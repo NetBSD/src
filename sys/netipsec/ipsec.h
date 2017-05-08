@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.44 2017/04/25 05:44:11 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.45 2017/05/08 06:39:23 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -320,8 +320,7 @@ struct m_tag;
 void ipsec4_common_input(struct mbuf *m, ...);
 int ipsec4_common_input_cb(struct mbuf *, struct secasvar *,
 			int, int, struct m_tag *);
-int ipsec4_process_packet (struct mbuf *, struct ipsecrequest *,
-			int, int);
+int ipsec4_process_packet(struct mbuf *, struct ipsecrequest *);
 int ipsec_process_done (struct mbuf *, struct ipsecrequest *);
 #define ipsec_indone(m)	\
 	(m_tag_find((m), PACKET_TAG_IPSEC_IN_DONE, NULL) != NULL)

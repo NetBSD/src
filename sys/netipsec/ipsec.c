@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.85 2017/04/28 02:29:38 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.86 2017/05/08 06:39:23 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.85 2017/04/28 02:29:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.86 2017/05/08 06:39:23 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -733,7 +733,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 	}
 
 	/* Note: callee frees mbuf */
-	error = ipsec4_process_packet(m, sp->req, flags, 0);
+	error = ipsec4_process_packet(m, sp->req);
 	/*
 	 * Preserve KAME behaviour: ENOENT can be returned
 	 * when an SA acquire is in progress.  Don't propagate
