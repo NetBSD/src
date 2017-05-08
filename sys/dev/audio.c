@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.336 2017/05/07 08:19:39 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.337 2017/05/08 07:31:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.336 2017/05/07 08:19:39 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.337 2017/05/08 07:31:34 martin Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3403,7 +3403,7 @@ audio_mmap(struct audio_softc *sc, off_t *offp, size_t len, int prot,
 	if (sc->hw_if == NULL)
 		return ENXIO;
 
-	DPRINTF(("audio_mmap: off=%lld, prot=%d\n", (long long)off, prot));
+	DPRINTF(("audio_mmap: off=%lld, prot=%d\n", (long long)(*offp), prot));
 	if (!(audio_get_props(sc) & AUDIO_PROP_MMAP))
 		return ENOTSUP;
 
