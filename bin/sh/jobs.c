@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.82 2017/05/04 04:37:51 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.83 2017/05/09 05:14:03 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.82 2017/05/04 04:37:51 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.83 2017/05/09 05:14:03 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1275,6 +1275,9 @@ cmdtxt(union node *n)
 		cmdputs(" || ");
 		cmdtxt(n->nbinary.ch2);
 		break;
+	case NDNOT:
+		cmdputs("! ");
+		/* FALLTHROUGH */
 	case NNOT:
 		cmdputs("! ");
 		cmdtxt(n->nnot.com);
