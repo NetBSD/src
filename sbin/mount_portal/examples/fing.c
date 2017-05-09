@@ -1,3 +1,5 @@
+/*	$NetBSD: fing.c,v 1.3 2017/05/09 23:26:49 kamil Exp $	*/
+
 #include <err.h>
 #include <stdio.h>
 
