@@ -1,3 +1,5 @@
+$NetBSD: cvs.1,v 1.7 2017/05/09 23:26:49 kamil Exp $
+
 The cvs.conf portal configuration file maps the NetBSD anoncvs
 respository into the local file system.  This means you can cat(1)
 or cp(1) copies of any arbitrary file or revision from the cvs
@@ -65,10 +67,5 @@ or you can do this:
 to get rid of any changes you might have made to /etc/security that
 you no longer want.
 
-Note that there's some support for the FreeBSD and OpenBSD anoncvs
-service in there as well, but those might be tricky.  The FreeBSD
-anoncvs server only offers pserver access, so you'll need to manually
-do a cvs login to make that work.  The OpenBSD server seems to move
-around a fair amount, so the CVSROOT value for it will need to be
-updated if that happens again.  You might also choose to use
-different servers entirely.
+Note that there's some support for the OpenBSD anoncvs.
+You might also choose to use different servers entirely.
