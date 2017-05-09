@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.137 2017/05/09 03:41:18 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.138 2017/05/09 04:08:37 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.137 2017/05/09 03:41:18 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.138 2017/05/09 04:08:37 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -476,8 +476,7 @@ evalcase(union node *n, int flags)
 					else
 						ncp = NULL;
 					evaltree(cp->nclist.body,
-					    ncp ? (flags & ~EV_EXIT) | EV_MORE
-						: flags );
+					    ncp ? (flags | EV_MORE) : flags);
 					status = exitstatus;
 					cp = ncp;
 				}
