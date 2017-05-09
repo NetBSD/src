@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.119 2017/05/09 04:17:13 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.120 2017/05/09 04:18:51 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.119 2017/05/09 04:17:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.120 2017/05/09 04:18:51 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -170,6 +170,17 @@ static const u_int saorder_state_any[] = {
 	SADB_SASTATE_MATURE, SADB_SASTATE_DYING,
 	SADB_SASTATE_LARVAL, SADB_SASTATE_DEAD
 };
+
+#define SASTATE_ALIVE_FOREACH(s)				\
+	for (int _i = 0;					\
+	    _i < __arraycount(saorder_state_alive) ?		\
+	    (s) = saorder_state_alive[_i], true : false;	\
+	    _i++)
+#define SASTATE_ANY_FOREACH(s)					\
+	for (int _i = 0;					\
+	    _i < __arraycount(saorder_state_any) ?		\
+	    (s) = saorder_state_any[_i], true : false;		\
+	    _i++)
 
 static const int minsize[] = {
 	sizeof(struct sadb_msg),	/* SADB_EXT_RESERVED */
@@ -2852,7 +2863,7 @@ static void
 key_delsah(struct secashead *sah)
 {
 	struct secasvar *sav, *nextsav;
-	u_int stateidx, state;
+	u_int state;
 	int s;
 	int zombie = 0;
 
@@ -2861,11 +2872,7 @@ key_delsah(struct secashead *sah)
 	s = splsoftnet();	/*called from softclock()*/
 
 	/* searching all SA registerd in the secindex. */
-	for (stateidx = 0;
-	     stateidx < _ARRAYLEN(saorder_state_any);
-	     stateidx++) {
-
-		state = saorder_state_any[stateidx];
+	SASTATE_ANY_FOREACH(state) {
 		LIST_FOREACH_SAFE(sav, &sah->savtree[state], chain, nextsav) {
 			if (sav->refcnt == 0) {
 				/* sanity check */
@@ -3109,14 +3116,10 @@ static struct secasvar *
 key_getsavbyspi(struct secashead *sah, u_int32_t spi)
 {
 	struct secasvar *sav;
-	u_int stateidx, state;
+	u_int state;
 
 	/* search all status */
-	for (stateidx = 0;
-	     stateidx < _ARRAYLEN(saorder_state_alive);
-	     stateidx++) {
-
-		state = saorder_state_alive[stateidx];
+	SASTATE_ALIVE_FOREACH(state) {
 		LIST_FOREACH(sav, &sah->savtree[state], chain) {
 
 			/* sanity check */
@@ -5757,7 +5760,7 @@ key_delete_all(struct socket *so, struct mbuf *m,
 	struct secasindex saidx;
 	struct secashead *sah;
 	struct secasvar *sav, *nextsav;
-	u_int stateidx, state;
+	u_int state;
 	int error;
 
 	src0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_SRC]);
@@ -5777,10 +5780,7 @@ key_delete_all(struct socket *so, struct mbuf *m,
 			continue;
 
 		/* Delete all non-LARVAL SAs. */
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_alive);
-		     stateidx++) {
-			state = saorder_state_alive[stateidx];
+		SASTATE_ALIVE_FOREACH(state) {
 			if (state == SADB_SASTATE_LARVAL)
 				continue;
 			LIST_FOREACH_SAFE(sav, &sah->savtree[state], chain,
@@ -6921,7 +6921,6 @@ key_flush(struct socket *so, struct mbuf *m,
 	struct secasvar *sav, *nextsav;
 	u_int16_t proto;
 	u_int8_t state;
-	u_int stateidx;
 
 	KASSERT(so != NULL);
 	KASSERT(mhp != NULL);
@@ -6939,10 +6938,7 @@ key_flush(struct socket *so, struct mbuf *m,
 		 && proto != sah->saidx.proto)
 			continue;
 
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_alive);
-		     stateidx++) {
-			state = saorder_state_any[stateidx];
+		SASTATE_ALIVE_FOREACH(state) {
 			LIST_FOREACH_SAFE(sav, &sah->savtree[state], chain,
 			    nextsav) {
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
@@ -6977,7 +6973,6 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 	struct secashead *sah;
 	struct secasvar *sav;
 	u_int16_t proto;
-	u_int stateidx;
 	u_int8_t satype;
 	u_int8_t state;
 	int cnt;
@@ -6998,10 +6993,7 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 		    proto != sah->saidx.proto)
 			continue;
 
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_any);
-		     stateidx++) {
-			state = saorder_state_any[stateidx];
+		SASTATE_ANY_FOREACH(state) {
 			LIST_FOREACH(sav, &sah->savtree[state], chain) {
 				cnt++;
 			}
@@ -7028,10 +7020,7 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 			return (NULL);
 		}
 
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_any);
-		     stateidx++) {
-			state = saorder_state_any[stateidx];
+		SASTATE_ANY_FOREACH(state) {
 			LIST_FOREACH(sav, &sah->savtree[state], chain) {
 				n = key_setdumpsa(sav, SADB_DUMP, satype,
 				    --cnt, pid);
@@ -7940,7 +7929,6 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 	struct secashead *sah;
 	struct secasvar *sav;
 	u_int16_t proto;
-	u_int stateidx;
 	u_int8_t satype;
 	u_int8_t state;
 	int cnt;
@@ -7959,10 +7947,7 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 		    proto != sah->saidx.proto)
 			continue;
 
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_any);
-		     stateidx++) {
-			state = saorder_state_any[stateidx];
+		SASTATE_ANY_FOREACH(state) {
 			LIST_FOREACH(sav, &sah->savtree[state], chain) {
 				cnt++;
 			}
@@ -7988,10 +7973,7 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 			return (NULL);
 		}
 
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_any);
-		     stateidx++) {
-			state = saorder_state_any[stateidx];
+		SASTATE_ANY_FOREACH(state) {
 			LIST_FOREACH(sav, &sah->savtree[state], chain) {
 				n = key_setdumpsa(sav, SADB_DUMP, satype,
 				    --cnt, pid);
