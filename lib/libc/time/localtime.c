@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.106 2017/03/11 18:23:14 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.107 2017/05/09 02:30:49 maya Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.106 2017/03/11 18:23:14 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.107 2017/05/09 02:30:49 maya Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1716,7 +1716,7 @@ timesub(const time_t *timep, int_fast32_t offset,
 						sp->lsis[i - 1].ls_trans + 1 &&
 						sp->lsis[i].ls_corr ==
 						sp->lsis[i - 1].ls_corr + 1) {
-							++hit;
+							hit = true;
 							--i;
 					}
 			}
