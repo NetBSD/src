@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.120 2017/05/09 04:18:51 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.121 2017/05/09 04:20:11 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.120 2017/05/09 04:18:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.121 2017/05/09 04:20:11 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -535,22 +535,54 @@ static void key_sp_unlink (struct secpolicy *sp);
 static struct mbuf *key_alloc_mbuf (int);
 struct callout key_timehandler_ch;
 
+#ifdef IPSEC_REF_DEBUG
+#define REFLOG(label, p, where, tag)					\
+	ipseclog((LOG_DEBUG, "%s:%d: " label " : refcnt=%d (%p)\n.",	\
+	    (where), (tag), (p)->refcnt, (p)))
+#else
+#define REFLOG	do {} while (0)
+#endif
+
 #define	SA_ADDREF(p) do {						\
 	(p)->refcnt++;							\
+	REFLOG("SA_ADDREF", (p), __func__, __LINE__);			\
+	KASSERTMSG((p)->refcnt != 0, "SA refcnt overflow");		\
+} while (0)
+#define	SA_ADDREF2(p, where, tag) do {					\
+	(p)->refcnt++;							\
+	REFLOG("SA_ADDREF", (p), (where), (tag));			\
 	KASSERTMSG((p)->refcnt != 0, "SA refcnt overflow");		\
 } while (0)
 #define	SA_DELREF(p) do {						\
 	KASSERTMSG((p)->refcnt > 0, "SA refcnt underflow");		\
 	(p)->refcnt--;							\
+	REFLOG("SA_DELREF", (p), __func__, __LINE__);			\
+} while (0)
+#define	SA_DELREF2(p, where, tag) do {					\
+	KASSERTMSG((p)->refcnt > 0, "SA refcnt underflow");		\
+	(p)->refcnt--;							\
+	REFLOG("SA_DELREF", (p), (where), (tag));			\
 } while (0)
 
 #define	SP_ADDREF(p) do {						\
 	(p)->refcnt++;							\
+	REFLOG("SP_ADDREF", (p), __func__, __LINE__);			\
+	KASSERTMSG((p)->refcnt != 0, "SP refcnt overflow");		\
+} while (0)
+#define	SP_ADDREF2(p, where, tag) do {					\
+	(p)->refcnt++;							\
+	REFLOG("SP_ADDREF", (p), (where), (tag));			\
 	KASSERTMSG((p)->refcnt != 0, "SP refcnt overflow");		\
 } while (0)
 #define	SP_DELREF(p) do {						\
 	KASSERTMSG((p)->refcnt > 0, "SP refcnt underflow");		\
 	(p)->refcnt--;							\
+	REFLOG("SP_DELREF", (p), __func__, __LINE__);			\
+} while (0)
+#define	SP_DELREF2(p, where, tag) do {					\
+	KASSERTMSG((p)->refcnt > 0, "SP refcnt underflow");		\
+	(p)->refcnt--;							\
+	REFLOG("SP_DELREF", (p), (where), (tag));			\
 } while (0)
 
 
@@ -631,7 +663,7 @@ found:
 
 		/* found a SPD entry */
 		sp->lastused = time_uptime;
-		SP_ADDREF(sp);
+		SP_ADDREF2(sp, where, tag);
 	}
 	splx(s);
 
@@ -695,7 +727,7 @@ found:
 
 		/* found a SPD entry */
 		sp->lastused = time_uptime;
-		SP_ADDREF(sp);
+		SP_ADDREF2(sp, where, tag);
 	}
 	splx(s);
 
@@ -771,7 +803,7 @@ key_gettunnel(const struct sockaddr *osrc,
 found:
 	if (sp) {
 		sp->lastused = time_uptime;
-		SP_ADDREF(sp);
+		SP_ADDREF2(sp, where, tag);
 	}
 	splx(s);
 done:
@@ -1187,7 +1219,7 @@ key_allocsa(
 				/* check dst address */
 				if (key_sockaddrcmp(&dst->sa, &sav->sah->saidx.dst.sa, chkport) != 0)
 					continue;
-				SA_ADDREF(sav);
+				SA_ADDREF2(sav, where, tag);
 				goto done;
 			}
 		}
@@ -1212,7 +1244,7 @@ _key_freesp(struct secpolicy **spp, const char* where, int tag)
 
 	KASSERT(sp != NULL);
 
-	SP_DELREF(sp);
+	SP_DELREF2(sp, where, tag);
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP SP:%p (ID=%u) from %s:%u; refcnt now %u\n",
@@ -1309,7 +1341,7 @@ key_freesav(struct secasvar **psav, const char* where, int tag)
 
 	KASSERT(sav != NULL);
 
-	SA_DELREF(sav);
+	SA_DELREF2(sav, where, tag);
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP SA:%p (SPI %lu) from %s:%u; refcnt now %u\n",
