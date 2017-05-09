@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.121 2017/05/09 04:20:11 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.122 2017/05/09 05:38:50 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.121 2017/05/09 04:20:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.122 2017/05/09 05:38:50 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -540,7 +540,7 @@ struct callout key_timehandler_ch;
 	ipseclog((LOG_DEBUG, "%s:%d: " label " : refcnt=%d (%p)\n.",	\
 	    (where), (tag), (p)->refcnt, (p)))
 #else
-#define REFLOG	do {} while (0)
+#define REFLOG(label, p, where, tag)	do {} while (0)
 #endif
 
 #define	SA_ADDREF(p) do {						\
