@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2131 2017/05/09 11:14:16 kre Exp $
+#	$NetBSD: mi,v 1.2132 2017/05/09 22:43:09 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9116,6 +9116,9 @@
 ./usr/share/man/cat3/signal_initialized.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/signal_pending.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/signal_set.0		comp-obsolete		obsolete
+./usr/share/man/cat3/signalname.0		comp-c-catman		.cat
+./usr/share/man/cat3/signalnext.0		comp-c-catman		.cat
+./usr/share/man/cat3/signalnumber.0		comp-c-catman		.cat
 ./usr/share/man/cat3/signbit.0			comp-c-catman		.cat
 ./usr/share/man/cat3/significand.0		comp-c-catman		.cat
 ./usr/share/man/cat3/significandf.0		comp-c-catman		.cat
