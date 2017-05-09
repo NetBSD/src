@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.123 2017/05/04 04:37:51 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.124 2017/05/09 02:47:47 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.123 2017/05/04 04:37:51 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.124 2017/05/09 02:47:47 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1956,7 +1956,7 @@ synexpect(int token, const char *text)
 STATIC void
 synerror(const char *msg)
 {
-	error("%d: Syntax error: %s\n", startlinno, msg);
+	error("%d: Syntax error: %s", startlinno, msg);
 	/* NOTREACHED */
 }
 
