@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.37 2017/05/03 21:34:51 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.38 2017/05/09 05:14:03 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.37 2017/05/03 21:34:51 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.38 2017/05/09 05:14:03 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,10 +127,16 @@ binop:
 		if (nl && len > 0)
 			len = 0, putc('\n', fp);
 		break;
+
+	case NDNOT:
+		fputs("! ", fp);
+		len += 2;
+		/* FALLTHROUGH */
 	case NNOT:
 		fputs("! ", fp);
 		len += 2 + shtree(n->nnot.com, 0, 0, NULL, fp);
 		break;
+
 	case NPIPE:
 		for (lp = n->npipe.cmdlist ; lp ; lp = lp->next) {
 			len += shtree(lp->n, 0, 0, NULL, fp);

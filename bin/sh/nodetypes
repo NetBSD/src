@@ -1,4 +1,4 @@
-#	$NetBSD: nodetypes,v 1.14 2017/05/04 04:37:51 kre Exp $
+#	$NetBSD: nodetypes,v 1.15 2017/05/09 05:14:03 kre Exp $
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
 #
@@ -140,5 +140,6 @@ NXHERE nhere			# fd<<!
 	doc	  nodeptr		# input to command (NARG node)
 
 NNOT nnot			# ! command  (actually pipeline)
+NDNOT nnot			# ! ! pipeline (optimisation)
 	type	  int
 	com	  nodeptr

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.124 2017/05/09 02:47:47 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.125 2017/05/09 05:14:03 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.124 2017/05/09 02:47:47 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.125 2017/05/09 05:14:03 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -262,7 +262,7 @@ pipeline(void)
 	checkkwd = 2;
 	while (readtoken() == TNOT) {
 		TRACE(("pipeline: TNOT recognized\n"));
-		negate = !negate;
+		negate++;
 	}
 	tokpushback++;
 	n1 = command();
@@ -284,9 +284,9 @@ pipeline(void)
 	}
 	tokpushback++;
 	if (negate) {
-		TRACE(("negate pipeline\n"));
+		TRACE(("%snegate pipeline\n", (negate&1) ? "" : "double "));
 		n2 = stalloc(sizeof(struct nnot));
-		n2->type = NNOT;
+		n2->type = (negate & 1) ? NNOT : NDNOT;
 		n2->nnot.com = n1;
 		return n2;
 	} else
@@ -321,7 +321,7 @@ command(void)
 
 	while (readtoken() == TNOT) {
 		TRACE(("command: TNOT recognized\n"));
-		negate = !negate;
+		negate++;
 	}
 	tokpushback++;
 
@@ -565,9 +565,9 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 
 checkneg:
 	if (negate) {
-		TRACE(("negate command\n"));
+		TRACE(("%snegate command\n", (negate&1) ? "" : "double "));
 		n2 = stalloc(sizeof(struct nnot));
-		n2->type = NNOT;
+		n2->type = (negate & 1) ? NNOT : NDNOT;
 		n2->nnot.com = n1;
 		return n2;
 	}
@@ -593,7 +593,7 @@ simplecmd(union node **rpp, union node *redir)
 
 	while (readtoken() == TNOT) {
 		TRACE(("simplcmd: TNOT recognized\n"));
-		negate = !negate;
+		negate++;
 	}
 	tokpushback++;
 
@@ -640,9 +640,9 @@ simplecmd(union node **rpp, union node *redir)
 
 checkneg:
 	if (negate) {
-		TRACE(("negate simplecmd\n"));
+		TRACE(("%snegate simplecmd\n", (negate&1) ? "" : "double "));
 		n2 = stalloc(sizeof(struct nnot));
-		n2->type = NNOT;
+		n2->type = (negate & 1) ? NNOT : NDNOT;
 		n2->nnot.com = n;
 		return n2;
 	}
