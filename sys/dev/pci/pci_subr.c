@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.179 2017/04/27 04:26:12 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.180 2017/05/09 11:17:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.179 2017/04/27 04:26:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.180 2017/05/09 11:17:07 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1648,7 +1648,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 {
 	pcireg_t reg; /* for each register */
 	pcireg_t val; /* for each bitfield */
-	bool check_link = false;
+	bool check_link = true;
 	bool check_slot = false;
 	bool check_rootport = false;
 	unsigned int pciever;
@@ -1664,15 +1664,12 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	switch ((reg & 0x00f00000) >> 20) {
 	case PCIE_XCAP_TYPE_PCIE_DEV:	/* 0x0 */
 		printf("PCI Express Endpoint device\n");
-		check_link = true;
 		break;
 	case PCIE_XCAP_TYPE_PCI_DEV:	/* 0x1 */
 		printf("Legacy PCI Express Endpoint device\n");
-		check_link = true;
 		break;
 	case PCIE_XCAP_TYPE_ROOT:	/* 0x4 */
 		printf("Root Port of PCI Express Root Complex\n");
-		check_link = true;
 		check_slot = true;
 		check_rootport = true;
 		break;
@@ -1693,10 +1690,12 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		break;
 	case PCIE_XCAP_TYPE_ROOT_INTEP:	/* 0x9 */
 		printf("Root Complex Integrated Endpoint\n");
+		check_link = false;
 		break;
 	case PCIE_XCAP_TYPE_ROOT_EVNTC:	/* 0xa */
-		check_rootport = true;
 		printf("Root Complex Event Collector\n");
+		check_link = false;
+		check_rootport = true;
 		break;
 	default:
 		printf("unknown\n");
