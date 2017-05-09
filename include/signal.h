@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.55 2015/07/31 12:51:32 kamil Exp $	*/
+/*	$NetBSD: signal.h,v 1.56 2017/05/09 11:14:16 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -56,6 +56,13 @@ extern const int sys_nsig __RENAME(__sys_nsig14);
 
 __BEGIN_DECLS
 int	raise(int);
+
+#if defined(_NETBSD_SOURCE)
+const char *signalname(int);
+int signalnext(int);
+int signalnumber(const char *);
+#endif
+
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
 int	kill(pid_t, int);

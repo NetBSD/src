@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.272 2017/03/15 23:23:15 dholland Exp $
+#	$NetBSD: shlib_version,v 1.273 2017/05/09 11:14:16 kre Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -48,4 +48,4 @@
 # - remove exect(3) API - tracing functionality has been moved to the kernel
 # - punt gethostid/sethostid(3) to libcompat or remove entirely
 major=12
-minor=206
+minor=207
