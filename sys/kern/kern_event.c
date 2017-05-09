@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.89 2017/04/27 16:52:22 abhinav Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.90 2017/05/09 21:18:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.89 2017/04/27 16:52:22 abhinav Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.90 2017/05/09 21:18:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1021,7 +1021,8 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			if (error != 0) {
 #ifdef DIAGNOSTIC
 				printf("%s: event not supported for file type"
-				    " %d\n", __func__, fp ? fp->f_type : -1);
+				    " %d (error %d)\n", __func__,
+				    ((file_t *)kn->kn_obj)->f_type, error);
 #endif
 				/* knote_detach() drops fdp->fd_lock */
 				knote_detach(kn, fdp, false);
