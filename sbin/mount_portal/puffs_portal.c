@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.7 2012/11/04 22:30:23 christos Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.8 2017/05/09 21:17:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.7 2012/11/04 22:30:23 christos Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.8 2017/05/09 21:17:54 christos Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -180,6 +180,13 @@ readdata(struct puffs_framebuf *pufbuf, int fd, int *done)
 	do {
 		n = read(fd, buf, MIN(sizeof(buf), max));
 		if (n == 0) {
+			/*
+			 * Deal with EOF here by closing the file descriptor
+			 * and thus causing an error on subsequent accesses.
+			 * This is the last kevent notification we are going
+			 * to be getting for regular files.
+			 */
+			close(fd);
 			if (moved)
 				break;
 			else
