@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_gif.sh,v 1.2 2017/04/27 10:17:12 ozaki-r Exp $
+#	$NetBSD: t_ipsec_gif.sh,v 1.3 2017/05/09 04:25:28 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -234,6 +234,9 @@ test_ipsec4_gif()
 	str=$(make_gif_pktstr $ip_gwre_tun $ip_gwlo_tun \
 	    $ip_remote $ip_local $proto ipv4)
 	atf_check -s exit:0 -o match:"$str" cat $outfile
+
+	test_flush_entries $SOCK_TUN_LOCAL
+	test_flush_entries $SOCK_TUN_REMOTE
 }
 
 test_ipsec6_gif()
@@ -401,6 +404,9 @@ test_ipsec6_gif()
 	str=$(make_gif_pktstr $ip_gwre_tun $ip_gwlo_tun \
 	    $ip_remote $ip_local $proto ipv6)
 	atf_check -s exit:0 -o match:"$str" cat $outfile
+
+	test_flush_entries $SOCK_TUN_LOCAL
+	test_flush_entries $SOCK_TUN_REMOTE
 }
 
 test_ipsec_gif_common()

@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_tunnel.sh,v 1.3 2017/04/16 10:34:49 ozaki-r Exp $
+#	$NetBSD: t_ipsec_tunnel.sh,v 1.4 2017/05/09 04:25:28 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -163,6 +163,9 @@ test_ipsec4_tunnel()
 	atf_check -s exit:0 \
 	    -o match:"$ip_gw_remote_tunnel > $ip_gw_local_tunnel: $proto_cap" \
 	    cat $outfile
+
+	test_flush_entries $SOCK_TUNNEL_LOCAL
+	test_flush_entries $SOCK_TUNNEL_REMOTE
 }
 
 test_ipsec6_tunnel()
@@ -292,6 +295,9 @@ test_ipsec6_tunnel()
 	atf_check -s exit:0 \
 	    -o match:"$ip_gw_remote_tunnel > $ip_gw_local_tunnel: $proto_cap" \
 	    cat $outfile
+
+	test_flush_entries $SOCK_TUNNEL_LOCAL
+	test_flush_entries $SOCK_TUNNEL_REMOTE
 }
 
 test_tunnel_common()

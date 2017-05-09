@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_transport.sh,v 1.1 2017/04/14 02:56:49 ozaki-r Exp $
+#	$NetBSD: t_ipsec_transport.sh,v 1.2 2017/05/09 04:25:28 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -114,6 +114,9 @@ test_ipsec4_transport()
 	    cat $outfile
 	atf_check -s exit:0 -o match:"$ip_peer > $ip_local: $proto_cap" \
 	    cat $outfile
+
+	test_flush_entries $SOCK_LOCAL
+	test_flush_entries $SOCK_PEER
 }
 
 test_ipsec6_transport()
@@ -199,6 +202,9 @@ test_ipsec6_transport()
 	    cat $outfile
 	atf_check -s exit:0 -o match:"$ip_peer > $ip_local: $proto_cap" \
 	    cat $outfile
+
+	test_flush_entries $SOCK_LOCAL
+	test_flush_entries $SOCK_PEER
 }
 
 test_transport_common()

@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_l2tp.sh,v 1.2 2017/04/27 10:17:12 ozaki-r Exp $
+#	$NetBSD: t_ipsec_l2tp.sh,v 1.3 2017/05/09 04:25:28 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -220,6 +220,9 @@ test_ipsec4_l2tp()
 	atf_check -s exit:0 -o match:"$str" cat $outfile
 	str=$(make_l2tp_pktstr $ip_gwre_tun $ip_gwlo_tun $proto ipv4 $mode)
 	atf_check -s exit:0 -o match:"$str" cat $outfile
+
+	test_flush_entries $SOCK_TUN_LOCAL
+	test_flush_entries $SOCK_TUN_REMOTE
 }
 
 test_ipsec6_l2tp()
@@ -387,6 +390,9 @@ test_ipsec6_l2tp()
 	atf_check -s exit:0 -o match:"$str" cat $outfile
 	str=$(make_l2tp_pktstr $ip_gwre_tun $ip_gwlo_tun $proto ipv6 $mode)
 	atf_check -s exit:0 -o match:"$str" cat $outfile
+
+	test_flush_entries $SOCK_TUN_LOCAL
+	test_flush_entries $SOCK_TUN_REMOTE
 }
 
 test_ipsec_l2tp_common()
