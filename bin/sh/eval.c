@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.135 2017/05/07 10:37:00 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.136 2017/05/09 03:38:24 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.135 2017/05/07 10:37:00 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.136 2017/05/09 03:38:24 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,6 +239,7 @@ void
 evaltree(union node *n, int flags)
 {
 	bool do_etest;
+	int sflags = flags & ~EV_EXIT;
 
 	do_etest = false;
 	if (n == NULL || nflag) {
@@ -259,7 +260,7 @@ evaltree(union node *n, int flags)
 #endif
 	switch (n->type) {
 	case NSEMI:
-		evaltree(n->nbinary.ch1, (flags & EV_TESTED) |
+		evaltree(n->nbinary.ch1, (sflags & EV_TESTED) |
 		    (n->nbinary.ch2 ? EV_MORE : 0));
 		if (nflag || evalskip)
 			goto out;
@@ -304,20 +305,20 @@ evaltree(union node *n, int flags)
 	}
 	case NWHILE:
 	case NUNTIL:
-		evalloop(n, flags);
+		evalloop(n, sflags);
 		break;
 	case NFOR:
-		evalfor(n, flags);
+		evalfor(n, sflags);
 		break;
 	case NCASE:
-		evalcase(n, flags);
+		evalcase(n, sflags);
 		break;
 	case NDEFUN:
 		defun(n->narg.text, n->narg.next);
 		exitstatus = 0;
 		break;
 	case NNOT:
-		evaltree(n->nnot.com, (flags & EV_MORE) | EV_TESTED);
+		evaltree(n->nnot.com, (sflags & EV_MORE) | EV_TESTED);
 		exitstatus = !exitstatus;
 		break;
 	case NPIPE:
