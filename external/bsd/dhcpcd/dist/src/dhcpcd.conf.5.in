@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 11, 2017
+.Dd May 9, 2017
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -199,7 +199,8 @@ Set the Interface Association Identifier to
 This option must be used in an
 .Ic interface
 block.
-This defaults to the last 4 bytes of the hardware address assigned to the
+This defaults to the VLANID (prefixed with 0xff) for the interface if set,
+otherwise the last 4 bytes of the hardware address assigned to the
 interface.
 Each instance of this should be unique within the scope of the client and
 .Nm dhcpcd
@@ -457,6 +458,10 @@ This is only useful when allowing IPv4LL.
 .It Ic nodhcp6
 Don't start DHCPv6 or listen to DHCPv6 messages.
 Normally DHCPv6 is started by a RA instruction or configuration.
+.It Ic nogateway
+Don't install any default routes.
+.It Ic gateway
+Install a default route if available (default).
 .It Ic nohook Ar script
 Don't run this hook script.
 Matches full name, or prefixed with 2 numbers optionally ending with

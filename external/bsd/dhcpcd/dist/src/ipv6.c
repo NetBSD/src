@@ -579,6 +579,22 @@ ipv6_checkaddrflags(void *arg)
 #endif
 
 static void
+ipv6_deletedaddr(struct ipv6_addr *ia)
+{
+
+#ifdef SMALL
+	UNUSED(ia);
+#else
+	/* NOREJECT is set if we delegated exactly the prefix to another
+	 * address.
+	 * This can only be one address, so just clear the flag.
+	 * This should ensure the reject route will be restored. */
+	if (ia->delegating_prefix != NULL)
+		ia->delegating_prefix->flags &= ~IPV6_AF_NOREJECT;
+#endif
+}
+
+static void
 ipv6_deleteaddr(struct ipv6_addr *ia)
 {
 	struct ipv6_state *state;
@@ -590,12 +606,7 @@ ipv6_deleteaddr(struct ipv6_addr *ia)
 	    errno != ENXIO && errno != ENODEV)
 		logerr(__func__);
 
-	/* NOREJECT is set if we delegated exactly the prefix to another
-	 * address.
-	 * This can only be one address, so just clear the flag.
-	 * This should ensure the reject route will be restored. */
-	if (ia->delegating_prefix != NULL)
-		ia->delegating_prefix->flags &= ~IPV6_AF_NOREJECT;
+	ipv6_deletedaddr(ia);
 
 	state = IPV6_STATE(ia->iface);
 	TAILQ_FOREACH(ap, &state->addrs, next) {
@@ -635,6 +646,38 @@ ipv6_addaddr1(struct ipv6_addr *ap, const struct timespec *now)
 	    ipv6_iffindaddr(ap->iface, &ap->addr, IN6_IFF_NOTUSEABLE))
 		ap->flags |= IPV6_AF_DADCOMPLETED;
 
+	/* Adjust plftime and vltime based on acquired time */
+	pltime = ap->prefix_pltime;
+	vltime = ap->prefix_vltime;
+	if (timespecisset(&ap->acquired) &&
+	    (ap->prefix_pltime != ND6_INFINITE_LIFETIME ||
+	    ap->prefix_vltime != ND6_INFINITE_LIFETIME))
+	{
+		struct timespec n;
+
+		if (now == NULL) {
+			clock_gettime(CLOCK_MONOTONIC, &n);
+			now = &n;
+		}
+		timespecsub(now, &ap->acquired, &n);
+		if (ap->prefix_pltime != ND6_INFINITE_LIFETIME) {
+			ap->prefix_pltime -= (uint32_t)n.tv_sec;
+			/* This can happen when confirming a
+			 * deprecated but still valid lease. */
+			if (ap->prefix_pltime > pltime)
+				ap->prefix_pltime = 0;
+		}
+		if (ap->prefix_vltime != ND6_INFINITE_LIFETIME) {
+			ap->prefix_vltime -= (uint32_t)n.tv_sec;
+			/* This should never happen. */
+			if (ap->prefix_vltime > vltime) {
+				logerrx("%s: %s: lifetime overflow",
+				    ifp->name, ap->saddr);
+				ap->prefix_vltime = ap->prefix_pltime = 0;
+			}
+		}
+	}
+
 	logfunc = ap->flags & IPV6_AF_NEW ? loginfox : logdebugx;
 	logfunc("%s: adding %saddress %s", ap->iface->name,
 #ifdef IPV6_AF_TEMPORARY
@@ -658,41 +701,6 @@ ipv6_addaddr1(struct ipv6_addr *ap, const struct timespec *now)
 		    " seconds",
 		    ap->iface->name, ap->prefix_pltime, ap->prefix_vltime);
 
-	/* Adjust plftime and vltime based on acquired time */
-	pltime = ap->prefix_pltime;
-	vltime = ap->prefix_vltime;
-	if (timespecisset(&ap->acquired) &&
-	    (ap->prefix_pltime != ND6_INFINITE_LIFETIME ||
-	    ap->prefix_vltime != ND6_INFINITE_LIFETIME))
-	{
-		struct timespec n;
-
-		if (now == NULL) {
-			clock_gettime(CLOCK_MONOTONIC, &n);
-			now = &n;
-		}
-		timespecsub(now, &ap->acquired, &n);
-		if (ap->prefix_pltime != ND6_INFINITE_LIFETIME) {
-			ap->prefix_pltime -= (uint32_t)n.tv_sec;
-			/* This can happen when confirming a
-			 * deprecated but still valid lease. */
-			if (ap->prefix_pltime > pltime)
-				ap->prefix_pltime = 0;
-		}
-		if (ap->prefix_vltime != ND6_INFINITE_LIFETIME)
-			ap->prefix_vltime -= (uint32_t)n.tv_sec;
-
-#if 0
-		logdebugx("%s: acquired %lld.%.9ld, now %lld.%.9ld, diff %lld.%.9ld",
-		    ap->iface->name,
-		    (long long)ap->acquired.tv_sec, ap->acquired.tv_nsec,
-		    (long long)now->tv_sec, now->tv_nsec,
-		    (long long)n.tv_sec, n.tv_nsec);
-		logdebugx("%s: adj pltime %"PRIu32" seconds, "
-		    "vltime %"PRIu32" seconds",
-		    ap->iface->name, ap->prefix_pltime, ap->prefix_vltime);
-#endif
-	}
 
 	if (if_address6(RTM_NEWADDR, ap) == -1) {
 		logerr(__func__);
@@ -719,8 +727,10 @@ ipv6_addaddr1(struct ipv6_addr *ap, const struct timespec *now)
 
 	ap->flags &= ~IPV6_AF_NEW;
 	ap->flags |= IPV6_AF_ADDED;
+#ifndef SMALL
 	if (ap->delegating_prefix != NULL)
 		ap->flags |= IPV6_AF_DELEGATED;
+#endif
 
 #ifdef IPV6_POLLADDRFLAG
 	eloop_timeout_delete(ap->iface->ctx->eloop,
@@ -944,6 +954,7 @@ ipv6_addaddrs(struct ipv6_addrhead *addrs)
 void
 ipv6_freeaddr(struct ipv6_addr *ap)
 {
+#ifndef SMALL
 	struct ipv6_addr *ia;
 
 	/* Forget the reference */
@@ -954,6 +965,7 @@ ipv6_freeaddr(struct ipv6_addr *ap)
 	} else if (ap->delegating_prefix != NULL) {
 		TAILQ_REMOVE(&ap->delegating_prefix->pd_pfxs, ap, pd_next);
 	}
+#endif
 
 	eloop_q_timeout_delete(ap->iface->ctx->eloop, 0, NULL, ap);
 	free(ap);
@@ -966,12 +978,17 @@ ipv6_freedrop_addrs(struct ipv6_addrhead *addrs, int drop,
 	struct ipv6_addr *ap, *apn, *apf;
 	struct timespec now;
 
+#ifdef SMALL
+	UNUSED(ifd);
+#endif
 	timespecclear(&now);
 	TAILQ_FOREACH_SAFE(ap, addrs, next, apn) {
+#ifndef SMALL
 		if (ifd != NULL &&
 		    (ap->delegating_prefix == NULL ||
 		    ap->delegating_prefix->iface != ifd))
 			continue;
+#endif
 		if (drop != 2)
 			TAILQ_REMOVE(addrs, ap, next);
 		if (drop && ap->flags & IPV6_AF_ADDED &&
@@ -1675,6 +1692,11 @@ ipv6_handleifa_addrs(int cmd,
 				logwarnx("%s: deleted address %s",
 				    ia->iface->name, ia->saddr);
 				ia->flags &= ~IPV6_AF_ADDED;
+			}
+			if (ia->flags & IPV6_AF_DELEGATED) {
+				TAILQ_REMOVE(addrs, ia, next);
+				ipv6_deletedaddr(ia);
+				ipv6_freeaddr(ia);
 			}
 			break;
 		case RTM_NEWADDR:
