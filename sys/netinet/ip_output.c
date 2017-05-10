@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.277 2017/05/07 16:41:22 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.278 2017/05/10 09:34:51 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.277 2017/05/07 16:41:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.278 2017/05/10 09:34:51 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -239,9 +239,6 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	int isbroadcast;
 	int sw_csum;
 	u_long mtu;
-#ifdef IPSEC
-	struct secpolicy *sp = NULL;
-#endif
 	bool natt_frag = false;
 	bool rtmtu_nolock;
 	union {
@@ -588,7 +585,7 @@ sendit:
 		bool ipsec_done = false;
 
 		/* Perform IPsec processing, if any. */
-		error = ipsec4_output(m, inp, flags, &sp, &mtu, &natt_frag,
+		error = ipsec4_output(m, inp, flags, &mtu, &natt_frag,
 		    &ipsec_done);
 		if (error || ipsec_done)
 			goto done;
@@ -770,11 +767,6 @@ done:
 	if (ro == &iproute) {
 		rtcache_free(&iproute);
 	}
-#ifdef IPSEC
-	if (sp) {
-		KEY_FREESP(&sp);
-	}
-#endif
 	if (mifp != NULL) {
 		if_put(mifp, &psref);
 	}
