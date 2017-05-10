@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_tunnel.sh,v 1.6 2017/05/10 08:59:40 ozaki-r Exp $
+#	$NetBSD: t_ipsec_tunnel.sh,v 1.7 2017/05/10 09:00:29 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -91,11 +91,13 @@ test_ipsec4_tunnel()
 	setup_servers
 
 	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_local/24
 	atf_check -s exit:0 -o ignore \
 	    rump.route -n add -net $subnet_remote $ip_gw_local
 
 	export RUMP_SERVER=$SOCK_TUNNEL_LOCAL
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_gw_local/24
 	atf_check -s exit:0 rump.ifconfig shmif1 $ip_gw_local_tunnel/24
 	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.forwarding=1
@@ -103,6 +105,7 @@ test_ipsec4_tunnel()
 	    rump.route -n add -net $subnet_remote $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_TUNNEL_REMOTE
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_gw_remote/24
 	atf_check -s exit:0 rump.ifconfig shmif1 $ip_gw_remote_tunnel/24
 	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.forwarding=1
@@ -110,9 +113,8 @@ test_ipsec4_tunnel()
 	    rump.route -n add -net $subnet_local $ip_gw_local_tunnel
 
 	export RUMP_SERVER=$SOCK_REMOTE
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_remote/24
-	# Run ifconfig -w 10 just once for optimization
-	atf_check -s exit:0 rump.ifconfig -w 10
 	atf_check -s exit:0 -o ignore \
 	    rump.route -n add -net $subnet_local $ip_gw_remote
 
@@ -198,11 +200,13 @@ test_ipsec6_tunnel()
 	setup_servers
 
 	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_local/64
 	atf_check -s exit:0 -o ignore \
 	    rump.route -n add -inet6 -net $subnet_remote/64 $ip_gw_local
 
 	export RUMP_SERVER=$SOCK_TUNNEL_LOCAL
+	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_gw_local/64
 	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $ip_gw_local_tunnel/64
 	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.forwarding=1
@@ -210,6 +214,7 @@ test_ipsec6_tunnel()
 	    rump.route -n add -inet6 -net $subnet_remote/64 $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_TUNNEL_REMOTE
+	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_gw_remote/64
 	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $ip_gw_remote_tunnel/64
 	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.forwarding=1
@@ -217,9 +222,8 @@ test_ipsec6_tunnel()
 	    rump.route -n add -inet6 -net $subnet_local/64 $ip_gw_local_tunnel
 
 	export RUMP_SERVER=$SOCK_REMOTE
+	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_remote
-	# Run ifconfig -w 10 just once for optimization
-	atf_check -s exit:0 rump.ifconfig -w 10
 	atf_check -s exit:0 -o ignore \
 	    rump.route -n add -inet6 -net $subnet_local/64 $ip_gw_remote
 
