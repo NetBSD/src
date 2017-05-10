@@ -93,7 +93,7 @@
 #define O_IPV6			O_BASE + 33
 #define O_CONTROLGRP		O_BASE + 34
 #define O_SLAAC			O_BASE + 35
-// unused			O_BASE + 36
+#define O_GATEWAY		O_BASE + 36
 #define O_NOUP			O_BASE + 37
 #define O_IPV6RA_AUTOCONF	O_BASE + 38
 #define O_IPV6RA_NOAUTOCONF	O_BASE + 39
@@ -196,6 +196,7 @@ const struct option cf_options[] = {
 	{"nodhcp6",         no_argument,       NULL, O_NODHCP6},
 	{"controlgroup",    required_argument, NULL, O_CONTROLGRP},
 	{"slaac",           required_argument, NULL, O_SLAAC},
+	{"gateway",         no_argument,       NULL, O_GATEWAY},
 	{"reject",          required_argument, NULL, O_REJECT},
 	{"bootp",           no_argument,       NULL, O_BOOTP},
 	{"nodelay",         no_argument,       NULL, O_NODELAY},
@@ -978,6 +979,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			return -1;
 		}
 		break;
+	case 'G':
+		ifo->options &= ~DHCPCD_GATEWAY;
+		break;
 	case 'H':
 		ifo->options |= DHCPCD_XID_HWADDR;
 		break;
@@ -1062,8 +1066,14 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		    strncmp(arg, "ms_classless_static_routes=",
 		        strlen("ms_classless_static_routes=")) == 0)
 		{
+			struct interface *ifp;
 			struct in_addr addr3;
 
+			ifp = if_find(ctx->ifaces, ifname);
+			if (ifp == NULL) {
+				logerrx("static routes require an interface");
+				return -1;
+			}
 			fp = np = strwhite(p);
 			if (np == NULL) {
 				logerrx("all routes need a gateway");
@@ -1077,7 +1087,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				*fp = ' ';
 				return -1;
 			}
-			if ((rt = rt_new(if_find(ctx->ifaces, ifname))) == NULL) {
+			if ((rt = rt_new(ifp)) == NULL) {
 				*fp = ' ';
 				return -1;
 			}
@@ -1087,9 +1097,16 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			TAILQ_INSERT_TAIL(&ifo->routes, rt, rt_next);
 			*fp = ' ';
 		} else if (strncmp(arg, "routers=", strlen("routers=")) == 0) {
+			struct interface *ifp;
+
+			ifp = if_find(ctx->ifaces, ifname);
+			if (ifp == NULL) {
+				logerrx("static routes require an interface");
+				return -1;
+			}
 			if (parse_addr(&addr, NULL, p) == -1)
 				return -1;
-			if ((rt = rt_new(if_find(ctx->ifaces, ifname))) == NULL)
+			if ((rt = rt_new(ifp)) == NULL)
 				return -1;
 			addr2.s_addr = INADDR_ANY;
 			sa_in_init(&rt->rt_dest, &addr2);
@@ -2078,6 +2095,9 @@ err_sla:
 		ctx->control_group = grp->gr_gid;
 #endif
 		break;
+	case O_GATEWAY:
+		ifo->options |= DHCPCD_GATEWAY;
+		break;
 	case O_NOUP:
 		ifo->options &= ~DHCPCD_IF_UP;
 		break;
@@ -2257,7 +2277,7 @@ read_config(struct dhcpcd_ctx *ctx,
 	/* Seed our default options */
 	if ((ifo = default_config(ctx)) == NULL)
 		return NULL;
-	ifo->options |= DHCPCD_DAEMONISE;
+	ifo->options |= DHCPCD_DAEMONISE | DHCPCD_GATEWAY;
 #ifdef PLUGIN_DEV
 	ifo->options |= DHCPCD_DEV;
 #endif
