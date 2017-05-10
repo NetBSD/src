@@ -81,6 +81,7 @@ struct interface {
 	sa_family_t family;
 	unsigned char hwaddr[HWADDR_LEN];
 	uint8_t hwlen;
+	unsigned short vlanid;
 	unsigned int metric;
 	int carrier;
 	int wireless;
