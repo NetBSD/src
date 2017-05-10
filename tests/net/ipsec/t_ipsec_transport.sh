@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_transport.sh,v 1.2 2017/05/09 04:25:28 ozaki-r Exp $
+#	$NetBSD: t_ipsec_transport.sh,v 1.3 2017/05/10 04:46:13 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -84,12 +84,7 @@ test_ipsec4_transport()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_local $ip_peer" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_peer $ip_local" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_LOCAL $ip_local $ip_peer
 
 	export RUMP_SERVER=$SOCK_PEER
 	cat > $tmpfile <<-EOF
@@ -99,12 +94,7 @@ test_ipsec4_transport()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_local $ip_peer" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_peer $ip_local" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_PEER $ip_local $ip_peer
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
@@ -172,12 +162,7 @@ test_ipsec6_transport()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_local $ip_peer" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_peer $ip_local" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_LOCAL $ip_local $ip_peer
 
 	export RUMP_SERVER=$SOCK_PEER
 	cat > $tmpfile <<-EOF
@@ -187,12 +172,7 @@ test_ipsec6_transport()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_local $ip_peer" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_peer $ip_local" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_PEER $ip_local $ip_peer
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -n -X 3 $ip_peer
