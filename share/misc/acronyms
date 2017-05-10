@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.253 2017/03/11 07:10:37 riastradh Exp $
+$NetBSD: acronyms,v 1.254 2017/05/10 01:24:32 sevan Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -416,6 +416,8 @@ PPL	people
 PPL	pretty please
 PPP	petty pet peeve
 PR	public relations
+PSA 	prostate-specific antigen
+PSA 	public service announcement
 PTA	parent-teacher association
 PTO	{paid,personal} time off
 PTO	parent-teacher organization
