@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.62 2017/05/10 03:26:33 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.63 2017/05/10 09:45:51 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.62 2017/05/10 03:26:33 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.63 2017/05/10 09:45:51 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -970,12 +970,10 @@ crypto_invoke(struct cryptop *crp, int hint)
 
 	hid = CRYPTO_SESID2HID(crp->crp_sid);
 
-	if (hid < crypto_drivers_num) {
+	if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP) == 0) {
 		int (*process)(void *, struct cryptop *, int);
 		void *arg;
 
-		if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP)
-			crypto_freesession(crp->crp_sid);
 		process = crypto_drivers[hid].cc_process;
 		arg = crypto_drivers[hid].cc_arg;
 
@@ -992,6 +990,8 @@ crypto_invoke(struct cryptop *crp, int hint)
 		 * Driver has unregistered; migrate the session and return
 		 * an error to the caller so they'll resubmit the op.
 		 */
+		crypto_freesession(crp->crp_sid);
+
 		for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
 			crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
 
