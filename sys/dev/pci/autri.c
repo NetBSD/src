@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.53 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: autri.c,v 1.54 2017/05/10 02:46:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.53 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.54 2017/05/10 02:46:06 msaitoh Exp $");
 
 #include "midi.h"
 
@@ -553,7 +553,8 @@ autri_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, autri_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_AUDIO, autri_intr,
+	    sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -588,8 +589,7 @@ autri_attach(device_t parent, device_t self, void *aux)
 
 	r = ac97_attach(&codec->host_if, self, &sc->sc_lock);
 	if (r != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "can't attach codec (error 0x%X)\n", r);
+		aprint_error_dev(self, "can't attach codec (error 0x%X)\n", r);
 		return;
 	}
 
