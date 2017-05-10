@@ -380,6 +380,11 @@ EOF
 	sunos*);;
 	*)		echo "CFLAGS+=	-Wstrict-overflow" >>$CONFIG_MK;;
 	esac
+
+	# Turn on extra per compiler debugging
+	case "$CC" in
+	*gcc*)		echo "CFLAGS+=	-Wlogical-op" >>$CONFIG_MK;;
+	esac
 else
 	echo "CPPFLAGS+=	-DNDEBUG" >>$CONFIG_MK
 fi
@@ -512,7 +517,7 @@ if ! $_CC; then
 	echo "$CC does not create executables" >&2
 	exit 1
 fi
-[ "$CC" != cc ] && echo "CC=	$CC" >>$CONFIG_MK
+[ "$CC" != cc ] && echo "CC=		$CC" >>$CONFIG_MK
 $CC --version | $SED -e '1!d'
 
 if [ -z "$EMBEDDED" -o "$EMBEDDED" = yes ]; then

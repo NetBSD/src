@@ -44,7 +44,7 @@ proginstall:
 	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@; cd ..; done
 
 clean:
-	rm -rf cov-int
+	rm -rf cov-int dhcpcd.xz
 	for x in ${SUBDIRS} tests; do cd $$x; ${MAKE} $@; cd ..; done
 
 distclean: clean
