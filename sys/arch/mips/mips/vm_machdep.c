@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.153 2016/08/09 16:38:24 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.154 2017/05/10 11:27:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.153 2016/08/09 16:38:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.154 2017/05/10 11:27:14 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
@@ -178,7 +178,7 @@ cpu_uarea_alloc(bool system)
 #else
 	const paddr_t high = MIPS_KSEG1_START - MIPS_KSEG0_START;
 	/*
-	 * Don't allocate a direct mapped uarea if aren't allocating for a
+	 * Don't allocate a direct mapped uarea if we aren't allocating for a
 	 * system lwp and we have memory that can't be mapped via KSEG0.
 	 */
 	if (!system && high < pmap_limits.avail_end)
