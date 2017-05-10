@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.60 2017/05/10 03:15:32 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.61 2017/05/10 03:23:26 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.60 2017/05/10 03:15:32 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.61 2017/05/10 03:23:26 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -612,6 +612,48 @@ crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 	return err;
 }
 
+static int
+crypto_unregister_locked(u_int32_t driverid, int alg)
+{
+	int i;
+	u_int32_t ses;
+	struct cryptocap *cap;
+	bool lastalg = true;
+
+	KASSERT(mutex_owned(&crypto_drv_mtx));
+
+	if (CRYPTO_ALGORITHM_MIN <= alg && alg <= CRYPTO_ALGORITHM_MAX)
+		return EINVAL;
+
+	cap = crypto_checkdriver(driverid);
+	if (cap == NULL || cap->cc_alg[alg] == 0)
+		return EINVAL;
+
+	cap->cc_alg[alg] = 0;
+	cap->cc_max_op_len[alg] = 0;
+
+	/* Was this the last algorithm ? */
+	for (i = CRYPTO_ALGORITHM_MIN; i <= CRYPTO_ALGORITHM_MAX; i++)
+		if (cap->cc_alg[i] != 0) {
+			lastalg = false;
+			break;
+		}
+
+	if (lastalg) {
+		ses = cap->cc_sessions;
+		memset(cap, 0, sizeof(struct cryptocap));
+		if (ses != 0) {
+			/*
+			 * If there are pending sessions, just mark as invalid.
+			 */
+			cap->cc_flags |= CRYPTOCAP_F_CLEANUP;
+			cap->cc_sessions = ses;
+		}
+	}
+
+	return 0;
+}
+
 /*
  * Unregister a crypto driver. If there are pending sessions using it,
  * leave enough information around so that subsequent calls using those
@@ -621,40 +663,12 @@ crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 int
 crypto_unregister(u_int32_t driverid, int alg)
 {
-	int i, err;
-	u_int32_t ses;
-	struct cryptocap *cap;
+	int err;
 
 	mutex_enter(&crypto_drv_mtx);
-
-	cap = crypto_checkdriver(driverid);
-	if (cap != NULL &&
-	    (CRYPTO_ALGORITHM_MIN <= alg && alg <= CRYPTO_ALGORITHM_MAX) &&
-	    cap->cc_alg[alg] != 0) {
-		cap->cc_alg[alg] = 0;
-		cap->cc_max_op_len[alg] = 0;
-
-		/* Was this the last algorithm ? */
-		for (i = CRYPTO_ALGORITHM_MIN; i <= CRYPTO_ALGORITHM_MAX; i++)
-			if (cap->cc_alg[i] != 0)
-				break;
-
-		if (i == CRYPTO_ALGORITHM_MAX + 1) {
-			ses = cap->cc_sessions;
-			memset(cap, 0, sizeof(struct cryptocap));
-			if (ses != 0) {
-				/*
-				 * If there are pending sessions, just mark as invalid.
-				 */
-				cap->cc_flags |= CRYPTOCAP_F_CLEANUP;
-				cap->cc_sessions = ses;
-			}
-		}
-		err = 0;
-	} else
-		err = EINVAL;
-
+	err = crypto_unregister_locked(driverid, alg);
 	mutex_exit(&crypto_drv_mtx);
+
 	return err;
 }
 
