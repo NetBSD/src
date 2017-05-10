@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.62 2017/05/09 06:29:20 msaitoh Exp $	*/
+/*	$NetBSD: ppb.c,v 1.63 2017/05/10 03:24:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.62 2017/05/09 06:29:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.63 2017/05/10 03:24:31 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,7 +354,7 @@ ppbattach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
-	 * Attach the PCI bus than hangs off of it.
+	 * Attach the PCI bus that hangs off of it.
 	 *
 	 * XXX Don't pass-through Memory Read Multiple.  Should we?
 	 * XXX Consult the spec...
