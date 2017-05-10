@@ -1,4 +1,4 @@
-#	$NetBSD: common.sh,v 1.1 2017/05/09 04:25:28 ozaki-r Exp $
+#	$NetBSD: common.sh,v 1.2 2017/05/10 04:46:13 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -35,4 +35,21 @@ test_flush_entries()
 	atf_check -s exit:0 -o empty $HIJACKING setkey -F -P
 	atf_check -s exit:0 -o match:"No SAD entries." $HIJACKING setkey -D -a
 	atf_check -s exit:0 -o match:"No SPD entries." $HIJACKING setkey -D -P
+}
+
+check_sa_entries()
+{
+	local sock=$1
+	local local_addr=$2
+	local remote_addr=$3
+
+	export RUMP_SERVER=$sock
+
+	$DEBUG && $HIJACKING setkey -D
+
+	atf_check -s exit:0 -o match:"$local_addr $rmote_addr" \
+	    $HIJACKING setkey -D
+	atf_check -s exit:0 -o match:"$remote_addr $local_addr" \
+	    $HIJACKING setkey -D
+	# TODO: more detail checks
 }
