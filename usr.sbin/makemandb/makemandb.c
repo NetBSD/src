@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.54 2017/05/02 13:54:08 abhinav Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.55 2017/05/10 12:09:52 abhinav Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.54 2017/05/02 13:54:08 abhinav Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.55 2017/05/10 12:09:52 abhinav Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -944,8 +944,7 @@ set_section(const struct roff_man *rm, mandb_rec *rec)
 {
 	if (!rm)
 		return;
-	const struct roff_meta *rm_meta = &rm->meta;
-	const char *s = rm_meta->msec == NULL ? "?" : rm_meta->msec;
+	const char *s = rm->meta.msec == NULL ? "?" : rm->meta.msec;
 	easprintf(&rec->section, "%s", s);
 	if (rec->section[0] == '?' && mflags.verbosity == 2)
 		warnx("%s: Missing section number", rec->file_path);
@@ -960,9 +959,8 @@ set_machine(const struct roff_man *rm, mandb_rec *rec)
 {
 	if (rm == NULL)
 		return;
-	const struct roff_meta *rm_meta = &rm->meta;
-	if (rm_meta->arch)
-		rec->machine = estrdup(rm_meta->arch);
+	if (rm->meta.arch)
+		rec->machine = estrdup(rm->meta.arch);
 }
 
 /*
