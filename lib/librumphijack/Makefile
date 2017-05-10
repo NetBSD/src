@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2017/05/10 01:11:51 sevan Exp $
+#	$NetBSD: Makefile,v 1.19 2017/05/10 08:48:46 sevan Exp $
 #
 
 LIB=		rumphijack
@@ -10,7 +10,7 @@ MAN=		rumphijack.3
 
 SRCS=		hijack.c hijackdlsym.c
 
-CPPFLAGS+=	-D_DIAGNOSTIC -D_REENTRANT
+CPPFLAGS+=	-D_DIAGNOSTIC -D_REENTRANT -D_KERNTYPES
 
 WARNS?=		5
 
