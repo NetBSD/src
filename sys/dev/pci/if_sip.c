@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.165 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.166 2017/05/10 02:46:33 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.165 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.166 2017/05/10 02:46:33 msaitoh Exp $");
 
 
 
@@ -1102,7 +1102,8 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, sipcom_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, sipcom_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)

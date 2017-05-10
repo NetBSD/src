@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.43 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.44 2017/05/10 02:46:33 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.43 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.44 2017/05/10 02:46:33 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -139,8 +139,8 @@ fwohci_pci_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	psc->psc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, fwohci_intr,
-	    &psc->psc_sc);
+	psc->psc_ih = pci_intr_establish_xname(pa->pa_pc, ih, IPL_BIO,
+	    fwohci_intr, &psc->psc_sc, device_xname(self));
 	if (psc->psc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
