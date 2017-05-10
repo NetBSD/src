@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.76 2017/02/09 22:02:13 christos Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.77 2017/05/10 06:19:48 riastradh Exp $ */
 
 /*
  * System call numbers.
