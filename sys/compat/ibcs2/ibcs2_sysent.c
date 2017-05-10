@@ -1,4 +1,4 @@
-/* $NetBSD: ibcs2_sysent.c,v 1.56 2017/01/16 17:43:04 christos Exp $ */
+/* $NetBSD: ibcs2_sysent.c,v 1.57 2017/05/10 06:19:48 riastradh Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_sysent.c,v 1.56 2017/01/16 17:43:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_sysent.c,v 1.57 2017/05/10 06:19:48 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
