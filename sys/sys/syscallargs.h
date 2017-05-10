@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.282 2017/01/13 06:20:31 christos Exp $ */
+/* $NetBSD: syscallargs.h,v 1.283 2017/05/10 06:19:47 riastradh Exp $ */
 
 /*
  * System call argument lists.
@@ -17,6 +17,9 @@
 #endif
 
 #include <sys/socket.h>
+
+/* Forward declaration */
+struct lwp;
 
 #define	SYS_MAXSYSARGS	8
 
