@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.61 2017/05/10 03:23:26 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.62 2017/05/10 03:26:33 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.61 2017/05/10 03:23:26 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.62 2017/05/10 03:26:33 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -613,7 +613,7 @@ crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 }
 
 static int
-crypto_unregister_locked(u_int32_t driverid, int alg)
+crypto_unregister_locked(u_int32_t driverid, int alg, bool all)
 {
 	int i;
 	u_int32_t ses;
@@ -626,19 +626,23 @@ crypto_unregister_locked(u_int32_t driverid, int alg)
 		return EINVAL;
 
 	cap = crypto_checkdriver(driverid);
-	if (cap == NULL || cap->cc_alg[alg] == 0)
+	if (cap == NULL || (!all && cap->cc_alg[alg] == 0))
 		return EINVAL;
 
 	cap->cc_alg[alg] = 0;
 	cap->cc_max_op_len[alg] = 0;
 
-	/* Was this the last algorithm ? */
-	for (i = CRYPTO_ALGORITHM_MIN; i <= CRYPTO_ALGORITHM_MAX; i++)
-		if (cap->cc_alg[i] != 0) {
+	if (all) {
+		if (alg != CRYPTO_ALGORITHM_MAX)
 			lastalg = false;
-			break;
-		}
-
+	} else {
+		/* Was this the last algorithm ? */
+		for (i = CRYPTO_ALGORITHM_MIN; i <= CRYPTO_ALGORITHM_MAX; i++)
+			if (cap->cc_alg[i] != 0) {
+				lastalg = false;
+				break;
+			}
+	}
 	if (lastalg) {
 		ses = cap->cc_sessions;
 		memset(cap, 0, sizeof(struct cryptocap));
@@ -666,7 +670,7 @@ crypto_unregister(u_int32_t driverid, int alg)
 	int err;
 
 	mutex_enter(&crypto_drv_mtx);
-	err = crypto_unregister_locked(driverid, alg);
+	err = crypto_unregister_locked(driverid, alg, false);
 	mutex_exit(&crypto_drv_mtx);
 
 	return err;
@@ -678,39 +682,20 @@ crypto_unregister(u_int32_t driverid, int alg)
  * around so that subsequent calls using those sessions will
  * correctly detect the driver has been unregistered and reroute
  * requests.
- *
- * XXX careful.  Don't change this to call crypto_unregister() for each
- * XXX registered algorithm unless you drop the mutex across the calls;
- * XXX you can't take it recursively.
  */
 int
 crypto_unregister_all(u_int32_t driverid)
 {
-	int i, err;
-	u_int32_t ses;
-	struct cryptocap *cap;
+	int err, i;
 
 	mutex_enter(&crypto_drv_mtx);
-	cap = crypto_checkdriver(driverid);
-	if (cap != NULL) {
-		for (i = CRYPTO_ALGORITHM_MIN; i <= CRYPTO_ALGORITHM_MAX; i++) {
-			cap->cc_alg[i] = 0;
-			cap->cc_max_op_len[i] = 0;
-		}
-		ses = cap->cc_sessions;
-		memset(cap, 0, sizeof(struct cryptocap));
-		if (ses != 0) {
-			/*
-			 * If there are pending sessions, just mark as invalid.
-			 */
-			cap->cc_flags |= CRYPTOCAP_F_CLEANUP;
-			cap->cc_sessions = ses;
-		}
-		err = 0;
-	} else
-		err = EINVAL;
-
+	for (i = CRYPTO_ALGORITHM_MIN; i <= CRYPTO_ALGORITHM_MAX; i++) {
+		err = crypto_unregister_locked(driverid, i, true);
+		if (err)
+			break;
+	}
 	mutex_exit(&crypto_drv_mtx);
+
 	return err;
 }
 
