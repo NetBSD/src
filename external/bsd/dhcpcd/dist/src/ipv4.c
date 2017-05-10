@@ -229,9 +229,9 @@ ipv4_ifcmp(const struct interface *si, const struct interface *ti)
 	if (!sis->new && tis->new)
 		return 1;
 	/* Always prefer proper leases */
-	if (!(sis->added & STATE_FAKE) && (sis->added & STATE_FAKE))
+	if (!(sis->added & STATE_FAKE) && (tis->added & STATE_FAKE))
 		return -1;
-	if ((sis->added & STATE_FAKE) && !(sis->added & STATE_FAKE))
+	if ((sis->added & STATE_FAKE) && !(tis->added & STATE_FAKE))
 		return 1;
 	/* If we are either, they neither have a lease, or they both have.
 	 * We need to check for IPv4LL and make it non-preferred. */
