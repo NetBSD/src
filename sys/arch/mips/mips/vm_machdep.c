@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.156 2017/05/10 22:19:31 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.157 2017/05/10 22:23:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.156 2017/05/10 22:19:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.157 2017/05/10 22:23:13 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
@@ -129,6 +129,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 		for (u_int i = 0; i < UPAGES; i++) {
 			KASSERT(pte_valid_p(pte[i]));
+			KASSERT(pte_global_p(pte[i]));
 			l2->l_md.md_upte[i] = pte[i] & ~x;
 		}
 	}
