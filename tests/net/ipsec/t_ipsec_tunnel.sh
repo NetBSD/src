@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_tunnel.sh,v 1.4 2017/05/09 04:25:28 ozaki-r Exp $
+#	$NetBSD: t_ipsec_tunnel.sh,v 1.5 2017/05/10 04:46:13 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -124,14 +124,8 @@ test_ipsec4_tunnel()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_local_tunnel $ip_gw_remote_tunnel" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_remote_tunnel $ip_gw_local_tunnel" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_TUNNEL_LOCAL $ip_gw_local_tunnel \
+	    $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_TUNNEL_REMOTE
 	cat > $tmpfile <<-EOF
@@ -144,14 +138,8 @@ test_ipsec4_tunnel()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_local_tunnel $ip_gw_remote_tunnel" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_remote_tunnel $ip_gw_local_tunnel" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_TUNNEL_REMOTE $ip_gw_local_tunnel \
+	    $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_remote
@@ -256,14 +244,8 @@ test_ipsec6_tunnel()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_local_tunnel $ip_gw_remote_tunnel" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_remote_tunnel $ip_gw_local_tunnel" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_TUNNEL_LOCAL $ip_gw_local_tunnel \
+	    $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_TUNNEL_REMOTE
 	cat > $tmpfile <<-EOF
@@ -276,14 +258,8 @@ test_ipsec6_tunnel()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_local_tunnel $ip_gw_remote_tunnel" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_remote_tunnel $ip_gw_local_tunnel" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_TUNNEL_REMOTE $ip_gw_local_tunnel \
+	    $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -n -X 3 $ip_remote

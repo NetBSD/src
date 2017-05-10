@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_gif.sh,v 1.3 2017/05/09 04:25:28 ozaki-r Exp $
+#	$NetBSD: t_ipsec_gif.sh,v 1.4 2017/05/10 04:46:13 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -161,12 +161,6 @@ test_ipsec4_gif()
 		EOF
 		$DEBUG && cat $tmpfile
 		atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-		$DEBUG && $HIJACKING setkey -D
-		atf_check -s exit:0 -o match:"$ip_gwlo_tun $ip_gwre_tun" \
-		    $HIJACKING setkey -D
-		atf_check -s exit:0 -o match:"$ip_gwre_tun $ip_gwlo_tun" \
-		    $HIJACKING setkey -D
-		# TODO: more detail checks
 
 		export RUMP_SERVER=$SOCK_TUN_REMOTE
 		cat > $tmpfile <<-EOF
@@ -179,12 +173,6 @@ test_ipsec4_gif()
 		EOF
 		$DEBUG && cat $tmpfile
 		atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-		$DEBUG && $HIJACKING setkey -D
-		atf_check -s exit:0 -o match:"$ip_gwlo_tun $ip_gwre_tun" \
-		    $HIJACKING setkey -D
-		atf_check -s exit:0 -o match:"$ip_gwre_tun $ip_gwlo_tun" \
-		    $HIJACKING setkey -D
-		# TODO: more detail checks
 	else # transport mode
 		export RUMP_SERVER=$SOCK_TUN_LOCAL
 		# from https://www.netbsd.org/docs/network/ipsec/
@@ -198,12 +186,6 @@ test_ipsec4_gif()
 		EOF
 		$DEBUG && cat $tmpfile
 		atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-		$DEBUG && $HIJACKING setkey -D
-		atf_check -s exit:0 -o match:"$ip_gwlo_tun $ip_gwre_tun" \
-		    $HIJACKING setkey -D
-		atf_check -s exit:0 -o match:"$ip_gwre_tun $ip_gwlo_tun" \
-		    $HIJACKING setkey -D
-		# TODO: more detail checks
 
 		export RUMP_SERVER=$SOCK_TUN_REMOTE
 		cat > $tmpfile <<-EOF
@@ -216,13 +198,10 @@ test_ipsec4_gif()
 		EOF
 		$DEBUG && cat $tmpfile
 		atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-		$DEBUG && $HIJACKING setkey -D
-		atf_check -s exit:0 -o match:"$ip_gwlo_tun $ip_gwre_tun" \
-		    $HIJACKING setkey -D
-		atf_check -s exit:0 -o match:"$ip_gwre_tun $ip_gwlo_tun" \
-		    $HIJACKING setkey -D
-		# TODO: more detail checks
 	fi
+
+	check_sa_entries $SOCK_TUN_LOCAL $ip_gwlo_tun $ip_gwre_tun
+	check_sa_entries $SOCK_TUN_REMOTE $ip_gwlo_tun $ip_gwre_tun
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_remote
@@ -378,21 +357,8 @@ test_ipsec6_gif()
 		atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
 	fi
 
-	export RUMP_SERVER=$SOCK_TUN_LOCAL
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_gwlo_tun $ip_gwre_tun" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_gwre_tun $ip_gwlo_tun" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
-
-	export RUMP_SERVER=$SOCK_TUN_REMOTE
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_gwlo_tun $ip_gwre_tun" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_gwre_tun $ip_gwlo_tun" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_TUN_LOCAL $ip_gwlo_tun $ip_gwre_tun
+	check_sa_entries $SOCK_TUN_REMOTE $ip_gwlo_tun $ip_gwre_tun
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -n -X 3 $ip_remote
