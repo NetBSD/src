@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.59 2017/05/02 03:17:43 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.60 2017/05/10 03:15:32 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.59 2017/05/02 03:17:43 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.60 2017/05/10 03:15:32 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -635,7 +635,7 @@ crypto_unregister(u_int32_t driverid, int alg)
 		cap->cc_max_op_len[alg] = 0;
 
 		/* Was this the last algorithm ? */
-		for (i = 1; i <= CRYPTO_ALGORITHM_MAX; i++)
+		for (i = CRYPTO_ALGORITHM_MIN; i <= CRYPTO_ALGORITHM_MAX; i++)
 			if (cap->cc_alg[i] != 0)
 				break;
 
