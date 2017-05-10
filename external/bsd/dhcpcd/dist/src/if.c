@@ -516,6 +516,8 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 			}
 		}
 
+		ifp->vlanid = if_vlanid(ifp);
+
 #ifdef SIOCGIFPRIORITY
 		/* Respect the interface priority */
 		memset(&ifr, 0, sizeof(ifr));

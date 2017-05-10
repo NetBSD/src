@@ -281,6 +281,21 @@ rt_add(struct rt *nrt, struct rt *ort)
 	assert(nrt != NULL);
 	ctx = nrt->rt_ifp->ctx;
 
+	/*
+	 * Don't install a gateway if not asked to.
+	 * This option is mainly for VPN users who want their VPN to be the
+	 * default route.
+	 * Because VPN's generally don't care about route management
+	 * beyond their own, a longer term solution would be to remove this
+	 * and get the VPN to inject the default route into dhcpcd somehow.
+	 */
+	if (((nrt->rt_ifp->active &&
+	    !(nrt->rt_ifp->options->options & DHCPCD_GATEWAY)) ||
+	    (!nrt->rt_ifp->active && !(ctx->options & DHCPCD_GATEWAY))) &&
+	    sa_is_unspecified(&nrt->rt_dest) &&
+	    sa_is_unspecified(&nrt->rt_netmask))
+		return false;
+
 	rt_desc(ort == NULL ? "adding" : "changing", nrt);
 
 	change = false;
