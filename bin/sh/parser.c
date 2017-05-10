@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.125 2017/05/09 05:14:03 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.126 2017/05/10 11:06:47 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.125 2017/05/09 05:14:03 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.126 2017/05/10 11:06:47 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,6 +162,7 @@ list(int nlflag, int erflag)
 {
 	union node *n1, *n2, *n3;
 	int tok;
+
 	TRACE(("list(%d,%d): entered\n", nlflag, erflag));
 
 	checkkwd = 2;
@@ -230,6 +231,7 @@ andor(void)
 	int t;
 
 	TRACE(("andor: entered\n"));
+
 	n1 = pipeline();
 	for (;;) {
 		if ((t = readtoken()) == TAND) {
@@ -356,6 +358,7 @@ command(void)
 	case TWHILE:
 	case TUNTIL: {
 		int got;
+
 		n1 = stalloc(sizeof(struct nbinary));
 		n1->type = (lasttoken == TWHILE)? NWHILE : NUNTIL;
 		n1->nbinary.ch1 = list(0, 0);
@@ -375,7 +378,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		n1 = stalloc(sizeof(struct nfor));
 		n1->type = NFOR;
 		n1->nfor.var = wordtext;
-		if (readtoken() == TWORD && ! quoteflag && equal(wordtext, "in")) {
+		if (readtoken()==TWORD && !quoteflag && equal(wordtext,"in")) {
 			app = &ap;
 			while (readtoken() == TWORD) {
 				n2 = stalloc(sizeof(struct narg));
@@ -393,6 +396,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 			static char argvars[5] = {
 			    CTLVAR, VSNORMAL|VSQUOTE, '@', '=', '\0'
 			};
+
 			n2 = stalloc(sizeof(struct narg));
 			n2->type = NARG;
 			n2->narg.text = argvars;
@@ -563,7 +567,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		n1->nredir.redirect = redir;
 	}
 
-checkneg:
+ checkneg:
 	if (negate) {
 		TRACE(("%snegate command\n", (negate&1) ? "" : "double "));
 		n2 = stalloc(sizeof(struct nnot));
@@ -638,7 +642,7 @@ simplecmd(union node **rpp, union node *redir)
 	n->ncmd.args = args;
 	n->ncmd.redirect = redir;
 
-checkneg:
+ checkneg:
 	if (negate) {
 		TRACE(("%snegate simplecmd\n", (negate&1) ? "" : "double "));
 		n2 = stalloc(sizeof(struct nnot));
@@ -666,6 +670,7 @@ makename(void)
 void
 fixredir(union node *n, const char *text, int err)
 {
+
 	TRACE(("Fix redir %s %d\n", text, err));
 	if (!err)
 		n->ndup.vname = NULL;
@@ -714,7 +719,7 @@ parsefname(void)
 		 * the parser is, at the minute, is impossible to prevent.
 		 * So, leave it like this until the rest of the parser is fixed.
 		 */
-		if (! noexpand(wordtext))
+		if (!noexpand(wordtext))
 			synerror("Illegal eof marker for << redirection");
 
 		rmescapes(wordtext);
@@ -744,6 +749,7 @@ parsefname(void)
 static int
 checkend(int c, char * const eofmark, const int striptabs)
 {
+
 	if (striptabs) {
 		while (c == '\t')
 			c = pgetc();
@@ -941,7 +947,8 @@ readtoken(void)
 				if (**pp == *wordtext && equal(*pp, wordtext)) {
 					lasttoken = t = pp -
 					    parsekwd + KWDOFFSET;
-					TRACE(("keyword %s recognized\n", tokname[t]));
+					TRACE(("keyword %s recognized\n",
+					    tokname[t]));
 					goto out;
 				}
 			}
@@ -952,10 +959,11 @@ readtoken(void)
 				goto top;
 			}
 		}
-out:
+ out:
 		checkkwd = (t == TNOT) ? savecheckkwd : 0;
 	}
-	TRACE(("%stoken %s %s\n", alreadyseen ? "reread " : "", tokname[t], t == TWORD ? wordtext : ""));
+	TRACE(("%stoken %s %s\n", alreadyseen ? "reread " : "",
+	    tokname[t], t == TWORD ? wordtext : ""));
 	return (t);
 }
 
@@ -1275,20 +1283,20 @@ parsebackq(VSS *const stack, char * const in,
 	}
 	handler = &jmploc;
 	INTON;
-        if (oldstyle) {
-                /* We must read until the closing backquote, giving special
-                   treatment to some slashes, and then push the string and
-                   reread it as input, interpreting it normally.  */
-                int pc;
-                int psavelen;
-                char *pstr;
+	if (oldstyle) {
+		/* We must read until the closing backquote, giving special
+		   treatment to some slashes, and then push the string and
+		   reread it as input, interpreting it normally.  */
+		int pc;
+		int psavelen;
+		char *pstr;
 
 		/*
 		 * Because the entire `...` is read here, we don't
 		 * need to bother the state stack.  That will be used
 		 * (as appropriate) when the processed string is re-read.
 		 */
-                STARTSTACKSTR(out);
+		STARTSTACKSTR(out);
 		for (;;) {
 			if (needprompt) {
 				setprompt(2);
@@ -1299,7 +1307,7 @@ parsebackq(VSS *const stack, char * const in,
 				goto done;
 
 			case '\\':
-                                if ((pc = pgetc()) == '\n') {
+				if ((pc = pgetc()) == '\n') {
 					plinno++;
 					if (doprompt)
 						setprompt(2);
@@ -1313,9 +1321,9 @@ parsebackq(VSS *const stack, char * const in,
 					 */
 					continue;
 				}
-                                if (pc != '\\' && pc != '`' && pc != '$'
-                                    && (!ISDBLQUOTE() || pc != '"'))
-                                        STPUTC('\\', out);
+				if (pc != '\\' && pc != '`' && pc != '$'
+				    && (!ISDBLQUOTE() || pc != '"'))
+					STPUTC('\\', out);
 				break;
 
 			case '\n':
@@ -1332,15 +1340,15 @@ parsebackq(VSS *const stack, char * const in,
 				break;
 			}
 			STPUTC(pc, out);
-                }
-done:
-                STPUTC('\0', out);
-                psavelen = out - stackblock();
-                if (psavelen > 0) {
+		}
+ done:
+		STPUTC('\0', out);
+		psavelen = out - stackblock();
+		if (psavelen > 0) {
 			pstr = grabstackstr(out);
 			setinputstring(pstr, 1);
-                }
-        }
+		}
+	}
 	nlpp = pbqlist;
 	while (*nlpp)
 		nlpp = &(*nlpp)->next;
@@ -1366,12 +1374,12 @@ done:
 	}
 
 	(*nlpp)->n = n;
-        if (oldstyle) {
+	if (oldstyle) {
 		/*
 		 * Start reading from old file again, ignoring any pushed back
 		 * tokens left from the backquote parsing
 		 */
-                popfile();
+		popfile();
 		tokpushback = 0;
 	}
 
@@ -1777,7 +1785,7 @@ parsesub: {
 			c = pgetc_linecont();
 		}
 		else {
-badsub:
+ badsub:
 			cleanup_state_stack(stack);
 			synerror("Bad substitution");
 		}
