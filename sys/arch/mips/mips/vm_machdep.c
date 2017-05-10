@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.154 2017/05/10 11:27:14 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.155 2017/05/10 12:12:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.154 2017/05/10 11:27:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.155 2017/05/10 12:12:21 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
@@ -193,10 +193,8 @@ cpu_uarea_alloc(bool system)
 	error = uvm_pglistalloc(USPACE, pmap_limits.avail_start, high,
 	    USPACE_ALIGN, 0, &pglist, 1, 1);
 	if (error) {
-#ifdef _LP64
 		if (!system)
 			return NULL;
-#endif
 		panic("%s: uvm_pglistalloc failed: %d", __func__, error);
 	}
 
