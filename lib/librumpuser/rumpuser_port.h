@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.48 2017/01/12 18:23:04 christos Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.49 2017/05/11 04:27:27 sevan Exp $	*/
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 #define _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
@@ -29,7 +29,6 @@
 #define HAVE_PATHS_H 1
 #define HAVE_POSIX_MEMALIGN 1
 #define HAVE_PTHREAD_SETNAME3 1
-#define HAVE_REGISTER_T 1
 #define HAVE_SETPROGNAME 1
 #define HAVE_STDINT_H 1
 #define HAVE_STDLIB_H 1
@@ -47,8 +46,8 @@
 #define HAVE_SYS_SYSCTL_H 1
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_UNISTD_H 1
-#define HAVE___QUOTACTL 1
 #define HAVE_UTIMENSAT 1
+#define HAVE___QUOTACTL 1
 #define PACKAGE_BUGREPORT "http://rumpkernel.org/"
 #define PACKAGE_NAME "rumpuser-posix"
 #define PACKAGE_STRING "rumpuser-posix 999"
