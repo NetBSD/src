@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpclient.h,v 1.16 2017/05/11 17:47:22 christos Exp $	*/
+/*	$NetBSD: rumpclient.h,v 1.17 2017/05/11 18:44:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -39,8 +39,11 @@
 #endif /* !__returns_twice */
 
 #if !defined(RUMP_REGISTER_T)
-#define RUMP_REGISTER_T long
+# define RUMP_REGISTER_T long
+# if !defined(_KERNEL) && !defined(_KMEMUSER) &&  \
+    !defined(_KERNTYPES) && !defined(_STANDALONE)
 typedef RUMP_REGISTER_T register_t;
+# endif
 #endif
 
 struct rumpclient_fork;
