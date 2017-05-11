@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2016/01/23 21:22:50 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2017/05/11 13:20:02 sevan Exp $
 #
 
 PROG=	rump.halt
 
 LDADD+= -lrumpclient
 DPADD+=	${RUMPCLIENT}
-CPPFLAGS+=	-D_KERNTYPES
 
 .include <bsd.prog.mk>
