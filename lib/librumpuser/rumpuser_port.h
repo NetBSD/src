@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.49 2017/05/11 04:27:27 sevan Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.50 2017/05/11 10:21:55 martin Exp $	*/
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 #define _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
@@ -300,6 +300,7 @@ aligned_alloc(size_t alignment, size_t size)
 #if !defined(HAVE_REGISTER_T) && !defined(RUMP_REGISTER_T)
 #define RUMP_REGISTER_T long
 typedef RUMP_REGISTER_T register_t;
+#define	PRIxREGISTER	"lx"
 #endif
 
 #include <sys/time.h>
