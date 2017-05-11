@@ -141,6 +141,7 @@ int if_conf(struct interface *);
 int if_init(struct interface *);
 int if_getssid(struct interface *);
 int if_vimaster(const struct dhcpcd_ctx *ctx, const char *);
+unsigned short if_vlanid(const struct interface *);
 int if_opensockets(struct dhcpcd_ctx *);
 int if_opensockets_os(struct dhcpcd_ctx *);
 void if_closesockets(struct dhcpcd_ctx *);

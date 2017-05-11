@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.67 2017/04/26 03:02:48 riastradh Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.67.2.1 2017/05/11 02:58:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.67 2017/04/26 03:02:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.67.2.1 2017/05/11 02:58:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1064,13 +1064,8 @@ union_revoke(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	if (UPPERVP(vp)) {
-		mutex_enter(UPPERVP(vp)->v_interlock);
-		KASSERT(vp->v_interlock == UPPERVP(vp)->v_interlock);
-		UPPERVP(vp)->v_writecount -= vp->v_writecount;
-		mutex_exit(UPPERVP(vp)->v_interlock);
+	if (UPPERVP(vp))
 		VOP_REVOKE(UPPERVP(vp), ap->a_flags);
-	}
 	if (LOWERVP(vp))
 		VOP_REVOKE(LOWERVP(vp), ap->a_flags);
 	vgone(vp);	/* XXXAD?? */
@@ -1585,8 +1580,17 @@ union_reclaim(void *v)
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct vnode *uvp = UPPERVP(vp);
 
-	union_freevp(ap->a_vp);
+	if (uvp != NULL) {
+		mutex_enter(uvp->v_interlock);
+		KASSERT(vp->v_interlock == uvp->v_interlock);
+		uvp->v_writecount -= vp->v_writecount;
+		mutex_exit(uvp->v_interlock);
+	}
+
+	union_freevp(vp);
 
 	return (0);
 }

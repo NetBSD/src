@@ -1,4 +1,4 @@
-/*	$NetBSD: catrigl.c,v 1.1 2016/09/19 22:05:05 christos Exp $	*/
+/*	$NetBSD: catrigl.c,v 1.1.6.1 2017/05/11 02:58:33 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2012 Stephen Montgomery-Smith <stephen@FreeBSD.ORG>
  * All rights reserved.
@@ -35,7 +35,7 @@
  * The code for catrig.c contains complete comments.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: catrigl.c,v 1.1 2016/09/19 22:05:05 christos Exp $");
+__RCSID("$NetBSD: catrigl.c,v 1.1.6.1 2017/05/11 02:58:33 pgoyette Exp $");
 
 #include "namespace.h"
 #ifdef __weak_alias
@@ -46,11 +46,12 @@ __weak_alias(catanl, _catanl)
 #endif
 
 
+#include <sys/param.h>
 #include <complex.h>
 #include <float.h>
-#ifdef __HAVE_LONG_DOUBLE
+#include <math.h>
+#ifdef notyet // missing log1pl __HAVE_LONG_DOUBLE
 
-#include "math.h"
 #include "math_private.h"
 
 #undef isinf
@@ -65,9 +66,10 @@ __weak_alias(catanl, _catanl)
 // Ok
 #elif LDBL_MANT_DIG == 64 && LDBL_MAX_EXP == 16384
 // XXX: Byte order
+#define EXT_EXPBITS	15
 struct ieee_ext {
 	uint64_t ext_frac;
-	uint16_t ext_exp:15;
+	uint16_t ext_exp:EXT_EXPBITS;
 	uint16_t ext_sign:1;
 	uint16_t ext_pad;
 };
@@ -87,14 +89,14 @@ union ieee_ext_u {
 	    union ieee_ext_u u; \
 	    u.extu_ld = s; \
 	    r = u.extu_sign; \
-	    r >>= EXT_EXPBITS - 1;
+	    r >>= EXT_EXPBITS - 1; \
     } while (/*CONSTCOND*/0)
-#define SET_LDBL_EXPSIGN(r, s) \
+#define SET_LDBL_EXPSIGN(s, r) \
     do { \
 	    union ieee_ext_u u; \
 	    u.extu_ld = s; \
 	    u.extu_exp &= __BITS(0, EXT_EXPBITS - 1); \
-	    u.extu_exp |= r << (EXT_EXPBITS - 1); \
+	    u.extu_exp |= (r) << (EXT_EXPBITS - 1); \
 	    s = u.extu_ld; \
     } while (/*CONSTCOND*/0)
 

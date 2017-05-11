@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2016/01/23 21:22:46 christos Exp $
+#	$NetBSD: Makefile,v 1.17.6.1 2017/05/11 02:58:34 pgoyette Exp $
 #
 
 LIB=		rumphijack

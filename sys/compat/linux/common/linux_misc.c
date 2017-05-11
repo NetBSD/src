@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.237 2017/01/28 15:01:01 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.237.4.1 2017/05/11 02:58:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.237 2017/01/28 15:01:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.237.4.1 2017/05/11 02:58:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,7 +603,7 @@ linux_sys_mprotect(struct lwp *l, const struct linux_sys_mprotect_args *uap, reg
 		}
 	}
 	vm_map_unlock(map);
-	return uvm_map_protect(map, start, end, prot, FALSE);
+	return uvm_map_protect_user(l, start, end, prot);
 }
 #endif /* USRSTACK */
 

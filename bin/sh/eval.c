@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.131 2017/04/22 15:53:17 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.131.2.1 2017/05/11 02:58:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.131 2017/04/22 15:53:17 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.131.2.1 2017/05/11 02:58:28 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,8 @@ evalcmd(int argc, char **argv)
                         p = grabstackstr(concat);
                 }
                 evalstring(p, builtin_flags & EV_TESTED);
-        }
+        } else
+		exitstatus = 0;
         return exitstatus;
 }
 
@@ -238,6 +239,7 @@ void
 evaltree(union node *n, int flags)
 {
 	bool do_etest;
+	int sflags = flags & ~EV_EXIT;
 
 	do_etest = false;
 	if (n == NULL || nflag) {
@@ -258,7 +260,7 @@ evaltree(union node *n, int flags)
 #endif
 	switch (n->type) {
 	case NSEMI:
-		evaltree(n->nbinary.ch1, (flags & EV_TESTED) |
+		evaltree(n->nbinary.ch1, (sflags & EV_TESTED) |
 		    (n->nbinary.ch2 ? EV_MORE : 0));
 		if (nflag || evalskip)
 			goto out;
@@ -303,21 +305,26 @@ evaltree(union node *n, int flags)
 	}
 	case NWHILE:
 	case NUNTIL:
-		evalloop(n, flags);
+		evalloop(n, sflags);
 		break;
 	case NFOR:
-		evalfor(n, flags);
+		evalfor(n, sflags);
 		break;
 	case NCASE:
-		evalcase(n, flags);
+		evalcase(n, sflags);
 		break;
 	case NDEFUN:
 		defun(n->narg.text, n->narg.next);
 		exitstatus = 0;
 		break;
 	case NNOT:
-		evaltree(n->nnot.com, (flags & EV_MORE) | EV_TESTED);
+		evaltree(n->nnot.com, (sflags & EV_MORE) | EV_TESTED);
 		exitstatus = !exitstatus;
+		break;
+	case NDNOT:
+		evaltree(n->nnot.com, (sflags & EV_MORE) | EV_TESTED);
+		if (exitstatus != 0)
+			exitstatus = 1;
 		break;
 	case NPIPE:
 		evalpipe(n);
@@ -366,7 +373,7 @@ evalloop(union node *n, int flags)
 		if (nflag)
 			break;
 		if (evalskip) {
-skipping:	  if (evalskip == SKIPCONT && --skipcount <= 0) {
+ skipping:		if (evalskip == SKIPCONT && --skipcount <= 0) {
 				evalskip = SKIPNONE;
 				continue;
 			}
@@ -455,7 +462,7 @@ out:
 STATIC void
 evalcase(union node *n, int flags)
 {
-	union node *cp;
+	union node *cp, *ncp;
 	union node *patp;
 	struct arglist arglist;
 	struct stackmark smark;
@@ -464,18 +471,25 @@ evalcase(union node *n, int flags)
 	setstackmark(&smark);
 	arglist.lastp = &arglist.list;
 	expandarg(n->ncase.expr, &arglist, EXP_TILDE);
-	for (cp = n->ncase.cases ; cp && evalskip == 0 ; cp = cp->nclist.next) {
-		for (patp = cp->nclist.pattern ; patp ; patp = patp->narg.next) {
+	for (cp = n->ncase.cases; cp && evalskip == 0; cp = cp->nclist.next) {
+		for (patp = cp->nclist.pattern; patp; patp = patp->narg.next) {
 			if (casematch(patp, arglist.list->text)) {
-				if (evalskip == 0) {
-					evaltree(cp->nclist.body, flags);
+				while (cp != NULL && evalskip == 0 &&
+				    nflag == 0) {
+					if (cp->type == NCLISTCONT)
+						ncp = cp->nclist.next;
+					else
+						ncp = NULL;
+					evaltree(cp->nclist.body,
+					    ncp ? (flags | EV_MORE) : flags);
 					status = exitstatus;
+					cp = ncp;
 				}
 				goto out;
 			}
 		}
 	}
-out:
+ out:
 	exitstatus = status;
 	popstackmark(&smark);
 }
@@ -1143,10 +1157,7 @@ parent:	/* parent process gets here (if we forked) */
 
 out:
 	if (lastarg)
-		/* dsl: I think this is intended to be used to support
-		 * '_' in 'vi' command mode during line editing...
-		 * However I implemented that within libedit itself.
-		 */
+		/* implement $_ for whatever use that really is */
 		setvar("_", lastarg, 0);
 	popstackmark(&smark);
 }
@@ -1225,6 +1236,8 @@ breakcmd(int argc, char **argv)
 {
 	int n = argc > 1 ? number(argv[1]) : 1;
 
+	if (n <= 0)
+		error("invalid count: %d", n);
 	if (n > loopnest)
 		n = loopnest;
 	if (n > 0) {

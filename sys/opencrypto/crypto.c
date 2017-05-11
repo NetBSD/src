@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.58 2017/04/26 03:29:36 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.58.2.1 2017/05/11 02:58:41 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.58 2017/04/26 03:29:36 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.58.2.1 2017/05/11 02:58:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -612,77 +612,38 @@ crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 	return err;
 }
 
-/*
- * Unregister a crypto driver. If there are pending sessions using it,
- * leave enough information around so that subsequent calls using those
- * sessions will correctly detect the driver has been unregistered and
- * reroute requests.
- */
-int
-crypto_unregister(u_int32_t driverid, int alg)
+static int
+crypto_unregister_locked(u_int32_t driverid, int alg, bool all)
 {
-	int i, err;
+	int i;
 	u_int32_t ses;
 	struct cryptocap *cap;
+	bool lastalg = true;
 
-	mutex_enter(&crypto_drv_mtx);
+	KASSERT(mutex_owned(&crypto_drv_mtx));
+
+	if (CRYPTO_ALGORITHM_MIN <= alg && alg <= CRYPTO_ALGORITHM_MAX)
+		return EINVAL;
 
 	cap = crypto_checkdriver(driverid);
-	if (cap != NULL &&
-	    (CRYPTO_ALGORITHM_MIN <= alg && alg <= CRYPTO_ALGORITHM_MAX) &&
-	    cap->cc_alg[alg] != 0) {
-		cap->cc_alg[alg] = 0;
-		cap->cc_max_op_len[alg] = 0;
+	if (cap == NULL || (!all && cap->cc_alg[alg] == 0))
+		return EINVAL;
 
+	cap->cc_alg[alg] = 0;
+	cap->cc_max_op_len[alg] = 0;
+
+	if (all) {
+		if (alg != CRYPTO_ALGORITHM_MAX)
+			lastalg = false;
+	} else {
 		/* Was this the last algorithm ? */
-		for (i = 1; i <= CRYPTO_ALGORITHM_MAX; i++)
-			if (cap->cc_alg[i] != 0)
+		for (i = CRYPTO_ALGORITHM_MIN; i <= CRYPTO_ALGORITHM_MAX; i++)
+			if (cap->cc_alg[i] != 0) {
+				lastalg = false;
 				break;
-
-		if (i == CRYPTO_ALGORITHM_MAX + 1) {
-			ses = cap->cc_sessions;
-			memset(cap, 0, sizeof(struct cryptocap));
-			if (ses != 0) {
-				/*
-				 * If there are pending sessions, just mark as invalid.
-				 */
-				cap->cc_flags |= CRYPTOCAP_F_CLEANUP;
-				cap->cc_sessions = ses;
 			}
-		}
-		err = 0;
-	} else
-		err = EINVAL;
-
-	mutex_exit(&crypto_drv_mtx);
-	return err;
-}
-
-/*
- * Unregister all algorithms associated with a crypto driver.
- * If there are pending sessions using it, leave enough information
- * around so that subsequent calls using those sessions will
- * correctly detect the driver has been unregistered and reroute
- * requests.
- *
- * XXX careful.  Don't change this to call crypto_unregister() for each
- * XXX registered algorithm unless you drop the mutex across the calls;
- * XXX you can't take it recursively.
- */
-int
-crypto_unregister_all(u_int32_t driverid)
-{
-	int i, err;
-	u_int32_t ses;
-	struct cryptocap *cap;
-
-	mutex_enter(&crypto_drv_mtx);
-	cap = crypto_checkdriver(driverid);
-	if (cap != NULL) {
-		for (i = CRYPTO_ALGORITHM_MIN; i <= CRYPTO_ALGORITHM_MAX; i++) {
-			cap->cc_alg[i] = 0;
-			cap->cc_max_op_len[i] = 0;
-		}
+	}
+	if (lastalg) {
 		ses = cap->cc_sessions;
 		memset(cap, 0, sizeof(struct cryptocap));
 		if (ses != 0) {
@@ -692,11 +653,49 @@ crypto_unregister_all(u_int32_t driverid)
 			cap->cc_flags |= CRYPTOCAP_F_CLEANUP;
 			cap->cc_sessions = ses;
 		}
-		err = 0;
-	} else
-		err = EINVAL;
+	}
 
+	return 0;
+}
+
+/*
+ * Unregister a crypto driver. If there are pending sessions using it,
+ * leave enough information around so that subsequent calls using those
+ * sessions will correctly detect the driver has been unregistered and
+ * reroute requests.
+ */
+int
+crypto_unregister(u_int32_t driverid, int alg)
+{
+	int err;
+
+	mutex_enter(&crypto_drv_mtx);
+	err = crypto_unregister_locked(driverid, alg, false);
 	mutex_exit(&crypto_drv_mtx);
+
+	return err;
+}
+
+/*
+ * Unregister all algorithms associated with a crypto driver.
+ * If there are pending sessions using it, leave enough information
+ * around so that subsequent calls using those sessions will
+ * correctly detect the driver has been unregistered and reroute
+ * requests.
+ */
+int
+crypto_unregister_all(u_int32_t driverid)
+{
+	int err, i;
+
+	mutex_enter(&crypto_drv_mtx);
+	for (i = CRYPTO_ALGORITHM_MIN; i <= CRYPTO_ALGORITHM_MAX; i++) {
+		err = crypto_unregister_locked(driverid, i, true);
+		if (err)
+			break;
+	}
+	mutex_exit(&crypto_drv_mtx);
+
 	return err;
 }
 
@@ -739,8 +738,12 @@ crypto_unblock(u_int32_t driverid, int what)
 int
 crypto_dispatch(struct cryptop *crp)
 {
-	u_int32_t hid = CRYPTO_SESID2HID(crp->crp_sid);
+	u_int32_t hid;
 	int result;
+
+	KASSERT(crp != NULL);
+
+	hid = CRYPTO_SESID2HID(crp->crp_sid);
 
 	mutex_spin_enter(&crypto_q_mtx);
 	DPRINTF(("crypto_dispatch: crp %p, alg %d\n",
@@ -825,6 +828,8 @@ crypto_kdispatch(struct cryptkop *krp)
 	struct cryptocap *cap;
 	int result;
 
+	KASSERT(krp != NULL);
+
 	mutex_spin_enter(&crypto_q_mtx);
 	cryptostats.cs_kops++;
 
@@ -873,9 +878,9 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 	u_int32_t hid;
 	int error;
 
+	KASSERT(krp != NULL);
+
 	/* Sanity checks. */
-	if (krp == NULL)
-		return EINVAL;
 	if (krp->krp_callback == NULL) {
 		cv_destroy(&krp->krp_cv);
 		pool_put(&cryptkop_pool, krp);
@@ -947,13 +952,13 @@ crypto_invoke(struct cryptop *crp, int hint)
 {
 	u_int32_t hid;
 
+	KASSERT(crp != NULL);
+
 #ifdef CRYPTO_TIMING
 	if (crypto_timing)
 		crypto_tstat(&cryptostats.cs_invoke, &crp->crp_tstamp);
 #endif
 	/* Sanity checks. */
-	if (crp == NULL)
-		return EINVAL;
 	if (crp->crp_callback == NULL) {
 		return EINVAL;
 	}
@@ -965,12 +970,10 @@ crypto_invoke(struct cryptop *crp, int hint)
 
 	hid = CRYPTO_SESID2HID(crp->crp_sid);
 
-	if (hid < crypto_drivers_num) {
+	if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP) == 0) {
 		int (*process)(void *, struct cryptop *, int);
 		void *arg;
 
-		if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP)
-			crypto_freesession(crp->crp_sid);
 		process = crypto_drivers[hid].cc_process;
 		arg = crypto_drivers[hid].cc_arg;
 
@@ -987,6 +990,8 @@ crypto_invoke(struct cryptop *crp, int hint)
 		 * Driver has unregistered; migrate the session and return
 		 * an error to the caller so they'll resubmit the op.
 		 */
+		crypto_freesession(crp->crp_sid);
+
 		for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
 			crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
 
@@ -1062,6 +1067,8 @@ void
 crypto_done(struct cryptop *crp)
 {
 	int wasempty;
+
+	KASSERT(crp != NULL);
 
 	if (crp->crp_etype != 0)
 		cryptostats.cs_errs++;
@@ -1144,6 +1151,8 @@ void
 crypto_kdone(struct cryptkop *krp)
 {
 	int wasempty;
+
+	KASSERT(krp != NULL);
 
 	if (krp->krp_status != 0)
 		cryptostats.cs_kerrs++;

@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_32_syscallargs.h,v 1.26 2017/01/16 17:43:05 christos Exp $ */
+/* $NetBSD: svr4_32_syscallargs.h,v 1.26.4.1 2017/05/11 02:58:37 pgoyette Exp $ */
 
 /*
  * System call argument lists.
@@ -9,6 +9,9 @@
 
 #ifndef _SVR4_32_SYS_SYSCALLARGS_H_
 #define	_SVR4_32_SYS_SYSCALLARGS_H_
+
+/* Forward declaration */
+struct lwp;
 
 #define	SVR4_32_SYS_MAXSYSARGS	8
 

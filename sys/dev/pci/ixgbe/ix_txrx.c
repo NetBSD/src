@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.22 2017/03/02 05:35:01 msaitoh Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.22.4.1 2017/05/11 02:58:39 pgoyette Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -333,6 +333,7 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 {
 	struct m_tag *mtag;
 	struct adapter  *adapter = txr->adapter;
+	struct ifnet	*ifp = adapter->ifp;
 	struct ethercom *ec = &adapter->osdep.ec;
 	u32		olinfo_status = 0, cmd_type_len;
 	int             i, j, error;
@@ -480,6 +481,13 @@ retry:
 	 */
 	++txr->total_packets.ev_count;
 	IXGBE_WRITE_REG(&adapter->hw, txr->tail, i);
+
+	/*
+	 * XXXX NOMPSAFE: ifp->if_data should be percpu.
+	 */
+	ifp->if_obytes += m_head->m_pkthdr.len;
+	if (m_head->m_flags & M_MCAST)
+		ifp->if_omcasts++;
 
 	/* Mark queue as having work */
 	if (txr->busy == 0)

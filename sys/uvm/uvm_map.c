@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.343 2017/03/15 20:25:41 christos Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.343.4.1 2017/05/11 02:58:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,9 +66,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.343 2017/03/15 20:25:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.343.4.1 2017/05/11 02:58:42 pgoyette Exp $");
 
 #include "opt_ddb.h"
+#include "opt_pax.h"
 #include "opt_uvmhist.h"
 #include "opt_uvm.h"
 #include "opt_sysv.h"
@@ -80,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.343 2017/03/15 20:25:41 christos Exp $
 #include <sys/pool.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
+#include <sys/pax.h>
 #include <sys/vnode.h>
 #include <sys/filedesc.h>
 #include <sys/lockdebug.h>
@@ -2949,6 +2951,24 @@ uvm_map_submap(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 	return error;
 }
+
+/*
+ * uvm_map_protect_user: change map protection on behalf of the user.
+ * Enforces PAX settings as necessary.
+ */
+int
+uvm_map_protect_user(struct lwp *l, vaddr_t start, vaddr_t end,
+    vm_prot_t new_prot)
+{
+	int error;
+
+	if ((error = PAX_MPROTECT_VALIDATE(l, new_prot)))
+		return error;
+
+	return uvm_map_protect(&l->l_proc->p_vmspace->vm_map, start, end,
+	    new_prot, false);
+}
+
 
 /*
  * uvm_map_protect: change map protection

@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpef.c,v 1.10 2011/08/29 20:38:54 joerg Exp $");
+__RCSID("$NetBSD: bootpef.c,v 1.10.32.1 2017/05/11 02:58:43 pgoyette Exp $");
 #endif
 
 
@@ -83,7 +83,6 @@ __RCSID("$NetBSD: bootpef.c,v 1.10 2011/08/29 20:38:54 joerg Exp $");
 
 static void mktagfile(struct host *);
 __dead static void usage(void);
-int main(int, char **);
 
 
 /*

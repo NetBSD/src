@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2277.2.1 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2277.2.2 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -505,3 +505,5 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	libc: Update to tzcode2017b. [christos 20170425]
 	lua: Updated to Lua 5.3.4. [mbalmer 20170426]
 	acpi(4): Updated ACPICA to 20170303. [christos 20170430]
+	openpam(3): update to 20170430 (resedacea) [christos 20170506]
+	dhcpcd: Import dhcpcd 7.0.0-rc1 [roy 20170510]

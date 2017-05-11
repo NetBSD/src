@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.95 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.95.8.1 2017/05/11 02:58:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -125,7 +125,7 @@
 
 /* Map virtual address to index in mips3 r4k virtually-indexed cache */
 #define	MIPS3_VA_TO_CINDEX(x) \
-		(((intptr_t)(x) & 0xffffff) | MIPS_KSEG0_START) 
+		(((intptr_t)(x) & 0xffffff) | MIPS_KSEG0_START)
 
 #ifndef _LOCORE
 #define	MIPS_XSEG_MASK		(0x3fffffffffffffffLL)
@@ -826,7 +826,7 @@
 /*
  * Prefetched data is expected to be read (not modified)
  */
-#define	PREF_LOAD		0	
+#define	PREF_LOAD		0
 #define	PREF_LOAD_STREAMED	4	/* but not reused extensively; it */
 					/* "streams" through cache.  */
 #define	PREF_LOAD_RETAINED	6	/* and reused extensively; it should */
@@ -835,7 +835,7 @@
 /*
  * Prefetched data is expected to be stored or modified
  */
-#define	PREF_STORE		1	
+#define	PREF_STORE		1
 #define	PREF_STORE_STREAMED	5	/* but not reused extensively; it */
 					/* "streams" through cache.  */
 #define	PREF_STORE_RETAINED	7	/* and reused extensively; it should */
@@ -845,14 +845,14 @@
  * data is no longer expected to be used.  For a WB cache, schedule a
  * writeback of any dirty data and afterwards free the cache lines.
  */
-#define	PREF_WB_INV		25	
+#define	PREF_WB_INV		25
 #define	PREF_NUDGE		PREF_WB_INV
 
 /*
  * Prepare for writing an entire cache line without the overhead
  * involved in filling the line from memory.
  */
-#define	PREF_PREPAREFORSTORE	30	
+#define	PREF_PREPAREFORSTORE	30
 
 /*
  * CPU processor revision IDs for company ID == 0 (non mips32/64 chips)

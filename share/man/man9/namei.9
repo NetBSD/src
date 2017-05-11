@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.47 2017/03/21 10:12:28 wiz Exp $
+.\"     $NetBSD: namei.9,v 1.47.2.1 2017/05/11 02:58:35 pgoyette Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006, 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,10 +35,10 @@
 .Nm NDINIT ,
 .Nm NDAT ,
 .Nm namei_simple_kernel ,
-.Nm namei_simple_user
+.Nm namei_simple_user ,
 .Nm relookup ,
 .Nm lookup_for_nfsd ,
-.Nm lookup_for_nfsd_index ,
+.Nm lookup_for_nfsd_index
 .Nd pathname lookup
 .Sh SYNOPSIS
 .In sys/namei.h
@@ -371,7 +371,7 @@ The file system is read-only.
 .El
 .El
 .Pp
-If a caller decides not to perform a operation it hinted at by a
+If a caller decides not to perform an operation it hinted at by a
 destructive operating mode
 .Pq Dv CREATE , Dv DELETE , No or Dv RENAME ,
 it SHOULD call

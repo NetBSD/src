@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_conf.c,v 1.7 2003/08/07 10:04:30 agc Exp $	*/
+/*	$NetBSD: pt_conf.c,v 1.7.88.1 2017/05/11 02:58:34 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_conf.c,v 1.7 2003/08/07 10:04:30 agc Exp $");
+__RCSID("$NetBSD: pt_conf.c,v 1.7.88.1 2017/05/11 02:58:34 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -45,7 +45,6 @@ __RCSID("$NetBSD: pt_conf.c,v 1.7 2003/08/07 10:04:30 agc Exp $");
 #include "portald.h"
 
 provider providers[] = {
-	{ "exec",	portal_exec },
 	{ "file",	portal_file },
 	{ "tcp",	portal_tcp },
 	{ "rfilter",	portal_rfilter },

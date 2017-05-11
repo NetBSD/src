@@ -28,15 +28,17 @@
 #include <asm/types.h> /* Needed for 2.4 kernels */
 
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 #include <sys/param.h>
 
 #include <linux/if_addr.h>
 #include <linux/if_link.h>
 #include <linux/if_packet.h>
+#include <linux/if_vlan.h>
 #include <linux/filter.h>
 #include <linux/netlink.h>
+#include <linux/sockios.h>
 #include <linux/rtnetlink.h>
 
 #include <arpa/inet.h>
@@ -251,6 +253,19 @@ if_vimaster(__unused const struct dhcpcd_ctx *ctx, __unused const char *ifname)
 {
 
 	return 0;
+}
+
+unsigned short
+if_vlanid(const struct interface *ifp)
+{
+	struct vlan_ioctl_args v;
+
+	memset(&v, 0, sizeof(v));
+	strlcpy(v.device1, ifp->name, sizeof(v.device1));
+	v.cmd = GET_VLAN_VID_CMD;
+	if (ioctl(ifp->ctx->pf_inet_fd, SIOCSIFVLAN, &v) != 0)
+		return 0; /* 0 means no VLANID */
+	return (unsigned short)v.u.VID;
 }
 
 static int

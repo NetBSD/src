@@ -1,4 +1,4 @@
--- $NetBSD: sqlite.lua,v 1.3 2015/12/08 23:04:40 kamil Exp $
+-- $NetBSD: sqlite.lua,v 1.3.6.1 2017/05/11 02:58:34 pgoyette Exp $
 
 local sqlite = require 'sqlite'
 
@@ -13,7 +13,8 @@ print('this is sqlite ' .. sqlite.libversion() .. ' (' ..
     sqlite.libversion_number() .. ')')
 print('sourceid ' .. sqlite.sourceid())
 
-db, state = sqlite.open('/tmp/db.sqlite', sqlite.OPEN_CREATE)
+db, state = sqlite.open('/tmp/db.sqlite', sqlite.OPEN_READWRITE |
+    sqlite.OPEN_CREATE)
 
 if state ~= sqlite.OK then
 	print('db open failed')

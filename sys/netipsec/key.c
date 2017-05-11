@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.118 2017/04/26 08:36:32 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.118.2.1 2017/05/11 02:58:41 pgoyette Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.118 2017/04/26 08:36:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.118.2.1 2017/05/11 02:58:41 pgoyette Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -170,6 +170,17 @@ static const u_int saorder_state_any[] = {
 	SADB_SASTATE_MATURE, SADB_SASTATE_DYING,
 	SADB_SASTATE_LARVAL, SADB_SASTATE_DEAD
 };
+
+#define SASTATE_ALIVE_FOREACH(s)				\
+	for (int _i = 0;					\
+	    _i < __arraycount(saorder_state_alive) ?		\
+	    (s) = saorder_state_alive[_i], true : false;	\
+	    _i++)
+#define SASTATE_ANY_FOREACH(s)					\
+	for (int _i = 0;					\
+	    _i < __arraycount(saorder_state_any) ?		\
+	    (s) = saorder_state_any[_i], true : false;		\
+	    _i++)
 
 static const int minsize[] = {
 	sizeof(struct sadb_msg),	/* SADB_EXT_RESERVED */
@@ -524,22 +535,54 @@ static void key_sp_unlink (struct secpolicy *sp);
 static struct mbuf *key_alloc_mbuf (int);
 struct callout key_timehandler_ch;
 
+#ifdef IPSEC_REF_DEBUG
+#define REFLOG(label, p, where, tag)					\
+	ipseclog((LOG_DEBUG, "%s:%d: " label " : refcnt=%d (%p)\n.",	\
+	    (where), (tag), (p)->refcnt, (p)))
+#else
+#define REFLOG(label, p, where, tag)	do {} while (0)
+#endif
+
 #define	SA_ADDREF(p) do {						\
 	(p)->refcnt++;							\
+	REFLOG("SA_ADDREF", (p), __func__, __LINE__);			\
+	KASSERTMSG((p)->refcnt != 0, "SA refcnt overflow");		\
+} while (0)
+#define	SA_ADDREF2(p, where, tag) do {					\
+	(p)->refcnt++;							\
+	REFLOG("SA_ADDREF", (p), (where), (tag));			\
 	KASSERTMSG((p)->refcnt != 0, "SA refcnt overflow");		\
 } while (0)
 #define	SA_DELREF(p) do {						\
 	KASSERTMSG((p)->refcnt > 0, "SA refcnt underflow");		\
 	(p)->refcnt--;							\
+	REFLOG("SA_DELREF", (p), __func__, __LINE__);			\
+} while (0)
+#define	SA_DELREF2(p, where, tag) do {					\
+	KASSERTMSG((p)->refcnt > 0, "SA refcnt underflow");		\
+	(p)->refcnt--;							\
+	REFLOG("SA_DELREF", (p), (where), (tag));			\
 } while (0)
 
 #define	SP_ADDREF(p) do {						\
 	(p)->refcnt++;							\
+	REFLOG("SP_ADDREF", (p), __func__, __LINE__);			\
+	KASSERTMSG((p)->refcnt != 0, "SP refcnt overflow");		\
+} while (0)
+#define	SP_ADDREF2(p, where, tag) do {					\
+	(p)->refcnt++;							\
+	REFLOG("SP_ADDREF", (p), (where), (tag));			\
 	KASSERTMSG((p)->refcnt != 0, "SP refcnt overflow");		\
 } while (0)
 #define	SP_DELREF(p) do {						\
 	KASSERTMSG((p)->refcnt > 0, "SP refcnt underflow");		\
 	(p)->refcnt--;							\
+	REFLOG("SP_DELREF", (p), __func__, __LINE__);			\
+} while (0)
+#define	SP_DELREF2(p, where, tag) do {					\
+	KASSERTMSG((p)->refcnt > 0, "SP refcnt underflow");		\
+	(p)->refcnt--;							\
+	REFLOG("SP_DELREF", (p), (where), (tag));			\
 } while (0)
 
 
@@ -573,7 +616,7 @@ int
 key_havesp(u_int dir)
 {
 	return (dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND ?
-		LIST_FIRST(&sptree[dir]) != NULL : 1);
+		!LIST_EMPTY(&sptree[dir]) : 1);
 }
 
 /* %%% IPsec policy management */
@@ -620,7 +663,7 @@ found:
 
 		/* found a SPD entry */
 		sp->lastused = time_uptime;
-		SP_ADDREF(sp);
+		SP_ADDREF2(sp, where, tag);
 	}
 	splx(s);
 
@@ -684,7 +727,7 @@ found:
 
 		/* found a SPD entry */
 		sp->lastused = time_uptime;
-		SP_ADDREF(sp);
+		SP_ADDREF2(sp, where, tag);
 	}
 	splx(s);
 
@@ -760,7 +803,7 @@ key_gettunnel(const struct sockaddr *osrc,
 found:
 	if (sp) {
 		sp->lastused = time_uptime;
-		SP_ADDREF(sp);
+		SP_ADDREF2(sp, where, tag);
 	}
 	splx(s);
 done:
@@ -927,17 +970,12 @@ key_allocsa_policy(const struct secasindex *saidx)
 static struct secasvar *
 key_do_allocsa_policy(struct secashead *sah, u_int state)
 {
-	struct secasvar *sav, *nextsav, *candidate, *d;
+	struct secasvar *sav, *candidate, *d;
 
 	/* initilize */
 	candidate = NULL;
 
-	for (sav = LIST_FIRST(&sah->savtree[state]);
-	     sav != NULL;
-	     sav = nextsav) {
-
-		nextsav = LIST_NEXT(sav, chain);
-
+	LIST_FOREACH(sav, &sah->savtree[state], chain) {
 		/* sanity check */
 		KEY_CHKSASTATE(sav->state, state, "key_do_allocsa_policy");
 
@@ -1181,7 +1219,7 @@ key_allocsa(
 				/* check dst address */
 				if (key_sockaddrcmp(&dst->sa, &sav->sah->saidx.dst.sa, chkport) != 0)
 					continue;
-				SA_ADDREF(sav);
+				SA_ADDREF2(sav, where, tag);
 				goto done;
 			}
 		}
@@ -1206,7 +1244,7 @@ _key_freesp(struct secpolicy **spp, const char* where, int tag)
 
 	KASSERT(sp != NULL);
 
-	SP_DELREF(sp);
+	SP_DELREF2(sp, where, tag);
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP SP:%p (ID=%u) from %s:%u; refcnt now %u\n",
@@ -1303,7 +1341,7 @@ key_freesav(struct secasvar **psav, const char* where, int tag)
 
 	KASSERT(sav != NULL);
 
-	SA_DELREF(sav);
+	SA_DELREF2(sav, where, tag);
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP SA:%p (SPI %lu) from %s:%u; refcnt now %u\n",
@@ -2395,11 +2433,7 @@ key_spdflush(struct socket *so, struct mbuf *m,
 
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
 		struct secpolicy * nextsp;
-		for (sp = LIST_FIRST(&sptree[dir]);
-		     sp != NULL;
-		     sp = nextsp) {
-
- 			nextsp = LIST_NEXT(sp, chain);
+		LIST_FOREACH_SAFE(sp, &sptree[dir], chain, nextsp) {
 			if (sp->state == IPSEC_SPSTATE_DEAD)
 				continue;
 			key_sp_dead(sp);
@@ -2861,7 +2895,7 @@ static void
 key_delsah(struct secashead *sah)
 {
 	struct secasvar *sav, *nextsav;
-	u_int stateidx, state;
+	u_int state;
 	int s;
 	int zombie = 0;
 
@@ -2870,17 +2904,8 @@ key_delsah(struct secashead *sah)
 	s = splsoftnet();	/*called from softclock()*/
 
 	/* searching all SA registerd in the secindex. */
-	for (stateidx = 0;
-	     stateidx < _ARRAYLEN(saorder_state_any);
-	     stateidx++) {
-
-		state = saorder_state_any[stateidx];
-		for (sav = (struct secasvar *)LIST_FIRST(&sah->savtree[state]);
-		     sav != NULL;
-		     sav = nextsav) {
-
-			nextsav = LIST_NEXT(sav, chain);
-
+	SASTATE_ANY_FOREACH(state) {
+		LIST_FOREACH_SAFE(sav, &sah->savtree[state], chain, nextsav) {
 			if (sav->refcnt == 0) {
 				/* sanity check */
 				KEY_CHKSASTATE(state, sav->state, "key_delsah");
@@ -3123,14 +3148,10 @@ static struct secasvar *
 key_getsavbyspi(struct secashead *sah, u_int32_t spi)
 {
 	struct secasvar *sav;
-	u_int stateidx, state;
+	u_int state;
 
 	/* search all status */
-	for (stateidx = 0;
-	     stateidx < _ARRAYLEN(saorder_state_alive);
-	     stateidx++) {
-
-		state = saorder_state_alive[stateidx];
+	SASTATE_ALIVE_FOREACH(state) {
 		LIST_FOREACH(sav, &sah->savtree[state], chain) {
 
 			/* sanity check */
@@ -4542,12 +4563,7 @@ key_timehandler(void* arg)
 	struct secpolicy *sp, *nextsp;
 
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
-		for (sp = LIST_FIRST(&sptree[dir]);
-		     sp != NULL;
-		     sp = nextsp) {
-
-			nextsp = LIST_NEXT(sp, chain);
-
+		LIST_FOREACH_SAFE(sp, &sptree[dir], chain, nextsp) {
 			if (sp->state == IPSEC_SPSTATE_DEAD) {
 				key_sp_unlink(sp);	/*XXX*/
 
@@ -4576,12 +4592,7 @@ key_timehandler(void* arg)
 	struct secashead *sah, *nextsah;
 	struct secasvar *sav, *nextsav;
 
-	for (sah = LIST_FIRST(&sahtree);
-	     sah != NULL;
-	     sah = nextsah) {
-
-		nextsah = LIST_NEXT(sah, chain);
-
+	LIST_FOREACH_SAFE(sah, &sahtree, chain, nextsah) {
 		/* if sah has been dead, then delete it and process next sah. */
 		if (sah->state == SADB_SASTATE_DEAD) {
 			key_delsah(sah);
@@ -4589,12 +4600,8 @@ key_timehandler(void* arg)
 		}
 
 		/* if LARVAL entry doesn't become MATURE, delete it. */
-		for (sav = LIST_FIRST(&sah->savtree[SADB_SASTATE_LARVAL]);
-		     sav != NULL;
-		     sav = nextsav) {
-
-			nextsav = LIST_NEXT(sav, chain);
-
+		LIST_FOREACH_SAFE(sav, &sah->savtree[SADB_SASTATE_LARVAL],
+		    chain, nextsav) {
 			if (now - sav->created > key_larval_lifetime) {
 				KEY_FREESAV(&sav);
 			}
@@ -4604,12 +4611,8 @@ key_timehandler(void* arg)
 		 * check MATURE entry to start to send expire message
 		 * whether or not.
 		 */
-		for (sav = LIST_FIRST(&sah->savtree[SADB_SASTATE_MATURE]);
-		     sav != NULL;
-		     sav = nextsav) {
-
-			nextsav = LIST_NEXT(sav, chain);
-
+		LIST_FOREACH_SAFE(sav, &sah->savtree[SADB_SASTATE_MATURE],
+		    chain, nextsav) {
 			/* we don't need to check. */
 			if (sav->lft_s == NULL)
 				continue;
@@ -4661,12 +4664,8 @@ key_timehandler(void* arg)
 		}
 
 		/* check DYING entry to change status to DEAD. */
-		for (sav = LIST_FIRST(&sah->savtree[SADB_SASTATE_DYING]);
-		     sav != NULL;
-		     sav = nextsav) {
-
-			nextsav = LIST_NEXT(sav, chain);
-
+		LIST_FOREACH_SAFE(sav, &sah->savtree[SADB_SASTATE_DYING],
+		    chain, nextsav) {
 			/* we don't need to check. */
 			if (sav->lft_h == NULL)
 				continue;
@@ -4708,12 +4707,8 @@ key_timehandler(void* arg)
 		}
 
 		/* delete entry in DEAD */
-		for (sav = LIST_FIRST(&sah->savtree[SADB_SASTATE_DEAD]);
-		     sav != NULL;
-		     sav = nextsav) {
-
-			nextsav = LIST_NEXT(sav, chain);
-
+		LIST_FOREACH_SAFE(sav, &sah->savtree[SADB_SASTATE_DEAD],
+		    chain, nextsav) {
 			/* sanity check */
 			if (sav->state != SADB_SASTATE_DEAD) {
 				ipseclog((LOG_DEBUG, "key_timehandler: "
@@ -4738,12 +4733,7 @@ key_timehandler(void* arg)
     {
 	struct secacq *acq, *nextacq;
 
-	for (acq = LIST_FIRST(&acqtree);
-	     acq != NULL;
-	     acq = nextacq) {
-
-		nextacq = LIST_NEXT(acq, chain);
-
+	LIST_FOREACH_SAFE(acq, &acqtree, chain, nextacq) {
 		if (now - acq->created > key_blockacq_lifetime
 		 && __LIST_CHAINED(acq)) {
 			LIST_REMOVE(acq, chain);
@@ -4757,12 +4747,7 @@ key_timehandler(void* arg)
     {
 	struct secspacq *acq, *nextacq;
 
-	for (acq = LIST_FIRST(&spacqtree);
-	     acq != NULL;
-	     acq = nextacq) {
-
-		nextacq = LIST_NEXT(acq, chain);
-
+	LIST_FOREACH_SAFE(acq, &spacqtree, chain, nextacq) {
 		if (now - acq->created > key_blockacq_lifetime
 		 && __LIST_CHAINED(acq)) {
 			LIST_REMOVE(acq, chain);
@@ -5807,7 +5792,7 @@ key_delete_all(struct socket *so, struct mbuf *m,
 	struct secasindex saidx;
 	struct secashead *sah;
 	struct secasvar *sav, *nextsav;
-	u_int stateidx, state;
+	u_int state;
 	int error;
 
 	src0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_SRC]);
@@ -5827,15 +5812,11 @@ key_delete_all(struct socket *so, struct mbuf *m,
 			continue;
 
 		/* Delete all non-LARVAL SAs. */
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_alive);
-		     stateidx++) {
-			state = saorder_state_alive[stateidx];
+		SASTATE_ALIVE_FOREACH(state) {
 			if (state == SADB_SASTATE_LARVAL)
 				continue;
-			for (sav = LIST_FIRST(&sah->savtree[state]);
-			     sav != NULL; sav = nextsav) {
-				nextsav = LIST_NEXT(sav, chain);
+			LIST_FOREACH_SAFE(sav, &sah->savtree[state], chain,
+			    nextsav) {
 				/* sanity check */
 				if (sav->state != state) {
 					ipseclog((LOG_DEBUG, "key_delete_all: "
@@ -6968,11 +6949,10 @@ key_flush(struct socket *so, struct mbuf *m,
           const struct sadb_msghdr *mhp)
 {
 	struct sadb_msg *newmsg;
-	struct secashead *sah, *nextsah;
+	struct secashead *sah;
 	struct secasvar *sav, *nextsav;
 	u_int16_t proto;
 	u_int8_t state;
-	u_int stateidx;
 
 	KASSERT(so != NULL);
 	KASSERT(mhp != NULL);
@@ -6985,25 +6965,14 @@ key_flush(struct socket *so, struct mbuf *m,
 	}
 
 	/* no SATYPE specified, i.e. flushing all SA. */
-	for (sah = LIST_FIRST(&sahtree);
-	     sah != NULL;
-	     sah = nextsah) {
-		nextsah = LIST_NEXT(sah, chain);
-
+	LIST_FOREACH(sah, &sahtree, chain) {
 		if (mhp->msg->sadb_msg_satype != SADB_SATYPE_UNSPEC
 		 && proto != sah->saidx.proto)
 			continue;
 
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_alive);
-		     stateidx++) {
-			state = saorder_state_any[stateidx];
-			for (sav = LIST_FIRST(&sah->savtree[state]);
-			     sav != NULL;
-			     sav = nextsav) {
-
-				nextsav = LIST_NEXT(sav, chain);
-
+		SASTATE_ALIVE_FOREACH(state) {
+			LIST_FOREACH_SAFE(sav, &sah->savtree[state], chain,
+			    nextsav) {
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 				KEY_FREESAV(&sav);
 			}
@@ -7036,7 +7005,6 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 	struct secashead *sah;
 	struct secasvar *sav;
 	u_int16_t proto;
-	u_int stateidx;
 	u_int8_t satype;
 	u_int8_t state;
 	int cnt;
@@ -7057,10 +7025,7 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 		    proto != sah->saidx.proto)
 			continue;
 
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_any);
-		     stateidx++) {
-			state = saorder_state_any[stateidx];
+		SASTATE_ANY_FOREACH(state) {
 			LIST_FOREACH(sav, &sah->savtree[state], chain) {
 				cnt++;
 			}
@@ -7087,10 +7052,7 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 			return (NULL);
 		}
 
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_any);
-		     stateidx++) {
-			state = saorder_state_any[stateidx];
+		SASTATE_ANY_FOREACH(state) {
 			LIST_FOREACH(sav, &sah->savtree[state], chain) {
 				n = key_setdumpsa(sav, SADB_DUMP, satype,
 				    --cnt, pid);
@@ -7999,7 +7961,6 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 	struct secashead *sah;
 	struct secasvar *sav;
 	u_int16_t proto;
-	u_int stateidx;
 	u_int8_t satype;
 	u_int8_t state;
 	int cnt;
@@ -8018,10 +7979,7 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 		    proto != sah->saidx.proto)
 			continue;
 
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_any);
-		     stateidx++) {
-			state = saorder_state_any[stateidx];
+		SASTATE_ANY_FOREACH(state) {
 			LIST_FOREACH(sav, &sah->savtree[state], chain) {
 				cnt++;
 			}
@@ -8047,10 +8005,7 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 			return (NULL);
 		}
 
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_any);
-		     stateidx++) {
-			state = saorder_state_any[stateidx];
+		SASTATE_ANY_FOREACH(state) {
 			LIST_FOREACH(sav, &sah->savtree[state], chain) {
 				n = key_setdumpsa(sav, SADB_DUMP, satype,
 				    --cnt, pid);

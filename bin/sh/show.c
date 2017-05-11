@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.36 2017/03/16 13:21:59 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.36.2.1 2017/05/11 02:58:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.36 2017/03/16 13:21:59 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.36.2.1 2017/05/11 02:58:28 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,9 +127,19 @@ binop:
 		if (nl && len > 0)
 			len = 0, putc('\n', fp);
 		break;
+
+	case NDNOT:
+		fputs("! ", fp);
+		len += 2;
+		/* FALLTHROUGH */
+	case NNOT:
+		fputs("! ", fp);
+		len += 2 + shtree(n->nnot.com, 0, 0, NULL, fp);
+		break;
+
 	case NPIPE:
 		for (lp = n->npipe.cmdlist ; lp ; lp = lp->next) {
-			len += shcmd(lp->n, fp);
+			len += shtree(lp->n, 0, 0, NULL, fp);
 			if (lp->next) {
 				len += 3, fputs(" | ", fp);
 				if (len >= 60)  {
@@ -273,8 +283,10 @@ sharg(union node *arg, FILE *fp)
 			putc('{', fp);
 			len += 2;
 			subtype = *++p;
-			if (subtype == VSLENGTH)
+			if ((subtype & VSTYPE) == VSLENGTH)
 				len++, putc('#', fp);
+			if (subtype & VSLINENO)
+				len += 7, fputs("LINENO=", fp);
 
 			while (*++p != '=')
 				len++, putc(*p, fp);

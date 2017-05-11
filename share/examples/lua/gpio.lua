@@ -1,4 +1,8 @@
--- $NetBSD: gpio.lua,v 1.3 2014/07/19 18:38:34 lneto Exp $
+-- $NetBSD: gpio.lua,v 1.3.14.1 2017/05/11 02:58:34 pgoyette Exp $
+
+-- This example works only if all pins, starting from pin 0 up to the
+-- number returned by gpio.info() are, readable.  It does _not_ work if
+-- only part of the pins are configured.
 
 local gpio = require 'gpio'
 

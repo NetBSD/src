@@ -1,4 +1,4 @@
-/*	$NetBSD: rdate.c,v 1.19 2009/10/21 01:07:47 snj Exp $	*/
+/*	$NetBSD: rdate.c,v 1.19.36.1 2017/05/11 02:58:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -34,7 +34,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rdate.c,v 1.19 2009/10/21 01:07:47 snj Exp $");
+__RCSID("$NetBSD: rdate.c,v 1.19.36.1 2017/05/11 02:58:43 pgoyette Exp $");
 #endif /* lint */
 
 #include <sys/types.h>
@@ -54,7 +54,6 @@ __RCSID("$NetBSD: rdate.c,v 1.19 2009/10/21 01:07:47 snj Exp $");
 /* seconds from midnight Jan 1900 - 1970 */
 #define DIFFERENCE 2208988800ULL
 
-	int	main(int, char **);
 static	void	usage(void);
 
 static void

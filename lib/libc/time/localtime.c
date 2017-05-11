@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.106 2017/03/11 18:23:14 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.106.2.1 2017/05/11 02:58:33 pgoyette Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.106 2017/03/11 18:23:14 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.106.2.1 2017/05/11 02:58:33 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1698,7 +1698,7 @@ timesub(const time_t *timep, int_fast32_t offset,
 	int			y;
 	const int *		ip;
 	int_fast64_t		corr;
-	bool			hit;
+	int			hit;
 	int			i;
 
 	corr = 0;

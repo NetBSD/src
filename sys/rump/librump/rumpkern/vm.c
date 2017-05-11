@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.170 2016/07/20 17:03:50 christos Exp $	*/
+/*	$NetBSD: vm.c,v 1.170.6.1 2017/05/11 02:58:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.170 2016/07/20 17:03:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.170.6.1 2017/05/11 02:58:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -713,6 +713,24 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 	return EOPNOTSUPP;
 }
+
+int
+uvm_map(struct vm_map *map, vaddr_t *startp, vsize_t size,
+    struct uvm_object *uobj, voff_t uoffset, vsize_t align,
+    uvm_flag_t flags)
+{
+
+	*startp = (vaddr_t)rump_hypermalloc(size, align, true, "uvm_map");
+	return *startp != 0 ? 0 : ENOMEM;
+}
+
+void
+uvm_unmap1(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
+{
+
+	rump_hyperfree((void*)start, end-start);
+}
+
 
 /*
  * UVM km

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.58 2017/02/18 01:29:09 chs Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.58.4.1 2017/05/11 02:58:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.58 2017/02/18 01:29:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.58.4.1 2017/05/11 02:58:40 pgoyette Exp $");
 
 #include "opt_pax.h"
 
@@ -423,42 +423,48 @@ pax_mprotect_elf_flags_active(uint32_t flags)
 	return true;
 }
 
-void
-pax_mprotect_adjust(
+vm_prot_t
+pax_mprotect_maxprotect(
 #ifdef PAX_MPROTECT_DEBUG
     const char *file, size_t line,
 #endif
-    struct lwp *l, vm_prot_t *prot, vm_prot_t *maxprot)
+    struct lwp *l, vm_prot_t active, vm_prot_t extra, vm_prot_t maxprot)
 {
 	uint32_t flags;
 
 	flags = l->l_proc->p_pax;
 	if (!pax_flags_active(flags, P_PAX_MPROTECT))
-		return;
+		return maxprot;
 
-	if ((*prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) != VM_PROT_EXECUTE) {
+	return (active|extra) & maxprot;
+}
+
+int
+pax_mprotect_validate(
+#ifdef PAX_MPROTECT_DEBUG
+    const char *file, size_t line,
+#endif
+    struct lwp *l, vm_prot_t prot)
+{
+	uint32_t flags;
+
+	flags = l->l_proc->p_pax;
+	if (!pax_flags_active(flags, P_PAX_MPROTECT))
+		return 0;
+
+	if ((prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) ==
+	    (VM_PROT_WRITE|VM_PROT_EXECUTE)) {
 #ifdef PAX_MPROTECT_DEBUG
 		struct proc *p = l->l_proc;
-		if ((*prot & VM_PROT_EXECUTE) && pax_mprotect_debug) {
-			printf("%s: %s,%zu: %d.%d (%s): -x\n",
+
+		if (pax_mprotect_debug)
+			printf("%s: %s,%zu: %d.%d (%s): WX rejected\n",
 			    __func__, file, line,
 			    p->p_pid, l->l_lid, p->p_comm);
-		}
 #endif
-		*prot &= ~VM_PROT_EXECUTE;
-		*maxprot &= ~VM_PROT_EXECUTE;
-	} else {
-#ifdef PAX_MPROTECT_DEBUG
-		struct proc *p = l->l_proc;
-		if ((*prot & VM_PROT_WRITE) && pax_mprotect_debug) {
-			printf("%s: %s,%zu: %d.%d (%s): -w\n",
-			    __func__, file, line,
-			    p->p_pid, l->l_lid, p->p_comm);
-		}
-#endif
-		*prot &= ~VM_PROT_WRITE;
-		*maxprot &= ~VM_PROT_WRITE;
+		return EACCES;
 	}
+	return 0;
 }
 
 /*

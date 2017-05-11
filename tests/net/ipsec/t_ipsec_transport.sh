@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_transport.sh,v 1.1 2017/04/14 02:56:49 ozaki-r Exp $
+#	$NetBSD: t_ipsec_transport.sh,v 1.1.6.1 2017/05/11 02:58:42 pgoyette Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -84,12 +84,7 @@ test_ipsec4_transport()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_local $ip_peer" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_peer $ip_local" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_LOCAL $ip_local $ip_peer
 
 	export RUMP_SERVER=$SOCK_PEER
 	cat > $tmpfile <<-EOF
@@ -99,12 +94,7 @@ test_ipsec4_transport()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_local $ip_peer" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_peer $ip_local" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_PEER $ip_local $ip_peer
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
@@ -114,6 +104,9 @@ test_ipsec4_transport()
 	    cat $outfile
 	atf_check -s exit:0 -o match:"$ip_peer > $ip_local: $proto_cap" \
 	    cat $outfile
+
+	test_flush_entries $SOCK_LOCAL
+	test_flush_entries $SOCK_PEER
 }
 
 test_ipsec6_transport()
@@ -169,12 +162,7 @@ test_ipsec6_transport()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_local $ip_peer" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_peer $ip_local" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_LOCAL $ip_local $ip_peer
 
 	export RUMP_SERVER=$SOCK_PEER
 	cat > $tmpfile <<-EOF
@@ -184,12 +172,7 @@ test_ipsec6_transport()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_local $ip_peer" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_peer $ip_local" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_PEER $ip_local $ip_peer
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -n -X 3 $ip_peer
@@ -199,6 +182,9 @@ test_ipsec6_transport()
 	    cat $outfile
 	atf_check -s exit:0 -o match:"$ip_peer > $ip_local: $proto_cap" \
 	    cat $outfile
+
+	test_flush_entries $SOCK_LOCAL
+	test_flush_entries $SOCK_PEER
 }
 
 test_transport_common()

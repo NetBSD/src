@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2125.2.4 2017/05/02 03:19:14 pgoyette Exp $
+#	$NetBSD: mi,v 1.2125.2.5 2017/05/11 02:58:28 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3456,10 +3456,10 @@
 ./usr/lib/librumpdev_scsitest_p.a		comp-obsolete		obsolete
 ./usr/lib/librumpdev_sysmon.a			comp-c-lib		rump
 ./usr/lib/librumpdev_sysmon_p.a			comp-c-proflib		rump,profile
-./usr/lib/librumpdev_ubt.a			comp-c-lib		rump
-./usr/lib/librumpdev_ubt_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_ualea.a			comp-c-lib		rump
 ./usr/lib/librumpdev_ualea_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpdev_ubt.a			comp-c-lib		rump
+./usr/lib/librumpdev_ubt_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_ucom.a			comp-c-lib		rump
 ./usr/lib/librumpdev_ucom_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_ugenhc.a			comp-c-lib		rump
@@ -9117,6 +9117,9 @@
 ./usr/share/man/cat3/signal_initialized.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/signal_pending.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/signal_set.0		comp-obsolete		obsolete
+./usr/share/man/cat3/signalname.0		comp-c-catman		.cat
+./usr/share/man/cat3/signalnext.0		comp-c-catman		.cat
+./usr/share/man/cat3/signalnumber.0		comp-c-catman		.cat
 ./usr/share/man/cat3/signbit.0			comp-c-catman		.cat
 ./usr/share/man/cat3/significand.0		comp-c-catman		.cat
 ./usr/share/man/cat3/significandf.0		comp-c-catman		.cat
@@ -16635,6 +16638,9 @@
 ./usr/share/man/html3/signal_initialized.html	comp-obsolete		obsolete
 ./usr/share/man/html3/signal_pending.html	comp-obsolete		obsolete
 ./usr/share/man/html3/signal_set.html		comp-obsolete		obsolete
+./usr/share/man/html3/signalname.html		comp-c-htmlman		html
+./usr/share/man/html3/signalnext.html		comp-c-htmlman		html
+./usr/share/man/html3/signalnumber.html		comp-c-htmlman		html
 ./usr/share/man/html3/signbit.html		comp-c-htmlman		html
 ./usr/share/man/html3/significand.html		comp-c-htmlman		html
 ./usr/share/man/html3/significandf.html		comp-c-htmlman		html
@@ -24162,6 +24168,9 @@
 ./usr/share/man/man3/signal_initialized.3	comp-obsolete		obsolete
 ./usr/share/man/man3/signal_pending.3		comp-obsolete		obsolete
 ./usr/share/man/man3/signal_set.3		comp-obsolete		obsolete
+./usr/share/man/man3/signalname.3		comp-c-man		.man
+./usr/share/man/man3/signalnext.3		comp-c-man		.man
+./usr/share/man/man3/signalnumber.3		comp-c-man		.man
 ./usr/share/man/man3/signbit.3			comp-c-man		.man
 ./usr/share/man/man3/significand.3		comp-c-man		.man
 ./usr/share/man/man3/significandf.3		comp-c-man		.man

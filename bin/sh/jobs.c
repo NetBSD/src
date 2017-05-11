@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.79.6.1 2017/05/02 03:19:14 pgoyette Exp $	*/
+/*	$NetBSD: jobs.c,v 1.79.6.2 2017/05/11 02:58:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.79.6.1 2017/05/02 03:19:14 pgoyette Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.79.6.2 2017/05/11 02:58:28 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -1275,6 +1275,13 @@ cmdtxt(union node *n)
 		cmdputs(" || ");
 		cmdtxt(n->nbinary.ch2);
 		break;
+	case NDNOT:
+		cmdputs("! ");
+		/* FALLTHROUGH */
+	case NNOT:
+		cmdputs("! ");
+		cmdtxt(n->nnot.com);
+		break;
 	case NPIPE:
 		for (lp = n->npipe.cmdlist ; lp ; lp = lp->next) {
 			cmdtxt(lp->n);
@@ -1332,7 +1339,14 @@ cmdtxt(union node *n)
 			cmdtxt(np->nclist.pattern);
 			cmdputs(") ");
 			cmdtxt(np->nclist.body);
-			cmdputs(";; ");
+			switch (n->type) {	/* switch (not if) for later */
+			case NCLISTCONT:
+				cmdputs(";& ");
+				break;
+			default:
+				cmdputs(";; ");
+				break;
+			}
 		}
 		cmdputs("esac");
 		break;

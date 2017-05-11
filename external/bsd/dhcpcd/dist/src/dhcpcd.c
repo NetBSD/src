@@ -477,6 +477,10 @@ configure_interface1(struct interface *ifp)
 		 * between reboots without persitent storage,
 		 * generating the IAID from the MAC address is the only
 		 * logical default.
+		 * Saying that, if a VLANID has been specified then we
+		 * can use that. It's possible that different interfaces
+		 * can have the same VLANID, but this is no worse than
+		 * generating the IAID from the duplicate MAC address.
 		 *
 		 * dhclient uses the last 4 bytes of the MAC address.
 		 * dibbler uses an increamenting counter.
@@ -487,11 +491,18 @@ configure_interface1(struct interface *ifp)
 		 * dhcpcd-6.1.0 and earlier used the interface name,
 		 * falling back to interface index if name > 4.
 		 */
-		if (ifp->hwlen >= sizeof(ifo->iaid))
+		if (ifp->vlanid != 0) {
+			uint32_t vlanid;
+
+			/* Maximal VLANID is 4095, so prefix with 0xff
+			 * so we don't conflict with an interface index. */
+			vlanid = htonl(ifp->vlanid | 0xff000000);
+			memcpy(ifo->iaid, &vlanid, sizeof(vlanid));
+		} else if (ifp->hwlen >= sizeof(ifo->iaid)) {
 			memcpy(ifo->iaid,
 			    ifp->hwaddr + ifp->hwlen - sizeof(ifo->iaid),
 			    sizeof(ifo->iaid));
-		else {
+		} else {
 			uint32_t len;
 
 			len = (uint32_t)strlen(ifp->name);
@@ -503,7 +514,7 @@ configure_interface1(struct interface *ifp)
 			} else {
 				/* IAID is the same size as a uint32_t */
 				len = htonl(ifp->index);
-				memcpy(ifo->iaid, &len, sizeof(len));
+				memcpy(ifo->iaid, &len, sizeof(ifo->iaid));
 			}
 		}
 		ifo->options |= DHCPCD_IAID;
@@ -775,7 +786,7 @@ warn_iaid_conflict(struct interface *ifp, uint8_t *iaid)
 
 	/* This is only a problem if the interfaces are on the same network. */
 	if (ifn)
-		logerr("%s: IAID conflicts with one assigned to %s",
+		logerrx("%s: IAID conflicts with one assigned to %s",
 		    ifp->name, ifn->name);
 }
 
@@ -1510,6 +1521,7 @@ main(int argc, char **argv)
 #endif
 		case 'P':
 			ctx.options |= DHCPCD_PRINT_PIDFILE;
+			logopts &= ~(LOGERR_LOG | LOGERR_ERR);
 			break;
 		case 'T':
 			i = 1;
@@ -1603,10 +1615,12 @@ printpidfile:
 		 *  instance for that interface. */
 		if (optind == argc - 1 && !(ctx.options & DHCPCD_MASTER)) {
 			const char *per;
+			const char *ifname;
 
-			if (strlen(argv[optind]) > IF_NAMESIZE) {
-				logerrx("%s: interface name too long",
-				    argv[optind]);
+			ifname = *ctx.ifv;
+			if (ifname == NULL || strlen(ifname) > IF_NAMESIZE) {
+				errno = ifname == NULL ? EINVAL : E2BIG;
+				logerr("%s: ", ifname);
 				goto exit_failure;
 			}
 			/* Allow a dhcpcd interface per address family */
@@ -1621,7 +1635,7 @@ printpidfile:
 				per = "";
 			}
 			snprintf(ctx.pidfile, sizeof(ctx.pidfile),
-			    PIDFILE, "-", argv[optind], per);
+			    PIDFILE, "-", ifname, per);
 		} else {
 			snprintf(ctx.pidfile, sizeof(ctx.pidfile),
 			    PIDFILE, "", "", "");
@@ -1643,20 +1657,13 @@ printpidfile:
 		goto exit_failure;
 	}
 
-	/* Open our persistent sockets.
-	 * This is needed early for dumping leases on valid interfaces. */
-#ifdef USE_SIGNALS
-	if (sig == 0) {
-#endif
+	if (ctx.options & DHCPCD_DUMPLEASE) {
+		/* Open sockets so we can dump something about
+		 * valid interfaces. */
 		if (if_opensockets(&ctx) == -1) {
 			logerr("%s: if_opensockets", __func__);
 			goto exit_failure;
 		}
-#ifdef USE_SIGNALS
-	}
-#endif
-
-	if (ctx.options & DHCPCD_DUMPLEASE) {
 		if (optind != argc) {
 			/* We need to try and find the interface so we can load
 			 * the hardware address to compare automated IAID */
@@ -1803,6 +1810,12 @@ printpidfile:
 
 	logdebugx(PACKAGE "-" VERSION " starting");
 	ctx.options |= DHCPCD_STARTED;
+
+	if (if_opensockets(&ctx) == -1) {
+		logerr("%s: if_opensockets", __func__);
+		goto exit_failure;
+	}
+
 #ifdef USE_SIGNALS
 	if (eloop_signal_set_cb(ctx.eloop,
 	    dhcpcd_signals, dhcpcd_signals_len,

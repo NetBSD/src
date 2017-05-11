@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_tunnel.sh,v 1.3 2017/04/16 10:34:49 ozaki-r Exp $
+#	$NetBSD: t_ipsec_tunnel.sh,v 1.3.6.1 2017/05/11 02:58:42 pgoyette Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -35,6 +35,33 @@ BUS_REMOTE=./bus_ipsec_remote
 
 DEBUG=${DEBUG:-false}
 
+setup_servers()
+{
+
+	# See https://www.netbsd.org/docs/network/ipsec/#sample_vpn
+	rump_server_crypto_start $SOCK_LOCAL netinet6
+	rump_server_crypto_start $SOCK_TUNNEL_LOCAL netipsec netinet6
+	rump_server_crypto_start $SOCK_TUNNEL_REMOTE netipsec netinet6
+	rump_server_crypto_start $SOCK_REMOTE netinet6
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS_LOCAL
+	rump_server_add_iface $SOCK_TUNNEL_LOCAL shmif0 $BUS_LOCAL
+	rump_server_add_iface $SOCK_TUNNEL_LOCAL shmif1 $BUS_TUNNEL
+	rump_server_add_iface $SOCK_TUNNEL_REMOTE shmif0 $BUS_REMOTE
+	rump_server_add_iface $SOCK_TUNNEL_REMOTE shmif1 $BUS_TUNNEL
+	rump_server_add_iface $SOCK_REMOTE shmif0 $BUS_REMOTE
+}
+
+check_tunnel_packets()
+{
+	local outfile=$1
+	local src=$2
+	local dst=$3
+	local proto=$4
+
+	atf_check -s exit:0 -o match:"$src > $dst: $proto" cat $outfile
+	atf_check -s exit:0 -o match:"$dst > $src: $proto" cat $outfile
+}
+
 test_ipsec4_tunnel()
 {
 	local proto=$1
@@ -61,24 +88,16 @@ test_ipsec4_tunnel()
 		proto_cap=AH
 	fi
 
-	# See https://www.netbsd.org/docs/network/ipsec/#sample_vpn
-	rump_server_crypto_start $SOCK_LOCAL
-	rump_server_crypto_start $SOCK_TUNNEL_LOCAL netipsec
-	rump_server_crypto_start $SOCK_TUNNEL_REMOTE netipsec
-	rump_server_crypto_start $SOCK_REMOTE
-	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS_LOCAL
-	rump_server_add_iface $SOCK_TUNNEL_LOCAL shmif0 $BUS_LOCAL
-	rump_server_add_iface $SOCK_TUNNEL_LOCAL shmif1 $BUS_TUNNEL
-	rump_server_add_iface $SOCK_TUNNEL_REMOTE shmif0 $BUS_REMOTE
-	rump_server_add_iface $SOCK_TUNNEL_REMOTE shmif1 $BUS_TUNNEL
-	rump_server_add_iface $SOCK_REMOTE shmif0 $BUS_REMOTE
+	setup_servers
 
 	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_local/24
 	atf_check -s exit:0 -o ignore \
 	    rump.route -n add -net $subnet_remote $ip_gw_local
 
 	export RUMP_SERVER=$SOCK_TUNNEL_LOCAL
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_gw_local/24
 	atf_check -s exit:0 rump.ifconfig shmif1 $ip_gw_local_tunnel/24
 	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.forwarding=1
@@ -86,6 +105,7 @@ test_ipsec4_tunnel()
 	    rump.route -n add -net $subnet_remote $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_TUNNEL_REMOTE
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_gw_remote/24
 	atf_check -s exit:0 rump.ifconfig shmif1 $ip_gw_remote_tunnel/24
 	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.forwarding=1
@@ -93,9 +113,8 @@ test_ipsec4_tunnel()
 	    rump.route -n add -net $subnet_local $ip_gw_local_tunnel
 
 	export RUMP_SERVER=$SOCK_REMOTE
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_remote/24
-	# Run ifconfig -w 10 just once for optimization
-	atf_check -s exit:0 rump.ifconfig -w 10
 	atf_check -s exit:0 -o ignore \
 	    rump.route -n add -net $subnet_local $ip_gw_remote
 
@@ -124,14 +143,8 @@ test_ipsec4_tunnel()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_local_tunnel $ip_gw_remote_tunnel" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_remote_tunnel $ip_gw_local_tunnel" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_TUNNEL_LOCAL $ip_gw_local_tunnel \
+	    $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_TUNNEL_REMOTE
 	cat > $tmpfile <<-EOF
@@ -144,25 +157,18 @@ test_ipsec4_tunnel()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_local_tunnel $ip_gw_remote_tunnel" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_remote_tunnel $ip_gw_local_tunnel" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_TUNNEL_REMOTE $ip_gw_local_tunnel \
+	    $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_remote
 
 	extract_new_packets $BUS_TUNNEL > $outfile
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_local_tunnel > $ip_gw_remote_tunnel: $proto_cap" \
-	    cat $outfile
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_remote_tunnel > $ip_gw_local_tunnel: $proto_cap" \
-	    cat $outfile
+	check_tunnel_packets $outfile $ip_gw_local_tunnel $ip_gw_remote_tunnel \
+	    $proto_cap
+
+	test_flush_entries $SOCK_TUNNEL_LOCAL
+	test_flush_entries $SOCK_TUNNEL_REMOTE
 }
 
 test_ipsec6_tunnel()
@@ -191,23 +197,16 @@ test_ipsec6_tunnel()
 		proto_cap=AH
 	fi
 
-	rump_server_crypto_start $SOCK_LOCAL netinet6
-	rump_server_crypto_start $SOCK_TUNNEL_LOCAL netipsec netinet6
-	rump_server_crypto_start $SOCK_TUNNEL_REMOTE netipsec netinet6
-	rump_server_crypto_start $SOCK_REMOTE netinet6
-	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS_LOCAL
-	rump_server_add_iface $SOCK_TUNNEL_LOCAL shmif0 $BUS_LOCAL
-	rump_server_add_iface $SOCK_TUNNEL_LOCAL shmif1 $BUS_TUNNEL
-	rump_server_add_iface $SOCK_TUNNEL_REMOTE shmif0 $BUS_REMOTE
-	rump_server_add_iface $SOCK_TUNNEL_REMOTE shmif1 $BUS_TUNNEL
-	rump_server_add_iface $SOCK_REMOTE shmif0 $BUS_REMOTE
+	setup_servers
 
 	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_local/64
 	atf_check -s exit:0 -o ignore \
 	    rump.route -n add -inet6 -net $subnet_remote/64 $ip_gw_local
 
 	export RUMP_SERVER=$SOCK_TUNNEL_LOCAL
+	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_gw_local/64
 	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $ip_gw_local_tunnel/64
 	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.forwarding=1
@@ -215,6 +214,7 @@ test_ipsec6_tunnel()
 	    rump.route -n add -inet6 -net $subnet_remote/64 $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_TUNNEL_REMOTE
+	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_gw_remote/64
 	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $ip_gw_remote_tunnel/64
 	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.forwarding=1
@@ -222,9 +222,8 @@ test_ipsec6_tunnel()
 	    rump.route -n add -inet6 -net $subnet_local/64 $ip_gw_local_tunnel
 
 	export RUMP_SERVER=$SOCK_REMOTE
+	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.dad_count=0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_remote
-	# Run ifconfig -w 10 just once for optimization
-	atf_check -s exit:0 rump.ifconfig -w 10
 	atf_check -s exit:0 -o ignore \
 	    rump.route -n add -inet6 -net $subnet_local/64 $ip_gw_remote
 
@@ -253,14 +252,8 @@ test_ipsec6_tunnel()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_local_tunnel $ip_gw_remote_tunnel" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_remote_tunnel $ip_gw_local_tunnel" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_TUNNEL_LOCAL $ip_gw_local_tunnel \
+	    $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_TUNNEL_REMOTE
 	cat > $tmpfile <<-EOF
@@ -273,25 +266,18 @@ test_ipsec6_tunnel()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_local_tunnel $ip_gw_remote_tunnel" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_remote_tunnel $ip_gw_local_tunnel" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	check_sa_entries $SOCK_TUNNEL_REMOTE $ip_gw_local_tunnel \
+	    $ip_gw_remote_tunnel
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -n -X 3 $ip_remote
 
 	extract_new_packets $BUS_TUNNEL > $outfile
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_local_tunnel > $ip_gw_remote_tunnel: $proto_cap" \
-	    cat $outfile
-	atf_check -s exit:0 \
-	    -o match:"$ip_gw_remote_tunnel > $ip_gw_local_tunnel: $proto_cap" \
-	    cat $outfile
+	check_tunnel_packets $outfile $ip_gw_local_tunnel $ip_gw_remote_tunnel \
+	    $proto_cap
+
+	test_flush_entries $SOCK_TUNNEL_LOCAL
+	test_flush_entries $SOCK_TUNNEL_REMOTE
 }
 
 test_tunnel_common()

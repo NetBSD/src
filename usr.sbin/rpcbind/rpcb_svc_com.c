@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.18 2015/11/10 18:04:51 christos Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.18.6.1 2017/05/11 02:58:44 pgoyette Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -45,6 +45,7 @@
 #include <sys/socket.h>
 #include <rpc/rpc.h>
 #include <rpc/rpcb_prot.h>
+#include <rpc/rpc_com.h>
 #include <netconfig.h>
 #include <errno.h>
 #include <syslog.h>
@@ -421,7 +422,8 @@ rpcbproc_taddr2uaddr_com(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
 static bool_t
 xdr_encap_parms(XDR *xdrs, struct encap_parms *epp)
 {
-	return (xdr_bytes(xdrs, &(epp->args), (u_int *) &(epp->arglen), ~0));
+	return (xdr_bytes(xdrs, &(epp->args), (u_int *) &(epp->arglen),
+	    RPC_MAXDATASIZE));
 }
 
 /*

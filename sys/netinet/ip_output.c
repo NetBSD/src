@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.276 2017/03/05 11:07:46 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.276.4.1 2017/05/11 02:58:41 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.276 2017/03/05 11:07:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.276.4.1 2017/05/11 02:58:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -239,9 +239,6 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	int isbroadcast;
 	int sw_csum;
 	u_long mtu;
-#ifdef IPSEC
-	struct secpolicy *sp = NULL;
-#endif
 	bool natt_frag = false;
 	bool rtmtu_nolock;
 	union {
@@ -588,7 +585,7 @@ sendit:
 		bool ipsec_done = false;
 
 		/* Perform IPsec processing, if any. */
-		error = ipsec4_output(m, inp, flags, &sp, &mtu, &natt_frag,
+		error = ipsec4_output(m, inp, flags, &mtu, &natt_frag,
 		    &ipsec_done);
 		if (error || ipsec_done)
 			goto done;
@@ -611,13 +608,18 @@ sendit:
 
 	/*
 	 * search for the source address structure to
-	 * maintain output statistics.
+	 * maintain output statistics, and verify address
+	 * validity
 	 */
 	KASSERT(ia == NULL);
 	ia = in_get_ia_psref(ip->ip_src, &psref_ia);
 
-	/* Ensure we only send from a valid address. */
-	if ((ia != NULL || (flags & IP_FORWARDING) == 0) &&
+	/*
+	 * Ensure we only send from a valid address.
+	 * A NULL address is valid because the packet could be
+	 * generated from a packet filter.
+	 */
+	if (ia != NULL && (flags & IP_FORWARDING) == 0 &&
 	    (error = ip_ifaddrvalid(ia)) != 0)
 	{
 		ARPLOG(LOG_ERR,
@@ -765,11 +767,6 @@ done:
 	if (ro == &iproute) {
 		rtcache_free(&iproute);
 	}
-#ifdef IPSEC
-	if (sp) {
-		KEY_FREESP(&sp);
-	}
-#endif
 	if (mifp != NULL) {
 		if_put(mifp, &psref);
 	}
@@ -1939,9 +1936,6 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, const struct sockaddr_in *dst)
 static int
 ip_ifaddrvalid(const struct in_ifaddr *ia)
 {
-
-	if (ia == NULL)
-		return -1;
 
 	if (ia->ia_addr.sin_addr.s_addr == INADDR_ANY)
 		return 0;

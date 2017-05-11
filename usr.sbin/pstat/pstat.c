@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.127 2017/04/17 08:29:58 hannken Exp $	*/
+/*	$NetBSD: pstat.c,v 1.127.2.1 2017/05/11 02:58:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.127 2017/04/17 08:29:58 hannken Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.127.2.1 2017/05/11 02:58:43 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,6 @@ char *	kinfo_vnodes(int *);
 void	layer_header(void);
 int	layer_print(struct vnode *, int);
 char *	loadvnodes(int *);
-int	main(int, char **);
 void	mount_print(struct mount *);
 void	nfs_header(void);
 int	nfs_print(struct vnode *, int);

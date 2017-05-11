@@ -1,4 +1,4 @@
-/* $NetBSD: t_mprotect.c,v 1.6 2017/03/25 01:39:20 pgoyette Exp $ */
+/* $NetBSD: t_mprotect.c,v 1.6.2.1 2017/05/11 02:58:42 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mprotect.c,v 1.6 2017/03/25 01:39:20 pgoyette Exp $");
+__RCSID("$NetBSD: t_mprotect.c,v 1.6.2.1 2017/05/11 02:58:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -161,7 +161,6 @@ ATF_TC_BODY(mprotect_exec, tc)
 		break;
 	}
 
-
 	/*
 	 * Map a page read/write and copy a trivial assembly function inside.
 	 * We will then change the mapping rights:
@@ -171,7 +170,8 @@ ATF_TC_BODY(mprotect_exec, tc)
 	 *   a SIGSEGV on architectures that can enforce --x permissions.
 	 */
 
-	map = mmap(NULL, page, PROT_WRITE|PROT_READ, MAP_ANON, -1, 0);
+	map = mmap(NULL, page, PROT_MPROTECT(PROT_EXEC)|PROT_WRITE|PROT_READ,
+	    MAP_ANON, -1, 0);
 	ATF_REQUIRE(map != MAP_FAILED);
 
 	memcpy(map, (void *)return_one,
@@ -312,6 +312,77 @@ ATF_TC_BODY(mprotect_write, tc)
 	ATF_REQUIRE(munmap(map, page) == 0);
 }
 
+ATF_TC(mprotect_mremap_exec);
+ATF_TC_HEAD(mprotect_mremap_exec, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test mremap(2)+mprotect(2) executable space protections");
+}
+
+/*
+ * Trivial function -- should fit into a page
+ */
+ATF_TC_BODY(mprotect_mremap_exec, tc)
+{
+	void *map, *map2;
+	pid_t pid;
+	int sta;
+
+	/*
+	 * Map a page read/write/exec and duplicate it.
+	 * Map the copy executable.
+	 * Copy a trivial assembly function to the writeable mapping.
+	 * Try to execute it. This should never create a SIGSEGV.
+	 */
+
+	map = mmap(NULL, page, PROT_MPROTECT(PROT_EXEC|PROT_WRITE|PROT_READ),
+	    MAP_ANON, -1, 0);
+	ATF_REQUIRE(map != MAP_FAILED);
+	map2 = mremap(map, page, NULL, page, MAP_REMAPDUP);
+	ATF_REQUIRE(map2 != MAP_FAILED);
+	ATF_REQUIRE(mprotect(map, page, PROT_WRITE|PROT_READ) == 0);
+	ATF_REQUIRE(mprotect(map2, page, PROT_EXEC|PROT_READ) == 0);
+
+	memcpy(map, (void *)return_one,
+	    (uintptr_t)return_one_end - (uintptr_t)return_one);
+	__builtin___clear_cache(map, (void *)((uintptr_t)map + page));
+
+	ATF_REQUIRE(((int (*)(void))map2)() == 1);
+
+	/* Double check that the executable mapping is not writeable. */
+	pid = fork();
+	ATF_REQUIRE(pid >= 0);
+
+	if (pid == 0) {
+		ATF_REQUIRE(signal(SIGSEGV, sighandler) != SIG_ERR);
+		ATF_REQUIRE(strlcpy(map2, "XXX", 3) == 0);
+	}
+
+	(void)wait(&sta);
+
+	ATF_REQUIRE(WIFEXITED(sta) != 0);
+	ATF_REQUIRE(WEXITSTATUS(sta) == SIGSEGV);
+
+	if (exec_prot_support() == PERPAGE_XP) {
+		/* Double check that the writeable mapping is not executable. */
+		pid = fork();
+		ATF_REQUIRE(pid >= 0);
+
+		if (pid == 0) {
+			ATF_REQUIRE(signal(SIGSEGV, sighandler) != SIG_ERR);
+			ATF_REQUIRE(((int (*)(void))map)() == 1);
+		}
+
+		(void)wait(&sta);
+
+		ATF_REQUIRE(WIFEXITED(sta) != 0);
+		ATF_REQUIRE(WEXITSTATUS(sta) == SIGSEGV);
+	}
+
+	ATF_REQUIRE(munmap(map, page) == 0);
+	ATF_REQUIRE(munmap(map2, page) == 0);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	page = sysconf(_SC_PAGESIZE);
@@ -322,6 +393,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, mprotect_exec);
 	ATF_TP_ADD_TC(tp, mprotect_pax);
 	ATF_TP_ADD_TC(tp, mprotect_write);
+	ATF_TP_ADD_TC(tp, mprotect_mremap_exec);
 
 	return atf_no_error();
 }

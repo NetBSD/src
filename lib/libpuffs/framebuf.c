@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.32 2012/06/25 22:32:47 abs Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.32.22.1 2017/05/11 02:58:33 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.32 2012/06/25 22:32:47 abs Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.32.22.1 2017/05/11 02:58:33 pgoyette Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -807,15 +807,22 @@ puffs__framev_addfd_ctrl(struct puffs_usermount *pu, int fd, int what,
 		readenable = EV_DISABLE;
 
 	if (pu->pu_state & PU_INLOOP) {
-		EV_SET(&kev[0], fd, EVFILT_READ,
+		struct stat st;
+		size_t nf = 0;
+
+		if (fstat(fd, &st) == -1)
+			goto out;
+		EV_SET(&kev[nf], fd, EVFILT_READ,
 		    EV_ADD|readenable, 0, 0, (intptr_t)fio);
-		EV_SET(&kev[1], fd, EVFILT_WRITE,
-		    EV_ADD|EV_DISABLE, 0, 0, (intptr_t)fio);
-		rv = kevent(pu->pu_kq, kev, 2, NULL, 0, NULL);
-		if (rv == -1) {
-			free(fio);
-			return -1;
+		nf++;
+		if (S_ISSOCK(st.st_mode)) {
+			EV_SET(&kev[nf], fd, EVFILT_WRITE,
+			    EV_ADD|EV_DISABLE, 0, 0, (intptr_t)fio);
+			nf++;
 		}
+		rv = kevent(pu->pu_kq, kev, nf, NULL, 0, NULL);
+		if (rv == -1)
+			goto out;
 	}
 	if (what & PUFFS_FBIO_READ)
 		fio->stat |= FIO_ENABLE_R;
@@ -826,6 +833,9 @@ puffs__framev_addfd_ctrl(struct puffs_usermount *pu, int fd, int what,
 	pu->pu_nevs = nevs;
 
 	return 0;
+out:
+	free(fio);
+	return -1;
 }
 
 int

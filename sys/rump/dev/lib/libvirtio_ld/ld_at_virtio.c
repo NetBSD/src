@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_at_virtio.c,v 1.3 2016/01/26 23:12:16 pooka Exp $	*/
+/*	$NetBSD: ld_at_virtio.c,v 1.3.8.1 2017/05/11 02:58:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_at_virtio.c,v 1.3 2016/01/26 23:12:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_at_virtio.c,v 1.3.8.1 2017/05/11 02:58:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -43,8 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: ld_at_virtio.c,v 1.3 2016/01/26 23:12:16 pooka Exp $
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 
-	config_init_component(cfdriver_ioconf_virtio_ld,
-	    cfattach_ioconf_virtio_ld, cfdata_ioconf_virtio_ld);
+	config_init_component(cfdriver_ioconf_ld_virtio,
+	    cfattach_ioconf_ld_virtio, cfdata_ioconf_ld_virtio);
 }
 
 /*

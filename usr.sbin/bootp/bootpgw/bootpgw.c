@@ -27,7 +27,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpgw.c,v 1.15 2011/08/29 20:38:55 joerg Exp $");
+__RCSID("$NetBSD: bootpgw.c,v 1.15.32.1 2017/05/11 02:58:43 pgoyette Exp $");
 #endif
 
 /*
@@ -87,7 +87,6 @@ __RCSID("$NetBSD: bootpgw.c,v 1.15 2011/08/29 20:38:55 joerg Exp $");
 __dead static void usage(void);
 static void handle_reply(void);
 static void handle_request(void);
-int main(int, char **);
 
 /*
  * IP port numbers for client and server obtained from /etc/services
@@ -126,7 +125,6 @@ char *servername;
 
 char myhostname[MAXHOSTNAMELEN + 1];
 struct in_addr my_ip_addr;
-
 
 
 

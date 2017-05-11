@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.57 2011/11/09 12:45:58 is Exp $	*/
+/*	$NetBSD: lpd.c,v 1.57.30.1 2017/05/11 02:58:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.57 2011/11/09 12:45:58 is Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.57.30.1 2017/05/11 02:58:43 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,6 @@ char	**blist;			/* list of addresses to bind(2) to */
 int	blist_size;
 int	blist_addrs;
 
-int			main(int, char **);
 static void		reapchild(int);
 __dead static void	mcleanup(int);
 static void		doit(void);

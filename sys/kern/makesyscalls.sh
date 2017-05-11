@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.168 2017/01/15 17:00:59 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.168.6.1 2017/05/11 02:58:40 pgoyette Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -341,6 +341,10 @@ NR == 1 {
 	printf "#include <rump/rump_syscalls_compat.h>\n\n" > rumpcallshdr
 
 	printf "%s", sysarghdrextra > sysarghdr
+	printf "/* Forward declaration */\n" > sysarghdr
+	printf "struct lwp;\n" > sysarghdr
+	printf "\n" > sysarghdr
+
 	# Write max number of system call arguments to both headers
 	printf("#define\t%sMAXSYSARGS\t%d\n\n", constprefix, maxsysargs) \
 		> sysnumhdr

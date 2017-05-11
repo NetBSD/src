@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.735.2.1 2017/05/02 03:19:15 pgoyette Exp $
+# $NetBSD: mi,v 1.735.2.2 2017/05/11 02:58:29 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3303,6 +3303,7 @@
 ./usr/tests/net/ipsec/t_ipsec_sysctl		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_transport		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_tunnel		tests-net-tests		atf,rump
+./usr/tests/net/ipsec/t_ipsec_tunnel_odd	tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_gif		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_l2tp		tests-net-tests		atf,rump
 ./usr/tests/net/mcast				tests-net-tests		compattestfile,atf

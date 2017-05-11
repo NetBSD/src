@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.64.6.1 2017/05/02 03:19:23 pgoyette Exp $	*/
+/*	$NetBSD: man.c,v 1.64.6.2 2017/05/11 02:58:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.64.6.1 2017/05/02 03:19:23 pgoyette Exp $");
+__RCSID("$NetBSD: man.c,v 1.64.6.2 2017/05/11 02:58:42 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -1046,44 +1046,33 @@ usage(void)
 static void
 printmanpath(struct manstate *m)
 {
-	ENTRY *esubd;
-	char *defaultpath = NULL; /* _default tag value from man.conf. */
-	char *buf; /* for storing temporary values */
+	ENTRY *epath;
 	char **ap;
 	glob_t pg;
 	struct stat sb;
-	TAG *path = m->defaultpath;
-	TAG *subdirs = m->subdirs;
+	TAG *path = m->mymanpath;
 	
 	/* the tail queue is empty if no _default tag is defined in * man.conf */
 	if (TAILQ_EMPTY(&path->entrylist))
 		errx(EXIT_FAILURE, "Empty manpath");
 		
-	defaultpath = TAILQ_LAST(&path->entrylist, tqh)->s;
-	
-	if (glob(defaultpath, GLOB_BRACE | GLOB_NOSORT, NULL, &pg) != 0)
-		err(EXIT_FAILURE, "glob failed");
+	TAILQ_FOREACH(epath, &path->entrylist, q) {
+		if (glob(epath->s, GLOB_BRACE | GLOB_NOSORT, NULL, &pg) != 0)
+			err(EXIT_FAILURE, "glob failed");
 
-	if (pg.gl_matchc == 0) {
-		warnx("Default path in %s doesn't exist", _PATH_MANCONF);
-		globfree(&pg);
-		return;
-	}
-
-	TAILQ_FOREACH(esubd, &subdirs->entrylist, q) {
-		/* Drop cat page directory, only sources are relevant. */
-		if (strncmp(esubd->s, "man", 3))
+		if (pg.gl_matchc == 0) {
+			globfree(&pg);
 			continue;
+		}
 
 		for (ap = pg.gl_pathv; *ap != NULL; ++ap) {
-			if (asprintf(&buf, "%s%s", *ap, esubd->s) == -1) 
-				err(EXIT_FAILURE, "memory allocation error");
+			/* Skip cat page directories */
+			if (strstr(*ap, "/cat") != NULL)
+				continue;
 			/* Skip non-directories. */
-			if (stat(buf, &sb) == 0 && S_ISDIR(sb.st_mode))
-				printf("%s\n", buf);
-
-			free(buf);
+			if (stat(*ap, &sb) == 0 && S_ISDIR(sb.st_mode))
+				printf("%s\n", *ap);
 		}
+		globfree(&pg);
 	}
-	globfree(&pg);
 }

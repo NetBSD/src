@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1438.2.1 2017/05/02 03:19:15 pgoyette Exp $
+#	$NetBSD: 3RDPARTY,v 1.1438.2.2 2017/05/11 02:58:29 pgoyette Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -334,8 +334,8 @@ Notes:
 Use the dhcp2netbsd script.
 
 Package:	dhcpcd
-Version:	7.0.0-beta3
-Current Vers:	7.0.0-beta3
+Version:	7.0.0-rc1
+Current Vers:	7.0.0-rc1
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
@@ -993,8 +993,8 @@ Location:	external/bsd/openldap/dist
 Notes:
 
 Package:	OpenPAM
-Version:	20140912 (Ourouparia)
-Current Vers:	20140912 (Ourouparia)
+Version:	20170430 (Resedacea)
+Current Vers:	20170430 (Resedacea)
 Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/

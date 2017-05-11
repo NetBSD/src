@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.8 2017/04/16 13:09:40 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.8.6.1 2017/05/11 02:58:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.8 2017/04/16 13:09:40 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.8.6.1 2017/05/11 02:58:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4436,9 +4436,8 @@ ptrace_step(int N, int setstep)
 		if (setstep) {
 			printf("Before resuming the child process where it "
 			    "left off and without signal to be sent (use "
-			    "PT_STEP)\n");
-			ATF_REQUIRE(ptrace(PT_SETSTEP, child, (void *)1, 0)
-			    != -1);
+			    "PT_SETSTEP and PT_CONTINUE)\n");
+			ATF_REQUIRE(ptrace(PT_SETSTEP, child, 0, 0) != -1);
 			ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0)
 			    != -1);
 		} else {
@@ -4456,8 +4455,7 @@ ptrace_step(int N, int setstep)
 		validate_status_stopped(status, SIGTRAP);
 
 		if (setstep) {
-			ATF_REQUIRE(ptrace(PT_CLEARSTEP, child, (void *)1, 0)
-			    != -1);
+			ATF_REQUIRE(ptrace(PT_CLEARSTEP, child, 0, 0) != -1);
 		}
 	}
 
