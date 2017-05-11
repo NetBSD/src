@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.64 2017/04/06 19:53:36 mbalmer Exp $
+#	$NetBSD: airport,v 1.65 2017/05/11 06:46:45 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -7601,7 +7601,7 @@ THV:York Airport, PA, USA
 THX:Turukhansk, Krasnoyarsk Krai, Russia
 THY:Thohoyandou, Venda, South Africa
 THZ:Tahoua, Niger
-TIA:Tirana, Albania
+TIA:Tirana International Airport, Albania
 TIB:Tibu, Colombia
 TIC:Tinak Airport, Marshall Islands
 TID:Tiaret (Bou Chekif), Algeria
