@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.337 2017/05/08 07:31:34 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.338 2017/05/11 23:20:38 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.337 2017/05/08 07:31:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.338 2017/05/11 23:20:38 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1690,18 +1690,17 @@ audioclose(struct file *fp)
 
 static int
 audioread(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
-	  int flags)
+	  int ioflag)
 {
 	struct audio_softc *sc;
 	struct virtual_channel *vc;
-	int error, ioflag;
+	int error;
 	dev_t dev;
 
 	if (fp->f_audioctx == NULL)
 		return EIO;
 
 	dev = fp->f_audioctx->dev;
-	ioflag = 0;
 
 	if ((error = audio_enter(dev, RW_READER, &sc)) != 0)
 		return error;
@@ -1730,18 +1729,17 @@ audioread(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 
 static int
 audiowrite(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
-	   int flags)
+	   int ioflag)
 {
 	struct audio_softc *sc;
 	struct virtual_channel *vc;
-	int error, ioflag;
+	int error;
 	dev_t dev;
 
 	if (fp->f_audioctx == NULL)
 		return EIO;
 
 	dev = fp->f_audioctx->dev;
-	ioflag = 0;
 
 	if ((error = audio_enter(dev, RW_READER, &sc)) != 0)
 		return error;
