@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.30 2017/02/19 07:47:00 rin Exp $
+# $NetBSD: LOONGSON,v 1.31 2017/05/11 07:56:43 maya Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.30 $"
+#ident 		"LOONGSON-$Revision: 1.31 $"
 
 maxusers	16
 
@@ -36,6 +36,7 @@ options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	PMAP_FAULTINFO
 #options 	LOCKDEBUG
 makeoptions	DEBUG="-g"
+makeoptions	COPY_SYMTAB=1		# size for embedded symbol table
 options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=8192		# dmesg buffer size
 
