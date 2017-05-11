@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.340 2017/05/11 23:32:27 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.341 2017/05/11 23:39:15 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.340 2017/05/11 23:32:27 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.341 2017/05/11 23:39:15 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1212,7 +1212,7 @@ audio_alloc_ring(struct audio_softc *sc, struct audio_ringbuffer *r,
 		/* Map it into the kernel virtual address space.  */
 		error = uvm_map(kernel_map, &vstart, vsize, r->uobj, 0, 0,
 		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
-			UVM_ADV_NORMAL, 0));
+			UVM_ADV_RANDOM, 0));
 		if (error) {
 			uao_detach(r->uobj);	/* release reference */
 			r->uobj = NULL;		/* paranoia */
@@ -3456,7 +3456,7 @@ audio_mmap(struct audio_softc *sc, off_t *offp, size_t len, int prot,
 	/* Acquire a reference for the mmap.  munmap will release.*/
 	uao_reference(*uobjp);
 	*maxprotp = prot;
-	*advicep = UVM_ADV_NORMAL;
+	*advicep = UVM_ADV_RANDOM;
 	*flagsp = MAP_SHARED;
 	return 0;
 }
