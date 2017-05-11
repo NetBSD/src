@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.157 2017/05/10 22:23:13 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.158 2017/05/11 09:09:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.157 2017/05/10 22:23:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.158 2017/05/11 09:09:54 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
@@ -206,7 +206,7 @@ cpu_uarea_alloc(bool system)
 	 */
 	const struct vm_page * const pg = TAILQ_FIRST(&pglist);
 	KASSERT(pg != NULL);
-	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	const paddr_t __diagused pa = VM_PAGE_TO_PHYS(pg);
 	KASSERTMSG(pa >= pmap_limits.avail_start,
 	    "pa (%#"PRIxPADDR") < pmap_limits.avail_start (%#"PRIxPADDR")",
 	     pa, pmap_limits.avail_start);
