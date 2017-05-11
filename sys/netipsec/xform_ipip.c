@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.48 2017/04/19 03:39:14 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.49 2017/05/11 05:55:14 ryo Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.48 2017/04/19 03:39:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.49 2017/05/11 05:55:14 ryo Exp $");
 
 /*
  * IP-inside-IP processing
@@ -402,6 +402,7 @@ ipip_output(
     int protoff
 )
 {
+	char buf[IPSEC_ADDRSTRLEN];
 	const struct secasvar *sav;
 	uint8_t tp, otos;
 	struct secasindex *saidx;
@@ -434,7 +435,7 @@ ipip_output(
 		    saidx->dst.sin.sin_addr.s_addr == INADDR_ANY) {
 			DPRINTF(("%s: unspecified tunnel endpoint "
 			    "address in SA %s/%08lx\n", __func__,
-			    ipsec_address(&saidx->dst),
+			    ipsec_address(&saidx->dst, buf, sizeof(buf)),
 			    (u_long) ntohl(sav->spi)));
 			IPIP_STATINC(IPIP_STAT_UNSPEC);
 			error = EINVAL;
@@ -508,7 +509,7 @@ ipip_output(
 		    IN6_IS_ADDR_UNSPECIFIED(&saidx->src.sin6.sin6_addr)) {
 			DPRINTF(("%s: unspecified tunnel endpoint "
 			    "address in SA %s/%08lx\n", __func__,
-			    ipsec_address(&saidx->dst),
+			    ipsec_address(&saidx->dst, buf, sizeof(buf)),
 			    (u_long) ntohl(sav->spi)));
 			IPIP_STATINC(IPIP_STAT_UNSPEC);
 			error = ENOBUFS;

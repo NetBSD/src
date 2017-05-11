@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.46 2017/05/10 09:34:52 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.47 2017/05/11 05:55:14 ryo Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -148,6 +148,11 @@ struct secspacq {
 	/* XXX: here is mbuf place holder to be sent ? */
 };
 #endif /* _KERNEL */
+
+/* buffer size for formatted output of ipsec address (addr + '%' + scope_id?) */
+#define	IPSEC_ADDRSTRLEN	(INET6_ADDRSTRLEN + 11)
+/* buffer size for ipsec_logsastr() */
+#define	IPSEC_LOGSASTRLEN	192
 
 /* according to IANA assignment, port 0x0000 and proto 0xff are reserved. */
 #define IPSEC_PORT_ANY		0
@@ -307,8 +312,8 @@ size_t ipsec4_hdrsiz_tcp (struct tcpcb *);
 #define ipsec4_getpolicybyaddr ipsec_getpolicybyaddr
 
 union sockaddr_union;
-const char *ipsec_address(const union sockaddr_union* sa);
-const char *ipsec_logsastr (const struct secasvar *);
+const char *ipsec_address(const union sockaddr_union* sa, char *, size_t);
+const char *ipsec_logsastr(const struct secasvar *, char *, size_t);
 
 void ipsec_dumpmbuf (struct mbuf *);
 
