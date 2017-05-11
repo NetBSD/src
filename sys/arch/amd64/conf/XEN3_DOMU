@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.73 2017/02/26 12:41:50 rin Exp $
+# $NetBSD: XEN3_DOMU,v 1.74 2017/05/11 15:42:15 sborrill Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -215,8 +215,10 @@ pseudo-device	dm			# device-mapper driver for LVM
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
+#pseudo-device	mpls			# MPLS pseudo-interface
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl			# Serial Line IP
