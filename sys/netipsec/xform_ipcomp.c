@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.37 2017/04/19 03:39:14 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.38 2017/05/11 05:55:14 ryo Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.37 2017/04/19 03:39:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.38 2017/05/11 05:55:14 ryo Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -230,6 +230,7 @@ ipcomp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 static int
 ipcomp_input_cb(struct cryptop *crp)
 {
+	char buf[IPSEC_ADDRSTRLEN];
 	struct tdb_crypto *tc;
 	int skip, protoff;
 	struct mbuf *m;
@@ -322,7 +323,7 @@ ipcomp_input_cb(struct cryptop *crp)
 	case IPPROTO_ESP:
 		IPCOMP_STATINC(IPCOMP_STAT_HDROPS);
 		DPRINTF(("%s: nested ipcomp, IPCA %s/%08lx\n", __func__,
-		    ipsec_address(&sav->sah->saidx.dst),
+		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi)));
 		error = EINVAL;
 		goto bad;
@@ -335,8 +336,8 @@ ipcomp_input_cb(struct cryptop *crp)
 	if (error) {
 		IPCOMP_STATINC(IPCOMP_STAT_HDROPS);
 		DPRINTF(("%s: bad mbuf chain, IPCA %s/%08lx\n", __func__,
-			 ipsec_address(&sav->sah->saidx.dst),
-			 (u_long) ntohl(sav->spi)));
+		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
+		    (u_long) ntohl(sav->spi)));
 		goto bad;
 	}
 
@@ -375,6 +376,7 @@ ipcomp_output(
     int protoff
 )
 {
+	char buf[IPSEC_ADDRSTRLEN];
 	const struct secasvar *sav;
 	const struct comp_algo *ipcompx;
 	int error, ralen, hlen, maxpacketsize;
@@ -417,7 +419,7 @@ ipcomp_output(
 		DPRINTF(("%s: unknown/unsupported protocol family %d"
 		    ", IPCA %s/%08lx\n", __func__,
 		    sav->sah->saidx.dst.sa.sa_family,
-		    ipsec_address(&sav->sah->saidx.dst),
+		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi)));
 		error = EPFNOSUPPORT;
 		goto bad;
@@ -426,7 +428,7 @@ ipcomp_output(
 		IPCOMP_STATINC(IPCOMP_STAT_TOOBIG);
 		DPRINTF(("%s: packet in IPCA %s/%08lx got too big "
 		    "(len %u, max len %u)\n", __func__,
-		    ipsec_address(&sav->sah->saidx.dst),
+		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi),
 		    skip + hlen + ralen, maxpacketsize));
 		error = EMSGSIZE;
@@ -440,7 +442,8 @@ ipcomp_output(
 	if (m == NULL) {
 		IPCOMP_STATINC(IPCOMP_STAT_HDROPS);
 		DPRINTF(("%s: cannot clone mbuf chain, IPCA %s/%08lx\n",
-		    __func__, ipsec_address(&sav->sah->saidx.dst),
+		    __func__,
+		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi)));
 		error = ENOBUFS;
 		goto bad;
@@ -506,6 +509,7 @@ bad:
 static int
 ipcomp_output_cb(struct cryptop *crp)
 {
+	char buf[IPSEC_ADDRSTRLEN];
 	struct tdb_crypto *tc;
 	struct ipsecrequest *isr;
 	struct secasvar *sav;
@@ -567,8 +571,8 @@ ipcomp_output_cb(struct cryptop *crp)
 			IPCOMP_STATINC(IPCOMP_STAT_WRAP);
 			DPRINTF(("%s: failed to inject IPCOMP header for "
 			    "IPCA %s/%08lx\n", __func__,
-			    ipsec_address(&sav->sah->saidx.dst),
-			    (u_long) ntohl(sav->spi)));
+			    ipsec_address(&sav->sah->saidx.dst, buf,
+			    sizeof(buf)), (u_long) ntohl(sav->spi)));
 			error = ENOBUFS;
 			goto bad;
 		}
@@ -618,8 +622,8 @@ ipcomp_output_cb(struct cryptop *crp)
 			DPRINTF(("ipcomp_output: unknown/unsupported protocol "
 			    "family %d, IPCA %s/%08lx\n",
 			    sav->sah->saidx.dst.sa.sa_family,
-			    ipsec_address(&sav->sah->saidx.dst),
-			    (u_long) ntohl(sav->spi)));
+			    ipsec_address(&sav->sah->saidx.dst, buf,
+			    sizeof(buf)), (u_long) ntohl(sav->spi)));
 			error = EPFNOSUPPORT;
 			goto bad;
 		}
