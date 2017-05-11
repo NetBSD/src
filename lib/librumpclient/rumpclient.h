@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpclient.h,v 1.15 2013/01/20 15:23:21 pooka Exp $	*/
+/*	$NetBSD: rumpclient.h,v 1.16 2017/05/11 17:47:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
 #endif /* !__GNUC__ */
 #endif /* !__returns_twice */
 
-#if defined(__sun__) && !defined(RUMP_REGISTER_T)
+#if !defined(RUMP_REGISTER_T)
 #define RUMP_REGISTER_T long
 typedef RUMP_REGISTER_T register_t;
 #endif
