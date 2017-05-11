@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.126 2017/05/10 11:06:47 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.127 2017/05/11 15:07:37 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.126 2017/05/10 11:06:47 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.127 2017/05/11 15:07:37 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1748,10 +1748,34 @@ parsesub: {
 		if (c == OPENBRACE) {
 			c = pgetc_linecont();
 			if (c == '#') {
-				if ((c = pgetc()) == CLOSEBRACE)
+				if ((c = pgetc_linecont()) == CLOSEBRACE)
 					c = '#';
-				else
+				else if (is_name(c) || isdigit(c))
 					subtype = VSLENGTH;
+				else if (is_special(c)) {
+					/*
+					 * ${##} is the length of ${#}
+					 * ${##1} is ${#} with leading 1 gone
+					 *
+					 * this stuff is UGLY!
+					 */
+					if (pgetc_linecont() == CLOSEBRACE) {
+						pungetc();
+						subtype = VSLENGTH;
+					} else {
+						static char cbuf[2];
+						pungetc();
+						cbuf[0] = c;
+						cbuf[1] = '\0';
+						pushstring(cbuf, 1, NULL);
+						c = '#';
+						subtype = 0;
+					}
+				} else {
+					pungetc();
+					c = '#';
+					subtype = 0;
+				}
 			}
 			else
 				subtype = 0;
@@ -1818,6 +1842,8 @@ parsesub: {
 				}
 			}
 		} else {
+			if (subtype == VSLENGTH && c != /*{*/ '}')
+				synerror("no modifiers allowed with ${#var}");
 			pungetc();
 		}
 		if (ISDBLQUOTE() || arinest)
