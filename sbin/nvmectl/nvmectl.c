@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmectl.c,v 1.2.6.1 2017/05/02 03:19:16 pgoyette Exp $	*/
+/*	$NetBSD: nvmectl.c,v 1.2.6.2 2017/05/11 02:58:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nvmectl.c,v 1.2.6.1 2017/05/02 03:19:16 pgoyette Exp $");
+__RCSID("$NetBSD: nvmectl.c,v 1.2.6.2 2017/05/11 02:58:34 pgoyette Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/nvmecontrol.c 314229 2017-02-25 00:09:12Z imp $");
 #endif
@@ -70,7 +70,7 @@ static struct nvme_function funcs[] = {
 	{NULL,		NULL,		NULL},
 };
 
-void
+static __dead void
 gen_usage(struct nvme_function *f)
 {
 
@@ -82,15 +82,13 @@ gen_usage(struct nvme_function *f)
 	exit(1);
 }
 
-void
+__dead void
 dispatch(int argc, char *argv[], struct nvme_function *tbl)
 {
 	struct nvme_function *f = tbl;
 
-	if (argv[1] == NULL) {
+	if (argv[1] == NULL)
 		gen_usage(tbl);
-		return;
-	}
 
 	while (f->name != NULL) {
 		if (strcmp(argv[1], f->name) == 0)

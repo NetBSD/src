@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.327.2.3 2017/05/02 03:19:18 pgoyette Exp $	*/
+/*	$NetBSD: audio.c,v 1.327.2.4 2017/05/11 02:58:38 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.327.2.3 2017/05/02 03:19:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.327.2.4 2017/05/11 02:58:38 pgoyette Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -179,6 +179,7 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.327.2.3 2017/05/02 03:19:18 pgoyette Exp
 #include <sys/intr.h>
 #include <sys/kthread.h>
 #include <sys/cpu.h>
+#include <sys/mman.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
@@ -231,8 +232,8 @@ int	audio_ioctl(dev_t, struct audio_softc *, u_long, void *, int,
 int	audio_poll(struct audio_softc *, int, struct lwp *,
 		   struct virtual_channel *);
 int	audio_kqfilter(struct audio_chan *, struct knote *);
-paddr_t audiommap(dev_t, off_t, int, struct virtual_channel *);
-paddr_t audio_mmap(struct audio_softc *, off_t, int, struct virtual_channel *);
+int 	audio_mmap(struct audio_softc *, off_t *, size_t, int, int *, int *,
+		   struct uvm_object **, int *, struct virtual_channel *);
 static	int audio_fop_mmap(struct file *, off_t *, size_t, int, int *, int *,
 			   struct uvm_object **, int *);
 
@@ -1176,6 +1177,9 @@ audio_alloc_ring(struct audio_softc *sc, struct audio_ringbuffer *r,
 	const struct audio_hw_if *hw;
 	struct audio_chan *chan;
 	void *hdl;
+	vaddr_t vstart;
+	vsize_t vsize;
+	int error;
 
 	chan = SIMPLEQ_FIRST(&sc->sc_audiochan);
 	hw = sc->hw_if;
@@ -1189,12 +1193,35 @@ audio_alloc_ring(struct audio_softc *sc, struct audio_ringbuffer *r,
 	if (hw->round_buffersize) {
 		bufsize = hw->round_buffersize(hdl, direction, bufsize);
 	}
-	if (hw->allocm && (r == &chan->vc->sc_mpr || r == &chan->vc->sc_mrr))
+
+	if (hw->allocm && (r == &chan->vc->sc_mpr || r == &chan->vc->sc_mrr)) {
+		/* Hardware ringbuffer.	 No dedicated uvm object.*/
+		r->uobj = NULL;
 		r->s.start = hw->allocm(hdl, direction, bufsize);
-	else
-		r->s.start = kmem_zalloc(bufsize, KM_SLEEP);
-	if (r->s.start == NULL)
-		return ENOMEM;
+		if (r->s.start == NULL)
+			return ENOMEM;
+	} else {
+		/* Software ringbuffer.	 */
+		vstart = 0;
+
+		/* Get a nonzero multiple of PAGE_SIZE.	 */
+		vsize = roundup2(MAX(bufsize, PAGE_SIZE), PAGE_SIZE);
+
+		/* Create a uvm anonymous object.  */
+		r->uobj = uao_create(vsize, 0);
+
+		/* Map it into the kernel virtual address space.  */
+		error = uvm_map(kernel_map, &vstart, vsize, r->uobj, 0, 0,
+		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
+			UVM_ADV_NORMAL, 0));
+		if (error) {
+			uao_detach(r->uobj);	/* release reference */
+			r->uobj = NULL;		/* paranoia */
+			return error;
+		}
+		r->s.start = (void *)vstart;
+	}
+
 	r->s.bufsize = bufsize;
 
 	return 0;
@@ -1204,6 +1231,8 @@ void
 audio_free_ring(struct audio_softc *sc, struct audio_ringbuffer *r)
 {
 	struct audio_chan *chan;
+	vaddr_t vstart;
+	vsize_t vsize;
 
 	if (r->s.start == NULL)
 		return;
@@ -1211,10 +1240,25 @@ audio_free_ring(struct audio_softc *sc, struct audio_ringbuffer *r)
 	chan = SIMPLEQ_FIRST(&sc->sc_audiochan);
 
 	if (sc->hw_if->freem && (r == &chan->vc->sc_mpr ||
-						r == &chan->vc->sc_mrr))
+					r == &chan->vc->sc_mrr)) {
+		 /* Hardware ringbuffer.  */
+		KASSERT(r->uobj == NULL);
 		sc->hw_if->freem(sc->hw_hdl, r->s.start, r->s.bufsize);
-	else
-		kmem_free(r->s.start, r->s.bufsize);
+	} else {
+				/* Software ringbuffer.	 */
+		vstart = (vaddr_t)r->s.start;
+		vsize = roundup2(MAX(r->s.bufsize, PAGE_SIZE), PAGE_SIZE);
+
+		/*
+		 * Unmap the kernel mapping.  uvm_unmap releases the
+		 * reference to the uvm object, and this should be the
+		 * last virtual mapping of the uvm object, so no need
+		 * to explicitly release (`detach') the object.
+		 */
+		uvm_unmap(kernel_map, vstart, vsize);
+		r->uobj = NULL;		/* paranoia */
+	}
+
 	r->s.start = NULL;
 }
 
@@ -1652,20 +1696,24 @@ audioclose(struct file *fp)
 
 static int
 audioread(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
-	  int ioflag)
+	  int flags)
 {
 	struct audio_softc *sc;
 	struct virtual_channel *vc;
-	int error;
+	int error, ioflag;
 	dev_t dev;
 
 	if (fp->f_audioctx == NULL)
 		return EIO;
 
 	dev = fp->f_audioctx->dev;
+	ioflag = 0;
 
 	if ((error = audio_enter(dev, RW_READER, &sc)) != 0)
 		return error;
+
+	if (fp->f_flag & O_NONBLOCK)
+		ioflag |= IO_NDELAY;
 
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
@@ -1688,20 +1736,24 @@ audioread(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 
 static int
 audiowrite(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
-	   int ioflag)
+	   int flags)
 {
 	struct audio_softc *sc;
 	struct virtual_channel *vc;
-	int error;
+	int error, ioflag;
 	dev_t dev;
 
 	if (fp->f_audioctx == NULL)
 		return EIO;
 
 	dev = fp->f_audioctx->dev;
+	ioflag = 0;
 
 	if ((error = audio_enter(dev, RW_READER, &sc)) != 0)
 		return error;
+
+	if (fp->f_flag & O_NONBLOCK)
+		ioflag |= IO_NDELAY;
 
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
@@ -1882,41 +1934,21 @@ audiokqfilter(struct file *fp, struct knote *kn)
 	return rv;
 }
 
-/* XXX:NS mmap is disabled. */
 static int
 audio_fop_mmap(struct file *fp, off_t *offp, size_t len, int prot, int *flagsp,
 	     int *advicep, struct uvm_object **uobjp, int *maxprotp)
 {
+	struct audio_softc *sc;
 	struct audio_chan *chan;
 	struct virtual_channel *vc;
 	dev_t dev;
-
-	return -1;
+	int error;
 
 	chan = fp->f_audioctx;
 	dev = chan->dev;
 	vc = chan->vc;
+	error = 0;
 
-	*offp = audiommap(dev, *offp, prot, vc);
-	*maxprotp = prot;
-	*advicep = UVM_ADV_RANDOM;
-	return -1;
-}
-
-paddr_t
-audiommap(dev_t dev, off_t off, int prot, struct virtual_channel *vc)
-{
-	struct audio_softc *sc;
-	paddr_t error;
-
-	return -1;
-
-	/*
-	 * Acquire a reader lock.  audio_mmap() will drop sc_lock
-	 * in order to allow the device's mmap routine to sleep.
-	 * Although not yet possible, we want to prevent memory
-	 * from being allocated or freed out from under us.
-	 */
 	if ((error = audio_enter(dev, RW_READER, &sc)) != 0)
 		return 1;
 	device_active(sc->dev, DVA_SYSTEM); /* XXXJDM */
@@ -1924,17 +1956,17 @@ audiommap(dev_t dev, off_t off, int prot, struct virtual_channel *vc)
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-		error = audio_mmap(sc, off, prot, vc);
+		error = audio_mmap(sc, offp, len, prot, flagsp, advicep,
+		    uobjp, maxprotp, vc);	
 		break;
 	case AUDIOCTL_DEVICE:
 	case MIXER_DEVICE:
-		error = -1;
-		break;
 	default:
-		error = -1;
+		error = ENOTSUP;
 		break;
 	}
 	audio_exit(sc);
+
 	return error;
 }
 
@@ -2169,6 +2201,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		audio_init_ringbuffer(sc, &sc->sc_rr, AUMODE_RECORD);
 		sc->schedule_wih = false;
 		sc->schedule_rih = false;
+		sc->sc_last_drops = 0;
 		sc->sc_eof = 0;
 		vc->sc_rbus = false;
 		sc->sc_async_audio = 0;
@@ -2453,7 +2486,8 @@ audio_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 		vc->sc_pbus = false;
 	}
 	if (sc->sc_opens == 1) {
-		audio_drain(sc, SIMPLEQ_FIRST(&sc->sc_audiochan));
+		if (vc->sc_mpr.mmapped == false)
+			audio_drain(sc, SIMPLEQ_FIRST(&sc->sc_audiochan));
 		if (hw->drain)
 			(void)hw->drain(sc->hw_hdl);
 		hw->halt_output(sc->hw_hdl);
@@ -3371,22 +3405,28 @@ audio_kqfilter(struct audio_chan *chan, struct knote *kn)
 	return 0;
 }
 
-/* XXX:NS mmap to be fixed. */
-paddr_t
-audio_mmap(struct audio_softc *sc, off_t off, int prot,
-	   struct virtual_channel *vc)
+int
+audio_mmap(struct audio_softc *sc, off_t *offp, size_t len, int prot,
+    int *flagsp, int *advicep, struct uvm_object **uobjp, int *maxprotp,
+    struct virtual_channel *vc)
 {
 	struct audio_ringbuffer *cb;
-	paddr_t rv;
 
 	KASSERT(mutex_owned(sc->sc_lock));
 
 	if (sc->hw_if == NULL)
 		return ENXIO;
 
-	DPRINTF(("audio_mmap: off=%lld, prot=%d\n", (long long)off, prot));
+	DPRINTF(("audio_mmap: off=%lld, prot=%d\n", (long long)(*offp), prot));
 	if (!(audio_get_props(sc) & AUDIO_PROP_MMAP))
-		return -1;
+		return ENOTSUP;
+
+	if (*offp < 0)
+		return EINVAL;
+	if ((off_t)(*offp + len) < *offp) {
+		/* no offset wrapping */
+		return EOVERFLOW;
+	}
 #if 0
 /* XXX
  * The idea here was to use the protection to determine if
@@ -3406,31 +3446,38 @@ audio_mmap(struct audio_softc *sc, off_t off, int prot,
 	else if (prot == VM_PROT_READ)
 		cb = &vc->sc_mrr;
 	else
-		return -1;
+		return EINVAL;
 #else
 	cb = &vc->sc_mpr;
 #endif
 
-	if ((u_int)off >= cb->s.bufsize)
-		return -1;
+	if ((u_int)*offp >= cb->s.bufsize)
+		return EOVERFLOW;
+
 	if (!cb->mmapped) {
 		cb->mmapped = true;
-		if (cb != &sc->sc_rr) {
+		if (cb == &vc->sc_mpr) {
 			audio_fill_silence(&cb->s.param, cb->s.start,
 					   cb->s.bufsize);
 			vc->sc_pustream = &cb->s;
 			if (!vc->sc_pbus && !vc->sc_mpr.pause)
 				(void)audiostartp(sc, vc);
-		} else {
+		} else if (cb == &vc->sc_mrr) {
 			vc->sc_rustream = &cb->s;
 			if (!vc->sc_rbus && !sc->sc_rr.pause)
 				(void)audiostartr(sc, vc);
 		}
 	}
 
-	rv = (paddr_t)(uintptr_t)(cb->s.start + off);
+	/* get ringbuffer */
+	*uobjp = cb->uobj;
 
-	return rv;
+	/* Acquire a reference for the mmap.  munmap will release.*/
+	uao_reference(*uobjp);
+	*maxprotp = prot;
+	*advicep = UVM_ADV_NORMAL;
+	*flagsp = MAP_SHARED;
+	return 0;
 }
 
 int
@@ -3612,18 +3659,21 @@ audio_pint(void *v)
 	vc = chan->vc;
 	blksize = vc->sc_mpr.blksize;
 
-	if (sc->sc_dying == true || sc->sc_opens == 0)
+	if (sc->sc_dying == true || sc->sc_trigger_started == false)
 		return;
 
-	if (vc->sc_draining == true) {
+	if (vc->sc_draining == true && sc->sc_pr.drops !=
+						sc->sc_last_drops) {
 		vc->sc_mpr.drops += blksize;
 		cv_broadcast(&sc->sc_wchan);
 	}
+	sc->sc_last_drops = sc->sc_pr.drops;
 
 	vc->sc_mpr.s.outp = audio_stream_add_outp(&vc->sc_mpr.s,
 	    vc->sc_mpr.s.outp, blksize);
 
 	if (audio_stream_get_used(&sc->sc_pr.s) < blksize) {
+		DPRINTFN(3, ("HW RING - INSERT SILENCE\n"));
 		used = blksize;
 		while (used > 0) {
 			cc = sc->sc_pr.s.end - sc->sc_pr.s.inp;
@@ -3653,7 +3703,7 @@ audio_mix(void *v)
 	struct audio_ringbuffer *cb;
 	stream_fetcher_t *fetcher;
 	uint8_t *inp;
-	int cc, used, blksize;
+	int cc, cc1, used, blksize;
 	
 	sc = v;
 
@@ -3697,6 +3747,8 @@ audio_mix(void *v)
 				     cb->s.outp, blksize, cb->s.inp));
 			mutex_enter(sc->sc_intr_lock);
 			mix_func(sc, cb, vc);
+			cb->s.outp = audio_stream_add_outp(&cb->s, cb->s.outp,
+			    blksize);
 			mutex_exit(sc->sc_intr_lock);
 			continue;
 		}
@@ -3813,12 +3865,24 @@ audio_mix(void *v)
 	cb = &sc->sc_pr;
 	inp = cb->s.inp;
 	cc = blksize - (inp - cb->s.start) % blksize;
-	if (sc->sc_writeme == false)
+	if (sc->sc_writeme == false) {
+		DPRINTFN(3, ("MIX RING EMPTY - INSERT SILENCE\n"));
+		mutex_exit(sc->sc_intr_lock);
 		audio_fill_silence(&vc->sc_mpr.s.param, inp, cc);
-	else
+		mutex_enter(sc->sc_intr_lock);
+		sc->sc_pr.drops += cc;
+	} else
 		cc = blksize;
 	cb->s.inp = audio_stream_add_inp(&cb->s, cb->s.inp, cc);
+	cc = blksize;
+	cc1 = sc->sc_pr.s.end - sc->sc_pr.s.inp;
 	mutex_exit(sc->sc_intr_lock);
+	if (cc1 < cc) {
+		audio_fill_silence(&vc->sc_mpr.s.param, sc->sc_pr.s.inp, cc1);
+		cc -= cc1;
+		audio_fill_silence(&vc->sc_mpr.s.param, sc->sc_pr.s.start, cc);
+	} else
+		audio_fill_silence(&vc->sc_mpr.s.param, sc->sc_pr.s.inp, cc);
 
 	kpreempt_disable();
 	if (sc->schedule_wih == true)
@@ -3844,7 +3908,7 @@ audio_rint(void *v)
 
 	KASSERT(mutex_owned(sc->sc_intr_lock));
 
-	if (sc->sc_dying == true || sc->sc_recopens == 0)
+	if (sc->sc_dying == true || sc->sc_rec_started == false)
 		return;
 
 	blksize = audio_stream_get_used(&sc->sc_rr.s);
@@ -3902,14 +3966,12 @@ audio_upmix(void *v)
 		cc = blksize;
 		if (cb->s.inp + blksize > cb->s.end)
 			cc = cb->s.end - cb->s.inp;
-		mutex_enter(sc->sc_intr_lock);
 		memcpy(cb->s.inp, sc->sc_rr.s.start, cc);
 		if (cc < blksize && cc != 0) {
 			cc1 = cc;
 			cc = blksize - cc;
 			memcpy(cb->s.start, sc->sc_rr.s.start + cc1, cc);
 		}
-		mutex_exit(sc->sc_intr_lock);
 
 		cc = blksize;
 		recswvol_func(sc, cb, blksize, vc);
@@ -5376,6 +5438,8 @@ audio_get_props(struct audio_softc *sc)
 	if ((props & (AUDIO_PROP_PLAYBACK|AUDIO_PROP_CAPTURE)) == 0)
 		props |= (AUDIO_PROP_PLAYBACK | AUDIO_PROP_CAPTURE);
 
+	props |= AUDIO_PROP_MMAP;
+
 	return props;
 }
 
@@ -5479,12 +5543,10 @@ mix_write(void *arg)
 		cc = used;
 		cc1 = vc->sc_pustream->end - tocopy;
 		cc2 = sc->sc_pr.s.end - orig;
-		if (cc2 < cc1)
-			cc = cc2;
-		else
+		if (cc > cc1)
 			cc = cc1;
-		if (cc > used)
-			cc = used;
+		if (cc > cc2)
+			cc = cc2;
 		memcpy(tocopy, orig, cc);
 		orig += cc;
 		tocopy += cc;
@@ -5500,15 +5562,6 @@ mix_write(void *arg)
 	inp = vc->sc_pustream->inp;
 	vc->sc_pustream->inp = audio_stream_add_inp(vc->sc_pustream,
 	    inp, blksize);
-
-	cc = blksize;
-	cc2 = sc->sc_pr.s.end - sc->sc_pr.s.inp;
-	if (cc2 < cc) {
-		memset(sc->sc_pr.s.inp, 0, cc2);
-		cc -= cc2;
-		memset(sc->sc_pr.s.start, 0, cc);
-	} else
-		memset(sc->sc_pr.s.inp, 0, cc);
 
 	sc->sc_pr.s.outp = audio_stream_add_outp(&sc->sc_pr.s,
 	    sc->sc_pr.s.outp, blksize);
@@ -5827,13 +5880,15 @@ audio_play_thread(void *v)
 			mutex_exit(sc->sc_intr_lock);
 			kthread_exit(0);
 		}
-		mutex_exit(sc->sc_intr_lock);
 
 		while (audio_stream_get_used(&sc->sc_pr.s) < sc->sc_pr.blksize) {
+			mutex_exit(sc->sc_intr_lock);
 			mutex_enter(sc->sc_lock);
 			audio_mix(sc);
 			mutex_exit(sc->sc_lock);
+			mutex_enter(sc->sc_intr_lock);
 		}
+		mutex_exit(sc->sc_intr_lock);
 	}
 }
 

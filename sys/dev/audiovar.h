@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.53 2017/04/17 22:40:06 nat Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.53.2.1 2017/05/11 02:58:38 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ int audiobellioctl(struct file *, u_long, void *);
 #define AUMINBLK	32
 #define AUMINNOBLK	3
 struct audio_ringbuffer {
+	struct uvm_object	*uobj;
 	audio_stream_t s;
 	int	blksize;	/* I/O block size (bytes) */
 	int	maxblks;	/* no of blocks in ring */
@@ -255,6 +256,7 @@ struct audio_softc {
 	 *  userland
 	 */
 	struct audio_ringbuffer	sc_rr;		/* Record ring */
+	ulong		sc_last_drops;		/* Drops from mix ring */
 
 	int		sc_eof;		/* EOF, i.e. zero sized write, counter */
 	struct	au_mixer_ports sc_inports, sc_outports;

@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.36.4.1 2017/05/02 03:19:16 pgoyette Exp $	*/
+/*	$NetBSD: glob.c,v 1.36.4.2 2017/05/11 02:58:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.36.4.1 2017/05/02 03:19:16 pgoyette Exp $");
+__RCSID("$NetBSD: glob.c,v 1.36.4.2 2017/05/11 02:58:32 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -958,7 +958,7 @@ match(const Char *name, const Char *pat, const Char *patend)
 			nameEnd = name;
 		switch (c & M_MASK) {
 		case M_ALL:
-			while (pat[1] == '*') pat++;
+			while ((pat[1] & M_MASK) == M_ALL) pat++;
 			patNext = pat;
 			nameNext = name + 1;
 			pat++;

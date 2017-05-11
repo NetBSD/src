@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.27 2017/01/10 21:15:23 christos Exp $ */
+/* $NetBSD: tic.c,v 1.27.4.1 2017/05/11 02:58:43 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.27 2017/01/10 21:15:23 christos Exp $");
+__RCSID("$NetBSD: tic.c,v 1.27.4.1 2017/05/11 02:58:43 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -483,6 +483,7 @@ main(int argc, char **argv)
 	size_t buflen;
 	ssize_t len;
 	TBUF tbuf;
+	struct term *term;
 
 	cflag = sflag = 0;
 	ofile = NULL;
@@ -527,7 +528,7 @@ main(int argc, char **argv)
 	hcreate(HASH_SIZE);
 
 	buf = tbuf.buf = NULL;
-	buflen = tbuf.buflen = tbuf.bufpos = 0;	
+	buflen = tbuf.buflen = tbuf.bufpos = 0;
 	while ((len = getline(&buf, &buflen, f)) != -1) {
 		/* Skip comments */
 		if (*buf == '#')
@@ -539,9 +540,9 @@ main(int argc, char **argv)
 			continue;
 		}
 		/*
-		  If the first char is space not a space then we have a
-		  new entry, so process it.
-		*/
+		 * If the first char is space not a space then we have a
+		 * new entry, so process it.
+		 */
 		if (!isspace((unsigned char)*buf) && tbuf.bufpos != 0)
 			process_entry(&tbuf, flags);
 
@@ -578,7 +579,6 @@ main(int argc, char **argv)
 		fprintf(stderr, "%zu entries and %zu aliases written to %s\n",
 		    nterm, nalias, dbname);
 
-#ifdef __VALGRIND__
 	if (ofile == NULL)
 		free(dbname);
 	while ((term = STAILQ_FIRST(&terms)) != NULL) {
@@ -587,6 +587,11 @@ main(int argc, char **argv)
 		free(term->name);
 		free(term);
 	}
+#ifndef HAVE_NBTOOL_CONFIG_H
+	/*
+	 * hdestroy1 is not standard but we don't really care if we
+	 * leak in the tools version
+	 */
 	hdestroy1(free, NULL);
 #endif
 

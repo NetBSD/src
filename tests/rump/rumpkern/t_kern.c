@@ -1,4 +1,4 @@
-/*	$NetBSD: t_kern.c,v 1.4.4.1 2017/05/03 12:10:22 pgoyette Exp $	*/
+/*	$NetBSD: t_kern.c,v 1.4.4.2 2017/05/11 02:58:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.

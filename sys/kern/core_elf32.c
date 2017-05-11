@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.54 2017/03/30 20:17:11 christos Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.54.4.1 2017/05/11 02:58:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.54 2017/03/30 20:17:11 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.54.4.1 2017/05/11 02:58:40 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -158,7 +158,10 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 #endif
 	ehdr.e_ident[EI_DATA] = ELFDEFNNAME(MACHDEP_ENDIANNESS);
 	ehdr.e_ident[EI_VERSION] = EV_CURRENT;
-	/* XXX Should be the OSABI/ABI version of the executable. */
+	/*
+	 * NetBSD sets generic SYSV OSABI and ABI version 0
+	 * Native ELF files are distinguishable with NetBSD specific notes
+	 */
 	ehdr.e_ident[EI_OSABI] = ELFOSABI_SYSV;
 	ehdr.e_ident[EI_ABIVERSION] = 0;
 

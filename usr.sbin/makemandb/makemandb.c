@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.47.2.1 2017/05/02 03:19:23 pgoyette Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.47.2.2 2017/05/11 02:58:43 pgoyette Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.47.2.1 2017/05/02 03:19:23 pgoyette Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.47.2.2 2017/05/11 02:58:43 pgoyette Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -450,9 +450,10 @@ main(int argc, char *argv[])
 	while ((len = getline(&line, &linesize, file)) != -1) {
 		/* Replace the new line character at the end of string with '\0' */
 		line[len - 1] = '\0';
-		char *pdir = dirname(line);
+		char *pdir = estrdup(dirname(line));
 		/* Traverse the man page directories and parse the pages */
 		traversedir(pdir, line, db, mp);
+		free(pdir);
 	}
 	free(line);
 
@@ -943,8 +944,7 @@ set_section(const struct roff_man *rm, mandb_rec *rec)
 {
 	if (!rm)
 		return;
-	const struct roff_meta *rm_meta = &rm->meta;
-	const char *s = rm_meta->msec == NULL ? "?" : rm_meta->msec;
+	const char *s = rm->meta.msec == NULL ? "?" : rm->meta.msec;
 	easprintf(&rec->section, "%s", s);
 	if (rec->section[0] == '?' && mflags.verbosity == 2)
 		warnx("%s: Missing section number", rec->file_path);
@@ -959,9 +959,8 @@ set_machine(const struct roff_man *rm, mandb_rec *rec)
 {
 	if (rm == NULL)
 		return;
-	const struct roff_meta *rm_meta = &rm->meta;
-	if (rm_meta->arch)
-		rec->machine = estrdup(rm_meta->arch);
+	if (rm->meta.arch)
+		rec->machine = estrdup(rm->meta.arch);
 }
 
 /*

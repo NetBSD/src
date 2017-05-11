@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_fcfs.c,v 1.12 2016/11/16 10:42:14 pgoyette Exp $	*/
+/*	$NetBSD: bufq_fcfs.c,v 1.12.6.1 2017/05/11 02:58:40 pgoyette Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.12 2016/11/16 10:42:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.12.6.1 2017/05/11 02:58:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ BUFQ_DEFINE(fcfs, 10, bufq_fcfs_init);
 static void
 bufq_fcfs_put(struct bufq_state *bufq, struct buf *bp)
 {
-	struct bufq_fcfs *fcfs = bufq->bq_private;
+	struct bufq_fcfs *fcfs = bufq_private(bufq);
 
 	TAILQ_INSERT_TAIL(&fcfs->bq_head, bp, b_actq);
 }
@@ -105,7 +105,7 @@ bufq_fcfs_put(struct bufq_state *bufq, struct buf *bp)
 static struct buf *
 bufq_fcfs_get(struct bufq_state *bufq, int remove)
 {
-	struct bufq_fcfs *fcfs = bufq->bq_private;
+	struct bufq_fcfs *fcfs = bufq_private(bufq);
 	struct buf *bp;
 
 	bp = TAILQ_FIRST(&fcfs->bq_head);
@@ -119,7 +119,7 @@ bufq_fcfs_get(struct bufq_state *bufq, int remove)
 static struct buf *
 bufq_fcfs_cancel(struct bufq_state *bufq, struct buf *buf)
 {
-	struct bufq_fcfs *fcfs = bufq->bq_private;
+	struct bufq_fcfs *fcfs = bufq_private(bufq);
 	struct buf *bp;
 
 	TAILQ_FOREACH(bp, &fcfs->bq_head, b_actq) {

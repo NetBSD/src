@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.513 2017/04/26 03:02:49 riastradh Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.513.2.1 2017/05/11 02:58:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.513 2017/04/26 03:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.513.2.1 2017/05/11 02:58:40 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -282,11 +282,6 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	if (error)
 		goto out;
 
-	if (vfs_busy(mp)) {
-		error = EPERM;
-		goto out;
-	}
-
 	error = vfs_suspend(mp, 0);
 	if (error)
 		goto out;
@@ -345,7 +340,6 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	}
 	mutex_exit(&mp->mnt_updating);
 	vfs_resume(mp);
-	vfs_unbusy(mp);
 
 	if ((error == 0) && !(saved_flags & MNT_EXTATTR) && 
 	    (flags & MNT_EXTATTR)) {
@@ -647,7 +641,6 @@ do_sys_sync(struct lwp *l)
 
 	mountlist_iterator_init(&iter);
 	while ((mp = mountlist_iterator_next(iter)) != NULL) {
-		fstrans_start(mp, FSTRANS_SHARED);
 		mutex_enter(&mp->mnt_updating);
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
@@ -657,7 +650,6 @@ do_sys_sync(struct lwp *l)
 				 mp->mnt_flag |= MNT_ASYNC;
 		}
 		mutex_exit(&mp->mnt_updating);
-		fstrans_done(mp);
 	}
 	mountlist_iterator_destroy(iter);
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.203 2017/01/04 23:59:49 christos Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.203.6.1 2017/05/11 02:58:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -662,6 +662,8 @@ bool			uvm_map_checkprot(struct vm_map *, vaddr_t,
 			    vaddr_t, vm_prot_t);
 int			uvm_map_protect(struct vm_map *, vaddr_t,
 			    vaddr_t, vm_prot_t, bool);
+int			uvm_map_protect_user(struct lwp *, vaddr_t, vaddr_t,
+			    vm_prot_t);
 struct vmspace		*uvmspace_alloc(vaddr_t, vaddr_t, bool);
 void			uvmspace_init(struct vmspace *, struct pmap *,
 			    vaddr_t, vaddr_t, bool);

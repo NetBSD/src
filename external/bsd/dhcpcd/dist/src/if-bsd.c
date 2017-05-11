@@ -48,6 +48,11 @@
 #include <netinet/in_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
+#ifdef __NetBSD__
+#include <net/if_vlanvar.h> /* Needs netinet/if_ether.h */
+#else
+#include <net/if_vlan_var.h>
+#endif
 #ifdef __DragonFly__
 #  include <netproto/802_11/ieee80211_ioctl.h>
 #elif __APPLE__
@@ -153,6 +158,8 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 #define SOCK_FLAGS	(SOCK_CLOEXEC | SOCK_NONBLOCK)
 	ctx->link_fd = xsocket(PF_ROUTE, SOCK_RAW | SOCK_FLAGS, AF_UNSPEC);
 #undef SOCK_FLAGS
+	if (ctx->link_fd == -1)
+		return -1;
 
 #if defined(RO_MSGFILTER)
 	if (setsockopt(ctx->link_fd, PF_ROUTE, RO_MSGFILTER,
@@ -168,7 +175,7 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 		logerr(__func__);
 #endif
 
-	return ctx->link_fd == -1 ? -1 : 0;
+	return 0;
 }
 
 void
@@ -194,12 +201,31 @@ if_linkaddr(struct sockaddr_dl *sdl, const struct interface *ifp)
 }
 #endif
 
+#if defined(SIOCG80211NWID) || defined(SIOCGETVLAN)
+static int if_direct_ioctl(int s, const char *ifname,
+    unsigned long cmd, void *data)
+{
+
+	strlcpy(data, ifname, IFNAMSIZ);
+	return ioctl(s, cmd, data);
+}
+
+static int if_indirect_ioctl(int s, const char *ifname,
+    unsigned long cmd, void *data)
+{
+	struct ifreq ifr;
+
+	memset(&ifr, 0, sizeof(ifr));
+	ifr.ifr_data = data;
+	return if_direct_ioctl(s, ifname, cmd, &ifr);
+}
+#endif
+
 static int
 if_getssid1(int s, const char *ifname, void *ssid)
 {
 	int retval = -1;
 #if defined(SIOCG80211NWID)
-	struct ifreq ifr;
 	struct ieee80211_nwid nwid;
 #elif defined(IEEE80211_IOC_SSID)
 	struct ieee80211req ireq;
@@ -207,11 +233,8 @@ if_getssid1(int s, const char *ifname, void *ssid)
 #endif
 
 #if defined(SIOCG80211NWID) /* NetBSD */
-	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	memset(&nwid, 0, sizeof(nwid));
-	ifr.ifr_data = (void *)&nwid;
-	if (ioctl(s, SIOCG80211NWID, &ifr) == 0) {
+	if (if_indirect_ioctl(s, ifname, SIOCG80211NWID, &nwid) == 0) {
 		if (ssid == NULL)
 			retval = nwid.i_len;
 		else if (nwid.i_len > IF_SSIDLEN)
@@ -284,6 +307,31 @@ if_vimaster(const struct dhcpcd_ctx *ctx, const char *ifname)
 			return 1;
 	}
 	return 0;
+}
+
+unsigned short
+if_vlanid(const struct interface *ifp)
+{
+#ifdef SIOCGETVLAN
+	struct vlanreq vlr;
+
+	memset(&vlr, 0, sizeof(vlr));
+	if (if_indirect_ioctl(ifp->ctx->pf_inet_fd,
+	    ifp->name, SIOCGETVLAN, &vlr) != 0)
+		return 0; /* 0 means no VLANID */
+	return vlr.vlr_tag;
+#elif defined(SIOCGVNETID)
+	struct ifreq ifr;
+
+	memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
+	if (ioctl(ifp->ctx->pf_inet_fd, SIOCGVNETID, &ifr) != 0)
+		return 0; /* 0 means no VLANID */
+	return ifr.ifr_vnetid;
+#else
+	UNUSED(ifp);
+	return 0; /* 0 means no VLANID */
+#endif
 }
 
 static void
@@ -413,6 +461,9 @@ if_route(unsigned char cmd, const struct rt *rt)
 	char *bp = rtmsg.buffer;
 	struct sockaddr_dl sdl;
 	bool gateway_unspec;
+#ifdef RTA_LABEL
+	struct sockaddr_rtlabel label;
+#endif
 
 	assert(rt != NULL);
 	ctx = rt->rt_ifp->ctx;
@@ -448,6 +499,9 @@ if_route(unsigned char cmd, const struct rt *rt)
 
 		rtm->rtm_flags |= RTF_UP;
 		rtm->rtm_addrs |= RTA_GATEWAY;
+#ifdef RTA_LABEL
+		rtm->rtm_addrs |= RTA_LABEL;
+#endif
 		if (!(rtm->rtm_flags & RTF_REJECT) &&
 		    !sa_is_loopback(&rt->rt_gateway))
 		{
@@ -531,6 +585,23 @@ if_route(unsigned char cmd, const struct rt *rt)
 
 	if (rtm->rtm_addrs & RTA_IFA)
 		ADDSA(&rt->rt_ifa);
+
+#ifdef RTA_LABEL
+	if (rtm->rtm_addrs & RTA_LABEL) {
+		int len;
+
+		memset(&label, 0, sizeof(label));
+		label.sr_family = AF_UNSPEC;
+		label.sr_len = sizeof(label);
+		len = snprintf(label.sr_label, sizeof(label.sr_label),
+		    PACKAGE " %d", getpid());
+		/* Don't add the label if we failed to create it. */
+		if (len == -1 || (size_t)len > sizeof(label.sr_label))
+			rtm->rtm_addrs &= ~RTA_LABEL;
+		else
+			ADDSA((struct sockaddr *)&label);
+	}
+#endif
 
 #undef ADDSA
 
@@ -785,7 +856,7 @@ if_address6(unsigned char cmd, const struct ipv6_addr *ia)
 	 */
 
 #if !((defined(__NetBSD_Version__) && __NetBSD_Version__ >= 799003600) || \
-      (defined(__OpenBSD__)))
+      (defined(__OpenBSD__) && OpenBSD >= 201605))
 	if (cmd == RTM_NEWADDR && !(ia->flags & IPV6_AF_ADDED)) {
 		ifa.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
 		ifa.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
@@ -793,8 +864,8 @@ if_address6(unsigned char cmd, const struct ipv6_addr *ia)
 	}
 #endif
 
-#if defined(__OpenBSD__)
-	/* BUT OpenBSD does not reset the address lifetime
+#if defined(__OpenBSD__) && OpenBSD <= 201705
+	/* BUT OpenBSD older than 6.2 does not reset the address lifetime
 	 * for subsequent calls...
 	 * Luckily dhcpcd will remove the lease when it expires so
 	 * just set an infinite lifetime, unless a temporary address. */

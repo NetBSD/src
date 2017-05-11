@@ -1,8 +1,8 @@
-/*	$NetBSD: pam_putenv.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+/*	$NetBSD: pam_putenv.c,v 1.2.8.1 2017/05/11 02:58:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
- * Copyright (c) 2004-2011 Dag-Erling Smørgrav
+ * Copyright (c) 2004-2017 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * This software was developed for the FreeBSD Project by ThinkSec AS and
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: pam_putenv.c 648 2013-03-05 17:54:27Z des 
+ * $OpenPAM: pam_putenv.c 938 2017-04-30 21:34:42Z des $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -42,8 +42,9 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pam_putenv.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
+__RCSID("$NetBSD: pam_putenv.c,v 1.2.8.1 2017/05/11 02:58:31 pgoyette Exp $");
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -63,15 +64,16 @@ pam_putenv(pam_handle_t *pamh,
 	const char *namevalue)
 {
 	char **env, *p;
+	size_t env_size;
 	int i;
 
 	ENTER();
-	if (pamh == NULL)
-		RETURNC(PAM_SYSTEM_ERR);
 
 	/* sanity checks */
-	if (namevalue == NULL || (p = strchr(namevalue, '=')) == NULL)
+	if ((p = strchr(namevalue, '=')) == NULL) {
+		errno = EINVAL;
 		RETURNC(PAM_SYSTEM_ERR);
+	}
 
 	/* see if the variable is already in the environment */
 	if ((i = openpam_findenv(pamh, namevalue,
@@ -85,12 +87,12 @@ pam_putenv(pam_handle_t *pamh,
 
 	/* grow the environment list if necessary */
 	if (pamh->env_count == pamh->env_size) {
-		env = realloc(pamh->env,
-		    sizeof(*env) * ((size_t)pamh->env_size * 2 + 1));
+		env_size = pamh->env_size * 2 + 1;
+		env = realloc(pamh->env, sizeof(*env) * env_size);
 		if (env == NULL)
 			RETURNC(PAM_BUF_ERR);
 		pamh->env = env;
-		pamh->env_size = pamh->env_size * 2 + 1;
+		pamh->env_size = env_size;
 	}
 
 	/* add the variable at the end */

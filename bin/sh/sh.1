@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.131.2.1 2017/05/02 03:19:14 pgoyette Exp $
+.\"	$NetBSD: sh.1,v 1.131.2.2 2017/05/11 02:58:28 pgoyette Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd April 29, 2017
+.Dd May 7, 2017
 .Dt SH 1
 .ds flags abCEeFfhnuvxIimpqV
 .Os
@@ -807,7 +807,8 @@ These are implemented as built-in commands.
 The syntax of the case command is
 .Bd -literal -offset indent
 case word in
-pattern) list ;;
+[(] pattern ) list ;&
+[(] pattern ) list ;;
 \&...
 esac
 .Ed
@@ -817,6 +818,25 @@ The pattern can actually be one or more patterns (see
 described later), separated by
 .Dq \*(Ba
 characters.
+.Pp
+Word is expanded and matched against each pattern in turn,
+from first to last,
+with each pattern being expanded just before the match is attempted.
+When a match is found, pattern comparisons cease, and the associated
+.Dq list
+(which may be empty)
+is evaluated.
+If the list is terminated with
+.Dq \&;&
+execution then falls through to the following list, if any,
+without evaluating its pattern, or attempting a match.
+When a list terminated with
+.Dq \&;;
+has been executed, or when
+.Dv esac
+is reached execution of the case statement is complete.
+The exit status is that of the last command executed
+from the last list evaluated, if any, or zero otherwise.
 .Ss Grouping Commands Together
 Commands may be grouped by writing either
 .Pp
@@ -2036,9 +2056,12 @@ The shift count must be less than or equal to the number of
 positional parameters (
 .Dq $# )
 before the shift.
-.It trap Oo Fl l Oc
 .It trap Ar action signal ...
+.It trap \-
+.It trap Oo Fl l Oc
+.It trap Oo Fl p Oc signal ...
 .It trap Ar N signal ...
+.Pp
 Cause the shell to parse and execute action when any of the specified
 signals are received.
 The signals are specified by signal number or as the name of the signal.
@@ -2048,13 +2071,15 @@ is
 .Li 0
 or its equivalent, EXIT,
 the action is executed when the shell exits.
+The
 .Ar action
-may be null, which cause the specified signals to be ignored.
+may be a null (empty) string,
+which causes the specified signals to be ignored.
 With
 .Ar action
 set to
 .Sq -
-the specified signals are set to their default action.
+the specified signals are set to their default actions.
 If the first
 .Ar signal
 is specified in its numeric form, then
@@ -2065,6 +2090,9 @@ but still standard,
 form should not be relied upon, use the explicit
 .Sq -
 action.
+If no signals are specified with an action of
+.Sq - ,
+all signals are reset.
 .Pp
 When the shell forks off a subshell, it resets trapped (but not ignored)
 signals to the default action.
@@ -2075,21 +2103,28 @@ ignored on entry to the shell.
 On interactive shells, the
 .Ic trap
 command will catch or reset signals ignored on entry.
+.Pp
 Issuing
 .Ic trap
 with option
 .Ar -l
 will print a list of valid signal names.
 .Ic trap
-without any arguments cause it to write a list of signals and their
-associated action to the standard output in a format that is suitable
-as an input to the shell that achieves the same trapping results.
+without any arguments causes it to write a list of signals and their
+associated non-default actions to the standard output in a format
+that is suitable as an input to the shell that achieves the same
+trapping results.
+With the
+.Ar -p
+flag, trap prints the same information for the signals specified,
+or if none are given, for all signals, including those where the
+action is the default.
 .Pp
 Examples:
 .Pp
 .Dl trap
 .Pp
-List trapped signals and their corresponding action.
+List trapped signals and their corresponding actions.
 .Pp
 .Dl trap -l
 .Pp
@@ -2109,11 +2144,30 @@ command (print the date) upon receiving signal INT.
 .Pp
 Run the
 .Dq HUP
-command upon receiving signal INT.
+command, or function, upon receiving signal INT.
 .Pp
 .Dl trap 1 2
 .Pp
 Reset the actions for signals 1 (HUP) and 2 (INT) to their defaults.
+.Pp
+.Bd -literal -offset indent
+traps=$(trap -p)
+   # more commands ...
+trap 'action' SIG
+   # more commands ...
+eval "$traps"
+.Ed
+.Pp
+Save the trap status, execute commands, changing some traps,
+and then reset all traps to their values at the start of the sequence.
+The
+.Fl p
+option is required in the first command here,
+or any signals that were previously
+untrapped (in their default states) 
+and which were altered during the intermediate code,
+would not be reset by the final
+.Dq eval .
 .It type Op Ar name ...
 Interpret each name as a command and print the resolution of the command
 search.
@@ -2348,14 +2402,19 @@ The current line number in the script or function.
 The name of a mail file, that will be checked for the arrival of new mail.
 Overridden by
 .Ev MAILPATH .
-.It Ev MAILCHECK
-The frequency in seconds that the shell checks for the arrival of mail
-in the files specified by the
-.Ev MAILPATH
-or the
-.Ev MAIL
-file.
-If set to 0, the check will occur at each prompt.
+The check occurs just before PS1 is written,
+immediately after reporting jobs which have changed status,
+in interactive shells only.
+New mail is considered to have arrived if the monitored file
+has increased in size since the last check.
+.\" .It Ev MAILCHECK
+.\" The frequency in seconds that the shell checks for the arrival of mail
+.\" in the files specified by the
+.\" .Ev MAILPATH
+.\" or the
+.\" .Ev MAIL
+.\" file.
+.\" If set to 0, the check will occur at each prompt.
 .It Ev MAILPATH
 A colon
 .Dq \&:
@@ -2436,7 +2495,10 @@ A
 .Nm
 command appeared in
 .At v1 .
-It was, however, unmaintainable so we wrote this one.
+It was replaced in
+.At v7
+with a version that introduced the basis of the current syntax.
+That was, however, unmaintainable so we wrote this one.
 .Sh BUGS
 Setuid shell scripts should be avoided at all costs, as they are a
 significant security risk.
@@ -2448,4 +2510,21 @@ The characters generated by filename completion should probably be quoted
 to ensure that the filename is still valid after the input line has been
 processed.
 .Pp
+The
+.\" markup?
+trap
+command cannot usefully be used, yet, within a command substitution,
+to obtain the current trap values,
+as all command substitutions are currently executed within a
+subshell environment,
+and in sub-shells all non-ignored, non-default, traps are reset.
+As a workaround, it is possible to redirect ooutput from
+.Dq trap
+or
+.Dq trap -p
+to a file, and then read the file later using the
+.Dq \&.
+command.
+.Pp
 Many, many, more.
+(But less than there were...)

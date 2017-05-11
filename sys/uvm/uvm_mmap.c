@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.162.6.1 2017/05/02 03:19:22 pgoyette Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.162.6.2 2017/05/11 02:58:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.162.6.1 2017/05/02 03:19:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.162.6.2 2017/05/11 02:58:42 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -287,7 +287,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	vaddr_t addr;
 	off_t pos;
 	vsize_t size, pageoff, newsize;
-	vm_prot_t prot, maxprot;
+	vm_prot_t prot, maxprot, extraprot;
 	int flags, fd, advice;
 	vaddr_t defaddr;
 	struct file *fp = NULL;
@@ -304,6 +304,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
 	prot = SCARG(uap, prot) & VM_PROT_ALL;
+	extraprot = PROT_MPROTECT_EXTRACT(SCARG(uap, prot));
 	flags = SCARG(uap, flags);
 	fd = SCARG(uap, fd);
 	pos = SCARG(uap, pos);
@@ -396,7 +397,11 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 		pos = 0;
 	}
 
-	PAX_MPROTECT_ADJUST(l, &prot, &maxprot);
+	maxprot = PAX_MPROTECT_MAXPROTECT(l, prot, extraprot, maxprot);
+	if (((prot | extraprot) & maxprot) != (prot | extraprot))
+		return EACCES;
+	if ((error = PAX_MPROTECT_VALIDATE(l, prot)))
+		return error;
 
 	pax_aslr_mmap(l, &addr, orig_addr, flags);
 
@@ -612,8 +617,7 @@ sys_mprotect(struct lwp *l, const struct sys_mprotect_args *uap,
 	if (error)
 		return EINVAL;
 
-	error = uvm_map_protect(&p->p_vmspace->vm_map, addr, addr + size, prot,
-				false);
+	error = uvm_map_protect_user(l, addr, addr + size, prot);
 	return error;
 }
 

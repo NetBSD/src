@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_disksort.c,v 1.13 2016/11/16 10:42:14 pgoyette Exp $	*/
+/*	$NetBSD: bufq_disksort.c,v 1.13.6.1 2017/05/11 02:58:40 pgoyette Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_disksort.c,v 1.13 2016/11/16 10:42:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_disksort.c,v 1.13.6.1 2017/05/11 02:58:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ insert:	TAILQ_INSERT_AFTER(&disksort->bq_head, bq, bp, b_actq);
 static struct buf *
 bufq_disksort_get(struct bufq_state *bufq, int remove)
 {
-	struct bufq_disksort *disksort = bufq->bq_private;
+	struct bufq_disksort *disksort = bufq_private(bufq);
 	struct buf *bp;
 
 	bp = TAILQ_FIRST(&disksort->bq_head);
@@ -195,7 +195,7 @@ bufq_disksort_get(struct bufq_state *bufq, int remove)
 static struct buf *
 bufq_disksort_cancel(struct bufq_state *bufq, struct buf *buf)
 {
-	struct bufq_disksort *disksort = bufq->bq_private;
+	struct bufq_disksort *disksort = bufq_private(bufq);
 	struct buf *bq;
 
 	TAILQ_FOREACH(bq, &disksort->bq_head, b_actq) {

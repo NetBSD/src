@@ -1,8 +1,6 @@
-/* $NetBSD: lroundf.c,v 1.3 2008/04/26 23:49:50 christos Exp $ */
-
 /*-
- * Copyright (c) 2004
- *	Matthias Drochner. All rights reserved.
+ * Copyright (c) 2015 Dag-Erling Smørgrav
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,6 +10,9 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
+ *    permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -24,57 +25,21 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $OpenPAM: t_pam_conv.h 938 2017-04-30 21:34:42Z des $
  */
 
-#include <math.h>
-#include <sys/ieee754.h>
-#include <machine/limits.h>
-#include "math_private.h"
+#ifndef T_PAM_CONV_H_INCLUDED
+#define T_PAM_CONV_H_INCLUDED
 
-#ifndef LROUNDNAME
-#define LROUNDNAME lroundf
-#define RESTYPE long int
-#define RESTYPE_MIN LONG_MIN
-#define RESTYPE_MAX LONG_MAX
+struct t_pam_conv_script {
+	int			 nmsg;
+	struct pam_message	*msgs;
+	struct pam_response	*resps;
+	char			*comment;
+};
+
+int t_pam_conv(int, const struct pam_message **, struct pam_response **,
+	void *);
+
 #endif
-
-#define RESTYPE_BITS (sizeof(RESTYPE) * 8)
-
-RESTYPE
-LROUNDNAME(float x)
-{
-	u_int32_t i0;
-	int e, s, shift;
-	RESTYPE res;
-
-	GET_FLOAT_WORD(i0, x);
-	e = i0 >> SNG_FRACBITS;
-	s = (uint32_t)e >> SNG_EXPBITS;
-	e = (e & 0xff) - SNG_EXP_BIAS;
-
-	/* 1.0 x 2^-1 is the smallest number which can be rounded to 1 */
-	if (e < -1)
-		return (0);
-	/* 1.0 x 2^31 (or 2^63) is already too large */
-	if (e >= (int)RESTYPE_BITS - 1)
-		return (s ? RESTYPE_MIN : RESTYPE_MAX); /* ??? unspecified */
-
-	/* >= 2^23 is already an exact integer */
-	if (e < SNG_FRACBITS) {
-		/* add 0.5, extraction below will truncate */
-		x += (s ? -0.5 : 0.5);
-	}
-
-	GET_FLOAT_WORD(i0, x);
-	e = ((i0 >> SNG_FRACBITS) & 0xff) - SNG_EXP_BIAS;
-	i0 &= 0x7fffff;
-	i0 |= (1 << SNG_FRACBITS);
-
-	shift = e - SNG_FRACBITS;
-	if (shift >=0)
-		res = (shift < 32 ? (RESTYPE)i0 << shift : 0);
-	else
-		res = (shift > -32 ? i0 >> -shift : 0);
-
-	return (s ? -res : res);
-}

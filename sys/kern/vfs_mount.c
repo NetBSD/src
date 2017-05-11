@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.58.2.1 2017/04/27 05:36:37 pgoyette Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.58.2.2 2017/05/11 02:58:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.58.2.1 2017/04/27 05:36:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.58.2.2 2017/05/11 02:58:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -148,6 +148,8 @@ struct mount *
 vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 {
 	struct mount *mp;
+	int error __diagused;
+	extern struct vfsops dead_vfsops;
 
 	mp = kmem_zalloc(sizeof(*mp), KM_SLEEP);
 	if (mp == NULL)
@@ -161,6 +163,10 @@ vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
 	mp->mnt_vnodecovered = vp;
 	mount_initspecific(mp);
+	if (vfsops != &dead_vfsops) {
+		error = fstrans_mount(mp);
+		KASSERT(error == 0);
+	}
 
 	mutex_enter(&mountgen_lock);
 	mp->mnt_gen = mountgen++;
@@ -318,12 +324,19 @@ _vfs_busy(struct mount *mp, bool wait)
 	KASSERT(mp->mnt_refcnt > 0);
 
 	if (wait) {
+		fstrans_start(mp, FSTRANS_SHARED);
 		mutex_enter(&mp->mnt_unmounting);
-	} else if (!mutex_tryenter(&mp->mnt_unmounting)) {
-		return EBUSY;
+	} else {
+		if (fstrans_start_nowait(mp, FSTRANS_SHARED))
+			return EBUSY;
+		if (!mutex_tryenter(&mp->mnt_unmounting)) {
+			fstrans_done(mp);
+			return EBUSY;
+		}
 	}
 	if (__predict_false((mp->mnt_iflag & IMNT_GONE) != 0)) {
 		mutex_exit(&mp->mnt_unmounting);
+		fstrans_done(mp);
 		return ENOENT;
 	}
 	++mp->mnt_busynest;
@@ -351,9 +364,6 @@ vfs_trybusy(struct mount *mp)
  * Unbusy a busy filesystem.
  *
  * Every successful vfs_busy() call must be undone by a vfs_unbusy() call.
- *
- * => If keepref is true, preserve reference added by vfs_busy().
- * => If nextp != NULL, acquire mountlist_lock.
  */
 void
 vfs_unbusy(struct mount *mp)
@@ -365,6 +375,7 @@ vfs_unbusy(struct mount *mp)
 	KASSERT(mp->mnt_busynest != 0);
 	mp->mnt_busynest--;
 	mutex_exit(&mp->mnt_unmounting);
+	fstrans_done(mp);
 	vfs_rele(mp);
 }
 
@@ -736,11 +747,6 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	if ((mp = vfs_mountalloc(vfsops, vp)) == NULL) {
 		vfs_delref(vfsops);
 		return ENOMEM;
-	}
-
-	if ((error = fstrans_mount(mp)) != 0) {
-		vfs_rele(mp);
-		return error;
 	}
 
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
@@ -1274,8 +1280,6 @@ done:
 
 		mp->mnt_flag |= MNT_ROOTFS;
 		mp->mnt_op->vfs_refcount++;
-		error = fstrans_mount(mp);
-		KASSERT(error == 0);
 
 		/*
 		 * Get the vnode for '/'.  Set cwdi0.cwdi_cdir to

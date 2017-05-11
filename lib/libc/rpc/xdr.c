@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.33 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: xdr.c,v 1.33.20.1 2017/05/11 02:58:33 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.33 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.33.20.1 2017/05/11 02:58:33 pgoyette Exp $");
 #endif
 #endif
 
@@ -59,8 +59,10 @@ __RCSID("$NetBSD: xdr.c,v 1.33 2013/03/11 20:19:29 tron Exp $");
 #include <stdlib.h>
 #include <string.h>
 
+#include <rpc/rpc.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
+#include <rpc/rpc_com.h>
 
 #ifdef __weak_alias
 __weak_alias(xdr_bool,_xdr_bool)
@@ -98,7 +100,6 @@ __weak_alias(xdr_wrapstring,_xdr_wrapstring)
  */
 #define XDR_FALSE	((long) 0)
 #define XDR_TRUE	((long) 1)
-#define LASTUNSIGNED	((u_int) 0-1)
 
 /*
  * for unit alignment
@@ -590,6 +591,7 @@ xdr_bytes(XDR *xdrs, char **cpp, u_int *sizep, u_int maxsize)
 {
 	char *sp;  		/* sp is the actual string pointer */
 	u_int nodesize;
+	bool_t ret, allocated = FALSE;
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(cpp != NULL);
@@ -619,6 +621,7 @@ xdr_bytes(XDR *xdrs, char **cpp, u_int *sizep, u_int maxsize)
 		}
 		if (sp == NULL) {
 			*cpp = sp = mem_alloc(nodesize);
+			allocated = TRUE;
 		}
 		if (sp == NULL) {
 			warn("%s: out of memory", __func__);
@@ -627,7 +630,14 @@ xdr_bytes(XDR *xdrs, char **cpp, u_int *sizep, u_int maxsize)
 		/* FALLTHROUGH */
 
 	case XDR_ENCODE:
-		return (xdr_opaque(xdrs, sp, nodesize));
+		ret = xdr_opaque(xdrs, sp, nodesize);
+		if ((xdrs->x_op == XDR_DECODE) && (ret == FALSE)) {
+			if (allocated == TRUE) {
+				free(sp);
+				*cpp = NULL;
+			}
+		}
+		return (ret);
 
 	case XDR_FREE:
 		if (sp != NULL) {
@@ -727,6 +737,7 @@ xdr_string(XDR *xdrs, char **cpp, u_int maxsize)
 	u_int size = 0;		/* XXX: GCC */
 	u_int nodesize;
 	size_t len;
+	bool_t ret, allocated = FALSE;
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(cpp != NULL);
@@ -767,8 +778,10 @@ xdr_string(XDR *xdrs, char **cpp, u_int maxsize)
 		if (nodesize == 0) {
 			return (TRUE);
 		}
-		if (sp == NULL)
+		if (sp == NULL) {
 			*cpp = sp = mem_alloc(nodesize);
+			allocated = TRUE;
+		}
 		if (sp == NULL) {
 			warn("%s: out of memory", __func__);
 			return (FALSE);
@@ -777,7 +790,14 @@ xdr_string(XDR *xdrs, char **cpp, u_int maxsize)
 		/* FALLTHROUGH */
 
 	case XDR_ENCODE:
-		return (xdr_opaque(xdrs, sp, size));
+		ret = xdr_opaque(xdrs, sp, size);
+		if ((xdrs->x_op == XDR_DECODE) && (ret == FALSE)) {
+			if (allocated == TRUE) {
+				free(sp);
+				*cpp = NULL;
+			}
+		}
+		return (ret);
 
 	case XDR_FREE:
 		mem_free(sp, nodesize);
@@ -799,7 +819,7 @@ xdr_wrapstring(XDR *xdrs, char **cpp)
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(cpp != NULL);
 
-	return xdr_string(xdrs, cpp, LASTUNSIGNED);
+	return xdr_string(xdrs, cpp, RPC_MAXDATASIZE);
 }
 
 /*

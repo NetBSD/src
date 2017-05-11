@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: cvs.sh.sh,v 1.3 2003/07/26 19:46:33 salo Exp $
+#	$NetBSD: cvs.sh.sh,v 1.3.88.1 2017/05/11 02:58:34 pgoyette Exp $
 
 # ensure that HOME is set for pserver modes
 UID=`id -u`
@@ -13,10 +13,6 @@ export CVS_RSH=ssh
 case $1 in
 	netbsd)
 		export CVSROOT="anoncvs@anoncvs.NetBSD.org:/cvsroot"
-		shift
-		;;
-	freebsd)
-		export CVSROOT=":pserver:anoncvs@anoncvs.freebsd.org:/home/ncvs"
 		shift
 		;;
 	openbsd)

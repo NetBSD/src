@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.47 2013/06/28 17:36:18 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.47.18.1 2017/05/11 02:58:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.47 2013/06/28 17:36:18 christos Exp $");
+__RCSID("$NetBSD: collect.c,v 1.47.18.1 2017/05/11 02:58:42 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -314,9 +314,11 @@ coll_int(int signo)
 			(void)puts("@");
 			(void)fflush(stdout);
 			clearerr(stdin);
+			signal(SIGINT, o);
 			return;
 		}
 		hadintr = 1;
+		signal(SIGINT, o);
 		longjmp(reset_jmpbuf, signo);
 	}
 	if (collf) {

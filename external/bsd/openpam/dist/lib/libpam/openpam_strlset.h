@@ -1,7 +1,7 @@
-/*	$NetBSD: openpam_strlset.h,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+/*	$NetBSD: openpam_strlset.h,v 1.2.8.1 2017/05/11 02:58:31 pgoyette Exp $	*/
 
 /*-
- * Copyright (c) 2011 Dag-Erling Smørgrav
+ * Copyright (c) 2014 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_strlset.h 807 2014-09-09 09:41:32Z des 
+ * $OpenPAM: openpam_strlset.h 938 2017-04-30 21:34:42Z des $
  */
 
 #ifndef OPENPAM_STRLSET_H_INCLUDED

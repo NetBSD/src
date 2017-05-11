@@ -1,4 +1,4 @@
-/*	$NetBSD: ppbreg.h,v 1.6 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: ppbreg.h,v 1.6.154.1 2017/05/11 02:58:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -91,7 +91,7 @@
 /*
  * bridge control register (see table 3.9 of ppb rev. 1.1)
  *
- * Note these are in the *upper* 16 bits if the Bridge Control
+ * Note these are in the *upper* 16 bits of the Bridge Control
  * Register (the bottom 16 are Interrupt Line and Interrupt Pin).
  */
 #define	PPB_BC_BITBASE			   16

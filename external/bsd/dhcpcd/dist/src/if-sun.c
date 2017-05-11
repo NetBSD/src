@@ -159,6 +159,13 @@ if_getssid(struct interface *ifp)
 	return -1;
 }
 
+unsigned short
+if_vlanid(__unused const struct interface *ifp)
+{
+
+	return 0;
+}
+
 int
 if_vimaster(__unused const struct dhcpcd_ctx *ctx, __unused const char *ifname)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lparser.c,v 1.7.4.1 2017/05/02 03:19:15 pgoyette Exp $	*/
+/*	$NetBSD: lparser.c,v 1.7.4.2 2017/05/11 02:58:32 pgoyette Exp $	*/
 
 /*
 ** Id: lparser.c,v 2.155 2016/08/01 19:51:24 roberto Exp 
@@ -1406,7 +1406,7 @@ static void test_then_block (LexState *ls, int *escapelist) {
     luaK_goiffalse(ls->fs, &v);  /* will jump to label if condition is true */
     enterblock(fs, &bl, 0);  /* must enter block before 'goto' */
     gotostat(ls, v.t);  /* handle goto/break */
-    skipnoopstat(ls);  /* skip other no-op statements */
+    while (testnext(ls, ';')) {}  /* skip colons */
     if (block_follow(ls, 0)) {  /* 'goto' is the entire block? */
       leaveblock(fs);
       return;  /* and that is it */

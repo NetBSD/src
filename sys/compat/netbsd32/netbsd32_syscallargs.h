@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscallargs.h,v 1.128 2017/01/16 17:43:04 christos Exp $ */
+/* $NetBSD: netbsd32_syscallargs.h,v 1.128.4.1 2017/05/11 02:58:37 pgoyette Exp $ */
 
 /*
  * System call argument lists.
@@ -9,6 +9,9 @@
 
 #ifndef _NETBSD32_SYS_SYSCALLARGS_H_
 #define	_NETBSD32_SYS_SYSCALLARGS_H_
+
+/* Forward declaration */
+struct lwp;
 
 #define	NETBSD32_SYS_MAXSYSARGS	8
 

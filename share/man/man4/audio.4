@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.78 2017/04/17 22:40:06 nat Exp $
+.\"	$NetBSD: audio.4,v 1.78.2.1 2017/05/11 02:58:34 pgoyette Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -190,7 +190,6 @@ or
 .Xr write 2
 calls, but it can also be mapped into user memory with
 .Xr mmap 2
-(when supported by the device).
 Once the device has been mapped it can no longer be accessed
 by read or write; all access is by reading and writing to
 the mapped memory.
@@ -776,6 +775,3 @@ string values.
 .Sh HISTORY
 Support for virtual channels and mixing first appeared in
 .Nx 8.0 .
-.Sh BUGS
-.Xr mmap 2
-currently does not work and should be avoided.

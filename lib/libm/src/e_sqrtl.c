@@ -28,8 +28,9 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/msun/src/e_sqrtl.c 176720 2008-03-02 01:47:58Z das $");
 #endif
-__RCSID("$NetBSD: e_sqrtl.c,v 1.5 2016/08/26 08:31:17 christos Exp $");
+__RCSID("$NetBSD: e_sqrtl.c,v 1.5.4.1 2017/05/11 02:58:33 pgoyette Exp $");
 
+#include "namespace.h"
 #include <machine/ieee.h>
 #include <float.h>
 

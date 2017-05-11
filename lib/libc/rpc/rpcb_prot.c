@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_prot.c,v 1.11 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: rpcb_prot.c,v 1.11.20.1 2017/05/11 02:58:33 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_prot.c 1.9 89/04/21 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_prot.c,v 1.11 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: rpcb_prot.c,v 1.11.20.1 2017/05/11 02:58:33 pgoyette Exp $");
 #endif
 #endif
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: rpcb_prot.c,v 1.11 2013/03/11 20:19:29 tron Exp $");
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <rpc/rpcb_prot.h>
+#include <rpc/rpc_com.h>
 
 #include <assert.h>
 
@@ -85,13 +86,13 @@ xdr_rpcb(XDR *xdrs, RPCB *objp)
 	if (!xdr_u_int32_t(xdrs, &objp->r_vers)) {
 		return (FALSE);
 	}
-	if (!xdr_string(xdrs, &objp->r_netid, (u_int)~0)) {
+	if (!xdr_string(xdrs, &objp->r_netid, RPC_MAXDATASIZE)) {
 		return (FALSE);
 	}
-	if (!xdr_string(xdrs, &objp->r_addr, (u_int)~0)) {
+	if (!xdr_string(xdrs, &objp->r_addr, RPC_MAXDATASIZE)) {
 		return (FALSE);
 	}
-	if (!xdr_string(xdrs, &objp->r_owner, (u_int)~0)) {
+	if (!xdr_string(xdrs, &objp->r_owner, RPC_MAXDATASIZE)) {
 		return (FALSE);
 	}
 	return (TRUE);
@@ -193,19 +194,19 @@ xdr_rpcb_entry(XDR *xdrs, rpcb_entry *objp)
 
 	_DIAGASSERT(objp != NULL);
 
-	if (!xdr_string(xdrs, &objp->r_maddr, (u_int)~0)) {
+	if (!xdr_string(xdrs, &objp->r_maddr, RPC_MAXDATASIZE)) {
 		return (FALSE);
 	}
-	if (!xdr_string(xdrs, &objp->r_nc_netid, (u_int)~0)) {
+	if (!xdr_string(xdrs, &objp->r_nc_netid, RPC_MAXDATASIZE)) {
 		return (FALSE);
 	}
 	if (!xdr_u_int32_t(xdrs, &objp->r_nc_semantics)) {
 		return (FALSE);
 	}
-	if (!xdr_string(xdrs, &objp->r_nc_protofmly, (u_int)~0)) {
+	if (!xdr_string(xdrs, &objp->r_nc_protofmly, RPC_MAXDATASIZE)) {
 		return (FALSE);
 	}
-	if (!xdr_string(xdrs, &objp->r_nc_proto, (u_int)~0)) {
+	if (!xdr_string(xdrs, &objp->r_nc_proto, RPC_MAXDATASIZE)) {
 		return (FALSE);
 	}
 	return (TRUE);
@@ -329,7 +330,7 @@ xdr_rpcb_rmtcallres(XDR *xdrs, struct rpcb_rmtcallres *p)
 
 	_DIAGASSERT(p != NULL);
 
-	if (!xdr_string(xdrs, &objp->addr, (u_int)~0)) {
+	if (!xdr_string(xdrs, &objp->addr, RPC_MAXDATASIZE)) {
 		return (FALSE);
 	}
 	if (!xdr_u_int(xdrs, &objp->results.results_len)) {
@@ -349,6 +350,11 @@ xdr_netbuf(XDR *xdrs, struct netbuf *objp)
 	if (!xdr_u_int32_t(xdrs, (u_int32_t *) &objp->maxlen)) {
 		return (FALSE);
 	}
+
+	if (objp->maxlen > RPC_MAXDATASIZE) {
+		return (FALSE);
+	}
+
 	dummy = xdr_bytes(xdrs, (char **)(void *)&(objp->buf),
 			(u_int *)&(objp->len), objp->maxlen);
 	return (dummy);

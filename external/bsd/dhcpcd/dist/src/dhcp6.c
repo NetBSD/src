@@ -1353,7 +1353,11 @@ dhcp6_dadcallback(void *arg)
 		{
 			struct ipv6_addr *ap2;
 
+#ifdef SMALL
+			valid = true;
+#else
 			valid = (ap->delegating_prefix == NULL);
+#endif
 			TAILQ_FOREACH(ap2, &state->addrs, next) {
 				if (ap2->flags & IPV6_AF_ADDED &&
 				    !(ap2->flags & IPV6_AF_DADCOMPLETED))
@@ -1366,8 +1370,10 @@ dhcp6_dadcallback(void *arg)
 				logdebugx("%s: DHCPv6 DAD completed",
 				    ifp->name);
 				script_runreason(ifp,
-				    ap->delegating_prefix ?
-				    "DELEGATED6" : state->reason);
+#ifndef SMALL
+				    ap->delegating_prefix ? "DELEGATED6" :
+#endif
+				    state->reason);
 				if (valid)
 					dhcpcd_daemonise(ifp->ctx);
 			}
@@ -2039,7 +2045,7 @@ dhcp6_findia(struct interface *ifp, struct dhcp6_message *m, size_t l,
 	uint16_t nl;
 	uint8_t iaid[4];
 	char buf[sizeof(iaid) * 3];
-	struct ipv6_addr *ap, *nap;
+	struct ipv6_addr *ap;
 
 	if (l < sizeof(*m)) {
 		/* Should be impossible with guards at packet in
@@ -2162,20 +2168,60 @@ dhcp6_findia(struct interface *ifp, struct dhcp6_message *m, size_t l,
 		i++;
 	}
 
-	TAILQ_FOREACH_SAFE(ap, &state->addrs, next, nap) {
-		if (ap->flags & IPV6_AF_STALE) {
-			eloop_q_timeout_delete(ifp->ctx->eloop, 0, NULL, ap);
-			if (ap->flags & IPV6_AF_REQUEST) {
-				ap->prefix_vltime = ap->prefix_pltime = 0;
-			} else {
-				TAILQ_REMOVE(&state->addrs, ap, next);
-				free(ap);
-			}
-		}
-	}
 	if (i == 0 && e)
 		return -1;
 	return i;
+}
+
+static void
+dhcp6_deprecateaddrs(struct ipv6_addrhead *addrs)
+{
+	struct ipv6_addr *ia, *ian;
+
+	TAILQ_FOREACH_SAFE(ia, addrs, next, ian) {
+		if (ia->flags & IPV6_AF_STALE) {
+			if (ia->prefix_vltime != 0)
+				logdebugx("%s: %s: became stale",
+				    ia->iface->name, ia->saddr);
+			ia->prefix_pltime = 0;
+		} else if (ia->prefix_vltime == 0)
+			loginfox("%s: %s: no valid lifetime",
+			    ia->iface->name, ia->saddr);
+		else
+			continue;
+
+#ifndef SMALL
+		/* If we delegated from this prefix, deprecate or remove
+		 * the delegations. */
+		if (ia->flags & IPV6_AF_DELEGATEDPFX) {
+			struct ipv6_addr *da;
+			bool touched = false;
+
+			TAILQ_FOREACH(da, &ia->pd_pfxs, pd_next) {
+				if (ia->prefix_vltime == 0) {
+					if (da->prefix_vltime != 0) {
+						da->prefix_vltime = 0;
+						touched = true;
+					}
+				} else if (da->prefix_pltime != 0) {
+					da->prefix_pltime = 0;
+					touched = true;
+				}
+			}
+			if (touched)
+				ipv6_addaddrs(&ia->pd_pfxs);
+		}
+#endif
+
+		if (ia->flags & IPV6_AF_REQUEST) {
+			ia->prefix_vltime = ia->prefix_pltime = 0;
+			eloop_q_timeout_delete(ia->iface->ctx->eloop,
+			    0, NULL, ia);
+			continue;
+		}
+		TAILQ_REMOVE(addrs, ia, next);
+		ipv6_freeaddr(ia);
+	}
 }
 
 static int
@@ -2416,7 +2462,7 @@ dhcp6_ifdelegateaddr(struct interface *ifp, struct ipv6_addr *prefix,
 	if (strcmp(ifp->name, prefix->iface->name) == 0) {
 		if (prefix->prefix_exclude_len == 0) {
 			/* Don't spam the log automatically */
-			if (sla)
+			if (sla != NULL)
 				logwarnx("%s: DHCPv6 server does not support "
 				    "OPTION_PD_EXCLUDE",
 				    ifp->name);
@@ -2428,14 +2474,14 @@ dhcp6_ifdelegateaddr(struct interface *ifp, struct ipv6_addr *prefix,
 	    sla, if_ia)) == -1)
 		return NULL;
 
-	if (fls64(sla->suffix) > 128 - pfxlen) {
+	if (sla != NULL && fls64(sla->suffix) > 128 - pfxlen) {
 		logerrx("%s: suffix %" PRIu64 " + prefix_len %d > 128",
 		    ifp->name, sla->suffix, pfxlen);
 		return NULL;
 	}
 
 	/* Add our suffix */
-	if (sla->suffix) {
+	if (sla != NULL && sla->suffix != 0) {
 		daddr = addr;
 		vl = be64dec(addr.s6_addr + 8);
 		vl |= sla->suffix;
@@ -2510,9 +2556,12 @@ dhcp6_script_try_run(struct interface *ifp, int delegated)
 			    ipv6_iffindaddr(ap->iface, &ap->addr,
 			                    IN6_IFF_TENTATIVE))
 				ap->flags |= IPV6_AF_DADCOMPLETED;
-			if ((ap->flags & IPV6_AF_DADCOMPLETED) == 0 &&
-			    ((delegated && ap->delegating_prefix) ||
-			    (!delegated && !ap->delegating_prefix)))
+			if ((ap->flags & IPV6_AF_DADCOMPLETED) == 0
+#ifndef SMALL
+			    && ((delegated && ap->delegating_prefix) ||
+			    (!delegated && !ap->delegating_prefix))
+#endif
+			    )
 			{
 				completed = 0;
 				break;
@@ -3166,6 +3215,7 @@ dhcp6_handledata(void *arg)
 			eloop_timeout_add_sec(ifp->ctx->eloop,
 			    (time_t)state->expire, dhcp6_startexpire, ifp);
 
+		dhcp6_deprecateaddrs(&state->addrs);
 		ipv6_addaddrs(&state->addrs);
 
 		if (state->state == DH6S_INFORMED)
@@ -3213,24 +3263,12 @@ dhcp6_open(struct dhcpcd_ctx *ctx)
 	ctx->dhcp6_fd = xsocket(PF_INET6, SOCK_DGRAM | SOCK_FLAGS, IPPROTO_UDP);
 #undef SOCK_FLAGS
 	if (ctx->dhcp6_fd == -1)
-		return -1;
-
-	n = 1;
-	if (setsockopt(ctx->dhcp6_fd, SOL_SOCKET, SO_REUSEADDR,
-	    &n, sizeof(n)) == -1)
 		goto errexit;
 
 	n = 1;
 	if (setsockopt(ctx->dhcp6_fd, SOL_SOCKET, SO_BROADCAST,
 	    &n, sizeof(n)) == -1)
 		goto errexit;
-
-#ifdef SO_REUSEPORT
-	n = 1;
-	if (setsockopt(ctx->dhcp6_fd, SOL_SOCKET, SO_REUSEPORT,
-	    &n, sizeof(n)) == -1)
-		logerr("SO_REUSEPORT");
-#endif
 
 	if (!(ctx->options & DHCPCD_MASTER)) {
 		/* Bind to the link-local address to allow more than one
@@ -3260,8 +3298,11 @@ dhcp6_open(struct dhcpcd_ctx *ctx)
 	return 0;
 
 errexit:
-	close(ctx->dhcp6_fd);
-	ctx->dhcp6_fd = -1;
+	logerr(__func__);
+	if (ctx->dhcp6_fd != -1) {
+		close(ctx->dhcp6_fd);
+		ctx->dhcp6_fd = -1;
+	}
 	return -1;
 }
 
@@ -3428,40 +3469,20 @@ dhcp6_freedrop(struct interface *ifp, int drop, const char *reason)
 	struct dhcp6_state *state;
 	struct dhcpcd_ctx *ctx;
 	unsigned long long options;
-#ifndef SMALL
-	int dropdele;
-#endif
 
-	/*
-	 * As the interface is going away from dhcpcd we need to
-	 * remove the delegated addresses, otherwise we lose track
-	 * of which interface is delegating as we remeber it by pointer.
-	 * So if we need to change this behaviour, we need to change
-	 * how we remember which interface delegated.
-	 *
-	 * XXX The below is no longer true due to the change of the
-	 * default IAID, but do PPP links have stable ethernet
-	 * addresses?
-	 *
-	 * To make it more interesting, on some OS's with PPP links
-	 * there is no guarantee the delegating interface will have
-	 * the same name or index so think very hard before changing
-	 * this.
-	 */
 	if (ifp->options)
 		options = ifp->options->options;
 	else
 		options = ifp->ctx->options;
-#ifndef SMALL
-	dropdele = (options & (DHCPCD_STOPPING | DHCPCD_RELEASE) &&
-	    (options & DHCPCD_NODROP) != DHCPCD_NODROP);
-#endif
 
 	if (ifp->ctx->eloop)
 		eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 
 #ifndef SMALL
-	if (dropdele)
+	/* If we're dropping the lease, drop delegated addresses.
+	 * If, for whatever reason, we don't drop them in the future
+	 * then they should at least be marked as deprecated (pltime 0). */
+	if (drop && (options & DHCPCD_NODROP) != DHCPCD_NODROP)
 		dhcp6_delete_delegates(ifp);
 #endif
 
@@ -3573,9 +3594,11 @@ dhcp6_env(char **env, const char *prefix, const struct interface *ifp,
 	char *pfx;
 	uint32_t en;
 	const struct dhcpcd_ctx *ctx;
+#ifndef SMALL
 	const struct dhcp6_state *state;
 	const struct ipv6_addr *ap;
 	char *v, *val;
+#endif
 
 	n = 0;
 	if (m == NULL)
@@ -3676,6 +3699,7 @@ dhcp6_env(char **env, const char *prefix, const struct interface *ifp,
 	free(pfx);
 
 delegated:
+#ifndef SMALL
         /* Needed for Delegated Prefixes */
 	state = D6_CSTATE(ifp);
 	i = 0;
@@ -3707,6 +3731,7 @@ delegated:
         }
 	if (i)
 		n++;
+#endif
 
 	return (ssize_t)n;
 }

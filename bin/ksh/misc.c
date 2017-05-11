@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.15.34.1 2017/05/02 03:19:14 pgoyette Exp $	*/
+/*	$NetBSD: misc.c,v 1.15.34.2 2017/05/11 02:58:28 pgoyette Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.15.34.1 2017/05/02 03:19:14 pgoyette Exp $");
+__RCSID("$NetBSD: misc.c,v 1.15.34.2 2017/05/11 02:58:28 pgoyette Exp $");
 #endif
 
 
@@ -683,12 +683,11 @@ do_gmatch(s, se, p, pe, isfile)
 		  case 0x80|'+': /* matches one or more times */
 		  case 0x80|'*': /* matches zero or more times */
 			if (!(prest = pat_scan(++p, pe, 0)))
-				break;
-			s--;
+				return 0;
 			/* take care of zero matches */
 			if (p[-1] == (0x80 | '*')
 			    && do_gmatch(s, se, prest, pe, isfile))
-				continue;
+				return 1;
 			for (psub = p; ; psub = pnext) {
 				pnext = pat_scan(psub, pe, 1);
 				for (srest = s; srest <= se; srest++) {
@@ -704,18 +703,17 @@ do_gmatch(s, se, p, pe, isfile)
 				if (pnext == prest)
 					break;
 			}
-			break;
+			return 0;
 
 		  case 0x80|'?': /* matches zero or once */
 		  case 0x80|'@': /* matches one of the patterns */
 		  case 0x80|' ': /* simile for @ */
 			if (!(prest = pat_scan(++p, pe, 0)))
-				break;
-			s--;
+				return 0;
 			/* Take care of zero matches */
 			if (p[-1] == (0x80 | '?')
 			    && do_gmatch(s, se, prest, pe, isfile))
-				continue;
+				return 1;
 			for (psub = p; ; psub = pnext) {
 				pnext = pat_scan(psub, pe, 1);
 				srest = prest == pe ? se : s;
@@ -724,17 +722,16 @@ do_gmatch(s, se, p, pe, isfile)
 						      psub, pnext - 2, isfile)
 					    && do_gmatch(srest, se,
 							 prest, pe, isfile))
-						continue;
+						return 1;
 				}
 				if (pnext == prest)
 					break;
 			}
-			break;
+			return 0;
 
 		  case 0x80|'!': /* matches none of the patterns */
 			if (!(prest = pat_scan(++p, pe, 0)))
-				break;
-			s--;
+				return 0;
 			for (srest = s; srest <= se; srest++) {
 				int matched = 0;
 
@@ -751,9 +748,9 @@ do_gmatch(s, se, p, pe, isfile)
 				}
 				if (!matched && do_gmatch(srest, se,
 							  prest, pe, isfile))
-					continue;
+					return 1;
 			}
-			break;
+			return 0;
 
 		  default:
 			if (sc != pc)

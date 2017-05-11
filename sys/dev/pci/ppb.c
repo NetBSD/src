@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.60.2.1 2017/05/02 03:19:20 pgoyette Exp $	*/
+/*	$NetBSD: ppb.c,v 1.60.2.2 2017/05/11 02:58:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.60.2.1 2017/05/02 03:19:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.60.2.2 2017/05/11 02:58:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ ppbattach(device_t parent, device_t self, void *aux)
 			    sc->sc_pciecapoff + PCIE_SLCSR, reg);
 		}
 #ifdef PPB_USEINTR
-#if 0
+#if 0 /* notyet */
 		/*
 		 * XXX Initialize workqueue or something else for
 		 * HotPlug support.
@@ -267,77 +267,94 @@ ppbattach(device_t parent, device_t self, void *aux)
 			sc->sc_intrhand = pci_intr_establish_xname(pc,
 			    sc->sc_pihp[0], IPL_BIO, ppb_intr, sc,
 			    device_xname(sc->sc_dev));
-
-		if (sc->sc_intrhand) {
-			pcireg_t slcap, slcsr, val;
-
-			intrstr = pci_intr_string(pc, sc->sc_pihp[0], intrbuf,
-			    sizeof(intrbuf));
-			aprint_normal_dev(self, "%s\n", intrstr);
-
-			/* Clear any pending events */
-			slcsr = pci_conf_read(pc, pa->pa_tag,
-			    sc->sc_pciecapoff + PCIE_SLCSR);
-			pci_conf_write(pc, pa->pa_tag,
-			    sc->sc_pciecapoff + PCIE_SLCSR, slcsr);
-
-			/* Enable interrupt. */
-			val = 0;
-			slcap = pci_conf_read(pc, pa->pa_tag,
-			    sc->sc_pciecapoff + PCIE_SLCAP);
-			if (slcap & PCIE_SLCAP_ABP)
-				val |= PCIE_SLCSR_ABE;
-			if (slcap & PCIE_SLCAP_PCP)
-				val |= PCIE_SLCSR_PFE;
-			if (slcap & PCIE_SLCAP_MSP)
-				val |= PCIE_SLCSR_MSE;
-#if 0
-			/*
-			 * XXX Disable for a while because setting
-			 * PCIE_SLCSR_CCE makes break device access on
-			 * some environment.
-			 */
-			if ((slcap & PCIE_SLCAP_NCCS) == 0)
-				val |= PCIE_SLCSR_CCE;
 #endif
-			/* Attention indicator off by default */
-			if (slcap & PCIE_SLCAP_AIP) {
-				val |= __SHIFTIN(PCIE_SLCSR_IND_OFF,
-				    PCIE_SLCSR_AIC);
-			}
-			/* Power indicator */
-			if (slcap & PCIE_SLCAP_PIP) {
-				/*
-				 * Indicator off:
-				 *  a) card not present
-				 *  b) power fault
-				 *  c) MRL sensor off
-				 */
-				if (((slcsr & PCIE_SLCSR_PDS) == 0)
-				    || ((slcsr & PCIE_SLCSR_PFD) != 0)
-				    || (((slcap & PCIE_SLCAP_MSP) != 0)
-					&& ((slcsr & PCIE_SLCSR_MS) != 0)))
-					val |= __SHIFTIN(PCIE_SLCSR_IND_OFF,
-					    PCIE_SLCSR_PIC);
-				else
-					val |= __SHIFTIN(PCIE_SLCSR_IND_ON,
-					    PCIE_SLCSR_PIC);
-			}
-
-			val |= PCIE_SLCSR_DLLSCE | PCIE_SLCSR_HPE
-			    | PCIE_SLCSR_PDE;
-			slcsr = val;
-			pci_conf_write(pc, pa->pa_tag,
-			    sc->sc_pciecapoff + PCIE_SLCSR, slcsr);
-		}
-#endif /* PPB_USEINTR */
 	}
+
+#ifdef PPB_USEINTR
+	if (sc->sc_intrhand != NULL) {
+		pcireg_t slcap, slcsr, val;
+
+		intrstr = pci_intr_string(pc, sc->sc_pihp[0], intrbuf,
+		    sizeof(intrbuf));
+		aprint_normal_dev(self, "%s\n", intrstr);
+
+		/* Clear any pending events */
+		slcsr = pci_conf_read(pc, pa->pa_tag,
+		    sc->sc_pciecapoff + PCIE_SLCSR);
+		pci_conf_write(pc, pa->pa_tag,
+		    sc->sc_pciecapoff + PCIE_SLCSR, slcsr);
+
+		/* Enable interrupt. */
+		val = 0;
+		slcap = pci_conf_read(pc, pa->pa_tag,
+		    sc->sc_pciecapoff + PCIE_SLCAP);
+		if (slcap & PCIE_SLCAP_ABP)
+			val |= PCIE_SLCSR_ABE;
+		if (slcap & PCIE_SLCAP_PCP)
+			val |= PCIE_SLCSR_PFE;
+		if (slcap & PCIE_SLCAP_MSP)
+			val |= PCIE_SLCSR_MSE;
+#if 0
+		/*
+		 * XXX Disable for a while because setting
+		 * PCIE_SLCSR_CCE makes break device access on
+		 * some environment.
+		 */
+		if ((slcap & PCIE_SLCAP_NCCS) == 0)
+			val |= PCIE_SLCSR_CCE;
+#endif
+		/* Attention indicator off by default */
+		if (slcap & PCIE_SLCAP_AIP) {
+			val |= __SHIFTIN(PCIE_SLCSR_IND_OFF,
+			    PCIE_SLCSR_AIC);
+		}
+		/* Power indicator */
+		if (slcap & PCIE_SLCAP_PIP) {
+			/*
+			 * Indicator off:
+			 *  a) card not present
+			 *  b) power fault
+			 *  c) MRL sensor off
+			 */
+			if (((slcsr & PCIE_SLCSR_PDS) == 0)
+			    || ((slcsr & PCIE_SLCSR_PFD) != 0)
+			    || (((slcap & PCIE_SLCAP_MSP) != 0)
+				&& ((slcsr & PCIE_SLCSR_MS) != 0)))
+				val |= __SHIFTIN(PCIE_SLCSR_IND_OFF,
+				    PCIE_SLCSR_PIC);
+			else
+				val |= __SHIFTIN(PCIE_SLCSR_IND_ON,
+				    PCIE_SLCSR_PIC);
+		}
+
+		val |= PCIE_SLCSR_DLLSCE | PCIE_SLCSR_HPE | PCIE_SLCSR_PDE;
+		slcsr = val;
+		pci_conf_write(pc, pa->pa_tag,
+		    sc->sc_pciecapoff + PCIE_SLCSR, slcsr);
+
+		/* Attach event counters */
+		evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR, NULL,
+		    device_xname(sc->sc_dev), "Interrupt");
+		evcnt_attach_dynamic(&sc->sc_ev_abp, EVCNT_TYPE_MISC, NULL,
+		    device_xname(sc->sc_dev), "Attention Button Pressed");
+		evcnt_attach_dynamic(&sc->sc_ev_pfd, EVCNT_TYPE_MISC, NULL,
+		    device_xname(sc->sc_dev), "Power Fault Detected");
+		evcnt_attach_dynamic(&sc->sc_ev_msc, EVCNT_TYPE_MISC, NULL,
+		    device_xname(sc->sc_dev), "MRL Sensor Changed");
+		evcnt_attach_dynamic(&sc->sc_ev_pdc, EVCNT_TYPE_MISC, NULL,
+		    device_xname(sc->sc_dev), "Presence Detect Changed");
+		evcnt_attach_dynamic(&sc->sc_ev_cc, EVCNT_TYPE_MISC, NULL,
+		    device_xname(sc->sc_dev), "Command Completed");
+		evcnt_attach_dynamic(&sc->sc_ev_lacs, EVCNT_TYPE_MISC, NULL,
+		    device_xname(sc->sc_dev), "Data Link Layer State Changed");
+	}
+#endif /* PPB_USEINTR */
 
 	if (!pmf_device_register(self, ppb_suspend, ppb_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
-	 * Attach the PCI bus than hangs off of it.
+	 * Attach the PCI bus that hangs off of it.
 	 *
 	 * XXX Don't pass-through Memory Read Multiple.  Should we?
 	 * XXX Consult the spec...
@@ -353,24 +370,6 @@ ppbattach(device_t parent, device_t self, void *aux)
 	pba.pba_bridgetag = &sc->sc_tag;
 	pba.pba_intrswiz = pa->pa_intrswiz;
 	pba.pba_intrtag = pa->pa_intrtag;
-
-#ifdef PPB_USEINTR
-	/* Attach event counters */
-	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR, NULL,
-	    device_xname(sc->sc_dev), "Interrupt");
-	evcnt_attach_dynamic(&sc->sc_ev_abp, EVCNT_TYPE_MISC, NULL,
-	    device_xname(sc->sc_dev), "Attention Button Pressed");
-	evcnt_attach_dynamic(&sc->sc_ev_pfd, EVCNT_TYPE_MISC, NULL,
-	    device_xname(sc->sc_dev), "Power Fault Detected");
-	evcnt_attach_dynamic(&sc->sc_ev_msc, EVCNT_TYPE_MISC, NULL,
-	    device_xname(sc->sc_dev), "MRL Sensor Changed");
-	evcnt_attach_dynamic(&sc->sc_ev_pdc, EVCNT_TYPE_MISC, NULL,
-	    device_xname(sc->sc_dev), "Presence Detect Changed");
-	evcnt_attach_dynamic(&sc->sc_ev_cc, EVCNT_TYPE_MISC, NULL,
-	    device_xname(sc->sc_dev), "Command Completed");
-	evcnt_attach_dynamic(&sc->sc_ev_lacs, EVCNT_TYPE_MISC, NULL,
-	    device_xname(sc->sc_dev), "Data Link Layer State Changed");
-#endif
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
@@ -388,24 +387,24 @@ ppbdetach(device_t self, int flags)
 		return rc;
 
 #ifdef PPB_USEINTR
-	/* Detach event counters */
-	evcnt_detach(&sc->sc_ev_intr);
-	evcnt_detach(&sc->sc_ev_abp);
-	evcnt_detach(&sc->sc_ev_pfd);
-	evcnt_detach(&sc->sc_ev_msc);
-	evcnt_detach(&sc->sc_ev_pdc);
-	evcnt_detach(&sc->sc_ev_cc);
-	evcnt_detach(&sc->sc_ev_lacs);
-
-	/* Clear any pending events and disable interrupt */
-	slcsr = pci_conf_read(sc->sc_pc, sc->sc_tag,
-	      sc->sc_pciecapoff + PCIE_SLCSR);
-	slcsr &= ~PCIE_SLCSR_ENABLE_MASK;
-	pci_conf_write(sc->sc_pc, sc->sc_tag,
-		sc->sc_pciecapoff + PCIE_SLCSR, slcsr);
-
-	/* Disestablish the interrupt handler */
 	if (sc->sc_intrhand != NULL) {
+		/* Detach event counters */
+		evcnt_detach(&sc->sc_ev_intr);
+		evcnt_detach(&sc->sc_ev_abp);
+		evcnt_detach(&sc->sc_ev_pfd);
+		evcnt_detach(&sc->sc_ev_msc);
+		evcnt_detach(&sc->sc_ev_pdc);
+		evcnt_detach(&sc->sc_ev_cc);
+		evcnt_detach(&sc->sc_ev_lacs);
+
+		/* Clear any pending events and disable interrupt */
+		slcsr = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    sc->sc_pciecapoff + PCIE_SLCSR);
+		slcsr &= ~PCIE_SLCSR_ENABLE_MASK;
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    sc->sc_pciecapoff + PCIE_SLCSR, slcsr);
+
+		/* Disestablish the interrupt handler */
 		pci_intr_disestablish(sc->sc_pc, sc->sc_intrhand);
 		pci_intr_release(sc->sc_pc, sc->sc_pihp, 1);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: sunos_syscallargs.h,v 1.75 2017/01/16 17:43:05 christos Exp $ */
+/* $NetBSD: sunos_syscallargs.h,v 1.75.4.1 2017/05/11 02:58:37 pgoyette Exp $ */
 
 /*
  * System call argument lists.
@@ -9,6 +9,9 @@
 
 #ifndef _SUNOS_SYS_SYSCALLARGS_H_
 #define	_SUNOS_SYS_SYSCALLARGS_H_
+
+/* Forward declaration */
+struct lwp;
 
 #define	SUNOS_SYS_MAXSYSARGS	8
 

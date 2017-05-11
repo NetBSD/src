@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.58 2017/02/27 06:46:59 chs Exp $	*/
+/*	$NetBSD: undefined.c,v 1.58.4.1 2017/05/11 02:58:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -47,15 +47,15 @@
 #define FAST_FPE
 
 #include "opt_ddb.h"
-#include "opt_kgdb.h"
 #include "opt_dtrace.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.58 2017/02/27 06:46:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.58.4.1 2017/05/11 02:58:35 pgoyette Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>

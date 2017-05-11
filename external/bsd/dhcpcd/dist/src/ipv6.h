@@ -166,12 +166,14 @@ struct ipv6_addr {
 	uint8_t iaid[4];
 	uint16_t ia_type;
 
+#ifndef SMALL
 	struct ipv6_addr *delegating_prefix;
 	struct ipv6_addrhead pd_pfxs;
 	TAILQ_ENTRY(ipv6_addr) pd_next;
 
 	uint8_t prefix_exclude_len;
 	struct in6_addr prefix_exclude;
+#endif
 
 	void (*dadcallback)(void *);
 	int dadcounter;

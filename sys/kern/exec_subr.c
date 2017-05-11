@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.76 2016/05/22 14:26:09 christos Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.76.8.1 2017/05/11 02:58:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.76 2016/05/22 14:26:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.76.8.1 2017/05/11 02:58:40 pgoyette Exp $");
 
 #include "opt_pax.h"
 
@@ -155,6 +155,19 @@ kill_vmcmds(struct exec_vmcmd_set *evsp)
  *	appropriate for handling demand-paged text and data segments.
  */
 
+static int
+vmcmd_get_prot(struct lwp *l, const struct exec_vmcmd *cmd, vm_prot_t *prot,
+    vm_prot_t *maxprot)
+{
+
+	*prot = cmd->ev_prot;
+	*maxprot = PAX_MPROTECT_MAXPROTECT(l, *prot, 0, UVM_PROT_ALL);
+
+	if ((*prot & *maxprot) != *prot)
+		return EACCES;
+	return PAX_MPROTECT_VALIDATE(l, *prot);
+}
+
 int
 vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 {
@@ -179,9 +192,8 @@ vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 	if (cmd->ev_len & PAGE_MASK)
 		return EINVAL;
 
-	prot = cmd->ev_prot;
-	maxprot = UVM_PROT_ALL;
-	PAX_MPROTECT_ADJUST(l, &prot, &maxprot);
+	if ((error = vmcmd_get_prot(l, cmd, &prot, &maxprot)) != 0)
+		return error;
 
 	/*
 	 * check the file system's opinion about mmapping the file
@@ -259,9 +271,8 @@ vmcmd_readvn(struct lwp *l, struct exec_vmcmd *cmd)
 	if (error)
 		return error;
 
-	prot = cmd->ev_prot;
-	maxprot = VM_PROT_ALL;
-	PAX_MPROTECT_ADJUST(l, &prot, &maxprot);
+	if ((error = vmcmd_get_prot(l, cmd, &prot, &maxprot)) != 0)
+		return error;
 
 #ifdef PMAP_NEED_PROCWR
 	/*
@@ -317,9 +328,8 @@ vmcmd_map_zero(struct lwp *l, struct exec_vmcmd *cmd)
 	cmd->ev_addr -= diff;			/* required by uvm_map */
 	cmd->ev_len += diff;
 
-	prot = cmd->ev_prot;
-	maxprot = UVM_PROT_ALL;
-	PAX_MPROTECT_ADJUST(l, &prot, &maxprot);
+	if ((error = vmcmd_get_prot(l, cmd, &prot, &maxprot)) != 0)
+		return error;
 
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
 			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,

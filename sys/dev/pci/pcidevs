@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1286.2.1 2017/05/02 03:19:18 pgoyette Exp $
+$NetBSD: pcidevs,v 1.1286.2.2 2017/05/11 02:58:38 pgoyette Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5915,6 +5915,7 @@ product RICOH Rx5C477	0x0477 5C477 PCI-CardBus Bridge
 product RICOH Rx5C478	0x0478 5C478 PCI-CardBus Bridge
 product RICOH Rx5C551	0x0551 5C551 PCI-CardBus Bridge/Firewire
 product RICOH Rx5C552	0x0552 5C552 PCI-CardBus Bridge/Firewire
+product RICOH RL5C576	0x0576 R5C576 SD Card Controller
 product RICOH Rx5C592	0x0592 5C592 PCI-CardBus Bridge/MS/SD/Firewire
 product RICOH Rx5C593	0x0593 5C593 PCI-CardBus Bridge/MS/SD/Firewire
 product RICOH Rx5C821	0x0821 5C821 PCI-CardBus Bridge/MS/SD/MMC/SC
@@ -6165,14 +6166,18 @@ product SIS 966			0x0966	966 Host Bridge
 product SIS 968			0x0968	968 Host Bridge
 product SIS 5597_IDE		0x5513	5597/5598 IDE Controller
 product SIS 5597_HB		0x5597	5597/5598 Host Bridge
+product SIS 6300		0x6300	630 AGP VGA
 product SIS 530VGA		0x6306	530 GUI Accelerator+3D
-product SIS 6325		0x6325	6325 AGP VGA
+product SIS 6325		0x6325	650 AGP VGA
 product SIS 6326		0x6326	6326 AGP VGA
+product SIS 6330		0x6330	6330 VGA
 product SIS 5597_USB		0x7001	5597/5598 USB Host Controller
 product SIS 7002		0x7002	7002 USB 2.0 Host Controller
 product SIS 7012_AC		0x7012	7012 AC-97 Sound
+product SIS 7013		0x7013	7013 Modem
 product SIS 7016		0x7016	7016 10/100 Ethernet
 product SIS 7018		0x7018	7018 Sound
+product SIS 7019		0x7019	7019 Audio
 product SIS 7502		0x7502	7502 HD audio
 
 /* Silicon Motion products */

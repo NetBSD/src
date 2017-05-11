@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.49.6.1 2017/05/02 03:19:14 pgoyette Exp $	*/
+/*	$NetBSD: var.c,v 1.49.6.2 2017/05/11 02:58:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.49.6.1 2017/05/02 03:19:14 pgoyette Exp $");
+__RCSID("$NetBSD: var.c,v 1.49.6.2 2017/05/11 02:58:28 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -430,13 +430,13 @@ environment(void)
 	nenv = 0;
 	for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
 		for (vp = *vpp ; vp ; vp = vp->next)
-			if (vp->flags & VEXPORT)
+			if ((vp->flags & (VEXPORT|VUNSET)) == VEXPORT)
 				nenv++;
 	}
 	ep = env = stalloc((nenv + 1) * sizeof *env);
 	for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
 		for (vp = *vpp ; vp ; vp = vp->next)
-			if (vp->flags & VEXPORT)
+			if ((vp->flags & (VEXPORT|VUNSET)) == VEXPORT)
 				*ep++ = vp->text;
 	}
 	*ep = NULL;
@@ -526,9 +526,34 @@ sort_var(const void *v_v1, const void *v_v2)
 {
 	const struct var * const *v1 = v_v1;
 	const struct var * const *v2 = v_v2;
+	char *t1 = (*v1)->text, *t2 = (*v2)->text;
 
-	/* XXX Will anyone notice we include the '=' of the shorter name? */
-	return strcoll((*v1)->text, (*v2)->text);
+	if (*t1 == *t2) {
+		char *p, *s;
+
+		STARTSTACKSTR(p);
+
+		/*
+		 * note: if lengths are equal, strings must be different
+		 * so we don't care which string we pick for the \0 in
+		 * that case.
+		 */
+		if ((strchr(t1, '=') - t1) <= (strchr(t2, '=') - t2)) {
+			s = t1;
+			t1 = p;
+		} else {
+			s = t2;
+			t2 = p;
+		}
+
+		while (*s && *s != '=') {
+			STPUTC(*s, p);
+			s++;
+		}
+		STPUTC('\0', p);
+	}
+
+	return strcoll(t1, t2);
 }
 
 /*
@@ -607,7 +632,7 @@ exportcmd(int argc, char **argv)
 	int xflg = 0;
 	int res;
 	int c;
-
+	int f;
 
 	while ((c = nextopt("npx")) != '\0') {
 		switch (c) {
@@ -643,6 +668,7 @@ exportcmd(int argc, char **argv)
 
 	res = 0;
 	while ((name = *argptr++) != NULL) {
+		f = flag;
 		if ((p = strchr(name, '=')) != NULL) {
 			p++;
 		} else {
@@ -658,10 +684,11 @@ exportcmd(int argc, char **argv)
 						vp->flags &= ~VEXPORT;
 				}
 				continue;
-			}
+			} else
+				f |= VUNSET;
 		}
 		if (!nflg)
-			setvar(name, p, flag);
+			setvar(name, p, f);
 	}
 	return res;
 }

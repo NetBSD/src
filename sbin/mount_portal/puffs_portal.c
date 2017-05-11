@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.7 2012/11/04 22:30:23 christos Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.7.20.1 2017/05/11 02:58:34 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.7 2012/11/04 22:30:23 christos Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.7.20.1 2017/05/11 02:58:34 pgoyette Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -180,6 +180,13 @@ readdata(struct puffs_framebuf *pufbuf, int fd, int *done)
 	do {
 		n = read(fd, buf, MIN(sizeof(buf), max));
 		if (n == 0) {
+			/*
+			 * Deal with EOF here by closing the file descriptor
+			 * and thus causing an error on subsequent accesses.
+			 * This is the last kevent notification we are going
+			 * to be getting for regular files.
+			 */
+			close(fd);
 			if (moved)
 				break;
 			else
@@ -543,21 +550,48 @@ portal_node_getattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 		va->va_type = VDIR;
 		va->va_mode = 0777;
 		va->va_nlink = 2;
-	} else {
-		va->va_type = VREG;
-		va->va_mode = 0666;
-		va->va_nlink = 1;
-	}
-	va->va_uid = va->va_gid = 0;
-	va->va_fileid = fakeid++;
-	va->va_size = va->va_bytes = 0;
-	va->va_gen = 0;
-	va->va_rdev = PUFFS_VNOVAL;
-	va->va_blocksize = DEV_BSIZE;
+		va->va_uid = va->va_gid = 0;
+		va->va_fileid = fakeid++;
+		va->va_size = va->va_bytes = 0;
+		va->va_gen = 0;
+		va->va_rdev = PUFFS_VNOVAL;
+		va->va_blocksize = DEV_BSIZE;
 
-	gettimeofday(&tv, NULL);
-	TIMEVAL_TO_TIMESPEC(&tv, &ts);
-	va->va_atime = va->va_ctime = va->va_mtime = va->va_birthtime = ts;
+		gettimeofday(&tv, NULL);
+		TIMEVAL_TO_TIMESPEC(&tv, &ts);
+		va->va_atime = va->va_ctime = va->va_mtime =
+		    va->va_birthtime = ts;
+	} else {
+		/* cheat for now */
+		int error;
+		struct stat st;
+		struct portal_node *portn = opc;
+		struct portal_cred portc;
+		char **v = conf_match(&q, portn->path);
+		if (v == NULL)
+			return ENOENT;
+		credtr(&portc, pcr, 0777);
+		error = provide(pu, portn, &portc, v);
+		if (error)
+			return error;
+		if (fstat(portn->fd, &st) == -1)
+			return errno;
+		va->va_type = S_ISDIR(st.st_mode) ? VDIR : VREG; /* XXX */
+		va->va_mode = st.st_mode;
+		va->va_nlink = st.st_nlink;
+		va->va_uid = st.st_uid;
+		va->va_gid = st.st_gid;
+		va->va_fileid = st.st_ino;
+		va->va_size = va->va_bytes = st.st_size;
+		va->va_gen = 0;
+		va->va_rdev = st.st_rdev;
+		va->va_blocksize = st.st_blksize;
+		va->va_atime = st.st_atim;
+		va->va_ctime = st.st_ctim;
+		va->va_mtime = st.st_mtim;
+		va->va_birthtime = st.st_birthtim;
+		portal_node_reclaim(pu, opc);
+	}
 
 	return 0;
 }

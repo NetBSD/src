@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.50 2013/04/09 16:38:18 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.50.18.1 2017/05/11 02:58:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -340,7 +340,6 @@ HASH *inodeH[HASHSIZE];		/* for inode lookup for linked file check */
 
 
 /* supfilesrv.c */
-int main(int, char **);
 void chldsig(int);
 void usage(void);
 void init(int, char **);

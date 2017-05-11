@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.49 2017/03/16 16:13:21 chs Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.49.4.1 2017/05/11 02:58:37 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.49 2017/03/16 16:13:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.49.4.1 2017/05/11 02:58:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,13 +321,13 @@ linux_sys_rt_sigreturn(struct lwp *l, const struct linux_sys_rt_sigreturn_args *
 	 * Make sure the fpu state is discarded
 	 */
 #ifdef PPC_HAVE_FPU
-	fpu_discard();
+	fpu_discard(l);
 #endif
 
 	memcpy(curpcb->pcb_fpu.fpreg, (void *)&sregs.lfp_regs,
 	       sizeof(curpcb->pcb_fpu.fpreg));
 
-	fpu_mark_used(curlwp);
+	fpu_mark_used(l);
 
 	mutex_enter(p->p_lock);
 
@@ -415,13 +415,13 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, r
 	 * Make sure the fpu state is discarded
 	 */
 #ifdef PPC_HAVE_FPU
-	fpu_discard();
+	fpu_discard(l);
 #endif
 
 	memcpy(curpcb->pcb_fpu.fpreg, (void *)&sregs.lfp_regs,
 	       sizeof(curpcb->pcb_fpu.fpreg));
 
-	fpu_mark_used(curlwp);
+	fpu_mark_used(l);
 
 	mutex_enter(p->p_lock);
 

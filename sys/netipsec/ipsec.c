@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.84.2.1 2017/05/02 03:19:22 pgoyette Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.84.2.2 2017/05/11 02:58:41 pgoyette Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.84.2.1 2017/05/02 03:19:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.84.2.2 2017/05/11 02:58:41 pgoyette Exp $");
 
 /*
  * IPsec controller part.
@@ -658,7 +658,7 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 
 int
 ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
-    struct secpolicy **sp_out, u_long *mtu, bool *natt_frag, bool *done)
+    u_long *mtu, bool *natt_frag, bool *done)
 {
 	const struct ip *ip = mtod(m, const struct ip *);
 	struct secpolicy *sp = NULL;
@@ -707,7 +707,6 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 		/* No IPsec processing for this packet. */
 		return 0;
 	}
-	*sp_out = sp;
 
 	/*
 	 * NAT-T ESP fragmentation: do not do IPSec processing now,
@@ -718,6 +717,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 		if (ntohs(ip->ip_len) > sp->req->sav->esp_frag) {
 			*mtu = sp->req->sav->esp_frag;
 			*natt_frag = true;
+			KEY_FREESP(&sp);
 			splx(s);
 			return 0;
 		}
@@ -733,7 +733,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 	}
 
 	/* Note: callee frees mbuf */
-	error = ipsec4_process_packet(m, sp->req, flags, 0);
+	error = ipsec4_process_packet(m, sp->req);
 	/*
 	 * Preserve KAME behaviour: ENOENT can be returned
 	 * when an SA acquire is in progress.  Don't propagate
@@ -743,6 +743,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 	 */
 	if (error == ENOENT)
 		error = 0;
+	KEY_FREESP(&sp);
 	splx(s);
 	*done = true;
 	return error;

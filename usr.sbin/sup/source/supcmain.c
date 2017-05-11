@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.33 2013/04/09 16:39:20 christos Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.33.18.1 2017/05/11 02:58:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -348,7 +348,6 @@ int rpauseflag;			/* don't disable resource pausing */
 int xpatchflag;			/* crosspatched with remote system */
 int portdebug;			/* network debugging ports */
 
-int main(int, char **);
 static int checkcoll(TREE *, void *);
 static void doswitch(int *, char ***, TREE **, int *, int *, char *, size_t);
 static char *init(int, char **);

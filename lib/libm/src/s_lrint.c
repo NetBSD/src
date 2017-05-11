@@ -1,11 +1,6 @@
-/*	$NetBSD: pt_exec.c,v 1.9 2007/07/02 18:07:45 pooka Exp $	*/
-
-/*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software donated to Berkeley by
- * Jan-Simon Pendry.
+/*-
+ * Copyright (c) 2005 David Schultz <das@FreeBSD.ORG>
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,14 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -30,29 +22,43 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: Id: pt_exec.c,v 1.1 1992/05/25 21:43:09 jsp Exp
- *	@(#)pt_exec.c	8.1 (Berkeley) 6/5/93
  */
 
+#include "namespace.h"
+
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: pt_exec.c,v 1.9 2007/07/02 18:07:45 pooka Exp $");
-#endif /* not lint */
+#include <fenv.h>
+#include <math.h>
 
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/syslog.h>
+#ifndef stype
+#ifdef __FreeBSD__
+__FBSDID("$FreeBSD: head/lib/msun/src/s_lrint.c 140088 2005-01-11 23:12:55Z das $");
+#else
+__RCSID("$NetBSD: s_lrint.c,v 1.1.2.2 2017/05/11 02:58:33 pgoyette Exp $");
+#endif
+#define stype		double
+#define	roundit		rint
+#define dtype		long
+#define	fn		lrint
+#endif
 
-#include "portald.h"
-
-int
-portal_exec(struct portal_cred *pcr, char *key, char **v, int *fdp)
+/*
+ * C99 says we should not raise a spurious inexact exception when an
+ * invalid exception is raised.  Unfortunately, the set of inputs
+ * that overflows depends on the rounding mode when 'dtype' has more
+ * significant bits than 'stype'.  Hence, we bend over backwards for the
+ * sake of correctness; an MD implementation could be more efficient.
+ */
+dtype
+fn(stype x)
 {
+	fenv_t env;
+	dtype d;
 
-	return (ENOEXEC);
+	feholdexcept(&env);
+	d = (dtype)roundit(x);
+	if (fetestexcept(FE_INVALID))
+		feclearexcept(FE_INEXACT);
+	feupdateenv(&env);
+	return (d);
 }

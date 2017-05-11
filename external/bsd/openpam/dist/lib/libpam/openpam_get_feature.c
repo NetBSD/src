@@ -1,7 +1,7 @@
-/*	$NetBSD: openpam_get_feature.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+/*	$NetBSD: openpam_get_feature.c,v 1.2.8.1 2017/05/11 02:58:31 pgoyette Exp $	*/
 
 /*-
- * Copyright (c) 2012 Dag-Erling Smørgrav
+ * Copyright (c) 2012-2017 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_get_feature.c 648 2013-03-05 17:54:27Z des 
+ * $OpenPAM: openpam_get_feature.c 938 2017-04-30 21:34:42Z des $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_get_feature.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
+__RCSID("$NetBSD: openpam_get_feature.c,v 1.2.8.1 2017/05/11 02:58:31 pgoyette Exp $");
 
 #include <security/pam_appl.h>
 #include <security/openpam.h>
@@ -55,7 +55,7 @@ openpam_get_feature(int feature, int *onoff)
 
 	ENTERF(feature);
 	if (feature < 0 || feature >= OPENPAM_NUM_FEATURES)
-		RETURNC(PAM_SYMBOL_ERR);
+		RETURNC(PAM_BAD_FEATURE);
 	*onoff = openpam_features[feature].onoff;
 	RETURNC(PAM_SUCCESS);
 }
@@ -63,7 +63,7 @@ openpam_get_feature(int feature, int *onoff)
 /*
  * Error codes:
  *
- *	PAM_SYMBOL_ERR
+ *	PAM_BAD_FEATURE
  */
 
 /**

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.20 2011/04/25 22:51:26 wiz Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.20.34.1 2017/05/11 02:58:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypxfr.c,v 1.20 2011/04/25 22:51:26 wiz Exp $");
+__RCSID("$NetBSD: ypxfr.c,v 1.20.34.1 2017/05/11 02:58:44 pgoyette Exp $");
 #endif
 
 #include <sys/param.h>
@@ -61,7 +61,6 @@ DBM	*db;
 static	int yperr2yppush(int);
 static	int ypxfr_foreach(int, char *, int, char *, int, char *);
 
-int	main(int, char *[]);
 int	get_local_ordernum(char *, char *, u_int *);
 int	get_remote_ordernum(CLIENT *, char *, char *, u_int, u_int *);
 void	get_map(CLIENT *, char *, char *, struct ypall_callback *);
