@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.338 2017/05/11 23:20:38 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.339 2017/05/11 23:26:48 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.338 2017/05/11 23:20:38 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.339 2017/05/11 23:26:48 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3407,10 +3407,7 @@ audio_mmap(struct audio_softc *sc, off_t *offp, size_t len, int prot,
 
 	if (*offp < 0)
 		return EINVAL;
-	if ((off_t)(*offp + len) < *offp) {
-		/* no offset wrapping */
-		return EOVERFLOW;
-	}
+
 #if 0
 /* XXX
  * The idea here was to use the protection to determine if
@@ -3435,7 +3432,7 @@ audio_mmap(struct audio_softc *sc, off_t *offp, size_t len, int prot,
 	cb = &vc->sc_mpr;
 #endif
 
-	if ((u_int)*offp >= cb->s.bufsize)
+	if (len > cb->s.bufsize || *offp > cb->s.bufsize - len)
 		return EOVERFLOW;
 
 	if (!cb->mmapped) {
