@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_localcount.c,v 1.1.6.3 2017/05/02 03:19:22 pgoyette Exp $	*/
+/*	$NetBSD: subr_localcount.c,v 1.1.6.4 2017/05/11 21:31:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.1.6.3 2017/05/02 03:19:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.1.6.4 2017/05/11 21:31:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/localcount.h>
@@ -215,7 +215,6 @@ localcount_acquire(struct localcount *lc)
 void
 localcount_release(struct localcount *lc, kcondvar_t *cv, kmutex_t *interlock)
 {
-	int s;
 
 	/*
 	 * Block xcall so that if someone begins draining after we see
@@ -227,7 +226,7 @@ localcount_release(struct localcount *lc, kcondvar_t *cv, kmutex_t *interlock)
 	 * lc->lc_totalp as null, this CPU will not wake
 	 * localcount_drain.
 	 */
-	s = splsoftserial();
+	kpreempt_disable();
 
 	KDASSERT(mutex_ownable(interlock));
 	if (__predict_false(lc->lc_totalp != NULL)) {
@@ -245,5 +244,5 @@ localcount_release(struct localcount *lc, kcondvar_t *cv, kmutex_t *interlock)
 	}
 
 	localcount_adjust(lc, -1);
-out:	splx(s);
+ out:	kpreempt_enable();
 }
