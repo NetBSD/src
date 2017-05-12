@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.278 2017/05/10 09:34:51 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.279 2017/05/12 17:53:54 ryo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.278 2017/05/10 09:34:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.279 2017/05/12 17:53:54 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -624,7 +624,7 @@ sendit:
 	{
 		ARPLOG(LOG_ERR,
 		    "refusing to send from invalid address %s (pid %d)\n",
-		    ARPLOGADDR(ip->ip_src), curproc->p_pid);
+		    ARPLOGADDR(&ip->ip_src), curproc->p_pid);
 		IP_STATINC(IP_STAT_ODROPPED);
 		if (error == 1)
 			/*
