@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.23 2014/05/20 20:23:56 bouyer Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.23.2.1 2017/05/12 05:44:10 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.23 2014/05/20 20:23:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.23.2.1 2017/05/12 05:44:10 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.23 2014/05/20 20:23:56 bouyer Exp $")
 #include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/sysctl.h>
+#include <sys/workqueue.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -91,6 +92,10 @@ LIST_HEAD(ip6flowhead, ip6flow);
 static struct ip6flowhead *ip6flowtable = NULL;
 static struct ip6flowhead ip6flowlist;
 static int ip6flow_inuse;
+
+static void ip6flow_slowtimo_work(struct work *, void *);
+static struct workqueue	*ip6flow_slowtimo_wq;
+static struct work	ip6flow_slowtimo_wk;
 
 /*
  * Insert an ip6flow into the list.
@@ -182,6 +187,12 @@ ip6flow_init(int table_size)
 {
 	struct ip6flowhead *new_table;
 	size_t i;
+	int error;
+
+	error = workqueue_create(&ip6flow_slowtimo_wq, "ip6flow_slowtimo",
+	    ip6flow_slowtimo_work, NULL, PRI_SOFTNET, IPL_NET, WQ_MPSAFE);
+	if (error != 0)
+		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 
 	new_table = (struct ip6flowhead *)malloc(sizeof(struct ip6flowhead) *
 	    table_size, M_RTABLE, M_NOWAIT);
@@ -415,8 +426,10 @@ ip6flow_reap(int just_one)
 	return NULL;
 }
 
+static bool ip6flow_work_enqueued = false;
+
 void
-ip6flow_slowtimo(void)
+ip6flow_slowtimo_work(struct work *wk, void *arg)
 {
 	struct ip6flow *ip6f, *next_ip6f;
 
@@ -436,9 +449,26 @@ ip6flow_slowtimo(void)
 			ip6f->ip6f_forwarded = 0;
 		}
 	}
+	ip6flow_work_enqueued = false;
 
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+}
+
+void
+ip6flow_slowtimo(void)
+{
+
+	/* Avoid enqueuing another work when one is already enqueued */
+	KERNEL_LOCK(1, NULL);
+	if (ip6flow_work_enqueued) {
+		KERNEL_UNLOCK_ONE(NULL);
+		return;
+	}
+	ip6flow_work_enqueued = true;
+	KERNEL_UNLOCK_ONE(NULL);
+
+	workqueue_enqueue(ip6flow_slowtimo_wq, &ip6flow_slowtimo_wk, NULL);
 }
 
 /*

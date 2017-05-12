@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.64 2014/05/22 22:01:12 rmind Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.64.2.1 2017/05/12 05:44:10 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.64 2014/05/22 22:01:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.64.2.1 2017/05/12 05:44:10 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.64 2014/05/22 22:01:12 rmind Exp $");
 #include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/sysctl.h>
+#include <sys/workqueue.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -96,6 +97,10 @@ static int ip_hashsize = IPFLOW_DEFAULT_HASHSIZE;
 
 static void ipflow_sysctl_init(struct sysctllog **);
 
+static void ipflow_slowtimo_work(struct work *, void *);
+static struct workqueue	*ipflow_slowtimo_wq;
+static struct work	ipflow_slowtimo_wk;
+
 static size_t 
 ipflow_hash(const struct ip *ip)
 {
@@ -130,6 +135,12 @@ ipflow_lookup(const struct ip *ip)
 void
 ipflow_poolinit(void)
 {
+	int error;
+
+	error = workqueue_create(&ipflow_slowtimo_wq, "ipflow_slowtimo",
+	    ipflow_slowtimo_work, NULL, PRI_SOFTNET, IPL_NET, WQ_MPSAFE);
+	if (error != 0)
+		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 
 	pool_init(&ipflow_pool, sizeof(struct ipflow), 0, 0, 0, "ipflowpl",
 	    NULL, IPL_NET);
@@ -390,8 +401,10 @@ ipflow_reap(bool just_one)
 	return NULL;
 }
 
-void
-ipflow_slowtimo(void)
+static bool ipflow_work_enqueued = false;
+
+static void
+ipflow_slowtimo_work(struct work *wk, void *arg)
 {
 	struct rtentry *rt;
 	struct ipflow *ipf, *next_ipf;
@@ -415,8 +428,25 @@ ipflow_slowtimo(void)
 			ipf->ipf_uses = 0;
 		}
 	}
+	ipflow_work_enqueued = false;
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+}
+
+void
+ipflow_slowtimo(void)
+{
+
+	/* Avoid enqueuing another work when one is already enqueued */
+	KERNEL_LOCK(1, NULL);
+	if (ipflow_work_enqueued) {
+		KERNEL_UNLOCK_ONE(NULL);
+		return;
+	}
+	ipflow_work_enqueued = true;
+	KERNEL_UNLOCK_ONE(NULL);
+
+	workqueue_enqueue(ipflow_slowtimo_wq, &ipflow_slowtimo_wk, NULL);
 }
 
 void
