@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.137 2017/05/12 08:39:47 kre Exp $
+.\"	$NetBSD: sh.1,v 1.138 2017/05/12 08:55:38 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -195,14 +195,18 @@ positional parameters of the shell ($1, $2, etc).
 Otherwise, the shell
 reads commands from its standard input.
 .Ss Argument List Processing
-All of the single letter options have a corresponding name that can be
-used as an argument to the
+Currently, all of the single letter options that can meaningfully
+be set using the
+.Ic set
+built-in, have a corresponding name
+that can be used as an argument to the
 .Fl o
 option.
 The set
 .Fl o
 name is provided next to the single letter option in
 the description below.
+Other options described are for the command line only.
 Specifying a dash
 .Dq -
 turns the option on, while using a plus
@@ -212,7 +216,7 @@ The following options can be set from the command line or
 with the
 .Ic set
 built-in (described later).
-.Bl -tag -width aaaallexportfoo -offset indent
+.Bl -tag -width \-WXXlineno_fn_relativeXX -offset indent
 .It Fl a Em allexport
 Export all variables assigned to.
 .It Fl b Em notify
@@ -345,6 +349,19 @@ Make an interactive shell always print the new directory name when
 changed by the
 .Ic cd
 command.
+.\" .It "\ \ " Em lineno_fn_relative
+.\" When set, before a function is defined,
+.\" causes the variable
+.\" .Cm LINENO
+.\" when used within the function,
+.\" to refer to the line number defined such that
+.\" first line of the function is line 1.
+.\" When reset,
+.\" .Cm LINENO
+.\" in a function refers to the line number within the file
+.\" in which the definition of the function occurs
+.\" (which can be the number of lines of shell input from standard input
+.\" when a function is defined interactively from the command prompt.)
 .It "\ \ " Em nolog
 Prevent the entry of function definitions into the command history (see
 .Ic fc
@@ -2135,22 +2152,53 @@ your shell.
 .It set Oo { Fl options | Cm +options | Cm \-- } Oc Ar arg ...
 The
 .Ic set
-command performs three different functions.
+command performs four different functions.
 .Pp
 With no arguments, it lists the values of all shell variables.
+.Pp
+With a single option of either
+.Sq Fl o
+or
+.Sq Cm +o
+.Ic set
+outputs the current values of the options.
+In the
+.Fl o
+form, all options are listed, with their current values.
+In the
+.Cm +o
+form, the shell outputs a string that can later be used
+as a command to reset all options to their current values.
 .Pp
 If options are given, it sets the specified option
 flags, or clears them as described in the
 .Sx Argument List Processing
 section.
+.\" In addition to the options listed there,
+.\" when the
+.\" .Dq "option name"
+.\" given to
+.\" .Fl o
+.\" is
+.\" .Cm default
+.\" all of the options are reset to the values they had immediately
+.\" after
+.\" .Nm
+.\" initialization, before any startup scripts had been processed.
+.\" While this may be of use to users or scripts, its primary purpose
+.\" is for use in the output of
+.\" .Dq Ic set Cm +o ,
+.\" to avoid that command needing to list every available option.
+.\" There is no
+.\" .Cm +o default .
 .Pp
-The third use of the set command is to set the values of the shell's
+The fourth use of the set command is to set the values of the shell's
 positional parameters to the specified arguments.
 To change the positional
 parameters without changing any options, use
 .Dq --
 as the first argument to set.
-If no arguments are present, the set command
+If no following arguments are present, the set command
 will clear all the positional parameters (equivalent to executing
 .Dq shift $# . )
 .It setvar Ar variable Ar value
