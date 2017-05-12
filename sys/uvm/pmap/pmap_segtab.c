@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.4 2016/11/23 03:30:53 mrg Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.5 2017/05/12 12:18:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.4 2016/11/23 03:30:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.5 2017/05/12 12:18:07 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -256,7 +256,7 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 	}
 
 	if (free_stp) {
-		pmap_check_stp(stp, __func__, 
+		pmap_check_stp(stp, __func__,
 			       vinc == NBSEG ? "release seg" : "release xseg");
 		pmap_segtab_free(stp);
 		*stp_p = NULL;
