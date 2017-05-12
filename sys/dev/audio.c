@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.342 2017/05/12 04:15:40 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.343 2017/05/12 07:12:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.342 2017/05/12 04:15:40 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.343 2017/05/12 07:12:37 martin Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2679,7 +2679,7 @@ audio_calc_blksize(struct audio_softc *sc, int mode,
 	     parm->channels * parm->precision / NBBY;
 
 	DPRINTF(("audio_calc_blksize: %s blksize=%d\n",
-		 mode == AUMODE_PLAY ? "play" : "record", rb->blksize));
+		 mode == AUMODE_PLAY ? "play" : "record", *blksize));
 }
 
 void
