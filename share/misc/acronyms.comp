@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.182 2017/05/11 22:19:29 kamil Exp $
+$NetBSD: acronyms.comp,v 1.183 2017/05/12 21:14:47 kamil Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -962,7 +962,7 @@ PIC	programmable interrupt controller
 PICNIC	problem in chair, not in computer
 PID	process id
 PIE	position independent executable
-PIL	Priority Interrut Level
+PIL	Priority Interrupt Level
 PIM	personal information manager
 PIM	platform-independent model
 PIO	programmed input/output
