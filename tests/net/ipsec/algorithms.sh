@@ -1,4 +1,4 @@
-#	$NetBSD: algorithms.sh,v 1.3 2017/04/27 08:06:59 ozaki-r Exp $
+#	$NetBSD: algorithms.sh,v 1.4 2017/05/12 02:34:45 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -159,4 +159,18 @@ generate_key()
 	fi
 
 	echo $key
+}
+
+generate_algo_args()
+{
+	local proto=$1
+	local algo=$2
+	local keylen=$(get_one_valid_keylen $algo)
+	local key=$(generate_key $keylen)
+
+	if [ $proto = esp ]; then
+		echo "-E $algo $key"
+	else
+		echo "-A $algo $key"
+	fi
 }
