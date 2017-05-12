@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.107.4.2 2016/12/18 08:22:28 snj Exp $	*/
+/*	$NetBSD: ping.c,v 1.107.4.2.2.1 2017/05/12 05:21:01 snj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.107.4.2 2016/12/18 08:22:28 snj Exp $");
+__RCSID("$NetBSD: ping.c,v 1.107.4.2.2.1 2017/05/12 05:21:01 snj Exp $");
 #endif
 
 #include <stdio.h>
@@ -883,7 +883,7 @@ pinger(void)
 		opack_icmp.icmp_id = ~ident;
 		opack_icmp.icmp_cksum = 0;
 		opack_icmp.icmp_cksum = in_cksum((u_int16_t *)&opack_icmp,
-		    phdrlen);
+		    ICMP_MINLEN);
 		sw = 0;
 		if (prog_setsockopt(sloop, IPPROTO_IP, IP_HDRINCL,
 			       (char *)&sw, sizeof(sw)) < 0)
