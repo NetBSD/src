@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.248 2017/04/04 09:53:02 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.249 2017/05/12 17:53:53 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.248 2017/04/04 09:53:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.249 2017/05/12 17:53:53 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -688,7 +688,7 @@ arpannounce(struct ifnet *ifp, struct ifaddr *ifa, const uint8_t *enaddr)
 	struct in_addr *ip = &IA_SIN(ifa)->sin_addr;
 
 	if (ia->ia4_flags & (IN_IFF_NOTREADY | IN_IFF_DETACHED)) {
-		ARPLOG(LOG_DEBUG, "%s not ready\n", ARPLOGADDR(*ip));
+		ARPLOG(LOG_DEBUG, "%s not ready\n", ARPLOGADDR(ip));
 		return;
 	}
 	arprequest(ifp, ip, ip, enaddr);
@@ -1111,7 +1111,7 @@ in_arpinput(struct mbuf *m)
 		ARP_STATINC(ARP_STAT_RCVBADLEN);
 		log(LOG_WARNING,
 		    "arp from %s: addr len: new %d, i/f %d (ignored)\n",
-		    in_fmtaddr(ipbuf, isaddr), ah->ar_hln, ifp->if_addrlen);
+		    IN_PRINT(ipbuf, &isaddr), ah->ar_hln, ifp->if_addrlen);
 		goto out;
 	}
 
@@ -1142,7 +1142,7 @@ in_arpinput(struct mbuf *m)
 		ARP_STATINC(ARP_STAT_RCVBCASTSHA);
 		log(LOG_ERR,
 		    "%s: arp: link address is broadcast for IP address %s!\n",
-		    ifp->if_xname, in_fmtaddr(ipbuf, isaddr));
+		    ifp->if_xname, IN_PRINT(ipbuf, &isaddr));
 		goto out;
 	}
 
@@ -1204,7 +1204,7 @@ in_arpinput(struct mbuf *m)
 			    "%s tried to overwrite permanent arp info"
 			    " for %s\n",
 			    lla_snprintf(llabuf, ar_sha(ah), ah->ar_hln),
-			    in_fmtaddr(ipbuf, isaddr));
+			    IN_PRINT(ipbuf, &isaddr));
 			goto out;
 		} else if (la->lle_tbl->llt_ifp != ifp) {
 			/* XXX should not happen? */
@@ -1215,7 +1215,7 @@ in_arpinput(struct mbuf *m)
 			    "%s on %s tried to overwrite "
 			    "arp info for %s on %s\n",
 			    lla_snprintf(llabuf, ar_sha(ah), ah->ar_hln),
-			    ifp->if_xname, in_fmtaddr(ipbuf, isaddr),
+			    ifp->if_xname, IN_PRINT(ipbuf, &isaddr),
 			    la->lle_tbl->llt_ifp->if_xname);
 				goto out;
 		} else {
@@ -1223,7 +1223,7 @@ in_arpinput(struct mbuf *m)
 			if (log_movements)
 				log(LOG_INFO, "arp info overwritten "
 				    "for %s by %s\n",
-				    in_fmtaddr(ipbuf, isaddr),
+				    IN_PRINT(ipbuf, &isaddr),
 				    lla_snprintf(llabuf, ar_sha(ah),
 				    ah->ar_hln));
 		}
@@ -1240,7 +1240,7 @@ in_arpinput(struct mbuf *m)
 		ARP_STATINC(ARP_STAT_RCVLENCHG);
 		log(LOG_WARNING,
 		    "arp from %s: new addr len %d, was %d\n",
-		    in_fmtaddr(ipbuf, isaddr), ah->ar_hln, sdl->sdl_alen);
+		    IN_PRINT(ipbuf, &isaddr), ah->ar_hln, sdl->sdl_alen);
 	}
 #endif
 
@@ -1613,7 +1613,7 @@ arp_dad_start(struct ifaddr *ifa)
 	if (!(ia->ia4_flags & IN_IFF_TENTATIVE)) {
 		log(LOG_DEBUG,
 		    "%s: called with non-tentative address %s(%s)\n", __func__,
-		    in_fmtaddr(ipbuf, ia->ia_addr.sin_addr),
+		    IN_PRINT(ipbuf, &ia->ia_addr.sin_addr),
 		    ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		return;
 	}
@@ -1641,7 +1641,7 @@ arp_dad_start(struct ifaddr *ifa)
 	if (dp == NULL) {
 		mutex_exit(&arp_dad_lock);
 		log(LOG_ERR, "%s: memory allocation failed for %s(%s)\n",
-		    __func__, in_fmtaddr(ipbuf, ia->ia_addr.sin_addr),
+		    __func__, IN_PRINT(ipbuf, &ia->ia_addr.sin_addr),
 		    ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		return;
 	}
@@ -1659,7 +1659,7 @@ arp_dad_start(struct ifaddr *ifa)
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 
 	ARPLOG(LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
-	    ARPLOGADDR(ia->ia_addr.sin_addr));
+	    ARPLOGADDR(&ia->ia_addr.sin_addr));
 
 	arp_dad_starttimer(dp, cprng_fast32() % (PROBE_WAIT * hz));
 
@@ -1721,14 +1721,14 @@ arp_dad_timer(struct ifaddr *ifa)
 	}
 	if (ia->ia4_flags & IN_IFF_DUPLICATED) {
 		log(LOG_ERR, "%s: called with duplicate address %s(%s)\n",
-		    __func__, in_fmtaddr(ipbuf, ia->ia_addr.sin_addr),
+		    __func__, IN_PRINT(ipbuf, &ia->ia_addr.sin_addr),
 		    ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		goto done;
 	}
 	if ((ia->ia4_flags & IN_IFF_TENTATIVE) == 0 && dp->dad_arp_acount == 0)
 	{
 		log(LOG_ERR, "%s: called with non-tentative address %s(%s)\n",
-		    __func__, in_fmtaddr(ipbuf, ia->ia_addr.sin_addr),
+		    __func__, IN_PRINT(ipbuf, &ia->ia_addr.sin_addr),
 		    ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		goto done;
 	}
@@ -1768,7 +1768,7 @@ arp_dad_timer(struct ifaddr *ifa)
 		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 		ARPLOG(LOG_DEBUG,
 		    "%s: DAD complete for %s - no duplicates found\n",
-		    if_name(ifa->ifa_ifp), ARPLOGADDR(ia->ia_addr.sin_addr));
+		    if_name(ifa->ifa_ifp), ARPLOGADDR(&ia->ia_addr.sin_addr));
 		dp->dad_arp_announce = ANNOUNCE_NUM;
 		goto announce;
 	} else if (dp->dad_arp_acount < dp->dad_arp_announce) {
@@ -1784,7 +1784,7 @@ announce:
 		}
 		ARPLOG(LOG_DEBUG,
 		    "%s: ARP announcement complete for %s\n",
-		    if_name(ifa->ifa_ifp), ARPLOGADDR(ia->ia_addr.sin_addr));
+		    if_name(ifa->ifa_ifp), ARPLOGADDR(&ia->ia_addr.sin_addr));
 	}
 
 	TAILQ_REMOVE(&dadq, dp, dad_list);
@@ -1811,7 +1811,7 @@ arp_dad_duplicated(struct ifaddr *ifa, const char *sha)
 	char ipbuf[INET_ADDRSTRLEN];
 	const char *iastr;
 
-	iastr = in_fmtaddr(ipbuf, ia->ia_addr.sin_addr);
+	iastr = IN_PRINT(ipbuf, &ia->ia_addr.sin_addr);
 
 	if (ia->ia4_flags & (IN_IFF_TENTATIVE|IN_IFF_DUPLICATED)) {
 		log(LOG_ERR,
