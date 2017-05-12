@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.13 2017/05/07 04:14:20 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.14 2017/05/12 06:38:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.13 2017/05/07 04:14:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.14 2017/05/12 06:38:18 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -722,9 +722,9 @@ pmap_md_unmap_poolpage(vaddr_t va, size_t len)
 
 	const paddr_t pa = pmap_md_direct_mapped_vaddr_to_paddr(va);
 	struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
-	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 
 	KASSERT(pg);
+	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 
 	KASSERT(VM_PAGEMD_CACHED_P(mdpg));
 	mdpg->mdpg_first.pv_va = va;
