@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.87 2017/04/19 03:23:06 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.88 2017/05/12 09:22:01 roy Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.87 2017/04/19 03:23:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.88 2017/05/12 09:22:01 roy Exp $");
 
 /*
  * TODO:
@@ -2172,6 +2172,8 @@ static void
 carp_set_state(struct carp_softc *sc, int state)
 {
 	static const char *carp_states[] = { CARP_STATES };
+	int link_state;
+
 	if (sc->sc_state == state)
 		return;
 
@@ -2180,16 +2182,16 @@ carp_set_state(struct carp_softc *sc, int state)
 	sc->sc_state = state;
 	switch (state) {
 	case BACKUP:
-		sc->sc_if.if_link_state = LINK_STATE_DOWN;
+		link_state = LINK_STATE_DOWN;
 		break;
 	case MASTER:
-		sc->sc_if.if_link_state = LINK_STATE_UP;
+		link_state = LINK_STATE_UP;
 		break;
 	default:
-		sc->sc_if.if_link_state = LINK_STATE_UNKNOWN;
+		link_state = LINK_STATE_UNKNOWN;
 		break;
 	}
-	rt_ifmsg(&sc->sc_if);
+	if_link_state_change(&sc->sc_if, link_state);
 }
 
 void
