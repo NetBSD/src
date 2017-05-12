@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.40 2017/04/26 14:58:53 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.41 2017/05/12 05:50:20 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -1877,4 +1877,15 @@ sys/arch/amd64/amd64/trap.c			1.96
 	by checking for the relevant lcall instruction in the trap handler
 	and treating it as a syscall.
 	[chs, ticket #1410]
+
+usr.sbin/rtadvd/config.c			1.36
+usr.sbin/rtadvd/rtadvd.h			1.15
+
+	Fix the default value of rltime. PR bin/51994
+	[ozaki-r, ticket #1373]
+
+sbin/ping/ping.c				1.116
+
+	Fix cksum calculation for clearing the cached route.
+	[ryo, ticket #1390]
 
