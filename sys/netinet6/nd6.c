@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.152.2.3 2015/04/06 01:32:33 snj Exp $	*/
+/*	$NetBSD: nd6.c,v 1.152.2.4 2017/05/12 05:44:10 snj Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.152.2.3 2015/04/06 01:32:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.152.2.4 2017/05/12 05:44:10 snj Exp $");
 
 #include "bridge.h"
 #include "carp.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.152.2.3 2015/04/06 01:32:33 snj Exp $");
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/cprng.h>
+#include <sys/workqueue.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -122,11 +123,14 @@ static void nd6_setmtu0(struct ifnet *, struct nd_ifinfo *);
 static void nd6_slowtimo(void *);
 static int regen_tmpaddr(struct in6_ifaddr *);
 static struct llinfo_nd6 *nd6_free(struct rtentry *, int);
+static void nd6_timer_work(struct work *, void *);
 static void nd6_llinfo_timer(void *);
 static void clear_llinfo_pqueue(struct llinfo_nd6 *);
 
 callout_t nd6_slowtimo_ch;
 callout_t nd6_timer_ch;
+static struct workqueue	*nd6_timer_wq;
+static struct work	nd6_timer_wk;
 extern callout_t in6_tmpaddrtimer_ch;
 
 static int fill_drlist(void *, size_t *, size_t);
@@ -148,6 +152,7 @@ void
 nd6_init(void)
 {
 	static int nd6_init_done = 0;
+	int error;
 
 	if (nd6_init_done) {
 		log(LOG_NOTICE, "nd6_init called more than once(ignored)\n");
@@ -161,6 +166,11 @@ nd6_init(void)
 
 	callout_init(&nd6_slowtimo_ch, CALLOUT_MPSAFE);
 	callout_init(&nd6_timer_ch, CALLOUT_MPSAFE);
+
+	error = workqueue_create(&nd6_timer_wq, "nd6_timer",
+	    nd6_timer_work, NULL, PRI_SOFTNET, IPL_SOFTNET, 0);
+	if (error)
+		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 
 	/* start timer */
 	callout_reset(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz,
@@ -541,7 +551,7 @@ nd6_llinfo_timer(void *arg)
  * ND6 timer routine to expire default route list and prefix list
  */
 void
-nd6_timer(void *ignored_arg)
+nd6_timer_work(struct work *wk, void *arg)
 {
 	struct nd_defrouter *next_dr, *dr;
 	struct nd_prefix *next_pr, *pr;
@@ -659,6 +669,13 @@ nd6_timer(void *ignored_arg)
 
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+}
+
+void
+nd6_timer(void *ignored_arg)
+{
+
+	workqueue_enqueue(nd6_timer_wq, &nd6_timer_wk, NULL);
 }
 
 /* ia6: deprecated/invalidated temporary address */
