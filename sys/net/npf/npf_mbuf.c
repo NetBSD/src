@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_mbuf.c,v 1.13.2.2 2016/01/26 01:27:21 riz Exp $	*/
+/*	$NetBSD: npf_mbuf.c,v 1.13.2.3 2017/05/12 05:32:12 snj Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.13.2.2 2016/01/26 01:27:21 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.13.2.3 2017/05/12 05:32:12 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -258,11 +258,13 @@ nbuf_cksum_barrier(nbuf_t *nbuf, int di)
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4 | M_CSUM_UDPv4);
 		return true;
 	}
+#ifdef INET6
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv6 | M_CSUM_UDPv6)) {
 		in6_delayed_cksum(m);
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv6 | M_CSUM_UDPv6);
 		return true;
 	}
+#endif
 	return false;
 }
 
