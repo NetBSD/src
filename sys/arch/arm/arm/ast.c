@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.28 2015/04/17 17:28:33 matt Exp $	*/
+/*	$NetBSD: ast.c,v 1.29 2017/05/12 05:46:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.28 2015/04/17 17:28:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.29 2017/05/12 05:46:39 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -80,7 +80,9 @@ userret(struct lwp *l)
 #ifdef __HAVE_PREEMPTION
 	kpreempt_disable();
 #endif
-	KASSERT(curcpu()->ci_pmap_cur == l->l_proc->p_vmspace->vm_map.pmap);
+	KASSERTMSG(curcpu()->ci_pmap_cur == l->l_proc->p_vmspace->vm_map.pmap,
+	    "%p vs %p", curcpu()->ci_pmap_cur,
+	    l->l_proc->p_vmspace->vm_map.pmap);
 	if (__predict_false(armreg_ttbcr_read() & TTBCR_S_PD0)) {
 		pmap_activate(l);
 	}
