@@ -1,4 +1,4 @@
-.\"	$NetBSD: locking.9,v 1.5 2017/04/16 07:05:24 wiz Exp $
+.\"	$NetBSD: locking.9,v 1.5.6.1 2017/05/12 06:24:53 pgoyette Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 15, 2017
+.Dd May 12, 2017
 .Dt LOCKING 9
 .Os
 .Sh NAME
@@ -212,6 +212,20 @@ The read operations may happen from software interrupt at
 .Pp
 See
 .Xr pserialize 9 .
+.Ss CPU-Local Reference Counting
+The
+.Xr localcount 9
+mechanism provides a medium-weight reference counting mechanism, between
+.Xr atomic_ops 3
+and
+.Xr pserialize 9 .
+Localcount references are maintained within thread context, and the
+reference can migrate across CPUs; threads holding references are allowed
+to sleep.
+During normal operations, the reference count is maintained without any
+expensive inter-process communication.
+When a localcount is being drained, the process waits for all references
+on all CPUs to be released.
 .Ss Simple do-it-in-thread-context framework
 The workqueue utility routines are provided to defer work which is needed to be
 processed in a thread context.
@@ -229,20 +243,24 @@ can be used to protect shared resources between the contexts they overlap.
 .It Sy interface Ta Sy thread Ta Sy softirq Ta Sy hardirq
 .It Xr atomic_ops 3 Ta yes Ta yes Ta yes
 .It Xr condvar 9 Ta yes Ta partly Ta no
+.It Xr localcount 9 Ta yes Ta no Ta no
 .It Xr membar_ops 3 Ta yes Ta yes Ta yes
 .It Xr mutex 9 Ta yes Ta depends Ta depends
+.It Xr pserialize 9 Ta yes Ta yes Ta no
 .It Xr rwlock 9 Ta yes Ta yes Ta no
 .It Xr softint 9 Ta yes Ta yes Ta yes
 .It Xr spl 9 Ta yes Ta no Ta no
 .It Xr splraiseipl 9 Ta yes Ta no Ta no
-.It Xr pserialize 9 Ta yes Ta yes Ta no
 .It Xr workqueue 9 Ta yes Ta yes Ta yes
 .El
 .Sh SEE ALSO
 .Xr atomic_ops 3 ,
 .Xr membar_ops 3 ,
 .Xr condvar 9 ,
+.Xr localcount 9 ,
 .Xr mutex 9 ,
+.Xr pserialize 9 ,
+.Xr psref 9 ,
 .Xr ras 9 ,
 .Xr rwlock 9 ,
 .Xr softint 9 ,
