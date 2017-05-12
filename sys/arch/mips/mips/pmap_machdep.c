@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.15 2017/05/12 06:43:42 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.16 2017/05/12 06:49:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.15 2017/05/12 06:43:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.16 2017/05/12 06:49:31 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -596,6 +596,8 @@ pmap_zero_page(paddr_t dst_pa)
 
 	struct vm_page * const dst_pg = PHYS_TO_VM_PAGE(dst_pa);
 
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(dst_pg)));
+
 	const register_t dst_va = pmap_md_map_ephemeral_page(dst_pg, false,
 	    VM_PROT_READ|VM_PROT_WRITE, &dst_pte);
 
@@ -625,6 +627,7 @@ pmap_copy_page(paddr_t src_pa, paddr_t dst_pa)
 	    VM_PROT_READ, &src_pte);
 
 	KASSERT(VM_PAGE_TO_MD(dst_pg)->mdpg_first.pv_pmap == NULL);
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(dst_pg)));
 	const register_t dst_va = pmap_md_map_ephemeral_page(dst_pg, false,
 	    VM_PROT_READ|VM_PROT_WRITE, &dst_pte);
 
@@ -698,7 +701,10 @@ pmap_md_map_poolpage(paddr_t pa, size_t len)
 		pv_entry_t pv = &mdpg->mdpg_first;
 		vaddr_t last_va = trunc_page(pv->pv_va);
 
+		KASSERT(len == PAGE_SIZE || last_va == pa);
 		KASSERT(pv->pv_pmap == NULL);
+		KASSERT(pv->pv_next == NULL);
+		KASSERT(!VM_PAGEMD_EXECPAGE_P(mdpg));
 
 		/*
 		 * If this page was last mapped with an address that
@@ -727,6 +733,8 @@ pmap_md_unmap_poolpage(vaddr_t va, size_t len)
 	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 
 	KASSERT(VM_PAGEMD_CACHED_P(mdpg));
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(mdpg));
+
 	pv_entry_t pv = &mdpg->mdpg_first;
 
 	/* Note last mapped address for future color check */
@@ -741,6 +749,8 @@ pmap_md_unmap_poolpage(vaddr_t va, size_t len)
 		pv->pv_va = va;
 	}
 #endif
+	KASSERT(pv->pv_pmap == NULL);
+	KASSERT(pv->pv_next == NULL);
 
 	return pa;
 }
@@ -911,11 +921,14 @@ pmap_md_vca_add(struct vm_page *pg, vaddr_t va, pt_entry_t *ptep)
 	if (__predict_true(!mips_cache_badalias(pv->pv_va, va))) {
 		return false;
 	}
+	KASSERT(pv->pv_pmap != NULL);
+	bool ret = false;
 	for (pv_entry_t npv = pv; npv && npv->pv_pmap;) {
 		if (npv->pv_va & PV_KENTER) {
 			npv = npv->pv_next;
 			continue;
 		}
+		ret = true;
 		vaddr_t nva = trunc_page(npv->pv_va);
 		pmap_t npm = npv->pv_pmap;
 		VM_PAGEMD_PVLIST_UNLOCK(mdpg);
@@ -925,7 +938,9 @@ pmap_md_vca_add(struct vm_page *pg, vaddr_t va, pt_entry_t *ptep)
 
 		npv = pv;
 	}
-	return true;
+	KASSERT(ret == true);
+
+	return ret;
 #else	/* !PMAP_NO_PV_UNCACHED */
 	if (VM_PAGEMD_CACHED_P(mdpg)) {
 		/*
