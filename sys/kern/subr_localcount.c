@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_localcount.c,v 1.1.6.4 2017/05/11 21:31:12 pgoyette Exp $	*/
+/*	$NetBSD: subr_localcount.c,v 1.1.6.5 2017/05/12 22:12:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.1.6.4 2017/05/11 21:31:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.1.6.5 2017/05/12 22:12:23 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/localcount.h>
@@ -148,6 +148,14 @@ localcount_fini(struct localcount *lc)
 	percpu_free(lc->lc_percpu, sizeof(uint64_t));
 }
 
+/*
+ * localcount_xc(cookie0, cookie1)
+ *
+ *	Accumulate and transfer the per-CPU reference counts to a
+ *	global total, resetting the per-CPU counter to zero.  Once
+ *	localcount_drain() has started, we only maintain the total
+ *	count in localcount_release().
+ */
 static void
 localcount_xc(void *cookie0, void *cookie1)
 {
@@ -158,6 +166,7 @@ localcount_xc(void *cookie0, void *cookie1)
 	mutex_enter(interlock);
 	localp = percpu_getref(lc->lc_percpu);
 	*lc->lc_totalp += *localp;
+	*localp -= *localp;		/* ie, *localp = 0; */
 	percpu_putref(lc->lc_percpu);
 	mutex_exit(interlock);
 }
@@ -235,9 +244,7 @@ localcount_release(struct localcount *lc, kcondvar_t *cv, kmutex_t *interlock)
 		 * the last reference.
 		 */
 		mutex_enter(interlock);
-		localcount_adjust(lc, -1);
-		*lc->lc_totalp -= 1;
-		if (*lc->lc_totalp == 0)
+		if (--*lc->lc_totalp == 0)
 			cv_broadcast(cv);
 		mutex_exit(interlock);
 		goto out;
