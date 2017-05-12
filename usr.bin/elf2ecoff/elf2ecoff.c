@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.29 2013/11/10 17:14:25 christos Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.29.4.1 2017/05/12 06:17:00 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -56,8 +56,8 @@
 #define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
 
 struct sect {
-	unsigned long vaddr;
-	unsigned long len;
+	uint32_t vaddr;
+	uint32_t len;
 };
 
 struct elf_syms {
@@ -83,12 +83,12 @@ static void    safewrite(int, const void *, off_t, const char *);
 static void    copy(int, int, off_t, off_t);
 static void    combine(struct sect *, struct sect *, int);
 static void    translate_syms(struct elf_syms *, struct ecoff_syms *);
-static void    elf_symbol_table_to_ecoff(int, int, struct ecoff_exechdr *,
+static void    elf_symbol_table_to_ecoff(int, int, struct ecoff32_exechdr *,
     off_t, off_t, off_t, off_t);
-static int     make_ecoff_section_hdrs(struct ecoff_exechdr *,
-    struct ecoff_scnhdr *);
-static void    write_ecoff_symhdr(int, struct ecoff_exechdr *,
-    struct ecoff_symhdr *, long, long, long, long);
+static int     make_ecoff_section_hdrs(struct ecoff32_exechdr *,
+    struct ecoff32_scnhdr *);
+static void    write_ecoff_symhdr(int, struct ecoff32_exechdr *,
+    struct ecoff32_symhdr *, int32_t, int32_t, int32_t, int32_t);
 static void    pad16(int, int, const char *);
 static void    bswap32_region(int32_t* , int);
 static void    elf_read_syms(struct elf_syms *, int, off_t, off_t, off_t,
@@ -107,12 +107,12 @@ main(int argc, char **argv)
 	int     pad;
 	struct sect text, data, bss;	/* a.out-compatible sections */
 
-	struct ecoff_exechdr ep;
-	struct ecoff_scnhdr esecs[6];
-	struct ecoff_symhdr symhdr;
+	struct ecoff32_exechdr ep;
+	struct ecoff32_scnhdr esecs[6];
+	struct ecoff32_symhdr symhdr;
 
 	int     infile, outfile;
-	unsigned long cur_vma = ULONG_MAX;
+	uint32_t cur_vma = UINT32_MAX;
 	int     nsecs = 0;
 	int	mipsel;
 
@@ -217,23 +217,25 @@ usage:
 	    (int (*) (const void *, const void *)) phcmp);
 
 	for (i = 0; i < ex.e_phnum; i++) {
-		/* Section types we can ignore... */
-		if (ph[i].p_type == PT_NULL || ph[i].p_type == PT_NOTE ||
-		    ph[i].p_type == PT_PHDR ||
-		    ph[i].p_type == PT_MIPS_REGINFO) {
-
+		switch (ph[i].p_type) {
+		case PT_NOTE:
+		case PT_NULL:
+		case PT_PHDR:
+		case PT_MIPS_ABIFLAGS:
+		case PT_MIPS_REGINFO:
+			/* Section types we can ignore... */
 			if (debug) {
-				fprintf(stderr, "  skipping PH %zu type %d "
-				    "flags 0x%x\n",
+				fprintf(stderr, "  skipping PH %zu type %#x "
+				    "flags %#x\n",
 				    i, ph[i].p_type, ph[i].p_flags);
 			}
 			continue;
-		}
-		/* Section types we can't handle... */
-		else
+		default:
+			/* Section types we can't handle... */
 			if (ph[i].p_type != PT_LOAD)
-				errx(1, "Program header %zu type %d can't be "
+				errx(1, "Program header %zu type %#x can't be "
 				    "converted", i, ph[i].p_type);
+		}
 		/* Writable (data) segment? */
 		if (ph[i].p_flags & PF_W) {
 			struct sect ndata, nbss;
@@ -245,8 +247,8 @@ usage:
 
 			if (debug) {
 				fprintf(stderr, "  combinining PH %zu type %d "
-				    "flags 0x%x with data, ndata = %ld, "
-				    "nbss =%ld\n", i, ph[i].p_type,
+				    "flags %#x with data, ndata = %d, "
+				    "nbss =%d\n", i, ph[i].p_type,
 				    ph[i].p_flags, ndata.len, nbss.len);
 			}
 			combine(&data, &ndata, 0);
@@ -258,7 +260,7 @@ usage:
 			ntxt.len = ph[i].p_filesz;
 			if (debug) {
 				fprintf(stderr, "  combinining PH %zu type %d "
-				    "flags 0x%x with text, len = %ld\n",
+				    "flags %#x with text, len = %d\n",
 				    i, ph[i].p_type, ph[i].p_flags, ntxt.len);
 			}
 			combine(&text, &ntxt, 0);
@@ -310,7 +312,7 @@ usage:
 	ep.f.f_nscns = 6;
 	ep.f.f_timdat = 0;	/* bogus */
 	ep.f.f_symptr = 0;
-	ep.f.f_nsyms = sizeof(struct ecoff_symhdr);
+	ep.f.f_nsyms = sizeof(struct ecoff32_symhdr);
 	ep.f.f_opthdr = sizeof ep.a;
 	ep.f.f_flags = 0x100f;	/* Stripped, not sharable. */
 
@@ -393,13 +395,13 @@ usage:
 		 * that the section can be loaded before copying. */
 		if (ph[i].p_type == PT_LOAD && ph[i].p_filesz) {
 			if (cur_vma != ph[i].p_vaddr) {
-				unsigned long gap = ph[i].p_vaddr - cur_vma;
+				uint32_t gap = ph[i].p_vaddr - cur_vma;
 				char    obuf[1024];
 				if (gap > 65536)
-					errx(1, "Intersegment gap (%ld bytes) "
+					errx(1, "Intersegment gap (%d bytes) "
 					    "too large", gap);
 				if (debug)
-					fprintf(stderr, "Warning: %ld byte "
+					fprintf(stderr, "Warning: %d byte "
 					    "intersegment gap.\n", gap);
 				memset(obuf, 0, sizeof obuf);
 				while (gap) {
@@ -421,8 +423,8 @@ usage:
 
 
 	if (debug)
-		fprintf(stderr, "writing syms at offset 0x%lx\n",
-		    (u_long) ep.f.f_symptr + sizeof(symhdr));
+		fprintf(stderr, "writing syms at offset %#x\n",
+		    (uint32_t)(ep.f.f_symptr + sizeof(symhdr)));
 
 	/* Copy and translate the symbol table... */
 	elf_symbol_table_to_ecoff(outfile, infile, &ep,
@@ -510,7 +512,7 @@ saveRead(int file, off_t offset, off_t len, const char *name)
 	if ((off = lseek(file, offset, SEEK_SET)) < 0)
 		err(1, "%s: fseek", name);
 	if ((tmp = malloc(len)) == NULL)
-		err(1, "%s: Can't allocate %ld bytes", name, (long) len);
+		err(1, "%s: Can't allocate %jd bytes", name, (intmax_t)len);
 	count = read(file, tmp, len);
 	if (count != len)
 		err(1, "%s: short read", name);
@@ -533,7 +535,7 @@ safewrite(int outfile, const void *buf, off_t len, const char *msg)
  * for text, data, and bss.
  */
 static int
-make_ecoff_section_hdrs(struct ecoff_exechdr *ep, struct ecoff_scnhdr *esecs)
+make_ecoff_section_hdrs(struct ecoff32_exechdr *ep, struct ecoff32_scnhdr *esecs)
 {
 
 	ep->f.f_nscns = 6;	/* XXX */
@@ -549,11 +551,11 @@ make_ecoff_section_hdrs(struct ecoff_exechdr *ep, struct ecoff_scnhdr *esecs)
 	esecs[1].s_size = ep->a.dsize;
 	esecs[2].s_size = ep->a.bsize;
 
-	esecs[0].s_scnptr = ECOFF_TXTOFF(ep);
-	esecs[1].s_scnptr = ECOFF_DATOFF(ep);
+	esecs[0].s_scnptr = ECOFF32_TXTOFF(ep);
+	esecs[1].s_scnptr = ECOFF32_DATOFF(ep);
 #if 0
 	esecs[2].s_scnptr = esecs[1].s_scnptr +
-	    ECOFF_ROUND(esecs[1].s_size, ECOFF_SEGMENT_ALIGNMENT(ep));
+	    ECOFF_ROUND(esecs[1].s_size, ECOFF32_SEGMENT_ALIGNMENT(ep));
 #endif
 
 	esecs[0].s_relptr = esecs[1].s_relptr = esecs[2].s_relptr = 0;
@@ -581,17 +583,17 @@ make_ecoff_section_hdrs(struct ecoff_exechdr *ep, struct ecoff_scnhdr *esecs)
  * Mark all symbols as EXTERN (for now).
  */
 static void
-write_ecoff_symhdr(int out, struct ecoff_exechdr *ep,
-    struct ecoff_symhdr *symhdrp, long nesyms,
-    long extsymoff, long extstroff, long strsize)
+write_ecoff_symhdr(int out, struct ecoff32_exechdr *ep,
+    struct ecoff32_symhdr *symhdrp, int32_t nesyms,
+    int32_t extsymoff, int32_t extstroff, int32_t strsize)
 {
 
 	if (debug)
 		fprintf(stderr,
-		    "writing symhdr for %ld entries at offset 0x%lx\n",
-		    nesyms, (u_long) ep->f.f_symptr);
+		    "writing symhdr for %d entries at offset %#x\n",
+		    nesyms, ep->f.f_symptr);
 
-	ep->f.f_nsyms = sizeof(struct ecoff_symhdr);
+	ep->f.f_nsyms = sizeof(struct ecoff32_symhdr);
 
 	memset(symhdrp, 0, sizeof(*symhdrp));
 	symhdrp->esymMax = nesyms;
@@ -602,9 +604,9 @@ write_ecoff_symhdr(int out, struct ecoff_exechdr *ep,
 	symhdrp->issExtMax = strsize;
 	if (debug)
 		fprintf(stderr,
-		    "ECOFF symhdr: symhdr %zx, strsize %lx, symsize %lx\n",
+		    "ECOFF symhdr: symhdr %zx, strsize %x, symsize %zx\n",
 		    sizeof(*symhdrp), strsize,
-		    (nesyms * sizeof(struct ecoff_extsym)));
+		    (nesyms * sizeof(struct ecoff32_extsym)));
 
 	if (needswap) {
 		bswap32_region(&symhdrp->ilineMax,
@@ -623,7 +625,7 @@ static void
 elf_read_syms(struct elf_syms *elfsymsp, int in, off_t symoff, off_t symsize,
     off_t stroff, off_t strsize)
 {
-	register int nsyms;
+	int nsyms;
 	int i;
 	nsyms = symsize / sizeof(Elf32_Sym);
 
@@ -650,16 +652,16 @@ elf_read_syms(struct elf_syms *elfsymsp, int in, off_t symoff, off_t symsize,
 
 
 static void
-elf_symbol_table_to_ecoff(int out, int in, struct ecoff_exechdr *ep,
+elf_symbol_table_to_ecoff(int out, int in, struct ecoff32_exechdr *ep,
     off_t symoff, off_t symsize, off_t stroff, off_t strsize)
 {
 
 	struct elf_syms elfsymtab;
 	struct ecoff_syms ecoffsymtab;
-	register u_long ecoff_symhdr_off, symtaboff, stringtaboff;
-	register u_long nextoff, symtabsize, ecoff_strsize;
+	uint32_t ecoff_symhdr_off, symtaboff, stringtaboff;
+	uint32_t nextoff, symtabsize, ecoff_strsize;
 	int     nsyms, i;
-	struct ecoff_symhdr symhdr;
+	struct ecoff32_symhdr symhdr;
 	int     padding;
 
 	/* Read in the ELF symbols. */
@@ -675,13 +677,13 @@ elf_symbol_table_to_ecoff(int out, int in, struct ecoff_exechdr *ep,
 	nextoff = ecoff_symhdr_off + sizeof(struct ecoff_symhdr);
 	stringtaboff = nextoff;
 	ecoff_strsize = ECOFF_ROUND(ecoffsymtab.stringsize,
-	    (ECOFF_SEGMENT_ALIGNMENT(ep)));
+	    (ECOFF32_SEGMENT_ALIGNMENT(ep)));
 
 
 	nextoff = stringtaboff + ecoff_strsize;
 	symtaboff = nextoff;
 	symtabsize = nsyms * sizeof(struct ecoff_extsym);
-	symtabsize = ECOFF_ROUND(symtabsize, ECOFF_SEGMENT_ALIGNMENT(ep));
+	symtabsize = ECOFF_ROUND(symtabsize, ECOFF32_SEGMENT_ALIGNMENT(ep));
 
 	/* Write out the symbol header ... */
 	write_ecoff_symhdr(out, ep, &symhdr, nsyms, symtaboff,
