@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_tunnel.sh,v 1.7 2017/05/10 09:00:29 ozaki-r Exp $
+#	$NetBSD: t_ipsec_tunnel.sh,v 1.8 2017/05/12 02:34:45 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -74,19 +74,10 @@ test_ipsec4_tunnel()
 	local ip_remote=10.0.2.2
 	local subnet_local=10.0.1.0
 	local subnet_remote=10.0.2.0
-	local keylen=$(get_one_valid_keylen $algo)
-	local key=$(generate_key $keylen)
 	local tmpfile=./tmp
 	local outfile=./out
-	local opt= proto_cap=
-
-	if [ $proto = esp ]; then
-		opt=-E
-		proto_cap=ESP
-	else
-		opt=-A
-		proto_cap=AH
-	fi
+	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
+	local algo_args="$(generate_algo_args $proto $algo)"
 
 	setup_servers
 
@@ -134,8 +125,8 @@ test_ipsec4_tunnel()
 	export RUMP_SERVER=$SOCK_TUNNEL_LOCAL
 	# from https://www.netbsd.org/docs/network/ipsec/
 	cat > $tmpfile <<-EOF
-	add $ip_gw_local_tunnel $ip_gw_remote_tunnel $proto 10000 $opt $algo $key;
-	add $ip_gw_remote_tunnel $ip_gw_local_tunnel $proto 10001 $opt $algo $key;
+	add $ip_gw_local_tunnel $ip_gw_remote_tunnel $proto 10000 $algo_args;
+	add $ip_gw_remote_tunnel $ip_gw_local_tunnel $proto 10001 $algo_args;
 	spdadd $subnet_local/24 $subnet_remote/24 any -P out ipsec
 	    $proto/tunnel/$ip_gw_local_tunnel-$ip_gw_remote_tunnel/require;
 	spdadd $subnet_remote/24 $subnet_local/24 any -P in ipsec
@@ -148,8 +139,8 @@ test_ipsec4_tunnel()
 
 	export RUMP_SERVER=$SOCK_TUNNEL_REMOTE
 	cat > $tmpfile <<-EOF
-	add $ip_gw_local_tunnel $ip_gw_remote_tunnel $proto 10000 $opt $algo $key;
-	add $ip_gw_remote_tunnel $ip_gw_local_tunnel $proto 10001 $opt $algo $key;
+	add $ip_gw_local_tunnel $ip_gw_remote_tunnel $proto 10000 $algo_args;
+	add $ip_gw_remote_tunnel $ip_gw_local_tunnel $proto 10001 $algo_args;
 	spdadd $subnet_remote/24 $subnet_local/24 any -P out ipsec
 	    $proto/tunnel/$ip_gw_remote_tunnel-$ip_gw_local_tunnel/require;
 	spdadd $subnet_local/24 $subnet_remote/24 any -P in ipsec
@@ -183,19 +174,10 @@ test_ipsec6_tunnel()
 	local ip_remote=fd00:2::2
 	local subnet_local=fd00:1::
 	local subnet_remote=fd00:2::
-	local keylen=$(get_one_valid_keylen $algo)
-	local key=$(generate_key $keylen)
 	local tmpfile=./tmp
 	local outfile=./out
-	local opt= proto_cap=
-
-	if [ $proto = esp ]; then
-		opt=-E
-		proto_cap=ESP
-	else
-		opt=-A
-		proto_cap=AH
-	fi
+	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
+	local algo_args="$(generate_algo_args $proto $algo)"
 
 	setup_servers
 
@@ -243,8 +225,8 @@ test_ipsec6_tunnel()
 	export RUMP_SERVER=$SOCK_TUNNEL_LOCAL
 	# from https://www.netbsd.org/docs/network/ipsec/
 	cat > $tmpfile <<-EOF
-	add $ip_gw_local_tunnel $ip_gw_remote_tunnel $proto 10000 $opt $algo $key;
-	add $ip_gw_remote_tunnel $ip_gw_local_tunnel $proto 10001 $opt $algo $key;
+	add $ip_gw_local_tunnel $ip_gw_remote_tunnel $proto 10000 $algo_args;
+	add $ip_gw_remote_tunnel $ip_gw_local_tunnel $proto 10001 $algo_args;
 	spdadd $subnet_local/64 $subnet_remote/64 any -P out ipsec
 	    $proto/tunnel/$ip_gw_local_tunnel-$ip_gw_remote_tunnel/require;
 	spdadd $subnet_remote/64 $subnet_local/64 any -P in ipsec
@@ -257,8 +239,8 @@ test_ipsec6_tunnel()
 
 	export RUMP_SERVER=$SOCK_TUNNEL_REMOTE
 	cat > $tmpfile <<-EOF
-	add $ip_gw_local_tunnel $ip_gw_remote_tunnel $proto 10000 $opt $algo $key;
-	add $ip_gw_remote_tunnel $ip_gw_local_tunnel $proto 10001 $opt $algo $key;
+	add $ip_gw_local_tunnel $ip_gw_remote_tunnel $proto 10000 $algo_args;
+	add $ip_gw_remote_tunnel $ip_gw_local_tunnel $proto 10001 $algo_args;
 	spdadd $subnet_remote/64 $subnet_local/64 any -P out ipsec
 	    $proto/tunnel/$ip_gw_remote_tunnel-$ip_gw_local_tunnel/require;
 	spdadd $subnet_local/64 $subnet_remote/64 any -P in ipsec
