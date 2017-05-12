@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.75 2017/04/22 15:05:02 macallan Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.76 2017/05/12 00:41:25 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.75 2017/04/22 15:05:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.76 2017/05/12 00:41:25 macallan Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -415,12 +415,14 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	ri->ri_ops.cursor = rasops_cursor;
 	ri->ri_do_cursor = rasops_do_cursor;
 
+	ri->ri_caps &= ~(WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
+		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE);
 	if (ri->ri_depth < 8 || (ri->ri_flg & RI_FORCEMONO) != 0) {
 		ri->ri_ops.allocattr = rasops_allocattr_mono;
-		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_REVERSE;
+		ri->ri_caps |= WSSCREEN_UNDERLINE | WSSCREEN_REVERSE;
 	} else {
 		ri->ri_ops.allocattr = rasops_allocattr_color;
-		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
+		ri->ri_caps |= WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	}
 
