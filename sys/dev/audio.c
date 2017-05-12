@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.341 2017/05/11 23:39:15 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.342 2017/05/12 04:15:40 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.341 2017/05/11 23:39:15 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.342 2017/05/12 04:15:40 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2659,20 +2659,23 @@ audio_calc_blksize(struct audio_softc *sc, int mode,
 		   struct virtual_channel *vc)
 {
 	const audio_params_t *parm;
-	struct audio_ringbuffer *rb;
+	struct audio_stream *rb;
+	int *blksize;
 
 	if (vc->sc_blkset)
 		return;
 
 	if (mode == AUMODE_PLAY) {
-		rb = &vc->sc_mpr;
-		parm = &rb->s.param;
+		rb = vc->sc_pustream;
+		parm = &rb->param;
+		blksize = &vc->sc_mpr.blksize;
 	} else {
-		rb = &vc->sc_mrr;
-		parm = &rb->s.param;
+		rb = vc->sc_rustream;
+		parm = &rb->param;
+		blksize = &vc->sc_mrr.blksize;
 	}
 
-	rb->blksize = parm->sample_rate * audio_blk_ms / 1000 *
+	*blksize = parm->sample_rate * audio_blk_ms / 1000 *
 	     parm->channels * parm->precision / NBBY;
 
 	DPRINTF(("audio_calc_blksize: %s blksize=%d\n",
@@ -5517,6 +5520,9 @@ mix_write(void *arg)
 	cc = blksize;
 	error = 0;
 
+	if (audio_stream_get_used(vc->sc_pustream) > blksize)
+		goto done;
+
 	tocopy = vc->sc_pustream->inp;
 	orig = __UNCONST(sc->sc_pr.s.outp);
 	used = blksize;
@@ -5547,6 +5553,7 @@ mix_write(void *arg)
 	sc->sc_pr.s.outp = audio_stream_add_outp(&sc->sc_pr.s,
 	    sc->sc_pr.s.outp, blksize);
 
+done:
 	if (vc->sc_npfilters > 0) {
 		null_fetcher.fetch_to = null_fetcher_fetch_to;
 		filter = vc->sc_pfilters[0];
