@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.14 2017/04/26 14:55:52 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.15 2017/05/12 06:19:33 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -1010,4 +1010,70 @@ sys/arch/amd64/amd64/trap.c			1.96
 	by checking for the relevant lcall instruction in the trap handler
 	and treating it as a syscall.
 	[chs, ticket #1410]
+
+ys/dev/pci/hdaudio/hdaudio_pci.c		patch based on revision 1.6 of sys/dev/pci/hdaudio_pci.c
+
+	Always allow hdaudio(4) to suspend
+	[khorben, ticket #1369]
+
+usr.sbin/rtadvd/config.c			1.36
+usr.sbin/rtadvd/rtadvd.h			1.15
+
+	Fix the default value of rltime.  PR bin/51994
+	[ozaki-r, ticket #1373]
+
+distrib/utils/embedded/mkimage			1.62
+
+	Mark the msdos parition active for boards like the
+	BeagleBone Black
+	[sevan, ticket #1386]
+
+sys/arch/arm/omap/omap_edma.c			1.4 via patch
+
+	Change the interrupt handler IPL level to IPL_VM (aka IPL_BIO
+	aka IPL_SDMMC) so that the sdhc_host_lock prevents edma_intr
+	from running.  PR/51380.
+	[sevan, ticket #1387]
+
+sbin/ping/ping.c				1.116
+
+	Fix cksum calculation for clearing the cached route.
+	[ryo, ticket #1390]
+
+share/misc/bsd-family-tree			1.59
+
+	Sync with r316082 from FreeBSD
+	[sevan, ticket #1392]
+
+sys/net/npf/npf_inet.c				1.34, 1.35 via patch
+sys/net/npf/npf_mbuf.c				1.16
+sys/net/npf/npf_nat.c				1.40
+
+	Fix build without INET6.
+	[jnemeth, ticket #1394]
+
+sbin/luactl/luactl.8				1.7
+
+	Direct reader to intro(9lua), lua(9) does not exist.
+	[sevan, ticket #1401]
+
+sys/net/route.c					1.170 via patch
+sys/netinet/ip_flow.c				1.73 via patch
+sys/netinet6/ip6_flow.c				1.28 via patch
+sys/netinet6/nd6.c				1.203 via patch
+
+	Run timers in workqueue.
+	[skrll/ozaki-r, ticket #1402]
+
+sys/arch/mips/include/ecoff_machdep.h		1.23
+sys/sys/exec_ecoff.h				1.21
+tools/Makefile.nbincludes			1.5
+tools/mips-elf2ecoff/Makefile			1.3
+tools/mips-elf2ecoff/machine/ecoff_machdep.h	1.3
+tools/mips-elf2ecoff/sys/exec_ecoff.h		delete
+tools/mips-elf2ecoff/sys/exec_elf.h		delete
+usr.bin/elf2ecoff/elf2ecoff.c			1.30-1.33
+
+	Make elf2ecoff usable as a tool on 64 bit systems.
+	[skrll, ticket #1406]
 
