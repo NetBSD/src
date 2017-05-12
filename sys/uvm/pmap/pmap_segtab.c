@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.5 2017/05/12 12:18:07 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.6 2017/05/12 12:18:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.5 2017/05/12 12:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.6 2017/05/12 12:18:37 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -168,7 +168,8 @@ static inline pt_entry_t *
 pmap_segmap(struct pmap *pmap, vaddr_t va)
 {
 	pmap_segtab_t *stp = pmap->pm_segtab;
-	KASSERT(pmap != pmap_kernel() || !pmap_md_direct_mapped_vaddr_p(va));
+	KASSERTMSG(pmap != pmap_kernel() || !pmap_md_direct_mapped_vaddr_p(va),
+	    "pmap %p va %#" PRIxVADDR, pmap, va);
 #ifdef _LP64
 	stp = stp->seg_seg[(va >> XSEGSHIFT) & (NSEGPG - 1)];
 	if (stp == NULL)
