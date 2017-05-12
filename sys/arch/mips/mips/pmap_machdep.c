@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.14 2017/05/12 06:38:18 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.15 2017/05/12 06:43:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.14 2017/05/12 06:38:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.15 2017/05/12 06:43:42 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -727,7 +727,10 @@ pmap_md_unmap_poolpage(vaddr_t va, size_t len)
 	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 
 	KASSERT(VM_PAGEMD_CACHED_P(mdpg));
-	mdpg->mdpg_first.pv_va = va;
+	pv_entry_t pv = &mdpg->mdpg_first;
+
+	/* Note last mapped address for future color check */
+	pv->pv_va = va;
 #if 0
 	if (MIPS_CACHE_VIRTUAL_ALIAS) {
 		/*
@@ -735,7 +738,7 @@ pmap_md_unmap_poolpage(vaddr_t va, size_t len)
 		 */
 		KASSERT((va & PAGE_MASK) == 0);
 		mips_dcache_inv_range(va, PAGE_SIZE);
-		mdpg->mdpg_first.pv_va = va;
+		pv->pv_va = va;
 	}
 #endif
 
