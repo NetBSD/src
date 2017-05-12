@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_gif.sh,v 1.4 2017/05/10 04:46:13 ozaki-r Exp $
+#	$NetBSD: t_ipsec_gif.sh,v 1.5 2017/05/12 02:34:45 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -74,17 +74,10 @@ test_ipsec4_gif()
 	local ip_remote=10.0.2.2
 	local subnet_local=10.0.1.0
 	local subnet_remote=10.0.2.0
-	local keylen=$(get_one_valid_keylen $algo)
-	local key=$(generate_key $keylen)
 	local tmpfile=./tmp
 	local outfile=./out
-	local opt= str=
-
-	if [ $proto = esp ]; then
-		opt=-E
-	else
-		opt=-A
-	fi
+	local str=
+	local algo_args="$(generate_algo_args $proto $algo)"
 
 	rump_server_crypto_start $SOCK_LOCAL
 	rump_server_crypto_start $SOCK_TUN_LOCAL netipsec gif
@@ -152,8 +145,8 @@ test_ipsec4_gif()
 		export RUMP_SERVER=$SOCK_TUN_LOCAL
 		# from https://www.netbsd.org/docs/network/ipsec/
 		cat > $tmpfile <<-EOF
-		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
-		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $algo_args;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $algo_args;
 		spdadd $subnet_local/24 $subnet_remote/24 any -P out ipsec
 		    $proto/tunnel/$ip_gwlo_tun-$ip_gwre_tun/require;
 		spdadd $subnet_remote/24 $subnet_local/24 any -P in ipsec
@@ -164,8 +157,8 @@ test_ipsec4_gif()
 
 		export RUMP_SERVER=$SOCK_TUN_REMOTE
 		cat > $tmpfile <<-EOF
-		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
-		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $algo_args;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $algo_args;
 		spdadd $subnet_remote/24 $subnet_local/24 any -P out ipsec
 		    $proto/tunnel/$ip_gwre_tun-$ip_gwlo_tun/require;
 		spdadd $subnet_local/24 $subnet_remote/24 any -P in ipsec
@@ -177,8 +170,8 @@ test_ipsec4_gif()
 		export RUMP_SERVER=$SOCK_TUN_LOCAL
 		# from https://www.netbsd.org/docs/network/ipsec/
 		cat > $tmpfile <<-EOF
-		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
-		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $algo_args;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $algo_args;
 		spdadd $ip_gwlo_tun/32 $ip_gwre_tun/32 any -P out ipsec
 		    $proto/transport//require;
 		spdadd $ip_gwre_tun/32 $ip_gwlo_tun/32 any -P in ipsec
@@ -189,8 +182,8 @@ test_ipsec4_gif()
 
 		export RUMP_SERVER=$SOCK_TUN_REMOTE
 		cat > $tmpfile <<-EOF
-		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
-		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $algo_args;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $algo_args;
 		spdadd $ip_gwre_tun/32 $ip_gwlo_tun/32 any -P out ipsec
 		    $proto/transport//require;
 		spdadd $ip_gwlo_tun/32 $ip_gwre_tun/32 any -P in ipsec
@@ -233,17 +226,10 @@ test_ipsec6_gif()
 	local ip_remote=fd00:2::2
 	local subnet_local=fd00:1::
 	local subnet_remote=fd00:2::
-	local keylen=$(get_one_valid_keylen $algo)
-	local key=$(generate_key $keylen)
 	local tmpfile=./tmp
 	local outfile=./out
-	local opt= str=
-
-	if [ $proto = esp ]; then
-		opt=-E
-	else
-		opt=-A
-	fi
+	local str=
+	local algo_args="$(generate_algo_args $proto $algo)"
 
 	rump_server_crypto_start $SOCK_LOCAL netinet6
 	rump_server_crypto_start $SOCK_TUN_LOCAL netipsec netinet6 gif
@@ -309,8 +295,8 @@ test_ipsec6_gif()
 		export RUMP_SERVER=$SOCK_TUN_LOCAL
 		# from https://www.netbsd.org/docs/network/ipsec/
 		cat > $tmpfile <<-EOF
-		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
-		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $algo_args;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $algo_args;
 		spdadd $subnet_local/64 $subnet_remote/64 any -P out ipsec
 		    $proto/tunnel/$ip_gwlo_tun-$ip_gwre_tun/require;
 		spdadd $subnet_remote/64 $subnet_local/64 any -P in ipsec
@@ -321,8 +307,8 @@ test_ipsec6_gif()
 
 		export RUMP_SERVER=$SOCK_TUN_REMOTE
 		cat > $tmpfile <<-EOF
-		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
-		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $algo_args;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $algo_args;
 		spdadd $subnet_remote/64 $subnet_local/64 any -P out ipsec
 		    $proto/tunnel/$ip_gwre_tun-$ip_gwlo_tun/require;
 		spdadd $subnet_local/64 $subnet_remote/64 any -P in ipsec
@@ -334,8 +320,8 @@ test_ipsec6_gif()
 		export RUMP_SERVER=$SOCK_TUN_LOCAL
 		# from https://www.netbsd.org/docs/network/ipsec/
 		cat > $tmpfile <<-EOF
-		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
-		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $algo_args;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $algo_args;
 		spdadd $ip_gwlo_tun/128 $ip_gwre_tun/128 any -P out ipsec
 		    $proto/transport//require;
 		spdadd $ip_gwre_tun/128 $ip_gwlo_tun/128 any -P in ipsec
@@ -346,8 +332,8 @@ test_ipsec6_gif()
 
 		export RUMP_SERVER=$SOCK_TUN_REMOTE
 		cat > $tmpfile <<-EOF
-		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
-		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $algo_args;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $algo_args;
 		spdadd $ip_gwre_tun/128 $ip_gwlo_tun/128 any -P out ipsec
 		    $proto/transport//require;
 		spdadd $ip_gwlo_tun/128 $ip_gwre_tun/128 any -P in ipsec

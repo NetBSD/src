@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_transport.sh,v 1.3 2017/05/10 04:46:13 ozaki-r Exp $
+#	$NetBSD: t_ipsec_transport.sh,v 1.4 2017/05/12 02:34:45 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -37,19 +37,10 @@ test_ipsec4_transport()
 	local algo=$2
 	local ip_local=10.0.0.1
 	local ip_peer=10.0.0.2
-	local keylen=$(get_one_valid_keylen $algo)
-	local key=$(generate_key $keylen)
 	local tmpfile=./tmp
 	local outfile=./out
-	local opt= proto_cap=
-
-	if [ $proto = esp ]; then
-		opt=-E
-		proto_cap=ESP
-	else
-		opt=-A
-		proto_cap=AH
-	fi
+	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
+	local algo_args="$(generate_algo_args $proto $algo)"
 
 	rump_server_crypto_start $SOCK_LOCAL netipsec
 	rump_server_crypto_start $SOCK_PEER netipsec
@@ -78,8 +69,8 @@ test_ipsec4_transport()
 	export RUMP_SERVER=$SOCK_LOCAL
 	# from https://www.netbsd.org/docs/network/ipsec/
 	cat > $tmpfile <<-EOF
-	add $ip_local $ip_peer $proto 10000 $opt $algo $key;
-	add $ip_peer $ip_local $proto 10001 $opt $algo $key;
+	add $ip_local $ip_peer $proto 10000 $algo_args;
+	add $ip_peer $ip_local $proto 10001 $algo_args;
 	spdadd $ip_local $ip_peer any -P out ipsec $proto/transport//require;
 	EOF
 	$DEBUG && cat $tmpfile
@@ -88,8 +79,8 @@ test_ipsec4_transport()
 
 	export RUMP_SERVER=$SOCK_PEER
 	cat > $tmpfile <<-EOF
-	add $ip_local $ip_peer $proto 10000 $opt $algo $key;
-	add $ip_peer $ip_local $proto 10001 $opt $algo $key;
+	add $ip_local $ip_peer $proto 10000 $algo_args;
+	add $ip_peer $ip_local $proto 10001 $algo_args;
 	spdadd $ip_peer $ip_local any -P out ipsec $proto/transport//require;
 	EOF
 	$DEBUG && cat $tmpfile
@@ -115,19 +106,10 @@ test_ipsec6_transport()
 	local algo=$2
 	local ip_local=fd00::1
 	local ip_peer=fd00::2
-	local keylen=$(get_one_valid_keylen $algo)
-	local key=$(generate_key $keylen)
 	local tmpfile=./tmp
 	local outfile=./out
-	local opt= proto_cap=
-
-	if [ $proto = esp ]; then
-		opt=-E
-		proto_cap=ESP
-	else
-		opt=-A
-		proto_cap=AH
-	fi
+	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
+	local algo_args="$(generate_algo_args $proto $algo)"
 
 	rump_server_crypto_start $SOCK_LOCAL netinet6 netipsec
 	rump_server_crypto_start $SOCK_PEER netinet6 netipsec
@@ -156,8 +138,8 @@ test_ipsec6_transport()
 	export RUMP_SERVER=$SOCK_LOCAL
 	# from https://www.netbsd.org/docs/network/ipsec/
 	cat > $tmpfile <<-EOF
-	add $ip_local $ip_peer $proto 10000 $opt $algo $key;
-	add $ip_peer $ip_local $proto 10001 $opt $algo $key;
+	add $ip_local $ip_peer $proto 10000 $algo_args;
+	add $ip_peer $ip_local $proto 10001 $algo_args;
 	spdadd $ip_local $ip_peer any -P out ipsec $proto/transport//require;
 	EOF
 	$DEBUG && cat $tmpfile
@@ -166,8 +148,8 @@ test_ipsec6_transport()
 
 	export RUMP_SERVER=$SOCK_PEER
 	cat > $tmpfile <<-EOF
-	add $ip_local $ip_peer $proto 10000 $opt $algo $key;
-	add $ip_peer $ip_local $proto 10001 $opt $algo $key;
+	add $ip_local $ip_peer $proto 10000 $algo_args;
+	add $ip_peer $ip_local $proto 10001 $algo_args;
 	spdadd $ip_peer $ip_local any -P out ipsec $proto/transport//require;
 	EOF
 	$DEBUG && cat $tmpfile
