@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 2017/05/07 04:15:50 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34 2017/05/12 05:45:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2017/05/07 04:15:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2017/05/12 05:45:58 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1738,6 +1738,8 @@ pmap_pvlist_check(struct vm_page_md *mdpg)
 		    || VM_PAGEMD_UNCACHED_P(mdpg), "colors=%#x uncached=%u",
 		    colors, VM_PAGEMD_UNCACHED_P(mdpg));
 #endif
+	} else {
+    		KASSERT(pv->pv_next == NULL);
 	}
 #endif /* DEBUG */
 }
@@ -2102,6 +2104,7 @@ pmap_pv_page_free(struct pool *pp, void *v)
 	kpreempt_enable();
 #endif
 	pmap_page_clear_attributes(VM_PAGE_TO_MD(pg), VM_PAGEMD_POOLPAGE);
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(pg)));
 	uvm_pagefree(pg);
 }
 
@@ -2139,7 +2142,10 @@ pmap_map_poolpage(paddr_t pa)
 {
 	struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 	KASSERT(pg);
+
 	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(mdpg));
+
 	pmap_page_set_attributes(mdpg, VM_PAGEMD_POOLPAGE);
 
 	return pmap_md_map_poolpage(pa, NBPG);
@@ -2153,6 +2159,8 @@ pmap_unmap_poolpage(vaddr_t va)
 
 	struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 	KASSERT(pg != NULL);
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(pg)));
+
 	pmap_page_clear_attributes(VM_PAGE_TO_MD(pg), VM_PAGEMD_POOLPAGE);
 	pmap_md_unmap_poolpage(va, NBPG);
 
