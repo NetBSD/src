@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.16 2017/05/12 10:48:34 sborrill Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.17 2017/05/13 06:31:44 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -1082,4 +1082,220 @@ sys/netinet/ip_carp.c				1.88
 	carp should call if_link_state_change instead of affecting
 	if_link_state directly.
 	[roy, ticket #1420]
+
+doc/3RDPARTY					1.1436, 1.1439
+external/mit/lua/dist/Makefile                  up to 1.7
+external/mit/lua/dist/README                    up to 1.7
+external/mit/lua/dist/doc/contents.html         up to 1.6
+external/mit/lua/dist/doc/logo.gif              up to 1.1.1.2
+external/mit/lua/dist/doc/lua.1                 up to 1.7
+external/mit/lua/dist/doc/manual.html           up to 1.7
+external/mit/lua/dist/doc/readme.html           up to 1.6
+external/mit/lua/dist/src/lauxlib.c             up to 1.10
+external/mit/lua/dist/src/lauxlib.h             up to 1.7
+external/mit/lua/dist/src/lbaselib.c            up to 1.9
+external/mit/lua/dist/src/lcode.c               up to 1.10
+external/mit/lua/dist/src/ldebug.c              up to 1.9
+external/mit/lua/dist/src/ldo.c                 up to 1.8
+external/mit/lua/dist/src/lgc.c                 up to 1.8
+external/mit/lua/dist/src/linit.c               up to 1.8
+external/mit/lua/dist/src/liolib.c              up to 1.8
+external/mit/lua/dist/src/lmathlib.c            up to 1.8
+external/mit/lua/dist/src/loadlib.c             up to 1.8
+external/mit/lua/dist/src/lobject.c             up to 1.11
+external/mit/lua/dist/src/lobject.h             up to 1.9
+external/mit/lua/dist/src/lopcodes.h            up to 1.7
+external/mit/lua/dist/src/loslib.c              up to 1.10
+external/mit/lua/dist/src/lparser.c             up to 1.10
+external/mit/lua/dist/src/lstate.h              up to 1.8
+external/mit/lua/dist/src/lstrlib.c             up to 1.17
+external/mit/lua/dist/src/ltable.c              up to 1.9
+external/mit/lua/dist/src/ltable.h              up to 1.7
+external/mit/lua/dist/src/ltm.c                 up to 1.8
+external/mit/lua/dist/src/lua.c                 up to 1.8
+external/mit/lua/dist/src/lua.h                 up to 1.9
+external/mit/lua/dist/src/luaconf.h             up to 1.21
+external/mit/lua/dist/src/lualib.h              up to 1.6
+external/mit/lua/dist/src/lutf8lib.c            up to 1.7
+external/mit/lua/dist/src/lvm.h                 up to 1.9
+
+	Update Lua to 5.3.4.
+	[mbalmer, ticket #1415]
+
+external/gpl2/xcvs/Makefile.inc                 up to 1.4
+external/gpl2/xcvs/bin/xcvs/Makefile            up to 1.5
+external/gpl2/xcvs/dist/build-aux/config.guess  up to 1.4
+external/gpl2/xcvs/dist/build-aux/config.sub    up to 1.4
+external/gpl2/xcvs/dist/doc/cvs.1               up to 1.4
+external/gpl2/xcvs/dist/doc/cvs.texinfo         up to 1.3
+external/gpl2/xcvs/dist/lib/__fpending.c        up to 1.2
+external/gpl2/xcvs/dist/lib/alloca.c            up to 1.2
+external/gpl2/xcvs/dist/lib/allocsa.c           up to 1.2
+external/gpl2/xcvs/dist/lib/asnprintf.c         up to 1.2
+external/gpl2/xcvs/dist/lib/asprintf.c          up to 1.2
+external/gpl2/xcvs/dist/lib/atexit.c            up to 1.2
+external/gpl2/xcvs/dist/lib/basename.c          up to 1.2
+external/gpl2/xcvs/dist/lib/canon-host.c        up to 1.2
+external/gpl2/xcvs/dist/lib/canonicalize.c      up to 1.2
+external/gpl2/xcvs/dist/lib/chdir-long.c        up to 1.2
+external/gpl2/xcvs/dist/lib/closeout.c          up to 1.2
+external/gpl2/xcvs/dist/lib/cycle-check.c       up to 1.2
+external/gpl2/xcvs/dist/lib/dirname.c           up to 1.2
+external/gpl2/xcvs/dist/lib/dup-safer.c         up to 1.2
+external/gpl2/xcvs/dist/lib/dup2.c              up to 1.2
+external/gpl2/xcvs/dist/lib/error.c             up to 1.2
+external/gpl2/xcvs/dist/lib/exitfail.c          up to 1.2
+external/gpl2/xcvs/dist/lib/fd-safer.c          up to 1.2
+external/gpl2/xcvs/dist/lib/filenamecat.c       up to 1.2
+external/gpl2/xcvs/dist/lib/fncase.c            up to 1.2
+external/gpl2/xcvs/dist/lib/fnmatch.c           up to 1.2
+external/gpl2/xcvs/dist/lib/fnmatch_loop.c      up to 1.2
+external/gpl2/xcvs/dist/lib/fseeko.c            up to 1.2
+external/gpl2/xcvs/dist/lib/ftello.c            up to 1.2
+external/gpl2/xcvs/dist/lib/ftruncate.c         up to 1.2
+external/gpl2/xcvs/dist/lib/gai_strerror.c      up to 1.2
+external/gpl2/xcvs/dist/lib/getaddrinfo.c       up to 1.2
+external/gpl2/xcvs/dist/lib/getcwd.c            up to 1.2
+external/gpl2/xcvs/dist/lib/getdate.c           up to 1.3
+external/gpl2/xcvs/dist/lib/getdelim.c          up to 1.2
+external/gpl2/xcvs/dist/lib/gethostname.c       up to 1.2
+external/gpl2/xcvs/dist/lib/getline.c           up to 1.2
+external/gpl2/xcvs/dist/lib/getlogin_r.c        up to 1.2
+external/gpl2/xcvs/dist/lib/getndelim2.c        up to 1.2
+external/gpl2/xcvs/dist/lib/getnline.c          up to 1.2
+external/gpl2/xcvs/dist/lib/getopt.c            up to 1.2
+external/gpl2/xcvs/dist/lib/getopt1.c           up to 1.2
+external/gpl2/xcvs/dist/lib/getpass.c           up to 1.2
+external/gpl2/xcvs/dist/lib/gettime.c           up to 1.2
+external/gpl2/xcvs/dist/lib/gettimeofday.c      up to 1.2
+external/gpl2/xcvs/dist/lib/glob.c              up to 1.2
+external/gpl2/xcvs/dist/lib/lstat.c             up to 1.2
+external/gpl2/xcvs/dist/lib/malloc.c            up to 1.2
+external/gpl2/xcvs/dist/lib/mbchar.c            up to 1.2
+external/gpl2/xcvs/dist/lib/md5.c               up to 1.2
+external/gpl2/xcvs/dist/lib/memchr.c            up to 1.2
+external/gpl2/xcvs/dist/lib/memmove.c           up to 1.2
+external/gpl2/xcvs/dist/lib/mempcpy.c           up to 1.2
+external/gpl2/xcvs/dist/lib/memrchr.c           up to 1.2
+external/gpl2/xcvs/dist/lib/mkdir.c             up to 1.2
+external/gpl2/xcvs/dist/lib/mkstemp.c           up to 1.2
+external/gpl2/xcvs/dist/lib/mktime.c            up to 1.2
+external/gpl2/xcvs/dist/lib/nanosleep.c         up to 1.2
+external/gpl2/xcvs/dist/lib/openat.c            up to 1.2
+external/gpl2/xcvs/dist/lib/pagealign_alloc.c   up to 1.2
+external/gpl2/xcvs/dist/lib/pipe-safer.c        up to 1.2
+external/gpl2/xcvs/dist/lib/printf-args.c       up to 1.2
+external/gpl2/xcvs/dist/lib/printf-parse.c      up to 1.2
+external/gpl2/xcvs/dist/lib/progname.c          up to 1.2
+external/gpl2/xcvs/dist/lib/quotearg.c          up to 1.3
+external/gpl2/xcvs/dist/lib/readlink.c          up to 1.2
+external/gpl2/xcvs/dist/lib/realloc.c           up to 1.2
+external/gpl2/xcvs/dist/lib/regcomp.c           up to 1.2
+external/gpl2/xcvs/dist/lib/regex.c             up to 1.2
+external/gpl2/xcvs/dist/lib/regex_internal.c    up to 1.2
+external/gpl2/xcvs/dist/lib/regexec.c           up to 1.3
+external/gpl2/xcvs/dist/lib/rename.c            up to 1.2
+external/gpl2/xcvs/dist/lib/rpmatch.c           up to 1.2
+external/gpl2/xcvs/dist/lib/save-cwd.c          up to 1.2
+external/gpl2/xcvs/dist/lib/setenv.c            up to 1.2
+external/gpl2/xcvs/dist/lib/sighandle.c         up to 1.2
+external/gpl2/xcvs/dist/lib/strcasecmp.c        up to 1.2
+external/gpl2/xcvs/dist/lib/strdup.c            up to 1.2
+external/gpl2/xcvs/dist/lib/strerror.c          up to 1.2
+external/gpl2/xcvs/dist/lib/strftime.c          up to 1.2
+external/gpl2/xcvs/dist/lib/stripslash.c        up to 1.2
+external/gpl2/xcvs/dist/lib/strncasecmp.c       up to 1.2
+external/gpl2/xcvs/dist/lib/strnlen1.c          up to 1.2
+external/gpl2/xcvs/dist/lib/strstr.c            up to 1.2
+external/gpl2/xcvs/dist/lib/strtol.c            up to 1.2
+external/gpl2/xcvs/dist/lib/strtoul.c           up to 1.2
+external/gpl2/xcvs/dist/lib/sunos57-select.c    up to 1.2
+external/gpl2/xcvs/dist/lib/tempname.c          up to 1.2
+external/gpl2/xcvs/dist/lib/time_r.c            up to 1.2
+external/gpl2/xcvs/dist/lib/unsetenv.c          up to 1.2
+external/gpl2/xcvs/dist/lib/vasnprintf.c        up to 1.4
+external/gpl2/xcvs/dist/lib/vasprintf.c         up to 1.2
+external/gpl2/xcvs/dist/lib/waitpid.c           up to 1.2
+external/gpl2/xcvs/dist/lib/xalloc-die.c        up to 1.2
+external/gpl2/xcvs/dist/lib/xgetcwd.c           up to 1.2
+external/gpl2/xcvs/dist/lib/xgethostname.c      up to 1.2
+external/gpl2/xcvs/dist/lib/xmalloc.c           up to 1.2
+external/gpl2/xcvs/dist/lib/xreadlink.c         up to 1.2
+external/gpl2/xcvs/dist/lib/yesno.c             up to 1.2
+external/gpl2/xcvs/dist/src/acl.c               up to 1.6
+external/gpl2/xcvs/dist/src/add.c               up to 1.4
+external/gpl2/xcvs/dist/src/admin.c             up to 1.6
+external/gpl2/xcvs/dist/src/annotate.c          up to 1.4
+external/gpl2/xcvs/dist/src/buffer.c            up to 1.2
+external/gpl2/xcvs/dist/src/checkin.c           up to 1.2
+external/gpl2/xcvs/dist/src/checkout.c          up to 1.4
+external/gpl2/xcvs/dist/src/classify.c          up to 1.2
+external/gpl2/xcvs/dist/src/client.c            up to 1.5
+external/gpl2/xcvs/dist/src/commit.c            up to 1.5
+external/gpl2/xcvs/dist/src/create_adm.c        up to 1.2
+external/gpl2/xcvs/dist/src/cvsrc.c             up to 1.2
+external/gpl2/xcvs/dist/src/diff.c              up to 1.4
+external/gpl2/xcvs/dist/src/edit.c              up to 1.3
+external/gpl2/xcvs/dist/src/entries.c           up to 1.3
+external/gpl2/xcvs/dist/src/error.c             up to 1.3
+external/gpl2/xcvs/dist/src/exithandle.c        up to 1.4
+external/gpl2/xcvs/dist/src/expand_path.c       up to 1.2
+external/gpl2/xcvs/dist/src/fileattr.c          up to 1.2
+external/gpl2/xcvs/dist/src/filesubr.c          up to 1.5
+external/gpl2/xcvs/dist/src/find_names.c        up to 1.3
+external/gpl2/xcvs/dist/src/gssapi-client.c     up to 1.3
+external/gpl2/xcvs/dist/src/hardlink.c          up to 1.2
+external/gpl2/xcvs/dist/src/hash.c              up to 1.2
+external/gpl2/xcvs/dist/src/history.c           up to 1.4
+external/gpl2/xcvs/dist/src/ignore.c            up to 1.3
+external/gpl2/xcvs/dist/src/import.c            up to 1.7
+external/gpl2/xcvs/dist/src/kerberos4-client.c  up to 1.2
+external/gpl2/xcvs/dist/src/lock.c              up to 1.5
+external/gpl2/xcvs/dist/src/log-buffer.c        up to 1.2
+external/gpl2/xcvs/dist/src/log.c               up to 1.4
+external/gpl2/xcvs/dist/src/login.c             up to 1.3
+external/gpl2/xcvs/dist/src/logmsg.c            up to 1.5
+external/gpl2/xcvs/dist/src/ls.c                up to 1.4
+external/gpl2/xcvs/dist/src/main.c              up to 1.6
+external/gpl2/xcvs/dist/src/mkmodules.c         up to 1.7
+external/gpl2/xcvs/dist/src/modules.c           up to 1.4
+external/gpl2/xcvs/dist/src/ms-buffer.c         up to 1.2
+external/gpl2/xcvs/dist/src/myndbm.c            up to 1.2
+external/gpl2/xcvs/dist/src/no_diff.c           up to 1.2
+external/gpl2/xcvs/dist/src/parseinfo.c         up to 1.4
+external/gpl2/xcvs/dist/src/patch.c             up to 1.7
+external/gpl2/xcvs/dist/src/rcs.c               up to 1.6
+external/gpl2/xcvs/dist/src/rcscmds.c           up to 1.2
+external/gpl2/xcvs/dist/src/recurse.c           up to 1.3
+external/gpl2/xcvs/dist/src/release.c           up to 1.3
+external/gpl2/xcvs/dist/src/remove.c            up to 1.4
+external/gpl2/xcvs/dist/src/repos.c             up to 1.2
+external/gpl2/xcvs/dist/src/root.c              up to 1.2
+external/gpl2/xcvs/dist/src/rsh-client.c        up to 1.2
+external/gpl2/xcvs/dist/src/run.c               up to 1.3
+external/gpl2/xcvs/dist/src/scramble.c          up to 1.2
+external/gpl2/xcvs/dist/src/server.c            up to 1.8
+external/gpl2/xcvs/dist/src/socket-client.c     up to 1.2
+external/gpl2/xcvs/dist/src/stack.c             up to 1.2
+external/gpl2/xcvs/dist/src/status.c            up to 1.4
+external/gpl2/xcvs/dist/src/subr.c              up to 1.4
+external/gpl2/xcvs/dist/src/tag.c               up to 1.4
+external/gpl2/xcvs/dist/src/update.c            up to 1.11
+external/gpl2/xcvs/dist/src/vers_ts.c           up to 1.2
+external/gpl2/xcvs/dist/src/version.c           up to 1.3
+external/gpl2/xcvs/dist/src/watch.c             up to 1.3
+external/gpl2/xcvs/dist/src/wrapper.c           up to 1.2
+external/gpl2/xcvs/dist/src/zlib.c              up to 1.3
+external/gpl2/xcvs/include/config.h             up to 1.7
+
+	- Add RCSIDs
+	- Add "update -t"
+	- Fix issues with whitespace in cvs import
+	- Don't redefine MAP_ANONYMOUS
+	[christos, ticket #1407]
+
+sys/arch/amd64/conf/XEN3_DOM0			1.135 via patch
+
+	Add ixg(4) to XEN3_DOM0.  PR#52180.
+	[msaitoh, ticket #1408]
 
