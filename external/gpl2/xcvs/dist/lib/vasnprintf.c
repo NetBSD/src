@@ -14,6 +14,9 @@
    You should have received a copy of the GNU General Public License along
    with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: vasnprintf.c,v 1.3.10.1 2017/05/13 06:23:23 snj Exp $");
+
 
 /* Tell glibc's <stdio.h> to provide a prototype for snprintf().
    This must come before <config.h> because <config.h> may include

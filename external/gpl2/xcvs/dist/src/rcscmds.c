@@ -13,6 +13,8 @@
  * The functions in this file provide an interface for performing 
  * operations directly on RCS files. 
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rcscmds.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 #include <stdio.h>

@@ -11,6 +11,8 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: run.c,v 1.2.26.1 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 

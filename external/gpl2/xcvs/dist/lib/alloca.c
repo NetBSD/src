@@ -20,6 +20,8 @@
    As a special case, alloca(0) reclaims storage without
    allocating any.  It is a good idea to use alloca(0) in
    your main control loop, etc. to force garbage collection.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: alloca.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>

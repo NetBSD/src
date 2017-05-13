@@ -7,6 +7,8 @@
  *
  * This is a convenience wrapper for some of the functions in lib/sighandle.c.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: exithandle.c,v 1.3.4.1 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 

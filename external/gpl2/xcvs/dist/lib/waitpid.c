@@ -1,3 +1,6 @@
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: waitpid.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

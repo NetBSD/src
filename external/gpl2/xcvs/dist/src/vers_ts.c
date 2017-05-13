@@ -10,6 +10,8 @@
  * You may distribute under the terms of the GNU General Public License as
  * specified in the README file that comes with the CVS source distribution.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: vers_ts.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 #include "lstat.h"

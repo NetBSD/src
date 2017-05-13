@@ -25,6 +25,8 @@
  *	processed one-by-one, as if they were specified as arguments on the
  *	command line.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: modules.c,v 1.3.26.1 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 #include "save-cwd.h"

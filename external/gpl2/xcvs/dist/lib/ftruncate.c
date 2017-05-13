@@ -1,5 +1,7 @@
 /* ftruncate emulations that work on some System V's.
    This file is in the public domain.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ftruncate.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>

@@ -14,6 +14,8 @@
  * know they will, and there's no reason to make it harder for them if
  * we're not trying to provide real security anyway.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: scramble.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
 
 /* Set this to test as a standalone program. */
 /* #define DIAGNOSTIC */

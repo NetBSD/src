@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2012/09/23 17:22:25 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.3.8.1 2017/05/13 06:23:22 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-parentheses \
 			-Wno-tautological-constant-out-of-range-compare
 
 BINDIR?= /usr/bin
-IDIST=	${NETBSDSRCDIR}/external/gpl2/xcvs/dist
+IDIST:=	${.PARSEDIR}/dist
 
 .if !defined(SUBDIR)
 CPPFLAGS+= -DSETXID_SUPPORT -DHAVE_CONFIG_H \

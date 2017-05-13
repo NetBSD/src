@@ -9,6 +9,8 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: client.c,v 1.4.18.1 2017/05/13 06:23:23 snj Exp $");
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"

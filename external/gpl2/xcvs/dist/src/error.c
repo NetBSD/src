@@ -10,6 +10,8 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: error.c,v 1.2.6.1 2017/05/13 06:23:23 snj Exp $");
 
 /* David MacKenzie */
 /* Brian Berliner added support for CVS */

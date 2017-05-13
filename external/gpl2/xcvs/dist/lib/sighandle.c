@@ -10,6 +10,8 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: sighandle.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
 
 /* Written by Paul Sander, HaL Computer Systems, Inc. <paul@hal.com>
    Brian Berliner <berliner@Sun.COM> added POSIX support */

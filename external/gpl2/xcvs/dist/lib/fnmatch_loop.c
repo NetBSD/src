@@ -14,6 +14,9 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: fnmatch_loop.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
+
 
 /* Match STRING against the file name pattern PATTERN, returning zero if
    it matches, nonzero if not.  */

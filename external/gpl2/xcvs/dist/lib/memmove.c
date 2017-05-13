@@ -2,6 +2,8 @@
    Copy LENGTH bytes from SOURCE to DEST.  Does not null-terminate.
    In the public domain.
    By David MacKenzie <djm@gnu.ai.mit.edu>.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: memmove.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>

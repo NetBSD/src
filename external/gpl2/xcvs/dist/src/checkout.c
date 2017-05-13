@@ -37,6 +37,8 @@
  * derivation time and its name.  Both files are normal files and can be
  * edited by the user, if necessary (when the repository is moved, e.g.)
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: checkout.c,v 1.3.26.1 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 

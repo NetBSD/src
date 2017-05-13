@@ -37,6 +37,8 @@
  * directories added to the repository are automatically created and updated
  * as well.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: update.c,v 1.4.10.1 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 #include <assert.h>
@@ -104,6 +106,7 @@ static int toss_local_changes = 0;
 static int force_tag_match = 1;
 static int update_build_dirs = 0;
 static int update_prune_dirs = 0;
+static int preserve_timestamps_on_update = 0;
 static int pipeout = 0;
 static int dotemplate = 0;
 #ifdef SERVER_SUPPORT
@@ -124,6 +127,7 @@ static const char *const update_usage[] =
     "\t-l\tLocal directory only, no recursion.\n",
     "\t-R\tProcess directories recursively.\n",
     "\t-p\tSend updates to standard output (avoids stickiness).\n",
+    "\t-t\tPreserve timestamps on update.\n",
     "\t-k kopt\tUse RCS kopt -k option on checkout. (is sticky)\n",
     "\t-r rev\tUpdate using specified revision/tag (is sticky).\n",
     "\t-D date\tSet date to update from (is sticky).\n",
@@ -160,7 +164,7 @@ update (int argc, char **argv)
 
     /* parse the args */
     getoptreset ();
-    while ((c = getopt (argc, argv, "+ApCPflRQqduk:r:D:j:I:W:")) != -1)
+    while ((c = getopt (argc, argv, "+ApCPflRQqduk:r:tD:j:I:W:")) != -1)
     {
 	switch (c)
 	{
@@ -215,6 +219,9 @@ update (int argc, char **argv)
 	    case 'p':
 		pipeout = 1;
 		noexec = 1;		/* so no locks will be created */
+		break;
+	    case 't':
+		preserve_timestamps_on_update = 1;
 		break;
 	    case 'j':
 		if (join_orig2)
@@ -279,6 +286,8 @@ update (int argc, char **argv)
 		send_arg("-C");
 	    if (update_prune_dirs)
 		send_arg("-P");
+	    if (preserve_timestamps_on_update)
+		send_arg("-t");
 	    client_prune_dirs = update_prune_dirs;
 	    option_with_arg ("-r", tag);
 	    if (options && options[0] != '\0')
@@ -1364,7 +1373,8 @@ VERS: ", 0);
 	    /* set the time from the RCS file iff it was unknown before */
 	    set_time =
 		(!noexec
-		 && (vers_ts->vn_user == NULL ||
+		 && (preserve_timestamps_on_update ||
+		     vers_ts->vn_user == NULL ||
 		     strncmp (vers_ts->ts_rcs, "Initial", 7) == 0)
 		 && !file_is_dead);
 
@@ -1766,7 +1776,7 @@ patch_file (struct file_info *finfo, Vers_TS *vers_ts, int *docheckout,
         /* This stuff is just copied blindly from checkout_file.  I
 	   don't really know what it does.  */
         xvers_ts = Version_TS (finfo, options, tag, date,
-			       force_tag_match, 0);
+			       force_tag_match, preserve_timestamps_on_update);
 	if (strcmp (xvers_ts->options, "-V4") == 0)
 	    xvers_ts->options[0] = '\0';
 

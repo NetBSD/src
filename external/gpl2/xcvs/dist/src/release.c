@@ -11,6 +11,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: release.c,v 1.2.26.1 2017/05/13 06:23:23 snj Exp $");
 
 /*
  * Release: "cancel" a checkout in the history log.

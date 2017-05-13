@@ -15,6 +15,9 @@
    License along with the GNU C Library; if not, write to the Free
    Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
    02111-1307 USA.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: glob.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
+
 
 #ifdef	HAVE_CONFIG_H
 # include <config.h>

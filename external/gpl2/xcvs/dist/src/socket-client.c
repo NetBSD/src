@@ -9,6 +9,8 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: socket-client.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
 
 /***
  *** THIS FILE SHOULD NEVER BE COMPILED UNLESS NO_SOCKET_TO_FD IS DEFINED.
