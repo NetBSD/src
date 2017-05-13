@@ -1,8 +1,10 @@
-/*	$NetBSD: show.c,v 1.38 2017/05/09 05:14:03 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.39 2017/05/13 03:26:03 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * Copyright (c) 2017 The NetBSD Foundation, Inc.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -37,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.38 2017/05/09 05:14:03 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.39 2017/05/13 03:26:03 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,6 +47,11 @@ __RCSID("$NetBSD: show.c,v 1.38 2017/05/09 05:14:03 kre Exp $");
 #include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+
+#include <sys/types.h>
+#include <sys/uio.h>
 
 #include "shell.h"
 #include "parser.h"
@@ -52,402 +59,911 @@ __RCSID("$NetBSD: show.c,v 1.38 2017/05/09 05:14:03 kre Exp $");
 #include "mystring.h"
 #include "show.h"
 #include "options.h"
-#ifndef SMALL
+#include "redir.h"
+#include "error.h"
+
+#if defined(DEBUG) && !defined(DBG_PID)
+/*
+ * If this is compiled, it means this is being compiled in a shell that still
+ * has an older shell.h (a simpler TRACE() mechanism than is coming soon.)
+ *
+ * Compensate for as much of that as is missing and is needed here
+ * to compile and operate at all.   After the other changes have appeared,
+ * this little block can (and should be) deleted (sometime).
+ *
+ * Try to avoid waiting 22 years...
+ */
+#define	DBG_PID		1
+#define	DBG_NEST	2
+#endif
+
 #define DEFINE_NODENAMES
-#include "nodenames.h"
-#endif
+#include "nodenames.h"		/* does almost nothing if !defined(DEBUG) */
 
+#define	TR_STD_WIDTH	60	/* tend to fold lines wider than this */
+#define	TR_IOVECS	10	/* number of lines or trace (max) / write */
 
-FILE *tracefile;
+typedef struct traceinfo {
+	int	tfd;	/* file descriptor for open trace file */
+	int	nxtiov;	/* the buffer we should be writing to */
+	char	lastc;	/* the last non-white character output */
+	uint8_t	supr;	/* char classes to supress after \n */
+	pid_t	pid;	/* process id of process that opened that file */
+	size_t	llen;	/* number of chars in current output line */
+	size_t	blen;	/* chars used in current buffer being filled */
+	char *	tracefile;		/* name of the tracefile */
+	struct iovec lines[TR_IOVECS];	/* filled, flling, pending buffers */
+} TFILE;
 
-#ifdef DEBUG
-static int shtree(union node *, int, int, char *, FILE*);
-static int shcmd(union node *, FILE *);
-static int shsubsh(union node *, FILE *);
-static int shredir(union node *, FILE *, int);
-static int sharg(union node *, FILE *);
-static int indent(int, char *, FILE *);
-static void trstring(char *);
+/* These are auto turned off when non white space is printed */
+#define	SUP_NL	0x01	/* don't print \n */
+#define	SUP_SP	0x03	/* supress spaces */
+#define	SUP_WSP	0x04	/* supress all white space */
 
-void
-showtree(union node *n)
-{
-	FILE *fp;
+#ifdef DEBUG		/* from here to end of file ... */
 
-	fp = tracefile ? tracefile : stdout;
+TFILE tracedata, *tracetfile;
+FILE *tracefile;		/* just for histedit */
 
-	trputs("showtree(");
-		if (n == NULL)
-			trputs("NULL");
-		else if (n == NEOF)
-			trputs("NEOF");
-	trputs(") called\n");
-	if (n != NULL && n != NEOF)
-		shtree(n, 1, 1, NULL, fp);
-}
+uint64_t	DFlags;		/* currently enabled debug flags */
+int ShNest;		/* depth of shell (internal) nesting */
 
+static void shtree(union node *, int, int, int, TFILE *);
+static void shcmd(union node *, TFILE *);
+static void shsubsh(union node *, TFILE *);
+static void shredir(union node *, TFILE *, int);
+static void sharg(union node *, TFILE *);
+static void indent(int, TFILE *);
+static void trstring(const char *);
+static void trace_putc(char, TFILE *);
+static void trace_puts(const char *, TFILE *);
+static void trace_flush(TFILE *, int);
+static char *trace_id(TFILE *);
+static void trace_fd_swap(int, int);
 
-static int
-shtree(union node *n, int ind, int nl, char *pfx, FILE *fp)
-{
-	struct nodelist *lp;
-	const char *s;
-	int len;
-
-	if (n == NULL) {
-		if (nl)
-			fputc('\n', fp);
-		return 0;
-	}
-
-	len = indent(ind, pfx, fp);
-	switch (n->type) {
-	case NSEMI:
-		s = "; ";
-		len += 2;
-		goto binop;
-	case NAND:
-		s = " && ";
-		len += 4;
-		goto binop;
-	case NOR:
-		s = " || ";
-		len += 4;
-binop:
-		len += shtree(n->nbinary.ch1, 0, 0, NULL, fp);
-		fputs(s, fp);
-		if (len >= 60) {
-			putc('\n', fp);
-			len = indent(ind < 0 ? 2 : ind + 1, pfx, fp);
-		}
-		len += shtree(n->nbinary.ch2, 0, nl, NULL, fp);
-		break;
-	case NCMD:
-		len += shcmd(n, fp);
-		if (nl && len > 0)
-			len = 0, putc('\n', fp);
-		break;
-
-	case NDNOT:
-		fputs("! ", fp);
-		len += 2;
-		/* FALLTHROUGH */
-	case NNOT:
-		fputs("! ", fp);
-		len += 2 + shtree(n->nnot.com, 0, 0, NULL, fp);
-		break;
-
-	case NPIPE:
-		for (lp = n->npipe.cmdlist ; lp ; lp = lp->next) {
-			len += shtree(lp->n, 0, 0, NULL, fp);
-			if (lp->next) {
-				len += 3, fputs(" | ", fp);
-				if (len >= 60)  {
-					fputc('\n', fp);
-					len = indent(ind < 0 ? 2 : ind + 1,
-					    pfx, fp);
-				}
-			}
-		}
-		if (n->npipe.backgnd)
-			len += 2, fputs(" &", fp);
-		if (nl || len >= 60)
-			len = 0, fputc('\n', fp);
-		break;
-	case NSUBSHELL:
-		len += shsubsh(n, fp);
-		if (nl && len > 0)
-			len = 0, putc('\n', fp);
-		break;
-	default:
-#ifdef NODETYPENAME
-		len += fprintf(fp, "<node type %d [%s]>", n->type,
-		    NODETYPENAME(n->type));
-#else
-		len += fprintf(fp, "<node type %d>", n->type);
-#endif
-		if (nl)
-			len = 0, putc('\n', fp);
-		break;
-	}
-	return len;
-}
-
-
-
-static int
-shcmd(union node *cmd, FILE *fp)
-{
-	union node *np;
-	int first;
-	int len = 0;
-
-	first = 1;
-	for (np = cmd->ncmd.args ; np ; np = np->narg.next) {
-		if (! first)
-			len++, fputc(' ', fp);
-		len += sharg(np, fp);
-		first = 0;
-	}
-	return len + shredir(cmd, fp, first);
-}
-
-static int
-shsubsh(union node *cmd, FILE *fp)
-{
-	int len = 6;
-
-	fputs(" ( ", fp);
-	len += shtree(cmd->nredir.n, -1, 0, NULL, fp);
-	fputs(" ) ", fp);
-	len += shredir(cmd, fp, 1);
-
-	return len;
-}
-
-static int
-shredir(union node *cmd, FILE *fp, int first)
-{
-	union node *np;
-	const char *s;
-	int dftfd;
-	int len = 0;
-	char buf[106];
-
-	for (np = cmd->ncmd.redirect ; np ; np = np->nfile.next) {
-		if (! first)
-			len++, fputc(' ', fp);
-		switch (np->nfile.type) {
-			case NTO:	s = ">";  dftfd = 1; len += 1; break;
-			case NCLOBBER:	s = ">|"; dftfd = 1; len += 2; break;
-			case NAPPEND:	s = ">>"; dftfd = 1; len += 2; break;
-			case NTOFD:	s = ">&"; dftfd = 1; len += 2; break;
-			case NFROM:	s = "<";  dftfd = 0; len += 1; break;
-			case NFROMFD:	s = "<&"; dftfd = 0; len += 2; break;
-			case NFROMTO:	s = "<>"; dftfd = 0; len += 2; break;
-			case NXHERE:	/* FALLTHROUGH */ 
-			case NHERE:	s = "<<"; dftfd = 0; len += 2; break;
-			default:   s = "*error*"; dftfd = 0; len += 7; break;
-		}
-		if (np->nfile.fd != dftfd)
-			len += fprintf(fp, "%d", np->nfile.fd);
-		fputs(s, fp);
-		if (np->nfile.type == NTOFD || np->nfile.type == NFROMFD) {
-			len += fprintf(fp, "%d", np->ndup.dupfd);
-		} else
-		    if (np->nfile.type == NHERE || np->nfile.type == NXHERE) {
-			if (np->nfile.type == NHERE)
-				fputc('\\', fp);
-			fputs("!!!\n", fp);
-			s = np->nhere.doc->narg.text;
-			if (strlen(s) > 100) {
-				memmove(buf, s, 100);
-				buf[100] = '\0';
-				strcat(buf, " ...");
-				s = buf;
-			}
-			fputs(s, fp);
-			fputs("!!!", fp);
-			len = 3;
-		} else {
-			len += sharg(np->nfile.fname, fp);
-		}
-		first = 0;
-	}
-	return len;
-}
-
-
-
-static int
-sharg(union node *arg, FILE *fp)
-{
-	char *p;
-	struct nodelist *bqlist;
-	int subtype;
-	int len = 0;
-
-	if (arg->type != NARG) {
-		fprintf(fp, "<node type %d>\n", arg->type);
-		abort();
-	}
-	bqlist = arg->narg.backquote;
-	for (p = arg->narg.text ; *p ; p++) {
-		switch (*p) {
-		case CTLESC:
-			putc(*++p, fp);
-			len++;
-			break;
-		case CTLVAR:
-			putc('$', fp);
-			putc('{', fp);
-			len += 2;
-			subtype = *++p;
-			if ((subtype & VSTYPE) == VSLENGTH)
-				len++, putc('#', fp);
-			if (subtype & VSLINENO)
-				len += 7, fputs("LINENO=", fp);
-
-			while (*++p != '=')
-				len++, putc(*p, fp);
-
-			if (subtype & VSNUL)
-				len++, putc(':', fp);
-
-			switch (subtype & VSTYPE) {
-			case VSNORMAL:
-				putc('}', fp);
-				len++;
-				break;
-			case VSMINUS:
-				putc('-', fp);
-				len++;
-				break;
-			case VSPLUS:
-				putc('+', fp);
-				len++;
-				break;
-			case VSQUESTION:
-				putc('?', fp);
-				len++;
-				break;
-			case VSASSIGN:
-				putc('=', fp);
-				len++;
-				break;
-			case VSTRIMLEFT:
-				putc('#', fp);
-				len++;
-				break;
-			case VSTRIMLEFTMAX:
-				putc('#', fp);
-				putc('#', fp);
-				len += 2;
-				break;
-			case VSTRIMRIGHT:
-				putc('%', fp);
-				len++;
-				break;
-			case VSTRIMRIGHTMAX:
-				putc('%', fp);
-				putc('%', fp);
-				len += 2;
-				break;
-			case VSLENGTH:
-				break;
-			default:
-				len += fprintf(fp, "<subtype %d>", subtype);
-			}
-			break;
-		case CTLENDVAR:
-		     putc('}', fp);
-		     len++;
-		     break;
-		case CTLBACKQ:
-		case CTLBACKQ|CTLQUOTE:
-			putc('$', fp);
-			putc('(', fp);
-			len += shtree(bqlist->n, -1, 0, NULL, fp) + 3;
-			putc(')', fp);
-			break;
-		default:
-			putc(*p, fp);
-			len++;
-			break;
-		}
-	}
-	return len;
-}
-
-
-static int
-indent(int amount, char *pfx, FILE *fp)
-{
-	int i;
-	int len = 0;
-
-	/*
-	 * in practice, pfx is **always** NULL
-	 * but here, we assume if it were not, at least strlen(pfx) < 8
-	 * if that is invalid, output will look messy
-	 */
-	for (i = 0 ; i < amount ; i++) {
-		if (pfx && i == amount - 1)
-			fputs(pfx, fp);
-		putc('\t', fp);
-		len |= 7;
-		len++;
-	}
-	return len;
-}
-#endif
-
+inline static int trlinelen(TFILE *);
 
 
 /*
- * Debugging stuff.
+ * These functions are the externally visible interface
+ *  (but only for a DEBUG shell.)
  */
 
-
-
-
-#ifdef DEBUG
 void
-trputc(int c)
+opentrace(void)
 {
-	if (debug != 1 || !tracefile)
+	char *s;
+	int fd;
+	int i;
+	pid_t pid;
+
+	if (debug != 1) {
+		/* leave fd open because libedit might be using it */
+		if (tracefile)
+			fflush(tracefile);
+		if (tracetfile)
+			trace_flush(tracetfile, 1);
 		return;
-	putc(c, tracefile);
-}
+	}
+#if DBG_PID == 1		/* using old shell.h, old tracing method */
+	DFlags = DBG_PID;	/* just force DBG_PID on, and leave it ... */
 #endif
+	pid = getpid();
+	if (asprintf(&s, "trace.%jd", (intmax_t)pid) <= 0) {
+		debug = 0;
+		error("Cannot asprintf tracefilename");
+	};
+
+	fd = open(s, O_WRONLY|O_APPEND|O_CREAT, 0666);
+	if (fd == -1) {
+		debug = 0;
+		error("Can't open tracefile: %s (%s)\n", s, strerror(errno));
+	}
+	fd = to_upper_fd(fd);
+	if (fd <= 2) {
+		(void) close(fd);
+		debug = 0;
+		error("Attempt to use fd %d as tracefile thwarted\n", fd);
+	}
+	register_sh_fd(fd, trace_fd_swap);
+
+	/*
+	 * This stuff is just so histedit has a FILE * to use
+	 */
+	if (tracefile)
+		(void) fclose(tracefile);	/* also closes tfd */
+	tracefile = fdopen(fd, "a");	/* don't care if it is NULL */
+	if (tracefile)			/* except here... */
+		setlinebuf(tracefile);
+
+	/*
+	 * Now the real tracing setup
+	 */
+	if (tracedata.tfd > 0 && tracedata.tfd != fd)
+		(void) close(tracedata.tfd);	/* usually done by fclose() */
+
+	tracedata.tfd = fd;
+	tracedata.pid = pid;
+	tracedata.nxtiov = 0;
+	tracedata.blen = 0;
+	tracedata.llen = 0;
+	tracedata.lastc = '\0';
+	tracedata.supr = SUP_NL | SUP_WSP;
+
+#define	replace(f, v) do {				\
+		if (tracedata.f != NULL)		\
+			free(tracedata.f);		\
+		tracedata.f = v;			\
+	} while (/*CONSTCOND*/ 0)
+
+	replace(tracefile, s);
+
+	for (i = 0; i < TR_IOVECS; i++) {
+		replace(lines[i].iov_base, NULL);
+		tracedata.lines[i].iov_len = 0;
+	}
+
+#undef replace
+
+	tracetfile = &tracedata;
+
+	trace_puts("\nTracing started.\n", tracetfile);
+}
 
 void
 trace(const char *fmt, ...)
 {
-#ifdef DEBUG
 	va_list va;
+	char *s;
 
-	if (debug != 1 || !tracefile)
+	if (debug != 1 || !tracetfile)
 		return;
 	va_start(va, fmt);
-	(void) vfprintf(tracefile, fmt, va);
+	(void) vasprintf(&s, fmt, va);
 	va_end(va);
-#endif
+
+	trace_puts(s, tracetfile);
+	free(s);
+	if (tracetfile->llen == 0)
+		trace_flush(tracetfile, 0);
 }
 
 void
 tracev(const char *fmt, va_list va)
 {
-#ifdef DEBUG
 	va_list ap;
-	if (debug != 1 || !tracefile)
+	char *s;
+
+	if (debug != 1 || !tracetfile)
 		return;
 	va_copy(ap, va);
-	(void) vfprintf(tracefile, fmt, ap);
+	(void) vasprintf(&s, fmt, ap);
 	va_end(ap);
-#endif
+
+	trace_puts(s, tracetfile);
+	free(s);
+	if (tracetfile->llen == 0)
+		trace_flush(tracetfile, 0);
 }
 
 
-#ifdef DEBUG
 void
 trputs(const char *s)
 {
-	if (debug != 1 || !tracefile)
+	if (debug != 1 || !tracetfile)
 		return;
-	fputs(s, tracefile);
+	trace_puts(s, tracetfile);
+}
+
+void
+trputc(int c)
+{
+	if (debug != 1 || !tracetfile)
+		return;
+	trace_putc(c, tracetfile);
+}
+
+void
+showtree(union node *n)
+{
+	TFILE *fp;
+
+	if ((fp = tracetfile) == NULL)
+		return;
+
+	trace_puts("showtree(", fp);
+		if (n == NULL)
+			trace_puts("NULL", fp);
+		else if (n == NEOF)
+			trace_puts("NEOF", fp);
+		else
+			trace("%p", n);
+	trace_puts(") called\n", fp);
+	if (n != NULL && n != NEOF)
+		shtree(n, 1, 1, 1, fp);
+}
+
+void
+trargs(char **ap)
+{
+	if (debug != 1 || !tracetfile)
+		return;
+	while (*ap) {
+		trstring(*ap++);
+		if (*ap)
+			trace_putc(' ', tracetfile);
+		else
+			trace_putc('\n', tracetfile);
+	}
+}
+
+
+/*
+ * Beyond here we just have the implementation of all of that
+ */
+
+
+inline static int
+trlinelen(TFILE * fp)
+{
+	return fp->llen;
+}
+
+static void
+shtree(union node *n, int ind, int ilvl, int nl, TFILE *fp)
+{
+	struct nodelist *lp;
+	const char *s;
+
+	if (n == NULL) {
+		if (nl)
+			trace_putc('\n', fp);
+		return;
+	}
+
+	indent(ind, fp);
+	switch (n->type) {
+	case NSEMI:
+		s = NULL;
+		goto binop;
+	case NAND:
+		s = " && ";
+		goto binop;
+	case NOR:
+		s = " || ";
+binop:
+		shtree(n->nbinary.ch1, 0, ilvl, 0, fp);
+		if (s != NULL)
+			trace_puts(s, fp);
+		if (trlinelen(fp) >= TR_STD_WIDTH) {
+			trace_putc('\n', fp);
+			indent(ind < 0 ? 2 : ind + 1, fp);
+		} else if (s == NULL) {
+			if (fp->lastc != '&')
+				trace_puts("; ", fp);
+			else
+				trace_putc(' ', fp);
+		}
+		shtree(n->nbinary.ch2, 0, ilvl, nl, fp);
+		break;
+	case NCMD:
+		shcmd(n, fp);
+		if (n->ncmd.backgnd)
+			trace_puts(" &", fp);
+		if (nl && trlinelen(fp) > 0)
+			trace_putc('\n', fp);
+		break;
+	case NPIPE:
+		for (lp = n->npipe.cmdlist ; lp ; lp = lp->next) {
+			shtree(lp->n, 0, ilvl, 0, fp);
+			if (lp->next) {
+				trace_puts(" |", fp);
+				if (trlinelen(fp) >= TR_STD_WIDTH)  {
+					trace_putc('\n', fp);
+					indent((ind < 0 ? ilvl : ind) + 1, fp);
+				} else
+					trace_putc(' ', fp);
+			}
+		}
+		if (n->npipe.backgnd)
+			trace_puts(" &", fp);
+		if (nl || trlinelen(fp) >= TR_STD_WIDTH)
+			trace_putc('\n', fp);
+		break;
+	case NBACKGND:
+	case NSUBSHELL:
+		shsubsh(n, fp);
+		if (n->type == NBACKGND)
+			trace_puts(" &", fp);
+		if (nl && trlinelen(fp) > 0)
+			trace_putc('\n', fp);
+		break;
+	case NDEFUN:
+		trace_puts(n->narg.text, fp);
+		trace_puts("() {\n", fp);
+		indent(ind, fp);
+		shtree(n->narg.next, (ind < 0 ? ilvl : ind) + 1, ilvl+1, 1, fp);
+		indent(ind, fp);
+		trace_puts("}\n", fp);
+		break;
+	case NDNOT:
+		trace_puts("! ", fp);
+		/* FALLTHROUGH */
+	case NNOT:
+		trace_puts("! ", fp);
+		shtree(n->nnot.com, -1, ilvl, nl, fp);
+		break;
+	case NREDIR:
+		shtree(n->nredir.n, -1, ilvl, 0, fp);
+		shredir(n->nredir.redirect, fp, n->nredir.n == NULL);
+		if (nl)
+			trace_putc('\n', fp);
+		break;
+
+	case NIF:
+	itsif:
+		trace_puts("if ", fp);
+		shtree(n->nif.test, -1, ilvl, 0, fp);
+		if (trlinelen(fp) > 0 && trlinelen(fp) < TR_STD_WIDTH) {
+			if (fp->lastc != '&')
+				trace_puts(" ;", fp);
+		} else
+			indent(ilvl, fp);
+		trace_puts(" then ", fp);
+		if (nl || trlinelen(fp) > TR_STD_WIDTH - 24)
+			indent(ilvl+1, fp);
+		shtree(n->nif.ifpart, -1, ilvl + 1, 0, fp);
+		if (trlinelen(fp) > 0 && trlinelen(fp) < TR_STD_WIDTH) {
+			if (fp->lastc != '&')
+				trace_puts(" ;", fp);
+		} else
+			indent(ilvl, fp);
+		if (n->nif.elsepart && n->nif.elsepart->type == NIF) {
+			if (nl || trlinelen(fp) > TR_STD_WIDTH - 24)
+				indent(ilvl, fp);
+			n = n->nif.elsepart;
+			trace_puts(" el", fp);
+			goto itsif;
+		}
+		if (n->nif.elsepart) {
+			if (nl || trlinelen(fp) > TR_STD_WIDTH - 24)
+				indent(ilvl+1, fp);
+			trace_puts(" else ", fp);
+			shtree(n->nif.elsepart, -1, ilvl + 1, 0, fp);
+			if (fp->lastc != '&')
+				trace_puts(" ;", fp);
+		}
+		trace_puts(" fi", fp);
+		if (nl)
+			trace_putc('\n', fp);
+		break;
+
+	case NWHILE:
+		trace_puts("while ", fp);
+		goto aloop;
+	case NUNTIL:
+		trace_puts("until ", fp);
+	aloop:
+		shtree(n->nbinary.ch1, -1, ilvl, 0, fp);
+		if (trlinelen(fp) > 0 && trlinelen(fp) < TR_STD_WIDTH) {
+			if (fp->lastc != '&')
+				trace_puts(" ;", fp);
+		} else
+			trace_putc('\n', fp);
+		trace_puts(" do ", fp);
+		shtree(n->nbinary.ch1, -1, ilvl + 1, 1, fp);
+		trace_puts(" done ", fp);
+		if (nl)
+			trace_putc('\n', fp);
+		break;
+
+	case NFOR:
+		trace_puts("for ", fp);
+		trace_puts(n->nfor.var, fp);
+		if (n->nfor.args) {
+			union node *argp;
+
+			trace_puts(" in ", fp);
+			for (argp = n->nfor.args; argp; argp=argp->narg.next) {
+				sharg(argp, fp);
+				trace_putc(' ', fp);
+			}
+			if (trlinelen(fp) > 0 && trlinelen(fp) < TR_STD_WIDTH) {
+				if (fp->lastc != '&')
+					trace_putc(';', fp);
+			} else
+				trace_putc('\n', fp);
+		}
+		trace_puts(" do ", fp);
+		shtree(n->nfor.body, -1, ilvl + 1, 0, fp);
+		if (fp->lastc != '&')
+			trace_putc(';', fp);
+		trace_puts(" done", fp);
+		if (nl)
+			trace_putc('\n', fp);
+		break;
+
+	case NCASE:
+		trace_puts("case ", fp);
+		sharg(n->ncase.expr, fp);
+		trace_puts(" in", fp);
+		if (nl)
+			trace_putc('\n', fp);
+		{
+			union node *cp;
+
+			for (cp = n->ncase.cases ; cp ; cp = cp->nclist.next) {
+				union node *patp;
+
+				if (nl || trlinelen(fp) > TR_STD_WIDTH - 16)
+					indent(ilvl, fp);
+				else
+					trace_putc(' ', fp);
+				trace_putc('(', fp);
+				patp = cp->nclist.pattern;
+				while (patp != NULL) {
+				    trace_putc(' ', fp);
+				    sharg(patp, fp);
+				    trace_putc(' ', fp);
+				    if ((patp = patp->narg.next) != NULL)
+					trace_putc('|', fp);
+				}
+				trace_putc(')', fp);
+				if (nl)
+					indent(ilvl + 1, fp);
+				else
+					trace_putc(' ', fp);
+				shtree(cp->nclist.body, -1, ilvl+2, 0, fp);
+				if (cp->type == NCLISTCONT)
+					trace_puts(" ;&", fp);
+				else
+					trace_puts(" ;;", fp);
+				if (nl)
+					trace_putc('\n', fp);
+			}
+		}
+		if (nl) {
+			trace_putc('\n', fp);
+			indent(ind, fp);
+		} else
+			trace_putc(' ', fp);
+		trace_puts("esac", fp);
+		if (nl)
+			trace_putc('\n', fp);
+		break;
+
+	default: {
+			char *str;
+
+			asprintf(&str, "<node type %d [%s]>", n->type,
+			    NODETYPENAME(n->type));
+			trace_puts(str, fp);
+			free(str);
+			if (nl)
+				trace_putc('\n', fp);
+		}
+		break;
+	}
 }
 
 
 static void
-trstring(char *s)
+shcmd(union node *cmd, TFILE *fp)
+{
+	union node *np;
+	int first;
+
+	first = 1;
+	for (np = cmd->ncmd.args ; np ; np = np->narg.next) {
+		if (! first)
+			trace_putc(' ', fp);
+		sharg(np, fp);
+		first = 0;
+	}
+	shredir(cmd->ncmd.redirect, fp, first);
+}
+
+static void
+shsubsh(union node *cmd, TFILE *fp)
+{
+	trace_puts(" ( ", fp);
+	shtree(cmd->nredir.n, -1, 3, 0, fp);
+	trace_puts(" ) ", fp);
+	shredir(cmd->ncmd.redirect, fp, 1);
+}
+
+static void
+shredir(union node *np, TFILE *fp, int first)
+{
+	const char *s;
+	int dftfd;
+	char buf[106];
+
+	for ( ; np ; np = np->nfile.next) {
+		if (! first)
+			trace_putc(' ', fp);
+		switch (np->nfile.type) {
+			case NTO:	s = ">";  dftfd = 1; break;
+			case NCLOBBER:	s = ">|"; dftfd = 1; break;
+			case NAPPEND:	s = ">>"; dftfd = 1; break;
+			case NTOFD:	s = ">&"; dftfd = 1; break;
+			case NFROM:	s = "<";  dftfd = 0; break;
+			case NFROMFD:	s = "<&"; dftfd = 0; break;
+			case NFROMTO:	s = "<>"; dftfd = 0; break;
+			case NXHERE:	/* FALLTHROUGH */
+			case NHERE:	s = "<<"; dftfd = 0; break;
+			default:   s = "*error*"; dftfd = 0; break;
+		}
+		if (np->nfile.fd != dftfd) {
+			sprintf(buf, "%d", np->nfile.fd);
+			trace_puts(buf, fp);
+		}
+		trace_puts(s, fp);
+		if (np->nfile.type == NTOFD || np->nfile.type == NFROMFD) {
+			if (np->ndup.vname)
+				sharg(np->ndup.vname, fp);
+			else {
+				sprintf(buf, "%d", np->ndup.dupfd);
+				trace_puts(buf, fp);
+			}
+		} else
+		    if (np->nfile.type == NHERE || np->nfile.type == NXHERE) {
+			if (np->nfile.type == NHERE)
+				trace_putc('\\', fp);
+			trace_puts("!!!\n", fp);
+			s = np->nhere.doc->narg.text;
+			if (strlen(s) > 100) {
+				memmove(buf, s, 100);
+				buf[100] = '\0';
+				strcat(buf, " ...\n");
+				s = buf;
+			}
+			trace_puts(s, fp);
+			trace_puts("!!! ", fp);
+		} else {
+			sharg(np->nfile.fname, fp);
+		}
+		first = 0;
+	}
+}
+
+static void
+sharg(union node *arg, TFILE *fp)
+{
+	char *p, *s;
+	struct nodelist *bqlist;
+	int subtype = 0;
+	int quoted = 0;
+
+	if (arg->type != NARG) {
+		asprintf(&s, "<node type %d> ! NARG\n", arg->type);
+		trace_puts(s, fp);
+		abort();	/* no need to free s, better not to */
+	}
+
+	bqlist = arg->narg.backquote;
+	for (p = arg->narg.text ; *p ; p++) {
+		switch (*p) {
+		case CTLESC:
+			trace_putc('\\', fp);
+			trace_putc(*++p, fp);
+			break;
+
+		case CTLVAR:
+			subtype = *++p;
+			if (!quoted != !(subtype & VSQUOTE))
+				trace_putc('"', fp);
+			trace_putc('$', fp);
+			trace_putc('{', fp);
+			if ((subtype & VSTYPE) == VSLENGTH)
+				trace_putc('#', fp);
+			if (subtype & VSLINENO)
+				trace_puts("LINENO=", fp);
+
+			while (*++p != '=')
+				trace_putc(*p, fp);
+
+			if (subtype & VSNUL)
+				trace_putc(':', fp);
+
+			switch (subtype & VSTYPE) {
+			case VSNORMAL:
+				/* { */
+				trace_putc('}', fp);
+				if (!quoted != !(subtype & VSQUOTE))
+					trace_putc('"', fp);
+				break;
+			case VSMINUS:
+				trace_putc('-', fp);
+				break;
+			case VSPLUS:
+				trace_putc('+', fp);
+				break;
+			case VSQUESTION:
+				trace_putc('?', fp);
+				break;
+			case VSASSIGN:
+				trace_putc('=', fp);
+				break;
+			case VSTRIMLEFTMAX:
+				trace_putc('#', fp);
+				/* FALLTHROUGH */
+			case VSTRIMLEFT:
+				trace_putc('#', fp);
+				break;
+			case VSTRIMRIGHTMAX:
+				trace_putc('%', fp);
+				/* FALLTHROUGH */
+			case VSTRIMRIGHT:
+				trace_putc('%', fp);
+				break;
+			case VSLENGTH:
+				break;
+			default: {
+					char str[32];
+
+					snprintf(str, sizeof str,
+					    "<subtype %d>", subtype);
+					trace_puts(str, fp);
+				}
+				break;
+			}
+			break;
+		case CTLENDVAR:
+			/* { */
+			trace_putc('}', fp);
+			if (!quoted != !(subtype & VSQUOTE))
+				trace_putc('"', fp);
+			subtype = 0;
+			break;
+
+		case CTLBACKQ|CTLQUOTE:
+			if (!quoted)
+				trace_putc('"', fp);
+			/* FALLTHRU */
+		case CTLBACKQ:
+			trace_putc('$', fp);
+			trace_putc('(', fp);
+			if (bqlist) {
+				shtree(bqlist->n, -1, 3, 0, fp);
+				bqlist = bqlist->next;
+			} else
+				trace_puts("???", fp);
+			trace_putc(')', fp);
+			if (!quoted && *p == (CTLBACKQ|CTLQUOTE))
+				trace_putc('"', fp);
+			break;
+
+		case CTLQUOTEMARK:
+			if (subtype != 0 || !quoted) {
+				trace_putc('"', fp);
+				quoted++;
+			}
+			break;
+		case CTLQUOTEEND:
+			trace_putc('"', fp);
+			quoted--;
+			break;
+		case CTLARI:
+			trace_puts("$(( ", fp);
+			break;
+		case CTLENDARI:
+			trace_puts(" ))", fp);
+			break;
+
+		default:
+			if (*p == '$')
+				trace_putc('\\', fp);
+			trace_putc(*p, fp);
+			break;
+		}
+	}
+	if (quoted)
+		trace_putc('"', fp);
+}
+
+
+static void
+indent(int amount, TFILE *fp)
+{
+	int i;
+
+	if (amount <= 0)
+		return;
+
+	amount <<= 2;	/* indent slots -> chars */
+
+	i = trlinelen(fp);
+	fp->supr = SUP_NL;
+	if (i > amount) {
+		trace_putc('\n', fp);
+		i = 0;
+	}
+	fp->supr = 0;
+	for (; i < amount - 7 ; i++) {
+		trace_putc('\t', fp);
+		i |= 7;
+	}
+	while (i < amount) {
+		trace_putc(' ', fp);
+		i++;
+	}
+	fp->supr = SUP_WSP;
+}
+
+static void
+trace_putc(char c, TFILE *fp)
 {
 	char *p;
+
+	if (c == '\0')
+		return;
+	if (debug == 0 || fp == NULL)
+		return;
+
+	if (fp->llen == 0) {
+		if (fp->blen != 0)
+			abort();
+
+		if ((fp->supr & SUP_NL) && c == '\n')
+			return;
+		if ((fp->supr & (SUP_WSP|SUP_SP)) && c == ' ')
+			return;
+		if ((fp->supr & SUP_WSP) && c == '\t')
+			return;
+
+		if (fp->nxtiov >= TR_IOVECS - 1)	/* should be rare */
+			trace_flush(fp, 0);
+
+		p = trace_id(fp);
+		if (p != NULL) {
+			fp->lines[fp->nxtiov].iov_base = p;
+			fp->lines[fp->nxtiov].iov_len = strlen(p);
+			fp->nxtiov++;
+		}
+	} else if (fp->blen && fp->blen >= fp->lines[fp->nxtiov].iov_len) {
+		fp->blen = 0;
+		if (++fp->nxtiov >= TR_IOVECS)
+			trace_flush(fp, 0);
+	}
+
+	if (fp->lines[fp->nxtiov].iov_len == 0) {
+		p = (char *)malloc(2 * TR_STD_WIDTH);
+		if (p == NULL) {
+			trace_flush(fp, 1);
+			debug = 0;
+			return;
+		}
+		*p = '\0';
+		fp->lines[fp->nxtiov].iov_base = p;
+		fp->lines[fp->nxtiov].iov_len = 2 * TR_STD_WIDTH;
+		fp->blen = 0;
+	}
+
+	p = (char *)fp->lines[fp->nxtiov].iov_base + fp->blen++;
+	*p++ = c;
+	*p = 0;
+
+	if (c != ' ' && c != '\t' && c != '\n') {
+		fp->lastc = c;
+		fp->supr = 0;
+	}
+
+	if (c == '\n') {
+		fp->lines[fp->nxtiov++].iov_len = fp->blen;
+		fp->blen = 0;
+		fp->llen = 0;
+		fp->supr |= SUP_NL;
+		return;
+	}
+
+	if (c == '\t')
+		fp->llen |=  7;
+	fp->llen++;
+}
+
+void
+trace_flush(TFILE *fp, int all)
+{
+	int niov, i;
+	ssize_t written;
+
+	niov = fp->nxtiov;
+	if (all && fp->blen > 0) {
+		fp->lines[niov].iov_len = fp->blen;
+		fp->blen = 0;
+		fp->llen = 0;
+		niov++;
+	}
+	if (niov == 0)
+		return;
+	if (fp->blen > 0 && --niov == 0)
+		return;
+	written = writev(fp->tfd, fp->lines, niov);
+	for (i = 0; i < niov; i++) {
+		free(fp->lines[i].iov_base);
+		fp->lines[i].iov_base = NULL;
+		fp->lines[i].iov_len = 0;
+	}
+	if (written == -1) {
+		if (fp->blen > 0) {
+			free(fp->lines[niov].iov_base);
+			fp->lines[niov].iov_base = NULL;
+			fp->lines[niov].iov_len = 0;
+		}
+		debug = 0;
+		fp->blen = 0;
+		fp->llen = 0;
+		return;
+	}
+	if (fp->blen > 0) {
+		fp->lines[0].iov_base = fp->lines[niov].iov_base;
+		fp->lines[0].iov_len = fp->lines[niov].iov_len;
+		fp->lines[niov].iov_base = NULL;
+		fp->lines[niov].iov_len = 0;
+	}
+	fp->nxtiov = 0;
+}
+
+void
+trace_puts(const char *s, TFILE *fp)
+{
 	char c;
 
-	if (debug != 1 || !tracefile)
+	while ((c = *s++) != '\0')
+		trace_putc(c, fp);
+}
+
+inline static char *
+trace_id(TFILE *tf)
+{
+	int i;
+	char indent[16];
+	char *p;
+
+	if (DFlags & DBG_NEST) {
+		p = indent;
+		for (i = 0; i < 6; i++)
+			*p++ = (i < ShNest) ? '#' : ' ';
+		while (i++ < ShNest && p < &indent[sizeof indent - 1])
+			*p++ = '#';
+		*p = '\0';
+	} else
+		indent[0] = '\0';
+
+	if (DFlags & DBG_PID) {
+		i = getpid();
+		(void) asprintf(&p, "%5d%c%s\t", i,
+		    i == tf->pid ? ':' : '=', indent);
+		return p;
+	} else if (DFlags & DBG_NEST) {
+		*p++ = '\t';
+		*p = '\0';
+		(void) asprintf(&p, "%s\t", indent);
+		return p;
+	}
+	return NULL;
+}
+
+/*
+ * Used only from trargs(), which itself is used only to print
+ * arg lists (argv[]) either that passed into this shell, or
+ * the arg list about to be given to some other command (incl
+ * builtin, and function) as their argv[].  If any of the CTL*
+ * chars seem to appear, they really should be just treated as data,
+ * not special...   But this is just debug, so, who cares!
+ */
+static void
+trstring(const char *s)
+{
+	const char *p;
+	char c;
+	TFILE *fp;
+
+	if (debug != 1 || !tracetfile)
 		return;
-	putc('"', tracefile);
+	fp = tracetfile;
+	trace_putc('"', fp);
 	for (p = s ; *p ; p++) {
 		switch (*p) {
 		case '\n':  c = 'n';  goto backslash;
@@ -460,78 +976,43 @@ trstring(char *s)
 		case CTLVAR+CTLQUOTE:  c = 'V';  goto backslash;
 		case CTLBACKQ:  c = 'q';  goto backslash;
 		case CTLBACKQ+CTLQUOTE:  c = 'Q';  goto backslash;
-backslash:	  putc('\\', tracefile);
-			putc(c, tracefile);
+backslash:		trace_putc('\\', fp);
+			trace_putc(c, fp);
 			break;
 		default:
 			if (*p >= ' ' && *p <= '~')
-				putc(*p, tracefile);
+				trace_putc(*p, fp);
 			else {
-				putc('\\', tracefile);
-				putc(*p >> 6 & 03, tracefile);
-				putc(*p >> 3 & 07, tracefile);
-				putc(*p & 07, tracefile);
+				trace_putc('\\', fp);
+				trace_putc(*p >> 6 & 03, fp);
+				trace_putc(*p >> 3 & 07, fp);
+				trace_putc(*p & 07, fp);
 			}
 			break;
 		}
 	}
-	putc('"', tracefile);
+	trace_putc('"', fp);
 }
-#endif
 
-
-void
-trargs(char **ap)
+/*
+ * deal with the user "accidentally" picking our fd to use.
+ */
+static void
+trace_fd_swap(int from, int to)
 {
-#ifdef DEBUG
-	if (debug != 1 || !tracefile)
+	if (tracetfile == NULL || from == to)
 		return;
-	while (*ap) {
-		trstring(*ap++);
-		if (*ap)
-			putc(' ', tracefile);
-		else
-			putc('\n', tracefile);
-	}
-#endif
+
+	tracetfile->tfd = to;
+
+	/*
+	 * This is just so histedit has a stdio FILE* to use.
+	 */
+	if (tracefile)
+		fclose(tracefile);
+	tracefile = fdopen(to, "a");
+	if (tracefile)
+		setlinebuf(tracefile);
 }
 
-
-#ifdef DEBUG
-void
-opentrace(void)
-{
-	char s[100];
-#ifdef O_APPEND
-	int flags;
-#endif
-
-	if (debug != 1) {
-		if (tracefile)
-			fflush(tracefile);
-		/* leave open because libedit might be using it */
-		return;
-	}
-	snprintf(s, sizeof(s), "./trace.%d", (int)getpid());
-	if (tracefile) {
-		if (!freopen(s, "a", tracefile)) {
-			fprintf(stderr, "Can't re-open %s\n", s);
-			tracefile = NULL;
-			debug = 0;
-			return;
-		}
-	} else {
-		if ((tracefile = fopen(s, "a")) == NULL) {
-			fprintf(stderr, "Can't open %s\n", s);
-			debug = 0;
-			return;
-		}
-	}
-#ifdef O_APPEND
-	if ((flags = fcntl(fileno(tracefile), F_GETFL, 0)) >= 0)
-		fcntl(fileno(tracefile), F_SETFL, flags | O_APPEND);
-#endif
-	setlinebuf(tracefile);
-	fputs("\nTracing started.\n", tracefile);
-}
 #endif /* DEBUG */
