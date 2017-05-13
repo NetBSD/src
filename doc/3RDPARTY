@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1145.2.40 2017/04/21 05:23:16 snj Exp $
+#	$NetBSD: 3RDPARTY,v 1.1145.2.41 2017/05/13 05:33:48 snj Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -735,8 +735,8 @@ under src/usr.sbin). We don't use tcpd; that functionality is built
 into inetd. The provided libwrap2netbsd script handles just libwrap.
 
 Package:	Lua
-Version:	Lua 5.3.3
-Current Vers:	Lua 5.3.3
+Version:	Lua 5.3.4
+Current Vers:	Lua 5.3.4
 Maintainer:	PUC Rio
 Home Page:	http://www.lua.org/
 Mailing List:
