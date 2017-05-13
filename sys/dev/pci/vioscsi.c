@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.17 2017/05/13 20:17:42 jdolecek Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.18 2017/05/13 20:35:20 jdolecek Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.17 2017/05/13 20:17:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.18 2017/05/13 20:35:20 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,20 +362,23 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 
 	error = bus_dmamap_load(virtio_dmat(vsc), vr->vr_data,
 	    xs->data, xs->datalen, NULL, XS2DMA(xs));
-	switch (error) {
-	case 0:
-		break;
-	case ENOMEM:
-	case EAGAIN:
-		xs->error = XS_RESOURCE_SHORTAGE;
-		goto nomore;
-	default:
-		aprint_error_dev(sc->sc_dev, "error %d loading DMA map\n",
-		    error);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "%s: error %d loading DMA map\n",
+		    __func__, error);
+
+		if (error == ENOMEM || error == EAGAIN) {
+			/*
+			 * Map is allocated with ALLOCNOW, so this should
+			 * actually never ever happen.
+			 */
+			xs->error = XS_RESOURCE_SHORTAGE;
+		} else {
 stuffup:
-		xs->error = XS_DRIVER_STUFFUP;
-nomore:
-		/* nothing else to free */
+			/* not a temporary condition */
+			xs->error = XS_DRIVER_STUFFUP;
+		}
+
+		virtio_enqueue_abort(vsc, vq, slot);
 		scsipi_done(xs);
 		return;
 	}
@@ -386,10 +389,13 @@ nomore:
 
 	error = virtio_enqueue_reserve(vsc, vq, slot, nsegs);
 	if (error) {
-		DPRINTF(("%s: error reserving %d\n", __func__, error));
+		aprint_error_dev(sc->sc_dev, "error reserving %d (nsegs %d)\n",
+		    error, nsegs);
 		bus_dmamap_unload(virtio_dmat(vsc), vr->vr_data);
+		/* slot already freed by virtio_enqueue_reserve() */
 		xs->error = XS_RESOURCE_SHORTAGE;
-		goto nomore;
+		scsipi_done(xs);
+		return;
 	}
 
 	vr->vr_xs = xs;
