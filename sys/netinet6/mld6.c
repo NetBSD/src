@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.88 2017/03/02 09:48:20 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.89 2017/05/13 20:13:26 kardel Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.88 2017/03/02 09:48:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.89 2017/05/13 20:13:26 kardel Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1062,7 +1062,6 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 		}
 
 		s = pserialize_read_enter();
-		ifa_release(ifa, &psref_ia);
 
 		break;
 	}
