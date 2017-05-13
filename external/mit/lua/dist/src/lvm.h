@@ -1,7 +1,7 @@
-/*	$NetBSD: lvm.h,v 1.2.2.4 2016/09/25 11:16:02 bouyer Exp $	*/
+/*	$NetBSD: lvm.h,v 1.2.2.5 2017/05/13 05:33:48 snj Exp $	*/
 
 /*
-** Id: lvm.h,v 2.40 2016/01/05 16:07:21 roberto Exp 
+** Id: lvm.h,v 2.41 2016/12/22 13:08:50 roberto Exp 
 ** Lua virtual machine
 ** See Copyright Notice in lua.h
 */
@@ -96,7 +96,7 @@
 #define luaV_settable(L,t,k,v) { const TValue *slot; \
   if (!luaV_fastset(L,t,k,slot,luaH_get,v)) \
     luaV_finishset(L,t,k,v,slot); }
-  
+
 
 
 LUAI_FUNC int luaV_equalobj (lua_State *L, const TValue *t1, const TValue *t2);
