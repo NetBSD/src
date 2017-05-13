@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.16 2017/03/25 23:58:35 christos Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.17 2017/05/13 20:17:42 jdolecek Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.16 2017/03/25 23:58:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.17 2017/05/13 20:17:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 
 	for(i=0; i < __arraycount(sc->sc_vqs); i++) {
 		rv = virtio_alloc_vq(vsc, &sc->sc_vqs[i], i, MAXPHYS,
-		    1 + howmany(MAXPHYS, NBPG),
+		    VIRTIO_SCSI_MIN_SEGMENTS + howmany(MAXPHYS, NBPG),
 		    vioscsi_vq_names[i]);
 		if (rv) {
 			aprint_error_dev(sc->sc_dev,
