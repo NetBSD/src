@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.139 2017/05/09 05:14:03 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.140 2017/05/13 03:26:03 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.139 2017/05/09 05:14:03 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.140 2017/05/13 03:26:03 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -931,6 +931,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			savelocalvars = localvars;
 			localvars = NULL;
 			vforked = 1;
+	VFORK_BLOCK
 			switch (pid = vfork()) {
 			case -1:
 				serrno = errno;
@@ -942,6 +943,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 				/* Make sure that exceptions only unwind to
 				 * after the vfork(2)
 				 */
+				SHELL_FORKED();
 				if (setjmp(jmploc.loc)) {
 					if (exception == EXSHELLPROC) {
 						/* We can't progress with the vfork,
@@ -960,6 +962,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 				forkchild(jp, cmd, mode, vforked);
 				break;
 			default:
+				VFORK_UNDO();
 				handler = savehandler;	/* restore from vfork(2) */
 				poplocalvars();
 				localvars = savelocalvars;
@@ -974,6 +977,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 				forkparent(jp, cmd, mode, pid);
 				goto parent;
 			}
+	VFORK_END
 		} else {
 normal_fork:
 #endif
