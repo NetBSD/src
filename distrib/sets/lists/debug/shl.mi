@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.172 2017/05/09 11:14:16 kre Exp $
+# $NetBSD: shl.mi,v 1.173 2017/05/13 21:27:11 htodd Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -14,7 +14,7 @@
 ./usr/libdata/debug/lib/libkvm.so.6.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/liblzf.so.1.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/liblzma.so.2.0.debug			comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/libm.so.0.11.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libm.so.0.12.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libnpf.so.0.1.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libpcap.so.6.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libppath.so.0.0.debug			comp-sys-debug	debug,dynamicroot
@@ -134,7 +134,7 @@
 ./usr/libdata/debug/usr/lib/liblwres.so.8.4.debug		comp-bind-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/liblzf.so.1.0.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/liblzma.so.2.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libm.so.0.11.debug			comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libm.so.0.12.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmagic.so.5.2.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmenu.so.6.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmj.so.1.0.debug			comp-crypto-debug	debug,compatfile,crypto
