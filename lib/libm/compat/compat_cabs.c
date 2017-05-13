@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_cabs.c,v 1.2 2007/08/10 21:20:35 drochner Exp $");
+__RCSID("$NetBSD: compat_cabs.c,v 1.3 2017/05/13 02:58:03 maya Exp $");
 #endif
 
 #include "../src/namespace.h"
@@ -19,7 +19,7 @@ struct complex {
 };
 
 double cabs(struct complex);
-__warn_references(cabs, "warning: reference to compatibility cabs()");
+__warn_references(cabs, "warning: reference to compatibility cabs()")
 
 double
 cabs(struct complex z)
