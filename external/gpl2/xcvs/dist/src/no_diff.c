@@ -18,6 +18,8 @@
  * 
  * returns 0 if no differences are found and non-zero otherwise
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: no_diff.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 #include <assert.h>

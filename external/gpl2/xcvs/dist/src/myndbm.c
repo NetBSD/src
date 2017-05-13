@@ -18,6 +18,8 @@
  * probably only good for fairly small modules files.  Ours is about 30K in
  * size, and this code works fine.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: myndbm.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 

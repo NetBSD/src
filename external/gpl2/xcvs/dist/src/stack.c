@@ -9,6 +9,8 @@
  *
  * This module uses the hash.c module to implement a stack.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: stack.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 #include <assert.h>

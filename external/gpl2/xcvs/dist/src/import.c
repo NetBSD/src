@@ -20,6 +20,8 @@
  *
  * Additional arguments specify more Vendor Release Tags.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: import.c,v 1.3.10.2 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 #include "lstat.h"
@@ -1407,7 +1409,7 @@ add_rcs_file (const char *message, const char *rcs, const char *user,
 	    /* We are going to put the log message in the revision on the
 	       branch.  So putting it here too seems kind of redundant, I
 	       guess (and that is what CVS has always done, anyway).  */
-	    if (fprintf (fprcs, "Initial revision\012") < 0)
+	    if (fprintf (fprcs, "Initial revision\n") < 0)
 		goto write_error;
 	}
 	else

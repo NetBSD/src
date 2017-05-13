@@ -16,6 +16,9 @@
    License along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
    USA.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pagealign_alloc.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
+
 
 /* Written by Derek R. Price <derek@ximbiot.com>.  */
 

@@ -16,6 +16,9 @@
    You should have received a copy of the GNU General Public License along
    with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: regex_internal.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
+
 
 static void re_string_construct_common (const char *str, Idx len,
 					re_string_t *pstr,

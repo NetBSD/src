@@ -13,6 +13,8 @@
  * The routines contained in this file do all the rcs file parsing and
  * manipulation
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rcs.c,v 1.5.10.1 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 #include "edit.h"

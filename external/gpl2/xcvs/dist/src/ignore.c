@@ -7,6 +7,8 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ignore.c,v 1.2.26.1 2017/05/13 06:23:23 snj Exp $");
 
 /*
  * .cvsignore file support contributed by David G. Grubbs <dgg@odi.com>

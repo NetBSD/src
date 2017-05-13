@@ -18,6 +18,8 @@
  * The call is: cvs commit [options] files...
  *
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: commit.c,v 1.4.10.1 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 #include "getline.h"

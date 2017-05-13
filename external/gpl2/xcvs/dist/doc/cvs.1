@@ -1490,7 +1490,7 @@ cannot commit to a specific revision on a branch.
 Refuse to commit files unless the user has registered a valid edit on the
 file via \fBcvs edit\fR.  This is most useful when \fBcommit -c\fR
 and \fBedit -c\fR have been placed in all \fB.cvsrc\fR files.
-A commit can be forced anyways by either regestering an edit retroactively
+A commit can be forced anyways by either registering an edit retroactively
 via \fBcvs edit\fR (no changes to the file will be lost) or using the
 \fB-f\fR option to commit.  Support for \fBcommit -c\fR requires both
 client and a server versions 1.12.10 or greater.
@@ -3664,7 +3664,7 @@ supported beginning with \fBcvs\fR release 1.12.13.
 .IX "update (subcommand)"
 .SP
 .IP "\(bu" 2
-update [-ACdflPpR] [-I name] [-j rev [-j rev]] [-k kflag] [-r tag[:date] | -D date] [-W spec] files\&...
+update [-ACdflPpRt] [-I name] [-j rev [-j rev]] [-k kflag] [-r tag[:date] | -D date] [-W spec] files\&...
 .IP "\(bu" 2
 Requires: repository, working directory.
 .IP "\(bu" 2
@@ -3722,6 +3722,19 @@ Local; run only in current working directory.  see node `Recursive behavior\(aq 
 \fB-P\fR
 .IP "" 2
 Prune empty directories.  See see node `Moving directories\(aq in the CVS manual.
+.SP
+.IP "" 0
+\fB-t\fR
+.IP "" 2
+Preserve source timestamps.  Unlike \fBcheckout\fR where files are created
+using the original timestamp of the file in the repository, \fBupdate\fR
+updates files using the current time of the machine.  This is convenient
+because updated files appear newer than any other files on the system so
+.BR make ( 1 )
+knows that are their corresponding built artifacts are out of date and
+they will get rebuilt.  The \fB-t\fR flag instead preserves the timestamps
+of the original repository files, behaving exactly like \fBcheckout\fR.
+This is useful for maintaining a tree in the original checked-out state.
 .SP
 .IP "" 0
 \fB-p\fR

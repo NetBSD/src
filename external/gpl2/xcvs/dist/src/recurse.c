@@ -13,6 +13,8 @@
  * General recursion handler
  *
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: recurse.c,v 1.2.10.1 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 #include "save-cwd.h"

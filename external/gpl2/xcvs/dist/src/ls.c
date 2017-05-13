@@ -9,6 +9,8 @@
  *
  * Query CVS/Entries from server
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ls.c,v 1.3.10.1 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 #include <stdbool.h>

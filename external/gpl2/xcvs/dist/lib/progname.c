@@ -17,6 +17,9 @@
    You should have received a copy of the GNU General Public License along
    with this program; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: progname.c,v 1.1.1.1.26.1 2017/05/13 06:23:23 snj Exp $");
+
 
 /* Written by Derek R. Price <derek@ximbiot.com>.  */
 

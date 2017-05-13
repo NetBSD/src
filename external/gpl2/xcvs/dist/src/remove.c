@@ -19,6 +19,8 @@
  * file must not exist in the current directory for "remove" to work
  * correctly.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: remove.c,v 1.3.10.1 2017/05/13 06:23:23 snj Exp $");
 
 #include "cvs.h"
 
