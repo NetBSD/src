@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.43 2015/05/09 13:28:55 christos Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.44 2017/05/13 15:03:34 gson Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.43 2015/05/09 13:28:55 christos Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.44 2017/05/13 15:03:34 gson Exp $");
 #endif
 #endif /* not lint */
 
@@ -321,7 +321,7 @@ static const struct limits limits[] = {
 #ifdef RLIMIT_STACK
 	{ "stack",	"kbytes",	RLIMIT_STACK,	1024, 's' },
 #endif
-#ifdef  RLIMIT_CORE
+#ifdef RLIMIT_CORE
 	{ "coredump",	"blocks",	RLIMIT_CORE,	 512, 'c' },
 #endif
 #ifdef RLIMIT_RSS
