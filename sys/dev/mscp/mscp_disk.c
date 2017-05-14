@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.89.8.1 2017/04/27 05:36:35 pgoyette Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.89.8.2 2017/05/14 13:02:35 pgoyette Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.89.8.1 2017/04/27 05:36:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.89.8.2 2017/05/14 13:02:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1145,21 +1145,20 @@ ra_putonline(dev_t dev, struct ra_softc *ra)
 	    rastrategy, dl, NULL)) == NULL) {
 		ra->ra_havelabel = 1;
 		ra->ra_state = DK_OPEN;
-	}
+	} else {
 #if NRACD
-	else {
 		cdev = cdevsw_lookup_acquire(dev);
 		if (cdev == &racd_cdevsw) {
 			dl->d_partitions[0].p_offset = 0;
 			dl->d_partitions[0].p_size = dl->d_secperunit;
 			dl->d_partitions[0].p_fstype = FS_ISO9660;
-		}
+		} else
+			printf(": %s", msg);
 		if (cdev != NULL)
 			cdevsw_release(cdev);
-	}
-#endif /* NRACD */
-	else {
+#else
 		printf(": %s", msg);
+#endif /* NRACD */
 	}
 
 	printf(": size %d sectors\n", dl->d_secperunit);
