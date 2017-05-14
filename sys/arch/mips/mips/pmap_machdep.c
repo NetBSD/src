@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.16 2017/05/12 06:49:31 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.17 2017/05/14 11:46:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.16 2017/05/12 06:49:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.17 2017/05/14 11:46:22 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -165,6 +165,10 @@ PMAP_COUNTER(zeroed_pages, "pages zeroed");
 PMAP_COUNTER(copied_pages, "pages copied");
 extern struct evcnt pmap_evcnt_page_cache_evictions;
 
+u_int pmap_page_cache_alias_mask;
+
+#define pmap_md_cache_indexof(x)	(((vaddr_t)(x)) & pmap_page_cache_alias_mask)
+
 static register_t
 pmap_md_map_ephemeral_page(struct vm_page *pg, bool locked_p, int prot,
     pt_entry_t *old_pte_p)
@@ -196,12 +200,20 @@ pmap_md_map_ephemeral_page(struct vm_page *pg, bool locked_p, int prot,
 		 */
 		kpreempt_disable(); // paired with the one in unmap
 		struct cpu_info * const ci = curcpu();
-		KASSERT(ci->ci_pmap_dstbase != 0);
+		if (MIPS_CACHE_VIRTUAL_ALIAS) {
+			KASSERT(ci->ci_pmap_dstbase != 0);
+			KASSERT(ci->ci_pmap_srcbase != 0);
 
+			const u_int __diagused mask = pmap_page_cache_alias_mask;
+			KASSERTMSG((ci->ci_pmap_dstbase & mask) == 0,
+			    "%#"PRIxVADDR, ci->ci_pmap_dstbase);
+			KASSERTMSG((ci->ci_pmap_srcbase & mask) == 0,
+			    "%#"PRIxVADDR, ci->ci_pmap_srcbase);
+		}
 		vaddr_t nva = (prot & VM_PROT_WRITE
 			? ci->ci_pmap_dstbase
 			: ci->ci_pmap_srcbase)
-		    + mips_cache_indexof(MIPS_CACHE_VIRTUAL_ALIAS
+		    + pmap_md_cache_indexof(MIPS_CACHE_VIRTUAL_ALIAS
 			? pv->pv_va
 			: pa);
 
@@ -330,8 +342,12 @@ pmap_bootstrap(void)
 	size_t sysmap_size;
 	pt_entry_t *sysmap;
 
-	if (MIPS_CACHE_VIRTUAL_ALIAS && uvmexp.ncolors)
+	if (MIPS_CACHE_VIRTUAL_ALIAS && uvmexp.ncolors) {
 		pmap_page_colormask = (uvmexp.ncolors - 1) << PAGE_SHIFT;
+		pmap_page_cache_alias_mask = max(
+		    mips_cache_info.mci_cache_alias_mask,
+		    mips_cache_info.mci_icache_alias_mask);
+	}
 
 #ifdef MULTIPROCESSOR
 	pmap_t pm = pmap_kernel();
@@ -509,16 +525,23 @@ pmap_md_alloc_ephemeral_address_space(struct cpu_info *ci)
 #endif
 	    || MIPS_CACHE_VIRTUAL_ALIAS
 	    || MIPS_ICACHE_VIRTUAL_ALIAS) {
-		vsize_t size = uvmexp.ncolors * PAGE_SIZE;
-		if (MIPS_ICACHE_VIRTUAL_ALIAS
-		    && mci->mci_picache_way_size > size)
-			size = mci->mci_picache_way_size;
-		ci->ci_pmap_dstbase = uvm_km_alloc(kernel_map, size, 0,
-		    UVM_KMF_COLORMATCH | UVM_KMF_VAONLY);
+		vsize_t size = max(mci->mci_pdcache_way_size, mci->mci_picache_way_size);;
+		const u_int __diagused mask = pmap_page_cache_alias_mask;
+
+		ci->ci_pmap_dstbase = uvm_km_alloc(kernel_map, size, size,
+		    UVM_KMF_VAONLY);
+
 		KASSERT(ci->ci_pmap_dstbase);
-		ci->ci_pmap_srcbase = uvm_km_alloc(kernel_map, size, 0,
-		    UVM_KMF_COLORMATCH | UVM_KMF_VAONLY);
+		KASSERT(!pmap_md_direct_mapped_vaddr_p(ci->ci_pmap_dstbase));
+		KASSERTMSG((ci->ci_pmap_dstbase & mask) == 0, "%#"PRIxVADDR,
+		    ci->ci_pmap_dstbase);
+
+		ci->ci_pmap_srcbase = uvm_km_alloc(kernel_map, size, size,
+		    UVM_KMF_VAONLY);
 		KASSERT(ci->ci_pmap_srcbase);
+		KASSERT(!pmap_md_direct_mapped_vaddr_p(ci->ci_pmap_srcbase));
+		KASSERTMSG((ci->ci_pmap_srcbase & mask) == 0, "%#"PRIxVADDR,
+		    ci->ci_pmap_srcbase);
 	}
 }
 
