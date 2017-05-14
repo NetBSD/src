@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.344 2017/05/14 10:01:34 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.345 2017/05/14 10:08:49 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.344 2017/05/14 10:01:34 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.345 2017/05/14 10:08:49 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3858,22 +3858,20 @@ audio_mix(void *v)
 	cc = blksize - (inp - cb->s.start) % blksize;
 	if (sc->sc_writeme == false) {
 		DPRINTFN(3, ("MIX RING EMPTY - INSERT SILENCE\n"));
-		mutex_exit(sc->sc_intr_lock);
 		audio_fill_silence(&vc->sc_mpr.s.param, inp, cc);
-		mutex_enter(sc->sc_intr_lock);
 		sc->sc_pr.drops += cc;
 	} else
 		cc = blksize;
 	cb->s.inp = audio_stream_add_inp(&cb->s, cb->s.inp, cc);
 	cc = blksize;
 	cc1 = sc->sc_pr.s.end - sc->sc_pr.s.inp;
-	mutex_exit(sc->sc_intr_lock);
 	if (cc1 < cc) {
 		audio_fill_silence(&vc->sc_mpr.s.param, sc->sc_pr.s.inp, cc1);
 		cc -= cc1;
 		audio_fill_silence(&vc->sc_mpr.s.param, sc->sc_pr.s.start, cc);
 	} else
 		audio_fill_silence(&vc->sc_mpr.s.param, sc->sc_pr.s.inp, cc);
+	mutex_exit(sc->sc_intr_lock);
 
 	kpreempt_disable();
 	if (sc->schedule_wih == true)
@@ -3957,12 +3955,14 @@ audio_upmix(void *v)
 		cc = blksize;
 		if (cb->s.inp + blksize > cb->s.end)
 			cc = cb->s.end - cb->s.inp;
+		mutex_enter(sc->sc_intr_lock);
 		memcpy(cb->s.inp, sc->sc_rr.s.start, cc);
 		if (cc < blksize && cc != 0) {
 			cc1 = cc;
 			cc = blksize - cc;
 			memcpy(cb->s.start, sc->sc_rr.s.start + cc1, cc);
 		}
+		mutex_exit(sc->sc_intr_lock);
 
 		cc = blksize;
 		recswvol_func(sc, cb, blksize, vc);
