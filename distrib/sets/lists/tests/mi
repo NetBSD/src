@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.738 2017/05/10 09:08:25 ozaki-r Exp $
+# $NetBSD: mi,v 1.739 2017/05/14 00:07:07 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3584,6 +3584,10 @@
 ./usr/tests/usr.bin/bzip2/d_sample3.bz2		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/bzip2/d_sample3.ref		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/bzip2/t_bzip2		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/c++				tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/Atffile			tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua,cxx
+./usr/tests/usr.bin/c++/t_hello			tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/cc				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
