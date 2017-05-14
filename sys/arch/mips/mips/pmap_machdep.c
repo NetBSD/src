@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.17 2017/05/14 11:46:22 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.18 2017/05/14 15:36:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.17 2017/05/14 11:46:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.18 2017/05/14 15:36:45 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -762,16 +762,7 @@ pmap_md_unmap_poolpage(vaddr_t va, size_t len)
 
 	/* Note last mapped address for future color check */
 	pv->pv_va = va;
-#if 0
-	if (MIPS_CACHE_VIRTUAL_ALIAS) {
-		/*
-		 * We've unmapped a poolpage.  Its contents are irrelevant.
-		 */
-		KASSERT((va & PAGE_MASK) == 0);
-		mips_dcache_inv_range(va, PAGE_SIZE);
-		pv->pv_va = va;
-	}
-#endif
+
 	KASSERT(pv->pv_pmap == NULL);
 	KASSERT(pv->pv_next == NULL);
 
