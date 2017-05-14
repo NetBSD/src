@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.23 2017/01/29 00:18:15 christos Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.24 2017/05/14 21:38:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.23 2017/01/29 00:18:15 christos Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.24 2017/05/14 21:38:23 christos Exp $");
 
 #include <sys/socket.h>
 #define	__FAVOR_BSD
@@ -341,7 +341,7 @@ static void
 npfctl_print_id(npf_conf_info_t *ctx, nl_rule_t *rl)
 {
 	uint64_t id = id = npf_rule_getid(rl);
-	fprintf(ctx->fp, "# id=\"%" PRIu64 "\" ", id);
+	fprintf(ctx->fp, "# id=\"%" PRIx64 "\" ", id);
 }
 
 static void
