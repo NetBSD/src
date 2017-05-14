@@ -1,10 +1,6 @@
-#	$NetBSD: Makefile,v 1.19 2010/08/01 16:44:31 jmmv Exp $
+#	$NetBSD: Makefile,v 1.20 2017/05/14 02:07:58 kamil Exp $
 
 .include <bsd.own.mk>
-
-.if ${MKCXX} != "no"
-SUBDIR+= c++
-.endif
 
 SUBDIR+= rtld
 
