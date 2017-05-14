@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.343 2017/05/12 07:12:37 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.344 2017/05/14 10:01:34 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.343 2017/05/12 07:12:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.344 2017/05/14 10:01:34 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -187,6 +187,8 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.343 2017/05/12 07:12:37 martin Exp $");
 #include <dev/auvolconv.h>
 
 #include <machine/endian.h>
+
+#include <uvm/uvm.h>
 
 /* #define AUDIO_DEBUG	1 */
 #ifdef AUDIO_DEBUG
@@ -1213,7 +1215,15 @@ audio_alloc_ring(struct audio_softc *sc, struct audio_ringbuffer *r,
 		error = uvm_map(kernel_map, &vstart, vsize, r->uobj, 0, 0,
 		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
 			UVM_ADV_RANDOM, 0));
+		if (error)
+			goto bad_map;
+
+		error = uvm_map_pageable(kernel_map, vstart, vstart + vsize,
+		    false, 0);
+
 		if (error) {
+			uvm_unmap(kernel_map, vstart, vsize);
+bad_map:
 			uao_detach(r->uobj);	/* release reference */
 			r->uobj = NULL;		/* paranoia */
 			return error;
@@ -1248,13 +1258,10 @@ audio_free_ring(struct audio_softc *sc, struct audio_ringbuffer *r)
 		vstart = (vaddr_t)r->s.start;
 		vsize = roundup2(MAX(r->s.bufsize, PAGE_SIZE), PAGE_SIZE);
 
-		/*
-		 * Unmap the kernel mapping.  uvm_unmap releases the
-		 * reference to the uvm object, and this should be the
-		 * last virtual mapping of the uvm object, so no need
-		 * to explicitly release (`detach') the object.
-		 */
+		uvm_map_pageable(kernel_map, vstart, vstart + vsize,
+		    true, 0);
 		uvm_unmap(kernel_map, vstart, vsize);
+		uao_detach(r->uobj);	/* release reference */
 		r->uobj = NULL;		/* paranoia */
 	}
 
