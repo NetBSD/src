@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.57 2017/05/14 09:33:17 skrll Exp $	*/
+/*	$NetBSD: cache.c,v 1.58 2017/05/14 09:37:13 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.57 2017/05/14 09:33:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.58 2017/05/14 09:37:13 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -662,7 +662,7 @@ primary_cache_is_2way:
 		KASSERT(mci->mci_picache_ways != 0);
 		mci->mci_picache_way_size = mci->mci_picache_size / mci->mci_picache_ways;
 		mci->mci_picache_way_mask = mci->mci_picache_way_size - 1;
-#if (MIPS2 + MIPS3) > 0
+#if (MIPS2 + MIPS3 + MIPS4) > 0
 		if (mci->mci_icache_virtual_alias)
 			mci->mci_icache_alias_mask =
 			    mci->mci_picache_way_mask & -PAGE_SIZE;
@@ -672,12 +672,20 @@ primary_cache_is_2way:
 		KASSERT(mci->mci_pdcache_ways != 0);
 		mci->mci_pdcache_way_size = mci->mci_pdcache_size / mci->mci_pdcache_ways;
 		mci->mci_pdcache_way_mask = mci->mci_pdcache_way_size - 1;
-#if (MIPS2 + MIPS3) > 0
+#if (MIPS2 + MIPS3 + MIPS4) > 0
 		if (mci->mci_cache_virtual_alias)
 			mci->mci_cache_alias_mask =
 			    mci->mci_pdcache_way_mask & -PAGE_SIZE;
 #endif
 	}
+
+#if (MIPS2 + MIPS3 + MIPS4) > 0
+	if (mci->mci_cache_virtual_alias) {
+		mci->mci_cache_prefer_mask = mci->mci_pdcache_way_mask;
+
+		uvmexp.ncolors = (mci->mci_cache_prefer_mask >> PAGE_SHIFT) + 1;
+	}
+#endif
 
 	mips_dcache_compute_align();
 
@@ -986,14 +994,6 @@ mips3_get_cache_config(int csizebase)
 	    MIPS3_CONFIG_DC_MASK, csizebase, MIPS3_CONFIG_DC_SHIFT);
 	mci->mci_pdcache_line_size = MIPS3_CONFIG_CACHE_L1_LSIZE(config,
 	    MIPS3_CONFIG_DB);
-
-	mci->mci_icache_alias_mask =
-	    (mci->mci_picache_size / mci->mci_picache_ways - 1) & -PAGE_SIZE;
-	mci->mci_cache_alias_mask =
-	    (mci->mci_pdcache_size / mci->mci_pdcache_ways - 1) & -PAGE_SIZE;
-	mci->mci_cache_prefer_mask =
-	    max(mci->mci_pdcache_size, mci->mci_picache_size) - 1;
-	uvmexp.ncolors = (mci->mci_cache_alias_mask >> PAGE_SHIFT) + 1;
 
 	switch(MIPS_PRID_IMPL(cpu_id)) {
 #ifndef ENABLE_MIPS_R3NKK
