@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.105 2017/05/14 11:23:33 kre Exp $
+#	$NetBSD: Makefile,v 1.106 2017/05/14 11:25:09 kre Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -34,7 +34,7 @@ CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
 BUILD_DATE!=	date -u -r "${MKREPRO_TIMESTAMP}" "+%Y%m%d%H%M%S"
 # These are (should be) equivalent, but the 2nd is easier to understand
 #CPPFLAGS+= -DBUILD_DATE='"${BUILD_DATE:C/([^0]0?)(00)*$/\1/}Z"'
-CPPFLAGS+= -DBUILD_DATE='"${BUILD_DATE:S/00$//:S/00$//:S/00//}Z"'
+CPPFLAGS+= -DBUILD_DATE='"${BUILD_DATE:S/00$//:S/00$//:S/00$//}Z"'
 .endif
 
 .ifdef SMALLPROG
