@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_segclean.2,v 1.8 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: lfs_segclean.2,v 1.9 2017/05/14 12:30:37 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Fn lfs_segclean
 marks segment number
 .Fa segment
-in LFS filesystem
+in LFS file system
 .Fa *fsidp
 "clean" or available for writing.
 .Sh RETURN VALUES
@@ -59,7 +59,7 @@ indicates:
 points outside the process's allocated address space.
 .It Bq Er EINVAL
 .Fa *fsidp
-does not specify a valid filesystem.
+does not specify a valid file system.
 .It Bq Er EBUSY
 .Fa segment
 is marked SU_ACTIVE, meaning that it does not yet belong to a valid checkpoint.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.2,v 1.49 2011/11/18 21:04:21 christos Exp $
+.\"	$NetBSD: mount.2,v 1.50 2017/05/14 12:30:37 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,12 +82,12 @@ suppress default semantics which affect file system access.
 The file system should be treated as read-only;
 even the super-user may not write on it.
 .It Dv MNT_UNION
-Union with underlying filesystem instead of obscuring it.
+Union with underlying file system instead of obscuring it.
 .It Dv MNT_HIDDEN
 Cause the
 .Xr df 1
 program, and perhaps others, to, by default,
-exclude this filesystem from its output.
+exclude this file system from its output.
 .It Dv MNT_NOEXEC
 Do not allow files to be executed from the file system.
 .It Dv MNT_NOSUID
@@ -109,22 +109,22 @@ Recognize the permission of symbolic link when reading or traversing.
 .It Dv MNT_SYNCHRONOUS
 All I/O to the file system should be done synchronously.
 This will slow I/O performance considerably, but
-enhances overall filesystem reliability.
+enhances overall file system reliability.
 .It Dv MNT_ASYNC
 All I/O to the file system should be done asynchronously.
 This vastly improves I/O throughput,
-but at a cost of making the filesystem likely to be
+but at a cost of making the file system likely to be
 completely unrecoverable should the system crash while
 unwritten data is pending in kernel buffers.
 .It Dv MNT_LOG
-Use a filesystem journal.
+Use a file system journal.
 .Dv MNT_LOG
 causes a journal (or log) to be created in the
-filesystem, creating a record of meta-data writes to be
+file system, creating a record of meta-data writes to be
 performed, allowing the actual writes to be deferred.
 This improves performance in most cases.
 .It MNT_EXTATTR
-Enable extended attributes, if the filesystem supports them and
+Enable extended attributes, if the file system supports them and
 does not enable them by default.
 Currently this is only the case for UFS1.
 .El
@@ -141,7 +141,7 @@ The
 flag allows the mount flags to be changed without requiring
 that the file system be unmounted and remounted.
 A conversion from read-write to read-only will fail if any files
-are currently open for writing on the filesystem, unless the
+are currently open for writing on the file system, unless the
 .Dv MNT_FORCE
 flag is also applied.
 Some file systems may not allow all flags to be changed.
@@ -149,16 +149,16 @@ For example,
 some file systems will not allow a change from read-write to read-only.
 The
 .Dv MNT_RELOAD
-flag causes kernel filesystem data to be reloaded from
-the filesystem device.
-It is only permitted on filesystems mounted read-only.
-Its purpose is to notify the system that the filesystem
+flag causes kernel file system data to be reloaded from
+the file system device.
+It is only permitted on file systems mounted read-only.
+Its purpose is to notify the system that the file system
 data has been modified by some external process.
 The
 .Dv MNT_GETARGS
-flag does not alter any of the mounted filesystem's properties,
-but returns the filesystem-specific arguments for the currently mounted
-filesystem.
+flag does not alter any of the mounted file system's properties,
+but returns the file system-specific arguments for the currently mounted
+file system.
 .Pp
 The
 .Fa type
@@ -172,7 +172,7 @@ to obtain the node
 .\" .Bd -literal -offset indent
 vfs.generic.fstypes.
 .\" XXX from lite-2:
-.\" The types of filesystems known to the system can be obtained with
+.\" The types of file systems known to the system can be obtained with
 .\" .Xr sysctl 8
 .\" by using the command:
 .\" .Bd -literal -offset indent
@@ -227,13 +227,13 @@ struct mfs_args {
 .Ed
 .\" XXX from lite-2:
 .\" The format for these argument structures is described in the
-.\" manual page for each filesystem.
-.\" By convention filesystem manual pages are named
-.\" by prefixing ``mount_'' to the name of the filesystem as returned by
+.\" manual page for each file system.
+.\" By convention file system manual pages are named
+.\" by prefixing ``mount_'' to the name of the file system as returned by
 .\" .Xr sysctl 8 .
 .\" Thus the
 .\" .Nm NFS
-.\" filesystem is described by the
+.\" file system is described by the
 .\" .Xr mount_nfs 8
 .\" manual page.
 .Pp
@@ -276,7 +276,7 @@ will fail when one of the following occurs:
 Another process currently holds a reference to
 .Fa dir ,
 or for an update from read-write to read-only
-there are files on the filesystem open for writes.
+there are files on the file system open for writes.
 .It Bq Er EFAULT
 .Fa dir
 points outside the process's allocated address space.
@@ -428,7 +428,7 @@ Prior to
 .Nx 4.0
 the
 .Nm
-call was used to export NFS filesystems.
+call was used to export NFS file systems.
 This is now done through
 .Fn nfssvc .
 .Pp
@@ -439,4 +439,4 @@ argument was added for
 .Sh BUGS
 Some of the error codes need translation to more obvious messages.
 .Pp
-Far more filesystems are supported than those those listed.
+Far more file systems are supported than those those listed.
