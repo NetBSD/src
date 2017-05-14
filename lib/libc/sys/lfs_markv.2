@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_markv.2,v 1.11 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: lfs_markv.2,v 1.12 2017/05/14 12:30:37 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@ the block will not be written to disk, but no error will be returned.
 .Pp
 The
 .Fa fsidp
-argument contains the id of the filesystem to which the inodes and
+argument contains the id of the file system to which the inodes and
 blocks belong.
 The
 .Fa bi_bp
@@ -103,7 +103,7 @@ indicates:
 points outside the process's allocated address space.
 .It Bq Er EINVAL
 .Fa *fsidp
-does not specify a valid filesystem.
+does not specify a valid file system.
 .It Bq Er EBUSY
 One or more of the inodes whose blocks were to be written was locked,
 and its blocks were not rewritten.

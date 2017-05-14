@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_segwait.2,v 1.8 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: lfs_segwait.2,v 1.9 2017/05/14 12:30:37 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,12 +41,12 @@
 .Fn lfs_segwait "fsid_t *fsidp" "struct timeval *tv"
 .Sh DESCRIPTION
 .Fn lfs_segwait
-blocks until a new segment is acquired for writing by the filesystem
+blocks until a new segment is acquired for writing by the file system
 specified by
 .Fa *fsidp
 or if
 .Fa *fsidp
-is \-1, until a segment is acquired for writing by any LFS filesystem.
+is \-1, until a segment is acquired for writing by any LFS file system.
 .Pp
 If
 .Fa timeout
