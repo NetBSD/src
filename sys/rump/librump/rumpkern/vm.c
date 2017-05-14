@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.172 2017/05/07 14:20:50 martin Exp $	*/
+/*	$NetBSD: vm.c,v 1.173 2017/05/14 13:49:55 nat Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.172 2017/05/07 14:20:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.173 2017/05/14 13:49:55 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -407,6 +407,13 @@ uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t vmin, vaddr_t vmax,
 
 	vm->vm_map.pmap = pmap;
 	vm->vm_refcnt = 1;
+}
+
+int
+uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
+    bool new_pageable, int lockflags)
+{
+	return 0;
 }
 
 void
