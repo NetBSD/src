@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.46.20.1 2017/04/27 05:36:31 pgoyette Exp $ */
+/* $NetBSD: ioasic.c,v 1.46.20.2 2017/05/14 05:33:41 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.46.20.1 2017/04/27 05:36:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.46.20.2 2017/05/14 05:33:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -239,7 +239,7 @@ ioasic_intr_establish(device_t ioa, void *cookie, tc_intrlevel_t level,
 	imsk = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
 	imsk |= ioasic_devs[i].iad_intrbits;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
-	device_release(sc->sc_dev;
+	device_release(sc->sc_dev);
 }
 
 void
