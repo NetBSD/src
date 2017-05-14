@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.54 2017/04/29 15:14:28 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.55 2017/05/14 17:27:05 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.54 2017/04/29 15:14:28 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.55 2017/05/14 17:27:05 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -338,7 +338,7 @@ openredirect(union node *redir, char memory[10], int flags)
 		abort();
 	}
 
-	cloexec = fd > 2 && (flags & REDIR_KEEP) == 0;
+	cloexec = fd > 2 && (flags & REDIR_KEEP) == 0 && !posix;
 	if (f != fd) {
 		if (copyfd(f, fd, cloexec) < 0) {
 			int e = errno;
