@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.127 2017/05/11 15:07:37 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.128 2017/05/14 11:17:04 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.127 2017/05/11 15:07:37 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.128 2017/05/14 11:17:04 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1754,8 +1754,12 @@ parsesub: {
 					subtype = VSLENGTH;
 				else if (is_special(c)) {
 					/*
+					 * ${#} is $# - the number of sh params
 					 * ${##} is the length of ${#}
+					 * ${###} is ${#} with as much nothing
+					 *        as possible removed from start
 					 * ${##1} is ${#} with leading 1 gone
+					 * ${##\#} is ${#} with leading # gone
 					 *
 					 * this stuff is UGLY!
 					 */
@@ -1764,12 +1768,13 @@ parsesub: {
 						subtype = VSLENGTH;
 					} else {
 						static char cbuf[2];
-						pungetc();
-						cbuf[0] = c;
+
+						pungetc();   /* would like 2 */
+						cbuf[0] = c; /* so ... */
 						cbuf[1] = '\0';
 						pushstring(cbuf, 1, NULL);
-						c = '#';
-						subtype = 0;
+						c = '#';     /* ${#:...} */
+						subtype = 0; /* .. or similar */
 					}
 				} else {
 					pungetc();
