@@ -1,4 +1,4 @@
-/* $NetBSD: axp20x.c,v 1.4 2015/10/15 13:48:57 bouyer Exp $ */
+/* $NetBSD: axp20x.c,v 1.5 2017/05/14 11:39:17 tnn Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.4 2015/10/15 13:48:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.5 2017/05/14 11:39:17 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,33 @@ static int ldo4_mvV[] = {
 #define AXP_LDO3_TRACK			__BIT(7)
 #define AXP_LDO3_VOLT_MASK		__BITS(0,6)
 #define AXP_LDO3_VOLT_SHIFT		0
+
+#define AXP_BKUP_CTRL			0x35
+#define AXP_BKUP_CTRL_ENABLE		__BIT(7)
+#define AXP_BKUP_CTRL_VOLT_MASK		__BITS(5,6)
+#define AXP_BKUP_CTRL_VOLT_SHIFT	5
+#define AXP_BKUP_CTRL_VOLT_3V1		0
+#define AXP_BKUP_CTRL_VOLT_3V0		1
+#define AXP_BKUP_CTRL_VOLT_3V6		2
+#define AXP_BKUP_CTRL_VOLT_2V5		3
+static int bkup_volt[] = {
+	3100,
+	3000,
+	3600,
+	2500
+};
+#define AXP_BKUP_CTRL_CURR_MASK		__BITS(0,1)
+#define AXP_BKUP_CTRL_CURR_SHIFT	0
+#define AXP_BKUP_CTRL_CURR_50U		0
+#define AXP_BKUP_CTRL_CURR_100U		1
+#define AXP_BKUP_CTRL_CURR_200U		2
+#define AXP_BKUP_CTRL_CURR_400U		3
+static int bkup_curr[] = {
+	50,
+	100,
+	200,
+	400
+};
 
 #define AXP_ACV_MON_REG		0x56	/* 2 bytes */
 #define AXP_ACI_MON_REG		0x58	/* 2 bytes */
@@ -345,6 +372,18 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 		} else {
 			aprint_verbose_dev(sc->sc_dev, ": LDO3 %dmV\n",
 			    (int)(700 + (value & AXP_LDO3_VOLT_MASK) * 25));
+		}
+	}
+
+	if (axp20x_read(sc, AXP_BKUP_CTRL, &value, 1, I2C_F_POLL) == 0) {
+		if (value & AXP_BKUP_CTRL_ENABLE) {
+			aprint_verbose_dev(sc->sc_dev,
+			    "RTC supercap charger enabled: %dmV at %duA\n",
+			    bkup_volt[(value & AXP_BKUP_CTRL_VOLT_MASK) >>
+			    AXP_BKUP_CTRL_VOLT_SHIFT],
+			    bkup_curr[(value & AXP_BKUP_CTRL_CURR_MASK) >>
+			    AXP_BKUP_CTRL_CURR_SHIFT]
+			);
 		}
 	}
 }
