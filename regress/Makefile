@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.19 2010/07/18 12:44:38 jmmv Exp $
+#	$NetBSD: Makefile,v 1.20 2017/05/14 02:30:27 kamil Exp $
 
-# missing: libexec sbin usr.sbin share
-SUBDIR+= lib libexec sys usr.bin
+SUBDIR+= lib libexec sys
 
 .include <bsd.subdir.mk>
