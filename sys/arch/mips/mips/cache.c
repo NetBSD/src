@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.55 2017/04/22 20:32:35 skrll Exp $	*/
+/*	$NetBSD: cache.c,v 1.56 2017/05/14 09:32:01 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.55 2017/04/22 20:32:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.56 2017/05/14 09:32:01 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -675,7 +675,7 @@ primary_cache_is_2way:
 #if (MIPS2 + MIPS3) > 0
 		if (mci->mci_cache_virtual_alias)
 			mci->mci_cache_alias_mask =
-			    mci->mci_picache_way_mask & -PAGE_SIZE;
+			    mci->mci_pcache_way_mask & -PAGE_SIZE;
 #endif
 	}
 
