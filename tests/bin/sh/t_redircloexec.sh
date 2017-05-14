@@ -1,4 +1,4 @@
-# $NetBSD: t_redircloexec.sh,v 1.3 2016/05/15 15:44:43 kre Exp $
+# $NetBSD: t_redircloexec.sh,v 1.4 2017/05/14 17:28:46 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,10 +37,6 @@ mkhelper() {
 
 	echo "$@" > ./"${name}1"
 	echo "echo ${name}2" ">&${fd}" > ./"${name}2"
-}
-
-runhelper() {
-	${TEST_SH} "./${1}1"
 }
 
 cleanhelper() {
@@ -168,6 +164,77 @@ subshell_redir_open_body() {
 	cleanhelper comp
 }
 
+atf_test_case posix_exec_redir
+posix_exec_redir_head() {
+	atf_set "descr" "Tests that redirections created by exec" \
+		" in posix mode  are not closed on exec"
+}
+posix_exec_redir_body() {
+
+	# This test mostly just expects the opposite results than
+	# exec_redir_closed ...
+
+	# First work out how to get shell into posix mode
+	POSIX=
+
+	# This should succeed only if "set -o posix" succeeds.
+	# If it fails, whether it fails and exits the shell, or
+	# just returns a "false" from set (exit != 0), with or
+	# without errs on stderr, should not matter
+
+	if ${TEST_SH} -c "set -o posix && exit 0 || exit 1" 2>/dev/null
+	then
+		# If we have this method, use it, as we can expect
+		# this really should mean the shell is in posix mode.
+
+		POSIX='set -o posix;'
+
+	else
+		# This one is just a guess, and there is no assurance
+		# that it will do anything at all.  What's more, since
+		# we do not know what the shell being tested does
+		# differently in posix and non-posix modes, if it
+		# even has that concept, there's nothing we can test
+		# to find out.
+
+		# A shell that always operates in posix mode (at least
+		# with regard to redirects on exec and close-on-exec
+		# should pass this test, in any case.
+
+		POSIXLY_CORRECT=true ; export POSIXLY_CORRECT
+
+	fi
+
+	mkhelper exec 6 \
+	    "${POSIX} exec 6> out; echo exec1 >&6; ${TEST_SH} exec2; exec 6>&-"
+
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} ./exec1
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -e ./exec1
+
+	mkhelper exec 9 \
+		"${POSIX} exec 9> out; echo exec1 >&9; ${TEST_SH} exec2"
+
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} ./exec1
+
+	mkhelper exec 8 \
+		"${POSIX}"				\
+		"exec 8> out; printf OK; echo exec1 >&8;" \
+		"printf OK; ${TEST_SH} exec2; printf GOOD"
+
+	atf_check -s exit:0 -o match:OKOKGOOD -e empty \
+		${TEST_SH} -e ./exec1
+
+	mkhelper exec 7 \
+		"${POSIX}"				\
+		"exec 7> out; printf OK; echo exec1 >&7;" \
+		"printf OK; ${TEST_SH} exec2 || printf ERR"
+
+	atf_check -s exit:0 -o match:OKOK -o not-match:ERR -e empty \
+		${TEST_SH} ./exec1
+
+	cleanhelper exec
+}
+
 atf_init_test_cases() {
 	atf_add_test_case exec_redir_closed
 	atf_add_test_case exec_redir_open
@@ -175,4 +242,5 @@ atf_init_test_cases() {
 	atf_add_test_case compound_redir_open
 	atf_add_test_case simple_redir_open
 	atf_add_test_case subshell_redir_open
+	atf_add_test_case posix_exec_redir
 }
