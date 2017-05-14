@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.138 2017/05/12 08:55:38 kre Exp $
+.\"	$NetBSD: sh.1,v 1.139 2017/05/14 10:53:26 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -170,9 +170,9 @@ restricting commands in the
 .Ev ENV
 file to interactive invocations.
 Place commands within the
-.Dq case
+.Dq Ic case
 and
-.Dq esac
+.Dq Ic esac
 below (these commands are described later):
 .Pp
 .Bl -item -compact -offset indent
@@ -449,10 +449,10 @@ shell and are recognized at the beginning of a line and
 after a control operator.
 The following are reserved words:
 .Bl -column while while while while -offset indent
-.It ! Ta { Ta } Ta case
-.It do Ta done Ta elif Ta else
-.It esac Ta fi Ta for Ta if
-.It in Ta then Ta until Ta while
+.It Ic \&! Ta Ic \&{ Ta Ic \&} Ta Ic case
+.It Ic do Ta Ic done Ta Ic elif Ta Ic else
+.It Ic esac Ta Ic fi Ta Ic for Ta Ic if
+.It Ic in Ta Ic then Ta Ic until Ta Ic while
 .El
 .Pp
 Their meanings are discussed later.
@@ -540,33 +540,43 @@ If present it must occur immediately before the redirection
 operator, with no intervening white space, and becomes a
 part of that operator.
 .Bl -tag -width aaabsfiles -offset indent
-.It [n] Ns \*[Gt] file
+.It Oo Ar n Oc Ns \*[Gt] Ar file
 Redirect standard output (or n) to
-.Cm file .
-.It [n] Ns \*[Gt]| file
+.Ar file .
+.It Oo Ar n Oc Ns \*[Gt]| file
 The same, but override the
 .Fl C
 option.
-.It [n] Ns \*[Gt]\*[Gt] file
+.It Oo Ar n Oc Ns \*[Gt]\*[Gt] Ar file
 Append standard output (or n) to
-.Cm file .
-.It [n] Ns \*[Lt] file
-Redirect standard input (or n) from
-.Cm file .
-.It [n1] Ns \*[Lt]\*[Am] Ns n2
-Duplicate standard input (or n1) from file descriptor n2.
-.Cm n2
+.Ar file .
+.It Oo Ar n Oc Ns \*[Lt] Ar file
+Redirect standard input (or
+.Ar n )
+from
+.Ar file .
+.It Oo Ar n1 Oc Ns \*[Lt]\*[Am] Ns Ar n2
+Duplicate standard input (or
+.Ar n1 )
+from file descriptor
+.Ar n2 .
+.Ar n2
 is expanded if not a digit string, the result must be a number.
-.It [n] Ns \*[Lt]\*[Am]-
-Close standard input (or n).
-.It [n1] Ns \*[Gt]\*[Am] Ns n2
-Duplicate standard output (or n1) to n2.
-.It [n] Ns \*[Gt]\*[Am]-
+.It Oo Ar n Oc Ns \*[Lt]\*[Am]-
+Close standard input (or
+.Ar n ) .
+.It Oo Ar n1 Oc Ns \*[Gt]\*[Am] Ns Ar n2
+Duplicate standard output (or
+.Ar n1 )
+to
+.Ar n2 .
+.It Oo Ar n Oc Ns \*[Gt]\*[Am]-
 Close standard output (or n).
-.It [n] Ns \*[Lt]\*[Gt] file
+.It Oo Ar n Oc Ns \*[Lt]\*[Gt] Ar file
 Open
-.Cm file
-for reading and writing on standard input (or n).
+.Ar file
+for reading and writing on standard input (or
+.Ar n ) .
 .El
 .Pp
 The following redirection is often called a
@@ -775,7 +785,7 @@ The exit status of an asynchronous AND-OR-list is zero.
 The actual status of the commands,
 after they have completed,
 can be obtained using the
-.Cm wait
+.Ic wait
 built-in command described later.
 .Pp
 Note that unlike some other shells, each process in the pipeline is a
@@ -834,7 +844,9 @@ writes
 and nothing else.
 This is not the way it works in C.
 .Ss Flow-Control Constructs -- if, while, for, case
-The syntax of the if command is
+The syntax of the
+.Ic if
+command is
 .Bd -literal -offset indent
 if list
 then list
@@ -845,19 +857,21 @@ fi
 .Ed
 The first list is executed, and if the exit status of that list is zero,
 the list following the
-.Cm then
+.Ic then
 is executed.
 Otherwise the list after an
-.Cm elif
+.Ic elif
 (if any) is executed and the process repeats.
 When no more
-.Cm elif
+.Ic elif
 reserved words, and accompanying lists, appear,
 the list after the
-.Cm else
+.Ic else
 reserved word, if any, is executed.
 .Pp
-The syntax of the while command is
+The syntax of the
+.Ic while
+command is
 .Bd -literal -offset indent
 while list
 do   list
@@ -866,11 +880,17 @@ done
 .Pp
 The two lists are executed repeatedly while the exit status of the
 first list is zero.
-The until command is similar, but has the word
-until in place of while, which causes it to
-repeat until the exit status of the first list is zero.
+The
+.Ic until
+command is similar, but has the word
+.Ic until
+in place of
+.Ic while ,
+which causes it to repeat until the exit status of the first list is zero.
 .Pp
-The syntax of the for command is
+The syntax of the
+.Ic for
+command is
 .Bd -literal -offset indent
 for variable [ in word ... ]
 do   list
@@ -880,28 +900,50 @@ done
 The words are expanded, or "$@" if no words are given,
 and then the list is executed repeatedly with the
 variable set to each word in turn.
-do and done may be replaced with
-.Dq {
+.Ic do
 and
-.Dq } ,
+.Ic done
+may be replaced with
+.Sq Ic \&{
+and
+.Sq Ic \&} ,
 but doing so is non-standard and not recommended.
 .Pp
-The syntax of the break and continue commands is
+The syntax of the
+.Ic break
+and
+.Ic continue
+commands is
 .Bd -literal -offset indent
 break [ num ]
 continue [ num ]
 .Ed
 .Pp
-Break terminates the num innermost for, while or until loops.
-Continue breaks execution of the num\-1 innermost for, while, or until
+.Ic break
+terminates the
+.Ar num
+innermost
+.Ic for , while ,
+or
+.Ic until
+loops.
+.Ic continue
+breaks execution of the
+.Ar num\-1
+innermost
+.Ic for , while ,
+or
+.Ic until
 loops, and then continues with the next iteration of the enclosing loop.
 These are implemented as built-in commands.
 The parameter
-.Cm num ,
+.Ar num ,
 if given, must be an unsigned positive integer (greater than zero).
 If not given, 1 is used.
 .Pp
-The syntax of the case command is
+The syntax of the
+.Ic case
+command is
 .Bd -literal -offset indent
 case word in
 [(] pattern ) list ;&
@@ -930,8 +972,10 @@ without evaluating its pattern, or attempting a match.
 When a list terminated with
 .Dq \&;;
 has been executed, or when
-.Dv esac
-is reached execution of the case statement is complete.
+.Ic esac
+is reached execution of the
+.Ic case
+statement is complete.
 The exit status is that of the last command executed
 from the last list evaluated, if any, or zero otherwise.
 .Ss Grouping Commands Together
@@ -1014,7 +1058,7 @@ that input only to the cat command, not to any other commands
 that might appear in the function.
 .Pp
 Variables may be declared to be local to a function by using a
-.Cm local
+.Ic local
 command.
 This should usually appear as the first statement of a function,
 its syntax is
@@ -2282,7 +2326,7 @@ command will catch or reset signals ignored on entry.
 Issuing
 .Ic trap
 with option
-.Ar -l
+.Fl l
 will print a list of valid signal names.
 .Ic trap
 without any arguments causes it to write a list of signals and their
@@ -2290,7 +2334,7 @@ associated non-default actions to the standard output in a format
 that is suitable as an input to the shell that achieves the same
 trapping results.
 With the
-.Ar -p
+.Fl p
 flag, trap prints the same information for the signals specified,
 or if none are given, for all signals, including those where the
 action is the default.
@@ -2324,7 +2368,6 @@ command, or function, upon receiving signal INT.
 .Dl trap 1 2
 .Pp
 Reset the actions for signals 1 (HUP) and 2 (INT) to their defaults.
-.Pp
 .Bd -literal -offset indent
 traps=$(trap -p)
    # more commands ...
@@ -2339,7 +2382,7 @@ The
 .Fl p
 option is required in the first command here,
 or any signals that were previously
-untrapped (in their default states) 
+untrapped (in their default states)
 and which were altered during the intermediate code,
 would not be reset by the final
 .Dq eval .
@@ -2582,8 +2625,9 @@ shell, even if made readonly.
 The name of a mail file, that will be checked for the arrival of new mail.
 Overridden by
 .Ev MAILPATH .
-The check occurs just before PS1 is written,
-immediately after reporting jobs which have changed status,
+The check occurs just before
+.Ev PS1
+is written, immediately after reporting jobs which have changed status,
 in interactive shells only.
 New mail is considered to have arrived if the monitored file
 has increased in size since the last check.
@@ -2688,7 +2732,11 @@ That was, however, unmaintainable so we wrote this one.
 Setuid shell scripts should be avoided at all costs, as they are a
 significant security risk.
 .Pp
-PS1, PS2, and PS4 should be subject to parameter expansion before
+.Ev PS1 ,
+.Ev PS2 ,
+and
+.Ev PS4
+should be subject to parameter expansion before
 being displayed.
 .Pp
 The characters generated by filename completion should probably be quoted
@@ -2696,8 +2744,7 @@ to ensure that the filename is still valid after the input line has been
 processed.
 .Pp
 The
-.\" markup?
-trap
+.Ic trap
 command cannot usefully be used, yet, within a command substitution,
 to obtain the current trap values,
 as all command substitutions are currently executed within a
