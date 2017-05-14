@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.140 2017/05/14 14:14:39 kre Exp $
+.\"	$NetBSD: sh.1,v 1.141 2017/05/14 17:27:05 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -382,7 +382,11 @@ Currently this option controls whether (!posix) or not (posix)
 the file given by the
 .Ev ENV
 variable is read at startup by a non-interactive shell.
-It also controls whether the shell treats
+It also controls whether file descriptors greater than 2
+opened using the
+.Ic exec
+built-in command are passed on to utilities executed,
+and whether the shell treats
 an empty compound statement as a syntax error (required
 by posix) or permits it.
 Empty compound statements
@@ -1769,7 +1773,10 @@ Any redirections on the
 command are marked as permanent, so that they are not undone when the
 .Ic exec
 command finishes.
-File descriptors created via such redirections are marked close-on-exec
+When the
+.Ic posix
+option is not set,
+file descriptors created via such redirections are marked close-on-exec
 (see
 .Xr open 2
 .Dv O_CLOEXEC
@@ -1783,7 +1790,12 @@ Traditionally Bourne-like shells
 (except
 .Xr ksh 1 ) ,
 made those file descriptors available to exec'ed processes.
-To turn off the close-on-exec mark,
+This behavior is required by the
+.Tn POSIX
+standard, so when the
+.Ic posix
+option is set, this shell also acts that way.
+To be assured the close-on-exec setting is off,
 redirect the descriptor to (or from) itself,
 either when invoking a command for which the descriptor is wanted open,
 or by using
@@ -1795,7 +1807,8 @@ to leave the descriptor open in the shell
 and pass it to all commands invoked subsequently.
 Alternatively, see the
 .Ic fdflags
-command below.
+command below, which can set, or clear, this, and other,
+file descriptor flags.
 .It exit Op Ar exitstatus
 Terminate the shell process.
 If
