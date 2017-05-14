@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.139 2017/05/14 10:53:26 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.140 2017/05/14 14:14:39 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -294,6 +294,19 @@ the file system is searched for commands each time the function is invoked.
 Force the shell to behave interactively.
 .It Fl I Em ignoreeof
 Ignore EOFs from input when interactive.
+.\" .It Fl L Em lineno_fn_relative
+.\" When set, before a function is defined,
+.\" causes the variable
+.\" .Ev LINENO
+.\" when used within the function,
+.\" to refer to the line number defined such that
+.\" first line of the function is line 1.
+.\" When reset,
+.\" .Ev LINENO
+.\" in a function refers to the line number within the file
+.\" in which the definition of the function occurs
+.\" (which can be the number of lines of shell input from standard input
+.\" when a function is defined interactively from the command prompt.)
 .It Fl m Em monitor
 Turn on job control (set automatically when interactive).
 .It Fl n Em noexec
@@ -349,19 +362,6 @@ Make an interactive shell always print the new directory name when
 changed by the
 .Ic cd
 command.
-.\" .It "\ \ " Em lineno_fn_relative
-.\" When set, before a function is defined,
-.\" causes the variable
-.\" .Cm LINENO
-.\" when used within the function,
-.\" to refer to the line number defined such that
-.\" first line of the function is line 1.
-.\" When reset,
-.\" .Cm LINENO
-.\" in a function refers to the line number within the file
-.\" in which the definition of the function occurs
-.\" (which can be the number of lines of shell input from standard input
-.\" when a function is defined interactively from the command prompt.)
 .It "\ \ " Em nolog
 Prevent the entry of function definitions into the command history (see
 .Ic fc
@@ -410,7 +410,7 @@ operators (their meaning is discussed later).
 The following is a list of operators:
 .Bl -ohang -offset indent
 .It "Control operators:"
-.Dl \*[Am]  \*[Am]\*[Am]  \&(  \&)  \&;  ;; | || \*[Lt]newline\*[Gt]
+.Dl \*[Am]  \*[Am]\*[Am]  \&(  \&)  \&;  ;; ;\*[Am] | || \*[Lt]newline\*[Gt]
 .It "Redirection operators:"
 .Dl \*[Lt]  \*[Gt]  \*[Gt]|  \*[Lt]\*[Lt]  \*[Gt]\*[Gt]  \*[Lt]\*[Am]  \*[Gt]\*[Am]  \*[Lt]\*[Lt]-  \*[Lt]\*[Gt]
 .El
@@ -820,7 +820,7 @@ for the command to terminate before proceeding to the next one.
 A newline is equivalent to a
 .Sq \&;
 when no other operator is present, and the command being input
-could syntatically correctly be terminated at the point where
+could syntactically correctly be terminated at the point where
 the newline is encountered, otherwise it is just whitespace.
 .Ss Short-Circuit List Operators
 .Dq \*[Am]\*[Am]
@@ -2683,7 +2683,15 @@ modified, or exported from the shell.
 If set, by the shell, it indicates that the shell is the
 .Ic sh
 defined by this manual page, and gives its version information.
-It behaves like any other variable that has the read-only
+It can also give information in additional space separated words,
+after the version string.
+If the shell was built as part of a reproducible build,
+the relevant date that was used for that build will be included.
+Finally, any non-standard compilation options,
+which may affect features available,
+that were used when building the shell will be listed.
+.Ev NETBSD_SHELL
+behaves like any other variable that has the read-only
 and un-exportable attributes set.
 .El
 .Sh FILES
