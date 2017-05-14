@@ -1,4 +1,4 @@
-#	$NetBSD: t_cxxruntime.sh,v 1.1 2017/05/14 01:03:21 kamil Exp $
+#	$NetBSD: t_cxxruntime.sh,v 1.2 2017/05/14 01:13:44 kamil Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -110,9 +110,9 @@ cxxruntime32_body() {
 	fi
 
 	cat > test.cpp << EOF
-#include <stdio.h>
-#include <stdlib.h>
-int main(void) {printf("hello world\n");exit(0);}
+#include <cstdlib>
+#include <iostream>
+int main(void) {std::cout << "hello world" << std::endl;exit(0);}
 EOF
 	atf_check -s exit:0 -o ignore -e ignore c++ -o hello32 -m32 test.cpp
 	atf_check -s exit:0 -o ignore -e ignore c++ -o hello64 test.cpp
@@ -129,8 +129,8 @@ EOF
 
 	# do another test with static 32bit binaries
 	cat > test.cpp << EOF
-#include <iostream>
 #include <cstdlib>
+#include <iostream>
 int main(void) {std::cout << "hello static world" << std::endl;exit(0);}
 EOF
 	atf_check -s exit:0 -o ignore -e ignore c++ -o hello -m32 \
