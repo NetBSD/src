@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.12 2017/05/14 11:28:49 kre Exp $
+# $NetBSD: t_expand.sh,v 1.13 2017/05/15 19:53:40 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -259,6 +259,7 @@ check()
 
 		# don't actually fail just because of wrong exit code
 		# unless we either expected, or received "good"
+		# or something else is detected as incorrect as well.
 		case "$3/${STATUS}" in
 		(*/0|0/*) fail=true;;
 		esac
@@ -307,7 +308,10 @@ check()
 		TEST_FAIL_COUNT=$(( $TEST_FAIL_COUNT + 1 ))
 		return 0
 	}
-	$fail && atf_fail "Test[$TEST_NUM] of '$1' failed${nl}${MSG}"
+	$fail && atf_fail "Test[$TEST_NUM] failed: $(
+	    # ATF does not like newlines in messages, so change them...
+		    printf '%s' "${MSG}" | tr '\n' ';'
+	    )"
 	return 0
 }
 
@@ -441,6 +445,9 @@ dollar_hash_body() {
 #	need a test of its own, and used in that way, it really doesn't.
 #	But when we add braces ${#} we need to deal with the three
 #	(almost 4) different meanings of a # inside a ${} expansion...
+#
+#	Note that some of these are just how we treat expansions that
+#	are unspecified by posix (as noted below.)
 #	
 #		1.   ${#} is just $# (number of params)
 #		1.a	${\#} is nothing at all (error: invalid expansion)
@@ -450,18 +457,24 @@ dollar_hash_body() {
 #		3    ${VAR#pat} is the value of VAR with leading pat removed
 #		3.a	Including ${VAR#} which just removes leading nothing
 #			This is relevant in case of ${VAR#${X}} with X=''
+#				nb: not required by posix, see XCU 2.6.2
 #		3.b	${##} is not a case of 3.a but rather 2.a 
 #		3.c	Yet ${##pat} is a case of 3.a
 #			Including ${##${X}} where X='' or X='#'
+#				nb: not required by posix, see XCU 2.6.2
 #		3.d	And ${#\#} is invalid (error)
 #		3.e	But ${##\#} removes a leading # from the value of $#
 #			(so is just $# as there is no leading # there)
+#				nb: not required by posix, see XCU 2.6.2
 #		4    ${VAR##pat} is the value of VAR with longest pat removed
 #		4.a	Including ${VAR##} which removes the longest nothing
 #		4.b	Which in this case includes ${###} (so is == $#)
+#				nb: not required by posix, see XCU 2.6.2
 #		4.c	But not ${##\#} which is $# with a leading '#' removed
 #			(and so is also == $#), i.e.: like ${###} but different.
+#				nb: not required by posix, see XCU 2.6.2
 #		4.d	As is ${###\#} or just ${####} - remove  # (so just $#)
+#				nb: not required by posix, see XCU 2.6.2
 #
 
 	reset dollar_hash
@@ -584,7 +597,53 @@ dollar_hash_body() {
 	check 'set -- a b c; echo ${#:=bogus}'		'3'		0  #85
 	check 'set -- a b c; echo ${#=bogus}'		'3'		0  #86
 
-	results
+	for n in 0 1 10 25 100				#87 #88 #89 #90 #91
+	do
+		check "(exit $n)"'; echo ${#?}'		"${#n}"		0
+	done
+
+	results		# results so far anyway...
+
+# now we have some harder to verify cases, as they (must) check unknown values
+# and hence the resuls cannot just be built into the script, but we have
+# to use some tricks to validate them, so for these, just do regular testing
+# and don't attempt to use the check helper function, nor to include
+# these tests in the result summary.   If anything has already failed, we
+# do not get this far...   From here on, first failure ends this test.
+
+	for opts in '' '-a' '-au' '-auf' '-aufe' # options safe enough to set
+	do
+		# Note the shell might have other (or these) opts set already
+
+		RES=$(${TEST_SH} -c "test -n '${opts}' && set ${opts};
+			printf '%s' \"\$-\";printf ' %s\\n' \"\${#-}\"") ||
+			atf_fail '${#-} test exited with status '"$?"
+		LEN="${RES##* }"
+		DMINUS="${RES% ${LEN}}"
+		if [ "${#DMINUS}" != "${LEN}" ]
+		then
+			atf_fail \
+		   '${#-} test'" produced ${LEN} for opts ${DMINUS} (${RES})"
+		fi
+	done
+
+	for seq in a b c d e f g h i j
+	do
+		# now we are tryin to generate different pids for $$ and $!
+		# so we just run the test a number of times, and hope...
+		# On NetBSD pid randomisation will usually help the tests
+
+		eval "$(${TEST_SH} -c \
+		    '(exit 0)& BG=$! LBG=${#!};
+	    printf "SH=%s BG=%s LSH=%s LBG=%s" "$$" "$BG" "${#$}" "$LBG";
+		      wait')"
+
+		if [ "${#SH}" != "${LSH}" ] || [ "${#BG}" != "${LBG}" ]
+		then
+			atf_fail \
+	'${#!] of '"${BG} was ${LBG}, expected ${#BG}"'; ${#$} of '"${SH} was ${LSH}, expected ${#SH}"
+		fi
+	done
 }
 
 atf_test_case dollar_star
