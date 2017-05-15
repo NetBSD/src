@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.347 2017/05/15 01:03:47 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.348 2017/05/15 09:43:56 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.347 2017/05/15 01:03:47 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.348 2017/05/15 09:43:56 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -5741,8 +5741,9 @@ audio_set_port(struct audio_softc *sc, mixer_ctrl_t *mc)
 	KASSERT(mutex_owned(sc->sc_lock));
 
 	int d = mc->dev - sc->sc_static_nmixer_states;
+	int u = sc->sc_nmixer_states - sc->sc_static_nmixer_states;
 
-	if (d == -1)
+	if (d == -1 || d >= u)
 		return 0;
 	if (d < 0)
 		return sc->hw_if->set_port(sc->hw_hdl, mc);
@@ -5761,8 +5762,9 @@ audio_get_port(struct audio_softc *sc, mixer_ctrl_t *mc)
 	KASSERT(mutex_owned(sc->sc_lock));
 
 	int d = mc->dev - sc->sc_static_nmixer_states;
+	int u = sc->sc_nmixer_states - sc->sc_static_nmixer_states;
 
-	if (d == -1)
+	if (d == -1 || d >= u)
 		return 0;
 	if (d < 0)
 		return sc->hw_if->get_port(sc->hw_hdl, mc);
