@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.741 2017/05/14 02:02:25 kamil Exp $
+# $NetBSD: mi,v 1.742 2017/05/15 09:56:12 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3300,12 +3300,12 @@
 ./usr/tests/net/ipsec/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/ipsec/t_ipsec_ah_keys		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_esp_keys		tests-net-tests		atf,rump
+./usr/tests/net/ipsec/t_ipsec_gif		tests-net-tests		atf,rump
+./usr/tests/net/ipsec/t_ipsec_l2tp		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_sysctl		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_transport		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_tunnel		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_tunnel_odd	tests-net-tests		atf,rump
-./usr/tests/net/ipsec/t_ipsec_gif		tests-net-tests		atf,rump
-./usr/tests/net/ipsec/t_ipsec_l2tp		tests-net-tests		atf,rump
 ./usr/tests/net/mcast				tests-net-tests		compattestfile,atf
 ./usr/tests/net/mcast/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/mcast/Kyuafile			tests-net-tests		atf,rump,kyua
