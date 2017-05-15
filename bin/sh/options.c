@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.46 2016/03/31 16:16:35 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.47 2017/05/15 20:00:36 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.46 2016/03/31 16:16:35 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.47 2017/05/15 20:00:36 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,6 +194,16 @@ options(int cmdline)
 				minus_o(*argptr, val);
 				if (*argptr)
 					argptr++;
+#ifdef DEBUG
+			} else if (c == 'D') {
+				if (*p) {
+					set_debug(p, val);
+					break;
+				} else if (*argptr)
+					set_debug(*argptr++, val);
+				else
+					set_debug("*$", val);
+#endif
 			} else {
 				setoption(c, val);
 			}

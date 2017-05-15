@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.39 2017/05/13 03:26:03 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.40 2017/05/15 20:00:36 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.39 2017/05/13 03:26:03 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.40 2017/05/15 20:00:36 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: show.c,v 1.39 2017/05/13 03:26:03 kre Exp $");
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <limits.h>
 
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -61,6 +62,9 @@ __RCSID("$NetBSD: show.c,v 1.39 2017/05/13 03:26:03 kre Exp $");
 #include "options.h"
 #include "redir.h"
 #include "error.h"
+#include "syntax.h"
+#include "output.h"
+#include "builtins.h"
 
 #if defined(DEBUG) && !defined(DBG_PID)
 /*
@@ -106,7 +110,7 @@ TFILE tracedata, *tracetfile;
 FILE *tracefile;		/* just for histedit */
 
 uint64_t	DFlags;		/* currently enabled debug flags */
-int ShNest;		/* depth of shell (internal) nesting */
+int ShNest;			/* depth of shell (internal) nesting */
 
 static void shtree(union node *, int, int, int, TFILE *);
 static void shcmd(union node *, TFILE *);
@@ -1013,6 +1017,123 @@ trace_fd_swap(int from, int to)
 	tracefile = fdopen(to, "a");
 	if (tracefile)
 		setlinebuf(tracefile);
+}
+
+
+static struct debug_flag {
+	char		label;
+	uint64_t	flag;
+} debug_flags[] = {
+	{ 'a',	DBG_ARITH	},	/* arithmetic ( $(( )) ) */
+	{ 'c',	DBG_CMDS	},	/* command searching, ... */
+	{ 'e',	DBG_EVAL	},	/* evaluation of the parse tree */
+	{ 'f',	DBG_REDIR	},	/* file descriptors & redirections */
+	{ 'h',	DBG_HISTORY	},	/* history & cmd line editing */
+	{ 'i',	DBG_INPUT	},	/* shell input routines */
+	{ 'j',	DBG_JOBS	},	/* job control, structures */
+	{ 'm',	DBG_MEM		},	/* memory management */
+	{ 'o',	DBG_OUTPUT	},	/* output routines */
+	{ 'p',	DBG_PROCS	},	/* process management, fork, ... */
+	{ 'r',	DBG_PARSE	},	/* parser, lexer, ... tree building */
+	{ 's',	DBG_SIG		},	/* signals and everything related */
+	{ 't',	DBG_TRAP	},	/* traps & signals */
+	{ 'v',	DBG_VARS	},	/* variables and parameters */
+	{ 'w',	DBG_WAIT	},	/* waits for processes to finish */
+	{ 'x',	DBG_EXPAND	},	/* word expansion ${} $() $(( )) */
+	{ 'z',	DBG_ERRS	},	/* error control, jumps, cleanup */
+ 
+	{ '0',	DBG_U0		},	/* ad-hoc temp debug flag #0 */
+	{ '1',	DBG_U1		},	/* ad-hoc temp debug flag #1 */
+	{ '2',	DBG_U2		},	/* ad-hoc temp debug flag #2 */
+ 
+	{ '$',	DBG_PID		},	/* prefix trace lines with sh pid */
+	{ '^',	DBG_NEST	},	/* show shell nesting level */
+
+			/* alpha options only */
+	{ '_',	DBG_PARSE | DBG_EVAL | DBG_EXPAND | DBG_JOBS |
+		    DBG_PROCS | DBG_REDIR | DBG_CMDS | DBG_ERRS |
+		    DBG_WAIT | DBG_TRAP | DBG_VARS | DBG_MEM |
+		    DBG_INPUT | DBG_OUTPUT | DBG_ARITH | DBG_HISTORY },
+
+   /*   { '*',	DBG_ALLVERBOSE	}, 	   is handled in the code */
+
+	{ '#',	DBG_U0 | DBG_U1 | DBG_U2 },
+
+	{ 0,	0		}
+};
+
+void
+set_debug(const char * flags, int on)
+{
+	char f;
+	struct debug_flag *df;
+	int verbose;
+
+	while ((f = *flags++) != '\0') {
+		verbose = 0;
+		if (is_upper(f)) {
+			verbose = 1;
+			f += 'a' - 'A';
+		}
+		if (f == '*')
+			f = '_', verbose = 1;
+		if (f == '+') {
+			if (*flags == '+')
+				flags++, verbose=1;
+		}
+
+		/*
+		 * Note: turning on any debug option also enables DBG_ALWAYS
+		 * turning on any verbose option also enables DBG_VERBOSE
+		 * Once enabled, those flags cannot be disabled.
+		 * (tracing can still be turned off with "set +o debug")
+		 */
+		for (df = debug_flags; df->label != '\0'; df++) {
+			if (f == '+' || df->label == f) {
+				if (on) {
+					DFlags |= DBG_ALWAYS | df->flag;
+					if (verbose)
+					    DFlags |= DBG_VERBOSE |
+						(df->flag << DBG_VBOSE_SHIFT);
+				} else {
+					DFlags &= ~(df->flag<<DBG_VBOSE_SHIFT);
+					if (!verbose)
+						DFlags &= ~df->flag;
+				}
+			}
+		}
+	}
+}
+
+
+int
+debugcmd(int argc, char **argv)
+{
+	if (argc == 1) {
+		struct debug_flag *df;
+
+		for (df = debug_flags; df->label != '\0'; df++) {
+			if (df->flag & (df->flag - 1))
+				continue;
+			if (is_alpha(df->label) &&
+			    (df->flag << DBG_VBOSE_SHIFT) & DFlags)
+				out1c(df->label - ('a' - 'A'));
+			else if (df->flag & DFlags)
+				out1c(df->label);
+		}
+		out1c('\n');
+		return 0;
+	}
+
+	while (*++argv) {
+		if (**argv == '-')
+			set_debug(*argv + 1, 1);
+		else if (**argv == '+')
+			set_debug(*argv + 1, 0);
+		else
+			return 1;
+	}
+	return 0;
 }
 
 #endif /* DEBUG */
