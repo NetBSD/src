@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.88 2017/05/11 05:55:14 ryo Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.89 2017/05/15 09:55:29 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.88 2017/05/11 05:55:14 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.89 2017/05/15 09:55:29 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -399,7 +399,7 @@ key_allocsp_default(int af, const char *where, int tag)
 	return sp;
 }
 #define	KEY_ALLOCSP_DEFAULT(af) \
-	key_allocsp_default((af),__FILE__, __LINE__)
+	key_allocsp_default((af), __func__, __LINE__)
 
 /*
  * For OUTBOUND packet having a socket. Searching SPD for packet,
