@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.106 2017/05/14 11:25:09 kre Exp $
+#	$NetBSD: Makefile,v 1.107 2017/05/15 18:34:56 kre Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -14,8 +14,8 @@ SRCS=	${SHSRCS} ${GENSRCS}
 
 DPSRCS+=${GENHDRS}
 
-LDADD+=	-ll -ledit -lterminfo
-DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMINFO}
+LDADD+=	-ledit -lterminfo
+DPADD+=	${LIBEDIT} ${LIBTERMINFO}
 
 # Environment for scripts executed during build.
 SCRIPT_ENV= \
