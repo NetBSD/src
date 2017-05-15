@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.46 2016/05/03 17:21:02 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.47 2017/05/15 19:55:20 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.46 2016/05/03 17:21:02 christos Exp $");
+__RCSID("$NetBSD: exec.c,v 1.47 2017/05/15 19:55:20 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -340,32 +340,82 @@ hashcmd(int argc, char **argv)
 	struct tblentry **pp;
 	struct tblentry *cmdp;
 	int c;
-	int verbose;
 	struct cmdentry entry;
 	char *name;
+	int allopt=0, bopt=0, fopt=0, ropt=0, sopt=0, uopt=0, verbose=0;
 
-	verbose = 0;
-	while ((c = nextopt("rv")) != '\0') {
-		if (c == 'r') {
-			clearcmdentry(0);
-		} else if (c == 'v') {
-			verbose++;
+	while ((c = nextopt("bcfrsuv")) != '\0')
+		switch (c) {
+		case 'b':	bopt = 1;	break;
+		case 'c':	uopt = 1;	break;	/* c == u */
+		case 'f':	fopt = 1;	break;
+		case 'r':	ropt = 1;	break;
+		case 's':	sopt = 1;	break;
+		case 'u':	uopt = 1;	break;
+		case 'v':	verbose = 1;	break;
 		}
-	}
+
+	if (ropt)
+		clearcmdentry(0);
+
+	if (bopt == 0 && fopt == 0 && sopt == 0 && uopt == 0)
+		allopt = bopt = fopt = sopt = uopt = 1;
+
 	if (*argptr == NULL) {
 		for (pp = cmdtable ; pp < &cmdtable[CMDTABLESIZE] ; pp++) {
 			for (cmdp = *pp ; cmdp ; cmdp = cmdp->next) {
-				if (verbose || cmdp->cmdtype == CMDNORMAL)
+				switch (cmdp->cmdtype) {
+				case CMDNORMAL:
+					if (!uopt)
+						continue;
+					break;
+				case CMDBUILTIN:
+					if (!bopt)
+						continue;
+					break;
+				case CMDSPLBLTIN:
+					if (!sopt)
+						continue;
+					break;
+				case CMDFUNCTION:
+					if (!fopt)
+						continue;
+					break;
+				default:	/* never happens */
+					continue;
+				}
+				if (!allopt || verbose ||
+				    cmdp->cmdtype == CMDNORMAL)
 					printentry(cmdp, verbose);
 			}
 		}
 		return 0;
 	}
-	while ((name = *argptr) != NULL) {
-		if ((cmdp = cmdlookup(name, 0)) != NULL
-		 && (cmdp->cmdtype == CMDNORMAL
-		     || (cmdp->cmdtype == CMDBUILTIN && builtinloc >= 0)))
-			delete_cmd_entry();
+
+	while ((name = *argptr++) != NULL) {
+		if ((cmdp = cmdlookup(name, 0)) != NULL) {
+			switch (cmdp->cmdtype) {
+			case CMDNORMAL:
+				if (!uopt)
+					continue;
+				delete_cmd_entry();
+				break;
+			case CMDBUILTIN:
+				if (!bopt)
+					continue;
+				if (builtinloc >= 0)
+					delete_cmd_entry();
+				break;
+			case CMDSPLBLTIN:
+				if (!sopt)
+					continue;
+				break;
+			case CMDFUNCTION:
+				if (!fopt)
+					continue;
+				break;
+			}
+		}
 		find_command(name, &entry, DO_ERR, pathval());
 		if (verbose) {
 			if (entry.cmdtype != CMDUNKNOWN) {	/* if no error msg */
@@ -375,11 +425,9 @@ hashcmd(int argc, char **argv)
 			}
 			flushall();
 		}
-		argptr++;
 	}
 	return 0;
 }
-
 
 STATIC void
 printentry(struct tblentry *cmdp, int verbose)
@@ -396,16 +444,24 @@ printentry(struct tblentry *cmdp, int verbose)
 			name = padvance(&path, cmdp->cmdname);
 			stunalloc(name);
 		} while (--idx >= 0);
+		if (verbose)
+			out1fmt("Command from PATH[%d]: ",
+			    cmdp->param.index);
 		out1str(name);
 		break;
 	case CMDSPLBLTIN:
-		out1fmt("special builtin %s", cmdp->cmdname);
-		break;
+		if (verbose)
+			out1str("special ");
+		/* FALLTHROUGH */
 	case CMDBUILTIN:
-		out1fmt("builtin %s", cmdp->cmdname);
+		if (verbose)
+			out1str("builtin ");
+		out1fmt("%s", cmdp->cmdname);
 		break;
 	case CMDFUNCTION:
-		out1fmt("function %s", cmdp->cmdname);
+		if (verbose)
+			out1str("function ");
+		out1fmt("%s", cmdp->cmdname);
 		if (verbose) {
 			struct procstat ps;
 			INTOFF;
@@ -417,7 +473,8 @@ printentry(struct tblentry *cmdp, int verbose)
 		}
 		break;
 	default:
-		error("internal error: %s cmdtype %d", cmdp->cmdname, cmdp->cmdtype);
+		error("internal error: %s cmdtype %d",
+		    cmdp->cmdname, cmdp->cmdtype);
 	}
 	if (cmdp->rehash)
 		out1c('*');
