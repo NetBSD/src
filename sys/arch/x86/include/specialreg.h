@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.97 2017/04/22 04:24:25 nonaka Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.98 2017/05/15 04:02:52 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -144,7 +144,7 @@
 #define CPUID_PAT	0x00010000	/* Page Attribute Table */
 #define CPUID_PSE36	0x00020000	/* 36-bit PSE */
 #define CPUID_PN	0x00040000	/* processor serial number */
-#define CPUID_CFLUSH	0x00080000	/* CFLUSH insn supported */
+#define CPUID_CFLUSH	0x00080000	/* CLFLUSH insn supported */
 #define CPUID_B20	0x00100000	/* reserved */
 #define CPUID_DS	0x00200000	/* Debug Store */
 #define CPUID_ACPI	0x00400000	/* ACPI performance modulation regs */
@@ -163,7 +163,7 @@
 	"\5" "TSC"	"\6" "MSR"	"\7" "PAE"	"\10" "MCE" \
 	"\11" "CX8"	"\12" "APIC"	"\13" "B10"	"\14" "SEP" \
 	"\15" "MTRR"	"\16" "PGE"	"\17" "MCA"	"\20" "CMOV" \
-	"\21" "PAT"	"\22" "PSE36"	"\23" "PN"	"\24" "CFLUSH" \
+	"\21" "PAT"	"\22" "PSE36"	"\23" "PN"	"\24" "CLFLUSH" \
 	"\25" "B20"	"\26" "DS"	"\27" "ACPI"	"\30" "MMX" \
 	"\31" "FXSR"	"\32" "SSE"	"\33" "SSE2"	"\34" "SS" \
 	"\35" "HTT"	"\36" "TM"	"\37" "IA64"	"\40" "SBF"
