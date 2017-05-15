@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.123 2017/05/15 09:51:00 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.124 2017/05/15 09:52:05 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.123 2017/05/15 09:51:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.124 2017/05/15 09:52:05 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -3021,7 +3021,7 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 			secasvar, chain);
 done:
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
-	    "DP from %s:%u return SP:%p\n", where, tag, newsav);
+	    "DP from %s:%u return SA:%p\n", where, tag, newsav);
 
 	return newsav;
 }
