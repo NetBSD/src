@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.18 2017/05/13 20:35:20 jdolecek Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.19 2017/05/15 21:30:37 jdolecek Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.18 2017/05/13 20:35:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.19 2017/05/15 21:30:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ static void	 vioscsi_scsipi_request(struct scsipi_channel *,
     scsipi_adapter_req_t, void *);
 static int	 vioscsi_vq_done(struct virtqueue *);
 static void	 vioscsi_req_done(struct vioscsi_softc *, struct virtio_softc *,
-    struct vioscsi_req *);
+    struct vioscsi_req *, struct virtqueue *, int);
 static struct vioscsi_req *vioscsi_req_get(struct vioscsi_softc *);
 static void	 vioscsi_bad_target(struct scsipi_xfer *);
 
@@ -450,7 +450,7 @@ stuffup:
 
 static void
 vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
-    struct vioscsi_req *vr)
+    struct vioscsi_req *vr, struct virtqueue *vq, int slot)
 {
 	struct scsipi_xfer *xs = vr->vr_xs;
 	size_t sense_len;
@@ -493,6 +493,8 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 	bus_dmamap_unload(virtio_dmat(vsc), vr->vr_data);
 	vr->vr_xs = NULL;
 
+	virtio_dequeue_commit(vsc, vq, slot);
+
 	mutex_exit(&sc->sc_mutex);
 	scsipi_done(xs);
 	mutex_enter(&sc->sc_mutex);
@@ -534,9 +536,7 @@ vioscsi_vq_done(struct virtqueue *vq)
 
 		DPRINTF(("%s: slot=%d\n", __func__, slot));
 
-		vioscsi_req_done(sc, vsc, &sc->sc_reqs[slot]);
-
-		virtio_dequeue_commit(vsc, vq, slot);
+		vioscsi_req_done(sc, vsc, &sc->sc_reqs[slot], vq, slot);
 
 		ret = 1;
 	}
