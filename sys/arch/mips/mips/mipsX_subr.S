@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.99 2017/05/07 05:50:39 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.100 2017/05/15 10:59:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2576,7 +2576,7 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 	_MFC0	t0, MIPS_COP_0_TLB_HI		# get VA and ASID
 	MFC0_HAZARD
 	and	t0, t0, MIPS3_PG_ASID		# focus on ASID
-	bge	t0, a1, 4f			# >= ASID max? skip
+	bgt	t0, a1, 4f			# > ASID max? skip
 	 nop
 
 	srl	a2, t0, 3 + LONG_SCALESHIFT	# drop low 5 or 6 bits
