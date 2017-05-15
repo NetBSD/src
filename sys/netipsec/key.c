@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.124 2017/05/15 09:52:05 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.125 2017/05/15 09:55:29 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.124 2017/05/15 09:52:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.125 2017/05/15 09:55:29 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -340,12 +340,12 @@ MALLOC_DEFINE(M_SECA, "key mgmt", "security associations, key management");
 do { \
 	((p) = malloc((unsigned long)(n), M_SECA, M_NOWAIT));             \
 	printf("%s %d: %p <- KMALLOC(%s, %d)\n",                             \
-	    __FILE__, __LINE__, (p), #t, n);                             	\
+	    __func__, __LINE__, (p), #t, n);                             	\
 } while (0)
 
 #define KFREE(p)                                                             \
 	do {                                                                 \
-		printf("%s %d: %p -> KFREE()\n", __FILE__, __LINE__, (p));   \
+		printf("%s %d: %p -> KFREE()\n", __func__, __LINE__, (p));   \
 		free((p), M_SECA);                                  \
 	} while (0)
 #endif
@@ -421,7 +421,7 @@ static struct secasvar *key_newsav (struct mbuf *,
 	const struct sadb_msghdr *, struct secashead *, int *,
 	const char*, int);
 #define	KEY_NEWSAV(m, sadb, sah, e)				\
-	key_newsav(m, sadb, sah, e, __FILE__, __LINE__)
+	key_newsav(m, sadb, sah, e, __func__, __LINE__)
 static void key_delsav (struct secasvar *);
 static struct secashead *key_getsah (const struct secasindex *);
 static struct secasvar *key_checkspidup (const struct secasindex *, u_int32_t);
