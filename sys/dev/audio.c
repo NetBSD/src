@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.348 2017/05/15 09:43:56 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.349 2017/05/15 12:07:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.348 2017/05/15 09:43:56 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.349 2017/05/15 12:07:32 martin Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -4697,8 +4697,10 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 	/* Play params can affect the record params, so recalculate blksize. */
 	if (nr > 0 || np > 0 || reset) {
 		vc->sc_blkset = false;
-		audio_calc_blksize(sc, AUMODE_RECORD, vc);
-		audio_calc_blksize(sc, AUMODE_PLAY, vc);
+		if (nr > 0)
+			audio_calc_blksize(sc, AUMODE_RECORD, vc);
+		if (np > 0)
+			audio_calc_blksize(sc, AUMODE_PLAY, vc);
 	}
 #ifdef AUDIO_DEBUG
 	if (audiodebug > 1 && nr > 0) {
@@ -4791,8 +4793,10 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 			cleared = true;
 		}
 		vc->sc_blkset = false;
-		audio_calc_blksize(sc, AUMODE_RECORD, vc);
-		audio_calc_blksize(sc, AUMODE_PLAY, vc);
+		if (nr > 0)
+			audio_calc_blksize(sc, AUMODE_RECORD, vc);
+		if (np > 0)
+			audio_calc_blksize(sc, AUMODE_PLAY, vc);
 		sc->sc_pr.blksize = vc->sc_mpr.blksize;
 		sc->sc_rr.blksize = vc->sc_mrr.blksize;
 	} else {
