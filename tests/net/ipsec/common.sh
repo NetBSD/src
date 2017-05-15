@@ -1,4 +1,4 @@
-#	$NetBSD: common.sh,v 1.2 2017/05/10 04:46:13 ozaki-r Exp $
+#	$NetBSD: common.sh,v 1.3 2017/05/15 09:56:47 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -47,7 +47,7 @@ check_sa_entries()
 
 	$DEBUG && $HIJACKING setkey -D
 
-	atf_check -s exit:0 -o match:"$local_addr $rmote_addr" \
+	atf_check -s exit:0 -o match:"$local_addr $remote_addr" \
 	    $HIJACKING setkey -D
 	atf_check -s exit:0 -o match:"$remote_addr $local_addr" \
 	    $HIJACKING setkey -D
