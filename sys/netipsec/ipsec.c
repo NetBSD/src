@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.90 2017/05/16 03:05:28 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.91 2017/05/16 07:25:57 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.90 2017/05/16 03:05:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.91 2017/05/16 07:25:57 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -1265,7 +1265,7 @@ static void
 ipsec_delpcbpolicy(struct inpcbpolicy *p)
 {
 
-	kmem_free(p, sizeof(*p));
+	kmem_intr_free(p, sizeof(*p));
 }
 
 /* initialize policy in PCB */
@@ -1274,11 +1274,14 @@ ipsec_init_policy(struct socket *so, struct inpcbpolicy **policy)
 {
 	struct inpcbpolicy *new;
 
-	KASSERT(!cpu_softintr_p());
 	KASSERT(so != NULL);
 	KASSERT(policy != NULL);
 
-	new = kmem_zalloc(sizeof(*new), KM_SLEEP);
+	new = kmem_intr_zalloc(sizeof(*new), KM_NOSLEEP);
+	if (new == NULL) {
+		ipseclog((LOG_DEBUG, "%s: No more memory.\n", __func__));
+		return ENOBUFS;
+	}
 
 	if (IPSEC_PRIVILEGED_SO(so))
 		new->priv = 1;
