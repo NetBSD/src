@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.129 2017/05/16 07:43:50 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.130 2017/05/16 10:11:24 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.129 2017/05/16 07:43:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.130 2017/05/16 10:11:24 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1544,8 +1544,7 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 		}
 
 		/* allocate request buffer */
-		*p_isr = kmem_alloc(sizeof(**p_isr), KM_SLEEP);
-		memset(*p_isr, 0, sizeof(**p_isr));
+		*p_isr = kmem_zalloc(sizeof(**p_isr), KM_SLEEP);
 
 		/* set values */
 		(*p_isr)->next = NULL;
@@ -2966,8 +2965,7 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 	KASSERT(mhp->msg != NULL);
 	KASSERT(sah != NULL);
 
-	newsav = kmem_alloc(sizeof(struct secasvar), KM_SLEEP);
-	memset(newsav, 0, sizeof(struct secasvar));
+	newsav = kmem_zalloc(sizeof(struct secasvar), KM_SLEEP);
 
 	switch (mhp->msg->sadb_msg_type) {
 	case SADB_GETSPI:
@@ -6433,12 +6431,11 @@ key_newacq(const struct secasindex *saidx)
 	struct secacq *newacq;
 
 	/* get new entry */
-	newacq = kmem_intr_alloc(sizeof(struct secacq), KM_NOSLEEP);
+	newacq = kmem_intr_zalloc(sizeof(struct secacq), KM_NOSLEEP);
 	if (newacq == NULL) {
 		ipseclog((LOG_DEBUG, "key_newacq: No more memory.\n"));
 		return NULL;
 	}
-	memset(newacq, 0, sizeof(*newacq));
 
 	/* copy secindex */
 	memcpy(&newacq->saidx, saidx, sizeof(newacq->saidx));
@@ -6482,12 +6479,11 @@ key_newspacq(const struct secpolicyindex *spidx)
 	struct secspacq *acq;
 
 	/* get new entry */
-	acq = kmem_intr_alloc(sizeof(struct secspacq), KM_NOSLEEP);
+	acq = kmem_intr_zalloc(sizeof(struct secspacq), KM_NOSLEEP);
 	if (acq == NULL) {
 		ipseclog((LOG_DEBUG, "key_newspacq: No more memory.\n"));
 		return NULL;
 	}
-	memset(acq, 0, sizeof(*acq));
 
 	/* copy secindex */
 	memcpy(&acq->spidx, spidx, sizeof(acq->spidx));
@@ -6672,8 +6668,7 @@ key_register(struct socket *so, struct mbuf *m,
 	}
 
 	/* create regnode */
-	newreg = kmem_alloc(sizeof(*newreg), KM_SLEEP);
-	memset(newreg, 0, sizeof(*newreg));
+	newreg = kmem_zalloc(sizeof(*newreg), KM_SLEEP);
 
 	newreg->so = so;
 	((struct keycb *)sotorawcb(so))->kp_registered++;
