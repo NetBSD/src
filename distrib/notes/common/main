@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.534 2017/03/10 04:13:43 salazar Exp $
+.\"	$NetBSD: main,v 1.535 2017/05/16 17:40:01 snj Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1028,9 +1028,9 @@ If you're one of them, and would like to be mentioned, tell us!)
 .br_ne 1i
 .It Em "The NetBSD core group:"
 .It Ta Ta
-.It Ta Alan Barrett Ta Mt apb@NetBSD.org
 .It Ta Alistair Crooks Ta Mt agc@NetBSD.org
 .It Ta Matthew Green Ta Mt mrg@NetBSD.org
+.It Ta Martin Husemann Ta Mt martin@NetBSD.org
 .It Ta Chuck Silvers Ta Mt chs@NetBSD.org
 .It Ta Matt Thomas Ta Mt matt@NetBSD.org
 .It Ta YAMAMOTO Takashi Ta Mt yamt@NetBSD.org
