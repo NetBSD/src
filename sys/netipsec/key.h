@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.15 2017/05/15 09:55:29 ozaki-r Exp $	*/
+/*	$NetBSD: key.h,v 1.16 2017/05/16 02:59:22 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -96,7 +96,6 @@ int key_ismyaddr (const struct sockaddr *);
 int key_cmpspidx_exactly (const struct secpolicyindex *, const struct secpolicyindex *);
 int key_cmpspidx_withmask (const struct secpolicyindex *, const struct secpolicyindex *);
 int key_spdacquire (const struct secpolicy *);
-void key_timehandler (void*);
 u_long key_random (void);
 void key_randomfill (void *, size_t);
 void key_freereg (struct socket *);

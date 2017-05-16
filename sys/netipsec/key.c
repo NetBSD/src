@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.125 2017/05/15 09:55:29 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.126 2017/05/16 02:59:22 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.125 2017/05/15 09:55:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.126 2017/05/16 02:59:22 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.125 2017/05/15 09:55:29 ozaki-r Exp $");
 #include <sys/cprng.h>
 #include <sys/psref.h>
 #include <sys/lwp.h>
+#include <sys/workqueue.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -533,7 +534,12 @@ static inline void key_sp_dead (struct secpolicy *);
 static void key_sp_unlink (struct secpolicy *sp);
 
 static struct mbuf *key_alloc_mbuf (int);
-struct callout key_timehandler_ch;
+
+static void key_timehandler(void *);
+static void key_timehandler_work(struct work *, void *);
+static struct callout	key_timehandler_ch;
+static struct workqueue	*key_timehandler_wq;
+static struct work	key_timehandler_wk;
 
 #ifdef IPSEC_REF_DEBUG
 #define REFLOG(label, p, where, tag)					\
@@ -4548,14 +4554,14 @@ key_bbcmp(const void *a1, const void *a2, u_int bits)
  * scanning SPD and SAD to check status for each entries,
  * and do to remove or to expire.
  */
-void
-key_timehandler(void* arg)
+static void
+key_timehandler_work(struct work *wk, void *arg)
 {
 	u_int dir;
 	int s;
 	time_t now = time_uptime;
 
-	s = splsoftnet();	/*called from softclock()*/
+	s = splsoftnet();
 	mutex_enter(softnet_lock);
 
 	/* SPD */
@@ -4762,6 +4768,13 @@ key_timehandler(void* arg)
 	mutex_exit(softnet_lock);
 	splx(s);
 	return;
+}
+
+static void
+key_timehandler(void *arg)
+{
+
+	workqueue_enqueue(key_timehandler_wq, &key_timehandler_wk, NULL);
 }
 
 u_long
@@ -7696,11 +7709,15 @@ key_validate_ext(const struct sadb_ext *ext, int len)
 static int
 key_do_init(void)
 {
-	int i;
+	int i, error;
 
 	pfkeystat_percpu = percpu_alloc(sizeof(uint64_t) * PFKEY_NSTATS);
 
 	callout_init(&key_timehandler_ch, 0);
+	error = workqueue_create(&key_timehandler_wq, "key_timehandler",
+	    key_timehandler_work, NULL, PRI_SOFTNET, IPL_SOFTNET, WQ_MPSAFE);
+	if (error != 0)
+		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 
 	for (i = 0; i < IPSEC_DIR_MAX; i++) {
 		LIST_INIT(&sptree[i]);
