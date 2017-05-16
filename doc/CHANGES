@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2281 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2282 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -483,6 +483,8 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	siginfo(2): Add new si_code values for SIGTRAP: TRAP_SCE and TRAP_SCX
 		[kamil 20170228]
 	zoneinfo: Import tzdata2017a.  [kre 20170301]
+	vioscsi(4): Allocate bus dma maps on attach, improves stability
+		and performance, adresses kern/52043 [jdolecek 20170307]
 	luna68k: Add a driver for LUNA's front panel LCD.  Ported from
 		OpenBSD/luna88k. [tsutsui 20170309]
 	sqlite3: Import 3.17.0. [christos 20170311]
@@ -492,6 +494,9 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		adding support for all required operators, as well
 		as being smaller and faster.  [kre 20170320]
 	zoneinfo: Import tzdata2017b.  [kre 20170321]
+	virtio(4): Refactor child driver attach code for better modularization
+		[jdolecek 20170325]
+	vioscsi(4): Use MSI/MSI-X, reduce disk probe time [jdolecek 20170325]
 	dhcpcd(8): Import dhcpcd-7.0.0-beta2 [roy 20170402]
 	ptrace(2): Add operations to single step specified threads:
 		PT_SETSTEP and PT_CLEARSTEP [kamil 20170408]
@@ -507,3 +512,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	acpi(4): Updated ACPICA to 20170303. [christos 20170430]
 	openpam(3): update to 20170430 (resedacea) [christos 20170506]
 	dhcpcd: Import dhcpcd 7.0.0-rc1 [roy 20170510]
+	vioscsi(4): Stability fixes [jdolecek 20170515]
