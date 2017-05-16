@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.24 2017/05/16 09:19:48 roy Exp $ */
+/* $NetBSD: term.c,v 1.25 2017/05/16 10:25:40 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.24 2017/05/16 09:19:48 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.25 2017/05/16 10:25:40 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -243,6 +243,32 @@ out:
 }
 
 static int
+_ti_checkname(const TERMINAL *term, const char *name)
+{
+	const char *a, *p;
+	size_t name_len;
+
+	/* Check terminal name matches. */
+	if (strcmp(name, term->name) == 0)
+		return 1;
+
+	/* Check terminal aliases match. */
+	name_len = strlen(name);
+	for (a = term->_alias; a != NULL && *a != '\0'; a = p) {
+		for (p = a; *p != '\0'; p++) {
+			if (*p == '|')
+				break;
+		}
+		if ((size_t)(p - a) == name_len &&
+		    memcmp(name, a, name_len) == 0)
+			return 1;
+	}
+
+	/* No match. */
+	return 0;
+}
+
+static int
 _ti_dbgetterm(TERMINAL *term, const char *path, const char *name, int flags)
 {
 	struct cdbr *db;
@@ -257,39 +283,32 @@ _ti_dbgetterm(TERMINAL *term, const char *path, const char *name, int flags)
 	if (db == NULL)
 		return -1;
 
+	r = 0;
 	klen = strlen(name) + 1;
 	if (cdbr_find(db, name, klen, &data, &len) == -1)
-		goto fail;
+		goto out;
 	data8 = data;
 	if (len == 0)
-		goto fail;
-	/* Check for alias first, fall through to processing normal entries. */
-	if (data8[0] == 2) {
-		if (klen + 7 > len || le16dec(data8 + 5) != klen)
-			goto fail;
-		if (memcmp(data8 + 7, name, klen))
-			goto fail;
-		if (cdbr_get(db, le32dec(data8 + 1), &data, &len))
-			goto fail;
-		data8 = data;
-		if (data8[0] != 1)
-			goto fail;
-	} else if (data8[0] != 1)
-		goto fail;
-	else if (klen + 3 >= len || le16dec(data8 + 1) != klen)
-		goto fail;
-	else if (memcmp(data8 + 3, name, klen))
-		goto fail;
+		goto out;
 
-	_ti_database = __ti_database;
+	/* If the entry is an alias, load the indexed terminfo description. */
+	if (data8[0] == 2) {
+		if (cdbr_get(db, le32dec(data8 + 1), &data, &len))
+			goto out;
+		data8 = data;
+	}
 
 	r = _ti_readterm(term, data, len, flags);
+	/* Ensure that this is the right terminfo description. */
+        if (r == 1)
+                r = _ti_checkname(term, name);
+	/* Remember the database we read. */
+        if (r == 1)
+                _ti_database = __ti_database;
+
+out:
 	cdbr_close(db);
 	return r;
-
-fail:
-	cdbr_close(db);
-	return 0;
 }
 
 static int
