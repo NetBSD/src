@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.22 2017/05/04 09:42:23 roy Exp $ */
+/* $NetBSD: term.c,v 1.23 2017/05/16 08:52:14 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.22 2017/05/04 09:42:23 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.23 2017/05/16 08:52:14 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: term.c,v 1.22 2017/05/04 09:42:23 roy Exp $");
 #define _PATH_TERMINFO		"/usr/share/misc/terminfo"
 
 static char database[PATH_MAX];
-static char pathbuf[PATH_MAX];
 const char *_ti_database;
 
 /* Include a generated list of pre-compiled terminfo descriptions. */
@@ -301,6 +300,7 @@ static int
 _ti_dbgettermp(TERMINAL *term, const char *path, const char *name, int flags)
 {
 	const char *p;
+	char pathbuf[PATH_MAX];
 	size_t l;
 	int r, e;
 
