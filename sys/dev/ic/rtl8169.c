@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.150 2017/04/19 00:20:02 jmcneill Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.151 2017/05/16 06:16:35 snj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.150 2017/04/19 00:20:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.151 2017/05/16 06:16:35 snj Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1916,7 +1916,7 @@ re_init(struct ifnet *ifp)
 	 */
 	if (sc->re_testmode)
 		CSR_WRITE_2(sc, RTK_IMR, 0);
-	else if ((sc->sc_quirk & RTKQ_IM_HW) == 0)
+	else if ((sc->sc_quirk & RTKQ_IM_HW) != 0)
 		CSR_WRITE_2(sc, RTK_IMR, RTK_INTRS_IM_HW);
 	else
 		CSR_WRITE_2(sc, RTK_IMR, RTK_INTRS_CPLUS);
