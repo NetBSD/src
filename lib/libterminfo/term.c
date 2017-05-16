@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.27 2017/05/16 11:16:37 roy Exp $ */
+/* $NetBSD: term.c,v 1.28 2017/05/16 12:03:41 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.27 2017/05/16 11:16:37 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.28 2017/05/16 12:03:41 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -349,10 +349,7 @@ static int
 _ti_findterm(TERMINAL *term, const char *name, int flags)
 {
 	int r;
-	char *c, *e, h[PATH_MAX];
-	TIC *tic;
-	uint8_t *f;
-	ssize_t len;
+	char *c, *e;
 
 	_DIAGASSERT(term != NULL);
 	_DIAGASSERT(name != NULL);
@@ -377,6 +374,8 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 	}
 
 	if (e != NULL) {
+		TIC *tic;
+
 		if (c == NULL)
 			e = strdup(e); /* So we don't destroy env */
 		if (e == NULL)
@@ -389,6 +388,9 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 		if (tic != NULL &&
 		    _ti_checkname(name, tic->name, tic->alias) == 1)
 		{
+			uint8_t *f;
+			ssize_t len;
+
 			len = _ti_flatten(&f, tic);
 			if (len != -1) {
 				r = _ti_readterm(term, (char *)f, (size_t)len,
@@ -410,8 +412,10 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 		return _ti_dbgettermp(term, e, name, flags);
 
 	if ((e = getenv("HOME")) != NULL) {
-		snprintf(h, sizeof(h), "%s/.terminfo", e);
-		r = _ti_dbgetterm(term, h, name, flags);
+		char homepath[PATH_MAX];
+
+		if (snprintf(homepath, sizeof(homepath), "%s/.terminfo", e) > 0)
+			r = _ti_dbgetterm(term, homepath, name, flags);
 	}
 	if (r != 1)
 		r = _ti_dbgettermp(term, _PATH_TERMINFO, name, flags);
