@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.349 2017/05/15 12:07:32 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.350 2017/05/16 21:43:18 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.349 2017/05/15 12:07:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.350 2017/05/16 21:43:18 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3485,12 +3485,10 @@ audiostartr(struct audio_softc *sc, struct virtual_channel *vc)
 		return EINVAL;
 
 	if (sc->sc_rec_started == false) {
-		mutex_exit(sc->sc_lock);
 		mutex_enter(sc->sc_intr_lock);
 		mix_read(sc);
 		cv_broadcast(&sc->sc_rcondvar);
 		mutex_exit(sc->sc_intr_lock);
-		mutex_enter(sc->sc_lock);
 	}
 	vc->sc_rbus = true;
 
@@ -3525,7 +3523,6 @@ audiostartp(struct audio_softc *sc, struct virtual_channel *vc)
 	if (sc->sc_trigger_started == false) {
 		audio_mix(sc);
 		audio_mix(sc);
-		mutex_exit(sc->sc_lock);
 		mutex_enter(sc->sc_intr_lock);
 		mix_write(sc);
 		vc = chan->vc;
@@ -3535,7 +3532,6 @@ audiostartp(struct audio_softc *sc, struct virtual_channel *vc)
 		mix_write(sc);
 		cv_broadcast(&sc->sc_condvar);
 		mutex_exit(sc->sc_intr_lock);
-		mutex_enter(sc->sc_lock);
 	}
 
 	return error;
