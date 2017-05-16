@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.25 2017/05/16 10:25:40 roy Exp $ */
+/* $NetBSD: term.c,v 1.26 2017/05/16 10:29:06 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.25 2017/05/16 10:25:40 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.26 2017/05/16 10:29:06 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -262,6 +262,8 @@ _ti_checkname(const TERMINAL *term, const char *name)
 		if ((size_t)(p - a) == name_len &&
 		    memcmp(name, a, name_len) == 0)
 			return 1;
+		if (*p == '|')
+			p++;
 	}
 
 	/* No match. */
