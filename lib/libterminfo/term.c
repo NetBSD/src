@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.26 2017/05/16 10:29:06 roy Exp $ */
+/* $NetBSD: term.c,v 1.27 2017/05/16 11:16:37 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.26 2017/05/16 10:29:06 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.27 2017/05/16 11:16:37 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -243,27 +243,32 @@ out:
 }
 
 static int
-_ti_checkname(const TERMINAL *term, const char *name)
+_ti_checkname(const char *name, const char *termname, const char *termalias)
 {
-	const char *a, *p;
-	size_t name_len;
+	const char *alias, *s;
+	size_t len, l;
 
 	/* Check terminal name matches. */
-	if (strcmp(name, term->name) == 0)
+	if (strcmp(termname, name) == 0)
 		return 1;
 
 	/* Check terminal aliases match. */
-	name_len = strlen(name);
-	for (a = term->_alias; a != NULL && *a != '\0'; a = p) {
-		for (p = a; *p != '\0'; p++) {
-			if (*p == '|')
-				break;
-		}
-		if ((size_t)(p - a) == name_len &&
-		    memcmp(name, a, name_len) == 0)
+	if (termalias == NULL)
+		return 0;
+
+	len = strlen(name);
+	alias = termalias;
+	while (*alias != '\0') {
+		s = strchr(alias, '|');
+		if (s == NULL)
+			l = strlen(alias);
+		else
+			l = (size_t)(s - alias);
+		if (len == l && memcmp(alias, name, l) == 0)
 			return 1;
-		if (*p == '|')
-			p++;
+		if (s == NULL)
+			break;
+		alias = s + 1;
 	}
 
 	/* No match. */
@@ -303,7 +308,7 @@ _ti_dbgetterm(TERMINAL *term, const char *path, const char *name, int flags)
 	r = _ti_readterm(term, data, len, flags);
 	/* Ensure that this is the right terminfo description. */
         if (r == 1)
-                r = _ti_checkname(term, name);
+                r = _ti_checkname(name, term->name, term->_alias);
 	/* Remember the database we read. */
         if (r == 1)
                 _ti_database = __ti_database;
@@ -341,34 +346,6 @@ _ti_dbgettermp(TERMINAL *term, const char *path, const char *name, int flags)
 }
 
 static int
-ticcmp(const TIC *tic, const char *name)
-{
-	char *alias, *s;
-	size_t len, l;
-
-	if (strcmp(tic->name, name) == 0)
-		return 0;
-	if (tic->alias == NULL)
-		return -1;
-
-	len = strlen(name);
-	alias = tic->alias;
-	while (*alias != '\0') {
-		s = strchr(alias, '|');
-		if (s == NULL)
-			l = strlen(alias);
-		else
-			l = (size_t)(s - alias);
-		if (len == l && memcmp(alias, name, l) == 0)
-			return 0;
-		if (s == NULL)
-			break;
-		alias = s + 1;
-	}
-	return 1;
-}
-
-static int
 _ti_findterm(TERMINAL *term, const char *name, int flags)
 {
 	int r;
@@ -380,7 +357,6 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 	_DIAGASSERT(term != NULL);
 	_DIAGASSERT(name != NULL);
 
-	__ti_database[0] = '\0';
 	_ti_database = NULL;
 	r = 0;
 
@@ -410,7 +386,9 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 			    TIC_ALIAS | TIC_DESCRIPTION | TIC_EXTRA);
 			free(e);
 		}
-		if (tic != NULL && ticcmp(tic, name) == 0) {
+		if (tic != NULL &&
+		    _ti_checkname(name, tic->name, tic->alias) == 1)
+		{
 			len = _ti_flatten(&f, tic);
 			if (len != -1) {
 				r = _ti_readterm(term, (char *)f, (size_t)len,
