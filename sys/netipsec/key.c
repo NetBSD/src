@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.128 2017/05/16 07:25:57 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.129 2017/05/16 07:43:50 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.128 2017/05/16 07:25:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.129 2017/05/16 07:43:50 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -2929,6 +2929,11 @@ key_delsah(struct secashead *sah)
 	if (__LIST_CHAINED(sah))
 		LIST_REMOVE(sah, chain);
 
+	if (sah->idents != NULL)
+		KFREE(sah->idents);
+	if (sah->identd != NULL)
+		KFREE(sah->identd);
+
 	kmem_free(sah, sizeof(*sah));
 
 	splx(s);
@@ -5570,6 +5575,18 @@ key_setident(struct secashead *sah, struct mbuf *m,
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
 	KASSERT(mhp->msg != NULL);
+
+	/*
+	 * Can be called with an existing sah from key_update().
+	 */
+	if (sah->idents != NULL) {
+		KFREE(sah->idents);
+		sah->idents = NULL;
+	}
+	if (sah->identd != NULL) {
+		KFREE(sah->identd);
+		sah->identd = NULL;
+	}
 
 	/* don't make buffer if not there */
 	if (mhp->ext[SADB_EXT_IDENTITY_SRC] == NULL &&
