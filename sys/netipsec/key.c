@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.126 2017/05/16 02:59:22 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.127 2017/05/16 03:05:28 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.126 2017/05/16 02:59:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.127 2017/05/16 03:05:28 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.126 2017/05/16 02:59:22 ozaki-r Exp $");
 #include <sys/psref.h>
 #include <sys/lwp.h>
 #include <sys/workqueue.h>
+#include <sys/kmem.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -1387,12 +1389,12 @@ key_delsp(struct secpolicy *sp)
 		}
 
 		nextisr = isr->next;
-		KFREE(isr);
+		kmem_intr_free(isr, sizeof(*isr));
 		isr = nextisr;
 	}
     }
 
-	KFREE(sp);
+	kmem_intr_free(sp, sizeof(*sp));
 
 	splx(s);
 }
@@ -1457,12 +1459,8 @@ key_newsp(const char* where, int tag)
 {
 	struct secpolicy *newsp = NULL;
 
-	newsp = (struct secpolicy *)
-		malloc(sizeof(struct secpolicy), M_SECA, M_NOWAIT|M_ZERO);
-	if (newsp) {
-		newsp->refcnt = 1;
-		newsp->req = NULL;
-	}
+	newsp = kmem_zalloc(sizeof(struct secpolicy), KM_SLEEP);
+	newsp->refcnt = 1;
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP from %s:%u return SP:%p\n", where, tag, newsp);
@@ -1479,6 +1477,7 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 {
 	struct secpolicy *newsp;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(xpl0 != NULL);
 	KASSERT(len >= sizeof(*xpl0));
 
@@ -1544,13 +1543,7 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 		}
 
 		/* allocate request buffer */
-		KMALLOC(*p_isr, struct ipsecrequest *, sizeof(**p_isr));
-		if ((*p_isr) == NULL) {
-			ipseclog((LOG_DEBUG,
-			    "key_msg2sp: No more memory.\n"));
-			*error = ENOBUFS;
-			goto free_exit;
-		}
+		*p_isr = kmem_alloc(sizeof(**p_isr), KM_SLEEP);
 		memset(*p_isr, 0, sizeof(**p_isr));
 
 		/* set values */
@@ -1862,6 +1855,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	struct secpolicy *newsp;
 	int error;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(so != NULL);
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
@@ -1957,7 +1951,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	}
 
 	if ((newsp->id = key_getnewspid()) == 0) {
-		KFREE(newsp);
+		kmem_free(newsp, sizeof(*newsp));
 		return key_senderror(so, m, ENOBUFS);
 	}
 
@@ -1973,12 +1967,12 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	/* sanity check on addr pair */
 	if (((const struct sockaddr *)(src0 + 1))->sa_family !=
 			((const struct sockaddr *)(dst0+ 1))->sa_family) {
-		KFREE(newsp);
+		kmem_free(newsp, sizeof(*newsp));
 		return key_senderror(so, m, EINVAL);
 	}
 	if (((const struct sockaddr *)(src0 + 1))->sa_len !=
 			((const struct sockaddr *)(dst0+ 1))->sa_len) {
-		KFREE(newsp);
+		kmem_free(newsp, sizeof(*newsp));
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -2876,22 +2870,20 @@ static struct secashead *
 key_newsah(const struct secasindex *saidx)
 {
 	struct secashead *newsah;
+	int i;
 
 	KASSERT(saidx != NULL);
 
-	newsah = (struct secashead *)
-		malloc(sizeof(struct secashead), M_SECA, M_NOWAIT|M_ZERO);
-	if (newsah != NULL) {
-		int i;
-		for (i = 0; i < sizeof(newsah->savtree)/sizeof(newsah->savtree[0]); i++)
-			LIST_INIT(&newsah->savtree[i]);
-		newsah->saidx = *saidx;
+	newsah = kmem_zalloc(sizeof(struct secashead), KM_SLEEP);
+	for (i = 0; i < __arraycount(newsah->savtree); i++)
+		LIST_INIT(&newsah->savtree[i]);
+	newsah->saidx = *saidx;
 
-		/* add to saidxtree */
-		newsah->state = SADB_SASTATE_MATURE;
-		LIST_INSERT_HEAD(&sahtree, newsah, chain);
-	}
-	return(newsah);
+	/* add to saidxtree */
+	newsah->state = SADB_SASTATE_MATURE;
+	LIST_INSERT_HEAD(&sahtree, newsah, chain);
+
+	return newsah;
 }
 
 /*
@@ -2905,9 +2897,10 @@ key_delsah(struct secashead *sah)
 	int s;
 	int zombie = 0;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(sah != NULL);
 
-	s = splsoftnet();	/*called from softclock()*/
+	s = splsoftnet();
 
 	/* searching all SA registerd in the secindex. */
 	SASTATE_ANY_FOREACH(state) {
@@ -2935,7 +2928,7 @@ key_delsah(struct secashead *sah)
 	if (__LIST_CHAINED(sah))
 		LIST_REMOVE(sah, chain);
 
-	KFREE(sah);
+	kmem_free(sah, sizeof(*sah));
 
 	splx(s);
 	return;
@@ -2961,17 +2954,13 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 	struct secasvar *newsav;
 	const struct sadb_sa *xsa;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
 	KASSERT(mhp->msg != NULL);
 	KASSERT(sah != NULL);
 
-	KMALLOC(newsav, struct secasvar *, sizeof(struct secasvar));
-	if (newsav == NULL) {
-		ipseclog((LOG_DEBUG, "key_newsa: No more memory.\n"));
-		*errp = ENOBUFS;
-		goto done;
-	}
+	newsav = kmem_alloc(sizeof(struct secasvar), KM_SLEEP);
 	memset(newsav, 0, sizeof(struct secasvar));
 
 	switch (mhp->msg->sadb_msg_type) {
@@ -2991,28 +2980,24 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 	case SADB_ADD:
 		/* sanity check */
 		if (mhp->ext[SADB_EXT_SA] == NULL) {
-			KFREE(newsav), newsav = NULL;
 			ipseclog((LOG_DEBUG, "key_newsa: invalid message is passed.\n"));
 			*errp = EINVAL;
-			goto done;
+			goto error;
 		}
 		xsa = (const struct sadb_sa *)mhp->ext[SADB_EXT_SA];
 		newsav->spi = xsa->sadb_sa_spi;
 		newsav->seq = mhp->msg->sadb_msg_seq;
 		break;
 	default:
-		KFREE(newsav), newsav = NULL;
 		*errp = EINVAL;
-		goto done;
+		goto error;
 	}
 
 	/* copy sav values */
 	if (mhp->msg->sadb_msg_type != SADB_GETSPI) {
 		*errp = key_setsaval(newsav, m, mhp);
-		if (*errp) {
-			KFREE(newsav), newsav = NULL;
-			goto done;
-		}
+		if (*errp)
+			goto error;
 	}
 
 	/* reset created */
@@ -3025,11 +3010,16 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 	newsav->state = SADB_SASTATE_LARVAL;
 	LIST_INSERT_TAIL(&sah->savtree[SADB_SASTATE_LARVAL], newsav,
 			secasvar, chain);
-done:
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP from %s:%u return SA:%p\n", where, tag, newsav);
-
 	return newsav;
+
+error:
+	KASSERT(*errp != 0);
+	kmem_free(newsav, sizeof(*newsav));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP from %s:%u return SA:NULL\n", where, tag);
+	return NULL;
 }
 
 /*
@@ -3075,7 +3065,7 @@ key_delsav(struct secasvar *sav)
 		sav->replay = NULL;
 	}
 	if (sav->lft_c != NULL) {
-		KFREE(sav->lft_c);
+		kmem_intr_free(sav->lft_c, sizeof(*(sav->lft_c)));
 		sav->lft_c = NULL;
 	}
 	if (sav->lft_h != NULL) {
@@ -3087,7 +3077,7 @@ key_delsav(struct secasvar *sav)
 		sav->lft_s = NULL;
 	}
 
-	KFREE(sav);
+	kmem_intr_free(sav, sizeof(*sav));
 
 	return;
 }
@@ -3190,6 +3180,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 {
 	int error = 0;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
 	KASSERT(mhp->msg != NULL);
@@ -3348,13 +3339,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	sav->created = time_uptime;
 
 	/* make lifetime for CURRENT */
-	KMALLOC(sav->lft_c, struct sadb_lifetime *,
-	    sizeof(struct sadb_lifetime));
-	if (sav->lft_c == NULL) {
-		ipseclog((LOG_DEBUG, "key_setsaval: No more memory.\n"));
-		error = ENOBUFS;
-		goto fail;
-	}
+	sav->lft_c = kmem_alloc(sizeof(struct sadb_lifetime), KM_SLEEP);
 
 	sav->lft_c->sadb_lifetime_len =
 	    PFKEY_UNIT64(sizeof(struct sadb_lifetime));
@@ -3418,7 +3403,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 		sav->key_enc = NULL;
 	}
 	if (sav->lft_c != NULL) {
-		KFREE(sav->lft_c);
+		kmem_free(sav->lft_c, sizeof(*(sav->lft_c)));
 		sav->lft_c = NULL;
 	}
 	if (sav->lft_h != NULL) {
@@ -4743,7 +4728,7 @@ key_timehandler_work(struct work *wk, void *arg)
 		if (now - acq->created > key_blockacq_lifetime
 		 && __LIST_CHAINED(acq)) {
 			LIST_REMOVE(acq, chain);
-			KFREE(acq);
+			kmem_free(acq, sizeof(*acq));
 		}
 	}
     }
@@ -4757,7 +4742,7 @@ key_timehandler_work(struct work *wk, void *arg)
 		if (now - acq->created > key_blockacq_lifetime
 		 && __LIST_CHAINED(acq)) {
 			LIST_REMOVE(acq, chain);
-			KFREE(acq);
+			kmem_free(acq, sizeof(*acq));
 		}
 	}
     }
@@ -4898,6 +4883,7 @@ key_getspi(struct socket *so, struct mbuf *m,
 	u_int16_t reqid;
 	int error;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(so != NULL);
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
@@ -5265,6 +5251,7 @@ key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	u_int16_t reqid;
 	int error;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(so != NULL);
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
@@ -6428,7 +6415,7 @@ key_newacq(const struct secasindex *saidx)
 	struct secacq *newacq;
 
 	/* get new entry */
-	KMALLOC(newacq, struct secacq *, sizeof(struct secacq));
+	newacq = kmem_intr_alloc(sizeof(struct secacq), KM_NOSLEEP);
 	if (newacq == NULL) {
 		ipseclog((LOG_DEBUG, "key_newacq: No more memory.\n"));
 		return NULL;
@@ -6477,7 +6464,7 @@ key_newspacq(const struct secpolicyindex *spidx)
 	struct secspacq *acq;
 
 	/* get new entry */
-	KMALLOC(acq, struct secspacq *, sizeof(struct secspacq));
+	acq = kmem_intr_alloc(sizeof(struct secspacq), KM_NOSLEEP);
 	if (acq == NULL) {
 		ipseclog((LOG_DEBUG, "key_newspacq: No more memory.\n"));
 		return NULL;
@@ -6644,6 +6631,7 @@ key_register(struct socket *so, struct mbuf *m,
 {
 	struct secreg *reg, *newreg = 0;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(so != NULL);
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
@@ -6666,11 +6654,7 @@ key_register(struct socket *so, struct mbuf *m,
 	}
 
 	/* create regnode */
-	KMALLOC(newreg, struct secreg *, sizeof(*newreg));
-	if (newreg == NULL) {
-		ipseclog((LOG_DEBUG, "key_register: No more memory.\n"));
-		return key_senderror(so, m, ENOBUFS);
-	}
+	newreg = kmem_alloc(sizeof(*newreg), KM_SLEEP);
 	memset(newreg, 0, sizeof(*newreg));
 
 	newreg->so = so;
@@ -6794,6 +6778,7 @@ key_freereg(struct socket *so)
 	struct secreg *reg;
 	int i;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(so != NULL);
 
 	/*
@@ -6806,7 +6791,7 @@ key_freereg(struct socket *so)
 			if (reg->so == so
 			 && __LIST_CHAINED(reg)) {
 				LIST_REMOVE(reg, chain);
-				KFREE(reg);
+				kmem_free(reg, sizeof(*reg));
 				break;
 			}
 		}

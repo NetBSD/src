@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.54 2017/04/27 09:43:52 ozaki-r Exp $	*/
+/*	$NetBSD: keysock.c,v 1.55 2017/05/16 03:05:28 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.54 2017/04/27 09:43:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.55 2017/05/16 03:05:28 ozaki-r Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.54 2017/04/27 09:43:52 ozaki-r Exp $")
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <net/raw_cb.h>
 #include <net/route.h>
@@ -459,6 +460,7 @@ key_detach(struct socket *so)
 	struct keycb *kp = (struct keycb *)sotorawcb(so);
 	int s;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(solocked(so));
 	KASSERT(kp != NULL);
 
