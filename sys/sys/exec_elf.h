@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.141.2.2 2016/03/07 08:08:52 msaitoh Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.141.2.3 2017/05/16 22:52:17 snj Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -354,6 +354,7 @@ typedef struct {
 #define PT_HIPROC	0x7fffffff
 
 #define PT_MIPS_REGINFO 0x70000000
+#define PT_MIPS_ABIFLAGS 0x70000003
 
 /* p_flags */
 #define PF_R		0x4		/* Segment is readable */
