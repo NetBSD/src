@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.350 2017/05/16 21:43:18 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.351 2017/05/16 23:55:53 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.350 2017/05/16 21:43:18 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.351 2017/05/16 23:55:53 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -5470,11 +5470,13 @@ mix_read(void *arg)
 
 	if (sc->hw_if->trigger_input && sc->sc_rec_started == false) {
 		DPRINTF(("%s: call trigger_input\n", __func__));
+		sc->sc_rec_started = true;
 		error = sc->hw_if->trigger_input(sc->hw_hdl, vc->sc_mrr.s.start,
 		    vc->sc_mrr.s.end, blksize,
 		    audio_rint, (void *)sc, &vc->sc_mrr.s.param);
 	} else if (sc->hw_if->start_input) {
 		DPRINTF(("%s: call start_input\n", __func__));
+		sc->sc_rec_started = true;
 		error = sc->hw_if->start_input(sc->hw_hdl,
 		    vc->sc_mrr.s.inp, blksize,
 		    audio_rint, (void *)sc);
@@ -5483,8 +5485,8 @@ mix_read(void *arg)
 		/* XXX does this really help? */
 		DPRINTF(("audio_upmix restart failed: %d\n", error));
 		audio_clear(sc, SIMPLEQ_FIRST(&sc->sc_audiochan)->vc);
+		sc->sc_rec_started = false;
 	}
-	sc->sc_rec_started = true;
 
 	inp = vc->sc_mrr.s.inp;
 	vc->sc_mrr.s.inp = audio_stream_add_inp(&vc->sc_mrr.s, inp, cc);
@@ -5575,16 +5577,17 @@ done:
 
 	if (sc->hw_if->trigger_output && sc->sc_trigger_started == false) {
 		DPRINTF(("%s: call trigger_output\n", __func__));
+		sc->sc_trigger_started = true;
 		error = sc->hw_if->trigger_output(sc->hw_hdl,
 		    vc->sc_mpr.s.start, vc->sc_mpr.s.end, blksize,
 		    audio_pint, (void *)sc, &vc->sc_mpr.s.param);
 	} else if (sc->hw_if->start_output) {
 		DPRINTF(("%s: call start_output\n", __func__));
+		sc->sc_trigger_started = true;
 		error = sc->hw_if->start_output(sc->hw_hdl,
 		    __UNCONST(vc->sc_mpr.s.outp), blksize,
 		    audio_pint, (void *)sc);
 	}
-	sc->sc_trigger_started = true;
 
 	if (error) {
 		/* XXX does this really help? */
