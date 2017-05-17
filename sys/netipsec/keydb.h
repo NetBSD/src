@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.14 2015/03/30 03:51:50 ozaki-r Exp $	*/
+/*	$NetBSD: keydb.h,v 1.15 2017/05/17 02:19:09 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -72,6 +72,8 @@ struct secashead {
 	struct sadb_ident *idents;	/* source identity */
 	struct sadb_ident *identd;	/* destination identity */
 					/* XXX I don't know how to use them. */
+	size_t idents_len;		/* length of idents */
+	size_t identd_len;		/* length of identd */
 
 	u_int8_t state;			/* MATURE or DEAD. */
 	LIST_HEAD(_satree, secasvar) savtree[SADB_SASTATE_MAX+1];
@@ -100,10 +102,13 @@ struct secasvar {
 	u_int32_t flags;		/* holder for SADB_KEY_FLAGS */
 
 	struct sadb_key *key_auth;	/* Key for Authentication */
+	size_t key_auth_len;		/* length of key_auth */
 	struct sadb_key *key_enc;	/* Key for Encryption */
+	size_t key_enc_len;		/* length of key_enc */
 	u_int ivlen;			/* length of IV */
 
 	struct secreplay *replay;	/* replay prevention */
+	size_t replay_len;		/* length of replay */
 	time_t created;			/* for lifetime */
 
 	struct sadb_lifetime *lft_c;	/* CURRENT lifetime, it's constant. */
