@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.130 2017/05/16 10:11:24 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.131 2017/05/17 02:04:55 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.130 2017/05/16 10:11:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.131 2017/05/17 02:04:55 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -431,6 +431,7 @@ static struct secasvar *key_checkspidup (const struct secasindex *, u_int32_t);
 static struct secasvar *key_getsavbyspi (struct secashead *, u_int32_t);
 static int key_setsaval (struct secasvar *, struct mbuf *,
 	const struct sadb_msghdr *);
+static void key_freesaval(struct secasvar *);
 static int key_mature (struct secasvar *);
 static struct mbuf *key_setdumpsa (struct secasvar *, u_int8_t,
 	u_int8_t, u_int32_t, u_int32_t);
@@ -3056,31 +3057,8 @@ key_delsav(struct secasvar *sav)
 			explicit_memset(_KEYBUF(sav->key_enc), 0,
 			    _KEYLEN(sav->key_enc));
 	}
-	if (sav->key_auth != NULL) {
-		KFREE(sav->key_auth);
-		sav->key_auth = NULL;
-	}
-	if (sav->key_enc != NULL) {
-		KFREE(sav->key_enc);
-		sav->key_enc = NULL;
-	}
-	if (sav->replay != NULL) {
-		KFREE(sav->replay);
-		sav->replay = NULL;
-	}
-	if (sav->lft_c != NULL) {
-		kmem_intr_free(sav->lft_c, sizeof(*(sav->lft_c)));
-		sav->lft_c = NULL;
-	}
-	if (sav->lft_h != NULL) {
-		KFREE(sav->lft_h);
-		sav->lft_h = NULL;
-	}
-	if (sav->lft_s != NULL) {
-		KFREE(sav->lft_s);
-		sav->lft_s = NULL;
-	}
 
+	key_freesaval(sav);
 	kmem_intr_free(sav, sizeof(*sav));
 
 	return;
@@ -3171,6 +3149,40 @@ key_getsavbyspi(struct secashead *sah, u_int32_t spi)
 }
 
 /*
+ * Free allocated data to member variables of sav:
+ * sav->replay, sav->key_* and sav->lft_*.
+ */
+static void
+key_freesaval(struct secasvar *sav)
+{
+
+	if (sav->replay != NULL) {
+		KFREE(sav->replay);
+		sav->replay = NULL;
+	}
+	if (sav->key_auth != NULL) {
+		KFREE(sav->key_auth);
+		sav->key_auth = NULL;
+	}
+	if (sav->key_enc != NULL) {
+		KFREE(sav->key_enc);
+		sav->key_enc = NULL;
+	}
+	if (sav->lft_c != NULL) {
+		kmem_free(sav->lft_c, sizeof(*(sav->lft_c)));
+		sav->lft_c = NULL;
+	}
+	if (sav->lft_h != NULL) {
+		KFREE(sav->lft_h);
+		sav->lft_h = NULL;
+	}
+	if (sav->lft_s != NULL) {
+		KFREE(sav->lft_s);
+		sav->lft_s = NULL;
+	}
+}
+
+/*
  * copy SA values from PF_KEY message except *SPI, SEQ, PID, STATE and TYPE*.
  * You must update these if need.
  * OUT:	0:	success.
@@ -3190,12 +3202,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	KASSERT(mhp->msg != NULL);
 
 	/* initialization */
-	sav->replay = NULL;
-	sav->key_auth = NULL;
-	sav->key_enc = NULL;
-	sav->lft_c = NULL;
-	sav->lft_h = NULL;
-	sav->lft_s = NULL;
+	key_freesaval(sav);
 	sav->tdb_xform = NULL;		/* transform */
 	sav->tdb_encalgxform = NULL;	/* encoding algorithm */
 	sav->tdb_authalgxform = NULL;	/* authentication algorithm */
@@ -3394,30 +3401,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 
  fail:
 	/* initialization */
-	if (sav->replay != NULL) {
-		KFREE(sav->replay);
-		sav->replay = NULL;
-	}
-	if (sav->key_auth != NULL) {
-		KFREE(sav->key_auth);
-		sav->key_auth = NULL;
-	}
-	if (sav->key_enc != NULL) {
-		KFREE(sav->key_enc);
-		sav->key_enc = NULL;
-	}
-	if (sav->lft_c != NULL) {
-		kmem_free(sav->lft_c, sizeof(*(sav->lft_c)));
-		sav->lft_c = NULL;
-	}
-	if (sav->lft_h != NULL) {
-		KFREE(sav->lft_h);
-		sav->lft_h = NULL;
-	}
-	if (sav->lft_s != NULL) {
-		KFREE(sav->lft_s);
-		sav->lft_s = NULL;
-	}
+	key_freesaval(sav);
 
 	return error;
 }
