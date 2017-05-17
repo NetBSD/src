@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.67 2017/05/17 06:53:02 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.68 2017/05/17 07:12:50 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.67 2017/05/17 06:53:02 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.68 2017/05/17 07:12:50 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -853,36 +853,49 @@ crypto_kdispatch(struct cryptkop *krp)
 	cryptostats.cs_kops++;
 
 	cap = crypto_checkdriver(krp->krp_hid);
-	if (cap && !cap->cc_kqblocked) {
+	/*
+	 * TODO:
+	 * If we can ensure the driver has been valid until the driver is
+	 * done crypto_unregister(), this migrate operation is not required.
+	 */
+	if (cap == NULL) {
+		TAILQ_INSERT_TAIL(&crp_kq, krp, krp_next);
 		mutex_spin_exit(&crypto_q_mtx);
-		result = crypto_kinvoke(krp, 0);
-		if (result == ERESTART) {
-			/*
-			 * The driver ran out of resources, mark the
-			 * driver ``blocked'' for cryptop's and put
-			 * the op on the queue.
-			 */
-			mutex_spin_enter(&crypto_q_mtx);
-			crypto_drivers[krp->krp_hid].cc_kqblocked = 1;
-			TAILQ_INSERT_HEAD(&crp_kq, krp, krp_next);
-			cryptostats.cs_kblocks++;
-			mutex_spin_exit(&crypto_q_mtx);
 
-			/*
-			 * The krp is enqueued to crp_kq, that is,
-			 * no error occurs. So, this function should
-			 * not return error.
-			 */
-			result = 0;
-		}
-	} else {
+		return 0;
+	}
+
+	if (cap->cc_kqblocked != 0) {
 		/*
 		 * The driver is blocked, just queue the op until
 		 * it unblocks and the swi thread gets kicked.
 		 */
 		TAILQ_INSERT_TAIL(&crp_kq, krp, krp_next);
-		result = 0;
 		mutex_spin_exit(&crypto_q_mtx);
+
+		return 0;
+	}
+
+	mutex_spin_exit(&crypto_q_mtx);
+	result = crypto_kinvoke(krp, 0);
+	if (result == ERESTART) {
+		/*
+		 * The driver ran out of resources, mark the
+		 * driver ``blocked'' for cryptop's and put
+		 * the op on the queue.
+		 */
+		mutex_spin_enter(&crypto_q_mtx);
+		crypto_drivers[krp->krp_hid].cc_kqblocked = 1;
+		TAILQ_INSERT_HEAD(&crp_kq, krp, krp_next);
+		cryptostats.cs_kblocks++;
+		mutex_spin_exit(&crypto_q_mtx);
+
+		/*
+		 * The krp is enqueued to crp_kq, that is,
+		 * no error occurs. So, this function should
+		 * not return error.
+		 */
+		result = 0;
 	}
 
 	return result;
