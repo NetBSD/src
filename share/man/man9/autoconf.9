@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.30.20.1 2017/04/28 06:00:33 pgoyette Exp $
+.\"     $NetBSD: autoconf.9,v 1.30.20.2 2017/05/17 01:54:06 pgoyette Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -342,6 +342,12 @@ object and pass it to
 The content of that object is similar to what is returned by
 .Fn config_search_loc
 for regular devices.
+.Pp
+.Fn config_attach_pseudo
+acquires a reference to the returned device_t (via
+.Fn device_acquire ) ;
+the caller is responsible for releasing the reference via
+.Fn device_release .
 .It Fn config_detach "dev" "flags"
 .It Fn config_detach_release "dev" "flags"
 Called by the parent to acquire a reference to and detach the child device.
