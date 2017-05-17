@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.36 2017/05/17 20:04:50 jdolecek Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.37 2017/05/17 20:13:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.36 2017/05/17 20:04:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.37 2017/05/17 20:13:02 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -832,19 +832,19 @@ vioif_start(struct ifnet *ifp)
 			if (newm == NULL) {
 				aprint_error_dev(sc->sc_dev,
 				    "m_defrag() failed\n");
-				m_freem(m);
 				goto skip;
 			}
 
+			m = newm;
 			r = bus_dmamap_load_mbuf(virtio_dmat(vsc),
 					 sc->sc_tx_dmamaps[slot],
-					 newm, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+					 m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (r != 0) {
 				aprint_error_dev(sc->sc_dev,
 	   			    "tx dmamap load failed, error code %d\n",
 				    r);
-				m_freem(newm);
 skip:
+				m_freem(m);
 				virtio_enqueue_abort(vsc, vq, slot);
 				continue;
 			}
@@ -860,6 +860,7 @@ skip:
 			bus_dmamap_unload(virtio_dmat(vsc),
 					  sc->sc_tx_dmamaps[slot]);
 			/* slot already freed by virtio_enqueue_reserve */
+			m_freem(m);
 			continue;
 		}
 
