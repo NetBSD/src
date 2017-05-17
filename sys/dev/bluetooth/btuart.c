@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.28 2015/08/20 14:40:17 christos Exp $	*/
+/*	$NetBSD: btuart.c,v 1.28.8.1 2017/05/17 01:44:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.28 2015/08/20 14:40:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.28.8.1 2017/05/17 01:44:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -273,6 +273,7 @@ btuartopen(dev_t devno __unused, struct tty *tp)
 
 	splx(s);
 
+	device_release(dev);
 	return 0;
 }
 

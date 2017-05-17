@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.20 2017/01/20 12:25:07 maya Exp $ */
+/* $NetBSD: gpiosim.c,v 1.20.4.1 2017/05/17 01:44:17 pgoyette Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -68,6 +68,7 @@ gpiosim_match(device_t parent, cfdata_t match, void *aux)
 void
 gpiosimattach(int num __unused)
 {
+	device_t dev;
 	cfdata_t cf;
 	int n, err;
 
@@ -81,7 +82,8 @@ gpiosimattach(int num __unused)
 		cf->cf_atname = "gpiosim";
 		cf->cf_unit = n;
 		cf->cf_fstate = FSTATE_NOTFOUND;
-		config_attach_pseudo(cf);
+		dev = config_attach_pseudo(cf);
+		device_release(dev);
 	}
 }
 
@@ -249,6 +251,7 @@ static int
 gpiosim_modcmd(modcmd_t cmd, void *opaque)
 {
 #ifdef _MODULE
+	device_t dev;
 	int error = 0;
 #endif
 	switch (cmd) {
@@ -275,7 +278,8 @@ gpiosim_modcmd(modcmd_t cmd, void *opaque)
 			    gpiosim_cd.cd_name);
 			return error;
 		}
-		config_attach_pseudo(gpiosim_cfdata);
+		dev = config_attach_pseudo(gpiosim_cfdata);
+		device_release(dev);
 #endif
 		return 0;
 	case MODULE_CMD_FINI:

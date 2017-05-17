@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.49 2017/04/18 17:05:05 maya Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.49.2.1 2017/05/17 01:44:18 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.49 2017/04/18 17:05:05 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.49.2.1 2017/05/17 01:44:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1388,6 +1388,7 @@ static int
 swcrypto_modcmd(modcmd_t cmd, void *arg)
 {
 	int error;
+	device_t dev;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
@@ -1417,7 +1418,8 @@ swcrypto_modcmd(modcmd_t cmd, void *arg)
 			return error;
 		}
 
-		(void)config_attach_pseudo(swcrypto_cfdata);
+		dev = config_attach_pseudo(swcrypto_cfdata);
+		device_release(dev);
 
 		return 0;
 	case MODULE_CMD_FINI:

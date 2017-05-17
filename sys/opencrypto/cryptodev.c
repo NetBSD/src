@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.89.2.2 2017/04/29 11:12:15 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.89.2.3 2017/05/17 01:44:18 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.89.2.2 2017/04/29 11:12:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.89.2.3 2017/05/17 01:44:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2157,6 +2157,7 @@ crypto_modcmd(modcmd_t cmd, void *arg)
 {
 	int error = 0;
 #ifdef _MODULE
+	device_t dev;
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
 #endif
 
@@ -2203,7 +2204,8 @@ crypto_modcmd(modcmd_t cmd, void *arg)
 			return error;
 		}
 
-		(void)config_attach_pseudo(crypto_cfdata);
+		dev = config_attach_pseudo(crypto_cfdata);
+		device_release(dev);
 #endif
 
 		return error;

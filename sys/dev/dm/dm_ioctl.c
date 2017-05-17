@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.30 2015/05/10 14:08:54 christos Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.30.8.1 2017/05/17 01:44:17 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -226,8 +226,10 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 		aprint_error("Unable to attach pseudo device dm/%s\n", name);
 		return (ENOMEM);
 	}
-	if ((dmv = dm_dev_alloc()) == NULL)
+	if ((dmv = dm_dev_alloc()) == NULL) {
+		device_release(devt);
 		return ENOMEM;
+	}
 
 	if (uuid)
 		strncpy(dmv->uuid, uuid, DM_UUID_LEN);
@@ -269,6 +271,7 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	/* Increment device counter After creating device */
 	atomic_inc_32(&dm_dev_counter);
 
+	device_release(devt);
 	return r;
 }
 /*

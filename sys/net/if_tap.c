@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.99.4.1 2017/04/27 05:36:38 pgoyette Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.99.4.2 2017/05/17 01:44:18 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.99.4.1 2017/04/27 05:36:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.99.4.2 2017/05/17 01:44:18 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -652,12 +652,16 @@ tap_stop(struct ifnet *ifp, int disable)
 static int
 tap_clone_create(struct if_clone *ifc, int unit)
 {
-	if (tap_clone_creator(unit) == NULL) {
+	struct tap_softc *sc;
+
+	if ((sc = tap_clone_creator(unit)) == NULL) {
 		aprint_error("%s%d: unable to attach an instance\n",
 		    tap_cd.cd_name, unit);
 		return ENXIO;
 	}
 	atomic_inc_uint(&tap_count);
+
+	device_release(sc->sc_dev);
 	return 0;
 }
 
@@ -684,6 +688,8 @@ tap_clone_creator(int unit)
 		cf->cf_unit = unit;
 		cf->cf_fstate = FSTATE_NOTFOUND;
 	}
+
+	/* Note that return occurs with a reference held! */
 
 	return device_private(config_attach_pseudo(cf));
 }
@@ -783,6 +789,7 @@ tap_cdev_open(dev_t dev, int flags, int fmt, struct lwp *l)
 static int
 tap_dev_cloner(struct lwp *l)
 {
+	int rv;
 	struct tap_softc *sc;
 	file_t *fp;
 	int error, fd;
@@ -797,8 +804,10 @@ tap_dev_cloner(struct lwp *l)
 
 	sc->sc_flags |= TAP_INUSE;
 
-	return fd_clone(fp, fd, FREAD|FWRITE, &tap_fileops,
+	rv = fd_clone(fp, fd, FREAD|FWRITE, &tap_fileops,
 	    (void *)(intptr_t)device_unit(sc->sc_dev));
+
+	device_release(sc->sc_dev);
 }
 
 /*

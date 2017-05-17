@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.38 2016/07/11 11:31:51 msaitoh Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.38.8.1 2017/05/17 01:44:18 pgoyette Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.38 2016/07/11 11:31:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.38.8.1 2017/05/17 01:44:18 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -608,6 +608,7 @@ static int
 etherip_clone_create(struct if_clone *ifc, int unit)
 {
 	cfdata_t cf;
+	device_t dev;
 
 	cf = malloc(sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
 	cf->cf_name   = etherip_cd.cd_name;
@@ -615,11 +616,12 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 	cf->cf_unit   = unit;
 	cf->cf_fstate = FSTATE_STAR;
 
-	if (config_attach_pseudo(cf) == NULL) {
+	if ((dev = config_attach_pseudo(cf)) == NULL) {
 		aprint_error("%s%d: unable to attach an instance\n",
 			     etherip_cd.cd_name, unit);
 		return (ENXIO);
 	}
+	device_release(dev);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.114.4.6 2017/04/29 10:50:46 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.114.4.7 2017/05/17 01:44:17 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114.4.6 2017/04/29 10:50:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114.4.7 2017/05/17 01:44:17 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -382,10 +382,7 @@ cgd_spawn(int unit, device_t *self)
 	cf->cf_unit = unit;
 	cf->cf_fstate = FSTATE_STAR;
 
-	if (config_attach_pseudo(cf) == NULL)
-		return NULL;
-
-	if ((*self = device_lookup_acquire(&cgd_cd, unit)) == NULL)
+	if ((*self = config_attach_pseudo(cf)) == NULL)
 		return NULL;
 	else {
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.30 2016/08/15 08:20:11 maxv Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.30.6.1 2017/05/17 01:44:17 pgoyette Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.30 2016/08/15 08:20:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.30.6.1 2017/05/17 01:44:17 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -422,6 +422,7 @@ bcspopen(dev_t device __unused, struct tty *tp)
 	/* start link-establishment */
 	bcsp_start_le(sc);
 
+	device_release(dev);
 	return 0;
 }
 

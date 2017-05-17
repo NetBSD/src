@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.65.20.1 2017/04/27 05:36:32 pgoyette Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.65.20.2 2017/05/17 01:44:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.65.20.1 2017/04/27 05:36:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.65.20.2 2017/05/17 01:44:16 pgoyette Exp $");
 
 #include "opt_md.h"
 
@@ -82,6 +82,7 @@ cpu_configure(void)
 void
 cpu_rootconf(void)
 {
+	device_t root;
 
 	findroot();
 #if defined(MEMORY_DISK_HOOKS)
@@ -110,7 +111,9 @@ cpu_rootconf(void)
 				cf->cf_unit = i;
 				cf->cf_fstate = FSTATE_STAR;
 				/* XXX mutex */
-				sc = device_private(config_attach_pseudo(cf));
+				root = config_attach_pseudo(cf));
+				sc = device_private(root);
+				device_release(root);
 				if (sc == NULL)
 					break;	/* XXX */
 			}

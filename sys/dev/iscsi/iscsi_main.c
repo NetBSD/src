@@ -200,6 +200,7 @@ iscsi_match(device_t self, cfdata_t cfdata, void *arg)
 void
 iscsiattach(int n)
 {
+	device_t dev;
 	int err;
 	cfdata_t cf;
 
@@ -226,7 +227,8 @@ iscsiattach(int n)
 	cf->cf_unit = 0;
 	cf->cf_fstate = FSTATE_NOTFOUND;
 
-	(void)config_attach_pseudo(cf);
+	dev = config_attach_pseudo(cf);
+	device_release(dev);
 	return;
 }
 
@@ -660,6 +662,7 @@ static int
 iscsi_modcmd(modcmd_t cmd, void *arg)
 {
 #ifdef _MODULE
+	device_t dev;
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
 	int error;
 	static struct sysctllog *clog;
@@ -701,13 +704,14 @@ iscsi_modcmd(modcmd_t cmd, void *arg)
 			return error;
 		}
 
-		if (config_attach_pseudo(iscsi_cfdata) == NULL) {
+		if ((dev = config_attach_pseudo(iscsi_cfdata)) == NULL) {
 			aprint_error("%s: config_attach_pseudo failed\n",
 				iscsi_cd.cd_name);
 			config_cfattach_detach(iscsi_cd.cd_name, &iscsi_ca);
 			config_cfdriver_detach(&iscsi_cd);
 			return ENXIO;
 		}
+		device_release(dev);
 
 		sysctl_iscsi_setup(&clog);
 #endif

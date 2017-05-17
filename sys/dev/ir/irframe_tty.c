@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.61.8.1 2017/04/27 05:36:35 pgoyette Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.61.8.2 2017/05/17 01:44:17 pgoyette Exp $	*/
 
 /*
  * TODO
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.61.8.1 2017/04/27 05:36:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.61.8.2 2017/05/17 01:44:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -322,6 +322,7 @@ irframetopen(dev_t dev, struct tty *tp)
 
 	splx(s);
 
+	device_release(d);
 	return (0);
 }
 
