@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.1 2017/05/15 09:58:22 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.2 2017/05/17 06:30:15 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -298,6 +298,117 @@ add_test_lifetime()
 	atf_add_test_case ${name}
 }
 
+prepare_file()
+{
+	local file=$1
+	local data="0123456789"
+
+	touch $file
+	for i in `seq 1 512`
+	do
+		echo $data >> $file
+	done
+}
+
+test_tcp()
+{
+	local proto=$1
+	local ip_local=$2
+	local ip_peer=$3
+	local port=1234
+	local file_send=./file.send
+	local file_recv=./file.recv
+	local opts=
+
+	if [ $proto = ipv4 ]; then
+		opts="-N -w 3 -4"
+	else
+		opts="-N -w 3 -6"
+	fi
+
+	# Start nc server
+	start_nc_server $SOCK_PEER $port $file_recv $proto
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	# Send a file to the server
+	prepare_file $file_send
+	atf_check -s exit:0 $HIJACKING nc $opts $ip_peer $port < $file_send
+
+	# Check if the file is transferred correctly
+	atf_check -s exit:0 diff -q $file_send $file_recv
+
+	stop_nc_server
+	rm -f $file_send $file_recv
+}
+
+test_tcp_ipv4()
+{
+	local ip_local=10.0.0.1
+	local ip_peer=10.0.0.2
+
+	rump_server_crypto_start $SOCK_LOCAL netipsec
+	rump_server_crypto_start $SOCK_PEER netipsec
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+	rump_server_add_iface $SOCK_PEER shmif0 $BUS
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_local/24
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	export RUMP_SERVER=$SOCK_PEER
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_peer/24
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	test_tcp ipv4 $ip_local $ip_peer
+}
+
+test_tcp_ipv6()
+{
+	local ip_local=fd00::1
+	local ip_peer=fd00::2
+
+	rump_server_crypto_start $SOCK_LOCAL netinet6 netipsec
+	rump_server_crypto_start $SOCK_PEER netinet6 netipsec
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+	rump_server_add_iface $SOCK_PEER shmif0 $BUS
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_local
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	export RUMP_SERVER=$SOCK_PEER
+	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_peer
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	test_tcp ipv6 $ip_local $ip_peer
+}
+
+add_test_tcp()
+{
+	local ipproto=$1
+	local name= desc=
+
+	name="ipsec_tcp_${ipproto}"
+	desc="Tests of TCP with IPsec enabled ($ipproto)"
+
+	atf_test_case ${name} cleanup
+	eval "								\
+	    ${name}_head() {						\
+	        atf_set \"descr\" \"$desc\";				\
+	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
+	    };								\
+	    ${name}_body() {						\
+	        test_tcp_${ipproto};					\
+	        rump_server_destroy_ifaces;				\
+	    };								\
+	    ${name}_cleanup() {						\
+	        $DEBUG && dump;						\
+	        cleanup;						\
+	    }								\
+	"
+	atf_add_test_case ${name}
+}
+
 atf_init_test_cases()
 {
 	local algo=
@@ -310,4 +421,7 @@ atf_init_test_cases()
 		add_test_lifetime ipv4 ah $algo
 		add_test_lifetime ipv6 ah $algo
 	done
+
+	add_test_tcp ipv4
+	add_test_tcp ipv6
 }
