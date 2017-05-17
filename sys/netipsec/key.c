@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.131 2017/05/17 02:04:55 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.132 2017/05/17 02:19:09 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.131 2017/05/17 02:04:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.132 2017/05/17 02:19:09 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.131 2017/05/17 02:04:55 ozaki-r Exp $");
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
@@ -332,26 +331,6 @@ do { \
 } while (0)
 
 MALLOC_DEFINE(M_SECA, "key mgmt", "security associations, key management");
-
-#if 1
-#define KMALLOC(p, t, n)                                                     \
-	((p) = (t) malloc((unsigned long)(n), M_SECA, M_NOWAIT))
-#define KFREE(p)                                                             \
-	free((p), M_SECA)
-#else
-#define KMALLOC(p, t, n) \
-do { \
-	((p) = malloc((unsigned long)(n), M_SECA, M_NOWAIT));             \
-	printf("%s %d: %p <- KMALLOC(%s, %d)\n",                             \
-	    __func__, __LINE__, (p), #t, n);                             	\
-} while (0)
-
-#define KFREE(p)                                                             \
-	do {                                                                 \
-		printf("%s %d: %p -> KFREE()\n", __func__, __LINE__, (p));   \
-		free((p), M_SECA);                                  \
-	} while (0)
-#endif
 
 /*
  * set parameters into secpolicyindex buffer.
@@ -2930,9 +2909,9 @@ key_delsah(struct secashead *sah)
 		LIST_REMOVE(sah, chain);
 
 	if (sah->idents != NULL)
-		KFREE(sah->idents);
+		kmem_free(sah->idents, sah->idents_len);
 	if (sah->identd != NULL)
-		KFREE(sah->identd);
+		kmem_free(sah->identd, sah->identd_len);
 
 	kmem_free(sah, sizeof(*sah));
 
@@ -3157,27 +3136,30 @@ key_freesaval(struct secasvar *sav)
 {
 
 	if (sav->replay != NULL) {
-		KFREE(sav->replay);
+		kmem_free(sav->replay, sav->replay_len);
 		sav->replay = NULL;
+		sav->replay_len = 0;
 	}
 	if (sav->key_auth != NULL) {
-		KFREE(sav->key_auth);
+		kmem_free(sav->key_auth, sav->key_auth_len);
 		sav->key_auth = NULL;
+		sav->key_auth_len = 0;
 	}
 	if (sav->key_enc != NULL) {
-		KFREE(sav->key_enc);
+		kmem_free(sav->key_enc, sav->key_enc_len);
 		sav->key_enc = NULL;
+		sav->key_enc_len = 0;
 	}
 	if (sav->lft_c != NULL) {
 		kmem_free(sav->lft_c, sizeof(*(sav->lft_c)));
 		sav->lft_c = NULL;
 	}
 	if (sav->lft_h != NULL) {
-		KFREE(sav->lft_h);
+		kmem_free(sav->lft_h, sizeof(*(sav->lft_h)));
 		sav->lft_h = NULL;
 	}
 	if (sav->lft_s != NULL) {
-		KFREE(sav->lft_s);
+		kmem_free(sav->lft_s, sizeof(*(sav->lft_s)));
 		sav->lft_s = NULL;
 	}
 }
@@ -3226,13 +3208,10 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 
 		/* replay window */
 		if ((sa0->sadb_sa_flags & SADB_X_EXT_OLD) == 0) {
-			sav->replay = (struct secreplay *)
-				malloc(sizeof(struct secreplay)+sa0->sadb_sa_replay, M_SECA, M_NOWAIT|M_ZERO);
-			if (sav->replay == NULL) {
-				ipseclog((LOG_DEBUG, "key_setsaval: No more memory.\n"));
-				error = ENOBUFS;
-				goto fail;
-			}
+			size_t len = sizeof(struct secreplay) +
+			    sa0->sadb_sa_replay;
+			sav->replay = kmem_zalloc(len, KM_SLEEP);
+			sav->replay_len = len;
 			if (sa0->sadb_sa_replay != 0)
 				sav->replay->bitmap = (char*)(sav->replay+1);
 			sav->replay->wsize = sa0->sadb_sa_replay;
@@ -3270,12 +3249,8 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 			goto fail;
 		}
 
-		sav->key_auth = (struct sadb_key *)key_newbuf(key0, len);
-		if (sav->key_auth == NULL) {
-			ipseclog((LOG_DEBUG, "key_setsaval: No more memory.\n"));
-			error = ENOBUFS;
-			goto fail;
-		}
+		sav->key_auth = key_newbuf(key0, len);
+		sav->key_auth_len = len;
 	}
 
 	/* Encryption key */
@@ -3298,12 +3273,8 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 				error = EINVAL;
 				break;
 			}
-			sav->key_enc = (struct sadb_key *)key_newbuf(key0, len);
-			if (sav->key_enc == NULL) {
-				ipseclog((LOG_DEBUG, "key_setsaval: No more memory.\n"));
-				error = ENOBUFS;
-				goto fail;
-			}
+			sav->key_enc = key_newbuf(key0, len);
+			sav->key_enc_len = len;
 			break;
 		case SADB_X_SATYPE_IPCOMP:
 			if (len != PFKEY_ALIGN8(sizeof(struct sadb_key)))
@@ -3370,14 +3341,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 			error = EINVAL;
 			goto fail;
 		}
-		sav->lft_h = (struct sadb_lifetime *)key_newbuf(lft0,
-		    sizeof(*lft0));
-		if (sav->lft_h == NULL) {
-			ipseclog((LOG_DEBUG, "key_setsaval: No more memory.\n"));
-			error = ENOBUFS;
-			goto fail;
-		}
-		/* to be initialize ? */
+		sav->lft_h = key_newbuf(lft0, sizeof(*lft0));
 	}
 
 	lft0 = (struct sadb_lifetime *)mhp->ext[SADB_EXT_LIFETIME_SOFT];
@@ -3386,13 +3350,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 			error = EINVAL;
 			goto fail;
 		}
-		sav->lft_s = (struct sadb_lifetime *)key_newbuf(lft0,
-		    sizeof(*lft0));
-		if (sav->lft_s == NULL) {
-			ipseclog((LOG_DEBUG, "key_setsaval: No more memory.\n"));
-			error = ENOBUFS;
-			goto fail;
-		}
+		sav->lft_s = key_newbuf(lft0, sizeof(*lft0));
 		/* to be initialize ? */
 	}
     }
@@ -4065,11 +4023,7 @@ key_newbuf(const void *src, u_int len)
 {
 	void *new;
 
-	KMALLOC(new, void *, len);
-	if (new == NULL) {
-		ipseclog((LOG_DEBUG, "key_newbuf: No more memory.\n"));
-		return NULL;
-	}
+	new = kmem_alloc(len, KM_SLEEP);
 	memcpy(new, src, len);
 
 	return new;
@@ -5553,6 +5507,7 @@ key_setident(struct secashead *sah, struct mbuf *m,
 	const struct sadb_ident *idsrc, *iddst;
 	int idsrclen, iddstlen;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(sah != NULL);
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
@@ -5562,12 +5517,14 @@ key_setident(struct secashead *sah, struct mbuf *m,
 	 * Can be called with an existing sah from key_update().
 	 */
 	if (sah->idents != NULL) {
-		KFREE(sah->idents);
+		kmem_free(sah->idents, sah->idents_len);
 		sah->idents = NULL;
+		sah->idents_len = 0;
 	}
 	if (sah->identd != NULL) {
-		KFREE(sah->identd);
+		kmem_free(sah->identd, sah->identd_len);
 		sah->identd = NULL;
+		sah->identd_len = 0;
 	}
 
 	/* don't make buffer if not there */
@@ -5607,18 +5564,10 @@ key_setident(struct secashead *sah, struct mbuf *m,
 	}
 
 	/* make structure */
-	KMALLOC(sah->idents, struct sadb_ident *, idsrclen);
-	if (sah->idents == NULL) {
-		ipseclog((LOG_DEBUG, "key_setident: No more memory.\n"));
-		return ENOBUFS;
-	}
-	KMALLOC(sah->identd, struct sadb_ident *, iddstlen);
-	if (sah->identd == NULL) {
-		KFREE(sah->idents);
-		sah->idents = NULL;
-		ipseclog((LOG_DEBUG, "key_setident: No more memory.\n"));
-		return ENOBUFS;
-	}
+	sah->idents = kmem_alloc(idsrclen, KM_SLEEP);
+	sah->idents_len = idsrclen;
+	sah->identd = kmem_alloc(iddstlen, KM_SLEEP);
+	sah->identd_len = iddstlen;
 	memcpy(sah->idents, idsrc, idsrclen);
 	memcpy(sah->identd, iddst, iddstlen);
 
