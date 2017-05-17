@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.65 2017/05/17 06:50:12 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.66 2017/05/17 06:52:08 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.65 2017/05/17 06:50:12 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.66 2017/05/17 06:52:08 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -774,13 +774,29 @@ crypto_dispatch(struct cryptop *crp)
 
 	mutex_spin_enter(&crypto_q_mtx);
 
+	cap = crypto_checkdriver(hid);
+	/*
+	 * TODO:
+	 * If we can ensure the driver has been valid until the driver is
+	 * done crypto_unregister(), this migrate operation is not required.
+	 */
+	if (cap == NULL) {
+		/*
+		 * The driver must be detached, so this request will migrate
+		 * to other drivers in cryptointr() later.
+		 */
+		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
+		mutex_spin_exit(&crypto_q_mtx);
+
+		return 0;
+	}
+
 	/*
 	 * Caller marked the request to be processed
 	 * immediately; dispatch it directly to the
 	 * driver unless the driver is currently blocked.
 	 */
-	cap = crypto_checkdriver(hid);
-	if (cap && !cap->cc_qblocked) {
+	if (!cap->cc_qblocked) {
 		mutex_spin_exit(&crypto_q_mtx);
 		result = crypto_invoke(crp, 0);
 		if (result == ERESTART) {
