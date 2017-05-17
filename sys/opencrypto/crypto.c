@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.70 2017/05/17 11:04:38 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.71 2017/05/17 12:11:41 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.70 2017/05/17 11:04:38 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.71 2017/05/17 12:11:41 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1272,24 +1272,30 @@ cryptointr(void)
 			if (cap->cc_qblocked != 0)
 				continue;
 
-			if (submit != NULL) {
-				/*
-				 * We stop on finding another op,
-				 * regardless whether its for the same
-				 * driver or not.  We could keep
-				 * searching the queue but it might be
-				 * better to just use a per-driver
-				 * queue instead.
-				 */
-				if (CRYPTO_SESID2HID(submit->crp_sid) == hid)
-					hint = CRYPTO_HINT_MORE;
-				break;
-			} else {
-				submit = crp;
-				if ((submit->crp_flags & CRYPTO_F_BATCH) == 0)
-					break;
-				/* keep scanning for more are q'd */
+			/*
+			 * skip batch crp until the end of crp_q
+			 */
+			if ((crp->crp_flags & CRYPTO_F_BATCH) != 0) {
+				if (submit == NULL) {
+					submit = crp;
+				} else {
+					if (CRYPTO_SESID2HID(submit->crp_sid)
+					    == hid)
+						hint = CRYPTO_HINT_MORE;
+				}
+
+				continue;
 			}
+
+			/*
+			 * found first crp which is neither blocked nor batch.
+			 */
+			submit = crp;
+			/*
+			 * batch crp can be processed much later, so clear hint.
+			 */
+			hint = 0;
+			break;
 		}
 		if (submit != NULL) {
 			TAILQ_REMOVE(&crp_q, submit, crp_next);
