@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.68 2017/05/17 07:12:50 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.69 2017/05/17 11:03:42 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.68 2017/05/17 07:12:50 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.69 2017/05/17 11:03:42 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1262,8 +1262,7 @@ cryptointr(void)
 			cap = crypto_checkdriver(hid);
 			if (cap == NULL || cap->cc_process == NULL) {
 				/* Op needs to be migrated, process it. */
-				if (submit == NULL)
-					submit = crp;
+				submit = crp;
 				break;
 			}
 			if (!cap->cc_qblocked) {
