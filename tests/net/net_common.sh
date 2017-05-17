@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.15 2017/04/14 02:56:48 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.16 2017/05/17 06:30:15 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -140,13 +140,20 @@ start_nc_server()
 	local sock=$1
 	local port=$2
 	local outfile=$3
+	local proto=${4:-ipv4}
 	local backup=$RUMP_SERVER
-	local pid=
+	local pid= opts=
 
 	export RUMP_SERVER=$sock
 
+	if [ $proto = ipv4 ]; then
+		opts="-l -4"
+	else
+		opts="-l -6"
+	fi
+
 	env LD_PRELOAD=/usr/lib/librumphijack.so \
-	    nc -l $port > $outfile &
+	    nc $opts $port > $outfile &
 	pid=$!
 	echo $pid > $NC_PID
 
