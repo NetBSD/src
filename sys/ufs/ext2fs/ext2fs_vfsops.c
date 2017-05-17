@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.208 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.208.2.1 2017/05/17 04:08:36 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.208 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.208.2.1 2017/05/17 04:08:36 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -301,6 +301,7 @@ ext2fs_mountroot(void)
 int
 ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	const struct bdevsw devsw;
 	struct lwp *l = curlwp;
 	struct vnode *devvp;
 	struct ufs_args *args = data;
@@ -342,8 +343,13 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 */
 			if (devvp->v_type != VBLK)
 				error = ENOTBLK;
-			else if (bdevsw_lookup(devvp->v_rdev) == NULL)
-				error = ENXIO;
+			else {
+				devsw = bdevsw_lookup_acquire(devvp->v_rdev);
+				if (devsw == NULL)
+					error = ENXIO;
+				else
+					bdevsw_release(devsw);
+			}
 		} else {
 		        /*
 			 * Be sure we're still naming the same device
