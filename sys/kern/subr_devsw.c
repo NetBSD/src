@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.37.2.3 2017/04/28 03:41:26 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.37.2.4 2017/05/17 04:33:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.37.2.3 2017/04/28 03:41:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.37.2.4 2017/05/17 04:33:03 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -505,8 +505,7 @@ void
 bdevsw_release(const struct bdevsw *bd)
 {
 
-	KASSERT(bd != NULL);
-	if (bd->d_localcount != NULL)
+	if (bd != NULL && bd->d_localcount != NULL)
 		localcount_release(bd->d_localcount, &device_cv, &device_lock);
 }
 
@@ -569,8 +568,7 @@ void
 cdevsw_release(const struct cdevsw *cd)
 {
 
-	KASSERT(cd != NULL);
-	if (cd->d_localcount != NULL)
+	if (cd != NULL && cd->d_localcount != NULL)
 		localcount_release(cd->d_localcount, &device_cv, &device_lock);
 }
 
