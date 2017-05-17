@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.99.4.2 2017/05/17 01:44:18 pgoyette Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.99.4.3 2017/05/17 02:40:58 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.99.4.2 2017/05/17 01:44:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.99.4.3 2017/05/17 02:40:58 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -808,6 +808,7 @@ tap_dev_cloner(struct lwp *l)
 	    (void *)(intptr_t)device_unit(sc->sc_dev));
 
 	device_release(sc->sc_dev);
+	return rv;
 }
 
 /*
