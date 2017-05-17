@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.89.8.3 2017/05/17 04:26:14 pgoyette Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.89.8.4 2017/05/17 04:29:46 pgoyette Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.89.8.3 2017/05/17 04:26:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.89.8.4 2017/05/17 04:29:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1192,23 +1192,23 @@ mscp_device_lookup(dev_t dev)
 	ra = NULL;
 #if NRA
 	if (( dev_cdevsw = cdevsw_lookup_acquire(dev)) == &ra_cdevsw) {
-		ra = device_lookup_private(&ra_cd, unit);
+		ra = device_lookup_private_acquire(&ra_cd, unit);
 		cdevsw_release(dev_cdevsw);
 		return ra;
 	} else
 		cdevsw_release(dev_cdevsw);
 #endif
 #if NRACD
-	if ((dev_cdevsw = cdevsw_lookup(dev)) == &racd_cdevsw) {
-		ra = device_lookup_private(&racd_cd, unit);
+	if ((dev_cdevsw = cdevsw_lookup_acquire(dev)) == &racd_cdevsw) {
+		ra = device_lookup_private_acquire(&racd_cd, unit);
 		cdevsw_release(dev_cdevsw);
 		return ra;
 	} else
 		cdevsw_release(dev_cdevsw);
 #endif
 #if NRX
-	if (cdevsw_lookup(dev) == &rx_cdevsw)
-		ra = device_lookup_private(&rx_cd, unit);
+	if ((dev_cdevsw = cdevsw_lookup_acquire(dev)) == &rx_cdevsw)
+		ra = device_lookup_private_acquire(&rx_cd, unit);
 		cdevsw_release(dev_cdevsw);
 		return ra;
 	else
