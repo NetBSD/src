@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.63 2017/05/10 09:45:51 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.64 2017/05/17 06:33:04 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.63 2017/05/10 09:45:51 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.64 2017/05/17 06:33:04 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -363,7 +363,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 		/* See if all the algorithms are supported. */
 		for (cr = cri; cr; cr = cr->cri_next)
 			if (crypto_drivers[hid].cc_alg[cr->cri_alg] == 0) {
-				DPRINTF(("crypto_newsession: alg %d not supported\n", cr->cri_alg));
+				DPRINTF("alg %d not supported\n", cr->cri_alg);
 				break;
 			}
 
@@ -387,8 +387,8 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 				(*sid) |= (lid & 0xffffffff);
 				crypto_drivers[hid].cc_sessions++;
 			} else {
-				DPRINTF(("%s: crypto_drivers[%d].cc_newsession() failed. error=%d\n",
-					__func__, hid, err));
+				DPRINTF("crypto_drivers[%d].cc_newsession() failed. error=%d\n",
+					hid, err);
 			}
 			goto done;
 			/*break;*/
@@ -746,8 +746,7 @@ crypto_dispatch(struct cryptop *crp)
 	hid = CRYPTO_SESID2HID(crp->crp_sid);
 
 	mutex_spin_enter(&crypto_q_mtx);
-	DPRINTF(("crypto_dispatch: crp %p, alg %d\n",
-		crp, crp->crp_desc->crd_alg));
+	DPRINTF("crp %p, alg %d\n", crp, crp->crp_desc->crd_alg);
 
 	cryptostats.cs_ops++;
 
@@ -980,7 +979,7 @@ crypto_invoke(struct cryptop *crp, int hint)
 		/*
 		 * Invoke the driver to process the request.
 		 */
-		DPRINTF(("calling process for %p\n", crp));
+		DPRINTF("calling process for %p\n", crp);
 		return (*process)(arg, crp, hint);
 	} else {
 		struct cryptodesc *crd;
@@ -1015,8 +1014,7 @@ crypto_freereq(struct cryptop *crp)
 
 	if (crp == NULL)
 		return;
-	DPRINTF(("crypto_freereq[%u]: crp %p\n",
-		CRYPTO_SESID2LID(crp->crp_sid), crp));
+	DPRINTF("lid[%u]: crp %p\n", CRYPTO_SESID2LID(crp->crp_sid), crp);
 
 	/* sanity check */
 	if (crp->crp_flags & CRYPTO_F_ONRETQ) {
@@ -1076,8 +1074,7 @@ crypto_done(struct cryptop *crp)
 	if (crypto_timing)
 		crypto_tstat(&cryptostats.cs_done, &crp->crp_tstamp);
 #endif
-	DPRINTF(("crypto_done[%u]: crp %p\n",
-		CRYPTO_SESID2LID(crp->crp_sid), crp));
+	DPRINTF("lid[%u]: crp %p\n", CRYPTO_SESID2LID(crp->crp_sid), crp);
 
 	/*
 	 * Normal case; queue the callback for the thread.
@@ -1123,20 +1120,20 @@ crypto_done(struct cryptop *crp)
 			 * the same context, we can skip enqueueing crp_ret_q
 			 * and cv_signal(&cryptoret_cv).
 			 */
-			DPRINTF(("crypto_done[%u]: crp %p CRYPTO_F_USER\n",
-				CRYPTO_SESID2LID(crp->crp_sid), crp));
+			DPRINTF("lid[%u]: crp %p CRYPTO_F_USER\n",
+				CRYPTO_SESID2LID(crp->crp_sid), crp);
 		} else
 #endif
 		{
 			wasempty = TAILQ_EMPTY(&crp_ret_q);
-			DPRINTF(("crypto_done[%u]: queueing %p\n",
-				CRYPTO_SESID2LID(crp->crp_sid), crp));
+			DPRINTF("lid[%u]: queueing %p\n",
+				CRYPTO_SESID2LID(crp->crp_sid), crp);
 			crp->crp_flags |= CRYPTO_F_ONRETQ;
 			TAILQ_INSERT_TAIL(&crp_ret_q, crp, crp_next);
 			if (wasempty) {
-				DPRINTF(("crypto_done[%u]: waking cryptoret, "
+				DPRINTF("lid[%u]: waking cryptoret, "
 					"crp %p hit empty queue\n.",
-					CRYPTO_SESID2LID(crp->crp_sid), crp));
+					CRYPTO_SESID2LID(crp->crp_sid), crp);
 				cv_signal(&cryptoret_cv);
 			}
 		}

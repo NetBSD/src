@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.89 2017/04/24 03:29:37 knakahara Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.90 2017/05/17 06:33:04 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.89 2017/04/24 03:29:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.90 2017/05/17 06:33:04 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,11 +336,11 @@ mbail:
 		cse = csefind(fcr, cop->ses);
 		mutex_exit(&crypto_mtx);
 		if (cse == NULL) {
-			DPRINTF(("csefind failed\n"));
+			DPRINTF("csefind failed\n");
 			return EINVAL;
 		}
 		error = cryptodev_op(cse, cop, curlwp);
-		DPRINTF(("cryptodev_op error = %d\n", error));
+		DPRINTF("cryptodev_op error = %d\n", error);
 		break;
 	case CIOCNCRYPTM:
 		mutex_enter(&crypto_mtx);
@@ -362,7 +362,7 @@ mbail:
 		break;
 	case CIOCKEY:
 		error = cryptodev_key((struct crypt_kop *)data);
-		DPRINTF(("cryptodev_key error = %d\n", error));
+		DPRINTF("cryptodev_key error = %d\n", error);
 		break;
 	case CIOCNFKEYM:
 		mutex_enter(&crypto_mtx);
@@ -446,14 +446,14 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 			return EINVAL;
 	}
 
-	DPRINTF(("cryptodev_op[%u]: iov_len %d\n",
-		CRYPTO_SESID2LID(cse->sid), iov_len));
+	DPRINTF("cryptodev_op[%u]: iov_len %d\n",
+		CRYPTO_SESID2LID(cse->sid), iov_len);
 	if ((cse->tcomp) && cop->dst_len) {
 		if (iov_len < cop->dst_len) {
 			/* Need larger iov to deal with decompress */
 			iov_len = cop->dst_len;
 		}
-		DPRINTF(("cryptodev_op: iov_len -> %d for decompress\n", iov_len));
+		DPRINTF("cryptodev_op: iov_len -> %d for decompress\n", iov_len);
 	}
 
 	(void)memset(&cse->uio, 0, sizeof(cse->uio));
@@ -470,17 +470,16 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	if (iov_len > 0)
 		cse->uio.uio_iov[0].iov_base = kmem_alloc(iov_len, KM_SLEEP);
 	cse->uio.uio_resid = cse->uio.uio_iov[0].iov_len;
-	DPRINTF(("cryptodev_op[%u]: uio.iov_base %p malloced %d bytes\n",
+	DPRINTF("lid[%u]: uio.iov_base %p malloced %d bytes\n",
 		CRYPTO_SESID2LID(cse->sid),
-		cse->uio.uio_iov[0].iov_base, iov_len));
+		cse->uio.uio_iov[0].iov_base, iov_len);
 
 	crp = crypto_getreq((cse->tcomp != NULL) + (cse->txform != NULL) + (cse->thash != NULL));
 	if (crp == NULL) {
 		error = ENOMEM;
 		goto bail;
 	}
-	DPRINTF(("cryptodev_op[%u]: crp %p\n",
-		CRYPTO_SESID2LID(cse->sid), crp));
+	DPRINTF("lid[%u]: crp %p\n", CRYPTO_SESID2LID(cse->sid), crp);
 
 	/* crds are always ordered tcomp, thash, then txform */
 	/* with optional missing links */
@@ -506,10 +505,10 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 		}
 	}
 
-	DPRINTF(("ocf[%u]: iov_len %zu, cop->len %u\n",
+	DPRINTF("ocf[%u]: iov_len %zu, cop->len %u\n",
 			CRYPTO_SESID2LID(cse->sid),
 			cse->uio.uio_iov[0].iov_len, 
-			cop->len));
+			cop->len);
 
 	if ((error = copyin(cop->src, cse->uio.uio_iov[0].iov_base, cop->len)))
 	{
@@ -538,8 +537,8 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 		crdc->crd_alg = cse->comp_alg;
 		crdc->crd_key = NULL;
 		crdc->crd_klen = 0;
-		DPRINTF(("cryptodev_op[%u]: crdc setup for comp_alg %d.\n",
-			CRYPTO_SESID2LID(cse->sid), crdc->crd_alg));
+		DPRINTF("lid[%u]: crdc setup for comp_alg %d.\n",
+			CRYPTO_SESID2LID(cse->sid), crdc->crd_alg);
 	}
 
 	if (crda) {
@@ -550,7 +549,7 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 		crda->crd_alg = cse->mac;
 		crda->crd_key = cse->mackey;
 		crda->crd_klen = cse->mackeylen * 8;
-		DPRINTF(("cryptodev_op: crda setup for mac %d.\n", crda->crd_alg));
+		DPRINTF("crda setup for mac %d.\n", crda->crd_alg);
 	}
 
 	if (crde) {
@@ -575,7 +574,7 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 		crde->crd_alg = cse->cipher;
 		crde->crd_key = cse->key;
 		crde->crd_klen = cse->keylen * 8;
-		DPRINTF(("cryptodev_op: crde setup for cipher %d.\n", crde->crd_alg));
+		DPRINTF("crde setup for cipher %d.\n", crde->crd_alg);
 	}
 
 
@@ -659,28 +658,28 @@ eagain:
 	case 0:
 		break;
 	default:
-		DPRINTF(("cryptodev_op: not waiting, error.\n"));
+		DPRINTF("not waiting, error.\n");
 		mutex_exit(&crypto_mtx);
 		cv_destroy(&crp->crp_cv);
 		goto bail;
 	}
 
 	while (!(crp->crp_flags & CRYPTO_F_DQRETQ)) {
-		DPRINTF(("cryptodev_op[%d]: sleeping on cv %p for crp %p\n",
-			(uint32_t)cse->sid, &crp->crp_cv, crp));
+		DPRINTF("cse->sid[%d]: sleeping on cv %p for crp %p\n",
+			(uint32_t)cse->sid, &crp->crp_cv, crp);
 		cv_wait(&crp->crp_cv, &crypto_mtx);	/* XXX cv_wait_sig? */
 	}
 	mutex_exit(&crypto_mtx);
 	cv_destroy(&crp->crp_cv);
 
 	if (crp->crp_etype != 0) {
-		DPRINTF(("cryptodev_op: crp_etype %d\n", crp->crp_etype));
+		DPRINTF("crp_etype %d\n", crp->crp_etype);
 		error = crp->crp_etype;
 		goto bail;
 	}
 
 	if (cse->error) {
-		DPRINTF(("cryptodev_op: cse->error %d\n", cse->error));
+		DPRINTF("cse->error %d\n", cse->error);
 		error = cse->error;
 		goto bail;
 	}
@@ -696,18 +695,18 @@ eagain:
 	}
 
 	if (cop->dst) {
-		DPRINTF(("cryptodev_op: copyout %d bytes to %p\n", dst_len, cop->dst));
+		DPRINTF("copyout %d bytes to %p\n", dst_len, cop->dst);
 	}
 	if (cop->dst &&
 	    (error = copyout(cse->uio.uio_iov[0].iov_base, cop->dst, dst_len)))
 	{
-		DPRINTF(("cryptodev_op: copyout error %d\n", error));
+		DPRINTF("copyout error %d\n", error);
 		goto bail;
 	}
 
 	if (cop->mac &&
 	    (error = copyout(crp->crp_mac, cop->mac, cse->thash->authsize))) {
-		DPRINTF(("cryptodev_op: mac copyout error %d\n", error));
+		DPRINTF("mac copyout error %d\n", error);
 		goto bail;
 	}
 
@@ -893,8 +892,7 @@ cryptodev_key(struct crypt_kop *kop)
 	mutex_exit(&crypto_mtx);
 
 	if (krp->krp_status != 0) {
-		DPRINTF(("cryptodev_key: krp->krp_status 0x%08x\n",
-		    krp->krp_status));
+		DPRINTF("krp->krp_status 0x%08x\n", krp->krp_status);
 		error = krp->krp_status;
 		goto fail;
 	}
@@ -907,8 +905,8 @@ cryptodev_key(struct crypt_kop *kop)
 		error = copyout(krp->krp_param[i].crp_p,
 		    kop->crk_param[i].crp_p, size);
 		if (error) {
-			DPRINTF(("cryptodev_key: copyout oparam %d failed, "
-			    "error=%d\n", i-krp->krp_iparams, error));
+			DPRINTF("copyout oparam %d failed, "
+			    "error=%d\n", i-krp->krp_iparams, error);
 			goto fail;
 		}
 	}
@@ -926,7 +924,7 @@ fail:
 	}
 	cv_destroy(&krp->krp_cv);
 	pool_put(&cryptkop_pool, krp);
-	DPRINTF(("cryptodev_key: error=0x%08x\n", error));
+	DPRINTF("error=0x%08x\n", error);
 	return error;
 }
 
@@ -1131,7 +1129,7 @@ cryptodev_mop(struct fcrypt *fcr,
 		mutex_enter(&crypto_mtx);
 		cse = csefind(fcr, cnop[req].ses);
 		if (cse == NULL) {
-			DPRINTF(("csefind failed\n"));
+			DPRINTF("csefind failed\n");
 			cnop[req].status = EINVAL;
 			mutex_exit(&crypto_mtx);
 			continue;
@@ -1139,7 +1137,7 @@ cryptodev_mop(struct fcrypt *fcr,
 		mutex_exit(&crypto_mtx);
 	
 		if (cnop[req].len > 256*1024-4) {
-			DPRINTF(("length failed\n"));
+			DPRINTF("length failed\n");
 			cnop[req].status = EINVAL;
 			continue;
 		}
@@ -1169,7 +1167,7 @@ cryptodev_mop(struct fcrypt *fcr,
 				/* Need larger iov to deal with decompress */
 				iov_len = cnop[req].dst_len;
 			}
-			DPRINTF(("cryptodev_mop: iov_len -> %d for decompress\n", iov_len));
+			DPRINTF("iov_len -> %d for decompress\n", iov_len);
 		}
 
 		(void)memset(&crp->uio, 0, sizeof(crp->uio));
@@ -1180,7 +1178,7 @@ cryptodev_mop(struct fcrypt *fcr,
 		UIO_SETUP_SYSSPACE(&crp->uio);
 		memset(&crp->iovec, 0, sizeof(crp->iovec));
 		crp->uio.uio_iov[0].iov_len = iov_len;
-		DPRINTF(("cryptodev_mop: kmem_alloc(%d) for iov \n", iov_len));
+		DPRINTF("kmem_alloc(%d) for iov \n", iov_len);
 		crp->uio.uio_iov[0].iov_base = kmem_alloc(iov_len, KM_SLEEP);
 		crp->uio.uio_resid = crp->uio.uio_iov[0].iov_len;
 
@@ -1228,10 +1226,10 @@ cryptodev_mop(struct fcrypt *fcr,
 			crdc->crd_alg = cse->comp_alg;
 			crdc->crd_key = NULL;
 			crdc->crd_klen = 0;
-			DPRINTF(("cryptodev_mop[%d]: crdc setup for comp_alg %d"
+			DPRINTF("cse->sid[%d]: crdc setup for comp_alg %d"
 				 " len %d.\n",
 				(uint32_t)cse->sid, crdc->crd_alg,
-				crdc->crd_len));
+				crdc->crd_len);
 		}
 	
 		if (crda) {
@@ -1280,9 +1278,9 @@ cryptodev_mop(struct fcrypt *fcr,
 		crp->dst = cnop[req].dst;
 		crp->len = cnop[req].len; /* input len, iov may be larger */
 		crp->mac = cnop[req].mac;
-		DPRINTF(("cryptodev_mop: iov_base %p dst %p len %d mac %p\n",
+		DPRINTF("iov_base %p dst %p len %d mac %p\n",
 			    crp->uio.uio_iov[0].iov_base, crp->dst, crp->len,
-			    crp->mac));
+			    crp->mac);
 
 		if (cnop[req].iv) {
 			if (crde == NULL) {
@@ -1340,7 +1338,7 @@ eagain:
 		case 0:
 			break;
 		default:
-			DPRINTF(("cryptodev_op: not waiting, error.\n"));
+			DPRINTF("not waiting, error.\n");
 			mutex_exit(&crypto_mtx);
 			cv_destroy(&crp->crp_cv);
 			goto bail;
@@ -1500,7 +1498,7 @@ fail:
 		}
 		error = 0;
 	}
-	DPRINTF(("cryptodev_key: error=0x%08x\n", error));
+	DPRINTF("error=0x%08x\n", error);
 	return error;
 }
 
@@ -1517,7 +1515,7 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 	u_int64_t sid;
 	int error = 0;
 
-	DPRINTF(("cryptodev_session() cipher=%d, mac=%d\n", sop->cipher, sop->mac));
+	DPRINTF("cipher=%d, mac=%d\n", sop->cipher, sop->mac);
 
 	/* XXX there must be a way to not embed the list of xforms here */
 	switch (sop->cipher) {
@@ -1560,7 +1558,7 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 		txform = &enc_xform_arc4;
 		break;
 	default:
-		DPRINTF(("Invalid cipher %d\n", sop->cipher));
+		DPRINTF("Invalid cipher %d\n", sop->cipher);
 		return EINVAL;
 	}
 
@@ -1572,10 +1570,10 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 		break;
 	case CRYPTO_GZIP_COMP:
 		tcomp = &comp_algo_gzip;
-		DPRINTF(("cryptodev_session() tcomp for GZIP\n"));
+		DPRINTF("tcomp for GZIP\n");
 		break;
 	default:
-		DPRINTF(("Invalid compression alg %d\n", sop->comp_alg));
+		DPRINTF("Invalid compression alg %d\n", sop->comp_alg);
 		return EINVAL;
 	}
 
@@ -1603,7 +1601,7 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 		} else if (sop->mackeylen == auth_hash_hmac_sha2_512.keysize) {
 			thash = &auth_hash_hmac_sha2_512;
 		} else {
-			DPRINTF(("Invalid mackeylen %d\n", sop->mackeylen));
+			DPRINTF("Invalid mackeylen %d\n", sop->mackeylen);
 			return EINVAL;
 		}
 		break;
@@ -1635,7 +1633,7 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 		thash = &auth_hash_null;
 		break;
 	default:
-		DPRINTF(("Invalid mac %d\n", sop->mac));
+		DPRINTF("Invalid mac %d\n", sop->mac);
 		return EINVAL;
 	}
 
@@ -1646,7 +1644,7 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 	if (tcomp) {
 		cric.cri_alg = tcomp->type;
 		cric.cri_klen = 0;
-		DPRINTF(("tcomp->type = %d\n", tcomp->type));
+		DPRINTF("tcomp->type = %d\n", tcomp->type);
 
 		crihead = &cric;
 		if (txform) {
@@ -1661,8 +1659,8 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 		crie.cri_klen = sop->keylen * 8;
 		if (sop->keylen > txform->maxkey ||
 		    sop->keylen < txform->minkey) {
-			DPRINTF(("keylen %d not in [%d,%d]\n",
-			    sop->keylen, txform->minkey, txform->maxkey));
+			DPRINTF("keylen %d not in [%d,%d]\n",
+			    sop->keylen, txform->minkey, txform->maxkey);
 			error = EINVAL;
 			goto bail;
 		}
@@ -1681,8 +1679,8 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 		cria.cri_alg = thash->type;
 		cria.cri_klen = sop->mackeylen * 8;
 		if (sop->mackeylen != thash->keysize) {
-			DPRINTF(("mackeylen %d != keysize %d\n",
-			    sop->mackeylen, thash->keysize));
+			DPRINTF("mackeylen %d != keysize %d\n",
+			    sop->mackeylen, thash->keysize);
 			error = EINVAL;
 			goto bail;
 		}
@@ -1701,20 +1699,19 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 
 	error = crypto_newsession(&sid, crihead, crypto_devallowsoft);
 	if (!error) {
-		DPRINTF(("cryptodev_session: got session %d\n", (uint32_t)sid));
+		DPRINTF("got session %d\n", (uint32_t)sid);
 		cse = csecreate(fcr, sid, crie.cri_key, crie.cri_klen,
 		    cria.cri_key, cria.cri_klen, (txform ? sop->cipher : 0), sop->mac,
 		    (tcomp ? sop->comp_alg : 0), txform, thash, tcomp);
 		if (cse != NULL) {
 			sop->ses = cse->ses;
 		} else {
-			DPRINTF(("csecreate failed\n"));
+			DPRINTF("csecreate failed\n");
 			crypto_freesession(sid);
 			error = EINVAL;
 		}
 	} else {
-		DPRINTF(("SIOCSESSION violates kernel parameters %d\n",
-		    error));
+		DPRINTF("SIOCSESSION violates kernel parameters %d\n", error);
 	}
 bail:
 	if (error) {
@@ -1813,7 +1810,7 @@ cryptodev_getmstatus(struct fcrypt *fcr, struct crypt_result *crypt_res,
 			if (cse != NULL) {
 				crypt_res[req].status = 0;
 			} else {
-				DPRINTF(("csefind failed\n"));
+				DPRINTF("csefind failed\n");
 				crypt_res[req].status = EINVAL;
 			}
 			req++;
@@ -1878,9 +1875,8 @@ bail:
 				crypt_res[req].opaque = krp->krp_usropaque;
 				completed++;
 				if (krp->krp_status != 0) {
-					DPRINTF(("cryptodev_key: "
-					    "krp->krp_status 0x%08x\n",
-					    krp->krp_status));
+					DPRINTF("krp->krp_status 0x%08x\n",
+					    krp->krp_status);
 					crypt_res[req].status = krp->krp_status;
 					goto fail;
 				}
@@ -1895,11 +1891,10 @@ bail:
 					    (krp->krp_param[i].crp_p,
 					    krp->crk_param[i].crp_p, size);
 					if (crypt_res[req].status) {
-						DPRINTF(("cryptodev_key: "
-						    "copyout oparam %d failed, "
+						DPRINTF("copyout oparam %d failed, "
 						    "error=%d\n",
 						    i - krp->krp_iparams, 
-						    crypt_res[req].status));
+						    crypt_res[req].status);
 						goto fail;
 					}
 				}
@@ -1943,7 +1938,7 @@ cryptodev_getstatus (struct fcrypt *fcr, struct crypt_result *crypt_res)
 		        crypt_res->opaque = crp->crp_usropaque;
 			cse = csefind(fcr, cse->ses);
 			if (cse == NULL) {
-				DPRINTF(("csefind failed\n"));
+				DPRINTF("csefind failed\n");
 				crypt_res->status = EINVAL;
 				goto bail;
 			}
@@ -1980,9 +1975,8 @@ bail:
 		if(krp && (krp->krp_reqid == crypt_res->reqid)) {
 			crypt_res[req].opaque = krp->krp_usropaque;
 			if (krp->krp_status != 0) {
-				DPRINTF(("cryptodev_key: "
-				    "krp->krp_status 0x%08x\n", 
-				    krp->krp_status));
+				DPRINTF("krp->krp_status 0x%08x\n", 
+				    krp->krp_status);
 				crypt_res[req].status = krp->krp_status;
 				goto fail;
 			}
@@ -1996,10 +1990,10 @@ bail:
 				    krp->krp_param[i].crp_p, 
 				    krp->crk_param[i].crp_p, size);
 				if (crypt_res[req].status) {
-					DPRINTF(("cryptodev_key: copyout oparam"
+					DPRINTF("copyout oparam "
 					    "%d failed, error=%d\n", 
 					    i - krp->krp_iparams, 
-					    crypt_res[req].status));
+					    crypt_res[req].status);
 					goto fail;
 				}
 			}
