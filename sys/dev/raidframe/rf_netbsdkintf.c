@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.349.4.2 2017/04/29 11:12:14 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.349.4.3 2017/05/17 01:44:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.349.4.2 2017/04/29 11:12:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.349.4.3 2017/05/17 01:44:18 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1866,6 +1866,7 @@ raidinit(struct raid_softc *rs)
 	rs->sc_flags |= RAIDF_INITED;
 
 	dkwedge_discover(&dksc->sc_dkdev);
+	device_release(dev);
 }
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)

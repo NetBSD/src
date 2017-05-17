@@ -1,4 +1,4 @@
-/*	$NetBSD: nandemulator.c,v 1.7 2015/08/20 14:40:18 christos Exp $	*/
+/*	$NetBSD: nandemulator.c,v 1.7.8.1 2017/05/17 01:44:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.7 2015/08/20 14:40:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.7.8.1 2017/05/17 01:44:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -137,6 +137,7 @@ void
 nandemulatorattach(int n)
 {
 	int i, err;
+	device_t dev;
 	cfdata_t cf;
 
 	aprint_debug("nandemulator: requested %d units\n", n);
@@ -161,7 +162,8 @@ nandemulatorattach(int n)
 		cf->cf_unit = i;
 		cf->cf_fstate = FSTATE_STAR;
 
-		(void)config_attach_pseudo(cf);
+		dev = config_attach_pseudo(cf);
+		device_release(dev);
 	}
 }
 
@@ -754,6 +756,7 @@ static struct cfdata nandemulator_cfdata[] = {
 static int
 nandemulator_modcmd(modcmd_t cmd, void *arg)
 {
+	device_t dev;
 	int error;
 
 	switch (cmd) {
@@ -784,7 +787,8 @@ nandemulator_modcmd(modcmd_t cmd, void *arg)
 			return error;
 		}
 
-		(void)config_attach_pseudo(nandemulator_cfdata);
+		dev = config_attach_pseudo(nandemulator_cfdata);
+		device_release(dev);
 
 		return 0;
 

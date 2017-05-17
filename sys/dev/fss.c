@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.97.4.3 2017/04/29 11:12:14 pgoyette Exp $	*/
+/*	$NetBSD: fss.c,v 1.97.4.4 2017/05/17 01:44:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.97.4.3 2017/04/29 11:12:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.97.4.4 2017/05/17 01:44:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,6 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 		cf->cf_unit = minor(dev);
 		cf->cf_fstate = FSTATE_STAR;
 		self = config_attach_pseudo(cf);
-		device_acquire(self);
 		sc = device_private(self);
 		if (sc == NULL) {
 			device_release(self);

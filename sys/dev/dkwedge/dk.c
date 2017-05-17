@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.96.4.1 2017/04/27 05:36:35 pgoyette Exp $	*/
+/*	$NetBSD: dk.c,v 1.96.4.2 2017/05/17 01:44:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.96.4.1 2017/04/27 05:36:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.96.4.2 2017/05/17 01:44:17 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -483,6 +483,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	    sc->sc_size, sc->sc_offset,
 	    sc->sc_ptype[0] == '\0' ? "<unknown>" : sc->sc_ptype);
 
+	device_release(sc->sc_dev);
 	return (0);
 }
 

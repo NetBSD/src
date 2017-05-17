@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.27 2013/06/28 14:44:15 christos Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.27.24.1 2017/05/17 01:44:17 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.27 2013/06/28 14:44:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.27.24.1 2017/05/17 01:44:17 pgoyette Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -332,6 +332,7 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 	sc->sc_tp = tp;
 
 	splx(s);
+	device_release(self);
 	return (0);
 }
 

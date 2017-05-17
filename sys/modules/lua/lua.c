@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.20.2.2 2017/04/29 10:19:32 pgoyette Exp $ */
+/*	$NetBSD: lua.c,v 1.20.2.3 2017/05/17 01:44:18 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -830,6 +830,7 @@ lua_modcmd(modcmd_t cmd, void *opaque)
 {
 #ifdef _MODULE
 	devmajor_t cmajor, bmajor;
+	device_t lua_dev;
 	int error = 0;
 
 	cmajor = bmajor = NODEVMAJOR;
@@ -867,7 +868,8 @@ lua_modcmd(modcmd_t cmd, void *opaque)
 			config_cfdriver_detach(&lua_cd);
 			return error;
 		}
-		config_attach_pseudo(lua_cfdata);
+		lua_dev = config_attach_pseudo(lua_cfdata);
+		device_release(lua_dev);
 #endif
 		return 0;
 	case MODULE_CMD_FINI:

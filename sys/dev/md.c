@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.78.6.5 2017/05/14 05:38:38 pgoyette Exp $	*/
+/*	$NetBSD: md.c,v 1.78.6.6 2017/05/17 01:44:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.78.6.5 2017/05/14 05:38:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.78.6.6 2017/05/17 01:44:17 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -262,7 +262,6 @@ static int
 mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	device_t self;
-	device_t new_self __diagused;
 	int unit;
 	int part = DISKPART(dev);
 	int pmask = 1 << part;
@@ -286,9 +285,7 @@ mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		cf->cf_atname = md_cd.cd_name;
 		cf->cf_unit = unit;
 		cf->cf_fstate = FSTATE_STAR;
-		new_self = config_attach_pseudo(cf);
-		self = device_lookup_acquire(&md_cd, unit);
-		KASSERT(self == new_self);
+		self = config_attach_pseudo(cf);
 		sc = device_private(self);
 		if (sc == NULL) {
 			mutex_exit(&md_device_lock);

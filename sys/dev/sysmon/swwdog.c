@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.19 2015/05/12 10:20:14 pgoyette Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.19.8.1 2017/05/17 01:44:18 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.19 2015/05/12 10:20:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.19.8.1 2017/05/17 01:44:18 pgoyette Exp $");
 
 /*
  *
@@ -145,6 +145,7 @@ swwdogattach(int n __unused)
 		workqueue_destroy(wq);
 		return 1;
 	}
+	device_release(dev);
 	return 0;
 }
 

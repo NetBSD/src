@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.28.4.2 2017/04/29 11:12:14 pgoyette Exp $ */
+/* $NetBSD: pad.c,v 1.28.4.3 2017/05/17 01:44:17 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.28.4.2 2017/04/29 11:12:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.28.4.3 2017/05/17 01:44:17 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -154,6 +154,7 @@ void
 padattach(int n)
 {
 	int i, err;
+	device_t dev;
 	cfdata_t cf;
 
 	aprint_debug("pad: requested %d units\n", n);
@@ -178,7 +179,8 @@ padattach(int n)
 		cf->cf_unit = i;
 		cf->cf_fstate = FSTATE_STAR;
 
-		(void)config_attach_pseudo(cf);
+		dev = config_attach_pseudo(cf);
+		device_release(dev);
 	}
 
 	return;
@@ -740,6 +742,7 @@ static struct cfdata pad_cfdata[] = {
 static int
 pad_modcmd(modcmd_t cmd, void *arg)
 {
+	device_t dev;
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
 	int error;
 
@@ -784,7 +787,8 @@ pad_modcmd(modcmd_t cmd, void *arg)
 			return error;
 		}
 
-		(void)config_attach_pseudo(pad_cfdata);
+		dev = config_attach_pseudo(pad_cfdata);
+		device_release(dev);
 
 		return 0;
 	case MODULE_CMD_FINI:

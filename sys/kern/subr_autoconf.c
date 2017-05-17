@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.252.4.3 2017/04/30 05:18:53 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.252.4.4 2017/05/17 01:44:18 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.252.4.3 2017/04/30 05:18:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.252.4.4 2017/05/17 01:44:18 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1654,6 +1654,10 @@ config_attach(device_t parent, cfdata_t cf, void *aux, cfprint_t print)
  * Note that because pseudo-devices are attached silently, any information
  * the attach routine wishes to print should be prefixed with the device
  * name by the attach routine.
+ *
+ * Also note that config_attach_pseudo() returns with a localcount
+ * reference held on the device_t.  It is the caller's responsibility
+ * to release this reference.
  */
 device_t
 config_attach_pseudo(cfdata_t cf)
@@ -1676,6 +1680,9 @@ config_attach_pseudo(cfdata_t cf)
 #if 0	/* XXXJRT not yet */
 	device_register(dev, NULL);	/* like a root node */
 #endif
+
+	/* Grab a reference to the device */
+	device_acquire(dev);
 
 	/* Let userland know */
 	devmon_report_device(dev, true);
