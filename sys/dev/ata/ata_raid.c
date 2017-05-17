@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.39.6.1 2017/05/17 01:44:17 pgoyette Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.39.6.2 2017/05/17 02:58:37 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.39.6.1 2017/05/17 01:44:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.39.6.2 2017/05/17 02:58:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -155,7 +155,7 @@ ata_raid_type_name(u_int type)
 static int
 ata_raid_finalize(device_t self)
 {
-	stgruct device_t dev;
+	struct device_t dev;
 	static struct cfdata ataraid_cfdata = {
 		.cf_name = "ataraid",
 		.cf_atname = "ataraid",
