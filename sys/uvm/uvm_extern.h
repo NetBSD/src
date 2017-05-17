@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.204 2017/05/06 21:34:52 joerg Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.205 2017/05/17 22:43:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -131,6 +131,48 @@
 #define UVM_FLAG_WAITVA  0x800000 /* wait for va */
 #define UVM_FLAG_VAONLY  0x2000000 /* unmap: no pages are mapped */
 #define UVM_FLAG_COLORMATCH 0x4000000 /* match color given in off */
+
+#define UVM_FLAG_BITS "\177\020\
+F\0\3\
+:\0PROT=NONE\0\
+:\1PROT=R\0\
+:\2PROT=W\0\
+:\3PROT=RW\0\
+:\4PROT=X\0\
+:\5PROT=RX\0\
+:\6PROT=WX\0\
+:\7PROT=RWX\0\
+F\4\2\
+:\0INH=SHARE\0\
+:\1INH=COPY\0\
+:\2INH=NONE\0\
+:\3INH=DONATE\0\
+F\10\3\
+:\0MAXPROT=NONE\0\
+:\1MAXPROT=R\0\
+:\2MAXPROT=W\0\
+:\3MAXPROT=RW\0\
+:\4MAXPROT=X\0\
+:\5MAXPROT=RX\0\
+:\6MAXPROT=WX\0\
+:\7MAXPROT=RWX\0\
+F\14\3\
+:\0ADV=NORMAL\0\
+:\1ADV=RANDOM\0\
+:\2ADV=SEQUENTIAL\0\
+:\3ADV=WILLNEED\0\
+:\4ADV=DONTNEED\0\
+:\5ADV=NOREUSE\0\
+b\20FIXED\0\
+b\21OVERLAY\0\
+b\22NOMERGE\0\
+b\23COPYONW\0\
+b\24AMAPPAD\0\
+b\25TRYLOCK\0\
+b\26NOWAIT\0\
+b\27WAITVA\0\
+b\30VAONLY\0\
+b\31COLORMATCH\0"
 
 /* macros to extract info */
 #define UVM_PROTECTION(X)	((X) & UVM_PROT_MASK)
