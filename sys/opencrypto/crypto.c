@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.66 2017/05/17 06:52:08 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.67 2017/05/17 06:53:02 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.66 2017/05/17 06:52:08 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.67 2017/05/17 06:53:02 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -792,44 +792,48 @@ crypto_dispatch(struct cryptop *crp)
 	}
 
 	/*
-	 * Caller marked the request to be processed
-	 * immediately; dispatch it directly to the
-	 * driver unless the driver is currently blocked.
+	 * TODO:
+	 * cap->cc_qblocked should be protected by a spin lock other than
+	 * crypto_q_mtx.
 	 */
-	if (!cap->cc_qblocked) {
-		mutex_spin_exit(&crypto_q_mtx);
-		result = crypto_invoke(crp, 0);
-		if (result == ERESTART) {
-			/*
-			 * The driver ran out of resources, mark the
-			 * driver ``blocked'' for cryptop's and put
-			 * the op on the queue.
-			 */
-			mutex_spin_enter(&crypto_q_mtx);
-			crypto_drivers[hid].cc_qblocked = 1;
-			TAILQ_INSERT_HEAD(&crp_q, crp, crp_next);
-			cryptostats.cs_blocks++;
-			mutex_spin_exit(&crypto_q_mtx);
-
-			/*
-			 * The crp is enqueued to crp_q, that is,
-			 * no error occurs. So, this function should
-			 * not return error.
-			 */
-			result = 0;
-		}
-		goto out_released;
-	} else {
+	if (cap->cc_qblocked != 0) {
 		/*
 		 * The driver is blocked, just queue the op until
 		 * it unblocks and the swi thread gets kicked.
 		 */
 		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
+		mutex_spin_exit(&crypto_q_mtx);
+
+		return 0;
+	}
+
+	/*
+	 * Caller marked the request to be processed
+	 * immediately; dispatch it directly to the
+	 * driver unless the driver is currently blocked.
+	 */
+	mutex_spin_exit(&crypto_q_mtx);
+	result = crypto_invoke(crp, 0);
+	if (result == ERESTART) {
+		/*
+		 * The driver ran out of resources, mark the
+		 * driver ``blocked'' for cryptop's and put
+		 * the op on the queue.
+		 */
+		mutex_spin_enter(&crypto_q_mtx);
+		crypto_drivers[hid].cc_qblocked = 1;
+		TAILQ_INSERT_HEAD(&crp_q, crp, crp_next);
+		cryptostats.cs_blocks++;
+		mutex_spin_exit(&crypto_q_mtx);
+
+		/*
+		 * The crp is enqueued to crp_q, that is,
+		 * no error occurs. So, this function should
+		 * not return error.
+		 */
 		result = 0;
 	}
 
-	mutex_spin_exit(&crypto_q_mtx);
-out_released:
 	return result;
 }
 
