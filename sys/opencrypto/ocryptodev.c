@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.6 2014/09/05 09:23:40 matt Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.7 2017/05/17 06:33:04 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.6 2014/09/05 09:23:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.7 2017/05/17 06:33:04 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,11 +151,11 @@ mbail:
 		cse = cryptodev_csefind(fcr, ocop->ses);
 		mutex_exit(&crypto_mtx);
 		if (cse == NULL) {
-			DPRINTF(("csefind failed\n"));
+			DPRINTF("csefind failed\n");
 			return EINVAL;
 		}
 		error = ocryptodev_op(cse, ocop, curlwp);
-		DPRINTF(("ocryptodev_op error = %d\n", error));
+		DPRINTF("ocryptodev_op error = %d\n", error);
 		break;
 	case OCIOCNCRYPTM:
 		omop = (struct ocrypt_mop *)data;
@@ -173,7 +173,7 @@ mbail:
 		kmem_free(ocnop, (omop->count * sizeof(struct ocrypt_n_op)));
 		break;	
 	default:
-		DPRINTF(("invalid ioctl cmd 0x%lx\n", cmd));
+		DPRINTF("invalid ioctl cmd 0x%lx\n", cmd);
 		return EINVAL;
 	}
 	return error;
