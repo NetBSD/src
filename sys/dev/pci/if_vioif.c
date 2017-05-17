@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.34 2017/03/28 04:10:33 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.35 2017/05/17 18:21:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.34 2017/03/28 04:10:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.35 2017/05/17 18:21:40 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -844,7 +844,6 @@ retry:
 		if (r != 0) {
 			bus_dmamap_unload(virtio_dmat(vsc),
 					  sc->sc_tx_dmamaps[slot]);
-			ifp->if_flags |= IFF_OACTIVE;
 			vioif_tx_vq_done_locked(vq);
 			if (retry++ == 0)
 				goto retry;
@@ -868,10 +867,8 @@ retry:
 		bpf_mtap(ifp, m);
 	}
 
-	if (m != NULL) {
-		ifp->if_flags |= IFF_OACTIVE;
+	if (m != NULL)
 		m_freem(m);
-	}
 
 	if (queued > 0) {
 		virtio_enqueue_commit(vsc, vq, -1, true);
