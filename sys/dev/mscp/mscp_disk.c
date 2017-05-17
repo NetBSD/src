@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.89.8.2 2017/05/14 13:02:35 pgoyette Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.89.8.3 2017/05/17 04:26:14 pgoyette Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.89.8.2 2017/05/14 13:02:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.89.8.3 2017/05/17 04:26:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -271,7 +271,7 @@ raopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		if ((error = tsleep((void *)ra, (PZERO + 1) | PCATCH,
 		    devopn, 0))) {
 			splx(s);
-			return (error);
+			goto bad2;
 		}
 #endif
 
@@ -289,6 +289,8 @@ raopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	error = 0;
  bad1:
 	mutex_exit(&ra->ra_disk.dk_openlock);
+ bad2:
+	device_release(ra->ra_dev);
 	return (error);
 }
 
@@ -328,6 +330,7 @@ raclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	}
 #endif
 	mutex_exit(&ra->ra_disk.dk_openlock);
+	device_release(ra->ra_dev);
 	return (0);
 }
 
@@ -345,7 +348,7 @@ rastrategy(struct buf *bp)
 	 */
 	if (ra == NULL) {
 		bp->b_error = ENXIO;
-		goto done;
+		goto done1;
 	}
 	/*
 	 * If drive is open `raw' or reading label, let it at it.
@@ -356,6 +359,7 @@ rastrategy(struct buf *bp)
 	        disk_busy(&ra->ra_disk);
 		splx(b);
 		mscp_strategy(bp, device_parent(ra->ra_dev));
+		device_release(ra->ra_dev);
 		return;
 	}
 
@@ -378,9 +382,12 @@ rastrategy(struct buf *bp)
 	disk_busy(&ra->ra_disk);
 	splx(b);
 	mscp_strategy(bp, device_parent(ra->ra_dev));
+	device_release(ra->ra_dev);
 	return;
 
-done:
+ done:
+	device_release(ra->ra_dev);
+ done1:
 	biodone(bp);
 }
 
@@ -414,9 +421,10 @@ raioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	lp = ra->ra_disk.dk_label;
 
 	error = disk_ioctl(&ra->ra_disk, dev, cmd, data, flag, l);
-	if (error != EPASSTHROUGH)
+	if (error != EPASSTHROUGH) {
+		device_release(ra->ra_dev);
 		return error;
-	else
+	} else
 		error = 0;
 
 	switch (cmd) {
@@ -489,6 +497,7 @@ raioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		error = ENOTTY;
 		break;
 	}
+	device_release(ra->ra_dev);
 	return (error);
 }
 
@@ -504,17 +513,22 @@ radump(dev_t dev, daddr_t blkno, void *va, size_t size)
 int
 rasize(dev_t dev)
 {
+	int rv;
 	struct ra_softc *ra = mscp_device_lookup(dev);
 
 	if (!ra)
 		return -1;
 
 	if (ra->ra_state == DK_CLOSED)
-		if (ra_putonline(dev, ra) == MSCP_FAILED)
+		if (ra_putonline(dev, ra) == MSCP_FAILED) {
+			device_release(ra->ra_dev);
 			return -1;
+		}
 
-	return ra->ra_disk.dk_label->d_partitions[DISKPART(dev)].p_size *
+	rv = ra->ra_disk.dk_label->d_partitions[DISKPART(dev)].p_size *
 	    (ra->ra_disk.dk_label->d_secsize / DEV_BSIZE);
+	device_release(ra->ra_dev);
+	return rv;
 }
 
 #endif /* NRA || NRACD || NRX */
@@ -1107,6 +1121,7 @@ rrfillin(struct buf *bp, struct mscp *mp)
 	mp->mscp_seq.seq_lbn = lp->d_partitions[part].p_offset + bp->b_blkno;
 	mp->mscp_unit = ra->ra_hwunit;
 	mp->mscp_seq.seq_bytecount = bp->b_bcount;
+	device_release(ra->ra_dev);
 }
 
 /*
@@ -1166,37 +1181,46 @@ ra_putonline(dev_t dev, struct ra_softc *ra)
 	return MSCP_DONE;
 }
 
-/* XXX
- *	This code needs to be restructured to deal with the localcount(9)
- *	referencing counting on {b,c}devsw.  Since we're returning the
- *	softc address here, we need to use cdevsw_lookup_acquire() to
- *	keep a reference to the device.  So all callers need to be able
- *	to determine which device's cdevsw needs to be released later on.
- * XXX
- */
 static inline struct ra_softc *
 mscp_device_lookup(dev_t dev)
 {
+	const struct dev_cdevsw;
 	struct ra_softc *ra;
 	int unit;
 
 	unit = DISKUNIT(dev);
+	ra = NULL;
 #if NRA
-	if (cdevsw_lookup(dev) == &ra_cdevsw)
+	if (( dev_cdevsw = cdevsw_lookup_acquire(dev)) == &ra_cdevsw) {
 		ra = device_lookup_private(&ra_cd, unit);
-	else
+		cdevsw_release(dev_cdevsw);
+		return ra;
+	} else
+		cdevsw_release(dev_cdevsw);
 #endif
 #if NRACD
-	if (cdevsw_lookup(dev) == &racd_cdevsw)
+	if ((dev_cdevsw = cdevsw_lookup(dev)) == &racd_cdevsw) {
 		ra = device_lookup_private(&racd_cd, unit);
-	else
+		cdevsw_release(dev_cdevsw);
+		return ra;
+	} else
+		cdevsw_release(dev_cdevsw);
 #endif
 #if NRX
 	if (cdevsw_lookup(dev) == &rx_cdevsw)
 		ra = device_lookup_private(&rx_cd, unit);
+		cdevsw_release(dev_cdevsw);
+		return ra;
 	else
+		cdevsw_release(dev_cdevsw);
 #endif
-		panic("mscp_device_lookup: unexpected major %"PRIu32" unit %u",
-		    major(dev), unit);
-	return ra;
+	panic("mscp_device_lookup: unexpected major %"PRIu32" unit %u",
+	    major(dev), unit);
+}
+
+static void
+mscp_devsw_release(struct ra_softc *sc)
+{
+
+	device_release(sc->ra_dev);
 }
