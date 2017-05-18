@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.142 2017/05/18 13:53:18 kre Exp $
+.\"	$NetBSD: sh.1,v 1.143 2017/05/18 13:56:58 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1962,14 +1962,28 @@ flag interprets the
 .Ar flags
 argument as a comma separated list of file descriptor flags, each preceded
 with a
-.Dq +
+.Dq \(pl
 or a
-.Dq -
+.Dq \(mi
 indicating to set or clear the respective flag.
 Valid flags are:
-append,async,sync,nonblock,fsync,dsync,rsync,direct,nosigpipe,cloexec.
+.Cm append ,
+.Cm async ,
+.Cm sync ,
+.Cm nonblock ,
+.Cm fsync ,
+.Cm dsync ,
+.Cm rsync ,
+.Cm direct ,
+.Cm nosigpipe ,
+and
+.Cm cloexec .
+Unique abbreviations of these names, of at least 2 characters,
+may be used on input.
 See
 .Xr fcntl 2
+and
+.Xr open 2
 for more information.
 .It getopts Ar optstring var
 The
