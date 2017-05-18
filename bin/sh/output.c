@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.35 2016/03/12 14:59:26 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.36 2017/05/18 13:31:10 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.35 2016/03/12 14:59:26 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.36 2017/05/18 13:31:10 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ out2shstr(const char *p)
 
 
 static const char norm_chars [] = \
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-=_.'";
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/+-=_,.'";
 
 static int
 inquote(const char *p)
@@ -176,7 +176,7 @@ outshstr(const char *p, struct output *file)
 	 */
 	if (need_q) {
 		if ((inq = inquote(p)) != 0)
-				outc('\'', file);
+			outc('\'', file);
 	} else
 		inq = 0;
 
