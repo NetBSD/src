@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.84 2017/05/11 14:57:14 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.85 2017/05/18 13:34:17 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.84 2017/05/11 14:57:14 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.85 2017/05/18 13:34:17 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -869,6 +869,7 @@ forkshell(struct job *jp, union node *n, int mode)
 		error("Cannot fork (%s)", strerror(serrno));
 		break;
 	case 0:
+		SHELL_FORKED();
 		forkchild(jp, n, mode, 0);
 		return 0;
 	default:
