@@ -1,4 +1,4 @@
-#	$NetBSD: t_hello.sh,v 1.4 2017/05/13 23:51:39 kamil Exp $
+#	$NetBSD: t_hello.sh,v 1.5 2017/05/18 10:29:47 martin Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,6 +31,12 @@ hello_head() {
 	atf_set "require.progs" "cc"
 }
 
+atf_test_case hello_profile
+hello_head() {
+	atf_set "descr" "compile and run \"hello world\" with profiling option"
+	atf_set "require.progs" "cc"
+}
+
 atf_test_case hello_pic
 hello_pic_head() {
 	atf_set "descr" "compile and run PIC \"hello world\""
@@ -56,6 +62,16 @@ hello_body() {
 int main(void) {printf("hello world\n");exit(0);}
 EOF
 	atf_check -s exit:0 -o ignore -e ignore cc -o hello test.c
+	atf_check -s exit:0 -o inline:"hello world\n" ./hello
+}
+
+hello_profile_body() {
+	cat > test.c << EOF
+#include <stdio.h>
+#include <stdlib.h>
+int main(void) {printf("hello world\n");exit(0);}
+EOF
+	atf_check -s exit:0 -o ignore -e ignore cc -o hello -pg test.c
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello
 }
 
@@ -139,6 +155,7 @@ atf_init_test_cases()
 {
 
 	atf_add_test_case hello
+	atf_add_test_case hello_profile
 	atf_add_test_case hello_pic
 	atf_add_test_case hello_pie
 	atf_add_test_case hello32
