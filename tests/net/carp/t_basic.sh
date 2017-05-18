@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.4 2017/02/27 08:26:53 ozaki-r Exp $
+#	$NetBSD: t_basic.sh,v 1.5 2017/05/18 06:33:49 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -31,21 +31,7 @@ SOCK_BACKUP=unix://carp_backup
 BUS=bus_carp
 TIMEOUT=3
 
-atf_test_case carp_handover_halt cleanup
-carp_handover_head()
-{
-
-	atf_set "descr" "Tests for CARP handover on halt"
-	atf_set "require.progs" "rump_server"
-}
-
-atf_test_case carp_handover_ifdown cleanup
-carp_handover_head()
-{
-
-	atf_set "descr" "Tests for CARP handover on ifconfig down"
-	atf_set "require.progs" "rump_server"
-}
+DEBUG=${DEBUG:-false}
 
 IP_CLIENT=10.1.1.240
 IP_MASTER=10.1.1.1
@@ -103,7 +89,7 @@ wait_handover()
 	fi
 }
 
-test_carp_handover()
+test_carp_handover_ipv4()
 {
 	local op=$1
 
@@ -172,48 +158,6 @@ test_carp_handover()
 	fi
 }
 
-carp_handover_halt_body()
-{
-
-	test_carp_handover halt
-}
-
-carp_handover_ifdown_body()
-{
-
-	test_carp_handover ifdown
-}
-
-carp_handover_halt_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-carp_handover_ifdown_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-atf_test_case carp6_handover_halt cleanup
-carp6_handover_halt_head()
-{
-
-	atf_set "descr" "Tests for CARP handover on halt (IPv6)"
-	atf_set "require.progs" "rump_server"
-}
-
-atf_test_case carp6_handover_ifdown cleanup
-carp6_handover_ifdown_head()
-{
-
-	atf_set "descr" "Tests for CARP handover on ifconfig down (IPv6)"
-	atf_set "require.progs" "rump_server"
-}
-
 IP6_CLIENT=fd00:1::240
 IP6_MASTER=fd00:1::1
 IP6_BACKUP=fd00:1::2
@@ -269,7 +213,7 @@ wait_carp6_handover()
 	fi
 }
 
-test_carp6_handover()
+test_carp_handover_ipv6()
 {
 	local op=$1
 
@@ -338,37 +282,41 @@ test_carp6_handover()
 	fi
 }
 
-carp6_handover_halt_body()
+add_test_case()
 {
+	local ipproto=$1
+	local halt=$2
 
-	test_carp6_handover halt
-}
+	name="carp_handover_${ipproto}_${halt}"
+	desc="Tests for CARP (${ipproto}) handover on ${halt}"
 
-carp6_handover_ifdown_body()
-{
-
-	test_carp6_handover ifdown
-}
-
-carp6_handover_halt_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
-}
-
-carp6_handover_ifdown_cleanup()
-{
-
-	$DEBUG && dump
-	cleanup
+	atf_test_case ${name} cleanup
+	eval "							\
+	    ${name}_head() {					\
+	        atf_set \"descr\" \"$desc\";			\
+	        atf_set \"require.progs\" \"rump_server\";	\
+	    };							\
+	    ${name}_body() {					\
+	        test_carp_handover_${ipproto} $halt;		\
+	        if [ $halt != halt ]; then			\
+	             rump_server_destroy_ifaces;		\
+	        fi						\
+	    };							\
+	    ${name}_cleanup() {					\
+	        $DEBUG && dump;					\
+	        cleanup;					\
+	    }							\
+	"
+	atf_add_test_case ${name}
 }
 
 atf_init_test_cases()
 {
+	local proto= halt=
 
-	atf_add_test_case carp_handover_halt
-	atf_add_test_case carp_handover_ifdown
-	atf_add_test_case carp6_handover_halt
-	atf_add_test_case carp6_handover_ifdown
+	for proto in ipv4 ipv6; do
+		for halt in halt ifdown; do
+			add_test_case $proto $halt
+		done
+	done
 }
