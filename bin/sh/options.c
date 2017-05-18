@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.47 2017/05/15 20:00:36 kre Exp $	*/
+/*	$NetBSD: options.c,v 1.48 2017/05/18 13:53:18 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.47 2017/05/15 20:00:36 kre Exp $");
+__RCSID("$NetBSD: options.c,v 1.48 2017/05/18 13:53:18 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,13 +88,23 @@ void
 procargs(int argc, char **argv)
 {
 	size_t i;
+	int psx;
 
 	argptr = argv;
 	if (argc > 0)
 		argptr++;
+
+	psx = posix;		/* save what we set it to earlier */
+	/*
+	 * option values are mostly boolean 0:off 1:on
+	 * we use 2 (just in this routine) to mean "unknown yet"
+	 */
 	for (i = 0; i < NOPTS; i++)
 		optlist[i].val = 2;
+	posix = psx;		/* restore before processing -o ... */
+
 	options(1);
+
 	if (*argptr == NULL && minusc == NULL)
 		sflag = 1;
 	if (iflag == 2 && sflag == 1 && isatty(0) && isatty(1))
@@ -107,12 +117,24 @@ procargs(int argc, char **argv)
 	if (usefork == 2)
 		usefork = 1;
 #endif
-	for (i = 0; i < NOPTS; i++)
-		if (optlist[i].val == 2)
-			optlist[i].val = 0;
 #if DEBUG == 2
-	debug = 1;
+	if (debug == 2)
+		debug = 1;
 #endif
+	/*
+	 * Any options not dealt with as special cases just above,
+	 * and which were not set on the command line, are set to
+	 * their expected default values (mostly "off")
+	 *
+	 * then as each option is initialised, save its setting now
+	 * as its "default" value for future use ("set -o default").
+	 */
+	for (i = 0; i < NOPTS; i++) {
+		if (optlist[i].val == 2)
+			optlist[i].val = optlist[i].dflt;
+		optlist[i].dflt = optlist[i].val;
+	}
+
 	arg0 = argv[0];
 	if (sflag == 0 && minusc == NULL) {
 		commandname = argv[0];
@@ -187,13 +209,20 @@ options(int cmdline)
 			break;
 		}
 		while ((c = *p++) != '\0') {
-			if (c == 'c' && cmdline) {
+			if (val == 1 && c == 'c' && cmdline) {
 				/* command is after shell args*/
 				minusc = empty;
 			} else if (c == 'o') {
-				minus_o(*argptr, val);
-				if (*argptr)
-					argptr++;
+				if (*p != '\0')
+					minus_o(p, val + (cmdline ? val : 0));
+				else if (*argptr)
+					minus_o(*argptr++,
+					    val + (cmdline ? val : 0));
+				else if (!cmdline)
+					minus_o(NULL, val);
+				else
+					error("arg for %co missing", "+-"[val]);
+				break;
 #ifdef DEBUG
 			} else if (c == 'D') {
 				if (*p) {
@@ -250,12 +279,14 @@ minus_o(char *name, int val)
 			out1c('\n');
 			for (i = 0; i < NOPTS; i++) {
 				if (optlist[i].name)
-				    out1fmt("%-16s%s\n", optlist[i].name,
+				    out1fmt("%-19s %s\n", optlist[i].name,
 					optlist[i].val ? "on" : "off");
 			}
 		} else {
-			out1str("set");
+			out1str("set -o default");
 			for (i = 0; i < NOPTS; i++) {
+				if (optlist[i].val == optlist[i].dflt)
+					continue;
 				if (optlist[i].name)
 				    out1fmt(" %co %s",
 					"+-"[optlist[i].val], optlist[i].name);
@@ -266,12 +297,19 @@ minus_o(char *name, int val)
 			out1c('\n');
 		}
 	} else {
+		if (val == 1 && equal(name, "default")) { /* special case */
+			for (i = 0; i < NOPTS; i++)
+				set_opt_val(i, optlist[i].dflt);
+			return;
+		}
+		if (val)
+			val = 1;
 		for (i = 0; i < NOPTS; i++)
 			if (optlist[i].name && equal(name, optlist[i].name)) {
 				set_opt_val(i, val);
 				return;
 			}
-		error("Illegal option -o %s", name);
+		error("Illegal option %co %s", "+-"[val], name);
 	}
 }
 
@@ -286,7 +324,7 @@ setoption(int flag, int val)
 			set_opt_val( i, val );
 			return;
 		}
-	error("Illegal option -%c", flag);
+	error("Illegal option %c%c", "+-"[val], flag);
 	/* NOTREACHED */
 }
 

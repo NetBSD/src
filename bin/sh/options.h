@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.25 2016/03/31 16:16:35 christos Exp $	*/
+/*	$NetBSD: options.h,v 1.26 2017/05/18 13:53:18 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,23 +43,29 @@ struct shparam {
 	char *optptr;		/* used by getopts */
 };
 
-
+/*
+ * Note that option default values can be changed at shell startup
+ * depending upon the environment in which the shell is running.
+ */
 struct optent {
 	const char *name;		/* for set -o <name> */
 	const char letter;		/* set [+/-]<letter> and $- */
 	const char opt_set;		/* mutually exclusive option set */
 	unsigned char val;		/* value of <letter>flag */
+	unsigned char dflt;		/* default value of flag */
 };
 
 /* Those marked [U] are required by posix, but have no effect! */
 
 #ifdef DEFINE_OPTIONS
-#define DEF_OPTS(name, letter, opt_set) {name, letter, opt_set, 0},
+#define DEF_OPTS_D(name,letter,opt_set,dflt) {name, letter, opt_set, 0, dflt },
 struct optent optlist[] = {
 #else
-#define DEF_OPTS(name, letter, opt_set)
+#define DEF_OPTS_D(name,letter,opt_set,dflt)
 #endif
-#define DEF_OPT(name,letter) DEF_OPTS(name, letter, 0)
+#define DEF_OPTS(name,letter,opt_set)	DEF_OPTS_D(name, letter, opt_set, 0)
+#define DEF_OPT(name,letter)		DEF_OPTS_D(name, letter, 0, 0)
+#define DEF_OPT_D(name,letter,dflt)	DEF_OPTS_D(name, letter, 0, dflt)
 
 DEF_OPT( "errexit",	'e' )	/* exit on error */
 #define eflag optlist[0].val
@@ -113,7 +119,7 @@ DEF_OPT( "debug",	0 )	/* enable debug prints */
 #endif
 
 #ifdef DEFINE_OPTIONS
-	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0, 0 },
 };
 #define NOPTS (sizeof optlist / sizeof optlist[0] - 1)
 int sizeof_optlist = sizeof optlist;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.141 2017/05/14 17:27:05 kre Exp $
+.\"	$NetBSD: sh.1,v 1.142 2017/05/18 13:53:18 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -212,8 +212,8 @@ Specifying a dash
 turns the option on, while using a plus
 .Dq +
 disables the option.
-The following options can be set from the command line or
-with the
+The following options can be set from the command line and,
+unless otherwise stated, with the
 .Ic set
 built-in (described later).
 .Bl -tag -width \-WXXlineno_fn_relativeXX -offset indent
@@ -2231,33 +2231,40 @@ If options are given, it sets the specified option
 flags, or clears them as described in the
 .Sx Argument List Processing
 section.
-.\" In addition to the options listed there,
-.\" when the
-.\" .Dq "option name"
-.\" given to
-.\" .Fl o
-.\" is
-.\" .Cm default
-.\" all of the options are reset to the values they had immediately
-.\" after
-.\" .Nm
-.\" initialization, before any startup scripts had been processed.
-.\" While this may be of use to users or scripts, its primary purpose
-.\" is for use in the output of
-.\" .Dq Ic set Cm +o ,
-.\" to avoid that command needing to list every available option.
-.\" There is no
-.\" .Cm +o default .
+In addition to the options listed there,
+when the
+.Dq "option name"
+given to
+.Ic set Fl o
+is
+.Cm default
+all of the options are reset to the values they had immediately
+after
+.Nm
+initialization, before any startup scripts, or other input, had been processed.
+While this may be of use to users or scripts, its primary purpose
+is for use in the output of
+.Dq Ic set Cm +o ,
+to avoid that command needing to list every available option.
+There is no
+.Cm +o default .
 .Pp
 The fourth use of the set command is to set the values of the shell's
 positional parameters to the specified arguments.
 To change the positional
 parameters without changing any options, use
-.Dq --
+.Dq -\|-
 as the first argument to set.
 If no following arguments are present, the set command
 will clear all the positional parameters (equivalent to executing
 .Dq shift $# . )
+Otherwise the following arguments become
+.Do \&$1 Dc Ns \&,
+.Do \&$2 Dc Ns \&,
+\&...,
+and
+.Dq \&$#
+is set to the number of arguments present.
 .It setvar Ar variable Ar value
 Assigns value to variable.
 (In general it is better to write
