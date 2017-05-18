@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.2 2017/05/17 06:30:15 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.3 2017/05/18 14:43:42 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -48,7 +48,8 @@ setup_sasp()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	check_sa_entries $SOCK_LOCAL $ip_local $ip_peer
+	# XXX it can be expired if $lifetime is very short
+	#check_sa_entries $SOCK_LOCAL $ip_local $ip_peer
 
 	export RUMP_SERVER=$SOCK_PEER
 	cat > $tmpfile <<-EOF
@@ -58,7 +59,8 @@ setup_sasp()
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	check_sa_entries $SOCK_PEER $ip_local $ip_peer
+	# XXX it can be expired if $lifetime is very short
+	#check_sa_entries $SOCK_PEER $ip_local $ip_peer
 }
 
 test_ipsec4_lifetime()
