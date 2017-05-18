@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.18 2017/05/14 15:36:45 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.19 2017/05/18 13:20:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.18 2017/05/14 15:36:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.19 2017/05/18 13:20:37 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -671,8 +671,6 @@ pmap_md_page_syncicache(struct vm_page *pg, const kcpuset_t *onproc)
 		return;
 
 	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
-	pv_entry_t pv = &mdpg->mdpg_first;
-	const register_t va = (intptr_t)trunc_page(pv->pv_va);
 
 	/*
 	 * If onproc is empty, we could do a
@@ -684,14 +682,23 @@ pmap_md_page_syncicache(struct vm_page *pg, const kcpuset_t *onproc)
 	if (MIPS_HAS_R4K_MMU) {
 		if (VM_PAGEMD_CACHED_P(mdpg)) {
 			/* This was probably mapped cached by UBC so flush it */
-			mips_dcache_wbinv_range_index(va, PAGE_SIZE);
-			mips_icache_sync_range_index(va, PAGE_SIZE);
+			pt_entry_t pte;
+			const register_t tva = pmap_md_map_ephemeral_page(pg, false,
+			    VM_PROT_READ, &pte);
+
+			UVMHIST_LOG(pmaphist, "  va %#"PRIxVADDR, tva, 0, 0, 0);
+			mips_dcache_wbinv_range(tva, PAGE_SIZE);
+			mips_icache_sync_range(tva, PAGE_SIZE);
+
+			pmap_md_unmap_ephemeral_page(pg, false, tva, pte);
 		}
 	} else {
 		mips_icache_sync_range(MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg)),
 		    PAGE_SIZE);
 	}
 #ifdef MULTIPROCESSOR
+	pv_entry_t pv = &mdpg->mdpg_first;
+	const register_t va = (intptr_t)trunc_page(pv->pv_va);
 	pmap_tlb_syncicache(va, onproc);
 #endif
 }
