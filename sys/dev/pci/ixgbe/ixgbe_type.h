@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_type.h 299200 2016-05-06 22:54:56Z pfg $*/
-/*$NetBSD: ixgbe_type.h,v 1.19 2017/02/24 05:38:30 msaitoh Exp $*/
+/*$NetBSD: ixgbe_type.h,v 1.20 2017/05/18 08:27:19 msaitoh Exp $*/
 
 #ifndef _IXGBE_TYPE_H_
 #define _IXGBE_TYPE_H_
@@ -3593,7 +3593,7 @@ struct ixgbe_hw_stats {
 	struct evcnt gptc;
 	struct evcnt gorc;
 	struct evcnt gotc;
-	u64 rnbc[8];
+	struct evcnt rnbc[8];
 	struct evcnt ruc;
 	struct evcnt rfc;
 	struct evcnt roc;

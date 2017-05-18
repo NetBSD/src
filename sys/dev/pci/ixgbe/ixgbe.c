@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.81 2017/04/28 10:24:45 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.82 2017/05/18 08:27:19 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -765,6 +765,7 @@ ixgbe_detach(device_t dev, int flags)
 	struct ix_queue *que = adapter->queues;
 	struct rx_ring *rxr = adapter->rx_rings;
 	struct tx_ring *txr = adapter->tx_rings;
+	struct ixgbe_hw *hw = &adapter->hw;
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
 	u32	ctrl_ext;
 
@@ -860,6 +861,8 @@ ixgbe_detach(device_t dev, int flags)
 
 		if (i < __arraycount(stats->mpc)) {
 			evcnt_detach(&stats->mpc[i]);
+			if (hw->mac.type == ixgbe_mac_82598EB)
+				evcnt_detach(&stats->rnbc[i]);
 		}
 		if (i < __arraycount(stats->pxontxc)) {
 			evcnt_detach(&stats->pxontxc[i]);
@@ -892,6 +895,7 @@ ixgbe_detach(device_t dev, int flags)
 	evcnt_detach(&stats->illerrc);
 	evcnt_detach(&stats->errbc);
 	evcnt_detach(&stats->mspdc);
+	evcnt_detach(&stats->mpctotal);
 	evcnt_detach(&stats->mlfc);
 	evcnt_detach(&stats->mrfc);
 	evcnt_detach(&stats->rlec);
@@ -918,6 +922,7 @@ ixgbe_detach(device_t dev, int flags)
 	evcnt_detach(&stats->roc);
 	evcnt_detach(&stats->rjc);
 	evcnt_detach(&stats->mngprc);
+	evcnt_detach(&stats->mngpdc);
 	evcnt_detach(&stats->xec);
 
 	/* Packet Transmission Stats */
@@ -1587,7 +1592,7 @@ ixgbe_enable_queue(struct adapter *adapter, u32 vector)
 	}
 }
 
-__unused static inline void
+static inline void
 ixgbe_disable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
@@ -3498,6 +3503,9 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 	for (i = 0; i < adapter->num_queues; i++, rxr++) {
 		u64 rdba = rxr->rxdma.dma_paddr;
 		int j = rxr->me;
+		u32 tqsmreg, reg;
+		int regnum = i / 4;	/* 1 register per 4 queues */
+		int regshift = i % 4;	/* 4 bits per 1 queue */
 
 		/* Setup the Base and Length of the Rx Descriptor Ring */
 		IXGBE_WRITE_REG(hw, IXGBE_RDBAL(j),
@@ -3512,6 +3520,26 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 		srrctl &= ~IXGBE_SRRCTL_BSIZEPKT_MASK;
 		srrctl |= bufsz;
 		srrctl |= IXGBE_SRRCTL_DESCTYPE_ADV_ONEBUF;
+
+		/* Set RQSMR (Receive Queue Statistic Mapping) register */
+		reg = IXGBE_READ_REG(hw, IXGBE_RQSMR(regnum));
+		reg &= ~(0x000000ff << (regshift * 8));
+		reg |= i << (regshift * 8);
+		IXGBE_WRITE_REG(hw, IXGBE_RQSMR(regnum), reg);
+
+		/*
+		 * Set RQSMR (Receive Queue Statistic Mapping) register.
+		 * Register location for queue 0...7 are different between
+		 * 82598 and newer.
+		 */
+		if (adapter->hw.mac.type == ixgbe_mac_82598EB)
+			tqsmreg = IXGBE_TQSMR(regnum);
+		else
+			tqsmreg = IXGBE_TQSM(regnum);
+		reg = IXGBE_READ_REG(hw, tqsmreg);
+		reg &= ~(0x000000ff << (regshift * 8));
+		reg |= i << (regshift * 8);
+		IXGBE_WRITE_REG(hw, tqsmreg, reg);
 
 		/*
 		 * Set DROP_EN iff we have no flow control and >1 queue.
@@ -4308,6 +4336,22 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		stats->qptc[j].ev_count += IXGBE_READ_REG(hw, IXGBE_QPTC(i));
 		stats->qprdc[j].ev_count += IXGBE_READ_REG(hw, IXGBE_QPRDC(i));
 	}
+	for (int i = 0; i < __arraycount(stats->mpc); i++) {
+		uint32_t mp;
+		int j = i % adapter->num_queues;
+
+		mp = IXGBE_READ_REG(hw, IXGBE_MPC(i));
+		/* global total per queue */
+		stats->mpc[j].ev_count += mp;
+		/* running comprehensive total for stats display */
+		total_missed_rx += mp;
+
+		if (hw->mac.type == ixgbe_mac_82598EB)
+			stats->rnbc[j].ev_count
+			    += IXGBE_READ_REG(hw, IXGBE_RNBC(i));
+		
+	}
+	stats->mpctotal.ev_count += total_missed_rx;
 	stats->mlfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MLFC);
 	stats->mrfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MRFC);
 	rlec = IXGBE_READ_REG(hw, IXGBE_RLEC);
@@ -4699,6 +4743,7 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	struct sysctllog **log = &adapter->sysctllog;
 	struct tx_ring *txr = adapter->tx_rings;
 	struct rx_ring *rxr = adapter->rx_rings;
+	struct ixgbe_hw *hw = &adapter->hw;
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
 	const char *xname = device_xname(dev);
 
@@ -4828,6 +4873,11 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 			evcnt_attach_dynamic(&stats->mpc[i],
 			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
 			    "Missed Packet Count");
+			if (hw->mac.type == ixgbe_mac_82598EB)
+				evcnt_attach_dynamic(&stats->rnbc[i],
+				    EVCNT_TYPE_MISC, NULL,
+				    adapter->queues[i].evnamebuf,
+				    "Receive No Buffers");
 		}
 		if (i < __arraycount(stats->pxontxc)) {
 			evcnt_attach_dynamic(&stats->pxontxc[i],
@@ -4909,6 +4959,8 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	    stats->namebuf, "Byte Errors");
 	evcnt_attach_dynamic(&stats->mspdc, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "MAC Short Packets Discarded");
+	evcnt_attach_dynamic(&stats->mpctotal, EVCNT_TYPE_MISC, NULL,
+	    stats->namebuf, "Total Packets Missed");
 	evcnt_attach_dynamic(&stats->mlfc, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "MAC Local Faults");
 	evcnt_attach_dynamic(&stats->mrfc, EVCNT_TYPE_MISC, NULL,
@@ -4959,6 +5011,8 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	    stats->namebuf, "Received Jabber");
 	evcnt_attach_dynamic(&stats->mngprc, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Management Packets Received");
+	evcnt_attach_dynamic(&stats->mngpdc, EVCNT_TYPE_MISC, NULL,
+	    stats->namebuf, "Management Packets Dropped");
 	evcnt_attach_dynamic(&stats->xec, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Checksum Errors");
 
