@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.89.8.4 2017/05/17 04:29:46 pgoyette Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.89.8.5 2017/05/18 07:35:01 pgoyette Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.89.8.4 2017/05/17 04:29:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.89.8.5 2017/05/18 07:35:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -289,7 +289,9 @@ raopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	error = 0;
  bad1:
 	mutex_exit(&ra->ra_disk.dk_openlock);
+#if notyet
  bad2:
+#endif
 	device_release(ra->ra_dev);
 	return (error);
 }
@@ -1184,7 +1186,7 @@ ra_putonline(dev_t dev, struct ra_softc *ra)
 static inline struct ra_softc *
 mscp_device_lookup(dev_t dev)
 {
-	const struct dev_cdevsw;
+	const struct cdevsw *dev_cdevsw;
 	struct ra_softc *ra;
 	int unit;
 
@@ -1207,20 +1209,13 @@ mscp_device_lookup(dev_t dev)
 		cdevsw_release(dev_cdevsw);
 #endif
 #if NRX
-	if ((dev_cdevsw = cdevsw_lookup_acquire(dev)) == &rx_cdevsw)
+	if ((dev_cdevsw = cdevsw_lookup_acquire(dev)) == &rx_cdevsw) {
 		ra = device_lookup_private_acquire(&rx_cd, unit);
 		cdevsw_release(dev_cdevsw);
 		return ra;
-	else
+	} else
 		cdevsw_release(dev_cdevsw);
 #endif
 	panic("mscp_device_lookup: unexpected major %"PRIu32" unit %u",
 	    major(dev), unit);
-}
-
-static void
-mscp_devsw_release(struct ra_softc *sc)
-{
-
-	device_release(sc->ra_dev);
 }
