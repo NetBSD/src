@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.249 2017/05/12 17:53:53 ryo Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.250 2017/05/18 06:33:11 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.249 2017/05/12 17:53:53 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250 2017/05/18 06:33:11 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -720,6 +720,11 @@ arpresolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 	const char *create_lookup;
 	bool renew;
 	int error;
+	struct ifnet *origifp = ifp;
+#if NCARP > 0
+	if (rt != NULL && rt->rt_ifp->if_type == IFT_CARP)
+		ifp = rt->rt_ifp;
+#endif
 
 	KASSERT(m != NULL);
 
@@ -796,12 +801,8 @@ notfound:
 
 		if (renew) {
 			const u_int8_t *enaddr =
-#if NCARP > 0
-			    (ifp->if_type == IFT_CARP) ?
-			    CLLADDR(ifp->if_sadl):
-#endif
 			    CLLADDR(ifp->if_sadl);
-			arprequest(ifp,
+			arprequest(origifp,
 			    &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
 			    &satocsin(dst)->sin_addr, enaddr);
 		}
@@ -861,10 +862,6 @@ notfound:
 
 	if (renew) {
 		const u_int8_t *enaddr =
-#if NCARP > 0
-		    (rt != NULL && rt->rt_ifp->if_type == IFT_CARP) ?
-		    CLLADDR(rt->rt_ifp->if_sadl):
-#endif
 		    CLLADDR(ifp->if_sadl);
 		la->la_expire = time_uptime;
 		arp_settimer(la, arpt_down);
@@ -872,7 +869,8 @@ notfound:
 		LLE_WUNLOCK(la);
 
 		if (rt != NULL) {
-			arprequest(ifp, &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
+			arprequest(origifp,
+			    &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
 			    &satocsin(dst)->sin_addr, enaddr);
 		} else {
 			struct sockaddr_in sin;
@@ -884,7 +882,7 @@ notfound:
 			_rt = rtalloc1((struct sockaddr *)&sin, 0);
 			if (_rt == NULL)
 				goto bad;
-			arprequest(ifp,
+			arprequest(origifp,
 			    &satocsin(_rt->rt_ifa->ifa_addr)->sin_addr,
 			    &satocsin(dst)->sin_addr, enaddr);
 			rt_unref(_rt);
