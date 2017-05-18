@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1545.2.2 2017/04/21 16:51:14 bouyer Exp $
+# $NetBSD: mi,v 1.1545.2.3 2017/05/18 11:28:49 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -954,6 +954,8 @@
 ./usr/share/man/cat4/bwi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ca.0			man-obsolete		obsolete
 ./usr/share/man/cat4/cac.0			man-sys-catman		.cat
+./usr/share/man/cat4/can.0			man-sys-catman		.cat
+./usr/share/man/cat4/canloop.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cardbus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cardslot.0			man-sys-catman		.cat
 ./usr/share/man/cat4/carp.0			man-sys-catman		.cat
@@ -4066,6 +4068,8 @@
 ./usr/share/man/html4/btuart.html		man-sys-htmlman		html
 ./usr/share/man/html4/bwi.html			man-sys-htmlman		html
 ./usr/share/man/html4/cac.html			man-sys-htmlman		html
+./usr/share/man/html4/can.html			man-sys-htmlman		html
+./usr/share/man/html4/canloop.html		man-sys-htmlman		html
 ./usr/share/man/html4/cardbus.html		man-sys-htmlman		html
 ./usr/share/man/html4/cardslot.html		man-sys-htmlman		html
 ./usr/share/man/html4/carp.html			man-sys-htmlman		html
@@ -6950,6 +6954,8 @@
 ./usr/share/man/man4/bwi.4			man-sys-man		.man
 ./usr/share/man/man4/ca.4			man-obsolete		obsolete
 ./usr/share/man/man4/cac.4			man-sys-man		.man
+./usr/share/man/man4/can.4			man-sys-man		.man
+./usr/share/man/man4/canloop.4			man-sys-man		.man
 ./usr/share/man/man4/cardbus.4			man-sys-man		.man
 ./usr/share/man/man4/cardslot.4			man-sys-man		.man
 ./usr/share/man/man4/carp.4			man-sys-man		.man
