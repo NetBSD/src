@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.40 2017/05/15 20:00:36 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.41 2017/05/18 15:42:37 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.40 2017/05/15 20:00:36 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.41 2017/05/18 15:42:37 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -926,12 +926,18 @@ trace_id(TFILE *tf)
 	char *p;
 
 	if (DFlags & DBG_NEST) {
-		p = indent;
-		for (i = 0; i < 6; i++)
-			*p++ = (i < ShNest) ? '#' : ' ';
-		while (i++ < ShNest && p < &indent[sizeof indent - 1])
-			*p++ = '#';
-		*p = '\0';
+		if ((unsigned)ShNest >= sizeof indent - 1) {
+			(void) snprintf(indent, sizeof indent,
+			    "### %*d ###", (int)(sizeof indent) - 9, ShNest);
+			p = strchr(indent, '\0');
+		} else {
+			p = indent;
+			for (i = 0; i < 6; i++)
+				*p++ = (i < ShNest) ? '#' : ' ';
+			while (i++ < ShNest && p < &indent[sizeof indent - 1])
+				*p++ = '#';
+			*p = '\0';
+		}
 	} else
 		indent[0] = '\0';
 
@@ -941,8 +947,6 @@ trace_id(TFILE *tf)
 		    i == tf->pid ? ':' : '=', indent);
 		return p;
 	} else if (DFlags & DBG_NEST) {
-		*p++ = '\t';
-		*p = '\0';
 		(void) asprintf(&p, "%s\t", indent);
 		return p;
 	}
@@ -1112,6 +1116,7 @@ debugcmd(int argc, char **argv)
 	if (argc == 1) {
 		struct debug_flag *df;
 
+		out1fmt("Debug: %sabled.  Flags: ", debug ? "en" : "dis");
 		for (df = debug_flags; df->label != '\0'; df++) {
 			if (df->flag & (df->flag - 1))
 				continue;
