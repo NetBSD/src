@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_localcount.c,v 1.2 2017/05/19 00:01:33 pgoyette Exp $	*/
+/*	$NetBSD: subr_localcount.c,v 1.3 2017/05/19 02:20:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.2 2017/05/19 00:01:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.3 2017/05/19 02:20:24 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/localcount.h>
@@ -138,7 +138,7 @@ localcount_drain(struct localcount *lc, kcondvar_t *cv, kmutex_t *interlock)
  * localcount_fini(lc)
  *
  *	Finalize a localcount object, releasing any memory allocated
- *	for it.  Caller must have already called localcount_drain.
+ *	for it.  The localcount object must already have been drained.
  */
 void
 localcount_fini(struct localcount *lc)
