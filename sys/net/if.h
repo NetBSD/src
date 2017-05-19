@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.238 2017/04/06 03:54:59 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.239 2017/05/19 08:53:51 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -956,6 +956,7 @@ void	if_purgeaddrs(struct ifnet *, int, void (*)(struct ifaddr *));
 void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);
 void	if_link_state_change(struct ifnet *, int);
+void	if_link_state_change_softint(struct ifnet *, int);
 void	if_up(struct ifnet *);
 void	ifinit(void);
 void	ifinit1(void);
