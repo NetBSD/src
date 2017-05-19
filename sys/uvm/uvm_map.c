@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.347 2017/05/19 15:30:19 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.348 2017/05/19 16:56:35 kamil Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.347 2017/05/19 15:30:19 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.348 2017/05/19 16:56:35 kamil Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1068,7 +1068,7 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	if ((flags & UVM_FLAG_FIXED) && *startp == 0 &&
 	    !VM_MAP_IS_KERNEL(map) && user_va0_disable) {
 		uprintf("%s: process wants to map virtual address 0; see "
-		    "vm.user_va0_disable in sysctl(7).\n" __func__);
+		    "vm.user_va0_disable in sysctl(7).\n", __func__);
 		return EACCES;
 	}
 #endif
