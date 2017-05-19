@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.89 2017/05/12 17:53:54 ryo Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.90 2017/05/19 08:53:51 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.89 2017/05/12 17:53:54 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.90 2017/05/19 08:53:51 ozaki-r Exp $");
 
 /*
  * TODO:
@@ -2191,7 +2191,7 @@ carp_set_state(struct carp_softc *sc, int state)
 		link_state = LINK_STATE_UNKNOWN;
 		break;
 	}
-	if_link_state_change(&sc->sc_if, link_state);
+	if_link_state_change_softint(&sc->sc_if, link_state);
 }
 
 void
