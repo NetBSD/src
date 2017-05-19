@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 2016/01/29 01:54:14 macallan Exp $ */
+/*	$NetBSD: mainbus.c,v 1.6 2017/05/19 07:40:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -25,9 +25,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2016/01/29 01:54:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2017/05/19 07:40:58 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 

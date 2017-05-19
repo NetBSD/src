@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.18 2015/10/08 17:54:30 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.19 2017/05/19 07:43:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -25,11 +25,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.18 2015/10/08 17:54:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.19 2017/05/19 07:43:31 skrll Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -264,7 +264,7 @@ apbus_attach(device_t parent, device_t self, void *aux)
 			reg &= ~adv->clk1;
 			writereg(JZ_CLKGR1, reg);
 		}
-	
+
 		(void) config_found_ia(self, "apbus", &aa, apbus_print);
 	}
 }
