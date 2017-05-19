@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 2016/08/26 15:45:48 skrll Exp $ */
+/*	$NetBSD: clock.c,v 1.9 2017/05/19 07:40:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2016/08/26 15:45:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2017/05/19 07:40:58 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -87,7 +87,7 @@ cpu_initclocks(void)
 	 * that to work yet ( all I get is INT0 which is for hardware interrupts
 	 * in general )
 	 * So if we can get OST to fire on INT2 we can just block INT0 on core1
-	 * and have a timer interrupt on both cores, if not the regular timer 
+	 * and have a timer interrupt on both cores, if not the regular timer
 	 * would be more convenient but we'd have to shoot an IPI to core1 on
 	 * every tick.
 	 * For now, use OST and hope we'll figure out how to make it fire on
@@ -129,7 +129,7 @@ cpu_initclocks(void)
 	printf("cnt5: %08x\n", readreg(JZ_TC_TCNT(5)));
 	printf("CR: %08x\n", MFC0(MIPS_COP_0_CAUSE, 0));
 	printf("SR: %08x\n", MFC0(MIPS_COP_0_STATUS, 0));
-	
+
 	printf("INTC %08x %08x\n", readreg(JZ_ICSR0), readreg(JZ_ICSR1));
 	delay(3000000);
 	printf("%s %d\n", __func__, MFC0(12, 3));
@@ -209,8 +209,8 @@ ingenic_clockintr(struct clockframe *cf)
 	/* Check for lost clock interrupts */
 	new_cnt = readreg(JZ_OST_CNT_LO);
 
-	/* 
-	 * Missed one or more clock interrupts, so let's start 
+	/*
+	 * Missed one or more clock interrupts, so let's start
 	 * counting again from the current value.
 	 */
 	if ((ci->ci_next_cp0_clk_intr - new_cnt) & 0x80000000) {
