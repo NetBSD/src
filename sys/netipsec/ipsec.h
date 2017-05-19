@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.47 2017/05/11 05:55:14 ryo Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.48 2017/05/19 04:34:09 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -242,9 +242,16 @@ extern int ip4_ipsec_ecn;
 extern int ip4_esp_randpad;
 extern int crypto_support;
 
+#include <sys/syslog.h>
 #define ipseclog(x)	do { if (ipsec_debug) log x; } while (0)
 /* for openbsd compatibility */
 #define	DPRINTF(x)	do { if (ipsec_debug) printf x; } while (0)
+
+#define IPSECLOG(level, fmt, args...) 					\
+	do {								\
+		if (ipsec_debug)					\
+			log(level, "%s: " fmt, __func__, ##args);	\
+	} while (0)
 
 void ipsec_pcbconn (struct inpcbpolicy *);
 void ipsec_pcbdisconn (struct inpcbpolicy *);

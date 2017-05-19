@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.91 2017/05/16 07:25:57 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.92 2017/05/19 04:34:09 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.91 2017/05/16 07:25:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.92 2017/05/19 04:34:09 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -389,8 +389,8 @@ key_allocsp_default(int af, const char *where, int tag)
 
 	if (sp->policy != IPSEC_POLICY_DISCARD &&
 		sp->policy != IPSEC_POLICY_NONE) {
-		ipseclog((LOG_INFO, "fixed system default policy: %d->%d\n",
-		    sp->policy, IPSEC_POLICY_NONE));
+		IPSECLOG(LOG_INFO, "fixed system default policy: %d->%d\n",
+		    sp->policy, IPSEC_POLICY_NONE);
 		sp->policy = IPSEC_POLICY_NONE;
 	}
 	sp->refcnt++;
@@ -525,8 +525,8 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 			break;
 
 		default:
-			ipseclog((LOG_ERR, "%s: Invalid policy for PCB %d\n",
-			    __func__, currsp->policy));
+			IPSECLOG(LOG_ERR, "Invalid policy for PCB %d\n",
+			    currsp->policy);
 			*error = EINVAL;
 			return NULL;
 		}
@@ -535,9 +535,9 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 		if (sp == NULL) {		/* no SP found */
 			switch (currsp->policy) {
 			case IPSEC_POLICY_BYPASS:
-				ipseclog((LOG_ERR, "%s: Illegal policy for "
-				    "non-priviliged defined %d\n", __func__,
-				    currsp->policy));
+				IPSECLOG(LOG_ERR, "Illegal policy for "
+				    "non-priviliged defined %d\n",
+				    currsp->policy);
 				*error = EINVAL;
 				return NULL;
 
@@ -551,8 +551,8 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 				break;
 
 			default:
-				ipseclog((LOG_ERR, "%s: Invalid policy for "
-				    "PCB %d\n", __func__, currsp->policy));
+				IPSECLOG(LOG_ERR, "Invalid policy for "
+				    "PCB %d\n", currsp->policy);
 				*error = EINVAL;
 				return NULL;
 			}
@@ -592,8 +592,7 @@ ipsec_getpolicybyaddr(struct mbuf *m, u_int dir, int flag, int *error)
 	/* Make an index to look for a policy. */
 	*error = ipsec_setspidx(m, &spidx, (flag & IP_FORWARDING) ? 0 : 1);
 	if (*error != 0) {
-		DPRINTF(("%s: setpidx failed, dir %u flag %u\n", __func__,
-		    dir, flag));
+		IPSECLOG(LOG_DEBUG, "setpidx failed, dir %u flag %u\n", dir, flag);
 		memset(&spidx, 0, sizeof (spidx));
 		return NULL;
 	}
@@ -652,7 +651,7 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 	if (*error != 0) {
 		KEY_FREESP(&sp);
 		sp = NULL;
-		DPRINTF(("%s: done, error %d\n", __func__, *error));
+		IPSECLOG(LOG_DEBUG, "done, error %d\n", *error);
 	}
 	return sp;
 }
@@ -898,7 +897,7 @@ ipsec6_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 	if (*error != 0) {
 		KEY_FREESP(&sp);
 		sp = NULL;
-		DPRINTF(("%s: done, error %d\n", __func__, *error));
+		IPSECLOG(LOG_DEBUG, "done, error %d\n", *error);
 	}
 	return sp;
 }
@@ -1279,7 +1278,7 @@ ipsec_init_policy(struct socket *so, struct inpcbpolicy **policy)
 
 	new = kmem_intr_zalloc(sizeof(*new), KM_NOSLEEP);
 	if (new == NULL) {
-		ipseclog((LOG_DEBUG, "%s: No more memory.\n", __func__));
+		IPSECLOG(LOG_DEBUG, "No more memory.\n");
 		return ENOBUFS;
 	}
 
@@ -1458,7 +1457,7 @@ ipsec_get_policy(struct secpolicy *policy, struct mbuf **mp)
 
 	*mp = key_sp2msg(policy);
 	if (!*mp) {
-		ipseclog((LOG_DEBUG, "%s: No more memory.\n", __func__));
+		IPSECLOG(LOG_DEBUG, "No more memory.\n");
 		return ENOBUFS;
 	}
 
@@ -1498,8 +1497,8 @@ ipsec4_set_policy(struct inpcb *inp, int optname, const void *request,
 		policy = &inp->inp_sp->sp_out;
 		break;
 	default:
-		ipseclog((LOG_ERR, "%s: invalid direction=%u\n", __func__,
-		    xpl->sadb_x_policy_dir));
+		IPSECLOG(LOG_ERR, "invalid direction=%u\n",
+		    xpl->sadb_x_policy_dir);
 		return EINVAL;
 	}
 
@@ -1530,8 +1529,8 @@ ipsec4_get_policy(struct inpcb *inp, const void *request, size_t len,
 		policy = inp->inp_sp->sp_out;
 		break;
 	default:
-		ipseclog((LOG_ERR, "%s: invalid direction=%u\n", __func__,
-		    xpl->sadb_x_policy_dir));
+		IPSECLOG(LOG_ERR, "invalid direction=%u\n",
+		    xpl->sadb_x_policy_dir);
 		return EINVAL;
 	}
 
@@ -1588,8 +1587,8 @@ ipsec6_set_policy(struct in6pcb *in6p, int optname, const void *request,
 		policy = &in6p->in6p_sp->sp_out;
 		break;
 	default:
-		ipseclog((LOG_ERR, "%s: invalid direction=%u\n", __func__,
-		    xpl->sadb_x_policy_dir));
+		IPSECLOG(LOG_ERR, "invalid direction=%u\n",
+		    xpl->sadb_x_policy_dir);
 		return EINVAL;
 	}
 
@@ -1620,8 +1619,8 @@ ipsec6_get_policy(struct in6pcb *in6p, const void *request, size_t len,
 		policy = in6p->in6p_sp->sp_out;
 		break;
 	default:
-		ipseclog((LOG_ERR, "%s: invalid direction=%u\n", __func__,
-		    xpl->sadb_x_policy_dir));
+		IPSECLOG(LOG_ERR, "invalid direction=%u\n",
+		    xpl->sadb_x_policy_dir);
 		return EINVAL;
 	}
 
@@ -1953,10 +1952,10 @@ ipsec_hdrsiz(const struct secpolicy *sp)
 				break;
 #endif
 			default:
-				ipseclog((LOG_ERR, "%s: unknown AF %d in "
-				    "IPsec tunnel SA\n", __func__,
+				IPSECLOG(LOG_ERR, "unknown AF %d in "
+				    "IPsec tunnel SA\n",
 				    ((const struct sockaddr *)&isr->saidx.dst)
-				    ->sa_family));
+				    ->sa_family);
 				break;
 			}
 		}
@@ -2185,8 +2184,8 @@ ok:
 		if ((sav->flags & SADB_X_EXT_CYCSEQ) == 0)
 			return 1;
 
-		ipseclog((LOG_WARNING, "replay counter made %d cycle. %s\n",
-		    replay->overflow, ipsec_logsastr(sav, buf, sizeof(buf))));
+		IPSECLOG(LOG_WARNING, "replay counter made %d cycle. %s\n",
+		    replay->overflow, ipsec_logsastr(sav, buf, sizeof(buf)));
 	}
 
 	replay->count++;
@@ -2365,7 +2364,7 @@ ipsec6_input(struct mbuf *m)
 	} else {
 		/* XXX error stat??? */
 		error = EINVAL;
-		DPRINTF(("%s: no SP, packet discarded\n", __func__));/*XXX*/
+		IPSECLOG(LOG_DEBUG, "no SP, packet discarded\n");/*XXX*/
 	}
 	splx(s);
 
@@ -2403,7 +2402,7 @@ xform_init(struct secasvar *sav, int xftype)
 		if (xsp->xf_type == xftype)
 			return (*xsp->xf_init)(sav, xsp);
 
-	DPRINTF(("%s: no match for xform type %d\n", __func__, xftype));
+	IPSECLOG(LOG_DEBUG, "no match for xform type %d\n", xftype);
 	return EINVAL;
 }
 

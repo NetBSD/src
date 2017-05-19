@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.47 2017/05/11 05:55:14 ryo Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.48 2017/05/19 04:34:09 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.47 2017/05/11 05:55:14 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.48 2017/05/19 04:34:09 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -98,7 +98,7 @@ ipsec_register_done(struct mbuf *m, int * error)
 
 	mtag = m_tag_get(PACKET_TAG_IPSEC_OUT_DONE, 0, M_NOWAIT);
 	if (mtag == NULL) {
-		DPRINTF(("ipsec_register_done: could not get packet tag\n"));
+		IPSECLOG(LOG_DEBUG, "could not get packet tag\n");
 		*error = ENOMEM;
 		return -1;
 	}
@@ -178,10 +178,10 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 		mo = m_makespace(m, sizeof(struct ip), hlen, &roff);
 		if (mo == NULL) {
 			char buf[IPSEC_ADDRSTRLEN];
-			DPRINTF(("ipsec_process_done : failed to inject"
-			    "%u byte UDP for SA %s/%08lx\n",
+			IPSECLOG(LOG_DEBUG,
+			    "failed to inject %u byte UDP for SA %s/%08lx\n",
 			    hlen, ipsec_address(&saidx->dst, buf, sizeof(buf)),
-			    (u_long) ntohl(sav->spi)));
+			    (u_long) ntohl(sav->spi));
 			error = ENOBUFS;
 			goto bad;
 		}
@@ -231,8 +231,8 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 		break;
 #endif /* INET6 */
 	default:
-		DPRINTF(("ipsec_process_done: unknown protocol family %u\n",
-		    saidx->dst.sa.sa_family));
+		IPSECLOG(LOG_DEBUG, "unknown protocol family %u\n",
+		    saidx->dst.sa.sa_family);
 		error = ENXIO;
 		goto bad;
 	}
@@ -258,8 +258,8 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 			return ipsec6_process_packet(m,isr->next);
 #endif /* INET6 */
 		default :
-			DPRINTF(("ipsec_process_done: unknown protocol family %u\n",
-			       saidx->dst.sa.sa_family));
+			IPSECLOG(LOG_DEBUG, "unknown protocol family %u\n",
+			    saidx->dst.sa.sa_family);
 			error = ENXIO;
 			goto bad;
 		}
@@ -417,8 +417,8 @@ again:
 	if ((isr->saidx.proto == IPPROTO_ESP && !esp_enable) ||
 	    (isr->saidx.proto == IPPROTO_AH && !ah_enable) ||
 	    (isr->saidx.proto == IPPROTO_IPCOMP && !ipcomp_enable)) {
-		DPRINTF(("ipsec_nextisr: IPsec outbound packet dropped due"
-			" to policy (check your sysctls)\n"));
+		IPSECLOG(LOG_DEBUG, "IPsec outbound packet dropped due"
+		    " to policy (check your sysctls)\n");
 		IPSEC_OSTAT(ESP_STAT_PDROPS, AH_STAT_PDROPS,
 		    IPCOMP_STAT_PDROPS);
 		*error = EHOSTUNREACH;
@@ -430,7 +430,7 @@ again:
 	 * before they invoke the xform output method.
 	 */
 	if (sav->tdb_xform == NULL) {
-		DPRINTF(("ipsec_nextisr: no transform for SA\n"));
+		IPSECLOG(LOG_DEBUG, "no transform for SA\n");
 		IPSEC_OSTAT(ESP_STAT_NOXFORM, AH_STAT_NOXFORM,
 		    IPCOMP_STAT_NOXFORM);
 		*error = EHOSTUNREACH;
@@ -531,8 +531,8 @@ ipsec4_process_packet(struct mbuf *m, struct ipsecrequest *isr)
 		error = ipip_output(m, isr, &mp, 0, 0);
 		if (mp == NULL && !error) {
 			/* Should never happen. */
-			DPRINTF(("ipsec4_process_packet: ipip_output "
-				"returns no mbuf and no error!"));
+			IPSECLOG(LOG_DEBUG,
+			    "ipip_output returns no mbuf and no error!");
 			error = EFAULT;
 		}
 		if (error) {
@@ -739,8 +739,8 @@ ipsec6_process_packet(
 		error = ipip_output(m, isr, &mp, 0, 0);
 		if (mp == NULL && !error) {
 			/* Should never happen. */
-			DPRINTF(("ipsec6_process_packet: ipip_output "
-				 "returns no mbuf and no error!"));
+			IPSECLOG(LOG_DEBUG,
+			    "ipip_output returns no mbuf and no error!");
 			error = EFAULT;
 		}
 

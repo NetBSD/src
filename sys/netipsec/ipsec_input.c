@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.42 2017/05/11 05:55:14 ryo Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.43 2017/05/19 04:34:09 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.42 2017/05/11 05:55:14 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.43 2017/05/19 04:34:09 ozaki-r Exp $");
 
 /*
  * IPsec input processing.
@@ -148,7 +148,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		m_freem(m);
 		IPSEC_ISTAT(sproto, ESP_STAT_HDROPS, AH_STAT_HDROPS,
 		    IPCOMP_STAT_HDROPS);
-		DPRINTF(("ipsec_common_input: packet too small\n"));
+		IPSECLOG(LOG_DEBUG, "packet too small\n");
 		return EINVAL;
 	}
 
@@ -199,8 +199,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		break;
 #endif /* INET6 */
 	default:
-		DPRINTF(("ipsec_common_input: unsupported protocol "
-			"family %u\n", af));
+		IPSECLOG(LOG_DEBUG, "unsupported protocol family %u\n", af);
 		m_freem(m);
 		IPSEC_ISTAT(sproto, ESP_STAT_NOPF, AH_STAT_NOPF,
 		    IPCOMP_STAT_NOPF);
@@ -212,10 +211,10 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	/* NB: only pass dst since key_allocsa follows RFC2401 */
 	sav = KEY_ALLOCSA(&dst_address, sproto, spi, sport, dport);
 	if (sav == NULL) {
-		DPRINTF(("ipsec_common_input: no key association found for"
-			  " SA %s/%08lx/%u/%u\n",
-			  ipsec_address(&dst_address, buf, sizeof(buf)),
-			  (u_long) ntohl(spi), sproto, ntohs(dport)));
+		IPSECLOG(LOG_DEBUG,
+		    "no key association found for SA %s/%08lx/%u/%u\n",
+		    ipsec_address(&dst_address, buf, sizeof(buf)),
+		    (u_long) ntohl(spi), sproto, ntohs(dport));
 		IPSEC_ISTAT(sproto, ESP_STAT_NOTDB, AH_STAT_NOTDB,
 		    IPCOMP_STAT_NOTDB);
 		splx(s);
@@ -224,10 +223,10 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	}
 
 	if (sav->tdb_xform == NULL) {
-		DPRINTF(("ipsec_common_input: attempted to use uninitialized"
-			 " SA %s/%08lx/%u\n",
-			 ipsec_address(&dst_address, buf, sizeof(buf)),
-			 (u_long) ntohl(spi), sproto));
+		IPSECLOG(LOG_DEBUG,
+		    "attempted to use uninitialized SA %s/%08lx/%u\n",
+		    ipsec_address(&dst_address, buf, sizeof(buf)),
+		    (u_long) ntohl(spi), sproto);
 		IPSEC_ISTAT(sproto, ESP_STAT_NOXFORM, AH_STAT_NOXFORM,
 		    IPCOMP_STAT_NOXFORM);
 		KEY_FREESAV(&sav);
@@ -297,7 +296,7 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 
 	/* Sanity check */
 	if (m == NULL) {
-		DPRINTF(("ipsec4_common_input_cb: null mbuf"));
+		IPSECLOG(LOG_DEBUG, "null mbuf");
 		IPSEC_ISTAT(sproto, ESP_STAT_BADKCR, AH_STAT_BADKCR,
 		    IPCOMP_STAT_BADKCR);
 		KEY_FREESAV(&sav);
@@ -307,10 +306,9 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 	/* Fix IPv4 header */
 	if (m->m_len < skip && (m = m_pullup(m, skip)) == NULL) {
 		char buf[IPSEC_ADDRSTRLEN];
-		DPRINTF(("ipsec4_common_input_cb: processing failed "
-		    "for SA %s/%08lx\n",
+		IPSECLOG(LOG_DEBUG, "processing failed for SA %s/%08lx\n",
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
-		    (u_long) ntohl(sav->spi)));
+		    (u_long) ntohl(sav->spi));
 		IPSEC_ISTAT(sproto, ESP_STAT_HDROPS, AH_STAT_HDROPS,
 		    IPCOMP_STAT_HDROPS);
 		error = ENOBUFS;
@@ -343,13 +341,13 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 			saidx->proxy.sa.sa_family != 0)) {
 
 			char ipbuf[INET_ADDRSTRLEN];
-			DPRINTF(("ipsec4_common_input_cb: inner "
-			    "source address %s doesn't correspond to "
+			IPSECLOG(LOG_DEBUG,
+			    "inner source address %s doesn't correspond to "
 			    "expected proxy source %s, SA %s/%08lx\n",
 			    IN_PRINT(ipbuf, ipn.ip_src),
 			    ipsp_address(saidx->proxy),
 			    ipsp_address(saidx->dst),
-			    (u_long) ntohl(sav->spi)));
+			    (u_long) ntohl(sav->spi));
 
 			IPSEC_ISTAT(sproto, ESP_STAT_PDROPS,
 			    AH_STAT_PDROPS,
@@ -381,13 +379,13 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 
 			char ip6buf[INET6_ADDRSTRLEN];
 			char pbuf[IPSEC_ADDRSTRLEN], dbuf[IPSEC_ADDRSTRLEN];
-			DPRINTF(("ipsec4_common_input_cb: inner "
-			    "source address %s doesn't correspond to "
+			IPSECLOG(LOG_DEBUG,
+			    "inner source address %s doesn't correspond to "
 			    "expected proxy source %s, SA %s/%08lx\n",
 			    ip6_sprintf(ip6buf, &ip6n.ip6_src),
 			    ipsec_address(&saidx->proxy, pbuf, sizeof(pbuf)),
 			    ipsec_address(&saidx->dst, dbuf, sizeof(dbuf)),
-			    (u_long) ntohl(sav->spi)));
+			    (u_long) ntohl(sav->spi));
 
 			IPSEC_ISTAT(sproto, ESP_STAT_PDROPS,
 			    AH_STAT_PDROPS,
@@ -411,7 +409,7 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 		mtag = m_tag_get(PACKET_TAG_IPSEC_IN_DONE,
 		    sizeof(struct tdb_ident), M_NOWAIT);
 		if (mtag == NULL) {
-			DPRINTF(("ipsec4_common_input_cb: failed to get tag\n"));
+			IPSECLOG(LOG_DEBUG, "failed to get tag\n");
 			IPSEC_ISTAT(sproto, ESP_STAT_HDROPS,
 			    AH_STAT_HDROPS, IPCOMP_STAT_HDROPS);
 			error = ENOMEM;
@@ -455,7 +453,7 @@ ipsec6_common_input(struct mbuf **mp, int *offp, int proto)
 	struct ip6_ext ip6e;
 
 	if (*offp < sizeof(struct ip6_hdr)) {
-		DPRINTF(("ipsec6_common_input: bad offset %u\n", *offp));
+		IPSECLOG(LOG_DEBUG, "bad offset %u\n", *offp);
 		IPSEC_ISTAT(proto, ESP_STAT_HDROPS, AH_STAT_HDROPS,
 			    IPCOMP_STAT_HDROPS);
 		m_freem(*mp);
@@ -482,8 +480,8 @@ ipsec6_common_input(struct mbuf **mp, int *offp, int proto)
 
 		/* Malformed packet check */
 		if (protoff + l != *offp) {
-			DPRINTF(("ipsec6_common_input: bad packet header chain, "
-				"protoff %u, l %u, off %u\n", protoff, l, *offp));
+			IPSECLOG(LOG_DEBUG, "bad packet header chain, "
+			    "protoff %u, l %u, off %u\n", protoff, l, *offp);
 			IPSEC_ISTAT(proto, ESP_STAT_HDROPS,
 				    AH_STAT_HDROPS,
 				    IPCOMP_STAT_HDROPS);
@@ -530,7 +528,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 
 	/* Sanity check */
 	if (m == NULL) {
-		DPRINTF(("ipsec6_common_input_cb: null mbuf"));
+		IPSECLOG(LOG_DEBUG, "null mbuf");
 		IPSEC_ISTAT(sproto, ESP_STAT_BADKCR, AH_STAT_BADKCR,
 		    IPCOMP_STAT_BADKCR);
 		error = EINVAL;
@@ -542,9 +540,9 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 	    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 
 		char buf[IPSEC_ADDRSTRLEN];
-		DPRINTF(("ipsec6_common_input_cb: processing failed "
-		    "for SA %s/%08lx\n", ipsec_address(&sav->sah->saidx.dst,
-		    buf, sizeof(buf)), (u_long) ntohl(sav->spi)));
+		IPSECLOG(LOG_DEBUG, "processing failed for SA %s/%08lx\n",
+		    ipsec_address(&sav->sah->saidx.dst,
+		    buf, sizeof(buf)), (u_long) ntohl(sav->spi));
 
 		IPSEC_ISTAT(sproto, ESP_STAT_HDROPS, AH_STAT_HDROPS,
 		    IPCOMP_STAT_HDROPS);
@@ -579,13 +577,13 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 
 			char ipbuf[INET_ADDRSTRLEN];
 			char pbuf[IPSEC_ADDRSTRLEN], dbuf[IPSEC_ADDRSTRLEN];
-			DPRINTF(("ipsec6_common_input_cb: inner "
-			    "source address %s doesn't correspond to "
+			IPSECLOG(LOG_DEBUG,
+			    "inner source address %s doesn't correspond to "
 			    "expected proxy source %s, SA %s/%08lx\n",
 			    IN_PRINT(ipbuf, ipn.ip_src),
 			    ipsec_address(&saidx->proxy, pbuf, sizeof(pbuf)),
 			    ipsec_address(&saidx->dst, dbuf, sizeof(dbuf)),
-			    (u_long) ntohl(sav->spi)));
+			    (u_long) ntohl(sav->spi));
 
 			IPSEC_ISTAT(sproto, ESP_STAT_PDROPS,
 			    AH_STAT_PDROPS, IPCOMP_STAT_PDROPS);
@@ -617,13 +615,13 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 
 			char ip6buf[INET6_ADDRSTRLEN];
 			char pbuf[IPSEC_ADDRSTRLEN], dbuf[IPSEC_ADDRSTRLEN];
-			DPRINTF(("ipsec6_common_input_cb: inner "
-			    "source address %s doesn't correspond to "
+			IPSECLOG(LOG_DEBUG,
+			    "inner source address %s doesn't correspond to "
 			    "expected proxy source %s, SA %s/%08lx\n",
 			    ip6_sprintf(ip6buf, &ip6n.ip6_src),
 			    ipsec_address(&saidx->proxy, pbuf, sizeof(pbuf)),
 			    ipsec_address(&saidx->dst, dbuf, sizeof(dbuf)),
-			    (u_long) ntohl(sav->spi)));
+			    (u_long) ntohl(sav->spi));
 
 			IPSEC_ISTAT(sproto, ESP_STAT_PDROPS,
 			    AH_STAT_PDROPS, IPCOMP_STAT_PDROPS);
@@ -645,8 +643,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 		mtag = m_tag_get(PACKET_TAG_IPSEC_IN_DONE,
 		    sizeof(struct tdb_ident), M_NOWAIT);
 		if (mtag == NULL) {
-			DPRINTF(("ipsec_common_input_cb: failed to "
-			    "get tag\n"));
+			IPSECLOG(LOG_DEBUG, "failed to get tag\n");
 			IPSEC_ISTAT(sproto, ESP_STAT_HDROPS,
 			    AH_STAT_HDROPS, IPCOMP_STAT_HDROPS);
 			error = ENOMEM;

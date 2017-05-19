@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.15 2017/04/19 03:39:14 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.16 2017/05/19 04:34:09 ozaki-r Exp $	*/
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.15 2017/04/19 03:39:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.16 2017/05/19 04:34:09 ozaki-r Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -321,7 +321,7 @@ m_pad(struct mbuf *m, int n)
 	void *retval;
 
 	if (n <= 0) {  /* No stupid arguments. */
-		DPRINTF(("m_pad: pad length invalid (%d)\n", n));
+		IPSECLOG(LOG_DEBUG, "pad length invalid (%d)\n", n);
 		m_freem(m);
 		return NULL;
 	}
@@ -338,8 +338,9 @@ m_pad(struct mbuf *m, int n)
 	}
 
 	if (m0->m_len != len) {
-		DPRINTF(("m_pad: length mismatch (should be %d instead of %d)\n",
-		    m->m_pkthdr.len, m->m_pkthdr.len + m0->m_len - len));
+		IPSECLOG(LOG_DEBUG,
+		    "length mismatch (should be %d instead of %d)\n",
+		    m->m_pkthdr.len, m->m_pkthdr.len + m0->m_len - len);
 
 		m_freem(m);
 		return NULL;
@@ -348,10 +349,10 @@ m_pad(struct mbuf *m, int n)
 	/* Check for zero-length trailing mbufs, and find the last one. */
 	for (m1 = m0; m1->m_next; m1 = m1->m_next) {
 		if (m1->m_next->m_len != 0) {
-			DPRINTF(("m_pad: length mismatch (should be %d "
-			    "instead of %d)\n",
+			IPSECLOG(LOG_DEBUG,
+			    "length mismatch (should be %d instead of %d)\n",
 			    m->m_pkthdr.len,
-			    m->m_pkthdr.len + m1->m_next->m_len));
+			    m->m_pkthdr.len + m1->m_next->m_len);
 
 			m_freem(m);
 			return NULL;
@@ -365,7 +366,7 @@ m_pad(struct mbuf *m, int n)
 		MGET(m1, M_DONTWAIT, MT_DATA);
 		if (m1 == 0) {
 			m_freem(m0);
-			DPRINTF(("m_pad: unable to get extra mbuf\n"));
+			IPSECLOG(LOG_DEBUG, "unable to get extra mbuf\n");
 			return NULL;
 		}
 
