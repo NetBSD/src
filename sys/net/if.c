@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.392 2017/04/06 09:20:07 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.393 2017/05/19 08:53:51 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.392 2017/04/06 09:20:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.393 2017/05/19 08:53:51 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2247,16 +2247,20 @@ out:
 
 /*
  * Handle interface link state change notifications.
- * Must be called at splnet().
  */
-static void
-if_link_state_change0(struct ifnet *ifp, int link_state)
+void
+if_link_state_change_softint(struct ifnet *ifp, int link_state)
 {
 	struct domain *dp;
+	int s = splnet();
+
+	KASSERT(!cpu_intr_p());
 
 	/* Ensure the change is still valid. */
-	if (ifp->if_link_state == link_state)
+	if (ifp->if_link_state == link_state) {
+		splx(s);
 		return;
+	}
 
 #ifdef DEBUG
 	log(LOG_DEBUG, "%s: link state %s (was %s)\n", ifp->if_xname,
@@ -2301,6 +2305,7 @@ if_link_state_change0(struct ifnet *ifp, int link_state)
 		if (dp->dom_if_link_state_change != NULL)
 			dp->dom_if_link_state_change(ifp, link_state);
 	}
+	splx(s);
 }
 
 /*
@@ -2321,7 +2326,7 @@ if_link_state_change_si(void *arg)
 
 	/* Pop a link state change from the queue and process it. */
 	LQ_POP(ifp->if_link_queue, state);
-	if_link_state_change0(ifp, state);
+	if_link_state_change_softint(ifp, state);
 
 	/* If there is a link state change to come, schedule it. */
 	if (LQ_ITEM(ifp->if_link_queue, 0) != LINK_STATE_UNSET)
