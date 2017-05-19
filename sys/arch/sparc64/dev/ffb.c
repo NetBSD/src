@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.60 2017/04/27 23:17:21 macallan Exp $	*/
+/*	$NetBSD: ffb.c,v 1.61 2017/05/19 19:25:53 macallan Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.60 2017/04/27 23:17:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.61 2017/05/19 19:25:53 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -100,7 +100,8 @@ struct wsscreen_descr ffb_stdscreen = {
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
 	0,
 	0, 0,
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS,
+	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE |
+	    WSSCREEN_RESIZE,
 	NULL	/* modecookie */
 };
 
@@ -131,7 +132,6 @@ static void	ffb_ras_setfg(struct ffb_softc *, int32_t);
 static void	ffb_ras_setbg(struct ffb_softc *, int32_t);
 
 void	ffb_clearscreen(struct ffb_softc *);
-int	ffb_load_font(void *, void *, struct wsdisplay_font *);
 void	ffb_init_screen(void *, struct vcons_screen *, int, 
 	    long *);
 int	ffb_allocattr(void *, int, int, int, long *);
@@ -338,6 +338,7 @@ ffb_attach(device_t self)
 
 	/* we mess with ffb_console_screen only once */
 	if (sc->sc_console) {
+		ffb_console_screen.scr_flags = VCONS_SCREEN_IS_STATIC;
 		vcons_init_screen(&sc->vd, &ffb_console_screen, 1, &defattr);
 		SCREEN_VISIBLE((&ffb_console_screen));
 		/* 
@@ -345,7 +346,6 @@ ffb_attach(device_t self)
 		 * screen
 		 */
 		sc->vd.active = &ffb_console_screen;
-		ffb_console_screen.scr_flags = VCONS_SCREEN_IS_STATIC;
 	} else {
 		if (ffb_console_screen.scr_ri.ri_rows == 0) {
 			/* do some minimal setup to avoid weirdnesses later */
@@ -357,7 +357,6 @@ ffb_attach(device_t self)
 	ffb_stdscreen.nrows = ri->ri_rows;
 	ffb_stdscreen.ncols = ri->ri_cols;
 	ffb_stdscreen.textops = &ri->ri_ops;
-	ffb_stdscreen.capabilities = ri->ri_caps;
 	
 	sc->sc_fb.fb_driver = &ffb_fbdriver;
 	sc->sc_fb.fb_type.fb_cmsize = 0;
@@ -1255,7 +1254,8 @@ ffb_init_screen(void *cookie, struct vcons_screen *scr,
 	 * we can't accelerate copycols() so instead of falling back to
 	 * software use vcons' putchar() based implementation
 	 */
-	scr->scr_flags |= VCONS_NO_COPYCOLS;
+	scr->scr_flags |= VCONS_NO_COPYCOLS | VCONS_LOADFONT;
+
 #ifdef VCONS_DRAW_INTR
         scr->scr_flags |= VCONS_DONT_READ;
 #endif
@@ -1270,9 +1270,10 @@ ffb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_bpos = 16;
 
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE | WSSCREEN_REVERSE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE | 
+	              WSSCREEN_REVERSE | WSSCREEN_RESIZE;
 
 	/* enable acceleration */
 	ri->ri_ops.copyrows = ffb_ras_copyrows;
