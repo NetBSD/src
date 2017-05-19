@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_com.c,v 1.5 2015/07/11 19:00:04 macallan Exp $ */
+/*	$NetBSD: ingenic_com.c,v 1.6 2017/05/19 07:43:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.5 2015/07/11 19:00:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.6 2017/05/19 07:43:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ ingenic_putchar_init(void)
 		com0addr[com_lctl] = htole32(LCR_8BITS);	/* XXX */
 		com0addr[com_mcr]  = htole32(MCR_DTR|MCR_RTS);
 		com0addr[com_fifo] = htole32(
-		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | 
+		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
 		    FIFO_TRIGGER_1 | FIFO_UART_ON);
 #if 0
 	}
@@ -149,7 +149,7 @@ void
 ingenic_com_cnattach(void)
 {
 	int i;
-	
+
 	bus_space_map(apbus_memt, JZ_UART0, 0x100, 0, &regh);
 	cons_com = JZ_UART0;
 	memset(&regs, 0, sizeof(regs));

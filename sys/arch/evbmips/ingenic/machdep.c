@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2016/12/22 14:47:57 cherry Exp $ */
+/*	$NetBSD: machdep.c,v 1.13 2017/05/19 07:40:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2016/12/22 14:47:57 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2017/05/19 07:40:58 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -97,7 +97,7 @@ cal_timer(void)
 	 */
 	curcpu()->ci_cpu_freq = 1200000000;	/* for now */
 	cntfreq = 12000000;	/* EXTCLK / 4 */
-	
+
 	curcpu()->ci_cctr_freq = cntfreq;
 	curcpu()->ci_cycles_per_hz = (cntfreq + hz / 2) / hz;
 
@@ -350,5 +350,5 @@ ingenic_reset(void)
 	writereg(JZ_WDOG_TCNT, 0);	/* reset counter */
 	writereg(JZ_WDOG_TDR, 128);	/* wait for ~1s */
 	writereg(JZ_WDOG_TCSR, TCSR_RTC_EN | TCSR_DIV_256);
-	writereg(JZ_WDOG_TCER, TCER_ENABLE);	/* fire! */	
+	writereg(JZ_WDOG_TCER, TCER_ENABLE);	/* fire! */
 }
