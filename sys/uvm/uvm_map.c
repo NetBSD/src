@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.344 2017/05/06 21:34:52 joerg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.345 2017/05/19 14:38:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.344 2017/05/06 21:34:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.345 2017/05/19 14:38:46 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1066,8 +1066,12 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 
 #ifndef __USER_VA0_IS_SAFE
 	if ((flags & UVM_FLAG_FIXED) && *startp == 0 &&
-	    !VM_MAP_IS_KERNEL(map) && user_va0_disable)
+	    !VM_MAP_IS_KERNEL(map) && user_va0_disable) {
+		uprintf("%s: process wants to map page 0; "
+		    "run 'sysctl -w vm.user_va0_disable=0' to enable access.\n",
+		    __func__);
 		return EACCES;
+	}
 #endif
 
 	/*
