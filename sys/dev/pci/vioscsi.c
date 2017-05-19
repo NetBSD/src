@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.16 2017/03/25 23:58:35 christos Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.16.4.1 2017/05/19 00:22:57 pgoyette Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.16 2017/03/25 23:58:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.16.4.1 2017/05/19 00:22:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ static void	 vioscsi_scsipi_request(struct scsipi_channel *,
     scsipi_adapter_req_t, void *);
 static int	 vioscsi_vq_done(struct virtqueue *);
 static void	 vioscsi_req_done(struct vioscsi_softc *, struct virtio_softc *,
-    struct vioscsi_req *);
+    struct vioscsi_req *, struct virtqueue *, int);
 static struct vioscsi_req *vioscsi_req_get(struct vioscsi_softc *);
 static void	 vioscsi_bad_target(struct scsipi_xfer *);
 
@@ -154,7 +154,7 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 
 	for(i=0; i < __arraycount(sc->sc_vqs); i++) {
 		rv = virtio_alloc_vq(vsc, &sc->sc_vqs[i], i, MAXPHYS,
-		    1 + howmany(MAXPHYS, NBPG),
+		    VIRTIO_SCSI_MIN_SEGMENTS + howmany(MAXPHYS, NBPG),
 		    vioscsi_vq_names[i]);
 		if (rv) {
 			aprint_error_dev(sc->sc_dev,
@@ -362,20 +362,23 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 
 	error = bus_dmamap_load(virtio_dmat(vsc), vr->vr_data,
 	    xs->data, xs->datalen, NULL, XS2DMA(xs));
-	switch (error) {
-	case 0:
-		break;
-	case ENOMEM:
-	case EAGAIN:
-		xs->error = XS_RESOURCE_SHORTAGE;
-		goto nomore;
-	default:
-		aprint_error_dev(sc->sc_dev, "error %d loading DMA map\n",
-		    error);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "%s: error %d loading DMA map\n",
+		    __func__, error);
+
+		if (error == ENOMEM || error == EAGAIN) {
+			/*
+			 * Map is allocated with ALLOCNOW, so this should
+			 * actually never ever happen.
+			 */
+			xs->error = XS_RESOURCE_SHORTAGE;
+		} else {
 stuffup:
-		xs->error = XS_DRIVER_STUFFUP;
-nomore:
-		/* nothing else to free */
+			/* not a temporary condition */
+			xs->error = XS_DRIVER_STUFFUP;
+		}
+
+		virtio_enqueue_abort(vsc, vq, slot);
 		scsipi_done(xs);
 		return;
 	}
@@ -386,10 +389,13 @@ nomore:
 
 	error = virtio_enqueue_reserve(vsc, vq, slot, nsegs);
 	if (error) {
-		DPRINTF(("%s: error reserving %d\n", __func__, error));
+		aprint_error_dev(sc->sc_dev, "error reserving %d (nsegs %d)\n",
+		    error, nsegs);
 		bus_dmamap_unload(virtio_dmat(vsc), vr->vr_data);
+		/* slot already freed by virtio_enqueue_reserve() */
 		xs->error = XS_RESOURCE_SHORTAGE;
-		goto nomore;
+		scsipi_done(xs);
+		return;
 	}
 
 	vr->vr_xs = xs;
@@ -444,7 +450,7 @@ nomore:
 
 static void
 vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
-    struct vioscsi_req *vr)
+    struct vioscsi_req *vr, struct virtqueue *vq, int slot)
 {
 	struct scsipi_xfer *xs = vr->vr_xs;
 	size_t sense_len;
@@ -487,6 +493,8 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 	bus_dmamap_unload(virtio_dmat(vsc), vr->vr_data);
 	vr->vr_xs = NULL;
 
+	virtio_dequeue_commit(vsc, vq, slot);
+
 	mutex_exit(&sc->sc_mutex);
 	scsipi_done(xs);
 	mutex_enter(&sc->sc_mutex);
@@ -528,9 +536,7 @@ vioscsi_vq_done(struct virtqueue *vq)
 
 		DPRINTF(("%s: slot=%d\n", __func__, slot));
 
-		vioscsi_req_done(sc, vsc, &sc->sc_reqs[slot]);
-
-		virtio_dequeue_commit(vsc, vq, slot);
+		vioscsi_req_done(sc, vsc, &sc->sc_reqs[slot], vq, slot);
 
 		ret = 1;
 	}

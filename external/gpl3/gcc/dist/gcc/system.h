@@ -224,6 +224,7 @@ extern int errno;
 #ifdef __cplusplus
 # include <algorithm>
 # include <cstring>
+# include <new>
 # include <utility>
 #endif
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.120.6.1 2017/05/11 02:58:28 pgoyette Exp $	*/
+/*	$NetBSD: parser.c,v 1.120.6.2 2017/05/19 00:22:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.120.6.1 2017/05/11 02:58:28 pgoyette Exp $");
+__RCSID("$NetBSD: parser.c,v 1.120.6.2 2017/05/19 00:22:51 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -1748,10 +1748,39 @@ parsesub: {
 		if (c == OPENBRACE) {
 			c = pgetc_linecont();
 			if (c == '#') {
-				if ((c = pgetc()) == CLOSEBRACE)
+				if ((c = pgetc_linecont()) == CLOSEBRACE)
 					c = '#';
-				else
+				else if (is_name(c) || isdigit(c))
 					subtype = VSLENGTH;
+				else if (is_special(c)) {
+					/*
+					 * ${#} is $# - the number of sh params
+					 * ${##} is the length of ${#}
+					 * ${###} is ${#} with as much nothing
+					 *        as possible removed from start
+					 * ${##1} is ${#} with leading 1 gone
+					 * ${##\#} is ${#} with leading # gone
+					 *
+					 * this stuff is UGLY!
+					 */
+					if (pgetc_linecont() == CLOSEBRACE) {
+						pungetc();
+						subtype = VSLENGTH;
+					} else {
+						static char cbuf[2];
+
+						pungetc();   /* would like 2 */
+						cbuf[0] = c; /* so ... */
+						cbuf[1] = '\0';
+						pushstring(cbuf, 1, NULL);
+						c = '#';     /* ${#:...} */
+						subtype = 0; /* .. or similar */
+					}
+				} else {
+					pungetc();
+					c = '#';
+					subtype = 0;
+				}
 			}
 			else
 				subtype = 0;
@@ -1818,6 +1847,8 @@ parsesub: {
 				}
 			}
 		} else {
+			if (subtype == VSLENGTH && c != /*{*/ '}')
+				synerror("no modifiers allowed with ${#var}");
 			pungetc();
 		}
 		if (ISDBLQUOTE() || arinest)

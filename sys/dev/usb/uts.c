@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.6 2017/04/06 20:06:44 macallan Exp $	*/
+/*	$NetBSD: uts.c,v 1.6.4.1 2017/05/19 00:22:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.6 2017/04/06 20:06:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.6.4.1 2017/05/19 00:22:57 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -212,7 +212,7 @@ uts_attach(device_t parent, device_t self, void *aux)
 			 * valid data
 			 */
 			aprint_debug_dev(sc->sc_hdev.sc_dev,
-			    "ELAN touchscreen found, workinmg around bug.\n");
+			    "ELAN touchscreen found, working around bug.\n");
 		} else {
 			aprint_error_dev(sc->sc_hdev.sc_dev,
 			    "touchscreen has no range report\n");

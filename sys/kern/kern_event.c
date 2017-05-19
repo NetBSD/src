@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.88.8.3 2017/05/17 01:42:17 pgoyette Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.88.8.4 2017/05/19 00:22:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.88.8.3 2017/05/17 01:42:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.88.8.4 2017/05/19 00:22:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

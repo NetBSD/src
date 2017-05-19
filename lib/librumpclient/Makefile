@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.6.1 2017/05/11 02:58:34 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.11.6.2 2017/05/19 00:22:53 pgoyette Exp $
 #
 
 .PATH:	${.CURDIR}/../../sys/rump/librump/rumpkern
@@ -17,7 +17,7 @@ LIBDO.${lib}=	_external
 LIBDPLIBS+=	${lib} lib
 .endfor
 
-CPPFLAGS+=	-DRUMP_CLIENT -D_KERNTYPES
+CPPFLAGS+=	-DRUMP_CLIENT
 CPPFLAGS+=	-I${.OBJDIR} -I${.CURDIR}
 CPPFLAGS+=	-I${.CURDIR}/../librumpuser
 SRCS=		rumpclient.c

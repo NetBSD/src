@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.4 2016/11/23 03:30:53 mrg Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.4.6.1 2017/05/19 00:22:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.4 2016/11/23 03:30:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.4.6.1 2017/05/19 00:22:58 pgoyette Exp $");
 
 /*
  *	Manages physical address maps.
@@ -168,7 +168,8 @@ static inline pt_entry_t *
 pmap_segmap(struct pmap *pmap, vaddr_t va)
 {
 	pmap_segtab_t *stp = pmap->pm_segtab;
-	KASSERT(pmap != pmap_kernel() || !pmap_md_direct_mapped_vaddr_p(va));
+	KASSERTMSG(pmap != pmap_kernel() || !pmap_md_direct_mapped_vaddr_p(va),
+	    "pmap %p va %#" PRIxVADDR, pmap, va);
 #ifdef _LP64
 	stp = stp->seg_seg[(va >> XSEGSHIFT) & (NSEGPG - 1)];
 	if (stp == NULL)
@@ -256,7 +257,7 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 	}
 
 	if (free_stp) {
-		pmap_check_stp(stp, __func__, 
+		pmap_check_stp(stp, __func__,
 			       vinc == NBSEG ? "release seg" : "release xseg");
 		pmap_segtab_free(stp);
 		*stp_p = NULL;

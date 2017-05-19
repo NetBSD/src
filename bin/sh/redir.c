@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.53.2.1 2017/05/02 03:19:14 pgoyette Exp $	*/
+/*	$NetBSD: redir.c,v 1.53.2.2 2017/05/19 00:22:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.53.2.1 2017/05/02 03:19:14 pgoyette Exp $");
+__RCSID("$NetBSD: redir.c,v 1.53.2.2 2017/05/19 00:22:51 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -338,7 +338,7 @@ openredirect(union node *redir, char memory[10], int flags)
 		abort();
 	}
 
-	cloexec = fd > 2 && (flags & REDIR_KEEP) == 0;
+	cloexec = fd > 2 && (flags & REDIR_KEEP) == 0 && !posix;
 	if (f != fd) {
 		if (copyfd(f, fd, cloexec) < 0) {
 			int e = errno;
@@ -653,42 +653,43 @@ renumber_sh_fd(struct shell_fds *fp)
 
 static const struct flgnames {
 	const char *name;
+	uint16_t minch;
 	uint32_t value;
 } nv[] = {
 #ifdef O_APPEND
-	{ "append",	O_APPEND 	},
+	{ "append",	2,	O_APPEND 	},
 #endif
 #ifdef O_ASYNC
-	{ "async",	O_ASYNC		},
+	{ "async",	2,	O_ASYNC		},
 #endif
 #ifdef O_SYNC
-	{ "sync",	O_SYNC		},
+	{ "sync",	2,	O_SYNC		},
 #endif
 #ifdef O_NONBLOCK
-	{ "nonblock",	O_NONBLOCK	},
+	{ "nonblock",	3,	O_NONBLOCK	},
 #endif
 #ifdef O_FSYNC
-	{ "fsync",	O_FSYNC		},
+	{ "fsync",	2,	O_FSYNC		},
 #endif
 #ifdef O_DSYNC
-	{ "dsync",	O_DSYNC		},
+	{ "dsync",	2,	O_DSYNC		},
 #endif
 #ifdef O_RSYNC
-	{ "rsync",	O_RSYNC		},
+	{ "rsync",	2,	O_RSYNC		},
 #endif
 #ifdef O_ALTIO
-	{ "altio",	O_ALT_IO	},
+	{ "altio",	2,	O_ALT_IO	},
 #endif
 #ifdef O_DIRECT
-	{ "direct",	O_DIRECT	},
+	{ "direct",	2,	O_DIRECT	},
 #endif
 #ifdef O_NOSIGPIPE
-	{ "nosigpipe",	O_NOSIGPIPE	},
+	{ "nosigpipe",	3,	O_NOSIGPIPE	},
 #endif
 #ifdef O_CLOEXEC
-	{ "cloexec",	O_CLOEXEC	},
+	{ "cloexec",	2,	O_CLOEXEC	},
 #endif
-	{ 0, 0 }
+	{ 0, 0, 0 }
 };
 #define ALLFLAGS (O_APPEND|O_ASYNC|O_SYNC|O_NONBLOCK|O_DSYNC|O_RSYNC|\
     O_ALT_IO|O_DIRECT|O_NOSIGPIPE|O_CLOEXEC)
@@ -752,6 +753,7 @@ parseflags(char *s, int *p, int *n)
 {
 	int *v, *w;
 	const struct flgnames *fn;
+	size_t len;
 
 	*p = 0;
 	*n = 0;
@@ -769,8 +771,9 @@ parseflags(char *s, int *p, int *n)
 			error("Missing +/- indicator before flag %s", s-1);
 		}
 			
+		len = strlen(s);
 		for (fn = nv; fn->name; fn++)
-			if (strcmp(s, fn->name) == 0) {
+			if (len >= fn->minch && strncmp(s,fn->name,len) == 0) {
 				*v |= fn->value;
 				*w &=~ fn->value;
 				break;
@@ -846,11 +849,6 @@ fdflagscmd(int argc, char *argv[])
 		if (setflags)
 			goto msg;
 
-		/*
-		 * XXX  we should only ever operate on user defined fds
-		 * XXX  not on sh internal fds that might be open.
-		 * XXX  but for that we need to know their range (later)
-		 */
 		for (i = 0; i <= max_user_fd; i++)
 			printone(i, 0, verbose, 1);
 		return 0;

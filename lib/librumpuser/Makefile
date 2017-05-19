@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24.6.1 2017/05/11 02:58:34 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.24.6.2 2017/05/19 00:22:53 pgoyette Exp $
 #
 
 .include <bsd.own.mk>
@@ -19,7 +19,7 @@ LIBDPLIBS+=	pthread ${.CURDIR}/../libpthread
 LIBDO.${lib}=	_external
 LIBDPLIBS+=	${lib} lib
 .endfor
-CPPFLAGS+=	-DLIBRUMPUSER -D_KERNTYPES
+CPPFLAGS+=	-DLIBRUMPUSER
 #CPPFLAGS+=	-D_DIAGNOSTIC
 
 

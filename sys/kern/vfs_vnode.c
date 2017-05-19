@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.87 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.87.2.1 2017/05/19 00:22:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.87 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.87.2.1 2017/05/19 00:22:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -950,31 +950,48 @@ vrecycle(vnode_t *vp)
 void
 vrevoke(vnode_t *vp)
 {
+	int error;
+	struct mount *mp;
 	vnode_t *vq;
 	enum vtype type;
 	dev_t dev;
 
 	KASSERT(vp->v_usecount > 0);
 
+	mp = vp->v_mount;
+	error = vfs_suspend(mp, 0);
+	KASSERT(error == 0 || error == EOPNOTSUPP);
+	if (error)
+		mp = NULL;
+
 	mutex_enter(vp->v_interlock);
 	VSTATE_WAIT_STABLE(vp);
 	if (VSTATE_GET(vp) == VS_RECLAIMED) {
 		mutex_exit(vp->v_interlock);
-		return;
 	} else if (vp->v_type != VBLK && vp->v_type != VCHR) {
 		atomic_inc_uint(&vp->v_usecount);
 		mutex_exit(vp->v_interlock);
 		vgone(vp);
-		return;
 	} else {
 		dev = vp->v_rdev;
 		type = vp->v_type;
 		mutex_exit(vp->v_interlock);
-	}
 
-	while (spec_node_lookup_by_dev(type, dev, &vq) == 0) {
-		vgone(vq);
+		while (spec_node_lookup_by_dev(type, dev, &vq) == 0) {
+			if (mp != vq->v_mount) {
+				if (mp)
+					vfs_resume(mp);
+				mp = vp->v_mount;
+				error = vfs_suspend(mp, 0);
+				KASSERT(error == 0 || error == EOPNOTSUPP);
+				if (error)
+					mp = NULL;
+			}
+			vgone(vq);
+		}
 	}
+	if (mp)
+		vfs_resume(mp);
 }
 
 /*

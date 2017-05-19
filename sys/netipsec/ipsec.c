@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.84.2.2 2017/05/11 02:58:41 pgoyette Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.84.2.3 2017/05/19 00:22:58 pgoyette Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.84.2.2 2017/05/11 02:58:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.84.2.3 2017/05/19 00:22:58 pgoyette Exp $");
 
 /*
  * IPsec controller part.
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.84.2.2 2017/05/11 02:58:41 pgoyette Exp 
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
@@ -58,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.84.2.2 2017/05/11 02:58:41 pgoyette Exp 
 #include <sys/sysctl.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
+#include <sys/cpu.h>
+#include <sys/kmem.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -399,7 +400,7 @@ key_allocsp_default(int af, const char *where, int tag)
 	return sp;
 }
 #define	KEY_ALLOCSP_DEFAULT(af) \
-	key_allocsp_default((af),__FILE__, __LINE__)
+	key_allocsp_default((af), __func__, __LINE__)
 
 /*
  * For OUTBOUND packet having a socket. Searching SPD for packet,
@@ -1263,7 +1264,8 @@ ipsec6_setspidx_ipaddr(struct mbuf *m, struct secpolicyindex *spidx)
 static void
 ipsec_delpcbpolicy(struct inpcbpolicy *p)
 {
-	free(p, M_SECA);
+
+	kmem_intr_free(p, sizeof(*p));
 }
 
 /* initialize policy in PCB */
@@ -1275,7 +1277,7 @@ ipsec_init_policy(struct socket *so, struct inpcbpolicy **policy)
 	KASSERT(so != NULL);
 	KASSERT(policy != NULL);
 
-	new = malloc(sizeof(*new), M_SECA, M_NOWAIT|M_ZERO);
+	new = kmem_intr_zalloc(sizeof(*new), KM_NOSLEEP);
 	if (new == NULL) {
 		ipseclog((LOG_DEBUG, "%s: No more memory.\n", __func__));
 		return ENOBUFS;
@@ -1353,7 +1355,7 @@ ipsec_deepcopy_policy(const struct secpolicy *src)
 	 */
 	q = &newchain;
 	for (p = src->req; p; p = p->next) {
-		*q = malloc(sizeof(**q), M_SECA, M_NOWAIT|M_ZERO);
+		*q = kmem_zalloc(sizeof(**q), KM_SLEEP);
 		if (*q == NULL)
 			goto fail;
 		(*q)->next = NULL;
@@ -1382,7 +1384,7 @@ ipsec_deepcopy_policy(const struct secpolicy *src)
 fail:
 	for (q = &newchain; *q; q = &r) {
 		r = (*q)->next;
-		free(*q, M_SECA);
+		kmem_free(*q, sizeof(**q));
 	}
 	return NULL;
 }
@@ -1400,6 +1402,8 @@ ipsec_set_policy(
 	const struct sadb_x_policy *xpl;
 	struct secpolicy *newsp = NULL;
 	int error;
+
+	KASSERT(!cpu_softintr_p());
 
 	/* sanity check. */
 	if (policy == NULL || *policy == NULL || request == NULL)
@@ -1473,6 +1477,8 @@ ipsec4_set_policy(struct inpcb *inp, int optname, const void *request,
 {
 	const struct sadb_x_policy *xpl;
 	struct secpolicy **policy;
+
+	KASSERT(!cpu_softintr_p());
 
 	/* sanity check. */
 	if (inp == NULL || request == NULL)
@@ -1563,6 +1569,8 @@ ipsec6_set_policy(struct in6pcb *in6p, int optname, const void *request,
 {
 	const struct sadb_x_policy *xpl;
 	struct secpolicy **policy;
+
+	KASSERT(!cpu_softintr_p());
 
 	/* sanity check. */
 	if (in6p == NULL || request == NULL)
@@ -2101,6 +2109,7 @@ ipsec_updatereplay(u_int32_t seq, const struct secasvar *sav)
 	int fr;
 	u_int32_t wsizeb;	/* constant: bits of window size */
 	int frlast;		/* constant: last frame */
+	char buf[INET6_ADDRSTRLEN];
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 
@@ -2177,7 +2186,7 @@ ok:
 			return 1;
 
 		ipseclog((LOG_WARNING, "replay counter made %d cycle. %s\n",
-		    replay->overflow, ipsec_logsastr(sav)));
+		    replay->overflow, ipsec_logsastr(sav, buf, sizeof(buf))));
 	}
 
 	replay->count++;
@@ -2210,37 +2219,21 @@ vshiftl(unsigned char *bitmap, int nbit, int wsize)
 	return;
 }
 
-/* Return a printable string for the IPv4 address. */
-static char *
-inet_ntoa4(struct in_addr ina)
-{
-	static char buf[4][4 * sizeof "123" + 4];
-	unsigned char *ucp = (unsigned char *) &ina;
-	static int i = 3;
-
-	i = (i + 1) % 4;
-	snprintf(buf[i], sizeof(buf[i]), "%d.%d.%d.%d",
-		ucp[0] & 0xff, ucp[1] & 0xff, ucp[2] & 0xff, ucp[3] & 0xff);
-	return (buf[i]);
-}
-
 /* Return a printable string for the address. */
 const char *
-ipsec_address(const union sockaddr_union *sa)
+ipsec_address(const union sockaddr_union *sa, char *buf, size_t size)
 {
-#if INET6
-	static char ip6buf[INET6_ADDRSTRLEN];	/* XXX: NOMPSAFE */
-#endif
-
 	switch (sa->sa.sa_family) {
 #if INET
 	case AF_INET:
-		return inet_ntoa4(sa->sin.sin_addr);
+		in_print(buf, size, &sa->sin.sin_addr);
+		return buf;
 #endif /* INET */
 
 #if INET6
 	case AF_INET6:
-		return IN6_PRINT(ip6buf, &sa->sin6.sin6_addr);
+		in6_print(buf, size, &sa->sin6.sin6_addr);
+		return buf;
 #endif /* INET6 */
 
 	default:
@@ -2249,27 +2242,19 @@ ipsec_address(const union sockaddr_union *sa)
 }
 
 const char *
-ipsec_logsastr(const struct secasvar *sav)
+ipsec_logsastr(const struct secasvar *sav, char *buf, size_t size)
 {
-	static char buf[256];
-	char *p;
 	const struct secasindex *saidx = &sav->sah->saidx;
+	char sbuf[IPSEC_ADDRSTRLEN], dbuf[IPSEC_ADDRSTRLEN];
 
 	KASSERTMSG(saidx->src.sa.sa_family == saidx->dst.sa.sa_family,
 	    "af family mismatch, src %u, dst %u",
 	    saidx->src.sa.sa_family, saidx->dst.sa.sa_family);
 
-	p = buf;
-	snprintf(buf, sizeof(buf), "SA(SPI=%u ", (u_int32_t)ntohl(sav->spi));
-	while (p && *p)
-		p++;
-	/* NB: only use ipsec_address on one address at a time */
-	snprintf(p, sizeof (buf) - (p - buf), "src=%s ",
-		ipsec_address(&saidx->src));
-	while (p && *p)
-		p++;
-	snprintf(p, sizeof (buf) - (p - buf), "dst=%s)",
-		ipsec_address(&saidx->dst));
+	snprintf(buf, size, "SA(SPI=%u src=%s dst=%s)",
+	    (u_int32_t)ntohl(sav->spi),
+	    ipsec_address(&saidx->src, sbuf, sizeof(sbuf)),
+	    ipsec_address(&saidx->dst, dbuf, sizeof(dbuf)));
 
 	return buf;
 }

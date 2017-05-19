@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.31 2017/04/24 03:29:37 knakahara Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.31.2.1 2017/05/19 00:22:58 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -640,11 +640,11 @@ extern int	cuio_getptr(struct uio *, int loc, int *off);
 
 #ifdef CRYPTO_DEBUG	/* yuck, netipsec defines these differently */
 #ifndef DPRINTF
-#define DPRINTF(a) printf a
+#define DPRINTF(a, ...)	printf("%s: " a, __func__, ##__VA_ARGS__)
 #endif
 #else
 #ifndef DPRINTF
-#define DPRINTF(a)
+#define DPRINTF(a, ...)
 #endif
 #endif
 

@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.11 2017/03/20 11:48:41 kre Exp $
+# $NetBSD: t_expand.sh,v 1.11.2.1 2017/05/19 00:22:58 pgoyette Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -259,6 +259,7 @@ check()
 
 		# don't actually fail just because of wrong exit code
 		# unless we either expected, or received "good"
+		# or something else is detected as incorrect as well.
 		case "$3/${STATUS}" in
 		(*/0|0/*) fail=true;;
 		esac
@@ -307,7 +308,10 @@ check()
 		TEST_FAIL_COUNT=$(( $TEST_FAIL_COUNT + 1 ))
 		return 0
 	}
-	$fail && atf_fail "Test[$TEST_NUM] of '$1' failed${nl}${MSG}"
+	$fail && atf_fail "Test[$TEST_NUM] failed: $(
+	    # ATF does not like newlines in messages, so change them...
+		    printf '%s' "${MSG}" | tr '\n' ';'
+	    )"
 	return 0
 }
 
@@ -430,13 +434,225 @@ var_with_embedded_cmdsub_body() {
 	results
 }
 
+atf_test_case dollar_hash
+dollar_hash_head() {
+	atf_set "descr" 'Test expansion of various aspects of $#'
+}
+dollar_hash_body() {
+
+#
+#	$# looks like it should be so simple that it doesn't really
+#	need a test of its own, and used in that way, it really doesn't.
+#	But when we add braces ${#} we need to deal with the three
+#	(almost 4) different meanings of a # inside a ${} expansion...
+#
+#	Note that some of these are just how we treat expansions that
+#	are unspecified by posix (as noted below.)
+#	
+#		1.   ${#} is just $# (number of params)
+#		1.a	${\#} is nothing at all (error: invalid expansion)
+#		1.b	${\#...} (anything after) is the same (invalid)
+#		2.   ${#VAR} is the length of the value VAR
+#		2.a	Including ${##} - the length of ${#}
+#		3    ${VAR#pat} is the value of VAR with leading pat removed
+#		3.a	Including ${VAR#} which just removes leading nothing
+#			This is relevant in case of ${VAR#${X}} with X=''
+#				nb: not required by posix, see XCU 2.6.2
+#		3.b	${##} is not a case of 3.a but rather 2.a 
+#		3.c	Yet ${##pat} is a case of 3.a
+#			Including ${##${X}} where X='' or X='#'
+#				nb: not required by posix, see XCU 2.6.2
+#		3.d	And ${#\#} is invalid (error)
+#		3.e	But ${##\#} removes a leading # from the value of $#
+#			(so is just $# as there is no leading # there)
+#				nb: not required by posix, see XCU 2.6.2
+#		4    ${VAR##pat} is the value of VAR with longest pat removed
+#		4.a	Including ${VAR##} which removes the longest nothing
+#		4.b	Which in this case includes ${###} (so is == $#)
+#				nb: not required by posix, see XCU 2.6.2
+#		4.c	But not ${##\#} which is $# with a leading '#' removed
+#			(and so is also == $#), i.e.: like ${###} but different.
+#				nb: not required by posix, see XCU 2.6.2
+#		4.d	As is ${###\#} or just ${####} - remove  # (so just $#)
+#				nb: not required by posix, see XCU 2.6.2
+#
+
+	reset dollar_hash
+
+	check 'set -- ; echo $#'			'0'		0  # 1
+	check 'set -- a b c; echo $#'			'3'		0  # 2
+	check 'set -- a b c d e f g h i j; echo $#'	'10'		0  # 3
+# rule 1
+	check 'set -- ; echo ${#}'			'0'		0  # 4
+	check 'set -- a b c; echo ${#}'			'3'		0  # 5
+	check 'set -- a b c d e f g h i j; echo ${#}'	'10'		0  # 6
+# rule 1.a
+	check 'set -- a b c; echo ${\#}'		''		2  # 7
+# rule 1.b
+	check 'set -- a b c; echo ${\#:-foo}'		''		2  # 8
+# rule 2
+	check 'VAR=12345; echo ${#VAR}'			'5'		0  # 9
+	check 'VAR=123456789012; echo ${#VAR}'		'12'		0  #10
+# rule 2.a
+	check 'set -- ; echo ${##}'			'1'		0  #11
+	check 'set -- a b c; echo ${##}'		'1'		0  #12
+	check 'set -- a b c d e f g h i j; echo ${##}'	'2'		0  #13
+# rule 3
+	check 'VAR=12345; echo ${VAR#1}'		'2345'		0  #14
+	check 'VAR=12345; echo ${VAR#2}'		'12345'		0  #15
+	check 'VAR=#2345; echo ${VAR#\#}'		'2345'		0  #16
+	check 'X=1; VAR=12345; echo ${VAR#${X}}'	'2345'		0  #17
+	check 'X=1; VAR=#2345; echo ${VAR#${X}}'	'#2345'		0  #18
+# rule 3.a
+	check 'VAR=12345; echo ${VAR#}'			'12345'		0  #19
+	check 'X=; VAR=12345; echo ${VAR#${X}}'		'12345'		0  #20
+# rule 3.b (tested above, rule 2.a)
+# rule 3.c
+	check 'set -- ; echo ${##0}'			''		0  #21
+	check 'set -- a b c; echo ${##1}'		'3'		0  #22
+	check 'set -- a b c d e f g h i j; echo ${##1}'	'0'		0  #23
+	check 'X=0; set -- ; echo ${##${X}}'		''		0  #24
+	check 'X=; set -- ; echo ${##${X}}'		'0'		0  #25
+	check 'X=1; set -- a b c; echo ${##${X}}'	'3'		0  #26
+	check 'X=1; set -- a b c d e f g h i j; echo ${##${X}}'	'0'	0  #27
+	check 'X=; set -- a b c d e f g h i j; echo ${##${X}}'	'10'	0  #28
+	check 'X=#; VAR=#2345; echo ${VAR#${X}}'	'2345'		0  #29
+	check 'X=#; VAR=12345; echo ${VAR#${X}}'	'12345'		0  #30
+# rule 3.d
+	check 'set -- a b c; echo ${#\#}'		''		2  #31
+# rule 3.e
+	check 'set -- ; echo ${##\#}'			'0'		0  #32
+	check 'set -- a b c d e f g h i j; echo ${##\#}' '10'		0  #33
+
+# rule 4
+	check 'VAR=12345; echo ${VAR##1}'		'2345'		0  #34
+	check 'VAR=12345; echo ${VAR##\1}'		'2345'		0  #35
+# rule 4.a
+	check 'VAR=12345; echo ${VAR##}'		'12345'		0  #36
+# rule 4.b
+	check 'set -- ; echo ${###}'			'0'		0  #37
+	check 'set -- a b c d e f g h i j; echo ${###}'	'10'		0  #38
+# rule 4.c
+	check 'VAR=12345; echo ${VAR#\#}'		'12345'		0  #39
+	check 'VAR=12345; echo ${VAR#\#1}'		'12345'		0  #40
+	check 'VAR=#2345; echo ${VAR#\#}'		'2345'		0  #41
+	check 'VAR=#12345; echo ${VAR#\#1}'		'2345'		0  #42
+	check 'VAR=#2345; echo ${VAR#\#1}'		'#2345'		0  #43
+	check 'set -- ; echo ${####}'			'0'		0  #44
+	check 'set -- ; echo ${###\#}'			'0'		0  #45
+	check 'set -- a b c d e f g h i j; echo ${####}' '10'		0  #46
+	check 'set -- a b c d e f g h i j; echo ${###\#}' '10'		0  #47
+
+# now check for some more utter nonsense, not mentioned in the rules
+# above (doesn't need to be)
+
+	check 'x=hello; set -- a b c; echo ${#x:-1}'	''		2  #48
+	check 'x=hello; set -- a b c; echo ${#x-1}'	''		2  #49
+	check 'x=hello; set -- a b c; echo ${#x:+1}'	''		2  #50
+	check 'x=hello; set -- a b c; echo ${#x+1}'	''		2  #51
+	check 'x=hello; set -- a b c; echo ${#x+1}'	''		2  #52
+	check 'x=hello; set -- a b c; echo ${#x:?msg}'	''		2  #53
+	check 'x=hello; set -- a b c; echo ${#x?msg}'	''		2  #54
+	check 'x=hello; set -- a b c; echo ${#x:=val}'	''		2  #55
+	check 'x=hello; set -- a b c; echo ${#x=val}'	''		2  #56
+	check 'x=hello; set -- a b c; echo ${#x#h}'	''		2  #57
+	check 'x=hello; set -- a b c; echo ${#x#*l}'	''		2  #58
+	check 'x=hello; set -- a b c; echo ${#x##*l}'	''		2  #59
+	check 'x=hello; set -- a b c; echo ${#x%o}'	''		2  #60
+	check 'x=hello; set -- a b c; echo ${#x%l*}'	''		2  #61
+	check 'x=hello; set -- a b c; echo ${#x%%l*}'	''		2  #62
+
+# but just to be complete, these ones should work
+
+	check 'x=hello; set -- a b c; echo ${#%5}'	'3'		0  #63
+	check 'x=hello; set -- a b c; echo ${#%3}'	''		0  #64
+	check 'x=hello; set -- a b c; echo ${#%?}'	''		0  #65
+	check 'X=#; set -- a b c; echo ${#%${X}}'	'3'		0  #66
+	check 'X=3; set -- a b c; echo ${#%${X}}'	''		0  #67
+	check 'set -- a b c; echo ${#%%5}'		'3'		0  #68
+	check 'set -- a b c; echo ${#%%3}'		''		0  #69
+	check 'set -- a b c d e f g h i j k l; echo ${#%1}' '12'	0  #70
+	check 'set -- a b c d e f g h i j k l; echo ${#%2}' '1'		0  #71
+	check 'set -- a b c d e f g h i j k l; echo ${#%?}' '1'		0  #72
+	check 'set -- a b c d e f g h i j k l; echo ${#%[012]}' '1'	0  #73
+	check 'set -- a b c d e f g h i j k l; echo ${#%[0-4]}' '1'	0  #74
+	check 'set -- a b c d e f g h i j k l; echo ${#%?2}' ''		0  #75
+	check 'set -- a b c d e f g h i j k l; echo ${#%1*}' ''		0  #76
+	check 'set -- a b c d e f g h i j k l; echo ${#%%2}' '1'	0  #77
+	check 'set -- a b c d e f g h i j k l; echo ${#%%1*}' ''	0  #78
+
+# and this lot are stupid, as $# is never unset or null, but they do work...
+
+	check 'set -- a b c; echo ${#:-99}'		'3'		0  #79
+	check 'set -- a b c; echo ${#-99}'		'3'		0  #80
+	check 'set -- a b c; echo ${#:+99}'		'99'		0  #81
+	check 'set -- a b c; echo ${#+99}'		'99'		0  #82
+	check 'set -- a b c; echo ${#:?bogus}'		'3'		0  #83
+	check 'set -- a b c; echo ${#?bogus}'		'3'		0  #84
+
+# even this utter nonsense is OK, as while special params cannot be
+# set this way, here, as $# is not unset, or null, the assignment
+# never happens (isn't even attempted)
+
+	check 'set -- a b c; echo ${#:=bogus}'		'3'		0  #85
+	check 'set -- a b c; echo ${#=bogus}'		'3'		0  #86
+
+	for n in 0 1 10 25 100				#87 #88 #89 #90 #91
+	do
+		check "(exit $n)"'; echo ${#?}'		"${#n}"		0
+	done
+
+	results		# results so far anyway...
+
+# now we have some harder to verify cases, as they (must) check unknown values
+# and hence the resuls cannot just be built into the script, but we have
+# to use some tricks to validate them, so for these, just do regular testing
+# and don't attempt to use the check helper function, nor to include
+# these tests in the result summary.   If anything has already failed, we
+# do not get this far...   From here on, first failure ends this test.
+
+	for opts in '' '-a' '-au' '-auf' '-aufe' # options safe enough to set
+	do
+		# Note the shell might have other (or these) opts set already
+
+		RES=$(${TEST_SH} -c "test -n '${opts}' && set ${opts};
+			printf '%s' \"\$-\";printf ' %s\\n' \"\${#-}\"") ||
+			atf_fail '${#-} test exited with status '"$?"
+		LEN="${RES##* }"
+		DMINUS="${RES% ${LEN}}"
+		if [ "${#DMINUS}" != "${LEN}" ]
+		then
+			atf_fail \
+		   '${#-} test'" produced ${LEN} for opts ${DMINUS} (${RES})"
+		fi
+	done
+
+	for seq in a b c d e f g h i j
+	do
+		# now we are tryin to generate different pids for $$ and $!
+		# so we just run the test a number of times, and hope...
+		# On NetBSD pid randomisation will usually help the tests
+
+		eval "$(${TEST_SH} -c \
+		    '(exit 0)& BG=$! LBG=${#!};
+	    printf "SH=%s BG=%s LSH=%s LBG=%s" "$$" "$BG" "${#$}" "$LBG";
+		      wait')"
+
+		if [ "${#SH}" != "${LSH}" ] || [ "${#BG}" != "${LBG}" ]
+		then
+			atf_fail \
+	'${#!] of '"${BG} was ${LBG}, expected ${#BG}"'; ${#$} of '"${SH} was ${LSH}, expected ${#SH}"
+		fi
+	done
+}
+
 atf_test_case dollar_star
 dollar_star_head() {
 	atf_set "descr" 'Test expansion of various aspects of $*'
 }
 dollar_star_body() {
 
-	reset # dollar_star
+	reset dollar_star
 
 	check 'set -- a b c; echo $# $*'		'3 a b c'	0  # 1
 	check 'set -- a b c; echo $# "$*"'		'3 a b c'	0  # 2
@@ -668,6 +884,7 @@ atf_init_test_cases() {
 	atf_add_test_case arithmetic
 	atf_add_test_case dollar_at
 	atf_add_test_case dollar_at_with_text
+	atf_add_test_case dollar_hash
 	atf_add_test_case dollar_star
 	atf_add_test_case dollar_star_in_quoted_word
 	atf_add_test_case dollar_star_in_word

@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.179.2.1 2017/05/11 02:58:35 pgoyette Exp $
+$NetBSD: acronyms.comp,v 1.179.2.2 2017/05/19 00:22:56 pgoyette Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -178,6 +178,7 @@ CBR	constant bit rate
 CC	carbon coby
 CCD	charge coupled device
 CCI	co-channel interferer
+CCNUMA	cache-coherent non-uniform memory access
 CD	cache disable
 CD	compact disc
 CDDA	compact disc digital audio
@@ -961,6 +962,7 @@ PIC	programmable interrupt controller
 PICNIC	problem in chair, not in computer
 PID	process id
 PIE	position independent executable
+PIL	Priority Interrupt Level
 PIM	personal information manager
 PIM	platform-independent model
 PIO	programmed input/output
@@ -1081,6 +1083,7 @@ RLL	run length limited
 RLO	right-to-left override
 RM	read miss
 RMI	remote method invocation
+RMO	Relaxed Memory Ordering
 RMPM	rapid memory power management
 RMS	root mean square
 RMW	read, modify, write
@@ -1216,6 +1219,8 @@ SPD	serial presence detect
 SPDIF	Sony/Philips digital interface format
 SPI	serial peripheral interface
 SPI	stateful packet inspection
+SPL	system interrupt priority level
+SPL	spinlock
 SPMD	single process, multiple data
 SPR	special purpose register
 SPT	sectors per track
@@ -1311,6 +1316,7 @@ TSC	time stamp counter
 TSD	time stamp disable
 TSL	test, set, lock
 TSO	time sharing option
+TSO	Total Store Ordering
 TSP	Time-Stamp Protocol
 TSP	Tunnel Setup Protocol
 TSP	time synchronization protocol

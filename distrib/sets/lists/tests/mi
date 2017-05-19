@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.735.2.2 2017/05/11 02:58:29 pgoyette Exp $
+# $NetBSD: mi,v 1.735.2.3 2017/05/19 00:22:51 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3300,12 +3300,13 @@
 ./usr/tests/net/ipsec/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/ipsec/t_ipsec_ah_keys		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_esp_keys		tests-net-tests		atf,rump
+./usr/tests/net/ipsec/t_ipsec_gif		tests-net-tests		atf,rump
+./usr/tests/net/ipsec/t_ipsec_l2tp		tests-net-tests		atf,rump
+./usr/tests/net/ipsec/t_ipsec_misc		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_sysctl		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_transport		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_tunnel		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_tunnel_odd	tests-net-tests		atf,rump
-./usr/tests/net/ipsec/t_ipsec_gif		tests-net-tests		atf,rump
-./usr/tests/net/ipsec/t_ipsec_l2tp		tests-net-tests		atf,rump
 ./usr/tests/net/mcast				tests-net-tests		compattestfile,atf
 ./usr/tests/net/mcast/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/mcast/Kyuafile			tests-net-tests		atf,rump,kyua
@@ -3584,6 +3585,12 @@
 ./usr/tests/usr.bin/bzip2/d_sample3.bz2		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/bzip2/d_sample3.ref		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/bzip2/t_bzip2		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/c++				tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/Atffile			tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua,cxx
+./usr/tests/usr.bin/c++/t_cxxruntime		tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_hello			tests-usr.bin-tests	compattestfile,atf,cxx
+./usr/tests/usr.bin/c++/t_static_destructor	tests-usr.bin-tests	compattestfile,atf,cxx
 ./usr/tests/usr.bin/cc				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua

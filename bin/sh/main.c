@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.68 2017/04/22 16:02:39 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.68.2.1 2017/05/19 00:22:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.68 2017/04/22 16:02:39 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.68.2.1 2017/05/19 00:22:51 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,7 +173,7 @@ main(int argc, char **argv)
 	handler = &jmploc;
 #ifdef DEBUG
 #if DEBUG == 2
-	debug = 1;
+	debug = 1;	/* this may be reset by procargs() later */
 #endif
 	opentrace();
 	trputs("Shell args:  ");  trargs(argv);
