@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.41 2017/05/19 19:51:10 christos Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.42 2017/05/19 19:55:16 christos Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.41 2017/05/19 19:51:10 christos Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.42 2017/05/19 19:55:16 christos Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -162,10 +162,6 @@ __RCSID("$NetBSD: jemalloc.c,v 1.41 2017/05/19 19:51:10 christos Exp $");
 #ifdef __NetBSD__
 #  include <reentrant.h>
 #  include "extern.h"
-__strong_alias(__libc_malloc,malloc)
-__strong_alias(__libc_realloc,realloc)
-__strong_alias(__libc_calloc,calloc)
-__strong_alias(__libc_free,free)
 
 #define STRERROR_R(a, b, c)	strerror_r_ss(a, b, c);
 #endif
