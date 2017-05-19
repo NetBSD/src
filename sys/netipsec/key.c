@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.132 2017/05/17 02:19:09 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.133 2017/05/19 04:39:25 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.132 2017/05/17 02:19:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.133 2017/05/19 04:39:25 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -3136,30 +3136,30 @@ key_freesaval(struct secasvar *sav)
 {
 
 	if (sav->replay != NULL) {
-		kmem_free(sav->replay, sav->replay_len);
+		kmem_intr_free(sav->replay, sav->replay_len);
 		sav->replay = NULL;
 		sav->replay_len = 0;
 	}
 	if (sav->key_auth != NULL) {
-		kmem_free(sav->key_auth, sav->key_auth_len);
+		kmem_intr_free(sav->key_auth, sav->key_auth_len);
 		sav->key_auth = NULL;
 		sav->key_auth_len = 0;
 	}
 	if (sav->key_enc != NULL) {
-		kmem_free(sav->key_enc, sav->key_enc_len);
+		kmem_intr_free(sav->key_enc, sav->key_enc_len);
 		sav->key_enc = NULL;
 		sav->key_enc_len = 0;
 	}
 	if (sav->lft_c != NULL) {
-		kmem_free(sav->lft_c, sizeof(*(sav->lft_c)));
+		kmem_intr_free(sav->lft_c, sizeof(*(sav->lft_c)));
 		sav->lft_c = NULL;
 	}
 	if (sav->lft_h != NULL) {
-		kmem_free(sav->lft_h, sizeof(*(sav->lft_h)));
+		kmem_intr_free(sav->lft_h, sizeof(*(sav->lft_h)));
 		sav->lft_h = NULL;
 	}
 	if (sav->lft_s != NULL) {
-		kmem_free(sav->lft_s, sizeof(*(sav->lft_s)));
+		kmem_intr_free(sav->lft_s, sizeof(*(sav->lft_s)));
 		sav->lft_s = NULL;
 	}
 }
