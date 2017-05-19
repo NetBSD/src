@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 2016/08/26 13:54:18 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3 2017/05/19 07:40:58 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2016/08/26 13:54:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2017/05/19 07:40:58 skrll Exp $");
 
 #include "opt_ingenic.h"
 #include "opt_multiprocessor.h"
@@ -79,7 +79,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 #ifdef MULTIPROCESSOR
 		uint32_t vec, reg;
 		int bail = 10000;
-		
+
 		startup_cpu_info = cpu_info_alloc(NULL, unit, 0, unit, 0);
 		startup_cpu_info->ci_cpu_freq = ci->ci_cpu_freq;
 		ci = startup_cpu_info;
