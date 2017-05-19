@@ -1,4 +1,4 @@
-.\"	$NetBSD: localcount.9,v 1.2 2017/05/19 00:01:33 pgoyette Exp $
+.\"	$NetBSD: localcount.9,v 1.3 2017/05/19 01:54:50 pgoyette Exp $
 .\"
 .\" Copyright (c) 2016
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 8, 2016
+.Dd May 19, 2017
 .Dt LOCALCOUNT 9
 .Os
 .Sh NAME
@@ -151,7 +151,7 @@ it must be passed to
 .Fn localcount_fini
 before any other re-use.
 .Sh CODE REFERENCES
-The core of the localcount implementation is in
+The core of the localcount implementation is located in
 .Pa sys/kern/subr_localcount.c .
 .Pp
 The header file
@@ -183,10 +183,10 @@ actually waiting for the count to reach zero.
 .Pp
 Waiting for a
 .Nm
-reference count to reach zero is a one-shot operation.
+reference count to drain (reach zero) is a one-shot operation.
 Once the
 .Nm
-has been waited for, no further operations are allowed until the
+has been drained, no further operations are allowed until the
 .Nm
 has been re-initialized.
 
