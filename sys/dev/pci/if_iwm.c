@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.71 2017/03/14 23:59:26 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.72 2017/05/19 14:18:10 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.71 2017/03/14 23:59:26 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.72 2017/05/19 14:18:10 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -7725,6 +7725,7 @@ static const pci_product_id_t iwm_devices[] = {
 	PCI_PRODUCT_INTEL_WIFI_LINK_8260_2,
 	PCI_PRODUCT_INTEL_WIFI_LINK_4165_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_4165_2,
+	PCI_PRODUCT_INTEL_WIFI_LINK_8265,
 };
 
 static int
