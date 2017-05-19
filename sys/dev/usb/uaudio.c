@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.148 2017/05/16 23:49:43 nat Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.149 2017/05/19 04:16:06 nat Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.148 2017/05/16 23:49:43 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.149 2017/05/19 04:16:06 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2603,6 +2603,7 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	mutex_exit(&sc->sc_lock);
 	err = uaudio_chan_open(sc, ch);
 	if (err) {
+		mutex_enter(&sc->sc_lock);
 		mutex_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
@@ -2610,6 +2611,7 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	err = uaudio_chan_alloc_buffers(sc, ch);
 	if (err) {
 		uaudio_chan_close(sc, ch);
+		mutex_enter(&sc->sc_lock);
 		mutex_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
@@ -2655,6 +2657,7 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	mutex_exit(&sc->sc_lock);
 	err = uaudio_chan_open(sc, ch);
 	if (err) {
+		mutex_enter(&sc->sc_lock);
 		mutex_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
@@ -2662,6 +2665,7 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	err = uaudio_chan_alloc_buffers(sc, ch);
 	if (err) {
 		uaudio_chan_close(sc, ch);
+		mutex_enter(&sc->sc_lock);
 		mutex_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
