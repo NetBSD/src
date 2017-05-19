@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2282 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2283 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -513,3 +513,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	openpam(3): update to 20170430 (resedacea) [christos 20170506]
 	dhcpcd: Import dhcpcd 7.0.0-rc1 [roy 20170510]
 	vioscsi(4): Stability fixes [jdolecek 20170515]
+	localcount(9): Add localcount ref-count primitives [pgoyette 20170519]
