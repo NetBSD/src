@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.29 2015/11/08 16:49:41 christos Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.30 2017/05/19 19:22:33 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.29 2015/11/08 16:49:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.30 2017/05/19 19:22:33 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ const struct wsemul_ops wsemul_sun_ops = {
 	wsemul_sun_resetop,
 	NULL,	/* getmsgattrs */
 	NULL,	/* setmsgattrs */
+	NULL	/* resize */
 };
 
 #define	SUN_EMUL_STATE_NORMAL	0	/* normal processing */
