@@ -1,4 +1,6 @@
-#	$NetBSD: files.ingenic,v 1.8 2015/10/08 17:54:30 macallan Exp $
+#	$NetBSD: files.ingenic,v 1.9 2017/05/19 07:30:24 skrll Exp $
+
+file	arch/mips/mips/bus_dma.c
 
 include "dev/scsipi/files.scsipi"		# SCSI devices
 include "dev/ata/files.ata"			# ATA devices
