@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.40 2016/04/12 18:07:08 joerg Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.41 2017/05/19 19:51:10 christos Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.40 2016/04/12 18:07:08 joerg Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.41 2017/05/19 19:51:10 christos Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -162,28 +162,12 @@ __RCSID("$NetBSD: jemalloc.c,v 1.40 2016/04/12 18:07:08 joerg Exp $");
 #ifdef __NetBSD__
 #  include <reentrant.h>
 #  include "extern.h"
+__strong_alias(__libc_malloc,malloc)
+__strong_alias(__libc_realloc,realloc)
+__strong_alias(__libc_calloc,calloc)
+__strong_alias(__libc_free,free)
 
-#define STRERROR_R(a, b, c)	__strerror_r(a, b, c);
-/*
- * A non localized version of strerror, that avoids bringing in
- * stdio and the locale code. All the malloc messages are in English
- * so why bother?
- */
-static int
-__strerror_r(int e, char *s, size_t l)
-{
-	int rval;
-	size_t slen;
-
-	if (e >= 0 && e < sys_nerr) {
-		slen = strlcpy(s, sys_errlist[e], l);
-		rval = 0;
-	} else {
-		slen = snprintf_ss(s, l, "Unknown error %u", e);
-		rval = EINVAL;
-	}
-	return slen >= l ? ERANGE : rval;
-}
+#define STRERROR_R(a, b, c)	strerror_r_ss(a, b, c);
 #endif
 
 #ifdef __FreeBSD__
