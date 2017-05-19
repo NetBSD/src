@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.346 2017/05/19 14:42:00 christos Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.347 2017/05/19 15:30:19 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.346 2017/05/19 14:42:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.347 2017/05/19 15:30:19 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1163,8 +1163,25 @@ retry:
 		}
 		vm_map_lock(map); /* could sleep here */
 	}
-	prev_entry = uvm_map_findspace(map, start, size, &start,
-	    uobj, uoffset, align, flags);
+	if (flags & UVM_FLAG_FIXED) {
+		KASSERT((flags & UVM_FLAG_NOWAIT) == 0);
+
+		/*
+		 * Set prev_entry to what it will need to be after any existing
+		 * entries are removed later in uvm_map_enter().
+		 */
+
+		if (uvm_map_lookup_entry(map, start, &prev_entry)) {
+			if (start == prev_entry->start)
+				prev_entry = prev_entry->prev;
+			else
+				UVM_MAP_CLIP_END(map, prev_entry, start);
+			SAVE_HINT(map, map->hint, prev_entry);
+		}
+	} else {
+		prev_entry = uvm_map_findspace(map, start, size, &start,
+		    uobj, uoffset, align, flags);
+	}
 	if (prev_entry == NULL) {
 		unsigned int timestamp;
 
@@ -1255,7 +1272,7 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
     struct vm_map_entry *new_entry)
 {
 	struct vm_map_entry *prev_entry = args->uma_prev;
-	struct vm_map_entry *dead = NULL;
+	struct vm_map_entry *dead = NULL, *dead_entries = NULL;
 
 	const uvm_flag_t flags = args->uma_flags;
 	const vm_prot_t prot = UVM_PROTECTION(flags);
@@ -1284,6 +1301,8 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 
 	KASSERT(map->hint == prev_entry); /* bimerge case assumes this */
 	KASSERT(vm_map_locked_p(map));
+	KASSERT((flags & (UVM_FLAG_NOWAIT | UVM_FLAG_FIXED)) !=
+		(UVM_FLAG_NOWAIT | UVM_FLAG_FIXED));
 
 	if (uobj)
 		newetype = UVM_ET_OBJ;
@@ -1294,6 +1313,27 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 		newetype |= UVM_ET_COPYONWRITE;
 		if ((flags & UVM_FLAG_OVERLAY) == 0)
 			newetype |= UVM_ET_NEEDSCOPY;
+	}
+
+	/*
+	 * For fixed mappings, remove any old entries now.  Adding the new
+	 * entry cannot fail because that can only happen if UVM_FLAG_NOWAIT
+	 * is set, and we do not support nowait and fixed together.
+	 */
+
+	if (flags & UVM_FLAG_FIXED) {
+		uvm_unmap_remove(map, start, start + size, &dead_entries, 0);
+#ifdef DEBUG
+		struct vm_map_entry *tmp_entry;
+		bool rv;
+
+		rv = uvm_map_lookup_entry(map, start, &tmp_entry);
+		KASSERT(!rv);
+		KASSERTMSG(prev_entry == tmp_entry,
+			   "args %p prev_entry %p tmp_entry %p",
+			   args, prev_entry, tmp_entry);
+#endif
+		SAVE_HINT(map, map->hint, prev_entry);
 	}
 
 	/*
@@ -1569,17 +1609,19 @@ nomerge:
 	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
 
 	error = 0;
+
 done:
 	vm_map_unlock(map);
 
 	if (new_entry) {
 		uvm_mapent_free(new_entry);
 	}
-
 	if (dead) {
 		KDASSERT(merged);
 		uvm_mapent_free(dead);
 	}
+	if (dead_entries)
+		uvm_unmap_detach(dead_entries, 0);
 
 	return error;
 }
