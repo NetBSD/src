@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.59 2017/02/25 01:11:55 nonaka Exp $ */
+/*	$NetBSD: genfb.c,v 1.60 2017/05/19 19:23:24 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.59 2017/02/25 01:11:55 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.60 2017/05/19 19:23:24 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		0, 0,
 		NULL,
 		8, 16,
-		WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
+		WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		  WSSCREEN_RESIZE,
 		NULL
 	};
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
@@ -538,6 +539,8 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	if (sc->sc_want_clear)
 		ri->ri_flg |= RI_FULLCLEAR;
 
+	scr->scr_flags |= VCONS_LOADFONT;
+
 	if (sc->sc_shadowfb != NULL) {
 		ri->ri_hwbits = (char *)sc->sc_fbaddr;
 		ri->ri_bits = (char *)sc->sc_shadowfb;
@@ -582,8 +585,8 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 
 
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS;
-
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		  WSSCREEN_RESIZE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
 
