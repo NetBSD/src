@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.149 2017/05/19 04:16:06 nat Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.150 2017/05/19 04:20:45 nat Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.149 2017/05/19 04:16:06 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.150 2017/05/19 04:20:45 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2889,14 +2889,14 @@ uaudio_chan_pintr(struct usbd_xfer *xfer, void *priv,
 #endif
 
 	ch->transferred += cb->size;
-	mutex_enter(&ch->sc->sc_intr_lock);
 	/* Call back to upper layer */
 	while (ch->transferred >= ch->blksize) {
+		mutex_enter(&ch->sc->sc_intr_lock);
 		ch->transferred -= ch->blksize;
 		DPRINTFN(5, "call %p(%p)\n", ch->intr, ch->arg);
 		ch->intr(ch->arg);
+		mutex_exit(&ch->sc->sc_intr_lock);
 	}
-	mutex_exit(&ch->sc->sc_intr_lock);
 
 	/* start next transfer */
 	uaudio_chan_ptransfer(ch);
@@ -2991,13 +2991,13 @@ uaudio_chan_rintr(struct usbd_xfer *xfer, void *priv,
 
 	/* Call back to upper layer */
 	ch->transferred += count;
-	mutex_enter(&ch->sc->sc_intr_lock);
 	while (ch->transferred >= ch->blksize) {
+		mutex_enter(&ch->sc->sc_intr_lock);
 		ch->transferred -= ch->blksize;
 		DPRINTFN(5, "call %p(%p)\n", ch->intr, ch->arg);
 		ch->intr(ch->arg);
+		mutex_exit(&ch->sc->sc_intr_lock);
 	}
-	mutex_exit(&ch->sc->sc_intr_lock);
 
 	/* start next transfer */
 	uaudio_chan_rtransfer(ch);
