@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.133 2017/05/19 04:39:25 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.134 2017/05/19 06:24:03 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.133 2017/05/19 04:39:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.134 2017/05/19 06:24:03 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -312,21 +312,22 @@ do {\
 	}\
 } while (0)
 
-#define KEY_CHKSASTATE(head, sav, name) \
+#define KEY_CHKSASTATE(head, sav) \
 /* do */ { \
 	if ((head) != (sav)) {						\
-		ipseclog((LOG_DEBUG, "%s: state mismatched (TREE=%d SA=%d)\n", \
-			(name), (head), (sav)));			\
+		IPSECLOG(LOG_DEBUG,					\
+		    "state mismatched (TREE=%d SA=%d)\n",		\
+		    (head), (sav));					\
 		continue;						\
 	}								\
 } /* while (0) */
 
-#define KEY_CHKSPDIR(head, sp, name) \
+#define KEY_CHKSPDIR(head, sp) \
 do { \
 	if ((head) != (sp)) {						\
-		ipseclog((LOG_DEBUG, "%s: direction mismatched (TREE=%d SP=%d), " \
-			"anyway continue.\n",				\
-			(name), (head), (sp)));				\
+		IPSECLOG(LOG_DEBUG,					\
+		    "direction mismatched (TREE=%d SP=%d), anyway continue.\n",\
+		    (head), (sp));					\
 	}								\
 } while (0)
 
@@ -525,8 +526,8 @@ static struct work	key_timehandler_wk;
 
 #ifdef IPSEC_REF_DEBUG
 #define REFLOG(label, p, where, tag)					\
-	ipseclog((LOG_DEBUG, "%s:%d: " label " : refcnt=%d (%p)\n.",	\
-	    (where), (tag), (p)->refcnt, (p)))
+	log(LOG_DEBUG, "%s:%d: " label " : refcnt=%d (%p)\n.",		\
+	    (where), (tag), (p)->refcnt, (p))
 #else
 #define REFLOG(label, p, where, tag)	do {} while (0)
 #endif
@@ -647,7 +648,7 @@ key_allocsp(const struct secpolicyindex *spidx, u_int dir, const char* where, in
 found:
 	if (sp) {
 		/* sanity check */
-		KEY_CHKSPDIR(sp->spidx.dir, dir, "key_allocsp");
+		KEY_CHKSPDIR(sp->spidx.dir, dir);
 
 		/* found a SPD entry */
 		sp->lastused = time_uptime;
@@ -711,7 +712,7 @@ key_allocsp2(u_int32_t spi,
 found:
 	if (sp) {
 		/* sanity check */
-		KEY_CHKSPDIR(sp->spidx.dir, dir, "key_allocsp2");
+		KEY_CHKSPDIR(sp->spidx.dir, dir);
 
 		/* found a SPD entry */
 		sp->lastused = time_uptime;
@@ -745,8 +746,8 @@ key_gettunnel(const struct sockaddr *osrc,
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP, "DP from %s:%u\n", where, tag);
 
 	if (isrc->sa_family != idst->sa_family) {
-		ipseclog((LOG_ERR, "protocol family mismatched %d != %d\n.",
-			isrc->sa_family, idst->sa_family));
+		IPSECLOG(LOG_ERR, "protocol family mismatched %d != %d\n.",
+		    isrc->sa_family, idst->sa_family);
 		sp = NULL;
 		goto done;
 	}
@@ -881,8 +882,8 @@ key_checkrequest(struct ipsecrequest *isr, const struct secasindex *saidx)
 	error = key_acquire(saidx, isr->sp);
 	if (error != 0) {
 		/* XXX What should I do ? */
-		ipseclog((LOG_DEBUG, "key_checkrequest: error %d returned "
-			"from key_acquire.\n", error));
+		IPSECLOG(LOG_DEBUG, "error %d returned from key_acquire.\n",
+		    error);
 		return error;
 	}
 
@@ -965,7 +966,7 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
 
 	LIST_FOREACH(sav, &sah->savtree[state], chain) {
 		/* sanity check */
-		KEY_CHKSASTATE(sav->state, state, "key_do_allocsa_policy");
+		KEY_CHKSASTATE(sav->state, state);
 
 		/* initialize */
 		if (candidate == NULL) {
@@ -1167,7 +1168,7 @@ key_allocsa(
 				    "try match spi %#x, %#x\n",
 				    ntohl(spi), ntohl(sav->spi));
 				/* sanity check */
-				KEY_CHKSASTATE(sav->state, state, "key_allocsav");
+				KEY_CHKSASTATE(sav->state, state);
 				/* do not return entries w/ unusable state */
 				if (sav->state != SADB_SASTATE_MATURE &&
 				    sav->state != SADB_SASTATE_DYING) {
@@ -1295,8 +1296,8 @@ key_freeso(struct socket *so)
 		break;
 #endif /* INET6 */
 	default:
-		ipseclog((LOG_DEBUG, "key_freeso: unknown address family=%d.\n",
-		    so->so_proto->pr_domain->dom_family));
+		IPSECLOG(LOG_DEBUG, "unknown address family=%d.\n",
+		    so->so_proto->pr_domain->dom_family);
 		return;
 	}
 }
@@ -1463,7 +1464,7 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 	KASSERT(len >= sizeof(*xpl0));
 
 	if (len != PFKEY_EXTLEN(xpl0)) {
-		ipseclog((LOG_DEBUG, "key_msg2sp: Invalid msg length.\n"));
+		IPSECLOG(LOG_DEBUG, "Invalid msg length.\n");
 		*error = EINVAL;
 		return NULL;
 	}
@@ -1490,7 +1491,7 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 		/* Continued */
 		break;
 	default:
-		ipseclog((LOG_DEBUG, "key_msg2sp: invalid policy type.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid policy type.\n");
 		KEY_FREESP(&newsp);
 		*error = EINVAL;
 		return NULL;
@@ -1505,8 +1506,7 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 
 	/* validity check */
 	if (PFKEY_EXTLEN(xpl0) < sizeof(*xpl0)) {
-		ipseclog((LOG_DEBUG,
-		    "key_msg2sp: Invalid msg length.\n"));
+		IPSECLOG(LOG_DEBUG, "Invalid msg length.\n");
 		*error = EINVAL;
 		goto free_exit;
 	}
@@ -1517,8 +1517,7 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 	while (tlen > 0) {
 		/* length check */
 		if (xisr->sadb_x_ipsecrequest_len < sizeof(*xisr)) {
-			ipseclog((LOG_DEBUG, "key_msg2sp: "
-				"invalid ipsecrequest length.\n"));
+			IPSECLOG(LOG_DEBUG, "invalid ipsecrequest length.\n");
 			*error = EINVAL;
 			goto free_exit;
 		}
@@ -1535,9 +1534,8 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 		case IPPROTO_IPCOMP:
 			break;
 		default:
-			ipseclog((LOG_DEBUG,
-			    "key_msg2sp: invalid proto type=%u\n",
-			    xisr->sadb_x_ipsecrequest_proto));
+			IPSECLOG(LOG_DEBUG, "invalid proto type=%u\n",
+			    xisr->sadb_x_ipsecrequest_proto);
 			*error = EPROTONOSUPPORT;
 			goto free_exit;
 		}
@@ -1549,9 +1547,8 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 			break;
 		case IPSEC_MODE_ANY:
 		default:
-			ipseclog((LOG_DEBUG,
-			    "key_msg2sp: invalid mode=%u\n",
-			    xisr->sadb_x_ipsecrequest_mode));
+			IPSECLOG(LOG_DEBUG, "invalid mode=%u\n",
+			    xisr->sadb_x_ipsecrequest_mode);
 			*error = EINVAL;
 			goto free_exit;
 		}
@@ -1570,10 +1567,10 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 			 * update it, don't refuse it.
 			 */
 			if (xisr_reqid > IPSEC_MANUAL_REQID_MAX) {
-				ipseclog((LOG_DEBUG,
-				    "key_msg2sp: reqid=%d range "
+				IPSECLOG(LOG_DEBUG,
+				    "reqid=%d range "
 				    "violation, updated by kernel.\n",
-				    xisr_reqid));
+				    xisr_reqid);
 				xisr_reqid = 0;
 			}
 
@@ -1592,8 +1589,8 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 			break;
 
 		default:
-			ipseclog((LOG_DEBUG, "key_msg2sp: invalid level=%u\n",
-				xisr->sadb_x_ipsecrequest_level));
+			IPSECLOG(LOG_DEBUG, "invalid level=%u\n",
+			    xisr->sadb_x_ipsecrequest_level);
 			*error = EINVAL;
 			goto free_exit;
 		}
@@ -1608,8 +1605,8 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 			/* validity check */
 			if (paddr->sa_len
 			    > sizeof((*p_isr)->saidx.src)) {
-				ipseclog((LOG_DEBUG, "key_msg2sp: invalid request "
-					"address length.\n"));
+				IPSECLOG(LOG_DEBUG, "invalid request "
+				    "address length.\n");
 				*error = EINVAL;
 				goto free_exit;
 			}
@@ -1621,8 +1618,8 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 			/* validity check */
 			if (paddr->sa_len
 			    > sizeof((*p_isr)->saidx.dst)) {
-				ipseclog((LOG_DEBUG, "key_msg2sp: invalid request "
-					"address length.\n"));
+				IPSECLOG(LOG_DEBUG, "invalid request "
+				    "address length.\n");
 				*error = EINVAL;
 				goto free_exit;
 			}
@@ -1638,7 +1635,7 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 
 		/* validity check */
 		if (tlen < 0) {
-			ipseclog((LOG_DEBUG, "key_msg2sp: becoming tlen < 0.\n"));
+			IPSECLOG(LOG_DEBUG, "becoming tlen < 0.\n");
 			*error = EINVAL;
 			goto free_exit;
 		}
@@ -1844,19 +1841,19 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL ||
 	    mhp->ext[SADB_X_EXT_POLICY] == NULL) {
-		ipseclog((LOG_DEBUG, "key_spdadd: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 	if (mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
 	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address) ||
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
-		ipseclog((LOG_DEBUG, "key_spdadd: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 	if (mhp->ext[SADB_EXT_LIFETIME_HARD] != NULL) {
 		if (mhp->extlen[SADB_EXT_LIFETIME_HARD]
 			< sizeof(struct sadb_lifetime)) {
-			ipseclog((LOG_DEBUG, "key_spdadd: invalid message is passed.\n"));
+			IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 			return key_senderror(so, m, EINVAL);
 		}
 		lft = (struct sadb_lifetime *)mhp->ext[SADB_EXT_LIFETIME_HARD];
@@ -1882,7 +1879,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	case IPSEC_DIR_OUTBOUND:
 		break;
 	default:
-		ipseclog((LOG_DEBUG, "key_spdadd: Invalid SP direction.\n"));
+		IPSECLOG(LOG_DEBUG, "Invalid SP direction.\n");
 		mhp->msg->sadb_msg_errno = EINVAL;
 		return 0;
 	}
@@ -1891,7 +1888,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	/* key_spdadd() accepts DISCARD, NONE and IPSEC. */
 	if (xpl0->sadb_x_policy_type == IPSEC_POLICY_ENTRUST
 	 || xpl0->sadb_x_policy_type == IPSEC_POLICY_BYPASS) {
-		ipseclog((LOG_DEBUG, "key_spdadd: Invalid policy type.\n"));
+		IPSECLOG(LOG_DEBUG, "Invalid policy type.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -1899,7 +1896,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	if (mhp->msg->sadb_msg_type != SADB_X_SPDSETIDX &&
 	    xpl0->sadb_x_policy_type == IPSEC_POLICY_IPSEC &&
 	    mhp->extlen[SADB_X_EXT_POLICY] <= sizeof(*xpl0)) {
-		ipseclog((LOG_DEBUG, "key_spdadd: some policy requests part required.\n"));
+		IPSECLOG(LOG_DEBUG, "some policy requests part required.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -1920,7 +1917,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	} else {
 		if (newsp != NULL) {
 			KEY_FREESP(&newsp);
-			ipseclog((LOG_DEBUG, "key_spdadd: a SP entry exists already.\n"));
+			IPSECLOG(LOG_DEBUG, "a SP entry exists already.\n");
 			return key_senderror(so, m, EEXIST);
 		}
 	}
@@ -2058,7 +2055,7 @@ key_getnewspid(void)
 	}
 
 	if (count == 0 || newid == 0) {
-		ipseclog((LOG_DEBUG, "key_getnewspid: to allocate policy id is failed.\n"));
+		IPSECLOG(LOG_DEBUG, "to allocate policy id is failed.\n");
 		return 0;
 	}
 
@@ -2094,13 +2091,13 @@ key_spddelete(struct socket *so, struct mbuf *m,
 	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL ||
 	    mhp->ext[SADB_X_EXT_POLICY] == NULL) {
-		ipseclog((LOG_DEBUG, "key_spddelete: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 	if (mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
 	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address) ||
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
-		ipseclog((LOG_DEBUG, "key_spddelete: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -2124,13 +2121,13 @@ key_spddelete(struct socket *so, struct mbuf *m,
 	case IPSEC_DIR_OUTBOUND:
 		break;
 	default:
-		ipseclog((LOG_DEBUG, "key_spddelete: Invalid SP direction.\n"));
+		IPSECLOG(LOG_DEBUG, "Invalid SP direction.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
 	/* Is there SP in SPD ? */
 	if ((sp = key_getsp(&spidx)) == NULL) {
-		ipseclog((LOG_DEBUG, "key_spddelete: no SP found.\n"));
+		IPSECLOG(LOG_DEBUG, "no SP found.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -2192,7 +2189,7 @@ key_spddelete2(struct socket *so, struct mbuf *m,
 
 	if (mhp->ext[SADB_X_EXT_POLICY] == NULL ||
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
-		ipseclog((LOG_DEBUG, "key_spddelete2: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		key_senderror(so, m, EINVAL);
 		return 0;
 	}
@@ -2201,7 +2198,7 @@ key_spddelete2(struct socket *so, struct mbuf *m,
 
 	/* Is there SP in SPD ? */
 	if ((sp = key_getspbyid(id)) == NULL) {
-		ipseclog((LOG_DEBUG, "key_spddelete2: no SP found id:%u.\n", id));
+		IPSECLOG(LOG_DEBUG, "no SP found id:%u.\n", id);
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -2292,7 +2289,7 @@ key_spdget(struct socket *so, struct mbuf *m,
 
 	if (mhp->ext[SADB_X_EXT_POLICY] == NULL ||
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
-		ipseclog((LOG_DEBUG, "key_spdget: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -2300,7 +2297,7 @@ key_spdget(struct socket *so, struct mbuf *m,
 
 	/* Is there SP in SPD ? */
 	if ((sp = key_getspbyid(id)) == NULL) {
-		ipseclog((LOG_DEBUG, "key_spdget: no SP found id:%u.\n", id));
+		IPSECLOG(LOG_DEBUG, "no SP found id:%u.\n", id);
 		return key_senderror(so, m, ENOENT);
 	}
 
@@ -2429,7 +2426,7 @@ key_spdflush(struct socket *so, struct mbuf *m,
 	/* We're deleting policy; no need to invalidate the ipflow cache. */
 
 	if (sizeof(struct sadb_msg) > m->m_len + M_TRAILINGSPACE(m)) {
-		ipseclog((LOG_DEBUG, "key_spdflush: No more memory.\n"));
+		IPSECLOG(LOG_DEBUG, "No more memory.\n");
 		return key_senderror(so, m, ENOBUFS);
 	}
 
@@ -2600,31 +2597,31 @@ key_nat_map(struct socket *so, struct mbuf *m,
 	if (mhp->ext[SADB_X_EXT_NAT_T_TYPE] == NULL ||
 		mhp->ext[SADB_X_EXT_NAT_T_SPORT] == NULL ||
 		mhp->ext[SADB_X_EXT_NAT_T_DPORT] == NULL) {
-		ipseclog((LOG_DEBUG, "key_nat_map: invalid message.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 	if ((mhp->extlen[SADB_X_EXT_NAT_T_TYPE] < sizeof(*type)) ||
 		(mhp->extlen[SADB_X_EXT_NAT_T_SPORT] < sizeof(*sport)) ||
 		(mhp->extlen[SADB_X_EXT_NAT_T_DPORT] < sizeof(*dport))) {
-		ipseclog((LOG_DEBUG, "key_nat_map: invalid message.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
 	if ((mhp->ext[SADB_X_EXT_NAT_T_OAI] != NULL) &&
 		(mhp->extlen[SADB_X_EXT_NAT_T_OAI] < sizeof(*iaddr))) {
-		ipseclog((LOG_DEBUG, "key_nat_map: invalid message\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
 	if ((mhp->ext[SADB_X_EXT_NAT_T_OAR] != NULL) &&
 		(mhp->extlen[SADB_X_EXT_NAT_T_OAR] < sizeof(*raddr))) {
-		ipseclog((LOG_DEBUG, "key_nat_map: invalid message\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
 	if ((mhp->ext[SADB_X_EXT_NAT_T_FRAG] != NULL) &&
 		(mhp->extlen[SADB_X_EXT_NAT_T_FRAG] < sizeof(*frag))) {
-		ipseclog((LOG_DEBUG, "key_nat_map: invalid message\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -2887,7 +2884,7 @@ key_delsah(struct secashead *sah)
 		LIST_FOREACH_SAFE(sav, &sah->savtree[state], chain, nextsav) {
 			if (sav->refcnt == 0) {
 				/* sanity check */
-				KEY_CHKSASTATE(state, sav->state, "key_delsah");
+				KEY_CHKSASTATE(state, sav->state);
 				KEY_FREESAV(&sav);
 			} else {
 				/* give up to delete this sa */
@@ -2964,7 +2961,7 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 	case SADB_ADD:
 		/* sanity check */
 		if (mhp->ext[SADB_EXT_SA] == NULL) {
-			ipseclog((LOG_DEBUG, "key_newsa: invalid message is passed.\n"));
+			IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 			*errp = EINVAL;
 			goto error;
 		}
@@ -3079,7 +3076,7 @@ key_checkspidup(const struct secasindex *saidx, u_int32_t spi)
 
 	/* check address family */
 	if (saidx->src.sa.sa_family != saidx->dst.sa.sa_family) {
-		ipseclog((LOG_DEBUG, "key_checkspidup: address family mismatched.\n"));
+		IPSECLOG(LOG_DEBUG, "address family mismatched.\n");
 		return NULL;
 	}
 
@@ -3113,9 +3110,9 @@ key_getsavbyspi(struct secashead *sah, u_int32_t spi)
 
 			/* sanity check */
 			if (sav->state != state) {
-				ipseclog((LOG_DEBUG, "key_getsavbyspi: "
+				IPSECLOG(LOG_DEBUG,
 				    "invalid sav->state (queue: %d SA: %d)\n",
-				    state, sav->state));
+				    state, sav->state);
 				continue;
 			}
 
@@ -3245,7 +3242,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 			break;
 		}
 		if (error) {
-			ipseclog((LOG_DEBUG, "key_setsaval: invalid key_auth values.\n"));
+			IPSECLOG(LOG_DEBUG, "invalid key_auth values.\n");
 			goto fail;
 		}
 
@@ -3288,7 +3285,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 			break;
 		}
 		if (error) {
-			ipseclog((LOG_DEBUG, "key_setsatval: invalid key_enc value.\n"));
+			IPSECLOG(LOG_DEBUG, "invalid key_enc value.\n");
 			goto fail;
 		}
 	}
@@ -3311,9 +3308,8 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 		break;
 	}
 	if (error) {
-		ipseclog((LOG_DEBUG,
-			"key_setsaval: unable to initialize SA type %u.\n",
-		        mhp->msg->sadb_msg_satype));
+		IPSECLOG(LOG_DEBUG, "unable to initialize SA type %u.\n",
+		    mhp->msg->sadb_msg_satype);
 		goto fail;
 	}
 
@@ -3379,9 +3375,8 @@ key_mature(struct secasvar *sav)
 	case IPPROTO_ESP:
 	case IPPROTO_AH:
 		if (ntohl(sav->spi) <= 255) {
-			ipseclog((LOG_DEBUG,
-			    "key_mature: illegal range of SPI %u.\n",
-			    (u_int32_t)ntohl(sav->spi)));
+			IPSECLOG(LOG_DEBUG, "illegal range of SPI %u.\n",
+			    (u_int32_t)ntohl(sav->spi));
 			return EINVAL;
 		}
 		break;
@@ -3393,8 +3388,8 @@ key_mature(struct secasvar *sav)
 		/* check flags */
 		if ((sav->flags & (SADB_X_EXT_OLD|SADB_X_EXT_DERIV)) ==
 		    (SADB_X_EXT_OLD|SADB_X_EXT_DERIV)) {
-			ipseclog((LOG_DEBUG, "key_mature: "
-			    "invalid flag (derived) given to old-esp.\n"));
+			IPSECLOG(LOG_DEBUG,
+			    "invalid flag (derived) given to old-esp.\n");
 			return EINVAL;
 		}
 		error = xform_init(sav, XF_ESP);
@@ -3402,40 +3397,40 @@ key_mature(struct secasvar *sav)
 	case IPPROTO_AH:
 		/* check flags */
 		if (sav->flags & SADB_X_EXT_DERIV) {
-			ipseclog((LOG_DEBUG, "key_mature: "
-			    "invalid flag (derived) given to AH SA.\n"));
+			IPSECLOG(LOG_DEBUG,
+			    "invalid flag (derived) given to AH SA.\n");
 			return EINVAL;
 		}
 		if (sav->alg_enc != SADB_EALG_NONE) {
-			ipseclog((LOG_DEBUG, "key_mature: "
-			    "protocol and algorithm mismated.\n"));
+			IPSECLOG(LOG_DEBUG,
+			    "protocol and algorithm mismated.\n");
 			return(EINVAL);
 		}
 		error = xform_init(sav, XF_AH);
 		break;
 	case IPPROTO_IPCOMP:
 		if (sav->alg_auth != SADB_AALG_NONE) {
-			ipseclog((LOG_DEBUG, "key_mature: "
-				"protocol and algorithm mismated.\n"));
+			IPSECLOG(LOG_DEBUG,
+			    "protocol and algorithm mismated.\n");
 			return(EINVAL);
 		}
 		if ((sav->flags & SADB_X_EXT_RAWCPI) == 0
 		 && ntohl(sav->spi) >= 0x10000) {
-			ipseclog((LOG_DEBUG, "key_mature: invalid cpi for IPComp.\n"));
+			IPSECLOG(LOG_DEBUG, "invalid cpi for IPComp.\n");
 			return(EINVAL);
 		}
 		error = xform_init(sav, XF_IPCOMP);
 		break;
 	case IPPROTO_TCP:
 		if (sav->alg_enc != SADB_EALG_NONE) {
-			ipseclog((LOG_DEBUG, "%s: protocol and algorithm "
-				"mismated.\n", __func__));
+			IPSECLOG(LOG_DEBUG,
+			    "protocol and algorithm mismated.\n");
 			return(EINVAL);
 		}
 		error = xform_init(sav, XF_TCPSIGNATURE);
 		break;
 	default:
-		ipseclog((LOG_DEBUG, "key_mature: Invalid satype.\n"));
+		IPSECLOG(LOG_DEBUG, "Invalid satype.\n");
 		error = EPROTONOSUPPORT;
 		break;
 	}
@@ -4552,8 +4547,8 @@ key_timehandler_work(struct work *wk, void *arg)
 
 			/* sanity check */
 			if (sav->lft_c == NULL) {
-				ipseclog((LOG_DEBUG,"key_timehandler: "
-					"There is no CURRENT time, why?\n"));
+				IPSECLOG(LOG_DEBUG,
+				    "There is no CURRENT time, why?\n");
 				continue;
 			}
 
@@ -4605,8 +4600,8 @@ key_timehandler_work(struct work *wk, void *arg)
 
 			/* sanity check */
 			if (sav->lft_c == NULL) {
-				ipseclog((LOG_DEBUG, "key_timehandler: "
-					"There is no CURRENT time, why?\n"));
+				IPSECLOG(LOG_DEBUG,
+				    "There is no CURRENT time, why?\n");
 				continue;
 			}
 
@@ -4644,11 +4639,10 @@ key_timehandler_work(struct work *wk, void *arg)
 		    chain, nextsav) {
 			/* sanity check */
 			if (sav->state != SADB_SASTATE_DEAD) {
-				ipseclog((LOG_DEBUG, "key_timehandler: "
-					"invalid sav->state "
-					"(queue: %d SA: %d): "
-					"kill it anyway\n",
-					SADB_SASTATE_DEAD, sav->state));
+				IPSECLOG(LOG_DEBUG,
+				    "invalid sav->state (queue: %d SA: %d): "
+				    "kill it anyway\n",
+				    SADB_SASTATE_DEAD, sav->state);
 			}
 
 			/*
@@ -4833,12 +4827,12 @@ key_getspi(struct socket *so, struct mbuf *m,
 
 	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL) {
-		ipseclog((LOG_DEBUG, "key_getspi: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 	if (mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
 	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address)) {
-		ipseclog((LOG_DEBUG, "key_getspi: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 	if (mhp->ext[SADB_X_EXT_SA2] != NULL) {
@@ -4854,7 +4848,7 @@ key_getspi(struct socket *so, struct mbuf *m,
 
 	/* map satype to proto */
 	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
-		ipseclog((LOG_DEBUG, "key_getspi: invalid satype is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid satype is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -4876,7 +4870,7 @@ key_getspi(struct socket *so, struct mbuf *m,
 	if ((newsah = key_getsah(&saidx)) == NULL) {
 		/* create a new SA index */
 		if ((newsah = key_newsah(&saidx)) == NULL) {
-			ipseclog((LOG_DEBUG, "key_getspi: No more memory.\n"));
+			IPSECLOG(LOG_DEBUG, "No more memory.\n");
 			return key_senderror(so, m, ENOBUFS);
 		}
 	}
@@ -5006,7 +5000,7 @@ key_do_getnewspi(const struct sadb_spirange *spirange,
 
 	if (spmin == spmax) {
 		if (key_checkspidup(saidx, htonl(spmin)) != NULL) {
-			ipseclog((LOG_DEBUG, "key_do_getnewspi: SPI %u exists already.\n", spmin));
+			IPSECLOG(LOG_DEBUG, "SPI %u exists already.\n", spmin);
 			return 0;
 		}
 
@@ -5028,7 +5022,7 @@ key_do_getnewspi(const struct sadb_spirange *spirange,
 		}
 
 		if (count == 0 || newspi == 0) {
-			ipseclog((LOG_DEBUG, "key_do_getnewspi: to allocate spi is failed.\n"));
+			IPSECLOG(LOG_DEBUG, "to allocate spi is failed.\n");
 			return 0;
 		}
 	}
@@ -5071,7 +5065,7 @@ key_handle_natt_info(struct secasvar *sav,
 	}
 
 	if (mhp->ext[SADB_X_EXT_NAT_T_OAI] != NULL) {
-		ipseclog((LOG_DEBUG,"%s: NAT-T OAi present\n", __func__));
+		IPSECLOG(LOG_DEBUG, "NAT-T OAi present\n");
 		if (mhp->extlen[SADB_X_EXT_NAT_T_OAI] < sizeof(*iaddr)) {
 			msg = "OAI";
 			goto bad;
@@ -5079,7 +5073,7 @@ key_handle_natt_info(struct secasvar *sav,
 	}
 
 	if (mhp->ext[SADB_X_EXT_NAT_T_OAR] != NULL) {
-		ipseclog((LOG_DEBUG,"%s: NAT-T OAr present\n", __func__));
+		IPSECLOG(LOG_DEBUG, "NAT-T OAr present\n");
 		if (mhp->extlen[SADB_X_EXT_NAT_T_OAR] < sizeof(*raddr)) {
 			msg = "OAR";
 			goto bad;
@@ -5100,10 +5094,10 @@ key_handle_natt_info(struct secasvar *sav,
 	raddr = (struct sadb_address *)mhp->ext[SADB_X_EXT_NAT_T_OAR];
 	frag = (struct sadb_x_nat_t_frag *)mhp->ext[SADB_X_EXT_NAT_T_FRAG];
 
-	ipseclog((LOG_DEBUG, "%s: type %d, sport = %d, dport = %d\n",
-	    __func__, type->sadb_x_nat_t_type_type,
+	IPSECLOG(LOG_DEBUG, "type %d, sport = %d, dport = %d\n",
+	    type->sadb_x_nat_t_type_type,
 	    ntohs(sport->sadb_x_nat_t_port_port),
-	    ntohs(dport->sadb_x_nat_t_port_port)));
+	    ntohs(dport->sadb_x_nat_t_port_port));
 
 	sav->natt_type = type->sadb_x_nat_t_type_type;
 	key_porttosaddr(&sav->sah->saidx.src,
@@ -5117,7 +5111,7 @@ key_handle_natt_info(struct secasvar *sav,
 
 	return 0;
 bad:
-	ipseclog((LOG_DEBUG, "%s: invalid message %s\n", __func__, msg));
+	IPSECLOG(LOG_DEBUG, "invalid message %s\n", msg);
 	__USE(msg);
 	return -1;
 }
@@ -5128,9 +5122,9 @@ key_set_natt_ports(union sockaddr_union *src, union sockaddr_union *dst,
       		     const struct sadb_msghdr *mhp)
 {
 	if (mhp->ext[SADB_X_EXT_NAT_T_OAI] != NULL)
-		ipseclog((LOG_DEBUG,"%s: NAT-T OAi present\n", __func__));
+		IPSECLOG(LOG_DEBUG, "NAT-T OAi present\n");
 	if (mhp->ext[SADB_X_EXT_NAT_T_OAR] != NULL)
-		ipseclog((LOG_DEBUG,"%s: NAT-T OAr present\n", __func__));
+		IPSECLOG(LOG_DEBUG, "NAT-T OAr present\n");
 
 	if ((mhp->ext[SADB_X_EXT_NAT_T_TYPE] != NULL) &&
 	    (mhp->ext[SADB_X_EXT_NAT_T_SPORT] != NULL) &&
@@ -5142,8 +5136,7 @@ key_set_natt_ports(union sockaddr_union *src, union sockaddr_union *dst,
 		if ((mhp->extlen[SADB_X_EXT_NAT_T_TYPE] < sizeof(*type)) ||
 		    (mhp->extlen[SADB_X_EXT_NAT_T_SPORT] < sizeof(*sport)) ||
 		    (mhp->extlen[SADB_X_EXT_NAT_T_DPORT] < sizeof(*dport))) {
-			ipseclog((LOG_DEBUG, "%s: invalid message\n",
-			    __func__));
+			IPSECLOG(LOG_DEBUG, "invalid message\n");
 			return -1;
 		}
 
@@ -5157,10 +5150,10 @@ key_set_natt_ports(union sockaddr_union *src, union sockaddr_union *dst,
 		key_porttosaddr(src, sport->sadb_x_nat_t_port_port);
 		key_porttosaddr(dst, dport->sadb_x_nat_t_port_port);
 
-		ipseclog((LOG_DEBUG, "%s: type %d, sport = %d, dport = %d\n",
-		    __func__, type->sadb_x_nat_t_type_type,
+		IPSECLOG(LOG_DEBUG, "type %d, sport = %d, dport = %d\n",
+		    type->sadb_x_nat_t_type_type,
 		    ntohs(sport->sadb_x_nat_t_port_port),
-		    ntohs(dport->sadb_x_nat_t_port_port)));
+		    ntohs(dport->sadb_x_nat_t_port_port));
 	}
 
 	return 0;
@@ -5201,7 +5194,7 @@ key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 
 	/* map satype to proto */
 	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
-		ipseclog((LOG_DEBUG, "key_update: invalid satype is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid satype is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -5216,13 +5209,13 @@ key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	     mhp->ext[SADB_EXT_LIFETIME_SOFT] == NULL) ||
 	    (mhp->ext[SADB_EXT_LIFETIME_HARD] == NULL &&
 	     mhp->ext[SADB_EXT_LIFETIME_SOFT] != NULL)) {
-		ipseclog((LOG_DEBUG, "key_update: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 	if (mhp->extlen[SADB_EXT_SA] < sizeof(struct sadb_sa) ||
 	    mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
 	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address)) {
-		ipseclog((LOG_DEBUG, "key_update: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 	if (mhp->ext[SADB_X_EXT_SA2] != NULL) {
@@ -5247,7 +5240,7 @@ key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 
 	/* get a SA header */
 	if ((sah = key_getsah(&saidx)) == NULL) {
-		ipseclog((LOG_DEBUG, "key_update: no SA index found.\n"));
+		IPSECLOG(LOG_DEBUG, "no SA index found.\n");
 		return key_senderror(so, m, ENOENT);
 	}
 
@@ -5261,40 +5254,35 @@ key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 #ifdef IPSEC_DOSEQCHECK
 	if (mhp->msg->sadb_msg_seq != 0
 	 && (sav = key_getsavbyseq(sah, mhp->msg->sadb_msg_seq)) == NULL) {
-		ipseclog((LOG_DEBUG,
-		    "key_update: no larval SA with sequence %u exists.\n",
-		    mhp->msg->sadb_msg_seq));
+		IPSECLOG(LOG_DEBUG, "no larval SA with sequence %u exists.\n",
+		    mhp->msg->sadb_msg_seq);
 		return key_senderror(so, m, ENOENT);
 	}
 #else
 	if ((sav = key_getsavbyspi(sah, sa0->sadb_sa_spi)) == NULL) {
-		ipseclog((LOG_DEBUG,
-		    "key_update: no such a SA found (spi:%u)\n",
-		    (u_int32_t)ntohl(sa0->sadb_sa_spi)));
+		IPSECLOG(LOG_DEBUG, "no such a SA found (spi:%u)\n",
+		    (u_int32_t)ntohl(sa0->sadb_sa_spi));
 		return key_senderror(so, m, EINVAL);
 	}
 #endif
 
 	/* validity check */
 	if (sav->sah->saidx.proto != proto) {
-		ipseclog((LOG_DEBUG,
-		    "key_update: protocol mismatched (DB=%u param=%u)\n",
-		    sav->sah->saidx.proto, proto));
+		IPSECLOG(LOG_DEBUG, "protocol mismatched (DB=%u param=%u)\n",
+		    sav->sah->saidx.proto, proto);
 		return key_senderror(so, m, EINVAL);
 	}
 #ifdef IPSEC_DOSEQCHECK
 	if (sav->spi != sa0->sadb_sa_spi) {
-		ipseclog((LOG_DEBUG,
-		    "key_update: SPI mismatched (DB:%u param:%u)\n",
+		IPSECLOG(LOG_DEBUG, "SPI mismatched (DB:%u param:%u)\n",
 		    (u_int32_t)ntohl(sav->spi),
-		    (u_int32_t)ntohl(sa0->sadb_sa_spi)));
+		    (u_int32_t)ntohl(sa0->sadb_sa_spi));
 		return key_senderror(so, m, EINVAL);
 	}
 #endif
 	if (sav->pid != mhp->msg->sadb_msg_pid) {
-		ipseclog((LOG_DEBUG,
-		    "key_update: pid mismatched (DB:%u param:%u)\n",
-		    sav->pid, mhp->msg->sadb_msg_pid));
+		IPSECLOG(LOG_DEBUG, "pid mismatched (DB:%u param:%u)\n",
+		    sav->pid, mhp->msg->sadb_msg_pid);
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -5320,7 +5308,7 @@ key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	/* set msg buf from mhp */
 	n = key_getmsgbuf_x1(m, mhp);
 	if (n == NULL) {
-		ipseclog((LOG_DEBUG, "key_update: No more memory.\n"));
+		IPSECLOG(LOG_DEBUG, "No more memory.\n");
 		return key_senderror(so, m, ENOBUFS);
 	}
 
@@ -5348,7 +5336,7 @@ key_getsavbyseq(struct secashead *sah, u_int32_t seq)
 	/* search SAD with sequence number ? */
 	LIST_FOREACH(sav, &sah->savtree[state], chain) {
 
-		KEY_CHKSASTATE(state, sav->state, "key_getsabyseq");
+		KEY_CHKSASTATE(state, sav->state);
 
 		if (sav->seq == seq) {
 			SA_ADDREF(sav);
@@ -5399,7 +5387,7 @@ key_add(struct socket *so, struct mbuf *m,
 
 	/* map satype to proto */
 	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
-		ipseclog((LOG_DEBUG, "key_add: invalid satype is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid satype is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -5414,14 +5402,14 @@ key_add(struct socket *so, struct mbuf *m,
 	     mhp->ext[SADB_EXT_LIFETIME_SOFT] == NULL) ||
 	    (mhp->ext[SADB_EXT_LIFETIME_HARD] == NULL &&
 	     mhp->ext[SADB_EXT_LIFETIME_SOFT] != NULL)) {
-		ipseclog((LOG_DEBUG, "key_add: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 	if (mhp->extlen[SADB_EXT_SA] < sizeof(struct sadb_sa) ||
 	    mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
 	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address)) {
 		/* XXX need more */
-		ipseclog((LOG_DEBUG, "key_add: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 	if (mhp->ext[SADB_X_EXT_SA2] != NULL) {
@@ -5447,7 +5435,7 @@ key_add(struct socket *so, struct mbuf *m,
 	if ((newsah = key_getsah(&saidx)) == NULL) {
 		/* create a new SA header */
 		if ((newsah = key_newsah(&saidx)) == NULL) {
-			ipseclog((LOG_DEBUG, "key_add: No more memory.\n"));
+			IPSECLOG(LOG_DEBUG, "No more memory.\n");
 			return key_senderror(so, m, ENOBUFS);
 		}
 	}
@@ -5462,7 +5450,7 @@ key_add(struct socket *so, struct mbuf *m,
 	/* create new SA entry. */
 	/* We can create new SA only if SPI is differenct. */
 	if (key_getsavbyspi(newsah, sa0->sadb_sa_spi)) {
-		ipseclog((LOG_DEBUG, "key_add: SA already exists.\n"));
+		IPSECLOG(LOG_DEBUG, "SA already exists.\n");
 		return key_senderror(so, m, EEXIST);
 	}
 	newsav = KEY_NEWSAV(m, mhp, newsah, &error);
@@ -5490,7 +5478,7 @@ key_add(struct socket *so, struct mbuf *m,
 	/* set msg buf from mhp */
 	n = key_getmsgbuf_x1(m, mhp);
 	if (n == NULL) {
-		ipseclog((LOG_DEBUG, "key_update: No more memory.\n"));
+		IPSECLOG(LOG_DEBUG, "No more memory.\n");
 		return key_senderror(so, m, ENOBUFS);
 	}
 
@@ -5537,7 +5525,7 @@ key_setident(struct secashead *sah, struct mbuf *m,
 
 	if (mhp->ext[SADB_EXT_IDENTITY_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_IDENTITY_DST] == NULL) {
-		ipseclog((LOG_DEBUG, "key_setident: invalid identity.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid identity.\n");
 		return EINVAL;
 	}
 
@@ -5548,7 +5536,7 @@ key_setident(struct secashead *sah, struct mbuf *m,
 
 	/* validity check */
 	if (idsrc->sadb_ident_type != iddst->sadb_ident_type) {
-		ipseclog((LOG_DEBUG, "key_setident: ident type mismatch.\n"));
+		IPSECLOG(LOG_DEBUG, "ident type mismatch.\n");
 		return EINVAL;
 	}
 
@@ -5644,19 +5632,19 @@ key_delete(struct socket *so, struct mbuf *m,
 
 	/* map satype to proto */
 	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
-		ipseclog((LOG_DEBUG, "key_delete: invalid satype is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid satype is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
 	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL) {
-		ipseclog((LOG_DEBUG, "key_delete: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
 	if (mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
 	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address)) {
-		ipseclog((LOG_DEBUG, "key_delete: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -5666,10 +5654,10 @@ key_delete(struct socket *so, struct mbuf *m,
 		 * that match the src/dst.  This is used during
 		 * IKE INITIAL-CONTACT.
 		 */
-		ipseclog((LOG_DEBUG, "key_delete: doing delete all.\n"));
+		IPSECLOG(LOG_DEBUG, "doing delete all.\n");
 		return key_delete_all(so, m, mhp, proto);
 	} else if (mhp->extlen[SADB_EXT_SA] < sizeof(struct sadb_sa)) {
-		ipseclog((LOG_DEBUG, "key_delete: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -5697,7 +5685,7 @@ key_delete(struct socket *so, struct mbuf *m,
 			break;
 	}
 	if (sah == NULL) {
-		ipseclog((LOG_DEBUG, "key_delete: no SA found.\n"));
+		IPSECLOG(LOG_DEBUG, "no SA found.\n");
 		return key_senderror(so, m, ENOENT);
 	}
 
@@ -5766,10 +5754,10 @@ key_delete_all(struct socket *so, struct mbuf *m,
 			    nextsav) {
 				/* sanity check */
 				if (sav->state != state) {
-					ipseclog((LOG_DEBUG, "key_delete_all: "
-					       "invalid sav->state "
-					       "(queue: %d SA: %d)\n",
-					       state, sav->state));
+					IPSECLOG(LOG_DEBUG,
+					    "invalid sav->state "
+					    "(queue: %d SA: %d)\n",
+					    state, sav->state);
 					continue;
 				}
 
@@ -5833,20 +5821,20 @@ key_get(struct socket *so, struct mbuf *m,
 
 	/* map satype to proto */
 	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
-		ipseclog((LOG_DEBUG, "key_get: invalid satype is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid satype is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
 	if (mhp->ext[SADB_EXT_SA] == NULL ||
 	    mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL) {
-		ipseclog((LOG_DEBUG, "key_get: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 	if (mhp->extlen[SADB_EXT_SA] < sizeof(struct sadb_sa) ||
 	    mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
 	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address)) {
-		ipseclog((LOG_DEBUG, "key_get: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -5874,7 +5862,7 @@ key_get(struct socket *so, struct mbuf *m,
 			break;
 	}
 	if (sah == NULL) {
-		ipseclog((LOG_DEBUG, "key_get: no SA found.\n"));
+		IPSECLOG(LOG_DEBUG, "no SA found.\n");
 		return key_senderror(so, m, ENOENT);
 	}
 
@@ -5884,7 +5872,7 @@ key_get(struct socket *so, struct mbuf *m,
 
 	/* map proto to satype */
 	if ((satype = key_proto2satype(sah->saidx.proto)) == 0) {
-		ipseclog((LOG_DEBUG, "key_get: there was invalid proto in SAD.\n"));
+		IPSECLOG(LOG_DEBUG, "there was invalid proto in SAD.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -6366,7 +6354,7 @@ key_newacq(const struct secasindex *saidx)
 	/* get new entry */
 	newacq = kmem_intr_zalloc(sizeof(struct secacq), KM_NOSLEEP);
 	if (newacq == NULL) {
-		ipseclog((LOG_DEBUG, "key_newacq: No more memory.\n"));
+		IPSECLOG(LOG_DEBUG, "No more memory.\n");
 		return NULL;
 	}
 
@@ -6414,7 +6402,7 @@ key_newspacq(const struct secpolicyindex *spidx)
 	/* get new entry */
 	acq = kmem_intr_zalloc(sizeof(struct secspacq), KM_NOSLEEP);
 	if (acq == NULL) {
-		ipseclog((LOG_DEBUG, "key_newspacq: No more memory.\n"));
+		IPSECLOG(LOG_DEBUG, "No more memory.\n");
 		return NULL;
 	}
 
@@ -6480,7 +6468,7 @@ key_acquire2(struct socket *so, struct mbuf *m,
 
 		/* check sequence number */
 		if (mhp->msg->sadb_msg_seq == 0) {
-			ipseclog((LOG_DEBUG, "key_acquire2: must specify sequence number.\n"));
+			IPSECLOG(LOG_DEBUG, "must specify sequence number.\n");
 			m_freem(m);
 			return 0;
 		}
@@ -6508,7 +6496,7 @@ key_acquire2(struct socket *so, struct mbuf *m,
 
 	/* map satype to proto */
 	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
-		ipseclog((LOG_DEBUG, "key_acquire2: invalid satype is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid satype is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -6516,14 +6504,14 @@ key_acquire2(struct socket *so, struct mbuf *m,
 	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL ||
 	    mhp->ext[SADB_EXT_PROPOSAL] == NULL) {
 		/* error */
-		ipseclog((LOG_DEBUG, "key_acquire2: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 	if (mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
 	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address) ||
 	    mhp->extlen[SADB_EXT_PROPOSAL] < sizeof(struct sadb_prop)) {
 		/* error */
-		ipseclog((LOG_DEBUG, "key_acquire2: invalid message is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -6545,14 +6533,14 @@ key_acquire2(struct socket *so, struct mbuf *m,
 			break;
 	}
 	if (sah != NULL) {
-		ipseclog((LOG_DEBUG, "key_acquire2: a SA exists already.\n"));
+		IPSECLOG(LOG_DEBUG, "a SA exists already.\n");
 		return key_senderror(so, m, EEXIST);
 	}
 
 	error = key_acquire(&saidx, NULL);
 	if (error != 0) {
-		ipseclog((LOG_DEBUG, "key_acquire2: error %d returned "
-			"from key_acquire.\n", mhp->msg->sadb_msg_errno));
+		IPSECLOG(LOG_DEBUG, "error %d returned from key_acquire.\n",
+		    mhp->msg->sadb_msg_errno);
 		return key_senderror(so, m, error);
 	}
 
@@ -6595,7 +6583,7 @@ key_register(struct socket *so, struct mbuf *m,
 	/* check whether existing or not */
 	LIST_FOREACH(reg, &regtree[mhp->msg->sadb_msg_satype], chain) {
 		if (reg->so == so) {
-			ipseclog((LOG_DEBUG, "key_register: socket exists already.\n"));
+			IPSECLOG(LOG_DEBUG, "socket exists already.\n");
 			return key_senderror(so, m, EEXIST);
 		}
 	}
@@ -6902,7 +6890,7 @@ key_flush(struct socket *so, struct mbuf *m,
 
 	/* map satype to proto */
 	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
-		ipseclog((LOG_DEBUG, "key_flush: invalid satype is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid satype is passed.\n");
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -6925,7 +6913,7 @@ key_flush(struct socket *so, struct mbuf *m,
 
 	if (m->m_len < sizeof(struct sadb_msg) ||
 	    sizeof(struct sadb_msg) > m->m_len + M_TRAILINGSPACE(m)) {
-		ipseclog((LOG_DEBUG, "key_flush: No more memory.\n"));
+		IPSECLOG(LOG_DEBUG, "No more memory.\n");
 		return key_senderror(so, m, ENOBUFS);
 	}
 
@@ -7058,7 +7046,7 @@ key_dump(struct socket *so, struct mbuf *m0,
 	/* map satype to proto */
 	satype = mhp->msg->sadb_msg_satype;
 	if ((proto = key_satype2proto(satype)) == 0) {
-		ipseclog((LOG_DEBUG, "key_dump: invalid satype is passed.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid satype is passed.\n");
 		return key_senderror(so, m0, EINVAL);
 	}
 
@@ -7218,7 +7206,7 @@ key_parse(struct mbuf *m, struct socket *so)
 
 #if 0	/*kdebug_sadb assumes msg in linear buffer*/
 	if (KEYDEBUG_ON(KEYDEBUG_KEY_DUMP)) {
-		ipseclog((LOG_DEBUG, "key_parse: passed sadb_msg\n"));
+		IPSECLOG(LOG_DEBUG, "passed sadb_msg\n");
 		kdebug_sadb(msg);
 	}
 #endif
@@ -7234,24 +7222,23 @@ key_parse(struct mbuf *m, struct socket *so)
 
 	if ((m->m_flags & M_PKTHDR) == 0 ||
 	    m->m_pkthdr.len != orglen) {
-		ipseclog((LOG_DEBUG, "key_parse: invalid message length.\n"));
+		IPSECLOG(LOG_DEBUG, "invalid message length.\n");
 		PFKEY_STATINC(PFKEY_STAT_OUT_INVLEN);
 		error = EINVAL;
 		goto senderror;
 	}
 
 	if (msg->sadb_msg_version != PF_KEY_V2) {
-		ipseclog((LOG_DEBUG,
-		    "key_parse: PF_KEY version %u is mismatched.\n",
-		    msg->sadb_msg_version));
+		IPSECLOG(LOG_DEBUG, "PF_KEY version %u is mismatched.\n",
+		    msg->sadb_msg_version);
 		PFKEY_STATINC(PFKEY_STAT_OUT_INVVER);
 		error = EINVAL;
 		goto senderror;
 	}
 
 	if (msg->sadb_msg_type > SADB_MAX) {
-		ipseclog((LOG_DEBUG, "key_parse: invalid type %u is passed.\n",
-		    msg->sadb_msg_type));
+		IPSECLOG(LOG_DEBUG, "invalid type %u is passed.\n",
+		    msg->sadb_msg_type);
 		PFKEY_STATINC(PFKEY_STAT_OUT_INVMSGTYPE);
 		error = EINVAL;
 		goto senderror;
@@ -7307,8 +7294,9 @@ key_parse(struct mbuf *m, struct socket *so)
 		case SADB_GET:
 		case SADB_ACQUIRE:
 		case SADB_EXPIRE:
-			ipseclog((LOG_DEBUG, "key_parse: must specify satype "
-			    "when msg type=%u.\n", msg->sadb_msg_type));
+			IPSECLOG(LOG_DEBUG,
+			    "must specify satype when msg type=%u.\n",
+			    msg->sadb_msg_type);
 			PFKEY_STATINC(PFKEY_STAT_OUT_INVSATYPE);
 			error = EINVAL;
 			goto senderror;
@@ -7327,8 +7315,8 @@ key_parse(struct mbuf *m, struct socket *so)
 		case SADB_X_SPDSETIDX:
 		case SADB_X_SPDUPDATE:
 		case SADB_X_SPDDELETE2:
-			ipseclog((LOG_DEBUG, "key_parse: illegal satype=%u\n",
-			    msg->sadb_msg_type));
+			IPSECLOG(LOG_DEBUG, "illegal satype=%u\n",
+			    msg->sadb_msg_type);
 			PFKEY_STATINC(PFKEY_STAT_OUT_INVSATYPE);
 			error = EINVAL;
 			goto senderror;
@@ -7338,8 +7326,8 @@ key_parse(struct mbuf *m, struct socket *so)
 	case SADB_SATYPE_OSPFV2:
 	case SADB_SATYPE_RIPV2:
 	case SADB_SATYPE_MIP:
-		ipseclog((LOG_DEBUG, "key_parse: type %u isn't supported.\n",
-		    msg->sadb_msg_satype));
+		IPSECLOG(LOG_DEBUG, "type %u isn't supported.\n",
+		    msg->sadb_msg_satype);
 		PFKEY_STATINC(PFKEY_STAT_OUT_INVSATYPE);
 		error = EOPNOTSUPP;
 		goto senderror;
@@ -7348,8 +7336,8 @@ key_parse(struct mbuf *m, struct socket *so)
 			break;
 		/*FALLTHROUGH*/
 	default:
-		ipseclog((LOG_DEBUG, "key_parse: invalid type %u is passed.\n",
-		    msg->sadb_msg_satype));
+		IPSECLOG(LOG_DEBUG, "invalid type %u is passed.\n",
+		    msg->sadb_msg_satype);
 		PFKEY_STATINC(PFKEY_STAT_OUT_INVSATYPE);
 		error = EINVAL;
 		goto senderror;
@@ -7366,7 +7354,7 @@ key_parse(struct mbuf *m, struct socket *so)
 
 		/* check upper layer protocol */
 		if (src0->sadb_address_proto != dst0->sadb_address_proto) {
-			ipseclog((LOG_DEBUG, "key_parse: upper layer protocol mismatched.\n"));
+			IPSECLOG(LOG_DEBUG, "upper layer protocol mismatched.\n");
 			PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
 			error = EINVAL;
 			goto senderror;
@@ -7375,15 +7363,15 @@ key_parse(struct mbuf *m, struct socket *so)
 		/* check family */
 		if (PFKEY_ADDR_SADDR(src0)->sa_family !=
 		    PFKEY_ADDR_SADDR(dst0)->sa_family) {
-			ipseclog((LOG_DEBUG, "key_parse: address family mismatched.\n"));
+			IPSECLOG(LOG_DEBUG, "address family mismatched.\n");
 			PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
 			error = EINVAL;
 			goto senderror;
 		}
 		if (PFKEY_ADDR_SADDR(src0)->sa_len !=
 		    PFKEY_ADDR_SADDR(dst0)->sa_len) {
-			ipseclog((LOG_DEBUG,
-			    "key_parse: address struct size mismatched.\n"));
+			IPSECLOG(LOG_DEBUG,
+			    "address struct size mismatched.\n");
 			PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
 			error = EINVAL;
 			goto senderror;
@@ -7407,8 +7395,7 @@ key_parse(struct mbuf *m, struct socket *so)
 			}
 			break;
 		default:
-			ipseclog((LOG_DEBUG,
-			    "key_parse: unsupported address family.\n"));
+			IPSECLOG(LOG_DEBUG, "unsupported address family.\n");
 			PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
 			error = EAFNOSUPPORT;
 			goto senderror;
@@ -7429,8 +7416,7 @@ key_parse(struct mbuf *m, struct socket *so)
 		/* check max prefix length */
 		if (src0->sadb_address_prefixlen > plen ||
 		    dst0->sadb_address_prefixlen > plen) {
-			ipseclog((LOG_DEBUG,
-			    "key_parse: illegal prefixlen.\n"));
+			IPSECLOG(LOG_DEBUG, "illegal prefixlen.\n");
 			PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
 			error = EINVAL;
 			goto senderror;
@@ -7534,18 +7520,17 @@ key_align(struct mbuf *m, struct sadb_msghdr *mhp)
 			 * KEY_AUTH or KEY_ENCRYPT ?
 			 */
 			if (mhp->ext[ext->sadb_ext_type] != NULL) {
-				ipseclog((LOG_DEBUG,
-				    "key_align: duplicate ext_type %u "
-				    "is passed.\n", ext->sadb_ext_type));
+				IPSECLOG(LOG_DEBUG,
+				    "duplicate ext_type %u is passed.\n",
+				    ext->sadb_ext_type);
 				m_freem(m);
 				PFKEY_STATINC(PFKEY_STAT_OUT_DUPEXT);
 				return EINVAL;
 			}
 			break;
 		default:
-			ipseclog((LOG_DEBUG,
-			    "key_align: invalid ext_type %u is passed.\n",
-			    ext->sadb_ext_type));
+			IPSECLOG(LOG_DEBUG, "invalid ext_type %u is passed.\n",
+			    ext->sadb_ext_type);
 			m_freem(m);
 			PFKEY_STATINC(PFKEY_STAT_OUT_INVEXTTYPE);
 			return EINVAL;
