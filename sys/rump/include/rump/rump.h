@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.68 2016/01/31 23:14:34 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.68.8.1 2017/05/19 00:22:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -46,9 +46,12 @@ struct lwp;
 struct modinfo;
 struct uio;
 
-#if (!defined(_KERNEL)) && (defined(__sun__) || defined(__ANDROID__)) && !defined(RUMP_REGISTER_T)
-#define RUMP_REGISTER_T long
+#if !defined(RUMP_REGISTER_T)
+# define RUMP_REGISTER_T long
+# if !defined(_KERNEL) && !defined(_KMEMUSER) &&  \
+    !defined(_KERNTYPES) && !defined(_STANDALONE)
 typedef RUMP_REGISTER_T register_t;
+# endif
 #endif
 
 #include <rump/rumpdefs.h>

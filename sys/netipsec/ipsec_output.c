@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.45.2.1 2017/05/11 02:58:41 pgoyette Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.45.2.2 2017/05/19 00:22:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.45.2.1 2017/05/11 02:58:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.45.2.2 2017/05/19 00:22:58 pgoyette Exp $");
 
 /*
  * IPsec output processing.
@@ -177,10 +177,11 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 
 		mo = m_makespace(m, sizeof(struct ip), hlen, &roff);
 		if (mo == NULL) {
-			DPRINTF(("ipsec_process_done : failed to inject" 
-				 "%u byte UDP for SA %s/%08lx\n",
-					 hlen, ipsec_address(&saidx->dst),
-					 (u_long) ntohl(sav->spi)));
+			char buf[IPSEC_ADDRSTRLEN];
+			DPRINTF(("ipsec_process_done : failed to inject"
+			    "%u byte UDP for SA %s/%08lx\n",
+			    hlen, ipsec_address(&saidx->dst, buf, sizeof(buf)),
+			    (u_long) ntohl(sav->spi)));
 			error = ENOBUFS;
 			goto bad;
 		}

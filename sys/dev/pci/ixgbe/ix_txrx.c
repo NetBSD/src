@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.22.4.1 2017/05/11 02:58:39 pgoyette Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.22.4.2 2017/05/19 00:22:57 pgoyette Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1955,7 +1955,6 @@ ixgbe_rxeof(struct ix_queue *que)
 			mp->m_next = nbuf->buf;
 		} else { /* Sending this frame */
 			m_set_rcvif(sendmp, ifp);
-			ifp->if_ipackets++;
 			rxr->rx_packets.ev_count++;
 			/* capture data for AIM */
 			rxr->bytes += sendmp->m_pkthdr.len;

@@ -1,4 +1,4 @@
-#	$NetBSD: t_hello.sh,v 1.3 2016/04/03 14:41:30 gson Exp $
+#	$NetBSD: t_hello.sh,v 1.3.6.1 2017/05/19 00:22:59 pgoyette Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,6 +31,12 @@ hello_head() {
 	atf_set "require.progs" "cc"
 }
 
+atf_test_case hello_profile
+hello_head() {
+	atf_set "descr" "compile and run \"hello world\" with profiling option"
+	atf_set "require.progs" "cc"
+}
+
 atf_test_case hello_pic
 hello_pic_head() {
 	atf_set "descr" "compile and run PIC \"hello world\""
@@ -59,18 +65,29 @@ EOF
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello
 }
 
+hello_profile_body() {
+	cat > test.c << EOF
+#include <stdio.h>
+#include <stdlib.h>
+int main(void) {printf("hello world\n");exit(0);}
+EOF
+	atf_check -s exit:0 -o ignore -e ignore cc -o hello -pg test.c
+	atf_check -s exit:0 -o inline:"hello world\n" ./hello
+}
+
 hello_pic_body() {
 	cat > test.c << EOF
 #include <stdlib.h>
+int callpic(void);
 int main(void) {callpic();exit(0);}
 EOF
 	cat > pic.c << EOF
 #include <stdio.h>
-int callpic(void) {printf("hello world\n");}
+int callpic(void) {printf("hello world\n");return 0;}
 EOF
 
 	atf_check -s exit:0 -o ignore -e ignore \
-	    cc -fPIC -dPIC -shared -o libtest.so pic.c
+	    cc -fPIC -shared -o libtest.so pic.c
 	atf_check -s exit:0 -o ignore -e ignore \
 	    cc -o hello test.c -L. -ltest
 
@@ -138,6 +155,7 @@ atf_init_test_cases()
 {
 
 	atf_add_test_case hello
+	atf_add_test_case hello_profile
 	atf_add_test_case hello_pic
 	atf_add_test_case hello_pie
 	atf_add_test_case hello32

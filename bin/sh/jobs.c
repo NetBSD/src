@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.79.6.2 2017/05/11 02:58:28 pgoyette Exp $	*/
+/*	$NetBSD: jobs.c,v 1.79.6.3 2017/05/19 00:22:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.79.6.2 2017/05/11 02:58:28 pgoyette Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.79.6.3 2017/05/19 00:22:51 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -869,6 +869,7 @@ forkshell(struct job *jp, union node *n, int mode)
 		error("Cannot fork (%s)", strerror(serrno));
 		break;
 	case 0:
+		SHELL_FORKED();
 		forkchild(jp, n, mode, 0);
 		return 0;
 	default:
@@ -1423,7 +1424,7 @@ cmdputs(const char *s)
 	int subtype = 0;
 	int quoted = 0;
 	static char vstype[16][4] = { "", "}", "-", "+", "?", "=",
-					"#", "##", "%", "%%" };
+					"#", "##", "%", "%%", "}" };
 
 	p = s;
 	nextc = cmdnextc;
@@ -1435,22 +1436,28 @@ cmdputs(const char *s)
 			break;
 		case CTLVAR:
 			subtype = *p++;
-			if ((subtype & VSTYPE) == VSLENGTH)
+			if (subtype & VSLINENO) {
+				if ((subtype & VSTYPE) == VSLENGTH)
+					str = "${#LINENO";
+				else
+					str = "${LINENO";
+				while (is_digit(*p))
+					p++;
+			} else if ((subtype & VSTYPE) == VSLENGTH)
 				str = "${#";
 			else
 				str = "${";
 			if (!(subtype & VSQUOTE) != !(quoted & 1)) {
 				quoted ^= 1;
 				c = '"';
-			} else
+			} else {
 				c = *str++;
+			}
 			break;
 		case CTLENDVAR:
-			if (quoted & 1) {
-				c = '"';
-				str = "}";
-			} else
-				c = '}';
+			c = '}';
+			if (quoted & 1)
+				str = "\"";
 			quoted >>= 1;
 			subtype = 0;
 			break;
@@ -1474,6 +1481,10 @@ cmdputs(const char *s)
 			quoted ^= 1;
 			c = '"';
 			break;
+		case CTLQUOTEEND:
+			quoted >>= 1;
+			c = '"';
+			break;
 		case '=':
 			if (subtype == 0)
 				break;
@@ -1484,6 +1495,9 @@ cmdputs(const char *s)
 				c = *str++;
 			if (c != '}')
 				quoted <<= 1;
+			else if (*p == CTLENDVAR)
+				c = *str++;
+			subtype = 0;
 			break;
 		case '\'':
 		case '\\':
@@ -1497,7 +1511,7 @@ cmdputs(const char *s)
 		default:
 			break;
 		}
-		do {
+		if (c != '\0') do {	/* c == 0 implies nothing in str */
 			*nextc++ = c;
 		} while (--nleft > 0 && str && (c = *str++));
 		str = 0;

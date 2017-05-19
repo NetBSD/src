@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.22.4.5 2017/05/02 05:17:56 pgoyette Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.22.4.6 2017/05/19 00:22:57 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.22.4.5 2017/05/02 05:17:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.22.4.6 2017/05/19 00:22:57 pgoyette Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -585,8 +585,13 @@ ipfdetach(ipf_main_softc_t *softc)
 # if (__NetBSD_Version__ >= 104200000)
 #  if __NetBSD_Version__ >= 105110000
 #   if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
+#    if __NetBSD_Version__ >= 799000400
+	(void) pfil_remove_ihook((void *)ipf_pfilsync, NULL,
+				PFIL_IFNET, ph_ifsync);
+#    else
 	(void) pfil_remove_hook((void *)ipf_pfilsync, NULL,
 				PFIL_IFNET, ph_ifsync);
+#    endif
 #   endif
 
 	if (ph_inet != NULL)

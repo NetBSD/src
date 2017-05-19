@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.8 2009/02/20 21:45:47 jmmv Exp $
+#	$NetBSD: Makefile,v 1.8.36.1 2017/05/19 00:22:54 pgoyette Exp $
 
-SUBDIR= getdents lseek
+SUBDIR= lseek
 
 .include <bsd.subdir.mk>

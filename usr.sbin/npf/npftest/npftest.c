@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.20 2016/12/26 23:05:05 christos Exp $	*/
+/*	$NetBSD: npftest.c,v 1.20.4.1 2017/05/19 00:23:00 pgoyette Exp $	*/
 
 /*
  * NPF testing framework.
@@ -195,6 +195,8 @@ npf_kern_fini(void)
 #endif
 }
 
+extern int rumpns_npfctl_testing;
+
 int
 main(int argc, char **argv)
 {
@@ -276,6 +278,7 @@ main(int argc, char **argv)
 	/*
 	 * Initialise the NPF kernel component.
 	 */
+	rumpns_npfctl_testing = 1;
 	npf_kern_init();
 	rumpns_npf_test_init(inet_pton, inet_ntop, random);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.118.2.1 2017/05/11 02:58:41 pgoyette Exp $	*/
+/*	$NetBSD: key.c,v 1.118.2.2 2017/05/19 00:22:58 pgoyette Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.118.2.1 2017/05/11 02:58:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.118.2.2 2017/05/19 00:22:58 pgoyette Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.118.2.1 2017/05/11 02:58:41 pgoyette Exp $
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
-#include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
@@ -64,6 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.118.2.1 2017/05/11 02:58:41 pgoyette Exp $
 #include <sys/cprng.h>
 #include <sys/psref.h>
 #include <sys/lwp.h>
+#include <sys/workqueue.h>
+#include <sys/kmem.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -330,26 +332,6 @@ do { \
 
 MALLOC_DEFINE(M_SECA, "key mgmt", "security associations, key management");
 
-#if 1
-#define KMALLOC(p, t, n)                                                     \
-	((p) = (t) malloc((unsigned long)(n), M_SECA, M_NOWAIT))
-#define KFREE(p)                                                             \
-	free((p), M_SECA)
-#else
-#define KMALLOC(p, t, n) \
-do { \
-	((p) = malloc((unsigned long)(n), M_SECA, M_NOWAIT));             \
-	printf("%s %d: %p <- KMALLOC(%s, %d)\n",                             \
-	    __FILE__, __LINE__, (p), #t, n);                             	\
-} while (0)
-
-#define KFREE(p)                                                             \
-	do {                                                                 \
-		printf("%s %d: %p -> KFREE()\n", __FILE__, __LINE__, (p));   \
-		free((p), M_SECA);                                  \
-	} while (0)
-#endif
-
 /*
  * set parameters into secpolicyindex buffer.
  * Must allocate secpolicyindex buffer passed to this function.
@@ -421,13 +403,14 @@ static struct secasvar *key_newsav (struct mbuf *,
 	const struct sadb_msghdr *, struct secashead *, int *,
 	const char*, int);
 #define	KEY_NEWSAV(m, sadb, sah, e)				\
-	key_newsav(m, sadb, sah, e, __FILE__, __LINE__)
+	key_newsav(m, sadb, sah, e, __func__, __LINE__)
 static void key_delsav (struct secasvar *);
 static struct secashead *key_getsah (const struct secasindex *);
 static struct secasvar *key_checkspidup (const struct secasindex *, u_int32_t);
 static struct secasvar *key_getsavbyspi (struct secashead *, u_int32_t);
 static int key_setsaval (struct secasvar *, struct mbuf *,
 	const struct sadb_msghdr *);
+static void key_freesaval(struct secasvar *);
 static int key_mature (struct secasvar *);
 static struct mbuf *key_setdumpsa (struct secasvar *, u_int8_t,
 	u_int8_t, u_int32_t, u_int32_t);
@@ -533,7 +516,12 @@ static inline void key_sp_dead (struct secpolicy *);
 static void key_sp_unlink (struct secpolicy *sp);
 
 static struct mbuf *key_alloc_mbuf (int);
-struct callout key_timehandler_ch;
+
+static void key_timehandler(void *);
+static void key_timehandler_work(struct work *, void *);
+static struct callout	key_timehandler_ch;
+static struct workqueue	*key_timehandler_wq;
+static struct work	key_timehandler_wk;
 
 #ifdef IPSEC_REF_DEBUG
 #define REFLOG(label, p, where, tag)					\
@@ -1381,12 +1369,12 @@ key_delsp(struct secpolicy *sp)
 		}
 
 		nextisr = isr->next;
-		KFREE(isr);
+		kmem_intr_free(isr, sizeof(*isr));
 		isr = nextisr;
 	}
     }
 
-	KFREE(sp);
+	kmem_intr_free(sp, sizeof(*sp));
 
 	splx(s);
 }
@@ -1451,12 +1439,9 @@ key_newsp(const char* where, int tag)
 {
 	struct secpolicy *newsp = NULL;
 
-	newsp = (struct secpolicy *)
-		malloc(sizeof(struct secpolicy), M_SECA, M_NOWAIT|M_ZERO);
-	if (newsp) {
+	newsp = kmem_intr_zalloc(sizeof(struct secpolicy), KM_NOSLEEP);
+	if (newsp != NULL)
 		newsp->refcnt = 1;
-		newsp->req = NULL;
-	}
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP from %s:%u return SP:%p\n", where, tag, newsp);
@@ -1473,6 +1458,7 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 {
 	struct secpolicy *newsp;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(xpl0 != NULL);
 	KASSERT(len >= sizeof(*xpl0));
 
@@ -1538,14 +1524,7 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 		}
 
 		/* allocate request buffer */
-		KMALLOC(*p_isr, struct ipsecrequest *, sizeof(**p_isr));
-		if ((*p_isr) == NULL) {
-			ipseclog((LOG_DEBUG,
-			    "key_msg2sp: No more memory.\n"));
-			*error = ENOBUFS;
-			goto free_exit;
-		}
-		memset(*p_isr, 0, sizeof(**p_isr));
+		*p_isr = kmem_zalloc(sizeof(**p_isr), KM_SLEEP);
 
 		/* set values */
 		(*p_isr)->next = NULL;
@@ -1856,6 +1835,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	struct secpolicy *newsp;
 	int error;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(so != NULL);
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
@@ -1951,7 +1931,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	}
 
 	if ((newsp->id = key_getnewspid()) == 0) {
-		KFREE(newsp);
+		kmem_free(newsp, sizeof(*newsp));
 		return key_senderror(so, m, ENOBUFS);
 	}
 
@@ -1967,12 +1947,12 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	/* sanity check on addr pair */
 	if (((const struct sockaddr *)(src0 + 1))->sa_family !=
 			((const struct sockaddr *)(dst0+ 1))->sa_family) {
-		KFREE(newsp);
+		kmem_free(newsp, sizeof(*newsp));
 		return key_senderror(so, m, EINVAL);
 	}
 	if (((const struct sockaddr *)(src0 + 1))->sa_len !=
 			((const struct sockaddr *)(dst0+ 1))->sa_len) {
-		KFREE(newsp);
+		kmem_free(newsp, sizeof(*newsp));
 		return key_senderror(so, m, EINVAL);
 	}
 
@@ -2870,22 +2850,20 @@ static struct secashead *
 key_newsah(const struct secasindex *saidx)
 {
 	struct secashead *newsah;
+	int i;
 
 	KASSERT(saidx != NULL);
 
-	newsah = (struct secashead *)
-		malloc(sizeof(struct secashead), M_SECA, M_NOWAIT|M_ZERO);
-	if (newsah != NULL) {
-		int i;
-		for (i = 0; i < sizeof(newsah->savtree)/sizeof(newsah->savtree[0]); i++)
-			LIST_INIT(&newsah->savtree[i]);
-		newsah->saidx = *saidx;
+	newsah = kmem_zalloc(sizeof(struct secashead), KM_SLEEP);
+	for (i = 0; i < __arraycount(newsah->savtree); i++)
+		LIST_INIT(&newsah->savtree[i]);
+	newsah->saidx = *saidx;
 
-		/* add to saidxtree */
-		newsah->state = SADB_SASTATE_MATURE;
-		LIST_INSERT_HEAD(&sahtree, newsah, chain);
-	}
-	return(newsah);
+	/* add to saidxtree */
+	newsah->state = SADB_SASTATE_MATURE;
+	LIST_INSERT_HEAD(&sahtree, newsah, chain);
+
+	return newsah;
 }
 
 /*
@@ -2899,9 +2877,10 @@ key_delsah(struct secashead *sah)
 	int s;
 	int zombie = 0;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(sah != NULL);
 
-	s = splsoftnet();	/*called from softclock()*/
+	s = splsoftnet();
 
 	/* searching all SA registerd in the secindex. */
 	SASTATE_ANY_FOREACH(state) {
@@ -2929,7 +2908,12 @@ key_delsah(struct secashead *sah)
 	if (__LIST_CHAINED(sah))
 		LIST_REMOVE(sah, chain);
 
-	KFREE(sah);
+	if (sah->idents != NULL)
+		kmem_free(sah->idents, sah->idents_len);
+	if (sah->identd != NULL)
+		kmem_free(sah->identd, sah->identd_len);
+
+	kmem_free(sah, sizeof(*sah));
 
 	splx(s);
 	return;
@@ -2955,18 +2939,13 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 	struct secasvar *newsav;
 	const struct sadb_sa *xsa;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
 	KASSERT(mhp->msg != NULL);
 	KASSERT(sah != NULL);
 
-	KMALLOC(newsav, struct secasvar *, sizeof(struct secasvar));
-	if (newsav == NULL) {
-		ipseclog((LOG_DEBUG, "key_newsa: No more memory.\n"));
-		*errp = ENOBUFS;
-		goto done;
-	}
-	memset(newsav, 0, sizeof(struct secasvar));
+	newsav = kmem_zalloc(sizeof(struct secasvar), KM_SLEEP);
 
 	switch (mhp->msg->sadb_msg_type) {
 	case SADB_GETSPI:
@@ -2985,28 +2964,24 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 	case SADB_ADD:
 		/* sanity check */
 		if (mhp->ext[SADB_EXT_SA] == NULL) {
-			KFREE(newsav), newsav = NULL;
 			ipseclog((LOG_DEBUG, "key_newsa: invalid message is passed.\n"));
 			*errp = EINVAL;
-			goto done;
+			goto error;
 		}
 		xsa = (const struct sadb_sa *)mhp->ext[SADB_EXT_SA];
 		newsav->spi = xsa->sadb_sa_spi;
 		newsav->seq = mhp->msg->sadb_msg_seq;
 		break;
 	default:
-		KFREE(newsav), newsav = NULL;
 		*errp = EINVAL;
-		goto done;
+		goto error;
 	}
 
 	/* copy sav values */
 	if (mhp->msg->sadb_msg_type != SADB_GETSPI) {
 		*errp = key_setsaval(newsav, m, mhp);
-		if (*errp) {
-			KFREE(newsav), newsav = NULL;
-			goto done;
-		}
+		if (*errp)
+			goto error;
 	}
 
 	/* reset created */
@@ -3019,11 +2994,16 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 	newsav->state = SADB_SASTATE_LARVAL;
 	LIST_INSERT_TAIL(&sah->savtree[SADB_SASTATE_LARVAL], newsav,
 			secasvar, chain);
-done:
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
-	    "DP from %s:%u return SP:%p\n", where, tag, newsav);
-
+	    "DP from %s:%u return SA:%p\n", where, tag, newsav);
 	return newsav;
+
+error:
+	KASSERT(*errp != 0);
+	kmem_free(newsav, sizeof(*newsav));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP from %s:%u return SA:NULL\n", where, tag);
+	return NULL;
 }
 
 /*
@@ -3056,32 +3036,9 @@ key_delsav(struct secasvar *sav)
 			explicit_memset(_KEYBUF(sav->key_enc), 0,
 			    _KEYLEN(sav->key_enc));
 	}
-	if (sav->key_auth != NULL) {
-		KFREE(sav->key_auth);
-		sav->key_auth = NULL;
-	}
-	if (sav->key_enc != NULL) {
-		KFREE(sav->key_enc);
-		sav->key_enc = NULL;
-	}
-	if (sav->replay != NULL) {
-		KFREE(sav->replay);
-		sav->replay = NULL;
-	}
-	if (sav->lft_c != NULL) {
-		KFREE(sav->lft_c);
-		sav->lft_c = NULL;
-	}
-	if (sav->lft_h != NULL) {
-		KFREE(sav->lft_h);
-		sav->lft_h = NULL;
-	}
-	if (sav->lft_s != NULL) {
-		KFREE(sav->lft_s);
-		sav->lft_s = NULL;
-	}
 
-	KFREE(sav);
+	key_freesaval(sav);
+	kmem_intr_free(sav, sizeof(*sav));
 
 	return;
 }
@@ -3171,6 +3128,43 @@ key_getsavbyspi(struct secashead *sah, u_int32_t spi)
 }
 
 /*
+ * Free allocated data to member variables of sav:
+ * sav->replay, sav->key_* and sav->lft_*.
+ */
+static void
+key_freesaval(struct secasvar *sav)
+{
+
+	if (sav->replay != NULL) {
+		kmem_free(sav->replay, sav->replay_len);
+		sav->replay = NULL;
+		sav->replay_len = 0;
+	}
+	if (sav->key_auth != NULL) {
+		kmem_free(sav->key_auth, sav->key_auth_len);
+		sav->key_auth = NULL;
+		sav->key_auth_len = 0;
+	}
+	if (sav->key_enc != NULL) {
+		kmem_free(sav->key_enc, sav->key_enc_len);
+		sav->key_enc = NULL;
+		sav->key_enc_len = 0;
+	}
+	if (sav->lft_c != NULL) {
+		kmem_free(sav->lft_c, sizeof(*(sav->lft_c)));
+		sav->lft_c = NULL;
+	}
+	if (sav->lft_h != NULL) {
+		kmem_free(sav->lft_h, sizeof(*(sav->lft_h)));
+		sav->lft_h = NULL;
+	}
+	if (sav->lft_s != NULL) {
+		kmem_free(sav->lft_s, sizeof(*(sav->lft_s)));
+		sav->lft_s = NULL;
+	}
+}
+
+/*
  * copy SA values from PF_KEY message except *SPI, SEQ, PID, STATE and TYPE*.
  * You must update these if need.
  * OUT:	0:	success.
@@ -3184,17 +3178,13 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 {
 	int error = 0;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
 	KASSERT(mhp->msg != NULL);
 
 	/* initialization */
-	sav->replay = NULL;
-	sav->key_auth = NULL;
-	sav->key_enc = NULL;
-	sav->lft_c = NULL;
-	sav->lft_h = NULL;
-	sav->lft_s = NULL;
+	key_freesaval(sav);
 	sav->tdb_xform = NULL;		/* transform */
 	sav->tdb_encalgxform = NULL;	/* encoding algorithm */
 	sav->tdb_authalgxform = NULL;	/* authentication algorithm */
@@ -3218,13 +3208,10 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 
 		/* replay window */
 		if ((sa0->sadb_sa_flags & SADB_X_EXT_OLD) == 0) {
-			sav->replay = (struct secreplay *)
-				malloc(sizeof(struct secreplay)+sa0->sadb_sa_replay, M_SECA, M_NOWAIT|M_ZERO);
-			if (sav->replay == NULL) {
-				ipseclog((LOG_DEBUG, "key_setsaval: No more memory.\n"));
-				error = ENOBUFS;
-				goto fail;
-			}
+			size_t len = sizeof(struct secreplay) +
+			    sa0->sadb_sa_replay;
+			sav->replay = kmem_zalloc(len, KM_SLEEP);
+			sav->replay_len = len;
 			if (sa0->sadb_sa_replay != 0)
 				sav->replay->bitmap = (char*)(sav->replay+1);
 			sav->replay->wsize = sa0->sadb_sa_replay;
@@ -3262,12 +3249,8 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 			goto fail;
 		}
 
-		sav->key_auth = (struct sadb_key *)key_newbuf(key0, len);
-		if (sav->key_auth == NULL) {
-			ipseclog((LOG_DEBUG, "key_setsaval: No more memory.\n"));
-			error = ENOBUFS;
-			goto fail;
-		}
+		sav->key_auth = key_newbuf(key0, len);
+		sav->key_auth_len = len;
 	}
 
 	/* Encryption key */
@@ -3290,12 +3273,8 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 				error = EINVAL;
 				break;
 			}
-			sav->key_enc = (struct sadb_key *)key_newbuf(key0, len);
-			if (sav->key_enc == NULL) {
-				ipseclog((LOG_DEBUG, "key_setsaval: No more memory.\n"));
-				error = ENOBUFS;
-				goto fail;
-			}
+			sav->key_enc = key_newbuf(key0, len);
+			sav->key_enc_len = len;
 			break;
 		case SADB_X_SATYPE_IPCOMP:
 			if (len != PFKEY_ALIGN8(sizeof(struct sadb_key)))
@@ -3342,13 +3321,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	sav->created = time_uptime;
 
 	/* make lifetime for CURRENT */
-	KMALLOC(sav->lft_c, struct sadb_lifetime *,
-	    sizeof(struct sadb_lifetime));
-	if (sav->lft_c == NULL) {
-		ipseclog((LOG_DEBUG, "key_setsaval: No more memory.\n"));
-		error = ENOBUFS;
-		goto fail;
-	}
+	sav->lft_c = kmem_alloc(sizeof(struct sadb_lifetime), KM_SLEEP);
 
 	sav->lft_c->sadb_lifetime_len =
 	    PFKEY_UNIT64(sizeof(struct sadb_lifetime));
@@ -3368,14 +3341,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 			error = EINVAL;
 			goto fail;
 		}
-		sav->lft_h = (struct sadb_lifetime *)key_newbuf(lft0,
-		    sizeof(*lft0));
-		if (sav->lft_h == NULL) {
-			ipseclog((LOG_DEBUG, "key_setsaval: No more memory.\n"));
-			error = ENOBUFS;
-			goto fail;
-		}
-		/* to be initialize ? */
+		sav->lft_h = key_newbuf(lft0, sizeof(*lft0));
 	}
 
 	lft0 = (struct sadb_lifetime *)mhp->ext[SADB_EXT_LIFETIME_SOFT];
@@ -3384,13 +3350,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 			error = EINVAL;
 			goto fail;
 		}
-		sav->lft_s = (struct sadb_lifetime *)key_newbuf(lft0,
-		    sizeof(*lft0));
-		if (sav->lft_s == NULL) {
-			ipseclog((LOG_DEBUG, "key_setsaval: No more memory.\n"));
-			error = ENOBUFS;
-			goto fail;
-		}
+		sav->lft_s = key_newbuf(lft0, sizeof(*lft0));
 		/* to be initialize ? */
 	}
     }
@@ -3399,30 +3359,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 
  fail:
 	/* initialization */
-	if (sav->replay != NULL) {
-		KFREE(sav->replay);
-		sav->replay = NULL;
-	}
-	if (sav->key_auth != NULL) {
-		KFREE(sav->key_auth);
-		sav->key_auth = NULL;
-	}
-	if (sav->key_enc != NULL) {
-		KFREE(sav->key_enc);
-		sav->key_enc = NULL;
-	}
-	if (sav->lft_c != NULL) {
-		KFREE(sav->lft_c);
-		sav->lft_c = NULL;
-	}
-	if (sav->lft_h != NULL) {
-		KFREE(sav->lft_h);
-		sav->lft_h = NULL;
-	}
-	if (sav->lft_s != NULL) {
-		KFREE(sav->lft_s);
-		sav->lft_s = NULL;
-	}
+	key_freesaval(sav);
 
 	return error;
 }
@@ -4086,11 +4023,7 @@ key_newbuf(const void *src, u_int len)
 {
 	void *new;
 
-	KMALLOC(new, void *, len);
-	if (new == NULL) {
-		ipseclog((LOG_DEBUG, "key_newbuf: No more memory.\n"));
-		return NULL;
-	}
+	new = kmem_alloc(len, KM_SLEEP);
 	memcpy(new, src, len);
 
 	return new;
@@ -4548,14 +4481,14 @@ key_bbcmp(const void *a1, const void *a2, u_int bits)
  * scanning SPD and SAD to check status for each entries,
  * and do to remove or to expire.
  */
-void
-key_timehandler(void* arg)
+static void
+key_timehandler_work(struct work *wk, void *arg)
 {
 	u_int dir;
 	int s;
 	time_t now = time_uptime;
 
-	s = splsoftnet();	/*called from softclock()*/
+	s = splsoftnet();
 	mutex_enter(softnet_lock);
 
 	/* SPD */
@@ -4737,7 +4670,7 @@ key_timehandler(void* arg)
 		if (now - acq->created > key_blockacq_lifetime
 		 && __LIST_CHAINED(acq)) {
 			LIST_REMOVE(acq, chain);
-			KFREE(acq);
+			kmem_free(acq, sizeof(*acq));
 		}
 	}
     }
@@ -4751,19 +4684,24 @@ key_timehandler(void* arg)
 		if (now - acq->created > key_blockacq_lifetime
 		 && __LIST_CHAINED(acq)) {
 			LIST_REMOVE(acq, chain);
-			KFREE(acq);
+			kmem_free(acq, sizeof(*acq));
 		}
 	}
     }
 
-#ifndef IPSEC_DEBUG2
 	/* do exchange to tick time !! */
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, NULL);
-#endif /* IPSEC_DEBUG2 */
 
 	mutex_exit(softnet_lock);
 	splx(s);
 	return;
+}
+
+static void
+key_timehandler(void *arg)
+{
+
+	workqueue_enqueue(key_timehandler_wq, &key_timehandler_wk, NULL);
 }
 
 u_long
@@ -4887,6 +4825,7 @@ key_getspi(struct socket *so, struct mbuf *m,
 	u_int16_t reqid;
 	int error;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(so != NULL);
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
@@ -5254,6 +5193,7 @@ key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	u_int16_t reqid;
 	int error;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(so != NULL);
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
@@ -5567,10 +5507,25 @@ key_setident(struct secashead *sah, struct mbuf *m,
 	const struct sadb_ident *idsrc, *iddst;
 	int idsrclen, iddstlen;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(sah != NULL);
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
 	KASSERT(mhp->msg != NULL);
+
+	/*
+	 * Can be called with an existing sah from key_update().
+	 */
+	if (sah->idents != NULL) {
+		kmem_free(sah->idents, sah->idents_len);
+		sah->idents = NULL;
+		sah->idents_len = 0;
+	}
+	if (sah->identd != NULL) {
+		kmem_free(sah->identd, sah->identd_len);
+		sah->identd = NULL;
+		sah->identd_len = 0;
+	}
 
 	/* don't make buffer if not there */
 	if (mhp->ext[SADB_EXT_IDENTITY_SRC] == NULL &&
@@ -5609,18 +5564,10 @@ key_setident(struct secashead *sah, struct mbuf *m,
 	}
 
 	/* make structure */
-	KMALLOC(sah->idents, struct sadb_ident *, idsrclen);
-	if (sah->idents == NULL) {
-		ipseclog((LOG_DEBUG, "key_setident: No more memory.\n"));
-		return ENOBUFS;
-	}
-	KMALLOC(sah->identd, struct sadb_ident *, iddstlen);
-	if (sah->identd == NULL) {
-		KFREE(sah->idents);
-		sah->idents = NULL;
-		ipseclog((LOG_DEBUG, "key_setident: No more memory.\n"));
-		return ENOBUFS;
-	}
+	sah->idents = kmem_alloc(idsrclen, KM_SLEEP);
+	sah->idents_len = idsrclen;
+	sah->identd = kmem_alloc(iddstlen, KM_SLEEP);
+	sah->identd_len = iddstlen;
 	memcpy(sah->idents, idsrc, idsrclen);
 	memcpy(sah->identd, iddst, iddstlen);
 
@@ -6417,12 +6364,11 @@ key_newacq(const struct secasindex *saidx)
 	struct secacq *newacq;
 
 	/* get new entry */
-	KMALLOC(newacq, struct secacq *, sizeof(struct secacq));
+	newacq = kmem_intr_zalloc(sizeof(struct secacq), KM_NOSLEEP);
 	if (newacq == NULL) {
 		ipseclog((LOG_DEBUG, "key_newacq: No more memory.\n"));
 		return NULL;
 	}
-	memset(newacq, 0, sizeof(*newacq));
 
 	/* copy secindex */
 	memcpy(&newacq->saidx, saidx, sizeof(newacq->saidx));
@@ -6466,12 +6412,11 @@ key_newspacq(const struct secpolicyindex *spidx)
 	struct secspacq *acq;
 
 	/* get new entry */
-	KMALLOC(acq, struct secspacq *, sizeof(struct secspacq));
+	acq = kmem_intr_zalloc(sizeof(struct secspacq), KM_NOSLEEP);
 	if (acq == NULL) {
 		ipseclog((LOG_DEBUG, "key_newspacq: No more memory.\n"));
 		return NULL;
 	}
-	memset(acq, 0, sizeof(*acq));
 
 	/* copy secindex */
 	memcpy(&acq->spidx, spidx, sizeof(acq->spidx));
@@ -6633,6 +6578,7 @@ key_register(struct socket *so, struct mbuf *m,
 {
 	struct secreg *reg, *newreg = 0;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(so != NULL);
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
@@ -6655,12 +6601,7 @@ key_register(struct socket *so, struct mbuf *m,
 	}
 
 	/* create regnode */
-	KMALLOC(newreg, struct secreg *, sizeof(*newreg));
-	if (newreg == NULL) {
-		ipseclog((LOG_DEBUG, "key_register: No more memory.\n"));
-		return key_senderror(so, m, ENOBUFS);
-	}
-	memset(newreg, 0, sizeof(*newreg));
+	newreg = kmem_zalloc(sizeof(*newreg), KM_SLEEP);
 
 	newreg->so = so;
 	((struct keycb *)sotorawcb(so))->kp_registered++;
@@ -6783,6 +6724,7 @@ key_freereg(struct socket *so)
 	struct secreg *reg;
 	int i;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(so != NULL);
 
 	/*
@@ -6795,7 +6737,7 @@ key_freereg(struct socket *so)
 			if (reg->so == so
 			 && __LIST_CHAINED(reg)) {
 				LIST_REMOVE(reg, chain);
-				KFREE(reg);
+				kmem_free(reg, sizeof(*reg));
 				break;
 			}
 		}
@@ -7698,11 +7640,15 @@ key_validate_ext(const struct sadb_ext *ext, int len)
 static int
 key_do_init(void)
 {
-	int i;
+	int i, error;
 
 	pfkeystat_percpu = percpu_alloc(sizeof(uint64_t) * PFKEY_NSTATS);
 
 	callout_init(&key_timehandler_ch, 0);
+	error = workqueue_create(&key_timehandler_wq, "key_timehandler",
+	    key_timehandler_work, NULL, PRI_SOFTNET, IPL_SOFTNET, WQ_MPSAFE);
+	if (error != 0)
+		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 
 	for (i = 0; i < IPSEC_DIR_MAX; i++) {
 		LIST_INIT(&sptree[i]);
@@ -7728,10 +7674,7 @@ key_do_init(void)
 	ip6_def_policy.refcnt++;	/*never reclaim this*/
 #endif
 
-
-#ifndef IPSEC_DEBUG2
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, NULL);
-#endif /*IPSEC_DEBUG2*/
 
 	/* initialize key statistics */
 	keystat.getspi_count = 1;

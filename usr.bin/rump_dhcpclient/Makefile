@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2016/01/23 21:22:50 christos Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2017/05/19 00:22:59 pgoyette Exp $
 #
 
 PROG=	rump.dhcpclient
 SRCS=	main.c bpf.c common.c configure.c dhcp.c if-bsd.c net.c
-CPPFLAGS+=	-D_KERNTYPES
 
 LDADD+=	-lrumpclient
 

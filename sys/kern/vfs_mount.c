@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.58.2.2 2017/05/11 02:58:40 pgoyette Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.58.2.3 2017/05/19 00:22:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.58.2.2 2017/05/11 02:58:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.58.2.3 2017/05/19 00:22:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -599,7 +599,7 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 		 * First, flush out any vnode references from the
 		 * deferred vrele list.
 		 */
-		vfs_drainvnodes();
+		vrele_flush(mp);
 
 		vfs_vnode_iterator_init(mp, &marker);
 
@@ -875,6 +875,12 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	 */
 	mutex_enter(&syncer_mutex);
 
+	error = vfs_suspend(mp, 0);
+	if (error) {
+		mutex_exit(&syncer_mutex);
+		return error;
+	}
+
 	/*
 	 * Abort unmount attempt when the filesystem is in use
 	 */
@@ -882,6 +888,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	if (mp->mnt_busynest != 0) {
 		mutex_exit(&mp->mnt_unmounting);
 		mutex_exit(&syncer_mutex);
+		vfs_resume(mp);
 		return EBUSY;
 	}
 
@@ -933,6 +940,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 			vfs_syncer_add_to_worklist(mp);
 		mp->mnt_flag |= async;
 		mutex_exit(&mp->mnt_updating);
+		vfs_resume(mp);
 		if (used_syncer)
 			mutex_exit(&syncer_mutex);
 		if (used_extattr) {
@@ -955,6 +963,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	 */
 	mp->mnt_iflag |= IMNT_GONE;
 	mutex_exit(&mp->mnt_unmounting);
+	vfs_resume(mp);
 
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
 		vn_lock(coveredvp, LK_EXCLUSIVE | LK_RETRY);

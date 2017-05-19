@@ -19,11 +19,11 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
-#include "system.h"
 
 #include <string.h>
 #include <map>
 #include <set>
+#include "system.h"
 
 #include "coretypes.h"
 #include "hash-set.h"

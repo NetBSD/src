@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.104 2017/03/20 11:26:07 kre Exp $
+#	$NetBSD: Makefile,v 1.104.2.1 2017/05/19 00:22:50 pgoyette Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -14,8 +14,8 @@ SRCS=	${SHSRCS} ${GENSRCS}
 
 DPSRCS+=${GENHDRS}
 
-LDADD+=	-ll -ledit -lterminfo
-DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMINFO}
+LDADD+=	-ledit -lterminfo
+DPADD+=	${LIBEDIT} ${LIBTERMINFO}
 
 # Environment for scripts executed during build.
 SCRIPT_ENV= \
@@ -28,6 +28,14 @@ CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
 #COPTS+=-g
 #CFLAGS+=-funsigned-char
 #TARGET_CHARFLAG?= -DTARGET_CHAR="unsigned char" -funsigned-char
+
+# Reproducible build parameters ... export into sh for NETBSD_SHELL setting
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+BUILD_DATE!=	date -u -r "${MKREPRO_TIMESTAMP}" "+%Y%m%d%H%M%S"
+# These are (should be) equivalent, but the 2nd is easier to understand
+#CPPFLAGS+= -DBUILD_DATE='"${BUILD_DATE:C/([^0]0?)(00)*$/\1/}Z"'
+CPPFLAGS+= -DBUILD_DATE='"${BUILD_DATE:S/00$//:S/00$//:S/00$//}Z"'
+.endif
 
 .ifdef SMALLPROG
 CPPFLAGS+=-DSMALL

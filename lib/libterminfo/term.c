@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.21.2.1 2017/05/11 02:58:34 pgoyette Exp $ */
+/* $NetBSD: term.c,v 1.21.2.2 2017/05/19 00:22:53 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.21.2.1 2017/05/11 02:58:34 pgoyette Exp $");
+__RCSID("$NetBSD: term.c,v 1.21.2.2 2017/05/19 00:22:53 pgoyette Exp $");
 
 #include <sys/stat.h>
 
@@ -46,8 +46,7 @@ __RCSID("$NetBSD: term.c,v 1.21.2.1 2017/05/11 02:58:34 pgoyette Exp $");
 
 #define _PATH_TERMINFO		"/usr/share/misc/terminfo"
 
-static char database[PATH_MAX];
-static char pathbuf[PATH_MAX];
+static char __ti_database[PATH_MAX];
 const char *_ti_database;
 
 /* Include a generated list of pre-compiled terminfo descriptions. */
@@ -244,63 +243,86 @@ out:
 }
 
 static int
+_ti_checkname(const char *name, const char *termname, const char *termalias)
+{
+	const char *alias, *s;
+	size_t len, l;
+
+	/* Check terminal name matches. */
+	if (strcmp(termname, name) == 0)
+		return 1;
+
+	/* Check terminal aliases match. */
+	if (termalias == NULL)
+		return 0;
+
+	len = strlen(name);
+	alias = termalias;
+	while (*alias != '\0') {
+		s = strchr(alias, '|');
+		if (s == NULL)
+			l = strlen(alias);
+		else
+			l = (size_t)(s - alias);
+		if (len == l && memcmp(alias, name, l) == 0)
+			return 1;
+		if (s == NULL)
+			break;
+		alias = s + 1;
+	}
+
+	/* No match. */
+	return 0;
+}
+
+static int
 _ti_dbgetterm(TERMINAL *term, const char *path, const char *name, int flags)
 {
 	struct cdbr *db;
 	const void *data;
-	char *db_name;
 	const uint8_t *data8;
 	size_t len, klen;
 	int r;
 
-	if (asprintf(&db_name, "%s.cdb", path) < 0)
+	if (snprintf(__ti_database, sizeof(__ti_database), "%s.cdb", path) < 0)
 		return -1;
-
-	db = cdbr_open(db_name, CDBR_DEFAULT);
-	free(db_name);
+	db = cdbr_open(__ti_database, CDBR_DEFAULT);
 	if (db == NULL)
 		return -1;
 
+	r = 0;
 	klen = strlen(name) + 1;
 	if (cdbr_find(db, name, klen, &data, &len) == -1)
-		goto fail;
+		goto out;
 	data8 = data;
 	if (len == 0)
-		goto fail;
-	/* Check for alias first, fall through to processing normal entries. */
-	if (data8[0] == 2) {
-		if (klen + 7 > len || le16dec(data8 + 5) != klen)
-			goto fail;
-		if (memcmp(data8 + 7, name, klen))
-			goto fail;
-		if (cdbr_get(db, le32dec(data8 + 1), &data, &len))
-			goto fail;
-		data8 = data;
-		if (data8[0] != 1)
-			goto fail;
-	} else if (data8[0] != 1)
-		goto fail;
-	else if (klen + 3 >= len || le16dec(data8 + 1) != klen)
-		goto fail;
-	else if (memcmp(data8 + 3, name, klen))
-		goto fail;
+		goto out;
 
-	strlcpy(database, path, sizeof(database));
-	_ti_database = database;
+	/* If the entry is an alias, load the indexed terminfo description. */
+	if (data8[0] == 2) {
+		if (cdbr_get(db, le32dec(data8 + 1), &data, &len))
+			goto out;
+		data8 = data;
+	}
 
 	r = _ti_readterm(term, data, len, flags);
+	/* Ensure that this is the right terminfo description. */
+        if (r == 1)
+                r = _ti_checkname(name, term->name, term->_alias);
+	/* Remember the database we read. */
+        if (r == 1)
+                _ti_database = __ti_database;
+
+out:
 	cdbr_close(db);
 	return r;
-
-fail:
-	cdbr_close(db);
-	return 0;
 }
 
 static int
 _ti_dbgettermp(TERMINAL *term, const char *path, const char *name, int flags)
 {
 	const char *p;
+	char pathbuf[PATH_MAX];
 	size_t l;
 	int r, e;
 
@@ -324,46 +346,14 @@ _ti_dbgettermp(TERMINAL *term, const char *path, const char *name, int flags)
 }
 
 static int
-ticcmp(const TIC *tic, const char *name)
-{
-	char *alias, *s;
-	size_t len, l;
-
-	if (strcmp(tic->name, name) == 0)
-		return 0;
-	if (tic->alias == NULL)
-		return -1;
-
-	len = strlen(name);
-	alias = tic->alias;
-	while (*alias != '\0') {
-		s = strchr(alias, '|');
-		if (s == NULL)
-			l = strlen(alias);
-		else
-			l = (size_t)(s - alias);
-		if (len == l && memcmp(alias, name, l) == 0)
-			return 0;
-		if (s == NULL)
-			break;
-		alias = s + 1;
-	}
-	return 1;
-}
-
-static int
 _ti_findterm(TERMINAL *term, const char *name, int flags)
 {
 	int r;
-	char *c, *e, h[PATH_MAX];
-	TIC *tic;
-	uint8_t *f;
-	ssize_t len;
+	char *c, *e;
 
 	_DIAGASSERT(term != NULL);
 	_DIAGASSERT(name != NULL);
 
-	database[0] = '\0';
 	_ti_database = NULL;
 	r = 0;
 
@@ -384,6 +374,8 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 	}
 
 	if (e != NULL) {
+		TIC *tic;
+
 		if (c == NULL)
 			e = strdup(e); /* So we don't destroy env */
 		if (e == NULL)
@@ -393,7 +385,12 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 			    TIC_ALIAS | TIC_DESCRIPTION | TIC_EXTRA);
 			free(e);
 		}
-		if (tic != NULL && ticcmp(tic, name) == 0) {
+		if (tic != NULL &&
+		    _ti_checkname(name, tic->name, tic->alias) == 1)
+		{
+			uint8_t *f;
+			ssize_t len;
+
 			len = _ti_flatten(&f, tic);
 			if (len != -1) {
 				r = _ti_readterm(term, (char *)f, (size_t)len,
@@ -415,8 +412,10 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 		return _ti_dbgettermp(term, e, name, flags);
 
 	if ((e = getenv("HOME")) != NULL) {
-		snprintf(h, sizeof(h), "%s/.terminfo", e);
-		r = _ti_dbgetterm(term, h, name, flags);
+		char homepath[PATH_MAX];
+
+		if (snprintf(homepath, sizeof(homepath), "%s/.terminfo", e) > 0)
+			r = _ti_dbgetterm(term, homepath, name, flags);
 	}
 	if (r != 1)
 		r = _ti_dbgettermp(term, _PATH_TERMINFO, name, flags);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.199.4.1 2017/05/02 03:19:22 pgoyette Exp $	*/
+/*	$NetBSD: in.c,v 1.199.4.2 2017/05/19 00:22:58 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.199.4.1 2017/05/02 03:19:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.199.4.2 2017/05/19 00:22:58 pgoyette Exp $");
 
 #include "arp.h"
 
@@ -292,24 +292,6 @@ in_socktrim(struct sockaddr_in *ap)
 			(ap)->sin_len = cp - (char *) (ap) + 1;
 			break;
 		}
-}
-
-/*
- *  Routine to take an Internet address and convert into a
- *  "dotted quad" representation for printing.
- *  Caller has to make sure that buf is at least INET_ADDRSTRLEN long.
- */
-const char *
-in_fmtaddr(char *buf, struct in_addr addr)
-{
-	addr.s_addr = ntohl(addr.s_addr);
-
-	snprintf(buf, INET_ADDRSTRLEN, "%d.%d.%d.%d",
-	    (addr.s_addr >> 24) & 0xFF,
-	    (addr.s_addr >> 16) & 0xFF,
-	    (addr.s_addr >>  8) & 0xFF,
-	    (addr.s_addr >>  0) & 0xFF);
-	return buf;
 }
 
 /*
