@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.134 2017/05/19 06:24:03 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.135 2017/05/19 06:32:31 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.134 2017/05/19 06:24:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.135 2017/05/19 06:32:31 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -330,8 +330,6 @@ do { \
 		    (head), (sp));					\
 	}								\
 } while (0)
-
-MALLOC_DEFINE(M_SECA, "key mgmt", "security associations, key management");
 
 /*
  * set parameters into secpolicyindex buffer.
