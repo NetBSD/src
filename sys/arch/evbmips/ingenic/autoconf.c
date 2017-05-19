@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.2 2015/10/08 17:51:15 macallan Exp $ */
+/* $NetBSD: autoconf.c,v 1.3 2017/05/19 07:40:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2015/10/08 17:51:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2017/05/19 07:40:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,7 +46,7 @@ void ingenic_set_enaddr(uint8_t *);
 
 /*
  * Configure all devices on system
- */     
+ */
 void
 cpu_configure(void)
 {
@@ -72,7 +72,7 @@ device_register(device_t dev, void *aux)
 	if (device_is_a(dev, "dme") && have_enaddr) {
 		prop_dictionary_t dict;
 		prop_data_t blob;
-		
+
 		dict = device_properties(dev);
 
 		blob = prop_data_create_data(enaddr, ETHER_ADDR_LEN);

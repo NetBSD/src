@@ -1,4 +1,4 @@
-/*	$NetBSD: jziic.c,v 1.3 2015/12/14 23:21:23 macallan Exp $ */
+/*	$NetBSD: jziic.c,v 1.4 2017/05/19 07:43:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,12 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jziic.c,v 1.3 2015/12/14 23:21:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jziic.c,v 1.4 2017/05/19 07:43:31 skrll Exp $");
 
 /*
  * a preliminary driver for JZ4780's on-chip SMBus controllers
  * - needs more error handling and interrupt support
- * - transfers can't be more than the chip's FIFO, supposedly 16 bytes per 
+ * - transfers can't be more than the chip's FIFO, supposedly 16 bytes per
  *   direction
  * so, good enough for RTCs but not much else yet
  */
@@ -259,7 +259,7 @@ jziic_wait(struct jziic_softc *sc)
 		delay(100);
 		reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, JZ_SMBST);
 		bail--;
-	}  
+	}
 	return ((reg & JZ_MSTACT) == 0);
 }
 
@@ -396,7 +396,7 @@ jziic_i2c_exec_poll(struct jziic_softc *sc, i2c_op_t op, i2c_addr_t addr,
 				  JZ_SMBST) & JZ_RFNE) == 0) && (bail > 0)) {
 				bail--;
 				delay(100);
-			} 
+			}
 			if (bail == 0) {
 				ret = -1;
 				goto bork;
@@ -536,7 +536,7 @@ jziic_i2c_exec_intr(struct jziic_softc *sc, i2c_op_t op, i2c_addr_t addr,
 
 		bail = 10 * sc->sc_buflen; /* 10 ticks per byte should be ok */
 		while ((sc->sc_bufptr < sc->sc_buflen) && (bail > 0)) {
-			cv_timedwait(&sc->sc_ping, &sc->sc_cvlock, 1); 
+			cv_timedwait(&sc->sc_ping, &sc->sc_cvlock, 1);
 			if (sc->sc_abort) {
 				/* we received an abort interrupt -> bailout */
 		  	  	DPRINTF("rx abort: %x\n", sc->sc_abort);
@@ -589,10 +589,10 @@ jziic_intr(void *cookie)
 				    JZ_SMBINTM,
 				    JZ_TXABT | JZ_RXFL);
 			}
-		} else {		
+		} else {
 			rstat = bus_space_read_4(sc->sc_memt, sc->sc_memh,
 			    JZ_SMBST);
-			while ((rstat & JZ_TFNF) && 
+			while ((rstat & JZ_TFNF) &&
 			         (sc->sc_cmdptr < sc->sc_cmdlen)) {
 				data = *sc->sc_cmd;
 				sc->sc_cmd++;
@@ -608,7 +608,7 @@ jziic_intr(void *cookie)
 				bus_space_write_4(sc->sc_memt, sc->sc_memh,
 				    JZ_SMBINTM, JZ_TXABT);
 			}
-		}			
+		}
 	}
 	if (stat & JZ_RXFL) {
 		rstat = bus_space_read_4(sc->sc_memt, sc->sc_memh, JZ_SMBST);
