@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.16 2017/05/17 06:30:15 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.17 2017/05/19 02:56:58 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -185,15 +185,30 @@ _rump_server_socks=./.__socks
 _rump_server_ifaces=./.__ifaces
 _rump_server_buses=./.__buses
 
+DEBUG_SYSCTL_ENTRIES="net.inet.arp.debug net.inet6.icmp6.nd6_debug \
+    net.inet.ipsec.debug"
+
 _rump_server_start_common()
 {
 	local sock=$1
 	local libs=
+	local backup=$RUMP_SERVER
 
 	shift 1
 	libs="$*"
 
 	atf_check -s exit:0 rump_server $libs $sock
+
+	if $DEBUG; then
+		# Enable debugging features in the kernel
+		export RUMP_SERVER=$sock
+		for ent in $DEBUG_SYSCTL_ENTRIES; do
+			if rump.sysctl -q $ent; then
+				atf_check -s exit:0 rump.sysctl -q -w $ent=1
+			fi
+		done
+		export RUMP_SERVER=$backup
+	fi
 
 	echo $sock >> $_rump_server_socks
 	$DEBUG && cat $_rump_server_socks
