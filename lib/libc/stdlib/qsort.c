@@ -1,5 +1,4 @@
-/*	$NetBSD: qsort.c,v 1.22 2012/05/26 21:47:05 christos Exp $	*/
-
+/*	$NetBSD: qsort.c,v 1.23 2017/05/19 19:48:19 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)qsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qsort.c,v 1.22 2012/05/26 21:47:05 christos Exp $");
+__RCSID("$NetBSD: qsort.c,v 1.23 2017/05/19 19:48:19 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -102,7 +101,7 @@ qsort(void *a, size_t n, size_t es,
     int (*cmp)(const void *, const void *))
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
-	size_t d, r;
+	size_t d, r, s;
 	int swaptype, cmp_result;
 
 	_DIAGASSERT(a != NULL || n == 0 || es == 0);
@@ -159,13 +158,28 @@ loop:	SWAPINIT(a, es);
 	vecswap(a, pb - r, r);
 	r = min((size_t)(pd - pc), pn - pd - es);
 	vecswap(pb, pn - r, r);
-	if ((r = pb - pa) > es)
-		qsort(a, r / es, es, cmp);
-	if ((r = pd - pc) > es) { 
-		/* Iterate rather than recurse to save stack space */
-		a = pn - r;
-		n = r / es;
-		goto loop;
+	/*
+	 * To save stack space we sort the smaller side of the partition first
+	 * using recursion and eliminate tail recursion for the larger side.
+	 */
+	r = pb - pa;
+	s = pd - pc;
+	if (r < s) {
+		/* Recurse for 1st side, iterate for 2nd side. */
+		if (s > es) {
+			if (r > es)
+				qsort(a, r / es, es, cmp);
+			a = pn - s;
+			n = s / es;
+			goto loop;
+		}
+	} else {
+		/* Recurse for 2nd side, iterate for 1st side. */
+		if (r > es) {
+			if (s > es)
+				qsort(pn - s, s / es, es, cmp);
+			n = r / es;
+			goto loop;
+		}
 	}
-/*		qsort(pn - r, r / es, es, cmp);*/
 }
