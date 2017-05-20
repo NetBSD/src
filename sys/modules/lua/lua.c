@@ -1,8 +1,8 @@
-/*	$NetBSD: lua.c,v 1.21 2017/05/11 07:34:27 mbalmer Exp $ */
+/*	$NetBSD: lua.c,v 1.22 2017/05/20 08:31:13 mbalmer Exp $ */
 
 /*
+ * Copyright (c) 2011 - 2017 by Marc Balmer <mbalmer@NetBSD.org>.
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
- * Copyright (c) 2011 - 2014 by Marc Balmer <mbalmer@NetBSD.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -514,6 +514,10 @@ lua_require(lua_State *L)
 	if (md != NULL)
 		LIST_FOREACH(s, &lua_states, lua_next)
 			if (s->K->L == L) {
+				LIST_FOREACH(m, &s->lua_modules, mod_next)
+					if (m == md)
+						return 1;
+
 				if (lua_verbose)
 					device_printf(sc_self,
 					    "require module %s\n",
