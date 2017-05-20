@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.743 2017/05/15 09:58:22 ozaki-r Exp $
+# $NetBSD: mi,v 1.744 2017/05/20 16:35:55 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1278,6 +1278,7 @@
 ./usr/tests/bin/sh/t_redircloexec		tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_set_e			tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_shift			tests-bin-tests		compattestfile,atf
+./usr/tests/bin/sh/t_syntax			tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_ulimit			tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_varquote			tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_varval			tests-bin-tests		compattestfile,atf
