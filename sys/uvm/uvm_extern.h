@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.205 2017/05/17 22:43:12 christos Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.206 2017/05/20 07:27:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -121,16 +121,17 @@
 #define UVM_ADV_MASK	0x7	/* mask */
 
 /* bits 0xffff0000: mapping flags */
-#define UVM_FLAG_FIXED   0x010000 /* find space */
-#define UVM_FLAG_OVERLAY 0x020000 /* establish overlay */
-#define UVM_FLAG_NOMERGE 0x040000 /* don't merge map entries */
-#define UVM_FLAG_COPYONW 0x080000 /* set copy_on_write flag */
-#define UVM_FLAG_AMAPPAD 0x100000 /* for bss: pad amap to reduce allocations */
-#define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
-#define UVM_FLAG_NOWAIT  0x400000 /* not allowed to sleep */
-#define UVM_FLAG_WAITVA  0x800000 /* wait for va */
-#define UVM_FLAG_VAONLY  0x2000000 /* unmap: no pages are mapped */
-#define UVM_FLAG_COLORMATCH 0x4000000 /* match color given in off */
+#define UVM_FLAG_FIXED		0x00010000 /* find space */
+#define UVM_FLAG_OVERLAY	0x00020000 /* establish overlay */
+#define UVM_FLAG_NOMERGE	0x00040000 /* don't merge map entries */
+#define UVM_FLAG_COPYONW	0x00080000 /* set copy_on_write flag */
+#define UVM_FLAG_AMAPPAD	0x00100000 /* for bss: pad amap */
+#define UVM_FLAG_TRYLOCK	0x00200000 /* fail if we can not lock map */
+#define UVM_FLAG_NOWAIT		0x00400000 /* not allowed to sleep */
+#define UVM_FLAG_WAITVA		0x00800000 /* wait for va */
+#define UVM_FLAG_VAONLY		0x02000000 /* unmap: no pages are mapped */
+#define UVM_FLAG_COLORMATCH	0x04000000 /* match color given in off */
+#define UVM_FLAG_UNMAP		0x08000000 /* unmap existing entries */
 
 #define UVM_FLAG_BITS "\177\020\
 F\0\3\
@@ -172,7 +173,9 @@ b\25TRYLOCK\0\
 b\26NOWAIT\0\
 b\27WAITVA\0\
 b\30VAONLY\0\
-b\31COLORMATCH\0"
+b\31COLORMATCH\0\
+b\32UNMAP\0\
+"
 
 /* macros to extract info */
 #define UVM_PROTECTION(X)	((X) & UVM_PROT_MASK)
