@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.h,v 1.9 2017/04/26 13:17:33 mbalmer Exp $	*/
+/*	$NetBSD: lua.h,v 1.10 2017/05/20 10:12:29 mbalmer Exp $	*/
 
 /*
 ** Id: lua.h,v 1.332 2016/12/22 15:51:20 roberto Exp 
@@ -23,21 +23,11 @@
 #define LUA_VERSION_MAJOR	"5"
 #define LUA_VERSION_MINOR	"3"
 #define LUA_VERSION_NUM		503
-#ifndef _KERNEL
 #define LUA_VERSION_RELEASE	"4"
-#else /* _KERNEL */
-#define LUA_VERSION_RELEASE	"4 (kernel)"
-#endif /* _KERNEL */
 
 #define LUA_VERSION	"Lua " LUA_VERSION_MAJOR "." LUA_VERSION_MINOR
 #define LUA_RELEASE	LUA_VERSION "." LUA_VERSION_RELEASE
-#ifndef _KERNEL
 #define LUA_COPYRIGHT	LUA_RELEASE "  Copyright (C) 1994-2017 Lua.org, PUC-Rio"
-#else /* _KERNEL */
-#define LUA_COPYRIGHT	LUA_RELEASE \
-	"  Copyright (c) 2016-2016, Lourival Vieira Neto <lneto@NetBSD.org>." \
-	"  Copyright (C) 1994-2017 Lua.org, PUC-Rio"
-#endif /* _KERNEL */
 #define LUA_AUTHORS	"R. Ierusalimschy, L. H. de Figueiredo, W. Celes"
 
 
