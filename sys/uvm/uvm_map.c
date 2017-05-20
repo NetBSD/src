@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.348 2017/05/19 16:56:35 kamil Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.349 2017/05/20 07:27:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.348 2017/05/19 16:56:35 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.349 2017/05/20 07:27:15 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1163,7 +1163,8 @@ retry:
 		}
 		vm_map_lock(map); /* could sleep here */
 	}
-	if (flags & UVM_FLAG_FIXED) {
+	if (flags & UVM_FLAG_UNMAP) {
+		KASSERT(flags & UVM_FLAG_FIXED);
 		KASSERT((flags & UVM_FLAG_NOWAIT) == 0);
 
 		/*
@@ -1301,8 +1302,8 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 
 	KASSERT(map->hint == prev_entry); /* bimerge case assumes this */
 	KASSERT(vm_map_locked_p(map));
-	KASSERT((flags & (UVM_FLAG_NOWAIT | UVM_FLAG_FIXED)) !=
-		(UVM_FLAG_NOWAIT | UVM_FLAG_FIXED));
+	KASSERT((flags & (UVM_FLAG_NOWAIT | UVM_FLAG_UNMAP)) !=
+		(UVM_FLAG_NOWAIT | UVM_FLAG_UNMAP));
 
 	if (uobj)
 		newetype = UVM_ET_OBJ;
@@ -1316,12 +1317,13 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 	}
 
 	/*
-	 * For fixed mappings, remove any old entries now.  Adding the new
+	 * For mappings with unmap, remove any old entries now.  Adding the new
 	 * entry cannot fail because that can only happen if UVM_FLAG_NOWAIT
-	 * is set, and we do not support nowait and fixed together.
+	 * is set, and we do not support nowait and unmap together.
 	 */
 
-	if (flags & UVM_FLAG_FIXED) {
+	if (flags & UVM_FLAG_UNMAP) {
+		KASSERT(flags & UVM_FLAG_FIXED);
 		uvm_unmap_remove(map, start, start + size, &dead_entries, 0);
 #ifdef DEBUG
 		struct vm_map_entry *tmp_entry;
