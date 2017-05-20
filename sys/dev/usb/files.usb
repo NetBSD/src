@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.143 2017/04/17 08:59:37 riastradh Exp $
+#	$NetBSD: files.usb,v 1.144 2017/05/20 00:56:32 pgoyette Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -103,8 +103,7 @@ file	dev/usb/usb_quirks.c		usb
 define	usb_dma: usb
 file	dev/usb/usb_mem.c		usb_dma			needs-flag
 
-define	usbverbose: usb
-file	dev/usb/usb_verbose.c		usbverbose
+file	dev/usb/usb_verbose.c		usbverbose & usb
 
 # Hub driver
 device	uhub: usbdevif, usbifif
