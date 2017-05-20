@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.22 2017/05/20 08:31:13 mbalmer Exp $ */
+/*	$NetBSD: lua.c,v 1.23 2017/05/20 09:46:17 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2011 - 2017 by Marc Balmer <mbalmer@NetBSD.org>.
@@ -514,15 +514,15 @@ lua_require(lua_State *L)
 	if (md != NULL)
 		LIST_FOREACH(s, &lua_states, lua_next)
 			if (s->K->L == L) {
-				LIST_FOREACH(m, &s->lua_modules, mod_next)
-					if (m == md)
-						return 1;
-
 				if (lua_verbose)
 					device_printf(sc_self,
 					    "require module %s\n",
 					    md->mod_name);
 				luaL_requiref(L, md->mod_name, md->open, 0);
+
+				LIST_FOREACH(m, &s->lua_modules, mod_next)
+					if (m == md)
+						return 1;
 
 				md->refcount++;
 				LIST_INSERT_HEAD(&s->lua_modules, md, mod_next);
