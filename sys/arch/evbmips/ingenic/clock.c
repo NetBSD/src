@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2017/05/19 07:40:58 skrll Exp $ */
+/*	$NetBSD: clock.c,v 1.10 2017/05/21 06:49:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2017/05/19 07:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2017/05/21 06:49:12 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2017/05/19 07:40:58 skrll Exp $");
 #include <sys/systm.h>
 #include <sys/timetc.h>
 
+#include <mips/ingenic/ingenic_var.h>
 #include <mips/ingenic/ingenic_regs.h>
 
 #include "opt_ingenic.h"
@@ -236,7 +237,7 @@ ingenic_clockintr(struct clockframe *cf)
 	 * XXX
 	 * needs to take the IPI lock and ping all online CPUs, not just core 1
 	 */
-	MTC0(1 << IPI_CLOCK, 20, 1);
+	mips_cp0_corembox_write(1, 1 << IPI_CLOCK);
 #endif
 	hardclock(cf);
 	splx(s);

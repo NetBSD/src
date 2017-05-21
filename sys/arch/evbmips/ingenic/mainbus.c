@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2017/05/19 07:40:58 skrll Exp $ */
+/*	$NetBSD: mainbus.c,v 1.7 2017/05/21 06:49:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2017/05/19 07:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2017/05/21 06:49:12 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -95,11 +95,11 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	printf("TMR: %08x\n", readreg(JZ_TC_TMR));
 
 	/* send ourselves an IPI */
-	MTC0(0x12345678, CP0_CORE_MBOX, 0);
+	mips_cp0_corembox_write(0x12345678, 0);
 	delay(1000);
 
 	/* send the other core an IPI */
-	MTC0(0x12345678, CP0_CORE_MBOX, 1);
+	mips_cp0_corembox_write(0x12345678, 1);
 	delay(1000);
 #endif
 }
