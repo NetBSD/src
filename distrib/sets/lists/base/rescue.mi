@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.39 2016/08/04 03:50:55 pgoyette Exp $
+# $NetBSD: rescue.mi,v 1.40 2017/05/21 15:28:37 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -130,15 +130,15 @@
 ./rescue/rtsol					base-obsolete		obsolete
 ./rescue/savecore				base-rescue-root
 ./rescue/scan_ffs				base-rescue-root
-./rescue/scp					base-rescue-root	crypto
+./rescue/scp					base-rescue-root
 ./rescue/scsictl				base-rescue-root
 ./rescue/setkey					base-rescue-root
 ./rescue/sh					base-rescue-root
 ./rescue/shutdown				base-rescue-root
 ./rescue/slattach				base-rescue-root
 ./rescue/sleep					base-rescue-root
-./rescue/slogin					base-rescue-root	crypto
-./rescue/ssh					base-rescue-root	crypto
+./rescue/slogin					base-rescue-root
+./rescue/ssh					base-rescue-root
 ./rescue/stty					base-rescue-root
 ./rescue/swapctl				base-rescue-root
 ./rescue/swapon					base-rescue-root

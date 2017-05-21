@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/06/30 03:05:45 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2017/05/21 15:28:40 riastradh Exp $
 
 NOMAN=	# defined
 
@@ -18,13 +18,8 @@ SRCS=	smtpd.c smtpd_token.c smtpd_check.c smtpd_chat.c smtpd_state.c \
 DPADD+= ${LIBPMASTER} ${LIBPMILTER} ${LIBPGLOBAL} ${LIBPDNS} ${LIBPXSASL}
 LDADD+= ${LIBPMASTER} ${LIBPMILTER} ${LIBPGLOBAL} ${LIBPDNS} ${LIBPXSASL}
 
-.if ${MKCRYPTO} != "no"
 DPADD+=	${LIBPTLS} ${LIBSSL} ${LIBCRYPTO}
 LDADD+=	${LIBPTLS} -lssl -lcrypto
-.else
-.PATH:	${TOP}/src/tls
-SRCS+=	tls_level.c
-.endif
 
 DPADD+=	${LIBPUTIL}
 LDADD+=	${LIBPUTIL}

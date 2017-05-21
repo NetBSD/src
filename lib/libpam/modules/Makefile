@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2011/03/08 09:49:42 mlelstv Exp $
+# $NetBSD: Makefile,v 1.13 2017/05/21 15:28:41 riastradh Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -39,8 +39,6 @@ SUBDIR+= pam_skey
 SUBDIR+= pam_afslog pam_krb5 pam_ksu
 .endif
 
-.if (${MKCRYPTO} != "no")
 SUBDIR+= pam_ssh
-.endif
 
 .include <bsd.subdir.mk>

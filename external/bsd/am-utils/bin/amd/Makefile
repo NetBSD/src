@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2015/01/25 14:56:22 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2017/05/21 15:28:38 riastradh Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -33,10 +33,8 @@ DPADD+=	${LIBLDAP}
 .if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != ""))
 LDADD+=	-llber
 DPADD+=	${LIBLBER}
-.if ${MKCRYPTO} != "no" 
 DPADD+=	${LIBSSL} ${LIBCRYPTO}
 LDADD+=	-lssl -lcrypto
-.endif
 .endif
 .endif
 

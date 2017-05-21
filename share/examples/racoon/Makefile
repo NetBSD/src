@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/12/10 05:52:10 manu Exp $
+#	$NetBSD: Makefile,v 1.4 2017/05/21 15:28:41 riastradh Exp $
 
 NOOBJ=	# defined
 
@@ -6,7 +6,7 @@ NOOBJ=	# defined
 
 SUBDIR= roadwarrior
 
-.if ${MKSHARE} != "no" && ${MKCRYPTO} != "no"
+.if ${MKSHARE} != "no"
 FILES=	psk.txt.sample racoon.conf.sample 			\
 	racoon.conf.sample-gssapi racoon.conf.sample-inherit	\
 	racoon.conf.sample-natt	racoon.conf.sample-plainrsa	\

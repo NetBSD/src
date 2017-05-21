@@ -21,17 +21,7 @@ WARNS=	4
 INCS=	bozohttpd.h
 INCSDIR=	/usr/include
 
-.include <bsd.own.mk>
-
-.if ${MKCRYPTO} != "no"
-
 LDADD+=	-lssl -lcrypto
 DPADD+=	${LIBSSL} ${LIBCRYPTO}
-
-.else
-
-COPTS+=	-DNO_SSL_SUPPORT
-
-.endif
 
 .include <bsd.lib.mk>

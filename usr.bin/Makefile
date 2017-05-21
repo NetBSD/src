@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.228 2017/04/10 16:38:19 christos Exp $
+#	$NetBSD: Makefile,v 1.229 2017/05/21 15:28:42 riastradh Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -73,9 +73,7 @@ SUBDIR+= skey skeyinfo skeyinit
 SUBDIR+= ypcat ypmatch ypwhich
 .endif
 
-.if (${MKCRYPTO} != "no")
 SUBDIR+= bdes
 SUBDIR+= nbsvtool
-.endif
 
 .include <bsd.subdir.mk>

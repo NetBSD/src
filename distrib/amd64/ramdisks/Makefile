@@ -1,11 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2016/06/30 12:56:27 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.4 2017/05/21 15:28:37 riastradh Exp $
 
 SUBDIR=
 SUBDIR+=	ramdisk
-
-.if ${MKCRYPTO:Uyes} != "no"
 SUBDIR+=	ramdisk-cgdroot
-.endif
 
 TARGETS+=	release
 

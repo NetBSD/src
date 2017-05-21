@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2014/01/30 22:19:00 matt Exp $
+#	$NetBSD: Makefile,v 1.32 2017/05/21 15:28:41 riastradh Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -37,10 +37,8 @@ LISTS+=		${.CURDIR}/list.${f}
 LISTS+=		${.CURDIR}/list.inet6
 .endif
 
-.if ${MKCRYPTO} != "no"
 LISTS+=		${.CURDIR}/list.crypto
 CRUNCHENV+=	MKKERBEROS=no		# for ssh
-.endif
 
 LISTS+=		${.CURDIR}/list.ldd
 LDD_ELF32DIR!=	cd ${NETBSDSRCDIR}/usr.bin/ldd/elf32 && ${PRINTOBJDIR}

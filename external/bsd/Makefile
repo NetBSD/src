@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57 2017/04/10 02:59:35 phil Exp $
+#	$NetBSD: Makefile,v 1.58 2017/05/21 15:28:38 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -10,9 +10,7 @@ SUBDIR=	acpica am-utils bc bind byacc cron dhcpcd ekermit elftosb \
 .if (${MKATF} != "no")
 SUBDIR+= atf
 .endif
-.if (${MKCRYPTO} != "no")
 SUBDIR+= pkg_install
-.endif
 # IP Filter
 .if (${MKIPFILTER} != "no")
 SUBDIR+=ipf
@@ -42,7 +40,7 @@ SUBDIR+= pcc
 SUBDIR+= libproc
 SUBDIR+= librtld_db
 .endif
-.if (${MKCRYPTO} != "no" && ${MKUNBOUND} != "no")
+.if ${MKUNBOUND} != "no"
 SUBDIR+= unbound
 .endif
 

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1156 2017/03/14 23:59:24 nonaka Exp $
+# $NetBSD: mi,v 1.1157 2017/05/21 15:28:37 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -573,7 +573,7 @@
 ./sbin/routed					base-router-root
 ./sbin/rrestore					base-netutil-root
 ./sbin/rtsol					base-obsolete		obsolete
-./sbin/rump.cgdconfig				base-sysutil-root	crypto,rump
+./sbin/rump.cgdconfig				base-sysutil-root	rump
 ./sbin/rump.ifconfig				base-netutil-root	rump
 ./sbin/rump.modload				base-sysutil-root	rump
 ./sbin/rump.modstat				base-sysutil-root	rump
@@ -637,7 +637,7 @@
 ./usr/bin/basename				base-util-bin
 ./usr/bin/batch					base-cron-bin
 ./usr/bin/bc					base-util-bin
-./usr/bin/bdes					base-crypto-bin		crypto
+./usr/bin/bdes					base-crypto-bin
 ./usr/bin/biff					base-mail-bin
 ./usr/bin/bthset				base-util-bin
 ./usr/bin/btkey					base-util-bin
@@ -820,12 +820,12 @@
 ./usr/bin/more					base-util-bin
 ./usr/bin/mset					base-obsolete		obsolete
 ./usr/bin/msgs					base-util-bin
-./usr/bin/nbsvtool				base-crypto-bin		crypto
+./usr/bin/nbsvtool				base-crypto-bin
 ./usr/bin/nc					base-netutil-bin
 ./usr/bin/netgroup				base-nis-bin
-./usr/bin/netpgp				base-crypto-bin		crypto
-./usr/bin/netpgpkeys				base-crypto-bin		crypto
-./usr/bin/netpgpverify				base-crypto-bin		crypto
+./usr/bin/netpgp				base-crypto-bin
+./usr/bin/netpgpkeys				base-crypto-bin
+./usr/bin/netpgpverify				base-crypto-bin
 ./usr/bin/netstat				base-netutil-bin
 ./usr/bin/newaliases				base-mailwrapper-bin
 ./usr/bin/newgrp				base-util-bin
@@ -841,7 +841,7 @@
 ./usr/bin/nview					base-obsolete		obsolete
 ./usr/bin/od					base-util-bin
 ./usr/bin/openpgp				base-obsolete		obsolete
-./usr/bin/openssl				base-crypto-bin		crypto
+./usr/bin/openssl				base-crypto-bin
 ./usr/bin/page					base-util-bin
 ./usr/bin/pagesize				base-util-bin
 ./usr/bin/passwd				base-util-bin
@@ -863,8 +863,8 @@
 ./usr/bin/purgestat				base-mailwrapper-bin
 ./usr/bin/pwait					base-util-bin
 ./usr/bin/pwhash				base-util-bin
-./usr/bin/qsafe					base-util-bin		crypto
-./usr/bin/qsieve				base-util-bin		crypto
+./usr/bin/qsafe					base-util-bin
+./usr/bin/qsieve				base-util-bin
 ./usr/bin/qsubst				base-util-bin
 ./usr/bin/quota					base-util-bin
 ./usr/bin/radioctl				base-audio-bin
@@ -900,7 +900,7 @@
 ./usr/bin/rusers				base-netutil-bin
 ./usr/bin/rwall					base-netutil-bin
 ./usr/bin/rwho					base-netutil-bin
-./usr/bin/scp					base-secsh-bin		crypto
+./usr/bin/scp					base-secsh-bin
 ./usr/bin/script				base-util-bin
 ./usr/bin/sdiff					base-util-bin
 ./usr/bin/sdpquery				base-util-bin
@@ -908,7 +908,7 @@
 ./usr/bin/send-pr				base-gnats-bin
 ./usr/bin/seq					base-util-bin
 ./usr/bin/setextattr				base-util-bin
-./usr/bin/sftp					base-secsh-bin		crypto
+./usr/bin/sftp					base-secsh-bin
 ./usr/bin/sha1					base-util-bin
 ./usr/bin/shar					base-util-bin
 ./usr/bin/shlock				base-util-bin
@@ -919,18 +919,18 @@
 ./usr/bin/skeyaudit				base-util-bin		skey
 ./usr/bin/skeyinfo				base-util-bin		skey
 ./usr/bin/skeyinit				base-util-bin		skey
-./usr/bin/slogin				base-secsh-bin		crypto
+./usr/bin/slogin				base-secsh-bin
 ./usr/bin/smbutil				base-util-bin
 ./usr/bin/sockstat				base-util-bin
 ./usr/bin/sort					base-util-bin
 ./usr/bin/spell					base-util-bin
 ./usr/bin/split					base-util-bin
 ./usr/bin/sqlite3				base-util-bin
-./usr/bin/ssh					base-secsh-bin		crypto
-./usr/bin/ssh-add				base-secsh-bin		crypto
-./usr/bin/ssh-agent				base-secsh-bin		crypto
-./usr/bin/ssh-keygen				base-secsh-bin		crypto
-./usr/bin/ssh-keyscan				base-secsh-bin		crypto
+./usr/bin/ssh					base-secsh-bin
+./usr/bin/ssh-add				base-secsh-bin
+./usr/bin/ssh-agent				base-secsh-bin
+./usr/bin/ssh-keygen				base-secsh-bin
+./usr/bin/ssh-keyscan				base-secsh-bin
 ./usr/bin/stat					base-util-bin
 ./usr/bin/string2key				base-krb5-bin		kerberos
 ./usr/bin/su					base-util-bin
@@ -965,7 +965,7 @@
 ./usr/bin/tty					base-util-bin
 ./usr/bin/ul					base-util-bin
 ./usr/bin/uname					base-util-bin
-./usr/bin/unbound-host				base-netutil-bin	crypto,unbound
+./usr/bin/unbound-host				base-netutil-bin	unbound
 ./usr/bin/uncompress				base-util-bin
 ./usr/bin/unexpand				base-util-bin
 ./usr/bin/uniq					base-util-bin
@@ -1508,7 +1508,7 @@
 ./usr/libexec/postfix/postfix-script		base-postfix-bin	postfix
 ./usr/libexec/postfix/postfix-wrapper		base-postfix-bin	postfix
 ./usr/libexec/postfix/postmulti-script		base-postfix-bin	postfix
-./usr/libexec/postfix/postscreen		base-postfix-bin	postfix,crypto
+./usr/libexec/postfix/postscreen		base-postfix-bin	postfix
 ./usr/libexec/postfix/proxymap			base-postfix-bin	postfix
 ./usr/libexec/postfix/qmgr			base-postfix-bin	postfix
 ./usr/libexec/postfix/qmqpd			base-obsolete		obsolete
@@ -1518,8 +1518,8 @@
 ./usr/libexec/postfix/smtp			base-postfix-bin	postfix
 ./usr/libexec/postfix/smtpd			base-postfix-bin	postfix
 ./usr/libexec/postfix/spawn			base-postfix-bin	postfix
-./usr/libexec/postfix/tlsmgr			base-postfix-bin	postfix,crypto
-./usr/libexec/postfix/tlsproxy			base-postfix-bin	postfix,crypto
+./usr/libexec/postfix/tlsmgr			base-postfix-bin	postfix
+./usr/libexec/postfix/tlsproxy			base-postfix-bin	postfix
 ./usr/libexec/postfix/trivial-rewrite		base-postfix-bin	postfix
 ./usr/libexec/postfix/verify			base-postfix-bin	postfix
 ./usr/libexec/postfix/virtual			base-postfix-bin	postfix
@@ -1534,15 +1534,15 @@
 ./usr/libexec/rshd				base-netutil-bin
 ./usr/libexec/sendmail				base-obsolete		obsolete
 ./usr/libexec/sendmail/sendmail			base-obsolete		obsolete
-./usr/libexec/sftp-server			base-secsh-bin		crypto
+./usr/libexec/sftp-server			base-secsh-bin
 ./usr/libexec/sm.bin				base-obsolete		obsolete
 ./usr/libexec/smrsh				base-obsolete		obsolete
 ./usr/libexec/spamd				base-obsolete		obsolete
 ./usr/libexec/spamd-setup			base-obsolete		obsolete
 ./usr/libexec/spamlogd				base-obsolete		obsolete
 ./usr/libexec/spellprog				base-util-bin
-./usr/libexec/ssh-keysign			base-secsh-bin		crypto
-./usr/libexec/ssh-pkcs11-helper			base-secsh-bin		crypto
+./usr/libexec/ssh-keysign			base-secsh-bin
+./usr/libexec/ssh-pkcs11-helper			base-secsh-bin
 ./usr/libexec/telnetd				base-netutil-bin
 ./usr/libexec/tftp-proxy			base-pf-bin		pf
 ./usr/libexec/tftpd				base-netutil-bin
@@ -1597,7 +1597,7 @@
 ./usr/sbin/amd					base-amd-bin
 ./usr/sbin/amq					base-amd-bin
 ./usr/sbin/arp					base-netutil-bin
-./usr/sbin/audit-packages			base-pkgutil-bin	crypto
+./usr/sbin/audit-packages			base-pkgutil-bin
 ./usr/sbin/authpf				base-pf-bin		pf
 ./usr/sbin/bootpd				base-bootserver-bin
 ./usr/sbin/bootpef				base-bootserver-bin
@@ -1640,7 +1640,7 @@
 ./usr/sbin/dnssec-signkey			base-obsolete		obsolete
 ./usr/sbin/dnssec-signzone			base-bind-bin
 ./usr/sbin/dnssec-verify			base-bind-bin
-./usr/sbin/download-vulnerability-list		base-pkgutil-bin	crypto
+./usr/sbin/download-vulnerability-list		base-pkgutil-bin
 ./usr/sbin/dtmfdecode				base-isdn-bin
 ./usr/sbin/dtrace				base-debug-bin		dtrace
 ./usr/sbin/dumpfs				base-sysutil-bin
@@ -1808,11 +1808,11 @@
 ./usr/sbin/pim6dd				base-obsolete		obsolete
 ./usr/sbin/pim6sd				base-obsolete		obsolete
 ./usr/sbin/pim6stat				base-obsolete		obsolete
-./usr/sbin/pkg_add				base-pkgutil-bin	crypto
-./usr/sbin/pkg_admin				base-pkgutil-bin	crypto
-./usr/sbin/pkg_create				base-pkgutil-bin	crypto
-./usr/sbin/pkg_delete				base-pkgutil-bin	crypto
-./usr/sbin/pkg_info				base-pkgutil-bin	crypto
+./usr/sbin/pkg_add				base-pkgutil-bin
+./usr/sbin/pkg_admin				base-pkgutil-bin
+./usr/sbin/pkg_create				base-pkgutil-bin
+./usr/sbin/pkg_delete				base-pkgutil-bin
+./usr/sbin/pkg_info				base-pkgutil-bin
 ./usr/sbin/pkg_view				base-obsolete		obsolete
 ./usr/sbin/portmap				base-obsolete		obsolete
 ./usr/sbin/postalias				base-postfix-bin	postfix
@@ -1847,8 +1847,8 @@
 ./usr/sbin/quotaoff				base-sysutil-bin
 ./usr/sbin/quotaon				base-sysutil-bin
 ./usr/sbin/quotarestore				base-sysutil-bin
-./usr/sbin/racoon				base-netutil-bin	crypto
-./usr/sbin/racoonctl				base-netutil-bin	crypto
+./usr/sbin/racoon				base-netutil-bin
+./usr/sbin/racoonctl				base-netutil-bin
 ./usr/sbin/rarpd				base-bootserver-bin
 ./usr/sbin/rbootd				base-bootserver-bin
 ./usr/sbin/rdate				base-netutil-bin
@@ -1885,7 +1885,7 @@
 ./usr/sbin/rump_msdos				base-puffs-bin	rump
 ./usr/sbin/rump_nfs				base-puffs-bin	rump
 ./usr/sbin/rump_ntfs				base-puffs-bin	rump
-./usr/sbin/rump_smbfs				base-puffs-bin	crypto,rump
+./usr/sbin/rump_smbfs				base-puffs-bin	rump
 ./usr/sbin/rump_syspuffs			base-puffs-bin	rump
 ./usr/sbin/rump_sysvbfs				base-puffs-bin	rump
 ./usr/sbin/rump_tmpfs				base-puffs-bin	rump
@@ -1912,7 +1912,7 @@
 ./usr/sbin/spawn				base-obsolete		obsolete
 ./usr/sbin/spray				base-rpcutil-bin
 ./usr/sbin/srtconfig				base-netutil-bin
-./usr/sbin/sshd					base-secsh-bin		crypto
+./usr/sbin/sshd					base-secsh-bin
 ./usr/sbin/statmsg				base-obsolete		obsolete
 ./usr/sbin/stdethers				base-nis-bin		yp
 ./usr/sbin/stdhosts				base-nis-bin		yp
@@ -1960,11 +1960,11 @@
 ./usr/sbin/traceroute6				base-netutil-bin	use_inet6
 ./usr/sbin/trpt					base-netutil-bin
 ./usr/sbin/trsp					base-obsolete		obsolete
-./usr/sbin/unbound				base-netutil-bin	crypto,unbound
-./usr/sbin/unbound-anchor			base-netutil-bin	crypto,unbound
-./usr/sbin/unbound-checkconf			base-netutil-bin	crypto,unbound
-./usr/sbin/unbound-control			base-netutil-bin	crypto,unbound
-./usr/sbin/unbound-control-setup		base-netutil-bin	crypto,unbound
+./usr/sbin/unbound				base-netutil-bin	unbound
+./usr/sbin/unbound-anchor			base-netutil-bin	unbound
+./usr/sbin/unbound-checkconf			base-netutil-bin	unbound
+./usr/sbin/unbound-control			base-netutil-bin	unbound
+./usr/sbin/unbound-control-setup		base-netutil-bin	unbound
 ./usr/sbin/unlink				base-sysutil-bin
 ./usr/sbin/update				base-obsolete		obsolete
 ./usr/sbin/usbdevs				base-sysutil-bin

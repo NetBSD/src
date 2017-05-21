@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2014/10/25 00:57:59 joerg Exp $
+# $NetBSD: Makefile,v 1.19 2017/05/21 15:28:41 riastradh Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -183,9 +183,7 @@ STATIC_MODULES+= pam_afslog pam_krb5 pam_ksu
 STATIC_MODULES+= pam_skey
 .endif
 
-.if (${MKCRYPTO} != "no")
 STATIC_MODULES+= pam_ssh
-.endif
  
 MODULE_DIR=../modules
 # XXX

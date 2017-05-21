@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.427 2017/02/07 21:18:05 christos Exp $
+#	$NetBSD: Makefile,v 1.428 2017/05/21 15:28:38 riastradh Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -15,7 +15,6 @@
 #	${KERNSRCDIR}/arch/${MACHINE}/compile, but can be overridden.
 #   KERNCONFDIR is where the configuration files for kernels are found;
 #	default is ${KERNSRCDIR}/arch/${MACHINE}/conf but can be overridden.
-#   MKCRYPTO; if not `no', install crypto-related configuration
 #   MKPOSTFIX; if not `no', install postfix configuration
 #   MKUNPRIVED; if not `no', allow non-root installs.
 #   MKUPDATE; if not `no', don't do a 'make clean' before kernel compile
@@ -354,9 +353,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 .if (${MKPF} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.sbin/pf configinstall
 .endif
-.if (${MKCRYPTO} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/crypto/external/bsd/openssh/bin configinstall
-.endif
 .if (${MKPOSTFIX} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/ibm-public/postfix configinstall
 .endif

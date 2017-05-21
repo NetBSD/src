@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.306 2017/05/21 14:24:05 riastradh Exp $
+#	$NetBSD: bsd.prog.mk,v 1.307 2017/05/21 15:28:42 riastradh Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -212,10 +212,8 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 
 # PAM applications, if linked statically, need more libraries
 .if (${MKPIC} == "no")
-.if (${MKCRYPTO} != "no")
 PAM_STATIC_LDADD+= -lssh
 PAM_STATIC_DPADD+= ${LIBSSH}
-.endif
 .if (${MKKERBEROS} != "no")
 PAM_STATIC_LDADD+= -lkafs -lkrb5 -lhx509 -lwind -lasn1 \
 	-lroken -lcom_err -lheimbase -lcrypto -lsqlite3

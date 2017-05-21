@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2017/02/20 05:46:12 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2017/05/21 15:28:39 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -20,15 +20,13 @@ CPPFLAGS+= -DNETBSD7 -DUSE_SASL_AUTH -DNO_EAI \
 CPPFLAGS+= -DUSE_SASL_AUTH
 CPPFLAGS+= -DDEF_SERVER_SASL_TYPE=\"dovecot\"
 
-.if (${MKCRYPTO} != "no")
 CPPFLAGS+= -DUSE_SASLC_SASL
 CPPFLAGS+= -DDEF_CLIENT_SASL_TYPE=\"saslc\"
 DPADD+= ${LIBSASCL} ${LIBSSL}
 LDADD+= -lsaslc -lssl
-. if (${MKKERBEROS} != "no")
+.if (${MKKERBEROS} != "no")
 DPADD+= ${LIBGSSAPI}
 LDADD+= -lgssapi
-. endif
 .endif
 
 .if defined(HAVE_PCC)
@@ -37,9 +35,7 @@ CPPFLAGS+=	-DCANT_USE_SEND_RECV_MSG
 .endif
 
 # TLS support.
-.if ${MKCRYPTO} != "no"
 CPPFLAGS+=	-DUSE_TLS
-.endif
 
 # IPv6 support.
 .if ${MKINET6} == "no"
@@ -61,7 +57,7 @@ CPPFLAGS+=	-DHAS_LDAP
 . if defined(PROG)
 LDADD+=		-lldap -llber
 DPADD+=		${LIBLDAP} ${LIBLBER}
-.  if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "")) && ${MKCRYPTO} != "no"
+.  if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != ""))
 DPADD+=		${LIBSSL} ${LIBCRYPTO}
 LDADD+=		-lssl -lcrypto
 .  endif
@@ -72,9 +68,7 @@ PFIX_SRCDIR=	${NETBSDSRCDIR}/external/ibm-public/postfix
 PFIX_LIBSDIRS=	dns dns masterlib master global global util util \
 		milter milter xsasl xsasl
 
-.if ${MKCRYPTO} != "no" 
 PFIX_LIBSDIRS+=	tls tls
-.endif
 
 .for _LD _LL in	${PFIX_LIBSDIRS}
 .if !defined(POBJDIR.${_LL})

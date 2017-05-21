@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2016/06/29 19:36:35 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2017/05/21 15:28:40 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -120,10 +120,8 @@ DPADD+=	${DPADD.dix} \
 	${LIBXFONT} ${LIBFREETYPE} ${LIBXAU} ${LIBFONTENC} \
 	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM} ${LIBPCIACCESS}
 
-.if ${MKCRYPTO:Uno} != "no"
 LDADD+=	-lcrypto
 DPADD+=	${LIBCRYPTO}
-.endif
 
 SYMLINKS=	${X11BINDIR}/Xorg ${X11BINDIR}/X
 
