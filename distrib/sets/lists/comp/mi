@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2135 2017/05/21 15:28:37 riastradh Exp $
+#	$NetBSD: mi,v 1.2136 2017/05/21 19:07:29 abhinav Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -10180,6 +10180,19 @@
 ./usr/share/man/cat9/buffercache.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/bufferio.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bufq.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bufq_alloc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bufq_cancel.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bufq_drain.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bufq_free.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bufq_get.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bufq_getstrategyname.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bufq_init.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bufq_move.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bufq_peek.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bufq_put.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bufq_register.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bufq_state.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bufq_unregister.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bus_dma.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bus_dmamap_create.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/bus_dmamap_destroy.0	comp-sys-catman		.cat
@@ -17653,6 +17666,19 @@
 ./usr/share/man/html9/buffercache.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bufferio.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bufq.html			comp-sys-htmlman	html
+./usr/share/man/html9/bufq_alloc.html			comp-sys-htmlman	html
+./usr/share/man/html9/bufq_cancel.html			comp-sys-htmlman	html
+./usr/share/man/html9/bufq_drain.html			comp-sys-htmlman	html
+./usr/share/man/html9/bufq_free.html			comp-sys-htmlman	html
+./usr/share/man/html9/bufq_get.html			comp-sys-htmlman	html
+./usr/share/man/html9/bufq_getstrategyname.html			comp-sys-htmlman	html
+./usr/share/man/html9/bufq_init.html			comp-sys-htmlman	html
+./usr/share/man/html9/bufq_move.html			comp-sys-htmlman	html
+./usr/share/man/html9/bufq_peek.html			comp-sys-htmlman	html
+./usr/share/man/html9/bufq_put.html			comp-sys-htmlman	html
+./usr/share/man/html9/bufq_register.html			comp-sys-htmlman	html
+./usr/share/man/html9/bufq_state.html			comp-sys-htmlman	html
+./usr/share/man/html9/bufq_unregister.html			comp-sys-htmlman	html
 ./usr/share/man/html9/bus_dma.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bus_dmamap_create.html	comp-sys-htmlman	html
 ./usr/share/man/html9/bus_dmamap_destroy.html	comp-sys-htmlman	html
@@ -25230,6 +25256,19 @@
 ./usr/share/man/man9/buffercache.9		comp-sys-man		.man
 ./usr/share/man/man9/bufferio.9			comp-sys-man		.man
 ./usr/share/man/man9/bufq.9			comp-sys-man		.man
+./usr/share/man/man9/bufq_alloc.9			comp-sys-man		.man
+./usr/share/man/man9/bufq_cancel.9			comp-sys-man		.man
+./usr/share/man/man9/bufq_drain.9			comp-sys-man		.man
+./usr/share/man/man9/bufq_free.9			comp-sys-man		.man
+./usr/share/man/man9/bufq_get.9			comp-sys-man		.man
+./usr/share/man/man9/bufq_getstrategyname.9			comp-sys-man		.man
+./usr/share/man/man9/bufq_init.9			comp-sys-man		.man
+./usr/share/man/man9/bufq_move.9			comp-sys-man		.man
+./usr/share/man/man9/bufq_peek.9			comp-sys-man		.man
+./usr/share/man/man9/bufq_put.9			comp-sys-man		.man
+./usr/share/man/man9/bufq_register.9			comp-sys-man		.man
+./usr/share/man/man9/bufq_state.9			comp-sys-man		.man
+./usr/share/man/man9/bufq_unregister.9			comp-sys-man		.man
 ./usr/share/man/man9/bus_dma.9			comp-sys-man		.man
 ./usr/share/man/man9/bus_dmamap_create.9	comp-sys-man		.man
 ./usr/share/man/man9/bus_dmamap_destroy.9	comp-sys-man		.man
