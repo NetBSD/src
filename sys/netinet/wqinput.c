@@ -1,4 +1,4 @@
-/*	$NetBSD: wqinput.c,v 1.1 2017/02/02 02:52:10 ozaki-r Exp $	*/
+/*	$NetBSD: wqinput.c,v 1.2 2017/05/21 08:36:22 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -249,6 +249,11 @@ wqinput_input(struct wqinput *wqi, struct mbuf *m, int off, int proto)
 	}
 
 	work = pool_get(&wqi->wqi_work_pool, PR_NOWAIT);
+	if (work == NULL) {
+		wwl->wwl_dropped++;
+		m_freem(m);
+		goto out;
+	}
 	work->ww_mbuf = m;
 	work->ww_off = off;
 	work->ww_proto = proto;
