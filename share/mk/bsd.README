@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.360 2017/05/21 14:20:45 riastradh Exp $
+#	$NetBSD: bsd.README,v 1.361 2017/05/21 14:24:05 riastradh Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1563,8 +1563,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBCRTI?=	${DESTDIR}/usr/lib/crti.o
 		LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
 		LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
-		LIBCRYPTO_IDEA?=${DESTDIR}/usr/lib/libcrypto_idea.a
-		LIBCRYPTO_MDC2?=${DESTDIR}/usr/lib/libcrypto_mdc2.a
 		LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
 		LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
 		LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
