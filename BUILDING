@@ -246,14 +246,6 @@ CONFIGURATION
 
                  Default: "no"
 
-     MKCRYPTO    Can be set to "yes" or "no".  Indicates whether cryptographic
-                 code will be included in a build; provided for the benefit of
-                 countries that do not allow strong cryptography.  Will not
-                 affect use of the standard low-security password encryption
-                 system, crypt(3).
-
-                 Default: "yes"
-
      MKDEBUG     Can be set to "yes" or "no".  Indicates whether debug
                  information should be generated for all userland binaries
                  compiled.  The result is collected as an additional debug.tgz
