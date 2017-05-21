@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_var.h,v 1.5 2015/05/18 15:07:52 macallan Exp $ */
+/*	$NetBSD: ingenic_var.h,v 1.6 2017/05/21 06:49:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -44,5 +44,15 @@ struct apbus_attach_args {
 
 extern bus_space_tag_t ingenic_memt;
 void apbus_init(void);
+
+uint32_t mips_cp0_corectrl_read(void);
+uint32_t mips_cp0_corestatus_read(void);
+uint32_t mips_cp0_corereim_read(void);
+uint32_t mips_cp0_corembox_read(u_int);
+
+void mips_cp0_corectrl_write(uint32_t);
+void mips_cp0_corestatus_write(uint32_t);
+void mips_cp0_corereim_write(uint32_t);
+void mips_cp0_corembox_write(u_int, uint32_t);
 
 #endif /* INGENIC_VAR_H */
