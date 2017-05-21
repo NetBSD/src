@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2012/06/06 00:33:45 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2017/05/21 15:28:43 riastradh Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 .include <bsd.own.mk>
 
@@ -25,10 +25,6 @@ CPPFLAGS+=-DLIBWRAP
 LDADD+=	-lwrap
 DPADD+=	${LIBWRAP}
 
-.if ${MKCRYPTO} != "no"
 LDADD+=	-lssl -lcrypto
-.else
-CPPFLAGS+=-DDISABLE_TLS -DDISABLE_SIGN
-.endif
 
 .include <bsd.prog.mk>

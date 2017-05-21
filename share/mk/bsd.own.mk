@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1008 2017/05/21 14:20:45 riastradh Exp $
+#	$NetBSD: bsd.own.mk,v 1.1009 2017/05/21 15:28:42 riastradh Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1034,7 +1034,7 @@ MKRELRO?=	no
 _MKVARS.yes= \
 	MKATF \
 	MKBINUTILS \
-	MKCRYPTO MKCOMPLEX MKCVS MKCXX \
+	MKCOMPLEX MKCVS MKCXX \
 	MKDOC \
 	MKDYNAMICROOT \
 	MKGCC MKGDB MKGROFF \
@@ -1179,11 +1179,6 @@ MKRADEONFIRMWARE=		yes
 MKATF:=		no
 MKGROFF:=	no
 MKKYUA:=	no
-.endif
-
-.if ${MKCRYPTO} == "no"
-MKKERBEROS:=	no
-MKLDAP:=	no
 .endif
 
 .if ${MKMAN} == "no"

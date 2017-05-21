@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.75 2017/05/21 14:20:45 riastradh Exp $
+.\"	$NetBSD: mk.conf.5,v 1.76 2017/05/21 15:28:42 riastradh Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -331,20 +331,6 @@ Indicates whether CTF tools are to be built and installed.
 If yes, the tools will be used to generate and manipulate
 CTF data of ELF binaries during build.
 .DFLTn
-.
-.It Sy MKCRYPTO
-.YorN
-Indicates whether cryptographic code will be included in a build;
-provided for the benefit of countries that do not allow strong
-cryptography.
-Will not affect use of the standard low-security password encryption system,
-.Xr crypt 3 .
-.DFLTy
-.Pp
-If
-.Dq no ,
-acts as
-.Sy MKKERBEROS=no .
 .
 .It Sy MKCVS
 .YorN

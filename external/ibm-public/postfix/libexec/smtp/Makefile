@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/07/06 19:53:05 tron Exp $
+#	$NetBSD: Makefile,v 1.3 2017/05/21 15:28:40 riastradh Exp $
 
 NOMAN=	# defined
 
@@ -19,10 +19,8 @@ LINKS+=	 ${PFIX_LIBEXECDIR}/smtp ${PFIX_LIBEXECDIR}/lmtp
 DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS} ${LIBPXSASL}
 LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS} ${LIBPXSASL}
 
-.if ${MKCRYPTO} != "no"
 DPADD+=	${LIBPTLS} ${LIBSSL} ${LIBCRYPTO}
 LDADD+=	${LIBPTLS} -lssl -lcrypto
-.endif
 
 DPADD+=	${LIBPUTIL}
 LDADD+=	${LIBPUTIL}

@@ -1,10 +1,10 @@
-# $NetBSD: shl.mi,v 1.174 2017/05/21 14:20:44 riastradh Exp $
+# $NetBSD: shl.mi,v 1.175 2017/05/21 15:28:37 riastradh Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.207.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug			comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/libcrypto.so.12.0.debug			comp-sys-debug	debug,dynamicroot,crypto
+./usr/libdata/debug/lib/libcrypto.so.12.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libdevmapper.so.1.0.debug		comp-sys-debug	debug,dynamicroot,lvm
 ./usr/libdata/debug/lib/libdm.so.0.0.debug 			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libedit.so.3.1.debug			comp-sys-debug	debug,dynamicroot
@@ -73,14 +73,14 @@
 ./usr/libdata/debug/usr/lib/libc.so.12.207.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libcom_err.so.8.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libcrypto.so.12.0.debug		comp-crypto-debug	debug,compatfile,crypto
+./usr/libdata/debug/usr/lib/libcrypto.so.12.0.debug		comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libcrypto_idea.so.7.0.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libcrypto_mdc2.so.7.0.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libcrypto_rc5.so.12.0.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libctf.so.3.0.debug			comp-sys-debug	debug,compatfile,ctf
 ./usr/libdata/debug/usr/lib/libcurses.so.7.0.debug		comp-obsolete	debug,obsolete,compatfile
 ./usr/libdata/debug/usr/lib/libcurses.so.7.1.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libdes.so.12.0.debug			comp-crypto-debug	debug,compatfile,crypto
+./usr/libdata/debug/usr/lib/libdes.so.12.0.debug			comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libdevmapper.so.1.0.debug		comp-lvm-debug	debug,compatfile,lvm
 ./usr/libdata/debug/usr/lib/libdm.so.0.0.debug 			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libdns.so.8.4.debug 		comp-bind-debug debug,compatfile
@@ -90,7 +90,7 @@
 ./usr/libdata/debug/usr/lib/libedit.so.3.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libelf.so.2.0.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libevent.so.4.1.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libevent_openssl.so.4.1.debug	comp-sys-debug	debug,compatfile,crypto
+./usr/libdata/debug/usr/lib/libevent_openssl.so.4.1.debug	comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libevent_pthreads.so.4.1.debug	comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libexecinfo.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libexpat.so.2.3.debug		comp-sys-debug	debug,compatfile
@@ -137,13 +137,13 @@
 ./usr/libdata/debug/usr/lib/libm.so.0.12.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmagic.so.5.2.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmenu.so.6.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libmj.so.1.0.debug			comp-crypto-debug	debug,compatfile,crypto
+./usr/libdata/debug/usr/lib/libmj.so.1.0.debug			comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmpc.so.2.0.debug			comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libmpfr.so.4.1.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libmudflap.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc=48
 ./usr/libdata/debug/usr/lib/libmudflapth.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc=48
-./usr/libdata/debug/usr/lib/libnetpgp.so.3.0.debug		comp-crypto-debug	debug,compatfile,crypto
-./usr/libdata/debug/usr/lib/libnetpgpverify.so.5.0.debug	comp-crypto-debug	debug,compatfile,crypto
+./usr/libdata/debug/usr/lib/libnetpgp.so.3.0.debug		comp-crypto-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libnetpgpverify.so.5.0.debug	comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libnpf.so.0.1.debug			comp-npf-debug	debug,compatfile,npf
 ./usr/libdata/debug/usr/lib/libnvpair.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libobjc.so.4.0.debug		comp-sys-debug	debug,compatfile,gcc
@@ -263,12 +263,12 @@
 ./usr/libdata/debug/usr/lib/librumpvfs_aio.so.0.0.debug		comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpvfs_fifofs.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug,rump
-./usr/libdata/debug/usr/lib/libsaslc.so.0.0.debug		comp-sys-debug	debug,compatfile,crypto
+./usr/libdata/debug/usr/lib/libsaslc.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libskey.so.2.0.debug		comp-sys-debug	debug,compatfile,skey
 ./usr/libdata/debug/usr/lib/libsl.so.6.0.debug			comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.3.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libssh.so.30.0.debug		comp-secsh-debug	debug,compatfile,crypto
-./usr/libdata/debug/usr/lib/libssl.so.12.0.debug		comp-crypto-debug	debug,compatfile,crypto
+./usr/libdata/debug/usr/lib/libssh.so.30.0.debug		comp-secsh-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libssl.so.12.0.debug		comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.3.debug		comp-sys-debug	debug,compatfile,gcc=48,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.4.debug		comp-sys-debug	debug,compatfile,gcc=53,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug		comp-sys-debug	debug,compatfile
@@ -278,7 +278,7 @@
 ./usr/libdata/debug/usr/lib/libubsan.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc=53
 ./usr/libdata/debug/usr/lib/libukfs.so.1.0.debug		comp-sys-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/libumem.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
-./usr/libdata/debug/usr/lib/libunbound.so.6.1.debug 		comp-net-debug	debug,compatfile,crypto,unbound
+./usr/libdata/debug/usr/lib/libunbound.so.6.1.debug 		comp-net-debug	debug,compatfile,unbound
 ./usr/libdata/debug/usr/lib/libusbhid.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libutil.so.7.23.debug		comp-obsolete	debug,compatfile,obsolete,compatfile
 ./usr/libdata/debug/usr/lib/libutil.so.7.24.debug		comp-sys-debug	debug,compatfile
