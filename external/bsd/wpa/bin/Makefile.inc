@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2016/11/21 20:15:16 christos Exp $
+# $NetBSD: Makefile.inc,v 1.6 2017/05/21 15:28:39 riastradh Exp $
 
 BINDIR?=	/usr/sbin
 
@@ -29,7 +29,3 @@ CPPFLAGS+= \
 CPPFLAGS+=-DCONFIG_CTRL_IFACE -DCONFIG_CTRL_IFACE_UNIX -DCONFIG_ELOOP_KQUEUE
 
 .include <bsd.own.mk>
-
-.if ${MKCRYPTO} == "no"
-NO_OPENSSL=	# defined
-.endif

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.815 2017/05/21 14:20:44 riastradh Exp $
+# $NetBSD: shl.mi,v 1.816 2017/05/21 15:28:37 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -22,9 +22,9 @@
 ./lib/libcrypt.so				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
-./lib/libcrypto.so				base-crypto-shlib	dynamicroot,crypto
-./lib/libcrypto.so.12				base-crypto-shlib	dynamicroot,crypto
-./lib/libcrypto.so.12.0				base-crypto-shlib	dynamicroot,crypto
+./lib/libcrypto.so				base-crypto-shlib	dynamicroot
+./lib/libcrypto.so.12				base-crypto-shlib	dynamicroot
+./lib/libcrypto.so.12.0				base-crypto-shlib	dynamicroot
 ./lib/libdevmapper.so				base-lvm-shlib		dynamicroot,lvm
 ./lib/libdevmapper.so.1				base-lvm-shlib		dynamicroot,lvm
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		dynamicroot,lvm
@@ -222,9 +222,9 @@
 ./usr/lib/libcrypt.so				base-sys-shlib		compatfile
 ./usr/lib/libcrypt.so.1				base-sys-shlib		compatfile
 ./usr/lib/libcrypt.so.1.0			base-sys-shlib		compatfile
-./usr/lib/libcrypto.so				base-crypto-shlib	compatfile,crypto
-./usr/lib/libcrypto.so.12			base-crypto-shlib	compatfile,crypto
-./usr/lib/libcrypto.so.12.0			base-crypto-shlib	compatfile,crypto
+./usr/lib/libcrypto.so				base-crypto-shlib	compatfile
+./usr/lib/libcrypto.so.12			base-crypto-shlib	compatfile
+./usr/lib/libcrypto.so.12.0			base-crypto-shlib	compatfile
 ./usr/lib/libcrypto_idea.so.7			base-obsolete		compatfile,obsolete
 ./usr/lib/libcrypto_idea.so.7.0			base-obsolete		compatfile,obsolete
 ./usr/lib/libcrypto_mdc2.so.7			base-obsolete		compatfile,obsolete
@@ -238,9 +238,9 @@
 ./usr/lib/libcurses.so				base-sys-shlib		compatfile
 ./usr/lib/libcurses.so.7			base-sys-shlib		compatfile
 ./usr/lib/libcurses.so.7.1			base-sys-shlib		compatfile
-./usr/lib/libdes.so				base-crypto-shlib	compatfile,crypto
-./usr/lib/libdes.so.12				base-crypto-shlib	compatfile,crypto
-./usr/lib/libdes.so.12.0				base-crypto-shlib	compatfile,crypto
+./usr/lib/libdes.so				base-crypto-shlib	compatfile
+./usr/lib/libdes.so.12				base-crypto-shlib	compatfile
+./usr/lib/libdes.so.12.0				base-crypto-shlib	compatfile
 ./usr/lib/libdevmapper.so			base-lvm-shlib		compatfile,lvm
 ./usr/lib/libdevmapper.so.1			base-lvm-shlib		compatfile,lvm
 ./usr/lib/libdevmapper.so.1.0			base-lvm-shlib		compatfile,lvm
@@ -268,9 +268,9 @@
 ./usr/lib/libevent.so				base-sys-shlib		compatfile
 ./usr/lib/libevent.so.4				base-sys-shlib		compatfile
 ./usr/lib/libevent.so.4.1			base-sys-shlib		compatfile
-./usr/lib/libevent_openssl.so			base-sys-shlib		compatfile,crypto
-./usr/lib/libevent_openssl.so.4			base-sys-shlib		compatfile,crypto
-./usr/lib/libevent_openssl.so.4.1		base-sys-shlib		compatfile,crypto
+./usr/lib/libevent_openssl.so			base-sys-shlib		compatfile
+./usr/lib/libevent_openssl.so.4			base-sys-shlib		compatfile
+./usr/lib/libevent_openssl.so.4.1		base-sys-shlib		compatfile
 ./usr/lib/libevent_pthreads.so			base-sys-shlib		compatfile
 ./usr/lib/libevent_pthreads.so.4		base-sys-shlib		compatfile
 ./usr/lib/libevent_pthreads.so.4.1		base-sys-shlib		compatfile
@@ -394,15 +394,15 @@
 ./usr/lib/libmenu.so				base-sys-shlib		compatfile
 ./usr/lib/libmenu.so.6				base-sys-shlib		compatfile
 ./usr/lib/libmenu.so.6.0			base-sys-shlib		compatfile
-./usr/lib/libmj.so				base-crypto-shlib	compatfile,crypto
-./usr/lib/libmj.so.1				base-crypto-shlib	compatfile,crypto
-./usr/lib/libmj.so.1.0				base-crypto-shlib	compatfile,crypto
-./usr/lib/libnetpgp.so				base-crypto-shlib	compatfile,crypto
-./usr/lib/libnetpgp.so.3			base-crypto-shlib	compatfile,crypto
-./usr/lib/libnetpgp.so.3.0			base-crypto-shlib	compatfile,crypto
-./usr/lib/libnetpgpverify.so			base-crypto-shlib	compatfile,crypto
-./usr/lib/libnetpgpverify.so.5			base-crypto-shlib	compatfile,crypto
-./usr/lib/libnetpgpverify.so.5.0		base-crypto-shlib	compatfile,crypto
+./usr/lib/libmj.so				base-crypto-shlib	compatfile
+./usr/lib/libmj.so.1				base-crypto-shlib	compatfile
+./usr/lib/libmj.so.1.0				base-crypto-shlib	compatfile
+./usr/lib/libnetpgp.so				base-crypto-shlib	compatfile
+./usr/lib/libnetpgp.so.3			base-crypto-shlib	compatfile
+./usr/lib/libnetpgp.so.3.0			base-crypto-shlib	compatfile
+./usr/lib/libnetpgpverify.so			base-crypto-shlib	compatfile
+./usr/lib/libnetpgpverify.so.5			base-crypto-shlib	compatfile
+./usr/lib/libnetpgpverify.so.5.0		base-crypto-shlib	compatfile
 ./usr/lib/libnpf.so				base-npf-shlib		npf,compatfile
 ./usr/lib/libnpf.so.0				base-npf-shlib		npf,compatfile
 ./usr/lib/libnpf.so.0.1				base-npf-shlib		npf,compatfile
@@ -769,9 +769,9 @@
 ./usr/lib/librumpvfs_layerfs.so			base-rump-shlib		rump
 ./usr/lib/librumpvfs_layerfs.so.0		base-rump-shlib		rump
 ./usr/lib/librumpvfs_layerfs.so.0.0		base-rump-shlib		rump
-./usr/lib/libsaslc.so				base-sys-shlib		compatfile,crypto
-./usr/lib/libsaslc.so.0				base-sys-shlib		compatfile,crypto
-./usr/lib/libsaslc.so.0.0			base-sys-shlib		compatfile,crypto
+./usr/lib/libsaslc.so				base-sys-shlib		compatfile
+./usr/lib/libsaslc.so.0				base-sys-shlib		compatfile
+./usr/lib/libsaslc.so.0.0			base-sys-shlib		compatfile
 ./usr/lib/libsdp.so				base-obsolete		obsolete
 ./usr/lib/libskey.so				base-sys-shlib		compatfile,skey
 ./usr/lib/libskey.so.2				base-sys-shlib		compatfile,skey
@@ -783,12 +783,12 @@
 ./usr/lib/libsqlite3.so.1			base-sys-shlib		compatfile
 ./usr/lib/libsqlite3.so.1.3			base-sys-shlib		compatfile
 ./usr/lib/libss.so				base-obsolete		obsolete
-./usr/lib/libssh.so				base-secsh-shlib	compatfile,crypto
-./usr/lib/libssh.so.30				base-secsh-shlib	compatfile,crypto
-./usr/lib/libssh.so.30.0			base-secsh-shlib	compatfile,crypto
-./usr/lib/libssl.so				base-crypto-shlib	compatfile,crypto
-./usr/lib/libssl.so.12				base-crypto-shlib	compatfile,crypto
-./usr/lib/libssl.so.12.0			base-crypto-shlib	compatfile,crypto
+./usr/lib/libssh.so				base-secsh-shlib	compatfile
+./usr/lib/libssh.so.30				base-secsh-shlib	compatfile
+./usr/lib/libssh.so.30.0			base-secsh-shlib	compatfile
+./usr/lib/libssl.so				base-crypto-shlib	compatfile
+./usr/lib/libssl.so.12				base-crypto-shlib	compatfile
+./usr/lib/libssl.so.12.0			base-crypto-shlib	compatfile
 ./usr/lib/libstdc++.so				base-sys-shlib		compatfile,gcc,cxx,libstdcxx
 ./usr/lib/libstdc++.so.7			base-sys-shlib		compatfile,gcc,cxx,libstdcxx
 ./usr/lib/libstdc++.so.7.3			base-sys-shlib		compatfile,gcc=48,cxx,libstdcxx
@@ -821,9 +821,9 @@
 ./usr/lib/libumem.so				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libumem.so.0				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libumem.so.0.0			base-zfs-shlib		compatfile,zfs
-./usr/lib/libunbound.so				base-sys-shlib		compatfile,crypto,unbound
-./usr/lib/libunbound.so.6			base-sys-shlib		compatfile,crypto,unbound
-./usr/lib/libunbound.so.6.1			base-sys-shlib		compatfile,crypto,unbound
+./usr/lib/libunbound.so				base-sys-shlib		compatfile,unbound
+./usr/lib/libunbound.so.6			base-sys-shlib		compatfile,unbound
+./usr/lib/libunbound.so.6.1			base-sys-shlib		compatfile,unbound
 ./usr/lib/libusbhid.so				base-sys-shlib		compatfile
 ./usr/lib/libusbhid.so.1			base-sys-shlib		compatfile
 ./usr/lib/libusbhid.so.1.0			base-sys-shlib		compatfile
@@ -886,6 +886,6 @@
 ./usr/lib/security/pam_securetty.so.4		base-sys-shlib		compatfile,pam
 ./usr/lib/security/pam_self.so.4		base-sys-shlib		compatfile,pam
 ./usr/lib/security/pam_skey.so.4		base-sys-shlib		compatfile,skey,pam
-./usr/lib/security/pam_ssh.so.4			base-sys-shlib		compatfile,crypto,pam
+./usr/lib/security/pam_ssh.so.4			base-sys-shlib		compatfile,pam
 ./usr/lib/security/pam_unix.so.4		base-sys-shlib		compatfile,pam
 ./usr/libexec/ld.elf_so				base-sys-shlib		dynamicroot
