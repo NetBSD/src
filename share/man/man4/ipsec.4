@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec.4,v 1.40 2017/03/06 17:19:21 snj Exp $
+.\"	$NetBSD: ipsec.4,v 1.41 2017/05/21 09:13:46 wiz Exp $
 .\"	$KAME: ipsec.4,v 1.17 2001/06/27 15:25:10 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,7 +46,6 @@ and
 .Pc .
 .Nm
 consists of two sub-protocols:
-.Pp
 .Bl -hang
 .It Em Encapsulated Security Payload Pq ESP
 protects IP payloads from wire-tapping (interception) by encrypting them with
@@ -59,7 +58,6 @@ by attaching cryptographic checksums computed by one-way hash functions.
 .Pp
 .Nm
 has two operation modes:
-.Pp
 .Bl -hang
 .It Em Transport mode
 is for protecting peer-to-peer communication between end nodes.
