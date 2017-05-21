@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.413 2017/05/19 03:33:31 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.414 2017/05/21 19:07:29 abhinav Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -151,6 +151,19 @@ MLINKS+=bufferio.9 biodone.9 \
 	bufferio.9 putiobuf.9 \
 	bufferio.9 nestiobuf_setup.9 \
 	bufferio.9 nestiobuf_done.9
+MLINKS+=bufq.9 bufq_init.9 \
+		bufq.9 bufq_register.9 \
+		bufq.9 bufq_unregister.9 \
+		bufq.9 bufq_state.9 \
+		bufq.9 bufq_alloc.9 \
+		bufq.9 bufq_drain.9 \
+		bufq.9 bufq_free.9 \
+		bufq.9 bufq_getstrategyname.9 \
+		bufq.9 bufq_move.9 \
+		bufq.9 bufq_put.9 \
+		bufq.9 bufq_get.9 \
+		bufq.9 bufq_peek.9 \
+		bufq.9 bufq_cancel.9
 MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
 	bus_space.9 bus_space_copy_region_1.9 \
 	bus_space.9 bus_space_copy_region_2.9 \
