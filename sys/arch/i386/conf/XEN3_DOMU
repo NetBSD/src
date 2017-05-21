@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.76 2017/02/26 12:41:50 rin Exp $
+# $NetBSD: XEN3_DOMU,v 1.77 2017/05/21 06:19:37 pgoyette Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -149,12 +149,6 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
-
-# pseudo-device support for sysmon and its sub-components
-options 	SYSMON_POWER
-options 	SYSMON_ENVSYS
-options 	SYSMON_WDOG
-options 	SYSMON_TASKQ
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
