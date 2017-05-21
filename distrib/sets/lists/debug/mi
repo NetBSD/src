@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.208 2017/04/17 09:06:55 knakahara Exp $
+# $NetBSD: mi,v 1.209 2017/05/21 14:20:44 riastradh Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -45,7 +45,7 @@
 ./usr/lib/libcrypto_g.a				comp-c-debuglib		debuglib,crypto,compatfile
 ./usr/lib/libcrypto_idea_g.a			comp-obsolete		obsolete,compatfile
 ./usr/lib/libcrypto_mdc2_g.a			comp-obsolete		obsolete,compatfile
-./usr/lib/libcrypto_rc5_g.a			comp-c-debuglib		debuglib,crypto_rc5,compatfile
+./usr/lib/libcrypto_rc5_g.a			comp-obsolete		debuglib,compatfile
 ./usr/lib/libctf_g.a				comp-c-debuglib		debuglib,compatfile,ctf
 ./usr/lib/libcurses_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libdes_g.a				comp-c-debuglib		debuglib,crypto,compatfile
@@ -1577,7 +1577,7 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_randtest.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc2test.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc4test.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc5test.debug		tests-crypto-debug	debug,atf,crypto_rc5,crypto,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc5test.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ripemdtest.debug	tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rsatest.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_sha1test.debug		tests-crypto-debug	debug,atf,crypto,compattestfile

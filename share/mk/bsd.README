@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.359 2017/04/20 09:29:10 ozaki-r Exp $
+#	$NetBSD: bsd.README,v 1.360 2017/05/21 14:20:45 riastradh Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -150,9 +150,6 @@ MKCOMPLEX	If "no", don't build libm support for <complex.h>
 MKCRYPTO	If "no", no cryptography support will be built into the system,
 		and also acts as "MKKERBEROS=no".
 		Default: yes
-
-MKCRYPTO_RC5	If not "no", RC5 support will be built into libcrypto_rc5
-		Default: no
 
 MKCTF		If "no", do not build and install CTF tools, and also
 		don't generate and manipulate CTF data of ELF binaries
@@ -1568,7 +1565,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
 		LIBCRYPTO_IDEA?=${DESTDIR}/usr/lib/libcrypto_idea.a
 		LIBCRYPTO_MDC2?=${DESTDIR}/usr/lib/libcrypto_mdc2.a
-		LIBCRYPTO_RC5?=	${DESTDIR}/usr/lib/libcrypto_rc5.a
 		LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
 		LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
 		LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
