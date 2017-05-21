@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2136 2017/05/21 19:07:29 abhinav Exp $
+#	$NetBSD: mi,v 1.2137 2017/05/21 22:48:25 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4005,7 +4005,7 @@
 ./usr/share/man/cat1/nm.0			comp-util-catman	binutils,.cat
 ./usr/share/man/cat1/objcopy.0			comp-util-catman	binutils,.cat
 ./usr/share/man/cat1/objdump.0			comp-util-catman	binutils,.cat
-./usr/share/man/cat1/openssl_ocsp.0		comp-c-catman		cat
+./usr/share/man/cat1/openssl_ocsp.0		comp-c-catman		.cat
 ./usr/share/man/cat1/ranlib.0			comp-util-catman	binutils,.cat
 ./usr/share/man/cat1/rcs2log.0			comp-cvs-catman		cvs,.cat
 ./usr/share/man/cat1/readelf.0			comp-util-catman	binutils,.cat
