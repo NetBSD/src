@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.345 2017/04/17 14:52:52 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.346 2017/05/21 07:06:51 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.345 2017/04/17 14:52:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.346 2017/05/21 07:06:51 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -1172,7 +1172,8 @@ pmap_remove_pv(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va)
 	KASSERT((md->pvh_attrs & PVF_DMOD) == 0 || (md->pvh_attrs & (PVF_DIRTY|PVF_NC)));
 #endif /* PMAP_CACHE_VIPT && !ARM_MMU_EXTENDED */
 
-	return(pv);				/* return removed pv */
+	/* return removed pv */
+	return pv;
 }
 
 /*
