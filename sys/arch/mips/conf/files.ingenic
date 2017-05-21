@@ -1,6 +1,7 @@
-#	$NetBSD: files.ingenic,v 1.9 2017/05/19 07:30:24 skrll Exp $
+#	$NetBSD: files.ingenic,v 1.10 2017/05/21 06:49:13 skrll Exp $
 
 file	arch/mips/mips/bus_dma.c
+file	arch/mips/mips/locore_ingenic.S
 
 include "dev/scsipi/files.scsipi"		# SCSI devices
 include "dev/ata/files.ata"			# ATA devices
