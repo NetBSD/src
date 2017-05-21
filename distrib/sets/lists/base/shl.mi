@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.814 2017/05/13 15:07:58 maya Exp $
+# $NetBSD: shl.mi,v 1.815 2017/05/21 14:20:44 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -229,9 +229,9 @@
 ./usr/lib/libcrypto_idea.so.7.0			base-obsolete		compatfile,obsolete
 ./usr/lib/libcrypto_mdc2.so.7			base-obsolete		compatfile,obsolete
 ./usr/lib/libcrypto_mdc2.so.7.0			base-obsolete		compatfile,obsolete
-./usr/lib/libcrypto_rc5.so			base-crypto-shlib	compatfile,crypto,crypto_rc5
-./usr/lib/libcrypto_rc5.so.12			base-crypto-shlib	compatfile,crypto,crypto_rc5
-./usr/lib/libcrypto_rc5.so.12.0			base-crypto-shlib	compatfile,crypto,crypto_rc5
+./usr/lib/libcrypto_rc5.so			base-obsolete		compatfile,obsolete
+./usr/lib/libcrypto_rc5.so.12			base-obsolete		compatfile,obsolete
+./usr/lib/libcrypto_rc5.so.12.0			base-obsolete		compatfile,obsolete
 ./usr/lib/libctf.so				base-sys-shlib		compatfile,ctf
 ./usr/lib/libctf.so.3				base-sys-shlib		compatfile,ctf
 ./usr/lib/libctf.so.3.0				base-sys-shlib		compatfile,ctf

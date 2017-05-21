@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.29 2017/02/22 12:17:16 maya Exp $
+# $NetBSD: Makefile,v 1.30 2017/05/21 14:20:45 riastradh Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -52,11 +52,7 @@ DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBCOM_ERR} \
 	${LIBROKEN} ${LIBASN1} ${LIBSQLITE3}
 .endif
 CPPFLAGS+=-DHAVE_OPENSSL_IDEA_H
-.if (${MKCRYPTO_RC5} != "no")
 CPPFLAGS+=-DHAVE_OPENSSL_RC5_H
-LDADD+= -lcrypto_rc5
-LDADD+= ${LIBCRYPTO_RC5}
-.endif
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
 .endif
