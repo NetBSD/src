@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.45 2015/06/22 00:05:23 matt Exp $
+# $NetBSD: Makefile,v 1.46 2017/05/21 15:28:42 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -17,9 +17,7 @@ TESTS_SUBDIRS+=		modules
 . endif
 . endif
 
-. if ${MKCRYPTO} != "no"
 TESTS_SUBDIRS+=		crypto
-. endif
 
 . if ${MKIPFILTER} != "no"
 TESTS_SUBDIRS+=		ipf

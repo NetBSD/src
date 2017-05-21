@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.204 2017/04/11 01:22:13 christos Exp $
+# $NetBSD: mi,v 1.205 2017/05/21 15:28:38 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1435,16 +1435,16 @@
 ./usr/share/examples/kyua-cli/Kyuafile.top	misc-kyua-examples	share,kyua
 ./usr/share/examples/kyua-cli/kyua.conf		misc-kyua-examples	share,kyua
 ./usr/share/examples/libsaslc			misc-libsaslc-examples
-./usr/share/examples/libsaslc/README		misc-libsaslc-examples	share,crypto
+./usr/share/examples/libsaslc/README		misc-libsaslc-examples	share
 ./usr/share/examples/libsaslc/mech		misc-libsaslc-examples
-./usr/share/examples/libsaslc/mech/ANONYMOUS.conf	misc-libsaslc-examples	share,crypto
-./usr/share/examples/libsaslc/mech/CRAM-MD5.conf	misc-libsaslc-examples	share,crypto
-./usr/share/examples/libsaslc/mech/DIGEST-MD5.conf	misc-libsaslc-examples	share,crypto
-./usr/share/examples/libsaslc/mech/EXTERNAL.conf	misc-libsaslc-examples	share,crypto
-./usr/share/examples/libsaslc/mech/GSSAPI.conf	misc-libsaslc-examples	share,crypto
-./usr/share/examples/libsaslc/mech/LOGIN.conf	misc-libsaslc-examples	share,crypto
-./usr/share/examples/libsaslc/mech/PLAIN.conf	misc-libsaslc-examples	share,crypto
-./usr/share/examples/libsaslc/saslc.conf	misc-libsaslc-examples	share,crypto
+./usr/share/examples/libsaslc/mech/ANONYMOUS.conf	misc-libsaslc-examples	share
+./usr/share/examples/libsaslc/mech/CRAM-MD5.conf	misc-libsaslc-examples	share
+./usr/share/examples/libsaslc/mech/DIGEST-MD5.conf	misc-libsaslc-examples	share
+./usr/share/examples/libsaslc/mech/EXTERNAL.conf	misc-libsaslc-examples	share
+./usr/share/examples/libsaslc/mech/GSSAPI.conf	misc-libsaslc-examples	share
+./usr/share/examples/libsaslc/mech/LOGIN.conf	misc-libsaslc-examples	share
+./usr/share/examples/libsaslc/mech/PLAIN.conf	misc-libsaslc-examples	share
+./usr/share/examples/libsaslc/saslc.conf	misc-libsaslc-examples	share
 ./usr/share/examples/lutok			misc-lutok-examples
 ./usr/share/examples/lutok/bindings.cpp		misc-lutok-examples	share,kyua
 ./usr/share/examples/lutok/hello.cpp		misc-lutok-examples	share,kyua
@@ -1467,10 +1467,10 @@
 ./usr/share/examples/mount_portal/tcp.1.conf	misc-sys-examples	share
 ./usr/share/examples/named/named.conf		misc-obsolete		obsolete
 ./usr/share/examples/nsd/nsd.conf		misc-netutil-examples	share,nsd
-./usr/share/examples/openssl/CA.pl		misc-crypto-examples	crypto,share
-./usr/share/examples/openssl/CA.sh		misc-crypto-examples	crypto,share
+./usr/share/examples/openssl/CA.pl		misc-crypto-examples	share
+./usr/share/examples/openssl/CA.sh		misc-crypto-examples	share
 ./usr/share/examples/openssl/der_chop		misc-obsolete		obsolete
-./usr/share/examples/openssl/openssl.cnf	misc-crypto-examples	crypto,share
+./usr/share/examples/openssl/openssl.cnf	misc-crypto-examples	share
 ./usr/share/examples/pf/ackpri			misc-pf-examples	pf,share
 ./usr/share/examples/pf/faq-example1		misc-pf-examples	pf,share
 ./usr/share/examples/pf/faq-example2		misc-pf-examples	pf,share
@@ -1585,23 +1585,23 @@
 ./usr/share/examples/pppd/cosmote3G.chat	misc-pppd-examples	share
 ./usr/share/examples/pppd/telus			misc-pppd-examples	share
 ./usr/share/examples/pppd/telus.chat		misc-pppd-examples	share
-./usr/share/examples/racoon/FAQ			misc-netutil-examples	crypto,share
-./usr/share/examples/racoon/README.certificate	misc-netutil-examples	crypto,share
-./usr/share/examples/racoon/README.gssapi	misc-netutil-examples	crypto,share
-./usr/share/examples/racoon/README.plainrsa	misc-netutil-examples	crypto,share
-./usr/share/examples/racoon/psk.txt.sample	misc-netutil-examples	crypto,share
-./usr/share/examples/racoon/racoon.conf.sample	misc-netutil-examples	crypto,share
-./usr/share/examples/racoon/racoon.conf.sample-gssapi	misc-netutil-examples	crypto,share
-./usr/share/examples/racoon/racoon.conf.sample-inherit	misc-netutil-examples	crypto,share
-./usr/share/examples/racoon/racoon.conf.sample-natt	misc-netutil-examples	crypto,share
-./usr/share/examples/racoon/racoon.conf.sample-plainrsa	misc-netutil-examples	crypto,share
-./usr/share/examples/racoon/roadwarrior/README		misc-netutil-examples	crypto,share
-./usr/share/examples/racoon/roadwarrior/client/phase1-down.sh		misc-netutil-examples	crypto,share
-./usr/share/examples/racoon/roadwarrior/client/phase1-up.sh		misc-netutil-examples	crypto,share
-./usr/share/examples/racoon/roadwarrior/client/racoon.conf		misc-netutil-examples	crypto,share
+./usr/share/examples/racoon/FAQ			misc-netutil-examples	share
+./usr/share/examples/racoon/README.certificate	misc-netutil-examples	share
+./usr/share/examples/racoon/README.gssapi	misc-netutil-examples	share
+./usr/share/examples/racoon/README.plainrsa	misc-netutil-examples	share
+./usr/share/examples/racoon/psk.txt.sample	misc-netutil-examples	share
+./usr/share/examples/racoon/racoon.conf.sample	misc-netutil-examples	share
+./usr/share/examples/racoon/racoon.conf.sample-gssapi	misc-netutil-examples	share
+./usr/share/examples/racoon/racoon.conf.sample-inherit	misc-netutil-examples	share
+./usr/share/examples/racoon/racoon.conf.sample-natt	misc-netutil-examples	share
+./usr/share/examples/racoon/racoon.conf.sample-plainrsa	misc-netutil-examples	share
+./usr/share/examples/racoon/roadwarrior/README		misc-netutil-examples	share
+./usr/share/examples/racoon/roadwarrior/client/phase1-down.sh		misc-netutil-examples	share
+./usr/share/examples/racoon/roadwarrior/client/phase1-up.sh		misc-netutil-examples	share
+./usr/share/examples/racoon/roadwarrior/client/racoon.conf		misc-netutil-examples	share
 ./usr/share/examples/racoon/roadwarrior/server/phase1-down.sh	misc-obsolete		obsolete
-./usr/share/examples/racoon/roadwarrior/server/racoon.conf		misc-netutil-examples	crypto,share
-./usr/share/examples/racoon/roadwarrior/server/racoon.conf-radius	misc-netutil-examples	crypto,share
+./usr/share/examples/racoon/roadwarrior/server/racoon.conf		misc-netutil-examples	share
+./usr/share/examples/racoon/roadwarrior/server/racoon.conf-radius	misc-netutil-examples	share
 ./usr/share/examples/rtadvd/rtadvd.conf		misc-router-examples	use_inet6,share
 ./usr/share/examples/smbfs/dot.nsmbrc		misc-sysutil-examples	share
 ./usr/share/examples/supfiles/ftp.cs.umn.edu	misc-obsolete		obsolete

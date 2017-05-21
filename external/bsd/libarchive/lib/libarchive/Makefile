@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/04/22 15:12:59 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2017/05/21 15:28:39 riastradh Exp $
 
 .include <bsd.init.mk>
 
@@ -6,10 +6,8 @@
 
 LIB=		archive
 
-.if ${MKCRYPTO:Uno} == "yes"
 LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
 CPPFLAGS+=	-DHAVE_LIBCRYPTO
-.endif
 
 LIBDPLIBS+=	bz2	${NETBSDSRCDIR}/lib/libbz2 \
 		expat	${NETBSDSRCDIR}/external/mit/expat/lib/libexpat \

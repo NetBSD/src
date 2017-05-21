@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.361 2017/05/21 14:24:05 riastradh Exp $
+#	$NetBSD: bsd.README,v 1.362 2017/05/21 15:28:42 riastradh Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -145,10 +145,6 @@ MKCOMPATX11  	If "yes", build and install the X11 libraries when
 		Default: no
 
 MKCOMPLEX	If "no", don't build libm support for <complex.h>
-		Default: yes
-
-MKCRYPTO	If "no", no cryptography support will be built into the system,
-		and also acts as "MKKERBEROS=no".
 		Default: yes
 
 MKCTF		If "no", do not build and install CTF tools, and also

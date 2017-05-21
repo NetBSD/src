@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.246 2017/02/08 04:18:42 christos Exp $
+# $NetBSD: mi,v 1.247 2017/05/21 15:28:38 riastradh Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -84,7 +84,7 @@
 ./etc/mailer.conf				etc-mailwrapper-etc
 ./etc/man.conf					etc-man-etc
 ./etc/master.passwd				etc-sys-etc
-./etc/moduli					etc-secsh-etc		crypto
+./etc/moduli					etc-secsh-etc
 ./etc/monthly					etc-sys-etc
 ./etc/monthly.conf				etc-sys-etc
 ./etc/motd					etc-sys-etc
@@ -334,9 +334,9 @@
 ./etc/skeykeys					etc-sys-etc
 ./etc/spamd.conf				etc-obsolete		obsolete
 ./etc/spwd.db					etc-sys-etc
-./etc/ssh/ssh_config				etc-secsh-etc		crypto
-./etc/ssh/ssh_known_hosts			etc-secsh-etc		crypto
-./etc/ssh/sshd_config				etc-secsh-etc		crypto
+./etc/ssh/ssh_config				etc-secsh-etc
+./etc/ssh/ssh_known_hosts			etc-secsh-etc
+./etc/ssh/sshd_config				etc-secsh-etc
 ./etc/sysctl.conf				etc-sys-etc
 ./etc/syslog.conf				etc-sys-etc
 ./etc/ttys					etc-sys-etc
