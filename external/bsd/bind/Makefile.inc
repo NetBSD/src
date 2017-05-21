@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2017/01/28 23:34:14 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2017/05/21 15:28:38 riastradh Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -13,11 +13,7 @@ CWARNFLAGS.clang+=	-Wno-unused-value -Wno-parentheses
 
 .include <bsd.own.mk>
 
-.if ${MKCRYPTO} == "no"
-NAMED_USE_OPENSSL?=no
-.else
 NAMED_USE_OPENSSL?=yes
-.endif
 
 .if exists(${NETBSDSRCDIR}/sys/sys/atomic.h)
 NAMED_USE_PTHREADS?=yes

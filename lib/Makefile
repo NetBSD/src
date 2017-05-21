@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.250 2017/02/22 02:58:31 maya Exp $
+#	$NetBSD: Makefile,v 1.251 2017/05/21 15:28:41 riastradh Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -109,12 +109,8 @@ SUBDIR+=        ../external/cddl/osnet/lib/libctf
 .endif
 
 SUBDIR+=	../external/public-domain/xz/lib	# depends on libpthread
-
-.if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/netpgp/libmj
 SUBDIR+=	../crypto/external/bsd/netpgp/lib/verify # depends on libz
-.endif
-
 SUBDIR+=	../external/bsd/blacklist/lib		# depends on libpthread
 SUBDIR+=	../external/bsd/elftoolchain/lib/libdwarf # depends on libelf
 SUBDIR+=	../external/mit/lua/lib # depends on libm
@@ -136,10 +132,7 @@ SUBDIR+=	librumphijack	# depends on librumpclient and libpthread
 SUBDIR+=	libnpf		# depends on libprop
 .endif
 
-.if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/openssl/lib # depends on libcrypt
-.endif
-
 SUBDIR+=	../external/bsd/file/lib	# depends on libz
 
 .if (${MKISCSI} != "no")
@@ -194,7 +187,7 @@ SUBDIR+=	../external/bsd/lutok/lib	# depends on lua and libstdc++
 SUBDIR+=	libform		# depends on libcurses
 SUBDIR+=	libmenu		# depends on libcurses
 SUBDIR+=	libpanel	# depends on libcurses
-SUBDIR+=	libradius	# depends on libcrypto if (${MKCRYPTO} != "no")
+SUBDIR+=	libradius	# depends on libcrypto
 .if (${MKRUMP} != "no")
 SUBDIR+=	librump		# depends on librumpuser
 .endif
@@ -204,11 +197,8 @@ SUBDIR+=	../crypto/external/bsd/heimdal/lib	# depends on libcrypto
 							# libedit, libterminfo,
 .endif
 
-.if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/openssh/lib # depends on libcrypto, libz
 SUBDIR+=	../crypto/external/bsd/netpgp/lib  # depends on libcrypto, ...
-.endif
-
 SUBDIR+=	../external/bsd/libevent/lib	# depends on libcrypto
 .if ${MKDTRACE} != "no"
 SUBDIR+=	../external/bsd/libproc/lib	# depends on libstdc++, libctf
@@ -223,7 +213,7 @@ SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
 SUBDIR+=	.WAIT
 
 SUBDIR+=	../external/bsd/bind/lib	# depends on heimdal, libcrypto
-.if ${MKCRYPTO} != "no" && ${MKUNBOUND} != "no"
+.if ${MKUNBOUND} != "no"
 SUBDIR+=	../external/bsd/unbound/lib	# depends on libcrypto
 .endif
 
@@ -241,10 +231,7 @@ SUBDIR+=	librumpvfs	# depends on librump
 SUBDIR+=	libpam		# depends on heimdal
 .endif
 
-.if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/libsaslc	# depends on heimdal, openssl
-.endif
-
 SUBDIR+=	../external/bsd/mdocml/lib
 
 .if (${MKRUMP} != "no")
@@ -279,6 +266,22 @@ SUBDIR+=	lua
 
 # Needed by rump and rescue which are outside the smbfs tree
 SUBDIR+=	../external/bsd/smbfs/lib
+
+.for S in ${SUBDIR}
+.if ${S} != ".WAIT"
+SUBLIB_${S}!=	cd ${S} && ${MAKE} -V LIB
+SUBDEP_${S}!=	cd ${S} && ${MAKE} -V LIBDPLIBS
+.endif
+.endfor
+
+showdeps:
+.for S in ${SUBDIR}
+.if ${S} != ".WAIT"
+.for DL DD in ${SUBDEP_${S}}
+	@echo ${S} ${SUBLIB_${S}} ${DL} ${DD:C,^${.CURDIR}/,,}
+.endfor
+.endif
+.endfor
 
 .include <bsd.buildinstall.mk>
 .include <bsd.subdir.mk>

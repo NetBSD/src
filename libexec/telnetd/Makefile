@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2017/01/28 23:40:51 christos Exp $
+#	$NetBSD: Makefile,v 1.51 2017/05/21 15:28:41 riastradh Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 
 WARNS?=	4		# XXX: const issues in sys_term.c
@@ -26,10 +26,8 @@ LDADD+= -lkrb5 -lasn1 -lcom_err -lroken -lsqlite3
 DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN} ${LIBSQLITE3}
 .endif
 
-.if (${MKCRYPTO} != "no")
 LDADD+=-ldes -lcrypto -lcrypt
 DPADD+=${LIBDES} ${LIBCRYPTO} ${LIBCRYPT}
-.endif
 
 .if (${USE_PAM} != "no")
 LDADD+= -lpam ${PAM_STATIC_LDADD}

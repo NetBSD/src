@@ -5,10 +5,8 @@
 PROG=	nc
 SRCS=	netcat.c atomicio.c socks.c
 
-#.if ${MKCRYPTO} == "yes"
 #CPPFLAGS+=-DCRYPTO
 #LDADD+= -ltls -lssl -lcrypto
 #DPADD+=  ${LIBTLS} ${LIBSSL} ${LIBCRYPTO}
-#.endif
 
 .include <bsd.prog.mk>

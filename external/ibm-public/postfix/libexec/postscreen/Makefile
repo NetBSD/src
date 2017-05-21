@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/09/25 19:25:08 tron Exp $
+#	$NetBSD: Makefile,v 1.4 2017/05/21 15:28:40 riastradh Exp $
 
 NOMAN=	# defined
 
@@ -18,9 +18,7 @@ SRCS=	postscreen.c postscreen_dict.c postscreen_dnsbl.c \
 DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
 
-.if ${MKCRYPTO} != "no"
 DPADD+= ${LIBPTLS} ${LIBSSL} ${LIBCRYPTO}
 LDADD+= ${LIBPTLS} -lssl -lcrypto
-.endif
 
 .include <bsd.prog.mk>
