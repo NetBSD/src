@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: wargames.sh,v 1.4 2001/09/19 04:54:06 lukem Exp $
+#	$NetBSD: wargames.sh,v 1.5 2017/05/21 16:47:26 leot Exp $
 #
 # Copyright (c) 1985, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 echo -n "Would you like to play a game? "
 read x
 
-x=`echo $x | sed 's/[^a-z0-9]//g'`
+x=`echo $x | sed 's/[^a-z0-9_]//g'`
 
 if [ -f /usr/games/$x ] ; then
 	tput cl
