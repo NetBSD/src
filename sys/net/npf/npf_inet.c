@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.32.2.1 2017/05/12 05:32:12 snj Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.32.2.2 2017/05/22 18:56:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.32.2.1 2017/05/12 05:32:12 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.32.2.2 2017/05/22 18:56:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.32.2.1 2017/05/12 05:32:12 snj Exp $"
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
+#include <netinet6/in6_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet/tcp.h>
