@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.83 2017/05/22 07:23:55 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.84 2017/05/22 07:35:14 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2381,7 +2381,7 @@ ixgbe_update_link_status(struct adapter *adapter)
 	device_t dev = adapter->dev;
 	struct ixgbe_hw *hw = &adapter->hw;
 
-	if (adapter->link_up){ 
+	if (adapter->link_up) {
 		if (adapter->link_active == FALSE) {
 			if (adapter->link_speed == IXGBE_LINK_SPEED_10GB_FULL){
 				/*
@@ -2394,10 +2394,26 @@ ixgbe_update_link_status(struct adapter *adapter)
 				IXGBE_READ_REG(hw, IXGBE_MRFC);
 			}
 
-			if (bootverbose)
-				device_printf(dev,"Link is up %d Gbps %s \n",
-				    ((adapter->link_speed == 128)? 10:1),
-				    "Full Duplex");
+			if (bootverbose) {
+				const char *bpsmsg;
+
+				switch (adapter->link_speed) {
+				case IXGBE_LINK_SPEED_10GB_FULL:
+					bpsmsg = "10 Gbps";
+					break;
+				case IXGBE_LINK_SPEED_1GB_FULL:
+					bpsmsg = "1 Gbps";
+					break;
+				case IXGBE_LINK_SPEED_100_FULL:
+					bpsmsg = "100 Mbps";
+					break;
+				default:
+					bpsmsg = "unknown speed";
+					break;
+				}
+				device_printf(dev,"Link is up %s %s \n",
+				    bpsmsg, "Full Duplex");
+			}
 			adapter->link_active = TRUE;
 			/* Update any Flow Control changes */
 			ixgbe_fc_enable(&adapter->hw);
