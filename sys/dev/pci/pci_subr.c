@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.180 2017/05/09 11:17:07 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.181 2017/05/22 04:21:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.180 2017/05/09 11:17:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.181 2017/05/22 04:21:20 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.180 2017/05/09 11:17:07 msaitoh Exp $
 #endif
 
 static int pci_conf_find_cap(const pcireg_t *, int, unsigned int, int *);
+static void pci_conf_print_pcie_power(uint8_t, unsigned int);
 
 /*
  * Descriptions of known PCI classes and subclasses.
@@ -1651,6 +1652,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	bool check_link = true;
 	bool check_slot = false;
 	bool check_rootport = false;
+	bool check_upstreamport = false;
 	unsigned int pciever;
 	unsigned int i;
 
@@ -1664,9 +1666,11 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	switch ((reg & 0x00f00000) >> 20) {
 	case PCIE_XCAP_TYPE_PCIE_DEV:	/* 0x0 */
 		printf("PCI Express Endpoint device\n");
+		check_upstreamport = true;
 		break;
 	case PCIE_XCAP_TYPE_PCI_DEV:	/* 0x1 */
 		printf("Legacy PCI Express Endpoint device\n");
+		check_upstreamport = true;
 		break;
 	case PCIE_XCAP_TYPE_ROOT:	/* 0x4 */
 		printf("Root Port of PCI Express Root Complex\n");
@@ -1675,6 +1679,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		break;
 	case PCIE_XCAP_TYPE_UP:		/* 0x5 */
 		printf("Upstream Port of PCI Express Switch\n");
+		check_upstreamport = true;
 		break;
 	case PCIE_XCAP_TYPE_DOWN:	/* 0x6 */
 		printf("Downstream Port of PCI Express Switch\n");
@@ -1683,9 +1688,11 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		break;
 	case PCIE_XCAP_TYPE_PCIE2PCI:	/* 0x7 */
 		printf("PCI Express to PCI/PCI-X Bridge\n");
+		check_upstreamport = true;
 		break;
 	case PCIE_XCAP_TYPE_PCI2PCIE:	/* 0x8 */
 		printf("PCI/PCI-X to PCI Express Bridge\n");
+		/* Upstream port is not PCIe */
 		check_slot = true;
 		break;
 	case PCIE_XCAP_TYPE_ROOT_INTEP:	/* 0x9 */
@@ -1735,10 +1742,12 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("Attention Indicator Present", reg, PCIE_DCAP_ATTN_IND);
 	onoff("Power Indicator Present", reg, PCIE_DCAP_PWR_IND);
 	onoff("Role-Based Error Report", reg, PCIE_DCAP_ROLE_ERR_RPT);
-	printf("      Captured Slot Power Limit Value: %u\n",
-	    (unsigned int)__SHIFTOUT(reg, PCIE_DCAP_SLOT_PWR_LIM_VAL));
-	printf("      Captured Slot Power Limit Scale: %u\n",
-	    (unsigned int)__SHIFTOUT(reg, PCIE_DCAP_SLOT_PWR_LIM_SCALE));
+	if (check_upstreamport) {
+		printf("      Captured Slot Power Limit: ");
+		pci_conf_print_pcie_power(
+			__SHIFTOUT(reg, PCIE_DCAP_SLOT_PWR_LIM_VAL),
+			__SHIFTOUT(reg, PCIE_DCAP_SLOT_PWR_LIM_SCALE));
+	}
 	onoff("Function-Level Reset Capability", reg, PCIE_DCAP_FLR);
 
 	/* Device Control Register */
@@ -1882,10 +1891,9 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		onoff("Power Indicator Present", reg, PCIE_SLCAP_PIP);
 		onoff("Hot-Plug Surprise", reg, PCIE_SLCAP_HPS);
 		onoff("Hot-Plug Capable", reg, PCIE_SLCAP_HPC);
-		printf("      Slot Power Limit Value: %d\n",
-		    (unsigned int)(reg & PCIE_SLCAP_SPLV) >> 7);
-		printf("      Slot Power Limit Scale: %d\n",
-		    (unsigned int)(reg & PCIE_SLCAP_SPLS) >> 15);
+		printf("      Slot Power Limit Value: ");
+		pci_conf_print_pcie_power(__SHIFTOUT(reg, PCIE_SLCAP_SPLV),
+		    __SHIFTOUT(reg, PCIE_SLCAP_SPLS));
 		onoff("Electromechanical Interlock Present", reg,
 		    PCIE_SLCAP_EIP);
 		onoff("No Command Completed Support", reg, PCIE_SLCAP_NCCS);
@@ -2700,40 +2708,47 @@ pci_conf_print_vc_cap(const pcireg_t *regs, int capoff, int extcapoff)
 		    "  VC", varbsel, varbsize);
 }
 
+/*
+ * Print Power limit. This encoding is the same among the following registers:
+ *  - The Captured Slot Power Limit in the PCIe Device Capability Register.
+ *  - The Slot Power Limit in the PCIe Slot Capability Register.
+ *  - The Base Power in the Data register of Power Budgeting capability.
+ */
 static void
-pci_conf_print_pwrbdgt_base_power(uint8_t base, unsigned int scale)
+pci_conf_print_pcie_power(uint8_t base, unsigned int scale)
 {
-	if (base <= 0xef) {
-		unsigned int sdiv = 1;
-		for (unsigned int i = scale; i > 0; i--)
-			sdiv *= 10;
+	unsigned int sdiv = 1;
 
-		printf("%u", base / sdiv);
+	if ((scale == 0) && (base > 0xef)) {
+		const char *s;
 
-		if (scale != 0) {
-			printf(".%u", base % sdiv);
+		switch (base) {
+		case 0xf0:
+			s = "239W < x <= 250W";
+			break;
+		case 0xf1:
+			s = "250W < x <= 275W";
+			break;
+		case 0xf2:
+			s = "275W < x <= 300W";
+			break;
+		default:
+			s = "reserved for above 300W";
+			break;
 		}
-		printf ("W\n");
-		return;
+		printf("%s\n", s);
 	}
 
-	const char *s;
+	for (unsigned int i = scale; i > 0; i--)
+		sdiv *= 10;
 
-	switch (base) {
-	case 0xf0:
-		s = "239W < x <= 250W";
-		break;
-	case 0xf1:
-		s = "250W < x <= 275W";
-		break;
-	case 0xf2:
-		s = "275W < x <= 300W";
-		break;
-	default:
-		s = "reserved for above 300W";
-		break;
+	printf("%u", base / sdiv);
+
+	if (scale != 0) {
+		printf(".%u", base % sdiv);
 	}
-	printf("%s\n", s);
+	printf ("W\n");
+	return;
 }
 
 static const char *
@@ -2782,7 +2797,6 @@ static void
 pci_conf_print_pwrbdgt_cap(const pcireg_t *regs, int capoff, int extcapoff)
 {
 	pcireg_t reg;
-	unsigned int scale;
 
 	printf("\n  Power Budgeting\n");
 
@@ -2791,9 +2805,10 @@ pci_conf_print_pwrbdgt_cap(const pcireg_t *regs, int capoff, int extcapoff)
 
 	reg = regs[o2i(extcapoff + PCI_PWRBDGT_DATA)];
 	printf("    Data register: 0x%08x\n", reg);
-	scale = __SHIFTOUT(reg, PCI_PWRBDGT_DATA_SCALE);
 	printf("      Base Power: ");
-	pci_conf_print_pwrbdgt_base_power((uint8_t)reg, scale);
+	pci_conf_print_pcie_power(
+	    __SHIFTOUT(reg, PCI_PWRBDGT_DATA_BASEPWR),
+	    __SHIFTOUT(reg, PCI_PWRBDGT_DATA_SCALE));
 	printf("      PM Sub State: 0x%hhx\n",
 	    (uint8_t)__SHIFTOUT(reg, PCI_PWRBDGT_PM_SUBSTAT));
 	printf("      PM State: D%u\n",
