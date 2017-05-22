@@ -1,4 +1,4 @@
-/*	$NetBSD: if_canloop.c,v 1.1.2.6 2017/04/24 13:38:33 bouyer Exp $	*/
+/*	$NetBSD: if_canloop.c,v 1.1.2.7 2017/05/22 16:11:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.1.2.6 2017/04/24 13:38:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.1.2.7 2017/05/22 16:11:23 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_can.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.1.2.6 2017/04/24 13:38:33 bouyer Ex
 #ifdef	CAN
 #include <netcan/can.h>
 #endif
-#include <net/bpf.h>
 
 void canloopattach(int);
 void canloopinit(void);
@@ -116,9 +115,7 @@ canloop_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_extflags = IFEF_OUTPUT_MPSAFE;
 	ifp->if_ioctl = canloop_ioctl;
 	ifp->if_start = canloop_ifstart;
-	if_attach(ifp);
 	can_ifattach(ifp);
-	bpf_attach(ifp, DLT_CAN_SOCKETCAN, 0);
 #ifdef MBUFTRACE
 	ifp->if_mowner = malloc(sizeof(struct mowner), M_DEVBUF,
 	    M_WAITOK | M_ZERO);
@@ -140,8 +137,7 @@ canloop_clone_destroy(struct ifnet *ifp)
 	free(ifp->if_mowner, M_DEVBUF);
 #endif
 
-	bpf_detach(ifp);
-	if_detach(ifp);
+	can_ifdetach(ifp);
 
 	if_free(ifp);
 	canloop_count--;
@@ -166,7 +162,7 @@ canloop_ifstart(struct ifnet *ifp)
 			panic("canloop_output: no header mbuf");
 		m_set_rcvif(m, ifp);
 		if (ifp->if_flags & IFF_LOOPBACK)
-			bpf_mtap(ifp, m);
+			can_bpf_mtap(ifp, m);
 
 		pktlen = m->m_pkthdr.len;
 		ifp->if_opackets++;

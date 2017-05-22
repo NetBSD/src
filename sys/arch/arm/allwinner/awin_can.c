@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_can.c,v 1.1.2.5 2017/04/21 13:08:55 bouyer Exp $	*/
+/*	$NetBSD: awin_can.c,v 1.1.2.6 2017/05/22 16:11:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.5 2017/04/21 13:08:55 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.6 2017/05/22 16:11:23 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.5 2017/04/21 13:08:55 bouyer Exp 
 #include <netcan/can.h>
 #include <netcan/can_var.h>
 #endif
-#include <net/bpf.h>
 
 #include <arm/allwinner/awin_reg.h>
 #include <arm/allwinner/awin_var.h>
@@ -209,9 +208,7 @@ awin_can_attach(device_t parent, device_t self, void *aux)
 	/*      
 	 * Attach the interface.
 	 */
-	if_attach(ifp);
 	can_ifattach(ifp);
-	bpf_attach(ifp, DLT_CAN_SOCKETCAN, 0);
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 #ifdef MBUFTRACE
@@ -278,7 +275,7 @@ awin_can_rx_intr(struct awin_can_softc *sc)
 	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_len;
 	m_set_rcvif(m, ifp);
-	bpf_mtap(ifp, m);
+	can_bpf_mtap(ifp, m);
 	can_input(ifp, m);
 }
 
@@ -352,7 +349,7 @@ awin_can_tx_intr(struct awin_can_softc *sc)
 	}
 	ifp->if_flags |= IFF_OACTIVE;
 	ifp->if_timer = 5;
-	bpf_mtap(ifp, m);
+	can_bpf_mtap(ifp, m);
 }
 
 static int
