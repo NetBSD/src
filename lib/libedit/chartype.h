@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.34 2016/05/09 21:46:56 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.35 2017/05/22 19:16:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -33,7 +33,12 @@
  * supports non-BMP code points without requiring UTF-16, but nothing
  * seems to actually advertise this properly, despite Unicode 3.1 having
  * been around since 2001... */
-#if !defined(__NetBSD__) && !defined(__sun) && !(defined(__APPLE__) && defined(__MACH__)) && !defined(__OpenBSD__) && !defined(__FreeBSD__)
+#if	!defined(__NetBSD__) && \
+	!defined(__sun) && \
+	!(defined(__APPLE__) && defined(__MACH__)) && \
+	!defined(__OpenBSD__) && \
+	!defined(__FreeBSD__) && \
+	!defined(__DragonFly__)
 #ifndef __STDC_ISO_10646__
 /* In many places it is assumed that the first 127 code points are ASCII
  * compatible, so ensure wchar_t indeed does ISO 10646 and not some other
