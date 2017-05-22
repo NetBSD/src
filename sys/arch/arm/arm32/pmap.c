@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.346 2017/05/21 07:06:51 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.347 2017/05/22 06:35:04 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.346 2017/05/21 07:06:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.347 2017/05/22 06:35:04 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -4833,14 +4833,15 @@ pmap_activate(struct lwp *l)
 	pmap_t rpm = ci->ci_pmap_lastuser;
 #endif
 
-/*
- * XXXSCW: There's a corner case here which can leave turds in the cache as
- * reported in kern/41058. They're probably left over during tear-down and
- * switching away from an exiting process. Until the root cause is identified
- * and fixed, zap the cache when switching pmaps. This will result in a few
- * unnecessary cache flushes, but that's better than silently corrupting data.
- */
 #ifndef ARM_MMU_EXTENDED
+	/*
+	 * XXXSCW: There's a corner case here which can leave turds in the
+	 * cache as reported in kern/41058. They're probably left over during
+	 * tear-down and switching away from an exiting process. Until the root
+	 * cause is identified and fixed, zap the cache when switching pmaps.
+	 * This will result in a few unnecessary cache flushes, but that's
+	 * better than silently corrupting data.
+	 */
 #if 0
 	if (npm != pmap_kernel() && rpm && npm != rpm &&
 	    rpm->pm_cstate.cs_cache) {
