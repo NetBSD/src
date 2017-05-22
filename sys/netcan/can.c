@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.1.2.13 2017/04/23 21:05:09 bouyer Exp $	*/
+/*	$NetBSD: can.c,v 1.1.2.14 2017/05/22 16:11:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.13 2017/04/23 21:05:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.14 2017/05/22 16:11:23 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.13 2017/04/23 21:05:09 bouyer Exp $");
 #include <net/if_types.h>
 #include <net/netisr.h>
 #include <net/route.h>
+#include <net/bpf.h> 
 
 #include <netcan/can.h>
 #include <netcan/can_pcb.h>
@@ -192,7 +193,9 @@ can_purgeif(struct socket *so, struct ifnet *ifp)
 }
 
 void
-can_ifattach(struct ifnet *ifp) {
+can_ifattach(struct ifnet *ifp)
+{
+	if_attach(ifp);
 	ifp->if_mtu = sizeof(struct can_frame);
 	ifp->if_type = IFT_OTHER;
 	ifp->if_hdrlen = 0;
@@ -201,6 +204,14 @@ can_ifattach(struct ifnet *ifp) {
 	ifp->if_output = NULL; /* unused */
 	IFQ_SET_READY(&ifp->if_snd);
 	if_alloc_sadl(ifp);
+	bpf_attach(ifp, DLT_CAN_SOCKETCAN, 0);
+}
+
+void
+can_ifdetach(struct ifnet *ifp)
+{
+	bpf_detach(ifp);
+	if_detach(ifp);
 }
 
 void
@@ -402,6 +413,20 @@ canintr(void)
 		}
 	}
 	mutex_exit(softnet_lock);
+}
+
+void
+can_bpf_mtap(struct ifnet *ifp, struct mbuf *m)
+{
+	/* bpf wants the CAN id in network byte order */
+	struct can_frame *cf;
+	canid_t oid;
+
+	cf = mtod(m, struct can_frame *);
+	oid = cf->can_id;
+	cf->can_id = htonl(oid);
+	bpf_mtap(ifp, m);
+	cf->can_id = oid;
 }
 
 static int
