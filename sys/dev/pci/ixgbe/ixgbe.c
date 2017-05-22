@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.82 2017/05/18 08:27:19 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.83 2017/05/22 07:23:55 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2379,9 +2379,21 @@ ixgbe_update_link_status(struct adapter *adapter)
 {
 	struct ifnet	*ifp = adapter->ifp;
 	device_t dev = adapter->dev;
+	struct ixgbe_hw *hw = &adapter->hw;
 
 	if (adapter->link_up){ 
 		if (adapter->link_active == FALSE) {
+			if (adapter->link_speed == IXGBE_LINK_SPEED_10GB_FULL){
+				/*
+				 *  Discard count for both MAC Local Fault and
+				 * Remote Fault because those registers are
+				 * valid only when the link speed is up and
+				 * 10Gbps.
+				 */
+				IXGBE_READ_REG(hw, IXGBE_MLFC);
+				IXGBE_READ_REG(hw, IXGBE_MRFC);
+			}
+
 			if (bootverbose)
 				device_printf(dev,"Link is up %d Gbps %s \n",
 				    ((adapter->link_speed == 128)? 10:1),
@@ -4352,8 +4364,13 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		
 	}
 	stats->mpctotal.ev_count += total_missed_rx;
-	stats->mlfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MLFC);
-	stats->mrfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MRFC);
+
+	/* Document says M[LR]FC are valid when link is up and 10Gbps */
+	if ((adapter->link_active == TRUE)
+	    && (adapter->link_speed == IXGBE_LINK_SPEED_10GB_FULL)) {
+		stats->mlfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MLFC);
+		stats->mrfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MRFC);
+	}
 	rlec = IXGBE_READ_REG(hw, IXGBE_RLEC);
 	stats->rlec.ev_count += rlec;
 
