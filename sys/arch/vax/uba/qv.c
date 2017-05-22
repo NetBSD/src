@@ -1,4 +1,4 @@
-/*$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.32 2016/07/07 06:55:39 msaitoh Exp $*/
+/*$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.33 2017/05/22 17:15:45 ragge Exp $*/
 /*
  * Copyright (c) 2015 Charles H. Dickman. All rights reserved.
  * Derived from smg.c
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed at Ludd, University of 
- *	Lule}, Sweden and its contributors.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -35,7 +31,7 @@
 /*3456789012345678901234567890123456789012345678901234567890123456789012345678*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.32 2016/07/07 06:55:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.33 2017/05/22 17:15:45 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
