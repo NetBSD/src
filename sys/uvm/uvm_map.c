@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.349 2017/05/20 07:27:15 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.350 2017/05/23 22:18:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.349 2017/05/20 07:27:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.350 2017/05/23 22:18:17 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1326,8 +1326,8 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 		KASSERT(flags & UVM_FLAG_FIXED);
 		uvm_unmap_remove(map, start, start + size, &dead_entries, 0);
 #ifdef DEBUG
-		struct vm_map_entry *tmp_entry;
-		bool rv;
+		struct vm_map_entry *tmp_entry __diagused;
+		bool rv __diagused;
 
 		rv = uvm_map_lookup_entry(map, start, &tmp_entry);
 		KASSERT(!rv);
