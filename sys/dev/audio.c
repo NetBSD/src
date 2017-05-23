@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.351 2017/05/16 23:55:53 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.352 2017/05/23 07:57:26 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.351 2017/05/16 23:55:53 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.352 2017/05/23 07:57:26 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1191,9 +1191,8 @@ audio_alloc_ring(struct audio_softc *sc, struct audio_ringbuffer *r,
 	if (bufsize < AUMINBUF)
 		bufsize = AUMINBUF;
 	ROUNDSIZE(bufsize);
-	if (hw->round_buffersize) {
+	if (hw->round_buffersize)
 		bufsize = hw->round_buffersize(hdl, direction, bufsize);
-	}
 
 	if (hw->allocm && (r == &chan->vc->sc_mpr || r == &chan->vc->sc_mrr)) {
 		/* Hardware ringbuffer.	 No dedicated uvm object.*/
@@ -1215,16 +1214,16 @@ audio_alloc_ring(struct audio_softc *sc, struct audio_ringbuffer *r,
 		error = uvm_map(kernel_map, &vstart, vsize, r->uobj, 0, 0,
 		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
 			UVM_ADV_RANDOM, 0));
-		if (error)
-			goto bad_map;
+		if (error) {
+			uao_detach(r->uobj);	/* release reference */
+			r->uobj = NULL;		/* paranoia */
+			return error;
+		}
 
 		error = uvm_map_pageable(kernel_map, vstart, vstart + vsize,
 		    false, 0);
-
 		if (error) {
-			uvm_unmap(kernel_map, vstart, vsize);
-bad_map:
-			uao_detach(r->uobj);	/* release reference */
+			uvm_unmap(kernel_map, vstart, vstart + vsize);
 			r->uobj = NULL;		/* paranoia */
 			return error;
 		}
@@ -1254,14 +1253,18 @@ audio_free_ring(struct audio_softc *sc, struct audio_ringbuffer *r)
 		KASSERT(r->uobj == NULL);
 		sc->hw_if->freem(sc->hw_hdl, r->s.start, r->s.bufsize);
 	} else {
-				/* Software ringbuffer.	 */
+		/* Software ringbuffer.  */
 		vstart = (vaddr_t)r->s.start;
 		vsize = roundup2(MAX(r->s.bufsize, PAGE_SIZE), PAGE_SIZE);
 
-		uvm_map_pageable(kernel_map, vstart, vstart + vsize,
-		    true, 0);
-		uvm_unmap(kernel_map, vstart, vsize);
-		uao_detach(r->uobj);	/* release reference */
+		/*
+		 * Unmap the kernel mapping.  uvm_unmap releases the
+		 * reference to the uvm object, and this should be the
+		 * last virtual mapping of the uvm object, so no need
+		 * to explicitly release (`detach') the object.
+		 */
+		uvm_unmap(kernel_map, vstart, vstart + vsize);
+
 		r->uobj = NULL;		/* paranoia */
 	}
 
