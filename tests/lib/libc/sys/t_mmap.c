@@ -1,4 +1,4 @@
-/* $NetBSD: t_mmap.c,v 1.12 2017/01/16 16:31:05 christos Exp $ */
+/* $NetBSD: t_mmap.c,v 1.13 2017/05/23 13:04:29 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.12 2017/01/16 16:31:05 christos Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.13 2017/05/23 13:04:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -178,13 +178,18 @@ ATF_TC_BODY(mmap_block, tc)
 	ATF_REQUIRE(drives != NULL);
 	ATF_REQUIRE(sysctl(mib, miblen, drives, &len, NULL, 0) == 0);
 	for (dk = strtok(drives, " "); dk != NULL; dk = strtok(NULL, " ")) {
-		sprintf(dev, _PATH_DEV "%s%c", dk, 'a'+RAW_PART);
+		if (strncmp(dk, "dk", 2) == 0)
+			snprintf(dev, sizeof(dev), _PATH_DEV "%s", dk);
+		else
+			snprintf(dev, sizeof(dev), _PATH_DEV "%s%c", dk,
+			    'a' + RAW_PART);
 		fprintf(stderr, "trying: %s\n", dev);
 
 		if ((fd = open(dev, O_RDONLY)) >= 0) {
 			(void)fprintf(stderr, "using %s\n", dev);
 			break;
-		}
+		} else
+			(void)fprintf(stderr, "%s: %s\n", dev, strerror(errno));
 	}
 	free(drives);
 
@@ -192,7 +197,7 @@ ATF_TC_BODY(mmap_block, tc)
 		atf_tc_skip("failed to find suitable block device");
 
 	map = mmap(NULL, 4096, PROT_READ, MAP_FILE, fd, 0);
-	ATF_REQUIRE(map != MAP_FAILED);
+	ATF_REQUIRE_MSG(map != MAP_FAILED, "mmap: %s", strerror(errno));
 
 	(void)fprintf(stderr, "first byte %x\n", *map);
 	ATF_REQUIRE(close(fd) == 0);
