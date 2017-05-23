@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.139 2017/05/23 04:26:08 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.140 2017/05/23 09:08:45 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.139 2017/05/23 04:26:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.140 2017/05/23 09:08:45 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -3478,7 +3478,7 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 		goto fail;
 	result = m;
 
-	for (i = sizeof(dumporder)/sizeof(dumporder[0]) - 1; i >= 0; i--) {
+	for (i = __arraycount(dumporder) - 1; i >= 0; i--) {
 		m = NULL;
 		p = NULL;
 		switch (dumporder[i]) {
@@ -6615,7 +6615,7 @@ key_register(struct socket *so, struct mbuf *m,
 	KASSERT(mhp->msg != NULL);
 
 	/* check for invalid register message */
-	if (mhp->msg->sadb_msg_satype >= sizeof(regtree)/sizeof(regtree[0]))
+	if (mhp->msg->sadb_msg_satype >= __arraycount(regtree))
 		return key_senderror(so, m, EINVAL);
 
 	/* When SATYPE_UNSPEC is specified, only return sabd_supported. */
@@ -7470,7 +7470,7 @@ key_parse(struct mbuf *m, struct socket *so)
 		 */
 	}
 
-	if (msg->sadb_msg_type >= sizeof(key_typesw)/sizeof(key_typesw[0]) ||
+	if (msg->sadb_msg_type >= __arraycount(key_typesw) ||
 	    key_typesw[msg->sadb_msg_type] == NULL) {
 		PFKEY_STATINC(PFKEY_STAT_OUT_INVMSGTYPE);
 		error = EINVAL;
@@ -7619,8 +7619,8 @@ key_validate_ext(const struct sadb_ext *ext, int len)
 		return EINVAL;
 
 	/* if it does not match minimum/maximum length, bail */
-	if (ext->sadb_ext_type >= sizeof(minsize) / sizeof(minsize[0]) ||
-	    ext->sadb_ext_type >= sizeof(maxsize) / sizeof(maxsize[0]))
+	if (ext->sadb_ext_type >= __arraycount(minsize) ||
+	    ext->sadb_ext_type >= __arraycount(maxsize))
 		return EINVAL;
 	if (!minsize[ext->sadb_ext_type] || len < minsize[ext->sadb_ext_type])
 		return EINVAL;
