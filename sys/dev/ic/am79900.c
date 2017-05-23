@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.25 2017/05/23 02:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: am79900.c,v 1.26 2017/05/23 04:51:31 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.25 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.26 2017/05/23 04:51:31 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ am79900_config(struct am79900_softc *sc)
 	sc->lsc.sc_start = am79900_start;
 
 	lance_config(&sc->lsc);
-	if_deferred_start_init(ifp, NULL);
+	if_deferred_start_init(&sc->lsc.sc_ethercom.ec_if, NULL);
 
 	mem = 0;
 	sc->lsc.sc_initaddr = mem;
