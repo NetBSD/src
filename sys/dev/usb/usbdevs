@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.734 2017/05/04 14:21:01 hauke Exp $
+$NetBSD: usbdevs,v 1.735 2017/05/23 00:29:20 khorben Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -321,6 +321,7 @@ vendor STSN		0x07ef	STSN
 vendor CENTURY		0x07f7	CENTURY Corporation
 vendor BEWAN		0x07fa	Bewan
 vendor ZOOM		0x0803	Zoom Telephonics
+vendor SYNET		0x0812	Synet Electronics
 vendor BROADLOGIC	0x0827	BroadLogic
 vendor HANDSPRING	0x082d	Handspring
 vendor PALM		0x0830	Palm Computing
@@ -3195,6 +3196,9 @@ product SWEEX2 LW153		0x0153	LW153
 product SWEEX2 LW154		0x0154	LW154
 product SWEEX2 LW303		0x0302	LW303
 product SWEEX2 LW313		0x0313	LW313
+
+/* Synet Electronics products */
+product SYNET MWP54SS		0x3101	MW-P54SS USB Wireless Broadband Router
 
 /* System TALKS, Inc. */
 product SYSTEMTALKS SGCX2UL	0x1920	SGC-X2UL
