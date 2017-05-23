@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1280 2017/05/08 07:38:56 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1281 2017/05/23 07:13:11 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1288 2017/05/08 07:34:33 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1289 2017/05/23 07:12:56 nonaka Exp
  */
 
 /*
@@ -968,6 +968,32 @@
 #define	PCI_PRODUCT_AMD_AMD64_F11_DRAM	0x1302		/* AMD64 Family11h DRAM Configuration */
 #define	PCI_PRODUCT_AMD_AMD64_F11_MISC	0x1303		/* AMD64 Family11h Miscellaneous Configuration */
 #define	PCI_PRODUCT_AMD_AMD64_F11_LINK	0x1304		/* AMD64 Family11h Link Configuration */
+#define	PCI_PRODUCT_AMD_F15_10_PF_0	0x1400		/* Family15h Processor Function 0 */
+#define	PCI_PRODUCT_AMD_F15_10_PF_1	0x1401		/* Family15h Processor Function 1 */
+#define	PCI_PRODUCT_AMD_F15_10_PF_2	0x1402		/* Family15h Processor Function 2 */
+#define	PCI_PRODUCT_AMD_F15_10_PF_3	0x1403		/* Family15h Processor Function 3 */
+#define	PCI_PRODUCT_AMD_F15_10_PF_4	0x1404		/* Family15h Processor Function 4 */
+#define	PCI_PRODUCT_AMD_F15_10_PF_5	0x1405		/* Family15h Processor Function 5 */
+#define	PCI_PRODUCT_AMD_F15_10_RC	0x1410		/* Family15h Root Complex */
+#define	PCI_PRODUCT_AMD_F15_10_RP_2	0x1412		/* Family15h Root Port */
+#define	PCI_PRODUCT_AMD_F15_10_RP_3	0x1413		/* Family15h Root Port */
+#define	PCI_PRODUCT_AMD_F15_10_RP_4	0x1414		/* Family15h Root Port */
+#define	PCI_PRODUCT_AMD_F15_10_RP_5	0x1415		/* Family15h Root Port */
+#define	PCI_PRODUCT_AMD_F15_10_RP_6	0x1416		/* Family15h Root Port */
+#define	PCI_PRODUCT_AMD_F15_10_RP_7	0x1417		/* Family15h Root Port */
+#define	PCI_PRODUCT_AMD_F15_10_RP_8	0x1418		/* Family15h Root Port */
+#define	PCI_PRODUCT_AMD_F15_10_IOMMU	0x1419		/* Family15h IOMMU */
+#define	PCI_PRODUCT_AMD_F15_30_PF_0	0x141a		/* Family15h Processor Function 0 */
+#define	PCI_PRODUCT_AMD_F15_30_PF_1	0x141b		/* Family15h Processor Function 1 */
+#define	PCI_PRODUCT_AMD_F15_30_PF_2	0x141c		/* Family15h Processor Function 2 */
+#define	PCI_PRODUCT_AMD_F15_30_PF_3	0x141d		/* Family15h Processor Function 3 */
+#define	PCI_PRODUCT_AMD_F15_30_PF_4	0x141e		/* Family15h Processor Function 4 */
+#define	PCI_PRODUCT_AMD_F15_30_PF_5	0x141f		/* Family15h Processor Function 5 */
+#define	PCI_PRODUCT_AMD_F15_30_RC	0x1422		/* Family15h Root Complex */
+#define	PCI_PRODUCT_AMD_F15_30_IOMMU	0x1423		/* Family15h IOMMU */
+#define	PCI_PRODUCT_AMD_F15_30_HB	0x1424		/* Family15h Host Bridge */
+#define	PCI_PRODUCT_AMD_F15_30_RP_5	0x1425		/* Family15h Root Port */
+#define	PCI_PRODUCT_AMD_F15_30_RP_6	0x1426		/* Family15h Root Port */
 #define	PCI_PRODUCT_AMD_F16_GPPB	0x1439		/* Family16h GPP Bridge */
 #define	PCI_PRODUCT_AMD_F14_RC	0x1510		/* Family14h Root Complex */
 #define	PCI_PRODUCT_AMD_F16_HT	0x1530		/* Family16h HyperTransport Configuration */
@@ -982,6 +1008,18 @@
 #define	PCI_PRODUCT_AMD_F16_30_IOMMU	0x1567		/* Family16h IOMMU */
 #define	PCI_PRODUCT_AMD_F16_HB	0x1568		/* Family16h Host Bridge */
 #define	PCI_PRODUCT_AMD_F16_30_HB	0x156b		/* Family16h Host Bridge */
+#define	PCI_PRODUCT_AMD_F15_60_PF_0	0x1570		/* Family15h Processor Function 0 */
+#define	PCI_PRODUCT_AMD_F15_60_PF_1	0x1571		/* Family15h Processor Function 1 */
+#define	PCI_PRODUCT_AMD_F15_60_PF_2	0x1572		/* Family15h Processor Function 2 */
+#define	PCI_PRODUCT_AMD_F15_60_PF_3	0x1573		/* Family15h Processor Function 3 */
+#define	PCI_PRODUCT_AMD_F15_60_PF_4	0x1574		/* Family15h Processor Function 4 */
+#define	PCI_PRODUCT_AMD_F15_60_PF_5	0x1575		/* Family15h Processor Function 5 */
+#define	PCI_PRODUCT_AMD_F15_60_RC	0x1576		/* Family15h Root Complex */
+#define	PCI_PRODUCT_AMD_F15_60_IOMMU	0x1577		/* Family15h IOMMU */
+#define	PCI_PRODUCT_AMD_F15_60_PSP	0x1578		/* Family15h PSP */
+#define	PCI_PRODUCT_AMD_F15_60_AC	0x157a		/* Family15h Audio Controller */
+#define	PCI_PRODUCT_AMD_F15_60_HB	0x157b		/* Family15h Host Bridge */
+#define	PCI_PRODUCT_AMD_F15_60_RP	0x157c		/* Family15h Root Port */
 #define	PCI_PRODUCT_AMD_F16_30_HT	0x1580		/* Family16h HyperTransport Configuration */
 #define	PCI_PRODUCT_AMD_F16_30_ADDR	0x1581		/* Family16h Address Map Configuration */
 #define	PCI_PRODUCT_AMD_F16_30_DRAM	0x1582		/* Family16h DRAM Configuration */
