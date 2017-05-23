@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.10 2016/12/15 09:28:04 ozaki-r Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.11 2017/05/23 02:19:14 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.10 2016/12/15 09:28:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.11 2017/05/23 02:19:14 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -384,8 +384,8 @@ cemac_intr(void *arg)
 		}
 	}
 
-	if (cemac_gctx(sc) > 0 && IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		cemac_ifstart(ifp);
+	if (cemac_gctx(sc) > 0)
+		if_schedule_deferred_start(ifp);
 #if 0 // reloop
 	irq = CEMAC_READ(IntStsC);
 	if ((irq & (IntSts_RxSQ|IntSts_ECI)) != 0)
@@ -621,6 +621,7 @@ cemac_init(struct cemac_softc *sc)
 	ifp->if_softc = sc;
         IFQ_SET_READY(&ifp->if_snd);
         if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
         ether_ifattach(ifp, (sc)->sc_enaddr);
 }
 
