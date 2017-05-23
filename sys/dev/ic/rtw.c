@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.125 2017/02/02 10:05:35 nonaka Exp $ */
+/* $NetBSD: rtw.c,v 1.126 2017/05/23 02:19:14 ozaki-r Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.125 2017/02/02 10:05:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.126 2017/05/23 02:19:14 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1858,7 +1858,7 @@ rtw_intr_tx(struct rtw_softc *sc, uint16_t isr)
 	}
 
 	if ((isr & RTW_INTR_TX) != 0)
-		rtw_start(ifp);
+		rtw_start(ifp); /* in softint */
 
 	splx(s);
 }
@@ -1915,7 +1915,7 @@ rtw_intr_beacon(struct rtw_softc *sc, uint16_t isr)
 		}
 		M_SETCTX(m, ieee80211_ref_node(ic->ic_bss));
 		IF_ENQUEUE(&sc->sc_beaconq, m);
-		rtw_start(&sc->sc_if);
+		rtw_start(&sc->sc_if); /* in softint */
 	}
 
 	splx(s);

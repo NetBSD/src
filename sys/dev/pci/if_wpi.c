@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.77 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.78 2017/05/23 02:19:14 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.77 2017/02/02 10:05:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.78 2017/05/23 02:19:14 ozaki-r Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -1665,7 +1665,7 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 
 	sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	wpi_start(ifp);
+	wpi_start(ifp); /* in softint */
 
 	splx(s);
 }

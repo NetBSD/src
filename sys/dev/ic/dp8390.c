@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.86 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.87 2017/05/23 02:19:14 ozaki-r Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.86 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.87 2017/05/23 02:19:14 ozaki-r Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -151,6 +151,7 @@ dp8390_config(struct dp8390_softc *sc)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
@@ -786,7 +787,7 @@ dp8390_intr(void *arg)
 		 * to start output on the interface.  This is done after
 		 * handling the receiver to give the receiver priority.
 		 */
-		dp8390_start(ifp);
+		if_schedule_deferred_start(ifp);
 
 		/*
 		 * Return NIC CR to standard state: page 0, remote DMA

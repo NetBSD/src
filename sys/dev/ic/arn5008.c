@@ -1,4 +1,4 @@
-/*	$NetBSD: arn5008.c,v 1.12 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: arn5008.c,v 1.13 2017/05/23 02:19:14 ozaki-r Exp $	*/
 /*	$OpenBSD: ar5008.c,v 1.21 2012/08/25 12:14:31 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.12 2017/02/02 10:05:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.13 2017/05/23 02:19:14 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1056,7 +1056,7 @@ ar5008_tx_intr(struct athn_softc *sc)
 	}
 	if (!SIMPLEQ_EMPTY(&sc->sc_txbufs)) {
 		ifp->if_flags &= ~IFF_OACTIVE;
-		ifp->if_start(ifp);
+		ifp->if_start(ifp); /* in softint */
 	}
 
 	splx(s);

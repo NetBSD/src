@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.34 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.35 2017/05/23 02:19:14 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.34 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.35 2017/05/23 02:19:14 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -283,6 +283,7 @@ sf_attach(struct sf_softc *sc)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	/*
@@ -605,7 +606,7 @@ sf_intr(void *arg)
 			sf_init(&sc->sc_ethercom.ec_if);
 
 		/* Try and get more packets going. */
-		sf_start(&sc->sc_ethercom.ec_if);
+		if_schedule_deferred_start(&sc->sc_ethercom.ec_if);
 	}
 
 	return (handled);

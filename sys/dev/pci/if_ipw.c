@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.63 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.64 2017/05/23 02:19:14 ozaki-r Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.63 2017/02/02 10:05:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.64 2017/05/23 02:19:14 ozaki-r Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1242,7 +1242,7 @@ ipw_tx_intr(struct ipw_softc *sc)
 
 	/* Call start() since some buffer descriptors have been released */
 	ifp->if_flags &= ~IFF_OACTIVE;
-	ipw_start(ifp);
+	ipw_start(ifp); /* in softint */
 
 	splx(s);
 }

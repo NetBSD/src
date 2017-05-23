@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.39 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.40 2017/05/23 02:19:14 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.39 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.40 2017/05/23 02:19:14 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -212,6 +212,7 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	/*
@@ -612,7 +613,7 @@ sonic_intr(void *arg)
 	if (handled) {
 		if (wantinit)
 			(void)sonic_init(ifp);
-		sonic_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 
 	return handled;

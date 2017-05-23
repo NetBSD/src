@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.25 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.26 2017/05/23 02:19:14 ozaki-r Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$FreeBSD: head/sys/dev/ral/rt2860.c 306591 2016-10-02 20:35:55Z avos $ */
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.25 2017/02/02 10:05:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.26 2017/05/23 02:19:14 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1282,7 +1282,7 @@ rt2860_tx_intr(struct rt2860_softc *sc, int qid)
 	if (ring->queued <= RT2860_TX_RING_ONEMORE)
 		sc->qfullmsk &= ~(1 << qid);
 	ifp->if_flags &= ~IFF_OACTIVE;
-	rt2860_start(ifp);
+	rt2860_start(ifp); /* in softint */
 
 	splx(s);
 }

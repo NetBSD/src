@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.16 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.17 2017/05/23 02:19:14 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.16 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.17 2017/05/23 02:19:14 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,6 +269,7 @@ vte_attach(device_t parent, device_t self, void *aux)
         ifp->if_timer = 0;
         IFQ_SET_READY(&ifp->if_snd);
         if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
         ether_ifattach(&(sc)->vte_if, (sc)->vte_eaddr);
 
 	if (pmf_device_register1(self, vte_suspend, vte_resume, vte_shutdown))
@@ -974,8 +975,7 @@ vte_intr(void *arg)
 			vte_txeof(sc);
 		if ((status & MISR_EVENT_CNT_OFLOW) != 0)
 			vte_stats_update(sc);
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			vte_ifstart(ifp);
+		if_schedule_deferred_start(ifp);
 		if (--n > 0)
 			status = CSR_READ_2(sc, VTE_MISR);
 		else
