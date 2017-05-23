@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.725 2017/05/04 14:21:01 hauke Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.726 2017/05/23 00:30:00 khorben Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.733 2017/05/03 15:14:27 jnemeth Exp
+ *	NetBSD: usbdevs,v 1.734 2017/05/04 14:21:01 hauke Exp
  */
 
 /*
@@ -328,6 +328,7 @@
 #define	USB_VENDOR_CENTURY	0x07f7		/* CENTURY Corporation */
 #define	USB_VENDOR_BEWAN	0x07fa		/* Bewan */
 #define	USB_VENDOR_ZOOM	0x0803		/* Zoom Telephonics */
+#define	USB_VENDOR_SYNET	0x0812		/* Synet Electronics */
 #define	USB_VENDOR_BROADLOGIC	0x0827		/* BroadLogic */
 #define	USB_VENDOR_HANDSPRING	0x082d		/* Handspring */
 #define	USB_VENDOR_PALM	0x0830		/* Palm Computing */
@@ -3202,6 +3203,9 @@
 #define	USB_PRODUCT_SWEEX2_LW154	0x0154		/* LW154 */
 #define	USB_PRODUCT_SWEEX2_LW303	0x0302		/* LW303 */
 #define	USB_PRODUCT_SWEEX2_LW313	0x0313		/* LW313 */
+
+/* Synet Electronics products */
+#define	USB_PRODUCT_SYNET_MWP54SS	0x3101		/* MW-P54SS USB Wireless Broadband Router */
 
 /* System TALKS, Inc. */
 #define	USB_PRODUCT_SYSTEMTALKS_SGCX2UL	0x1920		/* SGC-X2UL */
