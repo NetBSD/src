@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.69 2017/05/23 02:19:14 ozaki-r Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.70 2017/05/23 02:43:13 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.69 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.70 2017/05/23 02:43:13 ozaki-r Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -709,7 +709,6 @@ bah_tint(struct bah_softc *sc, int isr)
 	/* schedule soft int to fill a new buffer for us */
 	softint_schedule(sc->sc_txcookie);
 #else
-	/* call it directly */
 	if_schedule_deferred_start(ifp);
 #endif
 }
