@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.4 2015/04/06 14:36:41 wiz Exp $
+.\"	$NetBSD: awk.1,v 1.5 2017/05/23 14:11:08 abhinav Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd April 6, 2015
+.Dd May 18, 2017
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -661,8 +661,8 @@ separates multiple subscripts (default 034)
 .El
 .Ss Functions
 Functions may be defined (at the position of a pattern-action statement) thus:
-.Bd -filled -offset indent
-.Ic function foo(a, b, c) { ...; return x }
+.Bd -literal -offset indent
+function foo(a, b, c) { ...; return x }
 .Ed
 .Pp
 Parameters are passed by value if scalar and by reference if array name;
@@ -671,29 +671,42 @@ Parameters are local to the function; all other variables are global.
 Thus local variables may be created by providing excess parameters in
 the function definition.
 .Sh EXAMPLES
-.Bl -tag -width indent -compact
-.It Ic length($0) \*[Gt] 72
-Print lines longer than 72 characters.
+Print lines longer than 72 characters:
 .Pp
-.It Ic \&{ print $2, $1 \&}
-Print first two fields in opposite order.
+.Dl length($0) > 72
 .Pp
-.It Ic BEGIN { FS =  \&",[ \et]*|[ \et]+\&" }
-.It Ic "\ \ \ \ \ \ {" print \&$2, \&$1 }
-Same, with input fields separated by comma and/or blanks and tabs.
+Print first two fields in opposite order:
 .Pp
-.It Ic "\ \ \ \ {" s += $1 }
-.It Ic END { print \&"sum is\&", s, \&" average is\ \&",\ s/NR\ }
-Add up first column, print sum and average.
+.Dl { print $2, $1 }
 .Pp
-.It Ic /start/, /stop/
-Print all lines between start/stop pairs.
+Same, with input fields separated by comma and/or blanks and tabs:
+.Bd -literal -offset indent
+BEGIN { FS = ",[ \et]*|[ \et]+" }
+      { print $2, $1 }
+.Ed
 .Pp
-.It Ic BEGIN { # Simulate echo(1)
-.It Ic "\ \ \ \ " for (i = 1; i \*[Lt] ARGC;\ i++)\ printf\ \&"%s\ \&",\ ARGV[i]
-.It Ic "\ \ \ \ " printf \&"\en\&"
-.It Ic "\ \ \ \ " exit }
-.El
+Add up first column, print sum and average:
+.Bd -literal -offset indent
+{ s += $1 }
+END { print "sum is", s, " average is", s/NR }
+.Ed
+.Pp
+Print all lines between start/stop pairs:
+.Pp
+.Dl /start/, /stop/
+.Pp
+Simulate echo(1):
+.Bd -literal -offset indent
+BEGIN { # Simulate echo(1)
+        for (i = 1; i < ARGC; i++) printf "%s ", ARGV[i]
+        printf "\en"
+        exit }
+.Ed
+.Pp
+Print an error message to standard error:
+.Bd -literal -offset indent
+{ print "error!" > "/dev/stderr" }
+.Ed
 .Sh SEE ALSO
 .Xr egrep 1 ,
 .Xr lex 1 ,
