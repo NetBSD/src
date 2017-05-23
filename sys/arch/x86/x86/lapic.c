@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.56 2017/04/22 04:29:31 nonaka Exp $	*/
+/*	$NetBSD: lapic.c,v 1.57 2017/05/23 03:23:58 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.56 2017/04/22 04:29:31 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.57 2017/05/23 03:23:58 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -85,7 +85,7 @@ struct pic local_pic = {
 	.pic_lock = __SIMPLELOCK_UNLOCKED,
 	.pic_hwmask = lapic_hwmask,
 	.pic_hwunmask = lapic_hwunmask,
-	.pic_addroute =lapic_setup,
+	.pic_addroute = lapic_setup,
 	.pic_delroute = lapic_setup,
 };
 
