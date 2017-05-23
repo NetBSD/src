@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.15 2017/05/23 03:18:40 nonaka Exp $ */
+/* $NetBSD: i82093var.h,v 1.16 2017/05/23 03:23:58 nonaka Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,8 +37,7 @@
 #include <sys/device.h>
 #include <machine/apicvar.h>
 
-struct ioapic_pin 
-{
+struct ioapic_pin {
 	struct ioapic_pin	*ip_next;	/* next pin on this vector */
 	struct mp_intr_map 	*ip_map;
 	int			ip_vector;	/* IDT vector */
@@ -52,7 +51,7 @@ struct ioapic_softc {
 	struct ioapic_softc	*sc_next;
 	int			sc_apic_vers;
 	int			sc_apic_vecbase; /* global int base if ACPI */
-	int			sc_apic_sz;	/* apic size*/
+	int			sc_apic_sz;	/* apic size */
 	int			sc_flags;
 	paddr_t			sc_pa;		/* PA of ioapic */
 	volatile uint32_t	*sc_reg;	/* KVA of ioapic addr */
@@ -71,7 +70,7 @@ struct ioapic_softc {
  * (ih&0x000ff80000000000)>>43 -> MSI/MSI-X device id.
  * (ih&0x000007ff00000000)>>32 -> MSI/MSI-X vector id in a device.
  */
-#define	MPSAFE_MASK		0x80000000ULL
+#define MPSAFE_MASK		0x80000000ULL
 #define APIC_INT_VIA_APIC	0x10000000ULL
 #define APIC_INT_VIA_MSI	0x20000000ULL
 #define APIC_INT_APIC_MASK	0x00ff0000ULL
