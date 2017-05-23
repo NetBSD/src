@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.106 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.107 2017/05/23 02:19:14 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.106 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.107 2017/05/23 02:19:14 ozaki-r Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -459,6 +459,7 @@ tl_pci_attach(device_t parent, device_t self, void *aux)
 	ifp->if_timer = 0;
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(&(sc)->tl_if, (sc)->tl_enaddr);
 
 	/*
@@ -1168,8 +1169,7 @@ tl_intr(void *v)
 				TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_GO);
 			}
 			sc->tl_if.if_timer = 0;
-			if (IFQ_IS_EMPTY(&sc->tl_if.if_snd) == 0)
-				tl_ifstart(&sc->tl_if);
+			if_schedule_deferred_start(&sc->tl_if);
 			return 1;
 		}
 #ifdef TLDEBUG
@@ -1178,8 +1178,7 @@ tl_intr(void *v)
 		}
 #endif
 		sc->tl_if.if_timer = 0;
-		if (IFQ_IS_EMPTY(&sc->tl_if.if_snd) == 0)
-			tl_ifstart(&sc->tl_if);
+		if_schedule_deferred_start(&sc->tl_if);
 		break;
 	case TL_INTR_Stat:
 		ack++;

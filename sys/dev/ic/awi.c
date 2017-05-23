@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.91 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: awi.c,v 1.92 2017/05/23 02:19:14 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.91 2017/02/02 10:05:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.92 2017/05/23 02:19:14 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1173,7 +1173,7 @@ awi_tx_int(struct awi_softc *sc)
 	    sc->sc_txdone, sc->sc_txnext, sc->sc_txbase, sc->sc_txend));
 	sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	awi_start(ifp);
+	awi_start(ifp); /* in softint */
 }
 
 static struct mbuf *
