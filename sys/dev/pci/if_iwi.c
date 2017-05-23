@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.102 2017/02/02 10:05:35 nonaka Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.103 2017/05/23 02:19:14 ozaki-r Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.102 2017/02/02 10:05:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.103 2017/05/23 02:19:14 ozaki-r Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1485,7 +1485,7 @@ iwi_tx_intr(struct iwi_softc *sc, struct iwi_tx_ring *txq)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
 		/* Call start() since some buffer descriptors have been released */
-		iwi_start(ifp);
+		iwi_start(ifp); /* in softint */
 	}
 
 	splx(s);
