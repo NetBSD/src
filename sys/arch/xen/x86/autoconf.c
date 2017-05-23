@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2014/04/03 15:53:05 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 2017/05/23 08:48:35 nonaka Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2014/04/03 15:53:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2017/05/23 08:48:35 nonaka Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -94,6 +94,8 @@ int x86_ndisks;
 #include "bios32.h"
 #if NBIOS32 > 0
 #include <machine/bios32.h>
+/* XXX */
+extern void platform_init(void);
 #endif
 
 #include "opt_pcibios.h"
@@ -113,10 +115,17 @@ cpu_configure(void)
 
 	startrtclock();
 
-#if NBIOS32 > 0 && defined(DOM0OPS)
-	if (xendomain_is_dom0())
+#if defined(DOM0OPS)
+	if (xendomain_is_dom0()) {
+#if NBIOS32 > 0
 		bios32_init();
-#endif /* NBIOS32 > 0 && DOM0OPS */
+		platform_init();
+		/* identify hypervisor type from SMBIOS */
+		identify_hypervisor();
+#endif /* NBIOS32 > 0 */
+	} else
+#endif /* DOM0OPS */
+		vm_guest = VM_GUEST_XEN;
 #ifdef PCIBIOS
 	pcibios_init();
 #endif
