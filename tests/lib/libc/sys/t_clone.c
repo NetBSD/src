@@ -1,4 +1,4 @@
-/* $NetBSD: t_clone.c,v 1.3 2011/12/12 20:55:44 joerg Exp $ */
+/* $NetBSD: t_clone.c,v 1.4 2017/05/23 15:56:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_clone.c,v 1.3 2011/12/12 20:55:44 joerg Exp $");
+__RCSID("$NetBSD: t_clone.c,v 1.4 2017/05/23 15:56:55 christos Exp $");
 
 #include <sys/mman.h>
 #include <sys/resource.h>
@@ -99,7 +99,7 @@ ATF_TC_BODY(clone_basic, tc)
 	volatile long frobme[2];
 	int stat;
 
-	allocstack = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE|PROT_EXEC,
+	allocstack = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE,
 	    MAP_PRIVATE|MAP_ANON, -1, (off_t) 0);
 
 	ATF_REQUIRE_ERRNO(errno, allocstack != MAP_FAILED);
@@ -193,7 +193,7 @@ ATF_TC_BODY(clone_null_func, tc)
 	void *allocstack, *stack;
 	int rv;
 
-	allocstack = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE|PROT_EXEC,
+	allocstack = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE,
 	    MAP_PRIVATE|MAP_ANON, -1, (off_t) 0);
 	ATF_REQUIRE_ERRNO(errno, allocstack != MAP_FAILED);
 	stack = allocstack;
