@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.34 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.35 2017/05/23 02:19:14 ozaki-r Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.34 2017/02/02 10:05:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.35 2017/05/23 02:19:14 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -993,7 +993,7 @@ rt2661_tx_intr(struct rt2661_softc *sc)
 
 	sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	rt2661_start(ifp);
+	rt2661_start(ifp); /* in softint */
 
 	splx(s);
 }
