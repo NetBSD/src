@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.70 2017/05/15 04:02:52 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.71 2017/05/23 08:48:34 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -422,6 +422,18 @@ void 	tmx86_init_longrun(void);
 /* identcpu.c */
 void 	cpu_probe(struct cpu_info *);
 void	cpu_identify(struct cpu_info *);
+void	identify_hypervisor(void);
+
+typedef enum vm_guest {
+	VM_GUEST_NO = 0,
+	VM_GUEST_VM,
+	VM_GUEST_XEN,
+	VM_GUEST_HV,
+	VM_GUEST_VMWARE,
+	VM_GUEST_KVM,
+	VM_LAST
+} vm_guest_t;
+extern vm_guest_t vm_guest;
 
 /* cpu_topology.c */
 void	x86_cpu_topology(struct cpu_info *);

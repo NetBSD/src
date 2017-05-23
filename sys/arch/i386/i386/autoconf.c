@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.102 2017/04/22 04:29:31 nonaka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.103 2017/05/23 08:48:34 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.102 2017/04/22 04:29:31 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.103 2017/05/23 08:48:34 nonaka Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_intrdebug.h"
@@ -105,6 +105,8 @@ cpu_configure(void)
 #if NBIOS32 > 0
 	bios32_init();
 	platform_init();
+	/* identify hypervisor type from SMBIOS */
+	identify_hypervisor();
 #endif
 #ifdef PCIBIOS
 	pcibios_init();
