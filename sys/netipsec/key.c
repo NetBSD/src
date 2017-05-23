@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.138 2017/05/23 03:13:52 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.139 2017/05/23 04:26:08 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.138 2017/05/23 03:13:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.139 2017/05/23 04:26:08 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -150,7 +150,9 @@ static LIST_HEAD(_regtree, secreg) regtree[SADB_SATYPE_MAX + 1];
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 static LIST_HEAD(_acqtree, secacq) acqtree;		/* acquiring list */
 #endif
+#ifdef notyet
 static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
+#endif
 
 /* search order for SAs */
 	/*
@@ -488,8 +490,10 @@ static struct secacq *key_newacq (const struct secasindex *);
 static struct secacq *key_getacq (const struct secasindex *);
 static struct secacq *key_getacqbyseq (u_int32_t);
 #endif
+#ifdef notyet
 static struct secspacq *key_newspacq (const struct secpolicyindex *);
 static struct secspacq *key_getspacq (const struct secpolicyindex *);
+#endif
 static int key_acquire2 (struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 static int key_register (struct socket *, struct mbuf *,
@@ -1957,8 +1961,11 @@ key_spdadd(struct socket *so, struct mbuf *m,
 
 	newsp->refcnt = 1;	/* do not reclaim until I say I do */
 	newsp->state = IPSEC_SPSTATE_ALIVE;
+	if (newsp->policy == IPSEC_POLICY_IPSEC)
+		KASSERT(newsp->req != NULL);
 	LIST_INSERT_TAIL(&sptree[newsp->spidx.dir], newsp, secpolicy, chain);
 
+#ifdef notyet
 	/* delete the entry in spacqtree */
 	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
 		struct secspacq *spacq = key_getspacq(&spidx);
@@ -1968,6 +1975,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 			spacq->count = 0;
 		}
     	}
+#endif
 
 	/* Invalidate all cached SPD pointers in the PCBs. */
 	ipsec_invalpcbcacheall();
@@ -2312,6 +2320,7 @@ key_spdget(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, ENOBUFS);
 }
 
+#ifdef notyet
 /*
  * SADB_X_SPDACQUIRE processing.
  * Acquire policy and SA(s) for a *OUTBOUND* packet.
@@ -2382,6 +2391,7 @@ fail:
 		m_freem(result);
 	return error;
 }
+#endif /* notyet */
 
 /*
  * SADB_SPDFLUSH processing
@@ -4669,6 +4679,7 @@ key_timehandler_work(struct work *wk, void *arg)
     }
 #endif
 
+#ifdef notyet
 	/* SP ACQ tree */
     {
 	struct secspacq *acq, *nextacq;
@@ -4681,6 +4692,7 @@ key_timehandler_work(struct work *wk, void *arg)
 		}
 	}
     }
+#endif
 
 	/* do exchange to tick time !! */
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, NULL);
@@ -6418,6 +6430,7 @@ key_getacqbyseq(u_int32_t seq)
 }
 #endif
 
+#ifdef notyet
 static struct secspacq *
 key_newspacq(const struct secpolicyindex *spidx)
 {
@@ -6450,6 +6463,7 @@ key_getspacq(const struct secpolicyindex *spidx)
 
 	return NULL;
 }
+#endif /* notyet */
 
 /*
  * SADB_ACQUIRE processing,
@@ -7676,7 +7690,9 @@ key_do_init(void)
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	LIST_INIT(&acqtree);
 #endif
+#ifdef notyet
 	LIST_INIT(&spacqtree);
+#endif
 
 	/* system default */
 	ip4_def_policy.policy = IPSEC_POLICY_NONE;

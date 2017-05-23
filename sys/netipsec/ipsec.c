@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.92 2017/05/19 04:34:09 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.93 2017/05/23 04:26:08 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.92 2017/05/19 04:34:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.93 2017/05/23 04:26:08 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -644,8 +644,7 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 		sp = NULL;		/* NB: force NULL result */
 		break;
 	case IPSEC_POLICY_IPSEC:
-		if (sp->req == NULL)	/* acquire an SA */
-			*error = key_spdacquire(sp);
+		KASSERT(sp->req != NULL);
 		break;
 	}
 	if (*error != 0) {
@@ -890,8 +889,7 @@ ipsec6_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 		sp = NULL;	  /* NB: force NULL result */
 		break;
 	case IPSEC_POLICY_IPSEC:
-		if (sp->req == NULL)	/* acquire an SA */
-			*error = key_spdacquire(sp);
+		KASSERT(sp->req != NULL);
 		break;
 	}
 	if (*error != 0) {
