@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.24 2011/08/11 19:52:52 cherry Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.25 2017/05/23 08:54:38 nonaka Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,10 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.24 2011/08/11 19:52:52 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.25 2017/05/23 08:54:38 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+
+#include "lapic.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -93,7 +95,7 @@ static bool ddb_mp_online;
 int ddb_cpu = NOCPU;
 
 typedef void (vector)(void);
-extern vector Xintrddb;
+extern vector Xintrddb, Xx2apic_intrddb;
 
 void
 db_machine_init(void)
@@ -101,9 +103,14 @@ db_machine_init(void)
 
 #ifdef MULTIPROCESSOR
 #ifndef XEN
+	vector *handler = &Xintrddb;
+#if NLAPIC > 0
+	if (lapic_is_x2apic())
+		handler = &Xx2apic_intrddb;
+#endif
 	ddb_vec = idt_vec_alloc(0xf0, 0xff);
-	setgate((struct gate_descriptor *)&idt[ddb_vec], &Xintrddb, 1,
-	    SDT_SYS386IGT, SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
+	setgate(&idt[ddb_vec], handler, 1, SDT_SYS386IGT, SEL_KPL,
+	    GSEL(GCODE_SEL, SEL_KPL));
 #else
 	/* Initialised as part of xen_ipi_init() */
 #endif /* XEN */

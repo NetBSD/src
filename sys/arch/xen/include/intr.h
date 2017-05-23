@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.39 2016/10/17 18:23:50 jdolecek Exp $	*/
+/*	$NetBSD: intr.h,v 1.40 2017/05/23 08:54:39 nonaka Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -76,6 +76,8 @@ struct intrstub {
 extern struct intrstub i8259_stubs[];
 extern struct intrstub ioapic_edge_stubs[];
 extern struct intrstub ioapic_level_stubs[];
+extern struct intrstub x2apic_edge_stubs[];
+extern struct intrstub x2apic_level_stubs[];
 
 struct iplsource {
 	struct intrhand *ipl_handlers;   /* handler chain */

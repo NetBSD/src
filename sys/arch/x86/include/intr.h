@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.49 2016/07/07 06:55:39 msaitoh Exp $	*/
+/*	$NetBSD: intr.h,v 1.50 2017/05/23 08:54:39 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -177,6 +177,8 @@ void Xpreemptresume(void);
 extern struct intrstub i8259_stubs[];
 extern struct intrstub ioapic_edge_stubs[];
 extern struct intrstub ioapic_level_stubs[];
+extern struct intrstub x2apic_edge_stubs[];
+extern struct intrstub x2apic_level_stubs[];
 
 struct cpu_info;
 
