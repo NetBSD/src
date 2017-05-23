@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.18 2017/04/22 04:29:31 nonaka Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.19 2017/05/23 08:54:39 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,26 +36,10 @@
  * Software definitions belonging to Local APIC driver.
  */
 
-static __inline uint32_t i82489_readreg(int);
-static __inline void i82489_writereg(int, uint32_t);
-
 #ifdef _KERNEL
 extern volatile vaddr_t local_apic_va;
+extern bool x2apic_mode;
 #endif
-
-static __inline uint32_t
-i82489_readreg(int reg)
-{
-	return *((volatile uint32_t *)(local_apic_va + reg));
-}
-
-static __inline void
-i82489_writereg(int reg, uint32_t val)
-{
-	*((volatile uint32_t *)(local_apic_va + reg)) = val;
-}
-
-#define lapic_cpu_number() 	(i82489_readreg(LAPIC_ID) >> LAPIC_ID_SHIFT)
 
 /*
  * "spurious interrupt vector"; vector used by interrupt which was
@@ -70,11 +54,13 @@ extern void Xintrspurious(void);
  * Vectors used for inter-processor interrupts.
  */
 extern void Xintr_lapic_ipi(void);
+extern void Xintr_x2apic_ipi(void);
 extern void Xrecurse_lapic_ipi(void);
 extern void Xresume_lapic_ipi(void);
 #define LAPIC_IPI_VECTOR			0xe0
 
 extern void Xintr_lapic_tlb(void);
+extern void Xintr_x2apic_tlb(void);
 #define LAPIC_TLB_VECTOR			0xe1
 
 /*
@@ -82,6 +68,7 @@ extern void Xintr_lapic_tlb(void);
  */
 
 extern void Xintr_lapic_ltimer(void);
+extern void Xintr_x2apic_ltimer(void);
 extern void Xresume_lapic_ltimer(void);
 extern void Xrecurse_lapic_ltimer(void);
 #define LAPIC_TIMER_VECTOR		0xc0
@@ -104,6 +91,11 @@ extern void lapic_enable(void);
 extern void lapic_calibrate_timer(struct cpu_info *ci);
 extern void lapic_initclocks(void);
 
+extern uint32_t lapic_readreg(u_int);
+extern void lapic_writereg(u_int, uint32_t);
 extern void lapic_write_tpri(uint32_t);
+extern void lapic_eoi(void);
+extern uint32_t lapic_cpu_number(void);
+extern bool lapic_is_x2apic(void);
 
 #endif
