@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.93 2017/05/23 04:26:08 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.94 2017/05/23 09:08:45 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.93 2017/05/23 04:26:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.94 2017/05/23 09:08:45 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -214,7 +214,7 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 
 	KASSERT(IPSEC_DIR_IS_VALID(dir));
 	KASSERT(pcbsp != NULL);
-	KASSERT(dir < sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]));
+	KASSERT(dir < __arraycount(pcbsp->sp_cache));
 	KASSERT(inph_locked(pcbsp->sp_inph));
 
 	/* SPD table change invalidate all the caches. */
@@ -271,7 +271,7 @@ ipsec_fillpcbcache(struct inpcbpolicy *pcbsp, struct mbuf *m,
 {
 
 	KASSERT(IPSEC_DIR_IS_INOROUT(dir));
-	KASSERT(dir < sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]));
+	KASSERT(dir < __arraycount(pcbsp->sp_cache));
 	KASSERT(inph_locked(pcbsp->sp_inph));
 
 	if (pcbsp->sp_cache[dir].cachesp)
