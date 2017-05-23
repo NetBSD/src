@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.137 2017/05/22 04:40:23 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.138 2017/05/23 03:13:52 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.137 2017/05/22 04:40:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.138 2017/05/23 03:13:52 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -586,11 +586,10 @@ key_sp_unlink(struct secpolicy *sp)
 {
 
 	/* remove from SP index */
-	if (__LIST_CHAINED(sp)) {
-		LIST_REMOVE(sp, chain);
-		/* Release refcount held just for being on chain */
-		KEY_FREESP(&sp);
-	}
+	KASSERT(__LIST_CHAINED(sp));
+	LIST_REMOVE(sp, chain);
+	/* Release refcount held just for being on chain */
+	KEY_FREESP(&sp);
 }
 
 
@@ -2902,8 +2901,8 @@ key_delsah(struct secashead *sah)
 	rtcache_free(&sah->sa_route);
 
 	/* remove from tree of SA index */
-	if (__LIST_CHAINED(sah))
-		LIST_REMOVE(sah, chain);
+	KASSERT(__LIST_CHAINED(sah));
+	LIST_REMOVE(sah, chain);
 
 	if (sah->idents != NULL)
 		kmem_free(sah->idents, sah->idents_len);
@@ -3014,8 +3013,8 @@ key_delsav(struct secasvar *sav)
 	KASSERTMSG(sav->refcnt == 0, "reference count %u > 0", sav->refcnt);
 
 	/* remove from SA header */
-	if (__LIST_CHAINED(sav))
-		LIST_REMOVE(sav, chain);
+	KASSERT(__LIST_CHAINED(sav));
+	LIST_REMOVE(sav, chain);
 
 	/*
 	 * Cleanup xform state.  Note that zeroize'ing causes the
@@ -4661,8 +4660,8 @@ key_timehandler_work(struct work *wk, void *arg)
 	struct secacq *acq, *nextacq;
 
 	LIST_FOREACH_SAFE(acq, &acqtree, chain, nextacq) {
-		if (now - acq->created > key_blockacq_lifetime &&
-		    __LIST_CHAINED(acq)) {
+		if (now - acq->created > key_blockacq_lifetime) {
+			KASSERT(__LIST_CHAINED(acq));
 			LIST_REMOVE(acq, chain);
 			kmem_free(acq, sizeof(*acq));
 		}
@@ -4675,8 +4674,8 @@ key_timehandler_work(struct work *wk, void *arg)
 	struct secspacq *acq, *nextacq;
 
 	LIST_FOREACH_SAFE(acq, &spacqtree, chain, nextacq) {
-		if (now - acq->created > key_blockacq_lifetime &&
-		    __LIST_CHAINED(acq)) {
+		if (now - acq->created > key_blockacq_lifetime) {
+			KASSERT(__LIST_CHAINED(acq));
 			LIST_REMOVE(acq, chain);
 			kmem_free(acq, sizeof(*acq));
 		}
@@ -6751,7 +6750,8 @@ key_freereg(struct socket *so)
 	 */
 	for (i = 0; i <= SADB_SATYPE_MAX; i++) {
 		LIST_FOREACH(reg, &regtree[i], chain) {
-			if (reg->so == so && __LIST_CHAINED(reg)) {
+			if (reg->so == so) {
+				KASSERT(__LIST_CHAINED(reg));
 				LIST_REMOVE(reg, chain);
 				kmem_free(reg, sizeof(*reg));
 				break;
@@ -7866,8 +7866,8 @@ key_sa_chgstate(struct secasvar *sav, u_int8_t state)
 	if (sav->state == state)
 		return;
 
-	if (__LIST_CHAINED(sav))
-		LIST_REMOVE(sav, chain);
+	KASSERT(__LIST_CHAINED(sav));
+	LIST_REMOVE(sav, chain);
 
 	sav->state = state;
 	LIST_INSERT_HEAD(&sav->sah->savtree[state], sav, chain);
