@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.6 2017/04/18 15:14:28 maya Exp $	*/
+/*	$NetBSD: pmc.c,v 1.7 2017/05/23 08:54:39 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.6 2017/04/18 15:14:28 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.7 2017/05/23 08:54:39 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,8 +156,8 @@ pmc_apply_cpu(void *arg1, void *arg2)
 	struct cpu_info *ci = curcpu();
 
 	if (start) {
-		pmc_lapic_image[cpu_index(ci)] = i82489_readreg(LAPIC_PCINT);
-		i82489_writereg(LAPIC_PCINT, LAPIC_DLMODE_NMI);
+		pmc_lapic_image[cpu_index(ci)] = lapic_readreg(LAPIC_PCINT);
+		lapic_writereg(LAPIC_PCINT, LAPIC_DLMODE_NMI);
 	}
 
 	wrmsr(pmc->ctrmsr, pmc->ctrinitval);
@@ -173,7 +173,7 @@ pmc_apply_cpu(void *arg1, void *arg2)
 	pmc_val_cpus[cpu_index(ci)].overfl = 0;
 
 	if (!start) {
-		i82489_writereg(LAPIC_PCINT, pmc_lapic_image[cpu_index(ci)]);
+		lapic_writereg(LAPIC_PCINT, pmc_lapic_image[cpu_index(ci)]);
 	}
 }
 
