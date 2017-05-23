@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.8 2015/11/17 17:51:42 msaitoh Exp $	*/
+/*	$NetBSD: msipic.c,v 1.9 2017/05/23 08:54:39 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.8 2015/11/17 17:51:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.9 2017/05/23 08:54:39 nonaka Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.8 2015/11/17 17:51:42 msaitoh Exp $");
 #include <dev/pci/pcivar.h>
 
 #include <machine/i82489reg.h>
+#include <machine/i82489var.h>
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>
 #include <machine/pic.h>
@@ -257,6 +258,7 @@ msipic_construct_common_msi_pic(const struct pci_attach_args *pa,
 	}
 
 	memcpy(pic, pic_tmpl, sizeof(*pic));
+	pic->pic_edge_stubs = x2apic_mode ? x2apic_edge_stubs : ioapic_edge_stubs,
 	pic->pic_msipic = msipic;
 	msipic->mp_pic = pic;
 	pci_decompose_tag(pa->pa_pc, pa->pa_tag,
@@ -431,8 +433,6 @@ static struct pic msi_pic_tmpl = {
 	.pic_hwunmask = msi_hwunmask,
 	.pic_addroute = msi_addroute,
 	.pic_delroute = msi_delroute,
-	.pic_edge_stubs = ioapic_edge_stubs,
-	.pic_ioapic = NULL,
 };
 
 /*
@@ -603,7 +603,6 @@ static struct pic msix_pic_tmpl = {
 	.pic_hwunmask = msix_hwunmask,
 	.pic_addroute = msix_addroute,
 	.pic_delroute = msix_delroute,
-	.pic_edge_stubs = ioapic_edge_stubs,
 };
 
 struct pic *

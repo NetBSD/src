@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.124 2017/04/22 04:29:31 nonaka Exp $	*/
+/*	$NetBSD: cpu.c,v 1.125 2017/05/23 08:54:39 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.124 2017/04/22 04:29:31 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.125 2017/05/23 08:54:39 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -346,8 +346,8 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			aprint_verbose_dev(self, "running CPU at apic %d"
 			    " instead of at expected %d", lapic_cpu_number(),
 			    cpunum);
-			reg = i82489_readreg(LAPIC_ID);
-			i82489_writereg(LAPIC_ID, (reg & ~LAPIC_ID_MASK) |
+			reg = lapic_readreg(LAPIC_ID);
+			lapic_writereg(LAPIC_ID, (reg & ~LAPIC_ID_MASK) |
 			    (cpunum << LAPIC_ID_SHIFT));
 		}
 		if (cpunum != lapic_cpu_number()) {
@@ -972,7 +972,7 @@ tss_init(struct i386tss *tss, void *stack, void *func)
 typedef void (vector)(void);
 extern vector IDTVEC(tss_trap08);
 #if defined(DDB) && defined(MULTIPROCESSOR)
-extern vector Xintrddbipi;
+extern vector Xintrddbipi, Xx2apic_intrddbipi;
 extern int ddb_vec;
 #endif
 
@@ -1001,7 +1001,8 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	 */
 	ci->ci_ddbipi_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
 	    UVM_KMF_WIRED);
-	tss_init(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack, Xintrddbipi);
+	tss_init(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack,
+	    x2apic_mode ? Xx2apic_intrddbipi : Xintrddbipi);
 
 	setsegment(&sd, &ci->ci_ddbipi_tss, sizeof(struct i386tss) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);

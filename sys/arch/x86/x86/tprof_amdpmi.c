@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_amdpmi.c,v 1.6 2017/02/11 13:22:58 maxv Exp $	*/
+/*	$NetBSD: tprof_amdpmi.c,v 1.7 2017/05/23 08:54:39 nonaka Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.6 2017/02/11 13:22:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.7 2017/05/23 08:54:39 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,8 +120,8 @@ tprof_amdpmi_start_cpu(void *arg1, void *arg2)
 	wrmsr(PERFCTR(ctrno), counter_reset_val);
 	wrmsr(PERFEVTSEL(ctrno), pesr);
 
-	tprof_amdpmi_lapic_saved[cpu_index(ci)] = i82489_readreg(LAPIC_PCINT);
-	i82489_writereg(LAPIC_PCINT, LAPIC_DLMODE_NMI);
+	tprof_amdpmi_lapic_saved[cpu_index(ci)] = lapic_readreg(LAPIC_PCINT);
+	lapic_writereg(LAPIC_PCINT, LAPIC_DLMODE_NMI);
 
 	wrmsr(PERFEVTSEL(ctrno), pesr | PESR_EN);
 }
@@ -133,7 +133,7 @@ tprof_amdpmi_stop_cpu(void *arg1, void *arg2)
 
 	wrmsr(PERFEVTSEL(ctrno), 0);
 
-	i82489_writereg(LAPIC_PCINT, tprof_amdpmi_lapic_saved[cpu_index(ci)]);
+	lapic_writereg(LAPIC_PCINT, tprof_amdpmi_lapic_saved[cpu_index(ci)]);
 }
 
 static int

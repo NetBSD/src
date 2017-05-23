@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.71 2014/02/28 10:16:51 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.72 2017/05/23 08:54:38 nonaka Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.71 2014/02/28 10:16:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.72 2017/05/23 08:54:38 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -105,7 +105,7 @@ db_regs_t *ddb_regp = 0;
 int ddb_cpu = NOCPU;
 
 typedef void (vector)(void);
-extern vector Xintrddbipi;
+extern vector Xintrddbipi, Xx2apic_intrddbipi;
 
 void
 db_machine_init(void)
@@ -113,8 +113,13 @@ db_machine_init(void)
 
 #ifdef MULTIPROCESSOR
 #ifndef XEN
+	vector *handler = &Xintrddbipi;
+#if NLAPIC > 0
+	if (lapic_is_x2apic())
+		handler = &Xx2apic_intrddbipi;
+#endif
 	ddb_vec = idt_vec_alloc(0xf0, 0xff);
-	idt_vec_set(ddb_vec, &Xintrddbipi);
+	idt_vec_set(ddb_vec, handler);
 #else
 	/* Initialised as part of xen_ipi_init() */
 #endif /* XEN */
