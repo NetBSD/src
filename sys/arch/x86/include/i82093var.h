@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.14 2015/04/27 07:03:58 knakahara Exp $ */
+/* $NetBSD: i82093var.h,v 1.15 2017/05/23 03:18:40 nonaka Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -50,7 +50,6 @@ struct ioapic_softc {
 	device_t		sc_dev;
 	struct pic		sc_pic;
 	struct ioapic_softc	*sc_next;
-	int			sc_apicid;
 	int			sc_apic_vers;
 	int			sc_apic_vecbase; /* global int base if ACPI */
 	int			sc_apic_sz;	/* apic size*/

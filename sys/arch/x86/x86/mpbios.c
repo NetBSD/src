@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.65 2015/07/17 06:41:18 msaitoh Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.66 2017/05/23 03:18:40 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.65 2015/07/17 06:41:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.66 2017/05/23 03:18:40 nonaka Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -752,7 +752,7 @@ mpbios_scan(device_t self, int *ncpup)
 					struct ioapic_softc *sc;
 					for (sc = ioapics ; sc != NULL;
 					     sc = sc->sc_next) {
-						ie.dst_apic_id = sc->sc_apicid;
+						ie.dst_apic_id = sc->sc_pic.pic_apicid;
 						mpbios_int((char *)&ie, type,
 						    &mp_intrs[cur_intr++]);
 					}
