@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.464 2017/05/07 08:26:58 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.465 2017/05/24 09:52:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.464 2017/05/07 08:26:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.465 2017/05/24 09:52:59 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -568,7 +568,6 @@ time_t dirdelay  = 15;			/* time to delay syncing directories */
 time_t metadelay = 10;			/* time to delay syncing metadata */
 time_t lockdelay = 1;			/* time to delay if locking fails */
 
-kmutex_t		syncer_mutex;	/* used to freeze syncer, long term */
 static kmutex_t		syncer_data_lock; /* short term lock on data structs */
 
 static int		syncer_delayno = 0;
@@ -590,7 +589,6 @@ vn_initialize_syncerd(void)
 	for (i = 0; i < syncer_last; i++)
 		TAILQ_INIT(&syncer_workitem_pending[i]);
 
-	mutex_init(&syncer_mutex, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&syncer_data_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
@@ -767,8 +765,6 @@ sched_sync(void *arg)
 	bool synced;
 
 	for (;;) {
-		mutex_enter(&syncer_mutex);
-
 		starttime = time_second;
 
 		/*
@@ -830,7 +826,6 @@ sched_sync(void *arg)
 				    synced ? syncdelay : lockdelay);
 			}
 		}
-		mutex_exit(&syncer_mutex);
 
 		/*
 		 * If it has taken us less than a second to process the

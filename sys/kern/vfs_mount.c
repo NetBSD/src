@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.62 2017/05/17 12:45:03 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.63 2017/05/24 09:52:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.62 2017/05/17 12:45:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.63 2017/05/24 09:52:59 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -869,15 +869,8 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	}
 	mountlist_iterator_destroy(iter);
 
-	/*
-	 * XXX Freeze syncer.  Must do this before locking the
-	 * mount point.  See dounmount() for details.
-	 */
-	mutex_enter(&syncer_mutex);
-
 	error = vfs_suspend(mp, 0);
 	if (error) {
-		mutex_exit(&syncer_mutex);
 		return error;
 	}
 
@@ -887,7 +880,6 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	mutex_enter(&mp->mnt_unmounting);
 	if (mp->mnt_busynest != 0) {
 		mutex_exit(&mp->mnt_unmounting);
-		mutex_exit(&syncer_mutex);
 		vfs_resume(mp);
 		return EBUSY;
 	}
@@ -897,28 +889,12 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	 */
 	if ((mp->mnt_iflag & IMNT_GONE) != 0) {
 		mutex_exit(&mp->mnt_unmounting);
-		mutex_exit(&syncer_mutex);
 		return ENOENT;
 	}
 
 	used_syncer = (mp->mnt_iflag & IMNT_ONWORKLIST) != 0;
 	used_extattr = mp->mnt_flag & MNT_EXTATTR;
 
-	/*
-	 * XXX Syncer must be frozen when we get here.  This should really
-	 * be done on a per-mountpoint basis, but the syncer doesn't work
-	 * like that.
-	 *
-	 * The caller of dounmount() must acquire syncer_mutex because
-	 * the syncer itself acquires locks in syncer_mutex -> vfs_busy
-	 * order, and we must preserve that order to avoid deadlock.
-	 *
-	 * So, if the file system did not use the syncer, now is
-	 * the time to release the syncer_mutex.
-	 */
-	if (used_syncer == 0) {
-		mutex_exit(&syncer_mutex);
-	}
 	mp->mnt_iflag |= IMNT_UNMOUNT;
 	mutex_enter(&mp->mnt_updating);
 	async = mp->mnt_flag & MNT_ASYNC;
@@ -941,8 +917,6 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		mp->mnt_flag |= async;
 		mutex_exit(&mp->mnt_updating);
 		vfs_resume(mp);
-		if (used_syncer)
-			mutex_exit(&syncer_mutex);
 		if (used_extattr) {
 			if (start_extattr(mp) != 0)
 				mp->mnt_flag &= ~MNT_EXTATTR;
@@ -973,8 +947,6 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	mountlist_remove(mp);
 	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
-	if (used_syncer)
-		mutex_exit(&syncer_mutex);
 	vfs_hooks_unmount(mp);
 
 	fstrans_unmount(mp);
