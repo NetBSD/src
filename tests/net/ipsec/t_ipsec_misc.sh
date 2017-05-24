@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.3 2017/05/18 14:43:42 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.4 2017/05/24 09:34:48 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -29,7 +29,7 @@ SOCK_LOCAL=unix://ipsec_local
 SOCK_PEER=unix://ipsec_peer
 BUS=./bus_ipsec
 
-DEBUG=${DEBUG:-false}
+DEBUG=${DEBUG:-true}
 
 setup_sasp()
 {
