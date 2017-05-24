@@ -1,4 +1,4 @@
-/*	$NetBSD: readcdf.c,v 1.1.1.10 2017/02/10 17:42:57 christos Exp $	*/
+/*	$NetBSD: readcdf.c,v 1.1.1.11 2017/05/24 23:59:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2016 Christos Zoulas
@@ -29,9 +29,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: readcdf.c,v 1.63 2016/10/18 22:25:42 christos Exp $")
+FILE_RCSID("@(#)$File: readcdf.c,v 1.65 2017/04/08 20:58:03 christos Exp $")
 #else
-__RCSID("$NetBSD: readcdf.c,v 1.1.1.10 2017/02/10 17:42:57 christos Exp $");
+__RCSID("$NetBSD: readcdf.c,v 1.1.1.11 2017/05/24 23:59:57 christos Exp $");
 #endif
 #endif
 
@@ -158,7 +158,7 @@ cdf_file_property_info(struct magic_set *ms, const cdf_property_info_t *info,
         struct timespec ts;
         char buf[64];
         const char *str = NULL;
-        const char *s;
+        const char *s, *e;
         int len;
 
         if (!NOTMIME(ms) && root_storage)
@@ -205,7 +205,9 @@ cdf_file_property_info(struct magic_set *ms, const cdf_property_info_t *info,
                                 if (info[i].pi_type == CDF_LENGTH32_WSTRING)
                                     k++;
                                 s = info[i].pi_str.s_buf;
-                                for (j = 0; j < sizeof(vbuf) && len--; s += k) {
+				e = info[i].pi_str.s_buf + len;
+                                for (j = 0; s < e && j < sizeof(vbuf)
+				    && len--; s += k) {
                                         if (*s == '\0')
                                                 break;
                                         if (isprint((unsigned char)*s))
@@ -609,7 +611,7 @@ file_trycdf(struct magic_set *ms, int fd, const unsigned char *buf,
 	if ((i = cdf_read_user_stream(&info, &h, &sat, &ssat, &sst, &dir,
 	    "FileHeader", &scn)) != -1) {
 #define HWP5_SIGNATURE "HWP Document File"
-		if (scn.sst_dirlen >= sizeof(HWP5_SIGNATURE) - 1
+		if (scn.sst_len * scn.sst_ss >= sizeof(HWP5_SIGNATURE) - 1
 		    && memcmp(scn.sst_tab, HWP5_SIGNATURE,
 		    sizeof(HWP5_SIGNATURE) - 1) == 0) {
 		    if (NOTMIME(ms)) {

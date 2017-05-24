@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.1.1.9 2017/02/10 17:42:57 christos Exp $	*/
+/*	$NetBSD: funcs.c,v 1.1.1.10 2017/05/24 23:59:57 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -30,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: funcs.c,v 1.91 2016/12/01 16:16:14 christos Exp $")
+FILE_RCSID("@(#)$File: funcs.c,v 1.92 2017/04/07 20:10:24 christos Exp $")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.1.1.9 2017/02/10 17:42:57 christos Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.1.1.10 2017/05/24 23:59:57 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -515,6 +515,8 @@ file_regexec(file_regex_t *rx, const char *str, size_t nmatch,
     regmatch_t* pmatch, int eflags)
 {
 	assert(rx->rc == 0);
+	/* XXX: force initialization because glibc does not always do this */
+	memset(pmatch, 0, nmatch * sizeof(*pmatch));
 	return regexec(&rx->rx, str, nmatch, pmatch, eflags);
 }
 

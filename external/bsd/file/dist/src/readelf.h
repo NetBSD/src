@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.h,v 1.1.1.7 2017/02/10 17:42:57 christos Exp $	*/
+/*	$NetBSD: readelf.h,v 1.1.1.8 2017/05/24 23:59:57 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -232,6 +232,33 @@ typedef struct {
 } Elf64_Shdr;
 
 #define	NT_NETBSD_CORE_PROCINFO		1
+#define	NT_NETBSD_CORE_AUXV		2
+
+struct NetBSD_elfcore_procinfo {
+	/* Version 1 fields start here. */
+	uint32_t	cpi_version;		/* our version */
+	uint32_t	cpi_cpisize;		/* sizeof(this struct) */
+	uint32_t	cpi_signo;		/* killing signal */
+	uint32_t	cpi_sigcode;		/* signal code */
+	uint32_t	cpi_sigpend[4];		/* pending signals */
+	uint32_t	cpi_sigmask[4];		/* blocked signals */
+	uint32_t	cpi_sigignore[4];	/* ignored signals */
+	uint32_t	cpi_sigcatch[4];	/* caught signals */
+	int32_t		cpi_pid;		/* process ID */
+	int32_t		cpi_ppid;		/* parent process ID */
+	int32_t		cpi_pgrp;		/* process group ID */
+	int32_t		cpi_sid;		/* session ID */
+	uint32_t	cpi_ruid;		/* real user ID */
+	uint32_t	cpi_euid;		/* effective user ID */
+	uint32_t	cpi_svuid;		/* saved user ID */
+	uint32_t	cpi_rgid;		/* real group ID */
+	uint32_t	cpi_egid;		/* effective group ID */
+	uint32_t	cpi_svgid;		/* saved group ID */
+	uint32_t	cpi_nlwps;		/* number of LWPs */
+	int8_t		cpi_name[32];		/* copy of p->p_comm */
+	/* Add version 2 fields below here. */
+	int32_t		cpi_siglwp;	/* LWP target of killing signal */
+};
 
 /* Note header in a PT_NOTE section */
 typedef struct elf_note {
@@ -329,6 +356,11 @@ typedef struct {
  * descsz:	variable
  */
 #define NT_NETBSD_CMODEL	6
+
+/*
+ * FreeBSD specific notes
+ */
+#define NT_FREEBSD_PROCSTAT_AUXV	16
 
 #if !defined(ELFSIZE) && defined(ARCH_ELFSIZE)
 #define ELFSIZE ARCH_ELFSIZE
