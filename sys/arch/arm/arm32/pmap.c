@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.347 2017/05/22 06:35:04 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.348 2017/05/24 06:27:33 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.347 2017/05/22 06:35:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.348 2017/05/24 06:27:33 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -483,6 +483,11 @@ EVCNT_ATTACH_STATIC(pmap_ev_activations);
 #define	PMAPCOUNT(x)	((void)(pmap_ev_##x.ev_count++))
 #else
 #define	PMAPCOUNT(x)	((void)0)
+#endif
+
+#ifdef ARM_MMU_EXTENDED
+void pmap_md_pdetab_activate(pmap_t, struct lwp *);
+void pmap_md_pdetab_deactivate(pmap_t pm);
 #endif
 
 /*
@@ -3411,14 +3416,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 void
 pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 {
-	vaddr_t next_bucket;
-	u_int cleanlist_idx, total, cnt;
-	struct {
-		vaddr_t va;
-		pt_entry_t *ptep;
-	} cleanlist[PMAP_REMOVE_CLEAN_LIST_SIZE];
-	u_int mappings;
-
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, " (pm=%p, sva=%#x, eva=%#x)", pm, sva, eva, 0);
 
@@ -3427,22 +3424,27 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	 */
 	pmap_acquire_pmap_lock(pm);
 
+#ifndef ARM_MMU_EXTENDED
+	u_int cleanlist_idx, total, cnt;
+	struct {
+		vaddr_t va;
+		pt_entry_t *ptep;
+	} cleanlist[PMAP_REMOVE_CLEAN_LIST_SIZE];
+
 	if (pm->pm_remove_all || !pmap_is_cached(pm)) {
 		cleanlist_idx = PMAP_REMOVE_CLEAN_LIST_SIZE + 1;
-#ifndef ARM_MMU_EXTENDED
 		if (pm->pm_cstate.cs_tlb == 0)
 			pm->pm_remove_all = true;
-#endif
 	} else
 		cleanlist_idx = 0;
-
 	total = 0;
+#endif
 
 	while (sva < eva) {
 		/*
 		 * Do one L2 bucket's worth at a time.
 		 */
-		next_bucket = L2_NEXT_BUCKET_VA(sva);
+		vaddr_t next_bucket = L2_NEXT_BUCKET_VA(sva);
 		if (next_bucket > eva)
 			next_bucket = eva;
 
@@ -3453,9 +3455,9 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 		}
 
 		pt_entry_t *ptep = &l2b->l2b_kva[l2pte_index(sva)];
+		u_int mappings = 0;
 
-		for (mappings = 0;
-		     sva < next_bucket;
+		for (;sva < next_bucket;
 		     sva += PAGE_SIZE, ptep += PAGE_SIZE / L2_S_SIZE) {
 			pt_entry_t opte = *ptep;
 
@@ -3502,13 +3504,12 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			}
 
 #ifdef ARM_MMU_EXTENDED
-			if (pm == pmap_kernel()) {
-				l2pte_reset(ptep);
-				PTE_SYNC(ptep);
- 				pmap_tlb_flush_SE(pm, sva, flags);
-				continue;
+			l2pte_reset(ptep);
+			PTE_SYNC(ptep);
+			if (__predict_false(pm->pm_remove_all == false)) {
+				pmap_tlb_flush_SE(pm, sva, flags);
 			}
-#endif
+#else
 			if (cleanlist_idx < PMAP_REMOVE_CLEAN_LIST_SIZE) {
 				/* Add to the clean list. */
 				cleanlist[cleanlist_idx].ptep = ptep;
@@ -3540,8 +3541,10 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 					pmap_tlb_flush_SE(pm, sva, flags);
 				}
 			}
+#endif
 		}
 
+#ifndef ARM_MMU_EXTENDED
 		/*
 		 * Deal with any left overs
 		 */
@@ -3550,10 +3553,6 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			for (cnt = 0; cnt < cleanlist_idx; cnt++) {
 				l2pte_reset(cleanlist[cnt].ptep);
 				PTE_SYNC_CURRENT(pm, cleanlist[cnt].ptep);
-#ifdef ARM_MMU_EXTENDED
-				vaddr_t clva = cleanlist[cnt].va;
-				pmap_tlb_flush_SE(pm, clva, PVF_REF);
-#else
 				vaddr_t va = cleanlist[cnt].va;
 				if (pm->pm_cstate.cs_all != 0) {
 					vaddr_t clva = va & ~PAGE_MASK;
@@ -3565,7 +3564,6 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 					pmap_tlb_flush_SE(pm, clva,
 					    PVF_REF | flags);
 				}
-#endif /* ARM_MMU_EXTENDED */
 			}
 
 			/*
@@ -3584,7 +3582,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 				pm->pm_remove_all = true;
 			}
 		}
-
+#endif /* ARM_MMU_EXTENDED */
 
 		pmap_free_l2_bucket(pm, l2b, mappings);
 		pm->pm_stats.resident_count -= mappings / (PAGE_SIZE/L2_S_SIZE);
@@ -4768,19 +4766,85 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 	pmap_release_pmap_lock(pm);
 }
 
+#ifdef ARM_MMU_EXTENDED
+void
+pmap_md_pdetab_activate(pmap_t pm, struct lwp *l)
+{
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+
+	/*
+	 * Assume that TTBR1 has only global mappings and TTBR0 only
+	 * has non-global mappings.  To prevent speculation from doing
+	 * evil things we disable translation table walks using TTBR0
+	 * before setting the CONTEXTIDR (ASID) or new TTBR0 value.
+	 * Once both are set, table walks are reenabled.
+	 */
+	const uint32_t old_ttbcr = armreg_ttbcr_read();
+	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
+	arm_isb();
+
+	pmap_tlb_asid_acquire(pm, l);
+
+	struct cpu_info * const ci = curcpu();
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
+
+	cpu_setttb(pm->pm_l1_pa, pai->pai_asid);
+	/*
+	 * Now we can reenable tablewalks since the CONTEXTIDR and TTRB0
+	 * have been updated.
+	 */
+	arm_isb();
+
+	if (pm != pmap_kernel()) {
+		armreg_ttbcr_write(old_ttbcr & ~TTBCR_S_PD0);
+	}
+	cpu_cpwait();
+
+	UVMHIST_LOG(maphist, " pm %p pm->pm_l1_pa %08x asid %u... done", pm,
+	    pm->pm_l1_pa, pai->pai_asid, 0);
+
+	KASSERTMSG(ci->ci_pmap_asid_cur == pai->pai_asid, "%u vs %u",
+	    ci->ci_pmap_asid_cur, pai->pai_asid);
+	ci->ci_pmap_cur = pm;
+}
+
+void
+pmap_md_pdetab_deactivate(pmap_t pm)
+{
+
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+
+	kpreempt_disable();
+	struct cpu_info * const ci = curcpu();
+	/*
+	 * Disable translation table walks from TTBR0 while no pmap has been
+	 * activated.
+	 */
+	const uint32_t old_ttbcr = armreg_ttbcr_read();
+	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
+	arm_isb();
+	pmap_tlb_asid_deactivate(pm);
+	cpu_setttb(pmap_kernel()->pm_l1_pa, KERNEL_PID);
+	arm_isb();
+
+	ci->ci_pmap_cur = pmap_kernel();
+	KASSERTMSG(ci->ci_pmap_asid_cur == KERNEL_PID, "ci_pmap_asid_cur %u",
+	    ci->ci_pmap_asid_cur);
+	kpreempt_enable();
+}
+#endif
+
 void
 pmap_activate(struct lwp *l)
 {
-	struct cpu_info * const ci = curcpu();
 	extern int block_userspace_access;
 	pmap_t npm = l->l_proc->p_vmspace->vm_map.pmap;
-#ifdef ARM_MMU_EXTENDED
-	struct pmap_asid_info * const pai = PMAP_PAI(npm, cpu_tlb_info(ci));
-#endif
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(l=%#x) pm=%#x", l, npm, 0, 0);
+
+	struct cpu_info * const ci = curcpu();
 
 	/*
 	 * If activating a non-current lwp or the current lwp is
@@ -4831,9 +4895,7 @@ pmap_activate(struct lwp *l)
 	 * entire cache.
 	 */
 	pmap_t rpm = ci->ci_pmap_lastuser;
-#endif
 
-#ifndef ARM_MMU_EXTENDED
 	/*
 	 * XXXSCW: There's a corner case here which can leave turds in the
 	 * cache as reported in kern/41058. They're probably left over during
@@ -4881,30 +4943,7 @@ pmap_activate(struct lwp *l)
 #endif
 
 #ifdef ARM_MMU_EXTENDED
-	/*
-	 * Assume that TTBR1 has only global mappings and TTBR0 only has
-	 * non-global mappings.  To prevent speculation from doing evil things
-	 * we disable translation table walks using TTBR0 before setting the
-	 * CONTEXTIDR (ASID) or new TTBR0 value.  Once both are set, table
-	 * walks are reenabled.
-	 */
-	UVMHIST_LOG(maphist, " acquiring asid", 0, 0, 0, 0);
-	const uint32_t old_ttbcr = armreg_ttbcr_read();
-	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
-	arm_isb();
-	pmap_tlb_asid_acquire(npm, l);
-	UVMHIST_LOG(maphist, " setting ttbr pa=%#x asid=%#x", npm->pm_l1_pa, pai->pai_asid, 0, 0);
-	cpu_setttb(npm->pm_l1_pa, pai->pai_asid);
-	/*
-	 * Now we can reenable tablewalks since the CONTEXTIDR and TTRB0 have
-	 * been updated.
-	 */
-	arm_isb();
-	if (npm != pmap_kernel()) {
-		armreg_ttbcr_write(old_ttbcr & ~TTBCR_S_PD0);
-	}
-	cpu_cpwait();
-	ci->ci_pmap_asid_cur = pai->pai_asid;
+	pmap_md_pdetab_activate(npm, l);
 #else
 	cpu_domains(ndacr);
 	if (npm == pmap_kernel() || npm == rpm) {
@@ -4947,8 +4986,8 @@ pmap_activate(struct lwp *l)
 		/* But the new one is */
 		npm->pm_activated = true;
 	}
-#endif
 	ci->ci_pmap_cur = npm;
+#endif
 	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
 
@@ -4962,20 +5001,7 @@ pmap_deactivate(struct lwp *l)
 	UVMHIST_LOG(maphist, "(l=%#x) pm=%#x", l, pm, 0, 0);
 
 #ifdef ARM_MMU_EXTENDED
-	kpreempt_disable();
-	struct cpu_info * const ci = curcpu();
-	/*
-	 * Disable translation table walks from TTBR0 while no pmap has been
-	 * activated.
-	 */
-	const uint32_t old_ttbcr = armreg_ttbcr_read();
-	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
-	arm_isb();
-	pmap_tlb_asid_deactivate(pm);
-	cpu_setttb(pmap_kernel()->pm_l1_pa, KERNEL_PID);
-	ci->ci_pmap_cur = pmap_kernel();
-	ci->ci_pmap_asid_cur = KERNEL_PID;
-	kpreempt_enable();
+	pmap_md_pdetab_deactivate(pm);
 #else
 	/*
 	 * If the process is exiting, make sure pmap_activate() does
@@ -4990,67 +5016,6 @@ pmap_deactivate(struct lwp *l)
 	UVMHIST_LOG(maphist, "  <-- done", 0, 0, 0, 0);
 }
 
-#ifdef ARM_MMU_EXTENDED
-static inline void
-pmap_remove_all_complete(pmap_t pm)
-{
-	KASSERT(pm != pmap_kernel());
-
-	KASSERTMSG(curcpu()->ci_pmap_cur != pm
-	    || pm->pm_pai[0].pai_asid == curcpu()->ci_pmap_asid_cur,
-	    "pmap/asid %p/%#x != %s cur pmap/asid %p/%#x", pm,
-	    pm->pm_pai[0].pai_asid, curcpu()->ci_data.cpu_name,
-	    curcpu()->ci_pmap_cur, curcpu()->ci_pmap_asid_cur);
-
-	/*
-	 * Finish up the pmap_remove_all() optimisation by flushing
-	 * all our ASIDs.
-	 */
-#ifdef MULTIPROCESSOR
-	// This should be the last CPU with this pmap onproc
-//	KASSERT(!kcpuset_isotherset(pm->pm_onproc, cpu_index(curcpu())));
-#if PMAP_TLB_MAX > 1
-	for (u_int i = 0; !kcpuset_iszero(pm->pm_active); i++) {
-		KASSERT(i < pmap_ntlbs);
-		struct pmap_tlb_info * const ti = pmap_tlbs[i];
-#else
-		struct pmap_tlb_info * const ti = &pmap_tlb0_info;
-#endif
-		struct cpu_info * const ci = curcpu();
-		TLBINFO_LOCK(ti);
-		struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
-		if (PMAP_PAI_ASIDVALID_P(pai, ti)) {
-			if (kcpuset_isset(pm->pm_onproc, cpu_index(ci))) {
-#if PMAP_TLB_MAX == 1
-				    KASSERT(cpu_tlb_info(ci) == ti);
-
-				    tlb_invalidate_asids(pai->pai_asid,
-					pai->pai_asid);
-#else
-				    if (cpu_tlb_info(ci) == ti) {
-					    tlb_invalidate_asids(pai->pai_asid,
-						pai->pai_asid);
-				    } else {
-					    pm->pm_shootdown_needed = 1;
-				    }
-#endif
-			}
-		}
-		TLBINFO_UNLOCK(ti);
-
-#if PMAP_TLB_MAX > 1
-	}
-#endif
-#else /* MULTIPROCESSOR */
-
-	struct pmap_asid_info * const pai =
-	    PMAP_PAI(pm, cpu_tlb_info(ci));
-
-	tlb_invalidate_asids(pai->pai_asid, pai->pai_asid);
-#endif /* MULTIPROCESSOR */
-}
-#endif
-
 void
 pmap_update(pmap_t pm)
 {
@@ -5060,39 +5025,16 @@ pmap_update(pmap_t pm)
 	UVMHIST_LOG(maphist, "pm=%#x remove_all %d", pm, pm->pm_remove_all, 0,
 	    0);
 
+#ifndef ARM_MMU_EXTENDED
 	if (pm->pm_remove_all) {
-#ifdef ARM_MMU_EXTENDED
-		pmap_remove_all_complete(pm);
-#else
 		/*
 		 * Finish up the pmap_remove_all() optimisation by flushing
 		 * the TLB.
 		 */
 		pmap_tlb_flushID(pm);
-#endif
 		pm->pm_remove_all = false;
 	}
 
-#ifdef ARM_MMU_EXTENDED
-#if defined(MULTIPROCESSOR)
-	armreg_bpiallis_write(0);
-#else
-	armreg_bpiall_write(0);
-#endif
-
-#if defined(MULTIPROCESSOR) && PMAP_TLB_MAX > 1
-	u_int pending = atomic_swap_uint(&pmap->pm_shootdown_pending, 0);
-	if (pending && pmap_tlb_shootdown_bystanders(pmap)) {
-		PMAP_COUNT(shootdown_ipis);
-	}
-#endif
-	KASSERTMSG(pm == pmap_kernel()
-	    || curcpu()->ci_pmap_cur != pm
-	    || pm->pm_pai[0].pai_asid == curcpu()->ci_pmap_asid_cur,
-	    "pmap/asid %p/%#x != %s cur pmap/asid %p/%#x", pm,
-	    pm->pm_pai[0].pai_asid, curcpu()->ci_data.cpu_name,
-	    curcpu()->ci_pmap_cur, curcpu()->ci_pmap_asid_cur);
-#else
 	if (pmap_is_current(pm)) {
 		/*
 		 * If we're dealing with a current userland pmap, move its L1
@@ -5108,6 +5050,40 @@ pmap_update(pmap_t pm)
 		 */
 		pm->pm_cstate.cs_all = PMAP_CACHE_STATE_ALL;
 	}
+#else
+
+	kpreempt_disable();
+#if defined(MULTIPROCESSOR) && PMAP_TLB_MAX > 1
+	u_int pending = atomic_swap_uint(&pmap->pm_shootdown_pending, 0);
+	if (pending && pmap_tlb_shootdown_bystanders(pmap)) {
+		PMAP_COUNT(shootdown_ipis);
+	}
+#endif
+
+	/*
+	 * If pmap_remove_all was called, we deactivated ourselves and released
+	 * our ASID.  Now we have to reactivate ourselves.
+	 */
+	if (__predict_false(pm->pm_remove_all)) {
+		pm->pm_remove_all = false;
+
+		KASSERT(pm != pmap_kernel());
+		pmap_md_pdetab_activate(pm, curlwp);
+	}
+
+#if defined(MULTIPROCESSOR)
+	armreg_bpiallis_write(0);
+#else
+	armreg_bpiall_write(0);
+#endif
+	kpreempt_enable();
+
+	KASSERTMSG(pm == pmap_kernel()
+	    || curcpu()->ci_pmap_cur != pm
+	    || pm->pm_pai[0].pai_asid == curcpu()->ci_pmap_asid_cur,
+	    "pmap/asid %p/%#x != %s cur pmap/asid %p/%#x", pm,
+	    pm->pm_pai[0].pai_asid, curcpu()->ci_data.cpu_name,
+	    curcpu()->ci_pmap_cur, curcpu()->ci_pmap_asid_cur);
 #endif
 
 	PMAPCOUNT(updates);
@@ -5132,6 +5108,20 @@ pmap_remove_all(pmap_t pm)
 #ifdef PMAP_CACHE_VIVT
 	pmap_cache_wbinv_all(pm, PVF_EXEC);
 #endif
+#ifdef ARM_MMU_EXTENDED
+#ifdef MULTIPROCESSOR
+	struct cpu_info * const ci = curcpu();
+	// This should be the last CPU with this pmap onproc
+	KASSERT(!kcpuset_isotherset(pm->pm_onproc, cpu_index(ci)));
+	if (kcpuset_isset(pm->pm_onproc, cpu_index(ci)))
+#endif
+		pmap_tlb_asid_deactivate(pm);
+#ifdef MULTIPROCESSOR
+	KASSERT(kcpuset_iszero(pm->pm_onproc));
+#endif
+
+	pmap_tlb_asid_release_all(pm);
+#endif
 	pm->pm_remove_all = true;
 }
 
@@ -5154,7 +5144,6 @@ pmap_destroy(pmap_t pm)
 
 	if (pm->pm_remove_all) {
 #ifdef ARM_MMU_EXTENDED
-		pmap_remove_all_complete(pm);
  		pmap_tlb_asid_release_all(pm);
 #else
 		pmap_tlb_flushID(pm);
