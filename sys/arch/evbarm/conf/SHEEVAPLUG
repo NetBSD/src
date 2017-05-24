@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.54 2017/03/22 22:53:06 sevan Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.55 2017/05/24 20:23:04 christos Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -392,7 +392,7 @@ radio*	at udsbr?
 ugen*	at uhub? port ?
 
 # USB 3G datacards
-u3ginit* at uhub? port ?
+umodeswitch* at uhub? port ?
 u3g*	at uhub? port ?
 ucom*	at u3g?
 

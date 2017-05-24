@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.417 2017/04/18 19:09:12 riastradh Exp $
+# $NetBSD: ALL,v 1.418 2017/05/24 20:23:04 christos Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.417 $"
+#ident		"ALL-$Revision: 1.418 $"
 
 maxusers	64		# estimated number of users
 
@@ -1433,7 +1433,7 @@ radio*	at udsbr?
 ugen*	at uhub? port ?
 
 # USB 3G datacards
-u3ginit* at uhub? port ?
+umodeswitch* at uhub? port ?
 u3g*	at uhub? port ?
 ucom*	at u3g?
 

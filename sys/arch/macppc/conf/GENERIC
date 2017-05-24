@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.328 2017/02/26 12:03:14 rin Exp $
+# $NetBSD: GENERIC,v 1.329 2017/05/24 20:23:04 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.328 $"
+#ident 		"GENERIC-$Revision: 1.329 $"
 
 maxusers	32
 
@@ -553,7 +553,7 @@ uslsa*  at uhub? port ?         # Silicon Labs USB-RS232 serial adapter
 ucom*   at uslsa? portno ?
 
 # USB 3G datacards
-u3ginit* at uhub? port ?
+umodeswitch* at uhub? port ?
 u3g*    at uhub? port ?
 ucom*   at u3g?
 
