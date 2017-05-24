@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.74 2017/05/24 09:57:36 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.75 2017/05/24 10:05:09 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.74 2017/05/24 09:57:36 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.75 2017/05/24 10:05:09 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -131,9 +131,8 @@ static	TAILQ_HEAD(krprethead, cryptkop) crp_ret_kq =
 #define DEFINIT_CRYPTO_Q_DROPS(name)		\
 	static int crypto_##name##_drops = 0
 
-#define CRYPTO_Q_MAXLEN 0
-#define DEFINIT_CRYPTO_Q_MAXLEN(name)				\
-	static int crypto_##name##_maxlen = CRYPTO_Q_MAXLEN
+#define DEFINIT_CRYPTO_Q_MAXLEN(name, defval)		\
+	static int crypto_##name##_maxlen = defval
 
 #define CRYPTO_Q_INC(name)			\
 	do {					\
@@ -166,12 +165,18 @@ DEFINIT_CRYPTO_Q_LEN(crp_ret_kq);
 DEFINIT_CRYPTO_Q_DROPS(crp_ret_q);
 DEFINIT_CRYPTO_Q_DROPS(crp_ret_kq);
 
+#ifndef CRYPTO_RET_Q_MAXLEN
+#define CRYPTO_RET_Q_MAXLEN 0
+#endif
+#ifndef CRYPTO_RET_KQ_MAXLEN
+#define CRYPTO_RET_KQ_MAXLEN 0
+#endif
 /*
  * queue length limit.
  * default value is 0. <=0 means unlimited.
  */
-DEFINIT_CRYPTO_Q_MAXLEN(crp_ret_q);
-DEFINIT_CRYPTO_Q_MAXLEN(crp_ret_kq);
+DEFINIT_CRYPTO_Q_MAXLEN(crp_ret_q, CRYPTO_RET_Q_MAXLEN);
+DEFINIT_CRYPTO_Q_MAXLEN(crp_ret_kq, CRYPTO_RET_KQ_MAXLEN);
 
 /*
  * TODO:
