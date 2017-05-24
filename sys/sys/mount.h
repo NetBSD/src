@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.226 2017/04/17 08:34:27 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.227 2017/05/24 09:52:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -458,7 +458,6 @@ struct vnode *vfs_vnode_iterator_next(struct vnode_iterator *,
 
 /* Syncer */
 extern int	syncer_maxdelay;
-extern kmutex_t	syncer_mutex;
 extern time_t	syncdelay;
 extern time_t	filedelay;
 extern time_t	dirdelay;
