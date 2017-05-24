@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.73 2017/05/24 09:54:35 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.74 2017/05/24 09:57:36 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.73 2017/05/24 09:54:35 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.74 2017/05/24 09:57:36 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -144,6 +144,15 @@ static	TAILQ_HEAD(krprethead, cryptkop) crp_ret_kq =
 	do {					\
 		crypto_##name##_len--;		\
 	} while(0);
+
+#define CRYPTO_Q_INC_DROPS(name)		\
+	do {					\
+		crypto_##name##_drops++;	\
+	} while(0);
+
+#define CRYPTO_Q_IS_FULL(name)					\
+	(crypto_##name##_maxlen > 0				\
+	    && (crypto_##name##_len > crypto_##name##_maxlen))
 
 /*
  * current queue length.
@@ -1216,6 +1225,15 @@ crypto_getreq(int num)
 {
 	struct cryptodesc *crd;
 	struct cryptop *crp;
+
+	/*
+	 * When crp_ret_q is full, we restrict here to avoid crp_ret_q overflow
+	 * by error callback.
+	 */
+	if (CRYPTO_Q_IS_FULL(crp_ret_q)) {
+		CRYPTO_Q_INC_DROPS(crp_ret_q);
+		return NULL;
+	}
 
 	crp = pool_get(&cryptop_pool, 0);
 	if (crp == NULL) {
