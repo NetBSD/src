@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf.h,v 1.1.1.8 2017/02/10 17:42:57 christos Exp $	*/
+/*	$NetBSD: cdf.h,v 1.1.1.9 2017/05/24 23:59:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -129,9 +129,9 @@ typedef struct {
 
 typedef struct {
 	void *sst_tab;
-	size_t sst_len;
-	size_t sst_dirlen;
-	size_t sst_ss;
+	size_t sst_len;		/* Number of sectors */
+	size_t sst_dirlen;	/* Directory sector size */
+	size_t sst_ss;		/* Sector size */
 } cdf_stream_t;
 
 typedef struct {
