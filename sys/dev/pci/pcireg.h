@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.128 2017/04/21 09:01:52 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.129 2017/05/24 06:51:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1856,8 +1856,15 @@ struct pci_rom {
 #define	PCI_TPH_REQ_CAP_STTBLLOC __BITS(10, 9)	/* ST Table Location */
 #define	PCI_TPH_REQ_CAP_STTBLSIZ __BITS(26, 16)	/* ST Table Size */
 #define	PCI_TPH_REQ_CTL	0x08	/* TPH Requester Control */
-#define	PCI_TPH_REQ_CTL_STSEL	_BITS(2, 0)	/* ST Mode Select */
-#define	PCI_TPH_REQ_CTL_TPHREQEN _BITS(9, 8)	/* TPH Requester Enable */
+#define	PCI_TPH_REQ_CTL_STSEL	__BITS(2, 0)	/* ST Mode Select */
+#define	PCI_TPH_REQ_CTL_STSEL_NO	0	 /* No ST Mode */
+#define	PCI_TPH_REQ_CTL_STSEL_IV	1	 /* Interrupt Vector Mode */
+#define	PCI_TPH_REQ_CTL_STSEL_DS	2	 /* Device Specific Mode */
+#define	PCI_TPH_REQ_CTL_TPHREQEN __BITS(9, 8)	/* TPH Requester Enable */
+#define	PCI_TPH_REQ_CTL_TPHREQEN_NO	0	 /* Not permitted */
+#define	PCI_TPH_REQ_CTL_TPHREQEN_TPH	1	 /* TPH and no extended TPH */
+#define	PCI_TPH_REQ_CTL_TPHREQEN_RSVD	2	 /* Reserved */
+#define	PCI_TPH_REQ_CTL_TPHREQEN_ETPH	3	 /* TPH and Extended TPH */
 #define	PCI_TPH_REQ_STTBL 0x0c	/* TPH ST Table */
 
 /*
