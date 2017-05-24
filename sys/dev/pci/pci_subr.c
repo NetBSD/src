@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.181 2017/05/22 04:21:20 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.182 2017/05/24 06:51:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.181 2017/05/22 04:21:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.182 2017/05/24 06:51:27 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3410,6 +3410,40 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 		    (unsigned char)__SHIFTOUT(reg, PCI_TPH_REQ_CAP_STTBLLOC)));
 	size = __SHIFTOUT(reg, PCI_TPH_REQ_CAP_STTBLSIZ) + 1;
 	printf("      ST Table Size: %d\n", size);
+
+	reg = regs[o2i(extcapoff + PCI_TPH_REQ_CTL)];
+	printf("    TPH Requester Control register: 0x%08x\n", reg);
+	printf("      ST Mode Select: ");
+	switch (__SHIFTOUT(reg, PCI_TPH_REQ_CTL_STSEL)) {
+	case PCI_TPH_REQ_CTL_STSEL_NO:
+		printf("No ST Mode\n");
+		break;
+	case PCI_TPH_REQ_CTL_STSEL_IV:
+		printf("Interrupt Vector Mode\n");
+		break;
+	case PCI_TPH_REQ_CTL_STSEL_DS:
+		printf("Device Specific Mode\n");
+		break;
+	default:
+		printf("(reserved vaule)\n");
+		break;
+	}
+	printf("      TPH Requester Enable: ");
+	switch (__SHIFTOUT(reg, PCI_TPH_REQ_CTL_TPHREQEN)) {
+	case PCI_TPH_REQ_CTL_TPHREQEN_NO: /* 0x0 */
+		printf("Not permitted\n");
+		break;
+	case PCI_TPH_REQ_CTL_TPHREQEN_TPH:
+		printf("TPH and not Extended TPH\n");
+		break;
+	case PCI_TPH_REQ_CTL_TPHREQEN_ETPH:
+		printf("TPH and Extended TPH");
+		break;
+	default:
+		printf("(reserved vaule)\n");
+		break;
+	}
+	
 	for (i = 0; i < size ; i += 2) {
 		reg = regs[o2i(extcapoff + PCI_TPH_REQ_STTBL + i / 2)];
 		for (j = 0; j < 2 ; j++) {
