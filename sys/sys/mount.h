@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.227 2017/05/24 09:52:59 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.228 2017/05/24 09:53:55 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -115,10 +115,8 @@ struct mount {
 	int		mnt_synclist_slot;	/* synclist slot index */
 	void		*mnt_transinfo;		/* for FS-internal use */
 	void		*mnt_data;		/* private data */
-	kmutex_t	mnt_unmounting;		/* to prevent new activity */
 	kmutex_t	mnt_renamelock;		/* per-fs rename lock */
 	int		mnt_refcnt;		/* ref count on this structure */
-	unsigned int	mnt_busynest;		/* vfs_busy nestings */
 	int		mnt_flag;		/* flags */
 	int		mnt_iflag;		/* internal flags */
 	int		mnt_fs_bshift;		/* offset shift for lblkno */
