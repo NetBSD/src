@@ -1,4 +1,4 @@
-# $NetBSD: t_psshfs.sh,v 1.8 2016/09/05 08:53:57 christos Exp $
+# $NetBSD: t_psshfs.sh,v 1.9 2017/05/24 15:29:51 christos Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -267,7 +267,7 @@ read_empty_file_head() {
 	atf_set "descr" "Checks whether an empty file can be read"
 	# This test is supposed to make sure psshfs does not hang
 	# when reading from an empty file, hence the timeout.
-	atf_set "timeout" 8
+	atf_set "timeout" 60
 }
 read_empty_file_body() {
 	require_puffs
