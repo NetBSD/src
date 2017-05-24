@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.68 2017/05/07 08:22:40 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.69 2017/05/24 09:55:18 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.68 2017/05/07 08:22:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.69 2017/05/24 09:55:18 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1600,12 +1600,14 @@ union_lock1(struct vnode *vp, struct vnode *lockvp, int flags)
 {
 	struct vop_lock_args ap;
 
-	if (lockvp == vp) {
-		ap.a_vp = vp;
-		ap.a_flags = flags;
+	ap.a_desc = VDESC(vop_lock);
+	ap.a_vp = lockvp;
+	ap.a_flags = flags;
+
+	if (lockvp == vp)
 		return genfs_lock(&ap);
-	} else
-		return VOP_LOCK(lockvp, flags);
+	else
+		return VCALL(ap.a_vp, VOFFSET(vop_lock), &ap);
 }
 
 static int
@@ -1613,11 +1615,13 @@ union_unlock1(struct vnode *vp, struct vnode *lockvp)
 {
 	struct vop_unlock_args ap;
 
-	if (lockvp == vp) {
-		ap.a_vp = vp;
+	ap.a_desc = VDESC(vop_unlock);
+	ap.a_vp = lockvp;
+
+	if (lockvp == vp)
 		return genfs_unlock(&ap);
-	} else
-		return VOP_UNLOCK(lockvp);
+	else
+		return VCALL(ap.a_vp, VOFFSET(vop_unlock), &ap);
 }
 
 int
