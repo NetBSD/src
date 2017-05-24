@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: animation,v 1.59 2017/01/21 16:07:14 christos Exp $
+# $File: animation,v 1.61 2017/04/01 18:26:03 christos Exp $
 # animation:  file(1) magic for animation/movie formats
 #
 # animation formats
@@ -34,6 +34,13 @@
 !:mime	image/jp2
 # http://www.ftyps.com/ with local additions
 4	string		ftyp		ISO Media
+# http://aeroquartet.com/wordpress/2016/03/05/3-xavc-s/
+>8	string		XAVC		\b, MPEG v4 system, Sony XAVC Codec
+>>96	string		x		\b, Audio "%.4s"
+>>118	beshort		x		at %dHz
+>>140	string		x		\b, Video "%.4s"
+>>168	beshort		x		%d
+>>170	beshort		x		\bx%d
 >8	string		3g2		\b, MPEG v4 system, 3GPP2
 !:mime	video/3gpp2
 >>11	byte		4		\b v4 (H.263/AMR GSM 6.10)
@@ -186,13 +193,13 @@
 
 # MPEG sequences
 # Scans for all common MPEG header start codes
-0	 belong		    0x00000001     
+0	 belong		    0x00000001
 >4	 byte&0x1F	    0x07	   JVT NAL sequence, H.264 video
 >>5      byte               66             \b, baseline
 >>5      byte               77             \b, main
 >>5      byte               88             \b, extended
 >>7      byte               x              \b @ L %u
-0        belong&0xFFFFFF00  0x00000100     
+0        belong&0xFFFFFF00  0x00000100
 >3       byte               0xBA           MPEG sequence
 !:mime  video/mpeg
 >>4      byte               &0x40          \b, v2, program multiplex
@@ -493,8 +500,8 @@
 # GRR the original test are too common for many DOS files, so test 32 <= kbits <= 448
 # GRR this test is still too general as it catches a BOM of UTF-16 files (0xFFFE)
 # FIXME: Almost all little endian UTF-16 text with BOM are clobbered by these entries
-#0	beshort&0xFFFE		0xFFFE	
-#>2	ubyte&0xF0	>0x0F		
+#0	beshort&0xFFFE		0xFFFE
+#>2	ubyte&0xF0	>0x0F
 #>>2	ubyte&0xF0	<0xE1		MPEG ADTS, layer I, v1
 ## rate
 #>>>2      byte&0xF0       0x10           \b,  32 kbps
@@ -566,9 +573,9 @@
 # MP2, M2A
 0       beshort&0xFFFE  0xFFF4         MPEG ADTS, layer II, v2
 !:mime	audio/mpeg
-# rate 
+# rate
 >2      byte&0xF0       0x10           \b,   8 kbps
->2      byte&0xF0       0x20           \b,  16 kbps 
+>2      byte&0xF0       0x20           \b,  16 kbps
 >2      byte&0xF0       0x30           \b,  24 kbps
 >2      byte&0xF0       0x40           \b,  32 kbps
 >2      byte&0xF0       0x50           \b,  40 kbps
@@ -636,7 +643,7 @@
 # MP3, M25A
 0       beshort&0xFFFE  0xFFE2         MPEG ADTS, layer III,  v2.5
 !:mime	audio/mpeg
-# rate  
+# rate
 >2      byte&0xF0       0x10           \b,   8 kbps
 >2      byte&0xF0       0x20           \b,  16 kbps
 >2      byte&0xF0       0x30           \b,  24 kbps
