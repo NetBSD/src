@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.71 2017/05/17 12:11:41 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.72 2017/05/24 05:11:29 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.71 2017/05/17 12:11:41 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.72 2017/05/24 05:11:29 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -149,7 +149,8 @@ int	crypto_userasymcrypto = 1;	/* userland may do asym crypto reqs */
  */
 int	crypto_devallowsoft = 1;	/* only use hardware crypto */
 
-SYSCTL_SETUP(sysctl_opencrypto_setup, "sysctl opencrypto subtree setup")
+static void
+sysctl_opencrypto_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -212,9 +213,7 @@ static struct cryptostats cryptostats;
 static	int crypto_timing = 0;
 #endif
 
-#ifdef _MODULE
 static struct sysctllog *sysctl_opencrypto_clog;
-#endif
 
 static int
 crypto_init0(void)
@@ -249,9 +248,8 @@ crypto_init0(void)
 		return crypto_destroy(false);
 	}
 
-#ifdef _MODULE
 	sysctl_opencrypto_setup(&sysctl_opencrypto_clog);
-#endif
+
 	return 0;
 }
 
@@ -294,10 +292,8 @@ crypto_destroy(bool exit_kthread)
 		mutex_spin_exit(&crypto_ret_q_mtx);
 	}
 
-#ifdef _MODULE
 	if (sysctl_opencrypto_clog != NULL)
 		sysctl_teardown(&sysctl_opencrypto_clog);
-#endif
 
 	unregister_swi(SWI_CRYPTO, cryptointr);
 
