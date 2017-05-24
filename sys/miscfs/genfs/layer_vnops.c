@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.64 2017/05/07 08:21:57 hannken Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.65 2017/05/24 09:54:40 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.64 2017/05/07 08:21:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.65 2017/05/24 09:54:40 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,6 +183,7 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.64 2017/05/07 08:21:57 hannken Exp
 #include <sys/buf.h>
 #include <sys/kauth.h>
 #include <sys/fcntl.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
@@ -790,6 +791,8 @@ layer_getpages(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct mount *mp = vp->v_mount;
+	int error;
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
@@ -800,7 +803,19 @@ layer_getpages(void *v)
 	KASSERT(vp->v_interlock == ap->a_vp->v_interlock);
 
 	/* Just pass the request on to the underlying layer. */
-	return VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
+	mutex_exit(vp->v_interlock);
+	fstrans_start(mp, FSTRANS_SHARED);
+	mutex_enter(vp->v_interlock);
+	if (mp == vp->v_mount) {
+		/* Will release the interlock. */
+		error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
+	} else {
+		mutex_exit(vp->v_interlock);
+		error = ENOENT;
+	}
+	fstrans_done(mp);
+
+	return error;
 }
 
 int
