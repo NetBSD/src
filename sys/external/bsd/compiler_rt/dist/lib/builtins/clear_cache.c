@@ -147,6 +147,13 @@ void __clear_cache(void *start, void *end) {
   for (addr = xstart; addr < xend; addr += icache_line_size)
     __asm __volatile("ic ivau, %0" :: "r"(addr));
   __asm __volatile("isb sy");
+#elif defined(__sparc__)
+  uintptr_t xstart = (uintptr_t) start & ~(uintptr_t)3;
+  uintptr_t xend = (uintptr_t) end;
+
+  for (; xstart < xend; xstart += 4) {
+    __asm __volatile("flush %0" :: "r" (xstart));
+  }
 #else
     #if __APPLE__
         /* On Darwin, sys_icache_invalidate() provides this functionality */
