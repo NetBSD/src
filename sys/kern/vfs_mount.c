@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.63 2017/05/24 09:52:59 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.64 2017/05/24 09:53:55 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.63 2017/05/24 09:52:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.64 2017/05/24 09:53:55 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -158,7 +158,6 @@ vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 	mp->mnt_op = vfsops;
 	mp->mnt_refcnt = 1;
 	TAILQ_INIT(&mp->mnt_vnodelist);
-	mutex_init(&mp->mnt_unmounting, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
 	mp->mnt_vnodecovered = vp;
@@ -298,7 +297,6 @@ vfs_rele(struct mount *mp)
 	 */
 	KASSERT(mp->mnt_refcnt == 0);
 	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
-	mutex_destroy(&mp->mnt_unmounting);
 	mutex_destroy(&mp->mnt_updating);
 	mutex_destroy(&mp->mnt_renamelock);
 	if (mp->mnt_op != NULL) {
@@ -325,23 +323,14 @@ _vfs_busy(struct mount *mp, bool wait)
 
 	if (wait) {
 		fstrans_start(mp, FSTRANS_SHARED);
-		mutex_enter(&mp->mnt_unmounting);
 	} else {
 		if (fstrans_start_nowait(mp, FSTRANS_SHARED))
 			return EBUSY;
-		if (!mutex_tryenter(&mp->mnt_unmounting)) {
-			fstrans_done(mp);
-			return EBUSY;
-		}
 	}
 	if (__predict_false((mp->mnt_iflag & IMNT_GONE) != 0)) {
-		mutex_exit(&mp->mnt_unmounting);
 		fstrans_done(mp);
 		return ENOENT;
 	}
-	++mp->mnt_busynest;
-	KASSERT(mp->mnt_busynest != 0);
-	mutex_exit(&mp->mnt_unmounting);
 	vfs_ref(mp);
 	return 0;
 }
@@ -371,10 +360,6 @@ vfs_unbusy(struct mount *mp)
 
 	KASSERT(mp->mnt_refcnt > 0);
 
-	mutex_enter(&mp->mnt_unmounting);
-	KASSERT(mp->mnt_busynest != 0);
-	mp->mnt_busynest--;
-	mutex_exit(&mp->mnt_unmounting);
 	fstrans_done(mp);
 	vfs_rele(mp);
 }
@@ -874,23 +859,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		return error;
 	}
 
-	/*
-	 * Abort unmount attempt when the filesystem is in use
-	 */
-	mutex_enter(&mp->mnt_unmounting);
-	if (mp->mnt_busynest != 0) {
-		mutex_exit(&mp->mnt_unmounting);
-		vfs_resume(mp);
-		return EBUSY;
-	}
-
-	/*
-	 * Abort unmount attempt when the filesystem is not mounted
-	 */
-	if ((mp->mnt_iflag & IMNT_GONE) != 0) {
-		mutex_exit(&mp->mnt_unmounting);
-		return ENOENT;
-	}
+	KASSERT((mp->mnt_iflag & IMNT_GONE) == 0);
 
 	used_syncer = (mp->mnt_iflag & IMNT_ONWORKLIST) != 0;
 	used_extattr = mp->mnt_flag & MNT_EXTATTR;
@@ -911,7 +880,6 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	}
 	if (error) {
 		mp->mnt_iflag &= ~IMNT_UNMOUNT;
-		mutex_exit(&mp->mnt_unmounting);
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 			vfs_syncer_add_to_worklist(mp);
 		mp->mnt_flag |= async;
@@ -928,15 +896,11 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	mutex_exit(&mp->mnt_updating);
 
 	/*
-	 * release mnt_umounting lock here, because other code calls
-	 * vfs_busy() while holding the mountlist_lock.
-	 *
 	 * mark filesystem as gone to prevent further umounts
 	 * after mnt_umounting lock is gone, this also prevents
 	 * vfs_busy() from succeeding.
 	 */
 	mp->mnt_iflag |= IMNT_GONE;
-	mutex_exit(&mp->mnt_unmounting);
 	vfs_resume(mp);
 
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
