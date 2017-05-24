@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.348 2017/05/24 06:27:33 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.349 2017/05/24 06:31:07 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.348 2017/05/24 06:27:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.349 2017/05/24 06:31:07 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -7523,6 +7523,8 @@ pmap_pte_init_armv7(void)
 	 * the TLBIASID coproc op.
 	 */
 	if (__SHIFTOUT(armreg_mmfr2_read(), __BITS(16,19)) >= 2) {
+		arm_has_tlbiasid_p = true;
+	} else if (__SHIFTOUT(armreg_mmfr2_read(), __BITS(12,15)) >= 2) {
 		arm_has_tlbiasid_p = true;
 	}
 
