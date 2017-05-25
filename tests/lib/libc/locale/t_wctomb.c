@@ -1,4 +1,4 @@
-/* $NetBSD: t_wctomb.c,v 1.3 2013/03/25 15:31:03 gson Exp $ */
+/* $NetBSD: t_wctomb.c,v 1.4 2017/05/25 18:28:54 perseant Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_wctomb.c,v 1.3 2013/03/25 15:31:03 gson Exp $");
+__RCSID("$NetBSD: t_wctomb.c,v 1.4 2017/05/25 18:28:54 perseant Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,6 +76,7 @@ static struct test {
 	const char *data;
 	size_t wclen;
 	size_t mblen[16];
+	size_t stateful;
 } tests[] = {
 {
 	"ja_JP.ISO2022-JP",
@@ -87,13 +88,15 @@ static struct test {
 	"\xb1\xb2\xb3"	/* "aiu" */
 	"\x1b(B",	/* ISO 646 */
 	3 + 3 + 3,
-	{ 3+2, 2, 2, 3+1, 1, 1, 3+1, 1, 1, 3+1 }
+	{ 3+2, 2, 2, 3+1, 1, 1, 3+1, 1, 1, 3+1 },
+	1,
 }, {
 	"C", 
 	"ABC",
 	3,
-	{ 1, 1, 1, 1 }
-}, { NULL, NULL, 0, { } }
+	{ 1, 1, 1, 1 },
+	0,
+}, { NULL, NULL, 0, { }, 0 }
 };
 
 static void
@@ -109,18 +112,23 @@ h_wctomb(const struct test *t, char tc)
 	size_t sz, ret, i;
 
 	ATF_REQUIRE_STREQ(setlocale(LC_ALL, "C"), "C");
+	(void)printf("Trying locale: %s\n", t->locale);
 	ATF_REQUIRE(setlocale(LC_CTYPE, t->locale) != NULL);
+
+	if (tc == TC_WCRTOMB_ST) {
+		(void)memset(&st, 0, sizeof(st));
+		stp = &st;
+	} else {
+		(void)printf("Checking correct reporting of statefulness\n");
+		ret = wctomb(NULL, 0);
+		ATF_REQUIRE_EQ(t->stateful, !!ret);
+	}
 
 	(void)strvis(buf, t->data, VIS_WHITE | VIS_OCTAL);
 	(void)printf("Checking sequence: \"%s\"\n", buf);
 
 	ATF_REQUIRE((str = setlocale(LC_ALL, NULL)) != NULL);
 	(void)printf("Using locale: %s\n", str);
-
-	if (tc == TC_WCRTOMB_ST) {
-		(void)memset(&st, 0, sizeof(st));
-		stp = &st;
-	}
 
 	wcs[t->wclen] = L'X'; /* poison */
 	pcs = t->data;
