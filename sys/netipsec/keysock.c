@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.55 2017/05/16 03:05:28 ozaki-r Exp $	*/
+/*	$NetBSD: keysock.c,v 1.56 2017/05/25 04:19:50 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.55 2017/05/16 03:05:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.56 2017/05/25 04:19:50 ozaki-r Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -183,7 +183,7 @@ key_sendup0(
 		ok = sbappendaddrchain(&rp->rcb_socket->so_rcv,
 			       (struct sockaddr *)&key_src, m, sbprio);
 
-	  if (!ok) {
+	if (!ok) {
 		PFKEY_STATINC(PFKEY_STAT_IN_NOMEM);
 		m_freem(m);
 		error = ENOBUFS;
