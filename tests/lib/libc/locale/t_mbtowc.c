@@ -1,4 +1,4 @@
-/* $NetBSD: t_mbtowc.c,v 1.1 2011/04/09 17:45:25 pgoyette Exp $ */
+/* $NetBSD: t_mbtowc.c,v 1.2 2017/05/25 18:28:54 perseant Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mbtowc.c,v 1.1 2011/04/09 17:45:25 pgoyette Exp $");
+__RCSID("$NetBSD: t_mbtowc.c,v 1.2 2017/05/25 18:28:54 perseant Exp $");
 
 #include <errno.h>
 #include <locale.h>
@@ -69,21 +69,20 @@ __RCSID("$NetBSD: t_mbtowc.c,v 1.1 2011/04/09 17:45:25 pgoyette Exp $");
 #include <atf-c.h>
 
 static void
-h_mbtowc(const char *locale, const char *illegal, const char *legal)
+h_mbtowc(const char *locale, const char *illegal, const char *legal, size_t stateful)
 {
 	char buf[64];
-	size_t stateful, ret;
+	size_t ret;
 	char *str;
 
 	ATF_REQUIRE_STREQ(setlocale(LC_ALL, "C"), "C");
+	(void)printf("Trying locale: %s\n", locale);
 	ATF_REQUIRE(setlocale(LC_CTYPE, locale) != NULL);
 
 	ATF_REQUIRE((str = setlocale(LC_ALL, NULL)) != NULL);
 	(void)printf("Using locale: %s\n", str);
-
-	stateful = wctomb(NULL, L'\0');
 	(void)printf("Locale is state-%sdependent\n",
-		stateful ? "in" : "");
+		!stateful ? "in" : "");
 
 	/* initialize internal state */
 	ret = mbtowc(NULL, NULL, 0);
@@ -101,8 +100,7 @@ h_mbtowc(const char *locale, const char *illegal, const char *legal)
 	/* if this is stateless encoding, this re-initialization is not required. */
 	if (stateful) {
 		/* re-initialize internal state */
-		ret = mbtowc(NULL, NULL, 0);
-		ATF_REQUIRE(stateful ? ret : !ret);
+		mbtowc(NULL, NULL, 0);
 	}
 
 	/* valid multibyte sequence case */
@@ -126,13 +124,13 @@ ATF_TC_HEAD(mbtowc, tc)
 }
 ATF_TC_BODY(mbtowc, tc)
 {
-	h_mbtowc("en_US.UTF-8", "\240", "\302\240");
-	h_mbtowc("ja_JP.ISO2022-JP", "\033$B", "\033$B$\"\033(B");
-	h_mbtowc("ja_JP.SJIS", "\202", "\202\240");
-	h_mbtowc("ja_JP.eucJP", "\244", "\244\242");
-	h_mbtowc("zh_CN.GB18030", "\241", "\241\241");
-	h_mbtowc("zh_TW.Big5", "\241", "\241@");
-	h_mbtowc("zh_TW.eucTW", "\241", "\241\241");
+	h_mbtowc("en_US.UTF-8", "\240", "\302\240", 0);
+	h_mbtowc("ja_JP.ISO2022-JP", "\033$B", "\033$B$\"\033(B", 1);
+	h_mbtowc("ja_JP.SJIS", "\202", "\202\240", 0);
+	h_mbtowc("ja_JP.eucJP", "\244", "\244\242", 0);
+	h_mbtowc("zh_CN.GB18030", "\241", "\241\241", 0);
+	h_mbtowc("zh_TW.Big5", "\241", "\241@", 0);
+	h_mbtowc("zh_TW.eucTW", "\241", "\241\241", 0);
 }
 
 ATF_TP_ADD_TCS(tp)
