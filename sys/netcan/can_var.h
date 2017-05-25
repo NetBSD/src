@@ -1,4 +1,4 @@
-/*	$NetBSD: can_var.h,v 1.1.2.8 2017/05/22 16:11:23 bouyer Exp $	*/
+/*	$NetBSD: can_var.h,v 1.1.2.9 2017/05/25 18:21:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ void *can_ctlinput(int, struct sockaddr *, void *);
 int can_ctloutput(int, struct socket *, struct sockopt *);
 void can_init(void);
 void canintr(void);
-void can_bpf_mtap(struct ifnet *, struct mbuf *);
+void can_bpf_mtap(struct ifnet *, struct mbuf *, bool);
 
 #endif
 
