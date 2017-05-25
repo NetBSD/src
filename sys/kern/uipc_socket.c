@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.252 2016/10/13 19:10:23 uwe Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.252.2.1 2017/05/25 18:52:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.252 2016/10/13 19:10:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.252.2.1 2017/05/25 18:52:24 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -433,9 +433,9 @@ socket_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		}
 
 	case KAUTH_REQ_NETWORK_SOCKET_OPEN:
-		/* We allow "raw" routing/bluetooth sockets to anyone. */
+		/* We allow "raw" routing/bluetooth/CAN sockets to anyone. */
 		if ((u_long)arg1 == PF_ROUTE || (u_long)arg1 == PF_OROUTE
-		    || (u_long)arg1 == PF_BLUETOOTH) {
+		    || (u_long)arg1 == PF_BLUETOOTH || (u_long)arg1 == PF_CAN) {
 			result = KAUTH_RESULT_ALLOW;
 		} else {
 			/* Privileged, let secmodel handle this. */
