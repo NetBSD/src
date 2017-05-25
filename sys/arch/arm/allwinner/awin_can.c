@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_can.c,v 1.1.2.6 2017/05/22 16:11:23 bouyer Exp $	*/
+/*	$NetBSD: awin_can.c,v 1.1.2.7 2017/05/25 18:23:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.6 2017/05/22 16:11:23 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.7 2017/05/25 18:23:15 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.6 2017/05/22 16:11:23 bouyer Exp 
 
 #include <net/if.h>
 #include <net/if_types.h>
+#include <net/bpf.h>
 
 #ifdef CAN
 #include <netcan/can.h>
@@ -209,6 +210,8 @@ awin_can_attach(device_t parent, device_t self, void *aux)
 	 * Attach the interface.
 	 */
 	can_ifattach(ifp);
+	if_deferred_start_init(ifp, NULL);
+	bpf_mtap_softint_init(ifp);
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 #ifdef MBUFTRACE
@@ -275,7 +278,7 @@ awin_can_rx_intr(struct awin_can_softc *sc)
 	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_len;
 	m_set_rcvif(m, ifp);
-	can_bpf_mtap(ifp, m);
+	can_bpf_mtap(ifp, m, 1);
 	can_input(ifp, m);
 }
 
@@ -284,10 +287,6 @@ awin_can_tx_intr(struct awin_can_softc *sc)
 {
 	struct ifnet * const ifp = sc->sc_ifp;
 	struct mbuf *m;
-	struct can_frame *cf;
-	int regd;
-	uint32_t reg0val;
-	int i;
 
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 	if ((m = sc->sc_m_transmit) != NULL) {
@@ -298,58 +297,10 @@ awin_can_tx_intr(struct awin_can_softc *sc)
 		can_input(ifp, m); /* loopback */
 		sc->sc_m_transmit = NULL;
 		ifp->if_timer = 0;
-	}
-
-	IF_DEQUEUE(&ifp->if_snd, m);
-
-	if (m == NULL) {
 		ifp->if_flags &= ~IFF_OACTIVE;
-		return;
-	}
-	MCLAIM(m, ifp->if_mowner);
-	sc->sc_m_transmit = m;
-
-	KASSERT((m->m_flags & M_PKTHDR) != 0);
-	KASSERT(m->m_len == m->m_pkthdr.len);
-
-	cf = mtod(m, struct can_frame *);
-	reg0val = cf->can_dlc & AWIN_CAN_TXBUF0_DL;
-	if (cf->can_id & CAN_RTR_FLAG)
-		reg0val |= AWIN_CAN_TXBUF0_RTR;
-
-	if (cf->can_id & CAN_EFF_FLAG) {
-		reg0val |= AWIN_CAN_TXBUF0_EFF;
-		awin_can_write(sc, AWIN_CAN_TXBUF1_REG,
-		    (cf->can_id >> 21) & 0xff);
-		awin_can_write(sc, AWIN_CAN_TXBUF2_REG,
-		    (cf->can_id >> 13) & 0xff);
-		awin_can_write(sc, AWIN_CAN_TXBUF3_REG,
-		    (cf->can_id >> 5) & 0xff);
-		awin_can_write(sc, AWIN_CAN_TXBUF4_REG,
-		    (cf->can_id << 3) & 0xf8);
-		regd = AWIN_CAN_TXBUF5_REG;
-	} else {
-		awin_can_write(sc, AWIN_CAN_TXBUF1_REG,
-		    (cf->can_id >> 3) & 0xff);
-		awin_can_write(sc, AWIN_CAN_TXBUF2_REG,
-		    (cf->can_id << 5) & 0xe0);
-		regd = AWIN_CAN_TXBUF3_REG;
 	}
 
-	for (i = 0; i < cf->can_dlc; i++) {
-		awin_can_write(sc, regd + i * 4, cf->data[i]);
-	}
-	awin_can_write(sc, AWIN_CAN_TXBUF0_REG, reg0val);
-
-	if (sc->sc_linkmodes & CAN_LINKMODE_LOOPBACK) {
-		awin_can_write(sc, AWIN_CAN_CMD_REG,
-			AWIN_CAN_CMD_TANS_REQ | AWIN_CAN_CMD_SELF_REQ);
-	} else {
-		awin_can_write(sc, AWIN_CAN_CMD_REG, AWIN_CAN_CMD_TANS_REQ);
-	}
-	ifp->if_flags |= IFF_OACTIVE;
-	ifp->if_timer = 5;
-	can_bpf_mtap(ifp, m);
+	if_schedule_deferred_start(ifp);
 }
 
 static int
@@ -446,10 +397,66 @@ void
 awin_can_ifstart(struct ifnet *ifp)
 {
 	struct awin_can_softc * const sc = ifp->if_softc;
+	struct mbuf *m;
+	struct can_frame *cf;
+	int regd;
+	uint32_t reg0val;
+	int i;
 
 	mutex_enter(&sc->sc_intr_lock);
-	KASSERT((ifp->if_flags & IFF_OACTIVE) == 0);
-	awin_can_tx_intr(sc);
+	if (ifp->if_flags & IFF_OACTIVE)
+		goto out;
+
+	IF_DEQUEUE(&ifp->if_snd, m);
+
+	if (m == NULL)
+		goto out;
+
+	MCLAIM(m, ifp->if_mowner);
+	sc->sc_m_transmit = m;
+
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	KASSERT(m->m_len == m->m_pkthdr.len);
+
+	cf = mtod(m, struct can_frame *);
+	reg0val = cf->can_dlc & AWIN_CAN_TXBUF0_DL;
+	if (cf->can_id & CAN_RTR_FLAG)
+		reg0val |= AWIN_CAN_TXBUF0_RTR;
+
+	if (cf->can_id & CAN_EFF_FLAG) {
+		reg0val |= AWIN_CAN_TXBUF0_EFF;
+		awin_can_write(sc, AWIN_CAN_TXBUF1_REG,
+		    (cf->can_id >> 21) & 0xff);
+		awin_can_write(sc, AWIN_CAN_TXBUF2_REG,
+		    (cf->can_id >> 13) & 0xff);
+		awin_can_write(sc, AWIN_CAN_TXBUF3_REG,
+		    (cf->can_id >> 5) & 0xff);
+		awin_can_write(sc, AWIN_CAN_TXBUF4_REG,
+		    (cf->can_id << 3) & 0xf8);
+		regd = AWIN_CAN_TXBUF5_REG;
+	} else {
+		awin_can_write(sc, AWIN_CAN_TXBUF1_REG,
+		    (cf->can_id >> 3) & 0xff);
+		awin_can_write(sc, AWIN_CAN_TXBUF2_REG,
+		    (cf->can_id << 5) & 0xe0);
+		regd = AWIN_CAN_TXBUF3_REG;
+	}
+
+	for (i = 0; i < cf->can_dlc; i++) {
+		awin_can_write(sc, regd + i * 4, cf->data[i]);
+	}
+	awin_can_write(sc, AWIN_CAN_TXBUF0_REG, reg0val);
+
+	if (sc->sc_linkmodes & CAN_LINKMODE_LOOPBACK) {
+		awin_can_write(sc, AWIN_CAN_CMD_REG,
+			AWIN_CAN_CMD_TANS_REQ | AWIN_CAN_CMD_SELF_REQ);
+	} else {
+		awin_can_write(sc, AWIN_CAN_CMD_REG, AWIN_CAN_CMD_TANS_REQ);
+	}
+	ifp->if_flags |= IFF_OACTIVE;
+	ifp->if_timer = 5;
+	can_bpf_mtap(ifp, m, 0);
+out:
 	mutex_exit(&sc->sc_intr_lock);
 }
 
