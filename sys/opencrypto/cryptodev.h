@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.32 2017/05/17 06:33:04 knakahara Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.33 2017/05/25 05:22:55 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -603,8 +603,6 @@ void	cuio_copyback(struct uio *, int, int, void *);
 int	cuio_apply(struct uio *, int, int,
 	    int (*f)(void *, void *, unsigned int), void *);
 
-extern	int crypto_ret_q_remove(struct cryptop *);
-extern	int crypto_ret_kq_remove(struct cryptkop *);
 extern	void crypto_freereq(struct cryptop *crp);
 extern	struct cryptop *crypto_getreq(int num);
 
