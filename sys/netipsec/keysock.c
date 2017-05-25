@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.56 2017/05/25 04:19:50 ozaki-r Exp $	*/
+/*	$NetBSD: keysock.c,v 1.57 2017/05/25 04:35:02 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.56 2017/05/25 04:19:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.57 2017/05/25 04:35:02 ozaki-r Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.56 2017/05/25 04:19:50 ozaki-r Exp $")
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/syslog.h>
 
 #include <net/raw_cb.h>
 #include <net/route.h>
@@ -184,6 +185,9 @@ key_sendup0(
 			       (struct sockaddr *)&key_src, m, sbprio);
 
 	if (!ok) {
+		log(LOG_WARNING,
+		    "%s: couldn't send PF_KEY message to the socket\n",
+		    __func__);
 		PFKEY_STATINC(PFKEY_STAT_IN_NOMEM);
 		m_freem(m);
 		error = ENOBUFS;
