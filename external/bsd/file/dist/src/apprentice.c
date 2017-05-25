@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.17 2017/02/17 17:33:00 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.18 2017/05/25 00:11:26 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: apprentice.c,v 1.257 2017/02/04 16:46:16 christos Exp $")
+FILE_RCSID("@(#)$File: apprentice.c,v 1.260 2017/04/28 16:27:58 christos Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.17 2017/02/17 17:33:00 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.18 2017/05/25 00:11:26 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -2361,6 +2361,8 @@ check_format_type(const char *ptr, int type, const char **estr)
 		if (*ptr == '-')
 			ptr++;
 		if (*ptr == '.')
+			ptr++;
+		if (*ptr == '#')
 			ptr++;
 #define CHECKLEN() do { \
 	for (len = cnt = 0; isdigit((unsigned char)*ptr); ptr++, cnt++) \

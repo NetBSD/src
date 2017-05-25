@@ -1,4 +1,4 @@
-/*	$NetBSD: der.c,v 1.2 2017/02/10 18:11:17 christos Exp $	*/
+/*	$NetBSD: der.c,v 1.3 2017/05/25 00:11:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Christos Zoulas
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: der.c,v 1.11 2016/11/07 15:51:23 christos Exp $")
+FILE_RCSID("@(#)$File: der.c,v 1.12 2017/02/10 18:14:01 christos Exp $")
 #else
-__RCSID("$NetBSD: der.c,v 1.2 2017/02/10 18:11:17 christos Exp $");
+__RCSID("$NetBSD: der.c,v 1.3 2017/05/25 00:11:26 christos Exp $");
 #endif
 #endif
 #endif
