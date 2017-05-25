@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.33 2017/05/25 05:22:55 knakahara Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.34 2017/05/25 05:24:57 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -606,15 +606,12 @@ int	cuio_apply(struct uio *, int, int,
 extern	void crypto_freereq(struct cryptop *crp);
 extern	struct cryptop *crypto_getreq(int num);
 
+extern	void crypto_kfreereq(struct cryptkop *);
+extern	struct cryptkop *crypto_kgetreq(int, int);
+
 extern	int crypto_usercrypto;		/* userland may do crypto requests */
 extern	int crypto_userasymcrypto;	/* userland may do asym crypto reqs */
 extern	int crypto_devallowsoft;	/* only use hardware crypto */
-
-/*
- * Asymmetric operations are allocated in cryptodev.c but can be
- * freed in crypto.c.
- */
-extern struct pool	cryptkop_pool;
 
 /*
  * initialize the crypto framework subsystem (not the pseudo-device).
