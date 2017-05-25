@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf_time.c,v 1.7 2015/01/02 21:15:32 christos Exp $	*/
+/*	$NetBSD: cdf_time.c,v 1.8 2017/05/25 00:11:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -30,9 +30,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: cdf_time.c,v 1.15 2014/05/14 23:15:42 christos Exp $")
+FILE_RCSID("@(#)$File: cdf_time.c,v 1.16 2017/03/29 15:57:48 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf_time.c,v 1.7 2015/01/02 21:15:32 christos Exp $");
+__RCSID("$NetBSD: cdf_time.c,v 1.8 2017/05/25 00:11:26 christos Exp $");
 #endif
 #endif
 
@@ -177,7 +177,7 @@ cdf_ctime(const time_t *sec, char *buf)
 	char *ptr = ctime_r(sec, buf);
 	if (ptr != NULL)
 		return buf;
-	(void)snprintf(buf, 26, "*Bad* 0x%16.16" INT64_T_FORMAT "x\n",
+	(void)snprintf(buf, 26, "*Bad* %#16.16" INT64_T_FORMAT "x\n",
 	    (long long)*sec);
 	return buf;
 }
