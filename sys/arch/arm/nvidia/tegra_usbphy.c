@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_usbphy.c,v 1.6 2016/03/08 07:49:20 skrll Exp $ */
+/* $NetBSD: tegra_usbphy.c,v 1.7 2017/05/25 23:55:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.6 2016/03/08 07:49:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.7 2017/05/25 23:55:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -79,7 +79,12 @@ CFATTACH_DECL_NEW(tegra_usbphy, sizeof(struct tegra_usbphy_softc),
 static int
 tegra_usbphy_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,tegra124-usb-phy", NULL };
+	const char * const compatible[] = {
+		"nvidia,tegra210-usb-phy",
+		"nvidia,tegra124-usb-phy",
+		"nvidia,tegra30-usb-phy",
+		NULL
+	};
 	struct fdt_attach_args * const faa = aux;
 
 	return of_match_compatible(faa->faa_phandle, compatible);
