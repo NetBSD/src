@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.140 2017/05/23 09:08:45 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.141 2017/05/25 03:36:36 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.140 2017/05/23 09:08:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.141 2017/05/25 03:36:36 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -153,6 +153,11 @@ static LIST_HEAD(_acqtree, secacq) acqtree;		/* acquiring list */
 #ifdef notyet
 static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
 #endif
+
+/*
+ * Protect regtree, acqtree and items stored in the lists.
+ */
+static kmutex_t key_mtx __cacheline_aligned;
 
 /* search order for SAs */
 	/*
@@ -4669,13 +4674,17 @@ key_timehandler_work(struct work *wk, void *arg)
     {
 	struct secacq *acq, *nextacq;
 
+    restart:
+	mutex_enter(&key_mtx);
 	LIST_FOREACH_SAFE(acq, &acqtree, chain, nextacq) {
 		if (now - acq->created > key_blockacq_lifetime) {
-			KASSERT(__LIST_CHAINED(acq));
 			LIST_REMOVE(acq, chain);
+			mutex_exit(&key_mtx);
 			kmem_free(acq, sizeof(*acq));
+			goto restart;
 		}
 	}
+	mutex_exit(&key_mtx);
     }
 #endif
 
@@ -4903,12 +4912,14 @@ key_getspi(struct socket *so, struct mbuf *m,
 	/* delete the entry in acqtree */
 	if (mhp->msg->sadb_msg_seq != 0) {
 		struct secacq *acq;
+		mutex_enter(&key_mtx);
 		acq = key_getacqbyseq(mhp->msg->sadb_msg_seq);
 		if (acq != NULL) {
 			/* reset counter in order to deletion by timehandler. */
 			acq->created = time_uptime;
 			acq->count = 0;
 		}
+		mutex_exit(&key_mtx);
 	}
 #endif
 
@@ -6226,6 +6237,7 @@ key_acquire(const struct secasindex *saidx, struct secpolicy *sp)
 	 * managed with ACQUIRING list.
 	 */
 	/* Get an entry to check whether sending message or not. */
+	mutex_enter(&key_mtx);
 	newacq = key_getacq(saidx);
 	if (newacq != NULL) {
 		if (key_blockacq_count < newacq->count) {
@@ -6245,11 +6257,9 @@ key_acquire(const struct secasindex *saidx, struct secpolicy *sp)
 		/* add to acqtree */
 		LIST_INSERT_HEAD(&acqtree, newacq, chain);
 	}
-#endif
 
-
-#ifndef IPSEC_NONBLOCK_ACQUIRE
 	seq = newacq->seq;
+	mutex_exit(&key_mtx);
 #else
 	seq = (acq_seq = (acq_seq == ~0 ? 1 : ++acq_seq));
 #endif
@@ -6408,6 +6418,8 @@ key_getacq(const struct secasindex *saidx)
 {
 	struct secacq *acq;
 
+	KASSERT(mutex_owned(&key_mtx));
+
 	LIST_FOREACH(acq, &acqtree, chain) {
 		if (key_cmpsaidx(saidx, &acq->saidx, CMP_EXACTLY))
 			return acq;
@@ -6420,6 +6432,8 @@ static struct secacq *
 key_getacqbyseq(u_int32_t seq)
 {
 	struct secacq *acq;
+
+	KASSERT(mutex_owned(&key_mtx));
 
 	LIST_FOREACH(acq, &acqtree, chain) {
 		if (acq->seq == seq)
@@ -6511,8 +6525,10 @@ key_acquire2(struct socket *so, struct mbuf *m,
 			return 0;
 		}
 
+		mutex_enter(&key_mtx);
 		acq = key_getacqbyseq(mhp->msg->sadb_msg_seq);
 		if (acq == NULL) {
+			mutex_exit(&key_mtx);
 			/*
 			 * the specified larval SA is already gone, or we got
 			 * a bogus sequence number.  we can silently ignore it.
@@ -6524,6 +6540,7 @@ key_acquire2(struct socket *so, struct mbuf *m,
 		/* reset acq counter in order to deletion by timehander. */
 		acq->created = time_uptime;
 		acq->count = 0;
+		mutex_exit(&key_mtx);
 #endif
 		m_freem(m);
 		return 0;
@@ -6622,22 +6639,26 @@ key_register(struct socket *so, struct mbuf *m,
 	if (mhp->msg->sadb_msg_satype == SADB_SATYPE_UNSPEC)
 		goto setmsg;
 
+	/* Allocate regnode in advance, out of mutex */
+	newreg = kmem_zalloc(sizeof(*newreg), KM_SLEEP);
+
 	/* check whether existing or not */
+	mutex_enter(&key_mtx);
 	LIST_FOREACH(reg, &regtree[mhp->msg->sadb_msg_satype], chain) {
 		if (reg->so == so) {
 			IPSECLOG(LOG_DEBUG, "socket exists already.\n");
+			mutex_exit(&key_mtx);
+			kmem_free(newreg, sizeof(*newreg));
 			return key_senderror(so, m, EEXIST);
 		}
 	}
-
-	/* create regnode */
-	newreg = kmem_zalloc(sizeof(*newreg), KM_SLEEP);
 
 	newreg->so = so;
 	((struct keycb *)sotorawcb(so))->kp_registered++;
 
 	/* add regnode to regtree. */
 	LIST_INSERT_HEAD(&regtree[mhp->msg->sadb_msg_satype], newreg, chain);
+	mutex_exit(&key_mtx);
 
   setmsg:
     {
@@ -6763,14 +6784,16 @@ key_freereg(struct socket *so)
 	 * one socket is registered to multiple type of SA.
 	 */
 	for (i = 0; i <= SADB_SATYPE_MAX; i++) {
+		mutex_enter(&key_mtx);
 		LIST_FOREACH(reg, &regtree[i], chain) {
 			if (reg->so == so) {
-				KASSERT(__LIST_CHAINED(reg));
 				LIST_REMOVE(reg, chain);
-				kmem_free(reg, sizeof(*reg));
 				break;
 			}
 		}
+		mutex_exit(&key_mtx);
+		if (reg != NULL)
+			kmem_free(reg, sizeof(*reg));
 	}
 
 	return;
@@ -7668,6 +7691,8 @@ static int
 key_do_init(void)
 {
 	int i, error;
+
+	mutex_init(&key_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	pfkeystat_percpu = percpu_alloc(sizeof(uint64_t) * PFKEY_NSTATS);
 
