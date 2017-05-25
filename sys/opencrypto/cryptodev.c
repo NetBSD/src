@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.90 2017/05/17 06:33:04 knakahara Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.91 2017/05/25 05:24:57 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.90 2017/05/17 06:33:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.91 2017/05/25 05:24:57 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -855,7 +855,11 @@ cryptodev_key(struct crypt_kop *kop)
 		return EINVAL;
 	}
 
-	krp = pool_get(&cryptkop_pool, PR_WAITOK);
+	krp = crypto_kgetreq(1, PR_WAITOK);
+	if (krp == NULL) {
+		/* limited by opencrypto.crypto_ret_kq.maxlen */
+		return ENOMEM;
+	}
 	(void)memset(krp, 0, sizeof *krp);
 	cv_init(&krp->krp_cv, "crykdev");
 	krp->krp_op = kop->crk_op;
@@ -923,7 +927,7 @@ fail:
 		}
 	}
 	cv_destroy(&krp->krp_cv);
-	pool_put(&cryptkop_pool, krp);
+	crypto_kfreereq(krp);
 	DPRINTF("error=0x%08x\n", error);
 	return error;
 }
@@ -1435,7 +1439,11 @@ cryptodev_mkey(struct fcrypt *fcr, struct crypt_n_kop *kop, int count)
 			continue;
 		}
 
-		krp = pool_get(&cryptkop_pool, PR_WAITOK);
+		krp = crypto_kgetreq(1, PR_WAITOK);
+		if (krp == NULL) {
+			/* limited by opencrypto.crypto_ret_kq.maxlen */
+			continue;
+		}
 		(void)memset(krp, 0, sizeof *krp);
 		cv_init(&krp->krp_cv, "crykdev");
 		krp->krp_op = kop[req].crk_op;
@@ -1493,7 +1501,7 @@ fail:
 					}
 				}
 				cv_destroy(&krp->krp_cv);
-				pool_put(&cryptkop_pool, krp);
+				crypto_kfreereq(krp);
 			}
 		}
 		error = 0;
@@ -1912,7 +1920,7 @@ fail:
 					}
 				}
 				cv_destroy(&krp->krp_cv);
-				pool_put(&cryptkop_pool, krp);
+				crypto_kfreereq(krp);
 				req++;
 			}
 		}
@@ -2012,7 +2020,7 @@ fail:
 				}
 			}
 			cv_destroy(&krp->krp_cv);
-			pool_put(&cryptkop_pool, krp);
+			crypto_kfreereq(krp);
 			return 0;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.75 2017/05/24 10:05:09 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.76 2017/05/25 05:24:57 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.75 2017/05/24 10:05:09 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.76 2017/05/25 05:24:57 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1076,7 +1076,7 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 	/* Sanity checks. */
 	if (krp->krp_callback == NULL) {
 		cv_destroy(&krp->krp_cv);
-		pool_put(&cryptkop_pool, krp);
+		crypto_kfreereq(krp);
 		return EINVAL;
 	}
 
@@ -1259,6 +1259,54 @@ crypto_getreq(int num)
 	}
 
 	return crp;
+}
+
+/*
+ * Release a set of asymmetric crypto descriptors.
+ * Currently, support one descriptor only.
+ */
+void
+crypto_kfreereq(struct cryptkop *krp)
+{
+
+	if (krp == NULL)
+		return;
+
+	DPRINTF("krp %p\n", krp);
+
+	/* sanity check */
+	if (krp->krp_flags & CRYPTO_F_ONRETQ) {
+		panic("crypto_kfreereq() freeing krp on RETQ\n");
+	}
+
+	pool_put(&cryptkop_pool, krp);
+}
+
+/*
+ * Acquire a set of asymmetric crypto descriptors.
+ * Currently, support one descriptor only.
+ */
+struct cryptkop *
+crypto_kgetreq(int num __unused, int prflags)
+{
+	struct cryptkop *krp;
+
+	/*
+	 * When crp_ret_kq is full, we restrict here to avoid crp_ret_kq
+	 * overflow by error callback.
+	 */
+	if (CRYPTO_Q_IS_FULL(crp_ret_kq)) {
+		CRYPTO_Q_INC_DROPS(crp_ret_kq);
+		return NULL;
+	}
+
+	krp = pool_get(&cryptkop_pool, prflags);
+	if (krp == NULL) {
+		return NULL;
+	}
+	memset(krp, 0, sizeof(struct cryptkop));
+
+	return krp;
 }
 
 /*
