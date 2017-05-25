@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.145 2017/02/23 08:22:20 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.146 2017/05/25 20:32:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -167,7 +167,7 @@
 
 #ifndef _LOCORE
 
-#ifndef PMAP_MMU_EXTENDED
+#ifndef ARM_MMU_EXTENDED
 struct l1_ttable;
 struct l2_dtable;
 
