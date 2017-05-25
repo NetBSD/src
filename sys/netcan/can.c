@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.1.2.14 2017/05/22 16:11:23 bouyer Exp $	*/
+/*	$NetBSD: can.c,v 1.1.2.15 2017/05/25 18:21:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.14 2017/05/22 16:11:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.15 2017/05/25 18:21:00 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,7 +416,7 @@ canintr(void)
 }
 
 void
-can_bpf_mtap(struct ifnet *ifp, struct mbuf *m)
+can_bpf_mtap(struct ifnet *ifp, struct mbuf *m, bool do_softint)
 {
 	/* bpf wants the CAN id in network byte order */
 	struct can_frame *cf;
@@ -425,7 +425,10 @@ can_bpf_mtap(struct ifnet *ifp, struct mbuf *m)
 	cf = mtod(m, struct can_frame *);
 	oid = cf->can_id;
 	cf->can_id = htonl(oid);
-	bpf_mtap(ifp, m);
+	if (do_softint)
+		bpf_mtap_softint(ifp, m);
+	else
+		bpf_mtap(ifp, m);
 	cf->can_id = oid;
 }
 
