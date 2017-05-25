@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.15 2016/08/08 14:40:57 jakllsch Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.16 2017/05/25 23:43:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.15 2016/08/08 14:40:57 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.16 2017/05/25 23:43:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,7 +95,12 @@ CFATTACH_DECL_NEW(tegra_i2c, sizeof(struct tegra_i2c_softc),
 static int
 tegra_i2c_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,tegra124-i2c", NULL };
+	const char * const compatible[] = {
+		"nvidia,tegra210-i2c",
+		"nvidia,tegra124-i2c",
+		"nvidia,tegra114-i2c",
+		NULL
+	};
 	struct fdt_attach_args * const faa = aux;
 
 	return of_match_compatible(faa->faa_phandle, compatible);
