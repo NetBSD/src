@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soc.c,v 1.10 2017/04/22 23:53:24 jmcneill Exp $ */
+/* $NetBSD: tegra_soc.c,v 1.11 2017/05/25 23:26:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.10 2017/04/22 23:53:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.11 2017/05/25 23:26:48 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -99,6 +99,11 @@ tegra_mpinit(void)
 		tegra124_mpinit();
 		break;
 #endif
+#ifdef SOC_TEGRA210
+	case CHIP_ID_TEGRA210:
+		tegra210_mpinit();
+		break;
+#endif
 	default:
 		panic("Unsupported SOC ID %#x", tegra_chip_id());
 	}
@@ -127,6 +132,7 @@ tegra_chip_name(void)
 	switch (tegra_chip_id()) {
 	case CHIP_ID_TEGRA124:	return "Tegra K1 (T124)";
 	case CHIP_ID_TEGRA132:	return "Tegra K1 (T132)";
+	case CHIP_ID_TEGRA210:	return "Tegra X1 (T210)";
 	default:		return "Unknown Tegra SoC";
 	}
 }
