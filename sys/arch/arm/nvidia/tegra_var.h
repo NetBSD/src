@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.33 2017/04/22 23:53:24 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.34 2017/05/25 23:12:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -46,6 +46,7 @@ extern struct arm32_bus_dma_tag tegra_dma_tag;
 #define CHIP_ID_TEGRA114	0x35
 #define CHIP_ID_TEGRA124	0x40
 #define CHIP_ID_TEGRA132	0x13
+#define CHIP_ID_TEGRA210	0x21
 
 u_int	tegra_chip_id(void);
 const char *tegra_chip_name(void);
