@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.201 2017/05/12 17:53:53 ryo Exp $	*/
+/*	$NetBSD: in.c,v 1.202 2017/05/25 02:43:43 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.201 2017/05/12 17:53:53 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.202 2017/05/25 02:43:43 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -495,6 +495,11 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			IN_ADDRHASH_ENTRY_INIT(ia);
 			IN_ADDRLIST_ENTRY_INIT(ia);
 			ifa_psref_init(&ia->ia_ifa);
+			/*
+			 * We need a reference to make ia survive over in_ifinit
+			 * that does ifaref and ifafree.
+			 */
+			ifaref(&ia->ia_ifa);
 
 			newifaddr = 1;
 		}
@@ -681,6 +686,8 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
 		IN_ADDRLIST_WRITER_INSERT_TAIL(ia);
 		in_addrhash_insert_locked(ia);
+		/* Release a reference that is held just after creation. */
+		ifafree(&ia->ia_ifa);
 		mutex_exit(&in_ifaddr_lock);
 	} else if (need_reinsert) {
 		in_addrhash_insert(ia);
