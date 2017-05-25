@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_com.c,v 1.5 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: tegra_com.c,v 1.6 2017/05/25 23:42:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.5 2015/12/22 22:10:36 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.6 2017/05/25 23:42:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -65,7 +65,12 @@ CFATTACH_DECL_NEW(tegra_com, sizeof(struct tegra_com_softc),
 static int
 tegra_com_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,tegra124-uart", NULL };
+	const char * const compatible[] = {
+		"nvidia,tegra210-uart",
+		"nvidia,tegra124-uart",
+		"nvidia,tegra20-uart",
+		NULL
+	};
 	struct fdt_attach_args * const faa = aux;
 
 	return of_match_compatible(faa->faa_phandle, compatible);
