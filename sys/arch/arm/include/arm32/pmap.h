@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.146 2017/05/25 20:32:48 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.147 2017/05/25 20:42:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -84,8 +84,8 @@
 #endif
 
 #ifdef ARM_MMU_EXTENDED
+#define PMAP_HWPAGEWALKER		1
 #define PMAP_TLB_MAX			1
-#define PMAP_TLB_HWPAGEWALKER		1
 #if PMAP_TLB_MAX > 1
 #define PMAP_TLB_NEED_SHOOTDOWN		1
 #endif
