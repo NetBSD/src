@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2284 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2285 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -518,3 +518,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		[riastradh 20170521]
 	src: Remove MKCRYPTO option and always include cryptography.
 		[riastradh 20170521]
+	file(1): Upgraded to 5.31. [christos 20170524]
