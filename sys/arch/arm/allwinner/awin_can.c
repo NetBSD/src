@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_can.c,v 1.1.2.7 2017/05/25 18:23:15 bouyer Exp $	*/
+/*	$NetBSD: awin_can.c,v 1.1.2.8 2017/05/25 18:26:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.7 2017/05/25 18:23:15 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.8 2017/05/25 18:26:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -297,9 +297,8 @@ awin_can_tx_intr(struct awin_can_softc *sc)
 		can_input(ifp, m); /* loopback */
 		sc->sc_m_transmit = NULL;
 		ifp->if_timer = 0;
-		ifp->if_flags &= ~IFF_OACTIVE;
 	}
-
+	ifp->if_flags &= ~IFF_OACTIVE;
 	if_schedule_deferred_start(ifp);
 }
 
