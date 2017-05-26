@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.132 2017/04/26 03:02:48 riastradh Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.133 2017/05/26 14:21:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.132 2017/04/26 03:02:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.133 2017/05/26 14:21:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1060,12 +1060,15 @@ tmpfs_inactive(void *v)
 int
 tmpfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	vnode_t *vp = ap->a_vp;
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(vp->v_mount);
 	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
+
+	/* Unlock vnode.  We still have exclusive access to it. */
+	VOP_UNLOCK(vp);
 
 	/* Disassociate inode from vnode. */
 	node->tn_vnode = NULL;

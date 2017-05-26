@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.104 2017/04/26 03:02:48 riastradh Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.105 2017/05/26 14:21:01 riastradh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.104 2017/04/26 03:02:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.105 2017/05/26 14:21:01 riastradh Exp $");
 #endif /* not lint */
 
 
@@ -129,12 +129,14 @@ udf_inactive(void *v)
 int
 udf_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct udf_node *udf_node = VTOI(vp);
 	int refcnt;
+
+	VOP_UNLOCK(vp);
 
 	DPRINTF(NODE, ("udf_reclaim called for node %p\n", udf_node));
 	if (prtactive && vp->v_usecount > 1)

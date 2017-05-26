@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.126 2017/04/26 03:02:49 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.127 2017/05/26 14:21:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.126 2017/04/26 03:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.127 2017/05/26 14:21:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1123,12 +1123,14 @@ bad:
 int
 ext2fs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	int error;
+
+	VOP_UNLOCK(vp);
 
 	/*
 	 * The inode must be freed and updated before being removed
