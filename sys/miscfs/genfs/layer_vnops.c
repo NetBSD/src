@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.65 2017/05/24 09:54:40 hannken Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.66 2017/05/26 14:21:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.65 2017/05/24 09:54:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.66 2017/05/26 14:21:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -705,7 +705,7 @@ layer_revoke(void *v)
 int
 layer_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 		struct lwp *a_l;
 	} */ *ap = v;
@@ -713,6 +713,8 @@ layer_reclaim(void *v)
 	struct layer_mount *lmp = MOUNTTOLAYERMOUNT(vp->v_mount);
 	struct layer_node *xp = VTOLAYER(vp);
 	struct vnode *lowervp = xp->layer_lowervp;
+
+	VOP_UNLOCK(vp);
 
 	/*
 	 * Note: in vop_reclaim, the node's struct lock has been

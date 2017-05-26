@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.128 2017/04/11 14:25:00 riastradh Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.129 2017/05/26 14:21:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.128 2017/04/11 14:25:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.129 2017/05/26 14:21:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -855,11 +855,13 @@ fdesc_inactive(void *v)
 int
 fdesc_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct fdescnode *fd = VTOFDESC(vp);
+
+	VOP_UNLOCK(vp);
 
 	vp->v_data = NULL;
 	kmem_free(fd, sizeof(struct fdescnode));

@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.33 2016/08/20 12:37:07 hannken Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.34 2017/05/26 14:21:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.33 2016/08/20 12:37:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.34 2017/05/26 14:21:00 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1019,12 +1019,14 @@ hfs_vop_readlink(void *v) {
 int
 hfs_vop_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp;
 	struct hfsnode *hp;
-	
+
+	VOP_UNLOCK(ap->a_vp);
+
 	DPRINTF(("VOP = hfs_vop_reclaim()\n"));
 
 	vp = ap->a_vp;

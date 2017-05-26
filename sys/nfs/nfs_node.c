@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.120 2017/04/11 14:25:01 riastradh Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.121 2017/05/26 14:21:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.120 2017/04/11 14:25:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.121 2017/05/26 14:21:02 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -216,11 +216,13 @@ nfs_inactive(void *v)
 int
 nfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
+
+	VOP_UNLOCK(vp);
 
 	if (prtactive && vp->v_usecount > 1)
 		vprint("nfs_reclaim: pushing active", vp);

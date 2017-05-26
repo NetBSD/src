@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.54 2017/04/11 14:24:59 riastradh Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.55 2017/05/26 14:21:00 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.54 2017/04/11 14:24:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.55 2017/05/26 14:21:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -532,11 +532,13 @@ deextend(struct denode *dep, u_long length, kauth_cred_t cred)
 int
 msdosfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
+
+	VOP_UNLOCK(vp);
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_reclaim(): dep %p, file %s, refcnt %ld\n",

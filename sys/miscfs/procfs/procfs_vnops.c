@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.196 2017/04/11 14:25:01 riastradh Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.197 2017/05/26 14:21:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.196 2017/04/11 14:25:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.197 2017/05/26 14:21:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,11 +438,13 @@ procfs_inactive(void *v)
 int
 procfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct pfsnode *pfs = VTOPFS(vp);
+
+	VOP_UNLOCK(vp);
 
 	/*
 	 * To interlock with procfs_revoke_vnodes().

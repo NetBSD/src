@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.69 2017/05/24 09:55:18 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.70 2017/05/26 14:21:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.69 2017/05/24 09:55:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.70 2017/05/26 14:21:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1577,11 +1577,13 @@ union_inactive(void *v)
 int
 union_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vnode *uvp = UPPERVP(vp);
+
+	VOP_UNLOCK(vp);
 
 	if (uvp != NULL) {
 		mutex_enter(uvp->v_interlock);

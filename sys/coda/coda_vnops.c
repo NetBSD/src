@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.105 2017/04/26 03:02:48 riastradh Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.106 2017/05/26 14:21:00 riastradh Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.105 2017/04/26 03:02:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.106 2017/05/26 14:21:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1632,11 +1632,13 @@ int
 coda_reclaim(void *v)
 {
 /* true args */
-    struct vop_reclaim_args *ap = v;
+    struct vop_reclaim_v2_args *ap = v;
     vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
 /* upcall decl */
 /* locals */
+
+    VOP_UNLOCK(vp);
 
 /*
  * Forced unmount/flush will let vnodes with non zero use be destroyed!

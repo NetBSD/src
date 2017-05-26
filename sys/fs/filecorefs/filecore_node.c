@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.29 2017/04/11 14:24:59 riastradh Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.30 2017/05/26 14:21:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.29 2017/04/11 14:24:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.30 2017/05/26 14:21:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,12 +237,14 @@ filecore_inactive(void *v)
 int
 filecore_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip = VTOI(vp);
+
+	VOP_UNLOCK(vp);
 
 	if (prtactive && vp->v_usecount > 1)
 		vprint("filecore_reclaim: pushing active", vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.25 2017/04/26 03:02:49 riastradh Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.26 2017/05/26 14:21:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.25 2017/04/26 03:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.26 2017/05/26 14:21:01 riastradh Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -1032,13 +1032,15 @@ v7fs_reclaim(void *v)
 {
 	/*This vnode is no longer referenced by kernel. */
 	extern struct pool v7fs_node_pool;
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 				   struct vnode *a_vp;
 				   } */ *a = v;
 	struct vnode *vp = a->a_vp;
 	struct v7fs_node *v7node = vp->v_data;
 	struct v7fs_self *fs = v7node->v7fsmount->core;
 	struct v7fs_inode *inode = &v7node->inode;
+
+	VOP_UNLOCK(vp);
 
 	DPRINTF("%p #%d\n", vp, inode->inode_number);
 	if (v7fs_inode_nlink(inode) == 0) {

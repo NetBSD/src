@@ -5537,7 +5537,7 @@ zfs_netbsd_inactive(void *v)
 static int
 zfs_netbsd_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -5546,6 +5546,7 @@ zfs_netbsd_reclaim(void *v)
 	int error;
 
 	KASSERT(vp != NULL);
+	VOP_UNLOCK(vp);
 	zp = VTOZ(vp);
 	KASSERT(zp != NULL);
 	zfsvfs = zp->z_zfsvfs;

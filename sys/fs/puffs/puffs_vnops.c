@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.210 2017/04/26 03:02:48 riastradh Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.211 2017/05/26 14:21:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.210 2017/04/26 03:02:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.211 2017/05/26 14:21:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1443,13 +1443,15 @@ callreclaim(struct puffs_mount *pmp, puffs_cookie_t ck, int nlookup)
 int
 puffs_vnop_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	bool notifyserver = true;
+
+	VOP_UNLOCK(vp);
 
 	/*
 	 * first things first: check if someone is trying to reclaim the

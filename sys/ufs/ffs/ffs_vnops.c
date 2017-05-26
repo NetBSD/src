@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.128 2017/03/02 00:43:40 christos Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.129 2017/05/26 14:21:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.128 2017/03/02 00:43:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.129 2017/05/26 14:21:02 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -540,7 +540,7 @@ ffs_full_fsync(struct vnode *vp, int flags)
 int
 ffs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 		struct lwp *a_l;
 	} */ *ap = v;
@@ -550,6 +550,8 @@ ffs_reclaim(void *v)
 	struct ufsmount *ump = ip->i_ump;
 	void *data;
 	int error;
+
+	VOP_UNLOCK(vp);
 
 	/*
 	 * The inode must be freed and updated before being removed
