@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.16 2017/04/29 12:49:05 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.17 2017/05/26 18:56:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -182,6 +182,7 @@ int		fdtbus_register_dma_controller(device_t, int,
 		    const struct fdtbus_dma_controller_func *);
 
 int		fdtbus_get_reg(int, u_int, bus_addr_t *, bus_size_t *);
+int		fdtbus_get_reg64(int, u_int, uint64_t *, uint64_t *);
 int		fdtbus_get_phandle(int, const char *);
 int		fdtbus_get_phandle_from_native(int);
 i2c_tag_t	fdtbus_get_i2c_tag(int);
