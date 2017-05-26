@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.144 2017/05/26 08:10:46 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.145 2017/05/26 08:26:22 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.144 2017/05/26 08:10:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.145 2017/05/26 08:26:22 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -448,22 +448,23 @@ static int key_ismyaddr6 (const struct sockaddr_in6 *);
 static void sysctl_net_keyv2_setup(struct sysctllog **);
 static void sysctl_net_key_compat_setup(struct sysctllog **);
 
-/* flags for key_cmpsaidx() */
+/* flags for key_saidx_match() */
 #define CMP_HEAD	1	/* protocol, addresses. */
 #define CMP_MODE_REQID	2	/* additionally HEAD, reqid, mode. */
 #define CMP_REQID	3	/* additionally HEAD, reaid. */
 #define CMP_EXACTLY	4	/* all elements. */
-static int key_cmpsaidx
-	(const struct secasindex *, const struct secasindex *, int);
+static int key_saidx_match(const struct secasindex *,
+    const struct secasindex *, int);
 
-static int key_sockaddrcmp (const struct sockaddr *, const struct sockaddr *, int);
-static int key_bbcmp (const void *, const void *, u_int);
+static int key_sockaddr_match(const struct sockaddr *,
+    const struct sockaddr *, int);
+static int key_bb_match_withmask(const void *, const void *, u_int);
 static u_int16_t key_satype2proto (u_int8_t);
 static u_int8_t key_proto2satype (u_int16_t);
 
-static int key_cmpspidx_exactly(const struct secpolicyindex *,
+static int key_spidx_match_exactly(const struct secpolicyindex *,
     const struct secpolicyindex *);
-static int key_cmpspidx_withmask(const struct secpolicyindex *,
+static int key_spidx_match_withmask(const struct secpolicyindex *,
     const struct secpolicyindex *);
 
 static int key_getspi (struct socket *, struct mbuf *,
@@ -655,7 +656,7 @@ key_allocsp(const struct secpolicyindex *spidx, u_int dir, const char* where, in
 
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
-		if (key_cmpspidx_withmask(&sp->spidx, spidx))
+		if (key_spidx_match_withmask(&sp->spidx, spidx))
 			goto found;
 	}
 	sp = NULL;
@@ -719,7 +720,7 @@ key_allocsp2(u_int32_t spi,
 		/* NB: spi's must exist and match */
 		if (!sp->req || !sp->req->sav || sp->req->sav->spi != spi)
 			continue;
-		if (key_sockaddrcmp(&sp->spidx.dst.sa, &dst->sa, PORT_STRICT) == 0)
+		if (key_sockaddr_match(&sp->spidx.dst.sa, &dst->sa, PORT_STRICT))
 			goto found;
 	}
 	sp = NULL;
@@ -787,16 +788,16 @@ key_gettunnel(const struct sockaddr *osrc,
 					continue;
 				memcpy(&spidx.src, isrc, isrc->sa_len);
 				memcpy(&spidx.dst, idst, idst->sa_len);
-				if (!key_cmpspidx_withmask(&sp->spidx, &spidx))
+				if (!key_spidx_match_withmask(&sp->spidx, &spidx))
 					continue;
 			} else {
-				if (key_sockaddrcmp(&r1->saidx.src.sa, isrc, PORT_NONE) ||
-				    key_sockaddrcmp(&r1->saidx.dst.sa, idst, PORT_NONE))
+				if (!key_sockaddr_match(&r1->saidx.src.sa, isrc, PORT_NONE) ||
+				    !key_sockaddr_match(&r1->saidx.dst.sa, idst, PORT_NONE))
 					continue;
 			}
 
-			if (key_sockaddrcmp(&r2->saidx.src.sa, osrc, PORT_NONE) ||
-			    key_sockaddrcmp(&r2->saidx.dst.sa, odst, PORT_NONE))
+			if (!key_sockaddr_match(&r2->saidx.src.sa, osrc, PORT_NONE) ||
+			    !key_sockaddr_match(&r2->saidx.dst.sa, odst, PORT_NONE))
 				continue;
 
 			goto found;
@@ -928,7 +929,7 @@ key_allocsa_policy(const struct secasindex *saidx)
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
-		if (key_cmpsaidx(&sah->saidx, saidx, CMP_MODE_REQID))
+		if (key_saidx_match(&sah->saidx, saidx, CMP_MODE_REQID))
 			goto found;
 	}
 
@@ -1213,13 +1214,13 @@ key_allocsa(
 	/* Fix port in src->sa */
 
 				/* check src address */
-				if (key_sockaddrcmp(&src->sa, &sav->sah->saidx.src.sa, PORT_NONE) != 0)
+				if (!key_sockaddr_match(&src->sa, &sav->sah->saidx.src.sa, PORT_NONE))
 					continue;
 #endif
 				/* fix port of dst address XXX*/
 				key_porttosaddr(__UNCONST(dst), dport);
 				/* check dst address */
-				if (key_sockaddrcmp(&dst->sa, &sav->sah->saidx.dst.sa, chkport) != 0)
+				if (!key_sockaddr_match(&dst->sa, &sav->sah->saidx.dst.sa, chkport))
 					continue;
 				SA_ADDREF2(sav, where, tag);
 				goto done;
@@ -1410,7 +1411,7 @@ key_getsp(const struct secpolicyindex *spidx)
 	LIST_FOREACH(sp, &sptree[spidx->dir], chain) {
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
-		if (key_cmpspidx_exactly(spidx, &sp->spidx)) {
+		if (key_spidx_match_exactly(spidx, &sp->spidx)) {
 			SP_ADDREF(sp);
 			return sp;
 		}
@@ -3077,7 +3078,7 @@ key_getsah(const struct secasindex *saidx)
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
-		if (key_cmpsaidx(&sah->saidx, saidx, CMP_REQID))
+		if (key_saidx_match(&sah->saidx, saidx, CMP_REQID))
 			return sah;
 	}
 
@@ -4111,8 +4112,8 @@ key_ismyaddr6(const struct sockaddr_in6 *sin6)
 	IN6_ADDRLIST_READER_FOREACH(ia) {
 		bool ingroup;
 
-		if (key_sockaddrcmp((const struct sockaddr *)&sin6,
-		    (const struct sockaddr *)&ia->ia_addr, 0) == 0) {
+		if (key_sockaddr_match((const struct sockaddr *)&sin6,
+		    (const struct sockaddr *)&ia->ia_addr, 0)) {
 			pserialize_read_exit(s);
 			goto ours;
 		}
@@ -4161,7 +4162,7 @@ ours:
  *      0 : not equal
  */
 static int
-key_cmpsaidx(
+key_saidx_match(
 	const struct secasindex *saidx0,
 	const struct secasindex *saidx1,
 	int flag)
@@ -4223,10 +4224,10 @@ key_cmpsaidx(
 		else
 			chkport = PORT_NONE;
 
-		if (key_sockaddrcmp(sa0src, sa1src, chkport) != 0) {
+		if (!key_sockaddr_match(sa0src, sa1src, chkport)) {
 			return 0;
 		}
-		if (key_sockaddrcmp(sa0dst, sa1dst, chkport) != 0) {
+		if (!key_sockaddr_match(sa0dst, sa1dst, chkport)) {
 			return 0;
 		}
 	}
@@ -4244,7 +4245,7 @@ key_cmpsaidx(
  *	0 : not equal
  */
 static int
-key_cmpspidx_exactly(
+key_spidx_match_exactly(
 	const struct secpolicyindex *spidx0,
 	const struct secpolicyindex *spidx1)
 {
@@ -4260,8 +4261,8 @@ key_cmpspidx_exactly(
 	    spidx0->ul_proto != spidx1->ul_proto)
 		return 0;
 
-	return key_sockaddrcmp(&spidx0->src.sa, &spidx1->src.sa, PORT_STRICT) == 0 &&
-	       key_sockaddrcmp(&spidx0->dst.sa, &spidx1->dst.sa, PORT_STRICT) == 0;
+	return key_sockaddr_match(&spidx0->src.sa, &spidx1->src.sa, PORT_STRICT) &&
+	       key_sockaddr_match(&spidx0->dst.sa, &spidx1->dst.sa, PORT_STRICT);
 }
 
 /*
@@ -4274,7 +4275,7 @@ key_cmpspidx_exactly(
  *	0 : not equal
  */
 static int
-key_cmpspidx_withmask(
+key_spidx_match_withmask(
 	const struct secpolicyindex *spidx0,
 	const struct secpolicyindex *spidx1)
 {
@@ -4298,7 +4299,7 @@ key_cmpspidx_withmask(
 		if (spidx0->src.sin.sin_port != IPSEC_PORT_ANY &&
 		    spidx0->src.sin.sin_port != spidx1->src.sin.sin_port)
 			return 0;
-		if (!key_bbcmp(&spidx0->src.sin.sin_addr,
+		if (!key_bb_match_withmask(&spidx0->src.sin.sin_addr,
 		    &spidx1->src.sin.sin_addr, spidx0->prefs))
 			return 0;
 		break;
@@ -4314,7 +4315,7 @@ key_cmpspidx_withmask(
 		    spidx1->src.sin6.sin6_scope_id &&
 		    spidx0->src.sin6.sin6_scope_id != spidx1->src.sin6.sin6_scope_id)
 			return 0;
-		if (!key_bbcmp(&spidx0->src.sin6.sin6_addr,
+		if (!key_bb_match_withmask(&spidx0->src.sin6.sin6_addr,
 		    &spidx1->src.sin6.sin6_addr, spidx0->prefs))
 			return 0;
 		break;
@@ -4330,7 +4331,7 @@ key_cmpspidx_withmask(
 		if (spidx0->dst.sin.sin_port != IPSEC_PORT_ANY &&
 		    spidx0->dst.sin.sin_port != spidx1->dst.sin.sin_port)
 			return 0;
-		if (!key_bbcmp(&spidx0->dst.sin.sin_addr,
+		if (!key_bb_match_withmask(&spidx0->dst.sin.sin_addr,
 		    &spidx1->dst.sin.sin_addr, spidx0->prefd))
 			return 0;
 		break;
@@ -4346,7 +4347,7 @@ key_cmpspidx_withmask(
 		    spidx1->src.sin6.sin6_scope_id &&
 		    spidx0->dst.sin6.sin6_scope_id != spidx1->dst.sin6.sin6_scope_id)
 			return 0;
-		if (!key_bbcmp(&spidx0->dst.sin6.sin6_addr,
+		if (!key_bb_match_withmask(&spidx0->dst.sin6.sin6_addr,
 		    &spidx1->dst.sin6.sin6_addr, spidx0->prefd))
 			return 0;
 		break;
@@ -4386,9 +4387,9 @@ key_portcomp(in_port_t port1, in_port_t port2, int howport)
 	}
 }
 
-/* returns 0 on match */
+/* returns 1 on match */
 static int
-key_sockaddrcmp(
+key_sockaddr_match(
 	const struct sockaddr *sa1,
 	const struct sockaddr *sa2,
 	int howport)
@@ -4401,7 +4402,7 @@ key_sockaddrcmp(
 		    "fam/len fail %d != %d || %d != %d\n",
 			sa1->sa_family, sa2->sa_family, sa1->sa_len,
 			sa2->sa_len);
-		return 1;
+		return 0;
 	}
 
 	switch (sa1->sa_family) {
@@ -4410,7 +4411,7 @@ key_sockaddrcmp(
 			KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
 			    "len fail %d != %zu\n",
 			    sa1->sa_len, sizeof(struct sockaddr_in));
-			return 1;
+			return 0;
 		}
 		sin1 = (const struct sockaddr_in *)sa1;
 		sin2 = (const struct sockaddr_in *)sa2;
@@ -4418,10 +4419,10 @@ key_sockaddrcmp(
 			KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
 			    "addr fail %#x != %#x\n",
 			    sin1->sin_addr.s_addr, sin2->sin_addr.s_addr);
-			return 1;
+			return 0;
 		}
 		if (key_portcomp(sin1->sin_port, sin2->sin_port, howport)) {
-			return 1;
+			return 0;
 		}
 		KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
 		    "addr success %#x[%d] == %#x[%d]\n",
@@ -4432,25 +4433,25 @@ key_sockaddrcmp(
 		sin61 = (const struct sockaddr_in6 *)sa1;
 		sin62 = (const struct sockaddr_in6 *)sa2;
 		if (sa1->sa_len != sizeof(struct sockaddr_in6))
-			return 1;	/*EINVAL*/
+			return 0;	/*EINVAL*/
 
 		if (sin61->sin6_scope_id != sin62->sin6_scope_id) {
-			return 1;
+			return 0;
 		}
 		if (!IN6_ARE_ADDR_EQUAL(&sin61->sin6_addr, &sin62->sin6_addr)) {
-			return 1;
+			return 0;
 		}
 		if (key_portcomp(sin61->sin6_port, sin62->sin6_port, howport)) {
-			return 1;
+			return 0;
 		}
 		break;
 	default:
 		if (memcmp(sa1, sa2, sa1->sa_len) != 0)
-			return 1;
+			return 0;
 		break;
 	}
 
-	return 0;
+	return 1;
 }
 
 /*
@@ -4464,7 +4465,7 @@ key_sockaddrcmp(
  *	0 : not equal
  */
 static int
-key_bbcmp(const void *a1, const void *a2, u_int bits)
+key_bb_match_withmask(const void *a1, const void *a2, u_int bits)
 {
 	const unsigned char *p1 = a1;
 	const unsigned char *p2 = a2;
@@ -5724,7 +5725,7 @@ key_delete(struct socket *so, struct mbuf *m,
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
-		if (key_cmpsaidx(&sah->saidx, &saidx, CMP_HEAD) == 0)
+		if (!key_saidx_match(&sah->saidx, &saidx, CMP_HEAD))
 			continue;
 
 		/* get a SA with SPI. */
@@ -5793,7 +5794,7 @@ key_delete_all(struct socket *so, struct mbuf *m,
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
-		if (key_cmpsaidx(&sah->saidx, &saidx, CMP_HEAD) == 0)
+		if (!key_saidx_match(&sah->saidx, &saidx, CMP_HEAD))
 			continue;
 
 		/* Delete all non-LARVAL SAs. */
@@ -5905,7 +5906,7 @@ key_get(struct socket *so, struct mbuf *m,
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
-		if (key_cmpsaidx(&sah->saidx, &saidx, CMP_HEAD) == 0)
+		if (!key_saidx_match(&sah->saidx, &saidx, CMP_HEAD))
 			continue;
 
 		/* get a SA with SPI. */
@@ -6428,7 +6429,7 @@ key_getacq(const struct secasindex *saidx)
 	KASSERT(mutex_owned(&key_mtx));
 
 	LIST_FOREACH(acq, &acqtree, chain) {
-		if (key_cmpsaidx(saidx, &acq->saidx, CMP_EXACTLY))
+		if (key_saidx_match(saidx, &acq->saidx, CMP_EXACTLY))
 			return acq;
 	}
 
@@ -6478,7 +6479,7 @@ key_getspacq(const struct secpolicyindex *spidx)
 	struct secspacq *acq;
 
 	LIST_FOREACH(acq, &spacqtree, chain) {
-		if (key_cmpspidx_exactly(spidx, &acq->spidx))
+		if (key_spidx_match_exactly(spidx, &acq->spidx))
 			return acq;
 	}
 
@@ -6595,7 +6596,7 @@ key_acquire2(struct socket *so, struct mbuf *m,
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
-		if (key_cmpsaidx(&sah->saidx, &saidx, CMP_MODE_REQID))
+		if (key_saidx_match(&sah->saidx, &saidx, CMP_MODE_REQID))
 			break;
 	}
 	if (sah != NULL) {
