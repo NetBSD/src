@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_start.S,v 1.11 2017/05/26 00:00:25 jmcneill Exp $ */
+/* $NetBSD: tegra_start.S,v 1.12 2017/05/26 20:04:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014, 2015 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <arm/nvidia/tegra_reg.h>
 #include <evbarm/tegra/platform.h>
 
-RCSID("$NetBSD: tegra_start.S,v 1.11 2017/05/26 00:00:25 jmcneill Exp $")
+RCSID("$NetBSD: tegra_start.S,v 1.12 2017/05/26 20:04:56 jmcneill Exp $")
 
 #if defined(VERBOSE_INIT_ARM) && defined(CONSADDR)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -68,7 +68,7 @@ RCSID("$NetBSD: tegra_start.S,v 1.11 2017/05/26 00:00:25 jmcneill Exp $")
 #define	MD_CPU_HATCH	_C_LABEL(gtmr_init_cpu_clock)
 
 /*
- * Kernel start routine for Tegra 124 SoC.
+ * Kernel start routine for Tegra SoCs.
  * At this point, this code has been loaded into SDRAM
  * and the MMU maybe on or maybe off.
  */
