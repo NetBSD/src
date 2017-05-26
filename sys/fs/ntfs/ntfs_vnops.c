@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.61 2017/04/11 14:24:59 riastradh Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.62 2017/05/26 14:21:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.61 2017/04/11 14:24:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.62 2017/05/26 14:21:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ ntfs_inactive(void *v)
 int
 ntfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -237,6 +237,8 @@ ntfs_reclaim(void *v)
 	struct ntnode *ip = FTONT(fp);
 	const int attrlen = strlen(fp->f_attrname);
 	int error;
+
+	VOP_UNLOCK(vp);
 
 	dprintf(("ntfs_reclaim: vnode: %p, ntnode: %llu\n", vp,
 	    (unsigned long long)ip->i_number));

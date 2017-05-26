@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.53 2017/04/11 14:24:59 riastradh Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.54 2017/05/26 14:21:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.53 2017/04/11 14:24:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.54 2017/05/26 14:21:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,10 +219,12 @@ const struct vnodeopv_desc ptyfs_vnodeop_opv_desc =
 int
 ptyfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+
+	VOP_UNLOCK(vp);
 
 	vp->v_data = NULL;
 	return 0;
