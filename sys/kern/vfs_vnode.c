@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.89 2017/05/26 14:20:59 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.90 2017/05/26 14:39:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.89 2017/05/26 14:20:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.90 2017/05/26 14:39:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1570,7 +1570,9 @@ vcache_reclaim(vnode_t *vp)
 
 	/*
 	 * Disassociate the underlying file system from the vnode.
-	 * Note that the VOP_INACTIVE will not unlock the vnode.
+	 * VOP_INACTIVE leaves the vnode locked; VOP_RECLAIM unlocks
+	 * the vnode, and may destroy the vnode so that VOP_UNLOCK
+	 * would no longer function.
 	 */
 	VOP_INACTIVE(vp, &recycle);
 	if (VOP_RECLAIM(vp)) {
