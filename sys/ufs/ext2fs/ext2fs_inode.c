@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.87 2017/04/11 14:25:01 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.88 2017/05/26 14:34:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.87 2017/04/11 14:25:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.88 2017/05/26 14:34:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.87 2017/04/11 14:25:01 riastradh 
 
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
-
-extern int prtactive;
 
 static int ext2fs_indirtrunc(struct inode *, daddr_t, daddr_t,
 				  daddr_t, int, long *);
@@ -198,8 +196,6 @@ ext2fs_inactive(void *v)
 	struct inode *ip = VTOI(vp);
 	int error = 0;
 
-	if (prtactive && vp->v_usecount != 0)
-		vprint("ext2fs_inactive: pushing active", vp);
 	/* Get rid of inodes related to stale file handles. */
 	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0)
 		goto out;
