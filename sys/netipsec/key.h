@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.17 2017/05/26 08:09:44 ozaki-r Exp $	*/
+/*	$NetBSD: key.h,v 1.18 2017/05/26 08:10:46 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -92,8 +92,6 @@ int key_checkrequest (struct ipsecrequest *isr, const struct secasindex *);
 struct secpolicy *key_msg2sp (const struct sadb_x_policy *, size_t, int *);
 struct mbuf *key_sp2msg (const struct secpolicy *);
 int key_ismyaddr (const struct sockaddr *);
-int key_cmpspidx_exactly (const struct secpolicyindex *, const struct secpolicyindex *);
-int key_cmpspidx_withmask (const struct secpolicyindex *, const struct secpolicyindex *);
 int key_spdacquire (const struct secpolicy *);
 u_long key_random (void);
 void key_randomfill (void *, size_t);
