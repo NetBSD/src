@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.40 2017/04/21 23:36:58 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.41 2017/05/26 00:15:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.40 2017/04/21 23:36:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.41 2017/05/26 00:15:12 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -280,25 +280,6 @@ initarm(void *arg)
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
 #endif
-
-	const u_int chip_id = tegra_chip_id();
-	switch (chip_id) {
-#ifdef SOC_TEGRA124
-        case CHIP_ID_TEGRA124: {
-		const char * const tegra124_compatible_strings[] = {
-			"nvidia,tegra124",
-			NULL
-		};
-		const int node = OF_peer(0);
-                if (of_compatible(node, tegra124_compatible_strings) < 0) {
-			panic("FDT is not compatible with Tegra124");
-		}
-                break;
-	}
-#endif
-	default:
-		panic("Kernel does not support Tegra SOC ID %#x", chip_id);
-	}
 
 	DPRINTF("KERNEL_BASE=0x%x, KERNEL_VM_BASE=0x%x, KERNEL_VM_BASE - KERNEL_BASE=0x%x, KERNEL_BASE_VOFFSET=0x%x\n",
 		KERNEL_BASE, KERNEL_VM_BASE, KERNEL_VM_BASE - KERNEL_BASE, KERNEL_BASE_VOFFSET);
