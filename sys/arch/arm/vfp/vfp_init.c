@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.52 2017/03/22 23:36:02 chs Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.53 2017/05/26 21:17:46 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -96,6 +96,7 @@ load_vfpregs(const struct vfpreg *fregs)
 	case FPU_VFP_CORTEXA15:
 	case FPU_VFP_CORTEXA15_QEMU:
 	case FPU_VFP_CORTEXA53:
+	case FPU_VFP_CORTEXA57:
 #endif
 		load_vfpregs_hi(fregs->vfp_regs);
 #ifdef CPU_ARM11
@@ -119,6 +120,7 @@ save_vfpregs(struct vfpreg *fregs)
 	case FPU_VFP_CORTEXA15:
 	case FPU_VFP_CORTEXA15_QEMU:
 	case FPU_VFP_CORTEXA53:
+	case FPU_VFP_CORTEXA57:
 #endif
 		save_vfpregs_hi(fregs->vfp_regs);
 #ifdef CPU_ARM11
@@ -320,6 +322,7 @@ vfp_attach(struct cpu_info *ci)
 	case FPU_VFP_CORTEXA15:
 	case FPU_VFP_CORTEXA15_QEMU:
 	case FPU_VFP_CORTEXA53:
+	case FPU_VFP_CORTEXA57:
 		if (armreg_cpacr_read() & CPACR_V7_ASEDIS) {
 			model = "VFP 4.0+";
 		} else {
