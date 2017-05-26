@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.32 2017/05/24 21:45:40 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.33 2017/05/26 22:56:50 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -242,7 +242,7 @@ GENERIC_SRCS+= \
 	clear_cache.c
 .endif
 
-.if ${LIBC_MACHINE_CPU} == "sparc" || ${LIBC_MACHINE_CPU} == "sparc64"
+.if ${LIBC_MACHINE_ARCH} == "sparc" || ${LIBC_MACHINE_ARCH} == "sparc64"
 GENERIC_SRCS+= \
 	clear_cache.c
 .endif
