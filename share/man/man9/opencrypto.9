@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.15 2017/05/26 02:30:24 knakahara Exp $
+.\"	$NetBSD: opencrypto.9,v 1.16 2017/05/26 08:09:08 wiz Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -460,7 +460,8 @@ Callback called on completion of a keying operation.
 .Fn crypto_kgetreq
 allocates a
 .Fa cryptkop
-structure. The first argument means the same as
+structure.
+The first argument means the same as
 .Fn crypto_getreq .
 The second argument means flags passed to
 .Fn pool_get .
@@ -494,7 +495,8 @@ Allow user requests only for operations which are hardware-accelerated.
 Limit the length of queue(crypto_ret_q) which mediates between
 crypto driver's completion and calling
 .Fa cryptop
-callback. When the queue exceeds this limit,
+callback.
+When the queue exceeds this limit,
 .Fn crypto_getreq
 fails.
 .Bl -tag -width xxxx
@@ -505,7 +507,8 @@ means unlimited.
 Limit the length of queue(crypto_ret_kq) which mediates between
 crypto driver's completion and calling
 .Fa cryptkop
-callback. When the queue exceeds this limit,
+callback.
+When the queue exceeds this limit,
 .Fn crypto_kgetreq
 fails.
 .Bl -tag -width xxxx
@@ -522,18 +525,15 @@ Current crypto_ret_q length.
 The count of
 .Fn crypto_getreq
 failed as overflow
-.Pa opencrypto.crypto_ret_q.maxlen
-.
+.Pa opencrypto.crypto_ret_q.maxlen .
 .It opencrypto.crypto_ret_kq.len
 Current crypto_ret_kq length.
 .It opencrypto.crypto_ret_kq.drops
 The count of
 .Fn crypto_kgetreq
 failed as overflow
-.Pa opencrypto.crypto_ret_kq.maxlen
-.
+.Pa opencrypto.crypto_ret_kq.maxlen .
 .El
-.Pp
 .Sh DRIVER-SIDE API
 The
 .Fn crypto_get_driverid ,
