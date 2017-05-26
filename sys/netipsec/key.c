@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.141 2017/05/25 03:36:36 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.142 2017/05/26 08:00:15 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.141 2017/05/25 03:36:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.142 2017/05/26 08:00:15 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4268,12 +4268,9 @@ key_cmpspidx_withmask(
 	const struct secpolicyindex *spidx0,
 	const struct secpolicyindex *spidx1)
 {
-	/* sanity */
-	if (spidx0 == NULL && spidx1 == NULL)
-		return 1;
 
-	if (spidx0 == NULL || spidx1 == NULL)
-		return 0;
+	KASSERT(spidx0 != NULL);
+	KASSERT(spidx1 != NULL);
 
 	if (spidx0->src.sa.sa_family != spidx1->src.sa.sa_family ||
 	    spidx0->dst.sa.sa_family != spidx1->dst.sa.sa_family ||
