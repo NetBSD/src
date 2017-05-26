@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.36 2017/05/26 14:21:00 riastradh Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.37 2017/05/26 14:34:19 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.36 2017/05/26 14:21:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.37 2017/05/26 14:34:19 riastradh Exp $");
 #endif /* not lint */
 
 
@@ -60,9 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.36 2017/05/26 14:21:00 riastradh E
 
 #define VTOI(vnode) ((struct nilfs_node *) (vnode)->v_data)
 
-
-/* externs */
-extern int prtactive;
 
 /* implementations of vnode functions; table follows at end */
 /* --------------------------------------------------------------------- */
@@ -108,8 +105,6 @@ nilfs_reclaim(void *v)
 	VOP_UNLOCK(vp);
 
 	DPRINTF(NODE, ("nilfs_reclaim called for node %p\n", nilfs_node));
-	if (prtactive && vp->v_usecount > 1)
-		vprint("nilfs_reclaim(): pushing active", vp);
 
 	if (nilfs_node == NULL) {
 		DPRINTF(NODE, ("nilfs_reclaim(): null nilfsnode\n"));
