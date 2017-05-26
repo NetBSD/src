@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.171 2017/04/12 06:43:56 martin Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.172 2017/05/26 14:21:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.171 2017/04/12 06:43:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.172 2017/05/26 14:21:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1096,10 +1096,12 @@ spec_inactive(void *v)
 int
 spec_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	struct vnode *vp __diagused = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
+
+	VOP_UNLOCK(vp);
 
 	KASSERT(vp->v_mount == dead_rootmount);
 	return 0;

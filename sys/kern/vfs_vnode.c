@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.88 2017/05/17 12:46:14 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.89 2017/05/26 14:20:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.88 2017/05/17 12:46:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.89 2017/05/26 14:20:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1573,7 +1573,6 @@ vcache_reclaim(vnode_t *vp)
 	 * Note that the VOP_INACTIVE will not unlock the vnode.
 	 */
 	VOP_INACTIVE(vp, &recycle);
-	VOP_UNLOCK(vp);
 	if (VOP_RECLAIM(vp)) {
 		vnpanic(vp, "%s: cannot reclaim", __func__);
 	}
