@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.10 2017/04/29 12:38:26 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.11 2017/05/26 18:56:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.10 2017/04/29 12:38:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.11 2017/05/26 18:56:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -159,27 +159,47 @@ fdtbus_get_path(int phandle, char *buf, size_t buflen)
 int
 fdtbus_get_reg(int phandle, u_int index, bus_addr_t *paddr, bus_size_t *psize)
 {
-	bus_addr_t addr;
-	bus_size_t size;
+	uint64_t addr, size;
+	int error;
+
+	error = fdtbus_get_reg64(phandle, index, &addr, &size);
+	if (error)
+		return error;
+
+	if (sizeof(bus_addr_t) == 4 && (addr + size) > 0x100000000)
+		return ERANGE;
+
+	if (paddr)
+		*paddr = (bus_addr_t)addr;
+	if (psize)
+		*psize = (bus_size_t)size;
+
+	return 0;
+}
+
+int
+fdtbus_get_reg64(int phandle, u_int index, uint64_t *paddr, uint64_t *psize)
+{
+	uint64_t addr, size;
 	const uint8_t *buf;
 	int len;
 
 	const int addr_cells = fdtbus_get_addr_cells(phandle);
 	const int size_cells = fdtbus_get_size_cells(phandle);
 	if (addr_cells == -1 || size_cells == -1)
-		return -1;
+		return EINVAL;
 
 	buf = fdt_getprop(fdtbus_get_data(),
 	    fdtbus_phandle2offset(phandle), "reg", &len);
 	if (buf == NULL || len <= 0)
-		return -1;
+		return EINVAL;
 
 	const u_int reglen = size_cells * 4 + addr_cells * 4;
 	if (reglen == 0)
-		return -1;
+		return EINVAL;
 
 	if (index >= len / reglen)
-		return -1;
+		return ENXIO;
 
 	switch (addr_cells) {
 	case 0:
