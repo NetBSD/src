@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.18 2017/03/03 07:34:04 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.19 2017/05/26 01:14:38 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,7 @@ SOCKDST=unix://commsock2
 IP6SRC=fc00::1
 IP6DST=fc00::2
 
-DEBUG=${DEBUG:-true}
+DEBUG=${DEBUG:-false}
 TIMEOUT=1
 
 atf_test_case ndp_cache_expiration cleanup
