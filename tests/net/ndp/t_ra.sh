@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.26 2017/03/03 07:34:04 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.27 2017/05/26 01:14:38 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -44,7 +44,7 @@ PIDFILE3=./rump.rtadvd.pid3
 PIDFILE4=./rump.rtadvd.pid4
 CONFIG=./rtadvd.conf
 WAITTIME=2
-DEBUG=${DEBUG:-true}
+DEBUG=${DEBUG:-false}
 
 init_server()
 {
