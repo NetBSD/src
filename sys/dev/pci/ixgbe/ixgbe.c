@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.84 2017/05/22 07:35:14 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.85 2017/05/26 07:42:15 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -198,6 +198,7 @@ static void	ixgbe_unregister_vlan(void *, struct ifnet *, u16);
 
 static void	ixgbe_add_device_sysctls(struct adapter *);
 static void     ixgbe_add_hw_stats(struct adapter *);
+static void	ixgbe_clear_evcnt(struct adapter *);
 static int	ixgbe_set_flowcntl(struct adapter *, int);
 static int	ixgbe_set_advertise(struct adapter *, int);
 
@@ -1063,6 +1064,7 @@ static int
 ixgbe_ioctl(struct ifnet * ifp, u_long command, void *data)
 {
 	struct adapter	*adapter = ifp->if_softc;
+	struct ixgbe_hw *hw = &adapter->hw;
 	struct ifcapreq *ifcr = data;
 	struct ifreq	*ifr = data;
 	int             error = 0;
@@ -1113,6 +1115,11 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, void *data)
 	case SIOCGLIFADDR:
 		IOCTL_DEBUGOUT("ioctl: SIOCGLIFADDR (Get Interface addr)");
 		break;
+	case SIOCZIFDATA:
+		IOCTL_DEBUGOUT("ioctl: SIOCZIFDATA (Zero counter)");
+		hw->mac.ops.clear_hw_cntrs(hw);
+		ixgbe_clear_evcnt(adapter);
+		break;
 	case SIOCAIFADDR:
 		IOCTL_DEBUGOUT("ioctl: SIOCAIFADDR (add/chg IF alias)");
 		break;
@@ -1128,7 +1135,6 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, void *data)
 		return ifmedia_ioctl(ifp, ifr, &adapter->media, command);
 	case SIOCGI2C:
 	{
-		struct ixgbe_hw *hw = &adapter->hw;
 		struct ixgbe_i2c_req	i2c;
 		IOCTL_DEBUGOUT("ioctl: SIOCGI2C (Get I2C Data)");
 		error = copyin(ifr->ifr_data, &i2c, sizeof(i2c));
@@ -5074,6 +5080,118 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	    stats->namebuf, "512-1023 byte frames transmitted");
 	evcnt_attach_dynamic(&stats->ptc1522, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "1024-1522 byte frames transmitted");
+}
+
+static void
+ixgbe_clear_evcnt(struct adapter *adapter)
+{
+	struct tx_ring *txr = adapter->tx_rings;
+	struct rx_ring *rxr = adapter->rx_rings;
+	struct ixgbe_hw *hw = &adapter->hw;
+	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
+
+	adapter->handleq.ev_count = 0;
+	adapter->req.ev_count = 0;
+	adapter->efbig_tx_dma_setup.ev_count = 0;
+	adapter->mbuf_defrag_failed.ev_count = 0;
+	adapter->efbig2_tx_dma_setup.ev_count = 0;
+	adapter->einval_tx_dma_setup.ev_count = 0;
+	adapter->other_tx_dma_setup.ev_count = 0;
+	adapter->eagain_tx_dma_setup.ev_count = 0;
+	adapter->enomem_tx_dma_setup.ev_count = 0;
+	adapter->watchdog_events.ev_count = 0;
+	adapter->tso_err.ev_count = 0;
+	adapter->link_irq.ev_count = 0;
+
+	txr = adapter->tx_rings;
+	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
+		adapter->queues[i].irqs.ev_count = 0;
+		txr->no_desc_avail.ev_count = 0;
+		txr->total_packets.ev_count = 0;
+		txr->tso_tx.ev_count = 0;
+#ifndef IXGBE_LEGACY_TX
+		txr->pcq_drops.ev_count = 0;
+#endif
+
+		if (i < __arraycount(stats->mpc)) {
+			stats->mpc[i].ev_count = 0;
+			if (hw->mac.type == ixgbe_mac_82598EB)
+				stats->rnbc[i].ev_count = 0;
+		}
+		if (i < __arraycount(stats->pxontxc)) {
+			stats->pxontxc[i].ev_count = 0;
+			stats->pxonrxc[i].ev_count = 0;
+			stats->pxofftxc[i].ev_count = 0;
+			stats->pxoffrxc[i].ev_count = 0;
+			stats->pxon2offc[i].ev_count = 0;
+		}
+		if (i < __arraycount(stats->qprc)) {
+			stats->qprc[i].ev_count = 0;
+			stats->qptc[i].ev_count = 0;
+			stats->qbrc[i].ev_count = 0;
+			stats->qbtc[i].ev_count = 0;
+			stats->qprdc[i].ev_count = 0;
+		}
+
+		rxr->rx_packets.ev_count = 0;
+		rxr->rx_bytes.ev_count = 0;
+		rxr->rx_copies.ev_count = 0;
+		rxr->no_jmbuf.ev_count = 0;
+		rxr->rx_discarded.ev_count = 0;
+	}
+	stats->ipcs.ev_count = 0;
+	stats->l4cs.ev_count = 0;
+	stats->ipcs_bad.ev_count = 0;
+	stats->l4cs_bad.ev_count = 0;
+	stats->intzero.ev_count = 0;
+	stats->legint.ev_count = 0;
+	stats->crcerrs.ev_count = 0;
+	stats->illerrc.ev_count = 0;
+	stats->errbc.ev_count = 0;
+	stats->mspdc.ev_count = 0;
+	stats->mpctotal.ev_count = 0;
+	stats->mlfc.ev_count = 0;
+	stats->mrfc.ev_count = 0;
+	stats->rlec.ev_count = 0;
+	stats->lxontxc.ev_count = 0;
+	stats->lxonrxc.ev_count = 0;
+	stats->lxofftxc.ev_count = 0;
+	stats->lxoffrxc.ev_count = 0;
+
+	/* Packet Reception Stats */
+	stats->tor.ev_count = 0;
+	stats->gorc.ev_count = 0;
+	stats->tpr.ev_count = 0;
+	stats->gprc.ev_count = 0;
+	stats->mprc.ev_count = 0;
+	stats->bprc.ev_count = 0;
+	stats->prc64.ev_count = 0;
+	stats->prc127.ev_count = 0;
+	stats->prc255.ev_count = 0;
+	stats->prc511.ev_count = 0;
+	stats->prc1023.ev_count = 0;
+	stats->prc1522.ev_count = 0;
+	stats->ruc.ev_count = 0;
+	stats->rfc.ev_count = 0;
+	stats->roc.ev_count = 0;
+	stats->rjc.ev_count = 0;
+	stats->mngprc.ev_count = 0;
+	stats->mngpdc.ev_count = 0;
+	stats->xec.ev_count = 0;
+
+	/* Packet Transmission Stats */
+	stats->gotc.ev_count = 0;
+	stats->tpt.ev_count = 0;
+	stats->gptc.ev_count = 0;
+	stats->bptc.ev_count = 0;
+	stats->mptc.ev_count = 0;
+	stats->mngptc.ev_count = 0;
+	stats->ptc64.ev_count = 0;
+	stats->ptc127.ev_count = 0;
+	stats->ptc255.ev_count = 0;
+	stats->ptc511.ev_count = 0;
+	stats->ptc1023.ev_count = 0;
+	stats->ptc1522.ev_count = 0;
 }
 
 static void
