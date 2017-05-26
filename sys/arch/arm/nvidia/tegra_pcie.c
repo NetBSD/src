@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.17 2017/04/16 22:38:04 jmcneill Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.18 2017/05/26 20:14:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.17 2017/04/16 22:38:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.18 2017/05/26 20:14:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -125,7 +125,11 @@ CFATTACH_DECL_NEW(tegra_pcie, sizeof(struct tegra_pcie_softc),
 static int
 tegra_pcie_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,tegra124-pcie", NULL };
+	const char * const compatible[] = {
+		"nvidia,tegra210-pcie",
+		"nvidia,tegra124-pcie",
+		NULL
+	};
 	struct fdt_attach_args * const faa = aux;
 
 	return of_match_compatible(faa->faa_phandle, compatible);
