@@ -1,4 +1,4 @@
-#	$NetBSD: t_icmp6_redirect.sh,v 1.7 2016/11/25 08:51:16 ozaki-r Exp $
+#	$NetBSD: t_icmp6_redirect.sh,v 1.8 2017/05/26 01:14:38 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -42,7 +42,7 @@ IP6IF0_GW2=fc00:1::3
 
 REDIRECT_TIMEOUT=5
 
-DEBUG=${DEBUG:-true}
+DEBUG=${DEBUG:-false}
 
 atf_test_case icmp6_redirect_basic cleanup
 
