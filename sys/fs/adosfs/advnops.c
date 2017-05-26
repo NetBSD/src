@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.49 2017/04/11 14:24:59 riastradh Exp $	*/
+/*	$NetBSD: advnops.c,v 1.50 2017/05/26 14:21:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.49 2017/04/11 14:24:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.50 2017/05/26 14:21:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -866,11 +866,13 @@ adosfs_inactive(void *v)
 int
 adosfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *sp = v;
 	struct vnode *vp;
 	struct anode *ap;
+
+	VOP_UNLOCK(sp->a_vp);
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("(reclaim 0)");

@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.35 2017/04/26 03:02:48 riastradh Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.36 2017/05/26 14:21:00 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.35 2017/04/26 03:02:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.36 2017/05/26 14:21:00 riastradh Exp $");
 #endif /* not lint */
 
 
@@ -99,11 +99,13 @@ nilfs_inactive(void *v)
 int
 nilfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nilfs_node *nilfs_node = VTOI(vp);
+
+	VOP_UNLOCK(vp);
 
 	DPRINTF(NODE, ("nilfs_reclaim called for node %p\n", nilfs_node));
 	if (prtactive && vp->v_usecount > 1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.314 2017/04/26 03:02:49 riastradh Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.315 2017/05/26 14:21:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.314 2017/04/26 03:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.315 2017/05/26 14:21:02 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1414,13 +1414,15 @@ lfsfifo_close(void *v)
 int
 lfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip;
 	struct lfs *fs;
 	int error;
+
+	VOP_UNLOCK(vp);
 
 	ip = VTOI(vp);
 	fs = ip->i_lfs;

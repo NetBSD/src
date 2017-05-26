@@ -1478,9 +1478,11 @@ unionfs_inactive(void *v)
 static int
 unionfs_reclaim(void *v)
 {
-	struct vop_reclaim_args *ap = v;
+	struct vop_reclaim_v2_args *ap = v;
 
 	/* UNIONFS_INTERNAL_DEBUG("unionfs_reclaim: enter\n"); */
+
+	VOP_UNLOCK(ap->a_vp);
 
 	unionfs_noderem(ap->a_vp);
 
