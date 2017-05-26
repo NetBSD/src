@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.19 2016/10/09 14:51:50 christos Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.20 2017/05/26 06:38:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.19 2016/10/09 14:51:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.20 2017/05/26 06:38:56 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -721,7 +721,7 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 }
 #endif /* MULTIPROCESSOR && PMAP_TLB_NEED_SHOOTDOWN */
 
-#ifndef PMAP_TLB_HWPAGEWALKER
+#ifndef PMAP_HWPAGEWALKER
 int
 pmap_tlb_update_addr(pmap_t pm, vaddr_t va, pt_entry_t pte, u_int flags)
 {
@@ -762,7 +762,7 @@ pmap_tlb_update_addr(pmap_t pm, vaddr_t va, pt_entry_t pte, u_int flags)
 
 	return rv;
 }
-#endif /* !PMAP_TLB_HWPAGEWALKER */
+#endif /* !PMAP_HWPAGEWALKER */
 
 void
 pmap_tlb_invalidate_addr(pmap_t pm, vaddr_t va)
