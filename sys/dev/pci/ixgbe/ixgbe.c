@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.86 2017/05/26 08:36:41 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.87 2017/05/26 09:17:32 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -774,6 +774,8 @@ ixgbe_detach(device_t dev, int flags)
 	if (adapter->osdep.attached == false)
 		return 0;
 
+	/* Stop the interface. Callouts are stopped in it. */
+	ixgbe_ifstop(adapter->ifp, 1);
 #if NVLAN > 0
 	/* Make sure VLANs are not using driver */
 	if (!VLAN_ATTACHED(&adapter->osdep.ec))
