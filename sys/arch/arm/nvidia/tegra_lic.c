@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_lic.c,v 1.4 2017/04/22 19:20:51 jmcneill Exp $ */
+/* $NetBSD: tegra_lic.c,v 1.5 2017/05/26 20:08:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_lic.c,v 1.4 2017/04/22 19:20:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_lic.c,v 1.5 2017/05/26 20:08:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -72,7 +72,11 @@ CFATTACH_DECL_NEW(tegra_lic, sizeof(struct tegra_lic_softc),
 static int
 tegra_lic_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,tegra124-ictlr", NULL };
+	const char * const compatible[] = {
+		"nvidia,tegra210-ictlr",
+		"nvidia,tegra124-ictlr",
+		NULL
+	};
 	struct fdt_attach_args * const faa = aux;
 
 	return of_match_compatible(faa->faa_phandle, compatible);
