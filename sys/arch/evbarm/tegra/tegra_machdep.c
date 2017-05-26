@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.41 2017/05/26 00:15:12 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.42 2017/05/26 18:58:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.41 2017/05/26 00:15:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.42 2017/05/26 18:58:55 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -225,8 +225,7 @@ extern void cortex_mpstart(void);
 u_int
 initarm(void *arg)
 {
-	bus_addr_t memory_addr;
-	bus_size_t memory_size;
+	uint64_t memory_addr, memory_size;
 	psize_t ram_size = 0;
 	DPRINT("initarm:");
 
@@ -285,20 +284,24 @@ initarm(void *arg)
 		KERNEL_BASE, KERNEL_VM_BASE, KERNEL_VM_BASE - KERNEL_BASE, KERNEL_BASE_VOFFSET);
 
 	const int memory = OF_finddevice("/memory");
-	if (fdtbus_get_reg(memory, 0, &memory_addr, &memory_size) != 0)
+	if (fdtbus_get_reg64(memory, 0, &memory_addr, &memory_size) != 0)
 		panic("Cannot determine memory size");
 
 	DPRINTF("FDT memory node = %d, addr %llx, size %llu\n",
 	    memory, (unsigned long long)memory_addr,
 	    (unsigned long long)memory_size);
 
-	ram_size = memory_size;
+	/* Cannot map memory above 4GB */
+	if (memory_addr + memory_size > 0x100000000)
+		memory_size = 0x100000000 - memory_addr;
+
+	ram_size = (bus_size_t)memory_size;
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	const bool mapallmem_p = true;
 #ifndef PMAP_NEED_ALLOC_POOLPAGE
 	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
-		printf("%s: dropping RAM size from %luMB to %uMB\n",
+		DPRINTF("%s: dropping RAM size from %luMB to %uMB\n",
 		    __func__, (unsigned long) (ram_size >> 20),     
 		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
 		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
@@ -325,7 +328,7 @@ initarm(void *arg)
 
 	/* Fake bootconfig structure for the benefit of pmap.c. */
 	bootconfig.dramblocks = 1;
-	bootconfig.dram[0].address = memory_addr;
+	bootconfig.dram[0].address = (bus_addr_t)memory_addr;
 	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
 
 	KASSERT((armreg_pfr1_read() & ARM_PFR1_SEC_MASK) != 0);
