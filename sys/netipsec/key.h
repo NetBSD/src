@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.16 2017/05/16 02:59:22 ozaki-r Exp $	*/
+/*	$NetBSD: key.h,v 1.17 2017/05/26 08:09:44 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -86,7 +86,6 @@ void key_freesav(struct secasvar **, const char*, int);
 #define	KEY_FREESAV(psav)					\
 	key_freesav(psav, __func__, __LINE__)
 
-void key_freeso (struct socket *);
 int key_checktunnelsanity (struct secasvar *, u_int, void *, void *);
 int key_checkrequest (struct ipsecrequest *isr, const struct secasindex *);
 

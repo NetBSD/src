@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.142 2017/05/26 08:00:15 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.143 2017/05/26 08:09:44 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.142 2017/05/26 08:00:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.143 2017/05/26 08:09:44 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -374,7 +374,10 @@ struct sadb_msghdr {
 };
 
 static struct secasvar *key_allocsa_policy (const struct secasindex *);
-static void key_freesp_so (struct secpolicy **);
+#if 0
+static void key_freeso(struct socket *);
+static void key_freesp_so(struct secpolicy **);
+#endif
 static struct secasvar *key_do_allocsa_policy (struct secashead *, u_int);
 static void key_delsp (struct secpolicy *);
 static struct secpolicy *key_getsp (const struct secpolicyindex *);
@@ -1250,11 +1253,12 @@ _key_freesp(struct secpolicy **spp, const char* where, int tag)
 	}
 }
 
+#if 0
 /*
  * Must be called after calling key_allocsp().
  * For the packet with socket.
  */
-void
+static void
 key_freeso(struct socket *so)
 {
 	/* sanity check */
@@ -1322,6 +1326,7 @@ key_freesp_so(struct secpolicy **sp)
 	    "invalid policy %u", (*sp)->policy);
 	KEY_FREESP(sp);
 }
+#endif
 
 /*
  * Must be called after calling key_allocsa().
