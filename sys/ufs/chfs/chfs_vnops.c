@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.32 2017/04/26 03:02:49 riastradh Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.33 2017/05/26 14:21:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1474,11 +1474,13 @@ chfs_inactive(void *v)
 int
 chfs_reclaim(void *v)
 {
-	struct vop_reclaim_args *ap = v;
+	struct vop_reclaim_v2_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct chfs_inode *ip = VTOI(vp);
 	struct chfs_mount *chmp = ip->chmp;
 	struct chfs_dirent *fd;
+
+	VOP_UNLOCK(vp);
 
 	mutex_enter(&chmp->chm_lock_mountfields);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.157 2017/04/11 14:25:01 riastradh Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.158 2017/05/26 14:21:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.157 2017/04/11 14:25:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.158 2017/05/26 14:21:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1074,11 +1074,13 @@ kernfs_inactive(void *v)
 int
 kernfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct kernfs_node *kfs = VTOKERN(vp);
+
+	VOP_UNLOCK(vp);
 
 	vp->v_data = NULL;
 	mutex_enter(&kfs_lock);

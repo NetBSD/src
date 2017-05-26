@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.36 2017/04/11 14:24:59 riastradh Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.37 2017/05/26 14:21:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.36 2017/04/11 14:24:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.37 2017/05/26 14:21:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,11 +125,13 @@ cd9660_inactive(void *v)
 int
 cd9660_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+
+	VOP_UNLOCK(vp);
 
 	if (prtactive && vp->v_usecount > 1)
 		vprint("cd9660_reclaim: pushing active", vp);
