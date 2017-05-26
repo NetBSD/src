@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.9 2016/07/11 16:06:09 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.10 2017/05/26 06:41:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -115,7 +115,7 @@ struct pmap_tlb_info {
 #define	tlbinfo_noasids_p(ti)	((ti)->ti_asids_free == 0)
 	kmutex_t *ti_lock;
 	u_int ti_wired;			/* # of wired TLB entries */
-	tlb_asid_t ti_asid_hint;		/* probable next ASID to use */
+	tlb_asid_t ti_asid_hint;	/* probable next ASID to use */
 	tlb_asid_t ti_asid_max;
 	LIST_HEAD(, pmap_asid_info) ti_pais; /* list of active ASIDs */
 #ifdef MULTIPROCESSOR
