@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.105 2017/05/26 14:21:01 riastradh Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.106 2017/05/26 14:34:20 riastradh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.105 2017/05/26 14:21:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.106 2017/05/26 14:34:20 riastradh Exp $");
 #endif /* not lint */
 
 
@@ -70,9 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.105 2017/05/26 14:21:01 riastradh Ex
 /* forward declarations */
 static int udf_do_readlink(struct udf_node *udf_node, uint64_t filesize,
 	uint8_t *targetbuf, int *length);
-
-/* externs */
-extern int prtactive;
 
 /* implementations of vnode functions; table follows at end */
 /* --------------------------------------------------------------------- */
@@ -139,8 +136,6 @@ udf_reclaim(void *v)
 	VOP_UNLOCK(vp);
 
 	DPRINTF(NODE, ("udf_reclaim called for node %p\n", udf_node));
-	if (prtactive && vp->v_usecount > 1)
-		vprint("udf_reclaim(): pushing active", vp);
 
 	if (udf_node == NULL) {
 		DPRINTF(NODE, ("udf_reclaim(): null udfnode\n"));

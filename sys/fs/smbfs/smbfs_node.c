@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.56 2017/05/26 14:21:01 riastradh Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.57 2017/05/26 14:34:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.56 2017/05/26 14:21:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.57 2017/05/26 14:34:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.56 2017/05/26 14:21:01 riastradh Ex
 #include <fs/smbfs/smbfs_subr.h>
 
 extern int (**smbfs_vnodeop_p)(void *);
-extern int prtactive;
 
 static const struct genfs_ops smbfs_genfsops = {
 	.gop_write = genfs_compat_gop_write,
@@ -223,9 +222,6 @@ smbfs_reclaim(void *v)
 	struct smbmount *smp = VTOSMBFS(vp);
 
 	VOP_UNLOCK(vp);
-
-	if (prtactive && vp->v_usecount > 1)
-		vprint("smbfs_reclaim(): pushing active", vp);
 
 	SMBVDEBUG("%.*s,%d\n", (int) np->n_nmlen, np->n_name, vp->v_usecount);
 

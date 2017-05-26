@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.55 2017/05/26 14:21:00 riastradh Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.56 2017/05/26 14:34:19 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.55 2017/05/26 14:21:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.56 2017/05/26 14:34:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.55 2017/05/26 14:21:00 riastrad
 #include <fs/msdosfs/fat.h>
 
 struct pool msdosfs_denode_pool;
-
-extern int prtactive;
 
 struct fh_key {
 	struct msdosfsmount *fhk_mount;
@@ -545,8 +543,6 @@ msdosfs_reclaim(void *v)
 	    dep, dep->de_Name, dep->de_refcnt);
 #endif
 
-	if (prtactive && vp->v_usecount > 1)
-		vprint("msdosfs_reclaim(): pushing active", vp);
 	/*
 	 * Purge old data structures associated with the denode.
 	 */

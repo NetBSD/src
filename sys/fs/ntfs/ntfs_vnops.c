@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.62 2017/05/26 14:21:00 riastradh Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.63 2017/05/26 14:34:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.62 2017/05/26 14:21:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.63 2017/05/26 14:34:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,6 @@ static int	ntfs_lookup(void *);
 static int	ntfs_bmap(void *);
 static int	ntfs_fsync(void *);
 static int	ntfs_pathconf(void *);
-
-extern int prtactive;
 
 /*
  * This is a noop, simply returning what one has been given.
@@ -242,9 +240,6 @@ ntfs_reclaim(void *v)
 
 	dprintf(("ntfs_reclaim: vnode: %p, ntnode: %llu\n", vp,
 	    (unsigned long long)ip->i_number));
-
-	if (prtactive && vp->v_usecount > 1)
-		vprint("ntfs_reclaim: pushing active", vp);
 
 	if ((error = ntfs_ntget(ip)) != 0)
 		return (error);

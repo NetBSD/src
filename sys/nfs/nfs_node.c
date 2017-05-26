@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.121 2017/05/26 14:21:02 riastradh Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.122 2017/05/26 14:34:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.121 2017/05/26 14:21:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.122 2017/05/26 14:34:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.121 2017/05/26 14:21:02 riastradh Exp
 struct pool nfs_node_pool;
 struct pool nfs_vattr_pool;
 static struct workqueue *nfs_sillyworkq;
-
-extern int prtactive;
 
 static void nfs_gop_size(struct vnode *, off_t, off_t *, int);
 static int nfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
@@ -223,9 +221,6 @@ nfs_reclaim(void *v)
 	struct nfsnode *np = VTONFS(vp);
 
 	VOP_UNLOCK(vp);
-
-	if (prtactive && vp->v_usecount > 1)
-		vprint("nfs_reclaim: pushing active", vp);
 
 	/*
 	 * Free up any directory cookie structures and
