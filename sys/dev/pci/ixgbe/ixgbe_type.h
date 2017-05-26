@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_type.h 299200 2016-05-06 22:54:56Z pfg $*/
-/*$NetBSD: ixgbe_type.h,v 1.20 2017/05/18 08:27:19 msaitoh Exp $*/
+/*$NetBSD: ixgbe_type.h,v 1.21 2017/05/26 08:36:42 msaitoh Exp $*/
 
 #ifndef _IXGBE_TYPE_H_
 #define _IXGBE_TYPE_H_
@@ -896,6 +896,7 @@ struct ixgbe_dmac_config {
 #define IXGBE_ILLERRC	0x04004
 #define IXGBE_ERRBC	0x04008
 #define IXGBE_MSPDC	0x04010
+#define IXGBE_MBSDC	0x04018	/* Bad SFD Count */
 #define IXGBE_MPC(_i)	(0x03FA0 + ((_i) * 4)) /* 8 of these 3FA0-3FBC*/
 #define IXGBE_MLFC	0x04034
 #define IXGBE_MRFC	0x04038
@@ -3568,6 +3569,7 @@ struct ixgbe_hw_stats {
 	struct evcnt illerrc;
 	struct evcnt errbc;
 	struct evcnt mspdc;
+	struct evcnt mbsdc;
 	struct evcnt mpctotal;
 	struct evcnt mpc[8];
 	struct evcnt mlfc;
