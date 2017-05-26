@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.466 2017/05/24 09:53:55 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.467 2017/05/26 14:34:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.466 2017/05/24 09:53:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.467 2017/05/26 14:34:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -118,7 +118,6 @@ const int	vttoif_tab[9] = {
 }
 
 int doforce = 1;		/* 1 => permit forcible unmounting */
-int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
 
 extern struct mount *dead_rootmount;
 

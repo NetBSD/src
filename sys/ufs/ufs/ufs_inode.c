@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.100 2017/04/11 14:25:01 riastradh Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.101 2017/05/26 14:34:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.100 2017/04/11 14:25:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.101 2017/05/26 14:34:20 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -68,8 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.100 2017/04/11 14:25:01 riastradh Ex
 #endif
 
 #include <uvm/uvm.h>
-
-extern int prtactive;
 
 /*
  * Last reference to an inode.  If necessary, write or delete it.
@@ -161,9 +159,6 @@ int
 ufs_reclaim(struct vnode *vp)
 {
 	struct inode *ip = VTOI(vp);
-
-	if (prtactive && vp->v_usecount > 1)
-		vprint("ufs_reclaim: pushing active", vp);
 
 	if (!UFS_WAPBL_BEGIN(vp->v_mount)) {
 		UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);

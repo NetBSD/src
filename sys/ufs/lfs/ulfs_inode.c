@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.18 2017/04/11 14:25:01 riastradh Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.19 2017/05/26 14:34:20 riastradh Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.95 2015/06/13 14:56:45 hannken Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.18 2017/04/11 14:25:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.19 2017/05/26 14:34:20 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -70,8 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.18 2017/04/11 14:25:01 riastradh Ex
 #endif
 
 #include <uvm/uvm.h>
-
-extern int prtactive;
 
 /*
  * Last reference to an inode.  If necessary, write or delete it.
@@ -135,9 +133,6 @@ int
 ulfs_reclaim(struct vnode *vp)
 {
 	struct inode *ip = VTOI(vp);
-
-	if (prtactive && vp->v_usecount > 1)
-		vprint("ulfs_reclaim: pushing active", vp);
 
 	/* XXX: do we really need two of these? */
 	/* note: originally the first was inside a wapbl txn */
