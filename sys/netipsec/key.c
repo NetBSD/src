@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.143 2017/05/26 08:09:44 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.144 2017/05/26 08:10:46 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.143 2017/05/26 08:09:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.144 2017/05/26 08:10:46 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -460,6 +460,11 @@ static int key_sockaddrcmp (const struct sockaddr *, const struct sockaddr *, in
 static int key_bbcmp (const void *, const void *, u_int);
 static u_int16_t key_satype2proto (u_int8_t);
 static u_int8_t key_proto2satype (u_int16_t);
+
+static int key_cmpspidx_exactly(const struct secpolicyindex *,
+    const struct secpolicyindex *);
+static int key_cmpspidx_withmask(const struct secpolicyindex *,
+    const struct secpolicyindex *);
 
 static int key_getspi (struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
@@ -4238,7 +4243,7 @@ key_cmpsaidx(
  *	1 : equal
  *	0 : not equal
  */
-int
+static int
 key_cmpspidx_exactly(
 	const struct secpolicyindex *spidx0,
 	const struct secpolicyindex *spidx1)
@@ -4268,7 +4273,7 @@ key_cmpspidx_exactly(
  *	1 : equal
  *	0 : not equal
  */
-int
+static int
 key_cmpspidx_withmask(
 	const struct secpolicyindex *spidx0,
 	const struct secpolicyindex *spidx1)
