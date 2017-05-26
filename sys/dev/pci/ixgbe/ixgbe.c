@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.85 2017/05/26 07:42:15 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.86 2017/05/26 08:36:41 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -896,6 +896,8 @@ ixgbe_detach(device_t dev, int flags)
 	evcnt_detach(&stats->illerrc);
 	evcnt_detach(&stats->errbc);
 	evcnt_detach(&stats->mspdc);
+	if (hw->mac.type >= ixgbe_mac_X550)
+		evcnt_detach(&stats->mbsdc);
 	evcnt_detach(&stats->mpctotal);
 	evcnt_detach(&stats->mlfc);
 	evcnt_detach(&stats->mrfc);
@@ -4363,6 +4365,8 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	stats->illerrc.ev_count += IXGBE_READ_REG(hw, IXGBE_ILLERRC);
 	stats->errbc.ev_count += IXGBE_READ_REG(hw, IXGBE_ERRBC);
 	stats->mspdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MSPDC);
+	if (hw->mac.type == ixgbe_mac_X550)
+		stats->mbsdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MBSDC);
 
 	for (int i = 0; i < __arraycount(stats->qprc); i++) {
 		int j = i % adapter->num_queues;
@@ -4998,6 +5002,9 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	    stats->namebuf, "Byte Errors");
 	evcnt_attach_dynamic(&stats->mspdc, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "MAC Short Packets Discarded");
+	if (hw->mac.type >= ixgbe_mac_X550)
+		evcnt_attach_dynamic(&stats->mbsdc, EVCNT_TYPE_MISC, NULL,
+		    stats->namebuf, "Bad SFD");
 	evcnt_attach_dynamic(&stats->mpctotal, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Total Packets Missed");
 	evcnt_attach_dynamic(&stats->mlfc, EVCNT_TYPE_MISC, NULL,
@@ -5149,6 +5156,7 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	stats->illerrc.ev_count = 0;
 	stats->errbc.ev_count = 0;
 	stats->mspdc.ev_count = 0;
+	stats->mbsdc.ev_count = 0;
 	stats->mpctotal.ev_count = 0;
 	stats->mlfc.ev_count = 0;
 	stats->mrfc.ev_count = 0;
