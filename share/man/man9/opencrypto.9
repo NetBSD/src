@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.14 2013/12/31 01:55:05 pgoyette Exp $
+.\"	$NetBSD: opencrypto.9,v 1.15 2017/05/26 02:30:24 knakahara Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -16,7 +16,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd December 30, 2013
+.Dd May 26, 2017
 .Dt OPENCRYPTO 9
 .Os
 .Sh NAME
@@ -34,6 +34,8 @@
 .Nm crypto_kdispatch ,
 .Nm crypto_getreq ,
 .Nm crypto_freereq
+.Nm crypto_kgetreq ,
+.Nm crypto_kfreereq
 .Nd API for cryptographic services in the kernel
 .Sh SYNOPSIS
 .In opencrypto/cryptodev.h
@@ -63,6 +65,10 @@
 .Fn crypto_getreq "int"
 .Ft void
 .Fn crypto_freereq "struct cryptop *"
+.Ft struct cryptop *
+.Fn crypto_kgetreq "int" "int"
+.Ft void
+.Fn crypto_kfreereq "struct cryptop *"
 .Bd -literal
 
 #define EALG_MAX_BLOCK_LEN      16
@@ -451,9 +457,22 @@ Identifier specifying which low-level driver is being used.
 Callback called on completion of a keying operation.
 .El
 .Pp
+.Fn crypto_kgetreq
+allocates a
+.Fa cryptkop
+structure. The first argument means the same as
+.Fn crypto_getreq .
+The second argument means flags passed to
+.Fn pool_get .
+.Pp
+.Fn crypto_kfreereq
+deallocates a structure
+.Fa cryptkop
+structure.
+.Pp
 The following sysctl entries exist to adjust
 the behaviour of the system from userland:
-.Bl -tag -width kern.cryptodevallowsoft
+.Bl -tag -width opencrypto.crypto_ret_kq.maxlen
 .It kern.usercrypto
 Allow (1) or forbid (0) userland access to
 .Pa /dev/crypto .
@@ -471,7 +490,50 @@ operations (handling the latter in software).
 .It \*[Gt] 0
 Allow user requests only for operations which are hardware-accelerated.
 .El
+.It opencrypto.crypto_ret_q.maxlen
+Limit the length of queue(crypto_ret_q) which mediates between
+crypto driver's completion and calling
+.Fa cryptop
+callback. When the queue exceeds this limit,
+.Fn crypto_getreq
+fails.
+.Bl -tag -width xxxx
+.It <= 0
+means unlimited.
 .El
+.It opencrypto.crypto_ret_kq.maxlen
+Limit the length of queue(crypto_ret_kq) which mediates between
+crypto driver's completion and calling
+.Fa cryptkop
+callback. When the queue exceeds this limit,
+.Fn crypto_kgetreq
+fails.
+.Bl -tag -width xxxx
+.It <= 0
+means unlimited.
+.El
+.El
+.Pp
+.Bl -tag -width opencrypto.crypto_ret_kq.drops
+The following sysctl entries exist to get statistics.
+.It opencrypto.crypto_ret_q.len
+Current crypto_ret_q length.
+.It opencrypto.crypto_ret_q.drops
+The count of
+.Fn crypto_getreq
+failed as overflow
+.Pa opencrypto.crypto_ret_q.maxlen
+.
+.It opencrypto.crypto_ret_kq.len
+Current crypto_ret_kq length.
+.It opencrypto.crypto_ret_kq.drops
+The count of
+.Fn crypto_kgetreq
+failed as overflow
+.Pa opencrypto.crypto_ret_kq.maxlen
+.
+.El
+.Pp
 .Sh DRIVER-SIDE API
 The
 .Fn crypto_get_driverid ,
@@ -588,6 +650,12 @@ returns a pointer to a
 structure and
 .Dv NULL
 on failure.
+.Fn crypto_kgetreq
+returns a pointer to a
+.Fa cryptkop
+structure and
+.Dv NULL
+on failure.
 .Fn crypto_dispatch
 returns
 .Er EINVAL
@@ -608,7 +676,8 @@ crypto algorithm implementations
 .Xr ipsec 4 ,
 .Xr pcmcia 4 ,
 .Xr condvar 9 ,
-.Xr malloc 9
+.Xr malloc 9 ,
+.Xr pool 9
 .Rs
 .%A "Angelos D. Keromytis"
 .%A "Jason L. Wright"
