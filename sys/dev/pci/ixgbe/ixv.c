@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.55 2017/03/03 04:37:05 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.56 2017/05/26 09:17:32 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -87,6 +87,7 @@ static int      ixv_shutdown(device_t);
 static int      ixv_ioctl(struct ifnet *, u_long, void *);
 static int	ixv_init(struct ifnet *);
 static void	ixv_init_locked(struct adapter *);
+static void	ixv_ifstop(struct ifnet *, int);
 static void     ixv_stop(void *);
 static void     ixv_media_status(struct ifnet *, struct ifmediareq *);
 static int      ixv_media_change(struct ifnet *);
@@ -497,6 +498,9 @@ ixv_detach(device_t dev, int flags)
 	INIT_DEBUGOUT("ixv_detach: begin");
 	if (adapter->osdep.attached == false)
 		return 0;
+
+	/* Stop the interface. Callouts are stopped in it. */
+	ixv_ifstop(adapter->ifp, 1);
 
 #if NVLAN > 0
 	/* Make sure VLANS are not using driver */
