@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.144 2017/05/27 06:32:12 kre Exp $
+.\"	$NetBSD: sh.1,v 1.145 2017/05/27 11:19:57 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -385,13 +385,18 @@ variable is read at startup by a non-interactive shell.
 It also controls whether file descriptors greater than 2
 opened using the
 .Ic exec
-built-in command are passed on to utilities executed,
+built-in command are passed on to utilities executed
+.Dq ( yes
+in posix mode),
 and whether the shell treats
-an empty compound statement as a syntax error (required
-by posix) or permits it.
-Empty compound statements
+an empty brace-list compound statement as a syntax error
+(required by posix) or permits it.
+Such statements
 .Dq "{ }"
 can be useful when defining dummy functions.
+Lastly, in posix mode, only one
+.Dq \&!
+is permitted before a pipeline.
 .It "\ \ " Em tabcomplete
 Enables filename completion in the command line editor.
 Typing a tab character will extend the current input word to match a

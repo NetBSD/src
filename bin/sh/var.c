@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.54 2017/05/27 06:32:12 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.55 2017/05/27 11:19:57 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.54 2017/05/27 06:32:12 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.55 2017/05/27 11:19:57 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,6 +199,9 @@ INIT {
 #endif
 #ifndef BSD
 		" -BSD"
+#endif
+#ifdef BOGUS_NOT_COMMAND
+		" BOGUS_NOT"
 #endif
 		    , VTEXTFIXED|VREADONLY|VNOEXPORT);
 }
