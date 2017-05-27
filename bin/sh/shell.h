@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.21 2017/05/13 03:26:03 kre Exp $	*/
+/*	$NetBSD: shell.h,v 1.22 2017/05/27 11:19:57 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,6 +43,8 @@
  *	define DEBUG=2 to compile in and turn on debugging.
  *	define DO_SHAREDVFORK to indicate that vfork(2) shares its address
  *	       with its parent.
+ *	define BOGUS_NOT_COMMAND to allow ! reserved words in weird places
+ *		(traditional ash behaviour.)
  *
  * When debugging is on, debugging info will be written to ./trace and
  * a quit signal will generate a core dump.
