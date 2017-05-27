@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.17 2017/05/27 10:54:47 nat Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.18 2017/05/27 12:04:44 nat Exp $	*/
 
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.17 2017/05/27 10:54:47 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.18 2017/05/27 12:04:44 nat Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -50,31 +50,11 @@ __KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.17 2017/05/27 10:54:47 nat Exp $");
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
 #include <dev/audiobellvar.h>
-#ifdef HIRES_BELL
 #include <dev/audiobelldata.h>
 
 /* 44.1 kHz should reduce hum at higher pitches. */
 #define BELL_SAMPLE_RATE	44100
 #define BELL_SHIFT		19
-#else
-#define BELL_SAMPLE_RATE	8000
-#define BELL_SHIFT		24
-#endif
-
-#ifndef HIRES_BELL
-/* 1/4 cycle sine wave in u-law */
-/* XXX Probably highly inaccurate -- should be regenerated */
-static const int16_t sinewave[] = {
-	0x0000, 0x0324, 0x0647, 0x096a, 0x0c8b, 0x0fab, 0x12c8, 0x15e2, 
-	0x18f8, 0x1c0b, 0x1f19, 0x2223, 0x2528, 0x2826, 0x2b1f, 0x2e11, 
-	0x30fb, 0x33de, 0x36ba, 0x398c, 0x3c56, 0x3f17, 0x41ce, 0x447a, 
-	0x471c, 0x49b4, 0x4c3f, 0x4ebf, 0x5133, 0x539b, 0x55f5, 0x5842, 
-	0x5a82, 0x5cb4, 0x5ed7, 0x60ec, 0x62f2, 0x64e8, 0x66cf, 0x68a6, 
-	0x6a6d, 0x6c24, 0x6dca, 0x6f5f, 0x70e2, 0x7255, 0x73b5, 0x7504, 
-	0x7641, 0x776c, 0x7884, 0x798a, 0x7a7d, 0x7b5d, 0x7c29, 0x7ce3, 
-	0x7d8a, 0x7e1d, 0x7e9d, 0x7f09, 0x7f62, 0x7fa7, 0x7fd8, 0x7ff6, 
-};
-#endif
 
 static inline void
 audiobell_expandwave(int16_t *buf, int volume)
