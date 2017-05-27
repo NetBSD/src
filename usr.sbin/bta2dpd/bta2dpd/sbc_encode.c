@@ -1,4 +1,4 @@
-/* $NetBSD: sbc_encode.c,v 1.2 2017/02/12 08:25:31 nat Exp $ */
+/* $NetBSD: sbc_encode.c,v 1.3 2017/05/27 10:04:57 nat Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -943,9 +943,6 @@ send_again:
 	    / frequency) * (size_t)numpkts;
 
 	free(whole);
-
-	if (seqnumber % 96 == 95)
-		usleep(1);
 
 	return len;
 }
