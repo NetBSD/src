@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.29 2017/05/27 10:02:26 nat Exp $ */
+/* $NetBSD: pad.c,v 1.30 2017/05/27 10:43:30 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.29 2017/05/27 10:02:26 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.30 2017/05/27 10:43:30 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -396,6 +396,7 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 
 		err = pad_get_block(sc, &pb, min(uio->uio_resid, PAD_BLKSIZE));
 		if (!err) {
+			sc->sc_bytes_count += pb.pb_len;
 			mutex_exit(&sc->sc_lock);
 			err = uiomove(pb.pb_ptr, pb.pb_len, uio);
 			continue;
