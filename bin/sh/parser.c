@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.128 2017/05/14 11:17:04 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.129 2017/05/27 11:19:57 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.128 2017/05/14 11:17:04 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.129 2017/05/27 11:19:57 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -264,6 +264,10 @@ pipeline(void)
 	checkkwd = 2;
 	while (readtoken() == TNOT) {
 		TRACE(("pipeline: TNOT recognized\n"));
+#ifndef BOGUS_NOT_COMMAND
+		if (posix && negate)
+			synerror("2nd \"!\" unexpected");
+#endif
 		negate++;
 	}
 	tokpushback++;
@@ -304,7 +308,10 @@ command(void)
 	union node *ap, **app;
 	union node *cp, **cpp;
 	union node *redir, **rpp;
-	int t, negate = 0;
+	int t;
+#ifdef BOGUS_NOT_COMMAND
+	int negate = 0;
+#endif
 
 	TRACE(("command: entered\n"));
 
@@ -321,11 +328,13 @@ command(void)
 	}
 	tokpushback++;
 
+#ifdef BOGUS_NOT_COMMAND		/* only in pileline() */
 	while (readtoken() == TNOT) {
 		TRACE(("command: TNOT recognized\n"));
 		negate++;
 	}
 	tokpushback++;
+#endif
 
 	switch (readtoken()) {
 	case TIF:
@@ -568,6 +577,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 	}
 
  checkneg:
+#ifdef BOGUS_NOT_COMMAND
 	if (negate) {
 		TRACE(("%snegate command\n", (negate&1) ? "" : "double "));
 		n2 = stalloc(sizeof(struct nnot));
@@ -576,6 +586,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		return n2;
 	}
 	else
+#endif
 		return n1;
 }
 
@@ -584,8 +595,11 @@ STATIC union node *
 simplecmd(union node **rpp, union node *redir)
 {
 	union node *args, **app;
-	union node *n = NULL, *n2;
+	union node *n = NULL;
+#ifdef BOGUS_NOT_COMMAND
+	union node *n2;
 	int negate = 0;
+#endif
 
 	/* If we don't have any redirections already, then we must reset */
 	/* rpp to be the address of the local redir variable.  */
@@ -595,11 +609,13 @@ simplecmd(union node **rpp, union node *redir)
 	args = NULL;
 	app = &args;
 
+#ifdef BOGUS_NOT_COMMAND	/* pipelines get negated, commands do not */
 	while (readtoken() == TNOT) {
 		TRACE(("simplcmd: TNOT recognized\n"));
 		negate++;
 	}
 	tokpushback++;
+#endif
 
 	for (;;) {
 		if (readtoken() == TWORD) {
@@ -643,6 +659,7 @@ simplecmd(union node **rpp, union node *redir)
 	n->ncmd.redirect = redir;
 
  checkneg:
+#ifdef BOGUS_NOT_COMMAND
 	if (negate) {
 		TRACE(("%snegate simplecmd\n", (negate&1) ? "" : "double "));
 		n2 = stalloc(sizeof(struct nnot));
@@ -651,6 +668,7 @@ simplecmd(union node **rpp, union node *redir)
 		return n2;
 	}
 	else
+#endif
 		return n;
 }
 
