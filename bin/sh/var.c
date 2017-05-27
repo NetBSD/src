@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.53 2017/05/14 11:23:33 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.54 2017/05/27 06:32:12 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.53 2017/05/14 11:23:33 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.54 2017/05/27 06:32:12 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -349,6 +349,8 @@ setvareq(char *s, int flags)
 		vp->flags &= ~(VTEXTFIXED|VSTACK|VUNSET);
 		if (flags & VNOEXPORT)
 			vp->flags &= ~VEXPORT;
+		if (vp->flags & VNOEXPORT)
+			flags &= ~VEXPORT;
 		vp->flags |= flags & ~VNOFUNC;
 		vp->text = s;
 
@@ -733,11 +735,22 @@ int
 localcmd(int argc, char **argv)
 {
 	char *name;
+	int c;
+	int flags = 0;		/*XXX perhaps VUNSET from a -o option value */
 
 	if (! in_function())
 		error("Not in a function");
+
+	/* upper case options, as bash stole all the good ones ... */
+	while ((c = nextopt("INx")) != '\0')
+		switch (c) {
+		case 'I':	flags &= ~VUNSET;	break;
+		case 'N':	flags |= VUNSET;	break;
+		case 'x':	flags |= VEXPORT;	break;
+		}
+
 	while ((name = *argptr++) != NULL) {
-		mklocal(name, 0);
+		mklocal(name, flags);
 	}
 	return 0;
 }
@@ -767,8 +780,10 @@ mklocal(const char *name, int flags)
 	} else {
 		vp = find_var(name, &vpp, NULL);
 		if (vp == NULL) {
+			flags &= ~VNOEXPORT;
 			if (strchr(name, '='))
-				setvareq(savestr(name), VSTRFIXED|flags);
+				setvareq(savestr(name),
+				    VSTRFIXED | (flags & ~VUNSET));
 			else
 				setvar(name, NULL, VSTRFIXED|flags);
 			vp = *vpp;	/* the new variable */
@@ -778,8 +793,17 @@ mklocal(const char *name, int flags)
 			lvp->text = vp->text;
 			lvp->flags = vp->flags;
 			vp->flags |= VSTRFIXED|VTEXTFIXED;
+			if (vp->flags & VNOEXPORT)
+				flags &= ~VEXPORT;
+			if (flags & (VNOEXPORT | VUNSET))
+				vp->flags &= ~VEXPORT;
+			flags &= ~VNOEXPORT;
 			if (name[vp->name_len] == '=')
-				setvareq(savestr(name), flags);
+				setvareq(savestr(name), flags & ~VUNSET);
+			else if (flags & VUNSET)
+				unsetvar(name, 0);
+			else
+				vp->flags |= flags & (VUNSET|VEXPORT);
 		}
 	}
 	lvp->vp = vp;
@@ -847,14 +871,24 @@ unsetcmd(int argc, char **argv)
 	int i;
 	int flg_func = 0;
 	int flg_var = 0;
+	int flg_x = 0;
 	int ret = 0;
 
-	while ((i = nextopt("evf")) != '\0') {
-		if (i == 'f')
+	while ((i = nextopt("efvx")) != '\0') {
+		switch (i) {
+		case 'f':
 			flg_func = 1;
-		else
-			flg_var = i;
+			break;
+		case 'e':
+		case 'x':
+			flg_x = (2 >> (i == 'e'));
+			/* FALLTHROUGH */
+		case 'v':
+			flg_var = 1;
+			break;
+		}
 	}
+
 	if (flg_func == 0 && flg_var == 0)
 		flg_var = 1;
 
@@ -862,7 +896,7 @@ unsetcmd(int argc, char **argv)
 		if (flg_func)
 			ret |= unsetfunc(*ap);
 		if (flg_var)
-			ret |= unsetvar(*ap, flg_var == 'e');
+			ret |= unsetvar(*ap, flg_x);
 	}
 	return ret;
 }
@@ -882,18 +916,19 @@ unsetvar(const char *s, int unexport)
 	if (vp == NULL)
 		return 0;
 
-	if (vp->flags & VREADONLY && !unexport)
+	if (vp->flags & VREADONLY && !(unexport & 1))
 		return 1;
 
 	INTOFF;
-	if (unexport) {
+	if (unexport & 1) {
 		vp->flags &= ~VEXPORT;
 	} else {
 		if (vp->text[vp->name_len + 1] != '\0')
 			setvar(s, nullstr, 0);
-		vp->flags &= ~VEXPORT;
+		if (!(unexport & 2))
+			vp->flags &= ~VEXPORT;
 		vp->flags |= VUNSET;
-		if ((vp->flags & VSTRFIXED) == 0) {
+		if ((vp->flags&(VEXPORT|VSTRFIXED|VREADONLY|VNOEXPORT)) == 0) {
 			if ((vp->flags & VTEXTFIXED) == 0)
 				ckfree(vp->text);
 			*vpp = vp->next;
