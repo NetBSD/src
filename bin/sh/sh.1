@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.143 2017/05/18 13:56:58 kre Exp $
+.\"	$NetBSD: sh.1,v 1.144 2017/05/27 06:32:12 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1025,7 +1025,8 @@ and
 .Dq } .
 The standard syntax also allows the command to be any of the other
 compound commands, including a sub-shell, all of which are supported.
-As an extension, this shell also allows a simple command to be
+As an extension, this shell also allows a simple command
+(or even another function definition) to be
 used, though users should be aware this is non-standard syntax.
 This means that
 .Dl l() ls "$@"
@@ -1061,79 +1062,30 @@ each time the shell executes the function, and which applies
 that input only to the cat command, not to any other commands
 that might appear in the function.
 .Pp
-Variables may be declared to be local to a function by using a
+Variables may be declared to be local to a function by using the
 .Ic local
 command.
 This should usually appear as the first statement of a function,
-its syntax is
+though is an executable command which can be used anywhere in a
+function.
+See
+.Sx Built-ins
+below for its definition.
 .Pp
-.Dl local [ variable | - ] ...
-.Pp
-.Dq Ic local
-is implemented as a built-in command.
-.Pp
-When a variable is made local, it inherits the initial value and exported,
-unexportable,
-and read-only flags from the variable with the same name in the surrounding
-scope, if there is one.
-Otherwise, the variable is initially unset.
-Making a read-only variable local is possible, but pointless.
-If the
-.Ic readonly
-command is applied to a variable that has been declared local,
-the variable cannot be (further) modified within the function,
-or any other functions it calls, however when the function returns,
-the previous status (and value) of the variable is returned.
-.Pp
-Values may be given to local variables on the
-.Ic local
-command line in a similar fashion as used for
-.Ic export
-and
-.Ic readonly .
-.Pp
-The shell uses dynamic scoping, so that if you make the variable x local to
-function f, which then calls function g, references to the variable x made
-inside g will refer to the variable x declared inside f, not to the global
-variable named x.
-.Pp
-Note that the parameters $1, $2, ... (see
-.Sx Positional Parameters ) ,
-and $#, $* and $@ (see
-.Sx Special Parameters ) ,
-are always made local in all functions, and are reset inside the
-function to represent the options and arguments passed to the function.
-Note that $0 however retains the value it had outside the function,
-as do all the other special parameters.
-.Pp
-The only other special parameter that can be made local is
-.Dq - .
-Making
-.Dq -
-local causes any shell options that are changed via the set command inside the
-function to be restored to their original values when the function
-returns.
-.Pp
-It is a syntax error to use
-.Ic local
-outside the scope of a function definition.
-When used inside a function, it exits with status 0.
-.Pp
-The syntax of the return command is
-.Pp
-.Dl return [ exitstatus ]
-.Pp
-It terminates the currently executing function or
-.Dq \&.
-script.
-Return is implemented as a built-in command.
-The exit status of the function (or
-.Dl \&.
-command) is either that given on the
+The function completes after having executed
+.Ar command
+with exit status set to the status returned by
+.Ar command .
+If
+.Ar command
+is a compound-command
+it can use the
 .Ic return
-command line, or the value of the special parameter
-.Dq $?
-immediately before the return was executed.
+command (see
+.Sx Built-ins
+below)
+to finish before completing all of
+.Ar command .
 .Ss Variables and Parameters
 The shell maintains a set of parameters.
 A parameter denoted by a name is called a variable.
@@ -1633,6 +1585,7 @@ last, in the character class.
 This section lists the built-in commands which are built-in because they
 need to perform some operation that can't be performed by a separate
 process.
+Or just because they traditionally are.
 In addition to these, there are several other commands that may
 be built in for efficiency (e.g.
 .Xr printf 1 ,
@@ -1652,7 +1605,11 @@ listed in the
 .Ev PATH
 variable if its name does not contain a directory separator
 .Pq Sq / .
-The return command can be used for a premature return from the sourced file.
+The return command
+(see
+.Sx Built-ins
+below)
+can be used for a premature return from the sourced file.
 .Pp
 The POSIX standard has been unclear on how loop control keywords (break
 and continue) behave across a dot command boundary.
@@ -2123,6 +2080,141 @@ argument is omitted, the current job is used.
 .It jobs
 This command lists out all the background processes
 which are children of the current shell process.
+.It local Oo Fl INx Oc Oo Ar variable | \- Oc ...
+Define local variables for a function.
+Local variables have their attributes, and values,
+as they were before the
+.Ic local
+declaration, restored when the function terminates.
+.Pp
+With the
+.Fl N
+flag, variables made local, are unset initially inside
+the function.
+Unless the
+.Fl x
+flag is also given, such variables are also unexported.
+The
+.Fl I
+flag, which is the default in this shell, causes
+the initial value and exported atribute
+of local variables
+to be inherited from the variable
+with the same name in the surrounding
+scope, if there is one.
+If there is not, the variable is initially unset,
+and not exported.
+The
+.Fl N
+and
+.Fl I
+flags are mutually exclusive, if both are given, the last specified applies.
+The read-only and unexportable attributes are always
+inherited, if a variable with the same name already exists.
+.Pp
+The
+.Fl x
+flag (lower case) causes the local variable to be exported,
+while the function runs, unless it has the unexportable attribute.
+This can also be accomplished by using the
+.Ic export
+command, giving the same
+.Ar variable
+names, after the
+.Ic local
+command.
+.Pp
+Making an existing read-only variable local is possible,
+but pointless.
+If an attempt is made to assign an initial value to such
+a variable, the
+.Ic local
+command fails, as does any later attempted assignment.
+If the
+.Ic readonly
+command is applied to a variable that has been declared local,
+the variable cannot be (further) modified within the function,
+or any other functions it calls, however when the function returns,
+the previous status (and value) of the variable is returned.
+.Pp
+Values may be given to local variables on the
+.Ic local
+command line in a similar fashion as used for
+.Ic export
+and
+.Ic readonly .
+These values are assigned immediately after the initialization
+described above.
+Note that any variable references on the command line will have
+been expanded before
+.Ic local
+is executed, so expressions like
+.Dl "local -N X=${X}"
+are well defined, first $X is expanded, and then the command run is
+.Dl "local -N X=old-value-of-X"
+After arranging to preserve the old value and attributes, of X
+.Dq ( old-value-of X )
+.Ic local
+unsets
+.Ev X ,
+unexports it, and then assigns the
+.Dq old-value-of-X
+to
+.Ev X .
+.Pp
+The shell uses dynamic scoping, so that if you make the variable x local to
+function f, which then calls function g, references to the variable x made
+inside g will refer to the variable x declared inside f, not to the global
+variable named x.
+.Pp
+Another way to view this, is as if the shell just has one flat, global,
+namespace, in which all variables exist.
+The
+.Ic local
+command conceptually copies the variable(s) named to unnamed temporary
+variables, and when the function ends, copies them back again.
+All references to the variables reference the same global variables,
+but while the function is active, after the
+.Ic local
+command has run, the values and attributes of the variables might
+be altered, and later, when the function completes, be restored.
+.Pp
+Note that the parameters $1, $2, ... (see
+.Sx Positional Parameters ) ,
+and $#, $* and $@ (see
+.Sx Special Parameters ) ,
+are always made local in all functions, and are reset inside the
+function to represent the options and arguments passed to the function.
+Note that $0 however retains the value it had outside the function,
+as do all the other special parameters.
+.Pp
+The only other special parameter that can be made local is
+.Dq \- .
+Making
+.Dq \-
+local causes any shell options that are changed via the set command inside the
+function to be restored to their original values when the function
+returns.
+.Pp
+It is an error to use
+.Ic local
+outside the scope of a function definition.
+When used inside a function, it exits with status 0,
+unless an undefined option is used, or at attempt is made to
+assign a value to a read-only variable.
+.Pp
+Note that either
+.Fl I
+or
+.Fl U
+should always be used, or variables made local should always
+be given a value, or explicitly unset, as the default behavior
+(inheriting the earlier value, or starting unset after
+.Ic local )
+differs amongst shell implementations.
+Using
+.Dq local \&\-
+is an extension not implemented by most shells.
 .It pwd Op Fl \&LP
 Print the current directory.
 If
@@ -2205,7 +2297,7 @@ variables.
 With the
 .Fl p
 option specified the output will be formatted suitably for non-interactive use.
-.It return [ Ar n ]
+.It return Op Ar n
 Stop executing the current function or a dot command with return value of
 .Ar n
 or the value of the last executed command, if not specified.
@@ -2510,7 +2602,7 @@ is specified, the shell removes that alias.
 If
 .Fl a
 is specified, all aliases are removed.
-.It unset Oo Fl efv Oc Ar name ...
+.It unset Oo Fl efvx Oc Ar name ...
 If
 .Fl v
 is specified, the specified variables are unset and unexported.
@@ -2520,25 +2612,32 @@ If
 is specified, the specified functions are undefined.
 If
 .Fl e
-is given, the specified variables are unexported, but otherwise unchanged.
+is given, the specified variables are unexported, but otherwise unchanged,
+alternatively, if
+.Fl x
+is given, the exported status of the variable will be retained,
+even after it is unset.
 .Pp
 If no flags are provided
 .Fl v
 is assumed.
 If
 .Fl f
-is given with one (or both) of
-.Fl v
-or
-.Fl e ,
+is given with one of the other flags,
 then the named variables will be unset, or unexported, and functions
 of the same names will be undefined.
-It makes no sense to give both
-.Fl v
-and
+The
 .Fl e
-as unsetting a variable unexports it as well.
-However doing so is not an error, the last specified is used.
+and
+.Fl x
+flags both imply
+.Fl v .
+If
+.Fl e
+is given, the
+.Fl x
+flag is ignored.
+.Pp
 The exit status is 0, unless an attempt was made to unset
 a readonly variable, in which case the exit status is 1.
 It is not an error to unset (or undefine) a variable (or function)
