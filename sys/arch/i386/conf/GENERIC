@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1155 2017/05/24 20:23:04 christos Exp $
+# $NetBSD: GENERIC,v 1.1156 2017/05/27 22:53:29 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1155 $"
+#ident		"GENERIC-$Revision: 1.1156 $"
 
 maxusers	64		# estimated number of users
 
@@ -207,6 +207,7 @@ options 	IPSEC		# IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 options 	NETATALK	# AppleTalk networking protocols
+#options 	CAN		# Controller Area Network protocol
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -1679,6 +1680,8 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	etherip 		# Tunnel Ethernet over IP
 # srt is EXPERIMENTAL
 #pseudo-device	srt			# source-address-based routing
+
+#pseudo-device	canloop			# CAN loopback interface
 
 #
 # accept filters
