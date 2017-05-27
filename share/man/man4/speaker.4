@@ -1,4 +1,4 @@
-.\" $NetBSD: speaker.4,v 1.19 2017/05/27 11:10:24 nat Exp $
+.\" $NetBSD: speaker.4,v 1.20 2017/05/27 12:15:34 nat Exp $
 .\"
 .\" Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd May 27, 2017
+.Dd November 23, 2016
 .Dt SPEAKER 4
 .Os
 .Sh NAME
@@ -46,7 +46,6 @@
 .Cd "spkr0	at pcppi?"
 .Pp
 .Cd "options	VAUDIOSPEAKER"
-.Cd "options	HIRES_BELL"
 .Cd "spkr0	at audio?"
 .Pp
 .In machine/spkr.h
@@ -169,9 +168,6 @@ dotted twice, it is held 9/4, and three times would give 27/8.
 .Pp
 Whitespace in play strings is simply skipped and may be used to separate
 melody sections.
-.Pp
-The option HIRES_BELL for the audio synthesized speaker allows you to have a
-high reslution (44.1 kHz) bell.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/speaker
