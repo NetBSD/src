@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.35 2017/05/25 23:26:48 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.36 2017/05/27 20:26:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -51,7 +51,6 @@ extern struct arm32_bus_dma_tag tegra_dma_tag;
 u_int	tegra_chip_id(void);
 const char *tegra_chip_name(void);
 void	tegra_bootstrap(void);
-void	tegra_dma_bootstrap(psize_t);
 
 struct tegra_gpio_pin;
 struct tegra_gpio_pin *tegra_gpio_acquire(const char *, u_int);
