@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.175 2017/05/21 15:28:37 riastradh Exp $
+# $NetBSD: shl.mi,v 1.176 2017/05/27 21:02:55 bouyer Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -246,6 +246,7 @@
 ./usr/libdata/debug/usr/lib/librumpnet_net.so.0.0.debug		comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_net80211.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_netbt.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_netcan.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_netinet.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_netinet6.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_netipsec.so.0.0.debug	comp-rump-debug	debug,rump
