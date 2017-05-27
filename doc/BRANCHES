@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.340 2017/04/26 10:07:45 pgoyette Exp $
+#	$NetBSD: BRANCHES,v 1.341 2017/05/27 21:06:26 bouyer Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -396,9 +396,9 @@ Notes:		This code was on a branch because it involves changes to
 
 Branch:		bouyer-socketcan
 Description:	Implement a CAN socket layer compatible with linux SocketCAN
-Status:		Active
+Status:		Terminated
 Start Date:	Sun Jan 15 2017
-End Date:
+End Date:	May 27 2017
 Base Tag:	bouyer-socketcan-base
 Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
 Scope:		src/
