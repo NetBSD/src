@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.352 2017/05/23 07:57:26 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.353 2017/05/27 13:55:58 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.352 2017/05/23 07:57:26 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.353 2017/05/27 13:55:58 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2011,8 +2011,8 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 	struct audio_chan *chan;
 	int error;
 
+	chan = SIMPLEQ_FIRST(&sc->sc_audiochan);
 	if (vc == NULL) {
-		chan = SIMPLEQ_FIRST(&sc->sc_audiochan);
 		vc = chan->vc;
 		sc->sc_pr.blksize = vc->sc_mrr.blksize;
 		sc->sc_rr.blksize = vc->sc_mrr.blksize;
@@ -2020,7 +2020,8 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 
 	DPRINTF(("audio_initbufs: mode=0x%x\n", vc->sc_mode));
 	hw = sc->hw_if;
-	if (audio_can_capture(sc) || (vc->sc_open & AUOPEN_READ)) {
+	if (audio_can_capture(sc) &&
+		((vc->sc_open & AUOPEN_READ) || vc == chan->vc)) {
 		audio_init_ringbuffer(sc, &vc->sc_mrr,
 		    AUMODE_RECORD);
 		if (sc->sc_opens == 0 && hw->init_input &&
@@ -2034,7 +2035,8 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 	if (vc == SIMPLEQ_FIRST(&sc->sc_audiochan)->vc)
 		sc->sc_rr.blksize = vc->sc_mrr.blksize;
 
-	if (audio_can_playback(sc) || (vc->sc_open & AUOPEN_WRITE)) {
+	if (audio_can_playback(sc) &&
+		((vc->sc_open & AUOPEN_WRITE) || vc == chan->vc)) {
 		audio_init_ringbuffer(sc, &vc->sc_mpr,
 		    AUMODE_PLAY);
 		vc->sc_sil_count = 0;
@@ -2191,8 +2193,10 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			}
 		}
 		audio_initbufs(sc, NULL);
-		audio_init_ringbuffer(sc, &sc->sc_pr, AUMODE_PLAY);
-		audio_init_ringbuffer(sc, &sc->sc_rr, AUMODE_RECORD);
+		if (audio_can_playback(sc))
+			audio_init_ringbuffer(sc, &sc->sc_pr, AUMODE_PLAY);
+		if (audio_can_capture(sc))
+			audio_init_ringbuffer(sc, &sc->sc_rr, AUMODE_RECORD);
 		sc->schedule_wih = false;
 		sc->schedule_rih = false;
 		sc->sc_last_drops = 0;
