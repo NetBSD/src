@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1157 2017/05/21 15:28:37 riastradh Exp $
+# $NetBSD: mi,v 1.1158 2017/05/27 21:02:54 bouyer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -456,6 +456,7 @@
 ./sbin/blacklistctl				base-sysutil-root
 ./sbin/blacklistd				base-sysutil-root
 ./sbin/brconfig					base-netutil-root
+./sbin/canconfig				base-netutil-root
 ./sbin/ccdconfig				base-sysutil-root
 ./sbin/cgdconfig				base-sysutil-root
 ./sbin/chown					base-sysutil-root
@@ -1179,6 +1180,7 @@
 ./usr/include/net80211				base-c-usr
 ./usr/include/netatalk				base-c-usr
 ./usr/include/netbt				base-c-usr
+./usr/include/netcan				base-c-usr
 ./usr/include/netccitt				base-obsolete		obsolete
 ./usr/include/netinet				base-c-usr
 ./usr/include/netinet6				base-c-usr

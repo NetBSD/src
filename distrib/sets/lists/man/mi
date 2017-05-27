@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1556 2017/05/21 15:28:38 riastradh Exp $
+# $NetBSD: mi,v 1.1557 2017/05/27 21:02:55 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -954,6 +954,8 @@
 ./usr/share/man/cat4/bwi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ca.0			man-obsolete		obsolete
 ./usr/share/man/cat4/cac.0			man-sys-catman		.cat
+./usr/share/man/cat4/can.0			man-sys-catman		.cat
+./usr/share/man/cat4/canloop.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cardbus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cardslot.0			man-sys-catman		.cat
 ./usr/share/man/cat4/carp.0			man-sys-catman		.cat
@@ -2380,6 +2382,7 @@
 ./usr/share/man/cat8/bthcid.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/btpand.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/btuartd.0			man-obsolete		obsolete
+./usr/share/man/cat8/canconfig.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/catman.0			man-man-catman		.cat
 ./usr/share/man/cat8/cats/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/cats/makedev.0		man-obsolete		obsolete
@@ -4066,6 +4069,8 @@
 ./usr/share/man/html4/btuart.html		man-sys-htmlman		html
 ./usr/share/man/html4/bwi.html			man-sys-htmlman		html
 ./usr/share/man/html4/cac.html			man-sys-htmlman		html
+./usr/share/man/html4/can.html			man-sys-htmlman		html
+./usr/share/man/html4/canloop.html		man-sys-htmlman		html
 ./usr/share/man/html4/cardbus.html		man-sys-htmlman		html
 ./usr/share/man/html4/cardslot.html		man-sys-htmlman		html
 ./usr/share/man/html4/carp.html			man-sys-htmlman		html
@@ -5358,6 +5363,7 @@
 ./usr/share/man/html8/btdevctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/bthcid.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/btpand.html		man-sysutil-htmlman	html
+./usr/share/man/html8/canconfig.html		man-netutil-htmlman	html
 ./usr/share/man/html8/catman.html		man-man-htmlman		html
 ./usr/share/man/html8/ccdconfig.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/cgdconfig.html		man-sysutil-htmlman	html
@@ -6950,6 +6956,8 @@
 ./usr/share/man/man4/bwi.4			man-sys-man		.man
 ./usr/share/man/man4/ca.4			man-obsolete		obsolete
 ./usr/share/man/man4/cac.4			man-sys-man		.man
+./usr/share/man/man4/can.4			man-sys-man		.man
+./usr/share/man/man4/canloop.4			man-sys-man		.man
 ./usr/share/man/man4/cardbus.4			man-sys-man		.man
 ./usr/share/man/man4/cardslot.4			man-sys-man		.man
 ./usr/share/man/man4/carp.4			man-sys-man		.man
@@ -8375,6 +8383,7 @@
 ./usr/share/man/man8/bthcid.8			man-sysutil-man		.man
 ./usr/share/man/man8/btpand.8			man-sysutil-man		.man
 ./usr/share/man/man8/btuartd.8			man-obsolete		obsolete
+./usr/share/man/man8/canconfig.8		man-netutil-man		.man
 ./usr/share/man/man8/catman.8			man-man-man		.man
 ./usr/share/man/man8/cats/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/cats/makedev.8		man-obsolete		obsolete

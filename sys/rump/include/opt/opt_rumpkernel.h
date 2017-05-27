@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_rumpkernel.h,v 1.5 2016/04/15 01:35:26 ozaki-r Exp $	*/
+/*	$NetBSD: opt_rumpkernel.h,v 1.6 2017/05/27 21:02:56 bouyer Exp $	*/
 
 #ifndef __NetBSD__
 #define __NetBSD__
@@ -21,6 +21,8 @@
 #define GATEWAY	1
 
 #define MPLS	1
+
+#define CAN	1
 
 #define SOSEND_NO_LOAN
 

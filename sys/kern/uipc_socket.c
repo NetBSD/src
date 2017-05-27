@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.254 2017/05/25 20:42:36 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.255 2017/05/27 21:02:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.254 2017/05/25 20:42:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.255 2017/05/27 21:02:56 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -439,6 +439,7 @@ socket_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		case PF_ROUTE:
 		case PF_OROUTE:
 		case PF_BLUETOOTH:
+		case PF_CAN:
 			result = KAUTH_RESULT_ALLOW;
 			break;
 		default:
