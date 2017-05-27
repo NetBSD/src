@@ -1,4 +1,4 @@
-# $NetBSD: t_redircloexec.sh,v 1.4 2017/05/14 17:28:46 kre Exp $
+# $NetBSD: t_redircloexec.sh,v 1.5 2017/05/27 13:11:50 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,6 +49,8 @@ exec_redir_closed_head() {
 	atf_set "descr" "Tests that redirections created by exec are closed on exec"
 }
 exec_redir_closed_body() {
+
+	[ -n "${POSIXLY_CORRECT+set}" ] && atf_skip "tests non-posix behaviour"
 
 	mkhelper exec 6 \
 		"exec 6> out; echo exec1 >&6; ${TEST_SH} exec2; exec 6>&-"
