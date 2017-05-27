@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.159 2017/04/10 16:38:40 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.160 2017/05/27 21:02:55 bouyer Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -209,6 +209,7 @@
 ./usr/include/net/agr
 ./usr/include/netatalk
 ./usr/include/netbt
+./usr/include/netcan
 ./usr/include/netinet
 ./usr/include/net80211
 ./usr/include/netinet6

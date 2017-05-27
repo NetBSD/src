@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1171 2017/02/26 11:56:49 rin Exp $
+#	$NetBSD: files,v 1.1172 2017/05/27 21:02:56 bouyer Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -232,6 +232,7 @@ file	net/bpfjit.c	sljit & bpfjit
 include "net80211/files.net80211"
 include "netatalk/files.netatalk"
 include "netbt/files.netbt"
+include "netcan/files.netcan"
 include "netinet/files.netinet"
 include "netinet6/files.netinet6"
 include "netipsec/files.netipsec"
@@ -1439,6 +1440,7 @@ defpseudodev tap:	ifnet, ether, arp
 defpseudo carp:		ifnet, ether, arp
 defpseudodev etherip:	ifnet, ether, arp
 defpseudodev l2tp:	ifnet, ether, arp
+defpseudo canloop:	ifnet
 
 defpseudo sequencer
 defpseudo clockctl
