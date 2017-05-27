@@ -1,4 +1,4 @@
-/* $NetBSD: bta2dpd.c,v 1.2 2017/02/12 08:25:31 nat Exp $ */
+/* $NetBSD: bta2dpd.c,v 1.3 2017/05/27 10:04:57 nat Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -615,7 +615,7 @@ do_ctlreq(int fd, short ev, void *arg)
 	static uint8_t trans;
 	uint8_t buff[1024];
 	static size_t offset = 0;
-	int result, flags;
+	int result;
 
 	if(avdtpCheckResponse(fd, &isCommand, &trans, &signal, NULL, buff,
 	    &bufflen, &sep) == ENOMEM) {
@@ -775,8 +775,6 @@ opened_connection:
 			err(EXIT_FAILURE, "recv_ev");
 		state = 7;
 	} else {
-		flags = fcntl(sc, F_GETFL, 0);
-		fcntl(sc, F_SETFL, flags | O_NONBLOCK);
 		event_set(&interrupt_ev, audfile, EV_READ | EV_PERSIST,
 		    do_interrupt, NULL);
 		if (event_add(&interrupt_ev, NULL) < 0)
