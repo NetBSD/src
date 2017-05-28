@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.353 2017/05/27 13:55:58 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.354 2017/05/28 21:12:59 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.353 2017/05/27 13:55:58 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.354 2017/05/28 21:12:59 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -4734,18 +4734,11 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 		if (error)
 			goto cleanup;
 	}
-	if (SPECIFIED(p->gain)) {
-		au_get_gain(sc, &sc->sc_outports, &gain, &balance);
-		error = au_set_gain(sc, &sc->sc_outports, p->gain, balance);
-		if (error)
-			goto cleanup;
-	}
-	if (SPECIFIED(r->gain)) {
-		au_get_gain(sc, &sc->sc_inports, &gain, &balance);
-		error = au_set_gain(sc, &sc->sc_inports, r->gain, balance);
-		if (error)
-			goto cleanup;
-	}
+	if (SPECIFIED(p->gain))
+		vc->sc_swvol = p->gain;
+
+	if (SPECIFIED(r->gain))
+		vc->sc_recswvol = r->gain;
 
 	if (SPECIFIED_CH(p->balance)) {
 		au_get_gain(sc, &sc->sc_outports, &gain, &balance);
