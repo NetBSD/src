@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soc.c,v 1.12 2017/05/27 20:26:27 jmcneill Exp $ */
+/* $NetBSD: tegra_soc.c,v 1.13 2017/05/28 23:32:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,9 +30,8 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.12 2017/05/27 20:26:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.13 2017/05/28 23:32:14 jmcneill Exp $");
 
-#define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
@@ -52,12 +51,6 @@ bus_space_handle_t tegra_host1x_bsh;
 bus_space_handle_t tegra_ppsb_bsh;
 bus_space_handle_t tegra_apb_bsh;
 bus_space_handle_t tegra_ahb_a2_bsh;
-
-struct arm32_bus_dma_tag tegra_dma_tag = {
-	_BUS_DMAMAP_FUNCS,
-	_BUS_DMAMEM_FUNCS,
-	_BUS_DMATAG_FUNCS,
-};
 
 static void	tegra_mpinit(void);
 
