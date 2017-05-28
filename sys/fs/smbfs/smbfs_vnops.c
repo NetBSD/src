@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.94 2017/04/26 03:02:48 riastradh Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.95 2017/05/28 16:36:37 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.94 2017/04/26 03:02:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.95 2017/05/28 16:36:37 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1269,8 +1269,7 @@ smbfs_lookup(void *v)
 		cache_purge(newvp);
 		if (newvp != dvp) {
 			if (killit) {
-				VOP_UNLOCK(newvp);
-				vgone(newvp);
+				smbfs_uncache(newvp);
 			} else
 				vput(newvp);
 		} else
