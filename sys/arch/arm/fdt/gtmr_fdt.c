@@ -1,7 +1,7 @@
-/* $NetBSD: tegra_fdt.c,v 1.5 2017/04/22 23:53:24 jmcneill Exp $ */
+/* $NetBSD: gtmr_fdt.c,v 1.1 2017/05/28 00:40:20 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,55 +26,49 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_tegra.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_fdt.c,v 1.5 2017/04/22 23:53:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.1 2017/05/28 00:40:20 jmcneill Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-
-#include <machine/cpu.h>
 #include <sys/bus.h>
+#include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
 
-#include <arm/mainbus/mainbus.h>
-#include <arm/nvidia/tegra_reg.h>
-#include <arm/nvidia/tegra_var.h>
+#include <arm/cortex/gic_intr.h>
+#include <arm/cortex/mpcore_var.h>
 
 #include <dev/fdt/fdtvar.h>
-#include <dev/ofw/openfirm.h>
 
-static int	tegrafdt_match(device_t, cfdata_t, void *);
-static void	tegrafdt_attach(device_t, device_t, void *);
+static int	gtmr_fdt_match(device_t, cfdata_t, void *);
+static void	gtmr_fdt_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(tegra_fdt, 0,
-    tegrafdt_match, tegrafdt_attach, NULL, NULL);
+CFATTACH_DECL_NEW(gtmr_fdt, 0, gtmr_fdt_match, gtmr_fdt_attach, NULL, NULL);
 
-static bool tegrafdt_found = false;
-
-int
-tegrafdt_match(device_t parent, cfdata_t cf, void *aux)
+static int
+gtmr_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	if (tegrafdt_found)
-		return 0;
-	return 1;
+	const char * const compatible[] = {
+		"arm,armv7-timer",
+		NULL
+	};
+	struct fdt_attach_args * const faa = aux;
+
+	return of_compatible(faa->faa_phandle, compatible) >= 0;
 }
 
-void
-tegrafdt_attach(device_t parent, device_t self, void *aux)
+static void
+gtmr_fdt_attach(device_t parent, device_t self, void *aux)
 {
-	tegrafdt_found = true;
-
 	aprint_naive("\n");
-	aprint_normal("\n");
+	aprint_normal(": Generic Timer\n");
 
-	struct fdt_attach_args faa = {
-		.faa_name = "",
-		.faa_bst = &armv7_generic_bs_tag,
-		.faa_a4x_bst = &armv7_generic_a4x_bs_tag,
-		.faa_dmat = &tegra_dma_tag,
-		.faa_phandle = OF_peer(0),
+	struct mpcore_attach_args mpcaa = {
+		.mpcaa_name = "armgtmr",
+		.mpcaa_irq = IRQ_GTMR_PPI_VTIMER
 	};
-	config_found(self, &faa, NULL);
+
+	config_found(self, &mpcaa, NULL);
 }
