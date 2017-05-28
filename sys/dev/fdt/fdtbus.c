@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.12 2017/04/29 12:49:05 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.13 2017/05/28 00:28:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.12 2017/04/29 12:49:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.13 2017/05/28 00:28:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Scan devices */
-	for (int pass = 1; pass <= FDTCF_PASS_DEFAULT; pass++)
+	for (int pass = 0; pass <= FDTCF_PASS_DEFAULT; pass++)
 		fdt_scan(sc, pass);
 }
 
