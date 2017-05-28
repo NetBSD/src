@@ -1,13 +1,16 @@
-/* $NetBSD: option.list,v 1.1 2017/05/28 00:38:01 kre Exp $ */
+/* $NetBSD: option.list,v 1.2 2017/05/28 14:14:22 kre Exp $ */
 
 /*
  * define the shell's settable options
+ *
+ *	new options can be defined by adding them here,
+ *	but they do nothing untilcode to implement them
+ *	is added (using the "var name" field)
  */
 
 /*
  * format is up to 5 columns... (followed by anything)
  * end of line comments can be introduced by ' #' (space/tab hash) to eol.
- * proprocessor directoves can be (kind of) interspersed as required
  *
  * The columns are:
  *	1. internal shell "var name"	(required)
@@ -19,39 +22,54 @@
  *		if neither long nor short name, line is ignored
  *	4. option set short name (name of option equiv class)
  *		if '-' or absent then no class
- *	5. efault value of option
+ *	5. default value of option
  *		if absent, default is 0
- *		only 0 or 1 possible (0==off 1==on)
+ *		only 0 or 1 possible (0==off 1==on) ("on" and "off" can be used)
+ *
+ * Data may be followed by any C preprocessor #if expression (incl the #if..)
+ * (including #ifdef #ifndef) to conditionalise output for that option.
+ * The #if expression continues until \n or next following '#'
  */
 
-/*
- * The order of the lines below gives the order they are listed by set -o
- * Options labelled '[U]' are not (yet, maybe ever) implemented.
- */
+// the POSIX defined options
 aflag	allexport	a		# export all variables
-cdprint	cdprint				# always print result of a cd
-Eflag	emacs		E V		# enable emacs style editing
 eflag	errexit		e		# exit on command error ($? != 0)
-usefork	fork		F		# use fork(2) instead of vfork(2)
-Iflag	ignoreeof	I		# do not exit interactive shell on EOF
-iflag	interactive	i		# interactive shell
 mflag	monitor		m		# enable job control
 Cflag	noclobber	C		# do not overwrite files when using >
 nflag	noexec		n		# do not execue commands
 fflag	noglob		f		# no pathname expansion
-nolog	nolog				# [U] no func definitions in history
-pflag	nopriv		p		# preserve privs if set[ug]id
-bflag	notify		b		# [U] report bg job completion
 uflag	nounset		u		# expanding unset var is an error
-posix	posix				# be closer to POSIX compat
-qflag	quietprofile	q		# disable -v/-x in startup files
-sflag	stdin		s		# read from standard input
-tabcomplete	tabcomplete		# make <tab> cause filename expansion
-hflag	trackall	h		# [U] locate cmds in funcs during defn
 vflag	verbose		v		# echo commands as read
-Vflag	vi		V V		# enable vi style editing
 xflag	xtrace		x		# trace command execution
 
-#ifdef DEBUG
-debug	debug				# enable internal shell debugging
-#endif
+// the long name (ignoreeof) is standard, the I flag is not
+Iflag	ignoreeof	I		# do not exit interactive shell on EOF
+
+// defined but not really implemented by the shell (yet) - they do nothing
+bflag	notify		b		# [U] report bg job completion
+nolog	nolog				# [U] no func definitions in history
+// 'h' is standard, long name (trackall) is not
+hflag	trackall	h		# [U] locate cmds in funcs during defn
+
+// 's' is standard for command line, not as 'set' option, nor 'stdin' name
+sflag	stdin		s		# read from standard input
+// minusc		c		# command line option only.
+// --			o		# handled differently...
+
+// non-standard options -- 'i' is just a state, not an option in standard.
+iflag	interactive	i		# interactive shell
+cdprint	cdprint				# always print result of a cd
+usefork	fork		F		# use fork(2) instead of vfork(2)
+pflag	nopriv		p		# preserve privs if set[ug]id
+posix	posix				# be closer to POSIX compat
+qflag	quietprofile	q		# disable -v/-x in startup files
+
+// editline/history related options ("vi" is standard, 'V' and others are not)
+// only one of vi/emacs can be set, hence the "set" definition, value
+// of that can be any char (not used for a different set)
+Vflag	vi		V V		# enable vi style editing
+Eflag	emacs		E V		# enable emacs style editing
+tabcomplete	tabcomplete		# make <tab> cause filename expansion
+
+// internal debug option (not usually included in the shell)
+debug	debug		#ifdef DEBUG	# enable internal shell debugging
