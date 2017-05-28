@@ -1,4 +1,4 @@
-/* $NetBSD: armv7_fdt.c,v 1.1 2017/05/28 00:40:20 jmcneill Exp $ */
+/* $NetBSD: armv7_fdt.c,v 1.2 2017/05/28 23:39:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_fdt.c,v 1.1 2017/05/28 00:40:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armv7_fdt.c,v 1.2 2017/05/28 23:39:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: armv7_fdt.c,v 1.1 2017/05/28 00:40:20 jmcneill Exp $
 
 #include <dev/fdt/fdtvar.h>
 #include <dev/ofw/openfirm.h>
+
+#include <arm/fdt/armv7_fdtvar.h>
 
 static int	armv7_fdt_match(device_t, cfdata_t, void *);
 static void	armv7_fdt_attach(device_t, device_t, void *);
@@ -50,6 +52,9 @@ static bool armv7_fdt_found = false;
 extern struct bus_space armv7_generic_bs_tag;
 extern struct bus_space armv7_generic_a4x_bs_tag;
 extern struct arm32_bus_dma_tag armv7_generic_dma_tag;
+
+static struct armv7_platlist armv7_platform_list =
+    TAILQ_HEAD_INITIALIZER(armv7_platform_list);
 
 int
 armv7_fdt_match(device_t parent, cfdata_t cf, void *aux)
@@ -75,4 +80,31 @@ armv7_fdt_attach(device_t parent, device_t self, void *aux)
 		.faa_phandle = OF_peer(0),
 	};
 	config_found(self, &faa, NULL);
+}
+
+const struct armv7_platform *
+armv7_fdt_platform(void)
+{
+	static const struct armv7_platform_info *booted_platform = NULL;
+
+	if (booted_platform == NULL) {
+		__link_set_decl(armv7_platforms, struct armv7_platform_info);
+		struct armv7_platform_info * const *info;
+		const struct armv7_platform_info *best_info = NULL;
+		const int phandle = OF_peer(0);
+		int match, best_match = 0;
+
+		__link_set_foreach(info, armv7_platforms) {
+			const char * const compat[] = { (*info)->compat, NULL };
+			match = of_match_compatible(phandle, compat);
+			if (match > best_match) {
+				best_match = match;
+				best_info = *info;
+			}
+		}
+
+		booted_platform = best_info;
+	}
+
+	return booted_platform == NULL ? NULL : booted_platform->ops;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.45 2017/05/28 15:55:11 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.46 2017/05/28 23:39:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.45 2017/05/28 15:55:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.46 2017/05/28 23:39:30 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -35,11 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.45 2017/05/28 15:55:11 jmcneill 
 #include "opt_md.h"
 #include "opt_arm_debug.h"
 #include "opt_multiprocessor.h"
-
-#include "com.h"
-#include "ukbd.h"
-#include "genfb.h"
-#include "ether.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,13 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.45 2017/05/28 15:55:11 jmcneill 
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
-#include <sys/gpio.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <sys/conf.h>
-#include <dev/cons.h>
-#include <dev/md.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -73,20 +65,10 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.45 2017/05/28 15:55:11 jmcneill 
 
 #include <arm/arm32/machdep.h>
 
-#include <arm/nvidia/tegra_reg.h>
-#include <arm/nvidia/tegra_var.h>
-
-#include <arm/cortex/gtmr_var.h>
-
 #include <evbarm/include/autoconf.h>
 #include <evbarm/tegra/platform.h>
 
-#include <dev/ic/ns16550reg.h>
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-
-#include <dev/usb/ukbdvar.h>
-#include <net/if_ether.h>
+#include <arm/fdt/armv7_fdtvar.h>
 
 #ifndef TEGRA_MAX_BOOT_STRING
 #define TEGRA_MAX_BOOT_STRING 1024
@@ -109,46 +91,6 @@ static void tegra_device_register(device_t, void *);
 static void tegra_reset(void);
 static void tegra_powerdown(void);
 
-bs_protos(bs_notimpl);
-
-#define	_A(a)	((a) & ~L1_S_OFFSET)
-#define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
-
-static const struct pmap_devmap devmap[] = {
-	{
-		.pd_va = _A(TEGRA_HOST1X_VBASE),
-		.pd_pa = _A(TEGRA_HOST1X_BASE),
-		.pd_size = _S(TEGRA_HOST1X_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
-	{
-		.pd_va = _A(TEGRA_PPSB_VBASE),
-		.pd_pa = _A(TEGRA_PPSB_BASE),
-		.pd_size = _S(TEGRA_PPSB_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
-	{
-		.pd_va = _A(TEGRA_APB_VBASE),
-		.pd_pa = _A(TEGRA_APB_BASE),
-		.pd_size = _S(TEGRA_APB_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
-	{
-		.pd_va = _A(TEGRA_AHB_A2_VBASE),
-		.pd_pa = _A(TEGRA_AHB_A2_BASE),
-		.pd_size = _S(TEGRA_AHB_A2_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
-	{0}
-};
-
-#undef	_A
-#undef	_S
-
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
 static struct boot_physmem bp_lowgig = {
 	.bp_pages = (KERNEL_VM_BASE - KERNEL_BASE) / NBPG,
@@ -161,15 +103,11 @@ static struct boot_physmem bp_lowgig = {
 static void
 tegra_putchar(char c)
 {
-#ifdef CONSADDR
-	volatile uint32_t *uartaddr = (volatile uint32_t *)CONSADDR_VA;
-
-	while ((uartaddr[com_lsr] & LSR_TXRDY) == 0)
-		;
-
-	uartaddr[com_data] = c;
-#endif
+	const struct armv7_platform *plat = armv7_fdt_platform();
+	if (plat && plat->early_purchar)
+		plat->early_putchar(c);
 }
+
 static void
 tegra_putstr(const char *s)
 {
@@ -201,8 +139,6 @@ tegra_printn(u_int n, int base)
 #define DPRINTN(x,b)
 #endif
 
-extern void cortex_mpstart(void);
-
 /*
  * u_int initarm(...)
  *
@@ -219,24 +155,9 @@ extern void cortex_mpstart(void);
 u_int
 initarm(void *arg)
 {
+	const struct armv7_platform *plat;
 	uint64_t memory_addr, memory_size;
 	psize_t ram_size = 0;
-	DPRINT("initarm:");
-
-	DPRINT(" mpstart<0x");
-	DPRINTN((uint32_t)cortex_mpstart, 16);
-	DPRINT(">");
-
-	DPRINT(" devmap");
-	pmap_devmap_register(devmap);
-
-	DPRINT(" bootstrap");
-	tegra_bootstrap();
-
-	/* Heads up ... Setup the CPU / MMU / TLB functions. */
-	DPRINT(" cpufunc");
-	if (set_cpufuncs())
-		panic("cpu not recognized!");
 
 	/* Load FDT */
 	const uint8_t *fdt_addr_r = (const uint8_t *)uboot_args[2];
@@ -244,14 +165,31 @@ initarm(void *arg)
 	if (error == 0) {
 		error = fdt_move(fdt_addr_r, fdt_data, sizeof(fdt_data));
 		if (error != 0) {
-			DPRINT(" (fdt_move failed!)\n");
 			panic("fdt_move failed: %s", fdt_strerror(error));
 		}
 		fdtbus_set_data(fdt_data);
 	} else {
-		DPRINT(" (fdt_check_header failed!)\n");
 		panic("fdt_check_header failed: %s", fdt_strerror(error));
 	}
+
+	/* Lookup platform specific backend */
+	plat = armv7_fdt_platform();
+	if (plat == NULL)
+		panic("Kernel does not support this device");
+
+	/* Early console may be available, announce ourselves. */
+	DPRINT("NetBSD FDT init");
+
+	DPRINT(" devmap");
+	pmap_devmap_register(plat->devmap());
+
+	DPRINT(" bootstrap");
+	plat->bootstrap();
+
+	/* Heads up ... Setup the CPU / MMU / TLB functions. */
+	DPRINT(" cpufunc");
+	if (set_cpufuncs())
+		panic("cpu not recognized!");
 
 	DPRINT(" consinit");
 	consinit();
@@ -265,6 +203,7 @@ initarm(void *arg)
 
 	cpu_reset_address = tegra_reset;
 	cpu_powerdown_address = tegra_powerdown;
+	evbarm_device_register = tegra_device_register;
 
 	/* Talk to the user */
 	DPRINTF("\nNetBSD/evbarm (tegra) booting ...\n");
@@ -326,8 +265,8 @@ initarm(void *arg)
 
 	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
 	    KERNEL_BASE_PHYS);
-	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap,
-	    mapallmem_p);
+	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0,
+	    plat->devmap(), mapallmem_p);
 
 	const int chosen = OF_finddevice("/chosen");
 	if (chosen >= 0) {
@@ -338,8 +277,6 @@ initarm(void *arg)
 
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
-
-	evbarm_device_register = tegra_device_register;
 
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
 	bp_lowgig.bp_start = memory_addr / NBPG;
@@ -354,152 +291,33 @@ initarm(void *arg)
 
 }
 
-#if NCOM > 0
-#ifndef CONMODE
-#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-#endif
-#endif
-
 void
 consinit(void)
 {
-	static bool consinit_called = false;
+	const struct armv7_platform *plat = armv7_fdt_platform();
 
-	if (consinit_called)
-		return;
-	consinit_called = true;
-
-#if NCOM > 0
-	bus_addr_t addr;
-	int speed;
-
-#ifdef CONSADDR
-	addr = CONSADDR;
-#else
-	const char *stdout_path = fdtbus_get_stdout_path();
-	if (stdout_path == NULL) {
-		DPRINT(" (can't find stdout-path!)\n");
-		panic("Cannot find console device");
-	}
-	DPRINT(" ");
-	DPRINT(stdout_path);
-	fdtbus_get_reg(fdtbus_get_stdout_phandle(), 0, &addr, NULL);
-#endif
-	DPRINT(" 0x");
-	DPRINTN((uint32_t)addr, 16);
-
-#ifdef CONSPEED
-	speed = CONSPEED;
-#else
-	speed = fdtbus_get_stdout_speed();
-	if (speed < 0)
-		speed = 115200;	/* default */
-#endif
-	DPRINT(" ");
-	DPRINTN((uint32_t)speed, 10);
-
-	const bus_space_tag_t bst = &armv7_generic_a4x_bs_tag;
-	const u_int freq = 408000000;	/* 408MHz PLLP_OUT0 */
-	if (comcnattach(bst, addr, speed, freq, COM_TYPE_TEGRA, CONMODE))
-		panic("Serial console cannot be initialized.");
-#else
-#error only COM console is supported
-#endif
-}
-
-static bool
-tegra_bootconf_match(const char *key, const char *val)
-{
-	char *s;
-
-	if (!get_bootconf_option(boot_args, key, BOOTOPT_TYPE_STRING, &s))
-		return false;
-
-	return strncmp(s, val, strlen(val)) == 0;
-}
-
-static char *
-tegra_bootconf_strdup(const char *key)
-{
-	char *s, *ret;
-	int i = 0;
-
-	if (!get_bootconf_option(boot_args, key, BOOTOPT_TYPE_STRING, &s))
-		return NULL;
-
-	for (;;) {
-		if (s[i] == ' ' || s[i] == '\t' || s[i] == '\0')
-			break;
-		++i;
-	}
-
-	ret = kmem_alloc(i + 1, KM_SLEEP);
-	if (ret == NULL)
-		return NULL;
-
-	strlcpy(ret, s, i + 1);
-	return ret;
+	if (plat && plat->consinit)
+		plat->consinit();
 }
 
 void
 tegra_device_register(device_t self, void *aux)
 {
-	prop_dictionary_t dict = device_properties(self);
+	const struct armv7_platform *plat = armv7_fdt_platform();
 
-	if (device_is_a(self, "tegrafb")
-	    && tegra_bootconf_match("console", "fb")) {
-		prop_dictionary_set_bool(dict, "is_console", true);
-#if NUKBD > 0
-		ukbd_cnattach();
-#endif
-	}
-
-	if (device_is_a(self, "tegradrm")) {
-		const char *video = tegra_bootconf_strdup("video");
-
-		if (tegra_bootconf_match("hdmi.forcemode", "dvi")) {
-			prop_dictionary_set_bool(dict, "force-dvi", true);
-		}
-
-		if (video) {
-			prop_dictionary_set_cstring(dict, "HDMI-A-1", video);
-		}
-	}
-
-	if (device_is_a(self, "tegracec")) {
-		prop_dictionary_set_cstring(dict, "hdmi-device", "tegradrm0");
-	}
-
-	if (device_is_a(self, "nouveau")) {
-		const char *config = tegra_bootconf_strdup("nouveau.config");
-		const char *debug = tegra_bootconf_strdup("nouveau.debug");
-		if (config)
-			prop_dictionary_set_cstring(dict, "config", config);
-		if (debug)
-			prop_dictionary_set_cstring(dict, "debug", debug);
-	}
-
-	if (device_is_a(self, "tegrapcie")) {
-		const char * const jetsontk1_compat[] = {
-		    "nvidia,jetson-tk1", NULL
-		};
-		int phandle = OF_peer(0);
-		if (of_match_compatible(phandle, jetsontk1_compat)) {
-			/* rfkill GPIO at GPIO X7 */
-			struct tegra_gpio_pin *pin;
-			pin = tegra_gpio_acquire("X7", GPIO_PIN_OUTPUT);
-			if (pin) {
-				tegra_gpio_write(pin, 1);
-			}
-		}
-	}
+	if (plat && plat->device_register)
+		plat->device_register(self, aux);
 }
 
 static void
 tegra_reset(void)
 {
+	const struct armv7_platform *plat = armv7_fdt_platform();
+
 	fdtbus_power_reset();
-	tegra_pmc_reset();
+
+	if (plat && plat->reset)
+		plat->reset();
 }
 
 static void
