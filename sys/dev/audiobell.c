@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.18 2017/05/27 12:04:44 nat Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.19 2017/05/28 21:15:58 nat Exp $	*/
 
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.18 2017/05/27 12:04:44 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.19 2017/05/28 21:15:58 nat Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -57,13 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.18 2017/05/27 12:04:44 nat Exp $");
 #define BELL_SHIFT		19
 
 static inline void
-audiobell_expandwave(int16_t *buf, int volume)
+audiobell_expandwave(int16_t *buf)
 {
 	u_int i;
 
-	KASSERT(volume >= 0 && volume <= 100);
 	for (i = 0; i < __arraycount(sinewave); i++)
-		buf[i] = (int32_t)sinewave[i] * (int32_t)volume / 100;
+		buf[i] = sinewave[i];
 	for (i = __arraycount(sinewave); i < __arraycount(sinewave) * 2; i++)
 		 buf[i] = buf[__arraycount(sinewave) * 2 - i - 1];
 	for (i = __arraycount(sinewave) * 2; i < __arraycount(sinewave) * 4; i++)
@@ -82,7 +81,7 @@ audiobell_synthesize(int16_t *buf, u_int pitch, u_int period, u_int volume,
 
 	wave = malloc(sizeof(sinewave) * 4, M_TEMP, M_WAITOK);
 	if (wave == NULL) return -1;
-	audiobell_expandwave(wave, volume);
+	audiobell_expandwave(wave);
 	pitch = pitch * ((sizeof(sinewave) * 4) << BELL_SHIFT) /
 	    BELL_SAMPLE_RATE / 2;
 	period = period * BELL_SAMPLE_RATE / 1000 / 2;
@@ -107,6 +106,8 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 	struct file *fp;
 	int size, len;
 
+	KASSERT(volume <= 100);
+
 	fp = NULL;
 	dev_t audio = AUDIO_DEVICE | device_unit((device_t)v);
 
@@ -124,6 +125,7 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 
 	ai.play.sample_rate = BELL_SAMPLE_RATE;
 	ai.play.precision = 16;
+	ai.play.gain = 255 * 100 / volume;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	ai.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
