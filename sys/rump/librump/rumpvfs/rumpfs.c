@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.149 2017/05/26 14:21:00 riastradh Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.150 2017/05/28 16:37:16 hannken Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.149 2017/05/26 14:21:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.150 2017/05/28 16:37:16 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.149 2017/05/26 14:21:00 riastradh Exp $
 #include <sys/stat.h>
 #include <sys/syscallargs.h>
 #include <sys/vnode.h>
+#include <sys/fstrans.h>
 #include <sys/unistd.h>
 
 #include <miscfs/fifofs/fifo.h>
@@ -491,8 +492,12 @@ etfsremove(const char *key)
 			mp = NULL;
 		}
 		mutex_exit(&reclock);
-		if (mp && vcache_get(mp, &rn, sizeof(rn), &vp) == 0)
+		if (mp && vcache_get(mp, &rn, sizeof(rn), &vp) == 0) {
+			rv = vfs_suspend(mp, 0);
+			KASSERT(rv == 0);
 			vgone(vp);
+			vfs_resume(mp);
+		}
 	}
 
 	if (et->et_rn->rn_hostpath != NULL)
