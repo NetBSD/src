@@ -1,4 +1,4 @@
-#	$NetBSD: CUBIETRUCK,v 1.9 2015/12/27 06:24:25 macallan Exp $
+#	$NetBSD: CUBIETRUCK,v 1.10 2017/05/28 11:15:59 martin Exp $
 #
 #	CUBIETRUCK - Cubieboard3 (mostly cubieboard2 with 2GB)
 #
@@ -37,3 +37,9 @@ awintve0 	at awinio0
 cinclude	"arch/evbarm/conf/CUBIETRUCK.local"
 
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+
+# CAN bus support
+#options 	CAN		# Controller Area Network protocol
+#pseudo-device	canloop		# CAN loopback interface
+#awincan0	at awinio0 port ? flags 1
+
