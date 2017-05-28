@@ -1,5 +1,16 @@
-# $NetBSD: files.fdt,v 1.1 2015/12/13 17:45:37 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.2 2017/05/28 00:40:20 jmcneill Exp $
 
-device  gic
+device	armv7fdt { }: bus_space_generic, fdtbus
+attach	armv7fdt at root with armv7_fdt
+file	arch/arm/fdt/armv7_fdt.c		armv7_fdt
+
+attach	cpu at cpus with cpu_fdt
+file	arch/arm/fdt/cpu_fdt.c			cpu_fdt
+
+device	gtmr: mpcorebus
+attach	gtmr at fdt with gtmr_fdt
+file	arch/arm/fdt/gtmr_fdt.c			gtmr_fdt
+
+device  gic: mpcorebus
 attach  gic at fdt with gic_fdt
 file    arch/arm/fdt/gic_fdt.c             	gic_fdt

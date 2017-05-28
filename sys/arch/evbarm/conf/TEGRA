@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.19 2017/04/29 11:02:17 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.20 2017/05/28 00:40:21 jmcneill Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -27,17 +27,13 @@ makeoptions	COPY_SYMTAB=1
 
 config		netbsd		root on ? type ?
 
-mainbus0	at root
-cpu*		at mainbus?
-
-# A15 core devices
-armperiph0	at mainbus?
-armgic0		at armperiph?				# Interrupt Controller
-armgtmr0	at armperiph?				# ARM Generic Timer
-
-# On-board I/O
-tegrafdt0	at mainbus?
+# Device tree support
+armv7fdt0	at root
 fdt*		at fdtbus?
+
+# CPUs
+cpus*		at fdt? pass 0
+cpu*		at cpus?
 
 # CPU frequency scaling
 tegra124cpu*	at fdt?
@@ -46,9 +42,15 @@ fclock*		at fdt? pass 4
 fregulator*	at fdt? pass 4
 gpiokeys*	at fdt?
 
+# Timer
+gtmr*		at fdt? pass 1		# ARM Generic Timer
+armgtmr0	at gtmr?
+tegratimer*	at fdt?			# Timers
+
 # Interrupt controller
 tegralic*	at fdt? pass 1		# LIC
 gic*		at fdt? pass 1		# GIC
+armgic0		at gic?
 
 # Memory controller
 tegramc*	at fdt?	pass 4		# MC
@@ -68,9 +70,6 @@ tegra124car*	at fdt? pass 3		# CAR
 # GPIO controller
 tegragpio*	at fdt? pass 2		# GPIO
 gpio*		at gpiobus?
-
-# Timers
-tegratimer*	at fdt?			# Timers
 
 # MPIO / Pinmux
 tegrampio*	at fdt?			# MPIO
