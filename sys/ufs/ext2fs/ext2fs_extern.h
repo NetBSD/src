@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.55 2016/08/20 19:47:44 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.56 2017/05/28 16:38:55 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -95,7 +95,7 @@ int ext2fs_alloc(struct inode *, daddr_t, daddr_t , kauth_cred_t,
 		   daddr_t *);
 int ext2fs_realloccg(struct inode *, daddr_t, daddr_t, int, int ,
 			  kauth_cred_t, struct buf **);
-int ext2fs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
+int ext2fs_valloc(struct vnode *, int, kauth_cred_t, ino_t *);
 /* XXX ondisk32 */
 daddr_t ext2fs_blkpref(struct inode *, daddr_t, int, int32_t *);
 void ext2fs_blkfree(struct inode *, daddr_t);
@@ -176,8 +176,6 @@ int ext2fs_advlock(void *);
 int ext2fs_fsync(void *);
 int ext2fs_vinit(struct mount *, int (**specops)(void *),
 		      int (**fifoops)(void *), struct vnode **);
-int ext2fs_makeinode(int, struct vnode *, struct vnode **,
-			  struct componentname *cnp, int);
 int ext2fs_reclaim(void *);
 
 /* ext2fs_hash.c */
