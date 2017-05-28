@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.354 2017/05/28 21:12:59 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.355 2017/05/28 21:36:18 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.354 2017/05/28 21:12:59 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.355 2017/05/28 21:36:18 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2113,7 +2113,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	const struct audio_hw_if *hw;
 	struct virtual_channel *vc;
 	struct audio_chan *chan;
-	struct audio_info info;
 
 	KASSERT(mutex_owned(sc->sc_lock));
 
@@ -2240,9 +2239,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	 */
 	error = audio_set_defaults(sc, mode, vc);
 	if (!error && ISDEVSOUND(dev) && sc->sc_aivalid == true) {
-		error = audiogetinfo(sc, &info, 0, vc);
-		sc->sc_ai.play.gain = info.play.gain;
-		sc->sc_ai.record.gain = info.record.gain;
 		sc->sc_ai.mode = mode;
 		error = audiosetinfo(sc, &sc->sc_ai, true, vc);
 	}
