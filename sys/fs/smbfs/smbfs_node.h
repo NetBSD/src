@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.15 2015/01/02 09:48:01 martin Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.16 2017/05/28 16:36:37 hannken Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -97,6 +97,7 @@ int smbfs_loadvnode(struct mount *, struct vnode *,
     const void *, size_t, const void **);
 int smbfs_nget(struct mount *, struct vnode *, const char *, int,
     struct smbfattr *, struct vnode **);
+void smbfs_uncache(struct vnode *);
 
 int  smbfs_readvnode(struct vnode *, struct uio *, kauth_cred_t);
 int  smbfs_writevnode(struct vnode *, struct uio *, kauth_cred_t, int);

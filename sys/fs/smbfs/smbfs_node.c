@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.57 2017/05/26 14:34:20 riastradh Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.58 2017/05/28 16:36:37 hannken Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,10 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.57 2017/05/26 14:34:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.58 2017/05/28 16:36:37 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
 #include <sys/malloc.h>
@@ -191,7 +192,8 @@ retry:
 		if ((vp->v_type == VDIR && (np->n_dosattr & SMB_FA_DIR) == 0) ||
 		    (vp->v_type == VREG && (np->n_dosattr & SMB_FA_DIR) != 0)) {
 			mutex_exit(&np->n_lock);
-			vgone(vp);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			smbfs_uncache(vp);
 			goto retry;
  		}
 	}
@@ -204,6 +206,54 @@ out:
 	if (key != &small_key.u_key)
 		kmem_free(key, key_len);
 	return error;
+}
+
+/*
+ * Remove vnode that changed its type on the server from
+ * the vnode cache and the name cache.
+ */
+void
+smbfs_uncache(struct vnode *vp)
+{
+	static uint32_t gen = 0;
+	int error __diagused;
+	char newname[10];
+	struct mount *mp = vp->v_mount;
+	struct smbnode *np = VTOSMB(vp);
+	struct smbkey *key = np->n_key, *oldkey, *newkey;
+	int key_len = SMBFS_KEYSIZE(key->k_nmlen), newkey_len;
+
+	/* Setup old key as current key. */
+	oldkey = kmem_alloc(key_len, KM_SLEEP);
+	memcpy(oldkey, key, key_len);
+
+	/* Setup new key as unique and illegal name with colon. */
+	snprintf(newname, sizeof(newname), ":%08x", atomic_inc_uint_nv(&gen));
+	newkey = kmem_alloc(SMBFS_KEYSIZE(strlen(newname)), KM_SLEEP);
+	newkey->k_parent = NULL;
+	newkey->k_nmlen = strlen(newname);
+	memcpy(newkey->k_name, newname, newkey->k_nmlen);
+	newkey_len = SMBFS_KEYSIZE(newkey->k_nmlen);
+
+	/* Release parent and mark as gone. */
+	if (np->n_parent && (np->n_flag & NREFPARENT)) {
+		vrele(np->n_parent);
+		np->n_flag &= ~NREFPARENT;
+	}
+	np->n_flag |= NGONE;
+
+	/* Rekey the node. */
+	error = vcache_rekey_enter(mp, vp, oldkey, key_len, newkey, newkey_len);
+	KASSERT(error == 0);
+	np->n_key = newkey;
+	vcache_rekey_exit(mp, vp, oldkey, key_len, newkey, newkey_len);
+
+	/* Purge from name cache and cleanup. */
+	cache_purge(vp);
+	kmem_free(key, key_len);
+	kmem_free(oldkey, key_len);
+
+	vput(vp);
 }
 
 /*
