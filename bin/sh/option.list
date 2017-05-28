@@ -1,0 +1,57 @@
+/* $NetBSD: option.list,v 1.1 2017/05/28 00:38:01 kre Exp $ */
+
+/*
+ * define the shell's settable options
+ */
+
+/*
+ * format is up to 5 columns... (followed by anything)
+ * end of line comments can be introduced by ' #' (space/tab hash) to eol.
+ * proprocessor directoves can be (kind of) interspersed as required
+ *
+ * The columns are:
+ *	1. internal shell "var name"	(required)
+ *	2. option long name
+ *		if a single char, then no long name, and remaining
+ *		columns shift left (this becomes the short name)
+ *	3. option short name (single character name)
+ *		if '-' or absent then no short name
+ *		if neither long nor short name, line is ignored
+ *	4. option set short name (name of option equiv class)
+ *		if '-' or absent then no class
+ *	5. efault value of option
+ *		if absent, default is 0
+ *		only 0 or 1 possible (0==off 1==on)
+ */
+
+/*
+ * The order of the lines below gives the order they are listed by set -o
+ * Options labelled '[U]' are not (yet, maybe ever) implemented.
+ */
+aflag	allexport	a		# export all variables
+cdprint	cdprint				# always print result of a cd
+Eflag	emacs		E V		# enable emacs style editing
+eflag	errexit		e		# exit on command error ($? != 0)
+usefork	fork		F		# use fork(2) instead of vfork(2)
+Iflag	ignoreeof	I		# do not exit interactive shell on EOF
+iflag	interactive	i		# interactive shell
+mflag	monitor		m		# enable job control
+Cflag	noclobber	C		# do not overwrite files when using >
+nflag	noexec		n		# do not execue commands
+fflag	noglob		f		# no pathname expansion
+nolog	nolog				# [U] no func definitions in history
+pflag	nopriv		p		# preserve privs if set[ug]id
+bflag	notify		b		# [U] report bg job completion
+uflag	nounset		u		# expanding unset var is an error
+posix	posix				# be closer to POSIX compat
+qflag	quietprofile	q		# disable -v/-x in startup files
+sflag	stdin		s		# read from standard input
+tabcomplete	tabcomplete		# make <tab> cause filename expansion
+hflag	trackall	h		# [U] locate cmds in funcs during defn
+vflag	verbose		v		# echo commands as read
+Vflag	vi		V V		# enable vi style editing
+xflag	xtrace		x		# trace command execution
+
+#ifdef DEBUG
+debug	debug				# enable internal shell debugging
+#endif

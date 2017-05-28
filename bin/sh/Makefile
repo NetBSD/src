@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.107 2017/05/15 18:34:56 kre Exp $
+#	$NetBSD: Makefile,v 1.108 2017/05/28 00:38:01 kre Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ SHSRCS=	alias.c arith_token.c arithmetic.c cd.c echo.c error.c eval.c exec.c \
 	miscbltin.c mystring.c options.c parser.c redir.c show.c trap.c \
 	output.c var.c test.c kill.c syntax.c
 GENSRCS=builtins.c init.c nodes.c
-GENHDRS=builtins.h nodes.h token.h nodenames.h
+GENHDRS=builtins.h nodes.h token.h nodenames.h optinit.h
 SRCS=	${SHSRCS} ${GENSRCS}
 
 DPSRCS+=${GENHDRS}
@@ -76,6 +76,10 @@ nodes.c nodes.h: mknodes.sh nodetypes nodes.c.pat
 nodenames.h: mknodenames.sh nodes.h
 	${_MKTARGET_CREATE}
 	${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} > ${.TARGET}
+
+optinit.h: mkoptions.sh option.list
+	${_MKTARGET_CREATE}
+	${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} ${.TARGET} ${.OBJDIR}
 
 .if ${USETOOLS} == "yes"
 NBCOMPATLIB=   -L${TOOLDIR}/lib -lnbcompat
