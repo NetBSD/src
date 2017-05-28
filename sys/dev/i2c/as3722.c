@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.11 2017/04/29 20:43:48 jakllsch Exp $ */
+/* $NetBSD: as3722.c,v 1.12 2017/05/28 15:55:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.11 2017/04/29 20:43:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.12 2017/05/28 15:55:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,6 +197,14 @@ static struct fdtbus_regulator_controller_func as3722reg_funcs = {
 	.set_voltage = as3722reg_set_voltage,
 	.get_voltage = as3722reg_get_voltage,
 };
+
+static void	as3722_power_reset(device_t);
+static void	as3722_power_poweroff(device_t);
+
+static struct fdtbus_power_controller_func as3722power_funcs = {
+	.reset = as3722_power_reset,
+	.poweroff = as3722_power_poweroff,
+};
 #endif
 
 static int	as3722_read(struct as3722_softc *, uint8_t, uint8_t *, int);
@@ -258,6 +266,9 @@ as3722_attach(device_t parent, device_t self, void *aux)
 	as3722_rtc_attach(sc);
 #ifdef FDT
 	as3722_regulator_attach(sc);
+
+	fdtbus_register_power_controller(self, sc->sc_phandle,
+	    &as3722power_funcs);
 #endif
 }
 
@@ -812,6 +823,20 @@ as3722reg_get_voltage(device_t dev, u_int *puvol)
 	const struct as3722regdef *regdef = sc->sc_regdef;
 
 	return regdef->get(dev, puvol);
+}
+
+static void
+as3722_power_reset(device_t dev)
+{
+	delay(1000000);
+	as3722_reboot(dev);
+}
+
+static void
+as3722_power_poweroff(device_t dev)
+{
+	delay(1000000);
+	as3722_poweroff(dev);
 }
 #endif
 

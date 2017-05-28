@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.17 2017/05/26 18:56:27 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.18 2017/05/28 15:55:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -164,6 +164,13 @@ struct fdtbus_dma_controller_func {
 	void	(*halt)(device_t, void *);
 };
 
+struct fdtbus_power_controller;
+
+struct fdtbus_power_controller_func {
+	void 	(*reset)(device_t);
+	void	(*poweroff)(device_t);
+};
+
 int		fdtbus_register_interrupt_controller(device_t, int,
 		    const struct fdtbus_interrupt_controller_func *);
 int		fdtbus_register_i2c_controller(device_t, int,
@@ -180,6 +187,8 @@ int		fdtbus_register_reset_controller(device_t, int,
 		    const struct fdtbus_reset_controller_func *);
 int		fdtbus_register_dma_controller(device_t, int,
 		    const struct fdtbus_dma_controller_func *);
+int		fdtbus_register_power_controller(device_t, int,
+		    const struct fdtbus_power_controller_func *);
 
 int		fdtbus_get_reg(int, u_int, bus_addr_t *, bus_size_t *);
 int		fdtbus_get_reg64(int, u_int, uint64_t *, uint64_t *);
@@ -225,6 +234,9 @@ int		fdtbus_reset_assert(struct fdtbus_reset *);
 int		fdtbus_reset_deassert(struct fdtbus_reset *);
 
 int		fdtbus_todr_attach(device_t, int, todr_chip_handle_t);
+
+void		fdtbus_power_reset(void);
+void		fdtbus_power_poweroff(void);
 
 bool		fdtbus_set_data(const void *);
 const void *	fdtbus_get_data(void);

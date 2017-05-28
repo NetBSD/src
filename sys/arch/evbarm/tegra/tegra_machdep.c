@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.44 2017/05/28 00:40:21 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.45 2017/05/28 15:55:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.44 2017/05/28 00:40:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.45 2017/05/28 15:55:11 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.44 2017/05/28 00:40:21 jmcneill 
 #include "ukbd.h"
 #include "genfb.h"
 #include "ether.h"
-#include "as3722pmic.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,10 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.44 2017/05/28 00:40:21 jmcneill 
 
 #include <dev/usb/ukbdvar.h>
 #include <net/if_ether.h>
-
-#if NAS3722PMIC > 0
-#include <dev/i2c/as3722.h>
-#endif
 
 #ifndef TEGRA_MAX_BOOT_STRING
 #define TEGRA_MAX_BOOT_STRING 1024
@@ -503,30 +498,12 @@ tegra_device_register(device_t self, void *aux)
 static void
 tegra_reset(void)
 {
-#if NAS3722PMIC > 0
-	device_t pmic = device_find_by_driver_unit("as3722pmic", 0);
-	if (pmic != NULL) {
-		delay(1000000);
-		if (as3722_reboot(pmic) != 0) {
-			printf("WARNING: AS3722 reset failed\n");
-			return;
-		}
-	}
-#endif
+	fdtbus_power_reset();
 	tegra_pmc_reset();
 }
 
 static void
 tegra_powerdown(void)
 {
-#if NAS3722PMIC > 0
-	device_t pmic = device_find_by_driver_unit("as3722pmic", 0);
-	if (pmic != NULL) {
-		delay(1000000);
-		if (as3722_poweroff(pmic) != 0) {
-			printf("WARNING: AS3722 poweroff failed\n");
-			return;
-		}
-	}
-#endif
+	fdtbus_power_poweroff();
 }
