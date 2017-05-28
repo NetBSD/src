@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2016/03/05 07:33:58 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2017/05/28 00:30:49 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2016/03/05 07:33:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2017/05/28 00:30:49 jmcneill Exp $");
 
 #include "opt_md.h"
 
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2016/03/05 07:33:58 mlelstv Exp $"
 
 void	(*evbarm_device_register)(device_t, void *);
 void	(*evbarm_device_register_post_config)(device_t, void *);
+
+extern struct cfdata cfdata[];
 
 #ifndef MEMORY_DISK_IS_ROOT
 static int get_device(char *name, device_t *, int *);
@@ -164,13 +166,18 @@ void
 cpu_configure(void)
 {
 	struct mainbus_attach_args maa;
+	struct cfdata *cf;
 
 	(void) splhigh();
 	(void) splserial();	/* XXX need an splextreme() */
 
-	maa.ma_name = "mainbus";
-
-	config_rootfound("mainbus", &maa);
+	for (cf = &cfdata[0]; cf->cf_name; cf++) {
+		if (cf->cf_pspec == NULL) {
+			maa.ma_name = cf->cf_name;
+			if (config_rootfound(cf->cf_name, &maa) != NULL)
+				break;
+		}
+	}
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
 	spl0();
