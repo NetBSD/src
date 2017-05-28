@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.40 2017/03/22 21:30:59 jdolecek Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.41 2017/05/28 16:37:55 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.40 2017/03/22 21:30:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.41 2017/05/28 16:37:55 hannken Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -686,8 +686,7 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
 		 */
 		ip->i_nlink = 0;
 		DIP_ASSIGN(ip, nlink, 0);
-		VOP_UNLOCK(vp);
-		vgone(vp);
+		vput(vp);
 
 		return error;
 	}
@@ -696,8 +695,7 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
 	 * Now that we have the place-holder inode for the journal,
 	 * we don't need the vnode ever again.
 	 */
-	VOP_UNLOCK(vp);
-	vgone(vp);
+	vput(vp);
 
 	return 0;
 }
