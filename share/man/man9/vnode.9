@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.79 2017/01/23 11:49:03 abhinav Exp $
+.\"     $NetBSD: vnode.9,v 1.80 2017/05/28 16:39:41 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 11, 2017
+.Dd May 28, 2017
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -617,6 +617,9 @@ is a null operation if the reference count is greater than one.
 Eliminate all activity associated with the unlocked vnode
 .Fa vp
 in preparation for recycling.
+This operation is restricted to suspended file systems.
+See
+.Xr vfs_suspend 9 .
 .It Fn vgonel "vp" "p"
 Eliminate all activity associated with the locked vnode
 .Fa vp

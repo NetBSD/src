@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.92 2017/05/28 16:35:47 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.93 2017/05/28 16:39:41 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.92 2017/05/28 16:35:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.93 2017/05/28 16:39:41 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1017,6 +1017,9 @@ vrevoke(vnode_t *vp)
 void
 vgone(vnode_t *vp)
 {
+
+	KASSERT((vp->v_mount->mnt_iflag & IMNT_HAS_TRANS) == 0 ||
+	    fstrans_is_owner(vp->v_mount));
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	mutex_enter(vp->v_interlock);
