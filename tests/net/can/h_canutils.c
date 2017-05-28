@@ -1,4 +1,4 @@
-/*	$NetBSD: h_canutils.c,v 1.2 2017/05/27 21:02:56 bouyer Exp $	*/
+/*	$NetBSD: h_canutils.c,v 1.3 2017/05/28 13:55:07 kre Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: h_canutils.c,v 1.2 2017/05/27 21:02:56 bouyer Exp $");
+__RCSID("$NetBSD: h_canutils.c,v 1.3 2017/05/28 13:55:07 kre Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -124,7 +124,7 @@ can_recvfrom(int s, struct can_frame *cf, int *len, struct sockaddr_can *sa)
 	ATF_CHECK_MSG(sa->can_family == AF_CAN,
 	    "recvfrom provided wrong %d family", sa->can_family);       
         ATF_CHECK_MSG(salen == sizeof(struct sockaddr_can),
-            "recvfrom provided wrong size %d (!= %ld)", salen, sizeof(sa));
+            "recvfrom provided wrong size %d (!= %zu)", salen, sizeof(sa));
 	return 0;
 }
 
