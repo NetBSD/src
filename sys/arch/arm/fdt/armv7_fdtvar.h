@@ -1,7 +1,7 @@
-/* $NetBSD: platform.h,v 1.3 2017/05/28 23:39:30 jmcneill Exp $ */
+/* $NetBSD: armv7_fdtvar.h,v 1.1 2017/05/28 23:39:30 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,17 +26,35 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _EVBARM_TEGRA_PLATFORM_H
-#define _EVBARM_TEGRA_PLATFORM_H
+#ifndef _ARM_ARMV7_FDTVAR_H
+#define _ARM_ARMV7_FDTVAR_H
 
-#include <arm/nvidia/tegra_reg.h>
+struct armv7_platform {
+	const struct pmap_devmap *	(*devmap)(void);
+	void				(*bootstrap)(void);
+	void				(*early_putchar)(char);
+	void				(*device_register)(device_t, void *);
+	void				(*reset)(void);
+	void				(*consinit)(void);
+};
 
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-#define KERNEL_VM_BASE		0xc0000000
-#define KERNEL_VM_SIZE		0x20000000 /* 0x20000000 = 512MB */
-#else
-#define KERNEL_VM_BASE		0x90000000
-#define KERNEL_VM_SIZE		0x50000000 /* 0x50000000 = 1.25GB */
-#endif
+struct armv7_platform_info {
+	const char *			compat;
+	const struct armv7_platform *	ops;
+};
 
-#endif /* _EVBARM_TEGRA_PLATFORM_H */
+#define _ARMV7_PLATFORM_REGISTER(name)	\
+	__link_set_add_rodata(armv7_platforms, __CONCAT(name,_platinfo));
+
+#define ARMV7_PLATFORM(_name, _compat, _ops)				\
+static const struct armv7_platform_info __CONCAT(_name,_platinfo) = {	\
+	.compat = (_compat),						\
+	.ops = (_ops)							\
+};									\
+_ARMV7_PLATFORM_REGISTER(_name)
+
+TAILQ_HEAD(armv7_platlist, armv7_platform_info);
+
+const struct armv7_platform *	armv7_fdt_platform(void);
+
+#endif /* !_ARM_ARMV7_FDTVAR_H */
