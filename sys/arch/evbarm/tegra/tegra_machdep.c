@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.43 2017/05/27 20:26:27 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.44 2017/05/28 00:40:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.43 2017/05/27 20:26:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.44 2017/05/28 00:40:21 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.43 2017/05/27 20:26:27 jmcneill 
 #include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>
-#include <arm/mainbus/mainbus.h>
 
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_var.h>
@@ -451,18 +450,6 @@ void
 tegra_device_register(device_t self, void *aux)
 {
 	prop_dictionary_t dict = device_properties(self);
-
-	if (device_is_a(self, "armperiph")
-	    && device_is_a(device_parent(self), "mainbus")) {
-		struct mainbus_attach_args * const mb = aux;
-		mb->mb_iot = &armv7_generic_bs_tag;
-		return;
-	}
-
-	if (device_is_a(self, "armgtmr")) {
-                prop_dictionary_set_uint32(dict, "frequency", TEGRA_REF_FREQ);
-		return;
-	}
 
 	if (device_is_a(self, "tegrafb")
 	    && tegra_bootconf_match("console", "fb")) {

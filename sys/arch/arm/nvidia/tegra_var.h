@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.36 2017/05/27 20:26:44 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.37 2017/05/28 00:40:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,6 @@ extern struct bus_space armv7_generic_bs_tag;
 extern struct bus_space armv7_generic_a4x_bs_tag;
 extern bus_space_handle_t tegra_ppsb_bsh;
 extern bus_space_handle_t tegra_apb_bsh;
-extern struct arm32_bus_dma_tag tegra_dma_tag;
 
 #define CHIP_ID_TEGRA20		0x20
 #define CHIP_ID_TEGRA30		0x30
