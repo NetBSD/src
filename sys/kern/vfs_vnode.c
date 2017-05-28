@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.91 2017/05/26 14:40:09 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.92 2017/05/28 16:35:47 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.91 2017/05/26 14:40:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.92 2017/05/28 16:35:47 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -944,13 +944,42 @@ vrecycle(vnode_t *vp)
 }
 
 /*
+ * Helper for vrevoke() to propagate suspension from lastmp
+ * to thismp.  Both args may be NULL.
+ * Returns the currently suspended file system or NULL.
+ */
+static struct mount *
+vrevoke_suspend_next(struct mount *lastmp, struct mount *thismp)
+{
+	int error;
+
+	if (lastmp == thismp)
+		return thismp;
+
+	if (lastmp != NULL)
+		vfs_resume(lastmp);
+
+	if (thismp == NULL)
+		return NULL;
+
+	do {
+		error = vfs_suspend(thismp, 0);
+	} while (error == EINTR || error == ERESTART);
+
+	if (error == 0)
+		return thismp;
+
+	KASSERT(error == EOPNOTSUPP);
+	return NULL;
+}
+
+/*
  * Eliminate all activity associated with the requested vnode
  * and with all vnodes aliased to the requested vnode.
  */
 void
 vrevoke(vnode_t *vp)
 {
-	int error;
 	struct mount *mp;
 	vnode_t *vq;
 	enum vtype type;
@@ -958,11 +987,7 @@ vrevoke(vnode_t *vp)
 
 	KASSERT(vp->v_usecount > 0);
 
-	mp = vp->v_mount;
-	error = vfs_suspend(mp, 0);
-	KASSERT(error == 0 || error == EOPNOTSUPP);
-	if (error)
-		mp = NULL;
+	mp = vrevoke_suspend_next(NULL, vp->v_mount);
 
 	mutex_enter(vp->v_interlock);
 	VSTATE_WAIT_STABLE(vp);
@@ -978,20 +1003,11 @@ vrevoke(vnode_t *vp)
 		mutex_exit(vp->v_interlock);
 
 		while (spec_node_lookup_by_dev(type, dev, &vq) == 0) {
-			if (mp != vq->v_mount) {
-				if (mp)
-					vfs_resume(mp);
-				mp = vp->v_mount;
-				error = vfs_suspend(mp, 0);
-				KASSERT(error == 0 || error == EOPNOTSUPP);
-				if (error)
-					mp = NULL;
-			}
+			mp = vrevoke_suspend_next(mp, vq->v_mount);
 			vgone(vq);
 		}
 	}
-	if (mp)
-		vfs_resume(mp);
+	vrevoke_suspend_next(mp, NULL);
 }
 
 /*
