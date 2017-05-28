@@ -1,7 +1,7 @@
-/* $NetBSD: gic_fdt.c,v 1.2 2016/01/05 21:53:48 marty Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.3 2017/05/28 00:40:20 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.2 2016/01/05 21:53:48 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.3 2017/05/28 00:40:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.2 2016/01/05 21:53:48 marty Exp $");
 #include <sys/kmem.h>
 
 #include <arm/cortex/gic_intr.h>
+#include <arm/cortex/mpcore_var.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -83,6 +84,9 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 {
 	struct gic_fdt_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	bus_addr_t addr_d, addr_c;
+	bus_size_t size_d, size_c;
+	bus_space_handle_t bsh;
 	int error;
 
 	sc->sc_dev = self;
@@ -97,6 +101,34 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": GIC\n");
+
+	if (fdtbus_get_reg(sc->sc_phandle, 0, &addr_d, &size_d) != 0) {
+		aprint_error(": couldn't get distributor address\n");
+		return;
+	}
+	if (fdtbus_get_reg(sc->sc_phandle, 1, &addr_c, &size_c) != 0) {
+		aprint_error(": couldn't get cpu interface address\n");
+		return;
+	}
+
+	const bus_addr_t addr = addr_d;
+	const bus_size_t size = (addr_c + size_c) - addr_d;
+
+	error = bus_space_map(faa->faa_bst, addr, size, 0, &bsh);
+	if (error) {
+		aprint_error(": couldn't map registers: %d\n", error);
+		return;
+	}
+
+	struct mpcore_attach_args mpcaa = {
+		.mpcaa_name = "armgic",
+		.mpcaa_memt = faa->faa_bst,
+		.mpcaa_memh = bsh,
+		.mpcaa_off1 = 0,
+		.mpcaa_off2 = addr_c - addr_d
+	};
+
+	config_found(self, &mpcaa, NULL);
 }
 
 static void *
