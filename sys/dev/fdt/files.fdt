@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.12 2017/04/29 11:00:56 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.13 2017/05/28 00:38:40 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -33,3 +33,7 @@ file	dev/fdt/fdt_regulator.c			fdtbus
 file	dev/fdt/fdt_reset.c			fdtbus
 file	dev/fdt/fdt_rtc.c			fdtbus
 file	dev/fdt/fdt_pinctrl.c			fdtbus
+
+device	cpus { } : fdtbus
+attach	cpus at fdt
+file	dev/fdt/cpus.c				cpus
