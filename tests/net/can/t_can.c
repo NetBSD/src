@@ -1,4 +1,4 @@
-/*	$NetBSD: t_can.c,v 1.4 2017/05/28 14:49:00 christos Exp $	*/
+/*	$NetBSD: t_can.c,v 1.5 2017/05/28 14:53:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_can.c,v 1.4 2017/05/28 14:49:00 christos Exp $");
+__RCSID("$NetBSD: t_can.c,v 1.5 2017/05/28 14:53:13 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -686,8 +686,8 @@ ATF_TC_BODY(cannoloop, tc)
 		ATF_CHECK_MSG(sa.can_family == AF_CAN,
 		    "recvfrom provided wrong %d family", sa.can_family);
 		ATF_CHECK_MSG(salen == sizeof(sa),
-		    "recvfrom provided wrong size %ju (!= %zu)",
-		    (uintmax_t)salen, sizeof(sa));
+		    "recvfrom provided wrong size %u (!= %zu)",
+		    salen, sizeof(sa));
 		ATF_CHECK_MSG(sa.can_ifindex == ifindex,
 		   "recvfrom provided wrong ifindex %d (!= %d)",
 		    sa.can_ifindex, ifindex);
