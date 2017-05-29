@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.21 2017/03/18 19:01:01 riastradh Exp $
+.\"     $NetBSD: fstrans.9,v 1.22 2017/05/29 01:49:42 riastradh Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,10 +45,6 @@
 .Sh SYNOPSIS
 .In sys/mount.h
 .In sys/fstrans.h
-.Ft int
-.Fn fstrans_mount "struct mount *mp"
-.Ft void
-.Fn fstrans_unmount "struct mount *mp"
 .Ft void
 .Fn fstrans_start "struct mount *mp" "enum fstrans_lock_type lock_type"
 .Ft int
@@ -73,17 +69,6 @@
 The
 .Nm
 subsystem assists file system suspension and copy-on-write snapshots.
-.Pp
-For a file system to use
-.Nm ,
-its
-.Xr VFS_MOUNT 9
-method must call
-.Fn fstrans_mount ,
-and its
-.Xr VFS_UNMOUNT 9
-method must call
-.Fn fstrans_unmount .
 .Pp
 The file system's normal operations, such as its
 .Xr vnodeops 9 ,
