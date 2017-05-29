@@ -1,4 +1,4 @@
-/* $NetBSD: armv7_fdt.c,v 1.3 2017/05/29 23:13:03 jmcneill Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.1 2017/05/29 23:21:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_fdt.c,v 1.3 2017/05/29 23:13:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.1 2017/05/29 23:21:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,31 +39,27 @@ __KERNEL_RCSID(0, "$NetBSD: armv7_fdt.c,v 1.3 2017/05/29 23:13:03 jmcneill Exp $
 #include <dev/fdt/fdtvar.h>
 #include <dev/ofw/openfirm.h>
 
-#include <arm/fdt/armv7_fdtvar.h>
+#include <arm/fdt/arm_fdtvar.h>
 
-static int	armv7_fdt_match(device_t, cfdata_t, void *);
-static void	armv7_fdt_attach(device_t, device_t, void *);
+static int	arm_fdt_match(device_t, cfdata_t, void *);
+static void	arm_fdt_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(armv7_fdt, 0,
-    armv7_fdt_match, armv7_fdt_attach, NULL, NULL);
+CFATTACH_DECL_NEW(arm_fdt, 0,
+    arm_fdt_match, arm_fdt_attach, NULL, NULL);
 
-extern struct bus_space armv7_generic_bs_tag;
-extern struct bus_space armv7_generic_a4x_bs_tag;
-extern struct arm32_bus_dma_tag armv7_generic_dma_tag;
-
-static struct armv7_platlist armv7_platform_list =
-    TAILQ_HEAD_INITIALIZER(armv7_platform_list);
+static struct arm_platlist arm_platform_list =
+    TAILQ_HEAD_INITIALIZER(arm_platform_list);
 
 int
-armv7_fdt_match(device_t parent, cfdata_t cf, void *aux)
+arm_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 1;
 }
 
 void
-armv7_fdt_attach(device_t parent, device_t self, void *aux)
+arm_fdt_attach(device_t parent, device_t self, void *aux)
 {
-	const struct armv7_platform *plat = armv7_fdt_platform();
+	const struct arm_platform *plat = arm_fdt_platform();
 	struct fdt_attach_args faa;
 
 	aprint_naive("\n");
@@ -76,19 +72,19 @@ armv7_fdt_attach(device_t parent, device_t self, void *aux)
 	config_found(self, &faa, NULL);
 }
 
-const struct armv7_platform *
-armv7_fdt_platform(void)
+const struct arm_platform *
+arm_fdt_platform(void)
 {
-	static const struct armv7_platform_info *booted_platform = NULL;
+	static const struct arm_platform_info *booted_platform = NULL;
 
 	if (booted_platform == NULL) {
-		__link_set_decl(armv7_platforms, struct armv7_platform_info);
-		struct armv7_platform_info * const *info;
-		const struct armv7_platform_info *best_info = NULL;
+		__link_set_decl(arm_platforms, struct arm_platform_info);
+		struct arm_platform_info * const *info;
+		const struct arm_platform_info *best_info = NULL;
 		const int phandle = OF_peer(0);
 		int match, best_match = 0;
 
-		__link_set_foreach(info, armv7_platforms) {
+		__link_set_foreach(info, arm_platforms) {
 			const char * const compat[] = { (*info)->compat, NULL };
 			match = of_match_compatible(phandle, compat);
 			if (match > best_match) {

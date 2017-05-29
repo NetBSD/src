@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.20 2017/05/28 00:40:21 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.21 2017/05/29 23:21:12 jmcneill Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -28,7 +28,7 @@ makeoptions	COPY_SYMTAB=1
 config		netbsd		root on ? type ?
 
 # Device tree support
-armv7fdt0	at root
+armfdt0		at root
 fdt*		at fdtbus?
 
 # CPUs

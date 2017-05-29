@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.47 2017/05/29 23:13:03 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.48 2017/05/29 23:21:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.47 2017/05/29 23:13:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.48 2017/05/29 23:21:12 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.47 2017/05/29 23:13:03 jmcneill 
 #include <evbarm/include/autoconf.h>
 #include <evbarm/tegra/platform.h>
 
-#include <arm/fdt/armv7_fdtvar.h>
+#include <arm/fdt/arm_fdtvar.h>
 
 #ifndef TEGRA_MAX_BOOT_STRING
 #define TEGRA_MAX_BOOT_STRING 1024
@@ -103,7 +103,7 @@ static struct boot_physmem bp_lowgig = {
 static void
 tegra_putchar(char c)
 {
-	const struct armv7_platform *plat = armv7_fdt_platform();
+	const struct arm_platform *plat = arm_fdt_platform();
 	if (plat && plat->early_purchar)
 		plat->early_putchar(c);
 }
@@ -155,7 +155,7 @@ tegra_printn(u_int n, int base)
 u_int
 initarm(void *arg)
 {
-	const struct armv7_platform *plat;
+	const struct arm_platform *plat;
 	uint64_t memory_addr, memory_size;
 	psize_t ram_size = 0;
 
@@ -173,7 +173,7 @@ initarm(void *arg)
 	}
 
 	/* Lookup platform specific backend */
-	plat = armv7_fdt_platform();
+	plat = arm_fdt_platform();
 	if (plat == NULL)
 		panic("Kernel does not support this device");
 
@@ -295,7 +295,7 @@ void
 consinit(void)
 {
 	static bool initialized = false;
-	const struct armv7_platform *plat = armv7_fdt_platform();
+	const struct arm_platform *plat = arm_fdt_platform();
 	const struct fdt_console *cons = fdtbus_get_console();
 	struct fdt_attach_args faa;
 
@@ -313,7 +313,7 @@ consinit(void)
 void
 tegra_device_register(device_t self, void *aux)
 {
-	const struct armv7_platform *plat = armv7_fdt_platform();
+	const struct arm_platform *plat = arm_fdt_platform();
 
 	if (plat && plat->device_register)
 		plat->device_register(self, aux);
@@ -322,7 +322,7 @@ tegra_device_register(device_t self, void *aux)
 static void
 tegra_reset(void)
 {
-	const struct armv7_platform *plat = armv7_fdt_platform();
+	const struct arm_platform *plat = arm_fdt_platform();
 
 	fdtbus_power_reset();
 
