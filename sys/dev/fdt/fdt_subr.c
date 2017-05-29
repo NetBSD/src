@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.11 2017/05/26 18:56:27 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.12 2017/05/29 23:13:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.11 2017/05/26 18:56:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.12 2017/05/29 23:13:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,6 +37,9 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.11 2017/05/26 18:56:27 jmcneill Exp $
 #include <dev/fdt/fdtvar.h>
 
 static const void *fdt_data;
+
+static struct fdt_conslist fdt_console_list =
+    TAILQ_HEAD_INITIALIZER(fdt_console_list);
 
 bool
 fdtbus_set_data(const void *data)
@@ -237,6 +240,32 @@ fdtbus_get_reg64(int phandle, u_int index, uint64_t *paddr, uint64_t *psize)
 	return 0;
 }
 
+const struct fdt_console *
+fdtbus_get_console(void)
+{
+	static const struct fdt_console_info *booted_console = NULL;
+
+	if (booted_console == NULL) {
+		__link_set_decl(fdt_consoles, struct fdt_console_info);
+		struct fdt_console_info * const *info;
+		const struct fdt_console_info *best_info = NULL;
+		const int phandle = fdtbus_get_stdout_phandle();
+		int best_match = 0;
+
+		__link_set_foreach(info, fdt_consoles) {
+			const int match = (*info)->ops->match(phandle);
+			if (match > best_match) {
+				best_match = match;
+				best_info = *info;
+			}
+		}
+
+		booted_console = best_info;
+	}
+
+	return booted_console == NULL ? NULL : booted_console->ops;
+}
+
 const char *
 fdtbus_get_stdout_path(void)
 {
@@ -294,6 +323,47 @@ fdtbus_get_stdout_speed(void)
 		return -1;
 
 	return (int)strtoul(p + 1, NULL, 10);
+}
+
+tcflag_t
+fdtbus_get_stdout_flags(void)
+{
+	const char *prop, *p;
+	tcflag_t flags = TTYDEF_CFLAG;
+	char *ep;
+
+	prop = fdtbus_get_stdout_path();
+	if (prop == NULL)
+		return flags;
+
+	p = strchr(prop, ':');
+	if (p == NULL)
+		return flags;
+
+	ep = NULL;
+	(void)strtoul(p + 1, &ep, 10);
+	if (ep == NULL)
+		return flags;
+
+	/* <baud>{<parity>{<bits>{<flow>}}} */
+	while (*ep) {
+		switch (*ep) {
+		/* parity */
+		case 'n':	flags &= ~(PARENB|PARODD); break;
+		case 'e':	flags &= ~PARODD; flags |= PARENB; break;
+		case 'o':	flags |= (PARENB|PARODD); break;
+		/* bits */
+		case '5':	flags &= ~CSIZE; flags |= CS5; break;
+		case '6':	flags &= ~CSIZE; flags |= CS6; break;
+		case '7':	flags &= ~CSIZE; flags |= CS7; break;
+		case '8':	flags &= ~CSIZE; flags |= CS8; break;
+		/* flow */
+		case 'r':	flags |= CRTSCTS; break;
+		}
+		ep++;
+	}
+
+	return flags;
 }
 
 bool
