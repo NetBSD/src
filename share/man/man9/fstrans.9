@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.22 2017/05/29 01:49:42 riastradh Exp $
+.\"     $NetBSD: fstrans.9,v 1.23 2017/05/29 01:51:55 riastradh Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -140,31 +140,6 @@ The copy-on-write callback must be disestablished with
 when the file system is done with it.
 .Sh FUNCTIONS
 .Bl -tag -width abcd
-.It Fn fstrans_mount "mp"
-Initialize the
-.Nm
-subsystem for the file system mounted at
-.Fa mp .
-Sets
-.Dv IMNT_HAS_TRANS
-in
-.Fa mp Ns Li "->mnt_iflag" .
-Return zero on success, or error code if
-.Xr vfs_busy 9
-fails.
-.Pp
-May sleep.
-.It Fn fstrans_unmount "mp"
-Finalize the
-.Nm
-subsystem.
-Clears
-.Dv IMNT_HAS_TRANS
-in
-.Fa mp Ns Li "->mnt_iflag" .
-Caller is responsible for ensuring that no transactions are active.
-.Pp
-May sleep.
 .It Fn fstrans_start "mp" "lock_type"
 Enter a transaction of type
 .Fa lock_type
