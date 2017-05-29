@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.56 2017/05/18 13:56:58 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.57 2017/05/29 22:21:00 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.56 2017/05/18 13:56:58 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.57 2017/05/29 22:21:00 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -518,7 +518,7 @@ STATIC void
 find_big_fd(void)
 {
 	int i, fd;
-	static int last_start = 6;
+	static int last_start = 3; /* aim to keep sh fd's under 20 */
 
 	if (last_start < 10)
 		last_start++;
@@ -629,6 +629,15 @@ renumber_sh_fd(struct shell_fds *fp)
 #else
 #define	CLOEXEC(fd)
 #endif
+
+	/*
+	 * if we have had a collision, and the sh fd was a "big" one
+	 * try moving the sh fd base to a higher number (if possible)
+	 * so future sh fds are less likely to be in the user's sights
+	 * (incl this one when moved)
+	 */
+	if (fp->fd >= big_sh_fd)
+		find_big_fd();
 
 	to = fcntl(fp->fd, F_DUPFD_CLOEXEC, big_sh_fd);
 	if (to == -1)
