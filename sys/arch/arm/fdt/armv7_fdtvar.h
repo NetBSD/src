@@ -1,4 +1,4 @@
-/* $NetBSD: armv7_fdtvar.h,v 1.1 2017/05/28 23:39:30 jmcneill Exp $ */
+/* $NetBSD: armv7_fdtvar.h,v 1.2 2017/05/29 23:13:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,13 +29,19 @@
 #ifndef _ARM_ARMV7_FDTVAR_H
 #define _ARM_ARMV7_FDTVAR_H
 
+/*
+ * Platform-specific data
+ */
+
+struct fdt_attach_args;
+
 struct armv7_platform {
-	const struct pmap_devmap *	(*devmap)(void);
-	void				(*bootstrap)(void);
-	void				(*early_putchar)(char);
-	void				(*device_register)(device_t, void *);
-	void				(*reset)(void);
-	void				(*consinit)(void);
+	const struct pmap_devmap * (*devmap)(void);
+	void			(*bootstrap)(void);
+	void			(*init_attach_args)(struct fdt_attach_args *);
+	void			(*early_putchar)(char);
+	void			(*device_register)(device_t, void *);
+	void			(*reset)(void);
 };
 
 struct armv7_platform_info {

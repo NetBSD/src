@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.1 2017/05/28 23:39:30 jmcneill Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.2 2017/05/29 23:13:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.1 2017/05/28 23:39:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.2 2017/05/29 23:13:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,15 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.1 2017/05/28 23:39:30 jmcneill 
 
 #if NUKBD > 0
 #include <dev/usb/ukbdvar.h>
-#endif
-
-#if NCOM > 0
-#include <dev/ic/ns16550reg.h>
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-#ifndef CONMODE
-#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-#endif
 #endif
 
 #define	DEVMAP_ALIGN(a)	((a) & ~L1_S_OFFSET)
@@ -104,6 +95,18 @@ static void
 tegra_platform_bootstrap(void)
 {
 	tegra_bootstrap();
+}
+
+static void
+tegra_platform_init_attach_args(struct fdt_attach_args *faa)
+{
+	extern struct bus_space armv7_generic_bs_tag;
+	extern struct bus_space armv7_generic_a4x_bs_tag;
+	extern struct arm32_bus_dma_tag armv7_generic_dma_tag;
+
+	faa->faa_bst = &armv7_generic_bs_tag;
+	faa->faa_a4x_bst = &armv7_generic_a4x_bs_tag;
+	faa->faa_dmat = &armv7_generic_dma_tag;
 }
 
 static void
@@ -176,47 +179,13 @@ tegra_platform_reset(void)
 	tegra_pmc_reset();
 }
 
-static void
-tegra_platform_consinit(void)
-{
-	static bool consinit_called = false;
-
-	if (consinit_called)
-		return;
-	consinit_called = true;
-
-#if NCOM > 0
-	bus_addr_t addr;
-	int speed;
-
-#ifdef CONSADDR
-	addr = CONSADDR;
-#else
-	fdtbus_get_reg(fdtbus_get_stdout_phandle(), 0, &addr, NULL);
-#endif
-
-#ifdef CONSPEED
-	speed = CONSPEED;
-#else
-	speed = fdtbus_get_stdout_speed();
-	if (speed < 0)
-		speed = 115200;	/* default */
-#endif
-
-	const bus_space_tag_t bst = &armv7_generic_a4x_bs_tag;
-	const u_int freq = 408000000;	/* 408MHz PLLP_OUT0 */
-	if (comcnattach(bst, addr, speed, freq, COM_TYPE_TEGRA, CONMODE))
-		panic("Serial console cannot be initialized.");
-#endif
-}
-
 static const struct armv7_platform tegra_platform = {
 	.devmap = tegra_platform_devmap,
 	.bootstrap = tegra_platform_bootstrap,
+	.init_attach_args = tegra_platform_init_attach_args,
 	.early_putchar = tegra_platform_early_putchar,
 	.device_register = tegra_platform_device_register,
 	.reset = tegra_platform_reset,
-	.consinit = tegra_platform_consinit,
 };
 
 ARMV7_PLATFORM(tegra124, "nvidia,tegra124", &tegra_platform);
