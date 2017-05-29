@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.46 2017/05/28 23:39:30 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.47 2017/05/29 23:13:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.46 2017/05/28 23:39:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.47 2017/05/29 23:13:03 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -294,10 +294,20 @@ initarm(void *arg)
 void
 consinit(void)
 {
+	static bool initialized = false;
 	const struct armv7_platform *plat = armv7_fdt_platform();
+	const struct fdt_console *cons = fdtbus_get_console();
+	struct fdt_attach_args faa;
 
-	if (plat && plat->consinit)
-		plat->consinit();
+	if (initialized || cons == NULL)
+		return;
+
+	plat->init_attach_args(&faa);
+	faa.faa_phandle = fdtbus_get_stdout_phandle();
+
+	cons->consinit(&faa);
+
+	initialized = true;
 }
 
 void
