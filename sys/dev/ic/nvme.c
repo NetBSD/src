@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.26 2017/04/05 20:15:49 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.27 2017/05/29 02:20:34 nonaka Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.26 2017/04/05 20:15:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.27 2017/05/29 02:20:34 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,6 @@ static int	nvme_enable(struct nvme_softc *, u_int);
 static int	nvme_disable(struct nvme_softc *);
 static int	nvme_shutdown(struct nvme_softc *);
 
-static void	nvme_version(struct nvme_softc *, uint32_t);
 #ifdef NVME_DEBUG
 static void	nvme_dumpregs(struct nvme_softc *);
 #endif
@@ -161,32 +160,6 @@ nvme_write8(struct nvme_softc *sc, bus_size_t r, uint64_t v)
 #endif /* __LP64__ */
 #define nvme_barrier(_s, _r, _l, _f) \
 	bus_space_barrier((_s)->sc_iot, (_s)->sc_ioh, (_r), (_l), (_f))
-
-static void
-nvme_version(struct nvme_softc *sc, uint32_t ver)
-{
-	const char *v = NULL;
-
-	switch (ver) {
-	case NVME_VS_1_0:
-		v = "1.0";
-		break;
-	case NVME_VS_1_1:
-		v = "1.1";
-		break;
-	case NVME_VS_1_2:
-		v = "1.2";
-		break;
-	case NVME_VS_1_2_1:
-		v = "1.2.1";
-		break;
-	default:
-		aprint_error_dev(sc->sc_dev, "unknown version 0x%08x\n", ver);
-		return;
-	}
-
-	aprint_normal_dev(sc->sc_dev, "NVMe %s\n", v);
-}
 
 #ifdef NVME_DEBUG
 static __used void
@@ -353,7 +326,12 @@ nvme_attach(struct nvme_softc *sc)
 		return 1;
 	}
 
-	nvme_version(sc, reg);
+	if (NVME_VS_TER(reg) == 0)
+		aprint_normal_dev(sc->sc_dev, "NVMe %d.%d\n", NVME_VS_MJR(reg),
+		    NVME_VS_MNR(reg));
+	else
+		aprint_normal_dev(sc->sc_dev, "NVMe %d.%d.%d\n", NVME_VS_MJR(reg),
+		    NVME_VS_MNR(reg), NVME_VS_TER(reg));
 
 	cap = nvme_read8(sc, NVME_CAP);
 	dstrd = NVME_CAP_DSTRD(cap);
