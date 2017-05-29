@@ -1,4 +1,4 @@
-.\"	$NetBSD: canloop.4,v 1.2 2017/05/27 21:02:55 bouyer Exp $
+.\"	$NetBSD: canloop.4,v 1.3 2017/05/29 08:42:33 wiz Exp $
 .\"
 .\" Copyright (c) 2017 Manuel Bouyer.
 .\" Redistribution and use in source and binary forms, with or without
@@ -18,7 +18,7 @@
 .\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.    
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd May 18, 2017
 .Dt CANLOOP 4
@@ -31,8 +31,9 @@
 .Sh DESCRIPTION
 The
 .Nm canloop
-pseudo interface is a loopback interface for the CAN layer. It can be used
-as destination by a CAN application, when no CAN hardware is available.
+pseudo interface is a loopback interface for the CAN layer.
+It can be used as destination by a CAN application, when no CAN
+hardware is available.
 Other sockets bound to the same
 .Nm canloop
 interface (or not bound to any interface) will receive the frames.
