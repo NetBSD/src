@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.21 2017/05/29 23:21:12 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.22 2017/05/29 23:22:00 jmcneill Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -20,7 +20,7 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 # CONSADDR is required for early init messages from VERBOSE_INIT_ARM.
-#options 	CONSADDR=0x70006300, CONSPEED=115200
+#options 	CONSADDR=0x70006300
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
