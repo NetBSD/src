@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.182 2017/05/24 06:51:27 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.183 2017/05/29 07:09:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.182 2017/05/24 06:51:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.183 2017/05/29 07:09:20 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1245,7 +1245,11 @@ pci_conf_print_msi_cap(const pcireg_t *regs, int capoff)
 		printf("    Message Address %sregister: 0x%08x\n",
 		    "(upper) ", *regs++);
 	}
-	printf("    Message Data register: 0x%04x\n", *regs & 0xffff);
+	printf("    Message Data register: ");
+	if (ctl & PCI_MSI_CTL_EXTMDATA_CAP)
+		printf("0x%08x\n", *regs);
+	else
+		printf("0x%04x\n", *regs & 0xffff);
 	regs++;
 	if (ctl & PCI_MSI_CTL_PERVEC_MASK) {
 		printf("    Vector Mask register: 0x%08x\n", *regs++);
