@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.371 2017/05/23 00:54:13 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.372 2017/05/29 03:52:43 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -42,9 +42,6 @@ realinstall:	checkver libinstall
 # XXX: This is needed for programs that link with .a libraries
 # Perhaps a more correct solution is to always generate _pic.a
 # files or always have a shared library.
-# XXX: This breaks profiling (__mcount relocation is wrong)
-# XXX: This is why we remove the PIE_CFLAGS from the profile
-# built-in rule below.
 # Another fix is to provide rcrt0.o like OpenBSD does and
 # do relocations for static PIE.
 .if defined(MKPIE) && (${MKPIE} != "no") && !defined(NOPIE)
@@ -224,8 +221,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .c.po:
 	${_MKTARGET_COMPILE}
-	# XXX: See __mcount comment above
-	${COMPILE.c:S/${PIE_CFLAGS}//} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.c} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
 .if defined(CTFCONVERT)
 	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .endif
