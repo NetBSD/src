@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.27 2017/05/29 02:20:34 nonaka Exp $	*/
+/*	$NetBSD: nvme.c,v 1.28 2017/05/29 02:24:00 nonaka Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.27 2017/05/29 02:20:34 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.28 2017/05/29 02:24:00 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,12 +121,10 @@ static int	nvme_get_number_of_queues(struct nvme_softc *, u_int *);
 	bus_space_read_4((_s)->sc_iot, (_s)->sc_ioh, (_r))
 #define nvme_write4(_s, _r, _v) \
 	bus_space_write_4((_s)->sc_iot, (_s)->sc_ioh, (_r), (_v))
-#ifdef __LP64__
-#define nvme_read8(_s, _r) \
-	bus_space_read_8((_s)->sc_iot, (_s)->sc_ioh, (_r))
-#define nvme_write8(_s, _r, _v) \
-	bus_space_write_8((_s)->sc_iot, (_s)->sc_ioh, (_r), (_v))
-#else /* __LP64__ */
+/*
+ * Some controllers, at least Apple NVMe, always require split
+ * transfers, so don't use bus_space_{read,write}_8() on LP64.
+ */
 static inline uint64_t
 nvme_read8(struct nvme_softc *sc, bus_size_t r)
 {
@@ -157,7 +155,6 @@ nvme_write8(struct nvme_softc *sc, bus_size_t r, uint64_t v)
 	nvme_write4(sc, r + 4, a[0]);
 #endif
 }
-#endif /* __LP64__ */
 #define nvme_barrier(_s, _r, _l, _f) \
 	bus_space_barrier((_s)->sc_iot, (_s)->sc_ioh, (_r), (_l), (_f))
 
