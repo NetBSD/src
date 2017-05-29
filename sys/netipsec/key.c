@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.146 2017/05/28 14:16:05 mlelstv Exp $	*/
+/*	$NetBSD: key.c,v 1.147 2017/05/29 10:11:10 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.146 2017/05/28 14:16:05 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.147 2017/05/29 10:11:10 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.146 2017/05/28 14:16:05 mlelstv Exp $");
 #include <sys/workqueue.h>
 #include <sys/kmem.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -828,6 +829,7 @@ key_checkrequest(struct ipsecrequest *isr, const struct secasindex *saidx)
 {
 	u_int level;
 	int error;
+	struct secasvar *oldsav = NULL;
 
 	KASSERT(isr != NULL);
 	KASSERT(saidx != NULL);
@@ -871,10 +873,8 @@ key_checkrequest(struct ipsecrequest *isr, const struct secasindex *saidx)
 	 * want to check cached SA carefully, rather than picking new SA
 	 * every time.
 	 */
-	if (isr->sav != NULL) {
-		KEY_FREESAV(&isr->sav);
-		isr->sav = NULL;
-	}
+	if (isr->sav != NULL)
+		oldsav = isr->sav;
 #endif
 
 	/*
@@ -882,8 +882,10 @@ key_checkrequest(struct ipsecrequest *isr, const struct secasindex *saidx)
 	 * key_allocsa_policy should allocate the oldest SA available.
 	 * See key_do_allocsa_policy(), and draft-jenkins-ipsec-rekeying-03.txt.
 	 */
-	if (isr->sav == NULL)
-		isr->sav = key_allocsa_policy(saidx);
+	isr->sav = key_allocsa_policy(saidx);
+	membar_producer();
+	if (oldsav != NULL)
+		KEY_FREESAV(&oldsav);
 
 	/* When there is SA. */
 	if (isr->sav != NULL) {
