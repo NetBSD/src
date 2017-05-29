@@ -1,4 +1,4 @@
-/* $NetBSD: armv7_fdtvar.h,v 1.2 2017/05/29 23:13:03 jmcneill Exp $ */
+/* $NetBSD: arm_fdtvar.h,v 1.1 2017/05/29 23:21:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ARM_ARMV7_FDTVAR_H
-#define _ARM_ARMV7_FDTVAR_H
+#ifndef _ARM_ARM_FDTVAR_H
+#define _ARM_ARM_FDTVAR_H
 
 /*
  * Platform-specific data
@@ -35,7 +35,7 @@
 
 struct fdt_attach_args;
 
-struct armv7_platform {
+struct arm_platform {
 	const struct pmap_devmap * (*devmap)(void);
 	void			(*bootstrap)(void);
 	void			(*init_attach_args)(struct fdt_attach_args *);
@@ -44,23 +44,23 @@ struct armv7_platform {
 	void			(*reset)(void);
 };
 
-struct armv7_platform_info {
+struct arm_platform_info {
 	const char *			compat;
-	const struct armv7_platform *	ops;
+	const struct arm_platform *	ops;
 };
 
-#define _ARMV7_PLATFORM_REGISTER(name)	\
-	__link_set_add_rodata(armv7_platforms, __CONCAT(name,_platinfo));
+#define _ARM_PLATFORM_REGISTER(name)	\
+	__link_set_add_rodata(arm_platforms, __CONCAT(name,_platinfo));
 
-#define ARMV7_PLATFORM(_name, _compat, _ops)				\
-static const struct armv7_platform_info __CONCAT(_name,_platinfo) = {	\
+#define ARM_PLATFORM(_name, _compat, _ops)				\
+static const struct arm_platform_info __CONCAT(_name,_platinfo) = {	\
 	.compat = (_compat),						\
 	.ops = (_ops)							\
 };									\
-_ARMV7_PLATFORM_REGISTER(_name)
+_ARM_PLATFORM_REGISTER(_name)
 
-TAILQ_HEAD(armv7_platlist, armv7_platform_info);
+TAILQ_HEAD(arm_platlist, arm_platform_info);
 
-const struct armv7_platform *	armv7_fdt_platform(void);
+const struct arm_platform *	arm_fdt_platform(void);
 
-#endif /* !_ARM_ARMV7_FDTVAR_H */
+#endif /* !_ARM_ARM_FDTVAR_H */
