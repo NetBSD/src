@@ -1,4 +1,4 @@
-/* $NetBSD: armv7_fdt.c,v 1.2 2017/05/28 23:39:30 jmcneill Exp $ */
+/* $NetBSD: armv7_fdt.c,v 1.3 2017/05/29 23:13:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_fdt.c,v 1.2 2017/05/28 23:39:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armv7_fdt.c,v 1.3 2017/05/29 23:13:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,6 @@ static void	armv7_fdt_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(armv7_fdt, 0,
     armv7_fdt_match, armv7_fdt_attach, NULL, NULL);
 
-static bool armv7_fdt_found = false;
-
 extern struct bus_space armv7_generic_bs_tag;
 extern struct bus_space armv7_generic_a4x_bs_tag;
 extern struct arm32_bus_dma_tag armv7_generic_dma_tag;
@@ -59,26 +57,22 @@ static struct armv7_platlist armv7_platform_list =
 int
 armv7_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	if (armv7_fdt_found)
-		return 0;
 	return 1;
 }
 
 void
 armv7_fdt_attach(device_t parent, device_t self, void *aux)
 {
-	armv7_fdt_found = true;
+	const struct armv7_platform *plat = armv7_fdt_platform();
+	struct fdt_attach_args faa;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	struct fdt_attach_args faa = {
-		.faa_name = "",
-		.faa_bst = &armv7_generic_bs_tag,
-		.faa_a4x_bst = &armv7_generic_a4x_bs_tag,
-		.faa_dmat = &armv7_generic_dma_tag,
-		.faa_phandle = OF_peer(0),
-	};
+	plat->init_attach_args(&faa);
+	faa.faa_name = "";
+	faa.faa_phandle = OF_peer(0);
+
 	config_found(self, &faa, NULL);
 }
 

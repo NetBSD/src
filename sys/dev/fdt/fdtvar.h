@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.18 2017/05/28 15:55:11 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.19 2017/05/29 23:13:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/bus.h>
+#include <sys/termios.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/clk/clk.h>
@@ -171,6 +172,26 @@ struct fdtbus_power_controller_func {
 	void	(*poweroff)(device_t);
 };
 
+struct fdt_console {
+	int	(*match)(int);
+	void	(*consinit)(struct fdt_attach_args *);
+};
+
+struct fdt_console_info {
+	const struct fdt_console *ops;
+};
+
+#define	_FDT_CONSOLE_REGISTER(name)	\
+	__link_set_add_rodata(fdt_consoles, __CONCAT(name,_consinfo));
+
+#define	FDT_CONSOLE(_name, _ops)					\
+static const struct fdt_console_info __CONCAT(_name,_consinfo) = {	\
+	.ops = (_ops)							\
+};									\
+_FDT_CONSOLE_REGISTER(_name)
+
+TAILQ_HEAD(fdt_conslist, fdt_console_info);
+
 int		fdtbus_register_interrupt_controller(device_t, int,
 		    const struct fdtbus_interrupt_controller_func *);
 int		fdtbus_register_i2c_controller(device_t, int,
@@ -244,9 +265,12 @@ int		fdtbus_phandle2offset(int);
 int		fdtbus_offset2phandle(int);
 bool		fdtbus_get_path(int, char *, size_t);
 
+const struct fdt_console *fdtbus_get_console(void);
+
 const char *	fdtbus_get_stdout_path(void);
 int		fdtbus_get_stdout_phandle(void);
 int		fdtbus_get_stdout_speed(void);
+tcflag_t	fdtbus_get_stdout_flags(void);
 
 bool		fdtbus_status_okay(int);
 
