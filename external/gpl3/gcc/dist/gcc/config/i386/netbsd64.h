@@ -50,9 +50,9 @@ along with GCC; see the file COPYING3.  If not see
 #define FUNCTION_PROFILER(FILE, LABELNO)				\
 {									\
   if (TARGET_64BIT && flag_pic)						\
-    fprintf (FILE, "\tcall *__mcount@PLT\n");				\
+    fprintf (FILE, "\tcall __mcount@PLT\n");				\
   else if (flag_pic)							\
-    fprintf (FILE, "\tcall *__mcount@PLT\n");				\
+    fprintf (FILE, "\tcall __mcount@PLT\n");				\
   else									\
     fprintf (FILE, "\tcall __mcount\n");				\
 }
