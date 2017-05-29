@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.129 2017/05/24 06:51:27 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.130 2017/05/29 07:09:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -674,8 +674,8 @@ typedef u_int8_t pci_revision_t;
 /*
  * MSI Message Address is at offset 4.
  * MSI Message Upper Address (if 64bit) is at offset 8.
- * MSI Message data is at offset 8 or 12 and is 16 bits.
- * [16 bit reserved field]
+ * MSI Message data is at offset 8 or 12 and is lower 16 bits.
+ * MSI Extended Message data is at offset 8 or 12 and is upper 16 bits.
  * MSI Mask Bits (32 bit field)
  * MSI Pending Bits (32 bit field)
  */
