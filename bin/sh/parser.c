@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.129 2017/05/27 11:19:57 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.130 2017/05/29 10:43:27 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.129 2017/05/27 11:19:57 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.130 2017/05/29 10:43:27 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,7 +163,7 @@ list(int nlflag, int erflag)
 	union node *n1, *n2, *n3;
 	int tok;
 
-	TRACE(("list(%d,%d): entered\n", nlflag, erflag));
+	CTRACE(DBG_PARSE, ("list(%d,%d): entered @%d\n",nlflag,erflag,plinno));
 
 	checkkwd = 2;
 	if (nlflag == 0 && tokendlist[peektoken()])
@@ -230,7 +230,7 @@ andor(void)
 	union node *n1, *n2, *n3;
 	int t;
 
-	TRACE(("andor: entered\n"));
+	CTRACE(DBG_PARSE, ("andor: entered @%d\n", plinno));
 
 	n1 = pipeline();
 	for (;;) {
@@ -258,12 +258,12 @@ pipeline(void)
 	struct nodelist *lp, *prev;
 	int negate;
 
-	TRACE(("pipeline: entered\n"));
+	CTRACE(DBG_PARSE, ("pipeline: entered @%d\n", plinno));
 
 	negate = 0;
 	checkkwd = 2;
 	while (readtoken() == TNOT) {
-		TRACE(("pipeline: TNOT recognized\n"));
+		CTRACE(DBG_PARSE, ("pipeline: TNOT recognized\n"));
 #ifndef BOGUS_NOT_COMMAND
 		if (posix && negate)
 			synerror("2nd \"!\" unexpected");
@@ -290,7 +290,8 @@ pipeline(void)
 	}
 	tokpushback++;
 	if (negate) {
-		TRACE(("%snegate pipeline\n", (negate&1) ? "" : "double "));
+		CTRACE(DBG_PARSE, ("%snegate pipeline\n",
+		    (negate&1) ? "" : "double "));
 		n2 = stalloc(sizeof(struct nnot));
 		n2->type = (negate & 1) ? NNOT : NDNOT;
 		n2->nnot.com = n1;
@@ -313,7 +314,7 @@ command(void)
 	int negate = 0;
 #endif
 
-	TRACE(("command: entered\n"));
+	CTRACE(DBG_PARSE, ("command: entered @%d\n", plinno));
 
 	checkkwd = 2;
 	redir = NULL;
@@ -330,7 +331,7 @@ command(void)
 
 #ifdef BOGUS_NOT_COMMAND		/* only in pileline() */
 	while (readtoken() == TNOT) {
-		TRACE(("command: TNOT recognized\n"));
+		CTRACE(DBG_PARSE, ("command: TNOT (bogus) recognized\n"));
 		negate++;
 	}
 	tokpushback++;
@@ -372,7 +373,8 @@ command(void)
 		n1->type = (lasttoken == TWHILE)? NWHILE : NUNTIL;
 		n1->nbinary.ch1 = list(0, 0);
 		if ((got=readtoken()) != TDO) {
-TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
+			VTRACE(DBG_PARSE, ("expecting DO got %s %s\n",
+			    tokname[got], got == TWORD ? wordtext : ""));
 			synexpect(TDO, 0);
 		}
 		n1->nbinary.ch2 = list(0, 0);
@@ -579,7 +581,8 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
  checkneg:
 #ifdef BOGUS_NOT_COMMAND
 	if (negate) {
-		TRACE(("%snegate command\n", (negate&1) ? "" : "double "));
+		VTRACE(DBG_PARSE, ("bogus %snegate command\n",
+		    (negate&1) ? "" : "double "));
 		n2 = stalloc(sizeof(struct nnot));
 		n2->type = (negate & 1) ? NNOT : NDNOT;
 		n2->nnot.com = n1;
@@ -601,6 +604,9 @@ simplecmd(union node **rpp, union node *redir)
 	int negate = 0;
 #endif
 
+	CTRACE(DBG_PARSE, ("simple command with%s redir already @%d\n",
+	    redir ? "" : "out", plinno));
+
 	/* If we don't have any redirections already, then we must reset */
 	/* rpp to be the address of the local redir variable.  */
 	if (redir == 0)
@@ -611,7 +617,7 @@ simplecmd(union node **rpp, union node *redir)
 
 #ifdef BOGUS_NOT_COMMAND	/* pipelines get negated, commands do not */
 	while (readtoken() == TNOT) {
-		TRACE(("simplcmd: TNOT recognized\n"));
+		VTRACE(DBG_PARSE, ("simplcmd: bogus TNOT recognized\n"));
 		negate++;
 	}
 	tokpushback++;
@@ -661,7 +667,8 @@ simplecmd(union node **rpp, union node *redir)
  checkneg:
 #ifdef BOGUS_NOT_COMMAND
 	if (negate) {
-		TRACE(("%snegate simplecmd\n", (negate&1) ? "" : "double "));
+		VTRACE(DBG_PARSE, ("bogus %snegate simplecmd\n",
+		    (negate&1) ? "" : "double "));
 		n2 = stalloc(sizeof(struct nnot));
 		n2->type = (negate & 1) ? NNOT : NDNOT;
 		n2->nnot.com = n;
@@ -689,7 +696,7 @@ void
 fixredir(union node *n, const char *text, int err)
 {
 
-	TRACE(("Fix redir %s %d\n", text, err));
+	VTRACE(DBG_PARSE, ("Fix redir %s %d\n", text, err));
 	if (!err)
 		n->ndup.vname = NULL;
 
@@ -720,7 +727,7 @@ parsefname(void)
 
 		if (quoteflag == 0)
 			n->type = NXHERE;
-		TRACE(("Here document %d\n", n->type));
+		VTRACE(DBG_PARSE, ("Here document %d @%d\n", n->type, plinno));
 		if (here->striptabs) {
 			while (*wordtext == '\t')
 				wordtext++;
@@ -878,8 +885,10 @@ slurp_heredoc(char *const eofmark, const int striptabs, const int sq)
 	grabstackblock(c);
 	wordtext = out;
 
-	TRACE(("Slurped a heredoc (to '%s')%s: len %d, \"%.16s\"...\n",
-		eofmark, striptabs ? " tab stripped" : "", c, wordtext));
+	VTRACE(DBG_PARSE,
+	    ("Slurped a heredoc (to '%s')%s: len %d, \"%.*s%s\" @%d\n",
+		eofmark, striptabs ? " tab stripped" : "", c, (c > 16 ? 16 : c),
+		wordtext, (c > 16 ? "..." : ""), plinno));
 }
 
 STATIC void
@@ -965,7 +974,8 @@ readtoken(void)
 				if (**pp == *wordtext && equal(*pp, wordtext)) {
 					lasttoken = t = pp -
 					    parsekwd + KWDOFFSET;
-					TRACE(("keyword %s recognized\n",
+					VTRACE(DBG_PARSE,
+					    ("keyword %s recognized\n",
 					    tokname[t]));
 					goto out;
 				}
@@ -980,7 +990,7 @@ readtoken(void)
  out:
 		checkkwd = (t == TNOT) ? savecheckkwd : 0;
 	}
-	TRACE(("%stoken %s %s\n", alreadyseen ? "reread " : "",
+	VTRACE(DBG_PARSE, ("%stoken %s %s\n", alreadyseen ? "reread " : "",
 	    tokname[t], t == TWORD ? wordtext : ""));
 	return (t);
 }
