@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.28 2017/05/29 02:24:00 nonaka Exp $	*/
+/*	$NetBSD: nvme.c,v 1.29 2017/05/29 02:25:37 nonaka Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.28 2017/05/29 02:24:00 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.29 2017/05/29 02:25:37 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1296,7 +1296,6 @@ nvme_q_delete(struct nvme_softc *sc, struct nvme_queue *q)
 
 	memset(&sqe, 0, sizeof(sqe));
 	sqe.opcode = NVM_ADMIN_DEL_IOCQ;
-	htolem64(&sqe.prp1, NVME_DMA_DVA(q->q_sq_dmamem));
 	htolem16(&sqe.qid, q->q_id);
 
 	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill, NVME_TIMO_QOP);
