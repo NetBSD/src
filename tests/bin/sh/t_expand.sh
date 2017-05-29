@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.13 2017/05/15 19:53:40 kre Exp $
+# $NetBSD: t_expand.sh,v 1.14 2017/05/29 22:27:47 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -150,6 +150,50 @@ strip_body() {
 		'"${line%/\**}"'		\
 		'"${line%"/*"*}"'		\
 		'"${line%'"'"'/*'"'"'*}"'
+	do
+		atf_check -o inline:":$stripped:\n" -e empty ${TEST_SH} -c \
+			"line='${line}'; echo :${exp}:"
+	done
+}
+
+atf_test_case wrap_strip
+wrap_strip_head() {
+	atf_set "descr" "Checks that the %% operator works and strips" \
+	                "the contents of a variable from the given point" \
+			'to the end, and that \ \n sequences do not break it'
+}
+wrap_strip_body() {
+	line='#define bindir "/usr/bin" /* comment */'
+	stripped='#define bindir "/usr/bin" '
+
+	for exp in 				\
+		'${line\
+%%/\**}'					\
+		'${line%%"/\
+*"*}'						\
+		'${line%%'"'"'/*'"'"'\
+*}'						\
+		'"${li\
+ne%%/\**}"'					\
+		'"${line%%"\
+/*"*}"'						\
+		'"${line%\
+%'"'"'/*'"'"'*}"'				\
+		'${line\
+%\
+/\*\
+*\
+}'						\
+		'${line%"/*\
+"*\
+}'						\
+		'${line\
+%\
+'"'"'/*'"'"'*}'					\
+		'"$\
+{li\
+ne%\
+'"'"'/*'"'"'*}"'
 	do
 		atf_check -o inline:":$stripped:\n" -e empty ${TEST_SH} -c \
 			"line='${line}'; echo :${exp}:"
@@ -896,6 +940,7 @@ atf_init_test_cases() {
 	atf_add_test_case iteration_on_null_or_missing_parameter
 	atf_add_test_case shell_params
 	atf_add_test_case strip
+	atf_add_test_case wrap_strip
 	atf_add_test_case var_with_embedded_cmdsub
 	atf_add_test_case varpattern_backslashes
 }
