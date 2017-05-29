@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.41 2017/05/18 15:42:37 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.42 2017/05/29 14:03:23 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.41 2017/05/18 15:42:37 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.42 2017/05/29 14:03:23 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: show.c,v 1.41 2017/05/18 15:42:37 kre Exp $");
 #include "redir.h"
 #include "error.h"
 #include "syntax.h"
+#include "input.h"
 #include "output.h"
 #include "builtins.h"
 
@@ -924,6 +925,7 @@ trace_id(TFILE *tf)
 	int i;
 	char indent[16];
 	char *p;
+	int lno;
 
 	if (DFlags & DBG_NEST) {
 		if ((unsigned)ShNest >= sizeof indent - 1) {
@@ -941,13 +943,25 @@ trace_id(TFILE *tf)
 	} else
 		indent[0] = '\0';
 
+	lno = plinno;	/* only approximate for now - as good as we can do */
+
 	if (DFlags & DBG_PID) {
 		i = getpid();
-		(void) asprintf(&p, "%5d%c%s\t", i,
-		    i == tf->pid ? ':' : '=', indent);
+		if (DFlags & DBG_LINE)
+			(void) asprintf(&p, "%5d%c%s\t%4d @\t", i,
+			    i == tf->pid ? ':' : '=', indent, lno);
+		else
+			(void) asprintf(&p, "%5d%c%s\t", i,
+			    i == tf->pid ? ':' : '=', indent);
 		return p;
 	} else if (DFlags & DBG_NEST) {
-		(void) asprintf(&p, "%s\t", indent);
+		if (DFlags & DBG_LINE)
+			(void) asprintf(&p, "%s\t%4d @\t", indent, lno);
+		else
+			(void) asprintf(&p, "%s\t", indent);
+		return p;
+	} else if (DFlags & DBG_LINE) {
+		(void) asprintf(&p, "%4d @\t", lno);
 		return p;
 	}
 	return NULL;
@@ -1050,6 +1064,7 @@ static struct debug_flag {
 	{ '1',	DBG_U1		},	/* ad-hoc temp debug flag #1 */
 	{ '2',	DBG_U2		},	/* ad-hoc temp debug flag #2 */
  
+	{ '@',	DBG_LINE	},	/* prefix trace lines with line# */
 	{ '$',	DBG_PID		},	/* prefix trace lines with sh pid */
 	{ '^',	DBG_NEST	},	/* show shell nesting level */
 

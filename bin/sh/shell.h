@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.22 2017/05/27 11:19:57 kre Exp $	*/
+/*	$NetBSD: shell.h,v 1.23 2017/05/29 14:03:23 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,9 @@
  *	define BSD if you are running 4.2 BSD or later.
  *	define SYSV if you are running under System V.
  *	define DEBUG=1 to compile in debugging ('set -o debug' to turn on)
- *	define DEBUG=2 to compile in and turn on debugging.
+ *	define DEBUG=2 to compile in and enable debugging.
+ *	define DEBUG=3 for DEBUG==2 + enable most standard debug output
+ *	define DEBUG=4 for DEBUG==2 + enable absolutely everything
  *	define DO_SHAREDVFORK to indicate that vfork(2) shares its address
  *	       with its parent.
  *	define BOGUS_NOT_COMMAND to allow ! reserved words in weird places
@@ -190,6 +192,7 @@ extern	int		ShNest;
 #define	DBG_U1		(1LL << DBG_EXTRAS(1))	/* 1 - for short term */
 #define	DBG_U2		(1LL << DBG_EXTRAS(2))	/* 2 - extra tracing*/
 
+#define	DBG_LINE	(1LL << DBG_EXTRAS(9))	/* @ ($LINENO) */
 #define	DBG_PID		(1LL << DBG_EXTRAS(10))	/* $ ($$) */
 #define	DBG_NEST	(1LL << DBG_EXTRAS(11))	/* ^ */
 
