@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.48 2017/05/18 13:53:18 kre Exp $	*/
+/*	$NetBSD: options.c,v 1.49 2017/05/29 14:03:23 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.48 2017/05/18 13:53:18 kre Exp $");
+__RCSID("$NetBSD: options.c,v 1.49 2017/05/29 14:03:23 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ procargs(int argc, char **argv)
 	if (usefork == 2)
 		usefork = 1;
 #endif
-#if DEBUG == 2
+#if DEBUG >= 2
 	if (debug == 2)
 		debug = 1;
 #endif
