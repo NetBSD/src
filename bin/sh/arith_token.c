@@ -1,4 +1,4 @@
-/*	$NetBSD: arith_token.c,v 1.3 2017/03/20 13:12:35 kre Exp $	*/
+/*	$NetBSD: arith_token.c,v 1.4 2017/05/29 22:54:07 kre Exp $	*/
 
 /*-
  * Copyright (c) 2002
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arith_token.c,v 1.3 2017/03/20 13:12:35 kre Exp $");
+__RCSID("$NetBSD: arith_token.c,v 1.4 2017/05/29 22:54:07 kre Exp $");
 #endif /* not lint */
 
 #include <inttypes.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: arith_token.c,v 1.3 2017/03/20 13:12:35 kre Exp $");
 #include "memalloc.h"
 #include "parser.h"
 #include "syntax.h"
+#include "show.h"
 
 #if ARITH_BOR + ARITH_ASS_GAP != ARITH_BORASS || \
 	ARITH_ASS + ARITH_ASS_GAP != ARITH_EQ
@@ -87,6 +88,8 @@ arith_token(void)
 			 */
 			a_t_val.val = strtoimax(buf, &end, 0);
 			arith_buf = end;
+			VTRACE(DBG_ARITH, ("Arith token ARITH_NUM=%jd\n",
+			    a_t_val.val));
 			return ARITH_NUM;
 
 		} else if (is_name(token)) {
@@ -102,6 +105,8 @@ arith_token(void)
 			memcpy(a_t_val.name, p, buf - p);
 			a_t_val.name[buf - p] = '\0';
 			arith_buf = buf;
+			VTRACE(DBG_ARITH, ("Arith token ARITH_VAR=\"%s\"\n",
+			    a_t_val.name));
 			return ARITH_VAR;
 
 		} else switch (token) {
@@ -109,9 +114,11 @@ arith_token(void)
 			 * everything else must be some kind of
 			 * operator, white space, or an error.
 			 */
+		case '\n':
+			VTRACE(DBG_ARITH, ("Arith: newline\n"));
+			/* FALLTHROUGH */
 		case ' ':
 		case '\t':
-		case '\n':
 			buf++;
 			continue;
 
@@ -231,5 +238,6 @@ arith_token(void)
 	buf++;
  out:
 	arith_buf = buf;
+	VTRACE(DBG_ARITH, ("Arith token: %d\n", token));
 	return token;
 }
