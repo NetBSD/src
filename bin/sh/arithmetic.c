@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.1 2017/03/20 11:26:07 kre Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.2 2017/05/29 22:54:07 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arithmetic.c,v 1.1 2017/03/20 11:26:07 kre Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.2 2017/05/29 22:54:07 kre Exp $");
 #endif /* not lint */
 
 #include <limits.h>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: arithmetic.c,v 1.1 2017/03/20 11:26:07 kre Exp $");
 #include "output.h"
 #include "options.h"
 #include "var.h"
+#include "show.h"
 
 #if ARITH_BOR + ARITH_ASS_GAP != ARITH_BORASS || \
 	ARITH_ASS + ARITH_ASS_GAP != ARITH_EQ
@@ -139,6 +140,7 @@ static intmax_t
 do_binop(int op, intmax_t a, intmax_t b)
 {
 
+	VTRACE(DBG_ARITH, ("Arith do binop %d (%jd, %jd)\n", op, a, b));
 	switch (op) {
 	default:
 		arith_err("token error");
@@ -187,6 +189,9 @@ primary(int token, union a_token_val *val, int op, int noeval)
 {
 	intmax_t result;
 
+	VTRACE(DBG_ARITH, ("Arith primary: token %d op %d%s\n",
+	    token, op, noeval ? " noeval" : ""));
+
 	switch (token) {
 	case ARITH_LPAREN:
 		result = assignment(op, noeval);
@@ -225,6 +230,9 @@ binop2(intmax_t a, int op, int precedence, int noeval)
 	intmax_t b;
 	int op2;
 	int token;
+
+	VTRACE(DBG_ARITH, ("Arith: binop2 %jd op %d (P:%d)%s\n",
+	    a, op, precedence, noeval ? " noeval" : ""));
 
 	for (;;) {
 		token = arith_token();
@@ -271,6 +279,8 @@ and(int token, union a_token_val *val, int op, int noeval)
 	if (op != ARITH_AND)
 		return a;
 
+	VTRACE(DBG_ARITH, ("Arith: AND %jd%s\n", a, noeval ? " noeval" : ""));
+
 	token = arith_token();
 	*val = a_t_val;
 
@@ -289,6 +299,8 @@ or(int token, union a_token_val *val, int op, int noeval)
 	if (op != ARITH_OR)
 		return a;
 
+	VTRACE(DBG_ARITH, ("Arith: OR %jd%s\n", a, noeval ? " noeval" : ""));
+
 	token = arith_token();
 	*val = a_t_val;
 
@@ -306,6 +318,8 @@ cond(int token, union a_token_val *val, int op, int noeval)
 
 	if (last_token != ARITH_QMARK)
 		return a;
+
+	VTRACE(DBG_ARITH, ("Arith: ?: %jd%s\n", a, noeval ? " noeval" : ""));
 
 	b = assignment(arith_token(), noeval | !a);
 
@@ -335,6 +349,9 @@ assignment(int var, int noeval)
 	if (op != ARITH_ASS && (op < ARITH_ASS_MIN || op >= ARITH_ASS_MAX))
 		return cond(var, &val, op, noeval);
 
+	VTRACE(DBG_ARITH, ("Arith: %s ASSIGN %d%s\n", val.name, op,
+	    noeval ? " noeval" : ""));
+
 	result = assignment(arith_token(), noeval);
 	if (noeval)
 		return result;
@@ -355,6 +372,8 @@ arith(const char *s)
 
 	setstackmark(&smark);
 
+	CTRACE(DBG_ARITH, ("Arith(\"%s\")\n", s));
+
 	arith_buf = arith_startbuf = s;
 
 	result = assignment(arith_token(), 0);
@@ -363,6 +382,8 @@ arith(const char *s)
 		arith_err("expecting end of expression");
 
 	popstackmark(&smark);
+
+	CTRACE(DBG_ARITH, ("Arith result=%jd\n", result));
 
 	return result;
 }
