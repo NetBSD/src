@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2017/05/30 02:11:03 perseant Exp $
+# $NetBSD: Makefile,v 1.8 2017/05/30 23:44:02 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,9 @@ TESTS_C+=	t_wcstod
 TESTS_C+=	t_wctomb
 TESTS_C+=	t_io
 TESTS_C+=	t_toupper
+#TESTS_C+=	t_digittoint
+TESTS_C+=	t_sprintf
+TESTS_C+=	t_wctype
 
 COPTS.t_wctomb.c += -Wno-stack-protector
 
