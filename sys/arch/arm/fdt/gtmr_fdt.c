@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_fdt.c,v 1.1 2017/05/28 00:40:20 jmcneill Exp $ */
+/* $NetBSD: gtmr_fdt.c,v 1.2 2017/05/30 21:12:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.1 2017/05/28 00:40:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.2 2017/05/30 21:12:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,11 +39,15 @@ __KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.1 2017/05/28 00:40:20 jmcneill Exp $"
 
 #include <arm/cortex/gic_intr.h>
 #include <arm/cortex/mpcore_var.h>
+#include <arm/cortex/gtmr_var.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <arm/fdt/arm_fdtvar.h>
 
 static int	gtmr_fdt_match(device_t, cfdata_t, void *);
 static void	gtmr_fdt_attach(device_t, device_t, void *);
+
+static void	gtmr_fdt_cpu_hatch(void *, struct cpu_info *);
 
 CFATTACH_DECL_NEW(gtmr_fdt, 0, gtmr_fdt_match, gtmr_fdt_attach, NULL, NULL);
 
@@ -71,4 +75,12 @@ gtmr_fdt_attach(device_t parent, device_t self, void *aux)
 	};
 
 	config_found(self, &mpcaa, NULL);
+
+	arm_fdt_cpu_hatch_register(self, gtmr_fdt_cpu_hatch);
+}
+
+static void
+gtmr_fdt_cpu_hatch(void *priv, struct cpu_info *ci)
+{
+	gtmr_init_cpu_clock(ci);
 }
