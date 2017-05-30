@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.94 2017/05/23 09:08:45 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.95 2017/05/30 01:31:07 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.94 2017/05/23 09:08:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.95 2017/05/30 01:31:07 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -257,7 +257,7 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 	}
 
 	pcbsp->sp_cache[dir].cachesp->lastused = time_second;
-	pcbsp->sp_cache[dir].cachesp->refcnt++;
+	KEY_SP_REF(pcbsp->sp_cache[dir].cachesp);
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP cause refcnt++:%d SP:%p\n",
 	    pcbsp->sp_cache[dir].cachesp->refcnt,
@@ -283,7 +283,7 @@ ipsec_fillpcbcache(struct inpcbpolicy *pcbsp, struct mbuf *m,
 	}
 	pcbsp->sp_cache[dir].cachesp = sp;
 	if (pcbsp->sp_cache[dir].cachesp) {
-		pcbsp->sp_cache[dir].cachesp->refcnt++;
+		KEY_SP_REF(pcbsp->sp_cache[dir].cachesp);
 		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 		    "DP cause refcnt++:%d SP:%p\n",
 		    pcbsp->sp_cache[dir].cachesp->refcnt,
@@ -393,7 +393,7 @@ key_allocsp_default(int af, const char *where, int tag)
 		    sp->policy, IPSEC_POLICY_NONE);
 		sp->policy = IPSEC_POLICY_NONE;
 	}
-	sp->refcnt++;
+	KEY_SP_REF(sp);
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP, "DP returns SP:%p (%u)\n",
 	    sp, sp->refcnt);
@@ -513,7 +513,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 		switch (currsp->policy) {
 		case IPSEC_POLICY_BYPASS:
 		case IPSEC_POLICY_IPSEC:
-			currsp->refcnt++;
+			KEY_SP_REF(currsp);
 			sp = currsp;
 			break;
 
@@ -546,7 +546,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 				break;
 
 			case IPSEC_POLICY_IPSEC:
-				currsp->refcnt++;
+				KEY_SP_REF(currsp);
 				sp = currsp;
 				break;
 
