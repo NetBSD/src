@@ -1,4 +1,4 @@
-/*	$NetBSD: can_pcb.c,v 1.3 2017/05/30 13:30:51 bouyer Exp $	*/
+/*	$NetBSD: can_pcb.c,v 1.4 2017/05/30 13:33:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.3 2017/05/30 13:30:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.4 2017/05/30 13:33:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
