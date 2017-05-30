@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.18 2017/05/26 08:10:46 ozaki-r Exp $	*/
+/*	$NetBSD: key.h,v 1.19 2017/05/30 01:31:07 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -58,6 +58,7 @@ struct secpolicy *key_gettunnel(const struct sockaddr *,
 	const struct sockaddr *, const char*, int);
 /* NB: prepend with _ for KAME IPv6 compatbility */
 void _key_freesp(struct secpolicy **, const char*, int);
+void key_sp_ref(struct secpolicy *, const char*, int);
 
 /*
  * Access to the SADB are interlocked with splsoftnet.  In particular,
@@ -76,6 +77,8 @@ void _key_freesp(struct secpolicy **, const char*, int);
 	key_gettunnel(osrc, odst, isrc, idst, __func__, __LINE__)
 #define	KEY_FREESP(spp)						\
 	_key_freesp(spp, __func__, __LINE__)
+#define	KEY_SP_REF(sp)						\
+	key_sp_ref(sp, __func__, __LINE__)
 
 struct secasvar *key_allocsa(const union sockaddr_union *, 
 		u_int, u_int32_t, u_int16_t, u_int16_t, const char*, int);
