@@ -1,7 +1,7 @@
-/* $NetBSD: platform.h,v 1.3 2017/05/28 23:39:30 jmcneill Exp $ */
+/* $NetBSD: platform.h,v 1.1 2017/05/30 10:27:53 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _EVBARM_TEGRA_PLATFORM_H
-#define _EVBARM_TEGRA_PLATFORM_H
-
-#include <arm/nvidia/tegra_reg.h>
+#ifndef _EVBARM_FDT_PLATFORM_H
+#define _EVBARM_FDT_PLATFORM_H
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define KERNEL_VM_BASE		0xc0000000
@@ -39,4 +37,4 @@
 #define KERNEL_VM_SIZE		0x50000000 /* 0x50000000 = 1.25GB */
 #endif
 
-#endif /* _EVBARM_TEGRA_PLATFORM_H */
+#endif /* _EVBARM_FDT_PLATFORM_H */
