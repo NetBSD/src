@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.726 2017/05/23 00:30:00 khorben Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.727 2017/05/30 20:16:08 jnemeth Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.734 2017/05/04 14:21:01 hauke Exp
+ *	NetBSD: usbdevs,v 1.736 2017/05/30 20:13:35 jnemeth Exp
  */
 
 /*
@@ -561,6 +561,7 @@
 #define	USB_VENDOR_HAUPPAUGE2	0x2040		/* Hauppauge Computer Works */
 #define	USB_VENDOR_PARA	0x20b8		/* PARA Industrial */
 #define	USB_VENDOR_TRENDNET	0x20f4		/* TRENDnet */
+#define	USB_VENDOR_RTSYS	0x2100		/* RT Systems */
 #define	USB_VENDOR_DLINK3	0x2101		/* D-Link */
 #define	USB_VENDOR_VIALABS	0x2109		/* VIA Labs */
 #define	USB_VENDOR_ERICSSON	0x2282		/* Ericsson */
@@ -2830,6 +2831,9 @@
 #define	USB_PRODUCT_ROLAND_UA4FX	0x00A3		/* EDIROL UA-4FX */
 #define	USB_PRODUCT_ROLAND_SONICCELL	0x00C2		/* SonicCell */
 #define	USB_PRODUCT_ROLAND_UMONE	0x012a		/* UM-ONE MIDI I/F */
+
+/* RT Systems products */
+#define	USB_PRODUCT_RTSYS_CT57A	0x9e51		/* CT57A Radio Cable */
 
 /* Sagem products */
 #define	USB_PRODUCT_SAGEM_XG760A	0x004a		/* XG-760A */
