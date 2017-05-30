@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_start.S,v 1.13 2017/05/30 10:27:53 jmcneill Exp $ */
+/* $NetBSD: tegra_start.S,v 1.14 2017/05/30 21:12:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014, 2015 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <arm/nvidia/tegra_reg.h>
 
-RCSID("$NetBSD: tegra_start.S,v 1.13 2017/05/30 10:27:53 jmcneill Exp $")
+RCSID("$NetBSD: tegra_start.S,v 1.14 2017/05/30 21:12:41 jmcneill Exp $")
 
 #if defined(VERBOSE_INIT_ARM) && defined(CONSADDR)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -64,7 +64,7 @@ RCSID("$NetBSD: tegra_start.S,v 1.13 2017/05/30 10:27:53 jmcneill Exp $")
 #define INIT_MEMSIZE	128
 #define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + INIT_MEMSIZE * L1_S_SIZE - L1_TABLE_SIZE)
 
-#define	MD_CPU_HATCH	_C_LABEL(gtmr_init_cpu_clock)
+#define	MD_CPU_HATCH	_C_LABEL(arm_fdt_cpu_hatch)
 
 /*
  * Kernel start routine for Tegra SoCs.
