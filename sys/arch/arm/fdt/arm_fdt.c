@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.2 2017/05/30 21:12:41 jmcneill Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.3 2017/05/30 22:00:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.2 2017/05/30 21:12:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.3 2017/05/30 22:00:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,8 @@ struct arm_fdt_cpu_hatch_cb {
 
 static TAILQ_HEAD(, arm_fdt_cpu_hatch_cb) arm_fdt_cpu_hatch_cbs =
     TAILQ_HEAD_INITIALIZER(arm_fdt_cpu_hatch_cbs);
+
+static void (*_arm_fdt_irq_handler)(void *) = NULL;
 
 int
 arm_fdt_match(device_t parent, cfdata_t cf, void *aux)
@@ -127,4 +129,17 @@ arm_fdt_cpu_hatch(struct cpu_info *ci)
 
 	TAILQ_FOREACH(c, &arm_fdt_cpu_hatch_cbs, next)
 		c->cb(c->priv, ci);
+}
+
+void
+arm_fdt_irq_set_handler(void (*irq_handler)(void *))
+{
+	KASSERT(_arm_fdt_irq_handler == NULL);
+	_arm_fdt_irq_handler = irq_handler;
+}
+
+void
+arm_fdt_irq_handler(void *tf)
+{
+	_arm_fdt_irq_handler(tf);
 }

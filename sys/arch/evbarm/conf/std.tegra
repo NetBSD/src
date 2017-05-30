@@ -1,4 +1,4 @@
-#	$NetBSD: std.tegra,v 1.12 2015/12/22 22:10:36 jmcneill Exp $
+#	$NetBSD: std.tegra,v 1.13 2017/05/30 22:00:25 jmcneill Exp $
 #
 
 machine	evbarm arm
@@ -26,5 +26,5 @@ makeoptions	KERNEL_BASE_VIRT="0x81000000"
 makeoptions	BOARDTYPE="tegra"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.tegra"
 
-options 	ARM_INTR_IMPL="<arch/arm/nvidia/tegra_intr.h>"
+options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
 options		ARM_GENERIC_TODR

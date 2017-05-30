@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.20 2015/07/29 04:59:48 matt Exp $	*/
+/*	$NetBSD: gic.c,v 1.21 2017/05/30 22:00:25 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.20 2015/07/29 04:59:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.21 2017/05/30 22:00:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.20 2015/07/29 04:59:48 matt Exp $");
 
 #include <arm/cortex/gic_reg.h>
 #include <arm/cortex/mpcore_var.h>
+
+void armgic_irq_handler(void *);
 
 #define	ARMGIC_SGI_IPIBASE	(16 - NIPI)
 

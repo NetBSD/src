@@ -1,7 +1,7 @@
-/* $NetBSD: arm_fdtvar.h,v 1.3 2017/05/30 22:00:25 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.h,v 1.1 2017/05/30 22:00:25 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,47 +26,23 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ARM_ARM_FDTVAR_H
-#define _ARM_ARM_FDTVAR_H
+#ifndef _ARM_FDT_INTR_H
+#define _ARM_FDT_INTR_H
 
-/*
- * Platform-specific data
- */
+#define	ARM_IRQ_HANDLER		_C_LABEL(arm_fdt_irq_handler)
 
-struct fdt_attach_args;
+#ifndef _LOCORE
 
-struct arm_platform {
-	const struct pmap_devmap * (*devmap)(void);
-	void			(*bootstrap)(void);
-	void			(*init_attach_args)(struct fdt_attach_args *);
-	void			(*early_putchar)(char);
-	void			(*device_register)(device_t, void *);
-	void			(*reset)(void);
-};
+#define	__HAVE_PIC_SET_PRIORITY
 
-struct arm_platform_info {
-	const char *			compat;
-	const struct arm_platform *	ops;
-};
-
-#define _ARM_PLATFORM_REGISTER(name)	\
-	__link_set_add_rodata(arm_platforms, __CONCAT(name,_platinfo));
-
-#define ARM_PLATFORM(_name, _compat, _ops)				\
-static const struct arm_platform_info __CONCAT(_name,_platinfo) = {	\
-	.compat = (_compat),						\
-	.ops = (_ops)							\
-};									\
-_ARM_PLATFORM_REGISTER(_name)
-
-TAILQ_HEAD(arm_platlist, arm_platform_info);
-
-const struct arm_platform *	arm_fdt_platform(void);
-
-void    arm_fdt_cpu_hatch_register(void *, void (*)(void *, struct cpu_info *));
-void    arm_fdt_cpu_hatch(struct cpu_info *);
+#define	PIC_MAXSOURCES		256
+#define	PIC_MAXMAXSOURCES	(PIC_MAXSOURCES + 32)
 
 void	arm_fdt_irq_set_handler(void (*)(void *));
 void	arm_fdt_irq_handler(void *);
 
-#endif /* !_ARM_ARM_FDTVAR_H */
+#include <arm/pic/picvar.h>
+
+#endif
+
+#endif /* _ARM_FDT_INTR_H */

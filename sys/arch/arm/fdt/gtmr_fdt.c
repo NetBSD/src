@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_fdt.c,v 1.2 2017/05/30 21:12:41 jmcneill Exp $ */
+/* $NetBSD: gtmr_fdt.c,v 1.3 2017/05/30 22:00:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.2 2017/05/30 21:12:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.3 2017/05/30 22:00:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.2 2017/05/30 21:12:41 jmcneill Exp $"
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 
-#include <arm/cortex/gic_intr.h>
+#include <arm/cortex/gtmr_intr.h>
 #include <arm/cortex/mpcore_var.h>
 #include <arm/cortex/gtmr_var.h>
 
