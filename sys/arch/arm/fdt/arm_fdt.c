@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.1 2017/05/29 23:21:12 jmcneill Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.2 2017/05/30 21:12:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,14 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.1 2017/05/29 23:21:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.2 2017/05/30 21:12:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kmem.h>
+#include <sys/bus.h>
 
 #include <machine/cpu.h>
-#include <sys/bus.h>
 
 #include <dev/fdt/fdtvar.h>
 #include <dev/ofw/openfirm.h>
@@ -49,6 +50,15 @@ CFATTACH_DECL_NEW(arm_fdt, 0,
 
 static struct arm_platlist arm_platform_list =
     TAILQ_HEAD_INITIALIZER(arm_platform_list);
+
+struct arm_fdt_cpu_hatch_cb {
+	TAILQ_ENTRY(arm_fdt_cpu_hatch_cb) next;
+	void (*cb)(void *, struct cpu_info *);
+	void *priv;
+};
+
+static TAILQ_HEAD(, arm_fdt_cpu_hatch_cb) arm_fdt_cpu_hatch_cbs =
+    TAILQ_HEAD_INITIALIZER(arm_fdt_cpu_hatch_cbs);
 
 int
 arm_fdt_match(device_t parent, cfdata_t cf, void *aux)
@@ -97,4 +107,24 @@ arm_fdt_platform(void)
 	}
 
 	return booted_platform == NULL ? NULL : booted_platform->ops;
+}
+
+void
+arm_fdt_cpu_hatch_register(void *priv, void (*cb)(void *, struct cpu_info *))
+{
+	struct arm_fdt_cpu_hatch_cb *c;
+
+	c = kmem_alloc(sizeof(*c), KM_SLEEP);
+	c->priv = priv;
+	c->cb = cb;
+	TAILQ_INSERT_TAIL(&arm_fdt_cpu_hatch_cbs, c, next);
+}
+
+void
+arm_fdt_cpu_hatch(struct cpu_info *ci)
+{
+	struct arm_fdt_cpu_hatch_cb *c;
+
+	TAILQ_FOREACH(c, &arm_fdt_cpu_hatch_cbs, next)
+		c->cb(c->priv, ci);
 }
