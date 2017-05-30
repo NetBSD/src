@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.3 2017/05/28 00:40:20 jmcneill Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.4 2017/05/30 22:00:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.3 2017/05/28 00:40:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.4 2017/05/30 22:00:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -129,6 +129,8 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 	};
 
 	config_found(self, &mpcaa, NULL);
+
+	arm_fdt_irq_set_handler(armgic_irq_handler);
 }
 
 static void *
