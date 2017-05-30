@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.149 2017/05/30 09:39:08 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.150 2017/05/30 09:39:53 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.149 2017/05/30 09:39:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.150 2017/05/30 09:39:53 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -7287,7 +7287,6 @@ key_parse(struct mbuf *m, struct socket *so)
 	struct sadb_msghdr mh;
 	u_int orglen;
 	int error;
-	int target;
 
 	KASSERT(m != NULL);
 	KASSERT(so != NULL);
@@ -7306,7 +7305,6 @@ key_parse(struct mbuf *m, struct socket *so)
 	}
 	msg = mtod(m, struct sadb_msg *);
 	orglen = PFKEY_UNUNIT64(msg->sadb_msg_len);
-	target = KEY_SENDUP_ONE;
 
 	if ((m->m_flags & M_PKTHDR) == 0 ||
 	    m->m_pkthdr.len != orglen) {
@@ -7526,8 +7524,7 @@ key_parse(struct mbuf *m, struct socket *so)
 	return (*key_typesw[msg->sadb_msg_type])(so, m, &mh);
 
 senderror:
-	msg->sadb_msg_errno = error;
-	return key_sendup_mbuf(so, m, target);
+	return key_senderror(so, m, error);
 }
 
 static int
