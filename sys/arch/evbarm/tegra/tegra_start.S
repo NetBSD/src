@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_start.S,v 1.14 2017/05/30 21:12:41 jmcneill Exp $ */
+/* $NetBSD: tegra_start.S,v 1.15 2017/05/30 22:55:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014, 2015 The NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */
 
 #include "opt_tegra.h"
-#include "opt_com.h"
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_multiprocessor.h"
 #include "opt_arm_debug.h"
+#include "opt_fdt_arm.h"
 
 #include <arm/asm.h>
 #include <arm/armreg.h>
@@ -42,7 +42,7 @@
 
 #include <arm/nvidia/tegra_reg.h>
 
-RCSID("$NetBSD: tegra_start.S,v 1.14 2017/05/30 21:12:41 jmcneill Exp $")
+RCSID("$NetBSD: tegra_start.S,v 1.15 2017/05/30 22:55:27 jmcneill Exp $")
 
 #if defined(VERBOSE_INIT_ARM) && defined(CONSADDR)
 #define	XPUTC(n)	mov r0, n; bl xputc
