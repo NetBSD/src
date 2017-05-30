@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.124 2016/07/28 07:52:06 martin Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.125 2017/05/30 17:09:17 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.124 2016/07/28 07:52:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.125 2017/05/30 17:09:17 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -590,6 +590,7 @@ uao_detach(struct uvm_object *uobj)
 	 * Drop the reference.  If it was the last one, destroy the object.
 	 */
 
+	KASSERT(uobj->uo_refs > 0);
 	UVMHIST_LOG(maphist,"  (uobj=0x%x)  ref=%d", uobj,uobj->uo_refs,0,0);
 	if (atomic_dec_uint_nv(&uobj->uo_refs) > 0) {
 		UVMHIST_LOG(maphist, "<- done (rc>0)", 0,0,0,0);
