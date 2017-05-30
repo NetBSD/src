@@ -1,4 +1,4 @@
-/*	$NetBSD: can.h,v 1.2 2017/05/27 21:02:56 bouyer Exp $	*/
+/*	$NetBSD: can.h,v 1.3 2017/05/30 13:30:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _NETCAN_CAN_H
 
 #include <sys/featuretest.h>
-#include <machine/int_types.h>
+#include <sys/types.h>
 
 
 /* Definitions compatible (as much as possible) with socketCAN */

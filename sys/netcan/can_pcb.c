@@ -1,4 +1,4 @@
-/*	$NetBSD: can_pcb.c,v 1.2 2017/05/27 21:02:56 bouyer Exp $	*/
+/*	$NetBSD: can_pcb.c,v 1.3 2017/05/30 13:30:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.2 2017/05/27 21:02:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.3 2017/05/30 13:30:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,10 @@ can_setsockaddr(struct canpcb *canp, struct sockaddr_can *scan)
 	memset(scan, 0, sizeof (*scan));
 	scan->can_family = AF_CAN;
 	scan->can_len = sizeof(*scan);
-	scan->can_ifindex = canp->canp_ifp->if_index;
+	if (canp->canp_ifp) 
+		scan->can_ifindex = canp->canp_ifp->if_index;
+	else
+		scan->can_ifindex = 0;
 	mutex_exit(&canp->canp_mtx);
 }
 
