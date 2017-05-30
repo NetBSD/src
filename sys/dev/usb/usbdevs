@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.735 2017/05/23 00:29:20 khorben Exp $
+$NetBSD: usbdevs,v 1.736 2017/05/30 20:13:35 jnemeth Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -554,6 +554,7 @@ vendor ENCORE		0x203d	Encore
 vendor HAUPPAUGE2	0x2040	Hauppauge Computer Works
 vendor PARA		0x20b8	PARA Industrial
 vendor TRENDNET		0x20f4	TRENDnet
+vendor RTSYS		0x2100	RT Systems
 vendor DLINK3		0x2101  D-Link
 vendor VIALABS		0x2109	VIA Labs
 vendor ERICSSON		0x2282	Ericsson
@@ -2823,6 +2824,9 @@ product ROLAND UM3		0x009A	EDIROL UM-3
 product ROLAND UA4FX 		0x00A3	EDIROL UA-4FX
 product ROLAND SONICCELL	0x00C2	SonicCell
 product ROLAND UMONE		0x012a	UM-ONE MIDI I/F
+
+/* RT Systems products */
+product RTSYS CT57A		0x9e51	CT57A Radio Cable
 
 /* Sagem products */
 product SAGEM XG760A		0x004a	XG-760A
