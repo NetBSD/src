@@ -1,7 +1,7 @@
-/* $NetBSD: tegra_machdep.c,v 1.48 2017/05/29 23:21:12 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.1 2017/05/30 10:27:53 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.48 2017/05/29 23:21:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.1 2017/05/30 10:27:53 jmcneill Exp $");
 
-#include "opt_tegra.h"
 #include "opt_machdep.h"
 #include "opt_ddb.h"
 #include "opt_md.h"
 #include "opt_arm_debug.h"
 #include "opt_multiprocessor.h"
+#include "opt_cpuoptions.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,18 +66,18 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.48 2017/05/29 23:21:12 jmcneill 
 #include <arm/arm32/machdep.h>
 
 #include <evbarm/include/autoconf.h>
-#include <evbarm/tegra/platform.h>
+#include <evbarm/fdt/platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>
 
-#ifndef TEGRA_MAX_BOOT_STRING
-#define TEGRA_MAX_BOOT_STRING 1024
+#ifndef FDT_MAX_BOOT_STRING
+#define FDT_MAX_BOOT_STRING 1024
 #endif
 
 BootConfig bootconfig;
-char bootargs[TEGRA_MAX_BOOT_STRING] = "";
+char bootargs[FDT_MAX_BOOT_STRING] = "";
 char *boot_args = NULL;
-u_int uboot_args[4] = { 0 };	/* filled in by tegra_start.S (not in bss) */
+u_int uboot_args[4] = { 0 };	/* filled in by xxx_start.S (not in bss) */
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -87,9 +87,9 @@ static uint8_t fdt_data[FDT_BUF_SIZE];
 extern char KERNEL_BASE_phys[];
 #define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
 
-static void tegra_device_register(device_t, void *);
-static void tegra_reset(void);
-static void tegra_powerdown(void);
+static void fdt_device_register(device_t, void *);
+static void fdt_reset(void);
+static void fdt_powerdown(void);
 
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
 static struct boot_physmem bp_lowgig = {
@@ -101,7 +101,7 @@ static struct boot_physmem bp_lowgig = {
 
 #ifdef VERBOSE_INIT_ARM
 static void
-tegra_putchar(char c)
+fdt_putchar(char c)
 {
 	const struct arm_platform *plat = arm_fdt_platform();
 	if (plat && plat->early_purchar)
@@ -109,15 +109,14 @@ tegra_putchar(char c)
 }
 
 static void
-tegra_putstr(const char *s)
+fdt_putstr(const char *s)
 {
-	for (const char *p = s; *p; p++) {
-		tegra_putchar(*p);
-	}
+	for (const char *p = s; *p; p++)
+		fdt_putchar(*p);
 }
 
 static void
-tegra_printn(u_int n, int base)
+fdt_printn(u_int n, int base)
 {
 	char *p, buf[(sizeof(u_int) * NBBY / 3) + 1 + 2 /* ALT + SIGN */];
 
@@ -127,31 +126,18 @@ tegra_printn(u_int n, int base)
 	} while (n /= base);
 
 	do {
-		tegra_putchar(*--p);
+		fdt_putchar(*--p);
 	} while (p > buf);
 }
 #define DPRINTF(...)		printf(__VA_ARGS__)
-#define DPRINT(x)		tegra_putstr(x)
-#define DPRINTN(x,b)		tegra_printn((x), (b))
+#define DPRINT(x)		fdt_putstr(x)
+#define DPRINTN(x,b)		fdt_printn((x), (b))
 #else
 #define DPRINTF(...)
 #define DPRINT(x)
 #define DPRINTN(x,b)
 #endif
 
-/*
- * u_int initarm(...)
- *
- * Initial entry point on startup. This gets called before main() is
- * entered.
- * It should be responsible for setting up everything that must be
- * in place when main is called.
- * This includes
- *   Taking a copy of the boot configuration structure.
- *   Initialising the physical console so characters can be printed.
- *   Setting up page tables for the kernel
- *   Relocating the kernel to the bottom of physical memory
- */
 u_int
 initarm(void *arg)
 {
@@ -164,9 +150,8 @@ initarm(void *arg)
 	int error = fdt_check_header(fdt_addr_r);
 	if (error == 0) {
 		error = fdt_move(fdt_addr_r, fdt_data, sizeof(fdt_data));
-		if (error != 0) {
+		if (error != 0)
 			panic("fdt_move failed: %s", fdt_strerror(error));
-		}
 		fdtbus_set_data(fdt_data);
 	} else {
 		panic("fdt_check_header failed: %s", fdt_strerror(error));
@@ -194,39 +179,41 @@ initarm(void *arg)
 	DPRINT(" consinit");
 	consinit();
 
-	DPRINTF(" cbar=%#x", armreg_cbar_read());
-
 	DPRINTF(" ok\n");
 
 	DPRINTF("uboot: args %#x, %#x, %#x, %#x\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
 
-	cpu_reset_address = tegra_reset;
-	cpu_powerdown_address = tegra_powerdown;
-	evbarm_device_register = tegra_device_register;
+	cpu_reset_address = fdt_reset;
+	cpu_powerdown_address = fdt_powerdown;
+	evbarm_device_register = fdt_device_register;
 
 	/* Talk to the user */
-	DPRINTF("\nNetBSD/evbarm (tegra) booting ...\n");
+	DPRINTF("\nNetBSD/evbarm (fdt) booting ...\n");
 
 #ifdef BOOT_ARGS
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
 #endif
 
-	DPRINTF("KERNEL_BASE=0x%x, KERNEL_VM_BASE=0x%x, KERNEL_VM_BASE - KERNEL_BASE=0x%x, KERNEL_BASE_VOFFSET=0x%x\n",
-		KERNEL_BASE, KERNEL_VM_BASE, KERNEL_VM_BASE - KERNEL_BASE, KERNEL_BASE_VOFFSET);
+	DPRINTF("KERNEL_BASE=0x%x, "
+		"KERNEL_VM_BASE=0x%x, "
+		"KERNEL_VM_BASE - KERNEL_BASE=0x%x, "
+		"KERNEL_BASE_VOFFSET=0x%x\n",
+		KERNEL_BASE,
+		KERNEL_VM_BASE,
+		KERNEL_VM_BASE - KERNEL_BASE,
+		KERNEL_BASE_VOFFSET);
 
 	const int memory = OF_finddevice("/memory");
 	if (fdtbus_get_reg64(memory, 0, &memory_addr, &memory_size) != 0)
 		panic("Cannot determine memory size");
 
-	DPRINTF("FDT memory node = %d, addr %llx, size %llu\n",
-	    memory, (unsigned long long)memory_addr,
-	    (unsigned long long)memory_size);
-
+#if !defined(_LP64)
 	/* Cannot map memory above 4GB */
 	if (memory_addr + memory_size > 0x100000000)
 		memory_size = 0x100000000 - memory_addr;
+#endif
 
 	ram_size = (bus_size_t)memory_size;
 
@@ -244,24 +231,10 @@ initarm(void *arg)
 	const bool mapallmem_p = false;
 #endif
 
-	/*
-	 * If MEMSIZE specified less than what we really have, limit ourselves
-	 * to that.
-	 */
-#ifdef MEMSIZE
-	if (ram_size == 0 || ram_size > (unsigned)MEMSIZE * 1024 * 1024)
-		ram_size = (unsigned)MEMSIZE * 1024 * 1024;
-	DPRINTF("ram_size = 0x%x\n", (int)ram_size);
-#else
-	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
-#endif
-
 	/* Fake bootconfig structure for the benefit of pmap.c. */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = (bus_addr_t)memory_addr;
 	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
-
-	KASSERT((armreg_pfr1_read() & ARM_PFR1_SEC_MASK) != 0);
 
 	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
 	    KERNEL_BASE_PHYS);
@@ -269,9 +242,8 @@ initarm(void *arg)
 	    plat->devmap(), mapallmem_p);
 
 	const int chosen = OF_finddevice("/chosen");
-	if (chosen >= 0) {
+	if (chosen >= 0)
 		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
-	}
 
 	DPRINTF("bootargs: %s\n", bootargs);
 
@@ -310,8 +282,8 @@ consinit(void)
 	initialized = true;
 }
 
-void
-tegra_device_register(device_t self, void *aux)
+static void
+fdt_device_register(device_t self, void *aux)
 {
 	const struct arm_platform *plat = arm_fdt_platform();
 
@@ -320,7 +292,7 @@ tegra_device_register(device_t self, void *aux)
 }
 
 static void
-tegra_reset(void)
+fdt_reset(void)
 {
 	const struct arm_platform *plat = arm_fdt_platform();
 
@@ -331,7 +303,7 @@ tegra_reset(void)
 }
 
 static void
-tegra_powerdown(void)
+fdt_powerdown(void)
 {
 	fdtbus_power_poweroff();
 }
