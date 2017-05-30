@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.3 2017/05/29 23:21:12 jmcneill Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.4 2017/05/30 22:55:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,12 +28,12 @@
 
 #include "opt_tegra.h"
 #include "opt_multiprocessor.h"
+#include "opt_fdt_arm.h"
 
-#include "com.h"
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.3 2017/05/29 23:21:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.4 2017/05/30 22:55:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,6 +56,9 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.3 2017/05/29 23:21:12 jmcneill 
 #if NUKBD > 0
 #include <dev/usb/ukbdvar.h>
 #endif
+
+#include <dev/ic/ns16550reg.h>
+#include <dev/ic/comreg.h>
 
 #define	DEVMAP_ALIGN(a)	((a) & ~L1_S_OFFSET)
 #define	DEVMAP_SIZE(s)	roundup2((s), L1_S_SIZE)

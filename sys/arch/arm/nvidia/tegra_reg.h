@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_reg.h,v 1.22 2017/04/21 21:13:04 jmcneill Exp $ */
+/* $NetBSD: tegra_reg.h,v 1.23 2017/05/30 22:55:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,8 +28,6 @@
 
 #ifndef _ARM_TEGRA_REG_H
 #define _ARM_TEGRA_REG_H
-
-#define CONSADDR_VA	(CONSADDR - TEGRA_APB_BASE + TEGRA_APB_VBASE)
 
 #define TEGRA_PCIE_OFFSET	0x01000000
 #define TEGRA_PCIE_SIZE		0x3f000000

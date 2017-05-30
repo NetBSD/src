@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.1 2017/05/30 10:27:53 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.2 2017/05/30 22:55:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.1 2017/05/30 10:27:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.2 2017/05/30 22:55:27 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -104,7 +104,7 @@ static void
 fdt_putchar(char c)
 {
 	const struct arm_platform *plat = arm_fdt_platform();
-	if (plat && plat->early_purchar)
+	if (plat && plat->early_putchar)
 		plat->early_putchar(c);
 }
 
@@ -163,7 +163,9 @@ initarm(void *arg)
 		panic("Kernel does not support this device");
 
 	/* Early console may be available, announce ourselves. */
-	DPRINT("NetBSD FDT init");
+	DPRINT("FDT<");
+	DPRINTN((uintptr_t)fdt_addr_r, 16);
+	DPRINT(">");
 
 	DPRINT(" devmap");
 	pmap_devmap_register(plat->devmap());
