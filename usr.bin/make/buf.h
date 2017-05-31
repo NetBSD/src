@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.18 2017/05/31 21:15:47 maya Exp $	*/
+/*	$NetBSD: buf.h,v 1.19 2017/05/31 22:02:06 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -77,8 +77,8 @@
  *	Header for users of the buf library.
  */
 
-#ifndef _MAKE_BUF_H
-#define _MAKE_BUF_H
+#ifndef MAKE_BUF_H
+#define MAKE_BUF_H
 
 typedef char Byte;
 
@@ -116,4 +116,4 @@ void Buf_Init(Buffer *, int);
 Byte *Buf_Destroy(Buffer *, Boolean);
 Byte *Buf_DestroyCompact(Buffer *);
 
-#endif /* _MAKE_BUF_H */
+#endif /* MAKE_BUF_H */
