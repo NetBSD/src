@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.750 2017/05/30 05:35:03 pgoyette Exp $
+# $NetBSD: mi,v 1.751 2017/05/31 00:18:21 perseant Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2546,12 +2546,14 @@
 ./usr/tests/lib/libc/locale/t_mbsnrtowcs	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_mbstowcs		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_mbtowc		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_sprintf		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_toupper		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wcscspn		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wcspbrk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wcsspn		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wcstod		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wctomb		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_wctype		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/net			tests-lib-tests	compattestfile,atf
 ./usr/tests/lib/libc/net/Atffile		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/net/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
