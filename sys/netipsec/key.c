@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.156 2017/05/31 09:50:04 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.157 2017/05/31 09:51:31 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.156 2017/05/31 09:50:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.157 2017/05/31 09:51:31 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -2215,11 +2215,11 @@ key_spddelete2(struct socket *so, struct mbuf *m,
 	struct sadb_msg *newmsg;
 	int off, len;
 
+	CTASSERT(PFKEY_ALIGN8(sizeof(struct sadb_msg)) <= MCLBYTES);
+
 	/* create new sadb_msg to reply. */
 	len = PFKEY_ALIGN8(sizeof(struct sadb_msg));
 
-	if (len > MCLBYTES)
-		return key_senderror(so, m, ENOBUFS);
 	MGETHDR(n, M_DONTWAIT, MT_DATA);
 	if (n && len > MHLEN) {
 		MCLGET(n, M_DONTWAIT);
@@ -3798,9 +3798,10 @@ key_setsadbmsg(u_int8_t type,  u_int16_t tlen, u_int8_t satype,
 	struct sadb_msg *p;
 	int len;
 
+	CTASSERT(PFKEY_ALIGN8(sizeof(struct sadb_msg)) <= MCLBYTES);
+
 	len = PFKEY_ALIGN8(sizeof(struct sadb_msg));
-	if (len > MCLBYTES)
-		return NULL;
+
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m && len > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
@@ -4934,11 +4935,12 @@ key_getspi(struct socket *so, struct mbuf *m,
 	struct sadb_msg *newmsg;
 	int off, len;
 
+	CTASSERT(PFKEY_ALIGN8(sizeof(struct sadb_msg)) +
+	    PFKEY_ALIGN8(sizeof(struct sadb_sa)) <= MCLBYTES);
+
 	/* create new sadb_msg to reply. */
 	len = PFKEY_ALIGN8(sizeof(struct sadb_msg)) +
 	    PFKEY_ALIGN8(sizeof(struct sadb_sa));
-	if (len > MCLBYTES)
-		return key_senderror(so, m, ENOBUFS);
 
 	MGETHDR(n, M_DONTWAIT, MT_DATA);
 	if (len > MHLEN) {
