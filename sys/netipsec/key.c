@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.150 2017/05/30 09:39:53 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.151 2017/05/31 01:31:07 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.150 2017/05/30 09:39:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.151 2017/05/31 01:31:07 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -340,27 +340,12 @@ do { \
 } while (0)
 
 /*
- * set parameters into secpolicyindex buffer.
- * Must allocate secpolicyindex buffer passed to this function.
- */
-#define KEY_SETSECSPIDX(_dir, s, d, ps, pd, ulp, idx) \
-do { \
-	memset((idx), 0, sizeof(struct secpolicyindex));                     \
-	(idx)->dir = (_dir);                                                 \
-	(idx)->prefs = (ps);                                                 \
-	(idx)->prefd = (pd);                                                 \
-	(idx)->ul_proto = (ulp);                                             \
-	memcpy(&(idx)->src, (s), ((const struct sockaddr *)(s))->sa_len);    \
-	memcpy(&(idx)->dst, (d), ((const struct sockaddr *)(d))->sa_len);    \
-} while (0)
-
-/*
  * set parameters into secasindex buffer.
  * Must allocate secasindex buffer before calling this function.
  */
 static int
-key_setsecasidx (int, int, int, const struct sadb_address *,
-		     const struct sadb_address *, struct secasindex *);
+key_setsecasidx(int, int, int, const struct sockaddr *,
+    const struct sockaddr *, struct secasindex *);
 
 /* key statistics */
 struct _keystat {
@@ -373,6 +358,16 @@ struct sadb_msghdr {
 	int extoff[SADB_EXT_MAX + 1];
 	int extlen[SADB_EXT_MAX + 1];
 };
+
+static void
+key_init_spidx_bymsghdr(struct secpolicyindex *, const struct sadb_msghdr *);
+
+static const struct sockaddr *
+key_msghdr_get_sockaddr(const struct sadb_msghdr *mhp, int idx)
+{
+
+	return PFKEY_ADDR_SADDR((struct sadb_address *)mhp->ext[idx]);
+}
 
 static struct secasvar *key_allocsa_policy (const struct secasindex *);
 #if 0
@@ -1854,7 +1849,7 @@ static int
 key_spdadd(struct socket *so, struct mbuf *m,
 	   const struct sadb_msghdr *mhp)
 {
-	const struct sadb_address *src0, *dst0;
+	const struct sockaddr *src, *dst;
 	const struct sadb_x_policy *xpl0;
 	struct sadb_x_policy *xpl;
 	const struct sadb_lifetime *lft = NULL;
@@ -1889,19 +1884,11 @@ key_spdadd(struct socket *so, struct mbuf *m,
 		lft = (struct sadb_lifetime *)mhp->ext[SADB_EXT_LIFETIME_HARD];
 	}
 
-	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
-	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
+	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
+	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
 	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
 
-	/* make secindex */
-	/* XXX boundary check against sa_len */
-	KEY_SETSECSPIDX(xpl0->sadb_x_policy_dir,
-	                src0 + 1,
-	                dst0 + 1,
-	                src0->sadb_address_prefixlen,
-	                dst0->sadb_address_prefixlen,
-	                src0->sadb_address_proto,
-	                &spidx);
+	key_init_spidx_bymsghdr(&spidx, mhp);
 
 	/* checking the direciton. */
 	switch (xpl0->sadb_x_policy_dir) {
@@ -1963,23 +1950,14 @@ key_spdadd(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, ENOBUFS);
 	}
 
-	/* XXX boundary check against sa_len */
-	KEY_SETSECSPIDX(xpl0->sadb_x_policy_dir,
-	                src0 + 1,
-	                dst0 + 1,
-	                src0->sadb_address_prefixlen,
-	                dst0->sadb_address_prefixlen,
-	                src0->sadb_address_proto,
-	                &newsp->spidx);
+	key_init_spidx_bymsghdr(&newsp->spidx, mhp);
 
 	/* sanity check on addr pair */
-	if (((const struct sockaddr *)(src0 + 1))->sa_family !=
-	    ((const struct sockaddr *)(dst0+ 1))->sa_family) {
+	if (src->sa_family != dst->sa_family) {
 		kmem_free(newsp, sizeof(*newsp));
 		return key_senderror(so, m, EINVAL);
 	}
-	if (((const struct sockaddr *)(src0 + 1))->sa_len !=
-	    ((const struct sockaddr *)(dst0+ 1))->sa_len) {
+	if (src->sa_len != dst->sa_len) {
 		kmem_free(newsp, sizeof(*newsp));
 		return key_senderror(so, m, EINVAL);
 	}
@@ -2114,7 +2092,6 @@ static int
 key_spddelete(struct socket *so, struct mbuf *m,
               const struct sadb_msghdr *mhp)
 {
-	struct sadb_address *src0, *dst0;
 	struct sadb_x_policy *xpl0;
 	struct secpolicyindex spidx;
 	struct secpolicy *sp;
@@ -2137,19 +2114,10 @@ key_spddelete(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 	}
 
-	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
-	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
-	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
-
 	/* make secindex */
-	/* XXX boundary check against sa_len */
-	KEY_SETSECSPIDX(xpl0->sadb_x_policy_dir,
-	                src0 + 1,
-	                dst0 + 1,
-	                src0->sadb_address_prefixlen,
-	                dst0->sadb_address_prefixlen,
-	                src0->sadb_address_proto,
-	                &spidx);
+	key_init_spidx_bymsghdr(&spidx, mhp);
+
+	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
 
 	/* checking the direciton. */
 	switch (xpl0->sadb_x_policy_dir) {
@@ -4807,9 +4775,8 @@ key_proto2satype(u_int16_t proto)
 
 static int
 key_setsecasidx(int proto, int mode, int reqid,
-	        const struct sadb_address * src,
-	 	const struct sadb_address * dst,
-		struct secasindex * saidx)
+    const struct sockaddr *src, const struct sockaddr *dst,
+    struct secasindex * saidx)
 {
 	const union sockaddr_union *src_u = (const union sockaddr_union *)src;
 	const union sockaddr_union *dst_u = (const union sockaddr_union *)dst;
@@ -4832,6 +4799,30 @@ key_setsecasidx(int proto, int mode, int reqid,
 	return 0;
 }
 
+static void
+key_init_spidx_bymsghdr(struct secpolicyindex *spidx,
+    const struct sadb_msghdr *mhp)
+{
+	const struct sadb_address *src0, *dst0;
+	const struct sockaddr *src, *dst;
+	const struct sadb_x_policy *xpl0;
+
+	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
+	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
+	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
+	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
+	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
+
+	memset(spidx, 0, sizeof(*spidx));
+	spidx->dir = xpl0->sadb_x_policy_dir;
+	spidx->prefs = src0->sadb_address_prefixlen;
+	spidx->prefd = dst0->sadb_address_prefixlen;
+	spidx->ul_proto = src0->sadb_address_proto;
+	/* XXX boundary check against sa_len */
+	memcpy(&spidx->src, src, src->sa_len);
+	memcpy(&spidx->dst, dst, dst->sa_len);
+}
+
 /* %%% PF_KEY */
 /*
  * SADB_GETSPI processing is to receive
@@ -4849,7 +4840,7 @@ static int
 key_getspi(struct socket *so, struct mbuf *m,
 	   const struct sadb_msghdr *mhp)
 {
-	struct sadb_address *src0, *dst0;
+	const struct sockaddr *src, *dst;
 	struct secasindex saidx;
 	struct secashead *newsah;
 	struct secasvar *newsav;
@@ -4883,8 +4874,8 @@ key_getspi(struct socket *so, struct mbuf *m,
 		reqid = 0;
 	}
 
-	src0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_SRC]);
-	dst0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_DST]);
+	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
+	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
 
 	/* map satype to proto */
 	proto = key_satype2proto(mhp->msg->sadb_msg_satype);
@@ -4894,7 +4885,7 @@ key_getspi(struct socket *so, struct mbuf *m,
 	}
 
 
-	error = key_setsecasidx(proto, mode, reqid, src0 + 1, dst0 + 1, &saidx);
+	error = key_setsecasidx(proto, mode, reqid, src, dst, &saidx);
 	if (error != 0)
 		return key_senderror(so, m, EINVAL);
 
@@ -5222,7 +5213,7 @@ static int
 key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 {
 	struct sadb_sa *sa0;
-	struct sadb_address *src0, *dst0;
+	const struct sockaddr *src, *dst;
 	struct secasindex saidx;
 	struct secashead *sah;
 	struct secasvar *sav;
@@ -5274,10 +5265,10 @@ key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	/* XXX boundary checking for other extensions */
 
 	sa0 = (struct sadb_sa *)mhp->ext[SADB_EXT_SA];
-	src0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_SRC]);
-	dst0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_DST]);
+	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
+	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
 
-	error = key_setsecasidx(proto, mode, reqid, src0 + 1, dst0 + 1, &saidx);
+	error = key_setsecasidx(proto, mode, reqid, src, dst, &saidx);
 	if (error != 0)
 		return key_senderror(so, m, EINVAL);
 
@@ -5425,7 +5416,7 @@ key_add(struct socket *so, struct mbuf *m,
 	const struct sadb_msghdr *mhp)
 {
 	struct sadb_sa *sa0;
-	struct sadb_address *src0, *dst0;
+	const struct sockaddr *src, *dst;
 	struct secasindex saidx;
 	struct secashead *newsah;
 	struct secasvar *newsav;
@@ -5476,10 +5467,10 @@ key_add(struct socket *so, struct mbuf *m,
 	}
 
 	sa0 = (struct sadb_sa *)mhp->ext[SADB_EXT_SA];
-	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
-	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
+	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
+	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
 
-	error = key_setsecasidx(proto, mode, reqid, src0 + 1, dst0 + 1, &saidx);
+	error = key_setsecasidx(proto, mode, reqid, src, dst, &saidx);
 	if (error != 0)
 		return key_senderror(so, m, EINVAL);
 
@@ -5678,7 +5669,7 @@ key_delete(struct socket *so, struct mbuf *m,
 	   const struct sadb_msghdr *mhp)
 {
 	struct sadb_sa *sa0;
-	struct sadb_address *src0, *dst0;
+	const struct sockaddr *src, *dst;
 	struct secasindex saidx;
 	struct secashead *sah;
 	struct secasvar *sav = NULL;
@@ -5723,11 +5714,10 @@ key_delete(struct socket *so, struct mbuf *m,
 	}
 
 	sa0 = (struct sadb_sa *)mhp->ext[SADB_EXT_SA];
-	src0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_SRC]);
-	dst0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_DST]);
+	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
+	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
 
-	error = key_setsecasidx(proto, IPSEC_MODE_ANY, 0, src0 + 1, dst0 + 1,
-	    &saidx);
+	error = key_setsecasidx(proto, IPSEC_MODE_ANY, 0, src, dst, &saidx);
 	if (error != 0)
 		return key_senderror(so, m, EINVAL);
 
@@ -5786,18 +5776,17 @@ static int
 key_delete_all(struct socket *so, struct mbuf *m,
 	       const struct sadb_msghdr *mhp, u_int16_t proto)
 {
-	struct sadb_address *src0, *dst0;
+	const struct sockaddr *src, *dst;
 	struct secasindex saidx;
 	struct secashead *sah;
 	struct secasvar *sav, *nextsav;
 	u_int state;
 	int error;
 
-	src0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_SRC]);
-	dst0 = (struct sadb_address *)(mhp->ext[SADB_EXT_ADDRESS_DST]);
+	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
+	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
 
-	error = key_setsecasidx(proto, IPSEC_MODE_ANY, 0, src0 + 1, dst0 + 1,
-	    &saidx);
+	error = key_setsecasidx(proto, IPSEC_MODE_ANY, 0, src, dst, &saidx);
 	if (error != 0)
 		return key_senderror(so, m, EINVAL);
 
@@ -5872,7 +5861,7 @@ key_get(struct socket *so, struct mbuf *m,
 	const struct sadb_msghdr *mhp)
 {
 	struct sadb_sa *sa0;
-	struct sadb_address *src0, *dst0;
+	const struct sockaddr *src, *dst;
 	struct secasindex saidx;
 	struct secashead *sah;
 	struct secasvar *sav = NULL;
@@ -5904,11 +5893,10 @@ key_get(struct socket *so, struct mbuf *m,
 	}
 
 	sa0 = (struct sadb_sa *)mhp->ext[SADB_EXT_SA];
-	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
-	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
+	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
+	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
 
-	error = key_setsecasidx(proto, IPSEC_MODE_ANY, 0, src0 + 1, dst0 + 1,
-	    &saidx);
+	error = key_setsecasidx(proto, IPSEC_MODE_ANY, 0, src, dst, &saidx);
 	if (error != 0)
 		return key_senderror(so, m, EINVAL);
 
@@ -6520,7 +6508,7 @@ static int
 key_acquire2(struct socket *so, struct mbuf *m,
       	     const struct sadb_msghdr *mhp)
 {
-	const struct sadb_address *src0, *dst0;
+	const struct sockaddr *src, *dst;
 	struct secasindex saidx;
 	struct secashead *sah;
 	u_int16_t proto;
@@ -6595,11 +6583,10 @@ key_acquire2(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 	}
 
-	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
-	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
+	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
+	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
 
-	error = key_setsecasidx(proto, IPSEC_MODE_ANY, 0, src0 + 1, dst0 + 1,
-	    &saidx);
+	error = key_setsecasidx(proto, IPSEC_MODE_ANY, 0, src, dst, &saidx);
 	if (error != 0)
 		return key_senderror(so, m, EINVAL);
 
