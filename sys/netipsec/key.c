@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.153 2017/05/31 04:02:05 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.154 2017/05/31 04:02:44 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.153 2017/05/31 04:02:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.154 2017/05/31 04:02:44 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1929,21 +1929,24 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	 * If the type is either SPDADD or SPDSETIDX AND a SP is found,
 	 * then error.
 	 */
-	newsp = key_getsp(&spidx);
+    {
+	struct secpolicy *sp;
+
+	sp = key_getsp(&spidx);
 	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
-		if (newsp) {
-			key_sp_dead(newsp);
-			key_sp_unlink(newsp);	/* XXX jrs ordering */
-			KEY_FREESP(&newsp);
-			newsp = NULL;
+		if (sp) {
+			key_sp_dead(sp);
+			key_sp_unlink(sp);	/* XXX jrs ordering */
+			KEY_FREESP(&sp);
 		}
 	} else {
-		if (newsp != NULL) {
-			KEY_FREESP(&newsp);
+		if (sp != NULL) {
+			KEY_FREESP(&sp);
 			IPSECLOG(LOG_DEBUG, "a SP entry exists already.\n");
 			return key_senderror(so, m, EEXIST);
 		}
 	}
+    }
 
 	/* allocation new SP entry */
 	newsp = key_msg2sp(xpl0, PFKEY_EXTLEN(xpl0), &error);
