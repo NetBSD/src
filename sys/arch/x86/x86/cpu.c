@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.125 2017/05/23 08:54:39 nonaka Exp $	*/
+/*	$NetBSD: cpu.c,v 1.126 2017/05/31 00:19:17 maya Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.125 2017/05/23 08:54:39 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.126 2017/05/31 00:19:17 maya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -802,7 +802,7 @@ cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
 	struct pcb *pcb;
-	int s, i;
+	int s;
 
 	cpu_init_msrs(ci, true);
 	cpu_probe(ci);
@@ -835,9 +835,7 @@ cpu_hatch(void *v)
 			}
 			x86_mwait(0, 0);
 		} else {
-			for (i = 10000; i != 0; i--) {
-				x86_pause();
-			}
+			x86_pause();
 		}
 	}
 
