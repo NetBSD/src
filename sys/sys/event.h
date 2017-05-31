@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.26 2016/01/31 04:40:01 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.27 2017/05/31 00:45:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -45,17 +45,6 @@
 #define	EVFILT_TIMER		6U	/* arbitrary timer (in ms) */
 #define	EVFILT_SYSCOUNT		7U	/* number of filters */
 
-#define	EV_SET(kevp, a, b, c, d, e, f)					\
-do {									\
-	(kevp)->ident = (a);						\
-	(kevp)->filter = (b);						\
-	(kevp)->flags = (c);						\
-	(kevp)->fflags = (d);						\
-	(kevp)->data = (e);						\
-	(kevp)->udata = (f);						\
-} while (/* CONSTCOND */ 0)
-
-
 struct kevent {
 	uintptr_t	ident;		/* identifier for this event */
 	uint32_t	filter;		/* filter for event */
@@ -64,6 +53,18 @@ struct kevent {
 	int64_t		data;		/* filter data value */
 	intptr_t	udata;		/* opaque user data identifier */
 };
+
+static __inline void
+EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
+       uint32_t _flags, uint32_t _fflags, int64_t _data, intptr_t _udata)
+{
+	_kevp->ident = _ident;
+	_kevp->filter = _filter;
+	_kevp->flags = _flags;
+	_kevp->fflags = _fflags;
+	_kevp->data = _data;
+	_kevp->udata = _udata;
+}
 
 /* actions */
 #define	EV_ADD		0x0001U		/* add event to kq (implies ENABLE) */
