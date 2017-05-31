@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.34 2016/01/10 09:04:32 ryo Exp $	*/
+/*	$NetBSD: profile.h,v 1.35 2017/05/31 01:50:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,12 @@
 #define MCOUNT_COMPAT	/* nothing */
 #endif
 
+#if defined(_REENTRANT) && !defined(_KERNEL) 
+#define MCOUNT_ACTIVE	if (_gmonparam.state != GMON_PROF_ON) return
+#else
+#define MCOUNT_ACTIVE	
+#endif
+
 #define	MCOUNT \
 MCOUNT_COMPAT								\
 extern void mcount(void) __asm(MCOUNT_ENTRY)				\
@@ -55,6 +61,7 @@ mcount(void)								\
 	int selfpc, frompcindex;					\
 	int eax, ecx, edx;						\
 									\
+	MCOUNT_ACTIVE;							\
 	__asm volatile("movl %%eax,%0" : "=g" (eax));			\
 	__asm volatile("movl %%ecx,%0" : "=g" (ecx));			\
 	__asm volatile("movl %%edx,%0" : "=g" (edx));			\
