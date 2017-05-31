@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.154 2017/05/31 04:02:44 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.155 2017/05/31 05:05:38 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.154 2017/05/31 04:02:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.155 2017/05/31 05:05:38 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -410,7 +410,7 @@ static struct secasvar *key_newsav (struct mbuf *,
 #define	KEY_NEWSAV(m, sadb, sah, e)				\
 	key_newsav(m, sadb, sah, e, __func__, __LINE__)
 static void key_delsav (struct secasvar *);
-static struct secashead *key_getsah (const struct secasindex *);
+static struct secashead *key_getsah(const struct secasindex *, int);
 static struct secasvar *key_checkspidup (const struct secasindex *, u_int32_t);
 static struct secasvar *key_getsavbyspi (struct secashead *, u_int32_t);
 static int key_setsaval (struct secasvar *, struct mbuf *,
@@ -923,16 +923,9 @@ key_allocsa_policy(const struct secasindex *saidx)
 	const u_int *saorder_state_valid;
 	int arraysize;
 
-	LIST_FOREACH(sah, &sahtree, chain) {
-		if (sah->state == SADB_SASTATE_DEAD)
-			continue;
-		if (key_saidx_match(&sah->saidx, saidx, CMP_MODE_REQID))
-			goto found;
-	}
-
-	return NULL;
-
-    found:
+	sah = key_getsah(saidx, CMP_MODE_REQID);
+	if (sah == NULL)
+		return NULL;
 
 	/*
 	 * search a valid state list for outbound packet.
@@ -3052,14 +3045,14 @@ key_delsav(struct secasvar *sav)
  *	others	: found, pointer to a SA.
  */
 static struct secashead *
-key_getsah(const struct secasindex *saidx)
+key_getsah(const struct secasindex *saidx, int flag)
 {
 	struct secashead *sah;
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
-		if (key_saidx_match(&sah->saidx, saidx, CMP_REQID))
+		if (key_saidx_match(&sah->saidx, saidx, flag))
 			return sah;
 	}
 
@@ -4899,7 +4892,7 @@ key_getspi(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 
 	/* get a SA index */
-	newsah = key_getsah(&saidx);
+	newsah = key_getsah(&saidx, CMP_REQID);
 	if (newsah == NULL) {
 		/* create a new SA index */
 		newsah = key_newsah(&saidx);
@@ -5276,7 +5269,7 @@ key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 		return key_senderror(so, m, EINVAL);
 
 	/* get a SA header */
-	sah = key_getsah(&saidx);
+	sah = key_getsah(&saidx, CMP_REQID);
 	if (sah == NULL) {
 		IPSECLOG(LOG_DEBUG, "no SA index found.\n");
 		return key_senderror(so, m, ENOENT);
@@ -5478,7 +5471,7 @@ key_add(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 
 	/* get a SA header */
-	newsah = key_getsah(&saidx);
+	newsah = key_getsah(&saidx, CMP_REQID);
 	if (newsah == NULL) {
 		/* create a new SA header */
 		newsah = key_newsah(&saidx);
@@ -5725,18 +5718,13 @@ key_delete(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 
 	/* get a SA header */
-	LIST_FOREACH(sah, &sahtree, chain) {
-		if (sah->state == SADB_SASTATE_DEAD)
-			continue;
-		if (!key_saidx_match(&sah->saidx, &saidx, CMP_HEAD))
-			continue;
-
+	sah = key_getsah(&saidx, CMP_HEAD);
+	if (sah != NULL) {
 		/* get a SA with SPI. */
 		sav = key_getsavbyspi(sah, sa0->sadb_sa_spi);
-		if (sav)
-			break;
 	}
-	if (sah == NULL) {
+
+	if (sav == NULL) {
 		IPSECLOG(LOG_DEBUG, "no SA found.\n");
 		return key_senderror(so, m, ENOENT);
 	}
@@ -5793,12 +5781,8 @@ key_delete_all(struct socket *so, struct mbuf *m,
 	if (error != 0)
 		return key_senderror(so, m, EINVAL);
 
-	LIST_FOREACH(sah, &sahtree, chain) {
-		if (sah->state == SADB_SASTATE_DEAD)
-			continue;
-		if (!key_saidx_match(&sah->saidx, &saidx, CMP_HEAD))
-			continue;
-
+	sah = key_getsah(&saidx, CMP_HEAD);
+	if (sah != NULL) {
 		/* Delete all non-LARVAL SAs. */
 		SASTATE_ALIVE_FOREACH(state) {
 			if (state == SADB_SASTATE_LARVAL)
@@ -5904,18 +5888,12 @@ key_get(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 
 	/* get a SA header */
-	LIST_FOREACH(sah, &sahtree, chain) {
-		if (sah->state == SADB_SASTATE_DEAD)
-			continue;
-		if (!key_saidx_match(&sah->saidx, &saidx, CMP_HEAD))
-			continue;
-
+	sah = key_getsah(&saidx, CMP_HEAD);
+	if (sah != NULL) {
 		/* get a SA with SPI. */
 		sav = key_getsavbyspi(sah, sa0->sadb_sa_spi);
-		if (sav)
-			break;
 	}
-	if (sah == NULL) {
+	if (sav == NULL) {
 		IPSECLOG(LOG_DEBUG, "no SA found.\n");
 		return key_senderror(so, m, ENOENT);
 	}
@@ -6594,12 +6572,7 @@ key_acquire2(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 
 	/* get a SA index */
-	LIST_FOREACH(sah, &sahtree, chain) {
-		if (sah->state == SADB_SASTATE_DEAD)
-			continue;
-		if (key_saidx_match(&sah->saidx, &saidx, CMP_MODE_REQID))
-			break;
-	}
+	sah = key_getsah(&saidx, CMP_MODE_REQID);
 	if (sah != NULL) {
 		IPSECLOG(LOG_DEBUG, "a SA exists already.\n");
 		return key_senderror(so, m, EEXIST);
