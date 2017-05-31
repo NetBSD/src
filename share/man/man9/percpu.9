@@ -1,4 +1,4 @@
-.\"     $NetBSD: percpu.9,v 1.11 2014/03/18 18:20:40 riastradh Exp $
+.\"     $NetBSD: percpu.9,v 1.12 2017/05/31 23:54:17 chs Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 23, 2010
+.Dd May 31, 2017
 .Dt PERCPU 9
 .Os
 .Sh NAME
@@ -84,9 +84,7 @@ bytes of local storage on each CPU.
 The storage is initialized with zeroes.
 Treat this as an expensive operation.
 .Fn percpu_alloc
-returns
-.Dv NULL
-on failure, and a handle for the per-CPU storage on success.
+returns a handle for the per-CPU storage.
 .It Fn percpu_free "pc" "size"
 Call this in thread context to
 return to the system the per-CPU storage held by
