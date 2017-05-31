@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.120 2015/06/17 00:15:26 christos Exp $	*/
+/*	$NetBSD: puffs.c,v 1.121 2017/05/31 17:56:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.120 2015/06/17 00:15:26 christos Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.121 2017/05/31 17:56:00 christos Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -846,14 +846,14 @@ puffs__theloop(struct puffs_cc *pcc)
 			if (FIO_EN_WRITE(fio)) {
 				EV_SET(&pu->pu_evs[nchanges], fio->io_fd,
 				    EVFILT_WRITE, EV_ENABLE, 0, 0,
-				    (uintptr_t)fio);
+				    (intptr_t)fio);
 				fio->stat |= FIO_WR;
 				nchanges++;
 			}
 			if (FIO_RM_WRITE(fio)) {
 				EV_SET(&pu->pu_evs[nchanges], fio->io_fd,
 				    EVFILT_WRITE, EV_DISABLE, 0, 0,
-				    (uintptr_t)fio);
+				    (intptr_t)fio);
 				fio->stat &= ~FIO_WR;
 				nchanges++;
 			}
@@ -967,10 +967,10 @@ puffs_mainloop(struct puffs_usermount *pu)
 
 	LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
 		EV_SET(curev, fio->io_fd, EVFILT_READ, EV_ADD,
-		    0, 0, (uintptr_t)fio);
+		    0, 0, (intptr_t)fio);
 		curev++;
 		EV_SET(curev, fio->io_fd, EVFILT_WRITE, EV_ADD | EV_DISABLE,
-		    0, 0, (uintptr_t)fio);
+		    0, 0, (intptr_t)fio);
 		curev++;
 	}
 	for (i = 0; i < NSIG; i++) {
