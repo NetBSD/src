@@ -1,4 +1,4 @@
-#	$NetBSD: t_hello.sh,v 1.5 2017/05/18 10:29:47 martin Exp $
+#	$NetBSD: t_hello.sh,v 1.6 2017/05/31 11:08:35 martin Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -149,6 +149,16 @@ EOF
 	atf_check -s exit:0 -o ignore -e ignore cc -o hello -m32 \
 	    -static test.c
 	atf_check -s exit:0 -o inline:"hello static world\n" ./hello
+
+	# and another test with profile 32bit binaries
+	cat > test.c << EOF
+#include <stdio.h>
+#include <stdlib.h>
+int main(void) {printf("hello 32bit profile world\n");exit(0);}
+EOF
+	atf_check -s exit:0 -o ignore -e ignore cc -o hello -m32 \
+	    -pg test.c
+	atf_check -s exit:0 -o inline:"hello 32bit profile world\n" ./hello
 }
 
 atf_init_test_cases()
