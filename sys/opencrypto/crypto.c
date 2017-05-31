@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.77 2017/05/29 09:02:46 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.78 2017/05/31 02:17:49 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.77 2017/05/29 09:02:46 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.78 2017/05/31 02:17:49 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -790,7 +790,7 @@ crypto_unregister_locked(u_int32_t driverid, int alg, bool all)
 
 	KASSERT(mutex_owned(&crypto_drv_mtx));
 
-	if (CRYPTO_ALGORITHM_MIN <= alg && alg <= CRYPTO_ALGORITHM_MAX)
+	if (alg < CRYPTO_ALGORITHM_MIN || CRYPTO_ALGORITHM_MAX < alg)
 		return EINVAL;
 
 	cap = crypto_checkdriver(driverid);
