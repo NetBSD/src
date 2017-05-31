@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.129 2017/05/31 14:37:19 kre Exp $	*/
+/*	$NetBSD: cpu.c,v 1.130 2017/05/31 14:41:07 kre Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.129 2017/05/31 14:37:19 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130 2017/05/31 14:41:07 kre Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -802,7 +802,7 @@ cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
 	struct pcb *pcb;
-	int s;
+	int s, i;
 
 	cpu_init_msrs(ci, true);
 	cpu_probe(ci);
