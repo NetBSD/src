@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.157 2017/05/31 09:51:31 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.158 2017/05/31 09:52:43 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.157 2017/05/31 09:51:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.158 2017/05/31 09:52:43 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -367,6 +367,25 @@ key_msghdr_get_sockaddr(const struct sadb_msghdr *mhp, int idx)
 {
 
 	return PFKEY_ADDR_SADDR((struct sadb_address *)mhp->ext[idx]);
+}
+
+static struct mbuf *
+key_fill_replymsg(struct mbuf *m, int seq)
+{
+	struct sadb_msg *msg;
+
+	if (m->m_len < sizeof(*msg)) {
+		m = m_pullup(m, sizeof(*msg));
+		if (m == NULL)
+			return NULL;
+	}
+	msg = mtod(m, struct sadb_msg *);
+	msg->sadb_msg_errno = 0;
+	msg->sadb_msg_len = PFKEY_UNIT64(m->m_pkthdr.len);
+	if (seq != 0)
+		msg->sadb_msg_seq = seq;
+
+	return m;
 }
 
 static struct secasvar *key_allocsa_policy (const struct secasindex *);
@@ -1991,7 +2010,6 @@ key_spdadd(struct socket *so, struct mbuf *m,
 
     {
 	struct mbuf *n, *mpolicy;
-	struct sadb_msg *newmsg;
 	int off;
 
 	/* create new sadb_msg to reply. */
@@ -2007,14 +2025,9 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	if (!n)
 		return key_senderror(so, m, ENOBUFS);
 
-	if (n->m_len < sizeof(*newmsg)) {
-		n = m_pullup(n, sizeof(*newmsg));
-		if (!n)
-			return key_senderror(so, m, ENOBUFS);
-	}
-	newmsg = mtod(n, struct sadb_msg *);
-	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(n->m_pkthdr.len);
+	n = key_fill_replymsg(n, 0);
+	if (n == NULL)
+		return key_senderror(so, m, ENOBUFS);
 
 	off = 0;
 	mpolicy = m_pulldown(n, PFKEY_ALIGN8(sizeof(struct sadb_msg)),
@@ -2142,7 +2155,6 @@ key_spddelete(struct socket *so, struct mbuf *m,
 
     {
 	struct mbuf *n;
-	struct sadb_msg *newmsg;
 
 	/* create new sadb_msg to reply. */
 	n = key_gather_mbuf(m, mhp, 1, 4, SADB_EXT_RESERVED,
@@ -2150,9 +2162,9 @@ key_spddelete(struct socket *so, struct mbuf *m,
 	if (!n)
 		return key_senderror(so, m, ENOBUFS);
 
-	newmsg = mtod(n, struct sadb_msg *);
-	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(n->m_pkthdr.len);
+	n = key_fill_replymsg(n, 0);
+	if (n == NULL)
+		return key_senderror(so, m, ENOBUFS);
 
 	m_freem(m);
 	key_update_used();
@@ -2212,7 +2224,6 @@ key_spddelete2(struct socket *so, struct mbuf *m,
 
     {
 	struct mbuf *n, *nn;
-	struct sadb_msg *newmsg;
 	int off, len;
 
 	CTASSERT(PFKEY_ALIGN8(sizeof(struct sadb_msg)) <= MCLBYTES);
@@ -2251,9 +2262,9 @@ key_spddelete2(struct socket *so, struct mbuf *m,
 	for (nn = n; nn; nn = nn->m_next)
 		n->m_pkthdr.len += nn->m_len;
 
-	newmsg = mtod(n, struct sadb_msg *);
-	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(n->m_pkthdr.len);
+	n = key_fill_replymsg(n, 0);
+	if (n == NULL)
+		return key_senderror(so, m, ENOBUFS);
 
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
@@ -4932,7 +4943,6 @@ key_getspi(struct socket *so, struct mbuf *m,
     {
 	struct mbuf *n, *nn;
 	struct sadb_sa *m_sa;
-	struct sadb_msg *newmsg;
 	int off, len;
 
 	CTASSERT(PFKEY_ALIGN8(sizeof(struct sadb_msg)) +
@@ -4985,10 +4995,7 @@ key_getspi(struct socket *so, struct mbuf *m,
 	for (nn = n; nn; nn = nn->m_next)
 		n->m_pkthdr.len += nn->m_len;
 
-	newmsg = mtod(n, struct sadb_msg *);
-	newmsg->sadb_msg_seq = newsav->seq;
-	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(n->m_pkthdr.len);
+	key_fill_replymsg(n, newsav->seq);
 
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
@@ -5736,7 +5743,6 @@ key_delete(struct socket *so, struct mbuf *m,
 
     {
 	struct mbuf *n;
-	struct sadb_msg *newmsg;
 
 	/* create new sadb_msg to reply. */
 	n = key_gather_mbuf(m, mhp, 1, 4, SADB_EXT_RESERVED,
@@ -5744,14 +5750,9 @@ key_delete(struct socket *so, struct mbuf *m,
 	if (!n)
 		return key_senderror(so, m, ENOBUFS);
 
-	if (n->m_len < sizeof(struct sadb_msg)) {
-		n = m_pullup(n, sizeof(struct sadb_msg));
-		if (n == NULL)
-			return key_senderror(so, m, ENOBUFS);
-	}
-	newmsg = mtod(n, struct sadb_msg *);
-	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(n->m_pkthdr.len);
+	n = key_fill_replymsg(n, 0);
+	if (n == NULL)
+		return key_senderror(so, m, ENOBUFS);
 
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
@@ -5807,7 +5808,6 @@ key_delete_all(struct socket *so, struct mbuf *m,
 	}
     {
 	struct mbuf *n;
-	struct sadb_msg *newmsg;
 
 	/* create new sadb_msg to reply. */
 	n = key_gather_mbuf(m, mhp, 1, 3, SADB_EXT_RESERVED,
@@ -5815,14 +5815,9 @@ key_delete_all(struct socket *so, struct mbuf *m,
 	if (!n)
 		return key_senderror(so, m, ENOBUFS);
 
-	if (n->m_len < sizeof(struct sadb_msg)) {
-		n = m_pullup(n, sizeof(struct sadb_msg));
-		if (n == NULL)
-			return key_senderror(so, m, ENOBUFS);
-	}
-	newmsg = mtod(n, struct sadb_msg *);
-	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(n->m_pkthdr.len);
+	n = key_fill_replymsg(n, 0);
+	if (n == NULL)
+		return key_senderror(so, m, ENOBUFS);
 
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
@@ -6647,7 +6642,6 @@ key_register(struct socket *so, struct mbuf *m,
   setmsg:
     {
 	struct mbuf *n;
-	struct sadb_msg *newmsg;
 	struct sadb_supported *sup;
 	u_int len, alen, elen;
 	int off;
@@ -6691,9 +6685,10 @@ key_register(struct socket *so, struct mbuf *m,
 	off = 0;
 
 	m_copydata(m, 0, sizeof(struct sadb_msg), mtod(n, char *) + off);
-	newmsg = mtod(n, struct sadb_msg *);
-	newmsg->sadb_msg_errno = 0;
-	newmsg->sadb_msg_len = PFKEY_UNIT64(len);
+	n = key_fill_replymsg(n, 0);
+	if (n == NULL)
+		return key_senderror(so, m, ENOBUFS);
+
 	off += PFKEY_ALIGN8(sizeof(struct sadb_msg));
 
 	/* for authentication algorithm */
