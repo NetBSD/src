@@ -1,4 +1,4 @@
-/*	$NetBSD: sprite.h,v 1.12 2017/05/31 21:07:03 maya Exp $	*/
+/*	$NetBSD: sprite.h,v 1.13 2017/05/31 21:15:47 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -78,8 +78,8 @@
  * Common constants and type declarations for Sprite.
  */
 
-#ifndef _SPRITE_H
-#define _SPRITE_H
+#ifndef _MAKE_SPRITE_H
+#define _MAKE_SPRITE_H
 
 
 /*
@@ -113,4 +113,4 @@ typedef int  ReturnStatus;
 #define	SUCCESS			0x00000000
 #define	FAILURE			0x00000001
 
-#endif /* _SPRITE_H */
+#endif /* _MAKE_SPRITE_H */
