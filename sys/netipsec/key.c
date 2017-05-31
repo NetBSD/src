@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.151 2017/05/31 01:31:07 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.152 2017/05/31 04:01:21 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.151 2017/05/31 01:31:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.152 2017/05/31 04:01:21 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1884,11 +1884,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 		lft = (struct sadb_lifetime *)mhp->ext[SADB_EXT_LIFETIME_HARD];
 	}
 
-	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
-	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
 	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
-
-	key_init_spidx_bymsghdr(&spidx, mhp);
 
 	/* checking the direciton. */
 	switch (xpl0->sadb_x_policy_dir) {
@@ -1915,6 +1911,17 @@ key_spdadd(struct socket *so, struct mbuf *m,
 		IPSECLOG(LOG_DEBUG, "some policy requests part required.\n");
 		return key_senderror(so, m, EINVAL);
 	}
+
+	src = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_SRC);
+	dst = key_msghdr_get_sockaddr(mhp, SADB_EXT_ADDRESS_DST);
+
+	/* sanity check on addr pair */
+	if (src->sa_family != dst->sa_family)
+		return key_senderror(so, m, EINVAL);
+	if (src->sa_len != dst->sa_len)
+		return key_senderror(so, m, EINVAL);
+
+	key_init_spidx_bymsghdr(&spidx, mhp);
 
 	/*
 	 * checking there is SP already or not.
@@ -1951,17 +1958,6 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	}
 
 	key_init_spidx_bymsghdr(&newsp->spidx, mhp);
-
-	/* sanity check on addr pair */
-	if (src->sa_family != dst->sa_family) {
-		kmem_free(newsp, sizeof(*newsp));
-		return key_senderror(so, m, EINVAL);
-	}
-	if (src->sa_len != dst->sa_len) {
-		kmem_free(newsp, sizeof(*newsp));
-		return key_senderror(so, m, EINVAL);
-	}
-
 	newsp->created = time_uptime;
 	newsp->lastused = newsp->created;
 	newsp->lifetime = lft ? lft->sadb_lifetime_addtime : 0;
