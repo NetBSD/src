@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.158 2017/05/31 09:52:43 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.159 2017/05/31 09:53:35 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.158 2017/05/31 09:52:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.159 2017/05/31 09:53:35 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4477,23 +4477,10 @@ key_bb_match_withmask(const void *a1, const void *a2, u_int bits)
 	return 1;	/* Match! */
 }
 
-/*
- * time handler.
- * scanning SPD and SAD to check status for each entries,
- * and do to remove or to expire.
- */
 static void
-key_timehandler_work(struct work *wk, void *arg)
+key_timehandler_spd(time_t now)
 {
 	u_int dir;
-	int s;
-	time_t now = time_uptime;
-
-	s = splsoftnet();
-	mutex_enter(softnet_lock);
-
-	/* SPD */
-    {
 	struct secpolicy *sp, *nextsp;
 
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
@@ -4519,10 +4506,11 @@ key_timehandler_work(struct work *wk, void *arg)
 			}
 		}
 	}
-    }
+}
 
-	/* SAD */
-    {
+static void
+key_timehandler_sad(time_t now)
+{
 	struct secashead *sah, *nextsah;
 	struct secasvar *sav, *nextsav;
 
@@ -4661,11 +4649,12 @@ key_timehandler_work(struct work *wk, void *arg)
 			 */
 		}
 	}
-    }
+}
 
+static void
+key_timehandler_acq(time_t now)
+{
 #ifndef IPSEC_NONBLOCK_ACQUIRE
-	/* ACQ tree */
-    {
 	struct secacq *acq, *nextacq;
 
     restart:
@@ -4679,12 +4668,13 @@ key_timehandler_work(struct work *wk, void *arg)
 		}
 	}
 	mutex_exit(&key_mtx);
-    }
 #endif
+}
 
+static void
+key_timehandler_spacq(time_t now)
+{
 #ifdef notyet
-	/* SP ACQ tree */
-    {
 	struct secspacq *acq, *nextacq;
 
 	LIST_FOREACH_SAFE(acq, &spacqtree, chain, nextacq) {
@@ -4694,8 +4684,27 @@ key_timehandler_work(struct work *wk, void *arg)
 			kmem_free(acq, sizeof(*acq));
 		}
 	}
-    }
 #endif
+}
+
+/*
+ * time handler.
+ * scanning SPD and SAD to check status for each entries,
+ * and do to remove or to expire.
+ */
+static void
+key_timehandler_work(struct work *wk, void *arg)
+{
+	int s;
+	time_t now = time_uptime;
+
+	s = splsoftnet();
+	mutex_enter(softnet_lock);
+
+	key_timehandler_spd(now);
+	key_timehandler_sad(now);
+	key_timehandler_acq(now);
+	key_timehandler_spacq(now);
 
 	/* do exchange to tick time !! */
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, NULL);
