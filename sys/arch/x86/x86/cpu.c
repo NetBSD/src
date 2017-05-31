@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.126 2017/05/31 00:19:17 maya Exp $	*/
+/*	$NetBSD: cpu.c,v 1.127 2017/05/31 10:08:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.126 2017/05/31 00:19:17 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.127 2017/05/31 10:08:24 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -835,7 +835,9 @@ cpu_hatch(void *v)
 			}
 			x86_mwait(0, 0);
 		} else {
-			x86_pause();
+			for (i = 100; i != 0; i--) {
+				x86_pause();
+			}
 		}
 	}
 
