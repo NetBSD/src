@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.40 2017/04/11 17:59:23 abhinav Exp $
+.\"	$NetBSD: kqueue.2,v 1.41 2017/05/31 01:03:01 kamil Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -155,8 +155,10 @@ and
 .Fa eventlist .
 .Pp
 .Fn EV_SET
-is a macro which is provided for ease of initializing a
+is a static inline function which is provided for ease of initializing a
 kevent structure.
+Its original form was a preprocessor macro,
+which caused bugs in third party code.
 .Pp
 The
 .Va kevent
@@ -669,3 +671,7 @@ The
 .Fn kqueue1
 function first appeared in
 .Nx 6.0 .
+.Pp
+.Fn EV_SET
+was converted from a macro to a static inline function in
+.Nx 8.0 .
