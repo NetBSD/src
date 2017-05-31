@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.h,v 1.1 2017/02/16 08:23:35 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.h,v 1.2 2017/05/31 08:19:44 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -201,8 +201,8 @@ struct mbuf *l2tp_tcpmss_clamp(struct ifnet *, struct mbuf *);
  *   NOTICE
  *   - l2tp_softc must not have a variant value while the l2tp tunnel exists.
  *     Such variant values must be in l2tp_softc->l2tp_var.
- *   - l2tp_softc->l2tp_var is modified by atomic_swap_ptr() like
- *     read-copy-update. So, once we dereference l2tp_softc->l2tp_var, we must
+ *   - l2tp_softc->l2tp_var is modified like read-copy-update.
+ *     So, once we dereference l2tp_softc->l2tp_var, we must
  *     keep the pointer during the same context. If we re-derefence
  *     l2tp_softc->l2tp_var, the l2tp_var may be other one because of
  *     concurrent writer processing.
