@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.155 2017/05/31 05:05:38 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.156 2017/05/31 09:50:04 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.155 2017/05/31 05:05:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.156 2017/05/31 09:50:04 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -2106,9 +2106,6 @@ key_spddelete(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 	}
 
-	/* make secindex */
-	key_init_spidx_bymsghdr(&spidx, mhp);
-
 	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
 
 	/* checking the direciton. */
@@ -2120,6 +2117,9 @@ key_spddelete(struct socket *so, struct mbuf *m,
 		IPSECLOG(LOG_DEBUG, "Invalid SP direction.\n");
 		return key_senderror(so, m, EINVAL);
 	}
+
+	/* make secindex */
+	key_init_spidx_bymsghdr(&spidx, mhp);
 
 	/* Is there SP in SPD ? */
 	sp = key_getsp(&spidx);
