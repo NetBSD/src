@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.11 2017/04/18 16:30:21 maya Exp $ */
+/* $NetBSD: hdafg.c,v 1.12 2017/06/01 02:45:10 chs Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.11 2017/04/18 16:30:21 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.12 2017/06/01 02:45:10 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -797,8 +797,6 @@ hdafg_assoc_count_channels(struct hdafg_softc *sc,
 		return 0;
 
 	dacmap = kmem_zalloc(dacmapsz, KM_SLEEP);
-	if (dacmap == NULL)
-		return 0;
 
 	for (i = 0; i < HDAUDIO_MAXPINS; i++)
 		if (as->as_dacs[i])

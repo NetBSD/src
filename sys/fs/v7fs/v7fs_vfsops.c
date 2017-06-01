@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.15 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.16 2017/06/01 02:45:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.15 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.16 2017/06/01 02:45:13 chs Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -254,9 +254,6 @@ v7fs_mountfs(struct vnode *devvp, struct mount *mp, int endian)
 	DPRINTF("%d\n",endian);
 
 	v7fsmount = kmem_zalloc(sizeof(*v7fsmount), KM_SLEEP);
-	if (v7fsmount == NULL) {
-		return ENOMEM;
-	}
 	v7fsmount->devvp = devvp;
 	v7fsmount->mountp = mp;
 

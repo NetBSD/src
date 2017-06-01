@@ -1,4 +1,4 @@
-/*	$NetBSD: rtbl.c,v 1.6 2017/01/11 13:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: rtbl.c,v 1.7 2017/06/01 02:45:14 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008, 2011 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #endif /* _KERNEL && _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtbl.c,v 1.6 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtbl.c,v 1.7 2017/06/01 02:45:14 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -125,8 +125,7 @@ rt_inithead(rtbl_t **tp, int off)
 	rtbl_t *t;
 	if (*tp != NULL)
 		return 1;
-	if ((t = kmem_alloc(sizeof(*t), KM_SLEEP)) == NULL)
-		return 0;
+	t = kmem_alloc(sizeof(*t), KM_SLEEP);
 	*tp = t;
 	return rn_inithead0(&t->t_rnh, off);
 }

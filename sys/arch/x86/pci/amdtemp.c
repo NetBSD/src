@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.19 2015/04/23 23:23:00 pgoyette Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.20 2017/06/01 02:45:08 chs Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.19 2015/04/23 23:23:00 pgoyette Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.20 2017/06/01 02:45:08 chs Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -274,9 +274,6 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensor_len = sizeof(envsys_data_t) * sc->sc_numsensors;
 	sc->sc_sensor = kmem_zalloc(sc->sc_sensor_len, KM_SLEEP);
-
-	if (sc->sc_sensor == NULL)
-		goto bad;
 
 	switch (sc->sc_family) {
 	case 0xf:

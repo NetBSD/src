@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.56 2017/05/01 21:35:26 pgoyette Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.57 2017/06/01 02:45:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.56 2017/05/01 21:35:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.57 2017/06/01 02:45:13 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -379,9 +379,6 @@ lockdebug_more(int s)
 		block = kmem_zalloc(LD_BATCH * sizeof(lockdebug_t), KM_SLEEP);
 		s = splhigh();
 		__cpu_simple_lock(&ld_mod_lk);
-
-		if (block == NULL)
-			return s;
 
 		if (ld_nfree > LD_SLOP) {
 			/* Somebody beat us to it. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.393 2017/05/19 08:53:51 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.394 2017/06/01 02:45:14 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.393 2017/05/19 08:53:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394 2017/06/01 02:45:14 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -813,9 +813,6 @@ if_percpuq_create(struct ifnet *ifp)
 	struct if_percpuq *ipq;
 
 	ipq = kmem_zalloc(sizeof(*ipq), KM_SLEEP);
-	if (ipq == NULL)
-		panic("kmem_zalloc failed");
-
 	ipq->ipq_ifp = ifp;
 	ipq->ipq_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
 	    if_percpuq_softint, ipq);
@@ -1048,9 +1045,6 @@ if_deferred_start_init(struct ifnet *ifp, void (*func)(struct ifnet *))
 	struct if_deferred_start *ids;
 
 	ids = kmem_zalloc(sizeof(*ids), KM_SLEEP);
-	if (ids == NULL)
-		panic("kmem_zalloc failed");
-
 	ids->ids_ifp = ifp;
 	ids->ids_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
 	    if_deferred_start_softint, ids);
@@ -1220,9 +1214,6 @@ if_build_ifa_list(struct ifnet *ifp)
 		ifa_list_size++;
 
 	ifa_list = kmem_alloc(sizeof(*ifa) * ifa_list_size, KM_SLEEP);
-	if (ifa_list == NULL)
-		return;
-
 	i = 0;
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		ifa_list[i++] = ifa;
