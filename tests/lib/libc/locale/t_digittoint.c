@@ -1,4 +1,4 @@
-/* $NetBSD: t_digittoint.c,v 1.1 2017/05/30 23:44:02 perseant Exp $ */
+/* $NetBSD: t_digittoint.c,v 1.2 2017/06/01 15:45:02 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_digittoint.c,v 1.1 2017/05/30 23:44:02 perseant Exp $");
+__RCSID("$NetBSD: t_digittoint.c,v 1.2 2017/06/01 15:45:02 perseant Exp $");
 
 #include <locale.h>
 #include <stdio.h>
@@ -41,6 +41,11 @@ __RCSID("$NetBSD: t_digittoint.c,v 1.1 2017/05/30 23:44:02 perseant Exp $");
 #include <ctype.h>
 
 #include <atf-c.h>
+
+/* Use this until we have a better way to tell if it is defined */
+#ifdef digittoint
+# define DIGITTOINT_DEFINED
+#endif
 
 static struct test {
 	const char *locale;
@@ -61,6 +66,7 @@ static struct test {
 	}
 };
 
+#ifdef DIGITTOINT_DEFINED
 static void
 h_digittoint(const struct test *t)
 {
@@ -75,6 +81,7 @@ h_digittoint(const struct test *t)
 		ATF_REQUIRE_EQ(digittoint(t->digits[i]), i);
 	}
 }
+#endif /* DIGITTOINT_DEFINED */
 
 ATF_TC(digittoint);
 
@@ -88,8 +95,12 @@ ATF_TC_BODY(digittoint, tc)
 {
 	struct test *t;
 
+#ifdef DIGITTOINT_DEFINED
 	for (t = &tests[0]; t->locale != NULL; ++t)
 		h_digittoint(t);
+#else /* ! DIGITTOINT_DEFINED */
+	atf_tc_skip("digittoint(3) not present to test");
+#endif /* DIGITTOINT_DEFINED */
 }
 
 ATF_TP_ADD_TCS(tp)
