@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.109 2017/04/19 00:01:38 riastradh Exp $
+# $NetBSD: mi,v 1.110 2017/06/01 09:59:13 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -24,6 +24,8 @@
 ./@MODULEDIR@/amr/amr.kmod			base-obsolete		obsolete
 ./@MODULEDIR@/ataraid				base-obsolete		obsolete
 ./@MODULEDIR@/ataraid/ataraid.kmod		base-obsolete		obsolete
+./@MODULEDIR@/audio				base-kernel-modules	kmod
+./@MODULEDIR@/audio/audio.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/blowfish				base-kernel-modules	kmod
 ./@MODULEDIR@/blowfish/blowfish.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/bpf				base-kernel-modules	kmod
@@ -226,6 +228,8 @@
 ./@MODULEDIR@/mfs/mfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/miiverbose			base-kernel-modules	kmod
 ./@MODULEDIR@/miiverbose/miiverbose.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/midi				base-kernel-modules	kmod
+./@MODULEDIR@/midi/midi.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/miniroot				base-kernel-modules	kmod
 ./@MODULEDIR@/miniroot/miniroot.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mlx				base-obsolete		obsolete
@@ -308,6 +312,8 @@
 ./@MODULEDIR@/secmodel_overlay/secmodel_overlay.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/securelevel			base-kernel-modules	kmod
 ./@MODULEDIR@/securelevel/securelevel.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/sequencer				base-kernel-modules	kmod
+./@MODULEDIR@/sequencer/sequencer.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/skipjack				base-kernel-modules	kmod
 ./@MODULEDIR@/skipjack/skipjack.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/slcompress			base-kernel-modules     kmod
