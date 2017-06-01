@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.42 2017/04/21 15:10:35 christos Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.43 2017/06/01 02:45:13 chs Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.42 2017/04/21 15:10:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.43 2017/06/01 02:45:13 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -192,8 +192,6 @@ aio_procinit(struct proc *p)
 
 	/* Allocate and initialize AIO structure */
 	aio = kmem_zalloc(sizeof(struct aioproc), KM_SLEEP);
-	if (aio == NULL)
-		return EAGAIN;
 
 	/* Initialize queue and their synchronization structures */
 	mutex_init(&aio->aio_mtx, MUTEX_DEFAULT, IPL_NONE);

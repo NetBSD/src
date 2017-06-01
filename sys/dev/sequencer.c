@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.64 2015/08/20 14:40:17 christos Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.65 2017/06/01 02:45:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.64 2015/08/20 14:40:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.65 2017/06/01 02:45:09 chs Exp $");
 
 #include "sequencer.h"
 
@@ -192,12 +192,6 @@ static struct sequencer_softc *
 sequencercreate(int unit)
 {
 	struct sequencer_softc *sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
-	if (sc == NULL) {
-#ifdef DIAGNOSTIC
-		printf("%s: out of memory\n", __func__);
-#endif
-		return NULL;
-	}
 	sc->sc_unit = unit;
 	callout_init(&sc->sc_callout, CALLOUT_MPSAFE);
 	sc->sih = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,

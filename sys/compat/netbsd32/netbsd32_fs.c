@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.79 2016/12/01 05:07:27 mrg Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.80 2017/06/01 02:45:08 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.79 2016/12/01 05:07:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.80 2017/06/01 02:45:08 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -752,9 +752,6 @@ netbsd32___getcwd(struct lwp *l, const struct netbsd32___getcwd_args *uap, regis
 		return ERANGE;
 
 	path = kmem_alloc(len, KM_SLEEP);
-	if (!path)
-		return ENOMEM;
-
 	bp = &path[len];
 	bend = bp;
 	*(--bp) = '\0';

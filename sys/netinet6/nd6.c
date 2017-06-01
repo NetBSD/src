@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.231 2017/03/01 03:02:35 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.232 2017/06/01 02:45:14 chs Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.231 2017/03/01 03:02:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.232 2017/06/01 02:45:14 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2512,8 +2512,6 @@ nd6_sysctl(
 
 	if (oldp && *oldlenp > 0) {
 		p = kmem_alloc(*oldlenp, KM_SLEEP);
-		if (p == NULL)
-			return ENOMEM;
 		bufsize = *oldlenp;
 	} else
 		p = NULL;

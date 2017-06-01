@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.22 2017/03/05 23:07:12 mlelstv Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.23 2017/06/01 02:45:13 chs Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.22 2017/03/05 23:07:12 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.23 2017/06/01 02:45:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -140,9 +140,6 @@ iostat_alloc(int32_t type, void *parent, const char *name)
 	struct io_stats *stats;
 
 	stats = kmem_zalloc(sizeof(*stats), KM_SLEEP);
-	if (stats == NULL)
-		panic("iostat_alloc: cannot allocate memory for stats buffer");
-
 	stats->io_type = type;
 	stats->io_parent = parent;
 	(void)strlcpy(stats->io_name, name, sizeof(stats->io_name));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.212 2017/04/11 13:55:55 roy Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.213 2017/06/01 02:45:14 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.212 2017/04/11 13:55:55 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.213 2017/06/01 02:45:14 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1324,10 +1324,7 @@ again:
 				if (rw->w_tmem)
 					kmem_free(rw->w_tmem, rw->w_tmemsize);
 				rw->w_tmem = kmem_alloc(len, KM_SLEEP);
-				if (rw->w_tmem)
-					rw->w_tmemsize = len;
-				else
-					rw->w_tmemsize = 0;
+				rw->w_tmemsize = len;
 			}
 			if (rw->w_tmem) {
 				cp = rw->w_tmem;

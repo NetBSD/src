@@ -1,4 +1,4 @@
-/* $NetBSD: au8522.c,v 1.7 2015/03/07 14:16:51 jmcneill Exp $ */
+/* $NetBSD: au8522.c,v 1.8 2017/06/01 02:45:10 chs Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au8522.c,v 1.7 2015/03/07 14:16:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au8522.c,v 1.8 2017/06/01 02:45:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,8 +219,6 @@ au8522_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr, unsigned int if_fre
 	struct au8522 *au;
 
 	au = kmem_alloc(sizeof(*au), KM_SLEEP);
-	if (au == NULL)
-		return NULL;
 	au->parent = parent;
 	au->i2c = i2c;
 	au->i2c_addr = addr;

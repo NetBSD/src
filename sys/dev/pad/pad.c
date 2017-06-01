@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.30 2017/05/27 10:43:30 nat Exp $ */
+/* $NetBSD: pad.c,v 1.31 2017/06/01 02:45:10 chs Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.30 2017/05/27 10:43:30 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.31 2017/06/01 02:45:10 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -167,11 +167,6 @@ padattach(int n)
 
 	for (i = 0; i < n; i++) {
 		cf = kmem_alloc(sizeof(struct cfdata), KM_SLEEP);
-		if (cf == NULL) {
-			aprint_error("%s: couldn't allocate cfdata\n",
-			    pad_cd.cd_name);
-			continue;
-		}
 		cf->cf_name = pad_cd.cd_name;
 		cf->cf_atname = pad_cd.cd_name;
 		cf->cf_unit = i;

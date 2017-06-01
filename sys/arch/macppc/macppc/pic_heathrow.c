@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_heathrow.c,v 1.9 2012/05/02 00:55:26 macallan Exp $ */
+/*	$NetBSD: pic_heathrow.c,v 1.10 2017/06/01 02:45:06 chs Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.9 2012/05/02 00:55:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.10 2017/06/01 02:45:06 chs Exp $");
 
 #include "opt_interrupt.h"
 
@@ -108,7 +108,6 @@ setup_heathrow(uint32_t addr)
 	struct pic_ops *pic;
 
 	heathrow = kmem_alloc(sizeof(struct heathrow_ops), KM_SLEEP);
-	KASSERT(heathrow != NULL);
 	pic = &heathrow->pic;
 
 	pic->pic_numintrs = 64;

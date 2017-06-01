@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.49 2014/10/17 16:37:02 christos Exp $ */
+/* $NetBSD: privcmd.c,v 1.50 2017/06/01 02:45:08 chs Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.49 2014/10/17 16:37:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.50 2017/06/01 02:45:08 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,8 +350,6 @@ privcmd_ioctl(void *v)
 #endif
 			maddr = kmem_alloc(sizeof(paddr_t) * mentry.npages,
 			    KM_SLEEP);
-			if (maddr == NULL)
-				return ENOMEM;
 			va = mentry.va & ~PAGE_MASK;
 			ma = ((paddr_t)mentry.mfn) <<  PGSHIFT; /* XXX ??? */
 			for (j = 0; j < mentry.npages; j++) {
@@ -396,8 +394,6 @@ privcmd_ioctl(void *v)
 		vm_map_unlock_read(vmm);
 		
 		maddr = kmem_alloc(sizeof(paddr_t) * pmb->num, KM_SLEEP);
-		if (maddr == NULL)
-			return ENOMEM;
 		/* get a page of KVA to check mappins */
 		trymap = uvm_km_alloc(kernel_map, PAGE_SIZE, PAGE_SIZE,
 		    UVM_KMF_VAONLY);
@@ -554,11 +550,6 @@ privcmd_map_obj(struct vm_map *map, vaddr_t start, paddr_t *maddr,
 	uvm_unmap1(map, start, start + size, 0);
 
 	obj = kmem_alloc(sizeof(*obj), KM_SLEEP);
-	if (obj == NULL) {
-		kmem_free(maddr, sizeof(paddr_t) * npages);
-		return ENOMEM;
-	}
-
 	privcmd_nobjects++;
 	uvm_obj_init(&obj->uobj, &privpgops, true, 1);
 	mutex_enter(obj->uobj.vmobjlock);
