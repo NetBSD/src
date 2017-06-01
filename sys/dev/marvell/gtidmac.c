@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.14 2017/03/31 08:38:13 msaitoh Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.15 2017/06/01 02:45:10 chs Exp $	*/
 /*
  * Copyright (c) 2008, 2012, 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.14 2017/03/31 08:38:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.15 2017/06/01 02:45:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -446,10 +446,7 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 	n = idmac_nchan * GTIDMAC_NDESC + xore_nchan * MVXORE_NDESC;
 	sc->sc_dd_buffer =
 	    kmem_alloc(sizeof(struct gtidmac_dma_desc) * n, KM_SLEEP);
-	if (sc->sc_dd_buffer == NULL) {
-		aprint_error_dev(self, "can't allocate memory\n");
-		goto fail1;
-	}
+
 	/* pattern buffer */
 	if (bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
 	    &sc->sc_pattern_segment, 1, &nsegs, BUS_DMA_NOWAIT)) {
@@ -551,7 +548,6 @@ fail3:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_pattern_segment, 1);
 fail2:
 	kmem_free(sc->sc_dd_buffer, sizeof(struct gtidmac_dma_desc) * n);
-fail1:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, mva->mva_size);
 	return;
 }

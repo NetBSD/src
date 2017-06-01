@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.76 2017/05/12 00:41:25 macallan Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.77 2017/06/01 02:45:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.76 2017/05/12 00:41:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.77 2017/06/01 02:45:11 chs Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -299,9 +299,8 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	len = ri->ri_optfont.fontheight * ri->ri_optfont.stride *
 		      ri->ri_optfont.numchars; 
 
-	if (((ri->ri_flg & RI_NO_AUTO) == 0) && 
-	  ((ri->ri_optfont.data = kmem_zalloc(len, KM_SLEEP)) != NULL)) {
-
+	if ((ri->ri_flg & RI_NO_AUTO) == 0) {
+		ri->ri_optfont.data = kmem_zalloc(len, KM_SLEEP);
 		if (ri->ri_optfont.stride < ri->ri_optfont.fontwidth) {
 			switch (ri->ri_optfont.stride) {
 			case 1:

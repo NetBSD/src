@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.9 2017/05/23 08:54:39 nonaka Exp $	*/
+/*	$NetBSD: msipic.c,v 1.10 2017/06/01 02:45:08 chs Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.9 2017/05/23 08:54:39 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.10 2017/06/01 02:45:08 chs Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -238,14 +238,7 @@ msipic_construct_common_msi_pic(const struct pci_attach_args *pa,
 	int devid;
 
 	pic = kmem_alloc(sizeof(*pic), KM_SLEEP);
-	if (pic == NULL)
-		return NULL;
-
 	msipic = kmem_zalloc(sizeof(*msipic), KM_SLEEP);
-	if (msipic == NULL) {
-		kmem_free(pic, sizeof(*pic));
-		return NULL;
-	}
 
 	mutex_enter(&msipic_list_lock);
 

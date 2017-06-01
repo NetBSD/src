@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.49 2017/04/11 07:51:37 hannken Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.50 2017/06/01 02:45:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.49 2017/04/11 07:51:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.50 2017/06/01 02:45:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -166,9 +166,6 @@ layerfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	int error;
 
 	sbuf = kmem_zalloc(sizeof(*sbuf), KM_SLEEP);
-	if (sbuf == NULL) {
-		return ENOMEM;
-	}
 	error = VFS_STATVFS(mp->mnt_lower, sbuf);
 	if (error) {
 		goto done;
@@ -216,8 +213,6 @@ layerfs_loadvnode(struct mount *mp, struct vnode *vp,
 	memcpy(&lowervp, key, key_len);
 
 	xp = kmem_alloc(lmp->layerm_size, KM_SLEEP);
-	if (xp == NULL)
-		return ENOMEM;
 
 	/* Share the interlock with the lower node. */
 	mutex_obj_hold(lowervp->v_interlock);

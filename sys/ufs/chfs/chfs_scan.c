@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_scan.c,v 1.6 2015/02/07 04:19:52 christos Exp $	*/
+/*	$NetBSD: chfs_scan.c,v 1.7 2017/06/01 02:45:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -155,8 +155,6 @@ chfs_scan_check_vnode(struct chfs_mount *chmp,
 		}
 	} else {
 		vc->vno_version = kmem_alloc(sizeof(uint64_t), KM_SLEEP);
-		if (!vc->vno_version)
-			return ENOMEM;
 		*vc->vno_version = le64toh(vnode->version);
 		chfs_add_vnode_ref_to_vc(chmp, vc, nref);
 	}

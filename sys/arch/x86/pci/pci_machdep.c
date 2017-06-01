@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.78 2017/02/25 01:13:50 nonaka Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.79 2017/06/01 02:45:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.78 2017/02/25 01:13:50 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79 2017/06/01 02:45:08 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -923,10 +923,6 @@ pci_chipset_tag_create(pci_chipset_tag_t opc, const uint64_t present,
 		return EINVAL;
 
 	pc = kmem_alloc(sizeof(struct pci_chipset_tag), KM_SLEEP);
-
-	if (pc == NULL)
-		return ENOMEM;
-
 	pc->pc_super = opc;
 
 	for (bits = present; bits != 0; bits = nbits) {

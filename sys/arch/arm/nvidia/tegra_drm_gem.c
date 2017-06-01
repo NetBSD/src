@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_gem.c,v 1.2 2015/11/16 21:41:29 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_gem.c,v 1.3 2017/06/01 02:45:05 chs Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_gem.c,v 1.2 2015/11/16 21:41:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_gem.c,v 1.3 2017/06/01 02:45:05 chs Exp $");
 
 #include <drm/drmP.h>
 #include <uvm/uvm.h>
@@ -42,9 +42,6 @@ tegra_drm_obj_alloc(struct drm_device *ddev, size_t size)
 	int error, nsegs;
 
 	obj = kmem_zalloc(sizeof(*obj), KM_SLEEP);
-	if (obj == NULL)
-		return NULL;
-
 	obj->dmat = sc->sc_dmat;
 	obj->dmasize = size;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: xc3028.c,v 1.7 2015/03/07 14:16:51 jmcneill Exp $ */
+/* $NetBSD: xc3028.c,v 1.8 2017/06/01 02:45:10 chs Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xc3028.c,v 1.7 2015/03/07 14:16:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xc3028.c,v 1.8 2017/06/01 02:45:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,8 +312,6 @@ xc3028_firmware_parse(struct xc3028 *xc, const uint8_t *fw, size_t fwlen)
 	    xc3028_name(xc), fwname, fwver >> 8, fwver & 0xff, narr);
 
 	xc->fw = kmem_zalloc(sizeof(*xc->fw) * narr, KM_SLEEP);
-	if (xc->fw == NULL)
-		return ENOMEM;
 	xc->nfw = narr;
 
 	for (index = 0; index < xc->nfw && p < endp; index++) {
@@ -342,8 +340,6 @@ xc3028_firmware_parse(struct xc3028 *xc, const uint8_t *fw, size_t fwlen)
 		    xcfw->data_size > (uint32_t)(endp - p))
 			goto corrupt;
 		xcfw->data = kmem_alloc(xcfw->data_size, KM_SLEEP);
-		if (xcfw->data == NULL)
-			goto corrupt;
 		memcpy(xcfw->data, p, xcfw->data_size);
 		p += xcfw->data_size;
 	}
@@ -493,8 +489,6 @@ xc3028_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr,
 	struct xc3028 *xc;
 
 	xc = kmem_alloc(sizeof(*xc), KM_SLEEP);
-	if (xc == NULL)
-		return NULL;
 	xc->parent = parent;
 	xc->i2c = i2c;
 	xc->i2c_addr = addr;

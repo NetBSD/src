@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.152 2017/05/23 04:58:49 nat Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.153 2017/06/01 02:45:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.152 2017/05/23 04:58:49 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.153 2017/06/01 02:45:12 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -603,10 +603,6 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 	}
 	len = sizeof(*mc) * (sc->sc_nctls + 1);
 	nmc = kmem_alloc(len, KM_SLEEP);
-	if (nmc == NULL) {
-		aprint_error("uaudio_mixer_add_ctl: no memory\n");
-		return;
-	}
 	/* Copy old data, if there was any */
 	if (sc->sc_nctls != 0) {
 		memcpy(nmc, sc->sc_ctls, sizeof(*mc) * (sc->sc_nctls));
@@ -1540,10 +1536,6 @@ uaudio_add_alt(struct uaudio_softc *sc, const struct as_info *ai)
 
 	len = sizeof(*ai) * (sc->sc_nalts + 1);
 	nai = kmem_alloc(len, KM_SLEEP);
-	if (nai == NULL) {
-		aprint_error("uaudio_add_alt: no memory\n");
-		return;
-	}
 	/* Copy old data, if there was any */
 	if (sc->sc_nalts != 0) {
 		memcpy(nai, sc->sc_alts, sizeof(*ai) * (sc->sc_nalts));
@@ -1830,8 +1822,6 @@ uaudio_identify_as(struct uaudio_softc *sc,
 	/* build audio_format array */
 	sc->sc_formats = kmem_alloc(sizeof(struct audio_format) * sc->sc_nalts,
 	    KM_SLEEP);
-	if (sc->sc_formats == NULL)
-		return USBD_NOMEM;
 	sc->sc_nformats = sc->sc_nalts;
 	for (i = 0; i < sc->sc_nalts; i++) {
 		auf = &sc->sc_formats[i];

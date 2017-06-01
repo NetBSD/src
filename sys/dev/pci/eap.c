@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.96 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: eap.c,v 1.97 2017/06/01 02:45:11 chs Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.96 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.97 2017/06/01 02:45:11 chs Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -1729,8 +1729,6 @@ eap_malloc(void *addr, int direction, size_t size)
 	int error;
 
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (!p)
-		return NULL;
 	ei = addr;
 	sc = device_private(ei->parent);
 	error = eap_allocmem(sc, size, 16, p);

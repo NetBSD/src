@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.60 2017/04/21 19:38:35 kamil Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.61 2017/06/01 02:45:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.60 2017/04/21 19:38:35 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.61 2017/06/01 02:45:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -677,11 +677,8 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap,
 	sz = sizeof(target) * ntargets;
 	if (sz <= sizeof(targets))
 		tp = targets;
-	else {
+	else
 		tp = kmem_alloc(sz, KM_SLEEP);
-		if (tp == NULL)
-			return ENOMEM;
-	}
 	error = copyin(SCARG(uap, targets), tp, sz);
 	if (error != 0) {
 		if (tp != targets) {
@@ -767,8 +764,6 @@ sys__lwp_setname(struct lwp *l, const struct sys__lwp_setname_args *uap,
 		target = l->l_lid;
 
 	name = kmem_alloc(MAXCOMLEN, KM_SLEEP);
-	if (name == NULL)
-		return ENOMEM;
 	error = copyinstr(SCARG(uap, name), name, MAXCOMLEN, NULL);
 	switch (error) {
 	case ENAMETOOLONG:

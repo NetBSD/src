@@ -1,4 +1,4 @@
-/* $NetBSD: vbox_drv.c,v 1.3 2017/01/20 12:25:07 maya Exp $ */
+/* $NetBSD: vbox_drv.c,v 1.4 2017/06/01 02:45:09 chs Exp $ */
 
 /*
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vbox_drv.c,v 1.3 2017/01/20 12:25:07 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vbox_drv.c,v 1.4 2017/06/01 02:45:09 chs Exp $");
 
 #include "drmP.h"
 #include "drm.h"
@@ -73,11 +73,6 @@ vboxdrm_attach(device_t parent, device_t self, void *opaque)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	dev->driver = kmem_zalloc(sizeof(struct drm_driver_info), KM_SLEEP);
-	if (dev->driver == NULL) {
-		aprint_error_dev(self, "couldn't allocate memory\n");
-		return;
-	}
-
 	vboxdrm_configure(dev);
 	drm_attach(self, pa, vboxdrm_pciidlist);
 }

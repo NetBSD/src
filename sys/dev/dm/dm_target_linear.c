@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.14 2014/06/14 07:39:00 hannken Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.15 2017/06/01 02:45:09 chs Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -82,10 +82,7 @@ dm_target_linear_init(dm_dev_t * dmv, void **target_config, char *params)
 	if ((dmp = dm_pdev_insert(argv[0])) == NULL)
 		return ENOENT;
 
-	if ((tlc = kmem_alloc(sizeof(dm_target_linear_config_t), KM_SLEEP))
-	    == NULL)
-		return ENOMEM;
-
+	tlc = kmem_alloc(sizeof(dm_target_linear_config_t), KM_SLEEP);
 	tlc->pdev = dmp;
 	tlc->offset = 0;	/* default settings */
 

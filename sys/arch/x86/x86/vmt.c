@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.16 2017/05/23 08:48:34 nonaka Exp $ */
+/* $NetBSD: vmt.c,v 1.17 2017/06/01 02:45:08 chs Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -208,10 +208,6 @@ vmt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_rpc_buf = kmem_alloc(VMT_RPC_BUFLEN, KM_SLEEP);
-	if (sc->sc_rpc_buf == NULL) {
-		aprint_error_dev(self, "unable to allocate buffer for RPC\n");
-		goto free;
-	}
 
 	if (vm_rpc_open(&sc->sc_tclo_rpc, VM_RPC_OPEN_TCLO) != 0) {
 		aprint_error_dev(self, "failed to open backdoor RPC channel (TCLO protocol)\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.354 2017/03/31 06:49:44 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.355 2017/06/01 02:45:14 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.354 2017/03/31 06:49:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.355 2017/06/01 02:45:14 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -342,11 +342,7 @@ ip_init(void)
 #endif /* MBUFTRACE */
 
 	ipstat_percpu = percpu_alloc(sizeof(uint64_t) * IP_NSTATS);
-
 	ipforward_rt_percpu = percpu_alloc(sizeof(struct route));
-	if (ipforward_rt_percpu == NULL)
-		panic("failed to allocate ipforward_rt_percpu");
-
 	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 }
 

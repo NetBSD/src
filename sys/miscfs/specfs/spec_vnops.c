@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.172 2017/05/26 14:21:02 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.173 2017/06/01 02:45:14 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.172 2017/05/26 14:21:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.173 2017/06/01 02:45:14 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -230,15 +230,7 @@ spec_node_init(vnode_t *vp, dev_t rdev)
 	 * the vnode to the hash table.
 	 */
 	sn = kmem_alloc(sizeof(*sn), KM_SLEEP);
-	if (sn == NULL) {
-		/* XXX */
-		panic("spec_node_init: unable to allocate memory");
-	}
 	sd = kmem_alloc(sizeof(*sd), KM_SLEEP);
-	if (sd == NULL) {
-		/* XXX */
-		panic("spec_node_init: unable to allocate memory");
-	}
 	mutex_enter(&device_lock);
 	vpp = &specfs_hash[SPECHASH(rdev)];
 	for (vp2 = *vpp; vp2 != NULL; vp2 = vp2->v_specnext) {

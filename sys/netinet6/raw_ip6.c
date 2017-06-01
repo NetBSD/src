@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.156 2017/03/03 07:13:06 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.157 2017/06/01 02:45:14 chs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.156 2017/03/03 07:13:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.157 2017/06/01 02:45:14 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -626,10 +626,6 @@ rip6_attach(struct socket *so, int proto)
 	in6p->in6p_cksum = -1;
 
 	in6p->in6p_icmp6filt = kmem_alloc(sizeof(struct icmp6_filter), KM_SLEEP);
-	if (in6p->in6p_icmp6filt == NULL) {
-		in6_pcbdetach(in6p);
-		return ENOMEM;
-	}
 	ICMP6_FILTER_SETPASSALL(in6p->in6p_icmp6filt);
 	KASSERT(solocked(so));
 	return error;

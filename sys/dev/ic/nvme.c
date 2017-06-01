@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.29 2017/05/29 02:25:37 nonaka Exp $	*/
+/*	$NetBSD: nvme.c,v 1.30 2017/06/01 02:45:10 chs Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.29 2017/05/29 02:25:37 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.30 2017/06/01 02:45:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,10 +392,6 @@ nvme_attach(struct nvme_softc *sc)
 	}
 
 	sc->sc_q = kmem_zalloc(sizeof(*sc->sc_q) * sc->sc_nq, KM_SLEEP);
-	if (sc->sc_q == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to allocate io queue\n");
-		goto disable;
-	}
 	for (i = 0; i < sc->sc_nq; i++) {
 		sc->sc_q[i] = nvme_q_alloc(sc, i + 1, ioq_entries, dstrd);
 		if (sc->sc_q[i] == NULL) {
@@ -417,8 +413,6 @@ nvme_attach(struct nvme_softc *sc)
 	/* probe subdevices */
 	sc->sc_namespaces = kmem_zalloc(sizeof(*sc->sc_namespaces) * sc->sc_nn,
 	    KM_SLEEP);
-	if (sc->sc_namespaces == NULL)
-		goto free_q;
 	nvme_rescan(sc->sc_dev, "nvme", &i);
 
 	return 0;
@@ -949,10 +943,6 @@ nvme_command_passthrough(struct nvme_softc *sc, struct nvme_pt_command *pt,
 	if (pt->buf != NULL) {
 		KASSERT(pt->len > 0);
 		buf = kmem_alloc(pt->len, KM_SLEEP);
-		if (buf == NULL) {
-			error = ENOMEM;
-			goto ccb_put;
-		}
 		if (!pt->is_read) {
 			error = copyin(pt->buf, buf, pt->len);
 			if (error)
@@ -986,7 +976,6 @@ out:
 kmem_free:
 		kmem_free(buf, pt->len);
 	}
-ccb_put:
 	nvme_ccb_put(q, ccb);
 	return error;
 }
@@ -1371,8 +1360,6 @@ nvme_ccbs_alloc(struct nvme_queue *q, uint16_t nccbs)
 	SIMPLEQ_INIT(&q->q_ccb_list);
 
 	q->q_ccbs = kmem_alloc(sizeof(*ccb) * nccbs, KM_SLEEP);
-	if (q->q_ccbs == NULL)
-		return 1;
 
 	q->q_nccbs = nccbs;
 	q->q_nccbs_avail = nccbs;
@@ -1467,9 +1454,6 @@ nvme_q_alloc(struct nvme_softc *sc, uint16_t id, u_int entries, u_int dstrd)
 	struct nvme_queue *q;
 
 	q = kmem_alloc(sizeof(*q), KM_SLEEP);
-	if (q == NULL)
-		return NULL;
-
 	q->q_sc = sc;
 	q->q_sq_dmamem = nvme_dmamem_alloc(sc,
 	    sizeof(struct nvme_sqe) * entries);

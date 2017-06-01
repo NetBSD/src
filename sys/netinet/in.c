@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.202 2017/05/25 02:43:43 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.203 2017/06/01 02:45:14 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.202 2017/05/25 02:43:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.203 2017/06/01 02:45:14 chs Exp $");
 
 #include "arp.h"
 
@@ -2332,7 +2332,6 @@ in_domifattach(struct ifnet *ifp)
 	struct in_ifinfo *ii;
 
 	ii = kmem_zalloc(sizeof(struct in_ifinfo), KM_SLEEP);
-	KASSERT(ii != NULL);
 
 #if NARP > 0
 	ii->ii_llt = in_lltattach(ifp);

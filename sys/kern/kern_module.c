@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.124 2017/04/18 18:07:29 christos Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.125 2017/06/01 02:45:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.124 2017/04/18 18:07:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.125 2017/06/01 02:45:13 chs Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -178,11 +178,9 @@ module_newmodule(modsrc_t source)
 	module_t *mod;
 
 	mod = kmem_zalloc(sizeof(*mod), KM_SLEEP);
-	if (mod != NULL) {
-		mod->mod_source = source;
-		mod->mod_info = NULL;
-		mod->mod_flags = 0;
-	}
+	mod->mod_source = source;
+	mod->mod_info = NULL;
+	mod->mod_flags = 0;
 	return mod;
 }
 

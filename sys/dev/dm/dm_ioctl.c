@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.30 2015/05/10 14:08:54 christos Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.31 2017/06/01 02:45:09 chs Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -748,13 +748,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 			prop_object_iterator_release(iter);
 			return ENOENT;
 		}
-		if ((table_en = kmem_alloc(sizeof(dm_table_entry_t),
-			    KM_SLEEP)) == NULL) {
-			dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
-			dm_dev_unbusy(dmv);
-			prop_object_iterator_release(iter);
-			return ENOMEM;
-		}
+		table_en = kmem_alloc(sizeof(dm_table_entry_t), KM_SLEEP);
 		prop_dictionary_get_uint64(target_dict, DM_TABLE_START,
 		    &table_en->start);
 		prop_dictionary_get_uint64(target_dict, DM_TABLE_LENGTH,

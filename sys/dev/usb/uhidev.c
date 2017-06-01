@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.69 2016/12/04 10:12:35 skrll Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.70 2017/06/01 02:45:12 chs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.69 2016/12/04 10:12:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.70 2017/06/01 02:45:12 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -242,12 +242,8 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 
 	if (descptr) {
 		desc = kmem_alloc(size, KM_SLEEP);
-		if (desc == NULL)
-			err = USBD_NOMEM;
-		else {
-			err = USBD_NORMAL_COMPLETION;
-			memcpy(desc, descptr, size);
-		}
+		err = USBD_NORMAL_COMPLETION;
+		memcpy(desc, descptr, size);
 	} else {
 		desc = NULL;
 		err = usbd_read_report_desc(uiaa->uiaa_iface, &desc, &size);
@@ -316,16 +312,8 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self, "%d report ids\n", nrepid);
 	nrepid++;
 	repsizes = kmem_alloc(nrepid * sizeof(*repsizes), KM_SLEEP);
-	if (repsizes == NULL)
-		goto nomem;
 	sc->sc_subdevs = kmem_zalloc(nrepid * sizeof(device_t),
 	    KM_SLEEP);
-	if (sc->sc_subdevs == NULL) {
-		kmem_free(repsizes, nrepid * sizeof(*repsizes));
-nomem:
-		aprint_error_dev(self, "no memory\n");
-		return;
-	}
 
 	/* Just request max packet size for the interrupt pipe */
 	sc->sc_isize = maxinpktsize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.72 2017/05/19 14:18:10 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.73 2017/06/01 02:45:11 chs Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.72 2017/05/19 14:18:10 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.73 2017/06/01 02:45:11 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -534,12 +534,6 @@ iwm_firmload(struct iwm_softc *sc)
 
 	/* Read the firmware. */
 	fw->fw_rawdata = kmem_alloc(fw->fw_rawsize, KM_SLEEP);
-	if (fw->fw_rawdata == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "not enough memory to stock firmware %s\n", sc->sc_fwname);
-		err = ENOMEM;
-		goto out;
-	}
 	err = firmware_read(fwh, 0, fw->fw_rawdata, fw->fw_rawsize);
 	if (err) {
 		aprint_error_dev(sc->sc_dev,
@@ -3261,8 +3255,6 @@ iwm_nvm_init(struct iwm_softc *sc)
 	memset(nvm_sections, 0, sizeof(nvm_sections));
 
 	buf = kmem_alloc(bufsz, KM_SLEEP);
-	if (buf == NULL)
-		return ENOMEM;
 
 	for (i = 0; i < __arraycount(iwm_nvm_to_read); i++) {
 		section = iwm_nvm_to_read[i];
@@ -3274,10 +3266,6 @@ iwm_nvm_init(struct iwm_softc *sc)
 			continue;
 		}
 		nvm_sections[section].data = kmem_alloc(len, KM_SLEEP);
-		if (nvm_sections[section].data == NULL) {
-			err = ENOMEM;
-			break;
-		}
 		memcpy(nvm_sections[section].data, buf, len);
 		nvm_sections[section].length = len;
 	}
@@ -5365,9 +5353,6 @@ iwm_lmac_scan(struct iwm_softc *sc)
 	if (req_len > IWM_MAX_CMD_PAYLOAD_SIZE)
 		return ENOMEM;
 	req = kmem_zalloc(req_len, KM_SLEEP);
-	if (req == NULL)
-		return ENOMEM;
-
 	hcmd.len[0] = (uint16_t)req_len;
 	hcmd.data[0] = (void *)req;
 
@@ -5472,9 +5457,6 @@ iwm_config_umac_scan(struct iwm_softc *sc)
 	cmd_size = sizeof(*scan_config) + sc->sc_capa_n_scan_channels;
 
 	scan_config = kmem_zalloc(cmd_size, KM_SLEEP);
-	if (scan_config == NULL)
-		return ENOMEM;
-
 	scan_config->tx_chains = htole32(iwm_fw_valid_tx_ant(sc));
 	scan_config->rx_chains = htole32(iwm_fw_valid_rx_ant(sc));
 	scan_config->legacy_rates = htole32(rates |
@@ -5548,8 +5530,6 @@ iwm_umac_scan(struct iwm_softc *sc)
 	if (req_len > IWM_MAX_CMD_PAYLOAD_SIZE)
 		return ENOMEM;
 	req = kmem_zalloc(req_len, KM_SLEEP);
-	if (req == NULL)
-		return ENOMEM;
 
 	hcmd.len[0] = (uint16_t)req_len;
 	hcmd.data[0] = (void *)req;

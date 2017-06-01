@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcache.c,v 1.7 2015/08/24 22:50:33 pooka Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcache.c,v 1.8 2017/06/01 02:45:12 chs Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -89,10 +89,6 @@ glyphcache_init(glyphcache *gc, int first, int lines, int width,
 		return ENOMEM;
 
 	gc->gc_buckets = kmem_alloc(sizeof(gc_bucket) * buckets, KM_SLEEP);
-	if (gc->gc_buckets == NULL) {
-		aprint_error("%s: can't allocate memory\n", __func__);
-		return ENOMEM;
-	}
 	gc->gc_numbuckets = buckets;
 
 	DPRINTF("%s: using %d buckets\n", __func__, buckets);

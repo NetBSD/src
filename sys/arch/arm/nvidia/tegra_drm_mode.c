@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.14 2017/04/26 01:42:46 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.15 2017/06/01 02:45:05 chs Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.14 2017/04/26 01:42:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.15 2017/06/01 02:45:05 chs Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -233,9 +233,6 @@ tegra_fb_create(struct drm_device *ddev, struct drm_file *file,
 		return NULL;
 
 	fb = kmem_zalloc(sizeof(*fb), KM_SLEEP);
-	if (fb == NULL)
-		goto unref;
-
 	fb->obj = to_tegra_gem_obj(gem_obj);
 	fb->base.pitches[0] = cmd->pitches[0];
 	fb->base.offsets[0] = cmd->offsets[0];
@@ -254,7 +251,6 @@ tegra_fb_create(struct drm_device *ddev, struct drm_file *file,
 	drm_framebuffer_cleanup(&fb->base);
 dealloc:
 	kmem_free(fb, sizeof(*fb));
-unref:
 	drm_gem_object_unreference_unlocked(gem_obj);
 
 	return NULL;
@@ -312,9 +308,6 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 	}
 
 	crtc = kmem_zalloc(sizeof(*crtc), KM_SLEEP);
-	if (crtc == NULL)
-		return -ENOMEM;
-
 	crtc->index = index;
 	crtc->bst = sc->sc_bst;
 	error = bus_space_map(crtc->bst, offset, size, 0, &crtc->bsh);
@@ -798,13 +791,10 @@ tegra_encoder_init(struct drm_device *ddev)
 		return -EIO;
 	}
 
-	encoder = kmem_zalloc(sizeof(*encoder), KM_SLEEP);
-	if (encoder == NULL)
-		return -ENOMEM;
-
 	const bus_addr_t offset = TEGRA_GHOST_BASE + TEGRA_HDMI_OFFSET;
 	const bus_size_t size = TEGRA_HDMI_SIZE;
 
+	encoder = kmem_zalloc(sizeof(*encoder), KM_SLEEP);
 	encoder->bst = sc->sc_bst;
 	error = bus_space_map(encoder->bst, offset, size, 0, &encoder->bsh);
 	if (error) {
@@ -1174,8 +1164,6 @@ tegra_connector_init(struct drm_device *ddev, struct drm_encoder *encoder)
 	struct tegra_connector *connector;
 
 	connector = kmem_zalloc(sizeof(*connector), KM_SLEEP);
-	if (connector == NULL)
-		return -ENOMEM;
 
 	drm_connector_init(ddev, &connector->base, &tegra_connector_funcs,
 	    DRM_MODE_CONNECTOR_HDMIA);

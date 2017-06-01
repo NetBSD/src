@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.17 2017/03/24 21:28:03 macallan Exp $ */
+/*	$NetBSD: wcfb.c,v 1.18 2017/06/01 02:45:11 chs Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -20,7 +20,7 @@
 /* a driver for (some) 3DLabs Wildcat cards, based on OpenBSD's ifb driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.17 2017/03/24 21:28:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.18 2017/06/01 02:45:11 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,11 +233,6 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_is_jfb == 0) {
 		sc->sc_shadow = kmem_alloc(sc->sc_stride * sc->sc_height,
 		    KM_SLEEP);
-		if (sc->sc_shadow == NULL) {
-			aprint_error_dev(self,
-			    "failed to allocate shadow buffer\n");
-			return;
-		}
 	}
 
 	for (i = 0x40; i < 0x100; i += 16) {

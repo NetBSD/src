@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.10 2017/04/20 09:11:58 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.11 2017/06/01 02:45:14 chs Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.10 2017/04/20 09:11:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.11 2017/06/01 02:45:14 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -245,8 +245,6 @@ l2tp_clone_create(struct if_clone *ifc, int unit)
 	l2tpattach0(sc);
 
 	sc->l2tp_ro_percpu = percpu_alloc(sizeof(struct l2tp_ro));
-	KASSERTMSG(sc->l2tp_ro_percpu != NULL,
-	    "failed to allocate sc->l2tp_ro_percpu");
 	percpu_foreach(sc->l2tp_ro_percpu, l2tp_ro_init_pc, NULL);
 
 	mutex_enter(&l2tp_softcs.lock);

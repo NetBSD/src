@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.43 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.44 2017/06/01 02:45:12 chs Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.43 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.44 2017/06/01 02:45:12 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -799,8 +799,6 @@ uvideo_init_control(struct uvideo_softc *sc,
 	/* allocate space for units */
 	sc->sc_nunits = nunits;
 	sc->sc_unit = kmem_alloc(sizeof(*sc->sc_unit) * nunits, KM_SLEEP);
-	if (sc->sc_unit == NULL)
-		goto enomem;
 
 	/* restore original iterator state */
 	memcpy(iter, &orig, sizeof(orig));
@@ -859,9 +857,6 @@ uvideo_unit_alloc(const uvideo_descriptor_t *desc)
 		return NULL;
 
 	vu = kmem_alloc(sizeof(*vu), KM_SLEEP);
-	if (vu == NULL)
-		return NULL;
-
 	err = uvideo_unit_init(vu, desc);
 	if (err != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("uvideo_unit_alloc: error initializing unit: "
@@ -972,11 +967,6 @@ uvideo_unit_alloc_sources(struct uvideo_unit *vu,
 	} else {
 		vu->s.vu_src_id_ary =
 		    kmem_alloc(sizeof(*vu->s.vu_src_id_ary) * nsrcs, KM_SLEEP);
-		if (vu->s.vu_src_id_ary == NULL) {
-			vu->vu_nsrcs = 0;
-			return USBD_NOMEM;
-		}
-
 		memcpy(vu->s.vu_src_id_ary, src_ids, nsrcs);
 	}
 
@@ -1000,9 +990,6 @@ uvideo_unit_alloc_controls(struct uvideo_unit *vu, uint8_t size,
 			   const uint8_t *controls)
 {
 	vu->vu_controls = kmem_alloc(sizeof(*vu->vu_controls) * size, KM_SLEEP);
-	if (vu->vu_controls == NULL)
-		return USBD_NOMEM;
-
 	vu->vu_control_size = size;
 	memcpy(vu->vu_controls, controls, size);
 
@@ -1336,11 +1323,6 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 		uvdesc = (const uvideo_descriptor_t *) usb_desc_iter_next(iter);
 
 		format = kmem_zalloc(sizeof(struct uvideo_format), KM_SLEEP);
-		if (format == NULL) {
-			DPRINTF(("uvideo: failed to alloc video format\n"));
-			return USBD_NOMEM;
-		}
-
 		format->format.pixel_format = pixel_format;
 
 		switch (format_desc->bDescriptorSubtype) {
@@ -1577,12 +1559,6 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 			isoc->i_frlengths =
 			    kmem_alloc(sizeof(isoc->i_frlengths[0]) * nframes,
 				KM_SLEEP);
-			if (isoc->i_frlengths == NULL) {
-				DPRINTF(("uvideo: failed to alloc frlengths:"
-				 "%s (%d)\n",
-				 usbd_errstr(err), err));
-				return ENOMEM;
-			}
 		}
 
 		err = usbd_open_pipe(vs->vs_iface, ix->ix_endpt,

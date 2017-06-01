@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.58 2017/03/05 19:22:45 snj Exp $	*/
+/*	$NetBSD: ubt.c,v 1.59 2017/06/01 02:45:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.58 2017/03/05 19:22:45 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.59 2017/06/01 02:45:12 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1000,10 +1000,6 @@ ubt_enable(device_t self)
 
 	/* Events */
 	sc->sc_evt_buf = kmem_alloc(UBT_BUFSIZ_EVENT, KM_SLEEP);
-	if (sc->sc_evt_buf == NULL) {
-		error = ENOMEM;
-		goto bad;
-	}
 	err = usbd_open_pipe_intr(sc->sc_iface0,
 				  sc->sc_evt_addr,
 				  USBD_SHORT_XFER_OK,

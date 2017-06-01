@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.71 2017/03/01 10:44:47 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.72 2017/06/01 02:45:13 chs Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.71 2017/03/01 10:44:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.72 2017/06/01 02:45:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -184,9 +184,6 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	/* Allocate the tmpfs mount structure and fill it. */
 	tmp = kmem_zalloc(sizeof(tmpfs_mount_t), KM_SLEEP);
-	if (tmp == NULL)
-		return ENOMEM;
-
 	tmp->tm_nodes_max = nodes;
 	tmp->tm_nodes_cnt = 0;
 	LIST_INIT(&tmp->tm_nodes);

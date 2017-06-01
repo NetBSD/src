@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.89 2017/03/21 02:24:35 ozaki-r Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.90 2017/06/01 02:45:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.89 2017/03/21 02:24:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.90 2017/06/01 02:45:15 chs Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -188,8 +188,6 @@ ubc_init(void)
 	ubc_winsize = 1 << ubc_winshift;
 	ubc_object.inactive = kmem_alloc(UBC_NQUEUES *
 	    sizeof(struct ubc_inactive_head), KM_SLEEP);
-	if (ubc_object.inactive == NULL)
-		panic("ubc_init: failed to allocate inactive queue heads");
 	for (i = 0; i < UBC_NQUEUES; i++) {
 		TAILQ_INIT(&ubc_object.inactive[i]);
 	}

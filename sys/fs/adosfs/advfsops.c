@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.76 2017/02/17 08:31:24 hannken Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.77 2017/06/01 02:45:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.76 2017/02/17 08:31:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.77 2017/06/01 02:45:12 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -269,9 +269,8 @@ adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* allocate and load bitmap, set free space */
 	bitmap_sz = ((amp->numblks + 31) / 32) * sizeof(*amp->bitmap);
 	amp->bitmap = kmem_alloc(bitmap_sz, KM_SLEEP);
-	if (amp->bitmap)
-		adosfs_loadbitmap(amp);
-	if (mp->mnt_flag & MNT_RDONLY && amp->bitmap) {
+	adosfs_loadbitmap(amp);
+	if (mp->mnt_flag & MNT_RDONLY) {
 		/*
 		 * Don't need the bitmap any more if it's read-only.
 		 */

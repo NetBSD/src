@@ -1,4 +1,4 @@
-/* $NetBSD: nxt2k.c,v 1.4 2015/03/07 14:16:51 jmcneill Exp $ */
+/* $NetBSD: nxt2k.c,v 1.5 2017/06/01 02:45:10 chs Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nxt2k.c,v 1.4 2015/03/07 14:16:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nxt2k.c,v 1.5 2017/06/01 02:45:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -780,9 +780,6 @@ nxt2k_open(device_t parent, i2c_tag_t tag, i2c_addr_t addr, unsigned int if_freq
 	uint8_t b[5];
 
 	nxt = kmem_alloc(sizeof(*nxt), KM_SLEEP);
-	if (nxt == NULL)
-		return NULL;
-
 	nxt->parent = parent;
 	nxt->tag = tag;
 	nxt->addr = addr;

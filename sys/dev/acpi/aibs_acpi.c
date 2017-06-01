@@ -1,4 +1,4 @@
-/* $NetBSD: aibs_acpi.c,v 1.5 2015/04/23 23:23:00 pgoyette Exp $ */
+/* $NetBSD: aibs_acpi.c,v 1.6 2017/06/01 02:45:09 chs Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aibs_acpi.c,v 1.5 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aibs_acpi.c,v 1.6 2017/06/01 02:45:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -463,11 +463,6 @@ aibs_sensor_add(device_t self, ACPI_OBJECT *obj)
 	}
 
 	as = kmem_zalloc(sizeof(*as), KM_SLEEP);
-
-	if (as == NULL) {
-		rv = AE_NO_MEMORY;
-		goto out;
-	}
 
 	name = obj->Package.Elements[1].String.Pointer;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.46 2016/10/15 07:10:15 nat Exp $	*/
+/*	$NetBSD: hid.c,v 1.47 2017/06/01 02:45:11 chs Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.46 2016/10/15 07:10:15 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.47 2017/06/01 02:45:11 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -96,8 +96,6 @@ hid_start_parse(const void *d, int len, enum hid_kind kind)
 	struct hid_data *s;
 
 	s = kmem_zalloc(sizeof(*s), KM_SLEEP);
-	if (s == NULL)
-		return s;
 	s->start = s->p = d;
 	s->end = (const char *)d + len;
 	s->kind = kind;

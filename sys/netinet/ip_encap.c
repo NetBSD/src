@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.64 2017/04/15 17:06:45 riastradh Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.65 2017/06/01 02:45:14 chs Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.64 2017/04/15 17:06:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.65 2017/06/01 02:45:14 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -174,8 +174,6 @@ encapinit(void)
 
 	encaptab.psz = pserialize_create();
 	encaptab.elem_class = psref_class_create("encapelem", IPL_SOFTNET);
-	if (encaptab.elem_class == NULL)
-		panic("encaptab.elem_class cannot be allocated.\n");
 
 	mutex_init(&encap_whole.lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&encap_whole.cv, "ip_encap cv");

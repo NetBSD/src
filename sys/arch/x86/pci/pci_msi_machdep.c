@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.11 2017/04/14 09:34:46 knakahara Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.12 2017/06/01 02:45:08 chs Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.11 2017/04/14 09:34:46 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.12 2017/06/01 02:45:08 chs Exp $");
 
 #include "opt_intrdebug.h"
 #include "ioapic.h"
@@ -100,11 +100,6 @@ pci_msi_alloc_vectors(struct pic *msi_pic, uint *table_indexes, int *count)
 	char intrstr_buf[INTRIDBUF];
 
 	vectors = kmem_zalloc(sizeof(vectors[0]) * (*count), KM_SLEEP);
-	if (vectors == NULL) {
-		DPRINTF(("cannot allocate vectors\n"));
-		return NULL;
-	}
-
 	mutex_enter(&cpu_lock);
 	for (i = 0; i < *count; i++) {
 		u_int table_index;

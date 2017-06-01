@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.36 2014/03/26 08:17:59 christos Exp $	*/
+/*	$NetBSD: vs.c,v 1.37 2017/06/01 02:45:08 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.36 2014/03/26 08:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.37 2017/06/01 02:45:08 chs Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -723,8 +723,7 @@ vs_allocm(void *hdl, int direction, size_t size)
 	struct vs_dma *vd;
 	int error;
 
-	if ((vd = kmem_alloc(sizeof(*vd), KM_SLEEP)) == NULL)
-		return NULL;
+	vd = kmem_alloc(sizeof(*vd), KM_SLEEP);
 	sc = hdl;
 	vd->vd_dmat = sc->sc_dmat;
 

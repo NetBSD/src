@@ -1,4 +1,4 @@
-/*	$NetBSD: can_pcb.c,v 1.4 2017/05/30 13:33:16 bouyer Exp $	*/
+/*	$NetBSD: can_pcb.c,v 1.5 2017/06/01 02:45:14 chs Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.4 2017/05/30 13:33:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.5 2017/06/01 02:45:14 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,8 +240,6 @@ can_pcbsetfilter(struct canpcb *canp, struct can_filter *fp, int nfilters)
 	if (nfilters > 0) {
 		newf =
 		    kmem_alloc(sizeof(struct can_filter) * nfilters, KM_SLEEP);
-		if (newf == NULL)
-			return ENOMEM;
 		memcpy(newf, fp, sizeof(struct can_filter) * nfilters);
 	} else {
 		newf = NULL;

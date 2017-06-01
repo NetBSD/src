@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.172 2016/12/04 10:12:35 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.173 2017/06/01 02:45:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.172 2016/12/04 10:12:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.173 2017/06/01 02:45:12 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -412,11 +412,7 @@ usbd_alloc_buffer(struct usbd_xfer *xfer, uint32_t size)
 #endif
 	KASSERT(xfer->ux_bus->ub_usedma == false);
 	xfer->ux_buf = kmem_alloc(size, KM_SLEEP);
-
-	if (xfer->ux_buf != NULL) {
-		xfer->ux_bufsize = size;
-	}
-
+	xfer->ux_bufsize = size;
 	return xfer->ux_buf;
 }
 

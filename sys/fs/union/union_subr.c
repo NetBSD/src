@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.74 2016/08/20 12:37:08 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.75 2017/06/01 02:45:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.74 2016/08/20 12:37:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.75 2017/06/01 02:45:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1137,10 +1137,6 @@ union_check_rmdir(struct union_node *un, kauth_cred_t cred)
 	}
 	dirlen = va.va_blocksize;
 	dirbuf = kmem_alloc(dirlen, KM_SLEEP);
-	if (dirbuf == NULL) {
-		VOP_UNLOCK(un->un_lowervp);
-		return ENOMEM;
-	}
 	/* error = 0; */
 	eofflag = 0;
 	auio.uio_offset = 0;

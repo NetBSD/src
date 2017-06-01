@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.12 2017/03/28 08:47:19 ozaki-r Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.13 2017/06/01 02:45:05 chs Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.12 2017/03/28 08:47:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.13 2017/06/01 02:45:05 chs Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -961,9 +961,6 @@ gmac_hwqmem_create(gmac_mapcache_t *mc, size_t ndesc, size_t nqueue, int flags)
 	KASSERT((ndesc & (ndesc - 1)) == 0);
 
 	hqm = kmem_zalloc(sizeof(*hqm), KM_SLEEP);
-	if (hqm == NULL)
-		return NULL;
-
 	hqm->hqm_memsize = nqueue * sizeof(gmac_desc_t [ndesc]);
 	hqm->hqm_mc = mc;
 	hqm->hqm_dmat = mc->mc_dmat;
@@ -1048,11 +1045,7 @@ gmac_hwqueue_create(gmac_hwqmem_t *hqm,
 	KASSERT((hqm->hqm_refs & (1 << qno)) == 0);
 
 	hwq = kmem_zalloc(sizeof(*hwq), KM_SLEEP);
-	if (hwq == NULL)
-		return NULL;
-
 	hwq->hwq_size = hqm->hqm_ndesc;
-
 	hwq->hwq_iot = iot;
 	bus_space_subregion(iot, ioh, qrwptr, sizeof(uint32_t),
 	    &hwq->hwq_qrwptr_ioh);

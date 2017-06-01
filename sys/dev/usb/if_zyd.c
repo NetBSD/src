@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.43 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.44 2017/06/01 02:45:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.43 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.44 2017/06/01 02:45:12 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -510,8 +510,6 @@ zyd_open_pipes(struct zyd_softc *sc)
 		return EINVAL;
 
 	sc->ibuf = kmem_alloc(sc->ibuf_size, KM_SLEEP);
-	if (sc->ibuf == NULL)
-		return ENOMEM;
 
 	error = usbd_open_pipe_intr(sc->sc_iface, 0x83, USBD_SHORT_XFER_OK,
 	    &sc->zyd_ep[ZYD_ENDPT_IIN], sc, sc->ibuf, sc->ibuf_size, zyd_intr,

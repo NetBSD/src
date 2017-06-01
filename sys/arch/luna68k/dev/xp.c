@@ -1,4 +1,4 @@
-/* $NetBSD: xp.c,v 1.3 2017/01/08 16:41:35 tsutsui Exp $ */
+/* $NetBSD: xp.c,v 1.4 2017/06/01 02:45:06 chs Exp $ */
 
 /*-
  * Copyright (c) 2016 Izumi Tsutsui.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xp.c,v 1.3 2017/01/08 16:41:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xp.c,v 1.4 2017/06/01 02:45:06 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,9 +225,6 @@ xp_ioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 		}
 
 		loadbuf = kmem_alloc(loadsize, KM_SLEEP);
-		if (loadbuf == NULL) {
-			return ENOMEM;
-		}
 		error = copyin(downld->data, loadbuf, loadsize);
 		if (error == 0) {
 			put_pio0c(XP_RESET, ON);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.274 2016/12/04 10:12:35 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.275 2017/06/01 02:45:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.274 2016/12/04 10:12:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.275 2017/06/01 02:45:12 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3397,8 +3397,6 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 	upipe->intr.npoll = npoll;
 	upipe->intr.qhs =
 		kmem_alloc(npoll * sizeof(uhci_soft_qh_t *), KM_SLEEP);
-	if (upipe->intr.qhs == NULL)
-		return USBD_NOMEM;
 
 	/*
 	 * Figure out which offset in the schedule that has most

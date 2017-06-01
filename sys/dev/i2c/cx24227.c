@@ -1,4 +1,4 @@
-/* $NetBSD: cx24227.c,v 1.7 2015/03/07 14:16:51 jmcneill Exp $ */
+/* $NetBSD: cx24227.c,v 1.8 2017/06/01 02:45:10 chs Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.7 2015/03/07 14:16:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.8 2017/06/01 02:45:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,9 +234,6 @@ cx24227_open(device_t parent, i2c_tag_t tag, i2c_addr_t addr)
 	uint16_t value;
 
 	sc = kmem_alloc(sizeof(*sc), KM_SLEEP);
-	if (sc == NULL)
-		return NULL;
-
 	sc->parent = parent;
 	sc->tag = tag;
 	sc->addr = addr;

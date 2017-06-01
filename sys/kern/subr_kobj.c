@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.61 2017/04/19 15:54:45 christos Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.62 2017/06/01 02:45:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.61 2017/04/19 15:54:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.62 2017/06/01 02:45:13 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -109,10 +109,6 @@ kobj_load_mem(kobj_t *kop, const char *name, void *base, ssize_t size)
 	kobj_t ko;
 
 	ko = kmem_zalloc(sizeof(*ko), KM_SLEEP);
-	if (ko == NULL) {
-		return ENOMEM;
-	}
-
 	ko->ko_type = KT_MEMORY;
 	kobj_setname(ko, name);
 	ko->ko_source = base;

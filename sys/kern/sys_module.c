@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.21 2015/12/12 14:47:37 maxv Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.22 2017/06/01 02:45:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.21 2015/12/12 14:47:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.22 2017/06/01 02:45:13 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -81,11 +81,6 @@ handle_modctl_load(const char *ml_filename, int ml_flags, const char *ml_props,
 		propslen = ml_propslen + 1;
 
 		props = kmem_alloc(propslen, KM_SLEEP);
-		if (props == NULL) {
-			error = ENOMEM;
-			goto out1;
-		}
-
 		error = copyinstr(ml_props, props, propslen, NULL);
 		if (error != 0)
 			goto out2;
@@ -129,10 +124,6 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 	kernconfig_lock();
 	mslen = (module_count+module_builtinlist+1) * sizeof(modstat_t);
 	mso = kmem_zalloc(mslen, KM_SLEEP);
-	if (mso == NULL) {
-		kernconfig_unlock();
-		return ENOMEM;
-	}
 	ms = mso;
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
 		mi = mod->mod_info;

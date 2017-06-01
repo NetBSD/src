@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.54 2017/05/10 02:46:06 msaitoh Exp $	*/
+/*	$NetBSD: autri.c,v 1.55 2017/06/01 02:45:11 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.54 2017/05/10 02:46:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.55 2017/06/01 02:45:11 chs Exp $");
 
 #include "midi.h"
 
@@ -1095,8 +1095,6 @@ autri_malloc(void *addr, int direction, size_t size)
 	int error;
 
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (!p)
-		return NULL;
 	sc = addr;
 #if 0
 	error = autri_allocmem(sc, size, 16, p);

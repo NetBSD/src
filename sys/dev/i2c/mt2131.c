@@ -1,4 +1,4 @@
-/* $NetBSD: mt2131.c,v 1.5 2015/03/07 14:16:51 jmcneill Exp $ */
+/* $NetBSD: mt2131.c,v 1.6 2017/06/01 02:45:10 chs Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt2131.c,v 1.5 2015/03/07 14:16:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt2131.c,v 1.6 2017/06/01 02:45:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,6 @@ mt2131_open(device_t parent, i2c_tag_t t, i2c_addr_t a)
 	}
 
 	sc = kmem_alloc(sizeof(*sc), KM_SLEEP);
-	if (sc == NULL)
-                return NULL;
-
 	sc->parent = parent;
 	sc->tag = t;
 	sc->addr = a;

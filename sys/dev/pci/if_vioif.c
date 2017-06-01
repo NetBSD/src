@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.37 2017/05/17 20:13:02 jdolecek Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.38 2017/06/01 02:45:11 chs Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.37 2017/05/17 20:13:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.38 2017/06/01 02:45:11 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -382,8 +382,6 @@ vioif_alloc_mems(struct vioif_softc *sc)
 	allocsize2 += sizeof(bus_dmamap_t) * (rxqsize + txqsize);
 	allocsize2 += sizeof(struct mbuf*) * (rxqsize + txqsize);
 	sc->sc_arrays = kmem_zalloc(allocsize2, KM_SLEEP);
-	if (sc->sc_arrays == NULL)
-		goto err_dmamem_map;
 	sc->sc_txhdr_dmamaps = sc->sc_arrays + rxqsize;
 	sc->sc_rx_dmamaps = sc->sc_txhdr_dmamaps + txqsize;
 	sc->sc_tx_dmamaps = sc->sc_rx_dmamaps + rxqsize;
@@ -503,7 +501,6 @@ err_reqs:
 		kmem_free(sc->sc_arrays, allocsize2);
 		sc->sc_arrays = 0;
 	}
-err_dmamem_map:
 	bus_dmamem_unmap(virtio_dmat(vsc), sc->sc_hdrs, allocsize);
 err_dmamem_alloc:
 	bus_dmamem_free(virtio_dmat(vsc), &sc->sc_hdr_segs[0], 1);

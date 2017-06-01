@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_gc.c,v 1.8 2015/01/11 17:28:22 hannken Exp $	*/
+/*	$NetBSD: chfs_gc.c,v 1.9 2017/06/01 02:45:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -716,9 +716,6 @@ chfs_gcollect_pristine(struct chfs_mount *chmp, struct chfs_eraseblock *cheb,
 	dbg_gc("gcollect_pristine\n");
 
 	data = kmem_alloc(totlen, KM_SLEEP);
-	if (!data)
-		return ENOMEM;
-
 	ofs = CHFS_GET_OFS(nref->nref_offset);
 
 	/* Read header. */

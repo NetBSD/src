@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.349 2017/04/05 20:30:55 jdolecek Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.350 2017/06/01 02:45:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.349 2017/04/05 20:30:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.350 2017/06/01 02:45:11 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -355,12 +355,6 @@ static kmutex_t raid_lock;
 static struct raid_softc *
 raidcreate(int unit) {
 	struct raid_softc *sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
-	if (sc == NULL) {
-#ifdef DIAGNOSTIC
-		printf("%s: out of memory\n", __func__);
-#endif
-		return NULL;
-	}
 	sc->sc_unit = unit;
 	cv_init(&sc->sc_cv, "raidunit");
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);

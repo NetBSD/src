@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.36 2016/11/26 15:03:23 nonaka Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.37 2017/06/01 02:45:07 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.36 2016/11/26 15:03:23 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.37 2017/06/01 02:45:07 chs Exp $");
 
 #include "opt_pci.h"
 
@@ -528,9 +528,6 @@ pci_intx_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihpp)
 	pci_intr_handle_t *ihp;
 
 	ihp = kmem_alloc(sizeof(*ihp), KM_SLEEP);
-	if (ihp == NULL)
-		return ENOMEM;
-
 	if (pci_intr_map(pa, ihp)) {
 		kmem_free(ihp, sizeof(*ihp));
 		return EINVAL;

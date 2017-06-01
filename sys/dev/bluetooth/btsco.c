@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.35 2017/05/28 04:12:13 nat Exp $	*/
+/*	$NetBSD: btsco.c,v 1.36 2017/06/01 02:45:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.35 2017/05/28 04:12:13 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.36 2017/06/01 02:45:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -1025,7 +1025,7 @@ btsco_allocm(void *hdl, int direction, size_t size)
 
 	addr = kmem_alloc(size, KM_SLEEP);
 
-	if (addr != NULL && direction == AUMODE_PLAY) {
+	if (direction == AUMODE_PLAY) {
 		sc->sc_tx_buf = addr;
 		sc->sc_tx_refcnt = 0;
 	}

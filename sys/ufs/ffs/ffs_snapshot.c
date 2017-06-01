@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.148 2017/04/01 19:35:56 riastradh Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.149 2017/06/01 02:45:15 chs Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.148 2017/04/01 19:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.149 2017/06/01 02:45:15 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -139,9 +139,6 @@ ffs_snapshot_init(struct ufsmount *ump)
 	struct snap_info *si;
 
 	si = ump->um_snapinfo = kmem_alloc(sizeof(*si), KM_SLEEP);
-	if (si == NULL)
-		return ENOMEM;
-
 	TAILQ_INIT(&si->si_snapshots);
 	mutex_init(&si->si_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&si->si_snaplock, MUTEX_DEFAULT, IPL_NONE);
