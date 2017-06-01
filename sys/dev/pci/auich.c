@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.150 2017/01/25 06:33:52 martin Exp $	*/
+/*	$NetBSD: auich.c,v 1.151 2017/06/01 02:45:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.150 2017/01/25 06:33:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.151 2017/06/01 02:45:11 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1172,8 +1172,6 @@ auich_allocm(void *v, int direction, size_t size)
 		return NULL;
 
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (p == NULL)
-		return NULL;
 
 	sc = v;
 	error = auich_allocmem(sc, size, 0, p);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.125 2017/02/13 04:05:19 ozaki-r Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.126 2017/06/01 02:45:14 chs Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.125 2017/02/13 04:05:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.126 2017/06/01 02:45:14 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -233,16 +233,12 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	struct gif_softc *sc;
 
 	sc = kmem_zalloc(sizeof(struct gif_softc), KM_SLEEP);
-	if (sc == NULL)
-		return ENOMEM;
 
 	if_initname(&sc->gif_if, ifc->ifc_name, unit);
 
 	gifattach0(sc);
 
 	sc->gif_ro_percpu = percpu_alloc(sizeof(struct route));
-	KASSERTMSG(sc->gif_ro_percpu != NULL,
-	    "failed to allocate sc->gif_ro_percpu");
 	LIST_INSERT_HEAD(&gif_softc_list, sc, gif_list);
 	return (0);
 }

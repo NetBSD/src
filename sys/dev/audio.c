@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.355 2017/05/28 21:36:18 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.356 2017/06/01 02:45:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.355 2017/05/28 21:36:18 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.356 2017/06/01 02:45:08 chs Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -4976,12 +4976,11 @@ mixer_open(dev_t dev, struct audio_softc *sc, int flags,
 
 	DPRINTF(("mixer_open: flags=0x%x sc=%p\n", flags, sc));
 
-	chan = kmem_zalloc(sizeof(struct audio_chan), KM_SLEEP);
-
 	error = fd_allocfile(&fp, &fd);
 	if (error)
 		return error;
 
+	chan = kmem_zalloc(sizeof(struct audio_chan), KM_SLEEP);
 	chan->dev = dev;
 	chan->chan = MIXER_INUSE;
 

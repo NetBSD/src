@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.169 2016/09/13 07:39:45 martin Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.170 2017/06/01 02:45:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.169 2016/09/13 07:39:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.170 2017/06/01 02:45:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,11 +503,7 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 
 	kte = pool_cache_get(kte_cache, PR_WAITOK);
 	if (sz > sizeof(kte->kte_space)) {
-		if ((buf = kmem_alloc(sz, KM_SLEEP)) == NULL) {
-			pool_cache_put(kte_cache, kte);
-			ktrexit(l);
-			return ENOMEM;
-		}
+		buf = kmem_alloc(sz, KM_SLEEP);
 	} else
 		buf = kte->kte_space;
 

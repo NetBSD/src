@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.21 2016/10/19 00:08:42 nonaka Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.22 2017/06/01 02:45:07 chs Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.21 2016/10/19 00:08:42 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.22 2017/06/01 02:45:07 chs Exp $");
 
 #define _POWERPC_BUS_DMA_PRIVATE
 
@@ -160,9 +160,6 @@ genppc_pci_intr_alloc(const struct pci_attach_args *pa,
 		return EINVAL;
 
 	ihp = kmem_alloc(sizeof(*ihp), KM_SLEEP);
-	if (ihp == NULL)
-		return ENOMEM;
-
 	if (pci_intr_map(pa, ihp)) {
 		kmem_free(ihp, sizeof(*ihp));
 		return EINVAL;
@@ -191,9 +188,6 @@ genppc_pci_intx_alloc(const struct pci_attach_args *pa,
 	int error;
 
 	handle = kmem_zalloc(sizeof(*handle), KM_SLEEP);
-	if (handle == NULL)
-		return ENOMEM;
-
 	error = pci_intr_map(pa, handle);
 	if (error != 0) {
 		kmem_free(handle, sizeof(*handle));

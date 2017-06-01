@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.50 2014/02/07 15:29:22 hannken Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.51 2017/06/01 02:45:13 chs Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.50 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.51 2017/06/01 02:45:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -510,9 +510,6 @@ sys___getcwd(struct lwp *l, const struct sys___getcwd_args *uap, register_t *ret
 		return ERANGE;
 
 	path = kmem_alloc(len, KM_SLEEP);
-	if (!path)
-		return ENOMEM;
-
 	bp = &path[len];
 	bend = bp;
 	*(--bp) = '\0';

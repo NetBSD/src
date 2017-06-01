@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.104 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.105 2017/06/01 02:45:05 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.104 2017/02/23 03:34:22 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.105 2017/06/01 02:45:05 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -778,10 +778,6 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 
 	size = n * sizeof(struct mtrr);
 	m64p = kmem_zalloc(size, KM_SLEEP);
-	if (m64p == NULL) {
-		error = ENOMEM;
-		goto fail;
-	}
 	error = mtrr_get(m64p, &n, l->l_proc, 0);
 	if (error != 0)
 		goto fail;
@@ -843,10 +839,6 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 
 	size = n * sizeof(struct mtrr);
 	m64p = kmem_zalloc(size, KM_SLEEP);
-	if (m64p == NULL) {
-		error = ENOMEM;
-		goto fail;
-	}
 	m32p = (struct mtrr32 *)(uintptr_t)args32.mtrrp;
 	mp = m64p;
 	for (i = 0; i < n; i++) {

@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.5 2016/12/15 09:28:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.6 2017/06/01 02:45:05 chs Exp $");
 
 #include "opt_omapl1x.h"
 
@@ -1290,12 +1290,6 @@ emac_attach (device_t parent, device_t self, void *aux)
 		}
 
 		entry = kmem_zalloc(sizeof(*entry), KM_SLEEP);
-		if (!entry) {
-			aprint_error_dev(self, "Can't alloc txmap entry\n");
-			bus_dmamap_destroy(sc->sc_desct, dmamap);
-			goto fail;
-		}
-
 		entry->dmamap = dmamap;
 		entry->bd = sc->descs.tx_desc[i];
 		entry->m = NULL;
@@ -1314,12 +1308,6 @@ emac_attach (device_t parent, device_t self, void *aux)
 		}
 
 		entry = kmem_zalloc(sizeof(*entry), KM_SLEEP);
-		if (!entry) {
-			aprint_error_dev(self, "Can't alloc rxmap entry\n");
-			bus_dmamap_destroy(sc->sc_buft, dmamap);
-			goto fail;
-		}
-
 		entry->dmamap = dmamap;
 		entry->bd = sc->descs.rx_desc[i];
 		entry->m = NULL;

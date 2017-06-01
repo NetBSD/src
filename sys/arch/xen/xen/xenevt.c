@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.45 2016/07/07 06:55:40 msaitoh Exp $      */
+/*      $NetBSD: xenevt.c,v 1.46 2017/06/01 02:45:08 chs Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.45 2016/07/07 06:55:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.46 2017/06/01 02:45:08 chs Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -493,8 +493,6 @@ xenevt_fwrite(struct file *fp, off_t *offp, struct uio *uio,
 	if (nentries >= NR_EVENT_CHANNELS)
 		return EMSGSIZE;
 	chans = kmem_alloc(nentries * sizeof(uint16_t), KM_SLEEP);
-	if (chans == NULL)
-		return ENOMEM;
 	error = uiomove(chans, uio->uio_resid, uio);
 	if (error)
 		goto out;

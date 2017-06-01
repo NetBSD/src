@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.57 2016/07/14 04:19:27 msaitoh Exp $	*/
+/*	$NetBSD: yds.c,v 1.58 2017/06/01 02:45:11 chs Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.57 2016/07/14 04:19:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.58 2017/06/01 02:45:11 chs Exp $");
 
 #include "mpu.h"
 
@@ -1666,8 +1666,6 @@ yds_malloc(void *addr, int direction, size_t size)
 	int error;
 
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (p == NULL)
-		return NULL;
 	sc = addr;
 	error = yds_allocmem(sc, size, 16, p);
 	if (error) {
