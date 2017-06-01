@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.159 2017/05/31 09:53:35 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.160 2017/06/01 03:51:08 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.159 2017/05/31 09:53:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.160 2017/06/01 03:51:08 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -2199,8 +2199,7 @@ key_spddelete2(struct socket *so, struct mbuf *m,
 	if (mhp->ext[SADB_X_EXT_POLICY] == NULL ||
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
 		IPSECLOG(LOG_DEBUG, "invalid message is passed.\n");
-		key_senderror(so, m, EINVAL);
-		return 0;
+		return key_senderror(so, m, EINVAL);
 	}
 
 	id = ((struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY])->sadb_x_policy_id;
