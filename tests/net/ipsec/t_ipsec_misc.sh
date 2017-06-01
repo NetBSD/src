@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.4 2017/05/24 09:34:48 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.5 2017/06/01 03:51:47 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -167,7 +167,6 @@ test_ipsec6_lifetime()
 	local algo=$2
 	local ip_local=fd00::1
 	local ip_peer=fd00::2
-	local tmpfile=./tmp
 	local outfile=./out
 	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
 	local algo_args="$(generate_algo_args $proto $algo)"
