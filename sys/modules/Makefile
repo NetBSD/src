@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.191 2017/04/19 00:01:38 riastradh Exp $
+#	$NetBSD: Makefile,v 1.192 2017/06/01 09:58:27 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ SUBDIR=		accf_dataready
 SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
 SUBDIR+=	aio
+SUBDIR+=	audio
 SUBDIR+=	blowfish
 SUBDIR+=	bpf
 SUBDIR+=	bpf_filter
@@ -77,6 +78,7 @@ SUBDIR+=	lua
 SUBDIR+=	luasystm
 SUBDIR+=	luapmf
 SUBDIR+=	mfs
+SUBDIR+=	midi
 SUBDIR+=	miiverbose
 SUBDIR+=	miniroot
 SUBDIR+=	mqueue
@@ -113,6 +115,7 @@ SUBDIR+=	secmodel_bsd44
 SUBDIR+=	secmodel_extensions
 SUBDIR+=	secmodel_overlay
 SUBDIR+=	securelevel
+SUBDIR+=	sequencer
 SUBDIR+=	skipjack
 SUBDIR+=	slcompress
 SUBDIR+=	smbfs
