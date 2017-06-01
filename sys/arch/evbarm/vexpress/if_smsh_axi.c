@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsh_axi.c,v 1.2 2015/02/11 07:51:10 ozaki-r Exp $	*/
+/*	$NetBSD: if_smsh_axi.c,v 1.3 2017/06/01 17:01:18 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsh_axi.c,v 1.2 2015/02/11 07:51:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsh_axi.c,v 1.3 2017/06/01 17:01:18 jmcneill Exp $");
 
 #include "locators.h"
 
@@ -100,6 +100,9 @@ smsh_axi_attach(device_t parent, device_t self, void *aux)
 		&sc->sc_ioh))
 		panic("smsh_axi_attach: can't map i/o space");
 	sc->sc_iot = aa->aa_iot;
+
+	/* Configure IRQ polarity active high, IRQ output is push-pull */
+	sc->sc_flags |= LAN9118_FLAGS_IRQ_ACTHI | LAN9118_FLAGS_IRQ_PP;
 
 	if (lan9118_attach(sc) != 0) {
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, LAN9118_IOSIZE);
