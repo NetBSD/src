@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.24 2017/02/20 07:43:29 ozaki-r Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.25 2017/06/01 16:59:20 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.24 2017/02/20 07:43:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.25 2017/06/01 16:59:20 jmcneill Exp $");
 
 /*
  * The LAN9118 Family
@@ -156,7 +156,7 @@ int
 lan9118_attach(struct lan9118_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	uint32_t val;
+	uint32_t val, irq_cfg;
 	int timo, i;
 
 	if (sc->sc_flags & LAN9118_FLAGS_SWAP)
@@ -205,6 +205,14 @@ lan9118_attach(struct lan9118_softc *sc)
 	}
 	aprint_normal_dev(sc->sc_dev, "MAC address %s\n",
 	    ether_sprintf(sc->sc_enaddr));
+
+	/* Set IRQ config */
+	irq_cfg = 0;
+	if (sc->sc_flags & LAN9118_FLAGS_IRQ_ACTHI)
+		irq_cfg |= LAN9118_IRQ_CFG_IRQ_POL;
+	if (sc->sc_flags & LAN9118_FLAGS_IRQ_PP)
+		irq_cfg |= LAN9118_IRQ_CFG_IRQ_TYPE;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_IRQ_CFG, irq_cfg);
 
 	KASSERT(LAN9118_TX_FIF_SZ >= 2 && LAN9118_TX_FIF_SZ < 15);
 	sc->sc_afc_cfg = afc_cfg[LAN9118_TX_FIF_SZ];
@@ -514,7 +522,7 @@ lan9118_init(struct ifnet *ifp)
 {
 	struct lan9118_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_mii.mii_media;
-	uint32_t reg, hw_cfg, mac_cr;
+	uint32_t reg, hw_cfg, mac_cr, irq_cfg;
 	int timo, s;
 
 	DPRINTFN(2, ("%s\n", __func__));
@@ -588,8 +596,10 @@ lan9118_init(struct ifnet *ifp)
 	    LAN9118_GPIO_CFG_GPIOBUFN(1) |
 	    LAN9118_GPIO_CFG_GPIOBUFN(0));
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_IRQ_CFG,
-	    LAN9118_IRQ_CFG_IRQ_EN);
+	irq_cfg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_IRQ_CFG);
+	irq_cfg |= LAN9118_IRQ_CFG_IRQ_EN;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_IRQ_CFG, irq_cfg);
+
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_STS,
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_STS));
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_FIFO_INT,
