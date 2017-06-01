@@ -285,9 +285,6 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	WARN_ON(memhandle != VCHI_MEM_HANDLE_INVALID);
 
 	bi = kmem_alloc(sizeof(*bi), KM_SLEEP);
-	if (bi == NULL)
-		goto fail;
-
 	bi->buf = buf;
 	bi->size = size;
 	bi->pagelist_size = sizeof(PAGELIST_T) +
@@ -427,8 +424,6 @@ fail2:
 
 fail1:
 	kmem_free(bi, sizeof(*bi));
-
-fail:
 	return VCHIQ_ERROR;
 }
 

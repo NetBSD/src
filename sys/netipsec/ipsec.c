@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.95 2017/05/30 01:31:07 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.96 2017/06/01 02:45:14 chs Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.95 2017/05/30 01:31:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.96 2017/06/01 02:45:14 chs Exp $");
 
 /*
  * IPsec controller part.
@@ -1337,7 +1337,6 @@ ipsec_deepcopy_policy(const struct secpolicy *src)
 	struct ipsecrequest *newchain = NULL;
 	const struct ipsecrequest *p;
 	struct ipsecrequest **q;
-	struct ipsecrequest *r;
 	struct secpolicy *dst;
 
 	if (src == NULL)
@@ -1353,8 +1352,6 @@ ipsec_deepcopy_policy(const struct secpolicy *src)
 	q = &newchain;
 	for (p = src->req; p; p = p->next) {
 		*q = kmem_zalloc(sizeof(**q), KM_SLEEP);
-		if (*q == NULL)
-			goto fail;
 		(*q)->next = NULL;
 
 		(*q)->saidx.proto = p->saidx.proto;
@@ -1377,13 +1374,6 @@ ipsec_deepcopy_policy(const struct secpolicy *src)
 	/* do not touch the refcnt fields */
 
 	return dst;
-
-fail:
-	for (q = &newchain; *q; q = &r) {
-		r = (*q)->next;
-		kmem_free(*q, sizeof(**q));
-	}
-	return NULL;
 }
 
 /* set policy and ipsec request if present. */

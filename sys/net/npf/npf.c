@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.33 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf.c,v 1.34 2017/06/01 02:45:14 chs Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.33 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.34 2017/06/01 02:45:14 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -75,10 +75,6 @@ npf_create(int flags, const npf_mbufops_t *mbufops, const npf_ifops_t *ifops)
 
 	npf = kmem_zalloc(sizeof(npf_t), KM_SLEEP);
 	npf->qsbr = pserialize_create();
-	if (!npf->qsbr) {
-		kmem_free(npf, sizeof(npf_t));
-		return NULL;
-	}
 	npf->stats_percpu = percpu_alloc(NPF_STATS_SIZE);
 	npf->mbufops = mbufops;
 

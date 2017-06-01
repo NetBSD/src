@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.114 2016/07/11 14:35:00 kiyohara Exp $	*/
+/*	$NetBSD: cpu.c,v 1.115 2017/06/01 02:45:05 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.114 2016/07/11 14:35:00 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.115 2017/06/01 02:45:05 chs Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -96,7 +96,6 @@ cpu_attach(device_t dv, cpuid_t id)
 #ifdef MULTIPROCESSOR
 		KASSERT(cpu_info[id] == NULL);
 		ci = kmem_zalloc(sizeof(*ci), KM_SLEEP);
-		KASSERT(ci != NULL);
 		ci->ci_cpl = IPL_HIGH;
 		ci->ci_cpuid = id;
 		uint32_t mpidr = armreg_mpidr_read();

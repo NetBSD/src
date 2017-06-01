@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.54 2016/07/23 18:00:01 jakllsch Exp $	*/
+/*	$NetBSD: i2c.c,v 1.55 2017/06/01 02:45:10 chs Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.54 2016/07/23 18:00:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.55 2017/06/01 02:45:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,8 +541,6 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 
 	if (iie->iie_cmd != NULL) {
 		cmd = kmem_alloc(iie->iie_cmdlen, KM_SLEEP);
-		if (cmd == NULL)
-			return ENOMEM;
 		error = copyin(iie->iie_cmd, cmd, iie->iie_cmdlen);
 		if (error)
 			goto out;

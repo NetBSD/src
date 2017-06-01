@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.60 2017/05/19 19:23:24 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.61 2017/06/01 02:45:12 chs Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.60 2017/05/19 19:23:24 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.61 2017/06/01 02:45:12 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 
 	if (sc->sc_enable_shadowfb) {
 		sc->sc_shadowfb = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
-		if (sc->sc_want_clear == false && sc->sc_shadowfb != NULL)
+		if (sc->sc_want_clear == false)
 			memcpy(sc->sc_shadowfb, sc->sc_fbaddr, sc->sc_fbsize);
 	}
 

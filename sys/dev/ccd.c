@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.171 2017/04/05 18:34:56 jdolecek Exp $	*/
+/*	$NetBSD: ccd.c,v 1.172 2017/06/01 02:45:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.171 2017/04/05 18:34:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.172 2017/06/01 02:45:08 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -229,12 +229,7 @@ SYSCTL_SETUP_PROTO(sysctl_kern_ccd_setup);
 static struct ccd_softc *
 ccdcreate(int unit) {
 	struct ccd_softc *sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
-	if (sc == NULL) {
-#ifdef DIAGNOSTIC
-		printf("%s: out of memory\n", __func__);
-#endif
-		return NULL;
-	}
+
 	/* Initialize per-softc structures. */
 	snprintf(sc->sc_xname, sizeof(sc->sc_xname), "ccd%d", unit);
 	sc->sc_unit = unit;
@@ -1765,9 +1760,6 @@ ccd_units_sysctl(SYSCTLFN_ARGS)
 	if (nccd != 0) {
 		size = nccd * sizeof(*units);
 		units = kmem_zalloc(size, KM_SLEEP);
-		if (units == NULL)
-			return ENOMEM;
-
 		i = 0;
 		mutex_enter(&ccd_lock);
 		LIST_FOREACH(sc, &ccds, sc_link) {
@@ -1856,9 +1848,6 @@ ccd_components_sysctl(SYSCTLFN_ARGS)
 	if (size == 0)
 		return ENOENT;
 	names = kmem_zalloc(size, KM_SLEEP);
-	if (names == NULL)
-		return ENOMEM;
-
 	p = names;
 	ep = names + size;
 	mutex_enter(&ccd_lock);

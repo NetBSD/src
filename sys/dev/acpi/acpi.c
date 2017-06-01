@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.262 2016/06/21 11:33:33 nonaka Exp $	*/
+/*	$NetBSD: acpi.c,v 1.263 2017/06/01 02:45:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.262 2016/06/21 11:33:33 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.263 2017/06/01 02:45:09 chs Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -717,9 +717,6 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 	case ACPI_TYPE_POWER:
 
 		ad = kmem_zalloc(sizeof(*ad), KM_SLEEP);
-
-		if (ad == NULL)
-			return AE_NO_MEMORY;
 
 		ad->ad_device = NULL;
 		ad->ad_notify = NULL;

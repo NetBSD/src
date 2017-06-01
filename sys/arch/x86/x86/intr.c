@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.100 2017/04/20 02:42:59 knakahara Exp $	*/
+/*	$NetBSD: intr.c,v 1.101 2017/06/01 02:45:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.100 2017/04/20 02:42:59 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.101 2017/06/01 02:45:08 chs Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -558,15 +558,7 @@ intr_allocate_io_intrsource(const char *intrid)
 		return NULL;
 
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
-	if (isp == NULL) {
-		return NULL;
-	}
-
 	pep = kmem_zalloc(sizeof(*pep) * ncpu, KM_SLEEP);
-	if (pep == NULL) {
-		kmem_free(isp, sizeof(*isp));
-		return NULL;
-	}
 	isp->is_saved_evcnt = pep;
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		pep->cpuid = ci->ci_cpuid;
@@ -932,11 +924,6 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 	    "non-legacy IRQ on i8259");
 
 	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
-	if (ih == NULL) {
-		printf("%s: can't allocate handler info\n", __func__);
-		return NULL;
-	}
-
 	intrstr = create_intrid(legacy_irq, pic, pin, intrstr_buf,
 	    sizeof(intrstr_buf));
 	KASSERT(intrstr != NULL);
@@ -1318,7 +1305,6 @@ cpu_intr_init(struct cpu_info *ci)
 
 #if NLAPIC > 0
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
-	KASSERT(isp != NULL);
 	isp->is_recurse = Xrecurse_lapic_ltimer;
 	isp->is_resume = Xresume_lapic_ltimer;
 	fake_timer_intrhand.ih_level = IPL_CLOCK;
@@ -1332,7 +1318,6 @@ cpu_intr_init(struct cpu_info *ci)
 
 #ifdef MULTIPROCESSOR
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
-	KASSERT(isp != NULL);
 	isp->is_recurse = Xrecurse_lapic_ipi;
 	isp->is_resume = Xresume_lapic_ipi;
 	fake_ipi_intrhand.ih_level = IPL_HIGH;
@@ -1347,7 +1332,6 @@ cpu_intr_init(struct cpu_info *ci)
 #endif
 
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
-	KASSERT(isp != NULL);
 	isp->is_recurse = Xpreemptrecurse;
 	isp->is_resume = Xpreemptresume;
 	fake_preempt_intrhand.ih_level = IPL_PREEMPT;
@@ -1444,7 +1428,6 @@ softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 	ci = l->l_cpu;
 
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
-	KASSERT(isp != NULL);
 	isp->is_recurse = Xsoftintr;
 	isp->is_resume = Xsoftintr;
 	isp->is_pic = &softintr_pic;

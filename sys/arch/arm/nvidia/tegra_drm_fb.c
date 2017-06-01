@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_fb.c,v 1.4 2016/12/17 12:11:38 maya Exp $ */
+/* $NetBSD: tegra_drm_fb.c,v 1.5 2017/06/01 02:45:05 chs Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_fb.c,v 1.4 2016/12/17 12:11:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_fb.c,v 1.5 2017/06/01 02:45:05 chs Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -53,8 +53,6 @@ tegra_drm_fb_init(struct drm_device *ddev)
 	int error;
 
 	fbdev = kmem_zalloc(sizeof(*fbdev), KM_SLEEP);
-	if (fbdev == NULL)
-		return -ENOMEM;
 	fbdev->helper.funcs = &tegra_fb_helper_funcs;
 
 	error = drm_fb_helper_init(ddev, &fbdev->helper, 2, 1);
@@ -76,9 +74,6 @@ tegra_drm_fb_init(struct drm_device *ddev)
 	 */
 	fbdev->helper.fb =
 	    kmem_zalloc(sizeof(struct tegra_framebuffer), KM_SLEEP);
-	if (fbdev->helper.fb == NULL) {
-		DRM_ERROR("failed to create framebuffer\n");
-	}
 
 	drm_fb_helper_single_add_all_connectors(&fbdev->helper);
 

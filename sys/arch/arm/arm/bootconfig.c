@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.c,v 1.10 2017/05/28 23:31:41 jmcneill Exp $	*/
+/*	$NetBSD: bootconfig.c,v 1.11 2017/06/01 02:45:05 chs Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.10 2017/05/28 23:31:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.11 2017/06/01 02:45:05 chs Exp $");
 
 #include <sys/systm.h>
 #include <sys/kmem.h>
@@ -163,9 +163,6 @@ get_bootconf_string(char *opts, const char *key)
 	}
 
 	ret = kmem_alloc(i + 1, KM_SLEEP);
-	if (ret == NULL)
-		return NULL;
-
 	strlcpy(ret, s, i + 1);
 	return ret;
 }
