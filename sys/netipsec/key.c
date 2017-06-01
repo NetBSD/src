@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.160 2017/06/01 03:51:08 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.161 2017/06/01 09:50:35 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.160 2017/06/01 03:51:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.161 2017/06/01 09:50:35 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4155,13 +4155,10 @@ key_saidx_match(
 	int chkport;
 	const struct sockaddr *sa0src, *sa0dst, *sa1src, *sa1dst;
 
+	KASSERT(saidx0 != NULL);
+	KASSERT(saidx1 != NULL);
+
 	/* sanity */
-	if (saidx0 == NULL && saidx1 == NULL)
-		return 1;
-
-	if (saidx0 == NULL || saidx1 == NULL)
-		return 0;
-
 	if (saidx0->proto != saidx1->proto)
 		return 0;
 
@@ -4234,13 +4231,11 @@ key_spidx_match_exactly(
 	const struct secpolicyindex *spidx0,
 	const struct secpolicyindex *spidx1)
 {
+
+	KASSERT(spidx0 != NULL);
+	KASSERT(spidx1 != NULL);
+
 	/* sanity */
-	if (spidx0 == NULL && spidx1 == NULL)
-		return 1;
-
-	if (spidx0 == NULL || spidx1 == NULL)
-		return 0;
-
 	if (spidx0->prefs != spidx1->prefs ||
 	    spidx0->prefd != spidx1->prefd ||
 	    spidx0->ul_proto != spidx1->ul_proto)
