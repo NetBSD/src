@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.356 2017/06/01 02:45:08 chs Exp $	*/
+/*	$NetBSD: audio.c,v 1.357 2017/06/01 09:44:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,9 +148,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.356 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357 2017/06/01 09:44:30 pgoyette Exp $");
 
+#ifdef _KERNEL_OPT
 #include "audio.h"
+#include "midi.h"
+#endif
+
 #if NAUDIO > 0
 
 #include <sys/types.h>
@@ -165,6 +169,7 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.356 2017/06/01 02:45:08 chs Exp $");
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -308,6 +313,8 @@ static int	audiodetach(device_t, int);
 static int	audioactivate(device_t, enum devact);
 static void	audiochilddet(device_t, device_t);
 static int	audiorescan(device_t, const char *, const int *);
+
+static int	audio_modcmd(modcmd_t, void *);
 
 #ifdef AUDIO_PM_IDLE
 static void	audio_idle(void *);
@@ -5136,8 +5143,6 @@ mixer_ioctl(struct audio_softc *sc, u_long cmd, void *addr, int flag,
 }
 #endif /* NAUDIO > 0 */
 
-#include "midi.h"
-
 #if NAUDIO == 0 && (NMIDI > 0 || NMIDIBUS > 0)
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -6130,3 +6135,50 @@ shrink_mixer_states(struct audio_softc *sc, int count)
 }	
 
 #endif /* NAUDIO > 0 */
+
+#ifdef _MODULE
+
+extern struct cfdriver audio_cd;
+devmajor_t audio_bmajor = -1, audio_cmajor = -1;
+
+#include "ioconf.c"
+
+#endif
+
+MODULE(MODULE_CLASS_DRIVER, audio, NULL);
+
+static int
+audio_modcmd(modcmd_t cmd, void *arg)
+{
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = devsw_attach(audio_cd.cd_name, NULL, &audio_bmajor,
+		    &audio_cdevsw, &audio_cmajor);
+		if (error)
+			break;
+
+		error = config_init_component(cfdriver_ioconf_audio,
+		    cfattach_ioconf_audio, cfdata_ioconf_audio);
+		if (error) {
+			devsw_detach(NULL, &audio_cdevsw);
+		}
+		break;
+	case MODULE_CMD_FINI:
+		devsw_detach(NULL, &audio_cdevsw);
+		error = config_fini_component(cfdriver_ioconf_audio,
+		   cfattach_ioconf_audio, cfdata_ioconf_audio);
+		if (error)
+			devsw_attach(audio_cd.cd_name, NULL, &audio_bmajor,
+			    &audio_cdevsw, &audio_cmajor);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
+}
