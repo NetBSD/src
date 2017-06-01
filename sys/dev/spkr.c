@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.6 2017/01/06 09:32:08 pgoyette Exp $	*/
+/*	$NetBSD: spkr.c,v 1.7 2017/06/01 09:44:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.6 2017/01/06 09:32:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.7 2017/06/01 09:44:30 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -494,7 +494,7 @@ extern struct cfdriver spkr_cd;
 #include "ioconf.c"
 #endif
 
-MODULE(MODULE_CLASS_DRIVER, spkr, "" /* audio and/or pcppi */ );
+MODULE(MODULE_CLASS_DRIVER, spkr, "audio" /* and/or pcppi */ );
 
 int
 spkr_modcmd(modcmd_t cmd, void *arg)
