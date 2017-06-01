@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.50 2017/05/17 06:33:04 knakahara Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.51 2017/06/01 08:49:35 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.50 2017/05/17 06:33:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.51 2017/06/01 08:49:35 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1325,8 +1325,10 @@ swcr_init(void)
 void
 swcryptoattach(int num)
 {
-
-	swcr_init();
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in swcrypto_attach() below).
+	 */
 }
 
 void	swcrypto_attach(device_t, device_t, void *);
