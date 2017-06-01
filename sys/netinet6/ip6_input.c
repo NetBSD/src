@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.177 2017/03/14 04:25:10 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.178 2017/06/01 02:45:14 chs Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.177 2017/03/14 04:25:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.178 2017/06/01 02:45:14 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -205,10 +205,7 @@ ip6_init(void)
 	KASSERT(inet6_pfil_hook != NULL);
 
 	ip6stat_percpu = percpu_alloc(sizeof(uint64_t) * IP6_NSTATS);
-
 	ip6_forward_rt_percpu = percpu_alloc(sizeof(struct route));
-	if (ip6_forward_rt_percpu == NULL)
-		panic("failed to alllocate ip6_forward_rt_percpu");
 }
 
 static void

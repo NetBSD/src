@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.192 2017/02/05 07:25:49 maya Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.193 2017/06/01 02:45:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.192 2017/02/05 07:25:49 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.193 2017/06/01 02:45:15 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -720,11 +720,6 @@ uvm_page_recolor(int newncolors)
 	bucketmemsize = bucketcount * sizeof(struct pgflbucket) * 2;
 	bucketarray = kmem_alloc(bucketmemsize, KM_SLEEP);
 	cpuarray = bucketarray + bucketcount;
-	if (bucketarray == NULL) {
-		printf("WARNING: unable to allocate %ld page color buckets\n",
-		    (long) bucketcount);
-		return;
-	}
 
 	mutex_spin_enter(&uvm_fpageqlock);
 

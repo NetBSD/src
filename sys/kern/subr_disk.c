@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.118 2017/03/05 23:07:12 mlelstv Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.119 2017/06/01 02:45:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.118 2017/03/05 23:07:12 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.119 2017/06/01 02:45:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -211,8 +211,6 @@ disk_attach(struct disk *diskp)
 	diskp->dk_label = kmem_zalloc(sizeof(struct disklabel), KM_SLEEP);
 	diskp->dk_cpulabel = kmem_zalloc(sizeof(struct cpu_disklabel),
 	    KM_SLEEP);
-	if ((diskp->dk_label == NULL) || (diskp->dk_cpulabel == NULL))
-		panic("disk_attach: can't allocate storage for disklabel");
 
 	/*
 	 * Set up the stats collection.

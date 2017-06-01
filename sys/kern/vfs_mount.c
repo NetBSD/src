@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.64 2017/05/24 09:53:55 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.65 2017/06/01 02:45:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.64 2017/05/24 09:53:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.65 2017/06/01 02:45:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -152,9 +152,6 @@ vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 	extern struct vfsops dead_vfsops;
 
 	mp = kmem_zalloc(sizeof(*mp), KM_SLEEP);
-	if (mp == NULL)
-		return NULL;
-
 	mp->mnt_op = vfsops;
 	mp->mnt_refcnt = 1;
 	TAILQ_INIT(&mp->mnt_vnodelist);

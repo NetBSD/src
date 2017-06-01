@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.252 2017/03/20 01:24:06 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.253 2017/06/01 02:45:13 chs Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.252 2017/03/20 01:24:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.253 2017/06/01 02:45:13 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1193,8 +1193,6 @@ config_makeroom(int n, struct cfdriver *cd)
 		 */
 		mutex_exit(&alldevs.lock);
 		nsp = kmem_alloc(sizeof(device_t[nndevs]), KM_SLEEP);
-		if (nsp == NULL)
-			panic("%s: could not expand cd_devs", __func__);
 		mutex_enter(&alldevs.lock);
 
 		/*
@@ -1388,9 +1386,6 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	    sizeof(struct device));
 	if (ca->ca_devsize > 0) {
 		dev_private = kmem_zalloc(ca->ca_devsize, KM_SLEEP);
-		if (dev_private == NULL)
-			panic("config_devalloc: memory allocation for device "
-			    "softc failed");
 	} else {
 		KASSERT(ca->ca_flags & DVF_PRIV_ALLOC);
 		dev_private = NULL;
@@ -1404,9 +1399,6 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 		printf("%s has not been converted to device_t\n", cd->cd_name);
 #endif
 	}
-	if (dev == NULL)
-		panic("config_devalloc: memory allocation for device_t failed");
-
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
 	dev->dv_cfdriver = cd;
@@ -1976,9 +1968,6 @@ config_defer(device_t dev, void (*func)(device_t))
 #endif
 
 	dc = kmem_alloc(sizeof(*dc), KM_SLEEP);
-	if (dc == NULL)
-		panic("config_defer: unable to allocate callback");
-
 	dc->dc_dev = dev;
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&deferred_config_queue, dc, dc_queue);
@@ -2010,9 +1999,6 @@ config_interrupts(device_t dev, void (*func)(device_t))
 #endif
 
 	dc = kmem_alloc(sizeof(*dc), KM_SLEEP);
-	if (dc == NULL)
-		panic("config_interrupts: unable to allocate callback");
-
 	dc->dc_dev = dev;
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&interrupt_config_queue, dc, dc_queue);
@@ -2044,9 +2030,6 @@ config_mountroot(device_t dev, void (*func)(device_t))
 #endif
 
 	dc = kmem_alloc(sizeof(*dc), KM_SLEEP);
-	if (dc == NULL)
-		panic("%s: unable to allocate callback", __func__);
-
 	dc->dc_dev = dev;
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&mountroot_config_queue, dc, dc_queue);

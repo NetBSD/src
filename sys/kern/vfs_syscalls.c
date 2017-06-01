@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.515 2017/05/07 08:26:58 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.516 2017/06/01 02:45:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.515 2017/05/07 08:26:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.516 2017/06/01 02:45:13 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1764,10 +1764,6 @@ vfs_composefh_alloc(struct vnode *vp, fhandle_t **fhpp)
 	}
 	fhsize = FHANDLE_SIZE_FROM_FILEID_SIZE(fidsize);
 	fhp = kmem_zalloc(fhsize, KM_SLEEP);
-	if (fhp == NULL) {
-		error = ENOMEM;
-		goto out;
-	}
 	fhp->fh_fsid = mp->mnt_stat.f_fsidx;
 	error = VFS_VPTOFH(vp, &fhp->fh_fid, &fidsize);
 	if (error == 0) {
@@ -1832,9 +1828,6 @@ vfs_copyinfh_alloc(const void *ufhp, size_t fhsize, fhandle_t **fhpp)
 	}
 again:
 	fhp = kmem_alloc(fhsize, KM_SLEEP);
-	if (fhp == NULL) {
-		return ENOMEM;
-	}
 	error = copyin(ufhp, fhp, fhsize);
 	if (error == 0) {
 		/* XXX this check shouldn't be here */

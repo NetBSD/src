@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_psref.c,v 1.6 2016/11/09 09:00:46 ozaki-r Exp $	*/
+/*	$NetBSD: subr_psref.c,v 1.7 2017/06/01 02:45:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.6 2016/11/09 09:00:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.7 2017/06/01 02:45:13 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -120,21 +120,12 @@ psref_class_create(const char *name, int ipl)
 	ASSERT_SLEEPABLE();
 
 	class = kmem_alloc(sizeof(*class), KM_SLEEP);
-	if (class == NULL)
-		goto fail0;
-
 	class->prc_percpu = percpu_alloc(sizeof(struct psref_cpu));
-	if (class->prc_percpu == NULL)
-		goto fail1;
-
 	mutex_init(&class->prc_lock, MUTEX_DEFAULT, ipl);
 	cv_init(&class->prc_cv, name);
 	class->prc_iplcookie = makeiplcookie(ipl);
 
 	return class;
-
-fail1:	kmem_free(class, sizeof(*class));
-fail0:	return NULL;
 }
 
 #ifdef DIAGNOSTIC

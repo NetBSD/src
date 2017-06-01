@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_stub.c,v 1.6 2016/11/25 12:10:59 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_stub.c,v 1.7 2017/06/01 02:45:11 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -90,9 +90,6 @@ pci_intx_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihp)
 		return EINVAL;
 
 	pih = kmem_alloc(sizeof(*pih), KM_SLEEP);
-	if (pih == NULL)
-		return ENOMEM;
-
 	if (pci_intr_map(pa, pih)) {
 		kmem_free(pih, sizeof(*pih));
 		return EINVAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.16 2017/03/02 04:31:51 nonaka Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.17 2017/06/01 02:45:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.16 2017/03/02 04:31:51 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.17 2017/06/01 02:45:12 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -241,8 +241,6 @@ drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
 	struct drm_bus_irq_cookie *irq_cookie;
 
 	irq_cookie = kmem_alloc(sizeof(*irq_cookie), KM_SLEEP);
-	if (irq_cookie == NULL)
-		return -ENOMEM;
 
 	if (dev->pdev->msi_enabled) {
 		irq_cookie->intr_handles = dev->pdev->intr_handles;

@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmiaudio.c,v 1.6 2015/11/19 18:48:22 bouyer Exp $ */
+/* $NetBSD: awin_hdmiaudio.c,v 1.7 2017/06/01 02:45:05 chs Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmiaudio.c,v 1.6 2015/11/19 18:48:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmiaudio.c,v 1.7 2017/06/01 02:45:05 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -498,8 +498,6 @@ awin_hdmiaudio_allocm(void *priv, int dir, size_t size)
 	int error;
 
 	dma = kmem_alloc(sizeof(*dma), KM_SLEEP);
-	if (dma == NULL)
-		return NULL;
 
 	error = awin_hdmiaudio_allocdma(sc, size, 16, dma);
 	if (error) {
