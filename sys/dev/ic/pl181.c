@@ -1,4 +1,4 @@
-/* $NetBSD: pl181.c,v 1.1 2015/01/27 16:33:26 jmcneill Exp $ */
+/* $NetBSD: pl181.c,v 1.2 2017/06/01 16:57:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl181.c,v 1.1 2015/01/27 16:33:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl181.c,v 1.2 2017/06/01 16:57:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,7 +118,7 @@ plmmc_init(struct plmmc_softc *sc)
 	saa.saa_sch = sc;
 	saa.saa_clkmin = 400;
 	saa.saa_clkmax = sc->sc_clock_freq / 1000;
-	saa.saa_caps = 0;
+	saa.saa_caps = SMC_CAPS_4BIT_MODE | SMC_CAPS_SINGLE_ONLY;
 
 	sc->sc_sdmmc_dev = config_found(sc->sc_dev, &saa, NULL);
 }
