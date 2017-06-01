@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.5 2017/06/01 03:51:47 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.6 2017/06/01 03:56:47 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -344,8 +344,13 @@ test_tcp()
 
 test_tcp_ipv4()
 {
+	local proto=$1
+	local algo=$2
 	local ip_local=10.0.0.1
 	local ip_peer=10.0.0.2
+	local algo_args="$(generate_algo_args $proto $algo)"
+	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
+	local outfile=./out
 
 	rump_server_crypto_start $SOCK_LOCAL netipsec
 	rump_server_crypto_start $SOCK_PEER netipsec
@@ -360,13 +365,36 @@ test_tcp_ipv4()
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_peer/24
 	atf_check -s exit:0 rump.ifconfig -w 10
 
+	if [ $proto != none ]; then
+		setup_sasp $proto "$algo_args" $ip_local $ip_peer 100
+	fi
+
+	extract_new_packets $BUS > $outfile
+
 	test_tcp ipv4 $ip_local $ip_peer
+
+	extract_new_packets $BUS > $outfile
+	$DEBUG && cat $outfile
+
+	if [ $proto != none ]; then
+		atf_check -s exit:0 \
+		    -o match:"$ip_local > $ip_peer: $proto_cap" \
+		    cat $outfile
+		atf_check -s exit:0 \
+		    -o match:"$ip_peer > $ip_local: $proto_cap" \
+		    cat $outfile
+	fi
 }
 
 test_tcp_ipv6()
 {
+	local proto=$1
+	local algo=$2
 	local ip_local=fd00::1
 	local ip_peer=fd00::2
+	local algo_args="$(generate_algo_args $proto $algo)"
+	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
+	local outfile=./out
 
 	rump_server_crypto_start $SOCK_LOCAL netinet6 netipsec
 	rump_server_crypto_start $SOCK_PEER netinet6 netipsec
@@ -381,16 +409,42 @@ test_tcp_ipv6()
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_peer
 	atf_check -s exit:0 rump.ifconfig -w 10
 
+	if [ $proto != none ]; then
+		setup_sasp $proto "$algo_args" $ip_local $ip_peer 100
+	fi
+
+	extract_new_packets $BUS > $outfile
+
 	test_tcp ipv6 $ip_local $ip_peer
+
+	extract_new_packets $BUS > $outfile
+	$DEBUG && cat $outfile
+
+	if [ $proto != none ]; then
+		atf_check -s exit:0 \
+		    -o match:"$ip_local > $ip_peer: $proto_cap" \
+		    cat $outfile
+		atf_check -s exit:0 \
+		    -o match:"$ip_peer > $ip_local: $proto_cap" \
+		    cat $outfile
+	fi
 }
 
 add_test_tcp()
 {
 	local ipproto=$1
+	local proto=$2
+	local algo=$3
+	local _algo=$(echo $algo | sed 's/-//g')
 	local name= desc=
 
-	name="ipsec_tcp_${ipproto}"
-	desc="Tests of TCP with IPsec enabled ($ipproto)"
+	if [ $proto = none ]; then
+		desc="Tests of TCP with IPsec enabled ($ipproto)"
+		name="ipsec_tcp_${ipproto}_${proto}"
+	else
+		desc="Tests of TCP with IPsec ($ipproto) $proto $algo"
+		name="ipsec_tcp_${ipproto}_${proto}_${_algo}"
+	fi
 
 	atf_test_case ${name} cleanup
 	eval "								\
@@ -399,7 +453,7 @@ add_test_tcp()
 	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
 	    };								\
 	    ${name}_body() {						\
-	        test_tcp_${ipproto};					\
+	        test_tcp_${ipproto} $proto $algo;			\
 	        rump_server_destroy_ifaces;				\
 	    };								\
 	    ${name}_cleanup() {						\
@@ -417,12 +471,16 @@ atf_init_test_cases()
 	for algo in $ESP_ENCRYPTION_ALGORITHMS_MINIMUM; do
 		add_test_lifetime ipv4 esp $algo
 		add_test_lifetime ipv6 esp $algo
+		add_test_tcp ipv4 esp $algo
+		add_test_tcp ipv6 esp $algo
 	done
 	for algo in $AH_AUTHENTICATION_ALGORITHMS_MINIMUM; do
 		add_test_lifetime ipv4 ah $algo
 		add_test_lifetime ipv6 ah $algo
+		add_test_tcp ipv4 ah $algo
+		add_test_tcp ipv6 ah $algo
 	done
 
-	add_test_tcp ipv4
-	add_test_tcp ipv6
+	add_test_tcp ipv4 none
+	add_test_tcp ipv6 none
 }
