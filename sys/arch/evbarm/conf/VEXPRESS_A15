@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VEXPRESS_A15,v 1.8 2017/06/02 15:22:47 jmcneill Exp $
+#	$NetBSD: VEXPRESS_A15,v 1.9 2017/06/02 20:16:05 jmcneill Exp $
 #
 #	ARM Versatile Express A15
 #
@@ -8,8 +8,7 @@ include	"arch/evbarm/conf/std.vexpress"
 include	"arch/evbarm/conf/GENERIC.common"
 
 options 	CPU_CORTEXA15
-options 	SOC_TEGRA124
-#options 	MULTIPROCESSOR
+options 	MULTIPROCESSOR
 
 pseudo-device 	openfirm	# /dev/openfirm
 

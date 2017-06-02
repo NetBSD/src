@@ -1,4 +1,4 @@
-/*	$NetBSD: vexpress_start.S,v 1.3 2017/06/02 15:22:47 jmcneill Exp $	*/
+/*	$NetBSD: vexpress_start.S,v 1.4 2017/06/02 20:16:05 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -38,14 +38,17 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-#define VEXPRESS_CORE_VBASE	0xf0000000
-#define VEXPRESS_CORE_PBASE	0x10000000
-#define VEXPRESS_CORE_SIZE	0x10000000
+#include <arm/vexpress/vexpress_platform.h>
 
-RCSID("$NetBSD: vexpress_start.S,v 1.3 2017/06/02 15:22:47 jmcneill Exp $")
+RCSID("$NetBSD: vexpress_start.S,v 1.4 2017/06/02 20:16:05 jmcneill Exp $")
 
+#ifdef VERBOSE_INIT_ARM
 #define	XPUTC(n)	mov r0, n; bl xputc
 #define	XPUTC2(n)	mov r0, n; blx r11
+#else
+#define	XPUTC(n)
+#define	XPUTC2(n)
+#endif
 
 #define	INIT_MEMSIZE	128
 #define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + INIT_MEMSIZE * L1_S_SIZE - L1_TABLE_SIZE)
@@ -139,6 +142,16 @@ xputc:
 	/* Map VEXPRESS CORE (so console will work) */
 	MMU_INIT(VEXPRESS_CORE_PBASE, VEXPRESS_CORE_PBASE,
 		VEXPRESS_CORE_SIZE / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map VEXPRESS GIC */
+	MMU_INIT(VEXPRESS_GIC_VBASE, VEXPRESS_GIC_PBASE,
+		VEXPRESS_GIC_SIZE / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map VEXPRESS GIC */
+	MMU_INIT(VEXPRESS_GIC_PBASE, VEXPRESS_GIC_PBASE,
+		VEXPRESS_GIC_SIZE / L1_S_SIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
 
         /* end of table */
