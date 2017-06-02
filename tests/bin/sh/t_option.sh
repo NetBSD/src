@@ -1,4 +1,4 @@
-# $NetBSD: t_option.sh,v 1.3 2016/03/08 14:19:28 christos Exp $
+# $NetBSD: t_option.sh,v 1.4 2017/06/02 01:38:44 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -355,6 +355,8 @@ set_u_head() {
 }
 set_u_body() {
 	test_option_on_off u
+
+	unset ENV	# make sure there is nothing there to cause problems
 
 	# first make sure it is OK to unset an unset variable
 	atf_check -s exit:0 -o match:OK -e empty ${TEST_SH} -ce \
