@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.97 2017/06/02 03:34:10 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.98 2017/06/02 03:39:28 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.97 2017/06/02 03:34:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.98 2017/06/02 03:39:28 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -275,7 +275,7 @@ ipsec_fillpcbcache(struct inpcbpolicy *pcbsp, struct mbuf *m,
 	if (pcbsp->sp_cache[dir].cachesp)
 		KEY_FREESP(&pcbsp->sp_cache[dir].cachesp);
 	pcbsp->sp_cache[dir].cachesp = NULL;
-	pcbsp->sp_cache[dir].cachehint = IPSEC_PCBHINT_MAYBE;
+	pcbsp->sp_cache[dir].cachehint = IPSEC_PCBHINT_UNKNOWN;
 	if (ipsec_setspidx(m, &pcbsp->sp_cache[dir].cacheidx, 1) != 0) {
 		return EINVAL;
 	}
@@ -322,7 +322,7 @@ ipsec_invalpcbcache(struct inpcbpolicy *pcbsp, int dir)
 		if (pcbsp->sp_cache[i].cachesp)
 			KEY_FREESP(&pcbsp->sp_cache[i].cachesp);
 		pcbsp->sp_cache[i].cachesp = NULL;
-		pcbsp->sp_cache[i].cachehint = IPSEC_PCBHINT_MAYBE;
+		pcbsp->sp_cache[i].cachehint = IPSEC_PCBHINT_UNKNOWN;
 		pcbsp->sp_cache[i].cachegen = 0;
 		memset(&pcbsp->sp_cache[i].cacheidx, 0,
 			  sizeof(pcbsp->sp_cache[i].cacheidx));
