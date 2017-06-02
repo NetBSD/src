@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.88 2014/11/05 19:39:17 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.89 2017/06/02 22:08:00 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.88 2014/11/05 19:39:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.89 2017/06/02 22:08:00 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ static struct wsscreen_descr radeonfb_stdscreen = {
 	0, 0,		/* ncols, nrows */
 	NULL,		/* textops */
 	8, 16,		/* fontwidth, fontheight */
-	WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE, /* capabilities */
+	WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE | WSSCREEN_RESIZE, /* capabilities */
 	0,		/* modecookie */
 };
 
@@ -598,7 +598,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		    RADEON_TMDS_TRANSMITTER_PLLEN,
 		    ~(RADEON_TMDS_TRANSMITTER_PLLEN | RADEON_TMDS_TRANSMITTER_PLLRST));
 	}
-	
+
 	radeonfb_i2c_init(sc);
 
 	radeonfb_loadbios(sc, pa);
@@ -939,6 +939,9 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		    ri->ri_font->fontwidth,
 		    ri->ri_font->fontheight,
 		    defattr);
+		dp->rd_vd.show_screen_cookie = &dp->rd_gc;
+		dp->rd_vd.show_screen_cb = glyphcache_adapt;
+
 		if (dp->rd_console) {
 
 			radeonfb_modeswitch(dp);
@@ -2380,6 +2383,8 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	/* initialize font subsystem */
 	wsfont_init();
 
+	scr->scr_flags |= VCONS_LOADFONT;
+
 	DPRINTF(("init screen called, existing %d\n", existing));
 
 	ri->ri_depth = dp->rd_bpp;
@@ -2389,10 +2394,10 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_flg = RI_CENTER;
 	switch (ri->ri_depth) {
 		case 8:
-			ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
+			ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB | RI_PREFER_ALPHA;
 			break;
 		case 32:
-			ri->ri_flg |= RI_ENABLE_ALPHA;
+			ri->ri_flg |= RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
 			/* we run radeons in RGB even on SPARC hardware */
 			ri->ri_rnum = 8;
 			ri->ri_gnum = 8;
@@ -2424,7 +2429,7 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	/* initialize and look for an initial font */
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
+		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE | WSSCREEN_RESIZE;
 
 	rasops_reconfig(ri, dp->rd_virty / ri->ri_font->fontheight,
 		    dp->rd_virtx / ri->ri_font->fontwidth);
