@@ -1,0 +1,18 @@
+#	$NetBSD: files.vexpress,v 1.1 2017/06/02 15:22:47 jmcneill Exp $
+#
+# Configuration info for ARM Ltd. Versatile Express peripherals
+#
+#
+
+include	"arch/arm/pic/files.pic"
+include	"arch/arm/cortex/files.cortex"
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm32/armv7_generic_dma.c
+file	arch/arm/arm/bus_space_a4x.S
+
+file	arch/arm/vexpress/vexpress_platform.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: vexpress_start.S,v 1.2 2015/02/11 07:51:10 ozaki-r Exp $	*/
+/*	$NetBSD: vexpress_start.S,v 1.3 2017/06/02 15:22:47 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -37,18 +37,23 @@
 #include <arm/asm.h>
 #include <arm/armreg.h>
 #include "assym.h"
-#include "platform.h"
 
-RCSID("$NetBSD: vexpress_start.S,v 1.2 2015/02/11 07:51:10 ozaki-r Exp $")
+#define VEXPRESS_CORE_VBASE	0xf0000000
+#define VEXPRESS_CORE_PBASE	0x10000000
+#define VEXPRESS_CORE_SIZE	0x10000000
+
+RCSID("$NetBSD: vexpress_start.S,v 1.3 2017/06/02 15:22:47 jmcneill Exp $")
 
 #define	XPUTC(n)	mov r0, n; bl xputc
 #define	XPUTC2(n)	mov r0, n; blx r11
 
 #define	INIT_MEMSIZE	128
-#define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + INIT_MEMSIZE * 0x100000 - L1_TABLE_SIZE)
+#define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + INIT_MEMSIZE * L1_S_SIZE - L1_TABLE_SIZE)
+
+#define	MD_CPU_HATCH	_C_LABEL(arm_fdt_cpu_hatch)
 
 /*
- * Kernel start routine for ODROID boards running on uboot firmware
+ * Kernel start routine for Versatile Express boards running on uboot firmware
  * At this point, this code has been loaded into SDRAM
  * and the MMU is off
  */
@@ -61,6 +66,12 @@ _C_LABEL(vexpress_start):
 #endif
 	/* Move into supervisor mode and disable IRQs/FIQs. */
 	cpsid	if, #PSR_SVC32_MODE
+
+	/* Save any arguments passed to us. */
+	movw	r4, #:lower16:uboot_args
+	movt	r4, #:upper16:uboot_args
+	sub	r4, r4, #KERNEL_BASE_VOFFSET
+	stmia	r4, {r0-r3}
 
 	XPUTC('a')
 
