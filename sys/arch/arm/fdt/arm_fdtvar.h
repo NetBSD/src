@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdtvar.h,v 1.3 2017/05/30 22:00:25 jmcneill Exp $ */
+/* $NetBSD: arm_fdtvar.h,v 1.4 2017/06/02 00:16:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -42,6 +42,7 @@ struct arm_platform {
 	void			(*early_putchar)(char);
 	void			(*device_register)(device_t, void *);
 	void			(*reset)(void);
+	void			(*delay)(u_int);
 };
 
 struct arm_platform_info {
