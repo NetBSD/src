@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_platform.c,v 1.1 2017/06/02 15:22:47 jmcneill Exp $ */
+/* $NetBSD: vexpress_platform.c,v 1.2 2017/06/02 20:16:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.1 2017/06/02 15:22:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.2 2017/06/02 20:16:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,13 +49,13 @@ __KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.1 2017/06/02 15:22:47 jmcnei
 
 #include <arm/cortex/gtmr_var.h>
 
+#include <arm/cortex/gic_reg.h>
+
 #include <evbarm/dev/plcomvar.h>
 
-#define	VEXPRESS_REF_FREQ	24000000
+#include <arm/vexpress/vexpress_platform.h>
 
-#define	VEXPRESS_CORE_VBASE	0xf0000000
-#define	VEXPRESS_CORE_PBASE	0x10000000
-#define	VEXPRESS_CORE_SIZE	0x10000000
+#define	VEXPRESS_REF_FREQ	24000000
 
 #define	DEVMAP_ALIGN(a)	((a) & ~L1_S_OFFSET)
 #define	DEVMAP_SIZE(s)	roundup2((s), L1_S_SIZE)
@@ -100,6 +100,46 @@ static bus_space_handle_t sysreg_bsh;
 	bus_space_write_4(sysreg_bst, sysreg_bsh, (o), (v))
 
 
+static void
+vexpress_a15_smp_init(void)
+{
+	extern void cortex_mpstart(void);
+	bus_space_tag_t gicd_bst = &armv7_generic_bs_tag;
+	bus_space_handle_t gicd_bsh;
+	int started = 0;
+
+	/* Bitmask of CPUs (non-BSP) to start */
+	for (int i = 1; i < arm_cpu_max; i++)
+		started |= __BIT(i);
+
+	/* Write init vec to SYS_FLAGS register */
+	SYSREG_WRITE(SYS_FLAGSCLR, 0xffffffff);
+	SYSREG_WRITE(SYS_FLAGS, (uint32_t)cortex_mpstart);
+
+	/* Map GIC distributor */
+	bus_space_map(gicd_bst, VEXPRESS_GIC_PBASE + GICD_BASE,
+	    0x1000, 0, &gicd_bsh);
+
+	/* Enable GIC distributor */
+	bus_space_write_4(gicd_bst, gicd_bsh,
+	    GICD_CTRL, GICD_CTRL_Enable);
+
+	/* Send sw interrupt to APs */
+	const uint32_t sgir = GICD_SGIR_TargetListFilter_NotMe;
+	bus_space_write_4(gicd_bst, gicd_bsh, GICD_SGIR, sgir);
+
+	/* Wait for APs to start */
+	for (u_int i = 0x10000000; i > 0; i--) {
+		arm_dmb();
+		if (arm_cpu_hatched == started)
+			break;
+	}
+
+	/* Disable GIC distributor */
+	bus_space_write_4(gicd_bst, gicd_bsh, GICD_CTRL, 0);
+}
+
+
 static const struct pmap_devmap *
 vexpress_platform_devmap(void)
 {
@@ -107,6 +147,9 @@ vexpress_platform_devmap(void)
 		DEVMAP_ENTRY(VEXPRESS_CORE_VBASE,
 			     VEXPRESS_CORE_PBASE,
 			     VEXPRESS_CORE_SIZE),
+		DEVMAP_ENTRY(VEXPRESS_GIC_VBASE,
+			     VEXPRESS_GIC_PBASE,
+			     VEXPRESS_GIC_SIZE),
 		DEVMAP_ENTRY_END
 	};	
 
@@ -118,6 +161,10 @@ vexpress_platform_bootstrap(void)
 {
 	bus_space_map(sysreg_bst, SYSREG_BASE, SYSREG_SIZE, 0,
 	    &sysreg_bsh);
+
+	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
+
+	vexpress_a15_smp_init();
 }
 
 static void
