@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.22 2017/05/29 23:22:00 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.23 2017/06/02 00:09:56 jmcneill Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -36,7 +36,7 @@ cpus*		at fdt? pass 0
 cpu*		at cpus?
 
 # CPU frequency scaling
-tegra124cpu*	at fdt?
+tegra124cpu*	at cpu?
 
 fclock*		at fdt? pass 4
 fregulator*	at fdt? pass 4
