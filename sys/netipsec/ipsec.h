@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.48 2017/05/19 04:34:09 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.49 2017/06/02 03:39:28 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -123,7 +123,7 @@ struct inpcbpolicy {
 		struct secpolicy *cachesp;
 		struct secpolicyindex cacheidx;
 		int cachehint;		/* processing requirement hint: */
-#define	IPSEC_PCBHINT_MAYBE	0	/* IPsec processing maybe required */
+#define	IPSEC_PCBHINT_UNKNOWN	0	/* Unknown */
 #define	IPSEC_PCBHINT_YES	1	/* IPsec processing is required */
 #define	IPSEC_PCBHINT_NO	2	/* IPsec processing not required */
 		u_int cachegen;		/* spdgen when cache filled */
