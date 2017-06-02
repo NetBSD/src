@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.h,v 1.8 2016/01/20 21:44:00 riastradh Exp $	*/
+/*	$NetBSD: keysock.h,v 1.9 2017/06/02 03:32:51 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.h,v 1.8 2000/03/27 05:11:06 sumikawa Exp $	*/
 
@@ -64,6 +64,8 @@
 #define KEY_SENDUP_REGISTERED	2
 
 #ifdef _KERNEL
+#include <net/raw_cb.h>
+
 struct keycb {
 	struct rawcb kp_raw;	/* rawcb */
 	int kp_promisc;		/* promiscuous mode */
