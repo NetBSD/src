@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.161 2017/06/01 09:50:35 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.162 2017/06/02 01:22:50 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.161 2017/06/01 09:50:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.162 2017/06/02 01:22:50 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -400,22 +400,22 @@ static struct secpolicy *key_getspbyid (u_int32_t);
 static u_int16_t key_newreqid (void);
 static struct mbuf *key_gather_mbuf (struct mbuf *,
 	const struct sadb_msghdr *, int, int, ...);
-static int key_spdadd (struct socket *, struct mbuf *,
+static int key_api_spdadd(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 static u_int32_t key_getnewspid (void);
-static int key_spddelete (struct socket *, struct mbuf *,
+static int key_api_spddelete(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
-static int key_spddelete2 (struct socket *, struct mbuf *,
+static int key_api_spddelete2(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
-static int key_spdget (struct socket *, struct mbuf *,
+static int key_api_spdget(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
-static int key_spdflush (struct socket *, struct mbuf *,
+static int key_api_spdflush(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
-static int key_spddump (struct socket *, struct mbuf *,
+static int key_api_spddump(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 static struct mbuf * key_setspddump (int *errorp, pid_t);
 static struct mbuf * key_setspddump_chain (int *errorp, int *lenp, pid_t pid);
-static int key_nat_map (struct socket *, struct mbuf *,
+static int key_api_nat_map(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 static struct mbuf *key_setdumpsp (struct secpolicy *,
 	u_int8_t, u_int32_t, pid_t);
@@ -482,7 +482,7 @@ static int key_spidx_match_exactly(const struct secpolicyindex *,
 static int key_spidx_match_withmask(const struct secpolicyindex *,
     const struct secpolicyindex *);
 
-static int key_getspi (struct socket *, struct mbuf *,
+static int key_api_getspi(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 static u_int32_t key_do_getnewspi (const struct sadb_spirange *,
 					const struct secasindex *);
@@ -491,20 +491,20 @@ static int key_handle_natt_info (struct secasvar *,
 static int key_set_natt_ports (union sockaddr_union *,
 			 	union sockaddr_union *,
 				const struct sadb_msghdr *);
-static int key_update (struct socket *, struct mbuf *,
+static int key_api_update(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 #ifdef IPSEC_DOSEQCHECK
 static struct secasvar *key_getsavbyseq (struct secashead *, u_int32_t);
 #endif
-static int key_add (struct socket *, struct mbuf *,
+static int key_api_add(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 static int key_setident (struct secashead *, struct mbuf *,
 	const struct sadb_msghdr *);
 static struct mbuf *key_getmsgbuf_x1 (struct mbuf *,
 	const struct sadb_msghdr *);
-static int key_delete (struct socket *, struct mbuf *,
+static int key_api_delete(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
-static int key_get (struct socket *, struct mbuf *,
+static int key_api_get(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 
 static void key_getcomb_setlifetime (struct sadb_comb *);
@@ -523,18 +523,18 @@ static struct secacq *key_getacqbyseq (u_int32_t);
 static struct secspacq *key_newspacq (const struct secpolicyindex *);
 static struct secspacq *key_getspacq (const struct secpolicyindex *);
 #endif
-static int key_acquire2 (struct socket *, struct mbuf *,
+static int key_api_acquire(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
-static int key_register (struct socket *, struct mbuf *,
+static int key_api_register(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 static int key_expire (struct secasvar *);
-static int key_flush (struct socket *, struct mbuf *,
+static int key_api_flush(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 static struct mbuf *key_setdump_chain (u_int8_t req_satype, int *errorp,
 	int *lenp, pid_t pid);
-static int key_dump (struct socket *, struct mbuf *,
+static int key_api_dump(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
-static int key_promisc (struct socket *, struct mbuf *,
+static int key_api_promisc(struct socket *, struct mbuf *,
 	const struct sadb_msghdr *);
 static int key_senderror (struct socket *, struct mbuf *, int);
 static int key_validate_ext (const struct sadb_ext *, int);
@@ -1858,7 +1858,7 @@ fail:
  * m will always be freed.
  */
 static int
-key_spdadd(struct socket *so, struct mbuf *m,
+key_api_spdadd(struct socket *so, struct mbuf *m,
 	   const struct sadb_msghdr *mhp)
 {
 	const struct sockaddr *src, *dst;
@@ -1868,12 +1868,6 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	struct secpolicyindex spidx;
 	struct secpolicy *newsp;
 	int error;
-
-	KASSERT(!cpu_softintr_p());
-	KASSERT(so != NULL);
-	KASSERT(m != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL ||
@@ -1909,7 +1903,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	}
 
 	/* check policy */
-	/* key_spdadd() accepts DISCARD, NONE and IPSEC. */
+	/* key_api_spdadd() accepts DISCARD, NONE and IPSEC. */
 	if (xpl0->sadb_x_policy_type == IPSEC_POLICY_ENTRUST ||
 	    xpl0->sadb_x_policy_type == IPSEC_POLICY_BYPASS) {
 		IPSECLOG(LOG_DEBUG, "Invalid policy type.\n");
@@ -2094,17 +2088,12 @@ key_getnewspid(void)
  * m will always be freed.
  */
 static int
-key_spddelete(struct socket *so, struct mbuf *m,
+key_api_spddelete(struct socket *so, struct mbuf *m,
               const struct sadb_msghdr *mhp)
 {
 	struct sadb_x_policy *xpl0;
 	struct secpolicyindex spidx;
 	struct secpolicy *sp;
-
-	KASSERT(so != NULL);
-	KASSERT(m != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL ||
@@ -2185,16 +2174,11 @@ key_spddelete(struct socket *so, struct mbuf *m,
  * m will always be freed.
  */
 static int
-key_spddelete2(struct socket *so, struct mbuf *m,
+key_api_spddelete2(struct socket *so, struct mbuf *m,
 	       const struct sadb_msghdr *mhp)
 {
 	u_int32_t id;
 	struct secpolicy *sp;
-
-	KASSERT(so != NULL);
-	KASSERT(m != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	if (mhp->ext[SADB_X_EXT_POLICY] == NULL ||
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
@@ -2283,17 +2267,12 @@ key_spddelete2(struct socket *so, struct mbuf *m,
  * m will always be freed.
  */
 static int
-key_spdget(struct socket *so, struct mbuf *m,
+key_api_spdget(struct socket *so, struct mbuf *m,
 	   const struct sadb_msghdr *mhp)
 {
 	u_int32_t id;
 	struct secpolicy *sp;
 	struct mbuf *n;
-
-	KASSERT(so != NULL);
-	KASSERT(m != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	if (mhp->ext[SADB_X_EXT_POLICY] == NULL ||
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
@@ -2406,17 +2385,12 @@ fail:
  * m will always be freed.
  */
 static int
-key_spdflush(struct socket *so, struct mbuf *m,
+key_api_spdflush(struct socket *so, struct mbuf *m,
 	     const struct sadb_msghdr *mhp)
 {
 	struct sadb_msg *newmsg;
 	struct secpolicy *sp;
 	u_int dir;
-
-	KASSERT(so != NULL);
-	KASSERT(m != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	if (m->m_len != PFKEY_ALIGN8(sizeof(struct sadb_msg)))
 		return key_senderror(so, m, EINVAL);
@@ -2525,18 +2499,13 @@ key_setspddump_chain(int *errorp, int *lenp, pid_t pid)
  * m will always be freed.
  */
 static int
-key_spddump(struct socket *so, struct mbuf *m0,
+key_api_spddump(struct socket *so, struct mbuf *m0,
  	    const struct sadb_msghdr *mhp)
 {
 	struct mbuf *n;
 	int error, len;
 	int ok, s;
 	pid_t pid;
-
-	KASSERT(so != NULL);
-	KASSERT(m0 != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	pid = mhp->msg->sadb_msg_pid;
 	/*
@@ -2594,7 +2563,7 @@ key_spddump(struct socket *so, struct mbuf *m0,
  * SADB_X_NAT_T_NEW_MAPPING. Unused by racoon as of 2005/04/23
  */
 static int
-key_nat_map(struct socket *so, struct mbuf *m,
+key_api_nat_map(struct socket *so, struct mbuf *m,
 	    const struct sadb_msghdr *mhp)
 {
 	struct sadb_x_nat_t_type *type;
@@ -2602,11 +2571,6 @@ key_nat_map(struct socket *so, struct mbuf *m,
 	struct sadb_x_nat_t_port *dport;
 	struct sadb_address *iaddr, *raddr;
 	struct sadb_x_nat_t_frag *frag;
-
-	KASSERT(so != NULL);
-	KASSERT(m != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	if (mhp->ext[SADB_X_EXT_NAT_T_TYPE] == NULL ||
 	    mhp->ext[SADB_X_EXT_NAT_T_SPORT] == NULL ||
@@ -2926,7 +2890,8 @@ key_delsah(struct secashead *sah)
 }
 
 /*
- * allocating a new SA with LARVAL state.  key_add() and key_getspi() call,
+ * allocating a new SA with LARVAL state.
+ * key_api_add() and key_api_getspi() call,
  * and copy the values of mhp into new buffer.
  * When SAD message type is GETSPI:
  *	to set sequence number from acq_seq++,
@@ -4844,7 +4809,7 @@ key_init_spidx_bymsghdr(struct secpolicyindex *spidx,
  *	other if success, return pointer to the message to send.
  */
 static int
-key_getspi(struct socket *so, struct mbuf *m,
+key_api_getspi(struct socket *so, struct mbuf *m,
 	   const struct sadb_msghdr *mhp)
 {
 	const struct sockaddr *src, *dst;
@@ -4856,12 +4821,6 @@ key_getspi(struct socket *so, struct mbuf *m,
 	u_int8_t mode;
 	u_int16_t reqid;
 	int error;
-
-	KASSERT(!cpu_softintr_p());
-	KASSERT(so != NULL);
-	KASSERT(m != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL) {
@@ -5007,7 +4966,7 @@ key_getspi(struct socket *so, struct mbuf *m,
 
 /*
  * allocating new SPI
- * called by key_getspi().
+ * called by key_api_getspi().
  * OUT:
  *	0:	failure.
  *	others: success.
@@ -5214,7 +5173,7 @@ key_set_natt_ports(union sockaddr_union *src, union sockaddr_union *dst,
  * m will always be freed.
  */
 static int
-key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
+key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 {
 	struct sadb_sa *sa0;
 	const struct sockaddr *src, *dst;
@@ -5225,12 +5184,6 @@ key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	u_int8_t mode;
 	u_int16_t reqid;
 	int error;
-
-	KASSERT(!cpu_softintr_p());
-	KASSERT(so != NULL);
-	KASSERT(m != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	/* map satype to proto */
 	proto = key_satype2proto(mhp->msg->sadb_msg_satype);
@@ -5368,7 +5321,7 @@ key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 
 /*
  * search SAD with sequence for a SA which state is SADB_SASTATE_LARVAL.
- * only called by key_update().
+ * only called by key_api_update().
  * OUT:
  *	NULL	: not found
  *	others	: found, pointer to a SA.
@@ -5416,7 +5369,7 @@ key_getsavbyseq(struct secashead *sah, u_int32_t seq)
  * m will always be freed.
  */
 static int
-key_add(struct socket *so, struct mbuf *m,
+key_api_add(struct socket *so, struct mbuf *m,
 	const struct sadb_msghdr *mhp)
 {
 	struct sadb_sa *sa0;
@@ -5428,11 +5381,6 @@ key_add(struct socket *so, struct mbuf *m,
 	u_int8_t mode;
 	u_int16_t reqid;
 	int error;
-
-	KASSERT(so != NULL);
-	KASSERT(m != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	/* map satype to proto */
 	proto = key_satype2proto(mhp->msg->sadb_msg_satype);
@@ -5557,7 +5505,7 @@ key_setident(struct secashead *sah, struct mbuf *m,
 	KASSERT(mhp->msg != NULL);
 
 	/*
-	 * Can be called with an existing sah from key_update().
+	 * Can be called with an existing sah from key_api_update().
 	 */
 	if (sah->idents != NULL) {
 		kmem_free(sah->idents, sah->idents_len);
@@ -5669,7 +5617,7 @@ static int key_delete_all (struct socket *, struct mbuf *,
  * m will always be freed.
  */
 static int
-key_delete(struct socket *so, struct mbuf *m,
+key_api_delete(struct socket *so, struct mbuf *m,
 	   const struct sadb_msghdr *mhp)
 {
 	struct sadb_sa *sa0;
@@ -5679,11 +5627,6 @@ key_delete(struct socket *so, struct mbuf *m,
 	struct secasvar *sav = NULL;
 	u_int16_t proto;
 	int error;
-
-	KASSERT(so != NULL);
-	KASSERT(m != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	/* map satype to proto */
 	proto = key_satype2proto(mhp->msg->sadb_msg_satype);
@@ -5763,7 +5706,7 @@ key_delete(struct socket *so, struct mbuf *m,
 }
 
 /*
- * delete all SAs for src/dst.  Called from key_delete().
+ * delete all SAs for src/dst.  Called from key_api_delete().
  */
 static int
 key_delete_all(struct socket *so, struct mbuf *m,
@@ -5840,7 +5783,7 @@ key_delete_all(struct socket *so, struct mbuf *m,
  * m will always be freed.
  */
 static int
-key_get(struct socket *so, struct mbuf *m,
+key_api_get(struct socket *so, struct mbuf *m,
 	const struct sadb_msghdr *mhp)
 {
 	struct sadb_sa *sa0;
@@ -5850,11 +5793,6 @@ key_get(struct socket *so, struct mbuf *m,
 	struct secasvar *sav = NULL;
 	u_int16_t proto;
 	int error;
-
-	KASSERT(so != NULL);
-	KASSERT(m != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	/* map satype to proto */
 	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
@@ -6181,7 +6119,7 @@ key_getprop(const struct secasindex *saidx)
 }
 
 /*
- * SADB_ACQUIRE processing called by key_checkrequest() and key_acquire2().
+ * SADB_ACQUIRE processing called by key_checkrequest() and key_api_acquire().
  * send
  *   <base, SA, address(SD), (address(P)), x_policy,
  *       (identity(SD),) (sensitivity,) proposal>
@@ -6482,7 +6420,7 @@ key_getspacq(const struct secpolicyindex *spidx)
  * m will always be freed.
  */
 static int
-key_acquire2(struct socket *so, struct mbuf *m,
+key_api_acquire(struct socket *so, struct mbuf *m,
       	     const struct sadb_msghdr *mhp)
 {
 	const struct sockaddr *src, *dst;
@@ -6490,11 +6428,6 @@ key_acquire2(struct socket *so, struct mbuf *m,
 	struct secashead *sah;
 	u_int16_t proto;
 	int error;
-
-	KASSERT(so != NULL);
-	KASSERT(m != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	/*
 	 * Error message from KMd.
@@ -6602,16 +6535,10 @@ key_acquire2(struct socket *so, struct mbuf *m,
  * m will always be freed.
  */
 static int
-key_register(struct socket *so, struct mbuf *m,
+key_api_register(struct socket *so, struct mbuf *m,
 	     const struct sadb_msghdr *mhp)
 {
 	struct secreg *reg, *newreg = 0;
-
-	KASSERT(!cpu_softintr_p());
-	KASSERT(so != NULL);
-	KASSERT(m != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	/* check for invalid register message */
 	if (mhp->msg->sadb_msg_satype >= __arraycount(regtree))
@@ -6919,7 +6846,7 @@ key_expire(struct secasvar *sav)
  * m will always be freed.
  */
 static int
-key_flush(struct socket *so, struct mbuf *m,
+key_api_flush(struct socket *so, struct mbuf *m,
           const struct sadb_msghdr *mhp)
 {
 	struct sadb_msg *newmsg;
@@ -6927,10 +6854,6 @@ key_flush(struct socket *so, struct mbuf *m,
 	struct secasvar *sav, *nextsav;
 	u_int16_t proto;
 	u_int8_t state;
-
-	KASSERT(so != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	/* map satype to proto */
 	proto = key_satype2proto(mhp->msg->sadb_msg_satype);
@@ -7076,7 +6999,7 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
  * m will always be freed.
  */
 static int
-key_dump(struct socket *so, struct mbuf *m0,
+key_api_dump(struct socket *so, struct mbuf *m0,
 	 const struct sadb_msghdr *mhp)
 {
 	u_int16_t proto;
@@ -7084,11 +7007,6 @@ key_dump(struct socket *so, struct mbuf *m0,
 	struct mbuf *n;
 	int s;
 	int error, len, ok;
-
-	KASSERT(so != NULL);
-	KASSERT(m0 != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	/* map satype to proto */
 	satype = mhp->msg->sadb_msg_satype;
@@ -7153,15 +7071,10 @@ key_dump(struct socket *so, struct mbuf *m0,
  * m will always be freed.
  */
 static int
-key_promisc(struct socket *so, struct mbuf *m,
+key_api_promisc(struct socket *so, struct mbuf *m,
 	    const struct sadb_msghdr *mhp)
 {
 	int olen;
-
-	KASSERT(so != NULL);
-	KASSERT(m != NULL);
-	KASSERT(mhp != NULL);
-	KASSERT(mhp->msg != NULL);
 
 	olen = PFKEY_UNUNIT64(mhp->msg->sadb_msg_len);
 
@@ -7200,32 +7113,32 @@ key_promisc(struct socket *so, struct mbuf *m,
 	}
 }
 
-static int (*key_typesw[]) (struct socket *, struct mbuf *,
+static int (*key_api_typesw[]) (struct socket *, struct mbuf *,
 		const struct sadb_msghdr *) = {
-	NULL,		/* SADB_RESERVED */
-	key_getspi,	/* SADB_GETSPI */
-	key_update,	/* SADB_UPDATE */
-	key_add,	/* SADB_ADD */
-	key_delete,	/* SADB_DELETE */
-	key_get,	/* SADB_GET */
-	key_acquire2,	/* SADB_ACQUIRE */
-	key_register,	/* SADB_REGISTER */
-	NULL,		/* SADB_EXPIRE */
-	key_flush,	/* SADB_FLUSH */
-	key_dump,	/* SADB_DUMP */
-	key_promisc,	/* SADB_X_PROMISC */
-	NULL,		/* SADB_X_PCHANGE */
-	key_spdadd,	/* SADB_X_SPDUPDATE */
-	key_spdadd,	/* SADB_X_SPDADD */
-	key_spddelete,	/* SADB_X_SPDDELETE */
-	key_spdget,	/* SADB_X_SPDGET */
-	NULL,		/* SADB_X_SPDACQUIRE */
-	key_spddump,	/* SADB_X_SPDDUMP */
-	key_spdflush,	/* SADB_X_SPDFLUSH */
-	key_spdadd,	/* SADB_X_SPDSETIDX */
-	NULL,		/* SADB_X_SPDEXPIRE */
-	key_spddelete2,	/* SADB_X_SPDDELETE2 */
-	key_nat_map,	/* SADB_X_NAT_T_NEW_MAPPING */
+	NULL,			/* SADB_RESERVED */
+	key_api_getspi,		/* SADB_GETSPI */
+	key_api_update,		/* SADB_UPDATE */
+	key_api_add,		/* SADB_ADD */
+	key_api_delete,		/* SADB_DELETE */
+	key_api_get,		/* SADB_GET */
+	key_api_acquire,	/* SADB_ACQUIRE */
+	key_api_register,	/* SADB_REGISTER */
+	NULL,			/* SADB_EXPIRE */
+	key_api_flush,		/* SADB_FLUSH */
+	key_api_dump,		/* SADB_DUMP */
+	key_api_promisc,	/* SADB_X_PROMISC */
+	NULL,			/* SADB_X_PCHANGE */
+	key_api_spdadd,		/* SADB_X_SPDUPDATE */
+	key_api_spdadd,		/* SADB_X_SPDADD */
+	key_api_spddelete,	/* SADB_X_SPDDELETE */
+	key_api_spdget,		/* SADB_X_SPDGET */
+	NULL,			/* SADB_X_SPDACQUIRE */
+	key_api_spddump,	/* SADB_X_SPDDUMP */
+	key_api_spdflush,	/* SADB_X_SPDFLUSH */
+	key_api_spdadd,		/* SADB_X_SPDSETIDX */
+	NULL,			/* SADB_X_SPDEXPIRE */
+	key_api_spddelete2,	/* SADB_X_SPDDELETE2 */
+	key_api_nat_map,	/* SADB_X_NAT_T_NEW_MAPPING */
 };
 
 /*
@@ -7473,14 +7386,14 @@ key_parse(struct mbuf *m, struct socket *so)
 		 */
 	}
 
-	if (msg->sadb_msg_type >= __arraycount(key_typesw) ||
-	    key_typesw[msg->sadb_msg_type] == NULL) {
+	if (msg->sadb_msg_type >= __arraycount(key_api_typesw) ||
+	    key_api_typesw[msg->sadb_msg_type] == NULL) {
 		PFKEY_STATINC(PFKEY_STAT_OUT_INVMSGTYPE);
 		error = EINVAL;
 		goto senderror;
 	}
 
-	return (*key_typesw[msg->sadb_msg_type])(so, m, &mh);
+	return (*key_api_typesw[msg->sadb_msg_type])(so, m, &mh);
 
 senderror:
 	return key_senderror(so, m, error);
