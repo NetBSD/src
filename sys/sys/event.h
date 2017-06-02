@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.27 2017/05/31 00:45:59 kamil Exp $	*/
+/*	$NetBSD: event.h,v 1.28 2017/06/02 19:44:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -54,8 +54,11 @@ struct kevent {
 	intptr_t	udata;		/* opaque user data identifier */
 };
 
+#define EV_SET(kevp, a, b, c, d, e, f)					\
+	EV_SET_((kevp), (a), (b), (c), (d), (e), __CAST(intptr_t, (f)))
+
 static __inline void
-EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
+EV_SET_(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
        uint32_t _flags, uint32_t _fflags, int64_t _data, intptr_t _udata)
 {
 	_kevp->ident = _ident;
