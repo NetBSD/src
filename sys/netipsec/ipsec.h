@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.49 2017/06/02 03:39:28 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.50 2017/06/02 03:41:20 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -46,7 +46,9 @@
 #include <net/pfkeyv2.h>
 
 #ifdef _KERNEL
+#include <sys/socketvar.h>
 
+#include <netinet/in_pcb_hdr.h>
 #include <netipsec/keydb.h>
 
 /*
@@ -133,9 +135,17 @@ struct inpcbpolicy {
 	struct inpcb_hdr *sp_inph;	/* back pointer */
 };
 
-#define	IPSEC_PCB_SKIP_IPSEC(inpp, dir)					\
-	((inpp)->sp_cache[(dir)].cachehint == IPSEC_PCBHINT_NO &&	\
-	 (inpp)->sp_cache[(dir)].cachegen == ipsec_spdgen)
+extern u_int ipsec_spdgen;
+
+static inline bool
+ipsec_pcb_skip_ipsec(struct inpcbpolicy *pcbsp, int dir)
+{
+
+	KASSERT(inph_locked(pcbsp->sp_inph));
+
+	return pcbsp->sp_cache[(dir)].cachehint == IPSEC_PCBHINT_NO &&
+	    pcbsp->sp_cache[(dir)].cachegen == ipsec_spdgen;
+}
 
 /* SP acquiring list table. */
 struct secspacq {
@@ -256,8 +266,6 @@ extern int crypto_support;
 void ipsec_pcbconn (struct inpcbpolicy *);
 void ipsec_pcbdisconn (struct inpcbpolicy *);
 void ipsec_invalpcbcacheall (void);
-
-extern u_int ipsec_spdgen;
 
 struct tdb_ident;
 struct secpolicy *ipsec_getpolicy (const struct tdb_ident*, u_int);
