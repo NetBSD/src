@@ -1,4 +1,4 @@
-# $NetBSD: t_syntax.sh,v 1.1 2017/05/20 16:35:55 kre Exp $
+# $NetBSD: t_syntax.sh,v 1.2 2017/06/02 01:45:06 kre Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -632,6 +632,8 @@ q_for_loop_body() {
 		'for for in do;do : ;done'
 	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 		'for in in in;do : ; done'
+	atf_check -s exit:0 -o 'inline:do\nin\ndo\n' -e empty ${TEST_SH} -c \
+   'for in in in do in;do case $in in in)echo do;;do)echo in;;esac; done'
 	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 		'for in in for;do : ; done'
 	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
