@@ -1,4 +1,4 @@
-.\"	$NetBSD: localcount.9,v 1.5 2017/05/19 11:12:50 pgoyette Exp $
+.\"	$NetBSD: localcount.9,v 1.6 2017/06/02 00:32:12 chs Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 19, 2017
+.Dd June 1, 2017
 .Dt LOCALCOUNT 9
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nd reference-count primitives
 .Sh SYNOPSIS
 .In sys/localcount.h
-.Ft int
+.Ft void
 .Fn localcount_init "struct localcount *lc"
 .Ft void
 .Fn localcount_fini "struct localcount *lc"

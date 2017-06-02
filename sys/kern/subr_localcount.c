@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_localcount.c,v 1.3 2017/05/19 02:20:24 pgoyette Exp $	*/
+/*	$NetBSD: subr_localcount.c,v 1.4 2017/06/02 00:32:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.3 2017/05/19 02:20:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.4 2017/06/02 00:32:12 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/localcount.h>
@@ -66,16 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.3 2017/05/19 02:20:24 pgoyette
  */
 static void localcount_xc(void *, void *);
 
-int
+void
 localcount_init(struct localcount *lc)
 {
 
 	lc->lc_totalp = NULL;
 	lc->lc_percpu = percpu_alloc(sizeof(int64_t));
-	if (lc->lc_percpu == NULL)
-		return ENOMEM;
-
-	return 0;
 }
 
 /*
