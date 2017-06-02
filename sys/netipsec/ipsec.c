@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.98 2017/06/02 03:39:28 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.99 2017/06/02 03:41:20 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.98 2017/06/02 03:39:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.99 2017/06/02 03:41:20 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -673,7 +673,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 		return 0;
 	}
 	s = splsoftnet();
-	if (inp && IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND)) {
+	if (inp && ipsec_pcb_skip_ipsec(inp->inp_sp, IPSEC_DIR_OUTBOUND)) {
 		splx(s);
 		return 0;
 	}
@@ -2281,7 +2281,7 @@ ipsec6_check_policy(struct mbuf *m, struct in6pcb *in6p,
 	if (!ipsec_outdone(m)) {
 		s = splsoftnet();
 		if (in6p != NULL &&
-		    IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND)) {
+		    ipsec_pcb_skip_ipsec(in6p->in6p_sp, IPSEC_DIR_OUTBOUND)) {
 			splx(s);
 			goto skippolicycheck;
 		}
