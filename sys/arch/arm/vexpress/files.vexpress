@@ -1,4 +1,4 @@
-#	$NetBSD: files.vexpress,v 1.1 2017/06/02 15:22:47 jmcneill Exp $
+#	$NetBSD: files.vexpress,v 1.2 2017/06/02 21:16:42 jmcneill Exp $
 #
 # Configuration info for ARM Ltd. Versatile Express peripherals
 #
@@ -16,3 +16,7 @@ file	arch/arm/arm32/armv7_generic_dma.c
 file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/vexpress/vexpress_platform.c
+
+device	vxsysreg
+attach	vxsysreg at fdt with vexpress_sysreg
+file	arch/arm/vexpress/vexpress_sysreg.c	vexpress_sysreg	

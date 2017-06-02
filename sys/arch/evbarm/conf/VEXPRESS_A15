@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VEXPRESS_A15,v 1.9 2017/06/02 20:16:05 jmcneill Exp $
+#	$NetBSD: VEXPRESS_A15,v 1.10 2017/06/02 21:16:42 jmcneill Exp $
 #
 #	ARM Versatile Express A15
 #
@@ -44,6 +44,8 @@ armgtmr0	at gtmr?
 gic*		at fdt? pass 1		# GIC
 armgic0		at gic?
 
+# ARM Motherboard Express uATX system registers
+vxsysreg*	at fdt?
 
 # Ethernet
 smsh*		at fdt?			# SMSC LAN9118
