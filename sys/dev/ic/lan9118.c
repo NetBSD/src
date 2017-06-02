@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.25 2017/06/01 16:59:20 jmcneill Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.26 2017/06/02 23:39:08 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.25 2017/06/01 16:59:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.26 2017/06/02 23:39:08 jmcneill Exp $");
 
 /*
  * The LAN9118 Family
@@ -306,7 +306,8 @@ lan9118_intr(void *arg)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_STS,
 		    int_sts);
 		int_en =
-		    bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_EN);
+		    bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_EN) |
+		    LAN9118_INT_SW_INT;
 
 		DPRINTFN(3, ("%s: int_sts=0x%x, int_en=0x%x\n",
 		    __func__, int_sts, int_en));
@@ -314,6 +315,7 @@ lan9118_intr(void *arg)
 		if (!(int_sts & int_en))
 			break;
 		datum = int_sts;
+		handled = 1;
 
 #if 0	/* not yet... */
 		if (int_sts & LAN9118_INT_PHY_INT) { /* PHY */
@@ -327,7 +329,7 @@ lan9118_intr(void *arg)
 			ifp->if_ierrors++;
 			aprint_error_ifnet(ifp, "Receive Error\n");
 		}
-		if (int_sts & LAN9118_INT_TSFL) /* TX Status FIFO Level */
+		if (int_sts & (LAN9118_INT_TSFL|LAN9118_INT_SW_INT)) /* TX Status FIFO Level */
 			lan9118_txintr(sc);
 		if (int_sts & LAN9118_INT_RXDF_INT) {
 			ifp->if_ierrors++;
@@ -338,10 +340,11 @@ lan9118_intr(void *arg)
 			aprint_error_ifnet(ifp, "RX Status FIFO Full\n");
 		}
 		if (int_sts & LAN9118_INT_RSFL) /* RX Status FIFO Level */
-			 lan9118_rxintr(sc);
+			lan9118_rxintr(sc);
 	}
-
-	if_schedule_deferred_start(ifp);
+ 
+	if (handled)
+		if_schedule_deferred_start(ifp);
 
 	rnd_add_uint32(&sc->rnd_source, datum);
 
@@ -355,7 +358,7 @@ lan9118_start(struct ifnet *ifp)
 	struct lan9118_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
 	unsigned tdfree, totlen, dso;
-	uint32_t txa, txb;
+	uint32_t txa, txb, int_en;
 	uint8_t *p;
 	int n;
 
@@ -457,8 +460,18 @@ discard:
 
 		m_freem(m0);
 	}
-	if (totlen > 0)
+
+	if (totlen > 0) {
 		ifp->if_timer = 5;
+
+		/*
+		 * Trigger a software interrupt to catch any missed completion
+		 * interrupts.
+		 */
+		int_en = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_EN);
+		int_en |= LAN9118_INT_SW_INT;
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_EN, int_en);
+	}
 }
 
 static int
