@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.37 2017/05/19 19:22:33 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.38 2017/06/02 19:33:51 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.37 2017/05/19 19:22:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.38 2017/06/02 19:33:51 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,6 +438,11 @@ vcons_load_font(void *v, void *cookie, struct wsdisplay_font *f)
 	ri->ri_ops.copycols  = vcons_copycols;
 	ri->ri_ops.copyrows  = vcons_copyrows;
 	vcons_unlock(vd->active);
+
+	/* notify things that we're about to redraw */
+	if (vd->show_screen_cb != NULL)
+		vd->show_screen_cb(scr, vd->show_screen_cookie);
+	
 #ifdef VCONS_DRAW_INTR
 	/*
 	 * XXX
@@ -515,7 +520,7 @@ vcons_do_switch(void *arg)
 #endif
 
 	if (vd->show_screen_cb != NULL)
-		vd->show_screen_cb(scr);
+		vd->show_screen_cb(scr, vd->show_screen_cookie);
 
 	if ((scr->scr_flags & VCONS_NO_REDRAW) == 0)
 		vcons_redraw_screen(scr);
@@ -1505,7 +1510,7 @@ vcons_hard_switch(struct vcons_screen *scr)
 	vd->wanted = NULL;
 
 	if (vd->show_screen_cb != NULL)
-		vd->show_screen_cb(scr);
+		vd->show_screen_cb(scr, vd->show_screen_cookie);
 }
 
 #ifdef VCONS_DRAW_INTR
