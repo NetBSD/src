@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.14 2017/05/29 22:27:47 kre Exp $
+# $NetBSD: t_expand.sh,v 1.15 2017/06/02 01:48:13 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -417,6 +417,11 @@ shell_params_body() {
     echo "${1}:${1#*a}+${1%b*}-${1##*a}_${1%%b*}%${1#[ab]}=${1%?*}/${1%\?*}"' \
 	       'abab?cbb:bab?cbb+abab?cb-b?cbb_a%bab?cbb=abab?cb/abab' 0
 	check 'set -- a "" c "" e; echo "${2:=b}"' '' 1
+
+	check 'set -- a b c d; echo ${4294967297}' '' 0  # result 'a' => ${1}
+	check 'set -- a b c; echo ${01}' 'a' 0
+	check "${TEST_SH} -c 'echo 0=\${00} 1=\${01} 2=\${02}' a b c" \
+			'0=a 1=b 2=c' 0
 
 	results
 }
