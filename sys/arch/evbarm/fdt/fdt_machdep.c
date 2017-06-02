@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.2 2017/05/30 22:55:27 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.3 2017/06/02 00:16:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.2 2017/05/30 22:55:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.3 2017/06/02 00:16:28 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -282,6 +282,14 @@ consinit(void)
 	cons->consinit(&faa);
 
 	initialized = true;
+}
+
+void
+delay(u_int us)
+{
+	const struct arm_platform *plat = arm_fdt_platform();
+
+	plat->delay(us);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.4 2017/05/30 22:55:26 jmcneill Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.5 2017/06/02 00:16:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.4 2017/05/30 22:55:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.5 2017/06/02 00:16:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -182,6 +182,12 @@ tegra_platform_reset(void)
 	tegra_pmc_reset();
 }
 
+static void
+tegra_platform_delay(u_int us)
+{
+	tegra_timer_delay(us);
+}
+
 static const struct arm_platform tegra_platform = {
 	.devmap = tegra_platform_devmap,
 	.bootstrap = tegra_platform_bootstrap,
@@ -189,6 +195,7 @@ static const struct arm_platform tegra_platform = {
 	.early_putchar = tegra_platform_early_putchar,
 	.device_register = tegra_platform_device_register,
 	.reset = tegra_platform_reset,
+	.delay = tegra_platform_delay,
 };
 
 ARM_PLATFORM(tegra124, "nvidia,tegra124", &tegra_platform);
