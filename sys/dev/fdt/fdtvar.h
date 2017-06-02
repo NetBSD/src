@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.19 2017/05/29 23:13:03 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.20 2017/06/02 13:53:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -174,7 +174,7 @@ struct fdtbus_power_controller_func {
 
 struct fdt_console {
 	int	(*match)(int);
-	void	(*consinit)(struct fdt_attach_args *);
+	void	(*consinit)(struct fdt_attach_args *, u_int);
 };
 
 struct fdt_console_info {

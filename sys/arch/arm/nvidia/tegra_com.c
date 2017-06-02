@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_com.c,v 1.7 2017/05/29 23:13:03 jmcneill Exp $ */
+/* $NetBSD: tegra_com.c,v 1.8 2017/06/02 13:53:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.7 2017/05/29 23:13:03 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.8 2017/06/02 13:53:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,8 +47,6 @@ __KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.7 2017/05/29 23:13:03 jmcneill Exp $
 #include <dev/ic/comvar.h>
 
 #include <dev/fdt/fdtvar.h>
-
-#define	PLLP_OUT0_FREQ	408000000
 
 static int tegra_com_match(device_t, cfdata_t, void *);
 static void tegra_com_attach(device_t, device_t, void *);
@@ -162,9 +160,8 @@ tegra_com_console_match(int phandle)
 }
 
 static void
-tegra_com_console_consinit(struct fdt_attach_args *faa)
+tegra_com_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 {
-	const u_int freq = PLLP_OUT0_FREQ;
 	const int phandle = faa->faa_phandle;
 	bus_space_tag_t bst = faa->faa_a4x_bst;
 	bus_addr_t addr;
@@ -177,7 +174,7 @@ tegra_com_console_consinit(struct fdt_attach_args *faa)
 		speed = 115200;	/* default */
 	flags = fdtbus_get_stdout_flags();
 
-	if (comcnattach(bst, addr, speed, freq, COM_TYPE_TEGRA, flags))
+	if (comcnattach(bst, addr, speed, uart_freq, COM_TYPE_TEGRA, flags))
 		panic("Cannot initialize tegra com console");
 }
 
