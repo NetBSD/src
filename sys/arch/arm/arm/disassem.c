@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.36 2017/04/26 08:20:47 skrll Exp $	*/
+/*	$NetBSD: disassem.c,v 1.37 2017/06/02 19:58:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.36 2017/04/26 08:20:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.37 2017/06/02 19:58:31 skrll Exp $");
 
 #include <sys/systm.h>
 
@@ -203,6 +203,12 @@ static const struct arm32_insn arm32_i[] = {
     /* A5.2 exceptions */
 
     /* A5.2.7 Halfword multiply and multiply accumulate */
+    /* A5.2.9 Extra load/store instructions, unprivileged */
+
+    { 0x0f3000f0, 0x002000b0, "strht",	"de" },
+    { 0x0f3000f0, 0x003000b0, "ldrht",	"de" },
+    { 0x0f3000f0, 0x003000d0, "ldrsbt",	"de" },
+    { 0x0f3000f0, 0x003000f0, "ldrsht",	"de" },
 
     /* A5.2.8 Extra load/store instructions */
 
@@ -210,12 +216,12 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0e1000f0, 0x001000b0, "ldrh",	"de" },
 
     { 0x0e5000f0, 0x000000d0, "ldrd",	"de" },
-    { 0x0e5000f0, 0x001000d0, "ldrsb",	"de" },
-    { 0x0e5000f0, 0x004000d0, "ldrd",	"de" },
-    { 0x0e5000f0, 0x005000d0, "ldrsb",	"de" },
+    { 0x0e1000f0, 0x001000d0, "ldrsb",	"de" },
+    { 0x0e1000f0, 0x000000d0, "ldrd",	"de" },
+    { 0x0e1000f0, 0x001000d0, "ldrsb",	"de" },
 
-    { 0x0e1000f0, 0x000000f0, "ldrd",	"de" },
-    { 0x0e1000f0, 0x001000f0, "ldrsb",	"de" },
+    { 0x0e1000f0, 0x000000f0, "strd",	"de" },
+    { 0x0e1000f0, 0x001000f0, "ldrsh",	"de" },
     { 0x0e1000f0, 0x000000f0, "strd",	"de" },
     { 0x0e1000f0, 0x001000f0, "ldrsh",	"de" },
 
