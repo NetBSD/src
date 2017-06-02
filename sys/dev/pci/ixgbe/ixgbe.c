@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.87 2017/05/26 09:17:32 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.88 2017/06/02 08:16:52 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -466,7 +466,8 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	struct adapter *adapter;
 	struct ixgbe_hw *hw;
 	int             error = -1;
-	u16		csum, high, low;
+	u16		csum, high, low, nvmreg;
+	u8		id;
 	u32		ctrl_ext;
 	ixgbe_vendor_info_t *ent;
 	struct pci_attach_args *pa = aux;
@@ -630,10 +631,75 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		goto err_late;
 	}
 
-	/* Print the TrackID */
-	hw->eeprom.ops.read(hw, IXGBE_TRACKID_H, &high);
-	hw->eeprom.ops.read(hw, IXGBE_TRACKID_L, &low);
-	aprint_normal_dev(dev, "TrackID %08x\n", ((uint32_t)high << 16) | low);
+	aprint_normal("%s:", device_xname(dev));
+	/* NVM Image Version */
+	switch (hw->mac.type) {
+	case ixgbe_mac_X540:
+		hw->eeprom.ops.read(hw, IXGBE_NVM_IMAGE_VER, &nvmreg);
+		if (nvmreg == 0xffff)
+			break;
+		high = (nvmreg >> 12) & 0x0f;
+		low = (nvmreg >> 4) & 0xff;
+		id = nvmreg & 0x0f;
+		aprint_normal(" NVM Image Version %u.%u ID 0x%x,", high, low,
+		    id);
+		break;
+	case ixgbe_mac_X550EM_x:
+	case ixgbe_mac_X550:
+		hw->eeprom.ops.read(hw, IXGBE_NVM_IMAGE_VER, &nvmreg);
+		if (nvmreg == 0xffff)
+			break;
+		high = (nvmreg >> 12) & 0x0f;
+		low = nvmreg & 0xff;
+		aprint_normal(" NVM Image Version %u.%u,", high, low);
+		break;
+	default:
+		break;
+	}
+
+	/* PHY firmware revision */
+	switch (hw->mac.type) {
+	case ixgbe_mac_X540:
+	case ixgbe_mac_X550:
+		hw->eeprom.ops.read(hw, IXGBE_PHYFW_REV, &nvmreg);
+		if (nvmreg == 0xffff)
+			break;
+		high = (nvmreg >> 12) & 0x0f;
+		low = (nvmreg >> 4) & 0xff;
+		id = nvmreg & 0x000f;
+		aprint_normal(" PHY FW Revision %u.%u ID 0x%x,", high, low,
+		    id);
+		break;
+	default:
+		break;
+	}
+
+	/* NVM Map version & OEM NVM Image version */
+	switch (hw->mac.type) {
+	case ixgbe_mac_X550:
+	case ixgbe_mac_X550EM_x:
+		hw->eeprom.ops.read(hw, IXGBE_NVM_MAP_VER, &nvmreg);
+		if (nvmreg != 0xffff) {
+			high = (nvmreg >> 12) & 0x0f;
+			low = nvmreg & 0x00ff;
+			aprint_normal(" NVM Map version %u.%02x,", high, low);
+		}
+		hw->eeprom.ops.read(hw, IXGBE_OEM_NVM_IMAGE_VER, &nvmreg);
+		if (nvmreg == 0xffff) {
+			high = (nvmreg >> 12) & 0x0f;
+			low = nvmreg & 0x00ff;
+			aprint_verbose(" OEM NVM Image version %u.%02x,", high,
+			    low);
+		}
+		break;
+	default:
+		break;
+	}
+
+	/* Print the ETrackID */
+	hw->eeprom.ops.read(hw, IXGBE_ETRACKID_H, &high);
+	hw->eeprom.ops.read(hw, IXGBE_ETRACKID_L, &low);
+	aprint_normal(" ETrackID %08x\n", ((uint32_t)high << 16) | low);
 
 	error = ixgbe_init_hw(hw);
 	switch (error) {
