@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_cpu.c,v 1.3 2017/04/29 23:00:42 jmcneill Exp $ */
+/* $NetBSD: tegra124_cpu.c,v 1.4 2017/06/02 00:09:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_cpu.c,v 1.3 2017/04/29 23:00:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_cpu.c,v 1.4 2017/06/02 00:09:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -70,7 +70,7 @@ static size_t	tegra124_cpufreq_get_available(u_int *, size_t);
 
 static int	tegra124_cpu_match(device_t, cfdata_t, void *);
 static void	tegra124_cpu_attach(device_t, device_t, void *);
-static void	tegra124_cpu_init_cpufreq(device_t);
+static int	tegra124_cpu_init_cpufreq(device_t);
 
 CFATTACH_DECL_NEW(tegra124_cpu, 0, tegra124_cpu_match, tegra124_cpu_attach,
     NULL, NULL);
@@ -125,7 +125,7 @@ tegra124_cpu_match(device_t parent, cfdata_t cf, void *aux)
 	const char * const compatible[] = { "nvidia,tegra124", NULL };
 	struct fdt_attach_args *faa = aux;
 
-	if (OF_finddevice("/cpus") != faa->faa_phandle)
+	if (OF_finddevice("/cpus/cpu@0") != faa->faa_phandle)
 		return 0;
 
 	return of_match_compatible(OF_finddevice("/"), compatible);
@@ -135,12 +135,12 @@ static void
 tegra124_cpu_attach(device_t parent, device_t self, void *aux)
 {
 	aprint_naive("\n");
-	aprint_normal(": CPU complex\n");
+	aprint_normal(": DVFS\n");
 
-	config_defer(self, tegra124_cpu_init_cpufreq);
+	config_finalize_register(self, tegra124_cpu_init_cpufreq);
 }
 
-static void
+static int
 tegra124_cpu_init_cpufreq(device_t dev)
 {
 	tegra124_speedo_init();
@@ -153,14 +153,16 @@ tegra124_cpu_init_cpufreq(device_t dev)
 	}
 	if (tegra124_clk_pllx == NULL) {
 		aprint_error_dev(dev, "couldn't find clock pll_x\n");
-		return;
+		return 0;
 	}
 	if (tegra124_reg_vddcpu == NULL) {
 		aprint_error_dev(dev, "couldn't find voltage regulator\n");
-		return;
+		return 0;
 	}
 
 	tegra_cpufreq_register(&tegra124_cpufreq_func);
+
+	return 0;
 }
 
 static void
