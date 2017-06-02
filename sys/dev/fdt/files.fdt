@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.14 2017/05/28 15:55:11 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.15 2017/06/02 15:09:16 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -18,7 +18,7 @@ device	fclock: clk
 attach	fclock at fdt
 file	dev/fdt/fixedclock.c			fclock
 
-device	gpiokeys
+device	gpiokeys: sysmon_envsys, sysmon_power
 attach	gpiokeys at fdt
 file	dev/fdt/gpiokeys.c			gpiokeys
 
