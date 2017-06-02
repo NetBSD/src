@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.96 2017/06/01 02:45:14 chs Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.97 2017/06/02 03:34:10 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.96 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.97 2017/06/02 03:34:10 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -229,8 +229,6 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 		return NULL;
 	}
 	if ((pcbsp->sp_cacheflags & IPSEC_PCBSP_CONNECTED) == 0) {
-		if (!pcbsp->sp_cache[dir].cachesp)
-			return NULL;
 		if (ipsec_setspidx(m, &spidx, 1) != 0)
 			return NULL;
 
