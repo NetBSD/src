@@ -1,4 +1,4 @@
-/*	$NetBSD: localcount.h,v 1.3 2017/05/19 11:45:40 pgoyette Exp $	*/
+/*	$NetBSD: localcount.h,v 1.4 2017/06/02 00:32:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ struct localcount {
 	struct percpu	*lc_percpu; /* int64_t */
 };
 
-int	localcount_init(struct localcount *);
+void	localcount_init(struct localcount *);
 void	localcount_drain(struct localcount *, struct kcondvar *,
 	    struct kmutex *);
 void	localcount_fini(struct localcount *);
