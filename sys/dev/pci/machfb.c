@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.93 2017/05/28 05:27:13 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.94 2017/06/02 19:35:54 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.93 2017/05/28 05:27:13 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.94 2017/06/02 19:35:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0,
 
 #include "opt_wsemul.h"
 #include "opt_machfb.h"
+#include "opt_glyphcache.h"
 
 #define MACH64_REG_SIZE		0x800
 #define MACH64_REG_OFF		0x7ff800
@@ -275,7 +276,7 @@ static struct wsscreen_descr mach64_defaultscreen = {
 	NULL,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE
-	/* | WSSCREEN_RESIZE */,
+	 | WSSCREEN_RESIZE ,
 	NULL
 };
 
@@ -687,8 +688,15 @@ mach64_attach(device_t parent, device_t self, void *aux)
 
 	wsfont_init();
 
+#ifdef GLYPHCACHE_DEBUG
+	/* shrink the screen so we can see part of the glyph cache */
+	sc->sc_my_mode->vdisplay -= 200;
+#endif
+
 	vcons_init(&sc->vd, sc, &mach64_defaultscreen, &sc->sc_accessops);
 	sc->vd.init_screen = mach64_init_screen;
+	sc->vd.show_screen_cookie = &sc->sc_gc;
+	sc->vd.show_screen_cb = glyphcache_adapt;
 
 	sc->sc_gc.gc_bitblt = mach64_bitblt;
 	sc->sc_gc.gc_blitcookie = sc;
@@ -800,9 +808,11 @@ mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 #ifdef VCONS_DRAW_INTR
 	scr->scr_flags |= VCONS_DONT_READ;
 #endif
+	scr->scr_flags |= VCONS_LOADFONT;
 
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		      WSSCREEN_RESIZE;
 	rasops_reconfig(ri, sc->sc_my_mode->vdisplay / ri->ri_font->fontheight,
 		    sc->sc_my_mode->hdisplay / ri->ri_font->fontwidth);
 
