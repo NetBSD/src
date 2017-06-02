@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_sysreg.c,v 1.1 2017/06/02 21:16:42 jmcneill Exp $ */
+/* $NetBSD: vexpress_sysreg.c,v 1.2 2017/06/02 21:26:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_sysreg.c,v 1.1 2017/06/02 21:16:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_sysreg.c,v 1.2 2017/06/02 21:26:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -79,12 +79,14 @@ vexpress_sysreg_write(device_t dev, u_int func, u_int site)
 static void
 vexpress_sysreg_reset(device_t dev)
 {
+	delay(1000000);
 	vexpress_sysreg_write(dev, SYS_CFGCTRL_FUNCTION_REBOOT, SYS_CFGCTRL_SITE_MB);
 }
 
 static void
 vexpress_sysreg_poweroff(device_t dev)
 {
+	delay(1000000);
 	vexpress_sysreg_write(dev, SYS_CFGCTRL_FUNCTION_SHUTDOWN, SYS_CFGCTRL_SITE_MB);
 }
 
