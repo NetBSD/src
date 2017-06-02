@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.25 2017/05/19 19:22:33 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.26 2017/06/02 19:33:51 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -116,7 +116,8 @@ struct vcons_data {
 	void (*eraserows)(void *, int, int, long);
 	void (*cursor)(void *, int, int, int);
 	/* called before vcons_redraw_screen */
-	void (*show_screen_cb)(struct vcons_screen *);
+	void *show_screen_cookie;
+	void (*show_screen_cb)(struct vcons_screen *, void *);
 	/* virtual screen management stuff */
 	void (*switch_cb)(void *, int, int);
 	void *switch_cb_arg;
