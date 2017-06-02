@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.37 2017/05/28 00:40:20 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.38 2017/06/02 00:16:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -84,6 +84,8 @@ void	tegra_pmc_remove_clamping(u_int);
 void	tegra_pmc_hdmi_enable(void);
 
 uint32_t tegra_fuse_read(u_int);
+
+void	tegra_timer_delay(u_int);
 
 void	tegra_xusbpad_sata_enable(void);
 void	tegra_xusbpad_xhci_enable(void);
