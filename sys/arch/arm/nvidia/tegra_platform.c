@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.5 2017/06/02 00:16:27 jmcneill Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.6 2017/06/02 13:53:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.5 2017/06/02 00:16:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.6 2017/06/02 13:53:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.5 2017/06/02 00:16:27 jmcneill 
 
 #include <dev/ic/ns16550reg.h>
 #include <dev/ic/comreg.h>
+
+#define	PLLP_OUT0_FREQ	408000000
 
 #define	DEVMAP_ALIGN(a)	((a) & ~L1_S_OFFSET)
 #define	DEVMAP_SIZE(s)	roundup2((s), L1_S_SIZE)
@@ -188,6 +190,12 @@ tegra_platform_delay(u_int us)
 	tegra_timer_delay(us);
 }
 
+static u_int
+tegra_platform_uart_freq(void)
+{
+	return PLLP_OUT0_FREQ;
+}
+
 static const struct arm_platform tegra_platform = {
 	.devmap = tegra_platform_devmap,
 	.bootstrap = tegra_platform_bootstrap,
@@ -196,6 +204,7 @@ static const struct arm_platform tegra_platform = {
 	.device_register = tegra_platform_device_register,
 	.reset = tegra_platform_reset,
 	.delay = tegra_platform_delay,
+	.uart_freq = tegra_platform_uart_freq,
 };
 
 ARM_PLATFORM(tegra124, "nvidia,tegra124", &tegra_platform);

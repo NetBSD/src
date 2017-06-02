@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.3 2017/06/02 00:16:28 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.4 2017/06/02 13:53:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.3 2017/06/02 00:16:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.4 2017/06/02 13:53:29 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -272,6 +272,7 @@ consinit(void)
 	const struct arm_platform *plat = arm_fdt_platform();
 	const struct fdt_console *cons = fdtbus_get_console();
 	struct fdt_attach_args faa;
+	u_int uart_freq = 0;
 
 	if (initialized || cons == NULL)
 		return;
@@ -279,7 +280,10 @@ consinit(void)
 	plat->init_attach_args(&faa);
 	faa.faa_phandle = fdtbus_get_stdout_phandle();
 
-	cons->consinit(&faa);
+	if (plat->uart_freq != NULL)
+		uart_freq = plat->uart_freq();
+
+	cons->consinit(&faa, uart_freq);
 
 	initialized = true;
 }
