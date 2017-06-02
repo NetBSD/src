@@ -1,4 +1,4 @@
-/* $NetBSD: cpus.c,v 1.1 2017/05/28 00:38:40 jmcneill Exp $ */
+/* $NetBSD: cpus.c,v 1.2 2017/06/02 00:01:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.1 2017/05/28 00:38:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.2 2017/06/02 00:01:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,6 +71,8 @@ cpus_attach(device_t parent, device_t self, void *aux)
 		cfaa.faa_name = "cpu";
 		cfaa.faa_quiet = 0;
 
-		config_found(self, &cfaa, fdtbus_print);
+		device_t cpu = config_found(self, &cfaa, fdtbus_print);
+		if (cpu)
+			config_found(cpu, &cfaa, NULL);
 	}
 }
