@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.9 2008/05/02 18:11:05 martin Exp $
+#	$NetBSD: devlist2h.awk,v 1.10 2017/06/03 14:46:29 christos Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,7 +42,6 @@
 # 3. All advertising materials mentioning features or use of this software
 #    must display the following acknowledgement:
 #      This product includes software developed by Christopher G. Demetriou.
-#      This product includes software developed by Christos Zoulas
 # 4. The name of the author(s) may not be used to endorse or promote products
 #    derived from this software without specific prior written permission
 #
