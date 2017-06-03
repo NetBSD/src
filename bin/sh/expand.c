@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.109 2017/06/03 20:55:53 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.110 2017/06/03 21:52:05 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.109 2017/06/03 20:55:53 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.110 2017/06/03 21:52:05 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -225,7 +225,7 @@ argstr(const char *p, int flag)
 	if (flag & EXP_IFS_SPLIT)
 		ifs = ifsval();
 
-	VTRACE(DBG_EXPAND, ("argstr(\"%s\", %#x) quotes=%#x\n", p,flag,quotes));
+	CTRACE(DBG_EXPAND, ("argstr(\"%s\", %#x) quotes=%#x\n", p,flag,quotes));
 
 	if (*p == '~' && (flag & (EXP_TILDE | EXP_VARTILDE)))
 		p = exptilde(p, flag);
@@ -343,6 +343,8 @@ exptilde(const char *p, int flag)
 	}
  done:
 	STACKSTRNUL(user);
+
+	CTRACE(DBG_EXPAND, ("exptilde, found \"~%s\" :", expdest));
 	if (*expdest == '\0')
 		home = lookupvar("HOME");
 	else if ((pw = getpwnam(expdest)) == NULL)
@@ -358,6 +360,8 @@ exptilde(const char *p, int flag)
 			STPUTC(CTLESC, expdest);
 		STPUTC(c, expdest);
 	}
+	CTRACE(DBG_EXPAND, ("returning \"%s\"\n", p));
+
 	return (p);
 }
 
@@ -513,6 +517,7 @@ expbackq(union node *cmd, int quoted, int flag)
 	int quotes = flag & (EXP_GLOB | EXP_CASE);
 	int nnl;
 
+	VTRACE(DBG_EXPAND, ("expbackq( ..., q=%d flag=%#x)\n", quoted, flag));
 	INTOFF;
 	saveifs = ifsfirst;
 	savelastp = ifslastp;
@@ -536,7 +541,7 @@ expbackq(union node *cmd, int quoted, int flag)
 				break;
 			while ((i = read(in.fd, buf, sizeof buf)) < 0 && errno == EINTR)
 				continue;
-			TRACE(("expbackq: read returns %d\n", i));
+			VTRACE(DBG_EXPAND, ("expbackq: read returns %d\n", i));
 			if (i <= 0)
 				break;
 			p = buf;
@@ -567,7 +572,7 @@ expbackq(union node *cmd, int quoted, int flag)
 		back_exitstatus = waitforjob(in.jp);
 	if (quoted == 0)
 		recordregion(startloc, dest - stackblock(), 0);
-	TRACE(("evalbackq: size=%d: \"%.*s\"\n",
+	CTRACE(DBG_EXPAND, ("evalbackq: size=%d: \"%.*s\"\n",
 		(int)((dest - stackblock()) - startloc),
 		(int)((dest - stackblock()) - startloc),
 		stackblock() + startloc));
@@ -640,6 +645,11 @@ subevalvar_trim(const char *p, int strloc, int subtype, int startloc,
 		abort();
 		break;
 	}
+
+	VTRACE(DBG_EXPAND,
+	("subevalvar_trim(\"%.9s\", STR@%d, SUBT=%d, start@%d, vf=%x, q=%x)\n",
+		p, strloc, subtype, startloc, varflags, quotes));
+
 	argstr(p, (varflags & (VSQUOTE|VSPATQ)) == VSQUOTE ? 0 : EXP_CASE);
 	STACKSTRNUL(expdest);
 	herefd = saveherefd;
@@ -752,6 +762,10 @@ evalvar(const char *p, int flag)
 	var = p;
 	special = !is_name(*p);
 	p = strchr(p, '=') + 1;
+
+	CTRACE(DBG_EXPAND,
+	    ("evalvar \"%.*s\", flag=%#X quotes=%#X vf=%#X subtype=%X\n",
+	    p - var - 1, var, flag, quotes, varflags, subtype));
 
  again: /* jump here after setting a variable with ${var=text} */
 	if (varflags & VSLINENO) {
@@ -1133,8 +1147,10 @@ ifsbreakup(char *string, struct arglist *arglist)
 
 	start = string;
 
+	VTRACE(DBG_EXPAND, ("ifsbreakup(\"%s\")", string)); /* misses \0's */
 	if (ifslastp == NULL) {
 		/* Return entire argument, IFS doesn't apply to any of it */
+		VTRACE(DBG_EXPAND, ("no regions\n", string));
 		sp = stalloc(sizeof(*sp));
 		sp->text = start;
 		*arglist->lastp = sp;
@@ -1146,6 +1162,8 @@ ifsbreakup(char *string, struct arglist *arglist)
 
 	for (ifsp = &ifsfirst; ifsp != NULL; ifsp = ifsp->next) {
 		p = string + ifsp->begoff;
+		VTRACE(DBG_EXPAND, (" !%.*s!(%d)", ifsp->endoff-ifsp->begoff,
+		    p, ifsp->endoff-ifsp->begoff));
 		while (p < string + ifsp->endoff) {
 			had_param_ch = 1;
 			q = p;
@@ -1158,6 +1176,7 @@ ifsbreakup(char *string, struct arglist *arglist)
 					continue;
 				}
 				ifsspc = NULL;
+				VTRACE(DBG_EXPAND, (" \\0 nxt:\"%s\" ", p));
 			} else {
 				if (!strchr(ifs, *p)) {
 					p++;
@@ -1176,6 +1195,7 @@ ifsbreakup(char *string, struct arglist *arglist)
 
 			/* Save this argument... */
 			*q = '\0';
+			VTRACE(DBG_EXPAND, ("<%s>", start));
 			sp = stalloc(sizeof(*sp));
 			sp->text = start;
 			*arglist->lastp = sp;
@@ -1210,11 +1230,13 @@ ifsbreakup(char *string, struct arglist *arglist)
 	 * should only generate one....
 	 */
 	if (had_param_ch || *start != 0) {
+		VTRACE(DBG_EXPAND, (" T<%s>", start));
 		sp = stalloc(sizeof(*sp));
 		sp->text = start;
 		*arglist->lastp = sp;
 		arglist->lastp = &sp->next;
 	}
+	VTRACE(DBG_EXPAND, ("\n"));
 }
 
 STATIC void
