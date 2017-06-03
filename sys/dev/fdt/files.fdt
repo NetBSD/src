@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.15 2017/06/02 15:09:16 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.16 2017/06/03 14:48:03 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -38,3 +38,6 @@ file	dev/fdt/fdt_pinctrl.c			fdtbus
 device	cpus { } : fdtbus
 attach	cpus at fdt
 file	dev/fdt/cpus.c				cpus
+
+define	fdt_display_timing
+file	dev/fdt/display_timing.c		fdt_display_timing
