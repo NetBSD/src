@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.38 2017/06/02 21:20:47 skrll Exp $	*/
+/*	$NetBSD: disassem.c,v 1.39 2017/06/03 11:51:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.38 2017/06/02 21:20:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.39 2017/06/03 11:51:59 skrll Exp $");
 
 #include <sys/systm.h>
 
@@ -203,6 +203,7 @@ static const struct arm32_insn arm32_i[] = {
     /* A5.2 exceptions */
 
     /* A5.2.7 Halfword multiply and multiply accumulate */
+
     /* A5.2.9 Extra load/store instructions, unprivileged */
 
     { 0x0f3000f0, 0x002000b0, "strht",	"de" },
@@ -898,15 +899,17 @@ disasm_insn_ldrxstrx(const disasm_interface_t *di, u_int insn, u_int loc)
 		di->di_printf("[r%d", (insn >> 16) & 0x0f);
 		if ((insn & 0x01400f0f) != 0x01400000) {
 			di->di_printf("%s, ", (insn & (1 << 24)) ? "" : "]");
-			if (!(insn & 0x00800000))
-				di->di_printf("-");
+			char const *sign = (insn & 0x00800000) ? "" : "-";
 			if (insn & (1 << 22))
-				di->di_printf("#0x%02x", offset);
+				di->di_printf("#%s0x%02x", sign, offset);
 			else
-				di->di_printf("r%d", (insn & 0x0f));
+				di->di_printf("%sr%d", sign, (insn & 0x0f));
 		}
-		if (insn & (1 << 24))
+		if (insn & (1 << 24)) {
 			di->di_printf("]");
+			if (__SHIFTOUT(insn, __BIT(21)))
+				di->di_printf("!");
+		}
 	}
 }
 
