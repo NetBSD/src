@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.96 2015/05/22 18:27:03 snj Exp $
+.\" $NetBSD: legal.common,v 1.97 2017/06/03 09:00:35 mrg Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -370,8 +370,6 @@ This product includes software developed by Takumi Nakamura.
 .It
 This product includes software developed by Tatoku Ogaito
 for the NetBSD Project.
-.It
-This product includes software developed by Terrence R. Lambert.
 .It
 This product includes software developed by Texas A&M University
 and its contributors.
