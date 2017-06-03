@@ -1,4 +1,4 @@
-# $NetBSD: t_fsplit.sh,v 1.4 2016/03/27 14:50:01 christos Exp $
+# $NetBSD: t_fsplit.sh,v 1.5 2017/06/03 10:27:05 kre Exp $
 #
 # Copyright (c) 2007-2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -137,11 +137,13 @@ default_val_body() {
 	check 'for i in ${x-a ${x-b c} d};     do echo "z${i}z"; done' \
 		'zaz zbz zcz zdz'
 
-	# I am not sure these two are correct, the rules on quoting word
-	# in ${var-word} are peculiar, and hard to fathom...
-	# They are what the NetBSD shell does, and bash, not the freebsd shell
-	# (as of Mar 1, 2016)
+	# I am not sure the first of these two is correct, the rules on
+	# quoting word in ${var-word} are peculiar, and hard to fathom...
+	# It is what the NetBSD shell does, and bash, not the freebsd shell
+	# and not ksh93 (as of Mar 1, 2016, and still in June 2017)
+	# The likely correct interp of the next one is 'za bz zcz zdz'
 
+	# should be:    uuuu qqqqqq uuu q uuu   (unquoted/quoted) no nesting.
 	check 'for i in ${x-"a ${x-"b c"}" d}; do echo "z${i}z"; done' \
 		'za b cz zdz'
 	check 'for i in ${x-a ${x-"b c"} d};   do echo "z${i}z"; done' \
@@ -337,6 +339,7 @@ var_length_body() {
 	long=12345678123456781234567812345678
 	long=$long$long$long$long
 	export long
+	unset x
 
 	# first test that the test method works...
 	check 'set -u; : ${long}; echo ${#long}' '128'
@@ -344,8 +347,13 @@ var_length_body() {
 	# Check that we apply IFS to ${#var}
 	check 'echo ${#long}; IFS=2; echo ${#long}; set 1 ${#long};echo $#' \
 		'128 1 8 3'
-	check 'IFS=2; set ${x-${#long}};   IFS=" "; echo $* $#'   '1 8 2'
-	check 'IFS=2; set ${x-"${#long}"}; IFS=" "; echo $* $#'   '128 1'
+	check 'IFS=2; set ${x-${#long}};   IFS=" "; echo $* $#'     '1 8 2'
+	check 'IFS=2; set ${x-"${#long}"}; IFS=" "; echo $* $#'     '128 1'
+	check 'IFS=2; set "${x-${#long}}"; IFS=" "; echo $* $#'     '128 1'
+	check 'IFS=2; set ${x-${#long}};   :      ; echo $* $#'     '1 8 '
+	check 'IFS=2; set ${x-${#long}};   :      ; echo $* "$#"'   '1 8 2'
+	check 'IFS=2; set ${x-${#long}};   :      ; echo "$*" "$#"' '128 2'
+	check 'IFS=2; set ${x-${#long}};   :      ; echo "$@" "$#"' '1 8 2'
 }
 
 atf_init_test_cases() {
