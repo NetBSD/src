@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.117 2017/03/24 00:45:27 macallan Exp $ */
+/* $NetBSD: wsconsio.h,v 1.118 2017/06/03 14:49:42 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -340,6 +340,7 @@ struct wsmouse_repeat {
 #define	WSDISPLAY_TYPE_MESON	62	/* Amlogic Meson ARM SoC */
 #define	WSDISPLAY_TYPE_TEGRA	63	/* NVIDIA Tegra ARM SoC */
 #define	WSDISPLAY_TYPE_PLATINUM	64	/* onboard fb in PowerMac 7200 */
+#define	WSDISPLAY_TYPE_PLFB	65	/* ARM PrimeCell PL11x */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
