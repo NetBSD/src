@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.131 2017/06/03 10:31:16 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.132 2017/06/03 18:31:35 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.131 2017/06/03 10:31:16 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.132 2017/06/03 18:31:35 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1919,17 +1919,16 @@ parsearith: {
 	} else
 #endif
 	{
-		TS_PUSH();
-		syntax = ARISYNTAX;
-		arinest = 1;
-		varnest = 0;
-
 		USTPUTC(CTLARI, out);
 		if (ISDBLQUOTE())
 			USTPUTC('"',out);
 		else
 			USTPUTC(' ',out);
 
+		TS_PUSH();
+		syntax = ARISYNTAX;
+		arinest = 1;
+		varnest = 0;
 	}
 	goto parsearith_return;
 }
