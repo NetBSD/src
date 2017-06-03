@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.15 2017/06/02 01:48:13 kre Exp $
+# $NetBSD: t_expand.sh,v 1.16 2017/06/03 11:23:01 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -422,6 +422,11 @@ shell_params_body() {
 	check 'set -- a b c; echo ${01}' 'a' 0
 	check "${TEST_SH} -c 'echo 0=\${00} 1=\${01} 2=\${02}' a b c" \
 			'0=a 1=b 2=c' 0
+
+	# by special request, for PaulG...  (${0...} is not octal!)
+	check \
+	    'set -- a b c d e f g h i j k l m; echo "$#: ${08} ${010} ${011}"' \
+		'13: h j k' 0
 
 	results
 }
