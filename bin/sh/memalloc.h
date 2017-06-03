@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.h,v 1.15 2008/02/15 17:26:06 matt Exp $	*/
+/*	$NetBSD: memalloc.h,v 1.16 2017/06/03 10:31:16 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,6 +72,7 @@ void ungrabstackstr(char *, char *);
 #define STUNPUTC(p)	(++sstrnleft, --p)
 #define STTOPC(p)	p[-1]
 #define STADJUST(amount, p)	(p += (amount), sstrnleft -= (amount))
+#define STUNSTR(amount)	(sstrnleft -= (amount))
 #define grabstackstr(p)	stalloc(stackblocksize() - sstrnleft)
 
 #define ckfree(p)	free((pointer)(p))

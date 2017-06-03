@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.h,v 1.21 2017/04/26 17:43:33 christos Exp $	*/
+/*	$NetBSD: expand.h,v 1.22 2017/06/03 10:31:16 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -50,18 +50,20 @@ struct arglist {
 /*
  * expandarg() flags
  */
-#define EXP_FULL	0x1	/* perform word splitting & file globbing */
+#define EXP_SPLIT	0x1	/* perform word splitting */
 #define EXP_TILDE	0x2	/* do normal tilde expansion */
-#define	EXP_VARTILDE	0x4	/* expand tildes in an assignment */
-#define	EXP_REDIR	0x8	/* file glob for a redirection (1 match only) */
+#define EXP_VARTILDE	0x4	/* expand tildes in an assignment */
+#define EXP_REDIR	0x8	/* file glob for a redirection (1 match only) */
 #define EXP_CASE	0x10	/* keeps quotes around for CASE pattern */
 #define EXP_IFS_SPLIT	0x20	/* need to record arguments for ifs breakup */
 #define EXP_IN_QUOTES	0x40	/* don't set EXP_IFS_SPLIT again */
+#define EXP_GLOB	0x80	/* perform filename globbing */
 
+#define EXP_FULL	(EXP_SPLIT | EXP_GLOB)
 
 union node;
+
 void expandhere(union node *, int);
 void expandarg(union node *, struct arglist *, int);
-void expari(int);
 void rmescapes(char *);
 int casematch(union node *, char *);

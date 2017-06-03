@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.130 2017/05/29 10:43:27 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.131 2017/06/03 10:31:16 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.130 2017/05/29 10:43:27 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.131 2017/06/03 10:31:16 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1903,6 +1903,7 @@ parsesub: {
  */
 parsearith: {
 
+#if 0
 	if (syntax == ARISYNTAX) {
 		/*
 		 * we collapse embedded arithmetic expansion to
@@ -1915,10 +1916,12 @@ parsearith: {
 		 * two closing ))'s to follow later.
 		 */
 		parenlevel += 2;
-	} else {
+	} else
+#endif
+	{
 		TS_PUSH();
 		syntax = ARISYNTAX;
-		++arinest;
+		arinest = 1;
 		varnest = 0;
 
 		USTPUTC(CTLARI, out);
@@ -1926,6 +1929,7 @@ parsearith: {
 			USTPUTC('"',out);
 		else
 			USTPUTC(' ',out);
+
 	}
 	goto parsearith_return;
 }
