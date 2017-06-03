@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.66 2017/04/08 00:58:35 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.67 2017/06/03 19:41:14 abhinav Exp $
 .\"
 .\" This file is in the public domain.
 .Dd April 7, 2017
@@ -70,7 +70,7 @@ and the
 .Dv si_code
 value set to
 .Dv TRAP_BKPT .
-These breakpoints are machine specific instructions that interrput the process.
+These breakpoints are machine specific instructions that interrupt the process.
 In order to put a trap by a tracer into the tracee's program,
 debugger must violate the
 .Dv PaX MPROTECT
@@ -79,7 +79,7 @@ For details check the
 .Dv security.pax.mprotect.ptrace
 option described in
 .Xr sysctl 7 .
-When a tracee is interrputed by a trap,
+When a tracee is interrupted by a trap,
 the trap is not removed by the kernel and it must be handled by a debugger.
 .Pp
 If a program is traced with single steps
