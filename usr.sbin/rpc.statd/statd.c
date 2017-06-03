@@ -1,7 +1,6 @@
-/*	$NetBSD: statd.c,v 1.30 2015/08/21 15:41:38 christos Exp $	*/
+/*	$NetBSD: statd.c,v 1.31 2017/06/03 14:44:12 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Christos Zoulas. All rights reserved.
  * Copyright (c) 1995
  *	A.R. Gordon (andrew.gordon@net-tel.co.uk).  All rights reserved.
  *
@@ -37,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.30 2015/08/21 15:41:38 christos Exp $");
+__RCSID("$NetBSD: statd.c,v 1.31 2017/06/03 14:44:12 christos Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
