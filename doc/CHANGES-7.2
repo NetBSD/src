@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.19 2017/05/22 18:57:05 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.20 2017/06/03 17:53:38 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -1300,4 +1300,34 @@ sys/arch/amd64/conf/XEN3_DOM0			1.135 via patch
 
 	Add ixg(4) to XEN3_DOM0.  PR#52180.
 	[msaitoh, ticket #1408]
+
+sys/arch/i386/stand/misc/rawr32.exe.uue		1.7
+
+	Update to rawrite32 1.0.5 (new signatures to avoid scary
+	windows warnings)
+	[matin, ticket #1426]
+
+sys/kern/kern_descrip.c				1.230
+
+	Explicitly set the flags instead of masking set values in.
+	[riastradh, ticket #1425]
+
+sys/arch/arm/arm32/pmap.c			1.345
+
+	Perform icache syncs for ARM_MMU_EXTENDED as well.  This helps
+	the PT_STEP code in PR/52119 and probably other things.
+	[skrll, ticket #1424]
+
+sys/dev/usb/files.usb				1.144
+
+	Fix the USBVERBOSE stuff so it does not get included in the
+	build if there are no USB devices or controllers.
+	[pgoyette, ticket #1421]
+
+lib/lua/sqlite/sqlite.c				1.9
+
+	Guard against double freeing of objects (explicit by the Lua
+	program, then later by the garbage collector).
+	This fixes PR bin/52218.
+	[mbalmer, ticket #1416]
 
