@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.1,v 1.1.2.8 2017/05/12 05:55:07 snj Exp $
+# $NetBSD: CHANGES-7.1.1,v 1.1.2.9 2017/06/03 17:54:16 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.1.1
 release:
@@ -581,4 +581,15 @@ sbin/ping/ping.c				1.116
 
 	Fix cksum calculation for clearing the cached route.
 	[ryo, ticket #1390]
+
+sys/arch/i386/stand/misc/rawr32.exe.uue		1.7
+
+	Update to rawrite32 1.0.5 (new signatures to avoid scary
+	windows warnings)
+	[matin, ticket #1426]
+
+sys/kern/kern_descrip.c				1.230
+
+	Explicitly set the flags instead of masking set values in.
+	[riastradh, ticket #1425]
 
