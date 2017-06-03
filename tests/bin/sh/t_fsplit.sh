@@ -1,4 +1,4 @@
-# $NetBSD: t_fsplit.sh,v 1.5 2017/06/03 10:27:05 kre Exp $
+# $NetBSD: t_fsplit.sh,v 1.6 2017/06/03 15:15:49 kre Exp $
 #
 # Copyright (c) 2007-2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,7 @@
 # the "${x-" and "}" were absent from the input line.
 #
 # So: sh -c 'set ${x-a b c}; echo $#' should give 3.
-# and: sh -c 'set -- ${x-}' echo $#' shold give 0
+# and: sh -c 'set -- ${x-}' echo $#' should give 0
 #
 
 # the implementation of "sh" to test
@@ -79,6 +79,8 @@ check()
 	then
 		  atf_fail "TEST ${TEST} '$1' failed ($STATUS)"
 	fi
+
+	return 0
 }
 
 atf_test_case for
@@ -209,8 +211,11 @@ replacement_val_body() {
 		'za bz zcz'
 	check 'x=BOGUS; for i in ${x+"a ${x+b c}" d};   do echo "z${i}z"; done'\
 		'za b cz zdz'
+
+	# also incorrect:        uuuu qqqqqq uuu q uuu
 	check 'x=BOGUS; for i in ${x+"a ${x+"b c"}" d}; do echo "z${i}z"; done'\
 		'za b cz zdz'
+
 	check 'x=BOGUS; for i in ${x+a ${x+"b c"} d};   do echo "z${i}z"; done'\
 		'zaz zb cz zdz'
 	check 'x=BOGUS; for i in ${x+a ${x+b c} d};     do echo "z${i}z"; done'\
@@ -234,8 +239,12 @@ ifs_alpha_body() {
 		'zaqbz zcz'
 	check 'IFS=q; for i in ${x-"aq${x-bqc}"qd};   do echo "z${i}z"; done' \
 		'zaqbqcz zdz'
+
+	# this is another almost certainly incorrect expectation
+	#                        uu qqqqqq uuu q uu	(quoted/unquoted)
 	check 'IFS=q; for i in ${x-"aq${x-"bqc"}"qd}; do echo "z${i}z"; done' \
 		'zaqbqcz zdz'
+
 	check 'IFS=q; for i in ${x-aq${x-"bqc"}qd};  do echo "z${i}z"; done' \
 		'zaz zbqcz zdz'
 }
@@ -251,7 +260,11 @@ quote_body() {
 	TEST=0
 	# Some quote propagation checks
 	check 'set "${x-a b c}";   echo $#' 1
+
+	# this is another almost certainly incorrect expectation
+	#           qqqq uuu qqq  	(quoted/unquoted)  $1 is a $# is 2
 	check 'set "${x-"a b" c}"; echo $1' 'a b c'
+
 	check 'for i in "${x-a b c}"; do echo "z${i}z"; done' 'za b cz'
 }
 
@@ -356,6 +369,65 @@ var_length_body() {
 	check 'IFS=2; set ${x-${#long}};   :      ; echo "$@" "$#"' '1 8 2'
 }
 
+atf_test_case split_arith
+split_arith_head() {
+	atf_set "descr" "Checks that field splitting works when expanding" \
+	                "the results from arithmetic"
+}
+split_arith_body() {
+	TEST=0
+
+	# Check that we apply IFS to $(( expr ))
+
+	# Note: we do not check the actual arithmetic operations here
+	# (there is a separate test just for that) so we just enter
+	# the "answer" inside $(( )) ... also makes it easier to visualise
+
+	check 'IFS=5; echo $(( 123456789 ))'	'1234 6789'
+	check 'IFS=5; echo "$(( 123456789 ))"'	'123456789'
+	check 'IFS=37; echo $(( 123456789 ))'	'12 456 89'
+	check 'IFS=37; echo "$(( 123456789 ))"'	'123456789'
+	check 'IFS=159; echo $(( 123456789 ))'	' 234 678'
+
+	check 'IFS=5; set -- $(( 123456789 )); echo $#: $1 $2 $3 $4' \
+		'2: 1234 6789'
+	check 'IFS=5; set -- "$(( 123456789 ))"; echo $#: $1 $2 $3 $4' \
+		'1: 1234 6789'		# go ahead: explain it!
+	check 'IFS=5; set -- "$(( 123456789 ))"; echo "$#: $1 $2 $3 $4"' \
+		'1: 123456789   '	# ah!
+
+	check 'IFS=37; set -- $(( 123456789 )); echo $#: $1 $2 $3 $4' \
+		' : 12 456 89'		# Tricky!
+	check 'IFS=5; set -- $(( 123456789 )); echo $#: $*' \
+		'2: 1234 6789'
+	check 'IFS=47; set -- $(( 123456789 )); echo $#: $*' \
+		'3: 123 56 89'
+	check 'IFS=5; set -- $(( 123456789 )); echo "$#: $*"' \
+		'2: 123456789'
+	check 'IFS=37; set -- $(( 123456789 )); echo "$#: $*"' \
+		'3: 123456389'	# [sic]
+	check 'IFS=5; set -- $(( 123456789 )); echo $#: $@' \
+		'2: 1234 6789'
+	check 'IFS=47; set -- $(( 123456789 )); echo $#: $@' \
+		'3: 123 56 89'
+	check 'IFS=5; set -- $(( 123456789 )); echo "$#: $@"' \
+		'2: 1234 6789'
+	check 'IFS=37; set -- $(( 123456789 )); echo "$#: $*"' \
+		'3: 123456389'	# [sic]
+
+	check 'IFS=1; set -- $(( 1111 )); echo "$#:" $*'	'4:   '
+	check 'IFS=" 1"; set -- $(( 1231231231 )); echo "$#: $*"' \
+		'4:  23 23 23'
+	check 'IFS="1 "; set -- $(( 1231231231 )); echo "$#: $*"' \
+		'4: 123123123'
+
+	check 'IFS=5; echo 5$(( 123456789 ))5'		'51234 67895'
+	check 'IFS=37; echo 73$(( 123456789 ))37'	'7312 456 8937'
+	check 'IFS=159; echo 11$(( 123456789 ))95'	'11 234 678 95'
+	check 'IFS="159 "; echo 11$(( 123456789 ))95'	'11 234 678 95'
+	check 'IFS="159 "; echo 11$(( 11234567899 ))95'	'11  234 678  95'
+}
+
 atf_init_test_cases() {
 	atf_add_test_case for
 	atf_add_test_case default_val
@@ -365,4 +437,5 @@ atf_init_test_cases() {
 	atf_add_test_case dollar_at
 	atf_add_test_case ifs
 	atf_add_test_case var_length
+	atf_add_test_case split_arith
 }
