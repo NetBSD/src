@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.38 2017/03/26 18:38:33 martin Exp $	*/
+/*	$NetBSD: schizo.c,v 1.39 2017/06/03 21:32:43 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.38 2017/03/26 18:38:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.39 2017/06/03 21:32:43 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -439,7 +439,7 @@ schizo_pci_error(void *vpbm)
 		}
 	}
 
-	panic("%s: fatal", device_xname(sc->sc_dev));
+	panic("%s: %s: fatal", __func__, device_xname(sc->sc_dev));
 
  clear_error:
 	schizo_cfg_write(sp, PCI_COMMAND_STATUS_REG, csr);
@@ -461,7 +461,7 @@ schizo_safari_error(void *vsc)
 	printf("CE_AFSR=%" PRIx64 "\n", schizo_read(sc, SCZ_CE_AFSR));
 	printf("CE_AFAR=%" PRIx64 "\n", schizo_read(sc, SCZ_CE_AFAR));
 
-	panic("%s: fatal", device_xname(sc->sc_dev));
+	panic("%s: %s: fatal", __func__, device_xname(sc->sc_dev));
 	return (1);
 }
 
