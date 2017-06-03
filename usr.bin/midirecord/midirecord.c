@@ -1,7 +1,7 @@
-/*	$NetBSD: midirecord.c,v 1.11 2016/12/11 08:40:10 mrg Exp $	*/
+/*	$NetBSD: midirecord.c,v 1.12 2017/06/03 21:31:14 mrg Exp $	*/
 
 /*
- * Copyright (c) 2014, 2015 Matthew R. Green
+ * Copyright (c) 2014, 2015, 2017 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midirecord.c,v 1.11 2016/12/11 08:40:10 mrg Exp $");
+__RCSID("$NetBSD: midirecord.c,v 1.12 2017/06/03 21:31:14 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: midirecord.c,v 1.11 2016/12/11 08:40:10 mrg Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
-#include <assert.h>
 #include <stdbool.h>
 
 #include "libaudio.h"
@@ -327,6 +326,11 @@ midi_event_timer_wait_abs_to_output(
 	unsigned val = 0, xdiv;
 	int vallen = 0, i;
 
+	if (bufsize < 4) {
+		warnx("too small bufsize: %zu", bufsize);
+		return 0;
+	}
+
 	if (prev_div == 0 && !oflag)
 		prev_div = e.t_WAIT_ABS.divisions;
 	cur_div = e.t_WAIT_ABS.divisions;
@@ -415,8 +419,17 @@ midi_event_chn_common_to_output(seq_event_t e, u_char *buffer, size_t bufsize)
 {
 	size_t	size = 0;
 
-	assert(e.common.channel < 16);
 	LOG("SEQ_CHN_COMMON");
+
+	if (bufsize < 3) {
+		warnx("too small bufsize: %zu", bufsize);
+		return 0;
+	}
+
+	if (e.common.channel >= 16) {
+		warnx("invalid channel: %u", e.common.channel);
+		return 0;
+	}
 
 	if (filter_devchan(e.common.device, e.common.channel))
 		return 0;
@@ -474,8 +487,17 @@ midi_event_chn_voice_to_output(seq_event_t e, u_char *buffer, size_t bufsize)
 {
 	size_t	size = 0;
 
-	assert(e.common.channel < 16);
 	LOG("SEQ_CHN_VOICE");
+
+	if (bufsize < 3) {
+		warnx("too small bufsize: %zu", bufsize);
+		return 0;
+	}
+
+	if (e.common.channel >= 16) {
+		warnx("invalid channel: %u", e.common.channel);
+		return 0;
+	}
 
 	if (filter_devchan(e.voice.device, e.voice.channel))
 		return 0;
@@ -553,9 +575,6 @@ static size_t
 midi_event_to_output(seq_event_t e, u_char *buffer, size_t bufsize)
 {
 	size_t size = 0;
-
-	/* XXX so far we only process 4 byte returns */
-	assert(bufsize >= 4);
 
 	LOG("event: %02x:%02x:%02x:%02x %02x:%02x:%02x:%02x", e.tag,
 	     e.unknown.byte[0], e.unknown.byte[1],
@@ -716,8 +735,10 @@ cleanup(int signo)
 			err(1, "failed to stop midi timer");
 	}
 
-	close(outfd);
-	close(midifd);
+	if (close(outfd) != 0)
+		warn("couldn't close output");
+	if (close(midifd) != 0)
+		warn("couldn't close midi device");
 	if (signo != 0)
 		(void)raise_default_signal(signo);
 
