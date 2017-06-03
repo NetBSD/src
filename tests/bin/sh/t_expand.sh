@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.16 2017/06/03 11:23:01 kre Exp $
+# $NetBSD: t_expand.sh,v 1.17 2017/06/03 14:45:59 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -424,6 +424,11 @@ shell_params_body() {
 			'0=a 1=b 2=c' 0
 
 	# by special request, for PaulG...  (${0...} is not octal!)
+
+	# Posix XCU 2.5.1 (Issue 7 TC2 pg 2349 lines 74835..6):
+	#   The digits denoting the positional parameters shall always
+	#   be interpreted as a decimal value, even if there is a leading zero.
+
 	check \
 	    'set -- a b c d e f g h i j k l m; echo "$#: ${08} ${010} ${011}"' \
 		'13: h j k' 0
