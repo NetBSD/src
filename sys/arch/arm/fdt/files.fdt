@@ -1,4 +1,6 @@
-# $NetBSD: files.fdt,v 1.8 2017/06/03 14:50:39 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.9 2017/06/03 17:05:23 jmcneill Exp $
+
+include	"dev/pckbport/files.pckbport"
 
 device	armfdt { }: bus_space_generic, fdtbus
 attach	armfdt at root with arm_fdt
@@ -20,6 +22,9 @@ file	arch/arm/fdt/plcom_fdt.c		plcom_fdt
 
 attach	genfb at fdt with plfb_fdt: fdt_display_timing
 file	arch/arm/fdt/plfb_fdt.c			plfb_fdt
+
+attach	plkmi at fdt with plkmi_fdt
+file	arch/arm/fdt/plkmi_fdt.c		plkmi_fdt
 
 attach	plmmc at fdt with plmmc_fdt
 file	arch/arm/fdt/plmmc_fdt.c		plmmc_fdt
