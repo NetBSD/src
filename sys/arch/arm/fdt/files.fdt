@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.7 2017/06/02 14:30:58 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.8 2017/06/03 14:50:39 jmcneill Exp $
 
 device	armfdt { }: bus_space_generic, fdtbus
 attach	armfdt at root with arm_fdt
@@ -17,6 +17,9 @@ file    arch/arm/fdt/gic_fdt.c             	gic_fdt
 
 attach	plcom at fdt with plcom_fdt
 file	arch/arm/fdt/plcom_fdt.c		plcom_fdt
+
+attach	genfb at fdt with plfb_fdt: fdt_display_timing
+file	arch/arm/fdt/plfb_fdt.c			plfb_fdt
 
 attach	plmmc at fdt with plmmc_fdt
 file	arch/arm/fdt/plmmc_fdt.c		plmmc_fdt
