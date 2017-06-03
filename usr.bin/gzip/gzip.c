@@ -1,7 +1,8 @@
-/*	$NetBSD: gzip.c,v 1.109 2015/10/27 07:36:18 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.110 2017/06/03 21:28:48 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
+ * Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008, 2009, 2010, 2011, 2015
+ *    Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,9 +29,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006\
- Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.109 2015/10/27 07:36:18 mrg Exp $");
+__COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008,\
+ 2009, 2010, 2011, 2015 Matthew R. Green.  All rights reserved.");
+__RCSID("$NetBSD: gzip.c,v 1.110 2017/06/03 21:28:48 mrg Exp $");
 #endif /* not lint */
 
 /*
