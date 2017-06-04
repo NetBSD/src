@@ -1,0 +1,13 @@
+# $NetBSD: CHANGES-8.0,v 1.1.2.1 2017/06/04 07:12:09 snj Exp $
+
+A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
+until the 8.0 release:
+
+doc/CHANGES-8.0					patched by hand
+doc/LAST_MINUTE					patched by hand
+doc/README.files				patched by hand
+external/gpl2/groff/tmac/mdoc.local		patched by hand
+sys/sys/param.h					patched by hand
+
+	Welcome to 8.0_BETA!
+
