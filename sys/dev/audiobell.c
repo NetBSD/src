@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.19 2017/05/28 21:15:58 nat Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.20 2017/06/04 05:37:56 nat Exp $	*/
 
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.19 2017/05/28 21:15:58 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.20 2017/06/04 05:37:56 nat Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -125,7 +125,7 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 
 	ai.play.sample_rate = BELL_SAMPLE_RATE;
 	ai.play.precision = 16;
-	ai.play.gain = 255 * 100 / volume;
+	ai.play.gain = 255 * volume / 100;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	ai.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
