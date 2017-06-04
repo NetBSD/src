@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.4 2015/12/23 12:45:06 jmcneill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.5 2017/06/04 23:34:55 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.4 2015/12/23 12:45:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.5 2017/06/04 23:34:55 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1602,7 +1602,18 @@ hdaudioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	return err;
 }
 
-MODULE(MODULE_CLASS_DRIVER, hdaudio, NULL);
+MODULE(MODULE_CLASS_DRIVER, hdaudio, "audio");
+#ifdef _MODULE
+static const struct cfiattrdata hdaudiobuscf_iattrdata = {
+        "hdaudiobus", 1, {
+                { "nid", "-1", -1 },
+        }
+};
+static const struct cfiattrdata * const hdaudio_attrs[] = {
+	&hdaudiobuscf_iattrdata, NULL
+};
+CFDRIVER_DECL(hdaudio, DV_AUDIODEV, hdaudio_attrs);
+#endif
 
 static int
 hdaudio_modcmd(modcmd_t cmd, void *opaque)
@@ -1617,16 +1628,30 @@ hdaudio_modcmd(modcmd_t cmd, void *opaque)
 #ifdef _MODULE
 		error = devsw_attach("hdaudio", NULL, &bmaj,
 		    &hdaudio_cdevsw, &cmaj);
+		if (error)
+			break;
+		error = config_cfdriver_attach(&hdaudio_cd);
+		if (error)
+			devsw_detach(NULL, &hdaudio_cdevsw);
 #endif
-		return error;
+		break;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		devsw_detach(NULL, &hdaudio_cdevsw);
+		error = config_cfdriver_detach(&hdaudio_cd);
+		if (error)
+			break;
+		error = devsw_detach(NULL, &hdaudio_cdevsw);
+		if (error) {
+			config_cfdriver_attach(&hdaudio_cd);
+			break;
+		}
 #endif
-		return 0;
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+	return error;
 }
 
 DEV_VERBOSE_DEFINE(hdaudio);
