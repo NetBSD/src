@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.68 2017/04/01 23:34:17 dholland Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.69 2017/06/04 08:05:42 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.68 2017/04/01 23:34:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.69 2017/06/04 08:05:42 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,7 +293,7 @@ startover:
 
 	if (trans_mount == NULL) {
 		trans_mount = vp->v_mount;
-		fstrans_start(trans_mount, FSTRANS_SHARED);
+		fstrans_start(trans_mount);
 		/*
 		 * check if this vnode is still valid.
 		 */
@@ -891,7 +891,7 @@ retry:
 		if (pagedaemon) {
 			/* Pagedaemon must not sleep here. */
 			trans_mp = vp->v_mount;
-			error = fstrans_start_nowait(trans_mp, FSTRANS_SHARED);
+			error = fstrans_start_nowait(trans_mp);
 			if (error) {
 				mutex_exit(slock);
 				return error;
@@ -904,7 +904,7 @@ retry:
 			 */
 			mutex_exit(slock);
 			trans_mp = vp->v_mount;
-			fstrans_start(trans_mp, FSTRANS_SHARED);
+			fstrans_start(trans_mp);
 			if (vp->v_mount != trans_mp) {
 				fstrans_done(trans_mp);
 				trans_mp = NULL;

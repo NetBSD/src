@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.95 2017/06/04 08:02:26 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.96 2017/06/04 08:05:42 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.95 2017/06/04 08:02:26 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.96 2017/06/04 08:05:42 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -526,7 +526,7 @@ vdrain_remove(vnode_t *vp)
 		return;
 	}
 	mp = vp->v_mount;
-	if (fstrans_start_nowait(mp, FSTRANS_SHARED) != 0) {
+	if (fstrans_start_nowait(mp) != 0) {
 		mutex_exit(vp->v_interlock);
 		return;
 	}
@@ -556,7 +556,7 @@ vdrain_vrele(vnode_t *vp)
 	KASSERT(mutex_owned(&vdrain_lock));
 
 	mp = vp->v_mount;
-	if (fstrans_start_nowait(mp, FSTRANS_SHARED) != 0)
+	if (fstrans_start_nowait(mp) != 0)
 		return;
 
 	/*
@@ -1561,7 +1561,7 @@ vcache_reclaim(vnode_t *vp)
 	vip->vi_key.vk_key = temp_key;
 	mutex_exit(&vcache_lock);
 
-	fstrans_start(mp, FSTRANS_SHARED);
+	fstrans_start(mp);
 
 	/*
 	 * Clean out any cached data associated with the vnode.
