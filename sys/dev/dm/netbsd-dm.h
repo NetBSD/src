@@ -1,4 +1,4 @@
-/*        $NetBSD: netbsd-dm.h,v 1.7 2015/09/06 06:01:00 dholland Exp $      */
+/*        $NetBSD: netbsd-dm.h,v 1.8 2017/06/04 08:50:27 mbalmer Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -172,10 +172,10 @@
 
  /*
   * DM_TABLE_DEPS == "deps" 
-  * Request list active table device dependiences.
+  * Request list active table device dependencies.
   *
   * This command is also run to get dm-device
-  * dependiences for existing real block device.
+  * dependencies for existing real block device.
   *
   * eg. vgcreate calls DM_TABLE_DEPS
   *
