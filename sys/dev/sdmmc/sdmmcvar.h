@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.23 2017/02/17 10:51:48 nonaka Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.24 2017/06/04 15:00:02 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -122,6 +122,8 @@ struct sdmmc_command {
 #define SCF_RSP_SPI_BSY	(1U << 13)
 /* Probing */
 #define SCF_TOUT_OK	(1U << 14)	/* command timeout expected */
+/* Transfer hints */
+#define SCF_XFER_SDHC	(1U << 15)	/* card is SDHC */
 /* response types */
 #define SCF_RSP_R0	0	/* none */
 #define SCF_RSP_R1	(SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
