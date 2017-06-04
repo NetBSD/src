@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.65 2017/06/04 07:59:17 hannken Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.66 2017/06/04 08:03:26 hannken Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -335,7 +335,7 @@ vop_pre(vnode_t *vp, struct mount **mp, bool *mpsafe, enum fst_op op)
 		for (;;) {
 			*mp = vp->v_mount;
 			if (op == FST_TRY) {
-				error = fstrans_start_nowait(*mp, FSTRANS_SHARED);
+				error = fstrans_start_nowait(*mp);
 				if (error) {
 					if (!*mpsafe) {
 						KERNEL_UNLOCK_ONE(curlwp);
@@ -343,7 +343,7 @@ vop_pre(vnode_t *vp, struct mount **mp, bool *mpsafe, enum fst_op op)
 					return error;
 				}
 			} else {
-				fstrans_start(*mp, FSTRANS_SHARED);
+				fstrans_start(*mp);
 			}
 			if (__predict_true(*mp == vp->v_mount))
 				break;
