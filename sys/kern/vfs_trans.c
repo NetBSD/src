@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.45 2017/05/07 08:24:20 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.45.2.1 2017/06/04 20:35:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.45 2017/05/07 08:24:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.45.2.1 2017/06/04 20:35:01 bouyer Exp $");
 
 /*
  * File system transaction operations.
@@ -48,11 +48,15 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.45 2017/05/07 08:24:20 hannken Exp $
 #include <sys/mount.h>
 #include <sys/pserialize.h>
 #include <sys/vnode.h>
-#define _FSTRANS_API_PRIVATE
 #include <sys/fstrans.h>
 #include <sys/proc.h>
 
 #include <miscfs/specfs/specdev.h>
+
+enum fstrans_lock_type {
+	FSTRANS_SHARED,			/* Granted while not suspending */
+	FSTRANS_EXCL			/* Internal: exclusive lock */
+};
 
 struct fscow_handler {
 	LIST_ENTRY(fscow_handler) ch_list;
@@ -89,6 +93,7 @@ static inline struct mount *fstrans_normalize_mount(struct mount *);
 static void fstrans_lwp_dtor(void *);
 static void fstrans_mount_dtor(struct mount *);
 static struct fstrans_lwp_info *fstrans_get_lwp_info(struct mount *, bool);
+static inline int _fstrans_start(struct mount *, enum fstrans_lock_type, int);
 static bool grant_lock(const enum fstrans_state, const enum fstrans_lock_type);
 static bool state_change_done(const struct mount *);
 static bool cow_state_change_done(const struct mount *);
@@ -314,8 +319,6 @@ grant_lock(const enum fstrans_state state, const enum fstrans_lock_type type)
 		return true;
 	if (type == FSTRANS_EXCL)
 		return true;
-	if  (state == FSTRANS_SUSPENDING && type == FSTRANS_LAZY)
-		return true;
 
 	return false;
 }
@@ -324,7 +327,7 @@ grant_lock(const enum fstrans_state state, const enum fstrans_lock_type type)
  * Start a transaction.  If this thread already has a transaction on this
  * file system increment the reference counter.
  */
-int
+static inline int
 _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 {
 	int s;
@@ -378,6 +381,22 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 	mutex_exit(&fstrans_lock);
 
 	return 0;
+}
+
+void
+fstrans_start(struct mount *mp)
+{
+	int error __diagused;
+
+	error = _fstrans_start(mp, FSTRANS_SHARED, 1);
+	KASSERT(error == 0);
+}
+
+int
+fstrans_start_nowait(struct mount *mp)
+{
+
+	return _fstrans_start(mp, FSTRANS_SHARED, 0);
 }
 
 /*
@@ -502,7 +521,7 @@ fstrans_setstate(struct mount *mp, enum fstrans_state new_state)
 
 	if (old_state != new_state) {
 		if (old_state == FSTRANS_NORMAL)
-			fstrans_start(mp, FSTRANS_EXCL);
+			_fstrans_start(mp, FSTRANS_EXCL, 1);
 		if (new_state == FSTRANS_NORMAL)
 			fstrans_done(mp);
 	}
@@ -805,9 +824,6 @@ fstrans_print_lwp(struct proc *p, struct lwp *l, int verbose)
 			printf(" -");
 		} else {
 			switch (fli->fli_lock_type) {
-			case FSTRANS_LAZY:
-				printf(" lazy");
-				break;
 			case FSTRANS_SHARED:
 				printf(" shared");
 				break;
@@ -841,9 +857,6 @@ fstrans_print_mount(struct mount *mp, int verbose)
 	switch (fmi->fmi_state) {
 	case FSTRANS_NORMAL:
 		printf("state normal\n");
-		break;
-	case FSTRANS_SUSPENDING:
-		printf("state suspending\n");
 		break;
 	case FSTRANS_SUSPENDED:
 		printf("state suspended\n");

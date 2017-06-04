@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.11 2017/04/01 17:34:21 maya Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.11.6.1 2017/06/04 20:35:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.11 2017/04/01 17:34:21 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.11.6.1 2017/06/04 20:35:02 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -596,7 +596,7 @@ retry:
 		if (pagedaemon) {
 			/* Pagedaemon must not sleep here. */
 			trans_mp = vp->v_mount;
-			error = fstrans_start_nowait(trans_mp, FSTRANS_SHARED);
+			error = fstrans_start_nowait(trans_mp);
 			if (error) {
 				mutex_exit(vp->v_interlock);
 				return error;
@@ -609,7 +609,7 @@ retry:
 			 */
 			mutex_exit(vp->v_interlock);
 			trans_mp = vp->v_mount;
-			fstrans_start(trans_mp, FSTRANS_SHARED);
+			fstrans_start(trans_mp);
 			if (vp->v_mount != trans_mp) {
 				fstrans_done(trans_mp);
 				trans_mp = NULL;
