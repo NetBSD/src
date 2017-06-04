@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.2 2017/06/04 20:35:45 bouyer Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.3 2017/06/04 20:47:25 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -50,4 +50,22 @@ src/sys/ufs/lfs/lfs_pages.c			1.12
 	  fstrans_start_nowait,
 	  remove now unused FSTRANS state "FSTRANS_SUSPENDING".
 	[hannken, ticket #2]
+
+sys/dev/ic/pl181.c				1.4
+sys/dev/sdmmc/sdmmc_mem.c			1.57
+sys/dev/sdmmc/sdmmcvar.h			1.24
+
+	Give a hint to controllers in the command flags if we are performing a
+	transfer with an SDHC capable card. If the controller needs to adjust
+	command args, it can use this hint to understand how it is encoded.
+
+	Re-introduce support for multi-block transfers and split transfers to
+	fit within the 65535-byte limit.
+	[jmcneill, ticket #3]
+
+sys/arch/evbarm/vexpress/vexpress_start.S	1.5
+
+	Add a 1MB mapping to the MMU init table to cover the FDT blob in
+	case the bootloader places it beyond the init mem size.
+	[jmcneill, ticket #4]
 
