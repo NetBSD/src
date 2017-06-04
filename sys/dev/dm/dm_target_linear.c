@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.15 2017/06/01 02:45:09 chs Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.16 2017/06/04 08:54:38 mbalmer Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ dm_target_linear_destroy(dm_table_entry_t * table_en)
 
 	return 0;
 }
-/* Add this target pdev dependiences to prop_array_t */
+/* Add this target pdev dependencies to prop_array_t */
 int
 dm_target_linear_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
 {
