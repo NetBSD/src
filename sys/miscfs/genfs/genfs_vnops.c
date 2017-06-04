@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.196 2017/06/04 08:01:33 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.197 2017/06/04 08:02:26 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.196 2017/06/04 08:01:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.197 2017/06/04 08:02:26 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,10 +294,10 @@ genfs_deadlock(void *v)
 
 	op = (ISSET(flags, LK_EXCLUSIVE) ? RW_WRITER : RW_READER);
 	if (ISSET(flags, LK_NOWAIT)) {
-		if (! rw_tryenter(vip->vi_lock, op))
+		if (! rw_tryenter(&vip->vi_lock, op))
 			return EBUSY;
 	} else {
-		rw_enter(vip->vi_lock, op);
+		rw_enter(&vip->vi_lock, op);
 	}
 	VSTATE_ASSERT_UNLOCKED(vp, VS_RECLAIMED);
 	return 0;
@@ -315,7 +315,7 @@ genfs_deadunlock(void *v)
 	vnode_t *vp = ap->a_vp;
 	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
-	rw_exit(vip->vi_lock);
+	rw_exit(&vip->vi_lock);
 
 	return 0;
 }
@@ -337,10 +337,10 @@ genfs_lock(void *v)
 
 	op = (ISSET(flags, LK_EXCLUSIVE) ? RW_WRITER : RW_READER);
 	if (ISSET(flags, LK_NOWAIT)) {
-		if (! rw_tryenter(vip->vi_lock, op))
+		if (! rw_tryenter(&vip->vi_lock, op))
 			return EBUSY;
 	} else {
-		rw_enter(vip->vi_lock, op);
+		rw_enter(&vip->vi_lock, op);
 	}
 	VSTATE_ASSERT_UNLOCKED(vp, VS_ACTIVE);
 	return 0;
@@ -358,7 +358,7 @@ genfs_unlock(void *v)
 	vnode_t *vp = ap->a_vp;
 	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
-	rw_exit(vip->vi_lock);
+	rw_exit(&vip->vi_lock);
 
 	return 0;
 }
@@ -375,10 +375,10 @@ genfs_islocked(void *v)
 	vnode_t *vp = ap->a_vp;
 	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
-	if (rw_write_held(vip->vi_lock))
+	if (rw_write_held(&vip->vi_lock))
 		return LK_EXCLUSIVE;
 
-	if (rw_read_held(vip->vi_lock))
+	if (rw_read_held(&vip->vi_lock))
 		return LK_SHARED;
 
 	return 0;
