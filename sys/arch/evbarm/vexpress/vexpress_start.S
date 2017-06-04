@@ -1,4 +1,4 @@
-/*	$NetBSD: vexpress_start.S,v 1.4 2017/06/02 20:16:05 jmcneill Exp $	*/
+/*	$NetBSD: vexpress_start.S,v 1.4.2.1 2017/06/04 20:46:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <arm/vexpress/vexpress_platform.h>
 
-RCSID("$NetBSD: vexpress_start.S,v 1.4 2017/06/02 20:16:05 jmcneill Exp $")
+RCSID("$NetBSD: vexpress_start.S,v 1.4.2.1 2017/06/04 20:46:54 bouyer Exp $")
 
 #ifdef VERBOSE_INIT_ARM
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -50,7 +50,7 @@ RCSID("$NetBSD: vexpress_start.S,v 1.4 2017/06/02 20:16:05 jmcneill Exp $")
 #define	XPUTC2(n)
 #endif
 
-#define	INIT_MEMSIZE	128
+#define	INIT_MEMSIZE	64
 #define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + INIT_MEMSIZE * L1_S_SIZE - L1_TABLE_SIZE)
 
 #define	MD_CPU_HATCH	_C_LABEL(arm_fdt_cpu_hatch)
@@ -75,6 +75,18 @@ _C_LABEL(vexpress_start):
 	movt	r4, #:upper16:uboot_args
 	sub	r4, r4, #KERNEL_BASE_VOFFSET
 	stmia	r4, {r0-r3}
+
+	/* Add DTB PA (1MB) from r2 to MMU init table */
+	movw	r3, #:lower16:(L1_S_SIZE - 1)		/* align DTB PA to 1M */
+	movt	r3, #:upper16:(L1_S_SIZE - 1)
+	bic	r0, r2, r3
+	orr	r0, r0, #1				/* 1MB mapping */
+	bic	r1, r2, r3
+	movw	r3, #:lower16:(L1_S_PROTO_armv7|L1_S_APv7_KRW|L1_S_CACHEABLE)
+	movt	r3, #:upper16:(L1_S_PROTO_armv7|L1_S_APv7_KRW|L1_S_CACHEABLE)
+	orr	r1, r1, r3
+	adr	r3, .Lmmu_init_table_dtb		/* table entry addr */
+	stmia	r3, {r0-r1}				/* patch table entry */
 
 	XPUTC('a')
 
@@ -153,6 +165,10 @@ xputc:
 	MMU_INIT(VEXPRESS_GIC_PBASE, VEXPRESS_GIC_PBASE,
 		VEXPRESS_GIC_SIZE / L1_S_SIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map DTB location in SDRAM, patched in later */
+.Lmmu_init_table_dtb:
+	MMU_INIT(0, 0, 0, 0)
 
         /* end of table */
         MMU_INIT(0, 0, 0, 0)
