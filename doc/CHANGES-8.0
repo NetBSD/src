@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.1 2017/06/04 07:12:09 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.2 2017/06/04 20:35:45 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10,4 +10,44 @@ external/gpl2/groff/tmac/mdoc.local		patched by hand
 sys/sys/param.h					patched by hand
 
 	Welcome to 8.0_BETA!
+
+src/share/man/man9/fstrans.9			1.25
+src/sys/kern/vfs_mount.c			1.66
+src/sys/kern/vfs_subr.c				1.468
+src/sys/kern/vfs_trans.c			1.46
+src/sys/kern/vfs_vnode.c			1.94, 1.95, 1.96
+src/sys/kern/vnode_if.c				1.105, 1.106
+src/sys/kern/vnode_if.sh			1.65, 1.66
+src/sys/kern/vnode_if.src			1.76
+src/sys/miscfs/genfs/genfs_io.c			1.69
+src/sys/miscfs/genfs/genfs_vnops.c		1.196, 1.197
+src/sys/miscfs/genfs/layer_extern.h		1.40
+src/sys/miscfs/genfs/layer_vfsops.c		1.51
+src/sys/miscfs/genfs/layer_vnops.c		1.67
+src/sys/miscfs/nullfs/null_vnops.c		1.42
+src/sys/miscfs/overlay/overlay_vnops.c		1.24
+src/sys/miscfs/umapfs/umap_vnops.c		1.60
+src/sys/rump/include/rump/rumpvnode_if.h	1.29, 1.30
+src/sys/rump/librump/rumpkern/emul.c		1.182
+src/sys/rump/librump/rumpvfs/rumpvnode_if.c	1.29, 1.30
+src/sys/sys/fstrans.h				1.11
+src/sys/sys/vnode.h				1.278
+src/sys/sys/vnode_if.h				1.100, 1.101
+src/sys/sys/vnode_impl.h			1.14, 1.15
+src/sys/ufs/lfs/lfs_pages.c			1.12
+
+	Vnode state, lock and fstrans cleanup:
+	- Rename vnode state "VS_ACTIVE" to "VS_LOADED" and add synthetic
+	  state "VS_ACTIVE" to assert a loaded vnode with usecount > 0.
+
+	- Redo FSTRANS in vnode_if.c and use it for VOP_LOCK and VOP_UNLOCK.
+
+	- Cleanup the genfs lock operations.
+
+	- Make "struct vnode_impl" member "vi_lock" a krwlock_t again.
+
+	- Remove the lock type argument from fstrans_start and
+	  fstrans_start_nowait,
+	  remove now unused FSTRANS state "FSTRANS_SUSPENDING".
+	[hannken, ticket #2]
 
