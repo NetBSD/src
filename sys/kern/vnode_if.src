@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.75 2017/05/26 14:21:00 riastradh Exp $
+#	$NetBSD: vnode_if.src,v 1.75.2.1 2017/06/04 20:35:01 bouyer Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -407,7 +407,7 @@ vop_reclaim {
 #% lock               vp      U L U
 #
 vop_lock {
-	FSTRANS=NO
+	FSTRANS=LOCK
 	IN LOCKED=NO struct vnode *vp;
 	IN int flags;
 };
@@ -416,7 +416,7 @@ vop_lock {
 #% unlock     vp      L U L
 #
 vop_unlock {
-	FSTRANS=NO
+	FSTRANS=UNLOCK
 	IN LOCKED=YES struct vnode *vp;
 };
 

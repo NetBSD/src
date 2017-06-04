@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.181 2017/02/22 11:20:59 hannken Exp $	*/
+/*	$NetBSD: emul.c,v 1.181.6.1 2017/06/04 20:35:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.181 2017/02/22 11:20:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.181.6.1 2017/06/04 20:35:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -243,14 +243,22 @@ __strong_alias(_delay,rump_delay);
 
 /* Weak aliases for fstrans to be used unless librumpvfs is present. */
 
-int rump__fstrans_start(struct mount *, enum fstrans_lock_type, int);
+void rump_fstrans_start(struct mount *);
+void
+rump_fstrans_start(struct mount *mp)
+{
+
+}
+__weak_alias(fstrans_start,rump_fstrans_start);
+
+int rump_fstrans_start_nowait(struct mount *);
 int
-rump__fstrans_start(struct mount *mp, enum fstrans_lock_type lock, int wait)
+rump_fstrans_start_nowait(struct mount *mp)
 {
 
 	return 0;
 }
-__weak_alias(_fstrans_start,rump__fstrans_start);
+__weak_alias(fstrans_start_nowait,rump_fstrans_start_nowait);
 
 void rump_fstrans_done(struct mount *);
 void

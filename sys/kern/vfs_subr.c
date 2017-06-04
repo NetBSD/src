@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.467 2017/05/26 14:34:19 riastradh Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.467.2.1 2017/06/04 20:35:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.467 2017/05/26 14:34:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.467.2.1 2017/06/04 20:35:01 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1055,12 +1055,14 @@ vstate_name(enum vnode_state state)
 {
 
 	switch (state) {
+	case VS_ACTIVE:
+		return "ACTIVE";
 	case VS_MARKER:
 		return "MARKER";
 	case VS_LOADING:
 		return "LOADING";
-	case VS_ACTIVE:
-		return "ACTIVE";
+	case VS_LOADED:
+		return "LOADED";
 	case VS_BLOCKED:
 		return "BLOCKED";
 	case VS_RECLAIMING:
