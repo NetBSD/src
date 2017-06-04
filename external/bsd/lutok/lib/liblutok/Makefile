@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2013/10/18 23:36:10 jmmv Exp $
+# $NetBSD: Makefile,v 1.5 2017/06/04 21:03:20 christos Exp $
 
 #NOLINT=		# defined
 
@@ -13,7 +13,7 @@ LIBDPLIBS+=     m	${.CURDIR}/../../../../../lib/libm
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/lutok/dist
 .PATH:		${SRCDIR}
 
-CPPFLAGS+=	-I${.CURDIR}
+CPPFLAGS+=	-I${.CURDIR} -I${SRCDIR}
 CPPFLAGS+=	-I.
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
@@ -40,6 +40,7 @@ INCSDIR=	/usr/include/lutok
 .if ${MKSHARE} != "no"
 FILES+=		lutok.pc
 FILESDIR=	/usr/lib/pkgconfig
+COPTS+=		-Wno-error=ctor-dtor-privacy -Wno-error=unused-local-typedefs
 
 realall: lutok.pc
 lutok.pc: Makefile lutok.pc.in
