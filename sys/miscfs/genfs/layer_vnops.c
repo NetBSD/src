@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.66 2017/05/26 14:21:01 riastradh Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.67 2017/06/04 08:05:42 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.66 2017/05/26 14:21:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.67 2017/06/04 08:05:42 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -806,7 +806,7 @@ layer_getpages(void *v)
 
 	/* Just pass the request on to the underlying layer. */
 	mutex_exit(vp->v_interlock);
-	fstrans_start(mp, FSTRANS_SHARED);
+	fstrans_start(mp);
 	mutex_enter(vp->v_interlock);
 	if (mp == vp->v_mount) {
 		/* Will release the interlock. */
