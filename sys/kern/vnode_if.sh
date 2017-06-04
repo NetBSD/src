@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.64 2017/04/16 17:18:28 riastradh Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.65 2017/06/04 07:59:17 hannken Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -100,7 +100,7 @@ awk_parser='
 	args_name=$1;
 	argc=0;
 	willmake=-1;
-	fstrans=0;
+	fstrans="";
 	next;
 }
 # Last line of description
@@ -113,11 +113,9 @@ awk_parser='
 	if ($1 == "VERSION") {
 		args_name=args_name "_v" $2;
 		next;
-	} else if ($1 == "FSTRANS=YES") {
-		fstrans = 1;
-		next;
-	} else if ($1 == "FSTRANS=NO") {
-		fstrans = -1;
+	} else if ($1 ~ "^FSTRANS=") {
+		fstrans = $1;
+		sub("FSTRANS=", "", fstrans);
 		next;
 	}
 
@@ -147,8 +145,12 @@ awk_parser='
 		willmake=argc;
 		i++;
 	}
-	if (argc == 0 && fstrans == 0 && lockstate[0] != 1)
-		fstrans = 1;
+	if (argc == 0 && fstrans == "") {
+		if (lockstate[0] == 1)
+			fstrans = "NO";
+		else
+			fstrans = "YES";
+	}
 
 	# XXX: replace non-portable types for rump.  We should really
 	# nuke the types from the kernel, but that is a battle for
@@ -316,6 +318,57 @@ echo '
 
 if [ -z "${rump}" ] ; then
 	echo "
+enum fst_op { FST_NO, FST_YES, FST_TRY };
+
+static inline int
+vop_pre(vnode_t *vp, struct mount **mp, bool *mpsafe, enum fst_op op)
+{
+	int error;
+
+	*mpsafe = (vp->v_vflag & VV_MPSAFE);
+
+	if (!*mpsafe) {
+		KERNEL_LOCK(1, curlwp);
+	}
+
+	if (op == FST_YES || op == FST_TRY) {
+		for (;;) {
+			*mp = vp->v_mount;
+			if (op == FST_TRY) {
+				error = fstrans_start_nowait(*mp, FSTRANS_SHARED);
+				if (error) {
+					if (!*mpsafe) {
+						KERNEL_UNLOCK_ONE(curlwp);
+					}
+					return error;
+				}
+			} else {
+				fstrans_start(*mp, FSTRANS_SHARED);
+			}
+			if (__predict_true(*mp == vp->v_mount))
+				break;
+			fstrans_done(*mp);
+		}
+	} else {
+		*mp = vp->v_mount;
+	}
+
+	return 0;
+}
+
+static inline void
+vop_post(vnode_t *vp, struct mount *mp, bool mpsafe, enum fst_op op)
+{
+
+	if (op == FST_YES) {
+		fstrans_done(mp);
+	}
+
+	if (!mpsafe) {
+		KERNEL_UNLOCK_ONE(curlwp);
+	}
+}
+
 const struct vnodeop_desc vop_default_desc = {"
 echo '	0,
 	"default",
@@ -402,8 +455,7 @@ function bodyrump() {
 function bodynorm() {
 	printf("{\n\tint error;\n\tbool mpsafe;\n\tstruct %s_args a;\n",
 		args_name);
-	if (fstrans == 1)
-		printf("\tstruct mount *mp = %s->v_mount;\n", argname[0]);
+	printf("\tstruct mount *mp;\n");
 	if (lockdebug) {
 		printf("#ifdef VNODE_LOCKDEBUG\n");
 		for (i=0; i<argc; i++) {
@@ -425,15 +477,27 @@ function bodynorm() {
 			printf("#endif\n");
 		}
 	}
-	printf("\tmpsafe = (%s->v_vflag & VV_MPSAFE);\n", argname[0]);
-	printf("\tif (!mpsafe) { KERNEL_LOCK(1, curlwp); }\n");
-	if (fstrans == 1)
-		printf("\tfstrans_start(mp, FSTRANS_SHARED);\n");
+	if (fstrans == "LOCK")
+		printf("\terror = vop_pre(%s, &mp, &mpsafe, %s);\n",
+			argname[0], "(flags & LK_NOWAIT ? FST_TRY : FST_YES)");
+	else if (fstrans == "UNLOCK")
+		printf("\terror = vop_pre(%s, &mp, &mpsafe, FST_%s);\n",
+			argname[0], "NO");
+	else
+		printf("\terror = vop_pre(%s, &mp, &mpsafe, FST_%s);\n",
+			argname[0], fstrans);
+	printf("\tif (error)\n\t\treturn error;\n");
 	printf("\terror = (VCALL(%s, VOFFSET(%s), &a));\n",
 		argname[0], name);
-	if (fstrans == 1)
-		printf("\tfstrans_done(mp);\n");
-	printf("\tif (!mpsafe) { KERNEL_UNLOCK_ONE(curlwp); }\n");
+	if (fstrans == "LOCK")
+		printf("\tvop_post(%s, mp, mpsafe, %s);\n",
+			argname[0], "(error ? FST_YES : FST_NO)");
+	else if (fstrans == "UNLOCK")
+		printf("\tvop_post(%s, mp, mpsafe, FST_%s);\n",
+			argname[0], "YES");
+	else
+		printf("\tvop_post(%s, mp, mpsafe, FST_%s);\n",
+			argname[0], fstrans);
 	if (willmake != -1) {
 		printf("#ifdef DIAGNOSTIC\n");
 		printf("\tif (error == 0)\n"				\
