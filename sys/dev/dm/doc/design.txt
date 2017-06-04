@@ -176,10 +176,10 @@
 
      in: dm-ioctl(name/uuid)
 
-     out: list of dependiences devices
+     out: list of dependencies devices
 
      Function: 
-       Return set of device dependiences e.g. mirror device for mirror target etc..
+       Return set of device dependencies e.g. mirror device for mirror target etc..
 
  13) DM_TABLE_STATUS
 
