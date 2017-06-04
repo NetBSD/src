@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.110 2017/06/03 21:52:05 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.111 2017/06/04 23:40:31 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.110 2017/06/03 21:52:05 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.111 2017/06/04 23:40:31 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -321,7 +321,7 @@ exptilde(const char *p, int flag)
 	char *user;
 
 	user = expdest;		/* we will just borrow top of stack */
-	while ((c = *p) != '\0') {
+	while ((c = *++p) != '\0') {
 		switch(c) {
 		case CTLESC:
 		case CTLVAR:
@@ -339,7 +339,6 @@ exptilde(const char *p, int flag)
 			goto done;
 		}
 		STPUTC(c, user);
-		p++;
 	}
  done:
 	STACKSTRNUL(user);
