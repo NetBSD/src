@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.c,v 1.16 2003/08/07 09:05:33 agc Exp $	*/
+/*	$NetBSD: mail.c,v 1.17 2017/06/04 20:27:14 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mail.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mail.c,v 1.16 2003/08/07 09:05:33 agc Exp $");
+__RCSID("$NetBSD: mail.c,v 1.17 2017/06/04 20:27:14 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,9 +88,10 @@ chkmail(int silent)
 	setstackmark(&smark);
 	mpath = mpathset() ? mpathval() : mailval();
 	for (i = 0 ; i < nmboxes ; i++) {
-		p = padvance(&mpath, nullstr);
+		p = padvance(&mpath, nullstr, 1);
 		if (p == NULL)
 			break;
+		stunalloc(p);
 		if (*p == '\0')
 			continue;
 		for (q = p ; *q ; q++);
