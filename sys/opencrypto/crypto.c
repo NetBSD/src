@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.79 2017/06/05 09:07:46 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.80 2017/06/05 09:09:13 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.79 2017/06/05 09:07:46 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.80 2017/06/05 09:09:13 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -939,7 +939,7 @@ crypto_dispatch(struct cryptop *crp)
 #endif
 
 	if ((crp->crp_flags & CRYPTO_F_BATCH) != 0) {
-		int wasempty = TAILQ_EMPTY(&crp_q);
+		int wasempty;
 		/*
 		 * Caller marked the request as ``ok to delay'';
 		 * queue it for the swi thread.  This is desirable
@@ -947,6 +947,7 @@ crypto_dispatch(struct cryptop *crp)
 		 * for batching.
 		 */
 		mutex_spin_enter(&crypto_q_mtx);
+		wasempty  = TAILQ_EMPTY(&crp_q);
 		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
 		mutex_spin_exit(&crypto_q_mtx);
 		if (wasempty)
