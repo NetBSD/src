@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.315 2017/05/26 14:21:02 riastradh Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.316 2017/06/05 01:29:21 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.315 2017/05/26 14:21:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.316 2017/06/05 01:29:21 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -461,8 +461,8 @@ lfs_fsync(void *v)
 	if (ap->a_flags & FSYNC_LAZY) {
 		if (lfs_ignore_lazy_sync == 0) {
 			mutex_enter(&lfs_lock);
-			if (!(ip->i_flags & IN_PAGING)) {
-				ip->i_flags |= IN_PAGING;
+			if (!(ip->i_flag & IN_PAGING)) {
+				ip->i_flag |= IN_PAGING;
 				TAILQ_INSERT_TAIL(&fs->lfs_pchainhd, ip,
 						  i_lfs_pchain);
 			}
@@ -477,7 +477,7 @@ lfs_fsync(void *v)
 	 * reuse it.  This prevents the cleaner from writing files twice
 	 * in the same partial segment, causing an accounting underflow.
 	 */
-	if (ap->a_flags & FSYNC_RECLAIM && ip->i_flags & IN_CLEANING) {
+	if (ap->a_flags & FSYNC_RECLAIM && ip->i_flag & IN_CLEANING) {
 		lfs_vflush(vp);
 	}
 
@@ -1446,10 +1446,10 @@ lfs_reclaim(void *v)
 	 * We shouldn't be on them.
 	 */
 	mutex_enter(&lfs_lock);
-	if (ip->i_flags & IN_PAGING) {
+	if (ip->i_flag & IN_PAGING) {
 		log(LOG_WARNING, "%s: reclaimed vnode is IN_PAGING\n",
 		    lfs_sb_getfsmnt(fs));
-		ip->i_flags &= ~IN_PAGING;
+		ip->i_flag &= ~IN_PAGING;
 		TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 	}
 	if (vp->v_uflag & VU_DIROP) {
@@ -1776,7 +1776,7 @@ lfs_flush_pchain(struct lfs *fs)
 
 		nip = TAILQ_NEXT(ip, i_lfs_pchain);
 
-		if (!(ip->i_flags & IN_PAGING))
+		if (!(ip->i_flag & IN_PAGING))
 			goto top;
 
 		mutex_exit(&lfs_lock);
@@ -1792,7 +1792,7 @@ lfs_flush_pchain(struct lfs *fs)
 		ip = VTOI(vp);
 		mutex_enter(&lfs_lock);
 		if ((vp->v_uflag & VU_DIROP) != 0 || vp->v_type != VREG ||
-		    !(ip->i_flags & IN_PAGING)) {
+		    !(ip->i_flag & IN_PAGING)) {
 			mutex_exit(&lfs_lock);
 			vput(vp);
 			mutex_enter(&lfs_lock);
