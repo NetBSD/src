@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1444 2017/05/31 14:18:36 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1445 2017/06/05 18:56:16 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -225,8 +225,8 @@ is a FreeBSD committer who has been helpful with incorporating changes
 in the past.
 
 Package:	byacc
-Version:	20170201
-Current Vers:	20170201
+Version:	20170430
+Current Vers:	20170430
 Maintainer:	Thomas Dickey <dickey@invisible-island.net>
 Archive Site:	http://www.invisible-island.net/byacc/byacc.html
 Home Page:	http://www.invisible-island.net/byacc/byacc.html
