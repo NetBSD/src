@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.111 2017/06/04 23:40:31 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.112 2017/06/05 02:15:55 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.111 2017/06/04 23:40:31 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.112 2017/06/05 02:15:55 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,6 +159,7 @@ expandarg(union node *arg, struct arglist *arglist, int flag)
 	struct strlist *sp;
 	char *p;
 
+	CTRACE(DBG_EXPAND, ("expandarg(fl=%#x)\n", flag));
 	if (fflag)		/* no filename expandsion */
 		flag &= ~EXP_GLOB;
 
@@ -169,9 +170,13 @@ expandarg(union node *arg, struct arglist *arglist, int flag)
 	argstr(arg->narg.text, flag);
 	if (arglist == NULL) {
 		STACKSTRNUL(expdest);
+		CTRACE(DBG_EXPAND, ("expandarg: no arglist, done (%d) \"%s\"\n",
+		    expdest - stackblock(), stackblock()));
 		return;			/* here document expanded */
 	}
 	STPUTC('\0', expdest);
+	CTRACE(DBG_EXPAND, ("expandarg: arglist got (%d) \"%s\"\n",
+		    expdest - stackblock() - 1, stackblock()));
 	p = grabstackstr(expdest);
 	exparg.lastp = &exparg.list;
 	/*
@@ -343,7 +348,7 @@ exptilde(const char *p, int flag)
  done:
 	STACKSTRNUL(user);
 
-	CTRACE(DBG_EXPAND, ("exptilde, found \"~%s\" :", expdest));
+	CTRACE(DBG_EXPAND, ("exptilde, found \"%s\" :", expdest));
 	if (*expdest == '\0')
 		home = lookupvar("HOME");
 	else if ((pw = getpwnam(expdest)) == NULL)
@@ -368,10 +373,15 @@ exptilde(const char *p, int flag)
 STATIC void 
 removerecordregions(int endoff)
 {
-	if (ifslastp == NULL)
+
+	VTRACE(DBG_EXPAND, ("removerecordregions(%d):", endoff));
+	if (ifslastp == NULL) {
+		VTRACE(DBG_EXPAND, (" none\n", endoff));
 		return;
+	}
 
 	if (ifsfirst.endoff > endoff) {
+		VTRACE(DBG_EXPAND, (" first(%d)", ifsfirst.endoff));
 		while (ifsfirst.next != NULL) {
 			struct ifsregion *ifsp;
 			INTOFF;
@@ -383,15 +393,18 @@ removerecordregions(int endoff)
 		if (ifsfirst.begoff > endoff)
 			ifslastp = NULL;
 		else {
+			VTRACE(DBG_EXPAND,("->(%d,%d)",ifsfirst.begoff,endoff));
 			ifslastp = &ifsfirst;
 			ifsfirst.endoff = endoff;
 		}
+		VTRACE(DBG_EXPAND, ("\n"));
 		return;
 	}
 
 	ifslastp = &ifsfirst;
 	while (ifslastp->next && ifslastp->next->begoff < endoff)
 		ifslastp=ifslastp->next;
+	VTRACE(DBG_EXPAND, (" found(%d,%d)", ifslastp->begoff,ifslastp->endoff));
 	while (ifslastp->next != NULL) {
 		struct ifsregion *ifsp;
 		INTOFF;
@@ -402,6 +415,7 @@ removerecordregions(int endoff)
 	}
 	if (ifslastp->endoff > endoff)
 		ifslastp->endoff = endoff;
+	VTRACE(DBG_EXPAND, ("->(%d,%d)", ifslastp->begoff,ifslastp->endoff));
 }
 
 
@@ -484,7 +498,7 @@ expari(const char *p, int flag)
 		;
 
 	if (quoted == 0)			/* allow weird splitting */
-		recordregion(begoff, begoff + q - 1 - start, 0);
+		recordregion(begoff, begoff + q - 1 - expdest, 0);
 	adjustment = q - expdest - 1;
 	STADJUST(adjustment, expdest);
 	VTRACE(DBG_EXPAND, ("expari: adding %d ed \"%.*s\", "
@@ -1106,6 +1120,7 @@ recordregion(int start, int end, int inquotes)
 {
 	struct ifsregion *ifsp;
 
+	VTRACE(DBG_EXPAND, ("recordregion(%d,%d,%d)\n", start, end, inquotes));
 	if (ifslastp == NULL) {
 		ifsp = &ifsfirst;
 	} else {
