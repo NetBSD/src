@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.3 2017/06/04 20:47:25 bouyer Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.4 2017/06/05 08:21:39 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -68,4 +68,34 @@ sys/arch/evbarm/vexpress/vexpress_start.S	1.5
 	Add a 1MB mapping to the MMU init table to cover the FDT blob in
 	case the bootloader places it beyond the init mem size.
 	[jmcneill, ticket #4]
+
+bin/sh/cd.c					1.48
+bin/sh/eval.c					1.141
+bin/sh/exec.c					1.48
+bin/sh/exec.h					1.25
+bin/sh/mail.c					1.17, 1.18
+bin/sh/sh.1					1.147
+
+	Clean up CDPATH and MAILPATH processing a little.
+	[kre, ticket #5]
+
+sys/dev/hdaudio/hdaudio.c			1.5
+sys/dev/pci/hdaudio_pci.c			1.8
+
+	Move the hdaudio_cd out of the hdaudio_pci module and into the
+	main hdaudio module.  Rearrange the inter-module dependencies
+	accordingly.  PR kern/49836.
+	[pgoyette, ticket #6]
+
+bin/sh/expand.c					1.111, 1.112
+
+	Fix an off-by one that broke ~ expansions. PR bin/52272 
+	Fix bug affecting arithmetic expansions.
+	[kre, ticket #7]
+
+sys/arch/arm/cortex/gic.c			1.22
+
+	Initialise all the SGI/PPI priorities for all CPUs to mask
+	the interrupts
+	[skrll, ticket #8]
 
