@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.7 2017/04/27 10:01:54 msaitoh Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.7.2.1 2017/06/05 08:13:05 snj Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.7 2017/04/27 10:01:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.7.2.1 2017/06/05 08:13:05 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -269,27 +269,41 @@ hdaudio_pci_resume(device_t self, const pmf_qual_t *qual)
 	return hdaudio_resume(&sc->sc_hdaudio);
 }
 
-MODULE(MODULE_CLASS_DRIVER, hdaudio_pci, "hdaudio");
+MODULE(MODULE_CLASS_DRIVER, hdaudio_pci, "pci,hdaudio,audio");
 
 #ifdef _MODULE
+/*
+ * XXX Don't allow ioconf.c to redefine the "struct cfdriver hdaudio_cd"
+ * XXX it will be defined in the common hdaudio module
+ */
+
+#undef CFDRIVER_DECL
+#define CFDRIVER_DECL(name, class, attr) /* nothing */
 #include "ioconf.c"
 #endif
 
 static int
 hdaudio_pci_modcmd(modcmd_t cmd, void *opaque)
 {
+#ifdef _MODULE
+	/*
+	 * We ignore the cfdriver_vec[] that ioconf provides, since
+	 * the cfdrivers are attached already.
+	 */
+	static struct cfdriver * const no_cfdriver_vec[] = { NULL };
+#endif
 	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		error = config_init_component(cfdriver_ioconf_hdaudio_pci,
+		error = config_init_component(no_cfdriver_vec,
 		    cfattach_ioconf_hdaudio_pci, cfdata_ioconf_hdaudio_pci);
 #endif
 		return error;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		error = config_fini_component(cfdriver_ioconf_hdaudio_pci,
+		error = config_fini_component(no_cfdriver_vec,
 		    cfattach_ioconf_hdaudio_pci, cfdata_ioconf_hdaudio_pci);
 #endif
 		return error;
