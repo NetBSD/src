@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.155 2017/04/01 00:40:42 maya Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.156 2017/06/05 01:29:21 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.155 2017/04/01 00:40:42 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.156 2017/06/05 01:29:21 maya Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -592,8 +592,8 @@ done:
 	/*
 	 * If we truncated to zero, take us off the paging queue.
 	 */
-	if (oip->i_size == 0 && oip->i_flags & IN_PAGING) {
-		oip->i_flags &= ~IN_PAGING;
+	if (oip->i_size == 0 && oip->i_flag & IN_PAGING) {
+		oip->i_flag &= ~IN_PAGING;
 		TAILQ_REMOVE(&fs->lfs_pchainhd, oip, i_lfs_pchain);
 	}
 	mutex_exit(&lfs_lock);
