@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.188 2017/06/05 23:24:29 christos Exp $
+#	$NetBSD: Makefile,v 1.189 2017/06/05 23:55:43 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -214,8 +214,6 @@ SUBDIR+=	libfdt .WAIT
 SUBDIR+=	dtc
 .endif
 
-SUBDIR+=	libfdt .WAIT
-SUBDIR+=	dtc
 .if ${MKX11} != "no"
 SUBDIR+=	makestrs
 SUBDIR+=	makekeys
