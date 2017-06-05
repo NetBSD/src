@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.57 2016/09/14 11:43:08 roy Exp $	*/
+/*	$NetBSD: if_media.h,v 1.58 2017/06/05 08:50:07 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -80,67 +80,7 @@
  */
 
 #ifdef _KERNEL
-
 #include <sys/queue.h>
-
-/*
- * Driver callbacks for media status and change requests.
- */
-typedef	int (*ifm_change_cb_t)(struct ifnet *);
-typedef	void (*ifm_stat_cb_t)(struct ifnet *, struct ifmediareq *);
-
-/*
- * In-kernel representation of a single supported media type.
- */
-struct ifmedia_entry {
-	TAILQ_ENTRY(ifmedia_entry) ifm_list;
-	u_int	ifm_media;	/* description of this media attachment */
-	u_int	ifm_data;	/* for driver-specific use */
-	void	*ifm_aux;	/* for driver-specific use */
-};
-
-/*
- * One of these goes into a network interface's softc structure.
- * It is used to keep general media state.
- */
-struct ifmedia {
-	u_int	ifm_mask;	/* mask of changes we don't care about */
-	u_int	ifm_media;	/* current user-set media word */
-	struct ifmedia_entry *ifm_cur;	/* currently selected media */
-	TAILQ_HEAD(, ifmedia_entry) ifm_list; /* list of all supported media */
-	ifm_change_cb_t	ifm_change;	/* media change driver callback */
-	ifm_stat_cb_t	ifm_status;	/* media status driver callback */
-};
-
-/* Initialize an interface's struct if_media field. */
-void	ifmedia_init(struct ifmedia *, int, ifm_change_cb_t, ifm_stat_cb_t);
-
-int ifmedia_change(struct ifmedia *, struct ifnet *);
-
-/* Add one supported medium to a struct ifmedia. */
-void	ifmedia_add(struct ifmedia *, int, int, void *);
-
-/* Add an array (of ifmedia_entry) media to a struct ifmedia. */
-void	ifmedia_list_add(struct ifmedia *, struct ifmedia_entry *, int);
-
-/* Set default media type on initialization. */
-void	ifmedia_set(struct ifmedia *ifm, int mword);
-
-/* Common ioctl function for getting/setting media, called by driver. */
-int	ifmedia_ioctl(struct ifnet *, struct ifreq *, struct ifmedia *, u_long);
-
-/* Look up a media entry. */
-struct ifmedia_entry *ifmedia_match(struct ifmedia *, u_int, u_int);
-
-/* Delete all media for a given media instance */
-void	ifmedia_delete_instance(struct ifmedia *, u_int);
-
-/* Compute baudrate for a given media. */
-uint64_t	ifmedia_baudrate(int);
-
-/* Remove all media */
-void		ifmedia_removeall(struct ifmedia *);
-
 #endif /*_KERNEL */
 
 /*
@@ -151,20 +91,113 @@ void		ifmedia_removeall(struct ifmedia *);
  *	5-7	Media type
  *	8-15	Type specific options
  *	16-18	Mode (for multi-mode devices)
- *	19	RFU
+ *	19	RFU			(not used)
  *	20-27	Shared (global) options
  *	28-31	Instance
+ *
+ *   3                     2                   1
+ *   1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
+ *  +-------+---------------+-+-----+---------------+-----+---------+
+ *  |       |               |R|     |               |     |     |STA|
+ *  | IMASK |     GMASK     |F|MMASK|     OMASK     |NMASK|     +---|
+ *  |       |               |U|     |               |     |  TMASK  |
+ *  +-------+---------------+-+-----+---------------+-----+---------+
+ *   <----->                   <--->                 <--->
+ *  IFM_INST()               IFM_MODE()            IFM_TYPE()
+ *
+ *           <------------->         <------------->       <------->
+ *                        IFM_OPTIONS()                  IFM_SUBTYPE()
  */
 
 /*
- * Generic, only used for link status reporting.
+ * Masks
  */
-#define	IFM_GENERIC	0x00000000
+#define	IFM_NMASK	0x000000e0	/* Network type */
+#define	IFM_TMASK	0x0000001f	/* Media sub-type */
+#define	IFM_IMASK	0xf0000000	/* Instance */
+#define	IFM_ISHIFT	28		/* Instance shift */
+#define	IFM_OMASK	0x0000ff00	/* Type specific options */
+#define	IFM_MMASK	0x00070000	/* Mode */
+#define	IFM_MSHIFT	16		/* Mode shift */
+#define	IFM_GMASK	0x0ff00000	/* Global options */
 
 /*
- * Ethernet
+ * Macros to extract various bits of information from the media word.
  */
+#define	IFM_TYPE(x)	((x) & IFM_NMASK)
+#define	IFM_SUBTYPE(x)	((x) & IFM_TMASK)
+#define	IFM_INST(x)	(((x) & IFM_IMASK) >> IFM_ISHIFT)
+#define	IFM_OPTIONS(x)	((x) & (IFM_OMASK | IFM_GMASK))
+#define	IFM_MODE(x)	((x) & IFM_MMASK)
+
+#define	IFM_TYPE_MATCH(dt, t)						\
+	(IFM_TYPE((dt)) == 0 || IFM_TYPE((dt)) == IFM_TYPE((t)))
+
+#define	IFM_INST_MAX	IFM_INST(IFM_IMASK)
+#define	IFM_INST_ANY	((u_int) -1)
+
+/* Mask of "status valid" bits, for ifconfig(8). */
+#define	IFM_STATUS_VALID IFM_AVALID
+
+/* List of "status valid" bits, for ifconfig(8). */
+#define	IFM_STATUS_VALID_LIST {						\
+	IFM_AVALID,							\
+	0,								\
+}
+
+/*
+ * Macro to create a media word.
+ */
+#define	IFM_MAKEWORD(type, subtype, options, instance)			\
+	((type) | (subtype) | (options) | ((instance) << IFM_ISHIFT))
+#define	IFM_MAKEMODE(mode) \
+	(((mode) << IFM_MSHIFT) & IFM_MMASK)
+
+/*
+ * Media type (IFM_NMASK).
+ */
+#define	IFM_GENERIC	0x00000000    /* Only used for link status reporting */
 #define	IFM_ETHER	0x00000020
+#define	IFM_TOKEN	0x00000040
+#define	IFM_FDDI	0x00000060
+#define	IFM_IEEE80211	0x00000080
+#define	IFM_CARP	0x000000c0     /* Common Address Redundancy Protocol */
+
+#define	IFM_NMIN	IFM_ETHER	/* lowest Network type */
+#define	IFM_NMAX	IFM_NMASK	/* highest Network type */
+
+/*
+ * Shared media sub-types (IFM_TMASK)
+ */
+#define	IFM_AUTO	0		/* Autoselect best media */
+#define	IFM_MANUAL	1		/* Jumper/dipswitch selects media */
+#define	IFM_NONE	2		/* Deselect all media */
+
+/*
+ * Status bits (IFM_TMASK)
+ */
+#define	IFM_AVALID	0x00000001	/* Active bit valid */
+#define	IFM_ACTIVE	0x00000002	/* Interface attached to working net */
+
+/*
+ * Shared (global) options (IFM_GMASK)
+ */
+#define	IFM_FDX		0x00100000	/* Force full duplex */
+#define	IFM_HDX		0x00200000	/* Force half duplex */
+#define	IFM_FLOW	0x00400000	/* enable hardware flow control */
+#define	IFM_FLAG0	0x01000000	/* Driver defined flag */
+#define	IFM_FLAG1	0x02000000	/* Driver defined flag */
+#define	IFM_FLAG2	0x04000000	/* Driver defined flag */
+#define	IFM_LOOP	0x08000000	/* Put hardware in loopback */
+
+/*
+ * 0: Generic (IFM_GENERIC). Only used for link status reporting.
+ * No any media specific flag.
+ */
+
+/*
+ * 1: Ethernet (IFM_ETHER)
+ */
 #define	IFM_10_T	3		/* 10BaseT - RJ45 */
 #define	IFM_10_2	4		/* 10Base2 - Thinnet */
 #define	IFM_10_5	5		/* 10Base5 - AUI */
@@ -189,36 +222,37 @@ void		ifmedia_removeall(struct ifmedia *);
 #define	IFM_10G_TWINAX_LONG	24	/* 10GBase Twinax Long copper */
 #define	IFM_10G_LRM	25		/* 10GBase-LRM 850nm Multi-mode */
 #define	IFM_10G_T	26		/* 10GBase-T - RJ45 */
-
+/* IFM_OMASK bits */
 #define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
 #define	IFM_ETH_RXPAUSE	0x00000200	/* receive PAUSE frames */
 #define	IFM_ETH_TXPAUSE	0x00000400	/* transmit PAUSE frames */
 
+/* Ethernet flow control mask */
+#define	IFM_ETH_FMASK	(IFM_FLOW | IFM_ETH_RXPAUSE | IFM_ETH_TXPAUSE)
+
 /*
- * Token ring
+ * 2: Token ring (IFM_TOKEN)
  */
-#define	IFM_TOKEN	0x00000040
 #define	IFM_TOK_STP4	3		/* Shielded twisted pair 4m - DB9 */
 #define	IFM_TOK_STP16	4		/* Shielded twisted pair 16m - DB9 */
 #define	IFM_TOK_UTP4	5		/* Unshielded twisted pair 4m - RJ45 */
 #define	IFM_TOK_UTP16	6		/* Unshielded twisted pair 16m - RJ45 */
+/* IFM_OMASK bits */
 #define	IFM_TOK_ETR	0x00000200	/* Early token release */
 #define	IFM_TOK_SRCRT	0x00000400	/* Enable source routing features */
 #define	IFM_TOK_ALLR	0x00000800	/* All routes / Single route bcast */
 
 /*
- * FDDI
+ * 3: FDDI (IFM_FDDI)
  */
-#define	IFM_FDDI	0x00000060
 #define	IFM_FDDI_SMF	3		/* Single-mode fiber */
 #define	IFM_FDDI_MMF	4		/* Multi-mode fiber */
 #define	IFM_FDDI_UTP	5		/* CDDI / UTP */
 #define	IFM_FDDI_DA	0x00000100	/* Dual attach / single attach */
 
 /*
- * IEEE 802.11 Wireless
+ * 4: IEEE 802.11 Wireless (IFM_IEEE80211)
  */
-#define	IFM_IEEE80211	0x00000080
 #define	IFM_IEEE80211_FH1	3	/* Frequency Hopping 1Mbps */
 #define	IFM_IEEE80211_FH2	4	/* Frequency Hopping 2Mbps */
 #define	IFM_IEEE80211_DS2	5	/* Direct Sequence 2Mbps */
@@ -243,6 +277,7 @@ void		ifmedia_removeall(struct ifmedia *);
 /* NB: not enough bits to express MCS fully */
 #define	IFM_IEEE80211_MCS	24	/* HT MCS rate */
 
+/* IFM_OMASK bits */
 #define	IFM_IEEE80211_ADHOC	0x00000100	/* Operate in Adhoc mode */
 #define	IFM_IEEE80211_HOSTAP	0x00000200	/* Operate in Host AP mode */
 #define	IFM_IEEE80211_MONITOR	0x00000400	/* Operate in Monitor mode */
@@ -251,7 +286,7 @@ void		ifmedia_removeall(struct ifmedia *);
 #define	IFM_IEEE80211_WDS 	0x00002000	/* Operate as an WDS master */
 #define	IFM_IEEE80211_MBSS	0x00004000	/* Operate in MBSS mode */
 
-/* operating mode for multi-mode devices */
+/* Operating mode (IFM_MMASK) for multi-mode devices */
 #define	IFM_IEEE80211_11A	0x00010000	/* 5 GHz, OFDM mode */
 #define	IFM_IEEE80211_11B	0x00020000	/* Direct Sequence mode */
 #define	IFM_IEEE80211_11G	0x00030000	/* 2 GHz, CCK mode */
@@ -261,80 +296,9 @@ void		ifmedia_removeall(struct ifmedia *);
 
 
 /*
- * Common Address Redundancy Protocol
+ * 6: Common Address Redundancy Protocol (IFM_CARP)
+ * No any media specific flag.
  */
-#define	IFM_CARP		0x000000c0
-
-/*
- * Shared media sub-types
- */
-#define	IFM_AUTO	0		/* Autoselect best media */
-#define	IFM_MANUAL	1		/* Jumper/dipswitch selects media */
-#define	IFM_NONE	2		/* Deselect all media */
-
-/*
- * Shared options
- */
-#define	IFM_FDX		0x00100000	/* Force full duplex */
-#define	IFM_HDX		0x00200000	/* Force half duplex */
-#define	IFM_FLOW	0x00400000	/* enable hardware flow control */
-#define	IFM_FLAG0	0x01000000	/* Driver defined flag */
-#define	IFM_FLAG1	0x02000000	/* Driver defined flag */
-#define	IFM_FLAG2	0x04000000	/* Driver defined flag */
-#define	IFM_LOOP	0x08000000	/* Put hardware in loopback */
-
-/*
- * Masks
- */
-#define	IFM_NMASK	0x000000e0	/* Network type */
-#define	IFM_TMASK	0x0000001f	/* Media sub-type */
-#define	IFM_IMASK	0xf0000000	/* Instance */
-#define	IFM_ISHIFT	28		/* Instance shift */
-#define	IFM_OMASK	0x0000ff00	/* Type specific options */
-#define	IFM_MMASK	0x00070000	/* Mode */
-#define	IFM_MSHIFT	16		/* Mode shift */
-#define	IFM_GMASK	0x0ff00000	/* Global options */
-
-	/* Ethernet flow control mask */
-#define	IFM_ETH_FMASK	(IFM_FLOW | IFM_ETH_RXPAUSE | IFM_ETH_TXPAUSE)
-
-#define	IFM_NMIN	IFM_ETHER	/* lowest Network type */
-#define	IFM_NMAX	IFM_NMASK	/* highest Network type */
-
-/*
- * Status bits
- */
-#define	IFM_AVALID	0x00000001	/* Active bit valid */
-#define	IFM_ACTIVE	0x00000002	/* Interface attached to working net */
-
-/* Mask of "status valid" bits, for ifconfig(8). */
-#define	IFM_STATUS_VALID IFM_AVALID
-
-/* List of "status valid" bits, for ifconfig(8). */
-#define	IFM_STATUS_VALID_LIST {						\
-	IFM_AVALID,							\
-	0,								\
-}
-
-/*
- * Macros to extract various bits of information from the media word.
- */
-#define	IFM_TYPE(x)	((x) & IFM_NMASK)
-#define	IFM_SUBTYPE(x)	((x) & IFM_TMASK)
-#define	IFM_INST(x)	(((x) & IFM_IMASK) >> IFM_ISHIFT)
-#define	IFM_OPTIONS(x)	((x) & (IFM_OMASK | IFM_GMASK))
-#define	IFM_MODE(x)	((x) & IFM_MMASK)
-
-#define	IFM_INST_MAX	IFM_INST(IFM_IMASK)
-#define	IFM_INST_ANY	((u_int) -1)
-
-/*
- * Macro to create a media word.
- */
-#define	IFM_MAKEWORD(type, subtype, options, instance)			\
-	((type) | (subtype) | (options) | ((instance) << IFM_ISHIFT))
-#define	IFM_MAKEMODE(mode) \
-	(((mode) << IFM_MSHIFT) & IFM_MMASK)
 
 /*
  * NetBSD extension not defined in the BSDI API.  This is used in various
@@ -364,9 +328,6 @@ struct ifmedia_description {
 	{ IFM_CARP,			"CARP" },			\
 	{ 0, NULL },							\
 }
-
-#define	IFM_TYPE_MATCH(dt, t)						\
-	(IFM_TYPE((dt)) == 0 || IFM_TYPE((dt)) == IFM_TYPE((t)))
 
 #define	IFM_SUBTYPE_DESCRIPTIONS {					\
 	{ IFM_AUTO,			"autoselect" },			\
@@ -641,16 +602,75 @@ struct ifmedia_status_description {
 	  { NULL, NULL } },						\
 }
 
-#ifndef _KERNEL
+#ifdef _KERNEL
+/*
+ * Driver callbacks for media status and change requests.
+ */
+typedef	int (*ifm_change_cb_t)(struct ifnet *);
+typedef	void (*ifm_stat_cb_t)(struct ifnet *, struct ifmediareq *);
+
+/*
+ * In-kernel representation of a single supported media type.
+ */
+struct ifmedia_entry {
+	TAILQ_ENTRY(ifmedia_entry) ifm_list;
+	u_int	ifm_media;	/* description of this media attachment */
+	u_int	ifm_data;	/* for driver-specific use */
+	void	*ifm_aux;	/* for driver-specific use */
+};
+
+/*
+ * One of these goes into a network interface's softc structure.
+ * It is used to keep general media state.
+ */
+struct ifmedia {
+	u_int	ifm_mask;	/* mask of changes we don't care about */
+	u_int	ifm_media;	/* current user-set media word */
+	struct ifmedia_entry *ifm_cur;	/* currently selected media */
+	TAILQ_HEAD(, ifmedia_entry) ifm_list; /* list of all supported media */
+	ifm_change_cb_t	ifm_change;	/* media change driver callback */
+	ifm_stat_cb_t	ifm_status;	/* media status driver callback */
+};
+
+/* Initialize an interface's struct if_media field. */
+void	ifmedia_init(struct ifmedia *, int, ifm_change_cb_t, ifm_stat_cb_t);
+
+int	ifmedia_change(struct ifmedia *, struct ifnet *);
+
+/* Add one supported medium to a struct ifmedia. */
+void	ifmedia_add(struct ifmedia *, int, int, void *);
+
+/* Add an array (of ifmedia_entry) media to a struct ifmedia. */
+void	ifmedia_list_add(struct ifmedia *, struct ifmedia_entry *, int);
+
+/* Set default media type on initialization. */
+void	ifmedia_set(struct ifmedia *ifm, int mword);
+
+/* Common ioctl function for getting/setting media, called by driver. */
+int	ifmedia_ioctl(struct ifnet *, struct ifreq *, struct ifmedia *, u_long);
+
+/* Look up a media entry. */
+struct ifmedia_entry *ifmedia_match(struct ifmedia *, u_int, u_int);
+
+/* Delete all media for a given media instance */
+void	ifmedia_delete_instance(struct ifmedia *, u_int);
+
+/* Compute baudrate for a given media. */
+uint64_t ifmedia_baudrate(int);
+
+/* Remove all media */
+void	ifmedia_removeall(struct ifmedia *);
+
+#else
 /* Functions for converting media to/from strings, in libutil/if_media.c */
 const char *get_media_type_string(int);
 const char *get_media_subtype_string(int);
 const char *get_media_mode_string(int);
 const char *get_media_option_string(int *);
-int get_media_mode(int, const char *);
-int get_media_subtype(int, const char *);
-int get_media_options(int, const char *, char **);
-int lookup_media_word(struct ifmedia_description *, int, const char *);
+int	get_media_mode(int, const char *);
+int	get_media_subtype(int, const char *);
+int	get_media_options(int, const char *, char **);
+int	lookup_media_word(struct ifmedia_description *, int, const char *);
 #endif /* _KERNEL */
 
 #endif /* !_NET_IF_MEDIA_H_ */
