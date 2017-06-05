@@ -36,7 +36,7 @@ LINECOMMENT	"//".*\n
 %{
 #include "dtc.h"
 #include "srcpos.h"
-#include "dtc-parser.tab.h"
+#include "dtc-parser.h"
 
 YYLTYPE yylloc;
 extern bool treesource_error;
