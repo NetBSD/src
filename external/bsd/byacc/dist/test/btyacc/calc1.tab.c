@@ -1,4 +1,4 @@
-/*	$NetBSD: calc1.tab.c,v 1.1.1.4 2017/02/11 19:30:03 christos Exp $	*/
+/*	$NetBSD: calc1.tab.c,v 1.1.1.5 2017/06/05 18:49:48 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -803,6 +803,9 @@ YYPARSE_DECL()
     if (yydebug)
         fprintf(stderr, "%sdebug[<# of symbols on state stack>]\n", YYPREFIX);
 #endif
+#if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
+    memset(yyerror_loc_range, 0, sizeof(yyerror_loc_range));
+#endif
 
 #if YYBTYACC
     yyps = yyNewState(0); if (yyps == 0) goto yyenomem;
@@ -1480,7 +1483,7 @@ case 28:
 		yyval.vval = yystack.l_mark[-1].vval;
 	}
 break;
-#line 1482 "calc1.tab.c"
+#line 1485 "calc1.tab.c"
     default:
         break;
     }

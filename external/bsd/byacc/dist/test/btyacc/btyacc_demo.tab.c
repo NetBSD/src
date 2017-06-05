@@ -1,4 +1,4 @@
-/*	$NetBSD: btyacc_demo.tab.c,v 1.1.1.4 2017/02/11 19:30:04 christos Exp $	*/
+/*	$NetBSD: btyacc_demo.tab.c,v 1.1.1.5 2017/06/05 18:49:50 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -1332,6 +1332,9 @@ YYPARSE_DECL()
     if (yydebug)
         fprintf(stderr, "%sdebug[<# of symbols on state stack>]\n", YYPREFIX);
 #endif
+#if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
+    memset(yyerror_loc_range, 0, sizeof(yyerror_loc_range));
+#endif
 
 #if YYBTYACC
     yyps = yyNewState(0); if (yyps == 0) goto yyenomem;
@@ -2105,7 +2108,7 @@ case 59:
 #line 197 "btyacc_demo.y"
 	{ yyval.code = yystack.l_mark[-1].code; }
 break;
-#line 2107 "btyacc_demo.tab.c"
+#line 2110 "btyacc_demo.tab.c"
     default:
         break;
     }

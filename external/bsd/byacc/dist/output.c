@@ -1,6 +1,6 @@
-/*	$NetBSD: output.c,v 1.1.1.9 2017/02/11 19:30:02 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.1.1.10 2017/06/05 18:49:47 christos Exp $	*/
 
-/* Id: output.c,v 1.79 2016/12/02 20:42:38 tom Exp  */
+/* Id: output.c,v 1.81 2017/04/30 23:23:32 tom Exp  */
 
 #include "defs.h"
 
@@ -1586,6 +1586,19 @@ output_pure_parser(FILE * fp)
     putc_code(fp, '\n');
 }
 
+#if defined(YY_NO_LEAKS)
+static void
+output_no_leaks(FILE * fp)
+{
+    putc_code(fp, '\n');
+
+    if (fp == code_file)
+	++outline;
+    fputs("#define YY_NO_LEAKS 1\n", fp);
+    putc_code(fp, '\n');
+}
+#endif
+
 static void
 output_trailing_text(void)
 {
@@ -1987,6 +2000,9 @@ output(void)
 
     output_prefix(fp);
     output_pure_parser(fp);
+#if defined(YY_NO_LEAKS)
+    output_no_leaks(fp);
+#endif
     output_stored_text(fp);
     output_stype(fp);
 #if defined(YYBTYACC)
@@ -2070,6 +2086,10 @@ output(void)
 	write_section(code_file, body_vars);
     }
     write_section(code_file, body_2);
+    if (pure_parser)
+    {
+	write_section(code_file, init_vars);
+    }
 #if defined(YYBTYACC)
     if (initial_action)
 	output_initial_action();

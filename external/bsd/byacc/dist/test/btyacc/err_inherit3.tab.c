@@ -1,4 +1,4 @@
-/*	$NetBSD: err_inherit3.tab.c,v 1.1.1.4 2017/02/11 19:30:03 christos Exp $	*/
+/*	$NetBSD: err_inherit3.tab.c,v 1.1.1.5 2017/06/05 18:49:49 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -621,6 +621,9 @@ YYPARSE_DECL()
     if (yydebug)
         fprintf(stderr, "%sdebug[<# of symbols on state stack>]\n", YYPREFIX);
 #endif
+#if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
+    memset(yyerror_loc_range, 0, sizeof(yyerror_loc_range));
+#endif
 
 #if YYBTYACC
     yyps = yyNewState(0); if (yyps == 0) goto yyenomem;
@@ -1191,7 +1194,7 @@ case 13:
 #line 75 "err_inherit3.y"
 	{ yyval.nlist = yystack.l_mark[0].nlist; }
 break;
-#line 1193 "err_inherit3.tab.c"
+#line 1196 "err_inherit3.tab.c"
     default:
         break;
     }

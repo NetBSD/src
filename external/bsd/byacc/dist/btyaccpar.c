@@ -1,10 +1,10 @@
-/*	$NetBSD: btyaccpar.c,v 1.1.1.4 2017/02/11 19:30:02 christos Exp $	*/
+/*	$NetBSD: btyaccpar.c,v 1.1.1.5 2017/06/05 18:49:47 christos Exp $	*/
 
 /* This file generated automatically using
  * @Id: skel2c,v 1.4 2016/06/07 00:26:09 tom Exp @
  */
 
-/* @Id: btyaccpar.skel,v 1.5 2016/12/02 22:02:28 tom Exp @ */
+/* @Id: btyaccpar.skel,v 1.6 2017/04/30 23:40:34 tom Exp @ */
 
 #include "defs.h"
 
@@ -451,6 +451,23 @@ const char *const body_2[] =
     "    }",
     "    if (yydebug)",
     "        fprintf(stderr, \"%sdebug[<# of symbols on state stack>]\\n\", YYPREFIX);",
+    "#endif",
+    "#if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)",
+    "    memset(yyerror_loc_range, 0, sizeof(yyerror_loc_range));",
+    "#endif",
+    "",
+    0
+};
+
+const char *const init_vars[] =
+{
+    "    yyerrflag = 0;",
+    "    yychar = 0;",
+    "    memset(&yyval,  0, sizeof(yyval));",
+    "    memset(&yylval, 0, sizeof(yylval));",
+    "#if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)",
+    "    memset(&yyloc,  0, sizeof(yyloc));",
+    "    memset(&yylloc, 0, sizeof(yylloc));",
     "#endif",
     "",
     0

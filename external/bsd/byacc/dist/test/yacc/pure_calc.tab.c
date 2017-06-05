@@ -1,4 +1,4 @@
-/*	$NetBSD: pure_calc.tab.c,v 1.1.1.4 2017/02/11 19:30:02 christos Exp $	*/
+/*	$NetBSD: pure_calc.tab.c,v 1.1.1.5 2017/06/05 18:49:48 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -441,6 +441,9 @@ YYPARSE_DECL()
     }
 #endif
 
+    memset(&yyval,  0, sizeof(yyval));
+    memset(&yylval, 0, sizeof(yylval));
+
     yym = 0;
     yyn = 0;
     yynerrs = 0;
@@ -625,7 +628,7 @@ case 18:
 #line 69 "pure_calc.y"
 	{  yyval = base * yystack.l_mark[-1] + yystack.l_mark[0]; }
 break;
-#line 627 "pure_calc.tab.c"
+#line 630 "pure_calc.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;
