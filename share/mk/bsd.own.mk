@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1009 2017/05/21 15:28:42 riastradh Exp $
+#	$NetBSD: bsd.own.mk,v 1.1010 2017/06/05 23:41:52 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -352,6 +352,7 @@ TOOL_CTFMERGE=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctfmerge
 TOOL_CVSLATEST=		${TOOLDIR}/bin/${_TOOL_PREFIX}cvslatest
 TOOL_DB=		${TOOLDIR}/bin/${_TOOL_PREFIX}db
 TOOL_DISKLABEL=		${TOOLDIR}/bin/nbdisklabel
+TOOL_DTC=		${TOOLDIR}/bin/${_TOOL_PREFIX}dtc
 TOOL_EQN=		${TOOLDIR}/bin/${_TOOL_PREFIX}eqn
 TOOL_FDISK=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-fdisk
 TOOL_FGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}fgen
@@ -1035,7 +1036,7 @@ _MKVARS.yes= \
 	MKATF \
 	MKBINUTILS \
 	MKCOMPLEX MKCVS MKCXX \
-	MKDOC \
+	MKDOC MKDTC \
 	MKDYNAMICROOT \
 	MKGCC MKGDB MKGROFF \
 	MKHESIOD MKHTML \
