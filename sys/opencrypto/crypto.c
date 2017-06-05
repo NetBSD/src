@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.78 2017/05/31 02:17:49 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.79 2017/06/05 09:07:46 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.78 2017/05/31 02:17:49 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.79 2017/06/05 09:07:46 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -375,6 +375,7 @@ static	int crypto_invoke(struct cryptop *crp, int hint);
 static	int crypto_kinvoke(struct cryptkop *krp, int hint);
 
 static struct cryptocap *crypto_checkdriver(u_int32_t);
+static struct cryptocap *crypto_checkdriver_uninit(u_int32_t);
 
 static struct cryptostats cryptostats;
 #ifdef CRYPTO_TIMING
@@ -446,7 +447,7 @@ crypto_destroy(bool exit_kthread)
 		}
 
 		for (i = 0; i < crypto_drivers_num; i++) {
-			cap = crypto_checkdriver(i);
+			cap = crypto_checkdriver_uninit(i);
 			if (cap == NULL)
 				continue;
 			if (cap->cc_sessions != 0)
@@ -511,7 +512,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 	 */
 
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
-		cap = crypto_checkdriver(hid);
+		cap = crypto_checkdriver_uninit(hid);
 		if (cap == NULL)
 			continue;
 
@@ -623,7 +624,7 @@ crypto_get_driverid(u_int32_t flags)
 
 	mutex_enter(&crypto_drv_mtx);
 	for (i = 0; i < crypto_drivers_num; i++) {
-		cap = crypto_checkdriver(i);
+		cap = crypto_checkdriver_uninit(i);
 		if (cap == NULL)
 			continue;
 		if (cap->cc_process == NULL &&
@@ -657,7 +658,7 @@ crypto_get_driverid(u_int32_t flags)
 		free(crypto_drivers, M_CRYPTO_DATA);
 		crypto_drivers = newdrv;
 
-		cap = crypto_checkdriver(i);
+		cap = crypto_checkdriver_uninit(i);
 		KASSERT(cap != NULL);
 	}
 
@@ -676,8 +677,25 @@ crypto_get_driverid(u_int32_t flags)
 static struct cryptocap *
 crypto_checkdriver(u_int32_t hid)
 {
+
+	KASSERT(crypto_drivers != NULL);
+
+	return (hid >= crypto_drivers_num ? NULL : &crypto_drivers[hid]);
+}
+
+/*
+ * Use crypto_checkdriver_uninit() instead of crypto_checkdriver() below two
+ * situations
+ *     - crypto_drivers[] may not be allocated
+ *     - crypto_drivers[hid] may not be initialized
+ */
+static struct cryptocap *
+crypto_checkdriver_uninit(u_int32_t hid)
+{
+
 	if (crypto_drivers == NULL)
 		return NULL;
+
 	return (hid >= crypto_drivers_num ? NULL : &crypto_drivers[hid]);
 }
 
@@ -1087,7 +1105,7 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 
 	mutex_enter(&crypto_drv_mtx);
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
-		cap = crypto_checkdriver(hid);
+		cap = crypto_checkdriver_uninit(hid);
 		if (cap == NULL)
 			continue;
 		if ((cap->cc_flags & CRYPTOCAP_F_SOFTWARE) &&
@@ -1447,7 +1465,7 @@ crypto_getfeat(int *featp)
 
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
 		struct cryptocap *cap;
-		cap = crypto_checkdriver(hid);
+		cap = crypto_checkdriver_uninit(hid);
 		if (cap == NULL)
 			continue;
 
