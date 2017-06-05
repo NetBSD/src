@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.19 2017/04/06 03:21:01 maya Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.20 2017/06/05 01:01:42 maya Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
@@ -169,6 +169,8 @@ struct inode {
 /* 	   unused	0x0400 */	/* was FFS-only IN_SPACECOUNTED */
 #define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
 #define IN_CDIROP       0x4000          /* LFS: dirop completed pending i/o */
+
+#define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_MODIFY|IN_ACCESSED|IN_CLEANING)
 
 /*
  * LFS inode extensions.
