@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.22 2017/06/04 10:45:50 skrll Exp $	*/
+/*	$NetBSD: gic.c,v 1.23 2017/06/05 20:02:11 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.22 2017/06/04 10:45:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.23 2017/06/05 20:02:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -232,25 +232,15 @@ armgic_irq_handler(void *tf)
 
 	KASSERTMSG(old_ipl != IPL_HIGH, "old_ipl %d pmr %#x hppir %#x",
 	    old_ipl, gicc_read(sc, GICC_PMR), gicc_read(sc, GICC_HPPIR));
-#if 0
-	printf("%s(enter): %s: pmr=%u hppir=%u\n",
-	    __func__, ci->ci_data.cpu_name,
-	    gicc_read(sc, GICC_PMR),
-	    gicc_read(sc, GICC_HPPIR));
-#elif 0
-	printf("(%u:%d", ci->ci_index, old_ipl);
-#endif
 
 	for (;;) {
 		uint32_t iar = gicc_read(sc, GICC_IAR);
 		uint32_t irq = __SHIFTOUT(iar, GICC_IAR_IRQ);
-		//printf(".%u", irq);
 		if (irq == GICC_IAR_IRQ_SPURIOUS) {
 			iar = gicc_read(sc, GICC_IAR);
 			irq = __SHIFTOUT(iar, GICC_IAR_IRQ);
 			if (irq == GICC_IAR_IRQ_SPURIOUS)
 				break;
-			//printf(".%u", irq);
 		}
 
 		//const uint32_t cpuid = __SHIFTOUT(iar, GICC_IAR_CPUID_MASK);
@@ -269,27 +259,17 @@ armgic_irq_handler(void *tf)
 		 *
 		 * However, if are just raising ipl, we can just update ci_cpl.
 		 */
-#if 0
-		const int ipl = armgic_priority_to_ipl(gicc_read(sc, GICC_RPR));
-		KASSERTMSG(panicstr != NULL || ipl == is->is_ipl,
-		    "%s: irq %d: running ipl %d != source ipl %u",
-		    ci->ci_data.cpu_name, irq, ipl, is->is_ipl);
-#else
 		const int ipl = is->is_ipl;
-#endif
 		if (__predict_false(ipl < ci->ci_cpl)) {
-			//printf("<");
 			pic_do_pending_ints(I32_bit, ipl, tf);
 			KASSERT(ci->ci_cpl == ipl);
 		} else {
 			KASSERTMSG(ipl > ci->ci_cpl, "ipl %d cpl %d hw-ipl %#x",
 			    ipl, ci->ci_cpl,
 			    gicc_read(sc, GICC_PMR));
-			//printf(">");
 			gicc_write(sc, GICC_PMR, armgic_ipl_to_priority(ipl));
 			ci->ci_cpl = ipl;
 		}
-		//printf("$");
 		cpsie(I32_bit);
 		pic_dispatch(is, tf);
 		cpsid(I32_bit);
@@ -301,24 +281,14 @@ armgic_irq_handler(void *tf)
 #endif
 	}
 
-	// printf("%s(%p): exit (%zu dispatched)\n", __func__, tf, n);
 	/*
 	 * Now handle any pending ints.
 	 */
-	//printf("!");
 	KASSERT(old_ipl != IPL_HIGH);
 	pic_do_pending_ints(I32_bit, old_ipl, tf);
 	KASSERTMSG(ci->ci_cpl == old_ipl, "ci_cpl %d old_ipl %d", ci->ci_cpl, old_ipl);
 	KASSERT(old_mtx_count == ci->ci_mtx_count);
 	KASSERT(old_l_biglocks == ci->ci_curlwp->l_biglocks);
-#if 0
-	printf("%s(exit): %s(%d): pmr=%u hppir=%u\n",
-	    __func__, ci->ci_data.cpu_name, ci->ci_cpl,
-	    gicc_read(sc, GICC_PMR),
-	    gicc_read(sc, GICC_HPPIR));
-#elif 0
-	printf("->%#x)", ((struct trapframe *)tf)->tf_pc);
-#endif
 }
 
 void
@@ -371,10 +341,6 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		}
 		if (new_cfg != cfg) {
 			gicd_write(sc, cfg_reg, new_cfg);
-#if 0
-			printf("%s: irq %u: cfg changed from %#x to %#x\n",
-			    pic->pic_name, is->is_irq, cfg, new_cfg);
-#endif
 		}
 #ifdef MULTIPROCESSOR
 	} else {
@@ -395,13 +361,6 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	priority &= ~(0xff << byte_shift);
 	priority |= armgic_ipl_to_priority(is->is_ipl) << byte_shift;
 	gicd_write(sc, priority_reg, priority);
-
-#if 0
-	printf("%s: irq %u: target %#x cfg %u priority %#x (%u)\n",
-	    pic->pic_name, is->is_irq, (targets >> byte_shift) & 0xff,
-	    (cfg >> twopair_shift) & 3, (priority >> byte_shift) & 0xff,
-	    is->is_ipl);
-#endif
 }
 
 #ifdef MULTIPROCESSOR
@@ -500,9 +459,7 @@ armgic_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 		sgir |= GICD_SGIR_TargetListFilter_NotMe;
 	}
 
-	//printf("%s: %s: %#x", __func__, curcpu()->ci_data.cpu_name, sgir);
 	gicd_write(sc, GICD_SGIR, sgir);
-	//printf("\n");
 }
 #endif
 
