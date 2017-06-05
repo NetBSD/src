@@ -1,4 +1,4 @@
-/*	$NetBSD: calc3.tab.c,v 1.2 2017/02/11 19:33:13 christos Exp $	*/
+/*	$NetBSD: calc3.tab.c,v 1.3 2017/06/05 18:54:30 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -445,6 +445,9 @@ YYPARSE_DECL()
     }
 #endif
 
+    memset(&yyval,  0, sizeof(yyval));
+    memset(&yylval, 0, sizeof(yylval));
+
     yym = 0;
     yyn = 0;
     yynerrs = 0;
@@ -629,7 +632,7 @@ case 18:
 #line 73 "calc3.y"
 	{  yyval = (*base) * yystack.l_mark[-1] + yystack.l_mark[0]; }
 break;
-#line 631 "calc3.tab.c"
+#line 634 "calc3.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;

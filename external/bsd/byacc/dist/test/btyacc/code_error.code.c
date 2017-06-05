@@ -1,4 +1,4 @@
-/*	$NetBSD: code_error.code.c,v 1.2 2017/02/11 19:33:12 christos Exp $	*/
+/*	$NetBSD: code_error.code.c,v 1.3 2017/06/05 18:54:30 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -501,6 +501,9 @@ YYPARSE_DECL()
     }
     if (yydebug)
         fprintf(stderr, "%sdebug[<# of symbols on state stack>]\n", YYPREFIX);
+#endif
+#if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
+    memset(yyerror_loc_range, 0, sizeof(yyerror_loc_range));
 #endif
 
 #if YYBTYACC
