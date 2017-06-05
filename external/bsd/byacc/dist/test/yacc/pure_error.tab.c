@@ -1,4 +1,4 @@
-/*	$NetBSD: pure_error.tab.c,v 1.2 2017/02/11 19:33:13 christos Exp $	*/
+/*	$NetBSD: pure_error.tab.c,v 1.3 2017/06/05 18:54:30 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -337,6 +337,9 @@ YYPARSE_DECL()
             yydebug = yyn - '0';
     }
 #endif
+
+    memset(&yyval,  0, sizeof(yyval));
+    memset(&yylval, 0, sizeof(yylval));
 
     yym = 0;
     yyn = 0;

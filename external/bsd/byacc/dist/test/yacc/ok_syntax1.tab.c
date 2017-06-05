@@ -1,4 +1,4 @@
-/*	$NetBSD: ok_syntax1.tab.c,v 1.2 2017/02/11 19:33:13 christos Exp $	*/
+/*	$NetBSD: ok_syntax1.tab.c,v 1.3 2017/06/05 18:54:30 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -469,6 +469,9 @@ YYPARSE_DECL()
     }
 #endif
 
+    memset(&yyval,  0, sizeof(yyval));
+    memset(&yylval, 0, sizeof(yylval));
+
     yym = 0;
     yyn = 0;
     yynerrs = 0;
@@ -653,7 +656,7 @@ case 18:
 #line 101 "ok_syntax1.y"
 	{  yyval.ival = (*base) * yystack.l_mark[-1].ival + yystack.l_mark[0].ival; }
 break;
-#line 655 "ok_syntax1.tab.c"
+#line 658 "ok_syntax1.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;
