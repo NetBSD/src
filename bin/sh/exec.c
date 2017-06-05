@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.47 2017/05/15 19:55:20 kre Exp $	*/
+/*	$NetBSD: exec.c,v 1.47.2.1 2017/06/05 08:10:24 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.47 2017/05/15 19:55:20 kre Exp $");
+__RCSID("$NetBSD: exec.c,v 1.47.2.1 2017/06/05 08:10:24 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ shellexec(char **argv, char **envp, const char *path, int idx, int vforked)
 		e = errno;
 	} else {
 		e = ENOENT;
-		while ((cmdname = padvance(&path, argv[0])) != NULL) {
+		while ((cmdname = padvance(&path, argv[0], 1)) != NULL) {
 			if (--idx < 0 && pathopt == NULL) {
 				tryexec(cmdname, argv, envp, vforked);
 				if (errno != ENOENT && errno != ENOTDIR)
@@ -296,7 +296,7 @@ break2:;
 const char *pathopt;
 
 char *
-padvance(const char **path, const char *name)
+padvance(const char **path, const char *name, int magic_percent)
 {
 	const char *p;
 	char *q;
@@ -305,8 +305,12 @@ padvance(const char **path, const char *name)
 
 	if (*path == NULL)
 		return NULL;
+	if (magic_percent)
+		magic_percent = '%';
+
 	start = *path;
-	for (p = start ; *p && *p != ':' && *p != '%' ; p++);
+	for (p = start ; *p && *p != ':' && *p != magic_percent ; p++)
+		;
 	len = p - start + strlen(name) + 2;	/* "2" is for '/' and '\0' */
 	while (stackblocksize() < len)
 		growstackblock();
@@ -314,13 +318,15 @@ padvance(const char **path, const char *name)
 	if (p != start) {
 		memcpy(q, start, p - start);
 		q += p - start;
-		*q++ = '/';
+		if (q[-1] != '/')
+			*q++ = '/';
 	}
 	strcpy(q, name);
 	pathopt = NULL;
-	if (*p == '%') {
+	if (*p == magic_percent) {
 		pathopt = ++p;
-		while (*p && *p != ':')  p++;
+		while (*p && *p != ':')
+			p++;
 	}
 	if (*p == ':')
 		*path = p + 1;
@@ -441,7 +447,7 @@ printentry(struct tblentry *cmdp, int verbose)
 		idx = cmdp->param.index;
 		path = pathval();
 		do {
-			name = padvance(&path, cmdp->cmdname);
+			name = padvance(&path, cmdp->cmdname, 1);
 			stunalloc(name);
 		} while (--idx >= 0);
 		if (verbose)
@@ -574,7 +580,7 @@ find_command(char *name, struct cmdentry *entry, int act, const char *path)
 	e = ENOENT;
 	idx = -1;
 loop:
-	while ((fullname = padvance(&path, name)) != NULL) {
+	while ((fullname = padvance(&path, name, 1)) != NULL) {
 		stunalloc(fullname);
 		idx++;
 		if (pathopt) {
@@ -1075,7 +1081,7 @@ typecmd(int argc, char **argv)
 				char *name;
 				int j = entry.u.index;
 				do {
-					name = padvance(&path, arg);
+					name = padvance(&path, arg, 1);
 					stunalloc(name);
 				} while (--j >= 0);
 				if (!v_flag)
