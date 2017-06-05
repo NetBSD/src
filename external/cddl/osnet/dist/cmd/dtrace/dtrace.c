@@ -762,7 +762,7 @@ compile_str(dtrace_cmd_t *dcp)
 	    dcp->dc_spec, g_cflags | DTRACE_C_PSPEC, g_argc, g_argv)) == NULL)
 		dfatal("invalid probe specifier %s", dcp->dc_arg);
 
-	if ((p = strpbrk(dcp->dc_arg, "{/;")) != NULL)
+	if ((p = strpbrk(dcp->dc_arg, "{/; ")) != NULL)
 		*p = '\0'; /* crop name for reporting */
 
 	dcp->dc_desc = "description";
