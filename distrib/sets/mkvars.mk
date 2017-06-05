@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.31 2017/04/21 22:46:26 christos Exp $
+# $NetBSD: mkvars.mk,v 1.32 2017/06/05 23:44:27 christos Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -18,6 +18,7 @@ MKEXTRAVARS= \
 	MKCOMPAT \
 	MKCOMPATTESTS \
 	MKCOMPATMODULES \
+	MKDTC \
 	MKDYNAMICROOT \
 	MKMANPAGES \
 	MKSLJIT \
