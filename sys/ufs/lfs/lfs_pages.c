@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.12 2017/06/04 08:05:42 hannken Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.13 2017/06/05 01:29:21 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.12 2017/06/04 08:05:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.13 2017/06/05 01:29:21 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -506,8 +506,8 @@ retry:
 		
 		/* Remove us from paging queue, if we were on it */
 		mutex_enter(&lfs_lock);
-		if (ip->i_flags & IN_PAGING) {
-			ip->i_flags &= ~IN_PAGING;
+		if (ip->i_flag & IN_PAGING) {
+			ip->i_flag &= ~IN_PAGING;
 			TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 		}
 		mutex_exit(&lfs_lock);
@@ -688,8 +688,8 @@ retry:
 	if (pagedaemon) {
 		mutex_exit(vp->v_interlock);
 		mutex_enter(&lfs_lock);
-		if (!(ip->i_flags & IN_PAGING)) {
-			ip->i_flags |= IN_PAGING;
+		if (!(ip->i_flag & IN_PAGING)) {
+			ip->i_flag |= IN_PAGING;
 			TAILQ_INSERT_TAIL(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 		}
 		cv_broadcast(&lfs_writerd_cv);
@@ -898,8 +898,8 @@ retry:
 	 */
 	if (origendoffset == 0 || ap->a_flags & PGO_ALLPAGES) {
 		mutex_enter(&lfs_lock);
-		if (ip->i_flags & IN_PAGING) {
-			ip->i_flags &= ~IN_PAGING;
+		if (ip->i_flag & IN_PAGING) {
+			ip->i_flag &= ~IN_PAGING;
 			TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 		}
 		mutex_exit(&lfs_lock);
