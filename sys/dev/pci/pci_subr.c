@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.183 2017/05/29 07:09:20 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.184 2017/06/05 13:35:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.183 2017/05/29 07:09:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.184 2017/06/05 13:35:33 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2741,6 +2741,7 @@ pci_conf_print_pcie_power(uint8_t base, unsigned int scale)
 			break;
 		}
 		printf("%s\n", s);
+		return;
 	}
 
 	for (unsigned int i = scale; i > 0; i--)
