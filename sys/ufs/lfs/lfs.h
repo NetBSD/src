@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.201 2017/04/01 14:43:00 maya Exp $	*/
+/*	$NetBSD: lfs.h,v 1.202 2017/06/05 01:01:42 maya Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -509,13 +509,6 @@ union lfs_dinode {
 
 /* Unused logical block number */
 #define LFS_UNUSED_LBN	-1
-
-/*
- * "struct inode" associated definitions
- */
-
-/* For convenience */
-#define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_MODIFY|IN_ACCESSED|IN_CLEANING)
 
 /*
  * On-disk and in-memory checkpoint segment usage structure.
