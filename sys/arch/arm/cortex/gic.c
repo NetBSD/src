@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.21 2017/05/30 22:00:25 jmcneill Exp $	*/
+/*	$NetBSD: gic.c,v 1.21.2.1 2017/06/05 08:20:36 snj Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.21 2017/05/30 22:00:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.21.2.1 2017/06/05 08:20:36 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -408,23 +408,25 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 static void
 armgic_cpu_init_priorities(struct armgic_softc *sc)
 {
+	/* Set lowest priority, i.e. disable interrupts */
+	for (size_t i = 0; i < 32; i += 4) {
+		const bus_size_t priority_reg = GICD_IPRIORITYRn(i / 4);
+		gicd_write(sc, priority_reg, ~0);
+	}
+}
+
+static void
+armgic_cpu_update_priorities(struct armgic_softc *sc)
+{
 	uint32_t enabled = sc->sc_enabled_local;
 	for (size_t i = 0; i < 32; i += 4, enabled >>= 4) {
-		/*
-		 * If there are no enabled interrupts for the priority register,
-		 * don't bother changing it.
-		 */
-		if ((enabled & 0x0f) == 0)
-			continue;
-		/*
-		 * Since priorities are in 3210 order, it'
-		 */
 		const bus_size_t priority_reg = GICD_IPRIORITYRn(i / 4);
 		uint32_t priority = gicd_read(sc, priority_reg);
 		uint32_t byte_mask = 0xff;
 		size_t byte_shift = 0;
 		for (size_t j = 0; j < 4; j++, byte_mask <<= 8, byte_shift += 8) {
 			struct intrsource * const is = sc->sc_pic.pic_sources[i+j];
+			priority |= byte_mask;
 			if (is == NULL || is == &armgic_dummy_source)
 				continue;
 			priority &= ~byte_mask;
@@ -458,12 +460,13 @@ armgic_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 	struct armgic_softc * const sc = PICTOSOFTC(pic);
 	sc->sc_mptargets |= 1 << cpu_index(ci);
 	KASSERTMSG(ci->ci_cpl == IPL_HIGH, "ipl %d not IPL_HIGH", ci->ci_cpl);
+	armgic_cpu_init_priorities(sc);
 	if (!CPU_IS_PRIMARY(ci)) {
 		if (sc->sc_mptargets != 1) {
 			armgic_cpu_init_targets(sc);
 		}
 		if (sc->sc_enabled_local) {
-			armgic_cpu_init_priorities(sc);
+			armgic_cpu_update_priorities(sc);
 			gicd_write(sc, GICD_ISENABLERn(0),
 			    sc->sc_enabled_local);
 		}
@@ -612,6 +615,8 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	    pic_handle_softint, (void *)SOFTINT_SERIAL);
 #endif
 #ifdef MULTIPROCESSOR
+	armgic_cpu_init(&sc->sc_pic, curcpu());
+
 	intr_establish(ARMGIC_SGI_IPIBASE + IPI_AST, IPL_VM,
 	    IST_MPSAFE | IST_EDGE, pic_ipi_ast, (void *)-1);
 	intr_establish(ARMGIC_SGI_IPIBASE + IPI_XCALL, IPL_HIGH,
@@ -630,7 +635,6 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	intr_establish(ARMGIC_SGI_IPIBASE + IPI_KPREEMPT, IPL_VM,
 	    IST_MPSAFE | IST_EDGE, pic_ipi_kpreempt, (void *)-1);
 #endif
-	armgic_cpu_init(&sc->sc_pic, curcpu());
 #endif
 
 	const u_int ppis = popcount32(sc->sc_gic_valid_lines[0] >> 16);
