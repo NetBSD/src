@@ -1,10 +1,10 @@
-/*	$NetBSD: main.c,v 1.13 2017/02/11 19:33:12 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2017/06/05 18:54:30 christos Exp $	*/
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.13 2017/02/11 19:33:12 christos Exp $");
-/* Id: main.c,v 1.59 2017/02/02 00:44:38 tom Exp  */
+__RCSID("$NetBSD: main.c,v 1.14 2017/06/05 18:54:30 christos Exp $");
+/* Id: main.c,v 1.60 2017/04/30 20:57:56 Julien.Ramseier Exp  */
 
 #include <signal.h>
 #ifndef _WIN32
@@ -272,7 +272,7 @@ setflag(int ch)
 #if defined(YYBTYACC)
 	locations = 1;
 #else
-	unsupported_flag_warning("-B", "reconfigure with --enable-btyacc");
+	unsupported_flag_warning("-L", "reconfigure with --enable-btyacc");
 #endif
 	break;
 

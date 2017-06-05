@@ -1,4 +1,4 @@
-/*	$NetBSD: quote_calc2.tab.c,v 1.2 2017/02/11 19:33:12 christos Exp $	*/
+/*	$NetBSD: quote_calc2.tab.c,v 1.3 2017/06/05 18:54:30 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -683,6 +683,9 @@ YYPARSE_DECL()
     if (yydebug)
         fprintf(stderr, "%sdebug[<# of symbols on state stack>]\n", YYPREFIX);
 #endif
+#if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
+    memset(yyerror_loc_range, 0, sizeof(yyerror_loc_range));
+#endif
 
 #if YYBTYACC
     yyps = yyNewState(0); if (yyps == 0) goto yyenomem;
@@ -1257,7 +1260,7 @@ case 18:
 #line 70 "quote_calc2.y"
 	{  yyval = base * yystack.l_mark[-1] + yystack.l_mark[0]; }
 break;
-#line 1259 "quote_calc2.tab.c"
+#line 1262 "quote_calc2.tab.c"
     default:
         break;
     }
