@@ -24,7 +24,11 @@
 #include "srcpos.h"
 
 extern int yylex(void);
+#ifndef YYBYACC
 extern void yyerror(char const *s);
+#else
+#include "dtc-parser.h"
+#endif
 #define ERROR(loc, ...) \
 	do { \
 		srcpos_error((loc), "Error", __VA_ARGS__); \
@@ -471,7 +475,14 @@ subnode:
 
 %%
 
+#ifndef YYBYACC
 void yyerror(char const *s)
 {
 	ERROR(&yylloc, "%s", s);
 }
+#else
+void yyerror(YYLTYPE *loc, char const *s)
+{
+	ERROR(loc, "%s", s);
+}
+#endif
