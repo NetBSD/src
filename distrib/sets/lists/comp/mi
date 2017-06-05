@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2138 2017/05/27 21:02:54 bouyer Exp $
+#	$NetBSD: mi,v 1.2139 2017/06/05 23:44:08 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -26,6 +26,7 @@
 ./usr/bin/cvs					comp-cvs-bin		cvs
 ./usr/bin/cvsbug				comp-cvs-bin		cvs
 ./usr/bin/cvslatest				comp-cvs-bin
+./usr/bin/dtc					comp-util-bin		dtc
 ./usr/bin/elfedit				comp-util-bin		binutils
 ./usr/bin/f77					comp-obsolete	obsolete
 ./usr/bin/fgen					comp-util-bin
