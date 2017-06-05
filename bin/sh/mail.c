@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.c,v 1.16 2003/08/07 09:05:33 agc Exp $	*/
+/*	$NetBSD: mail.c,v 1.16.90.1 2017/06/05 08:10:24 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mail.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mail.c,v 1.16 2003/08/07 09:05:33 agc Exp $");
+__RCSID("$NetBSD: mail.c,v 1.16.90.1 2017/06/05 08:10:24 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: mail.c,v 1.16 2003/08/07 09:05:33 agc Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "shell.h"
 #include "exec.h"	/* defines padvance() */
@@ -61,7 +62,7 @@ __RCSID("$NetBSD: mail.c,v 1.16 2003/08/07 09:05:33 agc Exp $");
 
 
 STATIC int nmboxes;			/* number of mailboxes */
-STATIC time_t mailtime[MAXMBOXES];	/* times of mailboxes */
+STATIC off_t mailsize[MAXMBOXES];	/* sizes of mailboxes */
 
 
 
@@ -88,12 +89,14 @@ chkmail(int silent)
 	setstackmark(&smark);
 	mpath = mpathset() ? mpathval() : mailval();
 	for (i = 0 ; i < nmboxes ; i++) {
-		p = padvance(&mpath, nullstr);
+		p = padvance(&mpath, nullstr, 1);
 		if (p == NULL)
 			break;
+		stunalloc(p);
 		if (*p == '\0')
 			continue;
-		for (q = p ; *q ; q++);
+		for (q = p ; *q ; q++)
+			;
 		if (q[-1] != '/')
 			abort();
 		q[-1] = '\0';			/* delete trailing '/' */
@@ -108,11 +111,32 @@ chkmail(int silent)
 #else /* this is what it should do */
 		if (stat(p, &statb) < 0)
 			statb.st_size = 0;
-		if (statb.st_size > mailtime[i] && ! silent) {
-			out2str(pathopt ? pathopt : "you have mail");
+		if (statb.st_size > mailsize[i] && ! silent) {
+			const char *pp;
+
+			if ((pp = pathopt) != NULL) {
+				int len = 0;
+
+				while (*pp && *pp != ':')
+					len++, pp++;
+				if (len == 0) {
+					CHECKSTRSPACE(16, p);
+					strcat(p, ": file changed");
+				} else {
+					while (stackblocksize() <= len)
+						growstackblock();
+					p = stackblock();
+					memcpy(p, pathopt, len);
+					p[len] = '\0';
+				}
+				pp = p;
+			} else
+				pp = "you have mail";
+
+			out2str(pp);
 			out2c('\n');
 		}
-		mailtime[i] = statb.st_size;
+		mailsize[i] = statb.st_size;
 #endif
 	}
 	nmboxes = i;

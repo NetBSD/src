@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.140 2017/05/13 03:26:03 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.140.2.1 2017/06/05 08:10:24 snj Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.140 2017/05/13 03:26:03 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.140.2.1 2017/06/05 08:10:24 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -1300,7 +1300,7 @@ find_dot_file(char *basename)
 				error("%s: is a block device", basename);
 			return basename;
 		}
-	} else while ((fullname = padvance(&path, basename)) != NULL) {
+	} else while ((fullname = padvance(&path, basename, 1)) != NULL) {
 		if ((stat(fullname, &statb) == 0)) {
 			/* weird format is to ease future code... */
 			if (S_ISDIR(statb.st_mode) || S_ISBLK(statb.st_mode))
