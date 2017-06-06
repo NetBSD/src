@@ -1,4 +1,4 @@
-/* $NetBSD: padvar.h,v 1.8 2017/05/27 10:02:26 nat Exp $ */
+/* $NetBSD: padvar.h,v 1.9 2017/06/06 07:31:40 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -44,7 +44,7 @@ typedef struct pad_softc {
 	struct audio_softc *sc_audiodev;
 	int		sc_blksize;
 
-#define PAD_BLKSIZE	1024
+#define PAD_BLKSIZE	8192
 #define PAD_BUFSIZE	65536
 	uint8_t		sc_audiobuf[PAD_BUFSIZE];
 	uint32_t	sc_buflen;
