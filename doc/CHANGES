@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2286 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2286.2.1 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -283,7 +283,7 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	wpa_supplicant(8): Added interface matching rules [roy 20160323]
 	lua: Applied second and third patch from http://lua.org/bugs.html
 		[mbalmer 20160325]
-	i366: Add a GENERIC_PAE kernel that supports >4GB systems.  [mrg 20160326]
+	i386: Add a GENERIC_PAE kernel that supports >4GB systems.  [mrg 20160326]
 	network: Drop the concept of cloning/cloned routes [ozaki-r 20160404]
 	network: Remove RTF_CLONING, RTF_XRESOLVE, RTF_LLINFO, RTF_CLONED and
 		RTM_RESOLVE [ozaki-r 20160404]
