@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.32 2017/06/01 09:44:30 pgoyette Exp $ */
+/* $NetBSD: pad.c,v 1.33 2017/06/06 07:18:38 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.32 2017/06/01 09:44:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.33 2017/06/06 07:18:38 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -345,8 +345,8 @@ pad_close(dev_t dev, int flags, int fmt, struct lwp *l)
 }
 
 #define PAD_BYTES_PER_SEC   (44100 * sizeof(int16_t) * 2)
-#define TIMENEXTREAD	    (PAD_BLKSIZE * 1000000 / PAD_BYTES_PER_SEC)
-#define BYTESTOSLEEP 	    (PAD_BLKSIZE)
+#define BYTESTOSLEEP 	    (int64_t)(PAD_BLKSIZE)
+#define TIMENEXTREAD	    (int64_t)(BYTESTOSLEEP * 1000000 / PAD_BYTES_PER_SEC)
 
 int
 pad_read(dev_t dev, struct uio *uio, int flags)
