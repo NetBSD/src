@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.55 2016/04/04 07:37:08 ozaki-r Exp $ */
+/*	$NetBSD: arp.c,v 1.56 2017/06/06 19:59:10 ryo Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.55 2016/04/04 07:37:08 ozaki-r Exp $");
+__RCSID("$NetBSD: arp.c,v 1.56 2017/06/06 19:59:10 ryo Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ static int set(int, char **);
 static void usage(void) __dead;
 
 static int aflag, nflag, vflag;
-static struct sockaddr_in so_mask = { 
+static struct sockaddr_in so_mask = {
 	.sin_len = 8,
 	.sin_addr = {
 		.s_addr = 0xffffffff
@@ -206,7 +206,7 @@ file(const char *name)
 		inputstring = line;
 		for (ap = argv; ap < &argv[sizeof(argv) / sizeof(argv[0])] &&
 		    (*ap = stresep(&inputstring, " \t", '\\')) != NULL;) {
-		       if (**ap != '\0')
+			if (**ap != '\0')
 				ap++;
 		}
 		i = ap - argv;
@@ -257,7 +257,7 @@ getlink(const char *name, struct sockaddr_dl *sdl)
 }
 
 /*
- * Set an individual arp entry 
+ * Set an individual arp entry
  */
 static int
 set(int argc, char **argv)
@@ -291,8 +291,8 @@ set(int argc, char **argv)
 			flags |= RTF_ANNOUNCE;
 			doing_proxy = 1;
 			if (argc && strncmp(argv[1], "pro", 3) == 0) {
-			        export_only = 1;
-			        argc--; argv++;
+				export_only = 1;
+				argc--; argv++;
 			}
 		} else if (strncmp(argv[0], "trail", 5) == 0) {
 			warnx("%s: Sending trailers is no longer supported",
@@ -387,7 +387,7 @@ is_llinfo(const struct sockaddr_dl *sdl, int rtflags)
 }
 
 /*
- * Delete an arp entry 
+ * Delete an arp entry
  */
 int
 delete(const char *host, const char *info)
@@ -401,7 +401,7 @@ delete(const char *host, const char *info)
 
 	s = getsocket();
 	if (info && strncmp(info, "pro", 3) == 0)
-		 sin_m.sin_other = SIN_PROXY;
+		sin_m.sin_other = SIN_PROXY;
 	if (getinetaddr(host, &sin_m.sin_addr) == -1)
 		return (1);
 tryagain:
@@ -572,13 +572,13 @@ atosdl(const char *ss, struct sockaddr_dl *sdl)
 	int i;
 	unsigned long b;
 	char *endp;
-	char *p; 
+	char *p;
 	char *t, *r;
 
 	p = LLADDR(sdl);
 	endp = ((char *)(void *)sdl) + sdl->sdl_len;
 	i = 0;
-	
+
 	b = strtoul(ss, &t, 16);
 	if (b > 255 || t == ss)
 		return 1;
@@ -605,8 +605,8 @@ usage(void)
 
 	progname = getprogname();
 	(void)fprintf(stderr, "Usage: %s [-n] hostname\n", progname);
-	(void)fprintf(stderr, "	      %s [-nv] -a\n", progname);
-	(void)fprintf(stderr, "	      %s [-v] -d [-a|hostname [pub [proxy]]]\n",
+	(void)fprintf(stderr, "       %s [-nv] -a\n", progname);
+	(void)fprintf(stderr, "       %s [-v] -d [-a|hostname [pub [proxy]]]\n",
 	    progname);
 	(void)fprintf(stderr, "       %s -s hostname ether_addr [temp] [pub [proxy]]\n",
 	    progname);
@@ -725,7 +725,7 @@ getifname(u_int16_t ifindex, char *ifname, size_t l)
 	}
 
 	for (addr = ifaddrs; addr; addr = addr->ifa_next) {
-		if (addr->ifa_addr == NULL || 
+		if (addr->ifa_addr == NULL ||
 		    addr->ifa_addr->sa_family != AF_LINK)
 			continue;
 
