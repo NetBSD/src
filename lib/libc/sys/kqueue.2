@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.42 2017/06/06 17:01:59 kamil Exp $
+.\"	$NetBSD: kqueue.2,v 1.43 2017/06/06 20:12:54 abhinav Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd December 8, 2015
+.Dd June 6, 2017
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -424,7 +424,7 @@ The file referenced by the descriptor was renamed.
 .It NOTE_REVOKE
 Access to the file was revoked via
 .Xr revoke 2
-or the underlying fileystem was unmounted.
+or the underlying filesystem was unmounted.
 .El
 .Pp
 On return,
