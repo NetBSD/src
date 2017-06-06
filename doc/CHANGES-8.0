@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.5 2017/06/06 09:31:21 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.6 2017/06/06 16:29:36 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -122,4 +122,15 @@ external/bsd/blacklist/bin/blacklistd.conf.5	1.6
 
 	Improve wording.
 	[sevan, ticket #12]
+
+sys/arch/arm/fdt/plfb_fdt.c			1.2
+sys/arch/arm/vexpress/vexpress_platform.c	1.3
+sys/arch/evbarm/conf/VEXPRESS_A15		1.13
+sys/arch/evbarm/fdt/fdt_machdep.c		1.5
+sys/arch/evbarm/fdt/fdt_machdep.c		1.6
+sys/dev/ic/pl050.c				1.2
+
+	Enable using the fb driver as console device on VEXPRESS_A15
+	by passing the "console=fb" argument on the kernel cmdline.
+	[jmcneill, ticket #13]
 
