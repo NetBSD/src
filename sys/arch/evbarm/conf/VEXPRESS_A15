@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VEXPRESS_A15,v 1.12 2017/06/03 17:05:23 jmcneill Exp $
+#	$NetBSD: VEXPRESS_A15,v 1.12.2.1 2017/06/06 16:26:53 snj Exp $
 #
 #	ARM Versatile Express A15
 #
@@ -68,9 +68,9 @@ genfb*		at fdt?
 wsdisplay*	at genfb?
 options 	VCONS_DRAW_INTR
 options 	WSEMUL_VT100
-options 	WS_DEFAULT_FB=WSCOL_WHITE
+options 	WS_DEFAULT_FG=WSCOL_WHITE
 options 	WS_DEFAULT_BG=WSCOL_BLACK
-options 	WS_KERNEL_FB=WSCOL_GREEN
+options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WS_KERNEL_BG=WSCOL_BLACK
 options 	WSDISPLAY_COMPAT_PCVT
 options 	WSDISPLAY_COMPAT_SYSCONS
