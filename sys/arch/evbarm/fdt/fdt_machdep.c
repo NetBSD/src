@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.5 2017/06/06 00:28:05 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.6 2017/06/06 09:56:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.5 2017/06/06 00:28:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.6 2017/06/06 09:56:00 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -168,6 +168,11 @@ initarm(void *arg)
 	DPRINTN((uintptr_t)fdt_addr_r, 16);
 	DPRINT(">");
 
+	const int chosen = OF_finddevice("/chosen");
+	if (chosen >= 0)
+		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
+	boot_args = bootargs;
+
 	DPRINT(" devmap");
 	pmap_devmap_register(plat->devmap());
 
@@ -178,11 +183,6 @@ initarm(void *arg)
 	DPRINT(" cpufunc");
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
-
-	const int chosen = OF_finddevice("/chosen");
-	if (chosen >= 0)
-		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
-	boot_args = bootargs;
 
 	/*
 	 * If stdout-path is specified on the command line, override the
