@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.84 2017/06/06 04:11:41 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.85 2017/06/06 18:08:23 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.84 2017/06/06 04:11:41 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.85 2017/06/06 18:08:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1530,34 +1530,36 @@ crypto_kdone(struct cryptkop *krp)
 int
 crypto_getfeat(int *featp)
 {
-	int hid, kalg, feat = 0;
 
-	if (crypto_userasymcrypto == 0)
+	if (crypto_userasymcrypto == 0) {
+		*featp = 0;
 		return 0;
+	}
 
 	mutex_enter(&crypto_drv_mtx);
 
-	for (hid = 0; hid < crypto_drivers_num; hid++) {
+	int feat = 0;
+	for (int hid = 0; hid < crypto_drivers_num; hid++) {
 		struct cryptocap *cap;
 		cap = crypto_checkdriver_uninit(hid);
 		if (cap == NULL)
 			continue;
 
+		crypto_driver_lock(cap);
+
 		if ((cap->cc_flags & CRYPTOCAP_F_SOFTWARE) &&
-		    crypto_devallowsoft == 0) {
-			crypto_driver_unlock(cap);
-			continue;
-		}
-		if (cap->cc_kprocess == NULL) {
-			crypto_driver_unlock(cap);
-			continue;
-		}
-		for (kalg = 0; kalg < CRK_ALGORITHM_MAX; kalg++)
+		    crypto_devallowsoft == 0)
+			goto unlock;
+
+		if (cap->cc_kprocess == NULL)
+			goto unlock;
+
+		for (int kalg = 0; kalg < CRK_ALGORITHM_MAX; kalg++)
 			if ((cap->cc_kalg[kalg] &
 			    CRYPTO_ALG_FLAG_SUPPORTED) != 0)
 				feat |=  1 << kalg;
 
-		crypto_driver_unlock(cap);
+unlock:		crypto_driver_unlock(cap);
 	}
 
 	mutex_exit(&crypto_drv_mtx);
