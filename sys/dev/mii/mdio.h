@@ -1,3 +1,5 @@
+/*	$NetBSD: mdio.h,v 1.4 2017/06/06 04:56:12 msaitoh Exp $	*/
+
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
