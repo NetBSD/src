@@ -233,7 +233,7 @@ struct data data_append_zeroes(struct data d, int len)
 
 struct data data_append_align(struct data d, int align)
 {
-	int newlen = ALIGN(d.len, align);
+	int newlen = FDTALIGN2(d.len, align);
 	return data_append_zeroes(d, newlen - d.len);
 }
 

@@ -26,6 +26,8 @@
  */
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#define FDTALIGN2(x, a)	(((x) + (a) - 1) & ~((a) - 1))
+#define PALIGN(p, a)	((void *)(FDTALIGN2((unsigned long)(p), (a))))
 
 static inline void __attribute__((noreturn)) die(const char *str, ...)
 {

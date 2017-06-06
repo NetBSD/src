@@ -226,7 +226,7 @@ void srcpos_update(struct srcpos *pos, const char *text, int len)
 			current_srcfile->colno = 1;
 		} else if (text[i] == '\t') {
 			current_srcfile->colno =
-				ALIGN(current_srcfile->colno, TAB_SIZE);
+				FDTALIGN2(current_srcfile->colno, TAB_SIZE);
 		} else {
 			current_srcfile->colno++;
 		}

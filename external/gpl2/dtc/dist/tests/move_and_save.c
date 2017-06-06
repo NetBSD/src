@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 	fdt = load_blob_arg(argc, argv);
 	inname = argv[1];
 
-	shuntsize = ALIGN(fdt_totalsize(fdt) / 2, sizeof(uint64_t));
+	shuntsize = FDTALIGN2(fdt_totalsize(fdt) / 2, sizeof(uint64_t));
 	bufsize = fdt_totalsize(fdt) + shuntsize;
 	buf = xmalloc(bufsize);
 
