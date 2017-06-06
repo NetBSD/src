@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.33 2017/06/06 07:18:38 nat Exp $ */
+/* $NetBSD: pad.c,v 1.34 2017/06/06 07:27:15 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.33 2017/06/06 07:18:38 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.34 2017/06/06 07:27:15 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -322,10 +322,6 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 		return EBUSY;
 	}
 	
-	getmicrotime(&sc->sc_last);
-	sc->sc_bytes_count = 0;
-	sc->sc_remainder = 0;
-
 	return 0;
 }
 
@@ -438,6 +434,7 @@ pad_audio_open(void *opaque, int flags)
 		return EIO;
 
 	getmicrotime(&sc->sc_last);
+	sc->sc_bytes_count = 0;
 	sc->sc_remainder = 0;
 
 	return 0;
