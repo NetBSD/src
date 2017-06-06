@@ -1,4 +1,4 @@
-/* $NetBSD: pl050.c,v 1.1 2017/06/03 17:03:36 jmcneill Exp $ */
+/* $NetBSD: pl050.c,v 1.2 2017/06/06 00:26:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl050.c,v 1.1 2017/06/03 17:03:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl050.c,v 1.2 2017/06/06 00:26:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,6 +164,9 @@ plkmi_attach(struct plkmi_softc *sc)
 			sc->sc_slot = slot;
 			break;
 		}
+
+	if (sc->sc_slot == PCKBPORT_KBD_SLOT)
+		pckbport_cnattach(sc, &plkmi_ops, sc->sc_slot);
 }
 
 int
