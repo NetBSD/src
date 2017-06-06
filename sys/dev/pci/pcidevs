@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1289 2017/05/23 07:12:56 nonaka Exp $
+$NetBSD: pcidevs,v 1.1290 2017/06/06 05:39:06 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -6733,7 +6733,9 @@ product VMWARE VMSCSI	0x0730	Virtual SCSI
 product VMWARE VMCI	0x0740	Virtual Machine Communication Interface
 product VMWARE VMEM	0x0750	Virtual 82545EM
 product VMWARE VMEB	0x0760	Virtual 82546EB
-product VMWARE VMUSB	0x0770	Virtual USB
+product VMWARE VMUSB	0x0770	Virtual EHCI
+product VMWARE VMUHCI	0x0774	Virtual UHCI
+product VMWARE VMXHCI	0x0778	Virtual xHCI
 product VMWARE VM1394	0x0780	Virtual Firewire
 product VMWARE VMPCIB	0x0790	Virtual PCI Bridge
 product VMWARE VMPCIE	0x07a0	Virtual PCI Express Root Port
