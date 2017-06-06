@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.41 2017/05/31 01:03:01 kamil Exp $
+.\"	$NetBSD: kqueue.2,v 1.42 2017/06/06 17:01:59 kamil Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -155,10 +155,19 @@ and
 .Fa eventlist .
 .Pp
 .Fn EV_SET
-is a static inline function which is provided for ease of initializing a
-kevent structure.
-Its original form was a preprocessor macro,
-which caused bugs in third party code.
+is a macro which is provided for ease of initializing a kevent structure.
+It wraps an internal static inline function to prevent preprocessor misuse.
+In the past this code would behave incorrectly and damage process's memory,
+if incrementation or decrementation would be used as the first argument.
+This example has been taken from LLDB, that caused the memory corruption and
+inspired the
+.Nx
+developers for improving the implementation.
+.Bd -literal -offset indent
+EV_SET(&in_events[i++], fd.first, EVFILT_READ, EV_ADD, 0, 0, 0);
+.Ed
+.Pp
+This macro is now safe in all major BSDs.
 .Pp
 The
 .Va kevent
@@ -673,5 +682,5 @@ function first appeared in
 .Nx 6.0 .
 .Pp
 .Fn EV_SET
-was converted from a macro to a static inline function in
+was converted from a macro implementation to the macro wrapping a static inline function in
 .Nx 8.0 .
