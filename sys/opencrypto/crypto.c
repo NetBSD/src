@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.83 2017/06/06 01:51:39 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.84 2017/06/06 04:11:41 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.83 2017/06/06 01:51:39 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.84 2017/06/06 04:11:41 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1097,6 +1097,7 @@ crypto_kdispatch(struct cryptkop *krp)
 
 	cryptostats.cs_kops++;
 
+	mutex_enter(&crypto_q_mtx);
 	cap = crypto_checkdriver_lock(krp->krp_hid);
 	/*
 	 * TODO:
@@ -1104,10 +1105,8 @@ crypto_kdispatch(struct cryptkop *krp)
 	 * done crypto_unregister(), this migrate operation is not required.
 	 */
 	if (cap == NULL) {
-		mutex_enter(&crypto_q_mtx);
 		TAILQ_INSERT_TAIL(&crp_kq, krp, krp_next);
 		mutex_exit(&crypto_q_mtx);
-
 		return 0;
 	}
 
@@ -1117,10 +1116,8 @@ crypto_kdispatch(struct cryptkop *krp)
 		 * The driver is blocked, just queue the op until
 		 * it unblocks and the swi thread gets kicked.
 		 */
-		mutex_enter(&crypto_q_mtx);
 		TAILQ_INSERT_TAIL(&crp_kq, krp, krp_next);
 		mutex_exit(&crypto_q_mtx);
-
 		return 0;
 	}
 
@@ -1135,7 +1132,6 @@ crypto_kdispatch(struct cryptkop *krp)
 		crypto_driver_lock(cap);
 		cap->cc_kqblocked = 1;
 		crypto_driver_unlock(cap);
-		mutex_enter(&crypto_q_mtx);
 		TAILQ_INSERT_HEAD(&crp_kq, krp, krp_next);
 		cryptostats.cs_kblocks++;
 		mutex_exit(&crypto_q_mtx);
