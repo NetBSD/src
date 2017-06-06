@@ -65,8 +65,6 @@ typedef uint32_t cell_t;
 #define streq(a, b)	(strcmp((a), (b)) == 0)
 #define strneq(a, b, n)	(strncmp((a), (b), (n)) == 0)
 
-#define ALIGN(x, a)	(((x) + (a) - 1) & ~((a) - 1))
-
 /* Data blobs */
 enum markertype {
 	REF_PHANDLE,

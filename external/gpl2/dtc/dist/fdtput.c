@@ -128,7 +128,7 @@ static int encode_value(struct display_info *disp, char **arg, int arg_count,
 	return 0;
 }
 
-#define ALIGN(x)		(((x) + (FDT_TAGSIZE) - 1) & ~((FDT_TAGSIZE) - 1))
+#define FDTALIGN(x)		(((x) + (FDT_TAGSIZE) - 1) & ~((FDT_TAGSIZE) - 1))
 
 static char *_realloc_fdt(char *fdt, int delta)
 {
@@ -142,7 +142,7 @@ static char *realloc_node(char *fdt, const char *name)
 {
 	int delta;
 	/* FDT_BEGIN_NODE, node name in off_struct and FDT_END_NODE */
-	delta = sizeof(struct fdt_node_header) + ALIGN(strlen(name) + 1)
+	delta = sizeof(struct fdt_node_header) + FDTALIGN(strlen(name) + 1)
 			+ FDT_TAGSIZE;
 	return _realloc_fdt(fdt, delta);
 }
@@ -159,7 +159,7 @@ static char *realloc_property(char *fdt, int nodeoffset,
 
 	if (newlen > oldlen)
 		/* actual value in off_struct */
-		delta += ALIGN(newlen) - ALIGN(oldlen);
+		delta += FDTALIGN(newlen) - FDTALIGN(oldlen);
 
 	return _realloc_fdt(fdt, delta);
 }
