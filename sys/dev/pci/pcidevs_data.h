@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1280 2017/05/23 07:13:11 nonaka Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1281 2017/06/06 05:39:28 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289 2017/05/23 07:12:56 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1290 2017/06/06 05:39:06 msaitoh Exp
  */
 
 /*
@@ -11628,7 +11628,11 @@ static const uint16_t pci_products[] = {
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VMEB, 
 	    14368, 33567, 0,
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VMUSB, 
-	    14368, 6790, 0,
+	    14368, 8174, 0,
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VMUHCI, 
+	    14368, 20616, 0,
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VMXHCI, 
+	    14368, 8415, 0,
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VM1394, 
 	    14368, 8635, 0,
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VMPCIB, 
@@ -12653,7 +12657,7 @@ static const char pci_words[] = { "."
 	    "M4803\0" /* 1 refs @ 6772 */
 	    "M5229\0" /* 1 refs @ 6778 */
 	    "M5237\0" /* 1 refs @ 6784 */
-	    "USB\0" /* 198 refs @ 6790 */
+	    "USB\0" /* 197 refs @ 6790 */
 	    "1.1\0" /* 1 refs @ 6794 */
 	    "Host\0" /* 284 refs @ 6798 */
 	    "M5239\0" /* 1 refs @ 6803 */
@@ -12831,7 +12835,7 @@ static const char pci_words[] = { "."
 	    "South\0" /* 8 refs @ 8157 */
 	    "Flash\0" /* 3 refs @ 8163 */
 	    "OHCI\0" /* 18 refs @ 8169 */
-	    "EHCI\0" /* 42 refs @ 8174 */
+	    "EHCI\0" /* 43 refs @ 8174 */
 	    "UDC\0" /* 1 refs @ 8179 */
 	    "UOC\0" /* 1 refs @ 8183 */
 	    "Elan\0" /* 1 refs @ 8187 */
@@ -12872,7 +12876,7 @@ static const char pci_words[] = { "."
 	    "AHCI\0" /* 79 refs @ 8404 */
 	    "SD\0" /* 8 refs @ 8409 */
 	    "HD\0" /* 117 refs @ 8412 */
-	    "xHCI\0" /* 13 refs @ 8415 */
+	    "xHCI\0" /* 14 refs @ 8415 */
 	    "FCH\0" /* 2 refs @ 8420 */
 	    "RS780\0" /* 8 refs @ 8424 */
 	    "RS785/RS880\0" /* 1 refs @ 8430 */
@@ -13762,7 +13766,7 @@ static const char pci_words[] = { "."
 	    "3/Si\0" /* 3 refs @ 14353 */
 	    "4/Di\0" /* 2 refs @ 14358 */
 	    "DRAC\0" /* 3 refs @ 14363 */
-	    "Virtual\0" /* 36 refs @ 14368 */
+	    "Virtual\0" /* 38 refs @ 14368 */
 	    "4e/Si\0" /* 1 refs @ 14376 */
 	    "SMIC\0" /* 1 refs @ 14382 */
 	    "CERC\0" /* 1 refs @ 14387 */
@@ -14612,7 +14616,7 @@ static const char pci_words[] = { "."
 	    "82801CA\0" /* 9 refs @ 20591 */
 	    "82801CAM\0" /* 1 refs @ 20599 */
 	    "82801DB\0" /* 10 refs @ 20608 */
-	    "UHCI\0" /* 44 refs @ 20616 */
+	    "UHCI\0" /* 45 refs @ 20616 */
 	    "82801DBM\0" /* 1 refs @ 20621 */
 	    "(UltraATA/100)\0" /* 1 refs @ 20630 */
 	    "82801EB\0" /* 3 refs @ 20645 */

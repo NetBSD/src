@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1281 2017/05/23 07:13:11 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1282 2017/06/06 05:39:28 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289 2017/05/23 07:12:56 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1290 2017/06/06 05:39:06 msaitoh Exp
  */
 
 /*
@@ -6740,7 +6740,9 @@
 #define	PCI_PRODUCT_VMWARE_VMCI	0x0740		/* Virtual Machine Communication Interface */
 #define	PCI_PRODUCT_VMWARE_VMEM	0x0750		/* Virtual 82545EM */
 #define	PCI_PRODUCT_VMWARE_VMEB	0x0760		/* Virtual 82546EB */
-#define	PCI_PRODUCT_VMWARE_VMUSB	0x0770		/* Virtual USB */
+#define	PCI_PRODUCT_VMWARE_VMUSB	0x0770		/* Virtual EHCI */
+#define	PCI_PRODUCT_VMWARE_VMUHCI	0x0774		/* Virtual UHCI */
+#define	PCI_PRODUCT_VMWARE_VMXHCI	0x0778		/* Virtual xHCI */
 #define	PCI_PRODUCT_VMWARE_VM1394	0x0780		/* Virtual Firewire */
 #define	PCI_PRODUCT_VMWARE_VMPCIB	0x0790		/* Virtual PCI Bridge */
 #define	PCI_PRODUCT_VMWARE_VMPCIE	0x07a0		/* Virtual PCI Express Root Port */
