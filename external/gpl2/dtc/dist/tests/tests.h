@@ -32,8 +32,8 @@ extern int verbose_test;
 extern char *test_name;
 void test_init(int argc, char *argv[]);
 
-#define ALIGN(x, a)	(((x) + (a) - 1) & ~((a) - 1))
-#define PALIGN(p, a)	((void *)ALIGN((unsigned long)(p), (a)))
+#define FDTALIGN2(x, a)	(((x) + (a) - 1) & ~((a) - 1))
+#define PALIGN(p, a)	((void *)FDTALIGN2((unsigned long)(p), (a)))
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 #define streq(s1, s2)	(strcmp((s1),(s2)) == 0)
