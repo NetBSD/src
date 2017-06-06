@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1445 2017/06/05 18:56:16 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1446 2017/06/06 12:56:42 skrll Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1702,3 +1702,14 @@ Responsible:	christos
 Location:	usr.bin/dc
 Notes:
 		Uses OpenSSL's bignum
+
+Package:	dtc,libfdt
+Version:	1.4.1
+Current Vers:	1.4.4
+Maintainer:	David Gibson <david@gibson.dropbear.id.au>, Jon Loeliger <jdl@jdl.com>
+Archive Site:	https://git.kernel.org/pub/scm/utils/dtc/dtc.git
+Home Page:	https://git.kernel.org/pub/scm/utils/dtc/dtc.git
+Mailing List:	mailto:devicetree-compiler@vger.kernel.org
+Responsible:	skrll
+License:	GPLv2 (dtc), BSD (libfdt)
+Location:	external/gpl2/dtc, sys/external/bsd/libfdt
