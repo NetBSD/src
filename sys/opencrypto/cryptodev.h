@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.34 2017/05/25 05:24:57 knakahara Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.35 2017/06/06 01:45:57 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -560,6 +560,8 @@ struct cryptocap {
 	int		(*cc_freesession) (void*, u_int64_t);
 	void		*cc_karg;		/* callback argument */
 	int		(*cc_kprocess) (void*, struct cryptkop *, int);
+
+	kmutex_t	cc_lock;
 };
 
 /*
