@@ -1,4 +1,4 @@
-/* $NetBSD: plfb_fdt.c,v 1.1 2017/06/03 14:50:39 jmcneill Exp $ */
+/* $NetBSD: plfb_fdt.c,v 1.1.2.1 2017/06/06 16:26:53 snj Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plfb_fdt.c,v 1.1 2017/06/03 14:50:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plfb_fdt.c,v 1.1.2.1 2017/06/06 16:26:53 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: plfb_fdt.c,v 1.1 2017/06/03 14:50:39 jmcneill Exp $"
 #define	 LCDCONTROL_EN		__BIT(0)
 
 #define	PLFB_BPP		32
+
+static int plfb_console_phandle = -1;
 
 struct plfb_softc {
 	struct genfb_softc	sc_gen;
@@ -170,7 +172,8 @@ plfb_attach(device_t parent, device_t self, void *aux)
 	plfb_init(sc);
 
 	sc->sc_wstype = WSDISPLAY_TYPE_PLFB;
-	prop_dictionary_set_bool(dict, "is_console", false);
+	prop_dictionary_set_bool(dict, "is_console",
+	    phandle == plfb_console_phandle);
 
 	genfb_init(&sc->sc_gen);
 
@@ -294,3 +297,23 @@ plfb_init(struct plfb_softc *sc)
 	    LCDCONTROL_PWR | LCDCONTROL_EN | LCDCONTROL_BPP_24 |
 	    LCDCONTROL_BGR);
 }
+
+static int
+plfb_console_match(int phandle)
+{
+	return of_match_compatible(phandle, compatible);
+}
+
+static void
+plfb_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
+{
+	plfb_console_phandle = faa->faa_phandle;
+	genfb_cnattach();
+}
+
+static const struct fdt_console plfb_fdt_console = {
+	.match = plfb_console_match,
+	.consinit = plfb_console_consinit
+};
+
+FDT_CONSOLE(plfb, &plfb_fdt_console);

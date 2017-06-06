@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.4 2017/06/02 13:53:29 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.4.2.1 2017/06/06 16:26:53 snj Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.4 2017/06/02 13:53:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.4.2.1 2017/06/06 16:26:53 snj Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -87,6 +87,7 @@ static uint8_t fdt_data[FDT_BUF_SIZE];
 extern char KERNEL_BASE_phys[];
 #define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
 
+static void fdt_update_stdout_path(void);
 static void fdt_device_register(device_t, void *);
 static void fdt_reset(void);
 static void fdt_powerdown(void);
@@ -167,6 +168,11 @@ initarm(void *arg)
 	DPRINTN((uintptr_t)fdt_addr_r, 16);
 	DPRINT(">");
 
+	const int chosen = OF_finddevice("/chosen");
+	if (chosen >= 0)
+		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
+	boot_args = bootargs;
+
 	DPRINT(" devmap");
 	pmap_devmap_register(plat->devmap());
 
@@ -177,6 +183,12 @@ initarm(void *arg)
 	DPRINT(" cpufunc");
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
+
+	/*
+	 * If stdout-path is specified on the command line, override the
+	 * value in /chosen/stdout-path before initializing console.
+	 */
+	fdt_update_stdout_path();
 
 	DPRINT(" consinit");
 	consinit();
@@ -243,13 +255,8 @@ initarm(void *arg)
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0,
 	    plat->devmap(), mapallmem_p);
 
-	const int chosen = OF_finddevice("/chosen");
-	if (chosen >= 0)
-		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
-
 	DPRINTF("bootargs: %s\n", bootargs);
 
-	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
 
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
@@ -263,6 +270,32 @@ initarm(void *arg)
 
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
+}
+
+static void
+fdt_update_stdout_path(void)
+{
+	char *stdout_path, *ep;
+	int stdout_path_len;
+	char buf[256];
+
+	const int chosen_off = fdt_path_offset(fdt_data, "/chosen");
+	if (chosen_off == -1)
+		return;
+
+	if (get_bootconf_option(boot_args, "stdout-path",
+	    BOOTOPT_TYPE_STRING, &stdout_path) == 0)
+		return;
+
+	ep = strchr(stdout_path, ' ');
+	stdout_path_len = ep ? (ep - stdout_path) : strlen(stdout_path);
+	if (stdout_path_len >= sizeof(buf))
+		return;
+
+	strncpy(buf, stdout_path, stdout_path_len);
+	buf[stdout_path_len] = '\0';
+	fdt_setprop(fdt_data, chosen_off, "stdout-path",
+	    buf, stdout_path_len + 1);
 }
 
 void
