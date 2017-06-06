@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.81 2017/06/06 01:45:57 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.82 2017/06/06 01:47:23 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.81 2017/06/06 01:45:57 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.82 2017/06/06 01:47:23 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -393,7 +393,7 @@ crypto_init0(void)
 	int error;
 
 	mutex_init(&crypto_drv_mtx, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&crypto_q_mtx, MUTEX_DEFAULT, IPL_NET);
+	mutex_init(&crypto_q_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&crypto_ret_q_mtx, MUTEX_DEFAULT, IPL_NET);
 	cv_init(&cryptoret_cv, "crypto_w");
 	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0,  
@@ -442,12 +442,12 @@ crypto_destroy(bool exit_kthread)
 		struct cryptocap *cap = NULL;
 
 		/* if we have any in-progress requests, don't unload */
-		mutex_spin_enter(&crypto_q_mtx);
+		mutex_enter(&crypto_q_mtx);
 		if (!TAILQ_EMPTY(&crp_q) || !TAILQ_EMPTY(&crp_kq)) {
-			mutex_spin_exit(&crypto_q_mtx);
+			mutex_exit(&crypto_q_mtx);
 			return EBUSY;
 		}
-		mutex_spin_exit(&crypto_q_mtx);
+		mutex_exit(&crypto_q_mtx);
 		/* FIXME:
 		 * prohibit enqueue to crp_q and crp_kq after here.
 		 */
@@ -1012,10 +1012,10 @@ crypto_dispatch(struct cryptop *crp)
 		 * when the operation is low priority and/or suitable
 		 * for batching.
 		 */
-		mutex_spin_enter(&crypto_q_mtx);
+		mutex_enter(&crypto_q_mtx);
 		wasempty  = TAILQ_EMPTY(&crp_q);
 		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
-		mutex_spin_exit(&crypto_q_mtx);
+		mutex_exit(&crypto_q_mtx);
 		if (wasempty)
 			setsoftcrypto(softintr_cookie);
 
@@ -1033,9 +1033,9 @@ crypto_dispatch(struct cryptop *crp)
 		 * The driver must be detached, so this request will migrate
 		 * to other drivers in cryptointr() later.
 		 */
-		mutex_spin_enter(&crypto_q_mtx);
+		mutex_enter(&crypto_q_mtx);
 		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
-		mutex_spin_exit(&crypto_q_mtx);
+		mutex_exit(&crypto_q_mtx);
 
 		return 0;
 	}
@@ -1046,9 +1046,9 @@ crypto_dispatch(struct cryptop *crp)
 		 * The driver is blocked, just queue the op until
 		 * it unblocks and the swi thread gets kicked.
 		 */
-		mutex_spin_enter(&crypto_q_mtx);
+		mutex_enter(&crypto_q_mtx);
 		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
-		mutex_spin_exit(&crypto_q_mtx);
+		mutex_exit(&crypto_q_mtx);
 
 		return 0;
 	}
@@ -1069,10 +1069,10 @@ crypto_dispatch(struct cryptop *crp)
 		crypto_driver_lock(cap);
 		cap->cc_qblocked = 1;
 		crypto_driver_unlock(cap);
-		mutex_spin_enter(&crypto_q_mtx);
+		mutex_enter(&crypto_q_mtx);
 		TAILQ_INSERT_HEAD(&crp_q, crp, crp_next);
 		cryptostats.cs_blocks++;
-		mutex_spin_exit(&crypto_q_mtx);
+		mutex_exit(&crypto_q_mtx);
 
 		/*
 		 * The crp is enqueued to crp_q, that is,
@@ -1106,9 +1106,9 @@ crypto_kdispatch(struct cryptkop *krp)
 	 * done crypto_unregister(), this migrate operation is not required.
 	 */
 	if (cap == NULL) {
-		mutex_spin_enter(&crypto_q_mtx);
+		mutex_enter(&crypto_q_mtx);
 		TAILQ_INSERT_TAIL(&crp_kq, krp, krp_next);
-		mutex_spin_exit(&crypto_q_mtx);
+		mutex_exit(&crypto_q_mtx);
 
 		return 0;
 	}
@@ -1119,9 +1119,9 @@ crypto_kdispatch(struct cryptkop *krp)
 		 * The driver is blocked, just queue the op until
 		 * it unblocks and the swi thread gets kicked.
 		 */
-		mutex_spin_enter(&crypto_q_mtx);
+		mutex_enter(&crypto_q_mtx);
 		TAILQ_INSERT_TAIL(&crp_kq, krp, krp_next);
-		mutex_spin_exit(&crypto_q_mtx);
+		mutex_exit(&crypto_q_mtx);
 
 		return 0;
 	}
@@ -1137,10 +1137,10 @@ crypto_kdispatch(struct cryptkop *krp)
 		crypto_driver_lock(cap);
 		cap->cc_kqblocked = 1;
 		crypto_driver_unlock(cap);
-		mutex_spin_enter(&crypto_q_mtx);
+		mutex_enter(&crypto_q_mtx);
 		TAILQ_INSERT_HEAD(&crp_kq, krp, krp_next);
 		cryptostats.cs_kblocks++;
-		mutex_spin_exit(&crypto_q_mtx);
+		mutex_exit(&crypto_q_mtx);
 
 		/*
 		 * The krp is enqueued to crp_kq, that is,
@@ -1583,7 +1583,7 @@ cryptointr(void)
 	int result, hint;
 
 	cryptostats.cs_intrs++;
-	mutex_spin_enter(&crypto_q_mtx);
+	mutex_enter(&crypto_q_mtx);
 	do {
 		/*
 		 * Find the first element in the queue that can be
@@ -1639,11 +1639,11 @@ cryptointr(void)
 		}
 		if (submit != NULL) {
 			TAILQ_REMOVE(&crp_q, submit, crp_next);
-			mutex_spin_exit(&crypto_q_mtx);
+			mutex_exit(&crypto_q_mtx);
 			result = crypto_invoke(submit, hint);
 			/* we must take here as the TAILQ op or kinvoke
 			   may need this mutex below.  sigh. */
-			mutex_spin_enter(&crypto_q_mtx);
+			mutex_enter(&crypto_q_mtx);
 			if (result == ERESTART) {
 				/*
 				 * The driver ran out of resources, mark the
@@ -1685,10 +1685,10 @@ cryptointr(void)
 		}
 		if (krp != NULL) {
 			TAILQ_REMOVE(&crp_kq, krp, krp_next);
-			mutex_spin_exit(&crypto_q_mtx);
+			mutex_exit(&crypto_q_mtx);
 			result = crypto_kinvoke(krp, 0);
 			/* the next iteration will want the mutex. :-/ */
-			mutex_spin_enter(&crypto_q_mtx);
+			mutex_enter(&crypto_q_mtx);
 			if (result == ERESTART) {
 				/*
 				 * The driver ran out of resources, mark the
@@ -1713,7 +1713,7 @@ cryptointr(void)
 			}
 		}
 	} while (submit != NULL || krp != NULL);
-	mutex_spin_exit(&crypto_q_mtx);
+	mutex_exit(&crypto_q_mtx);
 }
 
 /*
