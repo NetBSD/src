@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.26 2017/04/22 14:19:36 jmcneill Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.27 2017/06/06 21:01:07 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.26 2017/04/22 14:19:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.27 2017/06/06 21:01:07 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.26 2017/04/22 14:19:36 jmcneill Exp $
 #include <sys/kthread.h>
 #include <sys/syslog.h>
 #include <sys/module.h>
+#include <sys/pcq.h>
 
 #include <dev/ldvar.h>
 
@@ -82,7 +83,7 @@ struct ld_sdmmc_softc {
 	struct sdmmc_function *sc_sf;
 #define LD_SDMMC_MAXQUEUECNT 4
 	struct ld_sdmmc_task sc_task[LD_SDMMC_MAXQUEUECNT];
-	TAILQ_HEAD(, sdmmc_task) sc_freeq;
+	pcq_t *sc_freeq;
 };
 
 static int ld_sdmmc_match(device_t, cfdata_t, void *);
@@ -129,12 +130,13 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	    sa->sf->cid.rev, sa->sf->cid.psn, sa->sf->cid.mdt);
 	aprint_naive("\n");
 
-	TAILQ_INIT(&sc->sc_freeq);
-	for (i = 0; i < __arraycount(sc->sc_task); i++) {
+	const int ntask = __arraycount(sc->sc_task);
+	sc->sc_freeq = pcq_create(ntask, KM_SLEEP);
+	for (i = 0; i < ntask; i++) {
 		task = &sc->sc_task[i];
 		task->task_sc = sc;
-		callout_init(&task->task_restart_ch, 0);
-		TAILQ_INSERT_TAIL(&sc->sc_freeq, &task->task, next);
+		callout_init(&task->task_restart_ch, CALLOUT_MPSAFE);
+		pcq_put(sc->sc_freeq, task);
 	}
 
 	sc->sc_hwunit = 0;	/* always 0? */
@@ -193,6 +195,8 @@ ld_sdmmc_detach(device_t dev, int flags)
 	for (i = 0; i < __arraycount(sc->sc_task); i++)
 		callout_destroy(&sc->sc_task[i].task_restart_ch);
 
+	pcq_destroy(sc->sc_freeq);
+
 	return 0;
 }
 
@@ -200,9 +204,10 @@ static int
 ld_sdmmc_start(struct ld_softc *ld, struct buf *bp)
 {
 	struct ld_sdmmc_softc *sc = device_private(ld->sc_dv);
-	struct ld_sdmmc_task *task = (void *)TAILQ_FIRST(&sc->sc_freeq);
+	struct ld_sdmmc_task *task = pcq_get(sc->sc_freeq);
 
-	TAILQ_REMOVE(&sc->sc_freeq, &task->task, next);
+	if (task == NULL)
+		return EAGAIN;
 
 	task->task_bp = bp;
 	task->task_retries = 0;
@@ -278,7 +283,7 @@ ld_sdmmc_dobio(void *arg)
 	}
 
 done:
-	TAILQ_INSERT_TAIL(&sc->sc_freeq, &task->task, next);
+	pcq_put(sc->sc_freeq, task);
 
 	lddone(&sc->sc_ld, bp);
 }
