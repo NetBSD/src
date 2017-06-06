@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.82 2017/06/06 01:47:23 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.83 2017/06/06 01:51:39 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.82 2017/06/06 01:47:23 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.83 2017/06/06 01:51:39 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1011,6 +1011,8 @@ crypto_dispatch(struct cryptop *crp)
 		 * queue it for the swi thread.  This is desirable
 		 * when the operation is low priority and/or suitable
 		 * for batching.
+		 *
+		 * don't care list order in batch job.
 		 */
 		mutex_enter(&crypto_q_mtx);
 		wasempty  = TAILQ_EMPTY(&crp_q);
@@ -1022,6 +1024,7 @@ crypto_dispatch(struct cryptop *crp)
 		return 0;
 	}
 
+	mutex_enter(&crypto_q_mtx);
 	cap = crypto_checkdriver_lock(CRYPTO_SESID2HID(crp->crp_sid));
 	/*
 	 * TODO:
@@ -1033,10 +1036,8 @@ crypto_dispatch(struct cryptop *crp)
 		 * The driver must be detached, so this request will migrate
 		 * to other drivers in cryptointr() later.
 		 */
-		mutex_enter(&crypto_q_mtx);
 		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
 		mutex_exit(&crypto_q_mtx);
-
 		return 0;
 	}
 
@@ -1046,10 +1047,8 @@ crypto_dispatch(struct cryptop *crp)
 		 * The driver is blocked, just queue the op until
 		 * it unblocks and the swi thread gets kicked.
 		 */
-		mutex_enter(&crypto_q_mtx);
 		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
 		mutex_exit(&crypto_q_mtx);
-
 		return 0;
 	}
 
@@ -1069,10 +1068,8 @@ crypto_dispatch(struct cryptop *crp)
 		crypto_driver_lock(cap);
 		cap->cc_qblocked = 1;
 		crypto_driver_unlock(cap);
-		mutex_enter(&crypto_q_mtx);
 		TAILQ_INSERT_HEAD(&crp_q, crp, crp_next);
 		cryptostats.cs_blocks++;
-		mutex_exit(&crypto_q_mtx);
 
 		/*
 		 * The crp is enqueued to crp_q, that is,
@@ -1082,6 +1079,7 @@ crypto_dispatch(struct cryptop *crp)
 		result = 0;
 	}
 
+	mutex_exit(&crypto_q_mtx);
 	return result;
 }
 
@@ -1639,11 +1637,9 @@ cryptointr(void)
 		}
 		if (submit != NULL) {
 			TAILQ_REMOVE(&crp_q, submit, crp_next);
-			mutex_exit(&crypto_q_mtx);
 			result = crypto_invoke(submit, hint);
 			/* we must take here as the TAILQ op or kinvoke
 			   may need this mutex below.  sigh. */
-			mutex_enter(&crypto_q_mtx);
 			if (result == ERESTART) {
 				/*
 				 * The driver ran out of resources, mark the
@@ -1685,10 +1681,8 @@ cryptointr(void)
 		}
 		if (krp != NULL) {
 			TAILQ_REMOVE(&crp_kq, krp, krp_next);
-			mutex_exit(&crypto_q_mtx);
 			result = crypto_kinvoke(krp, 0);
 			/* the next iteration will want the mutex. :-/ */
-			mutex_enter(&crypto_q_mtx);
 			if (result == ERESTART) {
 				/*
 				 * The driver ran out of resources, mark the
