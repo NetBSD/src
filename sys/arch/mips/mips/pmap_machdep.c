@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.19 2017/05/18 13:20:37 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.19.2.1 2017/06/06 09:25:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.19 2017/05/18 13:20:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.19.2.1 2017/06/06 09:25:49 martin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -954,7 +954,14 @@ pmap_md_vca_add(struct vm_page *pg, vaddr_t va, pt_entry_t *ptep)
 		pmap_t npm = npv->pv_pmap;
 		VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 		pmap_remove(npm, nva, nva + PAGE_SIZE);
-		pmap_update(npm);
+
+		/*
+		 * pmap_update is not required here as we're the pmap
+		 * and we know that the invalidation happened or the
+		 * asid has been released (and activation is deferred)
+		 *
+		 * A deferred activation should NOT occur here.
+		 */
 		(void)VM_PAGEMD_PVLIST_LOCK(mdpg);
 
 		npv = pv;
