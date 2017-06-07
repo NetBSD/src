@@ -1,4 +1,4 @@
-.\"	$NetBSD: umount.8,v 1.17 2016/09/12 06:34:08 sevan Exp $
+.\"	$NetBSD: umount.8,v 1.18 2017/06/07 15:24:50 abhinav Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 .Os
 .Sh NAME
 .Nm umount
-.Nd unmount filesystems
+.Nd unmount file systems
 .Sh SYNOPSIS
 .Nm
 .Op Fl fvFR
@@ -53,7 +53,7 @@ calls the
 .Xr unmount 2
 system call (or an external unmount program) to remove a
 .Ar "special device"
-or the remote node (rhost:path) from the filesystem tree at the point
+or the remote node (rhost:path) from the file system tree at the point
 .Ar node .
 If either
 .Ar special
@@ -82,12 +82,12 @@ party file systems and/or for research.
 The options are as follows:
 .Bl -tag -width indent
 .It Fl a
-All the currently mounted filesystems except the root are unmounted.
+All the currently mounted file systems except the root are unmounted.
 .It Fl f
-The filesystem is forcibly unmounted.
+The file system is forcibly unmounted.
 Active special devices continue to work,
 but all other files return errors if further accesses are attempted.
-The root filesystem cannot be forcibly unmounted.
+The root file system cannot be forcibly unmounted.
 .It Fl F
 Fake the unmount; perform all other processing but do not actually
 attempt the unmount.
@@ -104,7 +104,7 @@ argument as a path to be passed directly to
 bypassing all attempts to be smart about mechanically determining the
 correct path from the argument.
 This option is incompatible with any option that potentially unmounts
-more than one filesystem, such as
+more than one file system, such as
 .Fl a ,
 but it can be used with
 .Fl f
@@ -115,20 +115,20 @@ directory (such as a nullfs mount of a plain file); there are probably
 other cases where it is necessary.
 This option also disables the use of any external unmount program.
 .It Fl h Ar host
-Only filesystems mounted from the specified host will be
+Only file systems mounted from the specified host will be
 unmounted.
 This option is implies the
 .Fl a
 option and, unless otherwise specified with the
 .Fl t
-option, will only unmount NFS filesystems.
+option, will only unmount NFS file systems.
 .It Fl t Ar fstypelist
 Is used to indicate the actions should only be taken on
-filesystems of the specified type.
+file systems of the specified type.
 More than one type may be specified in a comma separated list.
-The list of filesystem types can be prefixed with
+The list of file system types can be prefixed with
 .Dq no
-to specify the filesystem types for which action should
+to specify the file system types for which action should
 .Em not
 be taken.
 For example, the
@@ -138,7 +138,7 @@ command:
 umount -a -t nfs,mfs
 .Ed
 .Pp
-unmounts all filesystems of the type
+unmounts all file systems of the type
 .Tn NFS
 and
 .Tn MFS ,
@@ -154,13 +154,13 @@ unmounts all file systems except those of type
 and
 .Tn MFS .
 .It Fl v
-Verbose, additional information is printed out as each filesystem
+Verbose, additional information is printed out as each file system
 is unmounted.
 .El
 .Sh FILES
 .Bl -tag -width /etc/fstab -compact
 .It Pa /etc/fstab
-filesystem table
+file system table
 .El
 .Sh SEE ALSO
 .Xr unmount 2 ,
