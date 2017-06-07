@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.148 2017/06/06 22:38:52 kre Exp $
+.\"	$NetBSD: sh.1,v 1.149 2017/06/07 05:08:32 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -294,19 +294,23 @@ the file system is searched for commands each time the function is invoked.
 Force the shell to behave interactively.
 .It Fl I Em ignoreeof
 Ignore EOFs from input when interactive.
-.\" .It Fl L Em lineno_fn_relative
-.\" When set, before a function is defined,
-.\" causes the variable
-.\" .Ev LINENO
-.\" when used within the function,
-.\" to refer to the line number defined such that
-.\" first line of the function is line 1.
-.\" When reset,
-.\" .Ev LINENO
-.\" in a function refers to the line number within the file
-.\" in which the definition of the function occurs
-.\" (which can be the number of lines of shell input from standard input
-.\" when a function is defined interactively from the command prompt.)
+.It Fl L Em lineno_fn_relative
+When set, before a function is defined,
+causes the variable
+.Ev LINENO
+when used within the function,
+to refer to the line number defined such that
+first line of the function is line 1.
+When reset,
+.Ev LINENO
+in a function refers to the line number within the file
+in which the definition of the function occurs.
+This option defaults to
+.Dq on 
+in this shell.
+For more details see the section
+.Sx LINENO
+below.
 .It Fl m Em monitor
 Turn on job control (set automatically when interactive).
 .It Fl n Em noexec
@@ -2228,6 +2232,12 @@ differs amongst shell implementations.
 Using
 .Dq local \&\-
 is an extension not implemented by most shells.
+.Pp
+See the section
+.Sx LINENO
+below for details of the effects of making the variable
+.Ev LINENO
+local.
 .It pwd Op Fl \&LP
 Print the current directory.
 If
@@ -2765,8 +2775,9 @@ See
 .Xr nls 7 .
 .It Ev LINENO
 The current line number in the script or function.
-The value of this variable is automatically set by the
-shell, even if made readonly.
+See the section
+.Sx LINENO
+below for more details.
 .It Ev MAIL
 The name of a mail file, that will be checked for the arrival of new mail.
 Overridden by
@@ -2840,6 +2851,153 @@ that were used when building the shell will be listed.
 behaves like any other variable that has the read-only
 and un-exportable attributes set.
 .El
+.Ss Ev LINENO
+.Ev LINENO
+is in many respects a normal shell variable, containing an
+integer value. and can be expanded using any of the forms
+mentioned above which can be used for any other variable.
+.Pp
+.Ev LINENO
+can be exported,
+made readonly (which prevents attempts to assign to it,
+and to unset it, but which does not change the value,
+that is the current line number, from being obtained when
+.Ev LINENO
+is referenced,)
+and can be unset.
+All of those act as they would with any other variable.
+However,
+.Ev LINENO
+should normally not ever be set, in this
+shell doing so reverses the effect of an earlier unset,
+but does not otherwise affect the value obtained.
+If unset,
+.Ev LINENO
+should not be set again.
+If
+.Ev LINENO
+is set or unset, different shells act differently.
+The value of
+.Ev LINENO
+is never imported from the environment when the shell is
+started, though if present there, as with any other variable,
+.Ev LINENO
+will be exported by this shell.
+.Pp
+.Ev LINENO
+is set automatically by the shell to be the number of the source
+line on which it occurs.
+When exported,
+.Ev LINENO
+is exported with its value set to the line number it would have
+had had it been referenced on the command line of the command to
+which it is exported.
+Line numbers are counted from 1, which is the first line the shell
+reads from any particular file.
+For this shell, standard input, including in an interactive shell,
+the user's terminal, is just another file and lines are counted
+there as well, however note that not all shells count interactive
+lines this way, it is wise to rely upon LINENO only having a useful
+value in a script, or a function.
+.Pp
+The role of
+.Ev LINENO
+in functions is less clear.
+In some shells,
+.Ev LINENO
+continues to refer to the line number in the script which defines
+the function,
+in others lines count from one within the function, always (and
+resume counting normally once the function definition is complete)
+and others count in functions from one if the function is defined
+interactively, but otherwise just reference the line number in the
+script in which the function is defined.
+This shell gives the user the option to choose.
+If the
+.Fl L
+flag (the
+.Ic lineno_fn_relative
+option) is set, when the function is defined, then the function
+defaults to counting lines with one being the first line of the
+function.
+When the
+.Fl L
+flag is not set, the shell counts lines in a function definition
+in the same continuous sequence as the lines that surround the
+function definition.  Further, if
+.Ev LINENO
+is made local
+(see
+.Sx Built-ins
+above)
+inside the function, the function can decide which
+behavior it prefers.
+If
+.Ev LINENO
+is made local and inherited, and not given a value, as in
+.Dl local -I LINENO
+then from that point in the function,
+.Ev LINENO
+will give the line number as if lines are counted in sequence
+with the lines that surround the function definition.
+If
+.Ev LINENO
+is made local, and in that same command, given a value, as
+.Dl local Oo Fl I Ns Cm \&| Ns Fl N Ns Oc LINENO=value
+then
+.Ev LINENO
+will give the line number as if lines are counted from one
+from the beginning of the function.
+The value nominally assigned in this case is irrelevant, and ignored.
+For completeness, if lineno is made local and unset, as in
+.Dl local -N LINENO
+then
+.Ev LINENO
+is simply unset inside the function, and gives no value at all.
+.Pp
+Now for some technical details.
+The line on which
+.Ev LINENO
+occurs in a parameter expansion, is the line that contains the
+.Sq \&$
+that begins the expansion of
+.Ev LINENO .
+In the case of nested expansions, that
+.Sq \&$
+is the one that actually has
+.Ev LINENO
+as its parameter.
+In an arithmetic expansion, where no
+.Sq \&$
+is used to evaluate
+.Ev LINENO
+but
+.Ev LINENO
+is simply referenced as a variable, then the value is the
+line number of the line that contains the
+.Sq L
+of
+.Ev LINENO .
+For functions line one of the function definition (when relevant)
+is the line that contains the first character of the
+function name in the definition.
+When exported, the line number of the command is the line number
+where the first character of the word which becomes the command name occurs.
+.Pp
+When the shell opens a new file, for any reason,
+it counts lines from one in that file,
+and then resumes its original counting once it resumes reading the
+previous input stream.
+When handling a string passed to
+.Ic eval
+the line number starts at the line on which the string starts,
+and then if the string contains internal newline characters,
+those characters increase the line number.
+This means that references to
+.Ev LINENO
+in such a case can produce values larger than would be
+produced by a reference on the line after the
+.Ic eval .
 .Sh FILES
 .Bl -item
 .It
