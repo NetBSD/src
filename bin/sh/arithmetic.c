@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.2 2017/05/29 22:54:07 kre Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.3 2017/06/07 05:08:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arithmetic.c,v 1.2 2017/05/29 22:54:07 kre Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.3 2017/06/07 05:08:32 kre Exp $");
 #endif /* not lint */
 
 #include <limits.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: arithmetic.c,v 1.2 2017/05/29 22:54:07 kre Exp $");
 #include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "shell.h"
 #include "arithmetic.h"
@@ -70,6 +71,8 @@ const char *arith_buf;
 union a_token_val a_t_val;
 
 static int last_token;
+
+int arith_lno, arith_var_lno;
 
 #define ARITH_PRECEDENCE(op, prec) [op - ARITH_BINOP_MIN] = prec
 
@@ -109,8 +112,15 @@ arith_lookupvarint(char *varname)
 	const char *str;
 	char *p;
 	intmax_t result;
+	const int oln = line_number;
 
+	VTRACE(DBG_ARITH, ("Arith var lookup(\"%s\") with lno=%d\n", varname,
+	    arith_var_lno));
+
+	line_number = arith_var_lno;
 	str = lookupvar(varname);
+	line_number = oln;
+
 	if (uflag && str == NULL)
 		arith_err("variable not set");
 	if (str == NULL || *str == '\0')
@@ -365,14 +375,33 @@ assignment(int var, int noeval)
 }
 
 intmax_t
-arith(const char *s)
+arith(const char *s, int lno)
 {
 	struct stackmark smark;
 	intmax_t result;
+	const char *p;
+	int nls = 0;
 
 	setstackmark(&smark);
 
-	CTRACE(DBG_ARITH, ("Arith(\"%s\")\n", s));
+	arith_lno = lno;
+
+	CTRACE(DBG_ARITH, ("Arith(\"%s\", %d) @%d\n", s, lno, arith_lno));
+
+	/* check if it is possible we might reference LINENO */
+	p = s;
+	while ((p = strchr(p, 'L')) != NULL) {
+		if (p[1] == 'I' && p[2] == 'N') {
+			/* if it is possible, we need to correct airth_lno */
+			p = s;
+			while ((p = strchr(p, '\n')) != NULL)
+				nls++, p++;
+			VTRACE(DBG_ARITH, ("Arith found %d newlines\n", nls));
+			arith_lno -= nls;
+			break;
+		}
+		p++;
+	}
 
 	arith_buf = arith_startbuf = s;
 
@@ -420,7 +449,7 @@ expcmd(int argc, char **argv)
 	} else
 		p = "";
 
-	i = arith(p);
+	i = arith(p, line_number);
 
 	out1fmt(ARITH_FORMAT_STR "\n", i);
 	return !i;
