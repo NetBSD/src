@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_union.8,v 1.19 2009/05/04 20:11:30 wiz Exp $
+.\"	$NetBSD: mount_union.8,v 1.20 2017/06/07 15:24:50 abhinav Exp $
 .\"
 .\" Copyright (c) 1994
 .\" The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Os
 .Sh NAME
 .Nm mount_union
-.Nd mount union filesystems
+.Nd mount union file systems
 .Sh SYNOPSIS
 .Nm
 .Op Fl b
@@ -107,7 +107,7 @@ which will still allow the lower files to be accessed by a different
 pathname.
 .Pp
 Except in the case of a directory,
-access to an object is granted via the normal filesystem access checks.
+access to an object is granted via the normal file system access checks.
 For directories, the current user must have access to both the upper
 and lower directories (should they both exist).
 .Pp
@@ -125,12 +125,12 @@ Any other operation which would ultimately require modification to
 the lower layer fails with
 .Dv EROFS .
 .Pp
-The union filesystem manipulates the namespace, rather than
-individual filesystems.
+The union file system manipulates the namespace, rather than
+individual file systems.
 The union operation applies recursively down the directory tree
 now rooted at
 .Ar uniondir .
-Thus any filesystems which are mounted under
+Thus any file systems which are mounted under
 .Ar uniondir
 will take part in the union operation.
 This differs from the
@@ -189,14 +189,14 @@ The
 command first appeared in
 .Bx 4.4 .
 .Sh BUGS
-Without whiteout support from the filesystem backing the upper layer,
+Without whiteout support from the file system backing the upper layer,
 there is no way that delete and rename operations on lower layer
 objects can be done.
 An attempt to mount a union directory under one which does not
 have whiteout support will return
 .Dv EOPNOTSUPP
 .Pq Qq Operation not supported .
-Whiteout support can be added to an existing FFS filesystem
+Whiteout support can be added to an existing FFS file system
 by using the
 .Fl c
 option of
