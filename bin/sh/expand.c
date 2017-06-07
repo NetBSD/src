@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.114 2017/06/07 08:07:50 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.115 2017/06/07 09:31:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.114 2017/06/07 08:07:50 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.115 2017/06/07 09:31:30 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ struct arglist exparg;		/* holds expanded arg list */
 STATIC const char *argstr(const char *, int);
 STATIC const char *exptilde(const char *, int);
 STATIC void expbackq(union node *, int, int);
-STATIC const char *expari(const char *, int);
+STATIC const char *expari(const char *);
 STATIC int subevalvar(const char *, const char *, int, int, int);
 STATIC int subevalvar_trim(const char *, int, int, int, int, int);
 STATIC const char *evalvar(const char *, int);
@@ -288,7 +288,7 @@ argstr(const char *p, int flag)
 			   expdest-ed, ed, *expdest));
 			break;
 		case CTLARI:
-			p = expari(p, flag);
+			p = expari(p);
 			VTRACE(DBG_EXPAND, ("argstr expari "
 			   "+ \"%.*s\" to dest (fwd by: %2.2x) p=\"%.5s...\"\n",
 			   expdest-ed, ed, *expdest, p));
@@ -435,13 +435,12 @@ removerecordregions(int endoff)
  * evaluate, place result in (backed up) result, adjust string position.
  */
 STATIC const char *
-expari(const char *p, int flag)
+expari(const char *p)
 {
 	char *q, *start;
 	intmax_t result;
 	int adjustment;
 	int begoff;
-	int quotes = flag & (EXP_GLOB | EXP_CASE);
 	int quoted;
 #ifdef DEBUG
 	const char *ed = expdest;
@@ -478,16 +477,14 @@ expari(const char *p, int flag)
 	 */
 	quoted = *p++ == '"';
 	begoff = expdest - stackblock();
-	VTRACE(DBG_EXPAND, ("expari: '%c' \"%s\" begoff %d quotes %x\n",
-	    p[-1],p,begoff, quotes));
+	VTRACE(DBG_EXPAND, ("expari: '%c' \"%s\" begoff %d\n", p[-1],p,begoff));
 	p = argstr(p, EXP_NL);			/* expand $(( )) string */
 	STPUTC('\0', expdest);
 	start = stackblock() + begoff;
 	VTRACE(DBG_EXPAND, ("expari: argstr added: '%s' start: \"%.8s\"\n",
 	    ed, start));
 	removerecordregions(begoff);
-	if (quotes)
-		rmescapes_nl(start);	/* convert CRTNONL back into \n's */
+	rmescapes_nl(start);	/* convert CRTNONL back into \n's */
 	q = grabstackstr(expdest);
 	result = arith(start, line_number);
 	VTRACE(DBG_EXPAND, ("expari: after arith: result=%jd '%s' q@'%.3s'\n",
