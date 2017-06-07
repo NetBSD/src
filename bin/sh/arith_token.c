@@ -1,4 +1,4 @@
-/*	$NetBSD: arith_token.c,v 1.4 2017/05/29 22:54:07 kre Exp $	*/
+/*	$NetBSD: arith_token.c,v 1.5 2017/06/07 05:08:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 2002
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arith_token.c,v 1.4 2017/05/29 22:54:07 kre Exp $");
+__RCSID("$NetBSD: arith_token.c,v 1.5 2017/06/07 05:08:32 kre Exp $");
 #endif /* not lint */
 
 #include <inttypes.h>
@@ -98,6 +98,7 @@ arith_token(void)
 			 * and nothing else does.  They continue for the
 			 * longest unbroken sequence of alphanumerics ( + _ )
 			 */
+			arith_var_lno = arith_lno;
 			p = buf;
 			while (buf++, is_in_name(*buf))
 				;
@@ -115,6 +116,7 @@ arith_token(void)
 			 * operator, white space, or an error.
 			 */
 		case '\n':
+			arith_lno++;
 			VTRACE(DBG_ARITH, ("Arith: newline\n"));
 			/* FALLTHROUGH */
 		case ' ':
