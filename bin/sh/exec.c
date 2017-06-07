@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.48 2017/06/04 20:27:14 kre Exp $	*/
+/*	$NetBSD: exec.c,v 1.49 2017/06/07 05:08:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.48 2017/06/04 20:27:14 kre Exp $");
+__RCSID("$NetBSD: exec.c,v 1.49 2017/06/07 05:08:32 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,8 @@ struct tblentry {
 	union param param;	/* definition of builtin function */
 	short cmdtype;		/* index identifying command */
 	char rehash;		/* if set, cd done since entry created */
+	char fn_ln1;		/* for functions, LINENO from 1 */
+	int lineno;		/* for functions abs LINENO of definition */
 	char cmdname[ARB];	/* name of command */
 };
 
@@ -676,6 +678,8 @@ success:
 	if (cmdp) {
 		cmdp->rehash = 0;
 		entry->cmdtype = cmdp->cmdtype;
+		entry->lineno = cmdp->lineno;
+		entry->lno_frel = cmdp->fn_ln1;
 		entry->u = cmdp->param;
 	} else
 		entry->cmdtype = CMDUNKNOWN;
@@ -971,6 +975,8 @@ addcmdentry(char *name, struct cmdentry *entry)
 			freefunc(cmdp->param.func);
 		}
 		cmdp->cmdtype = entry->cmdtype;
+		cmdp->lineno = entry->lineno;
+		cmdp->fn_ln1 = entry->lno_frel;
 		cmdp->param = entry->u;
 	}
 	INTON;
@@ -982,12 +988,14 @@ addcmdentry(char *name, struct cmdentry *entry)
  */
 
 void
-defun(char *name, union node *func)
+defun(char *name, union node *func, int lineno)
 {
 	struct cmdentry entry;
 
 	INTOFF;
 	entry.cmdtype = CMDFUNCTION;
+	entry.lineno = lineno;
+	entry.lno_frel = fnline1;
 	entry.u.func = copyfunc(func);
 	addcmdentry(name, &entry);
 	INTON;

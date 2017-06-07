@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.85 2017/05/18 13:34:17 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.86 2017/06/07 05:08:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.85 2017/05/18 13:34:17 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.86 2017/06/07 05:08:32 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1431,22 +1431,25 @@ cmdputs(const char *s)
 	nleft = cmdnleft;
 	while (nleft > 0 && (c = *p++) != 0) {
 		switch (c) {
+		case CTLNONL:
+			c = '\0';
+			break;
 		case CTLESC:
 			c = *p++;
 			break;
 		case CTLVAR:
 			subtype = *p++;
-			if (subtype & VSLINENO) {
+			if (subtype & VSLINENO) {	/* undo LINENO hack */
 				if ((subtype & VSTYPE) == VSLENGTH)
-					str = "${#LINENO";
+					str = "${#LINENO";	/*}*/
 				else
-					str = "${LINENO";
+					str = "${LINENO";	/*}*/
 				while (is_digit(*p))
 					p++;
 			} else if ((subtype & VSTYPE) == VSLENGTH)
-				str = "${#";
+				str = "${#"; /*}*/
 			else
-				str = "${";
+				str = "${"; /*}*/
 			if (!(subtype & VSQUOTE) != !(quoted & 1)) {
 				quoted ^= 1;
 				c = '"';
@@ -1454,7 +1457,7 @@ cmdputs(const char *s)
 				c = *str++;
 			}
 			break;
-		case CTLENDVAR:
+		case CTLENDVAR:		/*{*/
 			c = '}';
 			if (quoted & 1)
 				str = "\"";
@@ -1471,9 +1474,11 @@ cmdputs(const char *s)
 			break;
 		case CTLARI:
 			c = '$';
-			str = "((";
+			if (*p == ' ')
+				p++;
+			str = "((";	/*))*/
 			break;
-		case CTLENDARI:
+		case CTLENDARI:		/*((*/
 			c = ')';
 			str = ")";
 			break;
@@ -1492,7 +1497,7 @@ cmdputs(const char *s)
 			if (subtype & VSNUL)
 				c = ':';
 			else
-				c = *str++;
+				c = *str++;		/*{*/
 			if (c != '}')
 				quoted <<= 1;
 			else if (*p == CTLENDVAR)

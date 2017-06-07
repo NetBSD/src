@@ -1,7 +1,7 @@
-/*	$NetBSD: syntax.c,v 1.3 2012/03/28 20:11:25 christos Exp $	*/
+/*	$NetBSD: syntax.c,v 1.4 2017/06/07 05:08:32 kre Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syntax.c,v 1.3 2012/03/28 20:11:25 christos Exp $");
+__RCSID("$NetBSD: syntax.c,v 1.4 2017/06/07 05:08:32 kre Exp $");
 
 #include <limits.h>
 #include "shell.h"
@@ -102,4 +102,7 @@ const char is_type[257] = { 0,
     set('-', ISSPECL)
     set('*', ISSPECL)
     set('@', ISSPECL)
+    set(' ', ISSPACE)
+    set('\t', ISSPACE)
+    set('\n', ISSPACE)
 };

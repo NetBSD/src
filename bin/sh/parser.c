@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.133 2017/06/07 04:44:17 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.134 2017/06/07 05:08:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.133 2017/06/07 04:44:17 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.134 2017/06/07 05:08:32 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,6 +100,7 @@ struct heredoc *heredoc;
 int quoteflag;			/* set if (part of) last token was quoted */
 int startlinno;			/* line # where last token started */
 int funclinno;			/* line # where the current function started */
+int elided_nl;			/* count of \ \n (deleted \n's) we have seen */
 
 
 STATIC union node *list(int, int);
@@ -109,7 +110,7 @@ STATIC union node *command(void);
 STATIC union node *simplecmd(union node **, union node *);
 STATIC union node *makename(void);
 STATIC void parsefname(void);
-STATIC void slurp_heredoc(char *const, const int, const int);
+STATIC int slurp_heredoc(char *const, const int, const int);
 STATIC void readheredocs(void);
 STATIC int peektoken(void);
 STATIC int readtoken(void);
@@ -124,6 +125,9 @@ STATIC int pgetc_linecont(void);
 
 static const char EOFhere[] = "EOF reading here (<<) document";
 
+#ifdef DEBUG
+int parsing = 0;
+#endif
 
 /*
  * Read and parse a command.  Returns NEOF on end of file.  (NULL is a
@@ -136,6 +140,9 @@ parsecmd(int interact)
 	int t;
 	union node *n;
 
+#ifdef DEBUG
+	parsing++;
+#endif
 	tokpushback = 0;
 	doprompt = interact;
 	if (doprompt)
@@ -144,12 +151,22 @@ parsecmd(int interact)
 		setprompt(0);
 	needprompt = 0;
 	t = readtoken();
+#ifdef DEBUG
+	parsing--;
+#endif
 	if (t == TEOF)
 		return NEOF;
 	if (t == TNL)
 		return NULL;
+
+#ifdef DEBUG
+	parsing++;
+#endif
 	tokpushback++;
 	n = list(1, 0);
+#ifdef DEBUG
+	parsing--;
+#endif
 	if (heredoclist)
 		error("%d: Here document (<<%s) expected but not present",
 			heredoclist->startline, heredoclist->eofmark);
@@ -397,6 +414,7 @@ command(void)
 				n2->type = NARG;
 				n2->narg.text = wordtext;
 				n2->narg.backquote = backquotelist;
+				n2->narg.lineno = startlinno - elided_nl;
 				*app = n2;
 				app = &n2->narg.next;
 			}
@@ -414,6 +432,7 @@ command(void)
 			n2->narg.text = argvars;
 			n2->narg.backquote = NULL;
 			n2->narg.next = NULL;
+			n2->narg.lineno = startlinno - elided_nl;
 			n1->nfor.args = n2;
 			/*
 			 * Newline or semicolon here is optional (but note
@@ -437,13 +456,14 @@ command(void)
 	case TCASE:
 		n1 = stalloc(sizeof(struct ncase));
 		n1->type = NCASE;
-		n1->ncase.lineno = startlinno;
+		n1->ncase.lineno = startlinno - elided_nl;
 		if (readtoken() != TWORD)
 			synexpect(TWORD, 0);
 		n1->ncase.expr = n2 = stalloc(sizeof(struct narg));
 		n2->type = NARG;
 		n2->narg.text = wordtext;
 		n2->narg.backquote = backquotelist;
+		n2->narg.lineno = startlinno - elided_nl;
 		n2->narg.next = NULL;
 		while (readtoken() == TNL);
 		if (lasttoken != TWORD || ! equal(wordtext, "in"))
@@ -470,6 +490,7 @@ command(void)
 			for (;;) {
 				*app = ap = stalloc(sizeof(struct narg));
 				ap->type = NARG;
+				ap->narg.lineno = startlinno - elided_nl;
 				ap->narg.text = wordtext;
 				ap->narg.backquote = backquotelist;
 				if (checkkwd = 2, readtoken() != TPIPE)
@@ -482,6 +503,7 @@ command(void)
 			if (lasttoken != TRP) {
 				synexpect(TRP, 0);
 			}
+			cp->nclist.lineno = startlinno - elided_nl;
 			cp->nclist.body = list(0, 0);
 
 			checkkwd = 2;
@@ -601,6 +623,7 @@ simplecmd(union node **rpp, union node *redir)
 {
 	union node *args, **app;
 	union node *n = NULL;
+	int line = 0;
 #ifdef BOGUS_NOT_COMMAND
 	union node *n2;
 	int negate = 0;
@@ -627,13 +650,18 @@ simplecmd(union node **rpp, union node *redir)
 
 	for (;;) {
 		if (readtoken() == TWORD) {
+			if (line == 0)
+				line = startlinno;
 			n = stalloc(sizeof(struct narg));
 			n->type = NARG;
 			n->narg.text = wordtext;
 			n->narg.backquote = backquotelist;
+			n->narg.lineno = startlinno - elided_nl;
 			*app = n;
 			app = &n->narg.next;
 		} else if (lasttoken == TREDIR) {
+			if (line == 0)
+				line = startlinno;
 			*rpp = n = redirnode;
 			rpp = &n->nfile.next;
 			parsefname();	/* read name of redirection file */
@@ -646,7 +674,10 @@ simplecmd(union node **rpp, union node *redir)
 			rmescapes(n->narg.text);
 			if (strchr(n->narg.text, '/'))
 				synerror("Bad function name");
+			VTRACE(DBG_PARSE, ("Function '%s' seen @%d\n",
+			    n->narg.text, plinno));
 			n->type = NDEFUN;
+			n->narg.lineno = plinno - elided_nl;
 			n->narg.next = command();
 			funclinno = 0;
 			goto checkneg;
@@ -662,6 +693,7 @@ simplecmd(union node **rpp, union node *redir)
 	*rpp = NULL;
 	n = stalloc(sizeof(struct ncmd));
 	n->type = NCMD;
+	n->ncmd.lineno = line - elided_nl;
 	n->ncmd.backgnd = 0;
 	n->ncmd.args = args;
 	n->ncmd.redirect = redir;
@@ -692,6 +724,7 @@ makename(void)
 	n->narg.next = NULL;
 	n->narg.text = wordtext;
 	n->narg.backquote = backquotelist;
+	n->narg.lineno = startlinno - elided_nl;
 	return n;
 }
 
@@ -816,11 +849,12 @@ checkend(int c, char * const eofmark, const int striptabs)
  * Input any here documents.
  */
 
-STATIC void
+STATIC int
 slurp_heredoc(char *const eofmark, const int striptabs, const int sq)
 {
 	int c;
 	char *out;
+	int lines = plinno;
 
 	c = pgetc();
 
@@ -861,6 +895,7 @@ slurp_heredoc(char *const eofmark, const int striptabs, const int sq)
 			if (c == '\\') {		/* A backslash */
 				c = pgetc();		/* followed by */
 				if (c == '\n') {	/* a newline?  */
+					/*XXX CTLNONL ?? XXX*/
 					plinno++;
 					continue;	/*    :drop both */
 				}
@@ -889,9 +924,22 @@ slurp_heredoc(char *const eofmark, const int striptabs, const int sq)
 	wordtext = out;
 
 	VTRACE(DBG_PARSE,
-	    ("Slurped a heredoc (to '%s')%s: len %d, \"%.*s%s\" @%d\n",
-		eofmark, striptabs ? " tab stripped" : "", c, (c > 16 ? 16 : c),
+	   ("Slurped a %d line %sheredoc (to '%s')%s: len %d, \"%.*s%s\" @%d\n",
+		plinno - lines, sq ? "quoted " : "",  eofmark,
+		striptabs ? " tab stripped" : "", c, (c > 16 ? 16 : c),
 		wordtext, (c > 16 ? "..." : ""), plinno));
+
+	return (plinno - lines);
+}
+
+static char *
+insert_elided_nl(char *str)
+{
+	while (elided_nl > 0) {
+		STPUTC(CTLNONL, str);
+		elided_nl--;
+	}
+	return str;
 }
 
 STATIC void
@@ -899,8 +947,14 @@ readheredocs(void)
 {
 	struct heredoc *here;
 	union node *n;
+	int line, l;
 
+	line = 0;		/*XXX - gcc!  obviously unneeded */
+	if (heredoclist)
+		line = heredoclist->startline + 1;
+	l = 0;
 	while (heredoclist) {
+		line += l;
 		here = heredoclist;
 		heredoclist = here->next;
 		if (needprompt) {
@@ -908,7 +962,7 @@ readheredocs(void)
 			needprompt = 0;
 		}
 
-		slurp_heredoc(here->eofmark, here->striptabs,
+		l = slurp_heredoc(here->eofmark, here->striptabs,
 		    here->here->nhere.type == NHERE);
 
 		n = stalloc(sizeof(struct narg));
@@ -924,7 +978,7 @@ readheredocs(void)
 		/*
 		 * Now "parse" here docs that have unquoted eofmarkers.
 		 */
-		setinputstring(wordtext, 1, startlinno);
+		setinputstring(wordtext, 1, line);
 		readtoken1(pgetc(), DQSYNTAX, 1);
 		n->narg.text = wordtext;
 		n->narg.backquote = backquotelist;
@@ -978,8 +1032,8 @@ readtoken(void)
 					lasttoken = t = pp -
 					    parsekwd + KWDOFFSET;
 					VTRACE(DBG_PARSE,
-					    ("keyword %s recognized\n",
-					    tokname[t]));
+					    ("keyword %s recognized @%d\n",
+					    tokname[t], plinno));
 					goto out;
 				}
 			}
@@ -993,8 +1047,8 @@ readtoken(void)
  out:
 		checkkwd = (t == TNOT) ? savecheckkwd : 0;
 	}
-	VTRACE(DBG_PARSE, ("%stoken %s %s\n", alreadyseen ? "reread " : "",
-	    tokname[t], t == TWORD ? wordtext : ""));
+	VTRACE(DBG_PARSE, ("%stoken %s %s @%d\n", alreadyseen ? "reread " : "",
+	    tokname[t], t == TWORD ? wordtext : "", plinno));
 	return (t);
 }
 
@@ -1032,6 +1086,7 @@ xxreadtoken(void)
 		setprompt(2);
 		needprompt = 0;
 	}
+	elided_nl = 0;
 	startlinno = plinno;
 	for (;;) {	/* until token or start of word found */
 		c = pgetc_macro();
@@ -1315,12 +1370,15 @@ parsebackq(VSS *const stack, char * const in,
 	handler = &jmploc;
 	INTON;
 	if (oldstyle) {
-		/* We must read until the closing backquote, giving special
-		   treatment to some slashes, and then push the string and
-		   reread it as input, interpreting it normally.  */
+		/*
+		 * We must read until the closing backquote, giving special
+		 * treatment to some slashes, and then push the string and
+		 * reread it as input, interpreting it normally.
+		 */
 		int pc;
 		int psavelen;
 		char *pstr;
+		int line1 = plinno;
 
 		/*
 		 * Because the entire `...` is read here, we don't
@@ -1333,25 +1391,12 @@ parsebackq(VSS *const stack, char * const in,
 				setprompt(2);
 				needprompt = 0;
 			}
-			switch (pc = pgetc_linecont()) {
-			case '`':
-				goto done;
-
+			pc = pgetc_linecont();
+			if (pc == '`')
+				break;
+			switch (pc) {
 			case '\\':
-				if ((pc = pgetc()) == '\n') {
-					plinno++;
-					if (doprompt)
-						setprompt(2);
-					else
-						setprompt(0);
-					/*
-					 * If eating a newline, avoid putting
-					 * the newline into the new character
-					 * stream (via the STPUTC after the
-					 * switch).
-					 */
-					continue;
-				}
+				pc = pgetc();	/* cannot be '\n' */
 				if (pc != '\\' && pc != '`' && pc != '$'
 				    && (!ISDBLQUOTE() || pc != '"'))
 					STPUTC('\\', out);
@@ -1359,6 +1404,7 @@ parsebackq(VSS *const stack, char * const in,
 
 			case '\n':
 				plinno++;
+				out = insert_elided_nl(out);
 				needprompt = doprompt;
 				break;
 
@@ -1372,12 +1418,11 @@ parsebackq(VSS *const stack, char * const in,
 			}
 			STPUTC(pc, out);
 		}
- done:
 		STPUTC('\0', out);
 		psavelen = out - stackblock();
 		if (psavelen > 0) {
 			pstr = grabstackstr(out);
-			setinputstring(pstr, 1, startlinno);
+			setinputstring(pstr, 1, line1);
 		}
 	}
 	nlpp = pbqlist;
@@ -1549,10 +1594,13 @@ readtoken1(int firstc, char const *syn, int magicq)
 	bqlist = NULL;
 	arinest = 0;
 	parenlevel = 0;
+	elided_nl = 0;
 
 	STARTSTACKSTR(out);
 
 	for (c = firstc ;; c = pgetc_macro()) {	/* until of token */
+		if (syntax == ARISYNTAX)
+			out = insert_elided_nl(out);
 		CHECKSTRSPACE(4, out);	/* permit 4 calls to USTPUTC */
 		switch (syntax[c]) {
 		case CNL:	/* '\n' */
@@ -1583,6 +1631,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 			}
 			if (c == '\n') {
 				plinno++;
+				elided_nl++;
 				if (doprompt)
 					setprompt(2);
 				else
@@ -1656,6 +1705,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 			}
 			continue;
 		case CVAR:	/* '$' */
+			out = insert_elided_nl(out);
 			PARSESUB();		/* parse substitution */
 			continue;
 		case CENDVAR:	/* CLOSEBRACE */
@@ -1665,6 +1715,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 			} else {
 				USTPUTC(c, out);
 			}
+			out = insert_elided_nl(out);
 			continue;
 		case CLP:	/* '(' in arithmetic */
 			parenlevel++;
@@ -1676,6 +1727,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 				--parenlevel;
 			} else {
 				if (pgetc_linecont() == ')') {
+					out = insert_elided_nl(out);
 					if (--arinest == 0) {
 						TS_POP();
 						USTPUTC(CTLENDARI, out);
@@ -1750,23 +1802,22 @@ readtoken1(int firstc, char const *syn, int magicq)
  */
 
 parsesub: {
-	char buf[10];
 	int subtype;
 	int typeloc;
 	int flags;
 	char *p;
 	static const char types[] = "}-+?=";
-	int i;
-	int linno;
 
 	c = pgetc_linecont();
-	if (c != '(' && c != OPENBRACE && !is_name(c) && !is_special(c)) {
+	if (c != '('/*)*/ && c != OPENBRACE && !is_name(c) && !is_special(c)) {
 		USTPUTC('$', out);
 		pungetc();
-	} else if (c == '(') {	/* $(command) or $((arith)) */
-		if (pgetc_linecont() == '(') {
+	} else if (c == '('/*)*/) {	/* $(command) or $((arith)) */
+		if (pgetc_linecont() == '(' /*')'*/ ) {
+			out = insert_elided_nl(out);
 			PARSEARITH();
 		} else {
+			out = insert_elided_nl(out);
 			pungetc();
 			out = parsebackq(stack, out, &bqlist, 0);
 		}
@@ -1822,9 +1873,18 @@ parsesub: {
 				STPUTC(c, out);
 				c = pgetc_linecont();
 			} while (is_in_name(c));
+#if 0
 			if (out - p == 6 && strncmp(p, "LINENO", 6) == 0) {
-				/* Replace the variable name with the
-				 * current line number. */
+				int i;
+				int linno;
+				char buf[10];
+
+				/*
+				 * The "LINENO hack"
+				 *
+				 * Replace the variable name with the
+				 * current line number.
+				 */
 				linno = plinno;
 				if (funclinno != 0)
 					linno -= funclinno - 1;
@@ -1834,9 +1894,10 @@ parsesub: {
 					STPUTC(buf[i], out);
 				flags |= VSLINENO;
 			}
+#endif
 		} else if (is_digit(c)) {
 			do {
-				USTPUTC(c, out);
+				STPUTC(c, out);
 				c = pgetc_linecont();
 			} while (subtype != VSNORMAL && is_digit(c));
 		}
@@ -1911,6 +1972,8 @@ parsearith: {
 		/*
 		 * we collapse embedded arithmetic expansion to
 		 * parentheses, which should be equivalent
+		 *
+		 *	XXX It isn't, must fix, soonish...
 		 */
 		USTPUTC('(', out);
 		USTPUTC('(', out);
@@ -1937,6 +2000,7 @@ parsearith: {
 }
 
 } /* end of readtoken */
+
 
 
 
@@ -2058,6 +2122,7 @@ pgetc_linecont(void)
 		c = pgetc();
 		if (c == '\n') {
 			plinno++;
+			elided_nl++;
 			if (doprompt)
 				setprompt(2);
 			else
