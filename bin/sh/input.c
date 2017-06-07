@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.57 2017/06/07 04:44:17 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.58 2017/06/07 05:08:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.57 2017/06/07 04:44:17 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.58 2017/06/07 05:08:32 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: input.c,v 1.57 2017/06/07 04:44:17 kre Exp $");
 #include "alias.h"
 #include "parser.h"
 #include "myhistedit.h"
+#include "show.h"
 
 #define EOF_NLEFT -99		/* value of parsenleft when EOF pushed back */
 
@@ -482,12 +483,14 @@ setinputstring(char *string, int push, int line1)
 {
 
 	INTOFF;
-	if (push)
+	if (push)		/* XXX: always, as it happens */
 		pushfile();
 	parsenextc = string;
 	parselleft = parsenleft = strlen(string);
 	parsefile->buf = NULL;
 	plinno = line1;
+	TRACE(("setinputstring(\"%.20s%s\" (%d), %d, %d)\n", string,
+	    (parsenleft > 20 ? "..." : ""), parsenleft, push, line1));
 	INTON;
 }
 
