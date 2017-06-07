@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.18 2015/05/09 08:13:35 snj Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.19 2017/06/07 09:14:32 he Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -746,12 +746,20 @@ from a disk which then loads the secondary bootloader
 which then loads the kernel.
 .\}
 .(Note
+Despite a note to the contrary in earlier releases that
 .Pa ofwboot.elf
-is obsoleted.  All users should be using
+is obsoleted, that is no longer the case.
+It has been observed that on some newish machines (notably at least
+some Mac Minis), use of
 .Pa ofwboot.xcf
-instead of
+will result in an early kernel panic when loading the GENERIC kernel
+from disk.
+For these machines it appears to be a workaround to use
 .Pa ofwboot.elf
-now.
+instead of
+.Pa ofwboot.xcf
+as the boot loader.
+The root cause for this problem has unfortunately yet to be found.
 .Note)
 .Pp
 The following bootable media are available for loading the bootloader:
