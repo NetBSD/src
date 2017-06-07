@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.132 2017/06/03 18:31:35 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.133 2017/06/07 04:44:17 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.132 2017/06/03 18:31:35 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.133 2017/06/07 04:44:17 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -389,6 +389,7 @@ command(void)
 		n1 = stalloc(sizeof(struct nfor));
 		n1->type = NFOR;
 		n1->nfor.var = wordtext;
+		n1->nfor.lineno = startlinno;
 		if (readtoken()==TWORD && !quoteflag && equal(wordtext,"in")) {
 			app = &ap;
 			while (readtoken() == TWORD) {
@@ -436,6 +437,7 @@ command(void)
 	case TCASE:
 		n1 = stalloc(sizeof(struct ncase));
 		n1->type = NCASE;
+		n1->ncase.lineno = startlinno;
 		if (readtoken() != TWORD)
 			synexpect(TWORD, 0);
 		n1->ncase.expr = n2 = stalloc(sizeof(struct narg));
@@ -663,6 +665,7 @@ simplecmd(union node **rpp, union node *redir)
 	n->ncmd.backgnd = 0;
 	n->ncmd.args = args;
 	n->ncmd.redirect = redir;
+	n->ncmd.lineno = startlinno;
 
  checkneg:
 #ifdef BOGUS_NOT_COMMAND
@@ -921,7 +924,7 @@ readheredocs(void)
 		/*
 		 * Now "parse" here docs that have unquoted eofmarkers.
 		 */
-		setinputstring(wordtext, 1);
+		setinputstring(wordtext, 1, startlinno);
 		readtoken1(pgetc(), DQSYNTAX, 1);
 		n->narg.text = wordtext;
 		n->narg.backquote = backquotelist;
@@ -1374,7 +1377,7 @@ parsebackq(VSS *const stack, char * const in,
 		psavelen = out - stackblock();
 		if (psavelen > 0) {
 			pstr = grabstackstr(out);
-			setinputstring(pstr, 1);
+			setinputstring(pstr, 1, startlinno);
 		}
 	}
 	nlpp = pbqlist;
