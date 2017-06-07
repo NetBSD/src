@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.20 2016/10/28 05:47:16 msaitoh Exp $	*/
+/*	$NetBSD: mii.h,v 1.21 2017/06/07 03:08:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -130,7 +130,7 @@
 #define	ANAR_X_PAUSE_ASYM	(2 << 7)
 #define	ANAR_X_PAUSE_TOWARDS	(3 << 7)
 
-#define	MII_ANLPAR	0x05	/* Autonegotiation lnk partner abilities (rw) */
+#define	MII_ANLPAR	0x05	/* Autonegotiation link partner abilities (rw) */
 		/* section 28.2.4.1 and 37.2.6.1 */
 #define ANLPAR_NP	0x8000	/* Next page (ro) */
 #define	ANLPAR_ACK	0x4000	/* link partner accepted ACK (ro) */
@@ -159,10 +159,10 @@
 #define	MII_ANER	0x06	/* Autonegotiation expansion (ro) */
 		/* section 28.2.4.1 and 37.2.6.1 */
 #define ANER_MLF	0x0010	/* multiple link detection fault */
-#define ANER_LPNP	0x0008	/* link parter next page-able */
+#define ANER_LPNP	0x0008	/* link partner next page-able */
 #define ANER_NP		0x0004	/* next page-able */
 #define ANER_PAGE_RX	0x0002	/* Page received */
-#define ANER_LPAN	0x0001	/* link parter autoneg-able */
+#define ANER_LPAN	0x0001	/* link partner autoneg-able */
 
 #define	MII_ANNP	0x07	/* Autonegotiation next page */
 		/* section 28.2.4.1 and 37.2.6.1 */
