@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.57 2017/06/07 05:08:32 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.58 2017/06/07 08:06:22 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.57 2017/06/07 05:08:32 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.58 2017/06/07 08:06:22 kre Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -490,6 +491,7 @@ environment(void)
 			if ((vp->flags & (VEXPORT|VUNSET)) == VEXPORT)
 				nenv++;
 	}
+	CTRACE(DBG_VARS, ("environment: %d vars to export\n", nenv));
 	ep = env = stalloc((nenv + 1) * sizeof *env);
 	for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
 		for (vp = *vpp ; vp ; vp = vp->next)
@@ -498,6 +500,7 @@ environment(void)
 					*ep++ = (*vp->rfunc)(vp);
 				else
 					*ep++ = vp->text;
+				VTRACE(DBG_VARS, ("environment: %s\n", ep[-1]));
 			}
 	}
 	*ep = NULL;
