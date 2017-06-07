@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.141 2017/06/04 20:27:14 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.142 2017/06/07 04:44:17 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.141 2017/06/04 20:27:14 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.142 2017/06/07 04:44:17 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,6 +117,7 @@ STATIC void expredir(union node *);
 STATIC void evalpipe(union node *);
 STATIC void evalcommand(union node *, int, struct backcmd *);
 STATIC void prehash(union node *);
+STATIC void set_lineno(int);
 
 STATIC char *find_dot_file(char *);
 
@@ -216,7 +217,7 @@ evalstring(char *s, int flag)
 	struct stackmark smark;
 
 	setstackmark(&smark);
-	setinputstring(s, 1);
+	setinputstring(s, 1, atoi(line_num.text + line_num.name_len + 1));
 
 	while ((n = parsecmd(0)) != NEOF) {
 		TRACE(("evalstring: "); showtree(n));
@@ -308,9 +309,11 @@ evaltree(union node *n, int flags)
 		evalloop(n, sflags);
 		break;
 	case NFOR:
+		set_lineno(n->nfor.lineno);
 		evalfor(n, sflags);
 		break;
 	case NCASE:
+		set_lineno(n->ncase.lineno);
 		evalcase(n, sflags);
 		break;
 	case NDEFUN:
@@ -769,6 +772,9 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	TRACE(("evalcommand(0x%lx, %d) called\n", (long)cmd, flags));
 	setstackmark(&smark);
 	back_exitstatus = 0;
+
+	if (cmd != NULL)
+		set_lineno(cmd->ncmd.lineno);
 
 	arglist.lastp = &arglist.list;
 	varflag = 1;
@@ -1455,4 +1461,13 @@ timescmd(int argc, char **argv)
 		u, us, s, ss, cu, cus, cs, css);
 
 	return 0;
+}
+
+STATIC void
+set_lineno(int lno)
+{
+	char lineno[24];
+
+	(void)snprintf(lineno, sizeof lineno, "%u", lno);
+	(void)setvarsafe("LINENO", lineno, 0);
 }
