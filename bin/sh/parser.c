@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.134 2017/06/07 05:08:32 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.135 2017/06/07 08:10:31 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.134 2017/06/07 05:08:32 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.135 2017/06/07 08:10:31 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -414,7 +414,7 @@ command(void)
 				n2->type = NARG;
 				n2->narg.text = wordtext;
 				n2->narg.backquote = backquotelist;
-				n2->narg.lineno = startlinno - elided_nl;
+				n2->narg.lineno = startlinno;
 				*app = n2;
 				app = &n2->narg.next;
 			}
@@ -432,7 +432,7 @@ command(void)
 			n2->narg.text = argvars;
 			n2->narg.backquote = NULL;
 			n2->narg.next = NULL;
-			n2->narg.lineno = startlinno - elided_nl;
+			n2->narg.lineno = startlinno;
 			n1->nfor.args = n2;
 			/*
 			 * Newline or semicolon here is optional (but note
@@ -463,7 +463,7 @@ command(void)
 		n2->type = NARG;
 		n2->narg.text = wordtext;
 		n2->narg.backquote = backquotelist;
-		n2->narg.lineno = startlinno - elided_nl;
+		n2->narg.lineno = startlinno;
 		n2->narg.next = NULL;
 		while (readtoken() == TNL);
 		if (lasttoken != TWORD || ! equal(wordtext, "in"))
@@ -490,7 +490,7 @@ command(void)
 			for (;;) {
 				*app = ap = stalloc(sizeof(struct narg));
 				ap->type = NARG;
-				ap->narg.lineno = startlinno - elided_nl;
+				ap->narg.lineno = startlinno;
 				ap->narg.text = wordtext;
 				ap->narg.backquote = backquotelist;
 				if (checkkwd = 2, readtoken() != TPIPE)
@@ -503,7 +503,7 @@ command(void)
 			if (lasttoken != TRP) {
 				synexpect(TRP, 0);
 			}
-			cp->nclist.lineno = startlinno - elided_nl;
+			cp->nclist.lineno = startlinno;
 			cp->nclist.body = list(0, 0);
 
 			checkkwd = 2;
@@ -656,7 +656,7 @@ simplecmd(union node **rpp, union node *redir)
 			n->type = NARG;
 			n->narg.text = wordtext;
 			n->narg.backquote = backquotelist;
-			n->narg.lineno = startlinno - elided_nl;
+			n->narg.lineno = startlinno;
 			*app = n;
 			app = &n->narg.next;
 		} else if (lasttoken == TREDIR) {
@@ -723,6 +723,7 @@ makename(void)
 	n->type = NARG;
 	n->narg.next = NULL;
 	n->narg.text = wordtext;
+	n->narg.lineno = startlinno;
 	n->narg.backquote = backquotelist;
 	n->narg.lineno = startlinno - elided_nl;
 	return n;
@@ -969,6 +970,7 @@ readheredocs(void)
 		n->narg.type = NARG;
 		n->narg.next = NULL;
 		n->narg.text = wordtext;
+		n->narg.lineno = line;
 		n->narg.backquote = backquotelist;
 		here->here->nhere.doc = n;
 
