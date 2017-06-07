@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_cd9660.8,v 1.28 2009/01/03 22:56:23 christos Exp $
+.\" $NetBSD: mount_cd9660.8,v 1.29 2017/06/07 15:24:50 abhinav Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,7 @@
 .Os
 .Sh NAME
 .Nm mount_cd9660
-.Nd mount an ISO-9660 filesystem
+.Nd mount an ISO-9660 file system
 .Sh SYNOPSIS
 .Nm
 .Op Fl o Ar options
@@ -70,9 +70,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-command attaches the ISO-9660 filesystem residing on the device
+command attaches the ISO-9660 file system residing on the device
 .Pa special
-to the global filesystem namespace at the location indicated by
+to the global file system namespace at the location indicated by
 .Pa node .
 Both
 .Ar special
@@ -110,7 +110,7 @@ A synonym for
 .Cm nomaplcase .
 .It Cm nojoliet
 Do not make use of Joliet extensions for long filenames which
-may be present in the filesystem.
+may be present in the file system.
 .Pp
 Interpretation of Joliet extensions is enabled by default, Unicode
 file names are encoded into UTF-8.
@@ -122,7 +122,7 @@ names read from a non-Rock Ridge disk to all lowercase characters.
 .Cm nomaplcase
 turns off this mapping.
 .It Cm norrip
-Do not use any Rockridge extensions included in the filesystem.
+Do not use any Rockridge extensions included in the file system.
 .It Cm nrr
 Same as
 .Cm norrip .
@@ -164,7 +164,7 @@ The
 .Nm
 utility first appeared
 .Bx 4.4 .
-Support for Joliet filesystem appeared in
+Support for Joliet file system appeared in
 .Nx 1.4 .
 Options
 .Cm nomaplcase
@@ -172,10 +172,10 @@ and
 .Cm rrcaseins
 were added in
 .Nx 1.5 .
-UTF-8 encoding of Unicode file names for Joliet filesystems was added in
+UTF-8 encoding of Unicode file names for Joliet file systems was added in
 .Nx 3.0 .
 .Sh NOTES
-For Joliet filesystems, the Unicode file names used to be filtered
+For Joliet file systems, the Unicode file names used to be filtered
 to ISO-8859-1 character set.
 This changed in
 .Nx 3.0 ,
@@ -192,7 +192,7 @@ system call returns
 .Er EBADF
 causing, e.g., "ls -l" to fail with "Bad file descriptor".
 .Pp
-The cd9660 filesystem does not support the original "High Sierra"
+The cd9660 file system does not support the original "High Sierra"
 ("CDROM001") format.
 .Pp
 POSIX device node mapping is currently not supported.

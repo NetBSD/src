@@ -1,4 +1,4 @@
-.\"	$NetBSD: dump_lfs.8,v 1.16 2012/04/08 22:00:37 wiz Exp $
+.\"	$NetBSD: dump_lfs.8,v 1.17 2017/06/07 15:24:50 abhinav Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	 Regents of the University of California.
@@ -36,7 +36,7 @@
 .Sh NAME
 .Nm dump_lfs ,
 .Nm rdump_lfs
-.Nd filesystem backup
+.Nd file system backup
 .Sh SYNOPSIS
 .Nm
 .Op Fl 0123456789aceFnStuX
@@ -287,7 +287,7 @@ is ignored.
 .It Fl X
 Prevent the log from wrapping until the dump completes, guaranteeing
 a consistent backup.
-Processes that write to the filesystem will continue as usual
+Processes that write to the file system will continue as usual
 until the entire log is full, after which they will block
 until the dump is complete.
 This functionality is analogous to what
