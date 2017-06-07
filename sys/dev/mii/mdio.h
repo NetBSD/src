@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.4 2017/06/06 04:56:12 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.5 2017/06/07 03:32:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 #define MDIO_PMAPMD_10PDSRSCONF		53  /* 10P downstream ReedSolomon cnf*/
 #define MDIO_PMAPMD_10PUSDR1		54  /* 10P upstream data rate cnf1 */
 #define MDIO_PMAPMD_10PUSDR2		55  /* 10P upstream data rate cnf2 */
-#define MDIO_PMAPMD_10PUSRSCONF		56  /* 10P upnstream ReedSolomon cnf */
+#define MDIO_PMAPMD_10PUSRSCONF		56  /* 10P upstream ReedSolomon cnf */
 #define MDIO_PMAPMD_10PTONEGROUP1	57  /* 10P tone group 1 */
 #define MDIO_PMAPMD_10PTONEGROUP2	58  /* 10P tone group 2 */
 #define MDIO_PMAPMD_10PTONEPARAM1	59  /* 10P tone parameter 1 */
