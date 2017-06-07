@@ -1,4 +1,4 @@
-/*	$NetBSD: vmpagemd.h,v 1.3 2016/07/11 16:06:09 matt Exp $	*/
+/*	$NetBSD: vmpagemd.h,v 1.4 2017/06/07 07:06:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -65,12 +65,12 @@ typedef struct pv_entry {
 
 #ifndef _MODULE
 
-#define	VM_PAGEMD_REFERENCED	0x0001	/* page has been recently referenced */
-#define	VM_PAGEMD_MODIFIED	0x0002	/* page has been modified */
-#define	VM_PAGEMD_POOLPAGE	0x0004	/* page is used as a poolpage */
-#define	VM_PAGEMD_EXECPAGE	0x0008	/* page is exec mapped */
+#define	VM_PAGEMD_REFERENCED	__BIT(0)	/* page has been referenced */
+#define	VM_PAGEMD_MODIFIED	__BIT(1)	/* page has been modified */
+#define	VM_PAGEMD_POOLPAGE	__BIT(2)	/* page is used as a poolpage */
+#define	VM_PAGEMD_EXECPAGE	__BIT(3)	/* page is exec mapped */
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
-#define	VM_PAGEMD_UNCACHED	0x0010	/* page is mapped uncached */
+#define	VM_PAGEMD_UNCACHED	__BIT(4)	/* page is mapped uncached */
 #endif
 
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
