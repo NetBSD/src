@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.184 2017/06/05 13:35:33 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.185 2017/06/07 05:30:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.184 2017/06/05 13:35:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.185 2017/06/07 05:30:49 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1606,18 +1606,34 @@ pci_print_pcie_compl_timeout(uint32_t val)
 	}
 }
 
-static const char * const pcie_linkspeeds[] = {"2.5", "2.5", "5.0", "8.0"};
+static const char * const pcie_linkspeeds[] = {"2.5", "5.0", "8.0"};
 
+/*
+ * Print link speed. This function is used for the following register bits:
+ *   Maximum Link Speed in LCAP
+ *   Current Link Speed in LCSR
+ *   Target Link Speed in LCSR2
+ * All of above bitfield's values start from 1.
+ */
 static void
 pci_print_pcie_linkspeed(pcireg_t val)
 {
 
-	if (val > __arraycount(pcie_linkspeeds))
+	if ((val < 1) || (val > __arraycount(pcie_linkspeeds)))
 		printf("unknown value (%u)\n", val);
 	else
-		printf("%sGT/s\n", pcie_linkspeeds[val]);
+		printf("%sGT/s\n", pcie_linkspeeds[val - 1]);
 }
 
+/*
+ * Print link speed "vector".
+ * This function is used for the following register bits:
+ *   Supported Link Speeds Vector in LCAP2
+ *   Lower SKP OS Generation Supported Speed Vector  in LCAP2
+ *   Lower SKP OS Reception Supported Speed Vector in LCAP2
+ *   Enable Lower SKP OS Generation Vector in LCTL3
+ * All of above bitfield's values start from 0.
+ */
 static void
 pci_print_pcie_linkspeedvector(pcireg_t val)
 {
