@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.h,v 1.22 2017/06/03 10:31:16 kre Exp $	*/
+/*	$NetBSD: expand.h,v 1.23 2017/06/07 05:08:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -58,6 +58,7 @@ struct arglist {
 #define EXP_IFS_SPLIT	0x20	/* need to record arguments for ifs breakup */
 #define EXP_IN_QUOTES	0x40	/* don't set EXP_IFS_SPLIT again */
 #define EXP_GLOB	0x80	/* perform filename globbing */
+#define EXP_NL		0x100	/* keep CRTNONL in output */
 
 #define EXP_FULL	(EXP_SPLIT | EXP_GLOB)
 

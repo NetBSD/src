@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.112 2017/06/05 02:15:55 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.113 2017/06/07 05:08:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.112 2017/06/05 02:15:55 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.113 2017/06/07 05:08:32 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,6 +119,7 @@ STATIC int patmatch(const char *, const char *, int);
 STATIC char *cvtnum(int, char *);
 static int collate_range_cmp(wchar_t, wchar_t);
 STATIC void add_args(struct strlist *);
+STATIC void rmescapes_nl(char *);
 
 /*
  * Expand shell variables and backquotes inside a here document.
@@ -168,6 +169,7 @@ expandarg(union node *arg, struct arglist *arglist, int flag)
 	ifsfirst.next = NULL;
 	ifslastp = NULL;
 	argstr(arg->narg.text, flag);
+	line_number = arg->narg.lineno;
 	if (arglist == NULL) {
 		STACKSTRNUL(expdest);
 		CTRACE(DBG_EXPAND, ("expandarg: no arglist, done (%d) \"%s\"\n",
@@ -257,6 +259,11 @@ argstr(const char *p, int flag)
 				STPUTC(c, expdest);
 			ifs_split = 0;
 			break;
+		case CTLNONL:
+			if (flag & EXP_NL)
+				STPUTC(c, expdest);
+			line_number++;
+			break;
 		case CTLQUOTEEND:
 			ifs_split = EXP_IFS_SPLIT;
 			break;
@@ -304,6 +311,8 @@ argstr(const char *p, int flag)
 			}
 			break;
 		default:
+			if (c == '\n')
+				line_number++;
 			STPUTC(c, expdest);
 			if (flag & ifs_split && strchr(ifs, c) != NULL) {
 				/* We need to get the output split here... */
@@ -336,6 +345,8 @@ exptilde(const char *p, int flag)
 		case CTLENDARI:
 		case CTLQUOTEMARK:
 			return (startp);
+		case CTLNONL:
+			break;
 		case ':':
 			if (flag & EXP_VARTILDE)
 				goto done;
@@ -467,17 +478,18 @@ expari(const char *p, int flag)
 	 */
 	quoted = *p++ == '"';
 	begoff = expdest - stackblock();
-	VTRACE(DBG_EXPAND, ("expari: '%c' \"%s\" begoff %d\n", p[-1],p,begoff));
-	p = argstr(p, 0);			/* expand $(( )) string */
+	VTRACE(DBG_EXPAND, ("expari: '%c' \"%s\" begoff %d quotes %x\n",
+	    p[-1],p,begoff, quotes));
+	p = argstr(p, EXP_NL);			/* expand $(( )) string */
 	STPUTC('\0', expdest);
 	start = stackblock() + begoff;
 	VTRACE(DBG_EXPAND, ("expari: argstr added: '%s' start: \"%.8s\"\n",
 	    ed, start));
 	removerecordregions(begoff);
 	if (quotes)
-		rmescapes(start);		/* should be a no-op */
+		rmescapes_nl(start);	/* convert CRTNONL back into \n's */
 	q = grabstackstr(expdest);
-	result = arith(start);
+	result = arith(start, line_number);
 	VTRACE(DBG_EXPAND, ("expari: after arith: result=%jd '%s' q@'%.3s'\n",
 	    result, ed, q));
 	ungrabstackstr(q, expdest);
@@ -782,9 +794,14 @@ evalvar(const char *p, int flag)
 
  again: /* jump here after setting a variable with ${var=text} */
 	if (varflags & VSLINENO) {
-		set = 1;
-		special = p - var;
-		val = NULL;
+		if (line_num.flags & VUNSET) {
+			set = 0;
+			val = NULL;
+		} else {
+			set = 1;
+			special = p - var;
+			val = NULL;
+		}
 	} else if (special) {
 		set = varisset(var, varflags & VSNUL);
 		val = NULL;
@@ -951,6 +968,8 @@ evalvar(const char *p, int flag)
 		for (;;) {
 			if ((c = *p++) == CTLESC)
 				p++;
+			else if (c == CTLNONL)
+				;
 			else if (c == CTLBACKQ || c == (CTLBACKQ|CTLQUOTE)) {
 				if (set)
 					argbackq = argbackq->next;
@@ -1181,6 +1200,10 @@ ifsbreakup(char *string, struct arglist *arglist)
 		while (p < string + ifsp->endoff) {
 			had_param_ch = 1;
 			q = p;
+			if (*p == CTLNONL) {
+				p++;
+				continue;
+			}
 			if (*p == CTLESC)
 				p++;
 			if (ifsp->inquotes) {
@@ -1220,6 +1243,8 @@ ifsbreakup(char *string, struct arglist *arglist)
 				/* Ignore further trailing IFS whitespace */
 				for (; p < string + ifsp->endoff; p++) {
 					q = p;
+					if (*p == CTLNONL)
+						continue;
 					if (*p == CTLESC)
 						p++;
 					if (strchr(ifs, *p) == NULL) {
@@ -1366,7 +1391,7 @@ expmeta(char *enddir, char *name)
 			if (*q == '!')
 				q++;
 			for (;;) {
-				while (*q == CTLQUOTEMARK)
+				while (*q == CTLQUOTEMARK || *q == CTLNONL)
 					q++;
 				if (*q == CTLESC)
 					q++;
@@ -1381,7 +1406,7 @@ expmeta(char *enddir, char *name)
 			metaflag = 1;
 		} else if (*p == '\0')
 			break;
-		else if (*p == CTLQUOTEMARK)
+		else if (*p == CTLQUOTEMARK || *p == CTLNONL)
 			continue;
 		else if (*p == CTLESC)
 			p++;
@@ -1395,7 +1420,7 @@ expmeta(char *enddir, char *name)
 		if (enddir != expdir)
 			metaflag++;
 		for (p = name ; ; p++) {
-			if (*p == CTLQUOTEMARK)
+			if (*p == CTLQUOTEMARK || *p == CTLNONL)
 				continue;
 			if (*p == CTLESC)
 				p++;
@@ -1411,7 +1436,7 @@ expmeta(char *enddir, char *name)
 	if (start != name) {
 		p = name;
 		while (p < start) {
-			while (*p == CTLQUOTEMARK)
+			while (*p == CTLQUOTEMARK || *p == CTLNONL)
 				p++;
 			if (*p == CTLESC)
 				p++;
@@ -1438,7 +1463,7 @@ expmeta(char *enddir, char *name)
 	}
 	matchdot = 0;
 	p = start;
-	while (*p == CTLQUOTEMARK)
+	while (*p == CTLQUOTEMARK || *p == CTLNONL)
 		p++;
 	if (*p == CTLESC)
 		p++;
@@ -1606,6 +1631,7 @@ patmatch(const char *pattern, const char *string, int squoted)
 				goto backtrack;
 			break;
 		case CTLQUOTEMARK:
+		case CTLNONL:
 			continue;
 		case '?':
 			if (squoted && *q == CTLESC)
@@ -1617,7 +1643,7 @@ patmatch(const char *pattern, const char *string, int squoted)
 			c = *p;
 			while (c == CTLQUOTEMARK || c == '*')
 				c = *++p;
-			if (c != CTLESC &&  c != CTLQUOTEMARK &&
+			if (c != CTLESC &&  c != CTLQUOTEMARK && c != CTLNONL &&
 			    c != '?' && c != '*' && c != '[') {
 				while (*q != c) {
 					if (squoted && *q == CTLESC &&
@@ -1648,7 +1674,7 @@ patmatch(const char *pattern, const char *string, int squoted)
 			if (*endp == '!')
 				endp++;
 			for (;;) {
-				while (*endp == CTLQUOTEMARK)
+				while (*endp == CTLQUOTEMARK || *endp==CTLNONL)
 					endp++;
 				if (*endp == '\0')
 					goto dft;		/* no matching ] */
@@ -1670,7 +1696,7 @@ patmatch(const char *pattern, const char *string, int squoted)
 			chr = (unsigned char)*q++;
 			c = *p++;
 			do {
-				if (c == CTLQUOTEMARK)
+				if (c == CTLQUOTEMARK || c == CTLNONL)
 					continue;
 				if (c == '\0') {
 					p = savep, q = saveq;
@@ -1729,7 +1755,7 @@ backtrack:
 
 
 /*
- * Remove any CTLESC characters from a string.
+ * Remove any CTLESC or CTLNONL characters from a string.
  */
 
 void
@@ -1738,13 +1764,13 @@ rmescapes(char *str)
 	char *p, *q;
 
 	p = str;
-	while (*p != CTLESC && *p != CTLQUOTEMARK) {
+	while (*p != CTLESC && *p != CTLQUOTEMARK && *p != CTLNONL) {
 		if (*p++ == '\0')
 			return;
 	}
 	q = p;
 	while (*p) {
-		if (*p == CTLQUOTEMARK) {
+		if (*p == CTLQUOTEMARK || *p == CTLNONL) {
 			p++;
 			continue;
 		}
@@ -1752,6 +1778,58 @@ rmescapes(char *str)
 			p++;
 		*q++ = *p++;
 	}
+	*q = '\0';
+}
+
+/*
+ * and a special version for dealing with expressions to be parsed
+ * by the arithmetic evaluator.   That needs to be able to count \n's
+ * even ones that were \newline elided \n's, so we have to put the
+ * latter back into the string - just being careful to put them only
+ * at a place where white space can reasonably occur in the string
+ * -- then the \n we insert will just be white space, and ignored
+ * for all purposes except line counting.
+ */
+
+void
+rmescapes_nl(char *str)
+{
+	char *p, *q;
+	int nls = 0, holdnl = 0, holdlast;
+
+	p = str;
+	while (*p != CTLESC && *p != CTLQUOTEMARK && *p != CTLNONL) {
+		if (*p++ == '\0')
+			return;
+	}
+	if (p > str)	/* must reprocess char before stopper (if any) */
+		--p;	/* so we do not place a \n badly */
+	q = p;
+	while (*p) {
+		if (*p == CTLQUOTEMARK) {
+			p++;
+			continue;
+		}
+		if (*p == CTLNONL) {
+			p++;
+			nls++;
+			continue;
+		}
+		if (*p == CTLESC)
+			p++;
+
+		holdlast = holdnl;
+		holdnl = is_in_name(*p);	/* letters, digits, _ */
+		if (q == str || is_space(q[-1]) || (*p != '=' && q[-1] != *p)) {
+			if (nls > 0 && holdnl != holdlast) {
+				while (nls > 0)
+					*q++ = '\n', nls--;
+			}
+		}
+		*q++ = *p++;
+	}
+	while (--nls >= 0)
+		*q++ = '\n';
 	*q = '\0';
 }
 

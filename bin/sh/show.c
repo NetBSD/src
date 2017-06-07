@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.42 2017/05/29 14:03:23 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.43 2017/06/07 05:08:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.42 2017/05/29 14:03:23 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.43 2017/06/07 05:08:32 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: show.c,v 1.42 2017/05/29 14:03:23 kre Exp $");
 #include "syntax.h"
 #include "input.h"
 #include "output.h"
+#include "var.h"
 #include "builtins.h"
 
 #if defined(DEBUG) && !defined(DBG_PID)
@@ -654,12 +655,17 @@ sharg(union node *arg, TFILE *fp)
 			trace_putc(*++p, fp);
 			break;
 
+		case CTLNONL:
+			trace_putc('\\', fp);
+			trace_putc('\n', fp);
+			break;
+
 		case CTLVAR:
 			subtype = *++p;
 			if (!quoted != !(subtype & VSQUOTE))
 				trace_putc('"', fp);
 			trace_putc('$', fp);
-			trace_putc('{', fp);
+			trace_putc('{', fp);	/*}*/
 			if ((subtype & VSTYPE) == VSLENGTH)
 				trace_putc('#', fp);
 			if (subtype & VSLINENO)
@@ -750,6 +756,8 @@ sharg(union node *arg, TFILE *fp)
 			quoted--;
 			break;
 		case CTLARI:
+			if (*p == ' ')
+				p++;
 			trace_puts("$(( ", fp);
 			break;
 		case CTLENDARI:
@@ -943,13 +951,22 @@ trace_id(TFILE *tf)
 	} else
 		indent[0] = '\0';
 
-	lno = plinno;	/* only approximate for now - as good as we can do */
+	/*
+	 * If we are in the parser, then plinno is the current line
+	 * number being processed (parser line no).
+	 * If we are elsewhere, then line_number gives the source
+	 * line of whatever we are currently doing (close enough.)
+	 */
+	if (parsing)
+		lno = plinno;
+	else
+		lno = line_number;
 
 	if (DFlags & DBG_PID) {
 		i = getpid();
 		if (DFlags & DBG_LINE)
-			(void) asprintf(&p, "%5d%c%s\t%4d @\t", i,
-			    i == tf->pid ? ':' : '=', indent, lno);
+			(void) asprintf(&p, "%5d%c%s\t%4d%c@\t", i,
+			    i == tf->pid ? ':' : '=', indent, lno, parsing?'-':'+');
 		else
 			(void) asprintf(&p, "%5d%c%s\t", i,
 			    i == tf->pid ? ':' : '=', indent);

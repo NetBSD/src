@@ -1,4 +1,4 @@
-/*	$NetBSD: syntax.h,v 1.7 2017/05/15 20:00:36 kre Exp $	*/
+/*	$NetBSD: syntax.h,v 1.8 2017/06/07 05:08:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -56,6 +56,7 @@
 #define ISLOWER 04		/* a lower case letter */
 #define ISUNDER 010		/* an underscore */
 #define ISSPECL 020		/* the name of a special parameter */
+#define	ISSPACE 040		/* a white space character */
 
 #define PEOF (CHAR_MIN - 1)
 #define SYNBASE (-PEOF)
@@ -75,6 +76,7 @@
 #define	is_name(c)	(sh_ctype(c) & (ISUPPER|ISLOWER|ISUNDER))
 #define	is_in_name(c)	(sh_ctype(c) & (ISUPPER|ISLOWER|ISUNDER|ISDIGIT))
 #define is_special(c)	(sh_ctype(c) & (ISSPECL|ISDIGIT))
+#define is_space(c)	(sh_ctype(c) & ISSPACE)
 #define digit_val(c)	((c) - '0')
 
 extern const char basesyntax[];

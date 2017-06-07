@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.142 2017/06/07 04:44:17 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.143 2017/06/07 05:08:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.142 2017/06/07 04:44:17 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.143 2017/06/07 05:08:32 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,7 +217,7 @@ evalstring(char *s, int flag)
 	struct stackmark smark;
 
 	setstackmark(&smark);
-	setinputstring(s, 1, atoi(line_num.text + line_num.name_len + 1));
+	setinputstring(s, 1, line_number);
 
 	while ((n = parsecmd(0)) != NEOF) {
 		TRACE(("evalstring: "); showtree(n));
@@ -317,7 +317,9 @@ evaltree(union node *n, int flags)
 		evalcase(n, sflags);
 		break;
 	case NDEFUN:
-		defun(n->narg.text, n->narg.next);
+		CTRACE(DBG_EVAL, ("Defining fn %s @%d%s\n", n->narg.text,
+		    n->narg.lineno, fnline1 ? " LINENO=1" : ""));
+		defun(n->narg.text, n->narg.next, n->narg.lineno);
 		exitstatus = 0;
 		break;
 	case NNOT:
@@ -473,9 +475,11 @@ evalcase(union node *n, int flags)
 
 	setstackmark(&smark);
 	arglist.lastp = &arglist.list;
+	line_number = n->ncase.lineno;
 	expandarg(n->ncase.expr, &arglist, EXP_TILDE);
 	for (cp = n->ncase.cases; cp && evalskip == 0; cp = cp->nclist.next) {
 		for (patp = cp->nclist.pattern; patp; patp = patp->narg.next) {
+			line_number = patp->narg.lineno;
 			if (casematch(patp, arglist.list->text)) {
 				while (cp != NULL && evalskip == 0 &&
 				    nflag == 0) {
@@ -483,6 +487,7 @@ evalcase(union node *n, int flags)
 						ncp = cp->nclist.next;
 					else
 						ncp = NULL;
+					line_number = cp->nclist.lineno;
 					evaltree(cp->nclist.body,
 					    ncp ? (flags | EV_MORE) : flags);
 					status = exitstatus;
@@ -766,21 +771,25 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	char * volatile lastarg;
 	const char * volatile path = pathval();
 	volatile int temp_path;
+	const int savefuncline = funclinebase;
+	const int savefuncabs = funclineabs;
 
 	vforked = 0;
 	/* First expand the arguments. */
-	TRACE(("evalcommand(0x%lx, %d) called\n", (long)cmd, flags));
+	TRACE(("evalcommand(%p, %d) called\n", cmd, flags));
 	setstackmark(&smark);
 	back_exitstatus = 0;
 
 	if (cmd != NULL)
-		set_lineno(cmd->ncmd.lineno);
+		line_number = cmd->ncmd.lineno;
 
 	arglist.lastp = &arglist.list;
 	varflag = 1;
 	/* Expand arguments, ignoring the initial 'name=value' ones */
 	for (argp = cmd->ncmd.args ; argp ; argp = argp->narg.next) {
 		char *p = argp->narg.text;
+
+		line_number = argp->narg.lineno;
 		if (varflag && is_name(*p)) {
 			do {
 				p++;
@@ -799,6 +808,8 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	varlist.lastp = &varlist.list;
 	for (argp = cmd->ncmd.args ; argp ; argp = argp->narg.next) {
 		char *p = argp->narg.text;
+
+		line_number = argp->narg.lineno;
 		if (!is_name(*p))
 			break;
 		do
@@ -879,6 +890,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 
 		do {
 			int argsused, use_syspath;
+
 			find_command(argv[0], &cmdentry, cmd_flags, path);
 			if (cmdentry.cmdtype == CMDUNKNOWN) {
 				exitstatus = 127;
@@ -1031,11 +1043,27 @@ normal_fork:
 			}
 			poplocalvars();
 			localvars = savelocalvars;
+			funclinebase = savefuncline;
+			funclineabs = savefuncabs;
 			handler = savehandler;
 			longjmp(handler->loc, 1);
 		}
 		savehandler = handler;
 		handler = &jmploc;
+		if (cmdentry.u.func) {
+			if (cmdentry.lno_frel)
+				funclinebase = cmdentry.lineno - 1;
+			else
+				funclinebase = 0;
+			funclineabs = cmdentry.lineno;
+
+			VTRACE(DBG_EVAL,
+			  ("function: node: %d '%s' # %d%s; funclinebase=%d\n",
+			    cmdentry.u.func->type,
+			    NODETYPENAME(cmdentry.u.func->type),
+			    cmdentry.lineno, cmdentry.lno_frel?" (=1)":"",
+			    funclinebase));
+		}
 		listmklocal(varlist.list, VEXPORT);
 		/* stop shell blowing its stack */
 		if (++funcnest > 1000)
@@ -1045,6 +1073,8 @@ normal_fork:
 		INTOFF;
 		poplocalvars();
 		localvars = savelocalvars;
+		funclinebase = savefuncline;
+		funclineabs = savefuncabs;
 		freeparam(&shellparam);
 		shellparam = saveparam;
 		handler = savehandler;

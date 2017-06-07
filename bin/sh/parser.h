@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.21 2016/03/31 23:11:05 christos Exp $	*/
+/*	$NetBSD: parser.h,v 1.22 2017/06/07 05:08:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,9 @@
 #define	CTLENDARI '\207'
 #define	CTLQUOTEMARK '\210'
 #define	CTLQUOTEEND '\211'	/* only inside ${...} */
-#define	CTL_LAST '\211'		/* last 'special' character */
+#define CTLNONL '\212'		/* The \n in a deleted \ \n sequence */
+			/* pure concidence that (CTLNONL & 0x7f) == '\n' */
+#define	CTL_LAST '\212'		/* last 'special' character */
 
 /* variable substitution byte (follows CTLVAR) */
 #define VSTYPE		0x0f	/* type of variable substitution */
@@ -83,3 +85,7 @@ union node *parsecmd(int);
 void fixredir(union node *, const char *, int);
 int goodname(char *);
 const char *getprompt(void *);
+
+#ifdef DEBUG
+extern int parsing;
+#endif

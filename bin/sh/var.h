@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.29 2017/06/07 04:44:17 kre Exp $	*/
+/*	$NetBSD: var.h,v 1.30 2017/06/07 05:08:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,16 +48,21 @@
 #define VNOFUNC		0x0040	/* don't call the callback function */
 #define VNOSET		0x0080	/* do not set variable - just readonly test */
 #define VNOEXPORT	0x0100	/* variable may not be exported */
+#define VFUNCREF	0x0200	/* the function is called on ref, not set */
 
+struct var;
+
+union var_func_union {		/* function to be called when:  */
+	void (*set_func)(const char *);		/* variable gets set/unset */
+	char*(*ref_func)(struct var *);		/* variable is referenced */
+};
 
 struct var {
 	struct var *next;		/* next entry in hash list */
 	int flags;			/* flags are defined above */
 	char *text;			/* name=value */
 	int name_len;			/* length of name */
-	void (*func)(const char *);
-					/* function to be called when  */
-					/* the variable gets set/unset */
+	union var_func_union v_u;	/* function to apply (sometimes) */
 };
 
 
@@ -85,6 +90,10 @@ extern struct var vterm;
 extern struct var vtermcap;
 extern struct var vhistsize;
 #endif
+
+extern int line_number;
+extern int funclinebase;
+extern int funclineabs;
 
 /*
  * The following macros access the values of the above variables.
