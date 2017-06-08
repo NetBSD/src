@@ -1,4 +1,4 @@
-/* $NetBSD: pl041.c,v 1.2 2017/06/08 10:40:13 jmcneill Exp $ */
+/* $NetBSD: pl041.c,v 1.3 2017/06/08 11:05:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.2 2017/06/08 10:40:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.3 2017/06/08 11:05:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ aaci_write_data(struct aaci_softc *sc)
 		const int len = min(AACI_FIFO_DEPTH / 2, min(sc->sc_pblkresid,
 		    (uintptr_t)sc->sc_pend - (uintptr_t)sc->sc_pcur));
 		KASSERT((len & 3) == 0);
-		AACI_WRITE_MULTI(sc, AACIDR, sc->sc_pcur, len);
+		AACI_WRITE_MULTI(sc, AACIDR, sc->sc_pcur, len >> 2);
 		sc->sc_pcur += (len >> 2);
 		if (sc->sc_pcur == sc->sc_pend)
 			sc->sc_pcur = sc->sc_pstart;
