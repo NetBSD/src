@@ -1,3 +1,5 @@
+/*	$NetBSD: extra-terminating-null.c,v 1.1.1.2 2017/06/08 15:59:26 skrll Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Testcase for properties with more than one terminating null

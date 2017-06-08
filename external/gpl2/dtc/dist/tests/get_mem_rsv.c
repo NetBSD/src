@@ -1,3 +1,5 @@
+/*	$NetBSD: get_mem_rsv.c,v 1.1.1.2 2017/06/08 15:59:26 skrll Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Testcase for fdt_get_mem_rsv() and fdt_num_mem_rsv()

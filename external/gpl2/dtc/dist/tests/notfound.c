@@ -1,3 +1,5 @@
+/*	$NetBSD: notfound.c,v 1.1.1.2 2017/06/08 15:59:27 skrll Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Testcase for behaviour on searching for a non-existent node

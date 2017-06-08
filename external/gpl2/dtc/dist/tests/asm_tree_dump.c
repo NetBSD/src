@@ -1,3 +1,5 @@
+/*	$NetBSD: asm_tree_dump.c,v 1.1.1.2 2017/06/08 15:59:26 skrll Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Tests if an asm tree built into a shared object matches a given dtb

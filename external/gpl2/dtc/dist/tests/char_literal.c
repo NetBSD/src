@@ -1,3 +1,5 @@
+/*	$NetBSD: char_literal.c,v 1.1.1.2 2017/06/08 15:59:26 skrll Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Testcase for character literals in dtc
@@ -31,7 +33,7 @@
 int main(int argc, char *argv[])
 {
 	void *fdt;
-	uint32_t expected_cells[5];
+	fdt32_t expected_cells[5];
 
 	expected_cells[0] = cpu_to_fdt32((unsigned char)TEST_CHAR1);
 	expected_cells[1] = cpu_to_fdt32((unsigned char)TEST_CHAR2);

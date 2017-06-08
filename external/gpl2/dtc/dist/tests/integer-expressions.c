@@ -1,3 +1,5 @@
+/*	$NetBSD: integer-expressions.c,v 1.1.1.2 2017/06/08 15:59:27 skrll Exp $	*/
+
 /*
  * Testcase for dtc expression support
  *
@@ -30,7 +32,7 @@
 #include "tests.h"
 #include "testdata.h"
 
-struct test_expr {
+static struct test_expr {
 	const char *expr;
 	uint32_t result;
 } expr_table[] = {
@@ -70,7 +72,7 @@ struct test_expr {
 int main(int argc, char *argv[])
 {
 	void *fdt;
-	const uint32_t *res;
+	const fdt32_t *res;
 	int reslen;
 	int i;
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: utilfdt_test.c,v 1.1.1.2 2017/06/08 15:59:28 skrll Exp $	*/
+
 /*
  * Copyright 2011 The Chromium Authors, All Rights Reserved.
  *

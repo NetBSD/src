@@ -1,3 +1,5 @@
+/*	$NetBSD: convert-dtsv0-lexer.l,v 1.1.1.2 2017/06/08 15:59:15 skrll Exp $	*/
+
 /*
  * (C) Copyright David Gibson <dwg@au1.ibm.com>, IBM Corporation.  2005, 2008.
  *
@@ -49,7 +51,7 @@ static int saw_hyphen; /* = 0 */
 static unsigned long long last_val;
 static char *last_name; /* = NULL */
 
-const struct {
+static const struct {
 	const char *pattern;
 	int obase, width;
 } guess_table[] = {
@@ -223,6 +225,8 @@ static void convert_file(const char *fname)
 
 	while(yylex())
 		;
+
+	free(newname);
 }
 
 int main(int argc, char *argv[])

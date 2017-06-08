@@ -1,3 +1,5 @@
+/*	$NetBSD: sw_tree1.c,v 1.1.1.2 2017/06/08 15:59:27 skrll Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Testcase for fdt_nop_node()
@@ -42,14 +44,14 @@ static void realloc_fdt(void **fdt, size_t *size, bool created)
 	switch (alloc_mode) {
 	case FIXED:
 		if (!(*fdt))
-			fdt = xmalloc(*size);
+			*fdt = xmalloc(*size);
 		else
 			FAIL("Ran out of space");
 		return;
 
 	case RESIZE:
 		if (!(*fdt)) {
-			fdt = xmalloc(SPACE);
+			*fdt = xmalloc(SPACE);
 		} else if (*size < SPACE) {
 			*size += 1;
 			fdt_resize(*fdt, *fdt, *size);
