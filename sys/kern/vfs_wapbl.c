@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.96 2017/04/10 21:36:05 jdolecek Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.97 2017/06/08 01:23:01 chs Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.96 2017/04/10 21:36:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.97 2017/06/08 01:23:01 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -612,7 +612,7 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 
 	/* XXX maybe use filesystem fragment size instead of 1024 */
 	/* XXX fix actual number of buffers reserved per filesystem. */
-	wl->wl_bufcount_max = (nbuf / 2) * 1024;
+	wl->wl_bufcount_max = (buf_nbuf() / 2) * 1024;
 
 	wl->wl_brperjblock = ((1<<wl->wl_log_dev_bshift)
 	    - offsetof(struct wapbl_wc_blocklist, wc_blocks)) /

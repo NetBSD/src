@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.139 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.140 2017/06/08 01:23:01 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.139 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.140 2017/06/08 01:23:01 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,6 +304,20 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 		lfs_reserveavail(fs, vp, vp2, -fsb);
 
 	return error;
+}
+
+int
+lfs_max_bufs(void)
+{
+
+	return LFS_MAX_RESOURCE(buf_nbuf(), 1);
+}
+
+int
+lfs_wait_bufs(void)
+{
+
+	return LFS_WAIT_RESOURCE(buf_nbuf(), 1);
 }
 
 int
@@ -556,7 +570,6 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 		}
 		mountlist_iterator_destroy(iter);
 	}
-	LFS_DEBUG_COUNTLOCKED("flush");
 	wakeup(&lfs_subsys_pages);
 
     errout:
@@ -747,44 +760,6 @@ lfs_freebuf(struct lfs *fs, struct buf *bp)
 		bp->b_data = NULL;
 	}
 	putiobuf(bp);
-}
-
-/*
- * Count buffers on the "locked" queue, and compare it to a pro-forma count.
- * Don't count malloced buffers, since they don't detract from the total.
- */
-void
-lfs_countlocked(int *count, long *bytes, const char *msg)
-{
-	struct buf *bp;
-	int n = 0;
-	long int size = 0L;
-
-	mutex_enter(&bufcache_lock);
-	TAILQ_FOREACH(bp, &bufqueues[BQ_LOCKED].bq_queue, b_freelist) {
-		KASSERT(bp->b_iodone == NULL);
-		n++;
-		size += bp->b_bufsize;
-		KASSERTMSG((n <= nbuf),
-		    "lfs_countlocked: this can't happen: more"
-		    " buffers locked than exist");
-	}
-	/*
-	 * Theoretically this function never really does anything.
-	 * Give a warning if we have to fix the accounting.
-	 */
-	if (n != *count) {
-		DLOG((DLOG_LLIST, "lfs_countlocked: %s: adjusted buf count"
-		      " from %d to %d\n", msg, *count, n));
-	}
-	if (size != *bytes) {
-		DLOG((DLOG_LLIST, "lfs_countlocked: %s: adjusted byte count"
-		      " from %ld to %ld\n", msg, *bytes, size));
-	}
-	*count = n;
-	*bytes = size;
-	mutex_exit(&bufcache_lock);
-	return;
 }
 
 int
