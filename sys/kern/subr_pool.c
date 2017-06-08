@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.207 2017/03/14 03:13:50 riastradh Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.208 2017/06/08 04:00:01 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.207 2017/03/14 03:13:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.208 2017/06/08 04:00:01 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -105,6 +105,10 @@ struct pool_allocator pool_allocator_meta = {
 	.pa_free = pool_page_free_meta,
 	.pa_pagesz = 0
 };
+
+#define POOL_ALLOCATOR_BIG_BASE 13
+extern struct pool_allocator pool_allocator_big[];
+static int pool_bigidx(size_t);
 
 /* # of seconds to retain page after last use */
 int pool_inactive_time = 10;
@@ -1700,8 +1704,14 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 	struct pool *pp;
 
 	pp = &pc->pc_pool;
-	if (palloc == NULL && ipl == IPL_NONE)
-		palloc = &pool_allocator_nointr;
+	if (palloc == NULL && ipl == IPL_NONE) {
+		if (size > PAGE_SIZE) {
+			int bigidx = pool_bigidx(size);
+
+			palloc = &pool_allocator_big[bigidx];
+		} else
+			palloc = &pool_allocator_nointr;
+	}
 	pool_init(pp, size, align, align_offset, flags, wchan, palloc, ipl);
 	mutex_init(&pc->pc_lock, MUTEX_DEFAULT, ipl);
 
@@ -2497,6 +2507,61 @@ struct pool_allocator pool_allocator_nointr = {
 	.pa_pagesz = POOL_SUBPAGE
 };
 #endif /* POOL_SUBPAGE */
+
+struct pool_allocator pool_allocator_big[] = {
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 0),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 1),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 2),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 3),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 4),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 5),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 6),
+	},
+	{
+		.pa_alloc = pool_page_alloc,
+		.pa_free = pool_page_free,
+		.pa_pagesz = 1 << (POOL_ALLOCATOR_BIG_BASE + 7),
+	}
+};
+
+static int
+pool_bigidx(size_t size)
+{
+	int i;
+
+	for (i = 0; i < __arraycount(pool_allocator_big); i++) {
+		if (1 << (i + POOL_ALLOCATOR_BIG_BASE) >= size)
+			return i;
+	}
+	panic("pool item size %zu too large, use a custom allocator", size);
+}
 
 static void *
 pool_allocator_alloc(struct pool *pp, int flags)
