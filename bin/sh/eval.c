@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.145 2017/06/08 02:25:43 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.146 2017/06/08 13:12:17 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.145 2017/06/08 02:25:43 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.146 2017/06/08 13:12:17 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,6 @@ STATIC void expredir(union node *);
 STATIC void evalpipe(union node *);
 STATIC void evalcommand(union node *, int, struct backcmd *);
 STATIC void prehash(union node *);
-STATIC void set_lineno(int);
 
 STATIC char *find_dot_file(char *);
 
@@ -309,11 +308,9 @@ evaltree(union node *n, int flags)
 		evalloop(n, sflags);
 		break;
 	case NFOR:
-		set_lineno(n->nfor.lineno);
 		evalfor(n, sflags);
 		break;
 	case NCASE:
-		set_lineno(n->ncase.lineno);
 		evalcase(n, sflags);
 		break;
 	case NDEFUN:
@@ -1491,13 +1488,4 @@ timescmd(int argc, char **argv)
 		u, us, s, ss, cu, cus, cs, css);
 
 	return 0;
-}
-
-STATIC void
-set_lineno(int lno)
-{
-	char lineno[24];
-
-	(void)snprintf(lineno, sizeof lineno, "%u", lno);
-	(void)setvarsafe("LINENO", lineno, 0);
 }

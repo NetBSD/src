@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.135 2017/06/07 08:10:31 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.136 2017/06/08 13:12:17 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.135 2017/06/07 08:10:31 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.136 2017/06/08 13:12:17 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -406,7 +406,6 @@ command(void)
 		n1 = stalloc(sizeof(struct nfor));
 		n1->type = NFOR;
 		n1->nfor.var = wordtext;
-		n1->nfor.lineno = startlinno;
 		if (readtoken()==TWORD && !quoteflag && equal(wordtext,"in")) {
 			app = &ap;
 			while (readtoken() == TWORD) {
