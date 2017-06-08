@@ -10,7 +10,7 @@
 #
 VERSION = 1
 PATCHLEVEL = 4
-SUBLEVEL = 1
+SUBLEVEL = 4
 EXTRAVERSION =
 LOCAL_VERSION =
 CONFIG_LOCALVERSION =
@@ -197,10 +197,32 @@ fdtget:	$(FDTGET_OBJS) $(LIBFDT_archive)
 fdtput:	$(FDTPUT_OBJS) $(LIBFDT_archive)
 
 dist:
-	git archive --format=tar --prefix=dtc-v$(dtc_version)/ HEAD \
-		> ../dtc-v$(dtc_version).tar
-	cat ../dtc-v$(dtc_version).tar | \
-		gzip -9 > ../dtc-v$(dtc_version).tgz
+	git archive --format=tar --prefix=dtc-$(dtc_version)/ HEAD \
+		> ../dtc-$(dtc_version).tar
+	cat ../dtc-$(dtc_version).tar | \
+		gzip -9 > ../dtc-$(dtc_version).tar.gz
+
+#
+# Release signing and uploading
+# This is for maintainer convenience, don't try this at home.
+#
+ifeq ($(MAINTAINER),y)
+GPG = gpg2
+KUP = kup
+KUPDIR = /pub/software/utils/dtc
+
+kup: dist
+	$(GPG) --detach-sign --armor -o ../dtc-$(dtc_version).tar.sign \
+		../dtc-$(dtc_version).tar
+	$(KUP) put ../dtc-$(dtc_version).tar.gz ../dtc-$(dtc_version).tar.sign \
+		$(KUPDIR)/dtc-$(dtc_version).tar.gz
+endif
+
+tags: FORCE
+	rm -f tags
+	find . \( -name tests -type d -prune \) -o \
+	       \( ! -name '*.tab.[ch]' ! -name '*.lex.c' \
+	       -name '*.[chly]' -type f -print \) | xargs ctags -a
 
 #
 # Testsuite rules
