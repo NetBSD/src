@@ -1,4 +1,4 @@
-/*	$NetBSD: flattree.c,v 1.3 2017/06/08 16:00:40 skrll Exp $	*/
+/*	$NetBSD: flattree.c,v 1.4 2017/06/08 17:24:10 skrll Exp $	*/
 
 /*
  * (C) Copyright David Gibson <dwg@au1.ibm.com>, IBM Corporation.  2005.
@@ -404,7 +404,7 @@ void dt_to_blob(FILE *f, struct dt_info *dti, int version)
 		padlen = padsize;
 
 	if (alignsize > 0)
-		padlen = ALIGN(fdt32_to_cpu(fdt.totalsize) + padlen, alignsize)
+		padlen = FDTALIGN2(fdt32_to_cpu(fdt.totalsize) + padlen, alignsize)
 			- fdt32_to_cpu(fdt.totalsize);
 
 	if (padlen > 0) {
