@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.111 2017/06/08 02:23:51 kre Exp $
+#	$NetBSD: Makefile,v 1.112 2017/06/08 02:25:43 kre Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -26,11 +26,9 @@ SCRIPT_ENV= \
 CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
 #XXX: For testing only.
 #CPPFLAGS+=-DDEBUG=3
-CPPFLAGS+=-DDEBUG=1
-COPTS+=-g
+#COPTS+=-g
 #CFLAGS+=-funsigned-char
 #TARGET_CHARFLAG?= -DTARGET_CHAR="unsigned char" -funsigned-char
-CFLAGS+=-Wall
 
 # Reproducible build parameters ... export into sh for NETBSD_SHELL setting
 .if ${MKREPRO_TIMESTAMP:Uno} != "no"

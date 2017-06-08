@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.144 2017/06/08 02:23:51 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.145 2017/06/08 02:25:43 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.144 2017/06/08 02:23:51 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.145 2017/06/08 02:25:43 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -776,8 +776,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 
 	vforked = 0;
 	/* First expand the arguments. */
-	CTRACE(DBG_EVAL, ("evalcommand(%p, %d) called (%d)\n", cmd, flags,
-	    (cmd ? cmd->ncmd.lineno : -1)));
+	TRACE(("evalcommand(%p, %d) called\n", cmd, flags));
 	setstackmark(&smark);
 	back_exitstatus = 0;
 
