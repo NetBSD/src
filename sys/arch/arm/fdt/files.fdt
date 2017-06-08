@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.9 2017/06/03 17:05:23 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.10 2017/06/08 10:03:59 jmcneill Exp $
 
 include	"dev/pckbport/files.pckbport"
 
@@ -31,6 +31,9 @@ file	arch/arm/fdt/plmmc_fdt.c		plmmc_fdt
 
 attach	smsh at fdt with smsh_fdt
 file	arch/arm/fdt/smsh_fdt.c			smsh_fdt
+
+attach	aaci at fdt with aaci_fdt
+file	arch/arm/fdt/aaci_fdt.c			aaci_fdt
 
 # Console parameters
 defparam opt_fdt_arm.h				CONSADDR
