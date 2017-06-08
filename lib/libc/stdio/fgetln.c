@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.16 2009/12/02 09:03:13 roy Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.17 2017/06/08 15:59:45 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fgetln.c,v 1.16 2009/12/02 09:03:13 roy Exp $");
+__RCSID("$NetBSD: fgetln.c,v 1.17 2017/06/08 15:59:45 uwe Exp $");
 
 #include "namespace.h"
 
@@ -49,7 +49,7 @@ __weak_alias(fgetln,_fgetln)
 /*
  * Get an input line.
  * This now uses getdelim(3) for a code reduction.
- * The upside is that strings are now always NULL terminated, but relying
+ * The upside is that strings are now always null-terminated, but relying
  * on this is non portable - better to use the POSIX getdelim(3) function.
  */
 char *
