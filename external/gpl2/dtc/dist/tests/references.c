@@ -1,3 +1,5 @@
+/*	$NetBSD: references.c,v 1.1.1.2 2017/06/08 15:59:27 skrll Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Testcase for phandle references in dtc
@@ -29,7 +31,7 @@
 
 static void check_ref(const void *fdt, int node, uint32_t checkref)
 {
-	const uint32_t *p;
+	const fdt32_t *p;
 	uint32_t ref;
 	int len;
 
@@ -58,7 +60,7 @@ static void check_ref(const void *fdt, int node, uint32_t checkref)
 
 static void check_rref(const void *fdt)
 {
-	const uint32_t *p;
+	const fdt32_t *p;
 	uint32_t ref;
 	int len;
 

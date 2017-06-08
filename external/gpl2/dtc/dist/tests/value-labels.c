@@ -1,3 +1,5 @@
+/*	$NetBSD: value-labels.c,v 1.1.1.2 2017/06/08 15:59:28 skrll Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Test labels within values
@@ -36,13 +38,13 @@ struct val_label {
 	int propoff;
 };
 
-struct val_label labels1[] = {
+static struct val_label labels1[] = {
 	{ "start1", 0 },
 	{ "mid1", 2 },
 	{ "end1", -1 },
 };
 
-struct val_label labels2[] = {
+static struct val_label labels2[] = {
 	{ "start2", 0 },
 	{ "innerstart2", 0 },
 	{ "innermid2", 4 },
@@ -50,7 +52,7 @@ struct val_label labels2[] = {
 	{ "end2", -1 },
 };
 
-struct val_label labels3[] = {
+static struct val_label labels3[] = {
 	{ "start3", 0 },
 	{ "innerstart3", 0 },
 	{ "innermid3", 1 },
