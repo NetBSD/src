@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2017/06/06 07:45:39 skrll Exp $
+#	$NetBSD: Makefile,v 1.2 2017/06/08 17:09:29 skrll Exp $
 
 HOSTLIB=	fdt
 
 .include <bsd.own.mk>
 
-LIBFDT_DIR=	${.CURDIR}/../../external/gpl2/dtc/dist/libfdt
+LIBFDT_DIR=	${.CURDIR}/../../sys/external/bsd/libfdt/dist
 
 .include "${LIBFDT_DIR}/Makefile.libfdt"
 
