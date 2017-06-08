@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.150 2017/06/07 13:49:48 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.151 2017/06/08 02:23:51 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -2868,12 +2868,15 @@ and can be unset.
 All of those act as they would with any other variable.
 However,
 .Ev LINENO
-should normally not ever be set, in this
-shell doing so reverses the effect of an earlier unset,
+should normally not ever be set or unset.
+In this shell setting
+.Ev LINENO
+reverses the effect of an earlier
+.Ic unset ,
 but does not otherwise affect the value obtained.
 If unset,
 .Ev LINENO
-should not be set again.
+should not normally be set again, doing so is not portable.
 If
 .Ev LINENO
 is set or unset, different shells act differently.
@@ -2896,9 +2899,11 @@ Line numbers are counted from 1, which is the first line the shell
 reads from any particular file.
 For this shell, standard input, including in an interactive shell,
 the user's terminal, is just another file and lines are counted
-there as well, however note that not all shells count interactive
-lines this way, it is wise to rely upon LINENO only having a useful
-value in a script, or a function.
+there as well.
+However note that not all shells count interactive
+lines this way, it is not wise to rely upon
+.Ev LINENO
+having a useful value, except in a script, or a function.
 .Pp
 The role of
 .Ev LINENO
@@ -2917,7 +2922,9 @@ If the
 .Fl L
 flag (the
 .Ic lineno_fn_relative
-option) is set, when the function is defined, then the function
+option, see
+.Sx Argument List Processing )
+is set, when the function is defined, then the function
 defaults to counting lines with one being the first line of the
 function.
 When the
@@ -2936,7 +2943,7 @@ behavior it prefers.
 If
 .Ev LINENO
 is made local and inherited, and not given a value, as in
-.Dl local -I LINENO
+.Dl local Fl I Ev LINENO
 then from that point in the function,
 .Ev LINENO
 will give the line number as if lines are counted in sequence
@@ -2944,14 +2951,14 @@ with the lines that surround the function definition.
 If
 .Ev LINENO
 is made local, and in that same command, given a value, as
-.Dl local Oo Fl I Ns Cm \&| Ns Fl N Ns Oc LINENO=value
+.Dl local Oo Fl I Ns | Ns Fl N Oc Ev LINENO Ns = Ns Ar value
 then
 .Ev LINENO
 will give the line number as if lines are counted from one
 from the beginning of the function.
 The value nominally assigned in this case is irrelevant, and ignored.
 For completeness, if lineno is made local and unset, as in
-.Dl local -N LINENO
+.Dl local Fl N Ev LINENO
 then
 .Ev LINENO
 is simply unset inside the function, and gives no value at all.
