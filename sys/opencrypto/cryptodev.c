@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.92 2017/06/02 09:46:57 knakahara Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.93 2017/06/08 03:02:26 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.92 2017/06/02 09:46:57 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.93 2017/06/08 03:02:26 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,6 +281,11 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 		break;
 	case CIOCNGSESSION:
 		sgop = (struct crypt_sgop *)data;
+		if (sgop->count <= 0
+		    || SIZE_MAX / sizeof(struct session_n_op) <= sgop->count) {
+			error = EINVAL;
+			break;
+		}
 		snop = kmem_alloc((sgop->count *
 				  sizeof(struct session_n_op)), KM_SLEEP);
 		error = copyin(sgop->sessions, snop, sgop->count *
@@ -320,6 +325,11 @@ mbail:
 		fcr->mtime = fcr->atime;
 		mutex_exit(&cryptodev_mtx);
 		sfop = (struct crypt_sfop *)data;
+		if (sfop->count <= 0
+		    || SIZE_MAX / sizeof(u_int32_t) <= sfop->count) {
+			error = EINVAL;
+			break;
+		}
 		sesid = kmem_alloc((sfop->count * sizeof(u_int32_t)), 
 		    KM_SLEEP);
 		error = copyin(sfop->sesid, sesid,
@@ -347,6 +357,11 @@ mbail:
 		fcr->mtime = fcr->atime;
 		mutex_exit(&cryptodev_mtx);
 		mop = (struct crypt_mop *)data;
+		if (mop->count <= 0
+		    || SIZE_MAX / sizeof(struct crypt_n_op) <= mop->count) {
+			error = EINVAL;
+			break;
+		}
 		cnop = kmem_alloc((mop->count * sizeof(struct crypt_n_op)),
 		    KM_SLEEP);
 		error = copyin(mop->reqs, cnop,
@@ -369,6 +384,11 @@ mbail:
 		fcr->mtime = fcr->atime;
 		mutex_exit(&cryptodev_mtx);
 		mkop = (struct crypt_mkop *)data;
+		if (mkop->count <= 0
+		    || SIZE_MAX / sizeof(struct crypt_n_kop) <= mkop->count) {
+			error = EINVAL;
+			break;
+		}
 		knop = kmem_alloc((mkop->count * sizeof(struct crypt_n_kop)),
 		    KM_SLEEP);
 		error = copyin(mkop->reqs, knop,
@@ -390,6 +410,11 @@ mbail:
 		mutex_exit(&cryptodev_mtx);
 		crypt_ret = (struct cryptret *)data;
 		count = crypt_ret->count;
+		if (count <= 0
+		    || SIZE_MAX / sizeof(struct crypt_result) <= count) {
+			error = EINVAL;
+			break;
+		}
 		crypt_res = kmem_alloc((count * sizeof(struct crypt_result)),  
 		    KM_SLEEP);
 		error = copyin(crypt_ret->results, crypt_res,
