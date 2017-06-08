@@ -1,4 +1,4 @@
-/* $NetBSD: dkscan_bsdlabel.c,v 1.3 2011/08/27 16:43:07 joerg Exp $ */
+/* $NetBSD: dkscan_bsdlabel.c,v 1.4 2017/06/08 22:24:29 chs Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,6 +41,11 @@
 
 #include "dkscan_util.h"
 
+struct disk {
+	const char	*dk_name;	/* disk name */
+	int		dk_blkshift;	/* shift to convert DEV_BSIZE to blks */
+};
+
 #include "dkwedge_bsdlabel.c"
 
 __dead static void usage(void);
@@ -80,7 +85,7 @@ main(int argc, char **argv)
 		devpart = argv[optind];
 
 	memset(&d, 0, sizeof(d));
-	d.dk_name  = __UNCONST(devpart);
+	d.dk_name  = devpart;
 	dkwedge_discover_bsdlabel(&d, NULL);
 
 	close(disk_fd);
