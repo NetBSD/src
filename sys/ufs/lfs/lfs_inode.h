@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.21 2017/06/05 07:47:32 maya Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.22 2017/06/08 01:23:01 chs Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
@@ -215,17 +215,6 @@ struct lfs_inode_ext {
 #ifdef _KERNEL
 
 # define LFS_IS_MALLOC_BUF(bp) ((bp)->b_iodone == lfs_callback)
-
-# ifdef DEBUG
-#  define LFS_DEBUG_COUNTLOCKED(m) do {					\
-	if (lfs_debug_log_subsys[DLOG_LLIST]) {				\
-		lfs_countlocked(&locked_queue_count, &locked_queue_bytes, (m)); \
-		cv_broadcast(&locked_queue_cv);				\
-	}								\
-} while (0)
-# else
-#  define LFS_DEBUG_COUNTLOCKED(m)
-# endif
 
 /* log for debugging writes to the Ifile */
 # ifdef DEBUG

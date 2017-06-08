@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.273 2017/05/25 02:28:07 pgoyette Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.274 2017/06/08 01:23:01 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.273 2017/05/25 02:28:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.274 2017/06/08 01:23:01 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -170,9 +170,23 @@ u_int	nbuf;			/* desired number of buffer headers */
 u_int	bufpages = BUFPAGES;	/* optional hardwired count */
 u_int	bufcache = BUFCACHE;	/* max % of RAM to use for buffer cache */
 
-/* Function prototypes */
-struct bqueue;
+/*
+ * Definitions for the buffer free lists.
+ */
+#define	BQUEUES		3		/* number of free buffer queues */
 
+#define	BQ_LOCKED	0		/* super-blocks &c */
+#define	BQ_LRU		1		/* lru, useful buffers */
+#define	BQ_AGE		2		/* rubbish */
+
+struct bqueue {
+	TAILQ_HEAD(, buf) bq_queue;
+	uint64_t bq_bytes;
+	buf_t *bq_marker;
+};
+static struct bqueue bufqueues[BQUEUES];
+
+/* Function prototypes */
 static void buf_setwm(void);
 static int buf_trim(void);
 static void *bufpool_page_alloc(struct pool *, int);
@@ -217,7 +231,6 @@ biohist_init(void)
 	(&bufhashtbl[(((long)(dvp) >> 8) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
-struct bqueue bufqueues[BQUEUES];
 
 static kcondvar_t needbuffer_cv;
 
@@ -2135,4 +2148,15 @@ bbusy(buf_t *bp, bool intr, int timo, kmutex_t *interlock)
 	bp->b_cflags |= BC_BUSY;
 
 	return 0;
+}
+
+/*
+ * Nothing outside this file should really need to know about nbuf,
+ * but a few things still want to read it, so give them a way to do that.
+ */
+int
+buf_nbuf(void)
+{
+
+	return nbuf;
 }
