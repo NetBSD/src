@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.128 2017/04/10 19:52:38 jdolecek Exp $ */
+/*     $NetBSD: buf.h,v 1.129 2017/06/08 01:23:01 chs Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -257,26 +257,6 @@ do {									\
 #define	BPRIO_TIMENONCRITICAL	0
 #define	BPRIO_DEFAULT		BPRIO_TIMELIMITED
 
-extern	u_int nbuf;		/* The number of buffer headers */
-
-/*
- * Definitions for the buffer free lists.
- */
-#define	BQUEUES		4		/* number of free buffer queues */
-
-#define	BQ_LOCKED	0		/* super-blocks &c */
-#define	BQ_LRU		1		/* lru, useful buffers */
-#define	BQ_AGE		2		/* rubbish */
-#define	BQ_EMPTY	3		/* buffer headers with no memory */
-
-struct bqueue {
-	TAILQ_HEAD(, buf) bq_queue;
-	uint64_t bq_bytes;
-	buf_t *bq_marker;
-};
-
-extern struct bqueue bufqueues[BQUEUES];
-
 __BEGIN_DECLS
 /*
  * bufferio(9) ops
@@ -330,6 +310,7 @@ void	vfs_buf_print(buf_t *, int, void (*)(const char *, ...)
 void	buf_init(buf_t *);
 void	buf_destroy(buf_t *);
 int	bbusy(buf_t *, bool, int, kmutex_t *);
+int	buf_nbuf(void);
 
 void	biohist_init(void);
 
