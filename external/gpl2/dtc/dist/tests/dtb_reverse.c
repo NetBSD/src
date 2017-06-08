@@ -1,3 +1,5 @@
+/*	$NetBSD: dtb_reverse.c,v 1.1.1.2 2017/06/08 15:59:26 skrll Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Tests if two given dtbs are structurally equal (including order)

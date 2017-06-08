@@ -1,3 +1,5 @@
+/*	$NetBSD: move_and_save.c,v 1.1.1.2 2017/06/08 15:59:27 skrll Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Basic testcase for read-only access

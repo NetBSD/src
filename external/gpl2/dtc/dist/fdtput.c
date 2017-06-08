@@ -1,3 +1,5 @@
+/*	$NetBSD: fdtput.c,v 1.1.1.2 2017/06/08 15:59:16 skrll Exp $	*/
+
 /*
  * Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
  *
@@ -67,7 +69,7 @@ static void report_error(const char *name, int namelen, int err)
  * @param arg		List of arguments from command line
  * @param arg_count	Number of arguments (may be 0)
  * @param valuep	Returns buffer containing value
- * @param *value_len	Returns length of value encoded
+ * @param value_len	Returns length of value encoded
  */
 static int encode_value(struct display_info *disp, char **arg, int arg_count,
 			char **valuep, int *value_len)
@@ -107,7 +109,7 @@ static int encode_value(struct display_info *disp, char **arg, int arg_count,
 			if (disp->verbose)
 				fprintf(stderr, "\tstring: '%s'\n", ptr);
 		} else {
-			int *iptr = (int *)ptr;
+			fdt32_t *iptr = (fdt32_t *)ptr;
 			sscanf(*arg, fmt, &ival);
 			if (len == 4)
 				*iptr = cpu_to_fdt32(ival);
@@ -328,7 +330,7 @@ static int delete_node(char *blob, const char *node_name)
 static int do_fdtput(struct display_info *disp, const char *filename,
 		    char **arg, int arg_count)
 {
-	char *value;
+	char *value = NULL;
 	char *blob;
 	char *node;
 	int len, ret = 0;
@@ -374,6 +376,11 @@ static int do_fdtput(struct display_info *disp, const char *filename,
 	}
 
 	free(blob);
+
+	if (value) {
+		free(value);
+	}
+
 	return ret;
 }
 
