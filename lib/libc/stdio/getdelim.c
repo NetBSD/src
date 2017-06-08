@@ -1,4 +1,4 @@
-/* $NetBSD: getdelim.c,v 1.13 2011/07/22 23:12:30 joerg Exp $ */
+/* $NetBSD: getdelim.c,v 1.14 2017/06/08 15:59:45 uwe Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getdelim.c,v 1.13 2011/07/22 23:12:30 joerg Exp $");
+__RCSID("$NetBSD: getdelim.c,v 1.14 2017/06/08 15:59:45 uwe Exp $");
 
 #include "namespace.h"
 
@@ -96,7 +96,7 @@ __getdelim(char **__restrict buf, size_t *__restrict buflen,
 			errno = EOVERFLOW;
 			goto error;
 		}
-		newlen++; /* reserve space for the NULL terminator */
+		newlen++; /* reserve space for the null terminator */
 		if (newlen > *buflen) {
 			if (newlen < MINBUF)
 				newlen = MINBUF;

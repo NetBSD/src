@@ -1,4 +1,4 @@
-/* $NetBSD: fgetstr.c,v 1.11 2010/01/11 20:39:29 joerg Exp $	*/
+/* $NetBSD: fgetstr.c,v 1.12 2017/06/08 15:59:45 uwe Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fgetstr.c,v 1.11 2010/01/11 20:39:29 joerg Exp $");
+__RCSID("$NetBSD: fgetstr.c,v 1.12 2017/06/08 15:59:45 uwe Exp $");
 
 #include "namespace.h"
 
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: fgetstr.c,v 1.11 2010/01/11 20:39:29 joerg Exp $");
 /*
  * Get an input line.
  * This now uses getdelim(3) for a code reduction.
- * The upside is that strings are now always NULL terminated, but relying
+ * The upside is that strings are now always null-terminated, but relying
  * on this is non portable - better to use the POSIX getdelim(3) function.
  */
 char *
