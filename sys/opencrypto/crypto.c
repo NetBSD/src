@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.85 2017/06/06 18:08:23 christos Exp $ */
+/*	$NetBSD: crypto.c,v 1.86 2017/06/08 00:17:02 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.85 2017/06/06 18:08:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.86 2017/06/08 00:17:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -376,6 +376,7 @@ static	int crypto_kinvoke(struct cryptkop *krp, int hint);
 
 static struct cryptocap *crypto_checkdriver_lock(u_int32_t);
 static struct cryptocap *crypto_checkdriver_uninit(u_int32_t);
+static struct cryptocap *crypto_checkdriver(u_int32_t);
 static void crypto_driver_lock(struct cryptocap *);
 static void crypto_driver_unlock(struct cryptocap *);
 static void crypto_driver_clear(struct cryptocap *);
@@ -454,7 +455,7 @@ crypto_destroy(bool exit_kthread)
 
 		mutex_enter(&crypto_drv_mtx);
 		for (i = 0; i < crypto_drivers_num; i++) {
-			cap = crypto_checkdriver_uninit(i);
+			cap = crypto_checkdriver(i);
 			if (cap == NULL)
 				continue;
 			if (cap->cc_sessions != 0) {
@@ -522,7 +523,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 	 */
 
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
-		cap = crypto_checkdriver_uninit(hid);
+		cap = crypto_checkdriver(hid);
 		if (cap == NULL)
 			continue;
 
@@ -625,6 +626,15 @@ crypto_freesession(u_int64_t sid)
 	return err;
 }
 
+static bool
+crypto_checkdriver_initialized(const struct cryptocap *cap)
+{
+
+	return cap->cc_process != NULL ||
+	    (cap->cc_flags & CRYPTOCAP_F_CLEANUP) != 0 ||
+	    cap->cc_sessions != 0;
+}
+
 /*
  * Return an unused driver id.  Used by drivers prior to registering
  * support for the algorithms they handle.
@@ -641,12 +651,9 @@ crypto_get_driverid(u_int32_t flags)
 	mutex_enter(&crypto_drv_mtx);
 	for (i = 0; i < crypto_drivers_num; i++) {
 		cap = crypto_checkdriver_uninit(i);
-		if (cap == NULL)
+		if (cap == NULL || crypto_checkdriver_initialized(cap))
 			continue;
-		if (cap->cc_process == NULL &&
-		    (cap->cc_flags & CRYPTOCAP_F_CLEANUP) == 0 &&
-		    cap->cc_sessions == 0)
-			break;
+		break;
 	}
 
 	/* Out of entries, allocate some more. */
@@ -722,6 +729,25 @@ crypto_checkdriver_uninit(u_int32_t hid)
 		return NULL;
 
 	return (hid >= crypto_drivers_num ? NULL : &crypto_drivers[hid]);
+}
+
+/*
+ * Use crypto_checkdriver_uninit() instead of crypto_checkdriver() below two
+ * situations
+ *     - crypto_drivers[] may not be allocated
+ *     - crypto_drivers[hid] may not be initialized
+ */
+static struct cryptocap *
+crypto_checkdriver(u_int32_t hid)
+{
+
+	KASSERT(mutex_owned(&crypto_drv_mtx));
+
+	if (crypto_drivers == NULL || hid >= crypto_drivers_num)
+		return NULL;
+
+	struct cryptocap *cap = &crypto_drivers[hid];
+	return crypto_checkdriver_initialized(cap) ? cap : NULL;
 }
 
 static inline void
@@ -1168,7 +1194,7 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 
 	mutex_enter(&crypto_drv_mtx);
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
-		cap = crypto_checkdriver_uninit(hid);
+		cap = crypto_checkdriver(hid);
 		if (cap == NULL)
 			continue;
 		crypto_driver_lock(cap);
@@ -1541,7 +1567,7 @@ crypto_getfeat(int *featp)
 	int feat = 0;
 	for (int hid = 0; hid < crypto_drivers_num; hid++) {
 		struct cryptocap *cap;
-		cap = crypto_checkdriver_uninit(hid);
+		cap = crypto_checkdriver(hid);
 		if (cap == NULL)
 			continue;
 
