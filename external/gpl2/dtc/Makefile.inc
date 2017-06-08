@@ -1,4 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.1 2017/06/05 18:59:43 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2017/06/08 18:57:21 skrll Exp $
 
 BINDIR=		/usr/bin
-DIST=		${NETBSDSRCDIR}/external/gpl2/dtc/dist
+DTCDIST=	${NETBSDSRCDIR}/external/gpl2/dtc/dist
+LIBFDTDIST=	${NETBSDSRCDIR}/sys/external/bsd/libfdt/dist

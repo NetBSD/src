@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2017/06/05 18:59:43 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2017/06/08 18:57:21 skrll Exp $
 
 NOMAN=	# defined
 
@@ -7,15 +7,15 @@ NOMAN=	# defined
 PROG=	dtc
 
 .include "${.CURDIR}/../../Makefile.inc"
-.include "${DIST}/Makefile.dtc"
+.include "${DTCDIST}/Makefile.dtc"
 
 CPPFLAGS+=	-I${.CURDIR}
-CPPFLAGS+=	-I${DIST}
-CPPFLAGS+=	-I${DIST}/libfdt
+CPPFLAGS+=	-I${DTCDIST}
+CPPFLAGS+=	-I${LIBFDTDIST}
 
 SRCS+=	${DTC_SRCS} dtc-lexer.l dtc-parser.y
 YFLAGS+= -d -L
 
-.PATH:	${DIST}
+.PATH:	${DTCDIST}
 
 .include <bsd.prog.mk>

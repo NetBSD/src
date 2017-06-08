@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2017/06/08 17:24:31 skrll Exp $
+#	$NetBSD: Makefile,v 1.3 2017/06/08 18:57:21 skrll Exp $
 
 LIBISPRIVATE=	yes
 
@@ -7,13 +7,13 @@ LIBISPRIVATE=	yes
 LIB=	fdt
 
 .include "${.CURDIR}/../../Makefile.inc"
-.include "${.CURDIR}/../../../../../sys/external/bsd/libfdt/dist/Makefile.libfdt"
+.include "${LIBFDTDIST}/Makefile.libfdt"
 
 SRCS=	${LIBFDT_SRCS}
 
-CPPFLAGS+=	-I ${DIST}/libfdt
+CPPFLAGS+=	-I ${LIBFDTDIST}
 
-.PATH:	${DIST}/libfdt
+.PATH:	${LIBFDTDIST}
 
 .include <bsd.lib.mk>
 
