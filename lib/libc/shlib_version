@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.274 2017/06/08 13:32:20 joerg Exp $
+#	$NetBSD: shlib_version,v 1.275 2017/06/08 18:27:05 joerg Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -48,5 +48,7 @@
 # - boot obsolete signal functions to libcompat
 # - remove exect(3) API - tracing functionality has been moved to the kernel
 # - punt gethostid/sethostid(3) to libcompat or remove entirely
+# - clean-up initialisation order between crt0.o, rtld and libc.
+# - move environ and __ps_strings from crt0.o into libc.
 major=12
 minor=207
