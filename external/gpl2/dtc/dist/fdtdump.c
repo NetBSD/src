@@ -1,3 +1,5 @@
+/*	$NetBSD: fdtdump.c,v 1.3 2017/06/08 16:00:40 skrll Exp $	*/
+
 /*
  * fdtdump.c - Contributed by Pantelis Antoniou <pantelis.antoniou AT gmail.com>
  */
@@ -15,7 +17,10 @@
 
 #include "util.h"
 
-#define GET_CELL(p)	(p += 4, *((const uint32_t *)(p-4)))
+#define FDT_MAGIC_SIZE	4
+#define MAX_VERSION 17
+
+#define GET_CELL(p)	(p += 4, *((const fdt32_t *)(p-4)))
 
 static const char *tagname(uint32_t tag)
 {
@@ -155,6 +160,20 @@ static const char * const usage_opts_help[] = {
 	USAGE_COMMON_OPTS_HELP
 };
 
+static bool valid_header(char *p, off_t len)
+{
+	if (len < sizeof(struct fdt_header) ||
+	    fdt_magic(p) != FDT_MAGIC ||
+	    fdt_version(p) > MAX_VERSION ||
+	    fdt_last_comp_version(p) >= MAX_VERSION ||
+	    fdt_totalsize(p) >= len ||
+	    fdt_off_dt_struct(p) >= len ||
+	    fdt_off_dt_strings(p) >= len)
+		return 0;
+	else
+		return 1;
+}
+
 int main(int argc, char *argv[])
 {
 	int opt;
@@ -186,26 +205,21 @@ int main(int argc, char *argv[])
 
 	/* try and locate an embedded fdt in a bigger blob */
 	if (scan) {
-		unsigned char smagic[4];
+		unsigned char smagic[FDT_MAGIC_SIZE];
 		char *p = buf;
 		char *endp = buf + len;
 
 		fdt_set_magic(smagic, FDT_MAGIC);
 
 		/* poor man's memmem */
-		while (true) {
-			p = memchr(p, smagic[0], endp - p - 4);
+		while ((endp - p) >= FDT_MAGIC_SIZE) {
+			p = memchr(p, smagic[0], endp - p - FDT_MAGIC_SIZE);
 			if (!p)
 				break;
 			if (fdt_magic(p) == FDT_MAGIC) {
 				/* try and validate the main struct */
 				off_t this_len = endp - p;
-				fdt32_t max_version = 17;
-				if (fdt_version(p) <= max_version &&
-				    fdt_last_comp_version(p) < max_version &&
-				    fdt_totalsize(p) < this_len &&
-				    fdt_off_dt_struct(p) < this_len &&
-					fdt_off_dt_strings(p) < this_len)
+				if (valid_header(p, this_len))
 					break;
 				if (debug)
 					printf("%s: skipping fdt magic at offset %#zx\n",
@@ -213,11 +227,12 @@ int main(int argc, char *argv[])
 			}
 			++p;
 		}
-		if (!p)
+		if (!p || endp - p < sizeof(struct fdt_header))
 			die("%s: could not locate fdt magic\n", file);
 		printf("%s: found fdt at offset %#zx\n", file, p - buf);
 		buf = p;
-	}
+	} else if (!valid_header(buf, len))
+		die("%s: header is not valid\n", file);
 
 	dump_blob(buf, debug);
 
