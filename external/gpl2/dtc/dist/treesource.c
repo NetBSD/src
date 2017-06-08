@@ -1,3 +1,5 @@
+/*	$NetBSD: treesource.c,v 1.1.1.2 2017/06/08 15:59:21 skrll Exp $	*/
+
 /*
  * (C) Copyright David Gibson <dwg@au1.ibm.com>, IBM Corporation.  2005.
  *
@@ -25,12 +27,12 @@ extern FILE *yyin;
 extern int yyparse(void);
 extern YYLTYPE yylloc;
 
-struct boot_info *the_boot_info;
+struct dt_info *parser_output;
 bool treesource_error;
 
-struct boot_info *dt_from_source(const char *fname)
+struct dt_info *dt_from_source(const char *fname)
 {
-	the_boot_info = NULL;
+	parser_output = NULL;
 	treesource_error = false;
 
 	srcfile_push(fname);
@@ -43,7 +45,7 @@ struct boot_info *dt_from_source(const char *fname)
 	if (treesource_error)
 		die("Syntax error parsing input tree\n");
 
-	return the_boot_info;
+	return parser_output;
 }
 
 static void write_prefix(FILE *f, int level)
@@ -137,7 +139,7 @@ static void write_propval_string(FILE *f, struct data val)
 static void write_propval_cells(FILE *f, struct data val)
 {
 	void *propend = val.val + val.len;
-	cell_t *cp = (cell_t *)val.val;
+	fdt32_t *cp = (fdt32_t *)val.val;
 	struct marker *m = val.markers;
 
 	fprintf(f, "<");
@@ -263,22 +265,22 @@ static void write_tree_source_node(FILE *f, struct node *tree, int level)
 }
 
 
-void dt_to_source(FILE *f, struct boot_info *bi)
+void dt_to_source(FILE *f, struct dt_info *dti)
 {
 	struct reserve_info *re;
 
 	fprintf(f, "/dts-v1/;\n\n");
 
-	for (re = bi->reservelist; re; re = re->next) {
+	for (re = dti->reservelist; re; re = re->next) {
 		struct label *l;
 
 		for_each_label(re->labels, l)
 			fprintf(f, "%s: ", l->label);
 		fprintf(f, "/memreserve/\t0x%016llx 0x%016llx;\n",
-			(unsigned long long)re->re.address,
-			(unsigned long long)re->re.size);
+			(unsigned long long)re->address,
+			(unsigned long long)re->size);
 	}
 
-	write_tree_source_node(f, bi->dt, 0);
+	write_tree_source_node(f, dti->dt, 0);
 }
 

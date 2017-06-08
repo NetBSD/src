@@ -1,3 +1,5 @@
+/*	$NetBSD: truncated_property.c,v 1.1.1.2 2017/06/08 15:59:28 skrll Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Testcase for misbehaviour on a truncated property
