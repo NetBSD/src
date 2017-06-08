@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.92 2017/06/07 08:45:51 skrll Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.93 2017/06/08 05:46:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,7 +57,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: locore_mips1.S,v 1.92 2017/06/07 08:45:51 skrll Exp $")
+RCSID("$NetBSD: locore_mips1.S,v 1.93 2017/06/08 05:46:57 skrll Exp $")
 
 #include "assym.h"
 
@@ -1035,6 +1035,7 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	tlbwr					# write random TLB
 	j	k1
 	 rfe
+	.set	at
 END(MIPSX(kern_tlb_miss))
 
 #if 0
