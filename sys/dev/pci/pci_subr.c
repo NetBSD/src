@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.185 2017/06/07 05:30:49 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.186 2017/06/08 03:39:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.185 2017/06/07 05:30:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.186 2017/06/08 03:39:18 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1614,12 +1614,17 @@ static const char * const pcie_linkspeeds[] = {"2.5", "5.0", "8.0"};
  *   Current Link Speed in LCSR
  *   Target Link Speed in LCSR2
  * All of above bitfield's values start from 1.
+ * For LCSR2, 0 is allowed for a device which supports 2.5GT/s only (and
+ * this check also works for devices which compliant to versions of the base
+ * specification prior to 3.0.
  */
 static void
-pci_print_pcie_linkspeed(pcireg_t val)
+pci_print_pcie_linkspeed(int regnum, pcireg_t val)
 {
 
-	if ((val < 1) || (val > __arraycount(pcie_linkspeeds)))
+	if ((regnum == PCIE_LCSR2) && (val == 0))
+		printf("2.5GT/s\n");
+	else if ((val < 1) || (val > __arraycount(pcie_linkspeeds)))
 		printf("unknown value (%u)\n", val);
 	else
 		printf("%sGT/s\n", pcie_linkspeeds[val - 1]);
@@ -1804,7 +1809,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		reg = regs[o2i(capoff + PCIE_LCAP)];
 		printf("    Link Capabilities Register: 0x%08x\n", reg);
 		printf("      Maximum Link Speed: ");
-		pci_print_pcie_linkspeed(reg & PCIE_LCAP_MAX_SPEED);
+		pci_print_pcie_linkspeed(PCIE_LCAP, reg & PCIE_LCAP_MAX_SPEED);
 		printf("      Maximum Link Width: x%u lanes\n",
 		    (unsigned int)__SHIFTOUT(reg, PCIE_LCAP_MAX_WIDTH));
 		printf("      Active State PM Support: ");
@@ -1887,7 +1892,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		reg = regs[o2i(capoff + PCIE_LCSR)];
 		printf("    Link Status Register: 0x%04x\n", reg >> 16);
 		printf("      Negotiated Link Speed: ");
-		pci_print_pcie_linkspeed(__SHIFTOUT(reg, PCIE_LCSR_LINKSPEED));
+		pci_print_pcie_linkspeed(PCIE_LCSR,
+		    __SHIFTOUT(reg, PCIE_LCSR_LINKSPEED));
 		printf("      Negotiated Link Width: x%u lanes\n",
 		    (unsigned int)__SHIFTOUT(reg, PCIE_LCSR_NLW));
 		onoff("Training Error", reg, PCIE_LCSR_LINKTRAIN_ERR);
@@ -2167,10 +2173,11 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 
 		/* Link Control 2 */
 		reg = regs[o2i(capoff + PCIE_LCSR2)];
+		/* If the vector is 0, LCAP2 is not implemented */
 		printf("    Link Control 2: 0x%04x\n", reg & 0xffff);
 		printf("      Target Link Speed: ");
-		pci_print_pcie_linkspeed(__SHIFTOUT(reg,
-			PCIE_LCSR2_TGT_LSPEED));
+		pci_print_pcie_linkspeed(PCIE_LCSR2,
+		    __SHIFTOUT(reg, PCIE_LCSR2_TGT_LSPEED));
 		onoff("Enter Compliance Enabled", reg, PCIE_LCSR2_ENT_COMPL);
 		onoff("HW Autonomous Speed Disabled", reg,
 		    PCIE_LCSR2_HW_AS_DIS);
