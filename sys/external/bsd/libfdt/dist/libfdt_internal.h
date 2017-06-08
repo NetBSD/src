@@ -1,3 +1,5 @@
+/*	$NetBSD: libfdt_internal.h,v 1.1.1.2 2017/06/08 15:53:15 skrll Exp $	*/
+
 #ifndef _LIBFDT_INTERNAL_H
 #define _LIBFDT_INTERNAL_H
 /*
