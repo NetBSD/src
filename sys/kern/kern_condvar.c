@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.35 2015/08/07 06:22:12 uebayasi Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.36 2017/06/08 01:09:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.35 2015/08/07 06:22:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.36 2017/06/08 01:09:52 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.35 2015/08/07 06:22:12 uebayasi E
 #define	CV_DEBUG_P(cv)	(CV_WMESG(cv) != nodebug)
 #define	CV_RA		((uintptr_t)__builtin_return_address(0))
 
-static void	cv_unsleep(lwp_t *, bool);
-static void	cv_wakeup_one(kcondvar_t *);
-static void	cv_wakeup_all(kcondvar_t *);
+static void		cv_unsleep(lwp_t *, bool);
+static inline void	cv_wakeup_one(kcondvar_t *);
+static inline void	cv_wakeup_all(kcondvar_t *);
 
 static syncobj_t cv_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
@@ -86,6 +86,31 @@ lockops_t cv_lockops = {
 static const char deadcv[] = "deadcv";
 #ifdef LOCKDEBUG
 static const char nodebug[] = "nodebug";
+
+#define CV_LOCKDEBUG_HANDOFF(l, cv) cv_lockdebug_handoff(l, cv)
+#define CV_LOCKDEBUG_PROCESS(l, cv) cv_lockdebug_process(l, cv)
+
+static inline void
+cv_lockdebug_handoff(lwp_t *l, kcondvar_t *cv)
+{
+
+	if (CV_DEBUG_P(cv))
+		l->l_flag |= LW_CVLOCKDEBUG;
+}
+
+static inline void
+cv_lockdebug_process(lwp_t *l, kcondvar_t *cv)
+{
+
+	if ((l->l_flag & LW_CVLOCKDEBUG) == 0)
+		return;
+
+	l->l_flag &= ~LW_CVLOCKDEBUG;
+	LOCKDEBUG_UNLOCKED(true, cv, CV_RA, 0);
+}
+#else
+#define CV_LOCKDEBUG_HANDOFF(l, cv) __nothing
+#define CV_LOCKDEBUG_PROCESS(l, cv) __nothing
 #endif
 
 /*
@@ -214,8 +239,16 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 	KASSERT(mutex_owned(mtx));
 
 	cv_enter(cv, mtx, l);
+
+	/*
+	 * We can't use cv_exit() here since the cv might be destroyed before
+	 * this thread gets a chance to run.  Instead, hand off the lockdebug
+	 * responsibility to the thread that wakes us up.
+	 */
+
+	CV_LOCKDEBUG_HANDOFF(l, cv);
 	(void)sleepq_block(0, false);
-	(void)cv_exit(cv, mtx, l, 0);
+	mutex_enter(mtx);
 }
 
 /*
@@ -302,7 +335,7 @@ cv_signal(kcondvar_t *cv)
 		cv_wakeup_one(cv);
 }
 
-static void __noinline
+static inline void
 cv_wakeup_one(kcondvar_t *cv)
 {
 	sleepq_t *sq;
@@ -321,6 +354,7 @@ cv_wakeup_one(kcondvar_t *cv)
 	KASSERT(l->l_sleepq == sq);
 	KASSERT(l->l_mutex == mp);
 	KASSERT(l->l_wchan == cv);
+	CV_LOCKDEBUG_PROCESS(l, cv);
 	sleepq_remove(sq, l);
 	mutex_spin_exit(mp);
 
@@ -344,7 +378,7 @@ cv_broadcast(kcondvar_t *cv)
 		cv_wakeup_all(cv);
 }
 
-static void __noinline
+static inline void
 cv_wakeup_all(kcondvar_t *cv)
 {
 	sleepq_t *sq;
@@ -360,6 +394,7 @@ cv_wakeup_all(kcondvar_t *cv)
 		KASSERT(l->l_mutex == mp);
 		KASSERT(l->l_wchan == cv);
 		next = TAILQ_NEXT(l, l_sleepchain);
+		CV_LOCKDEBUG_PROCESS(l, cv);
 		sleepq_remove(sq, l);
 	}
 	mutex_spin_exit(mp);
