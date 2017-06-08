@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.357 2017/06/01 09:44:30 pgoyette Exp $	*/
+/*	$NetBSD: audio.c,v 1.358 2017/06/08 13:05:03 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357 2017/06/01 09:44:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.358 2017/06/08 13:05:03 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -267,8 +267,8 @@ void	recswvol_func(struct audio_softc *, struct audio_ringbuffer *,
 		      size_t, struct virtual_channel *);
 void	mix_func(struct audio_softc *, struct audio_ringbuffer *,
 		 struct virtual_channel *);
-void	mix_write(void *);
-void	mix_read(void *);
+int	mix_write(void *);
+int	mix_read(void *);
 int	audio_check_params(struct audio_params *);
 
 void	audio_calc_blksize(struct audio_softc *, int, struct virtual_channel *);
@@ -3485,6 +3485,8 @@ int
 audiostartr(struct audio_softc *sc, struct virtual_channel *vc)
 {
 
+	int error;
+
 	KASSERT(mutex_owned(sc->sc_lock));
 
 	DPRINTF(("audiostartr: start=%p used=%d(hi=%d) mmapped=%d\n",
@@ -3494,15 +3496,16 @@ audiostartr(struct audio_softc *sc, struct virtual_channel *vc)
 	if (!audio_can_capture(sc))
 		return EINVAL;
 
+	error = 0;
 	if (sc->sc_rec_started == false) {
 		mutex_enter(sc->sc_intr_lock);
-		mix_read(sc);
+		error = mix_read(sc);
 		cv_broadcast(&sc->sc_rcondvar);
 		mutex_exit(sc->sc_intr_lock);
 	}
 	vc->sc_rbus = true;
 
-	return 0;
+	return error;
 }
 
 int
@@ -3534,13 +3537,16 @@ audiostartp(struct audio_softc *sc, struct virtual_channel *vc)
 		audio_mix(sc);
 		audio_mix(sc);
 		mutex_enter(sc->sc_intr_lock);
-		mix_write(sc);
+		error = mix_write(sc);
+		if (error)
+			goto done;
 		vc = chan->vc;
 		vc->sc_mpr.s.outp =
 		    audio_stream_add_outp(&vc->sc_mpr.s,
 		      vc->sc_mpr.s.outp, vc->sc_mpr.blksize);
-		mix_write(sc);
+		error = mix_write(sc);
 		cv_broadcast(&sc->sc_condvar);
+done:
 		mutex_exit(sc->sc_intr_lock);
 	}
 
@@ -5450,7 +5456,7 @@ audio_can_capture(struct audio_softc *sc)
 	return audio_get_props(sc) & AUDIO_PROP_CAPTURE ? true : false;
 }
 
-void
+int
 mix_read(void *arg)
 {
 	struct audio_softc *sc = arg;
@@ -5486,6 +5492,7 @@ mix_read(void *arg)
 		DPRINTF(("audio_upmix restart failed: %d\n", error));
 		audio_clear(sc, SIMPLEQ_FIRST(&sc->sc_audiochan)->vc);
 		sc->sc_rec_started = false;
+		return error;
 	}
 
 	inp = vc->sc_mrr.s.inp;
@@ -5513,9 +5520,11 @@ mix_read(void *arg)
 	    blksize);
 	vc->sc_rustream->outp = audio_stream_add_outp(vc->sc_rustream,
 	    vc->sc_rustream->outp, blksize);
+	
+	return error;
 }
 
-void
+int
 mix_write(void *arg)
 {
 	struct audio_softc *sc = arg;
@@ -5595,6 +5604,8 @@ done:
 		audio_clear(sc, SIMPLEQ_FIRST(&sc->sc_audiochan)->vc);
 		sc->sc_trigger_started = false;
 	}
+
+	return error;
 }
 
 #define DEF_MIX_FUNC(name, type, MINVAL, MAXVAL)		\
