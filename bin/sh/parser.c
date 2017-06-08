@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.136 2017/06/08 13:12:17 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.137 2017/06/08 22:10:39 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.136 2017/06/08 13:12:17 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.137 2017/06/08 22:10:39 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1405,7 +1405,9 @@ parsebackq(VSS *const stack, char * const in,
 
 			case '\n':
 				plinno++;
+				/*
 				out = insert_elided_nl(out);
+				*/
 				needprompt = doprompt;
 				break;
 
