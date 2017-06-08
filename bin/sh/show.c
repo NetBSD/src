@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.43 2017/06/07 05:08:32 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.44 2017/06/08 13:17:00 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.43 2017/06/07 05:08:32 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.44 2017/06/08 13:17:00 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ typedef struct traceinfo {
 	int	tfd;	/* file descriptor for open trace file */
 	int	nxtiov;	/* the buffer we should be writing to */
 	char	lastc;	/* the last non-white character output */
-	uint8_t	supr;	/* char classes to supress after \n */
+	uint8_t	supr;	/* char classes to suppress after \n */
 	pid_t	pid;	/* process id of process that opened that file */
 	size_t	llen;	/* number of chars in current output line */
 	size_t	blen;	/* chars used in current buffer being filled */
@@ -103,8 +103,8 @@ typedef struct traceinfo {
 
 /* These are auto turned off when non white space is printed */
 #define	SUP_NL	0x01	/* don't print \n */
-#define	SUP_SP	0x03	/* supress spaces */
-#define	SUP_WSP	0x04	/* supress all white space */
+#define	SUP_SP	0x03	/* suppress spaces */
+#define	SUP_WSP	0x04	/* suppress all white space */
 
 #ifdef DEBUG		/* from here to end of file ... */
 
