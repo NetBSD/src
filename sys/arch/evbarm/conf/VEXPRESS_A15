@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VEXPRESS_A15,v 1.14 2017/06/08 10:05:32 jmcneill Exp $
+#	$NetBSD: VEXPRESS_A15,v 1.15 2017/06/08 10:40:38 jmcneill Exp $
 #
 #	ARM Versatile Express A15
 #
@@ -64,9 +64,9 @@ ld3		at sdmmc3
 ld*		at sdmmc?
 
 # Audio
-#aaci*		at fdt?			# ARM PrimeCell AACI
-#audio*		at audiobus?
-#spkr*		at audio?		# PC speaker (synthesized)
+aaci*		at fdt?			# ARM PrimeCell AACI
+audio*		at audiobus?
+spkr*		at audio?		# PC speaker (synthesized)
 
 # Framebuffer
 genfb*		at fdt?
