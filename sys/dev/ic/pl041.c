@@ -1,4 +1,4 @@
-/* $NetBSD: pl041.c,v 1.1 2017/06/08 10:02:39 jmcneill Exp $ */
+/* $NetBSD: pl041.c,v 1.2 2017/06/08 10:40:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.1 2017/06/08 10:02:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.2 2017/06/08 10:40:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ aaci_write_data(struct aaci_softc *sc)
 	if (sc->sc_pint == NULL)
 		return;
 
-	while ((AACI_READ(sc, AACISR) & AACISR_TXHE) == 0) {
+	while ((AACI_READ(sc, AACISR) & AACISR_TXHE) != 0) {
 		const int len = min(AACI_FIFO_DEPTH / 2, min(sc->sc_pblkresid,
 		    (uintptr_t)sc->sc_pend - (uintptr_t)sc->sc_pcur));
 		KASSERT((len & 3) == 0);
@@ -205,7 +205,7 @@ aaci_trigger_output(void *priv, void *start, void *end, int blksize,
 	    AACITXCR_TXCM | AACITXCR_TSIZE_16 |
 	    AACITXCR_TX(3) | AACITXCR_TX(4));
 
-	return ENXIO;
+	return 0;
 }
 
 static int
