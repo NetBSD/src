@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.92 2017/04/06 03:21:01 maya Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.93 2017/06/08 01:23:01 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.92 2017/04/06 03:21:01 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.93 2017/06/08 01:23:01 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,12 +463,10 @@ lfs_segunlock(struct lfs *fs)
 		 * sleep.
 		 */
 		mutex_enter(&lfs_lock);
-		if (--fs->lfs_iocount == 0) {
-			LFS_DEBUG_COUNTLOCKED("lfs_segunlock");
-		}
-		if (fs->lfs_iocount <= 1)
+		if (--fs->lfs_iocount <= 1)
 			wakeup(&fs->lfs_iocount);
 		mutex_exit(&lfs_lock);
+
 		/*
 		 * If we're not checkpointing, we don't have to block
 		 * other processes to wait for a synchronous write
