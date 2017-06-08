@@ -1,4 +1,4 @@
-/* $NetBSD: dkscan_util.h,v 1.4 2012/03/15 02:02:21 joerg Exp $ */
+/* $NetBSD: dkscan_util.h,v 1.5 2017/06/08 22:24:29 chs Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,6 +34,8 @@
 
 u_int dkcksum(struct disklabel *);
 u_int dkcksum_sized(struct disklabel *, size_t);
+struct disk;
+struct vnode;
 int dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
 	void *tbuf, size_t len);
 int dkwedge_add(struct dkwedge_info *dkw);
