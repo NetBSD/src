@@ -1,3 +1,5 @@
+/*	$NetBSD: mangle-layout.c,v 1.3 2017/06/08 16:00:40 skrll Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Testcase/tool for rearranging blocks of a dtb
