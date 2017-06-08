@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.93 2017/06/08 03:02:26 knakahara Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.94 2017/06/08 09:49:46 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.93 2017/06/08 03:02:26 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.94 2017/06/08 09:49:46 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1181,6 +1181,12 @@ cryptodev_mop(struct fcrypt *fcr,
 			}
 		}
 
+		/* sanitize */
+		if (cnop[req].len <= 0) {
+			cnop[req].status = ENOMEM;
+			goto bail;
+		}
+
 		crp = crypto_getreq((cse->txform != NULL) +
 				    (cse->thash != NULL) +
 				    (cse->tcomp != NULL));
@@ -1770,12 +1776,14 @@ cryptodev_msession(struct fcrypt *fcr, struct session_n_op *sn_ops,
 		struct session_op s_op;
 		s_op.cipher =		sn_ops->cipher;
 		s_op.mac =		sn_ops->mac;
+		s_op.comp_alg =		sn_ops->comp_alg;
 		s_op.keylen =		sn_ops->keylen;
 		s_op.key =		sn_ops->key;
 		s_op.mackeylen =	sn_ops->mackeylen;
 		s_op.mackey =		sn_ops->mackey;
 
 		sn_ops->status = cryptodev_session(fcr, &s_op);
+
 		sn_ops->ses =		s_op.ses;
 	}
 
