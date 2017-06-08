@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.174 2017/04/21 15:10:35 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.175 2017/06/08 01:09:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -231,6 +231,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 /* These flags are kept in l_flag. */
 #define	LW_IDLE		0x00000001 /* Idle lwp. */
 #define	LW_LWPCTL	0x00000002 /* Adjust lwpctl in userret */
+#define	LW_CVLOCKDEBUG	0x00000004 /* Waker does lockdebug */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
 #define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
