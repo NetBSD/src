@@ -1,3 +1,5 @@
+/*	$NetBSD: fdt.h,v 1.1.1.2 2017/06/08 15:53:11 skrll Exp $	*/
+
 #ifndef _FDT_H
 #define _FDT_H
 /*
