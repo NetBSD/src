@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.3 2015/12/17 22:36:48 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.4 2017/06/09 17:36:30 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: misc.c,v 1.16 2004/01/23 18:56:43 vixie Exp";
 #else
-__RCSID("$NetBSD: misc.c,v 1.3 2015/12/17 22:36:48 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.4 2017/06/09 17:36:30 christos Exp $");
 #endif
 #endif
 
@@ -220,6 +220,7 @@ set_cron_cwd(void) {
 #endif
 	/* first check for CRONDIR ("/var/cron" or some such)
 	 */
+#ifdef ENABLE_FIX_DIRECTORIES
 	if (stat(CRONDIR, &sb) < OK && errno == ENOENT) {
 		warn("Cannot stat `%s'", CRONDIR);
 		if (OK == mkdir(CRONDIR, 0710)) {
@@ -234,12 +235,14 @@ set_cron_cwd(void) {
 		errx(ERROR_EXIT, "`%s' is not a directory, bailing out.",
 			CRONDIR);
 	}
+#endif /* ENABLE_FIX_DIRECTORIES */
 	if (chdir(CRONDIR) < OK) {
 		err(ERROR_EXIT, "cannot chdir `%s', bailing out.\n", CRONDIR);
 	}
 
 	/* CRONDIR okay (now==CWD), now look at SPOOL_DIR ("tabs" or some such)
 	 */
+#ifdef ENABLE_FIX_DIRECTORIES
 	if (stat(SPOOL_DIR, &sb) < OK && errno == ENOENT) {
 		warn("cannot stat `%s'", SPOOL_DIR);
 		if (OK == mkdir(SPOOL_DIR, 0700)) {
@@ -250,17 +253,33 @@ set_cron_cwd(void) {
 			err(ERROR_EXIT, "cannot create `%s'", SPOOL_DIR);
 		}
 	}
+#else
+	if (stat(SPOOL_DIR, &sb)) {
+		err(ERROR_EXIT, "cannot stat `%s'", SPOOL_DIR);
+	}
+#endif /* ENABLE_FIX_DIRECTORIES */
 	if (!S_ISDIR(sb.st_mode)) {
 		errx(ERROR_EXIT, "`%s' is not a directory, bailing out.",
 			SPOOL_DIR);
 	}
 	if (grp != NULL) {
-		if (sb.st_gid != grp->gr_gid)
+		if (sb.st_gid != grp->gr_gid) {
+#ifdef ENABLE_FIX_DIRECTORIES
+			errx(ERROR_EXIT, "Bad group %d != %d for `%s'",
+			    (int)sb.st_gid, (int)grp->gr_gid, SPOOL_DIR);
+#else				
 			if (chown(SPOOL_DIR, (uid_t)-1, grp->gr_gid) == -1)
 			    err(ERROR_EXIT, "cannot chown `%s'", SPOOL_DIR);
+#endif
+		}
 		if (sb.st_mode != 01730)
+#ifdef ENABLE_FIX_DIRECTORIES
+			errx(ERROR_EXIT, "Bad mode %#o != %#o for `%s'",
+			    (int)sb.st_mode, 01730, SPOOL_DIR);
+#else				
 			if (chmod(SPOOL_DIR, 01730) == -1)
 			    err(ERROR_EXIT, "cannot chmod `%s'", SPOOL_DIR);
+#endif
 	}
 }
 
@@ -298,6 +317,17 @@ acquire_daemonlock(int closeflag) {
 				pidfile, strerror(errno));
 			log_it("CRON", getpid(), "DEATH", buf);
 			errx(ERROR_EXIT, "%s", buf);
+		}
+		/* fd must be > STDERR since we dup fd 0-2 to /dev/null */
+		if (fd <= STDERR) {
+			if (dup2(fd, STDERR + 1) < 0) {
+				snprintf(buf, sizeof buf,
+				    "can't dup pid fd: %s", strerror(errno));
+				log_it("CRON", getpid(), "DEATH", buf);
+ 				exit(ERROR_EXIT);
+ 			}
+			close(fd);
+			fd = STDERR + 1;
 		}
 
 		if (flock(fd, LOCK_EX|LOCK_NB) < OK) {

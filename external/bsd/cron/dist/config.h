@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.4 2012/11/03 15:39:23 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.5 2017/06/09 17:36:30 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -94,6 +94,7 @@
 #define HAVE_FCHOWN		/*-*/
 #define HAVE_UTIMES		/*-*/
 #define HAVE_UTIMENSAT
+#define HAVE_FUTIMENS
 #define _INCOMPLETE_XOPEN_C063
 
 			/* if your OS supports a BSD-style login.conf file */
@@ -108,6 +109,11 @@
 			 * If this is not defined then crontab and at
 			 * must be setuid root.
 			 */
+			/* if your os supports PAM authentication */
+/*#define USE_PAM			*/
+
 /*#define CRON_GROUP	"crontab"	*/
+
+#define ENABLE_FIX_DIRECTORIES
 
 #define MAXTABSIZE_DEFAULT	(1024*256)

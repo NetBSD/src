@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.h,v 1.3 2015/12/17 22:36:48 christos Exp $	*/
+/*	$NetBSD: funcs.h,v 1.4 2017/06/09 17:36:30 christos Exp $	*/
 
 /*
  * Id: funcs.h,v 1.9 2004/01/23 18:56:42 vixie Exp
@@ -74,4 +74,13 @@ struct passwd	*pw_dup(const struct passwd *);
 
 #ifndef HAVE_TM_GMTOFF
 long		get_gmtoff(time_t *, struct tm *);
+#endif
+
+extern int close_all(int);
+#ifdef USE_PAM
+extern int cron_pam_start (const char *user);
+extern int cron_pam_setcred (void);
+extern void cron_pam_finish (void);
+extern void cron_pam_child_close (void);
+extern char **cron_pam_getenvlist (char **envp);
 #endif
