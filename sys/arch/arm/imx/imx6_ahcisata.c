@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ahcisata.c,v 1.4 2016/11/24 03:59:36 hkenken Exp $	*/
+/*	$NetBSD: imx6_ahcisata.c,v 1.5 2017/06/09 18:14:59 ryo Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.4 2016/11/24 03:59:36 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.5 2017/06/09 18:14:59 ryo Exp $");
 
 #include "locators.h"
 #include "opt_imx.h"
@@ -81,6 +81,7 @@ imx6_ahcisata_match(device_t parent, cfdata_t match, void *aux)
 	case CHIPID_MAJOR_IMX6SL:
 	case CHIPID_MAJOR_IMX6DL:
 	case CHIPID_MAJOR_IMX6SOLO:
+	case CHIPID_MAJOR_IMX6UL:
 		return 0;
 	default:
 		break;
