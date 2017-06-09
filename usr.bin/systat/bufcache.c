@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.27 2016/10/24 00:40:17 christos Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.28 2017/06/09 00:13:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,11 +31,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.27 2016/10/24 00:40:17 christos Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.28 2017/06/09 00:13:29 chs Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#define __EXPOSE_MOUNT
 #include <sys/mount.h>
 #include <sys/sysctl.h>
 #include <sys/vnode.h>

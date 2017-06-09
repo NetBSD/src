@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 2016/12/22 22:41:02 mrg Exp $ */
+/*	$NetBSD: pmap.h,v 1.10 2017/06/09 00:13:29 chs Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/vnode.h>
+#define __EXPOSE_MOUNT
 #include <sys/mount.h>
 #include <sys/uio.h>
 #include <sys/namei.h>

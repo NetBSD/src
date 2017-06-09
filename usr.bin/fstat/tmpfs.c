@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.c,v 1.10 2016/01/23 16:12:03 christos Exp $	*/
+/*	$NetBSD: tmpfs.c,v 1.11 2017/06/09 00:13:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tmpfs.c,v 1.10 2016/01/23 16:12:03 christos Exp $");
+__RCSID("$NetBSD: tmpfs.c,v 1.11 2017/06/09 00:13:29 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -35,6 +35,7 @@ __RCSID("$NetBSD: tmpfs.c,v 1.10 2016/01/23 16:12:03 christos Exp $");
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
+#define __EXPOSE_MOUNT
 #include <sys/mount.h>
 
 #include <fs/tmpfs/tmpfs.h>
