@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.120 2015/07/05 03:06:27 matt Exp $
+#	$NetBSD: files.vax,v 1.121 2017/06/09 17:55:18 flxd Exp $
 #
 # new style config file for vax architecture
 #
@@ -110,8 +110,8 @@ include "dev/qbus/files.uba"
 # TurboCHANNEL bus support and device drivers
 include "dev/tc/files.tc"
 
-attach	tc at vsbus with tcbus
-file	arch/vax/vsa/tc_vsbus.c		tcbus
+attach	tc at vsbus with tc_vsbus
+file	arch/vax/vsa/tc_vsbus.c		tc_vsbus
 
 attach	uba at mainbus with uba_mainbus
 file	arch/vax/uba/uba_mainbus.c	uba_mainbus
