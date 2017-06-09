@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1173 2017/06/03 17:03:36 jmcneill Exp $
+#	$NetBSD: files,v 1.1173.2.1 2017/06/09 16:59:20 snj Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -1314,6 +1314,10 @@ file	dev/ic/rtsx.c			rtsx
 defflag	opt_dwc_mmc.h	DWC_MMC_DEBUG
 device	dwcmmc: sdmmcbus
 file	dev/ic/dwc_mmc.c		dwcmmc
+
+# ARM PrimeCell PL041 (AACI) Advanced Audio CODEC interface
+device	aaci: audiobus, auconv, aurateconv, mulaw, ac97
+file	dev/ic/pl041.c			aaci
 
 # ARM PrimeCell PL050 (KMI) PS2 keyboard/mouse interface
 device	plkmi: pckbport
