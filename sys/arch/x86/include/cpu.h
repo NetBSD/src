@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.71 2017/05/23 08:48:34 nonaka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.72 2017/06/09 01:16:54 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -368,8 +368,10 @@ extern void	cpu_signotify(struct lwp *);
 extern void (*delay_func)(unsigned int);
 struct timeval;
 
+#ifndef __HIDE_DELAY
 #define	DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
+#endif
 
 extern int biosbasemem;
 extern int biosextmem;
