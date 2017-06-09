@@ -1,4 +1,4 @@
-#	$NetBSD: t_opencrypto.sh,v 1.7 2017/04/17 03:59:37 knakahara Exp $
+#	$NetBSD: t_opencrypto.sh,v 1.8 2017/06/09 06:09:02 knakahara Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -282,6 +282,19 @@ xcbcmac_cleanup() {
 	common_cleanup
 }
 
+atf_test_case ioctl cleanup
+ioctl_head() {
+	common_head "Test ioctl for /dev/crypto"
+}
+
+ioctl_body() {
+	common_body h_ioctl
+}
+
+ioctl_cleanup() {
+	common_cleanup
+}
+
 atf_init_test_cases() {
 	RUMP_SERVER="unix://t_opencrypto_socket" ; export RUMP_SERVER
 
@@ -301,4 +314,5 @@ atf_init_test_cases() {
 	atf_add_test_case null
 	atf_add_test_case sha1_hmac
 	atf_add_test_case xcbcmac
+	atf_add_test_case ioctl
 }
