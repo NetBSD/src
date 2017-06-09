@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.32 2016/12/12 17:03:41 flxd Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.33 2017/06/09 17:55:18 flxd Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.32 2016/12/12 17:03:41 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.33 2017/06/09 17:55:18 flxd Exp $");
 
 #define	_PMAX_BUS_DMA_PRIVATE
 /*
@@ -221,7 +221,7 @@ tcfb_cnattach(int slotno)
 	int i;
 
 	tcaddr = promcall(callv->_slot_address, slotno);
-	if (tc_badaddr(tcaddr) || tc_checkslot(tcaddr, tcname) == 0)
+	if (tc_badaddr(tcaddr) || tc_checkslot(tcaddr, tcname, NULL) == 0)
 		panic("TC console designated by PROM does not exist!?");
 
 	for (i = 0; i < __arraycount(cnboards); i++) {

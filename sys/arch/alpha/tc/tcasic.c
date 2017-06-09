@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.45 2016/12/12 17:03:40 flxd Exp $ */
+/* $NetBSD: tcasic.c,v 1.46 2017/06/09 17:55:18 flxd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.45 2016/12/12 17:03:40 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.46 2017/06/09 17:55:18 flxd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ tc_fb_cnattach(tc_addr_t tcaddr)
 	char tcname[TC_ROM_LLEN];
 	int i;
 
-	if (tc_badaddr(tcaddr) || (tc_checkslot(tcaddr, tcname) == 0))
+	if (tc_badaddr(tcaddr) || (tc_checkslot(tcaddr, tcname, NULL) == 0))
 		return (EINVAL);
 
 	for (i = 0; i < sizeof(cnboards) / sizeof(cnboards[0]); i++)
