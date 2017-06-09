@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6var.h,v 1.5 2016/11/24 08:41:20 hkenken Exp $	*/
+/*	$NetBSD: imx6var.h,v 1.6 2017/06/09 18:14:59 ryo Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -50,8 +50,8 @@ extern bus_space_handle_t imx6_armcore_bsh;
 struct iomux_conf {
 	uint32_t pin;	/* ((MUXADDR<<16)|PADADDR) */
 #define IOMUX_CONF_EOT	((uint32_t)(-1))
-	uint32_t mux:8,
-	         pad:24;
+	uint32_t mux;
+	uint32_t pad;
 };
 
 uint32_t iomux_read(uint32_t);
@@ -76,6 +76,7 @@ uint32_t imx6_chip_id(void);
 #define CHIPID_MAJOR_IMX6DL		0x00610000
 #define CHIPID_MAJOR_IMX6SOLO		0x00620000
 #define CHIPID_MAJOR_IMX6Q		0x00630000
+#define CHIPID_MAJOR_IMX6UL		0x00640000
 #define IMX6_CHIPID_MAJOR(v)		((v) & CHIPID_MAJOR_MASK)
 #define IMX6_CHIPID_MINOR(v)		((v) & CHIPID_MINOR_MASK)
 

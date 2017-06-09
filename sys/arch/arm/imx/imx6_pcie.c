@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.2 2016/11/25 05:03:36 hkenken Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.3 2017/06/09 18:14:59 ryo Exp $	*/
 
 /*
  * Copyright (c) 2016  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.2 2016/11/25 05:03:36 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.3 2017/06/09 18:14:59 ryo Exp $");
 
 #include "opt_pci.h"
 
@@ -519,9 +519,10 @@ imx6pcie_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct axi_attach_args * const aa = aux;
 
-	/* i.MX6 SoloLite has no PCIe controller */
+	/* i.MX6 SoloLite/UltraLight has no PCIe controller */
 	switch (IMX6_CHIPID_MAJOR(imx6_chip_id())) {
 	case CHIPID_MAJOR_IMX6SL:
+	case CHIPID_MAJOR_IMX6UL:
 		return 0;
 	default:
 		break;

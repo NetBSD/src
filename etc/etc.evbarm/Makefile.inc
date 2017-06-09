@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.81 2017/01/07 16:29:04 kiyohara Exp $
+#	$NetBSD: Makefile.inc,v 1.82 2017/06/09 18:14:59 ryo Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -105,6 +105,8 @@ EVBARM_BOARDS.armv7hf+= 	CUBOX-I
 EVBARM_BOARDS.armv7+=		HUMMINGBIRD_A31
 EVBARM_BOARDS.armv7hf+=		HUMMINGBIRD_A31
 #EVBARM_BOARDS.armv7+=		IGEPV2
+EVBARM_BOARDS.armv7+=		IMX6UL-STARTER
+EVBARM_BOARDS.armv7hf+=		IMX6UL-STARTER
 EVBARM_BOARDS.armv7+=		TEGRA
 EVBARM_BOARDS.armv7hf+=		TEGRA
 EVBARM_BOARDS.armv7+=		ARMADILLO-IOT-G3
