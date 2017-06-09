@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.6 2017/06/06 16:29:36 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.7 2017/06/09 17:01:39 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -133,4 +133,38 @@ sys/dev/ic/pl050.c				1.2
 	Enable using the fb driver as console device on VEXPRESS_A15
 	by passing the "console=fb" argument on the kernel cmdline.
 	[jmcneill, ticket #13]
+
+sys/dev/sdmmc/ld_sdmmc.c			1.27
+
+	Fix a race between ld_sdmmc_start and ld_sdmmc_dobio that
+	could result in tasks getting lost from the task queue.
+	[jmcneill, ticket #14]
+
+bin/sh/sh.1					1.148
+
+	Correct option name in description of local command.
+	[kre, ticket #15]
+
+distrib/notes/macppc/prep.OPENFIRMWARE		1.19
+
+	Change the deprecation notice about ofwboot.elf to say that
+	it may still be required in some cases, as observed by some
+	MacMini users.
+	[he, ticket #16]
+
+sys/arch/arm/fdt/aaci_fdt.c			1.1
+sys/arch/arm/fdt/files.fdt			1.10
+sys/arch/evbarm/conf/VEXPRESS_A15		1.14, 1.15
+sys/conf/files					1.1174
+sys/dev/ic/pl041.c				1.1-1.3
+sys/dev/ic/pl041var.h				1.1
+
+	Add driver for ARM PrimeCell Advanced Audio CODEC interface (PL041).
+	[jmcneill, ticket #17]
+
+sys/dev/audio.c					1.358
+
+	Retrn error to userland from startp/startr depending on the
+	error from trigger/start output/input.
+	[nat, ticket #18]
 
