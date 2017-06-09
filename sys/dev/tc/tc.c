@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.54 2016/12/12 17:03:41 flxd Exp $	*/
+/*	$NetBSD: tc.c,v 1.55 2017/06/09 17:55:18 flxd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.54 2016/12/12 17:03:41 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.55 2017/06/09 17:55:18 flxd Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -156,7 +156,7 @@ tcattach(device_t parent, device_t self, void *aux)
 		tcaddr = slot->tcs_addr;
 		if (tc_badaddr(tcaddr))
 			continue;
-		if (tc_checkslot(tcaddr, ta.ta_modname) == 0)
+		if (tc_checkslot(tcaddr, ta.ta_modname, NULL) == 0)
 			continue;
 
 		/*
@@ -201,9 +201,7 @@ tcprint(void *aux, const char *pnp)
 
 static const tc_offset_t tc_slot_romoffs[] = {
 	TC_SLOT_ROM,
-#ifndef __vax__
 	TC_SLOT_PROTOROM,
-#endif
 };
 
 static int
@@ -234,7 +232,7 @@ tc_check_romp(const struct tc_rommap *romp)
 }
 
 int
-tc_checkslot(tc_addr_t slotbase, char *namep)
+tc_checkslot(tc_addr_t slotbase, char *namep, struct tc_rommap **rompp)
 {
 	struct tc_rommap *romp;
 	int i, j;
@@ -246,9 +244,13 @@ tc_checkslot(tc_addr_t slotbase, char *namep)
 		if (!tc_check_romp(romp))
 			continue;
 
-		for (j = 0; j < TC_ROM_LLEN; j++)
-			namep[j] = romp->tcr_modname[j].v;
-		namep[j] = '\0';
+		if (namep != NULL) {
+			for (j = 0; j < TC_ROM_LLEN; j++)
+				namep[j] = romp->tcr_modname[j].v;
+			namep[j] = '\0';
+		}
+		if (rompp != NULL)
+			*rompp = romp;
 		return (1);
 	}
 	return (0);
