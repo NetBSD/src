@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.9 2014/09/07 13:34:12 joerg Exp $	*/
+/*	$NetBSD: cron.c,v 1.10 2017/06/09 17:36:30 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: cron.c,v 1.12 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: cron.c,v 1.9 2014/09/07 13:34:12 joerg Exp $");
+__RCSID("$NetBSD: cron.c,v 1.10 2017/06/09 17:36:30 christos Exp $");
 #endif
 #endif
 
@@ -511,11 +511,10 @@ quit(int x __unused) {
 
 static void
 sigchld_reaper(void) {
-	WAIT_T waiter;
-	PID_T pid;
+	for (;;) {
+		WAIT_T waiter;
+		PID_T pid = waitpid(-1, &waiter, WNOHANG);
 
-	do {
-		pid = waitpid(-1, &waiter, WNOHANG);
 		switch (pid) {
 		case -1:
 			if (errno == EINTR)
@@ -523,19 +522,19 @@ sigchld_reaper(void) {
 			Debug(DPROC,
 			      ("[%ld] sigchld...no children\n",
 			       (long)getpid()));
-			break;
+			return;
 		case 0:
 			Debug(DPROC,
 			      ("[%ld] sigchld...no dead kids\n",
 			       (long)getpid()));
-			break;
+			return;
 		default:
 			Debug(DPROC,
 			      ("[%ld] sigchld...pid #%ld died, stat=%d\n",
 			       (long)getpid(), (long)pid, WEXITSTATUS(waiter)));
 			break;
 		}
-	} while (pid > 0);
+	}
 }
 
 static void

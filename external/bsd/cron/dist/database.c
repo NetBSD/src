@@ -1,4 +1,4 @@
-/*	$NetBSD: database.c,v 1.8 2012/12/24 19:30:46 christos Exp $	*/
+/*	$NetBSD: database.c,v 1.9 2017/06/09 17:36:30 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: database.c,v 1.7 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: database.c,v 1.8 2012/12/24 19:30:46 christos Exp $");
+__RCSID("$NetBSD: database.c,v 1.9 2017/06/09 17:36:30 christos Exp $");
 #endif
 #endif
 
@@ -36,16 +36,33 @@ __RCSID("$NetBSD: database.c,v 1.8 2012/12/24 19:30:46 christos Exp $");
 
 #define TMAX(a,b) ((a)>(b)?(a):(b))
 
+struct spooldir {
+	const char *path;
+	const char *uname;
+	const char *fname;
+	struct stat st;
+};
+
+static struct spooldir spools[] = {
+	{ .path = SPOOL_DIR, },
+	{ .path = CROND_DIR, .uname = "root", .fname = "*system*", },
+	{ .path = NULL, }
+};
+
 static	void		process_crontab(const char *, const char *,
 					const char *, struct stat *,
 					cron_db *, cron_db *);
 
 static void
-process_dir(const char *dname, struct stat *st, int sys, cron_db *new_db,
-    cron_db *old_db)
+process_dir(struct spooldir *sp, cron_db *new_db, cron_db *old_db)
 {
 	DIR *dir;
 	DIR_T *dp;
+	const char *dname = sp->path;
+	struct stat *st = &sp->st;
+
+	if (st->st_mtime == 0)
+		return;
 
 	/* we used to keep this dir open all the time, for the sake of
 	 * efficiency.  however, we need to close it in every fork, and
@@ -109,39 +126,40 @@ process_dir(const char *dname, struct stat *st, int sys, cron_db *new_db,
 			continue;
 		}
 
-		process_crontab(sys ? "root" : fname, sys ? "*system*" :
-				fname, tabname, st, new_db, old_db);
+		process_crontab(sp->uname ? sp->uname : fname,
+				sp->fname ? sp->fname : fname,
+				tabname, st, new_db, old_db);
 	}
 	(void)closedir(dir);
 }
 
 void
 load_database(cron_db *old_db) {
-	struct stat spool_stat, syscron_stat, crond_stat;
+	struct stat syscron_stat;
 	cron_db new_db;
 	user *u, *nu;
-	time_t new_mtime;
+	time_t maxtime;
 
 	Debug(DLOAD, ("[%ld] load_database()\n", (long)getpid()));
-
-	/* before we start loading any data, do a stat on SPOOL_DIR
-	 * so that if anything changes as of this moment (i.e., before we've
-	 * cached any of the database), we'll see the changes next time.
-	 */
-	if (stat(SPOOL_DIR, &spool_stat) < OK) {
-		log_it("CRON", getpid(), "STAT FAILED", SPOOL_DIR);
-		(void) exit(ERROR_EXIT);
-	}
-
-	/* track system crontab directory
-	 */
-	if (stat(CROND_DIR, &crond_stat) < OK)
-		crond_stat.st_mtime = 0;
 
 	/* track system crontab file
 	 */
 	if (stat(SYSCRONTAB, &syscron_stat) < OK)
 		syscron_stat.st_mtime = 0;
+
+	maxtime = syscron_stat.st_mtime;
+	for (struct spooldir *p = spools; p->path; p++) {
+		if (stat(p->path, &p->st) < OK) {
+			if (errno == ENOENT) {
+				p->st.st_mtime = 0;
+				continue;
+			}
+			log_it("CRON", getpid(), "STAT FAILED", p->path);
+			(void) exit(ERROR_EXIT);
+		}
+		if (p->st.st_mtime > maxtime)
+			maxtime = p->st.st_mtime;
+	}
 
 	/* if spooldir's mtime has not changed, we don't need to fiddle with
 	 * the database.
@@ -150,9 +168,7 @@ load_database(cron_db *old_db) {
 	 * so is guaranteed to be different than the stat() mtime the first
 	 * time this function is called.
 	 */
-	new_mtime = TMAX(crond_stat.st_mtime, TMAX(spool_stat.st_mtime,
-	    syscron_stat.st_mtime));
-	if (old_db->mtime == new_mtime) {
+	if (old_db->mtime == maxtime) {
 		Debug(DLOAD, ("[%ld] spool dir mtime unch, no load needed.\n",
 			      (long)getpid()));
 		return;
@@ -163,17 +179,15 @@ load_database(cron_db *old_db) {
 	 * actually changed.  Whatever is left in the old database when
 	 * we're done is chaff -- crontabs that disappeared.
 	 */
-	new_db.mtime = new_mtime;
+	new_db.mtime = maxtime;
 	new_db.head = new_db.tail = NULL;
 
 	if (syscron_stat.st_mtime)
-		process_crontab("root", NULL, SYSCRONTAB, &syscron_stat,
-				&new_db, old_db);
+		process_crontab("root", "*system*", SYSCRONTAB,
+		    &syscron_stat, &new_db, old_db);
 
-	if (crond_stat.st_mtime)
-		process_dir(CROND_DIR, &crond_stat, 1, &new_db, old_db);
-
-	process_dir(SPOOL_DIR, &spool_stat, 0, &new_db, old_db);
+ 	for (struct spooldir *p = spools; p->path; p++)
+		process_dir(p, &new_db, old_db);
 
 	/* if we don't do this, then when our children eventually call
 	 * getpwnam() in do_command.c's child_process to verify MAILTO=,
@@ -240,14 +254,12 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 	mode_t eqmode = 0400, badmode = 0;
 	user *u;
 
-	if (fname == NULL) {
+	if (strcmp(fname, "*system*") == 0) {
 		/*
 		 * SYSCRONTAB:
-		 * set fname to something for logging purposes.
 		 * Allow it to become readable by group and others, but
 		 * not writable.
 		 */
-		fname = "*system*";
 		eqmode = 0;
 		badmode = 022;
 	} else if ((pw = getpwnam(uname)) == NULL) {

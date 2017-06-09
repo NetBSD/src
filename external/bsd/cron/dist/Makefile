@@ -86,14 +86,14 @@ MANPAGES	=	bitstring.3 crontab.5 crontab.1 cron.8 putman.sh
 HEADERS		=	bitstring.h cron.h config.h pathnames.h externs.h \
 			macros.h structs.h funcs.h globals.h
 SOURCES		=	cron.c crontab.c database.c do_command.c entry.c \
-			env.c job.c user.c popen.c misc.c pw_dup.c
+			env.c job.c user.c popen.c misc.c pam_auth.c pw_dup.c
 SHAR_SOURCE	=	$(INFOS) $(MANPAGES) Makefile $(HEADERS) $(SOURCES)
 LINT_CRON	=	cron.c database.c user.c entry.c \
 			misc.c job.c do_command.c env.c popen.c pw_dup.c
 LINT_CRONTAB	=	crontab.c misc.c entry.c env.c
 CRON_OBJ	=	cron.o database.o user.o entry.o job.o do_command.o \
 			misc.o env.o popen.o pw_dup.o
-CRONTAB_OBJ	=	crontab.o misc.o entry.o env.o pw_dup.o
+CRONTAB_OBJ	=	crontab.o misc.o entry.o env.o pw_dup.o closeall.o
 
 all		:	cron crontab
 
