@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.4 2014/09/05 21:32:37 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.5 2017/06/09 17:36:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -44,7 +44,7 @@
 static sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 static char rcsid[] = "Id: popen.c,v 1.6 2003/02/16 04:40:01 vixie Exp";
 #else
-__RCSID("$NetBSD: popen.c,v 1.4 2014/09/05 21:32:37 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.5 2017/06/09 17:36:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,6 +121,11 @@ cron_popen(char *program, const char *type, struct passwd *pw) {
 				_exit(ERROR_EXIT);
 			}
 #endif /* BSD */
+#ifdef USE_PAM
+			if (!cron_pam_setcred())
+				_exit(1);
+			cron_pam_child_close();
+#endif
 			if (setuid(pw->pw_uid)) {
 				warn("unable to set uid for %s", pw->pw_name);
 				_exit(ERROR_EXIT);
