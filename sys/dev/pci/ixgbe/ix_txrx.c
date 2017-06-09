@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.24 2017/05/18 08:25:37 msaitoh Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.25 2017/06/09 03:19:55 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1510,7 +1510,8 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	 * or size of jumbo mbufs may have changed.
 	 */
 	ixgbe_jcl_reinit(&adapter->jcl_head, rxr->ptag->dt_dmat,
-	    2 * adapter->num_rx_desc, adapter->rx_mbuf_sz);
+	    (2 * adapter->num_rx_desc) * adapter->num_queues,
+	    adapter->rx_mbuf_sz);
 
 	IXGBE_RX_LOCK(rxr);
 
