@@ -144,6 +144,16 @@ proc_state(struct proc_handle *phdl)
 	return (phdl->status);
 }
 
+int
+proc_getmodel(struct proc_handle *phdl)
+{
+
+	if (phdl == NULL)
+		return (-1);
+
+	return (phdl->model);
+}
+
 pid_t
 proc_getpid(struct proc_handle *phdl)
 {
