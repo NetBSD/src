@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.7 2015/12/17 22:36:48 christos Exp $	*/
+/*	$NetBSD: do_command.c,v 1.8 2017/06/09 17:36:30 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,18 +25,20 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 1.9 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.7 2015/12/17 22:36:48 christos Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.8 2017/06/09 17:36:30 christos Exp $");
 #endif
 #endif
 
 #include "cron.h"
 #include <unistd.h>
 
-static void		child_process(entry *);
+static int		child_process(entry *);
 static int		safe_p(const char *, const char *);
 
 void
 do_command(entry *e, user *u) {
+	int retval;
+
 	Debug(DPROC, ("[%ld] do_command(%s, (%s,%ld,%ld))\n",
 		      (long)getpid(), e->cmd, u->name,
 		      (long)e->pwd->pw_uid, (long)e->pwd->pw_gid));
@@ -55,10 +57,10 @@ do_command(entry *e, user *u) {
 	case 0:
 		/* child process */
 		acquire_daemonlock(1);
-		child_process(e);
-		Debug(DPROC, ("[%ld] child process done, exiting\n",
-			      (long)getpid()));
-		_exit(OK_EXIT);
+		retval = child_process(e);
+		Debug(DPROC, ("[%ld] child process done (rc=%d), exiting\n",
+			      (long)getpid(), retval));
+		_exit(retval);
 		break;
 	default:
 		/* parent process */
@@ -68,11 +70,32 @@ do_command(entry *e, user *u) {
 }
 
 static void
+sigchld_handler(int signo) {
+	for (;;) {
+		WAIT_T waiter;
+		PID_T pid = waitpid(-1, &waiter, WNOHANG);
+
+		switch (pid) {
+		case -1:
+			if (errno == EINTR)
+				continue;
+		case 0:
+			return;
+		default:
+			break;
+		}
+	}
+}
+
+extern char **environ;
+static int
 child_process(entry *e) {
 	int stdin_pipe[2], stdout_pipe[2];
 	char * volatile input_data;
 	char *homedir, *usernm, * volatile mailto;
-	int children = 0;
+	struct sigaction sact;
+	char **envp = e->envp;
+	int retval = OK_EXIT;
 
 	Debug(DPROC, ("[%ld] child_process('%s')\n", (long)getpid(), e->cmd));
 
@@ -81,14 +104,16 @@ child_process(entry *e) {
 	/* discover some useful and important environment settings
 	 */
 	usernm = e->pwd->pw_name;
-	mailto = env_get("MAILTO", e->envp);
+	mailto = env_get("MAILTO", envp);
 
-	/* our parent is watching for our death by catching SIGCHLD.  we
-	 * do not care to watch for our children's deaths this way -- we
-	 * use wait() explicitly.  so we have to reset the signal (which
-	 * was inherited from the parent).
-	 */
-	(void) signal(SIGCHLD, SIG_DFL);
+	memset(&sact, 0, sizeof(sact));
+	sigemptyset(&sact.sa_mask);
+	sact.sa_flags = 0;
+#ifdef SA_RESTART
+	sact.sa_flags |= SA_RESTART;
+#endif
+	sact.sa_handler = sigchld_handler;
+	(void) sigaction(SIGCHLD, &sact, NULL);
 
 	/* create some pipes to talk to our future child
 	 */
@@ -142,12 +167,22 @@ child_process(entry *e) {
 		*p = '\0';
 	}
 
+#ifdef USE_PAM
+	if (!cron_pam_start(usernm))
+		return ERROR_EXIT;
+
+	if (!(envp = cron_pam_getenvlist(envp))) {
+		retval = ERROR_EXIT;
+		goto child_process_end;
+	}
+#endif
+
 	/* fork again, this time so we can exec the user's command.
 	 */
 	switch (vfork()) {
 	case -1:
-		log_it("CRON", getpid(), "error", "can't vfork");
-		exit(ERROR_EXIT);
+		retval = ERROR_EXIT;
+		goto child_process_end;
 		/*NOTREACHED*/
 	case 0:
 		Debug(DPROC, ("[%ld] grandchild process vfork()'ed\n",
@@ -236,9 +271,9 @@ child_process(entry *e) {
 			 * we just added one via login.conf, add it to
 			 * the crontab environment.
 			 */
-			if (env_get("PATH", e->envp) == NULL) {
+			if (env_get("PATH", envp) == NULL && environ != NULL) {
 				if ((p = getenv("PATH")) != NULL)
-					e->envp = env_set(e->envp, p);
+					envp = env_set(envp, p);
 			}
 		}
 #else
@@ -259,6 +294,11 @@ child_process(entry *e) {
 			_exit(ERROR_EXIT);
 		}
 #endif /* BSD */
+#ifdef USE_PAM
+		if (!cron_pam_setcred())
+			_exit(ERROR_EXIT);
+		cron_pam_child_close();
+#endif
 		if (setuid(e->pwd->pw_uid) != 0) {
 			syslog(LOG_ERR, "setuid(%d) failed for %s: %m",
 			    e->pwd->pw_uid, e->pwd->pw_name);
@@ -266,7 +306,7 @@ child_process(entry *e) {
 		}
 		/* we aren't root after this... */
 #endif /* LOGIN_CAP */
-		homedir = env_get("HOME", e->envp);
+		homedir = env_get("HOME", envp);
 		if (chdir(homedir) != 0) {
 			syslog(LOG_ERR, "chdir(%s) $HOME failed for %s: %m",
 			    homedir, e->pwd->pw_name);
@@ -280,13 +320,15 @@ child_process(entry *e) {
 		 */
 		(void) signal(SIGCHLD, SIG_DFL);
 #endif
+		(void) signal(SIGPIPE, SIG_DFL);
+		(void) signal(SIGUSR1, SIG_DFL);
 		(void) signal(SIGHUP, SIG_DFL);
 
 		/*
 		 * Exec the command.
 		 */
 		{
-			char	*shell = env_get("SHELL", e->envp);
+			char	*shell = env_get("SHELL", envp);
 
 # if DEBUGGING
 			if (DebugFlags & DTEST) {
@@ -297,7 +339,7 @@ child_process(entry *e) {
 				_exit(OK_EXIT);
 			}
 # endif /*DEBUGGING*/
-			(void)execle(shell, shell, "-c", e->cmd, NULL, e->envp);
+			(void)execle(shell, shell, "-c", e->cmd, NULL, envp);
 			warn("execl: couldn't exec `%s'", shell);
 			_exit(ERROR_EXIT);
 		}
@@ -306,8 +348,6 @@ child_process(entry *e) {
 		/* parent process */
 		break;
 	}
-
-	children++;
 
 	/* middle process, child of original cron, parent of process running
 	 * the user's command.
@@ -340,6 +380,12 @@ child_process(entry *e) {
 
 		Debug(DPROC, ("[%ld] child2 sending data to grandchild\n",
 			      (long)getpid()));
+
+#ifdef USE_PAM
+		cron_pam_child_close();
+#else
+		log_close();
+#endif
 
 		/* close the pipe we don't use, since we inherited it and
 		 * are part of its reference count now.
@@ -384,8 +430,6 @@ child_process(entry *e) {
 	 * ernie back there has it open and will close it when he's done.
 	 */
 	(void)close(stdin_pipe[WRITE_PIPE]);
-
-	children++;
 
 	/*
 	 * read output from the grandchild.  it's stderr has been redirected to
@@ -441,13 +485,15 @@ child_process(entry *e) {
 				if (strlens(MAILFMT, MAILARG, NULL) + 1
 				    >= sizeof mailcmd) {
 					warnx("mailcmd too long");
-					(void) _exit(ERROR_EXIT);
+					retval = ERROR_EXIT;
+					goto child_process_end;
 				}
 				(void)snprintf(mailcmd, sizeof(mailcmd), 
 				    MAILFMT, MAILARG);
 				if (!(mail = cron_popen(mailcmd, "w", e->pwd))) {
 					warn("cannot run `%s'", mailcmd);
-					(void) _exit(ERROR_EXIT);
+					retval = ERROR_EXIT;
+					goto child_process_end;
 				}
 				(void)fprintf(mail,
 				    "From: root (Cron Daemon)\n");
@@ -461,7 +507,7 @@ child_process(entry *e) {
 				(void)fprintf(mail, "Date: %s\n",
 					arpadate(&StartTime));
 #endif /*MAIL_DATE*/
-				for (env = e->envp;  *env;  env++)
+				for (env = envp;  *env;  env++)
 					(void)fprintf(mail,
 					    "X-Cron-Env: <%s>\n", *env);
 				(void)fprintf(mail, "\n");
@@ -522,26 +568,7 @@ child_process(entry *e) {
 
 	/* wait for children to die.
 	 */
-	for (; children > 0; children--) {
-		WAIT_T waiter;
-		PID_T pid;
-
-		Debug(DPROC, ("[%ld] waiting for grandchild #%d to finish\n",
-			      (long)getpid(), children));
-		while ((pid = wait(&waiter)) < OK && errno == EINTR)
-			;
-		if (pid < OK) {
-			Debug(DPROC,
-			      ("[%ld] no more grandchildren--mail written?\n",
-			       (long)getpid()));
-			break;
-		}
-		Debug(DPROC, ("[%ld] grandchild #%ld finished, status=%04x",
-			      (long)getpid(), (long)pid, WEXITSTATUS(waiter)));
-		if (WIFSIGNALED(waiter) && WCOREDUMP(waiter))
-			Debug(DPROC, (", dumped core"));
-		Debug(DPROC, ("\n"));
-	}
+	sigchld_handler(0);
 
 	/* Log the time when we finished deadling with the job */
 	/*local*/{
@@ -550,6 +577,12 @@ child_process(entry *e) {
 		log_it(usernm, getpid(), "CMD FINISH", x);
 		free(x);
 	}
+
+child_process_end:
+#ifdef USE_PAM
+	cron_pam_finish();
+#endif
+	return retval;
 }
 
 static int
