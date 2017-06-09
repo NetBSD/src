@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_vsbus.c,v 1.8 2017/06/09 17:55:18 flxd Exp $	*/
+/*	$NetBSD: tc_vsbus.c,v 1.9 2017/06/09 18:02:40 flxd Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc_vsbus.c,v 1.8 2017/06/09 17:55:18 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_vsbus.c,v 1.9 2017/06/09 18:02:40 flxd Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -156,10 +156,10 @@ tc_vsbus_match(device_t parent, cfdata_t cfdata, void *aux)
 		found = ((bus_space_read_4(bst, bsh, 0) & KA46_BWF0_ADP) != 0);
 		bus_space_unmap(bst, bsh, KA46_BWF0_SZ);
 		/*
-         	 * On VS4000/60, although interrupting on a real vector, fool
+		 * On VS4000/60, although interrupting on a real vector, fool
 		 * vsbus interrupt, as no interrupt bit will be set in
 		 * vsbus_softc's sc_intreq for TC adaptor.
-         	 */
+		 */
 		rc = 20;
 		break;
 	case VAX_BTYP_49:
