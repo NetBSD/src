@@ -26,7 +26,7 @@
  * $FreeBSD: head/lib/libproc/proc_create.c 265255 2014-05-03 04:44:03Z markj $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: proc_create.c,v 1.2 2015/09/24 14:12:48 christos Exp $");
+__RCSID("$NetBSD: proc_create.c,v 1.3 2017/06/09 01:17:25 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -47,7 +47,8 @@ static int	proc_init(pid_t, int, int, struct proc_handle *);
 static int
 proc_init(pid_t pid, int flags, int status, struct proc_handle *phdl)
 {
-	int mib[4], error;
+	struct kinfo_proc2 kp;
+	int mib[6], error;
 	size_t len;
 
 	memset(phdl, 0, sizeof(*phdl));
@@ -67,6 +68,24 @@ proc_init(pid_t pid, int flags, int status, struct proc_handle *phdl)
 	}
 	if (len == 0)
 		phdl->execname[0] = '\0';
+
+#ifdef _LP64
+	len = sizeof(kp);
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_PROC2;
+	mib[2] = KERN_PROC_PID;
+	mib[3] = pid;
+	mib[4] = len;
+	mib[5] = 1;
+	if (sysctl(mib, 6, &kp, &len, NULL, 0) != 0) {
+		error = errno;
+		DPRINTF("ERROR: cannot get kinfo_proc2 for pid %d", pid);
+		return (error);
+	}
+	phdl->model = (kp.p_flag & P_32) ? PR_MODEL_ILP32 : PR_MODEL_LP64;
+#else
+	phdl->model = PR_MODEL_ILP32;
+#endif
 
 	return (0);
 }
