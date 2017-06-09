@@ -1,4 +1,4 @@
-# $NetBSD: t_syntax.sh,v 1.2 2017/06/02 01:45:06 kre Exp $
+# $NetBSD: t_syntax.sh,v 1.3 2017/06/09 23:49:58 kre Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -208,12 +208,13 @@ c_line_wrapping_body() {
 		${V\
 		AR}\
 		}\
-		}}
+		}"}
 		printf '%s' ${V\
 		1?V1\
 		 \
 		FAIL}
 	DONE
+
 	cat <<- 'DONE' | atf_check -s exit:0 -o inline:'2\n' ${TEST_SH}
 		l\
 		s=7 bi\
@@ -224,6 +225,74 @@ c_line_wrapping_body() {
 		( ls /bin )\
 		)
 	DONE
+
+	# Inspired by src/etc/MAKEDEV.tmpl failure with (broken)
+	# sh LINENO code...  avoid it happening again...
+	for VARS in 1:0:0:0 0:1:0:0 0:0:1:0 0:0:0:1 \
+		    1:0:0:1 1:0:1:0 1:1:0:0 0:1:1:0 \
+		    0:0:0:0 1:1:0:1 0:1:1:1 1:1:1:1
+	do
+		eval $(
+			IFS=:
+			set -- $VARS
+			test $(( $1 + $2 + $3 + $4 )) -eq 1 &&
+				R=OK || R=BAD
+			printf "R=%s;" $R
+			for v in a b c d
+			do
+				case $1 in
+				(0)	printf "export %s=false;" $v;;
+				(1)	printf "export %s=true;"  $v;;
+				esac
+				shift
+			done
+		)
+
+		cat <<- 'DONE' | atf_check -s exit:0 -o inline:"${R}" ${TEST_SH}
+			case $(( $($a && echo 1 || echo 0) + \
+				 $($b && echo 1 || echo 0) + \
+				 $($c && echo 1 || echo 0) + \
+				 $($d && echo 1 || echo 0) ))
+			in
+			(1)	printf OK ;;
+			(*)	printf BAD ;;
+			esac
+		DONE
+	done
+
+	# inspired by pkgsrc/pkgtools/cwrappers :: libnbcompat/configure
+	# failure with (broken) sh LINENO core .. avoid recurrence
+	# This test would have failed.
+	cat <<- 'DONE' | atf_check -s exit:0 -o inline:'/tmp\n' ${TEST_SH}
+		dn=/tmp/foo
+
+		D=`dirname -- "${dn}" ||
+		expr	X"${dn}" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+			X"${dn}" : 'X\(//\)[^/]' \| \
+			X"${dn}" : 'X\(//\)$' \| \
+			X"${dn}" : 'X\(/\)' \| . 2>/dev/null ||
+		echo X"${dn}" |
+		    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{
+			    s//\1/
+			    q
+			  }
+			  /^X\(\/\/\)[^/].*/{
+			    s//\1/
+			    q
+			  }
+			  /^X\(\/\/\)$/{ 
+			    s//\1/
+			    q
+			  } 
+			  /^X\(\/\).*/{
+			    s//\1/
+			    q
+			  }
+			  s/.*/./; q'`
+
+		echo "${D}"
+	DONE
+	return 0
 }
 
 atf_test_case d_redirects
