@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.h,v 1.4 2008/04/28 20:23:08 martin Exp $ */
+/* $NetBSD: vnode.h,v 1.5 2017/06/09 00:13:08 chs Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,6 +27,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/queue.h>
 
 #define VNODE_HASH_MAX   1024 /* Must be a PO2 */
 #define VNODE_CACHE_SIZE 1024 /* Need not be a PO2 */
