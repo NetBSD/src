@@ -41,6 +41,7 @@ struct proc_handle {
 	int	flags;			/* Process flags. */
 	int	status;			/* Process status (PS_*). */
 	int	wstat;			/* Process wait status. */
+	int	model;			/* Process data model. */
 	rd_agent_t *rdap;		/* librtld_db agent */
 	rd_loadobj_t *rdobjs;
 	size_t	rdobjsz;
