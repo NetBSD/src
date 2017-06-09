@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.228 2017/05/24 09:53:55 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.229 2017/06/09 00:13:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -44,14 +44,16 @@
 #ifndef _STANDALONE
 #include <sys/param.h> /* precautionary upon removal from ucred.h */
 #include <sys/time.h>
-#include <sys/uio.h>
 #include <sys/ucred.h>
 #include <sys/fstypes.h>
+#include <sys/statvfs.h>
+#if defined(_KERNEL) || defined(__EXPOSE_MOUNT)
+#include <sys/uio.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
-#include <sys/statvfs.h>
 #include <sys/specificdata.h>
 #include <sys/condvar.h>
+#endif	/* defined(_KERNEL) || defined(__EXPOSE_MOUNT) */
 #endif	/* !_STANDALONE */
 
 /*
@@ -97,7 +99,26 @@
 #define MOUNT_RUMPFS	"rumpfs"	/* rump virtual file system */
 #define	MOUNT_V7FS	"v7fs"		/* 7th Edition of Unix Filesystem */
 
+/*
+ * Sysctl CTL_VFS definitions.
+ *
+ * Second level identifier specifies which filesystem. Second level
+ * identifier VFS_GENERIC returns information about all filesystems.
+ *
+ * Note the slightly non-flat nature of these sysctl numbers.  Oh for
+ * a better sysctl interface.
+ */
+#define VFS_GENERIC	0		/* generic filesystem information */
+#define VFS_MAXTYPENUM	1		/* int: highest defined fs type */
+#define VFS_CONF	2		/* struct: vfsconf for filesystem given
+					   as next argument */
+#define VFS_USERMOUNT	3		/* enable/disable fs mnt by non-root */
+#define	VFS_MAGICLINKS  4		/* expand 'magic' symlinks */
+#define	VFSGEN_MAXID	5		/* number of valid vfs.generic ids */
+
 #ifndef _STANDALONE
+
+#if defined(_KERNEL) || defined(__EXPOSE_MOUNT)
 
 struct vnode;
 struct vnode_impl;
@@ -133,22 +154,9 @@ struct mount {
 	uint64_t	mnt_gen;
 };
 
-/*
- * Sysctl CTL_VFS definitions.
- *
- * Second level identifier specifies which filesystem. Second level
- * identifier VFS_GENERIC returns information about all filesystems.
- *
- * Note the slightly non-flat nature of these sysctl numbers.  Oh for
- * a better sysctl interface.
- */
-#define VFS_GENERIC	0		/* generic filesystem information */
-#define VFS_MAXTYPENUM	1		/* int: highest defined fs type */
-#define VFS_CONF	2		/* struct: vfsconf for filesystem given
-					   as next argument */
-#define VFS_USERMOUNT	3		/* enable/disable fs mnt by non-root */
-#define	VFS_MAGICLINKS  4		/* expand 'magic' symlinks */
-#define	VFSGEN_MAXID	5		/* number of valid vfs.generic ids */
+#endif /* defined(_KERNEL) || defined(__EXPOSE_MOUNT) */
+
+#ifdef _KERNEL
 
 /*
  * USE THE SAME NAMES AS MOUNT_*!
@@ -189,8 +197,6 @@ struct mount {
 	{ "magiclinks", CTLTYPE_INT }, \
 }
 
-#if defined(_KERNEL)
-
 struct quotactl_args;		/* in sys/quotactl.h */
 struct quotastat;		/* in sys/quotactl.h */
 struct quotaidtypestat;		/* in sys/quotactl.h */
@@ -198,10 +204,6 @@ struct quotaobjtypestat;	/* in sys/quotactl.h */
 struct quotakcursor;		/* in sys/quotactl.h */
 struct quotakey;		/* in sys/quota.h */
 struct quotaval;		/* in sys/quota.h */
-
-#if __STDC__
-struct nameidata;
-#endif
 
 /*
  * Operations supported on mounted file system.
@@ -268,14 +270,8 @@ int	VFS_SNAPSHOT(struct mount *, struct vnode *, struct timespec *);
 int	VFS_EXTATTRCTL(struct mount *, int, struct vnode *, int, const char *);
 int	VFS_SUSPENDCTL(struct mount *, int);
 
-#endif /* _KERNEL */
-
-#ifdef _KERNEL
-#if __STDC__
-struct mbuf;
 struct vnodeopv_desc;
 struct kauth_cred;
-#endif
 
 #define	VFS_MAX_MOUNT_DATA	8192
 
