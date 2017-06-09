@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.c,v 1.6 2009/04/12 06:36:12 lukem Exp $	*/
+/*	$NetBSD: ptyfs.c,v 1.7 2017/06/09 00:13:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ptyfs.c,v 1.6 2009/04/12 06:36:12 lukem Exp $");
+__RCSID("$NetBSD: ptyfs.c,v 1.7 2017/06/09 00:13:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: ptyfs.c,v 1.6 2009/04/12 06:36:12 lukem Exp $");
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
+#define __EXPOSE_MOUNT
 #include <sys/mount.h>
 
 #include <stdbool.h>
