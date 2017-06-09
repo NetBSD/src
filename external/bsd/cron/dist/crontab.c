@@ -1,4 +1,4 @@
-/*	$NetBSD: crontab.c,v 1.13 2015/01/04 18:45:17 joerg Exp $	*/
+/*	$NetBSD: crontab.c,v 1.14 2017/06/09 17:36:30 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: crontab.c,v 1.12 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: crontab.c,v 1.13 2015/01/04 18:45:17 joerg Exp $");
+__RCSID("$NetBSD: crontab.c,v 1.14 2017/06/09 17:36:30 christos Exp $");
 #endif
 #endif
 
@@ -429,7 +429,11 @@ edit_cmd(void) {
 	if (fflush(NewCrontab) < OK) {
 		err(ERROR_EXIT, "cannot flush output for `%s'", Filename);
 	}
+#ifdef HAVE_FUTIMENS
+	if (futimens(t, ts) == -1)
+#else
 	if (change_time(Filename, ts) == -1)
+#endif
 		err(ERROR_EXIT, "cannot set time info for `%s'", Filename);
  again:
 	rewind(NewCrontab);
@@ -464,6 +468,9 @@ edit_cmd(void) {
 		}
 		if (setuid(MY_UID(pw)) < 0) {
 			err(ERROR_EXIT, "cannot setuid(getuid())");
+		}
+		if (close_all(3)) {
+			err(ERROR_EXIT, "cannot close files");
 		}
 		if (chdir(_PATH_TMP) < 0) {
 			err(ERROR_EXIT, "cannot chdir to `%s'", _PATH_TMP);
@@ -682,7 +689,7 @@ replace_cmd(void) {
 	    "# (%s installed on %-24.24s)\n", Filename, ctime(&now));
 	(void)fprintf(tmp,
 	    "# (Cron version %s -- %s)\n", CRON_VERSION,
-	    "$NetBSD: crontab.c,v 1.13 2015/01/04 18:45:17 joerg Exp $");
+	    "$NetBSD: crontab.c,v 1.14 2017/06/09 17:36:30 christos Exp $");
 
 	/* copy the crontab to the tmp
 	 */
