@@ -1,4 +1,4 @@
-/*	$NetBSD: can_pcb.c,v 1.5 2017/06/01 02:45:14 chs Exp $	*/
+/*	$NetBSD: can_pcb.c,v 1.6 2017/06/09 08:21:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.5 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.6 2017/06/09 08:21:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,8 +127,12 @@ can_pcbbind(void *v, struct sockaddr_can *scan, struct lwp *l)
 	mutex_enter(&canp->canp_mtx);
 	if (scan->can_ifindex != 0) {
 		canp->canp_ifp = if_byindex(scan->can_ifindex);
-		if (canp->canp_ifp == NULL)
+		if (canp->canp_ifp == NULL ||
+		    canp->canp_ifp->if_dlt != DLT_CAN_SOCKETCAN) {
+			canp->canp_ifp = NULL;
+			mutex_exit(&canp->canp_mtx);
 			return (EADDRNOTAVAIL);
+		}
 		soisconnected(canp->canp_socket);
 	} else {
 		canp->canp_ifp = NULL;
