@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.247 2017/05/21 15:28:38 riastradh Exp $
+# $NetBSD: mi,v 1.248 2017/06/09 17:29:03 christos Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -111,6 +111,7 @@
 ./etc/obsolete/misc				etc-obsolete		obsolete
 ./etc/obsolete/text				etc-obsolete		obsolete
 ./etc/pam.d/README				etc-sys-etc
+./etc/pam.d/cron				etc-sys-etc
 ./etc/pam.d/display_manager			etc-sys-etc
 ./etc/pam.d/ftpd				etc-sys-etc
 ./etc/pam.d/gdm					etc-sys-etc
