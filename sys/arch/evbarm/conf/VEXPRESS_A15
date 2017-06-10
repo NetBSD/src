@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VEXPRESS_A15,v 1.12.2.2 2017/06/09 16:59:20 snj Exp $
+#	$NetBSD: VEXPRESS_A15,v 1.12.2.3 2017/06/10 05:57:08 snj Exp $
 #
 #	ARM Versatile Express A15
 #
@@ -53,6 +53,9 @@ ukphy*		at mii? phy ?
 
 # UART
 plcom*		at fdt?			# ARM PL011 UART
+
+# RTC
+plrtc*		at fdt?			# ARM PrimeCell RTC
 
 # SDMMC
 plmmc*		at fdt?			# ARM PrimeCell MCI
