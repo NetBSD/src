@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.h,v 1.23 2017/06/08 01:23:01 chs Exp $	*/
+/*	$NetBSD: ulfs_inode.h,v 1.24 2017/06/10 05:29:36 maya Exp $	*/
 /*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
 /*
@@ -175,7 +175,7 @@ struct lfid {
 
 #define WRITEINPROG(vp) ((vp)->v_numoutput > 0 ||			\
 	(!LIST_EMPTY(&(vp)->v_dirtyblkhd) &&				\
-	 !(VTOI(vp)->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING))))
+	 !(VTOI(vp)->i_state & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING))))
 
 
 
