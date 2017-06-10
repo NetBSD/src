@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.7 2017/06/09 20:18:58 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.8 2017/06/10 13:25:51 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.7 2017/06/09 20:18:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.8 2017/06/10 13:25:51 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.7 2017/06/09 20:18:58 jdolecek Exp
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
+#include <dev/ata/satafisvar.h>
+#include <dev/ata/satafisreg.h>
 #include <dev/ata/satapmpreg.h>
 #include <dev/ata/satareg.h>
 #include <dev/ata/satavar.h>
@@ -3632,58 +3634,29 @@ mvsata_edma_setup_crqb_gen2e(struct mvsata_port *mvport, int erqqip,
 {
 	struct crqb_gen2e *crqb;
 	bus_addr_t eprd_addr;
-	daddr_t blkno;
 	uint32_t ctrlflg, rw;
-	uint8_t cmd, head;
-	struct ata_bio  *ata_bio = &xfer->c_bio;
+	uint8_t fis[RHD_FISLEN];
 
 	eprd_addr = mvport->port_eprd_dmamap->dm_segs[0].ds_addr +
 	    mvport->port_reqtbl[xfer->c_slot].eprd_offset;
-	rw = (ata_bio->flags & ATA_READ) ? CRQB_CDIR_READ : CRQB_CDIR_WRITE;
+	rw = (xfer->c_bio.flags & ATA_READ) ? CRQB_CDIR_READ : CRQB_CDIR_WRITE;
 	ctrlflg = (rw | CRQB_CDEVICEQUETAG(0) | /* XXX slot */
 	    CRQB_CPMPORT(xfer->c_drive) |
 	    CRQB_CPRDMODE_EPRD | CRQB_CHOSTQUETAG_GEN2(xfer->c_slot));
-	cmd = (ata_bio->flags & ATA_READ) ? WDCC_READDMA : WDCC_WRITEDMA;
-	if (ata_bio->flags & (ATA_LBA|ATA_LBA48)) {
-		head = WDSD_LBA;
-	} else {
-		head = 0;
-	}
-	blkno = ata_bio->blkno;
-	if (ata_bio->flags & ATA_LBA48)
-		cmd = atacmd_to48(cmd);
-	else {
-		head |= ((ata_bio->blkno >> 24) & 0xf);
-		blkno &= 0xffffff;
-	}
+
 	crqb = &mvport->port_crqb->crqb_gen2e + erqqip;
 	crqb->cprdbl = htole32(eprd_addr & CRQB_CRQBL_EPRD_MASK);
 	crqb->cprdbh = htole32((eprd_addr >> 16) >> 16);
 	crqb->ctrlflg = htole32(ctrlflg);
-	if (mvport->port_edmamode == dma) {
-		crqb->atacommand[0] = htole32(cmd << 16);
-		crqb->atacommand[1] = htole32((blkno & 0xffffff) | head << 24);
-		crqb->atacommand[2] = htole32(((blkno >> 24) & 0xffffff));
-		crqb->atacommand[3] = htole32(ata_bio->nblks & 0xffff);
-	} else { /* ncq/queued */
 
-		/*
-		 * XXXX: Oops, ata command is not correct.  And, atabus layer
-		 * has not been supported yet now.
-		 *   Queued DMA read/write.
-		 *   read/write FPDMAQueued.
-		 */
+	satafis_rhd_construct_bio(xfer, fis);
 
-		crqb->atacommand[0] = htole32(
-		    (cmd << 16) | ((ata_bio->nblks & 0xff) << 24));
-		crqb->atacommand[1] = htole32((blkno & 0xffffff) | head << 24);
-		crqb->atacommand[2] = htole32(((blkno >> 24) & 0xffffff) |
-		    ((ata_bio->nblks >> 8) & 0xff));
-		crqb->atacommand[3] = htole32(ata_bio->nblks & 0xffff);
-		crqb->atacommand[3] = htole32(xfer->c_slot << 3);
-	}
+	crqb->atacommand[0] = 0;
+	crqb->atacommand[1] = 0;
+	/* copy over the ATA command part of the fis */
+	memcpy(&crqb->atacommand[2], &fis[rhd_command],
+	    MIN(sizeof(crqb->atacommand) - 2, RHD_FISLEN - rhd_command));
 }
-
 
 #ifdef MVSATA_DEBUG
 #define MVSATA_DEBUG_PRINT(type, size, n, p)		\
