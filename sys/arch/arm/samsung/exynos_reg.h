@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_reg.h,v 1.13 2014/09/30 14:20:55 reinoud Exp $	*/
+/*	$NetBSD: exynos_reg.h,v 1.14 2017/06/10 15:13:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -97,10 +97,10 @@
 #define EXYNOS_BLOCK_SIZE		0x00010000
 
 
-#if defined(EXYNOS5)
+#if defined(SOC_EXYNOS5)
 #include <arm/samsung/exynos5_reg.h>
 #endif
-#if defined(EXYNOS4)
+#if defined(SOC_EXYNOS4)
 #include <arm/samsung/exynos4_reg.h>
 #endif
 

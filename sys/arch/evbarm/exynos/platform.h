@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.1 2015/12/06 00:33:44 marty Exp $	*/
+/*	$NetBSD: platform.h,v 1.2 2017/06/10 15:13:19 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,11 +32,7 @@
 #ifndef _ARM_EXYNOS_PLATFORM_H
 #define _ARM_EXYNOS_PLATFORM_H
 
-/*
- * Kernel VM space 16Mb behind KERNEL_BASE upto 0xeff00000
- */
-#define KERNEL_VM_BASE		0xc0000000
-#define KERNEL_VM_SIZE		(EXYNOS_CORE_VBASE - KERNEL_VM_BASE)
+#include <arch/evbarm/fdt/platform.h>
 
 /*
  * IO space
