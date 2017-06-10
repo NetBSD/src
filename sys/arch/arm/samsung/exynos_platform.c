@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.1 2017/06/10 15:13:18 jmcneill Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.2 2017/06/10 23:22:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.1 2017/06/10 15:13:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.2 2017/06/10 23:22:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,11 +51,11 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.1 2017/06/10 15:13:18 jmcneill
 #include <arm/samsung/exynos_reg.h>
 #include <arm/samsung/exynos_var.h>
 
+#include <evbarm/exynos/platform.h>
+
 #include <arm/cortex/gtmr_var.h>
 
 #include <arm/fdt/arm_fdtvar.h>
-
-#define	EXYNOS_CORE_VBASE	0xf0000000
 
 #define	DEVMAP_ALIGN(a)	((a) & ~L1_S_OFFSET)
 #define	DEVMAP_SIZE(s)	roundup2((s), L1_S_SIZE)
@@ -75,17 +75,24 @@ exynos_platform_devmap(void)
 	static const struct pmap_devmap devmap[] = {
 		DEVMAP_ENTRY(EXYNOS_CORE_VBASE,
 			     EXYNOS_CORE_PBASE,
-			     EXYNOS_CORE_SIZE),
+			     EXYNOS5_CORE_SIZE),
+		DEVMAP_ENTRY(EXYNOS5_AUDIOCORE_VBASE,
+			     EXYNOS5_AUDIOCORE_PBASE,
+			     EXYNOS5_AUDIOCORE_SIZE),
 		DEVMAP_ENTRY_END
 	};	
 
 	return devmap;
 }
 
+#define EXYNOS_IOPHYSTOVIRT(a) \
+    ((vaddr_t)(((a) - EXYNOS_CORE_PBASE) + EXYNOS_CORE_VBASE))
+
 static void
 exynos_platform_bootstrap(void)
 {
-	exynos_bootstrap(EXYNOS_CORE_PBASE, 0 /* XXX */);
+	paddr_t uart_address = armreg_tpidruro_read();	/* XXX */
+	exynos_bootstrap(EXYNOS_CORE_VBASE, EXYNOS_IOPHYSTOVIRT(uart_address));
 }
 
 static void
@@ -103,6 +110,9 @@ exynos_platform_init_attach_args(struct fdt_attach_args *faa)
 static void
 exynos_platform_early_putchar(char c)
 {
+	extern void exynos_putchar(int);	/* XXX from exynos_start.S */
+
+	exynos_putchar(c);
 }
 
 static void
