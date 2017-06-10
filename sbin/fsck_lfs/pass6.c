@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.49 2015/10/03 08:29:21 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.50 2017/06/10 08:13:15 pgoyette Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, daddr_t ndaddr, size_t size)
 	u_int32_t oldsn, sn;
 
 	ip = VTOI(vp);
-	ip->i_flag |= IN_MODIFIED;
+	ip->i_state |= IN_MODIFIED;
 
 	error = ulfs_bmaparray(fs, vp, lbn, &daddr, a, &num);
 	if (error)
