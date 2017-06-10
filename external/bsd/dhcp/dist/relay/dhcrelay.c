@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcrelay.c,v 1.6 2016/01/10 20:10:45 christos Exp $	*/
+/*	$NetBSD: dhcrelay.c,v 1.6.8.1 2017/06/10 06:30:07 snj Exp $	*/
 /* dhcrelay.c
 
    DHCP/BOOTP Relay Agent. */
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.6 2016/01/10 20:10:45 christos Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.6.8.1 2017/06/10 06:30:07 snj Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -206,13 +206,6 @@ main(int argc, char **argv) {
 #if !defined(DEBUG)
 	setlogmask(LOG_UPTO(LOG_INFO));
 #endif	
-
-	/* Set up the isc and dns library managers */
-	status = dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
-				     NULL, NULL);
-	if (status != ISC_R_SUCCESS)
-		log_fatal("Can't initialize context: %s",
-			  isc_result_totext(status));
 
 	/* Set up the OMAPI. */
 	status = omapi_init();
@@ -536,17 +529,6 @@ main(int argc, char **argv) {
 	}
 #endif
 
-	/* Get the current time... */
-	gettimeofday(&cur_tv, NULL);
-
-	/* Discover all the network interfaces. */
-	discover_interfaces(DISCOVER_RELAY);
-
-#ifdef DHCPv6
-	if (local_family == AF_INET6)
-		setup_streams();
-#endif
-
 	/* Become a daemon... */
 	if (!no_daemon) {
 		int pid;
@@ -586,6 +568,24 @@ main(int argc, char **argv) {
 
 		IGNORE_RET (chdir("/"));
 	}
+
+	/* Set up the isc and dns library managers */
+	status = dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+				     NULL, NULL);
+	if (status != ISC_R_SUCCESS)
+		log_fatal("Can't initialize context: %s",
+			  isc_result_totext(status));
+
+	/* Get the current time... */
+	gettimeofday(&cur_tv, NULL);
+
+	/* Discover all the network interfaces. */
+	discover_interfaces(DISCOVER_RELAY);
+
+#ifdef DHCPv6
+	if (local_family == AF_INET6)
+		setup_streams();
+#endif
 
 	/* Set up the packet handler... */
 	if (local_family == AF_INET)
@@ -948,7 +948,7 @@ find_interface_by_agent_option(struct dhcp_packet *packet,
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.6 2016/01/10 20:10:45 christos Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.6.8.1 2017/06/10 06:30:07 snj Exp $");
 static int
 add_relay_agent_options(struct interface_info *ip, struct dhcp_packet *packet,
 			unsigned length, struct in_addr giaddr) {
