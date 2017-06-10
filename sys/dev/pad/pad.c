@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.32 2017/06/01 09:44:30 pgoyette Exp $ */
+/* $NetBSD: pad.c,v 1.32.2.1 2017/06/10 06:05:47 snj Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.32 2017/06/01 09:44:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.32.2.1 2017/06/10 06:05:47 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -322,10 +322,6 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 		return EBUSY;
 	}
 	
-	getmicrotime(&sc->sc_last);
-	sc->sc_bytes_count = 0;
-	sc->sc_remainder = 0;
-
 	return 0;
 }
 
@@ -345,8 +341,8 @@ pad_close(dev_t dev, int flags, int fmt, struct lwp *l)
 }
 
 #define PAD_BYTES_PER_SEC   (44100 * sizeof(int16_t) * 2)
-#define TIMENEXTREAD	    (PAD_BLKSIZE * 1000000 / PAD_BYTES_PER_SEC)
-#define BYTESTOSLEEP 	    (PAD_BLKSIZE)
+#define BYTESTOSLEEP 	    (int64_t)(PAD_BLKSIZE)
+#define TIMENEXTREAD	    (int64_t)(BYTESTOSLEEP * 1000000 / PAD_BYTES_PER_SEC)
 
 int
 pad_read(dev_t dev, struct uio *uio, int flags)
@@ -374,10 +370,11 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 		nowusec = (now.tv_sec * 1000000) + now.tv_usec;
 		lastusec = (sc->sc_last.tv_sec * 1000000) +
 		     sc->sc_last.tv_usec;
-		if (lastusec + TIMENEXTREAD > nowusec &&
-		     sc->sc_bytes_count >= BYTESTOSLEEP) {
-			sc->sc_remainder +=
-			    ((lastusec + TIMENEXTREAD) - nowusec);
+		if (lastusec + TIMENEXTREAD > nowusec) {
+			if (sc->sc_bytes_count >= BYTESTOSLEEP) {
+				sc->sc_remainder +=
+				    ((lastusec + TIMENEXTREAD) - nowusec);
+			}
 			
 			wait_ticks = (hz * sc->sc_remainder) / 1000000;
 			if (wait_ticks > 0) {
@@ -385,19 +382,14 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 				kpause("padwait", TRUE, wait_ticks,
 				    &sc->sc_lock);
 			}
-
-			sc->sc_bytes_count -= BYTESTOSLEEP;
-			getmicrotime(&sc->sc_last);
-		} else if (sc->sc_bytes_count >= BYTESTOSLEEP) {
-			sc->sc_bytes_count -= BYTESTOSLEEP;
-			getmicrotime(&sc->sc_last);
-		} else if (lastusec + TIMENEXTREAD <= nowusec) {
-			getmicrotime(&sc->sc_last);
-			sc->sc_remainder = 0;
 		}
+
+		if (sc->sc_bytes_count >= BYTESTOSLEEP)
+			sc->sc_bytes_count -= BYTESTOSLEEP;
 
 		err = pad_get_block(sc, &pb, min(uio->uio_resid, PAD_BLKSIZE));
 		if (!err) {
+			getmicrotime(&sc->sc_last);
 			sc->sc_bytes_count += pb.pb_len;
 			mutex_exit(&sc->sc_lock);
 			err = uiomove(pb.pb_ptr, pb.pb_len, uio);
@@ -438,6 +430,7 @@ pad_audio_open(void *opaque, int flags)
 		return EIO;
 
 	getmicrotime(&sc->sc_last);
+	sc->sc_bytes_count = 0;
 	sc->sc_remainder = 0;
 
 	return 0;
