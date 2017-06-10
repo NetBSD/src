@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.130 2017/05/31 14:41:07 kre Exp $	*/
+/*	$NetBSD: cpu.c,v 1.131 2017/06/10 05:31:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130 2017/05/31 14:41:07 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.131 2017/06/10 05:31:34 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -835,7 +835,13 @@ cpu_hatch(void *v)
 			}
 			x86_mwait(0, 0);
 		} else {
-			for (i = 100; i != 0; i--) {
+	/*
+	 * XXX The loop repetition count could be a lot higher, but
+	 * XXX currently qemu emulator takes a _very_long_time_ to
+	 * XXX execute the pause instruction.  So for now, use a low
+	 * XXX value to allow the cpu to hatch before timing out.
+	 */
+			for (i = 50; i != 0; i--) {
 				x86_pause();
 			}
 		}
