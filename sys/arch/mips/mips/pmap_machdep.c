@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.19.2.1 2017/06/06 09:25:49 martin Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.19.2.2 2017/06/10 06:18:52 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.19.2.1 2017/06/06 09:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.19.2.2 2017/06/10 06:18:52 snj Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1065,12 +1065,10 @@ vaddr_t
 pmap_md_pool_phystov(paddr_t pa)
 {
 #ifdef _LP64
-	if ((pa & ~MIPS_PHYS_MASK) != 0) {
-		KASSERT(mips_options.mips3_xkphys_cached);
-		return MIPS_PHYS_TO_XKPHYS_CACHED(pa);
-	}
+	KASSERT(mips_options.mips3_xkphys_cached);
+	return MIPS_PHYS_TO_XKPHYS_CACHED(pa);
 #else
 	KASSERT((pa & ~MIPS_PHYS_MASK) == 0);
-#endif
 	return MIPS_PHYS_TO_KSEG0(pa);
+#endif
 }
