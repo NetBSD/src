@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.93 2017/06/08 01:23:01 chs Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.94 2017/06/10 05:29:36 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.93 2017/06/08 01:23:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.94 2017/06/10 05:29:36 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,7 +355,7 @@ lfs_unmark_dirop(struct lfs *fs)
 	for (ip = TAILQ_FIRST(&fs->lfs_dchainhd); ip != NULL; ip = nip) {
 		nip = TAILQ_NEXT(ip, i_lfs_dchain);
 		vp = ITOV(ip);
-		if ((ip->i_flag & (IN_ADIROP | IN_CDIROP)) == IN_CDIROP) {
+		if ((ip->i_state & (IN_ADIROP | IN_CDIROP)) == IN_CDIROP) {
 			--lfs_dirvcount;
 			--fs->lfs_dirvcount;
 			vp->v_uflag &= ~VU_DIROP;
@@ -366,7 +366,7 @@ lfs_unmark_dirop(struct lfs *fs)
 			vrele(vp);
 			mutex_enter(&lfs_lock);
 			fs->lfs_unlockvp = NULL;
-			ip->i_flag &= ~IN_CDIROP;
+			ip->i_state &= ~IN_CDIROP;
 		}
 	}
 
