@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.73 2017/06/01 02:45:11 chs Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.73.2.1 2017/06/10 06:17:01 snj Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.73 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.73.2.1 2017/06/10 06:17:01 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -3044,7 +3044,7 @@ iwm_send_paging_cmd(struct iwm_softc *sc, const struct iwm_fw_sects *fws)
 			fw_paging_cmd.device_phy_addr.addr32[blk_idx] =
 			    htole32(dev_phy_addr);
 		}
-		dmap = sc->fw_paging_db[blk_idx].fw_paging_block.map,
+		dmap = sc->fw_paging_db[blk_idx].fw_paging_block.map;
 		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	}
