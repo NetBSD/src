@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.153 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.153.2.1 2017/06/10 06:23:01 snj Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.153 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.153.2.1 2017/06/10 06:23:01 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2610,8 +2610,11 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	ch->intr = intr;
 	ch->arg = arg;
 
-	 /* XXX -1 shouldn't be needed */
-	for (i = 0; i < UAUDIO_NCHANBUFS - 1; i++) {
+	/*
+	 * Start as half as many channels for recording as for playback.
+	 * This stops playback from stuttering in full-duplex operation.
+	 */
+	for (i = 0; i < UAUDIO_NCHANBUFS / 2; i++) {
 		uaudio_chan_rtransfer(ch);
 	}
 
@@ -2663,8 +2666,7 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	ch->intr = intr;
 	ch->arg = arg;
 
-	/* XXX -1 shouldn't be needed */
-	for (i = 0; i < UAUDIO_NCHANBUFS - 1; i++)
+	for (i = 0; i < UAUDIO_NCHANBUFS; i++)
 		uaudio_chan_ptransfer(ch);
 	mutex_enter(&sc->sc_lock);
 	mutex_enter(&sc->sc_intr_lock);
