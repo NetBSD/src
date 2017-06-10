@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.163 2017/06/02 03:32:51 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.164 2017/06/10 14:21:01 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.163 2017/06/02 03:32:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.164 2017/06/10 14:21:01 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -6016,6 +6016,12 @@ key_getcomb_ah(void)
 		if (!m)
 			return NULL;
 
+		if (m->m_len < sizeof(struct sadb_comb)) {
+			m = m_pullup(m, sizeof(struct sadb_comb));
+			if (m == NULL)
+				return NULL;
+		}
+
 		comb = mtod(m, struct sadb_comb *);
 		memset(comb, 0, sizeof(*comb));
 		key_getcomb_setlifetime(comb);
@@ -6059,6 +6065,12 @@ key_getcomb_ipcomp(void)
 			M_PREPEND(m, l, M_DONTWAIT);
 		if (!m)
 			return NULL;
+
+		if (m->m_len < sizeof(struct sadb_comb)) {
+			m = m_pullup(m, sizeof(struct sadb_comb));
+			if (m == NULL)
+				return NULL;
+		}
 
 		comb = mtod(m, struct sadb_comb *);
 		memset(comb, 0, sizeof(*comb));
