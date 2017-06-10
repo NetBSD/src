@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.64 2017/04/11 21:06:30 jmcneill Exp $
+# $NetBSD: mkimage,v 1.65 2017/06/10 23:26:32 christos Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -60,7 +60,7 @@ MKUBOOTIMAGE=${TOOL_MKUBOOTIMAGE:-mkubootimage}
 GZIP_CMD=${TOOL_GZIP:-gzip} # ${GZIP} is special to gzip(1)
 
 src="/usr/src"
-sets="base comp etc games man misc modules text"
+sets="base comp etc games man misc modules tests text"
 xsets="xbase xcomp xetc xfont xserver" 
 minfree="10%"
 bar="==="
