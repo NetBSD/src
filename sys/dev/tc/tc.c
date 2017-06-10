@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.55 2017/06/09 17:55:18 flxd Exp $	*/
+/*	$NetBSD: tc.c,v 1.56 2017/06/10 12:03:30 flxd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.55 2017/06/09 17:55:18 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.56 2017/06/10 12:03:30 flxd Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -168,6 +168,7 @@ tcattach(device_t parent, device_t self, void *aux)
 		ta.ta_offset = 0;
 		ta.ta_addr = tcaddr;
 		ta.ta_cookie = slot->tcs_cookie;
+		ta.ta_busspeed = sc->sc_speed;
 
 		/*
 		 * Mark the slot as used.
