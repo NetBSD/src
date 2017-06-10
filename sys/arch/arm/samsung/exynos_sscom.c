@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_sscom.c,v 1.8 2017/06/10 15:13:18 jmcneill Exp $ */
+/*	$NetBSD: exynos_sscom.c,v 1.9 2017/06/10 23:23:05 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2014 Reinoud Zandijk
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.8 2017/06/10 15:13:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.9 2017/06/10 23:23:05 jmcneill Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -262,7 +262,14 @@ exynos_sscom_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 	if (bus_space_map(bst, addr, size, 0, &bsh) != 0)
 		panic("cannot map console UART");
 
-	if (sscom_cnattach(bst, bsh, &info, speed, uart_freq, flags) != 0)
+	/* Calculate UART frequency from bootloader (XXX) */
+	uint32_t freq = speed
+	    * (16 * (bus_space_read_4(bst, bsh, SSCOM_UBRDIV) + 1)
+		  + bus_space_read_4(bst, bsh, SSCOM_UFRACVAL));
+	freq = (freq + speed / 2) / 1000;
+	freq *= 1000;
+
+	if (sscom_cnattach(bst, bsh, &info, speed, freq, flags) != 0)
 		panic("cannot attach console UART");
 }
 
