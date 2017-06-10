@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.7 2017/06/09 17:01:39 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.8 2017/06/10 06:35:52 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -167,4 +167,63 @@ sys/dev/audio.c					1.358
 	Retrn error to userland from startp/startr depending on the
 	error from trigger/start output/input.
 	[nat, ticket #18]
+
+sys/arch/arm/fdt/files.fdt			1.11
+sys/arch/arm/fdt/plrtc_fdt.c			1.1
+sys/arch/evbarm/conf/VEXPRESS_A15		1.16
+sys/conf/files					1.1175
+sys/dev/ic/pl031.c				1.1
+sys/dev/ic/pl031var.h				1.1
+
+	Add driver for ARM PrimeCell PL031 (RTC) Real Time Clock.
+	[jmcneill, ticket #19]
+
+sys/dev/pad/pad.c				1.33-1.35
+sys/dev/pad/padvar.h				1.9
+
+	Make rate limiter work in uni/multiprocessor configurations.
+	[nat, ticket #20]
+
+sys/dev/pci/if_iwm.c				1.74
+
+	Build fix: comma -> semicolon.
+	[nonaka, ticket #21]
+
+sys/arch/mips/mips/mips_machdep.c		1.278
+sys/arch/mips/mips/pmap_machdep.c		1.21
+
+	Always use XKPHYS for pool pages on _LP64; otherwise use KSEG0
+	Maintain the split of physical memory into the defined freelists,
+	but only force pool pages to VM_FREELIST_FIRST512M for non _LP64
+	[skrll, ticket #22]
+
+sys/arch/sgimips/conf/INSTALL64_IP2x		1.3
+
+	Align MEMORY_ROOT_DISK_SIZE with INSTALL32_IP2x
+	[skrll, ticket #23]
+
+sys/dev/usb/uaudio.c				1.154
+
+	Start as half as many transfers for recording.  This fixes
+	recording and playback when uaudio is used in full duplex
+	mode.
+	[nat, ticket #24]
+
+sys/arch/mips/mips/locore_mips1.S		1.92, 1.93
+
+	Fix tlb_record_asids 2nd arg to match usage - it's a maximum
+	asid value and not a mask.
+	[skrll, ticket #25]
+
+libexec/ld.elf_so/rtld.c			1.184
+
+	Call _rtld_debug_state before running the global initialisers,
+	so give gdb a chance to set break points etc.
+	[joerg, ticket #26]
+
+external/bsd/dhcp/dist/relay/dhcrelay.c		1.7
+
+	Fix bug where dhcrelay(8) needed to stay inforeground with -d
+	flag in order to service requests.
+	[manu, ticket #27]
 
