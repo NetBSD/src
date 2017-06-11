@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.6 2017/06/06 09:56:00 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.7 2017/06/11 20:25:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.6 2017/06/06 09:56:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.7 2017/06/11 20:25:07 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -139,6 +139,34 @@ fdt_printn(u_int n, int base)
 #define DPRINTN(x,b)
 #endif
 
+/*
+ * Get the first physically contiguous region of memory.
+ */
+static void
+fdt_get_memory(uint64_t *paddr, uint64_t *psize)
+{
+	const int memory = OF_finddevice("/memory");
+	uint64_t cur_addr, cur_size;
+	int index;
+
+	/* Assume the first entry is the start of memory */
+	if (fdtbus_get_reg64(memory, 0, paddr, psize) != 0)
+		panic("Cannot determine memory size");
+
+	DPRINTF("FDT /memory [%d] @ 0x%" PRIx64 " size 0x%" PRIx64 "\n",
+	    0, *paddr, *psize);
+
+	/* If subsequent entries follow the previous one, append them. */
+	for (index = 1;
+	     fdtbus_get_reg64(memory, index, &cur_addr, &cur_size) == 0;
+	     index++) {
+		DPRINTF("FDT /memory [%d] @ 0x%" PRIx64 " size 0x%" PRIx64 "\n",
+		    index, cur_addr, cur_size);
+		if (*paddr + *psize == cur_addr)
+			*psize += cur_size;
+	}
+}
+
 u_int
 initarm(void *arg)
 {
@@ -219,9 +247,7 @@ initarm(void *arg)
 		KERNEL_VM_BASE - KERNEL_BASE,
 		KERNEL_BASE_VOFFSET);
 
-	const int memory = OF_finddevice("/memory");
-	if (fdtbus_get_reg64(memory, 0, &memory_addr, &memory_size) != 0)
-		panic("Cannot determine memory size");
+	fdt_get_memory(&memory_addr, &memory_size);
 
 #if !defined(_LP64)
 	/* Cannot map memory above 4GB */
