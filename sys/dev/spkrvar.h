@@ -1,4 +1,4 @@
-/* $NetBSD: spkrvar.h,v 1.8 2017/06/11 03:55:56 nat Exp $ */
+/* $NetBSD: spkrvar.h,v 1.9 2017/06/11 21:54:22 pgoyette Exp $ */
 
 #ifndef _SYS_DEV_SPKRVAR_H
 #define _SYS_DEV_SPKRVAR_H
@@ -26,5 +26,9 @@ void spkr_attach(device_t,
     void (*)(device_t, u_int, u_int), void (*)(device_t, int));
 
 int spkr_detach(device_t, int);
+
+int spkr_rescan(device_t, const char *, const int *);
+
+int spkr_childdet(device_t, device_t);
 
 #endif /* _SYS_DEV_SPKRVAR_H */
