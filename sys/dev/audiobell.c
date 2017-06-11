@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.21 2017/06/11 13:02:44 nat Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.22 2017/06/11 13:05:43 nat Exp $	*/
 
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.21 2017/06/11 13:02:44 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.22 2017/06/11 13:05:43 nat Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.21 2017/06/11 13:02:44 nat Exp $");
 
 /* 44.1 kHz should reduce hum at higher pitches. */
 #define BELL_SAMPLE_RATE	44100
-#define BELL_SHIFT		19
+#define BELL_SHIFT		3
 
 static inline void
 audiobell_expandwave(int16_t *buf)
@@ -75,7 +75,7 @@ audiobell_expandwave(int16_t *buf)
  */
 static inline int
 audiobell_synthesize(int16_t *buf, u_int pitch, u_int period, u_int volume,
-    uint32_t *phase)
+    uint16_t *phase)
 {
 	int16_t *wave;
 
@@ -99,7 +99,7 @@ void
 audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 {
 	int16_t *buf;
-	uint32_t phase;
+	uint16_t phase;
 	struct audio_info ai;
 	struct uio auio;
 	struct iovec aiov;
