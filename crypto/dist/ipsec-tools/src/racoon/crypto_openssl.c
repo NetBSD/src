@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.25 2014/02/27 08:37:58 tteras Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.26 2017/06/11 22:12:56 christos Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -1268,7 +1268,7 @@ eay_idea_encrypt(data, key, iv)
 	if ((res = vmalloc(data->l)) == NULL)
 		return NULL;
 
-	/* decryption data */
+	/* encrypt data */
 	idea_cbc_encrypt((unsigned char *)data->v, (unsigned char *)res->v, data->l,
 			&ks, (unsigned char *)iv->v, IDEA_ENCRYPT);
 
@@ -1366,7 +1366,7 @@ eay_rc5_encrypt(data, key, iv)
 	if ((res = vmalloc(data->l)) == NULL)
 		return NULL;
 
-	/* decryption data */
+	/* encrypt data */
 	RC5_32_cbc_encrypt((unsigned char *)data->v, (unsigned char *)res->v, data->l,
 		&ks, (unsigned char *)iv->v, RC5_ENCRYPT);
 
