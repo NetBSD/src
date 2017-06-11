@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.4 2017/06/11 01:15:11 jmcneill Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.5 2017/06/11 16:21:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.4 2017/06/11 01:15:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.5 2017/06/11 16:21:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,9 +132,7 @@ exynos_platform_reset(void)
 static void
 exynos_platform_delay(u_int us)
 {
-	extern void mct_delay(u_int);
-
-	mct_delay(us);
+	gtmr_delay(us);
 }
 
 static u_int
