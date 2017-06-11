@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.15 2017/06/10 15:13:19 jmcneill Exp $
+#	$NetBSD: EXYNOS,v 1.16 2017/06/11 11:04:20 jmcneill Exp $
 #
 #	Samsung Exynos SoC kernel
 #
@@ -20,8 +20,8 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
-# CONSADDR is required for early init messages from VERBOSE_INIT_ARM.
-#options 	CONSADDR=0x70006300
+# SSCOMnCONSOLE is required for early init messages from VERBOSE_INIT_ARM.
+#options 	SSCOM2CONSOLE
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
@@ -41,8 +41,6 @@ fregulator*	at fdt? pass 4
 gpiokeys*	at fdt?
 
 # Timer
-gtmr*		at fdt? pass 1		# ARM Generic Timer
-armgtmr0	at gtmr?
 mct*		at fdt?			# Exynos Multi Core Timer (MCT)
 
 # Interrupt controller
@@ -91,4 +89,4 @@ usb*		at ehci?
 include "dev/usb/usbdevices.config"
 midi*		at midibus?
 
-cinclude "arch/evbarm/conf/TEGRA.local"
+cinclude "arch/evbarm/conf/EXYNOS.local"
