@@ -1,4 +1,4 @@
-/* $NetBSD: spkrvar.h,v 1.6 2017/01/06 09:32:08 pgoyette Exp $ */
+/* $NetBSD: spkrvar.h,v 1.7 2017/06/11 03:33:48 nat Exp $ */
 
 #ifndef _SYS_DEV_SPKRVAR_H
 #define _SYS_DEV_SPKRVAR_H
@@ -18,6 +18,7 @@ struct spkr_softc {
 	/* attachment-specific hooks */
 	void (*sc_tone)(device_t, u_int, u_int);
 	void (*sc_rest)(device_t, int);
+	u_int sc_vol;	/* volume - only for audio skpr */
 };
 
 void spkr_attach(device_t,
