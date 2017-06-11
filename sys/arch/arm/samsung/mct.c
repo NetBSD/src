@@ -1,4 +1,4 @@
-/*	$NetBSD: mct.c,v 1.10 2016/01/07 04:45:10 marty Exp $	*/
+/*	$NetBSD: mct.c,v 1.11 2017/06/11 01:09:44 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.10 2016/01/07 04:45:10 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.11 2017/06/11 01:09:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,11 +56,11 @@ static int  mct_match(device_t, cfdata_t, void *);
 static void mct_attach(device_t, device_t, void *);
 
 static int clockhandler(void *);
+static u_int mct_get_timecount(struct timecounter *);
 
 CFATTACH_DECL_NEW(exyo_mct, 0, mct_match, mct_attach, NULL, NULL);
 
 
-#if 0
 static struct timecounter mct_timecounter = {
 	.tc_get_timecount = mct_get_timecount,
 	.tc_poll_pps = 0,
@@ -71,7 +71,6 @@ static struct timecounter mct_timecounter = {
 	.tc_priv = &mct_sc,
 	.tc_next = NULL,
 };
-#endif
 
 static inline uint32_t
 mct_read_global(struct mct_softc *sc, bus_size_t o)
@@ -157,6 +156,7 @@ mct_attach(device_t parent, device_t self, void *aux)
 	self->dv_private = sc;
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
+	sc->sc_freq = EXYNOS_F_IN_FREQ;
 
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
@@ -166,7 +166,7 @@ mct_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive("\n");
-	aprint_normal(": Exynos SoC multi core timer (64 bits) - NOT IMPLEMENTED\n");
+	aprint_normal(": Exynos SoC multi core timer (64 bits)\n");
 
 	evcnt_attach_dynamic(&sc->sc_ev_missing_ticks, EVCNT_TYPE_MISC, NULL,
 		device_xname(self), "missing interrupts");
@@ -187,6 +187,30 @@ mct_gettime(struct mct_softc *sc)
 	return ((uint64_t) hi << 32) | lo;
 }
 
+static u_int
+mct_get_timecount(struct timecounter *tc)
+{
+	struct mct_softc *sc = tc->tc_priv;
+
+	return (u_int)mct_gettime(sc);
+}
+
+void
+mct_delay(u_int us)
+{
+	struct mct_softc *sc = &mct_sc;
+
+	if (sc->sc_bsh == (bus_space_handle_t)0)
+		return;
+
+	int64_t mct_ticks = ((uint64_t)us * sc->sc_freq) / 1000000;
+	uint64_t ticks_prev = mct_gettime(sc);
+	while (mct_ticks > 0) {
+		uint64_t ticks_cur = mct_gettime(sc);
+		mct_ticks -= (ticks_cur - ticks_prev);
+		ticks_prev = ticks_cur;
+	}
+}
 
 /* interrupt handler */
 static int
@@ -250,8 +274,6 @@ mct_init_cpu_clock(struct cpu_info *ci)
 	mct_write_global(sc, MCT_G_TCON, tcon);
 }
 
-
-#if 0
 void
 cpu_initclocks(void)
 {
@@ -284,4 +306,7 @@ cpu_initclocks(void)
 #endif
 }
 
-#endif
+void
+setstatclockrate(int newhz)
+{
+}
