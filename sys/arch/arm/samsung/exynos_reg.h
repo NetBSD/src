@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_reg.h,v 1.14 2017/06/10 15:13:18 jmcneill Exp $	*/
+/*	$NetBSD: exynos_reg.h,v 1.15 2017/06/11 00:13:15 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -124,7 +124,8 @@
 #define PLL_CON0_P			__BITS( 8,13)	/* PLL P divide value */
 #define PLL_CON0_S			__BITS( 0, 2)	/* PLL S divide value */
 
-#define PLL_PMS2FREQ(F, M, P, S) (((M)*(F))/((P)*(1<<(S))))
+#define PLL_PMS2FREQ(F, M, P, S) \
+	((P) == 0 ? 0 : (((M)*(F))/((P)*(1<<(S)))))
 #define PLL_FREQ(f, v) PLL_PMS2FREQ( \
 	(f),\
 	__SHIFTOUT((v), PLL_CON0_M),\
