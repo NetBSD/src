@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmuxvar.h,v 1.15 2013/11/23 20:56:41 christos Exp $	*/
+/*	$NetBSD: wsmuxvar.h,v 1.16 2017/06/11 03:55:56 nat Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,5 +89,6 @@ int	wsmux_set_display(struct wsmux_softc *, device_t);
 
 int	wskbd_add_mux(int, struct wsmux_softc *);
 int	wsmouse_add_mux(int, struct wsmux_softc *);
+int	wsbell_add_mux(int, struct wsmux_softc *);
 
 #endif /* NWSMUX > 0 */

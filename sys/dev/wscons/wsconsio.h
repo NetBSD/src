@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.118 2017/06/03 14:49:42 jmcneill Exp $ */
+/* $NetBSD: wsconsio.h,v 1.119 2017/06/11 03:55:56 nat Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -544,6 +544,7 @@ struct wsmux_device {
 #define	WSMUX_MOUSE	1
 #define	WSMUX_KBD	2
 #define	WSMUX_MUX	3
+#define	WSMUX_BELL	4
 	int idx;
 };
 #define	WSMUXIO_ADD_DEVICE	_IOW('W', 97, struct wsmux_device)
