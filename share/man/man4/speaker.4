@@ -1,4 +1,4 @@
-.\" $NetBSD: speaker.4,v 1.21 2017/05/28 18:23:22 wiz Exp $
+.\" $NetBSD: speaker.4,v 1.22 2017/06/11 10:30:15 pgoyette Exp $
 .\"
 .\" Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
 .\" All rights reserved.
@@ -35,18 +35,15 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd November 23, 2016
+.Dd June 11, 2017
 .Dt SPEAKER 4
 .Os
 .Sh NAME
 .Nm speaker
 .Nd console speaker audio device driver
 .Sh SYNOPSIS
-.Cd "options	PCPPISPEAKER"
-.Cd "spkr0	at pcppi?"
-.Pp
-.Cd "options	VAUDIOSPEAKER"
-.Cd "spkr0	at audio?"
+.Cd "spkr*	at pcppi?"
+.Cd "spkr*	at audio?"
 .Pp
 .In machine/spkr.h
 .Pa /dev/speaker
