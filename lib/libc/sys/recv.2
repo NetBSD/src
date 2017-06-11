@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.36 2013/07/14 14:29:09 njoly Exp $
+.\"	$NetBSD: recv.2,v 1.37 2017/06/11 17:34:54 abhinav Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -72,11 +72,10 @@ address stored there.
 .Pp
 The
 .Fn recvmmsg
-call be used to receive multiple messages in the same call using an array of
+call can be used to receive multiple messages in the same call using an array of
 .Fa mmsghdr
 elements with the following form, as defined in
 .Ao Pa sys/socket.h Ac :
-.Pp
 .Bd -literal
 struct mmsghdr {
 	struct msghdr	msg_hdr;	/* the message to be sent */
@@ -167,7 +166,7 @@ The
 .Xr select 2
 or
 .Xr poll 2
-call may be used to determine when more data arrive.
+call may be used to determine when more data arrives.
 .Pp
 The
 .Fa flags
@@ -207,7 +206,6 @@ call uses a
 structure to minimize the number of directly supplied parameters.
 This structure has the following form, as defined in
 .Ao Pa sys/socket.h Ac :
-.Pp
 .Bd -literal
 struct msghdr {
 	void		*msg_name;	/* optional address */
@@ -298,7 +296,7 @@ For connected sockets whose remote peer was shut down,
 0 is returned when no more data is available.
 The
 .Fn recvmmsg
-calls return the number of messages received, or \-1
+call returns the number of messages received, or \-1
 if an error occurred.
 .Sh ERRORS
 The calls fail if:
@@ -341,7 +339,7 @@ The
 .Fa msg_iovlen
 member of the
 .Fa msg
-structure is less than or equal to 0
+structure is less than or equal to 0,
 or is greater than
 .Brq Dv IOV_MAX .
 .El
