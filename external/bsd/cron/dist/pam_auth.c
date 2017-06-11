@@ -5,7 +5,7 @@
 #include <security/pam_appl.h>
 
 static pam_handle_t *pamh = NULL;
-static const struct pam_conv cron_conv = { 0 };
+static const struct pam_conv cron_conv;
 
 int
 cron_pam_start (const char *username)
