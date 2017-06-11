@@ -1,4 +1,4 @@
-/* $NetBSD: wsbell.c,v 1.1 2017/06/11 03:55:56 nat Exp $ */
+/* $NetBSD: wsbell.c,v 1.2 2017/06/11 22:14:55 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -107,10 +107,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.1 2017/06/11 03:55:56 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.2 2017/06/11 22:14:55 pgoyette Exp $");
 
-#include "wsdisplay.h"
+#if defined(_KERNEL_OPT)
 #include "wsmux.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -130,6 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.1 2017/06/11 03:55:56 nat Exp $");
 #include <sys/vnode.h>
 #include <sys/callout.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsbellvar.h>
@@ -137,6 +139,8 @@ __KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.1 2017/06/11 03:55:56 nat Exp $");
 #include <dev/wscons/wsbelldata.h>
 
 #include <dev/spkrio.h>
+
+#include "ioconf.h"
 
 #if defined(WSMUX_DEBUG) && NWSMUX > 0
 #define DPRINTF(x)	if (wsmuxdebug) printf x
@@ -461,3 +465,50 @@ wsbell_mux_close(struct wsevsrc *me)
 	return (0);
 }
 #endif /* NWSMUX > 0 */
+
+MODULE(MODULE_CLASS_DRIVER, wsbell, "spkr");
+
+#ifdef _MODULE
+int wsbell_bmajor = -1, wsbell_cmajor = -1;
+
+#include "ioconf.c"
+#endif
+
+static int
+wsbell_modcmd(modcmd_t cmd, void *arg)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = devsw_attach("wsbell", NULL, &wsbell_bmajor,
+		    &wsbell_cdevsw, &wsbell_cmajor);
+		if (error)
+			break;
+
+		error = config_init_component(cfdriver_ioconf_wsbell,
+		    cfattach_ioconf_wsbell, cfdata_ioconf_wsbell);
+		if (error)
+			devsw_detach(NULL, &wsbell_cdevsw);
+#endif
+		break;
+
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		devsw_detach(NULL, &wsbell_cdevsw);
+		error = config_fini_component(cfdriver_ioconf_wsbell,
+		    cfattach_ioconf_wsbell, cfdata_ioconf_wsbell);
+		if (error)
+			devsw_attach("wsbell", NULL, &wsbell_bmajor,
+			    &wsbell_cdevsw, &wsbell_cmajor);
+#endif
+		break;
+
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	return error;
+}
