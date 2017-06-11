@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.10 2017/06/11 05:26:52 pgoyette Exp $	*/
+/*	$NetBSD: spkr.c,v 1.11 2017/06/11 09:41:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.10 2017/06/11 05:26:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.11 2017/06/11 09:41:40 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -521,12 +521,14 @@ MODULE(MODULE_CLASS_DRIVER, spkr, "audio" /* and/or pcppi */ );
 int
 spkr_modcmd(modcmd_t cmd, void *arg)
 {
+	int error = 0;
 #ifdef _MODULE
 	devmajor_t bmajor, cmajor;
-	int error = 0;
+#endif
 
 	switch(cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
 		bmajor = cmajor = -1;
 		error = devsw_attach(spkr_cd.cd_name, NULL, &bmajor,
 		    &spkr_cdevsw, &cmajor);
@@ -538,15 +540,18 @@ spkr_modcmd(modcmd_t cmd, void *arg)
 		if (error) {
 			devsw_detach(NULL, &spkr_cdevsw);
 		}
+#endif
 		break;
 
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
 		devsw_detach(NULL, &spkr_cdevsw);
 		error = config_fini_component(cfdriver_ioconf_spkr,
 		    cfattach_ioconf_spkr, cfdata_ioconf_spkr);
 		if (error)
 			devsw_attach(spkr_cd.cd_name, NULL, &bmajor,
 			    &spkr_cdevsw, &cmajor);
+#endif
 		break;
 
 	default:
@@ -555,7 +560,4 @@ spkr_modcmd(modcmd_t cmd, void *arg)
 	}
 
 	return error;
-#else
-	return 0;
-#endif
 }
