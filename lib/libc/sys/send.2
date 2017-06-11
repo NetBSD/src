@@ -1,4 +1,4 @@
-.\"	$NetBSD: send.2,v 1.31 2013/07/14 14:29:09 njoly Exp $
+.\"	$NetBSD: send.2,v 1.32 2017/06/11 17:01:26 abhinav Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -69,11 +69,10 @@ may be used at any time.
 .Pp
 The
 .Fn sendmmsg
-call be used to send multiple messages in the same call using an array of
+call can be used to send multiple messages in the same call using an array of
 .Fa mmsghdr
 elements with the following form, as defined in
 .Ao Pa sys/socket.h Ac :
-.Pp
 .Bd -literal
 struct mmsghdr {
 	struct msghdr	msg_hdr;	/* the message to be sent */
@@ -98,7 +97,7 @@ with
 .Dv SO_ERROR .
 .Pp
 The address of the target is given by
-.Fa to
+.Fa to ,
 with
 .Fa tolen
 specifying its size.
