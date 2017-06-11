@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.7 2017/06/01 09:44:30 pgoyette Exp $	*/
+/*	$NetBSD: spkr.c,v 1.8 2017/06/11 03:33:48 nat Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.7 2017/06/01 09:44:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.8 2017/06/11 03:33:48 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -483,6 +483,14 @@ spkrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				break;
 			playonetone(sc, &ttp);
 		}
+		return 0;
+	case SPKRGETVOL:
+		if (data != NULL)
+			*(u_int *)data = sc->sc_vol;
+		return 0;
+	case SPKRSETVOL:
+		if (data != NULL && *(u_int *)data <= 100)
+			sc->sc_vol = *(u_int *)data;
 		return 0;
 	default:
 		return ENOTTY;
