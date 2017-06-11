@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.11 2016/02/14 19:54:20 chs Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.12 2017/06/11 00:54:26 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_arm_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.11 2016/02/14 19:54:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.12 2017/06/11 00:54:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -138,7 +138,8 @@ exynos_i2c_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	struct i2cbus_attach_args iba;
-
+	prop_dictionary_t devs;
+	uint32_t address_cells;
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
@@ -187,7 +188,22 @@ exynos_i2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ic.ic_read_byte   = exynos_i2c_read_byte;
 	sc->sc_ic.ic_write_byte  = exynos_i2c_write_byte;
 
+	fdtbus_register_i2c_controller(self, phandle, &exynos_i2c_funcs);
+
+	devs = prop_dictionary_create();
+	if (of_getprop_uint32(phandle, "#address-cells", &address_cells))
+		address_cells = 1;
+	of_enter_i2c_devs(devs, phandle, address_cells * 4, 0);
+
 	memset(&iba, 0, sizeof(iba));
+	iba.iba_tag = &sc->sc_ic;
+	iba.iba_child_devices = prop_dictionary_get(devs, "i2c-child-devices");
+	if (iba.iba_child_devices != NULL)
+		prop_object_retain(iba.iba_child_devices);
+	else
+		iba.iba_child_devices = prop_array_create();
+	prop_object_release(devs);
+
 	sc->sc_i2cdev = config_found_ia(self, "i2cbus", &iba, iicbus_print);
 }
 
