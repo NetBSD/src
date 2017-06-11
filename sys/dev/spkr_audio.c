@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_audio.c,v 1.4 2017/06/11 03:25:02 nat Exp $	*/
+/*	$NetBSD: spkr_audio.c,v 1.5 2017/06/11 03:33:48 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.4 2017/06/11 03:25:02 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.5 2017/06/11 03:33:48 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,8 @@ spkr_audio_tone(device_t self, u_int xhz, u_int ticks)
 #ifdef SPKRDEBUG
 	aprint_debug_dev(self, "%s: %u %d\n", __func__, xhz, ticks);
 #endif /* SPKRDEBUG */
-	audiobell(sc->sc_audiodev, xhz, ticks * (1000 / hz), 80, 0);
+	audiobell(sc->sc_audiodev, xhz, ticks * (1000 / hz),
+	    sc->sc_spkr.sc_vol, 0);
 }
 
 static void
@@ -80,7 +81,8 @@ spkr_audio_rest(device_t self, int ticks)
 	aprint_debug_dev(self, "%s: %d\n", __func__, ticks);
 #endif /* SPKRDEBUG */
 	if (ticks > 0)
-		audiobell(sc->sc_audiodev, 0, ticks * (1000 / hz), 80, 0);
+		audiobell(sc->sc_audiodev, 0, ticks * (1000 / hz),
+		    sc->sc_spkr.sc_vol, 0);
 }
 
 static int
@@ -99,6 +101,7 @@ spkr_audio_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": PC Speaker (synthesized)\n");
 
 	sc->sc_audiodev = parent;
+	sc->sc_spkr.sc_vol = 80;
 	
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n"); 
