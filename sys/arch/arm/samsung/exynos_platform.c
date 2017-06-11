@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.3 2017/06/11 01:09:44 jmcneill Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.4 2017/06/11 01:15:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.3 2017/06/11 01:09:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.4 2017/06/11 01:15:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -110,9 +110,11 @@ exynos_platform_init_attach_args(struct fdt_attach_args *faa)
 static void
 exynos_platform_early_putchar(char c)
 {
+#if defined(VERBOSE_INIT_ARM)
 	extern void exynos_putchar(int);	/* XXX from exynos_start.S */
 
 	exynos_putchar(c);
+#endif
 }
 
 static void
