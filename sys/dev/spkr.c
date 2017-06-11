@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.8 2017/06/11 03:33:48 nat Exp $	*/
+/*	$NetBSD: spkr.c,v 1.9 2017/06/11 03:55:56 nat Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.8 2017/06/11 03:33:48 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.9 2017/06/11 03:55:56 nat Exp $");
+
+#include "wsmux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.8 2017/06/11 03:33:48 nat Exp $");
 
 #include <dev/spkrio.h>
 #include <dev/spkrvar.h>
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsbellvar.h>
+#include <dev/wscons/wsbellmuxvar.h>
 
 dev_type_open(spkropen);
 dev_type_close(spkrclose);
@@ -365,6 +370,13 @@ spkr_attach(device_t self, void (*tone)(device_t, u_int, u_int),
 	sc->sc_tone = tone;
 	sc->sc_rest = rest;
 	sc->sc_inbuf = NULL;
+
+#if (NWSMUX > 0)
+	struct wsbelldev_attach_args a;
+
+	a.accesscookie = sc;
+	sc->sc_wsbelldev = config_found(self, &a, wsbelldevprint);
+#endif
 }
 
 int

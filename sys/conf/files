@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1175 2017/06/08 21:00:43 jmcneill Exp $
+#	$NetBSD: files,v 1.1176 2017/06/11 03:55:56 nat Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -344,8 +344,8 @@ define	pckbport_machdep_cnattach
 define	firmload
 
 # speaker devices, attaches to audio or pcppi drivers
-device	spkr
-file	dev/spkr.c			spkr
+device	spkr: wsbelldev
+file	dev/spkr.c			spkr	needs-flag
 
 include "dev/files.audio"
 
@@ -1185,6 +1185,7 @@ define	wsdisplaydev		{[kbdmux = 1]}
 define	wsemuldisplaydev	{[console = -1], [kbdmux = 1]}
 define	wskbddev		{[console = -1], [mux = 1]}
 define	wsmousedev		{[mux = 0]}
+define	wsbelldev		{[console = -1], [mux = 1]}
 define	vcons
 # attribute to pull in raster support
 #
