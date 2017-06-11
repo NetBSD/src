@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.22 2017/06/10 15:13:18 jmcneill Exp $
+#	$NetBSD: files.exynos,v 1.23 2017/06/11 16:21:41 jmcneill Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -61,12 +61,12 @@ attach	sysmmu at fdt with exynos_sysmmu
 file	arch/arm/samsung/exynos_sysmmu.c	exynos_sysmmu
 
 # real time clock
-device  exyortc : ftdbus
+device  exyortc : fdtbus
 attach  exyortc at fdt with exynos_rtc
 file    arch/arm/samsung/exynos_rtc.c		exynos_rtc
 
 # Multi Core timer
-device	mct : ftdbus
+device	mct { } : fdtbus, mpcorebus
 attach	mct at fdt with exyo_mct
 file	arch/arm/samsung/mct.c		exyo_mct
 
