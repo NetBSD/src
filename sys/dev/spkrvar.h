@@ -1,4 +1,4 @@
-/* $NetBSD: spkrvar.h,v 1.7 2017/06/11 03:33:48 nat Exp $ */
+/* $NetBSD: spkrvar.h,v 1.8 2017/06/11 03:55:56 nat Exp $ */
 
 #ifndef _SYS_DEV_SPKRVAR_H
 #define _SYS_DEV_SPKRVAR_H
@@ -7,6 +7,7 @@
 
 struct spkr_softc {
 	device_t sc_dev;
+	device_t sc_wsbelldev;
 	int sc_octave;	/* currently selected octave */
 	int sc_whole;	/* whole-note time at current tempo, in ticks */
 	int sc_value;	/* whole divisor for note time, quarter note = 1 */
