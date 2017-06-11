@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1176 2017/06/11 03:55:56 nat Exp $
+#	$NetBSD: files,v 1.1177 2017/06/11 21:45:28 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -345,7 +345,7 @@ define	firmload
 
 # speaker devices, attaches to audio or pcppi drivers
 device	spkr: wsbelldev
-file	dev/spkr.c			spkr	needs-flag
+file	dev/spkr.c			spkr
 
 include "dev/files.audio"
 
