@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_pcppi.c,v 1.9 2017/01/06 09:32:08 pgoyette Exp $	*/
+/*	$NetBSD: spkr_pcppi.c,v 1.10 2017/06/11 21:54:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.9 2017/01/06 09:32:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.10 2017/06/11 21:54:22 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,9 +71,12 @@ struct spkr_pcppi_softc {
 static int spkr_pcppi_probe(device_t, cfdata_t, void *);
 static void spkr_pcppi_attach(device_t, device_t, void *);
 static int spkr_pcppi_detach(device_t, int);
+static int spkr_pcppi_rescan(device_t, const char *, const int *);
+static void spkr_pcppi_childdet(device_t, device_t);
 
-CFATTACH_DECL_NEW(spkr_pcppi, sizeof(struct spkr_pcppi_softc),
-    spkr_pcppi_probe, spkr_pcppi_attach, spkr_pcppi_detach, NULL);
+CFATTACH_DECL3_NEW(spkr_pcppi, sizeof(struct spkr_pcppi_softc),
+    spkr_pcppi_probe, spkr_pcppi_attach, spkr_pcppi_detach, NULL,
+    spkr_pcppi_rescan, spkr_pcppi_childdet, 0);
 
 #define SPKRPRI (PZERO - 1)
 
@@ -137,4 +140,18 @@ spkr_pcppi_detach(device_t self, int flags)
 	sc->sc_pcppicookie = NULL;
 	pmf_device_deregister(self);
 	return 0;
+}
+
+static int
+spkr_pcppi_rescan(device_t self, const char *iattr, const int *locators)
+{
+
+	return spkr_rescan(self, iattr, locators);
+}
+
+static void
+spkr_pcppi_childdet(device_t self, device_t child)
+{
+
+	spkr_childdet(self, child);
 }

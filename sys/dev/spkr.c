@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.11 2017/06/11 09:41:40 pgoyette Exp $	*/
+/*	$NetBSD: spkr.c,v 1.12 2017/06/11 21:54:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.11 2017/06/11 09:41:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.12 2017/06/11 21:54:22 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -372,13 +372,9 @@ spkr_attach(device_t self, void (*tone)(device_t, u_int, u_int),
 	sc->sc_tone = tone;
 	sc->sc_rest = rest;
 	sc->sc_inbuf = NULL;
+	sc->sc_wsbelldev = NULL;
 
-#if (NWSMUX > 0)
-	struct wsbelldev_attach_args a;
-
-	a.accesscookie = sc;
-	sc->sc_wsbelldev = config_found(self, &a, wsbelldevprint);
-#endif
+	spkr_rescan(self, "", NULL);
 }
 
 int
@@ -393,6 +389,33 @@ spkr_detach(device_t self, int flags)
 		return ENXIO;
 	if (sc->sc_inbuf != NULL)
 		return EBUSY;
+
+	return 0;
+}
+
+/* ARGSUSED */
+int
+spkr_rescan(device_t self, const char *iattr, const int *locators)
+{
+#if NWSMUX > 0
+	struct spkr_softc *sc = device_private(self);
+	struct wsbelldev_attach_args a;
+
+	if (sc->sc_wsbelldev == NULL) {
+		a.accesscookie = sc;
+		sc->sc_wsbelldev = config_found(self, &a, wsbelldevprint);
+	}
+#endif
+	return 0;
+}
+
+int
+spkr_childdet(device_t self, device_t child)
+{
+	struct spkr_softc *sc = device_private(self);
+
+	if (sc->sc_wsbelldev == child)
+		sc->sc_wsbelldev = NULL;
 
 	return 0;
 }

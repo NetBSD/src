@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_audio.c,v 1.5 2017/06/11 03:33:48 nat Exp $	*/
+/*	$NetBSD: spkr_audio.c,v 1.6 2017/06/11 21:54:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.5 2017/06/11 03:33:48 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.6 2017/06/11 21:54:22 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,14 +51,17 @@ __KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.5 2017/06/11 03:33:48 nat Exp $");
 static int spkr_audio_probe(device_t, cfdata_t, void *);
 static void spkr_audio_attach(device_t, device_t, void *);
 static int spkr_audio_detach(device_t, int);
+static int spkr_audio_rescan(device_t, const char *, const int *);
+static void spkr_audio_childdet(device_t, device_t);
 
 struct spkr_audio_softc {
 	struct spkr_softc sc_spkr;
 	device_t		sc_audiodev;
 };
 
-CFATTACH_DECL_NEW(spkr_audio, sizeof(struct spkr_audio_softc),
-    spkr_audio_probe, spkr_audio_attach, spkr_audio_detach, NULL);
+CFATTACH_DECL3_NEW(spkr_audio, sizeof(struct spkr_audio_softc),
+    spkr_audio_probe, spkr_audio_attach, spkr_audio_detach, NULL,
+    spkr_audio_rescan, spkr_audio_childdet, 0);
 
 static void
 spkr_audio_tone(device_t self, u_int xhz, u_int ticks)
@@ -120,4 +123,18 @@ spkr_audio_detach(device_t self, int flags)
 	pmf_device_deregister(self);
 
 	return 0;
+}
+
+static int 
+spkr_audio_rescan(device_t self, const char *iattr, const int *locators)
+{
+
+	return spkr_rescan(self, iattr, locators);
+}
+
+static void 
+spkr_audio_childdet(device_t self, device_t child)
+{
+ 
+	spkr_childdet(self, child);
 }
