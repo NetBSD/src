@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_localcount.c,v 1.5 2017/06/12 21:07:14 riastradh Exp $	*/
+/*	$NetBSD: subr_localcount.c,v 1.6 2017/06/12 21:08:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.5 2017/06/12 21:07:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.6 2017/06/12 21:08:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/localcount.h>
@@ -167,6 +167,12 @@ localcount_xc(void *cookie0, void *cookie1)
 	mutex_exit(interlock);
 }
 
+/*
+ * localcount_adjust(lc, delta)
+ *
+ *	Add delta -- positive or negative -- to the local CPU's count
+ *	for lc.
+ */
 static void
 localcount_adjust(struct localcount *lc, int delta)
 {
