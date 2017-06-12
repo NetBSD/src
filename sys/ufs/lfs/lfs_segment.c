@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.270 2017/06/10 05:29:36 maya Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.271 2017/06/12 15:02:32 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.270 2017/06/10 05:29:36 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.271 2017/06/12 15:02:32 maya Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1381,7 +1381,8 @@ loop:
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd);
 	     bp && LIST_NEXT(bp, b_vnbufs) != NULL;
 	     bp = LIST_NEXT(bp, b_vnbufs))
-		/* nothing */;
+		continue;
+
 	for (; bp && bp != BEG_OF_LIST; bp = nbp) {
 		nbp = BACK_BUF(bp);
 #else /* LFS_NO_BACKBUF_HACK */
