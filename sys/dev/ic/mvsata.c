@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.8 2017/06/10 13:25:51 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.9 2017/06/12 21:38:50 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.8 2017/06/10 13:25:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.9 2017/06/12 21:38:50 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -159,6 +159,8 @@ static void mvsata_bdma_start(struct mvsata_port *);
 #endif
 #endif
 
+static int mvsata_nondma_handle(struct mvsata_port *);
+
 static int mvsata_port_init(struct mvsata_hc *, int);
 static int mvsata_wdc_reg_init(struct mvsata_port *, struct wdc_regs *);
 #ifndef MVSATA_WITHOUTDMA
@@ -289,6 +291,7 @@ mvsata_attach(struct mvsata_softc *sc, struct mvsata_product *product,
 		_fix_phy = mvsata_fix_phy_gen2;
 #ifndef MVSATA_WITHOUTDMA
 		edma_setup_crqb = mvsata_edma_setup_crqb_gen2e;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_NCQ;
 #endif
 		break;
 	}
@@ -401,6 +404,7 @@ mvsata_intr(struct mvsata_hc *mvhc)
 	if (cause & SATAHC_IC_SAINTCOAL)
 		MVSATA_HC_WRITE_4(mvhc, SATAHC_IC, ~SATAHC_IC_SAINTCOAL);
 	cause &= ~SATAHC_IC_SAINTCOAL;
+
 	for (port = 0; port < sc->sc_port; port++) {
 		mvport = mvhc->hc_ports[port];
 
@@ -413,7 +417,7 @@ mvsata_intr(struct mvsata_hc *mvhc)
 		}
 
 		if (cause & SATAHC_IC_SADEVINTERRUPT(port)) {
-			wdcintr(&mvport->port_ata_channel);
+			(void) mvsata_nondma_handle(mvport);
 			MVSATA_HC_WRITE_4(mvhc, SATAHC_IC,
 			    ~SATAHC_IC_SADEVINTERRUPT(port));
 			handled = 1;
@@ -421,6 +425,35 @@ mvsata_intr(struct mvsata_hc *mvhc)
 	}
 
 	return handled;
+}
+
+static int
+mvsata_nondma_handle(struct mvsata_port *mvport)
+{
+	struct ata_channel *chp = &mvport->port_ata_channel;
+	struct ata_xfer *xfer;
+	int ret, quetag;
+
+	/*
+	 * The chip doesn't support several pending non-DMA commands,
+	 * and the ata middle layer never issues several non-NCQ commands,
+	 * so there must be exactly one active command at this moment.
+	 */
+	for (quetag = 0; quetag < MVSATA_EDMAQ_LEN; quetag++) {
+		if ((mvport->port_quetagidx & __BIT(quetag)) == 0)
+			continue;
+
+		break;
+	}
+	KASSERT(quetag < MVSATA_EDMAQ_LEN);
+
+	xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, quetag);
+	chp->ch_flags &= ~ATACH_IRQ_WAIT;
+	KASSERT(xfer->c_intr != NULL);
+	ret = xfer->c_intr(chp, xfer, 1);
+	if (ret == 0) /* irq was not for us, still waiting for irq */
+		chp->ch_flags |= ATACH_IRQ_WAIT;
+	return (ret);
 }
 
 int
@@ -528,12 +561,15 @@ static int
 mvsata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
+	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_bio *ata_bio = &xfer->c_bio;
 
 	DPRINTFN(1, ("%s:%d: mvsata_bio: drive=%d, blkno=%" PRId64
 	    ", bcount=%ld\n", device_xname(atac->atac_dev), chp->ch_channel,
 	    drvp->drive, ata_bio->blkno, ata_bio->bcount));
+
+	mvsata_quetag_get(mvport, xfer->c_slot);
 
 	if (atac->atac_cap & ATAC_CAP_NOIRQ)
 		ata_bio->flags |= ATA_POLL;
@@ -636,9 +672,7 @@ static int
 mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
-#ifdef MVSATA_DEBUG
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
-#endif
 	struct ata_command *ata_c = &xfer->c_ata_c;
 	int rv, s;
 
@@ -648,6 +682,8 @@ mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	    device_xname(MVSATA_DEV2(mvport)), chp->ch_channel,
 	    drvp->drive, ata_c->bcount, ata_c->r_lba, ata_c->r_count,
 	    ata_c->r_features, ata_c->r_device, ata_c->r_command));
+
+	mvsata_quetag_get(mvport, xfer->c_slot);
 
 	if (ata_c->flags & AT_POLL)
 		xfer->c_flags |= C_POLL;
@@ -747,8 +783,9 @@ mvsata_atapi_scsipi_request(struct scsipi_channel *chan,
 	struct scsipi_xfer *sc_xfer;
 	struct mvsata_softc *sc = device_private(adapt->adapt_dev);
 	struct atac_softc *atac = &sc->sc_wdcdev.sc_atac;
+	struct ata_channel *chp = atac->atac_channels[chan->chan_channel];
 	struct ata_xfer *xfer;
-	int channel = chan->chan_channel;
+	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	int drive, s;
 
         switch (req) {
@@ -762,12 +799,14 @@ mvsata_atapi_scsipi_request(struct scsipi_channel *chan,
 			scsipi_done(sc_xfer);
 			return;
 		}
-		xfer = ata_get_xfer(atac->atac_channels[channel]);
+		xfer = ata_get_xfer(chp);
 		if (xfer == NULL) {
 			sc_xfer->error = XS_RESOURCE_SHORTAGE;
 			scsipi_done(sc_xfer);
 			return;
 		}
+
+		mvsata_quetag_get(mvport, xfer->c_slot);
 
 		if (sc_xfer->xs_control & XS_CTL_POLL)
 			xfer->c_flags |= C_POLL;
@@ -781,7 +820,7 @@ mvsata_atapi_scsipi_request(struct scsipi_channel *chan,
 		xfer->c_kill_xfer = mvsata_atapi_kill_xfer;
 		xfer->c_dscpoll = 0;
 		s = splbio();
-		ata_exec_xfer(atac->atac_channels[channel], xfer);
+		ata_exec_xfer(chp, xfer);
 #ifdef DIAGNOSTIC
 		if ((sc_xfer->xs_control & XS_CTL_POLL) != 0 &&
 		    (sc_xfer->xs_status & XS_STS_DONE) == 0)
@@ -972,9 +1011,12 @@ mvsata_setup_channel(struct ata_channel *chp)
 			splx(s);
 		}
 
-		if (drvp->drive_flags & (ATA_DRIVE_UDMA | ATA_DRIVE_DMA))
-			if (drvp->drive_type == ATA_DRIVET_ATA)
+		if (drvp->drive_flags & (ATA_DRIVE_UDMA | ATA_DRIVE_DMA)) {
+			if (drvp->drive_flags & ATA_DRIVE_NCQ)
+				edma_mode = ncq;
+			else if (drvp->drive_type == ATA_DRIVET_ATA)
 				edma_mode = dma;
+		}
 	}
 
 	DPRINTF(("EDMA %sactive mode\n", (edma_mode == nodma) ? "not " : ""));
@@ -1406,6 +1448,7 @@ mvsata_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 		panic("mvsata_bio_kill_xfer");
 	}
 	ata_bio->r_error = WDCE_ABRT;
+	mvsata_quetag_put(mvport, xfer->c_slot);
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
 }
 
@@ -1432,6 +1475,7 @@ mvsata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	ata_bio->bcount = xfer->c_bcount;
 
 	/* mark controller inactive and free xfer */
+	mvsata_quetag_put(mvport, xfer->c_slot);
 	ata_deactivate_xfer(chp, xfer);
 
 	if (ata_waitdrain_check(chp, drive))
@@ -1731,6 +1775,7 @@ mvsata_wdc_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 		    "mvsata_cmd_kill_xfer: unknown reason %d\n", reason);
 		panic("mvsata_cmd_kill_xfer");
 	}
+	mvsata_quetag_put(mvport, xfer->c_slot);
 	mvsata_wdc_cmd_done_end(chp, xfer);
 }
 
@@ -1793,6 +1838,7 @@ mvsata_wdc_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 		}
 	}
 
+	mvsata_quetag_put(mvport, xfer->c_slot);
 	ata_deactivate_xfer(chp, xfer);
 
 	if (ata_c->flags & AT_POLL) {
@@ -2246,6 +2292,7 @@ mvsata_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 		    "mvsata_atapi_kill_xfer: unknown reason %d\n", reason);
 		panic("mvsata_atapi_kill_xfer");
 	}
+	mvsata_quetag_put(mvport, xfer->c_slot);
 	ata_free_xfer(chp, xfer);
 	scsipi_done(sc_xfer);
 }
@@ -2356,6 +2403,7 @@ mvsata_atapi_phase_complete(struct ata_xfer *xfer)
 static void
 mvsata_atapi_done(struct ata_channel *chp, struct ata_xfer *xfer)
 {
+	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	int drive = xfer->c_drive;
 
@@ -2364,7 +2412,7 @@ mvsata_atapi_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	    xfer->c_drive, (u_int)xfer->c_flags));
 
 	/* mark controller inactive and free the command */
-
+	mvsata_quetag_put(mvport, xfer->c_slot);
 	ata_deactivate_xfer(chp, xfer);
 
 	if (ata_waitdrain_check(chp, drive))
@@ -2420,17 +2468,14 @@ mvsata_edma_enqueue(struct mvsata_port *mvport, struct ata_xfer *xfer)
 	MVSATA_EDMAQ_INC(next);
 	if (next == erqqop) {
 		/* queue full */
-		return EBUSY; /* XXX slot */
+		return EBUSY;
 	}
-	mvsata_quetag_get(mvport, xfer->c_slot);
 	DPRINTFN(2, ("    erqqip=%d, quetag=%d\n", erqqip, xfer->c_slot));
 
 	rv = mvsata_dma_bufload(mvport, xfer->c_slot, databuf, ata_bio->nbytes,
 	    ata_bio->flags);
-	if (rv != 0) {
-		mvsata_quetag_put(mvport, xfer->c_slot);
+	if (rv != 0)
 		return rv;
-	}
 
 	/* setup EDMA Physical Region Descriptors (ePRD) Table Data */
 	data_dmamap = mvport->port_reqtbl[xfer->c_slot].data_dmamap;
@@ -2543,6 +2588,7 @@ mvsata_edma_handle(struct mvsata_port *mvport, struct ata_xfer *xfer1)
 #endif
 		crpb = mvport->port_crpb + erpqop;
 		quetag = CRPB_CHOSTQUETAG(le16toh(crpb->id));
+
 		xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, quetag);
 
 		bus_dmamap_sync(mvport->port_dmat, mvport->port_eprd_dmamap,
@@ -2562,7 +2608,6 @@ mvsata_edma_handle(struct mvsata_port *mvport, struct ata_xfer *xfer1)
 			ata_bio->error = ERR_DMA;
 
 		mvsata_dma_bufunload(mvport, quetag, ata_bio->flags);
-		mvsata_quetag_put(mvport, quetag);
 		MVSATA_EDMAQ_INC(erpqop);
 
 #if 1	/* XXXX: flags clears here, because necessary the atabus layer. */
@@ -2676,7 +2721,7 @@ mvsata_edma_rqq_remove(struct mvsata_port *mvport, struct ata_xfer *xfer)
 			    mvport->port_reqtbl[i].eprd_offset,
 			    MVSATA_EPRD_MAX_SIZE, BUS_DMASYNC_POSTWRITE);
 			mvsata_dma_bufunload(mvport, i, xfer->c_bio.flags);
-			mvsata_quetag_put(mvport, i);
+			/* quetag freed by caller later */
 			continue;
 		}
 
@@ -2715,16 +2760,11 @@ mvsata_bdma_init(struct mvsata_port *mvport, struct ata_xfer *xfer)
 	    device_xname(MVSATA_DEV2(mvport)), mvport->port_hc->hc,
 	    mvport->port, sc_xfer->datalen, sc_xfer->xs_control));
 
-	mvsata_quetag_get(mvport, xfer->c_slot);
-	DPRINTFN(2, ("    quetag=%d\n", xfer->c_slot));
-
 	rv = mvsata_dma_bufload(mvport, xfer->c_slot, databuf,
 	    sc_xfer->datalen,
 	    sc_xfer->xs_control & XS_CTL_DATA_IN ? ATA_READ : 0);
-	if (rv != 0) {
-		mvsata_quetag_put(mvport, xfer->c_slot);
+	if (rv != 0)
 		return rv;
-	}
 
 	/* setup EDMA Physical Region Descriptors (ePRD) Table Data */
 	data_dmamap = mvport->port_reqtbl[xfer->c_slot].data_dmamap;
@@ -2841,7 +2881,7 @@ mvsata_port_init(struct mvsata_hc *mvhc, int port)
 	chp = &mvport->port_ata_channel;
 	chp->ch_channel = channel;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
-	chp->ch_queue = ata_queue_alloc(1);	// XXX MVSATA_EDMAQ_LEN
+	chp->ch_queue = ata_queue_alloc(32);
 	sc->sc_ata_channels[channel] = chp;
 
 	rv = mvsata_wdc_reg_init(mvport, sc->sc_wdcdev.regs + channel);
@@ -3248,7 +3288,7 @@ mvsata_edma_disable(struct mvsata_port *mvport, int timeout, int waitok)
 				delay(1000);
 		}
 		if (ms == timeout) {
-			aprint_error("%s:%d:%d: unable to stop EDMA\n",
+			aprint_error("%s:%d:%d: unable to disable EDMA\n",
 			    device_xname(MVSATA_DEV2(mvport)),
 			    mvport->port_hc->hc, mvport->port);
 			return EBUSY;
@@ -3268,7 +3308,7 @@ mvsata_edma_disable(struct mvsata_port *mvport, int timeout, int waitok)
 				delay(1000);
 		}
 		if (ms == timeout) {
-			aprint_error("%s:%d:%d: unable to stop EDMA\n",
+			aprint_error("%s:%d:%d: unable to re-enable EDMA\n",
 			    device_xname(MVSATA_DEV2(mvport)),
 			    mvport->port_hc->hc, mvport->port);
 			return EBUSY;
@@ -3640,7 +3680,7 @@ mvsata_edma_setup_crqb_gen2e(struct mvsata_port *mvport, int erqqip,
 	eprd_addr = mvport->port_eprd_dmamap->dm_segs[0].ds_addr +
 	    mvport->port_reqtbl[xfer->c_slot].eprd_offset;
 	rw = (xfer->c_bio.flags & ATA_READ) ? CRQB_CDIR_READ : CRQB_CDIR_WRITE;
-	ctrlflg = (rw | CRQB_CDEVICEQUETAG(0) | /* XXX slot */
+	ctrlflg = (rw | CRQB_CDEVICEQUETAG(xfer->c_slot) |
 	    CRQB_CPMPORT(xfer->c_drive) |
 	    CRQB_CPRDMODE_EPRD | CRQB_CHOSTQUETAG_GEN2(xfer->c_slot));
 
