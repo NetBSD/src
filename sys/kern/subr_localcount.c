@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_localcount.c,v 1.4 2017/06/02 00:32:12 chs Exp $	*/
+/*	$NetBSD: subr_localcount.c,v 1.5 2017/06/12 21:07:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.4 2017/06/02 00:32:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.5 2017/06/12 21:07:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/localcount.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.4 2017/06/02 00:32:12 chs Exp 
 #include <sys/percpu.h>
 #include <sys/xcall.h>
 
+static void localcount_xc(void *, void *);
+
 /*
  * localcount_init(lc)
  *
@@ -64,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.4 2017/06/02 00:32:12 chs Exp 
  *	The caller must call localcount_drain and then localcount_fini
  *	when done with lc.
  */
-static void localcount_xc(void *, void *);
-
 void
 localcount_init(struct localcount *lc)
 {
