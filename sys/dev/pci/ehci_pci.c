@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.64 2016/10/13 20:05:06 jdolecek Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.65 2017/06/12 10:59:47 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.64 2016/10/13 20:05:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.65 2017/06/12 10:59:47 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,10 +161,14 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
+	pcireg_t intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+	int pin = PCI_INTERRUPT_PIN(intr);
+
 	/* Enable the device. */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
-		       csr | PCI_COMMAND_MASTER_ENABLE);
+	csr |= PCI_COMMAND_MASTER_ENABLE;
+	csr &= ~(pin ? PCI_COMMAND_INTERRUPT_DISABLE : 0);
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
