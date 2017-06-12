@@ -1,4 +1,4 @@
-/* $NetBSD: siisatareg.h,v 1.7.42.1 2017/04/24 13:05:26 jakllsch Exp $ */
+/* $NetBSD: siisatareg.h,v 1.7.42.2 2017/06/12 23:51:40 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 Jonathan A. Kollasch.
@@ -181,9 +181,9 @@ struct siisata_prb {
 #define PRO_PPHYC	0x1050		/* phy config */
 #define PRO_PSS		0x1800		/* port slot status */
 /* technically this is a shadow of the CAR */
-#define PRO_CAR		0x1c00
+#define PRO_CAR		0x1c00		/* command activation register */
 
-#define PRO_CARX(p,s)     (PRX(p, PRO_CAR) + s * sizeof(uint64_t))
+#define PRO_CARX(p,s)     (PRX(p, PRO_CAR) + (s) * sizeof(uint64_t))
 
 #define PRO_PCR		0x1e04		/* port context register */
 #define PRO_SCONTROL	0x1f00		/* SControl */
