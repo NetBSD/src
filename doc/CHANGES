@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2289 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2290 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -25,3 +25,5 @@
 
 Changes from NetBSD 8.0 to NetBSD 9.0:
 	byacc: update to 20170430 [christos 20170605]
+	wsbell(4): added console bell support for all speaker devices, not
+		only those attached at pcppi [nat 20170612]
