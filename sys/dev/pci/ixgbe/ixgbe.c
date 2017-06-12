@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.88 2017/06/02 08:16:52 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.89 2017/06/12 03:03:22 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2063,37 +2063,14 @@ ixgbe_media_status(struct ifnet * ifp, struct ifmediareq * ifmr)
 	** XXX: These need to use the proper media types once
 	** they're added.
 	*/
+	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KR)
+		switch (adapter->link_speed) {
+		case IXGBE_LINK_SPEED_10GB_FULL:
 #ifndef IFM_ETH_XTYPE
-	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KR)
-		switch (adapter->link_speed) {
-		case IXGBE_LINK_SPEED_10GB_FULL:
 			ifmr->ifm_active |= IFM_10G_SR | IFM_FDX;
-			break;
-		case IXGBE_LINK_SPEED_2_5GB_FULL:
-			ifmr->ifm_active |= IFM_2500_SX | IFM_FDX;
-			break;
-		case IXGBE_LINK_SPEED_1GB_FULL:
-			ifmr->ifm_active |= IFM_1000_CX | IFM_FDX;
-			break;
-		}
-	else if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KX4
-	    || layer & IXGBE_PHYSICAL_LAYER_1000BASE_KX)
-		switch (adapter->link_speed) {
-		case IXGBE_LINK_SPEED_10GB_FULL:
-			ifmr->ifm_active |= IFM_10G_CX4 | IFM_FDX;
-			break;
-		case IXGBE_LINK_SPEED_2_5GB_FULL:
-			ifmr->ifm_active |= IFM_2500_SX | IFM_FDX;
-			break;
-		case IXGBE_LINK_SPEED_1GB_FULL:
-			ifmr->ifm_active |= IFM_1000_CX | IFM_FDX;
-			break;
-		}
 #else
-	if (layer & IXGBE_PHYSICAL_LAYER_10GBASE_KR)
-		switch (adapter->link_speed) {
-		case IXGBE_LINK_SPEED_10GB_FULL:
 			ifmr->ifm_active |= IFM_10G_KR | IFM_FDX;
+#endif
 			break;
 		case IXGBE_LINK_SPEED_2_5GB_FULL:
 			ifmr->ifm_active |= IFM_2500_KX | IFM_FDX;
@@ -2106,7 +2083,11 @@ ixgbe_media_status(struct ifnet * ifp, struct ifmediareq * ifmr)
 	    || layer & IXGBE_PHYSICAL_LAYER_1000BASE_KX)
 		switch (adapter->link_speed) {
 		case IXGBE_LINK_SPEED_10GB_FULL:
+#ifndef IFM_ETH_XTYPE
+			ifmr->ifm_active |= IFM_10G_CX4 | IFM_FDX;
+#else
 			ifmr->ifm_active |= IFM_10G_KX4 | IFM_FDX;
+#endif
 			break;
 		case IXGBE_LINK_SPEED_2_5GB_FULL:
 			ifmr->ifm_active |= IFM_2500_KX | IFM_FDX;
@@ -2115,7 +2096,6 @@ ixgbe_media_status(struct ifnet * ifp, struct ifmediareq * ifmr)
 			ifmr->ifm_active |= IFM_1000_KX | IFM_FDX;
 			break;
 		}
-#endif
 	
 	/* If nothing is recognized... */
 #if 0
