@@ -1,24 +1,31 @@
 Bugs
 ----
 
-mvsata, siisata - fix all 'XXX slot' 
+test crashdump with ahci
+
+siisata - fix all 'XXX slot' 
 
 test wd* at umass?, confirm the ata_channel kludge works
 
 is ata_exec_xfer() + POLL safe wrt. more outstanding I/Os? why is it waiting
 until xfer is head of queue? also layer violation with the ata_xfer_free() call
 
-Other random notes (maybe do outside the NCQ branch):
+Other random notes (do outside the NCQ branch):
 -----------------------------------------------------
+add nibble to control number of tags (1==disable NCQ)?
+
 add support for the NCQ TRIM if supported by device?
 
 protect more of wddone() with mutex?
 
-refactor mvsata to reuse (more of) ata_wdc.c? duplicates e.g. mode selection
-logic
-
 implement DIOCGCACHE/DIOCCACHESYNC for ld@ataraid? just passthrough, like ccd
 
-MSI/MSI-X support for AHCI
+MSI/MSI-X support for AHCI and mvsata(4)
+
+mvsata - constify mvsata_pci_products and move pci-specific code to
+the pci attach code
+
+mvsata(4) 64-bit DMA
+- at least with AHA1430SA does not really work, crash in mvsata_intr() on boot
 
 malloc(M_CANFAIL) actually doesn't do anything
