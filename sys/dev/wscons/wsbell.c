@@ -1,4 +1,4 @@
-/* $NetBSD: wsbell.c,v 1.3 2017/06/12 06:59:19 pgoyette Exp $ */
+/* $NetBSD: wsbell.c,v 1.4 2017/06/12 07:12:49 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -107,11 +107,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.3 2017/06/12 06:59:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.4 2017/06/12 07:12:49 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
-#include "wsdisplay.h"
 #endif
 
 #include <sys/param.h>
