@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.62 2017/06/11 03:55:56 nat Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.63 2017/06/12 08:19:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.62 2017/06/11 03:55:56 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.63 2017/06/12 08:19:22 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.62 2017/06/11 03:55:56 nat Exp $");
 #include "wsmux.h"
 #include "wskbd.h"
 #include "wsmouse.h"
-#include "wsbell.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
