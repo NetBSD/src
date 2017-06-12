@@ -1,9 +1,10 @@
-# $NetBSD: Makefile.inc,v 1.1 2017/03/31 21:02:08 roy Exp $
+# $NetBSD: Makefile.inc,v 1.2 2017/06/12 14:50:38 roy Exp $
 
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/dhcpcd
 DIST=		${SRCDIR}/dist
 
 SED_SYS=	-e 's:@SYSCONFDIR@:/etc:g' \
+		-e 's:@DATADIR@:/usr/share/examples:g' \
 		-e 's:@DBDIR@:/var/db:g' \
 		-e 's:@LIBDIR@:/lib:g' \
 		-e 's:@RUNDIR@:/var/run:g' \
