@@ -3,12 +3,26 @@ Bugs
 
 test crashdump with ahci
 
-siisata - fix all 'XXX slot' 
+siisata - fix all 'XXX slot' -- jakllsch has this done but uncommited
+
+test crashdump with siisata
 
 test wd* at umass?, confirm the ata_channel kludge works
 
 is ata_exec_xfer() + POLL safe wrt. more outstanding I/Os? why is it waiting
 until xfer is head of queue? also layer violation with the ata_xfer_free() call
+
+further test port multipliers (currently appears to not work)
+
+test device error handling (currently appears to not work well, at least in NCQ case)
+
+do proper NCQ error recovery (currently not even really attempted)
+
+maybe do device error handling in not-interrupt-context (maybe this should be
+done on a mpata branch?)
+
+atabus(4) queue depth can only shrink, causing NCQ to not be available if NCQ
+drive rescaned after detach of non-NCQ drive
 
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------
