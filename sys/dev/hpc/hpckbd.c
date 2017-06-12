@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.30 2012/10/27 17:18:17 chs Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.31 2017/06/12 09:23:39 manu Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.30 2012/10/27 17:18:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.31 2017/06/12 09:23:39 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <sys/tty.h>
 
@@ -264,22 +265,30 @@ hpckbd_keymap_setup(struct hpckbd_core *hc,
 		    const keysym_t *map, int mapsize)
 {
 	int i;
-	struct wscons_keydesc *desc;
+	const struct wscons_keydesc *desc;
+	static struct wscons_keydesc *ndesc = NULL;
 
-	/* fix keydesc table */
 	/* 
-	 * XXX The way this is done is really wrong.  The __UNCONST()
-	 * is a hint as to what is wrong.  This actually ends up modifying
-	 * initialized data which is marked "const".
-	 * The reason we get away with it here is apparently that text
-	 * and read-only data gets mapped read/write on the platforms
-	 * using this code.
+	 * fix keydesc table. Since it is const data, we must 
+	 * copy it once before changingg it.
 	 */
-	desc = (struct wscons_keydesc *)__UNCONST(hpckbd_keymapdata.keydesc);
+
+	if (ndesc == NULL) {
+		size_t sz;
+
+		for (sz = 0; hpckbd_keymapdata.keydesc[sz].name != 0; sz++);
+
+		ndesc = malloc(sz * sizeof(*ndesc), M_DEVBUF, M_WAITOK);
+		memcpy(ndesc, hpckbd_keymapdata.keydesc, sz * sizeof(*ndesc));
+
+		hpckbd_keymapdata.keydesc = ndesc;
+	}
+
+	desc = hpckbd_keymapdata.keydesc;
 	for (i = 0; desc[i].name != 0; i++) {
 		if ((desc[i].name & KB_MACHDEP) && desc[i].map == NULL) {
-			desc[i].map = map;
-			desc[i].map_size = mapsize;
+			ndesc[i].map = map;
+			ndesc[i].map_size = mapsize;
 		}
 	}
 
