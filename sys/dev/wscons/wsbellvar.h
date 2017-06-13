@@ -1,4 +1,4 @@
-/* $NetBSD: wsbellvar.h,v 1.1 2017/06/11 03:55:56 nat Exp $ */
+/* $NetBSD: wsbellvar.h,v 1.2 2017/06/13 00:49:05 nat Exp $ */
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
@@ -35,7 +35,6 @@ struct vbell_args {
 	u_int pitch;
 	u_int period;
 	u_int volume;
-	bool dying;
 };
 
 struct wsbell_softc {
