@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.414 2017/05/21 19:07:29 abhinav Exp $
+#       $NetBSD: Makefile,v 1.415 2017/06/13 09:11:22 nat Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -61,7 +61,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 \
 	ubc.9 usbd_status.9 usbdi.9 uvm.9 uvm_hotplug.9 uvm_km.9 uvm_map.9 \
 	vmem.9 wapbl.9 wdc.9 workqueue.9 \
-	wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9 \
+	wsbell.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9 \
 	xcall.9
 
 MAN+=	boothowto.9
