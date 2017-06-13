@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2139 2017/06/05 23:44:08 christos Exp $
+#	$NetBSD: mi,v 1.2140 2017/06/13 06:39:09 nat Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11580,6 +11580,7 @@
 ./usr/share/man/cat9/workqueue_destroy.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/workqueue_enqueue.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/writedisklabel.0		comp-sys-catman		.cat
+./usr/share/man/cat9/wsbell.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/wscons.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/wsdisplay.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/wsdisplay_cnattach.0	comp-sys-catman		.cat
@@ -18992,6 +18993,7 @@
 ./usr/share/man/html9/workqueue_destroy.html	comp-sys-htmlman	html
 ./usr/share/man/html9/workqueue_enqueue.html	comp-sys-htmlman	html
 ./usr/share/man/html9/writedisklabel.html	comp-sys-htmlman	html
+./usr/share/man/html9/wsbell.html		comp-sys-htmlman	html
 ./usr/share/man/html9/wscons.html		comp-sys-htmlman	html
 ./usr/share/man/html9/wsdisplay.html		comp-sys-htmlman	html
 ./usr/share/man/html9/wsdisplay_cnattach.html	comp-sys-htmlman	html
@@ -26656,6 +26658,7 @@
 ./usr/share/man/man9/workqueue_destroy.9	comp-sys-man		.man
 ./usr/share/man/man9/workqueue_enqueue.9	comp-sys-man		.man
 ./usr/share/man/man9/writedisklabel.9		comp-sys-man		.man
+./usr/share/man/man9/wsbell.9			comp-sys-man		.man
 ./usr/share/man/man9/wscons.9			comp-sys-man		.man
 ./usr/share/man/man9/wsdisplay.9		comp-sys-man		.man
 ./usr/share/man/man9/wsdisplay_cnattach.9	comp-sys-man		.man
