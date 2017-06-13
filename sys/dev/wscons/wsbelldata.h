@@ -1,4 +1,4 @@
-/* $NetBSD: wsbelldata.h,v 1.1 2017/06/11 03:38:12 nat Exp $ */
+/* $NetBSD: wsbelldata.h,v 1.2 2017/06/13 00:42:27 nat Exp $ */
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
@@ -34,6 +34,17 @@
 #ifndef WSKBD_DEFAULT_BELL_VOLUME
 #define	WSKBD_DEFAULT_BELL_VOLUME	50	/* 50% volume */
 #endif
+
+#define	SETBELL(dstp, srcp, dfltp)					\
+    do {								\
+	(dstp)->pitch = ((srcp)->which & WSKBD_BELL_DOPITCH) ?		\
+	    (srcp)->pitch : (dfltp)->pitch;				\
+	(dstp)->period = ((srcp)->which & WSKBD_BELL_DOPERIOD) ?	\
+	    (srcp)->period : (dfltp)->period;				\
+	(dstp)->volume = ((srcp)->which & WSKBD_BELL_DOVOLUME) ?	\
+	    (srcp)->volume : (dfltp)->volume;				\
+	(dstp)->which = WSKBD_BELL_DOALL;				\
+    } while (0)
 
 static struct wskbd_bell_data wskbd_default_bell_data = {
 	WSKBD_BELL_DOALL,

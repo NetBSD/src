@@ -1,4 +1,4 @@
-/* $NetBSD: wsbell.c,v 1.4 2017/06/12 07:12:49 pgoyette Exp $ */
+/* $NetBSD: wsbell.c,v 1.5 2017/06/13 00:42:27 nat Exp $ */
 
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.4 2017/06/12 07:12:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.5 2017/06/13 00:42:27 nat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -351,17 +351,6 @@ wsbell_do_ioctl(struct wsbell_softc *sc, u_long cmd, void *data,
 	 * Try the wsbell specific ioctls.
 	 */
 	switch (cmd) {
-#define	SETBELL(dstp, srcp, dfltp)					\
-    do {								\
-	(dstp)->pitch = ((srcp)->which & WSKBD_BELL_DOPITCH) ?		\
-	    (srcp)->pitch : (dfltp)->pitch;				\
-	(dstp)->period = ((srcp)->which & WSKBD_BELL_DOPERIOD) ?	\
-	    (srcp)->period : (dfltp)->period;				\
-	(dstp)->volume = ((srcp)->which & WSKBD_BELL_DOVOLUME) ?	\
-	    (srcp)->volume : (dfltp)->volume;				\
-	(dstp)->which = WSKBD_BELL_DOALL;				\
-    } while (0)
-
 	case WSKBDIO_SETBELL:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
