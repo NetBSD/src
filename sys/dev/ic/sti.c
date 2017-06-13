@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.18 2014/06/29 04:08:43 tsutsui Exp $	*/
+/*	$NetBSD: sti.c,v 1.19 2017/06/13 19:13:55 spz Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.18 2014/06/29 04:08:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.19 2017/06/13 19:13:55 spz Exp $");
 
 #include "wsdisplay.h"
 
@@ -1017,7 +1017,7 @@ sti_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		cmapp = (struct wsdisplay_cmap *)data;
 		idx = cmapp->index;
 		count = cmapp->count;
-		if (idx >= STI_NCMAP || idx + count > STI_NCMAP)
+		if (idx >= STI_NCMAP || count > STI_NCMAP - idx)
 			return EINVAL;
 		if ((ret = copyout(&scr->scr_rcmap[idx], cmapp->red, count)))
 			break;
@@ -1033,7 +1033,7 @@ sti_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		cmapp = (struct wsdisplay_cmap *)data;
 		idx = cmapp->index;
 		count = cmapp->count;
-		if (idx >= STI_NCMAP || idx + count > STI_NCMAP)
+		if (idx >= STI_NCMAP || count > STI_NCMAP - idx)
 			return EINVAL;
 		if ((ret = copyin(cmapp->red, &scr->scr_rcmap[idx], count)))
 			break;
