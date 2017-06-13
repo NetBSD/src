@@ -1,4 +1,4 @@
-/* $NetBSD: wsbell.c,v 1.6 2017/06/13 00:49:05 nat Exp $ */
+/* $NetBSD: wsbell.c,v 1.7 2017/06/13 00:54:37 nat Exp $ */
 
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.6 2017/06/13 00:49:05 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.7 2017/06/13 00:54:37 nat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -220,6 +220,7 @@ wsbell_attach(device_t parent, device_t self, void *aux)
 	sc->sc_base.me_dv = self;
 	sc->sc_accesscookie = ap->accesscookie;
 
+	sc->sc_dying = false;
 	sc->sc_spkr = device_unit(parent);
 	sc->sc_bell_data = wskbd_default_bell_data;
 #if NWSMUX > 0
@@ -256,7 +257,7 @@ wsbell_activate(device_t self, enum devact act)
 	struct wsbell_softc *sc = device_private(self);
 
 	if (act == DVACT_DEACTIVATE)
-		sc->sc_dying = 1;
+		sc->sc_dying = true;
 	return (0);
 }
 
@@ -305,7 +306,7 @@ wsbell_detach(device_t self, int flags)
 	vdevgone(maj, mn, mn, VCHR);
 
 	mutex_enter(&sc->sc_bellock);
-	sc->sc_dying = 1;
+	sc->sc_dying = true;
 
 	cv_broadcast(&sc->sc_bellcv);
 	mutex_exit(&sc->sc_bellock);
@@ -344,7 +345,7 @@ wsbell_do_ioctl(struct wsbell_softc *sc, u_long cmd, void *data,
 		 int flag, struct lwp *l)
 {
 	struct wskbd_bell_data *ubdp, *kbdp;
-	if (sc->sc_dying)
+	if (sc->sc_dying == true)
 		return (EIO);
 
 	/*
@@ -400,7 +401,7 @@ bell_thread(void *arg)
 		mutex_enter(&sc->sc_bellock);
 		cv_wait_sig(&sc->sc_bellcv, &sc->sc_bellock);
 		
-		if (sc->sc_dying) {
+		if (sc->sc_dying == true) {
 			mutex_exit(&sc->sc_bellock);
 			kthread_exit(0);
 		}
