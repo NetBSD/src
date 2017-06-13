@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.139 2017/06/11 03:38:12 nat Exp $ */
+/* $NetBSD: wskbd.c,v 1.140 2017/06/13 00:42:27 nat Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.139 2017/06/11 03:38:12 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.140 2017/06/13 00:42:27 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1059,17 +1059,6 @@ wskbd_displayioctl(device_t dev, u_long cmd, void *data, int flag,
 	int len, error;
 
 	switch (cmd) {
-#define	SETBELL(dstp, srcp, dfltp)					\
-    do {								\
-	(dstp)->pitch = ((srcp)->which & WSKBD_BELL_DOPITCH) ?		\
-	    (srcp)->pitch : (dfltp)->pitch;				\
-	(dstp)->period = ((srcp)->which & WSKBD_BELL_DOPERIOD) ?	\
-	    (srcp)->period : (dfltp)->period;				\
-	(dstp)->volume = ((srcp)->which & WSKBD_BELL_DOVOLUME) ?	\
-	    (srcp)->volume : (dfltp)->volume;				\
-	(dstp)->which = WSKBD_BELL_DOALL;				\
-    } while (0)
-
 	case WSKBDIO_BELL:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
