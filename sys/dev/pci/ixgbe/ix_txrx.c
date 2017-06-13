@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.25 2017/06/09 03:19:55 msaitoh Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.26 2017/06/13 09:35:12 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1771,7 +1771,7 @@ ixgbe_rx_discard(struct rx_ring *rxr, int i)
 	** and mapping.
 	*/
 
-	if (rbuf->buf != NULL) {/* Partial chain ? */
+	if (rbuf->fmp != NULL) {/* Partial chain ? */
 		rbuf->fmp->m_flags |= M_PKTHDR;
 		m_freem(rbuf->fmp);
 		rbuf->fmp = NULL;
