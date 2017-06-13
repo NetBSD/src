@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.9 2017/06/12 21:38:50 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.10 2017/06/13 19:15:32 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.9 2017/06/12 21:38:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.10 2017/06/13 19:15:32 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -2881,7 +2881,7 @@ mvsata_port_init(struct mvsata_hc *mvhc, int port)
 	chp = &mvport->port_ata_channel;
 	chp->ch_channel = channel;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
-	chp->ch_queue = ata_queue_alloc(32);
+	chp->ch_queue = ata_queue_alloc(MVSATA_EDMAQ_LEN);
 	sc->sc_ata_channels[channel] = chp;
 
 	rv = mvsata_wdc_reg_init(mvport, sc->sc_wdcdev.regs + channel);
