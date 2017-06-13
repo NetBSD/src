@@ -1,4 +1,4 @@
-/* $NetBSD: wsbellvar.h,v 1.2 2017/06/13 00:49:05 nat Exp $ */
+/* $NetBSD: wsbellvar.h,v 1.3 2017/06/13 00:54:37 nat Exp $ */
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
@@ -45,7 +45,7 @@ struct wsbell_softc {
 	void		*sc_accesscookie;
 
 	int		sc_refcnt;
-	u_char		sc_dying;	/* device is being detached */
+	bool		sc_dying;	/* device is being detached */
 
 	lwp_t		*sc_bellthread;
 	kmutex_t	sc_bellock;
