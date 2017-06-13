@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.71 2017/06/08 22:24:59 chs Exp $	*/
+/*	$NetBSD: disk.h,v 1.72 2017/06/13 14:05:47 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 #include <sys/dkio.h>
 #include <sys/time.h>
 #include <sys/queue.h>
+#include <sys/iostat.h>
 
 /*
  * Disk information dictionary.
@@ -299,7 +300,6 @@ struct disk_strategy {
 #ifdef _KERNEL
 #include <sys/device.h>
 #include <sys/mutex.h>
-#include <sys/iostat.h>
 
 #include <prop/proplib.h>
 
