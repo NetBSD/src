@@ -1,4 +1,4 @@
-/*	$NetBSD: h_ioctl.c,v 1.1 2017/06/09 06:09:02 knakahara Exp $	*/
+/*	$NetBSD: h_ioctl.c,v 1.2 2017/06/13 08:16:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -69,11 +69,11 @@ static int
 test_ngsession(int fd)
 {
 	int ret;
-	int cs_count = 2;
 	struct crypt_sgop sg;
-	struct session_n_op css[cs_count];
+	struct session_n_op css[2];
+	const size_t cs_count = __arraycount(css);
 
-	for (int i = 0; i < cs_count; i++) {
+	for (size_t i = 0; i < cs_count; i++) {
 		struct session_n_op *cs = &css[i];
 
 		memset(cs, 0, sizeof(*cs));
@@ -100,9 +100,9 @@ static int
 test_nfsession(int fd)
 {
 	int ret;
-	int sid_count = 2;
 	struct crypt_sfop sf;
-	u_int32_t sids[sid_count];
+	u_int32_t sids[2];
+	const size_t sid_count = __arraycount(sids);
 
 	memset(sids, 0, sizeof(sids));
 	memset(&sf, 0, sizeof(sf));
@@ -124,11 +124,11 @@ static int
 test_ncryptm(int fd)
 {
 	int ret;
-	int cs_count = 2;
 	struct crypt_mop mop;
-	struct crypt_n_op css[cs_count];
+	struct crypt_n_op css[2];
+	const size_t cs_count = __arraycount(css);
 
-	for (int i = 0; i < cs_count; i++) {
+	for (size_t i = 0; i < cs_count; i++) {
 		struct crypt_n_op *cs;
 		cs = &css[i];
 
@@ -157,11 +157,11 @@ static int
 test_ncryptretm(int fd)
 {
 	int ret;
-	int req_count = 2;
 	struct session_op cs;
 
 	struct crypt_mop mop;
-	struct crypt_n_op cnos[req_count];
+	struct crypt_n_op cnos[2];
+	const size_t req_count = __arraycount(cnos);
 	unsigned char cno_dst[req_count][AES_CIPHER_LEN];
 
 	struct cryptret cret;
@@ -177,7 +177,7 @@ test_ncryptretm(int fd)
 		return ret;
 	}
 
-	for (int i = 0; i < req_count; i++) {
+	for (size_t i = 0; i < req_count; i++) {
 		struct crypt_n_op *cno = &cnos[i];
 
 		memset(cno, 0, sizeof(*cno));
@@ -196,7 +196,7 @@ test_ncryptretm(int fd)
 	if (ret < 0)
 		fprintf(stderr, "failed: CIOCNCRYPTM\n");
 
-	for (int i = 0; i < req_count; i++) {
+	for (size_t i = 0; i < req_count; i++) {
 		struct crypt_result *cr = &crs[i];
 
 		memset(cr, 0, sizeof(*cr));
