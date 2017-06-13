@@ -1,4 +1,4 @@
-/* $NetBSD: wsbell.c,v 1.5 2017/06/13 00:42:27 nat Exp $ */
+/* $NetBSD: wsbell.c,v 1.6 2017/06/13 00:49:05 nat Exp $ */
 
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.5 2017/06/13 00:42:27 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.6 2017/06/13 00:49:05 nat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -305,7 +305,7 @@ wsbell_detach(device_t self, int flags)
 	vdevgone(maj, mn, mn, VCHR);
 
 	mutex_enter(&sc->sc_bellock);
-	sc->sc_bell_args.dying = true;
+	sc->sc_dying = 1;
 
 	cv_broadcast(&sc->sc_bellcv);
 	mutex_exit(&sc->sc_bellock);
@@ -400,7 +400,7 @@ bell_thread(void *arg)
 		mutex_enter(&sc->sc_bellock);
 		cv_wait_sig(&sc->sc_bellcv, &sc->sc_bellock);
 		
-		if (vb->dying == true) {
+		if (sc->sc_dying) {
 			mutex_exit(&sc->sc_bellock);
 			kthread_exit(0);
 		}
@@ -423,7 +423,6 @@ spkr_audio_play(struct wsbell_softc *sc, u_int pitch, u_int period, u_int volume
 {
 
 	mutex_enter(&sc->sc_bellock);
-	sc->sc_bell_args.dying = false;
 	sc->sc_bell_args.pitch = pitch;
 	sc->sc_bell_args.period = period / 5;
 	sc->sc_bell_args.volume = volume;
