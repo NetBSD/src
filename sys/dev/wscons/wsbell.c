@@ -1,4 +1,4 @@
-/* $NetBSD: wsbell.c,v 1.7 2017/06/13 00:54:37 nat Exp $ */
+/* $NetBSD: wsbell.c,v 1.8 2017/06/13 05:49:48 nat Exp $ */
 
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.7 2017/06/13 00:54:37 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.8 2017/06/13 05:49:48 nat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -121,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.7 2017/06/13 00:54:37 nat Exp $");
 #include <sys/kernel.h>
 #include <sys/condvar.h>
 #include <sys/mutex.h>
+#include <sys/kauth.h>
 #include <sys/kthread.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
@@ -345,6 +346,8 @@ wsbell_do_ioctl(struct wsbell_softc *sc, u_long cmd, void *data,
 		 int flag, struct lwp *l)
 {
 	struct wskbd_bell_data *ubdp, *kbdp;
+	int error;
+
 	if (sc->sc_dying == true)
 		return (EIO);
 
@@ -356,15 +359,30 @@ wsbell_do_ioctl(struct wsbell_softc *sc, u_long cmd, void *data,
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
 		kbdp = &sc->sc_bell_data;
+setbell:
 		ubdp = (struct wskbd_bell_data *)data;
 		SETBELL(kbdp, ubdp, kbdp);
 		return (0);
 
 	case WSKBDIO_GETBELL:
 		kbdp = &sc->sc_bell_data;
+getbell:
 		ubdp = (struct wskbd_bell_data *)data;
 		SETBELL(ubdp, kbdp, kbdp);
 		return (0);
+
+	case WSKBDIO_SETDEFAULTBELL:
+		if ((error = kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_WSCONS_KEYBOARD_BELL, NULL, NULL,
+		    NULL, NULL)) != 0)
+			return (error);
+		kbdp = &wskbd_default_bell_data;
+		goto setbell;
+
+
+	case WSKBDIO_GETDEFAULTBELL:
+		kbdp = &wskbd_default_bell_data;
+		goto getbell;
 
 	case WSKBDIO_BELL:
 		if ((flag & FWRITE) == 0)
