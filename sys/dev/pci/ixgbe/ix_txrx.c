@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.26 2017/06/13 09:35:12 msaitoh Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.27 2017/06/13 09:37:22 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1446,21 +1446,10 @@ fail:
 
 static void     
 ixgbe_free_receive_ring(struct rx_ring *rxr)
-{ 
-	struct ixgbe_rx_buf       *rxbuf;
+{
 
 	for (int i = 0; i < rxr->num_desc; i++) {
-		rxbuf = &rxr->rx_buffers[i];
-		if (rxbuf->buf != NULL) {
-			bus_dmamap_sync(rxr->ptag->dt_dmat, rxbuf->pmap,
-			    0, rxbuf->buf->m_pkthdr.len,
-			    BUS_DMASYNC_POSTREAD);
-			ixgbe_dmamap_unload(rxr->ptag, rxbuf->pmap);
-			rxbuf->buf->m_flags |= M_PKTHDR;
-			m_freem(rxbuf->buf);
-			rxbuf->buf = NULL;
-			rxbuf->flags = 0;
-		}
+		ixgbe_rx_discard(rxr, i);
 	}
 }
 
@@ -1632,7 +1621,9 @@ fail:
 	 */
 	for (int i = 0; i < j; ++i) {
 		rxr = &adapter->rx_rings[i];
+		IXGBE_RX_LOCK(rxr);
 		ixgbe_free_receive_ring(rxr);
+		IXGBE_RX_UNLOCK(rxr);
 	}
 
 	return (ENOBUFS);
@@ -1686,15 +1677,7 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 	if (rxr->rx_buffers != NULL) {
 		for (int i = 0; i < adapter->num_rx_desc; i++) {
 			rxbuf = &rxr->rx_buffers[i];
-			if (rxbuf->buf != NULL) {
-				bus_dmamap_sync(rxr->ptag->dt_dmat,
-				    rxbuf->pmap, 0, rxbuf->buf->m_pkthdr.len,
-				    BUS_DMASYNC_POSTREAD);
-				ixgbe_dmamap_unload(rxr->ptag, rxbuf->pmap);
-				rxbuf->buf->m_flags |= M_PKTHDR;
-				m_freem(rxbuf->buf);
-			}
-			rxbuf->buf = NULL;
+			ixgbe_rx_discard(rxr, i);
 			if (rxbuf->pmap != NULL) {
 				ixgbe_dmamap_destroy(rxr->ptag, rxbuf->pmap);
 				rxbuf->pmap = NULL;
@@ -1772,11 +1755,14 @@ ixgbe_rx_discard(struct rx_ring *rxr, int i)
 	*/
 
 	if (rbuf->fmp != NULL) {/* Partial chain ? */
-		rbuf->fmp->m_flags |= M_PKTHDR;
+		bus_dmamap_sync(rxr->ptag->dt_dmat, rbuf->pmap, 0,
+		    rbuf->buf->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
 		m_freem(rbuf->fmp);
 		rbuf->fmp = NULL;
 		rbuf->buf = NULL; /* rbuf->buf is part of fmp's chain */
 	} else if (rbuf->buf) {
+		bus_dmamap_sync(rxr->ptag->dt_dmat, rbuf->pmap, 0,
+		    rbuf->buf->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
 		m_free(rbuf->buf);
 		rbuf->buf = NULL;
 	}
@@ -1869,6 +1855,9 @@ ixgbe_rxeof(struct ix_queue *que)
 			ixgbe_rx_discard(rxr, i);
 			goto next_desc;
 		}
+
+		bus_dmamap_sync(rxr->ptag->dt_dmat, rbuf->pmap, 0,
+		    rbuf->buf->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
 
 		/*
 		** On 82599 which supports a hardware
