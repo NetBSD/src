@@ -1,4 +1,4 @@
-/* $NetBSD: siisatavar.h,v 1.6 2010/07/26 15:41:33 jakllsch Exp $ */
+/* $NetBSD: siisatavar.h,v 1.6.48.1 2017/06/13 00:02:19 jakllsch Exp $ */
 
 /* from ahcisatavar.h */
 
@@ -113,8 +113,6 @@ struct siisata_softc {
 
 #define SIISATA_PRB_SYNC(sc, schp, slot, op) bus_dmamap_sync((sc)->sc_dmat, \
     (schp)->sch_prbd, slot * SIISATA_CMD_SIZE, SIISATA_CMD_SIZE, (op))
-
-#define SIISATA_NON_NCQ_SLOT 27
 
 void siisata_attach(struct siisata_softc *);
 int siisata_detach(struct siisata_softc *, int);

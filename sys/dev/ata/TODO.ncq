@@ -3,7 +3,7 @@ Bugs
 
 test crashdump with ahci
 
-siisata - fix all 'XXX slot' -- jakllsch has this done but uncommited
+siisata - fix all new XXX and unmergable bits
 
 test crashdump with siisata
 
