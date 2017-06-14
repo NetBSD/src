@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.22 2017/02/11 16:02:11 maxv Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.23 2017/06/14 07:45:45 maxv Exp $	*/
 
 #include "assym.h"
 
@@ -63,10 +63,10 @@ SECTIONS
 		*(.bss)
 		*(.bss.*)
 		*(COMMON)
-		. = ALIGN(64 / 8);
+		. = ALIGN(__LARGE_PAGE_SIZE);
 	}
 
-	. = ALIGN(__LARGE_PAGE_SIZE);
+	. = ALIGN(__PAGE_SIZE);
 
 	/* End of the kernel image */
 	__kernel_end = . ;
