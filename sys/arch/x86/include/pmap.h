@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.64 2017/03/23 18:08:06 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.65 2017/06/14 12:49:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -485,7 +485,7 @@ void	pmap_free_ptps(struct vm_page *);
 
 #ifdef __HAVE_DIRECT_MAP
 
-#define L4_SLOT_DIRECT		509
+#define L4_SLOT_DIRECT		460
 #define PDIR_SLOT_DIRECT	L4_SLOT_DIRECT
 
 #define PMAP_DIRECT_BASE	(VA_SIGN_NEG((L4_SLOT_DIRECT * NBPD_L4)))
