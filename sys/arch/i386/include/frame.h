@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.35 2012/02/19 21:06:11 rmind Exp $	*/
+/*	$NetBSD: frame.h,v 1.36 2017/06/14 00:40:05 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -173,6 +173,7 @@ struct sigframe_siginfo {
 void *getframe(struct lwp *, int, int *);
 void buildcontext(struct lwp *, int, void *, void *);
 void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
+#define lwp_trapframe(l)	((l)->l_md.md_regs)
 #endif
 
 #endif  /* _I386_FRAME_H_ */
