@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.80 2017/01/20 00:29:28 maya Exp $	*/
+/*	$NetBSD: param.h,v 1.81 2017/06/14 12:27:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,6 +66,15 @@
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 #define	MAXIOMEM	0xffffffff
+
+/*
+ * Maximum physical memory supported by the implementation.
+ */
+#ifdef PAE
+#define MAXPHYSMEM	0x1000000000ULL /* 64GB */
+#else
+#define MAXPHYSMEM	0x100000000ULL	/* 4GB */
+#endif
 
 #if defined(_KERNEL_OPT)
 #include "opt_kernbase.h"
