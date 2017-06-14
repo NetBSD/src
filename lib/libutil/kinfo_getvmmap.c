@@ -2,10 +2,9 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libutil/kinfo_getvmmap.c 186512 2008-12-27 11:12:23Z rwatson $");
 #endif
-__RCSID("$NetBSD: kinfo_getvmmap.c,v 1.3 2015/09/26 20:28:55 christos Exp $");
+__RCSID("$NetBSD: kinfo_getvmmap.c,v 1.4 2017/06/14 12:24:51 kamil Exp $");
 
 #include <sys/param.h>
-#include <sys/user.h>
 #include <sys/sysctl.h>
 #include <stdlib.h>
 #include <string.h>
