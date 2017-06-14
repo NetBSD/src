@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.7 2017/06/14 17:02:16 maxv Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.8 2017/06/14 17:21:04 maxv Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.7 2017/06/14 17:02:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.8 2017/06/14 17:21:04 maxv Exp $");
 #endif
 
 /*
@@ -98,11 +98,26 @@ IDTVEC(trap01)
 	BPTTRAP(T_TRCTRAP)
 IDTVEC_END(trap01)
 
+/*
+ * Non Maskable Interrupts are a special case: they can be triggered even
+ * with interrupts disabled, and once triggered they block further NMIs
+ * until an 'iret' instruction is executed.
+ *
+ * Therefore we don't enable interrupts, because the CPU could switch to
+ * another LWP, call 'iret' and unintentionally leave the NMI mode.
+ */
 IDTVEC(trap02)
 	pushl	$0
 	pushl	$(T_NMI)
 	INTRENTRY
-	jmp	_C_LABEL(calltrap)
+
+	addl	$1,CPUVAR(NTRAP)	/* statistical info */
+	adcl	$0,CPUVAR(NTRAP)+4
+	pushl	%esp
+	call	_C_LABEL(trap)
+	addl	$4,%esp
+
+	INTRFASTEXIT
 IDTVEC_END(trap02)
 
 IDTVEC(trap03)
