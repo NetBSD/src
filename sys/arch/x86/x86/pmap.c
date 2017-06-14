@@ -1,6 +1,6 @@
-/*	$NetBSD: pmap.c,v 1.245 2017/03/24 10:58:06 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.246 2017/06/14 14:17:15 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245 2017/03/24 10:58:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.246 2017/06/14 14:17:15 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1443,10 +1443,12 @@ pmap_init_directmap(struct pmap *kpm)
 	pt_entry_t *pte;
 	pd_entry_t *pde;
 	phys_ram_seg_t *mc;
-	size_t nL3e;
+	size_t nL4e, nL3e;
 	int i;
 
 	const pd_entry_t pteflags = PG_V | PG_KW | pmap_pg_nx;
+
+	CTASSERT(NL4_SLOT_DIRECT * NBPD_L4 == MAXPHYSMEM);
 
 	/* Get the last physical address available */
 	lastpa = 0;
@@ -1456,22 +1458,28 @@ pmap_init_directmap(struct pmap *kpm)
 	}
 
 	/*
-	 * We allocate only one L4 entry for the direct map (PDIR_SLOT_DIRECT),
-	 * so we cannot map more than 512GB.
+	 * x86_add_cluster should have truncated the memory to MAXPHYSMEM.
 	 */
-	if (lastpa > NBPD_L4) {
-		panic("RAM limit reached: > 512GB not supported");
+	if (lastpa > MAXPHYSMEM) {
+		panic("pmap_init_directmap: lastpa incorrect");
 	}
 
 	/* In locore.S, we allocated a tmp va. We will use it now. */
 	tmpva = (KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
 	pte = PTE_BASE + pl1_i(tmpva);
 
+	/* Number of L4 entries. */
+	nL4e = (lastpa + NBPD_L4 - 1) >> L4_SHIFT;
+	KASSERT(nL4e <= NL4_SLOT_DIRECT);
+
 	/* Allocate L3, and zero it out. */
-	L3page_pa = pmap_bootstrap_palloc(1);
-	*pte = L3page_pa | pteflags;
-	pmap_update_pg(tmpva);
-	memset((void *)tmpva, 0, PAGE_SIZE);
+	L3page_pa = pmap_bootstrap_palloc(nL4e);
+	for (i = 0; i < nL4e; i++) {
+		pdp = L3page_pa + i * PAGE_SIZE;
+		*pte = (pdp & PG_FRAME) | pteflags;
+		pmap_update_pg(tmpva);
+		memset((void *)tmpva, 0, PAGE_SIZE);
+	}
 
 	/* Number of L3 entries. */
 	nL3e = (lastpa + NBPD_L3 - 1) >> L3_SHIFT;
@@ -1528,7 +1536,11 @@ pmap_init_directmap(struct pmap *kpm)
 		}
 	}
 
-	kpm->pm_pdir[PDIR_SLOT_DIRECT] = L3page_pa | pteflags | PG_U;
+	/* Fill in the L4 entries, linked to L3. */
+	for (i = 0; i < nL4e; i++) {
+		kpm->pm_pdir[PDIR_SLOT_DIRECT + i] =
+		    (L3page_pa + (i << PAGE_SHIFT)) | pteflags | PG_U;
+	}
 
 	*pte = 0;
 	pmap_update_pg(tmpva);
@@ -2156,7 +2168,8 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	}
 
 #ifdef __HAVE_DIRECT_MAP
-	pdir[PDIR_SLOT_DIRECT] = PDP_BASE[PDIR_SLOT_DIRECT];
+	memcpy(&pdir[PDIR_SLOT_DIRECT], &PDP_BASE[PDIR_SLOT_DIRECT],
+	    NL4_SLOT_DIRECT * sizeof(pd_entry_t));
 #endif
 #endif /* XEN  && __x86_64__*/
 
