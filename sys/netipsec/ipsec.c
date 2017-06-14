@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.99 2017/06/02 03:41:20 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.100 2017/06/14 02:00:43 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.99 2017/06/02 03:41:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.100 2017/06/14 02:00:43 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -237,10 +237,8 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 		 * might have lower priority than a rule that would otherwise
 		 * have matched the packet. 
 		 */
-
 		if (memcmp(&pcbsp->sp_cache[dir].cacheidx, &spidx, sizeof(spidx))) 
 			return NULL;
-		
 	} else {
 		/*
 		 * The pcb is connected, and the L4 code is sure that:
@@ -296,11 +294,11 @@ ipsec_fillpcbcache(struct inpcbpolicy *pcbsp, struct mbuf *m,
 			case IPSEC_POLICY_NONE:
 			case IPSEC_POLICY_BYPASS:
 				pcbsp->sp_cache[dir].cachehint =
-					IPSEC_PCBHINT_NO;
+				    IPSEC_PCBHINT_NO;
 				break;
 			default:
 				pcbsp->sp_cache[dir].cachehint =
-					IPSEC_PCBHINT_YES;
+				    IPSEC_PCBHINT_YES;
 			}
 		}
 	}
@@ -325,7 +323,7 @@ ipsec_invalpcbcache(struct inpcbpolicy *pcbsp, int dir)
 		pcbsp->sp_cache[i].cachehint = IPSEC_PCBHINT_UNKNOWN;
 		pcbsp->sp_cache[i].cachegen = 0;
 		memset(&pcbsp->sp_cache[i].cacheidx, 0,
-			  sizeof(pcbsp->sp_cache[i].cacheidx));
+		    sizeof(pcbsp->sp_cache[i].cacheidx));
 	}
 	return 0;
 }
@@ -916,9 +914,9 @@ ipsec4_setspidx_inpcb(struct mbuf *m, struct inpcb *pcb)
 		pcb->inp_sp->sp_out->spidx.dir = IPSEC_DIR_OUTBOUND;
 	} else {
 		memset(&pcb->inp_sp->sp_in->spidx, 0,
-			sizeof (pcb->inp_sp->sp_in->spidx));
+		    sizeof(pcb->inp_sp->sp_in->spidx));
 		memset(&pcb->inp_sp->sp_out->spidx, 0,
-			sizeof (pcb->inp_sp->sp_in->spidx));
+		    sizeof(pcb->inp_sp->sp_in->spidx));
 	}
 	return error;
 }
@@ -1133,11 +1131,9 @@ ipsec4_setspidx_ipaddr(struct mbuf *m, struct secpolicyindex *spidx)
 
 	if (m->m_len < sizeof (struct ip)) {
 		m_copydata(m, offsetof(struct ip, ip_src),
-			   sizeof (struct  in_addr),
-			   &spidx->src.sin.sin_addr);
+		    sizeof(struct in_addr), &spidx->src.sin.sin_addr);
 		m_copydata(m, offsetof(struct ip, ip_dst),
-			   sizeof (struct  in_addr),
-			   &spidx->dst.sin.sin_addr);
+		    sizeof(struct in_addr), &spidx->dst.sin.sin_addr);
 	} else {
 		struct ip *ip = mtod(m, struct ip *);
 		spidx->src.sin.sin_addr = ip->ip_src;
