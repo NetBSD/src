@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.86 2017/06/08 00:17:02 christos Exp $ */
+/*	$NetBSD: crypto.c,v 1.87 2017/06/14 07:32:19 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.86 2017/06/08 00:17:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.87 2017/06/14 07:32:19 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -569,7 +569,9 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 
 			/* Call the driver initialization routine. */
 			lid = hid;		/* Pass the driver ID. */
+			crypto_driver_unlock(cap);
 			err = cap->cc_newsession(cap->cc_arg, &lid, cri);
+			crypto_driver_lock(cap);
 			if (err == 0) {
 				(*sid) = hid;
 				(*sid) <<= 32;
