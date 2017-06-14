@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.92 2017/06/14 08:12:22 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.93 2017/06/14 12:27:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.92 2017/06/14 08:12:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.93 2017/06/14 12:27:24 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -519,17 +519,7 @@ x86_add_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 	phys_ram_seg_t *cluster;
 	int i;
 
-#ifdef i386
-#ifdef PAE
-#define TOPLIMIT	0x1000000000ULL /* 64GB */
-#else
-#define TOPLIMIT	0x100000000ULL	/* 4GB */
-#endif
-#else
-#define TOPLIMIT	0x100000000000ULL /* 16TB */
-#endif
-
-	if (seg_end > TOPLIMIT) {
+	if (seg_end > MAXPHYSMEM) {
 		aprint_verbose("WARNING: skipping large memory map entry: "
 		    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n",
 		    seg_start, (seg_end - seg_start), type);
@@ -539,7 +529,7 @@ x86_add_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 	/*
 	 * XXX: Chop the last page off the size so that it can fit in avail_end.
 	 */
-	if (seg_end == TOPLIMIT)
+	if (seg_end == MAXPHYSMEM)
 		seg_end -= PAGE_SIZE;
 
 	if (seg_end <= seg_start)
