@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.44 2015/05/17 05:20:37 pgoyette Exp $ */
+/* $NetBSD: pcppi.c,v 1.45 2017/06/14 05:01:35 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.44 2015/05/17 05:20:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.45 2017/06/14 05:01:35 pgoyette Exp $");
 
 #include "attimer.h"
 
@@ -246,6 +246,7 @@ pcppi_rescan(device_t self, const char *ifattr, const int *flags)
 		return 0;
 
 	pa.pa_cookie = sc;
+	pa.pa_bell_func = pcppi_bell;
 	config_search_loc(pcppisearch, sc->sc_dv, "pcppi", NULL, &pa);
 
 	return 0;

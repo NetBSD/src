@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_pcppi.c,v 1.10 2017/06/11 21:54:22 pgoyette Exp $	*/
+/*	$NetBSD: spkr_pcppi.c,v 1.11 2017/06/14 05:01:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.10 2017/06/11 21:54:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.11 2017/06/14 05:01:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.10 2017/06/11 21:54:22 pgoyette Exp
 struct spkr_pcppi_softc {
 	struct spkr_softc sc_spkr;
 	pcppi_tag_t sc_pcppicookie;
+	void (*sc_bell_func)(pcppi_tag_t, int, int, int);
 };
 
 static int spkr_pcppi_probe(device_t, cfdata_t, void *);
@@ -88,7 +89,7 @@ spkr_pcppi_tone(device_t self, u_int xhz, u_int ticks)
 	aprint_debug_dev(self, "%s: %u %u\n", __func__, xhz, ticks);
 #endif /* SPKRDEBUG */
 	struct spkr_pcppi_softc *sc = device_private(self);
-	pcppi_bell(sc->sc_pcppicookie, xhz, ticks, PCPPI_BELL_SLEEP);
+	(*sc->sc_bell_func)(sc->sc_pcppicookie, xhz, ticks, PCPPI_BELL_SLEEP);
 }
 
 /* rest for given number of ticks */
@@ -123,6 +124,7 @@ spkr_pcppi_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": PC Speaker\n");
 
 	sc->sc_pcppicookie = pa->pa_cookie;
+	sc->sc_bell_func = pa->pa_bell_func;
 	spkr_attach(self, spkr_pcppi_tone, spkr_pcppi_rest);
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: pcppivar.h,v 1.11 2011/11/23 23:07:32 jmcneill Exp $ */
+/* $NetBSD: pcppivar.h,v 1.12 2017/06/14 05:01:35 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -34,6 +34,7 @@ typedef void *pcppi_tag_t;
 
 struct pcppi_attach_args {
 	pcppi_tag_t pa_cookie;
+	void (*pa_bell_func)(pcppi_tag_t, int, int, int);
 };
 
 struct pcppi_softc {
