@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_gif.sh,v 1.5 2017/05/12 02:34:45 ozaki-r Exp $
+#	$NetBSD: t_ipsec_gif.sh,v 1.6 2017/06/14 02:33:37 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -33,7 +33,7 @@ BUS_LOCAL=./bus_ipsec_local
 BUS_TUNNEL=./bus_ipsec_tunnel
 BUS_REMOTE=./bus_ipsec_remote
 
-DEBUG=${DEBUG:-false}
+DEBUG=${DEBUG:-true}
 
 make_gif_pktstr()
 {
