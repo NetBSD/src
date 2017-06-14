@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.98 2017/05/15 04:02:52 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.99 2017/06/14 08:45:42 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -732,6 +732,7 @@
 #define 	EFER_SVME	0x00001000	/* Secure Virtual Machine En. */
 #define 	EFER_LMSLE	0x00002000	/* Long Mode Segment Limit E. */
 #define 	EFER_FFXSR	0x00004000	/* Fast FXSAVE/FXRSTOR En. */
+#define 	EFER_TCE	0x00008000	/* Translation Cache Ext. */
 
 #define MSR_STAR	0xc0000081		/* 32 bit syscall gate addr */
 #define MSR_LSTAR	0xc0000082		/* 64 bit syscall gate addr */
