@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.87 2017/06/14 07:32:19 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.88 2017/06/14 07:36:24 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.87 2017/06/14 07:32:19 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.88 2017/06/14 07:36:24 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -501,29 +501,34 @@ crypto_destroy(bool exit_kthread)
 	return 0;
 }
 
-/*
- * Create a new session.
- */
-int
-crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
+static bool
+crypto_driver_suitable(struct cryptocap *cap, struct cryptoini *cri)
 {
 	struct cryptoini *cr;
-	struct cryptocap *cap;
-	u_int32_t hid, lid;
-	int err = EINVAL;
 
-	mutex_enter(&crypto_drv_mtx);
+	for (cr = cri; cr; cr = cr->cri_next)
+		if (cap->cc_alg[cr->cri_alg] == 0) {
+			DPRINTF("alg %d not supported\n", cr->cri_alg);
+			return false;
+		}
 
-	/*
-	 * The algorithm we use here is pretty stupid; just use the
-	 * first driver that supports all the algorithms we need.
-	 *
-	 * XXX We need more smarts here (in real life too, but that's
-	 * XXX another story altogether).
-	 */
+	return true;
+}
+
+/*
+ * The algorithm we use here is pretty stupid; just use the
+ * first driver that supports all the algorithms we need.
+ *
+ * XXX We need more smarts here (in real life too, but that's
+ * XXX another story altogether).
+ */
+static struct cryptocap *
+crypto_select_driver_lock(struct cryptoini *cri, int hard)
+{
+	u_int32_t hid;
 
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
-		cap = crypto_checkdriver(hid);
+		struct cryptocap *cap = crypto_checkdriver(hid);
 		if (cap == NULL)
 			continue;
 
@@ -551,45 +556,59 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 		}
 
 		/* See if all the algorithms are supported. */
-		for (cr = cri; cr; cr = cr->cri_next)
-			if (cap->cc_alg[cr->cri_alg] == 0) {
-				DPRINTF("alg %d not supported\n", cr->cri_alg);
-				break;
-			}
-
-		if (cr == NULL) {
-			/* Ok, all algorithms are supported. */
-
-			/*
-			 * Can't do everything in one session.
-			 *
-			 * XXX Fix this. We need to inject a "virtual" session layer right
-			 * XXX about here.
-			 */
-
-			/* Call the driver initialization routine. */
-			lid = hid;		/* Pass the driver ID. */
-			crypto_driver_unlock(cap);
-			err = cap->cc_newsession(cap->cc_arg, &lid, cri);
-			crypto_driver_lock(cap);
-			if (err == 0) {
-				(*sid) = hid;
-				(*sid) <<= 32;
-				(*sid) |= (lid & 0xffffffff);
-				(cap->cc_sessions)++;
-			} else {
-				DPRINTF("crypto_drivers[%d].cc_newsession() failed. error=%d\n",
-					hid, err);
-			}
-			crypto_driver_unlock(cap);
-			goto done;
-			/*break;*/
+		if (crypto_driver_suitable(cap, cri)) {
+			/* keep holding crypto_driver_lock(cap) */
+			return cap;
 		}
 
 		crypto_driver_unlock(cap);
 	}
-done:
+
+	return NULL;
+}
+
+/*
+ * Create a new session.
+ */
+int
+crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
+{
+	struct cryptocap *cap;
+	int err = EINVAL;
+
+	mutex_enter(&crypto_drv_mtx);
+
+	cap = crypto_select_driver_lock(cri, hard);
+	if (cap != NULL) {
+		u_int32_t hid, lid;
+
+		hid = cap - crypto_drivers;
+		/*
+		 * Can't do everything in one session.
+		 *
+		 * XXX Fix this. We need to inject a "virtual" session layer right
+		 * XXX about here.
+		 */
+
+		/* Call the driver initialization routine. */
+		lid = hid;		/* Pass the driver ID. */
+		crypto_driver_unlock(cap);
+		err = cap->cc_newsession(cap->cc_arg, &lid, cri);
+		crypto_driver_lock(cap);
+		if (err == 0) {
+			(*sid) = hid;
+			(*sid) <<= 32;
+			(*sid) |= (lid & 0xffffffff);
+			(cap->cc_sessions)++;
+		} else {
+			DPRINTF("crypto_drivers[%d].cc_newsession() failed. error=%d\n",
+			    hid, err);
+		}
+		crypto_driver_unlock(cap);
+	}
+
 	mutex_exit(&crypto_drv_mtx);
+
 	return err;
 }
 
