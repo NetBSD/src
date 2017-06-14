@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/06/14 17:11:39 kamil Exp $
+#	$NetBSD: Makefile,v 1.6 2017/06/14 17:37:40 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -14,8 +14,8 @@ MAN=	cron.8
 .if (${MKPAM} != "no")
 SRCS+=		pam_auth.c
 CPPFLAGS+=	-DUSE_PAM
-DPADD+=		${LIBPAM}
-LDADD+=		-lpam
+DPADD+=		${LIBPAM} ${PAM_STATIC_DPADD}
+LDADD+=		-lpam ${PAM_STATIC_LDADD}
 .endif
 
 CWARNFLAGS.clang+=	-Wno-string-plus-int
