@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.8 2017/06/10 06:35:52 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.9 2017/06/14 04:58:28 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -226,4 +226,32 @@ external/bsd/dhcp/dist/relay/dhcrelay.c		1.7
 	Fix bug where dhcrelay(8) needed to stay inforeground with -d
 	flag in order to service requests.
 	[manu, ticket #27]
+
+sys/arch/x86/x86/cpu.c				1.131
+
+	Further reduce the loop counter so that hatching completes
+	before the boot processor times us out.
+	[pgoyette, ticket #28]
+
+external/gpl3/gcc/dist/gcc/config/vax/builtins.md 1.6
+
+	Fix __builtin_ffs vax code generation. PR port-vax/51761 
+	[flxd, ticket #29]
+
+sys/dev/fdt/fdt_intr.c				1.11
+
+	Fix an issue with interrupt controller lookup wrt cascading
+	interrupt controllers.
+	[jmcneill, ticket #30]
+
+sys/arch/evbarm/fdt/fdt_machdep.c		1.7
+
+	Parse more than one entry from the /memory node's reg property.
+	[jmcneill, ticket #31]
+
+external/gpl3/gcc/usr.bin/gcc/arch/mips64el/auto-host.h 1.11
+external/gpl3/gcc/usr.bin/gcc/arch/mips64el/configargs.h 1.21
+
+	regen to fix PR toolchain/52142.
+	[maya, ticket #32]
 
