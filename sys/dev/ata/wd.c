@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.14 2017/04/24 22:20:23 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.15 2017/06/14 20:17:46 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.14 2017/04/24 22:20:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.15 2017/06/14 20:17:46 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -650,6 +650,7 @@ wdstart(struct wd_softc *wd)
 		bp = bufq_get(wd->sc_q);
 		KASSERT(bp != NULL);
 
+		xfer->c_bio.retries = 0;
 		wdstart1(wd, bp, xfer);
 	}
 
@@ -685,8 +686,17 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	    ((xfer->c_bio.bcount / wd->sc_dk.dk_label->d_secsize) > 128)))
 		xfer->c_bio.flags |= ATA_LBA48;
 
-	/* If NCQ was negotiated, always use it */
-	if (wd->drvp->drive_flags & ATA_DRIVE_NCQ) {
+	/*
+	 * If NCQ was negotiated, always use it for the first attempt.
+	 * Since device cancels all outstanding requests on error, downgrade
+	 * to non-NCQ on retry, so that the retried transfer would not cause
+	 * cascade failure for the other transfers if it fails again.
+	 * If FUA was requested, we can't downgrade, as that would violate
+	 * the semantics - FUA would not be honored. In that case, continue
+	 * retrying with NCQ.
+	 */
+	if (wd->drvp->drive_flags & ATA_DRIVE_NCQ &&
+	    (xfer->c_bio.retries == 0 || (bp->b_flags & B_MEDIA_FUA))) {
 		xfer->c_bio.flags |= ATA_LBA48;
 		xfer->c_flags |= C_NCQ;
 
