@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.12 2017/06/11 21:54:22 pgoyette Exp $	*/
+/*	$NetBSD: spkr.c,v 1.13 2017/06/14 06:55:37 nat Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.12 2017/06/11 21:54:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.13 2017/06/14 06:55:37 nat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -381,6 +381,7 @@ int
 spkr_detach(device_t self, int flags)
 {
 	struct spkr_softc *sc = device_private(self);
+	int rc;
 
 #ifdef SPKRDEBUG
 	aprint_debug("%s: entering for unit %d\n", __func__, self->dv_unit);
@@ -390,7 +391,9 @@ spkr_detach(device_t self, int flags)
 	if (sc->sc_inbuf != NULL)
 		return EBUSY;
 
-	return 0;
+	rc = config_detach_children(self, flags);
+
+	return rc;
 }
 
 /* ARGSUSED */
