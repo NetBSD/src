@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.88 2017/06/14 07:36:24 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.89 2017/06/14 07:38:24 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.88 2017/06/14 07:36:24 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.89 2017/06/14 07:38:24 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -515,9 +515,14 @@ crypto_driver_suitable(struct cryptocap *cap, struct cryptoini *cri)
 	return true;
 }
 
+#define CRYPTO_ACCEPT_HARDWARE 0x1
+#define CRYPTO_ACCEPT_SOFTWARE 0x2
 /*
  * The algorithm we use here is pretty stupid; just use the
  * first driver that supports all the algorithms we need.
+ * If there are multiple drivers we choose the driver with
+ * the fewest active sessions. We prefer hardware-backed
+ * drivers to software ones.
  *
  * XXX We need more smarts here (in real life too, but that's
  * XXX another story altogether).
@@ -526,9 +531,22 @@ static struct cryptocap *
 crypto_select_driver_lock(struct cryptoini *cri, int hard)
 {
 	u_int32_t hid;
+	int accept;
+	struct cryptocap *cap, *best;
 
+	best = NULL;
+	/*
+	 * hard == 0 can use both hardware and software drivers.
+	 * We use hardware drivers prior to software drivers, so search
+	 * hardware drivers at first time.
+	 */
+	if (hard >= 0)
+		accept = CRYPTO_ACCEPT_HARDWARE;
+	else
+		accept = CRYPTO_ACCEPT_SOFTWARE;
+again:
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
-		struct cryptocap *cap = crypto_checkdriver(hid);
+		cap = crypto_checkdriver(hid);
 		if (cap == NULL)
 			continue;
 
@@ -545,26 +563,41 @@ crypto_select_driver_lock(struct cryptoini *cri, int hard)
 		}
 
 		/* Hardware required -- ignore software drivers. */
-		if (hard > 0 && (cap->cc_flags & CRYPTOCAP_F_SOFTWARE)) {
+		if ((accept & CRYPTO_ACCEPT_SOFTWARE) == 0
+		    && (cap->cc_flags & CRYPTOCAP_F_SOFTWARE)) {
 			crypto_driver_unlock(cap);
 			continue;
 		}
 		/* Software required -- ignore hardware drivers. */
-		if (hard < 0 && (cap->cc_flags & CRYPTOCAP_F_SOFTWARE) == 0) {
+		if ((accept & CRYPTO_ACCEPT_HARDWARE) == 0
+		    && (cap->cc_flags & CRYPTOCAP_F_SOFTWARE) == 0) {
 			crypto_driver_unlock(cap);
 			continue;
 		}
 
 		/* See if all the algorithms are supported. */
 		if (crypto_driver_suitable(cap, cri)) {
-			/* keep holding crypto_driver_lock(cap) */
-			return cap;
+			if (best == NULL) {
+				/* keep holding crypto_driver_lock(cap) */
+				best = cap;
+				continue;
+			} else if (cap->cc_sessions < best->cc_sessions) {
+				crypto_driver_unlock(best);
+				/* keep holding crypto_driver_lock(cap) */
+				best = cap;
+				continue;
+			}
 		}
 
 		crypto_driver_unlock(cap);
 	}
+	if (best == NULL && hard == 0
+	    && (accept & CRYPTO_ACCEPT_SOFTWARE) == 0) {
+		accept = CRYPTO_ACCEPT_SOFTWARE;
+		goto again;
+	}
 
-	return NULL;
+	return best;
 }
 
 /*
