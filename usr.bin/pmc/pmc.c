@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.23 2017/03/24 18:30:44 maxv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.24 2017/06/14 17:54:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.23 2017/03/24 18:30:44 maxv Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.24 2017/06/14 17:54:01 maxv Exp $");
 #endif
 
 #include <inttypes.h>
@@ -585,8 +585,17 @@ main(int argc, char **argv)
 	setprogname(argv[0]);
 	argv += 1;
 
-	if (x86_pmc_info(&pmcinfo) < 0)
-		errx(EXIT_FAILURE, "PMC support not compiled into the kernel");
+	if (argc < 2)
+		usage();
+
+	if (x86_pmc_info(&pmcinfo) < 0) {
+		if (errno == EPERM)
+			errx(EXIT_FAILURE,
+			    "PMC operations require root privileges");
+		else
+			errx(EXIT_FAILURE,
+			    "PMC support not compiled into the kernel");
+	}
 	if (pmcinfo.vers != 1)
 		errx(EXIT_FAILURE, "Wrong PMC version");
 	pmc_ncounters = pmcinfo.nctrs;
