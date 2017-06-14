@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.10 2017/06/02 13:12:33 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.10.2.1 2017/06/14 04:53:12 snj Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.10 2017/06/02 13:12:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.10.2.1 2017/06/14 04:53:12 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +42,11 @@ struct fdtbus_interrupt_controller {
 	const struct fdtbus_interrupt_controller_func *ic_funcs;
 
 	struct fdtbus_interrupt_controller *ic_next;
+};
+
+struct fdtbus_interrupt_cookie {
+	struct fdtbus_interrupt_controller *c_ic;
+	void *c_ih;
 };
 
 static struct fdtbus_interrupt_controller *fdtbus_ic = NULL;
@@ -79,7 +84,7 @@ fdtbus_get_interrupt_parent(int phandle)
 }
 
 static struct fdtbus_interrupt_controller *
-fdtbus_get_interrupt_controller_ic(int phandle)
+fdtbus_get_interrupt_controller(int phandle)
 {
 	struct fdtbus_interrupt_controller * ic;
 	for (ic = fdtbus_ic; ic; ic = ic->ic_next) {
@@ -88,17 +93,6 @@ fdtbus_get_interrupt_controller_ic(int phandle)
 		}
 	}
 	return NULL;
-}
-
-static struct fdtbus_interrupt_controller *
-fdtbus_get_interrupt_controller(int phandle)
-{
-	const int ic_phandle = fdtbus_get_interrupt_parent(phandle);
-	if (ic_phandle < 0) {
-		return NULL;
-	}
-
-	return fdtbus_get_interrupt_controller_ic(ic_phandle);
 }
 
 int
@@ -123,8 +117,10 @@ fdtbus_intr_establish(int phandle, u_int index, int ipl, int flags,
     int (*func)(void *), void *arg)
 {
 	struct fdtbus_interrupt_controller *ic;
+	struct fdtbus_interrupt_cookie *c = NULL;
 	u_int *specifier;
 	int ihandle;
+	void *ih;
 
 	specifier = get_specifier_by_index(phandle, index, &ihandle);
 	if (specifier == NULL)
@@ -134,17 +130,23 @@ fdtbus_intr_establish(int phandle, u_int index, int ipl, int flags,
 	if (ic == NULL)
 		return NULL;
 
-	return ic->ic_funcs->establish(ic->ic_dev, specifier,
+	ih = ic->ic_funcs->establish(ic->ic_dev, specifier,
 	    ipl, flags, func, arg);
+	if (ih != NULL) {
+		c = kmem_alloc(sizeof(*c), KM_SLEEP);
+		c->c_ic = ic;
+		c->c_ih = ih;
+	}
+
+	return c;
 }
 
 void
-fdtbus_intr_disestablish(int phandle, void *ih)
+fdtbus_intr_disestablish(int phandle, void *cookie)
 {
-	struct fdtbus_interrupt_controller *ic;
-
-	ic = fdtbus_get_interrupt_controller(phandle);
-	KASSERT(ic != NULL);
+	struct fdtbus_interrupt_cookie *c = cookie;
+	struct fdtbus_interrupt_controller *ic = c->c_ic;
+	void *ih = c->c_ih;
 
 	return ic->ic_funcs->disestablish(ic->ic_dev, ih);
 }
