@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.7 2017/05/23 08:54:39 nonaka Exp $	*/
+/*	$NetBSD: pmc.c,v 1.8 2017/06/14 17:48:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -67,13 +67,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.7 2017/05/23 08:54:39 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.8 2017/06/14 17:48:40 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
 #include <sys/xcall.h>
+#include <sys/kauth.h>
 
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
@@ -325,6 +326,12 @@ int
 sys_pmc_info(struct lwp *l, struct x86_pmc_info_args *uargs, register_t *retval)
 {
 	struct x86_pmc_info_args rv;
+	int error;
+
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86PMC,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return error;
 
 	memset(&rv, 0, sizeof(rv));
 
@@ -343,6 +350,11 @@ sys_pmc_startstop(struct lwp *l, struct x86_pmc_startstop_args *uargs,
 	pmc_state_t *pmc;
 	bool start;
 	int error;
+
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86PMC,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return error;
 
 	if (pmc_type == PMC_TYPE_NONE)
 		return ENODEV;
@@ -385,6 +397,11 @@ sys_pmc_read(struct lwp *l, struct x86_pmc_read_args *uargs, register_t *retval)
 	pmc_state_t *pmc;
 	size_t nval;
 	int error;
+
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86PMC,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return error;
 
 	if (pmc_type == PMC_TYPE_NONE)
 		return ENODEV;
