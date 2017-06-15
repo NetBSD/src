@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.247 2017/06/15 06:32:52 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.248 2017/06/15 07:05:32 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.247 2017/06/15 06:32:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.248 2017/06/15 07:05:32 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1443,7 +1443,8 @@ pmap_init_directmap(struct pmap *kpm)
 	pt_entry_t *pte;
 	pd_entry_t *pde;
 	phys_ram_seg_t *mc;
-	size_t nL4e, nL3e, pn, npd;
+	size_t nL4e, nL3e, nL2e;
+	size_t pn, npd;
 	int i, n;
 
 	const pd_entry_t pteflags = PG_V | PG_KW | pmap_pg_nx;
@@ -1503,6 +1504,9 @@ pmap_init_directmap(struct pmap *kpm)
 		/* Allocate L2. */
 		L2page_pa = pmap_bootstrap_palloc(nL3e);
 
+		/* Number of L2 entries. */
+		nL2e = (lastpa + NBPD_L2 - 1) >> L2_SHIFT;
+
 		KASSERT(pmap_largepages != 0);
 
 		/* Large pages are supported. Just create L2. */
@@ -1514,7 +1518,8 @@ pmap_init_directmap(struct pmap *kpm)
 			memset((void *)tmpva, 0, PAGE_SIZE);
 
 			pde = (pd_entry_t *)tmpva;
-			for (n = 0; n < NPDPG; n++) {
+			npd = (i == nL3e - 1) ? (nL2e % NPDPG) : NPDPG;
+			for (n = 0; n < npd; n++) {
 				pn = (i * NPDPG) + n;
 				pde[n] = ((paddr_t)pn << L2_SHIFT) | pteflags |
 					PG_U | PG_PS | PG_G;
