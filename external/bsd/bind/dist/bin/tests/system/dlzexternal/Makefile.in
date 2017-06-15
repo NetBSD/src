@@ -1,4 +1,4 @@
-# Copyright (C) 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -12,8 +12,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.4 2011/11/16 00:42:07 each Exp 
-
 srcdir =	@srcdir@
 VPATH =		@srcdir@
 top_srcdir =	@top_srcdir@
@@ -22,32 +20,26 @@ VERSION=@BIND9_VERSION@
 
 @BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES}
-CDEFINES =
+CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} @DST_OPENSSL_INC@
+CDEFINES =	@CRYPTO@
 CWARNINGS =
 
 LIBS =		@LIBS@
 
 SO_TARGETS =    driver.@SO@
-TARGETS =	dlopen@EXEEXT@ @SO_TARGETS@
+TARGETS =	@SO_TARGETS@
 
-SRCS =		dlopen.c driver.c
-
-DLOPENOBJS      = dlopen.@O@
+SRCS =		driver.c
 
 SO_OBJS         = driver.@O@
 SO_SRCS         = driver.c
 
-OBJS =          ${DLOPENOBJS}
+OBJS =
 
 @BIND9_MAKE_RULES@
 
 CFLAGS =	@CFLAGS@ @SO_CFLAGS@
 SO_LDFLAGS =	@LDFLAGS@ @SO_LDFLAGS@
-
-dlopen@EXEEXT@: ${DLOPENOBJS}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} \
-		-o $@ ${DLOPENOBJS} ${LIBS}
 
 driver.@SO@: ${SO_OBJS}
 	${LIBTOOL_MODE_LINK} @SO_LD@ ${SO_LDFLAGS} -o $@ driver.@O@

@@ -23,6 +23,9 @@ If you wish to use IP geolocation, GeoIP API and database must be
 downloaded, patched and built on the system on which you are building
 BIND.
 
+If you wish to use python tools, you need a python (version 2 or 3)
+interpreter with its standard libraries.
+
 If you wish to use readline, the readline library must be downloaded
 and built on the system on which you are building BIND.
 
@@ -118,7 +121,25 @@ Step 3: Download and build GeoIP
   This patch has been submitted upstream, and will be included in
   future versions of libGeoIP.
 
-Step 4: Download and build Readline
+Step 4: Enable python tools
+
+  Some python packages are required: argparse, ply, win32con and win32api.
+  Last CPython's (version 2 or 3) from http://www.python.org include
+  the pip package manager which can install missing packages, for
+  instance for the 2 last packages 'pip install pypiwin32' downloads and
+  installs win32con and win32api.
+
+  Note when the python interpreter is in the command path and
+  the required packages available the Configure script will detect
+  them and add python tools to the BIND build.
+
+  To be used a python tool must be invoked with python (e.g.,
+  python dnssec-checkds.py <args>) as the shebang doesn't work
+  on Windows. The isc package should be installed too, cf step 11.
+  At the opposite of Unix this isc package uses the Registry to
+  learn where BIND was installed in step 10.
+
+Step 5: Download and build Readline
 
   The readline library adds command-line editing in nslookup and nsupdate.
   If you wish to build BIND 9 without support for this feature, skip to
@@ -134,7 +155,7 @@ Step 4: Download and build Readline
   Note: Windows command (cmd.exe) provides an integrated line edition
   feature so it is not recommended to configure bind with readline.
 
-Step 5: Make the redistributable runtime object available
+Step 6: Make the redistributable runtime object available
 
   Check that the Microsoft redistributable object (vcredist_x86.exe or
   vcredist_x64.exe) is available to the build.  The file may be placed
@@ -146,7 +167,7 @@ Step 5: Make the redistributable runtime object available
   step 4). If none of these options is used, Configure will attempt to
   find the redistributable based on clues in the build environment.
 
-Step 6: Configuring the BIND build
+Step 7: Configuring the BIND build
 
   From the command prompt, cd to the win32utils directory under
   the BIND 9 root:
@@ -170,7 +191,7 @@ Step 6: Configuring the BIND build
 
     perl Configure clean
 
-Step 7: Building BIND
+Step 8: Building BIND
 
   To build using 'nmake' or older versions of Visual Studio (e.g.
   VS 2005 or VS 2008), go to the legacy subdirectory:
@@ -194,7 +215,10 @@ Step 7: Building BIND
 
   Note: This mode does not support building for Windows XP.
 
-Step 8: Install
+  After this step this documentation applies to external or remote
+  builds, i.e., is common with installation.
+
+Step 9: Install
 
   Installation is accomplished by running the BINDInstall program. All
   DLL's are copied to the Program Files area and all applications
@@ -216,6 +240,19 @@ Step 8: Install
     4 flags (destination, importance, check version and part of tools).
   The idea is to be able to use any BINDInstall.exe binary so
   a non-free version of Visual Studio is no longer required.
+
+Step 10: Python package install
+
+  When BIND was built with python support, the isc python package
+  must be installed locally by:
+
+   cd <top-bind9-directory>
+   cd bin/python
+   python setup.py install
+
+  (replace 'python' by the path of your python interpreter if needed.)
+
+  BIND python tools should work with version 2 or 3, 32 or 64 bits.
 
 Please report bugs, whether in the process of building the application
 or in BIND 9 itself, to bind9-bugs@isc.org.
