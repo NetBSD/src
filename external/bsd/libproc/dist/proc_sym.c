@@ -32,7 +32,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/proc_sym.c 279946 2015-03-13 04:26:48Z stas $");
 #else
-__RCSID("$NetBSD: proc_sym.c,v 1.3 2016/04/26 14:28:39 chs Exp $");
+__RCSID("$NetBSD: proc_sym.c,v 1.4 2017/06/15 23:44:58 kamil Exp $");
 #endif
 
 #include <sys/types.h>
@@ -40,7 +40,9 @@ __RCSID("$NetBSD: proc_sym.c,v 1.3 2016/04/26 14:28:39 chs Exp $");
 #include <sys/ctf.h>
 #include <sys/ctf_api.h>
 #endif
+#if defined(__FreeBSD__)
 #include <sys/user.h>
+#endif
 #include <sys/sysctl.h>
 
 #include <assert.h>
