@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.3 2012/07/22 14:27:36 darrenr Exp $	*/
+/*	$NetBSD: sock.c,v 1.4 2017/06/15 23:50:20 kamil Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
@@ -47,7 +47,9 @@ typedef int     boolean_t;
 # undef  KERNEL
 #endif
 #include <nlist.h>
+#if defined(__FreeBSD__)
 #include <sys/user.h>
+#endif
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/proc.h>
