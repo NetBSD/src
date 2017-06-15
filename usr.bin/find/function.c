@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.75 2016/06/13 02:06:44 pgoyette Exp $	*/
+/*	$NetBSD: function.c,v 1.75.8.1 2017/06/15 05:46:49 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.75 2016/06/13 02:06:44 pgoyette Exp $");
+__RCSID("$NetBSD: function.c,v 1.75.8.1 2017/06/15 05:46:49 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -465,7 +465,7 @@ f_delete(PLAN *plan __unused, FTSENT *entry)
 		errx(1, "-delete: insecure options got turned on");
 
 	/* Potentially unsafe - do not accept relative paths whatsoever */
-	if (strchr(entry->fts_accpath, '/') != NULL)
+	if (entry->fts_level > 0 && strchr(entry->fts_accpath, '/') != NULL)
 		errx(1, "-delete: %s: relative path potentially not safe",
 			entry->fts_accpath);
 
