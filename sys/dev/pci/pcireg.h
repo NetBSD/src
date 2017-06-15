@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.130 2017/05/29 07:09:20 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.131 2017/06/15 06:51:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1877,7 +1877,7 @@ struct pci_rom {
 #define	PCI_LTR_MAXNOSNOOPLAT	0x04	/* Max No-Snoop Latency */
 #define	PCI_LTR_MAXNOSNOOPLAT_VAL __BITS(25, 16) /* Max No-Snoop LatencyValue*/
 #define	PCI_LTR_MAXNOSNOOPLAT_SCALE __BITS(28, 26) /*Max NoSnoop LatencyScale*/
-#define	PCI_LTR_SCALETONS(x) ((32 << (x)) / 32)
+#define	PCI_LTR_SCALETONS(x) (1 << ((x) * 5))
 
 /*
  * Extended capability ID: 0x0019
