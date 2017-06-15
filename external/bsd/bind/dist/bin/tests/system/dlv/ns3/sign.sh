@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009-2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -29,12 +29,13 @@ zone=child1.utld.
 infile=child.db.in
 zonefile=child1.utld.db
 outfile=child1.signed
-dlvsets="$dlvsets dlvset-$zone"
+dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null` 
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 
-cat $infile $keyname1.key $keyname2.key ../ns6/dsset-grand.$zone >$zonefile
+dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
+cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
 $SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo "I: signed $zone"
@@ -44,12 +45,13 @@ zone=child3.utld.
 infile=child.db.in
 zonefile=child3.utld.db
 outfile=child3.signed
-dlvsets="$dlvsets dlvset-$zone"
+dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 
-cat $infile $keyname1.key $keyname2.key ../ns6/dsset-grand.$zone >$zonefile
+dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
+cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
 $SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo "I: signed $zone"
@@ -59,7 +61,7 @@ zone=child4.utld.
 infile=child.db.in
 zonefile=child4.utld.db
 outfile=child4.signed
-dlvsets="$dlvsets dlvset-$zone"
+dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
@@ -74,12 +76,13 @@ zone=child5.utld.
 infile=child.db.in
 zonefile=child5.utld.db
 outfile=child5.signed
-dlvsets="$dlvsets dlvset-$zone"
+dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 
-cat $infile $keyname1.key $keyname2.key ../ns6/dsset-grand.$zone >$zonefile
+dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
+cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
 $SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo "I: signed $zone"
@@ -93,7 +96,8 @@ outfile=child7.signed
 keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 
-cat $infile $keyname1.key $keyname2.key ../ns6/dsset-grand.$zone >$zonefile
+dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
+cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
 $SIGNER -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo "I: signed $zone"
@@ -117,7 +121,7 @@ zone=child9.utld.
 infile=child.db.in
 zonefile=child9.utld.db
 outfile=child9.signed
-dlvsets="$dlvsets dlvset-$zone"
+dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
@@ -131,7 +135,7 @@ zone=child10.utld.
 infile=child.db.in
 zonefile=child10.utld.db
 outfile=child10.signed
-dlvsets="$dlvsets dlvset-$zone"
+dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
@@ -145,13 +149,14 @@ zone=child1.druz.
 infile=child.db.in
 zonefile=child1.druz.db
 outfile=child1.druz.signed
-dlvsets="$dlvsets dlvset-$zone"
-dssets="$dssets dsset-$zone"
+dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
+dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null` 
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 
-cat $infile $keyname1.key $keyname2.key ../ns6/dsset-grand.$zone >$zonefile
+dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
+cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
 $SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo "I: signed $zone"
@@ -161,13 +166,14 @@ zone=child3.druz.
 infile=child.db.in
 zonefile=child3.druz.db
 outfile=child3.druz.signed
-dlvsets="$dlvsets dlvset-$zone"
-dssets="$dssets dsset-$zone"
+dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
+dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 
-cat $infile $keyname1.key $keyname2.key ../ns6/dsset-grand.$zone >$zonefile
+dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
+cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
 $SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo "I: signed $zone"
@@ -177,8 +183,8 @@ zone=child4.druz.
 infile=child.db.in
 zonefile=child4.druz.db
 outfile=child4.druz.signed
-dlvsets="$dlvsets dlvset-$zone"
-dssets="$dssets dsset-$zone"
+dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
+dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
@@ -193,13 +199,14 @@ zone=child5.druz.
 infile=child.db.in
 zonefile=child5.druz.db
 outfile=child5.druz.signed
-dlvsets="$dlvsets dlvset-$zone"
-dssets="$dssets dsset-$zone"
+dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
+dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 
-cat $infile $keyname1.key $keyname2.key ../ns6/dsset-grand.$zone >$zonefile
+dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
+cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
 $SIGNER -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo "I: signed $zone"
@@ -209,12 +216,13 @@ zone=child7.druz.
 infile=child.db.in
 zonefile=child7.druz.db
 outfile=child7.druz.signed
-dssets="$dssets dsset-$zone"
+dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 
-cat $infile $keyname1.key $keyname2.key ../ns6/dsset-grand.$zone >$zonefile
+dsfilename=../ns6/dsset-grand.`echo $zone |sed -e "s/\.$//g"`$TP
+cat $infile $keyname1.key $keyname2.key $dsfilename >$zonefile
 
 $SIGNER -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null 2> signer.err || cat signer.err
 echo "I: signed $zone"
@@ -238,7 +246,7 @@ zone=child9.druz.
 infile=child.db.in
 zonefile=child9.druz.db
 outfile=child9.druz.signed
-dlvsets="$dlvsets dlvset-$zone"
+dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
@@ -252,8 +260,8 @@ zone=child10.druz.
 infile=child.db.in
 zonefile=child10.druz.db
 outfile=child10.druz.signed
-dlvsets="$dlvsets dlvset-$zone"
-dssets="$dssets dsset-$zone"
+dlvsets="$dlvsets dlvset-`echo $zone |sed -e "s/.$//g"`$TP"
+dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone 2> /dev/null`

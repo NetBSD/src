@@ -1,4 +1,4 @@
-; Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -33,6 +33,8 @@ b			A	10.0.0.2
 b			AAAA	fd92:7065:b8e:ffff::2
 c			A	10.0.0.3
 c			AAAA	fd92:7065:b8e:ffff::3
+
+xn--caf-dma		A	10.1.2.3
 
 foo			TXT	"testing"
 foo			A	10.0.1.0

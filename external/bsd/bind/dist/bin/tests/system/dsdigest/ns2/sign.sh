@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -37,8 +37,10 @@ cat $infile2 $keyname21.key $keyname22.key >$zonefile2
 $SIGNER -P -g -r $RANDFILE -o $zone1 $zonefile1 > /dev/null
 $SIGNER -P -g -r $RANDFILE -o $zone2 $zonefile2 > /dev/null
 
-$DSFROMKEY -a SHA-256 $keyname12 > dsset-$zone1
-$DSFROMKEY -a SHA-256 $keyname22 > dsset-$zone2
+DSFILENAME1=dsset-`echo $zone1 |sed -e "s/\.$//g"`$TP
+DSFILENAME2=dsset-`echo $zone2 |sed -e "s/\.$//g"`$TP
+$DSFROMKEY -a SHA-256 $keyname12 > $DSFILENAME1
+$DSFROMKEY -a SHA-256 $keyname22 > $DSFILENAME2
 
 supported=`cat ../supported`
 case "$supported" in
@@ -46,5 +48,6 @@ case "$supported" in
     *) algo=SHA-384 ;;
 esac
 
-$DSFROMKEY -a $algo $keyname12 >> dsset-$zone1
-$DSFROMKEY -a $algo $keyname22 > dsset-$zone2
+$DSFROMKEY -a $algo $keyname12 >> $DSFILENAME1
+$DSFROMKEY -a $algo $keyname22 > $DSFILENAME2
+

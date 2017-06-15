@@ -277,7 +277,7 @@ $PERL ../digcomp.pl dig.out.ns1 dig.out.ns2 || ret=1
 
 echo "I:SIGKILL and restart server ns1"
 cd ns1
-kill -KILL `cat named.pid`
+$KILL -KILL `cat named.pid`
 rm named.pid
 cd ..
 sleep 10
@@ -317,8 +317,13 @@ END
 
 sleep 5
 
-echo "I:SIGHUP slave"
-kill -HUP `cat ns2/named.pid`
+if [ ! "$CYGWIN" ]; then
+    echo "I:SIGHUP slave"
+    $KILL -HUP `cat ns2/named.pid`
+else
+    echo "I:reload slave"
+    $RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 reload > /dev/null 2>&1
+fi
 
 sleep 5
 
@@ -335,8 +340,13 @@ END
 
 sleep 5
 
-echo "I:SIGHUP slave again"
-kill -HUP `cat ns2/named.pid`
+if [ ! "$CYGWIN" ]; then
+    echo "I:SIGHUP slave again"
+    $KILL -HUP `cat ns2/named.pid`
+else
+    echo "I:reload slave again"
+    $RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 reload > /dev/null 2>&1
+fi
 
 sleep 5
 
@@ -610,5 +620,91 @@ $DIG +tcp @10.53.0.3 -p 5300 ns child.delegation.test > dig.out.ns1.test$n
 grep "status: NXDOMAIN" dig.out.ns1.test$n > /dev/null 2>&1 || ret=1
 [ $ret = 0 ] || { echo I:failed; status=1; }
 
+n=`expr $n + 1`
+echo "I:check that adding too many records is blocked ($n)"
+ret=0
+$NSUPDATE -v << EOF > nsupdate.out-$n 2>&1 && ret=1
+server 10.53.0.3 5300
+zone too-big.test.
+update add r1.too-big.test 3600 IN TXT r1.too-big.test
+send
+EOF
+grep "update failed: SERVFAIL" nsupdate.out-$n > /dev/null || ret=1
+$DIG +tcp @10.53.0.3 -p 5300 r1.too-big.test TXT > dig.out.ns3.test$n
+grep "status: NXDOMAIN" dig.out.ns3.test$n > /dev/null || ret=1
+grep "records in zone (4) exceeds max-records (3)" ns3/named.run > /dev/null || ret=1
+[ $ret = 0 ] || { echo I:failed; status=1; }
+
+#
+#  Add client library tests here
+#
+n=`expr $n + 1`
+echo "I:check that dns_client_update handles prerequisite NXDOMAIN failure ($n)"
+$SAMPLEUPDATE -P 5300 -a 10.53.0.1 -a 10.53.0.2 -p "nxdomain exists.sample" \
+	add "nxdomain-exists.sample 0 in a 1.2.3.4" > update.out.test$n 2>&1
+$SAMPLEUPDATE -P 5300 -a 10.53.0.2 -p "nxdomain exists.sample" \
+	add "check-nxdomain-exists.sample 0 in a 1.2.3.4" > update.out.check$n 2>&1
+$DIG +tcp @10.53.0.1 -p 5300 a nxdomain-exists.sample > dig.out.ns1.test$n
+$DIG +tcp @10.53.0.2 -p 5300 a nxdomain-exists.sample > dig.out.ns2.test$n
+$DIG +tcp @10.53.0.2 -p 5300 a check-nxdomain-exists.sample > check.out.ns2.test$n
+grep "update failed: YXDOMAIN" update.out.test$n > /dev/null || ret=1
+grep "update succeeded" update.out.check$n > /dev/null || ret=1
+grep "status: NXDOMAIN" dig.out.ns1.test$n > /dev/null || ret=1
+grep "status: NXDOMAIN" dig.out.ns2.test$n > /dev/null || ret=1
+grep "status: NOERROR" check.out.ns2.test$n > /dev/null || ret=1
+[ $ret = 0 ] || { echo I:failed; status=1; }
+
+n=`expr $n + 1`
+echo "I:check that dns_client_update handles prerequisite YXDOMAIN failure ($n)"
+$SAMPLEUPDATE -P 5300 -a 10.53.0.1 -a 10.53.0.2 -p "yxdomain nxdomain.sample" \
+	add "yxdomain-nxdomain.sample 0 in a 1.2.3.4" > update.out.test$n 2>&1
+$SAMPLEUPDATE -P 5300 -a 10.53.0.2 -p "yxdomain nxdomain.sample" \
+	add "check-yxdomain-nxdomain.sample 0 in a 1.2.3.4" > update.out.check$n 2>&1
+$DIG +tcp @10.53.0.1 -p 5300 a nxdomain-exists.sample > dig.out.ns1.test$n
+$DIG +tcp @10.53.0.2 -p 5300 a nxdomain-exists.sample > dig.out.ns2.test$n
+$DIG +tcp @10.53.0.2 -p 5300 a check-nxdomain-exists.sample > check.out.ns2.test$n
+grep "update failed: NXDOMAIN" update.out.test$n > /dev/null || ret=1
+grep "update succeeded" update.out.check$n > /dev/null || ret=1
+grep "status: NXDOMAIN" dig.out.ns1.test$n > /dev/null || ret=1
+grep "status: NXDOMAIN" dig.out.ns2.test$n > /dev/null || ret=1
+grep "status: NOERROR" check.out.ns2.test$n > /dev/null || ret=1
+[ $ret = 0 ] || { echo I:failed; status=1; }
+
+n=`expr $n + 1`
+echo "I:check that dns_client_update handles prerequisite NXRRSET failure ($n)"
+$SAMPLEUPDATE -P 5300 -a 10.53.0.1 -a 10.53.0.2 -p "nxrrset exists.sample TXT This RRset exists." \
+	add "nxrrset-exists.sample 0 in a 1.2.3.4" > update.out.test$n 2>&1
+$SAMPLEUPDATE -P 5300 -a 10.53.0.2 -p "nxrrset exists.sample TXT This RRset exists." \
+	add "check-nxrrset-exists.sample 0 in a 1.2.3.4" > update.out.check$n 2>&1
+$DIG +tcp @10.53.0.1 -p 5300 a nxrrset-exists.sample > dig.out.ns1.test$n
+$DIG +tcp @10.53.0.2 -p 5300 a nxrrset-exists.sample > dig.out.ns2.test$n
+$DIG +tcp @10.53.0.2 -p 5300 a check-nxrrset-exists.sample > check.out.ns2.test$n
+grep "update failed: YXRRSET" update.out.test$n > /dev/null || ret=1
+grep "update succeeded" update.out.check$n > /dev/null || ret=1
+grep "status: NXDOMAIN" dig.out.ns1.test$n > /dev/null || ret=1
+grep "status: NXDOMAIN" dig.out.ns2.test$n > /dev/null || ret=1
+grep "status: NOERROR" check.out.ns2.test$n > /dev/null || ret=1
+[ $ret = 0 ] || { echo I:failed; status=1; }
+
+n=`expr $n + 1`
+echo "I:check that dns_client_update handles prerequisite YXRRSET failure ($n)"
+$SAMPLEUPDATE -P 5300 -a 10.53.0.1 -a 10.53.0.2 -p "yxrrset no-txt.sample TXT" \
+	add "yxrrset-nxrrset.sample 0 in a 1.2.3.4" > update.out.test$n 2>&1
+$SAMPLEUPDATE -P 5300 -a 10.53.0.2 -p "yxrrset no-txt.sample TXT" \
+	add "check-yxrrset-nxrrset.sample 0 in a 1.2.3.4" > update.out.check$n 2>&1
+$DIG +tcp @10.53.0.1 -p 5300 a yxrrset-nxrrset.sample > dig.out.ns1.test$n
+$DIG +tcp @10.53.0.2 -p 5300 a yxrrset-nxrrset.sample > dig.out.ns2.test$n
+$DIG +tcp @10.53.0.2 -p 5300 a check-yxrrset-nxrrset.sample > check.out.ns2.test$n
+grep "update failed: NXRRSET" update.out.test$n > /dev/null || ret=1
+grep "update succeeded" update.out.check$n > /dev/null || ret=1
+grep "status: NXDOMAIN" dig.out.ns1.test$n > /dev/null || ret=1
+grep "status: NXDOMAIN" dig.out.ns2.test$n > /dev/null || ret=1
+grep "status: NOERROR" check.out.ns2.test$n > /dev/null || ret=1
+[ $ret = 0 ] || { echo I:failed; status=1; }
+
+#
+# End client library tests here
+#
+
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

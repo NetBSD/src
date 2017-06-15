@@ -152,6 +152,23 @@ if [ -x ${DIG} ] ; then
   if [ $ret != 0 ]; then echo "I:failed"; fi 
   status=`expr $status + $ret`
 
+  n=`expr $n + 1`
+  if $FEATURETEST --with-idn
+  then
+    echo "I:checking dig +idnout ($n)"
+    ret=0
+    $DIG $DIGOPTS @10.53.0.3 +noidnout xn--caf-dma.example. > dig.out.1.test$n 2>&1 || ret=1
+    $DIG $DIGOPTS @10.53.0.3 +idnout xn--caf-dma.example. > dig.out.2.test$n 2>&1 || ret=1
+    grep "^xn--caf-dma.example" dig.out.1.test$n > /dev/null || ret=1
+    grep "^xn--caf-dma.example" dig.out.2.test$n > /dev/null && ret=1
+    grep 10.1.2.3 dig.out.1.test$n > /dev/null || ret=1
+    grep 10.1.2.3 dig.out.2.test$n > /dev/null || ret=1
+    if [ $ret != 0 ]; then echo "I:failed"; fi
+    status=`expr $status + $ret`
+  else
+    echo "I:skipping 'dig +idnout' as IDN support is not enabled ($n)"
+  fi
+
 else
   echo "$DIG is needed, so skipping these dig tests"
 fi
@@ -276,7 +293,7 @@ if [ -x ${DELV} ] ; then
   status=`expr $status + $ret`
   
   n=`expr $n + 1`
-  echo "I:checking delv +sp works as an abbriviated form of split ($n)"
+  echo "I:checking delv +sp works as an abbreviated form of split ($n)"
   ret=0
   $DELV $DELVOPTS @10.53.0.3 +sp=4 -t sshfp foo.example > delv.out.test$n || ret=1
   grep " 9ABC DEF6 7890 " < delv.out.test$n > /dev/null || ret=1
@@ -306,8 +323,9 @@ if [ -x ${DELV} ] ; then
   grep "a.example." < delv.out.test$n > /dev/null || ret=1
   if [ $ret != 0 ]; then echo "I:failed"; fi 
   status=`expr $status + $ret`
-
-  exit $status
 else
   echo "$DELV is needed, so skipping these delv tests"
 fi
+
+echo "I:exit status: $status"
+[ $status -eq 0 ] || exit 1
