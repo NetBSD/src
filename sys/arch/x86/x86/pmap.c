@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.250 2017/06/15 13:42:55 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.251 2017/06/15 18:15:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.250 2017/06/15 13:42:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.251 2017/06/15 18:15:53 christos Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -974,8 +974,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #ifdef DOM0OPS
 	if (pa < pmap_pa_start || pa >= pmap_pa_end) {
 #ifdef DEBUG
-		printf_nolog("%s: pa 0x%" PRIx64 " for va 0x%" PRIx64
-		    " outside range\n", __func__, (int64_t)pa, (int64_t)va);
+		printf_nolog("%s: pa %#" PRIxPADDR " for va %#" PRIxVADDR
+		    " outside range\n", __func__, pa, va);
 #endif /* DEBUG */
 		npte = pa;
 	} else
@@ -991,7 +991,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * be kentered.
 	 */
 	if (opte & PG_PS)
-		panic("%s: PG_PS", __func__);
+		panic("%s: PG_PS va=%#" PRIxVADDR, __func__, va);
 #endif
 	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
 		/* This should not happen. */
@@ -1127,8 +1127,10 @@ pmap_kremove1(vaddr_t sva, vsize_t len, bool localonly)
 			pmap_tlb_shootdown(pmap_kernel(), va, opte,
 			    TLBSHOOT_KREMOVE);
 		}
-		KASSERT((opte & PG_PS) == 0);
-		KASSERT((opte & PG_PVLIST) == 0);
+		KASSERTMSG((opte & PG_PS) == 0,
+		    "va %#" PRIxVADDR " is a large page", va);
+		KASSERTMSG((opte & PG_PVLIST) == 0,
+		    "va %#" PRIxVADDR " is a pv tracked page", va);
 	}
 	if (localonly) {
 		tlbflushg();
@@ -2422,7 +2424,7 @@ pmap_destroy(struct pmap *pmap)
 				    ci->ci_index, ci->ci_pmap,
 				    i, ci->ci_kpm_pdir[i],
 				    i, pmap->pm_pdir[i]);
-				panic("pmap_destroy: used pmap");
+				panic("%s: used pmap", __func__);
 			}
 		}
 #endif
@@ -2527,8 +2529,8 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len, 0,
 		    UVM_KMF_WIRED);
 		if (new_ldt == NULL) {
-			printf("WARNING: pmap_fork: "
-			       "unable to allocate LDT space\n");
+			printf("WARNING: %s: unable to allocate LDT space\n",
+			    __func__);
 			return;
 		}
 		mutex_enter(&cpu_lock);
@@ -2538,8 +2540,8 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 			mutex_exit(&cpu_lock);
 			uvm_km_free(kernel_map, (vaddr_t)new_ldt, len,
 			    UVM_KMF_WIRED);
-			printf("WARNING: pmap_fork: "
-			       "unable to allocate LDT selector\n");
+			printf("WARNING: %s: unable to allocate LDT selector\n",
+			    __func__);
 			return;
 		}
 	} else {
@@ -3392,8 +3394,8 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 #if defined(DIAGNOSTIC) && !defined(DOM0OPS)
 		if (PHYS_TO_VM_PAGE(pmap_pte2pa(opte)) != NULL ||
 		    pmap_pv_tracked(pmap_pte2pa(opte)) != NULL)
-			panic("pmap_remove_pte: managed or pv-tracked page"
-			    " without PG_PVLIST for %#"PRIxVADDR, va);
+			panic("%s: managed or pv-tracked page"
+			    " without PG_PVLIST for %#"PRIxVADDR, __func__, va);
 #endif
 		return true;
 	}
@@ -3403,10 +3405,9 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 		pp = VM_PAGE_TO_PP(pg);
 	} else if ((pp = pmap_pv_tracked(pmap_pte2pa(opte))) == NULL) {
 		paddr_t pa = pmap_pte2pa(opte);
-		panic("pmap_remove_pte: PG_PVLIST with pv-untracked page"
-		    " va = 0x%"PRIxVADDR
-		    " pa = 0x%"PRIxPADDR" (0x%"PRIxPADDR")",
-		    va, pa, atop(pa));
+		panic("%s: PG_PVLIST with pv-untracked page"
+		    " va = %#"PRIxVADDR"pa = %#"PRIxPADDR" (%#"PRIxPADDR")",
+		    __func__, va, pa, atop(pa));
 	}
 
 	/* Sync R/M bits. */
@@ -3457,7 +3458,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			if (pmap != pmap_kernel()) {
 				ptp = pmap_find_ptp(pmap, va, ptppa, 1);
 				KASSERTMSG(ptp != NULL,
-				    "pmap_remove: unmanaged PTP detected");
+				    "%s: unmanaged PTP detected", __func__);
 			} else {
 				/* Never free kernel PTPs. */
 				ptp = NULL;
@@ -3511,8 +3512,8 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		/* Get PTP if non-kernel mapping. */
 		if (pmap != pmap_kernel()) {
 			ptp = pmap_find_ptp(pmap, va, ptppa, 1);
-			KASSERTMSG(ptp != NULL,
-			    "pmap_remove: unmanaged PTP detected");
+			KASSERTMSG(ptp != NULL, "%s: unmanaged PTP detected",
+			    __func__);
 		} else {
 			/* Never free kernel PTPs. */
 			ptp = NULL;
@@ -3744,8 +3745,7 @@ pmap_pv_remove(paddr_t pa)
 
 	pp = pmap_pv_tracked(pa);
 	if (pp == NULL)
-		panic("pmap_pv_protect: page not pv-tracked: 0x%"PRIxPADDR,
-		    pa);
+		panic("%s: page not pv-tracked: %#"PRIxPADDR, __func__, pa);
 	pmap_pp_remove(pp, pa);
 }
 
@@ -3865,8 +3865,7 @@ pmap_pv_clear_attrs(paddr_t pa, unsigned clearbits)
 
 	pp = pmap_pv_tracked(pa);
 	if (pp == NULL)
-		panic("pmap_pv_protect: page not pv-tracked: 0x%"PRIxPADDR,
-		    pa);
+		panic("%s: page not pv-tracked: %#"PRIxPADDR, __func__, pa);
 
 	return pmap_pp_clear_attrs(pp, pa, clearbits);
 }
@@ -4009,7 +4008,7 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 
 	if (!pmap_pdes_valid(va, pdes, NULL)) {
-		panic("pmap_unwire: invalid PDE");
+		panic("%s: invalid PDE va=%#" PRIxVADDR, __func__, va);
 	}
 
 	ptep = &ptes[pl1_i(va)];
@@ -4022,8 +4021,8 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 		opte = pmap_pte_testset(ptep, npte);
 		pmap_stats_update_bypte(pmap, npte, opte);
 	} else {
-		printf("pmap_unwire: wiring for pmap %p va 0x%lx "
-		    "did not change!\n", pmap, va);
+		printf("%s: wiring for pmap %p va %#" PRIxVADDR
+		    "did not change!\n", __func__, pmap, va);
 	}
 
 	/* Release pmap. */
@@ -4077,11 +4076,11 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	KASSERT(pmap_initialized);
 	KASSERT(curlwp->l_md.md_gc_pmap != pmap);
 	KASSERT(va < VM_MAX_KERNEL_ADDRESS);
-	KASSERTMSG(va != (vaddr_t)PDP_BASE,
-	    "pmap_enter: trying to map over PDP!");
+	KASSERTMSG(va != (vaddr_t)PDP_BASE, "%s: trying to map va=%#"
+	    PRIxVADDR " over PDP!", __func__, va);
 	KASSERTMSG(va < VM_MIN_KERNEL_ADDRESS ||
 	    pmap_valid_entry(pmap->pm_pdir[pl_i(va, PTP_LEVELS)]),
-	    "pmap_enter: missing kernel PTP for VA %lx!", va);
+	    "%s: missing kernel PTP for va=%#" PRIxVADDR, __func__, va);
 
 #ifdef XEN
 	KASSERT(domid == DOMID_SELF || pa == 0);
@@ -4131,7 +4130,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 			error = ENOMEM;
 			goto out2;
 		}
-		panic("pmap_enter: pve allocation failed");
+		panic("%s: pve allocation failed", __func__);
 	}
 
 	kpreempt_disable();
@@ -4146,7 +4145,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 				error = ENOMEM;
 				goto out;
 			}
-			panic("pmap_enter: get ptp failed");
+			panic("%s: get ptp failed", __func__);
 		}
 	}
 
@@ -4217,10 +4216,10 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 		} else if ((old_pp = pmap_pv_tracked(pmap_pte2pa(opte)))
 		    == NULL) {
 			pa = pmap_pte2pa(opte);
-			panic("pmap_enter: PG_PVLIST with pv-untracked page"
-			    " va = 0x%"PRIxVADDR
-			    " pa = 0x%" PRIxPADDR " (0x%" PRIxPADDR ")",
-			    va, pa, atop(pa));
+			panic("%s: PG_PVLIST with pv-untracked page"
+			    " va = %#"PRIxVADDR
+			    " pa = %#" PRIxPADDR " (%#" PRIxPADDR ")",
+			    __func__, va, pa, atop(pa));
 		}
 
 		old_pve = pmap_remove_pv(old_pp, ptp, va);
@@ -4279,7 +4278,7 @@ pmap_get_physpage(void)
 		 */
 
 		if (!uvm_page_physget(&pa))
-			panic("pmap_get_physpage: out of memory");
+			panic("%s: out of memory", __func__);
 #if defined(__HAVE_DIRECT_MAP)
 		pagezero(PMAP_DIRECT_MAP(pa));
 #else
@@ -4306,7 +4305,7 @@ pmap_get_physpage(void)
 		ptp = uvm_pagealloc(NULL, 0, NULL,
 				    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 		if (ptp == NULL)
-			panic("pmap_get_physpage: out of memory");
+			panic("%s: out of memory", __func__);
 		ptp->flags &= ~PG_BUSY;
 		ptp->wire_count = 1;
 		pa = VM_PAGE_TO_PHYS(ptp);
