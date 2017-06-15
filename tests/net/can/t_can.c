@@ -1,4 +1,4 @@
-/*	$NetBSD: t_can.c,v 1.5 2017/05/28 14:53:13 christos Exp $	*/
+/*	$NetBSD: t_can.c,v 1.5.2.1 2017/06/15 05:32:35 snj Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_can.c,v 1.5 2017/05/28 14:53:13 christos Exp $");
+__RCSID("$NetBSD: t_can.c,v 1.5.2.1 2017/06/15 05:32:35 snj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -717,6 +717,31 @@ ATF_TC_BODY(cannoloop, tc)
 	}
 }
 
+ATF_TC(canbindunknown);
+ATF_TC_HEAD(canbindunknown, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "check that bind to unkown interface fails");
+	atf_tc_set_md_var(tc, "timeout", "5");
+}
+
+ATF_TC_BODY(canbindunknown, tc)
+{
+	struct sockaddr_can sa;
+	int r, s;
+
+	rump_init();
+
+	s = can_socket_with_own();
+
+	sa.can_family = AF_CAN;
+	sa.can_ifindex = 10; /* should not exist */
+
+	r = rump_sys_bind(s, (struct sockaddr *)&sa, sizeof(sa));
+
+	ATF_CHECK_MSG(r < 0, "bind() didn't fail (%d)", r);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -730,5 +755,6 @@ ATF_TP_ADD_TCS(tp)
         ATF_TP_ADD_TC(tp, canrecvfrom);
         ATF_TP_ADD_TC(tp, canbindfilter);
         ATF_TP_ADD_TC(tp, cannoloop);
+        ATF_TP_ADD_TC(tp, canbindunknown);
 	return atf_no_error();
 }
