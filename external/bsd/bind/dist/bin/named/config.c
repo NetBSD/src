@@ -1,7 +1,7 @@
-/*	$NetBSD: config.c,v 1.13 2016/05/26 16:49:56 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.14 2017/06/15 15:59:36 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,6 +32,8 @@
 #include <isc/sockaddr.h>
 #include <isc/string.h>
 #include <isc/util.h>
+
+#include <pk11/site.h>
 
 #include <isccfg/namedconf.h>
 
@@ -108,6 +110,7 @@ options {\n\
 	transfers-in 10;\n\
 	transfers-out 10;\n\
 #	treat-cr-as-space <obsolete>;\n\
+	trust-anchor-telemetry yes;\n\
 #	use-id-pool <obsolete>;\n\
 #	use-ixfr <obsolete>;\n\
 	edns-udp-size 4096;\n\
@@ -211,6 +214,7 @@ options {\n\
 	max-transfer-time-out 120;\n\
 	max-transfer-idle-in 60;\n\
 	max-transfer-idle-out 60;\n\
+	max-records 0;\n\
 	max-retry-time 1209600; /* 2 weeks */\n\
 	min-retry-time 500;\n\
 	max-refresh-time 2419200; /* 4 weeks */\n\
@@ -959,9 +963,11 @@ struct keyalgorithms {
 	unsigned int type;
 	isc_uint16_t size;
 } algorithms[] = {
+#ifndef PK11_MD5_DISABLE
 	{ "hmac-md5", hmacmd5, DST_ALG_HMACMD5, 128 },
 	{ "hmac-md5.sig-alg.reg.int", hmacmd5, DST_ALG_HMACMD5, 0 },
 	{ "hmac-md5.sig-alg.reg.int.", hmacmd5, DST_ALG_HMACMD5, 0 },
+#endif
 	{ "hmac-sha1", hmacsha1, DST_ALG_HMACSHA1, 160 },
 	{ "hmac-sha224", hmacsha224, DST_ALG_HMACSHA224, 224 },
 	{ "hmac-sha256", hmacsha256, DST_ALG_HMACSHA256, 256 },
@@ -1008,7 +1014,9 @@ ns_config_getkeyalgorithm2(const char *str, dns_name_t **name,
 
 	if (name != NULL) {
 		switch (algorithms[i].hmac) {
+#ifndef PK11_MD5_DISABLE
 		case hmacmd5: *name = dns_tsig_hmacmd5_name; break;
+#endif
 		case hmacsha1: *name = dns_tsig_hmacsha1_name; break;
 		case hmacsha224: *name = dns_tsig_hmacsha224_name; break;
 		case hmacsha256: *name = dns_tsig_hmacsha256_name; break;

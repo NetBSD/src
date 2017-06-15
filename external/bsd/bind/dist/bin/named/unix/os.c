@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.9 2016/05/26 16:49:56 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.10 2017/06/15 15:59:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2011, 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
@@ -50,6 +50,7 @@
 #include <isc/strerror.h>
 #include <isc/string.h>
 
+#include <named/globals.h>
 #include <named/main.h>
 #include <named/os.h>
 #ifdef HAVE_LIBSCF
@@ -462,7 +463,7 @@ ns_os_daemonize(void) {
 			(void)close(STDOUT_FILENO);
 			(void)dup2(devnullfd, STDOUT_FILENO);
 		}
-		if (devnullfd != STDERR_FILENO) {
+		if (devnullfd != STDERR_FILENO && !ns_g_keepstderr) {
 			(void)close(STDERR_FILENO);
 			(void)dup2(devnullfd, STDERR_FILENO);
 		}

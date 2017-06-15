@@ -1,7 +1,7 @@
-/*	$NetBSD: update.c,v 1.12 2015/12/17 04:00:41 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.13 2017/06/15 15:59:37 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -2462,6 +2462,8 @@ update_action(isc_task_t *task, isc_event_t *event) {
 	isc_boolean_t had_dnskey;
 	dns_rdatatype_t privatetype = dns_zone_getprivatetype(zone);
 	dns_ttl_t maxttl = 0;
+	isc_uint32_t maxrecords;
+	isc_uint64_t records;
 
 	INSIST(event->ev_type == DNS_EVENT_UPDATE);
 
@@ -3141,6 +3143,20 @@ update_action(isc_task_t *task, isc_event_t *event) {
 					   ISC_LOG_ERROR,
 					   "RRSIG/NSEC/NSEC3 update failed: %s",
 					   isc_result_totext(result));
+				goto failure;
+			}
+		}
+
+		maxrecords = dns_zone_getmaxrecords(zone);
+		if (maxrecords != 0U) {
+			result = dns_db_getsize(db, ver, &records, NULL);
+			if (result == ISC_R_SUCCESS && records > maxrecords) {
+				update_log(client, zone, ISC_LOG_ERROR,
+					   "records in zone (%"
+					   ISC_PRINT_QUADFORMAT
+					   "u) exceeds max-records (%u)",
+					   records, maxrecords);
+				result = DNS_R_TOOMANYRECORDS;
 				goto failure;
 			}
 		}
