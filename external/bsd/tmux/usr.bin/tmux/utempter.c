@@ -1,4 +1,4 @@
-/*	$NetBSD: utempter.c,v 1.1 2017/04/23 02:02:00 christos Exp $	*/
+/*	$NetBSD: utempter.c,v 1.1.6.1 2017/06/15 05:35:07 snj Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: utempter.c,v 1.1 2017/04/23 02:02:00 christos Exp $");
+__RCSID("$NetBSD: utempter.c,v 1.1.6.1 2017/06/15 05:35:07 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,9 +86,9 @@ login_utmpx(const char *username, const char *hostname, const char *tty,
 }
 
 static void
-logout_utmpx(const char *tty, const struct timeval *now)
+logout_utmpx(const char *username, const char *tty, const struct timeval *now)
 {
-	doutmpx("", "", tty, now, DEAD_PROCESS, 0);
+	doutmpx(username, "", tty, now, DEAD_PROCESS, 0);
 }
 #endif
 
@@ -108,7 +108,8 @@ login_utmp(const char *username, const char *hostname, const char *tty,
 }
 
 static void
-logout_utmp(const char *tty, const struct timeval *now __unused)
+logout_utmp(const char *username __unused,
+    const char *tty, const struct timeval *now __unused)
 {
 	logout(tty);
 }
@@ -142,17 +143,22 @@ static int
 utmp_destroy(int fd)
 {
 	struct timeval tv;
+	char username[LOGIN_NAME_MAX];
 	char tty[128], *ttyp;
+
+	if (getlogin_r(username, sizeof(username)) == -1)
+		return -1;
 
 	if ((errno = ttyname_r(fd, tty, sizeof(tty))) != 0)
 		return -1;
+
 	ttyp = tty + sizeof(_PATH_DEV) - 1;
 	(void)gettimeofday(&tv, NULL);
 #ifdef SUPPORT_UTMPX
-	logout_utmpx(ttyp, &tv);
+	logout_utmpx(username, ttyp, &tv);
 #endif
 #ifdef SUPPORT_UTMP
-	logout_utmp(ttyp, &tv);
+	logout_utmp(username, ttyp, &tv);
 #endif
 	return 0;
 }
