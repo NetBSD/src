@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.36 2017/06/06 01:48:33 knakahara Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.37 2017/06/15 12:41:18 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -461,8 +461,10 @@ struct cryptop {
 					 * should always check and use the new
 					 * value on future requests.
 					 */
-	int		crp_flags;	/* Note: must hold mutext to modify */
-
+	int		crp_flags;	/*
+					 * other than crypto.c must not write
+					 * after crypto_dispatch().
+					 */
 #define CRYPTO_F_IMBUF		0x0001	/* Input/output are mbuf chains */
 #define CRYPTO_F_IOV		0x0002	/* Input/output are uio */
 #define CRYPTO_F_REL		0x0004	/* Must return data in same place */
@@ -473,7 +475,9 @@ struct cryptop {
 #define	CRYPTO_F_ONRETQ		0x0080	/* Request is on return queue */
 #define	CRYPTO_F_USER		0x0100	/* Request is in user context */
 #define	CRYPTO_F_MORE		0x0200	/* more data to follow */
-#define	CRYPTO_F_DQRETQ		0x0400	/* Dequeued from crp_ret_{,k}q */
+
+	int		crp_devflags;	/* other than cryptodev.c must not use. */
+#define	CRYPTODEV_F_RET		0x0001	/* return from crypto.c to cryptodev.c */
 
 	void *		crp_buf;	/* Data to be processed */
 	void *		crp_opaque;	/* Opaque pointer, passed along */
@@ -528,6 +532,7 @@ struct cryptkop {
 	struct crparam	krp_param[CRK_MAXPARAM];	/* kvm */
 	int		(*krp_callback)(struct cryptkop *);
 	int		krp_flags;	/* same values as crp_flags */
+	int		krp_devflags;	/* same values as crp_devflags */
 	kcondvar_t	krp_cv;
 	struct fcrypt 	*fcrp;
 	struct crparam	crk_param[CRK_MAXPARAM];
