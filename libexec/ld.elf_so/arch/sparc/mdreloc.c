@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.48 2014/08/25 20:40:52 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.49 2017/06/15 23:08:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.48 2014/08/25 20:40:52 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.49 2017/06/15 23:08:46 joerg Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -238,57 +238,56 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		 */
 		if (RELOC_TLS(type)) {
 			switch (type) {
-				case R_TYPE(TLS_DTPMOD32):
-					def = _rtld_find_symdef(symnum, obj,
-					    &defobj, false);
-					if (def == NULL)
-						return -1;
+			case R_TYPE(TLS_DTPMOD32):
+				def = _rtld_find_symdef(symnum, obj,
+				    &defobj, false);
+				if (def == NULL)
+					return -1;
 
-					*where = (Elf_Addr)defobj->tlsindex;
+				*where = (Elf_Addr)defobj->tlsindex;
 
-					rdbg(("TLS_DTPMOD32 %s in %s --> %p",
-					    obj->strtab +
-					    obj->symtab[symnum].st_name,
-					    obj->path, (void *)*where));
+				rdbg(("TLS_DTPMOD32 %s in %s --> %p",
+				    obj->strtab +
+				    obj->symtab[symnum].st_name,
+				    obj->path, (void *)*where));
 
-					break;
+				break;
 
-				case R_TYPE(TLS_DTPOFF32):
-					def = _rtld_find_symdef(symnum, obj,
-					    &defobj, false);
-					if (def == NULL)
-						return -1;
+			case R_TYPE(TLS_DTPOFF32):
+				def = _rtld_find_symdef(symnum, obj,
+				    &defobj, false);
+				if (def == NULL)
+					return -1;
 
-					*where = (Elf_Addr)(def->st_value
-					    + rela->r_addend);
+				*where = (Elf_Addr)(def->st_value
+				    + rela->r_addend);
 
-					rdbg(("TLS_DTPOFF32 %s in %s --> %p",
-					    obj->strtab +
-					        obj->symtab[symnum].st_name,
-					    obj->path, (void *)*where));
+				rdbg(("TLS_DTPOFF32 %s in %s --> %p",
+				    obj->strtab +
+				        obj->symtab[symnum].st_name,
+				    obj->path, (void *)*where));
 
-					break;
+				break;
 
-				case R_TYPE(TLS_TPOFF32):
-					def = _rtld_find_symdef(symnum, obj,
-					    &defobj, false);
-					if (def == NULL)
-						return -1;
+			case R_TYPE(TLS_TPOFF32):
+				def = _rtld_find_symdef(symnum, obj,
+				    &defobj, false);
+				if (def == NULL)
+					return -1;
 
-					if (!defobj->tls_done &&
-						_rtld_tls_offset_allocate(obj))
-						     return -1;
+				if (!defobj->tls_done &&
+					_rtld_tls_offset_allocate(obj))
+					     return -1;
 
-					*where = (Elf_Addr)(def->st_value -
-			                            defobj->tlsoffset +
-						    rela->r_addend);
+				*where = (Elf_Addr)(def->st_value -
+				    defobj->tlsoffset + rela->r_addend);
 
-		                        rdbg(("TLS_TPOFF32 %s in %s --> %p",
-		                            obj->strtab +
-					    obj->symtab[symnum].st_name,
-		                            obj->path, (void *)*where));
+				rdbg(("TLS_TPOFF32 %s in %s --> %p",
+				    obj->strtab +
+				    obj->symtab[symnum].st_name,
+				    obj->path, (void *)*where));
 
-	                		break;
+				break;
 			}
 			continue;
 		}
