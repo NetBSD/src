@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.256 2017/01/11 12:19:43 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.257 2017/06/15 21:41:01 jmcneill Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -533,6 +533,25 @@ build_kernel: .USE
 	@${_MKSHECHO} ${KCOMPILE.s} -pg
 	@${KCOMPILE.s} -pg
 .endif # ___USE_SUFFIX_RULES___
+
+# Begin DTS handling
+
+DTSINC?=$S/external/gpl2/dts/dist/include
+DTSPATH?=$S/external/gpl2/dts/dist/arch/${MACHINE_CPU}/boot/dts
+DTSPADDING?=1024
+
+.SUFFIXES: .dtb .dts
+.dts.dtb:
+	${CPP} -P -xassembler-with-cpp -I ${DTSINC} -I ${DTSPATH} \
+	    -include ${.IMPSRC} /dev/null | \
+	${TOOL_DTC} -i ${DTSINC} -i ${DTSPATH} -I dts -O dtb \
+	    -p ${DTSPADDING} -b 0 -o ${.TARGET}
+
+.PATH.dts: ${DTSPATH}
+
+all: ${DTS:.dts=.dtb}
+
+# End DTS handling
 
 ##
 ## the end
