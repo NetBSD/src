@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.188 2017/06/15 06:51:18 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.189 2017/06/15 15:38:18 flxd Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.188 2017/06/15 06:51:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.189 2017/06/15 15:38:18 flxd Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3505,13 +3505,13 @@ pci_conf_print_ltr_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	printf("\n  Latency Tolerance Reporting\n");
 	reg = regs[o2i(extcapoff + PCI_LTR_MAXSNOOPLAT)];
 	printf("    Max Snoop Latency Register: 0x%04x\n", reg & 0xffff);
-	printf("      Max Snoop Latency: %luns\n",
-	    __SHIFTOUT(reg, PCI_LTR_MAXSNOOPLAT_VAL)
-	    * PCI_LTR_SCALETONS(__SHIFTOUT(reg, PCI_LTR_MAXSNOOPLAT_SCALE)));
+	printf("      Max Snoop Latency: %juns\n",
+	    (uintmax_t)(__SHIFTOUT(reg, PCI_LTR_MAXSNOOPLAT_VAL)
+	    * PCI_LTR_SCALETONS(__SHIFTOUT(reg, PCI_LTR_MAXSNOOPLAT_SCALE))));
 	printf("    Max No-Snoop Latency Register: 0x%04x\n", reg >> 16);
-	printf("      Max No-Snoop Latency: %luns\n",
-	    __SHIFTOUT(reg, PCI_LTR_MAXNOSNOOPLAT_VAL)
-	    * PCI_LTR_SCALETONS(__SHIFTOUT(reg, PCI_LTR_MAXNOSNOOPLAT_SCALE)));
+	printf("      Max No-Snoop Latency: %juns\n",
+	    (uintmax_t)(__SHIFTOUT(reg, PCI_LTR_MAXNOSNOOPLAT_VAL)
+	    * PCI_LTR_SCALETONS(__SHIFTOUT(reg, PCI_LTR_MAXNOSNOOPLAT_SCALE))));
 }
 
 static void
