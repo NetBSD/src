@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.285 2017/06/03 17:26:55 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.286 2017/06/15 06:04:24 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -17782,4 +17782,12 @@ crypto/external/bsd/openssh/dist/moduli		up to 1.8
 
 	Update moduli file.
 	[aymeric/christos, ticket #1422]
+
+sys/arch/ews4800mips/sbd/fb_sbdio.c		1.16
+sys/arch/pmax/ibus/pm.c				1.13
+sys/dev/hpc/bivideo.c				1.34
+sys/dev/ic/sti.c				1.19
+
+	Fix size checks so they can't be circumvented by integer overflows.
+	[spz, ticket #1456]
 
