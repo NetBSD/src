@@ -37,7 +37,9 @@
 #include "readline/readline.h"
 #include <sys/param.h>
 #include <sys/proc.h>
+#if defined(__FreeBSD__)
 #include <sys/user.h>
+#endif
 
 #include "bsd-kvm.h"
 
