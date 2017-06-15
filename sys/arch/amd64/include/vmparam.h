@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.39 2017/02/11 15:05:15 maxv Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.40 2017/06/15 11:25:52 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -108,22 +108,24 @@
  */
 #define	USRIOSIZE 	300
 
-/*
- * Mach derived constants
- */
-
-/* user/kernel map constants */
+/* User map constants */
 #define VM_MIN_ADDRESS		0
 #define VM_MAXUSER_ADDRESS	(0x00007f8000000000 - PAGE_SIZE)
+#define VM_MAXUSER_ADDRESS32	0xfffff000
 #define VM_MAX_ADDRESS		0x00007fbfdfeff000
+
+/*
+ * Kernel map constants.
+ * MIN = VA_SIGN_NEG(L4_SLOT_KERN * NBPD_L4)
+ * MAX = MIN + NKL4_MAX_ENTRIES * NBPD_L4
+ */
 #ifndef XEN
 #define VM_MIN_KERNEL_ADDRESS	0xffff800000000000
-#else /* XEN */
+#define VM_MAX_KERNEL_ADDRESS	0xffff808000000000
+#else
 #define VM_MIN_KERNEL_ADDRESS	0xffffa00000000000
+#define VM_MAX_KERNEL_ADDRESS	0xffffa08000000000
 #endif
-#define VM_MAX_KERNEL_ADDRESS	0xfffffe8000000000
-
-#define VM_MAXUSER_ADDRESS32	0xfffff000
 
 /*
  * The address to which unspecified mapping requests default
