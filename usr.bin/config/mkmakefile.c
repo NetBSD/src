@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.68 2015/09/04 10:16:35 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.69 2017/06/15 23:52:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.68 2015/09/04 10:16:35 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.69 2017/06/15 23:52:15 christos Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -77,6 +77,7 @@ static void emitrules(FILE *);
 static void emitload(FILE *);
 static void emitincludes(FILE *);
 static void emitappmkoptions(FILE *);
+static void emitmkoption(FILE *, const char *, const struct nvlist *);
 static void emitsubs(FILE *, const char *, const char *, int);
 static int  selectopt(const char *, void *);
 
@@ -211,6 +212,21 @@ mkmakefile(void)
 }
 
 static void
+emitmkoption(FILE *fp, const char *ass, const struct nvlist *nv)
+{
+
+	fprintf(fp, "%s%s", nv->nv_name, ass);
+
+	for (const char *p = nv->nv_str; *p; p++) {
+		if (*p == '\n')
+			fputs(" \\", fp);
+		fputc(*p, fp);
+	}
+
+	fputc('\n', fp);
+}
+
+static void
 emitsubs(FILE *fp, const char *line, const char *file, int lineno)
 {
 	char *nextpct;
@@ -292,7 +308,7 @@ emitdefs(FILE *fp)
 		fprintf(fp, "___USE_SUFFIX_RULES___=1\n");
 	}
 	for (nv = mkoptions; nv != NULL; nv = nv->nv_next)
-		fprintf(fp, "%s=%s\n", nv->nv_name, nv->nv_str);
+		emitmkoption(fp, "=", nv);
 }
 
 static void
@@ -583,7 +599,7 @@ emitappmkoptions(FILE *fp)
 	for (nv = condmkoptions; nv != NULL; nv = nv->nv_next) {
 		cond = nv->nv_ptr;
 		if (expr_eval(cond, selectopt, NULL))
-			fprintf(fp, "%s+=%s\n", nv->nv_name, nv->nv_str);
+			emitmkoption(fp, "+=", nv);
 		condexpr_destroy(cond);
 		nv->nv_ptr = NULL;
 	}
