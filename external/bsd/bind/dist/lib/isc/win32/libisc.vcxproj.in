@@ -297,6 +297,7 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="..\include\isc\counter.h" />
     <ClInclude Include="..\include\isc\crc64.h" />
     <ClInclude Include="..\include\isc\entropy.h" />
+    <ClInclude Include="..\include\isc\errno.h" />
     <ClInclude Include="..\include\isc\error.h" />
     <ClInclude Include="..\include\isc\event.h" />
     <ClInclude Include="..\include\isc\eventclass.h" />
@@ -478,6 +479,7 @@ copy InstallFiles ..\Build\Release\
     <ClCompile Include="dir.c" />
     <ClCompile Include="DLLMain.c" />
     <ClCompile Include="entropy.c" />
+    <ClCompile Include="errno.c" />
     <ClCompile Include="errno2result.c" />
     <ClCompile Include="file.c" />
     <ClCompile Include="fsaccess.c" />

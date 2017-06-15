@@ -1,7 +1,7 @@
-/*	$NetBSD: task.c,v 1.1.1.15 2016/05/26 15:45:52 christos Exp $	*/
+/*	$NetBSD: task.c,v 1.1.1.16 2017/06/15 15:22:50 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -550,6 +550,7 @@ task_send(isc__task_t *task, isc_event_t **eventp) {
 	REQUIRE(event != NULL);
 	REQUIRE(event->ev_type > 0);
 	REQUIRE(task->state != task_state_done);
+	REQUIRE(!ISC_LINK_LINKED(event, ev_ratelink));
 
 	XTRACE("task_send");
 

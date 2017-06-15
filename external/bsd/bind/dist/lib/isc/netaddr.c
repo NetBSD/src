@@ -1,7 +1,7 @@
-/*	$NetBSD: netaddr.c,v 1.1.1.9 2016/05/26 15:45:52 christos Exp $	*/
+/*	$NetBSD: netaddr.c,v 1.1.1.10 2017/06/15 15:22:50 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2010-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2010-2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -281,7 +281,6 @@ isc_netaddr_masktoprefixlen(const isc_netaddr_t *s, unsigned int *lenp) {
 	for (; i < ipbytes; i++) {
 		if (p[i] != 0)
 			return (ISC_R_MASKNONCONTIG);
-		i++;
 	}
 	*lenp = nbytes * 8 + nbits;
 	return (ISC_R_SUCCESS);
@@ -421,15 +420,15 @@ isc_netaddr_issitelocal(isc_netaddr_t *na) {
 	}
 }
 
-#ifndef IN_ZERONET
-#define IN_ZERONET(x) (((x) & htonl(0xff000000U)) == 0)
-#endif
+#define ISC_IPADDR_ISNETZERO(i) \
+	       (((isc_uint32_t)(i) & ISC__IPADDR(0xff000000)) \
+		== ISC__IPADDR(0x00000000))
 
 isc_boolean_t
 isc_netaddr_isnetzero(isc_netaddr_t *na) {
 	switch (na->family) {
 	case AF_INET:
-		return (ISC_TF(IN_ZERONET(na->type.in.s_addr)));
+		return (ISC_TF(ISC_IPADDR_ISNETZERO(na->type.in.s_addr)));
 	case AF_INET6:
 		return (ISC_FALSE);
 	default:

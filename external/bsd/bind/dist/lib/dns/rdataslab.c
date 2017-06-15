@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataslab.c,v 1.1.1.14 2015/07/08 15:38:02 christos Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.1.1.15 2017/06/15 15:22:48 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -523,6 +523,19 @@ dns_rdataslab_size(unsigned char *slab, unsigned int reservelen) {
 	}
 
 	return ((unsigned int)(current - slab));
+}
+
+unsigned int
+dns_rdataslab_count(unsigned char *slab, unsigned int reservelen) {
+	unsigned int count;
+	unsigned char *current;
+
+	REQUIRE(slab != NULL);
+
+	current = slab + reservelen;
+	count = *current++ * 256;
+	count += *current++;
+	return (count);
 }
 
 /*

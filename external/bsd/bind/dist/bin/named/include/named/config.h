@@ -1,7 +1,7 @@
-/*	$NetBSD: config.h,v 1.1.1.7 2014/12/10 03:34:25 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.1.1.8 2017/06/15 15:22:38 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,11 +33,11 @@ isc_result_t
 ns_config_parsedefaults(cfg_parser_t *parser, cfg_obj_t **conf);
 
 isc_result_t
-ns_config_get(cfg_obj_t const * const *maps, const char* name,
+ns_config_get(cfg_obj_t const * const *maps, const char *name,
 	      const cfg_obj_t **obj);
 
 isc_result_t
-ns_checknames_get(const cfg_obj_t **maps, const char* name,
+ns_checknames_get(const cfg_obj_t **maps, const char *name,
 		  const cfg_obj_t **obj);
 
 int

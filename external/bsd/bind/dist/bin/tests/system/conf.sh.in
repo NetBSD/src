@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -58,8 +58,17 @@ RESOLVE=$TOP/lib/samples/resolve
 RRCHECKER=$TOP/bin/tools/named-rrchecker
 GENRANDOM=$TOP/bin/tools/genrandom
 NSLOOKUP=$TOP/bin/dig/nslookup
+FEATURETEST=$TOP/bin/tests/system/feature-test
 
 RANDFILE=$TOP/bin/tests/system/random.data
+MDIG=$TOP/bin/tests/mdig
+
+BIGKEY=$TOP/bin/tests/system/rsabigexponent/bigkey
+KEYCREATE=$TOP/bin/tests/system/tkey/keycreate
+KEYDELETE=$TOP/bin/tests/system/tkey/keydelete
+LWTEST=$TOP/bin/tests/system/lwresd/lwtest
+MAKEJOURNAL=$TOP/bin/tests/makejournal
+SAMPLEUPDATE=$TOP/lib/samples/sample-update
 
 # The "stress" test is not run by default since it creates enough
 # load on the machine to make it unusable to other users.
@@ -67,18 +76,22 @@ RANDFILE=$TOP/bin/tests/system/random.data
 SUBDIRS="acl additional allow_query addzone autosign builtin
 	 cacheclean case checkconf @CHECKDS@ checknames checkzone
 	 @COVERAGE@ database delv digdelv dlv dlvauto dlz dlzexternal
-	 dlzredir dname dns64 dnssec dsdigest dscp
-	 ecdsa ednscompliance emptyzones
-	 fetchlimit filter-aaaa formerr forward
-         geoip glue gost ixfr inline
-         legacy limits logfileconfig lwresd
-	 masterfile masterformat metadata notify nslookup nsupdate pending
-	 @PKCS11_TEST@ reclimit redirect resolver rndc rpz rpzrecurse
-	 rrl rrchecker rrsetorder rsabigexponent
-         sit smartsign sortlist spf staticstub statistics statschannel stub
-         tkey tsig tsiggss
-	 unknown upforwd verify views wildcard xfer xferquota zero
-	 zonechecks"
+	 dlzredir dname dns64 dnssec dsdigest dscp ecdsa ednscompliance
+	 emptyzones fetchlimit filter-aaaa formerr forward geoip
+	 glue gost ixfr inline integrity legacy limits logfileconfig
+	 lwresd masterfile masterformat metadata notify nslookup
+	 nsupdate pending @PKCS11_TEST@ reclimit redirect resolver
+	 rndc rpz rpzrecurse rrl rrchecker rrsetorder rsabigexponent
+	 sit smartsign sortlist spf staticstub statistics statschannel
+	 stub tcp tkey tsig tsiggss unknown upforwd verify views
+	 wildcard xfer xferquota zero zonechecks"
+
+# Things that are different on Windows
+KILL=kill
+DIFF=diff
+DOS2UNIX=true
+# There's no trailing period on Windows
+TP=.
 
 # Use the CONFIG_SHELL detected by configure for tests
 SHELL=@SHELL@
@@ -91,6 +104,7 @@ XMLLINT=@XMLLINT@
 
 # PERL will be an empty string if no perl interpreter was found.
 PERL=@PERL@
+
 if test -n "$PERL"
 then
 	if $PERL -e "use IO::Socket::INET6;" 2> /dev/null
@@ -116,12 +130,42 @@ PYTHON=@PYTHON@
 # Determine if we support various optional features.
 #
 CHECK_DSA=@CHECK_DSA@
-XMLSTATS=@XMLSTATS@
-JSONSTATS=@JSONSTATS@
+HAVEXMLSTATS=@XMLSTATS@
+HAVEJSONSTATS=@JSONSTATS@
 ZLIB=@ZLIB@
 
 . ${TOP}/version
 
-export NAMED LWRESD DIG NSUPDATE KEYGEN KEYFRLAB SIGNER KEYSIGNER KEYSETTOOL \
-       PERL SUBDIRS RNDC CHECKZONE PK11GEN PK11LIST PK11DEL TESTSOCK6 \
-       JOURNALPRINT ARPANAME RESOLVE RRCHECKER NSLOOKUP DESCRIPTION PYTHON
+export ARPANAME
+export BIGKEY
+export CHECKZONE
+export DESCRIPTION
+export DIG
+export FEATURETEST
+export JOURNALPRINT
+export KEYCREATE
+export KEYDELETE
+export KEYFRLAB
+export KEYGEN
+export KEYSETTOOL
+export KEYSIGNER
+export LWRESD
+export LWTEST
+export MAKEJOURNAL
+export MDIG
+export NAMED
+export NSLOOKUP
+export NSUPDATE
+export PERL
+export PK11DEL
+export PK11GEN
+export PK11LIST
+export PYTHON
+export RANDFILE
+export RESOLVE
+export RNDC
+export RRCHECKER
+export SAMPLEUPDATE
+export SIGNER
+export SUBDIRS
+export TESTSOCK6

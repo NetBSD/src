@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -176,6 +176,13 @@ install:: named@EXEEXT@ lwresd@EXEEXT@ installdirs
 	${INSTALL_DATA} ${srcdir}/named.8 ${DESTDIR}${mandir}/man8
 	${INSTALL_DATA} ${srcdir}/lwresd.8 ${DESTDIR}${mandir}/man8
 	${INSTALL_DATA} ${srcdir}/named.conf.5 ${DESTDIR}${mandir}/man5
+
+uninstall::
+	rm -f ${DESTDIR}${mandir}/man5/named.conf.5
+	rm -f ${DESTDIR}${mandir}/man8/lwresd.8
+	rm -f ${DESTDIR}${mandir}/man8/named.8
+	rm -f ${DESTDIR}${sbindir}/lwresd@EXEEXT@
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${sbindir}/named@EXEEXT@
 
 @DLZ_DRIVER_RULES@
 

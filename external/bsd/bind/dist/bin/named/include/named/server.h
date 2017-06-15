@@ -1,7 +1,7 @@
-/*	$NetBSD: server.h,v 1.1.1.17 2016/05/26 15:45:41 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.1.1.18 2017/06/15 15:22:38 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -84,6 +84,7 @@ struct ns_server {
 	isc_timer_t *		interface_timer;
 	isc_timer_t *		heartbeat_timer;
 	isc_timer_t *		pps_timer;
+	isc_timer_t *		tat_timer;
 
 	isc_uint32_t		interface_interval;
 	isc_uint32_t		heartbeat_interval;
@@ -281,7 +282,7 @@ ns_server_dumpstats(ns_server_t *server);
  * Dump the current cache to the dump file.
  */
 isc_result_t
-ns_server_dumpdb(ns_server_t *server, isc_lex_t *lex);
+ns_server_dumpdb(ns_server_t *server, isc_lex_t *lex, isc_buffer_t *text);
 
 /*%
  * Dump the current security roots to the secroots file.

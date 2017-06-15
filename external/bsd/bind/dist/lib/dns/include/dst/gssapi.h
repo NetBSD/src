@@ -1,7 +1,7 @@
-/*	$NetBSD: gssapi.h,v 1.1.1.7 2014/12/10 03:34:42 christos Exp $	*/
+/*	$NetBSD: gssapi.h,v 1.1.1.8 2017/06/15 15:22:49 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2011, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -147,6 +147,7 @@ dst_gssapi_acceptctx(gss_cred_id_t cred,
  *	Returns:
  *		ISC_R_SUCCESS   msg was successfully updated to include the
  * 				query to be sent
+ *		DNS_R_CONTINUE	transaction still in progress
  *		other 		an error occurred while building the message
  */
 

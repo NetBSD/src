@@ -1,5 +1,6 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2004-2015 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2016 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -14,7 +15,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<html>
+<html lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>Chapter 3. Name Server Configuration</title>
@@ -57,18 +58,22 @@
 </dl></dd>
 </dl>
 </div>
-<p>
+
+    <p>
       In this chapter we provide some suggested configurations along
       with guidelines for their use.  We suggest reasonable values for
       certain option settings.
     </p>
-<div class="section">
+
+    <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="sample_configuration"></a>Sample Configurations</h2></div></div></div>
-<div class="section">
+
+      <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="cache_only_sample"></a>A Caching-only Name Server</h3></div></div></div>
-<p>
+
+        <p>
           The following sample configuration is appropriate for a caching-only
           name server for use by clients internal to a corporation.  All
           queries
@@ -77,6 +82,7 @@
           suitable
           firewall rules.
         </p>
+
 <pre class="programlisting">
 // Two corporate subnets we wish to allow queries from.
 acl corpnets { 192.168.4.0/24; 192.168.7.0/24; };
@@ -94,15 +100,19 @@ zone "0.0.127.in-addr.arpa" {
      notify no;
 };
 </pre>
-</div>
-<div class="section">
+
+      </div>
+
+      <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="auth_only_sample"></a>An Authoritative-only Name Server</h3></div></div></div>
-<p>
+
+        <p>
           This sample configuration is for an authoritative-only server
           that is the master server for "<code class="filename">example.com</code>"
           and a slave for the subdomain "<code class="filename">eng.example.com</code>".
         </p>
+
 <pre class="programlisting">
 options {
      // Working directory
@@ -141,23 +151,31 @@ zone "eng.example.com" {
      masters { 192.168.4.12; };
 };
 </pre>
-</div>
-</div>
-<div class="section">
+
+      </div>
+    </div>
+
+    <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="load_balancing"></a>Load Balancing</h2></div></div></div>
-<p>
+
+      
+
+      <p>
         A primitive form of load balancing can be achieved in
         the <acronym class="acronym">DNS</acronym> by using multiple records
         (such as multiple A records) for one name.
       </p>
-<p>
+
+      <p>
         For example, if you have three WWW servers with network addresses
         of 10.0.0.1, 10.0.0.2 and 10.0.0.3, a set of records such as the
         following means that clients will connect to each machine one third
         of the time:
       </p>
-<div class="informaltable"><table border="1">
+
+      <div class="informaltable">
+        <table border="1">
 <colgroup>
 <col width="0.875in" class="1">
 <col width="0.500in" class="2">
@@ -271,47 +289,52 @@ zone "eng.example.com" {
               </td>
 </tr>
 </tbody>
-</table></div>
-<p>
+</table>
+      </div>
+      <p>
         When a resolver queries for these records, <acronym class="acronym">BIND</acronym> will rotate
         them and respond to the query with the records in a different
         order.  In the example above, clients will randomly receive
         records in the order 1, 2, 3; 2, 3, 1; and 3, 1, 2. Most clients
         will use the first record returned and discard the rest.
       </p>
-<p>
+      <p>
         For more detail on ordering responses, check the
         <span class="command"><strong>rrset-order</strong></span> sub-statement in the
         <span class="command"><strong>options</strong></span> statement, see
         <a class="xref" href="Bv9ARM.ch06.html#rrset_ordering" title="RRset Ordering">RRset Ordering</a>.
       </p>
-</div>
-<div class="section">
+
+    </div>
+
+    <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="ns_operations"></a>Name Server Operations</h2></div></div></div>
-<div class="section">
+
+      <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="tools"></a>Tools for Use With the Name Server Daemon</h3></div></div></div>
-<p>
+        <p>
           This section describes several indispensable diagnostic,
           administrative and monitoring tools available to the system
           administrator for controlling and debugging the name server
           daemon.
         </p>
-<div class="section">
+        <div class="section">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="diagnostic_tools"></a>Diagnostic Tools</h4></div></div></div>
-<p>
+          <p>
             The <span class="command"><strong>dig</strong></span>, <span class="command"><strong>host</strong></span>, and
             <span class="command"><strong>nslookup</strong></span> programs are all command
             line tools
             for manually querying name servers.  They differ in style and
             output format.
           </p>
-<div class="variablelist"><dl class="variablelist">
+
+          <div class="variablelist"><dl class="variablelist">
 <dt><span class="term"><a name="dig"></a><span class="command"><strong>dig</strong></span></span></dt>
 <dd>
-<p>
+                <p>
                   The domain information groper (<span class="command"><strong>dig</strong></span>)
                   is the most versatile and complete of these lookup tools.
                   It has two modes: simple interactive
@@ -321,22 +344,31 @@ zone "eng.example.com" {
                   accessible
                   from the command line.
                 </p>
-<div class="cmdsynopsis"><p><code class="command">dig</code>  [@<em class="replaceable"><code>server</code></em>]  <em class="replaceable"><code>domain</code></em>  [<em class="replaceable"><code>query-type</code></em>] [<em class="replaceable"><code>query-class</code></em>] [+<em class="replaceable"><code>query-option</code></em>] [-<em class="replaceable"><code>dig-option</code></em>] [%<em class="replaceable"><code>comment</code></em>]</p></div>
-<p>
+                <div class="cmdsynopsis"><p>
+                  <code class="command">dig</code> 
+                   [@<em class="replaceable"><code>server</code></em>]
+                    <em class="replaceable"><code>domain</code></em> 
+                   [<em class="replaceable"><code>query-type</code></em>]
+                   [<em class="replaceable"><code>query-class</code></em>]
+                   [+<em class="replaceable"><code>query-option</code></em>]
+                   [-<em class="replaceable"><code>dig-option</code></em>]
+                   [%<em class="replaceable"><code>comment</code></em>]
+                </p></div>
+                <p>
                   The usual simple use of <span class="command"><strong>dig</strong></span> will take the form
                 </p>
-<p class="simpara">
+                <p class="simpara">
                   <span class="command"><strong>dig @server domain query-type query-class</strong></span>
                 </p>
-<p>
+                <p>
                   For more information and a list of available commands and
                   options, see the <span class="command"><strong>dig</strong></span> man
                   page.
                 </p>
-</dd>
+              </dd>
 <dt><span class="term"><span class="command"><strong>host</strong></span></span></dt>
 <dd>
-<p>
+                <p>
                   The <span class="command"><strong>host</strong></span> utility emphasizes
                   simplicity
                   and ease of use.  By default, it converts
@@ -344,16 +376,29 @@ zone "eng.example.com" {
                   functionality
                   can be extended with the use of options.
                 </p>
-<div class="cmdsynopsis"><p><code class="command">host</code>  [-aCdlnrsTwv] [-c <em class="replaceable"><code>class</code></em>] [-N <em class="replaceable"><code>ndots</code></em>] [-t <em class="replaceable"><code>type</code></em>] [-W <em class="replaceable"><code>timeout</code></em>] [-R <em class="replaceable"><code>retries</code></em>] [-m <em class="replaceable"><code>flag</code></em>] [-4] [-6]  <em class="replaceable"><code>hostname</code></em>  [<em class="replaceable"><code>server</code></em>]</p></div>
-<p>
+                <div class="cmdsynopsis"><p>
+                  <code class="command">host</code> 
+                   [-aCdlnrsTwv]
+                   [-c <em class="replaceable"><code>class</code></em>]
+                   [-N <em class="replaceable"><code>ndots</code></em>]
+                   [-t <em class="replaceable"><code>type</code></em>]
+                   [-W <em class="replaceable"><code>timeout</code></em>]
+                   [-R <em class="replaceable"><code>retries</code></em>]
+                   [-m <em class="replaceable"><code>flag</code></em>]
+                   [-4]
+                   [-6]
+                    <em class="replaceable"><code>hostname</code></em> 
+                   [<em class="replaceable"><code>server</code></em>]
+                </p></div>
+                <p>
                   For more information and a list of available commands and
                   options, see the <span class="command"><strong>host</strong></span> man
                   page.
                 </p>
-</dd>
+              </dd>
 <dt><span class="term"><span class="command"><strong>nslookup</strong></span></span></dt>
 <dd>
-<p><span class="command"><strong>nslookup</strong></span>
+                <p><span class="command"><strong>nslookup</strong></span>
                   has two modes: interactive and
                   non-interactive. Interactive mode allows the user to
                   query name servers for information about various
@@ -362,8 +407,15 @@ zone "eng.example.com" {
                   the name and requested information for a host or
                   domain.
                 </p>
-<div class="cmdsynopsis"><p><code class="command">nslookup</code>  [-option...] [[<em class="replaceable"><code>host-to-find</code></em>] |  [- [server]]]</p></div>
-<p>
+                <div class="cmdsynopsis"><p>
+                  <code class="command">nslookup</code> 
+                   [-option...]
+                   [
+                    [<em class="replaceable"><code>host-to-find</code></em>]
+                     |  [- [server]]
+                  ]
+                </p></div>
+                <p>
                   Interactive mode is entered when no arguments are given (the
                   default name server will be used) or when the first argument
                   is a
@@ -371,7 +423,7 @@ zone "eng.example.com" {
                   Internet address
                   of a name server.
                 </p>
-<p>
+                <p>
                   Non-interactive mode is used when the name or Internet
                   address
                   of the host to be looked up is given as the first argument.
@@ -379,56 +431,76 @@ zone "eng.example.com" {
                   optional second argument specifies the host name or address
                   of a name server.
                 </p>
-<p>
+                <p>
                   Due to its arcane user interface and frequently inconsistent
                   behavior, we do not recommend the use of <span class="command"><strong>nslookup</strong></span>.
                   Use <span class="command"><strong>dig</strong></span> instead.
                 </p>
-</dd>
+              </dd>
 </dl></div>
-</div>
-<div class="section">
+        </div>
+
+        <div class="section">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="admin_tools"></a>Administrative Tools</h4></div></div></div>
-<p>
+          <p>
             Administrative tools play an integral part in the management
             of a server.
           </p>
-<div class="variablelist"><dl class="variablelist">
+          <div class="variablelist"><dl class="variablelist">
 <dt>
 <a name="named-checkconf"></a><span class="term"><span class="command"><strong>named-checkconf</strong></span></span>
 </dt>
 <dd>
-<p>
+                <p>
                   The <span class="command"><strong>named-checkconf</strong></span> program
                   checks the syntax of a <code class="filename">named.conf</code> file.
                 </p>
-<div class="cmdsynopsis"><p><code class="command">named-checkconf</code>  [-jvz] [-t <em class="replaceable"><code>directory</code></em>] [<em class="replaceable"><code>filename</code></em>]</p></div>
-</dd>
+                <div class="cmdsynopsis"><p>
+                  <code class="command">named-checkconf</code> 
+                   [-jvz]
+                   [-t <em class="replaceable"><code>directory</code></em>]
+                   [<em class="replaceable"><code>filename</code></em>]
+                </p></div>
+              </dd>
 <dt>
 <a name="named-checkzone"></a><span class="term"><span class="command"><strong>named-checkzone</strong></span></span>
 </dt>
 <dd>
-<p>
+                <p>
                   The <span class="command"><strong>named-checkzone</strong></span> program
                   checks a master file for
                   syntax and consistency.
                 </p>
-<div class="cmdsynopsis"><p><code class="command">named-checkzone</code>  [-djqvD] [-c <em class="replaceable"><code>class</code></em>] [-o <em class="replaceable"><code>output</code></em>] [-t <em class="replaceable"><code>directory</code></em>] [-w <em class="replaceable"><code>directory</code></em>] [-k <em class="replaceable"><code>(ignore|warn|fail)</code></em>] [-n <em class="replaceable"><code>(ignore|warn|fail)</code></em>] [-W <em class="replaceable"><code>(ignore|warn)</code></em>]  <em class="replaceable"><code>zone</code></em>  [<em class="replaceable"><code>filename</code></em>]</p></div>
-</dd>
+                <div class="cmdsynopsis"><p>
+                  <code class="command">named-checkzone</code> 
+                   [-djqvD]
+                   [-c <em class="replaceable"><code>class</code></em>]
+                   [-o <em class="replaceable"><code>output</code></em>]
+                   [-t <em class="replaceable"><code>directory</code></em>]
+                   [-w <em class="replaceable"><code>directory</code></em>]
+                   [-k <em class="replaceable"><code>(ignore|warn|fail)</code></em>]
+                   [-n <em class="replaceable"><code>(ignore|warn|fail)</code></em>]
+                   [-W <em class="replaceable"><code>(ignore|warn)</code></em>]
+                    <em class="replaceable"><code>zone</code></em> 
+                   [<em class="replaceable"><code>filename</code></em>]
+                </p></div>
+              </dd>
 <dt>
 <a name="named-compilezone"></a><span class="term"><span class="command"><strong>named-compilezone</strong></span></span>
 </dt>
-<dd><p>
+<dd>
+                <p>
                   Similar to <span class="command"><strong>named-checkzone,</strong></span> but
                   it always dumps the zone content to a specified file
                   (typically in a different format).
-                </p></dd>
+                </p>
+              </dd>
 <dt>
 <a name="rndc"></a><span class="term"><span class="command"><strong>rndc</strong></span></span>
 </dt>
 <dd>
-<p>
+                <p>
                   The remote name daemon control
                   (<span class="command"><strong>rndc</strong></span>) program allows the
                   system
@@ -443,11 +515,21 @@ zone "eng.example.com" {
                   options
                   it will display a usage message as follows:
                 </p>
-<div class="cmdsynopsis"><p><code class="command">rndc</code>  [-c <em class="replaceable"><code>config</code></em>] [-s <em class="replaceable"><code>server</code></em>] [-p <em class="replaceable"><code>port</code></em>] [-y <em class="replaceable"><code>key</code></em>]  <em class="replaceable"><code>command</code></em>  [<em class="replaceable"><code>command</code></em>...]</p></div>
-<p>See <a class="xref" href="man.rndc.html" title="rndc"><span class="refentrytitle"><span class="application">rndc</span></span>(8)</a> for details of
+                <div class="cmdsynopsis"><p>
+                  <code class="command">rndc</code> 
+                   [-c <em class="replaceable"><code>config</code></em>]
+                   [-s <em class="replaceable"><code>server</code></em>]
+                   [-p <em class="replaceable"><code>port</code></em>]
+                   [-y <em class="replaceable"><code>key</code></em>]
+                    <em class="replaceable"><code>command</code></em> 
+                   [<em class="replaceable"><code>command</code></em>...]
+                </p></div>
+
+                <p>See <a class="xref" href="man.rndc.html" title="rndc"><span class="refentrytitle"><span class="application">rndc</span></span>(8)</a> for details of
                   the available <span class="command"><strong>rndc</strong></span> commands.
                 </p>
-<p>
+
+                <p>
                   <span class="command"><strong>rndc</strong></span> requires a configuration file,
                   since all
                   communication with the server is authenticated with
@@ -471,7 +553,8 @@ zone "eng.example.com" {
                   <a class="xref" href="Bv9ARM.ch06.html#controls_statement_definition_and_usage" title="controls Statement Definition and Usage">the section called &#8220;<span class="command"><strong>controls</strong></span> Statement Definition and
           Usage&#8221;</a>.
                 </p>
-<p>
+
+                <p>
                   The format of the configuration file is similar to
                   that of <code class="filename">named.conf</code>, but
                   limited to
@@ -483,7 +566,8 @@ zone "eng.example.com" {
                   be shared.  The order of statements is not
                   significant.
                 </p>
-<p>
+
+                <p>
                   The <span class="command"><strong>options</strong></span> statement has
                   three clauses:
                   <span class="command"><strong>default-server</strong></span>, <span class="command"><strong>default-key</strong></span>,
@@ -501,7 +585,8 @@ zone "eng.example.com" {
                   port is given on the command line or in a
                   <span class="command"><strong>server</strong></span> statement.
                 </p>
-<p>
+
+                <p>
                   The <span class="command"><strong>key</strong></span> statement defines a
                   key to be used
                   by <span class="command"><strong>rndc</strong></span> when authenticating
@@ -530,7 +615,8 @@ zone "eng.example.com" {
                   have any meaning.  The secret is a base-64 encoded string
                   as specified in RFC 3548.
                 </p>
-<p>
+
+                <p>
                   The <span class="command"><strong>server</strong></span> statement
                   associates a key
                   defined using the <span class="command"><strong>key</strong></span>
@@ -546,9 +632,11 @@ zone "eng.example.com" {
                   connect
                   to on the server.
                 </p>
-<p>
+
+                <p>
                   A sample minimal configuration file is as follows:
                 </p>
+
 <pre class="programlisting">
 key rndc_key {
      algorithm "hmac-sha256";
@@ -560,30 +648,36 @@ options {
      default-key    rndc_key;
 };
 </pre>
-<p>
+
+                <p>
                   This file, if installed as <code class="filename">/etc/rndc.conf</code>,
                   would allow the command:
                 </p>
-<p>
+
+                <p>
                   <code class="prompt">$ </code><strong class="userinput"><code>rndc reload</code></strong>
                 </p>
-<p>
+
+                <p>
                   to connect to 127.0.0.1 port 953 and cause the name server
                   to reload, if a name server on the local machine were
                   running with
                   following controls statements:
                 </p>
+
 <pre class="programlisting">
 controls {
         inet 127.0.0.1
             allow { localhost; } keys { rndc_key; };
 };
 </pre>
-<p>
+
+                <p>
                   and it had an identical key statement for
                   <code class="literal">rndc_key</code>.
                 </p>
-<p>
+
+                <p>
                   Running the <span class="command"><strong>rndc-confgen</strong></span>
                   program will
                   conveniently create a <code class="filename">rndc.conf</code>
@@ -598,19 +692,23 @@ controls {
                   modify
                   <code class="filename">named.conf</code> at all.
                 </p>
-</dd>
+
+              </dd>
 </dl></div>
-</div>
-</div>
-<div class="section">
+
+        </div>
+      </div>
+
+      <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="signals"></a>Signals</h3></div></div></div>
-<p>
+        <p>
           Certain UNIX signals cause the name server to take specific
           actions, as described in the following table.  These signals can
           be sent using the <span class="command"><strong>kill</strong></span> command.
         </p>
-<div class="informaltable"><table border="1">
+        <div class="informaltable">
+          <table border="1">
 <colgroup>
 <col width="1.125in" class="1">
 <col width="4.000in" class="2">
@@ -648,10 +746,11 @@ controls {
                 </td>
 </tr>
 </tbody>
-</table></div>
-</div>
-</div>
-</div>
+</table>
+        </div>
+      </div>
+    </div>
+  </div>
 <div class="navfooter">
 <hr>
 <table width="100%" summary="Navigation footer">
@@ -669,6 +768,6 @@ controls {
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.4-P8</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.5-P1</p>
 </body>
 </html>

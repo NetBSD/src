@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrout.c,v 1.1.1.13 2016/05/26 15:45:41 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.1.1.14 2017/06/15 15:22:38 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1183,7 +1183,7 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 	xfr->txmem = NULL;
 	xfr->txmemlen = 0;
 	xfr->nmsg = 0;
-	xfr->many_answers = many_answers,
+	xfr->many_answers = many_answers;
 	xfr->sends = 0;
 	xfr->shuttingdown = ISC_FALSE;
 	xfr->mnemonic = NULL;

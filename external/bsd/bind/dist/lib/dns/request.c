@@ -1,7 +1,7 @@
-/*	$NetBSD: request.c,v 1.1.1.11 2015/12/17 03:22:07 christos Exp $	*/
+/*	$NetBSD: request.c,v 1.1.1.12 2017/06/15 15:22:48 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -218,7 +218,7 @@ void
 dns_requestmgr_whenshutdown(dns_requestmgr_t *requestmgr, isc_task_t *task,
 			    isc_event_t **eventp)
 {
-	isc_task_t *clone;
+	isc_task_t *tclone;
 	isc_event_t *event;
 
 	req_log(ISC_LOG_DEBUG(3), "dns_requestmgr_whenshutdown");
@@ -238,9 +238,9 @@ dns_requestmgr_whenshutdown(dns_requestmgr_t *requestmgr, isc_task_t *task,
 		event->ev_sender = requestmgr;
 		isc_task_send(task, &event);
 	} else {
-		clone = NULL;
-		isc_task_attach(task, &clone);
-		event->ev_sender = clone;
+		tclone = NULL;
+		isc_task_attach(task, &tclone);
+		event->ev_sender = tclone;
 		ISC_LIST_APPEND(requestmgr->whenshutdown, event, ev_link);
 	}
 	UNLOCK(&requestmgr->lock);
@@ -456,10 +456,11 @@ req_send(dns_request_t *request, isc_task_t *task, isc_sockaddr_t *address) {
 		sendevent->dscp = request->dscp;
 	}
 
+	request->flags |= DNS_REQUEST_F_SENDING;
 	result = isc_socket_sendto2(sock, &r, task, address, NULL,
 				    sendevent, 0);
-	if (result == ISC_R_SUCCESS)
-		request->flags |= DNS_REQUEST_F_SENDING;
+	if (result != ISC_R_SUCCESS)
+		request->flags &= ~DNS_REQUEST_F_SENDING;
 	return (result);
 }
 

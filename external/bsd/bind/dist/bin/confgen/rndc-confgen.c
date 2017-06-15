@@ -1,7 +1,7 @@
-/*	$NetBSD: rndc-confgen.c,v 1.1.1.8 2014/12/10 03:34:23 christos Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.1.1.9 2017/06/15 15:22:37 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -50,6 +50,8 @@
 #include <isc/time.h>
 #include <isc/util.h>
 
+#include <pk11/site.h>
+
 #include <dns/keyvalues.h>
 #include <dns/name.h>
 
@@ -76,6 +78,7 @@ usage(int status) ISC_PLATFORM_NORETURN_POST;
 static void
 usage(int status) {
 
+#ifndef PK11_MD5_DISABLE
 	fprintf(stderr, "\
 Usage:\n\
  %s [-a] [-b bits] [-c keyfile] [-k keyname] [-p port] [-r randomfile] \
@@ -91,6 +94,23 @@ Usage:\n\
   -t chrootdir:	 write a keyfile in chrootdir as well (requires -a)\n\
   -u user:	 set the keyfile owner to \"user\" (requires -a)\n",
 		 progname, keydef);
+#else
+	fprintf(stderr, "\
+Usage:\n\
+ %s [-a] [-b bits] [-c keyfile] [-k keyname] [-p port] [-r randomfile] \
+[-s addr] [-t chrootdir] [-u user]\n\
+  -a:		 generate just the key clause and write it to keyfile (%s)\n\
+  -A alg:	 algorithm (default hmac-sha256)\n\
+  -b bits:	 from 1 through 512, default 256; total length of the secret\n\
+  -c keyfile:	 specify an alternate key file (requires -a)\n\
+  -k keyname:	 the name as it will be used  in named.conf and rndc.conf\n\
+  -p port:	 the port named will listen on and rndc will connect to\n\
+  -r randomfile: source of random data (use \"keyboard\" for key timing)\n\
+  -s addr:	 the address to which rndc should connect\n\
+  -t chrootdir:	 write a keyfile in chrootdir as well (requires -a)\n\
+  -u user:	 set the keyfile owner to \"user\" (requires -a)\n",
+		 progname, keydef);
+#endif
 
 	exit (status);
 }
@@ -126,7 +146,11 @@ main(int argc, char **argv) {
 	progname = program;
 
 	keyname = DEFAULT_KEYNAME;
+#ifndef PK11_MD5_DISABLE
 	alg = DST_ALG_HMACMD5;
+#else
+	alg = DST_ALG_HMACSHA256;
+#endif
 	serveraddr = DEFAULT_SERVER;
 	port = DEFAULT_PORT;
 

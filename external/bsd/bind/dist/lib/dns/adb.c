@@ -1,7 +1,7 @@
-/*	$NetBSD: adb.c,v 1.1.1.15 2015/12/17 03:22:06 christos Exp $	*/
+/*	$NetBSD: adb.c,v 1.1.1.16 2017/06/15 15:22:47 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -2869,7 +2869,7 @@ dns_adb_detach(dns_adb_t **adbx) {
 
 void
 dns_adb_whenshutdown(dns_adb_t *adb, isc_task_t *task, isc_event_t **eventp) {
-	isc_task_t *clone;
+	isc_task_t *tclone;
 	isc_event_t *event;
 	isc_boolean_t zeroirefcnt = ISC_FALSE;
 
@@ -2896,9 +2896,9 @@ dns_adb_whenshutdown(dns_adb_t *adb, isc_task_t *task, isc_event_t **eventp) {
 		event->ev_sender = adb;
 		isc_task_send(task, &event);
 	} else {
-		clone = NULL;
-		isc_task_attach(task, &clone);
-		event->ev_sender = clone;
+		tclone = NULL;
+		isc_task_attach(task, &tclone);
+		event->ev_sender = tclone;
 		ISC_LIST_APPEND(adb->whenshutdown, event, ev_link);
 	}
 

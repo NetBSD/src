@@ -1,7 +1,7 @@
-/*	$NetBSD: ecdb.c,v 1.1.1.11 2015/07/08 15:38:01 christos Exp $	*/
+/*	$NetBSD: ecdb.c,v 1.1.1.12 2017/06/15 15:22:47 christos Exp $	*/
 
 /*
- * Copyright (C) 2009-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -589,7 +589,8 @@ static dns_dbmethods_t ecdb_methods = {
 	NULL,			/* findnodeext */
 	NULL,			/* findext */
 	NULL,			/* setcachestats */
-	NULL			/* hashsize */
+	NULL,			/* hashsize */
+	NULL			/* getsize */
 };
 
 static isc_result_t

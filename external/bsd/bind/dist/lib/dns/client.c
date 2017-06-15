@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.1.1.15 2016/05/26 15:45:49 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.16 2017/06/15 15:22:47 christos Exp $	*/
 
 /*
- * Copyright (C) 2009-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1327,7 +1327,7 @@ dns_client_startresolve(dns_client_t *client, dns_name_t *name,
 	dns_view_t *view = NULL;
 	dns_clientresevent_t *event = NULL;
 	resctx_t *rctx = NULL;
-	isc_task_t *clone = NULL;
+	isc_task_t *tclone = NULL;
 	isc_mem_t *mctx;
 	isc_result_t result;
 	dns_rdataset_t *rdataset, *sigrdataset;
@@ -1353,10 +1353,10 @@ dns_client_startresolve(dns_client_t *client, dns_name_t *name,
 	/*
 	 * Prepare some intermediate resources
 	 */
-	clone = NULL;
-	isc_task_attach(task, &clone);
+	tclone = NULL;
+	isc_task_attach(task, &tclone);
 	event = (dns_clientresevent_t *)
-		isc_event_allocate(mctx, clone, DNS_EVENT_CLIENTRESDONE,
+		isc_event_allocate(mctx, tclone, DNS_EVENT_CLIENTRESDONE,
 				   action, arg, sizeof(*event));
 	if (event == NULL) {
 		result = ISC_R_NOMEMORY;
@@ -1431,7 +1431,7 @@ dns_client_startresolve(dns_client_t *client, dns_name_t *name,
 	}
 	if (event != NULL)
 		isc_event_free(ISC_EVENT_PTR(&event));
-	isc_task_detach(&clone);
+	isc_task_detach(&tclone);
 	dns_view_detach(&view);
 
 	return (result);
@@ -1730,7 +1730,7 @@ dns_client_startrequest(dns_client_t *client, dns_message_t *qmessage,
 {
 	isc_result_t result;
 	dns_view_t *view = NULL;
-	isc_task_t *clone = NULL;
+	isc_task_t *tclone = NULL;
 	dns_clientreqevent_t *event = NULL;
 	reqctx_t *ctx = NULL;
 	dns_tsectype_t tsectype = dns_tsectype_none;
@@ -1755,10 +1755,10 @@ dns_client_startrequest(dns_client_t *client, dns_message_t *qmessage,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	clone = NULL;
-	isc_task_attach(task, &clone);
+	tclone = NULL;
+	isc_task_attach(task, &tclone);
 	event = (dns_clientreqevent_t *)
-		isc_event_allocate(client->mctx, clone,
+		isc_event_allocate(client->mctx, tclone,
 				   DNS_EVENT_CLIENTREQDONE,
 				   action, arg, sizeof(*event));
 	if (event == NULL) {
@@ -1817,7 +1817,7 @@ dns_client_startrequest(dns_client_t *client, dns_message_t *qmessage,
 	}
 	if (event != NULL)
 		isc_event_free(ISC_EVENT_PTR(&event));
-	isc_task_detach(&clone);
+	isc_task_detach(&tclone);
 	dns_view_detach(&view);
 
 	return (result);
@@ -1979,8 +1979,21 @@ update_done(isc_task_t *task, isc_event_t *event) {
 	LOCK(&uctx->lock);
 	uctx->currentserver = ISC_LIST_NEXT(uctx->currentserver, link);
 	dns_request_destroy(&uctx->updatereq);
-	if (result != ISC_R_SUCCESS && !uctx->canceled &&
-	    uctx->currentserver != NULL) {
+	/*
+	 * Moving on to the next server shouldn't change the result
+	 * for NXDOMAIN, YXDOMAIN, NXRRSET and YXRRSET as they
+	 * indicate a prerequisite failure.  REFUSED should also
+	 * be consistent across all servers but often isn't as that
+	 * is policy rather that zone content driven (slaves that
+	 * aren't willing to forward should return NOTIMPL).  NOTZONE
+	 * indicates that we stuffed up the request construction so
+	 * don't retry.
+	 */
+	if (result != ISC_R_SUCCESS && result != DNS_R_NXDOMAIN &&
+	    result != DNS_R_YXDOMAIN && result != DNS_R_YXRRSET &&
+	    result != DNS_R_NXRRSET && result != DNS_R_NOTZONE &&
+	    !uctx->canceled && uctx->currentserver != NULL)
+	{
 		dns_message_renderreset(uctx->updatemsg);
 		dns_message_settsigkey(uctx->updatemsg, NULL);
 
@@ -2732,6 +2745,46 @@ dns_client_update(dns_client_t *client, dns_rdataclass_t rdclass,
 	return (result);
 }
 
+static void
+startupdate(isc_task_t *task, isc_event_t *event) {
+	updatectx_t *uctx;
+	isc_result_t result;
+	unsigned int resoptions;
+
+	REQUIRE(event != NULL);
+
+	UNUSED(task);
+
+	uctx = event->ev_arg;
+
+	if (uctx->zonename != NULL && uctx->currentserver != NULL) {
+		result = send_update(uctx);
+		if (result != ISC_R_SUCCESS)
+			goto fail;
+	} else if (uctx->currentserver != NULL) {
+		result = request_soa(uctx);
+		if (result != ISC_R_SUCCESS)
+			goto fail;
+	} else {
+		resoptions = 0;
+		dns_name_clone(uctx->firstname, &uctx->soaqname);
+		result = dns_client_startresolve(uctx->client, &uctx->soaqname,
+						 uctx->rdclass,
+						 dns_rdatatype_soa, resoptions,
+						 uctx->client->task,
+						 resolvesoa_done, uctx,
+						 &uctx->restrans);
+		if (result != ISC_R_SUCCESS)
+			goto fail;
+	}
+
+	isc_event_free(&event);
+
+fail:
+	if (result != ISC_R_SUCCESS)
+		update_sendevent(uctx, result);
+}
+
 isc_result_t
 dns_client_startupdate(dns_client_t *client, dns_rdataclass_t rdclass,
 		       dns_name_t *zonename, dns_namelist_t *prerequisites,
@@ -2744,7 +2797,7 @@ dns_client_startupdate(dns_client_t *client, dns_rdataclass_t rdclass,
 	isc_result_t result;
 	dns_name_t *name, *newname;
 	updatectx_t *uctx;
-	isc_task_t *clone = NULL;
+	isc_task_t *tclone = NULL;
 	dns_section_t section = DNS_SECTION_UPDATE;
 	isc_sockaddr_t *server, *sa = NULL;
 	dns_tsectype_t tsectype = dns_tsectype_none;
@@ -2769,20 +2822,25 @@ dns_client_startupdate(dns_client_t *client, dns_rdataclass_t rdclass,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	/* Create a context and prepare some resources */
+	/*
+	 * Create a context and prepare some resources.
+	 */
+
 	uctx = isc_mem_get(client->mctx, sizeof(*uctx));
 	if (uctx == NULL) {
 		dns_view_detach(&view);
 		return (ISC_R_NOMEMORY);
 	}
+
 	result = isc_mutex_init(&uctx->lock);
 	if (result != ISC_R_SUCCESS) {
 		dns_view_detach(&view);
 		isc_mem_put(client->mctx, uctx, sizeof(*uctx));
 		return (ISC_R_NOMEMORY);
 	}
-	clone = NULL;
-	isc_task_attach(task, &clone);
+
+	tclone = NULL;
+	isc_task_attach(task, &tclone);
 	uctx->client = client;
 	ISC_LINK_INIT(uctx, link);
 	uctx->state = dns_clientupdatestate_prepare;
@@ -2809,7 +2867,7 @@ dns_client_startupdate(dns_client_t *client, dns_rdataclass_t rdclass,
 	if (tsec != NULL)
 		dns_tsec_getkey(tsec, &uctx->tsigkey);
 	uctx->event = (dns_clientupdateevent_t *)
-		isc_event_allocate(client->mctx, clone, DNS_EVENT_UPDATEDONE,
+		isc_event_allocate(client->mctx, tclone, DNS_EVENT_UPDATEDONE,
 				   action, arg, sizeof(*uctx->event));
 	if (uctx->event == NULL)
 		goto fail;
@@ -2881,28 +2939,12 @@ dns_client_startupdate(dns_client_t *client, dns_rdataclass_t rdclass,
 	ISC_LIST_APPEND(client->updatectxs, uctx, link);
 	UNLOCK(&client->lock);
 
-	if (uctx->zonename != NULL && uctx->currentserver != NULL) {
-		result = send_update(uctx);
-		if (result != ISC_R_SUCCESS)
-			goto fail;
-	} else if (uctx->currentserver != NULL) {
-		result = request_soa(uctx);
-		if (result != ISC_R_SUCCESS)
-			goto fail;
-	} else {
-		dns_name_clone(uctx->firstname, &uctx->soaqname);
-		result = dns_client_startresolve(uctx->client, &uctx->soaqname,
-						 uctx->rdclass,
-						 dns_rdatatype_soa, 0,
-						 client->task, resolvesoa_done,
-						 uctx, &uctx->restrans);
-		if (result != ISC_R_SUCCESS)
-			goto fail;
-	}
-
 	*transp = (dns_clientupdatetrans_t *)uctx;
-
-	return (ISC_R_SUCCESS);
+	result = isc_app_ctxonrun(client->actx, client->mctx, client->task,
+				  startupdate, uctx);
+	if (result == ISC_R_SUCCESS)
+		return (result);
+	*transp = NULL;
 
  fail:
 	if (ISC_LINK_LINKED(uctx, link)) {
@@ -2920,7 +2962,7 @@ dns_client_startupdate(dns_client_t *client, dns_rdataclass_t rdclass,
 		isc_event_free(ISC_EVENT_PTR(&uctx->event));
 	if (uctx->tsigkey != NULL)
 		dns_tsigkey_detach(&uctx->tsigkey);
-	isc_task_detach(&clone);
+	isc_task_detach(&tclone);
 	DESTROYLOCK(&uctx->lock);
 	uctx->magic = 0;
 	isc_mem_put(client->mctx, uctx, sizeof(*uctx));

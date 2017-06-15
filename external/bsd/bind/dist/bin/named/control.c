@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.1.1.16 2016/05/26 15:45:41 christos Exp $	*/
+/*	$NetBSD: control.c,v 1.1.1.17 2017/06/15 15:22:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -133,7 +133,7 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
 		      NS_LOGMODULE_CONTROL, log_level,
 		      "received control channel command '%s'",
-		      command);
+		      cmdline);
 
 	if (command_compare(command, NS_COMMAND_RELOAD)) {
 		result = ns_server_reloadcommand(ns_g_server, lex, text);
@@ -194,7 +194,7 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 	} else if (command_compare(command, NS_COMMAND_QUERYLOG)) {
 		result = ns_server_togglequerylog(ns_g_server, lex);
 	} else if (command_compare(command, NS_COMMAND_DUMPDB)) {
-		ns_server_dumpdb(ns_g_server, lex);
+		ns_server_dumpdb(ns_g_server, lex, text);
 		result = ISC_R_SUCCESS;
 	} else if (command_compare(command, NS_COMMAND_SECROOTS)) {
 		result = ns_server_dumpsecroots(ns_g_server, lex);

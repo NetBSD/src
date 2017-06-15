@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_openssl.h,v 1.1.1.11 2016/05/26 15:45:49 christos Exp $	*/
+/*	$NetBSD: dst_openssl.h,v 1.1.1.12 2017/06/15 15:22:47 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,8 +33,10 @@
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
 
-#if !defined(OPENSSL_NO_ENGINE) && defined(CRYPTO_LOCK_ENGINE) && \
-    (OPENSSL_VERSION_NUMBER >= 0x0090707f)
+#if !defined(OPENSSL_NO_ENGINE) && \
+    ((defined(CRYPTO_LOCK_ENGINE) && \
+      (OPENSSL_VERSION_NUMBER >= 0x0090707f)) || \
+     (OPENSSL_VERSION_NUMBER >= 0x10100000L))
 #define USE_ENGINE 1
 #endif
 
@@ -50,6 +52,15 @@
 #define BN_GENCB_free(x) (x = NULL);
 #define BN_GENCB_new() (&_cb)
 #define BN_GENCB_get_arg(x) ((x)->arg)
+#endif
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+/*
+ * EVP_dss1() is a version of EVP_sha1() that was needed prior to
+ * 1.1.0 because there was a link between digests and signing algorithms;
+ * the link has been eliminated and EVP_sha1() can be used now instead.
+ */
+#define EVP_dss1 EVP_sha1
 #endif
 
 ISC_LANG_BEGINDECLS

@@ -1,7 +1,7 @@
-/*	$NetBSD: dispatch.c,v 1.1.1.16 2015/12/17 03:22:06 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.1.1.17 2017/06/15 15:22:47 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: dispatch.c,v 1.175 2011/11/29 01:03:47 marka Exp  */
 
 /*! \file */
 
@@ -2257,10 +2255,9 @@ dns_dispatchmgr_setudp(dns_dispatchmgr_t *mgr,
 	}
 	result = isc_mempool_create(mgr->mctx, sizeof(dispsocket_t),
 				    &mgr->spool);
-	if (result != ISC_R_SUCCESS) {
-		UNLOCK(&mgr->buffer_lock);
+	if (result != ISC_R_SUCCESS)
 		goto cleanup;
-	}
+
 	isc_mempool_setname(mgr->spool, "dispmgr_spool");
 	isc_mempool_setmaxalloc(mgr->spool, maxrequests);
 	isc_mempool_setfreemax(mgr->spool, maxrequests);
@@ -3010,7 +3007,7 @@ dispatch_createudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 			isc_sockaddr_format(localaddr, addrbuf,
 					    ISC_SOCKADDR_FORMATSIZE);
 			mgr_log(mgr, LVL(90), "dns_dispatch_createudp: Created"
-				" UDP dispatch for %s with socket fd %d\n",
+				" UDP dispatch for %s with socket fd %d",
 				addrbuf, isc_socket_getfd(sock));
 		}
 

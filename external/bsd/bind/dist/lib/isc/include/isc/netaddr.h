@@ -1,7 +1,7 @@
-/*	$NetBSD: netaddr.h,v 1.1.1.7 2016/05/26 15:45:52 christos Exp $	*/
+/*	$NetBSD: netaddr.h,v 1.1.1.8 2017/06/15 15:22:50 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -68,7 +68,7 @@ isc_result_t
 isc_netaddr_masktoprefixlen(const isc_netaddr_t *s, unsigned int *lenp);
 /*%<
  * Convert a netmask in 's' into a prefix length in '*lenp'.
- * The mask should consist of zero or more '1' bits in the most
+ * The mask should consist of zero or more '1' bits in the
  * most significant part of the address, followed by '0' bits.
  * If this is not the case, #ISC_R_MASKNONCONTIG is returned.
  *

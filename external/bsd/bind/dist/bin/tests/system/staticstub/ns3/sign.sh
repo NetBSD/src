@@ -1,6 +1,6 @@
 #!/bin/sh 
 #
-# Copyright (C) 2010, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,7 @@ zonefile=example.db
 
 (cd ../ns4 && $SHELL -e sign.sh )
 
-cp ../ns4/dsset-sub.example. .
+cp ../ns4/dsset-sub.example$TP .
 
 keyname1=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
 keyname2=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 2048 -f KSK -n zone $zone`
