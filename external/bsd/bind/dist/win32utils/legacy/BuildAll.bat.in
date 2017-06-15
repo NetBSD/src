@@ -225,6 +225,18 @@ nmake /nologo -f timer_test.mak CFG="timer_test - @PLATFORM@ Release"  NO_EXTERN
 cd ..\..
 @END XTESTS
 
+@IF STESTS
+cd tests\win32
+nmake /nologo -f makejournal.mak CFG="makejournal - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+cd ..\system\win32
+nmake /nologo -f lwtest.mak CFG="lwtest - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f bigkey.mak CFG="bigkey - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f keycreate.mak CFG="keycreate - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f keydelete.mak CFG="keydelete - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f feature-test.mak CFG="feature-test - @PLATFORM@ Release"  NO_EXTERNAL_DEPS="1"
+cd ..\..\..
+@END STESTS
+
 rem This is the BIND 9 Installer
 
 cd win32\BINDInstall

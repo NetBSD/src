@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2005, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2005, 2007, 2009, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -55,13 +55,13 @@
   <xsl:variable name="isc.copyright">
     <xsl:call-template name="isc.copyright.format">
       <xsl:with-param name="text">
-        <xsl:for-each select="db:book/db:info/db:copyright | db:refentry/db:docinfo/db:copyright">
+        <xsl:for-each select="book/info/copyright | refentry/docinfo/copyright">
 	  <xsl:text>Copyright (C) </xsl:text>
 	  <xsl:call-template name="copyright.years">
-	    <xsl:with-param name="years" select="db:year"/>
+	    <xsl:with-param name="years" select="year"/>
 	  </xsl:call-template>
 	  <xsl:text> </xsl:text>
-	  <xsl:value-of select="db:holder"/>
+	  <xsl:value-of select="holder"/>
           <xsl:value-of select="$isc.copyright.breakline"/>
 	  <xsl:text>&#10;</xsl:text>
 	</xsl:for-each>

@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{207225E0-9CBF-41a8-9422-0C9B1A2F64E9}</ProjectGuid>
+    <ProjectGuid>{4E6F5A7C-89AA-4259-99DB-F89DAE418B3F}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>t_timers</RootNamespace>
   </PropertyGroup>

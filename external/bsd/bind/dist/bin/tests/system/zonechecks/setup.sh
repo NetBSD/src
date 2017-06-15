@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -29,7 +29,8 @@ touch master.db.signed
 echo '$INCLUDE "master.db.signed"' >> master.db
 $KEYGEN -r $RANDFILE -3q master.example > /dev/null 2>&1
 $KEYGEN -r $RANDFILE -3qfk master.example > /dev/null 2>&1
-$SIGNER -SD -o master.example master.db > /dev/null 2>&1
+$SIGNER -SD -o master.example master.db > /dev/null \
+    2> signer.err || cat signer.err
 echo '$INCLUDE "soa.db"' > reload.db
 echo '@ 0 NS .' >> reload.db
 echo '@ 0 SOA . . 1 0 0 0 0' > soa.db

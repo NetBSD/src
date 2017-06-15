@@ -39,3 +39,4 @@ rm -f */ans.run
 rm -f ns2/mapped.db
 rm -f ns3/mapped.bk
 rm -f dig.out.?.*
+rm -f ns1/ixfr-too-big.db ns1/ixfr-too-big.db.jnl

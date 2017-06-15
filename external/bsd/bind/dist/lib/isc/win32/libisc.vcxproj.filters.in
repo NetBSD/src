@@ -70,6 +70,9 @@
     <ClInclude Include="..\include\isc\entropy.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\isc\errno.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\isc\error.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
@@ -399,6 +402,9 @@
       <Filter>Win32 Source Files</Filter>
     </ClCompile>
     <ClCompile Include="entropy.c">
+      <Filter>Win32 Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="errno.c">
       <Filter>Win32 Source Files</Filter>
     </ClCompile>
     <ClCompile Include="errno2result.c">

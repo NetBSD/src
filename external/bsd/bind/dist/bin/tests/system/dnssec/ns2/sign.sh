@@ -32,7 +32,7 @@ for subdomain in secure bogus dnskey-unknown dnskey-nsec3-unknown \
 	auto-nsec3 secure.below-cname ttlpatch split-dnssec split-smart \
 	expired expiring upper lower managed-future revkey
 do
-	cp ../ns3/dsset-$subdomain.example. .
+	cp ../ns3/dsset-$subdomain.example$TP .
 done
 
 keyname1=`$KEYGEN -q -r $RANDFILE -a DSA -b 768 -n zone $zone`
@@ -119,10 +119,11 @@ $SIGNER -P -g -r $RANDFILE -o $privzone -l dlv $privzonefile > /dev/null
 dlvzone=dlv.
 dlvinfile=dlv.db.in
 dlvzonefile=dlv.db
+dlvsetfile=dlvset-`echo $privzone |sed -e "s/\.$//g"`$TP
 
 dlvkeyname=`$KEYGEN -q -r $RANDFILE -a RSAMD5 -b 768 -n zone $dlvzone`
 
-cat $dlvinfile $dlvkeyname.key dlvset-$privzone > $dlvzonefile
+cat $dlvinfile $dlvkeyname.key $dlvsetfile > $dlvzonefile
 
 $SIGNER -P -g -r $RANDFILE -o $dlvzone $dlvzonefile > /dev/null
 

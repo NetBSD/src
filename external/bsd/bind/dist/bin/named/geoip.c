@@ -1,7 +1,7 @@
-/*	$NetBSD: geoip.c,v 1.1.1.3 2014/12/10 03:34:24 christos Exp $	*/
+/*	$NetBSD: geoip.c,v 1.1.1.4 2017/06/15 15:22:38 christos Exp $	*/
 
 /*
- * Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -70,10 +70,12 @@ init_geoip_db(GeoIP **dbp, GeoIPDBTypes edition, GeoIPDBTypes fallback,
 	}
 
 	info = GeoIP_database_info(db);
-	if (info != NULL)
+	if (info != NULL) {
 		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
 			      NS_LOGMODULE_SERVER, ISC_LOG_INFO,
 			      "%s", info);
+		free(info);
+	}
 
 	*dbp = db;
 	return;

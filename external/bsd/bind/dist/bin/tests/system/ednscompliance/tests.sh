@@ -111,4 +111,4 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1
