@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.186 2017/06/08 03:39:18 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.187 2017/06/15 05:42:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.186 2017/06/08 03:39:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.187 2017/06/15 05:42:27 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1907,8 +1907,10 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	}
 
 	if (check_slot == true) {
+		pcireg_t slcap;
+		
 		/* Slot Capability Register */
-		reg = regs[o2i(capoff + PCIE_SLCAP)];
+		slcap = reg = regs[o2i(capoff + PCIE_SLCAP)];
 		printf("    Slot Capability Register: 0x%08x\n", reg);
 		onoff("Attention Button Present", reg, PCIE_SLCAP_ABP);
 		onoff("Power Controller Present", reg, PCIE_SLCAP_PCP);
@@ -1936,35 +1938,44 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		onoff("Command Completed Interrupt Enabled", reg,
 		    PCIE_SLCSR_CCE);
 		onoff("Hot-Plug Interrupt Enabled", reg, PCIE_SLCSR_HPE);
-		printf("      Attention Indicator Control: ");
-		switch ((reg & PCIE_SLCSR_AIC) >> 6) {
-		case 0x0:
-			printf("reserved\n");
-			break;
-		case PCIE_SLCSR_IND_ON:
-			printf("on\n");
-			break;
-		case PCIE_SLCSR_IND_BLINK:
-			printf("blink\n");
-			break;
-		case PCIE_SLCSR_IND_OFF:
-			printf("off\n");
-			break;
+		/*
+		 * For Attention Indicator Control and Power Indicator Control,
+		 * it's allowed to be a read only value 0 if corresponding
+		 * capability register bit is 0.
+		 */
+		if (slcap & PCIE_SLCAP_AIP) {
+			printf("      Attention Indicator Control: ");
+			switch ((reg & PCIE_SLCSR_AIC) >> 6) {
+			case 0x0:
+				printf("reserved\n");
+				break;
+			case PCIE_SLCSR_IND_ON:
+				printf("on\n");
+				break;
+			case PCIE_SLCSR_IND_BLINK:
+				printf("blink\n");
+				break;
+			case PCIE_SLCSR_IND_OFF:
+				printf("off\n");
+				break;
+			}
 		}
-		printf("      Power Indicator Control: ");
-		switch ((reg & PCIE_SLCSR_PIC) >> 8) {
-		case 0x0:
-			printf("reserved\n");
-			break;
-		case PCIE_SLCSR_IND_ON:
-			printf("on\n");
-			break;
-		case PCIE_SLCSR_IND_BLINK:
-			printf("blink\n");
-			break;
-		case PCIE_SLCSR_IND_OFF:
-			printf("off\n");
-			break;
+		if (slcap & PCIE_SLCAP_PIP) {
+			printf("      Power Indicator Control: ");
+			switch ((reg & PCIE_SLCSR_PIC) >> 8) {
+			case 0x0:
+				printf("reserved\n");
+				break;
+			case PCIE_SLCSR_IND_ON:
+				printf("on\n");
+				break;
+			case PCIE_SLCSR_IND_BLINK:
+				printf("blink\n");
+				break;
+			case PCIE_SLCSR_IND_OFF:
+				printf("off\n");
+				break;
+			}
 		}
 		printf("      Power Controller Control: Power %s\n",
 		    reg & PCIE_SLCSR_PCC ? "off" : "on");
