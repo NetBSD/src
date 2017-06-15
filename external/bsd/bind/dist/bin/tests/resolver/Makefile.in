@@ -1,4 +1,4 @@
-# Copyright (C) 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,9 +20,10 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	${TEST_INCLUDES} ${DNS_INCLUDES} ${ISC_INCLUDES}
+CINCLUDES =	${TEST_INCLUDES} ${DNS_INCLUDES} \
+		${ISC_INCLUDES} @DST_OPENSSL_INC@
 
-CDEFINES =
+CDEFINES =	@CRYPTO@
 CWARNINGS =
 
 # Note that we do not want to use libtool for libt_api
