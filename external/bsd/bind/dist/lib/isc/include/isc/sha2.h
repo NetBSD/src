@@ -1,7 +1,7 @@
-/*	$NetBSD: sha2.h,v 1.5 2014/12/10 04:38:00 christos Exp $	*/
+/*	$NetBSD: sha2.h,v 1.6 2017/06/15 15:59:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2005-2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005-2007, 2009, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -81,10 +81,18 @@
 /*** SHA-256/384/512 Context Structures *******************************/
 
 #ifdef ISC_PLATFORM_OPENSSLHASH
+#include <openssl/opensslv.h>
 #include <openssl/evp.h>
 
-typedef EVP_MD_CTX isc_sha256_t;
-typedef EVP_MD_CTX isc_sha512_t;
+typedef struct {
+	EVP_MD_CTX *ctx;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	EVP_MD_CTX _ctx;
+#endif
+} isc_sha2_t;
+
+typedef isc_sha2_t isc_sha256_t;
+typedef isc_sha2_t isc_sha512_t;
 
 #elif PKCS11CRYPTO
 #include <pk11/pk11.h>

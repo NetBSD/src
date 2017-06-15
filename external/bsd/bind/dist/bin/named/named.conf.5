@@ -1,4 +1,4 @@
-.\"	$NetBSD: named.conf.5,v 1.14 2016/05/26 16:49:56 christos Exp $
+.\"	$NetBSD: named.conf.5,v 1.15 2017/06/15 15:59:36 christos Exp $
 .\"
 .\" Copyright (C) 2004-2016 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -111,6 +111,7 @@ server ( \fIipv4_address\fR\fI[/prefixlen]\fR | \fIipv6_address\fR\fI[/prefixlen
 	edns \fIboolean\fR;
 	edns\-udp\-size \fIinteger\fR;
 	max\-udp\-size \fIinteger\fR;
+	tcp\-only \fIboolean\fR;
 	provide\-ixfr \fIboolean\fR;
 	request\-ixfr \fIboolean\fR;
 	keys \fIserver_key\fR;
@@ -352,6 +353,7 @@ options {
 		( \fIipv4_address\fR | \fIipv6_address\fR ) [ port \fIinteger\fR ]; \&.\&.\&.
 	};
 	max\-journal\-size \fIsize_no_default\fR;
+	max\-records \fIinteger\fR;
 	max\-transfer\-time\-in \fIinteger\fR;
 	max\-transfer\-time\-out \fIinteger\fR;
 	max\-transfer\-idle\-in \fIinteger\fR;
@@ -431,6 +433,10 @@ view \fIstring\fR \fIoptional_class\fR {
 	};
 	trusted\-keys {
 		\fIstring\fR \fIinteger\fR \fIinteger\fR \fIinteger\fR \fIquoted_string\fR;
+		[\&.\&.\&.]
+	};
+	managed\-keys {
+		\fIdomain_name\fR \fBinitial\-key\fR \fIflags\fR \fIprotocol\fR \fIalgorithm\fR \fIkey\fR;
 		[\&.\&.\&.]
 	};
 	allow\-recursion { \fIaddress_match_element\fR; \&.\&.\&. };
@@ -529,6 +535,7 @@ view \fIstring\fR \fIoptional_class\fR {
 		( \fIipv4_address\fR | \fIipv6_address\fR ) [ port \fIinteger\fR ]; \&.\&.\&.
 	};
 	max\-journal\-size \fIsize_no_default\fR;
+	max\-records \fIinteger\fR;
 	max\-transfer\-time\-in \fIinteger\fR;
 	max\-transfer\-time\-out \fIinteger\fR;
 	max\-transfer\-idle\-in \fIinteger\fR;
@@ -620,6 +627,7 @@ zone \fIstring\fR \fIoptional_class\fR {
 		( \fIipv4_address\fR | \fIipv6_address\fR ) [ port \fIinteger\fR ]; \&.\&.\&.
 	};
 	max\-journal\-size \fIsize_no_default\fR;
+	max\-records \fIinteger\fR;
 	max\-transfer\-time\-in \fIinteger\fR;
 	max\-transfer\-time\-out \fIinteger\fR;
 	max\-transfer\-idle\-in \fIinteger\fR;
