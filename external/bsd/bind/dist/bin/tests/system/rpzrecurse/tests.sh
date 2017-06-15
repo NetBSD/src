@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -173,7 +173,13 @@ echo "I:running dig to cache CNAME record (${t})"
 $DIG $DIGOPTS @10.53.0.2 -p 5300 www.test.example.org CNAME > dig.out.${t}
 sleep 1
 echo "I:suspending authority server"
-kill -TSTP `cat ns1/named.pid`
+if [ "$CYGWIN" ]; then
+    WINPID=`cat ns1/named.pid`
+    PID=`ps | sed 's/^..//' | awk '$4 == '$WINPID | awk '{print $1}'`
+else
+    PID=`cat ns1/named.pid`
+fi
+kill -TSTP $PID
 echo "I:adding an NSDNAME policy"
 cp ns2/db.6a.00.policy.local ns2/saved.policy.local
 cp ns2/db.6b.00.policy.local ns2/db.6a.00.policy.local
@@ -188,7 +194,13 @@ cp ns2/db.6c.00.policy.local ns2/db.6a.00.policy.local
 $RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 reload 6a.00.policy.local 2>&1 | sed 's/^/I:ns2 /'
 sleep 1
 echo "I:resuming authority server"
-kill -CONT `cat ns1/named.pid`
+if [ "$CYGWIN" ]; then
+    WINPID=`cat ns1/named.pid`
+    PID=`ps | sed 's/^..//' | awk '$4 == '$WINPID | awk '{print $1}'`
+else
+    PID=`cat ns1/named.pid`
+fi
+kill -CONT $PID
 for n in 1 2 3 4 5 6 7 8 9; do
     sleep 1
     [ -s dig.out.${t} ] || continue
@@ -207,7 +219,13 @@ echo "I:running dig to cache CNAME record (${t})"
 $DIG $DIGOPTS @10.53.0.2 -p 5300 www.test.example.org CNAME > dig.out.${t}
 sleep 1
 echo "I:suspending authority server"
-kill -TSTP `cat ns1/named.pid`
+if [ "$CYGWIN" ]; then
+    WINPID=`cat ns1/named.pid`
+    PID=`ps | sed 's/^..//' | awk '$4 == '$WINPID | awk '{print $1}'`
+else
+    PID=`cat ns1/named.pid`
+fi
+kill -TSTP $PID
 echo "I:adding an NSDNAME policy"
 cp ns2/db.6b.00.policy.local ns2/db.6a.00.policy.local
 $RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 reload 6a.00.policy.local 2>&1 | sed 's/^/I:ns2 /'
@@ -221,7 +239,13 @@ cp ns2/named.default.conf ns2/named.conf
 $RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 reconfig 2>&1 | sed 's/^/I:ns2 /'
 sleep 1
 echo "I:resuming authority server"
-kill -CONT `cat ns1/named.pid`
+if [ "$CYGWIN" ]; then
+    WINPID=`cat ns1/named.pid`
+    PID=`ps | sed 's/^..//' | awk '$4 == '$WINPID | awk '{print $1}'`
+else
+    PID=`cat ns1/named.pid`
+fi
+kill -CONT $PID
 for n in 1 2 3 4 5 6 7 8 9; do
     sleep 1
     [ -s dig.out.${t} ] || continue
@@ -242,6 +266,35 @@ grep "status: NOERROR" dig.out.${t} > /dev/null 2>&1 || {
 }
 grep "^l2.l1.l0.[[:space:]]*[0-9]*[[:space:]]*IN[[:space:]]*A[[:space:]]*10.53.0.2" dig.out.${t} > /dev/null 2>&1 || {
     echo "I:test $t failed: didn't get expected answer"
+    status=1
+}
+
+# Check CLIENT-IP behavior #2
+t=`expr $t + 1`
+echo "I:testing CLIENT-IP behavior #2 (${t})"
+run_server clientip2
+$DIG $DIGOPTS l2.l1.l0 a @10.53.0.2 -p 5300 -b 10.53.0.1 > dig.out.${t}.1
+grep "status: SERVFAIL" dig.out.${t}.1 > /dev/null 2>&1 || {
+    echo "I:test $t failed: query failed"
+    status=1
+}
+$DIG $DIGOPTS l2.l1.l0 a @10.53.0.2 -p 5300 -b 10.53.0.2 > dig.out.${t}.2
+grep "status: NXDOMAIN" dig.out.${t}.2 > /dev/null 2>&1 || {
+    echo "I:test $t failed: query failed"
+    status=1
+}
+$DIG $DIGOPTS l2.l1.l0 a @10.53.0.2 -p 5300 -b 10.53.0.3 > dig.out.${t}.3
+grep "status: NOERROR" dig.out.${t}.3 > /dev/null 2>&1 || {
+    echo "I:test $t failed: query failed"
+    status=1
+}
+grep "^l2.l1.l0.[ 	]*[0-9]*[ 	]*IN[ 	]*A[ 	]*10.53.0.1" dig.out.${t}.3 > /dev/null 2>&1 || {
+    echo "I:test $t failed: didn't get expected answer"
+    status=1
+}
+$DIG $DIGOPTS l2.l1.l0 a @10.53.0.2 -p 5300 -b 10.53.0.4 > dig.out.${t}.4
+grep "status: SERVFAIL" dig.out.${t}.4 > /dev/null 2>&1 || {
+    echo "I:test $t failed: query failed"
     status=1
 }
 
@@ -289,4 +342,5 @@ grep "status: NOERROR" dig.out.${t}.2 > /dev/null || {
     status=1
 }
 
-exit $status
+echo "I:exit status: $status"
+[ $status -eq 0 ] || exit 1

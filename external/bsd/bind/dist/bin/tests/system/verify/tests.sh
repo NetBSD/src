@@ -1,4 +1,4 @@
-# Copyright (C) 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -93,4 +93,6 @@ do
 	[ $ret = 0 ] || failed
 	[ $dumpit = 1 ] && cat verify.out.$n
 done
-exit $status
+
+echo "I:exit status: $status"
+[ $status -eq 0 ] || exit 1

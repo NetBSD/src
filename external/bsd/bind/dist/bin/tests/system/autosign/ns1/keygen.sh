@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009-2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,7 @@ infile=root.db.in
 
 (cd ../ns2 && $SHELL keygen.sh )
 
-cat $infile ../ns2/dsset-example. > $zonefile
+cat $infile ../ns2/dsset-example$TP > $zonefile
 
 zskact=`$KEYGEN -3 -q -r $RANDFILE $zone`
 zskvanish=`$KEYGEN -3 -q -r $RANDFILE $zone`

@@ -1,7 +1,7 @@
-/*	$NetBSD: sample-update.c,v 1.1.1.6 2015/12/17 03:22:13 christos Exp $	*/
+/*	$NetBSD: sample-update.c,v 1.1.1.7 2017/06/15 15:22:51 christos Exp $	*/
 
 /*
- * Copyright (C) 2009, 2010, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2010, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -70,6 +70,8 @@ static const dns_rdataclass_t default_rdataclass = dns_rdataclass_in;
 static isc_bufferlist_t usedbuffers;
 static ISC_LIST(dns_rdatalist_t) usedrdatalists;
 
+static const char *port = "53";
+
 static void setup_tsec(char *keyfile, isc_mem_t *mctx);
 static void update_addordelete(isc_mem_t *mctx, char *cmdline,
 			       isc_boolean_t isdelete, dns_name_t *name);
@@ -90,20 +92,49 @@ usage(void) {
 	exit(1);
 }
 
+static isc_boolean_t
+addserver(const char *server, isc_sockaddrlist_t *list,
+	   isc_sockaddr_t *sockaddr)
+{
+	struct addrinfo hints, *res;
+	int gaierror;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = IPPROTO_UDP;
+#ifdef AI_NUMERICHOST
+	hints.ai_flags |= AI_NUMERICHOST;
+#endif
+#ifdef AI_NUMERICSERV
+	hints.ai_flags |= AI_NUMERICSERV;
+#endif
+	gaierror = getaddrinfo(server, port, &hints, &res);
+	if (gaierror != 0) {
+		fprintf(stderr, "getaddrinfo(%s) failed: %s\n",
+			server, gai_strerror(gaierror));
+		return (ISC_FALSE);
+	}
+	INSIST(res->ai_addrlen <= sizeof(sockaddr->type));
+	memmove(&sockaddr->type, res->ai_addr, res->ai_addrlen);
+	sockaddr->length = (unsigned int)res->ai_addrlen;
+	ISC_LINK_INIT(sockaddr, link);
+	ISC_LIST_APPEND(*list, sockaddr, link);
+	freeaddrinfo(res);
+	return (ISC_TRUE);
+}
+
 int
 main(int argc, char *argv[]) {
 	int ch;
-	struct addrinfo hints, *res;
-	int gai_error;
 	dns_client_t *client = NULL;
 	char *zonenamestr = NULL;
 	char *keyfilename = NULL;
 	char *prereqstr = NULL;
-	isc_sockaddrlist_t auth_servers;
-	char *auth_server = NULL;
-	char *recursive_server = NULL;
-	isc_sockaddr_t sa_auth, sa_recursive;
+	isc_sockaddr_t sa_auth[10], sa_recursive[10];
+	unsigned int nsa_auth = 0, nsa_recursive = 0;
 	isc_sockaddrlist_t rec_servers;
+	isc_sockaddrlist_t auth_servers;
 	isc_result_t result;
 	isc_boolean_t isdelete;
 	isc_buffer_t b, *buf;
@@ -116,19 +147,32 @@ main(int argc, char *argv[]) {
 	dns_namelist_t updatelist, prereqlist, *prereqlistp = NULL;
 	isc_mem_t *umctx = NULL;
 
-	while ((ch = isc_commandline_parse(argc, argv, "a:k:p:r:z:")) != EOF) {
+	ISC_LIST_INIT(auth_servers);
+	ISC_LIST_INIT(rec_servers);
+
+	while ((ch = isc_commandline_parse(argc, argv, "a:k:p:P:r:z:")) != EOF) {
 		switch (ch) {
 		case 'k':
 			keyfilename = isc_commandline_argument;
 			break;
 		case 'a':
-			auth_server = isc_commandline_argument;
+			if (nsa_auth < sizeof(sa_auth)/sizeof(*sa_auth) &&
+			    addserver(isc_commandline_argument, &auth_servers,
+				      &sa_auth[nsa_auth]))
+				nsa_auth++;
 			break;
 		case 'p':
 			prereqstr = isc_commandline_argument;
 			break;
+		case 'P':
+			port = isc_commandline_argument;
+			break;
 		case 'r':
-			recursive_server = isc_commandline_argument;
+			if (nsa_recursive <
+				sizeof(sa_recursive)/sizeof(*sa_recursive) &&
+			    addserver(isc_commandline_argument, &rec_servers,
+				      &sa_recursive[nsa_recursive]))
+				nsa_recursive++;
 			break;
 		case 'z':
 			zonenamestr = isc_commandline_argument;
@@ -153,8 +197,9 @@ main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	if (auth_server == NULL && recursive_server == NULL) {
-		fprintf(stderr, "authoritative or recursive server "
+	if (ISC_LIST_HEAD(auth_servers) == NULL &&
+	    ISC_LIST_HEAD(rec_servers) == NULL) {
+		fprintf(stderr, "authoritative or recursive servers "
 			"must be specified\n");
 		usage();
 	}
@@ -163,7 +208,6 @@ main(int argc, char *argv[]) {
 	ISC_LIST_INIT(usedbuffers);
 	ISC_LIST_INIT(usedrdatalists);
 	ISC_LIST_INIT(prereqlist);
-	ISC_LIST_INIT(auth_servers);
 	isc_lib_register();
 	result = dns_lib_init();
 	if (result != ISC_R_SUCCESS) {
@@ -180,60 +224,6 @@ main(int argc, char *argv[]) {
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "dns_client_create failed: %d\n", result);
 		exit(1);
-	}
-
-	/* Set the authoritative server */
-	if (auth_server != NULL) {
-		memset(&hints, 0, sizeof(hints));
-		hints.ai_family = AF_UNSPEC;
-		hints.ai_socktype = SOCK_DGRAM;
-		hints.ai_protocol = IPPROTO_UDP;
-#ifdef AI_NUMERICHOST
-		hints.ai_flags = AI_NUMERICHOST;
-#endif
-		gai_error = getaddrinfo(auth_server, "53", &hints, &res);
-		if (gai_error != 0) {
-			fprintf(stderr, "getaddrinfo failed: %s\n",
-				gai_strerror(gai_error));
-			exit(1);
-		}
-		INSIST(res->ai_addrlen <= sizeof(sa_auth.type));
-		memmove(&sa_auth.type, res->ai_addr, res->ai_addrlen);
-		freeaddrinfo(res);
-		sa_auth.length = (unsigned int)res->ai_addrlen;
-		ISC_LINK_INIT(&sa_auth, link);
-
-		ISC_LIST_APPEND(auth_servers, &sa_auth, link);
-	}
-
-	/* Set the recursive server */
-	if (recursive_server != NULL) {
-		memset(&hints, 0, sizeof(hints));
-		hints.ai_family = AF_UNSPEC;
-		hints.ai_socktype = SOCK_DGRAM;
-		hints.ai_protocol = IPPROTO_UDP;
-#ifdef AI_NUMERICHOST
-		hints.ai_flags = AI_NUMERICHOST;
-#endif
-		gai_error = getaddrinfo(recursive_server, "53", &hints, &res);
-		if (gai_error != 0) {
-			fprintf(stderr, "getaddrinfo failed: %s\n",
-				gai_strerror(gai_error));
-			exit(1);
-		}
-		INSIST(res->ai_addrlen <= sizeof(sa_recursive.type));
-		memmove(&sa_recursive.type, res->ai_addr, res->ai_addrlen);
-		freeaddrinfo(res);
-		sa_recursive.length = (unsigned int)res->ai_addrlen;
-		ISC_LINK_INIT(&sa_recursive, link);
-		ISC_LIST_INIT(rec_servers);
-		ISC_LIST_APPEND(rec_servers, &sa_recursive, link);
-		result = dns_client_setservers(client, dns_rdataclass_in,
-					       NULL, &rec_servers);
-		if (result != ISC_R_SUCCESS) {
-			fprintf(stderr, "set server failed: %d\n", result);
-			exit(1);
-		}
 	}
 
 	/* Construct zone name */
@@ -274,8 +264,8 @@ main(int argc, char *argv[]) {
 	result = dns_client_update(client,
 				   default_rdataclass, /* XXX: fixed */
 				   zname, prereqlistp, &updatelist,
-				   (auth_server == NULL) ? NULL :
-				   &auth_servers, tsec, 0);
+				   (ISC_LIST_HEAD(auth_servers) == NULL) ?
+				    NULL : &auth_servers, tsec, 0);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr,
 			"update failed: %s\n", dns_result_totext(result));

@@ -1,7 +1,7 @@
 <!DOCTYPE book [
 <!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2011, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2011, 2013-2017  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
 -->
 
 <!-- Converted by db4-upgrade version 1.0 -->
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="man.dig">
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.dig">
   <info>
     <date>2014-02-19</date>
   </info>
@@ -52,6 +52,7 @@
       <year>2014</year>
       <year>2015</year>
       <year>2016</year>
+      <year>2017</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -402,7 +403,8 @@
 	    <literal>hmac-sha1</literal>, <literal>hmac-sha224</literal>,
 	    <literal>hmac-sha256</literal>, <literal>hmac-sha384</literal>, or
 	    <literal>hmac-sha512</literal>.  If <parameter>hmac</parameter>
-	    is not specified, the default is <literal>hmac-md5</literal>.
+	    is not specified, the default is <literal>hmac-md5</literal>
+	    or if MD5 was disabled <literal>hmac-sha256</literal>.
 	  </para>
 	  <para>
 	    NOTE: You should use the <option>-k</option> option and
@@ -722,6 +724,17 @@
 	</varlistentry>
 
 	<varlistentry>
+	  <term><option>+[no]idnout</option></term>
+	  <listitem>
+	    <para>
+	      Convert [do not convert] puny code on output.
+	      This requires IDN SUPPORT to have been enabled at
+	      compile time.  The default is to convert output.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
 	  <term><option>+[no]ignore</option></term>
 	  <listitem>
 	    <para>
@@ -929,8 +942,9 @@
 	  <term><option>+[no]sigchase</option></term>
 	  <listitem>
 	    <para>
-	      Chase DNSSEC signature chains.  Requires dig be
-	      compiled with -DDIG_SIGCHASE.
+	      Chase DNSSEC signature chains. Requires dig be compiled
+	      with -DDIG_SIGCHASE. This feature is deprecated.
+	      Use <command>delv</command> instead.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -986,7 +1000,7 @@
 	    <para>
               <command>dig +subnet=0.0.0.0/0</command>, or simply
               <command>dig +subnet=0</command> for short, sends an EDNS
-              client-subnet option with an empty address and a source
+              CLIENT-SUBNET option with an empty address and a source
               prefix-length of zero, which signals a resolver that
               the client's address information must
               <emphasis>not</emphasis> be used when resolving
@@ -1029,6 +1043,7 @@
 	    <para>
 	      When chasing DNSSEC signature chains perform a top-down
 	      validation.  Requires dig be compiled with -DDIG_SIGCHASE.
+	      This feature is deprecated. Use <command>delv</command> instead.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -1082,6 +1097,7 @@
 	      directory.
 	    </para> <para>
 	      Requires dig be compiled with -DDIG_SIGCHASE.
+	      This feature is deprecated. Use <command>delv</command> instead.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -1188,6 +1204,9 @@ dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
   <refsection><info><title>SEE ALSO</title></info>
 
     <para><citerefentry>
+	<refentrytitle>delv</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
 	<refentrytitle>host</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>,
       <citerefentry>

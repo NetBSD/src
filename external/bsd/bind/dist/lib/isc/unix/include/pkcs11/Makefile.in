@@ -1,4 +1,4 @@
-# Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -30,4 +30,9 @@ installdirs:
 install:: installdirs
 	for i in ${HEADERS}; do \
 		${INSTALL_DATA} $(srcdir)/$$i ${DESTDIR}${includedir}/pkcs11 ; \
+	done
+
+uninstall::
+	for i in ${HEADERS}; do \
+		rm -f ${DESTDIR}${includedir}/pkcs11/$$i ; \
 	done

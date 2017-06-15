@@ -1,7 +1,7 @@
-/*	$NetBSD: sign.c,v 1.1.1.5 2015/12/17 03:21:55 christos Exp $	*/
+/*	$NetBSD: sign.c,v 1.1.1.6 2017/06/15 15:22:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -58,6 +58,7 @@
 #include <isc/print.h>
 #include <isc/result.h>
 #include <isc/types.h>
+#include <isc/util.h>
 
 #include <pk11/pk11.h>
 #include <pk11/result.h>
@@ -67,15 +68,22 @@
 #endif
 
 #ifndef HAVE_CLOCK_GETTIME
+
+#include <sys/time.h>
+
 #ifndef CLOCK_REALTIME
 #define CLOCK_REALTIME 0
 #endif
 
-int
+static int clock_gettime(int32_t id, struct timespec *tp);
+
+static int
 clock_gettime(int32_t id, struct timespec *tp)
 {
 	struct timeval tv;
 	int result;
+
+	UNUSED(id);
 
 	result = gettimeofday(&tv, NULL);
 	if (result)

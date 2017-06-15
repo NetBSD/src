@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_gost.h,v 1.1.1.3 2014/12/10 03:34:39 christos Exp $	*/
+/*	$NetBSD: dst_gost.h,v 1.1.1.4 2017/06/15 15:22:47 christos Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,7 +28,13 @@
 #ifdef HAVE_OPENSSL_GOST
 #include <openssl/evp.h>
 
-typedef EVP_MD_CTX isc_gost_t;
+typedef struct {
+	EVP_MD_CTX *ctx;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	EVP_MD_CTX _ctx;
+#endif
+} isc_gost_t;
+
 #endif
 #ifdef HAVE_PKCS11_GOST
 #include <pk11/pk11.h>

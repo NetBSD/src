@@ -1,7 +1,7 @@
-/*	$NetBSD: dh_test.c,v 1.1.1.1 2015/07/08 15:38:04 christos Exp $	*/
+/*	$NetBSD: dh_test.c,v 1.1.1.2 2017/06/15 15:22:49 christos Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,8 @@
 #include <isc/util.h>
 #include <isc/string.h>
 
+#include <pk11/site.h>
+
 #include <dns/name.h>
 #include <dst/result.h>
 
@@ -36,7 +38,7 @@
 
 #include "dnstest.h"
 
-#ifdef OPENSSL
+#if defined(OPENSSL) && !defined(PK11_DH_DISABLE)
 
 ATF_TC(isc_dh_computesecret);
 ATF_TC_HEAD(isc_dh_computesecret, tc) {
@@ -90,7 +92,7 @@ ATF_TC_BODY(untested, tc) {
  * Main
  */
 ATF_TP_ADD_TCS(tp) {
-#ifdef OPENSSL
+#if defined(OPENSSL) && !defined(PK11_DH_DISABLE)
 	ATF_TP_ADD_TC(tp, isc_dh_computesecret);
 #else
 	ATF_TP_ADD_TC(tp, untested);

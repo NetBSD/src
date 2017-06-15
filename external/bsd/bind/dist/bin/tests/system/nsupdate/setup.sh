@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009-2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -27,12 +27,14 @@ test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 rm -f ns1/*.jnl ns1/example.db ns2/*.jnl ns2/example.bk
 rm -f ns2/update.bk ns2/update.alt.bk
 rm -f ns3/example.db.jnl
+rm -f ns3/too-big.test.db.jnl
 
 cp -f ns1/example1.db ns1/example.db
 sed 's/example.nil/other.nil/g' ns1/example1.db > ns1/other.db
 sed 's/example.nil/unixtime.nil/g' ns1/example1.db > ns1/unixtime.db
 sed 's/example.nil/keytests.nil/g' ns1/example1.db > ns1/keytests.db
 cp -f ns3/example.db.in ns3/example.db
+cp -f ns3/too-big.test.db.in ns3/too-big.test.db
 
 # update_test.pl has its own zone file because it
 # requires a specific NS record set.
@@ -61,3 +63,6 @@ $DDNSCONFGEN -q -r $RANDFILE -a hmac-sha384 -k sha384-key -z keytests.nil > ns1/
 $DDNSCONFGEN -q -r $RANDFILE -a hmac-sha512 -k sha512-key -z keytests.nil > ns1/sha512.key
 
 (cd ns3; $SHELL -e sign.sh)
+
+cp ns1/sample.db.in ns1/sample.db
+cp ns2/sample.db.in ns2/sample.db

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -17,10 +17,15 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-DIG="./dig.sh"
+if [ "$CYGWIN" ]; then
+    DIG=".\dig.bat"
+    WINDSFROMKEY=`cygpath -w $DSFROMKEY`
+    CHECKDS="$CHECKDS -d $DIG -D $WINDSFROMKEY"
+else
+    DIG="./dig.sh"
+    CHECKDS="$CHECKDS -d $DIG -D $DSFROMKEY"
+fi
 chmod +x $DIG
-
-CHECKDS="$CHECKDS -d $DIG -D $DSFROMKEY"
 
 status=0
 n=1
@@ -176,4 +181,4 @@ status=`expr $status + $ret`
 
 if [ $status = 0 ]; then $SHELL clean.sh; fi
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1
