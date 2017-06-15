@@ -1,7 +1,7 @@
-/*	$NetBSD: app.c,v 1.6 2014/12/10 04:38:01 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.7 2017/06/15 15:59:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -235,6 +235,7 @@ isc__app_ctxonrun(isc_appctx_t *ctx0, isc_mem_t *mctx, isc_task_t *task,
 		goto unlock;
 	}
 
+	ISC_LINK_INIT(event, ev_link);
 	ISC_LIST_APPEND(ctx->on_run, event, ev_link);
 
 	result = ISC_R_SUCCESS;

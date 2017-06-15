@@ -1,4 +1,4 @@
-/*	$NetBSD: message.h,v 1.10 2016/05/26 16:49:59 christos Exp $	*/
+/*	$NetBSD: message.h,v 1.11 2017/06/15 15:59:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -38,7 +38,7 @@
  *
  * How this beast works:
  *
- * When a dns message is received in a buffer, dns_message_fromwire() is called
+ * When a dns message is received in a buffer, dns_message_parse() is called
  * on the memory region.  Various items are checked including the format
  * of the message (if counts are right, if counts consume the entire sections,
  * and if sections consume the entire message) and known pseudo-RRs in the
