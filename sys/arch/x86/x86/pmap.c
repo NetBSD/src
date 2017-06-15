@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.249 2017/06/15 09:31:48 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.250 2017/06/15 13:42:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.249 2017/06/15 09:31:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.250 2017/06/15 13:42:55 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -562,7 +562,7 @@ static void pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t, vaddr_t,
     vaddr_t, struct pv_entry **);
 
 static paddr_t pmap_get_physpage(void);
-static void pmap_alloc_level(vaddr_t, long *);
+static void pmap_alloc_level(struct pmap *, vaddr_t, long *);
 
 static bool pmap_reactivate(struct pmap *);
 
@@ -4325,7 +4325,7 @@ pmap_get_physpage(void)
  * Used only by pmap_growkernel.
  */
 static void
-pmap_alloc_level(vaddr_t kva, long *needed_ptps)
+pmap_alloc_level(struct pmap *cpm, vaddr_t kva, long *needed_ptps)
 {
 	unsigned long i;
 	paddr_t pa;
@@ -4338,7 +4338,7 @@ pmap_alloc_level(vaddr_t kva, long *needed_ptps)
 
 	for (level = PTP_LEVELS; level > 1; level--) {
 		if (level == PTP_LEVELS)
-			pdep = pmap_kernel()->pm_pdir;
+			pdep = cpm->pm_pdir;
 		else
 			pdep = normal_pdes[level - 2];
 		index = pl_i_roundup(kva, level);
@@ -4398,10 +4398,11 @@ vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
 	struct pmap *kpm = pmap_kernel();
+	struct pmap *cpm;
 #if !defined(XEN) || !defined(__x86_64__)
 	struct pmap *pm;
-	long old;
 #endif
+	long old;
 	int s, i;
 	long needed_kptp[PTP_LEVELS], target_nptp;
 	bool invalidate = false;
@@ -4416,9 +4417,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	}
 
 	maxkvaddr = x86_round_pdr(maxkvaddr);
-#if !defined(XEN) || !defined(__x86_64__)
 	old = nkptp[PTP_LEVELS - 1];
-#endif
 
 	/* Initialize needed_kptp. */
 	for (i = PTP_LEVELS - 1; i >= 1; i--) {
@@ -4431,12 +4430,28 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		needed_kptp[i] = target_nptp - nkptp[i];
 	}
 
-	pmap_alloc_level(pmap_maxkvaddr, needed_kptp);
+	/* Get the current pmap */
+	if (__predict_true(cpu_info_primary.ci_flags & CPUF_PRESENT)) {
+		cpm = curcpu()->ci_pmap;
+	} else {
+		cpm = kpm;
+	}
+
+	pmap_alloc_level(cpm, pmap_maxkvaddr, needed_kptp);
 
 	/*
 	 * If the number of top level entries changed, update all pmaps.
 	 */
 	if (needed_kptp[PTP_LEVELS - 1] != 0) {
+		size_t newpdes;
+		newpdes = nkptp[PTP_LEVELS - 1] - old;
+
+		if (cpm != kpm) {
+			memcpy(&kpm->pm_pdir[PDIR_SLOT_KERN + old],
+			    &cpm->pm_pdir[PDIR_SLOT_KERN + old],
+			    newpdes * sizeof(pd_entry_t));
+		}
+
 #ifdef XEN
 #ifdef __x86_64__
 		/* nothing, kernel entries are never entered in user pmap */
@@ -4455,8 +4470,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		mutex_exit(&pmaps_lock);
 #endif /* __x86_64__ */
 #else /* XEN */
-		unsigned newpdes;
-		newpdes = nkptp[PTP_LEVELS - 1] - old;
 		mutex_enter(&pmaps_lock);
 		LIST_FOREACH(pm, &pmaps, pm_list) {
 			memcpy(&pm->pm_pdir[PDIR_SLOT_KERN + old],
