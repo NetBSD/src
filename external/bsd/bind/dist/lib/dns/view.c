@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.12 2016/05/26 16:49:59 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.13 2017/06/15 15:59:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -47,13 +47,13 @@
 #include <dns/masterdump.h>
 #include <dns/order.h>
 #include <dns/peer.h>
-#include <dns/rrl.h>
 #include <dns/rbt.h>
 #include <dns/rdataset.h>
 #include <dns/request.h>
 #include <dns/resolver.h>
 #include <dns/result.h>
 #include <dns/rpz.h>
+#include <dns/rrl.h>
 #include <dns/stats.h>
 #include <dns/tsig.h>
 #include <dns/zone.h>
@@ -208,6 +208,7 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	view->redirect = NULL;
 	view->requestnsid = ISC_FALSE;
 	view->requestsit = ISC_TRUE;
+	view->trust_anchor_telemetry = ISC_TRUE;
 	view->new_zone_file = NULL;
 	view->new_zone_config = NULL;
 	view->cfg_destroy = NULL;

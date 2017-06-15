@@ -1,7 +1,7 @@
-/*	$NetBSD: host.c,v 1.11 2015/07/08 17:28:54 christos Exp $	*/
+/*	$NetBSD: host.c,v 1.12 2017/06/15 15:59:36 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -148,14 +148,15 @@ show_usage(void) ISC_PLATFORM_NORETURN_POST;
 static void
 show_usage(void) {
 	fputs(
-"Usage: host [-aCdlriTwv] [-c class] [-N ndots] [-t type] [-W time]\n"
+"Usage: host [-aCdilrTvVw] [-c class] [-N ndots] [-t type] [-W time]\n"
 "            [-R number] [-m flag] hostname [server]\n"
 "       -a is equivalent to -v -t ANY\n"
 "       -c specifies query class for non-IN data\n"
 "       -C compares SOA records on authoritative nameservers\n"
 "       -d is equivalent to -v\n"
-"       -l lists all hosts in a domain, using AXFR\n"
 "       -i IP6.INT reverse lookups\n"
+"       -l lists all hosts in a domain, using AXFR\n"
+"       -m set memory debugging flag (trace|record|usage)\n"
 "       -N changes the number of dots allowed before root lookup is done\n"
 "       -r disables recursive processing\n"
 "       -R specifies number of retries for UDP packets\n"
@@ -163,12 +164,11 @@ show_usage(void) {
 "       -t specifies the query type\n"
 "       -T enables TCP/IP mode\n"
 "       -v enables verbose output\n"
+"       -V print version number and exit\n"
 "       -w specifies to wait forever for a reply\n"
 "       -W specifies how long to wait for a reply\n"
 "       -4 use IPv4 query transport only\n"
-"       -6 use IPv6 query transport only\n"
-"       -m set memory debugging flag (trace|record|usage)\n"
-"       -V print version number and exit\n", stderr);
+"       -6 use IPv6 query transport only\n", stderr);
 	exit(1);
 }
 
@@ -623,8 +623,8 @@ pre_parse_args(int argc, char **argv) {
 			memdebugging = ISC_TRUE;
 			if (strcasecmp("trace", isc_commandline_argument) == 0)
 				isc_mem_debugging |= ISC_MEM_DEBUGTRACE;
-			else if (!strcasecmp("record",
-					     isc_commandline_argument) == 0)
+			else if (strcasecmp("record",
+					    isc_commandline_argument) == 0)
 				isc_mem_debugging |= ISC_MEM_DEBUGRECORD;
 			else if (strcasecmp("usage",
 					    isc_commandline_argument) == 0)

@@ -1,7 +1,7 @@
-/*	$NetBSD: getaddrinfo.c,v 1.8 2015/12/17 04:00:45 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.9 2017/06/15 15:59:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2009, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -419,7 +419,7 @@ getaddrinfo(const char *hostname, const char *servname,
 				goto inet6_addr;
 			}
 			addrsize = sizeof(struct in_addr);
-			addroff = (char *)(&SIN(0)->sin_addr) - (char *)0;
+			addroff = offsetof(struct sockaddr_in, sin_addr);
 			family = AF_INET;
 			goto common;
 #ifdef IRS_HAVE_SIN6_SCOPE_ID
@@ -428,7 +428,7 @@ getaddrinfo(const char *hostname, const char *servname,
 			if (family && family != AF_INET6)
 				return (EAI_NONAME);
 			addrsize = sizeof(struct in6_addr);
-			addroff = (char *)(&SIN6(0)->sin6_addr) - (char *)0;
+			addroff = offsetof(struct sockaddr_in6, sin6_addr);
 			family = AF_INET6;
 			goto common;
 #endif
@@ -437,7 +437,7 @@ getaddrinfo(const char *hostname, const char *servname,
 				return (EAI_NONAME);
 		inet6_addr:
 			addrsize = sizeof(struct in6_addr);
-			addroff = (char *)(&SIN6(0)->sin6_addr) - (char *)0;
+			addroff = offsetof(struct sockaddr_in6, sin6_addr);
 			family = AF_INET6;
 
 		common:

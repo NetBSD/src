@@ -1,7 +1,7 @@
-/*	$NetBSD: t_api.c,v 1.7 2014/12/10 04:38:02 christos Exp $	*/
+/*	$NetBSD: t_api.c,v 1.8 2017/06/15 15:59:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2010, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2010, 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -297,7 +297,7 @@ t_main(int argc, char **argv)
 
 	tnum = 0;
 	pts = &T_testlist[0];
-	while (*pts->pfv != NULL) {
+	while (pts->pfv != NULL) {
 		if (T_tvec[tnum / 8] & (0x01 << (tnum % 8))) {
 #ifndef WIN32
 			if (subprocs) {
@@ -617,7 +617,7 @@ t_getdate(char *buf, size_t buflen) {
 /*
  * Some generally used utilities.
  */
-struct dns_errormap {
+static const struct dns_errormap {
 	isc_result_t	result;
 	const char *text;
 } dns_errormap[] = {
@@ -671,8 +671,8 @@ struct dns_errormap {
 isc_result_t
 t_dns_result_fromtext(char *name) {
 
-	isc_result_t		result;
-	struct dns_errormap	*pmap;
+	isc_result_t			result;
+	const struct dns_errormap	*pmap;
 
 	result = ISC_R_UNEXPECTED;
 
@@ -689,7 +689,7 @@ t_dns_result_fromtext(char *name) {
 	return (result);
 }
 
-struct dc_method_map {
+static const struct dc_method_map {
 	unsigned int	dc_method;
 	const char 	*text;
 } dc_method_map[] = {
@@ -702,8 +702,8 @@ struct dc_method_map {
 
 unsigned int
 t_dc_method_fromtext(char *name) {
-	unsigned int		dc_method;
-	struct dc_method_map	*pmap;
+	unsigned int			dc_method;
+	const struct dc_method_map	*pmap;
 
 	dc_method = DNS_COMPRESS_NONE;
 
@@ -843,7 +843,7 @@ t_settests(const testspec_t list[]) {
 
 	pts = &list[0];
 	for (tnum = 0; tnum < T_MAXTESTS - 1; pts++, tnum++) {
-		if (*pts->pfv == NULL)
+		if (pts->pfv == NULL)
 			break;
 		T_testlist[tnum] = *pts;
 	}
