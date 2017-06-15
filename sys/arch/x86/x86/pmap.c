@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.246 2017/06/14 14:17:15 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.247 2017/06/15 06:32:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.246 2017/06/14 14:17:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.247 2017/06/15 06:32:52 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1443,8 +1443,8 @@ pmap_init_directmap(struct pmap *kpm)
 	pt_entry_t *pte;
 	pd_entry_t *pde;
 	phys_ram_seg_t *mc;
-	size_t nL4e, nL3e;
-	int i;
+	size_t nL4e, nL3e, pn, npd;
+	int i, n;
 
 	const pd_entry_t pteflags = PG_V | PG_KW | pmap_pg_nx;
 
@@ -1503,36 +1503,37 @@ pmap_init_directmap(struct pmap *kpm)
 		/* Allocate L2. */
 		L2page_pa = pmap_bootstrap_palloc(nL3e);
 
-		/* Zero out the L2 pages. */
+		KASSERT(pmap_largepages != 0);
+
+		/* Large pages are supported. Just create L2. */
 		for (i = 0; i < nL3e; i++) {
 			pdp = L2page_pa + i * PAGE_SIZE;
 			*pte = (pdp & PG_FRAME) | pteflags;
 			pmap_update_pg(tmpva);
 
 			memset((void *)tmpva, 0, PAGE_SIZE);
-		}
 
-		KASSERT(pmap_largepages != 0);
-
-		/* Large pages are supported. Just create L2. */
-		for (i = 0; i < NPDPG * nL3e; i++) {
-			pdp = (paddr_t)&(((pd_entry_t *)L2page_pa)[i]);
-			*pte = (pdp & PG_FRAME) | pteflags;
-			pmap_update_pg(tmpva);
-
-			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = ((paddr_t)i << L2_SHIFT) | pteflags |
-			    PG_U | PG_PS | PG_G;
+			pde = (pd_entry_t *)tmpva;
+			for (n = 0; n < NPDPG; n++) {
+				pn = (i * NPDPG) + n;
+				pde[n] = ((paddr_t)pn << L2_SHIFT) | pteflags |
+					PG_U | PG_PS | PG_G;
+			}
 		}
 
 		/* Fill in the L3 entries, linked to L2. */
-		for (i = 0; i < nL3e; i++) {
-			pdp = (paddr_t)&(((pd_entry_t *)L3page_pa)[i]);
+		for (i = 0; i < nL4e; i++) {
+			pdp = L3page_pa + i * PAGE_SIZE;
 			*pte = (pdp & PG_FRAME) | pteflags;
 			pmap_update_pg(tmpva);
 
-			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = (L2page_pa + (i << PAGE_SHIFT)) | pteflags | PG_U;
+			pde = (pd_entry_t *)tmpva;
+			npd = (i == nL4e - 1) ? (nL3e % NPDPG) : NPDPG;
+			for (n = 0; n < npd; n++) {
+				pn = (i * NPDPG) + n;
+				pde[n] = (L2page_pa + (pn << PAGE_SHIFT)) |
+				    pteflags | PG_U;
+			}
 		}
 	}
 
