@@ -1,4 +1,4 @@
-/*	$NetBSD: lsock.c,v 1.2 2012/07/22 14:27:36 darrenr Exp $	*/
+/*	$NetBSD: lsock.c,v 1.3 2017/06/15 23:55:42 kamil Exp $	*/
 
 /*
  * lsock.c (C) 1995-1998 Darren Reed
@@ -39,7 +39,9 @@ static const char rcsid[] = "@(#)Id: lsock.c,v 1.1.1.2 2012/07/22 13:44:37 darre
 #include <linux/sched.h>
 #include <linux/netdevice.h>
 #include <nlist.h>
+#if defined(__FreeBSD__)
 #include <sys/user.h>
+#endif
 #include <sys/socket.h>
 #include <math.h>
 #include <netinet/in.h>
