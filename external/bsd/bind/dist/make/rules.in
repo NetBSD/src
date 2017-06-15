@@ -54,6 +54,7 @@ all: ${PREREQS} subdirs ${TARGETS} testdirs
 ###
 ### Makefile may define:
 ###	SUBDIRS
+###	DEPDIRS
 
 ALL_SUBDIRS = ${SUBDIRS} nulldir
 ALL_TESTDIRS = ${TESTDIRS} nulldir
@@ -84,7 +85,7 @@ testdirs:
 
 install:: all
 
-install clean distclean maintainer-clean doc docclean man manclean::
+install uninstall clean distclean maintainer-clean doc docclean man manclean::
 	@for i in ${ALL_SUBDIRS} ${ALL_TESTDIRS}; do \
 		if [ "$$i" != "nulldir" -a -d $$i ]; then \
 			echo "making $@ in `pwd`/$$i"; \
@@ -141,6 +142,7 @@ LIBTOOL = @LIBTOOL@
 LIBTOOL_MODE_COMPILE = ${LIBTOOL} @LIBTOOL_MODE_COMPILE@
 LIBTOOL_MODE_INSTALL = ${LIBTOOL} @LIBTOOL_MODE_INSTALL@
 LIBTOOL_MODE_LINK = ${LIBTOOL} @LIBTOOL_MODE_LINK@
+LIBTOOL_MODE_UNINSTALL = ${LIBTOOL} @LIBTOOL_MODE_UNINSTALL@
 PURIFY = @PURIFY@
 
 MKDEP = ${SHELL} ${top_builddir}/make/mkdep
@@ -241,7 +243,7 @@ distclean maintainer-clean::
 	rm -f Makefile
 
 depend:
-	@for i in ${ALL_SUBDIRS}; do \
+	@for i in ${ALL_SUBDIRS} ${ALL_TESTDIRS}; do \
 		if [ "$$i" != "nulldir" -a -d $$i ]; then \
 			echo "making depend in `pwd`/$$i"; \
 			(cd $$i; ${MAKE} ${MAKEDEFS} DESTDIR="${DESTDIR}" $@) || exit 1; \

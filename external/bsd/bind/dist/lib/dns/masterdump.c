@@ -1,7 +1,7 @@
-/*	$NetBSD: masterdump.c,v 1.11 2015/07/08 17:28:58 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.12 2017/06/15 15:59:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 /*! \file */
 
@@ -34,6 +32,7 @@
 #include <isc/string.h>
 #include <isc/task.h>
 #include <isc/time.h>
+#include <isc/types.h>
 #include <isc/util.h>
 
 #include <dns/db.h>
@@ -69,7 +68,7 @@
 	} while (/*CONSTCOND*/0)
 
 struct dns_master_style {
-	unsigned int flags;		/* DNS_STYLEFLAG_* */
+	dns_masterstyle_flags_t flags;		/* DNS_STYLEFLAG_* */
 	unsigned int ttl_column;
 	unsigned int class_column;
 	unsigned int type_column;
@@ -589,6 +588,7 @@ rdataset_totext(dns_rdataset_t *rdataset,
 
 			RETERR(dns_rdata_tofmttext(&rdata,
 						   ctx->origin,
+						   (unsigned int)
 						   ctx->style.flags,
 						   ctx->style.line_length -
 						       ctx->style.rdata_column,
@@ -1625,7 +1625,7 @@ dumptostreaminc(dns_dumpctx_t *dctx) {
 			isc_log_write(dns_lctx, ISC_LOGCATEGORY_GENERAL,
 				      DNS_LOGMODULE_MASTERDUMP,
 				      ISC_LOG_DEBUG(1),
-				      "dumptostreaminc(%p) new nodes -> %d\n",
+				      "dumptostreaminc(%p) new nodes -> %d",
 				      dctx, dctx->nodes);
 		}
 		result = DNS_R_CONTINUE;
