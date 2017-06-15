@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.9 2017/06/14 04:58:28 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.10 2017/06/15 05:48:45 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -254,4 +254,46 @@ external/gpl3/gcc/usr.bin/gcc/arch/mips64el/configargs.h 1.21
 
 	regen to fix PR toolchain/52142.
 	[maya, ticket #32]
+
+sys/dev/pci/ehci_pci.c				1.65
+
+	Deal with broken BIOSes that leave PCI interrupts disabled.
+	[sborrill, ticket #33]
+
+sys/netcan/can_pcb.c				1.6
+tests/net/can/t_can.c				1.6
+
+	Refuse to bind to a non-CAN interface.
+	Also release the lock in the error branch.
+
+	Test bind()ing to a non-existent interface.
+	[bouyer, ticket #34]
+
+external/bsd/dhcpcd/Makefile.inc		1.2
+
+	Replace @DATADIR@ with /usr/share/examples.
+	[roy, ticket #35]
+
+external/bsd/tmux/usr.bin/tmux/utempter.c	1.2
+
+	Fix utmp cleanup.  PR/52288.
+	[christos, ticket #36]
+
+sys/dev/audiobell.c				1.21, 1.22
+
+	Fix spkr(4) on 32-bit platforms when attached to an audio device.
+	[nat, ticket #38]
+
+sys/arch/ews4800mips/sbd/fb_sbdio.c		1.16
+sys/arch/pmax/ibus/pm.c				1.13
+sys/dev/hpc/bivideo.c				1.34
+sys/dev/ic/sti.c				1.19
+
+	Fix size checks so they can't be circumvented by integer overflows.
+	[spz, ticket #39]
+
+usr.bin/find/function.c				1.76
+
+	PR/52295: find -delete: "relative path not safe" with absolute paths
+	[christos, ticket #40]
 
