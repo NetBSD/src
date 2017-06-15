@@ -1,7 +1,7 @@
-/*	$NetBSD: errno2result.h,v 1.4 2014/12/10 04:38:01 christos Exp $	*/
+/*	$NetBSD: errno2result.h,v 1.5 2017/06/15 15:59:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,10 +32,11 @@
 ISC_LANG_BEGINDECLS
 
 #define isc__errno2result(posixerrno) \
-	isc__errno2resultx(posixerrno, __FILE__, __LINE__)
+	isc__errno2resultx(posixerrno, ISC_TRUE, __FILE__, __LINE__)
 
 isc_result_t
-isc__errno2resultx(int posixerrno, const char *file, int line);
+isc__errno2resultx(int posixerrno, isc_boolean_t dolog,
+		   const char *file, int line);
 
 ISC_LANG_ENDDECLS
 

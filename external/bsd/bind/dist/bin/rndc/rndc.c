@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc.c,v 1.14 2016/03/10 04:01:33 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.15 2017/06/15 15:59:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -42,6 +42,8 @@
 #include <isc/task.h>
 #include <isc/thread.h>
 #include <isc/util.h>
+
+#include <pk11/site.h>
 
 #include <isccfg/namedconf.h>
 
@@ -597,9 +599,12 @@ parse_config(isc_mem_t *mctx, isc_log_t *log, const char *keyname,
 	secretstr = cfg_obj_asstring(secretobj);
 	algorithmstr = cfg_obj_asstring(algorithmobj);
 
+#ifndef PK11_MD5_DISABLE
 	if (strcasecmp(algorithmstr, "hmac-md5") == 0)
 		algorithm = ISCCC_ALG_HMACMD5;
-	else if (strcasecmp(algorithmstr, "hmac-sha1") == 0)
+	else
+#endif
+	if (strcasecmp(algorithmstr, "hmac-sha1") == 0)
 		algorithm = ISCCC_ALG_HMACSHA1;
 	else if (strcasecmp(algorithmstr, "hmac-sha224") == 0)
 		algorithm = ISCCC_ALG_HMACSHA224;

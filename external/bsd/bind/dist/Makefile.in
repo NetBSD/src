@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -68,6 +68,13 @@ install:: isc-config.sh installdirs
 	rm -f ${DESTDIR}${mandir}/man1/bind9-config.1
 	@LN@ ${DESTDIR}${mandir}/man1/isc-config.sh.1 ${DESTDIR}${mandir}/man1/bind9-config.1
 	${INSTALL_DATA} ${top_srcdir}/bind.keys ${DESTDIR}${sysconfdir}
+
+uninstall::
+	rm -f ${DESTDIR}${sysconfdir}/bind.keys
+	rm -f ${DESTDIR}${mandir}/man1/bind9-config.1
+	rm -f ${DESTDIR}${mandir}/man1/isc-config.sh.1
+	rm -f ${DESTDIR}${bindir}/bind9-config
+	rm -f ${DESTDIR}${bindir}/isc-config.sh
 
 tags:
 	rm -f TAGS

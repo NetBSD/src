@@ -1,7 +1,7 @@
-/*	$NetBSD: acl.c,v 1.7 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: acl.c,v 1.8 2017/06/15 15:59:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011, 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -521,32 +521,26 @@ initialize_action(void) {
  */
 static void
 is_insecure(isc_prefix_t *prefix, void **data) {
-	isc_boolean_t secure;
-	int bitlen, family;
-
-	bitlen = prefix->bitlen;
-	family = prefix->family;
-
-	/* Negated entries are always secure. */
-	secure = * (isc_boolean_t *)data[ISC_IS6(family)];
-	if (!secure) {
+	/*
+	 * If all nonexistent or negative then this node is secure.
+	 */
+	if ((data[0] == NULL || !* (isc_boolean_t *) data[0]) &&
+	    (data[1] == NULL || !* (isc_boolean_t *) data[1]))
 		return;
-	}
 
-	/* If loopback prefix found, return */
-	switch (family) {
-	case AF_INET:
-		if (bitlen == 32 &&
-		    htonl(prefix->add.sin.s_addr) == INADDR_LOOPBACK)
-			return;
-		break;
-	case AF_INET6:
-		if (bitlen == 128 && IN6_IS_ADDR_LOOPBACK(&prefix->add.sin6))
-			return;
-		break;
-	default:
-		break;
-	}
+	/*
+	 * If a loopback address found and the other family
+	 * doesn't exist or is negative, return.
+	 */
+	if (prefix->bitlen == 32 &&
+	    htonl(prefix->add.sin.s_addr) == INADDR_LOOPBACK &&
+	    (data[1] == NULL || !* (isc_boolean_t *) data[1]))
+		return;
+
+	if (prefix->bitlen == 128 &&
+	    IN6_IS_ADDR_LOOPBACK(&prefix->add.sin6) &&
+	    (data[0] == NULL || !* (isc_boolean_t *) data[0]))
+		return;
 
 	/* Non-negated, non-loopback */
 	insecure_prefix_found = ISC_TRUE;	/* LOCKED */

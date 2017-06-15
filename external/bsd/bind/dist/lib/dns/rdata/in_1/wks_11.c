@@ -1,7 +1,7 @@
-/*	$NetBSD: wks_11.c,v 1.7 2015/12/17 04:00:44 christos Exp $	*/
+/*	$NetBSD: wks_11.c,v 1.8 2017/06/15 15:59:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -63,6 +63,12 @@ mygetservbyname(const char *name, const char *proto, long *port) {
 	return (ISC_TF(se != NULL));
 }
 
+#ifdef _WIN32
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+
 static inline isc_result_t
 fromtext_in_wks(ARGS_FROMTEXT) {
 	static isc_once_t once = ISC_ONCE_INIT;
@@ -78,6 +84,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	unsigned int n;
 	char service[32];
 	int i;
+	isc_result_t result;
 
 	REQUIRE(type == dns_rdatatype_wks);
 	REQUIRE(rdclass == dns_rdataclass_in);
@@ -89,15 +96,29 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 
 	RUNTIME_CHECK(isc_once_do(&once, init_lock) == ISC_R_SUCCESS);
 
+#ifdef _WIN32
+	{
+		WORD wVersionRequested;
+		WSADATA wsaData;
+		int err;
+
+		wVersionRequested = MAKEWORD(2, 0);
+
+		err = WSAStartup(wVersionRequested, &wsaData );
+		if (err != 0)
+			return (ISC_R_FAILURE);
+	}
+#endif
+
 	/*
 	 * IPv4 dotted quad.
 	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
+	CHECK(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
 
 	isc_buffer_availableregion(target, &region);
 	if (getquad(DNS_AS_STR(token), &addr, lexer, callbacks) != 1)
-		RETTOK(DNS_R_BADDOTTEDQUAD);
+		CHECKTOK(DNS_R_BADDOTTEDQUAD);
 	if (region.length < 4)
 		return (ISC_R_NOSPACE);
 	memmove(region.base, &addr, 4);
@@ -106,28 +127,28 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	/*
 	 * Protocol.
 	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
+	CHECK(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
 
 	proto = strtol(DNS_AS_STR(token), &e, 10);
 	if (*e == 0)
 		;
 	else if (!mygetprotobyname(DNS_AS_STR(token), &proto))
-		RETTOK(DNS_R_UNKNOWNPROTO);
+		CHECKTOK(DNS_R_UNKNOWNPROTO);
 
 	if (proto < 0 || proto > 0xff)
-		RETTOK(ISC_R_RANGE);
+		CHECKTOK(ISC_R_RANGE);
 
 	if (proto == IPPROTO_TCP)
 		ps = "tcp";
 	else if (proto == IPPROTO_UDP)
 		ps = "udp";
 
-	RETERR(uint8_tobuffer(proto, target));
+	CHECK(uint8_tobuffer(proto, target));
 
 	memset(bm, 0, sizeof(bm));
 	do {
-		RETERR(isc_lex_getmastertoken(lexer, &token,
+		CHECK(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_string, ISC_TRUE));
 		if (token.type != isc_tokentype_string)
 			break;
@@ -147,9 +168,9 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 			;
 		else if (!mygetservbyname(service, ps, &port) &&
 			 !mygetservbyname(DNS_AS_STR(token), ps, &port))
-			RETTOK(DNS_R_UNKNOWNSERVICE);
+			CHECKTOK(DNS_R_UNKNOWNSERVICE);
 		if (port < 0 || port > 0xffff)
-			RETTOK(ISC_R_RANGE);
+			CHECKTOK(ISC_R_RANGE);
 		if (port > maxport)
 			maxport = port;
 		bm[port / 8] |= (0x80 >> (port % 8));
@@ -161,7 +182,14 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	isc_lex_ungettoken(lexer, &token);
 
 	n = (maxport + 8) / 8;
-	return (mem_tobuffer(target, bm, n));
+	result = mem_tobuffer(target, bm, n);
+
+ cleanup:
+#ifdef _WIN32
+	WSACleanup();
+#endif
+
+	return (result);
 }
 
 static inline isc_result_t

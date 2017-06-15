@@ -1,7 +1,7 @@
-/*	$NetBSD: sdb.c,v 1.10 2015/12/17 04:00:43 christos Exp $	*/
+/*	$NetBSD: sdb.c,v 1.11 2017/06/15 15:59:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1300,7 +1300,8 @@ static dns_dbmethods_t sdb_methods = {
 	findnodeext,
 	findext,
 	NULL,			/* setcachestats */
-	NULL			/* hashsize */
+	NULL,			/* hashsize */
+	NULL			/* getsize */
 };
 
 static isc_result_t

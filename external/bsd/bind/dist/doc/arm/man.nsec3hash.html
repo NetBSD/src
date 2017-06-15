@@ -1,5 +1,6 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2004-2015 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2016 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -14,7 +15,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<html>
+<html lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>nsec3hash</title>
@@ -38,53 +39,85 @@
 </div>
 <div class="refentry">
 <a name="man.nsec3hash"></a><div class="titlepage"></div>
-<div class="refnamediv">
+  
+  
+
+  
+
+  <div class="refnamediv">
 <h2>Name</h2>
-<p><span class="application">nsec3hash</span> &#8212; generate NSEC3 hash</p>
-</div>
-<div class="refsynopsisdiv">
-<h2>Synopsis</h2>
-<div class="cmdsynopsis"><p><code class="command">nsec3hash</code>  {<em class="replaceable"><code>salt</code></em>} {<em class="replaceable"><code>algorithm</code></em>} {<em class="replaceable"><code>iterations</code></em>} {<em class="replaceable"><code>domain</code></em>}</p></div>
-</div>
-<div class="refsection">
-<a name="id-1.14.30.7"></a><h2>DESCRIPTION</h2>
 <p>
+    <span class="application">nsec3hash</span>
+     &#8212; generate NSEC3 hash
+  </p>
+</div>
+
+  
+
+  <div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+    <div class="cmdsynopsis"><p>
+      <code class="command">nsec3hash</code> 
+       {<em class="replaceable"><code>salt</code></em>}
+       {<em class="replaceable"><code>algorithm</code></em>}
+       {<em class="replaceable"><code>iterations</code></em>}
+       {<em class="replaceable"><code>domain</code></em>}
+    </p></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.14.30.7"></a><h2>DESCRIPTION</h2>
+
+    <p>
       <span class="command"><strong>nsec3hash</strong></span> generates an NSEC3 hash based on
       a set of NSEC3 parameters.  This can be used to check the validity
       of NSEC3 records in a signed zone.
     </p>
-</div>
-<div class="refsection">
+  </div>
+
+  <div class="refsection">
 <a name="id-1.14.30.8"></a><h2>ARGUMENTS</h2>
-<div class="variablelist"><dl class="variablelist">
+
+    <div class="variablelist"><dl class="variablelist">
 <dt><span class="term">salt</span></dt>
-<dd><p>
+<dd>
+          <p>
             The salt provided to the hash algorithm.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">algorithm</span></dt>
-<dd><p>
+<dd>
+          <p>
             A number indicating the hash algorithm.  Currently the
             only supported hash algorithm for NSEC3 is SHA-1, which is
             indicated by the number 1; consequently "1" is the only
             useful value for this argument.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">iterations</span></dt>
-<dd><p>
+<dd>
+          <p>
             The number of additional times the hash should be performed.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">domain</span></dt>
-<dd><p>
+<dd>
+          <p>
             The domain name to be hashed.
-          </p></dd>
+          </p>
+        </dd>
 </dl></div>
-</div>
-<div class="refsection">
+  </div>
+
+  <div class="refsection">
 <a name="id-1.14.30.9"></a><h2>SEE ALSO</h2>
-<p>
+
+    <p>
       <em class="citetitle">BIND 9 Administrator Reference Manual</em>,
       <em class="citetitle">RFC 5155</em>.
     </p>
-</div>
+  </div>
+
 </div>
 <div class="navfooter">
 <hr>
@@ -103,6 +136,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.4-P8</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.5-P1</p>
 </body>
 </html>

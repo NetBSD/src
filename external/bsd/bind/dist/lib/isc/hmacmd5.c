@@ -1,7 +1,7 @@
-/*	$NetBSD: hmacmd5.c,v 1.9 2015/12/17 04:00:45 christos Exp $	*/
+/*	$NetBSD: hmacmd5.c,v 1.10 2017/06/15 15:59:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -26,6 +26,10 @@
 
 #include "config.h"
 
+#include <pk11/site.h>
+
+#ifndef PK11_MD5_DISABLE
+
 #include <isc/assertions.h>
 #include <isc/hmacmd5.h>
 #include <isc/md5.h>
@@ -35,52 +39,52 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
-#if PKCS11CRYPTO || PKCS11CRYPTOWITHHMAC
+#if PKCS11CRYPTO
 #include <pk11/internal.h>
 #include <pk11/pk11.h>
 #endif
 
 #ifdef ISC_PLATFORM_OPENSSLHASH
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define HMAC_CTX_new() &(ctx->_ctx), HMAC_CTX_init(&(ctx->_ctx))
+#define HMAC_CTX_free(ptr) HMAC_CTX_cleanup(ptr)
+#endif
 
 void
 isc_hmacmd5_init(isc_hmacmd5_t *ctx, const unsigned char *key,
 		 unsigned int len)
 {
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Init(ctx, (const void *) key,
-				(int) len, EVP_md5()) == 1);
-#else
-	HMAC_Init(ctx, (const void *) key, (int) len, EVP_md5());
-#endif
+	ctx->ctx = HMAC_CTX_new();
+	RUNTIME_CHECK(ctx->ctx != NULL);
+	RUNTIME_CHECK(HMAC_Init_ex(ctx->ctx, (const void *) key,
+				   (int) len, EVP_md5(), NULL) == 1);
 }
 
 void
 isc_hmacmd5_invalidate(isc_hmacmd5_t *ctx) {
-	HMAC_CTX_cleanup(ctx);
+	if (ctx->ctx == NULL)
+		return;
+	HMAC_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
 }
 
 void
 isc_hmacmd5_update(isc_hmacmd5_t *ctx, const unsigned char *buf,
 		   unsigned int len)
 {
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Update(ctx, buf, (int) len) == 1);
-#else
-	HMAC_Update(ctx, buf, (int) len);
-#endif
+	RUNTIME_CHECK(HMAC_Update(ctx->ctx, buf, (int) len) == 1);
 }
 
 void
 isc_hmacmd5_sign(isc_hmacmd5_t *ctx, unsigned char *digest) {
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Final(ctx, digest, NULL) == 1);
-#else
-	HMAC_Final(ctx, digest, NULL);
-#endif
-	HMAC_CTX_cleanup(ctx);
+	RUNTIME_CHECK(HMAC_Final(ctx->ctx, digest, NULL) == 1);
+	HMAC_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
 }
 
-#elif PKCS11CRYPTOWITHHMAC
+#elif PKCS11CRYPTO
+
+#ifndef PK11_MD5_HMAC_REPLACE
 
 static CK_BBOOL truevalue = TRUE;
 static CK_BBOOL falsevalue = FALSE;
@@ -153,8 +157,8 @@ isc_hmacmd5_sign(isc_hmacmd5_t *ctx, unsigned char *digest) {
 	ctx->object = CK_INVALID_HANDLE;
 	pk11_return_session(ctx);
 }
-
-#elif PKCS11CRYPTO
+#else
+/* Replace missing CKM_MD5_HMAC PKCS#11 mechanism */
 
 #define PADLEN 64
 #define IPAD 0x36
@@ -240,6 +244,7 @@ isc_hmacmd5_sign(isc_hmacmd5_t *ctx, unsigned char *digest) {
 			 (CK_ULONG_PTR) &len));
 	pk11_return_session(ctx);
 }
+#endif
 
 #else
 
@@ -330,3 +335,17 @@ isc_hmacmd5_verify2(isc_hmacmd5_t *ctx, unsigned char *digest, size_t len) {
 	isc_hmacmd5_sign(ctx, newdigest);
 	return (isc_safe_memequal(digest, newdigest, len));
 }
+
+#else /* !PK11_MD5_DISABLE */
+#ifdef WIN32
+/* Make the Visual Studio linker happy */
+#include <isc/util.h>
+
+void isc_hmacmd5_init() { INSIST(0); }
+void isc_hmacmd5_invalidate() { INSIST(0); }
+void isc_hmacmd5_sign() { INSIST(0); }
+void isc_hmacmd5_update() { INSIST(0); }
+void isc_hmacmd5_verify() { INSIST(0); }
+void isc_hmacmd5_verify2() { INSIST(0); }
+#endif
+#endif /* PK11_MD5_DISABLE */

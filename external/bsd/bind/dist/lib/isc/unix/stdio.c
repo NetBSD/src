@@ -1,7 +1,7 @@
-/*	$NetBSD: stdio.c,v 1.7 2015/07/08 17:29:00 christos Exp $	*/
+/*	$NetBSD: stdio.c,v 1.8 2017/06/15 15:59:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -139,14 +139,20 @@ isc_stdio_flush(FILE *f) {
 
 isc_result_t
 isc_stdio_sync(FILE *f) {
+	struct stat buf;
 	int r;
 
-	r = fsync(fileno(f));
+	if (fstat(fileno(f), &buf) != 0)
+		return (isc__errno2result(errno));
+
 	/*
-	 * fsync is not supported on sockets and pipes which
-	 * result in EINVAL / ENOTSUP.
+	 * Only call fsync() on regular files.
 	 */
-	if (r == 0 || errno == EINVAL || errno == ENOTSUP)
+	if ((buf.st_mode & S_IFMT) != S_IFREG)
+		return (ISC_R_SUCCESS);
+
+	r = fsync(fileno(f));
+	if (r == 0)
 		return (ISC_R_SUCCESS);
 	else
 		return (isc__errno2result(errno));
