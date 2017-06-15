@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.94 2017/06/08 09:49:46 knakahara Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.95 2017/06/15 12:41:18 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.94 2017/06/08 09:49:46 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.95 2017/06/15 12:41:18 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -689,7 +689,7 @@ eagain:
 		goto bail;
 	}
 
-	while (!(crp->crp_flags & CRYPTO_F_DQRETQ)) {
+	while (!(crp->crp_devflags & CRYPTODEV_F_RET)) {
 		DPRINTF("cse->sid[%d]: sleeping on cv %p for crp %p\n",
 			(uint32_t)cse->sid, &crp->crp_cv, crp);
 		cv_wait(&crp->crp_cv, &cryptodev_mtx);	/* XXX cv_wait_sig? */
@@ -763,7 +763,7 @@ cryptodev_cb(void *op)
 		mutex_enter(&cryptodev_mtx);
 	}
 	if (error != 0 || (crp->crp_flags & CRYPTO_F_DONE)) {
-		crp->crp_flags |= CRYPTO_F_DQRETQ;
+		crp->crp_devflags |= CRYPTODEV_F_RET;
 		cv_signal(&crp->crp_cv);
 	}
 	mutex_exit(&cryptodev_mtx);
@@ -800,7 +800,7 @@ cryptodevkey_cb(void *op)
 	struct cryptkop *krp = op;
 	
 	mutex_enter(&cryptodev_mtx);
-	krp->krp_flags |= CRYPTO_F_DQRETQ;
+	krp->krp_devflags |= CRYPTODEV_F_RET;
 	cv_signal(&krp->krp_cv);
 	mutex_exit(&cryptodev_mtx);
 	return 0;
@@ -915,7 +915,7 @@ cryptodev_key(struct crypt_kop *kop)
 	}
 
 	mutex_enter(&cryptodev_mtx);
-	while (!(krp->krp_flags & CRYPTO_F_DQRETQ)) {
+	while (!(krp->krp_devflags & CRYPTODEV_F_RET)) {
 		cv_wait(&krp->krp_cv, &cryptodev_mtx);	/* XXX cv_wait_sig? */
 	}
 	mutex_exit(&cryptodev_mtx);
