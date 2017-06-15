@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2008-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2008-2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -29,8 +29,11 @@ rm -f dig.*.prime.*
 rm -f ns4/tld.db
 rm -f ns6/K*
 rm -f ns6/example.net.db.signed ns6/example.net.db
-rm -f ns6/dsset-example.net. ns6/example.net.db.signed.jnl
+rm -f ns6/ds.example.net.db.signed ns6/ds.example.net.db
+rm -f ns6/dsset-ds.example.net*
+rm -f ns6/dsset-example.net* ns6/example.net.db.signed.jnl
 rm -f ns6/to-be-removed.tld.db ns6/to-be-removed.tld.db.jnl
 rm -f ns7/server.db ns7/server.db.jnl ns7/named.conf
-rm -f resolve.out
+rm -f resolve.out.*.test*
 rm -f .digrc
+rm -f ns5/trusted.conf

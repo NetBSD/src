@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -12,8 +12,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id
-
 srcdir =	@srcdir@
 VPATH =		@srcdir@
 top_srcdir =	@top_srcdir@
@@ -21,6 +19,8 @@ top_srcdir =	@top_srcdir@
 @BIND9_MAKE_INCLUDES@
 
 PYTHON	=	@PYTHON@
+
+SUBDIRS	=	isc
 
 TARGETS =	dnssec-checkds dnssec-coverage
 PYSRCS =	dnssec-checkds.py dnssec-coverage.py
@@ -49,13 +49,28 @@ installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 install:: ${TARGETS} installdirs
-	${INSTALL_SCRIPT} dnssec-checkds@EXEEXT@ ${DESTDIR}${sbindir}
-	${INSTALL_SCRIPT} dnssec-coverage@EXEEXT@ ${DESTDIR}${sbindir}
+	${INSTALL_SCRIPT} dnssec-checkds ${DESTDIR}${sbindir}
+	${INSTALL_SCRIPT} dnssec-coverage ${DESTDIR}${sbindir}
 	${INSTALL_DATA} ${srcdir}/dnssec-checkds.8 ${DESTDIR}${mandir}/man8
 	${INSTALL_DATA} ${srcdir}/dnssec-coverage.8 ${DESTDIR}${mandir}/man8
+	if test -n "${PYTHON}" ; then \
+		if test -n "${DESTDIR}" ; then \
+			${PYTHON} ${srcdir}/setup.py install --root=${DESTDIR} --prefix=${prefix} ; \
+		else \
+			${PYTHON} ${srcdir}/setup.py install --prefix=${prefix} ; \
+		fi \
+	fi
+
+uninstall::
+	rm -f ${DESTDIR}${mandir}/man8/dnssec-coverage.8
+	rm -f ${DESTDIR}${mandir}/man8/dnssec-checkds.8
+	rm -f ${DESTDIR}${sbindir}/dnssec-coverage
+	rm -f ${DESTDIR}${sbindir}/dnssec-checkds
+	# only manually uninstall for the python package itself
 
 clean distclean::
 	rm -f ${TARGETS}
+	rm -rf build
 
 distclean::
 	rm -f dnssec-checkds.py dnssec-coverage.py

@@ -34,6 +34,15 @@ copy /Y ..\..\bin\python\dnssec-checkds.py ..\..\Build\Release\dnssec-checkds.py
 copy /Y ..\..\bin\python\dnssec-checkds.py ..\..\Build\Debug\dnssec-checkds.py
 copy /Y ..\..\bin\python\dnssec-coverage.py ..\..\Build\Release\dnssec-coverage.py
 copy /Y ..\..\bin\python\dnssec-coverage.py ..\..\Build\Debug\dnssec-coverage.py
+
+echo Build python parser
+
+cd ..\..\bin\python\isc
+@PYTHON@ policy.py parse \dev\nul
+set PYTHONPATH=.
+@PYTHON@ -m parsetab
+cd ..\..\..\win32utils\legacy
+
 @END PYTHON
 
 echo Done.

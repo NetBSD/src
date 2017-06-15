@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011, 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -28,7 +28,7 @@ rm -f Ksig0.example2.*
 # SIG(0) required cryptographic support which may not be configured.
 #
 test -r $RANDFILE || $GENRANDOM 400 $RANDFILE 
-keyname=`$KEYGEN  -q -r $RANDFILE -n HOST -a RSASHA1 -b 1024 -T KEY sig0.example2 2>/dev/null`
+keyname=`$KEYGEN  -q -r $RANDFILE -n HOST -a RSASHA1 -b 1024 -T KEY sig0.example2 2>/dev/null | $D2U`
 if test -n "$keyname"
 then
 	cat ns1/example1.db $keyname.key > ns1/example2.db

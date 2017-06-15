@@ -1,7 +1,7 @@
-/*	$NetBSD: seccomp.h,v 1.1.1.3 2014/12/10 03:34:25 christos Exp $	*/
+/*	$NetBSD: seccomp.h,v 1.1.1.4 2017/06/15 15:22:38 christos Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -60,6 +60,10 @@ int scmp_syscalls[] = {
 	SCMP_SYS(fstat),
 	SCMP_SYS(epoll_ctl),
 	SCMP_SYS(gettimeofday),
+	SCMP_SYS(getpid),
+#ifdef HAVE_GETRANDOM
+	SCMP_SYS(getrandom),
+#endif
 	SCMP_SYS(unlink),
 	SCMP_SYS(socket),
 	SCMP_SYS(sendto),
@@ -123,6 +127,10 @@ const char *scmp_syscall_names[] = {
 	"fstat",
 	"epoll_ctl",
 	"gettimeofday",
+	"getpid",
+#ifdef HAVE_GETRANDOM
+	"getrandom",
+#endif
 	"unlink",
 	"socket",
 	"sendto",
@@ -192,6 +200,10 @@ int scmp_syscalls[] = {
 	SCMP_SYS(fstat64),
 	SCMP_SYS(epoll_ctl),
 	SCMP_SYS(gettimeofday),
+	SCMP_SYS(getpid),
+#ifdef HAVE_GETRANDOM
+	SCMP_SYS(getrandom),
+#endif
 	SCMP_SYS(unlink),
 #ifndef ISC_PLATFORM_USETHREADS
 	SCMP_SYS(fcntl64),
@@ -228,6 +240,10 @@ const char *scmp_syscall_names[] = {
 	"fstat64",
 	"epoll_ctl",
 	"gettimeofday",
+	"getpid",
+#ifdef HAVE_GETRANDOM
+	"getrandom",
+#endif
 	"unlink",
 #ifndef ISC_PLATFORM_USETHREADS
 	"fcntl64",
