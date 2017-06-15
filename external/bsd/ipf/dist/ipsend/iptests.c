@@ -1,4 +1,4 @@
-/*	$NetBSD: iptests.c,v 1.3 2012/07/22 14:27:36 darrenr Exp $	*/
+/*	$NetBSD: iptests.c,v 1.4 2017/06/15 23:53:56 kamil Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -41,7 +41,9 @@ typedef	int	boolean_t;
 #endif
 #if !defined(solaris) && !defined(linux) && !defined(__sgi)
 # include <nlist.h>
+#if defined(__FreeBSD__)
 # include <sys/user.h>
+#endif
 # include <sys/proc.h>
 #endif
 #if !defined(ultrix) && !defined(hpux) && !defined(linux) && \
