@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.89 2017/06/14 07:38:24 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.90 2017/06/15 12:45:10 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.89 2017/06/14 07:38:24 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.90 2017/06/15 12:45:10 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1494,7 +1494,6 @@ crypto_kgetreq(int num __unused, int prflags)
 void
 crypto_done(struct cryptop *crp)
 {
-	int wasempty;
 
 	KASSERT(crp != NULL);
 
@@ -1520,9 +1519,7 @@ crypto_done(struct cryptop *crp)
   	 	* callback routine does very little (e.g. the
 	 	* /dev/crypto callback method just does a wakeup).
 	 	*/
-		mutex_spin_enter(&crypto_ret_q_mtx);
 		crp->crp_flags |= CRYPTO_F_DONE;
-		mutex_spin_exit(&crypto_ret_q_mtx);
 
 #ifdef CRYPTO_TIMING
 		if (crypto_timing) {
@@ -1539,7 +1536,6 @@ crypto_done(struct cryptop *crp)
 #endif
 		crp->crp_callback(crp);
 	} else {
-		mutex_spin_enter(&crypto_ret_q_mtx);
 		crp->crp_flags |= CRYPTO_F_DONE;
 #if 0
 		if (crp->crp_flags & CRYPTO_F_USER) {
@@ -1555,6 +1551,9 @@ crypto_done(struct cryptop *crp)
 		} else
 #endif
 		{
+			int wasempty;
+
+			mutex_spin_enter(&crypto_ret_q_mtx);
 			wasempty = TAILQ_EMPTY(&crp_ret_q);
 			DPRINTF("lid[%u]: queueing %p\n",
 				CRYPTO_SESID2LID(crp->crp_sid), crp);
@@ -1567,8 +1566,8 @@ crypto_done(struct cryptop *crp)
 					CRYPTO_SESID2LID(crp->crp_sid), crp);
 				cv_signal(&cryptoret_cv);
 			}
+			mutex_spin_exit(&crypto_ret_q_mtx);
 		}
-		mutex_spin_exit(&crypto_ret_q_mtx);
 	}
 }
 
@@ -1578,7 +1577,6 @@ crypto_done(struct cryptop *crp)
 void
 crypto_kdone(struct cryptkop *krp)
 {
-	int wasempty;
 
 	KASSERT(krp != NULL);
 
@@ -1596,6 +1594,8 @@ crypto_kdone(struct cryptkop *krp)
 	if (krp->krp_flags & CRYPTO_F_CBIMM) {
 		krp->krp_callback(krp);
 	} else {
+		int wasempty;
+
 		mutex_spin_enter(&crypto_ret_q_mtx);
 		wasempty = TAILQ_EMPTY(&crp_ret_kq);
 		krp->krp_flags |= CRYPTO_F_ONRETQ;
