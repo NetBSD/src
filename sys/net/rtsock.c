@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.213 2017/06/01 02:45:14 chs Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.214 2017/06/15 02:51:45 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.213 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.214 2017/06/15 02:51:45 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -536,12 +536,11 @@ route_output_report(struct rtentry *rt, struct rt_addrinfo *info,
     struct rt_xmsghdr *rtm, struct rt_xmsghdr **new_rtm)
 {
 	int len;
-	struct ifnet *ifp;
 
-	if ((rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) == 0)
-		;
-	else if ((ifp = rt->rt_ifp) != NULL) {
+	if (rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) {
 		const struct ifaddr *rtifa;
+		const struct ifnet *ifp = rt->rt_ifp;
+
 		info->rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
 		/* rtifa used to be simply rt->rt_ifa.
 		 * If rt->rt_ifa != NULL, then
@@ -569,9 +568,6 @@ route_output_report(struct rtentry *rt, struct rt_addrinfo *info,
 		else
 			info->rti_info[RTAX_BRD] = NULL;
 		rtm->rtm_index = ifp->if_index;
-	} else {
-		info->rti_info[RTAX_IFP] = NULL;
-		info->rti_info[RTAX_IFA] = NULL;
 	}
 	(void)rt_msg2(rtm->rtm_type, info, NULL, NULL, &len);
 	if (len > rtm->rtm_msglen) {
