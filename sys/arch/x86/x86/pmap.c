@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.248 2017/06/15 07:05:32 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.249 2017/06/15 09:31:48 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.248 2017/06/15 07:05:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.249 2017/06/15 09:31:48 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1518,7 +1518,8 @@ pmap_init_directmap(struct pmap *kpm)
 			memset((void *)tmpva, 0, PAGE_SIZE);
 
 			pde = (pd_entry_t *)tmpva;
-			npd = (i == nL3e - 1) ? (nL2e % NPDPG) : NPDPG;
+			npd = ((i == nL3e - 1) && (nL2e % NPDPG != 0)) ?
+			    (nL2e % NPDPG) : NPDPG;
 			for (n = 0; n < npd; n++) {
 				pn = (i * NPDPG) + n;
 				pde[n] = ((paddr_t)pn << L2_SHIFT) | pteflags |
@@ -1533,7 +1534,8 @@ pmap_init_directmap(struct pmap *kpm)
 			pmap_update_pg(tmpva);
 
 			pde = (pd_entry_t *)tmpva;
-			npd = (i == nL4e - 1) ? (nL3e % NPDPG) : NPDPG;
+			npd = ((i == nL4e - 1) && (nL3e % NPDPG != 0)) ?
+			    (nL3e % NPDPG) : NPDPG;
 			for (n = 0; n < npd; n++) {
 				pn = (i * NPDPG) + n;
 				pde[n] = (L2page_pa + (pn << PAGE_SHIFT)) |
