@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.12 2017/04/25 20:55:05 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.13 2017/06/16 20:40:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.12 2017/04/25 20:55:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.13 2017/06/16 20:40:49 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -673,10 +673,7 @@ ahci_exec_fis(struct ata_channel *chp, int timeout, int flags)
 			    AHCINAME(sc), chp->ch_channel, is);
 			return ERR_DF;
 		}
-		if (flags & AT_WAIT)
-			tsleep(&sc, PRIBIO, "ahcifis", 1);
-		else
-			delay(10000);
+		ata_delay(10, "ahcifis", flags);
 	}
 
 	aprint_debug("%s channel %d: timeout sending FIS\n",
@@ -779,10 +776,7 @@ skip_reset:
 		sig = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
 		if ((__SHIFTOUT(sig, AHCI_P_TFD_ST) & WDCS_BSY) == 0)
 			break;
-		if (flags & AT_WAIT)
-			tsleep(&sc, PRIBIO, "ahcid2h", mstohz(10));
-		else
-			delay(10000);
+		ata_delay(10, "ahcid2h", flags);
 	}
 	if (i == AHCI_RST_WAIT) {
 		aprint_error("%s: BSY never cleared, TD 0x%x\n",
@@ -801,10 +795,7 @@ skip_reset:
 	    AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel))), DEBUG_PROBE);
 end:
 	ahci_channel_stop(sc, chp, flags);
-	if (flags & AT_WAIT)
-		tsleep(&sc, PRIBIO, "ahcirst", mstohz(500));
-	else
-		delay(500000);
+	ata_delay(500, "ahcirst", flags);
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 	ahci_channel_start(sc, chp, flags,
@@ -825,7 +816,7 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 		printf("%s: port %d reset failed\n", AHCINAME(sc), chp->ch_channel);
 		/* XXX and then ? */
 	}
-	ata_kill_active(chp, KILL_RESET);
+	ata_kill_active(chp, KILL_RESET, flags);
 	ata_delay(500, "ahcirst", flags);
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
@@ -1035,10 +1026,7 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		if (ata_c->flags & AT_DONE)
 			break;
 		ahci_intr_port(sc, achp);
-		if (ata_c->flags & AT_WAIT)
-			tsleep(&xfer, PRIBIO, "ahcipl", mstohz(10));
-		else
-			delay(10000);
+		ata_delay(10, "ahcipl", ata_c->flags);
 	}
 	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), channel, 
 	    AHCI_READ(sc, AHCI_GHC), AHCI_READ(sc, AHCI_IS),
@@ -1060,6 +1048,8 @@ ahci_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 	struct ata_command *ata_c = &xfer->c_ata_c;
 	AHCIDEBUG_PRINT(("ahci_cmd_kill_xfer channel %d\n", chp->ch_channel),
 	    DEBUG_FUNCS);
+
+	ata_deactivate_xfer(chp, xfer);
 
 	switch (reason) {
 	case KILL_GONE:
@@ -1271,6 +1261,8 @@ ahci_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 	    DEBUG_FUNCS);
 
 	achp->ahcic_cmds_active &= ~(1 << xfer->c_slot);
+	ata_deactivate_xfer(chp, xfer);
+
 	ata_bio->flags |= ATA_ITSDONE;
 	switch (reason) {
 	case KILL_GONE:
@@ -1299,6 +1291,7 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	    DEBUG_FUNCS);
 
 	achp->ahcic_cmds_active &= ~(1 << xfer->c_slot);
+
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
 	if (xfer->c_flags & C_TIMEOU) {
 		ata_bio->error = TIMEOUT;
@@ -1364,10 +1357,7 @@ ahci_channel_stop(struct ahci_softc *sc, struct ata_channel *chp, int flags)
 		if ((AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_CR)
 		    == 0)
 			break;
-		if (flags & AT_WAIT)
-			tsleep(&sc, PRIBIO, "ahcistop", mstohz(10));
-		else
-			delay(10000);
+		ata_delay(10, "ahcistop", flags);
 	}
 	if (AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_CR) {
 		printf("%s: channel wouldn't stop\n", AHCINAME(sc));
@@ -1399,10 +1389,7 @@ ahci_channel_start(struct ahci_softc *sc, struct ata_channel *chp,
 			if ((AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) &
 			    AHCI_P_CMD_CLO) == 0)
 				break;
-			if (flags & AT_WAIT)
-				tsleep(&sc, PRIBIO, "ahciclo", mstohz(10));
-			else
-				delay(10000);
+			ata_delay(10, "ahciclo", flags);
 		}
 		if (AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_CLO) {
 			printf("%s: channel wouldn't CLO\n", AHCINAME(sc));
@@ -1709,6 +1696,7 @@ ahci_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	    DEBUG_FUNCS);
 
 	achp->ahcic_cmds_active &= ~(1 << xfer->c_slot);
+
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
 	if (xfer->c_flags & C_TIMEOU) {
 		sc_xfer->error = XS_TIMEOUT;
@@ -1762,6 +1750,7 @@ ahci_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 
 	achp->ahcic_cmds_active &= ~(1 << xfer->c_slot);
+	ata_deactivate_xfer(chp, xfer);
 
 	/* remove this command from xfer queue */
 	switch (reason) {

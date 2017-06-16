@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.8 2017/04/24 22:20:23 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.9 2017/06/16 20:40:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -185,7 +185,7 @@ struct ata_xfer {
 
 /* Per-channel queue of ata_xfers */
 struct ata_queue {
-	TAILQ_HEAD(, ata_xfer) queue_xfer; /* queue of pending commands */
+	TAILQ_HEAD(, ata_xfer) queue_xfer; 	/* queue of pending commands */
 	int queue_freeze; /* freeze count for the queue */
 	int queue_flags;	/* flags for this queue */
 #define QF_IDLE_WAIT	0x01    /* someone wants the controller idle */
@@ -322,7 +322,6 @@ struct ata_bustype {
 	void	(*ata_reset_channel)(struct ata_channel *, int);
 /* extra flags for ata_reset_*(), in addition to AT_* */
 #define AT_RST_EMERG 0x10000 /* emergency - e.g. for a dump */
-#define	AT_RST_NOCMD 0x20000 /* XXX has to go - temporary until we have tagged queuing */
 
 	int	(*ata_exec_command)(struct ata_drive_datas *,
 				    struct ata_xfer *);
@@ -482,7 +481,7 @@ void	ata_deactivate_xfer(struct ata_channel *, struct ata_xfer *);
 
 void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_kill_pending(struct ata_drive_datas *);
-void	ata_kill_active(struct ata_channel *, int);
+void	ata_kill_active(struct ata_channel *, int, int);
 void	ata_reset_channel(struct ata_channel *, int);
 
 int	ata_addref(struct ata_channel *);
@@ -505,6 +504,8 @@ struct ata_queue *
 void	ata_queue_free(struct ata_queue *);
 struct ata_xfer *
 	ata_queue_hwslot_to_xfer(struct ata_queue *, int);
+struct ata_xfer *
+	ata_queue_active_xfer_peek(struct ata_queue *);
 
 void	ata_delay(int, const char *, int);
 

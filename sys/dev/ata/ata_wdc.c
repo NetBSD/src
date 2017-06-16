@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.105.6.3 2017/04/19 20:49:17 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.105.6.4 2017/06/16 20:40:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.105.6.3 2017/04/19 20:49:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.105.6.4 2017/06/16 20:40:49 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -774,6 +774,8 @@ wdc_ata_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 {
 	struct ata_bio *ata_bio = &xfer->c_bio;
 	int drive = xfer->c_drive;
+
+	ata_deactivate_xfer(chp, xfer);
 
 	ata_bio->flags |= ATA_ITSDONE;
 	switch (reason) {

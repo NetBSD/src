@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.15 2017/06/13 00:02:19 jakllsch Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.16 2017/06/16 20:40:49 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.15 2017/06/13 00:02:19 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.16 2017/06/16 20:40:49 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -609,10 +609,7 @@ siisata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 		pss = PR_PXSS(xfer->c_slot);
 		/* XXX DO NOT MERGE UNTIL THIS IS FIXED XXX */
 #endif
-		if ((flags & AT_POLL) == 0)
-			tsleep(schp, PRIBIO, "siiprb", mstohz(10));
-		else
-			DELAY(10000);
+		ata_delay(10, "siiprb", flags);
 	}
 
 	siisata_deactivate_prb(schp, xfer->c_slot);
@@ -694,7 +691,7 @@ siisata_reset_channel(struct ata_channel *chp, int flags)
 		DELAY(10);
 	PRWRITE(sc, PRX(chp->ch_channel, PRO_SERROR),
 	    PRREAD(sc, PRX(chp->ch_channel, PRO_SERROR)));
-	ata_kill_active(chp, KILL_RESET);
+	ata_kill_active(chp, KILL_RESET, flags);
 
 	return;
 }
@@ -952,6 +949,7 @@ siisata_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
 
 	siisata_deactivate_prb(schp, xfer->c_slot);
+	ata_deactivate_xfer(chp, xfer);
 	
 	switch (reason) {
 	case KILL_GONE:
@@ -1155,6 +1153,7 @@ siisata_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 	    chp->ch_channel, xfer->c_slot), DEBUG_FUNCS);
 
 	siisata_deactivate_prb(schp, xfer->c_slot);
+	ata_deactivate_xfer(chp, xfer);
 
 	ata_bio->flags |= ATA_ITSDONE;
 	switch (reason) {
@@ -1422,6 +1421,7 @@ siisata_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
 
 	siisata_deactivate_prb(schp, xfer->c_slot);
+	ata_deactivate_xfer(chp, xfer);
 
 	/* remove this command from xfer queue */
 	switch (reason) {

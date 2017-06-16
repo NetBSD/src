@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.123.4.4 2017/04/19 20:49:17 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.123.4.5 2017/06/16 20:40:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.4 2017/04/19 20:49:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.5 2017/06/16 20:40:49 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -170,6 +170,8 @@ static void
 wdc_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 {
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
+
+	ata_deactivate_xfer(chp, xfer);
 
 	/* remove this command from xfer queue */
 	switch (reason) {
