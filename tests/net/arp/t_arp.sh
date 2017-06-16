@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.22 2016/11/25 08:51:16 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.23 2017/06/16 04:41:02 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -598,6 +598,77 @@ arp_static_cleanup()
 	cleanup
 }
 
+arp_rtm_head()
+{
+
+	atf_set "descr" "Tests for routing messages on operations of ARP entries"
+	atf_set "require.progs" "rump_server"
+}
+
+arp_rtm_body()
+{
+	local arp_keep=5
+	local macaddr_src= macaddr_dst=
+	local file=./tmp
+	local pid= str=
+
+	rump_server_start $SOCKSRC
+	rump_server_start $SOCKDST
+
+	setup_dst_server
+	setup_src_server $arp_keep
+
+	macaddr_src=$(get_macaddr $SOCKSRC shmif0)
+	macaddr_dst=$(get_macaddr $SOCKDST shmif0)
+
+	export RUMP_SERVER=$SOCKSRC
+
+	# Test ping and a resulting routing message (RTM_ADD)
+	rump.route -n monitor -c 1 > $file &
+	pid=$?
+	sleep 1
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP4DST
+	wait $pid
+	$DEBUG && cat $file
+
+	str="RTM_ADD.+<UP,HOST,DONE,LLINFO,CLONED>"
+	atf_check -s exit:0 -o match:"$str" cat $file
+	str="<DST,GATEWAY,IFP,IFA>"
+	atf_check -s exit:0 -o match:"$str" cat $file
+	str="$IP4DST link#2 $macaddr_src $IP4SRC"
+	atf_check -s exit:0 -o match:"$str" cat $file
+
+	# Test arp -d and resulting routing messages (RTM_GET and RTM_DELETE)
+	rump.route -n monitor -c 2 > $file &
+	pid=$?
+	sleep 1
+	atf_check -s exit:0 -o ignore rump.arp -d $IP4DST
+	wait $pid
+	$DEBUG && cat $file
+
+	str="RTM_GET.+<UP,DONE,LLINFO>"
+	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_GET $file
+	str="<DST,GATEWAY,IFP,IFA>"
+	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_GET $file
+	str="$IP4DST $macaddr_dst $macaddr_src $IP4SRC"
+	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_GET $file
+	str="RTM_DELETE.+<UP,DONE,LLINFO>"
+	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_DELETE $file
+	str="<DST,GATEWAY,IFP,IFA>"
+	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_DELETE $file
+	str="$IP4DST $macaddr_dst $macaddr_src $IP4SRC"
+	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_DELETE $file
+
+	rump_server_destroy_ifaces
+}
+
+arp_rtm_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case arp_cache_expiration_5s
@@ -609,4 +680,5 @@ atf_init_test_cases()
 	atf_add_test_case arp_proxy_arp_pubproxy
 	atf_add_test_case arp_link_activation
 	atf_add_test_case arp_static
+	atf_add_test_case arp_rtm
 }
