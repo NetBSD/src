@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.100 2017/05/22 17:12:11 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.101 2017/06/16 18:17:42 jdolecek Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -226,7 +226,6 @@ void	cpu_handle_ipi(void);
 #endif
 vaddr_t	cpu_lwp_pc(struct lwp *);
 int	badaddr(volatile void *, int);
-void	dumpconf(void);
 void	dumpsys(void);
 void	swapconf(void);
 void	disk_printtype(int, int);

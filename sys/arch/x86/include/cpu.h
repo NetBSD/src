@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.72 2017/06/09 01:16:54 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.73 2017/06/16 18:17:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -408,10 +408,8 @@ extern void (*x86_cpu_idle)(void);
 #define	cpu_idle() (*x86_cpu_idle)()
 
 /* machdep.c */
-void	dumpconf(void);
 void	cpu_reset(void);
 void	i386_proc0_tss_ldt_init(void);
-void	dumpconf(void);
 void	cpu_reset(void);
 void	x86_64_proc0_tss_ldt_init(void);
 void	x86_64_init_pcb_tss_ldt(struct cpu_info *);
