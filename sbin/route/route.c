@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.155 2017/03/17 16:13:44 roy Exp $	*/
+/*	$NetBSD: route.c,v 1.156 2017/06/16 04:40:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.155 2017/03/17 16:13:44 roy Exp $");
+__RCSID("$NetBSD: route.c,v 1.156 2017/06/16 04:40:16 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ static char *netmask_string(const struct sockaddr *, int, int);
 static int prefixlen(const char *, struct sou *);
 #ifndef SMALL
 static void interfaces(void);
-__dead static void monitor(void);
+static void monitor(int, char * const *);
 static int print_getmsg(struct rt_msghdr *, int, struct sou *);
 static const char *linkstate(struct if_msghdr *);
 static sup readtag(sup, const char *);
@@ -236,7 +236,7 @@ main(int argc, char * const *argv)
 
 #ifndef SMALL
 	case K_MONITOR:
-		monitor();
+		monitor(argc, argv);
 		return 0;
 
 #endif /* SMALL */
@@ -1105,20 +1105,37 @@ interfaces(void)
 }
 
 static void
-monitor(void)
+monitor(int argc, char * const *argv)
 {
-	int n;
+	int i, n;
 	union {
 		char msg[2048];
 		struct rt_msghdr hdr;
 	} u;
+	int count = 0;
+
+	/* usage: route monitor [-c <count>] */
+
+	/* eat "monitor" */
+	argc -= 1;
+	argv += 1;
+
+	/* parse [-c <count>] */
+	if (argc > 0) {
+		if (argc != 2)
+			usage(argv[0]);
+		if (strcmp(argv[0], "-c") != 0)
+			usage(argv[0]);
+
+		count = atoi(argv[1]);
+	}
 
 	verbose = 1;
 	if (debugonly) {
 		interfaces();
 		exit(0);
 	}
-	for(;;) {
+	for(i = 0; count == 0 || i < count; i++) {
 		time_t now;
 		n = prog_read(sock, &u, sizeof(u));
 		now = time(NULL);
