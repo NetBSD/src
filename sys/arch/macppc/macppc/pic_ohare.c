@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_ohare.c,v 1.14 2017/06/01 02:45:06 chs Exp $ */
+/*	$NetBSD: pic_ohare.c,v 1.15 2017/06/16 18:48:22 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.14 2017/06/01 02:45:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.15 2017/06/16 18:48:22 macallan Exp $");
 
 #include "opt_interrupt.h"
 
@@ -116,7 +116,7 @@ setup_ohare(uint32_t addr, int is_gc)
 	struct pic_ops *pic;
 	int i;
 
-	ohare = kmem_alloc(sizeof(struct ohare_ops), KM_SLEEP);
+	ohare = kmem_zalloc(sizeof(struct ohare_ops), KM_SLEEP);
 	pic = &ohare->pic;
 
 	pic->pic_numintrs = OHARE_NIRQ;
@@ -179,7 +179,7 @@ ohare_reenable_irq(struct pic_ops *pic, int irq, int type)
 
 	ohare->enable_mask |= mask;
 	out32rb(INT_ENABLE_REG, ohare->enable_mask);
-	levels = in32rb(INT_LEVEL_REG);
+	levels = in32rb(INT_STATE_REG);
 	if (levels & mask) {
 		pic_mark_pending(pic->pic_intrbase + irq);
 		out32rb(INT_CLEAR_REG, mask);
