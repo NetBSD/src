@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: dtc2netbsd,v 1.1 2017/06/08 15:51:12 skrll Exp $
+#	$NetBSD: dtc2netbsd,v 1.2 2017/06/16 22:47:22 jmcneill Exp $
 #
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -52,6 +52,9 @@
 #	$ cvs import -m "Import dtc YYYY-MM-DD" src/external/gpl2/dtc/dist DTC dtc-<version>
 # merge dtc sources using, e.g.
 # 	$ cvs -d cvs.netbsd.org:/cvsroot checkout -jdtc-1-4-1 -jdtc-1-4-4 src/external/gpl2/dtc/dist
+#
+# Update the version string in the version_gen.h header to match the imported version:
+#	$ echo '#define DTC_VERSION "DTC 1.4.4"' > src/external/gpl2/dtc/usr.bin/dtc/version_gen.h
 
 if [ $# -ne 2 ]; then echo "dtc2netbsd dtcsrc tmpdir"; exit 1; fi
 
