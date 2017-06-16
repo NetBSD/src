@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.69 2017/06/15 23:52:15 christos Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.70 2017/06/16 02:01:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.69 2017/06/15 23:52:15 christos Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.70 2017/06/16 02:01:10 christos Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -214,15 +214,14 @@ mkmakefile(void)
 static void
 emitmkoption(FILE *fp, const char *ass, const struct nvlist *nv)
 {
+	const char *p;
 
 	fprintf(fp, "%s%s", nv->nv_name, ass);
-
-	for (const char *p = nv->nv_str; *p; p++) {
+	for (p = nv->nv_str; *p; p++) {
 		if (*p == '\n')
 			fputs(" \\", fp);
 		fputc(*p, fp);
 	}
-
 	fputc('\n', fp);
 }
 
