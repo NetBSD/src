@@ -23,6 +23,10 @@
   #include <machine/sysarch.h>
 #endif
 
+#if defined(__NetBSD__) && defined(__ppc__)
+  #include <machine/cpu.h>
+#endif
+
 #if defined(__mips__)
   #include <sys/cachectl.h>
   #include <sys/syscall.h>
@@ -154,6 +158,8 @@ void __clear_cache(void *start, void *end) {
   for (; xstart < xend; xstart += 4) {
     __asm __volatile("flush %0" :: "r" (xstart));
   }
+#elif defined(__NetBSD__) && defined(__ppc__)
+  __syncicache(start, (uintptr_t)end - (uintptr_t)start);
 #else
     #if __APPLE__
         /* On Darwin, sys_icache_invalidate() provides this functionality */
