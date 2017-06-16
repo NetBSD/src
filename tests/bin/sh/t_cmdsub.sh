@@ -1,4 +1,4 @@
-# $NetBSD: t_cmdsub.sh,v 1.4 2016/04/04 12:40:13 christos Exp $
+# $NetBSD: t_cmdsub.sh,v 1.5 2017/06/16 07:37:41 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -678,31 +678,31 @@ x_heredoc_outside_backticks_body() {
 			'
 }
 
-atf_test_case t_nested_cmdsubs_in_heredoc
-t_nested_cmdsubs_in_heredoc_head() {
-	atf_set "descr" "Checks nested command substitutions in here docs"
+atf_test_case y_many_embedded_nl
+y_many_embedded_nl_head() {
+	atf_set "descr" "Checks command substitutions that return many lines"
 }
-t_nested_cmdsubs_in_heredoc_body() {
-	atf_require_prog cat
-	atf_require_prog rm
+y_many_embedded_nl_body() {
+	atf_require_prog wc
+	atf_require_prog seq
 
-	rm -f * 2>/dev/null || :
-	echo "Hello" > File
+	# first make sure it should work
+	atf_check -s exit:0 -o match:'1002' -e empty \
+	    ${TEST_SH} -c "{ printf '%s\n' x
+		for a in \$( seq 1000 ); do printf '\n'; done
+		printf '%s\n' y; } | wc -l"
 
-	atf_check -s exit:0 -o inline:'Hello U\nHelp me!\n' -e empty \
-	    ${TEST_SH} -c 'cat <<- EOF
-		$(cat File) U
-		$( V=$(cat File); echo "${V%lo}p" ) me!
-		EOF'
+	# then use a cmd-sub to get the same thing
+	atf_check -s exit:0 -o match:'1002' -e empty \
+	    ${TEST_SH} -c "printf '%s\n' \"\$( printf '%s\n' x
+		for a in \$( seq 1000 ); do printf '\n'; done
+		printf '%s\n' y )\" | wc -l"
 
-	rm -f * 2>/dev/null || :
-	echo V>V ; echo A>A; echo R>R
-	echo Value>VAR
-
-	atf_check -s exit:0 -o inline:'$2.50\n' -e empty \
-	    ${TEST_SH} -c 'cat <<- EOF
-	$(Value='\''$2.50'\'';eval echo $(eval $(cat V)$(cat A)$(cat R)=\'\''\$$(cat $(cat V)$(cat A)$(cat R))\'\''; eval echo \$$(set -- *;echo ${3}${1}${2})))
-		EOF'
+	# and a much bigger one.
+	atf_check -s exit:0 -o match:'10002' -e empty \
+	    ${TEST_SH} -c "printf '%s\n' \"\$( printf '%s\n' x
+		for a in \$( seq 10000 ); do printf '\n'; done
+		printf '%s\n' y )\" | wc -l"
 }
 
 atf_test_case z_absurd_heredoc_cmdsub_combos
@@ -779,5 +779,6 @@ atf_init_test_cases() {
 	atf_add_test_case v_cmdsub_paren_tests
 	atf_add_test_case w_heredoc_outside_cmdsub
 	atf_add_test_case x_heredoc_outside_backticks
+	atf_add_test_case y_many_embedded_nl
 	atf_add_test_case z_absurd_heredoc_cmdsub_combos
 }
