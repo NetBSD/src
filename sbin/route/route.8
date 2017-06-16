@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.56 2016/04/04 07:37:07 ozaki-r Exp $
+.\"	$NetBSD: route.8,v 1.57 2017/06/16 04:40:16 ozaki-r Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)route.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd March 30, 2016
+.Dd June 16, 2017
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -139,7 +139,16 @@ The monitor command has the syntax
 .Nm
 .Op Fl n
 .Cm monitor
+.Op Fl c Ar count
 .Ed
+.Pp
+If
+.Ar count
+is specified,
+.Nm
+exits after receiving
+.Ar count
+routing messages.
 .Pp
 The flush command has the syntax
 .Pp
