@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.215 2017/06/16 02:24:54 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.216 2017/06/16 02:26:17 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.215 2017/06/16 02:24:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.216 2017/06/16 02:26:17 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -916,6 +916,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 				rtm = new_rtm;
 			}
 			rtm->rtm_flags |= RTF_LLDATA;
+			rtm->rtm_flags &= ~RTF_CONNECTED;
 			rtm->rtm_flags |= (ll_flags & LLE_STATIC) ? RTF_STATIC : 0;
 			break;
 		}
