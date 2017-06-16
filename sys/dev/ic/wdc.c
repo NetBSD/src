@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.283.2.4 2017/04/19 20:49:17 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.283.2.5 2017/06/16 20:40:49 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.4 2017/04/19 20:49:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.5 2017/06/16 20:40:49 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -921,21 +921,19 @@ wdc_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 void
 wdc_reset_channel(struct ata_channel *chp, int flags)
 {
-	TAILQ_HEAD(, ata_xfer) reset_xfer;
-	struct ata_xfer *xfer, *next_xfer;
+	struct ata_xfer *xfer;
 #if NATA_DMA || NATA_PIOBM
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 #endif
-	TAILQ_INIT(&reset_xfer);
 
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
 
 	/*
-	 * if the current command if on an ATAPI device, issue a
+	 * if the current command is on an ATAPI device, issue a
 	 * ATAPI_SOFT_RESET
 	 */
 	KASSERT(chp->ch_queue->queue_openings == 1);
-	xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0);
+	xfer = ata_queue_active_xfer_peek(chp->ch_queue);
 	if (xfer && xfer->c_chp == chp && (xfer->c_flags & C_ATAPI)) {
 		wdccommandshort(chp, xfer->c_drive, ATAPI_SOFT_RESET);
 		if (flags & AT_WAIT)
@@ -958,59 +956,33 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 		tsleep(&flags, PRIBIO, "atardl", mstohz(1) + 1);
 	else
 		delay(1000);
-	/*
-	 * look for pending xfers. If we have a shared queue, we'll also reset
-	 * the other channel if the current xfer is running on it.
-	 * Then we'll dequeue only the xfers for this channel.
-	 */
-	if ((flags & AT_RST_NOCMD) == 0) {
-		/*
-		 * move all xfers queued for this channel to the reset queue,
-		 * and then process the current xfer and then the reset queue.
-		 * We have to use a temporary queue because c_kill_xfer()
-		 * may requeue commands.
-		 */
-		for (xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
-		    xfer != NULL; xfer = next_xfer) {
-			next_xfer = TAILQ_NEXT(xfer, c_xferchain);
-			if (xfer->c_chp != chp)
-				continue;
-			TAILQ_REMOVE(&chp->ch_queue->queue_xfer,
-			    xfer, c_xferchain);
-			TAILQ_INSERT_TAIL(&reset_xfer, xfer, c_xferchain);
-		}
-		xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0);
-		if (xfer) {
-			if (xfer->c_chp != chp)
-				ata_reset_channel(xfer->c_chp, flags);
-			else {
-#if NATA_DMA || NATA_PIOBM
-				/*
-				 * If we're waiting for DMA, stop the
-				 * DMA engine
-				 */
-				if (chp->ch_flags & ATACH_DMA_WAIT) {
-					(*wdc->dma_finish)(wdc->dma_arg,
-					    chp->ch_channel, xfer->c_drive,
-					    WDC_DMAEND_ABRT_QUIET);
-					chp->ch_flags &= ~ATACH_DMA_WAIT;
-				}
-#endif
-				ata_deactivate_xfer(chp, xfer);
-				if ((flags & AT_RST_EMERG) == 0)
-					xfer->c_kill_xfer(
-					    chp, xfer, KILL_RESET);
-			}
-		}
 
-		for (xfer = TAILQ_FIRST(&reset_xfer);
-		    xfer != NULL; xfer = next_xfer) {
-			next_xfer = TAILQ_NEXT(xfer, c_xferchain);
-			TAILQ_REMOVE(&reset_xfer, xfer, c_xferchain);
-			if ((flags & AT_RST_EMERG) == 0)
-				xfer->c_kill_xfer(chp, xfer, KILL_RESET);
+	/*
+	 * Look for pending xfers. If we have a shared queue, we'll also reset
+	 * the other channel if the current xfer is running on it.
+	 * Then we'll kill the eventual active transfer explicitely, so that
+	 * it is queued for retry immediatelly without waiting for I/O timeout.
+	 */
+	if (xfer) {
+		if (xfer->c_chp != chp)
+			ata_reset_channel(xfer->c_chp, flags);
+		else {
+#if NATA_DMA || NATA_PIOBM
+			/*
+			 * If we're waiting for DMA, stop the
+			 * DMA engine
+			 */
+			if (chp->ch_flags & ATACH_DMA_WAIT) {
+				(*wdc->dma_finish)(wdc->dma_arg,
+				    chp->ch_channel, xfer->c_drive,
+				    WDC_DMAEND_ABRT_QUIET);
+				chp->ch_flags &= ~ATACH_DMA_WAIT;
+			}
+#endif
 		}
 	}
+
+	ata_kill_active(chp, KILL_RESET, flags);
 }
 
 static int
@@ -1693,6 +1665,8 @@ __wdccommand_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
     int reason)
 {
 	struct ata_command *ata_c = &xfer->c_ata_c;
+
+	ata_deactivate_xfer(chp, xfer);
 
 	switch (reason) {
 	case KILL_GONE:

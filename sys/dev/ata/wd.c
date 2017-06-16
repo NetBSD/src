@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.15 2017/06/14 20:17:46 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.16 2017/06/16 20:40:49 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.15 2017/06/14 20:17:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.16 2017/06/16 20:40:49 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -167,6 +167,10 @@ const struct cdevsw wd_cdevsw = {
 	.d_discard = wddiscard,
 	.d_flag = D_DISK | D_MPSAFE
 };
+
+/* #define WD_DUMP_NOT_TRUSTED if you just want to watch */
+static int wddoingadump = 0;
+static int wddumprecalibrated = 0;
 
 /*
  * Glue necessary to hook WDCIOCCOMMAND into physio
@@ -742,6 +746,11 @@ wddone(void *v, struct ata_xfer *xfer)
 
 	ATADEBUG_PRINT(("wddone %s\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
+	if (wddoingadump) {
+		/* just drop it to the floor */
+		ata_free_xfer(wd->drvp->chnl_softc, xfer);
+		return;
+	}
 
 	mutex_enter(&wd->sc_lock);
 
@@ -770,7 +779,7 @@ wddone(void *v, struct ata_xfer *xfer)
 		errmsg = "error";
 		do_perror = 1;
 retry:		/* Just reset and retry. Can we do more ? */
-		(*wd->atabus->ata_reset_drive)(wd->drvp, AT_RST_NOCMD, NULL);
+		(*wd->atabus->ata_reset_drive)(wd->drvp, 0, NULL);
 retry2:
 		diskerr(bp, "wd", errmsg, LOG_PRINTF,
 		    xfer->c_bio.blkdone, wd->sc_dk.dk_label);
@@ -1583,10 +1592,6 @@ wdsize(dev_t dev)
 	return (size);
 }
 
-/* #define WD_DUMP_NOT_TRUSTED if you just want to watch */
-static int wddoingadump = 0;
-static int wddumprecalibrated = 0;
-
 /*
  * Dump core after a system crash.
  */
@@ -1682,8 +1687,6 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	default:
 		panic("wddump: unknown error type %d", err);
 	}
-
-	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 
 	if (err != 0) {
 		printf("\n");

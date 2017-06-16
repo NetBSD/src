@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.8 2017/04/24 22:20:23 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.9 2017/06/16 20:40:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.8 2017/04/24 22:20:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.9 2017/06/16 20:40:49 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -187,6 +187,8 @@ ata_queue_reset(struct ata_queue *chq)
 	TAILQ_INIT(&chq->active_xfers);
 	chq->queue_freeze = 0;
 	chq->queue_active = 0;
+	chq->active_xfers_used = 0;
+	chq->queue_xfers_avail = (1 << chq->queue_openings) - 1;
 }
 
 struct ata_xfer *
@@ -205,6 +207,18 @@ ata_queue_hwslot_to_xfer(struct ata_queue *chq, int hwslot)
 
 	panic("%s: xfer with slot %d not found (active %x)", __func__, hwslot,
 	    chq->active_xfers_used);
+}
+
+/*
+ * This interface is supposed only to be used when there is exactly
+ * one outstanding command, and there is no information about the slot,
+ * which triggered the command. ata_queue_hwslot_to_xfer() interface
+ * is preferred in all standard cases.
+ */
+struct ata_xfer *
+ata_queue_active_xfer_peek(struct ata_queue *chq)
+{
+	return TAILQ_FIRST(&chq->active_xfers);
 }
 
 void
@@ -241,7 +255,6 @@ ata_queue_alloc(uint8_t openings)
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	chq->queue_openings = openings;
-	chq->queue_xfers_avail = (1 << openings) - 1;
 	ata_queue_reset(chq);
 
 	for (uint8_t i = 0; i < openings; i++)
@@ -258,7 +271,6 @@ ata_queue_downsize(struct ata_queue *chq, uint8_t openings)
 	KASSERT(openings < chq->queue_openings);
 
 	chq->queue_openings = openings;
-	chq->queue_xfers_avail = (1 << openings) - 1;
 	ata_queue_reset(chq);
 }
 
@@ -1136,6 +1148,8 @@ ata_get_xfer(struct ata_channel *chp)
 	xfer = &chq->queue_xfers[slot];
 	chq->queue_xfers_avail &= ~__BIT(slot);
 
+	KASSERT((chq->active_xfers_used & __BIT(slot)) == 0);
+
 	/* zero everything after the callout member */
 	memset(&xfer->c_startzero, 0,
 	    sizeof(struct ata_xfer) - offsetof(struct ata_xfer, c_startzero));
@@ -1146,6 +1160,9 @@ out:
 	return xfer;
 }
 
+/*
+ * ata_deactivate_xfer() must be always called prior to ata_free_xfer()
+ */
 void
 ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 {
@@ -1171,6 +1188,7 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 #endif
 
 	s = splbio();
+	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) == 0);
 	KASSERT((chq->queue_xfers_avail & __BIT(xfer->c_slot)) == 0);
 	chq->queue_xfers_avail |= __BIT(xfer->c_slot);
 	splx(s);
@@ -1236,7 +1254,7 @@ ata_waitdrain_xfer_check(struct ata_channel *chp, struct ata_xfer *xfer)
  * Must be called at splbio().
  */
 void
-ata_kill_active(struct ata_channel *chp, int reason)
+ata_kill_active(struct ata_channel *chp, int reason, int flags)
 {
 	struct ata_queue * const chq = chp->ch_queue;
 	struct ata_xfer *xfer, *xfernext;
@@ -1244,6 +1262,9 @@ ata_kill_active(struct ata_channel *chp, int reason)
 	TAILQ_FOREACH_SAFE(xfer, &chq->active_xfers, c_activechain, xfernext) {
 		(*xfer->c_kill_xfer)(xfer->c_chp, xfer, reason);
 	}
+
+	if (flags & AT_RST_EMERG)
+		ata_queue_reset(chq);
 }
 
 /*
@@ -1322,7 +1343,7 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 			return;
 		}
 		chp->ch_flags |= ATACH_TH_RESET;
-		chp->ch_reset_flags = flags & (AT_RST_EMERG | AT_RST_NOCMD);
+		chp->ch_reset_flags = flags & AT_RST_EMERG;
 		wakeup(&chp->ch_thread);
 		return;
 	}
@@ -1486,7 +1507,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	(*atac->atac_set_modes)(chp);
 	ata_print_modes(chp);
 	/* reset the channel, which will schedule all drives for setup */
-	ata_reset_channel(chp, flags | AT_RST_NOCMD);
+	ata_reset_channel(chp, flags);
 	return 1;
 }
 #endif	/* NATA_DMA */

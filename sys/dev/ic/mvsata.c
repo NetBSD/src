@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.10 2017/06/13 19:15:32 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.11 2017/06/16 20:40:49 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.10 2017/06/13 19:15:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.11 2017/06/16 20:40:49 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -624,9 +624,7 @@ mvsata_reset_channel(struct ata_channel *chp, int flags)
 {
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	struct mvsata_softc *sc = device_private(MVSATA_DEV2(mvport));
-	struct ata_xfer *xfer;
 	uint32_t sstat, ctrl;
-	int i;
 
 	DPRINTF(("%s: mvsata_reset_channel: channel=%d\n",
 	    device_xname(MVSATA_DEV2(mvport)), chp->ch_channel));
@@ -653,13 +651,7 @@ mvsata_reset_channel(struct ata_channel *chp, int flags)
 		    flags);
 	}
 
-	for (i = 0; i < MVSATA_EDMAQ_LEN; i++) {
-		if ((mvport->port_quetagidx & __BIT(i)) == 0)
-			continue;
-
-		xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, i);
-		xfer->c_kill_xfer(chp, xfer, KILL_RESET);
-	}
+	ata_kill_active(chp, KILL_RESET, flags);
 
 	mvsata_edma_config(mvport, mvport->port_edmamode);
 	mvsata_edma_reset_qptr(mvport);
@@ -1434,6 +1426,9 @@ mvsata_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 		mvsata_edma_enable(mvport);
 	}
 
+	mvsata_quetag_put(mvport, xfer->c_slot);
+	ata_deactivate_xfer(chp, xfer);
+
 	ata_bio->flags |= ATA_ITSDONE;
 	switch (reason) {
 	case KILL_GONE:
@@ -1448,7 +1443,6 @@ mvsata_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 		panic("mvsata_bio_kill_xfer");
 	}
 	ata_bio->r_error = WDCE_ABRT;
-	mvsata_quetag_put(mvport, xfer->c_slot);
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
 }
 
@@ -1763,6 +1757,9 @@ mvsata_wdc_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 	DPRINTFN(1, ("%s:%d: mvsata_cmd_kill_xfer: drive=%d\n",
 	    device_xname(MVSATA_DEV2(mvport)), chp->ch_channel, xfer->c_drive));
 
+	mvsata_quetag_put(mvport, xfer->c_slot);
+	ata_deactivate_xfer(chp, xfer);
+
 	switch (reason) {
 	case KILL_GONE:
 		ata_c->flags |= AT_GONE;
@@ -1775,7 +1772,6 @@ mvsata_wdc_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 		    "mvsata_cmd_kill_xfer: unknown reason %d\n", reason);
 		panic("mvsata_cmd_kill_xfer");
 	}
-	mvsata_quetag_put(mvport, xfer->c_slot);
 	mvsata_wdc_cmd_done_end(chp, xfer);
 }
 
@@ -2277,6 +2273,9 @@ mvsata_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 
+	mvsata_quetag_put(mvport, xfer->c_slot);
+	ata_deactivate_xfer(chp, xfer);
+
 	/* remove this command from xfer queue */
 	switch (reason) {
 	case KILL_GONE:
@@ -2292,7 +2291,6 @@ mvsata_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 		    "mvsata_atapi_kill_xfer: unknown reason %d\n", reason);
 		panic("mvsata_atapi_kill_xfer");
 	}
-	mvsata_quetag_put(mvport, xfer->c_slot);
 	ata_free_xfer(chp, xfer);
 	scsipi_done(sc_xfer);
 }
@@ -2661,10 +2659,7 @@ mvsata_edma_wait(struct mvsata_port *mvport, struct ata_xfer *xfer, int timeout)
 	for (xtime = 0;  xtime < timeout / 10; xtime++) {
 		if (mvsata_edma_handle(mvport, xfer))
 			return 0;
-		if (ata_bio->flags & ATA_POLL)
-			delay(10000);
-		else
-			tsleep(&xfer, PRIBIO, "mvsataipl", mstohz(10));
+		ata_delay(10, "mvsataipl", ata_bio->flags);
 	}
 
 	DPRINTF(("mvsata_edma_wait: timeout: %p\n", xfer));
