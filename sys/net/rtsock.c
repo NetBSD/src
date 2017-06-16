@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.214 2017/06/15 02:51:45 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.215 2017/06/16 02:24:54 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.214 2017/06/15 02:51:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.215 2017/06/16 02:24:54 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1627,6 +1627,44 @@ COMPATNAME(rt_ieee80211msg)(struct ifnet *ifp, int what, void *data,
 	mtod(m, struct if_xannouncemsghdr *)->ifan_msglen += data_len;
 	COMPATNAME(route_enqueue)(m, 0);
 }
+
+#ifndef COMPAT_RTSOCK
+/*
+ * Send a routing message as mimicing that a cloned route is added.
+ */
+void
+rt_clonedmsg(const struct sockaddr *dst, const struct ifnet *ifp,
+    const struct rtentry *rt)
+{
+	struct rt_addrinfo info;
+	/* Mimic flags exactly */
+#define RTF_LLINFO	0x400
+#define RTF_CLONED	0x2000
+	int flags = RTF_UP | RTF_HOST | RTF_DONE | RTF_LLINFO | RTF_CLONED;
+	union {
+		struct sockaddr sa;
+		struct sockaddr_storage ss;
+		struct sockaddr_dl sdl;
+	} u;
+	uint8_t namelen = strlen(ifp->if_xname);
+	uint8_t addrlen = ifp->if_addrlen;
+
+	if (rt == NULL)
+		return; /* XXX */
+
+	memset(&info, 0, sizeof(info));
+	info.rti_info[RTAX_DST] = dst;
+	sockaddr_dl_init(&u.sdl, sizeof(u.ss), ifp->if_index, ifp->if_type,
+	    NULL, namelen, NULL, addrlen);
+	info.rti_info[RTAX_GATEWAY] = &u.sa;
+	info.rti_info[RTAX_IFP] = rt->rt_ifp->if_dl->ifa_addr;
+	info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
+
+	rt_missmsg(RTM_ADD, &info, flags, 0);
+#undef RTF_LLINFO
+#undef RTF_CLONED
+}
+#endif /* COMPAT_RTSOCK */
 
 /*
  * This is used in dumping the kernel table via sysctl().
