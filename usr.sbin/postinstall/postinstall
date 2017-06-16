@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.214 2017/04/17 18:41:48 martin Exp $
+# $NetBSD: postinstall,v 1.215 2017/06/16 22:58:38 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1262,8 +1262,9 @@ do_pam()
 
 	populate_dir "${op}" true "${SRC_DIR}/etc/pam.d" \
 		"${DEST_DIR}/etc/pam.d" 644 \
-		README display_manager ftpd gdm imap kde login other passwd \
-		pop3 ppp rexecd rsh sshd su system telnetd xdm xserver
+		README cron display_manager ftpd gdm imap kde login other \
+		passwd pop3 ppp racoon rexecd rsh sshd su system telnetd \
+		xdm xserver
 
 	failed=$(( ${failed} + $? ))
 
