@@ -1,7 +1,8 @@
 Bugs
 ----
 
-test crashdump with ahci
+test crashdump with ahci, pciide, mvsata
+- jdolecek: broken for various reasons, working on fix
 
 siisata - fix all new XXX and unmergable bits
 
@@ -26,6 +27,14 @@ drive rescaned after detach of non-NCQ drive
 
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------
+change wd(4) to use dk_open()
+
+dump to unopened disk fails (e.g. dump do wd1b when wd1a not mounted), due
+to the open path executing ata_get_params(), which eventually tsleeps()
+while waiting for the command to finish; specifically, if WDF_LOADED is not
+set 
+- happens due to wd_get_params() with just AT_WAIT in wdopen()
+
 add nibble to control number of tags (1==disable NCQ)?
 
 add support for the NCQ TRIM if supported by device?
