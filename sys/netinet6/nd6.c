@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.232 2017/06/01 02:45:14 chs Exp $	*/
+/*	$NetBSD: nd6.c,v 1.233 2017/06/16 02:24:54 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.232 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.233 2017/06/16 02:24:54 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2298,6 +2298,7 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 	/* Slow path */
 	ln = nd6_lookup(&dst->sin6_addr, ifp, true);
 	if (ln == NULL && nd6_is_addr_neighbor(dst, ifp))  {
+		struct sockaddr_in6 sin6;
 		/*
 		 * Since nd6_is_addr_neighbor() internally calls nd6_lookup(),
 		 * the condition below is not very efficient.  But we believe
@@ -2313,6 +2314,10 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 			m_freem(m);
 			return ENOBUFS;
 		}
+
+		sockaddr_in6_init(&sin6, &ln->r_l3addr.addr6, 0, 0, 0);
+		rt_clonedmsg(sin6tosa(&sin6), ifp, rt);
+
 		created = true;
 	}
 

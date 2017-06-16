@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.250 2017/05/18 06:33:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.251 2017/06/16 02:24:54 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250 2017/05/18 06:33:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.251 2017/06/16 02:24:54 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -760,8 +760,13 @@ notfound:
 		IF_AFDATA_WUNLOCK(ifp);
 		if (la == NULL)
 			ARP_STATINC(ARP_STAT_ALLOCFAIL);
-		else
+		else {
+			struct sockaddr_in sin;
+
 			arp_init_llentry(ifp, la);
+			sockaddr_in_init(&sin, &la->r_l3addr.addr4, 0);
+			rt_clonedmsg(sintosa(&sin), ifp, rt);
+		}
 	} else if (LLE_TRY_UPGRADE(la) == 0) {
 		create_lookup = "lookup";
 		LLE_RUNLOCK(la);
