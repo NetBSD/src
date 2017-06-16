@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.97 2016/12/10 10:41:07 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.98 2017/06/16 18:17:42 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -460,7 +460,6 @@ int isbad(struct dkbad *, int, int, int);
 
 /* machdep.c */
 int	ldcontrolb(void *);
-void	dumpconf(void);
 void *	reserve_dumppages(void *);
 void	wcopy(const void *, void *, u_int);
 void	wzero(void *, u_int);

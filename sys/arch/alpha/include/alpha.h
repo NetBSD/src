@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.35 2017/03/16 16:13:20 chs Exp $ */
+/* $NetBSD: alpha.h,v 1.36 2017/06/16 18:17:41 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,7 +86,6 @@ int	badaddr(void *, size_t);
 int	badaddr_read(void *, size_t, void *);
 uint64_t console_restart(struct trapframe *);
 void	do_sir(void);
-void	dumpconf(void);
 void	exception_return(void);					/* MAGIC */
 void	frametoreg(const struct trapframe *, struct reg *);
 long	fswintrberr(void);					/* MAGIC */

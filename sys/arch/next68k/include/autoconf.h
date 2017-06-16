@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.6 2007/03/04 06:00:27 christos Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.7 2017/06/16 18:17:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -50,7 +50,6 @@ struct mainbus_attach_args {
 void	setconf(void);
 
 /* machdep.c */
-void	cpu_dumpconf(void);
 int	badbaddr(void *);
 int	badwaddr(void *);
 int	badladdr(void *);

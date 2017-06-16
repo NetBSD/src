@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.33 2016/12/17 14:36:29 flxd Exp $ */
+/* $NetBSD: cpu.h,v 1.34 2017/06/16 18:17:41 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -123,7 +123,6 @@ extern	char *intiobase, *intiolimit;		/* XXX */
 extern	u_int intiobase_phys, intiotop_phys;	/* XXX */
 
 /* machdep.c functions */
-void	dumpconf(void);
 void	dumpsys(void);
 
 /* locore.s functions */

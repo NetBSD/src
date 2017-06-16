@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2012/10/27 17:17:52 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 2017/06/16 18:17:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2012/10/27 17:17:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2017/06/16 18:17:41 jdolecek Exp $");
 
 #include "opt_md.h"
 
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2012/10/27 17:17:52 chs Exp $");
 
 extern dev_t dumpdev;
 
-void dumpconf(void);
 void isa_intr_init(void);
 
 #ifndef MEMORY_DISK_IS_ROOT
