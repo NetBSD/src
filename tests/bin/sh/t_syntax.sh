@@ -1,4 +1,4 @@
-# $NetBSD: t_syntax.sh,v 1.3 2017/06/09 23:49:58 kre Exp $
+# $NetBSD: t_syntax.sh,v 1.4 2017/06/16 07:30:32 kre Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -316,40 +316,40 @@ d_redirects_body() {
 	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 		'>/dev/null>/dev/null>/dev/null'
 
-	atf-check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 		'echo hello >/dev/null'
-	atf-check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 		'echo >/dev/null hello'
-	atf-check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 		'>/dev/null echo hello'
-	atf-check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 		'echo hello >/dev/null world'
-	atf-check -s exit:0 -o 'inline:hello world\n' -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o 'inline:hello world\n' -e empty ${TEST_SH} -c \
 		'echo hello </dev/null world'
 
-	atf-check -s exit:0 -o 'inline:hello\n' -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o 'inline:hello\n' -e empty ${TEST_SH} -c \
 		'echo hello </dev/null'
-	atf-check -s exit:0 -o 'inline:hello\n' -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o 'inline:hello\n' -e empty ${TEST_SH} -c \
 		'echo hello 3</dev/null'
-	atf-check -s exit:0 -o 'inline:hello 3\n' -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o 'inline:hello 3\n' -e empty ${TEST_SH} -c \
 		'echo hello 3 </dev/null'
-	atf-check -s exit:0 -o 'inline:hello 3\n' -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o 'inline:hello 3\n' -e empty ${TEST_SH} -c \
 		'echo hello \3</dev/null'
-	atf-check -s exit:0 -o 'inline:hello\n' -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o 'inline:hello\n' -e empty ${TEST_SH} -c \
 		'echo hello</dev/null'
-	atf-check -s exit:0 -o 'inline:3\n' -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o 'inline:3\n' -e empty ${TEST_SH} -c \
 		'hello=3; echo ${hello}</dev/null'
 
-	atf-check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 		'2>&1'
-	atf-check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 		'2>& 1'
-	atf-check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 		'FD=1; 2>&"${FD}"'
-	atf-check -s exit:0 -o 'inline:hello\n' -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o 'inline:hello\n' -e empty ${TEST_SH} -c \
 		'FD=1; echo hello 2>&"${FD}" >&2'
 
-	atf-check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 		'2>&- 3<&- 4>&-'
 
 	return 0
