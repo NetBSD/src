@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.19 2017/05/26 01:14:38 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.20 2017/06/16 04:41:02 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -396,6 +396,76 @@ ndp_link_activation_cleanup()
 	cleanup
 }
 
+ndp_rtm_head()
+{
+
+	atf_set "descr" "Tests for routing messages on operations of ARP entries"
+	atf_set "require.progs" "rump_server"
+}
+
+ndp_rtm_body()
+{
+	local macaddr_src= macaddr_dst=
+	local file=./tmp
+	local pid= str=
+
+	rump_server_start $SOCKSRC netinet6
+	rump_server_start $SOCKDST netinet6
+
+	setup_dst_server
+	setup_src_server
+
+	macaddr_src=$(get_macaddr $SOCKSRC shmif0)
+	macaddr_dst=$(get_macaddr $SOCKDST shmif0)
+
+	export RUMP_SERVER=$SOCKSRC
+
+	# Test ping and a resulting routing message (RTM_ADD)
+	rump.route -n monitor -c 1 > $file &
+	pid=$?
+	sleep 1
+	atf_check -s exit:0 -o ignore rump.ping6 -n -X 1 -c 1 $IP6DST
+	wait $pid
+	$DEBUG && cat $file
+
+	str="RTM_ADD.+<UP,HOST,DONE,LLINFO,CLONED>"
+	atf_check -s exit:0 -o match:"$str" cat $file
+	str="<DST,GATEWAY,IFP,IFA>"
+	atf_check -s exit:0 -o match:"$str" cat $file
+	str="$IP6DST link#2 $macaddr_src $IP6SRC"
+	atf_check -s exit:0 -o match:"$str" cat $file
+
+	# Test ndp -d and resulting routing messages (RTM_GET and RTM_DELETE)
+	rump.route -n monitor -c 2 > $file &
+	pid=$?
+	sleep 1
+	atf_check -s exit:0 -o ignore rump.ndp -d $IP6DST
+	wait $pid
+	$DEBUG && cat $file
+
+	str="RTM_GET.+<UP,DONE,LLINFO>"
+	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_GET $file
+	str="<DST,GATEWAY,IFP,IFA>"
+	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_GET $file
+	str="$IP6DST $macaddr_dst $macaddr_src $IP6SRC"
+	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_GET $file
+	str="RTM_DELETE.+<UP,DONE,LLINFO>"
+	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_DELETE $file
+	str="<DST,GATEWAY,IFP,IFA>"
+	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_DELETE $file
+	str="$IP6DST $macaddr_dst $macaddr_src $IP6SRC"
+	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_DELETE $file
+
+	rump_server_destroy_ifaces
+}
+
+ndp_rtm_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case ndp_cache_expiration
@@ -403,4 +473,5 @@ atf_init_test_cases()
 	atf_add_test_case ndp_cache_overwriting
 	atf_add_test_case ndp_neighborgcthresh
 	atf_add_test_case ndp_link_activation
+	atf_add_test_case ndp_rtm
 }
