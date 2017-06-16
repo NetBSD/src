@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.90 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: GUMSTIX,v 1.91 2017/06/16 22:39:34 pgoyette Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -179,6 +179,7 @@ pxaintc0 at pxaip?				# interrupt controller
 options 	PXAGPIO_HAS_GPION_INTRS
 
 pxagpio0 at pxaip?				# GPIO
+gpio* at gpiobus?
 pxartc0	at pxaip? addr 0x40900000		# RTC
 
 # cotulla integrated 16550 UARTs

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1558 2017/06/13 06:39:09 nat Exp $
+# $NetBSD: mi,v 1.1559 2017/06/16 22:39:34 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1579,6 +1579,7 @@
 ./usr/share/man/cat4/puffs.0			man-puffs-catman	.cat
 ./usr/share/man/cat4/pwdog.0			man-sys-catman		.cat
 ./usr/share/man/cat4/px.0			man-sys-catman		.cat
+./usr/share/man/cat4/pxagpio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pxaip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pxg.0			man-sys-catman		.cat
 ./usr/share/man/cat4/qe.0			man-sys-catman		.cat
@@ -4630,6 +4631,7 @@
 ./usr/share/man/html4/puffs.html		man-sys-htmlman		html
 ./usr/share/man/html4/pwdog.html		man-sys-htmlman		html
 ./usr/share/man/html4/px.html			man-sys-htmlman		html
+./usr/share/man/html4/pxagpio.html		man-sys-htmlman		html
 ./usr/share/man/html4/pxaip.html		man-sys-htmlman		html
 ./usr/share/man/html4/pxg.html			man-sys-htmlman		html
 ./usr/share/man/html4/qe.html			man-sys-htmlman		html
@@ -7583,6 +7585,7 @@
 ./usr/share/man/man4/puffs.4			man-sys-man		.man
 ./usr/share/man/man4/pwdog.4			man-sys-man		.man
 ./usr/share/man/man4/px.4			man-sys-man		.man
+./usr/share/man/man4/pxagpio.4			man-sys-man		.man
 ./usr/share/man/man4/pxaip.4			man-sys-man		.man
 ./usr/share/man/man4/pxg.4			man-sys-man		.man
 ./usr/share/man/man4/qe.4			man-sys-man		.man
