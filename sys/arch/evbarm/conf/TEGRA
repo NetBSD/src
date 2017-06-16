@@ -1,11 +1,19 @@
 #
-#	$NetBSD: TEGRA,v 1.23 2017/06/02 00:09:56 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.24 2017/06/16 21:37:11 jmcneill Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
 
 include	"arch/evbarm/conf/std.tegra"
 include	"arch/evbarm/conf/GENERIC.common"
+
+makeoptions	DTS="
+	tegra124-apalis-eval.dts
+	tegra124-jetson-tk1.dts
+	tegra124-nyan-big.dts
+	tegra124-nyan-blaze.dts
+	tegra124-venice2.dts
+"
 
 options 	CPU_CORTEXA15
 options 	SOC_TEGRA124

@@ -1,4 +1,4 @@
-#	$NetBSD: mk.tegra,v 1.5 2017/06/15 22:08:07 jmcneill Exp $
+#	$NetBSD: mk.tegra,v 1.6 2017/06/16 21:37:11 jmcneill Exp $
 CPPFLAGS+=		-mcpu=cortex-a15 -mfpu=neon
 
 .include "$S/arch/arm/nvidia/tegra_xusb-fw.mk"
@@ -30,9 +30,3 @@ EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.ub@}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin.gz@}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gz.ub@}
-
-DTS=	tegra124-apalis-eval.dts \
-	tegra124-jetson-tk1.dts \
-	tegra124-nyan-big.dts \
-	tegra124-nyan-blaze.dts \
-	tegra124-venice2.dts
