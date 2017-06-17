@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1282 2017/06/06 05:39:28 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1283 2017/06/17 20:25:26 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1290 2017/06/06 05:39:06 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1291 2017/06/17 20:25:06 jdolecek Exp
  */
 
 /*
@@ -1962,6 +1962,7 @@
 
 /* Adaptec's AAR-1210SA serial ATA RAID controller uses the CMDTECH chip */
 #define	PCI_PRODUCT_CMDTECH_AAR_1210SA	0x0240		/* AAR-1210SA SATA RAID Controller */
+#define	PCI_PRODUCT_CMDTECH_AAR_1220SA	0x0242		/* AAR-1220SA SATA RAID Controller */
 /* CMD Technology products -- info gleaned from their web site */
 #define	PCI_PRODUCT_CMDTECH_640	0x0640		/* PCI0640 */
 /* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
