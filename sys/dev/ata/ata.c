@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.9 2017/06/16 20:40:49 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.10 2017/06/17 14:01:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.9 2017/06/16 20:40:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.10 2017/06/17 14:01:36 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1082,8 +1082,6 @@ atastart(struct ata_channel *chp)
 	/* is there a xfer ? */
 	if ((xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) == NULL)
 		return;
-
-	KASSERT(chp->ch_ndrives == 1 || chq->queue_openings == 1);
 
 	/*
 	 * Can only take NCQ command if there are no current active

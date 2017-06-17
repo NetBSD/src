@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmp_subr.c,v 1.12.24.1 2017/04/15 17:14:11 jdolecek Exp $	*/
+/*	$NetBSD: satapmp_subr.c,v 1.12.24.2 2017/06/17 14:01:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2012 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.12.24.1 2017/04/15 17:14:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.12.24.2 2017/06/17 14:01:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value)
 	struct ata_xfer xfer;
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_drive_datas *drvp;
+	int error = 0;
 
 	KASSERT(port < PMP_MAX_DRIVES);
 	KASSERT(reg < PMP_GSCR_NREGS);
@@ -60,7 +61,7 @@ satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value)
 	drvp = &chp->ch_drive[PMP_PORT_CTL];
 	KASSERT(drvp->drive == PMP_PORT_CTL);
 
-	memset(&xfer, 0, sizeof(xfer));
+	ata_xfer_init(&xfer, true);
 
 	xfer.c_ata_c.r_command = PMPC_READ_PORT;
 	xfer.c_ata_c.r_features = reg;
@@ -74,19 +75,22 @@ satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value)
 	    &xfer) != ATACMD_COMPLETE) {
 		aprint_error_dev(chp->atabus,
 		    "PMP port %d register %d read failed\n", port, reg);
-		return EIO;
+		error = EIO;
+		goto out;
 	}
 	if (xfer.c_ata_c.flags & (AT_TIMEOU | AT_DF)) {
 		aprint_error_dev(chp->atabus,
 		    "PMP port %d register %d read failed, flags 0x%x\n",
 		    port, reg, xfer.c_ata_c.flags);
-		return EIO;
+		error = EIO;
+		goto out;
 	}
 	if (xfer.c_ata_c.flags & AT_ERROR) {
 		aprint_verbose_dev(chp->atabus,
 		    "PMP port %d register %d read failed, error 0x%x\n",
 		    port, reg, xfer.c_ata_c.r_error);
-		return EIO;
+		error = EIO;
+		goto out;
 	}
 
 	*value = ((uint64_t)((xfer.c_ata_c.r_lba >> 24) & 0xffffff) << 40) |
@@ -94,7 +98,9 @@ satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value)
 		((uint64_t)((xfer.c_ata_c.r_lba >> 0) & 0xffffff) << 8) |
 		((uint64_t)((xfer.c_ata_c.r_count >> 0) & 0xff) << 0);
 
-	return 0;
+out:
+	ata_xfer_destroy(&xfer);
+	return error;
 }
 
 static inline int
@@ -117,6 +123,7 @@ satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value)
 	struct ata_xfer xfer;
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_drive_datas *drvp;
+	int error = 0;
 
 	KASSERT(port < PMP_MAX_DRIVES);
 	KASSERT(reg < PMP_GSCR_NREGS);
@@ -124,7 +131,7 @@ satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value)
 	drvp = &chp->ch_drive[PMP_PORT_CTL];
 	KASSERT(drvp->drive == PMP_PORT_CTL);
 
-	memset(&xfer, 0, sizeof(xfer));
+	ata_xfer_init(&xfer, true);
 
 	xfer.c_ata_c.r_command = PMPC_WRITE_PORT;
 	xfer.c_ata_c.r_features = reg;
@@ -142,21 +149,27 @@ satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value)
 	    &xfer) != ATACMD_COMPLETE) {
 		aprint_error_dev(chp->atabus,
 		    "PMP port %d register %d write failed\n", port, reg);
-		return EIO;
+		error = EIO;
+		goto out;
 	}
 	if (xfer.c_ata_c.flags & (AT_TIMEOU | AT_DF)) {
 		aprint_error_dev(chp->atabus,
 		    "PMP port %d register %d write failed, flags 0x%x\n",
 		    port, reg, xfer.c_ata_c.flags);
-		return EIO;
+		error = EIO;
+		goto out;
 	}
 	if (xfer.c_ata_c.flags & AT_ERROR) {
 		aprint_verbose_dev(chp->atabus,
 		    "PMP port %d register %d write failed, error 0x%x\n",
 		    port, reg, xfer.c_ata_c.r_error);
-		return EIO;
+		error = EIO;
+		goto out;
 	}
-	return 0;
+
+out:
+	ata_xfer_destroy(&xfer);
+	return error;
 }
 
 static inline int
