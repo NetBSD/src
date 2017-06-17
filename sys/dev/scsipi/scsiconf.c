@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.279 2017/03/18 08:05:40 tsutsui Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.280 2017/06/17 22:35:50 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.279 2017/03/18 08:05:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.280 2017/06/17 22:35:50 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,43 +333,19 @@ scsibusdetach(device_t self, int flags)
 {
 	struct scsibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = sc->sc_channel;
-	struct scsipi_periph *periph;
-	int ctarget, clun;
-	struct scsipi_xfer *xs;
 	int error;
 
 	/*
 	 * Detach all of the periphs.
 	 */
-	if ((error = scsipi_target_detach(chan, -1, -1, flags)) != 0)
+	error = scsipi_target_detach(chan, -1, -1, flags);
+	if (error)
 		return error;
 
 	pmf_device_deregister(self);
 
 	/*
-	 * Process outstanding commands (which will never complete as the
-	 * controller is gone).
-	 *
-	 * XXX Surely this is redundant?  If we get this far, the
-	 * XXX peripherals have all been detached.
-	 */
-	for (ctarget = 0; ctarget < chan->chan_ntargets; ctarget++) {
-		if (ctarget == chan->chan_id)
-			continue;
-		for (clun = 0; clun < chan->chan_nluns; clun++) {
-			periph = scsipi_lookup_periph(chan, ctarget, clun);
-			if (periph == NULL)
-				continue;
-			TAILQ_FOREACH(xs, &periph->periph_xferq, device_q) {
-				callout_stop(&xs->xs_callout);
-				xs->error = XS_DRIVER_STUFFUP;
-				scsipi_done(xs);
-			}
-		}
-	}
-
-	/*
-	 * Now shut down the channel.
+	 * Shut down the channel.
 	 */
 	scsipi_channel_shutdown(chan);
 
