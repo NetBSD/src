@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.49 2017/06/07 05:08:32 kre Exp $	*/
+/*	$NetBSD: exec.c,v 1.50 2017/06/17 07:22:12 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.49 2017/06/07 05:08:32 kre Exp $");
+__RCSID("$NetBSD: exec.c,v 1.50 2017/06/17 07:22:12 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -334,9 +334,8 @@ padvance(const char **path, const char *name, int magic_percent)
 		*path = p + 1;
 	else
 		*path = NULL;
-	return stalloc(len);
+	return grabstackstr(q + strlen(name) + 1);
 }
-
 
 
 /*** Command hashing code ***/
@@ -617,14 +616,17 @@ loop:
 		if (!S_ISREG(statb.st_mode))
 			goto loop;
 		if (pathopt) {		/* this is a %func directory */
+			char *endname;
+
 			if (act & DO_NOFUNC)
 				goto loop;
-			stalloc(strlen(fullname) + 1);
+			endname = fullname + strlen(fullname) + 1;
+			grabstackstr(endname);
 			readcmdfile(fullname);
 			if ((cmdp = cmdlookup(name, 0)) == NULL ||
 			    cmdp->cmdtype != CMDFUNCTION)
 				error("%s not defined in %s", name, fullname);
-			stunalloc(fullname);
+			ungrabstackstr(fullname, endname);
 			goto success;
 		}
 #ifdef notdef
@@ -644,7 +646,11 @@ loop:
 		TRACE(("searchexec \"%s\" returns \"%s\"\n", name, fullname));
 		INTOFF;
 		if (act & DO_ALTPATH) {
+		/*
+		 * this should be a grabstackstr() but is not needed:
+		 * fullname is no longer needed for anything
 			stalloc(strlen(fullname) + 1);
+		 */
 			cmdp = &loc_cmd;
 		} else
 			cmdp = cmdlookup(name, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.h,v 1.16 2017/06/03 10:31:16 kre Exp $	*/
+/*	$NetBSD: memalloc.h,v 1.17 2017/06/17 07:22:12 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,6 +38,7 @@ struct stackmark {
 	struct stack_block *stackp;
 	char *stacknxt;
 	int stacknleft;
+	int sstrnleft;
 	struct stackmark *marknext;
 };
 
@@ -68,11 +69,10 @@ void ungrabstackstr(char *, char *);
 #define STPUTC(c, p)	(--sstrnleft >= 0? (*p++ = (c)) : (p = growstackstr(), *p++ = (c)))
 #define CHECKSTRSPACE(n, p)	{ if (sstrnleft < n) p = makestrspace(); }
 #define USTPUTC(c, p)	(--sstrnleft, *p++ = (c))
-#define STACKSTRNUL(p)	(sstrnleft == 0? (p = growstackstr(), *p = '\0') : (*p = '\0'))
+#define STACKSTRNUL(p)	(sstrnleft == 0? (p = growstackstr(), sstrnleft++, *p = '\0') : (*p = '\0'))
 #define STUNPUTC(p)	(++sstrnleft, --p)
 #define STTOPC(p)	p[-1]
 #define STADJUST(amount, p)	(p += (amount), sstrnleft -= (amount))
-#define STUNSTR(amount)	(sstrnleft -= (amount))
-#define grabstackstr(p)	stalloc(stackblocksize() - sstrnleft)
+#define grabstackstr(p)	stalloc((p) - stackblock())
 
 #define ckfree(p)	free((pointer)(p))
