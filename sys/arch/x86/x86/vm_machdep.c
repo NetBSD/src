@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.28 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.29 2017/06/17 07:45:13 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.28 2017/02/23 03:34:22 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29 2017/06/17 07:45:13 maxv Exp $");
 
 #include "opt_mtrr.h"
 
@@ -399,7 +399,7 @@ cpu_uarea_free(void *vva)
 {
 	vaddr_t va = (vaddr_t) vva;
 
-	if (va >= VM_MIN_KERNEL_ADDRESS && va < VM_MAX_KERNEL_ADDRESS) {
+	if (va < PMAP_DIRECT_BASE || va >= PMAP_DIRECT_END) {
 		return false;
 	}
 
