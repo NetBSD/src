@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.30 2017/06/07 05:08:32 kre Exp $	*/
+/*	$NetBSD: var.h,v 1.31 2017/06/17 10:46:34 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,16 +39,19 @@
  */
 
 /* flags */
-#define VEXPORT		0x0001	/* variable is exported */
-#define VREADONLY	0x0002	/* variable cannot be modified */
-#define VSTRFIXED	0x0004	/* variable struct is statically allocated */
-#define VTEXTFIXED	0x0008	/* text is statically allocated */
-#define VSTACK		0x0010	/* text is allocated on the stack */
-#define VUNSET		0x0020	/* the variable is not set */
-#define VNOFUNC		0x0040	/* don't call the callback function */
-#define VNOSET		0x0080	/* do not set variable - just readonly test */
-#define VNOEXPORT	0x0100	/* variable may not be exported */
+#define VUNSET		0x0001	/* the variable is not set */
+#define VEXPORT		0x0002	/* variable is exported */
+#define VREADONLY	0x0004	/* variable cannot be modified */
+#define VNOEXPORT	0x0008	/* variable may not be exported */
+
+#define VSTRFIXED	0x0010	/* variable struct is statically allocated */
+#define VTEXTFIXED	0x0020	/* text is statically allocated */
+#define VSTACK		0x0040	/* text is allocated on the stack */
+#define VNOFUNC		0x0100	/* don't call the callback function */
 #define VFUNCREF	0x0200	/* the function is called on ref, not set */
+
+#define VNOSET		0x4000	/* do not set variable - just readonly test */
+#define VNOERROR	0x8000	/* be quiet if set fails (no error msg) */
 
 struct var;
 

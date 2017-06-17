@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.59 2017/06/17 04:12:06 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.60 2017/06/17 10:46:34 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.59 2017/06/17 04:12:06 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.60 2017/06/17 10:46:34 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -353,10 +353,18 @@ setvareq(char *s, int flags)
 		flags |= VEXPORT;
 	vp = find_var(s, &vpp, &nlen);
 	if (vp != NULL) {
-		if (vp->flags & VREADONLY)
+		if (vp->flags & VREADONLY) {
+			if ((flags & (VTEXTFIXED|VSTACK)) == 0)
+				ckfree(s);
+			if (flags & VNOERROR)
+				return;
 			error("%.*s: is read only", vp->name_len, s);
-		if (flags & VNOSET)
+		}
+		if (flags & VNOSET) {
+			if ((flags & (VTEXTFIXED|VSTACK)) == 0)
+				ckfree(s);
 			return;
+		}
 
 		INTOFF;
 
@@ -385,8 +393,11 @@ setvareq(char *s, int flags)
 		return;
 	}
 	/* not found */
-	if (flags & VNOSET)
+	if (flags & VNOSET) {
+		if ((flags & (VTEXTFIXED|VSTACK)) == 0)
+			ckfree(s);
 		return;
+	}
 	vp = ckmalloc(sizeof (*vp));
 	vp->flags = flags & ~(VNOFUNC|VFUNCREF);
 	vp->text = s;
