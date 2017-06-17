@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.267 2017/06/17 15:49:56 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.268 2017/06/17 16:34:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.267 2017/06/17 15:49:56 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.268 2017/06/17 16:34:07 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.267 2017/06/17 15:49:56 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.268 2017/06/17 16:34:07 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -876,13 +876,12 @@ doPrintVars(void)
 			value = p1 = Var_Subst(NULL, tmp, VAR_GLOBAL,
 			    VARF_WANTRES);
 		} else {
-			char *next = var;
-			value = Var_Value(next, VAR_GLOBAL, &p1);
+			value = Var_Value(var, VAR_GLOBAL, &p1);
 			if (*value == '$') {
-				var = value;
-				value = p1 = Var_Subst(NULL, var,
+				value = Var_Subst(NULL, value,
 				    VAR_GLOBAL, VARF_WANTRES);
-				free(var);
+				free(p1);
+				p1 = value;
 			}
 		}
 		printf("%s\n", value ? value : "");
