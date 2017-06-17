@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.86 2017/06/07 05:08:32 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.87 2017/06/17 12:12:50 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.86 2017/06/07 05:08:32 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.87 2017/06/17 12:12:50 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -433,7 +433,8 @@ showjob(struct output *out, struct job *jp, int mode)
 
 	if (mode & SHOW_SIGNALLED && !(mode & SHOW_ISSIG)) {
 		if (jp->state == JOBDONE && !(mode & SHOW_NO_FREE)) {
-			TRACE(("showjob: freeing job %d\n", jp - jobtab + 1));
+			VTRACE(DBG_JOBS, ("showjob: freeing job %d\n",
+			    jp - jobtab + 1));
 			freejob(jp);
 		}
 		return;
@@ -546,7 +547,7 @@ showjobs(struct output *out, int mode)
 	struct job *jp;
 	int silent = 0, gotpid;
 
-	TRACE(("showjobs(%x) called\n", mode));
+	CTRACE(DBG_JOBS, ("showjobs(%x) called\n", mode));
 
 	/* If not even one one job changed, there is nothing to do */
 	gotpid = dowait(0, NULL);
@@ -561,7 +562,7 @@ showjobs(struct output *out, int mode)
 		if (tcsetpgrp(ttyfd, getpid()) == -1)
 			error("Cannot set tty process group (%s) at %d",
 			    strerror(errno), __LINE__);
-		TRACE(("repaired tty process group\n"));
+		VTRACE(DBG_JOBS|DBG_INPUT, ("repaired tty process group\n"));
 		silent = 1;
 	}
 #endif
@@ -833,8 +834,8 @@ makejob(union node *node, int nprocs)
 		jp->ps = &jp->ps0;
 	}
 	INTON;
-	TRACE(("makejob(0x%lx, %d) returns %%%d\n", (long)node, nprocs,
-	    jp - jobtab + 1));
+	VTRACE(DBG_JOBS, ("makejob(0x%lx, %d) returns %%%d\n",
+	    (long)node, nprocs, jp - jobtab + 1));
 	return jp;
 }
 
@@ -860,11 +861,13 @@ forkshell(struct job *jp, union node *n, int mode)
 	pid_t pid;
 	int serrno;
 
-	TRACE(("forkshell(%%%d, %p, %d) called\n", jp - jobtab, n, mode));
+	CTRACE(DBG_JOBS, ("forkshell(%%%d, %p, %d) called\n",
+	    jp - jobtab, n, mode));
+
 	switch ((pid = fork())) {
 	case -1:
 		serrno = errno;
-		TRACE(("Fork failed, errno=%d\n", serrno));
+		VTRACE(DBG_JOBS, ("Fork failed, errno=%d\n", serrno));
 		INTON;
 		error("Cannot fork (%s)", strerror(serrno));
 		break;
@@ -900,7 +903,7 @@ forkparent(struct job *jp, union node *n, int mode, pid_t pid)
 		if (/* iflag && rootshell && */ n)
 			commandtext(ps, n);
 	}
-	TRACE(("In parent shell:  child = %d\n", pid));
+	CTRACE(DBG_JOBS, ("In parent shell:  child = %d\n", pid));
 	return pid;
 }
 
@@ -913,7 +916,7 @@ forkchild(struct job *jp, union node *n, int mode, int vforked)
 	const char *nullerr = "Can't open %s";
 
 	wasroot = rootshell;
-	TRACE(("Child shell %d\n", getpid()));
+	CTRACE(DBG_JOBS, ("Child shell %d\n", getpid()));
 	if (!vforked)
 		rootshell = 0;
 
@@ -997,7 +1000,7 @@ waitforjob(struct job *jp)
 	int st;
 
 	INTOFF;
-	TRACE(("waitforjob(%%%d) called\n", jp - jobtab + 1));
+	VTRACE(DBG_JOBS, ("waitforjob(%%%d) called\n", jp - jobtab + 1));
 	while (jp->state == JOBRUNNING) {
 		dowait(WBLOCK, jp);
 	}
@@ -1020,8 +1023,9 @@ waitforjob(struct job *jp)
 #endif
 	else
 		st = WTERMSIG(status) + 128;
-	TRACE(("waitforjob: job %d, nproc %d, status %x, st %x\n",
-		jp - jobtab + 1, jp->nprocs, status, st ));
+
+	VTRACE(DBG_JOBS, ("waitforjob: job %d, nproc %d, status %d, st %x\n",
+		jp - jobtab + 1, jp->nprocs, status, st));
 #if JOBS
 	if (jp->jobctl) {
 		/*
@@ -1059,10 +1063,11 @@ dowait(int flags, struct job *job)
 	int done;
 	int stopped;
 
-	TRACE(("dowait(%x) called\n", flags));
+	VTRACE(DBG_JOBS|DBG_PROCS, ("dowait(%x) called\n", flags));
 	do {
 		pid = waitproc(flags & WBLOCK, job, &status);
-		TRACE(("wait returns pid %d, status %d\n", pid, status));
+		VTRACE(DBG_JOBS|DBG_PROCS, ("wait returns pid %d, status %#x\n",
+		    pid, status));
 	} while (pid == -1 && errno == EINTR && pendingsigs == 0);
 	if (pid <= 0)
 		return pid;
@@ -1076,7 +1081,10 @@ dowait(int flags, struct job *job)
 				if (sp->pid == -1)
 					continue;
 				if (sp->pid == pid) {
-					TRACE(("Job %d: changing status of proc %d from 0x%x to 0x%x\n", jp - jobtab + 1, pid, sp->status, status));
+					VTRACE(DBG_JOBS | DBG_PROCS,
+			("Job %d: changing status of proc %d from %#x to %#x\n",
+						jp - jobtab + 1, pid,
+						sp->status, status));
 					sp->status = status;
 					thisjob = jp;
 				}
@@ -1088,7 +1096,9 @@ dowait(int flags, struct job *job)
 			if (stopped) {		/* stopped or done */
 				int state = done ? JOBDONE : JOBSTOPPED;
 				if (jp->state != state) {
-					TRACE(("Job %d: changing state from %d to %d\n", jp - jobtab + 1, jp->state, state));
+					VTRACE(DBG_JOBS,
+				("Job %d: changing state from %d to %d\n",
+					    jp - jobtab + 1, jp->state, state));
 					jp->state = state;
 #if JOBS
 					if (done)
@@ -1109,8 +1119,9 @@ dowait(int flags, struct job *job)
 		if (mode)
 			showjob(out2, thisjob, mode);
 		else {
-			TRACE(("Not printing status, rootshell=%d, job=%p\n",
-				rootshell, job));
+			VTRACE(DBG_JOBS,
+			    ("Not printing status, rootshell=%d, job=%p\n",
+			    rootshell, job));
 			thisjob->changed = 1;
 		}
 	}
@@ -1245,8 +1256,10 @@ commandtext(struct procstat *ps, union node *n)
 		p[3] = 0;
 	} else
 		*cmdnextc = '\0';
-	TRACE(("commandtext: ps->cmd %x, end %x, left %d\n\t\"%s\"\n",
-		ps->cmd, cmdnextc, cmdnleft, ps->cmd));
+
+	VTRACE(DBG_JOBS,
+	    ("commandtext: ps->cmd %x, end %x, left %d\n\t\"%s\"\n",
+	    ps->cmd, cmdnextc, cmdnleft, ps->cmd));
 }
 
 
