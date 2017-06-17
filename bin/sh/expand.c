@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.115 2017/06/07 09:31:30 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.116 2017/06/17 07:22:12 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.115 2017/06/07 09:31:30 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.116 2017/06/17 07:22:12 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -225,9 +225,6 @@ argstr(const char *p, int flag)
 	int firsteq = 1;
 	const char *ifs = NULL;
 	int ifs_split = EXP_IFS_SPLIT;
-#ifdef DEBUG
-	const char *ed = expdest;
-#endif
 
 	if (flag & EXP_IFS_SPLIT)
 		ifs = ifsval();
@@ -239,16 +236,16 @@ argstr(const char *p, int flag)
 	for (;;) {
 		switch (c = *p++) {
 		case '\0':
+			STACKSTRNUL(expdest);
 			VTRACE(DBG_EXPAND, ("argstr returning at \"\" "
-			   "added \"%.*s\" to expdest (followed by: %2.2x)\n", 
-			   expdest-ed, ed, *expdest));
+			   "added \"%s\" to expdest\n", stackblock()));
 			return p - 1;
 		case CTLENDVAR: /* end of expanding yyy in ${xxx-yyy} */
 		case CTLENDARI: /* end of a $(( )) string */
+			STACKSTRNUL(expdest);
 			VTRACE(DBG_EXPAND, ("argstr returning at \"%.6s\"..."
-			    " after %2.2x; "
-			   "added \"%.*s\" to expdest (followed by: %2.2x)\n", 
-			    p, p[-1]&0xff, expdest-ed, ed, *expdest));
+			    " after %2.2X; added \"%s\" to expdest\n", 
+			    p, (c&0xff), stackblock()));
 			return p;
 		case CTLQUOTEMARK:
 			/* "$@" syntax adherence hack */
@@ -272,27 +269,43 @@ argstr(const char *p, int flag)
 				STPUTC(c, expdest);
 			c = *p++;
 			STPUTC(c, expdest);
+			if (c == '\n')		/* should not happen, but ... */
+				line_number++;
 			break;
-		case CTLVAR:
+		case CTLVAR: {
+#ifdef DEBUG
+			unsigned int pos = expdest - stackblock();
+#endif
 			p = evalvar(p, (flag & ~EXP_IFS_SPLIT) | (flag & ifs_split));
+			STACKSTRNUL(expdest);
 			VTRACE(DBG_EXPAND, ("argstr evalvar "
-			   "added \"%.*s\" to expdest (followed by: %2.2x)\n", 
-			   expdest-ed, ed, *expdest));
+			   "added \"%s\" to expdest\n", 
+			   stackblock() + pos));
 			break;
+		}
 		case CTLBACKQ:
-		case CTLBACKQ|CTLQUOTE:
+		case CTLBACKQ|CTLQUOTE: {
+#ifdef DEBUG
+			unsigned int pos = expdest - stackblock();
+#endif
 			expbackq(argbackq->n, c & CTLQUOTE, flag);
 			argbackq = argbackq->next;
-			VTRACE(DBG_EXPAND, ("argstr expbackq "
-			   "added \"%.*s\" to expdest (followed by: %2.2x)\n", 
-			   expdest-ed, ed, *expdest));
+			STACKSTRNUL(expdest);
+			VTRACE(DBG_EXPAND, ("argstr expbackq added \"%s\" "
+			   "to expdest\n", stackblock() + pos));
 			break;
-		case CTLARI:
+		}
+		case CTLARI: {
+#ifdef DEBUG
+			unsigned int pos = expdest - stackblock();
+#endif
 			p = expari(p);
+			STACKSTRNUL(expdest);
 			VTRACE(DBG_EXPAND, ("argstr expari "
-			   "+ \"%.*s\" to dest (fwd by: %2.2x) p=\"%.5s...\"\n",
-			   expdest-ed, ed, *expdest, p));
+			   "+ \"%s\" to expdest p=\"%.5s...\"\n",
+			   stackblock() + pos, p));
 			break;
+		}
 		case ':':
 		case '=':
 			/*
@@ -333,20 +346,29 @@ exptilde(const char *p, int flag)
 	const char *home;
 	int quotes = flag & (EXP_GLOB | EXP_CASE);
 	char *user;
+	struct stackmark smark;
+#ifdef DEBUG
+	unsigned int offs = expdest - stackblock();
+#endif
 
-	user = expdest;		/* we will just borrow top of stack */
+	setstackmark(&smark);
+	user = stackblock();		/* we will just borrow top of stack */
+
 	while ((c = *++p) != '\0') {
 		switch(c) {
-		case CTLESC:
-		case CTLVAR:
-		case CTLBACKQ:
+		case CTLESC:		/* any of these occurring */
+		case CTLVAR:		/* means ~ expansion */
+		case CTLBACKQ:		/* does not happen at all */
 		case CTLBACKQ | CTLQUOTE:
-		case CTLARI:
+		case CTLARI:		/* just leave original unchanged */
 		case CTLENDARI:
 		case CTLQUOTEMARK:
+		case CTLENDVAR:
+		case '\n':
+			popstackmark(&smark);
 			return (startp);
 		case CTLNONL:
-			break;
+			continue;
 		case ':':
 			if (flag & EXP_VARTILDE)
 				goto done;
@@ -358,24 +380,46 @@ exptilde(const char *p, int flag)
 	}
  done:
 	STACKSTRNUL(user);
+	user = stackblock();		/* to start of collected username */
 
-	CTRACE(DBG_EXPAND, ("exptilde, found \"%s\" :", expdest));
-	if (*expdest == '\0')
+	CTRACE(DBG_EXPAND, ("exptilde, found \"~%s\"", user));
+	if (*user == '\0') {
 		home = lookupvar("HOME");
-	else if ((pw = getpwnam(expdest)) == NULL)
+		/*
+		 * if HOME is unset, results are unspecified...
+		 * we used to just leave the ~ unchanged, but
+		 * (some) other shells do ... and this seems more useful.
+		 */
+		if (home == NULL && (pw = getpwuid(getuid())) != NULL)
+			home = pw->pw_dir;
+	} else if ((pw = getpwnam(user)) == NULL) {
+		/*
+		 * If user does not exist, results are undefined.
+		 * so we can abort() here if we want, but let's not!
+		 */
 		home = NULL;
-	else
+	} else
 		home = pw->pw_dir;
-	STUNSTR(user - expdest);	/* return borrowed string space */
 
-	if (home == NULL || *home == '\0')
+	VTRACE(DBG_EXPAND, (" ->\"%s\"", home ? home : "<<NULL>>"));
+	popstackmark(&smark);	/* now expdest is valid again */
+
+	/*
+	 * Posix XCU 2.6.1: The value of $HOME (for ~) or the initial
+	 *		working directory from getpwnam() for ~user
+	 * Nothing there about "except if a null string".  So do what it wants.
+	 */
+	if (home == NULL /* || *home == '\0' */) {
+		CTRACE(DBG_EXPAND, (": returning unused \"%s\"\n", startp));
 		return startp;
-	while ((c = *home++) != '\0') {
+	} while ((c = *home++) != '\0') {
 		if (quotes && SQSYNTAX[(int)c] == CCTL)
 			STPUTC(CTLESC, expdest);
 		STPUTC(c, expdest);
 	}
-	CTRACE(DBG_EXPAND, ("returning \"%s\"\n", p));
+	CTRACE(DBG_EXPAND, (": added %d \"%.*s\" returning \"%s\"\n",
+	      expdest - stackblock() - offs, expdest - stackblock() - offs,
+	      stackblock() + offs, p));
 
 	return (p);
 }
@@ -431,8 +475,13 @@ removerecordregions(int endoff)
 
 
 /*
- * Expand arithmetic expression.  Backup to start of expression,
- * evaluate, place result in (backed up) result, adjust string position.
+ * Expand arithmetic expression.
+ *
+ * In this incarnation, we start at the beginning (yes, "Let's start at the
+ * very beginning.  A very good place to start.") and collect the expression
+ * until the end - which means expanding anything contained within.
+ *
+ * Fortunately, argstr() just happens to do that for us...
  */
 STATIC const char *
 expari(const char *p)
@@ -442,22 +491,9 @@ expari(const char *p)
 	int adjustment;
 	int begoff;
 	int quoted;
-#ifdef DEBUG
-	const char *ed = expdest;
-#endif
+	struct stackmark smark;
 
 	/*	ifsfree(); */
-
-	/*
-	 * This routine is slightly over-complicated for
-	 * efficiency.  First we make sure there is
-	 * enough space for the result, which may be bigger
-	 * than the expression if we add exponentation.  Next we
-	 * scan backwards looking for the start of arithmetic.  If the
-	 * next previous character is a CTLESC character, then we
-	 * have to rescan starting from the beginning since CTLESC
-	 * characters have to be processed left to right.
-	 */
 
 	/*
 	 * SPACE_NEEDED is enough for all possible digits (rounded up)
@@ -469,57 +505,47 @@ expari(const char *p)
 	 * so this is safe, if occasionally slightly wasteful.
 	 */
 #define SPACE_NEEDED ((int)((sizeof(intmax_t) * CHAR_BIT + 2) / 3 + 2))
-	/*
-	 * Only need check for SPACE_NEEDED-2 as we have already
-	 * consumed (but will overwrite) 2 chars, the CTLARI, and the
-	 * flags (quoting) byte (if those had not already been seen,
-	 * we would not be here.)
-	 */
+
 	quoted = *p++ == '"';
 	begoff = expdest - stackblock();
-	VTRACE(DBG_EXPAND, ("expari: '%c' \"%s\" begoff %d\n", p[-1],p,begoff));
+	VTRACE(DBG_EXPAND, ("expari%s: \"%s\" begoff %d\n",
+	    quoted ? "(quoted)" : "", p, begoff));
+
 	p = argstr(p, EXP_NL);			/* expand $(( )) string */
 	STPUTC('\0', expdest);
 	start = stackblock() + begoff;
-	VTRACE(DBG_EXPAND, ("expari: argstr added: '%s' start: \"%.8s\"\n",
-	    ed, start));
-	removerecordregions(begoff);
-	rmescapes_nl(start);	/* convert CRTNONL back into \n's */
-	q = grabstackstr(expdest);
+
+	removerecordregions(begoff);		/* nothing there is kept */
+	rmescapes_nl(start);		/* convert CRTNONL back into \n's */
+
+	setstackmark(&smark);
+	q = grabstackstr(expdest);	/* keep the expression while eval'ing */
 	result = arith(start, line_number);
-	VTRACE(DBG_EXPAND, ("expari: after arith: result=%jd '%s' q@'%.3s'\n",
-	    result, ed, q));
-	ungrabstackstr(q, expdest);
+	popstackmark(&smark);		/* return the stack to before grab */
 
-	start = stackblock() + begoff;
+	start = stackblock() + begoff;		/* block may have moved */
 	adjustment = expdest - start;
-	VTRACE(DBG_EXPAND, ("expari: removing %d ", adjustment));
-	STADJUST(-adjustment, expdest);		/* remove the argstr() */
-	VTRACE(DBG_EXPAND, ("ed \"%.*s\", expdest \"%s\"\n",
-	    expdest-ed, ed, expdest));
+	STADJUST(-adjustment, expdest);		/* remove the argstr() result */
 
-	CHECKSTRSPACE(SPACE_NEEDED, expdest);
+	CHECKSTRSPACE(SPACE_NEEDED, expdest);	/* nb: stack block might move */
 	fmtstr(expdest, SPACE_NEEDED, "%"PRIdMAX, result);
-	VTRACE(DBG_EXPAND, ("expari: after fmtstr: ed \"%s\" expdest \"%s\"\n",
-	    ed, expdest));
 
-	for (q = expdest; *q++ != '\0'; )
+	for (q = expdest; *q++ != '\0'; )	/* find end of what we added */
 		;
 
 	if (quoted == 0)			/* allow weird splitting */
 		recordregion(begoff, begoff + q - 1 - expdest, 0);
 	adjustment = q - expdest - 1;
-	STADJUST(adjustment, expdest);
-	VTRACE(DBG_EXPAND, ("expari: adding %d ed \"%.*s\", "
-	    "expdest \"%s\" returning \"%.5s...\"\n", adjustment, expdest - ed,
-	    ed, expdest, p));
+	STADJUST(adjustment, expdest);		/* move expdest to end */
+	VTRACE(DBG_EXPAND, ("expari: adding %d \"%s\", produced \"%s\" "
+	    "returning \"%.5s...\"\n", adjustment, stackblock() + begoff, p));
 
 	return p;
 }
 
 
 /*
- * Expand stuff in backwards quotes.
+ * Expand stuff in backwards quotes (these days, any command substitution).
  */
 
 STATIC void
@@ -529,7 +555,7 @@ expbackq(union node *cmd, int quoted, int flag)
 	int i;
 	char buf[128];
 	char *p;
-	char *dest = expdest;
+	char *dest = expdest;	/* expdest may be reused by eval, use an alt */
 	struct ifsregion saveifs, *savelastp;
 	struct nodelist *saveargbackq;
 	char lastc;
@@ -538,25 +564,29 @@ expbackq(union node *cmd, int quoted, int flag)
 	int saveherefd;
 	int quotes = flag & (EXP_GLOB | EXP_CASE);
 	int nnl;
+	struct stackmark smark;
 
-	VTRACE(DBG_EXPAND, ("expbackq( ..., q=%d flag=%#x)\n", quoted, flag));
+	VTRACE(DBG_EXPAND, ("expbackq( ..., q=%d flag=%#x) have %d\n",
+	    quoted, flag, startloc));
 	INTOFF;
 	saveifs = ifsfirst;
 	savelastp = ifslastp;
 	saveargbackq = argbackq;
 	saveherefd = herefd;
 	herefd = -1;
-	p = grabstackstr(dest);
-	evalbackcmd(cmd, &in);
-	ungrabstackstr(p, dest);
+
+	setstackmark(&smark);	/* preserve the stack */
+	p = grabstackstr(dest);	/* save what we have there currently */
+	evalbackcmd(cmd, &in);	/* evaluate the $( ) tree (using stack) */
+	popstackmark(&smark);	/* and return stack to when we entered */
+
 	ifsfirst = saveifs;
 	ifslastp = savelastp;
 	argbackq = saveargbackq;
 	herefd = saveherefd;
 
-	p = in.buf;
-	lastc = '\0';
-	nnl = 0;
+	p = in.buf;		/* now extract the results */
+	nnl = 0;		/* dropping trailing \n's */
 	for (;;) {
 		if (--in.nleft < 0) {
 			if (in.fd < 0)
@@ -571,13 +601,38 @@ expbackq(union node *cmd, int quoted, int flag)
 		}
 		lastc = *p++;
 		if (lastc != '\0') {
-			if (lastc == '\n')
-				nnl++;
+			if (lastc == '\n')	/* don't save \n yet */
+				nnl++;		/* it might be trailing */
 			else {
-				CHECKSTRSPACE(nnl + 2, dest);
-				while (nnl > 0) {
-					nnl--;
-					USTPUTC('\n', dest);
+				/*
+				 * We have something other than \n
+				 *
+				 * Before saving it, we need to insert
+				 * any \n's that we have just skipped.
+				 */
+
+				/* XXX
+				 * this hack is just because our
+				 * CHECKSTRSPACE() is lazy, and only
+				 * ever grows the stack once, even
+				 * if that does not allocate the space
+				 * we requested.  ie: safe for small
+				 * requests, but not large ones.
+				 * FIXME someday...
+				 */
+				if (nnl < 20) {
+					CHECKSTRSPACE(nnl + 2, dest);
+					while (nnl > 0) {
+						nnl--;
+						USTPUTC('\n', dest);
+					}
+				} else {
+					/* The slower, safer, way */
+					while (nnl > 0) {
+						nnl--;
+						STPUTC('\n', dest);
+					}
+					CHECKSTRSPACE(2, dest);
 				}
 				if (quotes && syntax[(int)lastc] == CCTL)
 					USTPUTC(CTLESC, dest);
@@ -598,7 +653,8 @@ expbackq(union node *cmd, int quoted, int flag)
 		(int)((dest - stackblock()) - startloc),
 		(int)((dest - stackblock()) - startloc),
 		stackblock() + startloc));
-	expdest = dest;
+
+	expdest = dest;		/* all done, expdest is all ours again */
 	INTON;
 }
 
@@ -613,6 +669,8 @@ subevalvar(const char *p, const char *str, int subtype, int startloc,
 	int amount;
 
 	herefd = -1;
+	VTRACE(DBG_EXPAND, ("subevalvar(%d) \"%.20s\" ${%.*s} sloc=%d vf=%x\n",
+	    subtype, p, p-str, str, startloc, varflags));
 	argstr(p, EXP_TILDE);
 	STACKSTRNUL(expdest);
 	herefd = saveherefd;
@@ -622,10 +680,10 @@ subevalvar(const char *p, const char *str, int subtype, int startloc,
 	switch (subtype) {
 	case VSASSIGN:
 		setvar(str, startp, 0);
-		amount = startp - expdest;
+		amount = startp - expdest;	/* remove what argstr added */
 		STADJUST(amount, expdest);
-		varflags &= ~VSNUL;
-		return 1;
+		varflags &= ~VSNUL;	/*XXX Huh?   What's that achieve? */
+		return 1;			/* go back and eval var again */
 
 	case VSQUESTION:
 		if (*p != CTLENDVAR) {
@@ -833,7 +891,7 @@ evalvar(const char *p, int flag)
 		if (special) {
 			if (varflags & VSLINENO) {
 				/*
-				 * The LINENO hack
+				 * The LINENO hack (expansion part)
 				 */
 				while (--special > 0) {
 /*						not needed, it is a number...
@@ -946,15 +1004,12 @@ evalvar(const char *p, int flag)
 			removerecordregions(startloc);
 			goto again;
 		}
-		apply_ifs = 0;
+		apply_ifs = 0;		/* never executed */
 		break;
 
 	default:
 		abort();
 	}
-#if 0
-	p[-1] = '=';	/* recover overwritten '=' */
-#endif
 
 	if (apply_ifs)
 		recordregion(startloc, expdest - stackblock(),
@@ -985,7 +1040,7 @@ evalvar(const char *p, int flag)
 
 
 /*
- * Test whether a specialized variable is set.
+ * Test whether a special parameter is set.
  */
 
 STATIC int
@@ -1007,7 +1062,15 @@ varisset(const char *name, int nulok)
 		}
 	} else if (is_digit(*name)) {
 		char *ap;
-		int num = atoi(name);
+		long num;
+
+		/*
+		 * handle overflow sensibly (the *ap tests should never fail)
+		 */
+		errno = 0;
+		num = strtol(name, &ap, 10);
+		if (errno != 0 || (*ap != '\0' && *ap != '='))
+			return 0;
 
 		if (num == 0)
 			ap = arg0;
@@ -1043,16 +1106,16 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 
 #define STRTODEST(p) \
 	do {\
-	if (flag & (EXP_GLOB | EXP_CASE) && subtype != VSLENGTH) { \
-		syntax = quoted? DQSYNTAX : BASESYNTAX; \
-		while (*p) { \
-			if (syntax[(int)*p] == CCTL) \
-				STPUTC(CTLESC, expdest); \
-			STPUTC(*p++, expdest); \
-		} \
-	} else \
-		while (*p) \
-			STPUTC(*p++, expdest); \
+		if (flag & (EXP_GLOB | EXP_CASE) && subtype != VSLENGTH) { \
+			syntax = quoted? DQSYNTAX : BASESYNTAX; \
+			while (*p) { \
+				if (syntax[(int)*p] == CCTL) \
+					STPUTC(CTLESC, expdest); \
+				STPUTC(*p++, expdest); \
+			} \
+		} else \
+			while (*p) \
+				STPUTC(*p++, expdest); \
 	} while (0)
 
 
