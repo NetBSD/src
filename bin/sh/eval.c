@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.146 2017/06/08 13:12:17 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.147 2017/06/17 10:46:34 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.146 2017/06/08 13:12:17 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.147 2017/06/17 10:46:34 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1195,7 +1195,7 @@ parent:	/* parent process gets here (if we forked) */
 out:
 	if (lastarg)
 		/* implement $_ for whatever use that really is */
-		setvar("_", lastarg, 0);
+		(void) setvarsafe("_", lastarg, VNOERROR);
 	popstackmark(&smark);
 }
 
