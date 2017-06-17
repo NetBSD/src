@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.40 2017/06/15 11:25:52 maxv Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41 2017/06/17 08:40:46 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,10 +121,10 @@
  */
 #ifndef XEN
 #define VM_MIN_KERNEL_ADDRESS	0xffff800000000000
-#define VM_MAX_KERNEL_ADDRESS	0xffff808000000000
+#define VM_MAX_KERNEL_ADDRESS	0xffffa00000000000
 #else
 #define VM_MIN_KERNEL_ADDRESS	0xffffa00000000000
-#define VM_MAX_KERNEL_ADDRESS	0xffffa08000000000
+#define VM_MAX_KERNEL_ADDRESS	0xffffc00000000000
 #endif
 
 /*
