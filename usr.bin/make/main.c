@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.266 2017/06/17 15:26:50 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.267 2017/06/17 15:49:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.266 2017/06/17 15:26:50 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.267 2017/06/17 15:49:56 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.266 2017/06/17 15:26:50 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.267 2017/06/17 15:49:56 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -864,18 +864,26 @@ doPrintVars(void)
 		char *p1;
 		
 		if (strchr(var, '$')) {
-		    value = p1 = Var_Subst(NULL, var, VAR_GLOBAL, VARF_WANTRES);
+			value = p1 = Var_Subst(NULL, var, VAR_GLOBAL,
+			    VARF_WANTRES);
 		} else if (expandVars) {
 			char tmp[128];
 			int len = snprintf(tmp, sizeof(tmp), "${%s}", var);
 							
 			if (len >= (int)sizeof(tmp))
 				Fatal("%s: variable name too big: %s",
-				      progname, var);
+				    progname, var);
 			value = p1 = Var_Subst(NULL, tmp, VAR_GLOBAL,
 			    VARF_WANTRES);
 		} else {
-			value = Var_Value(var, VAR_GLOBAL, &p1);
+			char *next = var;
+			value = Var_Value(next, VAR_GLOBAL, &p1);
+			if (*value == '$') {
+				var = value;
+				value = p1 = Var_Subst(NULL, var,
+				    VAR_GLOBAL, VARF_WANTRES);
+				free(var);
+			}
 		}
 		printf("%s\n", value ? value : "");
 		free(p1);
