@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.257 2017/06/15 21:41:01 jmcneill Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.258 2017/06/17 17:08:49 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -549,7 +549,8 @@ DTSPADDING?=1024
 
 .PATH.dts: ${DTSPATH}
 
-all: ${DTS:.dts=.dtb}
+DTB= ${DTS:.dts=.dtb}
+all: ${DTB}
 
 # End DTS handling
 
