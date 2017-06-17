@@ -1,6 +1,6 @@
-/*	$NetBSD: gdt.c,v 1.60 2017/02/08 18:53:01 kre Exp $	*/
+/*	$NetBSD: gdt.c,v 1.61 2017/06/17 09:32:53 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.60 2017/02/08 18:53:01 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.61 2017/06/17 09:32:53 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -45,28 +45,20 @@ __KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.60 2017/02/08 18:53:01 kre Exp $");
 
 #include <machine/gdt.h>
 
-#ifndef XEN
-int gdt_size[1];	/* total number of GDT entries */
-int gdt_count[1];	/* number of GDT entries in use */
-int gdt_next[1];	/* next available slot for sweeping */
-int gdt_free[1];	/* next free slot; terminated with GNULL_SEL */
-#else
-int gdt_size[2];	/* total number of GDT entries */
-int gdt_count[2];	/* number of GDT entries in use */
-int gdt_next[2];	/* next available slot for sweeping */
-int gdt_free[2];	/* next free slot; terminated with GNULL_SEL */
-#endif
+int gdt_size;	/* total number of GDT entries */
+int gdt_count;	/* number of GDT entries in use */
+int gdt_next;	/* next available slot for sweeping */
+int gdt_free;	/* next free slot; terminated with GNULL_SEL */
 
+#ifndef XEN
 static int ldt_count;	/* number of LDTs */
 static int ldt_max = 1000;/* max number of LDTs */
-
-#ifndef XEN
 static void setgdt(int, const void *, size_t, int, int, int, int);
+static int gdt_get_slot(void);
+static void gdt_put_slot(int);
+static void gdt_grow(void);
 #endif
 void gdt_init(void);
-static void gdt_grow(int);
-static int gdt_get_slot1(int);
-static void gdt_put_slot1(int, int);
 
 void
 update_descriptor(union descriptor *table, union descriptor *entry)
@@ -96,12 +88,6 @@ setgdt(int sel, const void *base, size_t limit, int type, int dpl, int def32,
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 
-#ifdef XEN
-	if (type == SDT_SYS386TSS) {
-		/* printk("XXX TSS descriptor not supported in GDT\n"); */
-		return;
-	}
-#endif
 	setsegment(sd, base, limit, type, dpl, def32, gran);
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci->ci_gdt != NULL)
@@ -127,17 +113,10 @@ gdt_init(void)
 	max_len = MAXGDTSIZ * sizeof(gdtstore[0]);
 	min_len = MINGDTSIZ * sizeof(gdtstore[0]);
 
-	gdt_size[0] = MINGDTSIZ;
-	gdt_count[0] = NGDT;
-	gdt_next[0] = NGDT;
-	gdt_free[0] = GNULL_SEL;
-#ifdef XEN
-	max_len = max_len * 2;
-	gdt_size[1] = 0;
-	gdt_count[1] = MAXGDTSIZ;
-	gdt_next[1] = MAXGDTSIZ;
-	gdt_free[1] = GNULL_SEL;
-#endif
+	gdt_size = MINGDTSIZ;
+	gdt_count = NGDT;
+	gdt_next = NGDT;
+	gdt_free = GNULL_SEL;
 
 	old_gdt = gdtstore;
 	gdtstore = (union descriptor *)uvm_km_alloc(kernel_map, max_len,
@@ -185,7 +164,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 	}
 	pmap_update(pmap_kernel());
 	memset(ci->ci_gdt, 0, min_len);
-	memcpy(ci->ci_gdt, gdtstore, gdt_count[0] * sizeof(gdtstore[0]));
+	memcpy(ci->ci_gdt, gdtstore, gdt_count * sizeof(gdtstore[0]));
 	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci,
 	    sizeof(struct cpu_info) - 1, SDT_MEMRWA, SEL_KPL, 1, 0);
 }
@@ -205,7 +184,7 @@ gdt_init_cpu(struct cpu_info *ci)
 	setregion(&region, ci->ci_gdt, max_len - 1);
 	lgdt(&region);
 #else
-	size_t len = gdt_size[0] * sizeof(gdtstore[0]);
+	size_t len = gdt_size * sizeof(gdtstore[0]);
 	unsigned long frames[len >> PAGE_SHIFT];
 	vaddr_t va;
 	pt_entry_t *ptp;
@@ -229,19 +208,20 @@ gdt_init_cpu(struct cpu_info *ci)
 		}
 	}
 
-	if (HYPERVISOR_set_gdt(frames, gdt_size[0]))
+	if (HYPERVISOR_set_gdt(frames, gdt_size))
 		panic("HYPERVISOR_set_gdt failed!\n");
 	lgdt_finish();
 #endif
 }
 
+#ifndef XEN
 /*
  * Grow the GDT. The GDT is present on each CPU, so we need to iterate over all
  * of them. We already have the virtual memory, we only need to grow the
  * physical memory.
  */
 void
-gdt_grow(int which)
+gdt_grow(void)
 {
 	size_t old_len, new_len;
 	CPU_INFO_ITERATOR cii;
@@ -249,32 +229,9 @@ gdt_grow(int which)
 	struct vm_page *pg;
 	vaddr_t va;
 
-	old_len = gdt_size[which] * sizeof(gdtstore[0]);
-	gdt_size[which] <<= 1;
+	old_len = gdt_size * sizeof(gdtstore[0]);
+	gdt_size <<= 1;
 	new_len = old_len << 1;
-
-#ifdef XEN
-	if (which != 0) {
-		size_t max_len = MAXGDTSIZ * sizeof(gdtstore[0]);
-		if (old_len == 0) {
-			gdt_size[which] = MINGDTSIZ;
-			new_len = gdt_size[which] * sizeof(gdtstore[0]);
-		}
-		for (CPU_INFO_FOREACH(cii, ci)) {
-			for(va = (vaddr_t)(ci->ci_gdt) + old_len + max_len;
-			    va < (vaddr_t)(ci->ci_gdt) + new_len + max_len;
-			    va += PAGE_SIZE) {
-				while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO))
-				       == NULL) {
-					uvm_wait("gdt_grow");
-				}
-				pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-				    VM_PROT_READ | VM_PROT_WRITE, 0);
-			}
-		}
-		return;
-	}
-#endif
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		for (va = (vaddr_t)(ci->ci_gdt) + old_len;
@@ -300,61 +257,38 @@ gdt_grow(int which)
  * 3) As a last resort, we increase the size of the GDT, and sweep through
  *    the new slots.
  */
-
-#ifndef XEN
 static int
 gdt_get_slot(void)
-{
-
-	KASSERT(mutex_owned(&cpu_lock));
-
-	return gdt_get_slot1(0);
-}
-#endif
-
-static int
-gdt_get_slot1(int which)
 {
 	int slot;
 	size_t offset;
 
 	KASSERT(mutex_owned(&cpu_lock));
 
-	if (gdt_free[which] != GNULL_SEL) {
-		slot = gdt_free[which];
-		gdt_free[which] = gdtstore[slot].gd.gd_selector;
+	if (gdt_free != GNULL_SEL) {
+		slot = gdt_free;
+		gdt_free = gdtstore[slot].gd.gd_selector;
 	} else {
-		offset = which * MAXGDTSIZ * sizeof(gdtstore[0]);
-		if (gdt_next[which] != gdt_count[which] + offset)
+		offset = 0;
+		if (gdt_next != gdt_count + offset)
 			panic("gdt_get_slot botch 1");
-		if (gdt_next[which] - offset >= gdt_size[which]) {
-			if (gdt_size[which] >= MAXGDTSIZ)
+		if (gdt_next - offset >= gdt_size) {
+			if (gdt_size >= MAXGDTSIZ)
 				panic("gdt_get_slot botch 2");
-			gdt_grow(which);
+			gdt_grow();
 		}
-		slot = gdt_next[which]++;
+		slot = gdt_next++;
 	}
 
-	gdt_count[which]++;
+	gdt_count++;
 	return (slot);
 }
 
 /*
  * Deallocate a GDT slot, putting it on the free list.
  */
-#ifndef XEN
 static void
 gdt_put_slot(int slot)
-{
-
-	KASSERT(mutex_owned(&cpu_lock));
-
-	gdt_put_slot1(slot, 0);
-}
-#endif
-
-static void
-gdt_put_slot1(int slot, int which)
 {
 	union descriptor d;
 	d.raw[0] = 0;
@@ -362,16 +296,15 @@ gdt_put_slot1(int slot, int which)
 
 	KASSERT(mutex_owned(&cpu_lock));
 
-	gdt_count[which]--;
+	gdt_count--;
 
 	d.gd.gd_type = SDT_SYSNULL;
-	d.gd.gd_selector = gdt_free[which];
+	d.gd.gd_selector = gdt_free;
 	update_descriptor(&gdtstore[slot], &d);
 
-	gdt_free[which] = slot;
+	gdt_free = slot;
 }
 
-#ifndef XEN
 int
 tss_alloc(const struct i386tss *tss)
 {
@@ -394,7 +327,6 @@ tss_free(int sel)
 	gdt_put_slot(IDXSEL(sel));
 	mutex_exit(&cpu_lock);
 }
-#endif
 
 int
 ldt_alloc(union descriptor *ldtp, size_t len)
@@ -408,15 +340,8 @@ ldt_alloc(union descriptor *ldtp, size_t len)
 	}
 	ldt_count++;
 
-#ifndef XEN
 	slot = gdt_get_slot();
 	setgdt(slot, ldtp, len - 1, SDT_SYSLDT, SEL_KPL, 0, 0);
-#else
-	slot = gdt_get_slot1(1);
-	cpu_info_primary.ci_gdt[slot].ld.ld_base = (uint32_t)ldtp;
-	cpu_info_primary.ci_gdt[slot].ld.ld_entries =
-	    len / sizeof(union descriptor);
-#endif
 
 	return GSEL(slot, SEL_KPL);
 }
@@ -430,10 +355,7 @@ ldt_free(int sel)
 	KASSERT(ldt_count > 0);
 
 	slot = IDXSEL(sel);
-#ifndef XEN
 	gdt_put_slot(slot);
-#else
-	gdt_put_slot1(slot, 1);
-#endif
 	ldt_count--;
 }
+#endif
