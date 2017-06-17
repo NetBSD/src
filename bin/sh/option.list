@@ -1,4 +1,4 @@
-/* $NetBSD: option.list,v 1.3 2017/06/07 05:08:32 kre Exp $ */
+/* $NetBSD: option.list,v 1.4 2017/06/17 07:50:35 kre Exp $ */
 
 /*
  * define the shell's settable options
@@ -63,7 +63,7 @@ usefork	fork		F		# use fork(2) instead of vfork(2)
 pflag	nopriv		p		# preserve privs if set[ug]id
 posix	posix				# be closer to POSIX compat
 qflag	quietprofile	q		# disable -v/-x in startup files
-fnline1	lineno_fn_relative	L on	# number lines in funcs starting at 1
+fnline1	local_lineno	L on		# number lines in funcs starting at 1
 
 // editline/history related options ("vi" is standard, 'V' and others are not)
 // only one of vi/emacs can be set, hence the "set" definition, value
