@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.268 2017/06/17 16:34:07 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.269 2017/06/17 19:59:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.268 2017/06/17 16:34:07 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.269 2017/06/17 19:59:28 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.268 2017/06/17 16:34:07 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.269 2017/06/17 19:59:28 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -862,6 +862,10 @@ doPrintVars(void)
 		char *var = (char *)Lst_Datum(ln);
 		char *value;
 		char *p1;
+		Boolean noExpand;
+
+		if ((noExpand = (*var == '\\'))) 
+			var++;
 		
 		if (strchr(var, '$')) {
 			value = p1 = Var_Subst(NULL, var, VAR_GLOBAL,
@@ -877,7 +881,7 @@ doPrintVars(void)
 			    VARF_WANTRES);
 		} else {
 			value = Var_Value(var, VAR_GLOBAL, &p1);
-			if (*value == '$') {
+			if (!noExpand && value && *value == '$') {
 				value = Var_Subst(NULL, value,
 				    VAR_GLOBAL, VARF_WANTRES);
 				free(p1);
