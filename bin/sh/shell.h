@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.23 2017/05/29 14:03:23 kre Exp $	*/
+/*	$NetBSD: shell.h,v 1.24 2017/06/17 12:41:20 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -181,7 +181,7 @@ extern	int		ShNest;
 
 /*
  * reserved extras: b=builtins l=alias
- * still free:  d g k n q s u y
+ * still free:  d g k n q u y
  */
 
 	/* use VTRACE(DBG_ALWAYS, (...)) to test this one */
