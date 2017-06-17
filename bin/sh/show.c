@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.44 2017/06/08 13:17:00 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.45 2017/06/17 04:16:33 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.44 2017/06/08 13:17:00 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.45 2017/06/17 04:16:33 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -298,9 +298,8 @@ trargs(char **ap)
 		trstring(*ap++);
 		if (*ap)
 			trace_putc(' ', tracetfile);
-		else
-			trace_putc('\n', tracetfile);
 	}
+	trace_putc('\n', tracetfile);
 }
 
 
