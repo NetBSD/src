@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.88 2016/11/20 15:37:19 mlelstv Exp $	*/
+/*	$NetBSD: ss.c,v 1.89 2017/06/17 22:35:50 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.88 2016/11/20 15:37:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.89 2017/06/17 22:35:50 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,7 @@ ssdetach(device_t self, int flags)
 	cmaj = cdevsw_lookup_major(&ss_cdevsw);
 
 	/* kill any pending restart */
-	callout_stop(&ss->sc_callout);
+	callout_halt(&ss->sc_callout, NULL);
 
 	mutex_enter(chan_mtx(chan));
 

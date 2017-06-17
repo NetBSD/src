@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.91 2016/11/20 15:37:19 mlelstv Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.92 2017/06/17 22:35:50 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.91 2016/11/20 15:37:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.92 2017/06/17 22:35:50 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,16 @@ scsi_print_addr(struct scsipi_periph *periph)
 void
 scsi_kill_pending(struct scsipi_periph *periph)
 {
+	struct scsipi_xfer *xs;
+
+	TAILQ_FOREACH(xs, &periph->periph_xferq, device_q) {
+		callout_stop(&xs->xs_callout);
+		scsi_print_addr(periph);
+		printf("killed ");
+		scsipi_print_cdb(xs->cmd);
+		xs->error = XS_DRIVER_STUFFUP;
+		scsipi_done(xs);
+	}
 }
 
 /*
