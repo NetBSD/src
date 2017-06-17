@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.70 2017/01/06 14:55:37 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.71 2017/06/17 17:03:40 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.70 2017/01/06 14:55:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.71 2017/06/17 17:03:40 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1201,6 +1201,21 @@ rpi_device_register(device_t dev, void *aux)
 		}
 	}
 #endif
+
+	/* BSC0 is used internally on some boards */
+	if (device_is_a(dev, "bsciic") &&
+	    ((struct amba_attach_args *)aux)->aaa_addr == BCM2835_BSC0_BASE) {
+		const uint32_t rev = vb.vbt_boardrev.rev;
+
+		if ((rev & VCPROP_REV_ENCFLAG) != 0) {
+			switch (__SHIFTOUT(rev, VCPROP_REV_MODEL)) {
+			case RPI_MODEL_B_PI3:
+			case RPI_MODEL_ZERO_W:
+				prop_dictionary_set_bool(dict, "disable", true);
+				break;
+		    	}
+		}
+	}
 }
 
 SYSCTL_SETUP(sysctl_machdep_rpi, "sysctl machdep subtree setup (rpi)")
