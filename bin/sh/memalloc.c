@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.29 2008/02/15 17:26:06 matt Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.30 2017/06/17 07:22:12 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.29 2008/02/15 17:26:06 matt Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.30 2017/06/17 07:22:12 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,6 +167,7 @@ setstackmark(struct stackmark *mark)
 	mark->stackp = stackp;
 	mark->stacknxt = stacknxt;
 	mark->stacknleft = stacknleft;
+	mark->sstrnleft = sstrnleft;
 	mark->marknext = markp;
 	markp = mark;
 }
@@ -186,6 +187,7 @@ popstackmark(struct stackmark *mark)
 	}
 	stacknxt = mark->stacknxt;
 	stacknleft = mark->stacknleft;
+	sstrnleft = mark->sstrnleft;
 	INTON;
 }
 
@@ -297,11 +299,26 @@ makestrspace(void)
 	return stackblock() + len;
 }
 
+/*
+ * Note that this only works to release stack space for reuse
+ * if nothing else has allocated space on the stack since the grabstackstr()
+ *
+ * "s" is the start of the area to be released, and "p" represents the end
+ * of the string we have stored beyond there and are now releasing.
+ * (ie: "p" should be the same as in the call to grabstackstr()).
+ *
+ * stunalloc(s) and ungrabstackstr(s, p) are almost interchangable after
+ * a grabstackstr(), however the latter also returns string space so we
+ * can just continue with STPUTC() etc without needing a new STARTSTACKSTR(s)
+ */
 void
 ungrabstackstr(char *s, char *p)
 {
+#ifdef DEBUG
+	if (s < stacknxt || stacknxt + stacknleft < s)
+		abort();
+#endif
 	stacknleft += stacknxt - s;
 	stacknxt = s;
 	sstrnleft = stacknleft - (p - s);
-
 }
