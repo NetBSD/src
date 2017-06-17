@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.39 2016/11/11 12:06:31 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.40 2017/06/17 08:40:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -169,7 +169,7 @@
 
 #define PDP_BASE	L4_BASE
 
-#define NKL4_MAX_ENTRIES	(unsigned long)1
+#define NKL4_MAX_ENTRIES	(unsigned long)64
 #define NKL3_MAX_ENTRIES	(unsigned long)(NKL4_MAX_ENTRIES * 512)
 #define NKL2_MAX_ENTRIES	(unsigned long)(NKL3_MAX_ENTRIES * 512)
 #define NKL1_MAX_ENTRIES	(unsigned long)(NKL2_MAX_ENTRIES * 512)
