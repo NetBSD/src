@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.52 2017/06/12 07:06:45 pgoyette Exp $
+# $NetBSD: files.wscons,v 1.53 2017/06/18 05:57:58 pgoyette Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -70,7 +70,7 @@ file	dev/wscons/wscons_rops.c	wsrasteremulops
 
 defpseudo	wsmux
 file	dev/wscons/wsmux.c		wsmux			needs-flag
-file	dev/wscons/wsbellmux.c		wsmux			needs-flag
+file	dev/wscons/wsbellmux.c		wsmux
 
 define	tpcalib
 file	dev/wscons/tpcalib.c		tpcalib
