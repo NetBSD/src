@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.47 2017/06/18 13:59:45 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.48 2017/06/18 14:00:17 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.47 2017/06/18 13:59:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.48 2017/06/18 14:00:17 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -93,7 +93,9 @@ static inline struct mount *fstrans_normalize_mount(struct mount *);
 static void fstrans_lwp_dtor(void *);
 static void fstrans_mount_dtor(struct mount *);
 static void fstrans_clear_lwp_info(void);
-static struct fstrans_lwp_info *fstrans_get_lwp_info(struct mount *, bool);
+static inline struct fstrans_lwp_info *
+    fstrans_get_lwp_info(struct mount *, bool);
+static struct fstrans_lwp_info *fstrans_alloc_lwp_info(struct mount *);
 static inline int _fstrans_start(struct mount *, enum fstrans_lock_type, int);
 static bool grant_lock(const enum fstrans_state, const enum fstrans_lock_type);
 static bool state_change_done(const struct mount *);
@@ -249,29 +251,19 @@ fstrans_clear_lwp_info(void)
 }
 
 /*
- * Retrieve the per lwp info for this mount allocating if necessary.
+ * Allocate and return per lwp info for this mount.
  */
 static struct fstrans_lwp_info *
-fstrans_get_lwp_info(struct mount *mp, bool do_alloc)
+fstrans_alloc_lwp_info(struct mount *mp)
 {
 	struct fstrans_lwp_info *fli;
 	struct fstrans_mount_info *fmi;
 
 	/*
-	 * Scan our list for a match.
-	 */
-	for (fli = lwp_getspecific(lwp_data_key); fli; fli = fli->fli_succ) {
-		if (fli->fli_mount == mp)
-			return fli;
-	}
-
-	if (! do_alloc)
-		return NULL;
-
-	/*
 	 * Try to reuse a cleared entry or allocate a new one.
 	 */
 	for (fli = lwp_getspecific(lwp_data_key); fli; fli = fli->fli_succ) {
+		KASSERT(fli->fli_mount != mp);
 		if (fli->fli_mount == NULL) {
 			KASSERT(fli->fli_trans_cnt == 0);
 			KASSERT(fli->fli_cow_cnt == 0);
@@ -318,6 +310,25 @@ fstrans_get_lwp_info(struct mount *mp, bool do_alloc)
 	mutex_exit(&fstrans_mount_lock);
 
 	return fli;
+}
+
+/*
+ * Retrieve the per lwp info for this mount allocating if necessary.
+ */
+static inline struct fstrans_lwp_info *
+fstrans_get_lwp_info(struct mount *mp, bool do_alloc)
+{
+	struct fstrans_lwp_info *fli;
+
+	/*
+	 * Scan our list for a match.
+	 */
+	for (fli = lwp_getspecific(lwp_data_key); fli; fli = fli->fli_succ) {
+		if (fli->fli_mount == mp)
+			return fli;
+	}
+
+	return (do_alloc ? fstrans_alloc_lwp_info(mp) : NULL);
 }
 
 /*
