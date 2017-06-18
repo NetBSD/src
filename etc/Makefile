@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.429 2017/06/18 01:03:30 christos Exp $
+#	$NetBSD: Makefile,v 1.430 2017/06/18 02:43:43 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -605,7 +605,7 @@ build_kernelsets: .PHONY
 .if ${configfile} == ${configsel}
 build_kernelsets: kernset-${configfile}
 kernset-${configfile}: .PHONY build_kernels snap_pre
-	@ set -x; kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile}); \
+	@kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile}); \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
 	kern_tgz=${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets/kern-${configfile}.tgz; \
@@ -647,7 +647,7 @@ build_releasekernels: .PHONY
 .if ${configfile} == ${configsel}
 build_releasekernels: releasekern-${configfile}
 releasekern-${configfile}: .PHONY build_kernels snap_pre
-	@ set -x;  kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}); \
+	@kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}); \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
 	dest="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel"; \
