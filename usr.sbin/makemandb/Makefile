@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2017/05/21 15:28:43 riastradh Exp $
+# $NetBSD: Makefile,v 1.9 2017/06/18 16:24:10 abhinav Exp $
 
 .include <bsd.own.mk>
 
@@ -6,9 +6,9 @@ MDOCDIR=${NETBSDSRCDIR}/external/bsd/mdocml
 MANCONFDIR=${NETBSDSRCDIR}/usr.bin/man
 
 PROGS=			makemandb apropos whatis
-SRCS.makemandb=		makemandb.c apropos-utils.c manconf.c
-SRCS.apropos=	apropos.c apropos-utils.c manconf.c
-SRCS.whatis=	whatis.c apropos-utils.c manconf.c
+SRCS.makemandb=		makemandb.c apropos-utils.c manconf.c custom_apropos_tokenizer.c
+SRCS.apropos=	apropos.c apropos-utils.c manconf.c custom_apropos_tokenizer.c
+SRCS.whatis=	whatis.c apropos-utils.c manconf.c custom_apropos_tokenizer.c
 MAN.makemandb=	makemandb.8
 MAN.apropos=	apropos.1
 MAN.whatis=	whatis.1
@@ -39,7 +39,14 @@ stopwords.c: stopwords.txt
 	echo '};'							\
 	) > ${.TARGET}
 
-DPSRCS+=	stopwords.c
-CLEANFILES+=	stopwords.c
+nostem.c: nostem.txt
+	( set -e; ${TOOL_NBPERF} -n nostem_hash -s -p ${.ALLSRC};	\
+	echo 'static const char *nostem[] = {';			\
+	${TOOL_SED} -e 's|^\(.*\)$$|	"\1",|' ${.ALLSRC};		\
+	echo '};'							\
+	) > ${.TARGET}
+
+DPSRCS+=	stopwords.c nostem.c
+CLEANFILES+=	stopwords.c nostem.c
 
 .include <bsd.prog.mk>
