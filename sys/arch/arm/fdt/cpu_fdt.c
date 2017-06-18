@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.1 2017/05/28 00:40:20 jmcneill Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.2 2017/06/18 23:20:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.1 2017/05/28 00:40:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.2 2017/06/18 23:20:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,8 +68,23 @@ cpu_fdt_match(device_t parent, cfdata_t cf, void *aux)
 		NULL
 	};
 	struct fdt_attach_args * const faa = aux;
+	int is_compatible;
+	bus_addr_t mpidr;
 
-	return of_compatible(faa->faa_phandle, compatible) >= 0;
+	is_compatible = of_match_compatible(faa->faa_phandle, compatible);
+	if (!is_compatible)
+		return 0;
+
+	/* XXX NetBSD requires all CPUs to be in the same cluster */
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &mpidr, NULL) != 0)
+		return 0;
+	const uint32_t bp_mpidr = armreg_mpidr_read();
+	const u_int bp_clid = __SHIFTOUT(bp_mpidr, CORTEXA9_MPIDR_CLID);
+	const u_int clid = __SHIFTOUT(mpidr, CORTEXA9_MPIDR_CLID);
+	if (bp_clid != clid)
+		return 0;
+
+	return is_compatible;
 }
 
 static void
@@ -87,5 +102,6 @@ cpu_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	cpu_attach(self, mpidr);
+	/* Attach the CPU */
+	cpu_attach(self, __SHIFTOUT(mpidr, CORTEXA9_MPIDR_CPUID));
 }
