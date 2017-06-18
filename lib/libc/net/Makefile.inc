@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.86 2015/04/15 19:13:46 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.87 2017/06/18 04:03:44 manu Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -21,8 +21,9 @@ SRCS+=	hesiod.c
 
 SRCS+=	getaddrinfo.c getnameinfo.c
 .if (${USE_INET6} != "no")
-SRCS+=	ip6opt.c rthdr.c vars6.c inet6_scopeid.c
+SRCS+=	ip6opt.c rthdr.c inet6_scopeid.c
 .endif
+SRCS+=	vars6.c
 SRCS+=	if_indextoname.c if_nameindex.c if_nametoindex.c
 
 LPREFIX=_nsyy
