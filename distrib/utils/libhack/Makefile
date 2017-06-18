@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2013/08/27 09:53:33 christos Exp $
+# $NetBSD: Makefile,v 1.25 2017/06/18 03:56:39 manu Exp $
 #
 # Stubs to kill off some things from libc:
 # This save space on a boot system.
@@ -10,6 +10,7 @@ HACKSRC?=${.CURDIR}
 HACKOBJ?=${.OBJDIR}
 
 CPPFLAGS+=	-DSMALL
+CPPFLAGS+=	-DLIBHACK
 CPPFLAGS.runetable.c+=	-I${HACKSRC}/../../../lib/libc/citrus \
 			-DALL_80_TO_FF_SW1
 CPPFLAGS.syslog.c+=	-I${HACKSRC}/../../../lib/libc/include
