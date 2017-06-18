@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.37 2017/05/01 05:28:00 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.38 2017/06/18 16:24:10 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.37 2017/05/01 05:28:00 abhinav Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.38 2017/06/18 16:24:10 abhinav Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -50,7 +50,9 @@ __RCSID("$NetBSD: apropos-utils.c,v 1.37 2017/05/01 05:28:00 abhinav Exp $");
 #undef tab	// XXX: manconf.h
 
 #include "apropos-utils.h"
+#include "custom_apropos_tokenizer.h"
 #include "manconf.h"
+#include "fts3_tokenizer.h"
 
 typedef struct orig_callback_data {
 	void *data;
@@ -78,6 +80,28 @@ static const double col_weights[] = {
 	0.00,	//md5_hash
 	1.00	//machine
 };
+
+static int
+register_tokenizer(sqlite3 *db)
+{
+	int rc;
+	sqlite3_stmt *stmt;
+	const sqlite3_tokenizer_module *p;
+	const char *name = "custom_apropos_tokenizer";
+	get_custom_apropos_tokenizer(&p);
+	const char *sql = "SELECT fts3_tokenizer(?, ?)";
+
+	sqlite3_db_config(db, SQLITE_DBCONFIG_ENABLE_FTS3_TOKENIZER, 1, 0);
+	rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+	if (rc != SQLITE_OK)
+		return rc;
+
+	sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
+	sqlite3_bind_blob(stmt, 2, &p, sizeof(p), SQLITE_STATIC);
+	sqlite3_step(stmt);
+
+	return sqlite3_finalize(stmt);
+}
 
 /*
  * lower --
@@ -180,7 +204,7 @@ create_db(sqlite3 *db)
 #ifndef DEBUG		
 		"compress=zip, uncompress=unzip, "
 #endif		
-		"tokenize=porter, notindexed=section, notindexed=md5_hash); "
+		"tokenize=custom_apropos_tokenizer, notindexed=section, notindexed=md5_hash); "
 	    //mandb_meta
 	    "CREATE TABLE IF NOT EXISTS mandb_meta(device, inode, mtime, "
 		"file UNIQUE, md5_hash UNIQUE, id  INTEGER PRIMARY KEY); "
@@ -365,6 +389,14 @@ init_db(mandb_access_mode db_flag, const char *manconf)
 		goto error;
 	}
 
+	sqlite3_extended_result_codes(db, 1);
+
+	rc = register_tokenizer(db);
+	if (rc != SQLITE_OK) {
+		warnx("Unable to register custom tokenizer: %s", sqlite3_errmsg(db));
+		goto error;
+	}
+
 	if (create_db_flag && create_db(db) < 0) {
 		warnx("%s", "Unable to create database schema");
 		goto error;
@@ -390,7 +422,6 @@ init_db(mandb_access_mode db_flag, const char *manconf)
 	}
 	sqlite3_finalize(stmt);
 
-	sqlite3_extended_result_codes(db, 1);
 
 	/* Register the zip and unzip functions for FTS compression */
 	rc = sqlite3_create_function(db, "zip", 1, SQLITE_ANY, NULL, zip,
