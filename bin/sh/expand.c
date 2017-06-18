@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.116 2017/06/17 07:22:12 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.117 2017/06/18 07:50:46 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.116 2017/06/17 07:22:12 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.117 2017/06/18 07:50:46 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -537,8 +537,8 @@ expari(const char *p)
 		recordregion(begoff, begoff + q - 1 - expdest, 0);
 	adjustment = q - expdest - 1;
 	STADJUST(adjustment, expdest);		/* move expdest to end */
-	VTRACE(DBG_EXPAND, ("expari: adding %d \"%s\", produced \"%s\" "
-	    "returning \"%.5s...\"\n", adjustment, stackblock() + begoff, p));
+	VTRACE(DBG_EXPAND, ("expari: adding %d \"%s\", returning \"%.5s...\"\n",
+	    adjustment, stackblock() + begoff, p));
 
 	return p;
 }
