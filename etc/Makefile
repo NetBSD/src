@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.428 2017/05/21 15:28:38 riastradh Exp $
+#	$NetBSD: Makefile,v 1.429 2017/06/18 01:03:30 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -605,7 +605,7 @@ build_kernelsets: .PHONY
 .if ${configfile} == ${configsel}
 build_kernelsets: kernset-${configfile}
 kernset-${configfile}: .PHONY build_kernels snap_pre
-	@ kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile}); \
+	@ set -x; kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile}); \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
 	kern_tgz=${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets/kern-${configfile}.tgz; \
@@ -625,6 +625,10 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 			echo "echo $${kernels} | $${pax_cmd}"; \
 			( echo "/set uname=${BINOWN} gname=${BINGRP}"; \
 			echo ". type=dir optional"; \
+			dtblist=$$(${MAKE} -V DTB); \
+			for dtb in $${dtblist}; do \
+				echo "./$${dtb} type=file"; \
+			done; \
 			for kernel in $${kernels}; do \
 				echo "./$${kernel} type=file"; \
 			done ) | eval $${pax_cmd}; \
@@ -643,15 +647,25 @@ build_releasekernels: .PHONY
 .if ${configfile} == ${configsel}
 build_releasekernels: releasekern-${configfile}
 releasekern-${configfile}: .PHONY build_kernels snap_pre
-	@ kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}); \
+	@ set -x;  kernlist=$$(${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}); \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
+	dest="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel"; \
 	cd $${kerndir} && {	\
+		dtblist=$$(${MAKE} -V DTB); \
+		for dtb in $${dtblist}; do \
+			[ ! -f $${dtb} ] && continue; \
+			dtb_gz="$${dest}/$${dtb}.gz"; \
+			[ $${dtb_gz} -nt $${dtb} ] && continue; \
+			rm -f $${dtb_gz}; \
+			echo "${TOOL_GZIP} ${GZIP_FLAGS} -c < $${kerndir}/$${dtb} > $${dtb_gz}"; \
+			${TOOL_GZIP} ${GZIP_FLAGS} -c < $${dtb} > $${dtb_gz}; \
+		done; \
 		for kernel in $${kernlist}; do \
 			for s in "" $${kernsuffixes}; do \
 				ks="$${kernel}$${s}"; \
 				[ ! -f $${ks} ] && continue; \
-				knl_gz="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/$${kernel}-${configfile:C/.*\///}$${s}.gz"; \
+				knl_gz="$${dest}/$${kernel}-${configfile:C/.*\///}$${s}.gz"; \
 				[ $${knl_gz} -nt $${ks} ] && continue; \
 				rm -f $${knl_gz}; \
 				echo "${TOOL_GZIP} ${GZIP_FLAGS} -c < $${kerndir}/$${ks} > $${knl_gz}"; \
