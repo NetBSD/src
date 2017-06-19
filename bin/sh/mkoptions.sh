@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkoptions.sh,v 1.2 2017/05/28 14:14:22 kre Exp $
+# $NetBSD: mkoptions.sh,v 1.3 2017/06/19 02:43:55 kre Exp $
 
 #
 # It would be more sensible to generate 2 .h files, one which
@@ -41,7 +41,7 @@ ${SED:-sed} <"${IF}"			\
 	-e '/^[ 	]*\//d'		\
 	-e '/^[ 	]*\*/d'		\
 	-e '/^[ 	]*;/d'			|
-sort -k2,2f -k2,2r < "${IF}"			|
+sort -b -k2,2f -k2,2r < "${IF}"			|
 while read line
 do
 	# Look for comments in various styles, and ignore them
