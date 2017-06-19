@@ -1,4 +1,4 @@
-.\" $NetBSD: pxagpio.4,v 1.2 2017/06/19 09:49:07 wiz Exp $
+.\" $NetBSD: pxagpio.4,v 1.3 2017/06/19 10:07:29 pgoyette Exp $
 .\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,12 +41,12 @@
 is an on-board GPIO controller found in XScale PXA250, PXA255, PXA270,
 PXA271, PXA272, and PXA273 processors manufactured by Intel and Marvell
 Technology.
-The driver does support 86 pins for PXA250 and 121 pins for PXA270
+The driver supports 86 pins for PXA250 or 121 pins for PXA270
 processor families.
 Access to the pins is provided by the
 .Xr gpio 4
 interface.
-The driver does support
+The driver supports
 .Dv GPIO_PIN_INPUT
 and
 .Dv GPIO_PIN_OUTPUT .
