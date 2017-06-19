@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.149 2017/06/19 02:51:51 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.150 2017/06/19 03:21:31 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.149 2017/06/19 02:51:51 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.150 2017/06/19 03:21:31 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,7 @@ evalstring(char *s, int flag)
 
 	while ((n = parsecmd(0)) != NEOF) {
 		XTRACE(DBG_EVAL, ("evalstring: "), showtree(n));
-		if (nflag == 0)
+		if (n && nflag == 0)
 			evaltree(n, flag | EV_MORE);
 		popstackmark(&smark);
 	}
