@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.148 2017/06/17 11:53:24 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.149 2017/06/19 02:51:51 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.148 2017/06/17 11:53:24 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.149 2017/06/19 02:51:51 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -546,7 +546,7 @@ expredir(union node *n)
 		case NFROMFD:
 		case NTOFD:
 			if (redir->ndup.vname) {
-				expandarg(redir->ndup.vname, &fn, EXP_FULL | EXP_TILDE);
+				expandarg(redir->ndup.vname, &fn, EXP_TILDE | EXP_REDIR);
 				fixredir(redir, fn.list->text, 1);
 			}
 			break;
