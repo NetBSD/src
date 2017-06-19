@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_sscom.c,v 1.9 2017/06/10 23:23:05 jmcneill Exp $ */
+/*	$NetBSD: exynos_sscom.c,v 1.10 2017/06/19 21:58:13 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2014 Reinoud Zandijk
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.9 2017/06/10 23:23:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.10 2017/06/19 21:58:13 jmcneill Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -155,6 +155,7 @@ sscom_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t bst = faa->faa_bst;
 	bus_space_handle_t bsh;
 	struct clk *clk_uart, *clk_uart_baud0;
+	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
 
@@ -169,13 +170,19 @@ sscom_attach(device_t parent, device_t self, void *aux)
 	}
 
 	clk_uart = fdtbus_clock_get(phandle, "uart");
+	if (clk_uart != NULL) {
+		if (clk_enable(clk_uart) != 0) {
+			aprint_error(": couldn't enable uart clock\n");
+			return;
+		}
+	}
 	clk_uart_baud0 = fdtbus_clock_get(phandle, "clk_uart_baud0");
-	if (clk_uart == NULL || clk_uart_baud0 == NULL) {
-		aprint_error(": couldn't get clocks\n");
+	if (clk_uart_baud0 == NULL) {
+		aprint_error(": couldn't get baud clock\n");
 		return;
 	}
-	if (clk_enable(clk_uart) != 0 || clk_enable(clk_uart_baud0) != 0) {
-		aprint_error(": couldn't enable clocks\n");
+	if (clk_enable(clk_uart_baud0) != 0) {
+		aprint_error(": couldn't enable baud clock\n");
 		return;
 	}
 
@@ -183,7 +190,7 @@ sscom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = bst = faa->faa_bst;
 	sc->sc_ioh = bsh;
 	sc->sc_unit = phandle;
-	sc->sc_frequency = clk_get_rate(clk_uart);
+	sc->sc_frequency = clk_get_rate(clk_uart_baud0);
 
 	sc->sc_change_txrx_interrupts = exynos_change_txrx_interrupts;
 	sc->sc_clear_interrupts = exynos_clear_interrupts;
@@ -197,10 +204,17 @@ sscom_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(self, "failed to decode interrupt\n");
+		return;
+	}
+
 	void *ih = fdtbus_intr_establish(phandle, 0, IPL_SERIAL,
 	    FDT_INTR_MPSAFE, sscomintr, sc);
 	if (ih == NULL)
 		aprint_error_dev(self, "failed to establish interrupt\n");
+
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	sscom_attach_subr(sc);
 
