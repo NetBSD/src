@@ -1,3 +1,4 @@
+.\" $NetBSD: pxagpio.4,v 1.2 2017/06/19 09:49:07 wiz Exp $
 .\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,23 +39,27 @@
 .Sh DESCRIPTION
 .Nm
 is an on-board GPIO controller found in XScale PXA250, PXA255, PXA270,
-PXA271, PXA272 and PXA273 processors manufactured by Intel and Marvell
+PXA271, PXA272, and PXA273 processors manufactured by Intel and Marvell
 Technology.
-The driver does support either 86 pins for PXA250 and 121 pins for PXA270
-processor family.
+The driver does support 86 pins for PXA250 and 121 pins for PXA270
+processor families.
 Access to the pins is provided by the
 .Xr gpio 4
-interface. The driver does support GPIO_PIN_INPUT and GPIO_PIN_OUTPUT.
+interface.
+The driver does support
+.Dv GPIO_PIN_INPUT
+and
+.Dv GPIO_PIN_OUTPUT .
 GPIO pins being used in alternate configurations are not available
 for GPIO operations.
 .Sh SEE ALSO
-.Xr gpio 4 ,
-.Xr pxagpio 4
+.Xr gpio 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Nx 2.0 . GPIO attachment appeared in
+.Nx 2.0 .
+GPIO attachment appeared in
 .Nx 8.0 .
 .Sh AUTHORS
 .An -nosplit
