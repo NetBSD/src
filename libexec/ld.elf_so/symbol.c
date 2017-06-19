@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.67 2016/12/01 14:29:15 christos Exp $	 */
+/*	$NetBSD: symbol.c,v 1.68 2017/06/19 11:57:01 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.67 2016/12/01 14:29:15 christos Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.68 2017/06/19 11:57:01 joerg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -323,21 +323,6 @@ _rtld_symlook_obj(const char *name, unsigned long hash,
 	return NULL;
 }
 
-#ifdef COMBRELOC
-static const Obj_Entry *_rtld_last_refobj;
-
-/*
- * Called when an object is freed. Reset the cached symbol look up if
- * our last referencing or definition object just got unloaded.
- */
-void
-_rtld_combreloc_reset(const Obj_Entry *obj)
-{
-	if (_rtld_last_refobj == obj)
-		_rtld_last_refobj = NULL;
-}
-#endif
-
 /*
  * Given a symbol number in a referencing object, find the corresponding
  * definition of the symbol.  Returns a pointer to the symbol, or NULL if
@@ -353,25 +338,6 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 	const Obj_Entry *defobj;
 	const char     *name;
 	unsigned long   hash;
-
-#ifdef COMBRELOC
-	/*
-	 * COMBRELOC combines multiple reloc sections and sorts them to make
-	 * dynamic symbol lookup caching possible.
-	 *
-	 * So if the lookup we are doing is the same as the previous lookup
-	 * return the cached results.
-	 */
-	static unsigned long last_symnum;
-	static const Obj_Entry *last_defobj;
-	static const Elf_Sym *last_def;
-
-	if (symnum == last_symnum && refobj == _rtld_last_refobj
-	    && !(flags & SYMLOOK_IN_PLT)) {
-		*defobj_out = last_defobj;
-		return last_def;
-	}
-#endif
 
 	ref = refobj->symtab + symnum;
 	name = refobj->strtab + ref->st_name;
@@ -409,18 +375,6 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 
 	if (def != NULL) {
 		*defobj_out = defobj;
-#ifdef COMBRELOC
-		if (!(flags & SYMLOOK_IN_PLT)) {
-			/*
-			 * Cache the lookup arguments and results if this was
-			 * non-PLT lookup.
-			 */
-			last_symnum = symnum;
-			_rtld_last_refobj = refobj;
-			last_def = def;
-			last_defobj = defobj;
-		}
-#endif
 	} else {
 		rdbg(("lookup failed"));
 		_rtld_error("%s: Undefined %ssymbol \"%s\" (symnum = %ld)",
