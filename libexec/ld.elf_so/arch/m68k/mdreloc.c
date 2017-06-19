@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.31 2016/04/14 20:17:07 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.32 2017/06/19 11:57:01 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.31 2016/04/14 20:17:07 skrll Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.32 2017/06/19 11:57:01 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,16 +52,37 @@ int
 _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
+	const Elf_Sym *def = NULL;
+	const Obj_Entry *defobj = NULL;
+	unsigned long last_symnum = ULONG_MAX;
 
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
-		const Elf_Sym   *def;
-		const Obj_Entry *defobj;
 		Elf_Addr         tmp;
 		unsigned long	 symnum;
 
 		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-		symnum = ELF_R_SYM(rela->r_info);
+
+		switch (ELF_R_TYPE(rela->r_info)) {
+		case R_TYPE(PC32):
+		case R_TYPE(GOT32):
+		case R_TYPE(32):
+		case R_TYPE(GLOB_DAT):
+		case R_TYPE(TLS_DTPMOD32):
+		case R_TYPE(TLS_DTPREL32):
+		case R_TYPE(TLS_TPREL32):
+			symnum = ELF_R_SYM(rela->r_info);
+			if (last_symnum != symnum) {
+				last_symnum = symnum;
+				def = _rtld_find_symdef(symnum, obj, &defobj,
+				    false);
+				if (def == NULL)
+					return -1;
+			}
+			break;
+		default:
+			break;
+		}
 
 		switch (ELF_R_TYPE(rela->r_info)) {
 		case R_TYPE(NONE):
@@ -69,10 +90,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 #if 1 /* XXX should not occur */
 		case R_TYPE(PC32):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
 			    rela->r_addend) - (Elf_Addr)where;
 			if (*where != tmp)
@@ -86,10 +103,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 #endif
 		case R_TYPE(32):
 		case R_TYPE(GLOB_DAT):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
 			    rela->r_addend);
 			if (*where != tmp)
@@ -122,10 +135,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TLS_DTPMOD32):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			*where = (Elf_Addr)defobj->tlsindex;
 			rdbg(("DTPMOD32 %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
@@ -133,10 +142,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TLS_DTPREL32):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
 				return -1;
 
@@ -148,10 +153,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TLS_TPREL32):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
 				return -1;
 
@@ -165,7 +166,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "addend = %p, contents = %p, symbol = %s",
-			    symnum, (u_long)ELF_R_TYPE(rela->r_info),
+			    (u_long)ELF_R_SYM(rela->r_info),
+			    (u_long)ELF_R_TYPE(rela->r_info),
 			    (void *)rela->r_offset, (void *)rela->r_addend,
 			    (void *)*where,
 			    obj->strtab + obj->symtab[symnum].st_name));
