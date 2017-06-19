@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.23 2017/06/16 04:41:02 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.24 2017/06/19 10:57:37 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -598,6 +598,7 @@ arp_static_cleanup()
 	cleanup
 }
 
+atf_test_case arp_rtm cleanup
 arp_rtm_head()
 {
 
