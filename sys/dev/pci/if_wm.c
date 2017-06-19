@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.509 2017/06/12 03:03:22 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.510 2017/06/19 10:59:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.509 2017/06/12 03:03:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.510 2017/06/19 10:59:01 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4335,6 +4335,15 @@ wm_reset(struct wm_softc *sc)
 			CSR_WRITE(sc, WMREG_EIAC_82574, 0);
 	}
 
+	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
+	    || (sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT)
+	    || (sc->sc_type == WM_T_PCH_SPT)) {
+		reg = CSR_READ(sc, WMREG_KABGTXD);
+		reg |= KABGTXD_BGSQLBIAS;
+		CSR_WRITE(sc, WMREG_KABGTXD, reg);
+	}
+
 	/* reload sc_ctrl */
 	sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
 
@@ -5362,15 +5371,6 @@ wm_init_locked(struct ifnet *ifp)
 		}
 	} else
 		CSR_WRITE(sc, WMREG_IMS, sc->sc_icr);
-
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
-	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
-	    || (sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT)
-	    || (sc->sc_type == WM_T_PCH_SPT)) {
-		reg = CSR_READ(sc, WMREG_KABGTXD);
-		reg |= KABGTXD_BGSQLBIAS;
-		CSR_WRITE(sc, WMREG_KABGTXD, reg);
-	}
 
 	/* Set up the inter-packet gap. */
 	CSR_WRITE(sc, WMREG_TIPG, sc->sc_tipg);
