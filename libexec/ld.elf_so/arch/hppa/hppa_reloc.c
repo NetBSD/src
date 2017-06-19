@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.43 2014/08/25 20:40:52 joerg Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.44 2017/06/19 11:57:01 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.43 2014/08/25 20:40:52 joerg Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.44 2017/06/19 11:57:01 joerg Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -413,46 +413,23 @@ int
 _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
+	const Elf_Sym *def = NULL;
+	const Obj_Entry *defobj = NULL;
+	unsigned long last_symnum = ULONG_MAX;
 
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
-		const Elf_Sym   *def;
-		const Obj_Entry *defobj;
 		Elf_Addr         tmp;
 		unsigned long	 symnum;
 
 		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-		symnum = ELF_R_SYM(rela->r_info);
 
-		switch (ELF_R_TYPE(rela->r_info)) {
-		case R_TYPE(NONE):
-			break;
-
-		case R_TYPE(DIR32):
-			if (symnum) {
-				/*
-				 * This is either a DIR32 against a symbol
-				 * (def->st_name != 0), or against a local
-				 * section (def->st_name == 0).
-				 */
-				def = obj->symtab + symnum;
-				defobj = obj;
-				if (def->st_name != 0)
-					def = _rtld_find_symdef(symnum, obj,
-					    &defobj, false);
-				if (def == NULL)
-					return -1;
-
-				tmp = (Elf_Addr)(defobj->relocbase +
-				    def->st_value + rela->r_addend);
-
-				if (load_ptr(where) != tmp)
-					store_ptr(where, tmp);
-				rdbg(("DIR32 %s in %s --> %p in %s",
-				    obj->strtab + obj->symtab[symnum].st_name,
-				    obj->path, (void *)load_ptr(where),
-				    defobj->path));
-			} else {
+		/* First, handle DIR32 and PLABEL32 without symbol. */
+		if (ELF_R_SYM(rela->r_info) == 0) {
+			switch (ELF_R_TYPE(rela->r_info)) {
+			default:
+				break;
+			case R_TYPE(DIR32):
 				tmp = (Elf_Addr)(obj->relocbase +
 				    rela->r_addend);
 
@@ -460,27 +437,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 					store_ptr(where, tmp);
 				rdbg(("DIR32 in %s --> %p", obj->path,
 					    (void *)load_ptr(where)));
-			}
-			break;
-
-		case R_TYPE(PLABEL32):
-			if (symnum) {
-				def = _rtld_find_symdef(symnum, obj, &defobj,
-				    false);
-				if (def == NULL)
-					return -1;
-
-				tmp = _rtld_function_descriptor_alloc(defobj,
-				    def, rela->r_addend);
-				if (tmp == (Elf_Addr)-1)
-					return -1;
-
-				if (*where != tmp)
-					*where = tmp;
-				rdbg(("PLABEL32 %s in %s --> %p in %s",
-				    obj->strtab + obj->symtab[symnum].st_name,
-				    obj->path, (void *)*where, defobj->path));
-			} else {
+				continue;
+			case R_TYPE(PLABEL32):
 				/*
 				 * This is a PLABEL for a static function, and
 				 * the dynamic linker has both allocated a PLT
@@ -505,7 +463,67 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 					*where = tmp;
 				rdbg(("PLABEL32 in %s --> %p", obj->path,
 				    (void *)*where));
+				continue;
 			}
+		}
+
+		switch (ELF_R_TYPE(rela->r_info)) {
+		case R_TYPE(DIR32):
+		case R_TYPE(PLABEL32):
+		case R_TYPE(COPY):
+		case R_TYPE(TLS_TPREL32):
+		case R_TYPE(TLS_DTPMOD32):
+		case R_TYPE(TLS_DTPOFF32):
+			symnum = ELF_R_SYM(rela->r_info);
+			if (last_symnum != symnum) {
+				last_symnum = symnum;
+				if (ELF_R_TYPE(rela->r_info) == R_TYPE(DIR32)) {
+					/*
+					 * DIR32 relocation against local
+					 * symbols are special...
+					 */
+					def = obj->symtab + symnum;
+					defobj = obj;
+					if (def->st_name == 0)
+						break;
+				}
+				def = _rtld_find_symdef(symnum, obj, &defobj,
+				    false);
+				if (def == NULL)
+					return -1;
+			}
+			break;
+		default:
+			break;
+		}
+
+		switch (ELF_R_TYPE(rela->r_info)) {
+		case R_TYPE(NONE):
+			break;
+
+		case R_TYPE(DIR32):
+			tmp = (Elf_Addr)(defobj->relocbase +
+			    def->st_value + rela->r_addend);
+
+			if (load_ptr(where) != tmp)
+				store_ptr(where, tmp);
+			rdbg(("DIR32 %s in %s --> %p in %s",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)load_ptr(where),
+			    defobj->path));
+			break;
+
+		case R_TYPE(PLABEL32):
+			tmp = _rtld_function_descriptor_alloc(defobj,
+			    def, rela->r_addend);
+			if (tmp == (Elf_Addr)-1)
+				return -1;
+
+			if (*where != tmp)
+				*where = tmp;
+			rdbg(("PLABEL32 %s in %s --> %p in %s",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, defobj->path));
 			break;
 
 		case R_TYPE(COPY):
@@ -525,10 +543,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TLS_TPREL32):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
 				return -1;
 
@@ -541,10 +555,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TLS_DTPMOD32):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			*where = (Elf_Addr)(defobj->tlsindex);
 
 			rdbg(("TLS_DTPMOD32 %s in %s --> %p",
@@ -554,10 +564,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TLS_DTPOFF32):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			*where = (Elf_Addr)(def->st_value);
 
 			rdbg(("TLS_DTPOFF32 %s in %s --> %p",
