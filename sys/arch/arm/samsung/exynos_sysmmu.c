@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_sysmmu.c,v 1.1 2016/01/03 04:10:58 marty Exp $ */
+/*	$NetBSD: exynos_sysmmu.c,v 1.2 2017/06/19 23:08:05 jmcneill Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_sysmmu.c,v 1.1 2016/01/03 04:10:58 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_sysmmu.c,v 1.2 2017/06/19 23:08:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -102,6 +102,10 @@ exynos_sysmmu_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	aprint_normal(" @ 0x%08x: SYSMMU -  NOT IMPLEMENTED", (uint)addr);
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
@@ -116,9 +120,6 @@ exynos_sysmmu_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
-	aprint_normal(" @ 0x%08x: SYSMMU -  NOT IMPLEMENTED", (uint)addr);
-	aprint_naive("\n");
-	aprint_normal("\n");
 
 }
 
