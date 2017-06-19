@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.65 2016/02/20 15:20:23 christos Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.66 2017/06/19 11:57:01 joerg Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.65 2016/02/20 15:20:23 christos Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.66 2017/06/19 11:57:01 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -230,6 +230,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 	Elf_Addr *got = obj->pltgot;
 	const Elf_Sym *sym, *def;
 	const Obj_Entry *defobj;
+	unsigned long last_symnum = ULONG_MAX;
 	Elf_Word i;
 #ifdef SUPPORT_OLD_BROKEN_LD
 	int broken;
@@ -313,14 +314,35 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 	got = obj->pltgot;
 	for (rel = obj->rel; rel < obj->rellim; rel++) {
-		Elf_Word	r_symndx, r_type;
+		unsigned long symnum;
 		void		*where;
 
 		where = obj->relocbase + rel->r_offset;
-		r_symndx = ELF_R_SYM(rel->r_info);
-		r_type = ELF_R_TYPE(rel->r_info);
 
-		switch (r_type & 0xff) {
+		switch (ELF_R_TYPE(rel->r_info)) {
+#if ELFSIZE == 64
+		case R_TYPE(TLS_DTPMOD64):
+		case R_TYPE(TLS_DTPREL64):
+		case R_TYPE(TLS_TPREL64):
+#else
+		case R_TYPE(TLS_DTPMOD32): 
+		case R_TYPE(TLS_DTPREL32):
+		case R_TYPE(TLS_TPREL32):
+#endif
+			symnum = ELF_R_SYM(rela->r_info);
+			if (last_symnum != symnum) {
+				last_symnum = symnum;
+				def = _rtld_find_symdef(symnum, obj, &defobj,
+				    false);
+				if (def == NULL)
+					return -1;
+			}
+			break;
+		default:
+			break;
+		}
+
+		switch (ELF_R_TYPE(rel->r_info)) {
 		case R_TYPE(NONE):
 			break;
 
@@ -385,10 +407,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			Elf_Addr old = load_ptr(where, ELFSIZE / 8);
 			Elf_Addr val = old;
 
-			def = _rtld_find_symdef(r_symndx, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			val += (Elf_Addr)defobj->tlsindex;
 
 			store_ptr(where, val, ELFSIZE / 8);
@@ -406,10 +424,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		{
 			Elf_Addr old = load_ptr(where, ELFSIZE / 8);
 			Elf_Addr val = old;
-
-			def = _rtld_find_symdef(r_symndx, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
 
 			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
 				return -1;
@@ -432,10 +446,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			Elf_Addr old = load_ptr(where, ELFSIZE / 8);
 			Elf_Addr val = old;
 
-			def = _rtld_find_symdef(r_symndx, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
 			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
 				return -1;
 
@@ -452,7 +462,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "contents = %p, symbol = %s",
-			    (u_long)r_symndx, (u_long)ELF_R_TYPE(rel->r_info),
+			    (u_long)ELF_R_SYM(rel->r_info),
+			    (u_long)ELF_R_TYPE(rel->r_info),
 			    (void *)rel->r_offset,
 			    (void *)load_ptr(where, sizeof(Elf_Sword)),
 			    obj->strtab + obj->symtab[r_symndx].st_name));
