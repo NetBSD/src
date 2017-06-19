@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.36 2017/06/06 07:32:41 nat Exp $ */
+/* $NetBSD: pad.c,v 1.37 2017/06/19 23:54:00 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.36 2017/06/06 07:32:41 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.37 2017/06/19 23:54:00 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,6 +53,11 @@ __KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.36 2017/06/06 07:32:41 nat Exp $");
 #include <dev/pad/padvar.h>
 
 #define PADUNIT(x)	minor(x)
+
+#define PADFREQ		44100
+#define PADCHAN		2
+#define PADPREC		16
+#define PADENC		AUDIO_ENCODING_SLINEAR_LE
 
 extern struct cfdriver pad_cd;
 
@@ -120,8 +125,8 @@ static const struct audio_hw_if pad_hw_if = {
 
 #define PAD_NFORMATS	1
 static const struct audio_format pad_formats[PAD_NFORMATS] = {
-	{ NULL, AUMODE_PLAY|AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
-	  2, AUFMT_STEREO, 1, { 44100 } },
+	{ NULL, AUMODE_PLAY|AUMODE_RECORD, PADENC, PADPREC, PADPREC,
+	  PADCHAN, AUFMT_STEREO, 1, { PADFREQ } },
 };
 
 extern void	padattach(int);
@@ -339,8 +344,8 @@ pad_close(dev_t dev, int flags, int fmt, struct lwp *l)
 	return 0;
 }
 
-#define PAD_BYTES_PER_SEC   (44100 * sizeof(int16_t) * 2)
-#define BYTESTOSLEEP 	    (int64_t)(PAD_BLKSIZE)
+#define PAD_BYTES_PER_SEC   (PADFREQ * PADPREC / NBBY * PADCHAN)
+#define BYTESTOSLEEP	    (int64_t)(PAD_BLKSIZE)
 #define TIMENEXTREAD	    (int64_t)(BYTESTOSLEEP * 1000000 / PAD_BYTES_PER_SEC)
 
 int
