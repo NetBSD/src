@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.117 2017/06/18 07:50:46 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.118 2017/06/19 02:46:50 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.117 2017/06/18 07:50:46 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.118 2017/06/19 02:46:50 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,6 +121,12 @@ static int collate_range_cmp(wchar_t, wchar_t);
 STATIC void add_args(struct strlist *);
 STATIC void rmescapes_nl(char *);
 
+#ifdef	DEBUG
+#define	NULLTERM_4_TRACE(p)	STACKSTRNUL(p)
+#else
+#define	NULLTERM_4_TRACE(p)	do { /* nothing */ } while (/*CONSTCOND*/0)
+#endif
+
 /*
  * Expand shell variables and backquotes inside a here document.
  */
@@ -171,7 +177,7 @@ expandarg(union node *arg, struct arglist *arglist, int flag)
 	line_number = arg->narg.lineno;
 	argstr(arg->narg.text, flag);
 	if (arglist == NULL) {
-		STACKSTRNUL(expdest);
+		NULLTERM_4_TRACE(expdest);
 		CTRACE(DBG_EXPAND, ("expandarg: no arglist, done (%d) \"%s\"\n",
 		    expdest - stackblock(), stackblock()));
 		return;			/* here document expanded */
@@ -236,13 +242,13 @@ argstr(const char *p, int flag)
 	for (;;) {
 		switch (c = *p++) {
 		case '\0':
-			STACKSTRNUL(expdest);
+			NULLTERM_4_TRACE(expdest);
 			VTRACE(DBG_EXPAND, ("argstr returning at \"\" "
 			   "added \"%s\" to expdest\n", stackblock()));
 			return p - 1;
 		case CTLENDVAR: /* end of expanding yyy in ${xxx-yyy} */
 		case CTLENDARI: /* end of a $(( )) string */
-			STACKSTRNUL(expdest);
+			NULLTERM_4_TRACE(expdest);
 			VTRACE(DBG_EXPAND, ("argstr returning at \"%.6s\"..."
 			    " after %2.2X; added \"%s\" to expdest\n", 
 			    p, (c&0xff), stackblock()));
@@ -277,7 +283,7 @@ argstr(const char *p, int flag)
 			unsigned int pos = expdest - stackblock();
 #endif
 			p = evalvar(p, (flag & ~EXP_IFS_SPLIT) | (flag & ifs_split));
-			STACKSTRNUL(expdest);
+			NULLTERM_4_TRACE(expdest);
 			VTRACE(DBG_EXPAND, ("argstr evalvar "
 			   "added \"%s\" to expdest\n", 
 			   stackblock() + pos));
@@ -290,7 +296,7 @@ argstr(const char *p, int flag)
 #endif
 			expbackq(argbackq->n, c & CTLQUOTE, flag);
 			argbackq = argbackq->next;
-			STACKSTRNUL(expdest);
+			NULLTERM_4_TRACE(expdest);
 			VTRACE(DBG_EXPAND, ("argstr expbackq added \"%s\" "
 			   "to expdest\n", stackblock() + pos));
 			break;
@@ -300,7 +306,7 @@ argstr(const char *p, int flag)
 			unsigned int pos = expdest - stackblock();
 #endif
 			p = expari(p);
-			STACKSTRNUL(expdest);
+			NULLTERM_4_TRACE(expdest);
 			VTRACE(DBG_EXPAND, ("argstr expari "
 			   "+ \"%s\" to expdest p=\"%.5s...\"\n",
 			   stackblock() + pos, p));
