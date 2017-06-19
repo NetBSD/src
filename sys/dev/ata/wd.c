@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.16 2017/06/16 20:40:49 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.17 2017/06/19 17:11:24 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.16 2017/06/16 20:40:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.17 2017/06/19 17:11:24 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -150,7 +150,7 @@ const struct bdevsw wd_bdevsw = {
 	.d_dump = wddump,
 	.d_psize = wdsize,
 	.d_discard = wddiscard,
-	.d_flag = D_DISK | D_MPSAFE
+	.d_flag = D_DISK
 };
 
 const struct cdevsw wd_cdevsw = {
@@ -165,7 +165,7 @@ const struct cdevsw wd_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = wddiscard,
-	.d_flag = D_DISK | D_MPSAFE
+	.d_flag = D_DISK
 };
 
 /* #define WD_DUMP_NOT_TRUSTED if you just want to watch */
@@ -298,7 +298,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	wd->sc_dev = self;
 
 	ATADEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
-	callout_init(&wd->sc_restart_ch, CALLOUT_MPSAFE);
+	callout_init(&wd->sc_restart_ch, 0);
 	callout_setfunc(&wd->sc_restart_ch, wdrestart, wd);
 	mutex_init(&wd->sc_lock, MUTEX_DEFAULT, IPL_BIO);
 	bufq_alloc(&wd->sc_q, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
