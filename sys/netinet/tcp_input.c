@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.357 2017/04/20 08:46:07 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.358 2017/06/19 10:04:23 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.357 2017/04/20 08:46:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.358 2017/06/19 10:04:23 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1835,7 +1835,13 @@ findpcb:
 					switch (af) {
 #ifdef INET
 					case AF_INET:
-						KASSERT(sotoinpcb(so) == inp);
+						/*
+						 * inp can be NULL when
+						 * receiving an IPv4 packet on
+						 * an IPv4-mapped IPv6 address.
+						 */
+						KASSERT(inp == NULL ||
+						    sotoinpcb(so) == inp);
 						if (!ipsec4_in_reject(m, inp))
 							break;
 						IPSEC_STATINC(
