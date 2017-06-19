@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.70 2017/05/29 14:03:23 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.71 2017/06/19 02:49:33 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.70 2017/05/29 14:03:23 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.71 2017/06/19 02:49:33 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,7 @@ main(int argc, char **argv)
 	opentrace();
 	trputs("Shell args:  ");  trargs(argv);
 #if DEBUG >= 3
-	set_debug(((DEBUG)==3 ? "_^" : "++"), 1);
+	set_debug(((DEBUG)==3 ? "_@" : "++"), 1);
 #endif
 #endif
 	rootpid = getpid();
@@ -217,6 +217,8 @@ state2:
 	}
 state3:
 	state = 4;
+	line_number = 1;	/* undo anything from profile files */
+
 	if (sflag == 0 || minusc) {
 		static int sigs[] =  {
 		    SIGINT, SIGQUIT, SIGHUP, 
