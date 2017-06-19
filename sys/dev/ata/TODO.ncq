@@ -6,11 +6,11 @@ fix crashdump for mvsata - request times out (maybe same as HEAD?)
 siisata - fix all new XXX and unmergable bits, fix PMP
 
 test crashdump with siisata
-
-reset channel and PMP doesn't work with siisata - siisata_reset_drive()
-uses ata_get_xfer() and this can clash on slot 0 with on-stack xfers
+- fails with recursive panic via pmap_kremove_local() regardless if
+  drive connected via PMP or direct
 
 test wd* at umass?, confirm the ata_channel kludge works
++ add detach code (channel detach, free queue)
 
 is ata_exec_xfer() + POLL safe wrt. more outstanding I/Os? why is it waiting
 until xfer is head of queue? also layer violation with the ata_xfer_free() call
@@ -29,6 +29,10 @@ drive rescaned after detach of non-NCQ drive
 - the downsize can leak transfers with PMP if other device happens
   to have active or pending transfers (e.g. when non-NCQ device is attached
   while there is already NCQ device present)
+
+add mechanics to re-check queue when xfer is finished - needed on PMP
+and for IDE disks, when one drive uses up all available xfers nothing
+ever restarts queue for the other drives
 
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------

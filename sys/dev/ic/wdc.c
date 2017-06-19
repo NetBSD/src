@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.283.2.5 2017/06/16 20:40:49 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.283.2.6 2017/06/19 21:00:00 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.5 2017/06/16 20:40:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.6 2017/06/19 21:00:00 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -823,6 +823,7 @@ wdcdetach(device_t self, int flags)
 		    DEBUG_DETACH);
 		if ((error = config_detach(chp->atabus, flags)) != 0)
 			return error;
+		ata_channel_detach(chp);
 	}
 	if (adapt->adapt_refcnt != 0)
 		return EBUSY;

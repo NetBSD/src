@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.17 2017/06/19 17:11:24 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.18 2017/06/19 21:00:00 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.17 2017/06/19 17:11:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.18 2017/06/19 21:00:00 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -646,8 +646,8 @@ wdstart(struct wd_softc *wd)
 
 	while (bufq_peek(wd->sc_q) != NULL) {
 		/* First try to get command */
-		xfer = ata_get_xfer(wd->drvp->chnl_softc);
-		if (!xfer) 
+		xfer = ata_get_xfer(wd->drvp->chnl_softc, false);
+		if (xfer == NULL) 
 			break;
 
 		/* There is got to be a buf for us */
@@ -1637,7 +1637,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		wd->drvp->state = RESET;
 	}
 
-	xfer = ata_get_xfer(wd->drvp->chnl_softc);
+	xfer = ata_get_xfer(wd->drvp->chnl_softc, false);
 	if (xfer == NULL)
 		return EAGAIN;
 
@@ -1812,7 +1812,7 @@ int
 wd_setcache(struct wd_softc *wd, int bits)
 {
 	struct ataparams params;
-	struct ata_xfer xfer;
+	struct ata_xfer *xfer;
 	int error;
 
 	if (wd_get_params(wd, AT_WAIT, &params) != 0)
@@ -1827,26 +1827,29 @@ wd_setcache(struct wd_softc *wd, int bits)
 	    (bits & DKCACHE_SAVE) != 0)
 		return EOPNOTSUPP;
 
-	ata_xfer_init(&xfer, true);
-	xfer.c_ata_c.r_command = SET_FEATURES;
-	xfer.c_ata_c.r_st_bmask = 0;
-	xfer.c_ata_c.r_st_pmask = 0;
-	xfer.c_ata_c.timeout = 30000; /* 30s timeout */
-	xfer.c_ata_c.flags = AT_WAIT;
+	xfer = ata_get_xfer(wd->drvp->chnl_softc, true);
+	if (xfer == NULL)
+		return EINTR;
+
+	xfer->c_ata_c.r_command = SET_FEATURES;
+	xfer->c_ata_c.r_st_bmask = 0;
+	xfer->c_ata_c.r_st_pmask = 0;
+	xfer->c_ata_c.timeout = 30000; /* 30s timeout */
+	xfer->c_ata_c.flags = AT_WAIT;
 	if (bits & DKCACHE_WRITE)
-		xfer.c_ata_c.r_features = WDSF_WRITE_CACHE_EN;
+		xfer->c_ata_c.r_features = WDSF_WRITE_CACHE_EN;
 	else
-		xfer.c_ata_c.r_features = WDSF_WRITE_CACHE_DS;
-	if (wd->atabus->ata_exec_command(wd->drvp, &xfer) != ATACMD_COMPLETE) {
+		xfer->c_ata_c.r_features = WDSF_WRITE_CACHE_DS;
+	if (wd->atabus->ata_exec_command(wd->drvp, xfer) != ATACMD_COMPLETE) {
 		aprint_error_dev(wd->sc_dev,
 		    "wd_setcache command not complete\n");
 		error = EIO;
 		goto out;
 	}
 
-	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		char sbuf[sizeof(at_errbits) + 64];
-		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer.c_ata_c.flags);
+		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer->c_ata_c.flags);
 		aprint_error_dev(wd->sc_dev, "wd_setcache: status=%s\n", sbuf);
 		error = EIO;
 		goto out;
@@ -1855,38 +1858,41 @@ wd_setcache(struct wd_softc *wd, int bits)
 	error = 0;
 
 out:
-	ata_xfer_destroy(&xfer);
+	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 	return error;
 }
 
 static int
 wd_standby(struct wd_softc *wd, int flags)
 {
-	struct ata_xfer xfer;
+	struct ata_xfer *xfer;
 	int error;
 
-	ata_xfer_init(&xfer, true);
-	xfer.c_ata_c.r_command = WDCC_STANDBY_IMMED;
-	xfer.c_ata_c.r_st_bmask = WDCS_DRDY;
-	xfer.c_ata_c.r_st_pmask = WDCS_DRDY;
-	xfer.c_ata_c.flags = flags;
-	xfer.c_ata_c.timeout = 30000; /* 30s timeout */
-	if (wd->atabus->ata_exec_command(wd->drvp, &xfer) != ATACMD_COMPLETE) {
+	xfer = ata_get_xfer(wd->drvp->chnl_softc, true);
+	if (xfer == NULL)
+		return EINTR;
+
+	xfer->c_ata_c.r_command = WDCC_STANDBY_IMMED;
+	xfer->c_ata_c.r_st_bmask = WDCS_DRDY;
+	xfer->c_ata_c.r_st_pmask = WDCS_DRDY;
+	xfer->c_ata_c.flags = flags;
+	xfer->c_ata_c.timeout = 30000; /* 30s timeout */
+	if (wd->atabus->ata_exec_command(wd->drvp, xfer) != ATACMD_COMPLETE) {
 		aprint_error_dev(wd->sc_dev,
 		    "standby immediate command didn't complete\n");
 		error = EIO;
 		goto out;
 	}
-	if (xfer.c_ata_c.flags & AT_ERROR) {
-		if (xfer.c_ata_c.r_error == WDCE_ABRT) {
+	if (xfer->c_ata_c.flags & AT_ERROR) {
+		if (xfer->c_ata_c.r_error == WDCE_ABRT) {
 			/* command not supported */
 			error = ENODEV;
 			goto out;
 		}
 	}
-	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		char sbuf[sizeof(at_errbits) + 64];
-		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer.c_ata_c.flags);
+		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer->c_ata_c.flags);
 		aprint_error_dev(wd->sc_dev, "wd_standby: status=%s\n", sbuf);
 		error = EIO;
 		goto out;
@@ -1894,14 +1900,14 @@ wd_standby(struct wd_softc *wd, int flags)
 	error = 0;
 
 out:
-	ata_xfer_destroy(&xfer);
+	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 	return error;
 }
 
 int
 wd_flushcache(struct wd_softc *wd, int flags)
 {
-	struct ata_xfer xfer;
+	struct ata_xfer *xfer;
 	int error;
 
 	/*
@@ -1913,33 +1919,36 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	    wd->sc_params.atap_cmd_set2 == 0xffff))
 		return ENODEV;
 
-	ata_xfer_init(&xfer, true);
+	xfer = ata_get_xfer(wd->drvp->chnl_softc, true);
+	if (xfer == NULL)
+		return EINTR;
+
 	if ((wd->sc_params.atap_cmd2_en & ATA_CMD2_LBA48) != 0 &&
 	    (wd->sc_params.atap_cmd2_en & ATA_CMD2_FCE) != 0) {
-		xfer.c_ata_c.r_command = WDCC_FLUSHCACHE_EXT;
+		xfer->c_ata_c.r_command = WDCC_FLUSHCACHE_EXT;
 		flags |= AT_LBA48;
 	} else
-		xfer.c_ata_c.r_command = WDCC_FLUSHCACHE;
-	xfer.c_ata_c.r_st_bmask = WDCS_DRDY;
-	xfer.c_ata_c.r_st_pmask = WDCS_DRDY;
-	xfer.c_ata_c.flags = flags | AT_READREG;
-	xfer.c_ata_c.timeout = 300000; /* 5m timeout */
-	if (wd->atabus->ata_exec_command(wd->drvp, &xfer) != ATACMD_COMPLETE) {
+		xfer->c_ata_c.r_command = WDCC_FLUSHCACHE;
+	xfer->c_ata_c.r_st_bmask = WDCS_DRDY;
+	xfer->c_ata_c.r_st_pmask = WDCS_DRDY;
+	xfer->c_ata_c.flags = flags | AT_READREG;
+	xfer->c_ata_c.timeout = 300000; /* 5m timeout */
+	if (wd->atabus->ata_exec_command(wd->drvp, xfer) != ATACMD_COMPLETE) {
 		aprint_error_dev(wd->sc_dev,
 		    "flush cache command didn't complete\n");
 		error = EIO;
 		goto out;
 	}
-	if (xfer.c_ata_c.flags & AT_ERROR) {
-		if (xfer.c_ata_c.r_error == WDCE_ABRT) {
+	if (xfer->c_ata_c.flags & AT_ERROR) {
+		if (xfer->c_ata_c.r_error == WDCE_ABRT) {
 			/* command not supported */
 			error = ENODEV;
 			goto out;
 		}
 	}
-	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		char sbuf[sizeof(at_errbits) + 64];
-		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer.c_ata_c.flags);
+		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer->c_ata_c.flags);
 		aprint_error_dev(wd->sc_dev, "wd_flushcache: status=%s\n",
 		    sbuf);
 		error = EIO;
@@ -1948,19 +1957,23 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	error = 0;
 
 out:
-	ata_xfer_destroy(&xfer);
+	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 	return error;
 }
 
 int
 wd_trim(struct wd_softc *wd, int part, daddr_t bno, long size)
 {
-	struct ata_xfer xfer;
+	struct ata_xfer *xfer;
 	int error;
 	unsigned char *req;
 
 	if (part != RAW_PART)
 		bno += wd->sc_dk.dk_label->d_partitions[part].p_offset;;
+
+	xfer = ata_get_xfer(wd->drvp->chnl_softc, true);
+	if (xfer == NULL)
+		return EINTR;
 
 	req = kmem_zalloc(512, KM_SLEEP);
 	req[0] = bno & 0xff;
@@ -1972,17 +1985,16 @@ wd_trim(struct wd_softc *wd, int part, daddr_t bno, long size)
 	req[6] = size & 0xff;
 	req[7] = (size >> 8) & 0xff;
 
-	ata_xfer_init(&xfer, true);
-	xfer.c_ata_c.r_command = ATA_DATA_SET_MANAGEMENT;
-	xfer.c_ata_c.r_count = 1;
-	xfer.c_ata_c.r_features = ATA_SUPPORT_DSM_TRIM;
-	xfer.c_ata_c.r_st_bmask = WDCS_DRDY;
-	xfer.c_ata_c.r_st_pmask = WDCS_DRDY;
-	xfer.c_ata_c.timeout = 30000; /* 30s timeout */
-	xfer.c_ata_c.data = req;
-	xfer.c_ata_c.bcount = 512;
-	xfer.c_ata_c.flags |= AT_WRITE | AT_WAIT;
-	if (wd->atabus->ata_exec_command(wd->drvp, &xfer) != ATACMD_COMPLETE) {
+	xfer->c_ata_c.r_command = ATA_DATA_SET_MANAGEMENT;
+	xfer->c_ata_c.r_count = 1;
+	xfer->c_ata_c.r_features = ATA_SUPPORT_DSM_TRIM;
+	xfer->c_ata_c.r_st_bmask = WDCS_DRDY;
+	xfer->c_ata_c.r_st_pmask = WDCS_DRDY;
+	xfer->c_ata_c.timeout = 30000; /* 30s timeout */
+	xfer->c_ata_c.data = req;
+	xfer->c_ata_c.bcount = 512;
+	xfer->c_ata_c.flags |= AT_WRITE | AT_WAIT;
+	if (wd->atabus->ata_exec_command(wd->drvp, xfer) != ATACMD_COMPLETE) {
 		aprint_error_dev(wd->sc_dev,
 		    "trim command didn't complete\n");
 		kmem_free(req, 512);
@@ -1990,16 +2002,16 @@ wd_trim(struct wd_softc *wd, int part, daddr_t bno, long size)
 		goto out;
 	}
 	kmem_free(req, 512);
-	if (xfer.c_ata_c.flags & AT_ERROR) {
-		if (xfer.c_ata_c.r_error == WDCE_ABRT) {
+	if (xfer->c_ata_c.flags & AT_ERROR) {
+		if (xfer->c_ata_c.r_error == WDCE_ABRT) {
 			/* command not supported */
 			error = ENODEV;
 			goto out;
 		}
 	}
-	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		char sbuf[sizeof(at_errbits) + 64];
-		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer.c_ata_c.flags);
+		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer->c_ata_c.flags);
 		aprint_error_dev(wd->sc_dev, "wd_trim: status=%s\n",
 		    sbuf);
 		error = EIO;
@@ -2008,7 +2020,7 @@ wd_trim(struct wd_softc *wd, int part, daddr_t bno, long size)
 	error = 0;
 
 out:
-	ata_xfer_destroy(&xfer);
+	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 	return error;
 }
 
@@ -2114,7 +2126,7 @@ void
 wdioctlstrategy(struct buf *bp)
 {
 	struct wd_ioctl *wi;
-	struct ata_xfer xfer;
+	struct ata_xfer *xfer;
 	int error = 0;
 
 	wi = wi_find(bp);
@@ -2125,7 +2137,11 @@ wdioctlstrategy(struct buf *bp)
 		goto out2;
 	}
 
-	ata_xfer_init(&xfer, true);
+	xfer = ata_get_xfer(wi->wi_softc->drvp->chnl_softc, true);
+	if (xfer == NULL) {
+		error = EINTR;
+		goto out2;
+	}
 
 	/*
 	 * Abort if physio broke up the transfer
@@ -2159,62 +2175,62 @@ wdioctlstrategy(struct buf *bp)
 	}
 
 	if (wi->wi_atareq.flags & ATACMD_READ)
-		xfer.c_ata_c.flags |= AT_READ;
+		xfer->c_ata_c.flags |= AT_READ;
 	else if (wi->wi_atareq.flags & ATACMD_WRITE)
-		xfer.c_ata_c.flags |= AT_WRITE;
+		xfer->c_ata_c.flags |= AT_WRITE;
 
 	if (wi->wi_atareq.flags & ATACMD_READREG)
-		xfer.c_ata_c.flags |= AT_READREG;
+		xfer->c_ata_c.flags |= AT_READREG;
 
 	if ((wi->wi_atareq.flags & ATACMD_LBA) != 0)
-		xfer.c_ata_c.flags |= AT_LBA;
+		xfer->c_ata_c.flags |= AT_LBA;
 
-	xfer.c_ata_c.flags |= AT_WAIT;
+	xfer->c_ata_c.flags |= AT_WAIT;
 
-	xfer.c_ata_c.timeout = wi->wi_atareq.timeout;
-	xfer.c_ata_c.r_command = wi->wi_atareq.command;
-	xfer.c_ata_c.r_lba = ((wi->wi_atareq.head & 0x0f) << 24) |
+	xfer->c_ata_c.timeout = wi->wi_atareq.timeout;
+	xfer->c_ata_c.r_command = wi->wi_atareq.command;
+	xfer->c_ata_c.r_lba = ((wi->wi_atareq.head & 0x0f) << 24) |
 	    (wi->wi_atareq.cylinder << 8) |
 	    wi->wi_atareq.sec_num;
-	xfer.c_ata_c.r_count = wi->wi_atareq.sec_count;
-	xfer.c_ata_c.r_features = wi->wi_atareq.features;
-	xfer.c_ata_c.r_st_bmask = WDCS_DRDY;
-	xfer.c_ata_c.r_st_pmask = WDCS_DRDY;
-	xfer.c_ata_c.data = wi->wi_bp.b_data;
-	xfer.c_ata_c.bcount = wi->wi_bp.b_bcount;
+	xfer->c_ata_c.r_count = wi->wi_atareq.sec_count;
+	xfer->c_ata_c.r_features = wi->wi_atareq.features;
+	xfer->c_ata_c.r_st_bmask = WDCS_DRDY;
+	xfer->c_ata_c.r_st_pmask = WDCS_DRDY;
+	xfer->c_ata_c.data = wi->wi_bp.b_data;
+	xfer->c_ata_c.bcount = wi->wi_bp.b_bcount;
 
-	if (wi->wi_softc->atabus->ata_exec_command(wi->wi_softc->drvp, &xfer)
+	if (wi->wi_softc->atabus->ata_exec_command(wi->wi_softc->drvp, xfer)
 	    != ATACMD_COMPLETE) {
 		wi->wi_atareq.retsts = ATACMD_ERROR;
 		error = EIO;
 		goto out;
 	}
 
-	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		if (xfer.c_ata_c.flags & AT_ERROR) {
+	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		if (xfer->c_ata_c.flags & AT_ERROR) {
 			wi->wi_atareq.retsts = ATACMD_ERROR;
-			wi->wi_atareq.error = xfer.c_ata_c.r_error;
-		} else if (xfer.c_ata_c.flags & AT_DF)
+			wi->wi_atareq.error = xfer->c_ata_c.r_error;
+		} else if (xfer->c_ata_c.flags & AT_DF)
 			wi->wi_atareq.retsts = ATACMD_DF;
 		else
 			wi->wi_atareq.retsts = ATACMD_TIMEOUT;
 	} else {
 		wi->wi_atareq.retsts = ATACMD_OK;
 		if (wi->wi_atareq.flags & ATACMD_READREG) {
-			wi->wi_atareq.command = xfer.c_ata_c.r_status;
-			wi->wi_atareq.features = xfer.c_ata_c.r_error;
-			wi->wi_atareq.sec_count = xfer.c_ata_c.r_count;
-			wi->wi_atareq.sec_num = xfer.c_ata_c.r_lba & 0xff;
-			wi->wi_atareq.head = (xfer.c_ata_c.r_device & 0xf0) |
-			    ((xfer.c_ata_c.r_lba >> 24) & 0x0f);
+			wi->wi_atareq.command = xfer->c_ata_c.r_status;
+			wi->wi_atareq.features = xfer->c_ata_c.r_error;
+			wi->wi_atareq.sec_count = xfer->c_ata_c.r_count;
+			wi->wi_atareq.sec_num = xfer->c_ata_c.r_lba & 0xff;
+			wi->wi_atareq.head = (xfer->c_ata_c.r_device & 0xf0) |
+			    ((xfer->c_ata_c.r_lba >> 24) & 0x0f);
 			wi->wi_atareq.cylinder =
-			    (xfer.c_ata_c.r_lba >> 8) & 0xffff;
-			wi->wi_atareq.error = xfer.c_ata_c.r_error;
+			    (xfer->c_ata_c.r_lba >> 8) & 0xffff;
+			wi->wi_atareq.error = xfer->c_ata_c.r_error;
 		}
 	}
 
 out:
-	ata_xfer_destroy(&xfer);
+	ata_free_xfer(wi->wi_softc->drvp->chnl_softc, xfer);
 out2:
 	bp->b_error = error;
 	if (error)

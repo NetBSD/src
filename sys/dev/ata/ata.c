@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.10 2017/06/17 14:01:36 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.11 2017/06/19 21:00:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.10 2017/06/17 14:01:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.11 2017/06/19 21:00:00 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -129,6 +129,9 @@ static bool atabus_resume(device_t, const pmf_qual_t *);
 static bool atabus_suspend(device_t, const pmf_qual_t *);
 static void atabusconfig_thread(void *);
 
+static void ata_xfer_init(struct ata_xfer *, bool);
+static void ata_xfer_destroy(struct ata_xfer *);
+
 /*
  * atabus_init:
  *
@@ -221,7 +224,7 @@ ata_queue_active_xfer_peek(struct ata_queue *chq)
 	return TAILQ_FIRST(&chq->active_xfers);
 }
 
-void
+static void
 ata_xfer_init(struct ata_xfer *xfer, bool zero)
 {
 	if (zero)
@@ -230,7 +233,7 @@ ata_xfer_init(struct ata_xfer *xfer, bool zero)
 	callout_init(&xfer->c_timo_callout, 0); 	/* XXX MPSAFE */
 }
 
-void
+static void
 ata_xfer_destroy(struct ata_xfer *xfer)
 {
 	callout_halt(&xfer->c_timo_callout, NULL);	/* XXX MPSAFE */
@@ -256,6 +259,8 @@ ata_queue_alloc(uint8_t openings)
 
 	chq->queue_openings = openings;
 	ata_queue_reset(chq);
+
+	cv_init(&chq->queue_busy, "ataqbusy");
 
 	for (uint8_t i = 0; i < openings; i++)
 		ata_xfer_init(&chq->queue_xfers[i], false);
@@ -283,6 +288,12 @@ ata_queue_free(struct ata_queue *chq)
 	free(chq, M_DEVBUF);
 }
 
+void
+ata_channel_init(struct ata_channel *chp)
+{
+	mutex_init(&chp->ch_lock, MUTEX_DEFAULT, IPL_BIO);
+}
+
 /*
  * ata_channel_attach:
  *
@@ -291,15 +302,35 @@ ata_queue_free(struct ata_queue *chq)
 void
 ata_channel_attach(struct ata_channel *chp)
 {
-	struct ata_queue * const chq = chp->ch_queue;
-
 	if (chp->ch_flags & ATACH_DISABLED)
 		return;
 
-	ata_queue_reset(chq);
+	KASSERT(chp->ch_queue != NULL);
+
+	ata_channel_init(chp);
 
 	chp->atabus = config_found_ia(chp->ch_atac->atac_dev, "ata", chp,
 		atabusprint);
+}
+
+void
+ata_channel_destroy(struct ata_channel *chp)
+{
+	mutex_destroy(&chp->ch_lock);
+}
+
+/*
+ * ata_channel_detach:
+ *
+ *	Common parts of detaching an atabus to an ATA controller channel.
+ */
+void
+ata_channel_detach(struct ata_channel *chp)
+{
+	if (chp->ch_flags & ATACH_DISABLED)
+		return;
+
+	ata_channel_destroy(chp);
 }
 
 static void
@@ -1130,17 +1161,27 @@ atastart(struct ata_channel *chp)
 }
 
 struct ata_xfer *
-ata_get_xfer(struct ata_channel *chp)
+ata_get_xfer(struct ata_channel *chp, bool wait)
 {
 	struct ata_queue *chq = chp->ch_queue;
 	struct ata_xfer *xfer = NULL;
-	int s;
 	uint32_t avail, slot;
+	int error;
 
-	s = splbio();
+	mutex_enter(&chp->ch_lock);
+
+retry:
 	avail = ffs32(chq->queue_xfers_avail);
-	if (avail == 0)
+	if (avail == 0) {
+		if (wait) {
+			chq->queue_flags |= QF_NEED_XFER;
+			error = cv_wait_sig(&chq->queue_busy, &chp->ch_lock);
+			if (error == 0)
+				goto retry;
+		}
+
 		goto out;
+	}
 
 	slot = avail - 1;
 	xfer = &chq->queue_xfers[slot];
@@ -1154,7 +1195,7 @@ ata_get_xfer(struct ata_channel *chp)
 	xfer->c_slot = slot;
 
 out:
-	splx(s);
+	mutex_exit(&chp->ch_lock);
 	return xfer;
 }
 
@@ -1165,13 +1206,14 @@ void
 ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ata_queue *chq = chp->ch_queue;
-	int s;
+
+	mutex_enter(&chp->ch_lock);
 
 	if (xfer->c_flags & C_WAITACT) {
 		/* Someone is waiting for this xfer, so we can't free now */
 		xfer->c_flags |= C_FREE;
 		wakeup(xfer);
-		return;
+		goto out;
 	}
 
 #if NATA_PIOBM		/* XXX wdc dependent code */
@@ -1185,17 +1227,25 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 #endif
 
-	s = splbio();
 	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) == 0);
 	KASSERT((chq->queue_xfers_avail & __BIT(xfer->c_slot)) == 0);
 	chq->queue_xfers_avail |= __BIT(xfer->c_slot);
-	splx(s);
+
+out:
+	if (chq->queue_flags & QF_NEED_XFER) {
+		chq->queue_flags &= ~QF_NEED_XFER;
+		cv_broadcast(&chq->queue_busy);
+	}
+
+	mutex_exit(&chp->ch_lock);
 }
 
 void
 ata_activate_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ata_queue * const chq = chp->ch_queue;
+
+	mutex_enter(&chp->ch_lock);
 
 	KASSERT(chq->queue_active < chq->queue_openings);
 	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) == 0);
@@ -1204,12 +1254,16 @@ ata_activate_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	TAILQ_INSERT_TAIL(&chq->active_xfers, xfer, c_activechain);
 	chq->active_xfers_used |= __BIT(xfer->c_slot);
 	chq->queue_active++;
+
+	mutex_exit(&chp->ch_lock);
 }
 
 void
 ata_deactivate_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ata_queue * const chq = chp->ch_queue;
+
+	mutex_enter(&chp->ch_lock);
 
 	KASSERT(chq->queue_active > 0);
 	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) != 0);
@@ -1219,6 +1273,8 @@ ata_deactivate_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	TAILQ_REMOVE(&chq->active_xfers, xfer, c_activechain);
 	chq->active_xfers_used &= ~__BIT(xfer->c_slot);
 	chq->queue_active--;
+
+	mutex_exit(&chp->ch_lock);
 }
 
 

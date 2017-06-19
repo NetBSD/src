@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.11 2017/06/16 20:40:49 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.12 2017/06/19 21:00:00 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.11 2017/06/16 20:40:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.12 2017/06/19 21:00:00 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -791,7 +791,7 @@ mvsata_atapi_scsipi_request(struct scsipi_channel *chan,
 			scsipi_done(sc_xfer);
 			return;
 		}
-		xfer = ata_get_xfer(chp);
+		xfer = ata_get_xfer(chp, false);
 		if (xfer == NULL) {
 			sc_xfer->error = XS_RESOURCE_SHORTAGE;
 			scsipi_done(sc_xfer);
