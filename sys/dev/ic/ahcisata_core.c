@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.13 2017/06/16 20:40:49 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.14 2017/06/19 21:00:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.13 2017/06/16 20:40:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.14 2017/06/19 21:00:00 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -511,6 +511,8 @@ ahci_detach(struct ahci_softc *sc, int flags)
 		ata_queue_free(chp->ch_queue);
 		chp->ch_queue = NULL;
 		chp->atabus = NULL;
+
+		ata_channel_detach(chp);
 	}
 
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_cmd_hdrd);
@@ -1567,7 +1569,7 @@ ahci_atapi_scsipi_request(struct scsipi_channel *chan,
 			scsipi_done(sc_xfer);
 			return;
 		}
-		xfer = ata_get_xfer(atac->atac_channels[channel]);
+		xfer = ata_get_xfer(atac->atac_channels[channel], false);
 		if (xfer == NULL) {
 			sc_xfer->error = XS_RESOURCE_SHORTAGE;
 			scsipi_done(sc_xfer);

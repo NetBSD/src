@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.123.4.5 2017/06/16 20:40:49 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.123.4.6 2017/06/19 21:00:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.5 2017/06/16 20:40:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.6 2017/06/19 21:00:00 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -198,27 +198,31 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	struct atac_softc *atac = &wdc->sc_atac;
 	struct wdc_regs *wdr = &wdc->regs[chan->chan_channel];
 	struct ata_channel *chp = atac->atac_channels[chan->chan_channel];
-	struct ata_xfer xfer;
+	struct ata_xfer *xfer;
 	int rv;
 
-	ata_xfer_init(&xfer, true);
+	xfer = ata_get_xfer(chp, true);
+	if (xfer == NULL) {
+		printf("wdc_atapi_get_params: no xfer\n");
+		return EBUSY;
+	}
 
-	xfer.c_ata_c.r_command = ATAPI_SOFT_RESET;
-	xfer.c_ata_c.r_st_bmask = 0;
-	xfer.c_ata_c.r_st_pmask = 0;
-	xfer.c_ata_c.flags = AT_WAIT | AT_POLL;
-	xfer.c_ata_c.timeout = WDC_RESET_WAIT;
-	if (wdc_exec_command(&chp->ch_drive[drive], &xfer) != ATACMD_COMPLETE) {
+	xfer->c_ata_c.r_command = ATAPI_SOFT_RESET;
+	xfer->c_ata_c.r_st_bmask = 0;
+	xfer->c_ata_c.r_st_pmask = 0;
+	xfer->c_ata_c.flags = AT_WAIT | AT_POLL;
+	xfer->c_ata_c.timeout = WDC_RESET_WAIT;
+	if (wdc_exec_command(&chp->ch_drive[drive], xfer) != ATACMD_COMPLETE) {
 		printf("wdc_atapi_get_params: ATAPI_SOFT_RESET failed for"
 		    " drive %s:%d:%d: driver failed\n",
 		    device_xname(atac->atac_dev), chp->ch_channel, drive);
 		panic("wdc_atapi_get_params");
 	}
-	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		ATADEBUG_PRINT(("wdc_atapi_get_params: ATAPI_SOFT_RESET "
 		    "failed for drive %s:%d:%d: error 0x%x\n",
 		    device_xname(atac->atac_dev), chp->ch_channel, drive,
-		    xfer.c_ata_c.r_error), DEBUG_PROBE);
+		    xfer->c_ata_c.r_error), DEBUG_PROBE);
 		rv = -1;
 		goto out;
 	}
@@ -232,14 +236,14 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 		ATADEBUG_PRINT(("wdc_atapi_get_params: ATAPI_IDENTIFY_DEVICE "
 		    "failed for drive %s:%d:%d: error 0x%x\n",
 		    device_xname(atac->atac_dev), chp->ch_channel, drive,
-		    xfer.c_ata_c.r_error), DEBUG_PROBE);
+		    xfer->c_ata_c.r_error), DEBUG_PROBE);
 		rv = -1;
 		goto out;
 	}
 	rv = 0;
 
 out:
-	ata_xfer_destroy(&xfer);
+	ata_free_xfer(chp, xfer);
 	return rv;
 }
 
@@ -372,7 +376,7 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			return;
 		}
 
-		xfer = ata_get_xfer(atac->atac_channels[channel]);
+		xfer = ata_get_xfer(atac->atac_channels[channel], false);
 		if (xfer == NULL) {
 			sc_xfer->error = XS_RESOURCE_SHORTAGE;
 			scsipi_done(sc_xfer);

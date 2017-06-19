@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.33.4.2 2017/04/20 20:14:42 jdolecek Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.33.4.3 2017/06/19 21:00:00 jdolecek Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.33.4.2 2017/04/20 20:14:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.33.4.3 2017/06/19 21:00:00 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -221,6 +221,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	adev.adev_drv_data = &scbus->sc_drv_data;
 
 	/* Fake ATA channel so wd(4) ata_{get,free}_xfer() work */
+	ata_channel_init(&scbus->sc_channel);
 	scbus->sc_channel.atabus = (device_t)scbus;
 	scbus->sc_channel.ch_queue = ata_queue_alloc(1);
 
@@ -520,7 +521,7 @@ uisdata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 		struct ataparams *prms)
 {
 	char tb[DEV_BSIZE];
-	struct ata_xfer xfer;
+	struct ata_xfer *xfer;
 	int rv;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -533,19 +534,23 @@ uisdata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 	memset(tb, 0, DEV_BSIZE);
 	memset(prms, 0, sizeof(struct ataparams));
 
-	ata_xfer_init(&xfer, true);
+	xfer = ata_get_xfer(drvp->chnl_softc, true);
+	if (!xfer) {
+		rv = CMD_AGAIN;
+		goto out;
+	}
 
-	xfer.c_ata_c.r_command = WDCC_IDENTIFY;
-	xfer.c_ata_c.timeout = 1000; /* 1s */
-	xfer.c_ata_c.flags = AT_READ | flags;
-	xfer.c_ata_c.data = tb;
-	xfer.c_ata_c.bcount = DEV_BSIZE;
-	if (uisdata_exec_command(drvp, &xfer) != ATACMD_COMPLETE) {
+	xfer->c_ata_c.r_command = WDCC_IDENTIFY;
+	xfer->c_ata_c.timeout = 1000; /* 1s */
+	xfer->c_ata_c.flags = AT_READ | flags;
+	xfer->c_ata_c.data = tb;
+	xfer->c_ata_c.bcount = DEV_BSIZE;
+	if (uisdata_exec_command(drvp, xfer) != ATACMD_COMPLETE) {
 		DPRINTF(("uisdata_get_parms: wdc_exec_command failed\n"));
 		rv = CMD_AGAIN;
 		goto out;
 	}
-	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		DPRINTF(("uisdata_get_parms: ata_c.flags=0x%x\n",
 			 ata_c.flags));
 		rv = CMD_ERR;
@@ -585,7 +590,7 @@ uisdata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 	rv = CMD_OK;
 
 out:
-	ata_xfer_destroy(&xfer);
+	ata_free_xfer(drvp->chnl_softc, xfer);
 	return rv;
 }
 

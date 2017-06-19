@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.9 2017/06/16 20:40:49 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.10 2017/06/19 21:00:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -186,12 +186,14 @@ struct ata_xfer {
 /* Per-channel queue of ata_xfers */
 struct ata_queue {
 	TAILQ_HEAD(, ata_xfer) queue_xfer; 	/* queue of pending commands */
-	int queue_freeze; /* freeze count for the queue */
-	int queue_flags;	/* flags for this queue */
-#define QF_IDLE_WAIT	0x01    /* someone wants the controller idle */
-	int queue_active; /* number of active transfers */
-	int queue_openings; /* max number of active transfers */
+	int queue_freeze; 		/* freeze count for the queue */
+	int8_t queue_flags;		/* flags for this queue */
+#define QF_IDLE_WAIT	0x01    	/* someone wants the controller idle */
+#define QF_NEED_XFER	0x02    	/* someone wants xfer */
+	int8_t queue_active; 		/* number of active transfers */
+	int8_t queue_openings; 		/* max number of active transfers */
 #ifdef ATABUS_PRIVATE
+	kcondvar_t queue_busy;			/* c: waiting of xfer */
 	TAILQ_HEAD(, ata_xfer) active_xfers; 	/* active commands */
 	uint32_t active_xfers_used;		/* mask of active commands */
 	uint32_t queue_xfers_avail;		/* available xfers mask */
@@ -358,6 +360,7 @@ struct ata_device {
 struct ata_channel {
 	int ch_channel;			/* location */
 	struct atac_softc *ch_atac;	/* ATA controller softc */
+	kmutex_t ch_lock;		/* channel lock - queue */
 
 	/* Our state */
 	volatile int ch_flags;
@@ -457,6 +460,9 @@ struct atac_softc {
 
 #ifdef _KERNEL
 void	ata_channel_attach(struct ata_channel *);
+void	ata_channel_init(struct ata_channel *);
+void	ata_channel_detach(struct ata_channel *);
+void	ata_channel_destroy(struct ata_channel *);
 int	atabusprint(void *aux, const char *);
 int	ataprint(void *aux, const char *);
 
@@ -471,7 +477,7 @@ int	ata_set_mode(struct ata_drive_datas *, uint8_t, uint8_t);
 #define CMD_ERR   1
 #define CMD_AGAIN 2
 
-struct ata_xfer *ata_get_xfer(struct ata_channel *);
+struct ata_xfer *ata_get_xfer(struct ata_channel *, bool);
 void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
 #define	ATAXF_CANSLEEP	0x00
 #define	ATAXF_NOSLEEP	0x01
@@ -497,8 +503,6 @@ void	ata_probe_caps(struct ata_drive_datas *);
 void	ata_dmaerr(struct ata_drive_datas *, int);
 #endif
 void	ata_queue_idle(struct ata_queue *);
-void	ata_xfer_init(struct ata_xfer *, bool);
-void	ata_xfer_destroy(struct ata_xfer *);
 struct ata_queue *
 	ata_queue_alloc(uint8_t openings);
 void	ata_queue_free(struct ata_queue *);
