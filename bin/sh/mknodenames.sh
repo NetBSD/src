@@ -7,7 +7,7 @@ fi
 
 NODES=$1
 
-test -t 1 && -z "$2" && exec > nodenames.h
+test -t 1 && test -z "$2" && exec > nodenames.h
 
 echo "#ifdef DEBUG"
 echo '
@@ -28,7 +28,7 @@ echo
 echo '#ifdef DEFINE_NODENAMES'
 echo "STATIC const char * const NodeNames[${MAX} + 1] = {"
 
-grep '^#define' "$NODES" | sort -k2n | while read define name number opt_comment
+grep '^#define' "$NODES" | sort -k3n | while read define name number opt_comment
 do
 	: ${next:=0}
 	while [ "$number" -gt "$next" ]
