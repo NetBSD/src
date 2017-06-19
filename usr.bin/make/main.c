@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.271 2017/06/19 15:49:21 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.272 2017/06/19 19:58:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.271 2017/06/19 15:49:21 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.272 2017/06/19 19:58:24 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.271 2017/06/19 15:49:21 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.272 2017/06/19 19:58:24 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -155,7 +155,9 @@ Boolean			deleteOnError;	/* .DELETE_ON_ERROR: set */
 
 static Boolean		noBuiltins;	/* -r flag */
 static Lst		makefiles;	/* ordered list of makefiles to read */
-static Boolean		printVars;	/* print value of one or more vars */
+static int		printVars;	/* -[vV] argument */
+#define COMPAT_VARS 1
+#define EXPAND_VARS 2
 static Lst		variables;	/* list of variables to print */
 int			maxJobs;	/* -j argument */
 static int		maxJobTokens;	/* -j argument */
@@ -408,7 +410,7 @@ MainParseArgs(int argc, char **argv)
 	Boolean inOption, dashDash = FALSE;
 	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
 
-#define OPTFLAGS "BC:D:I:J:NST:V:WXd:ef:ij:km:nqrstw"
+#define OPTFLAGS "BC:D:I:J:NST:V:WXd:ef:ij:km:nqrstv:w"
 /* Can't actually use getopt(3) because rescanning is not portable */
 
 	getopt_def = OPTFLAGS;
@@ -533,8 +535,9 @@ rearg:
 			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 			break;
 		case 'V':
+		case 'v':
 			if (argvalue == NULL) goto noarg;
-			printVars = TRUE;
+			printVars = c == 'v' ? EXPAND_VARS : COMPAT_VARS;
 			(void)Lst_AtEnd(variables, argvalue);
 			Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
@@ -852,10 +855,12 @@ doPrintVars(void)
 	LstNode ln;
 	Boolean expandVars;
 
-	if (debugVflag)
+	if (printVars == EXPAND_VARS)
+		expandVars = TRUE;
+	else if (debugVflag)
 		expandVars = FALSE;
 	else
-		expandVars = getBoolean(".MAKE.EXPAND_VARIABLES", TRUE);
+		expandVars = getBoolean(".MAKE.EXPAND_VARIABLES", FALSE);
 
 	for (ln = Lst_First(variables); ln != NULL;
 	    ln = Lst_Succ(ln)) {
@@ -1072,7 +1077,7 @@ main(int argc, char **argv)
 
 	create = Lst_Init(FALSE);
 	makefiles = Lst_Init(FALSE);
-	printVars = FALSE;
+	printVars = 0;
 	debugVflag = FALSE;
 	variables = Lst_Init(FALSE);
 	beSilent = FALSE;		/* Print commands as executed */
@@ -1917,7 +1922,8 @@ usage(void)
 "usage: %s [-BeikNnqrstWwX] \n\
             [-C directory] [-D variable] [-d flags] [-f makefile]\n\
             [-I directory] [-J private] [-j max_jobs] [-m directory] [-T file]\n\
-            [-V variable] [variable=value] [target ...]\n", progname);
+            [-V variable] [-v variable] [variable=value] [target ...]\n",
+	    progname);
 	exit(2);
 }
 
