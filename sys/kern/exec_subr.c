@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.79 2017/06/19 15:53:16 joerg Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.80 2017/06/19 19:02:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.79 2017/06/19 15:53:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.80 2017/06/19 19:02:16 joerg Exp $");
 
 #include "opt_pax.h"
 
@@ -66,8 +66,6 @@ VMCMD_EVCNT_DECL(kills);
 #else
 #define DPRINTF(a)
 #endif
-
-uint32_t user_stack_guard_size = 1024 * 1024;
 
 /*
  * new_vmcmd():
@@ -442,17 +440,6 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	    (uintmax_t)access_size, (uintmax_t)access_linear_min,
 	    (uintmax_t)noaccess_size, (uintmax_t)noaccess_linear_min));
 
-	if (user_stack_guard_size > 0) {
-#ifdef __MACHINE_STACK_GROWS_UP
-		vsize_t guard_size = MIN(VM_MAXUSER_ADDRESS - epp->ep_maxsaddr, user_stack_guard_size);
-		if (guard_size > 0)
-			NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, guard_size,
-			    epp->ep_maxsaddr, NULL, 0, VM_PROT_NONE);
-#else
-		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, user_stack_guard_size,
-		    epp->ep_maxsaddr - user_stack_guard_size, NULL, 0, VM_PROT_NONE);
-#endif
-	}
 	if (noaccess_size > 0 && noaccess_size <= MAXSSIZ) {
 		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
 		    noaccess_linear_min, NULL, 0, VM_PROT_NONE, VMCMD_STACK);
