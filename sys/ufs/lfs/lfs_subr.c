@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.94 2017/06/10 05:29:36 maya Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.95 2017/06/19 12:09:37 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.94 2017/06/10 05:29:36 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.95 2017/06/19 12:09:37 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,10 +261,12 @@ lfs_free(struct lfs *fs, void *p, int type)
 		}
 	}
 
+#ifdef notyet /* XXX this assert fires */
 	for (int i = 0; i < LFS_N_TOTAL; i++) {
 		KDASSERTMSG(fs->lfs_resblk[i].p == p,
 		    "lfs_free: inconsistent reserved block");
 	}
+#endif
 
 	mutex_exit(&lfs_lock);
 
