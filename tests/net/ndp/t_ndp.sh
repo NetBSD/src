@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.20 2017/06/16 04:41:02 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.21 2017/06/19 10:57:37 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -396,6 +396,7 @@ ndp_link_activation_cleanup()
 	cleanup
 }
 
+atf_test_case ndp_rtm cleanup
 ndp_rtm_head()
 {
 
