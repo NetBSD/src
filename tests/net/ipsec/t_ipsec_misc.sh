@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.6 2017/06/01 03:56:47 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.7 2017/06/19 10:05:04 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -313,22 +313,23 @@ prepare_file()
 
 test_tcp()
 {
-	local proto=$1
+	local local_proto=$1
 	local ip_local=$2
-	local ip_peer=$3
+	local peer_proto=$3
+	local ip_peer=$4
 	local port=1234
 	local file_send=./file.send
 	local file_recv=./file.recv
 	local opts=
 
-	if [ $proto = ipv4 ]; then
+	if [ $local_proto = ipv4 ]; then
 		opts="-N -w 3 -4"
 	else
 		opts="-N -w 3 -6"
 	fi
 
 	# Start nc server
-	start_nc_server $SOCK_PEER $port $file_recv $proto
+	start_nc_server $SOCK_PEER $port $file_recv $peer_proto
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	# Send a file to the server
@@ -371,7 +372,7 @@ test_tcp_ipv4()
 
 	extract_new_packets $BUS > $outfile
 
-	test_tcp ipv4 $ip_local $ip_peer
+	test_tcp ipv4 $ip_local ipv4 $ip_peer
 
 	extract_new_packets $BUS > $outfile
 	$DEBUG && cat $outfile
@@ -415,7 +416,54 @@ test_tcp_ipv6()
 
 	extract_new_packets $BUS > $outfile
 
-	test_tcp ipv6 $ip_local $ip_peer
+	test_tcp ipv6 $ip_local ipv6 $ip_peer
+
+	extract_new_packets $BUS > $outfile
+	$DEBUG && cat $outfile
+
+	if [ $proto != none ]; then
+		atf_check -s exit:0 \
+		    -o match:"$ip_local > $ip_peer: $proto_cap" \
+		    cat $outfile
+		atf_check -s exit:0 \
+		    -o match:"$ip_peer > $ip_local: $proto_cap" \
+		    cat $outfile
+	fi
+}
+
+test_tcp_ipv4mappedipv6()
+{
+	local proto=$1
+	local algo=$2
+	local ip_local=10.0.0.1
+	local ip_peer=10.0.0.2
+	local ip6_peer=::ffff:10.0.0.2
+	local algo_args="$(generate_algo_args $proto $algo)"
+	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
+	local outfile=./out
+
+	rump_server_crypto_start $SOCK_LOCAL netipsec
+	rump_server_crypto_start $SOCK_PEER netipsec netinet6
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+	rump_server_add_iface $SOCK_PEER shmif0 $BUS
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_local/24
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	export RUMP_SERVER=$SOCK_PEER
+	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet6.ip6.v6only=0
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_peer/24
+	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip6_peer/96
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	if [ $proto != none ]; then
+		setup_sasp $proto "$algo_args" $ip_local $ip_peer 100
+	fi
+
+	extract_new_packets $BUS > $outfile
+
+	test_tcp ipv4 $ip_local ipv6 $ip_peer
 
 	extract_new_packets $BUS > $outfile
 	$DEBUG && cat $outfile
@@ -473,14 +521,17 @@ atf_init_test_cases()
 		add_test_lifetime ipv6 esp $algo
 		add_test_tcp ipv4 esp $algo
 		add_test_tcp ipv6 esp $algo
+		add_test_tcp ipv4mappedipv6 esp $algo
 	done
 	for algo in $AH_AUTHENTICATION_ALGORITHMS_MINIMUM; do
 		add_test_lifetime ipv4 ah $algo
 		add_test_lifetime ipv6 ah $algo
 		add_test_tcp ipv4 ah $algo
 		add_test_tcp ipv6 ah $algo
+		add_test_tcp ipv4mappedipv6 ah $algo
 	done
 
 	add_test_tcp ipv4 none
 	add_test_tcp ipv6 none
+	add_test_tcp ipv4mappedipv6 none
 }
