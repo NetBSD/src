@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.176 2017/06/17 22:35:50 mlelstv Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.177 2017/06/19 20:52:20 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.176 2017/06/17 22:35:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.177 2017/06/19 20:52:20 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -2403,7 +2403,7 @@ scsipi_target_detach(struct scsipi_channel *chan, int target, int lun,
 	device_t tdev;
 	int ctarget, mintarget, maxtarget;
 	int clun, minlun, maxlun;
-	int error;
+	int error = 0;
 
 	if (target == -1) {
 		mintarget = 0;
@@ -2453,7 +2453,7 @@ scsipi_target_detach(struct scsipi_channel *chan, int target, int lun,
 out:
 	KERNEL_UNLOCK_ONE(curlwp);
 
-	return 0;
+	return error;
 }
 
 /*
