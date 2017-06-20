@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.18 2017/06/19 21:00:00 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.19 2017/06/20 20:58:22 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.18 2017/06/19 21:00:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.19 2017/06/20 20:58:22 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -309,6 +309,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	wd->atabus = adev->adev_bustype;
 	wd->drvp = adev->adev_drv_data;
 
+	wd->drvp->drv_openings = 1;
 	wd->drvp->drv_done = wddone;
 	wd->drvp->drv_softc = wd->sc_dev; /* done in atabusconfig_thread()
 					     but too late */
@@ -646,7 +647,8 @@ wdstart(struct wd_softc *wd)
 
 	while (bufq_peek(wd->sc_q) != NULL) {
 		/* First try to get command */
-		xfer = ata_get_xfer(wd->drvp->chnl_softc, false);
+		xfer = ata_get_xfer_ext(wd->drvp->chnl_softc, false,
+		    wd->drvp->drv_openings);
 		if (xfer == NULL) 
 			break;
 
@@ -1637,7 +1639,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		wd->drvp->state = RESET;
 	}
 
-	xfer = ata_get_xfer(wd->drvp->chnl_softc, false);
+	xfer = ata_get_xfer_ext(wd->drvp->chnl_softc, false, 0);
 	if (xfer == NULL)
 		return EAGAIN;
 
@@ -1827,7 +1829,7 @@ wd_setcache(struct wd_softc *wd, int bits)
 	    (bits & DKCACHE_SAVE) != 0)
 		return EOPNOTSUPP;
 
-	xfer = ata_get_xfer(wd->drvp->chnl_softc, true);
+	xfer = ata_get_xfer(wd->drvp->chnl_softc);
 	if (xfer == NULL)
 		return EINTR;
 
@@ -1868,7 +1870,7 @@ wd_standby(struct wd_softc *wd, int flags)
 	struct ata_xfer *xfer;
 	int error;
 
-	xfer = ata_get_xfer(wd->drvp->chnl_softc, true);
+	xfer = ata_get_xfer(wd->drvp->chnl_softc);
 	if (xfer == NULL)
 		return EINTR;
 
@@ -1919,7 +1921,7 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	    wd->sc_params.atap_cmd_set2 == 0xffff))
 		return ENODEV;
 
-	xfer = ata_get_xfer(wd->drvp->chnl_softc, true);
+	xfer = ata_get_xfer(wd->drvp->chnl_softc);
 	if (xfer == NULL)
 		return EINTR;
 
@@ -1971,7 +1973,7 @@ wd_trim(struct wd_softc *wd, int part, daddr_t bno, long size)
 	if (part != RAW_PART)
 		bno += wd->sc_dk.dk_label->d_partitions[part].p_offset;;
 
-	xfer = ata_get_xfer(wd->drvp->chnl_softc, true);
+	xfer = ata_get_xfer(wd->drvp->chnl_softc);
 	if (xfer == NULL)
 		return EINTR;
 
@@ -2137,7 +2139,7 @@ wdioctlstrategy(struct buf *bp)
 		goto out2;
 	}
 
-	xfer = ata_get_xfer(wi->wi_softc->drvp->chnl_softc, true);
+	xfer = ata_get_xfer(wi->wi_softc->drvp->chnl_softc);
 	if (xfer == NULL) {
 		error = EINTR;
 		goto out2;

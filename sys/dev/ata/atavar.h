@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.10 2017/06/19 21:00:00 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.11 2017/06/20 20:58:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -183,16 +183,23 @@ struct ata_xfer {
 #define KILL_GONE 1 /* device is gone */
 #define KILL_RESET 2 /* xfer was reset */
 
+/*
+ * While hw supports up to 32 tags, in practice we must never
+ * allow 32 active commands, since that would signal same as
+ * channel error. So just limit this to 31.
+ */
+#define ATA_MAX_OPENINGS	31
+
 /* Per-channel queue of ata_xfers */
 struct ata_queue {
-	TAILQ_HEAD(, ata_xfer) queue_xfer; 	/* queue of pending commands */
-	int queue_freeze; 		/* freeze count for the queue */
 	int8_t queue_flags;		/* flags for this queue */
 #define QF_IDLE_WAIT	0x01    	/* someone wants the controller idle */
 #define QF_NEED_XFER	0x02    	/* someone wants xfer */
 	int8_t queue_active; 		/* number of active transfers */
-	int8_t queue_openings; 		/* max number of active transfers */
 #ifdef ATABUS_PRIVATE
+	int8_t queue_openings; 			/* max number of active xfers */
+	TAILQ_HEAD(, ata_xfer) queue_xfer; 	/* queue of pending commands */
+	int queue_freeze; 			/* freeze count for the queue */
 	kcondvar_t queue_busy;			/* c: waiting of xfer */
 	TAILQ_HEAD(, ata_xfer) active_xfers; 	/* active commands */
 	uint32_t active_xfers_used;		/* mask of active commands */
@@ -477,10 +484,9 @@ int	ata_set_mode(struct ata_drive_datas *, uint8_t, uint8_t);
 #define CMD_ERR   1
 #define CMD_AGAIN 2
 
-struct ata_xfer *ata_get_xfer(struct ata_channel *, bool);
+struct ata_xfer *ata_get_xfer_ext(struct ata_channel *, bool, int8_t);
+#define ata_get_xfer(chp) ata_get_xfer_ext((chp), true, 0);
 void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
-#define	ATAXF_CANSLEEP	0x00
-#define	ATAXF_NOSLEEP	0x01
 
 void	ata_activate_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_deactivate_xfer(struct ata_channel *, struct ata_xfer *);
@@ -489,6 +495,8 @@ void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_kill_pending(struct ata_drive_datas *);
 void	ata_kill_active(struct ata_channel *, int, int);
 void	ata_reset_channel(struct ata_channel *, int);
+void	ata_channel_freeze(struct ata_channel *);
+void	ata_channel_thaw(struct ata_channel *);
 
 int	ata_addref(struct ata_channel *);
 void	ata_delref(struct ata_channel *);
@@ -502,14 +510,13 @@ void	ata_probe_caps(struct ata_drive_datas *);
 #if NATA_DMA
 void	ata_dmaerr(struct ata_drive_datas *, int);
 #endif
-void	ata_queue_idle(struct ata_queue *);
 struct ata_queue *
 	ata_queue_alloc(uint8_t openings);
 void	ata_queue_free(struct ata_queue *);
 struct ata_xfer *
 	ata_queue_hwslot_to_xfer(struct ata_queue *, int);
 struct ata_xfer *
-	ata_queue_active_xfer_peek(struct ata_queue *);
+	ata_queue_get_active_xfer(struct ata_queue *);
 
 void	ata_delay(int, const char *, int);
 

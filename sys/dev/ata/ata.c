@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.11 2017/06/19 21:00:00 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.12 2017/06/20 20:58:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.11 2017/06/19 21:00:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.12 2017/06/20 20:58:22 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -131,6 +131,7 @@ static void atabusconfig_thread(void *);
 
 static void ata_xfer_init(struct ata_xfer *, bool);
 static void ata_xfer_destroy(struct ata_xfer *);
+static void ata_channel_idle(struct ata_channel *);
 
 /*
  * atabus_init:
@@ -214,13 +215,14 @@ ata_queue_hwslot_to_xfer(struct ata_queue *chq, int hwslot)
 
 /*
  * This interface is supposed only to be used when there is exactly
- * one outstanding command, and there is no information about the slot,
+ * one outstanding command, when there is no information about the slot,
  * which triggered the command. ata_queue_hwslot_to_xfer() interface
- * is preferred in all standard cases.
+ * is preferred in all NCQ cases.
  */
 struct ata_xfer *
-ata_queue_active_xfer_peek(struct ata_queue *chq)
+ata_queue_get_active_xfer(struct ata_queue *chq)
 {
+	KASSERT(chq->queue_active <= 1);
 	return TAILQ_FIRST(&chq->active_xfers);
 }
 
@@ -246,13 +248,8 @@ ata_queue_alloc(uint8_t openings)
 	if (openings == 0)
 		openings = 1;
 
-	/*
-	 * While hw supports up to 32 tags, in practice we must never
-	 * allow 32 active commands, since that would signal same as
-	 * channel error. So just limit this to 31.
-	 */
-	if (openings > 31)
-		openings = 31;
+	if (openings > ATA_MAX_OPENINGS)
+		openings = ATA_MAX_OPENINGS;
 
 	struct ata_queue *chq = malloc(offsetof(struct ata_queue, queue_xfers[openings]),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
@@ -266,17 +263,6 @@ ata_queue_alloc(uint8_t openings)
 		ata_xfer_init(&chq->queue_xfers[i], false);
 
 	return chq;
-}
-
-static void
-ata_queue_downsize(struct ata_queue *chq, uint8_t openings)
-{
-	KASSERT(chq->queue_active == 0);
-	KASSERT(TAILQ_FIRST(&chq->queue_xfer) == NULL);
-	KASSERT(openings < chq->queue_openings);
-
-	chq->queue_openings = openings;
-	ata_queue_reset(chq);
 }
 
 void
@@ -588,13 +574,13 @@ atabus_thread(void *arg)
 			 * ata_reset_channel() will freeze 2 times, so
 			 * unfreeze one time. Not a problem as we're at splbio
 			 */
-			chq->queue_freeze--;
+			ata_channel_thaw(chp);
 			ata_reset_channel(chp, AT_WAIT | chp->ch_reset_flags);
 		} else if (chq->queue_active > 0 && chq->queue_freeze == 1) {
 			/*
 			 * Caller has bumped queue_freeze, decrease it.
 			 */
-			chq->queue_freeze--;
+			ata_channel_thaw(chp);
 			u_int active __diagused = 0;
 			TAILQ_FOREACH(xfer, &chq->active_xfers, c_activechain) {
 				(*xfer->c_start)(xfer->c_chp, xfer);
@@ -1020,14 +1006,14 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
  * freeze the queue and wait for the controller to be idle. Caller has to
  * unfreeze/restart the queue
  */
-void
-ata_queue_idle(struct ata_queue *queue)
+static void
+ata_channel_idle(struct ata_channel *chp)
 {
 	int s = splbio();
-	queue->queue_freeze++;
-	while (queue->queue_active > 0) {
-		queue->queue_flags |= QF_IDLE_WAIT;
-		tsleep(&queue->queue_flags, PRIBIO, "qidl", 0);
+	ata_channel_freeze(chp);
+	while (chp->ch_queue->queue_active > 0) {
+		chp->ch_queue->queue_flags |= QF_IDLE_WAIT;
+		tsleep(&chp->ch_queue->queue_flags, PRIBIO, "qidl", 0);
 	}
 	splx(s);
 }
@@ -1160,18 +1146,28 @@ atastart(struct ata_channel *chp)
 	xfer->c_start(chp, xfer);
 }
 
+/*
+ * Does it's own locking, does not require splbio().
+ * wait - whether to block waiting for free xfer
+ * openings - limit of openings supported by device, <= 0 means tag not
+ *     relevant, and any available xfer can be returned
+ */
 struct ata_xfer *
-ata_get_xfer(struct ata_channel *chp, bool wait)
+ata_get_xfer_ext(struct ata_channel *chp, bool wait, int8_t openings)
 {
 	struct ata_queue *chq = chp->ch_queue;
 	struct ata_xfer *xfer = NULL;
-	uint32_t avail, slot;
+	uint32_t avail, slot, mask;
 	int error;
 
 	mutex_enter(&chp->ch_lock);
 
 retry:
-	avail = ffs32(chq->queue_xfers_avail);
+	mask = (openings > 0)
+	    ? (__BIT(MIN(ATA_MAX_OPENINGS, openings)) - 1)
+	    : chq->queue_xfers_avail;
+
+	avail = ffs32(chq->queue_xfers_avail & mask);
 	if (avail == 0) {
 		if (wait) {
 			chq->queue_flags |= QF_NEED_XFER;
@@ -1356,6 +1352,18 @@ ata_kill_pending(struct ata_drive_datas *drvp)
 	splx(s);
 }
 
+void
+ata_channel_freeze(struct ata_channel *chp)
+{
+	chp->ch_queue->queue_freeze++;		/* XXX MPSAFE */
+}
+
+void
+ata_channel_thaw(struct ata_channel *chp)
+{
+	chp->ch_queue->queue_freeze--;		/* XXX MPSAFE */
+}
+
 /*
  * ata_reset_channel:
  *
@@ -1382,7 +1390,7 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 	splx(spl1);
 #endif /* ATA_DEBUG */
 
-	chp->ch_queue->queue_freeze++;
+	ata_channel_freeze(chp);
 
 	/*
 	 * If we can poll or wait it's OK, otherwise wake up the
@@ -1393,7 +1401,7 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 	if ((flags & (AT_POLL | AT_WAIT)) == 0) {
 		if (chp->ch_flags & ATACH_TH_RESET) {
 			/* No need to schedule a reset more than one time. */
-			chp->ch_queue->queue_freeze--;
+			ata_channel_thaw(chp);
 			return;
 		}
 		chp->ch_flags |= ATACH_TH_RESET;
@@ -1410,7 +1418,7 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 
 	chp->ch_flags &= ~ATACH_TH_RESET;
 	if ((flags & AT_RST_EMERG) == 0)  {
-		chp->ch_queue->queue_freeze--;
+		ata_channel_thaw(chp);
 		atastart(chp);
 	} else {
 		/* make sure that we can use polled commands */
@@ -1831,8 +1839,6 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			aprint_verbose(" w/PRIO");
 		}
 	}
-	if (drvp->drv_openings < chp->ch_queue->queue_openings)
-		ata_queue_downsize(chp->ch_queue, drvp->drv_openings);
 	splx(s);
 
 	if (printed)
@@ -1976,7 +1982,7 @@ atabus_suspend(device_t dv, const pmf_qual_t *qual)
 	struct atabus_softc *sc = device_private(dv);
 	struct ata_channel *chp = sc->sc_chan;
 
-	ata_queue_idle(chp->ch_queue);
+	ata_channel_idle(chp);
 
 	return true;
 }
@@ -1999,7 +2005,7 @@ atabus_resume(device_t dv, const pmf_qual_t *qual)
 	}
 	KASSERT(chp->ch_queue->queue_freeze > 0);
 	/* unfreeze the queue and reset drives */
-	chp->ch_queue->queue_freeze--;
+	ata_channel_thaw(chp);
 
 	/* reset channel only if there are drives attached */
 	if (chp->ch_ndrives > 0)

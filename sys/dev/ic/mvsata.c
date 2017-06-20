@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.12 2017/06/19 21:00:00 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.13 2017/06/20 20:58:22 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.12 2017/06/19 21:00:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.13 2017/06/20 20:58:22 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -791,7 +791,7 @@ mvsata_atapi_scsipi_request(struct scsipi_channel *chan,
 			scsipi_done(sc_xfer);
 			return;
 		}
-		xfer = ata_get_xfer(chp, false);
+		xfer = ata_get_xfer_ext(chp, false, 0);
 		if (xfer == NULL) {
 			sc_xfer->error = XS_RESOURCE_SHORTAGE;
 			scsipi_done(sc_xfer);
@@ -1219,7 +1219,7 @@ do_pio:
 			 * thread
 			 */
 			if ((xfer->c_flags & C_POLL) == 0 && cpu_intr_p()) {
-				chp->ch_queue->queue_freeze++;
+				ata_channel_freeze(chp);
 				wakeup(&chp->ch_thread);
 				return;
 			}
@@ -1897,7 +1897,7 @@ mvsata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	if (__predict_false(drvp->state < READY)) {
 		/* If it's not a polled command, we need the kernel thread */
 		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0 && cpu_intr_p()) {
-			chp->ch_queue->queue_freeze++;
+			ata_channel_freeze(chp);
 			wakeup(&chp->ch_thread);
 			return;
 		}

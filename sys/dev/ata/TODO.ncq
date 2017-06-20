@@ -22,14 +22,6 @@ do proper NCQ error recovery (currently not even really attempted)
 maybe do device error handling in not-interrupt-context (maybe this should be
 done on a mpata branch?)
 
-atabus(4) queue depth can only shrink, causing NCQ to not be available if NCQ
-drive rescaned after detach of non-NCQ drive
-- careful with PMP, must be minimum of openings supported by drives
-  attached to the same channel
-- the downsize can leak transfers with PMP if other device happens
-  to have active or pending transfers (e.g. when non-NCQ device is attached
-  while there is already NCQ device present)
-
 add mechanics to re-check queue when xfer is finished - needed on PMP
 and for IDE disks, when one drive uses up all available xfers nothing
 ever restarts queue for the other drives

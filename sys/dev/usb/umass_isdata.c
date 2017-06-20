@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.33.4.3 2017/06/19 21:00:00 jdolecek Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.33.4.4 2017/06/20 20:58:22 jdolecek Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.33.4.3 2017/06/19 21:00:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.33.4.4 2017/06/20 20:58:22 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -502,7 +502,7 @@ uisdata_kill_pending(struct ata_drive_datas *drv)
 	struct ata_channel *chp = drv->chnl_softc;
 	struct umass_softc *sc = CH2SELF(chp);
 	struct uisdata_softc *scbus = (struct uisdata_softc *)sc->bus;
-	struct ata_xfer *xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0);
+	struct ata_xfer *xfer = ata_queue_get_active_xfer(chp->ch_queue);
 	struct ata_bio *ata_bio = &xfer->c_bio;
 
 	DPRINTFN(-1,("%s\n", __func__));
@@ -534,7 +534,7 @@ uisdata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 	memset(tb, 0, DEV_BSIZE);
 	memset(prms, 0, sizeof(struct ataparams));
 
-	xfer = ata_get_xfer(drvp->chnl_softc, true);
+	xfer = ata_get_xfer(drvp->chnl_softc);
 	if (!xfer) {
 		rv = CMD_AGAIN;
 		goto out;

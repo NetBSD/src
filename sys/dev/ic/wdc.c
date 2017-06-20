@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.283.2.6 2017/06/19 21:00:00 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.283.2.7 2017/06/20 20:58:22 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.6 2017/06/19 21:00:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.7 2017/06/20 20:58:22 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -873,11 +873,10 @@ wdcintr(void *arg)
 	}
 
 	ATADEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
-	KASSERT(chp->ch_queue->queue_openings == 1);
-	xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0);
+	KASSERT(chp->ch_queue->queue_active == 1);
+	xfer = ata_queue_get_active_xfer(chp->ch_queue);
+	KASSERT(xfer != NULL);
 #ifdef DIAGNOSTIC
-	if (xfer == NULL)
-		panic("wdcintr: no xfer");
 	if (xfer->c_chp != chp) {
 		printf("channel %d expected %d\n", xfer->c_chp->ch_channel,
 		    chp->ch_channel);
@@ -933,8 +932,7 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 	 * if the current command is on an ATAPI device, issue a
 	 * ATAPI_SOFT_RESET
 	 */
-	KASSERT(chp->ch_queue->queue_openings == 1);
-	xfer = ata_queue_active_xfer_peek(chp->ch_queue);
+	xfer = ata_queue_get_active_xfer(chp->ch_queue);
 	if (xfer && xfer->c_chp == chp && (xfer->c_flags & C_ATAPI)) {
 		wdccommandshort(chp, xfer->c_drive, ATAPI_SOFT_RESET);
 		if (flags & AT_WAIT)
@@ -1205,7 +1203,9 @@ __wdcwait(struct ata_channel *chp, int mask, int bits, int timeout)
 #ifdef WDCNDELAY_DEBUG
 	/* After autoconfig, there should be no long delays. */
 	if (!cold && xtime > WDCNDELAY_DEBUG) {
-		struct ata_xfer *xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0);
+		struct ata_xfer *xfer;
+
+		xfer = ata_queue_get_active_xfer(chp->ch_queue);
 		if (xfer == NULL)
 			printf("%s channel %d: warning: busy-wait took %dus\n",
 			    device_xname(chp->ch_atac->atac_dev),
@@ -1254,11 +1254,7 @@ wdcwait(struct ata_channel *chp, int mask, int bits, int timeout, int flags)
 				 * we're probably in interrupt context,
 				 * ask the thread to come back here
 				 */
-#ifdef DIAGNOSTIC
-				if (chp->ch_queue->queue_freeze > 0)
-					panic("wdcwait: queue_freeze");
-#endif
-				chp->ch_queue->queue_freeze++;
+				ata_channel_freeze(chp);
 				wakeup(&chp->ch_thread);
 				return(WDCWAIT_THR);
 			}
@@ -1817,7 +1813,7 @@ static void
 __wdcerror(struct ata_channel *chp, const char *msg)
 {
 	struct atac_softc *atac = chp->ch_atac;
-	struct ata_xfer *xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0);
+	struct ata_xfer *xfer = ata_queue_get_active_xfer(chp->ch_queue);
 
 	if (xfer == NULL)
 		aprint_error("%s:%d: %s\n", device_xname(atac->atac_dev),

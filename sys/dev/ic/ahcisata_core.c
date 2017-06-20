@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.14 2017/06/19 21:00:00 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.15 2017/06/20 20:58:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.14 2017/06/19 21:00:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.15 2017/06/20 20:58:22 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1569,7 +1569,7 @@ ahci_atapi_scsipi_request(struct scsipi_channel *chan,
 			scsipi_done(sc_xfer);
 			return;
 		}
-		xfer = ata_get_xfer(atac->atac_channels[channel], false);
+		xfer = ata_get_xfer_ext(atac->atac_channels[channel], false, 0);
 		if (xfer == NULL) {
 			sc_xfer->error = XS_RESOURCE_SHORTAGE;
 			scsipi_done(sc_xfer);

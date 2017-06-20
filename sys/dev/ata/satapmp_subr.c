@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmp_subr.c,v 1.12.24.3 2017/06/19 21:00:00 jdolecek Exp $	*/
+/*	$NetBSD: satapmp_subr.c,v 1.12.24.4 2017/06/20 20:58:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2012 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.12.24.3 2017/06/19 21:00:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.12.24.4 2017/06/20 20:58:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value)
 	drvp = &chp->ch_drive[PMP_PORT_CTL];
 	KASSERT(drvp->drive == PMP_PORT_CTL);
 
-	xfer = ata_get_xfer(chp, true);
+	xfer = ata_get_xfer(chp);
 	if (xfer == NULL)
 		return EINTR;
 
@@ -133,7 +133,7 @@ satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value)
 	drvp = &chp->ch_drive[PMP_PORT_CTL];
 	KASSERT(drvp->drive == PMP_PORT_CTL);
 
-	xfer = ata_get_xfer(chp, true);
+	xfer = ata_get_xfer(chp);
 	if (xfer == NULL)
 		return EINTR;
 
