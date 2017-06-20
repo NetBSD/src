@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5410_clock.c,v 1.1 2017/06/20 13:21:45 jmcneill Exp $ */
+/* $NetBSD: exynos5410_clock.c,v 1.2 2017/06/20 17:43:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.1 2017/06/20 13:21:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.2 2017/06/20 17:43:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -322,11 +322,11 @@ static struct exynos_clk exynos5410_clocks[] = {
 	CLK_DIV("dout_mmc1", "mout_mmc1", EXYNOS5410_DIV_FSYS1, __BITS(19,16)),
 	CLK_DIV("dout_mmc2", "mout_mmc2", EXYNOS5410_DIV_FSYS2, __BITS(3,0)),
 
-	CLK_DIVF("dout_mmc_pre0", "div_mmc0", EXYNOS5410_DIV_FSYS1, __BITS(15,8),
+	CLK_DIVF("dout_mmc_pre0", "dout_mmc0", EXYNOS5410_DIV_FSYS1, __BITS(15,8),
 	    CLK_SET_RATE_PARENT),
-	CLK_DIVF("dout_mmc_pre1", "div_mmc1", EXYNOS5410_DIV_FSYS1, __BITS(31,24),
+	CLK_DIVF("dout_mmc_pre1", "dout_mmc1", EXYNOS5410_DIV_FSYS1, __BITS(31,24),
 	    CLK_SET_RATE_PARENT),
-	CLK_DIVF("dout_mmc_pre2", "div_mmc2", EXYNOS5410_DIV_FSYS2, __BITS(15,8),
+	CLK_DIVF("dout_mmc_pre2", "dout_mmc2", EXYNOS5410_DIV_FSYS2, __BITS(15,8),
 	    CLK_SET_RATE_PARENT),
 
 	CLK_DIV("div_uart0", "mout_uart0", EXYNOS5410_DIV_PERIC0, __BITS(3,0)),
@@ -347,11 +347,11 @@ static struct exynos_clk exynos5410_clocks[] = {
 	CLK_GATE("rtc", "aclk66", EXYNOS5410_GATE_IP_PERIS, __BIT(20), 0),
 	CLK_GATE("tmu", "aclk66", EXYNOS5410_GATE_IP_PERIS, __BIT(21), 0),
 
-	CLK_GATE("sclk_mmc0", "div_mmc_pre0", EXYNOS5410_SRC_MASK_FSYS,
+	CLK_GATE("sclk_mmc0", "dout_mmc_pre0", EXYNOS5410_SRC_MASK_FSYS,
 	    __BIT(0), CLK_SET_RATE_PARENT),
-	CLK_GATE("sclk_mmc1", "div_mmc_pre1", EXYNOS5410_SRC_MASK_FSYS,
+	CLK_GATE("sclk_mmc1", "dout_mmc_pre1", EXYNOS5410_SRC_MASK_FSYS,
 	    __BIT(4), CLK_SET_RATE_PARENT),
-	CLK_GATE("sclk_mmc2", "div_mmc_pre2", EXYNOS5410_SRC_MASK_FSYS,
+	CLK_GATE("sclk_mmc2", "dout_mmc_pre2", EXYNOS5410_SRC_MASK_FSYS,
 	    __BIT(8), CLK_SET_RATE_PARENT),
 
 	CLK_GATE("mmc0", "aclk200", EXYNOS5410_GATE_BUS_FSYS0, __BIT(12), 0),
