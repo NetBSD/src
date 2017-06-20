@@ -1,7 +1,7 @@
-/*	$NetBSD: globals.h,v 1.7.4.1 2015/07/17 04:31:21 snj Exp $	*/
+/*	$NetBSD: globals.h,v 1.7.4.1.2.1 2017/06/20 16:39:57 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -166,16 +166,20 @@ EXTERN isc_boolean_t		ns_g_dropedns		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_noedns		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_nosoa		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_noaa		INIT(ISC_FALSE);
+EXTERN isc_boolean_t		ns_g_keepstderr		INIT(ISC_FALSE);
 EXTERN unsigned int		ns_g_delay		INIT(0);
 EXTERN isc_boolean_t		ns_g_nonearest		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_notcp		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_disable6		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_disable4		INIT(ISC_FALSE);
+EXTERN unsigned int		ns_g_tat_interval	INIT(24*3600);
 
 
 #ifdef HAVE_GEOIP
 EXTERN dns_geoip_databases_t	*ns_g_geoip		INIT(NULL);
 #endif
+
+EXTERN dns_acl_t *		ns_g_mapped		INIT(NULL);
 
 #undef EXTERN
 #undef INIT

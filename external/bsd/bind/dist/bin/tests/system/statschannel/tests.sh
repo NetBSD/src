@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,7 @@ SYSTEMTESTTOP=..
 
 DIGCMD="$DIG @10.53.0.2 -p 5300"
 
-if [ ! "$JSONSTATS" ]
+if [ ! "$HAVEJSONSTATS" ]
 then
     unset PERL_JSON
     echo "I:JSON was not configured; skipping" >&2
@@ -31,7 +31,7 @@ else
     echo "I:JSON tests require JSON library; skipping" >&2
 fi
 
-if [ ! "$XMLSTATS" ]
+if [ ! "$HAVEXMLSTATS" ]
 then
     unset PERL_XML
     echo "I:XML was not configured; skipping" >&2
@@ -85,4 +85,4 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

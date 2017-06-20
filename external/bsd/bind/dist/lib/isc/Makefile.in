@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -35,7 +35,7 @@ CWARNINGS =
 
 # Alphabetically
 UNIXOBJS =	@ISC_ISCIPV6_O@ @ISC_ISCPK11_API_O@ \
-		unix/app.@O@ unix/dir.@O@ unix/entropy.@O@ \
+		unix/app.@O@ unix/dir.@O@ unix/entropy.@O@ unix/errno.@O@ \
 		unix/errno2result.@O@ unix/file.@O@ unix/fsaccess.@O@ \
 		unix/interfaceiter.@O@ unix/keyboard.@O@ unix/net.@O@ \
 		unix/os.@O@ unix/resource.@O@ unix/socket.@O@ unix/stdio.@O@ \
@@ -47,8 +47,9 @@ THREADOPTOBJS = @ISC_THREAD_DIR@/condition.@O@ @ISC_THREAD_DIR@/mutex.@O@
 
 THREADOBJS =	@THREADOPTOBJS@ @ISC_THREAD_DIR@/thread.@O@
 
-WIN32OBJS = 	win32/condition.@O@ win32/dir.@O@ win32/file.@O@ \
-		win32/fsaccess.@O@ win32/once.@O@ win32/stdtime.@O@ \
+WIN32OBJS = 	win32/condition.@O@ win32/dir.@O@ win32/errno.@O@ \
+		win32/file.@O@ win32/fsaccess.@O@ \
+		win32/once.@O@ win32/stdtime.@O@ \
 		win32/thread.@O@ win32/time.@O@
 
 # Alphabetically
@@ -137,6 +138,9 @@ installdirs:
 
 install:: timestamp installdirs
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_LIBRARY} libisc.@A@ ${DESTDIR}${libdir}
+
+uninstall::
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${libdir}/libisc.@A@
 
 clean distclean::
 	rm -f libisc.@A@ libisc-nosymtbl.@A@ libisc.la \

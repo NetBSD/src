@@ -1,7 +1,7 @@
-/*	$NetBSD: zoneconf.c,v 1.6.4.1.2.1 2016/10/14 11:42:29 martin Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.6.4.1.2.2 2017/06/20 16:39:57 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -984,6 +984,13 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		if (raw != NULL)
 			dns_zone_setmaxttl(raw, maxttl);
 	}
+
+	obj = NULL;
+	result = ns_config_get(maps, "max-records", &obj);
+	INSIST(result == ISC_R_SUCCESS && obj != NULL);
+	dns_zone_setmaxrecords(mayberaw, cfg_obj_asuint32(obj));
+	if (zone != mayberaw)
+		dns_zone_setmaxrecords(zone, 0);
 
 	if (raw != NULL && filename != NULL) {
 #define SIGNED ".signed"

@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-settime.c,v 1.10.2.2.2.2 2016/10/14 11:42:28 martin Exp $	*/
+/*	$NetBSD: dnssec-settime.c,v 1.10.2.2.2.3 2017/06/20 16:39:57 snj Exp $	*/
 
 /*
- * Copyright (C) 2009-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -474,11 +474,12 @@ main(int argc, char **argv) {
 	if ((setdel && setinact && del < inact) ||
 	    (dst_key_gettime(key, DST_TIME_INACTIVE,
 			     &previnact) == ISC_R_SUCCESS &&
-	     setdel && !setinact && del < previnact) ||
+	     setdel && !setinact && !unsetinact && del < previnact) ||
 	    (dst_key_gettime(key, DST_TIME_DELETE,
 			     &prevdel) == ISC_R_SUCCESS &&
-	     setinact && !setdel && prevdel < inact) ||
-	    (!setdel && !setinact && prevdel < previnact))
+	     setinact && !setdel && !unsetdel && prevdel < inact) ||
+	    (!setdel && !unsetdel && !setinact && !unsetinact &&
+	     prevdel < previnact))
 		fprintf(stderr, "%s: warning: Key is scheduled to "
 				"be deleted before it is\n\t"
 				"scheduled to be inactive.\n",

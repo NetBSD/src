@@ -114,7 +114,7 @@ restart () {
 	    PID=`cat ns$1/named.pid 2>/dev/null`
 	    if test -n "$PID"; then
 		echo "I:killing ns$1 server $PID"
-		kill -9 $PID
+		$KILL -9 $PID
 	    fi
 	fi
     fi
@@ -446,7 +446,7 @@ nochange a5-1-2.tld2
 end_group
 ckstats $ns3 'radix tree deletions' ns3 0
 
-if ./rpz nsdname; then
+if $FEATURETEST --rpz-nsdname; then
     # these tests assume "min-ns-dots 0"
     start_group "NSDNAME rewrites" test3
     nochange a3-1.tld2			# 1
@@ -467,7 +467,7 @@ else
     echo "I:NSDNAME not checked; named configured with --disable-rpz-nsdname"
 fi
 
-if ./rpz nsip; then
+if $FEATURETEST --rpz-nsip; then
     # these tests assume "min-ns-dots 0"
     start_group "NSIP rewrites" test4
     nxdomain a3-1.tld2			# 1 NXDOMAIN for all of tld2
@@ -647,4 +647,4 @@ $DIG -p 5300 @$ns3 ns example.com > dig.out.delegation
 grep "status: SERVFAIL" dig.out.delegation > /dev/null || setret "I:failed"
 
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

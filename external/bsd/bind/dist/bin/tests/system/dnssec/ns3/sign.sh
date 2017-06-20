@@ -214,7 +214,8 @@ $SIGNER -P -3 - -r $RANDFILE -o $zone -O full -f ${zonefile}.tmp $zonefile > /de
 
 awk '$4 == "DNSKEY" { $7 = 100; print } $4 == "RRSIG" { $6 = 100; print } { print }' ${zonefile}.tmp > ${zonefile}.signed
 
-$DSFROMKEY -A -f ${zonefile}.signed $zone > dsset-${zone}
+DSFILE=dsset-`echo ${zone} |sed -e "s/\.$//g"`$TP
+$DSFROMKEY -A -f ${zonefile}.signed $zone > $DSFILE
 
 #
 # A zone with a unknown DNSKEY algorithm + unknown NSEC3 hash algorithm (-U).
@@ -232,7 +233,8 @@ $SIGNER -P -3 - -r $RANDFILE -o $zone -U -O full -f ${zonefile}.tmp $zonefile > 
 
 awk '$4 == "DNSKEY" { $7 = 100; print } $4 == "RRSIG" { $6 = 100; print } { print }' ${zonefile}.tmp > ${zonefile}.signed
 
-$DSFROMKEY -A -f ${zonefile}.signed $zone > dsset-${zone}
+DSFILE=dsset-`echo ${zone} |sed -e "s/\.$//g"`$TP
+$DSFROMKEY -A -f ${zonefile}.signed $zone > $DSFILE
 
 #
 # A multiple parameter nsec3 zone.

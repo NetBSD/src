@@ -1,7 +1,7 @@
-/*	$NetBSD: result.h,v 1.5.6.1 2016/03/13 08:00:35 martin Exp $	*/
+/*	$NetBSD: result.h,v 1.5.6.2 2017/06/20 16:40:21 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -159,8 +159,12 @@
 #define DNS_R_BADCDS			(ISC_RESULTCLASS_DNS + 111)
 #define DNS_R_BADCDNSKEY		(ISC_RESULTCLASS_DNS + 112)
 #define DNS_R_OPTERR			(ISC_RESULTCLASS_DNS + 113)
+#define DNS_R_BADDNSTAP			(ISC_RESULTCLASS_DNS + 114)
+#define DNS_R_BADTSIG			(ISC_RESULTCLASS_DNS + 115)
+#define DNS_R_BADSIG0			(ISC_RESULTCLASS_DNS + 116)
+#define DNS_R_TOOMANYRECORDS		(ISC_RESULTCLASS_DNS + 117)
 
-#define DNS_R_NRESULTS			114	/*%< Number of results */
+#define DNS_R_NRESULTS			118	/*%< Number of results */
 
 /*
  * DNS wire format rcodes.

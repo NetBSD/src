@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -18,8 +18,8 @@ SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 ret=0
-../rpz/rpz nsdname || ret=1
-../rpz/rpz nsip || ret=1
+$FEATURETEST --rpz-nsdname || ret=1
+$FEATURETEST --rpz-nsip || ret=1
 
 if [ $ret != 0 ]; then
     echo "I:This test requires NSIP AND NSDNAME support in RPZ." >&2

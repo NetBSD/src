@@ -1,7 +1,7 @@
-/*	$NetBSD: nsupdate.c,v 1.11.2.2.2.2 2016/10/14 11:42:29 martin Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.11.2.2.2.3 2017/06/20 16:39:58 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -51,6 +51,8 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
+#include <pk11/site.h>
+
 #include <isccfg/namedconf.h>
 
 #include <dns/callbacks.h>
@@ -90,8 +92,17 @@
 #include <bind9/getaddresses.h>
 
 #if defined(HAVE_READLINE)
+#if defined(HAVE_EDIT_READLINE_READLINE_H)
+#include <edit/readline/readline.h>
+#if defined(HAVE_EDIT_READLINE_HISTORY_H)
+#include <edit/readline/history.h>
+#endif
+#elif defined(HAVE_EDITLINE_READLINE_H)
+#include <editline/readline.h>
+#else
 #include <readline/readline.h>
 #include <readline/history.h>
+#endif
 #endif
 
 #ifdef HAVE_ADDRINFO
@@ -459,6 +470,7 @@ parse_hmac(dns_name_t **hmac, const char *hmacstr, size_t len) {
 	strncpy(buf, hmacstr, len);
 	buf[len] = 0;
 
+#ifndef PK11_MD5_DISABLE
 	if (strcasecmp(buf, "hmac-md5") == 0) {
 		*hmac = DNS_TSIG_HMACMD5_NAME;
 	} else if (strncasecmp(buf, "hmac-md5-", 9) == 0) {
@@ -467,7 +479,9 @@ parse_hmac(dns_name_t **hmac, const char *hmacstr, size_t len) {
 		if (result != ISC_R_SUCCESS || digestbits > 128)
 			fatal("digest-bits out of range [0..128]");
 		digestbits = (digestbits +7) & ~0x7U;
-	} else if (strcasecmp(buf, "hmac-sha1") == 0) {
+	} else
+#endif
+	if (strcasecmp(buf, "hmac-sha1") == 0) {
 		*hmac = DNS_TSIG_HMACSHA1_NAME;
 	} else if (strncasecmp(buf, "hmac-sha1-", 10) == 0) {
 		*hmac = DNS_TSIG_HMACSHA1_NAME;
@@ -557,7 +571,11 @@ setup_keystr(void) {
 		secretstr = n + 1;
 		digestbits = parse_hmac(&hmacname, keystr, s - keystr);
 	} else {
+#ifndef PK11_MD5_DISABLE
 		hmacname = DNS_TSIG_HMACMD5_NAME;
+#else
+		hmacname = DNS_TSIG_HMACSHA256_NAME;
+#endif
 		name = keystr;
 		n = s;
 	}
@@ -691,9 +709,11 @@ setup_keyfile(isc_mem_t *mctx, isc_log_t *lctx) {
 	}
 
 	switch (dst_key_alg(dstkey)) {
+#ifndef PK11_MD5_DISABLE
 	case DST_ALG_HMACMD5:
 		hmacname = DNS_TSIG_HMACMD5_NAME;
 		break;
+#endif
 	case DST_ALG_HMACSHA1:
 		hmacname = DNS_TSIG_HMACSHA1_NAME;
 		break;
@@ -1549,7 +1569,11 @@ evaluate_key(char *cmdline) {
 		digestbits = parse_hmac(&hmacname, namestr, n - namestr);
 		namestr = n + 1;
 	} else
+#ifndef PK11_MD5_DISABLE
 		hmacname = DNS_TSIG_HMACMD5_NAME;
+#else
+		hmacname = DNS_TSIG_HMACSHA256_NAME;
+#endif
 
 	isc_buffer_init(&b, namestr, strlen(namestr));
 	isc_buffer_add(&b, strlen(namestr));
@@ -2928,13 +2952,15 @@ recvgss(isc_task_t *task, isc_event_t *event) {
 	tsigkey = NULL;
 	result = dns_tkey_gssnegotiate(tsigquery, rcvmsg, servname,
 				       &context, &tsigkey, gssring,
-				       use_win2k_gsstsig,
-				       &err_message);
+				       use_win2k_gsstsig, &err_message);
 	switch (result) {
 
 	case DNS_R_CONTINUE:
+		dns_message_destroy(&rcvmsg);
+		dns_request_destroy(&request);
 		send_gssrequest(kserver, tsigquery, &request, context);
-		break;
+		ddebug("Out of recvgss");
+		return;
 
 	case ISC_R_SUCCESS:
 		/*
@@ -2971,7 +2997,7 @@ recvgss(isc_task_t *task, isc_event_t *event) {
 		break;
 
 	default:
-		fatal("dns_tkey_negotiategss: %s %s",
+		fatal("dns_tkey_gssnegotiate: %s %s",
 		      isc_result_totext(result),
 		      err_message != NULL ? err_message : "");
 	}

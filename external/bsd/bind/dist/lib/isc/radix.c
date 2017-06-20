@@ -1,7 +1,7 @@
-/*	$NetBSD: radix.c,v 1.6.4.2 2015/07/17 04:31:34 snj Exp $	*/
+/*	$NetBSD: radix.c,v 1.6.4.2.2.1 2017/06/20 16:40:22 snj Exp $	*/
 
 /*
- * Copyright (C) 2007-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2009, 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -131,8 +131,8 @@ _comp_with_mask(void *addr, void *dest, u_int mask) {
 		return (1);
 
 	if (memcmp(addr, dest, mask / 8) == 0) {
-		int n = mask / 8;
-		int m = ((~0) << (8 - (mask % 8)));
+		u_int n = mask / 8;
+		u_int m = ((~0U) << (8 - (mask % 8)));
 
 		if ((mask % 8) == 0 ||
 		    (((u_char *)addr)[n] & m) == (((u_char *)dest)[n] & m))

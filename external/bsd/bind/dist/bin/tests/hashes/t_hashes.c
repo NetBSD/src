@@ -1,7 +1,7 @@
-/*	$NetBSD: t_hashes.c,v 1.4 2013/12/31 20:24:40 christos Exp $	*/
+/*	$NetBSD: t_hashes.c,v 1.4.6.1 2017/06/20 16:40:00 snj Exp $	*/
 
 /*
- * Copyright (C) 2010, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2010, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -34,6 +34,8 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
+#include <pk11/site.h>
+
 #include <tests/t_api.h>
 
 
@@ -57,7 +59,9 @@ typedef struct {
 
 union {
     unsigned char b[1024];
+#ifndef PK11_MD5_DISABLE
     unsigned char md5[16];
+#endif
     unsigned char sha1[ISC_SHA1_DIGESTLENGTH];
     unsigned char sha224[ISC_SHA224_DIGESTLENGTH];
     unsigned char sha256[ISC_SHA256_DIGESTLENGTH];
@@ -82,9 +86,11 @@ static OUT_ abc_sha1 = {
 static OUT_ abc_sha224 = {
 	"23097d223405d8228642a477bda255b32aadbce4bda0b3f7e36c9da7",
 	ISC_SHA224_DIGESTLENGTH};
+#ifndef PK11_MD5_DISABLE
 static OUT_ abc_md5 = {
 	"900150983cd24fb0d6963f7d28e17f72",
 	16};
+#endif
 
 static IN_ abc_blah = { "\"abcdbc...\"", NULL, 0,
 	STR_INIT("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq")};
@@ -94,6 +100,7 @@ static OUT_ abc_blah_sha1 =  {
 static OUT_ abc_blah_sha224 = {
 	"75388b16512776cc5dba5da1fd890150b0c6455cb4f58b1952522525",
 	ISC_SHA224_DIGESTLENGTH};
+#ifndef PK11_MD5_DISABLE
 static OUT_ abc_blah_md5 = {
 	"8215ef0796a20bcaaae116d3876c664a",
 	16};
@@ -132,6 +139,7 @@ static IN_ rfc2104_3 = {"RFC 2104 #3", rfc2104_3_key, sizeof(rfc2104_3_key),
 static OUT_ rfc2104_3_hmac = {
 	"56be34521d144c88dbb8c733f0e8b3f6",
 	16};
+#endif
 
 /*
  * four three HMAC-SHA tests cut-and-pasted from RFC 4634 starting on page 86
@@ -319,7 +327,9 @@ t_hash(const char *hname, HASH_INIT init, UPDATE update, FINAL final,
 	union {
 	    unsigned char b[1024];
 	    isc_sha1_t sha1;
+#ifndef PK11_MD5_DISABLE
 	    isc_md5_t md5;
+#endif
 	} ctx;
 
 	init(&ctx);
@@ -350,17 +360,23 @@ t_sha224(IN_ *in, OUT_ *out)
 
 
 static void
+#ifndef PK11_MD5_DISABLE
 t_hashes(IN_ *in, OUT_ *out_sha1, OUT_ *out_sha224, OUT_ *out_md5)
+#else
+t_hashes(IN_ *in, OUT_ *out_sha1, OUT_ *out_sha224)
+#endif
 {
 	t_hash("SHA1", (HASH_INIT)isc_sha1_init, (UPDATE)isc_sha1_update,
 	       (FINAL)isc_sha1_final, in, out_sha1);
 	t_sha224(in, out_sha224);
+#ifndef PK11_MD5_DISABLE
 	t_hash("md5", (HASH_INIT)isc_md5_init, (UPDATE)isc_md5_update,
 	       (FINAL)isc_md5_final, in, out_md5);
+#endif
 }
 
 
-
+#ifndef PK11_MD5_DISABLE
 /*
  * isc_hmacmd5_sign has a different calling sequence
  */
@@ -375,7 +391,7 @@ t_md5hmac(IN_ *in, OUT_ *out)
 	isc_hmacmd5_sign(&ctx, dbuf.b);
 	ck("HMAC-md5", in, out);
 }
-
+#endif
 
 
 static void
@@ -384,7 +400,9 @@ t_hmac(const char *hname, HMAC_INIT init, UPDATE update, SIGN sign,
 {
 	union {
 	    unsigned char b[1024];
+#ifndef PK11_MD5_DISABLE
 	    isc_hmacmd5_t hmacmd5;
+#endif
 	    isc_hmacsha1_t hmacsha1;
 	    isc_hmacsha224_t hmacsha224;
 	    isc_hmacsha256_t hmacsha256;
@@ -434,15 +452,22 @@ t1(void)
 	/*
 	 * two ad hoc hash examples
 	 */
+#ifndef PK11_MD5_DISABLE
 	t_hashes(&abc, &abc_sha1, &abc_sha224, &abc_md5);
 	t_hashes(&abc_blah, &abc_blah_sha1, &abc_blah_sha224, &abc_blah_md5);
+#else
+	t_hashes(&abc, &abc_sha1, &abc_sha224);
+	t_hashes(&abc_blah, &abc_blah_sha1, &abc_blah_sha224);
+#endif
 
+#ifndef PK11_MD5_DISABLE
 	/*
 	 * three HMAC-md5 examples from RFC 2104
 	 */
 	t_md5hmac(&rfc2104_1, &rfc2104_1_hmac);
 	t_md5hmac(&rfc2104_2, &rfc2104_2_hmac);
 	t_md5hmac(&rfc2104_3, &rfc2104_3_hmac);
+#endif
 
 	/*
 	 * four HMAC-SHA tests from RFC 4634 starting on page 86

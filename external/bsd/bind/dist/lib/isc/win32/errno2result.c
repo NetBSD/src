@@ -1,7 +1,7 @@
-/*	$NetBSD: errno2result.c,v 1.4 2014/03/01 03:24:40 christos Exp $	*/
+/*	$NetBSD: errno2result.c,v 1.4.6.1 2017/06/20 16:40:24 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -34,7 +34,9 @@
  * not already there.
  */
 isc_result_t
-isc__errno2resultx(int posixerrno, const char *file, int line) {
+isc__errno2resultx(int posixerrno, isc_boolean_t dolog,
+		   const char *file, int line)
+{
 	char strbuf[ISC_STRERRORSIZE];
 
 	switch (posixerrno) {
@@ -105,9 +107,13 @@ isc__errno2resultx(int posixerrno, const char *file, int line) {
 	case WSAENOBUFS:
 		return (ISC_R_NORESOURCES);
 	default:
-		isc__strerror(posixerrno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(file, line, "unable to convert errno "
-				 "to isc_result: %d: %s", posixerrno, strbuf);
+		if (dolog) {
+			isc__strerror(posixerrno, strbuf, sizeof(strbuf));
+			UNEXPECTED_ERROR(file, line,
+					 "unable to convert errno "
+					 "to isc_result: %d: %s",
+					 posixerrno, strbuf);
+		}
 		/*
 		 * XXXDCL would be nice if perhaps this function could
 		 * return the system's error string, so the caller

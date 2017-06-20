@@ -1,4 +1,4 @@
-# Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,7 @@ VERSION=@BIND9_VERSION@
 # machine generated.  The latter are handled specially in the
 # install target below.
 #
-HEADERS =	constants.h internal.h pk11.h result.h
+HEADERS =	constants.h internal.h pk11.h result.h site.h
 SUBDIRS =
 TARGETS =
 
@@ -35,4 +35,9 @@ installdirs:
 install:: installdirs
 	for i in ${HEADERS}; do \
 		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/pk11 ; \
+	done
+
+uninstall::
+	for i in ${HEADERS}; do \
+		rm -f ${DESTDIR}${includedir}/pk11/$$i ; \
 	done

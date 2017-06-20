@@ -1,7 +1,7 @@
-/*	$NetBSD: offset.h,v 1.3.14.1 2016/03/13 08:00:38 martin Exp $	*/
+/*	$NetBSD: offset.h,v 1.3.14.2 2017/06/20 16:40:24 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,13 +31,5 @@
 #include <stddef.h>		/* For Linux Standard Base. */
 
 typedef off_t isc_offset_t;
-
-#define ISC_OFFSET_MAXIMUM \
-    (sizeof(off_t) == sizeof(char) ? INT_MAX : \
-     (sizeof(off_t) == sizeof(short) ? SHRT_MAX : \
-      (sizeof(off_t) == sizeof(int) ? INT_MAX : \
-       (sizeof(off_t) == sizeof(long) ? LONG_MAX : \
-        (sizeof(off_t) == sizeof(long long) ? LLONG_MAX : INTMAX_MAX)))))
-
 
 #endif /* ISC_OFFSET_H */

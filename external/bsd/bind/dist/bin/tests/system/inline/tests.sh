@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -889,4 +889,5 @@ $IMPORTKEY -f import.key import.example > /dev/null 2>&1 || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-exit $status
+echo "I:exit status: $status"
+[ $status -eq 0 ] || exit 1

@@ -113,4 +113,37 @@ cfg_ungettoken
 
 ; Exported Data
 
+;cfg_rep_boolean
+;cfg_rep_fixedpoint
+;cfg_rep_list
+;cfg_rep_map
+;cfg_rep_netprefix
+;cfg_rep_percentage
+;cfg_rep_sockaddr
+;cfg_rep_string
+;cfg_rep_tuple
+;cfg_rep_uint32
+;cfg_rep_uint64
+;cfg_rep_void
+;cfg_type_astring
+;cfg_type_boolean
+;cfg_type_bracketed_text
+;cfg_type_fixedpoint
+;cfg_type_netaddr
+;cfg_type_netaddr4
+;cfg_type_netaddr4wild
+;cfg_type_netaddr6
+;cfg_type_netaddr6wild
+;cfg_type_netprefix
+;cfg_type_percentage
+;cfg_type_qstring
 ;cfg_type_rndcconf
+;cfg_type_sockaddr
+;cfg_type_sockaddrdscp
+;cfg_type_sstring
+;cfg_type_token
+;cfg_type_uint32
+;cfg_type_uint64
+;cfg_type_unsupported
+;cfg_type_ustring
+;cfg_type_void

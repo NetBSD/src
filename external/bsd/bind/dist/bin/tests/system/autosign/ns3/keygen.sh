@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009-2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -37,7 +37,7 @@ setup secure.example
 cp $infile $zonefile
 ksk=`$KEYGEN -3 -q -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
 $KEYGEN -3 -q -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key > dsset-${zone}.
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
 
 #
 #  NSEC3/NSEC test zone
@@ -46,7 +46,7 @@ setup secure.nsec3.example
 cp $infile $zonefile
 ksk=`$KEYGEN -q -3 -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
 $KEYGEN -q -3 -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key > dsset-${zone}.
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
 
 #
 #  NSEC3/NSEC3 test zone
@@ -55,7 +55,7 @@ setup nsec3.nsec3.example
 cp $infile $zonefile
 ksk=`$KEYGEN -q -3 -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
 $KEYGEN -q -3 -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key > dsset-${zone}.
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
 
 #
 #  OPTOUT/NSEC3 test zone
@@ -64,16 +64,16 @@ setup optout.nsec3.example
 cp $infile $zonefile
 ksk=`$KEYGEN -q -3 -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
 $KEYGEN -q -3 -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key > dsset-${zone}.
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
 
 #
 # A nsec3 zone (non-optout).
 #
 setup nsec3.example
-cat $infile dsset-*.${zone}. > $zonefile
+cat $infile dsset-*.${zone}$TP > $zonefile
 ksk=`$KEYGEN -q -3 -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
 $KEYGEN -q -3 -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key > dsset-${zone}.
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
 
 #
 # An NSEC3 zone, with NSEC3 parameters set prior to signing
@@ -84,7 +84,7 @@ ksk=`$KEYGEN -G -q -3 -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
 echo $ksk > ../autoksk.key
 zsk=`$KEYGEN -G -q -3 -r $RANDFILE $zone 2> kg.out` || dumpit kg.out
 echo $zsk > ../autozsk.key
-$DSFROMKEY $ksk.key > dsset-${zone}.
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
 
 #
 #  OPTOUT/NSEC test zone
@@ -93,7 +93,7 @@ setup secure.optout.example
 cp $infile $zonefile
 ksk=`$KEYGEN -q -3 -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
 $KEYGEN -q -3 -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key > dsset-${zone}.
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
 
 #
 #  OPTOUT/NSEC3 test zone
@@ -102,7 +102,7 @@ setup nsec3.optout.example
 cp $infile $zonefile
 ksk=`$KEYGEN -q -3 -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
 $KEYGEN -q -3 -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key > dsset-${zone}.
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
 
 #
 #  OPTOUT/OPTOUT test zone
@@ -111,16 +111,16 @@ setup optout.optout.example
 cp $infile $zonefile
 ksk=`$KEYGEN -q -3 -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
 $KEYGEN -q -3 -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key > dsset-${zone}.
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
 
 #
 # A optout nsec3 zone.
 #
 setup optout.example
-cat $infile dsset-*.${zone}. > $zonefile
+cat $infile dsset-*.${zone}$TP > $zonefile
 ksk=`$KEYGEN -q -3 -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
 $KEYGEN -q -3 -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key > dsset-${zone}.
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
 
 #
 # A RSASHA256 zone.
@@ -129,7 +129,7 @@ setup rsasha256.example
 cp $infile $zonefile
 ksk=`$KEYGEN -q -a RSASHA256 -b 2048 -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
 $KEYGEN -q -a RSASHA256 -b 1024 -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key > dsset-${zone}.
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
 
 #
 # A RSASHA512 zone.
@@ -138,7 +138,7 @@ setup rsasha512.example
 cp $infile $zonefile
 ksk=`$KEYGEN -q -a RSASHA512 -b 2048 -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
 $KEYGEN -q -a RSASHA512 -b 1024 -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key > dsset-${zone}.
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
 
 #
 # NSEC-only zone.
@@ -147,7 +147,7 @@ setup nsec.example
 cp $infile $zonefile
 ksk=`$KEYGEN -q -r $RANDFILE -fk $zone 2> kg.out` || dumpit kg.out
 $KEYGEN -q -r $RANDFILE $zone > kg.out 2>&1 || dumpit kg.out
-$DSFROMKEY $ksk.key > dsset-${zone}.
+$DSFROMKEY $ksk.key > dsset-${zone}$TP
 
 #
 # Signature refresh test zone.  Signatures are set to expire long

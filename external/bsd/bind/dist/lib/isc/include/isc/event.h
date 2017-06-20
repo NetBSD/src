@@ -1,7 +1,7 @@
-/*	$NetBSD: event.h,v 1.5.2.1 2014/12/22 03:28:46 msaitoh Exp $	*/
+/*	$NetBSD: event.h,v 1.5.2.1.2.1 2017/06/20 16:40:23 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2014, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: event.h,v 1.34 2007/06/19 23:47:18 tbox Exp  */
 
 #ifndef ISC_EVENT_H
 #define ISC_EVENT_H 1
@@ -43,7 +41,8 @@ typedef void (*isc_eventdestructor_t)(isc_event_t *);
 	void *				ev_sender; \
 	isc_eventdestructor_t		ev_destroy; \
 	void *				ev_destroy_arg; \
-	ISC_LINK(ltype)			ev_link
+	ISC_LINK(ltype)			ev_link; \
+	ISC_LINK(ltype)			ev_ratelink
 
 /*%
  * Attributes matching a mask of 0x000000ff are reserved for the task library's
@@ -73,6 +72,7 @@ do { \
 	(event)->ev_destroy = (df); \
 	(event)->ev_destroy_arg = (da); \
 	ISC_LINK_INIT((event), ev_link); \
+	ISC_LINK_INIT((event), ev_ratelink); \
 } while (/*CONSTCOND*/0)
 
 /*%

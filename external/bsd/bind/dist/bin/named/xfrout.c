@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrout.c,v 1.6.4.2.2.2 2016/10/14 11:42:29 martin Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.6.4.2.2.3 2017/06/20 16:39:57 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any

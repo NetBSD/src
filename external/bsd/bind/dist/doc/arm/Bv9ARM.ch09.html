@@ -1,5 +1,6 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2004-2015 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2016 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -14,7 +15,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<html>
+<html lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>Appendix A. Release Notes</title>
@@ -44,79 +45,50 @@
 <div class="toc">
 <p><b>Table of Contents</b></p>
 <dl class="toc">
-<dt><span class="section"><a href="Bv9ARM.ch09.html#id-1.10.2">Release Notes for BIND Version 9.10.4-P8</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch09.html#id-1.10.2">Release Notes for BIND Version 9.10.5-P1</a></span></dt>
 <dd><dl>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_intro">Introduction</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_download">Download</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#root_key">New DNSSEC Root Key</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_security">Security Fixes</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_features">New Features</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_changes">Feature Changes</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_port">Porting Changes</a></span></dt>
-<dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_bugs">Bug Fixes</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#end_of_life">End of Life</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_thanks">Thank You</a></span></dt>
 </dl></dd>
 </dl>
 </div>
-<div class="section">
+      <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id-1.10.2"></a>Release Notes for BIND Version 9.10.4-P8</h2></div></div></div>
-<div class="section">
+<a name="id-1.10.2"></a>Release Notes for BIND Version 9.10.5-P1</h2></div></div></div>
+  
+  <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_intro"></a>Introduction</h3></div></div></div>
-<p>
-      This document summarizes changes since BIND 9.10.4:
+    <p>
+      This document summarizes changes since BIND 9.10.5:
     </p>
-<p>
-      BIND 9.10.4-P7 addresses the security issue described in
-      CVE-2017-3136, and updates the built in trusted keys for
-      the root zone.
+    <p>
+      BIND 9.10.5-P1 addresses the security issues described in
+      CVE-2017-3140 and CVE-2017-3141.
     </p>
-<p>
-      BIND 9.10.4-P6 addresses the security issue described in
-      CVE-2017-3135, and fixes a regression introduced in a prior
-      security release.
-    </p>
-<p>
-      BIND 9.10.4-P5 addresses the security issues described in
-      CVE-2016-9131, CVE-2016-9147, CVE-2016-9444 and CVE-2016-9778.
-    </p>
-<p>
-      BIND 9.10.4-P4 addresses the security issue described in
-      CVE-2016-8864.
-    </p>
-<p>
-      BIND 9.10.4-P3 addresses the security issue described in
-      CVE-2016-2776 and addresses an interoperability issue with
-      ECS clients.
-    </p>
-<p>
-      BIND 9.10.4-P2 addresses the security issue described in
-      CVE-2016-2775.
-    </p>
-<p>
-      BIND 9.10.4-P1 addresses Windows installation issues, the %z
-      modifier is not supported under Windows and a race condition
-      in the rbt/rbtdb implementation resulting in named exiting
-      due to assertion failures being detected.
-    </p>
-</div>
-<div class="section">
+  </div>
+
+
+  <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_download"></a>Download</h3></div></div></div>
-<p>
+    <p>
       The latest versions of BIND 9 software can always be found at
       <a class="link" href="http://www.isc.org/downloads/" target="_top">http://www.isc.org/downloads/</a>.
       There you will find additional information about each release,
       source code, and pre-compiled versions for Microsoft Windows
       operating systems.
     </p>
-</div>
-<div class="section">
+  </div>
+
+  <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="root_key"></a>New DNSSEC Root Key</h3></div></div></div>
-<p>
+    <p>
       ICANN is in the process of introducing a new Key Signing Key (KSK) for
       the global root zone. BIND has multiple methods for managing DNSSEC
       trust anchors, with somewhat different behaviors. If the root
@@ -133,7 +105,7 @@
       signing with the new KSK. This is currently scheduled for
       October 11, 2017.
     </p>
-<p>
+    <p>
       This release includes an updated version of the
       <code class="filename">bind.keys</code> file containing the new root
       key. This file can also be downloaded from
@@ -141,141 +113,52 @@
 	https://www.isc.org/bind-keys
       </a>.
     </p>
-</div>
-<div class="section">
+  </div>
+
+  <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_security"></a>Security Fixes</h3></div></div></div>
-<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
-<li class="listitem"><p>
-	  'rndc ""' could trigger a assertion failure in named. This flaw
-	  is disclosed in (CVE-2017-3138). [RT #44924]
-	</p></li>
-<li class="listitem"><p>
-	  Some chaining (i.e., type CNAME or DNAME) responses to upstream
-	  queries could trigger assertion failures. This flaw is disclosed
-	  in CVE-2017-3137. [RT #44734]
-	</p></li>
-<li class="listitem"><p>
-	  <span class="command"><strong>dns64</strong></span> with <span class="command"><strong>break-dnssec yes;</strong></span>
-	  can result in an assertion failure. This flaw is disclosed in
-	  CVE-2017-3136. [RT #44653]
-	</p></li>
-<li class="listitem"><p>
-	  If a server is configured with a response policy zone (RPZ)
-	  that rewrites an answer with local data, and is also configured
-	  for DNS64 address mapping, a NULL pointer can be read
-	  triggering a server crash.  This flaw is disclosed in
-	  CVE-2017-3135. [RT #44434]
-	</p></li>
-<li class="listitem"><p>
-	  <span class="command"><strong>named</strong></span> could mishandle authority sections
-	  with missing RRSIGs, triggering an assertion failure. This
-	  flaw is disclosed in CVE-2016-9444. [RT #43632]
-	</p></li>
-<li class="listitem"><p>
-	  <span class="command"><strong>named</strong></span> mishandled some responses where
-	  covering RRSIG records were returned without the requested
-	  data, resulting in an assertion failure. This flaw is
-	  disclosed in CVE-2016-9147. [RT #43548]
-	</p></li>
-<li class="listitem"><p>
-	  <span class="command"><strong>named</strong></span> incorrectly tried to cache TKEY
-	  records which could trigger an assertion failure when there was
-	  a class mismatch. This flaw is disclosed in CVE-2016-9131.
-	  [RT #43522]
-	</p></li>
-<li class="listitem"><p>
-	  It was possible to trigger assertions when processing
-	  responses containing answers of type DNAME. This flaw is
-	  disclosed in CVE-2016-8864. [RT #43465]
-	</p></li>
-<li class="listitem"><p>
-	  It was possible to trigger a assertion when rendering a
-	  message using a specially crafted request. This flaw is
-	  disclosed in CVE-2016-2776. [RT #43139]
-	</p></li>
-<li class="listitem"><p>
-	  Calling <span class="command"><strong>getrrsetbyname()</strong></span> with a non
-	  absolute name could trigger an infinite recursion bug in
-	  <span class="command"><strong>lwresd</strong></span> or <span class="command"><strong>named</strong></span> with
-	  <span class="command"><strong>lwres</strong></span> configured if, when combined with
-	  a search list entry from <code class="filename">resolv.conf</code>,
-	  the resulting name is too long.  This flaw is disclosed in
-	  CVE-2016-2775. [RT #42694]
-	</p></li>
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+	<p>
+	  The BIND installer on Windows used an unquoted service path,
+	  which can enable privilege escalation. This flaw is disclosed
+	  in CVE-2017-3141. [RT #45229]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  With certain RPZ configurations, a response with TTL 0
+	  could cause <span class="command"><strong>named</strong></span> to go into an infinite
+	  query loop. This flaw is disclosed in CVE-2017-3140.
+	  [RT #45181]
+	</p>
+      </li>
 </ul></div>
-</div>
-<div class="section">
-<div class="titlepage"><div><div><h3 class="title">
-<a name="relnotes_features"></a>New Features</h3></div></div></div>
-<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>
-	  None.
-	</p></li></ul></div>
-</div>
-<div class="section">
-<div class="titlepage"><div><div><h3 class="title">
-<a name="relnotes_changes"></a>Feature Changes</h3></div></div></div>
-<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>
-	  None.
-	</p></li></ul></div>
-</div>
-<div class="section">
-<div class="titlepage"><div><div><h3 class="title">
-<a name="relnotes_port"></a>Porting Changes</h3></div></div></div>
-<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>
-	  None.
-	</p></li></ul></div>
-</div>
-<div class="section">
-<div class="titlepage"><div><div><h3 class="title">
-<a name="relnotes_bugs"></a>Bug Fixes</h3></div></div></div>
-<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
-<li class="listitem"><p>
-	  A synthesized CNAME record appearing in a response before the
-	  associated DNAME could be cached, when it should not have been.
-	  This was a regression introduced while addressing CVE-2016-8864.
-	  [RT #44318]
-	</p></li>
-<li class="listitem"><p>
-	  Fixed a crash when calling <span class="command"><strong>rndc stats</strong></span> on some
-	  Windows builds: some Visual Studio compilers generate code that
-	  crashes when the "%z" printf() format specifier is used. [RT #42380]
-	</p></li>
-<li class="listitem"><p>
-	  ECS clients with the option set to 0.0.0.0/0/0 or ::/0/0
-	  were incorrectly getting a FORMERR response.
-	</p></li>
-<li class="listitem"><p>
-	  Windows installs were failing due to triggering UAC without
-	  the installation binary being signed.
-	</p></li>
-<li class="listitem"><p>
-	  A race condition in rbt/rbtdb was leading to INSISTs being
-	  triggered.
-	</p></li>
-</ul></div>
-</div>
-<div class="section">
+  </div>
+
+  <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="end_of_life"></a>End of Life</h3></div></div></div>
-<p>
+    <p>
       The end of life for BIND 9.10 is yet to be determined but
       will not be before BIND 9.12.0 has been released for 6 months.
       <a class="link" href="https://www.isc.org/downloads/software-support-policy/" target="_top">https://www.isc.org/downloads/software-support-policy/</a>
     </p>
-</div>
-<div class="section">
+  </div>
+
+  <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_thanks"></a>Thank You</h3></div></div></div>
-<p>
+    <p>
       Thank you to everyone who assisted us in making this release possible.
       If you would like to contribute to ISC to assist us in continuing to
       make quality open source software, please visit our donations page at
       <a class="link" href="http://www.isc.org/donate/" target="_top">http://www.isc.org/donate/</a>.
     </p>
+  </div>
 </div>
-</div>
-</div>
+    </div>
 <div class="navfooter">
 <hr>
 <table width="100%" summary="Navigation footer">
@@ -294,6 +177,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.4-P8</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.5-P1</p>
 </body>
 </html>

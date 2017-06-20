@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -103,6 +103,14 @@ install:: rndc-confgen@EXEEXT@ ddns-confgen@EXEEXT@ installdirs
 	${INSTALL_DATA} ${srcdir}/ddns-confgen.8 ${DESTDIR}${mandir}/man8
 	(cd ${DESTDIR}${sbindir}; rm -f tsig-keygen@EXEEXT@; ${LINK_PROGRAM} ddns-confgen@EXEEXT@ tsig-keygen@EXEEXT@)
 	(cd ${DESTDIR}${mandir}/man8; rm -f tsig-keygen.8; ${LINK_PROGRAM} ddns-confgen.8 tsig-keygen.8)
+
+uninstall::
+	rm -f ${DESTDIR}${mandir}/man8/tsig-keygen.8
+	rm -f ${DESTDIR}${sbindir}/tsig-keygen@EXEEXT@
+	rm -f ${DESTDIR}${mandir}/man8/ddns-confgen.8
+	rm -f ${DESTDIR}${mandir}/man8/rndc-confgen.8
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${sbindir}/ddns-confgen@EXEEXT@
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${sbindir}/rndc-confgen@EXEEXT@
 
 clean distclean maintainer-clean::
 	rm -f ${TARGETS}

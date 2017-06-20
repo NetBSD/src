@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.8.4.1.2.1 2016/10/14 11:42:49 martin Exp $	*/
+/*	$NetBSD: socket.h,v 1.8.4.1.2.2 2017/06/20 16:40:23 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
@@ -262,6 +262,7 @@ struct isc_socket_connev {
  * _PKTINFO:	The pktinfo member is valid.
  * _MULTICAST:	The UDP packet was received via a multicast transmission.
  * _DSCP:	The UDP DSCP value is valid.
+ * _USEMINMTU:	Set the per packet IPV6_USE_MIN_MTU flag.
  */
 #define ISC_SOCKEVENTATTR_ATTACHED		0x80000000U /* internal */
 #define ISC_SOCKEVENTATTR_TRUNC			0x00800000U /* public */
@@ -270,6 +271,7 @@ struct isc_socket_connev {
 #define ISC_SOCKEVENTATTR_PKTINFO		0x00100000U /* public */
 #define ISC_SOCKEVENTATTR_MULTICAST		0x00080000U /* public */
 #define ISC_SOCKEVENTATTR_DSCP			0x00040000U /* public */
+#define ISC_SOCKEVENTATTR_USEMINMTU		0x00020000U /* public */
 /*@}*/
 
 #define ISC_SOCKEVENT_ANYEVENT  (0)
