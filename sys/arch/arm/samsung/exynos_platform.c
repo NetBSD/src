@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.5 2017/06/11 16:21:41 jmcneill Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.6 2017/06/20 19:13:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.5 2017/06/11 16:21:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.6 2017/06/20 19:13:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.5 2017/06/11 16:21:41 jmcneill
 #include <arm/cortex/gtmr_var.h>
 
 #include <arm/fdt/arm_fdtvar.h>
+
+#define	EXYNOS5_SWRESET_REG	0x10040400
 
 #define	DEVMAP_ALIGN(a)	((a) & ~L1_S_OFFSET)
 #define	DEVMAP_SIZE(s)	roundup2((s), L1_S_SIZE)
@@ -124,9 +126,13 @@ exynos_platform_device_register(device_t self, void *aux)
 }
 
 static void
-exynos_platform_reset(void)
+exynos5_platform_reset(void)
 {
-	printf("%s: not implemented\n", __func__);
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
+	bus_space_handle_t bsh;
+
+	bus_space_map(bst, EXYNOS5_SWRESET_REG, 4, 0, &bsh);
+	bus_space_write_4(bst, bsh, 0, 1);
 }
 
 static void
@@ -147,7 +153,7 @@ static const struct arm_platform exynos5_platform = {
 	.init_attach_args = exynos_platform_init_attach_args,
 	.early_putchar = exynos_platform_early_putchar,
 	.device_register = exynos_platform_device_register,
-	.reset = exynos_platform_reset,
+	.reset = exynos5_platform_reset,
 	.delay = exynos_platform_delay,
 	.uart_freq = exynos_platform_uart_freq,
 };
