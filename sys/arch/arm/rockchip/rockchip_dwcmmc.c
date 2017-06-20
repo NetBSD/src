@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_dwcmmc.c,v 1.5 2015/01/03 13:29:02 jmcneill Exp $ */
+/* $NetBSD: rockchip_dwcmmc.c,v 1.6 2017/06/20 19:03:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_dwcmmc.c,v 1.5 2015/01/03 13:29:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_dwcmmc.c,v 1.6 2017/06/20 19:03:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: rockchip_dwcmmc.c,v 1.5 2015/01/03 13:29:02 jmcneill
 
 static int	rk_dwcmmc_match(device_t, cfdata_t, void *);
 static void	rk_dwcmmc_attach(device_t, device_t, void *);
-
-static void	rk_dwcmmc_attach_i(device_t);
 
 CFATTACH_DECL_NEW(rkdwcmmc, sizeof(struct dwc_mmc_softc),
 	rk_dwcmmc_match, rk_dwcmmc_attach, NULL, NULL);
@@ -68,8 +66,7 @@ rk_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bst = obio->obio_bst;
 	sc->sc_dmat = obio->obio_dmat;
-	sc->sc_flags = DWC_MMC_F_USE_HOLD_REG | DWC_MMC_F_PWREN_CLEAR |
-		       DWC_MMC_F_FORCE_CLK;
+	sc->sc_flags = DWC_MMC_F_USE_HOLD_REG;
 	sc->sc_clock_freq = rockchip_mmc0_get_rate();
 #if 0
 	sc->sc_clock_max = 24000;
@@ -82,6 +79,9 @@ rk_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": SD/MMC controller\n");
 
+	if (dwc_mmc_init(sc) != 0)
+		return;
+
 	sc->sc_ih = intr_establish(obio->obio_intr, IPL_BIO, IST_LEVEL,
 	    dwc_mmc_intr, sc);
 	if (sc->sc_ih == NULL) {
@@ -89,14 +89,4 @@ rk_dwcmmc_attach(device_t parent, device_t self, void *aux)
 		    obio->obio_intr);
 		return;
 	}
-
-	config_interrupts(self, rk_dwcmmc_attach_i);
-}
-
-static void
-rk_dwcmmc_attach_i(device_t self)
-{
-	struct dwc_mmc_softc *sc = device_private(self);
-
-	dwc_mmc_init(sc);
 }
