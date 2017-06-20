@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.33 2017/06/19 11:57:02 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.34 2017/06/20 13:45:20 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.33 2017/06/19 11:57:02 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.34 2017/06/20 13:45:20 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,11 +52,12 @@ int
 _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
+	const Elf_Sym   *def = NULL;
+	const Obj_Entry *defobj = NULL;
+	unsigned long last_symnum = ULONG_MAX;
 
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
-		const Elf_Sym   *def;
-		const Obj_Entry *defobj;
 		Elf_Addr         tmp;
 		unsigned long	 symnum;
 
