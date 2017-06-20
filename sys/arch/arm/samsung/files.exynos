@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.23 2017/06/11 16:21:41 jmcneill Exp $
+#	$NetBSD: files.exynos,v 1.24 2017/06/20 13:21:45 jmcneill Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -120,3 +120,7 @@ file	arch/arm/samsung/exynos_i2c.c		exynos_i2c needs-flag
 device	exy5422clk: clk
 attach	exy5422clk at fdt with exynos5422_clock
 file	arch/arm/samsung/exynos5422_clock.c	exynos5422_clock
+
+device	exy5410clk: clk
+attach	exy5410clk at fdt with exynos5410_clock
+file	arch/arm/samsung/exynos5410_clock.c	exynos5410_clock
