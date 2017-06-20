@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.123.4.6 2017/06/19 21:00:00 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.123.4.7 2017/06/20 20:58:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.6 2017/06/19 21:00:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.7 2017/06/20 20:58:23 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -201,7 +201,7 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	struct ata_xfer *xfer;
 	int rv;
 
-	xfer = ata_get_xfer(chp, true);
+	xfer = ata_get_xfer(chp);
 	if (xfer == NULL) {
 		printf("wdc_atapi_get_params: no xfer\n");
 		return EBUSY;
@@ -376,7 +376,7 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			return;
 		}
 
-		xfer = ata_get_xfer(atac->atac_channels[channel], false);
+		xfer = ata_get_xfer_ext(atac->atac_channels[channel], false, 0);
 		if (xfer == NULL) {
 			sc_xfer->error = XS_RESOURCE_SHORTAGE;
 			scsipi_done(sc_xfer);
@@ -485,7 +485,7 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		/* If it's not a polled command, we need the kernel thread */
 		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0 &&
 		    (chp->ch_flags & ATACH_TH_RUN) == 0) {
-			chp->ch_queue->queue_freeze++;
+			ata_channel_freeze(chp);
 			wakeup(&chp->ch_thread);
 			return;
 		}
