@@ -1,7 +1,7 @@
-/*	$NetBSD: nslookup.c,v 1.9.2.2 2016/03/13 08:06:02 martin Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.9.2.3 2017/06/20 17:09:25 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -29,7 +29,6 @@
 #include <isc/parseint.h>
 #include <isc/print.h>
 #include <isc/string.h>
-#include <isc/timer.h>
 #include <isc/util.h>
 #include <isc/task.h>
 #include <isc/netaddr.h>
@@ -47,8 +46,19 @@
 #include <dig/dig.h>
 
 #if defined(HAVE_READLINE)
+#if defined(HAVE_EDIT_READLINE_READLINE_H)
+#include <edit/readline/readline.h>
+#if defined(HAVE_EDIT_READLINE_HISTORY_H)
+#include <edit/readline/history.h>
+#endif
+#elif defined(HAVE_EDITLINE_READLINE_H)
+#include <editline/readline.h>
+#elif defined(HAVE_READLINE_READLINE_H)
 #include <readline/readline.h>
+#if defined (HAVE_READLINE_HISTORY_H)
 #include <readline/history.h>
+#endif
+#endif
 #endif
 
 static isc_boolean_t short_form = ISC_TRUE,
@@ -868,8 +878,6 @@ flush_lookup_list(void) {
 		}
 		if (l->sendmsg != NULL)
 			dns_message_destroy(&l->sendmsg);
-		if (l->timer != NULL)
-			isc_timer_detach(&l->timer);
 		lp = l;
 		l = ISC_LIST_NEXT(l, link);
 		ISC_LIST_DEQUEUE(lookup_list, lp, link);

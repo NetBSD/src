@@ -1,7 +1,7 @@
-/*	$NetBSD: sha1.c,v 1.6.2.1 2015/07/17 04:31:34 snj Exp $	*/
+/*	$NetBSD: sha1.c,v 1.6.2.2 2017/06/20 17:09:53 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -52,17 +52,25 @@
 #endif
 
 #ifdef ISC_PLATFORM_OPENSSLHASH
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define EVP_MD_CTX_new() &(context->_ctx)
+#define EVP_MD_CTX_free(ptr) EVP_MD_CTX_cleanup(ptr)
+#endif
+
 void
 isc_sha1_init(isc_sha1_t *context)
 {
 	INSIST(context != NULL);
 
-	RUNTIME_CHECK(EVP_DigestInit(context, EVP_sha1()) == 1);
+	context->ctx = EVP_MD_CTX_new();
+	RUNTIME_CHECK(context->ctx != NULL);
+	RUNTIME_CHECK(EVP_DigestInit(context->ctx, EVP_sha1()) == 1);
 }
 
 void
 isc_sha1_invalidate(isc_sha1_t *context) {
-	EVP_MD_CTX_cleanup(context);
+	EVP_MD_CTX_free(context->ctx);
+	context->ctx = NULL;
 }
 
 void
@@ -70,9 +78,10 @@ isc_sha1_update(isc_sha1_t *context, const unsigned char *data,
 		unsigned int len)
 {
 	INSIST(context != 0);
+	INSIST(context->ctx != 0);
 	INSIST(data != 0);
 
-	RUNTIME_CHECK(EVP_DigestUpdate(context,
+	RUNTIME_CHECK(EVP_DigestUpdate(context->ctx,
 				       (const void *) data,
 				       (size_t) len) == 1);
 }
@@ -81,8 +90,11 @@ void
 isc_sha1_final(isc_sha1_t *context, unsigned char *digest) {
 	INSIST(digest != 0);
 	INSIST(context != 0);
+	INSIST(context->ctx != 0);
 
-	RUNTIME_CHECK(EVP_DigestFinal(context, digest, NULL) == 1);
+	RUNTIME_CHECK(EVP_DigestFinal(context->ctx, digest, NULL) == 1);
+	EVP_MD_CTX_free(context->ctx);
+	context->ctx = NULL;
 }
 
 #elif PKCS11CRYPTO

@@ -1,7 +1,7 @@
-/*	$NetBSD: lwres_grbn.c,v 1.4 2013/12/31 20:24:43 christos Exp $	*/
+/*	$NetBSD: lwres_grbn.c,v 1.4.4.1 2017/06/20 17:09:56 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -252,7 +252,7 @@ lwres_grbnrequest_parse(lwres_context_t *ctx, lwres_buffer_t *b,
 	return (LWRES_R_SUCCESS);
 }
 
-/*% Thread-save equivalent to \link lwres_gabn.c lwres_gabn* \endlink routines. */
+/*% Thread-safe equivalent to \link lwres_gabn.c lwres_gabn* \endlink routines. */
 lwres_result_t
 lwres_grbnresponse_parse(lwres_context_t *ctx, lwres_buffer_t *b,
 			lwres_lwpacket_t *pkt, lwres_grbnresponse_t **structp)

@@ -1,7 +1,7 @@
-/*	$NetBSD: sample-request.c,v 1.1.1.2.2.2 2016/03/13 08:06:16 martin Exp $	*/
+/*	$NetBSD: sample-request.c,v 1.1.1.2.2.3 2017/06/20 17:09:57 snj Exp $	*/
 
 /*
- * Copyright (C) 2009, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -149,7 +149,7 @@ print_section(dns_message_t *message, int section, isc_buffer_t *buf) {
 
 int
 main(int argc, char *argv[]) {
-	int ch, i, gai_error;
+	int ch, i, gaierror;
 	struct addrinfo hints, *res;
 	isc_textregion_t tr;
 	dns_client_t *client = NULL;
@@ -223,10 +223,10 @@ main(int argc, char *argv[]) {
 #ifdef AI_NUMERICHOST
 	hints.ai_flags = AI_NUMERICHOST;
 #endif
-	gai_error = getaddrinfo(argv[0], "53", &hints, &res);
-	if (gai_error != 0) {
+	gaierror = getaddrinfo(argv[0], "53", &hints, &res);
+	if (gaierror != 0) {
 		fprintf(stderr, "getaddrinfo failed: %s\n",
-			gai_strerror(gai_error));
+			gai_strerror(gaierror));
 		exit(1);
 	}
 	INSIST(res->ai_addrlen <= sizeof(sa.type));

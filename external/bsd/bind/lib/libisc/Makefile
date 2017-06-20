@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.4.1 2014/12/22 03:28:48 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.6.4.2 2017/06/20 17:09:58 snj Exp $
 
 LIB=isc
 #USE_SHLIBDIR=   yes
@@ -23,9 +23,7 @@ UNIX_SRCS=	app.c backtrace.c dir.c entropy.c errno2result.c file.c \
 NLS_SRCS=	msgcat.c
 PTHREAD_SRCS=	condition.c mutex.c thread.c
 
-.if ${MKCRYPTO} != "no"
 CRYPTO_SRCS=	aes.c
-.endif
 
 SRCS=		assertions.c base32.c base64.c bind9.c buffer.c \
 		bufferlist.c commandline.c crc64.c counter.c error.c event.c \

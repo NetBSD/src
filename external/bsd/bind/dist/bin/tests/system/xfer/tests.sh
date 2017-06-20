@@ -391,5 +391,31 @@ $PERL ../digcomp.pl knowngood.mapped dig.out.3.$n || tmp=1
 if test $tmp != 0 ; then echo "I:failed"; fi
 status=`expr $status + $tmp`
 
+n=`expr $n + 1`
+echo "I:test that a zone with too many records is rejected (AXFR) ($n)"
+tmp=0
+grep "'axfr-too-big/IN'.*: too many records" ns6/named.run >/dev/null || tmp=1
+if test $tmp != 0 ; then echo "I:failed"; fi
+status=`expr $status + $tmp`
+
+n=`expr $n + 1`
+echo "I:test that a zone with too many records is rejected (IXFR) ($n)"
+tmp=0
+grep "'ixfr-too-big./IN.*: too many records" ns6/named.run >/dev/null && tmp=1
+$NSUPDATE << EOF
+zone ixfr-too-big
+server 10.53.0.1 5300
+update add the-31st-record.ixfr-too-big 0 TXT this is it
+send
+EOF
+for i in 1 2 3 4 5 6 7 8
+do
+    grep "'ixfr-too-big/IN'.*: too many records" ns6/named.run >/dev/null && break
+    sleep 1
+done
+grep "'ixfr-too-big/IN'.*: too many records" ns6/named.run >/dev/null || tmp=1
+if test $tmp != 0 ; then echo "I:failed"; fi
+status=`expr $status + $tmp`
+
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

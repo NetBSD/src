@@ -1,7 +1,7 @@
-/*	$NetBSD: pkcs11gost_link.c,v 1.1.1.2.2.2 2016/03/13 08:06:13 martin Exp $	*/
+/*	$NetBSD: pkcs11gost_link.c,v 1.1.1.2.2.3 2017/06/20 17:09:50 snj Exp $	*/
 
 /*
- * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@
 
 #include <isc/entropy.h>
 #include <isc/mem.h>
+#include <isc/safe.h>
 #include <isc/sha2.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -165,16 +166,20 @@ pkcs11gost_createctx_sign(dst_key_t *key, dst_context_t *dctx) {
 	isc_result_t ret;
 	unsigned int i;
 
+	REQUIRE(key != NULL);
+	gost = key->keydata.pkey;
+	REQUIRE(gost != NULL);
+
 	pk11_ctx = (pk11_context_t *) isc_mem_get(dctx->mctx,
 						  sizeof(*pk11_ctx));
 	if (pk11_ctx == NULL)
 		return (ISC_R_NOMEMORY);
 	ret = pk11_get_session(pk11_ctx, OP_GOST, ISC_TRUE, ISC_FALSE,
-			       ISC_FALSE, NULL, pk11_get_best_token(OP_GOST));
+			       gost->reqlogon, NULL,
+			       pk11_get_best_token(OP_GOST));
 	if (ret != ISC_R_SUCCESS)
 		goto err;
 
-	gost = key->keydata.pkey;
 	if (gost->ontoken && (gost->object != CK_INVALID_HANDLE)) {
 		pk11_ctx->ontoken = gost->ontoken;
 		pk11_ctx->object = gost->object;
@@ -266,16 +271,20 @@ pkcs11gost_createctx_verify(dst_key_t *key, dst_context_t *dctx) {
 	isc_result_t ret;
 	unsigned int i;
 
+	REQUIRE(key != NULL);
+	gost = key->keydata.pkey;
+	REQUIRE(gost != NULL);
+
 	pk11_ctx = (pk11_context_t *) isc_mem_get(dctx->mctx,
 						  sizeof(*pk11_ctx));
 	if (pk11_ctx == NULL)
 		return (ISC_R_NOMEMORY);
 	ret = pk11_get_session(pk11_ctx, OP_GOST, ISC_TRUE, ISC_FALSE,
-			       ISC_FALSE, NULL, pk11_get_best_token(OP_GOST));
+			       gost->reqlogon, NULL,
+			       pk11_get_best_token(OP_GOST));
 	if (ret != ISC_R_SUCCESS)
 		goto err;
 
-	gost = key->keydata.pkey;
 	if (gost->ontoken && (gost->object != CK_INVALID_HANDLE)) {
 		pk11_ctx->ontoken = gost->ontoken;
 		pk11_ctx->object = gost->object;

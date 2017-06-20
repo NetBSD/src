@@ -1,7 +1,7 @@
-/*	$NetBSD: opensslgost_link.c,v 1.8.2.2 2016/03/13 08:06:13 martin Exp $	*/
+/*	$NetBSD: opensslgost_link.c,v 1.8.2.3 2017/06/20 17:09:50 snj Exp $	*/
 
 /*
- * Copyright (C) 2010-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2010-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -38,6 +38,11 @@
 #include <openssl/rsa.h>
 #include <openssl/engine.h>
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#define EVP_MD_CTX_new() &(ctx->_ctx), EVP_MD_CTX_init(&(ctx->_ctx))
+#define EVP_MD_CTX_free(ptr) EVP_MD_CTX_cleanup(ptr)
+#endif
+
 static ENGINE *e = NULL;
 static const EVP_MD *opensslgost_digest;
 extern const EVP_MD *EVP_gost(void);
@@ -58,8 +63,10 @@ isc_gost_init(isc_gost_t *ctx) {
 	md = EVP_gost();
 	if (md == NULL)
 		return (DST_R_CRYPTOFAILURE);
-	EVP_MD_CTX_init(ctx);
-	ret = EVP_DigestInit(ctx, md);
+	ctx->ctx = EVP_MD_CTX_new();
+	if (ctx->ctx == NULL)
+		return (ISC_R_NOMEMORY);
+	ret = EVP_DigestInit(ctx->ctx, md);
 	if (ret != 1)
 		return (DST_R_CRYPTOFAILURE);
 	return (ISC_R_SUCCESS);
@@ -67,7 +74,8 @@ isc_gost_init(isc_gost_t *ctx) {
 
 void
 isc_gost_invalidate(isc_gost_t *ctx) {
-	EVP_MD_CTX_cleanup(ctx);
+	EVP_MD_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
 }
 
 isc_result_t
@@ -77,9 +85,10 @@ isc_gost_update(isc_gost_t *ctx, const unsigned char *data,
 	int ret;
 
 	INSIST(ctx != NULL);
+	INSIST(ctx->ctx != NULL);
 	INSIST(data != NULL);
 
-	ret = EVP_DigestUpdate(ctx, (const void *) data, (size_t) len);
+	ret = EVP_DigestUpdate(ctx->ctx, (const void *) data, (size_t) len);
 	if (ret != 1)
 		return (DST_R_CRYPTOFAILURE);
 	return (ISC_R_SUCCESS);
@@ -90,9 +99,12 @@ isc_gost_final(isc_gost_t *ctx, unsigned char *digest) {
 	int ret;
 
 	INSIST(ctx != NULL);
+	INSIST(ctx->ctx != NULL);
 	INSIST(digest != NULL);
 
-	ret = EVP_DigestFinal(ctx, digest, NULL);
+	ret = EVP_DigestFinal(ctx->ctx, digest, NULL);
+	EVP_MD_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
 	if (ret != 1)
 		return (DST_R_CRYPTOFAILURE);
 	return (ISC_R_SUCCESS);
@@ -283,7 +295,7 @@ opensslgost_destroy(dst_key_t *key) {
 	key->keydata.pkey = NULL;
 }
 
-unsigned char gost_prefix[37] = {
+static const unsigned char gost_prefix[37] = {
 	0x30, 0x63, 0x30, 0x1c, 0x06, 0x06, 0x2a, 0x85,
 	0x03, 0x02, 0x02, 0x13, 0x30, 0x12, 0x06, 0x07,
 	0x2a, 0x85, 0x03, 0x02, 0x02, 0x23, 0x01, 0x06,

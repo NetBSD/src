@@ -1,4 +1,4 @@
-/*	$NetBSD: view.h,v 1.9.2.2 2016/10/14 12:01:29 martin Exp $	*/
+/*	$NetBSD: view.h,v 1.9.2.3 2017/06/20 17:09:51 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
@@ -130,6 +130,7 @@ struct dns_view {
 	isc_boolean_t			enablednssec;
 	isc_boolean_t			enablevalidation;
 	isc_boolean_t			acceptexpired;
+	isc_boolean_t			trust_anchor_telemetry;
 	dns_transfer_format_t		transfer_format;
 	dns_acl_t *			cacheacl;
 	dns_acl_t *			cacheonacl;

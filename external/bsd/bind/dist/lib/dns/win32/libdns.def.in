@@ -159,6 +159,7 @@ dns_db_dump
 dns_db_dump2
 dns_db_endload
 dns_db_expirenode
+dns_db_getsize
 dns_db_find
 dns_db_findext
 dns_db_findnode
@@ -370,6 +371,7 @@ dns_keytable_find
 dns_keytable_finddeepestmatch
 dns_keytable_findkeynode
 dns_keytable_findnextkeynode
+dns_keytable_forall
 dns_keytable_issecuredomain
 dns_keytable_marksecure
 dns_keytable_nextkeynode
@@ -573,6 +575,7 @@ dns_order_find
 dns_peer_attach
 dns_peer_detach
 dns_peer_getbogus
+dns_peer_getforcetcp
 dns_peer_getkey
 dns_peer_getmaxudp
 dns_peer_getnotifydscp
@@ -592,6 +595,7 @@ dns_peer_gettransfersource
 dns_peer_new
 dns_peer_newprefix
 dns_peer_setbogus
+dns_peer_setforcetcp
 dns_peer_setkey
 dns_peer_setkeybycharp
 dns_peer_setmaxudp
@@ -725,6 +729,7 @@ dns_rdatasetstats_create
 dns_rdatasetstats_decrement
 dns_rdatasetstats_dump
 dns_rdatasetstats_increment
+dns_rdataslab_count
 dns_rdataslab_equal
 dns_rdataslab_equalx
 dns_rdataslab_fromrdataset
@@ -1051,6 +1056,7 @@ dns_zone_getjournalsize
 dns_zone_getkeydirectory
 dns_zone_getkeyopts
 dns_zone_getloadtime
+dns_zone_getmaxrecords
 dns_zone_getmaxttl
 dns_zone_getmaxxfrin
 dns_zone_getmaxxfrout
@@ -1107,9 +1113,6 @@ dns_zone_log
 dns_zone_logc
 dns_zone_maintenance
 dns_zone_markdirty
-dns_zone_mkey_hour
-dns_zone_mkey_day
-dns_zone_mkey_month
 dns_zone_name
 dns_zone_nameonly
 dns_zone_next
@@ -1151,6 +1154,7 @@ dns_zone_setkeydirectory
 dns_zone_setkeyopt
 dns_zone_setmasters
 dns_zone_setmasterswithkeys
+dns_zone_setmaxrecords
 dns_zone_setmaxrefreshtime
 dns_zone_setmaxretrytime
 dns_zone_setmaxttl
@@ -1323,5 +1327,13 @@ dst_result_totext
 
 EXPORTS
 
+dns_pps			DATA
 dns_master_style_full	DATA
-@END NOLONGER
+dns_msgcat		DATA
+dns_tsig_hmacmd5_name	DATA
+dns_zone_mkey_day	DATA
+dns_zone_mkey_hour	DATA
+dns_zone_mkey_month	DATA
+dst__memory_pool	DATA
+dst_msgcat		DATA
+@IF NOLONGER

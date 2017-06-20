@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2009, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2009, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 -->
 
 <!-- Converted by db4-upgrade version 1.0 -->
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="man.named-journalprint">
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.named-journalprint">
   <info>
     <date>2009-12-04</date>
   </info>
@@ -40,6 +40,8 @@
       <year>2009</year>
       <year>2014</year>
       <year>2015</year>
+      <year>2016</year>
+      <year>2017</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -85,7 +87,7 @@
         <refentrytitle>named</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>nsupdate</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>nsupdate</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>,
       <citetitle>BIND 9 Administrator Reference Manual</citetitle>.
     </para>

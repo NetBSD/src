@@ -1,4 +1,4 @@
-/*	$NetBSD: aclconf.c,v 1.7.2.2 2016/10/14 12:01:33 martin Exp $	*/
+/*	$NetBSD: aclconf.c,v 1.7.2.3 2017/06/20 17:09:55 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 #include <config.h>
 
@@ -721,6 +719,14 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 				if (nest_level != 0)
 					dns_acl_detach(&de->nestedacl);
 				continue;
+			}
+			result = isc_netaddr_prefixok(&addr, bitlen);
+			if (result != ISC_R_SUCCESS) {
+				char buf[ISC_NETADDR_FORMATSIZE + 1];
+				isc_netaddr_format(&addr, buf, sizeof(buf));
+				cfg_obj_log(ce, lctx, ISC_LOG_WARNING,
+					    "'%s/%u': address/prefix length "
+					    "mismatch", buf, bitlen);
 			}
 
 			/*

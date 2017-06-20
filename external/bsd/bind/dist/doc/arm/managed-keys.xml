@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
 <!-- Id -->
 
 <!-- Converted by db4-upgrade version 1.0 -->
-<section xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="rfc5011.support"><info><title>Dynamic Trust Anchor Management</title></info>
+<section xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="rfc5011.support"><info><title>Dynamic Trust Anchor Management</title></info>
 
   <para>BIND 9.7.0 introduces support for RFC 5011, dynamic trust
   anchor management. Using this feature allows

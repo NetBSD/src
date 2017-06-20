@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_filesystem_dynamic.c,v 1.1.1.1.6.1 2016/10/14 12:01:23 martin Exp $	*/
+/*	$NetBSD: dlz_filesystem_dynamic.c,v 1.1.1.1.6.2 2017/06/20 17:09:46 snj Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -827,6 +827,7 @@ isc_result_t
 dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 	   void **dbdata, ...)
 {
+	isc_result_t result = ISC_R_NOMEMORY;
 	config_data_t *cd;
 	char *endp;
 	int len;
@@ -935,7 +936,7 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 		dlz_destroy(cd);
 
 	/* return error */
-	return (ISC_R_NOMEMORY);
+	return (result);
 }
 
 void

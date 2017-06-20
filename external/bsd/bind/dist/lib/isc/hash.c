@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.7.2.3 2016/10/14 12:01:31 martin Exp $	*/
+/*	$NetBSD: hash.c,v 1.7.2.4 2017/06/20 17:09:53 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -430,7 +430,7 @@ isc_hash_function(const void *data, size_t length,
 	const unsigned char *bp;
 	const unsigned char *be;
 
-	INSIST(data == NULL || length > 0);
+	REQUIRE(length == 0 || data != NULL);
 	RUNTIME_CHECK(isc_once_do(&fnv_once, fnv_initialize) == ISC_R_SUCCESS);
 
 	hval = ISC_UNLIKELY(previous_hashp != NULL) ?
@@ -497,7 +497,7 @@ isc_hash_function_reverse(const void *data, size_t length,
 	const unsigned char *bp;
 	const unsigned char *be;
 
-	INSIST(data == NULL || length > 0);
+	REQUIRE(length == 0 || data != NULL);
 	RUNTIME_CHECK(isc_once_do(&fnv_once, fnv_initialize) == ISC_R_SUCCESS);
 
 	hval = ISC_UNLIKELY(previous_hashp != NULL) ?

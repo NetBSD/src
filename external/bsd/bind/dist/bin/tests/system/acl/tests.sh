@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2008, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2008, 2012-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -151,4 +151,4 @@ $DIG +tcp soa example. \
 grep "status: NOERROR" dig.out.${t} > /dev/null 2>&1 || { echo "I:test $t failed" ; status=1; }
 
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

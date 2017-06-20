@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -25,7 +25,7 @@ VERSION=@BIND9_VERSION@
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	-I. -Iinclude ${ISC_INCLUDES} @ISC_OPENSSL_INC@
-CDEFINES =	-DTESTS="\"${top_builddir}/lib/isc/tests/\""
+CDEFINES =	@CRYPTO@ -DTESTS="\"${top_builddir}/lib/isc/tests/\""
 
 ISCLIBS =	../libisc.@A@ @ISC_OPENSSL_LIBS@
 ISCDEPLIBS =	../libisc.@A@
@@ -38,7 +38,7 @@ SRCS =		isctest.c taskpool_test.c socket_test.c hash_test.c \
 		sockaddr_test.c symtab_test.c task_test.c queue_test.c \
 		parse_test.c pool_test.c print_test.c regex_test.c \
 		socket_test.c safe_test.c time_test.c aes_test.c \
-		counter_test.c mem_test.c
+		counter_test.c mem_test.c errno_test.c netaddr_test.c
 
 SUBDIRS =
 TARGETS =	taskpool_test@EXEEXT@ socket_test@EXEEXT@ hash_test@EXEEXT@ \
@@ -47,7 +47,8 @@ TARGETS =	taskpool_test@EXEEXT@ socket_test@EXEEXT@ hash_test@EXEEXT@ \
 		queue_test@EXEEXT@ parse_test@EXEEXT@ pool_test@EXEEXT@ \
 		print_test@EXEEXT@ regex_test@EXEEXT@ socket_test@EXEEXT@ \
 		safe_test@EXEEXT@ time_test@EXEEXT@ aes_test@EXEEXT@ \
-		counter_test@EXEEXT@ mem_test@EXEEXT@
+		counter_test@EXEEXT@ mem_test@EXEEXT@ errno_test@EXEEXT@ \
+		netaddr_test@EXEEXT@
 
 @BIND9_MAKE_RULES@
 
@@ -123,6 +124,14 @@ counter_test@EXEEXT@: counter_test.@O@ ${ISCDEPLIBS}
 mem_test@EXEEXT@: mem_test.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 			mem_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+errno_test@EXEEXT@: errno_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			errno_test.@O@ ${ISCLIBS} ${LIBS}
+
+netaddr_test@EXEEXT@: netaddr_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			netaddr_test.@O@ ${ISCLIBS} ${LIBS}
 
 unit::
 	sh ${top_srcdir}/unit/unittest.sh

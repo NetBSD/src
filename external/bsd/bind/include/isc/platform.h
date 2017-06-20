@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -252,6 +252,11 @@
  * the KRB5 header.
  */
 #define ISC_PLATFORM_KRB5HEADER <krb5/krb5.h>
+
+/*
+ * Define if the system has nanosecond-level accuracy in file stats.
+ */
+#undef ISC_PLATFORM_HAVESTATNSEC
 
 /*
  * Type used for resource limits.

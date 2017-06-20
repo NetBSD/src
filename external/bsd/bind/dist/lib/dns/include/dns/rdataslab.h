@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataslab.h,v 1.3 2012/06/05 00:41:52 christos Exp $	*/
+/*	$NetBSD: rdataslab.h,v 1.3.12.1 2017/06/20 17:09:51 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -106,6 +106,7 @@ dns_rdataslab_tordataset(unsigned char *slab, unsigned int reservelen,
  * Ensures:
  *\li	'rdataset' is associated and points to a valid rdataest.
  */
+
 unsigned int
 dns_rdataslab_size(unsigned char *slab, unsigned int reservelen);
 /*%<
@@ -116,6 +117,18 @@ dns_rdataslab_size(unsigned char *slab, unsigned int reservelen);
  *
  * Returns:
  *\li	The number of bytes in the slab, including the reservelen.
+ */
+
+unsigned int
+dns_rdataslab_count(unsigned char *slab, unsigned int reservelen);
+/*%<
+ * Return the number of records in the rdataslab
+ *
+ * Requires:
+ *\li	'slab' points to a slab.
+ *
+ * Returns:
+ *\li	The number of records in the slab.
  */
 
 isc_result_t

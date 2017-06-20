@@ -1,7 +1,7 @@
-/*	$NetBSD: delv.c,v 1.2.4.2 2016/10/14 12:01:09 martin Exp $	*/
+/*	$NetBSD: delv.c,v 1.2.4.3 2017/06/20 17:09:25 snj Exp $	*/
 
 /*
- * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -776,7 +776,7 @@ setup_dnsseckeys(dns_client_t *client) {
 static isc_result_t
 addserver(dns_client_t *client) {
 	struct addrinfo hints, *res, *cur;
-	int gai_error;
+	int gaierror;
 	struct in_addr in4;
 	struct in6_addr in6;
 	isc_sockaddr_t *sa;
@@ -815,11 +815,11 @@ addserver(dns_client_t *client) {
 			hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_DGRAM;
 		hints.ai_protocol = IPPROTO_UDP;
-		gai_error = getaddrinfo(server, port, &hints, &res);
-		if (gai_error != 0) {
+		gaierror = getaddrinfo(server, port, &hints, &res);
+		if (gaierror != 0) {
 			delv_log(ISC_LOG_ERROR,
 				  "getaddrinfo failed: %s",
-				  gai_strerror(gai_error));
+				  gai_strerror(gaierror));
 			return (ISC_R_FAILURE);
 		}
 
