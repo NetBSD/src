@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.510 2017/06/19 10:59:01 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.511 2017/06/20 10:10:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.510 2017/06/19 10:59:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.511 2017/06/20 10:10:36 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2990,6 +2990,9 @@ wm_ifflags_cb(struct ethercom *ec)
 	struct wm_softc *sc = ifp->if_softc;
 	int rc = 0;
 
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+
 	WM_CORE_LOCK(sc);
 
 	int change = ifp->if_flags ^ sc->sc_if_flags;
@@ -4069,6 +4072,9 @@ wm_reset(struct wm_softc *sc)
 				break;
 			delay(100);
 		}
+		if (timeout == 0)
+			device_printf(sc->sc_dev,
+			    "failed to disable busmastering\n");
 	}
 
 	/* Set the completion timeout for interface */
@@ -8469,12 +8475,14 @@ wm_intr_legacy(void *arg)
 	uint32_t icr, rndval = 0;
 	int handled = 0;
 
-	DPRINTF(WM_DEBUG_TX,
-	    ("%s: INTx: got intr\n", device_xname(sc->sc_dev)));
 	while (1 /* CONSTCOND */) {
 		icr = CSR_READ(sc, WMREG_ICR);
 		if ((icr & sc->sc_icr) == 0)
 			break;
+		if (handled == 0) {
+			DPRINTF(WM_DEBUG_TX,
+			    ("%s: INTx: got intr\n", device_xname(sc->sc_dev)));
+		}
 		if (rndval == 0)
 			rndval = icr;
 
@@ -13774,6 +13782,7 @@ wm_platform_pm_pch_lpt(struct wm_softc *sc, bool link)
 		}
 		lat_enc = (uint16_t)(__SHIFTIN(scale, LTRV_SCALE) | value);
 
+		/* Determine the maximum latency tolerated by the platform */
 		preg = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 		    WM_PCI_LTR_CAP_LPT);
 		max_snoop = preg & 0xffff;
