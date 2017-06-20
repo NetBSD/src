@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.55 2017/05/07 08:19:39 nat Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.56 2017/06/20 07:45:01 nat Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -291,7 +291,7 @@ struct audio_softc {
 	struct sysctllog	*sc_log;	/* sysctl log */
 	int		sc_channels;
 	int		sc_precision;
-	int		sc_iffreq;
+	int		sc_frequency;
 	struct audio_info 	sc_ai;		/* Recent info for  dev sound */
 	bool			sc_aivalid;
 #define VAUDIO_NFORMATS	1
