@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2010, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2010, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -18,10 +18,11 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES} \
-		${LWRES_INCLUDES} ${OMAPI_INCLUDES}
+CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} @DST_OPENSSL_INC@ \
+		${ISCCFG_INCLUDES} ${LWRES_INCLUDES} ${OMAPI_INCLUDES}
 
-CDEFINES =
+CDEFINES =	@CRYPTO@
+
 CWARNINGS =
 
 DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
@@ -88,17 +89,18 @@ docclean manclean maintainer-clean::
 	rm -f ${MANOBJS}
 
 installdirs:
+	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${bindir}
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${sbindir}
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man1
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 install:: ${TARGETS} installdirs
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} arpaname@EXEEXT@ \
-		${DESTDIR}${sbindir}
+		${DESTDIR}${bindir}
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} named-journalprint@EXEEXT@ \
 		${DESTDIR}${sbindir}
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} named-rrchecker@EXEEXT@ \
-		${DESTDIR}${sbindir}
+		${DESTDIR}${bindir}
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} nsec3hash@EXEEXT@ \
 		${DESTDIR}${sbindir}
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} genrandom@EXEEXT@ \
@@ -111,6 +113,26 @@ install:: ${TARGETS} installdirs
 	${INSTALL_DATA} ${srcdir}/named-rrchecker.1 ${DESTDIR}${mandir}/man1
 	${INSTALL_DATA} ${srcdir}/nsec3hash.8 ${DESTDIR}${mandir}/man8
 	${INSTALL_DATA} ${srcdir}/genrandom.8 ${DESTDIR}${mandir}/man8
+
+uninstall::
+	rm -f ${DESTDIR}${mandir}/man8/genrandom.8
+	rm -f ${DESTDIR}${mandir}/man8/nsec3hash.8
+	rm -f ${DESTDIR}${mandir}/man1/named-rrchecker.1
+	rm -f ${DESTDIR}${mandir}/man8/named-journalprint.8
+	rm -f ${DESTDIR}${mandir}/man8/isc-hmac-fixup.8
+	rm -f ${DESTDIR}${mandir}/man1/arpaname.1
+	${LIBTOOL_MODE_UNINSTALL} rm -f \
+		${DESTDIR}${sbindir}/isc-hmac-fixup@EXEEXT@
+	${LIBTOOL_MODE_UNINSTALL} rm -f \
+		${DESTDIR}${sbindir}/genrandom@EXEEXT@
+	${LIBTOOL_MODE_UNINSTALL} rm -f \
+		${DESTDIR}${sbindir}/nsec3hash@EXEEXT@
+	${LIBTOOL_MODE_UNINSTALL} rm -f \
+		${DESTDIR}${bindir}/named-rrchecker@EXEEXT@
+	${LIBTOOL_MODE_UNINSTALL} rm -f \
+		${DESTDIR}${sbindir}/named-journalprint@EXEEXT@
+	${LIBTOOL_MODE_UNINSTALL} rm -f \
+		${DESTDIR}${bindir}/arpaname@EXEEXT@
 
 clean distclean::
 	rm -f ${TARGETS}

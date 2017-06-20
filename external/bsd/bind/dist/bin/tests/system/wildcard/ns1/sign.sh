@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -25,7 +25,7 @@ zone=dlv.
 infile=dlv.db.in
 zonefile=dlv.db
 outfile=dlv.db.signed
-dssets="$dssets dsset-$zone"
+dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone 2> /dev/null` 
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone 2> /dev/null`
@@ -39,7 +39,7 @@ zone=nsec.
 infile=nsec.db.in
 zonefile=nsec.db
 outfile=nsec.db.signed
-dssets="$dssets dsset-$zone"
+dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone 2> /dev/null` 
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone 2> /dev/null`
@@ -76,7 +76,7 @@ zone=nsec3.
 infile=nsec3.db.in
 zonefile=nsec3.db
 outfile=nsec3.db.signed
-dssets="$dssets dsset-$zone"
+dssets="$dssets dsset-`echo $zone |sed -e "s/.$//g"`$TP"
 
 keyname1=`$KEYGEN -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone $zone 2> /dev/null` 
 keyname2=`$KEYGEN -f KSK -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone $zone 2> /dev/null`

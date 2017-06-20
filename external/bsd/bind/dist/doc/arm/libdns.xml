@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2010, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 -->
 
 <!-- Converted by db4-upgrade version 1.0 -->
-<section xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="bind9.library"><info><title>BIND 9 DNS Library Support</title></info>
+<section xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="bind9.library"><info><title>BIND 9 DNS Library Support</title></info>
 
   <para>This version of BIND 9 "exports" its internal libraries so
   that they can be used by third-party applications more easily (we

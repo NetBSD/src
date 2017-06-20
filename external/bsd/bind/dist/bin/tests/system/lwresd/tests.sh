@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011-2013, 2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -45,7 +45,7 @@ do
 	grep ' running$' lwresd1/lwresd.run > /dev/null && break
 	sleep 1
 done
-./lwtest || ret=1
+$LWTEST || ret=1
 if [ $ret != 0 ]; then
 	echo "I:failed"
 fi
@@ -64,11 +64,30 @@ do
 	grep ' running$' lwresd1/lwresd.run > /dev/null && break
 	sleep 1
 done
-./lwtest || ret=1
+$LWTEST || ret=1
+if [ $ret != 0 ]; then
+	echo "I:failed"
+fi
+status=`expr $status + $ret`
+
+$PERL $SYSTEMTESTTOP/stop.pl . lwresd1
+
+mv lwresd1/lwresd.run lwresd1/lwresd.run.lwresd
+
+$PERL $SYSTEMTESTTOP/start.pl . lwresd1 -- "-m record,size,mctx -c nosearch.conf -d 99 -g"
+
+echo "I:using nosearch.conf"
+ret=0
+for i in 0 1 2 3 4 5 6 7 8 9 
+do
+	grep ' running$' lwresd1/lwresd.run > /dev/null && break
+	sleep 1
+done
+$LWTEST -nosearch || ret=1
 if [ $ret != 0 ]; then
 	echo "I:failed"
 fi
 status=`expr $status + $ret`
 
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

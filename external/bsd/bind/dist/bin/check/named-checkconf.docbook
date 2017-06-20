@@ -1,7 +1,7 @@
 <!DOCTYPE book [
 <!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004, 2005, 2007, 2009, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004, 2005, 2007, 2009, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2002  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
 -->
 
 <!-- Converted by db4-upgrade version 1.0 -->
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="man.named-checkconf">
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.named-checkconf">
   <info>
     <date>2014-01-10</date>
   </info>
@@ -41,6 +41,7 @@
       <year>2009</year>
       <year>2014</year>
       <year>2015</year>
+      <year>2016</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -59,14 +60,12 @@
   <refsynopsisdiv>
     <cmdsynopsis sepchar=" ">
       <command>named-checkconf</command>
-      <arg choice="opt" rep="norepeat"><option>-h</option></arg>
-      <arg choice="opt" rep="norepeat"><option>-v</option></arg>
-      <arg choice="opt" rep="norepeat"><option>-j</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-hjvz</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-p</option>
+	<arg choice="opt" rep="norepeat"><option>-x</option>
+      </arg></arg>
       <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">directory</replaceable></option></arg>
       <arg choice="req" rep="norepeat">filename</arg>
-      <arg choice="opt" rep="norepeat"><option>-p</option></arg>
-      <arg choice="opt" rep="norepeat"><option>-x</option></arg>
-      <arg choice="opt" rep="norepeat"><option>-z</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -93,7 +92,6 @@
 
   <refsection><info><title>OPTIONS</title></info>
 
-
     <variablelist>
       <varlistentry>
         <term>-h</term>
@@ -105,22 +103,10 @@
       </varlistentry>
 
       <varlistentry>
-        <term>-t <replaceable class="parameter">directory</replaceable></term>
+        <term>-j</term>
         <listitem>
           <para>
-            Chroot to <filename>directory</filename> so that include
-            directives in the configuration file are processed as if
-            run by a similarly chrooted named.
-          </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>-v</term>
-        <listitem>
-          <para>
-            Print the version of the <command>named-checkconf</command>
-            program and exit.
+            When loading a zonefile read the journal if it exists.
           </para>
         </listitem>
       </varlistentry>
@@ -131,6 +117,28 @@
           <para>
 	    Print out the <filename>named.conf</filename> and included files
 	    in canonical form if no errors were detected.
+            See also the <option>-x</option> option.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-t <replaceable class="parameter">directory</replaceable></term>
+        <listitem>
+          <para>
+            Chroot to <filename>directory</filename> so that include
+            directives in the configuration file are processed as if
+            run by a similarly chrooted <command>named</command>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-v</term>
+        <listitem>
+          <para>
+            Print the version of the <command>named-checkconf</command>
+            program and exit.
           </para>
         </listitem>
       </varlistentry>
@@ -156,15 +164,6 @@
           <para>
 	    Perform a test load of all master zones found in
 	    <filename>named.conf</filename>.
-          </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>-j</term>
-        <listitem>
-          <para>
-            When loading a zonefile read the journal if it exists.
           </para>
         </listitem>
       </varlistentry>

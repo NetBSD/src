@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2004, 2006-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -26,12 +26,12 @@ zonefile=root.db
 (cd ../ns6 && $SHELL sign.sh )
 (cd ../ns7 && $SHELL sign.sh )
 
-cp ../ns2/dsset-example. .
-cp ../ns2/dsset-dlv. .
-cp ../ns2/dsset-in-addr.arpa. .
+cp ../ns2/dsset-example$TP .
+cp ../ns2/dsset-dlv$TP .
+cp ../ns2/dsset-in-addr.arpa$TP .
 
-grep "8 [12] " ../ns2/dsset-algroll. > dsset-algroll.
-cp ../ns6/dsset-optout-tld. .
+grep "8 [12] " ../ns2/dsset-algroll$TP > dsset-algroll$TP
+cp ../ns6/dsset-optout-tld$TP .
 
 keyname=`$KEYGEN -q -r $RANDFILE -a RSAMD5 -b 768 -n zone $zone`
 

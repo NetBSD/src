@@ -43,7 +43,7 @@
  - SUCH DAMAGE.
 -->
 <!-- Converted by db4-upgrade version 1.0 -->
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0">
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.nslookup">
   <info>
     <date>2014-01-24</date>
   </info>

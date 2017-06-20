@@ -28,8 +28,6 @@ isc__appctx_destroy
 isc__appctx_setsocketmgr
 isc__appctx_settaskmgr
 isc__appctx_settimermgr
-isc__backtrace_nsymbols
-isc__backtrace_symtable
 isc__buffer_activeregion
 isc__buffer_add
 isc__buffer_availableregion
@@ -189,7 +187,6 @@ isc_dir_init
 isc_dir_open
 isc_dir_read
 isc_dir_reset
-isc_dscp_check_value
 isc_entropy_addcallbacksample
 isc_entropy_addsample
 isc_entropy_attach
@@ -538,6 +535,8 @@ isc_sha1_final
 isc_sha1_init
 isc_sha1_invalidate
 isc_sha1_update
+isc_sha224_data
+isc_sha224_end
 isc_sha224_final
 isc_sha224_init
 isc_sha224_invalidate
@@ -547,10 +546,14 @@ isc_sha256_final
 isc_sha256_init
 isc_sha256_invalidate
 isc_sha256_update
+isc_sha384_data
+isc_sha384_end
 isc_sha384_final
 isc_sha384_init
 isc_sha384_invalidate
 isc_sha384_update
+isc_sha512_data
+isc_sha512_end
 isc_sha512_final
 isc_sha512_init
 isc_sha512_invalidate
@@ -705,6 +708,7 @@ pk11_error_fatalcheck
 pk11_finalize
 pk11_get_best_token
 pk11_get_lib_name
+pk11_get_load_error_message
 pk11_get_session
 pk11_initialize
 pk11_initmsgcat
@@ -760,6 +764,8 @@ syslog
 
 EXPORTS
 
+isc__backtrace_nsymbols		DATA
+isc__backtrace_symtable		DATA
 isc_bind9			DATA
 isc_commandline_argument	DATA
 isc_commandline_errprint	DATA
@@ -767,5 +773,11 @@ isc_commandline_index		DATA
 isc_commandline_option		DATA
 isc_commandline_progname	DATA
 isc_commandline_reset		DATA
+isc_dscp_check_value		DATA
 isc_mem_debugging		DATA
+isc_msgcat			DATA
+@IF PKCS11
+pk11_msgcat			DATA
+pk11_verbose_init		DATA
+@END PKCS11
 @END NOLONGER

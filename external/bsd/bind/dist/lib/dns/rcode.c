@@ -1,7 +1,7 @@
-/*	$NetBSD: rcode.c,v 1.7.4.3 2016/10/14 12:01:29 martin Exp $	*/
+/*	$NetBSD: rcode.c,v 1.7.4.4 2017/06/20 17:09:51 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,6 +32,8 @@
 #include <isc/string.h>
 #include <isc/types.h>
 #include <isc/util.h>
+
+#include <pk11/site.h>
 
 #include <dns/cert.h>
 #include <dns/ds.h>
@@ -108,12 +110,31 @@
 
 /* RFC2535 section 7, RFC3110 */
 
-#define SECALGNAMES \
+#ifndef PK11_MD5_DISABLE
+#define MD5_SECALGNAMES \
 	{ DNS_KEYALG_RSAMD5, "RSAMD5", 0 }, \
-	{ DNS_KEYALG_RSAMD5, "RSA", 0 }, \
-	{ DNS_KEYALG_DH, "DH", 0 }, \
+	{ DNS_KEYALG_RSAMD5, "RSA", 0 },
+#else
+#define MD5_SECALGNAMES
+#endif
+#ifndef PK11_DH_DISABLE
+#define DH_SECALGNAMES \
+	{ DNS_KEYALG_DH, "DH", 0 },
+#else
+#define DH_SECALGNAMES
+#endif
+#ifndef PK11_DSA_DISABLE
+#define DSA_SECALGNAMES \
 	{ DNS_KEYALG_DSA, "DSA", 0 }, \
-	{ DNS_KEYALG_NSEC3DSA, "NSEC3DSA", 0 }, \
+	{ DNS_KEYALG_NSEC3DSA, "NSEC3DSA", 0 },
+#else
+#define DSA_SECALGNAMES
+#endif
+
+#define SECALGNAMES \
+	MD5_SECALGNAMES \
+	DH_SECALGNAMES \
+	DSA_SECALGNAMES \
 	{ DNS_KEYALG_ECC, "ECC", 0 }, \
 	{ DNS_KEYALG_RSASHA1, "RSASHA1", 0 }, \
 	{ DNS_KEYALG_NSEC3RSASHA1, "NSEC3RSASHA1", 0 }, \

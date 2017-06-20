@@ -9,6 +9,7 @@ whether the resulting digest is is correct.  For instance:
 ...must return "9294727a3638bb1c13f48ef8158bfc9d".
 
 If any other value is returned, then the provider library is buggy,
-and the compilation flag PKCS11CRYPTOWITHHMAC must *not* be defined.
+and theflag PK11_MD5_HMAC_REPLACE must be defined in
+lib/isc/include/pk11/site.h
 However, if the correct value is returned, then it is safe to turn
-on PKCS11CRYPTOWITHHMAC. (It is off by default.)
+off PK11_MD5_HMAC_REPLACE. (It is on by default.)

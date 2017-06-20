@@ -1,4 +1,4 @@
-# Copyright (C) 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -43,7 +43,7 @@ grep "zone serial (0) unchanged." ns1/named.run > /dev/null && ret=1
 if [ $ret != 0 ] ; then echo I:failed; status=`expr $status + $ret`; fi
 
 VERSION=`../../../../isc-config.sh  --version | cut -d = -f 2`
-HOSTNAME=`./gethostname`
+HOSTNAME=`$FEATURETEST --gethostname`
 
 n=`expr $n + 1`
 ret=0
@@ -56,7 +56,7 @@ n=`expr $n + 1`
 ret=0
 echo "I:Checking that custom version works for rndc ($n)"
 $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 status > rndc.status.ns3.$n 2>&1
-grep "^version: BIND $VERSION ${DESCRIPTION}${DESCRIPTION:+ }<id:.......> (this is a test of version)" rndc.status.ns3.$n > /dev/null || ret=1
+grep "^version: BIND $VERSION ${DESCRIPTION}${DESCRIPTION:+ }<id:........*> (this is a test of version)" rndc.status.ns3.$n > /dev/null || ret=1
 if [ $ret != 0 ] ; then echo I:failed; status=`expr $status + $ret`; fi
 
 n=`expr $n + 1`
@@ -123,4 +123,5 @@ $DIG +norec +nsid foo @10.53.0.3 -p 5300 > dig.out.ns3.$n
 grep "^; NSID: .* (\"this.is.a.test.of.server-id\")$" dig.out.ns3.$n > /dev/null || ret=1
 if [ $ret != 0 ] ; then echo I:failed; status=`expr $status + $ret`; fi
 
-exit $status
+echo "I:exit status: $status"
+[ $status -eq 0 ] || exit 1

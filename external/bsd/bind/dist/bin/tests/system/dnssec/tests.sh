@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -2103,7 +2103,7 @@ awk '{
 	for (i=1;i<7;i++) printf("%s ", $i);
 	for (i=7;i<=NF;i++) printf("%s", $i);
 	printf("\n");
-}' < ns1/dsset-algroll. > canonical2.$n || ret=1
+}' < ns1/dsset-algroll$TP > canonical2.$n || ret=1
 diff -b canonical1.$n canonical2.$n > /dev/null 2>&1 || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -2569,7 +2569,7 @@ else
 		 +trusted-key=ns3/trusted-future.key > dig.out.ns3.test$n &
 	pid=$!
 	sleep 1
-	kill -9 $pid 2> /dev/null
+	$KILL -9 $pid 2> /dev/null
 	wait $pid
 	grep ";; No DNSKEY is valid to check the RRSIG of the RRset: FAILED" dig.out.ns3.test$n > /dev/null || ret=1
 	if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -2818,7 +2818,7 @@ $KEYGEN -q -r $RANDFILE -3 remove > /dev/null
 echo > remove.db.signed
 $SIGNER -S -o remove -D -f remove.db.signed remove.db.in > signer.out.1.$n 2>&1
 )
-grep -w MX signer/remove.db.signed > /dev/null || {
+grep "RRSIG MX" signer/remove.db.signed > /dev/null || {
 	ret=1 ; cp signer/remove.db.signed signer/remove.db.signed.pre$n;
 }
 # re-generate signed zone without MX and AAAA records at apex.
@@ -2826,7 +2826,7 @@ grep -w MX signer/remove.db.signed > /dev/null || {
 cd signer
 $SIGNER -S -o remove -D -f remove.db.signed remove2.db.in > signer.out.2.$n 2>&1
 )
-grep -w MX signer/remove.db.signed > /dev/null &&  {
+grep "RRSIG MX" signer/remove.db.signed > /dev/null &&  {
 	ret=1 ; cp signer/remove.db.signed signer/remove.db.signed.post$n;
 }
 n=`expr $n + 1`
@@ -2841,7 +2841,7 @@ cd signer
 echo > remove.db.signed
 $SIGNER -3 - -S -o remove -D -f remove.db.signed remove.db.in > signer.out.1.$n 2>&1
 )
-grep -w MX signer/remove.db.signed > /dev/null || {
+grep "RRSIG MX" signer/remove.db.signed > /dev/null || {
 	ret=1 ; cp signer/remove.db.signed signer/remove.db.signed.pre$n;
 }
 # re-generate signed zone without MX and AAAA records at apex.
@@ -2849,14 +2849,14 @@ grep -w MX signer/remove.db.signed > /dev/null || {
 cd signer
 $SIGNER -3 - -S -o remove -D -f remove.db.signed remove2.db.in > signer.out.2.$n 2>&1
 )
-grep -w MX signer/remove.db.signed > /dev/null &&  {
+grep "RRSIG MX" signer/remove.db.signed > /dev/null &&  {
 	ret=1 ; cp signer/remove.db.signed signer/remove.db.signed.post$n;
 }
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-echo "I:check that a named managed zone that was signed 'in-the-future' is re-signed when loaded"
+echo "I:check that a named managed zone that was signed 'in-the-future' is re-signed when loaded ($n)"
 ret=0
 $DIG $DIGOPTS managed-future.example. @10.53.0.4 a > dig.out.ns4.test$n || ret=1
 grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
@@ -2865,5 +2865,26 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:check that trust-anchor-telemetry queries are logged ($n)"
+ret=0
+grep "sending trust-anchor-telemetry query '_ta-[0-9a-f]*/NULL" ns6/named.run > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that trust-anchor-telemetry queries are received ($n)"
+ret=0
+grep "query '_ta-[0-9a-f]*/NULL/IN' approved" ns1/named.run > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that trust-anchor-telemetry are not sent when disabled ($n)"
+ret=0
+grep "sending trust-anchor-telemetry query '_ta-[0-9a-f]*/NULL" ns1/named.run > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

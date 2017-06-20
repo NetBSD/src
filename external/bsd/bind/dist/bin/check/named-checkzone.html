@@ -1,5 +1,6 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <!--
- - Copyright (C) 2004-2007, 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2007, 2009-2016 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2002 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -14,7 +15,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<html>
+<html lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>named-checkzone</title>
@@ -22,24 +23,94 @@
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry">
 <a name="man.named-checkzone"></a><div class="titlepage"></div>
-<div class="refnamediv">
+  
+  
+
+  
+
+  
+
+  <div class="refnamediv">
 <h2>Name</h2>
-<p><span class="application">named-checkzone</span>, <span class="application">named-compilezone</span> &#8212; zone file validity checking or converting tool</p>
+<p>
+    <span class="application">named-checkzone</span>, 
+    <span class="application">named-compilezone</span>
+     &#8212; zone file validity checking or converting tool
+  </p>
 </div>
-<div class="refsynopsisdiv">
+
+  <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
-<div class="cmdsynopsis"><p><code class="command">named-checkzone</code>  [<code class="option">-d</code>] [<code class="option">-h</code>] [<code class="option">-j</code>] [<code class="option">-q</code>] [<code class="option">-v</code>] [<code class="option">-c <em class="replaceable"><code>class</code></em></code>] [<code class="option">-f <em class="replaceable"><code>format</code></em></code>] [<code class="option">-F <em class="replaceable"><code>format</code></em></code>] [<code class="option">-J <em class="replaceable"><code>filename</code></em></code>] [<code class="option">-i <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-k <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-m <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-M <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-n <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-l <em class="replaceable"><code>ttl</code></em></code>] [<code class="option">-L <em class="replaceable"><code>serial</code></em></code>] [<code class="option">-o <em class="replaceable"><code>filename</code></em></code>] [<code class="option">-r <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-s <em class="replaceable"><code>style</code></em></code>] [<code class="option">-S <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-t <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-T <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-w <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-D</code>] [<code class="option">-W <em class="replaceable"><code>mode</code></em></code>] {zonename} {filename}</p></div>
-<div class="cmdsynopsis"><p><code class="command">named-compilezone</code>  [<code class="option">-d</code>] [<code class="option">-j</code>] [<code class="option">-q</code>] [<code class="option">-v</code>] [<code class="option">-c <em class="replaceable"><code>class</code></em></code>] [<code class="option">-C <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-f <em class="replaceable"><code>format</code></em></code>] [<code class="option">-F <em class="replaceable"><code>format</code></em></code>] [<code class="option">-J <em class="replaceable"><code>filename</code></em></code>] [<code class="option">-i <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-k <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-m <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-n <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-l <em class="replaceable"><code>ttl</code></em></code>] [<code class="option">-L <em class="replaceable"><code>serial</code></em></code>] [<code class="option">-r <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-s <em class="replaceable"><code>style</code></em></code>] [<code class="option">-t <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-T <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-w <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-D</code>] [<code class="option">-W <em class="replaceable"><code>mode</code></em></code>] {<code class="option">-o <em class="replaceable"><code>filename</code></em></code>} {zonename} {filename}</p></div>
-</div>
-<div class="refsection">
+    <div class="cmdsynopsis"><p>
+      <code class="command">named-checkzone</code> 
+       [<code class="option">-d</code>]
+       [<code class="option">-h</code>]
+       [<code class="option">-j</code>]
+       [<code class="option">-q</code>]
+       [<code class="option">-v</code>]
+       [<code class="option">-c <em class="replaceable"><code>class</code></em></code>]
+       [<code class="option">-f <em class="replaceable"><code>format</code></em></code>]
+       [<code class="option">-F <em class="replaceable"><code>format</code></em></code>]
+       [<code class="option">-J <em class="replaceable"><code>filename</code></em></code>]
+       [<code class="option">-i <em class="replaceable"><code>mode</code></em></code>]
+       [<code class="option">-k <em class="replaceable"><code>mode</code></em></code>]
+       [<code class="option">-m <em class="replaceable"><code>mode</code></em></code>]
+       [<code class="option">-M <em class="replaceable"><code>mode</code></em></code>]
+       [<code class="option">-n <em class="replaceable"><code>mode</code></em></code>]
+       [<code class="option">-l <em class="replaceable"><code>ttl</code></em></code>]
+       [<code class="option">-L <em class="replaceable"><code>serial</code></em></code>]
+       [<code class="option">-o <em class="replaceable"><code>filename</code></em></code>]
+       [<code class="option">-r <em class="replaceable"><code>mode</code></em></code>]
+       [<code class="option">-s <em class="replaceable"><code>style</code></em></code>]
+       [<code class="option">-S <em class="replaceable"><code>mode</code></em></code>]
+       [<code class="option">-t <em class="replaceable"><code>directory</code></em></code>]
+       [<code class="option">-T <em class="replaceable"><code>mode</code></em></code>]
+       [<code class="option">-w <em class="replaceable"><code>directory</code></em></code>]
+       [<code class="option">-D</code>]
+       [<code class="option">-W <em class="replaceable"><code>mode</code></em></code>]
+       {zonename}
+       {filename}
+    </p></div>
+    <div class="cmdsynopsis"><p>
+      <code class="command">named-compilezone</code> 
+       [<code class="option">-d</code>]
+       [<code class="option">-j</code>]
+       [<code class="option">-q</code>]
+       [<code class="option">-v</code>]
+       [<code class="option">-c <em class="replaceable"><code>class</code></em></code>]
+       [<code class="option">-C <em class="replaceable"><code>mode</code></em></code>]
+       [<code class="option">-f <em class="replaceable"><code>format</code></em></code>]
+       [<code class="option">-F <em class="replaceable"><code>format</code></em></code>]
+       [<code class="option">-J <em class="replaceable"><code>filename</code></em></code>]
+       [<code class="option">-i <em class="replaceable"><code>mode</code></em></code>]
+       [<code class="option">-k <em class="replaceable"><code>mode</code></em></code>]
+       [<code class="option">-m <em class="replaceable"><code>mode</code></em></code>]
+       [<code class="option">-n <em class="replaceable"><code>mode</code></em></code>]
+       [<code class="option">-l <em class="replaceable"><code>ttl</code></em></code>]
+       [<code class="option">-L <em class="replaceable"><code>serial</code></em></code>]
+       [<code class="option">-r <em class="replaceable"><code>mode</code></em></code>]
+       [<code class="option">-s <em class="replaceable"><code>style</code></em></code>]
+       [<code class="option">-t <em class="replaceable"><code>directory</code></em></code>]
+       [<code class="option">-T <em class="replaceable"><code>mode</code></em></code>]
+       [<code class="option">-w <em class="replaceable"><code>directory</code></em></code>]
+       [<code class="option">-D</code>]
+       [<code class="option">-W <em class="replaceable"><code>mode</code></em></code>]
+       {<code class="option">-o <em class="replaceable"><code>filename</code></em></code>}
+       {zonename}
+       {filename}
+    </p></div>
+  </div>
+
+  <div class="refsection">
 <a name="id-1.7"></a><h2>DESCRIPTION</h2>
-<p><span class="command"><strong>named-checkzone</strong></span>
+
+    <p><span class="command"><strong>named-checkzone</strong></span>
       checks the syntax and integrity of a zone file.  It performs the
       same checks as <span class="command"><strong>named</strong></span> does when loading a
       zone.  This makes <span class="command"><strong>named-checkzone</strong></span> useful for
       checking zone files before configuring them into a name server.
     </p>
-<p>
+    <p>
         <span class="command"><strong>named-compilezone</strong></span> is similar to
 	<span class="command"><strong>named-checkzone</strong></span>, but it always dumps the
         zone contents to a specified file in a specified format.
@@ -50,45 +121,62 @@
         least be as strict as those specified in the
 	<span class="command"><strong>named</strong></span> configuration file.
      </p>
-</div>
-<div class="refsection">
+  </div>
+
+  <div class="refsection">
 <a name="id-1.8"></a><h2>OPTIONS</h2>
-<div class="variablelist"><dl class="variablelist">
+
+
+    <div class="variablelist"><dl class="variablelist">
 <dt><span class="term">-d</span></dt>
-<dd><p>
+<dd>
+          <p>
             Enable debugging.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-h</span></dt>
-<dd><p>
+<dd>
+          <p>
             Print the usage summary and exit.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-q</span></dt>
-<dd><p>
+<dd>
+          <p>
             Quiet mode - exit code only.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-v</span></dt>
-<dd><p>
+<dd>
+          <p>
             Print the version of the <span class="command"><strong>named-checkzone</strong></span>
             program and exit.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-j</span></dt>
-<dd><p>
+<dd>
+          <p>
             When loading a zone file, read the journal if it exists.
             The journal file name is assumed to be the zone file name
 	    appended with the string <code class="filename">.jnl</code>.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-J <em class="replaceable"><code>filename</code></em></span></dt>
-<dd><p>
+<dd>
+          <p>
             When loading the zone file read the journal from the given
             file, if it exists. (Implies -j.)
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-c <em class="replaceable"><code>class</code></em></span></dt>
-<dd><p>
+<dd>
+          <p>
             Specify the class of the zone.  If not specified, "IN" is assumed.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-i <em class="replaceable"><code>mode</code></em></span></dt>
 <dd>
-<p>
+	  <p>
 	      Perform post-load zone integrity checks.  Possible modes are
 	      <span class="command"><strong>"full"</strong></span> (default),
 	      <span class="command"><strong>"full-sibling"</strong></span>,
@@ -96,19 +184,19 @@
 	      <span class="command"><strong>"local-sibling"</strong></span> and
 	      <span class="command"><strong>"none"</strong></span>.
 	  </p>
-<p>
+	  <p>
 	      Mode <span class="command"><strong>"full"</strong></span> checks that MX records
 	      refer to A or AAAA record (both in-zone and out-of-zone
 	      hostnames).  Mode <span class="command"><strong>"local"</strong></span> only
 	      checks MX records which refer to in-zone hostnames.
 	  </p>
-<p>
+	  <p>
 	      Mode <span class="command"><strong>"full"</strong></span> checks that SRV records
 	      refer to A or AAAA record (both in-zone and out-of-zone
 	      hostnames).  Mode <span class="command"><strong>"local"</strong></span> only
 	      checks SRV records which refer to in-zone hostnames.
 	  </p>
-<p>
+	  <p>
 	      Mode <span class="command"><strong>"full"</strong></span> checks that delegation NS
 	      records refer to A or AAAA record (both in-zone and out-of-zone
 	      hostnames).  It also checks that glue address records
@@ -117,31 +205,33 @@
 	      refer to in-zone hostnames or that some required glue exists,
 	      that is when the nameserver is in a child zone.
 	  </p>
-<p>
+	  <p>
 	      Mode <span class="command"><strong>"full-sibling"</strong></span> and
 	      <span class="command"><strong>"local-sibling"</strong></span> disable sibling glue
 	      checks but are otherwise the same as <span class="command"><strong>"full"</strong></span>
 	      and <span class="command"><strong>"local"</strong></span> respectively.
 	  </p>
-<p>
+	  <p>
 	      Mode <span class="command"><strong>"none"</strong></span> disables the checks.
 	  </p>
-</dd>
+	</dd>
 <dt><span class="term">-f <em class="replaceable"><code>format</code></em></span></dt>
-<dd><p>
+<dd>
+	  <p>
 	    Specify the format of the zone file.
 	    Possible formats are <span class="command"><strong>"text"</strong></span> (default),
 	    <span class="command"><strong>"raw"</strong></span>, and <span class="command"><strong>"map"</strong></span>.
-	  </p></dd>
+	  </p>
+	</dd>
 <dt><span class="term">-F <em class="replaceable"><code>format</code></em></span></dt>
 <dd>
-<p>
+	  <p>
 	    Specify the format of the output file specified.
 	    For <span class="command"><strong>named-checkzone</strong></span>,
 	    this does not cause any effects unless it dumps the zone
 	    contents.
 	  </p>
-<p>
+	  <p>
 	    Possible formats are <span class="command"><strong>"text"</strong></span> (default),
 	    which is the standard textual representation of the zone,
 	    and <span class="command"><strong>"map"</strong></span>, <span class="command"><strong>"raw"</strong></span>,
@@ -152,9 +242,10 @@
             any version of <span class="command"><strong>named</strong></span>; if N is 1, the file
             can be read by release 9.9.0 or higher; the default is 1.
 	  </p>
-</dd>
+	</dd>
 <dt><span class="term">-k <em class="replaceable"><code>mode</code></em></span></dt>
-<dd><p>
+<dd>
+          <p>
             Perform <span class="command"><strong>"check-names"</strong></span> checks with the
 	    specified failure mode.
             Possible modes are <span class="command"><strong>"fail"</strong></span>
@@ -162,38 +253,48 @@
             <span class="command"><strong>"warn"</strong></span>
 	    (default for <span class="command"><strong>named-checkzone</strong></span>) and
             <span class="command"><strong>"ignore"</strong></span>.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-l <em class="replaceable"><code>ttl</code></em></span></dt>
-<dd><p>
+<dd>
+          <p>
             Sets a maximum permissible TTL for the input file.
             Any record with a TTL higher than this value will cause
             the zone to be rejected.  This is similar to using the
             <span class="command"><strong>max-zone-ttl</strong></span> option in
             <code class="filename">named.conf</code>.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-L <em class="replaceable"><code>serial</code></em></span></dt>
-<dd><p>
+<dd>
+          <p>
             When compiling a zone to "raw" or "map" format, set the
             "source serial" value in the header to the specified serial
             number.  (This is expected to be used primarily for testing
             purposes.)
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-m <em class="replaceable"><code>mode</code></em></span></dt>
-<dd><p>
+<dd>
+          <p>
             Specify whether MX records should be checked to see if they
             are addresses.  Possible modes are <span class="command"><strong>"fail"</strong></span>,
             <span class="command"><strong>"warn"</strong></span> (default) and
             <span class="command"><strong>"ignore"</strong></span>.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-M <em class="replaceable"><code>mode</code></em></span></dt>
-<dd><p>
+<dd>
+	  <p>
 	    Check if a MX record refers to a CNAME.
             Possible modes are <span class="command"><strong>"fail"</strong></span>,
             <span class="command"><strong>"warn"</strong></span> (default) and
             <span class="command"><strong>"ignore"</strong></span>.
-	  </p></dd>
+	  </p>
+        </dd>
 <dt><span class="term">-n <em class="replaceable"><code>mode</code></em></span></dt>
-<dd><p>
+<dd>
+          <p>
             Specify whether NS records should be checked to see if they
             are addresses.
 	    Possible modes are <span class="command"><strong>"fail"</strong></span>
@@ -201,24 +302,30 @@
             <span class="command"><strong>"warn"</strong></span>
 	    (default for <span class="command"><strong>named-checkzone</strong></span>) and
             <span class="command"><strong>"ignore"</strong></span>.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-o <em class="replaceable"><code>filename</code></em></span></dt>
-<dd><p>
+<dd>
+          <p>
             Write zone output to <code class="filename">filename</code>.
 	    If <code class="filename">filename</code> is <code class="filename">-</code> then
 	    write to standard out.
 	    This is mandatory for <span class="command"><strong>named-compilezone</strong></span>.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-r <em class="replaceable"><code>mode</code></em></span></dt>
-<dd><p>
+<dd>
+	  <p>
             Check for records that are treated as different by DNSSEC but
 	    are semantically equal in plain DNS.
             Possible modes are <span class="command"><strong>"fail"</strong></span>,
             <span class="command"><strong>"warn"</strong></span> (default) and
             <span class="command"><strong>"ignore"</strong></span>.
-	  </p></dd>
+	  </p>
+        </dd>
 <dt><span class="term">-s <em class="replaceable"><code>style</code></em></span></dt>
-<dd><p>
+<dd>
+	  <p>
 	    Specify the style of the dumped zone file.
 	    Possible styles are <span class="command"><strong>"full"</strong></span> (default)
 	    and <span class="command"><strong>"relative"</strong></span>.
@@ -231,74 +338,101 @@
 	    contents.
 	    It also does not have any meaning if the output format
 	    is not text.
-	  </p></dd>
+	  </p>
+	</dd>
 <dt><span class="term">-S <em class="replaceable"><code>mode</code></em></span></dt>
-<dd><p>
+<dd>
+	  <p>
 	    Check if a SRV record refers to a CNAME.
             Possible modes are <span class="command"><strong>"fail"</strong></span>,
             <span class="command"><strong>"warn"</strong></span> (default) and
             <span class="command"><strong>"ignore"</strong></span>.
-	  </p></dd>
+	  </p>
+        </dd>
 <dt><span class="term">-t <em class="replaceable"><code>directory</code></em></span></dt>
-<dd><p>
+<dd>
+          <p>
             Chroot to <code class="filename">directory</code> so that
             include
             directives in the configuration file are processed as if
             run by a similarly chrooted named.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-T <em class="replaceable"><code>mode</code></em></span></dt>
-<dd><p>
+<dd>
+	  <p>
 	    Check if Sender Policy Framework (SPF) records exist
 	    and issues a warning if an SPF-formatted TXT record is
 	    not also present.  Possible modes are <span class="command"><strong>"warn"</strong></span>
 	    (default), <span class="command"><strong>"ignore"</strong></span>.
-	  </p></dd>
+	  </p>
+	</dd>
 <dt><span class="term">-w <em class="replaceable"><code>directory</code></em></span></dt>
-<dd><p>
+<dd>
+          <p>
             chdir to <code class="filename">directory</code> so that
             relative
             filenames in master file $INCLUDE directives work.  This
             is similar to the directory clause in
             <code class="filename">named.conf</code>.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-D</span></dt>
-<dd><p>
+<dd>
+          <p>
             Dump zone file in canonical format.
 	    This is always enabled for <span class="command"><strong>named-compilezone</strong></span>.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">-W <em class="replaceable"><code>mode</code></em></span></dt>
-<dd><p>
+<dd>
+          <p>
             Specify whether to check for non-terminal wildcards.
             Non-terminal wildcards are almost always the result of a
             failure to understand the wildcard matching algorithm (RFC 1034).
             Possible modes are <span class="command"><strong>"warn"</strong></span> (default)
             and
             <span class="command"><strong>"ignore"</strong></span>.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">zonename</span></dt>
-<dd><p>
+<dd>
+          <p>
             The domain name of the zone being checked.
-          </p></dd>
+          </p>
+        </dd>
 <dt><span class="term">filename</span></dt>
-<dd><p>
+<dd>
+          <p>
             The name of the zone file.
-          </p></dd>
+          </p>
+        </dd>
 </dl></div>
-</div>
-<div class="refsection">
+
+  </div>
+
+  <div class="refsection">
 <a name="id-1.9"></a><h2>RETURN VALUES</h2>
-<p><span class="command"><strong>named-checkzone</strong></span>
+
+    <p><span class="command"><strong>named-checkzone</strong></span>
       returns an exit status of 1 if
       errors were detected and 0 otherwise.
     </p>
-</div>
-<div class="refsection">
+  </div>
+
+  <div class="refsection">
 <a name="id-1.10"></a><h2>SEE ALSO</h2>
-<p><span class="citerefentry"><span class="refentrytitle">named</span>(8)</span>,
-      <span class="citerefentry"><span class="refentrytitle">named-checkconf</span>(8)</span>,
+
+    <p><span class="citerefentry">
+        <span class="refentrytitle">named</span>(8)
+      </span>,
+      <span class="citerefentry">
+        <span class="refentrytitle">named-checkconf</span>(8)
+      </span>,
       <em class="citetitle">RFC 1035</em>,
       <em class="citetitle">BIND 9 Administrator Reference Manual</em>.
     </p>
-</div>
+  </div>
+
 </div></body>
 </html>

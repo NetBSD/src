@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -89,6 +89,20 @@ install:: ${TARGETS} installdirs
 	${INSTALL_DATA} ${srcdir}/pkcs11-destroy.8 ${DESTDIR}${mandir}/man8
 	${INSTALL_DATA} ${srcdir}/pkcs11-keygen.8 ${DESTDIR}${mandir}/man8
 	${INSTALL_DATA} ${srcdir}/pkcs11-tokens.8 ${DESTDIR}${mandir}/man8
+
+uninstall::
+	rm -f ${DESTDIR}${mandir}/man8/pkcs11-tokens.8
+	rm -f ${DESTDIR}${mandir}/man8/pkcs11-keygen.8
+	rm -f ${DESTDIR}${mandir}/man8/pkcs11-destroy.8
+	rm -f ${DESTDIR}${mandir}/man8/pkcs11-list.8
+	${LIBTOOL_MODE_UNINSTALL} rm -f /
+		${DESTDIR}${sbindir}/pkcs11-tokens@EXEEXT@
+	${LIBTOOL_MODE_UNINSTALL} rm -f /
+		${DESTDIR}${sbindir}/pkcs11-keygen@EXEEXT@
+	${LIBTOOL_MODE_UNINSTALL} rm -f /
+		${DESTDIR}${sbindir}/pkcs11-destroy@EXEEXT@
+	${LIBTOOL_MODE_UNINSTALL} rm -f /
+		${DESTDIR}${sbindir}/pkcs11-list@EXEEXT@
 
 clean distclean::
 	rm -f ${OBJS} ${TARGETS}

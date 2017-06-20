@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004-2010, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2010, 2013-2017  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -59,6 +59,7 @@
 #include "DirBrowse.h"
 #include <winsvc.h>
 #include <shlobj.h>
+#include <shlwapi.h>
 #include <named/ntservice.h>
 #include <isc/bind_registry.h>
 #include <isc/ntgroups.h>
@@ -623,8 +624,16 @@ void CBINDInstallDlg::OnInstall() {
 					(LPBYTE)(LPCTSTR)buf, buf.GetLength());
 
 			buf.Format("%s\\BINDInstall.exe", m_binDir);
+
+			CStringA installLocA(buf);
+			const char *str = (const char *) installLocA;
+			char pathBuffer[2 * MAX_PATH];
+			strncpy(pathBuffer, str, sizeof(pathBuffer) - 1);
+			pathBuffer[sizeof(pathBuffer) - 1] = 0;
+			PathQuoteSpaces(pathBuffer);
+
 			RegSetValueEx(hKey, "UninstallString", 0, REG_SZ,
-					(LPBYTE)(LPCTSTR)buf, buf.GetLength());
+				      (LPBYTE)(LPCTSTR)pathBuffer, strlen(pathBuffer));
 			RegCloseKey(hKey);
 		}
 
@@ -1019,10 +1028,17 @@ CBINDInstallDlg::RegisterService() {
 	CString namedLoc;
 	namedLoc.Format("%s\\bin\\named.exe", m_targetDir);
 
+	CStringA namedLocA(namedLoc);
+	const char *str = (const char *) namedLocA;
+	char pathBuffer[2 * MAX_PATH];
+	strncpy(pathBuffer, str, sizeof(pathBuffer) - 1);
+	pathBuffer[sizeof(pathBuffer) - 1] = 0;
+	PathQuoteSpaces(pathBuffer);
+
 	SetCurrent(IDS_CREATE_SERVICE);
 	hService = CreateService(hSCManager, BIND_SERVICE_NAME,
 		BIND_DISPLAY_NAME, SERVICE_ALL_ACCESS, dwServiceType, dwStart,
-		SERVICE_ERROR_NORMAL, namedLoc, NULL, NULL, NULL, StartName,
+		SERVICE_ERROR_NORMAL, pathBuffer, NULL, NULL, NULL, StartName,
 		m_accountPassword);
 
 	if (!hService && GetLastError() != ERROR_SERVICE_EXISTS)
@@ -1061,6 +1077,13 @@ CBINDInstallDlg::UpdateService(CString StartName) {
 	CString namedLoc;
 	namedLoc.Format("%s\\bin\\named.exe", m_targetDir);
 
+	CStringA namedLocA(namedLoc);
+	const char *str = (const char *) namedLocA;
+	char pathBuffer[2 * MAX_PATH];
+	strncpy(pathBuffer, str, sizeof(pathBuffer) - 1);
+	pathBuffer[sizeof(pathBuffer) - 1] = 0;
+	PathQuoteSpaces(pathBuffer);
+
 	SetCurrent(IDS_OPEN_SERVICE);
 	hService = OpenService(hSCManager, BIND_SERVICE_NAME,
 			       SERVICE_CHANGE_CONFIG);
@@ -1072,7 +1095,7 @@ CBINDInstallDlg::UpdateService(CString StartName) {
 		return;
 	} else {
 		if (ChangeServiceConfig(hService, dwServiceType, dwStart,
-			SERVICE_ERROR_NORMAL, namedLoc, NULL, NULL, NULL,
+			SERVICE_ERROR_NORMAL, pathBuffer, NULL, NULL, NULL,
 			StartName, m_accountPassword, BIND_DISPLAY_NAME)
 			!= TRUE) {
 			DWORD err = GetLastError();

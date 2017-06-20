@@ -1,7 +1,7 @@
-/*	$NetBSD: keytable.h,v 1.3 2012/06/05 00:41:49 christos Exp $	*/
+/*	$NetBSD: keytable.h,v 1.3.12.1 2017/06/20 17:09:51 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2010, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -54,33 +54,6 @@
 #include <dst/dst.h>
 
 ISC_LANG_BEGINDECLS
-
-struct dns_keytable {
-	/* Unlocked. */
-	unsigned int		magic;
-	isc_mem_t		*mctx;
-	isc_mutex_t		lock;
-	isc_rwlock_t		rwlock;
-	/* Locked by lock. */
-	isc_uint32_t		active_nodes;
-	/* Locked by rwlock. */
-	isc_uint32_t		references;
-	dns_rbt_t		*table;
-};
-
-#define KEYTABLE_MAGIC			ISC_MAGIC('K', 'T', 'b', 'l')
-#define VALID_KEYTABLE(kt)	 	ISC_MAGIC_VALID(kt, KEYTABLE_MAGIC)
-
-struct dns_keynode {
-	unsigned int		magic;
-	isc_refcount_t		refcount;
-	dst_key_t *		key;
-	isc_boolean_t           managed;
-	struct dns_keynode *	next;
-};
-
-#define KEYNODE_MAGIC			ISC_MAGIC('K', 'N', 'o', 'd')
-#define VALID_KEYNODE(kn)	 	ISC_MAGIC_VALID(kn, KEYNODE_MAGIC)
 
 isc_result_t
 dns_keytable_create(isc_mem_t *mctx, dns_keytable_t **keytablep);
@@ -454,6 +427,11 @@ dns_keynode_detachall(isc_mem_t *mctx, dns_keynode_t **target);
 /*%<
  * Detach a keynode and all its succesors.
  */
+
+isc_result_t
+dns_keytable_forall(dns_keytable_t *keytable,
+		    void (*func)(dns_keytable_t *, dns_keynode_t *, void *),
+		    void *arg);
 ISC_LANG_ENDDECLS
 
 #endif /* DNS_KEYTABLE_H */

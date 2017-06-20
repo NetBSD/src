@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -59,7 +59,7 @@ echo "I:checking with journal file ($n)"
 ret=0
 $CHECKZONE -D -o test.orig.db test zones/test1.db > /dev/null 2>&1 || ret=1
 $CHECKZONE -D -o test.changed.db test zones/test2.db > /dev/null 2>&1 || ret=1
-../../makejournal test test.orig.db test.changed.db test.orig.db.jnl 2>&1 || ret=1
+$MAKEJOURNAL test test.orig.db test.changed.db test.orig.db.jnl 2>&1 || ret=1
 jlines=`$JOURNALPRINT test.orig.db.jnl | wc -l`
 [ $jlines = 3 ] || ret=1
 $CHECKZONE -D -j -o test.out1.db test test.orig.db > /dev/null 2>&1 || ret=1
@@ -141,5 +141,34 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking that expirations that loop using serial arithmetic are handled ($n)"
+ret=0
+q=-q
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1
