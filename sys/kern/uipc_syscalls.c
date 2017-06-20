@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.186 2017/02/03 16:06:45 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.187 2017/06/20 20:34:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.186 2017/02/03 16:06:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.187 2017/06/20 20:34:49 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -1362,7 +1362,7 @@ int
 copyout_sockname_sb(struct sockaddr *asa, unsigned int *alen, int flags,
     struct sockaddr_big *addr)
 {
-	int len;
+	unsigned int len;
 	int error;
 
 	if (asa == NULL)
@@ -1375,8 +1375,6 @@ copyout_sockname_sb(struct sockaddr *asa, unsigned int *alen, int flags,
 			return error;
 	} else
 		len = *alen;
-	if (len < 0)
-		return EINVAL;
 
 	if (addr == NULL) {
 		len = 0;
