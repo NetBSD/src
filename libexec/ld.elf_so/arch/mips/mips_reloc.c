@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.66 2017/06/19 11:57:01 joerg Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.67 2017/06/20 13:24:03 joerg Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.66 2017/06/19 11:57:01 joerg Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.67 2017/06/20 13:24:03 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -228,8 +228,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
 	Elf_Addr *got = obj->pltgot;
-	const Elf_Sym *sym, *def;
-	const Obj_Entry *defobj;
+	const Elf_Sym *sym, *def = NULL;
+	const Obj_Entry *defobj = NULL;
 	unsigned long last_symnum = ULONG_MAX;
 	Elf_Word i;
 #ifdef SUPPORT_OLD_BROKEN_LD
@@ -329,7 +329,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		case R_TYPE(TLS_DTPREL32):
 		case R_TYPE(TLS_TPREL32):
 #endif
-			symnum = ELF_R_SYM(rela->r_info);
+			symnum = ELF_R_SYM(rel->r_info);
 			if (last_symnum != symnum) {
 				last_symnum = symnum;
 				def = _rtld_find_symdef(symnum, obj, &defobj,
@@ -348,6 +348,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 		case R_TYPE(REL32): {
 			/* 32-bit PC-relative reference */
+			const Elf_Sym *def2;
 			const size_t rlen =
 			    ELF_R_NXTTYPE_64_P(r_type)
 				? sizeof(Elf_Sxword)
@@ -355,13 +356,14 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			Elf_Sxword old = load_ptr(where, rlen);
 			Elf_Sxword val = old;
 
-			def = obj->symtab + r_symndx;
+			def2 = obj->symtab + ELF_R_SYM(rel->r_info);
 
-			if (r_symndx >= obj->gotsym) {
-				val += got[obj->local_gotno + r_symndx - obj->gotsym];
+			if (ELF_R_SYM(rel->r_info) >= obj->gotsym) {
+				val += got[obj->local_gotno +
+				    ELF_R_SYM(rel->r_info) - obj->gotsym];
 				rdbg(("REL32/G(%p) %p --> %p (%s) in %s",
 				    where, (void *)old, (void *)val,
-				    obj->strtab + def->st_name,
+				    obj->strtab + def2->st_name,
 				    obj->path));
 			} else {
 				/*
@@ -380,7 +382,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 				 * --rkb, Oct 6, 2001
 				 */
 
-				if (def->st_info ==
+				if (def2->st_info ==
 				    ELF_ST_INFO(STB_LOCAL, STT_SECTION)
 #ifdef SUPPORT_OLD_BROKEN_LD
 				    && !broken
@@ -392,7 +394,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 				rdbg(("REL32/L(%p) %p -> %p (%s) in %s",
 				    where, (void *)old, (void *)val,
-				    obj->strtab + def->st_name, obj->path));
+				    obj->strtab + def2->st_name, obj->path));
 			}
 			store_ptr(where, val, rlen);
 			break;
