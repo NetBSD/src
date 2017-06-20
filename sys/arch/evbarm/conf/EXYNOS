@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.21 2017/06/20 13:21:45 jmcneill Exp $
+#	$NetBSD: EXYNOS,v 1.22 2017/06/20 20:20:02 skrll Exp $
 #
 #	Samsung Exynos SoC kernel
 #
@@ -9,6 +9,7 @@ include	"arch/evbarm/conf/GENERIC.common"
 
 makeoptions 	DTS="
 	exynos5410-odroidxu.dts
+	exynos5410-smdk5410.dts
 	exynos5422-odroidxu3-lite.dts
 	exynos5422-odroidxu3.dts
 	exynos5422-odroidxu4.dts
