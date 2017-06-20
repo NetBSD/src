@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2140 2017/06/13 06:39:09 nat Exp $
+#	$NetBSD: mi,v 1.2141 2017/06/20 01:17:13 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2994,7 +2994,7 @@
 ./usr/include/sys/un.h				comp-c-include
 ./usr/include/sys/unistd.h			comp-c-include
 ./usr/include/sys/unpcb.h			comp-c-include
-./usr/include/sys/user.h			comp-c-include
+./usr/include/sys/user.h			comp-obsolete		obsolete
 ./usr/include/sys/utsname.h			comp-c-include
 ./usr/include/sys/uuid.h			comp-c-include
 ./usr/include/sys/vadvise.h			comp-c-include
