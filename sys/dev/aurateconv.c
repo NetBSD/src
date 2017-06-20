@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.19 2011/11/23 23:07:31 jmcneill Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.20 2017/06/20 07:13:09 nat Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.19 2011/11/23 23:07:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.20 2017/06/20 07:13:09 nat Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -68,6 +68,8 @@ typedef struct aurateconv {
 static int aurateconv_fetch_to(struct audio_softc *, stream_fetcher_t *,
 			       audio_stream_t *, int);
 static void aurateconv_dtor(stream_filter_t *);
+static int aurateconv_slinear8_LE(aurateconv_t *, audio_stream_t *,
+				   int, int, int);
 static int aurateconv_slinear16_LE(aurateconv_t *, audio_stream_t *,
 				   int, int, int);
 static int aurateconv_slinear24_LE(aurateconv_t *, audio_stream_t *,
@@ -118,8 +120,9 @@ aurateconv(struct audio_softc *sc, const audio_params_t *from,
 	}
 	if ((from->encoding != AUDIO_ENCODING_SLINEAR_LE
 	     && from->encoding != AUDIO_ENCODING_SLINEAR_BE)
-	    || (from->precision != 16 && from->precision != 24 && from->precision != 32)) {
-		printf("%s: encoding/precision must be SLINEAR_LE 16/24/32bit, "
+	    || (from->precision != 8 && from->precision != 16 &&
+			 from->precision != 24 && from->precision != 32)) {
+		printf("%s: encoding/precision must be SLINEAR_LE 8/16/24/32bit, "
 		       "or SLINEAR_BE 16/24/32bit", __func__);
 		return NULL;
 	}
@@ -189,6 +192,9 @@ aurateconv_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
 	switch (this->from.encoding) {
 	case AUDIO_ENCODING_SLINEAR_LE:
 		switch (this->from.precision) {
+		case 8:
+			return aurateconv_slinear8_LE(this, dst, m,
+						       frame_src, frame_dst);
 		case 16:
 			return aurateconv_slinear16_LE(this, dst, m,
 						       frame_src, frame_dst);
@@ -458,6 +464,7 @@ aurateconv_slinear32_##EN (aurateconv_t *this, audio_stream_t *dst, \
 	return 0; \
 }
 
+AURATECONV_SLINEAR(8, LE)
 AURATECONV_SLINEAR(16, LE)
 AURATECONV_SLINEAR(24, LE)
 AURATECONV_SLINEAR32(LE)
