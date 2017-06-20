@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.17 2017/06/19 21:00:00 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.18 2017/06/20 21:00:47 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.17 2017/06/19 21:00:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.18 2017/06/20 21:00:47 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -588,7 +588,7 @@ siisata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 	 * Try to get available slot. If there is none available, must
 	 * do full channel reset.
 	 */
-	xfer = ata_get_xfer(chp, false);
+	xfer = ata_get_xfer_ext(chp, false, 0);
 	if (xfer == NULL) {
 		siisata_reset_channel(chp, flags);
 		return;
@@ -738,7 +738,7 @@ siisata_probe_drive(struct ata_channel *chp)
 	SIISATA_DEBUG_PRINT(("%s: %s: port %d start\n", SIISATANAME(sc),
 	    __func__, chp->ch_channel), DEBUG_FUNCS);
 
-	xfer = ata_get_xfer(chp, true);
+	xfer = ata_get_xfer(chp);
 	if (xfer == NULL) {
 		aprint_error_dev(sc->sc_atac.atac_dev,
 		    "failed to get xfer port %d\n",
@@ -821,6 +821,9 @@ siisata_probe_drive(struct ata_channel *chp)
 	}
 
 	siisata_enable_port_interrupt(chp);
+
+	ata_free_xfer(chp, xfer);
+
 	SIISATA_DEBUG_PRINT(("%s: %s: port %d done\n", SIISATANAME(sc),
 	    __func__, chp->ch_channel), DEBUG_PROBE);
 	return;
@@ -1597,7 +1600,7 @@ siisata_atapi_scsipi_request(struct scsipi_channel *chan,
 			scsipi_done(sc_xfer);
 			return;
 		}
-		xfer = ata_get_xfer(atac->atac_channels[channel], false);
+		xfer = ata_get_xfer_ext(atac->atac_channels[channel], false, 0);
 		if (xfer == NULL) {
 			sc_xfer->error = XS_RESOURCE_SHORTAGE;
 			scsipi_done(sc_xfer);
