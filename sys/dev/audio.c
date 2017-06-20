@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.359 2017/06/20 07:42:31 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.360 2017/06/20 07:45:01 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.359 2017/06/20 07:42:31 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.360 2017/06/20 07:45:01 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -535,7 +535,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	vc->sc_lastinfovalid = false;
 	vc->sc_swvol = 255;
 	vc->sc_recswvol = 255;
-	sc->sc_iffreq = 44100;
+	sc->sc_frequency = 44100;
 	sc->sc_precision = 16;
 	sc->sc_channels = 2;
 
@@ -4149,7 +4149,7 @@ audio_set_vchan_defaults(struct audio_softc *sc, u_int mode,
 		return EINVAL;
 	vc = chan->vc;
 
-	sc->sc_vchan_params.sample_rate = sc->sc_iffreq;
+	sc->sc_vchan_params.sample_rate = sc->sc_frequency;
 #if BYTE_ORDER == LITTLE_ENDIAN
 	sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_LE;
 #else
@@ -4165,12 +4165,12 @@ audio_set_vchan_defaults(struct audio_softc *sc, u_int mode,
 	vc->sc_blkset = false;
 
 	AUDIO_INITINFO(&ai);
-	ai.record.sample_rate = sc->sc_iffreq;
+	ai.record.sample_rate = sc->sc_frequency;
 	ai.record.encoding    = format->encoding;
 	ai.record.channels    = sc->sc_channels;
 	ai.record.precision   = sc->sc_precision;
 	ai.record.pause	      = false;
-	ai.play.sample_rate   = sc->sc_iffreq;
+	ai.play.sample_rate   = sc->sc_frequency;
 	ai.play.encoding      = format->encoding;
 	ai.play.channels      = sc->sc_channels;
 	ai.play.precision     = sc->sc_precision;
@@ -4180,7 +4180,7 @@ audio_set_vchan_defaults(struct audio_softc *sc, u_int mode,
 	sc->sc_format->channels = sc->sc_channels;
 	sc->sc_format->precision = sc->sc_precision;
 	sc->sc_format->validbits = sc->sc_precision;
-	sc->sc_format->frequency[0] = sc->sc_iffreq;
+	sc->sc_format->frequency[0] = sc->sc_frequency;
 
 	auconv_delete_encodings(sc->sc_encodings);
 	error = auconv_create_encodings(sc->sc_format, VAUDIO_NFORMATS,
@@ -5941,7 +5941,7 @@ audio_sysctl_frequency(SYSCTLFN_ARGS)
 	node = *rnode;
 	sc = node.sysctl_data;
 
-	t = sc->sc_iffreq;
+	t = sc->sc_frequency;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -5960,7 +5960,7 @@ audio_sysctl_frequency(SYSCTLFN_ARGS)
 		return EINVAL;
 	}
 
-	sc->sc_iffreq = t;
+	sc->sc_frequency = t;
 	error = audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL
 	    | AUMODE_RECORD, &sc->sc_format[0]);
 	if (error)
@@ -6082,13 +6082,13 @@ vchan_autoconfig(struct audio_softc *sc)
 		for (j = 0; j < __arraycount(auto_config_channels); j++) {
 			sc->sc_channels = auto_config_channels[j];
 			for (k = 0; k < __arraycount(auto_config_freq); k++) {
-				sc->sc_iffreq = auto_config_freq[k];
+				sc->sc_frequency = auto_config_freq[k];
 				error = audio_set_vchan_defaults(sc,
 				    AUMODE_PLAY | AUMODE_PLAY_ALL |
 				    AUMODE_RECORD, &sc->sc_format[0]);
 				if (vc->sc_npfilters > 0 &&
 				    (vc->sc_mpr.s.param.
-					sample_rate != sc->sc_iffreq ||
+					sample_rate != sc->sc_frequency ||
 				    vc->sc_mpr.s.param.
 					 channels != sc->sc_channels))
 					error = EINVAL;
@@ -6099,7 +6099,7 @@ vchan_autoconfig(struct audio_softc *sc)
 					    "Format SLINEAR, precision %d, "
 					    "channels %d, frequency %d\n",
 					    sc->sc_precision, sc->sc_channels,
-					    sc->sc_iffreq);
+					    sc->sc_frequency);
 					mutex_exit(sc->sc_lock);
 
 					return 0;
