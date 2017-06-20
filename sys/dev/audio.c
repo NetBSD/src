@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.358 2017/06/08 13:05:03 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.359 2017/06/20 07:42:31 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.358 2017/06/08 13:05:03 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.359 2017/06/20 07:42:31 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4187,7 +4187,7 @@ audio_set_vchan_defaults(struct audio_softc *sc, u_int mode,
 	    &sc->sc_encodings);
 
 	if (error == 0)
-		error = audiosetinfo(sc, &ai, true, vc);
+		error = audiosetinfo(sc, &ai, false, vc);
 
 	return error;
 }
