@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.64 2015/03/04 09:39:26 skrll Exp $	*/
+/*	$NetBSD: exception.c,v 1.65 2017/06/20 23:20:01 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.64 2015/03/04 09:39:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.65 2017/06/20 23:20:01 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -393,11 +393,11 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	/* User stack extension */
 	if (map != kernel_map &&
 	    (va >= (vaddr_t)l->l_proc->p_vmspace->vm_maxsaddr) &&
-	    (va < USRSTACK)) {
+	    (va <  (vaddr_t)l->l_proc->p_vmspace->vm_minsaddr)) {
 		if (err == 0) {
 			struct vmspace *vm = l->l_proc->p_vmspace;
 			uint32_t nss;
-			nss = btoc(USRSTACK - va);
+			nss = btoc((vaddr_t)vm->vm_minsaddr - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (err == EACCES) {
