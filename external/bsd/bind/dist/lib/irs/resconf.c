@@ -1,7 +1,7 @@
-/*	$NetBSD: resconf.c,v 1.7.4.1 2016/10/14 11:42:48 martin Exp $	*/
+/*	$NetBSD: resconf.c,v 1.7.4.2 2017/06/20 16:40:22 snj Exp $	*/
 
 /*
- * Copyright (C) 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -83,10 +83,10 @@
  * resolv.conf parameters
  */
 
-#define RESCONFMAXNAMESERVERS 3		/*%< max 3 "nameserver" entries */
-#define RESCONFMAXSEARCH 8		/*%< max 8 domains in "search" entry */
-#define RESCONFMAXLINELEN 256		/*%< max size of a line */
-#define RESCONFMAXSORTLIST 10		/*%< max 10 */
+#define RESCONFMAXNAMESERVERS 3U	/*%< max 3 "nameserver" entries */
+#define RESCONFMAXSEARCH 8U		/*%< max 8 domains in "search" entry */
+#define RESCONFMAXLINELEN 256U		/*%< max size of a line */
+#define RESCONFMAXSORTLIST 10U		/*%< max 10 */
 
 /*!
  * configuration data structure
@@ -308,7 +308,8 @@ resconf_parsenameserver(irs_resconf_t *conf,  FILE *fp) {
 static isc_result_t
 resconf_parsedomain(irs_resconf_t *conf,  FILE *fp) {
 	char word[RESCONFMAXLINELEN];
-	int res, i;
+	int res;
+	unsigned int i;
 
 	res = getword(fp, word, sizeof(word));
 	if (strlen(word) == 0U)
@@ -342,7 +343,8 @@ resconf_parsedomain(irs_resconf_t *conf,  FILE *fp) {
 
 static isc_result_t
 resconf_parsesearch(irs_resconf_t *conf,  FILE *fp) {
-	int idx, delim;
+	int delim;
+	unsigned int idx;
 	char word[RESCONFMAXLINELEN];
 
 	if (conf->domainname != NULL) {
@@ -373,6 +375,7 @@ resconf_parsesearch(irs_resconf_t *conf,  FILE *fp) {
 		if (conf->searchnxt == RESCONFMAXSEARCH)
 			goto ignore; /* Too many domains. */
 
+		INSIST(idx < sizeof(conf->search)/sizeof(conf->search[0]));
 		conf->search[idx] = isc_mem_strdup(conf->mctx, word);
 		if (conf->search[idx] == NULL)
 			return (ISC_R_NOMEMORY);
@@ -391,7 +394,8 @@ resconf_parsesearch(irs_resconf_t *conf,  FILE *fp) {
 
 static isc_result_t
 resconf_parsesortlist(irs_resconf_t *conf,  FILE *fp) {
-	int delim, res, idx;
+	int delim, res;
+	unsigned int idx;
 	char word[RESCONFMAXLINELEN];
 	char *p;
 
@@ -408,6 +412,7 @@ resconf_parsesortlist(irs_resconf_t *conf,  FILE *fp) {
 			*p++ = '\0';
 
 		idx = conf->sortlistnxt;
+		INSIST(idx < sizeof(conf->sortlist)/sizeof(conf->sortlist[0]));
 		res = create_addr(word, &conf->sortlist[idx].addr, 1);
 		if (res != ISC_R_SUCCESS)
 			return (res);
@@ -491,7 +496,8 @@ irs_resconf_load(isc_mem_t *mctx, const char *filename, irs_resconf_t **confp)
 	char word[256];
 	isc_result_t rval, ret = ISC_R_SUCCESS;
 	irs_resconf_t *conf;
-	int i, stopchar;
+	unsigned int i;
+	int stopchar;
 
 	REQUIRE(mctx != NULL);
 	REQUIRE(filename != NULL);
@@ -507,6 +513,7 @@ irs_resconf_load(isc_mem_t *mctx, const char *filename, irs_resconf_t **confp)
 	conf->numns = 0;
 	conf->domainname = NULL;
 	conf->searchnxt = 0;
+	conf->sortlistnxt = 0;
 	conf->resdebug = 0;
 	conf->ndots = 1;
 	for (i = 0; i < RESCONFMAXSEARCH; i++)
@@ -558,7 +565,7 @@ irs_resconf_load(isc_mem_t *mctx, const char *filename, irs_resconf_t **confp)
 	}
 
 	/* If we don't find a nameserver fall back to localhost */
-	if (conf->numns == 0) {
+	if (conf->numns == 0U) {
 		INSIST(ISC_LIST_EMPTY(conf->nameservers));
 
 		/* XXX: should we catch errors? */
@@ -599,7 +606,7 @@ irs_resconf_destroy(irs_resconf_t **confp) {
 	irs_resconf_t *conf;
 	isc_sockaddr_t *address;
 	irs_resconf_search_t *searchentry;
-	int i;
+	unsigned int i;
 
 	REQUIRE(confp != NULL);
 	conf = *confp;

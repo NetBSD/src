@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-coverage.8,v 1.1.1.3.2.1.2.1 2016/10/14 11:42:30 martin Exp $
+.\"	$NetBSD: dnssec-coverage.8,v 1.1.1.3.2.1.2.2 2017/06/20 16:39:59 snj Exp $
 .\"
-.\" Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -49,7 +49,7 @@
 dnssec-coverage \- checks future DNSKEY coverage for a zone
 .SH "SYNOPSIS"
 .HP \w'\fBdnssec\-coverage\fR\ 'u
-\fBdnssec\-coverage\fR [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-l\ \fR\fB\fIlength\fR\fR] [\fB\-f\ \fR\fB\fIfile\fR\fR] [\fB\-d\ \fR\fB\fIDNSKEY\ TTL\fR\fR] [\fB\-m\ \fR\fB\fImax\ TTL\fR\fR] [\fB\-r\ \fR\fB\fIinterval\fR\fR] [\fB\-c\ \fR\fB\fIcompilezone\ path\fR\fR] [\fB\-k\fR] [\fB\-z\fR] [zone]
+\fBdnssec\-coverage\fR [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-l\ \fR\fB\fIlength\fR\fR] [\fB\-f\ \fR\fB\fIfile\fR\fR] [\fB\-d\ \fR\fB\fIDNSKEY\ TTL\fR\fR] [\fB\-m\ \fR\fB\fImax\ TTL\fR\fR] [\fB\-r\ \fR\fB\fIinterval\fR\fR] [\fB\-c\ \fR\fB\fIcompilezone\ path\fR\fR] [\fB\-k\fR] [\fB\-z\fR] [zone...]
 .SH "DESCRIPTION"
 .PP
 \fBdnssec\-coverage\fR
@@ -97,11 +97,13 @@ Sets the value to be used as the maximum TTL for the zone or zones being analyze
 .sp
 The length of the TTL can be set in seconds, or in larger units of time by adding a suffix: \*(Aqmi\*(Aq for minutes, \*(Aqh\*(Aq for hours, \*(Aqd\*(Aq for days, \*(Aqw\*(Aq for weeks, \*(Aqmo\*(Aq for months, \*(Aqy\*(Aq for years\&.
 .sp
-This option is mandatory unless the
+This option is not necessary if the
 \fB\-f\fR
-has been used to specify a zone file\&. (If
+has been used to specify a zone file\&. If
 \fB\-f\fR
-has been specified, this option may still be used; it will override the value found in the file\&.)
+has been specified, this option may still be used; it will override the value found in the file\&.
+.sp
+If this option is not used and the maximum TTL cannot be retrieved from a zone file, a warning is generated and a default value of 1 week is used\&.
 .RE
 .PP
 \-d \fIDNSKEY TTL\fR
@@ -110,12 +112,14 @@ Sets the value to be used as the DNSKEY TTL for the zone or zones being analyzed
 .sp
 The length of the TTL can be set in seconds, or in larger units of time by adding a suffix: \*(Aqmi\*(Aq for minutes, \*(Aqh\*(Aq for hours, \*(Aqd\*(Aq for days, \*(Aqw\*(Aq for weeks, \*(Aqmo\*(Aq for months, \*(Aqy\*(Aq for years\&.
 .sp
-This option is mandatory unless the
+This option is not necessary if
 \fB\-f\fR
-has been used to specify a zone file, or a default key TTL was set with the
+has been used to specify a zone file from which the TTL of the DNSKEY RRset can be read, or if a default key TTL was set using ith the
 \fB\-L\fR
 to
-\fBdnssec\-keygen\fR\&. (If either of those is true, this option may still be used; it will override the value found in the zone or key file\&.)
+\fBdnssec\-keygen\fR\&. If either of those is true, this option may still be used; it will override the values found in the zone file or the key file\&.
+.sp
+If this option is not used and the key TTL cannot be retrieved from the zone file or the key file, then a warning is generated and a default value of 1 day is used\&.
 .RE
 .PP
 \-r \fIresign interval\fR
@@ -158,5 +162,5 @@ binary\&. Used for testing\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 .br

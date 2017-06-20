@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec.c,v 1.9.4.2.2.1 2016/03/13 08:00:35 martin Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.9.4.2.2.2 2017/06/20 16:40:20 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,6 +33,8 @@
 #include <isc/serial.h>
 #include <isc/string.h>
 #include <isc/util.h>
+
+#include <pk11/site.h>
 
 #include <dns/db.h>
 #include <dns/diff.h>
@@ -1321,7 +1323,7 @@ dns_dnssec_findmatchingkeys(dns_name_t *origin, const char *directory,
 	dst_key_t *dstkey = NULL;
 	char namebuf[DNS_NAME_FORMATSIZE];
 	isc_buffer_t b;
-	unsigned int len, i;
+	unsigned int len, i, alg;
 	isc_stdtime_t now;
 
 	REQUIRE(keylist != NULL);
@@ -1347,11 +1349,20 @@ dns_dnssec_findmatchingkeys(dns_name_t *origin, const char *directory,
 		    strncasecmp(dir.entry.name + 1, namebuf, len) != 0)
 			continue;
 
-		for (i = len + 1 + 1; i < dir.entry.length ; i++)
+		alg = 0;
+		for (i = len + 1 + 1; i < dir.entry.length ; i++) {
 			if (dir.entry.name[i] < '0' || dir.entry.name[i] > '9')
 				break;
+			alg *= 10;
+			alg += dir.entry.name[i] - '0';
+		}
 
-		if (i == len + 1 + 1 || i >= dir.entry.length ||
+		/*
+		 * Did we not read exactly 3 digits?
+		 * Did we overflow?
+		 * Did we correctly terminate?
+		 */
+		if (i != len + 1 + 1 + 3 || i >= dir.entry.length ||
 		    dir.entry.name[i] != '+')
 			continue;
 
@@ -1359,7 +1370,13 @@ dns_dnssec_findmatchingkeys(dns_name_t *origin, const char *directory,
 			if (dir.entry.name[i] < '0' || dir.entry.name[i] > '9')
 				break;
 
-		if (strcmp(dir.entry.name + i, ".private") != 0)
+		/*
+		 * Did we not read exactly 5 more digits?
+		 * Did we overflow?
+		 * Did we correctly terminate?
+		 */
+		if (i != len + 1 + 1 + 3 + 1 + 5 || i >= dir.entry.length ||
+		    strcmp(dir.entry.name + i, ".private") != 0)
 				continue;
 
 		dstkey = NULL;
@@ -1368,6 +1385,19 @@ dns_dnssec_findmatchingkeys(dns_name_t *origin, const char *directory,
 					       DST_TYPE_PUBLIC |
 					       DST_TYPE_PRIVATE,
 					       mctx, &dstkey);
+
+		switch (alg) {
+#ifndef PK11_MD5_DISABLE
+		case DST_ALG_HMACMD5:
+#endif
+		case DST_ALG_HMACSHA1:
+		case DST_ALG_HMACSHA224:
+		case DST_ALG_HMACSHA256:
+		case DST_ALG_HMACSHA384:
+		case DST_ALG_HMACSHA512:
+			if (result == DST_R_BADKEYTYPE)
+				continue;
+		}
 
 		if (result != ISC_R_SUCCESS) {
 			isc_log_write(dns_lctx,

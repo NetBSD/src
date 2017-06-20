@@ -1,7 +1,7 @@
-/*	$NetBSD: opensslecdsa_link.c,v 1.6.2.2.2.1 2016/03/13 08:00:35 martin Exp $	*/
+/*	$NetBSD: opensslecdsa_link.c,v 1.6.2.2.2.2 2017/06/20 16:40:20 snj Exp $	*/
 
 /*
- * Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -50,6 +50,30 @@
 #endif
 
 #define DST_RET(a) {ret = a; goto err;}
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+/* From OpenSSL 1.1 */
+static void
+ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps) {
+	if (pr != NULL)
+		*pr = sig->r;
+	if (ps != NULL)
+		*ps = sig->s;
+}
+
+static int
+ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s) {
+	if (r == NULL || s == NULL)
+		return 0;
+
+	BN_clear_free(sig->r);
+	BN_clear_free(sig->s);
+	sig->r = r;
+	sig->s = s;
+
+	return 1;
+}
+#endif
 
 static isc_result_t opensslecdsa_todns(const dst_key_t *key,
 				       isc_buffer_t *data);
@@ -112,7 +136,7 @@ opensslecdsa_adddata(dst_context_t *dctx, const isc_region_t *data) {
 }
 
 static int
-BN_bn2bin_fixed(BIGNUM *bn, unsigned char *buf, int size) {
+BN_bn2bin_fixed(const BIGNUM *bn, unsigned char *buf, int size) {
 	int bytes = size - BN_num_bytes(bn);
 
 	while (bytes-- > 0)
@@ -125,13 +149,14 @@ static isc_result_t
 opensslecdsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 	isc_result_t ret;
 	dst_key_t *key = dctx->key;
-	isc_region_t r;
+	isc_region_t region;
 	ECDSA_SIG *ecdsasig;
 	EVP_MD_CTX *evp_md_ctx = dctx->ctxdata.evp_md_ctx;
 	EVP_PKEY *pkey = key->keydata.pkey;
 	EC_KEY *eckey = EVP_PKEY_get1_EC_KEY(pkey);
 	unsigned int dgstlen, siglen;
 	unsigned char digest[EVP_MAX_MD_SIZE];
+	const BIGNUM *r, *s;
 
 	REQUIRE(key->key_alg == DST_ALG_ECDSA256 ||
 		key->key_alg == DST_ALG_ECDSA384);
@@ -144,8 +169,8 @@ opensslecdsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 	else
 		siglen = DNS_SIG_ECDSA384SIZE;
 
-	isc_buffer_availableregion(sig, &r);
-	if (r.length < siglen)
+	isc_buffer_availableregion(sig, &region);
+	if (region.length < siglen)
 		DST_RET(ISC_R_NOSPACE);
 
 	if (!EVP_DigestFinal(evp_md_ctx, digest, &dgstlen))
@@ -158,10 +183,11 @@ opensslecdsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 		DST_RET(dst__openssl_toresult3(dctx->category,
 					       "ECDSA_do_sign",
 					       DST_R_SIGNFAILURE));
-	BN_bn2bin_fixed(ecdsasig->r, r.base, siglen / 2);
-	isc_region_consume(&r, siglen / 2);
-	BN_bn2bin_fixed(ecdsasig->s, r.base, siglen / 2);
-	isc_region_consume(&r, siglen / 2);
+	ECDSA_SIG_get0(ecdsasig, &r, &s);
+	BN_bn2bin_fixed(r, region.base, siglen / 2);
+	isc_region_consume(&region, siglen / 2);
+	BN_bn2bin_fixed(s, region.base, siglen / 2);
+	isc_region_consume(&region, siglen / 2);
 	ECDSA_SIG_free(ecdsasig);
 	isc_buffer_add(sig, siglen);
 	ret = ISC_R_SUCCESS;
@@ -184,6 +210,7 @@ opensslecdsa_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	EC_KEY *eckey = EVP_PKEY_get1_EC_KEY(pkey);
 	unsigned int dgstlen, siglen;
 	unsigned char digest[EVP_MAX_MD_SIZE];
+	BIGNUM *r = NULL, *s = NULL ;
 
 	REQUIRE(key->key_alg == DST_ALG_ECDSA256 ||
 		key->key_alg == DST_ALG_ECDSA384);
@@ -207,13 +234,10 @@ opensslecdsa_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	ecdsasig = ECDSA_SIG_new();
 	if (ecdsasig == NULL)
 		DST_RET (ISC_R_NOMEMORY);
-	if (ecdsasig->r != NULL)
-		BN_free(ecdsasig->r);
-	ecdsasig->r = BN_bin2bn(cp, siglen / 2, NULL);
+	r = BN_bin2bn(cp, siglen / 2, NULL);
 	cp += siglen / 2;
-	if (ecdsasig->s != NULL)
-		BN_free(ecdsasig->s);
-	ecdsasig->s = BN_bin2bn(cp, siglen / 2, NULL);
+	s = BN_bin2bn(cp, siglen / 2, NULL);
+	ECDSA_SIG_set0(ecdsasig, r, s);
 	/* cp += siglen / 2; */
 
 	status = ECDSA_do_verify(digest, dgstlen, ecdsasig, eckey);

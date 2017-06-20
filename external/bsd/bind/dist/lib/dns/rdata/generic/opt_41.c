@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_41.c,v 1.6.4.2.2.2 2016/10/14 11:42:47 martin Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.6.4.2.2.3 2017/06/20 16:40:21 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -166,7 +166,7 @@ fromwire_opt(ARGS_FROMWIRE) {
 				return (DNS_R_OPTERR);
 
 			if (addrbytes != 0U && (addrlen % 8) != 0) {
-				isc_uint8_t bits = ~0 << (8 - (addrlen % 8));
+				isc_uint8_t bits = ~0U << (8 - (addrlen % 8));
 				bits &= sregion.base[addrbytes - 1];
 				if (bits != sregion.base[addrbytes - 1])
 					return (DNS_R_OPTERR);

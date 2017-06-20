@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2010, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2010, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -89,7 +89,7 @@ then
 fi
 
 # Start name servers running
-$PERL start.pl $test || { echo "E:$test:`date`"; exit 1; }
+$PERL start.pl $test || { echo "R:FAIL"; echo "E:$test:`date`"; exit 1; }
 
 # Run the tests
 ( cd $test ; $SHELL tests.sh )

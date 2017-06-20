@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 -->
 
 <!-- Converted by db4-upgrade version 1.0 -->
-<informaltable xmlns="http://docbook.org/ns/docbook" version="5.0" colsep="0" rowsep="0">
+<informaltable xmlns:db="http://docbook.org/ns/docbook" version="5.0" colsep="0" rowsep="0">
   <tgroup cols="2" colsep="0" rowsep="0" tgroupstyle="4Level-table">
     <colspec colname="1" colnum="1" colsep="0" colwidth="1.150in"/>
     <colspec colname="2" colnum="2" colsep="0" colwidth="3.350in"/>

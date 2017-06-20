@@ -1,7 +1,7 @@
-/*	$NetBSD: ipv6.h,v 1.5 2012/06/05 00:42:55 christos Exp $	*/
+/*	$NetBSD: ipv6.h,v 1.5.14.1 2017/06/20 16:40:24 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -54,6 +54,9 @@
 #endif
 #ifndef IN6ADDR_LOOPBACK_INIT
 #define IN6ADDR_LOOPBACK_INIT 	{{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }}
+#endif
+#ifndef IN6ADDR_V4MAPPED_INIT
+#define IN6ADDR_V4MAPPED_INIT 	{{ 0,0,0,0,0,0,0,0,0,0,0xff,0xff,0,0,0,0 }}
 #endif
 
 LIBISC_EXTERNAL_DATA extern const struct in6_addr isc_in6addr_any;

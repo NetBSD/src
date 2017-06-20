@@ -1,7 +1,7 @@
-/*	$NetBSD: types.h,v 1.6.6.1 2016/03/13 08:00:35 martin Exp $	*/
+/*	$NetBSD: types.h,v 1.6.6.2 2017/06/20 16:40:21 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 #ifndef DNS_TYPES_H
 #define DNS_TYPES_H 1
@@ -95,6 +93,7 @@ typedef isc_uint16_t				dns_keytag_t;
 typedef struct dns_loadctx			dns_loadctx_t;
 typedef struct dns_loadmgr			dns_loadmgr_t;
 typedef struct dns_masterrawheader		dns_masterrawheader_t;
+typedef isc_uint64_t				dns_masterstyle_flags_t;
 typedef struct dns_message			dns_message_t;
 typedef isc_uint16_t				dns_messageid_t;
 typedef isc_region_t				dns_label_t;

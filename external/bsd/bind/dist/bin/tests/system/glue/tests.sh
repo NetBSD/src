@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2012, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -43,4 +43,4 @@ $DIG +norec @10.53.0.1 -p 5300 example.net. a > dig.out || status=1
 $PERL ../digcomp.pl noglue.good dig.out || status=1
 
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

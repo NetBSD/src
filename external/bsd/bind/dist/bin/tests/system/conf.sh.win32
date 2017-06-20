@@ -1,0 +1,175 @@
+#!/bin/sh
+#
+# Copyright (C) 2016  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+#
+# Common configuration data for system tests, to be sourced into
+# other shell scripts.
+#
+
+# For specific stuff (currently kill HUP -> rdnc reload in notify)
+CYGWIN=1
+
+# Find the top of the BIND9 tree.
+TOP=${SYSTEMTESTTOP:=.}/../../..
+
+# Make it absolute so that it continues to work after we cd.
+TOP=`cd $TOP && pwd`
+
+# Visual Studio build configurations are Release and Debug
+VSCONF=Debug
+
+NAMED=$TOP/Build/$VSCONF/named@EXEEXT@
+# We must use "named -l" instead of "lwresd" because argv[0] is lost
+# if the program is libtoolized.
+LWRESD="$TOP/Build/$VSCONF/named@EXEEXT@ -l"
+DIG=$TOP/Build/$VSCONF/dig@EXEEXT@
+DELV=$TOP/Build/$VSCONF/delv@EXEEXT@
+RNDC=$TOP/Build/$VSCONF/rndc@EXEEXT@
+NSUPDATE=$TOP/Build/$VSCONF/nsupdate@EXEEXT@
+DDNSCONFGEN=$TOP/Build/$VSCONF/ddns-confgen@EXEEXT@
+TSIGKEYGEN=$TOP/Build/$VSCONF/tsig-keygen@EXEEXT@
+RNDCCONFGEN=$TOP/Build/$VSCONF/rndc-confgen@EXEEXT@
+KEYGEN=$TOP/Build/$VSCONF/dnssec-keygen@EXEEXT@
+KEYFRLAB=$TOP/Build/$VSCONF/dnssec-keyfromlabel@EXEEXT@
+SIGNER=$TOP/Build/$VSCONF/dnssec-signzone@EXEEXT@
+REVOKE=$TOP/Build/$VSCONF/dnssec-revoke@EXEEXT@
+SETTIME=$TOP/Build/$VSCONF/dnssec-settime@EXEEXT@
+DSFROMKEY=$TOP/Build/$VSCONF/dnssec-dsfromkey@EXEEXT@
+IMPORTKEY=$TOP/Build/$VSCONF/dnssec-importkey@EXEEXT@
+CHECKDS="$PYTHON `cygpath -w $TOP/bin/python/dnssec-checkds.py`"
+COVERAGE="$PYTHON `cygpath -w $TOP/bin/python/dnssec-coverage.py`"
+KEYMGR="$PYTHON `cygpath -w $TOP/bin/python/dnssec-keymgr.py`"
+CHECKZONE=$TOP/Build/$VSCONF/named-checkzone@EXEEXT@
+CHECKCONF=$TOP/Build/$VSCONF/named-checkconf@EXEEXT@
+PK11GEN="$TOP/Build/$VSCONF/pkcs11-keygen@EXEEXT@ -q -s ${SLOT:-0} -p ${HSMPIN:-1234}"
+PK11LIST="$TOP/Build/$VSCONF/pkcs11-list@EXEEXT@ -s ${SLOT:-0} -p ${HSMPIN:-1234}"
+PK11DEL="$TOP/Build/$VSCONF/pkcs11-destroy@EXEEXT@ -s ${SLOT:-0} -p ${HSMPIN:-1234} -w 0"
+JOURNALPRINT=$TOP/Build/$VSCONF/named-journalprint@EXEEXT@
+VERIFY=$TOP/Build/$VSCONF/dnssec-verify@EXEEXT@
+ARPANAME=$TOP/Build/$VSCONF/arpaname@EXEEXT@
+RESOLVE=$TOP/lib/samples/resolve
+RRCHECKER=$TOP/Build/$VSCONF/named-rrchecker@EXEEXT@
+GENRANDOM=$TOP/Build/$VSCONF/genrandom@EXEEXT@
+NSLOOKUP=$TOP/Build/$VSCONF/nslookup@EXEEXT@
+DNSTAPREAD=$TOP/Build/$VSCONF/dnstap-read@EXEEXT@
+MDIG=$TOP/Build/$VSCONF/mdig@EXEEXT@
+NZD2NZF=$TOP/Build/$VSCONF/named-nzd2nzf@EXEEXT@
+FSTRM_CAPTURE=@FSTRM_CAPTURE@
+FEATURETEST=$TOP/Build/$VSCONF/feature-test@EXEEXT@
+
+# this is given as argument to native WIN32 executables
+RANDFILE=`cygpath -w $TOP/bin/tests/system/random.data`
+
+BIGKEY=$TOP/Build/$VSCONF/bigkey@EXEEXT@
+KEYCREATE=$TOP/Build/$VSCONF/keycreate@EXEEXT@
+KEYDELETE=$TOP/Build/$VSCONF/keydelete@EXEEXT@
+LWTEST=$TOP/Build/$VSCONF/lwtest@EXEEXT@
+MAKEJOURNAL=$TOP/Build/$VSCONF/makejournal@EXEEXT@
+
+# The "stress" test is not run by default since it creates enough
+# load on the machine to make it unusable to other users.
+# v6synth
+SUBDIRS="acl additional addzone allow_query autosign builtin cacheclean case
+	 catz checkconf @CHECKDS@ checknames checkzone cookie @COVERAGE@
+	 database digdelv dlv dlvauto dlz dlzexternal dname dns64 dnssec
+	 @DNSTAP@ dscp dsdigest dyndb ecdsa ednscompliance emptyzones
+	 fetchlimit filter-aaaa formerr forward geoip glue gost inline ixfr
+	 @KEYMGR@ legacy limits logfileconfig lwresd masterfile masterformat
+	 metadata mkeys names notify nslookup nsupdate nzd2nzf pending
+	 pipelined @PKCS11_TEST@ reclimit redirect resolver rndc rpz
+	 rpzrecurse rrchecker rrl rrsetorder rsabigexponent runtime sfcache
+	 smartsign sortlist spf staticstub statistics statschannel stub tcp
+	 tkey tsig tsiggss unknown upforwd verify views wildcard xfer
+	 xferquota zero zonechecks"
+
+#Things that are different on Windows
+KILL="/bin/kill -f"
+DIFF="diff --strip-trailing-cr"
+DOS2UNIX=dos2unix
+# No trailing period
+TP=
+
+# Configure is launched from native environment, but tests are run in Cygwin -
+# so any detection is unreliable. 
+SHELL="/bin/bash -o igncr"
+CURL=/usr/bin/curl
+XMLLINT=/usr/bin/xmllint
+PERL=/usr/bin/perl
+
+if test -n "$PERL"
+then
+	if $PERL -e "use IO::Socket::INET6;" 2> /dev/null
+	then
+		TESTSOCK6="$PERL $TOP/bin/tests/system/testsock6.pl"
+	else
+		TESTSOCK6=false
+	fi
+else
+	TESTSOCK6=false
+fi
+
+if grep "^#define WANT_IPV6 1" $TOP/config.h > /dev/null 2>&1 ; then
+        TESTSOCK6="$TESTSOCK6"
+else
+        TESTSOCK6=false
+fi
+
+
+PYTHON=@PYTHON@
+
+#
+# Determine if we support various optional features.
+#
+CHECK_DSA=@CHECK_DSA@
+HAVEXMLSTATS=@XMLSTATS@
+HAVEJSONSTATS=@JSONSTATS@
+ZLIB=@ZLIB@
+NZD=@NZD_TOOLS@
+
+. ${TOP}/version
+
+export ARPANAME
+export BIGKEY
+export CHECKZONE
+export DESCRIPTION
+export DIG
+export FEATURETEST
+export JOURNALPRINT
+export KEYCREATE
+export KEYDELETE
+export KEYFRLAB
+export KEYGEN
+export KEYSETTOOL
+export KEYSIGNER
+export LWRESD
+export LWTEST
+export MAKEJOURNAL
+export NAMED
+export NSLOOKUP
+export NSUPDATE
+export PERL
+export PIPEQUERIES
+export PK11DEL
+export PK11GEN
+export PK11LIST
+export PYTHON
+export RANDFILE
+export RESOLVE
+export RNDC
+export RRCHECKER
+export SIGNER
+export SUBDIRS
+export TESTSOCK6

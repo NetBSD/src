@@ -1,0 +1,346 @@
+# Microsoft Developer Studio Generated NMAKE File, Based on bigkey.dsp
+!IF "$(CFG)" == ""
+CFG=bigkey - @PLATFORM@ Debug
+!MESSAGE No configuration specified. Defaulting to bigkey - @PLATFORM@ Debug.
+!ENDIF 
+
+!IF "$(CFG)" != "bigkey - @PLATFORM@ Release" && "$(CFG)" != "bigkey - @PLATFORM@ Debug"
+!MESSAGE Invalid configuration "$(CFG)" specified.
+!MESSAGE You can specify a configuration when running NMAKE
+!MESSAGE by defining the macro CFG on the command line. For example:
+!MESSAGE 
+!MESSAGE NMAKE /f "bigkey.mak" CFG="bigkey - @PLATFORM@ Debug"
+!MESSAGE 
+!MESSAGE Possible choices for configuration are:
+!MESSAGE 
+!MESSAGE "bigkey - @PLATFORM@ Release" (based on "@PLATFORM@ (x86) Console Application")
+!MESSAGE "bigkey - @PLATFORM@ Debug" (based on "@PLATFORM@ (x86) Console Application")
+!MESSAGE 
+!ERROR An invalid configuration is specified.
+!ENDIF 
+
+!IF "$(OS)" == "Windows_NT"
+NULL=
+!ELSE 
+NULL=nul
+!ENDIF 
+
+CPP=cl.exe
+RSC=rc.exe
+LIBXML=@LIBXML2_LIB@
+
+!IF  "$(CFG)" == "bigkey - @PLATFORM@ Release"
+_VC_MANIFEST_INC=0
+_VC_MANIFEST_BASENAME=__VC80
+!ELSE
+_VC_MANIFEST_INC=1
+_VC_MANIFEST_BASENAME=__VC80.Debug
+!ENDIF
+
+####################################################
+# Specifying name of temporary resource file used only in incremental builds:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+_VC_MANIFEST_AUTO_RES=$(_VC_MANIFEST_BASENAME).auto.res
+!else
+_VC_MANIFEST_AUTO_RES=
+!endif
+
+####################################################
+# _VC_MANIFEST_EMBED_EXE - command to embed manifest in EXE:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+
+#MT_SPECIAL_RETURN=1090650113
+#MT_SPECIAL_SWITCH=-notify_resource_update
+MT_SPECIAL_RETURN=0
+MT_SPECIAL_SWITCH=
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).auto.manifest $(MT_SPECIAL_SWITCH) & \
+if "%ERRORLEVEL%" == "$(MT_SPECIAL_RETURN)" \
+rc /r $(_VC_MANIFEST_BASENAME).auto.rc & \
+link $** /out:$@ $(LFLAGS)
+
+!else
+
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -outputresource:$@;1
+
+!endif
+
+####################################################
+# _VC_MANIFEST_EMBED_DLL - command to embed manifest in DLL:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+
+#MT_SPECIAL_RETURN=1090650113
+#MT_SPECIAL_SWITCH=-notify_resource_update
+MT_SPECIAL_RETURN=0
+MT_SPECIAL_SWITCH=
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).auto.manifest $(MT_SPECIAL_SWITCH) & \
+if "%ERRORLEVEL%" == "$(MT_SPECIAL_RETURN)" \
+rc /r $(_VC_MANIFEST_BASENAME).auto.rc & \
+link $** /out:$@ $(LFLAGS)
+
+!else
+
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -outputresource:$@;2
+
+!endif
+####################################################
+# _VC_MANIFEST_CLEAN - command to clean resources files generated temporarily:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+
+_VC_MANIFEST_CLEAN=-del $(_VC_MANIFEST_BASENAME).auto.res \
+    $(_VC_MANIFEST_BASENAME).auto.rc \
+    $(_VC_MANIFEST_BASENAME).auto.manifest
+
+!else
+
+_VC_MANIFEST_CLEAN=
+
+!endif
+
+!IF  "$(CFG)" == "bigkey - @PLATFORM@ Release"
+
+OUTDIR=.\Release
+INTDIR=.\Release
+
+!IF "$(RECURSE)" == "0" 
+
+ALL : "..\..\..\..\Build\Release\bigkey.exe"
+
+!ELSE 
+
+ALL : "libisc - @PLATFORM@ Release" "libdns - @PLATFORM@ Release" "..\..\..\..\Build\Release\bigkey.exe"
+
+!ENDIF 
+
+!IF "$(RECURSE)" == "1" 
+CLEAN :"libdns - @PLATFORM@ ReleaseCLEAN" "libisc - @PLATFORM@ ReleaseCLEAN"
+!ELSE 
+CLEAN :
+!ENDIF 
+	-@erase "$(INTDIR)\bigkey.obj"
+	-@erase "$(INTDIR)\vc60.idb"
+	-@erase "..\..\..\..\Build\Release\bigkey.exe"
+	-@$(_VC_MANIFEST_CLEAN)
+
+"$(OUTDIR)" :
+    if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
+
+CPP_PROJ=/nologo /MD /W3 @COPTX@ @COPTI@ /O2 /I "./" /I "../../../../" @LIBXML2_INC@ @OPENSSL_INC@ /I "../../../../lib/isc/win32" /I "../../../../lib/isc/win32/include" /I "../../../../lib/isc/include" /I "../../../../lib/dns/win32/include" /I "../../../../lib/dns/include" @CRYPTO@ /D "WIN32" /D "NDEBUG" /D "__STDC__" /D "_CONSOLE" /D "_MBCS" /Fp"$(INTDIR)\bigkey.pch" @COPTY@ /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\bigkey.bsc" 
+BSC32_SBRS= \
+	
+LINK32=link.exe
+LINK32_FLAGS=user32.lib advapi32.lib kernel32.lib ws2_32.lib ../../../../lib/isc/win32/Release/libisc.lib ../../../../lib/dns/win32/Release/libdns.lib $(LIBXML) @OPENSSL_LIB@ /nologo /subsystem:console /incremental:no /pdb:"$(OUTDIR)\bigkey.pdb" @MACHINE@ /out:"../../../../Build/Release/bigkey.exe" 
+LINK32_OBJS= \
+	"$(INTDIR)\bigkey.obj" \
+	"..\..\..\..\lib\isc\win32\Release\libisc.lib" \
+	"..\..\..\..\lib\isc\win32\Release\libdns.lib"
+
+"..\..\..\..\Build\Release\bigkey.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+    $(_VC_MANIFEST_EMBED_EXE)
+
+!ELSEIF  "$(CFG)" == "bigkey - @PLATFORM@ Debug"
+
+OUTDIR=.\Debug
+INTDIR=.\Debug
+# Begin Custom Macros
+OutDir=.\Debug
+# End Custom Macros
+
+!IF "$(RECURSE)" == "0" 
+
+ALL : "..\..\..\..\Build\Debug\bigkey.exe" "$(OUTDIR)\bigkey.bsc"
+
+!ELSE 
+
+ALL : "libisc - @PLATFORM@ Debug" "libdns - @PLATFORM@ Debug" "..\..\..\..\Build\Debug\bigkey.exe" "$(OUTDIR)\bigkey.bsc"
+
+!ENDIF 
+
+!IF "$(RECURSE)" == "1" 
+CLEAN :"libdns - @PLATFORM@ DebugCLEAN" "libisc - @PLATFORM@ DebugCLEAN"
+!ELSE 
+CLEAN :
+!ENDIF 
+	-@erase "$(INTDIR)\bigkey.obj"
+	-@erase "$(INTDIR)\bigkey.sbr"
+	-@erase "$(INTDIR)\vc60.idb"
+	-@erase "$(INTDIR)\vc60.pdb"
+	-@erase "$(OUTDIR)\bigkey.bsc"
+	-@erase "$(OUTDIR)\bigkey.map"
+	-@erase "$(OUTDIR)\bigkey.pdb"
+	-@erase "..\..\..\..\Build\Debug\bigkey.exe"
+	-@erase "..\..\..\..\Build\Debug\bigkey.ilk"
+	-@$(_VC_MANIFEST_CLEAN)
+
+"$(OUTDIR)" :
+    if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
+
+CPP_PROJ=/nologo /MDd /W3 /Gm @COPTX@ @COPTI@ /ZI /Od /I "./" /I "../../../../" @LIBXML2_INC@ @OPENSSL_INC@ /I "../../../../lib/isc/win32" /I "../../../../lib/isc/win32/include" /I "../../../../lib/isc/include" /I "../../../../lib/dns/win32/include" /I "../../../../lib/dns/include" @CRYPTO@ /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "i386" /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+BSC32=bscmake.exe
+BSC32_FLAGS=/nologo /o"$(OUTDIR)\bigkey.bsc" 
+BSC32_SBRS= \
+	"$(INTDIR)\bigkey.sbr"
+
+"$(OUTDIR)\bigkey.bsc" : "$(OUTDIR)" $(BSC32_SBRS)
+    $(BSC32) @<<
+  $(BSC32_FLAGS) $(BSC32_SBRS)
+<<
+
+LINK32=link.exe
+LINK32_FLAGS=user32.lib advapi32.lib kernel32.lib ws2_32.lib ../../../../lib/isc/win32/Debug/libisc.lib ../../../../lib/dns/win32/Debug/libdns.lib $(LIBXML) @OPENSSL_LIB@ /nologo /subsystem:console /incremental:yes /pdb:"$(OUTDIR)\bigkey.pdb" /map:"$(INTDIR)\bigkey.map" /debug @MACHINE@ /out:"../../../../Build/Debug/bigkey.exe" /pdbtype:sept 
+LINK32_OBJS= \
+	"$(INTDIR)\bigkey.obj" \
+	"..\..\..\..\lib\isc\win32\Debug\libisc.lib" \
+	"..\..\..\..\lib\isc\win32\Debug\libdns.lib"
+
+"..\..\..\..\Build\Debug\bigkey.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
+    $(LINK32) @<<
+  $(LINK32_FLAGS) $(LINK32_OBJS)
+<<
+    $(_VC_MANIFEST_EMBED_EXE)
+
+!ENDIF 
+
+.c{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.c{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cpp{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+.cxx{$(INTDIR)}.sbr::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+
+!IF "$(NO_EXTERNAL_DEPS)" != "1"
+!IF EXISTS("bigkey.dep")
+!INCLUDE "bigkey.dep"
+!ELSE 
+!MESSAGE Warning: cannot find "bigkey.dep"
+!ENDIF 
+!ENDIF 
+
+
+!IF "$(CFG)" == "bigkey - @PLATFORM@ Release" || "$(CFG)" == "bigkey - @PLATFORM@ Debug"
+SOURCE=..\rsabigexponent\bigkey.c
+
+!IF  "$(CFG)" == "bigkey - @PLATFORM@ Release"
+
+
+"$(INTDIR)\bigkey.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "bigkey - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\bigkey.obj"	"$(INTDIR)\bigkey.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+!IF  "$(CFG)" == "bigkey - @PLATFORM@ Release"
+
+"libdns - @PLATFORM@ Release" : 
+   cd "..\..\..\..\lib\dns\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libdns.mak" CFG="libdns - @PLATFORM@ Release" 
+   cd "..\..\..\bin\tests\system\win32"
+
+"libdns - @PLATFORM@ ReleaseCLEAN" : 
+   cd "..\..\..\..\lib\dns\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libdns.mak" CFG="libdns - @PLATFORM@ Release" RECURSE=1 CLEAN 
+   cd "..\..\..\bin\tests\system\win32"
+
+!ELSEIF  "$(CFG)" == "bigkey - @PLATFORM@ Debug"
+
+"libdns - @PLATFORM@ Debug" : 
+   cd "..\..\..\..\lib\dns\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libdns.mak" CFG="libdns - @PLATFORM@ Debug" 
+   cd "..\..\..\bin\tests\system\win32"
+
+"libdns - @PLATFORM@ DebugCLEAN" : 
+   cd "..\..\..\..\lib\dns\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libdns.mak" CFG="libdns - @PLATFORM@ Debug" RECURSE=1 CLEAN 
+   cd "..\..\..\bin\tests\system\win32"
+
+!ENDIF 
+
+!IF  "$(CFG)" == "bigkey - @PLATFORM@ Release"
+
+"libisc - @PLATFORM@ Release" : 
+   cd "..\..\..\..\lib\isc\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libisc.mak" CFG="libisc - @PLATFORM@ Release" 
+   cd "..\..\..\bin\tests\system\win32"
+
+"libisc - @PLATFORM@ ReleaseCLEAN" : 
+   cd "..\..\..\..\lib\isc\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libisc.mak" CFG="libisc - @PLATFORM@ Release" RECURSE=1 CLEAN 
+   cd "..\..\..\bin\tests\system\win32"
+
+!ELSEIF  "$(CFG)" == "bigkey - @PLATFORM@ Debug"
+
+"libisc - @PLATFORM@ Debug" : 
+   cd "..\..\..\..\lib\isc\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libisc.mak" CFG="libisc - @PLATFORM@ Debug" 
+   cd "..\..\..\bin\tests\system\win32"
+
+"libisc - @PLATFORM@ DebugCLEAN" : 
+   cd "..\..\..\..\lib\isc\win32"
+   $(MAKE) /$(MAKEFLAGS) /F ".\libisc.mak" CFG="libisc - @PLATFORM@ Debug" RECURSE=1 CLEAN 
+   cd "..\..\..\bin\tests\system\win32"
+
+!ENDIF 
+
+!ENDIF 
+
+####################################################
+# Commands to generate initial empty manifest file and the RC file
+# that references it, and for generating the .res file:
+
+$(_VC_MANIFEST_BASENAME).auto.res : $(_VC_MANIFEST_BASENAME).auto.rc
+
+$(_VC_MANIFEST_BASENAME).auto.rc : $(_VC_MANIFEST_BASENAME).auto.manifest
+    type <<$@
+#include <winuser.h>
+1RT_MANIFEST"$(_VC_MANIFEST_BASENAME).auto.manifest"
+<< KEEP
+
+$(_VC_MANIFEST_BASENAME).auto.manifest :
+    type <<$@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<assembly xmlns='urn:schemas-microsoft-com:asm.v1' manifestVersion='1.0'>
+</assembly>
+<< KEEP

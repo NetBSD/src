@@ -15,7 +15,7 @@
 -->
 
 <!-- Converted by db4-upgrade version 1.0 -->
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="man.named.conf">
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.named.conf">
   <info>
     <date>2014-01-08</date>
   </info>
@@ -116,6 +116,7 @@ server ( <replaceable>ipv4_address<optional>/prefixlen</optional></replaceable> 
 	edns <replaceable>boolean</replaceable>;
 	edns-udp-size <replaceable>integer</replaceable>;
 	max-udp-size <replaceable>integer</replaceable>;
+	tcp-only <replaceable>boolean</replaceable>;
 	provide-ixfr <replaceable>boolean</replaceable>;
 	request-ixfr <replaceable>boolean</replaceable>;
 	keys <replaceable>server_key</replaceable>;
@@ -341,6 +342,7 @@ options {
 	};
 
 	max-journal-size <replaceable>size_no_default</replaceable>;
+	max-records <replaceable>integer</replaceable>;
 	max-transfer-time-in <replaceable>integer</replaceable>;
 	max-transfer-time-out <replaceable>integer</replaceable>;
 	max-transfer-idle-in <replaceable>integer</replaceable>;
@@ -427,6 +429,11 @@ view <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 
 	trusted-keys {
 		<replaceable>string</replaceable> <replaceable>integer</replaceable> <replaceable>integer</replaceable> <replaceable>integer</replaceable> <replaceable>quoted_string</replaceable>;
+		<optional>...</optional>
+	};
+
+	managed-keys {
+		<replaceable>domain_name</replaceable> <constant>initial-key</constant> <replaceable>flags</replaceable> <replaceable>protocol</replaceable> <replaceable>algorithm</replaceable> <replaceable>key</replaceable>;
 		<optional>...</optional>
 	};
 
@@ -533,6 +540,7 @@ view <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	};
 
 	max-journal-size <replaceable>size_no_default</replaceable>;
+	max-records <replaceable>integer</replaceable>;
 	max-transfer-time-in <replaceable>integer</replaceable>;
 	max-transfer-time-out <replaceable>integer</replaceable>;
 	max-transfer-idle-in <replaceable>integer</replaceable>;
@@ -630,6 +638,7 @@ zone <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	};
 
 	max-journal-size <replaceable>size_no_default</replaceable>;
+	max-records <replaceable>integer</replaceable>;
 	max-transfer-time-in <replaceable>integer</replaceable>;
 	max-transfer-time-out <replaceable>integer</replaceable>;
 	max-transfer-idle-in <replaceable>integer</replaceable>;

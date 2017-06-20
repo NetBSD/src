@@ -121,6 +121,10 @@ SOURCE=.\entropy.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\errno.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\errno2result.c
 # End Source File
 # Begin Source File
@@ -286,6 +290,10 @@ SOURCE=.\include\isc\dir.h
 # Begin Source File
 
 SOURCE=..\include\isc\entropy.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\isc\errno.h
 # End Source File
 # Begin Source File
 
