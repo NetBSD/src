@@ -35,6 +35,9 @@ to the open path executing ata_get_params(), which eventually tsleeps()
 while waiting for the command to finish; specifically, if WDF_LOADED is not
 set 
 - happens due to wd_get_params() with just AT_WAIT in wdopen()
+- not easy to fix, open needs to read disklabel and all this mechanics
+  is too much for emergency crash dump code path
+- old bug - kern/16789
 
 add nibble to control number of tags (1==disable NCQ)?
 
