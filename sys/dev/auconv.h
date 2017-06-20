@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.17 2017/06/20 07:21:50 nat Exp $	*/
+/*	$NetBSD: auconv.h,v 1.18 2017/06/20 13:51:54 nat Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -83,8 +83,8 @@ extern stream_filter_factory_t linear8_8_to_linear24;
 extern stream_filter_factory_t linear8_8_to_linear16;
 extern stream_filter_factory_t linear8_8_to_linear8;
 
-#define linear16_to_linear8 linear_16_16_to_linear8
-#define linear8_to_linear16 linear_8_8_to_linear16
+#define linear16_to_linear8 linear16_16_to_linear8
+#define linear8_to_linear16 linear8_8_to_linear16
 
 /* sampling rate conversion (aurateconv.c) */
 extern stream_filter_factory_t aurateconv;
