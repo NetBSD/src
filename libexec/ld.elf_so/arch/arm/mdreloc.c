@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.40 2017/06/20 11:01:18 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.41 2017/06/20 12:41:49 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.40 2017/06/20 11:01:18 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.41 2017/06/20 12:41:49 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -128,15 +128,17 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 				"%s: R_ARM_PC24 relocation @ %p to %s failed "
 				"(displacement %ld (%#lx) out of range)",
 				    obj->path, where,
-				    obj->strtab + obj->symtab[symnum].st_name,
+				    obj->strtab + obj->symtab[
+				        ELF_R_SYM(rel->r_info)].st_name,
 				    (long) tmp, (long) tmp);
 				return -1;
 			}
 			tmp >>= 2;
 			*where = (*where & 0xff000000) | (tmp & 0x00ffffff);
 			rdbg(("PC24 %s in %s --> %p @ %p in %s",
-			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)*where, where, defobj->path));
+			    obj->strtab + obj->symtab[ELF_R_SYM(rel->r_info)]
+			    .st_name, obj->path, (void *)*where, where,
+			    defobj->path));
 			break;
 		}
 #endif
@@ -160,8 +162,9 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 				store_ptr(where, tmp);
 			}
 			rdbg(("ABS32/GLOB_DAT %s in %s --> %p @ %p in %s",
-			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)tmp, where, defobj->path));
+			    obj->strtab + obj->symtab[ELF_R_SYM(rel->r_info)]
+			    .st_name, obj->path, (void *)tmp, where,
+			    defobj->path));
 			break;
 
 		case R_TYPE(RELATIVE):	/* word32 B + A */
@@ -201,8 +204,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 				store_ptr(where, tmp);
 
 			rdbg(("TLS_DTPOFF32 %s in %s --> %p",
-			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)tmp));
+			    obj->strtab + obj->symtab[ELF_R_SYM(rel->r_info)]
+			    .st_name, obj->path, (void *)tmp));
 
 			break;
 		case R_TYPE(TLS_DTPMOD32):
@@ -213,8 +216,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 				store_ptr(where, tmp);
 
 			rdbg(("TLS_DTPMOD32 %s in %s --> %p",
-			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)tmp));
+			    obj->strtab + obj->symtab[ELF_R_SYM(rel->r_info)]
+			    .st_name, obj->path, (void *)tmp));
 
 			break;
 
@@ -230,8 +233,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			else
 				store_ptr(where, tmp);
 			rdbg(("TLS_TPOFF32 %s in %s --> %p",
-			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)tmp));
+			    obj->strtab + obj->symtab[ELF_R_SYM(rel->r_info)]
+			    .st_name, obj->path, (void *)tmp));
 			break;
 
 		default:
