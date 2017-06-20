@@ -1,7 +1,7 @@
-/*	$NetBSD: gssapictx.c,v 1.7.2.1 2016/03/13 08:06:12 martin Exp $	*/
+/*	$NetBSD: gssapictx.c,v 1.7.2.1.4.1 2017/06/20 17:02:22 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -723,10 +723,7 @@ dst_gssapi_acceptctx(gss_cred_id_t cred,
 
 	switch (gret) {
 	case GSS_S_COMPLETE:
-		result = ISC_R_SUCCESS;
-		break;
 	case GSS_S_CONTINUE_NEEDED:
-		result = DNS_R_CONTINUE;
 		break;
 	case GSS_S_DEFECTIVE_TOKEN:
 	case GSS_S_DEFECTIVE_CREDENTIAL:
@@ -791,7 +788,8 @@ dst_gssapi_acceptctx(gss_cred_id_t cred,
 					gss_error_tostring(gret, minor, buf,
 							   sizeof(buf)));
 		}
-	}
+	} else
+		result = DNS_R_CONTINUE;
 
 	*ctxout = context;
 

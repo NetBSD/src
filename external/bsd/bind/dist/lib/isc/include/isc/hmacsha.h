@@ -1,7 +1,7 @@
-/*	$NetBSD: hmacsha.h,v 1.4 2014/03/01 03:24:39 christos Exp $	*/
+/*	$NetBSD: hmacsha.h,v 1.4.10.1 2017/06/20 17:02:24 snj Exp $	*/
 
 /*
- * Copyright (C) 2005-2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005-2007, 2009, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -39,13 +39,21 @@
 #define ISC_HMACSHA512_KEYLENGTH ISC_SHA512_BLOCK_LENGTH
 
 #ifdef ISC_PLATFORM_OPENSSLHASH
+#include <openssl/opensslv.h>
 #include <openssl/hmac.h>
 
-typedef HMAC_CTX isc_hmacsha1_t;
-typedef HMAC_CTX isc_hmacsha224_t;
-typedef HMAC_CTX isc_hmacsha256_t;
-typedef HMAC_CTX isc_hmacsha384_t;
-typedef HMAC_CTX isc_hmacsha512_t;
+typedef struct {
+	HMAC_CTX *ctx;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	HMAC_CTX _ctx;
+#endif
+} isc_hmacsha_t;
+
+typedef isc_hmacsha_t isc_hmacsha1_t;
+typedef isc_hmacsha_t isc_hmacsha224_t;
+typedef isc_hmacsha_t isc_hmacsha256_t;
+typedef isc_hmacsha_t isc_hmacsha384_t;
+typedef isc_hmacsha_t isc_hmacsha512_t;
 
 #elif PKCS11CRYPTO
 #include <pk11/pk11.h>

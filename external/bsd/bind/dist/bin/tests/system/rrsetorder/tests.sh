@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2006-2008, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2006-2008, 2011, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -38,7 +38,7 @@ if $test_fixed; then
     for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
     do
     $DIGCMD @10.53.0.1 fixed.example > dig.out.fixed || ret=1
-    cmp -s dig.out.fixed dig.out.fixed.good || ret=1
+    $DIFF dig.out.fixed dig.out.fixed.good >/dev/null || ret=1
     done
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
@@ -53,15 +53,15 @@ else
         if [ $i -le 4 ]; then
             cp dig.out.fixed dig.out.$j
         else
-            cmp -s dig.out.fixed dig.out.$j && matches=`expr $matches + 1`
+            $DIFF dig.out.fixed dig.out.$j >/dev/null && matches=`expr $matches + 1`
         fi
     done
-    cmp -s dig.out.0 dig.out.1 && ret=1
-    cmp -s dig.out.0 dig.out.2 && ret=1
-    cmp -s dig.out.0 dig.out.3 && ret=1
-    cmp -s dig.out.1 dig.out.2 && ret=1
-    cmp -s dig.out.1 dig.out.3 && ret=1
-    cmp -s dig.out.2 dig.out.3 && ret=1
+    $DIFF dig.out.0 dig.out.1 >/dev/null && ret=1
+    $DIFF dig.out.0 dig.out.2 >/dev/null && ret=1
+    $DIFF dig.out.0 dig.out.3 >/dev/null && ret=1
+    $DIFF dig.out.1 dig.out.2 >/dev/null && ret=1
+    $DIFF dig.out.1 dig.out.3 >/dev/null && ret=1
+    $DIFF dig.out.2 dig.out.3 >/dev/null && ret=1
     if [ $matches -ne 16 ]; then ret=1; fi
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
@@ -80,15 +80,15 @@ do
     if [ $i -le 4 ]; then
         cp dig.out.cyclic dig.out.$j
     else
-        cmp -s dig.out.cyclic dig.out.$j && matches=`expr $matches + 1`
+        $DIFF dig.out.cyclic dig.out.$j >/dev/null && matches=`expr $matches + 1`
     fi
 done
-cmp -s dig.out.0 dig.out.1 && ret=1
-cmp -s dig.out.0 dig.out.2 && ret=1
-cmp -s dig.out.0 dig.out.3 && ret=1
-cmp -s dig.out.1 dig.out.2 && ret=1
-cmp -s dig.out.1 dig.out.3 && ret=1
-cmp -s dig.out.2 dig.out.3 && ret=1
+$DIFF dig.out.0 dig.out.1 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.2 dig.out.3 >/dev/null && ret=1
 if [ $matches -ne 16 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -106,15 +106,15 @@ do
     if [ $i -le 4 ]; then
         cp dig.out.cyclic2 dig.out.$j
     else
-        cmp -s dig.out.cyclic2 dig.out.$j && matches=`expr $matches + 1`
+        $DIFF dig.out.cyclic2 dig.out.$j >/dev/null && matches=`expr $matches + 1`
     fi
 done
-cmp -s dig.out.0 dig.out.1 && ret=1
-cmp -s dig.out.0 dig.out.2 && ret=1
-cmp -s dig.out.0 dig.out.3 && ret=1
-cmp -s dig.out.1 dig.out.2 && ret=1
-cmp -s dig.out.1 dig.out.3 && ret=1
-cmp -s dig.out.2 dig.out.3 && ret=1
+$DIFF dig.out.0 dig.out.1 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.2 dig.out.3 >/dev/null && ret=1
 if [ $matches -ne 16 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -130,7 +130,7 @@ do
 	match=0
 	for j in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
 	do
-		eval "cmp -s dig.out.random dig.out.random.good$j && match$j=1 match=1"
+		eval "$DIFF dig.out.random dig.out.random.good$j >/dev/null && match$j=1 match=1"
 		if [ $match -eq 1 ]; then break; fi
 	done
 	if [ $match -eq 0 ]; then ret=1; fi
@@ -154,7 +154,7 @@ if $test_fixed; then
     for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
     do
     $DIGCMD @10.53.0.2 fixed.example > dig.out.fixed || ret=1
-    cmp -s dig.out.fixed dig.out.fixed.good || ret=1
+    $DIFF dig.out.fixed dig.out.fixed.good || ret=1
     done
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
@@ -173,15 +173,15 @@ do
     if [ $i -le 4 ]; then
         cp dig.out.cyclic dig.out.$j
     else
-        cmp -s dig.out.cyclic dig.out.$j && matches=`expr $matches + 1`
+        $DIFF dig.out.cyclic dig.out.$j >/dev/null && matches=`expr $matches + 1`
     fi
 done
-cmp -s dig.out.0 dig.out.1 && ret=1
-cmp -s dig.out.0 dig.out.2 && ret=1
-cmp -s dig.out.0 dig.out.3 && ret=1
-cmp -s dig.out.1 dig.out.2 && ret=1
-cmp -s dig.out.1 dig.out.3 && ret=1
-cmp -s dig.out.2 dig.out.3 && ret=1
+$DIFF dig.out.0 dig.out.1 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.2 dig.out.3 >/dev/null && ret=1
 if [ $matches -ne 16 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -199,15 +199,15 @@ do
     if [ $i -le 4 ]; then
         cp dig.out.cyclic2 dig.out.$j
     else
-        cmp -s dig.out.cyclic2 dig.out.$j && matches=`expr $matches + 1`
+        $DIFF dig.out.cyclic2 dig.out.$j >/dev/null && matches=`expr $matches + 1`
     fi
 done
-cmp -s dig.out.0 dig.out.1 && ret=1
-cmp -s dig.out.0 dig.out.2 && ret=1
-cmp -s dig.out.0 dig.out.3 && ret=1
-cmp -s dig.out.1 dig.out.2 && ret=1
-cmp -s dig.out.1 dig.out.3 && ret=1
-cmp -s dig.out.2 dig.out.3 && ret=1
+$DIFF dig.out.0 dig.out.1 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.2 dig.out.3 >/dev/null && ret=1
 if [ $matches -ne 16 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -224,7 +224,7 @@ $DIGCMD @10.53.0.2 random.example > dig.out.random || ret=1
 	match=0
 	for j in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
 	do
-		eval "cmp -s dig.out.random dig.out.random.good$j && match$j=1 match=1"
+		eval "$DIFF dig.out.random dig.out.random.good$j >/dev/null && match$j=1 match=1"
 		if [ $match -eq 1 ]; then break; fi
 	done
 	if [ $match -eq 0 ]; then ret=1; fi
@@ -264,7 +264,7 @@ if $test_fixed; then
     for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
     do
     $DIGCMD @10.53.0.2 fixed.example > dig.out.fixed || ret=1
-    cmp -s dig.out.fixed dig.out.fixed.good || ret=1
+    $DIFF dig.out.fixed dig.out.fixed.good || ret=1
     done
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
@@ -283,15 +283,15 @@ do
     if [ $i -le 4 ]; then
         cp dig.out.cyclic dig.out.$j
     else
-        cmp -s dig.out.cyclic dig.out.$j && matches=`expr $matches + 1`
+        $DIFF dig.out.cyclic dig.out.$j >/dev/null && matches=`expr $matches + 1`
     fi
 done
-cmp -s dig.out.0 dig.out.1 && ret=1
-cmp -s dig.out.0 dig.out.2 && ret=1
-cmp -s dig.out.0 dig.out.3 && ret=1
-cmp -s dig.out.1 dig.out.2 && ret=1
-cmp -s dig.out.1 dig.out.3 && ret=1
-cmp -s dig.out.2 dig.out.3 && ret=1
+$DIFF dig.out.0 dig.out.1 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.2 dig.out.3 >/dev/null && ret=1
 if [ $matches -ne 16 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -309,15 +309,15 @@ do
     if [ $i -le 4 ]; then
         cp dig.out.cyclic2 dig.out.$j
     else
-        cmp -s dig.out.cyclic2 dig.out.$j && matches=`expr $matches + 1`
+        $DIFF dig.out.cyclic2 dig.out.$j >/dev/null && matches=`expr $matches + 1`
     fi
 done
-cmp -s dig.out.0 dig.out.1 && ret=1
-cmp -s dig.out.0 dig.out.2 && ret=1
-cmp -s dig.out.0 dig.out.3 && ret=1
-cmp -s dig.out.1 dig.out.2 && ret=1
-cmp -s dig.out.1 dig.out.3 && ret=1
-cmp -s dig.out.2 dig.out.3 && ret=1
+$DIFF dig.out.0 dig.out.1 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.2 dig.out.3 >/dev/null && ret=1
 if [ $matches -ne 16 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -334,7 +334,7 @@ do
 	match=0
 	for j in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
 	do
-		eval "cmp -s dig.out.random dig.out.random.good$j && match$j=1 match=1"
+		eval "$DIFF dig.out.random dig.out.random.good$j >/dev/null && match$j=1 match=1"
 		if [ $match -eq 1 ]; then break; fi
 	done
 	if [ $match -eq 0 ]; then ret=1; fi
@@ -358,7 +358,7 @@ if $test_fixed; then
     for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
     do
     $DIGCMD @10.53.0.3 fixed.example > dig.out.fixed || ret=1
-    cmp -s dig.out.fixed dig.out.fixed.good || ret=1
+    $DIFF dig.out.fixed dig.out.fixed.good || ret=1
     done
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
@@ -379,15 +379,15 @@ do
     if [ $i -le 4 ]; then
         cp dig.out.cyclic dig.out.$j
     else
-        cmp -s dig.out.cyclic dig.out.$j && matches=`expr $matches + 1`
+        $DIFF dig.out.cyclic dig.out.$j >/dev/null && matches=`expr $matches + 1`
     fi
 done
-cmp -s dig.out.0 dig.out.1 && ret=1
-cmp -s dig.out.0 dig.out.2 && ret=1
-cmp -s dig.out.0 dig.out.3 && ret=1
-cmp -s dig.out.1 dig.out.2 && ret=1
-cmp -s dig.out.1 dig.out.3 && ret=1
-cmp -s dig.out.2 dig.out.3 && ret=1
+$DIFF dig.out.0 dig.out.1 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.2 dig.out.3 >/dev/null && ret=1
 if [ $matches -ne 16 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -407,15 +407,15 @@ do
     if [ $i -le 4 ]; then
         cp dig.out.cyclic2 dig.out.$j
     else
-        cmp -s dig.out.cyclic2 dig.out.$j && matches=`expr $matches + 1`
+        $DIFF dig.out.cyclic2 dig.out.$j >/dev/null && matches=`expr $matches + 1`
     fi
 done
-cmp -s dig.out.0 dig.out.1 && ret=1
-cmp -s dig.out.0 dig.out.2 && ret=1
-cmp -s dig.out.0 dig.out.3 && ret=1
-cmp -s dig.out.1 dig.out.2 && ret=1
-cmp -s dig.out.1 dig.out.3 && ret=1
-cmp -s dig.out.2 dig.out.3 && ret=1
+$DIFF dig.out.0 dig.out.1 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.0 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.2 >/dev/null && ret=1
+$DIFF dig.out.1 dig.out.3 >/dev/null && ret=1
+$DIFF dig.out.2 dig.out.3 >/dev/null && ret=1
 if [ $matches -ne 16 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -432,7 +432,7 @@ do
 	match=0
 	for j in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
 	do
-		eval "cmp -s dig.out.random dig.out.random.good$j && match$j=1 match=1"
+		eval "$DIFF dig.out.random dig.out.random.good$j >/dev/null && match$j=1 match=1"
 		if [ $match -eq 1 ]; then break; fi
 	done
 	if [ $match -eq 0 ]; then ret=1; fi
@@ -459,7 +459,7 @@ $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
 	match=0
 	for j in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
 	do
-		eval "cmp -s dig.out.random dig.out.random.good$j && match$j=1 match=1"
+		eval "$DIFF dig.out.random dig.out.random.good$j >/dev/null && match$j=1 match=1"
 		if [ $match -eq 1 ]; then break; fi
 	done
 	if [ $match -eq 0 ]; then ret=1; fi
@@ -475,4 +475,4 @@ if [ $ret != 0 ]; then echo "I:failed"; fi
 
 status=`expr $status + $ret`
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

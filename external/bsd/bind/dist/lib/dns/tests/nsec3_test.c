@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec3_test.c,v 1.1.1.2.4.1 2016/10/14 12:01:30 martin Exp $	*/
+/*	$NetBSD: nsec3_test.c,v 1.1.1.2.4.1.2.1 2017/06/20 17:02:23 snj Exp $	*/
 
 /*
- * Copyright (C) 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -37,18 +37,18 @@
  */
 
 static void
-iteration_test(const char* file, unsigned int expected) {
+iteration_test(const char *file, unsigned int expected) {
 	isc_result_t result;
 	dns_db_t *db = NULL;
 	unsigned int iterations;
 
 	result = dns_test_loaddb(&db, dns_dbtype_zone, "test", file);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	ATF_CHECK_EQ_MSG(result, ISC_R_SUCCESS, "%s", file);
 
 	result = dns_nsec3_maxiterations(db, NULL, mctx, &iterations);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	ATF_CHECK_EQ_MSG(result, ISC_R_SUCCESS, "%s", file);
 
-	ATF_CHECK_EQ(iterations, expected);
+	ATF_CHECK_EQ_MSG(iterations, expected, "%s", file);
 
 	dns_db_detach(&db);
 }

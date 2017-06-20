@@ -1,7 +1,7 @@
-/*	$NetBSD: t_atomic.c,v 1.4.4.1 2016/10/14 12:01:13 martin Exp $	*/
+/*	$NetBSD: t_atomic.c,v 1.4.4.1.2.1 2017/06/20 17:02:02 snj Exp $	*/
 
 /*
- * Copyright (C) 2011, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -340,7 +340,7 @@ testspec_t T_testlist[] = {
 #ifdef ISC_PLATFORM_HAVEATOMICSTORE
 	{ (PFV) test_atomic_store,	"test_atomic_store"		},
 #endif
-#if defined(ISC_PLATFORM_HAVEXADDQ)
+#if defined(ISC_PLATFORM_HAVEATOMICSTOREQ)
 	{ (PFV) test_atomic_storeq,	"test_atomic_storeq"		},
 #endif
 	{ (PFV) 0,			NULL }

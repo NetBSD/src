@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.h,v 1.9.4.3 2016/10/14 12:01:29 martin Exp $	*/
+/*	$NetBSD: rbt.h,v 1.9.4.3.2.1 2017/06/20 17:02:23 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -393,7 +393,7 @@ dns_rbt_addnode(dns_rbt_t *rbt, dns_name_t *name, dns_rbtnode_t **nodep);
  */
 
 isc_result_t
-dns_rbt_findname(dns_rbt_t *rbt, dns_name_t *name, unsigned int options,
+dns_rbt_findname(dns_rbt_t *rbt, const dns_name_t *name, unsigned int options,
 		 dns_name_t *foundname, void **data);
 /*%<
  * Get the data pointer associated with 'name'.
@@ -432,7 +432,7 @@ dns_rbt_findname(dns_rbt_t *rbt, dns_name_t *name, unsigned int options,
  */
 
 isc_result_t
-dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
+dns_rbt_findnode(dns_rbt_t *rbt, const dns_name_t *name, dns_name_t *foundname,
 		 dns_rbtnode_t **node, dns_rbtnodechain_t *chain,
 		 unsigned int options, dns_rbtfindcallback_t callback,
 		 void *callback_arg);

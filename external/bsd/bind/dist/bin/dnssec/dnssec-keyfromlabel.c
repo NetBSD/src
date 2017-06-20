@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-keyfromlabel.c,v 1.12.2.2 2015/07/17 04:31:20 snj Exp $	*/
+/*	$NetBSD: dnssec-keyfromlabel.c,v 1.12.2.2.6.1 2017/06/20 17:01:58 snj Exp $	*/
 
 /*
- * Copyright (C) 2007-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,6 +31,8 @@
 #include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
+
+#include <pk11/site.h>
 
 #include <dns/dnssec.h>
 #include <dns/fixedname.h>
@@ -381,10 +383,20 @@ main(int argc, char **argv) {
 		}
 
 		if (strcasecmp(algname, "RSA") == 0) {
+#ifndef PK11_MD5_DISABLE
 			fprintf(stderr, "The use of RSA (RSAMD5) is not "
 					"recommended.\nIf you still wish to "
 					"use RSA (RSAMD5) please specify "
 					"\"-a RSAMD5\"\n");
+#else
+			fprintf(stderr,
+				"The use of RSA (RSAMD5) was disabled\n");
+			if (freeit != NULL)
+				free(freeit);
+			return (1);
+		} else if (strcasecmp(algname, "RSAMD5") == 0) {
+			fprintf(stderr, "The use of RSAMD5 was disabled\n");
+#endif
 			if (freeit != NULL)
 				free(freeit);
 			return (1);
@@ -480,6 +492,11 @@ main(int argc, char **argv) {
 		name = dst_key_name(prevkey);
 		alg = dst_key_alg(prevkey);
 		flags = dst_key_flags(prevkey);
+
+#ifdef PK11_MD5_DISABLE
+		if (alg == DST_ALG_RSAMD5)
+			fatal("Key %s uses disabled RSAMD5", predecessor);
+#endif
 
 		dst_key_format(prevkey, keystr, sizeof(keystr));
 		dst_key_getprivateformat(prevkey, &major, &minor);

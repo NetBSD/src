@@ -229,6 +229,68 @@ done
 n=`expr $n + 1`
 status=`expr $status + $ret`
 
+echo "I:check that adding a 'stub' zone works ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone 'stub.example { type stub; masters { 1.2.3.4; }; file "stub.example.bk"; };' > rndc.out.ns2.$n 2>&1 || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that adding a 'static-stub' zone works ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone 'static-stub.example { type static-stub; server-addresses { 1.2.3.4; }; };' > rndc.out.ns2.$n 2>&1 || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that zone type 'redirect' (master) is properly rejected ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone '"." { type redirect; file "redirect.db"; };' > rndc.out.ns2.$n 2>&1 && ret=1
+grep "zones not supported by addzone" rndc.out.ns2.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that zone type 'redirect' (slave) is properly rejected ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone '"." { type redirect; masters { 1.2.3.4; }; file "redirect.bk"; };' > rndc.out.ns2.$n 2>&1 && ret=1
+grep "zones not supported by addzone" rndc.out.ns2.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that zone type 'hint' is properly rejected ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone '"." { type hint; file "hints.db"; };' > rndc.out.ns2.$n 2>&1 && ret=1
+grep "zones not supported by addzone" rndc.out.ns2.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that zone type 'forward' is properly rejected ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone 'forward.example { type forward; forwarders { 1.2.3.4; }; forward only; };' > rndc.out.ns2.$n 2>&1 && ret=1
+grep "zones not supported by addzone" rndc.out.ns2.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that zone type 'delegation-only' is properly rejected ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone 'delegation-only.example { type delegation-only; };' > rndc.out.ns2.$n 2>&1 && ret=1
+grep "zones not supported by addzone" rndc.out.ns2.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that 'in-view' zones are properly rejected ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone 'in-view.example { in-view "_default"; };' > rndc.out.ns2.$n 2>&1 && ret=1
+grep "zones not supported by addzone" rndc.out.ns2.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:reconfiguring server with multiple views"
 rm -f ns2/named.conf 
 cp -f ns2/named2.conf ns2/named.conf
@@ -320,4 +382,4 @@ if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

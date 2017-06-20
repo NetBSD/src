@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -166,4 +166,5 @@ grep "status: SERVFAIL" dig.out.ns1.7 > /dev/null || ret=1
 [ "$ret" -eq 0 ] || echo "I:failed"
 status=`expr $status + $ret`
 
-exit $status
+echo "I:exit status: $status"
+[ $status -eq 0 ] || exit 1

@@ -1,7 +1,7 @@
-/*	$NetBSD: pk11_api.c,v 1.1.1.2 2014/07/08 04:49:49 spz Exp $	*/
+/*	$NetBSD: pk11_api.c,v 1.1.1.2.10.1 2017/06/20 17:02:26 snj Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +30,7 @@
 #include <isc/log.h>
 #include <isc/mem.h>
 #include <isc/once.h>
+#include <isc/print.h>
 #include <isc/stdio.h>
 #include <isc/thread.h>
 #include <isc/util.h>
@@ -73,6 +74,7 @@ getpassphrase(const char *prompt) {
 /* load PKCS11 DLL */
 
 static HINSTANCE hPK11 = NULL;
+static char loaderrmsg[1024];
 
 CK_RV
 pkcs_C_Initialize(CK_VOID_PTR pReserved) {
@@ -90,12 +92,21 @@ pkcs_C_Initialize(CK_VOID_PTR pReserved) {
 
 	hPK11 = LoadLibraryA(lib_name);
 
-	if (hPK11 == NULL)
+	if (hPK11 == NULL) {
+		const DWORD err = GetLastError();
+		snprintf(loaderrmsg, sizeof(loaderrmsg),
+			 "LoadLibraryA(\"%s\") failed with 0x%X\n",
+			 lib_name, err);
 		return (CKR_LIBRARY_FAILED_TO_LOAD);
+	}
 	sym = (CK_C_Initialize)GetProcAddress(hPK11, "C_Initialize");
 	if (sym == NULL)
 		return (CKR_SYMBOL_RESOLUTION_FAILED);
 	return (*sym)(pReserved);
+}
+
+char *pk11_get_load_error_message(void) {
+	return (loaderrmsg);
 }
 
 CK_RV
@@ -177,8 +188,13 @@ pkcs_C_OpenSession(CK_SLOT_ID slotID,
 
 	if (hPK11 == NULL)
 		hPK11 = LoadLibraryA(pk11_get_lib_name());
-	if (hPK11 == NULL)
+	if (hPK11 == NULL) {
+		const DWORD err = GetLastError();
+		snprintf(loaderrmsg, sizeof(loaderrmsg),
+			 "LoadLibraryA(\"%s\") failed with 0x%X\n",
+			 pk11_get_lib_name(), err);
 		return (CKR_LIBRARY_FAILED_TO_LOAD);
+	}
 	if (sym == NULL)
 		sym = (CK_C_OpenSession)GetProcAddress(hPK11, "C_OpenSession");
 	if (sym == NULL)

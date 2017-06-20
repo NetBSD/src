@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009-2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -22,18 +22,18 @@ SYSTEMTESTTOP=../..
 
 for subdomain in secure nsec3 autonsec3 optout rsasha256 rsasha512 nsec3-to-nsec oldsigs
 do
-	cp ../ns3/dsset-$subdomain.example. .
+	cp ../ns3/dsset-$subdomain.example$TP .
 done
 
 # Create keys and pass the DS to the parent.
 zone=example
 zonefile="${zone}.db"
 infile="${zonefile}.in"
-cat $infile dsset-*.example. > $zonefile
+cat $infile dsset-*.example$TP > $zonefile
 
 kskname=`$KEYGEN -3 -q -r $RANDFILE -fk $zone`
 $KEYGEN -3 -q -r $RANDFILE $zone > /dev/null
-$DSFROMKEY $kskname.key > dsset-${zone}.
+$DSFROMKEY $kskname.key > dsset-${zone}$TP
 
 # Create keys for a private secure zone.
 zone=private.secure.example
@@ -54,4 +54,4 @@ do
 	cp $i `echo $i | sed s/X/K/`
 done
 $KEYGEN -q -r $RANDFILE $zone > /dev/null
-$DSFROMKEY Kbar.+005+30804.key > dsset-bar.
+$DSFROMKEY Kbar.+005+30804.key > dsset-bar$TP

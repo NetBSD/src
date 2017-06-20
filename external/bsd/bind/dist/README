@@ -51,51 +51,25 @@ BIND 9
 	For up-to-date release notes and errata, see
 	http://www.isc.org/software/bind9/releasenotes
 
-BIND 9.10.4-P7
+BIND 9.10.5-P1
 
-	This version contains fixes for CVE-2017-3136 and CVE-2017-3137,
-	and updates the built in trusted keys for the root zone.
+        This version contains a fix for the security flaws
+        disclosed in CVE-2017-3140 and CVE-2017-3141.
 
-BIND 9.10.4-P6
-
-	This version contains a fix for CVE-2017-3135, and a bug fix
-	for a regression in CNAME/DNAME caching that was introduced
-	in an earlier security release.
-
-BIND 9.10.4-P5
-
-	This version contains fixes for CVE-2016-9131, CVE-2016-9147,
-	CVE-2016-9444 and CVE-2016-9778.
-
-BIND 9.10.4-P4
-
-	This version contains a fix for CVE-2016-8864.
-
-BIND 9.10.4-P3
-
-	This version contains a fix for CVE-2016-2776 and addresses
-	an interoperability issue with ECS clients.
-
-BIND 9.10.4-P2
-
-	This version contains a fix for CVE-2016-2775 and addresses
-	two regressions introduced with BIND 9.10.4.
-
-BIND 9.10.4-P1
-
-	This version contains three urgent fixes to BIND 9.10.4:
-	1) Windows installation was failing without manual updating
-	   of BINDinstall's attributes.
-	2) Windows doesn't support the %z printf modifier.
-	3) A race condition was causing instability in the RBT
-	   tree state.
+BIND 9.10.5
+	
+	BIND 9.10.5 is a maintenance release and addresses the security
+	flaws disclosed in CVE-2016-2775, CVE-2016-2776, CVE-2016-6170,
+	CVE-2016-8864, CVE-2016-9131, CVE-2016-9147, CVE-2016-9444,
+	CVE-2017-3135, CVE-2017-3136, CVE-2017-3137, and CVE-2017-3138.
 
 BIND 9.10.4
 
 	BIND 9.10.4 is a maintenance release and addresses bugs
 	found in BIND 9.10.3 and earlier, as well as the security
 	flaws described in CVE-2015-8000, CVE-2015-8461, CVE-2015-8704,
-	CVE-2015-8705, CVE-2016-1285, CVE-2016-1286, and CVE-2016-2088.
+	CVE-2015-8705, CVE-2016-1285, CVE-2016-1286, CVE-2016-2088,
+	CVE-2016-2775 and CVE-2016-2776.
 
 BIND 9.10.3
 
@@ -390,6 +364,7 @@ Building
 		Change the default syslog facility of named/lwresd.
 		  -DISC_FACILITY=LOG_LOCAL0
 		Enable DNSSEC signature chasing support in dig.
+		  (This feature is deprecated. Use `delv` instead.)
 		  -DDIG_SIGCHASE=1 (sets -DDIG_SIGCHASE_TD=1 and
 				    -DDIG_SIGCHASE_BU=1)
 		Disable dropping queries from particular well known ports.
@@ -444,7 +419,7 @@ Building
 	systems.
 
 	For the server to support DNSSEC, you need to build it
-	with crypto support.  You must have OpenSSL 0.9.5a
+	with crypto support.  You must have OpenSSL 1.0.1t
 	or newer installed and specify "--with-openssl" on the
 	configure command line.  If OpenSSL is installed under
 	a nonstandard prefix, you can tell configure where to
@@ -455,6 +430,9 @@ Building
 	(http://xmlsoft.org) or json-c (https://github.com/json-c).
 	If these are installed at a nonstandard prefix, use
 	"--with-libxml2=/prefix" or "--with-libjson=/prefix".
+
+	Python requires 'argparse' to be available.  'argparse' is
+	a standard module as of Python 2.7 and Python 3.2.
 
 	On some platforms it is necessary to explicitly request large
 	file support to handle files bigger than 2GB.  This can be

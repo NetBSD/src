@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.13.2.4 2016/10/14 12:01:10 martin Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.13.2.4.2.1 2017/06/20 17:01:58 snj Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -3154,6 +3154,10 @@ main(int argc, char *argv[]) {
 	}
 	isc_commandline_reset = ISC_TRUE;
 
+#ifdef _WIN32
+	InitSockets();
+#endif
+
 	masterstyle = &dns_master_style_explicitttl;
 
 	check_result(isc_app_start(), "isc_app_start");
@@ -3858,5 +3862,8 @@ main(int argc, char *argv[]) {
 			    &sign_start, &sign_finish);
 	}
 
+#ifdef _WIN32
+	DestroySockets();
+#endif
 	return (0);
 }

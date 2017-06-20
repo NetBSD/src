@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -42,7 +42,8 @@ signzone () {
     cat $1/$3 $1/$KEYNAME.key > $1/tmp
     $SIGNER -Pp -K $1 -o $2 -f $1/$4 $1/tmp >/dev/null
     sed -n -e 's/\(.*\) IN DNSKEY \([0-9]\{1,\} [0-9]\{1,\} [0-9]\{1,\}\) \(.*\)/trusted-keys {"\1" \2 "\3";};/p' $1/$KEYNAME.key >>trusted.conf
-    rm dsset-$2 $1/tmp
+    DSFILENAME=dsset-`echo $2 |sed -e "s/\.$//g"`$TP
+    rm $DSFILENAME $1/tmp
 }
 signzone ns2 tld2s. base-tld2s.db tld2s.db
 

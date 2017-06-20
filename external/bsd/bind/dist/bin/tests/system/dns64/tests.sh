@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -80,6 +80,44 @@ ret=0
 $DIG $DIGOPTS excluded-good-a.example. @10.53.0.2 -b 10.53.0.2 aaaa > dig.out.ns2.test$n || ret=1
 grep "status: NOERROR" dig.out.ns2.test$n > /dev/null || ret=1
 grep "2001:aaaa::1.2.3.4" dig.out.ns2.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I: checking default exclude acl ignores mapped A records (all mapped) ($n)"
+ret=0
+$DIG $DIGOPTS a-and-mapped.example. @10.53.0.2 -b 10.53.0.4 aaaa > dig.out.ns2.test$n || ret=1
+grep "status: NOERROR" dig.out.ns2.test$n > /dev/null || ret=1
+grep "2001:bbbb::1.2.3.5" dig.out.ns2.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I: checking default exclude acl ignores mapped A records (some mapped) ($n)"
+ret=0
+$DIG $DIGOPTS a-and-aaaa-and-mapped.example. @10.53.0.2 -b 10.53.0.4 aaaa > dig.out.ns2.test$n || ret=1
+grep "status: NOERROR" dig.out.ns2.test$n > /dev/null || ret=1
+grep "2001:eeee::4" dig.out.ns2.test$n > /dev/null || ret=1
+grep "::ffff:1.2.3.4" dig.out.ns2.test$n > /dev/null && ret=1
+grep "::ffff:1.2.3.5" dig.out.ns2.test$n > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I: checking default exclude acl works with AAAA only ($n)"
+ret=0
+$DIG $DIGOPTS aaaa-only.example. @10.53.0.2 -b 10.53.0.4 aaaa > dig.out.ns2.test$n || ret=1
+grep "status: NOERROR" dig.out.ns2.test$n > /dev/null || ret=1
+grep "2001::2" dig.out.ns2.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I: checking default exclude acl A only lookup works ($n)"
+ret=0
+$DIG $DIGOPTS a-only.example. @10.53.0.2 -b 10.53.0.4 aaaa > dig.out.ns2.test$n || ret=1
+grep "status: NOERROR" dig.out.ns2.test$n > /dev/null || ret=1
+grep "2001:bbbb::102:305" dig.out.ns2.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -1370,4 +1408,4 @@ if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

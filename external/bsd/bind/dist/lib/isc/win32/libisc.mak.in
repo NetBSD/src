@@ -133,6 +133,7 @@ CLEAN :
 	-@erase "$(INTDIR)\dir.obj"
 	-@erase "$(INTDIR)\DLLMain.obj"
 	-@erase "$(INTDIR)\entropy.obj"
+	-@erase "$(INTDIR)\errno.obj"
 	-@erase "$(INTDIR)\errno2result.obj"
 	-@erase "$(INTDIR)\error.obj"
 	-@erase "$(INTDIR)\event.obj"
@@ -234,6 +235,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\dir.obj" \
 	"$(INTDIR)\DLLMain.obj" \
 	"$(INTDIR)\entropy.obj" \
+	"$(INTDIR)\errno.obj" \
 	"$(INTDIR)\errno2result.obj" \
 	"$(INTDIR)\file.obj" \
 	"$(INTDIR)\fsaccess.obj" \
@@ -377,6 +379,8 @@ CLEAN :
 	-@erase "$(INTDIR)\DLLMain.sbr"
 	-@erase "$(INTDIR)\entropy.obj"
 	-@erase "$(INTDIR)\entropy.sbr"
+	-@erase "$(INTDIR)\errno.obj"
+	-@erase "$(INTDIR)\errno.sbr"
 	-@erase "$(INTDIR)\errno2result.obj"
 	-@erase "$(INTDIR)\errno2result.sbr"
 	-@erase "$(INTDIR)\error.obj"
@@ -544,6 +548,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\dir.sbr" \
 	"$(INTDIR)\DLLMain.sbr" \
 	"$(INTDIR)\entropy.sbr" \
+	"$(INTDIR)\errno.sbr" \
 	"$(INTDIR)\errno2result.sbr" \
 	"$(INTDIR)\file.sbr" \
 	"$(INTDIR)\fsaccess.sbr" \
@@ -648,6 +653,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\dir.obj" \
 	"$(INTDIR)\DLLMain.obj" \
 	"$(INTDIR)\entropy.obj" \
+	"$(INTDIR)\errno.obj" \
 	"$(INTDIR)\errno2result.obj" \
 	"$(INTDIR)\file.obj" \
 	"$(INTDIR)\fsaccess.obj" \
@@ -865,6 +871,23 @@ SOURCE=.\entropy.c
 
 
 !ENDIF 
+
+SOURCE=.\errno.c
+
+!IF  "$(CFG)" == "libisc - @PLATFORM@ Release"
+
+
+"$(INTDIR)\errno.obj" : $(SOURCE) "$(INTDIR)"
+
+
+!ELSEIF  "$(CFG)" == "libisc - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\errno.obj"	"$(INTDIR)\errno.sbr" : $(SOURCE) "$(INTDIR)"
+
+
+!ENDIF
+
 
 SOURCE=.\errno2result.c
 

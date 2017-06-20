@@ -1,7 +1,7 @@
-/*	$NetBSD: db.c,v 1.6.4.1 2016/10/14 12:01:28 martin Exp $	*/
+/*	$NetBSD: db.c,v 1.6.4.1.2.1 2017/06/20 17:02:21 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -996,6 +996,19 @@ dns_db_getnsec3parameters(dns_db_t *db, dns_dbversion_t *version,
 		return ((db->methods->getnsec3parameters)(db, version, hash,
 							  flags, iterations,
 							  salt, salt_length));
+
+	return (ISC_R_NOTFOUND);
+}
+
+isc_result_t
+dns_db_getsize(dns_db_t *db, dns_dbversion_t *version, isc_uint64_t *records,
+	       isc_uint64_t *bytes)
+{
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(dns_db_iszone(db) == ISC_TRUE);
+
+	if (db->methods->getsize != NULL)
+		return ((db->methods->getsize)(db, version, records, bytes));
 
 	return (ISC_R_NOTFOUND);
 }

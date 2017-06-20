@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.8.2.4 2016/10/14 12:01:29 martin Exp $	*/
+/*	$NetBSD: rbt.c,v 1.8.2.4.2.1 2017/06/20 17:02:22 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -1460,7 +1460,7 @@ dns_rbt_addname(dns_rbt_t *rbt, dns_name_t *name, void *data) {
  * Find the node for "name" in the tree of trees.
  */
 isc_result_t
-dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
+dns_rbt_findnode(dns_rbt_t *rbt, const dns_name_t *name, dns_name_t *foundname,
 		 dns_rbtnode_t **node, dns_rbtnodechain_t *chain,
 		 unsigned int options, dns_rbtfindcallback_t callback,
 		 void *callback_arg)
@@ -1991,7 +1991,7 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
  * Get the data pointer associated with 'name'.
  */
 isc_result_t
-dns_rbt_findname(dns_rbt_t *rbt, dns_name_t *name, unsigned int options,
+dns_rbt_findname(dns_rbt_t *rbt, const dns_name_t *name, unsigned int options,
 		 dns_name_t *foundname, void **data) {
 	dns_rbtnode_t *node = NULL;
 	isc_result_t result;
