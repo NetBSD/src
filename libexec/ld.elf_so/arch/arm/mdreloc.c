@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.39 2017/06/19 11:57:01 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.40 2017/06/20 11:01:18 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.39 2017/06/19 11:57:01 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.40 2017/06/20 11:01:18 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -236,11 +236,10 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
-			    "contents = %p, symbol = %s",
+			    "contents = %p",
 			    (u_long)ELF_R_SYM(rel->r_info),
 			    (u_long)ELF_R_TYPE(rel->r_info),
-			    (void *)rel->r_offset, (void *)load_ptr(where),
-			    obj->strtab + obj->symtab[symnum].st_name));
+			    (void *)rel->r_offset, (void *)load_ptr(where)));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations",
 			    obj->path, (u_long) ELF_R_TYPE(rel->r_info));
