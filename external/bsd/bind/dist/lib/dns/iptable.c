@@ -1,7 +1,7 @@
-/*	$NetBSD: iptable.c,v 1.4 2013/07/27 19:23:12 christos Exp $	*/
+/*	$NetBSD: iptable.c,v 1.4.10.1 2017/06/20 17:02:22 snj Exp $	*/
 
 /*
- * Copyright (C) 2007-2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2009, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -56,8 +56,8 @@ dns_iptable_create(isc_mem_t *mctx, dns_iptable_t **target) {
 	return (result);
 }
 
-isc_boolean_t dns_iptable_neg = ISC_FALSE;
-isc_boolean_t dns_iptable_pos = ISC_TRUE;
+static isc_boolean_t dns_iptable_neg = ISC_FALSE;
+static isc_boolean_t dns_iptable_pos = ISC_TRUE;
 
 /*
  * Add an IP prefix to an existing IP table

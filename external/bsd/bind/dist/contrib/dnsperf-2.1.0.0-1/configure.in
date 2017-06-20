@@ -58,7 +58,19 @@ AC_DEFUN(AC_SA_LEN,
 AC_CHECK_LIB(socket, socket)
 AC_CHECK_LIB(nsl, inet_ntoa)
 
-AC_PATH_PROG(ac_cv_isc_config, [isc-config.sh], "no")
+AC_ARG_WITH(bind,
+[  --with-bind=[[PATH]]      Specify ISC BIND 9 prefix path],
+    use_bind="$withval", use_bind="yes")
+
+AC_MSG_CHECKING(for BIND 9 libraries)
+if test $use_bind = no; then
+    AC_MSG_ERROR(BIND 9 libraries must be installed)
+elif test $use_bind = yes; then
+    bindpath="$PATH"
+else
+    bindpath="$withval/bin"
+fi
+AC_PATH_PROG(ac_cv_isc_config, [isc-config.sh], "no", [$bindpath])
 if test "$ac_cv_isc_config" = "no"; then
   AC_MSG_ERROR(BIND 9 libraries must be installed)
 fi

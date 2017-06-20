@@ -1,7 +1,7 @@
-/*	$NetBSD: result.c,v 1.5.4.1 2016/03/13 08:06:13 martin Exp $	*/
+/*	$NetBSD: result.c,v 1.5.4.1.4.1 2017/06/20 17:02:22 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -169,11 +169,16 @@ static const char *text[DNS_R_NRESULTS] = {
 	"covered by negative trust anchor",    /*%< 110 DNS_R_NTACOVERED */
 	"bad CDS",			       /*%< 111 DNS_R_BADCSD */
 	"bad CDNSKEY",			       /*%< 112 DNS_R_BADCDNSKEY */
-	"malformed OPT option"		       /*%< 113 DNS_R_OPTERR */
+	"malformed OPT option",		       /*%< 113 DNS_R_OPTERR */
+	"malformed DNSTAP data",	       /*%< 114 DNS_R_BADDNSTAP */
+
+	"TSIG in wrong location",	       /*%< 115 DNS_R_BADTSIG */
+	"SIG(0) in wrong location",	       /*%< 116 DNS_R_BADSIG0 */
+	"too many records",	               /*%< 117 DNS_R_TOOMANYRECORDS */
 };
 
 static const char *rcode_text[DNS_R_NRCODERESULTS] = {
-	"NOERROR",				/*%< 0 DNS_R_NOEROR */
+	"NOERROR",				/*%< 0 DNS_R_NOERROR */
 	"FORMERR",				/*%< 1 DNS_R_FORMERR */
 	"SERVFAIL",				/*%< 2 DNS_R_SERVFAIL */
 	"NXDOMAIN",				/*%< 3 DNS_R_NXDOMAIN */

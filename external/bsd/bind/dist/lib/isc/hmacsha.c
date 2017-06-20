@@ -1,7 +1,7 @@
-/*	$NetBSD: hmacsha.c,v 1.7.2.2 2016/03/13 08:06:14 martin Exp $	*/
+/*	$NetBSD: hmacsha.c,v 1.7.2.2.4.1 2017/06/20 17:02:24 snj Exp $	*/
 
 /*
- * Copyright (C) 2005-2007, 2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005-2007, 2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -42,32 +42,34 @@
 #endif
 
 #ifdef ISC_PLATFORM_OPENSSLHASH
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define HMAC_CTX_new() &(ctx->_ctx), HMAC_CTX_init(&(ctx->_ctx))
+#define HMAC_CTX_free(ptr) HMAC_CTX_cleanup(ptr)
+#endif
+
 void
 isc_hmacsha1_init(isc_hmacsha1_t *ctx, const unsigned char *key,
 		  unsigned int len)
 {
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Init(ctx, (const void *) key,
-				(int) len, EVP_sha1()) == 1);
-#else
-	HMAC_Init(ctx, (const void *) key, (int) len, EVP_sha1());
-#endif
+	ctx->ctx = HMAC_CTX_new();
+	RUNTIME_CHECK(ctx->ctx != NULL);
+	RUNTIME_CHECK(HMAC_Init_ex(ctx->ctx, (const void *) key,
+				   (int) len, EVP_sha1(), NULL) == 1);
 }
 
 void
 isc_hmacsha1_invalidate(isc_hmacsha1_t *ctx) {
-	HMAC_CTX_cleanup(ctx);
+	if (ctx->ctx == NULL)
+		return;
+	HMAC_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
 }
 
 void
 isc_hmacsha1_update(isc_hmacsha1_t *ctx, const unsigned char *buf,
 		   unsigned int len)
 {
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Update(ctx, buf, (int) len) == 1);
-#else
-	HMAC_Update(ctx, buf, (int) len);
-#endif
+	RUNTIME_CHECK(HMAC_Update(ctx->ctx, buf, (int) len) == 1);
 }
 
 void
@@ -76,12 +78,9 @@ isc_hmacsha1_sign(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len) {
 
 	REQUIRE(len <= ISC_SHA1_DIGESTLENGTH);
 
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Final(ctx, newdigest, NULL) == 1);
-#else
-	HMAC_Final(ctx, newdigest, NULL);
-#endif
-	HMAC_CTX_cleanup(ctx);
+	RUNTIME_CHECK(HMAC_Final(ctx->ctx, newdigest, NULL) == 1);
+	HMAC_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
 	memmove(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));
 }
@@ -90,28 +89,25 @@ void
 isc_hmacsha224_init(isc_hmacsha224_t *ctx, const unsigned char *key,
 		    unsigned int len)
 {
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Init(ctx, (const void *) key,
-				(int) len, EVP_sha224()) == 1);
-#else
-	HMAC_Init(ctx, (const void *) key, (int) len, EVP_sha224());
-#endif
+	ctx->ctx = HMAC_CTX_new();
+	RUNTIME_CHECK(ctx->ctx != NULL);
+	RUNTIME_CHECK(HMAC_Init_ex(ctx->ctx, (const void *) key,
+				   (int) len, EVP_sha224(), NULL) == 1);
 }
 
 void
 isc_hmacsha224_invalidate(isc_hmacsha224_t *ctx) {
-	HMAC_CTX_cleanup(ctx);
+	if (ctx->ctx == NULL)
+		return;
+	HMAC_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
 }
 
 void
 isc_hmacsha224_update(isc_hmacsha224_t *ctx, const unsigned char *buf,
 		   unsigned int len)
 {
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Update(ctx, buf, (int) len) == 1);
-#else
-	HMAC_Update(ctx, buf, (int) len);
-#endif
+	RUNTIME_CHECK(HMAC_Update(ctx->ctx, buf, (int) len) == 1);
 }
 
 void
@@ -120,12 +116,9 @@ isc_hmacsha224_sign(isc_hmacsha224_t *ctx, unsigned char *digest, size_t len) {
 
 	REQUIRE(len <= ISC_SHA224_DIGESTLENGTH);
 
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Final(ctx, newdigest, NULL) == 1);
-#else
-	HMAC_Final(ctx, newdigest, NULL);
-#endif
-	HMAC_CTX_cleanup(ctx);
+	RUNTIME_CHECK(HMAC_Final(ctx->ctx, newdigest, NULL) == 1);
+	HMAC_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
 	memmove(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));
 }
@@ -134,28 +127,25 @@ void
 isc_hmacsha256_init(isc_hmacsha256_t *ctx, const unsigned char *key,
 		    unsigned int len)
 {
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Init(ctx, (const void *) key,
-				(int) len, EVP_sha256()) == 1);
-#else
-	HMAC_Init(ctx, (const void *) key, (int) len, EVP_sha256());
-#endif
+	ctx->ctx = HMAC_CTX_new();
+	RUNTIME_CHECK(ctx->ctx != NULL);
+	RUNTIME_CHECK(HMAC_Init_ex(ctx->ctx, (const void *) key,
+				   (int) len, EVP_sha256(), NULL) == 1);
 }
 
 void
 isc_hmacsha256_invalidate(isc_hmacsha256_t *ctx) {
-	HMAC_CTX_cleanup(ctx);
+	if (ctx->ctx == NULL)
+		return;
+	HMAC_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
 }
 
 void
 isc_hmacsha256_update(isc_hmacsha256_t *ctx, const unsigned char *buf,
 		   unsigned int len)
 {
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Update(ctx, buf, (int) len) == 1);
-#else
-	HMAC_Update(ctx, buf, (int) len);
-#endif
+	RUNTIME_CHECK(HMAC_Update(ctx->ctx, buf, (int) len) == 1);
 }
 
 void
@@ -164,12 +154,9 @@ isc_hmacsha256_sign(isc_hmacsha256_t *ctx, unsigned char *digest, size_t len) {
 
 	REQUIRE(len <= ISC_SHA256_DIGESTLENGTH);
 
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Final(ctx, newdigest, NULL) == 1);
-#else
-	HMAC_Final(ctx, newdigest, NULL);
-#endif
-	HMAC_CTX_cleanup(ctx);
+	RUNTIME_CHECK(HMAC_Final(ctx->ctx, newdigest, NULL) == 1);
+	HMAC_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
 	memmove(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));
 }
@@ -178,28 +165,25 @@ void
 isc_hmacsha384_init(isc_hmacsha384_t *ctx, const unsigned char *key,
 		    unsigned int len)
 {
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Init(ctx, (const void *) key,
-				(int) len, EVP_sha384()) == 1);
-#else
-	HMAC_Init(ctx, (const void *) key, (int) len, EVP_sha384());
-#endif
+	ctx->ctx = HMAC_CTX_new();
+	RUNTIME_CHECK(ctx->ctx != NULL);
+	RUNTIME_CHECK(HMAC_Init_ex(ctx->ctx, (const void *) key,
+				   (int) len, EVP_sha384(), NULL) == 1);
 }
 
 void
 isc_hmacsha384_invalidate(isc_hmacsha384_t *ctx) {
-	HMAC_CTX_cleanup(ctx);
+	if (ctx->ctx == NULL)
+		return;
+	HMAC_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
 }
 
 void
 isc_hmacsha384_update(isc_hmacsha384_t *ctx, const unsigned char *buf,
 		   unsigned int len)
 {
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Update(ctx, buf, (int) len) == 1);
-#else
-	HMAC_Update(ctx, buf, (int) len);
-#endif
+	RUNTIME_CHECK(HMAC_Update(ctx->ctx, buf, (int) len) == 1);
 }
 
 void
@@ -208,12 +192,9 @@ isc_hmacsha384_sign(isc_hmacsha384_t *ctx, unsigned char *digest, size_t len) {
 
 	REQUIRE(len <= ISC_SHA384_DIGESTLENGTH);
 
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Final(ctx, newdigest, NULL) == 1);
-#else
-	HMAC_Final(ctx, newdigest, NULL);
-#endif
-	HMAC_CTX_cleanup(ctx);
+	RUNTIME_CHECK(HMAC_Final(ctx->ctx, newdigest, NULL) == 1);
+	HMAC_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
 	memmove(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));
 }
@@ -222,28 +203,25 @@ void
 isc_hmacsha512_init(isc_hmacsha512_t *ctx, const unsigned char *key,
 		    unsigned int len)
 {
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Init(ctx, (const void *) key,
-				(int) len, EVP_sha512()) == 1);
-#else
-	HMAC_Init(ctx, (const void *) key, (int) len, EVP_sha512());
-#endif
+	ctx->ctx = HMAC_CTX_new();
+	RUNTIME_CHECK(ctx->ctx != NULL);
+	RUNTIME_CHECK(HMAC_Init_ex(ctx->ctx, (const void *) key,
+				   (int) len, EVP_sha512(), NULL) == 1);
 }
 
 void
 isc_hmacsha512_invalidate(isc_hmacsha512_t *ctx) {
-	HMAC_CTX_cleanup(ctx);
+	if (ctx->ctx == NULL)
+		return;
+	HMAC_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
 }
 
 void
 isc_hmacsha512_update(isc_hmacsha512_t *ctx, const unsigned char *buf,
 		   unsigned int len)
 {
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Update(ctx, buf, (int) len) == 1);
-#else
-	HMAC_Update(ctx, buf, (int) len);
-#endif
+	RUNTIME_CHECK(HMAC_Update(ctx->ctx, buf, (int) len) == 1);
 }
 
 void
@@ -252,21 +230,34 @@ isc_hmacsha512_sign(isc_hmacsha512_t *ctx, unsigned char *digest, size_t len) {
 
 	REQUIRE(len <= ISC_SHA512_DIGESTLENGTH);
 
-#ifdef HMAC_RETURN_INT
-	RUNTIME_CHECK(HMAC_Final(ctx, newdigest, NULL) == 1);
-#else
-	HMAC_Final(ctx, newdigest, NULL);
-#endif
-	HMAC_CTX_cleanup(ctx);
+	RUNTIME_CHECK(HMAC_Final(ctx->ctx, newdigest, NULL) == 1);
+	HMAC_CTX_free(ctx->ctx);
+	ctx->ctx = NULL;
 	memmove(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));
 }
 
 #elif PKCS11CRYPTO
 
+#if defined(PK11_SHA_1_HMAC_REPLACE) || \
+    defined(PK11_SHA224_HMAC_REPLACE) || \
+    defined(PK11_SHA256_HMAC_REPLACE) || \
+    defined(PK11_SHA384_HMAC_REPLACE) || \
+    defined(PK11_SHA512_HMAC_REPLACE)
+#define IPAD 0x36
+#define OPAD 0x5C
+#endif
+
+#if !defined(PK11_SHA_1_HMAC_REPLACE) && \
+    !defined(PK11_SHA224_HMAC_REPLACE) && \
+    !defined(PK11_SHA256_HMAC_REPLACE) && \
+    !defined(PK11_SHA384_HMAC_REPLACE) && \
+    !defined(PK11_SHA512_HMAC_REPLACE)
 static CK_BBOOL truevalue = TRUE;
 static CK_BBOOL falsevalue = FALSE;
+#endif
 
+#ifndef PK11_SHA_1_HMAC_REPLACE
 void
 isc_hmacsha1_init(isc_hmacsha1_t *ctx, const unsigned char *key,
 		 unsigned int len)
@@ -339,7 +330,93 @@ isc_hmacsha1_sign(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len) {
 	memmove(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));
 }
+#else
+void
+isc_hmacsha1_init(isc_hmacsha1_t *ctx, const unsigned char *key,
+		  unsigned int len)
+{
+	CK_RV rv;
+	CK_MECHANISM mech = { CKM_SHA_1, NULL, 0 };
+	unsigned char ipad[ISC_SHA1_BLOCK_LENGTH];
+	unsigned int i;
 
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
+	RUNTIME_CHECK((ctx->key = pk11_mem_get(ISC_SHA1_BLOCK_LENGTH))
+		      != NULL);
+	if (len > ISC_SHA1_BLOCK_LENGTH) {
+		CK_BYTE_PTR kPart;
+		CK_ULONG kl;
+
+		PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+		DE_CONST(key, kPart);
+		PK11_FATALCHECK(pkcs_C_DigestUpdate,
+				(ctx->session, kPart, (CK_ULONG) len));
+		kl = ISC_SHA1_DIGESTLENGTH;
+		PK11_FATALCHECK(pkcs_C_DigestFinal,
+				(ctx->session, (CK_BYTE_PTR) ctx->key, &kl));
+	} else
+		memmove(ctx->key, key, len);
+	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+	memset(ipad, IPAD, ISC_SHA1_BLOCK_LENGTH);
+	for (i = 0; i < ISC_SHA1_BLOCK_LENGTH; i++)
+		ipad[i] ^= ctx->key[i];
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, ipad,
+			 (CK_ULONG) ISC_SHA1_BLOCK_LENGTH));
+}
+
+void
+isc_hmacsha1_invalidate(isc_hmacsha1_t *ctx) {
+	if (ctx->key != NULL)
+		pk11_mem_put(ctx->key, ISC_SHA1_BLOCK_LENGTH);
+	ctx->key = NULL;
+	isc_sha1_invalidate(ctx);
+}
+
+void
+isc_hmacsha1_update(isc_hmacsha1_t *ctx, const unsigned char *buf,
+		    unsigned int len)
+{
+	CK_RV rv;
+	CK_BYTE_PTR pPart;
+
+	DE_CONST(buf, pPart);
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, pPart, (CK_ULONG) len));
+}
+
+void
+isc_hmacsha1_sign(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len) {
+	CK_RV rv;
+	CK_BYTE newdigest[ISC_SHA1_DIGESTLENGTH];
+	CK_ULONG psl = ISC_SHA1_DIGESTLENGTH;
+	CK_MECHANISM mech = { CKM_SHA_1, NULL, 0 };
+	CK_BYTE opad[ISC_SHA1_BLOCK_LENGTH];
+	unsigned int i;
+
+	REQUIRE(len <= ISC_SHA1_DIGESTLENGTH);
+
+	PK11_FATALCHECK(pkcs_C_DigestFinal, (ctx->session, newdigest, &psl));
+	memset(opad, OPAD, ISC_SHA1_BLOCK_LENGTH);
+	for (i = 0; i < ISC_SHA1_BLOCK_LENGTH; i++)
+		opad[i] ^= ctx->key[i];
+	pk11_mem_put(ctx->key, ISC_SHA1_BLOCK_LENGTH);
+	ctx->key = NULL;
+	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, opad,
+			 (CK_ULONG) ISC_SHA1_BLOCK_LENGTH));
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, (CK_BYTE_PTR) newdigest, psl));
+	PK11_FATALCHECK(pkcs_C_DigestFinal, (ctx->session, newdigest, &psl));
+	pk11_return_session(ctx);
+	memmove(digest, newdigest, len);
+	memset(newdigest, 0, sizeof(newdigest));
+}
+#endif
+
+#ifndef PK11_SHA224_HMAC_REPLACE
 void
 isc_hmacsha224_init(isc_hmacsha224_t *ctx, const unsigned char *key,
 		    unsigned int len)
@@ -412,7 +489,93 @@ isc_hmacsha224_sign(isc_hmacsha224_t *ctx, unsigned char *digest, size_t len) {
 	memmove(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));
 }
+#else
+void
+isc_hmacsha224_init(isc_hmacsha224_t *ctx, const unsigned char *key,
+		    unsigned int len)
+{
+	CK_RV rv;
+	CK_MECHANISM mech = { CKM_SHA224, NULL, 0 };
+	unsigned char ipad[ISC_SHA224_BLOCK_LENGTH];
+	unsigned int i;
 
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
+	RUNTIME_CHECK((ctx->key = pk11_mem_get(ISC_SHA224_BLOCK_LENGTH))
+		      != NULL);
+	if (len > ISC_SHA224_BLOCK_LENGTH) {
+		CK_BYTE_PTR kPart;
+		CK_ULONG kl;
+
+		PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+		DE_CONST(key, kPart);
+		PK11_FATALCHECK(pkcs_C_DigestUpdate,
+				(ctx->session, kPart, (CK_ULONG) len));
+		kl = ISC_SHA224_DIGESTLENGTH;
+		PK11_FATALCHECK(pkcs_C_DigestFinal,
+				(ctx->session, (CK_BYTE_PTR) ctx->key, &kl));
+	} else
+		memmove(ctx->key, key, len);
+	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+	memset(ipad, IPAD, ISC_SHA224_BLOCK_LENGTH);
+	for (i = 0; i < ISC_SHA224_BLOCK_LENGTH; i++)
+		ipad[i] ^= ctx->key[i];
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, ipad,
+			 (CK_ULONG) ISC_SHA224_BLOCK_LENGTH));
+}
+
+void
+isc_hmacsha224_invalidate(isc_hmacsha224_t *ctx) {
+	if (ctx->key != NULL)
+		pk11_mem_put(ctx->key, ISC_SHA224_BLOCK_LENGTH);
+	ctx->key = NULL;
+	isc_sha224_invalidate(ctx);
+}
+
+void
+isc_hmacsha224_update(isc_hmacsha224_t *ctx, const unsigned char *buf,
+		      unsigned int len)
+{
+	CK_RV rv;
+	CK_BYTE_PTR pPart;
+
+	DE_CONST(buf, pPart);
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, pPart, (CK_ULONG) len));
+}
+
+void
+isc_hmacsha224_sign(isc_hmacsha224_t *ctx, unsigned char *digest, size_t len) {
+	CK_RV rv;
+	CK_BYTE newdigest[ISC_SHA224_DIGESTLENGTH];
+	CK_ULONG psl = ISC_SHA224_DIGESTLENGTH;
+	CK_MECHANISM mech = { CKM_SHA224, NULL, 0 };
+	CK_BYTE opad[ISC_SHA224_BLOCK_LENGTH];
+	unsigned int i;
+
+	REQUIRE(len <= ISC_SHA224_DIGESTLENGTH);
+
+	PK11_FATALCHECK(pkcs_C_DigestFinal, (ctx->session, newdigest, &psl));
+	memset(opad, OPAD, ISC_SHA224_BLOCK_LENGTH);
+	for (i = 0; i < ISC_SHA224_BLOCK_LENGTH; i++)
+		opad[i] ^= ctx->key[i];
+	pk11_mem_put(ctx->key, ISC_SHA224_BLOCK_LENGTH);
+	ctx->key = NULL;
+	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, opad,
+			 (CK_ULONG) ISC_SHA224_BLOCK_LENGTH));
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, (CK_BYTE_PTR) newdigest, psl));
+	PK11_FATALCHECK(pkcs_C_DigestFinal, (ctx->session, newdigest, &psl));
+	pk11_return_session(ctx);
+	memmove(digest, newdigest, len);
+	memset(newdigest, 0, sizeof(newdigest));
+}
+#endif
+
+#ifndef PK11_SHA256_HMAC_REPLACE
 void
 isc_hmacsha256_init(isc_hmacsha256_t *ctx, const unsigned char *key,
 		    unsigned int len)
@@ -485,7 +648,93 @@ isc_hmacsha256_sign(isc_hmacsha256_t *ctx, unsigned char *digest, size_t len) {
 	memmove(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));
 }
+#else
+void
+isc_hmacsha256_init(isc_hmacsha256_t *ctx, const unsigned char *key,
+		    unsigned int len)
+{
+	CK_RV rv;
+	CK_MECHANISM mech = { CKM_SHA256, NULL, 0 };
+	unsigned char ipad[ISC_SHA256_BLOCK_LENGTH];
+	unsigned int i;
 
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
+	RUNTIME_CHECK((ctx->key = pk11_mem_get(ISC_SHA256_BLOCK_LENGTH))
+		      != NULL);
+	if (len > ISC_SHA256_BLOCK_LENGTH) {
+		CK_BYTE_PTR kPart;
+		CK_ULONG kl;
+
+		PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+		DE_CONST(key, kPart);
+		PK11_FATALCHECK(pkcs_C_DigestUpdate,
+				(ctx->session, kPart, (CK_ULONG) len));
+		kl = ISC_SHA256_DIGESTLENGTH;
+		PK11_FATALCHECK(pkcs_C_DigestFinal,
+				(ctx->session, (CK_BYTE_PTR) ctx->key, &kl));
+	} else
+		memmove(ctx->key, key, len);
+	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+	memset(ipad, IPAD, ISC_SHA256_BLOCK_LENGTH);
+	for (i = 0; i < ISC_SHA256_BLOCK_LENGTH; i++)
+		ipad[i] ^= ctx->key[i];
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, ipad,
+			 (CK_ULONG) ISC_SHA256_BLOCK_LENGTH));
+}
+
+void
+isc_hmacsha256_invalidate(isc_hmacsha256_t *ctx) {
+	if (ctx->key != NULL)
+		pk11_mem_put(ctx->key, ISC_SHA256_BLOCK_LENGTH);
+	ctx->key = NULL;
+	isc_sha256_invalidate(ctx);
+}
+
+void
+isc_hmacsha256_update(isc_hmacsha256_t *ctx, const unsigned char *buf,
+		      unsigned int len)
+{
+	CK_RV rv;
+	CK_BYTE_PTR pPart;
+
+	DE_CONST(buf, pPart);
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, pPart, (CK_ULONG) len));
+}
+
+void
+isc_hmacsha256_sign(isc_hmacsha256_t *ctx, unsigned char *digest, size_t len) {
+	CK_RV rv;
+	CK_BYTE newdigest[ISC_SHA256_DIGESTLENGTH];
+	CK_ULONG psl = ISC_SHA256_DIGESTLENGTH;
+	CK_MECHANISM mech = { CKM_SHA256, NULL, 0 };
+	CK_BYTE opad[ISC_SHA256_BLOCK_LENGTH];
+	unsigned int i;
+
+	REQUIRE(len <= ISC_SHA256_DIGESTLENGTH);
+
+	PK11_FATALCHECK(pkcs_C_DigestFinal, (ctx->session, newdigest, &psl));
+	memset(opad, OPAD, ISC_SHA256_BLOCK_LENGTH);
+	for (i = 0; i < ISC_SHA256_BLOCK_LENGTH; i++)
+		opad[i] ^= ctx->key[i];
+	pk11_mem_put(ctx->key, ISC_SHA256_BLOCK_LENGTH);
+	ctx->key = NULL;
+	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, opad,
+			 (CK_ULONG) ISC_SHA256_BLOCK_LENGTH));
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, (CK_BYTE_PTR) newdigest, psl));
+	PK11_FATALCHECK(pkcs_C_DigestFinal, (ctx->session, newdigest, &psl));
+	pk11_return_session(ctx);
+	memmove(digest, newdigest, len);
+	memset(newdigest, 0, sizeof(newdigest));
+}
+#endif
+
+#ifndef PK11_SHA384_HMAC_REPLACE
 void
 isc_hmacsha384_init(isc_hmacsha384_t *ctx, const unsigned char *key,
 		    unsigned int len)
@@ -558,7 +807,93 @@ isc_hmacsha384_sign(isc_hmacsha384_t *ctx, unsigned char *digest, size_t len) {
 	memmove(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));
 }
+#else
+void
+isc_hmacsha384_init(isc_hmacsha384_t *ctx, const unsigned char *key,
+		    unsigned int len)
+{
+	CK_RV rv;
+	CK_MECHANISM mech = { CKM_SHA384, NULL, 0 };
+	unsigned char ipad[ISC_SHA384_BLOCK_LENGTH];
+	unsigned int i;
 
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
+	RUNTIME_CHECK((ctx->key = pk11_mem_get(ISC_SHA384_BLOCK_LENGTH))
+		      != NULL);
+	if (len > ISC_SHA384_BLOCK_LENGTH) {
+		CK_BYTE_PTR kPart;
+		CK_ULONG kl;
+
+		PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+		DE_CONST(key, kPart);
+		PK11_FATALCHECK(pkcs_C_DigestUpdate,
+				(ctx->session, kPart, (CK_ULONG) len));
+		kl = ISC_SHA384_DIGESTLENGTH;
+		PK11_FATALCHECK(pkcs_C_DigestFinal,
+				(ctx->session, (CK_BYTE_PTR) ctx->key, &kl));
+	} else
+		memmove(ctx->key, key, len);
+	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+	memset(ipad, IPAD, ISC_SHA384_BLOCK_LENGTH);
+	for (i = 0; i < ISC_SHA384_BLOCK_LENGTH; i++)
+		ipad[i] ^= ctx->key[i];
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, ipad,
+			 (CK_ULONG) ISC_SHA384_BLOCK_LENGTH));
+}
+
+void
+isc_hmacsha384_invalidate(isc_hmacsha384_t *ctx) {
+	if (ctx->key != NULL)
+		pk11_mem_put(ctx->key, ISC_SHA384_BLOCK_LENGTH);
+	ctx->key = NULL;
+	isc_sha384_invalidate(ctx);
+}
+
+void
+isc_hmacsha384_update(isc_hmacsha384_t *ctx, const unsigned char *buf,
+		      unsigned int len)
+{
+	CK_RV rv;
+	CK_BYTE_PTR pPart;
+
+	DE_CONST(buf, pPart);
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, pPart, (CK_ULONG) len));
+}
+
+void
+isc_hmacsha384_sign(isc_hmacsha384_t *ctx, unsigned char *digest, size_t len) {
+	CK_RV rv;
+	CK_BYTE newdigest[ISC_SHA384_DIGESTLENGTH];
+	CK_ULONG psl = ISC_SHA384_DIGESTLENGTH;
+	CK_MECHANISM mech = { CKM_SHA384, NULL, 0 };
+	CK_BYTE opad[ISC_SHA384_BLOCK_LENGTH];
+	unsigned int i;
+
+	REQUIRE(len <= ISC_SHA384_DIGESTLENGTH);
+
+	PK11_FATALCHECK(pkcs_C_DigestFinal, (ctx->session, newdigest, &psl));
+	memset(opad, OPAD, ISC_SHA384_BLOCK_LENGTH);
+	for (i = 0; i < ISC_SHA384_BLOCK_LENGTH; i++)
+		opad[i] ^= ctx->key[i];
+	pk11_mem_put(ctx->key, ISC_SHA384_BLOCK_LENGTH);
+	ctx->key = NULL;
+	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, opad,
+			 (CK_ULONG) ISC_SHA384_BLOCK_LENGTH));
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, (CK_BYTE_PTR) newdigest, psl));
+	PK11_FATALCHECK(pkcs_C_DigestFinal, (ctx->session, newdigest, &psl));
+	pk11_return_session(ctx);
+	memmove(digest, newdigest, len);
+	memset(newdigest, 0, sizeof(newdigest));
+}
+#endif
+
+#ifndef PK11_SHA512_HMAC_REPLACE
 void
 isc_hmacsha512_init(isc_hmacsha512_t *ctx, const unsigned char *key,
 		    unsigned int len)
@@ -631,6 +966,91 @@ isc_hmacsha512_sign(isc_hmacsha512_t *ctx, unsigned char *digest, size_t len) {
 	memmove(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));
 }
+#else
+void
+isc_hmacsha512_init(isc_hmacsha512_t *ctx, const unsigned char *key,
+		    unsigned int len)
+{
+	CK_RV rv;
+	CK_MECHANISM mech = { CKM_SHA512, NULL, 0 };
+	unsigned char ipad[ISC_SHA512_BLOCK_LENGTH];
+	unsigned int i;
+
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
+	RUNTIME_CHECK((ctx->key = pk11_mem_get(ISC_SHA512_BLOCK_LENGTH))
+		      != NULL);
+	if (len > ISC_SHA512_BLOCK_LENGTH) {
+		CK_BYTE_PTR kPart;
+		CK_ULONG kl;
+
+		PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+		DE_CONST(key, kPart);
+		PK11_FATALCHECK(pkcs_C_DigestUpdate,
+				(ctx->session, kPart, (CK_ULONG) len));
+		kl = ISC_SHA512_DIGESTLENGTH;
+		PK11_FATALCHECK(pkcs_C_DigestFinal,
+				(ctx->session, (CK_BYTE_PTR) ctx->key, &kl));
+	} else
+		memmove(ctx->key, key, len);
+	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+	memset(ipad, IPAD, ISC_SHA512_BLOCK_LENGTH);
+	for (i = 0; i < ISC_SHA512_BLOCK_LENGTH; i++)
+		ipad[i] ^= ctx->key[i];
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, ipad,
+			 (CK_ULONG) ISC_SHA512_BLOCK_LENGTH));
+}
+
+void
+isc_hmacsha512_invalidate(isc_hmacsha512_t *ctx) {
+	if (ctx->key != NULL)
+		pk11_mem_put(ctx->key, ISC_SHA512_BLOCK_LENGTH);
+	ctx->key = NULL;
+	isc_sha512_invalidate(ctx);
+}
+
+void
+isc_hmacsha512_update(isc_hmacsha512_t *ctx, const unsigned char *buf,
+		      unsigned int len)
+{
+	CK_RV rv;
+	CK_BYTE_PTR pPart;
+
+	DE_CONST(buf, pPart);
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, pPart, (CK_ULONG) len));
+}
+
+void
+isc_hmacsha512_sign(isc_hmacsha512_t *ctx, unsigned char *digest, size_t len) {
+	CK_RV rv;
+	CK_BYTE newdigest[ISC_SHA512_DIGESTLENGTH];
+	CK_ULONG psl = ISC_SHA512_DIGESTLENGTH;
+	CK_MECHANISM mech = { CKM_SHA512, NULL, 0 };
+	CK_BYTE opad[ISC_SHA512_BLOCK_LENGTH];
+	unsigned int i;
+
+	REQUIRE(len <= ISC_SHA512_DIGESTLENGTH);
+
+	PK11_FATALCHECK(pkcs_C_DigestFinal, (ctx->session, newdigest, &psl));
+	memset(opad, OPAD, ISC_SHA512_BLOCK_LENGTH);
+	for (i = 0; i < ISC_SHA512_BLOCK_LENGTH; i++)
+		opad[i] ^= ctx->key[i];
+	pk11_mem_put(ctx->key, ISC_SHA512_BLOCK_LENGTH);
+	ctx->key = NULL;
+	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, opad,
+			 (CK_ULONG) ISC_SHA512_BLOCK_LENGTH));
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, (CK_BYTE_PTR) newdigest, psl));
+	PK11_FATALCHECK(pkcs_C_DigestFinal, (ctx->session, newdigest, &psl));
+	pk11_return_session(ctx);
+	memmove(digest, newdigest, len);
+	memset(newdigest, 0, sizeof(newdigest));
+}
+#endif
 
 #else
 

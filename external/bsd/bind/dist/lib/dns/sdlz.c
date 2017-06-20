@@ -1,7 +1,7 @@
-/*	$NetBSD: sdlz.c,v 1.7.4.2 2016/03/13 08:06:13 martin Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.7.4.2.4.1 2017/06/20 17:02:22 snj Exp $	*/
 
 /*
- * Portions Copyright (C) 2005-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2005-2016  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1274,7 +1274,8 @@ static dns_dbmethods_t sdlzdb_methods = {
 	findnodeext,
 	findext,
 	NULL,			/* setcachestats */
-	NULL			/* hashsize */
+	NULL,			/* hashsize */
+	NULL			/* getsize */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_test.c,v 1.1.1.3.4.4 2016/10/14 12:01:32 martin Exp $	*/
+/*	$NetBSD: hash_test.c,v 1.1.1.3.4.4.2.1 2017/06/20 17:02:25 snj Exp $	*/
 
 /*
  * Copyright (C) 2011-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -35,6 +35,8 @@
 #include <isc/util.h>
 #include <isc/print.h>
 #include <isc/string.h>
+
+#include <pk11/site.h>
 
 /*
  * Test data from RFC6234
@@ -778,6 +780,7 @@ ATF_TC_BODY(isc_sha512, tc) {
 	}
 }
 
+#ifndef PK11_MD5_DISABLE
 ATF_TC(isc_md5);
 ATF_TC_HEAD(isc_md5, tc) {
 	atf_tc_set_md_var(tc, "descr", "md5 example from RFC1321");
@@ -850,6 +853,7 @@ ATF_TC_BODY(isc_md5, tc) {
 		testcase++;
 	}
 }
+#endif
 
 /* HMAC-SHA1 test */
 ATF_TC(isc_hmacsha1);
@@ -1646,6 +1650,7 @@ ATF_TC_BODY(isc_hmacsha512, tc) {
 }
 
 
+#ifndef PK11_MD5_DISABLE
 /* HMAC-MD5 Test */
 ATF_TC(isc_hmacmd5);
 ATF_TC_HEAD(isc_hmacmd5, tc) {
@@ -1787,6 +1792,7 @@ ATF_TC_BODY(isc_hmacmd5, tc) {
 		test_key++;
 	}
 }
+#endif
 
 /* CRC64 Test */
 ATF_TC(isc_crc64);
@@ -1955,13 +1961,17 @@ ATF_TP_ADD_TCS(tp) {
 	 */
 	ATF_TP_ADD_TC(tp, isc_hash_function);
 	ATF_TP_ADD_TC(tp, isc_hash_function_reverse);
+#ifndef PK11_MD5_DISABLE
 	ATF_TP_ADD_TC(tp, isc_hmacmd5);
+#endif
 	ATF_TP_ADD_TC(tp, isc_hmacsha1);
 	ATF_TP_ADD_TC(tp, isc_hmacsha224);
 	ATF_TP_ADD_TC(tp, isc_hmacsha256);
 	ATF_TP_ADD_TC(tp, isc_hmacsha384);
 	ATF_TP_ADD_TC(tp, isc_hmacsha512);
+#ifndef PK11_MD5_DISABLE
 	ATF_TP_ADD_TC(tp, isc_md5);
+#endif
 	ATF_TP_ADD_TC(tp, isc_sha1);
 	ATF_TP_ADD_TC(tp, isc_sha224);
 	ATF_TP_ADD_TC(tp, isc_sha256);

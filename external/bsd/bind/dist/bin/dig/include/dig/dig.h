@@ -1,7 +1,7 @@
-/*	$NetBSD: dig.h,v 1.9.4.3 2016/03/13 08:06:02 martin Exp $	*/
+/*	$NetBSD: dig.h,v 1.9.4.3.4.1 2017/06/20 17:01:58 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -136,7 +136,9 @@ struct dig_lookup {
 		sit,
 #endif
 		nsid,   /*% Name Server ID (RFC 5001) */
-		ednsneg;
+		ednsneg,
+		mapped,
+		idnout;
 #ifdef DIG_SIGCHASE
 isc_boolean_t	sigchase;
 #if DIG_SIGCHASE_TD
@@ -168,7 +170,6 @@ isc_boolean_t	sigchase;
 	isc_buffer_t renderbuf;
 	char *sendspace;
 	dns_name_t *name;
-	isc_timer_t *timer;
 	isc_interval_t interval;
 	dns_message_t *sendmsg;
 	dns_name_t *oname;
@@ -211,7 +212,8 @@ struct dig_query {
 		second_rr_rcvd,
 		first_repeat_rcvd,
 		recv_made,
-		warn_id;
+		warn_id,
+		timedout;
 	isc_uint32_t first_rr_serial;
 	isc_uint32_t second_rr_serial;
 	isc_uint32_t msg_count;
@@ -236,6 +238,7 @@ struct dig_query {
 	isc_time_t time_recv;
 	isc_uint64_t byte_count;
 	isc_buffer_t sendbuf;
+	isc_timer_t *timer;
 };
 
 struct dig_server {

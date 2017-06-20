@@ -1,7 +1,7 @@
-/*	$NetBSD: isc-hmac-fixup.c,v 1.6.2.1 2016/03/13 08:06:10 martin Exp $	*/
+/*	$NetBSD: isc-hmac-fixup.c,v 1.6.2.1.4.1 2017/06/20 17:02:17 snj Exp $	*/
 
 /*
- * Copyright (C) 2010, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2010, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,6 +31,8 @@
 #include <isc/stdio.h>
 #include <isc/string.h>
 
+#include <pk11/site.h>
+
 #define HMAC_LEN	64
 
 int
@@ -44,8 +46,13 @@ main(int argc, char **argv)  {
 
 	if (argc != 3) {
 		fprintf(stderr, "Usage:\t%s algorithm secret\n", argv[0]);
+#ifndef PK11_MD5_DISABLE
 		fprintf(stderr, "\talgorithm: (MD5 | SHA1 | SHA224 | "
 				"SHA256 | SHA384 | SHA512)\n");
+#else
+		fprintf(stderr, "\talgorithm: (SHA1 | SHA224 | "
+				"SHA256 | SHA384 | SHA512)\n");
+#endif
 		return (1);
 	}
 
@@ -57,6 +64,7 @@ main(int argc, char **argv)  {
 	}
 	isc_buffer_usedregion(&buf, &r);
 
+#ifndef PK11_MD5_DISABLE
 	if (!strcasecmp(argv[1], "md5") ||
 	    !strcasecmp(argv[1], "hmac-md5")) {
 		if (r.length > HMAC_LEN) {
@@ -68,7 +76,9 @@ main(int argc, char **argv)  {
 			r.base = key;
 			r.length = ISC_MD5_DIGESTLENGTH;
 		}
-	} else if (!strcasecmp(argv[1], "sha1") ||
+	} else
+#endif
+	if (!strcasecmp(argv[1], "sha1") ||
 		   !strcasecmp(argv[1], "hmac-sha1")) {
 		if (r.length > ISC_SHA1_DIGESTLENGTH) {
 			isc_sha1_t sha1ctx;
