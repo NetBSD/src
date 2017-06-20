@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.360 2017/06/20 07:45:01 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.361 2017/06/20 08:33:11 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.360 2017/06/20 07:45:01 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.361 2017/06/20 08:33:11 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5608,8 +5608,8 @@ done:
 	return error;
 }
 
-#define DEF_MIX_FUNC(name, type, MINVAL, MAXVAL)		\
-	static void						\
+#define DEF_MIX_FUNC(name, type, bigger_type, MINVAL, MAXVAL)		\
+	static void							\
 	mix_func##name(struct audio_softc *sc, struct audio_ringbuffer *cb, \
 		  struct virtual_channel *vc)				\
 	{								\
@@ -5633,9 +5633,9 @@ done:
 			if (cc > cc2)					\
 				cc = cc2;				\
 									\
-			for (m = 0; m < (cc / (name / 8)); m++) {	\
-				tomix[m] = tomix[m] *			\
-				    (int32_t)(vc->sc_swvol) / 255;	\
+			for (m = 0; m < (cc / (name / NBBY)); m++) {	\
+				tomix[m] = (bigger_type)tomix[m] *	\
+				    (bigger_type)(vc->sc_swvol) / 255;	\
 				result = orig[m] + tomix[m];		\
 				product = orig[m] * tomix[m];		\
 				if (orig[m] > 0 && tomix[m] > 0)	\
@@ -5654,9 +5654,9 @@ done:
 		}							\
 	}								\
 
-DEF_MIX_FUNC(8, int8_t, INT8_MIN, INT8_MAX);
-DEF_MIX_FUNC(16, int16_t, INT16_MIN, INT16_MAX);
-DEF_MIX_FUNC(32, int32_t, INT32_MIN, INT32_MAX);
+DEF_MIX_FUNC(8, int8_t, int32_t, INT8_MIN, INT8_MAX);
+DEF_MIX_FUNC(16, int16_t, int32_t, INT16_MIN, INT16_MAX);
+DEF_MIX_FUNC(32, int32_t, int64_t, INT32_MIN, INT32_MAX);
 
 void
 mix_func(struct audio_softc *sc, struct audio_ringbuffer *cb,
