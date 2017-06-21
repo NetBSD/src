@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.10 2017/06/15 05:48:45 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.11 2017/06/21 18:31:24 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -296,4 +296,1113 @@ usr.bin/find/function.c				1.76
 
 	PR/52295: find -delete: "relative path not safe" with absolute paths
 	[christos, ticket #40]
+
+sys/net/if_vlan.c				1.98
+sys/net/if_vlanvar.h				1.10
+
+	MP-ify vlan(4).
+	[knakahara, ticket #41]
+
+sys/arch/amd64/conf/kern.ldscript		1.23
+sys/arch/x86/x86/x86_machdep.c			1.92
+
+	x86: fix two inconsistencies in the memory map.
+	[maxv, ticket #42]
+
+sys/arch/arm/broadcom/bcm2835_bsc.c		1.6
+sys/arch/evbarm/rpi/rpi_machdep.c		1.71
+sys/arch/evbarm/rpi/vcprop.h			1.16
+
+	Allow CPU speed control on Raspberry Pi 3 / Zero W.
+	[jmcneill, ticket #43]
+
+lib/libc/misc/initfini.c			1.14
+
+	PR 51654: Don't initialize _dlauxinfo for static binaries.
+	[joerg, ticket #44]
+
+sys/arch/arm/cortex/gtmr.c			1.18
+
+	Ensures that the ARM Generic Timer is disabled when interrupts
+	are first enabled.
+	[jmcneill, ticket #45]
+
+sys/arch/evbarm/rpi/rpi_machdep.c		1.72
+
+	Enable UART0 (PL011) on GPIO header for Raspberry Pi 3 / Zero W
+	[jmcneill, ticket #46]
+
+doc/3RDPARTY					1.1452
+distrib/sets/lists/base/shl.mi			1.818
+distrib/sets/lists/debug/shl.mi			1.177
+external/bsd/bind/dist/CHANGES                  up to 1.27
+external/bsd/bind/dist/FAQ.xml                  up to 1.1.1.12
+external/bsd/bind/dist/Makefile.in              up to 1.4
+external/bsd/bind/dist/README                   up to 1.15
+external/bsd/bind/dist/acconfig.h               up to 1.10
+external/bsd/bind/dist/bin/check/Makefile.in    up to 1.1.1.10
+external/bsd/bind/dist/bin/check/named-checkconf.8 up to 1.8
+external/bsd/bind/dist/bin/check/named-checkconf.c up to 1.14
+external/bsd/bind/dist/bin/check/named-checkconf.docbook up to 1.1.1.9
+external/bsd/bind/dist/bin/check/named-checkconf.html up to 1.1.1.10
+external/bsd/bind/dist/bin/check/named-checkzone.8 up to 1.9
+external/bsd/bind/dist/bin/check/named-checkzone.docbook up to 1.1.1.11
+external/bsd/bind/dist/bin/check/named-checkzone.html up to 1.1.1.11
+external/bsd/bind/dist/bin/check/win32/checkconf.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/check/win32/checkconf.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/check/win32/checkconf.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/check/win32/checktool.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/check/win32/checktool.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/check/win32/checkzone.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/check/win32/checkzone.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/check/win32/checkzone.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/confgen/Makefile.in  up to 1.1.1.9
+external/bsd/bind/dist/bin/confgen/ddns-confgen.8 up to 1.7
+external/bsd/bind/dist/bin/confgen/ddns-confgen.docbook up to 1.1.1.7
+external/bsd/bind/dist/bin/confgen/ddns-confgen.html up to 1.1.1.7
+external/bsd/bind/dist/bin/confgen/keygen.c     up to 1.8
+external/bsd/bind/dist/bin/confgen/rndc-confgen.8 up to 1.8
+external/bsd/bind/dist/bin/confgen/rndc-confgen.c up to 1.9
+external/bsd/bind/dist/bin/confgen/rndc-confgen.docbook up to 1.1.1.7
+external/bsd/bind/dist/bin/confgen/rndc-confgen.html up to 1.1.1.8
+external/bsd/bind/dist/bin/delv/Makefile.in     up to 1.1.1.3
+external/bsd/bind/dist/bin/delv/delv.1          up to 1.1.1.5
+external/bsd/bind/dist/bin/delv/delv.c          up to 1.6
+external/bsd/bind/dist/bin/delv/delv.docbook    up to 1.1.1.3
+external/bsd/bind/dist/bin/delv/delv.html       up to 1.1.1.4
+external/bsd/bind/dist/bin/delv/win32/delv.dsp.in up to 1.1.1.2
+external/bsd/bind/dist/bin/delv/win32/delv.mak.in up to 1.1.1.2
+external/bsd/bind/dist/bin/delv/win32/delv.vcxproj.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dig/Makefile.in      up to 1.1.1.11
+external/bsd/bind/dist/bin/dig/dig.1            up to 1.13
+external/bsd/bind/dist/bin/dig/dig.c            up to 1.13
+external/bsd/bind/dist/bin/dig/dig.docbook      up to 1.1.1.14
+external/bsd/bind/dist/bin/dig/dig.html         up to 1.1.1.14
+external/bsd/bind/dist/bin/dig/dighost.c        up to 1.19
+external/bsd/bind/dist/bin/dig/host.1           up to 1.7
+external/bsd/bind/dist/bin/dig/host.c           up to 1.12
+external/bsd/bind/dist/bin/dig/host.docbook     up to 1.1.1.7
+external/bsd/bind/dist/bin/dig/host.html        up to 1.1.1.8
+external/bsd/bind/dist/bin/dig/include/dig/dig.h up to 1.13
+external/bsd/bind/dist/bin/dig/nslookup.c       up to 1.13
+external/bsd/bind/dist/bin/dig/nslookup.docbook up to 1.1.1.9
+external/bsd/bind/dist/bin/dig/nslookup.html    up to 1.1.1.11
+external/bsd/bind/dist/bin/dig/win32/dig.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dig/win32/dig.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dig/win32/dig.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/dig/win32/dighost.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dig/win32/dighost.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/dig/win32/host.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dig/win32/host.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dig/win32/host.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/dig/win32/nslookup.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dig/win32/nslookup.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dig/win32/nslookup.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/dnssec/Makefile.in   up to 1.1.1.11
+external/bsd/bind/dist/bin/dnssec/dnssec-dsfromkey.8 up to 1.10
+external/bsd/bind/dist/bin/dnssec/dnssec-dsfromkey.docbook up to 1.1.1.11
+external/bsd/bind/dist/bin/dnssec/dnssec-dsfromkey.html up to 1.1.1.12
+external/bsd/bind/dist/bin/dnssec/dnssec-importkey.8 up to 1.6
+external/bsd/bind/dist/bin/dnssec/dnssec-importkey.docbook up to 1.1.1.6
+external/bsd/bind/dist/bin/dnssec/dnssec-importkey.html up to 1.1.1.5
+external/bsd/bind/dist/bin/dnssec/dnssec-keyfromlabel.8 up to 1.11
+external/bsd/bind/dist/bin/dnssec/dnssec-keyfromlabel.c up to 1.15
+external/bsd/bind/dist/bin/dnssec/dnssec-keyfromlabel.docbook up to 1.1.1.14
+external/bsd/bind/dist/bin/dnssec/dnssec-keyfromlabel.html up to 1.1.1.14
+external/bsd/bind/dist/bin/dnssec/dnssec-keygen.8 up to 1.11
+external/bsd/bind/dist/bin/dnssec/dnssec-keygen.c up to 1.18
+external/bsd/bind/dist/bin/dnssec/dnssec-keygen.docbook up to 1.1.1.14
+external/bsd/bind/dist/bin/dnssec/dnssec-keygen.html up to 1.1.1.14
+external/bsd/bind/dist/bin/dnssec/dnssec-revoke.8 up to 1.8
+external/bsd/bind/dist/bin/dnssec/dnssec-revoke.docbook up to 1.1.1.9
+external/bsd/bind/dist/bin/dnssec/dnssec-revoke.html up to 1.1.1.10
+external/bsd/bind/dist/bin/dnssec/dnssec-settime.8 up to 1.10
+external/bsd/bind/dist/bin/dnssec/dnssec-settime.c up to 1.15
+external/bsd/bind/dist/bin/dnssec/dnssec-settime.docbook up to 1.1.1.13
+external/bsd/bind/dist/bin/dnssec/dnssec-settime.html up to 1.1.1.13
+external/bsd/bind/dist/bin/dnssec/dnssec-signzone.8 up to 1.10
+external/bsd/bind/dist/bin/dnssec/dnssec-signzone.c up to 1.18
+external/bsd/bind/dist/bin/dnssec/dnssec-signzone.docbook up to 1.1.1.13
+external/bsd/bind/dist/bin/dnssec/dnssec-signzone.html up to 1.1.1.13
+external/bsd/bind/dist/bin/dnssec/dnssec-verify.8 up to 1.7
+external/bsd/bind/dist/bin/dnssec/dnssec-verify.docbook up to 1.1.1.6
+external/bsd/bind/dist/bin/dnssec/dnssec-verify.html up to 1.1.1.7
+external/bsd/bind/dist/bin/dnssec/dnssectool.c  up to 1.10
+external/bsd/bind/dist/bin/dnssec/dnssectool.h  up to 1.8
+external/bsd/bind/dist/bin/dnssec/win32/dnssectool.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/dnssectool.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/dnssec/win32/dsfromkey.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/dsfromkey.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/dsfromkey.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/dnssec/win32/importkey.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/importkey.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/importkey.vcxproj.in up to 1.1.1.5
+external/bsd/bind/dist/bin/dnssec/win32/keyfromlabel.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/keyfromlabel.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/keyfromlabel.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/dnssec/win32/keygen.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/keygen.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/keygen.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/dnssec/win32/revoke.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/revoke.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/revoke.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/dnssec/win32/settime.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/settime.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/settime.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/dnssec/win32/signzone.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/signzone.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/signzone.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/dnssec/win32/verify.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/verify.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/dnssec/win32/verify.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/named/Makefile.in    up to 1.1.1.14
+external/bsd/bind/dist/bin/named/client.c       up to 1.17
+external/bsd/bind/dist/bin/named/config.c       up to 1.14
+external/bsd/bind/dist/bin/named/control.c      up to 1.12
+external/bsd/bind/dist/bin/named/geoip.c        up to 1.1.1.4
+external/bsd/bind/dist/bin/named/include/named/config.h up to 1.6
+external/bsd/bind/dist/bin/named/include/named/globals.h up to 1.10
+external/bsd/bind/dist/bin/named/include/named/seccomp.h up to 1.1.1.4
+external/bsd/bind/dist/bin/named/include/named/server.h up to 1.12
+external/bsd/bind/dist/bin/named/logconf.c      up to 1.9
+external/bsd/bind/dist/bin/named/lwresd.8       up to 1.7
+external/bsd/bind/dist/bin/named/lwresd.docbook up to 1.1.1.7
+external/bsd/bind/dist/bin/named/lwresd.html    up to 1.1.1.8
+external/bsd/bind/dist/bin/named/lwsearch.c     up to 1.5
+external/bsd/bind/dist/bin/named/main.c         up to 1.21
+external/bsd/bind/dist/bin/named/named.8        up to 1.10
+external/bsd/bind/dist/bin/named/named.conf.5   up to 1.15
+external/bsd/bind/dist/bin/named/named.conf.docbook up to 1.14
+external/bsd/bind/dist/bin/named/named.conf.html up to 1.15
+external/bsd/bind/dist/bin/named/named.docbook  up to 1.1.1.10
+external/bsd/bind/dist/bin/named/named.html     up to 1.1.1.11
+external/bsd/bind/dist/bin/named/query.c        up to 1.25
+external/bsd/bind/dist/bin/named/server.c       up to 1.22
+external/bsd/bind/dist/bin/named/unix/Makefile.in up to 1.1.1.8
+external/bsd/bind/dist/bin/named/unix/os.c      up to 1.10
+external/bsd/bind/dist/bin/named/update.c       up to 1.13
+external/bsd/bind/dist/bin/named/xfrout.c       up to 1.13
+external/bsd/bind/dist/bin/named/zoneconf.c     up to 1.10
+external/bsd/bind/dist/bin/nsupdate/Makefile.in up to 1.1.1.11
+external/bsd/bind/dist/bin/nsupdate/nsupdate.1  up to 1.9
+external/bsd/bind/dist/bin/nsupdate/nsupdate.c  up to 1.16
+external/bsd/bind/dist/bin/nsupdate/nsupdate.docbook up to 1.1.1.10
+external/bsd/bind/dist/bin/nsupdate/nsupdate.html up to 1.1.1.12
+external/bsd/bind/dist/bin/nsupdate/win32/nsupdate.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/nsupdate/win32/nsupdate.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/nsupdate/win32/nsupdate.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/pkcs11/Makefile.in   up to 1.1.1.8
+external/bsd/bind/dist/bin/pkcs11/openssl-1.0.1q-patch delete
+external/bsd/bind/dist/bin/pkcs11/openssl-1.0.1t-patch up to 1.1.1.1
+external/bsd/bind/dist/bin/pkcs11/openssl-1.0.2f-patch delete
+external/bsd/bind/dist/bin/pkcs11/openssl-1.0.2h-patch up to 1.1.1.1
+external/bsd/bind/dist/bin/pkcs11/pkcs11-destroy.8 up to 1.7
+external/bsd/bind/dist/bin/pkcs11/pkcs11-destroy.docbook up to 1.1.1.8
+external/bsd/bind/dist/bin/pkcs11/pkcs11-destroy.html up to 1.1.1.6
+external/bsd/bind/dist/bin/pkcs11/pkcs11-keygen.8 up to 1.7
+external/bsd/bind/dist/bin/pkcs11/pkcs11-keygen.docbook up to 1.1.1.8
+external/bsd/bind/dist/bin/pkcs11/pkcs11-keygen.html up to 1.1.1.6
+external/bsd/bind/dist/bin/pkcs11/pkcs11-list.8 up to 1.6
+external/bsd/bind/dist/bin/pkcs11/pkcs11-list.docbook up to 1.1.1.7
+external/bsd/bind/dist/bin/pkcs11/pkcs11-list.html up to 1.1.1.5
+external/bsd/bind/dist/bin/pkcs11/pkcs11-tokens.8 up to 1.1.1.5
+external/bsd/bind/dist/bin/pkcs11/pkcs11-tokens.c up to 1.1.1.6
+external/bsd/bind/dist/bin/pkcs11/pkcs11-tokens.docbook up to 1.1.1.5
+external/bsd/bind/dist/bin/pkcs11/pkcs11-tokens.html up to 1.1.1.3
+external/bsd/bind/dist/bin/pkcs11/win32/pk11destroy.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/pkcs11/win32/pk11tokens.vcxproj.in up to 1.1.1.3
+external/bsd/bind/dist/bin/python/Makefile.in   up to 1.1.1.5
+external/bsd/bind/dist/bin/python/dnssec-checkds.8 up to 1.7
+external/bsd/bind/dist/bin/python/dnssec-checkds.docbook up to 1.6
+external/bsd/bind/dist/bin/python/dnssec-checkds.html up to 1.1.1.6
+external/bsd/bind/dist/bin/python/dnssec-checkds.py.in up to 1.1.1.6
+external/bsd/bind/dist/bin/python/dnssec-coverage.8 up to 1.1.1.8
+external/bsd/bind/dist/bin/python/dnssec-coverage.docbook up to 1.1.1.6
+external/bsd/bind/dist/bin/python/dnssec-coverage.html up to 1.1.1.5
+external/bsd/bind/dist/bin/python/dnssec-coverage.py.in up to 1.1.1.8
+external/bsd/bind/dist/bin/python/isc/Makefile.in up to 1.1.1.1
+external/bsd/bind/dist/bin/python/isc/__init__.py.in up to 1.1.1.1
+external/bsd/bind/dist/bin/python/isc/checkds.py.in up to 1.1.1.1
+external/bsd/bind/dist/bin/python/isc/coverage.py.in up to 1.1.1.1
+external/bsd/bind/dist/bin/python/isc/dnskey.py.in up to 1.1.1.1
+external/bsd/bind/dist/bin/python/isc/eventlist.py.in up to 1.1.1.1
+external/bsd/bind/dist/bin/python/isc/keydict.py.in up to 1.1.1.1
+external/bsd/bind/dist/bin/python/isc/keyevent.py.in up to 1.1.1.1
+external/bsd/bind/dist/bin/python/isc/keyzone.py.in up to 1.1.1.1
+external/bsd/bind/dist/bin/python/isc/tests/Makefile.in up to 1.1.1.1
+external/bsd/bind/dist/bin/python/isc/tests/dnskey_test.py.in up to 1.1.1.1
+external/bsd/bind/dist/bin/python/isc/tests/testdata/Kexample.com.+007+35529.key up to 1.1.1.1
+external/bsd/bind/dist/bin/python/isc/tests/testdata/Kexample.com.+007+35529.private up to 1.1.1.1
+external/bsd/bind/dist/bin/python/isc/utils.py.in up to 1.1.1.1
+external/bsd/bind/dist/bin/python/setup.py      up to 1.1.1.1
+external/bsd/bind/dist/bin/rndc/Makefile.in     up to 1.1.1.9
+external/bsd/bind/dist/bin/rndc/rndc.8          up to 1.10
+external/bsd/bind/dist/bin/rndc/rndc.c          up to 1.15
+external/bsd/bind/dist/bin/rndc/rndc.conf.5     up to 1.8
+external/bsd/bind/dist/bin/rndc/rndc.conf.docbook up to 1.1.1.7
+external/bsd/bind/dist/bin/rndc/rndc.conf.html  up to 1.1.1.9
+external/bsd/bind/dist/bin/rndc/rndc.docbook    up to 1.1.1.10
+external/bsd/bind/dist/bin/rndc/rndc.html       up to 1.1.1.11
+external/bsd/bind/dist/bin/tests/Makefile.in    up to 1.1.1.11
+external/bsd/bind/dist/bin/tests/atomic/t_atomic.c up to 1.7
+external/bsd/bind/dist/bin/tests/byname_test.c  up to 1.9
+external/bsd/bind/dist/bin/tests/db/Makefile.in up to 1.1.1.9
+external/bsd/bind/dist/bin/tests/db/win32/t_db.dsp.in up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/db/win32/t_db.mak.in up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/db/win32/t_db.vcxproj.in up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/dst/Makefile.in up to 1.1.1.10
+external/bsd/bind/dist/bin/tests/dst/t_dst.c    up to 1.11
+external/bsd/bind/dist/bin/tests/hash_test.c    up to 1.8
+external/bsd/bind/dist/bin/tests/hashes/Makefile.in up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/hashes/t_hashes.c up to 1.6
+external/bsd/bind/dist/bin/tests/hashes/win32/t_hashes.dsp.in up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/hashes/win32/t_hashes.mak.in up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/hashes/win32/t_hashes.vcxproj.in up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/master/Makefile.in up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/master/win32/t_master.dsp.in up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/master/win32/t_master.mak.in up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/master/win32/t_master.vcxproj.in up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/mdig.c         up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/pkcs11/README  up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/pkcs11/benchmarks/create.c up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/pkcs11/benchmarks/find.c up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/pkcs11/benchmarks/genrsa.c up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/pkcs11/benchmarks/login.c up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/pkcs11/benchmarks/privrsa.c up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/pkcs11/benchmarks/pubrsa.c up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/pkcs11/benchmarks/random.c up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/pkcs11/benchmarks/session.c up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/pkcs11/benchmarks/sha1.c up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/pkcs11/benchmarks/sign.c up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/pkcs11/benchmarks/verify.c up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/rdata_test.c   up to 1.10
+external/bsd/bind/dist/bin/tests/resolver/Makefile.in up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/resolver/win32/t_resolver.dsp.in up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/resolver/win32/t_resolver.mak.in up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/resolver/win32/t_resolver.vcxproj.in up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/Makefile.in up to 1.1.1.11
+external/bsd/bind/dist/bin/tests/system/acl/tests.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/additional/tests.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/addzone/ns2/hints.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/addzone/ns2/redirect.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/addzone/tests.sh up to 1.1.1.11
+external/bsd/bind/dist/bin/tests/system/allow_query/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/autosign/ns1/keygen.sh up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/system/autosign/ns2/keygen.sh up to 1.1.1.9
+external/bsd/bind/dist/bin/tests/system/autosign/ns3/keygen.sh up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/system/autosign/tests.sh up to 1.1.1.11
+external/bsd/bind/dist/bin/tests/system/builtin/Makefile.in delete
+external/bsd/bind/dist/bin/tests/system/builtin/gethostname.c delete
+external/bsd/bind/dist/bin/tests/system/builtin/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/cacheclean/tests.sh up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/system/case/tests.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-options-also-notify.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-rate-limit-acl.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-rate-limit-all-per-second.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-rate-limit-errors-per-second.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-rate-limit-ipv4-prefix-length.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-rate-limit-ipv6-prefix-length.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-rate-limit-max-table-size.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-rate-limit-nodata-per-second.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-rate-limit-nxdomains-per-second.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-rate-limit-qps-scale.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-rate-limit-referrals-per-second.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-rate-limit-responses-per-second.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-rate-limit-slip.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-rate-limit-window.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-rpz-zone.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/bad-view-also-notify.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/good-acl.conf up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/checkconf/good-options-also-notify.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/good-view-also-notify.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkconf/good.conf up to 1.1.1.12
+external/bsd/bind/dist/bin/tests/system/checkconf/tests.sh up to 1.1.1.14
+external/bsd/bind/dist/bin/tests/system/checkds/dig.bat up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/checkds/tests.sh up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/checknames/tests.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/checkzone/tests.sh up to 1.1.1.10
+external/bsd/bind/dist/bin/tests/system/checkzone/zones/crashzone.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/conf.sh.in up to 1.1.1.18
+external/bsd/bind/dist/bin/tests/system/conf.sh.win32 up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/coverage/03-ksk-unpublished/expect up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/coverage/04-zsk-unpublished/expect up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/coverage/05-ksk-unpub-active/expect up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/coverage/06-zsk-unpub-active/expect up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/coverage/07-ksk-ttl/expect up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/coverage/08-zsk-ttl/expect up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/coverage/clean.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/coverage/tests.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/database/tests.sh up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/dialup/tests.sh up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/digcomp.pl up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/digdelv/clean.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/digdelv/ns2/example.db up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/digdelv/tests.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/dlv/ns3/sign.sh up to 1.1.1.12
+external/bsd/bind/dist/bin/tests/system/dlv/tests.sh up to 1.1.1.9
+external/bsd/bind/dist/bin/tests/system/dlvauto/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/dlz/tests.sh up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/system/dlzexternal/Makefile.in up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/dlzexternal/dlopen.c delete
+external/bsd/bind/dist/bin/tests/system/dlzexternal/prereq.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/dlzexternal/tests.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/dname/ns2/example.db up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/dname/tests.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/dns64/ns1/example.db up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/dns64/ns2/named.conf up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/dns64/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/dnssec/ns1/named.conf up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/dnssec/ns1/sign.sh up to 1.1.1.14
+external/bsd/bind/dist/bin/tests/system/dnssec/ns2/sign.sh up to 1.1.1.18
+external/bsd/bind/dist/bin/tests/system/dnssec/ns3/sign.sh up to 1.1.1.18
+external/bsd/bind/dist/bin/tests/system/dnssec/ns6/named.args up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/dnssec/tests.sh up to 1.1.1.18
+external/bsd/bind/dist/bin/tests/system/dscp/tests.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/dsdigest/ns1/sign.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/dsdigest/ns2/sign.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/dsdigest/tests.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/ecdsa/tests.sh up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/ednscompliance/tests.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/emptyzones/tests.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/feature-test.c up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/fetchlimit/Makefile.in delete
+external/bsd/bind/dist/bin/tests/system/fetchlimit/fetchlimit.c delete
+external/bsd/bind/dist/bin/tests/system/fetchlimit/prereq.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/fetchlimit/tests.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/filter-aaaa/Makefile.in delete
+external/bsd/bind/dist/bin/tests/system/filter-aaaa/filter-aaaa.c delete
+external/bsd/bind/dist/bin/tests/system/filter-aaaa/prereq.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/filter-aaaa/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/formerr/tests.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/forward/tests.sh up to 1.1.1.9
+external/bsd/bind/dist/bin/tests/system/geoip/Makefile.in delete
+external/bsd/bind/dist/bin/tests/system/geoip/geoip.c delete
+external/bsd/bind/dist/bin/tests/system/geoip/prereq.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/geoip/tests.sh up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/glue/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/gost/tests.sh up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/ifconfig.bat up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/ifconfig.sh up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/system/inline/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/integrity/clean.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/integrity/ns1/mx-cname.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/integrity/ns1/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/integrity/ns1/srv-cname.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/integrity/tests.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/ixfr/tests.sh up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/system/legacy/tests.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/limits/tests.sh up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/logfileconfig/clean.sh up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/logfileconfig/ns1/named.unlimited up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/logfileconfig/ns1/named.versconf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/logfileconfig/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/lwresd/clean.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/lwresd/lwresd1/nosearch.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/lwresd/lwtest.c up to 1.10
+external/bsd/bind/dist/bin/tests/system/lwresd/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/masterfile/tests.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/masterformat/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/metadata/tests.sh up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/system/notify/ns2/named.conf up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/notify/tests.sh up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/system/nslookup/tests.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/nsupdate/clean.sh up to 1.1.1.12
+external/bsd/bind/dist/bin/tests/system/nsupdate/ns1/named.conf up to 1.1.1.9
+external/bsd/bind/dist/bin/tests/system/nsupdate/ns1/sample.db.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/nsupdate/ns2/named.conf up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/nsupdate/ns2/sample.db.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/nsupdate/ns3/named.conf up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/nsupdate/ns3/too-big.test.db.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/nsupdate/setup.sh up to 1.1.1.12
+external/bsd/bind/dist/bin/tests/system/nsupdate/tests.sh up to 1.1.1.12
+external/bsd/bind/dist/bin/tests/system/pending/ns1/sign.sh up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/system/pending/ns2/named.conf up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/pending/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/pkcs11/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/pkcs11ssl/tests.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/reclimit/ans2/ans.pl up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/reclimit/tests.sh up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/redirect/tests.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/resolver/clean.sh up to 1.1.1.11
+external/bsd/bind/dist/bin/tests/system/resolver/ns4/root.db up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/resolver/ns5/named.conf up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/system/resolver/ns6/ds.example.net.db.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/resolver/ns6/example.net.db.in up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/resolver/ns6/keygen.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/resolver/ns6/named.conf up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/system/resolver/tests.sh up to 1.1.1.15
+external/bsd/bind/dist/bin/tests/system/rndc/tests.sh up to 1.1.1.10
+external/bsd/bind/dist/bin/tests/system/rpz/Makefile.in delete
+external/bsd/bind/dist/bin/tests/system/rpz/rpz.c delete
+external/bsd/bind/dist/bin/tests/system/rpz/setup.sh up to 1.1.1.9
+external/bsd/bind/dist/bin/tests/system/rpz/tests.sh up to 1.1.1.14
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/ns2/db.clientip21 up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/ns2/named.clientip2.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/prereq.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/rpzrecurse/tests.sh up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/rrchecker/tests.sh up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/rrl/clean.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/rrl/tests.sh up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/rrsetorder/tests.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/rsabigexponent/clean.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/rsabigexponent/ns1/sign.sh up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/rsabigexponent/prereq.sh up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/rsabigexponent/tests.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/run.sh  up to 1.1.1.9
+external/bsd/bind/dist/bin/tests/system/sit/tests.sh up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/smartsign/tests.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/sortlist/tests.sh up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/spf/tests.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/start.pl up to 1.1.1.14
+external/bsd/bind/dist/bin/tests/system/staticstub/ns3/sign.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/staticstub/tests.sh up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/system/statistics/Makefile.in delete
+external/bsd/bind/dist/bin/tests/system/statistics/tests.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/statistics/xmlstats.c delete
+external/bsd/bind/dist/bin/tests/system/statschannel/ns2/named.conf up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/statschannel/tests.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/stop.pl up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/stress/tests.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/stub/tests.sh up to 1.5
+external/bsd/bind/dist/bin/tests/system/tcp/clean.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/tcp/ns1/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/tcp/ns1/root.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/tcp/ns2/example.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/tcp/ns2/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/tcp/ns3/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/tcp/ns4/named.conf up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/tcp/tests.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/tkey/Makefile.in up to 1.1.1.10
+external/bsd/bind/dist/bin/tests/system/tkey/keycreate.c up to 1.9
+external/bsd/bind/dist/bin/tests/system/tkey/keydelete.c up to 1.8
+external/bsd/bind/dist/bin/tests/system/tkey/tests.sh up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/system/tsig/clean.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/tsig/setup.sh up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/tsig/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/tsiggss/Makefile.in delete
+external/bsd/bind/dist/bin/tests/system/tsiggss/gssapi_krb.c delete
+external/bsd/bind/dist/bin/tests/system/tsiggss/prereq.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/tsiggss/tests.sh up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/unknown/tests.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/upforwd/setup.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/upforwd/tests.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/v6synth/tests.sh up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/verify/tests.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/verify/zones/unsigned.db up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/views/tests.sh up to 1.1.1.7
+external/bsd/bind/dist/bin/tests/system/wildcard/ns1/sign.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/wildcard/tests.sh up to 1.1.1.2
+external/bsd/bind/dist/bin/tests/system/win32/bigkey.dsp.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/bigkey.dsw up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/bigkey.mak.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/bigkey.vcxproj.filters.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/bigkey.vcxproj.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/bigkey.vcxproj.user up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/feature-test.dsp.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/feature-test.dsw up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/feature-test.mak.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/feature-test.vcxproj.filters.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/feature-test.vcxproj.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/feature-test.vcxproj.user up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/keycreate.dsp.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/keycreate.dsw up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/keycreate.mak.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/keycreate.vcxproj.filters.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/keycreate.vcxproj.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/keycreate.vcxproj.user up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/keydelete.dsp.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/keydelete.dsw up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/keydelete.mak.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/keydelete.vcxproj.filters.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/keydelete.vcxproj.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/keydelete.vcxproj.user up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/lwtest.dsp.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/lwtest.dsw up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/lwtest.mak.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/lwtest.vcxproj.filters.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/lwtest.vcxproj.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/win32/lwtest.vcxproj.user up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/xfer/clean.sh up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/system/xfer/ns1/axfr-too-big.db up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/xfer/ns1/ixfr-too-big.db.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/xfer/ns1/named.conf up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/xfer/ns6/named.conf up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/xfer/setup.sh up to 1.1.1.9
+external/bsd/bind/dist/bin/tests/system/xfer/tests.sh up to 1.1.1.12
+external/bsd/bind/dist/bin/tests/system/xferquota/ns1/named.conf up to 1.1.1.4
+external/bsd/bind/dist/bin/tests/system/xferquota/tests.sh up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/zero/ans5/ans.pl up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/system/zero/ns1/root.db up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/zero/tests.sh up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/system/zonechecks/clean.sh up to 1.1.1.6
+external/bsd/bind/dist/bin/tests/system/zonechecks/setup.sh up to 1.1.1.5
+external/bsd/bind/dist/bin/tests/system/zonechecks/tests.sh up to 1.1.1.8
+external/bsd/bind/dist/bin/tests/timers/win32/t_timers.vcxproj.in up to 1.1.1.3
+external/bsd/bind/dist/bin/tests/win32/makejournal.dsp.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/win32/makejournal.dsw up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/win32/makejournal.mak.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/win32/makejournal.vcxproj.filters.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/win32/makejournal.vcxproj.in up to 1.1.1.1
+external/bsd/bind/dist/bin/tests/win32/makejournal.vcxproj.user up to 1.1.1.1
+external/bsd/bind/dist/bin/tools/Makefile.in    up to 1.1.1.9
+external/bsd/bind/dist/bin/tools/arpaname.1     up to 1.7
+external/bsd/bind/dist/bin/tools/arpaname.docbook up to 1.1.1.6
+external/bsd/bind/dist/bin/tools/arpaname.html  up to 1.1.1.8
+external/bsd/bind/dist/bin/tools/genrandom.8    up to 1.8
+external/bsd/bind/dist/bin/tools/genrandom.docbook up to 1.1.1.8
+external/bsd/bind/dist/bin/tools/genrandom.html up to 1.1.1.9
+external/bsd/bind/dist/bin/tools/isc-hmac-fixup.8 up to 1.8
+external/bsd/bind/dist/bin/tools/isc-hmac-fixup.c up to 1.9
+external/bsd/bind/dist/bin/tools/isc-hmac-fixup.docbook up to 1.1.1.7
+external/bsd/bind/dist/bin/tools/isc-hmac-fixup.html up to 1.1.1.8
+external/bsd/bind/dist/bin/tools/named-journalprint.8 up to 1.7
+external/bsd/bind/dist/bin/tools/named-journalprint.docbook up to 1.1.1.6
+external/bsd/bind/dist/bin/tools/named-journalprint.html up to 1.1.1.8
+external/bsd/bind/dist/bin/tools/named-rrchecker.1 up to 1.1.1.6
+external/bsd/bind/dist/bin/tools/named-rrchecker.docbook up to 1.1.1.4
+external/bsd/bind/dist/bin/tools/named-rrchecker.html up to 1.1.1.5
+external/bsd/bind/dist/bin/tools/nsec3hash.8    up to 1.7
+external/bsd/bind/dist/bin/tools/nsec3hash.docbook up to 1.1.1.6
+external/bsd/bind/dist/bin/tools/nsec3hash.html up to 1.1.1.8
+external/bsd/bind/dist/bin/tools/win32/ischmacfixup.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/tools/win32/ischmacfixup.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/tools/win32/ischmacfixup.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/tools/win32/nsec3hash.dsp.in up to 1.1.1.3
+external/bsd/bind/dist/bin/tools/win32/nsec3hash.mak.in up to 1.1.1.3
+external/bsd/bind/dist/bin/tools/win32/nsec3hash.vcxproj.in up to 1.1.1.4
+external/bsd/bind/dist/bin/win32/BINDInstall/BINDInstallDlg.cpp up to 1.1.1.12
+external/bsd/bind/dist/bind.keys                up to 1.1.1.7
+external/bsd/bind/dist/bind.keys.h              up to 1.1.1.5
+external/bsd/bind/dist/config.h.in              up to 1.14
+external/bsd/bind/dist/configure                up to 1.8
+external/bsd/bind/dist/configure.in             up to 1.10
+external/bsd/bind/dist/contrib/dlz/modules/filesystem/dlz_filesystem_dynamic.c up to 1.1.1.5
+external/bsd/bind/dist/contrib/dnsperf-2.1.0.0-1/configure up to 1.1.1.2
+external/bsd/bind/dist/contrib/dnsperf-2.1.0.0-1/configure.in up to 1.1.1.2
+external/bsd/bind/dist/contrib/queryperf/utils/gen-data-queryperf.py up to 1.1.1.4
+external/bsd/bind/dist/contrib/sdb/ldap/zone2ldap.c up to 1.6
+external/bsd/bind/dist/doc/arm/Bv9ARM-book.xml  up to 1.1.1.21
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch01.html up to 1.1.1.25
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch02.html up to 1.1.1.22
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch03.html up to 1.1.1.27
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch04.html up to 1.15
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch05.html up to 1.1.1.28
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch06.html up to 1.15
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch07.html up to 1.15
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch08.html up to 1.15
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch09.html up to 1.15
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch10.html up to 1.1.1.24
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch11.html up to 1.1.1.13
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch12.html up to 1.1.1.13
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch13.html up to 1.1.1.13
+external/bsd/bind/dist/doc/arm/Bv9ARM.html      up to 1.15
+external/bsd/bind/dist/doc/arm/Bv9ARM.pdf       up to 1.20
+external/bsd/bind/dist/doc/arm/dlz.xml          up to 1.1.1.4
+external/bsd/bind/dist/doc/arm/dnssec.xml       up to 1.1.1.8
+external/bsd/bind/dist/doc/arm/libdns.xml       up to 1.1.1.6
+external/bsd/bind/dist/doc/arm/logging-categories.xml up to 1.1.1.2
+external/bsd/bind/dist/doc/arm/man.arpaname.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.ddns-confgen.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.delv.html    up to 1.15
+external/bsd/bind/dist/doc/arm/man.dig.html     up to 1.15
+external/bsd/bind/dist/doc/arm/man.dnssec-checkds.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.dnssec-coverage.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.dnssec-dsfromkey.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.dnssec-importkey.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.dnssec-keyfromlabel.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.dnssec-keygen.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.dnssec-revoke.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.dnssec-settime.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.dnssec-signzone.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.dnssec-verify.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.genrandom.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.host.html    up to 1.15
+external/bsd/bind/dist/doc/arm/man.isc-hmac-fixup.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.lwresd.html  up to 1.1.1.7
+external/bsd/bind/dist/doc/arm/man.named-checkconf.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.named-checkzone.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.named-journalprint.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.named-rrchecker.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.named.conf.html up to 1.1.1.7
+external/bsd/bind/dist/doc/arm/man.named.html   up to 1.15
+external/bsd/bind/dist/doc/arm/man.nsec3hash.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.nsupdate.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.rndc-confgen.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.rndc.conf.html up to 1.15
+external/bsd/bind/dist/doc/arm/man.rndc.html    up to 1.15
+external/bsd/bind/dist/doc/arm/managed-keys.xml up to 1.1.1.5
+external/bsd/bind/dist/doc/arm/notes-wrapper.xml up to 1.1.1.3
+external/bsd/bind/dist/doc/arm/notes.html       up to 1.1.1.13
+external/bsd/bind/dist/doc/arm/notes.pdf        up to 1.1.1.13
+external/bsd/bind/dist/doc/arm/notes.xml        up to 1.1.1.13
+external/bsd/bind/dist/doc/arm/pkcs11.xml       up to 1.1.1.10
+external/bsd/bind/dist/doc/misc/options         up to 1.9
+external/bsd/bind/dist/doc/misc/sort-options.pl up to 1.1.1.5
+external/bsd/bind/dist/doc/xsl/copyright.xsl    up to 1.1.1.6
+external/bsd/bind/dist/doc/xsl/isc-docbook-chunk.xsl.in up to 1.1.1.7
+external/bsd/bind/dist/doc/xsl/isc-docbook-html.xsl.in up to 1.1.1.7
+external/bsd/bind/dist/isc-config.sh.1          up to 1.7
+external/bsd/bind/dist/isc-config.sh.docbook    up to 1.1.1.7
+external/bsd/bind/dist/isc-config.sh.html       up to 1.1.1.9
+external/bsd/bind/dist/lib/Atffile              up to 1.1.1.3
+external/bsd/bind/dist/lib/bind9/Makefile.in    up to 1.1.1.10
+external/bsd/bind/dist/lib/bind9/api            up to 1.1.1.19
+external/bsd/bind/dist/lib/bind9/check.c        up to 1.15
+external/bsd/bind/dist/lib/bind9/include/bind9/Makefile.in up to 1.1.1.6
+external/bsd/bind/dist/lib/dns/Makefile.in      up to 1.1.1.15
+external/bsd/bind/dist/lib/dns/acl.c            up to 1.8
+external/bsd/bind/dist/lib/dns/adb.c            up to 1.13
+external/bsd/bind/dist/lib/dns/api              up to 1.15
+external/bsd/bind/dist/lib/dns/client.c         up to 1.13
+external/bsd/bind/dist/lib/dns/db.c             up to 1.9
+external/bsd/bind/dist/lib/dns/dbtable.c        up to 1.6
+external/bsd/bind/dist/lib/dns/dispatch.c       up to 1.12
+external/bsd/bind/dist/lib/dns/dnssec.c         up to 1.13
+external/bsd/bind/dist/lib/dns/dst_api.c        up to 1.14
+external/bsd/bind/dist/lib/dns/dst_gost.h       up to 1.1.1.4
+external/bsd/bind/dist/lib/dns/dst_internal.h   up to 1.11
+external/bsd/bind/dist/lib/dns/dst_openssl.h    up to 1.10
+external/bsd/bind/dist/lib/dns/dst_parse.c      up to 1.10
+external/bsd/bind/dist/lib/dns/ecdb.c           up to 1.10
+external/bsd/bind/dist/lib/dns/gssapictx.c      up to 1.10
+external/bsd/bind/dist/lib/dns/hmac_link.c      up to 1.10
+external/bsd/bind/dist/lib/dns/include/dns/Makefile.in up to 1.1.1.10
+external/bsd/bind/dist/lib/dns/include/dns/db.h up to 1.10
+external/bsd/bind/dist/lib/dns/include/dns/events.h up to 1.5
+external/bsd/bind/dist/lib/dns/include/dns/keytable.h up to 1.5
+external/bsd/bind/dist/lib/dns/include/dns/masterdump.h up to 1.9
+external/bsd/bind/dist/lib/dns/include/dns/message.h up to 1.11
+external/bsd/bind/dist/lib/dns/include/dns/peer.h up to 1.6
+external/bsd/bind/dist/lib/dns/include/dns/rbt.h up to 1.13
+external/bsd/bind/dist/lib/dns/include/dns/rdata.h up to 1.10
+external/bsd/bind/dist/lib/dns/include/dns/rdataslab.h up to 1.5
+external/bsd/bind/dist/lib/dns/include/dns/result.h up to 1.8
+external/bsd/bind/dist/lib/dns/include/dns/rrl.h up to 1.5
+external/bsd/bind/dist/lib/dns/include/dns/tsig.h up to 1.5
+external/bsd/bind/dist/lib/dns/include/dns/types.h up to 1.9
+external/bsd/bind/dist/lib/dns/include/dns/view.h up to 1.12
+external/bsd/bind/dist/lib/dns/include/dns/zone.h up to 1.18
+external/bsd/bind/dist/lib/dns/include/dns/zt.h up to 1.5
+external/bsd/bind/dist/lib/dns/include/dst/Makefile.in up to 1.1.1.6
+external/bsd/bind/dist/lib/dns/include/dst/gssapi.h up to 1.6
+external/bsd/bind/dist/lib/dns/iptable.c        up to 1.6
+external/bsd/bind/dist/lib/dns/keytable.c       up to 1.12
+external/bsd/bind/dist/lib/dns/masterdump.c     up to 1.12
+external/bsd/bind/dist/lib/dns/message.c        up to 1.23
+external/bsd/bind/dist/lib/dns/name.c           up to 1.14
+external/bsd/bind/dist/lib/dns/ncache.c         up to 1.12
+external/bsd/bind/dist/lib/dns/openssl_link.c   up to 1.14
+external/bsd/bind/dist/lib/dns/openssldh_link.c up to 1.12
+external/bsd/bind/dist/lib/dns/openssldsa_link.c up to 1.13
+external/bsd/bind/dist/lib/dns/opensslecdsa_link.c up to 1.11
+external/bsd/bind/dist/lib/dns/opensslgost_link.c up to 1.12
+external/bsd/bind/dist/lib/dns/opensslrsa_link.c up to 1.13
+external/bsd/bind/dist/lib/dns/peer.c           up to 1.8
+external/bsd/bind/dist/lib/dns/pkcs11dh_link.c  up to 1.1.1.7
+external/bsd/bind/dist/lib/dns/pkcs11dsa_link.c up to 1.1.1.7
+external/bsd/bind/dist/lib/dns/pkcs11ecdsa_link.c up to 1.1.1.7
+external/bsd/bind/dist/lib/dns/pkcs11gost_link.c up to 1.1.1.7
+external/bsd/bind/dist/lib/dns/pkcs11rsa_link.c up to 1.1.1.7
+external/bsd/bind/dist/lib/dns/rbt.c            up to 1.13
+external/bsd/bind/dist/lib/dns/rbtdb.c          up to 1.24
+external/bsd/bind/dist/lib/dns/rcode.c          up to 1.11
+external/bsd/bind/dist/lib/dns/rdata.c          up to 1.15
+external/bsd/bind/dist/lib/dns/rdata/generic/opt_41.c up to 1.12
+external/bsd/bind/dist/lib/dns/rdata/in_1/wks_11.c up to 1.8
+external/bsd/bind/dist/lib/dns/rdataset.c       up to 1.11
+external/bsd/bind/dist/lib/dns/rdataslab.c      up to 1.12
+external/bsd/bind/dist/lib/dns/request.c        up to 1.11
+external/bsd/bind/dist/lib/dns/resolver.c       up to 1.31
+external/bsd/bind/dist/lib/dns/result.c         up to 1.8
+external/bsd/bind/dist/lib/dns/rootns.c         up to 1.12
+external/bsd/bind/dist/lib/dns/rpz.c            up to 1.11
+external/bsd/bind/dist/lib/dns/sdb.c            up to 1.11
+external/bsd/bind/dist/lib/dns/sdlz.c           up to 1.11
+external/bsd/bind/dist/lib/dns/spnego.c         up to 1.11
+external/bsd/bind/dist/lib/dns/tests/Krsa.+005+29235.key up to 1.1.1.1
+external/bsd/bind/dist/lib/dns/tests/Makefile.in up to 1.9
+external/bsd/bind/dist/lib/dns/tests/acl_test.c up to 1.1.1.1
+external/bsd/bind/dist/lib/dns/tests/dh_test.c  up to 1.1.1.2
+external/bsd/bind/dist/lib/dns/tests/nsec3_test.c up to 1.1.1.6
+external/bsd/bind/dist/lib/dns/tests/rsa_test.c up to 1.1.1.1
+external/bsd/bind/dist/lib/dns/tkey.c           up to 1.12
+external/bsd/bind/dist/lib/dns/tsec.c           up to 1.5
+external/bsd/bind/dist/lib/dns/tsig.c           up to 1.10
+external/bsd/bind/dist/lib/dns/view.c           up to 1.13
+external/bsd/bind/dist/lib/dns/win32/libdns.def.in up to 1.1.1.9
+external/bsd/bind/dist/lib/dns/xfrin.c          up to 1.14
+external/bsd/bind/dist/lib/dns/zone.c           up to 1.17
+external/bsd/bind/dist/lib/dns/zt.c             up to 1.9
+external/bsd/bind/dist/lib/irs/Atffile          up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/Makefile.in      up to 1.1.1.8
+external/bsd/bind/dist/lib/irs/api              up to 1.1.1.10
+external/bsd/bind/dist/lib/irs/getaddrinfo.c    up to 1.9
+external/bsd/bind/dist/lib/irs/include/irs/Makefile.in up to 1.1.1.7
+external/bsd/bind/dist/lib/irs/resconf.c        up to 1.10
+external/bsd/bind/dist/lib/irs/tests/Atffile    up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/Makefile.in up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/resconf_test.c up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/testdata/domain.conf up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/testdata/nameserver-v4.conf up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/testdata/nameserver-v6.conf up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/testdata/options-debug.conf up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/testdata/options-ndots.conf up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/testdata/options-timeout.conf up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/testdata/options-unknown.conf up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/testdata/options.conf up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/testdata/port.conf up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/testdata/resolv.conf up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/testdata/search.conf up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/testdata/sortlist-v4.conf up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/testdata/timeout.conf up to 1.1.1.1
+external/bsd/bind/dist/lib/irs/tests/testdata/unknown.conf up to 1.1.1.1
+external/bsd/bind/dist/lib/isc/Makefile.in      up to 1.1.1.15
+external/bsd/bind/dist/lib/isc/aes.c            up to 1.1.1.5
+external/bsd/bind/dist/lib/isc/alpha/include/isc/Makefile.in up to 1.1.1.6
+external/bsd/bind/dist/lib/isc/api              up to 1.1.1.22
+external/bsd/bind/dist/lib/isc/backtrace-emptytbl.c up to 1.5
+external/bsd/bind/dist/lib/isc/hash.c           up to 1.11
+external/bsd/bind/dist/lib/isc/hmacmd5.c        up to 1.10
+external/bsd/bind/dist/lib/isc/hmacsha.c        up to 1.11
+external/bsd/bind/dist/lib/isc/ia64/include/isc/Makefile.in up to 1.1.1.6
+external/bsd/bind/dist/lib/isc/include/isc/Makefile.in up to 1.1.1.12
+external/bsd/bind/dist/lib/isc/include/isc/backtrace.h up to 1.5
+external/bsd/bind/dist/lib/isc/include/isc/errno.h up to 1.1.1.1
+external/bsd/bind/dist/lib/isc/include/isc/event.h up to 1.7
+external/bsd/bind/dist/lib/isc/include/isc/hmacmd5.h up to 1.6
+external/bsd/bind/dist/lib/isc/include/isc/hmacsha.h up to 1.6
+external/bsd/bind/dist/lib/isc/include/isc/lex.h up to 1.6
+external/bsd/bind/dist/lib/isc/include/isc/md5.h up to 1.6
+external/bsd/bind/dist/lib/isc/include/isc/netaddr.h up to 1.6
+external/bsd/bind/dist/lib/isc/include/isc/platform.h.in up to 1.1.1.12
+external/bsd/bind/dist/lib/isc/include/isc/sha1.h up to 1.6
+external/bsd/bind/dist/lib/isc/include/isc/sha2.h up to 1.6
+external/bsd/bind/dist/lib/isc/include/isc/sockaddr.h up to 1.7
+external/bsd/bind/dist/lib/isc/include/isc/socket.h up to 1.11
+external/bsd/bind/dist/lib/isc/include/isc/types.h up to 1.9
+external/bsd/bind/dist/lib/isc/include/pk11/Makefile.in up to 1.1.1.4
+external/bsd/bind/dist/lib/isc/include/pk11/README.site up to 1.1.1.1
+external/bsd/bind/dist/lib/isc/include/pk11/pk11.h up to 1.1.1.5
+external/bsd/bind/dist/lib/isc/include/pk11/site.h up to 1.1.1.1
+external/bsd/bind/dist/lib/isc/include/pkcs11/Makefile.in up to 1.1.1.3
+external/bsd/bind/dist/lib/isc/include/pkcs11/pkcs11.h up to 1.1.1.4
+external/bsd/bind/dist/lib/isc/include/pkcs11/pkcs11f.h up to 1.1.1.4
+external/bsd/bind/dist/lib/isc/include/pkcs11/pkcs11t.h up to 1.1.1.4
+external/bsd/bind/dist/lib/isc/lex.c            up to 1.9
+external/bsd/bind/dist/lib/isc/log.c            up to 1.9
+external/bsd/bind/dist/lib/isc/md5.c            up to 1.9
+external/bsd/bind/dist/lib/isc/mips/include/isc/Makefile.in up to 1.1.1.6
+external/bsd/bind/dist/lib/isc/mips/include/isc/atomic.h up to 1.6
+external/bsd/bind/dist/lib/isc/netaddr.c        up to 1.9
+external/bsd/bind/dist/lib/isc/noatomic/include/isc/Makefile.in up to 1.1.1.6
+external/bsd/bind/dist/lib/isc/nothreads/include/isc/Makefile.in up to 1.1.1.6
+external/bsd/bind/dist/lib/isc/pk11.c           up to 1.1.1.7
+external/bsd/bind/dist/lib/isc/powerpc/include/isc/Makefile.in up to 1.1.1.6
+external/bsd/bind/dist/lib/isc/print.c          up to 1.7
+external/bsd/bind/dist/lib/isc/pthreads/include/isc/Makefile.in up to 1.1.1.6
+external/bsd/bind/dist/lib/isc/radix.c          up to 1.9
+external/bsd/bind/dist/lib/isc/random.c         up to 1.6
+external/bsd/bind/dist/lib/isc/ratelimiter.c    up to 1.7
+external/bsd/bind/dist/lib/isc/sha1.c           up to 1.9
+external/bsd/bind/dist/lib/isc/sha2.c           up to 1.11
+external/bsd/bind/dist/lib/isc/task.c           up to 1.14
+external/bsd/bind/dist/lib/isc/tests/Makefile.in up to 1.1.1.12
+external/bsd/bind/dist/lib/isc/tests/errno_test.c up to 1.1.1.1
+external/bsd/bind/dist/lib/isc/tests/hash_test.c up to 1.1.1.10
+external/bsd/bind/dist/lib/isc/tests/netaddr_test.c up to 1.1.1.1
+external/bsd/bind/dist/lib/isc/tests/print_test.c up to 1.1.1.7
+external/bsd/bind/dist/lib/isc/unix/Makefile.in up to 1.1.1.8
+external/bsd/bind/dist/lib/isc/unix/dir.c       up to 1.6
+external/bsd/bind/dist/lib/isc/unix/errno.c     up to 1.1.1.1
+external/bsd/bind/dist/lib/isc/unix/errno2result.c up to 1.6
+external/bsd/bind/dist/lib/isc/unix/errno2result.h up to 1.5
+external/bsd/bind/dist/lib/isc/unix/file.c      up to 1.12
+external/bsd/bind/dist/lib/isc/unix/include/isc/Makefile.in up to 1.1.1.8
+external/bsd/bind/dist/lib/isc/unix/include/isc/net.h up to 1.7
+external/bsd/bind/dist/lib/isc/unix/include/isc/offset.h up to 1.6
+external/bsd/bind/dist/lib/isc/unix/include/pkcs11/Makefile.in up to 1.1.1.2
+external/bsd/bind/dist/lib/isc/unix/net.c       up to 1.11
+external/bsd/bind/dist/lib/isc/unix/pk11_api.c  up to 1.1.1.5
+external/bsd/bind/dist/lib/isc/unix/socket.c    up to 1.21
+external/bsd/bind/dist/lib/isc/unix/stdio.c     up to 1.8
+external/bsd/bind/dist/lib/isc/win32/Makefile.in up to 1.1.1.8
+external/bsd/bind/dist/lib/isc/win32/app.c      up to 1.7
+external/bsd/bind/dist/lib/isc/win32/condition.c up to 1.5
+external/bsd/bind/dist/lib/isc/win32/errno.c    up to 1.1.1.1
+external/bsd/bind/dist/lib/isc/win32/errno2result.c up to 1.6
+external/bsd/bind/dist/lib/isc/win32/errno2result.h up to 1.5
+external/bsd/bind/dist/lib/isc/win32/include/isc/ipv6.h up to 1.7
+external/bsd/bind/dist/lib/isc/win32/include/isc/offset.h up to 1.5
+external/bsd/bind/dist/lib/isc/win32/interfaceiter.c up to 1.8
+external/bsd/bind/dist/lib/isc/win32/libisc.def.in up to 1.1.1.9
+external/bsd/bind/dist/lib/isc/win32/libisc.dsp.in up to 1.1.1.6
+external/bsd/bind/dist/lib/isc/win32/libisc.mak.in up to 1.1.1.6
+external/bsd/bind/dist/lib/isc/win32/libisc.vcxproj.filters.in up to 1.1.1.6
+external/bsd/bind/dist/lib/isc/win32/libisc.vcxproj.in up to 1.1.1.8
+external/bsd/bind/dist/lib/isc/win32/pk11_api.c up to 1.1.1.5
+external/bsd/bind/dist/lib/isc/win32/socket.c   up to 1.13
+external/bsd/bind/dist/lib/isc/win32/stdio.c    up to 1.6
+external/bsd/bind/dist/lib/isc/x86_32/include/isc/Makefile.in up to 1.1.1.6
+external/bsd/bind/dist/lib/isc/x86_64/include/isc/Makefile.in up to 1.1.1.6
+external/bsd/bind/dist/lib/isccc/Makefile.in    up to 1.1.1.12
+external/bsd/bind/dist/lib/isccc/api            up to 1.1.1.12
+external/bsd/bind/dist/lib/isccc/cc.c           up to 1.12
+external/bsd/bind/dist/lib/isccc/include/isccc/Makefile.in up to 1.1.1.6
+external/bsd/bind/dist/lib/isccc/win32/libisccc.def up to 1.1.1.2
+external/bsd/bind/dist/lib/isccfg/Makefile.in   up to 1.1.1.13
+external/bsd/bind/dist/lib/isccfg/aclconf.c     up to 1.10
+external/bsd/bind/dist/lib/isccfg/api           up to 1.1.1.19
+external/bsd/bind/dist/lib/isccfg/include/isccfg/Makefile.in up to 1.1.1.7
+external/bsd/bind/dist/lib/isccfg/include/isccfg/grammar.h up to 1.7
+external/bsd/bind/dist/lib/isccfg/namedconf.c   up to 1.14
+external/bsd/bind/dist/lib/isccfg/parser.c      up to 1.12
+external/bsd/bind/dist/lib/isccfg/win32/libisccfg.def up to 1.1.1.9
+external/bsd/bind/dist/lib/lwres/Makefile.in    up to 1.1.1.7
+external/bsd/bind/dist/lib/lwres/api            up to 1.1.1.15
+external/bsd/bind/dist/lib/lwres/include/lwres/Makefile.in up to 1.1.1.7
+external/bsd/bind/dist/lib/lwres/lwres_grbn.c   up to 1.6
+external/bsd/bind/dist/lib/lwres/man/Makefile.in up to 1.1.1.6
+external/bsd/bind/dist/lib/lwres/man/lwres.3    up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres.docbook up to 1.1.1.7
+external/bsd/bind/dist/lib/lwres/man/lwres.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_buffer.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_buffer.docbook up to 1.1.1.6
+external/bsd/bind/dist/lib/lwres/man/lwres_buffer.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_config.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_config.docbook up to 1.1.1.6
+external/bsd/bind/dist/lib/lwres/man/lwres_config.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_context.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_context.docbook up to 1.1.1.6
+external/bsd/bind/dist/lib/lwres/man/lwres_context.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_gabn.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_gabn.docbook up to 1.1.1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_gabn.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_gai_strerror.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_gai_strerror.docbook up to 1.1.1.6
+external/bsd/bind/dist/lib/lwres/man/lwres_gai_strerror.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_getaddrinfo.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_getaddrinfo.docbook up to 1.1.1.6
+external/bsd/bind/dist/lib/lwres/man/lwres_getaddrinfo.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_gethostent.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_gethostent.docbook up to 1.1.1.6
+external/bsd/bind/dist/lib/lwres/man/lwres_gethostent.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_getipnode.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_getipnode.docbook up to 1.1.1.6
+external/bsd/bind/dist/lib/lwres/man/lwres_getipnode.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_getnameinfo.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_getnameinfo.docbook up to 1.1.1.6
+external/bsd/bind/dist/lib/lwres/man/lwres_getnameinfo.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_getrrsetbyname.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_getrrsetbyname.docbook up to 1.1.1.6
+external/bsd/bind/dist/lib/lwres/man/lwres_getrrsetbyname.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_gnba.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_gnba.docbook up to 1.1.1.6
+external/bsd/bind/dist/lib/lwres/man/lwres_gnba.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_hstrerror.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_hstrerror.docbook up to 1.1.1.6
+external/bsd/bind/dist/lib/lwres/man/lwres_hstrerror.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_inetntop.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_inetntop.docbook up to 1.1.1.6
+external/bsd/bind/dist/lib/lwres/man/lwres_inetntop.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_noop.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_noop.docbook up to 1.1.1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_noop.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_packet.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_packet.docbook up to 1.1.1.6
+external/bsd/bind/dist/lib/lwres/man/lwres_packet.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/man/lwres_resutil.3 up to 1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_resutil.docbook up to 1.1.1.7
+external/bsd/bind/dist/lib/lwres/man/lwres_resutil.html up to 1.1.1.12
+external/bsd/bind/dist/lib/lwres/unix/include/lwres/Makefile.in up to 1.1.1.5
+external/bsd/bind/dist/lib/lwres/win32/liblwres.def up to 1.1.1.3
+external/bsd/bind/dist/lib/samples/Makefile.in  up to 1.1.1.4
+external/bsd/bind/dist/lib/samples/resolve.c    up to 1.1.1.6
+external/bsd/bind/dist/lib/samples/sample-request.c up to 1.1.1.7
+external/bsd/bind/dist/lib/samples/sample-update.c up to 1.1.1.7
+external/bsd/bind/dist/lib/samples/win32/async.dsp.in up to 1.1.1.2
+external/bsd/bind/dist/lib/samples/win32/async.mak.in up to 1.1.1.2
+external/bsd/bind/dist/lib/samples/win32/async.vcxproj.in up to 1.1.1.3
+external/bsd/bind/dist/lib/samples/win32/nsprobe.dsp.in up to 1.1.1.2
+external/bsd/bind/dist/lib/samples/win32/nsprobe.mak.in up to 1.1.1.2
+external/bsd/bind/dist/lib/samples/win32/nsprobe.vcxproj.in up to 1.1.1.3
+external/bsd/bind/dist/lib/samples/win32/request.dsp.in up to 1.1.1.2
+external/bsd/bind/dist/lib/samples/win32/request.mak.in up to 1.1.1.2
+external/bsd/bind/dist/lib/samples/win32/request.vcxproj.in up to 1.1.1.3
+external/bsd/bind/dist/lib/samples/win32/resolve.dsp.in up to 1.1.1.2
+external/bsd/bind/dist/lib/samples/win32/resolve.mak.in up to 1.1.1.2
+external/bsd/bind/dist/lib/samples/win32/resolve.vcxproj.in up to 1.1.1.3
+external/bsd/bind/dist/lib/samples/win32/update.dsp.in up to 1.1.1.2
+external/bsd/bind/dist/lib/samples/win32/update.mak.in up to 1.1.1.2
+external/bsd/bind/dist/lib/samples/win32/update.vcxproj.in up to 1.1.1.3
+external/bsd/bind/dist/lib/tests/t_api.c        up to 1.8
+external/bsd/bind/dist/make/rules.in            up to 1.8
+external/bsd/bind/dist/srcid                    up to 1.21
+external/bsd/bind/dist/util/bindkeys.pl         up to 1.1.1.2
+external/bsd/bind/dist/version                  up to 1.25
+external/bsd/bind/dist/win32utils/Configure     up to 1.1.1.7
+external/bsd/bind/dist/win32utils/bind9.sln.in  up to 1.1.1.4
+external/bsd/bind/dist/win32utils/build.txt     up to 1.1.1.5
+external/bsd/bind/dist/win32utils/legacy/BINDBuild.dsw.in up to 1.5
+external/bsd/bind/dist/win32utils/legacy/BuildAll.bat.in up to 1.1.1.4
+external/bsd/bind/dist/win32utils/legacy/BuildPost.bat.in up to 1.1.1.3
+external/bsd/bind/dist/win32utils/readme1st.txt up to 1.1.1.8
+external/bsd/bind/include/config.h              up to 1.21
+external/bsd/bind/include/dns/code.h            up to 1.13
+external/bsd/bind/include/dns/enumclass.h       up to 1.9
+external/bsd/bind/include/dns/enumtype.h        up to 1.13
+external/bsd/bind/include/dns/rdatastruct.h     up to 1.13
+external/bsd/bind/include/isc/platform.h        up to 1.23
+external/bsd/bind/lib/libbind9/shlib_version    up to 1.17
+external/bsd/bind/lib/libdns/shlib_version      up to 1.19
+external/bsd/bind/lib/libirs/shlib_version      up to 1.6
+external/bsd/bind/lib/libisc/shlib_version      up to 1.19
+external/bsd/bind/lib/libisccc/shlib_version    up to 1.17
+external/bsd/bind/lib/libisccfg/shlib_version   up to 1.17
+external/bsd/bind/lib/liblwres/shlib_version    up to 1.17
+
+	Update BIND to 9.10.5-P1.
+	[spz, ticket #47]
+
+doc/3RDPARTY					1.1454
+external/mit/expat/dist/AUTHORS                 up to 1.1.1.1
+external/mit/expat/dist/CMake.README            up to 1.1.1.4
+external/mit/expat/dist/CMakeLists.txt          up to 1.1.1.4
+external/mit/expat/dist/COPYING                 up to 1.1.1.3
+external/mit/expat/dist/Changes                 up to 1.1.1.5
+external/mit/expat/dist/MANIFEST                up to 1.1.1.5
+external/mit/expat/dist/Makefile.in             up to 1.1.1.5
+external/mit/expat/dist/README                  up to 1.1.1.5
+external/mit/expat/dist/amiga/Makefile          delete
+external/mit/expat/dist/amiga/README.txt        delete
+external/mit/expat/dist/amiga/expat.xml         delete
+external/mit/expat/dist/amiga/expat_68k.c       delete
+external/mit/expat/dist/amiga/expat_68k.h       delete
+external/mit/expat/dist/amiga/expat_68k_handler_stubs.c delete
+external/mit/expat/dist/amiga/expat_base.h      delete
+external/mit/expat/dist/amiga/expat_lib.c       delete
+external/mit/expat/dist/amiga/expat_vectors.c   delete
+external/mit/expat/dist/amiga/include/inline4/expat.h delete
+external/mit/expat/dist/amiga/include/interfaces/expat.h delete
+external/mit/expat/dist/amiga/include/libraries/expat.h delete
+external/mit/expat/dist/amiga/include/proto/expat.h delete
+external/mit/expat/dist/amiga/launch.c          delete
+external/mit/expat/dist/bcb5/README.txt         delete
+external/mit/expat/dist/bcb5/all_projects.bpg   delete
+external/mit/expat/dist/bcb5/elements.bpf       delete
+external/mit/expat/dist/bcb5/elements.bpr       delete
+external/mit/expat/dist/bcb5/elements.mak       delete
+external/mit/expat/dist/bcb5/expat.bpf          delete
+external/mit/expat/dist/bcb5/expat.bpr          delete
+external/mit/expat/dist/bcb5/expat.mak          delete
+external/mit/expat/dist/bcb5/expat_static.bpf   delete
+external/mit/expat/dist/bcb5/expat_static.bpr   delete
+external/mit/expat/dist/bcb5/expat_static.mak   delete
+external/mit/expat/dist/bcb5/expatw.bpf         delete
+external/mit/expat/dist/bcb5/expatw.bpr         delete
+external/mit/expat/dist/bcb5/expatw.mak         delete
+external/mit/expat/dist/bcb5/expatw_static.bpf  delete
+external/mit/expat/dist/bcb5/expatw_static.bpr  delete
+external/mit/expat/dist/bcb5/expatw_static.mak  delete
+external/mit/expat/dist/bcb5/libexpat_mtd.def   delete
+external/mit/expat/dist/bcb5/libexpatw_mtd.def  delete
+external/mit/expat/dist/bcb5/makefile.mak       delete
+external/mit/expat/dist/bcb5/outline.bpf        delete
+external/mit/expat/dist/bcb5/outline.bpr        delete
+external/mit/expat/dist/bcb5/outline.mak        delete
+external/mit/expat/dist/bcb5/setup.bat          delete
+external/mit/expat/dist/bcb5/xmlwf.bpf          delete
+external/mit/expat/dist/bcb5/xmlwf.bpr          delete
+external/mit/expat/dist/bcb5/xmlwf.mak          delete
+external/mit/expat/dist/configure               up to 1.1.1.5
+external/mit/expat/dist/configure.ac            up to 1.1.1.3
+external/mit/expat/dist/configure.in            delete
+external/mit/expat/dist/doc/reference.html      up to 1.1.1.4
+external/mit/expat/dist/examples/elements.c     up to 1.1.1.4
+external/mit/expat/dist/examples/elements.dsp   delete
+external/mit/expat/dist/examples/outline.c      up to 1.1.1.3
+external/mit/expat/dist/examples/outline.dsp    delete
+external/mit/expat/dist/expat.dsw               delete
+external/mit/expat/dist/expat_config.h.in       up to 1.1.1.5
+external/mit/expat/dist/lib/Makefile.MPW        delete
+external/mit/expat/dist/lib/amigaconfig.h       delete
+external/mit/expat/dist/lib/expat.dsp           delete
+external/mit/expat/dist/lib/expat.h             up to 1.1.1.5
+external/mit/expat/dist/lib/expat_external.h    up to 1.1.1.3
+external/mit/expat/dist/lib/expat_static.dsp    delete
+external/mit/expat/dist/lib/expatw.dsp          delete
+external/mit/expat/dist/lib/expatw_static.dsp   delete
+external/mit/expat/dist/lib/macconfig.h         delete
+external/mit/expat/dist/lib/siphash.h           up to 1.1.1.1
+external/mit/expat/dist/lib/winconfig.h         up to 1.1.1.2
+external/mit/expat/dist/lib/xmlparse.c          up to 1.7
+external/mit/expat/dist/lib/xmlrole.c           up to 1.1.1.4
+external/mit/expat/dist/lib/xmltok.c            up to 1.4
+external/mit/expat/dist/m4/libtool.m4           up to 1.1.1.4
+external/mit/expat/dist/run.sh.in               up to 1.1.1.1
+external/mit/expat/dist/tests/benchmark/benchmark.c up to 1.1.1.2
+external/mit/expat/dist/tests/benchmark/benchmark.dsp delete
+external/mit/expat/dist/tests/benchmark/benchmark.dsw delete
+external/mit/expat/dist/tests/memcheck.c        up to 1.1.1.1
+external/mit/expat/dist/tests/memcheck.h        up to 1.1.1.1
+external/mit/expat/dist/tests/minicheck.c       up to 1.1.1.3
+external/mit/expat/dist/tests/minicheck.h       up to 1.1.1.4
+external/mit/expat/dist/tests/runtests.c        up to 1.1.1.4
+external/mit/expat/dist/tests/xmltest.sh        up to 1.3
+external/mit/expat/dist/vms/README.vms          delete
+external/mit/expat/dist/vms/descrip.mms         delete
+external/mit/expat/dist/vms/expat_config.h      delete
+external/mit/expat/dist/win32/MANIFEST.txt      up to 1.1.1.2
+external/mit/expat/dist/win32/README.txt        up to 1.1.1.4
+external/mit/expat/dist/win32/expat.iss         up to 1.1.1.5
+external/mit/expat/dist/xmlwf/codepage.c        up to 1.1.1.3
+external/mit/expat/dist/xmlwf/filemap.h         up to 1.1.1.2
+external/mit/expat/dist/xmlwf/readfilemap.c     up to 1.1.1.4
+external/mit/expat/dist/xmlwf/unixfilemap.c     up to 1.1.1.3
+external/mit/expat/dist/xmlwf/win32filemap.c    up to 1.1.1.2
+external/mit/expat/dist/xmlwf/xmlfile.c         up to 1.1.1.3
+external/mit/expat/dist/xmlwf/xmlwf.c           up to 1.1.1.5
+external/mit/expat/dist/xmlwf/xmlwf.dsp         delete
+
+	Update expat to 2.2.1.
+	[spz, #48]
+
+sys/arch/arm/fdt/cpu_fdt.c			1.2
+
+	Limit CPU FDT attachment to cores that are in the same cluster
+	as the boot CPU.
+	[jmcneill, ticket #49]
+
+sys/netinet/tcp_input.c				1.358
+tests/net/ipsec/t_ipsec_misc.sh			1.7
+
+	Fix KASSERT in tcp_input: inp can be NULL when receiving an IPv4
+	packet on an IPv4-mapped IPv6 address. In that case
+	KASSERT(sotoinpcb(so) == inp) always fails.  PR kern/52304.
+	[ozaki-r, ticket #51]
+
+etc/etc.vax/MAKEDEV.conf			1.18
+
+	Add audio for vsaudio(4) and speaker.
+	[flxd, ticket #52]
+
+sys/dev/scsipi/atapiconf.c			1.91
+sys/dev/scsipi/cd.c				1.341
+sys/dev/scsipi/scsi_base.c			1.92
+sys/dev/scsipi/scsiconf.c			1.280
+sys/dev/scsipi/scsipi_base.c			1.176
+sys/dev/scsipi/scsipi_base.c			1.177
+sys/dev/scsipi/sd.c				1.325
+sys/dev/scsipi/ss.c				1.89
+sys/dev/scsipi/st.c				1.231
+
+	Fix a locking error with atapi devices that would panic the
+	kernel when detaching.
+	[mlelstv, ticket #53]
+
+sys/kern/vfs_trans.c				1.47, 1.48
+
+	Clear fstrans entries whose mount is gone from the last
+	fstrans_done() only.
+	Make the fast path of fstrans_get_lwp_info() "static inline".
+	[hannken, ticket #54]
 
