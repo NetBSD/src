@@ -1,7 +1,7 @@
-/*	$NetBSD: keycreate.c,v 1.8 2015/12/17 04:00:42 christos Exp $	*/
+/*	$NetBSD: keycreate.c,v 1.8.8.1 2017/06/21 18:03:36 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -37,6 +37,8 @@
 #include <isc/timer.h>
 #include <isc/util.h>
 
+#include <pk11/site.h>
+
 #include <dns/dispatch.h>
 #include <dns/fixedname.h>
 #include <dns/keyvalues.h>
@@ -71,6 +73,7 @@ static isc_buffer_t nonce;
 static dns_requestmgr_t *requestmgr;
 static const char *ownername_str = ".";
 
+#ifndef PK11_MD5_DISABLE
 static void
 recvquery(isc_task_t *task, isc_event_t *event) {
 	dns_requestevent_t *reqev = (dns_requestevent_t *)event;
@@ -130,9 +133,11 @@ recvquery(isc_task_t *task, isc_event_t *event) {
 	isc_app_shutdown();
 	return;
 }
+#endif
 
 static void
 sendquery(isc_task_t *task, isc_event_t *event) {
+#ifndef PK11_MD5_DISABLE
 	struct in_addr inaddr;
 	isc_sockaddr_t address;
 	isc_region_t r;
@@ -196,6 +201,12 @@ sendquery(isc_task_t *task, isc_event_t *event) {
 				    TIMEOUT, task, recvquery, query,
 				    &request);
 	CHECK("dns_request_create", result);
+#else
+	UNUSED(task);
+
+	isc_event_free(&event);
+	CHECK("MD5 was disabled", ISC_R_NOTIMPLEMENTED);
+#endif
 }
 
 int

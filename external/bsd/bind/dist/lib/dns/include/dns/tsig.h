@@ -1,7 +1,7 @@
-/*	$NetBSD: tsig.h,v 1.4 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: tsig.h,v 1.4.8.1 2017/06/21 18:03:44 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2011, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -30,6 +30,8 @@
 #include <isc/stdio.h>
 #include <isc/stdtime.h>
 
+#include <pk11/site.h>
+
 #include <dns/types.h>
 #include <dns/name.h>
 
@@ -38,8 +40,10 @@
 /*
  * Algorithms.
  */
+#ifndef PK11_MD5_DISABLE
 LIBDNS_EXTERNAL_DATA extern dns_name_t *dns_tsig_hmacmd5_name;
 #define DNS_TSIG_HMACMD5_NAME		dns_tsig_hmacmd5_name
+#endif
 LIBDNS_EXTERNAL_DATA extern dns_name_t *dns_tsig_gssapi_name;
 #define DNS_TSIG_GSSAPI_NAME		dns_tsig_gssapi_name
 LIBDNS_EXTERNAL_DATA extern dns_name_t *dns_tsig_gssapims_name;

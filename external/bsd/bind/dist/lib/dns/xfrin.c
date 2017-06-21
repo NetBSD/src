@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrin.c,v 1.13 2016/05/26 16:49:59 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.13.8.1 2017/06/21 18:03:44 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -150,6 +150,9 @@ struct dns_xfrin_ctx {
 	unsigned int		nmsg;		/*%< Number of messages recvd */
 	unsigned int		nrecs;		/*%< Number of records recvd */
 	isc_uint64_t		nbytes;		/*%< Number of bytes received */
+
+	unsigned int		maxrecords;	/*%< The maximum number of
+						     records set for the zone */
 
 	isc_time_t		start;		/*%< Start time of the transfer */
 	isc_time_t		end;		/*%< End time of the transfer */
@@ -314,10 +317,18 @@ axfr_putdata(dns_xfrin_ctx_t *xfr, dns_diffop_t op,
 static isc_result_t
 axfr_apply(dns_xfrin_ctx_t *xfr) {
 	isc_result_t result;
+	isc_uint64_t records;
 
 	CHECK(dns_diff_load(&xfr->diff, xfr->axfr.add, xfr->axfr.add_private));
 	xfr->difflen = 0;
 	dns_diff_clear(&xfr->diff);
+	if (xfr->maxrecords != 0U) {
+		result = dns_db_getsize(xfr->db, xfr->ver, &records, NULL);
+		if (result == ISC_R_SUCCESS && records > xfr->maxrecords) {
+			result = DNS_R_TOOMANYRECORDS;
+			goto failure;
+		}
+	}
 	result = ISC_R_SUCCESS;
  failure:
 	return (result);
@@ -404,6 +415,7 @@ ixfr_putdata(dns_xfrin_ctx_t *xfr, dns_diffop_t op,
 static isc_result_t
 ixfr_apply(dns_xfrin_ctx_t *xfr) {
 	isc_result_t result;
+	isc_uint64_t records;
 
 	if (xfr->ver == NULL) {
 		CHECK(dns_db_newversion(xfr->db, &xfr->ver));
@@ -411,6 +423,13 @@ ixfr_apply(dns_xfrin_ctx_t *xfr) {
 			CHECK(dns_journal_begin_transaction(xfr->ixfr.journal));
 	}
 	CHECK(dns_diff_apply(&xfr->diff, xfr->db, xfr->ver));
+	if (xfr->maxrecords != 0U) {
+		result = dns_db_getsize(xfr->db, xfr->ver, &records, NULL);
+		if (result == ISC_R_SUCCESS && records > xfr->maxrecords) {
+			result = DNS_R_TOOMANYRECORDS;
+			goto failure;
+		}
+	}
 	if (xfr->ixfr.journal != NULL) {
 		result = dns_journal_writediff(xfr->ixfr.journal, &xfr->diff);
 		if (result != ISC_R_SUCCESS)
@@ -767,7 +786,7 @@ xfrin_reset(dns_xfrin_ctx_t *xfr) {
 
 static void
 xfrin_fail(dns_xfrin_ctx_t *xfr, isc_result_t result, const char *msg) {
-	if (result != DNS_R_UPTODATE) {
+	if (result != DNS_R_UPTODATE && result != DNS_R_TOOMANYRECORDS) {
 		xfrin_log(xfr, ISC_LOG_ERROR, "%s: %s",
 			  msg, isc_result_totext(result));
 		if (xfr->is_ixfr)
@@ -860,6 +879,7 @@ xfrin_create(isc_mem_t *mctx,
 	xfr->nmsg = 0;
 	xfr->nrecs = 0;
 	xfr->nbytes = 0;
+	xfr->maxrecords = dns_zone_getmaxrecords(zone);
 	isc_time_now(&xfr->start);
 
 	xfr->tsigkey = NULL;

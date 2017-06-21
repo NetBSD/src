@@ -1,7 +1,7 @@
-/*	$NetBSD: net.c,v 1.10 2016/05/26 16:50:00 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.10.8.1 2017/06/21 18:03:47 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -511,7 +511,7 @@ cmsgsend(int s, int level, int type, struct addrinfo *res) {
 		unsigned char b[256];
 	} control;
 	struct cmsghdr *cmsgp;
-	int dscp = 46;
+	int dscp = (46 << 2);	/* Expedited forwarding. */
 	struct iovec iovec;
 	char buf[1] = { 0 };
 	isc_result_t result;
@@ -573,6 +573,8 @@ cmsgsend(int s, int level, int type, struct addrinfo *res) {
 
 	if (sendmsg(s, &msg, 0) < 0) {
 		int debug = ISC_LOG_DEBUG(10);
+		const char *typestr;
+		const char *msgstr;
 		switch (errno) {
 #ifdef ENOPROTOOPT
 		case ENOPROTOOPT:
@@ -581,6 +583,7 @@ cmsgsend(int s, int level, int type, struct addrinfo *res) {
 		case EOPNOTSUPP:
 #endif
 		case EINVAL:
+		case EPERM:
 			break;
 		default:
 			debug = ISC_LOG_NOTICE;
@@ -591,13 +594,12 @@ cmsgsend(int s, int level, int type, struct addrinfo *res) {
 				      ISC_LOGMODULE_SOCKET, ISC_LOG_DEBUG(10),
 				      "sendmsg: %s", strbuf);
 		} else {
-			UNEXPECTED_ERROR(__FILE__, __LINE__,
-					 "sendmsg() %s: %s",
-					 isc_msgcat_get(isc_msgcat,
-							ISC_MSGSET_GENERAL,
-							ISC_MSG_FAILED,
-							"failed"),
-					 strbuf);
+			typestr = (type == IP_TOS) ? "IP_TOS" : "IPV6_TCLASS";
+			msgstr = isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
+						ISC_MSG_FAILED, "failed");
+			UNEXPECTED_ERROR(__FILE__, __LINE__, "probing "
+					 "sendmsg() with %s=%02x %s: %s",
+					 typestr, dscp, msgstr, strbuf);
 		}
 		return (ISC_FALSE);
 	}

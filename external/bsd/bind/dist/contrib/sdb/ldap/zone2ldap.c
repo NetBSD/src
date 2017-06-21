@@ -1,4 +1,4 @@
-/*	$NetBSD: zone2ldap.c,v 1.5 2016/05/26 16:49:58 christos Exp $	*/
+/*	$NetBSD: zone2ldap.c,v 1.5.8.1 2017/06/21 18:03:40 snj Exp $	*/
 
 /*
  * Copyright (C) 2001 Jeff McNeil <jeff@snapcase.g-rock.net>
@@ -27,6 +27,7 @@
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/result.h>
+#include <isc/string.h>
 
 #include <dns/db.h>
 #include <dns/dbiterator.h>

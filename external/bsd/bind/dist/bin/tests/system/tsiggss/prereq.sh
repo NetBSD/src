@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@ SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 # enable the tsiggss test only if gssapi was enabled
-./gssapi_krb ||  {
+$FEATURETEST --gssapi ||  {
         echo "I:gssapi and krb5 not supported - skipping tsiggss test"
         exit 255
 }

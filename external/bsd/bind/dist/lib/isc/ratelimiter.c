@@ -1,7 +1,7 @@
-/*	$NetBSD: ratelimiter.c,v 1.6 2015/07/08 17:28:59 christos Exp $	*/
+/*	$NetBSD: ratelimiter.c,v 1.6.8.1 2017/06/21 18:03:45 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2012, 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: ratelimiter.c,v 1.25 2007/06/19 23:47:17 tbox Exp  */
 
 /*! \file */
 
@@ -157,7 +155,7 @@ isc_ratelimiter_enqueue(isc_ratelimiter_t *rl, isc_task_t *task,
 	    rl->state == isc_ratelimiter_stalled) {
 		ev->ev_sender = task;
 		*eventp = NULL;
-		ISC_LIST_APPEND(rl->pending, ev, ev_link);
+		ISC_LIST_APPEND(rl->pending, ev, ev_ratelink);
 	} else if (rl->state == isc_ratelimiter_idle) {
 		result = isc_timer_reset(rl->timer, isc_timertype_ticker, NULL,
 					 &rl->interval, ISC_FALSE);
@@ -183,8 +181,8 @@ isc_ratelimiter_dequeue(isc_ratelimiter_t *rl, isc_event_t *event) {
 	REQUIRE(event != NULL);
 
 	LOCK(&rl->lock);
-	if (ISC_LINK_LINKED(event, ev_link)) {
-		ISC_LIST_UNLINK(rl->pending, event, ev_link);
+	if (ISC_LINK_LINKED(event, ev_ratelink)) {
+		ISC_LIST_UNLINK(rl->pending, event, ev_ratelink);
 		event->ev_sender = NULL;
 	} else
 		result = ISC_R_NOTFOUND;
@@ -212,7 +210,7 @@ ratelimiter_tick(isc_task_t *task, isc_event_t *event) {
 			/*
 			 * There is work to do.  Let's do it after unlocking.
 			 */
-			ISC_LIST_UNLINK(rl->pending, p, ev_link);
+			ISC_LIST_UNLINK(rl->pending, p, ev_ratelink);
 		} else {
 			/*
 			 * No work left to do.  Stop the timer so that we don't
@@ -246,7 +244,7 @@ isc_ratelimiter_shutdown(isc_ratelimiter_t *rl) {
 	(void)isc_timer_reset(rl->timer, isc_timertype_inactive,
 			      NULL, NULL, ISC_FALSE);
 	while ((ev = ISC_LIST_HEAD(rl->pending)) != NULL) {
-		ISC_LIST_UNLINK(rl->pending, ev, ev_link);
+		ISC_LIST_UNLINK(rl->pending, ev, ev_ratelink);
 		ev->ev_attributes |= ISC_EVENTATTR_CANCELED;
 		task = ev->ev_sender;
 		isc_task_send(task, &ev);

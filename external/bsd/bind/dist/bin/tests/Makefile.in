@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -13,27 +13,28 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.145 2011/02/03 05:41:53 marka Exp 
-
 srcdir =	@srcdir@
 VPATH =		@srcdir@
 top_srcdir =	@top_srcdir@
 
 @BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES} \
-		${LWRES_INCLUDES} ${OMAPI_INCLUDES}
+CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} @DST_OPENSSL_INC@ \
+		${ISCCFG_INCLUDES} ${LWRES_INCLUDES} ${OMAPI_INCLUDES} \
+		${BIND9_INCLUDES}
 
-CDEFINES =
+CDEFINES =	@CRYPTO@
 CWARNINGS =
 BACKTRACECFLAGS = @BACKTRACECFLAGS@
 
+BIND9LIBS =	../../lib/bind9/libbind9.@A@
 DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
 ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
 ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @ISC_OPENSSL_LIBS@
 ISCCFGLIBS = 	../../lib/isccfg/libisccfg.@A@
 LWRESLIBS =	../../lib/lwres/liblwres.@A@
 
+BIND9DEPLIBS =	../../lib/bind9/libbind9.@A@
 DNSDEPLIBS =	../../lib/dns/libdns.@A@
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
 ISCDEPNOSYMLIBS = ../../lib/isc/libisc-nosymtbl.@A@
@@ -50,7 +51,8 @@ SUBDIRS =	atomic db dst master mem hashes names net rbt resolver \
 # makejournal is needed by system tests
 
 # Alphabetically
-TARGETS =	cfg_test@EXEEXT@ makejournal@EXEEXT@ wire_test@EXEEXT@
+TARGETS =	@XTARGETS@ cfg_test@EXEEXT@ makejournal@EXEEXT@ \
+		mdig@EXEEXT@ wire_test@EXEEXT@
 
 # All the other tests are optional and not built by default.
 
@@ -94,7 +96,7 @@ XTARGETS =	adb_test@EXEEXT@ \
 		zone_test@EXEEXT@
 
 # Alphabetically
-SRCS =		cfg_test.c makejournal.c wire_test.c ${XSRCS}
+SRCS =		cfg_test.c makejournal.c mdig.c wire_test.c ${XSRCS}
 
 XSRCS =		adb_test.c \
 		byaddr_test.c \
@@ -145,11 +147,11 @@ adb_test@EXEEXT@: adb_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ adb_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-backtrace_test_nosymtbl@EXEEXT@: backtrace_test.c ${ISCDEPLIBS}
+backtrace_test_nosymtbl@EXEEXT@: ${srcdir}/backtrace_test.c ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${BTTEST_CFLAGS} ${LDFLAGS} -o $@ \
-	backtrace_test.c ${ISCLIBS} ${LIBS}
+	${srcdir}/backtrace_test.c ${ISCLIBS} ${LIBS}
 
-backtrace_test@EXEEXT@: backtrace_test_nosymtbl@EXEEXT@
+backtrace_test@EXEEXT@: ${srcdir}/backtrace_test.c backtrace_test_nosymtbl@EXEEXT@
 	#first step: create a first symbol table
 	rm -f symtbl.c
 	if test X${MKSYMTBL_PROGRAM} != X; then \
@@ -158,7 +160,7 @@ backtrace_test@EXEEXT@: backtrace_test_nosymtbl@EXEEXT@
 	cp ${top_srcdir}/lib/isc/backtrace-emptytbl.c symtbl.c; fi
 	#second step: build a binary with the first symbol table
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${BTTEST_CFLAGS} ${LDFLAGS} \
-	-o $@0 backtrace_test.c symtbl.c \
+	-o $@0 ${srcdir}/backtrace_test.c symtbl.c \
 	${ISCNOSYMLIBS} ${LIBS}
 	rm -f symtbl.c
 	#third step: create a second symbol table
@@ -168,7 +170,7 @@ backtrace_test@EXEEXT@: backtrace_test_nosymtbl@EXEEXT@
 	#fourth step: build the final binary
 	rm -f $@0
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${BTTEST_CFLAGS} ${LDFLAGS} \
-	-o $@ backtrace_test.c symtbl.c ${ISCNOSYMLIBS} ${LIBS}
+	-o $@ ${srcdir}/backtrace_test.c symtbl.c ${ISCNOSYMLIBS} ${LIBS}
 	rm -f symtbl.c
 
 nsecify@EXEEXT@: nsecify.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
@@ -314,6 +316,10 @@ cfg_test@EXEEXT@: cfg_test.@O@ ${ISCCFGDEPLIBS} ${ISCDEPLIBS}
 makejournal@EXEEXT@: makejournal.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ makejournal.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
+
+mdig@EXEEXT@: mdig.@O@ ${BIND9DEPLIBS} ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ mdig.@O@ \
+		${BIND9LIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
 
 distclean::
 	rm -f headerdep_test.sh

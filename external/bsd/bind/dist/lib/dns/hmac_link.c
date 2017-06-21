@@ -1,7 +1,7 @@
-/*	$NetBSD: hmac_link.c,v 1.9 2015/12/17 04:00:43 christos Exp $	*/
+/*	$NetBSD: hmac_link.c,v 1.9.8.1 2017/06/21 18:03:43 snj Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -48,16 +48,20 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
+#include <pk11/site.h>
+
 #include <dst/result.h>
 
 #include "dst_internal.h"
 #include "dst_parse.h"
 
+#ifndef PK11_MD5_DISABLE
 static isc_result_t hmacmd5_fromdns(dst_key_t *key, isc_buffer_t *data);
 
 struct dst_hmacmd5_key {
 	unsigned char key[ISC_MD5_BLOCK_LENGTH];
 };
+#endif
 
 static isc_result_t
 getkeybits(dst_key_t *key, struct dst_private_element *element) {
@@ -70,6 +74,7 @@ getkeybits(dst_key_t *key, struct dst_private_element *element) {
 	return (ISC_R_SUCCESS);
 }
 
+#ifndef PK11_MD5_DISABLE
 static isc_result_t
 hmacmd5_createctx(dst_key_t *key, dst_context_t *dctx) {
 	isc_hmacmd5_t *hmacmd5ctx;
@@ -348,6 +353,7 @@ dst__hmacmd5_init(dst_func_t **funcp) {
 		*funcp = &hmacmd5_functions;
 	return (ISC_R_SUCCESS);
 }
+#endif
 
 static isc_result_t hmacsha1_fromdns(dst_key_t *key, isc_buffer_t *data);
 

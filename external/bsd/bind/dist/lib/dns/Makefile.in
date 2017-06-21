@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -157,6 +157,9 @@ installdirs:
 install:: timestamp installdirs
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_LIBRARY} libdns.@A@ ${DESTDIR}${libdir}
 
+uninstall::
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${libdir}/libdns.@A@
+
 clean distclean::
 	rm -f libdns.@A@ timestamp
 	rm -f gen code.h include/dns/enumtype.h include/dns/enumclass.h
@@ -172,20 +175,21 @@ include: include/dns/enumtype.h include/dns/enumclass.h \
 rdata.@O@: code.h
 
 include/dns/enumtype.h: gen
-	./gen -s ${srcdir} -t > $@
+	./gen -s ${srcdir} -t > $@ || { rm -f $@ ; exit 1; }
 
 include/dns/enumclass.h: gen
-	./gen -s ${srcdir} -c > $@
+	./gen -s ${srcdir} -c > $@ || { rm -f $@ ; exit 1; }
 
 include/dns/rdatastruct.h: gen \
 		${srcdir}/rdata/rdatastructpre.h \
 		${srcdir}/rdata/rdatastructsuf.h
 	./gen -s ${srcdir} -i \
 		-P ${srcdir}/rdata/rdatastructpre.h \
-		-S ${srcdir}/rdata/rdatastructsuf.h > $@
+		-S ${srcdir}/rdata/rdatastructsuf.h > $@ || \
+	{ rm -f $@ ; exit 1; }
 
 code.h:	gen
-	./gen -s ${srcdir} > code.h
+	./gen -s ${srcdir} > code.h || { rm -f $@ ; exit 1; }
 
 gen: gen.c
 	${BUILD_CC} ${BUILD_CFLAGS} -I${top_srcdir}/lib/isc/include \

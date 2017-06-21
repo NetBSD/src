@@ -48,6 +48,20 @@ if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
+echo "I:check repeated recursive lookups of non recurring TTL=0 responses get new values ($n)"
+count=`(
+$DIG +short -p 5300 @10.53.0.3 foo.increment
+$DIG +short -p 5300 @10.53.0.3 foo.increment
+$DIG +short -p 5300 @10.53.0.3 foo.increment
+$DIG +short -p 5300 @10.53.0.3 foo.increment
+$DIG +short -p 5300 @10.53.0.3 foo.increment
+$DIG +short -p 5300 @10.53.0.3 foo.increment
+$DIG +short -p 5300 @10.53.0.3 foo.increment
+) | sort -u | wc -l `
+if [ $count -ne 7 ] ; then echo "I:failed (count=$count)"; ret=1; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
 echo "I:check lookups against TTL=1 records ($n)"
 i=0
 passes=10
@@ -75,4 +89,4 @@ if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

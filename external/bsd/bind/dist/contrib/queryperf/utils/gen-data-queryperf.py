@@ -10,24 +10,15 @@
 #  behaviour with NXdomain) and with domains from a real zone file."
 #
 
-import sys
 import getopt
 import random
 import re
+import string
+import sys
 
-ldh = []
-# Letters
-for i in range(97, 122):
-    ldh.append(chr(i))
-# Digits
-for i in range(48, 57):
-    ldh.append(chr(i))
-# Hyphen
-ldh.append('-')
-
-maxsize=10
-tld='org'
-num=4
+maxsize = 10
+tld = 'org'
+num = 4
 percent_random = 0.3
 gen = None
 zone_file = None
@@ -35,26 +26,40 @@ domains = {}
 domain_ns = r'^([a-z0-9-\.]+)((\s+\d+)?(\s+IN)?|(\s+IN)(\s+\d+)?)\s+NS'
 domain_ns_re = re.compile(domain_ns, re.IGNORECASE)
 
+
 def remove_tld(label, tld):
     if label.endswith('.' + tld + '.'):
-        return label[0:-(1+ len(tld) + 1)]
+        return label[0:-(1 + len(tld) + 1)]
     else:
         return label
 
+
+# characters allowed in a label
+LDH = string.digits + string.ascii_lowercase + "-"
+
+
 def gen_random_label():
+    """
+    Generate a random DNS label.
+
+    Note that this may generate labels that start/end with '-'.
+    """
     label = ""
-    for i in range(gen.randint(1, maxsize)):
-        label = label + gen.choice(ldh)
+    for _ in range(gen.randint(1, maxsize)):
+        label = label + gen.choice(LDH)
     return label
+
 
 def make_domain(label):
     return "www." + label + "." + tld + "     A"
 
+
 def usage():
-    sys.stdout.write("Usage: " + sys.argv[0] + " [-n number] " + \
+    sys.stdout.write("Usage: " + sys.argv[0] + " [-n number] " +
                      "[-p percent-random] [-t TLD]\n")
     sys.stdout.write("       [-m MAXSIZE] [-f zone-file]\n")
-    
+
+
 try:
     optlist, args = getopt.getopt(sys.argv[1:], "hp:f:n:t:m:",
                                   ["help", "percentrandom=", "zonefile=",
@@ -75,13 +80,13 @@ try:
         elif option == "--zonefile" or option == "-f":
             zone_file = str(value)
         else:
-            error("Unknown option " + option)
-except getopt.error, reason:
+            getopt.error("Unknown option " + option)
+except getopt.error as reason:
     sys.stderr.write(sys.argv[0] + ": " + str(reason) + "\n")
     usage()
     sys.exit(1)
-    
-if len(args) <> 0:
+
+if len(args) > 0:
     usage()
     sys.exit(1)
 
@@ -92,22 +97,22 @@ if zone_file:
     while line:
         domain_line = domain_ns_re.match(line)
         if domain_line:
-            print domain_line.group(1)
+            print(domain_line.group(1))
             domain = remove_tld(domain_line.group(1), tld)
             domains[domain] = 1
         line = file.readline()
     file.close()
 if zone_file:
-    domains = domains.keys()
-    if len(domains) == 0:
+    if not domains:
         sys.stderr.write("No domains found in '%s'\n" % zone_file)
         sys.exit(1)
+    domain_names = list(domains.keys())
 for i in range(num):
     if zone_file:
         if gen.random() < percent_random:
             sys.stdout.write(make_domain(gen_random_label()))
         else:
-            sys.stdout.write(make_domain(gen.choice(domains)))
+            sys.stdout.write(make_domain(gen.choice(domain_names)))
     else:
         sys.stdout.write(make_domain(gen_random_label()))
     sys.stdout.write("\n")

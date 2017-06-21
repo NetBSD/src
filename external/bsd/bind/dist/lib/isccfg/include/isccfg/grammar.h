@@ -1,7 +1,7 @@
-/*	$NetBSD: grammar.h,v 1.6 2015/12/17 04:00:46 christos Exp $	*/
+/*	$NetBSD: grammar.h,v 1.6.8.1 2017/06/21 18:03:48 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2011, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -57,6 +57,8 @@
 #define CFG_CLAUSEFLAG_TESTONLY		0x00000040
 /*% A configuration option that was not configured at compile time. */
 #define CFG_CLAUSEFLAG_NOTCONFIGURED	0x00000080
+/*% A option for a experimental feature. */
+#define CFG_CLAUSEFLAG_EXPERIMENTAL	0x00000100
 
 typedef struct cfg_clausedef cfg_clausedef_t;
 typedef struct cfg_tuplefielddef cfg_tuplefielddef_t;

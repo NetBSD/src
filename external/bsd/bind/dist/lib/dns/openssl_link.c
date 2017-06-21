@@ -1,7 +1,7 @@
-/*	$NetBSD: openssl_link.c,v 1.13 2016/05/26 16:49:58 christos Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.13.8.1 2017/06/21 18:03:43 snj Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2012, 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2012, 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,7 +33,6 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id
  */
 #ifdef OPENSSL
 
@@ -60,8 +59,10 @@
 
 static RAND_METHOD *rm = NULL;
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 static isc_mutex_t *locks = NULL;
 static int nlocks;
+#endif
 
 #ifdef USE_ENGINE
 static ENGINE *e = NULL;
@@ -107,6 +108,7 @@ entropy_add(const void *buf, int num, double entropy) {
 #endif
 }
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 static void
 lock_callback(int mode, int type, const char *file, int line) {
 	UNUSED(file);
@@ -117,45 +119,66 @@ lock_callback(int mode, int type, const char *file, int line) {
 		UNLOCK(&locks[type]);
 }
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 static unsigned long
 id_callback(void) {
 	return ((unsigned long)isc_thread_self());
 }
 #endif
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+
+#define FLARG
+#define FILELINE
+#if ISC_MEM_TRACKLINES
+#define FLARG_PASS      , __FILE__, __LINE__
+#else
+#define FLARG_PASS
+#endif
+
+#else
+
+#define FLARG           , const char *file, int line
+#define FILELINE	, __FILE__, __LINE__
+#if ISC_MEM_TRACKLINES
+#define FLARG_PASS      , file, line
+#else
+#define FLARG_PASS
+#endif
+
+#endif
+
 static void *
-mem_alloc(size_t size) {
+mem_alloc(size_t size FLARG) {
 #ifdef OPENSSL_LEAKS
 	void *ptr;
 
 	INSIST(dst__memory_pool != NULL);
-	ptr = isc_mem_allocate(dst__memory_pool, size);
+	ptr = isc__mem_allocate(dst__memory_pool, size FLARG_PASS);
 	return (ptr);
 #else
 	INSIST(dst__memory_pool != NULL);
-	return (isc_mem_allocate(dst__memory_pool, size));
+	return (isc__mem_allocate(dst__memory_pool, size FLARG_PASS));
 #endif
 }
 
 static void
-mem_free(void *ptr) {
+mem_free(void *ptr FLARG) {
 	INSIST(dst__memory_pool != NULL);
 	if (ptr != NULL)
-		isc_mem_free(dst__memory_pool, ptr);
+		isc__mem_free(dst__memory_pool, ptr FLARG_PASS);
 }
 
 static void *
-mem_realloc(void *ptr, size_t size) {
+mem_realloc(void *ptr, size_t size FLARG) {
 #ifdef OPENSSL_LEAKS
 	void *rptr;
 
 	INSIST(dst__memory_pool != NULL);
-	rptr = isc_mem_reallocate(dst__memory_pool, ptr, size);
+	rptr = isc__mem_reallocate(dst__memory_pool, ptr, size FLARG_PASS);
 	return (rptr);
 #else
 	INSIST(dst__memory_pool != NULL);
-	return (isc_mem_reallocate(dst__memory_pool, ptr, size));
+	return (isc__mem_reallocate(dst__memory_pool, ptr, size FLARG_PASS));
 #endif
 }
 
@@ -175,21 +198,21 @@ dst__openssl_init(const char *engine) {
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 #endif
 	CRYPTO_set_mem_functions(mem_alloc, mem_realloc, mem_free);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	nlocks = CRYPTO_num_locks();
-	locks = mem_alloc(sizeof(isc_mutex_t) * nlocks);
+	locks = mem_alloc(sizeof(isc_mutex_t) * nlocks FILELINE);
 	if (locks == NULL)
 		return (ISC_R_NOMEMORY);
 	result = isc_mutexblock_init(locks, nlocks);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_mutexalloc;
 	CRYPTO_set_locking_callback(lock_callback);
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	CRYPTO_set_id_callback(id_callback);
 #endif
 
 	ERR_load_crypto_strings();
 
-	rm = mem_alloc(sizeof(RAND_METHOD));
+	rm = mem_alloc(sizeof(RAND_METHOD) FILELINE);
 	if (rm == NULL) {
 		result = ISC_R_NOMEMORY;
 		goto cleanup_mutexinit;
@@ -255,20 +278,29 @@ dst__openssl_init(const char *engine) {
 	if (e != NULL)
 		ENGINE_free(e);
 	e = NULL;
-	mem_free(rm);
+	mem_free(rm FILELINE);
 	rm = NULL;
 #endif
  cleanup_mutexinit:
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	CRYPTO_set_locking_callback(NULL);
 	DESTROYMUTEXBLOCK(locks, nlocks);
  cleanup_mutexalloc:
-	mem_free(locks);
+	mem_free(locks FILELINE);
 	locks = NULL;
+#endif
 	return (result);
 }
 
 void
 dst__openssl_destroy(void) {
+#if !defined(LIBRESSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+	OPENSSL_cleanup();
+	if (rm != NULL) {
+		mem_free(rm FILELINE);
+		rm = NULL;
+	}
+#else
 	/*
 	 * Sequence taken from apps_shutdown() in <apps/apps.h>.
 	 */
@@ -276,7 +308,7 @@ dst__openssl_destroy(void) {
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 		RAND_cleanup();
 #endif
-		mem_free(rm);
+		mem_free(rm FILELINE);
 		rm = NULL;
 	}
 #if (OPENSSL_VERSION_NUMBER >= 0x00907000L)
@@ -308,16 +340,18 @@ dst__openssl_destroy(void) {
 	if (locks != NULL) {
 		CRYPTO_set_locking_callback(NULL);
 		DESTROYMUTEXBLOCK(locks, nlocks);
-		mem_free(locks);
+		mem_free(locks FILELINE);
 		locks = NULL;
 	}
+#endif
 }
 
 static isc_result_t
 toresult(isc_result_t fallback) {
 	isc_result_t result = fallback;
 	unsigned long err = ERR_get_error();
-#ifdef HAVE_OPENSSL_ECDSA
+#if defined(HAVE_OPENSSL_ECDSA) && \
+    defined(ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED)
 	int lib = ERR_GET_LIB(err);
 #endif
 	int reason = ERR_GET_REASON(err);
@@ -331,7 +365,8 @@ toresult(isc_result_t fallback) {
 		result = ISC_R_NOMEMORY;
 		break;
 	default:
-#ifdef HAVE_OPENSSL_ECDSA
+#if defined(HAVE_OPENSSL_ECDSA) && \
+    defined(ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED)
 		if (lib == ERR_R_ECDSA_LIB &&
 		    reason == ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED) {
 			result = ISC_R_NOENTROPY;
