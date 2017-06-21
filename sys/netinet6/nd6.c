@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.233 2017/06/16 02:24:54 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.234 2017/06/21 09:05:31 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.233 2017/06/16 02:24:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.234 2017/06/21 09:05:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2421,43 +2421,6 @@ nd6_need_cache(struct ifnet *ifp)
 	default:
 		return 0;
 	}
-}
-
-/*
- * Add pernament ND6 link-layer record for given
- * interface address.
- *
- * Very similar to IPv4 arp_ifinit(), but:
- * 1) IPv6 DAD is performed in different place
- * 2) It is called by IPv6 protocol stack in contrast to
- * arp_ifinit() which is typically called in SIOCSIFADDR
- * driver ioctl handler.
- *
- */
-int
-nd6_add_ifa_lle(struct in6_ifaddr *ia)
-{
-	struct ifnet *ifp;
-	struct llentry *ln;
-
-	ifp = ia->ia_ifa.ifa_ifp;
-	if (nd6_need_cache(ifp) == 0)
-		return 0;
-	ia->ia_ifa.ifa_rtrequest = nd6_rtrequest;
-	ia->ia_ifa.ifa_flags |= RTF_CONNECTED;
-
-	IF_AFDATA_WLOCK(ifp);
-	ln = lla_create(LLTABLE6(ifp), LLE_IFADDR | LLE_EXCLUSIVE,
-	    sin6tosa(&ia->ia_addr));
-	IF_AFDATA_WUNLOCK(ifp);
-	if (ln == NULL)
-		return ENOBUFS;
-
-	ln->la_expire = 0;  /* for IPv6 this means permanent */
-	ln->ln_state = ND6_LLINFO_REACHABLE;
-
-	LLE_WUNLOCK(ln);
-	return 0;
 }
 
 /*

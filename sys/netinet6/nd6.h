@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.83 2017/02/22 03:02:55 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.h,v 1.84 2017/06/21 09:05:31 ozaki-r Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -447,7 +447,6 @@ void nd6_cache_lladdr(struct ifnet *, struct in6_addr *,
 int nd6_sysctl(int, void *, size_t *, void *, size_t);
 int nd6_need_cache(struct ifnet *);
 void nd6_llinfo_release_pkts(struct llentry *, struct ifnet *);
-int nd6_add_ifa_lle(struct in6_ifaddr *);
 void nd6_rem_ifa_lle(struct in6_ifaddr *);
 
 /* nd6_nbr.c */

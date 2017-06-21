@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.21 2017/06/19 10:57:37 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.22 2017/06/21 09:05:31 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -99,8 +99,8 @@ setup_src_server()
 	# Sanity check
 	$DEBUG && rump.ifconfig shmif0
 	$DEBUG && rump.ndp -n -a
-	atf_check -s exit:0 -o ignore rump.ndp -n $IP6SRC
-	atf_check -s not-exit:0 -o ignore -e ignore rump.ndp -n $IP6DST
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' rump.ndp -n $IP6SRC
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' rump.ndp -n $IP6DST
 }
 
 get_timeout()
@@ -126,7 +126,7 @@ ndp_cache_expiration_body()
 	atf_check -s exit:0 -o ignore rump.ping6 -n -X $TIMEOUT -c 1 $IP6DST
 
 	$DEBUG && rump.ndp -n -a
-	atf_check -s exit:0 -o match:'permanent' rump.ndp -n $IP6SRC
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' rump.ndp -n $IP6SRC
 	# Should be cached
 	atf_check -s exit:0 -o not-match:'permanent' rump.ndp -n $IP6DST
 
@@ -135,7 +135,7 @@ ndp_cache_expiration_body()
 	atf_check -s exit:0 sleep $(($timeout + 1))
 
 	$DEBUG && rump.ndp -n -a
-	atf_check -s exit:0 -o match:'permanent' rump.ndp -n $IP6SRC
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' rump.ndp -n $IP6SRC
 	# Expired but remains until GC sweaps it (1 day)
 	atf_check -s exit:0 -o match:"$ONEDAYISH" rump.ndp -n $IP6DST
 
@@ -159,9 +159,6 @@ ndp_commands_body()
 	setup_src_server
 
 	export RUMP_SERVER=$SOCKSRC
-
-	# We can delete the entry for the interface's IP address
-	atf_check -s exit:0 -o match:"$IP6SRC" rump.ndp -d $IP6SRC
 
 	# Add and delete a static entry
 	$DEBUG && rump.ndp -n -a
@@ -229,8 +226,9 @@ ndp_cache_overwriting_body()
 	export RUMP_SERVER=$SOCKSRC
 
 	# Cannot overwrite a permanent cache
-	atf_check -s not-exit:0 -e ignore rump.ndp -s $IP6SRC b2:a0:20:00:00:ff
+	atf_check -s exit:0 rump.ndp -s $IP6SRC b2:a0:20:00:00:ff
 	$DEBUG && rump.ndp -n -a
+	atf_check -s not-exit:0 -e ignore rump.ndp -s $IP6SRC b2:a0:20:00:00:fe
 
 	atf_check -s exit:0 -o ignore rump.ping6 -n -X $TIMEOUT -c 1 $IP6DST
 	$DEBUG && rump.ndp -n -a
