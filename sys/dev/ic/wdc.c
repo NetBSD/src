@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.283.2.7 2017/06/20 20:58:22 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.283.2.8 2017/06/21 19:21:25 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.7 2017/06/20 20:58:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.8 2017/06/21 19:21:25 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -873,7 +873,6 @@ wdcintr(void *arg)
 	}
 
 	ATADEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
-	KASSERT(chp->ch_queue->queue_active == 1);
 	xfer = ata_queue_get_active_xfer(chp->ch_queue);
 	KASSERT(xfer != NULL);
 #ifdef DIAGNOSTIC
