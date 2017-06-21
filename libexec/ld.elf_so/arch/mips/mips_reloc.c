@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.67 2017/06/20 13:24:03 joerg Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.68 2017/06/21 12:34:01 joerg Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.67 2017/06/20 13:24:03 joerg Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.68 2017/06/21 12:34:01 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -350,7 +350,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			/* 32-bit PC-relative reference */
 			const Elf_Sym *def2;
 			const size_t rlen =
-			    ELF_R_NXTTYPE_64_P(r_type)
+			    ELF_R_NXTTYPE_64_P(ELF_R_TYPE(rel->r_info))
 				? sizeof(Elf_Sxword)
 				: sizeof(Elf_Sword);
 			Elf_Sxword old = load_ptr(where, rlen);
