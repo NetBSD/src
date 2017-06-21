@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.340 2017/04/08 13:50:23 mlelstv Exp $	*/
+/*	$NetBSD: cd.c,v 1.340.6.1 2017/06/21 18:18:55 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.340 2017/04/08 13:50:23 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.340.6.1 2017/06/21 18:18:55 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,7 +354,7 @@ cddetach(device_t self, int flags)
 	}
 
 	/* kill any pending restart */
-	callout_stop(&cd->sc_callout);
+	callout_halt(&cd->sc_callout, NULL);
 
 	dk_drain(dksc);
 

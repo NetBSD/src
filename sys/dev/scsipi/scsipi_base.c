@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.175 2016/12/22 11:19:21 mlelstv Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.175.8.1 2017/06/21 18:18:55 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.175 2016/12/22 11:19:21 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.175.8.1 2017/06/21 18:18:55 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -2400,9 +2400,10 @@ scsipi_target_detach(struct scsipi_channel *chan, int target, int lun,
     int flags)
 {
 	struct scsipi_periph *periph;
+	device_t tdev;
 	int ctarget, mintarget, maxtarget;
 	int clun, minlun, maxlun;
-	int error;
+	int error = 0;
 
 	if (target == -1) {
 		mintarget = 0;
@@ -2426,20 +2427,33 @@ scsipi_target_detach(struct scsipi_channel *chan, int target, int lun,
 		maxlun = lun + 1;
 	}
 
+	/* for config_detach */
+	KERNEL_LOCK(1, curlwp);
+
+	mutex_enter(chan_mtx(chan));
 	for (ctarget = mintarget; ctarget < maxtarget; ctarget++) {
 		if (ctarget == chan->chan_id)
 			continue;
 
 		for (clun = minlun; clun < maxlun; clun++) {
-			periph = scsipi_lookup_periph(chan, ctarget, clun);
+			periph = scsipi_lookup_periph_locked(chan, ctarget, clun);
 			if (periph == NULL)
 				continue;
-			error = config_detach(periph->periph_dev, flags);
+			tdev = periph->periph_dev;
+			mutex_exit(chan_mtx(chan));
+			error = config_detach(tdev, flags);
 			if (error)
-				return error;
+				goto out;
+			mutex_enter(chan_mtx(chan));
+			KASSERT(scsipi_lookup_periph_locked(chan, ctarget, clun) == NULL);
 		}
 	}
-	return 0;
+	mutex_exit(chan_mtx(chan));
+
+out:
+	KERNEL_UNLOCK_ONE(curlwp);
+
+	return error;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.324 2017/04/10 18:20:43 jdolecek Exp $	*/
+/*	$NetBSD: sd.c,v 1.324.6.1 2017/06/21 18:18:55 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.324 2017/04/10 18:20:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.324.6.1 2017/06/21 18:18:55 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -385,7 +385,7 @@ sddetach(device_t self, int flags)
 	}
 
 	/* kill any pending restart */
-	callout_stop(&sd->sc_callout);
+	callout_halt(&sd->sc_callout, NULL);
 
 	dk_drain(dksc);
 

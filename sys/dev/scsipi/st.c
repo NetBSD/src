@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.230 2016/11/20 15:37:19 mlelstv Exp $ */
+/*	$NetBSD: st.c,v 1.230.8.1 2017/06/21 18:18:55 snj Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.230 2016/11/20 15:37:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.230.8.1 2017/06/21 18:18:55 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -440,7 +440,7 @@ stdetach(device_t self, int flags)
 	cmaj = cdevsw_lookup_major(&st_cdevsw);
 
 	/* kill any pending restart */
-	callout_stop(&st->sc_callout);
+	callout_halt(&st->sc_callout, NULL);
 
 	mutex_enter(chan_mtx(chan));
 
