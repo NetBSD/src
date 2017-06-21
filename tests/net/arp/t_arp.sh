@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.24 2017/06/19 10:57:37 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.25 2017/06/21 03:10:42 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -115,12 +115,15 @@ setup_dst_server()
 
 setup_src_server()
 {
-	local keep=$1
+	local keep=${1:-0}
 
 	export RUMP_SERVER=$SOCKSRC
 
 	# Adjust ARP parameters
-	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.arp.keep=$keep
+	if [ $keep != 0 ]; then
+		atf_check -s exit:0 -o ignore \
+		    rump.sysctl -w net.inet.arp.keep=$keep
+	fi
 
 	# Setup an interface
 	rump_server_add_iface $SOCKSRC shmif0 bus1
@@ -309,14 +312,13 @@ arp_garp_body()
 
 arp_cache_overwriting_body()
 {
-	local arp_keep=5
 	local bonus=2
 
 	rump_server_start $SOCKSRC
 	rump_server_start $SOCKDST
 
 	setup_dst_server
-	setup_src_server $arp_keep
+	setup_src_server
 
 	export RUMP_SERVER=$SOCKSRC
 
@@ -366,7 +368,6 @@ make_pkt_str_garp()
 
 test_proxy_arp()
 {
-	local arp_keep=5
 	local opts= title= flags=
 	local type=$1
 
@@ -374,7 +375,7 @@ test_proxy_arp()
 	rump_server_start $SOCKDST tap
 
 	setup_dst_server
-	setup_src_server $arp_keep
+	setup_src_server
 
 	export RUMP_SERVER=$SOCKDST
 	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.ip.forwarding=1
@@ -480,14 +481,13 @@ arp_proxy_arp_pubproxy_body()
 
 arp_link_activation_body()
 {
-	local arp_keep=5
 	local bonus=2
 
 	rump_server_start $SOCKSRC
 	rump_server_start $SOCKDST
 
 	setup_dst_server
-	setup_src_server $arp_keep
+	setup_src_server
 
 	# flush old packets
 	extract_new_packets bus1 > ./out
@@ -520,14 +520,13 @@ arp_link_activation_body()
 
 arp_static_body()
 {
-	local arp_keep=5
 	local macaddr_src=
 
 	rump_server_start $SOCKSRC
 	rump_server_start $SOCKDST
 
 	setup_dst_server
-	setup_src_server $arp_keep
+	setup_src_server
 
 	macaddr_src=$(get_macaddr $SOCKSRC shmif0)
 
@@ -608,7 +607,6 @@ arp_rtm_head()
 
 arp_rtm_body()
 {
-	local arp_keep=5
 	local macaddr_src= macaddr_dst=
 	local file=./tmp
 	local pid= str=
@@ -617,7 +615,7 @@ arp_rtm_body()
 	rump_server_start $SOCKDST
 
 	setup_dst_server
-	setup_src_server $arp_keep
+	setup_src_server
 
 	macaddr_src=$(get_macaddr $SOCKSRC shmif0)
 	macaddr_dst=$(get_macaddr $SOCKDST shmif0)
