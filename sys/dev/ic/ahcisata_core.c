@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.15 2017/06/20 20:58:22 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.16 2017/06/21 19:38:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.15 2017/06/20 20:58:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.16 2017/06/21 19:38:42 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -577,8 +577,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 		if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
 			continue;
 		if ((active & (1 << slot)) == 0) {
-			xfer = ata_queue_hwslot_to_xfer(chp->ch_queue,
-			    slot);
+			xfer = ata_queue_hwslot_to_xfer(chp, slot);
 			xfer->c_intr(chp, xfer, 0);
 		}
 	}
@@ -608,8 +607,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 			if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
 				continue;
 			if ((active & (1 << slot)) == 1) {
-				xfer = ata_queue_hwslot_to_xfer(chp->ch_queue,
-				    slot);
+				xfer = ata_queue_hwslot_to_xfer(chp, slot);
 				xfer->c_intr(chp, xfer, is);
 			}
 		}

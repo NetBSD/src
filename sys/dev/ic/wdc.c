@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.283.2.8 2017/06/21 19:21:25 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.283.2.9 2017/06/21 19:38:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.8 2017/06/21 19:21:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.9 2017/06/21 19:38:43 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -873,7 +873,7 @@ wdcintr(void *arg)
 	}
 
 	ATADEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
-	xfer = ata_queue_get_active_xfer(chp->ch_queue);
+	xfer = ata_queue_get_active_xfer(chp);
 	KASSERT(xfer != NULL);
 #ifdef DIAGNOSTIC
 	if (xfer->c_chp != chp) {
@@ -931,7 +931,7 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 	 * if the current command is on an ATAPI device, issue a
 	 * ATAPI_SOFT_RESET
 	 */
-	xfer = ata_queue_get_active_xfer(chp->ch_queue);
+	xfer = ata_queue_get_active_xfer(chp);
 	if (xfer && xfer->c_chp == chp && (xfer->c_flags & C_ATAPI)) {
 		wdccommandshort(chp, xfer->c_drive, ATAPI_SOFT_RESET);
 		if (flags & AT_WAIT)
@@ -1204,7 +1204,7 @@ __wdcwait(struct ata_channel *chp, int mask, int bits, int timeout)
 	if (!cold && xtime > WDCNDELAY_DEBUG) {
 		struct ata_xfer *xfer;
 
-		xfer = ata_queue_get_active_xfer(chp->ch_queue);
+		xfer = ata_queue_get_active_xfer(chp);
 		if (xfer == NULL)
 			printf("%s channel %d: warning: busy-wait took %dus\n",
 			    device_xname(chp->ch_atac->atac_dev),
@@ -1812,7 +1812,7 @@ static void
 __wdcerror(struct ata_channel *chp, const char *msg)
 {
 	struct atac_softc *atac = chp->ch_atac;
-	struct ata_xfer *xfer = ata_queue_get_active_xfer(chp->ch_queue);
+	struct ata_xfer *xfer = ata_queue_get_active_xfer(chp);
 
 	if (xfer == NULL)
 		aprint_error("%s:%d: %s\n", device_xname(atac->atac_dev),

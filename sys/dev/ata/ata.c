@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.12 2017/06/20 20:58:22 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.13 2017/06/21 19:38:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.12 2017/06/20 20:58:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.13 2017/06/21 19:38:43 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -196,9 +196,12 @@ ata_queue_reset(struct ata_queue *chq)
 }
 
 struct ata_xfer *
-ata_queue_hwslot_to_xfer(struct ata_queue *chq, int hwslot)
+ata_queue_hwslot_to_xfer(struct ata_channel *chp, int hwslot)
 {
-	struct ata_xfer *xfer;
+	struct ata_queue *chq = chp->ch_queue;
+	struct ata_xfer *xfer = NULL;
+
+	mutex_enter(&chp->ch_lock);
 
 	KASSERT(hwslot < chq->queue_openings);
 	KASSERT((chq->active_xfers_used & __BIT(hwslot)) != 0);
@@ -206,11 +209,16 @@ ata_queue_hwslot_to_xfer(struct ata_queue *chq, int hwslot)
 	/* Usually the first entry will be the one */
 	TAILQ_FOREACH(xfer, &chq->active_xfers, c_activechain) {
 		if (xfer->c_slot == hwslot)
-			return xfer;
+			break;
 	}
 
-	panic("%s: xfer with slot %d not found (active %x)", __func__, hwslot,
-	    chq->active_xfers_used);
+	mutex_exit(&chp->ch_lock);
+
+	KASSERTMSG((xfer != NULL),
+	    "%s: xfer with slot %d not found (active %x)", __func__,
+	    hwslot, chq->active_xfers_used);
+
+	return xfer;
 }
 
 /*
@@ -220,10 +228,18 @@ ata_queue_hwslot_to_xfer(struct ata_queue *chq, int hwslot)
  * is preferred in all NCQ cases.
  */
 struct ata_xfer *
-ata_queue_get_active_xfer(struct ata_queue *chq)
+ata_queue_get_active_xfer(struct ata_channel *chp)
 {
-	KASSERT(chq->queue_active <= 1);
-	return TAILQ_FIRST(&chq->active_xfers);
+	struct ata_xfer *xfer = NULL;
+
+	mutex_enter(&chp->ch_lock);
+
+	KASSERT(chp->ch_queue->queue_active <= 1);
+	xfer = TAILQ_FIRST(&chp->ch_queue->active_xfers);
+
+	mutex_exit(&chp->ch_lock);
+
+	return xfer;
 }
 
 static void
