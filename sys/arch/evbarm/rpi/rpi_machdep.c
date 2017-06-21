@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.70.8.1 2017/06/21 17:43:33 snj Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.70.8.2 2017/06/21 17:50:08 snj Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.70.8.1 2017/06/21 17:43:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.70.8.2 2017/06/21 17:50:08 snj Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.70.8.1 2017/06/21 17:43:33 snj Exp
 #include <arm/broadcom/bcm2835var.h>
 #include <arm/broadcom/bcm2835_pmvar.h>
 #include <arm/broadcom/bcm2835_mbox.h>
+#include <arm/broadcom/bcm2835_gpio_subr.h>
 #include <arm/broadcom/bcm_amba.h>
 
 #include <evbarm/rpi/vcio.h>
@@ -180,6 +181,7 @@ static struct plcom_instance rpi_pi = {
 static struct __aligned(16) {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_clockrate	vbt_uartclockrate;
+	struct vcprop_tag_boardrev	vbt_boardrev;
 	struct vcprop_tag end;
 } vb_uart = {
 	.vb_hdr = {
@@ -193,6 +195,13 @@ static struct __aligned(16) {
 			.vpt_rcode = VCPROPTAG_REQUEST
 		},
 		.id = VCPROP_CLK_UART
+	},
+	.vbt_boardrev = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_BOARDREVISION,
+			.vpt_len = VCPROPTAG_LEN(vb_uart.vbt_boardrev),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
 	},
 	.end = {
 		.vpt_tag = VCPROPTAG_NULL
@@ -426,7 +435,20 @@ rpi_uartinit(void)
 
 	bcm2835_mbox_read(iot, ioh, BCMMBOX_CHANARM2VC, &res);
 
-	cpu_dcache_inv_range((vaddr_t)&vb, sizeof(vb));
+	cpu_dcache_inv_range((vaddr_t)&vb_uart, sizeof(vb_uart));
+
+	if (vcprop_tag_success_p(&vb_uart.vbt_boardrev.tag) &&
+	    (vb_uart.vbt_boardrev.rev & VCPROP_REV_ENCFLAG) != 0) {
+		const uint32_t rev = vb_uart.vbt_boardrev.rev;
+		switch (__SHIFTOUT(rev, VCPROP_REV_MODEL)) {
+		case RPI_MODEL_B_PI3:
+		case RPI_MODEL_ZERO_W:
+			/* Enable UART0 (PL011) on GPIO header */
+			bcm2835gpio_function_select(14, BCM2835_GPIO_ALT0);
+			bcm2835gpio_function_select(15, BCM2835_GPIO_ALT0);
+			break;
+		}
+	}
 
 	if (vcprop_tag_success_p(&vb_uart.vbt_uartclockrate.tag))
 		uart_clk = vb_uart.vbt_uartclockrate.rate;
