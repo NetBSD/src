@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.123.4.7 2017/06/20 20:58:23 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.123.4.8 2017/06/21 22:34:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.7 2017/06/20 20:58:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.8 2017/06/21 22:34:46 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -224,9 +224,11 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 		    device_xname(atac->atac_dev), chp->ch_channel, drive,
 		    xfer->c_ata_c.r_error), DEBUG_PROBE);
 		rv = -1;
-		goto out;
+		goto out_xfer;
 	}
 	chp->ch_drive[drive].state = 0;
+
+	ata_free_xfer(chp, xfer);
 
 	(void)bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_status], 0);
 
@@ -241,8 +243,10 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 		goto out;
 	}
 	rv = 0;
-
 out:
+	return rv;
+
+out_xfer:
 	ata_free_xfer(chp, xfer);
 	return rv;
 }
