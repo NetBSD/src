@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.19 2016/11/21 00:54:21 ozaki-r Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.20 2017/06/21 07:39:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.19 2016/11/21 00:54:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.20 2017/06/21 07:39:04 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -345,7 +345,8 @@ xc__highpri_intr(void *dummy)
 	void *arg1, *arg2;
 	xcfunc_t func;
 
-	KASSERT(!cpu_intr_p());
+	KASSERTMSG(!cpu_intr_p(), "high priority xcall for function %p",
+	    xc->xc_func);
 	/*
 	 * Lock-less fetch of function and its arguments.
 	 * Safe since it cannot change at this point.
