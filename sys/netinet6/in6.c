@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.245 2017/04/28 05:56:33 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.246 2017/06/21 09:05:31 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.245 2017/04/28 05:56:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.246 2017/06/21 09:05:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1298,10 +1298,11 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			goto cleanup;
 	}
 
-	/* Add local address to lltable, if necessary (ex. on p2p link). */
-	error = nd6_add_ifa_lle(ia);
-	if (error != 0)
-		goto cleanup;
+	if (nd6_need_cache(ifp)) {
+		/* XXX maybe unnecessary */
+		ia->ia_ifa.ifa_rtrequest = nd6_rtrequest;
+		ia->ia_ifa.ifa_flags |= RTF_CONNECTED;
+	}
 
 	/*
 	 * Perform DAD, if needed.

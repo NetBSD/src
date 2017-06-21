@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.25 2017/06/21 03:10:42 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.26 2017/06/21 09:05:31 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -134,8 +134,8 @@ setup_src_server()
 	# Sanity check
 	$DEBUG && rump.ifconfig shmif0
 	$DEBUG && rump.arp -n -a
-	atf_check -s exit:0 -o ignore rump.arp -n $IP4SRC
-	atf_check -s not-exit:0 -e ignore rump.arp -n $IP4DST
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4SRC
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4DST
 }
 
 test_cache_expiration()
@@ -156,16 +156,16 @@ test_cache_expiration()
 	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP4DST
 
 	$DEBUG && rump.arp -n -a
-	atf_check -s exit:0 -o ignore rump.arp -n $IP4SRC
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4SRC
 	# Should be cached
 	atf_check -s exit:0 -o ignore rump.arp -n $IP4DST
 
 	atf_check -s exit:0 sleep $(($arp_keep + $bonus))
 
 	$DEBUG && rump.arp -n -a
-	atf_check -s exit:0 -o ignore rump.arp -n $IP4SRC
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4SRC
 	# Should be expired
-	atf_check -s not-exit:0 -e ignore rump.arp -n $IP4DST
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4DST
 }
 
 arp_cache_expiration_5s_body()
@@ -194,9 +194,6 @@ arp_command_body()
 	setup_src_server $arp_keep
 
 	export RUMP_SERVER=$SOCKSRC
-
-	# We can delete the entry for the interface's IP address
-	atf_check -s exit:0 -o ignore rump.arp -d $IP4SRC
 
 	# Add and delete a static entry
 	$DEBUG && rump.arp -n -a
@@ -323,9 +320,10 @@ arp_cache_overwriting_body()
 	export RUMP_SERVER=$SOCKSRC
 
 	# Cannot overwrite a permanent cache
-	atf_check -s not-exit:0 -e match:'File exists' \
-	    rump.arp -s $IP4SRC b2:a0:20:00:00:ff
+	atf_check -s exit:0 rump.arp -s $IP4SRC b2:a0:20:00:00:ff
 	$DEBUG && rump.arp -n -a
+	atf_check -s not-exit:0 -e match:'File exists' \
+	    rump.arp -s $IP4SRC b2:a0:20:00:00:fe
 
 	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP4DST
 	$DEBUG && rump.arp -n -a
