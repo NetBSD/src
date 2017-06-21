@@ -1,4 +1,4 @@
-/* 	$NetBSD: initfini.c,v 1.13 2016/11/26 21:17:06 dholland Exp $	 */
+/* 	$NetBSD: initfini.c,v 1.13.6.1 2017/06/21 17:46:02 snj Exp $	 */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: initfini.c,v 1.13 2016/11/26 21:17:06 dholland Exp $");
+__RCSID("$NetBSD: initfini.c,v 1.13.6.1 2017/06/21 17:46:02 snj Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -58,6 +58,7 @@ __weak_alias(_dlauxinfo,___dlauxinfo)
 static void *__libc_dlauxinfo;
 
 void *___dlauxinfo(void) __pure;
+__weakref_visible void * real_dlauxinfo(void) __weak_reference(_dlauxinfo);
 
 void *
 ___dlauxinfo(void)
@@ -107,7 +108,8 @@ _libc_init(void)
 
 	libc_initialised = 1;
 
-	if (__ps_strings != NULL)
+	/* Only initialize _dlauxinfo for static binaries. */
+	if (__ps_strings != NULL && real_dlauxinfo == ___dlauxinfo)
 		__libc_dlauxinfo = __ps_strings->ps_argvstr +
 		    __ps_strings->ps_nargvstr + __ps_strings->ps_nenvstr + 2;
 
