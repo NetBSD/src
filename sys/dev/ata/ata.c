@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.13 2017/06/21 19:38:43 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.14 2017/06/21 22:34:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.13 2017/06/21 19:38:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.14 2017/06/21 22:34:46 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -129,8 +129,6 @@ static bool atabus_resume(device_t, const pmf_qual_t *);
 static bool atabus_suspend(device_t, const pmf_qual_t *);
 static void atabusconfig_thread(void *);
 
-static void ata_xfer_init(struct ata_xfer *, bool);
-static void ata_xfer_destroy(struct ata_xfer *);
 static void ata_channel_idle(struct ata_channel *);
 
 /*
@@ -859,7 +857,7 @@ int
 ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
     struct ataparams *prms)
 {
-	struct ata_xfer xfer;
+	struct ata_xfer *xfer;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
 	char *tb;
@@ -868,44 +866,50 @@ ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 
 	ATADEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
+	xfer = ata_get_xfer(chp);
+	if (xfer == NULL) {
+		ATADEBUG_PRINT(("%s: no xfer\n", __func__),
+		    DEBUG_FUNCS|DEBUG_PROBE);
+		return CMD_AGAIN;
+	}
+
 	tb = kmem_zalloc(DEV_BSIZE, KM_SLEEP);
 	memset(prms, 0, sizeof(struct ataparams));
-	ata_xfer_init(&xfer, true);
 
 	if (drvp->drive_type == ATA_DRIVET_ATA) {
-		xfer.c_ata_c.r_command = WDCC_IDENTIFY;
-		xfer.c_ata_c.r_st_bmask = WDCS_DRDY;
-		xfer.c_ata_c.r_st_pmask = WDCS_DRQ;
-		xfer.c_ata_c.timeout = 3000; /* 3s */
+		xfer->c_ata_c.r_command = WDCC_IDENTIFY;
+		xfer->c_ata_c.r_st_bmask = WDCS_DRDY;
+		xfer->c_ata_c.r_st_pmask = WDCS_DRQ;
+		xfer->c_ata_c.timeout = 3000; /* 3s */
 	} else if (drvp->drive_type == ATA_DRIVET_ATAPI) {
-		xfer.c_ata_c.r_command = ATAPI_IDENTIFY_DEVICE;
-		xfer.c_ata_c.r_st_bmask = 0;
-		xfer.c_ata_c.r_st_pmask = WDCS_DRQ;
-		xfer.c_ata_c.timeout = 10000; /* 10s */
+		xfer->c_ata_c.r_command = ATAPI_IDENTIFY_DEVICE;
+		xfer->c_ata_c.r_st_bmask = 0;
+		xfer->c_ata_c.r_st_pmask = WDCS_DRQ;
+		xfer->c_ata_c.timeout = 10000; /* 10s */
 	} else {
 		ATADEBUG_PRINT(("ata_get_parms: no disks\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		rv = CMD_ERR;
 		goto out;
 	}
-	xfer.c_ata_c.flags = AT_READ | flags;
-	xfer.c_ata_c.data = tb;
-	xfer.c_ata_c.bcount = DEV_BSIZE;
+	xfer->c_ata_c.flags = AT_READ | flags;
+	xfer->c_ata_c.data = tb;
+	xfer->c_ata_c.bcount = DEV_BSIZE;
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-						&xfer) != ATACMD_COMPLETE) {
+						xfer) != ATACMD_COMPLETE) {
 		ATADEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		rv = CMD_AGAIN;
 		goto out;
 	}
-	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		ATADEBUG_PRINT(("ata_get_parms: ata_c.flags=0x%x\n",
-		    xfer.c_ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
+		    xfer->c_ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
 		rv = CMD_ERR;
 		goto out;
 	}
 	/* if we didn't read any data something is wrong */
-	if ((xfer.c_ata_c.flags & AT_XFDONE) == 0) {
+	if ((xfer->c_ata_c.flags & AT_XFDONE) == 0) {
 		rv = CMD_ERR;
 		goto out;
 	}
@@ -953,35 +957,40 @@ ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 	rv = CMD_OK;
  out:
 	kmem_free(tb, DEV_BSIZE);
-	ata_xfer_destroy(&xfer);
+	ata_free_xfer(chp, xfer);
 	return rv;
 }
 
 int
 ata_set_mode(struct ata_drive_datas *drvp, uint8_t mode, uint8_t flags)
 {
-	struct ata_xfer xfer;
+	struct ata_xfer *xfer;
 	int rv;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
 
 	ATADEBUG_PRINT(("ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
 
-	ata_xfer_init(&xfer, true);
+	xfer = ata_get_xfer(chp);
+	if (xfer == NULL) {
+		ATADEBUG_PRINT(("%s: no xfer\n", __func__),
+		    DEBUG_FUNCS|DEBUG_PROBE);
+		return CMD_AGAIN;
+	}
 
-	xfer.c_ata_c.r_command = SET_FEATURES;
-	xfer.c_ata_c.r_st_bmask = 0;
-	xfer.c_ata_c.r_st_pmask = 0;
-	xfer.c_ata_c.r_features = WDSF_SET_MODE;
-	xfer.c_ata_c.r_count = mode;
-	xfer.c_ata_c.flags = flags;
-	xfer.c_ata_c.timeout = 1000; /* 1s */
+	xfer->c_ata_c.r_command = SET_FEATURES;
+	xfer->c_ata_c.r_st_bmask = 0;
+	xfer->c_ata_c.r_st_pmask = 0;
+	xfer->c_ata_c.r_features = WDSF_SET_MODE;
+	xfer->c_ata_c.r_count = mode;
+	xfer->c_ata_c.flags = flags;
+	xfer->c_ata_c.timeout = 1000; /* 1s */
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-						&xfer) != ATACMD_COMPLETE) {
+						xfer) != ATACMD_COMPLETE) {
 		rv = CMD_AGAIN;
 		goto out;
 	}
-	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		rv = CMD_ERR;
 		goto out;
 	}
@@ -989,7 +998,7 @@ ata_set_mode(struct ata_drive_datas *drvp, uint8_t mode, uint8_t flags)
 	rv = CMD_OK;
 
 out:
-	ata_xfer_destroy(&xfer);
+	ata_free_xfer(chp, xfer);
 	return rv;
 }
 
