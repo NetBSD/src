@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.361 2017/06/20 08:33:11 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.362 2017/06/21 08:40:05 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.361 2017/06/20 08:33:11 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.362 2017/06/21 08:40:05 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -6087,7 +6087,9 @@ vchan_autoconfig(struct audio_softc *sc)
 				    AUMODE_PLAY | AUMODE_PLAY_ALL |
 				    AUMODE_RECORD, &sc->sc_format[0]);
 				if (vc->sc_npfilters > 0 &&
-				    (vc->sc_mpr.s.param.
+				    (vc->sc_mpr.s.param.precision !=
+							sc->sc_precision ||
+				    vc->sc_mpr.s.param.
 					sample_rate != sc->sc_frequency ||
 				    vc->sc_mpr.s.param.
 					 channels != sc->sc_channels))
