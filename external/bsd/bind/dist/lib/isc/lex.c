@@ -1,7 +1,7 @@
-/*	$NetBSD: lex.c,v 1.8 2017/04/13 19:11:20 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.8.4.1 2017/06/21 18:03:45 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2013-2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any

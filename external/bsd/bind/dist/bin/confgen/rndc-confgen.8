@@ -1,6 +1,6 @@
-.\"	$NetBSD: rndc-confgen.8,v 1.7 2016/05/26 16:49:55 christos Exp $
+.\"	$NetBSD: rndc-confgen.8,v 1.7.8.1 2017/06/21 18:03:18 snj Exp $
 .\"
-.\" Copyright (C) 2004, 2005, 2007, 2009, 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004, 2005, 2007, 2009, 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2001, 2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -122,7 +122,7 @@ as directed\&.
 .PP
 \-A \fIalgorithm\fR
 .RS 4
-Specifies the algorithm to use for the TSIG key\&. Available choices are: hmac\-md5, hmac\-sha1, hmac\-sha224, hmac\-sha256, hmac\-sha384 and hmac\-sha512\&. The default is hmac\-md5\&.
+Specifies the algorithm to use for the TSIG key\&. Available choices are: hmac\-md5, hmac\-sha1, hmac\-sha224, hmac\-sha256, hmac\-sha384 and hmac\-sha512\&. The default is hmac\-md5 or if MD5 was disabled hmac\-sha256\&.
 .RE
 .PP
 \-b \fIkeysize\fR
@@ -228,7 +228,7 @@ BIND 9 Administrator Reference Manual\&.
 \fBInternet Systems Consortium, Inc\&.\fR
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2004, 2005, 2007, 2009, 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004, 2005, 2007, 2009, 2013-2016 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2001, 2003 Internet Software Consortium.
 .br

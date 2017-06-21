@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2004, 2007, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2012, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -37,7 +37,8 @@ $rcode2 = "none";
 
 open(FILE1, $file1) || die("open: $file1: $!\n");
 while (<FILE1>) {
-	chomp;
+	~ s/\r\n//g;
+	~ s/\n//g;
 	if (/^;.+status:\s+(\S+).+$/) {
 		$rcode1 = $1;
 	}
@@ -72,7 +73,8 @@ $printed = 0;
 
 open(FILE2, $file2) || die("open: $file2: $!\n");
 while (<FILE2>) {
-	chomp;
+	~ s/\r\n//g;
+	~ s/\n//g;
 	if (/^;.+status:\s+(\S+).+$/) {
 		$rcode2 = $1;
 	}

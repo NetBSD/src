@@ -1,7 +1,7 @@
-/*	$NetBSD: pkcs11-tokens.c,v 1.1.1.5 2015/12/17 03:21:54 christos Exp $	*/
+/*	$NetBSD: pkcs11-tokens.c,v 1.1.1.5.8.1 2017/06/21 18:03:22 snj Exp $	*/
 
 /*
- * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -48,10 +48,13 @@ main(int argc, char *argv[]) {
 	isc_mem_t *mctx = NULL;
 	pk11_context_t pctx;
 
-	while ((c = isc_commandline_parse(argc, argv, ":m:")) != -1) {
+	while ((c = isc_commandline_parse(argc, argv, ":m:v")) != -1) {
 		switch (c) {
 		case 'm':
 			lib_name = isc_commandline_argument;
+			break;
+		case 'v':
+			pk11_verbose_init = ISC_TRUE;
 			break;
 		case ':':
 			fprintf(stderr, "Option -%c requires an operand\n",
@@ -68,7 +71,7 @@ main(int argc, char *argv[]) {
 
 	if (errflg) {
 		fprintf(stderr, "Usage:\n");
-		fprintf(stderr, "\tpkcs11-tokens [-m module]\n");
+		fprintf(stderr, "\tpkcs11-tokens [-v] [-m module]\n");
 		exit(1);
 	}
 
@@ -83,7 +86,7 @@ main(int argc, char *argv[]) {
 	if (lib_name != NULL)
 		pk11_set_lib_name(lib_name);
 
-	result = pk11_get_session(&pctx, OP_ANY, ISC_FALSE, ISC_FALSE,
+	result = pk11_get_session(&pctx, OP_ANY, ISC_TRUE, ISC_FALSE,
 				  ISC_FALSE, NULL, 0);
 	if (result == PK11_R_NORANDOMSERVICE ||
 	    result == PK11_R_NODIGESTSERVICE ||
@@ -91,7 +94,7 @@ main(int argc, char *argv[]) {
 		fprintf(stderr, "Warning: %s\n", isc_result_totext(result));
 		fprintf(stderr, "This HSM will not work with BIND 9 "
 				"using native PKCS#11.\n\n");
-	} else if (result != ISC_R_SUCCESS) {
+	} else if ((result != ISC_R_SUCCESS) && (result != ISC_R_NOTFOUND)) {
 		fprintf(stderr, "Unrecoverable error initializing "
 				"PKCS#11: %s\n", isc_result_totext(result));
 		exit(1);

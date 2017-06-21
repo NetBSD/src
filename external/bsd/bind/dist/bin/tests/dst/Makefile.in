@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2006-2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2010, 2012-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1999-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -22,9 +22,9 @@ top_srcdir =	@top_srcdir@
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	${TEST_INCLUDES} ${DNS_INCLUDES} \
-		${ISC_INCLUDES} @DST_GSSAPI_INC@
+		${ISC_INCLUDES} @DST_OPENSSL_INC@ @DST_GSSAPI_INC@
 
-CDEFINES =	@USE_GSSAPI@
+CDEFINES =	@CRYPTO@ @USE_GSSAPI@
 CWARNINGS =
 
 DNSLIBS =	../../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011-2013, 2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -67,4 +67,4 @@ $PERL ../digcomp.pl knowngood.dig.out.rec dig.out.ns3 || ret=1
 done
 
 echo "I:exit status: $status"
-exit $status
+[ $status -eq 0 ] || exit 1

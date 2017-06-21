@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.13 2016/05/26 16:49:58 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.13.8.1 2017/06/21 18:03:43 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -116,17 +116,17 @@ static unsigned char maptolower[] = {
 #define CONVERTTOASCII(c)
 #define CONVERTFROMASCII(c)
 
-#define INIT_OFFSETS(name, var, default) \
-	if (name->offsets != NULL) \
-		var = name->offsets; \
+#define INIT_OFFSETS(name, var, default_offsets) \
+	if ((name)->offsets != NULL)		 \
+		var = (name)->offsets;		 \
 	else \
-		var = default;
+		var = (default_offsets);
 
-#define SETUP_OFFSETS(name, var, default) \
-	if (name->offsets != NULL) \
-		var = name->offsets; \
+#define SETUP_OFFSETS(name, var, default_offsets) \
+	if ((name)->offsets != NULL)		  \
+		var = (name)->offsets;		  \
 	else { \
-		var = default; \
+		var = (default_offsets);      \
 		set_offsets(name, var, NULL); \
 	}
 
@@ -2381,7 +2381,8 @@ dns_name_settotextfilter(dns_name_totextfilter_t proc) {
 		return (ISC_R_SUCCESS);
 	}
 	if (proc == NULL) {
-		isc_mem_put(thread_key_mctx, mem, sizeof(*mem));
+		if (mem != NULL)
+			isc_mem_put(thread_key_mctx, mem, sizeof(*mem));
 		res = isc_thread_key_setspecific(totext_filter_proc_key, NULL);
 		if (res != 0)
 			result = ISC_R_UNEXPECTED;

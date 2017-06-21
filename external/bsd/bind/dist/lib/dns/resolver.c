@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.30 2017/04/13 19:11:20 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.30.4.1 2017/06/21 18:03:43 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
@@ -1703,6 +1703,7 @@ fctx_query(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
 	if (res->view->peers != NULL) {
 		dns_peer_t *peer = NULL;
 		isc_netaddr_t dstip;
+		isc_boolean_t usetcp = ISC_FALSE;
 		isc_netaddr_fromsockaddr(&dstip, &addrinfo->sockaddr);
 		result = dns_peerlist_peerbyaddr(res->view->peers,
 						 &dstip, &peer);
@@ -1713,6 +1714,9 @@ fctx_query(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
 			result = dns_peer_getquerydscp(peer, &dscp);
 			if (result == ISC_R_SUCCESS)
 				query->dscp = dscp;
+			result = dns_peer_getforcetcp(peer, &usetcp);
+			if (result == ISC_R_SUCCESS && usetcp)
+				query->options |= DNS_FETCHOPT_TCP;
 		}
 	}
 
@@ -4080,7 +4084,7 @@ fctx_join(fetchctx_t *fctx, isc_task_t *task, isc_sockaddr_t *client,
 	  dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
 	  dns_fetch_t *fetch)
 {
-	isc_task_t *clone;
+	isc_task_t *tclone;
 	dns_fetchevent_t *event;
 
 	FCTXTRACE("join");
@@ -4090,13 +4094,13 @@ fctx_join(fetchctx_t *fctx, isc_task_t *task, isc_sockaddr_t *client,
 	 * sender field.  We'll make the fetch the sender when we actually
 	 * send the event.
 	 */
-	clone = NULL;
-	isc_task_attach(task, &clone);
+	tclone = NULL;
+	isc_task_attach(task, &tclone);
 	event = (dns_fetchevent_t *)
-		isc_event_allocate(fctx->res->mctx, clone, DNS_EVENT_FETCHDONE,
+		isc_event_allocate(fctx->res->mctx, tclone, DNS_EVENT_FETCHDONE,
 				   action, arg, sizeof(*event));
 	if (event == NULL) {
-		isc_task_detach(&clone);
+		isc_task_detach(&tclone);
 		return (ISC_R_NOMEMORY);
 	}
 	event->result = DNS_R_SERVFAIL;
@@ -4979,7 +4983,7 @@ validated(isc_task_t *task, isc_event_t *event) {
 			eresult = DNS_R_NCACHENXRRSET;
 	} else if (vevent->sigrdataset != NULL) {
 		result = dns_db_addrdataset(fctx->cache, node, NULL, now,
-					    vevent->sigrdataset, 0,
+					    vevent->sigrdataset, options,
 					    asigrdataset);
 		if (result != ISC_R_SUCCESS &&
 		    result != DNS_R_UNCHANGED)
@@ -5442,8 +5446,8 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, dns_adbaddrinfo_t *addrinfo,
 			 * Mark the rdataset as being prefetch eligible.
 			 */
 			if (rdataset->ttl > fctx->res->view->prefetch_eligible)
-				rdataset->attributes |= DNS_RDATASETATTR_PREFETCH;
-
+				rdataset->attributes |=
+					DNS_RDATASETATTR_PREFETCH;
 
 			/*
 			 * Cache this rdataset/sigrdataset pair as
@@ -9010,7 +9014,7 @@ void
 dns_resolver_whenshutdown(dns_resolver_t *res, isc_task_t *task,
 			  isc_event_t **eventp)
 {
-	isc_task_t *clone;
+	isc_task_t *tclone;
 	isc_event_t *event;
 
 	REQUIRE(VALID_RESOLVER(res));
@@ -9028,9 +9032,9 @@ dns_resolver_whenshutdown(dns_resolver_t *res, isc_task_t *task,
 		event->ev_sender = res;
 		isc_task_send(task, &event);
 	} else {
-		clone = NULL;
-		isc_task_attach(task, &clone);
-		event->ev_sender = clone;
+		tclone = NULL;
+		isc_task_attach(task, &tclone);
+		event->ev_sender = tclone;
 		ISC_LIST_APPEND(res->whenshutdown, event, ev_link);
 	}
 

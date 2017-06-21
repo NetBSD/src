@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2012, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -24,3 +24,9 @@ rm -f ns1/named.memstats ns1/dig.out
 rm -f ns1/named_log ns1/named_pipe ns1/named_sym
 rm -f ns1/named.conf
 rm -rf ns1/named_dir
+rm -f ns1/rndc.out.test*
+rm -f ns1/dig.out.test*
+rm -f ns1/named_vers
+rm -f ns1/named_vers.*
+rm -f ns1/named_unlimited
+rm -f ns1/named_unlimited.*

@@ -1,7 +1,7 @@
-/*	$NetBSD: aes.c,v 1.1.1.4 2014/12/10 03:34:43 christos Exp $	*/
+/*	$NetBSD: aes.c,v 1.1.1.4.8.1 2017/06/21 18:03:45 snj Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,54 +32,72 @@
 #ifdef ISC_PLATFORM_WANTAES
 #if HAVE_OPENSSL_EVP_AES
 
+#include <openssl/opensslv.h>
 #include <openssl/evp.h>
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define EVP_CIPHER_CTX_new() &(_context), EVP_CIPHER_CTX_init(&_context)
+#define EVP_CIPHER_CTX_free(c) RUNTIME_CHECK(EVP_CIPHER_CTX_cleanup(c) == 1)
+#endif
 
 void
 isc_aes128_crypt(const unsigned char *key, const unsigned char *in,
 		 unsigned char *out)
 {
-	EVP_CIPHER_CTX c;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	EVP_CIPHER_CTX _context;
+#endif
+	EVP_CIPHER_CTX *c;
 	int len;
 
-	EVP_CIPHER_CTX_init(&c);
-	RUNTIME_CHECK(EVP_EncryptInit(&c, EVP_aes_128_ecb(), key, NULL) == 1);
-	EVP_CIPHER_CTX_set_padding(&c, 0);
-	RUNTIME_CHECK(EVP_EncryptUpdate(&c, out, &len, in,
+	c = EVP_CIPHER_CTX_new();
+	RUNTIME_CHECK(c != NULL);
+	RUNTIME_CHECK(EVP_EncryptInit(c, EVP_aes_128_ecb(), key, NULL) == 1);
+	EVP_CIPHER_CTX_set_padding(c, 0);
+	RUNTIME_CHECK(EVP_EncryptUpdate(c, out, &len, in,
 					ISC_AES_BLOCK_LENGTH) == 1);
 	RUNTIME_CHECK(len == ISC_AES_BLOCK_LENGTH);
-	RUNTIME_CHECK(EVP_CIPHER_CTX_cleanup(&c) == 1);
+	EVP_CIPHER_CTX_free(c);
 }
 
 void
 isc_aes192_crypt(const unsigned char *key, const unsigned char *in,
 		 unsigned char *out)
 {
-	EVP_CIPHER_CTX c;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	EVP_CIPHER_CTX _context;
+#endif
+	EVP_CIPHER_CTX *c;
 	int len;
 
-	EVP_CIPHER_CTX_init(&c);
-	RUNTIME_CHECK(EVP_EncryptInit(&c, EVP_aes_192_ecb(), key, NULL) == 1);
-	EVP_CIPHER_CTX_set_padding(&c, 0);
-	RUNTIME_CHECK(EVP_EncryptUpdate(&c, out, &len, in,
+	c = EVP_CIPHER_CTX_new();
+	RUNTIME_CHECK(c != NULL);
+	RUNTIME_CHECK(EVP_EncryptInit(c, EVP_aes_192_ecb(), key, NULL) == 1);
+	EVP_CIPHER_CTX_set_padding(c, 0);
+	RUNTIME_CHECK(EVP_EncryptUpdate(c, out, &len, in,
 					ISC_AES_BLOCK_LENGTH) == 1);
 	RUNTIME_CHECK(len == ISC_AES_BLOCK_LENGTH);
-	RUNTIME_CHECK(EVP_CIPHER_CTX_cleanup(&c) == 1);
+	EVP_CIPHER_CTX_free(c);
 }
 
 void
 isc_aes256_crypt(const unsigned char *key, const unsigned char *in,
 		 unsigned char *out)
 {
-	EVP_CIPHER_CTX c;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	EVP_CIPHER_CTX _context;
+#endif
+	EVP_CIPHER_CTX *c;
 	int len;
 
-	EVP_CIPHER_CTX_init(&c);
-	RUNTIME_CHECK(EVP_EncryptInit(&c, EVP_aes_256_ecb(), key, NULL) == 1);
-	EVP_CIPHER_CTX_set_padding(&c, 0);
-	RUNTIME_CHECK(EVP_EncryptUpdate(&c, out, &len, in,
+	c = EVP_CIPHER_CTX_new();
+	RUNTIME_CHECK(c != NULL);
+	RUNTIME_CHECK(EVP_EncryptInit(c, EVP_aes_256_ecb(), key, NULL) == 1);
+	EVP_CIPHER_CTX_set_padding(c, 0);
+	RUNTIME_CHECK(EVP_EncryptUpdate(c, out, &len, in,
 					ISC_AES_BLOCK_LENGTH) == 1);
 	RUNTIME_CHECK(len == ISC_AES_BLOCK_LENGTH);
-	RUNTIME_CHECK(EVP_CIPHER_CTX_cleanup(&c) == 1);
+	EVP_CIPHER_CTX_free(c);
 }
 
 #elif HAVE_OPENSSL_AES

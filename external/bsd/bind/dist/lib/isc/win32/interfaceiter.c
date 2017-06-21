@@ -1,7 +1,7 @@
-/*	$NetBSD: interfaceiter.c,v 1.7 2015/12/17 04:00:45 christos Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.7.8.1 2017/06/21 18:03:47 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007-2009, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -63,15 +63,17 @@ struct isc_interfaceiter {
 	unsigned int		magic;		/* Magic number. */
 	isc_mem_t		*mctx;
 	SOCKET			socket;
-	INTERFACE_INFO		IFData;		/* Current Interface Info */
-	int			numIF;		/* Current Interface count */
+	INTERFACE_INFO		IFData;		/* Current Interface Info. */
+	int			numIF;		/* Current Interface count. */
 	int			v4IF;		/* Number of IPv4 Interfaces */
 	INTERFACE_INFO		*buf4;		/* Buffer for WSAIoctl data. */
 	unsigned int		buf4size;	/* Bytes allocated. */
 	INTERFACE_INFO		*pos4;		/* Current offset in IF List */
-	SOCKET_ADDRESS_LIST	*buf6;
+	SOCKET_ADDRESS_LIST	*buf6;		/* Buffer for WSAIoctl data. */
 	unsigned int		buf6size;	/* Bytes allocated. */
-	unsigned int		pos6;
+	unsigned int		pos6;		/* Which entry to process. */
+	isc_boolean_t		v6loop;		/* See IPv6 loop address. */
+	isc_boolean_t		pos6zero;	/* Done pos6 == 0. */
 	isc_interface_t		current;	/* Current interface data. */
 	isc_result_t		result;		/* Last result code. */
 };
@@ -130,6 +132,8 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 	iter->buf6 = NULL;
 	iter->pos4 = NULL;
 	iter->pos6 = 0;
+	iter->v6loop = ISC_TRUE;
+	iter->pos6zero = ISC_TRUE;
 	iter->buf6size = 0;
 	iter->buf4size = 0;
 	iter->result = ISC_R_FAILURE;
@@ -338,14 +342,15 @@ internal_current(isc_interfaceiter_t *iter) {
 
 	if ((flags & IFF_POINTTOPOINT) != 0) {
 		iter->current.flags |= INTERFACE_F_POINTTOPOINT;
-		sprintf(iter->current.name, "PPP Interface %d", iter->numIF);
+		snprintf(iter->current.name, sizeof(iter->current.name),
+			 "PPP Interface %d", iter->numIF);
 		ifNamed = TRUE;
 	}
 
 	if ((flags & IFF_LOOPBACK) != 0) {
 		iter->current.flags |= INTERFACE_F_LOOPBACK;
-		sprintf(iter->current.name, "Loopback Interface %d",
-			iter->numIF);
+		snprintf(iter->current.name, sizeof(iter->current.name),
+			 "Loopback Interface %d", iter->numIF);
 		ifNamed = TRUE;
 	}
 
@@ -358,7 +363,7 @@ internal_current(isc_interfaceiter_t *iter) {
 	}
 
 	if (ifNamed == FALSE)
-		sprintf(iter->current.name,
+		snprintf(iter->current.name, sizeof(iter->current.name),
 			"TCP/IP Interface %d", iter->numIF);
 
 	/*
@@ -372,32 +377,68 @@ internal_current(isc_interfaceiter_t *iter) {
 
 static isc_result_t
 internal_current6(isc_interfaceiter_t *iter) {
-	BOOL ifNamed = FALSE;
+	SOCKET fd;
 	int i;
 
 	REQUIRE(VALID_IFITER(iter));
-	REQUIRE(iter->pos6 >= 0);
-	REQUIRE(iter->buf6 != 0);
+	REQUIRE(iter->buf6 != NULL);
 
 	memset(&iter->current, 0, sizeof(iter->current));
 	iter->current.af = AF_INET6;
 
-	get_addr(AF_INET6, &iter->current.address,
-		 iter->buf6->Address[iter->pos6].lpSockaddr);
+	if (!iter->pos6zero) {
+		if (iter->pos6 == 0U)
+			iter->pos6zero = ISC_TRUE;
+		get_addr(AF_INET6, &iter->current.address,
+			 iter->buf6->Address[iter->pos6].lpSockaddr);
 
-	/*
-	 * Get interface flags.
-	 */
+		/*
+		 * Set interface flags.
+		 */
 
-	iter->current.flags = INTERFACE_F_UP;
+		iter->current.flags = INTERFACE_F_UP;
 
-	if (ifNamed == FALSE)
-		sprintf(iter->current.name,
-			"TCP/IPv6 Interface %d", iter->pos6 + 1);
+		snprintf(iter->current.name, sizeof(iter->current.name),
+			 "TCP/IPv6 Interface %d", iter->pos6 + 1);
 
-	for (i = 0; i< 16; i++)
-		iter->current.netmask.type.in6.s6_addr[i] = 0xff;
-	iter->current.netmask.family = AF_INET6;
+		for (i = 0; i < 16; i++)
+			iter->current.netmask.type.in6.s6_addr[i] = 0xff;
+		iter->current.netmask.family = AF_INET6;
+		if (IN6_IS_ADDR_LOOPBACK(&iter->current.address.type.in6))
+			   iter->v6loop = ISC_TRUE;
+	} else {
+		/*
+		 * See if we can bind to the ::1 and if so return ::1.
+		 */
+		struct sockaddr_in6 sin6;
+
+		iter->v6loop = ISC_TRUE;	/* So we don't loop forever. */
+
+		fd = socket(AF_INET6, SOCK_DGRAM, 0);
+		if (fd == INVALID_SOCKET)
+			return (ISC_R_IGNORE);
+		memset(&sin6, 0, sizeof(sin6));
+		sin6.sin6_family = AF_INET6;
+		sin6.sin6_addr.s6_addr[15] = 1;
+		if (bind(fd, (struct sockaddr *)&sin6, sizeof(sin6)) < 0) {
+			closesocket(fd);
+			return (ISC_R_IGNORE);
+		}
+		closesocket(fd);
+
+		iter->current.flags = INTERFACE_F_UP | INTERFACE_F_LOOPBACK;
+		snprintf(iter->current.name, sizeof(iter->current.name),
+			"TCP/IPv6 Loopback Interface");
+		for (i = 0; i < 16; i++) {
+			if (i != 15)
+				iter->current.address.type.in6.s6_addr[i] = 0;
+			else
+				iter->current.address.type.in6.s6_addr[i] = 1;
+			iter->current.netmask.type.in6.s6_addr[i] = 0xff;
+		}
+		iter->current.address.family = AF_INET6;
+		iter->current.netmask.family = AF_INET6;
+	}
 	return (ISC_R_SUCCESS);
 }
 
@@ -436,9 +477,10 @@ internal_next(isc_interfaceiter_t *iter) {
 
 static isc_result_t
 internal_next6(isc_interfaceiter_t *iter) {
-	if (iter->pos6 == 0)
+	if (iter->pos6 == 0U && iter->v6loop)
 		return (ISC_R_NOMORE);
-	iter->pos6--;
+	if (iter->pos6 != 0U)
+		iter->pos6--;
 	return (ISC_R_SUCCESS);
 }
 
@@ -455,8 +497,11 @@ isc_interfaceiter_first(isc_interfaceiter_t *iter) {
 
 	REQUIRE(VALID_IFITER(iter));
 
-	if (iter->buf6 != NULL)
+	if (iter->buf6 != NULL) {
 		iter->pos6 = iter->buf6->iAddressCount;
+		iter->v6loop = ISC_FALSE;
+		iter->pos6zero = ISC_TF(iter->pos6 == 0U);
+	}
 	iter->result = ISC_R_SUCCESS;
 	return (isc_interfaceiter_next(iter));
 }
@@ -475,8 +520,9 @@ isc_interfaceiter_next(isc_interfaceiter_t *iter) {
 			if (result != ISC_R_SUCCESS)
 				break;
 			result = internal_current6(iter);
-			if (result != ISC_R_IGNORE)
-				break;
+			if (result == ISC_R_IGNORE)
+				continue;
+			break;
 		} else if (result != ISC_R_SUCCESS)
 			break;
 		result = internal_current(iter);

@@ -1,7 +1,7 @@
-/*	$NetBSD: rrl.h,v 1.4 2015/12/17 04:00:44 christos Exp $	*/
+/*	$NetBSD: rrl.h,v 1.4.8.1 2017/06/21 18:03:44 snj Exp $	*/
 
 /*
- * Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -97,8 +97,8 @@ struct dns__rrl_key {
 	isc_uint32_t	    qname_hash;
 	dns_rdatatype_t	    qtype;
 	isc_uint8_t         qclass;
-	dns_rrl_rtype_t	    rtype   :4; /* 3 bits + sign bit */
-	isc_boolean_t	    ipv6    :1;
+	unsigned int	    rtype   :4; /* dns_rrl_rtype_t */
+	unsigned int	    ipv6    :1;
 };
 union dns_rrl_key {
 	struct dns__rrl_key s;
@@ -122,10 +122,10 @@ struct dns_rrl_entry {
 
 # define DNS_RRL_TS_GEN_BITS	2
 	unsigned int	ts_gen	    :DNS_RRL_TS_GEN_BITS;
-	isc_boolean_t	ts_valid    :1;
+	unsigned int	ts_valid    :1;
 # define DNS_RRL_HASH_GEN_BITS	1
 	unsigned int	hash_gen    :DNS_RRL_HASH_GEN_BITS;
-	isc_boolean_t	logged	    :1;
+	unsigned int	logged	    :1;
 # define DNS_RRL_LOG_BITS	11
 	unsigned int	log_secs    :DNS_RRL_LOG_BITS;
 

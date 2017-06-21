@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -32,5 +32,4 @@ if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
 echo "I:exit status: $status"
-exit $status
-
+[ $status -eq 0 ] || exit 1

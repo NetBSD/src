@@ -71,9 +71,6 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name libdns
     End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libisccc
-    End Project Dependency
 }}}
 
 ###############################################################################
@@ -1350,6 +1347,112 @@ Package=<4>
 
 @END XTESTS
 ###############################################################################
+@IF STESTS
+
+Project: "makejournal"="..\..\bin\tests\win32\makejournal.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "lwtest"="..\..\bin\tests\system\win32\lwtest.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name liblwres
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "bigkey"="..\..\bin\tests\system\win32\bigkey.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "keycreate"="..\..\bin\tests\system\win32\keycreate.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "keydelete"="..\..\bin\tests\system\win32\keydelete.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libdns
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "feature-test"="..\..\bin\tests\system\win32\feature-test.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libisc
+    End Project Dependency
+}}}
+
+@END STESTS
 
 Global:
 

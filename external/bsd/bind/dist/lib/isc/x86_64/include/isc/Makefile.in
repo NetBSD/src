@@ -1,4 +1,4 @@
-# Copyright (C) 2007, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2007, 2012, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -33,4 +33,9 @@ installdirs:
 install:: installdirs
 	for i in ${HEADERS}; do \
 		${INSTALL_DATA} $(srcdir)/$$i ${DESTDIR}${includedir}/isc ; \
+	done
+
+uninstall::
+	for i in ${HEADERS}; do \
+		rm -f ${DESTDIR}${includedir}/isc/$$i ; \
 	done
