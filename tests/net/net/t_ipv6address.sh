@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6address.sh,v 1.13 2017/05/26 01:14:38 ozaki-r Exp $
+#	$NetBSD: t_ipv6address.sh,v 1.14 2017/06/21 09:05:31 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -364,7 +364,7 @@ linklocal_ops_body()
 	    rump.route get -inet6 ${src_if0_lladdr}
 
 	# ndp
-	atf_check -s exit:0 -o match:"${src_if0_lladdr}" \
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' \
 	    rump.ndp -n ${src_if0_lladdr}%shmif0
 
 	# ndp without an interface name (zone index)
