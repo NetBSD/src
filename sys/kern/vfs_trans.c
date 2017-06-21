@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.45.2.1 2017/06/04 20:35:01 bouyer Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.45.2.2 2017/06/21 18:24:26 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.45.2.1 2017/06/04 20:35:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.45.2.2 2017/06/21 18:24:26 snj Exp $");
 
 /*
  * File system transaction operations.
@@ -92,7 +92,10 @@ static LIST_HEAD(fstrans_lwp_head, fstrans_lwp_info) fstrans_fli_head;
 static inline struct mount *fstrans_normalize_mount(struct mount *);
 static void fstrans_lwp_dtor(void *);
 static void fstrans_mount_dtor(struct mount *);
-static struct fstrans_lwp_info *fstrans_get_lwp_info(struct mount *, bool);
+static void fstrans_clear_lwp_info(void);
+static inline struct fstrans_lwp_info *
+    fstrans_get_lwp_info(struct mount *, bool);
+static struct fstrans_lwp_info *fstrans_alloc_lwp_info(struct mount *);
 static inline int _fstrans_start(struct mount *, enum fstrans_lock_type, int);
 static bool grant_lock(const enum fstrans_state, const enum fstrans_lock_type);
 static bool state_change_done(const struct mount *);
@@ -227,39 +230,40 @@ fstrans_unmount(struct mount *mp)
 }
 
 /*
- * Retrieve the per lwp info for this mount allocating if necessary.
+ * Clear mount entries whose mount is gone.
  */
-static struct fstrans_lwp_info *
-fstrans_get_lwp_info(struct mount *mp, bool do_alloc)
+static void
+fstrans_clear_lwp_info(void)
 {
-	struct fstrans_lwp_info *fli, *res;
-	struct fstrans_mount_info *fmi;
+	struct fstrans_lwp_info *fli;
 
 	/*
-	 * Scan our list for a match clearing entries whose mount is gone.
+	 * Scan our list clearing entries whose mount is gone.
 	 */
-	res = NULL;
 	for (fli = lwp_getspecific(lwp_data_key); fli; fli = fli->fli_succ) {
-		if (fli->fli_mount == mp) {
-			KASSERT(res == NULL);
-			res = fli;
-		} else if (fli->fli_mount != NULL &&
+		if (fli->fli_mount != NULL &&
 		    (fli->fli_mount->mnt_iflag & IMNT_GONE) != 0 &&
 		    fli->fli_trans_cnt == 0 && fli->fli_cow_cnt == 0) {
 			fstrans_mount_dtor(fli->fli_mount);
 			fli->fli_mount = NULL;
 		}
 	}
-	if (__predict_true(res != NULL))
-		return res;
+}
 
-	if (! do_alloc)
-		return NULL;
+/*
+ * Allocate and return per lwp info for this mount.
+ */
+static struct fstrans_lwp_info *
+fstrans_alloc_lwp_info(struct mount *mp)
+{
+	struct fstrans_lwp_info *fli;
+	struct fstrans_mount_info *fmi;
 
 	/*
 	 * Try to reuse a cleared entry or allocate a new one.
 	 */
 	for (fli = lwp_getspecific(lwp_data_key); fli; fli = fli->fli_succ) {
+		KASSERT(fli->fli_mount != mp);
 		if (fli->fli_mount == NULL) {
 			KASSERT(fli->fli_trans_cnt == 0);
 			KASSERT(fli->fli_cow_cnt == 0);
@@ -306,6 +310,25 @@ fstrans_get_lwp_info(struct mount *mp, bool do_alloc)
 	mutex_exit(&fstrans_mount_lock);
 
 	return fli;
+}
+
+/*
+ * Retrieve the per lwp info for this mount allocating if necessary.
+ */
+static inline struct fstrans_lwp_info *
+fstrans_get_lwp_info(struct mount *mp, bool do_alloc)
+{
+	struct fstrans_lwp_info *fli;
+
+	/*
+	 * Scan our list for a match.
+	 */
+	for (fli = lwp_getspecific(lwp_data_key); fli; fli = fli->fli_succ) {
+		if (fli->fli_mount == mp)
+			return fli;
+	}
+
+	return (do_alloc ? fstrans_alloc_lwp_info(mp) : NULL);
 }
 
 /*
@@ -420,6 +443,8 @@ fstrans_done(struct mount *mp)
 
 		return;
 	}
+
+	fstrans_clear_lwp_info();
 
 	s = pserialize_read_enter();
 	fmi = mp->mnt_transinfo;
