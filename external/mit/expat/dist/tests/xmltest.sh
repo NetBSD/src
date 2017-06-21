@@ -25,9 +25,9 @@ shopt -s nullglob
 MYDIR="`dirname \"$0\"`"
 cd "$MYDIR"
 MYDIR="`pwd`"
-# XMLWF="`dirname \"$MYDIR\"`/xmlwf/xmlwf"
+#XMLWF="${1:-`dirname \"$MYDIR\"`/xmlwf/xmlwf}"
 XMLWF=/usr/bin/xmlwf
-TS="$MYDIR/XML-Test-Suite"
+TS="$MYDIR"
 # OUTPUT must terminate with the directory separator.
 OUTPUT="$TS/out/"
 # OUTPUT=/home/tmp/xml-testsuite-out/
@@ -98,7 +98,8 @@ for xmldir in ibm/valid/P* \
               sun/invalid ; do
   cd "$TS/xmlconf/$xmldir"
   mkdir -p "$OUTPUT$xmldir"
-  for xmlfile in *.xml ; do
+  for xmlfile in $(ls -1 *.xml | sort -d) ; do
+      [[ -f "$xmlfile" ]] || continue
       RunXmlwfWF "$xmlfile" "$xmldir/"
       UpdateStatus $?
   done
