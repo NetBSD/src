@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.13 2017/06/20 20:58:22 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.14 2017/06/21 19:38:43 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.13 2017/06/20 20:58:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.14 2017/06/21 19:38:43 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -447,7 +447,7 @@ mvsata_nondma_handle(struct mvsata_port *mvport)
 	}
 	KASSERT(quetag < MVSATA_EDMAQ_LEN);
 
-	xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, quetag);
+	xfer = ata_queue_hwslot_to_xfer(chp, quetag);
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
 	KASSERT(xfer->c_intr != NULL);
 	ret = xfer->c_intr(chp, xfer, 1);
@@ -2587,7 +2587,7 @@ mvsata_edma_handle(struct mvsata_port *mvport, struct ata_xfer *xfer1)
 		crpb = mvport->port_crpb + erpqop;
 		quetag = CRPB_CHOSTQUETAG(le16toh(crpb->id));
 
-		xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, quetag);
+		xfer = ata_queue_hwslot_to_xfer(chp, quetag);
 
 		bus_dmamap_sync(mvport->port_dmat, mvport->port_eprd_dmamap,
 		    mvport->port_reqtbl[xfer->c_slot].eprd_offset,
@@ -2720,7 +2720,7 @@ mvsata_edma_rqq_remove(struct mvsata_port *mvport, struct ata_xfer *xfer)
 			continue;
 		}
 
-		rqxfer = ata_queue_hwslot_to_xfer(chp->ch_queue, i);
+		rqxfer = ata_queue_hwslot_to_xfer(chp, i);
 		sc->sc_edma_setup_crqb(mvport, erqqip, rqxfer);
 		erqqip++;
 	}

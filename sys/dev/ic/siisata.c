@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.18 2017/06/20 21:00:47 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.19 2017/06/21 19:38:43 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.18 2017/06/20 21:00:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.19 2017/06/21 19:38:43 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -494,7 +494,7 @@ siisata_intr_port(struct siisata_channel *schp)
 		if (((pss >> slot) & 1) != 0)
 			/* execution is incomplete or unsuccessful, skip for now */
 			continue;
-		xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, slot);
+		xfer = ata_queue_hwslot_to_xfer(chp, slot);
 		if (xfer->c_intr == NULL) {
 			wakeup(schp);
 			continue;
@@ -556,7 +556,7 @@ siisata_intr_port(struct siisata_channel *schp)
 			/* there's nothing executing here, skip */
 			if (((schp->sch_active_slots >> slot) & 1) == 0)
 				continue;
-			xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, slot);
+			xfer = ata_queue_hwslot_to_xfer(chp, slot);
 			if (xfer == NULL)
 				continue;
 			xfer->c_intr(chp, xfer, 0);

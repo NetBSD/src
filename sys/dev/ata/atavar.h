@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.12 2017/06/21 19:21:25 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.13 2017/06/21 19:38:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -516,9 +516,9 @@ struct ata_queue *
 	ata_queue_alloc(uint8_t openings);
 void	ata_queue_free(struct ata_queue *);
 struct ata_xfer *
-	ata_queue_hwslot_to_xfer(struct ata_queue *, int);
+	ata_queue_hwslot_to_xfer(struct ata_channel *, int);
 struct ata_xfer *
-	ata_queue_get_active_xfer(struct ata_queue *);
+	ata_queue_get_active_xfer(struct ata_channel *);
 
 void	ata_delay(int, const char *, int);
 
