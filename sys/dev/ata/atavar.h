@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.13 2017/06/21 19:38:43 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.14 2017/06/21 22:40:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -134,6 +134,7 @@ struct scsipi_xfer;
  */
 struct ata_xfer {
 	struct callout c_timo_callout;	/* timeout callout handle */
+	kcondvar_t c_active;		/* somebody actively waiting for xfer */
 
 #define c_startzero	c_chp
 	/* Channel and drive that are to process the request. */
@@ -490,7 +491,6 @@ struct ata_xfer *ata_get_xfer_ext(struct ata_channel *, bool, int8_t);
 #define ata_get_xfer(chp) ata_get_xfer_ext((chp), true, 0);
 void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
 
-void	ata_activate_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_deactivate_xfer(struct ata_channel *, struct ata_xfer *);
 
 void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);

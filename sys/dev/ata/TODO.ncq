@@ -12,9 +12,6 @@ test crashdump with siisata
 test wd* at umass?, confirm the ata_channel kludge works
 + add detach code (channel detach, free queue)
 
-is ata_exec_xfer() + POLL safe wrt. more outstanding I/Os? why is it waiting
-until xfer is head of queue? also layer violation with the ata_xfer_free() call
-
 test device error handling (currently appears to not work well, at least in NCQ case)
 
 do proper NCQ error recovery (currently not even really attempted)
