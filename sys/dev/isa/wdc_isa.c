@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.59 2012/07/31 15:50:35 bouyer Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.59.28.1 2017/06/21 19:21:25 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.59 2012/07/31 15:50:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.59.28.1 2017/06/21 19:21:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,6 @@ struct wdc_isa_softc {
 	struct	wdc_softc sc_wdcdev;
 	struct	ata_channel *wdc_chanlist[1];
 	struct	ata_channel ata_channel;
-	struct	ata_queue wdc_chqueue;
 	struct	wdc_regs wdc_regs;
 	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
@@ -227,7 +226,7 @@ wdc_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->ata_channel.ch_channel = 0;
 	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
+	sc->ata_channel.ch_queue = ata_queue_alloc(1);
 	wdc_init_shadow_regs(&sc->ata_channel);
 
 	aprint_normal("\n");

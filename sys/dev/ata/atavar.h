@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.11 2017/06/20 20:58:22 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.12 2017/06/21 19:21:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -191,12 +191,14 @@ struct ata_xfer {
 #define ATA_MAX_OPENINGS	31
 
 /* Per-channel queue of ata_xfers */
+#ifndef ATABUS_PRIVATE
+struct ata_queue;
+#else
 struct ata_queue {
 	int8_t queue_flags;		/* flags for this queue */
 #define QF_IDLE_WAIT	0x01    	/* someone wants the controller idle */
 #define QF_NEED_XFER	0x02    	/* someone wants xfer */
 	int8_t queue_active; 		/* number of active transfers */
-#ifdef ATABUS_PRIVATE
 	int8_t queue_openings; 			/* max number of active xfers */
 	TAILQ_HEAD(, ata_xfer) queue_xfer; 	/* queue of pending commands */
 	int queue_freeze; 			/* freeze count for the queue */
@@ -205,8 +207,8 @@ struct ata_queue {
 	uint32_t active_xfers_used;		/* mask of active commands */
 	uint32_t queue_xfers_avail;		/* available xfers mask */
 	struct ata_xfer queue_xfers[0];		/* xfers */
-#endif
 };
+#endif
 
 /* ATA bus instance state information. */
 struct atabus_softc {
