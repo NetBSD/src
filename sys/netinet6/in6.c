@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.247 2017/06/22 09:29:23 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.248 2017/06/22 09:53:25 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.247 2017/06/22 09:29:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.248 2017/06/22 09:53:25 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2274,6 +2274,7 @@ in6_if_down(struct ifnet *ifp)
 {
 
 	in6_if_link_down(ifp);
+	lltable_purge_entries(LLTABLE6(ifp));
 }
 
 void
