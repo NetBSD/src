@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.34 2017/05/25 05:24:57 knakahara Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.34.2.1 2017/06/22 05:36:41 snj Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -560,6 +560,8 @@ struct cryptocap {
 	int		(*cc_freesession) (void*, u_int64_t);
 	void		*cc_karg;		/* callback argument */
 	int		(*cc_kprocess) (void*, struct cryptkop *, int);
+
+	kmutex_t	cc_lock;
 };
 
 /*
@@ -644,4 +646,18 @@ extern int	cuio_getptr(struct uio *, int loc, int *off);
 #endif
 
 #endif /* _KERNEL */
+/*
+ * Locking notes:
+ * + crypto_drivers itself is protected by crypto_drv_mtx (an adaptive lock)
+ * + crypto_drivers[i] and its all members are protected by
+ *   crypto_drivers[i].cc_lock (a spin lock)
+ *       spin lock as crypto_unblock() can be called in interrupt context
+ * + crp_q and crp_kq are procted by crypto_q_mtx (an adaptive lock)
+ * + crp_ret_q, crp_ret_kq and crypto_exit_flag are protected by
+ *   crypto_ret_q_mtx (a spin lock)
+ *       spin lock as crypto_done() can be called in interrupt context
+ *
+ * Locking order:
+ *     - crypto_q_mtx => crypto_drv_mtx => crypto_drivers[i].cc_lock
+ */
 #endif /* _CRYPTO_CRYPTO_H_ */
