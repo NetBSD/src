@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.21 2017/06/22 14:20:46 kamil Exp $	*/
+/*	$NetBSD: misc.c,v 1.22 2017/06/22 23:38:49 kamil Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -6,15 +6,13 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.21 2017/06/22 14:20:46 kamil Exp $");
+__RCSID("$NetBSD: misc.c,v 1.22 2017/06/22 23:38:49 kamil Exp $");
 #endif
 
 
 #include "sh.h"
 #include <ctype.h>	/* for FILECHCONV */
-#ifdef HAVE_LIMITS_H
-# include <limits.h>
-#endif
+#include <limits.h>
 
 #ifndef UCHAR_MAX
 # define UCHAR_MAX	0xFF
