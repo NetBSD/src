@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.18 2017/06/22 23:11:48 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.19 2017/06/22 23:15:05 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -22,9 +22,6 @@
 
 /* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
 #define HAVE_SYS_WAIT_H 1
-
-/* Define if you have <unistd.h>.  */
-#define HAVE_UNISTD_H 1
 
 /* Define if on MINIX.  */
 /* #undef _MINIX */
