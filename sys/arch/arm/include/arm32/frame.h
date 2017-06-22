@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.42 2015/04/17 17:28:33 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.43 2017/06/22 08:44:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -64,7 +64,7 @@ struct switchframe {
 	u_int	sf_sp;
 	u_int	sf_pc;
 };
- 
+
 /*
  * System stack frames.
  */
@@ -240,7 +240,7 @@ void validate_trapframe(trapframe_t *, int);
 #define	ENABLE_ALIGNMENT_FAULTS						\
 	and	r7, r0, #(PSR_MODE)	/* Test for USR32 mode */	;\
 	GET_CURCPU(r4)			/* r4 = cpuinfo */
-	
+
 
 #define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
 	DO_PENDING_SOFTINTS						;\
@@ -423,7 +423,7 @@ LOCK_CAS_DEBUG_LOCALS
  * This should only be used if the processor is not currently in SVC32
  * mode. The processor mode is switched to SVC mode and the trap frame is
  * stored. The SVC lr field is used to store the previous value of
- * lr in SVC mode.  
+ * lr in SVC mode.
  *
  * NOTE: r13 and r14 are stored separately as a work around for the
  * SA110 rev 2 STM^ bug
