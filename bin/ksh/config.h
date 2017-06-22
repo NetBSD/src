@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.31 2017/06/22 23:50:24 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.32 2017/06/22 23:54:13 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -13,9 +13,6 @@
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 /* #undef gid_t */
-
-/* Define if you have a working `mmap' system call.  */
-#define HAVE_MMAP 1
 
 /* Define if your struct stat has st_rdev.  */
 #define HAVE_ST_RDEV 1
