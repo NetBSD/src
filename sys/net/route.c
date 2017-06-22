@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.195 2017/06/22 08:31:54 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.196 2017/06/22 09:56:48 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.195 2017/06/22 08:31:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.196 2017/06/22 09:56:48 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -123,6 +123,9 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.195 2017/06/22 08:31:54 ozaki-r Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
+#if defined(INET) || defined(INET6)
+#include <net/if_llatbl.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -1249,6 +1252,10 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		need_unlock = false;
 		rt_timer_remove_all(rt);
 		rtcache_clear_rtentry(dst->sa_family, rt);
+#if defined(INET) || defined(INET6)
+		if (netmask != NULL)
+			lltable_prefix_free(dst->sa_family, dst, netmask, 0);
+#endif
 		if (ret_nrt == NULL) {
 			/* Adjust the refcount */
 			rt_ref(rt);

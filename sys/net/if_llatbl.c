@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.18 2017/03/03 06:27:20 msaitoh Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.19 2017/06/22 09:56:48 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -486,8 +486,8 @@ lltable_drain(int af)
 }
 
 void
-lltable_prefix_free(int af, struct sockaddr *prefix, struct sockaddr *mask,
-    u_int flags)
+lltable_prefix_free(const int af, const struct sockaddr *prefix,
+    const struct sockaddr *mask, const u_int flags)
 {
 	struct lltable *llt;
 
