@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.50 2017/06/01 02:45:08 chs Exp $ */
+/* $NetBSD: privcmd.c,v 1.51 2017/06/22 22:36:50 chs Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.50 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.51 2017/06/22 22:36:50 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -546,34 +546,20 @@ privcmd_map_obj(struct vm_map *map, vaddr_t start, paddr_t *maddr,
 		return EINVAL;
 	}
 	vm_map_unlock_read(map);
-	/* remove current entries */
-	uvm_unmap1(map, start, start + size, 0);
 
 	obj = kmem_alloc(sizeof(*obj), KM_SLEEP);
 	privcmd_nobjects++;
 	uvm_obj_init(&obj->uobj, &privpgops, true, 1);
-	mutex_enter(obj->uobj.vmobjlock);
 	obj->maddr = maddr;
 	obj->npages = npages;
 	obj->domid = domid;
-	mutex_exit(obj->uobj.vmobjlock);
 	uvmflag = UVM_MAPFLAG(prot, prot, UVM_INH_NONE, UVM_ADV_NORMAL,
-	    UVM_FLAG_FIXED | UVM_FLAG_NOMERGE);
+	    UVM_FLAG_FIXED | UVM_FLAG_UNMAP | UVM_FLAG_NOMERGE);
 	error = uvm_map(map, &newstart, size, &obj->uobj, 0, 0, uvmflag);
 
-	if (error) {
-		if (obj)
-			obj->uobj.pgops->pgo_detach(&obj->uobj);
-		return error;
-	}
-	if (newstart != start) {
-		printf("uvm_map didn't give us back our vm space\n");
-		uvm_unmap1(map, newstart, newstart + size, 0);
-		if (obj)
-			obj->uobj.pgops->pgo_detach(&obj->uobj);
-		return EINVAL;
-	}
-	return 0;
+	if (error)
+		obj->uobj.pgops->pgo_detach(&obj->uobj);
+	return error;
 }
 
 static const struct kernfs_fileop privcmd_fileops[] = {
