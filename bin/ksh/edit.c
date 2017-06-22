@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.26 2017/06/22 13:32:04 kamil Exp $	*/
+/*	$NetBSD: edit.c,v 1.27 2017/06/22 13:33:39 kamil Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.26 2017/06/22 13:32:04 kamil Exp $");
+__RCSID("$NetBSD: edit.c,v 1.27 2017/06/22 13:33:39 kamil Exp $");
 #endif
 
 
@@ -161,10 +161,6 @@ x_read(buf, len)
 int
 x_getc()
 {
-#ifdef OS2
-	unsigned char c = _read_kbd(0, 1, 0);
-	return c == 0 ? 0xE0 : c;
-#else /* OS2 */
 	char c;
 	int n;
 
@@ -177,7 +173,6 @@ x_getc()
 	if (n != 1)
 		return -1;
 	return (int) (unsigned char) c;
-#endif /* OS2 */
 }
 
 void
