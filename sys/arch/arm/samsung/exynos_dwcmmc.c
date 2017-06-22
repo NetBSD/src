@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_dwcmmc.c,v 1.4 2017/06/19 22:03:50 jmcneill Exp $ */
+/* $NetBSD: exynos_dwcmmc.c,v 1.5 2017/06/22 06:42:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.4 2017/06/19 22:03:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.5 2017/06/22 06:42:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,6 +68,7 @@ CFATTACH_DECL_NEW(exynos_dwcmmc, sizeof(struct dwc_mmc_softc),
 	exynos_dwcmmc_match, exynos_dwcmmc_attach, NULL, NULL);
 
 static const char * const exynos_dwcmmc_compat[] = {
+	"samsung,exynos5250-dw-mshc",
 	"samsung,exynos5420-dw-mshc-smu",
 	"samsung,exynos5420-dw-mshc",
 	NULL
