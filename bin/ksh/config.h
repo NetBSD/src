@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.8 2004/08/19 23:00:22 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.9 2017/06/22 13:33:39 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -183,9 +183,6 @@
 
 /* Define if you arg running ISC unix */
 /* #undef OS_ISC */
-
-/* Define if you arg running OS2 with the EMX library */
-/* #undef OS2 */
 
 /* Define if you have a POSIX.1 compatible <sys/wait.h> */
 #define POSIX_SYS_WAIT 1
