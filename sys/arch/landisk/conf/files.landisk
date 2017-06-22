@@ -1,4 +1,4 @@
-#	$NetBSD: files.landisk,v 1.5 2017/06/22 18:39:04 uwe Exp $
+#	$NetBSD: files.landisk,v 1.6 2017/06/22 20:11:17 uwe Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 16
@@ -35,8 +35,7 @@ file dev/md_root.c				memory_disk_hooks
 # System bus types
 #
 
-define	mainbus {}
-device	mainbus: pcibus, mainbus
+device	mainbus {}: pcibus
 attach	mainbus at root
 file	arch/landisk/landisk/mainbus.c		mainbus
 
