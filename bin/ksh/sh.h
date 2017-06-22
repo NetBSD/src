@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.12 2017/06/22 14:20:46 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.13 2017/06/22 23:15:05 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.12 2017/06/22 14:20:46 kamil Exp $ */
+/* $Id: sh.h,v 1.13 2017/06/22 23:15:05 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -37,45 +37,7 @@ extern void   srand   ARGS((unsigned int));
 extern int    atoi    ARGS((const char *));
 #endif /* HAVE_STDLIB_H */
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#else
-/* just a useful subset of what unistd.h would have */
-extern int access ARGS((const char *, int));
-extern int open ARGS((const char *, int, ...));
-extern int creat ARGS((const char *, mode_t));
-extern int read ARGS((int, char *, unsigned));
-extern int write ARGS((int, const char *, unsigned));
-extern off_t lseek ARGS((int, off_t, int));
-extern int close ARGS((int));
-extern int pipe ARGS((int []));
-extern int dup2 ARGS((int, int));
-extern int unlink ARGS((const char *));
-extern int fork ARGS((void));
-extern int execve ARGS((const char *, char * const[], char * const[]));
-extern int chdir ARGS((const char *));
-extern int kill ARGS((pid_t, int));
-extern char *getcwd();	/* no ARGS here - differs on different machines */
-extern int geteuid ARGS((void));
-extern int readlink ARGS((const char *, char *, int));
-extern int getegid ARGS((void));
-extern int getpid ARGS((void));
-extern int getppid ARGS((void));
-extern unsigned int sleep ARGS((unsigned int));
-extern int isatty ARGS((int));
-# ifdef POSIX_PGRP
-extern int getpgrp ARGS((void));
-extern int setpgid ARGS((pid_t, pid_t));
-# endif /* POSIX_PGRP */
-# ifdef BSD_PGRP
-extern int getpgrp ARGS((pid_t));
-extern int setpgrp ARGS((pid_t, pid_t));
-# endif /* BSD_PGRP */
-# ifdef SYSV_PGRP
-extern int getpgrp ARGS((void));
-extern int setpgrp ARGS((void));
-# endif /* SYSV_PGRP */
-#endif /* HAVE_UNISTD_H */
+#include <unistd.h>
 
 #ifdef HAVE_STRING_H
 # include <string.h>
