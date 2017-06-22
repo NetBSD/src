@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_pinctrl.c,v 1.9 2016/01/01 22:37:07 marty Exp $ */
+/*	$NetBSD: exynos_pinctrl.c,v 1.10 2017/06/22 06:42:38 skrll Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.9 2016/01/01 22:37:07 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.10 2017/06/22 06:42:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,8 +76,10 @@ CFATTACH_DECL_NEW(exynos_pinctrl, sizeof(struct exynos_pinctrl_softc),
 static int
 exynos_pinctrl_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "samsung,exynos5420-pinctrl",
-					    NULL };
+	const char * const compatible[] = {
+	    "samsung,exynos5410-pinctrl",
+	    "samsung,exynos5420-pinctrl",
+	    NULL };
 	struct fdt_attach_args * const faa = aux;
 	return of_match_compatible(faa->faa_phandle, compatible);
 }
