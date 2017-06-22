@@ -1,4 +1,4 @@
-/* $NetBSD: bus_defs.h,v 1.3 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: bus_defs.h,v 1.4 2017/06/22 16:46:52 flxd Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -341,7 +341,7 @@ struct alpha_bus_dma_tag {
 	 *	direct -> NULL
 	 *
 	 * If the window size is 0, it will not be checked (e.g.
-	 * TurboChannel DMA).
+	 * TURBOchannel DMA).
 	 */
 	bus_size_t _wsize;
 	struct alpha_bus_dma_tag *_next_window;

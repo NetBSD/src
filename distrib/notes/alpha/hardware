@@ -1,10 +1,10 @@
-.\"	$NetBSD: hardware,v 1.18 2015/05/19 19:30:26 snj Exp $
+.\"	$NetBSD: hardware,v 1.19 2017/06/22 16:46:52 flxd Exp $
 .
 .Nx*M
 \*V runs on most of the
 .Tn DEC
 Alpha PCI platforms, on all
-of the TURBOChannel models, on the high end 8200 and 8400 systems,
+of the TURBOchannel models, on the high end 8200 and 8400 systems,
 and on the 4100 series.
 .Pp
 The SRM console is required.
@@ -40,7 +40,7 @@ it is actually possible to boot and install
 in only
 16 MB of RAM, you will want to have at least 32 MB.
 .
-We support add-in devices on the PCI, ISA, EISA and TurboChannel buses.
+We support add-in devices on the PCI, ISA, EISA and TURBOchannel buses.
 Because
 .Nx
 has an extremely machine-independent device driver
@@ -192,7 +192,7 @@ BusLogic 7xx SCSI
 .bullet)
 .bullet)
 .
-.Ss2 Supported Turbochannel bus devices
+.Ss2 Supported TURBOchannel bus devices
 .(bullet -offset indent
 Graphics Adapters
 .(bullet -compact
@@ -206,7 +206,7 @@ SFB video (PMAGB-BA,
 Although these boards are supported by
 .Nx*M
 since there is no keyboard or mouse support available for the
-TurboChannel systems, they aren't very useful.
+TURBOchannel systems, they aren't very useful.
 .\" XXX: is this still true now that the MI sfb.c is used???
 .Note)
 .It
