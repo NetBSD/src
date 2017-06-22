@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.246 2017/06/21 09:05:31 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.247 2017/06/22 09:29:23 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.246 2017/06/21 09:05:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.247 2017/06/22 09:29:23 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2416,15 +2416,16 @@ static void
 in6_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 {
 	struct ifnet *ifp = llt->llt_ifp;
+	bool locked = false;
 
-	IF_AFDATA_WLOCK_ASSERT(ifp);
 	LLE_WLOCK_ASSERT(lle);
 
 	/* Unlink entry from table */
 	if ((lle->la_flags & LLE_LINKED) != 0) {
-
+		IF_AFDATA_WLOCK_ASSERT(ifp);
 		lltable_unlink_entry(llt, lle);
 		KASSERT((lle->la_flags & LLE_LINKED) == 0);
+		locked = true;
 	}
 	/*
 	 * We need to release the lock here to lle_timer proceeds;
@@ -2434,7 +2435,8 @@ in6_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 	 */
 	LLE_ADDREF(lle);
 	LLE_WUNLOCK(lle);
-	IF_AFDATA_WUNLOCK(ifp);
+	if (locked)
+		IF_AFDATA_WUNLOCK(ifp);
 
 #ifdef NET_MPSAFE
 	callout_halt(&lle->lle_timer, NULL);
@@ -2450,7 +2452,8 @@ in6_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 	lltable_drop_entry_queue(lle);
 	LLE_FREE_LOCKED(lle);
 
-	IF_AFDATA_WLOCK(ifp);
+	if (locked)
+		IF_AFDATA_WLOCK(ifp);
 }
 
 static int
