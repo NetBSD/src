@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.268 2017/06/22 13:21:21 dholland Exp $
+.\"	$NetBSD: make.1,v 1.269 2017/06/22 13:34:13 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -209,7 +209,7 @@ Force the
 .Fl V
 option to print raw values of variables, overriding the default behavior
 set via
-.Va .MAKE.EXPAND_VARIABLES.
+.Va .MAKE.EXPAND_VARIABLES .
 .It Ar v
 Print debugging information about variable assignment.
 .It Ar x
@@ -352,7 +352,7 @@ contains a
 .Ql \&$
 then the value will be expanded before printing.
 .It Fl v Ar variable
-Like 
+Like
 .Fl V
 but the variable is always expanded to its final value.
 .It Fl W
