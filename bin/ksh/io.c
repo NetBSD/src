@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.12 2017/06/22 14:20:46 kamil Exp $	*/
+/*	$NetBSD: io.c,v 1.13 2017/06/22 19:41:07 kamil Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.12 2017/06/22 14:20:46 kamil Exp $");
+__RCSID("$NetBSD: io.c,v 1.13 2017/06/22 19:41:07 kamil Exp $");
 #endif
 
 
@@ -282,12 +282,6 @@ ksh_dup2(ofd, nfd, errok)
 
 	if (ret < 0 && errno != EBADF && !errok)
 		errorf("too many files open in shell");
-
-#ifdef DUP2_BROKEN
-	/* Ultrix systems like to preserve the close-on-exec flag */
-	if (ret >= 0)
-		(void) fcntl(nfd, F_SETFD, 0);
-#endif /* DUP2_BROKEN */
 
 	return ret;
 }
