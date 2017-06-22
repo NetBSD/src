@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.15 2009/09/05 11:37:52 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.16 2017/06/22 16:46:52 flxd Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -130,8 +130,8 @@ with the
 flag, followed by the path of the kernel to boot, as described above.
 For example:
 .Dl Ic boot -f rz(0,4,0)netbsd.new
-.Sh TURBOCHANNEL DECstations
-On TurboChannel machines (all DECstation 5000 models), the boot path
+.Sh TURBOchannel DECstations
+On TURBOchannel machines (all DECstation 5000 models), the boot path
 is specified in the boot environment variable, along with any arguments
 to be passed to the kernel.
 Note that to specify boot arguments (e.g.,
@@ -143,17 +143,17 @@ must be enclosed in quotes.
 For example:
 .Dl Ic setenv boot Dq Ic "3/rz4/netbsd -a"
 .Pp
-The device from which to boot is specified as the TurboChannel slot
-number, a TurboChannel-option-specific device name, and a path to the
+The device from which to boot is specified as the TURBOchannel slot
+number, a TURBOchannel-option-specific device name, and a path to the
 file to load, all separated by slashes.
 You can get a list of the
-devices installed in your TurboChannel slots (as well as any built-in
-devices which appear as TurboChannel slots) by typing the
+devices installed in your TURBOchannel slots (as well as any built-in
+devices which appear as TURBOchannel slots) by typing the
 .Nm cnfg
 command
 at the boot prompt.
 You can get more detailed information about a specific
-TurboChannel option by typing
+TURBOchannel option by typing
 .Nm cnfg
 followed by the slot number of that
 option.
