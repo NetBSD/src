@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.189 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.190 2017/06/22 09:05:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.189 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.190 2017/06/22 09:05:09 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -887,8 +887,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	pcu_save_all(l1);
 
 	uvm_lwp_setuarea(l2, uaddr);
-	uvm_lwp_fork(l1, l2, stack, stacksize, func,
-	    (arg != NULL) ? arg : l2);
+	uvm_lwp_fork(l1, l2, stack, stacksize, func, (arg != NULL) ? arg : l2);
 
 	if ((flags & LWP_PIDLID) != 0) {
 		lid = proc_alloc_pid(p2);
