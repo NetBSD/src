@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.18 2017/06/22 14:20:46 kamil Exp $	*/
+/*	$NetBSD: exec.c,v 1.19 2017/06/22 23:47:29 kamil Exp $	*/
 
 /*
  * execute command tree
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: exec.c,v 1.18 2017/06/22 14:20:46 kamil Exp $");
+__RCSID("$NetBSD: exec.c,v 1.19 2017/06/22 23:47:29 kamil Exp $");
 #endif
 
 
@@ -420,7 +420,7 @@ execute(t, flags)
 #endif
 		restoresigs();
 		cleanup_proc_env();
-		ksh_execve(t->str, t->args, ap, flags);
+		execve(t->str, t->args, ap);
 		if (errno == ENOEXEC)
 			scriptexec(t, ap);
 		else
@@ -813,7 +813,7 @@ scriptexec(tp, ap)
 #endif	/* SHARPBANG */
 	*tp->args = shellv;
 
-	ksh_execve(tp->args[0], tp->args, ap, 0);
+	execve(tp->args[0], tp->args, ap);
 
 	/* report both the program that was run and the bogus shell */
 	errorf("%s: %s: %s", tp->str, shellv, strerror(errno));
