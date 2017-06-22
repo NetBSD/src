@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.15 2017/06/22 19:41:07 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.16 2017/06/22 19:46:54 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -104,12 +104,6 @@
 
 /* Define if you don't have setpgrp(), setpgid() or getpgrp() routines */
 /* #undef NO_PGRP */
-
-/* Define to char if your compiler doesn't like the void keyword */
-/* #undef void */
-
-/* Define to nothing if compiler doesn't like the volatile keyword */
-/* #undef volatile */
 
 /* Define if C compiler groks function prototypes */
 #define HAVE_PROTOTYPES 1
