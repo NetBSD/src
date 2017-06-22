@@ -1,4 +1,4 @@
-/*	$NetBSD: sigact.c,v 1.4 2003/06/23 11:39:03 agc Exp $	*/
+/*	$NetBSD: sigact.c,v 1.5 2017/06/22 23:56:24 kamil Exp $	*/
 
 /* NAME:
  *      sigact.c - fake sigaction(2)
@@ -141,7 +141,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: sigact.c,v 1.4 2003/06/23 11:39:03 agc Exp $");
+__RCSID("$NetBSD: sigact.c,v 1.5 2017/06/22 23:56:24 kamil Exp $");
 #endif
 
 
@@ -171,11 +171,7 @@ __RCSID("$NetBSD: sigact.c,v 1.4 2003/06/23 11:39:03 agc Exp $");
 #ifdef BSD42_SIGNALS
 # define USE_SIGMASK
 #else
-# ifdef BSD41_SIGNALS
-#  define USE_SIGSET
-# else
-#  define USE_SIGNAL
-# endif
+# define USE_SIGNAL
 #endif /* BSD42_SIGNALS */
 
 /*
