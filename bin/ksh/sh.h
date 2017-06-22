@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.9 2017/06/22 13:33:39 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.10 2017/06/22 13:37:16 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.9 2017/06/22 13:33:39 kamil Exp $ */
+/* $Id: sh.h,v 1.10 2017/06/22 13:37:16 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -545,10 +545,7 @@ typedef struct trap {
 EXTERN	int volatile trap;	/* traps pending? */
 EXTERN	int volatile intrsig;	/* pending trap interrupts executing command */
 EXTERN	int volatile fatal_trap;/* received a fatal signal */
-#ifndef FROM_TRAP_C
-/* Kludge to avoid bogus re-declaration of sigtraps[] error on AIX 3.2.5 */
 extern	Trap	sigtraps[SIGNALS+1];
-#endif /* !FROM_TRAP_C */
 
 #ifdef KSH
 /*
