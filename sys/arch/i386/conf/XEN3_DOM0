@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.112 2017/04/17 09:54:59 bouyer Exp $
+#	$NetBSD: XEN3_DOM0,v 1.113 2017/06/22 18:14:32 khorben Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -689,6 +689,23 @@ ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394
 sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
+
+# SD/MMC/SDIO Controller and Device support
+
+# PCI SD/MMC controller
+sdhc*	at pci?				# SD Host Controller
+rtsx*	at pci?				# Realtek RTS5209/RTS5229 Card Reader
+
+# CardBus SD/MMC controller
+#sdhc*	at cardbus? function ?		# SD Host Controller
+
+sdmmc*	at sdhc?			# SD/MMC bus
+sdmmc*	at rtsx?			# SD/MMC bus
+ld*	at sdmmc?
+
+
+# Audio Devices
+
 # PCI audio devices
 auacer* at pci? dev ? function ?	# ALi M5455 integrated AC'97 Audio
 auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
@@ -767,6 +784,7 @@ wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 btsco* at bthub?
+
 
 # Cryptographic Devices
 
