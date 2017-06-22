@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.234 2017/06/21 09:05:31 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.235 2017/06/22 09:24:02 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.234 2017/06/21 09:05:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.235 2017/06/22 09:24:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2421,24 +2421,6 @@ nd6_need_cache(struct ifnet *ifp)
 	default:
 		return 0;
 	}
-}
-
-/*
- * Removes ALL lle records for interface address prefix.
- * XXXME: That's probably not we really want to do, we need
- * to remove address record only and keep other records
- * until we determine if given prefix is really going
- * to be removed.
- */
-void
-nd6_rem_ifa_lle(struct in6_ifaddr *ia)
-{
-	struct sockaddr_in6 mask, addr;
-
-	memcpy(&addr, &ia->ia_addr, sizeof(ia->ia_addr));
-	memcpy(&mask, &ia->ia_prefixmask, sizeof(ia->ia_prefixmask));
-	lltable_prefix_free(AF_INET6, sin6tosa(&addr), sin6tosa(&mask),
-	    LLE_STATIC);
 }
 
 static void 
