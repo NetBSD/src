@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.28 2017/06/22 23:37:00 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.29 2017/06/22 23:38:49 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -258,9 +258,6 @@
 
 /* Define if you have the <dirent.h> header file.  */
 #define HAVE_DIRENT_H 1
-
-/* Define if you have the <limits.h> header file.  */
-#define HAVE_LIMITS_H 1
 
 /* Define if you have the <ndir.h> header file.  */
 /* #undef HAVE_NDIR_H */
