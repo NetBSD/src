@@ -1,9 +1,9 @@
-/*	$NetBSD: conf-end.h,v 1.3 2017/06/22 23:54:13 kamil Exp $	*/
+/*	$NetBSD: conf-end.h,v 1.4 2017/06/22 23:59:28 kamil Exp $	*/
 
 /*
  * End of configuration stuff for PD ksh.
  *
- * RCSid: $NetBSD: conf-end.h,v 1.3 2017/06/22 23:54:13 kamil Exp $
+ * RCSid: $NetBSD: conf-end.h,v 1.4 2017/06/22 23:59:28 kamil Exp $
  */
 
 #if defined(EMACS) || defined(VI)
@@ -24,7 +24,7 @@
 
 /* Can we safely catch sigchld and wait for processes? */
 #if (defined(HAVE_WAITPID) || defined(HAVE_WAIT3)) \
-    && (defined(POSIX_SIGNALS) || defined(BSD42_SIGNALS))
+    && (defined(POSIX_SIGNALS))
 # define JOB_SIGS
 #endif
 
