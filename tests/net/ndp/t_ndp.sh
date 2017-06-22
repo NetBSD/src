@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.23 2017/06/22 09:05:02 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.24 2017/06/22 10:06:34 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,7 +28,9 @@
 SOCKSRC=unix://commsock1
 SOCKDST=unix://commsock2
 IP6SRC=fc00::1
+IP6SRC2=fc00::3
 IP6DST=fc00::2
+IP6NET=fc00::0
 
 DEBUG=${DEBUG:-false}
 TIMEOUT=1
@@ -465,6 +467,129 @@ ndp_rtm_cleanup()
 	cleanup
 }
 
+atf_test_case ndp_purge_on_route_change cleanup
+ndp_purge_on_route_change_head()
+{
+
+	atf_set "descr" "Tests if NDP entries are removed on route change"
+	atf_set "require.progs" "rump_server"
+}
+
+ndp_purge_on_route_change_body()
+{
+
+	rump_server_start $SOCKSRC netinet6
+	rump_server_start $SOCKDST netinet6
+
+	setup_dst_server
+	setup_src_server
+
+	rump_server_add_iface $SOCKSRC shmif1 bus1
+	export RUMP_SERVER=$SOCKSRC
+	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $IP6SRC2
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	$DEBUG && rump.netstat -nr -f inet6
+	atf_check -s exit:0 -o ignore rump.ping6 -n -X 1 -c 1 $IP6DST
+	atf_check -s exit:0 -o match:'shmif0' rump.ndp -n $IP6DST
+
+	atf_check -s exit:0 -o ignore \
+	    rump.route change -inet6 -net $IP6NET/64 -ifp shmif1
+	$DEBUG && rump.netstat -nr -f inet6
+	$DEBUG && rump.ndp -na
+	# The entry was already removed on route change
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' \
+	    rump.ndp -n $IP6DST
+
+	rump_server_destroy_ifaces
+}
+
+ndp_purge_on_route_change_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case ndp_purge_on_route_delete cleanup
+ndp_purge_on_route_delete_head()
+{
+
+	atf_set "descr" "Tests if NDP entries are removed on route delete"
+	atf_set "require.progs" "rump_server"
+}
+
+ndp_purge_on_route_delete_body()
+{
+
+	rump_server_start $SOCKSRC netinet6
+	rump_server_start $SOCKDST netinet6
+
+	setup_dst_server
+	setup_src_server
+
+	$DEBUG && rump.netstat -nr -f inet6
+	atf_check -s exit:0 -o ignore rump.ping6 -n -X 1 -c 1 $IP6DST
+	atf_check -s exit:0 -o match:'shmif0' rump.ndp -n $IP6DST
+
+	atf_check -s exit:0 -o ignore rump.route delete -inet6 -net $IP6NET/64
+	$DEBUG && rump.netstat -nr -f inet6
+	$DEBUG && rump.ndp -na
+
+	# The entry was already removed on route delete
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' \
+	    rump.ndp -n $IP6DST
+
+	rump_server_destroy_ifaces
+}
+
+ndp_purge_on_route_delete_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case ndp_purge_on_ifdown cleanup
+ndp_purge_on_ifdown_head()
+{
+
+	atf_set "descr" "Tests if NDP entries are removed on interface down"
+	atf_set "require.progs" "rump_server"
+}
+
+ndp_purge_on_ifdown_body()
+{
+
+	rump_server_start $SOCKSRC netinet6
+	rump_server_start $SOCKDST netinet6
+
+	setup_dst_server
+	setup_src_server
+
+	$DEBUG && rump.netstat -nr -f inet6
+	atf_check -s exit:0 -o ignore rump.ping6 -n -X 1 -c 1 $IP6DST
+	atf_check -s exit:0 -o match:'shmif0' rump.ndp -n $IP6DST
+
+	# Shutdown the interface
+	atf_check -s exit:0 rump.ifconfig shmif0 down
+	$DEBUG && rump.netstat -nr -f inet6
+	$DEBUG && rump.ndp -na
+
+	# The entry was already removed on ifconfig down
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' \
+	    rump.ndp -n $IP6DST
+
+	rump_server_destroy_ifaces
+}
+
+ndp_purge_on_ifdown_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case ndp_cache_expiration
@@ -473,4 +598,7 @@ atf_init_test_cases()
 	atf_add_test_case ndp_neighborgcthresh
 	atf_add_test_case ndp_link_activation
 	atf_add_test_case ndp_rtm
+	atf_add_test_case ndp_purge_on_route_change
+	atf_add_test_case ndp_purge_on_route_delete
+	atf_add_test_case ndp_purge_on_ifdown
 }
