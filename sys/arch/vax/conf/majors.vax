@@ -1,4 +1,4 @@
-#	$NetBSD: majors.vax,v 1.26 2015/07/05 03:06:27 matt Exp $
+#	$NetBSD: majors.vax,v 1.27 2017/06/22 17:51:22 flxd Exp $
 #
 # Device majors for vax
 #
@@ -97,3 +97,5 @@ device-major	uu			 block 13	uu
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.
+
+include "conf/majors.usb"
