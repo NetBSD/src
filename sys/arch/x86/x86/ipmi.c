@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.65 2017/06/21 21:55:07 christos Exp $ */
+/*	$NetBSD: ipmi.c,v 1.66 2017/06/22 13:32:47 joerg Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.65 2017/06/21 21:55:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.66 2017/06/22 13:32:47 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2165,7 +2165,7 @@ ipmi_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_poll_cv, "ipmipoll");
 
 	if (kthread_create(PRI_NONE, 0, NULL, ipmi_thread, self,
-	    &sc->sc_kthread, device_xname(self)) != 0) {
+	    &sc->sc_kthread, "%s", device_xname(self)) != 0) {
 		aprint_error_dev(self, "unable to create thread, disabled\n");
 	}
 }
