@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.126 2017/06/01 02:45:14 chs Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.127 2017/06/22 09:26:43 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.126 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.127 2017/06/22 09:26:43 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -608,7 +608,12 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 		return;
 	}
 
-	if (__predict_true(pktq_enqueue(pktq, m, 0))) {
+#ifdef GIF_MPSAFE
+	const u_int h = curcpu()->ci_index;
+#else
+	const uint32_t h = pktq_rps_hash(m);
+#endif
+	if (__predict_true(pktq_enqueue(pktq, m, h))) {
 		ifp->if_ibytes += pktlen;
 		ifp->if_ipackets++;
 	} else {
