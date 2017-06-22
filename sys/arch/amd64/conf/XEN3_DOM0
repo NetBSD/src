@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.135 2017/04/20 09:56:27 msaitoh Exp $
+# $NetBSD: XEN3_DOM0,v 1.136 2017/06/22 18:14:32 khorben Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -796,6 +796,19 @@ wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 btsco* at bthub?
+
+
+# SD/MMC/SDIO Controller and Device support
+
+# SD/MMC controller
+sdhc*	at pci?		# SD Host Controller
+rtsx*	at pci?		# Realtek RTS5209/RTS5229 Card Reader
+#sdhc*	at cardbus?	# SD Host Controller
+sdmmc*	at sdhc?	# SD/MMC bus
+sdmmc*	at rtsx?	# SD/MMC bus
+
+ld*	at sdmmc?
+
 
 # Cryptographic Devices
 
