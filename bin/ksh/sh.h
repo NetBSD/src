@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.13 2017/06/22 23:15:05 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.14 2017/06/22 23:17:50 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.13 2017/06/22 23:15:05 kamil Exp $ */
+/* $Id: sh.h,v 1.14 2017/06/22 23:17:50 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -23,20 +23,7 @@
 # include <stddef.h>
 #endif
 
-#ifdef HAVE_STDLIB_H
-# include <stdlib.h>
-#else
-/* just a useful subset of what stdlib.h would have */
-extern char * getenv  ARGS((const char *));
-extern void * malloc  ARGS((size_t));
-extern void * realloc ARGS((void *, size_t));
-extern int    free    ARGS((void *));
-extern int    exit    ARGS((int));
-extern int    rand    ARGS((void));
-extern void   srand   ARGS((unsigned int));
-extern int    atoi    ARGS((const char *));
-#endif /* HAVE_STDLIB_H */
-
+#include <stdlib.h>
 #include <unistd.h>
 
 #ifdef HAVE_STRING_H
