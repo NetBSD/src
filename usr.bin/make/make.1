@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.269 2017/06/22 13:34:13 wiz Exp $
+.\"	$NetBSD: make.1,v 1.270 2017/06/22 13:42:09 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -337,24 +337,39 @@ for each job started and completed.
 Rather than re-building a target as specified in the makefile, create it
 or update its modification time to make it appear up-to-date.
 .It Fl V Ar variable
-Print
-.Nm Ns 's
-idea of the value of
-.Ar variable ,
-in the global context.
+Print the value of
+.Ar variable .
 Do not build any targets.
 Multiple instances of this option may be specified;
 the variables will be printed one per line,
 with a blank line for each null or undefined variable.
+The value printed is extracted from the global context after all
+makefiles have been read.
+By default, the raw variable contents (which may
+include additional unexpanded variable references) are shown.
 If
 .Ar variable
 contains a
 .Ql \&$
-then the value will be expanded before printing.
+then the value will be recursively expanded to its complete resultant
+text before printing.
+The expanded value will also be printed if
+.Va .MAKE.EXPAND_VARIABLES
+is set to true and
+the
+.Fl dV
+option has not been used to override it.
+Note that loop-local and target-local variables, as well as values
+taken temporarily by global variables during makefile processing, are
+not accessible via this option.
+The
+.Fl dv
+debug mode can be used to see these at the cost of generating
+substantial extraneous output.
 .It Fl v Ar variable
 Like
 .Fl V
-but the variable is always expanded to its final value.
+but the variable is always expanded to its complete value.
 .It Fl W
 Treat any warnings during makefile parsing as errors.
 .It Fl w
