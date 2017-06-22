@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.24 2017/06/22 23:42:35 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.25 2017/06/22 23:47:29 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.24 2017/06/22 23:42:35 kamil Exp $ */
+/* $Id: sh.h,v 1.25 2017/06/22 23:47:29 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -107,19 +107,6 @@ typedef	RETSIGTYPE (*handler_t) ARGS((int));	/* signal handler */
 #ifndef HAVE_KILLPG
 # define killpg(p, s)	kill(-(p), (s))
 #endif /* !HAVE_KILLPG */
-
-/* Special cases for execve(2) */
-# if defined(OS_ISC) && defined(_POSIX_SOURCE)
-/* Kludge for ISC 3.2 (and other versions?) so programs will run correctly.  */
-#  define ksh_execve(p, av, ev, flags) \
-				do { \
-					__setostype(0); \
-					execve(p, av, ev); \
-					__setostype(1); \
-				} while (0)
-# else /* OS_ISC && _POSIX */
-#  define ksh_execve(p, av, ev, flags)	execve(p, av, ev)
-# endif /* OS_ISC && _POSIX */
 
 /* this is a hang-over from older versions of the os2 port */
 #define ksh_dupbase(fd, base) fcntl(fd, F_DUPFD, base)
