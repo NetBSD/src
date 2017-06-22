@@ -1,4 +1,4 @@
-/*	$NetBSD: shf.c,v 1.9 2017/06/22 14:11:27 kamil Exp $	*/
+/*	$NetBSD: shf.c,v 1.10 2017/06/22 14:20:46 kamil Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shf.c,v 1.9 2017/06/22 14:11:27 kamil Exp $");
+__RCSID("$NetBSD: shf.c,v 1.10 2017/06/22 14:20:46 kamil Exp $");
 #endif
 
 
@@ -577,13 +577,6 @@ shf_getse(buf, bsize, shf)
 		shf->rnleft -= ncopy;
 		buf += ncopy;
 		bsize -= ncopy;
-#ifdef OS2
-		if (end && buf > orig_buf + 1 && buf[-2] == '\r') {
-			buf--;
-			bsize++;
-			buf[-1] = '\n';
-		}
-#endif
 
 	} while (!end && bsize);
 	*buf = '\0';

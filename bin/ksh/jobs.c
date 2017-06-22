@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.12 2017/06/22 14:11:27 kamil Exp $	*/
+/*	$NetBSD: jobs.c,v 1.13 2017/06/22 14:20:46 kamil Exp $	*/
 
 /*
  * Process and job control
@@ -26,7 +26,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: jobs.c,v 1.12 2017/06/22 14:11:27 kamil Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.13 2017/06/22 14:20:46 kamil Exp $");
 #endif
 
 
@@ -648,10 +648,6 @@ exchild(t, flags, close_fd)
 		Flag(FMONITOR) = 0;
 #endif /* JOBS */
 		Flag(FTALKING) = 0;
-#ifdef OS2
-		if (tty_fd >= 0)
-			flags |= XINTACT;
-#endif /* OS2 */
 		tty_close();
 		cleartraps();
 		execute(t, (flags & XERROK) | XEXEC); /* no return */

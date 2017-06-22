@@ -1,8 +1,8 @@
-/*	$NetBSD: path.c,v 1.11 2017/06/22 14:11:27 kamil Exp $	*/
+/*	$NetBSD: path.c,v 1.12 2017/06/22 14:20:46 kamil Exp $	*/
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: path.c,v 1.11 2017/06/22 14:11:27 kamil Exp $");
+__RCSID("$NetBSD: path.c,v 1.12 2017/06/22 14:20:46 kamil Exp $");
 #endif
 
 
@@ -130,10 +130,6 @@ simplify_path(pathx)
 
 	if ((isrooted = ISROOTEDPATH(pathx)))
 		very_start++;
-#if defined (OS2) || defined (__CYGWIN__)
-	if (pathx[0] && pathx[1] == ':')	/* skip a: */
-		very_start += 2;
-#endif /* OS2 || __CYGWIN__ */
 
 	/* Before			After
 	 *  /foo/			/foo
@@ -143,18 +139,7 @@ simplify_path(pathx)
 	 *  ..				..
 	 *  ./foo			foo
 	 *  foo/../../../bar		../../bar
-	 * OS2 and CYGWIN:
-	 *  a:/foo/../..		a:/
-	 *  a:.				a:
-	 *  a:..			a:..
-	 *  a:foo/../../blah		a:../blah
 	 */
-
-#ifdef __CYGWIN__
-       /* preserve leading double-slash on pathnames (for UNC paths) */
-       if (pathx[0] && ISDIRSEP(pathx[0]) && pathx[1] && ISDIRSEP(pathx[1]))
-               very_start++;
-#endif /* __CYGWIN__ */
 
 	for (cur = t = start = very_start; ; ) {
 		/* treat multiple '/'s as one '/' */
