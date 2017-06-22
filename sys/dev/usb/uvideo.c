@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.44 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.45 2017/06/22 15:22:16 khorben Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.44 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.45 2017/06/22 15:22:16 khorben Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1929,7 +1929,7 @@ uvideo_get_format(void *addr, struct video_format *format)
 }
 
 /*
- * uvideo_set_format - TODO: this is boken and does nothing
+ * uvideo_set_format - TODO: this is broken and does nothing
  */
 static int
 uvideo_set_format(void *addr, struct video_format *format)
@@ -2071,7 +2071,7 @@ uvideo_start_transfer(void *addr)
 	struct uvideo_stream *vs;
 	int s, err;
 
-	/* FIXME: this functions should be stream specific */
+	/* FIXME: this function should be stream specific */
 	vs = SLIST_FIRST(&sc->sc_stream_list);
 	s = splusb();
 	err = uvideo_stream_start_xfer(vs);
