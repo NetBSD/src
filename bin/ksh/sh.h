@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.25 2017/06/22 23:47:29 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.26 2017/06/22 23:50:24 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.25 2017/06/22 23:47:29 kamil Exp $ */
+/* $Id: sh.h,v 1.26 2017/06/22 23:50:24 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -125,10 +125,6 @@ typedef	RETSIGTYPE (*handler_t) ARGS((int));	/* signal handler */
 # endif /* HAVE__SETJMP */
 # define ksh_jmp_buf		jmp_buf
 #endif /* HAVE_SIGSETJMP */
-
-#ifndef HAVE_DUP2
-extern int dup2 ARGS((int, int));
-#endif /* !HAVE_DUP2 */
 
 /* Find a integer type that is at least 32 bits (or die) - SIZEOF_* defined
  * by autoconf (assumes an 8 bit byte, but I'm not concerned).

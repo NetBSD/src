@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.30 2017/06/22 23:47:29 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.31 2017/06/22 23:50:24 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -137,9 +137,6 @@
 
 /* Define if opendir() will open non-directory files */
 /* #undef OPENDIR_DOES_NONDIR */
-
-/* Define if you have a dup2() function in your C library */
-#define	HAVE_DUP2 1
 
 /* Define if the pgrp of setpgrp() can't be the pid of a zombie process */
 /* #undef NEED_PGRP_SYNC */
