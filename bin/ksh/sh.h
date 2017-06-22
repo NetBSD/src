@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.21 2017/06/22 23:33:36 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.22 2017/06/22 23:37:00 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.21 2017/06/22 23:33:36 kamil Exp $ */
+/* $Id: sh.h,v 1.22 2017/06/22 23:37:00 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -33,12 +33,8 @@
 #endif /* HAVE_PROTOTYPES */
 
 #include <errno.h>
+#include <fcntl.h>
 
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>
-#else
-# include <sys/file.h>
-#endif /* HAVE_FCNTL_H */
 #ifndef O_ACCMODE
 # define O_ACCMODE	(O_RDONLY|O_WRONLY|O_RDWR)
 #endif /* !O_ACCMODE */
