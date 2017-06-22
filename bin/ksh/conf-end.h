@@ -1,9 +1,9 @@
-/*	$NetBSD: conf-end.h,v 1.2 1997/01/12 19:11:43 tls Exp $	*/
+/*	$NetBSD: conf-end.h,v 1.3 2017/06/22 23:54:13 kamil Exp $	*/
 
 /*
  * End of configuration stuff for PD ksh.
  *
- * RCSid: $NetBSD: conf-end.h,v 1.2 1997/01/12 19:11:43 tls Exp $
+ * RCSid: $NetBSD: conf-end.h,v 1.3 2017/06/22 23:54:13 kamil Exp $
  */
 
 #if defined(EMACS) || defined(VI)
@@ -17,11 +17,7 @@
 # define HISTORY
 #endif /* EDIT */
 
-/*
- * if you don't have mmap() you can't use Peter Collinson's history
- * mechanism.  If that is the case, then define EASY_HISTORY
- */
-#if defined(HISTORY) && (!defined(COMPLEX_HISTORY) || !defined(HAVE_MMAP) || !defined(HAVE_FLOCK))
+#if defined(HISTORY) && (!defined(COMPLEX_HISTORY) || !defined(HAVE_FLOCK))
 # undef COMPLEX_HISTORY
 # define EASY_HISTORY			/* sjg's trivial history file */
 #endif
