@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.27 2017/06/22 08:04:32 skrll Exp $	*/
+/*	$NetBSD: gic.c,v 1.28 2017/06/22 08:10:29 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.27 2017/06/22 08:04:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.28 2017/06/22 08:10:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -293,11 +293,15 @@ armgic_irq_handler(void *arg)
 		uint32_t irq = __SHIFTOUT(iar, GICC_IAR_IRQ);
 
 		KERNHIST_LOG(armgichist, "iar %#x (irq %d)", iar, irq, 0, 0);
-		if (irq == GICC_IAR_IRQ_SPURIOUS) {
+		if (irq == GICC_IAR_IRQ_SPURIOUS ||
+		    irq == GICC_IAR_IRQ_SSPURIOUS) {
 			iar = gicc_read(sc, GICC_IAR);
 			irq = __SHIFTOUT(iar, GICC_IAR_IRQ);
 			if (irq == GICC_IAR_IRQ_SPURIOUS)
 				break;
+			if (irq == GICC_IAR_IRQ_SSPURIOUS) {
+				break;
+			}
 		}
 
 		//const uint32_t cpuid = __SHIFTOUT(iar, GICC_IAR_CPUID_MASK);
