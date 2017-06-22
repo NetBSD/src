@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.10 2017/06/22 13:34:48 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.11 2017/06/22 13:35:47 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -193,10 +193,6 @@
 #else
 #define DEFAULT_PATH "/bin:/usr/bin:/sbin:/usr/sbin"
 #endif
-
-/* Define if your C library's getwd/getcwd function dumps core in unreadable
- * directories.  */
-/* #undef HPUX_GETWD_BUG */
 
 /* Include ksh features? */
 #define KSH 1
