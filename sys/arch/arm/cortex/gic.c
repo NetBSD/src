@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.24 2017/06/18 22:11:50 jmcneill Exp $	*/
+/*	$NetBSD: gic.c,v 1.25 2017/06/22 06:51:30 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,19 +29,22 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kernhist.h"
 #include "opt_multiprocessor.h"
 
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.24 2017/06/18 22:11:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.25 2017/06/22 06:51:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/evcnt.h>
 #include <sys/intr.h>
-#include <sys/cpu.h>
+#include <sys/kernhist.h>
+#include <sys/once.h>
 #include <sys/proc.h>
 
 #include <arm/armreg.h>
@@ -69,6 +72,16 @@ static void armgic_source_name(struct pic_softc *, int, char *, size_t);
 #ifdef MULTIPROCESSOR
 static void armgic_cpu_init(struct pic_softc *, struct cpu_info *);
 static void armgic_ipi_send(struct pic_softc *, const kcpuset_t *, u_long);
+#endif
+
+#ifdef KERNHIST
+static int armgichist_init(void);
+
+#ifndef ARMGICHIST_SIZE
+#define ARMGICHIST_SIZE 200
+#endif
+
+KERNHIST_DEFINE(armgichist);
 #endif
 
 static const struct pic_ops armgic_picops = {
@@ -238,12 +251,27 @@ softint_trigger(uintptr_t machdep)
 }
 #endif
 
-void
-armgic_irq_handler(void *tf)
+
+#ifdef KERNHIST
+int
+armgichist_init(void)
 {
+
+	KERNHIST_INIT(armgichist, ARMGICHIST_SIZE);
+
+	return 0;
+}
+#endif
+
+void
+armgic_irq_handler(void *arg)
+{
+    	KERNHIST_FUNC(__func__); KERNHIST_CALLED(armgichist);
 	struct cpu_info * const ci = curcpu();
 	struct armgic_softc * const sc = &armgic_softc;
 	const int old_ipl = ci->ci_cpl;
+	struct trapframe * const tf = arg;
+	
 #ifdef DIAGNOSTIC
 	const int old_mtx_count = ci->ci_mtx_count;
 	const int old_l_biglocks = ci->ci_curlwp->l_biglocks;
@@ -257,9 +285,14 @@ armgic_irq_handler(void *tf)
 	KASSERTMSG(old_ipl != IPL_HIGH, "old_ipl %d pmr %#x hppir %#x",
 	    old_ipl, gicc_read(sc, GICC_PMR), gicc_read(sc, GICC_HPPIR));
 
+	KERNHIST_LOG(armgichist, "old_ipl %d pmr %u hppir %u", old_ipl,
+	    gicc_read(sc, GICC_PMR), gicc_read(sc, GICC_HPPIR), 0);
+
 	for (;;) {
 		uint32_t iar = gicc_read(sc, GICC_IAR);
 		uint32_t irq = __SHIFTOUT(iar, GICC_IAR_IRQ);
+
+		KERNHIST_LOG(armgichist, "iar %#x (irq %d)", iar, irq, 0, 0);
 		if (irq == GICC_IAR_IRQ_SPURIOUS) {
 			iar = gicc_read(sc, GICC_IAR);
 			irq = __SHIFTOUT(iar, GICC_IAR_IRQ);
@@ -284,6 +317,9 @@ armgic_irq_handler(void *tf)
 		 * However, if are just raising ipl, we can just update ci_cpl.
 		 */
 		const int ipl = is->is_ipl;
+
+		KERNHIST_LOG(armgichist, "ipl %d vs ci_cpl %d pmr %#x", ipl,
+		    ci->ci_cpl, gicc_read(sc, GICC_PMR), 0);
 		if (__predict_false(ipl < ci->ci_cpl)) {
 			pic_do_pending_ints(I32_bit, ipl, tf);
 			KASSERT(ci->ci_cpl == ipl);
@@ -310,14 +346,18 @@ armgic_irq_handler(void *tf)
 	 */
 	KASSERT(old_ipl != IPL_HIGH);
 	pic_do_pending_ints(I32_bit, old_ipl, tf);
-	KASSERTMSG(ci->ci_cpl == old_ipl, "ci_cpl %d old_ipl %d", ci->ci_cpl, old_ipl);
+	KASSERTMSG(ci->ci_cpl == old_ipl, "ci_cpl %d old_ipl %d", ci->ci_cpl,
+	    old_ipl);
 	KASSERT(old_mtx_count == ci->ci_mtx_count);
 	KASSERT(old_l_biglocks == ci->ci_curlwp->l_biglocks);
+
+	KERNHIST_LOG(armgichist, "... done", 0, 0, 0, 0);
 }
 
 void
 armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 {
+    	KERNHIST_FUNC(__func__); KERNHIST_CALLED(armgichist);
 	struct armgic_softc * const sc = PICTOSOFTC(pic);
 	const size_t group = is->is_irq / 32;
 	const u_int irq = is->is_irq & 31;
@@ -365,6 +405,9 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		}
 		if (new_cfg != cfg) {
 			gicd_write(sc, cfg_reg, new_cfg);
+
+			KERNHIST_LOG(armgichist, "irq %u: cfg changed from %#x "
+			    "to %#x", is->is_irq, cfg, new_cfg, 0);
 		}
 #ifdef MULTIPROCESSOR
 	} else {
@@ -462,6 +505,7 @@ armgic_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 void
 armgic_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 {
+    	KERNHIST_FUNC(__func__); KERNHIST_CALLED(armgichist);
 	struct armgic_softc * const sc = PICTOSOFTC(pic);
 
 #if 0
@@ -484,6 +528,7 @@ armgic_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 	}
 
 	gicd_write(sc, GICD_SGIR, sgir);
+	KERNHIST_LOG(armgichist, "... done (%#x)", sgir, 0, 0, 0);
 }
 #endif
 
@@ -505,6 +550,13 @@ armgic_attach(device_t parent, device_t self, void *aux)
 {
 	struct armgic_softc * const sc = &armgic_softc;
 	struct mpcore_attach_args * const mpcaa = aux;
+#ifdef KERNHIST
+	static ONCE_DECL(armgic_once);
+
+	RUN_ONCE(&armgic_once, armgichist_init);
+#endif
+
+    	KERNHIST_FUNC(__func__); KERNHIST_CALLED(armgichist);
 
 	sc->sc_dev = self;
 	self->dv_private = sc;
