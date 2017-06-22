@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.26 2017/06/22 07:56:40 skrll Exp $	*/
+/*	$NetBSD: gic.c,v 1.27 2017/06/22 08:04:32 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.26 2017/06/22 07:56:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.27 2017/06/22 08:04:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -686,8 +686,9 @@ armgic_attach(device_t parent, device_t self, void *aux)
 
 	const u_int ppis = popcount32(sc->sc_gic_valid_lines[0] >> 16);
 	const u_int sgis = popcount32(sc->sc_gic_valid_lines[0] & 0xffff);
-	aprint_normal_dev(sc->sc_dev, "%u Priorities, %zu SPIs, %u PPIs, %u SGIs\n",
-	    priorities, sc->sc_gic_lines - ppis - sgis, ppis, sgis);
+	aprint_normal_dev(sc->sc_dev, "%u Priorities, %zu SPIs, %u PPIs, "
+	    "%u SGIs\n",  priorities, sc->sc_gic_lines - ppis - sgis, ppis,
+	    sgis);
 }
 
 CFATTACH_DECL_NEW(armgic, 0,
