@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.25 2017/06/22 06:51:30 skrll Exp $	*/
+/*	$NetBSD: gic.c,v 1.26 2017/06/22 07:56:40 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.25 2017/06/22 06:51:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.26 2017/06/22 07:56:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -577,6 +577,12 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	uint32_t pmr = gicc_read(sc, GICC_PMR);
 	u_int priorities = 1 << popcount32(pmr);
 
+	const uint32_t iidr = gicc_read(sc, GICC_IIDR);
+	const int iidr_prod = __SHIFTOUT(iidr, GICC_IIDR_ProductID);
+	const int iidr_arch = __SHIFTOUT(iidr, GICC_IIDR_ArchVersion);
+	const int iidr_rev = __SHIFTOUT(iidr, GICC_IIDR_Revision);
+	const int iidr_imp = __SHIFTOUT(iidr, GICC_IIDR_Implementer);
+
 	/*
 	 * Find the boot processor's CPU interface number.
 	 */
@@ -611,6 +617,9 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Generic Interrupt Controller, "
 	    "%zu sources (%zu valid)\n",
 	    sc->sc_pic.pic_maxsources, sc->sc_gic_lines);
+	aprint_debug_dev(sc->sc_dev, "Architecture version %d"
+	    " (0x%x:%d rev %d)\n", iidr_arch, iidr_imp, iidr_prod,
+	    iidr_rev);
 
 #ifdef MULTIPROCESSOR
 	sc->sc_pic.pic_cpus = kcpuset_running;
