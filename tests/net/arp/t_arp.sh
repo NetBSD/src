@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.26 2017/06/21 09:05:31 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.27 2017/06/22 10:06:33 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,6 +28,8 @@
 SOCKSRC=unix://commsock1
 SOCKDST=unix://commsock2
 IP4SRC=10.0.1.1
+IP4SRC2=10.0.1.5
+IP4NET=10.0.1.0
 IP4DST=10.0.1.2
 IP4DST_PROXYARP1=10.0.1.3
 IP4DST_PROXYARP2=10.0.1.4
@@ -666,6 +668,124 @@ arp_rtm_cleanup()
 	cleanup
 }
 
+atf_test_case arp_purge_on_route_change cleanup
+arp_purge_on_route_change_head()
+{
+
+	atf_set "descr" "Tests if ARP entries are removed on route change"
+	atf_set "require.progs" "rump_server"
+}
+
+arp_purge_on_route_change_body()
+{
+
+	rump_server_start $SOCKSRC
+	rump_server_start $SOCKDST
+
+	setup_dst_server
+	setup_src_server
+
+	rump_server_add_iface $SOCKSRC shmif1 bus1
+	export RUMP_SERVER=$SOCKSRC
+	atf_check -s exit:0 rump.ifconfig shmif1 inet $IP4SRC2/24
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	$DEBUG && rump.netstat -nr -f inet
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP4DST
+	$DEBUG && rump.arp -na
+	atf_check -s exit:0 -o ignore \
+	    rump.route change -net $IP4NET -ifp shmif1
+	$DEBUG && rump.netstat -nr -f inet
+	$DEBUG && rump.arp -na
+	# The entry was already removed on route change
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4DST
+
+	rump_server_destroy_ifaces
+}
+
+arp_purge_on_route_change_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case arp_purge_on_route_delete cleanup
+arp_purge_on_route_delete_head()
+{
+
+	atf_set "descr" "Tests if ARP entries are removed on route delete"
+	atf_set "require.progs" "rump_server"
+}
+
+arp_purge_on_route_delete_body()
+{
+
+	rump_server_start $SOCKSRC
+	rump_server_start $SOCKDST
+
+	setup_dst_server
+	setup_src_server
+
+	$DEBUG && rump.netstat -nr -f inet
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP4DST
+	$DEBUG && rump.arp -na
+
+	atf_check -s exit:0 -o ignore rump.route delete -net $IP4NET
+	$DEBUG && rump.netstat -nr -f inet
+	$DEBUG && rump.arp -na
+
+	# The entry was already removed on route delete
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4DST
+
+	rump_server_destroy_ifaces
+}
+
+arp_purge_on_route_delete_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case arp_purge_on_ifdown cleanup
+arp_purge_on_ifdown_head()
+{
+
+	atf_set "descr" "Tests if ARP entries are removed on interface down"
+	atf_set "require.progs" "rump_server"
+}
+
+arp_purge_on_ifdown_body()
+{
+
+	rump_server_start $SOCKSRC
+	rump_server_start $SOCKDST
+
+	setup_dst_server
+	setup_src_server
+
+	$DEBUG && rump.netstat -nr -f inet
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP4DST
+	atf_check -s exit:0 -o match:'shmif0' rump.arp -n $IP4DST
+
+	# Shutdown the interface
+	atf_check -s exit:0 rump.ifconfig shmif0 down
+	$DEBUG && rump.netstat -nr -f inet
+	$DEBUG && rump.arp -na
+
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4DST
+
+	rump_server_destroy_ifaces
+}
+
+arp_purge_on_ifdown_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case arp_cache_expiration_5s
@@ -678,4 +798,7 @@ atf_init_test_cases()
 	atf_add_test_case arp_link_activation
 	atf_add_test_case arp_static
 	atf_add_test_case arp_rtm
+	atf_add_test_case arp_purge_on_route_change
+	atf_add_test_case arp_purge_on_route_delete
+	atf_add_test_case arp_purge_on_ifdown
 }
