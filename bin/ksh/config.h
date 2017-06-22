@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.14 2017/06/22 14:20:46 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.15 2017/06/22 19:41:07 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -71,9 +71,6 @@
 
 /* Define if your kernel doesn't handle scripts starting with #! */
 /* #undef SHARPBANG */
-
-/* Define if dup2() preserves the close-on-exec flag (ultrix does this) */
-/* #undef DUP2_BROKEN */
 
 /* Define as the return value of signal handlers (0 or ).  */
 #define RETSIGVAL 
