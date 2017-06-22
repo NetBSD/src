@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.216 2017/06/16 02:26:17 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.217 2017/06/22 09:58:04 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.216 2017/06/16 02:26:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.217 2017/06/22 09:58:04 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -641,7 +641,7 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 	struct ifnet *ifp = NULL, *new_ifp;
 	struct ifaddr *ifa = NULL, *new_ifa;
 	struct psref psref_ifa, psref_new_ifa, psref_ifp;
-	bool newgw;
+	bool newgw, ifp_changed = false;
 
 	/*
 	 * New gateway could require new ifaddr, ifp;
@@ -691,13 +691,16 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 				oifa->ifa_rtrequest(RTM_DELETE, rt, info);
 			rt_replace_ifa(rt, ifa);
 			rt->rt_ifp = new_ifp;
+			ifp_changed = true;
 		}
 		if (new_ifa == NULL)
 			ifa_release(ifa, &psref_ifa);
 	}
 	ifa_release(new_ifa, &psref_new_ifa);
-	if (new_ifp && rt->rt_ifp != new_ifp && !if_is_deactivated(new_ifp))
+	if (new_ifp && rt->rt_ifp != new_ifp && !if_is_deactivated(new_ifp)) {
 		rt->rt_ifp = new_ifp;
+		ifp_changed = true;
+	}
 	rt_setmetrics(rtm->rtm_inits, rtm, rt);
 	if (rt->rt_flags != info->rti_flags) {
 		rt->rt_flags = (info->rti_flags & ~PRESERVED_RTF) |
@@ -705,6 +708,11 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 	}
 	if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
 		rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, info);
+#if defined(INET) || defined(INET6)
+	if (ifp_changed && rt_mask(rt) != NULL)
+		lltable_prefix_free(rt_getkey(rt)->sa_family, rt_getkey(rt),
+		    rt_mask(rt), 0);
+#endif
 out:
 	if_put(ifp, &psref_ifp);
 
