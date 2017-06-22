@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.16 2017/06/22 23:23:27 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.17 2017/06/22 23:26:17 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.16 2017/06/22 23:23:27 kamil Exp $ */
+/* $Id: sh.h,v 1.17 2017/06/22 23:26:17 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -24,9 +24,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#ifndef HAVE_STRSTR
-char *strstr ARGS((const char *s, const char *p));
-#endif /* HAVE_STRSTR */
 #ifndef HAVE_STRCASECMP
 int strcasecmp ARGS((const char *s1, const char *s2));
 int strncasecmp ARGS((const char *s1, const char *s2, int n));
