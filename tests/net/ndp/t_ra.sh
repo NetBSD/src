@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.28 2017/06/21 09:05:31 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.29 2017/06/22 09:56:48 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -334,7 +334,6 @@ ra_flush_defrouter_entries_body()
 	atf_check -s exit:0 -o empty rump.ndp -r
 	atf_check -s exit:0 -o match:'No advertising router' rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:"$ONEDAYISH S R" rump.ndp -n -a
 	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
@@ -762,7 +761,6 @@ ra_defrouter_expiration_body()
 	atf_check -s exit:0 -o not-match:'if=shmif0' rump.ndp -r
 	atf_check -s exit:0 -o match:'No advertising router' rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:"$ONEDAYISH S R" rump.ndp -n -a
 	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
