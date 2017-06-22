@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.25 2010/06/05 03:02:37 sjg Exp $	*/
+/*	$NetBSD: edit.c,v 1.26 2017/06/22 13:32:04 kamil Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.25 2010/06/05 03:02:37 sjg Exp $");
+__RCSID("$NetBSD: edit.c,v 1.26 2017/06/22 13:32:04 kamil Exp $");
 #endif
 
 
@@ -292,11 +292,6 @@ x_mode(onoff)
 #endif /* HAVE_TERMIOS_H || HAVE_TERMIO_H */
 
 		set_tty(tty_fd, &cb, TF_WAIT);
-
-#ifdef __CYGWIN__
-		if (edchars.eof == '\0')
-			edchars.eof = '\4';
-#endif /* __CYGWIN__ */
 
 		/* Convert unset values to internal `unset' value */
 		if (edchars.erase == vdisable_c)
