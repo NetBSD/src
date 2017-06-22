@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.19 2017/06/22 23:29:35 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.20 2017/06/22 23:30:42 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.19 2017/06/22 23:29:35 kamil Exp $ */
+/* $Id: sh.h,v 1.20 2017/06/22 23:30:42 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -24,11 +24,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#ifndef HAVE_MEMSET
-# define memcpy(d, s, n)	bcopy(s, d, n)
-# define memcmp(s1, s2, n)	bcmp(s1, s2, n)
-void *memset ARGS((void *d, int c, size_t n));
-#endif /* HAVE_MEMSET */
 #ifndef HAVE_MEMMOVE
 # ifdef HAVE_BCOPY
 #  define memmove(d, s, n)	bcopy(s, d, n)
