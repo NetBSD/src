@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.32 2017/06/22 23:54:13 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.33 2017/06/22 23:56:24 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -68,9 +68,6 @@
 
 /* Define if you have BSD4.2 signal routines (sigsetmask(), et. al.) */
 /* #undef BSD42_SIGNALS */
-
-/* Define if you have BSD4.1 signal routines (sigset(), et. al.) */
-/* #undef BSD41_SIGNALS */
 
 /* Define if you have v7 signal routines (signal(), signal reset on delivery) */
 /* #undef V7_SIGNALS */
