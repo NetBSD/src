@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: k_rem_pio2.c,v 1.12 2010/04/23 19:17:07 drochner Exp $");
+__RCSID("$NetBSD: k_rem_pio2.c,v 1.13 2017/06/22 12:43:43 maya Exp $");
 #endif
 
 /*
@@ -175,7 +175,9 @@ __kernel_rem_pio2(double *x, double *y, int e0, int nx, int prec, const int32_t 
 
     /* compute q[0],q[1],...q[jk] */
 	for (i=0;i<=jk;i++) {
-	    for(j=0,fw=0.0;j<=jx;j++) fw += x[j]*f[jx+i-j]; q[i] = fw;
+	    for(j=0,fw=0.0;j<=jx;j++)
+		    fw += x[j]*f[jx+i-j];
+	    q[i] = fw;
 	}
 
 	jz = jk;
