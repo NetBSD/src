@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.204 2017/06/22 09:23:10 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.205 2017/06/22 09:53:24 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.204 2017/06/22 09:23:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.205 2017/06/22 09:53:24 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -1505,6 +1505,7 @@ in_if_down(struct ifnet *ifp)
 {
 
 	in_if_link_down(ifp);
+	lltable_purge_entries(LLTABLE(ifp));
 }
 
 void
