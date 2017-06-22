@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.20 2017/06/22 13:33:39 kamil Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.21 2017/06/22 13:35:47 kamil Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ksh.c,v 1.20 2017/06/22 13:33:39 kamil Exp $");
+__RCSID("$NetBSD: c_ksh.c,v 1.21 2017/06/22 13:35:47 kamil Exp $");
 #endif
 
 #include "sh.h"
@@ -325,7 +325,7 @@ c_print(wp)
 
 				switch ((c = *s++)) {
 				/* Oddly enough, \007 seems more portable than
-				 * \a (due to HP-UX cc, Ultrix cc, old pcc's,
+				 * \a (due to Ultrix cc, old pcc's,
 				 * etc.).
 				 */
 				case 'a': c = '\007'; break;
