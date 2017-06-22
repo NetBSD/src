@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.23 2017/06/22 23:26:17 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.24 2017/06/22 23:27:53 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -243,9 +243,6 @@
 
 /* Define if you have the sigsetjmp function.  */
 #define HAVE_SIGSETJMP 1
-
-/* Define if you have the strcasecmp function.  */
-#define HAVE_STRCASECMP 1
 
 /* Define if you have the strerror function.  */
 #define HAVE_STRERROR 1
