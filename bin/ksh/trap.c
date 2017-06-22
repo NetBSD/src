@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 2006/10/16 00:07:32 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.9 2017/06/22 13:37:16 kamil Exp $	*/
 
 /*
  * signal handling
@@ -6,12 +6,9 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: trap.c,v 1.8 2006/10/16 00:07:32 christos Exp $");
+__RCSID("$NetBSD: trap.c,v 1.9 2017/06/22 13:37:16 kamil Exp $");
 #endif
 
-
-/* Kludge to avoid bogus re-declaration of sigtraps[] error on AIX 3.2.5 */
-#define FROM_TRAP_C
 #include "sh.h"
 
 /* Table is indexed by signal number
