@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.27 2017/06/20 07:21:50 nat Exp $	*/
+/*	$NetBSD: auconv.c,v 1.28 2017/06/22 02:09:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.27 2017/06/20 07:21:50 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.28 2017/06/22 02:09:37 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -199,6 +199,7 @@ static const struct conv_table u16be_table[] = {
 	MULAW_TABLE(16, 16, 16)
 #endif
 	{0, 0, 0, NULL, NULL}};
+#ifdef notdef
 static const struct conv_table s24le_table[] = {
 	TABLE_LIST(32, 32, 24)
 	TABLE_LIST(24, 32, 24)
@@ -239,6 +240,7 @@ static const struct conv_table u24be_table[] = {
 	MULAW_TABLE(24, 24, 24)
 #endif
 	{0, 0, 0, NULL, NULL}};
+#endif
 static const struct conv_table s32le_table[] = {
 	TABLE_LIST(32, 32, 32)
 	TABLE_LIST(24, 32, 32)
