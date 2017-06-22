@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.23 2017/06/22 23:38:49 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.24 2017/06/22 23:42:35 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.23 2017/06/22 23:38:49 kamil Exp $ */
+/* $Id: sh.h,v 1.24 2017/06/22 23:42:35 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -103,10 +103,6 @@ typedef	RETSIGTYPE (*handler_t) ARGS((int));	/* signal handler */
 #else /* _PATH_DEFPATH */
 # define DEFAULT__PATH DEFAULT_PATH
 #endif /* _PATH_DEFPATH */
-
-#ifndef offsetof
-# define offsetof(type,id) ((size_t)&((type*)NULL)->id)
-#endif
 
 #ifndef HAVE_KILLPG
 # define killpg(p, s)	kill(-(p), (s))
