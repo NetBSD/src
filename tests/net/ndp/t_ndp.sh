@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.22 2017/06/21 09:05:31 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.23 2017/06/22 09:05:02 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -398,7 +398,7 @@ atf_test_case ndp_rtm cleanup
 ndp_rtm_head()
 {
 
-	atf_set "descr" "Tests for routing messages on operations of ARP entries"
+	atf_set "descr" "Tests for routing messages on operations of NDP entries"
 	atf_set "require.progs" "rump_server"
 }
 
