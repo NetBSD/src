@@ -1,4 +1,4 @@
-#	$NetBSD: files.integrator,v 1.12 2017/06/22 02:19:25 christos Exp $
+#	$NetBSD: files.integrator,v 1.13 2017/06/22 15:27:23 christos Exp $
 #
 # ARM, Ltd. Integrator evaluation board configuraiton info
 #
@@ -30,8 +30,6 @@ file	arch/evbarm/ifpga/plmmc_ifpga.c		plmmc_ifpga
 
 # Integrator real-time clock
 # XXX: dev/ic/pl031.c
-no device plrtc
-device plrtc
 attach plrtc at ifpga
 file	arch/evbarm/ifpga/pl030_rtc.c		plrtc
 
