@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.18 2017/06/22 23:27:53 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.19 2017/06/22 23:29:35 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.18 2017/06/22 23:27:53 kamil Exp $ */
+/* $Id: sh.h,v 1.19 2017/06/22 23:29:35 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -24,9 +24,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#ifdef HAVE_MEMORY_H
-# include <memory.h>
-#endif
 #ifndef HAVE_MEMSET
 # define memcpy(d, s, n)	bcopy(s, d, n)
 # define memcmp(s1, s2, n)	bcmp(s1, s2, n)
