@@ -1,4 +1,4 @@
-/*	$NetBSD: gic_reg.h,v 1.5 2015/06/09 10:22:15 skrll Exp $	*/
+/*	$NetBSD: gic_reg.h,v 1.6 2017/06/22 07:02:14 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
 #define	GICD_TYPER_ITLinesNumber	__BITS(4,0)	// 32*(N+1)
 #define	GICD_TYPER_LINES(n)		MIN(32*(__SHIFTOUT((n), GICD_TYPER_ITLinesNumber) + 1), 1020)
 
-#define	GICD_IIDR_ProductId		__BITS(31,24)
+#define	GICD_IIDR_ProductID		__BITS(31,24)
 #define	GICD_IIDR_Variant		__BITS(19,16)
 #define	GICD_IIDR_Revision		__BITS(15,12)
 #define	GICD_IIDR_Implementer		__BITS(11,0)
