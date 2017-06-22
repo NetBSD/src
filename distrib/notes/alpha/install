@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.37 2009/04/25 21:21:47 snj Exp $
+.\"	$NetBSD: install,v 1.38 2017/06/22 16:46:52 flxd Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -358,7 +358,7 @@ with:
 .Pp
 .Dl \*[Gt]\*[Gt]\*[Gt] Ic "set ewa0_protocols bootp"
 .Pp
-The 3000 series of Turbochannel systems and certain other models use
+The 3000 series of TURBOchannel systems and certain other models use
 .Em old SRM ,
 do not have a
 .Fl proto

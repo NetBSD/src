@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.18 2015/05/19 19:30:28 snj Exp $
+.\"	$NetBSD: hardware,v 1.19 2017/06/22 16:46:52 flxd Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -52,7 +52,7 @@ DECstation 2100 and 3100 baseboard video
 one-bit mono or 8-bit pseudocolor frame buffers.
 .bullet)
 .It
-DECstation 5000 series TurboChannel video
+DECstation 5000 series TURBOchannel video
 .(bullet -compact
 PMAG-DV Personal DECstation baseboard 1024x768 frame buffer
 .It
@@ -105,7 +105,7 @@ on-board
 .Em asc
 SCSI controller (5000 series machines)
 .It
-TurboChannel
+TURBOchannel
 .Em asc No SCSI controller
 .Pq the Em PMAZ
 .bullet)
@@ -128,7 +128,7 @@ Audio drivers for Personal DECstation machines
 .It
 Floppy driver for Personal DECstation machines
 .It
-TurboChannel audio hardware (LoFi)
+TURBOchannel audio hardware (LoFi)
 .bullet)
 .(Note
 The primary obstacle to supporting the above is non-availability of sample
