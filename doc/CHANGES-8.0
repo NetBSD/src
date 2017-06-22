@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.11 2017/06/21 18:31:24 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.12 2017/06/22 05:38:03 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -1405,4 +1405,10 @@ sys/kern/vfs_trans.c				1.47, 1.48
 	fstrans_done() only.
 	Make the fast path of fstrans_get_lwp_info() "static inline".
 	[hannken, ticket #54]
+
+sys/opencrypto/crypto.c				1.79-1.86
+sys/opencrypto/cryptodev.h			1.35, 1.36
+
+	Fix opencrypto locking.
+	[christos/knakahara, ticket #37]
 
