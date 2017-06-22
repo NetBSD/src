@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.41 2009/04/23 01:56:50 snj Exp $
+.\"	$NetBSD: install,v 1.42 2017/06/22 16:46:52 flxd Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,7 +87,7 @@ section later in these INSTALL notes.
 You should familiarize yourself with the console PROM environment
 and the hardware configuration.
 The PROMs on the older DECstation 2100 and 3100 use one syntax.
-The PROMs on the TurboChannel machines use a completely different syntax.
+The PROMs on the TURBOchannel machines use a completely different syntax.
 Be sure you know how to print the configuration of your machine,
 and how to boot from disk or network, as appropriate.
 .Pp

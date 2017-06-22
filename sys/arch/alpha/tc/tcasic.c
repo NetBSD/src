@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.46 2017/06/09 17:55:18 flxd Exp $ */
+/* $NetBSD: tcasic.c,v 1.47 2017/06/22 16:46:52 flxd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.46 2017/06/09 17:55:18 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.47 2017/06/22 16:46:52 flxd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,11 +64,11 @@ tcasicmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	/* Make sure that we're looking for a TurboChannel ASIC. */
+	/* Make sure that we're looking for a TURBOchannel ASIC. */
 	if (strcmp(ma->ma_name, tcasic_cd.cd_name))
 	        return (0);
 
-	/* Make sure that the system supports a TurboChannel ASIC. */
+	/* Make sure that the system supports a TURBOchannel ASIC. */
 	if ((cputype != ST_DEC_3000_500) && (cputype != ST_DEC_3000_300))
 		return (0);
 
