@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.29 2017/06/22 14:11:27 kamil Exp $	*/
+/*	$NetBSD: edit.c,v 1.30 2017/06/22 14:20:46 kamil Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.29 2017/06/22 14:11:27 kamil Exp $");
+__RCSID("$NetBSD: edit.c,v 1.30 2017/06/22 14:20:46 kamil Exp $");
 #endif
 
 
@@ -19,10 +19,6 @@ __RCSID("$NetBSD: edit.c,v 1.29 2017/06/22 14:11:27 kamil Exp $");
 #define EXTERN
 #include "edit.h"
 #undef EXTERN
-#ifdef OS_SCO	/* SCO Unix 3.2v4.1 */
-# include <sys/stream.h>	/* needed for <sys/ptem.h> */
-# include <sys/ptem.h>		/* needed for struct winsize */
-#endif /* OS_SCO */
 #include <sys/ioctl.h>
 #include <ctype.h>
 #include "ksh_stat.h"
@@ -161,10 +157,6 @@ x_read(buf, len)
 int
 x_getc()
 {
-#ifdef OS2
-	unsigned char c = _read_kbd(0, 1, 0);
-	return c == 0 ? 0xE0 : c;
-#else /* OS2 */
 	char c;
 	int n;
 
@@ -177,7 +169,6 @@ x_getc()
 	if (n != 1)
 		return -1;
 	return (int) (unsigned char) c;
-#endif /* OS2 */
 }
 
 void
@@ -292,11 +283,6 @@ x_mode(onoff)
 #endif /* HAVE_TERMIOS_H || HAVE_TERMIO_H */
 
 		set_tty(tty_fd, &cb, TF_WAIT);
-
-#ifdef __CYGWIN__
-		if (edchars.eof == '\0')
-			edchars.eof = '\4';
-#endif /* __CYGWIN__ */
 
 		/* Convert unset values to internal `unset' value */
 		if (edchars.erase == vdisable_c)

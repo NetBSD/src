@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.11 2017/06/22 14:11:27 kamil Exp $	*/
+/*	$NetBSD: io.c,v 1.12 2017/06/22 14:20:46 kamil Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.11 2017/06/22 14:11:27 kamil Exp $");
+__RCSID("$NetBSD: io.c,v 1.12 2017/06/22 14:20:46 kamil Exp $");
 #endif
 
 
@@ -370,20 +370,7 @@ check_fd(name, mode, emsgp)
 			return -1;
 		}
 		fl &= O_ACCMODE;
-#ifdef OS2
-		if (mode == W_OK ) {
-		       if (setmode(fd, O_TEXT) == -1) {
-				if (emsgp)
-					*emsgp = "couldn't set write mode";
-				return -1;
-			}
-		 } else if (mode == R_OK)
-	      		if (setmode(fd, O_BINARY) == -1) {
-				if (emsgp)
-					*emsgp = "couldn't set read mode";
-				return -1;
-			}
-#else /* OS2 */
+
 		/* X_OK is a kludge to disable this check for dups (x<&1):
 		 * historical shells never did this check (XXX don't know what
 		 * posix has to say).
@@ -398,7 +385,6 @@ check_fd(name, mode, emsgp)
 					      : "fd not open for writing";
 			return -1;
 		}
-#endif /* OS2 */
 		return fd;
 	}
 #ifdef KSH

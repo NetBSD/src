@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.13 2017/06/22 14:11:27 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.14 2017/06/22 14:20:46 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -10,13 +10,6 @@
 
 #ifndef CONFIG_H
 #define CONFIG_H
-
-/* Define if on AIX 3.
-   System headers sometimes define this.
-   We just want to avoid a redefinition error message.  */
-#ifndef _ALL_SOURCE
-/* #undef _ALL_SOURCE */
-#endif
 
 /* Define if the closedir function returns void instead of int.  */
 /* #undef CLOSEDIR_VOID */
@@ -178,14 +171,8 @@
 /* Define if the pgrp of setpgrp() can't be the pid of a zombie process */
 /* #undef NEED_PGRP_SYNC */
 
-/* Define if you arg running SCO unix */
-/* #undef OS_SCO */
-
 /* Define if you arg running ISC unix */
 /* #undef OS_ISC */
-
-/* Define if you arg running OS2 with the EMX library */
-/* #undef OS2 */
 
 /* Define if you have a POSIX.1 compatible <sys/wait.h> */
 #define POSIX_SYS_WAIT 1
@@ -199,10 +186,6 @@
 #else
 #define DEFAULT_PATH "/bin:/usr/bin:/sbin:/usr/sbin"
 #endif
-
-/* Define if your C library's getwd/getcwd function dumps core in unreadable
- * directories.  */
-/* #undef HPUX_GETWD_BUG */
 
 /* Include ksh features? */
 #define KSH 1
