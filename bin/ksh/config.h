@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.9 2017/06/22 13:33:39 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.10 2017/06/22 13:34:48 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -177,9 +177,6 @@
 
 /* Define if the pgrp of setpgrp() can't be the pid of a zombie process */
 /* #undef NEED_PGRP_SYNC */
-
-/* Define if you arg running SCO unix */
-/* #undef OS_SCO */
 
 /* Define if you arg running ISC unix */
 /* #undef OS_ISC */

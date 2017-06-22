@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.27 2017/06/22 13:33:39 kamil Exp $	*/
+/*	$NetBSD: edit.c,v 1.28 2017/06/22 13:34:48 kamil Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.27 2017/06/22 13:33:39 kamil Exp $");
+__RCSID("$NetBSD: edit.c,v 1.28 2017/06/22 13:34:48 kamil Exp $");
 #endif
 
 
@@ -19,10 +19,6 @@ __RCSID("$NetBSD: edit.c,v 1.27 2017/06/22 13:33:39 kamil Exp $");
 #define EXTERN
 #include "edit.h"
 #undef EXTERN
-#ifdef OS_SCO	/* SCO Unix 3.2v4.1 */
-# include <sys/stream.h>	/* needed for <sys/ptem.h> */
-# include <sys/ptem.h>		/* needed for struct winsize */
-#endif /* OS_SCO */
 #include <sys/ioctl.h>
 #include <ctype.h>
 #include "ksh_stat.h"
