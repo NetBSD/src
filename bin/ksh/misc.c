@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.17 2017/05/03 00:41:34 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.18 2017/06/22 13:33:39 kamil Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.17 2017/05/03 00:41:34 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.18 2017/06/22 13:33:39 kamil Exp $");
 #endif
 
 
@@ -323,14 +323,10 @@ change_flag(f, what, newval)
 #endif /* EDIT */
 	/* Turning off -p? */
 	if (f == FPRIVILEGED && oldval && !newval) {
-#ifdef OS2
-		;
-#else /* OS2 */
 		seteuid(ksheuid = getuid());
 		setuid(ksheuid);
 		setegid(getgid());
 		setgid(getgid());
-#endif /* OS2 */
 	} else if (f == FPOSIX && newval) {
 #ifdef BRACE_EXPAND
 		Flag(FBRACEEXPAND) = 0
