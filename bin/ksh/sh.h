@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.15 2017/06/22 23:19:53 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.16 2017/06/22 23:23:27 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.15 2017/06/22 23:19:53 kamil Exp $ */
+/* $Id: sh.h,v 1.16 2017/06/22 23:23:27 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -22,14 +22,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
-#ifdef HAVE_STRING_H
-# include <string.h>
-#else
-# include <strings.h>
-# define strchr index
-# define strrchr rindex
-#endif /* HAVE_STRING_H */
 #ifndef HAVE_STRSTR
 char *strstr ARGS((const char *s, const char *p));
 #endif /* HAVE_STRSTR */
