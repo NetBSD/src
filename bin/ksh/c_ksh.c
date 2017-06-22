@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.18 2011/10/16 17:12:11 joerg Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.19 2017/06/22 13:32:04 kamil Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -6,16 +6,12 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ksh.c,v 1.18 2011/10/16 17:12:11 joerg Exp $");
+__RCSID("$NetBSD: c_ksh.c,v 1.19 2017/06/22 13:32:04 kamil Exp $");
 #endif
 
 #include "sh.h"
 #include "ksh_stat.h"
 #include <ctype.h>
-
-#ifdef __CYGWIN__
-#include <sys/cygwin.h>
-#endif /* __CYGWIN__ */
 
 int
 c_cd(wp)
@@ -162,12 +158,7 @@ c_cd(wp)
 
 	/* Set PWD */
 	if (pwd) {
-#ifdef __CYGWIN__
-		char ptmp[PATH];  /* larger than MAX_PATH */
-		cygwin_conv_to_full_posix_path(pwd, ptmp);
-#else /* __CYGWIN__ */
 		char *ptmp = pwd;
-#endif /* __CYGWIN__ */
 		set_current_wd(ptmp);
 		/* Ignore failure (happens if readonly or integer) */
 		setstr(pwd_s, ptmp, KSH_RETURN_ERROR);
