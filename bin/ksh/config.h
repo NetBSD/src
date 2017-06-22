@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.17 2017/06/22 23:09:32 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.18 2017/06/22 23:11:48 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -10,9 +10,6 @@
 
 #ifndef CONFIG_H
 #define CONFIG_H
-
-/* Define if the closedir function returns void instead of int.  */
-/* #undef CLOSEDIR_VOID */
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 /* #undef gid_t */
