@@ -1,4 +1,4 @@
-/*	$NetBSD: c_sh.c,v 1.16 2016/10/11 06:31:07 dholland Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.17 2017/06/22 13:33:39 kamil Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_sh.c,v 1.16 2016/10/11 06:31:07 dholland Exp $");
+__RCSID("$NetBSD: c_sh.c,v 1.17 2017/06/22 13:33:39 kamil Exp $");
 #endif
 
 
@@ -331,9 +331,6 @@ c_read(wp)
 			while (1) {
 				c = shf_getc(shf);
 				if (c == '\0'
-#ifdef OS2
-				    || c == '\r'
-#endif /* OS2 */
 				    )
 					continue;
 				if (c == EOF && shf_error(shf)
@@ -905,13 +902,5 @@ const struct builtin shbuiltins [] = {
 	{"ulimit", c_ulimit},
 	{"+umask", c_umask},
 	{"*=unset", c_unset},
-#ifdef OS2
-	/* In OS2, the first line of a file can be "extproc name", which
-	 * tells the command interpreter (cmd.exe) to use name to execute
-	 * the file.  For this to be useful, ksh must ignore commands
-	 * starting with extproc and this does the trick...
-	 */
-	{"extproc", c_label},
-#endif /* OS2 */
 	{NULL, NULL}
 };

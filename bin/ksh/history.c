@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.12 2017/01/14 18:35:43 maya Exp $	*/
+/*	$NetBSD: history.c,v 1.13 2017/06/22 13:33:39 kamil Exp $	*/
 
 /*
  * command history
@@ -19,7 +19,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: history.c,v 1.12 2017/01/14 18:35:43 maya Exp $");
+__RCSID("$NetBSD: history.c,v 1.13 2017/06/22 13:33:39 kamil Exp $");
 #endif
 
 
@@ -30,11 +30,7 @@ __RCSID("$NetBSD: history.c,v 1.12 2017/01/14 18:35:43 maya Exp $");
 # ifdef EASY_HISTORY
 
 #  ifndef HISTFILE
-#   ifdef OS2
-#    define HISTFILE "history.ksh"
-#   else /* OS2 */
 #    define HISTFILE ".pdksh_history"
-#   endif /* OS2 */
 #  endif
 
 # else
