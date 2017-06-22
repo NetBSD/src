@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.121 2017/06/09 17:55:18 flxd Exp $
+#	$NetBSD: files.vax,v 1.122 2017/06/22 16:46:53 flxd Exp $
 #
 # new style config file for vax architecture
 #
@@ -107,7 +107,7 @@ include "dev/mscp/files.mscp"
 # Unibus/Q22 bus definitions
 include "dev/qbus/files.uba"
 
-# TurboCHANNEL bus support and device drivers
+# TURBOchannel bus support and device drivers
 include "dev/tc/files.tc"
 
 attach	tc at vsbus with tc_vsbus
