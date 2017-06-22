@@ -1,4 +1,4 @@
-/*	$NetBSD: sigact.c,v 1.5 2017/06/22 23:56:24 kamil Exp $	*/
+/*	$NetBSD: sigact.c,v 1.6 2017/06/22 23:59:28 kamil Exp $	*/
 
 /* NAME:
  *      sigact.c - fake sigaction(2)
@@ -141,7 +141,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: sigact.c,v 1.5 2017/06/22 23:56:24 kamil Exp $");
+__RCSID("$NetBSD: sigact.c,v 1.6 2017/06/22 23:59:28 kamil Exp $");
 #endif
 
 
@@ -167,12 +167,7 @@ __RCSID("$NetBSD: sigact.c,v 1.5 2017/06/22 23:56:24 kamil Exp $");
 #ifdef USE_FAKE_SIGACT /* let autoconf decide.. */
 /* #if !defined(SA_NOCLDSTOP) || defined(_SIGACT_H) || defined(USE_SIGNAL) || defined(USE_SIGSET) || defined(USE_SIGMASK) */
 
-/* Let autoconf decide which to use */
-#ifdef BSD42_SIGNALS
-# define USE_SIGMASK
-#else
-# define USE_SIGNAL
-#endif /* BSD42_SIGNALS */
+#define USE_SIGMASK
 
 /*
  * if we haven't been told,
