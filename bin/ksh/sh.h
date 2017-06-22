@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.14 2017/06/22 23:17:50 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.15 2017/06/22 23:19:53 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.14 2017/06/22 23:17:50 kamil Exp $ */
+/* $Id: sh.h,v 1.15 2017/06/22 23:19:53 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -19,10 +19,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <setjmp.h>
-#ifdef HAVE_STDDEF_H
-# include <stddef.h>
-#endif
-
+#include <stddef.h>
 #include <stdlib.h>
 #include <unistd.h>
 

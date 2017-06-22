@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.20 2017/06/22 23:17:50 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.21 2017/06/22 23:19:53 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -288,9 +288,6 @@
 
 /* Define if you have the <paths.h> header file.  */
 #define HAVE_PATHS_H 1
-
-/* Define if you have the <stddef.h> header file.  */
-#define HAVE_STDDEF_H 1
 
 /* Define if you have the <string.h> header file.  */
 #define HAVE_STRING_H 1
