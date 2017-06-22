@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.21 2017/06/22 13:35:47 kamil Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.22 2017/06/22 14:11:27 kamil Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -6,12 +6,16 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ksh.c,v 1.21 2017/06/22 13:35:47 kamil Exp $");
+__RCSID("$NetBSD: c_ksh.c,v 1.22 2017/06/22 14:11:27 kamil Exp $");
 #endif
 
 #include "sh.h"
 #include "ksh_stat.h"
 #include <ctype.h>
+
+#ifdef __CYGWIN__
+#include <sys/cygwin.h>
+#endif /* __CYGWIN__ */
 
 int
 c_cd(wp)
@@ -141,7 +145,15 @@ c_cd(wp)
 		setstr(oldpwd_s, current_wd, KSH_RETURN_ERROR);
 
 	if (!ISABSPATH(Xstring(xs, xp))) {
+#ifdef OS2
+		/* simplify_path() doesn't know about os/2's drive contexts,
+		 * so it can't set current_wd when changing to a:foo.
+		 * Handle this by calling getcwd()...
+		 */
+		pwd = ksh_get_wd((char *) 0, 0);
+#else /* OS2 */
 		pwd = (char *) 0;
+#endif /* OS2 */
 	} else
 #ifdef S_ISLNK
 	if (!physical || !(pwd = get_phys_path(Xstring(xs, xp))))
@@ -150,7 +162,12 @@ c_cd(wp)
 
 	/* Set PWD */
 	if (pwd) {
+#ifdef __CYGWIN__
+		char ptmp[PATH];  /* larger than MAX_PATH */
+		cygwin_conv_to_full_posix_path(pwd, ptmp);
+#else /* __CYGWIN__ */
 		char *ptmp = pwd;
+#endif /* __CYGWIN__ */
 		set_current_wd(ptmp);
 		/* Ignore failure (happens if readonly or integer) */
 		setstr(pwd_s, ptmp, KSH_RETURN_ERROR);
@@ -224,6 +241,7 @@ c_print(wp)
 #define PO_PMINUSMINUS	BIT(2)	/* print a -- argument */
 #define PO_HIST		BIT(3)	/* print to history instead of stdout */
 #define PO_COPROC	BIT(4)	/* printing to coprocess: block SIGPIPE */
+#define PO_FSLASH	BIT(5)  /* swap slash for backslash (for os2 ) */
 	int fd = 1;
 	int flags = PO_EXPAND|PO_NL;
 	char *s;
@@ -264,7 +282,11 @@ c_print(wp)
 		}
 	} else {
 		int optc;
+#if OS2
+		const char *options = "Rnpfrsu,"; /* added f flag */
+#else
 		const char *options = "Rnprsu,";
+#endif
 		while ((optc = ksh_getopt(wp, &builtin_opt, options)) != EOF)
 			switch (optc) {
 			  case 'R': /* fake BSD echo command */
@@ -275,6 +297,11 @@ c_print(wp)
 			  case 'e':
 				flags |= PO_EXPAND;
 				break;
+#ifdef OS2
+			  case 'f':
+				flags |= PO_FSLASH;
+				break;
+#endif
 			  case 'n':
 				flags &= ~PO_NL;
 				break;
@@ -320,12 +347,19 @@ c_print(wp)
 		s = *wp;
 		while ((c = *s++) != '\0') {
 			Xcheck(xs, xp);
+#ifdef OS2
+			if ((flags & PO_FSLASH) && c == '\\')
+				if (*s == '\\')
+					*s++;
+				else
+					c = '/';
+#endif /* OS2 */
 			if ((flags & PO_EXPAND) && c == '\\') {
 				int i;
 
 				switch ((c = *s++)) {
 				/* Oddly enough, \007 seems more portable than
-				 * \a (due to Ultrix cc, old pcc's,
+				 * \a (due to HP-UX cc, Ultrix cc, old pcc's,
 				 * etc.).
 				 */
 				case 'a': c = '\007'; break;
