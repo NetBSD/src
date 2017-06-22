@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.20 2017/06/22 23:30:42 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.21 2017/06/22 23:33:36 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.20 2017/06/22 23:30:42 kamil Exp $ */
+/* $Id: sh.h,v 1.21 2017/06/22 23:33:36 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -23,14 +23,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-
-#ifndef HAVE_MEMMOVE
-# ifdef HAVE_BCOPY
-#  define memmove(d, s, n)	bcopy(s, d, n)
-# else
-void *memmove ARGS((void *d, const void *s, size_t n));
-# endif
-#endif /* HAVE_MEMMOVE */
 
 #ifdef HAVE_PROTOTYPES
 # include <stdarg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.26 2017/06/22 23:30:42 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.27 2017/06/22 23:33:36 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -125,12 +125,6 @@
 
 /* Define if you have a sane <termios.h> header file */
 #define HAVE_TERMIOS_H 1
-
-/* Define if you have a memmove() function in your C library */
-#define HAVE_MEMMOVE 1
-
-/* Define if you have a bcopy() function in your C library */
-#define HAVE_BCOPY
 
 /* Define if you have a lstat() function in your C library */
 #define HAVE_LSTAT 1
