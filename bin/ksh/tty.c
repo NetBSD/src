@@ -1,9 +1,9 @@
-/*	$NetBSD: tty.c,v 1.5 2017/06/23 00:04:20 kamil Exp $	*/
+/*	$NetBSD: tty.c,v 1.6 2017/06/23 00:09:36 kamil Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: tty.c,v 1.5 2017/06/23 00:04:20 kamil Exp $");
+__RCSID("$NetBSD: tty.c,v 1.6 2017/06/23 00:09:36 kamil Exp $");
 #endif
 
 
@@ -112,22 +112,6 @@ tty_init(init_ttystate)
 	/* SCO can't job control on /dev/tty, so don't try... */
 #if !defined(__SCO__)
 	if ((tfd = open(devtty, O_RDWR, 0)) < 0) {
-#ifdef __NeXT
-		/* rlogin on NeXT boxes does not set up the controlling tty,
-		 * so force it to be done here...
-		 */
-		{
-			extern char *ttyname ARGS((int));
-			char *s = ttyname(isatty(2) ? 2 : 0);
-			int fd;
-
-			if (s && (fd = open(s, O_RDWR, 0)) >= 0) {
-				close(fd);
-				tfd = open(devtty, O_RDWR, 0);
-			}
-		}
-#endif /* __NeXT */
-
 		if (tfd < 0) {
 			tty_devtty = 0;
 			warningf(FALSE,
