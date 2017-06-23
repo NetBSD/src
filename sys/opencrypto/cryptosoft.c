@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.51 2017/06/01 08:49:35 knakahara Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.52 2017/06/23 11:41:58 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.51 2017/06/01 08:49:35 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.52 2017/06/23 11:41:58 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,8 @@ static	int swcr_combined(struct cryptop *, int);
 static	int swcr_process(void *, struct cryptop *, int);
 static	int swcr_newsession(void *, u_int32_t *, struct cryptoini *);
 static	int swcr_freesession(void *, u_int64_t);
+
+static	int swcryptoattach_internal(void);
 
 /*
  * Apply a symmetric encryption/decryption algorithm.
@@ -1326,9 +1328,17 @@ void
 swcryptoattach(int num)
 {
 	/*
-	 * Nothing to do here, initialization is handled by the
-	 * module initialization code in swcrypto_attach() below).
+	 * swcrypto_attach() must be called after attached cpus, because
+	 * it calls softint_establish() through below call path.
+	 *     swcr_init() => crypto_get_driverid() => crypto_init()
+	 *         => crypto_init0()
+	 * If softint_establish() is called before attached cpus that ncpu == 0,
+	 * the softint handler is established to CPU#0 only.
+	 *
+	 * So, swcrypto_attach() must be called from not module_init_class()
+	 * but config_finalize() when it is built as builtin module.
 	 */
+	swcryptoattach_internal();
 }
 
 void	swcrypto_attach(device_t, device_t, void *);
@@ -1386,42 +1396,56 @@ static struct cfdata swcrypto_cfdata[] = {
 	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
 
+/*
+ * Internal attach routine.
+ * Don't call before attached cpus.
+ */
 static int
-swcrypto_modcmd(modcmd_t cmd, void *arg)
+swcryptoattach_internal(void)
 {
 	int error;
 
+	error = config_cfdriver_attach(&swcrypto_cd);
+	if (error) {
+		return error;
+	}
+
+	error = config_cfattach_attach(swcrypto_cd.cd_name, &swcrypto_ca);
+	if (error) {
+		config_cfdriver_detach(&swcrypto_cd);
+		aprint_error("%s: unable to register cfattach\n",
+		    swcrypto_cd.cd_name);
+
+		return error;
+	}
+
+	error = config_cfdata_attach(swcrypto_cfdata, 1);
+	if (error) {
+		config_cfattach_detach(swcrypto_cd.cd_name,
+		    &swcrypto_ca);
+		config_cfdriver_detach(&swcrypto_cd);
+		aprint_error("%s: unable to register cfdata\n",
+		    swcrypto_cd.cd_name);
+
+		return error;
+	}
+
+	(void)config_attach_pseudo(swcrypto_cfdata);
+
+	return 0;
+}
+
+static int
+swcrypto_modcmd(modcmd_t cmd, void *arg)
+{
+	int error = 0;
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = config_cfdriver_attach(&swcrypto_cd);
-		if (error) {
-			return error;
-		}
-
-		error = config_cfattach_attach(swcrypto_cd.cd_name,
-		    &swcrypto_ca);
-		if (error) {
-			config_cfdriver_detach(&swcrypto_cd);
-			aprint_error("%s: unable to register cfattach\n",
-				swcrypto_cd.cd_name);
-
-			return error;
-		}
-
-		error = config_cfdata_attach(swcrypto_cfdata, 1);
-		if (error) {
-			config_cfattach_detach(swcrypto_cd.cd_name,
-			    &swcrypto_ca);
-			config_cfdriver_detach(&swcrypto_cd);
-			aprint_error("%s: unable to register cfdata\n",
-				swcrypto_cd.cd_name);
-
-			return error;
-		}
-
-		(void)config_attach_pseudo(swcrypto_cfdata);
-
-		return 0;
+#ifdef _MODULE
+		error = swcryptoattach_internal();
+#endif
+		return error;
 	case MODULE_CMD_FINI:
 		error = config_cfdata_detach(swcrypto_cfdata);
 		if (error) {
