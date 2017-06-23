@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.26 2017/06/22 23:50:24 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.27 2017/06/23 00:09:36 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.26 2017/06/22 23:50:24 kamil Exp $ */
+/* $Id: sh.h,v 1.27 2017/06/23 00:09:36 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -553,11 +553,7 @@ EXTERN	int	x_cols I__(80);	/* tty columns */
 
 /* Determine the location of the system (common) profile */
 #ifndef KSH_SYSTEM_PROFILE
-# ifdef __NeXT
-#  define KSH_SYSTEM_PROFILE "/etc/profile.std"
-# else /* __NeXT */
-#  define KSH_SYSTEM_PROFILE "/etc/profile"
-# endif /* __NeXT */
+# define KSH_SYSTEM_PROFILE "/etc/profile"
 #endif /* KSH_SYSTEM_PROFILE */
 
 /* Used by v_evaluate() and setstr() to control action when error occurs */
