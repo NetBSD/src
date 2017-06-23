@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.11 2017/06/22 09:56:48 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.12 2017/06/23 05:46:10 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -258,7 +258,7 @@ void		lltable_prefix_free(const int, const struct sockaddr *,
 		    const struct sockaddr *, const u_int);
 void		lltable_drain(int);
 void		lltable_purge_entries(struct lltable *);
-int		lltable_sysctl_dumparp(int, struct rt_walkarg *);
+int		lltable_sysctl_dump(int, struct rt_walkarg *);
 int		lltable_dump_entry(struct lltable *, struct llentry *,
 		    struct rt_walkarg *, struct sockaddr *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.218 2017/06/23 04:27:55 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.219 2017/06/23 05:46:10 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.218 2017/06/23 04:27:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.219 2017/06/23 05:46:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1916,7 +1916,7 @@ again:
 
 	case NET_RT_DUMP:
 	case NET_RT_FLAGS:
-#ifdef INET
+#if defined(INET) || defined(INET6)
 		/*
 		 * take care of llinfo entries, the caller must
 		 * specify an AF
@@ -1924,12 +1924,12 @@ again:
 		if (w.w_op == NET_RT_FLAGS &&
 		    (w.w_arg == 0 || w.w_arg & RTF_LLDATA)) {
 			if (af != 0)
-				error = lltable_sysctl_dumparp(af, &w);
+				error = lltable_sysctl_dump(af, &w);
 			else
 				error = EINVAL;
 			break;
 		}
-#endif /* INET */
+#endif
 
 		for (i = 1; i <= AF_MAX; i++)
 			if ((af == 0 || af == i) &&
