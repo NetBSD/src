@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.35 2015/09/26 20:28:38 christos Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.36 2017/06/23 21:28:39 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -224,9 +224,10 @@ extern const int *const uvmexp_pageshift;
     round_page((vaddr_t)(da) + (vsize_t)maxdmap)
 #endif
 
+extern uint32_t user_stack_guard_size;
 #ifndef VM_DEFAULT_ADDRESS_TOPDOWN
 #define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
-    trunc_page(VM_MAXUSER_ADDRESS - MAXSSIZ - (sz))
+    trunc_page(VM_MAXUSER_ADDRESS - MAXSSIZ - (sz) - user_stack_guard_size)
 #endif
 
 extern int		ubc_nwins;	/* number of UBC mapping windows */
