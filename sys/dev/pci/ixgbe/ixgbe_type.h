@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_type.h 299200 2016-05-06 22:54:56Z pfg $*/
-/*$NetBSD: ixgbe_type.h,v 1.22 2017/06/02 08:16:52 msaitoh Exp $*/
+/*$NetBSD: ixgbe_type.h,v 1.23 2017/06/23 09:02:48 msaitoh Exp $*/
 
 #ifndef _IXGBE_TYPE_H_
 #define _IXGBE_TYPE_H_
@@ -3835,7 +3835,6 @@ struct ixgbe_mac_info {
 	u32				max_tx_queues;
 	u32				max_rx_queues;
 	u32				orig_autoc;
-	u32 cached_autoc;
 	u8  san_mac_rar_index;
 	bool get_link_status;
 	u32				orig_autoc2;
