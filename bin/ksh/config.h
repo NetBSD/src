@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.34 2017/06/22 23:59:28 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.35 2017/06/23 00:00:58 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -65,9 +65,6 @@
 
 /* Define if you have posix signal routines (sigaction(), et. al.) */
 #define POSIX_SIGNALS 1
-
-/* Define if you have v7 signal routines (signal(), signal reset on delivery) */
-/* #undef V7_SIGNALS */
 
 /* Define to use the fake posix signal routines (sigact.[ch]) */
 /* #undef USE_FAKE_SIGACT */

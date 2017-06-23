@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 2017/06/22 14:20:46 kamil Exp $	*/
+/*	$NetBSD: trap.c,v 1.12 2017/06/23 00:00:58 kamil Exp $	*/
 
 /*
  * signal handling
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: trap.c,v 1.11 2017/06/22 14:20:46 kamil Exp $");
+__RCSID("$NetBSD: trap.c,v 1.12 2017/06/23 00:00:58 kamil Exp $");
 #endif
 
 #include "sh.h"
@@ -141,10 +141,7 @@ trapsig(i)
 	}
 	if (p->shtrap)
 		(*p->shtrap)(i);
-#ifdef V7_SIGNALS
-	if (sigtraps[i].cursig == trapsig) /* this for SIGCHLD,SIGALRM */
-		sigaction(i, &Sigact_trap, (struct sigaction *) 0);
-#endif /* V7_SIGNALS */
+
 	errno = errno_;
 	return RETSIGVAL;
 }
