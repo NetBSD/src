@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.20 2017/06/23 20:40:51 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.21 2017/06/23 22:11:13 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.20 2017/06/23 20:40:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.21 2017/06/23 22:11:13 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -198,7 +198,7 @@ void  wdrestart(void *);
 void  wddone(device_t, struct ata_xfer *);
 static void wd_params_to_properties(struct wd_softc *);
 int   wd_get_params(struct wd_softc *, uint8_t, struct ataparams *);
-int   wd_flushcache(struct wd_softc *, int);
+int   wd_flushcache(struct wd_softc *, int, bool);
 int   wd_trim(struct wd_softc *, int, daddr_t, long);
 bool  wd_shutdown(device_t, int);
 
@@ -458,7 +458,7 @@ wd_suspend(device_t dv, const pmf_qual_t *qual)
 	if (sc->atabus->ata_addref(sc->drvp))
 		return true; /* no need to complain */
 
-	wd_flushcache(sc, AT_WAIT);
+	wd_flushcache(sc, AT_WAIT, false);
 	wd_standby(sc, AT_WAIT);
 
 	sc->atabus->ata_delref(sc->drvp);
@@ -494,10 +494,11 @@ wddetach(device_t self, int flags)
 	bufq_drain(sc->sc_q);
 
 	sc->atabus->ata_killpending(sc->drvp);
+	mutex_exit(&sc->sc_lock);
+
 	if (flags & DETACH_POWEROFF)
 		wd_standby(sc, AT_POLL);
 
-	mutex_exit(&sc->sc_lock);
 	bufq_free(sc->sc_q);
 
 	/* Detach disk. */
@@ -1035,7 +1036,7 @@ wdlastclose(device_t self)
 {
 	struct wd_softc *wd = device_private(self);
 
-	wd_flushcache(wd, AT_WAIT);
+	wd_flushcache(wd, AT_WAIT, false);
 
 	if (! (wd->sc_flags & WDF_KLABEL))
 		wd->sc_flags &= ~WDF_LOADED;
@@ -1416,7 +1417,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		return wd_setcache(wd, *(int *)addr);
 
 	case DIOCCACHESYNC:
-		return wd_flushcache(wd, AT_WAIT);
+		return wd_flushcache(wd, AT_WAIT, true);
 
 	case ATAIOCCOMMAND:
 		/*
@@ -1917,12 +1918,12 @@ wd_standby(struct wd_softc *wd, int flags)
 
 out:
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
-	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive);
+	/* drive is supposed to go idle, do not call ata_channel_start() */
 	return error;
 }
 
 int
-wd_flushcache(struct wd_softc *wd, int flags)
+wd_flushcache(struct wd_softc *wd, int flags, bool start)
 {
 	struct ata_xfer *xfer;
 	int error;
@@ -1989,7 +1990,8 @@ out_xfer:
 
 out:
 	/* kick queue processing blocked while waiting for flush xfer */
-	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive);
+	if (start)
+		ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive);
 
 	return error;
 }
@@ -2067,7 +2069,7 @@ wd_shutdown(device_t dev, int how)
 	if (wd->atabus->ata_addref(wd->drvp))
 		return true; /* no need to complain */
 
-	wd_flushcache(wd, AT_POLL);
+	wd_flushcache(wd, AT_POLL, false);
 	if ((how & RB_POWERDOWN) == RB_POWERDOWN)
 		wd_standby(wd, AT_POLL);
 	return true;
