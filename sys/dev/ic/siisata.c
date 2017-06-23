@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.19 2017/06/21 19:38:43 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.20 2017/06/23 23:45:56 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.19 2017/06/21 19:38:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.20 2017/06/23 23:45:56 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -590,6 +590,7 @@ siisata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 	 */
 	xfer = ata_get_xfer_ext(chp, false, 0);
 	if (xfer == NULL) {
+		printf("%s: no xfer\n", __func__);
 		siisata_reset_channel(chp, flags);
 		return;
 	}
@@ -1151,7 +1152,7 @@ siisata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		if (ata_bio->flags & ATA_ITSDONE)
 			break;
 		siisata_intr_port(schp);
-		DELAY(1000);
+		DELAY(100);
 	}
 
 	siisata_enable_port_interrupt(chp);
@@ -1245,8 +1246,6 @@ siisata_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 			ata_bio->bcount = 0;
 	}
 	SIISATA_DEBUG_PRINT((" now %ld\n", ata_bio->bcount), DEBUG_XFERS);
-	if (ata_bio->flags & ATA_POLL)
-		return 1;
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
 	atastart(chp);
 	return 0;
