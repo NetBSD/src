@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.90 2017/06/23 04:36:48 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.91 2017/06/23 06:33:35 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2433,6 +2433,12 @@ ixgbe_update_link_status(struct adapter *adapter)
 				switch (adapter->link_speed) {
 				case IXGBE_LINK_SPEED_10GB_FULL:
 					bpsmsg = "10 Gbps";
+					break;
+				case IXGBE_LINK_SPEED_5GB_FULL:
+					bpsmsg = "5 Gbps";
+					break;
+				case IXGBE_LINK_SPEED_2_5GB_FULL:
+					bpsmsg = "2.5 Gbps";
 					break;
 				case IXGBE_LINK_SPEED_1GB_FULL:
 					bpsmsg = "1 Gbps";
