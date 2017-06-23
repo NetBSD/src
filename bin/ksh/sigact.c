@@ -1,4 +1,4 @@
-/*	$NetBSD: sigact.c,v 1.6 2017/06/22 23:59:28 kamil Exp $	*/
+/*	$NetBSD: sigact.c,v 1.7 2017/06/23 00:07:15 kamil Exp $	*/
 
 /* NAME:
  *      sigact.c - fake sigaction(2)
@@ -141,7 +141,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: sigact.c,v 1.6 2017/06/22 23:59:28 kamil Exp $");
+__RCSID("$NetBSD: sigact.c,v 1.7 2017/06/23 00:07:15 kamil Exp $");
 #endif
 
 
@@ -168,28 +168,6 @@ __RCSID("$NetBSD: sigact.c,v 1.6 2017/06/22 23:59:28 kamil Exp $");
 /* #if !defined(SA_NOCLDSTOP) || defined(_SIGACT_H) || defined(USE_SIGNAL) || defined(USE_SIGSET) || defined(USE_SIGMASK) */
 
 #define USE_SIGMASK
-
-/*
- * if we haven't been told,
- * try and guess what we should implement with.
- */
-#if !defined(USE_SIGSET) && !defined(USE_SIGMASK) && !defined(USE_SIGNAL)
-# if defined(sigmask) || defined(BSD) || defined(_BSD) && !defined(BSD41)
-#   define USE_SIGMASK
-# else
-#   ifndef NO_SIGSET
-#     define USE_SIGSET
-#   else
-#     define USE_SIGNAL
-#   endif
-# endif
-#endif
-/*
- * if we still don't know, we're in trouble
- */
-#if !defined(USE_SIGSET) && !defined(USE_SIGMASK) && !defined(USE_SIGNAL)
-error must know what to implement with
-#endif
 
 #include "sigact.h"
 
