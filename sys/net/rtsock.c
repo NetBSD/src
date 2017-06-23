@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.217 2017/06/22 09:58:04 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.218 2017/06/23 04:27:55 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.217 2017/06/22 09:58:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.218 2017/06/23 04:27:55 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -712,6 +712,8 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 	if (ifp_changed && rt_mask(rt) != NULL)
 		lltable_prefix_free(rt_getkey(rt)->sa_family, rt_getkey(rt),
 		    rt_mask(rt), 0);
+#else
+	(void)ifp_changed; /* XXX gcc */
 #endif
 out:
 	if_put(ifp, &psref_ifp);
