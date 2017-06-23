@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.6 2005/06/26 19:09:00 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.7 2017/06/23 00:18:01 kamil Exp $	*/
 
 /*
  * command tree climbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: tree.c,v 1.6 2005/06/26 19:09:00 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.7 2017/06/23 00:18:01 kamil Exp $");
 #endif
 
 
@@ -387,7 +387,7 @@ fptreef(shf, indent, fmt, va_alist)
 {
   va_list	va;
 
-  SH_VA_START(va, fmt);
+  va_start(va, fmt);
 
   vfptreef(shf, indent, fmt, va);
   va_end(va);
@@ -411,7 +411,7 @@ snptreef(s, n, fmt, va_alist)
 
   shf_sopen(s, n, SHF_WR | (s ? 0 : SHF_DYNAMIC), &shf);
 
-  SH_VA_START(va, fmt);
+  va_start(va, fmt);
   vfptreef(&shf, 0, fmt, va);
   va_end(va);
 
