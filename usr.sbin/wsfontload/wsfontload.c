@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.20 2017/06/23 17:40:15 macallan Exp $ */
+/* $NetBSD: wsfontload.c,v 1.21 2017/06/23 18:40:03 macallan Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -138,6 +138,7 @@ main(int argc, char **argv)
 	struct stat st;
 	int c, res, wsfd, ffd, verbose = 0;
 	size_t len;
+	int use_embedded_name = 1;
 	void *buf;
 	char nbuf[65];
 
@@ -170,6 +171,7 @@ main(int argc, char **argv)
 			break;
 		case 'N':
 			f.name = optarg;
+			use_embedded_name = 0;
 			break;
 		case 'b':
 			f.bitorder = WSDISPLAY_FONTORDER_R2L;
@@ -208,7 +210,7 @@ main(int argc, char **argv)
 	if (!f.stride)
 		f.stride = (f.fontwidth + 7) / 8;
 	len = f.fontheight * f.numchars * f.stride;
-	if (fstat(ffd, &st) == 0) {
+	if ((ffd != 0) && (fstat(ffd, &st) == 0)) {
 		if ((off_t)len != st.st_size) {
 			uint32_t foo = 0;
 			char b[65];
@@ -218,9 +220,11 @@ main(int argc, char **argv)
 			if (strncmp(b, "WSFT", 4) != 0)
 				errx(1, "invalid wsf file ");
 			read(ffd, b, 64);
-			b[64] = 0;
-			strcpy(nbuf, b);
-			f.name = nbuf;
+			if (use_embedded_name) {
+				b[64] = 0;
+				strcpy(nbuf, b);
+				f.name = nbuf;
+			}
 			read(ffd, &foo, 4);
 			f.firstchar = le32toh(foo);
 			read(ffd, &foo, 4);
