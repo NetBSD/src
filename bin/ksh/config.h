@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.35 2017/06/23 00:00:58 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.36 2017/06/23 00:20:22 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -53,9 +53,6 @@
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 /* #undef uid_t */
-
-/* Define if the closedir function returns void instead of int.  */
-/* #undef VOID_CLOSEDIR */
 
 /* Define if your kernel doesn't handle scripts starting with #! */
 /* #undef SHARPBANG */
