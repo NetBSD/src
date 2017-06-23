@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.13 2017/06/22 19:41:07 kamil Exp $	*/
+/*	$NetBSD: io.c,v 1.14 2017/06/23 00:18:01 kamil Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.13 2017/06/22 19:41:07 kamil Exp $");
+__RCSID("$NetBSD: io.c,v 1.14 2017/06/23 00:18:01 kamil Exp $");
 #endif
 
 
@@ -37,7 +37,7 @@ errorf(fmt, va_alist)
 	exstat = 1;
 	if (*fmt) {
 		error_prefix(TRUE);
-		SH_VA_START(va, fmt);
+		va_start(va, fmt);
 		shf_vfprintf(shl_out, fmt, va);
 		va_end(va);
 		shf_putchar('\n', shl_out);
@@ -60,7 +60,7 @@ warningf(fileline, fmt, va_alist)
 	va_list va;
 
 	error_prefix(fileline);
-	SH_VA_START(va, fmt);
+	va_start(va, fmt);
 	shf_vfprintf(shl_out, fmt, va);
 	va_end(va);
 	shf_putchar('\n', shl_out);
@@ -88,7 +88,7 @@ bi_errorf(fmt, va_alist)
 		/* not set when main() calls parse_args() */
 		if (builtin_argv0)
 			shf_fprintf(shl_out, "%s: ", builtin_argv0);
-		SH_VA_START(va, fmt);
+		va_start(va, fmt);
 		shf_vfprintf(shl_out, fmt, va);
 		va_end(va);
 		shf_putchar('\n', shl_out);
@@ -121,7 +121,7 @@ internal_errorf(jump, fmt, va_alist)
 
 	error_prefix(TRUE);
 	shf_fprintf(shl_out, "internal error: ");
-	SH_VA_START(va, fmt);
+	va_start(va, fmt);
 	shf_vfprintf(shl_out, fmt, va);
 	va_end(va);
 	shf_putchar('\n', shl_out);
@@ -160,7 +160,7 @@ shellf(fmt, va_alist)
 
 	if (!initio_done) /* shl_out may not be set up yet... */
 		return;
-	SH_VA_START(va, fmt);
+	va_start(va, fmt);
 	shf_vfprintf(shl_out, fmt, va);
 	va_end(va);
 	shf_flush(shl_out);
@@ -180,7 +180,7 @@ shprintf(fmt, va_alist)
 
 	if (!shl_stdout_ok)
 		internal_errorf(1, "shl_stdout not valid");
-	SH_VA_START(va, fmt);
+	va_start(va, fmt);
 	shf_vfprintf(shl_stdout, fmt, va);
 	va_end(va);
 }
@@ -216,7 +216,7 @@ kshdebug_printf_(fmt, va_alist)
 
 	if (!kshdebug_shf)
 		return;
-	SH_VA_START(va, fmt);
+	va_start(va, fmt);
 	shf_fprintf(kshdebug_shf, "[%d] ", getpid());
 	shf_vfprintf(kshdebug_shf, fmt, va);
 	va_end(va);
