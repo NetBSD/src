@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.21 2017/06/23 22:11:13 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.22 2017/06/23 23:45:09 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.21 2017/06/23 22:11:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.22 2017/06/23 23:45:09 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1654,8 +1654,10 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	}
 
 	xfer = ata_get_xfer_ext(wd->drvp->chnl_softc, false, 0);
-	if (xfer == NULL)
+	if (xfer == NULL) {
+		printf("%s: no xfer\n", __func__);
 		return EAGAIN;
+	}
 
 	xfer->c_bio.blkno = blkno;
 	xfer->c_bio.flags = ATA_POLL;
