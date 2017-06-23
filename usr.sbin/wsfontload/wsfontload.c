@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.19 2017/06/23 02:16:39 macallan Exp $ */
+/* $NetBSD: wsfontload.c,v 1.20 2017/06/23 17:40:15 macallan Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -209,7 +209,7 @@ main(int argc, char **argv)
 		f.stride = (f.fontwidth + 7) / 8;
 	len = f.fontheight * f.numchars * f.stride;
 	if (fstat(ffd, &st) == 0) {
-		if (len != st.st_size) {
+		if ((off_t)len != st.st_size) {
 			uint32_t foo = 0;
 			char b[65];
 			len = st.st_size;
