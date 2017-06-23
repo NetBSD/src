@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.19 2017/06/22 09:56:48 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.20 2017/06/23 05:46:10 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -149,7 +149,7 @@ lltable_dump_af(struct lltable *llt, struct rt_walkarg *w)
  * Dump arp state for a specific address family.
  */
 int
-lltable_sysctl_dumparp(int af, struct rt_walkarg *w)
+lltable_sysctl_dump(int af, struct rt_walkarg *w)
 {
 	struct lltable *llt;
 	int error = 0;
