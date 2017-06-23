@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.13 2017/06/22 14:20:46 kamil Exp $	*/
+/*	$NetBSD: jobs.c,v 1.14 2017/06/23 00:29:42 kamil Exp $	*/
 
 /*
  * Process and job control
@@ -26,7 +26,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: jobs.c,v 1.13 2017/06/22 14:20:46 kamil Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.14 2017/06/23 00:29:42 kamil Exp $");
 #endif
 
 
@@ -142,7 +142,7 @@ struct job {
 	int	status;		/* exit status of last process */
 	pid_t	pgrp;		/* process group of job */
 	pid_t	ppid;		/* pid of process that forked job */
-	INT32	age;		/* number of jobs started */
+	int_least32_t	age;	/* number of jobs started */
 	clock_t	systime;	/* system time used by job */
 	clock_t	usrtime;	/* user time used by job */
 	Proc	*proc_list;	/* process list */
@@ -183,7 +183,7 @@ static Job		*async_job;
 static pid_t		async_pid;
 
 static int		nzombie;	/* # of zombies owned by this process */
-static INT32		njobs;		/* # of jobs started */
+static int_least32_t	njobs;		/* # of jobs started */
 static int		child_max;	/* CHILD_MAX */
 
 

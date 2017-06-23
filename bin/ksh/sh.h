@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.28 2017/06/23 00:18:01 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.29 2017/06/23 00:29:42 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.28 2017/06/23 00:18:01 kamil Exp $ */
+/* $Id: sh.h,v 1.29 2017/06/23 00:29:42 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -26,6 +26,7 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdint.h>
 
 #ifndef O_ACCMODE
 # define O_ACCMODE	(O_RDONLY|O_WRONLY|O_RDWR)
@@ -118,20 +119,6 @@ typedef	RETSIGTYPE (*handler_t) ARGS((int));	/* signal handler */
 # define ksh_jmp_buf		jmp_buf
 #endif /* HAVE_SIGSETJMP */
 
-/* Find a integer type that is at least 32 bits (or die) - SIZEOF_* defined
- * by autoconf (assumes an 8 bit byte, but I'm not concerned).
- * NOTE: INT32 may end up being more than 32 bits.
- */
-#if SIZEOF_INT >= 4
-# define INT32	int
-#else /* SIZEOF_INT */
-# if SIZEOF_LONG >= 4
-#  define INT32	long
-# else /* SIZEOF_LONG */
-   #error cannot find 32 bit type...
-# endif /* SIZEOF_LONG */
-#endif /* SIZEOF_INT */
-
 /* end of common headers */
 
 /* Stop gcc and lint from complaining about possibly uninitialized variables */
@@ -187,7 +174,7 @@ typedef int bool_t;
 #define	BIT(i)	(1<<(i))	/* define bit in flag */
 
 /* Table flag type - needs > 16 and < 32 bits */
-typedef INT32 Tflag;
+typedef int_least32_t Tflag;
 
 #define	NUFILE	32		/* Number of user-accessible files */
 #define	FDBASE	10		/* First file usable by Shell */
@@ -495,7 +482,7 @@ EXTERN Getopt user_opt;		/* parsing state for getopts builtin command */
 #ifdef KSH
 /* This for co-processes */
 
-typedef INT32 Coproc_id; /* something that won't (realisticly) wrap */
+typedef int_least32_t Coproc_id; /* something that won't (realisticly) wrap */
 struct coproc {
 	int	read;		/* pipe from co-process's stdout */
 	int	readw;		/* other side of read (saved temporarily) */
