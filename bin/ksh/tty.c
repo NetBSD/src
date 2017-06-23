@@ -1,9 +1,9 @@
-/*	$NetBSD: tty.c,v 1.6 2017/06/23 00:09:36 kamil Exp $	*/
+/*	$NetBSD: tty.c,v 1.7 2017/06/23 00:11:01 kamil Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: tty.c,v 1.6 2017/06/23 00:09:36 kamil Exp $");
+__RCSID("$NetBSD: tty.c,v 1.7 2017/06/23 00:11:01 kamil Exp $");
 #endif
 
 
@@ -109,8 +109,6 @@ tty_init(init_ttystate)
 	}
 	tty_devtty = 1;
 
-	/* SCO can't job control on /dev/tty, so don't try... */
-#if !defined(__SCO__)
 	if ((tfd = open(devtty, O_RDWR, 0)) < 0) {
 		if (tfd < 0) {
 			tty_devtty = 0;
@@ -119,9 +117,6 @@ tty_init(init_ttystate)
 				devtty, strerror(errno));
 		}
 	}
-#else /* !__SCO__ */
-	tfd = -1;
-#endif /* __SCO__ */
 
 	if (tfd < 0) {
 		do_close = 0;
