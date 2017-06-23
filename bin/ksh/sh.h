@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.27 2017/06/23 00:09:36 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.28 2017/06/23 00:18:01 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.27 2017/06/23 00:09:36 kamil Exp $ */
+/* $Id: sh.h,v 1.28 2017/06/23 00:18:01 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -23,15 +23,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-
-#ifdef HAVE_PROTOTYPES
-# include <stdarg.h>
-# define SH_VA_START(va, argn) va_start(va, argn)
-#else
-# include <varargs.h>
-# define SH_VA_START(va, argn) va_start(va)
-#endif /* HAVE_PROTOTYPES */
-
+#include <stdarg.h>
 #include <errno.h>
 #include <fcntl.h>
 

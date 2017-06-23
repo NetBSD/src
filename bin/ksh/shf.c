@@ -1,4 +1,4 @@
-/*	$NetBSD: shf.c,v 1.10 2017/06/22 14:20:46 kamil Exp $	*/
+/*	$NetBSD: shf.c,v 1.11 2017/06/23 00:18:01 kamil Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shf.c,v 1.10 2017/06/22 14:20:46 kamil Exp $");
+__RCSID("$NetBSD: shf.c,v 1.11 2017/06/23 00:18:01 kamil Exp $");
 #endif
 
 
@@ -770,7 +770,7 @@ shf_fprintf(shf, fmt, va_alist)
 	va_list args;
 	int n;
 
-	SH_VA_START(args, fmt);
+	va_start(args, fmt);
 	n = shf_vfprintf(shf, fmt, args);
 	va_end(args);
 
@@ -797,7 +797,7 @@ shf_snprintf(buf, bsize, fmt, va_alist)
 			(long) buf, bsize);
 
 	shf_sopen(buf, bsize, SHF_WR, &shf);
-	SH_VA_START(args, fmt);
+	va_start(args, fmt);
 	n = shf_vfprintf(&shf, fmt, args);
 	va_end(args);
 	shf_sclose(&shf); /* null terminates */
@@ -817,7 +817,7 @@ shf_smprintf(fmt, va_alist)
 	va_list args;
 
 	shf_sopen((char *) 0, 0, SHF_WR|SHF_DYNAMIC, &shf);
-	SH_VA_START(args, fmt);
+	va_start(args, fmt);
 	shf_vfprintf(&shf, fmt, args);
 	va_end(args);
 	return shf_sclose(&shf); /* null terminates */
