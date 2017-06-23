@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.37 2017/06/23 00:29:42 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.38 2017/06/23 00:35:20 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -86,9 +86,6 @@
 
 /* Define if C compiler groks __attribute__((...)) (const, noreturn, format) */
 #define HAVE_GCC_FUNC_ATTR 1
-
-/* Define to 32-bit signed integer type if <sys/types.h> doesn't define */
-/* #undef clock_t */
 
 /* Define to the type of struct rlimit fields if the rlim_t type is missing */
 /* #undef rlim_t */
