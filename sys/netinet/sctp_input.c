@@ -1,5 +1,5 @@
 /*	$KAME: sctp_input.c,v 1.28 2005/04/21 18:36:21 nishida Exp $	*/
-/*	$NetBSD: sctp_input.c,v 1.5 2017/04/20 09:19:19 ozaki-r Exp $	*/
+/*	$NetBSD: sctp_input.c,v 1.6 2017/06/23 15:13:21 rjs Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.5 2017/04/20 09:19:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.6 2017/06/23 15:13:21 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -3187,7 +3187,7 @@ sctp_process_control(struct mbuf *m, int iphlen, int *offset, int length,
 #ifdef SCTP_DEBUG
 			if (sctp_debug_on & SCTP_DEBUG_INPUT3) {
 				printf("sctp_process_control: chunk length invalid! *offset:%u, chk_length:%u > length:%u\n",
-				    *offset, length, chk_length);
+				    *offset, chk_length, length);
 			}
 #endif /* SCTP_DEBUG */
 			*offset = length;
