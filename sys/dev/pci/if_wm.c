@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.511 2017/06/20 10:10:36 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.512 2017/06/23 06:10:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.511 2017/06/20 10:10:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.512 2017/06/23 06:10:31 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -12172,6 +12172,7 @@ wm_nvm_version(struct wm_softc *sc)
 	bool check_version = false;
 	bool check_optionrom = false;
 	bool have_build = false;
+	bool have_uid = true;
 
 	/*
 	 * Version format:
@@ -12208,10 +12209,12 @@ wm_nvm_version(struct wm_softc *sc)
 		break;
 	case WM_T_I211:
 		wm_nvm_version_invm(sc);
+		have_uid = false;
 		goto printver;
 	case WM_T_I210:
 		if (!wm_nvm_get_flash_presence_i210(sc)) {
 			wm_nvm_version_invm(sc);
+			have_uid = false;
 			goto printver;
 		}
 		/* FALLTHROUGH */
@@ -12265,8 +12268,10 @@ printver:
 		}
 	}
 
-	wm_nvm_read(sc, NVM_OFF_IMAGE_UID0, 1, &uid0);
-	aprint_verbose(", Image Unique ID %08x", (uid1 << 16) | uid0);
+	if (have_uid) {
+		wm_nvm_read(sc, NVM_OFF_IMAGE_UID0, 1, &uid0);
+		aprint_verbose(", Image Unique ID %08x", (uid1 << 16) | uid0);
+	}
 }
 
 /*
