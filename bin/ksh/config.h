@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.36 2017/06/23 00:20:22 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.37 2017/06/23 00:29:42 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -171,12 +171,6 @@
 
 /* Include game-of-life? */
 /* #undef SILLY */
-
-/* The number of bytes in a int.  */
-#define SIZEOF_INT 4
-
-/* The number of bytes in a long.  */
-#define SIZEOF_LONG 4
 
 /* Define if you have the _setjmp function.  */
 #define HAVE__SETJMP
