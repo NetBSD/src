@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.43.4.5 2017/04/23 01:21:04 jakllsch Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.43.4.6 2017/06/23 20:40:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -58,6 +58,7 @@ struct wd_softc {
 #define WDF_LBA		0x040 /* using LBA mode */
 #define WDF_KLABEL	0x080 /* retain label after 'full' close */
 #define WDF_LBA48	0x100 /* using 48-bit LBA mode */
+#define WDF_FLUSH_PEND	0x200 /* cache flush waits for free xfer */
 	uint64_t sc_capacity; /* full capacity of the device */
 	uint64_t sc_capacity512; /* ... in DEV_BSIZE blocks */
 	uint32_t sc_capacity28; /* capacity accessible with LBA28 commands */

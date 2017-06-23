@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.15 2017/06/21 22:40:43 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.16 2017/06/23 20:40:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.15 2017/06/21 22:40:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.16 2017/06/23 20:40:51 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -2142,4 +2142,48 @@ atacmd_toncq(struct ata_xfer *xfer, uint8_t *cmd, uint16_t *count,
 	/* other device flags */
 	if (xfer->c_bio.flags & ATA_FUA)
 		*device |= WDSD_FUA;
+}
+
+/*
+ * Must be called without any locks, i.e. with both drive and channel locks
+ * released.
+ */ 
+void
+ata_channel_start(struct ata_channel *chp, int drive)
+{
+	int i;
+	struct ata_drive_datas *drvp;
+
+	KASSERT(chp->ch_ndrives > 0);
+
+#define ATA_DRIVE_START(chp, drive) \
+	do {							\
+		KASSERT(drive < chp->ch_ndrives);		\
+		drvp = &chp->ch_drive[drive];			\
+								\
+		if (drvp->drive_type != ATA_DRIVET_ATA &&	\
+		    drvp->drive_type != ATA_DRIVET_ATAPI &&	\
+		    drvp->drive_type != ATA_DRIVET_OLD)		\
+			continue;				\
+								\
+		if (drvp->drv_start != NULL)			\
+			(*drvp->drv_start)(drvp->drv_softc);	\
+	} while (0)
+
+	/*
+	 * Process drives in round robin fashion starting with next one after
+	 * the one which finished transfer. Thus no single drive would
+	 * completely starve other drives on same channel. 
+	 * This loop processes all but the current drive, so won't do anything
+	 * if there is only one drive in channel.
+	 */
+	for (i = (drive + 1) % chp->ch_ndrives; i != drive;
+	    i = (i + 1) % chp->ch_ndrives) {
+		ATA_DRIVE_START(chp, i);
+	}
+
+	/* Now try to kick off xfers on the current drive */
+	ATA_DRIVE_START(chp, drive);
+
+#undef ATA_DRIVE_START
 }

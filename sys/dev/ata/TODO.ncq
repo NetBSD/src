@@ -2,12 +2,15 @@ Bugs
 ----
 
 fix crashdump for mvsata - request times out (maybe same as HEAD?)
+- HEAD crash due to KASSERT(chp->ch_queue->active_xfer != NULL)
 
-siisata - fix all new XXX and unmergable bits, fix PMP
+siisata - fix all new XXX and unmergable bits
 
 test crashdump with siisata
 - fails with recursive panic via pmap_kremove_local() regardless if
-  drive connected via PMP or direct
+  drive connected via PMP or direct (failed KASSERT(panicstr != NULL))
+- HEAD crashes same as branch
+- see kern/49610 for potential fix
 
 test wd* at umass?, confirm the ata_channel kludge works
 + add detach code (channel detach, free queue)
@@ -19,13 +22,16 @@ do proper NCQ error recovery (currently not even really attempted)
 maybe do device error handling in not-interrupt-context (maybe this should be
 done on a mpata branch?)
 
-add mechanics to re-check queue when xfer is finished - needed on PMP
-and for IDE disks, when one drive uses up all available xfers nothing
-ever restarts queue for the other drives
+do not limit openings for xfers for non-NCQ drives in wdstart(), the tag
+will not be used so can use any xfer
+
+in atastart(), restrict NCQ commands to commands for the same drive? it's
+fine for fis-based switching to have outstanding for several drives, but
+not non-FIS
 
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------
-change wd(4) to use dk_open()
+change wd(4) to use dksubr
 
 dump to unopened disk fails (e.g. dump do wd1b when wd1a not mounted), due
 to the open path executing ata_get_params(), which eventually tsleeps()

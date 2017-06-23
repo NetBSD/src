@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.19 2017/06/20 20:58:22 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.20 2017/06/23 20:40:51 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.19 2017/06/20 20:58:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.20 2017/06/23 20:40:51 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -192,10 +192,10 @@ void	wdioctlstrategy(struct buf *);
 
 void  wdgetdefaultlabel(struct wd_softc *, struct disklabel *);
 void  wdgetdisklabel(struct wd_softc *);
-void  wdstart(struct wd_softc *);
+void  wdstart(device_t);
 void  wdstart1(struct wd_softc *, struct buf *, struct ata_xfer *);
 void  wdrestart(void *);
-void  wddone(void *, struct ata_xfer *);
+void  wddone(device_t, struct ata_xfer *);
 static void wd_params_to_properties(struct wd_softc *);
 int   wd_get_params(struct wd_softc *, uint8_t, struct ataparams *);
 int   wd_flushcache(struct wd_softc *, int);
@@ -310,6 +310,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	wd->drvp = adev->adev_drv_data;
 
 	wd->drvp->drv_openings = 1;
+	wd->drvp->drv_start = wdstart;
 	wd->drvp->drv_done = wddone;
 	wd->drvp->drv_softc = wd->sc_dev; /* done in atabusconfig_thread()
 					     but too late */
@@ -518,6 +519,7 @@ wddetach(device_t self, int flags)
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 
+	mutex_destroy(&sc->sc_lock);
 	callout_destroy(&sc->sc_restart_ch);
 
 	sc->drvp->drive_type = ATA_DRIVET_NONE; /* no drive any more here */
@@ -620,7 +622,8 @@ wdstrategy(struct buf *bp)
 	bufq_put(wd->sc_q, bp);
 	mutex_exit(&wd->sc_lock);
 
-	wdstart(wd);
+	/* Try to queue on the current drive only */
+	wdstart(wd->sc_dev);
 	return;
 done:
 	/* Toss transfer; we're done early. */
@@ -632,8 +635,9 @@ done:
  * Queue a drive for I/O.
  */
 void
-wdstart(struct wd_softc *wd)
+wdstart(device_t self)
 {
+	struct wd_softc *wd = device_private(self);
 	struct buf *bp;
 	struct ata_xfer *xfer;
 
@@ -645,11 +649,19 @@ wdstart(struct wd_softc *wd)
 
 	mutex_enter(&wd->sc_lock);
 
+	/*
+	 * Do not queue any transfers until flush is finished, so that
+	 * once flush is pending, it will get handled as soon as xfer
+	 * is available.
+	 */
+	if (ISSET(wd->sc_flags, WDF_FLUSH_PEND))
+		goto out;
+
 	while (bufq_peek(wd->sc_q) != NULL) {
 		/* First try to get command */
 		xfer = ata_get_xfer_ext(wd->drvp->chnl_softc, false,
 		    wd->drvp->drv_openings);
-		if (xfer == NULL) 
+		if (xfer == NULL)
 			break;
 
 		/* There is got to be a buf for us */
@@ -660,6 +672,7 @@ wdstart(struct wd_softc *wd)
 		wdstart1(wd, bp, xfer);
 	}
 
+out:
 	mutex_exit(&wd->sc_lock);
 }
 
@@ -739,9 +752,9 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 }
 
 void
-wddone(void *v, struct ata_xfer *xfer)
+wddone(device_t self, struct ata_xfer *xfer)
 {
-	struct wd_softc *wd = device_private(v);
+	struct wd_softc *wd = device_private(self);
 	const char *errmsg;
 	int do_perror = 0;
 	struct buf *bp;
@@ -854,7 +867,7 @@ noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_bio.retries > 0)
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 	mutex_exit(&wd->sc_lock);
 	biodone(bp);
-	wdstart(wd);
+	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive);
 }
 
 void
@@ -1861,6 +1874,7 @@ wd_setcache(struct wd_softc *wd, int bits)
 
 out:
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
+	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive);
 	return error;
 }
 
@@ -1903,6 +1917,7 @@ wd_standby(struct wd_softc *wd, int flags)
 
 out:
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
+	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive);
 	return error;
 }
 
@@ -1921,9 +1936,20 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	    wd->sc_params.atap_cmd_set2 == 0xffff))
 		return ENODEV;
 
+	mutex_enter(&wd->sc_lock);
+	SET(wd->sc_flags, WDF_FLUSH_PEND);
+	mutex_exit(&wd->sc_lock);
+
 	xfer = ata_get_xfer(wd->drvp->chnl_softc);
-	if (xfer == NULL)
-		return EINTR;
+
+	mutex_enter(&wd->sc_lock);
+	CLR(wd->sc_flags, WDF_FLUSH_PEND);
+	mutex_exit(&wd->sc_lock);
+
+	if (xfer == NULL) {
+		error = EINTR;
+		goto out;
+	}
 
 	if ((wd->sc_params.atap_cmd2_en & ATA_CMD2_LBA48) != 0 &&
 	    (wd->sc_params.atap_cmd2_en & ATA_CMD2_FCE) != 0) {
@@ -1939,13 +1965,13 @@ wd_flushcache(struct wd_softc *wd, int flags)
 		aprint_error_dev(wd->sc_dev,
 		    "flush cache command didn't complete\n");
 		error = EIO;
-		goto out;
+		goto out_xfer;
 	}
 	if (xfer->c_ata_c.flags & AT_ERROR) {
 		if (xfer->c_ata_c.r_error == WDCE_ABRT) {
 			/* command not supported */
 			error = ENODEV;
-			goto out;
+			goto out_xfer;
 		}
 	}
 	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
@@ -1954,12 +1980,17 @@ wd_flushcache(struct wd_softc *wd, int flags)
 		aprint_error_dev(wd->sc_dev, "wd_flushcache: status=%s\n",
 		    sbuf);
 		error = EIO;
-		goto out;
+		goto out_xfer;
 	}
 	error = 0;
 
-out:
+out_xfer:
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
+
+out:
+	/* kick queue processing blocked while waiting for flush xfer */
+	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive);
+
 	return error;
 }
 
@@ -2023,6 +2054,7 @@ wd_trim(struct wd_softc *wd, int part, daddr_t bno, long size)
 
 out:
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
+	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive);
 	return error;
 }
 
@@ -2233,6 +2265,8 @@ wdioctlstrategy(struct buf *bp)
 
 out:
 	ata_free_xfer(wi->wi_softc->drvp->chnl_softc, xfer);
+	ata_channel_start(wi->wi_softc->drvp->chnl_softc,
+	    wi->wi_softc->drvp->drive);
 out2:
 	bp->b_error = error;
 	if (error)
