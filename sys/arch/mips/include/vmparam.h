@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.57 2016/11/22 11:01:50 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.58 2017/06/23 21:28:38 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -185,7 +185,7 @@
 #define __USE_TOPDOWN_VM
 
 #define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
-    trunc_page(USRSTACK - MAXSSIZ - (sz))
+    trunc_page(USRSTACK - MAXSSIZ - (sz) - user_stack_guard_size)
 #define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
     round_page((vaddr_t)(da) + (vsize_t)maxdmap)
 
