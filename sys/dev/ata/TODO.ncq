@@ -6,12 +6,6 @@ fix crashdump for mvsata - request times out (maybe same as HEAD?)
 
 siisata - fix all new XXX and unmergable bits
 
-test crashdump with siisata
-- fails with recursive panic via pmap_kremove_local() regardless if
-  drive connected via PMP or direct (failed KASSERT(panicstr != NULL))
-- HEAD crashes same as branch
-- see kern/49610 for potential fix
-
 test wd* at umass?, confirm the ata_channel kludge works
 + add detach code (channel detach, free queue)
 
@@ -31,6 +25,8 @@ not non-FIS
 
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------
+queue is allocated regardless if there are any drives, fix? 
+
 change wd(4) to use dksubr
 
 dump to unopened disk fails (e.g. dump do wd1b when wd1a not mounted), due
