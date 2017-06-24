@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.173 2017/06/01 02:45:14 chs Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.174 2017/06/24 12:14:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.173 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.174 2017/06/24 12:14:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -580,13 +580,16 @@ spec_open(void *v)
 		 * For block devices, permit only one open.  The buffer
 		 * cache cannot remain self-consistent with multiple
 		 * vnodes holding a block device open.
+		 *
+		 * Treat zero opencnt with non-NULL mountpoint as open.
+		 * This may happen after forced detach of a mounted device.
 		 */
 		mutex_enter(&device_lock);
 		if (sn->sn_gone) {
 			mutex_exit(&device_lock);
 			return (EBADF);
 		}
-		if (sd->sd_opencnt != 0) {
+		if (sd->sd_opencnt != 0 || sd->sd_mountpoint != NULL) {
 			mutex_exit(&device_lock);
 			return EBUSY;
 		}
