@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.59 2017/06/24 23:07:35 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.60 2017/06/24 23:25:01 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.59 2017/06/24 23:07:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.60 2017/06/24 23:25:01 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1373,7 +1373,6 @@ sdmmc_mem_decode_ssr(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	const int uhs_speed_grade = SSR_UHS_SPEED_GRADE(ssr);
 	const int video_speed_class = SSR_VIDEO_SPEED_CLASS(ssr);
 	const int app_perf_class = SSR_APP_PERF_CLASS(ssr);
-	const int discard_support = SSR_DISCARD_SUPPORT(ssr);
 
 	switch (speed_class) {
 	case SSR_SPEED_CLASS_0:	speed_class_val = 0; break;
@@ -1406,15 +1405,7 @@ sdmmc_mem_decode_ssr(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 		printf(", V%d", video_speed_class);
 	if (app_perf_class)
 		printf(", A%d", app_perf_class);
-	if (discard_support)
-		printf(", DISCARD");
 	printf("\n");
-
-	/*
-	 * Set function flags
-	 */
-	if (discard_support)
-		SET(sf->flags, SFF_DISCARD);
 
 	return 0;
 }
@@ -2186,8 +2177,6 @@ sdmmc_mem_discard(struct sdmmc_function *sf, off_t pos, off_t len)
 	/* Start the erase operation */
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.c_opcode = MMC_ERASE;
-	if (ISSET(sf->flags, SFF_DISCARD))
-		cmd.c_arg = SD_ERASE_DISCARD;
 	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1B;
 	error = sdmmc_mmc_command(sc, &cmd);
 	if (error)
