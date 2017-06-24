@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.57 2017/06/04 15:00:02 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.58 2017/06/24 11:27:33 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.57 2017/06/04 15:00:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.58 2017/06/24 11:27:33 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1984,6 +1984,71 @@ unload:
 out:
 	mutex_exit(&sc->sc_mtx);
 	SDMMC_UNLOCK(sc);
+
+	return error;
+}
+
+int
+sdmmc_mem_discard(struct sdmmc_function *sf, off_t pos, off_t len)
+{
+	struct sdmmc_softc *sc = sf->sc;
+	struct sdmmc_command cmd;
+	int error;
+
+	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE))
+		return ENODEV;	/* XXX not tested */
+
+	/* Erase what we can in the specified range. */
+	const off_t start = roundup(pos, SDMMC_SECTOR_SIZE);
+	const off_t end = rounddown(pos + len, SDMMC_SECTOR_SIZE) - 1;
+	if (end < start)
+		return EINVAL;
+	const uint32_t sblkno = start / SDMMC_SECTOR_SIZE;
+	const uint32_t eblkno = end / SDMMC_SECTOR_SIZE;
+
+	SDMMC_LOCK(sc);
+	mutex_enter(&sc->sc_mtx);
+
+	/* Set the address of the first write block to be erased */
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.c_opcode = ISSET(sc->sc_flags, SMF_SD_MODE) ?
+	    SD_ERASE_WR_BLK_START : MMC_TAG_ERASE_GROUP_START;
+	cmd.c_arg = sblkno;
+	if (!ISSET(sf->flags, SFF_SDHC))
+		cmd.c_arg <<= SDMMC_SECTOR_SIZE_SB;
+	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
+	error = sdmmc_mmc_command(sc, &cmd);
+	if (error)
+		goto out;
+
+	/* Set the address of the last write block to be erased */
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.c_opcode = ISSET(sc->sc_flags, SMF_SD_MODE) ?
+	    SD_ERASE_WR_BLK_END : MMC_TAG_ERASE_GROUP_END;
+	cmd.c_arg = eblkno;
+	if (!ISSET(sf->flags, SFF_SDHC))
+		cmd.c_arg <<= SDMMC_SECTOR_SIZE_SB;
+	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
+	error = sdmmc_mmc_command(sc, &cmd);
+	if (error)
+		goto out;
+
+	/* Start the erase operation */
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.c_opcode = MMC_ERASE;
+	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1B;
+	error = sdmmc_mmc_command(sc, &cmd);
+	if (error)
+		goto out;
+
+out:
+	mutex_exit(&sc->sc_mtx);
+	SDMMC_UNLOCK(sc);
+
+#ifdef SDMMC_DEBUG
+	device_printf(sc->sc_dev, "discard blk %u-%u error %d\n",
+	    sblkno, eblkno, error);
+#endif
 
 	return error;
 }
