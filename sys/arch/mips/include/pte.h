@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.24 2016/09/04 07:27:49 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.25 2017/06/24 07:00:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -359,6 +359,12 @@ pte_cached_change(pt_entry_t pte, bool cached)
 		pte |= (cached ? MIPS3_PG_CACHED : MIPS3_PG_UNCACHED);
 	}
 	return pte;
+}
+
+static inline void
+pte_set(pt_entry_t *ptep, pt_entry_t pte)
+{
+	*ptep = pte;
 }
 
 #ifdef __PMAP_PRIVATE
