@@ -1,4 +1,4 @@
-# $NetBSD: t_syntax.sh,v 1.4 2017/06/16 07:30:32 kre Exp $
+# $NetBSD: t_syntax.sh,v 1.5 2017/06/24 11:09:42 kre Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -364,7 +364,9 @@ f_variable_syntax_body() {
 	for vname in a ab _a _9 a123 a_1_2_3 __ ___ ____ __1__ _0 \
 	    A AA AAA AaBb _A_a A_a_ a1_ abc_123 ab_12_cd_ef_34_99 \
 	    abcdefghijklmnopqrstuvwzyz ABCDEFGHIJKLMNOPQRSTUVWXYZ_ \
-	    A_VERY_LONG_VARIABLE_NAME_that_is_probably_longer_than_most_used_in_the_average_shell_script_already_about_100_chars_in_this_one_but_there_is_not_supposed_to_be_any_limit_on_the_length_at_all xyzzy \
+	    A_VERY_LONG_VARIABLE_NAME_that_is_probably_longer_than_most_used_in_the_average_shell_script_already_about_100_chars_in_this_one_but_there_is_not_supposed_to_be_any_limit_on_the_length_at_all \
+	    Then_Make_it_Even_Longer_by_Multiplying_it___A_VERY_LONG_VARIABLE_NAME_that_is_probably_longer_than_most_used_in_the_average_shell_script_already_about_100_chars_in_this_one_but_there_is_not_supposed_to_be_any_limit_on_the_length_at_all__A_VERY_LONG_VARIABLE_NAME_that_is_probably_longer_than_most_used_in_the_average_shell_script_already_about_100_chars_in_this_one_but_there_is_not_supposed_to_be_any_limit_on_the_length_at_all__A_VERY_LONG_VARIABLE_NAME_that_is_probably_longer_than_most_used_in_the_average_shell_script_already_about_100_chars_in_this_one_but_there_is_not_supposed_to_be_any_limit_on_the_length_at_all__A_VERY_LONG_VARIABLE_NAME_that_is_probably_longer_than_most_used_in_the_average_shell_script_already_about_100_chars_in_this_one_but_there_is_not_supposed_to_be_any_limit_on_the_length_at_all \
+	    xyzzy __0123454321__ _0_1_2_3_4_5_6_7_8_9_ ABBA X_ Y__ Z___ \
 	    _____________________________________________________________
 	do
 		atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
@@ -383,6 +385,54 @@ f_variable_syntax_body() {
 			"${vname}=GOOD; unset ${vname}x; printf %s \$${vname}"
 		atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 			"unset ${vname}x; ${vname}=GOOD; printf %s \$${vname}x"
+		atf_check -s exit:0 -o match:GOOD -e empty ${TEST_SH} -c \
+			"${vname}=GOOD; ${vname}_=BAD; printf %s \$${vname}"
+
+		case "${vname}" in
+		?)	continue;;
+		esac
+
+		# The following tests do not work for 1 char var names.
+		# hence the check and "continue" above to skip the remaining
+		# tests for that case
+
+		atf_check -s exit:0 -o match:GOOD -e empty ${TEST_SH} -c \
+			"${vname}=GOOD; unset ${vname%?}; printf %s \$${vname}"
+
+		# (this next would work, but becomes just a duplicate of
+		# an earlier test, so is pointless for 1 ch names)
+		atf_check -s exit:0 -o match:GOOD -e empty ${TEST_SH} -c \
+	"${vname}=GOOD; unset ${vname}x ${vname%?}; printf %s \$${vname}"
+
+		atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+			"unset ${vname%?};${vname}=GOOD; printf %s \$${vname%?}"
+
+		atf_check -s exit:0 -o match:GOOD -e empty ${TEST_SH} -c \
+			"${vname}=GOOD; ${vname%?}=BAD; printf %s \$${vname}"
+
+		# all the remaining tests require the 2nd char of the
+		# variable name to be a legal first character.  That
+		# is, not a digit, so skip the rest if we have a digit
+		# second...
+		case "${vname}" in
+		?[0-9]*)	continue;;
+		esac
+
+		atf_check -s exit:0 -o match:GOOD -e empty ${TEST_SH} -c \
+			"${vname}=GOOD; unset ${vname#?}; printf %s \$${vname}"
+		atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+			"unset ${vname#?};${vname}=GOOD; printf %s \$${vname#?}"
+
+		atf_check -s exit:0 -o match:GOOD -e empty ${TEST_SH} -c \
+			"${vname}=GOOD; ${vname#?}=BAD; printf %s \$${vname}"
+
+		atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+			"unset ${vname%?} ${vname#?} ${vname}x; ${vname}=GOOD;
+			printf %s \$${vname%?}\$${vname#?}\$${vname}x"
+
+		atf_check -s exit:0 -o match:GOOD -e empty ${TEST_SH} -c \
+			"${vname}=GOOD; ${vname%?}=BAD; ${vname}_=BAD;
+			${vname#?}=BAD; printf %s \$${vname}"
 	done
 
 	# don't test '.' in var names, some shells permit that (in ${} anyway)
