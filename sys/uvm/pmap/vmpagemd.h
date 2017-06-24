@@ -1,4 +1,4 @@
-/*	$NetBSD: vmpagemd.h,v 1.6 2017/06/24 05:34:37 skrll Exp $	*/
+/*	$NetBSD: vmpagemd.h,v 1.7 2017/06/24 05:39:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ typedef struct pv_entry {
 	struct pv_entry *pv_next;
 	struct pmap *pv_pmap;
 	vaddr_t pv_va;
-#define	PV_KENTER		0x0001
+#define	PV_KENTER		__BIT(0)
 } *pv_entry_t;
 
 #ifndef _MODULE
