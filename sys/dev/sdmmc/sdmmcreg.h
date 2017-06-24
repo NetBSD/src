@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.30 2017/06/24 11:27:33 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.31 2017/06/24 23:07:35 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -69,6 +69,10 @@
 #define SD_APP_SD_STATUS		13	/* R1 */
 #define SD_APP_OP_COND			41	/* R3 */
 #define SD_APP_SEND_SCR			51	/* R1 */
+
+/* SD erase arguments */
+#define SD_ERASE_DISCARD		0x00000001
+#define SD_ERASE_FULE			0x00000002
 
 /* OCR bits */
 #define MMC_OCR_MEM_READY		(1U<<31)/* memory power-up status bit */
@@ -344,6 +348,42 @@
 #define SCR_CMD_SUPPORT_CMD23(scr)	MMC_RSP_BITS((scr), 33, 1)
 #define SCR_CMD_SUPPORT_CMD20(scr)	MMC_RSP_BITS((scr), 32, 1)
 #define SCR_RESERVED2(scr)		MMC_RSP_BITS((scr), 0, 32)
+
+/* SSR (SD Status Register) */
+#define SSR_DAT_BUS_WIDTH(resp)		__bitfield((resp), 510, 2)
+#define  SSR_DAT_BUS_WIDTH_1		0
+#define  SSR_DAT_BUS_WIDTH_4		2
+#define SSR_SECURED_MODE(resp)		__bitfield((resp), 509, 1)
+#define SSR_SD_CARD_TYPE(resp)		__bitfield((resp), 480, 16)
+#define  SSR_SD_CARD_TYPE_RDWR		0
+#define  SSR_SD_CARD_TYPE_ROM		1
+#define  SSR_SD_CARD_TYPE_OTP		2
+#define SSR_SIZE_OF_PROTECTED_AREA(resp) __bitfield((resp), 448, 32)
+#define SSR_SPEED_CLASS(resp)		__bitfield((resp), 440, 8)
+#define  SSR_SPEED_CLASS_0		0
+#define  SSR_SPEED_CLASS_2		1
+#define  SSR_SPEED_CLASS_4		2
+#define  SSR_SPEED_CLASS_6		3
+#define  SSR_SPEED_CLASS_10		4
+#define SSR_PERFORMANCE_MOVE(resp)	__bitfield((resp), 432, 8)
+#define SSR_AU_SIZE(resp)		__bitfield((resp), 428, 4)
+#define SSR_ERASE_SIZE(resp)		__bitfield((resp), 408, 16)
+#define SSR_ERASE_TIMEOUT(resp)		__bitfield((resp), 402, 6)
+#define SSR_ERASE_OFFSET(resp)		__bitfield((resp), 400, 2)
+#define SSR_UHS_SPEED_GRADE(resp)	__bitfield((resp), 396, 4)
+#define  SSR_UHS_SPEED_GRADE_10MB	1
+#define  SSR_UHS_SPEED_GRADE_30MB	3
+#define SSR_UHS_AU_SIZE(resp)		__bitfield((resp), 392, 4)
+#define SSR_VIDEO_SPEED_CLASS(resp)	__bitfield((resp), 384, 8)
+#define SSR_VSC_AU_SIZE(resp)		__bitfield((resp), 368, 10)
+#define SSR_SUS_ADDR(resp)		__bitfield((resp), 346, 22)
+#define SSR_APP_PERF_CLASS(resp)	__bitfield((resp), 336, 4)
+#define  SSR_APP_PERF_CLASS_UNSUPPORTED	0
+#define  SSR_APP_PERF_CLASS_A1		1
+#define  SSR_APP_PERF_CLASS_A2		2
+#define SSR_PERFORMANCE_ENHANCE(resp)	__bitfield((resp), 328, 8)
+#define SSR_DISCARD_SUPPORT(resp)	__bitfield((resp), 313, 1)
+#define SSR_FULE_SUPPORT(resp)		__bitfield((resp), 312, 1)
 
 /* Status of Switch Function */
 #define SFUNC_STATUS_GROUP(status, group) \
