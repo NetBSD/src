@@ -16,9 +16,6 @@ do proper NCQ error recovery (currently not even really attempted)
 maybe do device error handling in not-interrupt-context (maybe this should be
 done on a mpata branch?)
 
-do not limit openings for xfers for non-NCQ drives in wdstart(), the tag
-will not be used so can use any xfer
-
 in atastart(), restrict NCQ commands to commands for the same drive? it's
 fine for fis-based switching to have outstanding for several drives, but
 not non-FIS
