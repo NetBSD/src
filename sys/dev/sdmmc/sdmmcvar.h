@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.26 2017/06/24 23:07:35 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.27 2017/06/24 23:25:01 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -185,7 +185,6 @@ struct sdmmc_function {
 	int flags;
 #define SFF_ERROR		0x0001	/* function is poo; ignore it */
 #define SFF_SDHC		0x0002	/* SD High Capacity card */
-#define SFF_DISCARD		0x0004	/* SD card supports discard erase */
 	SIMPLEQ_ENTRY(sdmmc_function) sf_list;
 	/* SD card I/O function members */
 	int number;			/* I/O function number or -1 */
