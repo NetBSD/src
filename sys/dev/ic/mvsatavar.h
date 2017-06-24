@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsatavar.h,v 1.2.48.1 2017/06/09 20:18:58 jdolecek Exp $	*/
+/*	$NetBSD: mvsatavar.h,v 1.2.48.2 2017/06/24 14:33:06 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -57,18 +57,21 @@ struct _fix_phy_param {
 	void (*_fix_phy)(struct mvsata_port *);
 };
 
+enum mvsata_edmamode {
+	nodma,
+	dma,
+	queued,
+	ncq,
+};
+
 struct mvsata_port {
 	struct ata_channel port_ata_channel;
 
 	int port;
 	struct mvsata_hc *port_hc;
 
-	enum {
-		nodma,
-		dma,
-		queued,
-		ncq,
-	} port_edmamode;
+	enum mvsata_edmamode port_edmamode_negotiated;
+	enum mvsata_edmamode port_edmamode_curr;
 
 	uint32_t port_quetagidx;	/* Host Queue Tag valiable */
 
