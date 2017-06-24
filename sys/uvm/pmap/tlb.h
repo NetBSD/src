@@ -1,4 +1,4 @@
-/*	$NetBSD: tlb.h,v 1.3 2016/07/11 16:06:09 matt Exp $	*/
+/*	$NetBSD: tlb.h,v 1.4 2017/06/24 05:31:03 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,8 +27,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _UVM_PMAP_PMAP_TLB_TLB_H_
-#define	_UVM_PMAP_PMAP_TLB_TLB_H_
+#ifndef	_UVM_PMAP_TLB_H_
+#define	_UVM_PMAP_TLB_H_
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 
@@ -69,4 +69,4 @@ void	tlb_dump(void (*)(const char *, ...));
 
 #endif /* _KERNEL || _KMEMUSER */
 
-#endif /* !_UVM_PMAP_PMAP_TLB_TLB_H_ */
+#endif /* _UVM_PMAP_TLB_H_ */
