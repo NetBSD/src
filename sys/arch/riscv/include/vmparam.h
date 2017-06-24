@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2 2017/06/23 21:28:38 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 2017/06/24 13:43:36 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
     round_page((vaddr_t)(da) + (vsize_t)maxdmap)
 
 #define VM_DEFAULT_ADDRESS32_TOPDOWN(da, sz) \
-    trunc_page(USRSTACK32 - MAXSSIZ32 - (sz))
+    trunc_page(USRSTACK32 - MAXSSIZ32 - (sz) - user_stack_guard_size)
 #define VM_DEFAULT_ADDRESS32_BOTTOMUP(da, sz) \
     round_page((vaddr_t)(da) + (vsize_t)MAXDSIZ32)
 
