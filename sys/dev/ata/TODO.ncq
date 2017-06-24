@@ -1,9 +1,6 @@
 Bugs
 ----
 
-fix crashdump for mvsata - request times out (maybe same as HEAD?)
-- HEAD crash due to KASSERT(chp->ch_queue->active_xfer != NULL)
-
 siisata - fix all new XXX and unmergable bits
 
 test wd* at umass?, confirm the ata_channel kludge works
