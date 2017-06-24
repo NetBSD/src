@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.16 2017/06/23 20:40:51 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.17 2017/06/24 14:57:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.16 2017/06/23 20:40:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.17 2017/06/24 14:57:17 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -2110,7 +2110,8 @@ ata_delay(int ms, const char *msg, int flags)
 		 */
 		delay(ms * 1000);
 	} else {
-		kpause(msg, false, mstohz(ms), NULL);
+		int pause = mstohz(ms);
+		kpause(msg, false, pause > 0 ? pause : 1, NULL);
 	}
 }
 
