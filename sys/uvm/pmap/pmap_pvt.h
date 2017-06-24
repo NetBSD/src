@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.h,v 1.1 2015/11/11 08:20:22 skrll Exp $	*/
+/*	$NetBSD: pmap_pvt.h,v 1.2 2017/06/24 05:31:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,8 +30,8 @@
  */
 
 
-#ifndef _COMMON_PMAP_PV_H_
-#define _COMMON_PMAP_PV_H_
+#ifndef	_UVM_PMAP_PMAP_PVT_H_
+#define	_UVM_PMAP_PMAP_PVT_H_
 
 #include <sys/pserialize.h>
 
@@ -44,4 +44,4 @@ void pmap_pv_untrack(paddr_t, psize_t);
 
 struct pmap_page *pmap_pv_tracked(paddr_t);
 
-#endif  /* _COMMON_PMAP_PV_H_ */
+#endif	/* _UVM_PMAP_PMAP_PVT_H_ */
