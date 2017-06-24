@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.138 2017/06/17 07:22:12 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.139 2017/06/24 11:23:35 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.138 2017/06/17 07:22:12 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.139 2017/06/24 11:23:35 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1495,11 +1495,11 @@ parsebackq(VSS *const stack, char * const in,
 	parsebackquote = savepbq;
 	handler = savehandler;
 	if (arinest || ISDBLQUOTE()) {
-		USTPUTC(CTLBACKQ | CTLQUOTE, out);
+		STPUTC(CTLBACKQ | CTLQUOTE, out);
 		while (--lno >= 0)
-			USTPUTC(CTLNONL, out);
+			STPUTC(CTLNONL, out);
 	} else
-		USTPUTC(CTLBACKQ, out);
+		STPUTC(CTLBACKQ, out);
 
 	return out;
 }
