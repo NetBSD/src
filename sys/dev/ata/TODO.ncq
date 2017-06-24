@@ -7,7 +7,6 @@ fix crashdump for mvsata - request times out (maybe same as HEAD?)
 siisata - fix all new XXX and unmergable bits
 
 test wd* at umass?, confirm the ata_channel kludge works
-+ add detach code (channel detach, free queue)
 
 test device error handling (currently appears to not work well, at least in NCQ case)
 
