@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34 2017/05/12 05:45:58 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35 2017/06/24 07:30:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2017/05/12 05:45:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2017/06/24 07:30:17 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -773,7 +773,7 @@ pmap_page_remove(struct vm_page *pg)
 
 		pmap_md_tlb_miss_lock_enter();
 		const pt_entry_t npte = pte_nv_entry(is_kernel_pmap_p);
-		*ptep = npte;
+		pte_set(ptep, npte);
 		/*
 		 * Flush the TLB for the given address.
 		 */
@@ -902,7 +902,7 @@ pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 			pmap_remove_pv(pmap, sva, pg, pte_modified_p(pte));
 		}
 		pmap_md_tlb_miss_lock_enter();
-		*ptep = npte;
+		pte_set(ptep, npte);
 		/*
 		 * Flush the TLB for the given address.
 		 */
@@ -1054,7 +1054,7 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 		pte = pte_prot_downgrade(pte, prot);
 		if (*ptep != pte) {
 			pmap_md_tlb_miss_lock_enter();
-			*ptep = pte;
+			pte_set(ptep, pte);
 			/*
 			 * Update the TLB if needed.
 			 */
@@ -1137,7 +1137,7 @@ pmap_page_cache(struct vm_page *pg, bool cached)
 		if (pte_valid_p(pte)) {
 			pte = pte_cached_change(pte, cached);
 			pmap_md_tlb_miss_lock_enter();
-			*ptep = pte;
+			pte_set(ptep, pte);
 			pmap_tlb_update_addr(pmap, va, pte, PMAP_TLB_NEED_IPI);
 			pmap_md_tlb_miss_lock_exit();
 		}
@@ -1271,7 +1271,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	KASSERT(pte_valid_p(npte));
 
 	pmap_md_tlb_miss_lock_enter();
-	*ptep = npte;
+	pte_set(ptep, npte);
 	pmap_tlb_update_addr(pmap, va, npte, update_flags);
 	pmap_md_tlb_miss_lock_exit();
 	kpreempt_enable();
@@ -1357,7 +1357,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * don't.  Instead let the next reference to the page do it.
 	 */
 	pmap_md_tlb_miss_lock_enter();
-	*ptep = npte;
+	pte_set(ptep, npte);
 	pmap_tlb_update_addr(pmap_kernel(), va, npte, 0);
 	pmap_md_tlb_miss_lock_exit();
 	kpreempt_enable();
@@ -1407,7 +1407,7 @@ pmap_pte_kremove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 #endif
 
 		pmap_md_tlb_miss_lock_enter();
-		*ptep = new_pte;
+		pte_set(ptep, new_pte);
 		pmap_tlb_invalidate_addr(pmap, sva);
 		pmap_md_tlb_miss_lock_exit();
 	}
@@ -1500,7 +1500,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 
 	if (pte_wired_p(pte)) {
 		pmap_md_tlb_miss_lock_enter();
-		*ptep = pte_unwire_entry(pte);
+		pte_set(ptep, pte_unwire_entry(pte));
 		pmap_md_tlb_miss_lock_exit();
 		pmap->pm_stats.wired_count--;
 	}
@@ -1667,7 +1667,7 @@ pmap_clear_modify(struct vm_page *pg)
 		KASSERT(pte_valid_p(pte));
 		const uintptr_t gen = VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 		pmap_md_tlb_miss_lock_enter();
-		*ptep = pte;
+		pte_set(ptep, pte);
 		pmap_tlb_invalidate_addr(pmap, va);
 		pmap_md_tlb_miss_lock_exit();
 		pmap_update(pmap);
