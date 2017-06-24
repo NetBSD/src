@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.8 2017/06/24 05:31:03 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9 2017/06/24 05:49:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -154,7 +154,7 @@ struct pmap_limits {
 
 /*
  * Initialize the kernel pmap.
- */      
+ */
 #ifdef MULTIPROCESSOR
 #define PMAP_SIZE	offsetof(struct pmap, pm_pai[PMAP_TLB_MAX])
 #else       
