@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.75 2017/04/01 19:35:56 riastradh Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.76 2017/06/24 12:13:16 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.75 2017/04/01 19:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.76 2017/06/24 12:13:16 hannken Exp $");
 #endif /* not lint */
 
 
@@ -277,7 +277,6 @@ static void
 udf_release_system_nodes(struct mount *mp)
 {
 	struct udf_mount *ump = VFSTOUDF(mp);
-	int error;
 
 	/* if we haven't even got an ump, dont bother */
 	if (!ump)
@@ -294,10 +293,6 @@ udf_release_system_nodes(struct mount *mp)
 		vrele(ump->metadatamirror_node->vnode);
 	if (ump->metadatabitmap_node)
 		vrele(ump->metadatabitmap_node->vnode);
-
-	/* This flush should NOT write anything nor allow any node to remain */
-	if ((error = vflush(ump->vfs_mountp, NULLVP, 0)) != 0)
-		panic("Failure to flush UDF system vnodes\n");
 }
 
 
@@ -519,6 +514,10 @@ udf_unmount(struct mount *mp, int mntflags)
 
 	/* NOTE release system nodes should NOT write anything */
 	udf_release_system_nodes(mp);
+
+	/* This flush should NOT write anything nor allow any node to remain */
+	if ((error = vflush(ump->vfs_mountp, NULLVP, 0)) != 0)
+		panic("Failure to flush UDF system vnodes\n");
 
 	/* finalise disc strategy */
 	udf_discstrat_finish(ump);
