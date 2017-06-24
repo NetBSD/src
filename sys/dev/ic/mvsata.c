@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.15 2017/06/24 14:33:06 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.16 2017/06/24 14:59:10 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.15 2017/06/24 14:33:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.16 2017/06/24 14:59:10 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1081,7 +1081,7 @@ mvsata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct ata_bio *ata_bio = &xfer->c_bio;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
-	int wait_flags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
+	int wait_flags =  ata_bio->flags & AT_WAIT;
 	u_int16_t cyl;
 	u_int8_t head, sect, cmd = 0;
 	int nblks, error;
@@ -3206,10 +3206,10 @@ mvsata_reset_hc(struct mvsata_hc *mvhc)
 #define WDCNDELAY_RST (WDC_RESET_WAIT * 1000 / WDCDELAY)
 
 static uint32_t
-mvsata_softreset(struct mvsata_port *mvport, int waitok)
+mvsata_softreset(struct mvsata_port *mvport, int flags)
 {
 	uint32_t sig0 = ~0;
-	int timeout, nloop;
+	int timeout;
 	uint8_t st0;
 
 	MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_RST | WDCTL_IDS | WDCTL_4BIT);
@@ -3218,13 +3218,8 @@ mvsata_softreset(struct mvsata_port *mvport, int waitok)
 	MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_IDS | WDCTL_4BIT);
 	delay(10);
 
-	if (!waitok)
-		nloop = WDCNDELAY_RST;
-	else
-		nloop = WDC_RESET_WAIT * hz / 1000;
-
 	/* wait for BSY to deassert */
-	for (timeout = 0; timeout < nloop; timeout++) {
+	for (timeout = 0; timeout < WDCNDELAY_RST; timeout++) {
 		st0 = MVSATA_WDC_READ_1(mvport, SRB_CS);
 
 		if ((st0 & WDCS_BSY) == 0) {
@@ -3234,10 +3229,7 @@ mvsata_softreset(struct mvsata_port *mvport, int waitok)
 			sig0 |= MVSATA_WDC_READ_1(mvport, SRB_LBAH) << 24;
 			goto out;
 		}
-		if (!waitok)
-			delay(WDCDELAY);
-		else
-			tsleep(&nloop, PRIBIO, "atarst", 1);
+		ata_delay(WDCDELAY, "atarst", flags);
 	}
 	
 out:
@@ -3270,7 +3262,7 @@ mvsata_edma_enable(struct mvsata_port *mvport)
 }
 
 static int
-mvsata_edma_disable(struct mvsata_port *mvport, int timeout, int waitok)
+mvsata_edma_disable(struct mvsata_port *mvport, int timeout, int wflags)
 {
 	uint32_t status, command;
 	int ms;
@@ -3280,11 +3272,7 @@ mvsata_edma_disable(struct mvsata_port *mvport, int timeout, int waitok)
 			status = MVSATA_EDMA_READ_4(mvport, EDMA_S);
 			if (status & EDMA_S_EDMAIDLE)
 				break;
-			if (waitok)
-				tsleep(&waitok, PRIBIO, "mvsata_edma1",
-				    mstohz(1));
-			else
-				delay(1000);
+			ata_delay(1, "mvsata_edma1", wflags);
 		}
 		if (ms == timeout) {
 			aprint_error("%s:%d:%d: unable to disable EDMA\n",
@@ -3300,11 +3288,7 @@ mvsata_edma_disable(struct mvsata_port *mvport, int timeout, int waitok)
 			command = MVSATA_EDMA_READ_4(mvport, EDMA_CMD);
 			if (!(command & EDMA_CMD_EENEDMA))
 				break;
-			if (waitok)
-				tsleep(&waitok, PRIBIO, "mvsata_edma2",
-				    mstohz(1));
-			else
-				delay(1000);
+			ata_delay(1, "mvsata_edma2", wflags);
 		}
 		if (ms == timeout) {
 			aprint_error("%s:%d:%d: unable to re-enable EDMA\n",
