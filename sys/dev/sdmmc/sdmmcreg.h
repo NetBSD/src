@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.29 2017/02/17 10:51:48 nonaka Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.30 2017/06/24 11:27:33 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -61,6 +61,8 @@
 #define SD_SEND_SWITCH_FUNC		6	/* R1 */
 #define SD_SEND_IF_COND			8	/* R7 */
 #define SD_VOLTAGE_SWITCH		11	/* R1 */
+#define SD_ERASE_WR_BLK_START		32	/* R1 */
+#define SD_ERASE_WR_BLK_END		33	/* R1 */
 
 /* SD application commands */			/* response type */
 #define SD_APP_SET_BUS_WIDTH		6	/* R1 */

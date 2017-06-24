@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.27 2017/06/06 21:01:07 jmcneill Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.28 2017/06/24 11:27:33 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.27 2017/06/06 21:01:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.28 2017/06/24 11:27:33 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -93,6 +93,7 @@ static int ld_sdmmc_detach(device_t, int);
 static int ld_sdmmc_dump(struct ld_softc *, void *, int, int);
 static int ld_sdmmc_start(struct ld_softc *, struct buf *);
 static void ld_sdmmc_restart(void *);
+static int ld_sdmmc_discard(struct ld_softc *, off_t, off_t);
 
 static void ld_sdmmc_doattach(void *);
 static void ld_sdmmc_dobio(void *);
@@ -149,6 +150,7 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	ld->sc_maxqueuecnt = LD_SDMMC_MAXQUEUECNT;
 	ld->sc_dump = ld_sdmmc_dump;
 	ld->sc_start = ld_sdmmc_start;
+	ld->sc_discard = ld_sdmmc_discard;
 
 	/*
 	 * It is avoided that the error occurs when the card attaches it,
@@ -295,6 +297,14 @@ ld_sdmmc_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 
 	return sdmmc_mem_write_block(sc->sc_sf, blkno, data,
 	    blkcnt * ld->sc_secsize);
+}
+
+static int
+ld_sdmmc_discard(struct ld_softc *ld, off_t pos, off_t len)
+{
+	struct ld_sdmmc_softc *sc = device_private(ld->sc_dv);
+
+	return sdmmc_mem_discard(sc->sc_sf, pos, len);
 }
 
 MODULE(MODULE_CLASS_DRIVER, ld_sdmmc, "ld");
