@@ -1,4 +1,4 @@
-/*	$NetBSD: vmpagemd.h,v 1.4 2017/06/07 07:06:26 skrll Exp $	*/
+/*	$NetBSD: vmpagemd.h,v 1.5 2017/06/24 05:31:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,8 +35,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMON_PMAP_TLB_VMPAGEMD_H_
-#define _COMMON_PMAP_TLB_VMPAGEMD_H_
+#ifndef _UVM_PMAP_VMPAGEMD_H_
+#define _UVM_PMAP_VMPAGEMD_H_
 
 #ifdef _LOCORE
 #error use assym.h instead
@@ -158,4 +158,4 @@ do {									\
 
 #endif /* _MODULE */
 
-#endif /* __COMMON_PMAP_TLB_VMPAGEMD_H_ */
+#endif /* _UVM_PMAP_VMPAGEMD_H_ */

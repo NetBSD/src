@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.10 2017/05/26 06:41:42 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.11 2017/06/24 05:31:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,8 +71,8 @@
  *	@(#)pmap.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_COMMON_PMAP_TLB_H_
-#define	_COMMON_PMAP_TLB_H_
+#ifndef	_UVM_PMAP_PMAP_TLB_H_
+#define	_UVM_PMAP_PMAP_TLB_H_
 
 #include <sys/evcnt.h>
 #include <sys/kcpuset.h>
@@ -179,4 +179,4 @@ void	pmap_tlb_check(pmap_t, bool (*)(void *, vaddr_t, tlb_asid_t, pt_entry_t));
 void	pmap_tlb_asid_check(void);
 
 #endif	/* _KERNEL */
-#endif	/* _COMMON_PMAP_TLB_H_ */
+#endif	/* _UVM_PMAP_PMAP_TLB_H_ */
