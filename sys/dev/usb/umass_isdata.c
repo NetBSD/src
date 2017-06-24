@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.33.4.5 2017/06/21 19:38:43 jdolecek Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.33.4.6 2017/06/24 00:23:39 jdolecek Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.33.4.5 2017/06/21 19:38:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.33.4.6 2017/06/24 00:23:39 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -233,6 +233,16 @@ umass_isdata_attach(struct umass_softc *sc)
 	return 0;
 }
 
+void
+umass_isdata_detach(struct umass_softc *sc)
+{
+	struct uisdata_softc *scbus = (struct uisdata_softc *)sc->bus;
+
+	ata_queue_free(scbus->sc_channel.ch_queue);
+	scbus->sc_channel.ch_queue = NULL;
+
+	ata_channel_destroy(&scbus->sc_channel);
+}
 
 void
 uisdata_bio_cb(struct umass_softc *sc, void *priv, int residue, int status)
