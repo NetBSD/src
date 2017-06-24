@@ -1,4 +1,4 @@
-# $NetBSD: t_fsplit.sh,v 1.6 2017/06/03 15:15:49 kre Exp $
+# $NetBSD: t_fsplit.sh,v 1.7 2017/06/24 11:06:17 kre Exp $
 #
 # Copyright (c) 2007-2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -145,6 +145,13 @@ default_val_body() {
 	# and not ksh93 (as of Mar 1, 2016, and still in June 2017)
 	# The likely correct interp of the next one is 'za bz zcz zdz'
 
+	# That and the "should be" below are correct as of POSIX 7 TC2
+	# But this is going to change to "unspecified" in POSIX 8
+	# (resolution of bug 221)  so instead of being incorrect (as now)
+	# the NetBSD shell will simply be implementing is version
+	# of unspecified behaviour.  Just beware that shells differ,
+	# a shell that fails this test is not incorrect because of it.
+
 	# should be:    uuuu qqqqqq uuu q uuu   (unquoted/quoted) no nesting.
 	check 'for i in ${x-"a ${x-"b c"}" d}; do echo "z${i}z"; done' \
 		'za b cz zdz'
@@ -212,6 +219,8 @@ replacement_val_body() {
 	check 'x=BOGUS; for i in ${x+"a ${x+b c}" d};   do echo "z${i}z"; done'\
 		'za b cz zdz'
 
+	# see the (extended) comment in the default_val test.  This will be
+	# unspecified, hence we are OK (will be) but expect differences.
 	# also incorrect:        uuuu qqqqqq uuu q uuu
 	check 'x=BOGUS; for i in ${x+"a ${x+"b c"}" d}; do echo "z${i}z"; done'\
 		'za b cz zdz'
@@ -241,6 +250,7 @@ ifs_alpha_body() {
 		'zaqbqcz zdz'
 
 	# this is another almost certainly incorrect expectation
+	# (but again, see comment in default_val test - becoming unspecified.)
 	#                        uu qqqqqq uuu q uu	(quoted/unquoted)
 	check 'IFS=q; for i in ${x-"aq${x-"bqc"}"qd}; do echo "z${i}z"; done' \
 		'zaqbqcz zdz'
@@ -262,6 +272,7 @@ quote_body() {
 	check 'set "${x-a b c}";   echo $#' 1
 
 	# this is another almost certainly incorrect expectation
+	# (but again, see comment in default_val test - becoming unspecified.)
 	#           qqqq uuu qqq  	(quoted/unquoted)  $1 is a $# is 2
 	check 'set "${x-"a b" c}"; echo $1' 'a b c'
 
