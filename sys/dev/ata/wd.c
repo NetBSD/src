@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.22 2017/06/23 23:45:09 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.23 2017/06/24 00:00:10 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.22 2017/06/23 23:45:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.23 2017/06/24 00:00:10 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -659,9 +659,10 @@ wdstart(device_t self)
 		goto out;
 
 	while (bufq_peek(wd->sc_q) != NULL) {
-		/* First try to get command */
+		/* First try to get xfer. Limit to drive openings iff NCQ. */
 		xfer = ata_get_xfer_ext(wd->drvp->chnl_softc, false,
-		    wd->drvp->drv_openings);
+		    ISSET(wd->drvp->drive_flags, ATA_DRIVE_NCQ)
+		        ? wd->drvp->drv_openings : 0);
 		if (xfer == NULL)
 			break;
 
