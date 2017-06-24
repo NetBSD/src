@@ -1,4 +1,4 @@
-/*	$NetBSD: vmpagemd.h,v 1.5 2017/06/24 05:31:03 skrll Exp $	*/
+/*	$NetBSD: vmpagemd.h,v 1.6 2017/06/24 05:34:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -86,9 +86,9 @@ typedef struct pv_entry {
 
 struct vm_page_md {
 	volatile unsigned long mdpg_attrs;	/* page attributes */
-	struct pv_entry mdpg_first;	/* pv_entry first */
+	struct pv_entry mdpg_first;		/* pv_entry first */
 #if defined(MULTIPROCESSOR) || defined(MODULAR) || defined(_MODULE)
-	kmutex_t *mdpg_lock;		/* pv list lock */
+	kmutex_t *mdpg_lock;			/* pv list lock */
 #endif
 };
 
