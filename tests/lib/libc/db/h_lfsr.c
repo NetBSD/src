@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_lfsr.c,v 1.1 2015/11/18 18:35:35 christos Exp $");
+__RCSID("$NetBSD: h_lfsr.c,v 1.2 2017/06/24 10:25:23 gson Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: h_lfsr.c,v 1.1 2015/11/18 18:35:35 christos Exp $");
 #include <unistd.h>
 #include <db.h>
 
-#define MAXKEY 0xffff
+#define MAXKEY 1000
 #ifdef DEBUG
 #define DPRINTF(...)	printf(__VA_ARGS__)
 #else
