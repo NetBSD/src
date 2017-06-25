@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.194 2017/03/24 03:45:02 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.194.6.1 2017/06/25 06:31:58 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194 2017/03/24 03:45:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.1 2017/06/25 06:31:58 snj Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -280,7 +280,7 @@ static void rtcache_invalidate(struct dom_rtlist *);
 static void rt_ref(struct rtentry *);
 
 static struct rtentry *
-    rtalloc1_locked(const struct sockaddr *, int, bool);
+    rtalloc1_locked(const struct sockaddr *, int, bool, bool);
 static struct rtentry *
     rtcache_validate_locked(struct route *);
 static void rtcache_free_locked(struct route *);
@@ -557,7 +557,8 @@ dump_rt(const struct rtentry *rt)
  * will be incremented. The caller has to rtfree it by itself.
  */
 struct rtentry *
-rtalloc1_locked(const struct sockaddr *dst, int report, bool wait_ok)
+rtalloc1_locked(const struct sockaddr *dst, int report, bool wait_ok,
+    bool wlock)
 {
 	rtbl_t *rtbl;
 	struct rtentry *rt;
@@ -599,6 +600,10 @@ retry:
 
 		if (need_lock)
 			RTCACHE_WLOCK();
+		if (wlock)
+			RT_WLOCK();
+		else
+			RT_RLOCK();
 		goto retry;
 	}
 #endif /* NET_MPSAFE */
@@ -627,7 +632,7 @@ rtalloc1(const struct sockaddr *dst, int report)
 	struct rtentry *rt;
 
 	RT_RLOCK();
-	rt = rtalloc1_locked(dst, report, true);
+	rt = rtalloc1_locked(dst, report, true, false);
 	RT_UNLOCK();
 
 	return rt;
@@ -1026,7 +1031,7 @@ ifa_ifwithroute_psref(int flags, const struct sockaddr *dst,
 
 		/* XXX we cannot call rtalloc1 if holding the rt lock */
 		if (RT_LOCKED())
-			rt = rtalloc1_locked(gateway, 0, true);
+			rt = rtalloc1_locked(gateway, 0, true, true);
 		else
 			rt = rtalloc1(gateway, 0);
 		if (rt == NULL)
@@ -1387,7 +1392,7 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 
 		/* XXX we cannot call rtalloc1 if holding the rt lock */
 		if (RT_LOCKED())
-			gwrt = rtalloc1_locked(gate, 1, false);
+			gwrt = rtalloc1_locked(gate, 1, false, true);
 		else
 			gwrt = rtalloc1(gate, 1);
 		/*
