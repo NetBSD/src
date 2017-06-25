@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.39 2017/02/22 09:45:15 nonaka Exp $ */
+/* $NetBSD: if_ie.c,v 1.40 2017/06/25 12:07:23 maxv Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.39 2017/02/22 09:45:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.40 2017/06/25 12:07:23 maxv Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -616,7 +616,7 @@ ieioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 
 	case SIOCSIFFLAGS:
 	    if ((error = ifioctl_common(ifp, cmd, data)) != 0)
-		return error;
+		break;
 	    sc->promisc = ifp->if_flags & ( IFF_PROMISC | IFF_ALLMULTI );
 
 	    if ( IZCLR(ifp,IFF_UP) && IZSET(ifp,IFF_RUNNING) )
