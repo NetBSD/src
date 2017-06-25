@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ipuv3.c,v 1.4 2015/12/21 04:26:28 hkenken Exp $	*/
+/*	$NetBSD: imx51_ipuv3.c,v 1.5 2017/06/25 12:11:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 2011, 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_ipuv3.c,v 1.4 2015/12/21 04:26:28 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_ipuv3.c,v 1.5 2017/06/25 12:11:30 maxv Exp $");
 
 #include "opt_imx51_ipuv3.h"
 
@@ -949,6 +949,7 @@ imx51_ipuv3_new_screen(struct imx51_ipuv3_softc *sc,
 		aprint_error_dev(sc->dev,
 		    "failed to allocate %u bytes of video memory: %d\n",
 		    scr->stride * height, error);
+		free(scr, M_DEVBUF);
 		return error;
 	}
 
