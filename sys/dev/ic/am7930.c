@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.53 2016/12/28 10:04:53 nat Exp $	*/
+/*	$NetBSD: am7930.c,v 1.54 2017/06/25 02:09:47 nat Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.53 2016/12/28 10:04:53 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.54 2017/06/25 02:09:47 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -263,8 +263,8 @@ am7930_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
 	    r->encoding == AUDIO_ENCODING_SLINEAR) {
 		hw.encoding = AUDIO_ENCODING_ULAW;
 		pfil->req_size = rfil->req_size = 0;
-		pfil->append(rfil, mulaw_to_linear8, &hw);
-		rfil->append(pfil, linear8_to_mulaw, &hw);
+		rfil->append(rfil, mulaw_to_linear8, &hw);
+		pfil->append(pfil, linear8_to_mulaw, &hw);
 	}
 
 	return 0;
