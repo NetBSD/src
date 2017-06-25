@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.59 2017/05/06 21:34:51 joerg Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.60 2017/06/25 04:10:47 snj Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.59 2017/05/06 21:34:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.60 2017/06/25 04:10:47 snj Exp $");
 
 #include "opt_pax.h"
 
@@ -291,7 +291,7 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 	sysctl_createv(clog, 0, &rnode, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "debug",
-		       SYSCTL_DESCR("Pring ASLR selected addresses."),
+		       SYSCTL_DESCR("Print ASLR selected addresses."),
 		       NULL, 0, &pax_aslr_debug, 0,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &rnode, NULL,
