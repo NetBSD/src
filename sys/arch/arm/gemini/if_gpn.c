@@ -1,4 +1,4 @@
-/* $NetBSD: if_gpn.c,v 1.7 2016/12/15 09:28:02 ozaki-r Exp $ */
+/* $NetBSD: if_gpn.c,v 1.8 2017/06/25 12:44:04 maxv Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "opt_gemini.h"
 
-__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.7 2016/12/15 09:28:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.8 2017/06/25 12:44:04 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -471,7 +471,12 @@ gpn_ifstart(struct ifnet *ifp)
 			ifp->if_obytes += m->m_len;
 		}
 		ifp->if_opackets++;
+
+		/*
+		 * XXX XXX 'last_gd' could be NULL
+		 */
 		last_gd->gd_subtype |= GPN_EOF;
+
 		sc->sc_txactive++;
 		sc->sc_free--;
 		gemini_ipm_produce(last_gd, 1);
