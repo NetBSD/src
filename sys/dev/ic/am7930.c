@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.54 2017/06/25 02:09:47 nat Exp $	*/
+/*	$NetBSD: am7930.c,v 1.55 2017/06/25 09:40:17 nat Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.54 2017/06/25 02:09:47 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.55 2017/06/25 09:40:17 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -242,6 +242,12 @@ am7930_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
 			hw.precision *= sc->sc_glue->factor;
 			pfil->append(pfil, sc->sc_glue->output_conv, &hw);
 		}
+		if (p->encoding == AUDIO_ENCODING_SLINEAR) {
+			hw = *p;
+			hw.encoding = AUDIO_ENCODING_ULAW;
+			pfil->append(pfil, linear8_to_mulaw, &hw);
+		}
+
 	}
 	if ((usemode & AUMODE_RECORD) == AUMODE_RECORD) {
 		if (r->sample_rate < 7500 || r->sample_rate > 8500 ||
@@ -257,14 +263,11 @@ am7930_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
 			hw.precision *= sc->sc_glue->factor;
 			pfil->append(rfil, sc->sc_glue->input_conv, &hw);
 		}
-	}
-
-	if (p->encoding == AUDIO_ENCODING_SLINEAR ||
-	    r->encoding == AUDIO_ENCODING_SLINEAR) {
-		hw.encoding = AUDIO_ENCODING_ULAW;
-		pfil->req_size = rfil->req_size = 0;
-		rfil->append(rfil, mulaw_to_linear8, &hw);
-		pfil->append(pfil, linear8_to_mulaw, &hw);
+	    	if (r->encoding == AUDIO_ENCODING_SLINEAR) {
+			hw = *r;
+			hw.encoding = AUDIO_ENCODING_ULAW;
+			rfil->append(rfil, mulaw_to_linear8, &hw);
+		}
 	}
 
 	return 0;
