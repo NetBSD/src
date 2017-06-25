@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.h,v 1.22 2017/06/20 13:51:54 nat Exp $	*/
+/*	$NetBSD: mulaw.h,v 1.23 2017/06/25 02:14:16 nat Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ extern stream_filter_factory_t linear24_32_to_mulaw;
 /* Convert 8-bit mu-law to/from 16 bit unsigned/signed linear. */
 extern stream_filter_factory_t mulaw_to_linear16;
 extern stream_filter_factory_t linear16_16_to_mulaw;
-#define linear16_to_mulaw linear16_16_to_mulaw;
+#define linear16_to_mulaw linear16_16_to_mulaw
 /* Convert 8-bit mu-law to/from 8 bit unsigned/signed linear. */
 extern stream_filter_factory_t mulaw_to_linear8;
 extern stream_filter_factory_t linear8_to_mulaw;
@@ -59,7 +59,7 @@ extern stream_filter_factory_t linear24_32_to_alaw;
 /* Convert 8-bit alaw to/from 16 bit unsigned/signed linear. */
 extern stream_filter_factory_t alaw_to_linear16;
 extern stream_filter_factory_t linear16_16_to_alaw;
-#define linear16_to_alaw linear16_16_to_alaw;
+#define linear16_to_alaw linear16_16_to_alaw
 /* Convert 8-bit A-law to/from 8 bit unsigned/signed linear. */
 extern stream_filter_factory_t alaw_to_linear8;
 extern stream_filter_factory_t linear8_to_alaw;
