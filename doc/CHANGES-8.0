@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.12 2017/06/22 05:38:03 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.13 2017/06/25 06:34:38 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -1411,4 +1411,24 @@ sys/opencrypto/cryptodev.h			1.35, 1.36
 
 	Fix opencrypto locking.
 	[christos/knakahara, ticket #37]
+
+share/man/man4/siisata.4			1.6
+sys/dev/pci/pcidevs				1.1291
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/siisata_pci.c			1.15
+
+	siisata(4): Add Adaptec 1220SA support.
+	[jdolecek, ticket #55]
+
+sys/dev/pci/mvsata_pci.c			1.9
+sys/dev/pci/siisata_pci.c			1.16
+
+	switch to pci_intr_establish_xname()
+	[jdolecek, ticket #56]
+
+sys/net/route.c					1.195
+
+	Fix locking in rtalloc1 (affected only if NET_MPSAFE)
+	[ozaki-r, ticket #57]
 
