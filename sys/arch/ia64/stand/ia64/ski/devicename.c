@@ -1,4 +1,4 @@
-/*	$NetBSD: devicename.c,v 1.8 2016/08/15 09:06:39 maxv Exp $	*/
+/*	$NetBSD: devicename.c,v 1.9 2017/06/25 12:04:37 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -236,8 +236,7 @@ ski_fmtdev(void *vdev)
 		break;
 
 	case DEVT_NET:
-		/* XXX XXX XXX: Yay, 'len' is not initialized here */
-		snprintf(buf, buflen - len, "%s%d:", dev->d_dev->dv_name, dev->d_kind.netif.unit);
+		snprintf(buf, buflen, "%s%d:", dev->d_dev->dv_name, dev->d_kind.netif.unit);
 		break;
 	}
 	return(buf);
