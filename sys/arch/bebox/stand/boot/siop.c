@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.5 2014/12/12 15:57:30 phx Exp $	*/
+/*	$NetBSD: siop.c,v 1.6 2017/06/25 12:15:04 maxv Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -993,6 +993,7 @@ scsi_interpret_sense(struct siop_adapter *adp, struct scsi_xfer *xs)
 			error = 0;
 			break;
 		case SKEY_ABORTED_COMMAND:
+			/* XXX XXX initialize 'error' */
 			break;
 		case SKEY_VOLUME_OVERFLOW:
 			error = ENOSPC;
