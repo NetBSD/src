@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.364 2017/06/25 02:47:28 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.365 2017/06/25 09:42:40 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.364 2017/06/25 02:47:28 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.365 2017/06/25 09:42:40 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3485,6 +3485,7 @@ int
 audiostartr(struct audio_softc *sc, struct virtual_channel *vc)
 {
 
+	struct audio_chan *chan;
 	int error;
 
 	KASSERT(mutex_owned(sc->sc_lock));
@@ -3493,8 +3494,11 @@ audiostartr(struct audio_softc *sc, struct virtual_channel *vc)
 		 vc->sc_mrr.s.start, audio_stream_get_used(&vc->sc_mrr.s),
 		 vc->sc_mrr.usedhigh, vc->sc_mrr.mmapped));
 
+	chan = SIMPLEQ_FIRST(&sc->sc_audiochan);
 	if (!audio_can_capture(sc))
 		return EINVAL;
+	if (vc == chan->vc)
+		return 0;
 
 	error = 0;
 	if (sc->sc_rec_started == false) {
@@ -3525,6 +3529,8 @@ audiostartp(struct audio_softc *sc, struct virtual_channel *vc)
 
 	if (!audio_can_playback(sc))
 		return EINVAL;
+	if (vc == chan->vc)
+		return 0;
 
 	if (!vc->sc_mpr.mmapped && used < vc->sc_mpr.blksize) {
 		cv_broadcast(&sc->sc_wchan);
