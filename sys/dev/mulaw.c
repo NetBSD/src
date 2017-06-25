@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.29 2017/06/20 07:21:50 nat Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.30 2017/06/25 02:16:41 nat Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.29 2017/06/20 07:21:50 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.30 2017/06/25 02:16:41 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -406,28 +406,7 @@ LINEARNTOMULAW(32, 32)
 LINEARNTOMULAW(24, 32)
 LINEARNTOMULAW(24, 24)
 LINEARNTOMULAW(16, 16)
-
-DEFINE_FILTER(linear8_to_mulaw)
-{
-	stream_filter_t *this;
-	int m, err;
-
-	this = (stream_filter_t *)self;
-	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
-		return err;
-	m = dst->end - dst->start;
-	m = min(m, max_used);
-	if (this->src->param.encoding == AUDIO_ENCODING_ULINEAR_LE) {
-		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 1, m) {
-			*d = lintomulaw[*s];
-		} FILTER_LOOP_EPILOGUE(this->src, dst);
-	} else {		/* SLINEAR_LE */
-		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 1, m) {
-			*d = lintomulaw[*s ^ 0x80];
-		} FILTER_LOOP_EPILOGUE(this->src, dst);
-	}
-	return 0;
-}
+LINEARNTOMULAW(8, 8)
 
 DEFINE_FILTER(alaw_to_linear8)
 {
