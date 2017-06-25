@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.11 2011/11/23 23:07:30 jmcneill Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.12 2017/06/25 06:26:40 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -94,6 +94,7 @@ struct vs_softc {
 		int bufsize, blksize;
 		int dmap;
 	} sc_current;
+	int sc_active;
 
 	const struct audio_hw_if *sc_hw_if;
 
