@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.253 2017/06/25 12:42:40 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.254 2017/06/25 22:16:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.253 2017/06/25 12:42:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.254 2017/06/25 22:16:46 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4430,8 +4430,8 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		needed_kptp[i] = target_nptp - nkptp[i];
 	}
 
-#if defined(XEN) && defined(__x86_64__)
-	/* only pmap_kernel() has kernel entries */
+#if defined(XEN) && (defined(__x86_64__) || defined(PAE))
+	/* only pmap_kernel(), or the per-cpu map, has kernel entries */
 	cpm = kpm;
 #else
 	/* Get the current pmap */
@@ -4453,6 +4453,11 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		/* nothing, kernel entries are never entered in user pmap */
 #else /* __x86_64__ */
 		int pdkidx;
+#ifndef PAE
+		/*
+		 * for PAE this is not needed, because pmap_alloc_level()
+		 * already did update the per-CPU tables
+		 */
 		if (cpm != kpm) {
 			for (pdkidx = PDIR_SLOT_KERN + old;
 			    pdkidx < PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1];
@@ -4462,6 +4467,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			}
 			pmap_pte_flush();
 		}
+#endif /* !PAE */
 
 		mutex_enter(&pmaps_lock);
 		LIST_FOREACH(pm, &pmaps, pm_list) {
