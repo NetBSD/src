@@ -1,4 +1,4 @@
-/*	$NetBSD: ydsvar.h,v 1.11 2011/11/23 23:07:36 jmcneill Exp $	*/
+/*	$NetBSD: ydsvar.h,v 1.12 2017/06/25 16:07:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -66,6 +66,7 @@ struct yds_softc {
 	bus_space_handle_t	memh;
 	bus_dma_tag_t		sc_dmatag;	/* DMA tag */
 	u_int			sc_flags;
+	int			sc_enabled;
 
 	struct yds_codec_softc	sc_codec[2];	/* Primary/Secondary AC97 */
 
