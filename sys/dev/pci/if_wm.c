@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.513 2017/06/26 04:03:34 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.514 2017/06/26 04:09:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.513 2017/06/26 04:03:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.514 2017/06/26 04:09:02 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3206,7 +3206,9 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 static void
 wm_set_ral(struct wm_softc *sc, const uint8_t *enaddr, int idx)
 {
-	uint32_t ral_lo, ral_hi;
+	uint32_t ral_lo, ral_hi, addrl, addrh;
+	uint32_t wlock_mac;
+	int rv;
 
 	if (enaddr != NULL) {
 		ral_lo = enaddr[0] | (enaddr[1] << 8) | (enaddr[2] << 16) |
@@ -3218,14 +3220,54 @@ wm_set_ral(struct wm_softc *sc, const uint8_t *enaddr, int idx)
 		ral_hi = 0;
 	}
 
-	if (sc->sc_type >= WM_T_82544) {
-		CSR_WRITE(sc, WMREG_RAL_LO(WMREG_CORDOVA_RAL_BASE, idx),
-		    ral_lo);
-		CSR_WRITE(sc, WMREG_RAL_HI(WMREG_CORDOVA_RAL_BASE, idx),
-		    ral_hi);
-	} else {
-		CSR_WRITE(sc, WMREG_RAL_LO(WMREG_RAL_BASE, idx), ral_lo);
-		CSR_WRITE(sc, WMREG_RAL_HI(WMREG_RAL_BASE, idx), ral_hi);
+	switch (sc->sc_type) {
+	case WM_T_82542_2_0:
+	case WM_T_82542_2_1:
+	case WM_T_82543:
+		CSR_WRITE(sc, WMREG_RAL(idx), ral_lo);
+		CSR_WRITE_FLUSH(sc);
+		CSR_WRITE(sc, WMREG_RAH(idx), ral_hi);
+		CSR_WRITE_FLUSH(sc);
+		break;
+	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
+	case WM_T_PCH_SPT:
+		if (idx == 0) {
+			CSR_WRITE(sc, WMREG_CORDOVA_RAL(idx), ral_lo);
+			CSR_WRITE_FLUSH(sc);
+			CSR_WRITE(sc, WMREG_CORDOVA_RAH(idx), ral_hi);
+			CSR_WRITE_FLUSH(sc);
+			return;
+		}
+		if (sc->sc_type != WM_T_PCH2) {
+			wlock_mac = __SHIFTOUT(CSR_READ(sc, WMREG_FWSM),
+			    FWSM_WLOCK_MAC);
+			addrl = WMREG_SHRAL(idx - 1);
+			addrh = WMREG_SHRAH(idx - 1);
+		} else {
+			wlock_mac = 0;
+			addrl = WMREG_PCH_LPT_SHRAL(idx - 1);
+			addrh = WMREG_PCH_LPT_SHRAH(idx - 1);
+		}
+		
+		if ((wlock_mac == 0) || (idx <= wlock_mac)) {
+			rv = wm_get_swflag_ich8lan(sc);
+			if (rv != 0)
+				return;
+			CSR_WRITE(sc, addrl, ral_lo);
+			CSR_WRITE_FLUSH(sc);
+			CSR_WRITE(sc, addrh, ral_hi);
+			CSR_WRITE_FLUSH(sc);
+			wm_put_swflag_ich8lan(sc);
+		}
+
+		break;
+	default:
+		CSR_WRITE(sc, WMREG_CORDOVA_RAL(idx), ral_lo);
+		CSR_WRITE_FLUSH(sc);
+		CSR_WRITE(sc, WMREG_CORDOVA_RAH(idx), ral_hi);
+		CSR_WRITE_FLUSH(sc);
+		break;
 	}
 }
 
