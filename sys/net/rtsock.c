@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.220 2017/06/26 03:13:40 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.221 2017/06/26 03:16:28 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.220 2017/06/26 03:13:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.221 2017/06/26 03:16:28 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1670,8 +1670,6 @@ rt_clonedmsg(const struct sockaddr *dst, const struct ifnet *ifp,
 	sockaddr_dl_init(&u.sdl, sizeof(u.ss), ifp->if_index, ifp->if_type,
 	    NULL, namelen, NULL, addrlen);
 	info.rti_info[RTAX_GATEWAY] = &u.sa;
-	info.rti_info[RTAX_IFP] = rt->rt_ifp->if_dl->ifa_addr;
-	info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 
 	rt_missmsg(RTM_ADD, &info, flags, 0);
 #undef RTF_LLINFO
