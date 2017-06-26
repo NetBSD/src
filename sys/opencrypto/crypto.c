@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.90 2017/06/15 12:45:10 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.91 2017/06/26 05:34:48 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.90 2017/06/15 12:45:10 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.91 2017/06/26 05:34:48 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1117,8 +1117,8 @@ crypto_dispatch(struct cryptop *crp)
 		 * to other drivers in cryptointr() later.
 		 */
 		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
-		mutex_exit(&crypto_q_mtx);
-		return 0;
+		result = 0;
+		goto out;
 	}
 
 	if (cap->cc_qblocked != 0) {
@@ -1128,8 +1128,8 @@ crypto_dispatch(struct cryptop *crp)
 		 * it unblocks and the swi thread gets kicked.
 		 */
 		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
-		mutex_exit(&crypto_q_mtx);
-		return 0;
+		result = 0;
+		goto out;
 	}
 
 	/*
@@ -1159,6 +1159,7 @@ crypto_dispatch(struct cryptop *crp)
 		result = 0;
 	}
 
+out:
 	mutex_exit(&crypto_q_mtx);
 	return result;
 }
@@ -1186,8 +1187,8 @@ crypto_kdispatch(struct cryptkop *krp)
 	 */
 	if (cap == NULL) {
 		TAILQ_INSERT_TAIL(&crp_kq, krp, krp_next);
-		mutex_exit(&crypto_q_mtx);
-		return 0;
+		result = 0;
+		goto out;
 	}
 
 	if (cap->cc_kqblocked != 0) {
@@ -1197,8 +1198,8 @@ crypto_kdispatch(struct cryptkop *krp)
 		 * it unblocks and the swi thread gets kicked.
 		 */
 		TAILQ_INSERT_TAIL(&crp_kq, krp, krp_next);
-		mutex_exit(&crypto_q_mtx);
-		return 0;
+		result = 0;
+		goto out;
 	}
 
 	crypto_driver_unlock(cap);
@@ -1214,7 +1215,6 @@ crypto_kdispatch(struct cryptkop *krp)
 		crypto_driver_unlock(cap);
 		TAILQ_INSERT_HEAD(&crp_kq, krp, krp_next);
 		cryptostats.cs_kblocks++;
-		mutex_exit(&crypto_q_mtx);
 
 		/*
 		 * The krp is enqueued to crp_kq, that is,
@@ -1224,6 +1224,8 @@ crypto_kdispatch(struct cryptkop *krp)
 		result = 0;
 	}
 
+out:
+	mutex_exit(&crypto_q_mtx);
 	return result;
 }
 
