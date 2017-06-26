@@ -1,4 +1,4 @@
-/*	$NetBSD: moscom.c,v 1.10 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: moscom.c,v 1.11 2017/06/26 20:36:01 is Exp $	*/
 /*	$OpenBSD: moscom.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.10 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.11 2017/06/26 20:36:01 is Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,6 +168,7 @@ struct ucom_methods moscom_methods = {
 
 static const struct usb_devno moscom_devs[] = {
 	{ USB_VENDOR_MOSCHIP,		USB_PRODUCT_MOSCHIP_MCS7703 },
+	{ USB_VENDOR_MOSCHIP,		USB_PRODUCT_MOSCHIP_MCS7720 },
 	{ USB_VENDOR_MOSCHIP,		USB_PRODUCT_MOSCHIP_MCS7840 },
 	{ USB_VENDOR_ATEN,		USB_PRODUCT_ATEN_UC2324 }
 };
