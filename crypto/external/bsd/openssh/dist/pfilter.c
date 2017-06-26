@@ -30,6 +30,10 @@ pfilter_notify(int a)
 	// XXX: 3?
  	fd = packet_connection_is_on_socket() ? packet_get_connection_in() : 3;
 	(void)blacklist_r(blstate, a, fd, "ssh");
+	if (a == 0) {
+		blacklist_close(blstate);
+		blstate = NULL;
+	}
 #else
 	__USE(a);
 #endif
