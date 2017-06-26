@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.22 2017/06/24 11:34:33 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.23 2017/06/26 20:36:14 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.22 2017/06/24 11:34:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.23 2017/06/26 20:36:14 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -944,7 +944,7 @@ siisata_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	/*
 	 * polled command
 	 */
-	for (i = 0; i < ata_c->timeout / 10; i++) {
+	for (i = 0; i < ata_c->timeout * 10; i++) {
 		if (ata_c->flags & AT_DONE)
 			break;
 		siisata_intr_port(schp);
@@ -1148,7 +1148,7 @@ siisata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	/*
 	 * polled command
 	 */
-	for (i = 0; i < ATA_DELAY / 10; i++) {
+	for (i = 0; i < ATA_DELAY * 10; i++) {
 		if (ata_bio->flags & ATA_ITSDONE)
 			break;
 		siisata_intr_port(schp);
@@ -1693,11 +1693,11 @@ siisata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	/*
 	 * polled command
 	 */
-	for (i = 0; i < ATA_DELAY / 10; i++) {
+	for (i = 0; i < ATA_DELAY * 10; i++) {
 		if (sc_xfer->xs_status & XS_STS_DONE)
 			break;
 		siisata_intr_port(schp);
-		DELAY(1000);
+		DELAY(100);
 	}
 	if ((sc_xfer->xs_status & XS_STS_DONE) == 0) {
 		siisata_timeout(xfer);
