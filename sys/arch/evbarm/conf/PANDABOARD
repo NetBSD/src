@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PANDABOARD,v 1.21 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: PANDABOARD,v 1.22 2017/06/26 03:15:16 sevan Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -274,6 +274,7 @@ wd*		at umass?
 #wskbd*		at ukbd?
 #wsmouse*	at ums?
 
+# USB Ethernet adapters
 axe*		at uhub? port ? configuration ? interface ?
 
 # Hardware clocking and power management

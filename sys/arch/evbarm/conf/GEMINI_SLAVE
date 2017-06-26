@@ -217,6 +217,8 @@ gpn0		at geminiipm0
 ##usb* at ehci?
 ##uhub* at usb?
 ##uhub* at uhub? port ?
+
+# USB Ethernet adapters
 ##axe* at uhub?
 
 # PCI

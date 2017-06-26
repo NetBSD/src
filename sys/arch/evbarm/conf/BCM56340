@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM56340,v 1.11 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: BCM56340,v 1.12 2017/06/26 03:15:16 sevan Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -265,6 +265,7 @@ scsibus*	at scsi?
 sd*		at scsibus? target ? lun ?
 #wd*		at umass?
 
+# USB Ethernet adapters
 axe*		at uhub? port ? configuration ? interface ?
 
 # Hardware clocking and power management
