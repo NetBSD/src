@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.26 2017/06/26 03:16:28 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.27 2017/06/26 06:59:57 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -450,7 +450,7 @@ ndp_rtm_body()
 	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_GET $file
 	str="$IP6DST $macaddr_dst"
 	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_GET $file
-	str="RTM_DELETE.+<UP,DONE,LLINFO>"
+	str="RTM_DELETE.+<DONE,LLINFO>"
 	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_DELETE $file
 	str="<DST,GATEWAY>"
 	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_DELETE $file

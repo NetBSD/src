@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.222 2017/06/26 06:58:42 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.223 2017/06/26 06:59:56 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.222 2017/06/26 06:58:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.223 2017/06/26 06:59:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -860,6 +860,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 			    satocsdl(info.rti_info[RTAX_GATEWAY]);
 			error = lla_rt_output(rtm->rtm_type, rtm->rtm_flags,
 			    rtm->rtm_rmx.rmx_expire, &info, sdlp->sdl_index);
+			rtm->rtm_flags &= ~RTF_UP;
 			break;
 		}
 #endif
