@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.17 2017/05/23 02:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.18 2017/06/26 18:23:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.17 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.18 2017/06/26 18:23:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -733,7 +733,8 @@ vte_encap(struct vte_softc *sc, struct mbuf **m_head)
 		m->m_len = m->m_pkthdr.len;
 	}
 
-	error = bus_dmamap_load_mbuf(sc->vte_dmatag, txd->tx_dmamap, m, 0);
+	error = bus_dmamap_load_mbuf(sc->vte_dmatag, txd->tx_dmamap, m,
+	    BUS_DMA_NOWAIT);
 	if (error != 0) {
 		txd->tx_flags &= ~VTE_TXMBUF;
 		return (NULL);
@@ -1055,7 +1056,7 @@ vte_newbuf(struct vte_softc *sc, struct vte_rxdesc *rxd)
 	m_adj(m, sizeof(uint32_t));
 
 	if (bus_dmamap_load_mbuf(sc->vte_dmatag,
-	    sc->vte_cdata.vte_rx_sparemap, m, 0) != 0) {
+	    sc->vte_cdata.vte_rx_sparemap, m, BUS_DMA_NOWAIT) != 0) {
 		m_freem(m);
 		return (ENOBUFS);
 	}
