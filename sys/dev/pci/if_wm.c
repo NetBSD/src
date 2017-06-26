@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.514 2017/06/26 04:09:02 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.515 2017/06/26 04:15:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.514 2017/06/26 04:09:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.515 2017/06/26 04:15:06 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3386,8 +3386,10 @@ wm_set_filter(struct wm_softc *sc)
 	else
 		size = WM_MC_TABSIZE;
 	/* Clear out the multicast table. */
-	for (i = 0; i < size; i++)
+	for (i = 0; i < size; i++) {
 		CSR_WRITE(sc, mta_reg + (i << 2), 0);
+		CSR_WRITE_FLUSH(sc);
+	}
 
 	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
@@ -3429,9 +3431,13 @@ wm_set_filter(struct wm_softc *sc)
 			 */
 			bit = CSR_READ(sc, mta_reg + ((reg - 1) << 2));
 			CSR_WRITE(sc, mta_reg + (reg << 2), hash);
+			CSR_WRITE_FLUSH(sc);
 			CSR_WRITE(sc, mta_reg + ((reg - 1) << 2), bit);
-		} else
+			CSR_WRITE_FLUSH(sc);
+		} else {
 			CSR_WRITE(sc, mta_reg + (reg << 2), hash);
+			CSR_WRITE_FLUSH(sc);
+		}
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
@@ -5524,9 +5530,6 @@ wm_init_locked(struct ifnet *ifp)
 		} else panic("wm_init: i82542 requires MCLBYTES = 2048");
 	}
 
-	/* Set the receive filter. */
-	wm_set_filter(sc);
-
 	/* Enable ECC */
 	switch (sc->sc_type) {
 	case WM_T_82571:
@@ -5560,6 +5563,9 @@ wm_init_locked(struct ifnet *ifp)
 			}
 		}
 	}
+
+	/* Set the receive filter. */
+	wm_set_filter(sc);
 
 	wm_turnon(sc);
 
@@ -9442,6 +9448,7 @@ wm_gmii_mediachange(struct ifnet *ifp)
 		}
 	}
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+	CSR_WRITE_FLUSH(sc);
 	if (sc->sc_type <= WM_T_82543)
 		wm_gmii_reset(sc);
 
