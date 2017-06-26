@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.56 2017/06/06 19:59:10 ryo Exp $ */
+/*	$NetBSD: arp.c,v 1.57 2017/06/26 03:13:40 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.56 2017/06/06 19:59:10 ryo Exp $");
+__RCSID("$NetBSD: arp.c,v 1.57 2017/06/26 03:13:40 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -660,7 +660,7 @@ rtmsg(const int s, const int cmd, const struct sockaddr_inarp *sin,
 		break;
 	case RTM_GET:
 		rtm->rtm_flags |= RTF_LLDATA;
-		rtm->rtm_addrs |= RTA_DST | RTA_IFP;
+		rtm->rtm_addrs |= RTA_DST | RTA_GATEWAY;
 	}
 
 #define NEXTADDR(w, s) \
