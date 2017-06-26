@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.31 2017/06/17 10:46:34 kre Exp $	*/
+/*	$NetBSD: var.h,v 1.32 2017/06/26 22:09:16 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,6 +34,7 @@
  *	@(#)var.h	8.2 (Berkeley) 5/4/95
  */
 
+#ifndef	VUNSET		/* double include protection */
 /*
  * Shell variables.
  */
@@ -137,3 +138,5 @@ int unsetvar(const char *, int);
 void choose_ps1(void);
 int setvarsafe(const char *, const char *, int);
 void print_quoted(const char *);
+
+#endif
