@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.28 2017/06/26 03:13:40 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.29 2017/06/26 03:16:28 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -632,9 +632,9 @@ arp_rtm_body()
 
 	str="RTM_ADD.+<UP,HOST,DONE,LLINFO,CLONED>"
 	atf_check -s exit:0 -o match:"$str" cat $file
-	str="<DST,GATEWAY,IFP,IFA>"
+	str="<DST,GATEWAY>"
 	atf_check -s exit:0 -o match:"$str" cat $file
-	str="$IP4DST link#2 $macaddr_src $IP4SRC"
+	str="$IP4DST link#2"
 	atf_check -s exit:0 -o match:"$str" cat $file
 
 	# Test arp -d and resulting routing messages (RTM_GET and RTM_DELETE)
