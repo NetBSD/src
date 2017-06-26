@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.23 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: N900,v 1.24 2017/06/26 03:15:16 sevan Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -312,6 +312,7 @@ prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
 #wskbd*		at ukbd?
 #wsmouse*	at ums?
 
+# USB Ethernet adapters
 #axe*		at uhub? port ? configuration ? interface ?
 
 # Hardware clocking and power management
