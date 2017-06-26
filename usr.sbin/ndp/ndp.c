@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.48 2016/09/19 19:13:14 christos Exp $	*/
+/*	$NetBSD: ndp.c,v 1.49 2017/06/26 03:13:40 ozaki-r Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -813,7 +813,7 @@ rtmsg(int cmd)
 		break;
 	case RTM_GET:
 		rtm->rtm_flags |= RTF_LLDATA;
-		rtm->rtm_addrs |= RTA_DST | RTA_IFP;
+		rtm->rtm_addrs |= RTA_DST | RTA_GATEWAY;
 	}
 #define NEXTADDR(w, s) \
 	if (rtm->rtm_addrs & (w)) { \
