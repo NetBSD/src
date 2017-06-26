@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.98 2017/02/28 09:55:47 knakahara Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.99 2017/06/26 04:09:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -636,8 +636,15 @@ struct livengood_tcpip_ctxdesc {
 #define FEXTNVM3_PHY_CFG_COUNTER_MASK	__BITS(27, 26)
 #define FEXTNVM3_PHY_CFG_COUNTER_50MS	__BIT(27)
 
-#define	WMREG_RAL_BASE	0x0040	/* Receive Address List */
-#define	WMREG_CORDOVA_RAL_BASE 0x5400
+#define	WMREG_RAL(x)		(0x0040	+ ((x) * 8)) /* Receive Address List */
+#define	WMREG_RAH(x)		(WMREG_RAL(x) + 4)
+#define	WMREG_CORDOVA_RAL(x)	(((x) <= 15) ? (0x5400 + ((x) * 8)) : \
+	    (0x54e0 + (((x) - 16) * 8)))
+#define	WMREG_CORDOVA_RAH(x)	(WMREG_CORDOVA_RAL(x) + 4)
+#define	WMREG_SHRAL(x)		(0x5438 + ((x) * 8))
+#define	WMREG_SHRAH(x)		(WMREG_PCH_LPT_SHRAL(x) + 4)
+#define	WMREG_PCH_LPT_SHRAL(x)	(0x5408 + ((x) * 8))
+#define	WMREG_PCH_LPT_SHRAH(x)	(WMREG_PCH_LPT_SHRAL(x) + 4)
 #define	WMREG_RAL_LO(b, x) ((b) + ((x) << 3))
 #define	WMREG_RAL_HI(b, x) (WMREG_RAL_LO(b, x) + 4)
 	/*
@@ -1276,7 +1283,7 @@ struct livengood_tcpip_ctxdesc {
 #define	MNG_ICH_IAMT_MODE	0x2	/* PT mode? */
 #define	MNG_IAMT_MODE		0x3
 #define FWSM_RSPCIPHY		__BIT(6)  /* Reset PHY on PCI reset */
-#define FWSM_WLOCK_MAC		__BITS(7, 9)  /* Reset PHY on PCI reset */
+#define FWSM_WLOCK_MAC		__BITS(7, 9)
 #define FWSM_ULP_CFG_DONE	__BIT(10)
 #define FWSM_FW_VALID		__BIT(15) /* FW established a valid mode */
 
