@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.99 2017/06/26 04:09:02 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.100 2017/06/26 04:22:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -728,6 +728,13 @@ struct livengood_tcpip_ctxdesc {
 #define IVAR_MISC_TCPTIMER __BITS(0, 7)
 #define IVAR_MISC_OTHER	__BITS(8, 15)
 
+#define	WMREG_SVCR	0x00f0
+#define	SVCR_OFF_EN		__BIT(0)
+#define	SVCR_OFF_MASKINT	__BIT(12)
+
+#define	WMREG_SVT	0x00f4
+#define	SVT_OFF_HWM		__BITS(4, 0)
+
 #define	WMREG_LTRV	0x00f8	/* Latency Tolerance Reporting */
 #define	LTRV_VALUE	__BITS(9, 0)
 #define	LTRV_SCALE	__BITS(12, 10)
@@ -1302,6 +1309,8 @@ struct livengood_tcpip_ctxdesc {
 
 #define WMREG_GCR2	0x5b64	/* 3GPIO Control Register 2 */
 #define WMREG_FEXTNVM9	0x5bb4	/* Future Extended NVM 9 */
+#define FEXTNVM9_IOSFSB_CLKGATE_DIS __BIT(11)
+#define FEXTNVM9_IOSFSB_CLKREQ_DIS __BIT(12)
 #define WMREG_FEXTNVM11	0x5bbc	/* Future Extended NVM 11 */
 #define FEXTNVM11_DIS_MULRFIX	__BIT(13)	/* Disable MULR fix */
 

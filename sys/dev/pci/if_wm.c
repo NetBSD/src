@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.516 2017/06/26 04:18:14 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.517 2017/06/26 04:22:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.516 2017/06/26 04:18:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.517 2017/06/26 04:22:46 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -679,6 +679,7 @@ static void	wm_set_pcie_completion_timeout(struct wm_softc *);
 static void	wm_get_auto_rd_done(struct wm_softc *);
 static void	wm_lan_init_done(struct wm_softc *);
 static void	wm_get_cfg_done(struct wm_softc *);
+static void	wm_phy_post_reset(struct wm_softc *);
 static void	wm_initialize_hardware_bits(struct wm_softc *);
 static uint32_t	wm_rxpbs_adjust_82580(uint32_t);
 static void	wm_reset_phy(struct wm_softc *);
@@ -930,6 +931,7 @@ static bool	wm_phy_is_accessible_pchlan(struct wm_softc *);
 static void	wm_toggle_lanphypc_pch_lpt(struct wm_softc *);
 static int	wm_platform_pm_pch_lpt(struct wm_softc *, bool);
 static void	wm_pll_workaround_i210(struct wm_softc *);
+static void	wm_legacy_irq_quirk_spt(struct wm_softc *);
 
 CFATTACH_DECL3_NEW(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, wm_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
@@ -3659,6 +3661,47 @@ wm_get_cfg_done(struct wm_softc *sc)
 	}
 }
 
+void
+wm_phy_post_reset(struct wm_softc *sc)
+{
+	uint32_t reg;
+
+	/* This function is only for ICH8 and newer. */
+	if (sc->sc_type < WM_T_ICH8)
+		return;
+
+	if (wm_phy_resetisblocked(sc)) {
+		/* XXX */
+		device_printf(sc->sc_dev, " PHY is blocked\n");
+		return;
+	}
+
+	/* Allow time for h/w to get to quiescent state after reset */
+	delay(10*1000);
+
+	/* Perform any necessary post-reset workarounds */
+	if (sc->sc_type == WM_T_PCH)
+		wm_hv_phy_workaround_ich8lan(sc);
+	if (sc->sc_type == WM_T_PCH2)
+		wm_lv_phy_workaround_ich8lan(sc);
+
+	/* Clear the host wakeup bit after lcd reset */
+	if (sc->sc_type >= WM_T_PCH) {
+		reg = wm_gmii_hv_readreg(sc->sc_dev, 2,
+		    BM_PORT_GEN_CFG);
+		reg &= ~BM_WUC_HOST_WU_BIT;
+		wm_gmii_hv_writereg(sc->sc_dev, 2,
+		    BM_PORT_GEN_CFG, reg);
+	}
+
+	/*
+	 * XXX Configure the LCD with th extended configuration region
+	 * in NVM
+	 */
+
+	/* Configure the LCD with the OEM bits in NVM */
+}
+
 /* Init hardware bits */
 void
 wm_initialize_hardware_bits(struct wm_softc *sc)
@@ -3938,6 +3981,7 @@ wm_reset_phy(struct wm_softc *sc)
 	sc->phy.release(sc);
 
 	wm_get_cfg_done(sc);
+	wm_phy_post_reset(sc);
 }
 
 static void
@@ -4371,6 +4415,9 @@ wm_reset(struct wm_softc *sc)
 		break;
 	}
 
+	if (phy_reset != 0)
+		wm_phy_post_reset(sc);
+
 	if ((sc->sc_type == WM_T_82580)
 	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)) {
 		/* clear global device reset status bit */
@@ -4402,15 +4449,6 @@ wm_reset(struct wm_softc *sc)
 
 	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type <= WM_T_I211))
 		wm_set_eee_i350(sc);
-
-	/* Clear the host wakeup bit after lcd reset */
-	if (sc->sc_type >= WM_T_PCH) {
-		reg = wm_gmii_hv_readreg(sc->sc_dev, 2,
-		    BM_PORT_GEN_CFG);
-		reg &= ~BM_WUC_HOST_WU_BIT;
-		wm_gmii_hv_writereg(sc->sc_dev, 2,
-		    BM_PORT_GEN_CFG, reg);
-	}
 
 	/*
 	 * For PCH, this write will make sure that any noise will be detected
@@ -5091,6 +5129,10 @@ wm_init_locked(struct ifnet *ifp)
 	ifp->if_collisions += CSR_READ(sc, WMREG_COLC);
 	ifp->if_ierrors += CSR_READ(sc, WMREG_RXERRC);
 
+	/* AMT based hardware can now take control from firmware */
+	if ((sc->sc_flags & WM_F_HAS_AMT) != 0)
+		wm_get_hw_control(sc);
+
 	/* PCH_SPT hardware workaround */
 	if (sc->sc_type == WM_T_PCH_SPT)
 		wm_flush_desc_rings(sc);
@@ -5098,9 +5140,9 @@ wm_init_locked(struct ifnet *ifp)
 	/* Reset the chip to a known state. */
 	wm_reset(sc);
 
-	/* AMT based hardware can now take control from firmware */
-	if ((sc->sc_flags & WM_F_HAS_AMT) != 0)
-		wm_get_hw_control(sc);
+	if ((sc->sc_type == WM_T_PCH_SPT) &&
+	    pci_intr_type(sc->sc_pc, sc->sc_intrs[0]) == PCI_INTR_TYPE_INTX)
+		wm_legacy_irq_quirk_spt(sc);
 
 	/* Init hardware bits */
 	wm_initialize_hardware_bits(sc);
@@ -8528,7 +8570,7 @@ wm_intr_legacy(void *arg)
 			break;
 		if (handled == 0) {
 			DPRINTF(WM_DEBUG_TX,
-			    ("%s: INTx: got intr\n", device_xname(sc->sc_dev)));
+			    ("%s: INTx: got intr\n",device_xname(sc->sc_dev)));
 		}
 		if (rndval == 0)
 			rndval = icr;
@@ -8934,34 +8976,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_PCH2:
 	case WM_T_PCH_LPT:
 	case WM_T_PCH_SPT:
-		/* Allow time for h/w to get to a quiescent state afer reset */
-		delay(10*1000);
-
-		if (sc->sc_type == WM_T_PCH)
-			wm_hv_phy_workaround_ich8lan(sc);
-
-		if (sc->sc_type == WM_T_PCH2)
-			wm_lv_phy_workaround_ich8lan(sc);
-
-		/* Clear the host wakeup bit after lcd reset */
-		if (sc->sc_type >= WM_T_PCH) {
-			reg = wm_gmii_hv_readreg(sc->sc_dev, 2,
-			    BM_PORT_GEN_CFG);
-			reg &= ~BM_WUC_HOST_WU_BIT;
-			wm_gmii_hv_writereg(sc->sc_dev, 2,
-			    BM_PORT_GEN_CFG, reg);
-		}
-
-		/*
-		 * XXX Configure the LCD with th extended configuration region
-		 * in NVM
-		 */
-
-		/* Disable D0 LPLU. */
-		if (sc->sc_type >= WM_T_PCH)	/* PCH* */
-			wm_lplu_d0_disable_pch(sc);
-		else
-			wm_lplu_d0_disable(sc);	/* ICH* */
+		wm_phy_post_reset(sc);
 		break;
 	default:
 		panic("%s: unknown type\n", __func__);
@@ -9421,6 +9436,12 @@ wm_gmii_mediachange(struct ifnet *ifp)
 		device_xname(sc->sc_dev), __func__));
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return 0;
+
+	/* Disable D0 LPLU. */
+	if (sc->sc_type >= WM_T_PCH)	/* PCH* */
+		wm_lplu_d0_disable_pch(sc);
+	else
+		wm_lplu_d0_disable(sc);	/* ICH* */
 
 	sc->sc_ctrl &= ~(CTRL_SPEED_MASK | CTRL_FD);
 	sc->sc_ctrl |= CTRL_SLU;
@@ -13764,15 +13785,36 @@ wm_platform_pm_pch_lpt(struct wm_softc *sc, bool link)
 	    | __SHIFTIN(link, LTRV_SNOOP_REQ) | LTRV_SEND;
 	uint32_t rxa;
 	uint16_t scale = 0, lat_enc = 0;
+	int32_t obff_hwm = 0;
 	int64_t lat_ns, value;
 	
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
 	if (link) {
-		pcireg_t preg;
 		uint16_t max_snoop, max_nosnoop, max_ltr_enc;
+		uint32_t status;
+		uint16_t speed;
+		pcireg_t preg;
 
+		status = CSR_READ(sc, WMREG_STATUS);
+		switch (__SHIFTOUT(status, STATUS_SPEED)) {
+		case STATUS_SPEED_10:
+			speed = 10;
+			break;
+		case STATUS_SPEED_100:
+			speed = 100;
+			break;
+		case STATUS_SPEED_1000:
+			speed = 1000;
+			break;
+		default:
+			device_printf(sc->sc_dev, "Unknown speed "
+			    "(status = %08x)\n", status);
+			return -1;
+		}
+
+		/* Rx Packet Buffer Allocation size (KB) */
 		rxa = CSR_READ(sc, WMREG_PBA) & PBA_RXA_MASK;
 
 		/*
@@ -13785,31 +13827,12 @@ wm_platform_pm_pch_lpt(struct wm_softc *sc, bool link)
 		 * 1=2^5ns, 2=2^10ns,...5=2^25ns.
 		 */
 		lat_ns = ((int64_t)rxa * 1024 -
-		    (2 * (int64_t)sc->sc_ethercom.ec_if.if_mtu)) * 8 * 1000;
+		    (2 * ((int64_t)sc->sc_ethercom.ec_if.if_mtu
+			+ ETHER_HDR_LEN))) * 8 * 1000;
 		if (lat_ns < 0)
 			lat_ns = 0;
-		else {
-			uint32_t status;
-			uint16_t speed;
-
-			status = CSR_READ(sc, WMREG_STATUS);
-			switch (__SHIFTOUT(status, STATUS_SPEED)) {
-			case STATUS_SPEED_10:
-				speed = 10;
-				break;
-			case STATUS_SPEED_100:
-				speed = 100;
-				break;
-			case STATUS_SPEED_1000:
-				speed = 1000;
-				break;
-			default:
-				printf("%s: Unknown speed (status = %08x)\n",
-				    device_xname(sc->sc_dev), status);
-				return -1;
-			}
+		else
 			lat_ns /= speed;
-		}
 		value = lat_ns;
 
 		while (value > LTRV_VALUE) {
@@ -13833,12 +13856,39 @@ wm_platform_pm_pch_lpt(struct wm_softc *sc, bool link)
 
 		if (lat_enc > max_ltr_enc) {
 			lat_enc = max_ltr_enc;
+			lat_ns = __SHIFTOUT(lat_enc, PCI_LTR_MAXSNOOPLAT_VAL)
+			    * PCI_LTR_SCALETONS(
+				    __SHIFTOUT(lat_enc,
+					PCI_LTR_MAXSNOOPLAT_SCALE));
+		}
+
+		if (lat_ns) {
+			lat_ns *= speed * 1000;
+			lat_ns /= 8;
+			lat_ns /= 1000000000;
+			obff_hwm = (int32_t)(rxa - lat_ns);
+		}
+		if ((obff_hwm < 0) || (obff_hwm > SVT_OFF_HWM)) {
+			device_printf(sc->sc_dev, "Invalid high water mark %d"
+			    "(rxa = %d, lat_ns = %d)\n",
+			    obff_hwm, (int32_t)rxa, (int32_t)lat_ns);
+			return -1;
 		}
 	}
 	/* Snoop and No-Snoop latencies the same */
 	reg |= lat_enc | __SHIFTIN(lat_enc, LTRV_NONSNOOP);
 	CSR_WRITE(sc, WMREG_LTRV, reg);
 
+	/* Set OBFF high water mark */
+	reg = CSR_READ(sc, WMREG_SVT) & ~SVT_OFF_HWM;
+	reg |= obff_hwm;
+	CSR_WRITE(sc, WMREG_SVT, reg);
+
+	/* Enable OBFF */
+	reg = CSR_READ(sc, WMREG_SVCR);
+	reg |= SVCR_OFF_EN | SVCR_OFF_MASKINT;
+	CSR_WRITE(sc, WMREG_SVCR, reg);
+	
 	return 0;
 }
 
@@ -13915,4 +13965,22 @@ wm_pll_workaround_i210(struct wm_softc *sc)
 	CSR_WRITE(sc, WMREG_MDICNFG, mdicnfg);
 	if (wa_done)
 		aprint_verbose_dev(sc->sc_dev, "I210 workaround done\n");
+}
+
+static void
+wm_legacy_irq_quirk_spt(struct wm_softc *sc)
+{
+	uint32_t reg;
+
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+	KASSERT(sc->sc_type == WM_T_PCH_SPT);
+
+	reg = CSR_READ(sc, WMREG_FEXTNVM7);
+	reg |= FEXTNVM7_SIDE_CLK_UNGATE;
+	CSR_WRITE(sc, WMREG_FEXTNVM7, reg);
+
+	reg = CSR_READ(sc, WMREG_FEXTNVM9);
+	reg |= FEXTNVM9_IOSFSB_CLKGATE_DIS | FEXTNVM9_IOSFSB_CLKREQ_DIS;
+	CSR_WRITE(sc, WMREG_FEXTNVM9, reg);
 }
