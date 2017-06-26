@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.515 2017/06/26 04:15:06 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.516 2017/06/26 04:18:14 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.515 2017/06/26 04:15:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.516 2017/06/26 04:18:14 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -12079,7 +12079,7 @@ wm_nvm_release(struct wm_softc *sc)
 		wm_put_nvm_ich8lan(sc);
 	} else if (sc->sc_flags & WM_F_LOCK_EXTCNF)
 		wm_put_swfwhw_semaphore(sc);
-	if (sc->sc_flags & WM_F_LOCK_SWFW)
+	else if (sc->sc_flags & WM_F_LOCK_SWFW)
 		wm_put_swfw_semaphore(sc, SWFW_EEP_SM);
 	else if (sc->sc_flags & WM_F_LOCK_SWSM)
 		wm_put_swsm_semaphore(sc);
