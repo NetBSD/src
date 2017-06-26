@@ -1,4 +1,4 @@
-/*	$NetBSD: bltin.h,v 1.14 2016/03/16 22:36:21 christos Exp $	*/
+/*	$NetBSD: bltin.h,v 1.15 2017/06/26 22:09:16 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,6 +51,7 @@
 #ifdef SHELL
 #include "../output.h"
 #include "../error.h"
+#include "../var.h"
 #undef stdout
 #undef stderr
 #undef putc
