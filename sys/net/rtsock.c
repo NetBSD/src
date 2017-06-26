@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.221 2017/06/26 03:16:28 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.222 2017/06/26 06:58:42 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.221 2017/06/26 03:16:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.222 2017/06/26 06:58:42 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -474,7 +474,7 @@ COMPATNAME(route_purgeif)(struct socket *so, struct ifnet *ifp)
 	return EOPNOTSUPP;
 }
 
-#ifdef INET
+#if defined(INET) || defined(INET6)
 static int
 route_get_sdl_index(struct rt_addrinfo *info, int *sdl_index)
 {
@@ -493,7 +493,7 @@ route_get_sdl_index(struct rt_addrinfo *info, int *sdl_index)
 
 	return 0;
 }
-#endif /* INET */
+#endif
 
 static void
 route_get_sdl(const struct ifnet *ifp, const struct sockaddr *dst,
@@ -799,8 +799,8 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 		if (info.rti_info[RTAX_GATEWAY] == NULL) {
 			senderr(EINVAL);
 		}
-#ifdef INET
-		/* support for new ARP code with keeping backcompat */
+#if defined(INET) || defined(INET6)
+		/* support for new ARP/NDP code with keeping backcompat */
 		if (info.rti_info[RTAX_GATEWAY]->sa_family == AF_LINK) {
 			const struct sockaddr_dl *sdlp =
 			    satocsdl(info.rti_info[RTAX_GATEWAY]);
@@ -842,7 +842,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 			break;
 		}
 	fallback:
-#endif /* INET */
+#endif /* defined(INET) || defined(INET6) */
 		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
 		if (error == 0) {
 			rt_setmetrics(rtm->rtm_inits, rtm, saved_nrt);
@@ -851,8 +851,8 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 		break;
 
 	case RTM_DELETE:
-#ifdef INET
-		/* support for new ARP code */
+#if defined(INET) || defined(INET6)
+		/* support for new ARP/NDP code */
 		if (info.rti_info[RTAX_GATEWAY] &&
 		    (info.rti_info[RTAX_GATEWAY]->sa_family == AF_LINK) &&
 		    (rtm->rtm_flags & RTF_LLDATA) != 0) {
@@ -862,7 +862,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 			    rtm->rtm_rmx.rmx_expire, &info, sdlp->sdl_index);
 			break;
 		}
-#endif /* INET */
+#endif
 		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
 		if (error != 0)
 			break;
