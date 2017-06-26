@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.25 2017/06/26 03:13:40 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.26 2017/06/26 03:16:28 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -431,9 +431,9 @@ ndp_rtm_body()
 
 	str="RTM_ADD.+<UP,HOST,DONE,LLINFO,CLONED>"
 	atf_check -s exit:0 -o match:"$str" cat $file
-	str="<DST,GATEWAY,IFP,IFA>"
+	str="<DST,GATEWAY>"
 	atf_check -s exit:0 -o match:"$str" cat $file
-	str="$IP6DST link#2 $macaddr_src $IP6SRC"
+	str="$IP6DST link#2"
 	atf_check -s exit:0 -o match:"$str" cat $file
 
 	# Test ndp -d and resulting routing messages (RTM_GET and RTM_DELETE)
