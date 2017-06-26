@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.33 2017/02/01 08:56:41 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.34 2017/06/26 04:03:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -99,6 +99,15 @@
 #define	WM_F_EEPROM_INVM	0x01000000 /* NVM is iNVM */
 #define	WM_F_PCS_DIS_AUTONEGO	0x02000000 /* PCS Disable Autonego */
 #define	WM_F_PLL_WA_I210	0x04000000 /* I21[01] PLL workaround */
+
+#define WM_FLAGS "\20" \
+	"\1" "HAS_MII"	"\2" "EECD"	"\3" "SWSM"	"\4" "SWFW"	\
+	"\5" "EXTCNF"	"\6" "EERDEEWR"	"\7" "SPI"	"\10" "FLASH"	\
+	"\11" "FLASH_HW" "\12" "INVALID" "\13" "IOH_VALID" "\14" "BUS64" \
+	"\15" "PCIX"	"\16" "CSA"	"\17" "PCIE"	"\20" "SGMII"	\
+	"\21" "NEWQUEUE" "\22" "ASF_FIRM" "\23" "ARC_SUBSYS" "\24" "AMT" \
+	"\25" "MANAGE"	"\26" "WOL"	"\27" "EEE"	"\30" "ATTACHED" \
+	"\31" "INVM"	"\32" "PCS_DIS_AUTONEGO" "\33" "PLLWA"
 
 /*
  * Variations of Intel gigabit Ethernet controller:

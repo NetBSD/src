@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.512 2017/06/23 06:10:31 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.513 2017/06/26 04:03:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.512 2017/06/23 06:10:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.513 2017/06/26 04:03:34 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1674,6 +1674,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	prop_data_t ea;
 	prop_number_t pn;
 	uint8_t enaddr[ETHER_ADDR_LEN];
+	char buf[256];
 	uint16_t cfg1, cfg2, swdpin, nvmword;
 	pcireg_t preg, memtype;
 	uint16_t eeprom_data, apme_mask;
@@ -2377,10 +2378,6 @@ alloc_retry:
 	/* Check for WM_F_WOL flag after the setting of the EEPROM stuff */
 	if ((eeprom_data & apme_mask) != 0)
 		sc->sc_flags |= WM_F_WOL;
-#ifdef WM_DEBUG
-	if ((sc->sc_flags & WM_F_WOL) != 0)
-		printf("WOL\n");
-#endif
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)) {
 		/* Check NVM for autonegotiation */
@@ -2574,6 +2571,8 @@ alloc_retry:
 		}
 		wm_gmii_mediainit(sc, wmp->wmp_product);
 	}
+	snprintb(buf, sizeof(buf), WM_FLAGS, sc->sc_flags);
+	aprint_verbose_dev(sc->sc_dev, "%s\n", buf);
 
 	ifp = &sc->sc_ethercom.ec_if;
 	xname = device_xname(sc->sc_dev);
@@ -13054,18 +13053,6 @@ wm_get_wakeup(struct wm_softc *sc)
 	if (wm_enable_mng_pass_thru(sc) != 0)
 		sc->sc_flags |= WM_F_HAS_MANAGE;
 
-#ifdef WM_DEBUG
-	printf("\n");
-	if ((sc->sc_flags & WM_F_HAS_AMT) != 0)
-		printf("HAS_AMT,");
-	if ((sc->sc_flags & WM_F_ARC_SUBSYS_VALID) != 0)
-		printf("ARC_SUBSYS_VALID,");
-	if ((sc->sc_flags & WM_F_ASF_FIRMWARE_PRES) != 0)
-		printf("ASF_FIRMWARE_PRES,");
-	if ((sc->sc_flags & WM_F_HAS_MANAGE) != 0)
-		printf("HAS_MANAGE,");
-	printf("\n");
-#endif
 	/*
 	 * Note that the WOL flags is set after the resetting of the eeprom
 	 * stuff
