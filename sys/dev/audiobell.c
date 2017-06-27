@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.22 2017/06/11 13:05:43 nat Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.23 2017/06/27 09:35:05 nat Exp $	*/
 
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.22 2017/06/11 13:05:43 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.23 2017/06/27 09:35:05 nat Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -80,7 +80,8 @@ audiobell_synthesize(int16_t *buf, u_int pitch, u_int period, u_int volume,
 	int16_t *wave;
 
 	wave = malloc(sizeof(sinewave) * 4, M_TEMP, M_WAITOK);
-	if (wave == NULL) return -1;
+	if (wave == NULL)
+		return -1;
 	audiobell_expandwave(wave);
 	pitch = pitch * ((sizeof(sinewave) * 4) << BELL_SHIFT) /
 	    BELL_SAMPLE_RATE / 2;
@@ -98,6 +99,7 @@ audiobell_synthesize(int16_t *buf, u_int pitch, u_int period, u_int volume,
 void
 audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 {
+	dev_t audio;
 	int16_t *buf;
 	uint16_t phase;
 	struct audio_info ai;
@@ -109,19 +111,19 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 	KASSERT(volume <= 100);
 
 	fp = NULL;
-	dev_t audio = AUDIO_DEVICE | device_unit((device_t)v);
+	buf = NULL;
+	audio = AUDIO_DEVICE | device_unit((device_t)v);
 
 	/* The audio system isn't built for polling. */
-	if (poll) return;
+	if (poll)
+		return;
 
 	/* If not configured, we can't beep. */
 	if (audiobellopen(audio, FWRITE, 0, NULL, &fp) != EMOVEFD || fp == NULL)
 		return;
 
-	if (audiobellioctl(fp, AUDIO_GETINFO, &ai) != 0) {
-		audiobellclose(fp);
-		return;
-	}
+	if (audiobellioctl(fp, AUDIO_GETINFO, &ai) != 0)
+		goto out;
 
 	AUDIO_INITINFO(&ai);
 	ai.mode = AUMODE_PLAY;
@@ -136,21 +138,20 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 	ai.play.encoding = AUDIO_ENCODING_SLINEAR_BE;
 #endif
 
-	if (audiobellioctl(fp, AUDIO_SETINFO, &ai) != 0) {
-		audiobellclose(fp);
-		return;
-	}
-	buf = NULL;
+	if (audiobellioctl(fp, AUDIO_SETINFO, &ai) != 0)
+		goto out;
 
 	if (ai.blocksize < BELL_SAMPLE_RATE)
 		ai.blocksize = BELL_SAMPLE_RATE;
 
 	len = period * BELL_SAMPLE_RATE / 1000 * 2;
 	size = min(len, ai.blocksize);
-	if (size == 0) goto out;
+	if (size == 0)
+		goto out;
 
 	buf = malloc(size, M_TEMP, M_WAITOK);
-	if (buf == NULL) goto out;
+	if (buf == NULL)
+		goto out;
  
 	phase = 0;
 	while (len > 0) {
@@ -171,6 +172,7 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 		len -= size;
 	}
 out:
-	if (buf != NULL) free(buf, M_TEMP);
+	if (buf != NULL)
+		free(buf, M_TEMP);
 	audiobellclose(fp);
 }
