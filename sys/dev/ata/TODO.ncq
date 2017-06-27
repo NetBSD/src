@@ -3,6 +3,8 @@ Bugs
 
 siisata - fix all new XXX and unmergable bits
 
+test ATAPI on siisata, ahcisata
+
 test wd* at umass?, confirm the ata_channel kludge works
 
 test device error handling (currently appears to not work well, at least in NCQ case)
