@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.92 2017/06/27 05:01:51 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.93 2017/06/27 05:17:54 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4690,7 +4690,7 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
 	    CTLFLAG_READWRITE, CTLTYPE_INT,
-	    "ts", SYSCTL_DESCR("Thermal Test"),
+	    "thermal_test", SYSCTL_DESCR("Thermal Test"),
 	    ixgbe_sysctl_thermal_test, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
