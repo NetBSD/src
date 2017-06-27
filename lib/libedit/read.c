@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.102 2016/12/11 15:47:06 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.103 2017/06/27 23:24:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.102 2016/12/11 15:47:06 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.103 2017/06/27 23:24:19 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -229,10 +229,9 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, wchar_t *ch)
 {
 	static const wchar_t meta = (wchar_t)0x80;
 	el_action_t cmd;
-	int num;
 
 	do {
-		if ((num = el_wgetc(el, ch)) != 1)
+		if (el_wgetc(el, ch) != 1)
 			return -1;
 
 #ifdef	KANJI
