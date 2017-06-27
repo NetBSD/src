@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.16 2017/06/27 04:52:45 ozaki-r Exp $
+#	$NetBSD: t_flags.sh,v 1.17 2017/06/27 04:56:13 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -100,7 +100,7 @@ test_connected()
 
 	export RUMP_SERVER=$SOCK_LOCAL
 
-	# Up, Host, LLINFO, local
+	# Up, Host, local
 	check_route_flags 10.0.0.2 UHl
 
 	# Up, Cloning
