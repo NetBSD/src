@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_type.h 299200 2016-05-06 22:54:56Z pfg $*/
-/*$NetBSD: ixgbe_type.h,v 1.23 2017/06/23 09:02:48 msaitoh Exp $*/
+/*$NetBSD: ixgbe_type.h,v 1.24 2017/06/27 08:03:55 msaitoh Exp $*/
 
 #ifndef _IXGBE_TYPE_H_
 #define _IXGBE_TYPE_H_
@@ -1052,6 +1052,24 @@ struct ixgbe_dmac_config {
 #define IXGBE_GSCN_2		0x11028
 #define IXGBE_GSCN_3		0x1102C
 #define IXGBE_FACTPS		0x10150
+
+/* X550 */
+#define IXGBE_PCI_ICAUSE	0x11520
+#define IXGBE_PCI_IENA		0x11528
+#define IXGBE_PCI_VMINDEX	0x11530
+#define IXGBE_PCI_VMPEND	0x11538
+#define IXGBE_PCI_DREVID	0x11540
+#define IXGBE_PCI_BYTCTH	0x11544
+#define IXGBE_PCI_BYTCTL	0x11548
+#define IXGBE_PCI_LATCT		0x11720 /* Denverton */
+#define IXGBE_PCI_LCBDATA	0x11734
+#define IXGBE_PCI_PKTCT		0x11740 /* Denverton */
+#define IXGBE_PCI_LCBADD	0x11788
+#define IXGBE_GSCL_1_X550	0x11800
+#define IXGBE_GSCL_2_X550	0x11804
+#define IXGBE_PCI_GSCL(_i)	(0x011810 + ((_i) * 4))
+#define IXGBE_PCI_GSCN(_i)	(0x011820 + ((_i) * 4))
+
 #define IXGBE_FACTPS_X540	IXGBE_FACTPS
 #define IXGBE_FACTPS_X550	IXGBE_FACTPS
 #define IXGBE_FACTPS_X550EM_x	IXGBE_FACTPS
