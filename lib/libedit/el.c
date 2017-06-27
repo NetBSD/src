@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.92 2016/05/22 19:44:26 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.93 2017/06/27 00:47:37 kre Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.92 2016/05/22 19:44:26 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.93 2017/06/27 00:47:37 kre Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -524,18 +524,22 @@ el_source(EditLine *el, const char *fname)
 	fp = NULL;
 	if (fname == NULL) {
 #ifdef HAVE_ISSETUGID
-		static const char elpath[] = "/.editrc";
-		size_t plen = sizeof(elpath);
-
 		if (issetugid())
 			return -1;
-		if ((ptr = getenv("HOME")) == NULL)
-			return -1;
-		plen += strlen(ptr);
-		if ((path = el_malloc(plen * sizeof(*path))) == NULL)
-			return -1;
-		(void)snprintf(path, plen, "%s%s", ptr, elpath);
-		fname = path;
+
+		if ((fname = getenv("EDITRC")) == NULL) {
+			static const char elpath[] = "/.editrc";
+			size_t plen = sizeof(elpath);
+
+			if ((ptr = getenv("HOME")) == NULL)
+				return -1;
+			plen += strlen(ptr);
+			if ((path = el_malloc(plen * sizeof(*path))) == NULL)
+				return -1;
+			(void)snprintf(path, plen, "%s%s", ptr,
+				elpath + (*ptr == '\0'));
+			fname = path;
+		}
 #else
 		/*
 		 * If issetugid() is missing, always return an error, in order
@@ -545,6 +549,9 @@ el_source(EditLine *el, const char *fname)
 		return -1;
 #endif
 	}
+	if (fname[0] == '\0')
+		return -1;
+
 	if (fp == NULL)
 		fp = fopen(fname, "r");
 	if (fp == NULL) {
