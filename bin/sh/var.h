@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.32 2017/06/26 22:09:16 kre Exp $	*/
+/*	$NetBSD: var.h,v 1.33 2017/06/27 02:22:08 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -89,6 +89,7 @@ extern struct var vps1;
 extern struct var vps2;
 extern struct var vps4;
 extern struct var line_num;
+extern struct var editrc;
 #ifndef SMALL
 extern struct var vterm;
 extern struct var vtermcap;

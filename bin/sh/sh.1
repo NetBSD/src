@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.152 2017/06/17 07:50:35 kre Exp $
+.\"	$NetBSD: sh.1,v 1.153 2017/06/27 02:22:08 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -2750,12 +2750,46 @@ and the default settings in
 and
 .Ar vi
 modes.
+Also see
+.Xr editrc 5
+for the commands that can be given to configure
+.Xr editline 7
+in the file named by the
+.Ev EDITRC
+parameter, or using
+.Xr editline 7 Ns \&'s
+configuration command line.
 .Sh ENVIRONMENT
 .Bl -tag -width MAILCHECK
 .It Ev CDPATH
 The search path used with the
 .Ic cd
 built-in.
+.It Ev EDITRC
+Gives the name of the file containing commands for
+.Xr editline 7 .
+See
+.Xr editrc 5
+for possible content and format.
+The file is processed, when in interactive mode with
+command line editing enabled, whenever
+.Ev EDITRC
+is set (even with no actual value change,)
+and if command line editing changes from disabled to enabled,
+or the editor style used is changed.
+(See the
+.Fl E
+and
+.Fl V
+options of the
+.Ic set
+builtin command, described in
+.Sx Built-ins
+above, which are documented further above in
+.Sx Argument List Processing . )
+If unset
+.Dq $HOME/.editrc
+is used.
 .It Ev HISTSIZE
 The number of lines in the history buffer for the shell.
 .It Ev HOME

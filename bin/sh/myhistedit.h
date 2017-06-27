@@ -1,4 +1,4 @@
-/*	$NetBSD: myhistedit.h,v 1.11 2011/06/18 21:18:46 christos Exp $	*/
+/*	$NetBSD: myhistedit.h,v 1.12 2017/06/27 02:22:08 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,6 +41,7 @@ void histedit(void);
 void sethistsize(const char *);
 void setterm(const char *);
 int inputrc(int, char **);
+void set_editrc(const char *);
 int not_fcnumber(char *);
 int str_to_event(const char *, int);
 

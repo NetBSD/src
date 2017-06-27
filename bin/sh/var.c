@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.60 2017/06/17 10:46:34 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.61 2017/06/27 02:22:08 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.60 2017/06/17 10:46:34 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.61 2017/06/27 02:22:08 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,6 +95,7 @@ struct localvar *localvars;
 #ifndef SMALL
 struct var vhistsize;
 struct var vterm;
+struct var editrc;
 #endif
 struct var vifs;
 struct var vmail;
@@ -139,6 +140,8 @@ const struct varinit varinit[] = {
 #ifndef SMALL
 	{ &vterm,	VSTRFIXED|VTEXTFIXED|VUNSET,	"TERM=",
 	   { .set_func= setterm } },
+	{ &editrc, 	VSTRFIXED|VTEXTFIXED|VUNSET,	"EDITRC=",
+	   { .set_func= set_editrc } },
 #endif
 	{ &voptind,	VSTRFIXED|VTEXTFIXED|VNOFUNC,	"OPTIND=1",
 	   { .set_func= getoptsreset } },
