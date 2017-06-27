@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.32 2016/05/09 21:46:56 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.33 2017/06/27 23:23:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.32 2016/05/09 21:46:56 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.33 2017/06/27 23:23:09 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -419,6 +419,45 @@ terminal_rebuffer_display(EditLine *el)
 	return 0;
 }
 
+static wchar_t **
+terminal_alloc_buffer(EditLine *el)
+{
+	wint_t **b;
+	coord_t *c = &el->el_terminal.t_size;
+	int i;
+
+	b =  el_malloc(sizeof(*b) * (size_t)(c->v + 1));
+	if (b == NULL)
+		return NULL;
+	for (i = 0; i < c->v; i++) {
+		b[i] = el_malloc(sizeof(**b) * (size_t)(c->h + 1));
+		if (b[i] == NULL) {
+			while (--i >= 0)
+				el_free(b[i]);
+			el_free(b);
+			return NULL;
+		}
+	}
+	b[c->v] = NULL;
+	return b;
+}
+
+static void
+terminal_free_buffer(wint_t ***bp)
+{
+	wint_t **b;
+	wint_t **bufp;
+
+	if (*bp == NULL)
+		return;
+
+	b = *bp;
+	*bp = NULL;
+
+	for (bufp = b; *bufp != NULL; bufp++)
+		el_free(*bufp);
+	el_free(b);
+}
 
 /* terminal_alloc_display():
  *	Allocate a new display.
@@ -426,39 +465,12 @@ terminal_rebuffer_display(EditLine *el)
 static int
 terminal_alloc_display(EditLine *el)
 {
-	int i;
-	wchar_t **b;
-	coord_t *c = &el->el_terminal.t_size;
-
-	b =  el_malloc(sizeof(*b) * (size_t)(c->v + 1));
-	if (b == NULL)
+	el->el_display = terminal_alloc_buffer(el);
+	if (el->el_display == NULL)
 		goto done;
-	for (i = 0; i < c->v; i++) {
-		b[i] = el_malloc(sizeof(**b) * (size_t)(c->h + 1));
-		if (b[i] == NULL) {
-			while (--i >= 0)
-				el_free(b[i]);
-			el_free(b);
-			goto done;
-		}
-	}
-	b[c->v] = NULL;
-	el->el_display = b;
-
-	b = el_malloc(sizeof(*b) * (size_t)(c->v + 1));
-	if (b == NULL)
+	el->el_vdisplay = terminal_alloc_buffer(el);
+	if (el->el_vdisplay == NULL)
 		goto done;
-	for (i = 0; i < c->v; i++) {
-		b[i] = el_malloc(sizeof(**b) * (size_t)(c->h + 1));
-		if (b[i] == NULL) {
-			while (--i >= 0)
-				el_free(b[i]);
-			el_free(b);
-			goto done;
-		}
-	}
-	b[c->v] = NULL;
-	el->el_vdisplay = b;
 	return 0;
 done:
 	terminal_free_display(el);
@@ -472,23 +484,8 @@ done:
 static void
 terminal_free_display(EditLine *el)
 {
-	wchar_t **b;
-	wchar_t **bufp;
-
-	b = el->el_display;
-	el->el_display = NULL;
-	if (b != NULL) {
-		for (bufp = b; *bufp != NULL; bufp++)
-			el_free(*bufp);
-		el_free(b);
-	}
-	b = el->el_vdisplay;
-	el->el_vdisplay = NULL;
-	if (b != NULL) {
-		for (bufp = b; *bufp != NULL; bufp++)
-			el_free(*bufp);
-		el_free(b);
-	}
+	terminal_free_buffer(&el->el_display);
+	terminal_free_buffer(&el->el_vdisplay);
 }
 
 
@@ -1254,6 +1251,8 @@ terminal__putc(EditLine *el, wint_t c)
 	ssize_t i;
 	if (c == (wint_t)MB_FILL_CHAR)
 		return 0;
+	if (c & EL_LITERAL)
+		return fputs(literal_get(el, c), el->el_outfile);
 	i = ct_encode_char(buf, (size_t)MB_LEN_MAX, c);
 	if (i <= 0)
 		return (int)i;
