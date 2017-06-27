@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.49 2017/06/26 20:28:01 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.50 2017/06/27 02:22:08 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.49 2017/06/26 20:28:01 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.50 2017/06/27 02:22:08 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,7 @@ bad:
 				el_set(el, EL_EDITOR, "emacs");
 			el_set(el, EL_BIND, "^I", 
 			    tabcomplete ? "rl-complete" : "ed-insert", NULL);
-			el_source(el, NULL);
+			el_source(el, lookupvar("EDITRC"));
 		}
 	} else {
 		INTOFF;
@@ -174,6 +174,12 @@ bad:
 	}
 }
 
+void
+set_editrc(const char *fname)
+{
+	if (iflag && editing && el)
+		el_source(el, fname);
+}
 
 void
 sethistsize(const char *hs)
