@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.94 2017/06/27 01:22:58 kre Exp $
+.\"	$NetBSD: editline.3,v 1.95 2017/06/27 23:22:20 christos Exp $
 .\"
 .\" Copyright (c) 1997-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 22, 2016
+.Dd June 27, 2017
 .Dt EDITLINE 3
 .Os
 .Sh NAME
@@ -358,6 +358,8 @@ terminal without affecting the state of the current line.
 A subsequent second start/stop literal character ends this behavior.
 This is typically used to embed literal escape sequences that change the
 color/style of the terminal in the prompt.
+Note that the literal escape character cannot be the last character in the
+prompt, as the escape sequence is attached to the next character in the prompt.
 .Dv 0
 unsets it.
 .It Dv EL_REFRESH
