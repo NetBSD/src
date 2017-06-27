@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.252 2017/06/21 09:05:31 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.253 2017/06/27 12:21:54 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.252 2017/06/21 09:05:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.253 2017/06/27 12:21:54 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1025,6 +1025,16 @@ in_arpinput(struct mbuf *m)
 	ah = mtod(m, struct arphdr *);
 	op = ntohs(ah->ar_op);
 
+	if (ah->ar_pln != sizeof(struct in_addr))
+		goto out;
+
+	ifp = if_get_bylla(ar_sha(ah), ah->ar_hln, &psref);
+	if (ifp) {
+		if_put(ifp, &psref);
+		ARP_STATINC(ARP_STAT_RCVLOCALSHA);
+		goto out;	/* it's from me, ignore it. */
+	}
+
 	rcvif = ifp = m_get_rcvif_psref(m, &psref);
 	if (__predict_false(rcvif == NULL))
 		goto drop;
@@ -1045,9 +1055,6 @@ in_arpinput(struct mbuf *m)
 	default:
 		break;
 	}
-
-	if (ah->ar_pln != sizeof(struct in_addr))
-		goto drop;
 
 	memcpy(&isaddr, ar_spa(ah), sizeof(isaddr));
 	memcpy(&itaddr, ar_tpa(ah), sizeof(itaddr));
@@ -1133,12 +1140,6 @@ in_arpinput(struct mbuf *m)
 	}
 
 	myaddr = ia->ia_addr.sin_addr;
-
-	/* XXX checks for bridge case? */
-	if (!memcmp(ar_sha(ah), CLLADDR(ifp->if_sadl), ifp->if_addrlen)) {
-		ARP_STATINC(ARP_STAT_RCVLOCALSHA);
-		goto out;	/* it's from me, ignore it. */
-	}
 
 	/* XXX checks for bridge case? */
 	if (!memcmp(ar_sha(ah), ifp->if_broadcastaddr, ifp->if_addrlen)) {
