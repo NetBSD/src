@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.23 2017/06/27 09:35:05 nat Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.24 2017/06/27 09:44:13 nat Exp $	*/
 
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.23 2017/06/27 09:35:05 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.24 2017/06/27 09:44:13 nat Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -106,10 +106,11 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 	struct uio auio;
 	struct iovec aiov;
 	struct file *fp;
-	int size, len;
+	int size, len, fd;
 
 	KASSERT(volume <= 100);
 
+	fd = -1;
 	fp = NULL;
 	buf = NULL;
 	audio = AUDIO_DEVICE | device_unit((device_t)v);
@@ -121,6 +122,7 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 	/* If not configured, we can't beep. */
 	if (audiobellopen(audio, FWRITE, 0, NULL, &fp) != EMOVEFD || fp == NULL)
 		return;
+	fd = curlwp->l_dupfd;	/* save the fd for closing when done */
 
 	if (audiobellioctl(fp, AUDIO_GETINFO, &ai) != 0)
 		goto out;
@@ -174,5 +176,9 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 out:
 	if (buf != NULL)
 		free(buf, M_TEMP);
+	if (fd >= 0) {
+		fd_getfile(fd);
+		fd_close(fd);
+	}
 	audiobellclose(fp);
 }
