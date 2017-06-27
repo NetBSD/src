@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.91 2017/06/23 06:33:35 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.92 2017/06/27 05:01:51 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -5474,8 +5474,8 @@ ixgbe_sysctl_thermal_test(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct adapter	*adapter = (struct adapter *)node.sysctl_data;
-	int		error, fire = 0;
 	struct ixgbe_hw *hw;
+	int error, fire = 0;
 
 	hw = &adapter->hw;
 
