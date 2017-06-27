@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.52 2017/06/27 23:23:48 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.53 2017/06/27 23:29:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.52 2017/06/27 23:23:48 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.53 2017/06/27 23:29:12 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -155,7 +155,7 @@ re_addc(EditLine *el, wint_t c)
 	}
 }
 
-/* re_putc():
+/* re_putliteral():
  *	Place the literal string given
  */
 libedit_private void
