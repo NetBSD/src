@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags6.sh,v 1.12 2016/12/21 02:46:08 ozaki-r Exp $
+#	$NetBSD: t_flags6.sh,v 1.13 2017/06/27 04:52:45 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -149,6 +149,8 @@ test_blackhole6()
 
 	# Shouldn't be created
 	check_route_no_entry $IP6_PEER
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' \
+	    rump.ndp -n $IP6_PEER
 }
 
 test_reject6()
@@ -173,6 +175,8 @@ test_reject6()
 
 	# Shouldn't be created
 	check_route_no_entry $IP6_PEER
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' \
+	    rump.ndp -n $IP6_PEER
 
 	# Gateway is lo0 (RTF_GATEWAY)
 
@@ -193,6 +197,8 @@ test_reject6()
 
 	# Shouldn't be created
 	check_route_no_entry $IP6_PEER
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' \
+	    rump.ndp -n $IP6_PEER
 
 	# Gateway is lo0 (RTF_HOST)
 
