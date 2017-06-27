@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.93 2017/06/27 05:17:54 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.94 2017/06/27 10:33:09 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2131,6 +2131,9 @@ ixgbe_media_change(struct ifnet * ifp)
 	struct ifmedia *ifm = &adapter->media;
 	struct ixgbe_hw *hw = &adapter->hw;
 	ixgbe_link_speed speed = 0;
+	ixgbe_link_speed link_caps = 0;
+	bool negotiate = false;
+	s32 err = IXGBE_NOT_IMPLEMENTED;
 
 	INIT_DEBUGOUT("ixgbe_media_change: begin");
 
@@ -2147,10 +2150,19 @@ ixgbe_media_change(struct ifnet * ifp)
 	*/
 	switch (IFM_SUBTYPE(ifm->ifm_media)) {
 		case IFM_AUTO:
+			err = hw->mac.ops.get_link_capabilities(hw, &link_caps,
+			    &negotiate);
+			if (err != IXGBE_SUCCESS) {
+				device_printf(adapter->dev, "Unable to determine "
+				    "supported advertise speeds\n");
+				return (ENODEV);
+			}
+			speed |= link_caps;
+			break;
 		case IFM_10G_T:
-			speed |= IXGBE_LINK_SPEED_100_FULL;
 		case IFM_10G_LRM:
 		case IFM_10G_LR:
+		case IFM_10G_TWINAX:
 #ifndef IFM_ETH_XTYPE
 		case IFM_10G_SR: /* KR, too */
 		case IFM_10G_CX4: /* KX4 */
@@ -2158,12 +2170,9 @@ ixgbe_media_change(struct ifnet * ifp)
 		case IFM_10G_KR:
 		case IFM_10G_KX4:
 #endif
-			speed |= IXGBE_LINK_SPEED_1GB_FULL;
-		case IFM_10G_TWINAX:
 			speed |= IXGBE_LINK_SPEED_10GB_FULL;
 			break;
 		case IFM_1000_T:
-			speed |= IXGBE_LINK_SPEED_100_FULL;
 		case IFM_1000_LX:
 		case IFM_1000_SX:
 		case IFM_1000_KX:
