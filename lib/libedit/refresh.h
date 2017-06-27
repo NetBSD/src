@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.h,v 1.10 2016/05/09 21:46:56 christos Exp $	*/
+/*	$NetBSD: refresh.h,v 1.11 2017/06/27 23:23:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -47,6 +47,8 @@ typedef struct {
 } el_refresh_t;
 
 libedit_private void	re_putc(EditLine *, wint_t, int);
+libedit_private void	re_putliteral(EditLine *, const wchar_t *,
+    const wchar_t *);
 libedit_private void	re_clear_lines(EditLine *);
 libedit_private void	re_clear_display(EditLine *);
 libedit_private void	re_refresh(EditLine *);
