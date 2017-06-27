@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.93 2017/04/10 15:02:40 abhinav Exp $
+.\"	$NetBSD: editline.3,v 1.94 2017/06/27 01:22:58 kre Exp $
 .\"
 .\" Copyright (c) 1997-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -667,6 +667,8 @@ If
 is
 .Dv NULL ,
 try
+.Pa $EDITRC
+and if that is not set
 .Pa $HOME/.editrc .
 Refer to
 .Xr editrc 5
