@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.283.2.9 2017/06/21 19:38:43 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.283.2.10 2017/06/27 18:36:04 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.9 2017/06/21 19:38:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.10 2017/06/27 18:36:04 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1561,11 +1561,16 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	struct ata_command *ata_c = &xfer->c_ata_c;
+	bool start = false;
 
 	ATADEBUG_PRINT(("__wdccommand_done %s:%d:%d flags 0x%x\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
 	    ata_c->flags), DEBUG_FUNCS);
 
+	if (ata_waitdrain_xfer_check(chp, xfer)) {
+		start = false;
+		goto out;
+	}
 
 	if (chp->ch_status & WDCS_DWF)
 		ata_c->flags |= AT_DF;
@@ -1629,6 +1634,9 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	ata_deactivate_xfer(chp, xfer);
 
+	__wdccommand_done_end(chp, xfer);
+
+out:
 	if (ata_c->flags & AT_POLL) {
 		/* enable interrupts */
 		if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL)) 
@@ -1637,9 +1645,8 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 		delay(10); /* some drives need a little delay here */
 	}
 
-	if (!ata_waitdrain_xfer_check(chp, xfer)) {
-		__wdccommand_done_end(chp, xfer);
-	}
+	if (start)
+		atastart(chp);
 }
 
 static void
@@ -1650,9 +1657,6 @@ __wdccommand_done_end(struct ata_channel *chp, struct ata_xfer *xfer)
 	ata_c->flags |= AT_DONE;
 	if (ata_c->flags & AT_WAIT)
 		wakeup(ata_c);
-	else if (ata_c->callback)
-		ata_c->callback(ata_c->callback_arg);
-	atastart(chp);
 	return;
 }
 
@@ -1661,10 +1665,12 @@ __wdccommand_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
     int reason)
 {
 	struct ata_command *ata_c = &xfer->c_ata_c;
-
-	ata_deactivate_xfer(chp, xfer);
+	bool deactivate = true;
 
 	switch (reason) {
+	case KILL_GONE_INACTIVE:
+		deactivate = false;
+		/* FALLTHROUGH */
 	case KILL_GONE:
 		ata_c->flags |= AT_GONE;
 		break;
@@ -1676,6 +1682,10 @@ __wdccommand_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 		    reason);
 		panic("__wdccommand_kill_xfer");
 	}
+
+	if (deactivate)
+		ata_deactivate_xfer(chp, xfer);
+
 	__wdccommand_done_end(chp, xfer);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.15 2017/06/23 20:40:51 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.16 2017/06/27 18:36:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -121,8 +121,6 @@ struct ata_command {
 	int timeout;		/* timeout (in ms) */
 	void *data;		/* Data buffer address */
 	int bcount;		/* number of bytes to transfer */
-	void (*callback)(void *); /* command to call once command completed */
-	void *callback_arg;	/* argument passed to *callback() */
 };
 
 /* Forward declaration for ata_xfer */
@@ -181,8 +179,9 @@ struct ata_xfer {
 #define	C_NCQ		0x0100		/* command is queued  */
 
 /* reasons for c_kill_xfer() */
-#define KILL_GONE 1 /* device is gone */
-#define KILL_RESET 2 /* xfer was reset */
+#define KILL_GONE 1		/* device is gone while xfer was active */
+#define KILL_RESET 2		/* xfer was reset */
+#define KILL_GONE_INACTIVE 3	/* device is gone while xfer was pending */
 
 /*
  * While hw supports up to 32 tags, in practice we must never
@@ -204,6 +203,7 @@ struct ata_queue {
 	TAILQ_HEAD(, ata_xfer) queue_xfer; 	/* queue of pending commands */
 	int queue_freeze; 			/* freeze count for the queue */
 	kcondvar_t queue_busy;			/* c: waiting of xfer */
+	kcondvar_t queue_drain;			/* c: waiting of queue drain */
 	TAILQ_HEAD(, ata_xfer) active_xfers; 	/* active commands */
 	uint32_t active_xfers_used;		/* mask of active commands */
 	uint32_t queue_xfers_avail;		/* available xfers mask */
@@ -524,7 +524,6 @@ struct ata_xfer *
 
 void	ata_delay(int, const char *, int);
 
-bool	ata_waitdrain_check(struct ata_channel *, int);
 bool	ata_waitdrain_xfer_check(struct ata_channel *, struct ata_xfer *);
 
 void	atacmd_toncq(struct ata_xfer *, uint8_t *, uint16_t *, uint16_t *,

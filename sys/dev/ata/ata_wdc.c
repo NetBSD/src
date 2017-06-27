@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.105.6.5 2017/06/20 20:58:22 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.105.6.6 2017/06/27 18:36:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.105.6.5 2017/06/20 20:58:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.105.6.6 2017/06/27 18:36:03 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -774,11 +774,13 @@ wdc_ata_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 {
 	struct ata_bio *ata_bio = &xfer->c_bio;
 	int drive = xfer->c_drive;
-
-	ata_deactivate_xfer(chp, xfer);
+	bool deactivate = true;
 
 	ata_bio->flags |= ATA_ITSDONE;
 	switch (reason) {
+	case KILL_GONE_INACTIVE:
+		deactivate = false;
+		/* FALLTHROUGH */
 	case KILL_GONE:
 		ata_bio->error = ERR_NODEV;
 		break;
@@ -791,6 +793,10 @@ wdc_ata_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 		panic("wdc_ata_bio_kill_xfer");
 	}
 	ata_bio->r_error = WDCE_ABRT;
+
+	if (deactivate)
+		ata_deactivate_xfer(chp, xfer);
+
 	ATADEBUG_PRINT(("wdc_ata_bio_kill_xfer: drv_done\n"), DEBUG_XFERS);
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
 }
@@ -806,7 +812,8 @@ wdc_ata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	    xfer->c_drive, (u_int)xfer->c_flags),
 	    DEBUG_XFERS);
 
-	callout_stop(&xfer->c_timo_callout);
+	if (ata_waitdrain_xfer_check(chp, xfer))
+		return;
 
 	/* feed back residual bcount to our caller */
 	ata_bio->bcount = xfer->c_bcount;
@@ -814,9 +821,6 @@ wdc_ata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	/* mark controller inactive and free xfer */
 	ata_deactivate_xfer(chp, xfer);
 
-	if (ata_waitdrain_check(chp, drive)) {
-		ata_bio->error = ERR_NODEV;
-	}
 	ata_bio->flags |= ATA_ITSDONE;
 	ATADEBUG_PRINT(("wdc_ata_done: drv_done\n"), DEBUG_XFERS);
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
