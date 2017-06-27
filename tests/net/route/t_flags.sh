@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.15 2016/12/21 02:46:08 ozaki-r Exp $
+#	$NetBSD: t_flags.sh,v 1.16 2017/06/27 04:52:45 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -163,6 +163,7 @@ test_blackhole()
 
 	# Shouldn't be created
 	check_route_no_entry 10.0.0.1
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n 10.0.0.1
 }
 
 test_reject()
@@ -185,6 +186,7 @@ test_reject()
 
 	# Shouldn't be created
 	check_route_no_entry 10.0.0.1
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n 10.0.0.1
 
 	# Gateway is lo0 (RTF_GATEWAY)
 
@@ -204,6 +206,7 @@ test_reject()
 
 	# Shouldn't be created
 	check_route_no_entry 10.0.0.1
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n 10.0.0.1
 
 	# Gateway is lo0 (RTF_HOST)
 
