@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.50 2017/06/27 02:22:08 kre Exp $	*/
+/*	$NetBSD: histedit.c,v 1.51 2017/06/27 23:27:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.50 2017/06/27 02:22:08 kre Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.51 2017/06/27 23:27:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ histedit(void)
 			if (el != NULL) {
 				if (hist)
 					el_set(el, EL_HIST, history, hist);
-				el_set(el, EL_PROMPT, getprompt);
+				el_set(el, EL_PROMPT_ESC, getprompt, L'\1');
 				el_set(el, EL_SIGNAL, 1);
 				el_set(el, EL_ALIAS_TEXT, alias_text, NULL);
 				el_set(el, EL_ADDFN, "rl-complete",
