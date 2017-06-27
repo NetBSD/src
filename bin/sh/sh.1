@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.154 2017/06/27 08:30:40 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.155 2017/06/27 12:43:44 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1022,7 +1022,7 @@ and allows for commands which do affect the current shell.
 Grouping commands together this way allows you to redirect
 their output as though they were one program:
 .Bd -literal -offset indent
-{ echo -n \*q hello \*q ; echo \*q world" ; } > greeting
+{ echo -n \*qhello \*q ; echo \*qworld\*q ; } > greeting
 .Ed
 .Pp
 Note that
