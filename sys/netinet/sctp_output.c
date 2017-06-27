@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.10 2017/03/03 07:13:06 ozaki-r Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.11 2017/06/27 13:54:56 rjs Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.10 2017/03/03 07:13:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.11 2017/06/27 13:54:56 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2243,7 +2243,7 @@ sctp_lowlevel_chunk_output(struct sctp_inpcb *inp,
 			       (u_int)(ntohl(ip->ip_src.s_addr)));
 			printf("Destination is %x\n", (u_int)(ntohl(ip->ip_dst.s_addr)));
 			printf("RTP route is %p through\n", rt);
-			printf("length %d\n", ip->ip_len);
+			printf("length %d\n", ntohs(ip->ip_len));
 		}
 #endif
 		if ((have_mtu) && (net) && (have_mtu > net->mtu)) {
