@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.41 2016/05/24 15:00:45 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.42 2017/06/27 23:25:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,6 +94,7 @@ typedef struct el_state_t {
 
 #include "tty.h"
 #include "prompt.h"
+#include "literal.h"
 #include "keymacro.h"
 #include "terminal.h"
 #include "refresh.h"
@@ -115,8 +116,8 @@ struct editline {
 	int		  el_errfd;	/* Error file descriptor	*/
 	int		  el_flags;	/* Various flags.		*/
 	coord_t		  el_cursor;	/* Cursor location		*/
-	wchar_t		**el_display;	/* Real screen image = what is there */
-	wchar_t		**el_vdisplay;	/* Virtual screen image = what we see */
+	wint_t		**el_display;	/* Real screen image = what is there */
+	wint_t		**el_vdisplay;	/* Virtual screen image = what we see */
 	void		 *el_data;	/* Client data			*/
 	el_line_t	  el_line;	/* The current line information	*/
 	el_state_t	  el_state;	/* Current editor state		*/
@@ -125,6 +126,7 @@ struct editline {
 	el_refresh_t	  el_refresh;	/* Refresh stuff		*/
 	el_prompt_t	  el_prompt;	/* Prompt stuff			*/
 	el_prompt_t	  el_rprompt;	/* Prompt stuff			*/
+	el_literal_t	  el_literal;	/* prompt literal bits		*/
 	el_chared_t	  el_chared;	/* Characted editor stuff	*/
 	el_map_t	  el_map;	/* Key mapping stuff		*/
 	el_keymacro_t	  el_keymacro;	/* Key binding stuff		*/

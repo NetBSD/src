@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.26 2016/05/09 21:46:56 christos Exp $	*/
+/*	$NetBSD: prompt.c,v 1.27 2017/06/27 23:25:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)prompt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: prompt.c,v 1.26 2016/05/09 21:46:56 christos Exp $");
+__RCSID("$NetBSD: prompt.c,v 1.27 2017/06/27 23:25:13 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -84,7 +84,6 @@ prompt_print(EditLine *el, int op)
 {
 	el_prompt_t *elp;
 	wchar_t *p;
-	int ignore = 0;
 
 	if (op == EL_PROMPT)
 		elp = &el->el_prompt;
@@ -99,13 +98,17 @@ prompt_print(EditLine *el, int op)
 
 	for (; *p; p++) {
 		if (elp->p_ignore == *p) {
-			ignore = !ignore;
+			wchar_t *litstart = ++p;
+			while (*p && *p != elp->p_ignore)
+				p++;
+			if (!*p || !p[1]) {
+				// XXX: We lose the last literal
+				break;
+			}
+			re_putliteral(el, litstart, p++);
 			continue;
 		}
-		if (ignore)
-			terminal__putc(el, *p);
-		else
-			re_putc(el, *p, 1);
+		re_putc(el, *p, 1);
 	}
 
 	elp->p_pos.v = el->el_refresh.r_cursor.v;
