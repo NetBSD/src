@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.123.4.8 2017/06/21 22:34:46 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.123.4.9 2017/06/27 18:36:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.8 2017/06/21 22:34:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.9 2017/06/27 18:36:03 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -170,11 +170,13 @@ static void
 wdc_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 {
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
-
-	ata_deactivate_xfer(chp, xfer);
+	bool deactivate = true;
 
 	/* remove this command from xfer queue */
 	switch (reason) {
+	case KILL_GONE_INACTIVE:
+		deactivate = false;
+		/* FALLTHROUGH */
 	case KILL_GONE:
 		sc_xfer->error = XS_DRIVER_STUFFUP;
 		break;
@@ -186,6 +188,10 @@ wdc_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 		    reason);
 		panic("wdc_ata_bio_kill_xfer");
 	}
+
+	if (deactivate)
+		ata_deactivate_xfer(chp, xfer);
+
 	ata_free_xfer(chp, xfer);
 	scsipi_done(sc_xfer);
 }
@@ -1096,17 +1102,16 @@ wdc_atapi_done(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
-	int drive = xfer->c_drive;
 
 	ATADEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
 	    (u_int)xfer->c_flags), DEBUG_XFERS);
 
+	if (ata_waitdrain_xfer_check(chp, xfer))
+		return;
+
 	ata_deactivate_xfer(chp, xfer);
 	ata_free_xfer(chp, xfer);
-
-	if (ata_waitdrain_check(chp, drive))
-		sc_xfer->error = XS_DRIVER_STUFFUP;
 
 	ATADEBUG_PRINT(("wdc_atapi_done: scsipi_done\n"), DEBUG_XFERS);
 	scsipi_done(sc_xfer);

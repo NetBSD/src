@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.17 2017/06/24 14:57:17 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.18 2017/06/27 18:36:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.17 2017/06/24 14:57:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.18 2017/06/27 18:36:03 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -275,6 +275,7 @@ ata_queue_alloc(uint8_t openings)
 	ata_queue_reset(chq);
 
 	cv_init(&chq->queue_busy, "ataqbusy");
+	cv_init(&chq->queue_drain, "atdrn");
 
 	for (uint8_t i = 0; i < openings; i++)
 		ata_xfer_init(&chq->queue_xfers[i], false);
@@ -287,6 +288,9 @@ ata_queue_free(struct ata_queue *chq)
 {
 	for (uint8_t i = 0; i < chq->queue_openings; i++)
 		ata_xfer_destroy(&chq->queue_xfers[i]);
+
+	cv_destroy(&chq->queue_busy);
+	cv_destroy(&chq->queue_drain);
 
 	free(chq, M_DEVBUF);
 }
@@ -1140,6 +1144,9 @@ atastart(struct ata_channel *chp)
 	if ((xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) == NULL)
 		goto out;
 
+	/* all xfers on same queue must belong to the same channel */
+	KASSERT(xfer->c_chp == chp);
+
 	/*
 	 * Can only take NCQ command if there are no current active
 	 * commands, or if the active commands are NCQ. Need only check
@@ -1148,10 +1155,6 @@ atastart(struct ata_channel *chp)
 	axfer = TAILQ_FIRST(&chp->ch_queue->active_xfers);
 	if (axfer && (axfer->c_flags & C_NCQ) == 0)
 		goto out;
-
-	/* adjust chp, in case we have a shared queue */
-	chp = xfer->c_chp;
-	KASSERT(chp->ch_queue == chq);
 
 	struct ata_drive_datas * const drvp = &chp->ch_drive[xfer->c_drive];
 
@@ -1322,29 +1325,37 @@ ata_deactivate_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	mutex_exit(&chp->ch_lock);
 }
 
-
-bool
-ata_waitdrain_check(struct ata_channel *chp, int drive)
-{
-	if (chp->ch_drive[drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
-		chp->ch_drive[drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
-		wakeup(&chp->ch_queue->active_xfers);
-		return true;
-	}
-	return false;
-}
-
+/*
+ * Called in c_intr hook. Must be called before before any deactivations
+ * are done - if there is drain pending, it calls c_kill_xfer hook which
+ * deactivates the xfer.
+ * Calls c_kill_xfer with channel lock free.
+ * Returns true if caller should just exit without further processing.
+ * Caller must not further access any part of xfer or any related controller
+ * structures in that case, it should just return.
+ */
 bool
 ata_waitdrain_xfer_check(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	int drive = xfer->c_drive;
+	bool draining = false;
+
+	mutex_enter(&chp->ch_lock);
+
 	if (chp->ch_drive[drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
+		mutex_exit(&chp->ch_lock);
+
 		(*xfer->c_kill_xfer)(chp, xfer, KILL_GONE);
+
+		mutex_enter(&chp->ch_lock);
 		chp->ch_drive[drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
-		wakeup(&chp->ch_queue->active_xfers);
-		return true;
+		cv_signal(&chp->ch_queue->queue_drain);
+		draining = true;
 	}
-	return false;
+
+	mutex_exit(&chp->ch_lock);
+
+	return draining;
 }
 
 /*
@@ -1367,38 +1378,58 @@ ata_kill_active(struct ata_channel *chp, int reason, int flags)
 }
 
 /*
- * Kill off all pending xfers for a ata_channel.
- *
- * Must be called at splbio().
+ * Kill off all pending xfers for a drive.
  */
 void
 ata_kill_pending(struct ata_drive_datas *drvp)
 {
 	struct ata_channel * const chp = drvp->chnl_softc;
 	struct ata_queue * const chq = chp->ch_queue;
-	struct ata_xfer *xfer, *next_xfer;
-	int s = splbio();
+	struct ata_xfer *xfer, *xfernext;
 
-	for (xfer = TAILQ_FIRST(&chq->queue_xfer);
-	    xfer != NULL; xfer = next_xfer) {
-		next_xfer = TAILQ_NEXT(xfer, c_xferchain);
-		if (xfer->c_chp != chp || xfer->c_drive != drvp->drive)
+	mutex_enter(&chp->ch_lock);
+
+	/* Kill all pending transfers */
+	TAILQ_FOREACH_SAFE(xfer, &chq->queue_xfer, c_xferchain, xfernext) {
+		KASSERT(xfer->c_chp == chp);
+
+		if (xfer->c_drive != drvp->drive)
 			continue;
-		TAILQ_REMOVE(&chq->queue_xfer, xfer, c_xferchain);
-		(*xfer->c_kill_xfer)(chp, xfer, KILL_GONE);
+
+		TAILQ_REMOVE(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
+
+		/*
+		 * Keep the lock, so that we get deadlock (and 'locking against
+		 * myself' with LOCKDEBUG), instead of silent
+		 * data corruption, if the hook tries to call back into
+		 * middle layer for inactive xfer.
+		 */
+		(*xfer->c_kill_xfer)(chp, xfer, KILL_GONE_INACTIVE);
 	}
 
+	/* Wait until all active transfers on the drive finish */
 	while (chq->queue_active > 0) {
-		if (chq->queue_openings == 1 && chp->ch_ndrives > 1) {
-			xfer = TAILQ_FIRST(&chq->active_xfers);
-			KASSERT(xfer != NULL);
-			if (xfer->c_chp != chp || xfer->c_drive != drvp->drive)
+		bool drv_active = false;
+
+		TAILQ_FOREACH(xfer, &chq->active_xfers, c_activechain) {
+			KASSERT(xfer->c_chp == chp);
+
+			if (xfer->c_drive == drvp->drive) {
+				drv_active = true;
 				break;
+			}
 		}
+		
+		if (!drv_active) {
+			/* all finished */
+			break;
+		}
+
 		drvp->drive_flags |= ATA_DRIVE_WAITDRAIN;
-		(void) tsleep(&chq->active_xfers, PRIBIO, "atdrn", 0);
+		cv_wait(&chq->queue_drain, &chp->ch_lock);
 	}
-	splx(s);
+
+	mutex_exit(&chp->ch_lock);
 }
 
 void
@@ -2152,8 +2183,10 @@ atacmd_toncq(struct ata_xfer *xfer, uint8_t *cmd, uint16_t *count,
 void
 ata_channel_start(struct ata_channel *chp, int drive)
 {
-	int i;
+	int i, s;
 	struct ata_drive_datas *drvp;
+
+	s = splbio();
 
 	KASSERT(chp->ch_ndrives > 0);
 
@@ -2186,5 +2219,6 @@ ata_channel_start(struct ata_channel *chp, int drive)
 	/* Now try to kick off xfers on the current drive */
 	ATA_DRIVE_START(chp, drive);
 
+	splx(s);
 #undef ATA_DRIVE_START
 }

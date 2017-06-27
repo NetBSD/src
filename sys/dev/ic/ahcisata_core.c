@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.16 2017/06/21 19:38:42 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.17 2017/06/27 18:36:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.16 2017/06/21 19:38:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.17 2017/06/27 18:36:03 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -69,6 +69,7 @@ static void ahci_killpending(struct ata_drive_datas *);
 static void ahci_cmd_start(struct ata_channel *, struct ata_xfer *);
 static int  ahci_cmd_complete(struct ata_channel *, struct ata_xfer *, int);
 static void ahci_cmd_done(struct ata_channel *, struct ata_xfer *);
+static void ahci_cmd_done_end(struct ata_channel *, struct ata_xfer *);
 static void ahci_cmd_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
 static void ahci_bio_start(struct ata_channel *, struct ata_xfer *);
 static int  ahci_bio_complete(struct ata_channel *, struct ata_xfer *, int);
@@ -1045,13 +1046,17 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 static void
 ahci_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 {
+	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	struct ata_command *ata_c = &xfer->c_ata_c;
+	bool deactivate = true;
+
 	AHCIDEBUG_PRINT(("ahci_cmd_kill_xfer channel %d\n", chp->ch_channel),
 	    DEBUG_FUNCS);
 
-	ata_deactivate_xfer(chp, xfer);
-
 	switch (reason) {
+	case KILL_GONE_INACTIVE:
+		deactivate = false;
+		/* FALLTHROUGH */
 	case KILL_GONE:
 		ata_c->flags |= AT_GONE;
 		break;
@@ -1062,7 +1067,13 @@ ahci_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 		printf("ahci_cmd_kill_xfer: unknown reason %d\n", reason);
 		panic("ahci_cmd_kill_xfer");
 	}
-	ahci_cmd_done(chp, xfer);
+
+	if (deactivate) {
+		achp->ahcic_cmds_active &= ~(1 << xfer->c_slot);
+		ata_deactivate_xfer(chp, xfer);
+	}
+
+	ahci_cmd_done_end(chp, xfer);
 }
 
 static int
@@ -1076,15 +1087,16 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	    chp->ch_channel, AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)),
 	    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))),
 	    DEBUG_FUNCS);
+
+	if (ata_waitdrain_xfer_check(chp, xfer))
+		return 0;
+
+	achp->ahcic_cmds_active &= ~(1 << xfer->c_slot);
+	ata_deactivate_xfer(chp, xfer);
+
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
 	if (xfer->c_flags & C_TIMEOU) {
 		ata_c->flags |= AT_TIMEOU;
-	}
-
-	ata_deactivate_xfer(chp, xfer);
-
-	if (ata_waitdrain_xfer_check(chp, xfer)) {
-		return 0;
 	}
 
 	if (chp->ch_status & WDCS_BSY) {
@@ -1113,9 +1125,6 @@ ahci_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	AHCIDEBUG_PRINT(("ahci_cmd_done channel %d (status %#x) flags %#x/%#x\n",
 	    chp->ch_channel, chp->ch_status, xfer->c_flags, ata_c->flags), DEBUG_FUNCS);
 
-	/* this comamnd is not active any more */
-	achp->ahcic_cmds_active &= ~(1 << xfer->c_slot);
-
 	if (ata_c->flags & (AT_READ|AT_WRITE) && ata_c->bcount > 0) {
 		bus_dmamap_t map = achp->ahcic_datad[xfer->c_slot];
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
@@ -1136,15 +1145,22 @@ ahci_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 		}
 	}
 
-	ata_c->flags |= AT_DONE;
 	if (achp->ahcic_cmdh[xfer->c_slot].cmdh_prdbc)
 		ata_c->flags |= AT_XFDONE;
 
+	ahci_cmd_done_end(chp, xfer);
+	atastart(chp);
+}
+
+static void
+ahci_cmd_done_end(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	struct ata_command *ata_c = &xfer->c_ata_c;
+	
+	ata_c->flags |= AT_DONE;
+
 	if (ata_c->flags & AT_WAIT)
 		wakeup(ata_c);
-	else if (ata_c->callback)
-		ata_c->callback(ata_c->callback_arg);
-	atastart(chp);
 	return;
 }
 
@@ -1257,14 +1273,16 @@ ahci_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 	int drive = xfer->c_drive;
 	struct ata_bio *ata_bio = &xfer->c_bio;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
+	bool deactivate = true;
+
 	AHCIDEBUG_PRINT(("ahci_bio_kill_xfer channel %d\n", chp->ch_channel),
 	    DEBUG_FUNCS);
 
-	achp->ahcic_cmds_active &= ~(1 << xfer->c_slot);
-	ata_deactivate_xfer(chp, xfer);
-
 	ata_bio->flags |= ATA_ITSDONE;
 	switch (reason) {
+	case KILL_GONE_INACTIVE:
+		deactivate = false;
+		/* FALLTHROUGH */
 	case KILL_GONE:
 		ata_bio->error = ERR_NODEV;
 		break;
@@ -1276,6 +1294,12 @@ ahci_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 		panic("ahci_bio_kill_xfer");
 	}
 	ata_bio->r_error = WDCE_ABRT;
+
+	if (deactivate) {
+		achp->ahcic_cmds_active &= ~(1 << xfer->c_slot);
+		ata_deactivate_xfer(chp, xfer);
+	}
+
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
 }
 
@@ -1290,7 +1314,11 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	AHCIDEBUG_PRINT(("ahci_bio_complete channel %d\n", chp->ch_channel),
 	    DEBUG_FUNCS);
 
+	if (ata_waitdrain_xfer_check(chp, xfer))
+		return 0;
+
 	achp->ahcic_cmds_active &= ~(1 << xfer->c_slot);
+	ata_deactivate_xfer(chp, xfer);
 
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
 	if (xfer->c_flags & C_TIMEOU) {
@@ -1299,17 +1327,12 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 		ata_bio->error = NOERROR;
 	}
 
-	ata_deactivate_xfer(chp, xfer);
-
 	bus_dmamap_sync(sc->sc_dmat, achp->ahcic_datad[xfer->c_slot], 0,
 	    achp->ahcic_datad[xfer->c_slot]->dm_mapsize,
 	    (ata_bio->flags & ATA_READ) ? BUS_DMASYNC_POSTREAD :
 	    BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, achp->ahcic_datad[xfer->c_slot]);
 
-	if (ata_waitdrain_xfer_check(chp, xfer)) {
-		return 0;
-	}
 	ata_bio->flags |= ATA_ITSDONE;
 	if (chp->ch_status & WDCS_DWF) { 
 		ata_bio->error = ERR_DF;
@@ -1695,7 +1718,11 @@ ahci_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	AHCIDEBUG_PRINT(("ahci_atapi_complete channel %d\n", chp->ch_channel),
 	    DEBUG_FUNCS);
 
+	if (ata_waitdrain_xfer_check(chp, xfer))
+		return 0;
+
 	achp->ahcic_cmds_active &= ~(1 << xfer->c_slot);
+	ata_deactivate_xfer(chp, xfer);
 
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
 	if (xfer->c_flags & C_TIMEOU) {
@@ -1703,8 +1730,6 @@ ahci_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	} else {
 		sc_xfer->error = 0;
 	}
-
-	ata_deactivate_xfer(chp, xfer);
 
 	if (xfer->c_bcount > 0) {
 		bus_dmamap_sync(sc->sc_dmat, achp->ahcic_datad[xfer->c_slot], 0,
@@ -1714,10 +1739,6 @@ ahci_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		bus_dmamap_unload(sc->sc_dmat, achp->ahcic_datad[xfer->c_slot]);
 	}
 
-	if (ata_waitdrain_xfer_check(chp, xfer)) {
-		sc_xfer->error = XS_DRIVER_STUFFUP;
-		return 0;
-	}
 	ata_free_xfer(chp, xfer);
 
 	AHCI_CMDH_SYNC(sc, achp, xfer->c_slot,
@@ -1748,12 +1769,13 @@ ahci_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 {
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
-
-	achp->ahcic_cmds_active &= ~(1 << xfer->c_slot);
-	ata_deactivate_xfer(chp, xfer);
+	bool deactivate = true;
 
 	/* remove this command from xfer queue */
 	switch (reason) {
+	case KILL_GONE_INACTIVE:
+		deactivate = false;
+		/* FALLTHROUGH */
 	case KILL_GONE:
 		sc_xfer->error = XS_DRIVER_STUFFUP;
 		break;
@@ -1764,6 +1786,12 @@ ahci_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 		printf("ahci_ata_atapi_kill_xfer: unknown reason %d\n", reason);
 		panic("ahci_ata_atapi_kill_xfer");
 	}
+
+	if (deactivate) {
+		achp->ahcic_cmds_active &= ~(1 << xfer->c_slot);
+		ata_deactivate_xfer(chp, xfer);
+	}
+
 	ata_free_xfer(chp, xfer);
 	scsipi_done(sc_xfer);
 }
