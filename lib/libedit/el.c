@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.93 2017/06/27 00:47:37 kre Exp $	*/
+/*	$NetBSD: el.c,v 1.94 2017/06/27 23:25:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.93 2017/06/27 00:47:37 kre Exp $");
+__RCSID("$NetBSD: el.c,v 1.94 2017/06/27 23:25:13 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -115,6 +115,7 @@ el_init_fd(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
 	(void) hist_init(el);
 	(void) prompt_init(el);
 	(void) sig_init(el);
+	(void) literal_init(el);
 	if (read_init(el) == -1) {
 		el_end(el);
 		return NULL;
@@ -146,6 +147,7 @@ el_end(EditLine *el)
 	hist_end(el);
 	prompt_end(el);
 	sig_end(el);
+	literal_end(el);
 
 	el_free(el->el_prog);
 	el_free(el->el_visual.cbuff);
