@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.32 2017/06/28 04:14:53 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.33 2017/06/28 08:17:50 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -654,7 +654,7 @@ arp_rtm_body()
 	str="$IP4DST link#2"
 	atf_check -s exit:0 -o match:"$str" cat $file
 
-	# Test arp -d and resulting routing messages (RTM_GET and RTM_DELETE)
+	# Test arp -d and resulting routing messages (RTM_DELETE)
 	rump.route -n monitor -c 2 > $file &
 	pid=$?
 	sleep 1
@@ -662,13 +662,7 @@ arp_rtm_body()
 	wait $pid
 	$DEBUG && cat $file
 
-	str="RTM_GET.+<UP,DONE,LLINFO>"
-	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_GET $file
-	str="<DST,GATEWAY>"
-	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_GET $file
-	str="$IP4DST $macaddr_dst"
-	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_GET $file
-	str="RTM_DELETE.+<DONE,LLINFO>"
+	str="RTM_DELETE.+<HOST,DONE,LLINFO,CLONED>"
 	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_DELETE $file
 	str="<DST,GATEWAY>"
 	atf_check -s exit:0 -o match:"$str" grep -A 3 RTM_DELETE $file
@@ -803,6 +797,85 @@ arp_purge_on_ifdown_cleanup()
 	cleanup
 }
 
+atf_test_case arp_stray_entries cleanup
+arp_stray_entries_head()
+{
+
+	atf_set "descr" "Tests if ARP entries are removed on route change"
+	atf_set "require.progs" "rump_server"
+}
+
+arp_stray_entries_body()
+{
+
+	rump_server_start $SOCKSRC
+	rump_server_start $SOCKDST
+
+	setup_dst_server
+	setup_src_server
+
+	rump_server_add_iface $SOCKSRC shmif1 bus1
+
+	export RUMP_SERVER=$SOCKSRC
+	atf_check -s exit:0 rump.ifconfig shmif1 inet $IP4SRC2/24
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	$DEBUG && rump.netstat -nr -f inet
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP4DST
+	$DEBUG && rump.arp -na
+	atf_check -s exit:0 -o match:'shmif0' rump.arp -n $IP4DST
+	atf_check -s exit:0 -o not-match:'shmif1' rump.arp -n $IP4DST
+
+	# Clean up
+	atf_check -s exit:0 -o ignore rump.arp -da
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4DST
+
+	# ping from a different source address
+	atf_check -s exit:0 -o ignore \
+	    rump.ping -n -w 1 -c 1 -I $IP4SRC2 $IP4DST
+	$DEBUG && rump.arp -na
+	atf_check -s exit:0 -o match:'shmif0' rump.arp -n $IP4DST
+	# ARP reply goes back via shmif1, so a cache is created on shmif1
+	atf_check -s exit:0 -o match:'shmif1' rump.arp -n $IP4DST
+
+	# Clean up by arp -da
+	atf_check -s exit:0 -o ignore rump.arp -da
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4DST
+
+	# ping from a different source address again
+	atf_check -s exit:0 -o ignore \
+	    rump.ping -n -w 1 -c 1 -I $IP4SRC2 $IP4DST
+	atf_check -s exit:0 -o match:'shmif0' rump.arp -n $IP4DST
+	# ARP reply doen't come
+	atf_check -s exit:0 -o not-match:'shmif1' rump.arp -n $IP4DST
+
+	# Cleanup caches on the destination
+	export RUMP_SERVER=$SOCKDST
+	atf_check -s exit:0 -o ignore rump.arp -da
+	export RUMP_SERVER=$SOCKSRC
+
+	# ping from a different source address again
+	atf_check -s exit:0 -o ignore \
+	    rump.ping -n -w 1 -c 1 -I $IP4SRC2 $IP4DST
+	atf_check -s exit:0 -o match:'shmif0' rump.arp -n $IP4DST
+	# ARP reply goes back via shmif1
+	atf_check -s exit:0 -o match:'shmif1' rump.arp -n $IP4DST
+
+	# Clean up by arp -d <ip>
+	atf_check -s exit:0 -o ignore rump.arp -d $IP4DST
+	# Both entries should be deleted
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4DST
+
+	rump_server_destroy_ifaces
+}
+
+arp_stray_entries_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case arp_cache_expiration_5s
@@ -818,4 +891,5 @@ atf_init_test_cases()
 	atf_add_test_case arp_purge_on_route_change
 	atf_add_test_case arp_purge_on_route_delete
 	atf_add_test_case arp_purge_on_ifdown
+	atf_add_test_case arp_stray_entries
 }
