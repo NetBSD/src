@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.57 2017/06/26 03:13:40 ozaki-r Exp $ */
+/*	$NetBSD: arp.c,v 1.58 2017/06/28 08:17:50 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.57 2017/06/26 03:13:40 ozaki-r Exp $");
+__RCSID("$NetBSD: arp.c,v 1.58 2017/06/28 08:17:50 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,9 +79,9 @@ __RCSID("$NetBSD: arp.c,v 1.57 2017/06/26 03:13:40 ozaki-r Exp $");
 #include "prog_ops.h"
 
 static int is_llinfo(const struct sockaddr_dl *, int);
-static int delete(const char *, const char *);
+static int delete_one(struct rt_msghdr *);
 static void dump(uint32_t);
-static void delete_all(void);
+static void delete(const char *, const char *);
 static void sdl_print(const struct sockaddr_dl *);
 static int getifname(u_int16_t, char *, size_t);
 static int atosdl(const char *s, struct sockaddr_dl *sdl);
@@ -90,8 +90,8 @@ static void get(const char *);
 static int getinetaddr(const char *, struct in_addr *);
 static int getsocket(void);
 static struct rt_msghdr *
-	rtmsg(const int, const int, const struct sockaddr_inarp *,
-	    const struct sockaddr_dl *);
+	rtmsg(const int, const int,  struct rt_msghdr *,
+	    const struct sockaddr_inarp *, const struct sockaddr_dl *);
 static int set(int, char **);
 static void usage(void) __dead;
 
@@ -157,11 +157,11 @@ main(int argc, char **argv)
 		break;
 	case 'd':
 		if (aflag && argc == 0)
-			delete_all();
+			delete(NULL, NULL);
 		else {
 			if (aflag || argc < 1 || argc > 2)
 				usage();
-			(void)delete(argv[0], argv[1]);
+			delete(argv[0], argv[1]);
 		}
 		break;
 	case 's':
@@ -310,7 +310,7 @@ set(int argc, char **argv)
 
 	}
 tryagain:
-	rtm = rtmsg(s, RTM_GET, &sin_m, &sdl_m);
+	rtm = rtmsg(s, RTM_GET, NULL, &sin_m, &sdl_m);
 	if (rtm == NULL) {
 		warn("%s", host);
 		return (1);
@@ -344,7 +344,7 @@ overwrite:
 	sin_m.sin_other = 0;
 	if (doing_proxy && export_only)
 		sin_m.sin_other = SIN_PROXY;
-	rtm = rtmsg(s, RTM_ADD, &sin_m, &sdl_m);
+	rtm = rtmsg(s, RTM_ADD, NULL, &sin_m, &sdl_m);
 	if (vflag)
 		(void)printf("%s (%s) added\n", host, eaddr);
 	return (rtm == NULL) ? 1 : 0;
@@ -390,50 +390,21 @@ is_llinfo(const struct sockaddr_dl *sdl, int rtflags)
  * Delete an arp entry
  */
 int
-delete(const char *host, const char *info)
+delete_one(struct rt_msghdr *rtm)
 {
 	struct sockaddr_inarp *sina;
 	struct sockaddr_dl *sdl;
-	struct rt_msghdr *rtm;
-	struct sockaddr_inarp sin_m = blank_sin; /* struct copy */
-	struct sockaddr_dl sdl_m = blank_sdl; /* struct copy */
 	int s;
 
 	s = getsocket();
-	if (info && strncmp(info, "pro", 3) == 0)
-		sin_m.sin_other = SIN_PROXY;
-	if (getinetaddr(host, &sin_m.sin_addr) == -1)
-		return (1);
-tryagain:
-	rtm = rtmsg(s, RTM_GET, &sin_m, &sdl_m);
-	if (rtm == NULL) {
-		warn("%s", host);
-		return (1);
-	}
 	sina = (struct sockaddr_inarp *)(void *)(rtm + 1);
 	sdl = (struct sockaddr_dl *)(void *)(RT_ROUNDUP(sina->sin_len) +
 	    (char *)(void *)sina);
-	if (sina->sin_addr.s_addr == sin_m.sin_addr.s_addr &&
-	    is_llinfo(sdl, rtm->rtm_flags))
-		goto delete;
-	if (sin_m.sin_other & SIN_PROXY) {
-		warnx("delete: can't locate %s", host);
+	if (sdl->sdl_family != AF_LINK)
 		return (1);
-	} else {
-		sin_m.sin_other = SIN_PROXY;
-		goto tryagain;
-	}
-delete:
-	if (sdl->sdl_family != AF_LINK) {
-		(void)warnx("cannot locate %s", host);
-		return (1);
-	}
-	rtm = rtmsg(s, RTM_DELETE, &sin_m, sdl);
+	rtm = rtmsg(s, RTM_DELETE, rtm, sina, sdl);
 	if (rtm == NULL)
 		return (1);
-	if (vflag)
-		(void)printf("%s (%s) deleted\n", host,
-		    inet_ntoa(sin_m.sin_addr));
 	return (0);
 }
 
@@ -519,36 +490,56 @@ dump(uint32_t addr)
  * Delete the entire arp table
  */
 void
-delete_all(void)
+delete(const char *host, const char *info)
 {
 	int mib[6];
 	size_t needed;
-	char addr[sizeof("000.000.000.000\0")];
 	char *lim, *buf, *next;
 	struct rt_msghdr *rtm;
 	struct sockaddr_inarp *sina;
+	struct sockaddr_inarp sin_m = blank_sin; /* struct copy */
 
+	if (host != NULL) {
+		int ret = getinetaddr(host, &sin_m.sin_addr);
+		if (ret == -1)
+			return;
+	}
+	if (info && strncmp(info, "pro", 3) == 0)
+		sin_m.sin_other = SIN_PROXY;
+
+retry:
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
 	mib[2] = 0;
 	mib[3] = AF_INET;
 	mib[4] = NET_RT_FLAGS;
-	mib[5] = 0;
+	mib[5] = RTF_LLDATA;
 	if (prog_sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
 	if (needed == 0)
 		return;
 	if ((buf = malloc(needed)) == NULL)
 		err(1, "malloc");
-	if (prog_sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+	if (prog_sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
+		free(buf);
+		if (errno == ENOBUFS)
+			goto retry;
 		err(1, "actual retrieval of routing table");
+	}
 	lim = buf + needed;
+
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
+		int ret;
 		rtm = (struct rt_msghdr *)(void *)next;
 		sina = (struct sockaddr_inarp *)(void *)(rtm + 1);
-		(void)snprintf(addr, sizeof(addr), "%s",
-		    inet_ntoa(sina->sin_addr));
-		(void)delete(addr, NULL);
+		if (host != NULL &&
+		    sina->sin_addr.s_addr != sin_m.sin_addr.s_addr)
+			continue;
+		ret = delete_one(rtm);
+		if (vflag && ret == 0) {
+			(void)printf("%s (%s) deleted\n", host,
+			    inet_ntoa(sina->sin_addr));
+		}
 	}
 	free(buf);
 }
@@ -615,11 +606,11 @@ usage(void)
 }
 
 static struct rt_msghdr *
-rtmsg(const int s, const int cmd, const struct sockaddr_inarp *sin,
-    const struct sockaddr_dl *sdl)
+rtmsg(const int s, const int cmd, struct rt_msghdr *_rtm,
+    const struct sockaddr_inarp *sin, const struct sockaddr_dl *sdl)
 {
 	static int seq;
-	struct rt_msghdr *rtm;
+	struct rt_msghdr *rtm = _rtm;
 	char *cp;
 	int l;
 	static struct {
@@ -628,16 +619,16 @@ rtmsg(const int s, const int cmd, const struct sockaddr_inarp *sin,
 	} m_rtmsg;
 	pid_t pid;
 
-	rtm = &m_rtmsg.m_rtm;
-	cp = m_rtmsg.m_space;
 	errno = 0;
-
-	/* XXX depends on rtm is filled by RTM_GET */
-	if (cmd == RTM_DELETE) {
-		rtm->rtm_flags |= RTF_LLDATA;
+	if (rtm != NULL) {
+		memcpy(&m_rtmsg, rtm, rtm->rtm_msglen);
+		rtm = &m_rtmsg.m_rtm;
 		goto doit;
 	}
 	(void)memset(&m_rtmsg, 0, sizeof(m_rtmsg));
+	rtm = &m_rtmsg.m_rtm;
+	cp = m_rtmsg.m_space;
+
 	rtm->rtm_flags = flags;
 	rtm->rtm_version = RTM_VERSION;
 

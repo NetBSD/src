@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.49 2017/06/26 03:13:40 ozaki-r Exp $	*/
+/*	$NetBSD: ndp.c,v 1.50 2017/06/28 08:17:50 ozaki-r Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -122,13 +122,14 @@ static char ifix_buf[IFNAMSIZ];		/* if_indextoname() */
 static void getsocket(void);
 static int set(int, char **);
 static void get(char *);
-static int delete(char *);
-static void dump(struct in6_addr *, int);
+static int delete(struct rt_msghdr *, char *);
+static void delete_one(char *);
+static void do_foreach(struct in6_addr *, char *, int);
 static struct in6_nbrinfo *getnbrinfo(struct in6_addr *, unsigned int, int);
 static char *ether_str(struct sockaddr_dl *);
 static int ndp_ether_aton(char *, u_char *);
 __dead static void usage(void);
-static int rtmsg(int);
+static int rtmsg(int, struct rt_msghdr *);
 static void ifinfo(char *, int, char **);
 static void rtrlist(void);
 static void plist(void);
@@ -143,6 +144,9 @@ static void setdefif(char *);
 static const char *sec2str(time_t);
 static char *ether_str(struct sockaddr_dl *);
 static void ts_print(const struct timeval *);
+
+#define NDP_F_CLEAR	1
+#define NDP_F_DELETE	2
 
 #ifdef ICMPV6CTL_ND6_DRLIST
 static const char *rtpref_str[] = {
@@ -223,14 +227,14 @@ main(int argc, char **argv)
 			usage();
 			/*NOTREACHED*/
 		}
-		dump(0, mode == 'c');
+		do_foreach(0, NULL, mode == 'c' ? NDP_F_CLEAR : 0);
 		break;
 	case 'd':
 		if (argc != 0) {
 			usage();
 			/*NOTREACHED*/
 		}
-		(void)delete(arg);
+		delete_one(arg);
 		break;
 	case 'I':
 #ifdef SIOCSDEFIFACE_IN6	/* XXX: check SIOCGDEFIFACE_IN6 as well? */
@@ -386,7 +390,7 @@ set(int argc, char **argv)
 			flags |= RTF_ANNOUNCE;
 		argv++;
 	}
-	if (rtmsg(RTM_GET) < 0) {
+	if (rtmsg(RTM_GET, NULL) < 0) {
 		errx(1, "RTM_GET(%s) failed", host);
 		/* NOTREACHED */
 	}
@@ -415,7 +419,7 @@ overwrite:
 	}
 	sdl_m.sdl_type = sdl->sdl_type;
 	sdl_m.sdl_index = sdl->sdl_index;
-	return (rtmsg(RTM_ADD));
+	return (rtmsg(RTM_ADD, NULL));
 }
 
 /*
@@ -437,7 +441,7 @@ get(char *host)
 		return;
 	}
 	makeaddr(mysin, res->ai_addr);
-	dump(&mysin->sin6_addr, 0);
+	do_foreach(&mysin->sin6_addr, host, 0);
 	if (found_entry == 0) {
 		(void)getnameinfo((struct sockaddr *)(void *)mysin,
 		    (socklen_t)mysin->sin6_len,
@@ -447,52 +451,44 @@ get(char *host)
 	}
 }
 
-/*
- * Delete a neighbor cache entry
- */
-static int
-delete(char *host)
+static void
+delete_one(char *host)
 {
 	struct sockaddr_in6 *mysin = &sin_m;
-	register struct rt_msghdr *rtm = &m_rtmsg.m_rtm;
-	struct sockaddr_dl *sdl;
 	struct addrinfo hints, *res;
 	int gai_error;
 
-	getsocket();
 	sin_m = blank_sin;
-
-	bzero(&hints, sizeof(hints));
+	(void)memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET6;
 	gai_error = getaddrinfo(host, NULL, &hints, &res);
 	if (gai_error) {
 		warnx("%s: %s", host, gai_strerror(gai_error));
-		return 1;
+		return;
 	}
 	makeaddr(mysin, res->ai_addr);
-	if (rtmsg(RTM_GET) < 0)
-		errx(1, "RTM_GET(%s) failed", host);
+	do_foreach(&mysin->sin6_addr, host, NDP_F_DELETE);
+}
+
+/*
+ * Delete a neighbor cache entry
+ */
+static int
+delete(struct rt_msghdr *rtm, char *host)
+{
+	struct sockaddr_in6 *mysin = &sin_m;
+	struct sockaddr_dl *sdl;
+
+	getsocket();
 	mysin = (struct sockaddr_in6 *)(void *)(rtm + 1);
 	sdl = (struct sockaddr_dl *)(void *)(RT_ROUNDUP(mysin->sin6_len) +
 	    (char *)(void *)mysin);
-	if (IN6_ARE_ADDR_EQUAL(&mysin->sin6_addr, &sin_m.sin6_addr)) {
-		if (sdl->sdl_family == AF_LINK &&
-		    !(rtm->rtm_flags & RTF_GATEWAY)) {
-			goto delete;
-		}
-		/*
-		 * IPv4 arp command retries with sin_other = SIN_PROXY here.
-		 */
-		warnx("delete: cannot delete non-NDP entry");
-		return 1;
-	}
 
-delete:
 	if (sdl->sdl_family != AF_LINK) {
 		(void)printf("cannot locate %s\n", host);
 		return (1);
 	}
-	if (rtmsg(RTM_DELETE) == 0) {
+	if (rtmsg(RTM_DELETE, rtm) == 0) {
 		struct sockaddr_in6 s6 = *mysin; /* XXX: for safety */
 
 		mysin->sin6_scope_id = 0;
@@ -512,10 +508,13 @@ delete:
 #define W_IF	6
 
 /*
- * Dump the entire neighbor cache
+ * Iterate on neighbor caches and do
+ * - dump all caches,
+ * - clear all caches (NDP_F_CLEAR) or
+ * - remove matched caches (NDP_F_DELETE)
  */
 static void
-dump(struct in6_addr *addr, int cflag)
+do_foreach(struct in6_addr *addr, char *host, int _flags)
 {
 	int mib[6];
 	size_t needed;
@@ -530,6 +529,8 @@ dump(struct in6_addr *addr, int cflag)
 	int ifwidth;
 	char flgbuf[8], *fl;
 	const char *ifname;
+	int cflag = _flags == NDP_F_CLEAR;
+	int dflag = _flags == NDP_F_DELETE;
 
 	/* Print header */
 	if (!tflag && !cflag)
@@ -543,14 +544,18 @@ again:;
 	mib[2] = 0;
 	mib[3] = AF_INET6;
 	mib[4] = NET_RT_FLAGS;
-	mib[5] = 0;
+	mib[5] = RTF_LLDATA;
 	if (prog_sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(1, "sysctl(PF_ROUTE estimate)");
 	if (needed > 0) {
 		if ((buf = malloc(needed)) == NULL)
 			err(1, "malloc");
-		if (prog_sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+		if (prog_sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
+			free(buf);
+			if (errno == ENOBUFS)
+				goto again;
 			err(1, "sysctl(PF_ROUTE, NET_RT_FLAGS)");
+		}
 		lim = buf + needed;
 	} else
 		buf = lim = NULL;
@@ -587,6 +592,10 @@ again:;
 			found_entry = 1;
 		} else if (IN6_IS_ADDR_MULTICAST(&mysin->sin6_addr))
 			continue;
+		if (dflag) {
+			(void)delete(rtm, host_buf);
+			continue;
+		}
 		if (IN6_IS_ADDR_LINKLOCAL(&mysin->sin6_addr) ||
 		    IN6_IS_ADDR_MC_LINKLOCAL(&mysin->sin6_addr)) {
 			uint16_t scopeid = mysin->sin6_scope_id;
@@ -600,8 +609,13 @@ again:;
 		    host_buf, sizeof(host_buf), NULL, 0,
 		    (nflag ? NI_NUMERICHOST : 0));
 		if (cflag) {
+			/* Restore scopeid */
+			if (IN6_IS_ADDR_LINKLOCAL(&mysin->sin6_addr) ||
+			    IN6_IS_ADDR_MC_LINKLOCAL(&mysin->sin6_addr))
+				inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL|
+				    INET6_IS_ADDR_MC_LINKLOCAL);
 			if ((rtm->rtm_flags & RTF_STATIC) == 0)
-				(void)delete(host_buf);
+				(void)delete(rtm, host_buf);
 			continue;
 		}
 		(void)gettimeofday(&tim, 0);
@@ -776,19 +790,21 @@ usage(void)
 }
 
 static int
-rtmsg(int cmd)
+rtmsg(int cmd, struct rt_msghdr *_rtm)
 {
 	static int seq;
-	register struct rt_msghdr *rtm = &m_rtmsg.m_rtm;
+	register struct rt_msghdr *rtm = _rtm;
 	register char *cp = m_rtmsg.m_space;
 	register int l;
 
 	errno = 0;
-	if (cmd == RTM_DELETE) {
-		rtm->rtm_flags |= RTF_LLDATA;
+	if (rtm != NULL) {
+		memcpy(&m_rtmsg, rtm, rtm->rtm_msglen);
+		rtm = &m_rtmsg.m_rtm;
 		goto doit;
 	}
 	(void)memset(&m_rtmsg, 0, sizeof(m_rtmsg));
+	rtm = &m_rtmsg.m_rtm;
 	rtm->rtm_flags = flags;
 	rtm->rtm_version = RTM_VERSION;
 
