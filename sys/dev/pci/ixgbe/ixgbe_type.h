@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_type.h 299200 2016-05-06 22:54:56Z pfg $*/
-/*$NetBSD: ixgbe_type.h,v 1.24 2017/06/27 08:03:55 msaitoh Exp $*/
+/*$NetBSD: ixgbe_type.h,v 1.25 2017/06/28 03:57:36 msaitoh Exp $*/
 
 #ifndef _IXGBE_TYPE_H_
 #define _IXGBE_TYPE_H_
@@ -510,6 +510,7 @@
 /* Tx DCA Control register : 128 of these (0-127) */
 #define IXGBE_DCA_TXCTRL_82599(_i)	(0x0600C + ((_i) * 0x40))
 #define IXGBE_TIPG			0x0CB00
+#define IXGBE_TIPG_IPGT_MASK		0x000000FF
 #define IXGBE_TXPBSIZE(_i)		(0x0CC00 + ((_i) * 4)) /* 8 of these */
 #define IXGBE_MNGTXMAP			0x0CD10
 #define IXGBE_TIPG_FIBER_DEFAULT	3
@@ -1759,6 +1760,7 @@ enum {
 
 /* PAP bit masks*/
 #define IXGBE_PAP_TXPAUSECNT_MASK	0x0000FFFF /* Pause counter mask */
+#define IXGBE_PAP_PACE_MASK		0x000F0000 /* Pace bit mask */
 
 /* RMCS Bit Masks */
 #define IXGBE_RMCS_RRM			0x00000002 /* Rx Recycle Mode enable */
