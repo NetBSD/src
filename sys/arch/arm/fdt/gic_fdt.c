@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.4 2017/05/30 22:00:25 jmcneill Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.5 2017/06/28 23:49:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.4 2017/05/30 22:00:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.5 2017/06/28 23:49:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.4 2017/05/30 22:00:25 jmcneill Exp $")
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/kmem.h>
 
 #include <arm/cortex/gic_intr.h>
@@ -42,8 +43,12 @@ __KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.4 2017/05/30 22:00:25 jmcneill Exp $")
 
 #include <dev/fdt/fdtvar.h>
 
+#define	GIC_MAXIRQ	1020
+
 static int	gic_fdt_match(device_t, cfdata_t, void *);
 static void	gic_fdt_attach(device_t, device_t, void *);
+
+static int	gic_fdt_intr(void *);
 
 static void *	gic_fdt_establish(device_t, u_int *, int, int,
 		    int (*)(void *), void *);
@@ -56,9 +61,30 @@ struct fdtbus_interrupt_controller_func gic_fdt_funcs = {
 	.intrstr = gic_fdt_intrstr
 };
 
+struct gic_fdt_softc;
+struct gic_fdt_irq;
+
+struct gic_fdt_irqhandler {
+	struct gic_fdt_irq	*ih_irq;
+	int			(*ih_fn)(void *);
+	void			*ih_arg;
+	bool			ih_mpsafe;
+	TAILQ_ENTRY(gic_fdt_irqhandler) ih_next;
+};
+
+struct gic_fdt_irq {
+	struct gic_fdt_softc	*intr_sc;
+	void			*intr_ih;
+	int			intr_refcnt;
+	int			intr_ipl;
+	TAILQ_HEAD(, gic_fdt_irqhandler) intr_handlers;
+};
+
 struct gic_fdt_softc {
 	device_t		sc_dev;
 	int			sc_phandle;
+
+	struct gic_fdt_irq	*sc_irq[GIC_MAXIRQ];
 };
 
 CFATTACH_DECL_NEW(gic_fdt, sizeof(struct gic_fdt_softc),
@@ -137,7 +163,9 @@ static void *
 gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
     int (*func)(void *), void *arg)
 {
-	int iflags = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
+	struct gic_fdt_softc * const sc = device_private(dev);
+	struct gic_fdt_irq *firq;
+	struct gic_fdt_irqhandler *firqh;
 
 	/* 1st cell is the interrupt type; 0 is SPI, 1 is PPI */
 	/* 2nd cell is the interrupt number */
@@ -149,13 +177,73 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	const u_int trig = be32toh(specifier[2]) & 0xf;
 	const u_int level = (trig & 0x3) ? IST_EDGE : IST_LEVEL;
 
-	return intr_establish(irq, ipl, level | iflags, func, arg);
+	firq = sc->sc_irq[irq];
+	if (firq == NULL) {
+		firq = kmem_alloc(sizeof(*firq), KM_SLEEP);
+		firq->intr_sc = sc;
+		firq->intr_refcnt = 0;
+		firq->intr_ipl = ipl;
+		TAILQ_INIT(&firq->intr_handlers);
+		firq->intr_ih = intr_establish(irq, ipl, level | IST_MPSAFE,
+		    gic_fdt_intr, firq);
+		if (firq->intr_ih == NULL) {
+			kmem_free(firq, sizeof(*firq));
+			return NULL;
+		}
+		sc->sc_irq[irq] = firq;
+	}
+
+	if (firq->intr_ipl != ipl) {
+		device_printf(dev, "cannot share irq with different ipl\n");
+		return NULL;
+	}
+
+	firq->intr_refcnt++;
+
+	firqh = kmem_alloc(sizeof(*firqh), KM_SLEEP);
+	firqh->ih_mpsafe = (flags & FDT_INTR_MPSAFE) != 0;
+	firqh->ih_irq = firq;
+	firqh->ih_fn = func;
+	firqh->ih_arg = arg;
+	TAILQ_INSERT_TAIL(&firq->intr_handlers, firqh, ih_next);
+
+	return firqh;
 }
 
 static void
 gic_fdt_disestablish(device_t dev, void *ih)
 {
-	intr_disestablish(ih);
+	struct gic_fdt_irqhandler *firqh = ih;
+	struct gic_fdt_irq *firq = firqh->ih_irq;
+
+	KASSERT(firq->intr_refcnt > 0);
+
+	TAILQ_REMOVE(&firq->intr_handlers, firqh, ih_next);
+	kmem_free(firqh, sizeof(*firqh));
+
+	firq->intr_refcnt--;
+	if (firq->intr_refcnt == 0) {
+		intr_disestablish(firq->intr_ih);
+		kmem_free(firq, sizeof(*firq));
+	}
+}
+
+static int
+gic_fdt_intr(void *priv)
+{
+	struct gic_fdt_irq *firq = priv;
+	struct gic_fdt_irqhandler *firqh;
+	int handled = 0;
+
+	TAILQ_FOREACH(firqh, &firq->intr_handlers, ih_next) {
+		if (!firqh->ih_mpsafe)
+			KERNEL_LOCK(1, curlwp);
+		handled += firqh->ih_fn(firqh->ih_arg);
+		if (!firqh->ih_mpsafe)
+			KERNEL_UNLOCK_ONE(curlwp);
+	}
+
+	return handled;
 }
 
 static bool
