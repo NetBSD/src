@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.43 2017/05/19 04:34:09 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.44 2017/06/28 13:12:37 christos Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.43 2017/05/19 04:34:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.44 2017/06/28 13:12:37 christos Exp $");
 
 /*
  * IPsec input processing.
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.43 2017/05/19 04:34:09 ozaki-r Exp
 #include <netinet/ip_var.h>
 #include <netinet/in_var.h>
 #include <netinet/in_proto.h>
+#include <netinet/udp.h>
+#include <netinet/tcp.h>
 
 #include <netinet/ip6.h>
 #ifdef INET6
@@ -112,6 +114,63 @@ do {									\
 		break;							\
 	}								\
 } while (/*CONSTCOND*/0)
+
+/*
+ * fixup TCP/UDP checksum
+ *
+ * XXX: if we have NAT-OA payload from IKE server,
+ *      we must do the differential update of checksum.
+ *
+ * XXX: NAT-OAi/NAT-OAr drived from IKE initiator/responder.
+ *      how to know the IKE side from kernel?
+ */
+static struct mbuf *
+ipsec4_fixup_checksum(struct mbuf *m)
+{
+       struct ip *ip;
+       struct tcphdr *th;
+       struct udphdr *uh;
+       int poff, off;
+       int plen;
+
+       if (m->m_len < sizeof(*ip))
+               m = m_pullup(m, sizeof(*ip));
+       ip = mtod(m, struct ip *); 
+       poff = ip->ip_hl << 2;
+       plen = ntohs(ip->ip_len) - poff;
+
+       switch (ip->ip_p) {
+       case IPPROTO_TCP:
+               IP6_EXTHDR_GET(th, struct tcphdr *, m, poff, sizeof(*th));
+               if (th == NULL)
+                       return NULL;
+               off = th->th_off << 2;
+               if (off < sizeof(*th) || off > plen) {
+                       m_freem(m);
+                       return NULL;
+               }
+               th->th_sum = 0;
+               th->th_sum = in4_cksum(m, IPPROTO_TCP, poff, plen);
+               break;
+       case IPPROTO_UDP:
+               IP6_EXTHDR_GET(uh, struct udphdr *, m, poff, sizeof(*uh));
+               if (uh == NULL)
+                       return NULL;
+               off = sizeof(*uh); 
+               if (off > plen) {  
+                       m_freem(m);
+                       return NULL;
+               }
+               uh->uh_sum = 0;
+               uh->uh_sum = in4_cksum(m, IPPROTO_UDP, poff, plen);
+               break;
+       default:
+               /* no checksum */  
+               return m;
+       }
+
+       return m;
+}
 
 /*
  * ipsec_common_input gets called when an IPsec-protected packet
@@ -304,19 +363,37 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 	}
 
 	/* Fix IPv4 header */
-	if (m->m_len < skip && (m = m_pullup(m, skip)) == NULL) {
-		char buf[IPSEC_ADDRSTRLEN];
-		IPSECLOG(LOG_DEBUG, "processing failed for SA %s/%08lx\n",
-		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
-		    (u_long) ntohl(sav->spi));
-		IPSEC_ISTAT(sproto, ESP_STAT_HDROPS, AH_STAT_HDROPS,
-		    IPCOMP_STAT_HDROPS);
-		error = ENOBUFS;
-		goto bad;
+	if (skip != 0) {
+		if (m->m_len < skip && (m = m_pullup(m, skip)) == NULL) {
+			char buf[IPSEC_ADDRSTRLEN];
+cantpull:
+			IPSECLOG(LOG_DEBUG,
+			    "processing failed for SA %s/%08lx\n",
+			    ipsec_address(&sav->sah->saidx.dst, buf,
+			    sizeof(buf)), (u_long) ntohl(sav->spi));
+			IPSEC_ISTAT(sproto, ESP_STAT_HDROPS, AH_STAT_HDROPS,
+			    IPCOMP_STAT_HDROPS);
+			error = ENOBUFS;
+			goto bad;
+		}
+
+		ip = mtod(m, struct ip *);
+		ip->ip_len = htons(m->m_pkthdr.len);
+		ip->ip_sum = 0;
+		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+	} else {
+		ip = mtod(m, struct ip *);
 	}
 
-	ip = mtod(m, struct ip *);
-	ip->ip_len = htons(m->m_pkthdr.len);
+	/*
+	 * Update TCP/UDP checksum
+	 * XXX: should only do it in NAT-T case
+	 * XXX: should do it incrementally, see FreeBSD code.
+	 */
+	m = ipsec4_fixup_checksum(m);
+	if (m == NULL)
+		goto cantpull;
+
 	prot = ip->ip_p;
 
 	/* IP-in-IP encapsulation */
