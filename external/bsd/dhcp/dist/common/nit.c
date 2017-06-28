@@ -1,4 +1,4 @@
-/*	$NetBSD: nit.c,v 1.1.1.3 2016/01/10 19:44:39 christos Exp $	*/
+/*	$NetBSD: nit.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
 /* nit.c
 
    Network Interface Tap (NIT) network interface code, by Ted Lemon
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nit.c,v 1.1.1.3 2016/01/10 19:44:39 christos Exp $");
+__RCSID("$NetBSD: nit.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_NIT_SEND) || defined (USE_NIT_RECEIVE)
@@ -234,7 +234,7 @@ void if_register_receive (info)
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_CAND;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + 18;
 	pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
-	pf.Pf_Filter [pf.Pf_FilterLen++] = local_port;
+	pf.Pf_Filter [pf.Pf_FilterLen++] = *libdhcp_callbacks.local_port;
 
 	/* Install the filter... */
 	sio.ic_cmd = NIOCSETF;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dhclient.c,v 1.10 2016/01/10 20:10:44 christos Exp $	*/
+/*	$NetBSD: dhclient.c,v 1.11 2017/06/28 02:46:30 manu Exp $	*/
 /* dhclient.c
 
    DHCP Client. */
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.10 2016/01/10 20:10:44 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.11 2017/06/28 02:46:30 manu Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -94,6 +94,21 @@ int wanted_ia_na = -1;		/* the absolute value is the real one. */
 int wanted_ia_ta = 0;
 int wanted_ia_pd = 0;
 char *mockup_relay = NULL;
+
+libdhcp_callbacks_t dhclient_callbacks = {
+	&local_port,
+	&remote_port,
+	classify,
+	check_collection,
+	dhcp,
+#ifdef DHCPv6
+	dhcpv6,
+#endif /* DHCPv6 */
+	bootp,
+	find_class,
+	parse_allow_deny,
+	dhcp_set_control_state,
+};
 
 void run_stateless(int exit_mode);
 
@@ -182,6 +197,8 @@ main(int argc, char **argv) {
 #endif /* DHCPv6 */
 	char *s;
 	char **ifaces;
+
+	libdhcp_callbacks_register(&dhclient_callbacks);
 
 	/* Initialize client globals. */
 	memset(&default_duid, 0, sizeof(default_duid));
@@ -942,7 +959,7 @@ int find_subnet (struct subnet **sp,
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.10 2016/01/10 20:10:44 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.11 2017/06/28 02:46:30 manu Exp $");
 
 void state_reboot (cpp)
 	void *cpp;
