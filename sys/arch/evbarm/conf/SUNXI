@@ -1,0 +1,109 @@
+#
+#	$NetBSD: SUNXI,v 1.1 2017/06/28 23:51:29 jmcneill Exp $
+#
+#	Allwinner sunxi family
+#
+
+include	"arch/evbarm/conf/std.sunxi"
+include	"arch/evbarm/conf/GENERIC.common"
+
+makeoptions	DTS="
+	sun8i-h3-bananapi-m2-plus.dts
+	sun8i-h3-beelink-x2.dts
+	sun8i-h3-nanopi-m1.dts
+	sun8i-h3-nanopi-neo.dts
+	sun8i-h3-orangepi-2.dts
+	sun8i-h3-orangepi-lite.dts
+	sun8i-h3-orangepi-pc-plus.dts
+	sun8i-h3-orangepi-pc.dts
+	sun8i-h3-orangepi-plus.dts
+	sun8i-h3-orangepi-plus2e.dts
+"
+
+options 	CPU_CORTEXA7
+options 	SOC_SUN8I_H3
+options 	MULTIPROCESSOR
+
+pseudo-device 	openfirm	# /dev/openfirm
+
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
+#options 	LOCKDEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	IPKDB		# remote kernel debugging
+#options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+# CONSADDR is required for early init messages from VERBOSE_INIT_ARM.
+#options 	CONSADDR=0x01c28000
+
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+
+config		netbsd		root on ? type ?
+
+# Device tree support
+armfdt0		at root
+fdt*		at fdtbus?
+
+# CPUs
+cpus*		at fdt? pass 0
+cpu*		at cpus?
+
+# Power state coordination interface
+psci*		at fdt?
+
+# Clock and reset controllers
+sun8ih3ccu*	at fdt? pass 4		# H3 CCU
+
+fclock*		at fdt? pass 4
+fregulator*	at fdt? pass 4
+gpiokeys*	at fdt?
+
+# Timer
+gtmr*		at fdt? pass 1		# ARM Generic Timer
+armgtmr0	at gtmr?
+
+# Interrupt controller
+gic*		at fdt? pass 1		# GIC
+armgic0		at gic?
+
+# Memory controller
+
+# DMA controller
+
+# Clock and Reset controller
+
+# GPIO controller
+#sunxigpio*	at fdt? pass 2		# GPIO
+#gpio*		at gpiobus?
+
+# Ethernet
+#awg*		at pci? dev ? function ?	# Allwinner Gigabit Ethernet
+#ukphy*		at mii? phy ?
+
+# UART
+com*		at fdt?			# UART
+
+# I2C
+#sunxiiic*	at fdt?			# I2C
+#iic*		at sunxiiic?
+
+# RTC
+
+# SDMMC
+#sunximmc*	at fdt?			# SDMMC
+#sdmmc*		at sdhc?
+#ld0		at sdmmc0
+#ld1		at sdmmc1
+#ld2		at sdmmc2
+#ld3		at sdmmc3
+#ld*		at sdmmc?
+
+# USB 2.0
+#sunxiusbphy*	at fdt?			# USB PHY
+#ehci*		at fdt?			# USB
+#usb*		at ehci?
+
+#include "dev/usb/usbdevices.config"
+#midi*		at midibus?
+
+cinclude "arch/evbarm/conf/SUNXI.local"
