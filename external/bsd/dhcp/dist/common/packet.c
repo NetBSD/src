@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.3 2016/01/10 20:10:44 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.4 2017/06/28 02:46:30 manu Exp $	*/
 /* packet.c
 
    Packet assembly code, originally contributed by Archie Cobbs. */
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: packet.c,v 1.3 2016/01/10 20:10:44 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.4 2017/06/28 02:46:30 manu Exp $");
 
 #include "dhcpd.h"
 
@@ -170,7 +170,7 @@ void assemble_udp_ip_header (interface, buf, bufix,
 	*bufix += sizeof ip;
 
 	/* Fill out the UDP header */
-	udp.uh_sport = local_port;		/* XXX */
+	udp.uh_sport = *libdhcp_callbacks.local_port;		/* XXX */
 	udp.uh_dport = port;			/* XXX */
 	udp.uh_ulen = htons(sizeof(udp) + len);
 	memset (&udp.uh_sum, 0, sizeof udp.uh_sum);
@@ -301,7 +301,7 @@ decode_udp_ip_header(struct interface_info *interface,
 	  return -1;
 
   /* Is it to the port we're serving? */
-  if (udp.uh_dport != local_port)
+  if (udp.uh_dport != *libdhcp_callbacks.local_port)
 	  return -1;
 #endif /* USERLAND_FILTER */
 

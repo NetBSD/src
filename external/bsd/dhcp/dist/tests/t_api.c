@@ -1,4 +1,4 @@
-/*	$NetBSD: t_api.c,v 1.1.1.3 2014/07/12 11:58:01 spz Exp $	*/
+/*	$NetBSD: t_api.c,v 1.2 2017/06/28 02:46:31 manu Exp $	*/
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
@@ -125,6 +125,23 @@ printusage(void);
 
 static int	T_int;
 
+uint16_t local_port = 0;
+uint16_t remote_port = 0;
+libdhcp_callbacks_t t_api_callbacks = {
+	&local_port,
+	&remote_port,
+	classify,
+	check_collection,
+	dhcp,
+#ifdef DHCPv6
+	dhcpv6,
+#endif /* DHCPv6 */
+	bootp,
+	find_class,
+	parse_allow_deny,
+	dhcp_set_control_state,
+};
+
 static void
 t_sighandler(int sig) {
 	T_int = sig;
@@ -148,6 +165,8 @@ main(int argc, char **argv) {
 	first = ISC_TRUE;
 	subprocs = 1;
 	T_timeout = T_TCTOUT;
+
+	libdhcp_callbacks_register(&t_api_callbacks);
 
 	/*
 	 * -a option is now default.

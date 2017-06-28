@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpd.c,v 1.5 2016/01/10 20:10:45 christos Exp $	*/
+/*	$NetBSD: dhcpd.c,v 1.6 2017/06/28 02:46:31 manu Exp $	*/
 /* dhcpd.c
 
    DHCP Server Daemon. */
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpd.c,v 1.5 2016/01/10 20:10:45 christos Exp $");
+__RCSID("$NetBSD: dhcpd.c,v 1.6 2017/06/28 02:46:31 manu Exp $");
 
 static const char copyright[] =
 "Copyright 2004-2015 Internet Systems Consortium.";
@@ -98,6 +98,23 @@ int omapi_port;
 trace_type_t *trace_srandom;
 #endif
 
+uint16_t local_port = 0;
+uint16_t remote_port = 0;
+libdhcp_callbacks_t dhcpd_callbacks = {
+	&local_port,
+	&remote_port,
+	classify,
+	check_collection,
+	dhcp,
+#ifdef DHCPv6
+	dhcpv6,
+#endif /* DHCPv6 */
+	bootp,
+	find_class,
+	parse_allow_deny,
+	dhcp_set_control_state,
+};
+
 static isc_result_t verify_addr (omapi_object_t *l, omapi_addr_t *addr) {
 	return ISC_R_SUCCESS;
 }
@@ -141,7 +158,7 @@ static void omapi_listener_start (void *foo)
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpd.c,v 1.5 2016/01/10 20:10:45 christos Exp $");
+__RCSID("$NetBSD: dhcpd.c,v 1.6 2017/06/28 02:46:31 manu Exp $");
 
 #if defined (PARANOIA)
 /* to be used in one of two possible scenarios */
@@ -197,6 +214,8 @@ main(int argc, char **argv) {
 	char *set_group  = 0;
 	char *set_chroot = 0;
 #endif /* PARANOIA */
+
+	libdhcp_callbacks_register(&dhcpd_callbacks);
 
         /* Make sure that file descriptors 0 (stdin), 1, (stdout), and
            2 (stderr) are open. To do this, we assume that when we

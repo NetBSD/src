@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcpd.h,v 1.8 2016/01/10 20:10:44 christos Exp $	*/
+/*	$NetBSD: dhcpd.h,v 1.9 2017/06/28 02:46:30 manu Exp $	*/
 /* dhcpd.h
 
    Definitions for dhcpd... */
@@ -3766,6 +3766,28 @@ void lc_delete_all(struct leasechain *lc);
 
 #define MAX_ADDRESS_STRING_LEN \
    (sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"))
+
+typedef struct libdhcp_callbacks {
+	uint16_t *local_port;
+	uint16_t *remote_port;
+	void (*classify) (struct packet *, struct class *);
+	int (*check_collection) (struct packet *, struct lease *,
+				 struct collection *);
+	void (*dhcp) (struct packet *);
+#ifdef DHCPv6
+	void (*dhcpv6) (struct packet *);
+#endif /* DHCPv6 */
+	void (*bootp) (struct packet *);
+	isc_result_t (*find_class) (struct class **, const char *,
+				    const char *, int);
+	int (*parse_allow_deny) (struct option_cache **, struct parse *, int);
+	isc_result_t (*dhcp_set_control_state) (control_object_state_t,
+						control_object_state_t);
+} libdhcp_callbacks_t;
+
+extern libdhcp_callbacks_t libdhcp_callbacks;
+
+void libdhcp_callbacks_register(libdhcp_callbacks_t *);
 
 /* Find the percentage of count.  We need to try two different
  * ways to avoid rounding mistakes.

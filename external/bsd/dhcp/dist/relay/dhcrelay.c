@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcrelay.c,v 1.7 2017/06/05 07:35:23 manu Exp $	*/
+/*	$NetBSD: dhcrelay.c,v 1.8 2017/06/28 02:46:30 manu Exp $	*/
 /* dhcrelay.c
 
    DHCP/BOOTP Relay Agent. */
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.7 2017/06/05 07:35:23 manu Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.8 2017/06/28 02:46:30 manu Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -94,8 +94,8 @@ enum { forward_and_append,	/* Forward and append our own relay option. */
        forward_untouched,	/* Forward without changes. */
        discard } agent_relay_mode = forward_and_replace;
 
-u_int16_t local_port;
-u_int16_t remote_port;
+u_int16_t local_port = 0;
+u_int16_t remote_port = 0;
 
 /* Relay agent server list. */
 struct server_list {
@@ -123,6 +123,21 @@ static void setup_streams(void);
  */
 char *dhcrelay_sub_id = NULL;
 #endif
+
+libdhcp_callbacks_t dhcrelay_callbacks = {
+	&local_port,
+	&remote_port,
+	classify,
+	check_collection,
+	dhcp,
+#ifdef DHCPv6
+	dhcpv6,
+#endif /* DHCPv6 */
+	bootp,
+	find_class,
+	parse_allow_deny,
+	dhcp_set_control_state,
+};
 
 static void do_relay4(struct interface_info *, struct dhcp_packet *,
 	              unsigned int, unsigned int, struct iaddr,
@@ -187,6 +202,8 @@ main(int argc, char **argv) {
 	struct stream_list *sl = NULL;
 	int local_family_set = 0;
 #endif
+
+	libdhcp_callbacks_register(&dhcrelay_callbacks);
 
 	/* Make sure that file descriptors 0(stdin), 1,(stdout), and
 	   2(stderr) are open. To do this, we assume that when we
@@ -948,7 +965,7 @@ find_interface_by_agent_option(struct dhcp_packet *packet,
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.7 2017/06/05 07:35:23 manu Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.8 2017/06/28 02:46:30 manu Exp $");
 static int
 add_relay_agent_options(struct interface_info *ip, struct dhcp_packet *packet,
 			unsigned length, struct in_addr giaddr) {

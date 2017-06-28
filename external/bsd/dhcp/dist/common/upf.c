@@ -1,4 +1,4 @@
-/*	$NetBSD: upf.c,v 1.1.1.3 2016/01/10 19:44:40 christos Exp $	*/
+/*	$NetBSD: upf.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
 /* upf.c
 
    Ultrix PacketFilter interface code. */
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: upf.c,v 1.1.1.3 2016/01/10 19:44:40 christos Exp $");
+__RCSID("$NetBSD: upf.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_UPF_SEND) || defined (USE_UPF_RECEIVE)
@@ -205,7 +205,7 @@ void if_register_receive (info)
 	pf.enf_Filter [pf.enf_FilterLen++] = ENF_CAND;
 	pf.enf_Filter [pf.enf_FilterLen++] = ENF_PUSHWORD + 18;
 	pf.enf_Filter [pf.enf_FilterLen++] = ENF_PUSHLIT + ENF_CAND;
-	pf.enf_Filter [pf.enf_FilterLen++] = local_port;
+	pf.enf_Filter [pf.enf_FilterLen++] = *libdhcp_callbacks.local_port;
 
 	if (ioctl (info -> rfdesc, EIOCSETF, &pf) < 0)
 		log_fatal ("Can't install packet filter program: %m");

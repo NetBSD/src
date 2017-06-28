@@ -1,4 +1,4 @@
-/*	$NetBSD: dlpi.c,v 1.1.1.4 2016/01/10 19:44:39 christos Exp $	*/
+/*	$NetBSD: dlpi.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
 /* dlpi.c
  
    Data Link Provider Interface (DLPI) network interface code. */
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dlpi.c,v 1.1.1.4 2016/01/10 19:44:39 christos Exp $");
+__RCSID("$NetBSD: dlpi.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
 
 /*
  * Based largely in part to the existing NIT code in nit.c.
@@ -456,7 +456,7 @@ void if_register_receive (info)
         offset = ETHER_H_PREFIX + sizeof (iphdr) + sizeof (u_int16_t);
         pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHWORD + (offset / 2);
         pf.Pf_Filter [pf.Pf_FilterLen++] = ENF_PUSHLIT | ENF_CAND;
-        pf.Pf_Filter [pf.Pf_FilterLen++] = local_port;
+        pf.Pf_Filter [pf.Pf_FilterLen++] = *libdhcp_callbacks.local_port;
 
         /*
          * protocol should be udp. this is a byte compare, test for

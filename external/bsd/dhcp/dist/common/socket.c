@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.4 2016/01/10 19:44:40 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
 /* socket.c
 
    BSD socket interface code... */
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: socket.c,v 1.1.1.4 2016/01/10 19:44:40 christos Exp $");
+__RCSID("$NetBSD: socket.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
 
 /* SO_BINDTODEVICE support added by Elliot Poger (poger@leland.stanford.edu).
  * This sockopt allows a socket to be bound to a particular interface,
@@ -159,7 +159,7 @@ if_register_socket(struct interface_info *info, int family,
 	case AF_INET6:
 		addr6 = (struct sockaddr_in6 *)&name; 
 		addr6->sin6_family = AF_INET6;
-		addr6->sin6_port = local_port;
+		addr6->sin6_port = *libdhcp_callbacks.local_port;
 		if (linklocal6) {
 			memcpy(&addr6->sin6_addr,
 			       linklocal6,
@@ -181,7 +181,7 @@ if_register_socket(struct interface_info *info, int family,
 	default:
 		addr = (struct sockaddr_in *)&name; 
 		addr->sin_family = AF_INET;
-		addr->sin_port = local_port;
+		addr->sin_port = *libdhcp_callbacks.local_port;
 		memcpy(&addr->sin_addr,
 		       &local_address,
 		       sizeof(addr->sin_addr));
@@ -498,7 +498,8 @@ if_register6(struct interface_info *info, int do_multicast) {
 			 */
 			log_fatal("Impossible condition at %s:%d", MDL);
 		} else {
-			log_info("Bound to *:%d", ntohs(local_port));
+			log_info("Bound to *:%d",
+				 ntohs(*libdhcp_callbacks.local_port));
 		}
 	}
 		
@@ -617,7 +618,8 @@ if_deregister6(struct interface_info *info) {
 		close(global_v6_socket);
 		global_v6_socket = -1;
 
-		log_info("Unbound from *:%d", ntohs(local_port));
+		log_info("Unbound from *:%d",
+			 ntohs(*libdhcp_callbacks.local_port));
 	}
 }
 #endif /* DHCPv6 */

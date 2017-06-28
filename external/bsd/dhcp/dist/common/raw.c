@@ -1,4 +1,4 @@
-/*	$NetBSD: raw.c,v 1.1.1.2 2014/07/12 11:57:46 spz Exp $	*/
+/*	$NetBSD: raw.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
 /* raw.c
 
    BSD raw socket interface code... */
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: raw.c,v 1.1.1.2 2014/07/12 11:57:46 spz Exp $");
+__RCSID("$NetBSD: raw.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
 
 #include "dhcpd.h"
 
@@ -59,14 +59,15 @@ void if_register_send (info)
 
 	/* Set up the address we're going to connect to. */
 	name.sin_family = AF_INET;
-	name.sin_port = local_port;
+	name.sin_port = *libdhcp_callbacks.local_port;
 	name.sin_addr.s_addr = htonl (INADDR_BROADCAST);
 	memset (name.sin_zero, 0, sizeof (name.sin_zero));
 
 	/* List addresses on which we're listening. */
         if (!quiet_interface_discovery)
 		log_info ("Sending on %s, port %d",
-		      piaddr (info -> address), htons (local_port));
+		      piaddr (info -> address),
+		      htons (*libdhcp_callbacks.local_port));
 	if ((sock = socket (AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
 		log_fatal ("Can't create dhcp socket: %m");
 
