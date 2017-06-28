@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.155 2017/06/27 12:43:44 kre Exp $
+.\"	$NetBSD: sh.1,v 1.156 2017/06/28 13:46:06 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd June 17, 2017
+.Dd June 28, 2017
 .Dt SH 1
 .ds flags abCEeFfhnuvxIimpqV
 .Os
@@ -2756,9 +2756,109 @@ for the commands that can be given to configure
 .Xr editline 7
 in the file named by the
 .Ev EDITRC
-parameter, or using
+parameter,
+or a file used with the
+.Ic inputrc
+built-in command,
+or using
 .Xr editline 7 Ap s
 configuration command line.
+.Pp
+When command line editing is enabled, the
+.Xr editline 7
+functions control printing of the
+.Ev PS1
+and
+.Ev PS2
+prompts when required.
+As, in this mode, the command line editor needs to
+keep track of what characters are in what position on
+the command line, care needs to be taken when setting
+the prompts.
+Normal printing characters are handled automatically,
+however mode setting sequences, which do not actually display
+on the terminal, need to be identified to
+.Xr editline 7 .
+This is done, when needed, by choosing a character that
+is not needed anywhere in the prompt, including in the mode
+setting sequences, any single character is acceptable,
+and assigning it to the shell parameter
+.Ev PSlit .
+Then that character should be used, in pairs, in the
+prompt string.
+Between each pair of
+.Ev PSlit
+characters are mode setting sequences, which affect the printing
+attributes of the following (normal) characters of the prompt,
+but do not themselves appear visibly, nor change the terminal's
+cursor position.
+.Pp
+Each such sequence, that is
+.Ev PSlit
+character, mode setting character sequence, and another
+.Ev PSlit
+character, must currently be followed by at least one following
+normal prompt character, or it will be ignored.
+That is, a
+.Ev PSlit
+character cannot be the final character of
+.Ev PS1
+or
+.Ev PS2 ,
+nor may two
+.Ev PSlit
+delimited sequences appear adjacent to each other.
+Each sequence can contain as many mode altering sequences as are
+required however.
+Only the first character from
+.Ev PSlit
+will be used.
+When set
+.Ev PSlit
+should usually be set to a string containing just one
+character, then it can simply be embedded in
+.Ev PS1
+(or
+.Ev PS2 )
+as in
+.Dl PS1="${PSlit}mset${PSlit}XYZ${PSlit}mclr${PSlit}ABC"
+The prompt visible will be
+.Dq XYZABC
+with the
+.Dq XYZ
+part shown according as defined by the mode setting characters
+.Dq mset ,
+and then cleared again by
+.Dq mclr .
+See
+.Xr tput 1
+for one method to generate appropriate mode sequences.
+Note that both parts, XYZ and ABC, must each contain at least one
+character.
+.Pp
+If
+.Ev PSlit
+is unset, which is its initial state, or set to a null string,
+no literal character will be defined,
+and all characters of the prompt strings will be assumed
+to be visible characters (which includes spaces etc.)
+To allow smooth use of prompts, without needing redefinition, when
+.Xr editline 7
+is disabled, the character chosen should be one which will be
+ignored by the terminal if received, as when
+.Xr edlitline 7
+is not in use, the prompt strings are simply written to the terminal.
+For example, setting:
+.Bd -compact -literal -offset left
+  PSlit="$(printf\ '\e1')"
+  PS1="${PSlit}$(tput\ bold\ blink)${PSlit}\e$${PSlit}$(tput\ sgr0)${PSlit}\ "
+.Ed
+will arrange for the primary prompt to be a bold blinking dollar sign,
+if supported by the current terminal, followed by an (ordinary) space,
+and, as the SOH (Control-A) character ('\e1') will not normally affect
+a terminal, this same prompt will usually work with
+.Xr editline 7
+enabled or disabled.
 .Sh ENVIRONMENT
 .Bl -tag -width MAILCHECK
 .It Ev CDPATH
@@ -2868,6 +2968,22 @@ The secondary prompt string, which defaults to
 Output before each line when execution trace (set -x) is enabled,
 defaults to
 .Dq + \  .
+.It Ev PSlit
+Defines the character which may be embedded in pairs, in
+.Ev PS1
+or
+.Ev PS2
+to indicate to
+.Xr editline 7
+that the characters between each pair of occurrences of the
+.Ev PSlit
+character will not appear in the visible prompt, and will not
+cause the terminal's cursor to change position, but rather set terminal
+attributes for the following prompt character(s) at least one of
+which must be present.
+See
+.Sx Command Line Editing
+above for more information.
 .It Ev TERM
 The default terminal setting for the shell.
 This is inherited by
