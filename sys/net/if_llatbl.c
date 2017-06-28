@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.20 2017/06/23 05:46:10 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.21 2017/06/28 04:14:53 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -80,6 +80,8 @@ int
 lltable_dump_entry(struct lltable *llt, struct llentry *lle,
     struct rt_walkarg *w, struct sockaddr *sa)
 {
+#define RTF_LLINFO	0x400
+#define RTF_CLONED	0x2000
 	struct ifnet *ifp = llt->llt_ifp;
 	int error;
 	void *a;
@@ -107,9 +109,14 @@ lltable_dump_entry(struct lltable *llt, struct llentry *lle,
 		struct rt_msghdr *rtm = (struct rt_msghdr *)w->w_tmem;
 
 		/* Need to copy by myself */
+		rtm->rtm_index = ifp->if_index;
+		rtm->rtm_rmx.rmx_mtu = 0;
 		rtm->rtm_rmx.rmx_expire =
 		    (lle->la_flags & LLE_STATIC) ? 0 : lle->la_expire;
+		rtm->rtm_flags = RTF_UP;
 		rtm->rtm_flags |= RTF_HOST; /* For ndp */
+		/* For backward compatibility */
+		rtm->rtm_flags |= RTF_LLINFO | RTF_CLONED;
 		rtm->rtm_flags |= (lle->la_flags & LLE_STATIC) ? RTF_STATIC : 0;
 		if (lle->la_flags & LLE_PUB)
 			rtm->rtm_flags |= RTF_ANNOUNCE;
@@ -121,6 +128,8 @@ lltable_dump_entry(struct lltable *llt, struct llentry *lle,
 	}
 
 	return error;
+#undef RTF_LLINFO
+#undef RTF_CLONED
 }
 
 /*

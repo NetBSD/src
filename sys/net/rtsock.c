@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.223 2017/06/26 06:59:56 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.224 2017/06/28 04:14:53 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.223 2017/06/26 06:59:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.224 2017/06/28 04:14:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1932,10 +1932,22 @@ again:
 		}
 #endif
 
-		for (i = 1; i <= AF_MAX; i++)
-			if ((af == 0 || af == i) &&
-			    (error = rt_walktree(i, sysctl_dumpentry, &w)))
-				break;
+		for (i = 1; i <= AF_MAX; i++) {
+			if (af == 0 || af == i) {
+				error = rt_walktree(i, sysctl_dumpentry, &w);
+				if (error != 0)
+					break;
+#if defined(INET) || defined(INET6)
+				/*
+				 * Return ARP/NDP entries too for
+				 * backward compatibility.
+				 */
+				error = lltable_sysctl_dump(i, &w);
+				if (error != 0)
+					break;
+#endif
+			}
+		}
 		break;
 
 #ifdef COMPAT_14

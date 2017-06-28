@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.31 2017/06/28 04:10:47 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.32 2017/06/28 04:14:53 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -113,6 +113,7 @@ setup_dst_server()
 
 	$DEBUG && rump.ifconfig shmif0
 	$DEBUG && rump.arp -n -a
+	$DEBUG && rump.netstat -nr -f inet
 }
 
 setup_src_server()
@@ -136,6 +137,7 @@ setup_src_server()
 	# Sanity check
 	$DEBUG && rump.ifconfig shmif0
 	$DEBUG && rump.arp -n -a
+	$DEBUG && rump.netstat -nr -f inet
 	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4SRC
 	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4DST
 }
@@ -161,6 +163,8 @@ test_cache_expiration()
 	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n $IP4SRC
 	# Should be cached
 	atf_check -s exit:0 -o ignore rump.arp -n $IP4DST
+	$DEBUG && rump.netstat -nr -f inet
+	atf_check -s exit:0 -o match:"$IP4DST" rump.netstat -nr -f inet
 
 	atf_check -s exit:0 sleep $(($arp_keep + $bonus))
 
@@ -184,6 +188,23 @@ arp_cache_expiration_10s_body()
 	rump_server_destroy_ifaces
 }
 
+check_arp_static_entry()
+{
+	local ip=$1
+	local mac=$2
+	local type=$3
+	local flags=
+
+	atf_check -s exit:0 -o match:"$mac" rump.arp -n $ip
+	if [ $type = 'permanent' ]; then
+		atf_check -s exit:0 -o match:'permanent' rump.arp -n $ip
+		check_route $ip "$mac" UHLS shmif0
+	else
+		atf_check -s exit:0 -o not-match:'permanent' rump.arp -n $ip
+		check_route $ip "$mac" UHL shmif0
+	fi
+}
+
 arp_command_body()
 {
 	local arp_keep=5
@@ -201,11 +222,13 @@ arp_command_body()
 	$DEBUG && rump.arp -n -a
 	atf_check -s exit:0 -o ignore rump.arp -s 10.0.1.10 b2:a0:20:00:00:10
 	$DEBUG && rump.arp -n -a
-	atf_check -s exit:0 -o match:'b2:a0:20:00:00:10' rump.arp -n 10.0.1.10
-	atf_check -s exit:0 -o match:'permanent' rump.arp -n 10.0.1.10
+	$DEBUG && rump.netstat -nr -f inet
+	check_arp_static_entry 10.0.1.10 'b2:a0:20:00:00:10' permanent
 	atf_check -s exit:0 -o ignore rump.arp -d 10.0.1.10
 	$DEBUG && rump.arp -n -a
+	$DEBUG && rump.netstat -nr -f inet
 	atf_check -s not-exit:0 -e ignore rump.arp -n 10.0.1.10
+	check_route_no_entry 10.0.1.10
 
 	# Add multiple entries via a file
 	cat - > ./list <<-EOF
@@ -216,18 +239,15 @@ arp_command_body()
 	10.0.1.15 b2:a0:20:00:00:15
 	EOF
 	$DEBUG && rump.arp -n -a
+	$DEBUG && rump.netstat -nr -f inet
 	atf_check -s exit:0 -o ignore rump.arp -f ./list
 	$DEBUG && rump.arp -n -a
-	atf_check -s exit:0 -o match:'b2:a0:20:00:00:11' rump.arp -n 10.0.1.11
-	atf_check -s exit:0 -o match:'permanent' rump.arp -n 10.0.1.11
-	atf_check -s exit:0 -o match:'b2:a0:20:00:00:12' rump.arp -n 10.0.1.12
-	atf_check -s exit:0 -o match:'permanent' rump.arp -n 10.0.1.12
-	atf_check -s exit:0 -o match:'b2:a0:20:00:00:13' rump.arp -n 10.0.1.13
-	atf_check -s exit:0 -o match:'permanent' rump.arp -n 10.0.1.13
-	atf_check -s exit:0 -o match:'b2:a0:20:00:00:14' rump.arp -n 10.0.1.14
-	atf_check -s exit:0 -o match:'permanent' rump.arp -n 10.0.1.14
-	atf_check -s exit:0 -o match:'b2:a0:20:00:00:15' rump.arp -n 10.0.1.15
-	atf_check -s exit:0 -o match:'permanent' rump.arp -n 10.0.1.15
+	$DEBUG && rump.netstat -nr -f inet
+	check_arp_static_entry 10.0.1.11 'b2:a0:20:00:00:11' permanent
+	check_arp_static_entry 10.0.1.12 'b2:a0:20:00:00:12' permanent
+	check_arp_static_entry 10.0.1.13 'b2:a0:20:00:00:13' permanent
+	check_arp_static_entry 10.0.1.14 'b2:a0:20:00:00:14' permanent
+	check_arp_static_entry 10.0.1.15 'b2:a0:20:00:00:15' permanent
 
 	# Test arp -a
 	atf_check -s exit:0 -o match:'10.0.1.11' rump.arp -n -a
@@ -238,6 +258,7 @@ arp_command_body()
 
 	# Flush all entries
 	$DEBUG && rump.arp -n -a
+	$DEBUG && rump.netstat -nr -f inet
 	atf_check -s exit:0 -o ignore rump.arp -d -a
 	atf_check -s not-exit:0 -e ignore rump.arp -n 10.0.1.11
 	atf_check -s not-exit:0 -e ignore rump.arp -n 10.0.1.12
@@ -245,17 +266,23 @@ arp_command_body()
 	atf_check -s not-exit:0 -e ignore rump.arp -n 10.0.1.14
 	atf_check -s not-exit:0 -e ignore rump.arp -n 10.0.1.15
 	atf_check -s not-exit:0 -e ignore rump.arp -n 10.0.1.1
+	check_route_no_entry 10.0.1.11
+	check_route_no_entry 10.0.1.12
+	check_route_no_entry 10.0.1.13
+	check_route_no_entry 10.0.1.14
+	check_route_no_entry 10.0.1.15
 
 	# Test temp option
 	$DEBUG && rump.arp -n -a
 	atf_check -s exit:0 -o ignore rump.arp -s 10.0.1.10 b2:a0:20:00:00:10 temp
 	$DEBUG && rump.arp -n -a
-	atf_check -s exit:0 -o match:'b2:a0:20:00:00:10' rump.arp -n 10.0.1.10
-	atf_check -s exit:0 -o not-match:'permanent' rump.arp -n 10.0.1.10
+	$DEBUG && rump.netstat -nr -f inet
+	check_arp_static_entry 10.0.1.10 'b2:a0:20:00:00:10' temp
 
 	# Hm? the cache doesn't expire...
 	atf_check -s exit:0 sleep $(($arp_keep + $bonus))
 	$DEBUG && rump.arp -n -a
+	$DEBUG && rump.netstat -nr -f inet
 	#atf_check -s not-exit:0 -e ignore rump.arp -n 10.0.1.10
 
 	rump_server_destroy_ifaces
