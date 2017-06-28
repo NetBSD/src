@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.8 2016/12/08 05:16:33 ozaki-r Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.9 2017/06/28 13:22:28 rjs Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.8 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.9 2017/06/28 13:22:28 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2085,7 +2085,7 @@ sctp_inpcb_free(struct sctp_inpcb *inp, int immediate)
 		sctp_m_freem(inp->pkt);
 		inp->pkt = NULL;
 	}
-	so  = inp->sctp_socket;
+	so = inp->sctp_socket;
 	ip_pcb = &inp->ip_inp.inp; /* we could just cast the main
 				   * pointer here but I will
 				   * be nice :> (i.e. ip_pcb = ep;)
