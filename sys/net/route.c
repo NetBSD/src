@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.196 2017/06/22 09:56:48 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.197 2017/06/28 04:10:47 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.196 2017/06/22 09:56:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.197 2017/06/28 04:10:47 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1594,8 +1594,6 @@ rt_ifa_addlocal(struct ifaddr *ifa)
 
 		memset(&info, 0, sizeof(info));
 		info.rti_flags = RTF_HOST | RTF_LOCAL;
-		if (!(ifa->ifa_ifp->if_flags & (IFF_LOOPBACK|IFF_POINTOPOINT)))
-			info.rti_flags |= RTF_LLDATA;
 		info.rti_info[RTAX_DST] = ifa->ifa_addr;
 		info.rti_info[RTAX_GATEWAY] =
 		    (const struct sockaddr *)ifa->ifa_ifp->if_sadl;
