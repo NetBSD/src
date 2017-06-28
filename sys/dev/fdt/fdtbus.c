@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.13 2017/05/28 00:28:17 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.14 2017/06/28 23:45:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.13 2017/05/28 00:28:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.14 2017/06/28 23:45:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.13 2017/05/28 00:28:17 jmcneill Exp $")
 #include <dev/ofw/openfirm.h>
 
 #include <dev/fdt/fdtvar.h>
+
+#include <libfdt.h>
 
 #include "locators.h"
 
@@ -82,13 +84,21 @@ static int
 fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const struct fdt_attach_args *faa = aux;
+	const int phandle = faa->faa_phandle;
 	int match;
 
-	match = of_match_compatible(faa->faa_phandle, fdtbus_compatible);
+	/* Check compatible string */
+	match = of_match_compatible(phandle, fdtbus_compatible);
 	if (match)
 		return match;
 
-	return OF_finddevice("/") == faa->faa_phandle;
+	/* Some /clocks nodes have no compatible string */
+	if (!of_hasprop(phandle, "compatible") &&
+	    OF_finddevice("/clocks") == phandle)
+		return 1;
+
+	/* Always match the root node */
+	return OF_finddevice("/") == phandle;
 }
 
 static void
@@ -275,6 +285,7 @@ fdtbus_print(void *aux, const char *pnp)
 	const struct fdt_attach_args * const faa = aux;
 	char buf[FDT_MAX_PATH];
 	const char *name = buf;
+	int len;
 
 	if (pnp && faa->faa_quiet)
 		return QUIET;
@@ -286,9 +297,17 @@ fdtbus_print(void *aux, const char *pnp)
 	if (!fdtbus_get_path(faa->faa_phandle, buf, sizeof(buf)))
 		name = faa->faa_name;
 
-	if (pnp)
+	if (pnp) {
 		aprint_normal("%s at %s", name, pnp);
-	else
+		const char *compat = fdt_getprop(fdtbus_get_data(),
+		    fdtbus_phandle2offset(faa->faa_phandle), "compatible",
+		    &len);
+		while (len > 0) {
+			aprint_debug(" <%s>", compat);
+			len -= (strlen(compat) + 1);
+			compat += (strlen(compat) + 1);
+		}
+	} else
 		aprint_debug(" (%s)", name);
 
 	return UNCONF;
