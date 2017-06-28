@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.27 2017/06/26 06:59:57 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.28 2017/06/28 04:14:53 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -167,9 +167,11 @@ ndp_commands_body()
 	atf_check -s exit:0 -o ignore rump.ndp -s fc00::10 b2:a0:20:00:00:10
 	$DEBUG && rump.ndp -n -a
 	atf_check -s exit:0 -o match:'permanent' rump.ndp -n fc00::10
+	check_route fc00::10 'b2:a0:20:00:00:10' UHLS shmif0
 	atf_check -s exit:0 -o match:'deleted' rump.ndp -d fc00::10
 	$DEBUG && rump.ndp -n -a
 	atf_check -s not-exit:0 -o ignore -e ignore rump.ndp -n fc00::10
+	check_route_no_entry fc00::10
 
 	# Add multiple entries via a file (XXX not implemented)
 	#cat - > ./list <<-EOF
@@ -190,6 +192,9 @@ ndp_commands_body()
 	atf_check -s exit:0 -o not-match:'permanent' rump.ndp -n $IP6DST
 	atf_check -s exit:0 -o match:'permanent' rump.ndp -n fc00::11
 	atf_check -s exit:0 -o match:'permanent' rump.ndp -n fc00::12
+	check_route_flags $IP6DST UHL
+	check_route_flags fc00::11 UHLS
+	check_route_flags fc00::12 UHLS
 
 	# Test ndp -a
 	atf_check -s exit:0 -o match:'fc00::11' rump.ndp -n -a
@@ -203,15 +208,20 @@ ndp_commands_body()
 	atf_check -s exit:0 -o ignore rump.ndp -c
 	atf_check -s not-exit:0 -o ignore -e ignore rump.ndp -n $IP6SRC
 	atf_check -s not-exit:0 -o ignore -e ignore rump.ndp -n $IP6DST
+	#check_route_no_entry $IP6SRC
+	check_route_no_entry $IP6DST
 	# Only the static caches are not deleted
 	atf_check -s exit:0 -o ignore -e ignore rump.ndp -n fc00::11
 	atf_check -s exit:0 -o ignore -e ignore rump.ndp -n fc00::12
+	check_route_flags fc00::11 UHLS
+	check_route_flags fc00::12 UHLS
 
 	$DEBUG && rump.ndp -n -a
 	atf_check -s exit:0 -o ignore rump.ndp -s fc00::10 b2:a0:20:00:00:10 temp
 	rump.ndp -s fc00::10 b2:a0:20:00:00:10 temp
 	$DEBUG && rump.ndp -n -a
 	atf_check -s exit:0 -o not-match:'permanent' rump.ndp -n fc00::10
+	check_route fc00::10 'b2:a0:20:00:00:10' UHL shmif0
 
 	rump_server_destroy_ifaces
 }
