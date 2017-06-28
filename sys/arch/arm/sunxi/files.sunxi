@@ -1,0 +1,37 @@
+#	$NetBSD: files.sunxi,v 1.1 2017/06/28 23:51:29 jmcneill Exp $
+#
+# Configuration info for Allwinner sunxi family SoCs
+#
+#
+
+include	"arch/arm/pic/files.pic"
+include	"arch/arm/cortex/files.cortex"
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm32/armv7_generic_dma.c
+file	arch/arm/arm/bus_space_a4x.S
+
+file	arch/arm/sunxi/sunxi_platform.c		soc_sunxi
+
+# CCU
+define	sunxi_ccu
+file	arch/arm/sunxi/sunxi_ccu.c		sunxi_ccu
+file	arch/arm/sunxi/sunxi_ccu_gate.c		sunxi_ccu
+file	arch/arm/sunxi/sunxi_ccu_nm.c		sunxi_ccu
+
+device	sun8ih3ccu: sunxi_ccu
+attach	sun8ih3ccu at fdt with sunxi_h3_ccu
+file	arch/arm/sunxi/sun8i_h3_ccu.c		sunxi_h3_ccu
+
+# UART
+attach	com at fdt with sunxi_com
+file	arch/arm/sunxi/sunxi_com.c		sunxi_com needs-flag
+
+# SOC parameters
+defflag	opt_soc.h			SOC_SUNXI
+defflag	opt_soc.h			SOC_SUN8I: SOC_SUNXI
+defflag	opt_soc.h			SOC_SUN8I_H3: SOC_SUN8I
