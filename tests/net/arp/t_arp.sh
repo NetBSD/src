@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.30 2017/06/26 06:59:57 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.31 2017/06/28 04:10:47 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -322,10 +322,12 @@ arp_cache_overwriting_body()
 	export RUMP_SERVER=$SOCKSRC
 
 	# Cannot overwrite a permanent cache
-	atf_check -s exit:0 rump.arp -s $IP4SRC b2:a0:20:00:00:ff
+	atf_check -s exit:0 rump.arp -s $IP4DST b2:a0:20:00:00:ff
 	$DEBUG && rump.arp -n -a
 	atf_check -s not-exit:0 -e match:'File exists' \
-	    rump.arp -s $IP4SRC b2:a0:20:00:00:fe
+	    rump.arp -s $IP4DST b2:a0:20:00:00:fe
+	# cleanup
+	atf_check -s exit:0 rump.arp -d $IP4DST
 
 	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP4DST
 	$DEBUG && rump.arp -n -a
@@ -383,11 +385,11 @@ test_proxy_arp()
 
 	if [ "$type" = "pub" ]; then
 		opts="pub"
-		title="permanent published"
 	else
 		opts="pub proxy"
-		title='permanent published \(proxy only\)'
 	fi
+	# Always proxy only since migrating to lltable/llentry
+	title='permanent published \(proxy only\)'
 
 	#
 	# Test#1: First setup an endpoint then create proxy arp entry
@@ -413,26 +415,14 @@ test_proxy_arp()
 
 	# Try to ping
 	export RUMP_SERVER=$SOCKSRC
-	if [ "$type" = "pub" ]; then
-		# XXX fails
-		atf_check -s not-exit:0 -o ignore -e ignore \
-		    rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP1
-	else
-		atf_check -s exit:0 -o ignore \
-		    rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP1
-	fi
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP1
 
 	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	pkt1=$(make_pkt_str_arprep $IP4DST_PROXYARP1 $macaddr_dst)
 	pkt2=$(make_pkt_str_garp $IP4DST_PROXYARP1 $macaddr_dst)
-	if [ "$type" = "pub" ]; then
-		atf_check -s not-exit:0 -x \
-		    "cat ./out |grep -q -e '$pkt1' -e '$pkt2'"
-	else
-		atf_check -s exit:0 -x "cat ./out |grep -q -e '$pkt1' -e '$pkt2'"
-	fi
+	atf_check -s exit:0 -x "cat ./out |grep -q -e '$pkt1' -e '$pkt2'"
 
 	#
 	# Test#2: Create proxy arp entry then set up an endpoint
