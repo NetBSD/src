@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.4 2016/01/10 20:10:44 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.5 2017/06/28 02:46:30 manu Exp $	*/
 /* bpf.c
 
    BPF socket interface code, originally contributed by Archie Cobbs. */
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bpf.c,v 1.4 2016/01/10 20:10:44 christos Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.5 2017/06/28 02:46:30 manu Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_BPF_SEND) || defined (USE_BPF_RECEIVE)	\
@@ -315,7 +315,7 @@ void if_register_receive (info)
         /* Patch the server port into the BPF  program...
 	   XXX changes to filter program may require changes
 	   to the insn number(s) used below! XXX */
-	dhcp_bpf_filter [8].k = ntohs (local_port);
+	dhcp_bpf_filter [8].k = ntohs (*libdhcp_callbacks.local_port);
 
 	if (ioctl (info -> rfdesc, BIOCSETF, &p) < 0)
 		log_fatal ("Can't install packet filter program: %m");
