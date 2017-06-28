@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.17 2017/06/27 04:56:13 ozaki-r Exp $
+#	$NetBSD: t_flags.sh,v 1.18 2017/06/28 04:14:53 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -300,6 +300,20 @@ test_announce()
 	# TODO test its behavior
 }
 
+test_llinfo()
+{
+	local peer_macaddr=
+
+	peer_macaddr=$(get_macaddr $SOCK_PEER shmif0)
+
+	export RUMP_SERVER=$SOCK_LOCAL
+
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 10.0.0.1
+
+	# Up, Host, LLINFO
+	check_route 10.0.0.1 $peer_macaddr UHL shmif0
+}
+
 add_test()
 {
 	local name=$1
@@ -334,4 +348,5 @@ atf_init_test_cases()
 	add_test reject          "Tests route flags: reject route"
 	add_test icmp_redirect   "Tests route flags: icmp redirect"
 	add_test announce        "Tests route flags: announce flag"
+	add_test llinfo          "Tests route flags: ARP caches"
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags6.sh,v 1.13 2017/06/27 04:52:45 ozaki-r Exp $
+#	$NetBSD: t_flags6.sh,v 1.14 2017/06/28 04:14:53 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -238,6 +238,20 @@ test_announce6()
 	# TODO test its behavior
 }
 
+test_llinfo6()
+{
+	local peer_macaddr=
+
+	peer_macaddr=$(get_macaddr $SOCK_PEER shmif0)
+
+	export RUMP_SERVER=$SOCK_LOCAL
+
+	atf_check -s exit:0 -o ignore rump.ping6 -n -X 1 -c 1 $IP6_PEER
+
+	# Up, Host, LLINFO
+	check_route $IP6_PEER $peer_macaddr UHL shmif0
+}
+
 add_test()
 {
 	local name=$1
@@ -271,4 +285,5 @@ atf_init_test_cases()
 	add_test blackhole6       "Tests route flags: blackhole route"
 	add_test reject6          "Tests route flags: reject route"
 	add_test announce6        "Tests route flags: announce flag"
+	add_test llinfo6          "Tests route flags: announce llinfo"
 }
