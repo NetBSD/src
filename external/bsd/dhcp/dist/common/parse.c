@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.1.1.4 2016/01/10 19:44:39 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
 /* parse.c
 
    Common parser code for dhcpd and dhclient. */
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.1.1.4 2016/01/10 19:44:39 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -2155,7 +2155,7 @@ int parse_executable_statement (result, cfile, lose, case_context)
 			return 0;
 		}
 		cta = (struct class *)0;
-		status = find_class (&cta, val, MDL);
+		status = libdhcp_callbacks.find_class (&cta, val, MDL);
 		if (status != ISC_R_SUCCESS) {
 			parse_warn (cfile, "class %s: %s",
 				    val, isc_result_totext (status));
@@ -2222,7 +2222,7 @@ int parse_executable_statement (result, cfile, lose, case_context)
 	      pad:
 		skip_token(&val, (unsigned *)0, cfile);
 		cache = (struct option_cache *)0;
-		if (!parse_allow_deny (&cache, cfile, flag))
+		if (!libdhcp_callbacks.parse_allow_deny (&cache, cfile, flag))
 			return 0;
 		if (!executable_statement_allocate (result, MDL))
 			log_fatal ("no memory for new statement.");

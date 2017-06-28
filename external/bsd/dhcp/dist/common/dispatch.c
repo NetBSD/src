@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.4 2014/07/12 12:09:37 spz Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.5 2017/06/28 02:46:30 manu Exp $	*/
 /* dispatch.c
 
    Network input dispatcher... */
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dispatch.c,v 1.4 2014/07/12 12:09:37 spz Exp $");
+__RCSID("$NetBSD: dispatch.c,v 1.5 2017/06/28 02:46:30 manu Exp $");
 
 #include "dhcpd.h"
 
@@ -36,6 +36,8 @@ __RCSID("$NetBSD: dispatch.c,v 1.4 2014/07/12 12:09:37 spz Exp $");
 
 struct timeout *timeouts;
 static struct timeout *free_timeouts;
+
+libdhcp_callbacks_t libdhcp_callbacks;
 
 void set_time(TIME t)
 {
@@ -128,8 +130,8 @@ dispatch(void)
 			 * dhcp_set_control_state() will do the job.
 			 * Note its first argument is ignored.
 			 */
-			status = dhcp_set_control_state(server_shutdown,
-							server_shutdown);
+			status = libdhcp_callbacks.dhcp_set_control_state
+					(server_shutdown, server_shutdown);
 			if (status == ISC_R_SUCCESS)
 				status = ISC_R_RELOAD;
 		}
@@ -437,3 +439,10 @@ void relinquish_timeouts ()
 	}
 }
 #endif
+
+void libdhcp_callbacks_register(cb)
+	libdhcp_callbacks_t *cb;
+{
+	memcpy(&libdhcp_callbacks, cb, sizeof(libdhcp_callbacks));
+	return;
+}
