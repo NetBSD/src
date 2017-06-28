@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.1.1.4 2016/01/10 19:44:40 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
 /* tree.c
 
    Routines for manipulating parse trees... */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tree.c,v 1.1.1.4 2016/01/10 19:44:40 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
@@ -719,8 +719,8 @@ int evaluate_boolean_expression (result, packet, lease, client_state,
 
 	switch (expr -> op) {
 	      case expr_check:
-		*result = check_collection (packet, lease,
-					    expr -> data.check);
+		*result = libdhcp_callbacks.check_collection (packet, lease,
+				expr -> data.check);
 #if defined (DEBUG_EXPRESSIONS)
 		log_debug ("bool: check (%s) returns %s",
 			   expr -> data.check -> name,
