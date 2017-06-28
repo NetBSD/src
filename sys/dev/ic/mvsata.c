@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.17 2017/06/27 18:36:03 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.18 2017/06/28 19:59:36 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.17 2017/06/27 18:36:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.18 2017/06/28 19:59:36 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -760,10 +760,8 @@ mvsata_atapibus_attach(struct atabus_softc *ata_sc)
 	chan->chan_ntargets = 1;
 	chan->chan_nluns = 1;
 
-#if 0 /* XXX ATAPI implementation not finished. */
 	chp->atapibus =
 	    config_found_ia(ata_sc->sc_dev, "atapi", chan, atapiprint);
-#endif
 }
 
 static void
