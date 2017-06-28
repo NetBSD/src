@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.1.1.4 2016/01/10 19:44:39 christos Exp $	*/
+/*	$NetBSD: execute.c,v 1.2 2017/06/28 02:46:30 manu Exp $	*/
 /* execute.c
 
    Support for executable statements. */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: execute.c,v 1.1.1.4 2016/01/10 19:44:39 christos Exp $");
+__RCSID("$NetBSD: execute.c,v 1.2 2017/06/28 02:46:30 manu Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
@@ -295,7 +295,7 @@ int execute_statements (result, packet, lease, client_state,
 					       ? r->data.add->name
 					       : "<unnamed class>"));
 #endif
-			classify (packet, r->data.add);
+			libdhcp_callbacks.classify (packet, r->data.add);
 			break;
 
 		      case break_statement:

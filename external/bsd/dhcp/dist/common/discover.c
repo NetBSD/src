@@ -1,4 +1,4 @@
-/*	$NetBSD: discover.c,v 1.5 2016/01/10 20:10:44 christos Exp $	*/
+/*	$NetBSD: discover.c,v 1.6 2017/06/28 02:46:30 manu Exp $	*/
 /* discover.c
 
    Find and identify the network interfaces. */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: discover.c,v 1.5 2016/01/10 20:10:44 christos Exp $");
+__RCSID("$NetBSD: discover.c,v 1.6 2017/06/28 02:46:30 manu Exp $");
 
 #include "dhcpd.h"
 
@@ -47,8 +47,6 @@ __RCSID("$NetBSD: discover.c,v 1.5 2016/01/10 20:10:44 christos Exp $");
 struct interface_info *interfaces, *dummy_interfaces, *fallback_interface;
 int interfaces_invalidated;
 int quiet_interface_discovery;
-u_int16_t local_port;
-u_int16_t remote_port;
 int (*dhcp_interface_setup_hook) (struct interface_info *, struct iaddr *);
 int (*dhcp_interface_discovery_hook) (struct interface_info *);
 isc_result_t (*dhcp_interface_startup_hook) (struct interface_info *);
