@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.1 2017/06/28 23:51:29 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.2 2017/06/29 09:26:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -58,6 +58,8 @@ enum sunxi_ccu_clktype {
 	SUNXI_CCU_UNKNOWN,
 	SUNXI_CCU_GATE,
 	SUNXI_CCU_NM,
+	SUNXI_CCU_NKMP,
+	SUNXI_CCU_PREDIV,
 };
 
 struct sunxi_ccu_gate {
@@ -82,6 +84,46 @@ const char *sunxi_ccu_gate_get_parent(struct sunxi_ccu_softc *,
 		.get_parent = sunxi_ccu_gate_get_parent,	\
 	}
 
+struct sunxi_ccu_nkmp {
+	bus_size_t	reg;
+	const char	*parent;
+	uint32_t	n;
+	uint32_t	k;
+	uint32_t	m;
+	uint32_t	p;
+	uint32_t	lock;
+	uint32_t	enable;
+	uint32_t	flags;
+};
+
+int	sunxi_ccu_nkmp_enable(struct sunxi_ccu_softc *,
+			      struct sunxi_ccu_clk *, int);
+u_int	sunxi_ccu_nkmp_get_rate(struct sunxi_ccu_softc *,
+				struct sunxi_ccu_clk *);
+int	sunxi_ccu_nkmp_set_rate(struct sunxi_ccu_softc *,
+				struct sunxi_ccu_clk *, u_int);
+const char *sunxi_ccu_nkmp_get_parent(struct sunxi_ccu_softc *,
+				      struct sunxi_ccu_clk *);
+
+#define	SUNXI_CCU_NKMP(_id, _name, _parent, _reg, _n, _k, _m,	\
+		       _p, _enable, _flags)			\
+	[_id] = {						\
+		.type = SUNXI_CCU_NKMP,				\
+		.base.name = (_name),				\
+		.u.nkmp.reg = (_reg),				\
+		.u.nkmp.parent = (_parent),			\
+		.u.nkmp.n = (_n),				\
+		.u.nkmp.k = (_k),				\
+		.u.nkmp.m = (_m),				\
+		.u.nkmp.p = (_p),				\
+		.u.nkmp.enable = (_enable),			\
+		.u.nkmp.flags = (_flags),			\
+		.enable = sunxi_ccu_nkmp_enable,		\
+		.get_rate = sunxi_ccu_nkmp_get_rate,		\
+		.set_rate = sunxi_ccu_nkmp_set_rate,		\
+		.get_parent = sunxi_ccu_nkmp_get_parent,	\
+	}
+
 struct sunxi_ccu_nm {
 	bus_size_t	reg;
 	const char	**parents;
@@ -89,10 +131,14 @@ struct sunxi_ccu_nm {
 	uint32_t	n;
 	uint32_t	m;
 	uint32_t	sel;
+	uint32_t	enable;
 	uint32_t	flags;
 #define	SUNXI_CCU_NM_POWER_OF_TWO	__BIT(0)
+#define	SUNXI_CCU_NM_ROUND_DOWN		__BIT(1)
 };
 
+int	sunxi_ccu_nm_enable(struct sunxi_ccu_softc *,
+			    struct sunxi_ccu_clk *, int);
 u_int	sunxi_ccu_nm_get_rate(struct sunxi_ccu_softc *,
 			      struct sunxi_ccu_clk *);
 int	sunxi_ccu_nm_set_rate(struct sunxi_ccu_softc *,
@@ -104,7 +150,7 @@ const char *sunxi_ccu_nm_get_parent(struct sunxi_ccu_softc *,
 				    struct sunxi_ccu_clk *);
 
 #define	SUNXI_CCU_NM(_id, _name, _parents, _reg, _n, _m, _sel,	\
-		     _flags)					\
+		     _enable, _flags)				\
 	[_id] = {						\
 		.type = SUNXI_CCU_NM,				\
 		.base.name = (_name),				\
@@ -114,9 +160,54 @@ const char *sunxi_ccu_nm_get_parent(struct sunxi_ccu_softc *,
 		.u.nm.n = (_n),					\
 		.u.nm.m = (_m),					\
 		.u.nm.sel = (_sel),				\
+		.u.nm.enable = (_enable),			\
 		.u.nm.flags = (_flags),				\
+		.enable = sunxi_ccu_nm_enable,			\
+		.get_rate = sunxi_ccu_nm_get_rate,		\
+		.set_rate = sunxi_ccu_nm_set_rate,		\
 		.set_parent = sunxi_ccu_nm_set_parent,		\
 		.get_parent = sunxi_ccu_nm_get_parent,		\
+	}
+
+struct sunxi_ccu_prediv {
+	bus_size_t	reg;
+	const char	**parents;
+	u_int		nparents;
+	uint32_t	prediv;
+	uint32_t	prediv_sel;
+	uint32_t	div;
+	uint32_t	sel;
+	uint32_t	flags;
+#define	SUNXI_CCU_PREDIV_POWER_OF_TWO	__BIT(0)
+};
+
+u_int	sunxi_ccu_prediv_get_rate(struct sunxi_ccu_softc *,
+				  struct sunxi_ccu_clk *);
+int	sunxi_ccu_prediv_set_rate(struct sunxi_ccu_softc *,
+				  struct sunxi_ccu_clk *, u_int);
+int	sunxi_ccu_prediv_set_parent(struct sunxi_ccu_softc *,
+				    struct sunxi_ccu_clk *,
+				    const char *);
+const char *sunxi_ccu_prediv_get_parent(struct sunxi_ccu_softc *,
+					struct sunxi_ccu_clk *);
+
+#define	SUNXI_CCU_PREDIV(_id, _name, _parents, _reg, _prediv,	\
+		     _prediv_sel, _div, _sel, _flags)		\
+	[_id] = {						\
+		.type = SUNXI_CCU_PREDIV,			\
+		.base.name = (_name),				\
+		.u.prediv.reg = (_reg),				\
+		.u.prediv.parents = (_parents),			\
+		.u.prediv.nparents = __arraycount(_parents),	\
+		.u.prediv.prediv = (_prediv),			\
+		.u.prediv.prediv_sel = (_prediv_sel),		\
+		.u.prediv.div = (_div),				\
+		.u.prediv.sel = (_sel),				\
+		.u.prediv.flags = (_flags),			\
+		.get_rate = sunxi_ccu_prediv_get_rate,		\
+		.set_rate = sunxi_ccu_prediv_set_rate,		\
+		.set_parent = sunxi_ccu_prediv_set_parent,	\
+		.get_parent = sunxi_ccu_prediv_get_parent,	\
 	}
 
 struct sunxi_ccu_clk {
@@ -125,6 +216,8 @@ struct sunxi_ccu_clk {
 	union {
 		struct sunxi_ccu_gate gate;
 		struct sunxi_ccu_nm nm;
+		struct sunxi_ccu_nkmp nkmp;
+		struct sunxi_ccu_prediv prediv;
 	} u;
 
 	int		(*enable)(struct sunxi_ccu_softc *,
