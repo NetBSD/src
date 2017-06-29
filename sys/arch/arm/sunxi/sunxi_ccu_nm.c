@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_nm.c,v 1.2 2017/06/29 09:26:06 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu_nm.c,v 1.3 2017/06/29 10:53:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_nm.c,v 1.2 2017/06/29 09:26:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_nm.c,v 1.3 2017/06/29 10:53:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -146,6 +146,7 @@ sunxi_ccu_nm_set_rate(struct sunxi_ccu_softc *sc,
 				if (nm->flags & SUNXI_CCU_NM_ROUND_DOWN) {
 					const int diff = new_rate - rate;
 					if (diff >= 0 && rate > best_rate) {
+						best_diff = diff;
 						best_rate = rate;
 						best_n = n;
 						best_m = m;
@@ -154,6 +155,7 @@ sunxi_ccu_nm_set_rate(struct sunxi_ccu_softc *sc,
 				} else {
 					const int diff = abs(new_rate - rate);
 					if (diff < best_diff) {
+						best_diff = diff;
 						best_rate = rate;
 						best_n = n;
 						best_m = m;

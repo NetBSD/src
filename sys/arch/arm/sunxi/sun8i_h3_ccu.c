@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_ccu.c,v 1.2 2017/06/29 09:26:06 jmcneill Exp $ */
+/* $NetBSD: sun8i_h3_ccu.c,v 1.3 2017/06/29 10:53:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.2 2017/06/29 09:26:06 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.3 2017/06/29 10:53:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -138,8 +138,13 @@ static const char *mod_parents[] = { "hosc", "pll_periph0", "pll_periph1" };
 
 static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	SUNXI_CCU_NKMP(H3_CLK_PLL_PERIPH0, "pll_periph0", "hosc",
-	    PLL_PERIPH0_CTRL_REG, __BITS(12,8), __BITS(5,3), 0, __BITS(17,16), __BIT(31),
-	    0),
+	    PLL_PERIPH0_CTRL_REG,	/* reg */
+	    __BITS(12,8),		/* n */
+	    __BITS(5,4), 		/* k */
+	    0,				/* m */
+	    __BITS(17,16),		/* p */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_NKMP_DIVIDE_BY_TWO),
 
 	SUNXI_CCU_PREDIV(H3_CLK_AHB1, "ahb1", ahb1_parents,
 	    AHB1_APB1_CFG_REG,	/* reg */
