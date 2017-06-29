@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.c,v 1.2 2017/06/29 09:26:06 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.c,v 1.3 2017/06/29 10:53:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu.c,v 1.2 2017/06/29 09:26:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu.c,v 1.3 2017/06/29 10:53:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -327,10 +327,11 @@ sunxi_ccu_print(struct sunxi_ccu_softc *sc)
 		case SUNXI_CCU_GATE:	type = "gate"; break;
 		case SUNXI_CCU_NM:	type = "nm"; break;
 		case SUNXI_CCU_NKMP:	type = "nkmp"; break;
+		case SUNXI_CCU_PREDIV:	type = "prediv"; break;
 		default:		type = "???"; break;
 		}
 
-        	printf("  %-12s %2s %-12s %-5s ",
+        	printf("  %-12s %2s %-12s %-7s ",
         	    clk->base.name,
         	    clkp_parent ? "<-" : "",
         	    clkp_parent ? clkp_parent->name : "",
