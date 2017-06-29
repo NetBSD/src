@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.5 2017/06/29 19:16:08 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.6 2017/06/29 19:38:24 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -90,6 +90,7 @@ options 	GTTWSI_ALLWINNER	# XXX this should be a driver flag
 iic*		at sunxitwi?
 
 # RTC
+sunxirtc*	at fdt?			# RTC
 
 # SDMMC
 sunximmc*	at fdt?			# SDMMC
