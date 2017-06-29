@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.5 2017/06/28 23:49:29 jmcneill Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.6 2017/06/29 20:54:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.5 2017/06/28 23:49:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.6 2017/06/29 20:54:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -77,6 +77,7 @@ struct gic_fdt_irq {
 	void			*intr_ih;
 	int			intr_refcnt;
 	int			intr_ipl;
+	int			intr_level;
 	TAILQ_HEAD(, gic_fdt_irqhandler) intr_handlers;
 };
 
@@ -183,6 +184,7 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		firq->intr_sc = sc;
 		firq->intr_refcnt = 0;
 		firq->intr_ipl = ipl;
+		firq->intr_level = level;
 		TAILQ_INIT(&firq->intr_handlers);
 		firq->intr_ih = intr_establish(irq, ipl, level | IST_MPSAFE,
 		    gic_fdt_intr, firq);
@@ -195,6 +197,10 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 
 	if (firq->intr_ipl != ipl) {
 		device_printf(dev, "cannot share irq with different ipl\n");
+		return NULL;
+	}
+	if (firq->intr_level != level) {
+		device_printf(dev, "cannot share edge and level interrupts\n");
 		return NULL;
 	}
 
