@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.2 2017/06/29 09:26:06 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.3 2017/06/29 17:08:52 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -99,11 +99,13 @@ ld3		at sdmmc3
 ld*		at sdmmc?
 
 # USB 2.0
-#sunxiusbphy*	at fdt?			# USB PHY
-#ehci*		at fdt?			# USB
-#usb*		at ehci?
+sunxiusbphy*	at fdt?	pass 5		# USB PHY
+ehci*		at fdt?	pass 9		# EHCI
+ohci*		at fdt?	pass 8		# OHCI
+usb*		at ehci?
+usb*		at ohci?
 
-#include "dev/usb/usbdevices.config"
-#midi*		at midibus?
+include "dev/usb/usbdevices.config"
+midi*		at midibus?
 
 cinclude "arch/evbarm/conf/SUNXI.local"

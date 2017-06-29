@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_ccu.c,v 1.3 2017/06/29 10:53:59 jmcneill Exp $ */
+/* $NetBSD: sun8i_h3_ccu.c,v 1.4 2017/06/29 17:08:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.3 2017/06/29 10:53:59 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.4 2017/06/29 17:08:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,14 +41,6 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.3 2017/06/29 10:53:59 jmcneill Ex
 #include <arm/sunxi/sunxi_ccu.h>
 #include <arm/sunxi/sun8i_h3_ccu.h>
 
-#define	USBPHY_CFG_REG		0x0cc
-#define	MBUS_RST_REG		0x0fc
-#define	BUS_SOFT_RST_REG0	0x2c0
-#define	BUS_SOFT_RST_REG1	0x2c4
-#define	BUS_SOFT_RST_REG2	0x2c8
-#define	BUS_SOFT_RST_REG3	0x2d0
-#define	BUS_SOFT_RST_REG4	0x2d8
-
 #define	PLL_PERIPH0_CTRL_REG	0x028
 #define	AHB1_APB1_CFG_REG	0x054
 #define	APB2_CFG_REG		0x058
@@ -57,6 +49,13 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.3 2017/06/29 10:53:59 jmcneill Ex
 #define	SDMMC0_CLK_REG		0x088
 #define	SDMMC1_CLK_REG		0x08c
 #define	SDMMC2_CLK_REG		0x090
+#define	USBPHY_CFG_REG		0x0cc
+#define	MBUS_RST_REG		0x0fc
+#define	BUS_SOFT_RST_REG0	0x2c0
+#define	BUS_SOFT_RST_REG1	0x2c4
+#define	BUS_SOFT_RST_REG2	0x2c8
+#define	BUS_SOFT_RST_REG3	0x2d0
+#define	BUS_SOFT_RST_REG4	0x2d8
 
 static int sun8i_h3_ccu_match(device_t, cfdata_t, void *);
 static void sun8i_h3_ccu_attach(device_t, device_t, void *);
@@ -133,6 +132,7 @@ static struct sunxi_ccu_reset sun8i_h3_ccu_resets[] = {
 };
 
 static const char *ahb1_parents[] = { "losc", "hosc", "axi", "pll_periph0" };
+static const char *ahb2_parents[] = { "ahb1", "pll_periph0" };
 static const char *apb2_parents[] = { "losc", "hosc", "pll_periph0" };
 static const char *mod_parents[] = { "hosc", "pll_periph0", "pll_periph1" };
 
@@ -153,6 +153,13 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    __BITS(5,4),	/* div */
 	    __BITS(13,12),	/* sel */
 	    SUNXI_CCU_PREDIV_POWER_OF_TWO),
+	SUNXI_CCU_PREDIV(H3_CLK_AHB2, "ahb2", ahb2_parents,
+	    APB2_CFG_REG,	/* reg */
+	    0,			/* prediv */
+	    __BIT(1),		/* prediv_sel */
+	    0,			/* div */
+	    __BITS(1,0),	/* sel */
+	    SUNXI_CCU_PREDIV_DIVIDE_BY_TWO),
 
 	SUNXI_CCU_NM(H3_CLK_APB2, "apb2", apb2_parents,
 	    APB2_CFG_REG,	/* reg */
@@ -178,9 +185,56 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    BUS_CLK_GATING_REG0, 9),
 	SUNXI_CCU_GATE(H3_CLK_BUS_MMC2, "bus-mmc2", "ahb1",
 	    BUS_CLK_GATING_REG0, 10),
+	SUNXI_CCU_GATE(H3_CLK_BUS_OTG, "bus-otg", "ahb1",
+	    BUS_CLK_GATING_REG0, 23),
+	SUNXI_CCU_GATE(H3_CLK_BUS_EHCI0, "bus-ehci0", "ahb1",
+	    BUS_CLK_GATING_REG0, 24),
+	SUNXI_CCU_GATE(H3_CLK_BUS_EHCI1, "bus-ehci1", "ahb2",
+	    BUS_CLK_GATING_REG0, 25),
+	SUNXI_CCU_GATE(H3_CLK_BUS_EHCI2, "bus-ehci2", "ahb2",
+	    BUS_CLK_GATING_REG0, 26),
+	SUNXI_CCU_GATE(H3_CLK_BUS_EHCI3, "bus-ehci3", "ahb2",
+	    BUS_CLK_GATING_REG0, 27),
+	SUNXI_CCU_GATE(H3_CLK_BUS_OHCI0, "bus-ohci0", "ahb1",
+	    BUS_CLK_GATING_REG0, 28),
+	SUNXI_CCU_GATE(H3_CLK_BUS_OHCI1, "bus-ohci1", "ahb2",
+	    BUS_CLK_GATING_REG0, 29),
+	SUNXI_CCU_GATE(H3_CLK_BUS_OHCI2, "bus-ohci2", "ahb2",
+	    BUS_CLK_GATING_REG0, 30),
+	SUNXI_CCU_GATE(H3_CLK_BUS_OHCI3, "bus-ohci3", "ahb2",
+	    BUS_CLK_GATING_REG0, 31),
 
+	SUNXI_CCU_GATE(H3_CLK_BUS_I2C0, "bus-i2c0", "apb2",
+	    BUS_CLK_GATING_REG3, 0),
+	SUNXI_CCU_GATE(H3_CLK_BUS_I2C1, "bus-i2c1", "apb2",
+	    BUS_CLK_GATING_REG3, 1),
+	SUNXI_CCU_GATE(H3_CLK_BUS_I2C2, "bus-i2c2", "apb2",
+	    BUS_CLK_GATING_REG3, 2),
 	SUNXI_CCU_GATE(H3_CLK_BUS_UART0, "bus-uart0", "apb2",
+	    BUS_CLK_GATING_REG3, 16),
+	SUNXI_CCU_GATE(H3_CLK_BUS_UART1, "bus-uart1", "apb2",
+	    BUS_CLK_GATING_REG3, 17),
+	SUNXI_CCU_GATE(H3_CLK_BUS_UART2, "bus-uart2", "apb2",
+	    BUS_CLK_GATING_REG3, 18),
+	SUNXI_CCU_GATE(H3_CLK_BUS_UART3, "bus-uart3", "apb2",
 	    BUS_CLK_GATING_REG3, 19),
+
+	SUNXI_CCU_GATE(H3_CLK_USBPHY0, "usb-phy0", "hosc",
+	    USBPHY_CFG_REG, 8),
+	SUNXI_CCU_GATE(H3_CLK_USBPHY1, "usb-phy1", "hosc",
+	    USBPHY_CFG_REG, 9),
+	SUNXI_CCU_GATE(H3_CLK_USBPHY2, "usb-phy2", "hosc",
+	    USBPHY_CFG_REG, 10),
+	SUNXI_CCU_GATE(H3_CLK_USBPHY3, "usb-phy3", "hosc",
+	    USBPHY_CFG_REG, 11),
+	SUNXI_CCU_GATE(H3_CLK_USBOHCI0, "usb-ohci0", "hosc",
+	    USBPHY_CFG_REG, 16),
+	SUNXI_CCU_GATE(H3_CLK_USBOHCI1, "usb-ohci1", "hosc",
+	    USBPHY_CFG_REG, 17),
+	SUNXI_CCU_GATE(H3_CLK_USBOHCI2, "usb-ohci2", "hosc",
+	    USBPHY_CFG_REG, 18),
+	SUNXI_CCU_GATE(H3_CLK_USBOHCI3, "usb-ohci3", "hosc",
+	    USBPHY_CFG_REG, 19),
 };
 
 static int
