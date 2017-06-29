@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.54 2017/05/11 05:55:14 ryo Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.55 2017/06/29 07:13:41 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.54 2017/05/11 05:55:14 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.55 2017/06/29 07:13:41 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1291,9 +1291,14 @@ bad:
 }
 
 static struct xformsw ah_xformsw = {
-	XF_AH,		XFT_AUTH,	"IPsec AH",
-	ah_init,	ah_zeroize,	ah_input,	ah_output,
-	NULL,
+	.xf_type	= XF_AH,
+	.xf_flags	= XFT_AUTH,
+	.xf_name	= "IPsec AH",
+	.xf_init	= ah_init,
+	.xf_zeroize	= ah_zeroize,
+	.xf_input	= ah_input,
+	.xf_output	= ah_output,
+	.xf_next	= NULL,
 };
 
 void
