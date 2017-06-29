@@ -1,4 +1,4 @@
-/*	$NetBSD: literal.c,v 1.1 2017/06/27 23:25:13 christos Exp $	*/
+/*	$NetBSD: literal.c,v 1.2 2017/06/29 02:54:40 kre Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: literal.c,v 1.1 2017/06/27 23:25:13 christos Exp $");
+__RCSID("$NetBSD: literal.c,v 1.2 2017/06/29 02:54:40 kre Exp $");
 #endif /* not lint && not SCCSID */
 
 /*
@@ -63,7 +63,7 @@ literal_clear(EditLine *el)
 {
 	el_literal_t *l = &el->el_literal;
 	size_t i;
-	for (i = 0; i < l->l_idx; l++)
+	for (i = 0; i < l->l_idx; i++)
 		el_free(l->l_buf[i]);
 	l->l_len = 0;
 	l->l_idx = 0;
