@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_com.c,v 1.1 2017/06/28 23:51:29 jmcneill Exp $ */
+/* $NetBSD: sunxi_com.c,v 1.2 2017/06/29 17:05:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_com.c,v 1.1 2017/06/28 23:51:29 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_com.c,v 1.2 2017/06/29 17:05:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -72,8 +72,8 @@ sunxi_com_match(device_t parent, cfdata_t cf, void *aux)
 static void
 sunxi_com_attach(device_t parent, device_t self, void *aux)
 {
-	struct sunxi_com_softc * const tsc = device_private(self);
-	struct com_softc * const sc = &tsc->ssc_sc;
+	struct sunxi_com_softc * const ssc = device_private(self);
+	struct com_softc * const sc = &ssc->ssc_sc;
 	struct fdt_attach_args * const faa = aux;
 	bus_space_handle_t bsh;
 	bus_space_tag_t bst;
@@ -105,15 +105,15 @@ sunxi_com_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	tsc->ssc_clk = fdtbus_clock_get_index(faa->faa_phandle, 0);
-	tsc->ssc_rst = fdtbus_reset_get_index(faa->faa_phandle, 0);
+	ssc->ssc_clk = fdtbus_clock_get_index(faa->faa_phandle, 0);
+	ssc->ssc_rst = fdtbus_reset_get_index(faa->faa_phandle, 0);
 
-	if (tsc->ssc_clk == NULL) {
+	if (ssc->ssc_clk == NULL) {
 		aprint_error(": couldn't get frequency\n");
 		return;
 	}
 
-	sc->sc_frequency = clk_get_rate(tsc->ssc_clk);
+	sc->sc_frequency = clk_get_rate(ssc->ssc_clk);
 	sc->sc_type = COM_TYPE_NORMAL;
 
 	error = bus_space_map(bst, addr, size, 0, &bsh);
@@ -132,9 +132,9 @@ sunxi_com_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	tsc->ssc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_SERIAL,
+	ssc->ssc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_SERIAL,
 	    FDT_INTR_MPSAFE, comintr, sc);
-	if (tsc->ssc_ih == NULL) {
+	if (ssc->ssc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
 	}
