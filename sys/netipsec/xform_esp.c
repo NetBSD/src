@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.55 2017/05/11 05:55:14 ryo Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.56 2017/06/29 07:13:41 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.55 2017/05/11 05:55:14 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.56 2017/06/29 07:13:41 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1063,10 +1063,14 @@ bad:
 }
 
 static struct xformsw esp_xformsw = {
-	XF_ESP,		XFT_CONF|XFT_AUTH,	"IPsec ESP",
-	esp_init,	esp_zeroize,		esp_input,
-	esp_output,
-	NULL,
+	.xf_type	= XF_ESP,
+	.xf_flags	= XFT_CONF|XFT_AUTH,
+	.xf_name	= "IPsec ESP",
+	.xf_init	= esp_init,
+	.xf_zeroize	= esp_zeroize,
+	.xf_input	= esp_input,
+	.xf_output	= esp_output,
+	.xf_next	= NULL,
 };
 
 void

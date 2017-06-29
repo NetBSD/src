@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.38 2017/05/11 05:55:14 ryo Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.39 2017/06/29 07:13:41 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.38 2017/05/11 05:55:14 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.39 2017/06/29 07:13:41 ozaki-r Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -658,10 +658,14 @@ bad:
 }
 
 static struct xformsw ipcomp_xformsw = {
-	XF_IPCOMP,		XFT_COMP,		"IPcomp",
-	ipcomp_init,		ipcomp_zeroize,		ipcomp_input,
-	ipcomp_output,
-	NULL,
+	.xf_type	= XF_IPCOMP,
+	.xf_flags	= XFT_COMP,
+	.xf_name	= "IPcomp",
+	.xf_init	= ipcomp_init,
+	.xf_zeroize	= ipcomp_zeroize,
+	.xf_input	= ipcomp_input,
+	.xf_output	= ipcomp_output,
+	.xf_next	= NULL,
 };
 
 void
