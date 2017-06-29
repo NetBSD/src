@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.3 2017/06/29 10:53:59 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.4 2017/06/29 17:08:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -180,6 +180,7 @@ struct sunxi_ccu_prediv {
 	uint32_t	sel;
 	uint32_t	flags;
 #define	SUNXI_CCU_PREDIV_POWER_OF_TWO	__BIT(0)
+#define	SUNXI_CCU_PREDIV_DIVIDE_BY_TWO	__BIT(1)
 };
 
 u_int	sunxi_ccu_prediv_get_rate(struct sunxi_ccu_softc *,
