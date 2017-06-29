@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_prediv.c,v 1.1 2017/06/29 09:26:06 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu_prediv.c,v 1.2 2017/06/29 17:08:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_prediv.c,v 1.1 2017/06/29 09:26:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_prediv.c,v 1.2 2017/06/29 17:08:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,8 +57,14 @@ sunxi_ccu_prediv_get_rate(struct sunxi_ccu_softc *sc,
 		return 0;
 
 	val = CCU_READ(sc, prediv->reg);
-	pre = __SHIFTOUT(val, prediv->prediv);
-	div = __SHIFTOUT(val, prediv->div);
+	if (prediv->prediv)
+		pre = __SHIFTOUT(val, prediv->prediv);
+	else
+		pre = 0;
+	if (prediv->div)
+		div = __SHIFTOUT(val, prediv->div);
+	else
+		div = 0;
 	sel = __SHIFTOUT(val, prediv->sel);
 
 	if (prediv->flags & SUNXI_CCU_PREDIV_POWER_OF_TWO)
@@ -67,6 +73,9 @@ sunxi_ccu_prediv_get_rate(struct sunxi_ccu_softc *sc,
 		div++;
 
 	pre++;
+
+	if (prediv->flags & SUNXI_CCU_PREDIV_DIVIDE_BY_TWO)
+		pre *= 2;
 
 	if (prediv->prediv_sel & __BIT(sel))
 		return rate / pre / div;
