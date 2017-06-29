@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_ccu.c,v 1.1 2017/06/28 23:51:29 jmcneill Exp $ */
+/* $NetBSD: sun8i_h3_ccu.c,v 1.2 2017/06/29 09:26:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.1 2017/06/28 23:51:29 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.2 2017/06/29 09:26:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,8 +49,14 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.1 2017/06/28 23:51:29 jmcneill Ex
 #define	BUS_SOFT_RST_REG3	0x2d0
 #define	BUS_SOFT_RST_REG4	0x2d8
 
+#define	PLL_PERIPH0_CTRL_REG	0x028
+#define	AHB1_APB1_CFG_REG	0x054
 #define	APB2_CFG_REG		0x058
+#define	BUS_CLK_GATING_REG0	0x060
 #define	BUS_CLK_GATING_REG3	0x06c
+#define	SDMMC0_CLK_REG		0x088
+#define	SDMMC1_CLK_REG		0x08c
+#define	SDMMC2_CLK_REG		0x090
 
 static int sun8i_h3_ccu_match(device_t, cfdata_t, void *);
 static void sun8i_h3_ccu_attach(device_t, device_t, void *);
@@ -126,12 +132,47 @@ static struct sunxi_ccu_reset sun8i_h3_ccu_resets[] = {
 	SUNXI_CCU_RESET(H3_RST_BUS_SCR, BUS_SOFT_RST_REG4, 20),
 };
 
+static const char *ahb1_parents[] = { "losc", "hosc", "axi", "pll_periph0" };
 static const char *apb2_parents[] = { "losc", "hosc", "pll_periph0" };
+static const char *mod_parents[] = { "hosc", "pll_periph0", "pll_periph1" };
 
 static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
+	SUNXI_CCU_NKMP(H3_CLK_PLL_PERIPH0, "pll_periph0", "hosc",
+	    PLL_PERIPH0_CTRL_REG, __BITS(12,8), __BITS(5,3), 0, __BITS(17,16), __BIT(31),
+	    0),
+
+	SUNXI_CCU_PREDIV(H3_CLK_AHB1, "ahb1", ahb1_parents,
+	    AHB1_APB1_CFG_REG,	/* reg */
+	    __BITS(7,6),	/* prediv */
+	    __BIT(3),		/* prediv_sel */
+	    __BITS(5,4),	/* div */
+	    __BITS(13,12),	/* sel */
+	    SUNXI_CCU_PREDIV_POWER_OF_TWO),
+
 	SUNXI_CCU_NM(H3_CLK_APB2, "apb2", apb2_parents,
-	    APB2_CFG_REG, __BITS(17,16), __BITS(4,0), __BITS(25,24),
+	    APB2_CFG_REG,	/* reg */
+	    __BITS(17,16),	/* n */
+	    __BITS(4,0),	/* m */
+	    __BITS(25,24),	/* sel */
+	    0,			/* enable */
 	    SUNXI_CCU_NM_POWER_OF_TWO),
+
+	SUNXI_CCU_NM(H3_CLK_MMC0, "mmc0", mod_parents,
+	    SDMMC0_CLK_REG, __BITS(17, 16), __BITS(3,0), __BITS(25, 24), __BIT(31),
+	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
+	SUNXI_CCU_NM(H3_CLK_MMC1, "mmc1", mod_parents,
+	    SDMMC1_CLK_REG, __BITS(17, 16), __BITS(3,0), __BITS(25, 24), __BIT(31),
+	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
+	SUNXI_CCU_NM(H3_CLK_MMC2, "mmc2", mod_parents,
+	    SDMMC2_CLK_REG, __BITS(17, 16), __BITS(3,0), __BITS(25, 24), __BIT(31),
+	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
+
+	SUNXI_CCU_GATE(H3_CLK_BUS_MMC0, "bus-mmc0", "ahb1",
+	    BUS_CLK_GATING_REG0, 8),
+	SUNXI_CCU_GATE(H3_CLK_BUS_MMC1, "bus-mmc1", "ahb1",
+	    BUS_CLK_GATING_REG0, 9),
+	SUNXI_CCU_GATE(H3_CLK_BUS_MMC2, "bus-mmc2", "ahb1",
+	    BUS_CLK_GATING_REG0, 10),
 
 	SUNXI_CCU_GATE(H3_CLK_BUS_UART0, "bus-uart0", "apb2",
 	    BUS_CLK_GATING_REG3, 19),
