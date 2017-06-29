@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2016/06/09 07:11:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2017/06/29 18:52:23 joerg Exp $
+
+UNSUPPORTED_COMPILER.clang=	# defined
+
 .include <bsd.own.mk>
 
 .include "../Makefile.inc"
