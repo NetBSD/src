@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_usbphy.c,v 1.1 2017/06/29 17:08:52 jmcneill Exp $ */
+/* $NetBSD: sunxi_usbphy.c,v 1.2 2017/06/29 20:54:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.1 2017/06/29 17:08:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.2 2017/06/29 20:54:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,7 +58,7 @@ static const char * const compatible[] = {
 	NULL
 };
 
-#define	SUNXI_MAXUSBPHY		5
+#define	SUNXI_MAXUSBPHY		4
 
 struct sunxi_usbphy {
 	u_int			phy_index;
@@ -69,6 +69,7 @@ struct sunxi_usbphy {
 struct sunxi_usbphy_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
+	bus_space_handle_t	sc_bsh_phy_ctrl;
 
 	struct sunxi_usbphy	sc_phys[SUNXI_MAXUSBPHY];
 	u_int			sc_nphys;
@@ -181,8 +182,17 @@ sunxi_usbphy_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
 
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get phy ctrl registers\n");
+		return;
+	}
+	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh_phy_ctrl) != 0) {
+		aprint_error(": couldn't map phy ctrl registers\n");
+		return;
+	}
+
 	for (sc->sc_nphys = 0; sc->sc_nphys < SUNXI_MAXUSBPHY; sc->sc_nphys++) {
-		if (fdtbus_get_reg(phandle, sc->sc_nphys, &addr, &size) != 0)
+		if (fdtbus_get_reg(phandle, sc->sc_nphys + 1, &addr, &size) != 0)
 			break;
 		phy = &sc->sc_phys[sc->sc_nphys];
 		phy->phy_index = sc->sc_nphys;
