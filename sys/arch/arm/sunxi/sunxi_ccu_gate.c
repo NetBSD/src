@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_gate.c,v 1.1 2017/06/28 23:51:29 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu_gate.c,v 1.2 2017/06/29 17:06:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_gate.c,v 1.1 2017/06/28 23:51:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_gate.c,v 1.2 2017/06/29 17:06:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,13 +59,8 @@ const char *
 sunxi_ccu_gate_get_parent(struct sunxi_ccu_softc *sc, struct sunxi_ccu_clk *clk)
 {
 	struct sunxi_ccu_gate *gate = &clk->u.gate;
-	struct sunxi_ccu_clk *clk_parent;
 
 	KASSERT(clk->type == SUNXI_CCU_GATE);
 
-	clk_parent = sunxi_ccu_clock_find(sc, gate->parent);
-	if (clk_parent == NULL)
-		return NULL;
-
-	return clk_parent->base.name;
+	return gate->parent;
 }
