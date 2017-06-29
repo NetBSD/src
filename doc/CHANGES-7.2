@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.23 2017/06/21 17:27:15 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.24 2017/06/29 12:25:04 sborrill Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -2387,4 +2387,15 @@ external/mit/expat/dist/xmlwf/xmlwf.dsp         delete
 
 	Update expat to 2.2.1.
 	[spz, ticket #1437]
+
+sys/external/bsd/ipf/netinet/fil.c		1.20
+sys/external/bsd/ipf/netinet/ip_state.c		1.7
+sys/external/bsd/ipf/netinet/ip_frag.c		1.5
+
+	Disconnect maintaining fragment state from keeping session state.
+	The user now must specify keep frags along with keep state to have 
+	ipfilter do what it did before, as documented in ipf.conf.5.
+	Free the right fragment. This will cause use after free issues and
+	eventually panic.
+	[christos, ticket #1412]
 
