@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.1 2017/06/28 23:51:29 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.2 2017/06/29 09:26:06 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -90,13 +90,13 @@ com*		at fdt?			# UART
 # RTC
 
 # SDMMC
-#sunximmc*	at fdt?			# SDMMC
-#sdmmc*		at sdhc?
-#ld0		at sdmmc0
-#ld1		at sdmmc1
-#ld2		at sdmmc2
-#ld3		at sdmmc3
-#ld*		at sdmmc?
+sunximmc*	at fdt?			# SDMMC
+sdmmc*		at sunximmc?
+ld0		at sdmmc0
+ld1		at sdmmc1
+ld2		at sdmmc2
+ld3		at sdmmc3
+ld*		at sdmmc?
 
 # USB 2.0
 #sunxiusbphy*	at fdt?			# USB PHY
