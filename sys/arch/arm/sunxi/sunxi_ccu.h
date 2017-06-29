@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.2 2017/06/29 09:26:06 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.3 2017/06/29 10:53:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -94,6 +94,7 @@ struct sunxi_ccu_nkmp {
 	uint32_t	lock;
 	uint32_t	enable;
 	uint32_t	flags;
+#define	SUNXI_CCU_NKMP_DIVIDE_BY_TWO	__BIT(0)
 };
 
 int	sunxi_ccu_nkmp_enable(struct sunxi_ccu_softc *,
