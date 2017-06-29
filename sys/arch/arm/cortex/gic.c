@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.29 2017/06/28 20:46:35 skrll Exp $	*/
+/*	$NetBSD: gic.c,v 1.30 2017/06/29 00:11:28 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.29 2017/06/28 20:46:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.30 2017/06/29 00:11:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,7 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.29 2017/06/28 20:46:35 skrll Exp $");
 
 void armgic_irq_handler(void *);
 
-#define	ARMGIC_SGI_IPIBASE	(16 - NIPI)
+#define	ARMGIC_SGI_IPIBASE	0
+
+/*
+ * SGIs 8-16 are reserved for use by ARM Trusted Firmware.
+ */
+__CTASSERT(ARMGIC_SGI_IPIBASE + NIPI <= 8);
 
 static int armgic_match(device_t, cfdata_t, void *);
 static void armgic_attach(device_t, device_t, void *);
