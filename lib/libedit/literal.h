@@ -1,4 +1,4 @@
-/*	$NetBSD: literal.h,v 1.1 2017/06/27 23:25:13 christos Exp $	*/
+/*	$NetBSD: literal.h,v 1.2 2017/06/30 20:26:52 kre Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ libedit_private void literal_init(EditLine *);
 libedit_private void literal_end(EditLine *);
 libedit_private void literal_clear(EditLine *);
 libedit_private wint_t literal_add(EditLine *, const wchar_t *,
-    const wchar_t *);
+    const wchar_t *, int *);
 libedit_private const char *literal_get(EditLine *, wint_t);
 
 #endif /* _h_el_literal */
