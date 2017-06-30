@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.40 2017/06/30 01:56:34 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.41 2017/06/30 02:02:41 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -16,15 +16,6 @@
 
 /* Define if on MINIX.  */
 /* #undef _MINIX */
-
-/* Define to `int' if <sys/types.h> doesn't define.  */
-/* #undef mode_t */
-
-/* Define to `long' if <sys/types.h> doesn't define.  */
-/* #undef off_t */
-
-/* Define to `int' if <sys/types.h> doesn't define.  */
-/* #undef pid_t */
 
 /* Define if the system does not provide POSIX.1 features except
    with this defined.  */
@@ -44,9 +35,6 @@
 
 /* Define if you can safely include both <sys/time.h> and <time.h>.  */
 #define TIME_WITH_SYS_TIME 1
-
-/* Define to `int' if <sys/types.h> doesn't define.  */
-/* #undef uid_t */
 
 /* Define if your kernel doesn't handle scripts starting with #! */
 /* #undef SHARPBANG */
@@ -81,14 +69,8 @@
 /* Define if C compiler groks __attribute__((...)) (const, noreturn, format) */
 #define HAVE_GCC_FUNC_ATTR 1
 
-/* Define to the type of struct rlimit fields if the rlim_t type is missing */
-/* #undef rlim_t */
-
 /* Define if time() is declared in <time.h> */
 #define TIME_DECLARED 1
-
-/* Define to `unsigned' if <signal.h> doesn't define */
-/* #undef sigset_t */
 
 /* Define if sys_errlist[] and sys_nerr are in the C library */
 #define HAVE_SYS_ERRLIST 1
