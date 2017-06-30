@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.1 2017/06/28 23:51:29 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.2 2017/06/30 09:05:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.1 2017/06/28 23:51:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.2 2017/06/30 09:05:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,10 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.1 2017/06/28 23:51:29 jmcneill 
 #define	SUN8I_WDT_MODE		0x18
 #define	 SUN8I_WDT_MODE_EN	1
 
-#define	SUN8I_CPUCFG_BASE	0x01f01c00
-#define	SUN8I_CPUCFG_SIZE	0x400
-#define	SUN8I_PRCM_BASE		0x01f01400
-#define	SUN8I_PRCM_SIZE		0x800
 
 #define	DEVMAP_ALIGN(a)	((a) & ~L1_S_OFFSET)
 #define	DEVMAP_SIZE(s)	roundup2((s), L1_S_SIZE)
