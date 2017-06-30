@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.51 2017/06/30 03:56:12 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.52 2017/06/30 04:11:57 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -68,9 +68,6 @@
 
 /* Define if the pgrp of setpgrp() can't be the pid of a zombie process */
 /* #undef NEED_PGRP_SYNC */
-
-/* Define if your OS maps references to /dev/fd/n to file descriptor n */
-#define HAVE_DEV_FD 1
 
 /* Default PATH */
 #ifdef RESCUEDIR
