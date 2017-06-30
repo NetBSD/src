@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.38 2017/06/23 00:35:20 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.39 2017/06/30 01:36:30 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -10,9 +10,6 @@
 
 #ifndef CONFIG_H
 #define CONFIG_H
-
-/* Define to `int' if <sys/types.h> doesn't define.  */
-/* #undef gid_t */
 
 /* Define if your struct stat has st_rdev.  */
 #define HAVE_ST_RDEV 1
