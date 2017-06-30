@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.357.2.1 2017/06/09 17:00:46 snj Exp $	*/
+/*	$NetBSD: audio.c,v 1.357.2.2 2017/06/30 06:43:07 snj Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.1 2017/06/09 17:00:46 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.2 2017/06/30 06:43:07 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -447,7 +447,7 @@ const struct audio_params audio_default = {
 	.channels = 1,
 };
 
-int auto_config_precision[] = { 32, 24, 16, 8 };
+int auto_config_precision[] = { 32, 16, 8 };
 int auto_config_channels[] = { 32, 24, 16, 8, 6, 4, 2, 1};
 int auto_config_freq[] = { 48000, 44100, 96000, 192000, 32000,
 			   22050, 16000, 11025, 8000, 4000 };
@@ -535,7 +535,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	vc->sc_lastinfovalid = false;
 	vc->sc_swvol = 255;
 	vc->sc_recswvol = 255;
-	sc->sc_iffreq = 44100;
+	sc->sc_frequency = 44100;
 	sc->sc_precision = 16;
 	sc->sc_channels = 2;
 
@@ -3485,6 +3485,7 @@ int
 audiostartr(struct audio_softc *sc, struct virtual_channel *vc)
 {
 
+	struct audio_chan *chan;
 	int error;
 
 	KASSERT(mutex_owned(sc->sc_lock));
@@ -3493,8 +3494,11 @@ audiostartr(struct audio_softc *sc, struct virtual_channel *vc)
 		 vc->sc_mrr.s.start, audio_stream_get_used(&vc->sc_mrr.s),
 		 vc->sc_mrr.usedhigh, vc->sc_mrr.mmapped));
 
+	chan = SIMPLEQ_FIRST(&sc->sc_audiochan);
 	if (!audio_can_capture(sc))
 		return EINVAL;
+	if (vc == chan->vc)
+		return 0;
 
 	error = 0;
 	if (sc->sc_rec_started == false) {
@@ -3525,6 +3529,8 @@ audiostartp(struct audio_softc *sc, struct virtual_channel *vc)
 
 	if (!audio_can_playback(sc))
 		return EINVAL;
+	if (vc == chan->vc)
+		return 0;
 
 	if (!vc->sc_mpr.mmapped && used < vc->sc_mpr.blksize) {
 		cv_broadcast(&sc->sc_wchan);
@@ -3874,7 +3880,7 @@ audio_mix(void *v)
 	cc = blksize - (inp - cb->s.start) % blksize;
 	if (sc->sc_writeme == false) {
 		DPRINTFN(3, ("MIX RING EMPTY - INSERT SILENCE\n"));
-		audio_fill_silence(&vc->sc_mpr.s.param, inp, cc);
+		audio_fill_silence(&vc->sc_pustream->param, inp, cc);
 		sc->sc_pr.drops += cc;
 	} else
 		cc = blksize;
@@ -3882,11 +3888,11 @@ audio_mix(void *v)
 	cc = blksize;
 	cc1 = sc->sc_pr.s.end - sc->sc_pr.s.inp;
 	if (cc1 < cc) {
-		audio_fill_silence(&vc->sc_mpr.s.param, sc->sc_pr.s.inp, cc1);
+		audio_fill_silence(&vc->sc_pustream->param, sc->sc_pr.s.inp, cc1);
 		cc -= cc1;
-		audio_fill_silence(&vc->sc_mpr.s.param, sc->sc_pr.s.start, cc);
+		audio_fill_silence(&vc->sc_pustream->param, sc->sc_pr.s.start, cc);
 	} else
-		audio_fill_silence(&vc->sc_mpr.s.param, sc->sc_pr.s.inp, cc);
+		audio_fill_silence(&vc->sc_pustream->param, sc->sc_pr.s.inp, cc);
 	mutex_exit(sc->sc_intr_lock);
 
 	kpreempt_disable();
@@ -4149,7 +4155,7 @@ audio_set_vchan_defaults(struct audio_softc *sc, u_int mode,
 		return EINVAL;
 	vc = chan->vc;
 
-	sc->sc_vchan_params.sample_rate = sc->sc_iffreq;
+	sc->sc_vchan_params.sample_rate = sc->sc_frequency;
 #if BYTE_ORDER == LITTLE_ENDIAN
 	sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_LE;
 #else
@@ -4165,12 +4171,12 @@ audio_set_vchan_defaults(struct audio_softc *sc, u_int mode,
 	vc->sc_blkset = false;
 
 	AUDIO_INITINFO(&ai);
-	ai.record.sample_rate = sc->sc_iffreq;
+	ai.record.sample_rate = sc->sc_frequency;
 	ai.record.encoding    = format->encoding;
 	ai.record.channels    = sc->sc_channels;
 	ai.record.precision   = sc->sc_precision;
 	ai.record.pause	      = false;
-	ai.play.sample_rate   = sc->sc_iffreq;
+	ai.play.sample_rate   = sc->sc_frequency;
 	ai.play.encoding      = format->encoding;
 	ai.play.channels      = sc->sc_channels;
 	ai.play.precision     = sc->sc_precision;
@@ -4180,14 +4186,14 @@ audio_set_vchan_defaults(struct audio_softc *sc, u_int mode,
 	sc->sc_format->channels = sc->sc_channels;
 	sc->sc_format->precision = sc->sc_precision;
 	sc->sc_format->validbits = sc->sc_precision;
-	sc->sc_format->frequency[0] = sc->sc_iffreq;
+	sc->sc_format->frequency[0] = sc->sc_frequency;
 
 	auconv_delete_encodings(sc->sc_encodings);
 	error = auconv_create_encodings(sc->sc_format, VAUDIO_NFORMATS,
 	    &sc->sc_encodings);
 
 	if (error == 0)
-		error = audiosetinfo(sc, &ai, true, vc);
+		error = audiosetinfo(sc, &ai, false, vc);
 
 	return error;
 }
@@ -5608,8 +5614,8 @@ done:
 	return error;
 }
 
-#define DEF_MIX_FUNC(name, type, MINVAL, MAXVAL)		\
-	static void						\
+#define DEF_MIX_FUNC(name, type, bigger_type, MINVAL, MAXVAL)		\
+	static void							\
 	mix_func##name(struct audio_softc *sc, struct audio_ringbuffer *cb, \
 		  struct virtual_channel *vc)				\
 	{								\
@@ -5633,9 +5639,9 @@ done:
 			if (cc > cc2)					\
 				cc = cc2;				\
 									\
-			for (m = 0; m < (cc / (name / 8)); m++) {	\
-				tomix[m] = tomix[m] *			\
-				    (int32_t)(vc->sc_swvol) / 255;	\
+			for (m = 0; m < (cc / (name / NBBY)); m++) {	\
+				tomix[m] = (bigger_type)tomix[m] *	\
+				    (bigger_type)(vc->sc_swvol) / 255;	\
 				result = orig[m] + tomix[m];		\
 				product = orig[m] * tomix[m];		\
 				if (orig[m] > 0 && tomix[m] > 0)	\
@@ -5654,9 +5660,9 @@ done:
 		}							\
 	}								\
 
-DEF_MIX_FUNC(8, int8_t, INT8_MIN, INT8_MAX);
-DEF_MIX_FUNC(16, int16_t, INT16_MIN, INT16_MAX);
-DEF_MIX_FUNC(32, int32_t, INT32_MIN, INT32_MAX);
+DEF_MIX_FUNC(8, int8_t, int32_t, INT8_MIN, INT8_MAX);
+DEF_MIX_FUNC(16, int16_t, int32_t, INT16_MIN, INT16_MAX);
+DEF_MIX_FUNC(32, int32_t, int64_t, INT32_MIN, INT32_MAX);
 
 void
 mix_func(struct audio_softc *sc, struct audio_ringbuffer *cb,
@@ -5941,7 +5947,7 @@ audio_sysctl_frequency(SYSCTLFN_ARGS)
 	node = *rnode;
 	sc = node.sysctl_data;
 
-	t = sc->sc_iffreq;
+	t = sc->sc_frequency;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -5960,7 +5966,7 @@ audio_sysctl_frequency(SYSCTLFN_ARGS)
 		return EINVAL;
 	}
 
-	sc->sc_iffreq = t;
+	sc->sc_frequency = t;
 	error = audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL
 	    | AUMODE_RECORD, &sc->sc_format[0]);
 	if (error)
@@ -6082,13 +6088,17 @@ vchan_autoconfig(struct audio_softc *sc)
 		for (j = 0; j < __arraycount(auto_config_channels); j++) {
 			sc->sc_channels = auto_config_channels[j];
 			for (k = 0; k < __arraycount(auto_config_freq); k++) {
-				sc->sc_iffreq = auto_config_freq[k];
+				sc->sc_frequency = auto_config_freq[k];
 				error = audio_set_vchan_defaults(sc,
 				    AUMODE_PLAY | AUMODE_PLAY_ALL |
 				    AUMODE_RECORD, &sc->sc_format[0]);
 				if (vc->sc_npfilters > 0 &&
-				    (vc->sc_mpr.s.param.
-					sample_rate != sc->sc_iffreq ||
+				    (vc->sc_mpr.s.param.precision !=
+							sc->sc_precision ||
+				    vc->sc_mpr.s.param.validbits !=
+							sc->sc_precision ||
+				    vc->sc_mpr.s.param.
+					sample_rate != sc->sc_frequency ||
 				    vc->sc_mpr.s.param.
 					 channels != sc->sc_channels))
 					error = EINVAL;
@@ -6099,7 +6109,7 @@ vchan_autoconfig(struct audio_softc *sc)
 					    "Format SLINEAR, precision %d, "
 					    "channels %d, frequency %d\n",
 					    sc->sc_precision, sc->sc_channels,
-					    sc->sc_iffreq);
+					    sc->sc_frequency);
 					mutex_exit(sc->sc_lock);
 
 					return 0;
