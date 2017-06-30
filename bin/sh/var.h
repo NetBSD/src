@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.34 2017/06/28 13:46:06 kre Exp $	*/
+/*	$NetBSD: var.h,v 1.35 2017/06/30 23:05:45 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -95,6 +95,9 @@ extern struct var vterm;
 extern struct var vtermcap;
 extern struct var vhistsize;
 extern struct var ps_lit;
+extern struct var euname;
+extern struct var random_num;
+extern intmax_t sh_start_time;
 #endif
 
 extern int line_number;
