@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.14 2017/06/23 00:29:42 kamil Exp $	*/
+/*	$NetBSD: jobs.c,v 1.15 2017/06/30 01:52:34 kamil Exp $	*/
 
 /*
  * Process and job control
@@ -26,13 +26,13 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: jobs.c,v 1.14 2017/06/23 00:29:42 kamil Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.15 2017/06/30 01:52:34 kamil Exp $");
 #endif
 
+#include <sys/wait.h>
 
 #include "sh.h"
 #include "ksh_stat.h"
-#include "ksh_wait.h"
 #include "ksh_times.h"
 #include "tty.h"
 
@@ -103,7 +103,7 @@ typedef struct proc	Proc;
 struct proc {
 	Proc	*next;		/* next process in pipeline (if any) */
 	int	state;
-	WAIT_T	status;		/* wait status */
+	int	status;		/* wait status */
 	pid_t	pid;		/* process id */
 	char	command[48];	/* process command string */
 };
@@ -469,7 +469,7 @@ exchild(t, flags, close_fd)
 	p = new_proc();
 	p->next = (Proc *) 0;
 	p->state = PRUNNING;
-	WSTATUS(p->status) = 0;
+	p->status = 0;
 	p->pid = 0;
 
 	/* link process into jobs list */
@@ -891,7 +891,7 @@ j_resume(cp, bg)
 	for (p = j->proc_list; p != (Proc *) 0; p = p->next) {
 		if (p->state == PSTOPPED) {
 			p->state = PRUNNING;
-			WSTATUS(p->status) = 0;
+			p->status = 0;
 			running = 1;
 		}
 		shprintf("%s%s", p->command, p->next ? "| " : null);
@@ -1212,7 +1212,7 @@ j_waitj(j, flags, where)
 	j->flags &= ~(JF_WAITING|JF_W_ASYNCNOTIFY);
 
 	if (j->flags & JF_FG) {
-		WAIT_T	status;
+		int	status;
 
 		j->flags &= ~JF_FG;
 #ifdef TTY_PGRP
@@ -1317,7 +1317,7 @@ j_sigchld(sig)
 	Job		*j;
 	Proc		UNINITIALIZED(*p);
 	int		pid;
-	WAIT_T		status;
+	int		status;
 	struct tms	t0, t1;
 
 #ifdef JOB_SIGS
@@ -1336,7 +1336,7 @@ j_sigchld(sig)
 	ksh_times(&t0);
 	do {
 #ifdef JOB_SIGS
-		pid = ksh_waitpid(-1, &status, (WNOHANG|WUNTRACED));
+		pid = waitpid(-1, &status, (WNOHANG|WUNTRACED));
 #else /* JOB_SIGS */
 		pid = wait(&status);
 #endif /* JOB_SIGS */
@@ -1513,7 +1513,7 @@ j_print(j, how, shf)
 {
 	Proc	*p;
 	int	state;
-	WAIT_T	status;
+	int	status;
 	int	coredumped;
 	char	jobchar = ' ';
 	char	buf[64];
@@ -1556,7 +1556,7 @@ j_print(j, how, shf)
 					WEXITSTATUS(p->status));
 			break;
 		case PSIGNALLED:
-			if (WIFCORED(p->status))
+			if (WCOREDUMP(p->status))
 				coredumped = 1;
 			/* kludge for not reporting `normal termination signals'
 			 * (ie, SIGINT, SIGPIPE)
@@ -1597,8 +1597,7 @@ j_print(j, how, shf)
 		state = p->state;
 		status = p->status;
 		p = p->next;
-		while (p && p->state == state
-		       && WSTATUS(p->status) == WSTATUS(status))
+		while (p && p->state == state && p->status == status)
 		{
 			if (how == JP_LONG)
 				shf_fprintf(shf, "%s%5d %-20s %s%s", filler, p->pid,
