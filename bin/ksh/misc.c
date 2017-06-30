@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.22 2017/06/22 23:38:49 kamil Exp $	*/
+/*	$NetBSD: misc.c,v 1.23 2017/06/30 04:41:19 kamil Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.22 2017/06/22 23:38:49 kamil Exp $");
+__RCSID("$NetBSD: misc.c,v 1.23 2017/06/30 04:41:19 kamil Exp $");
 #endif
 
 
@@ -461,7 +461,7 @@ parse_args(argv, what, setargsp)
 		*setargsp = !arrayset && ((go.info & GI_MINUSMINUS)
 					  || argv[go.optind]);
 
-	if (arrayset && (!*array || *skip_varname(array, FALSE))) {
+	if (arrayset && (!*array || *skip_varname(array, false))) {
 		bi_errorf("%s: is not an identifier", array);
 		return -1;
 	}
@@ -1010,7 +1010,7 @@ ksh_getopt(argv, go, options)
 			go->buf[0] = c;
 			go->optarg = go->buf;
 		} else {
-			warningf(TRUE, "%s%s-%c: unknown option",
+			warningf(true, "%s%s-%c: unknown option",
 				(go->flags & GF_NONAME) ? "" : argv[0],
 				(go->flags & GF_NONAME) ? "" : ": ", c);
 			if (go->flags & GF_ERROR)
@@ -1036,7 +1036,7 @@ ksh_getopt(argv, go, options)
 				go->optarg = go->buf;
 				return ':';
 			}
-			warningf(TRUE, "%s%s-`%c' requires argument",
+			warningf(true, "%s%s-`%c' requires argument",
 				(go->flags & GF_NONAME) ? "" : argv[0],
 				(go->flags & GF_NONAME) ? "" : ": ", c);
 			if (go->flags & GF_ERROR)
