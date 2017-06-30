@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.17 2017/06/30 03:56:12 kamil Exp $	*/
+/*	$NetBSD: vi.c,v 1.18 2017/06/30 04:41:19 kamil Exp $	*/
 
 /*
  *	vi command editing
@@ -9,7 +9,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: vi.c,v 1.17 2017/06/30 03:56:12 kamil Exp $");
+__RCSID("$NetBSD: vi.c,v 1.18 2017/06/30 04:41:19 kamil Exp $");
 #endif
 
 #include "config.h"
@@ -226,7 +226,7 @@ x_vi(buf, len)
 				x_vi_zotc(c);
 				x_flush();
 				trapsig(c == edchars.intr ? SIGINT : SIGQUIT);
-				x_mode(FALSE);
+				x_mode(false);
 				unwind(LSHELL);
 			} else if (c == edchars.eof && state != VVERSION) {
 				if (es->linelen == 0) {

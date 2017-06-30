@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.21 2017/06/30 03:56:12 kamil Exp $	*/
+/*	$NetBSD: eval.c,v 1.22 2017/06/30 04:41:19 kamil Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.21 2017/06/30 03:56:12 kamil Exp $");
+__RCSID("$NetBSD: eval.c,v 1.22 2017/06/30 04:41:19 kamil Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -880,7 +880,7 @@ comsub(xp, cp)
 		shf = shf_fdopen(pv[0], SHF_RD, (struct shf *) 0);
 		ofd1 = savefd(1, 0);	/* fd 1 may be closed... */
 		if (pv[1] != 1) {
-			ksh_dup2(pv[1], 1, FALSE);
+			ksh_dup2(pv[1], 1, false);
 			close(pv[1]);
 		}
 		execute(t, XFORK|XXCOM|XPIPEO);
@@ -910,7 +910,7 @@ trimsub(str, pat, how)
 	  case '#':		/* shortest at beginning */
 		for (p = str; p <= end; p++) {
 			c = *p; *p = '\0';
-			if (gmatch(str, pat, FALSE)) {
+			if (gmatch(str, pat, false)) {
 				*p = c;
 				return p;
 			}
@@ -920,7 +920,7 @@ trimsub(str, pat, how)
 	  case '#'|0x80:	/* longest match at beginning */
 		for (p = end; p >= str; p--) {
 			c = *p; *p = '\0';
-			if (gmatch(str, pat, FALSE)) {
+			if (gmatch(str, pat, false)) {
 				*p = c;
 				return p;
 			}
@@ -929,13 +929,13 @@ trimsub(str, pat, how)
 		break;
 	  case '%':		/* shortest match at end */
 		for (p = end; p >= str; p--) {
-			if (gmatch(p, pat, FALSE))
+			if (gmatch(p, pat, false))
 				return str_nsave(str, p - str, ATEMP);
 		}
 		break;
 	  case '%'|0x80:	/* longest match at end */
 		for (p = str; p <= end; p++) {
-			if (gmatch(p, pat, FALSE))
+			if (gmatch(p, pat, false))
 				return str_nsave(str, p - str, ATEMP);
 		}
 		break;
@@ -1106,7 +1106,7 @@ globit(xs, xpp, sp, wp, check)
 		while ((d = readdir(dirp)) != NULL) {
 			name = d->d_name;
 			if ((*name == '.' && *sp != '.')
-			    || !gmatch(name, sp, TRUE))
+			    || !gmatch(name, sp, true))
 				continue;
 
 			len = NLENGTH(d) + 1;

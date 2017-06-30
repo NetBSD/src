@@ -1,9 +1,9 @@
-/*	$NetBSD: tty.c,v 1.8 2017/06/30 03:56:12 kamil Exp $	*/
+/*	$NetBSD: tty.c,v 1.9 2017/06/30 04:41:19 kamil Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: tty.c,v 1.8 2017/06/30 03:56:12 kamil Exp $");
+__RCSID("$NetBSD: tty.c,v 1.9 2017/06/30 04:41:19 kamil Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -112,7 +112,7 @@ tty_init(init_ttystate)
 	if ((tfd = open(devtty, O_RDWR, 0)) < 0) {
 		if (tfd < 0) {
 			tty_devtty = 0;
-			warningf(FALSE,
+			warningf(false,
 				"No controlling tty (open %s: %s)",
 				devtty, strerror(errno));
 		}
@@ -125,15 +125,15 @@ tty_init(init_ttystate)
 		else if (isatty(2))
 			tfd = 2;
 		else {
-			warningf(FALSE, "Can't find tty file descriptor");
+			warningf(false, "Can't find tty file descriptor");
 			return;
 		}
 	}
 	if ((tty_fd = ksh_dupbase(tfd, FDBASE)) < 0) {
-		warningf(FALSE, "j_ttyinit: dup of tty fd failed: %s",
+		warningf(false, "j_ttyinit: dup of tty fd failed: %s",
 			strerror(errno));
 	} else if (fd_clexec(tty_fd) < 0) {
-		warningf(FALSE, "j_ttyinit: can't set close-on-exec flag: %s",
+		warningf(false, "j_ttyinit: can't set close-on-exec flag: %s",
 			strerror(errno));
 		close(tty_fd);
 		tty_fd = -1;
