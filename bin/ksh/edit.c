@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.32 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: edit.c,v 1.33 2017/06/30 05:18:36 kamil Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.32 2017/06/30 04:41:19 kamil Exp $");
+__RCSID("$NetBSD: edit.c,v 1.33 2017/06/30 05:18:36 kamil Exp $");
 #endif
 
 #include <stdbool.h>
@@ -450,35 +450,6 @@ x_do_comment(buf, bsize, lenp)
 static char	*add_glob ARGS((const char *, int));
 static void	glob_table ARGS((const char *, XPtrV *, struct table *));
 static void	glob_path ARGS((int, const char *, XPtrV *, const char *));
-
-#if 0 /* not used... */
-int	x_complete_word ARGS((const char *, int, int, int *, char **));
-int
-x_complete_word(str, slen, is_command, nwordsp, ret)
-	const char *str;
-	int slen;
-	int is_command;
-	int *nwordsp;
-	char **ret;
-{
-	int nwords;
-	int prefix_len;
-	char **words;
-
-	nwords = (is_command ? x_command_glob : x_file_glob)(XCF_FULLPATH,
-				str, slen, &words);
-	*nwordsp = nwords;
-	if (nwords == 0) {
-		*ret = (char *) 0;
-		return -1;
-	}
-
-	prefix_len = x_longest_prefix(nwords, words);
-	*ret = str_nsave(words[0], prefix_len, ATEMP);
-	x_free_words(nwords, words);
-	return prefix_len;
-}
-#endif /* 0 */
 
 void
 x_print_expansions(nwords, words, is_command)
