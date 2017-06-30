@@ -1,13 +1,15 @@
-/*	$NetBSD: main.c,v 1.18 2017/06/22 14:20:46 kamil Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2017/06/30 03:43:57 kamil Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
  */
 #include <sys/cdefs.h>
+#include <sys/time.h>
 #include <locale.h>
+#include <time.h>
 
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.18 2017/06/22 14:20:46 kamil Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2017/06/30 03:43:57 kamil Exp $");
 #endif
 
 
@@ -15,7 +17,6 @@ __RCSID("$NetBSD: main.c,v 1.18 2017/06/22 14:20:46 kamil Exp $");
 
 #include "sh.h"
 #include "ksh_stat.h"
-#include "ksh_time.h"
 
 extern char **environ;
 
