@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.15 2017/06/30 02:51:14 kamil Exp $	*/
+/*	$NetBSD: io.c,v 1.16 2017/06/30 03:56:12 kamil Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -6,13 +6,12 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.15 2017/06/30 02:51:14 kamil Exp $");
+__RCSID("$NetBSD: io.c,v 1.16 2017/06/30 03:56:12 kamil Exp $");
 #endif
 
-
+#include <sys/stat.h>
 #include <ctype.h>
 #include "sh.h"
-#include "ksh_stat.h"
 
 static int initio_done;
 
