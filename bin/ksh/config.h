@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.39 2017/06/30 01:36:30 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.40 2017/06/30 01:56:34 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -13,9 +13,6 @@
 
 /* Define if your struct stat has st_rdev.  */
 #define HAVE_ST_RDEV 1
-
-/* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
-#define HAVE_SYS_WAIT_H 1
 
 /* Define if on MINIX.  */
 /* #undef _MINIX */
@@ -246,9 +243,6 @@
 
 /* Define if you have the <sys/time.h> header file.  */
 #define HAVE_SYS_TIME_H 1
-
-/* Define if you have the <sys/wait.h> header file.  */
-#define HAVE_SYS_WAIT_H 1
 
 /* Define if you have the <ulimit.h> header file.  */
 #define HAVE_ULIMIT_H
