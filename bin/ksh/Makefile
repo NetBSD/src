@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2016/03/16 23:02:23 christos Exp $
+#	$NetBSD: Makefile,v 1.34 2017/06/30 04:22:22 kamil Exp $
 
 WARNS=3
 CWARNFLAGS.clang+=	-Wno-error=cast-qual
@@ -10,8 +10,8 @@ CPPFLAGS+=	-I.
 PROG=	ksh
 SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
 	eval.c exec.c expr.c history.c io.c jobs.c lex.c mail.c \
-	main.c misc.c path.c shf.c sigact.c syn.c table.c trap.c \
-	tree.c tty.c var.c version.c vi.c
+	main.c misc.c path.c shf.c syn.c table.c trap.c tree.c tty.c \
+	var.c version.c vi.c
 DPSRCS=	emacs.out siglist.out
 .if (${MKMAN} != "no")
 DPSRCS+=ksh.1
