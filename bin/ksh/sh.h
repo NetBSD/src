@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.32 2017/06/30 04:22:22 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.33 2017/06/30 04:30:26 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.32 2017/06/30 04:22:22 kamil Exp $ */
+/* $Id: sh.h,v 1.33 2017/06/30 04:30:26 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -204,10 +204,6 @@ typedef struct Area {
 EXTERN	Area	aperm;		/* permanent object space */
 #define	APERM	&aperm
 #define	ATEMP	&e->area
-
-#ifdef MEM_DEBUG
-# include "chmem.h" /* a debugging front end for malloc et. al. */
-#endif /* MEM_DEBUG */
 
 #ifdef KSH_DEBUG
 # define kshdebug_init()	kshdebug_init_()

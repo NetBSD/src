@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2017/06/30 03:56:12 kamil Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2017/06/30 04:30:26 kamil Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -10,7 +10,7 @@
 #include <time.h>
 
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.20 2017/06/30 03:56:12 kamil Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2017/06/30 04:30:26 kamil Exp $");
 #endif
 
 
@@ -101,11 +101,6 @@ main(int argc, char *argv[])
 	char **wp;
 	struct env env;
 	pid_t ppid;
-
-#ifdef MEM_DEBUG
-	chmem_set_defaults("ct", 1);
-	/* chmem_push("+c", 1); */
-#endif /* MEM_DEBUG */
 
 	/* make sure argv[] is sane */
 	if (!*argv) {
@@ -711,9 +706,6 @@ quitenv()
 					kill(0, sig);
 				}
 			}
-#ifdef MEM_DEBUG
-			chmem_allfree();
-#endif /* MEM_DEBUG */
 		}
 		exit(exstat);
 	}
