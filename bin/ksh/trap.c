@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 2017/06/23 00:00:58 kamil Exp $	*/
+/*	$NetBSD: trap.c,v 1.13 2017/06/30 04:41:19 kamil Exp $	*/
 
 /*
  * signal handling
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: trap.c,v 1.12 2017/06/23 00:00:58 kamil Exp $");
+__RCSID("$NetBSD: trap.c,v 1.13 2017/06/30 04:41:19 kamil Exp $");
 #endif
 
 #include "sh.h"
@@ -205,7 +205,7 @@ runtraps(flag)
 #ifdef KSH
 	if (ksh_tmout_state == TMOUT_LEAVING) {
 		ksh_tmout_state = TMOUT_EXECUTING;
-		warningf(FALSE, "timed out waiting for input");
+		warningf(false, "timed out waiting for input");
 		unwind(LEXIT);
 	} else
 		/* XXX: this means the alarm will have no effect if a trap

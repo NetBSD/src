@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.22 2017/06/30 03:56:12 kamil Exp $	*/
+/*	$NetBSD: exec.c,v 1.23 2017/06/30 04:41:19 kamil Exp $	*/
 
 /*
  * execute command tree
@@ -6,11 +6,12 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: exec.c,v 1.22 2017/06/30 03:56:12 kamil Exp $");
+__RCSID("$NetBSD: exec.c,v 1.23 2017/06/30 04:41:19 kamil Exp $");
 #endif
 
 #include <sys/stat.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #include "sh.h"
 #include "c_test.h"
@@ -29,7 +30,7 @@ static int	call_builtin ARGS((struct tbl *, char **));
 static int	iosetup ARGS((struct ioword *, struct tbl *));
 static int	herein ARGS((const char *, int));
 #ifdef KSH
-static char 	*do_selectargs ARGS((char **, bool_t));
+static char 	*do_selectargs ARGS((char **, bool));
 #endif /* KSH */
 #ifdef KSH
 static int	dbteste_isa ARGS((Test_env *, Test_meta));
@@ -90,9 +91,9 @@ execute(t, flags)
 
 	/* Is this the end of a pipeline?  If so, we want to evaluate the
 	 * command arguments
-	bool_t eval_done = FALSE;
+	bool eval_done = false;
 	if ((flags&XFORK) && !(flags&XEXEC) && (flags&XPCLOSE)) {
-		eval_done = TRUE;
+		eval_done = true;
 		tp = eval_execute_args(t, &ap);
 	}
 	 */
@@ -166,18 +167,18 @@ execute(t, flags)
 		flags |= XFORK;
 		flags &= ~XEXEC;
 		e->savefd[0] = savefd(0, 0);
-		(void) ksh_dup2(e->savefd[0], 0, FALSE); /* stdin of first */
+		(void) ksh_dup2(e->savefd[0], 0, false); /* stdin of first */
 		e->savefd[1] = savefd(1, 0);
 		while (t->type == TPIPE) {
 			openpipe(pv);
-			(void) ksh_dup2(pv[1], 1, FALSE); /* stdout of curr */
+			(void) ksh_dup2(pv[1], 1, false); /* stdout of curr */
 			/* Let exchild() close pv[0] in child
 			 * (if this isn't done, commands like
 			 *    (: ; cat /etc/termcap) | sleep 1
 			 *  will hang forever).
 			 */
 			exchild(t->left, flags|XPIPEO|XCCLOSE, pv[0]);
-			(void) ksh_dup2(pv[0], 0, FALSE); /* stdin of next */
+			(void) ksh_dup2(pv[0], 0, false); /* stdin of next */
 			closepipe(pv);
 			flags |= XPIPEI;
 			t = t->right;
@@ -221,7 +222,7 @@ execute(t, flags)
 			errorf("coprocess already exists");
 
 		/* Can we re-use the existing co-process pipe? */
-		coproc_cleanup(TRUE);
+		coproc_cleanup(true);
 
 		/* do this before opening pipes, in case these fail */
 		e->savefd[0] = savefd(0, 0);
@@ -229,18 +230,18 @@ execute(t, flags)
 
 		openpipe(pv);
 		if (pv[0] != 0) {
-			ksh_dup2(pv[0], 0, FALSE);
+			ksh_dup2(pv[0], 0, false);
 			close(pv[0]);
 		}
 		coproc.write = pv[1];
 		coproc.job = (void *) 0;
 
 		if (coproc.readw >= 0)
-			ksh_dup2(coproc.readw, 1, FALSE);
+			ksh_dup2(coproc.readw, 1, false);
 		else {
 			openpipe(pv);
 			coproc.read = pv[0];
-			ksh_dup2(pv[1], 1, FALSE);
+			ksh_dup2(pv[1], 1, false);
 			coproc.readw = pv[1];	 /* closed before first read */
 			coproc.njobs = 0;
 			/* create new coprocess id */
@@ -303,7 +304,7 @@ execute(t, flags)
 #ifdef KSH
 	  case TSELECT:
 	    {
-		volatile bool_t is_first = TRUE;
+		volatile bool is_first = true;
 #endif /* KSH */
 		ap = (t->vars != NULL) ?
 			  eval(t->vars, DOBLANK|DOGLOB|DOTILDE)
@@ -337,7 +338,7 @@ execute(t, flags)
 					rv = 1;
 					break;
 				}
-				is_first = FALSE;
+				is_first = false;
 				setstr(global(t->str), cp, KSH_UNWIND_ERROR);
 				rv = execute(t->left, flags & XERROK);
 			}
@@ -382,7 +383,7 @@ execute(t, flags)
 		for (t = t->left; t != NULL && t->type == TPAT; t = t->right)
 		    for (ap = t->vars; *ap; ap++)
 			if ((s = evalstr(*ap, DOTILDE|DOPAT))
-			    && gmatch(cp, s, FALSE))
+			    && gmatch(cp, s, false))
 				goto Found;
 		break;
 	  Found:
@@ -518,7 +519,7 @@ comexec(t, tp, ap, flags)
 			fcflags = FC_BI|FC_PATH;
 			if (saw_p) {
 				if (Flag(FRESTRICTED)) {
-					warningf(TRUE,
+					warningf(true,
 						"command -p: restricted");
 					rv = 1;
 					goto Leave;
@@ -575,7 +576,7 @@ comexec(t, tp, ap, flags)
 		goto Leave;
 	} else if (!tp) {
 		if (Flag(FRESTRICTED) && ksh_strchr_dirsep(cp)) {
-			warningf(TRUE, "%s: restricted", cp);
+			warningf(true, "%s: restricted", cp);
 			rv = 1;
 			goto Leave;
 		}
@@ -598,28 +599,28 @@ comexec(t, tp, ap, flags)
 
 			if (!tp->u.fpath) {
 				if (tp->u2.errno_) {
-					warningf(TRUE,
+					warningf(true,
 				"%s: can't find function definition file - %s",
 						cp, strerror(tp->u2.errno_));
 					rv = 126;
 				} else {
-					warningf(TRUE,
+					warningf(true,
 				"%s: can't find function definition file", cp);
 					rv = 127;
 				}
 				break;
 			}
 			if (include(tp->u.fpath, 0, (char **) 0, 0) < 0) {
-				warningf(TRUE,
+				warningf(true,
 			    "%s: can't open function definition file %s - %s",
 					cp, tp->u.fpath, strerror(errno));
 				rv = 127;
 				break;
 			}
-			if (!(ftp = findfunc(cp, hash(cp), FALSE))
+			if (!(ftp = findfunc(cp, hash(cp), false))
 			    || !(ftp->flag & ISSET))
 			{
-				warningf(TRUE,
+				warningf(true,
 					"%s: function not defined by %s",
 					cp, tp->u.fpath);
 				rv = 127;
@@ -650,7 +651,7 @@ comexec(t, tp, ap, flags)
 		}
 
 		old_xflag = Flag(FXTRACE);
-		Flag(FXTRACE) = tp->flag & TRACE ? TRUE : FALSE;
+		Flag(FXTRACE) = tp->flag & TRACE ? true : false;
 
 		old_inuse = tp->flag & FINUSE;
 		tp->flag |= FINUSE;
@@ -704,11 +705,11 @@ comexec(t, tp, ap, flags)
 			 * useful error message and set the exit status to 126.
 			 */
 			if (tp->u2.errno_) {
-				warningf(TRUE, "%s: cannot execute - %s", cp,
+				warningf(true, "%s: cannot execute - %s", cp,
 					strerror(tp->u2.errno_));
 				rv = 126;	/* POSIX */
 			} else {
-				warningf(TRUE, "%s: not found", cp);
+				warningf(true, "%s: not found", cp);
 				rv = 127;
 			}
 			break;
@@ -821,7 +822,7 @@ define(name, t)
 	int was_set = 0;
 
 	while (1) {
-		tp = findfunc(name, hash(name), TRUE);
+		tp = findfunc(name, hash(name), true);
 
 		if (tp->flag & ISSET)
 			was_set = 1;
@@ -912,7 +913,7 @@ findcom(name, flags)
 	if ((flags & FC_SPECBI) && tbi && (tbi->flag & SPEC_BI))
 		tp = tbi;
 	if (!tp && (flags & FC_FUNC)) {
-		tp = findfunc(name, h, FALSE);
+		tp = findfunc(name, h, false);
 		if (tp && !(tp->flag & ISSET)) {
 			if ((fpath = str_val(global("FPATH"))) == null) {
 				tp->u.fpath = (char *) 0;
@@ -1176,7 +1177,7 @@ iosetup(iop, tp)
 				X_OK | ((iop->flag & IORDUP) ? R_OK : W_OK),
 				&emsg)) < 0)
 		{
-			warningf(TRUE, "%s: %s",
+			warningf(true, "%s: %s",
 				snptreef((char *) 0, 32, "%R", &iotmp), emsg);
 			return -1;
 		}
@@ -1187,7 +1188,7 @@ iosetup(iop, tp)
 	}
 	if (do_open) {
 		if (Flag(FRESTRICTED) && (flags & O_CREAT)) {
-			warningf(TRUE, "%s: restricted", cp);
+			warningf(true, "%s: restricted", cp);
 			return -1;
 		}
 		u = open(cp, flags, 0666);
@@ -1195,7 +1196,7 @@ iosetup(iop, tp)
 	if (u < 0) {
 		/* herein() may already have printed message */
 		if (u == -1)
-			warningf(TRUE, "cannot %s %s: %s",
+			warningf(true, "cannot %s %s: %s",
 			       iotype == IODUP ? "dup"
 				: (iotype == IOREAD || iotype == IOHERE) ?
 				    "open" : "create", cp, strerror(errno));
@@ -1219,8 +1220,8 @@ iosetup(iop, tp)
 	if (do_close)
 		close(iop->unit);
 	else if (u != iop->unit) {
-		if (ksh_dup2(u, iop->unit, TRUE) < 0) {
-			warningf(TRUE,
+		if (ksh_dup2(u, iop->unit, true) < 0) {
+			warningf(true,
 				"could not finish (dup) redirection %s: %s",
 				snptreef((char *) 0, 32, "%R", &iotmp),
 				strerror(errno));
@@ -1264,7 +1265,7 @@ herein(content, sub)
 
 	/* ksh -c 'cat << EOF' can cause this... */
 	if (content == (char *) 0) {
-		warningf(TRUE, "here document missing");
+		warningf(true, "here document missing");
 		return -2; /* special to iosetup(): don't print error */
 	}
 
@@ -1273,7 +1274,7 @@ herein(content, sub)
 	 */
 	h = maketemp(ATEMP, TT_HEREDOC_EXP, &e->temps);
 	if (!(shf = h->shf) || (fd = open(h->name, O_RDONLY, 0)) < 0) {
-		warningf(TRUE, "can't %s temporary file %s: %s",
+		warningf(true, "can't %s temporary file %s: %s",
 			!shf ? "create" : "open",
 			h->name, strerror(errno));
 		if (shf)
@@ -1307,7 +1308,7 @@ herein(content, sub)
 
 	if (shf_close(shf) == EOF) {
 		close(fd);
-		warningf(TRUE, "error writing %s: %s", h->name,
+		warningf(true, "error writing %s: %s", h->name,
 			strerror(errno));
 		return -2; /* special to iosetup(): don't print error */
 	}
@@ -1323,7 +1324,7 @@ herein(content, sub)
 static char *
 do_selectargs(ap, print_menu)
 	register char **ap;
-	bool_t print_menu;
+	bool print_menu;
 {
 	static const char *const read_args[] = {
 					"read", "-r", "REPLY", (char *) 0

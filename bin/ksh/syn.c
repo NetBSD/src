@@ -1,4 +1,4 @@
-/*	$NetBSD: syn.c,v 1.9 2006/10/16 00:07:32 christos Exp $	*/
+/*	$NetBSD: syn.c,v 1.10 2017/06/30 04:41:19 kamil Exp $	*/
 
 /*
  * shell parser (C version)
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: syn.c,v 1.9 2006/10/16 00:07:32 christos Exp $");
+__RCSID("$NetBSD: syn.c,v 1.10 2017/06/30 04:41:19 kamil Exp $");
 #endif
 
 
@@ -199,7 +199,7 @@ nested(type, smark, emark)
 	struct nesting_state old_nesting;
 
 	nesting_push(&old_nesting, smark);
-	t = c_list(TRUE);
+	t = c_list(true);
 	musthave(emark, KEYWORD|ALIAS);
 	nesting_pop(&old_nesting);
 	return (block(type, t, NOBLOCK, NOWORDS));
@@ -277,7 +277,7 @@ get_command(cf)
 				ACCEPT;
 				/*(*/
 				musthave(')', 0);
-				t = function_body(XPptrv(args)[0], FALSE);
+				t = function_body(XPptrv(args)[0], false);
 				goto Leave;
 
 			  default:
@@ -336,7 +336,7 @@ get_command(cf)
 	  case SELECT:
 		t = newtp((c == FOR) ? TFOR : TSELECT);
 		musthave(LWORD, ARRAYVAR);
-		if (!is_wdvarname(yylval.cp, TRUE))
+		if (!is_wdvarname(yylval.cp, true))
 			yyerror("%s: bad identifier\n",
 				c == FOR ? "for" : "select");
 		t->str = str_save(ident, ATEMP);
@@ -350,7 +350,7 @@ get_command(cf)
 	  case UNTIL:
 		nesting_push(&old_nesting, c);
 		t = newtp((c == WHILE) ? TWHILE : TUNTIL);
-		t->left = c_list(TRUE);
+		t->left = c_list(true);
 		t->right = dogroup();
 		nesting_pop(&old_nesting);
 		break;
@@ -367,7 +367,7 @@ get_command(cf)
 	  case IF:
 		nesting_push(&old_nesting, c);
 		t = newtp(TIF);
-		t->left = c_list(TRUE);
+		t->left = c_list(true);
 		t->right = thenpart();
 		musthave(FI, KEYWORD|ALIAS);
 		nesting_pop(&old_nesting);
@@ -389,7 +389,7 @@ get_command(cf)
 
 	  case FUNCTION:
 		musthave(LWORD, 0);
-		t = function_body(yylval.cp, TRUE);
+		t = function_body(yylval.cp, true);
 		break;
 	}
 
@@ -440,7 +440,7 @@ dogroup()
 		c = '}';
 	else
 		syntaxerr((char *) 0);
-	list = c_list(TRUE);
+	list = c_list(true);
 	musthave(c, KEYWORD|ALIAS);
 	return list;
 }
@@ -452,7 +452,7 @@ thenpart()
 
 	musthave(THEN, KEYWORD|ALIAS);
 	t = newtp(0);
-	t->left = c_list(TRUE);
+	t->left = c_list(true);
 	if (t->left == NULL)
 		syntaxerr((char *) 0);
 	t->right = elsepart();
@@ -466,13 +466,13 @@ elsepart()
 
 	switch (token(KEYWORD|ALIAS|VARASN)) {
 	  case ELSE:
-		if ((t = c_list(TRUE)) == NULL)
+		if ((t = c_list(true)) == NULL)
 			syntaxerr((char *) 0);
 		return (t);
 
 	  case ELIF:
 		t = newtp(TELIF);
-		t->left = c_list(TRUE);
+		t->left = c_list(true);
 		t->right = thenpart();
 		return (t);
 
@@ -530,7 +530,7 @@ casepart(endtok)
 	t->vars = (char **) XPclose(ptns);
 	musthave(')', 0);
 
-	t->left = c_list(TRUE);
+	t->left = c_list(true);
 	/* Note: Posix requires the ;; */
 	if ((tpeek(CONTIN|KEYWORD|ALIAS)) != endtok)
 		musthave(BREAK, CONTIN|KEYWORD|ALIAS);
@@ -649,40 +649,40 @@ const	struct tokeninfo {
 	short	reserved;
 } tokentab[] = {
 	/* Reserved words */
-	{ "if",		IF,	TRUE },
-	{ "then",	THEN,	TRUE },
-	{ "else",	ELSE,	TRUE },
-	{ "elif",	ELIF,	TRUE },
-	{ "fi",		FI,	TRUE },
-	{ "case",	CASE,	TRUE },
-	{ "esac",	ESAC,	TRUE },
-	{ "for",	FOR,	TRUE },
+	{ "if",		IF,	true },
+	{ "then",	THEN,	true },
+	{ "else",	ELSE,	true },
+	{ "elif",	ELIF,	true },
+	{ "fi",		FI,	true },
+	{ "case",	CASE,	true },
+	{ "esac",	ESAC,	true },
+	{ "for",	FOR,	true },
 #ifdef KSH
-	{ "select",	SELECT,	TRUE },
+	{ "select",	SELECT,	true },
 #endif /* KSH */
-	{ "while",	WHILE,	TRUE },
-	{ "until",	UNTIL,	TRUE },
-	{ "do",		DO,	TRUE },
-	{ "done",	DONE,	TRUE },
-	{ "in",		IN,	TRUE },
-	{ "function",	FUNCTION, TRUE },
-	{ "time",	TIME,	TRUE },
-	{ "{",		'{',	TRUE },
-	{ "}",		'}',	TRUE },
-	{ "!",		BANG,	TRUE },
+	{ "while",	WHILE,	true },
+	{ "until",	UNTIL,	true },
+	{ "do",		DO,	true },
+	{ "done",	DONE,	true },
+	{ "in",		IN,	true },
+	{ "function",	FUNCTION, true },
+	{ "time",	TIME,	true },
+	{ "{",		'{',	true },
+	{ "}",		'}',	true },
+	{ "!",		BANG,	true },
 #ifdef KSH
-	{ "[[",		DBRACKET, TRUE },
+	{ "[[",		DBRACKET, true },
 #endif /* KSH */
 	/* Lexical tokens (0[EOF], LWORD and REDIR handled specially) */
-	{ "&&",		LOGAND,	FALSE },
-	{ "||",		LOGOR,	FALSE },
-	{ ";;",		BREAK,	FALSE },
+	{ "&&",		LOGAND,	false },
+	{ "||",		LOGOR,	false },
+	{ ";;",		BREAK,	false },
 #ifdef KSH
-	{ "((",		MDPAREN, FALSE },
-	{ "|&",		COPROC,	FALSE },
+	{ "((",		MDPAREN, false },
+	{ "|&",		COPROC,	false },
 #endif /* KSH */
 	/* and some special cases... */
-	{ "newline",	'\n',	FALSE },
+	{ "newline",	'\n',	false },
 	{ .name = NULL }
 };
 

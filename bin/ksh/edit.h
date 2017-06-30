@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.h,v 1.3 1999/11/02 22:06:45 jdolecek Exp $	*/
+/*	$NetBSD: edit.h,v 1.4 2017/06/30 04:41:19 kamil Exp $	*/
 
 /* NAME:
  *      edit.h - globals for edit modes
@@ -10,9 +10,11 @@
  *      
  *
  * RCSid:
- *      $NetBSD: edit.h,v 1.3 1999/11/02 22:06:45 jdolecek Exp $
+ *      $NetBSD: edit.h,v 1.4 2017/06/30 04:41:19 kamil Exp $
  *
  */
+
+#include <stdbool.h>
 
 /* some useful #defines */
 #ifdef EXTERN
@@ -48,7 +50,7 @@ int 	x_getc		ARGS((void));
 void 	x_flush		ARGS((void));
 void 	x_putc		ARGS((int c));
 void 	x_puts		ARGS((const char *s));
-bool_t 	x_mode		ARGS((bool_t onoff));
+bool 	x_mode		ARGS((bool onoff));
 int 	promptlen	ARGS((const char *cp, const char **spp));
 int	x_do_comment	ARGS((char *buf, int bsize, int *lenp));
 void	x_print_expansions ARGS((int nwords, char *const *words, int is_command));

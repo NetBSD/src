@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.33 2017/06/30 04:30:26 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.34 2017/06/30 04:41:19 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.33 2017/06/30 04:30:26 kamil Exp $ */
+/* $Id: sh.h,v 1.34 2017/06/30 04:41:19 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -156,10 +156,6 @@ typedef	RETSIGTYPE (*handler_t) ARGS((int));	/* signal handler */
 # define FILENCMP(s1, s2, n) strncmp(s1, s2, n)
 # define ksh_strchr_dirsep(p)   strchr(p, DIRSEP)
 # define ksh_strrchr_dirsep(p)  strrchr(p, DIRSEP)
-
-typedef int bool_t;
-#define	FALSE	0
-#define	TRUE	1
 
 #define	NELEM(a) (sizeof(a) / sizeof((a)[0]))
 #define	sizeofN(type, n) (sizeof(type) * (n))

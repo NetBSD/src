@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.20 2017/06/30 02:51:14 kamil Exp $	*/
+/*	$NetBSD: lex.c,v 1.21 2017/06/30 04:41:19 kamil Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: lex.c,v 1.20 2017/06/30 02:51:14 kamil Exp $");
+__RCSID("$NetBSD: lex.c,v 1.21 2017/06/30 04:41:19 kamil Exp $");
 #endif
 
 
@@ -170,7 +170,7 @@ yylex(cf)
 		  case SBASE:
 			if (c == '[' && (cf & (VARASN|ARRAYVAR))) {
 				*wp = EOS; /* temporary */
-				if (is_wdvarname(Xstring(ws, wp), FALSE))
+				if (is_wdvarname(Xstring(ws, wp), false))
 				{
 					char *p, *tmp;
 
@@ -845,7 +845,7 @@ yyerror(const char *fmt, ...)
 		source = source->next;
 	source->str = null;	/* zap pending input */
 
-	error_prefix(TRUE);
+	error_prefix(true);
 	va_start(va, fmt);
 	shf_vfprintf(shl_out, fmt, va);
 	va_end(va);

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2017/06/30 04:30:26 kamil Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2017/06/30 04:41:19 kamil Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -10,7 +10,7 @@
 #include <time.h>
 
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.21 2017/06/30 04:30:26 kamil Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2017/06/30 04:41:19 kamil Exp $");
 #endif
 
 
@@ -351,7 +351,7 @@ main(int argc, char *argv[])
 	 * user will know why things broke.
 	 */
 	if (!current_wd[0] && Flag(FTALKING))
-		warningf(FALSE, "Cannot determine current working directory");
+		warningf(false, "Cannot determine current working directory");
 
 	if (Flag(FLOGIN)) {
 		include(KSH_SYSTEM_PROFILE, 0, (char **) 0, 1);
@@ -410,7 +410,7 @@ main(int argc, char *argv[])
 		Flag(FTRACKALL) = 1;	/* set after ENV */
 
 	setlocale(LC_CTYPE, "");
-	shell(s, TRUE);	/* doesn't return */
+	shell(s, true);	/* doesn't return */
 	return 0;
 }
 
@@ -476,7 +476,7 @@ include(name, argc, argv, intr_ok)
 	s = pushs(SFILE, ATEMP);
 	s->u.shf = shf;
 	s->file = str_save(name, ATEMP);
-	i = shell(s, FALSE);
+	i = shell(s, false);
 	shf_close(s->u.shf);
 	quitenv();
 	if (old_argv) {
@@ -495,7 +495,7 @@ command(comm)
 
 	s = pushs(SSTRING, ATEMP);
 	s->start = s->str = comm;
-	r = shell(s, FALSE);
+	r = shell(s, false);
 	afree(s, ATEMP);
 	return r;
 }
