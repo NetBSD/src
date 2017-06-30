@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.31 2017/06/30 02:51:14 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.32 2017/06/30 04:22:22 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.31 2017/06/30 02:51:14 kamil Exp $ */
+/* $Id: sh.h,v 1.32 2017/06/30 04:22:22 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -79,10 +79,6 @@
 #endif /* SA_INTERRUPT */
 
 typedef	RETSIGTYPE (*handler_t) ARGS((int));	/* signal handler */
-
-#ifdef USE_FAKE_SIGACT
-# include "sigact.h"			/* use sjg's fake sigaction() */
-#endif
 
 #ifdef HAVE_PATHS_H
 # include <paths.h>
