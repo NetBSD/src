@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.30 2017/06/22 14:20:46 kamil Exp $	*/
+/*	$NetBSD: edit.c,v 1.31 2017/06/30 03:56:12 kamil Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.30 2017/06/22 14:20:46 kamil Exp $");
+__RCSID("$NetBSD: edit.c,v 1.31 2017/06/30 03:56:12 kamil Exp $");
 #endif
 
 
@@ -20,8 +20,8 @@ __RCSID("$NetBSD: edit.c,v 1.30 2017/06/22 14:20:46 kamil Exp $");
 #include "edit.h"
 #undef EXTERN
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <ctype.h>
-#include "ksh_stat.h"
 
 
 #if defined(TIOCGWINSZ)

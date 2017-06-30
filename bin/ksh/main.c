@@ -1,22 +1,22 @@
-/*	$NetBSD: main.c,v 1.19 2017/06/30 03:43:57 kamil Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2017/06/30 03:56:12 kamil Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
  */
 #include <sys/cdefs.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <locale.h>
 #include <time.h>
 
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.19 2017/06/30 03:43:57 kamil Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2017/06/30 03:56:12 kamil Exp $");
 #endif
 
 
 #define	EXTERN				/* define EXTERNs in sh.h */
 
 #include "sh.h"
-#include "ksh_stat.h"
 
 extern char **environ;
 
