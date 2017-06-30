@@ -1,4 +1,4 @@
-/*	$NetBSD: shf.c,v 1.11 2017/06/23 00:18:01 kamil Exp $	*/
+/*	$NetBSD: shf.c,v 1.12 2017/06/30 02:51:14 kamil Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shf.c,v 1.11 2017/06/23 00:18:01 kamil Exp $");
+__RCSID("$NetBSD: shf.c,v 1.12 2017/06/30 02:51:14 kamil Exp $");
 #endif
 
 
@@ -758,14 +758,7 @@ shf_write(buf, nbytes, shf)
 }
 
 int
-#ifdef HAVE_PROTOTYPES
 shf_fprintf(struct shf *shf, const char *fmt, ...)
-#else
-shf_fprintf(shf, fmt, va_alist)
-	struct shf *shf;
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list args;
 	int n;
@@ -778,15 +771,7 @@ shf_fprintf(shf, fmt, va_alist)
 }
 
 int
-#ifdef HAVE_PROTOTYPES
 shf_snprintf(char *buf, int bsize, const char *fmt, ...)
-#else
-shf_snprintf(buf, bsize, fmt, va_alist)
-	char *buf;
-	int bsize;
-	const char *fmt;
-	va_dcl
-#endif
 {
 	struct shf shf;
 	va_list args;
@@ -805,13 +790,7 @@ shf_snprintf(buf, bsize, fmt, va_alist)
 }
 
 char *
-#ifdef HAVE_PROTOTYPES
 shf_smprintf(const char *fmt, ...)
-#else
-shf_smprintf(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	struct shf shf;
 	va_list args;

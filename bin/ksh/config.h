@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.45 2017/06/30 02:38:09 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.46 2017/06/30 02:51:14 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -53,9 +53,6 @@
 
 /* Define if you don't have setpgrp(), setpgid() or getpgrp() routines */
 /* #undef NO_PGRP */
-
-/* Define if C compiler groks function prototypes */
-#define HAVE_PROTOTYPES 1
 
 /* Define if C compiler groks __attribute__((...)) (const, noreturn, format) */
 #define HAVE_GCC_FUNC_ATTR 1
