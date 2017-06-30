@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.35 2017/06/22 14:20:46 kamil Exp $	*/
+/*	$NetBSD: emacs.c,v 1.36 2017/06/30 03:56:12 kamil Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -10,18 +10,18 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: emacs.c,v 1.35 2017/06/22 14:20:46 kamil Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.36 2017/06/30 03:56:12 kamil Exp $");
 #endif
-
 
 #include "config.h"
 #ifdef EMACS
 
-#include "sh.h"
-#include "ksh_stat.h"
-#include "ksh_dir.h"
+#include <sys/stat.h>
 #include <ctype.h>
 #include <locale.h>
+
+#include "sh.h"
+#include "ksh_dir.h"
 #include "edit.h"
 
 static	Area	aedit;

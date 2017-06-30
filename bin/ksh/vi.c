@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.16 2017/06/22 14:20:46 kamil Exp $	*/
+/*	$NetBSD: vi.c,v 1.17 2017/06/30 03:56:12 kamil Exp $	*/
 
 /*
  *	vi command editing
@@ -9,15 +9,15 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: vi.c,v 1.16 2017/06/22 14:20:46 kamil Exp $");
+__RCSID("$NetBSD: vi.c,v 1.17 2017/06/30 03:56:12 kamil Exp $");
 #endif
 
 #include "config.h"
 #ifdef VI
 
 #include "sh.h"
+#include <sys/stat.h>
 #include <ctype.h>
-#include "ksh_stat.h"		/* completion */
 #include "edit.h"
 
 #define CMDLEN		1024
