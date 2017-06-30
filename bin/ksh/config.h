@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.42 2017/06/30 02:06:59 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.43 2017/06/30 02:13:29 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -44,9 +44,6 @@
 
 /* Define to use the fake posix signal routines (sigact.[ch]) */
 /* #undef USE_FAKE_SIGACT */
-
-/* Define if signals don't interrupt read() */
-/* #undef SIGNALS_DONT_INTERRUPT */
 
 /* Define if you have bsd versions of the setpgrp() and getpgrp() routines */
 /* #undef BSD_PGRP */

@@ -1,9 +1,9 @@
-/*	$NetBSD: conf-end.h,v 1.4 2017/06/22 23:59:28 kamil Exp $	*/
+/*	$NetBSD: conf-end.h,v 1.5 2017/06/30 02:13:29 kamil Exp $	*/
 
 /*
  * End of configuration stuff for PD ksh.
  *
- * RCSid: $NetBSD: conf-end.h,v 1.4 2017/06/22 23:59:28 kamil Exp $
+ * RCSid: $NetBSD: conf-end.h,v 1.5 2017/06/30 02:13:29 kamil Exp $
  */
 
 #if defined(EMACS) || defined(VI)
@@ -31,18 +31,6 @@
 #if !defined(JOB_SIGS) || !(defined(POSIX_PGRP) || defined(BSD_PGRP))
 # undef JOBS /* if no JOB_SIGS, no job control support */
 #endif
-
-/* pdksh assumes system calls return EINTR if a signal happened (this so
- * the signal handler doesn't have to longjmp()).  I don't know if this
- * happens (or can be made to happen) with sigset() et. al. (the bsd41 signal
- * routines), so, the autoconf stuff checks what they do and defines
- * SIGNALS_DONT_INTERRUPT if signals don't interrupt read().
- * If SIGNALS_DONT_INTERRUPT isn't defined and your compiler chokes on this,
- * delete the hash in front of the error (and file a bug report).
- */
-#ifdef SIGNALS_DONT_INTERRUPT
-  # error pdksh needs interruptable system calls.
-#endif /* SIGNALS_DONT_INTERRUPT */
 
 #ifdef HAVE_GCC_FUNC_ATTR
 # define GCC_FUNC_ATTR(x)	__attribute__((x))
