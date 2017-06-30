@@ -1,4 +1,4 @@
-.\" $NetBSD: wsbell.9,v 1.1 2017/06/13 06:27:10 nat Exp $
+.\" $NetBSD: wsbell.9,v 1.2 2017/06/30 05:22:14 pgoyette Exp $
 .\"
 .\" Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 13, 2017
+.Dd June 30, 2017
 .Dt WSBELL 9
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@ The
 .Nm
 module is a component of the
 .Xr wscons 9
-framework to provide keyboard-independent bell support.
+framework, providing keyboard-independent bell support.
 All of the support is provided by the
 .Xr wsbell 4
 device driver, which must be a child of the hardware device driver.
@@ -80,7 +80,7 @@ To attach the
 .Xr wsbell 4
 device, the speaker driver must allocate and populate a
 .Fa wsbelldev_attach_args
-structure with a pointer to the parents device structure as an access cookie
+structure with a pointer to the parent's device structure as an access cookie
 and call
 .Fn config_found
 to perform the attach (see
