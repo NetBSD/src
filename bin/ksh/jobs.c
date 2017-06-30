@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.16 2017/06/30 02:38:10 kamil Exp $	*/
+/*	$NetBSD: jobs.c,v 1.17 2017/06/30 03:23:18 kamil Exp $	*/
 
 /*
  * Process and job control
@@ -21,14 +21,14 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: jobs.c,v 1.16 2017/06/30 02:38:10 kamil Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.17 2017/06/30 03:23:18 kamil Exp $");
 #endif
 
+#include <sys/times.h>
 #include <sys/wait.h>
 
 #include "sh.h"
 #include "ksh_stat.h"
-#include "ksh_times.h"
 #include "tty.h"
 
 /* Start of system configuration stuff */
@@ -1263,14 +1263,14 @@ j_sigchld(sig)
 			return RETSIGVAL;
 		}
 
-	ksh_times(&t0);
+	times(&t0);
 	do {
 		pid = waitpid(-1, &status, (WNOHANG|WUNTRACED));
 
 		if (pid <= 0)	/* return if would block (0) ... */
 			break;	/* ... or no children or interrupted (-1) */
 
-		ksh_times(&t1);
+		times(&t1);
 
 		/* find job and process structures for this pid */
 		for (j = job_list; j != (Job *) 0; j = j->next)
