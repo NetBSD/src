@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.150 2017/06/19 03:21:31 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.151 2017/06/30 23:01:21 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.150 2017/06/19 03:21:31 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.151 2017/06/30 23:01:21 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -276,9 +276,24 @@ evaltree(union node *n, int flags)
 		break;
 	case NREDIR:
 		expredir(n->nredir.redirect);
+		if (xflag && n->nredir.redirect) {
+			union node *rn;
+
+			out2str(expandstr(ps4val(), line_number));
+			out2str("using redirections:");
+			for (rn = n->nredir.redirect; rn; rn = rn->nfile.next)
+				(void) outredir(&errout, rn, ' ');
+			out2str(" do\n");
+			flushout(&errout);
+		}
 		redirect(n->nredir.redirect, REDIR_PUSH | REDIR_KEEP);
 		evaltree(n->nredir.n, flags);
 		popredir();
+		if (xflag && n->nredir.redirect) {
+			out2str(expandstr(ps4val(), line_number));
+			out2str("done\n");
+			flushout(&errout);
+		}
 		break;
 	case NSUBSHELL:
 		evalsubshell(n, flags & ~EV_MORE);
@@ -422,7 +437,7 @@ evalfor(union node *n, int flags)
 			f |= EV_MORE;
 
 		if (xflag) {
-			out2str(ps4val());
+			out2str(expandstr(ps4val(), line_number));
 			out2str("for ");
 			out2str(n->nfor.var);
 			out2c('=');
@@ -505,6 +520,16 @@ evalsubshell(union node *n, int flags)
 	int backgnd = (n->type == NBACKGND);
 
 	expredir(n->nredir.redirect);
+	if (xflag && n->nredir.redirect) {
+		union node *rn;
+
+		out2str(expandstr(ps4val(), line_number));
+		out2str("using redirections:");
+		for (rn = n->nredir.redirect; rn; rn = rn->nfile.next)
+			(void) outredir(&errout, rn, ' ');
+		out2str(" do subshell\n");
+		flushout(&errout);
+	}
 	INTOFF;
 	jp = makejob(n, 1);
 	if (forkshell(jp, n, backgnd ? FORK_BG : FORK_FG) == 0) {
@@ -517,6 +542,11 @@ evalsubshell(union node *n, int flags)
 	}
 	exitstatus = backgnd ? 0 : waitforjob(jp);
 	INTON;
+	if (!backgnd && xflag && n->nredir.redirect) {
+		out2str(expandstr(ps4val(), line_number));
+		out2str("done subshell\n");
+		flushout(&errout);
+	}
 }
 
 
@@ -771,8 +801,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	setstackmark(&smark);
 	back_exitstatus = 0;
 
-	if (cmd != NULL)
-		line_number = cmd->ncmd.lineno;
+	line_number = cmd->ncmd.lineno;
 
 	arglist.lastp = &arglist.list;
 	varflag = 1;
@@ -830,7 +859,9 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	/* Print the command if xflag is set. */
 	if (xflag) {
 		char sep = 0;
-		out2str(ps4val());
+		union node *rn;
+
+		out2str(expandstr(ps4val(), line_number));
 		for (sp = varlist.list ; sp ; sp = sp->next) {
 			char *p;
 
@@ -859,6 +890,9 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			out2shstr(sp->text);
 			sep = ' ';
 		}
+		for (rn = cmd->ncmd.redirect; rn; rn = rn->nfile.next)
+			if (outredir(&errout, rn, sep))
+				sep = ' ';
 		outc('\n', &errout);
 		flushout(&errout);
 	}
