@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.17 2017/06/30 03:23:18 kamil Exp $	*/
+/*	$NetBSD: jobs.c,v 1.18 2017/06/30 03:56:12 kamil Exp $	*/
 
 /*
  * Process and job control
@@ -21,14 +21,14 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: jobs.c,v 1.17 2017/06/30 03:23:18 kamil Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.18 2017/06/30 03:56:12 kamil Exp $");
 #endif
 
+#include <sys/stat.h>
 #include <sys/times.h>
 #include <sys/wait.h>
 
 #include "sh.h"
-#include "ksh_stat.h"
 #include "tty.h"
 
 /* Start of system configuration stuff */
