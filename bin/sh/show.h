@@ -1,4 +1,4 @@
-/*	$NetBSD: show.h,v 1.10 2017/05/13 03:26:03 kre Exp $	*/
+/*	$NetBSD: show.h,v 1.11 2017/06/30 23:00:40 kre Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -39,6 +39,7 @@ void showtree(union node *);
 void trace(const char *, ...);
 void tracev(const char *, va_list);
 void trargs(char **);
+void trargstr(union node *);
 void trputc(int);
 void trputs(const char *);
 void opentrace(void);
