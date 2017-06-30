@@ -23,7 +23,7 @@
 
   <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id-1.2"></a>Release Notes for BIND Version 9.10.5-P1</h2></div></div></div>
+<a name="id-1.2"></a>Release Notes for BIND Version 9.10.5-P2</h2></div></div></div>
   
   <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
@@ -34,6 +34,11 @@
     <p>
       BIND 9.10.5-P1 addresses the security issues described in
       CVE-2017-3140 and CVE-2017-3141.
+    </p>
+    <p>
+      BIND 9.11.1-P2 addresses the security issues described in
+      CVE-2017-3142 and CVE-2017-3143. It also includes an update
+      to the address of the B root server.
     </p>
   </div>
 
@@ -84,6 +89,13 @@
 <div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_security"></a>Security Fixes</h3></div></div></div>
     <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+	<p>
+	  An error in TSIG handling could permit unauthorized zone
+	  transfers or zone updates. These flaws are disclosed in
+	  CVE-2017-3142 and CVE-2017-3143. [RT #45383]
+	</p>
+      </li>
 <li class="listitem">
 	<p>
 	  The BIND installer on Windows used an unquoted service path,

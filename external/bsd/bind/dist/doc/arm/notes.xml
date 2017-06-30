@@ -27,6 +27,11 @@
       BIND 9.10.5-P1 addresses the security issues described in
       CVE-2017-3140 and CVE-2017-3141.
     </para>
+    <para>
+      BIND 9.11.1-P2 addresses the security issues described in
+      CVE-2017-3142 and CVE-2017-3143. It also includes an update
+      to the address of the B root server.
+    </para>
   </section>
 
 
@@ -71,6 +76,13 @@
 
   <section xml:id="relnotes_security"><info><title>Security Fixes</title></info>
     <itemizedlist>
+      <listitem>
+	<para>
+	  An error in TSIG handling could permit unauthorized zone
+	  transfers or zone updates. These flaws are disclosed in
+	  CVE-2017-3142 and CVE-2017-3143. [RT #45383]
+	</para>
+      </listitem>
       <listitem>
 	<para>
 	  The BIND installer on Windows used an unquoted service path,
