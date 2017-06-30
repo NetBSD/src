@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.43 2017/06/30 02:13:29 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.44 2017/06/30 02:20:47 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -38,9 +38,6 @@
 
 /* Define as the return value of signal handlers (0 or ).  */
 #define RETSIGVAL 
-
-/* Define if you have posix signal routines (sigaction(), et. al.) */
-#define POSIX_SIGNALS 1
 
 /* Define to use the fake posix signal routines (sigact.[ch]) */
 /* #undef USE_FAKE_SIGACT */
