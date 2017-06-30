@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.47 2017/06/30 03:23:18 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.48 2017/06/30 03:32:28 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -83,9 +83,6 @@
 
 /* Define if the pgrp of setpgrp() can't be the pid of a zombie process */
 /* #undef NEED_PGRP_SYNC */
-
-/* Define if you have a POSIX.1 compatible <sys/wait.h> */
-#define POSIX_SYS_WAIT 1
 
 /* Define if your OS maps references to /dev/fd/n to file descriptor n */
 #define HAVE_DEV_FD 1
