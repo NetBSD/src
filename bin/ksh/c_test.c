@@ -1,4 +1,4 @@
-/*	$NetBSD: c_test.c,v 1.7 2017/06/30 03:56:12 kamil Exp $	*/
+/*	$NetBSD: c_test.c,v 1.8 2017/06/30 04:11:57 kamil Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -11,7 +11,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_test.c,v 1.7 2017/06/30 03:56:12 kamil Exp $");
+__RCSID("$NetBSD: c_test.c,v 1.8 2017/06/30 04:11:57 kamil Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -422,19 +422,11 @@ test_eval(te, op, opnd1, opnd2, do_eval)
 	return 1;
 }
 
-/* Nasty kludge to handle Korn's bizarre /dev/fd hack */
 static int
 test_stat(pathx, statb)
 	const char *pathx;
 	struct stat *statb;
 {
-#if !defined(HAVE_DEV_FD)
-	int fd;
-
-	if (strncmp(pathx, "/dev/fd/", 8) == 0 && getn(pathx + 8, &fd))
-		return fstat(fd, statb);
-#endif /* !HAVE_DEV_FD */
-
 	return stat(pathx, statb);
 }
 
@@ -447,22 +439,6 @@ test_eaccess(pathx, mode)
 	int mode;
 {
 	int res;
-
-#if !defined(HAVE_DEV_FD)
-	int fd;
-
-	/* Note: doesn't handle //dev/fd, etc.. (this is ok) */
-	if (strncmp(pathx, "/dev/fd/", 8) == 0 && getn(pathx + 8, &fd)) {
-		int flags;
-
-		if ((flags = fcntl(fd, F_GETFL, 0)) < 0
-		    || (mode & X_OK)
-		    || ((mode & W_OK) && (flags & O_ACCMODE) == O_RDONLY)
-		    || ((mode & R_OK) && (flags & O_ACCMODE) == O_WRONLY))
-			return -1;
-		return 0;
-	}
-#endif /* !HAVE_DEV_FD */
 
 	res = eaccess(pathx, mode);
 	/*
