@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.28.42.1 2017/06/30 06:38:00 snj Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.28.42.2 2017/06/30 06:51:28 snj Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.28.42.1 2017/06/30 06:38:00 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.28.42.2 2017/06/30 06:51:28 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -321,7 +321,7 @@ DEFINE_FILTER(mulaw_to_linear##n_prec)					\
 		break;							\
 	case AUDIO_ENCODING_ULINEAR_BE:					\
 		FILTER_LOOP_PROLOGUE(this->src, 1, dst, hw, m) {	\
-			j = hw - 2;					\
+			j = 2;						\
 			d[0] = mulawtolin16[s[0]][0];			\
 			d[1] = mulawtolin16[s[0]][1];			\
 			while (j < hw)					\
@@ -339,7 +339,7 @@ DEFINE_FILTER(mulaw_to_linear##n_prec)					\
 		break;							\
 	case AUDIO_ENCODING_SLINEAR_BE:					\
 		FILTER_LOOP_PROLOGUE(this->src, 1, dst, hw, m) {	\
-			j = hw - 2;					\
+			j = 2;						\
 			d[0] = mulawtolin16[s[0]][0] ^ 0x80;		\
 			d[1] = mulawtolin16[s[0]][1];			\
 			while (j < hw)					\
@@ -456,7 +456,7 @@ DEFINE_FILTER(alaw_to_linear##n_prec)					\
 		break;							\
 	case AUDIO_ENCODING_ULINEAR_BE:					\
 		FILTER_LOOP_PROLOGUE(this->src, 1, dst, hw, m) {	\
-			j = hw - 2;					\
+			j = 2;						\
 			d[0] = alawtolin16[s[0]][0];			\
 			d[1] = alawtolin16[s[0]][1];			\
 			while (j < hw)					\
@@ -474,10 +474,10 @@ DEFINE_FILTER(alaw_to_linear##n_prec)					\
 		break;							\
 	case AUDIO_ENCODING_SLINEAR_BE:					\
 		FILTER_LOOP_PROLOGUE(this->src, 1, dst, hw, m) {	\
-			j = hw - 2;					\
+			j = 2;						\
 			d[0] = alawtolin16[s[0]][0] ^ 0x80;		\
 			d[1] = alawtolin16[s[0]][1];			\
-			while (j < hw)	 				\
+			while (j < hw)					\
 				d[j++] = 0;				\
 		} FILTER_LOOP_EPILOGUE(this->src, dst);			\
 		break;							\
