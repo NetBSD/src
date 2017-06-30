@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_sysreg.c,v 1.2 2017/06/02 21:26:20 jmcneill Exp $ */
+/* $NetBSD: vexpress_sysreg.c,v 1.3 2017/06/30 09:19:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_sysreg.c,v 1.2 2017/06/02 21:26:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_sysreg.c,v 1.3 2017/06/30 09:19:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -100,7 +100,7 @@ vexpress_sysreg_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_compatible(faa->faa_phandle, compatible) >= 0;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
