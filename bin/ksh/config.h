@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.48 2017/06/30 03:32:28 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.49 2017/06/30 03:35:16 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -71,9 +71,6 @@
 
 /* Define if you have a sane <termios.h> header file */
 #define HAVE_TERMIOS_H 1
-
-/* Define if you have a lstat() function in your C library */
-#define HAVE_LSTAT 1
 
 /* Define if you have a sane <termio.h> header file */
 /* #undef HAVE_TERMIO_H */
