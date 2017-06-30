@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.18 2017/06/28 04:14:53 ozaki-r Exp $
+#	$NetBSD: t_flags.sh,v 1.19 2017/06/30 07:57:12 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -148,6 +148,8 @@ test_blackhole()
 
 	# Delete an existing route first
 	atf_check -s exit:0 -o ignore rump.route delete -net 10.0.0.0/24
+	# Should be removed too
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n 10.0.0.1
 
 	# Gateway must be lo0
 	atf_check -s exit:0 -o ignore \

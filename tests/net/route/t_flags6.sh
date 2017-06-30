@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags6.sh,v 1.14 2017/06/28 04:14:53 ozaki-r Exp $
+#	$NetBSD: t_flags6.sh,v 1.15 2017/06/30 07:57:12 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -134,6 +134,9 @@ test_blackhole6()
 	# Delete an existing route first
 	atf_check -s exit:0 -o ignore \
 	    rump.route delete -inet6 -net fc00::/64
+	# Should be removed too
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' \
+	    rump.ndp -n $IP6_PEER
 
 	# Gateway must be lo0
 	atf_check -s exit:0 -o ignore \
