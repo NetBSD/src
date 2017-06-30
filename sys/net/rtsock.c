@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.225 2017/06/30 09:11:22 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.226 2017/06/30 18:28:31 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.225 2017/06/30 09:11:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.226 2017/06/30 18:28:31 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -721,6 +721,24 @@ out:
 	return error;
 }
 
+static socklen_t
+sa_addrlen(const struct sockaddr *sa)
+{
+
+	switch (sa->sa_family) {
+#ifdef INET
+	case AF_INET:
+		return sizeof(struct sockaddr_in);
+#endif
+#ifdef INET6
+	case AF_INET6:
+		return sizeof(struct sockaddr_in6);
+#endif
+	default:
+		return 0;
+	}
+}
+
 /*ARGSUSED*/
 int
 COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
@@ -736,7 +754,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 	struct sockaddr_dl sdl;
 	int bound = curlwp_bind();
 	bool do_rt_free = false;
-	struct sockaddr *netmask = NULL;
+	struct sockaddr_storage netmask;
 
 #define senderr(e) do { error = e; goto flush;} while (/*CONSTCOND*/ 0)
 	if (m == NULL || ((m->m_len < sizeof(int32_t)) &&
@@ -796,36 +814,18 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 
 	/*
 	 * route(8) passes a sockaddr truncated with prefixlen.
-	 * The kernel doesn't expect such sockaddr and need to restore
-	 * the original length of the sockaddr.
+	 * The kernel doesn't expect such sockaddr and need to 
+	 * use a buffer that is big enough for the sockaddr expected
+	 * (padded with 0's). We keep the original length of the sockaddr.
 	 */
 	if (info.rti_info[RTAX_NETMASK]) {
-		size_t sa_len = 0;
-		int af = info.rti_info[RTAX_NETMASK]->sa_family;
-
-		switch (af) {
-#ifdef INET
-		case AF_INET:
-			sa_len = sizeof(struct sockaddr_in);
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			sa_len = sizeof(struct sockaddr_in6);
-			break;
-#endif
-		default:
-			break;
-		}
-		if (sa_len != 0 &&
-		    sa_len > info.rti_info[RTAX_NETMASK]->sa_len) {
-			netmask = sockaddr_alloc(af, sa_len, M_WAITOK|M_ZERO);
-			sockaddr_copy(netmask,
-			    info.rti_info[RTAX_NETMASK]->sa_len,
-			    info.rti_info[RTAX_NETMASK]);
-			/* Restore original sa_len */
-			netmask->sa_len = info.rti_info[RTAX_NETMASK]->sa_len;
-			info.rti_info[RTAX_NETMASK] = netmask;
+		socklen_t sa_len = sa_addrlen(info.rti_info[RTAX_NETMASK]);
+		socklen_t masklen = info.rti_info[RTAX_NETMASK]->sa_len;
+		if (sa_len != 0 && sa_len > masklen) {
+			KASSERT(sa_len <= sizeof(netmask));
+			memcpy(&netmask, info.rti_info[RTAX_NETMASK], masklen);
+			memset((char *)&netmask + masklen, 0, sa_len - masklen);
+			info.rti_info[RTAX_NETMASK] = sstocsa(&netmask);
 		}
 	}
 
@@ -1067,8 +1067,6 @@ flush:
     }
 out:
 	curlwp_bindx(bound);
-	if (netmask)
-		sockaddr_free(netmask);
 	return error;
 }
 
