@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.41 2017/06/30 02:02:41 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.42 2017/06/30 02:06:59 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -35,9 +35,6 @@
 
 /* Define if you can safely include both <sys/time.h> and <time.h>.  */
 #define TIME_WITH_SYS_TIME 1
-
-/* Define if your kernel doesn't handle scripts starting with #! */
-/* #undef SHARPBANG */
 
 /* Define as the return value of signal handlers (0 or ).  */
 #define RETSIGVAL 

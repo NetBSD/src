@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.19 2017/06/22 23:47:29 kamil Exp $	*/
+/*	$NetBSD: exec.c,v 1.20 2017/06/30 02:06:59 kamil Exp $	*/
 
 /*
  * execute command tree
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: exec.c,v 1.19 2017/06/22 23:47:29 kamil Exp $");
+__RCSID("$NetBSD: exec.c,v 1.20 2017/06/30 02:06:59 kamil Exp $");
 #endif
 
 
@@ -764,53 +764,6 @@ scriptexec(tp, ap)
 		shellv = __UNCONST(EXECSHELL);
 
 	*tp->args-- = tp->str;
-#ifdef	SHARPBANG
-	{
-		char buf[LINE];
-		register char *cp;
-		register int fd, n;
-
-		buf[0] = '\0';
-		if ((fd = open(tp->str, O_RDONLY)) >= 0) {
-			if ((n = read(fd, buf, LINE - 1)) > 0)
-				buf[n] = '\0';
-			(void) close(fd);
-		}
-		if ((buf[0] == '#' && buf[1] == '!' && (cp = &buf[2]))
-		    )
-		{
-			while (*cp && (*cp == ' ' || *cp == '\t'))
-				cp++;
-			if (*cp && *cp != '\n') {
-				char *a0 = cp, *a1 = (char *) 0;
-
-				while (*cp && *cp != '\n' && *cp != ' '
-				       && *cp != '\t')
-				{
-					cp++;
-				}
-				if (*cp && *cp != '\n') {
-					*cp++ = '\0';
-					while (*cp
-					       && (*cp == ' ' || *cp == '\t'))
-						cp++;
-					if (*cp && *cp != '\n') {
-						a1 = cp;
-						/* all one argument */
-						while (*cp && *cp != '\n')
-							cp++;
-					}
-				}
-				if (*cp == '\n') {
-					*cp = '\0';
-					if (a1)
-						*tp->args-- = a1;
-					shellv = a0;
-				}
-			}
-		}
-	}
-#endif	/* SHARPBANG */
 	*tp->args = shellv;
 
 	execve(tp->args[0], tp->args, ap);

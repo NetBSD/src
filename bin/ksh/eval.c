@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.19 2017/06/22 14:20:46 kamil Exp $	*/
+/*	$NetBSD: eval.c,v 1.20 2017/06/30 02:06:59 kamil Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.19 2017/06/22 14:20:46 kamil Exp $");
+__RCSID("$NetBSD: eval.c,v 1.20 2017/06/30 02:06:59 kamil Exp $");
 #endif
 
 #include <stdint.h>
@@ -95,17 +95,10 @@ eval(ap, f)
 		return ap;
 	XPinit(w, 32);
 	XPput(w, NULL);		/* space for shell name */
-#ifdef	SHARPBANG
-	XPput(w, NULL);		/* and space for one arg */
-#endif
 	while (*ap != NULL)
 		expand(*ap++, &w, f);
 	XPput(w, NULL);
-#ifdef	SHARPBANG
-	return (char **) XPclose(w) + 2;
-#else
 	return (char **) XPclose(w) + 1;
-#endif
 }
 
 /*
