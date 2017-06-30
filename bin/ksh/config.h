@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.44 2017/06/30 02:20:47 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.45 2017/06/30 02:38:09 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -186,12 +186,6 @@
 
 /* Define if you have the valloc function.  */
 #define HAVE_VALLOC 1
-
-/* Define if you have the wait3 function.  */
-#define HAVE_WAIT3 1
-
-/* Define if you have the waitpid function.  */
-#define HAVE_WAITPID 1
 
 /* Define if you have the <dirent.h> header file.  */
 #define HAVE_DIRENT_H 1

@@ -1,9 +1,9 @@
-/*	$NetBSD: conf-end.h,v 1.6 2017/06/30 02:20:47 kamil Exp $	*/
+/*	$NetBSD: conf-end.h,v 1.7 2017/06/30 02:38:09 kamil Exp $	*/
 
 /*
  * End of configuration stuff for PD ksh.
  *
- * RCSid: $NetBSD: conf-end.h,v 1.6 2017/06/30 02:20:47 kamil Exp $
+ * RCSid: $NetBSD: conf-end.h,v 1.7 2017/06/30 02:38:09 kamil Exp $
  */
 
 #if defined(EMACS) || defined(VI)
@@ -20,15 +20,6 @@
 #if defined(HISTORY) && (!defined(COMPLEX_HISTORY) || !defined(HAVE_FLOCK))
 # undef COMPLEX_HISTORY
 # define EASY_HISTORY			/* sjg's trivial history file */
-#endif
-
-/* Can we safely catch sigchld and wait for processes? */
-#if defined(HAVE_WAITPID) || defined(HAVE_WAIT3)
-# define JOB_SIGS
-#endif
-
-#if !defined(JOB_SIGS) || !(defined(POSIX_PGRP) || defined(BSD_PGRP))
-# undef JOBS /* if no JOB_SIGS, no job control support */
 #endif
 
 #ifdef HAVE_GCC_FUNC_ATTR

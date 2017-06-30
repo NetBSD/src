@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.29 2017/06/23 00:29:42 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.30 2017/06/30 02:38:10 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.29 2017/06/23 00:29:42 kamil Exp $ */
+/* $Id: sh.h,v 1.30 2017/06/30 02:38:10 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -495,9 +495,7 @@ EXTERN struct coproc coproc;
 #endif /* KSH */
 
 /* Used in jobs.c and by coprocess stuff in exec.c */
-#ifdef JOB_SIGS
 EXTERN sigset_t		sm_default, sm_sigchld;
-#endif /* JOB_SIGS */
 
 extern char ksh_version[];
 
