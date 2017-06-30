@@ -1,18 +1,18 @@
-/*	$NetBSD: var.c,v 1.18 2017/06/30 03:43:57 kamil Exp $	*/
+/*	$NetBSD: var.c,v 1.19 2017/06/30 03:56:12 kamil Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.18 2017/06/30 03:43:57 kamil Exp $");
+__RCSID("$NetBSD: var.c,v 1.19 2017/06/30 03:56:12 kamil Exp $");
 #endif
 
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>
 #include <ctype.h>
 
 #include "sh.h"
 #include "ksh_limval.h"
-#include "ksh_stat.h"
 
 /*
  * Variables

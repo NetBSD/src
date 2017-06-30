@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.21 2017/06/30 02:38:10 kamil Exp $	*/
+/*	$NetBSD: exec.c,v 1.22 2017/06/30 03:56:12 kamil Exp $	*/
 
 /*
  * execute command tree
@@ -6,14 +6,14 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: exec.c,v 1.21 2017/06/30 02:38:10 kamil Exp $");
+__RCSID("$NetBSD: exec.c,v 1.22 2017/06/30 03:56:12 kamil Exp $");
 #endif
 
+#include <sys/stat.h>
+#include <ctype.h>
 
 #include "sh.h"
 #include "c_test.h"
-#include <ctype.h>
-#include "ksh_stat.h"
 
 /* Does ps4 get parameter substitutions done? */
 #ifdef KSH

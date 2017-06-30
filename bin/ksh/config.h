@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.50 2017/06/30 03:43:57 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.51 2017/06/30 03:56:12 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -10,9 +10,6 @@
 
 #ifndef CONFIG_H
 #define CONFIG_H
-
-/* Define if your struct stat has st_rdev.  */
-#define HAVE_ST_RDEV 1
 
 /* Define if on MINIX.  */
 /* #undef _MINIX */
@@ -26,9 +23,6 @@
 
 /* Define as the return type of signal handlers (int or void).  */
 #define RETSIGTYPE void
-
-/* Define if the `S_IS*' macros in <sys/stat.h> do not work properly.  */
-/* #undef STAT_MACROS_BROKEN */
 
 /* Define if `sys_siglist' is declared by <signal.h>.  */
 #define SYS_SIGLIST_DECLARED 1

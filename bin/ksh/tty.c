@@ -1,14 +1,14 @@
-/*	$NetBSD: tty.c,v 1.7 2017/06/23 00:11:01 kamil Exp $	*/
+/*	$NetBSD: tty.c,v 1.8 2017/06/30 03:56:12 kamil Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: tty.c,v 1.7 2017/06/23 00:11:01 kamil Exp $");
+__RCSID("$NetBSD: tty.c,v 1.8 2017/06/30 03:56:12 kamil Exp $");
 #endif
 
+#include <sys/stat.h>
 
 #include "sh.h"
-#include "ksh_stat.h"
 #define EXTERN
 #include "tty.h"
 #undef EXTERN

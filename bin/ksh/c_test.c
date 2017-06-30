@@ -1,4 +1,4 @@
-/*	$NetBSD: c_test.c,v 1.6 2005/06/26 19:09:00 christos Exp $	*/
+/*	$NetBSD: c_test.c,v 1.7 2017/06/30 03:56:12 kamil Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -11,12 +11,12 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_test.c,v 1.6 2005/06/26 19:09:00 christos Exp $");
+__RCSID("$NetBSD: c_test.c,v 1.7 2017/06/30 03:56:12 kamil Exp $");
 #endif
 
+#include <sys/stat.h>
 
 #include "sh.h"
-#include "ksh_stat.h"
 #include "c_test.h"
 
 /* test(1) accepts the following grammar:

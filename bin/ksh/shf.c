@@ -1,4 +1,4 @@
-/*	$NetBSD: shf.c,v 1.12 2017/06/30 02:51:14 kamil Exp $	*/
+/*	$NetBSD: shf.c,v 1.13 2017/06/30 03:56:12 kamil Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -6,12 +6,12 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shf.c,v 1.12 2017/06/30 02:51:14 kamil Exp $");
+__RCSID("$NetBSD: shf.c,v 1.13 2017/06/30 03:56:12 kamil Exp $");
 #endif
 
+#include <sys/stat.h>
 
 #include "sh.h"
-#include "ksh_stat.h"
 #include "ksh_limval.h"
 
 
