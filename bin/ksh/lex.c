@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.19 2017/06/23 00:18:01 kamil Exp $	*/
+/*	$NetBSD: lex.c,v 1.20 2017/06/30 02:51:14 kamil Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: lex.c,v 1.19 2017/06/23 00:18:01 kamil Exp $");
+__RCSID("$NetBSD: lex.c,v 1.20 2017/06/30 02:51:14 kamil Exp $");
 #endif
 
 
@@ -836,13 +836,7 @@ readhere(iop)
 }
 
 void
-#ifdef HAVE_PROTOTYPES
 yyerror(const char *fmt, ...)
-#else
-yyerror(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list va;
 
