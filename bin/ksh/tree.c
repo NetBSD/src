@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.7 2017/06/23 00:18:01 kamil Exp $	*/
+/*	$NetBSD: tree.c,v 1.8 2017/06/30 02:51:14 kamil Exp $	*/
 
 /*
  * command tree climbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: tree.c,v 1.7 2017/06/23 00:18:01 kamil Exp $");
+__RCSID("$NetBSD: tree.c,v 1.8 2017/06/30 02:51:14 kamil Exp $");
 #endif
 
 
@@ -375,15 +375,7 @@ tputS(wp, shf)
  */
 /* VARARGS */
 int
-#ifdef HAVE_PROTOTYPES
 fptreef(struct shf *shf, int indent, const char *fmt, ...)
-#else
-fptreef(shf, indent, fmt, va_alist)
-  struct shf *shf;
-  int indent;
-  const char *fmt;
-  va_dcl
-#endif
 {
   va_list	va;
 
@@ -396,15 +388,7 @@ fptreef(shf, indent, fmt, va_alist)
 
 /* VARARGS */
 char *
-#ifdef HAVE_PROTOTYPES
 snptreef(char *s, int n, const char *fmt, ...)
-#else
-snptreef(s, n, fmt, va_alist)
-  char *s;
-  int n;
-  const char *fmt;
-  va_dcl
-#endif
 {
   va_list va;
   struct shf shf;
