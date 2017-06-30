@@ -1,18 +1,14 @@
-/*	$NetBSD: sh.h,v 1.30 2017/06/30 02:38:10 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.31 2017/06/30 02:51:14 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.30 2017/06/30 02:38:10 kamil Exp $ */
+/* $Id: sh.h,v 1.31 2017/06/30 02:51:14 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
-#ifdef HAVE_PROTOTYPES
-# define	ARGS(args)	args	/* prototype declaration */
-#else
-# define	ARGS(args)	()	/* K&R declaration */
-#endif
+#define	ARGS(args)	args	/* prototype declaration */
 
 /* Start of common headers */
 
