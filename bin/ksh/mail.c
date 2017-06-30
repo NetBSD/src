@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.c,v 1.5 2006/01/15 18:16:30 jschauma Exp $	*/
+/*	$NetBSD: mail.c,v 1.6 2017/06/30 03:43:57 kamil Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
@@ -7,16 +7,17 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: mail.c,v 1.5 2006/01/15 18:16:30 jschauma Exp $");
+__RCSID("$NetBSD: mail.c,v 1.6 2017/06/30 03:43:57 kamil Exp $");
 #endif
-
 
 #include "config.h"
 
 #ifdef KSH
+#include <sys/time.h>
+#include <time.h>
+
 #include "sh.h"
 #include "ksh_stat.h"
-#include "ksh_time.h"
 
 #define MBMESSAGE	"You have mail in $_"
 

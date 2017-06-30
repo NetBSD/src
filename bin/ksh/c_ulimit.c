@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ulimit.c,v 1.15 2017/06/22 14:20:46 kamil Exp $	*/
+/*	$NetBSD: c_ulimit.c,v 1.16 2017/06/30 03:43:57 kamil Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -20,12 +20,13 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ulimit.c,v 1.15 2017/06/22 14:20:46 kamil Exp $");
+__RCSID("$NetBSD: c_ulimit.c,v 1.16 2017/06/30 03:43:57 kamil Exp $");
 #endif
 
+#include <sys/time.h>
+#include <time.h>
 
 #include "sh.h"
-#include "ksh_time.h"
 #ifdef HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
 #endif /* HAVE_SYS_RESOURCE_H */
