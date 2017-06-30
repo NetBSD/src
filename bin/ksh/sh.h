@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.34 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: sh.h,v 1.35 2017/06/30 04:44:46 kamil Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.34 2017/06/30 04:41:19 kamil Exp $ */
+/* $Id: sh.h,v 1.35 2017/06/30 04:44:46 kamil Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -47,9 +47,6 @@
 # endif /* L_SET */
 #endif /* !SEEK_SET */
 
-/* Some machines (eg, FreeBSD 1.1.5) define CLK_TCK in limits.h
- * (ksh_limval.h assumes limits has been included, if available)
- */
 #include <limits.h>
 
 #include <signal.h>
