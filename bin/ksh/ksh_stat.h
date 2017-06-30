@@ -1,14 +1,10 @@
-/*	$NetBSD: ksh_stat.h,v 1.2 1997/01/12 19:12:00 tls Exp $	*/
+/*	$NetBSD: ksh_stat.h,v 1.3 2017/06/30 03:35:16 kamil Exp $	*/
 
 /* Wrapper around the ugly sys/stat includes/ifdefs */
-/* $NetBSD: ksh_stat.h,v 1.2 1997/01/12 19:12:00 tls Exp $ */
+/* $NetBSD: ksh_stat.h,v 1.3 2017/06/30 03:35:16 kamil Exp $ */
 
 /* assumes <sys/types.h> already included */
 #include <sys/stat.h>
-
-#ifndef HAVE_LSTAT
-# define lstat(path, buf)	stat(path, buf)
-#endif /* HAVE_LSTAT */
 
 #ifdef STAT_MACROS_BROKEN
 # undef S_ISREG
