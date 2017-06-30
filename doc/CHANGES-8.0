@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.13 2017/06/25 06:34:38 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.14 2017/06/30 07:00:24 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -1431,4 +1431,64 @@ sys/net/route.c					1.195
 
 	Fix locking in rtalloc1 (affected only if NET_MPSAFE)
 	[ozaki-r, ticket #57]
+
+sys/net/if_gif.c				1.127
+
+	Further gif(4) MP-ification.
+	[knakahara, ticket #58]
+
+sys/arch/arm/broadcom/bcm2835_emmc.c		1.30
+
+	Disable SDR50 support, it is not reliable on these boards.
+	[jmcneill, ticket #59]
+
+sys/dev/hpc/hpckbd.c				1.31
+
+	Restore wscons keymaps feature on hpcarm
+	[manu, ticket #61]
+
+sys/arch/amd64/conf/XEN3_DOM0			1.136
+sys/arch/i386/conf/XEN3_DOM0			1.113
+sys/arch/xen/conf/files.xen			1.148
+
+	Register support for SD card readers with Xen DOM0 kernels
+	[khorben, ticket #62]
+
+libexec/ld.elf_so/headers.c			1.62
+
+	Remove old assert that only two segments exist. The rest of the
+	code has been changed to cope with more and at least Go actively
+	creates them.  Adjust the mapping size computation to use the
+	maximum and not depend on PT_LOAD segments to be in order.
+	[joerg, ticket #63]
+
+sys/dev/ic/am7930.c				1.54, 1.55
+
+	Make vsaudio(4) work again.
+	[nat, ticket #68]
+
+sys/dev/aurateconv.c				1.20
+
+	Enable rate conversion for 8-bit audio.
+	[nat, ticket #69]
+
+sys/dev/auconv.c				1.27, 1.28
+sys/dev/auconv.h				1.17, 1.18
+sys/dev/mulaw.c					1.29, 1.30
+sys/dev/mulaw.h					1.21-1.24
+
+	auconv/mulaw.c: allow for 32 bit precision and more filters
+	for conversion between formats.
+	[nat, ticket #70]
+
+sys/dev/audio.c					1.359-1.366
+sys/dev/audiovar.h				1.56
+
+	audio(4): Fix several stability issues.
+	[nat, ticket #71]
+
+sys/dev/mulaw.c					1.31, 1.32
+
+	Fix big endian bug.
+	[nat, ticket #74]
 
