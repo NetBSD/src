@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.118 2017/06/19 02:46:50 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.119 2017/06/30 23:02:56 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.118 2017/06/19 02:46:50 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.119 2017/06/30 23:02:56 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,7 +177,7 @@ expandarg(union node *arg, struct arglist *arglist, int flag)
 	line_number = arg->narg.lineno;
 	argstr(arg->narg.text, flag);
 	if (arglist == NULL) {
-		NULLTERM_4_TRACE(expdest);
+		STACKSTRNUL(expdest);
 		CTRACE(DBG_EXPAND, ("expandarg: no arglist, done (%d) \"%s\"\n",
 		    expdest - stackblock(), stackblock()));
 		return;			/* here document expanded */
@@ -597,8 +597,10 @@ expbackq(union node *cmd, int quoted, int flag)
 		if (--in.nleft < 0) {
 			if (in.fd < 0)
 				break;
+			INTON;
 			while ((i = read(in.fd, buf, sizeof buf)) < 0 && errno == EINTR)
 				continue;
+			INTOFF;
 			VTRACE(DBG_EXPAND, ("expbackq: read returns %d\n", i));
 			if (i <= 0)
 				break;

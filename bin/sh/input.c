@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.58 2017/06/07 05:08:32 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.59 2017/06/30 23:02:56 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.58 2017/06/07 05:08:32 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.59 2017/06/30 23:02:56 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -471,6 +471,7 @@ setinputfd(int fd, int push)
 		parsefile->buf = ckmalloc(BUFSIZ);
 	parselleft = parsenleft = 0;
 	plinno = 1;
+	CTRACE(DBG_INPUT, ("setinputfd(%d, %d); plinno=1\n", fd, push));
 }
 
 
@@ -489,7 +490,7 @@ setinputstring(char *string, int push, int line1)
 	parselleft = parsenleft = strlen(string);
 	parsefile->buf = NULL;
 	plinno = line1;
-	TRACE(("setinputstring(\"%.20s%s\" (%d), %d, %d)\n", string,
+	CTRACE(DBG_INPUT, ("setinputstring(\"%.20s%s\" (%d), %d, %d)\n", string,
 	    (parsenleft > 20 ? "..." : ""), parsenleft, push, line1));
 	INTON;
 }
@@ -505,6 +506,10 @@ STATIC void
 pushfile(void)
 {
 	struct parsefile *pf;
+
+	VTRACE(DBG_INPUT, ("pushfile(): fd=%d nl=%d ll=%d \"%.*s\" plinno=%d\n",
+	    parsefile->fd, parsenleft, parselleft,
+	    parsenleft, parsenextc, plinno));
 
 	parsefile->nleft = parsenleft;
 	parsefile->lleft = parselleft;
@@ -536,8 +541,38 @@ popfile(void)
 	parsenleft = parsefile->nleft;
 	parselleft = parsefile->lleft;
 	parsenextc = parsefile->nextc;
+	VTRACE(DBG_INPUT,
+	    ("popfile(): fd=%d nl=%d ll=%d \"%.*s\" plinno:%d->%d\n",
+	    parsefile->fd, parsenleft, parselleft,
+	    parsenleft, parsenextc, plinno, parsefile->linno));
 	plinno = parsefile->linno;
 	INTON;
+}
+
+/*
+ * Return current file (to go back to it later using popfilesupto()).
+ */
+
+struct parsefile *
+getcurrentfile(void)
+{
+	return parsefile;
+}
+
+
+/*
+ * Pop files until the given file is on top again. Useful for regular
+ * builtins that read shell commands from files or strings.
+ * If the given file is not an active file, an error is raised.
+ */
+
+void
+popfilesupto(struct parsefile *file)
+{
+	while (parsefile != file && parsefile != &basepf)
+		popfile();
+	if (parsefile != file)
+		error("popfilesupto() misused");
 }
 
 
