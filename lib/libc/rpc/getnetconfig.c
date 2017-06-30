@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.24 2016/10/26 15:39:30 christos Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.25 2017/06/30 10:03:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -36,7 +36,7 @@
 #if 0
 static        char sccsid[] = "@(#)getnetconfig.c	1.12 91/12/19 SMI";
 #else
-__RCSID("$NetBSD: getnetconfig.c,v 1.24 2016/10/26 15:39:30 christos Exp $");
+__RCSID("$NetBSD: getnetconfig.c,v 1.25 2017/06/30 10:03:34 christos Exp $");
 #endif
 #endif
 
@@ -649,12 +649,12 @@ static struct netconfig *
 dup_ncp(struct netconfig *ncp)
 {
 	struct netconfig	*p;
-	char	*tmp, *tmp2;
+	char	*tmp;
 	u_int	i;
 
 	_DIAGASSERT(ncp != NULL);
 
-	if ((tmp2 = tmp = malloc(MAXNETCONFIGLINE)) == NULL)
+	if ((tmp = malloc(MAXNETCONFIGLINE)) == NULL)
 		return NULL;
 	if ((p = malloc(sizeof(*p))) == NULL) {
 		free(tmp);
@@ -679,7 +679,6 @@ dup_ncp(struct netconfig *ncp)
 	p->nc_device = strcpy(tmp, ncp->nc_device);
 	p->nc_lookups = calloc((size_t)(p->nc_nlookups + 1), sizeof(char *));
 	if (p->nc_lookups == NULL) {
-		free(tmp2);
 		free(p->nc_netid);
 		free(p);
 		return NULL;
