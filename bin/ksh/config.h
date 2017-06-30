@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.49 2017/06/30 03:35:16 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.50 2017/06/30 03:43:57 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -33,9 +33,6 @@
 /* Define if `sys_siglist' is declared by <signal.h>.  */
 #define SYS_SIGLIST_DECLARED 1
 
-/* Define if you can safely include both <sys/time.h> and <time.h>.  */
-#define TIME_WITH_SYS_TIME 1
-
 /* Define as the return value of signal handlers (0 or ).  */
 #define RETSIGVAL 
 
@@ -56,9 +53,6 @@
 
 /* Define if C compiler groks __attribute__((...)) (const, noreturn, format) */
 #define HAVE_GCC_FUNC_ATTR 1
-
-/* Define if time() is declared in <time.h> */
-#define TIME_DECLARED 1
 
 /* Define if sys_errlist[] and sys_nerr are in the C library */
 #define HAVE_SYS_ERRLIST 1
@@ -195,9 +189,6 @@
 
 /* Define if you have the <sys/resource.h> header file.  */
 #define HAVE_SYS_RESOURCE_H 1
-
-/* Define if you have the <sys/time.h> header file.  */
-#define HAVE_SYS_TIME_H 1
 
 /* Define if you have the <ulimit.h> header file.  */
 #define HAVE_ULIMIT_H
