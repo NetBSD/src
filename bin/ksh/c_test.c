@@ -1,4 +1,4 @@
-/*	$NetBSD: c_test.c,v 1.8 2017/06/30 04:11:57 kamil Exp $	*/
+/*	$NetBSD: c_test.c,v 1.9 2017/06/30 04:41:19 kamil Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -11,7 +11,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_test.c,v 1.8 2017/06/30 04:11:57 kamil Exp $");
+__RCSID("$NetBSD: c_test.c,v 1.9 2017/06/30 04:41:19 kamil Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -352,11 +352,11 @@ test_eval(te, op, opnd1, opnd2, do_eval)
 	 */
 	  case TO_STEQL: /* = */
 		if (te->flags & TEF_DBRACKET)
-			return gmatch(opnd1, opnd2, FALSE);
+			return gmatch(opnd1, opnd2, false);
 		return strcmp(opnd1, opnd2) == 0;
 	  case TO_STNEQ: /* != */
 		if (te->flags & TEF_DBRACKET)
-			return !gmatch(opnd1, opnd2, FALSE);
+			return !gmatch(opnd1, opnd2, false);
 		return strcmp(opnd1, opnd2) != 0;
 	  case TO_STLT: /* < */
 		return strcmp(opnd1, opnd2) < 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.18 2017/06/30 03:56:12 kamil Exp $	*/
+/*	$NetBSD: jobs.c,v 1.19 2017/06/30 04:41:19 kamil Exp $	*/
 
 /*
  * Process and job control
@@ -21,7 +21,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: jobs.c,v 1.18 2017/06/30 03:56:12 kamil Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.19 2017/06/30 04:41:19 kamil Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -269,7 +269,7 @@ j_init(mflagset)
 	else
 #endif /* JOBS */
 	  if (Flag(FTALKING))
-		tty_init(TRUE);
+		tty_init(true);
 }
 
 /* job cleanup before shell exit */
@@ -337,14 +337,14 @@ j_change()
 
 	if (Flag(FMONITOR)) {
 		/* Don't call get_tty() 'til we own the tty process group */
-		tty_init(FALSE);
+		tty_init(false);
 
 # ifdef TTY_PGRP
 		/* no controlling tty, no SIGT* */
 		ttypgrp_ok = tty_fd >= 0 && tty_devtty;
 
 		if (ttypgrp_ok && (our_pgrp = getpgID()) < 0) {
-			warningf(FALSE, "j_init: getpgrp() failed: %s",
+			warningf(false, "j_init: getpgrp() failed: %s",
 				strerror(errno));
 			ttypgrp_ok = 0;
 		}
@@ -356,7 +356,7 @@ j_change()
 				pid_t ttypgrp;
 
 				if ((ttypgrp = tcgetpgrp(tty_fd)) < 0) {
-					warningf(FALSE,
+					warningf(false,
 					"j_init: tcgetpgrp() failed: %s",
 						strerror(errno));
 					ttypgrp_ok = 0;
@@ -372,13 +372,13 @@ j_change()
 				SS_RESTORE_DFL|SS_FORCE);
 		if (ttypgrp_ok && our_pgrp != kshpid) {
 			if (setpgid(0, kshpid) < 0) {
-				warningf(FALSE,
+				warningf(false,
 					"j_init: setpgid() failed: %s",
 					strerror(errno));
 				ttypgrp_ok = 0;
 			} else {
 				if (tcsetpgrp(tty_fd, kshpid) < 0) {
-					warningf(FALSE,
+					warningf(false,
 					"j_init: tcsetpgrp() failed: %s",
 						strerror(errno));
 					ttypgrp_ok = 0;
@@ -392,13 +392,13 @@ j_change()
 			int ldisc = NTTYDISC;
 
 			if (ioctl(tty_fd, TIOCSETD, &ldisc) < 0)
-				warningf(FALSE,
+				warningf(false,
 				"j_init: can't set new line discipline: %s",
 					strerror(errno));
 		}
 #  endif /* NTTYDISC && TIOCSETD */
 		if (!ttypgrp_ok)
-			warningf(FALSE, "warning: won't have full job control");
+			warningf(false, "warning: won't have full job control");
 # endif /* TTY_PGRP */
 		if (tty_fd >= 0)
 			get_tty(tty_fd, &tty_state);
@@ -589,7 +589,7 @@ exchild(t, flags, close_fd)
 #ifdef KSH
 		/* Do this before restoring signal */
 		if (flags & XCOPROC)
-			coproc_cleanup(FALSE);
+			coproc_cleanup(false);
 #endif /* KSH */
 		sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
 		cleanup_parents_env();
@@ -616,7 +616,7 @@ exchild(t, flags, close_fd)
 			if (!(flags & (XPIPEI | XCOPROC))) {
 				int fd = open("/dev/null", 0);
 				if (fd != 0) {
-					(void) ksh_dup2(fd, 0, TRUE);
+					(void) ksh_dup2(fd, 0, true);
 					close(fd);
 				}
 			}
@@ -701,7 +701,7 @@ waitlast()
 	j = last_job;
 	if (!j || !(j->flags & JF_STARTED)) {
 		if (!j)
-			warningf(TRUE, "waitlast: no last job");
+			warningf(true, "waitlast: no last job");
 		else
 			internal_errorf(0, "waitlast: not started");
 		sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
@@ -892,7 +892,7 @@ j_resume(cp, bg)
 				set_tty(tty_fd, &tty_state, TF_NONE);
 			}
 			if (ttypgrp_ok && tcsetpgrp(tty_fd, our_pgrp) < 0) {
-				warningf(TRUE,
+				warningf(true,
 				"fg: 2nd tcsetpgrp(%d, %d) failed: %s",
 					tty_fd, (int) our_pgrp,
 					strerror(errno));
@@ -1164,7 +1164,7 @@ j_waitj(j, flags, where)
 			    && (j->saved_ttypgrp = tcgetpgrp(tty_fd)) >= 0)
 				j->flags |= JF_SAVEDTTYPGRP;
 			if (tcsetpgrp(tty_fd, our_pgrp) < 0) {
-				warningf(TRUE,
+				warningf(true,
 				"j_waitj: tcsetpgrp(%d, %d) failed: %s",
 					tty_fd, (int) our_pgrp,
 					strerror(errno));
@@ -1280,7 +1280,7 @@ j_sigchld(sig)
 found:
 		if (j == (Job *) 0) {
 			/* Can occur if process has kids, then execs shell
-			warningf(TRUE, "bad process waited for (pid = %d)",
+			warningf(true, "bad process waited for (pid = %d)",
 				pid);
 			 */
 			t0 = t1;
