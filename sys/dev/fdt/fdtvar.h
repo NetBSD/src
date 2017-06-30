@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.21 2017/06/29 17:04:17 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.22 2017/06/30 09:11:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -293,6 +293,8 @@ int		fdtbus_get_stdout_speed(void);
 tcflag_t	fdtbus_get_stdout_flags(void);
 
 bool		fdtbus_status_okay(int);
+
+const char *	fdtbus_get_string(int, const char *);
 
 int		fdtbus_print(void *, const char *);
 

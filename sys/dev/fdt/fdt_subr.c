@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.13 2017/06/02 01:07:53 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.14 2017/06/30 09:11:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.13 2017/06/02 01:07:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.14 2017/06/30 09:11:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -405,4 +405,12 @@ fdtbus_status_okay(int phandle)
 		return true;
 
 	return strncmp(prop, "ok", 2) == 0;
+}
+
+const char *
+fdtbus_get_string(int phandle, const char *prop)
+{
+	const int off = fdtbus_phandle2offset(phandle);
+
+	return fdt_getprop(fdtbus_get_data(), off, prop, NULL);
 }
