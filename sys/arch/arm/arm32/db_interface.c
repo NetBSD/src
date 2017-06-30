@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.54 2014/10/29 14:14:14 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.55 2017/06/30 08:05:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.54 2014/10/29 14:14:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.55 2017/06/30 08:05:22 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -133,7 +133,7 @@ kdb_trap(int type, db_regs_t *regs)
 			/*
 			 * While we aren't the master, wait until the master
 			 * gives control to us or exits.  If it exited, we
-			 * just exit to.  Otherwise this cpu will enter DDB.
+			 * just exit too.  Otherwise this cpu will enter DDB.
 			 */
 			membar_consumer();
 			while (db_onproc != ci) {
