@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.156 2017/06/28 13:46:06 kre Exp $
+.\"	$NetBSD: sh.1,v 1.157 2017/06/30 23:07:29 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,9 +31,10 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd June 28, 2017
+.Dd July 1, 2017
 .Dt SH 1
-.ds flags abCEeFfhnuvxIimpqV
+.\" everything except c o and s (keep them ordered)
+.ds flags abCeEfFhiILmnpquvVx
 .Os
 .Sh NAME
 .Nm sh
@@ -54,6 +55,7 @@
 .Nm
 .Fl c
 .Bk -words
+.Op Fl s
 .Op Fl \*[flags]
 .Op Cm +\*[flags]
 .Ek
@@ -83,7 +85,7 @@
 is the standard command interpreter for the system.
 The current version of
 .Nm
-is in the process of being changed to conform with the
+is in the process of being changed to conform more closely to the
 .Tn POSIX
 1003.2 and 1003.2a specifications for the shell.
 This version has many
@@ -95,8 +97,8 @@ to be a tutorial or a complete specification of the shell.
 .Ss Overview
 The shell is a command that reads lines from either a file or the
 terminal, interprets them, and generally executes other commands.
-It is the program that is running when a user logs into the system
-(although a user can select a different shell with the
+A shell is the program that is running when a user logs into the system.
+(Users can select which shell is executed for them at login with the
 .Xr chsh 1
 command).
 The shell implements a language that has flow control
@@ -188,12 +190,37 @@ below (these commands are described later):
 .Li esac
 .El
 .Pp
-If command line arguments besides the options have been specified, then
-the shell treats the first argument as the name of a file from which to
-read commands (a shell script), and the remaining arguments are set as the
+If command line arguments besides the options have been specified, and
+neither
+.Fl c
+nor
+.Fl s
+was given, then the shell treats the first argument
+as the name of a file from which to read commands (a shell script).
+This also becomes $0 and the remaining arguments are set as the
 positional parameters of the shell ($1, $2, etc).
-Otherwise, the shell
-reads commands from its standard input.
+Otheriwse, if
+.Fl c
+was given, then the first argument, which must exist,
+is taken to be a string of
+.Nm
+commands to execute.
+Then if any additional arguments follow the command string,
+those arguments become $0, $1, ...
+Otherwise, if additional arguments were given
+(which implies that
+.Fl s
+was set)
+those arguments become $1, $2, ...
+If $0 has not been set by the preceding processing, it
+will be set to argv[0] as passed to the shell, which will
+usually be the name of the shell itself.
+If
+.Fl s
+was given, or if neither
+.Fc c
+nor any additional (non-option) arguments were present,
+the shell reads commands from its standard input.
 .Ss Argument List Processing
 Currently, all of the single letter options that can meaningfully
 be set using the
@@ -206,6 +233,14 @@ The set
 .Fl o
 name is provided next to the single letter option in
 the description below.
+Some options have only a long name, they are described after
+the flag options, they are used with
+.Fl o
+or
+.Cm +o
+only, either on the command line, or with the
+.Ic set
+built-in command.
 Other options described are for the command line only.
 Specifying a dash
 .Dq -
@@ -218,26 +253,28 @@ unless otherwise stated, with the
 built-in (described later).
 .\"
 .\" strlen("quietprofile") == strlen("local_lineno"): pick the latter
-.\" to give the indent as the _ in that case, and the fi ligature in
-.\" the former combine to make local_lineno slightly wider when printed
+.\" to give the indent as the _ in local_lineno, and the fi ligature in
+.\" quietprofile combine to make "local_lineno' slightly wider when printed
 .\" (in italics) in a variable width font.   Probably should test the actual
 .\" widths and use the wider, but I am not sure if mandoc is up to that...
 .\" (and I don't know how to get at the font that will be used easily anyway!)
+.\" The X's just provide a little extra space.
 .Bl -tag -width \-WXXlocal_linenoXX -offset indent
 .\"
 .It Fl a Em allexport
-Export all variables assigned to.
+Automatically export any variable to which a value is assigned
+while this flag is set.
 .It Fl b Em notify
 Enable asynchronous notification of background job completion.
 (Not implemented.)
 .It Fl c
 Read commands from the
 .Ar command_string
-operand instead of from the standard input.
+operand instead of, or in addition to, from the standard input.
 Special parameter 0 will be set from the
 .Ar command_name
-operand and the positional parameters ($1, $2, etc.)
-set from the remaining argument operands.
+operand if given, and the positional parameters ($1, $2, etc.)
+set from the remaining argument operands, if any.
 .Fl c
 is only available at invocation, it cannot be
 .Ic set ,
@@ -248,6 +285,9 @@ Don't overwrite existing files with
 .Dq > .
 .It Fl e Em errexit
 If not interactive, exit immediately if any untested command fails.
+If interactive, and an untested command fails,
+cease all processing of the current command and return to
+prompt for a new command.
 The exit status of a command is considered to be
 explicitly tested if the command is used to control an
 .Ic if ,
@@ -294,14 +334,16 @@ in which case altering the
 .Fl F
 flag has no effect.
 .It Fl h Em trackall
-Bind commands in functions to file system paths when the function is defined.
-When off,
+Functions defined while this option is set will have paths bound to
+commands to be executed by the function at the time of the definition.
+When off when a function is defined,
 the file system is searched for commands each time the function is invoked.
 (Not implemented.)
 .It Fl i Em interactive
 Force the shell to behave interactively.
 .It Fl I Em ignoreeof
 Ignore EOFs from input when interactive.
+(After a large number of consecutive EOFs the shell will exit anyway.)
 .It Fl L Em local_lineno
 When set, before a function is defined,
 causes the variable
@@ -312,7 +354,7 @@ first line of the function is line 1.
 When reset,
 .Ev LINENO
 in a function refers to the line number within the file
-in which the definition of the function occurs.
+within which the definition of the function occurs.
 This option defaults to
 .Dq on
 in this shell.
@@ -322,8 +364,12 @@ below.
 .It Fl m Em monitor
 Turn on job control (set automatically when interactive).
 .It Fl n Em noexec
-If not interactive, read commands but do not execute them.
+Read and parse commands, but do not execute them.
 This is useful for checking the syntax of shell scripts.
+If
+.Fl n
+becomes set in an interactive shell, it will automatically be
+cleared just before the next time the command line prompt (PS1) is written.
 .It Fl p Em nopriv
 Do not attempt to reset effective UID if it does not match UID.
 This is not set by default to help avoid incorrect usage by setuid
@@ -344,20 +390,43 @@ and the file specified by the
 .Ev ENV
 environment variable.
 .It Fl s Em stdin
-Read commands from standard input (set automatically if no file arguments
-are present).
+Read commands from standard input (set automatically if
+neither
+.Fl c
+nor file arguments are present).
+If after procesing a command_string with the
+.Fl c
+option, the shell has not exited, and the
+.Fl s
+option is set, it will continue reading more commands from standard input.
 This option has no effect when set or reset after the shell has
-already started running (i.e. with
-.Ic set ) .
+already started reading from the command_file, or from standard input.
+Note that the
+.Fl s
+flag being set does not cause the shell to be interactive.
 .It Fl u Em nounset
-Write a message to standard error when attempting to expand a variable
-that is not set, and if the shell is not interactive, exit immediately.
+Write a message to standard error when attempting to obtain a
+value from a variable that is not set,
+and if the shell is not interactive, exit immediately.
+For interactive shells, instead return immediately to the command prompt
+and read the next command.
+Note that expansions (described later, see
+.Sx Word Expansions
+below) using the
+.Sq \&+ ,
+.Sq \&\- ,
+.Sq \&= ,
+or
+.Sq \&?
+operators test if the variable is set, before attempting to
+obtain its value, and hence are unaffected by
+.Fl u .
 .It Fl v Em verbose
 The shell writes its input to standard error as it is read.
 Useful for debugging.
 .It Fl x Em xtrace
-Write each command to standard error (preceded by a
-.Sq +\  )
+Write each command to standard error (preceded by the expanded value of
+.Dq $PS4 )
 before it is executed.
 Useful for debugging.
 .It Fl V Em vi
@@ -383,12 +452,12 @@ in the
 section.)
 (Not implemented.)
 .It "\ \ " Em posix
-Enables closer adherence to the shell standard.
+Enables closer adherence to the POSIX shell standard.
 This option will default set at shell startup if the
 environment variable
 .Ev POSIXLY_CORRECT
 is present.
-That can be overridden by the
+That can be overridden (set or reset) by the
 .Fl o
 option on the command line.
 Currently this option controls whether (!posix) or not (posix)
@@ -403,13 +472,25 @@ built-in command are passed on to utilities executed
 in posix mode),
 and whether the shell treats
 an empty brace-list compound statement as a syntax error
-(required by posix) or permits it.
+(expected by posix) or permits it.
 Such statements
 .Dq "{ }"
 can be useful when defining dummy functions.
 Lastly, in posix mode, only one
 .Dq \&!
 is permitted before a pipeline.
+.It "\ \ " Em promptcmds
+Allows command substitutions (as well as parameter
+and arithmetic expansions, which are always performed)
+upon the prompt strings
+.Ev PS1 ,
+.Ev PS2 ,
+and
+.Ev PS4
+each time, before they are output.
+This option should not be set until after the prompts
+have been set (or verified) to avoid accidentally importing
+unwanted command substitutions from the environment.
 .It "\ \ " Em tabcomplete
 Enables filename completion in the command line editor.
 Typing a tab character will extend the current input word to match a
@@ -2900,6 +2981,16 @@ from the user's login directory in the password file
 This environment variable also functions as the default argument for the
 .Ic cd
 built-in.
+.It Ev HOSTNAME
+Set to the current hostname of the system, as returned by
+.Xr gethostname 3 .
+This is obtained each time
+.Ev HOSTNAME
+is expanded, so changes to the system's name are reflected
+without further action.
+If unset, it returns nothing.
+Setting it does nothing except reverse the effect of an earlier
+.Ic unset .
 .It Ev IFS
 Input Field Separators.
 This is normally set to
@@ -2961,13 +3052,46 @@ The primary prompt string, which defaults to
 .Dq $ \  ,
 unless you are the superuser, in which case it defaults to
 .Dq # \  .
+This string is subject to parameter, arithmetic, and if
+enabled by setting the
+.Ic promptcmds
+option, command substitution before being output.
+During execution of commands used by command substitution,
+execution tracing, the
+.Ic xtrace
+.Ic ( set Fl x )
+option is temporarily disabled.
+If
+.Ic promptcmds
+is not set and the prompt string uses command substitution,
+the prompt used will be an appropriate error string.
+For other expansion errors, a message will be output,
+and the unexpanded string will then be used as the prompt.
 .It Ev PS2
 The secondary prompt string, which defaults to
 .Dq > \  .
+After expansion (as for
+.Ev PS1 )
+it is written whenever more input is required to complete the
+current command.
 .It Ev PS4
-Output before each line when execution trace (set -x) is enabled,
+Output, after expansion like
+.Ev PS1 ,
+before each line when execution trace
+.Ic ( set Fl x )
+is enabled.
+.Ev PS4
 defaults to
 .Dq + \  .
+.It Ev PSc
+Initialised by the shell, ignoring any value from the environment,
+to a single character string, either
+.Sq \&#
+or
+.Sq \&$ ,
+depending upon whether the current user is the superuser or not.
+This is intended for use when building a custom
+.Ev PS1 .
 .It Ev PSlit
 Defines the character which may be embedded in pairs, in
 .Ev PS1
@@ -2984,11 +3108,84 @@ which must be present.
 See
 .Sx Command Line Editing
 above for more information.
+.It Ev RANDOM
+Returns a different pseudo-random integer,
+in the range [0,32767] each time it is accessed.
+.Ev RANDOM
+can be assigned an integer value to seed the PRNG.
+If the value assigned is a constant, then the
+sequence of values produces on subsequent references of
+.Ev RANDOM
+will repeat after the next time the same constant is assigned.
+Note, this is not guaranteed to remain constant from one version
+of the shell to another \(en the PRNG algorithm, or seeding
+method is subject to change.
+If
+.Ev RANDOM
+is assigned an empty value (null string) then the next time
+.Ev RANDOM
+is accessed, it will be seeded from a more genuinely random source.
+The sequence of pseudo-random numbers generated will not be able to
+be generated again (except by luck, whether good or bad, depends!)
+This is also how the initial seed is generated, if none has been
+assigned before
+.Ev RANDOM
+is first accessed after shell initialization.
+.It Ev SECONDS
+Returns the number of seconds since the current shell was started.
+Attempts to set this variable are ignored.
+If unset, it remains unset, and returns nothing, unless set again.
+.It Ev START_TIME
+Initialised by the shell to the number of seconds since the Epoch
+(see
+.Xr localtime 3 )
+when the shell was started.
+The value of
+.Dl $(( Ns Ev START_TIME + Ev SECONDS Ns ))
+represents the current time, if
+.Ev START_TIME
+has not been modified, and
+.Ev SECONDS
+is not unset.
+.Ev
 .It Ev TERM
 The default terminal setting for the shell.
 This is inherited by
 children of the shell, and is used in the history editing modes.
 .\" This is explicitly last, not in sort order - please leave!
+.It Ev ToD
+When referenced, uses the value of
+.Ev ToD_FORMAT
+(or
+.Dq %T
+if
+.Ev ToD_FORMAT
+is unset) as the format argument to
+.Xr strftime 3
+to encode the current time of day, in the time zone
+defined by
+.Ev TZ
+if set, or current local time if not, and returns the result.
+If unset
+.Ev ToD
+returns nothing.
+Setting it has no effect, other than to reverse the effect of an earlier
+.Ic unset .
+.It Ev ToD_FORMAT
+Can be set to the
+.Xr strftime 3
+format string to be used when expanding
+.Ev ToD .
+Initially unset.
+.It Ev TZ
+If set, gives the time zone
+(see
+.Xr localtime 3 ,
+.Xr environ 7 )
+to use when formatting
+.Ev ToD
+and if exported, other utilities that deal with times.
+If unset, the system's local wall clock time zone is used.
 .It Ev NETBSD_SHELL
 Unlike the variables previously mentioned,
 this variable is somewhat strange,
@@ -3210,13 +3407,6 @@ That was, however, unmaintainable so we wrote this one.
 .Sh BUGS
 Setuid shell scripts should be avoided at all costs, as they are a
 significant security risk.
-.Pp
-.Ev PS1 ,
-.Ev PS2 ,
-and
-.Ev PS4
-should be subject to parameter expansion before
-being displayed.
 .Pp
 The characters generated by filename completion should probably be quoted
 to ensure that the filename is still valid after the input line has been
