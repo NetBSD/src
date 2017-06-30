@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.62 2017/06/28 13:46:06 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.63 2017/06/30 23:05:45 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.62 2017/06/28 13:46:06 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.63 2017/06/30 23:05:45 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,9 @@ __RCSID("$NetBSD: var.c,v 1.62 2017/06/28 13:46:06 kre Exp $");
 #include <string.h>
 #include <paths.h>
 #include <limits.h>
+#include <time.h>
+#include <pwd.h>
+#include <fcntl.h>
 
 /*
  * Shell variables.
@@ -68,6 +71,7 @@ __RCSID("$NetBSD: var.c,v 1.62 2017/06/28 13:46:06 kre Exp $");
 #include "mystring.h"
 #include "parser.h"
 #include "show.h"
+#include "machdep.h"
 #ifndef SMALL
 #include "myhistedit.h"
 #endif
@@ -90,6 +94,14 @@ struct varinit {
 
 char *get_lineno(struct var *);
 
+#ifndef SMALL
+char *get_tod(struct var *);
+char *get_hostname(struct var *);
+char *get_seconds(struct var *);
+char *get_euser(struct var *);
+char *get_random(struct var *);
+#endif
+
 struct localvar *localvars;
 
 #ifndef SMALL
@@ -108,6 +120,15 @@ struct var vps4;
 struct var vvers;
 struct var voptind;
 struct var line_num;
+#ifndef SMALL
+struct var tod;
+struct var host_name;
+struct var seconds;
+struct var euname;
+struct var random_num;
+
+intmax_t sh_start_time;
+#endif
 
 struct var line_num;
 int line_number;
@@ -150,6 +171,18 @@ const struct varinit varinit[] = {
 	   { .set_func= getoptsreset } },
 	{ &line_num,	VSTRFIXED|VTEXTFIXED|VFUNCREF,	"LINENO=1",
 	   { .ref_func= get_lineno } },
+#ifndef SMALL
+	{ &tod,		VSTRFIXED|VTEXTFIXED|VFUNCREF,	"ToD=",
+	   { .ref_func= get_tod } },
+	{ &host_name,	VSTRFIXED|VTEXTFIXED|VFUNCREF,	"HOSTNAME=",
+	   { .ref_func= get_hostname } },
+	{ &seconds,	VSTRFIXED|VTEXTFIXED|VFUNCREF,	"SECONDS=",
+	   { .ref_func= get_seconds } },
+	{ &euname,	VSTRFIXED|VTEXTFIXED|VFUNCREF,	"EUSER=",
+	   { .ref_func= get_euser } },
+	{ &random_num,	VSTRFIXED|VTEXTFIXED|VFUNCREF,	"RANDOM=",
+	   { .ref_func= get_random } },
+#endif
 	{ NULL,	0,				NULL,
 	   { NULL } }
 };
@@ -166,6 +199,7 @@ STATIC struct var *find_var(const char *, struct var ***, int *);
 #ifdef mkinit
 INCLUDE <stdio.h>
 INCLUDE <unistd.h>
+INCLUDE <time.h>
 INCLUDE "var.h"
 INCLUDE "version.h"
 MKINIT char **environ;
@@ -173,7 +207,18 @@ INIT {
 	char **envp;
 	char buf[64];
 
+#ifndef SMALL
+	sh_start_time = (intmax_t)time((time_t *)0);
+#endif
+	/*
+	 * Set up our default variables and their values.
+	 */
 	initvar();
+
+	/*
+	 * Import variables from the environment, which will
+	 * override anything initialised just previously.
+	 */
 	for (envp = environ ; *envp ; envp++) {
 		if (strchr(*envp, '=')) {
 			setvareq(*envp, VEXPORT|VTEXTFIXED);
@@ -185,12 +230,20 @@ INIT {
 	 *
 	 * PPID is readonly
 	 * Always default IFS
+	 * PSc indicates the root/non-root status of this shell.
 	 * NETBSD_SHELL is a constant (readonly), and is never exported
+	 * START_TIME belongs only to this shell.
 	 * LINENO is simply magic...
 	 */
 	snprintf(buf, sizeof(buf), "%d", (int)getppid());
 	setvar("PPID", buf, VREADONLY);
 	setvar("IFS", ifs_default, VTEXTFIXED);
+	setvar("PSc", (geteuid() == 0 ? "#" : "$"), VTEXTFIXED);
+
+#ifndef SMALL
+	snprintf(buf, sizeof(buf), "%jd", sh_start_time);
+	setvar("START_TIME", buf, VTEXTFIXED);
+#endif
 
 	setvar("NETBSD_SHELL", NETBSD_SHELL
 #ifdef BUILD_DATE
@@ -248,7 +301,7 @@ initvar(void)
 		vp->next = *vpp;
 		*vpp = vp;
 		vp->text = strdup(ip->text);
-		vp->flags = ip->flags;
+		vp->flags = (ip->flags & ~VTEXTFIXED) | VSTRFIXED;
 		vp->v_u = ip->v_u;
 	}
 	/*
@@ -257,7 +310,7 @@ initvar(void)
 	if (find_var("PS1", &vpp, &vps1.name_len) == NULL) {
 		vps1.next = *vpp;
 		*vpp = &vps1;
-		vps1.flags = VSTRFIXED|VTEXTFIXED;
+		vps1.flags = VSTRFIXED;
 		vps1.text = NULL;
 		choose_ps1();
 	}
@@ -266,8 +319,15 @@ initvar(void)
 void
 choose_ps1(void)
 {
-	free(vps1.text);
+	if ((vps1.flags & (VTEXTFIXED|VSTACK)) == 0)
+		free(vps1.text);
 	vps1.text = strdup(geteuid() ? "PS1=$ " : "PS1=# ");
+	vps1.flags &= ~(VTEXTFIXED|VSTACK);
+
+	/*
+	 * Update PSc whenever we feel the need to update PS1
+	 */
+	setvarsafe("PSc", (geteuid() == 0 ? "#" : "$"), 0);
 }
 
 /*
@@ -294,6 +354,11 @@ setvarsafe(const char *name, const char *val, int flags)
 /*
  * Set the value of a variable.  The flags argument is ored with the
  * flags of the variable.  If val is NULL, the variable is unset.
+ *
+ * This always copies name and val when setting a variable, so
+ * the source strings can be from anywhere, and are no longer needed
+ * after this function returns.  The VTEXTFIXED and VSTACK flags should
+ * not be used (but just in case they were, clear them.)
  */
 
 void
@@ -337,7 +402,7 @@ setvar(const char *name, const char *val, int flags)
 	*d = '\0';
 	if (val)
 		scopy(val, d);
-	setvareq(nameeq, flags);
+	setvareq(nameeq, flags & ~(VTEXTFIXED | VSTACK));
 }
 
 
@@ -346,7 +411,9 @@ setvar(const char *name, const char *val, int flags)
  * Same as setvar except that the variable and value are passed in
  * the first argument as name=value.  Since the first argument will
  * be actually stored in the table, it should not be a string that
- * will go away.
+ * will go away.   The flags (VTEXTFIXED or VSTACK) can be used to
+ * indicate the source of the string (if neither is set, the string will
+ * eventually be free()d when a replacement value is assigned.)
  */
 
 void
@@ -405,7 +472,7 @@ setvareq(char *s, int flags)
 		return;
 	}
 	vp = ckmalloc(sizeof (*vp));
-	vp->flags = flags & ~(VNOFUNC|VFUNCREF);
+	vp->flags = flags & ~(VNOFUNC|VFUNCREF|VSTRFIXED);
 	vp->text = s;
 	vp->name_len = nlen;
 	vp->next = *vpp;
@@ -1058,16 +1125,304 @@ find_var(const char *name, struct var ***vppp, int *lenp)
 	return NULL;
 }
 
+/*
+ * The following are the functions that create the values for
+ * shell variables that are dynamically produced when needed.
+ *
+ * The output strings cannot be malloc'd as there is nothing to
+ * free them - callers assume these are ordinary variables where
+ * the value returned is vp->text
+ *
+ * Each function needs its own storage space, as the results are
+ * used to create processes' environment, and (if exported) all
+ * the values will (might) be needed simultaneously.
+ *
+ * It is not a problem if a var is updated while nominally in use
+ * somewhere, all these are intended to be dynamic, the value they
+ * return is not guaranteed, an updated vaue is just as good.
+ *
+ * So, malloc a single buffer for the result of each function,
+ * grow, and even shrink, it as needed, but once we have one that
+ * is a suitable size for the actual usage, simply hold it forever.
+ *
+ * For a SMALL shell we implement only LINENO, none of the others,
+ * and give it just a fixed length static buffer for its result.
+ */
+
+#ifndef SMALL
+
+struct space_reserved {		/* record of space allocated for results */
+	char *b;
+	int len;
+};
+
+/* rough (over-)estimate of the number of bytes needed to hold a number */
+static int
+digits_in(intmax_t number)
+{
+	int res = 0;
+
+	if (number & ~((1LL << 62) - 1))
+		res = 64;	/* enough for 2^200 and a bit more */
+	else if (number & ~((1LL << 32) - 1))
+		res = 20;	/* enough for 2^64 */
+	else if (number & ~((1 << 23) - 1))
+		res = 10;	/* enough for 2^32 */
+	else
+		res = 8;	/* enough for 2^23 or smaller */
+
+	return res;
+}
+
+static int
+make_space(struct space_reserved *m, int bytes)
+{
+	void *p;
+
+	if (m->len >= bytes && m->len <= (bytes<<2))
+		return 1;
+
+	bytes = SHELL_ALIGN(bytes);
+	/* not ckrealloc() - we want failure, not error() here */
+	p = realloc(m->b, bytes);
+	if (p == NULL)	/* what we had should still be there */
+		return 0;
+
+	m->b = p;
+	m->len = bytes;
+	m->b[bytes - 1] = '\0';
+
+	return 1;
+}
+#endif
+
 char *
 get_lineno(struct var *vp)
 {
-	static char lineno_buf[8 + 14];
+#ifdef SMALL
+#define length (8 + 10)		/* 10 digits is enough for a 32 bit line num */
+	static char result[length];
+#else
+	static struct space_reserved buf;
+#define result buf.b
+#define length buf.len
+#endif
 	int ln = line_number;
 
 	if (vp->flags & VUNSET)
 		return NULL;
 
 	ln -= funclinebase;
-	snprintf(lineno_buf, sizeof(lineno_buf), "LINENO=%d", ln);;
-	return lineno_buf;
+
+#ifndef SMALL
+	if (!make_space(&buf, vp->name_len + 2 + digits_in(ln)))
+		return vp->text;
+#endif
+
+	snprintf(result, length - 1, "%.*s=%d", vp->name_len, vp->text, ln);
+	return result;
 }
+#undef result
+#undef length
+
+#ifndef SMALL
+
+char *
+get_hostname(struct var *vp)
+{
+	static struct space_reserved buf;
+
+	if (vp->flags & VUNSET)
+		return NULL;
+
+	if (!make_space(&buf, vp->name_len + 2 + 256))
+		return vp->text;
+
+	memcpy(buf.b, vp->text, vp->name_len + 1);	/* include '=' */
+	(void)gethostname(buf.b + vp->name_len + 1,
+	    buf.len - vp->name_len - 3);
+	return buf.b;
+}
+
+char *
+get_tod(struct var *vp)
+{
+	static struct space_reserved buf;	/* space for answers */
+	static struct space_reserved tzs;	/* remember TZ last used */
+	static timezone_t last_zone;		/* timezone data for tzs zone */
+	const char *fmt;
+	char *tz;
+	time_t now;
+	struct tm tm_now, *tmp;
+	timezone_t zone = NULL;
+	static char t_err[] = "time error";
+	int len;
+
+	if (vp->flags & VUNSET)
+		return NULL;
+
+	fmt = lookupvar("ToD_FORMAT");
+	if (fmt == NULL)
+		fmt="%T";
+	tz = lookupvar("TZ");
+	(void)time(&now);
+
+	if (tz != NULL) {
+		if (tzs.b == NULL || strcmp(tzs.b, tz) != 0) {
+			if (make_space(&tzs, strlen(tz) + 1)) {
+				INTOFF;
+				strcpy(tzs.b, tz);
+				if (last_zone)
+					tzfree(last_zone);
+				last_zone = zone = tzalloc(tz);
+				INTON;
+			} else
+				zone = tzalloc(tz);
+		} else
+			zone = last_zone;
+
+		tmp = localtime_rz(zone, &now, &tm_now);
+	} else
+		tmp = localtime_r(&now, &tm_now);
+
+	len = (strlen(fmt) * 4) + vp->name_len + 2;
+	while (make_space(&buf, len)) {
+		memcpy(buf.b, vp->text, vp->name_len+1);
+		if (tmp == NULL) {
+			if (buf.len >= vp->name_len+2+(int)(sizeof t_err - 1)) {
+				strcpy(buf.b + vp->name_len + 1, t_err);
+				if (zone && zone != last_zone)
+					tzfree(zone);
+				return buf.b;
+			}
+			len = vp->name_len + 4 + sizeof t_err - 1;
+			continue;
+		}
+		if (strftime_z(zone, buf.b + vp->name_len + 1,
+		     buf.len - vp->name_len - 2, fmt, tmp)) {
+			if (zone && zone != last_zone)
+				tzfree(zone);
+			return buf.b;
+		}
+		if (len >= 4096)	/* Let's be reasonable */
+			break;
+		len <<= 1;
+	}
+	if (zone && zone != last_zone)
+		tzfree(zone);
+	return vp->text;
+}
+
+char *
+get_seconds(struct var *vp)
+{
+	static struct space_reserved buf;
+	intmax_t secs;
+
+	if (vp->flags & VUNSET)
+		return NULL;
+
+	secs = (intmax_t)time((time_t *)0) - sh_start_time;
+	if (!make_space(&buf, vp->name_len + 2 + digits_in(secs)))
+		return vp->text;
+
+	snprintf(buf.b, buf.len-1, "%.*s=%jd", vp->name_len, vp->text, secs);
+	return buf.b;
+}
+
+char *
+get_euser(struct var *vp)
+{
+	static struct space_reserved buf;
+	static uid_t lastuid = 0;
+	uid_t euid;
+	struct passwd *pw;
+
+	if (vp->flags & VUNSET)
+		return NULL;
+
+	euid = geteuid();
+	if (buf.b != NULL && lastuid == euid)
+		return buf.b;
+
+	pw = getpwuid(euid);
+	if (pw == NULL)
+		return vp->text;
+
+	if (make_space(&buf, vp->name_len + 2 + strlen(pw->pw_name))) {
+		lastuid = euid;
+		snprintf(buf.b, buf.len, "%.*s=%s", vp->name_len, vp->text,
+		    pw->pw_name);
+		return buf.b;
+	}
+
+	return vp->text;
+}
+
+char *
+get_random(struct var *vp)
+{
+	static struct space_reserved buf;
+	static intmax_t random_val = 0;
+
+#ifdef USE_LRAND48
+#define random lrand48
+#define srandom srand48
+#endif
+
+	if (vp->flags & VUNSET)
+		return NULL;
+
+	if (vp->text != buf.b) {
+		/*
+		 * Either initialisation, or a new seed has been set
+		 */
+		if (vp->text[vp->name_len + 1] == '\0') {
+			int fd;
+
+			/*
+			 * initialisation (without pre-seeding),
+			 * or explictly requesting a truly random seed.
+			 */
+			fd = open("/dev/urandom", 0);
+			if (fd == -1) {
+				out2str("RANDOM initialisation failed\n");
+				random_val = (getpid()<<3) ^ time((time_t *)0);
+			} else {
+				int n;
+
+				do {
+				    n = read(fd,&random_val,sizeof random_val);
+				} while (n != sizeof random_val);
+				close(fd);
+			}
+		} else
+			/* good enough for today */
+			random_val = atoi(vp->text + vp->name_len + 1);
+
+		srandom((long)random_val);
+	}
+
+#if 0
+	random_val = (random_val + 1) & 0x7FFF;	/* 15 bit "random" numbers */
+#else
+	random_val = (random() >> 5) & 0x7FFF;
+#endif
+
+	if (!make_space(&buf, vp->name_len + 2 + digits_in(random_val)))
+		return vp->text;
+
+	snprintf(buf.b, buf.len-1, "%.*s=%jd", vp->name_len, vp->text,
+	    random_val);
+
+	if (buf.b != vp->text && (vp->flags & (VTEXTFIXED|VSTACK)) == 0)
+		free(vp->text);
+	vp->flags |= VTEXTFIXED;
+	vp->text = buf.b;
+
+	return vp->text;
+#undef random
+#undef srandom
+}
+
+#endif /* SMALL */
