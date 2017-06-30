@@ -1,4 +1,4 @@
-/*	$NetBSD: c_sh.c,v 1.20 2017/06/30 03:23:18 kamil Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.21 2017/06/30 03:43:57 kamil Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -6,14 +6,15 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_sh.c,v 1.20 2017/06/30 03:23:18 kamil Exp $");
+__RCSID("$NetBSD: c_sh.c,v 1.21 2017/06/30 03:43:57 kamil Exp $");
 #endif
 
+#include <sys/time.h>
 #include <sys/times.h>
+#include <time.h>
 
 #include "sh.h"
 #include "ksh_stat.h" 	/* umask() */
-#include "ksh_time.h"
 
 
 static	char *clocktos ARGS((clock_t t));
