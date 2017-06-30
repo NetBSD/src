@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.46 2017/06/30 02:51:14 kamil Exp $	*/
+/*	$NetBSD: config.h,v 1.47 2017/06/30 03:23:18 kamil Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -77,9 +77,6 @@
 
 /* Define if you have a sane <termio.h> header file */
 /* #undef HAVE_TERMIO_H */
-
-/* Define if you don't have times() or if it always returns 0 */
-/* #undef TIMES_BROKEN */
 
 /* Define if opendir() will open non-directory files */
 /* #undef OPENDIR_DOES_NONDIR */

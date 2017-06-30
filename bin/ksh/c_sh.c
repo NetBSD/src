@@ -1,4 +1,4 @@
-/*	$NetBSD: c_sh.c,v 1.19 2017/06/22 14:20:46 kamil Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.20 2017/06/30 03:23:18 kamil Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -6,14 +6,15 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_sh.c,v 1.19 2017/06/22 14:20:46 kamil Exp $");
+__RCSID("$NetBSD: c_sh.c,v 1.20 2017/06/30 03:23:18 kamil Exp $");
 #endif
 
+#include <sys/times.h>
 
 #include "sh.h"
 #include "ksh_stat.h" 	/* umask() */
 #include "ksh_time.h"
-#include "ksh_times.h"
+
 
 static	char *clocktos ARGS((clock_t t));
 
@@ -706,7 +707,7 @@ c_times(wp)
 {
 	struct tms all;
 
-	(void) ksh_times(&all);
+	times(&all);
 	shprintf("Shell: %8ss user ", clocktos(all.tms_utime));
 	shprintf("%8ss system\n", clocktos(all.tms_stime));
 	shprintf("Kids:  %8ss user ", clocktos(all.tms_cutime));
@@ -733,7 +734,7 @@ timex(t, f)
 	extern clock_t j_usrtime, j_systime; /* computed by j_wait */
 	char opts[1];
 
-	t0t = ksh_times(&t0);
+	t0t = times(&t0);
 	if (t->left) {
 		/*
 		 * Two ways of getting cpu usage of a command: just use t0
@@ -749,7 +750,7 @@ timex(t, f)
 		opts[0] = 0;
 		rv = execute(t->left, f | XTIME);
 		tf |= opts[0];
-		t1t = ksh_times(&t1);
+		t1t = times(&t1);
 	} else
 		tf = TF_NOARGS;
 
