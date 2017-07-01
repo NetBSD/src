@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.123 2017/03/25 15:07:21 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.124 2017/07/01 10:44:42 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1409,7 +1409,6 @@ IDTVEC(osyscall)
 	addq $0x10,%rsp
 #endif
 	pushq	$2		/* size of instruction for restart */
-osyscall1:
 	pushq	$T_ASTFLT	/* trap # for doing ASTs */
 	INTRENTRY
 	STI(si)
