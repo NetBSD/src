@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.38 2016/12/24 09:19:23 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.39 2017/07/01 09:18:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -124,7 +124,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.38 2016/12/24 09:19:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.39 2017/07/01 09:18:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -141,6 +141,12 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.38 2016/12/24 09:19:23 skrll Exp
 #include <arm/undefined.h>
 #include <arm/bootconfig.h>
 #include <arm/arm32/machdep.h>
+
+#ifdef MULTIPROCESSOR
+#ifndef __HAVE_CPU_UAREA_ALLOC_IDLELWP
+#error __HAVE_CPU_UAREA_ALLOC_IDLELWP required to not waste pages for idlestack
+#endif
+#endif
 
 struct bootmem_info bootmem_info;
 
