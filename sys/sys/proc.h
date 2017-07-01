@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.340 2017/03/30 20:17:11 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.341 2017/07/01 16:36:46 khorben Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -200,7 +200,7 @@ struct emul {
 };
 
 /*
- * Emulation miscelaneous flags
+ * Emulation miscellaneous flags
  */
 #define	EMUL_HAS_SYS___syscall	0x001	/* Has SYS___syscall */
 
