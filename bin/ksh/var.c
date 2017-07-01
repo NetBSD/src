@@ -1,9 +1,9 @@
-/*	$NetBSD: var.c,v 1.20 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: var.c,v 1.21 2017/07/01 23:12:08 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.20 2017/06/30 04:41:19 kamil Exp $");
+__RCSID("$NetBSD: var.c,v 1.21 2017/07/01 23:12:08 joerg Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -254,9 +254,7 @@ global(n)
  * Search for local variable, if not found create locally.
  */
 struct tbl *
-local(n, copy)
-	register const char *n;
-	bool copy;
+local(const char *n, bool copy)
 {
 	register struct block *l = e->loc;
 	register struct tbl *vp;

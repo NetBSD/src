@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.10 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: expr.c,v 1.11 2017/07/01 23:12:08 joerg Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -9,7 +9,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: expr.c,v 1.10 2017/06/30 04:41:19 kamil Exp $");
+__RCSID("$NetBSD: expr.c,v 1.11 2017/07/01 23:12:08 joerg Exp $");
 #endif
 
 
@@ -138,8 +138,7 @@ static void        evalerr  ARGS((Expr_state *es, enum error_type type,
 				  const char *str)) GCC_FUNC_ATTR(noreturn);
 static struct tbl *evalexpr ARGS((Expr_state *es, enum prec prec));
 static void        token    ARGS((Expr_state *es));
-static struct tbl *do_ppmm  ARGS((Expr_state *es, enum token op,
-				  struct tbl *vasn, bool is_prefix));
+static struct tbl *do_ppmm(Expr_state *, enum token, struct tbl *, bool);
 static void	   assign_check ARGS((Expr_state *es, enum token op,
 				      struct tbl *vasn));
 static struct tbl *tempvar  ARGS((void));
@@ -537,11 +536,7 @@ token(es)
 
 /* Do a ++ or -- operation */
 static struct tbl *
-do_ppmm(es, op, vasn, is_prefix)
-	Expr_state *es;
-	enum token op;
-	struct tbl *vasn;
-	bool is_prefix;
+do_ppmm(Expr_state *es, enum token op, struct tbl *vasn, bool is_prefix)
 {
 	struct tbl *vl;
 	int oval;
