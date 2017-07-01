@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.197 2017/06/04 08:02:26 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.198 2017/07/01 20:07:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.197 2017/06/04 08:02:26 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.198 2017/07/01 20:07:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,6 +500,32 @@ filt_genfsread(struct knote *kn, long hint)
 }
 
 static int
+filt_genfswrite(struct knote *kn, long hint)
+{
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+
+	/*
+	 * filesystem is gone, so set the EOF flag and schedule
+	 * the knote for deletion.
+	 */
+	switch (hint) {
+	case NOTE_REVOKE:
+		KASSERT(mutex_owned(vp->v_interlock));
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		return (1);
+	case 0:
+		mutex_enter(vp->v_interlock);
+		kn->kn_data = 0;
+		mutex_exit(vp->v_interlock);
+		return 1;
+	default:
+		KASSERT(mutex_owned(vp->v_interlock));
+		kn->kn_data = 0;
+		return 1;
+	}
+}
+
+static int
 filt_genfsvnode(struct knote *kn, long hint)
 {
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
@@ -530,6 +556,8 @@ filt_genfsvnode(struct knote *kn, long hint)
 
 static const struct filterops genfsread_filtops =
 	{ 1, NULL, filt_genfsdetach, filt_genfsread };
+static const struct filterops genfswrite_filtops =
+	{ 1, NULL, filt_genfsdetach, filt_genfswrite };
 static const struct filterops genfsvnode_filtops =
 	{ 1, NULL, filt_genfsdetach, filt_genfsvnode };
 
@@ -548,6 +576,9 @@ genfs_kqfilter(void *v)
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		kn->kn_fop = &genfsread_filtops;
+		break;
+	case EVFILT_WRITE:
+		kn->kn_fop = &genfswrite_filtops;
 		break;
 	case EVFILT_VNODE:
 		kn->kn_fop = &genfsvnode_filtops;
