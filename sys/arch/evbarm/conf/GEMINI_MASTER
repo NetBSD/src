@@ -218,6 +218,8 @@ geminigpio2	at obio0 addr 0x4f000000 intrbase 96  intr 24
 ##usb* at ehci?
 ##uhub* at usb?
 ##uhub* at uhub? port ?
+
+# USB Ethernet adapters
 ##axe* at uhub?
 
 # PCI
