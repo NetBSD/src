@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.158 2017/06/30 23:48:50 kre Exp $
+.\"	$NetBSD: sh.1,v 1.159 2017/07/01 05:11:57 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -34,7 +34,7 @@
 .Dd July 1, 2017
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
-.ds flags abCeEfFhiILmnpquvVx
+.ds flags abCEeFfhIiLmnpquVvx
 .Os
 .Sh NAME
 .Nm sh
@@ -199,7 +199,7 @@ was given, then the shell treats the first argument
 as the name of a file from which to read commands (a shell script).
 This also becomes $0 and the remaining arguments are set as the
 positional parameters of the shell ($1, $2, etc).
-Otheriwse, if
+Otherwise, if
 .Fl c
 was given, then the first argument, which must exist,
 is taken to be a string of
@@ -267,6 +267,9 @@ while this flag is set.
 .It Fl b Em notify
 Enable asynchronous notification of background job completion.
 (Not implemented.)
+.It Fl C Em noclobber
+Don't overwrite existing files with
+.Dq > .
 .It Fl c
 Read commands from the
 .Ar command_string
@@ -280,9 +283,14 @@ is only available at invocation, it cannot be
 .Ic set ,
 and there is no form using
 .Dq \&+ .
-.It Fl C Em noclobber
-Don't overwrite existing files with
-.Dq > .
+.It Fl E Em emacs
+Enable the built-in emacs style
+command line editor (disables
+.Fl V
+if it has been set).
+(See the
+.Sx Command Line Editing
+section below.)
 .It Fl e Em errexit
 If not interactive, exit immediately if any untested command fails.
 If interactive, and an untested command fails,
@@ -308,16 +316,6 @@ With pipelines, only the status of the entire pipeline
 is tested when
 .Fl e
 is set to determine if the shell should exit.
-.It Fl E Em emacs
-Enable the built-in emacs style
-command line editor (disables
-.Fl V
-if it has been set).
-(See the
-.Sx Command Line Editing
-section below.)
-.It Fl f Em noglob
-Disable pathname expansion.
 .It Fl F Em fork
 Cause the shell to always use
 .Xr fork 2
@@ -333,17 +331,19 @@ can be compiled to always use
 in which case altering the
 .Fl F
 flag has no effect.
+.It Fl f Em noglob
+Disable pathname expansion.
 .It Fl h Em trackall
 Functions defined while this option is set will have paths bound to
 commands to be executed by the function at the time of the definition.
 When off when a function is defined,
 the file system is searched for commands each time the function is invoked.
 (Not implemented.)
-.It Fl i Em interactive
-Force the shell to behave interactively.
 .It Fl I Em ignoreeof
 Ignore EOFs from input when interactive.
 (After a large number of consecutive EOFs the shell will exit anyway.)
+.It Fl i Em interactive
+Force the shell to behave interactively.
 .It Fl L Em local_lineno
 When set, before a function is defined,
 causes the variable
@@ -369,7 +369,9 @@ This is useful for checking the syntax of shell scripts.
 If
 .Fl n
 becomes set in an interactive shell, it will automatically be
-cleared just before the next time the command line prompt (PS1) is written.
+cleared just before the next time the command line prompt
+.Pq Ev PS1
+is written.
 .It Fl p Em nopriv
 Do not attempt to reset effective UID if it does not match UID.
 This is not set by default to help avoid incorrect usage by setuid
@@ -421,14 +423,6 @@ or
 operators test if the variable is set, before attempting to
 obtain its value, and hence are unaffected by
 .Fl u .
-.It Fl v Em verbose
-The shell writes its input to standard error as it is read.
-Useful for debugging.
-.It Fl x Em xtrace
-Write each command to standard error (preceded by the expanded value of
-.Dq $PS4 )
-before it is executed.
-Useful for debugging.
 .It Fl V Em vi
 Enable the built-in
 .Xr vi 1
@@ -438,6 +432,14 @@ if it has been set).
 (See the
 .Sx Command Line Editing
 section below.)
+.It Fl v Em verbose
+The shell writes its input to standard error as it is read.
+Useful for debugging.
+.It Fl x Em xtrace
+Write each command to standard error (preceded by the expanded value of
+.Dq $PS4 )
+before it is executed.
+Useful for debugging.
 .It "\ \ " Em cdprint
 Make an interactive shell always print the new directory name when
 changed by the
@@ -472,7 +474,7 @@ built-in command are passed on to utilities executed
 in posix mode),
 and whether the shell treats
 an empty brace-list compound statement as a syntax error
-(expected by posix) or permits it.
+(expected by POSIX) or permits it.
 Such statements
 .Dq "{ }"
 can be useful when defining dummy functions.
@@ -3147,7 +3149,6 @@ represents the current time, if
 has not been modified, and
 .Ev SECONDS
 is not unset.
-.Ev
 .It Ev TERM
 The default terminal setting for the shell.
 This is inherited by
@@ -3157,7 +3158,7 @@ children of the shell, and is used in the history editing modes.
 When referenced, uses the value of
 .Ev ToD_FORMAT
 (or
-.Dq %T
+.Dq \&%T
 if
 .Ev ToD_FORMAT
 is unset) as the format argument to
