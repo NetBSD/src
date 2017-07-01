@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2016/10/16 04:37:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.31 2017/07/01 12:23:09 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -42,6 +42,8 @@ MKNATIVE_CONFIGURE_PRESET= \
 	bash_cv_func_sigsetjmp=present \
 	bash_cv_func_strcoll_broken=no \
 	bash_cv_must_reinstall_sighandlers=no
+
+CONFIGURE_ENV+=	am_cv_func_iconv=no
 
 # Recent versions of Solaris have ncurses, but they hide the lib in an
 # odd directory. Prevent configure from finding the ncurses headers,
