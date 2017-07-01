@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.33 2017/06/30 05:18:36 kamil Exp $	*/
+/*	$NetBSD: edit.c,v 1.34 2017/07/01 23:12:08 joerg Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.33 2017/06/30 05:18:36 kamil Exp $");
+__RCSID("$NetBSD: edit.c,v 1.34 2017/07/01 23:12:08 joerg Exp $");
 #endif
 
 #include <stdbool.h>
@@ -194,8 +194,7 @@ x_puts(s)
 }
 
 bool
-x_mode(onoff)
-	bool	onoff;
+x_mode(bool onoff)
 {
 	static bool	x_cur_mode;
 	bool		prev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.23 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: exec.c,v 1.24 2017/07/01 23:12:08 joerg Exp $	*/
 
 /*
  * execute command tree
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: exec.c,v 1.23 2017/06/30 04:41:19 kamil Exp $");
+__RCSID("$NetBSD: exec.c,v 1.24 2017/07/01 23:12:08 joerg Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -30,7 +30,7 @@ static int	call_builtin ARGS((struct tbl *, char **));
 static int	iosetup ARGS((struct ioword *, struct tbl *));
 static int	herein ARGS((const char *, int));
 #ifdef KSH
-static char 	*do_selectargs ARGS((char **, bool));
+static char 	*do_selectargs(char **, bool);
 #endif /* KSH */
 #ifdef KSH
 static int	dbteste_isa ARGS((Test_env *, Test_meta));
@@ -1322,9 +1322,7 @@ herein(content, sub)
  *	print the args in column form - assuming that we can
  */
 static char *
-do_selectargs(ap, print_menu)
-	register char **ap;
-	bool print_menu;
+do_selectargs(char **ap, bool print_menu)
 {
 	static const char *const read_args[] = {
 					"read", "-r", "REPLY", (char *) 0

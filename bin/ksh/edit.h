@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.h,v 1.4 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: edit.h,v 1.5 2017/07/01 23:12:08 joerg Exp $	*/
 
 /* NAME:
  *      edit.h - globals for edit modes
@@ -10,7 +10,7 @@
  *      
  *
  * RCSid:
- *      $NetBSD: edit.h,v 1.4 2017/06/30 04:41:19 kamil Exp $
+ *      $NetBSD: edit.h,v 1.5 2017/07/01 23:12:08 joerg Exp $
  *
  */
 
@@ -50,7 +50,7 @@ int 	x_getc		ARGS((void));
 void 	x_flush		ARGS((void));
 void 	x_putc		ARGS((int c));
 void 	x_puts		ARGS((const char *s));
-bool 	x_mode		ARGS((bool onoff));
+bool 	x_mode(bool onoff);
 int 	promptlen	ARGS((const char *cp, const char **spp));
 int	x_do_comment	ARGS((char *buf, int bsize, int *lenp));
 void	x_print_expansions ARGS((int nwords, char *const *words, int is_command));
