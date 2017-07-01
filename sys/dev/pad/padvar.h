@@ -1,4 +1,4 @@
-/* $NetBSD: padvar.h,v 1.10 2017/07/01 05:50:10 nat Exp $ */
+/* $NetBSD: padvar.h,v 1.11 2017/07/01 23:31:19 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,6 +40,7 @@ typedef struct pad_softc {
 	kcondvar_t	sc_condvar;
 	kmutex_t	sc_lock;
 	kmutex_t	sc_intr_lock;
+	bool		sc_dying;
 
 	device_t	sc_audiodev;
 	int		sc_blksize;
