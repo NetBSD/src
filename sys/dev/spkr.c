@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.13 2017/06/14 06:55:37 nat Exp $	*/
+/*	$NetBSD: spkr.c,v 1.14 2017/07/01 23:27:17 nat Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.13 2017/06/14 06:55:37 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.14 2017/07/01 23:27:17 nat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -388,6 +388,10 @@ spkr_detach(device_t self, int flags)
 #endif /* SPKRDEBUG */
 	if (sc == NULL)
 		return ENXIO;
+
+	/* XXXNS If speaker never closes, we cannot complete the detach. */
+	while ((flags & DETACH_FORCE) != 0 && sc->sc_inbuf != NULL)
+		kpause("spkrwait", TRUE, 1, NULL);
 	if (sc->sc_inbuf != NULL)
 		return EBUSY;
 
