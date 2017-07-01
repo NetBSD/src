@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.37 2017/06/19 23:54:00 nat Exp $ */
+/* $NetBSD: pad.c,v 1.38 2017/07/01 05:50:10 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.37 2017/06/19 23:54:00 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.38 2017/07/01 05:50:10 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -277,7 +277,7 @@ pad_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_swvol = 255;
 	sc->sc_buflen = 0;
 	sc->sc_rpos = sc->sc_wpos = 0;
-	sc->sc_audiodev = (void *)audio_attach_mi(&pad_hw_if, sc, sc->sc_dev);
+	sc->sc_audiodev = audio_attach_mi(&pad_hw_if, sc, sc->sc_dev);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
