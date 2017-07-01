@@ -1,4 +1,4 @@
-#	$NetBSD: std.nitrogen6,v 1.4 2016/11/24 12:06:44 hkenken Exp $
+#	$NetBSD: std.nitrogen6,v 1.5 2017/07/01 12:52:01 skrll Exp $
 #
 # standard NetBSD/evbarm options for Nitrogen6X
 
@@ -12,6 +12,7 @@ options 	NITROGEN6
 
 options 	ARM_HAS_VBAR
 options 	__HAVE_CPU_COUNTER
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	TPIDRPRW_IS_CURCPU
 options 	PCI_NETBSD_CONFIGURE
