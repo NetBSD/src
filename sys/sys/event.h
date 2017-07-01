@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.29 2017/06/14 16:37:05 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.30 2017/07/01 20:08:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -188,10 +188,10 @@ struct knote {
 	TAILQ_ENTRY(knote)	kn_tqe;		/* q: for struct kqueue */
 	struct kqueue		*kn_kq;		/* q: which queue we are on */
 	struct kevent		kn_kevent;
-	uint32_t		kn_status;
-	uint32_t		kn_sfflags;	/*   saved filter flags */
-	uintptr_t		kn_sdata;	/*   saved data field */
-	void			*kn_obj;	/*   pointer to monitored obj */
+	uint32_t		kn_status;	/* q: flags below */
+	uint32_t		kn_sfflags;	/*    saved filter flags */
+	uintptr_t		kn_sdata;	/*    saved data field */
+	void			*kn_obj;	/*    monitored obj */
 	const struct filterops	*kn_fop;
 	struct kfilter		*kn_kfilter;
 	void 			*kn_hook;
@@ -201,7 +201,8 @@ struct knote {
 #define	KN_DISABLED	0x04U			/* event is disabled */
 #define	KN_DETACHED	0x08U			/* knote is detached */
 #define	KN_MARKER	0x10U			/* is a marker */
-#define KN_BUSY		0x20U			/* is being scanned */
+#define	KN_BUSY		0x20U			/* is being scanned */
+/* Toggling KN_BUSY also requires kn_kq->kq_fdp->fd_lock. */
 
 #define	kn_id		kn_kevent.ident
 #define	kn_filter	kn_kevent.filter
