@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkoptions.sh,v 1.3 2017/06/19 02:43:55 kre Exp $
+# $NetBSD: mkoptions.sh,v 1.4 2017/07/01 06:14:51 kre Exp $
 
 #
 # It would be more sensible to generate 2 .h files, one which
@@ -158,7 +158,7 @@ do
 
 	printf '%s _SH_OPT_%s %s\n' "${chr}" "${var}" "${COND}"
 
-done 4>>"${OF}" | sort -t' ' -k1,1f -k1,1r | while read chr index COND
+done 4>>"${OF}" | sort -t' ' -k1,1f -k1,1 | while read chr index COND
 do
 	if $FIRST
 	then
