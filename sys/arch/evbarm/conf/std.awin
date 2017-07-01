@@ -1,4 +1,4 @@
-#	$NetBSD: std.awin,v 1.9 2015/12/19 13:28:22 skrll Exp $
+#	$NetBSD: std.awin,v 1.10 2017/07/01 09:26:51 skrll Exp $
 #
 # standard NetBSD/evbarm for Allwinner based options
 
@@ -12,6 +12,7 @@ include		"arch/evbarm/conf/files.awin"
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
 options 	__HAVE_CPU_COUNTER
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	CORTEX_PMC
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	ARM_HAS_VBAR
