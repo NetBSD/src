@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.226 2017/06/30 18:28:31 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.227 2017/07/01 16:59:12 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.226 2017/06/30 18:28:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.227 2017/07/01 16:59:12 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -721,24 +721,6 @@ out:
 	return error;
 }
 
-static socklen_t
-sa_addrlen(const struct sockaddr *sa)
-{
-
-	switch (sa->sa_family) {
-#ifdef INET
-	case AF_INET:
-		return sizeof(struct sockaddr_in);
-#endif
-#ifdef INET6
-	case AF_INET6:
-		return sizeof(struct sockaddr_in6);
-#endif
-	default:
-		return 0;
-	}
-}
-
 /*ARGSUSED*/
 int
 COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
@@ -819,8 +801,10 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 	 * (padded with 0's). We keep the original length of the sockaddr.
 	 */
 	if (info.rti_info[RTAX_NETMASK]) {
-		socklen_t sa_len = sa_addrlen(info.rti_info[RTAX_NETMASK]);
-		socklen_t masklen = info.rti_info[RTAX_NETMASK]->sa_len;
+		socklen_t sa_len = sockaddr_getsize_by_family(
+		    info.rti_info[RTAX_NETMASK]->sa_family);
+		socklen_t masklen = sockaddr_getlen(
+		    info.rti_info[RTAX_NETMASK]);
 		if (sa_len != 0 && sa_len > masklen) {
 			KASSERT(sa_len <= sizeof(netmask));
 			memcpy(&netmask, info.rti_info[RTAX_NETMASK], masklen);
