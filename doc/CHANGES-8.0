@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.14 2017/06/30 07:00:24 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.15 2017/07/01 08:58:41 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -1491,4 +1491,75 @@ sys/dev/mulaw.c					1.31, 1.32
 
 	Fix big endian bug.
 	[nat, ticket #74]
+
+share/man/man4/tc.4				1.7
+sys/arch/alpha/tc/tcasic.c			1.46
+sys/arch/pmax/tc/tcbus.c			1.33
+sys/arch/vax/conf/files.vax			1.121
+sys/arch/vax/vsa/tc_vsbus.c			1.8, 1.9
+sys/dev/tc/tc.c					1.55
+sys/dev/tc/tcvar.h				1.27
+
+	vax: Add support for VAXstation 4000 TURBOchannel.
+	[flxd, ticket #65]
+
+sys/dev/tc/tc.c					1.56
+
+	Fix missing TC bus speed.
+	[flxd, ticket #66]
+
+sys/dev/sdmmc/ld_sdmmc.c			1.28
+sys/dev/sdmmc/sdmmc_mem.c			1.58-1.60
+sys/dev/sdmmc/sdmmcreg.h			1.30, 1.31
+sys/dev/sdmmc/sdmmcvar.h			1.25-1.27
+
+	- Add discard support to ld@sdmmc using the ERASE (CMD38) command.
+	- Read SD status register and print card status when a new SD card
+	  is found.
+	[jmcneill, ticket #67]
+
+sys/arch/evbarm/conf/BCM5301X			1.27
+sys/arch/evbarm/conf/BCM56340			1.12
+sys/arch/evbarm/conf/BEAGLEBOARDXM		1.24
+sys/arch/evbarm/conf/BEAGLEBONE			1.43
+sys/arch/evbarm/conf/GEMINI			1.34
+sys/arch/evbarm/conf/GEMINI_MASTER		1.34
+sys/arch/evbarm/conf/GEMINI_SLAVE		1.35
+sys/arch/evbarm/conf/GOLDENGATE			1.14
+sys/arch/evbarm/conf/N900			1.24
+sys/arch/evbarm/conf/PANDABOARD			1.22
+
+	Add a heading to describe the class of device axe(4) is.
+	[sevan, ticket #72]
+
+sys/netinet6/ip6_output.c			1.192
+
+	Fix a KASSERT failure due to misusage of ip6_get_membership. 
+	PR kern/52324
+	[ozaki-r, ticket #73]
+
+sys/fs/udf/udf_vfsops.c				1.76
+
+	No need to call vflush from failing udf_mount().  If the system
+	nodes really have to disappear we should change vrele() to
+	vrecycle() here.
+	[hannken, ticket #75]
+
+sys/miscfs/specfs/spec_vnops.c			1.174
+
+	Refuse to open a block device with zero open count when it has
+	a mountpoint set.  This may happen after forced detach or unplug
+	of a mounted block device.
+	[hannken, ticket #76]
+
+sys/net/if.c					1.395
+sys/net/if.h					1.240
+sys/netinet/if_arp.c				1.253
+
+	Introduce if_get_bylla to find an interface with the active
+	local link address.
+
+	Allow any ARP message we receieved from another interface to
+	be correctly dropped.
+	[roy, ticket #77]
 
