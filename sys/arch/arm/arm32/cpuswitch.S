@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.90 2015/04/08 12:07:40 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.91 2017/07/01 15:28:18 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.90 2015/04/08 12:07:40 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.91 2017/07/01 15:28:18 skrll Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 
@@ -250,7 +250,7 @@ ENTRY(cpu_switchto)
 	vmsrne	fpexc, r0
 #endif
 
-	/* 
+	/*
 	 * Check for restartable atomic sequences (RAS).
 	 */
 
