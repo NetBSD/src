@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.17 2016/10/04 14:36:46 sborrill Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.18 2017/07/01 16:34:17 khorben Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.17 2016/10/04 14:36:46 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.18 2017/07/01 16:34:17 khorben Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -6012,7 +6012,7 @@ ipf_nat_icmpquerytype(int icmptype)
 	{
 	case ICMP_ECHOREPLY:
 	case ICMP_ECHO:
-	/* route aedvertisement/solliciation is currently unsupported: */
+	/* route advertisement/sollicitation is currently unsupported: */
 	/* it would require rewriting the ICMP data section            */
 	case ICMP_TSTAMP:
 	case ICMP_TSTAMPREPLY:
