@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.6 2017/06/29 19:38:24 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.7 2017/07/01 16:25:15 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -77,8 +77,9 @@ armgic0		at gic?
 #gpio*		at gpiobus?
 
 # Ethernet
-#awg*		at pci? dev ? function ?	# Allwinner Gigabit Ethernet
-#ukphy*		at mii? phy ?
+sunxiemac*	at fdt?			# Allwinner Gigabit Ethernet
+rgephy*		at mii? phy ?
+ukphy*		at mii? phy ?
 
 # UART
 com*		at fdt?			# UART
