@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_ccu.c,v 1.4 2017/06/29 17:08:52 jmcneill Exp $ */
+/* $NetBSD: sun8i_h3_ccu.c,v 1.5 2017/07/01 16:25:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.4 2017/06/29 17:08:52 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.5 2017/07/01 16:25:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -185,6 +185,8 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    BUS_CLK_GATING_REG0, 9),
 	SUNXI_CCU_GATE(H3_CLK_BUS_MMC2, "bus-mmc2", "ahb1",
 	    BUS_CLK_GATING_REG0, 10),
+	SUNXI_CCU_GATE(H3_CLK_BUS_EMAC, "bus-emac", "ahb2",
+	    BUS_CLK_GATING_REG0, 17),
 	SUNXI_CCU_GATE(H3_CLK_BUS_OTG, "bus-otg", "ahb1",
 	    BUS_CLK_GATING_REG0, 23),
 	SUNXI_CCU_GATE(H3_CLK_BUS_EHCI0, "bus-ehci0", "ahb1",
