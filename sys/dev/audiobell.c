@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.24 2017/06/27 09:44:13 nat Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.25 2017/07/01 05:32:24 nat Exp $	*/
 
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.24 2017/06/27 09:44:13 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.25 2017/07/01 05:32:24 nat Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -170,7 +170,8 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 		auio.uio_rw = UIO_WRITE;
 		UIO_SETUP_SYSSPACE(&auio);
 
-		audiobellwrite(fp, NULL, &auio, NULL, 0);
+		if (audiobellwrite(fp, NULL, &auio, NULL, 0) != 0)
+			break;
 		len -= size;
 	}
 out:
