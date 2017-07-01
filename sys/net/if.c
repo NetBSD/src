@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.394 2017/06/01 02:45:14 chs Exp $	*/
+/*	$NetBSD: if.c,v 1.394.2.1 2017/07/01 08:56:06 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394.2.1 2017/07/01 08:56:06 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2599,8 +2599,8 @@ out:
 }
 
 /*
- * Release a reference of an ifnet object given by if_get or
- * if_get_byindex.
+ * Release a reference of an ifnet object given by if_get, if_get_byindex
+ * or if_get_bylla.
  */
 void
 if_put(const struct ifnet *ifp, struct psref *psref)
@@ -2638,6 +2638,29 @@ if_get_byindex(u_int idx, struct psref *psref)
 	ifp = if_byindex(idx);
 	if (__predict_true(ifp != NULL))
 		psref_acquire(psref, &ifp->if_psref, ifnet_psref_class);
+	pserialize_read_exit(s);
+
+	return ifp;
+}
+
+ifnet_t *
+if_get_bylla(const void *lla, unsigned char lla_len, struct psref *psref)
+{
+	ifnet_t *ifp;
+	int s;
+
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
+		if (if_is_deactivated(ifp))
+			continue;
+		if (ifp->if_addrlen != lla_len)
+			continue;
+		if (memcmp(lla, CLLADDR(ifp->if_sadl), lla_len) == 0) {
+			psref_acquire(psref, &ifp->if_psref,
+			    ifnet_psref_class);
+			break;
+		}
+	}
 	pserialize_read_exit(s);
 
 	return ifp;
