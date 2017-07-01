@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_twi.c,v 1.1 2017/06/29 19:16:08 jmcneill Exp $ */
+/* $NetBSD: sunxi_twi.c,v 1.2 2017/07/01 22:49:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.1 2017/06/29 19:16:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.2 2017/07/01 22:49:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,9 +118,6 @@ sunxi_twi_attach(device_t parent, device_t self, void *aux)
 		}
 
 	gttwsi_attach_subr(self, bst, bsh);
-
-	aprint_naive("\n");
-	aprint_normal(": TWI\n");
 
 	ih = fdtbus_intr_establish(phandle, 0, IPL_VM, 0, gttwsi_intr, sc);
 	if (ih == NULL) {
