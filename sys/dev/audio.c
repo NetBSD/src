@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.366 2017/06/25 10:28:22 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.367 2017/07/01 05:44:52 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.366 2017/06/25 10:28:22 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.367 2017/07/01 05:44:52 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -897,6 +897,10 @@ audioactivate(device_t self, enum devact act)
 		sc->sc_dying = true;
 		mutex_enter(sc->sc_intr_lock);
 		cv_broadcast(&sc->sc_condvar);
+		cv_broadcast(&sc->sc_rcondvar);
+		cv_broadcast(&sc->sc_wchan);
+		cv_broadcast(&sc->sc_rchan);
+		cv_broadcast(&sc->sc_lchan);
 		mutex_exit(sc->sc_intr_lock);
 		mutex_exit(sc->sc_lock);
 		return 0;
