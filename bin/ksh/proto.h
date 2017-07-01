@@ -1,9 +1,9 @@
-/*	$NetBSD: proto.h,v 1.9 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: proto.h,v 1.10 2017/07/01 23:12:08 joerg Exp $	*/
 
 /*
  * prototypes for PD-KSH
  * originally generated using "cproto.c 3.5 92/04/11 19:28:01 cthuang "
- * $Id: proto.h,v 1.9 2017/06/30 04:41:19 kamil Exp $
+ * $Id: proto.h,v 1.10 2017/07/01 23:12:08 joerg Exp $
  */
 
 #include <stdbool.h>
@@ -255,7 +255,7 @@ void 	newblock	ARGS((void));
 void 	popblock	ARGS((void));
 void	initvar		ARGS((void));
 struct tbl *	global	ARGS((const char *));
-struct tbl *	local	ARGS((const char *, bool));
+struct tbl *	local(const char *, bool);
 char *	str_val		ARGS((struct tbl *));
 long 	intval		ARGS((struct tbl *));
 int 	setstr		ARGS((struct tbl *, const char *, int));
