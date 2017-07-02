@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.97 2017/07/01 16:59:12 christos Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.98 2017/07/02 02:39:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.97 2017/07/01 16:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.98 2017/07/02 02:39:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -283,6 +283,8 @@ sockaddr_checklen(const struct sockaddr *sa)
 {
 	socklen_t len = sockaddr_getsize_by_family(sa->sa_family);
 	if (len == 0 || len == sa->sa_len)
+		return;
+	if (sa->sa_family == AF_LINK && sa->sa_len <= len)
 		return;
 
 	char buf[512];
