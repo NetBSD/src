@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_can.c,v 1.2 2017/05/27 21:02:55 bouyer Exp $	*/
+/*	$NetBSD: awin_can.c,v 1.2.2.1 2017/07/02 15:07:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.2 2017/05/27 21:02:55 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.2.2.1 2017/07/02 15:07:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -239,12 +239,14 @@ awin_can_rx_intr(struct awin_can_softc *sc)
 
 	if (dlc > CAN_MAX_DLC) {
 		ifp->if_ierrors++;
+		awin_can_write(sc, AWIN_CAN_CMD_REG, AWIN_CAN_CMD_REL_RX_BUF);
 		return;
 	}
 		
 	m = m_gethdr(M_NOWAIT, MT_HEADER);
 	if (m == NULL) {
 		ifp->if_ierrors++;
+		awin_can_write(sc, AWIN_CAN_CMD_REG, AWIN_CAN_CMD_REL_RX_BUF);
 		return;
 	}
 	cf = mtod(m, struct can_frame *);
