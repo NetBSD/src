@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.40 2017/07/02 05:59:27 nat Exp $ */
+/* $NetBSD: pad.c,v 1.41 2017/07/02 13:32:50 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.40 2017/07/02 05:59:27 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.41 2017/07/02 13:32:50 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.40 2017/07/02 05:59:27 nat Exp $");
 #include <dev/pad/padvar.h>
 
 #define MAXDEVS		128
+#define PADCLONER	254
 #define PADUNIT(x)	minor(x)
 
 #define PADFREQ		44100
@@ -110,8 +111,11 @@ static stream_filter_t *pad_swvol_filter_be(struct audio_softc *,
     const audio_params_t *, const audio_params_t *);
 static void	pad_swvol_dtor(stream_filter_t *);
 
-static int pad_close(struct file *);
-static int pad_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);
+static int pad_close(struct pad_softc *);
+static int pad_read(struct pad_softc *, off_t *, struct uio *, kauth_cred_t, int);
+
+static int fops_pad_close(struct file *);
+static int fops_pad_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);
 static int pad_write(struct file *, off_t *, struct uio *, kauth_cred_t, int);
 static int pad_ioctl(struct file *, u_long, void *);
 static int pad_kqfilter(struct file *, struct knote *);
@@ -149,11 +153,13 @@ static int	pad_add_block(pad_softc_t *, uint8_t *, int);
 static int	pad_get_block(pad_softc_t *, pad_block_t *, int);
 
 dev_type_open(pad_open);
+dev_type_close(cdev_pad_close);
+dev_type_read(cdev_pad_read);
 
 const struct cdevsw pad_cdevsw = {
 	.d_open = pad_open,
-	.d_close = noclose,
-	.d_read = noread,
+	.d_close = cdev_pad_close,
+	.d_read = cdev_pad_read,
 	.d_write = nowrite,
 	.d_ioctl = noioctl,
 	.d_stop = nostop,
@@ -166,13 +172,13 @@ const struct cdevsw pad_cdevsw = {
 };
 
 const struct fileops pad_fileops = {
-	.fo_read = pad_read,
+	.fo_read = fops_pad_read,
 	.fo_write = pad_write,
 	.fo_ioctl = pad_ioctl,
 	.fo_fcntl = fnullop_fcntl,
 	.fo_stat = pad_stat,
 	.fo_poll = pad_poll,
-	.fo_close = pad_close,
+	.fo_close = fops_pad_close,
 	.fo_mmap = pad_mmap,
 	.fo_kqfilter = pad_kqfilter,
 	.fo_restart = fnullop_restart
@@ -308,7 +314,7 @@ pad_detach(device_t self, int flags)
 
 	auconv_delete_encodings(sc->sc_encodings);
 
-	return rc;
+	return 0;
 }
 
 int
@@ -320,12 +326,18 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	cfdata_t cf;
 	int error, fd, i;
 
-	for (i = 0; i < MAXDEVS; i++) {
-		if (device_lookup(&pad_cd, i) == NULL)
-			break;
+	if (PADUNIT(dev) == PADCLONER) {
+		for (i = 0; i < MAXDEVS; i++) {
+			if (device_lookup(&pad_cd, i) == NULL)
+				break;
+		}
+		if (i == MAXDEVS)
+			return ENXIO;
+	} else {
+		if (PADUNIT(dev) >= MAXDEVS)
+			return ENXIO;
+		i = PADUNIT(dev);
 	}
-	if (i == MAXDEVS)
-		return ENXIO;
 
 	cf = kmem_alloc(sizeof(struct cfdata), KM_SLEEP);
 	cf->cf_name = pad_cd.cd_name;
@@ -333,18 +345,27 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	cf->cf_unit = i;
 	cf->cf_fstate = FSTATE_STAR;
 
-	paddev = config_attach_pseudo(cf);
+	if (device_lookup(&pad_cd, minor(dev)) == NULL)
+		paddev = config_attach_pseudo(cf);
+	else
+		paddev = device_lookup(&pad_cd, minor(dev));
+
 	sc = device_private(paddev);
-	sc->sc_dev = paddev;
-	sc->sc_dying = false;
+	if (sc == NULL)
+		return ENXIO;
 
 	if (sc->sc_open == 1)
 		return EBUSY;
 
-	error = fd_allocfile(&fp, &fd);
-	if (error) {
-		config_detach(sc->sc_dev, 0);
-		return error;
+	sc->sc_dev = paddev;
+	sc->sc_dying = false;
+
+	if (PADUNIT(dev) == PADCLONER) {
+		error = fd_allocfile(&fp, &fd);
+		if (error) {
+			config_detach(sc->sc_dev, 0);
+			return error;
+		}
 	}
 
 	if (auconv_create_encodings(pad_formats, PAD_NFORMATS,
@@ -366,28 +387,47 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
 		aprint_error_dev(sc->sc_dev, "couldn't establish power handler\n");
 
-	error = fd_clone(fp, fd, flags, &pad_fileops, sc);
-	KASSERT(error == EMOVEFD);
-	
+	if (PADUNIT(dev) == PADCLONER) {
+		error = fd_clone(fp, fd, flags, &pad_fileops, sc);
+		KASSERT(error == EMOVEFD);
+	}	
 	sc->sc_open = 1;
 
 	return error;
 }
 
 static int
-pad_close(struct file *fp)
+pad_close(struct pad_softc *sc)
 {
-	pad_softc_t *sc;
-
-	sc = fp->f_pad;
 	if (sc == NULL)
 		return ENXIO;
 
-	config_detach(sc->sc_dev, DETACH_FORCE);
+	return config_detach(sc->sc_dev, DETACH_FORCE);
+}
 
-	fp->f_pad = NULL;
+static int
+fops_pad_close(struct file *fp)
+{
+	pad_softc_t *sc;
+	int error;
 
-	return 0;
+	sc = fp->f_pad;
+
+	error = pad_close(sc);
+
+	if (error == 0)
+		fp->f_pad = NULL;
+
+	return error;
+}
+
+int
+cdev_pad_close(dev_t dev, int flags, int ifmt, struct lwp *l)
+{
+	pad_softc_t *sc;
+	sc = device_private(device_lookup(&pad_cd, PADUNIT(dev)));
+
+	return pad_close(sc);
 }
 
 static int
@@ -448,21 +488,40 @@ pad_mmap(struct file *fp, off_t *offp, size_t len, int prot, int *flagsp,
 #define BYTESTOSLEEP	    (int64_t)(PAD_BLKSIZE)
 #define TIMENEXTREAD	    (int64_t)(BYTESTOSLEEP * 1000000 / PAD_BYTES_PER_SEC)
 
+int
+cdev_pad_read(dev_t dev, struct uio *uio, int ioflag)
+{
+	pad_softc_t *sc;
+	sc = device_private(device_lookup(&pad_cd, PADUNIT(dev)));
+	if (sc == NULL)
+		return ENXIO;
+
+	return pad_read(sc, NULL, uio, NULL, ioflag);
+}
+
 static int
-pad_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
+fops_pad_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	  int ioflag)
 {
-	struct timeval now;
-	uint64_t nowusec, lastusec;
 	pad_softc_t *sc;
-	pad_block_t pb;
-	void (*intr)(void *);
-	void *intrarg;
-	int err, wait_ticks;
 
 	sc = fp->f_pad;
 	if (sc == NULL)
 		return ENXIO;
+
+	return pad_read(sc, offp, uio, cred, ioflag);
+}
+
+static int
+pad_read(struct pad_softc *sc, off_t *offp, struct uio *uio, kauth_cred_t cred,
+	  int ioflag)
+{
+	struct timeval now;
+	uint64_t nowusec, lastusec;
+	pad_block_t pb;
+	void (*intr)(void *);
+	void *intrarg;
+	int err, wait_ticks;
 
 	err = 0;
 
