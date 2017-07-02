@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.22 2017/06/30 09:11:22 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.23 2017/07/02 15:27:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -85,7 +85,7 @@ struct fdtbus_pinctrl_pin {
 };
 
 struct fdtbus_pinctrl_controller_func {
-	int (*set_config)(void *);
+	int (*set_config)(device_t, const void *, size_t);
 };
 
 struct fdtbus_regulator_controller;
@@ -211,7 +211,7 @@ int		fdtbus_register_i2c_controller(device_t, int,
 		    const struct fdtbus_i2c_controller_func *);
 int		fdtbus_register_gpio_controller(device_t, int,
 		    const struct fdtbus_gpio_controller_func *);
-int		fdtbus_register_pinctrl_config(void *, int,
+int		fdtbus_register_pinctrl_config(device_t, int,
 		    const struct fdtbus_pinctrl_controller_func *);
 int		fdtbus_register_regulator_controller(device_t, int,
 		    const struct fdtbus_regulator_controller_func *);
@@ -241,6 +241,7 @@ int		fdtbus_gpio_read(struct fdtbus_gpio_pin *);
 void		fdtbus_gpio_write(struct fdtbus_gpio_pin *, int);
 int		fdtbus_gpio_read_raw(struct fdtbus_gpio_pin *);
 void		fdtbus_gpio_write_raw(struct fdtbus_gpio_pin *, int);
+void		fdtbus_pinctrl_configure(void);
 int		fdtbus_pinctrl_set_config_index(int, u_int);
 int		fdtbus_pinctrl_set_config(int, const char *);
 struct fdtbus_regulator *fdtbus_regulator_acquire(int, const char *);
@@ -294,6 +295,7 @@ tcflag_t	fdtbus_get_stdout_flags(void);
 
 bool		fdtbus_status_okay(int);
 
+const void *	fdtbus_get_prop(int, const char *, int *);
 const char *	fdtbus_get_string(int, const char *);
 
 int		fdtbus_print(void *, const char *);
