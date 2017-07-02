@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.3 2017/07/02 18:19:26 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.4 2017/07/02 21:13:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.3 2017/07/02 18:19:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.4 2017/07/02 21:13:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,17 +44,17 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.3 2017/07/02 18:19:26 jmcneill Exp 
 
 #include <arm/sunxi/sunxi_gpio.h>
 
-#define	SUNXI_GPIO_PORT(port)		(0x20 * (port))
-#define SUNXI_GPIO_CFG(port, pin)	(SUNXI_GPIO_PORT(port) + (0x4 * ((pin) / 8)))
+#define	SUNXI_GPIO_PORT(port)		(0x24 * (port))
+#define SUNXI_GPIO_CFG(port, pin)	(SUNXI_GPIO_PORT(port) + 0x00 + (0x4 * ((pin) / 8)))
 #define  SUNXI_GPIO_CFG_PINMASK(pin)	(0x7 << (((pin) % 8) * 4))
 #define	SUNXI_GPIO_DATA(port)		(SUNXI_GPIO_PORT(port) + 0x10)
 #define	SUNXI_GPIO_DRV(port, pin)	(SUNXI_GPIO_PORT(port) + 0x14 + (0x4 * ((pin) / 16)))
-#define  SUNXI_GPIO_DRV_PINMASK(pin)	(0x3 << (((pin) % 16) * 4))
+#define  SUNXI_GPIO_DRV_PINMASK(pin)	(0x3 << (((pin) % 16) * 2))
 #define	SUNXI_GPIO_PULL(port, pin)	(SUNXI_GPIO_PORT(port) + 0x1c + (0x4 * ((pin) / 16)))
 #define	 SUNXI_GPIO_PULL_DISABLE	0
 #define	 SUNXI_GPIO_PULL_UP		1
 #define	 SUNXI_GPIO_PULL_DOWN		2
-#define  SUNXI_GPIO_PULL_PINMASK(pin)	(0x3 << (((pin) % 16) * 4))
+#define  SUNXI_GPIO_PULL_PINMASK(pin)	(0x3 << (((pin) % 16) * 2))
 
 static const struct of_compat_data compat_data[] = {
 #ifdef SOC_SUN6I_A31
@@ -140,6 +140,10 @@ sunxi_gpio_setfunc(struct sunxi_gpio_softc *sc,
 			cfg = GPIO_READ(sc, cfg_reg);
 			cfg &= ~cfg_mask;
 			cfg |= __SHIFTIN(n, cfg_mask);
+#ifdef SUNXI_GPIO_DEBUG
+			device_printf(sc->sc_dev, "P%c%02d cfg %08x -> %08x\n",
+			    pin_def->port + 'A', pin_def->pin, GPIO_READ(sc, cfg_reg), cfg);
+#endif
 			GPIO_WRITE(sc, cfg_reg, cfg);
 			return 0;
 		}
@@ -169,6 +173,10 @@ sunxi_gpio_setpull(struct sunxi_gpio_softc *sc,
 		pull |= __SHIFTIN(SUNXI_GPIO_PULL_DOWN, pull_mask);
 	else
 		pull |= __SHIFTIN(SUNXI_GPIO_PULL_DISABLE, pull_mask);
+#ifdef SUNXI_GPIO_DEBUG
+	device_printf(sc->sc_dev, "P%c%02d pull %08x -> %08x\n",
+	    pin_def->port + 'A', pin_def->pin, GPIO_READ(sc, pull_reg), pull);
+#endif
 	GPIO_WRITE(sc, pull_reg, pull);
 
 	return 0;
@@ -189,6 +197,10 @@ sunxi_gpio_setdrv(struct sunxi_gpio_softc *sc,
 	drv = GPIO_READ(sc, drv_reg);
 	drv &= ~drv_mask;
 	drv |= __SHIFTIN((drive_strength / 10) - 1, drv_mask);
+#ifdef SUNXI_GPIO_DEBUG
+	device_printf(sc->sc_dev, "P%c%02d drv %08x -> %08x\n",
+	    pin_def->port + 'A', pin_def->pin, GPIO_READ(sc, drv_reg), drv);
+#endif
 	GPIO_WRITE(sc, drv_reg, drv);
 
 	return 0;
@@ -284,9 +296,6 @@ sunxi_gpio_write(device_t dev, void *priv, int val, bool raw)
 	struct sunxi_gpio_pin *pin = priv;
 	const struct sunxi_gpio_pins *pin_def = pin->pin_def;
 	uint32_t data;
-#ifdef SUNXI_GPIO_DEBUG
-	uint32_t old_data;
-#endif
 
 	KASSERT(sc == pin->pin_sc);
 
@@ -298,17 +307,13 @@ sunxi_gpio_write(device_t dev, void *priv, int val, bool raw)
 
 	/* XXX locking */
 	data = GPIO_READ(sc, data_reg);
-#ifdef SUNXI_GPIO_DEBUG
-	old_data = data;
-#endif
 	data &= ~data_mask;
 	data |= __SHIFTIN(val, data_mask);
-	GPIO_WRITE(sc, data_reg, data_mask);
-
 #ifdef SUNXI_GPIO_DEBUG
 	device_printf(dev, "P%c%02d wr %08x -> %08x\n",
-	    pin_def->port + 'A', pin_def->pin, old_data, data);
+	    pin_def->port + 'A', pin_def->pin, GPIO_READ(sc, data_reg), data);
 #endif
+	GPIO_WRITE(sc, data_reg, data_mask);
 }
 
 static struct fdtbus_gpio_controller_func sunxi_gpio_funcs = {
