@@ -1,0 +1,10 @@
+#	$NetBSD: SUNXI_INSTALL,v 1.1 2017/07/02 22:39:05 jmcneill Exp $
+#
+#       SUNXI_INSTALL -- Allwinner SUNXI kernel with
+#	installation-sized ramdisk
+#
+
+include "arch/evbarm/conf/SUNXI"
+include "arch/evbarm/conf/INSTALL"
+
+options 	BOOTHOWTO=RB_SINGLE
