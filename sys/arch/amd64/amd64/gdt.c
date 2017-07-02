@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.39 2017/07/02 09:02:51 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.40 2017/07/02 11:21:13 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.39 2017/07/02 09:02:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.40 2017/07/02 11:21:13 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -58,8 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.39 2017/07/02 09:02:51 maxv Exp $");
 #endif
 
 #define NSLOTS(sz)	\
-	((sz - DYNSEL_START) / sizeof(struct sys_segment_descriptor))
-
+	(((sz) - DYNSEL_START) / sizeof(struct sys_segment_descriptor))
 #define NDYNSLOTS	NSLOTS(MAXGDTSIZ)
 
 typedef struct {
@@ -67,7 +66,7 @@ typedef struct {
 	size_t nslots;
 } gdt_bitmap_t;
 
-size_t gdt_size;			/* size of GDT in bytes */		
+size_t gdt_size;			/* size of GDT in bytes */	
 static gdt_bitmap_t gdt_bitmap;		/* bitmap of busy slots */
 
 #if defined(USER_LDT) || !defined(XEN)

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.63 2017/07/02 11:16:50 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.64 2017/07/02 11:21:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.63 2017/07/02 11:16:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.64 2017/07/02 11:21:13 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -46,8 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.63 2017/07/02 11:16:50 maxv Exp $");
 #include <machine/gdt.h>
 
 #define NSLOTS(sz)	\
-	((sz - DYNSEL_START) / sizeof(union descriptor))
-
+	(((sz) - DYNSEL_START) / sizeof(union descriptor))
 #define NDYNSLOTS	NSLOTS(MAXGDTSIZ)
 
 typedef struct {
