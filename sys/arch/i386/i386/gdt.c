@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.61 2017/06/17 09:32:53 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.62 2017/07/02 09:02:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.61 2017/06/17 09:32:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.62 2017/07/02 09:02:06 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -110,10 +110,10 @@ gdt_init(void)
 	vaddr_t va;
 	struct cpu_info *ci = &cpu_info_primary;
 
-	max_len = MAXGDTSIZ * sizeof(gdtstore[0]);
-	min_len = MINGDTSIZ * sizeof(gdtstore[0]);
+	max_len = MAXGDTSIZ;
+	min_len = MINGDTSIZ;
 
-	gdt_size = MINGDTSIZ;
+	gdt_size = (MINGDTSIZ / sizeof(gdtstore[0]));
 	gdt_count = NGDT;
 	gdt_next = NGDT;
 	gdt_free = GNULL_SEL;
@@ -146,8 +146,8 @@ gdt_init(void)
 void
 gdt_alloc_cpu(struct cpu_info *ci)
 {
-	int max_len = MAXGDTSIZ * sizeof(gdtstore[0]);
-	int min_len = MINGDTSIZ * sizeof(gdtstore[0]);
+	int max_len = MAXGDTSIZ;
+	int min_len = MINGDTSIZ;
 	struct vm_page *pg;
 	vaddr_t va;
 
@@ -180,7 +180,7 @@ gdt_init_cpu(struct cpu_info *ci)
 	struct region_descriptor region;
 	size_t max_len;
 
-	max_len = MAXGDTSIZ * sizeof(gdtstore[0]);
+	max_len = MAXGDTSIZ;
 	setregion(&region, ci->ci_gdt, max_len - 1);
 	lgdt(&region);
 #else
@@ -273,7 +273,7 @@ gdt_get_slot(void)
 		if (gdt_next != gdt_count + offset)
 			panic("gdt_get_slot botch 1");
 		if (gdt_next - offset >= gdt_size) {
-			if (gdt_size >= MAXGDTSIZ)
+			if (gdt_size >= (MAXGDTSIZ / sizeof(gdtstore[0])))
 				panic("gdt_get_slot botch 2");
 			gdt_grow();
 		}

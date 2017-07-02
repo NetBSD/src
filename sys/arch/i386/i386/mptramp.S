@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.29 2016/05/14 08:34:00 maxv Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.30 2017/07/02 09:02:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000, 2016 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.29 2016/05/14 08:34:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.30 2017/07/02 09:02:06 maxv Exp $");
 
 #include "opt_mpbios.h"		/* for MPDEBUG */
 
@@ -223,7 +223,7 @@ no_NOX:
 
 	/* %ecx points at our cpu_info structure. */
 
-	movw	$((MAXGDTSIZ*8) - 1), 6(%esp)	/* prepare segment descriptor */
+	movw	$(MAXGDTSIZ-1), 6(%esp)	/* prepare segment descriptor */
 	movl	CPU_INFO_GDT(%ecx), %eax	/* for our real gdt */
 	movl	%eax, 8(%esp)
 	lgdt	6(%esp)

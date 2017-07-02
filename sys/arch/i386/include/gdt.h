@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.15 2017/02/08 10:08:26 maxv Exp $	*/
+/*	$NetBSD: gdt.h,v 1.16 2017/07/02 09:02:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,5 +44,5 @@ void ldt_free(int);
 
 #endif /* LOCORE */
 
-#define	MINGDTSIZ	512
-#define	MAXGDTSIZ	8192
+#define	MINGDTSIZ	PAGE_SIZE
+#define	MAXGDTSIZ	65536
