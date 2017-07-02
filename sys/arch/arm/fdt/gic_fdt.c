@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.6 2017/06/29 20:54:28 jmcneill Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.7 2017/07/02 21:59:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.6 2017/06/29 20:54:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.7 2017/07/02 21:59:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,6 +78,7 @@ struct gic_fdt_irq {
 	int			intr_refcnt;
 	int			intr_ipl;
 	int			intr_level;
+	int			intr_mpsafe;
 	TAILQ_HEAD(, gic_fdt_irqhandler) intr_handlers;
 };
 
@@ -178,6 +179,8 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	const u_int trig = be32toh(specifier[2]) & 0xf;
 	const u_int level = (trig & 0x3) ? IST_EDGE : IST_LEVEL;
 
+	const u_int mpsafe = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
+
 	firq = sc->sc_irq[irq];
 	if (firq == NULL) {
 		firq = kmem_alloc(sizeof(*firq), KM_SLEEP);
@@ -185,8 +188,9 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		firq->intr_refcnt = 0;
 		firq->intr_ipl = ipl;
 		firq->intr_level = level;
+		firq->intr_mpsafe = mpsafe;
 		TAILQ_INIT(&firq->intr_handlers);
-		firq->intr_ih = intr_establish(irq, ipl, level | IST_MPSAFE,
+		firq->intr_ih = intr_establish(irq, ipl, level | mpsafe,
 		    gic_fdt_intr, firq);
 		if (firq->intr_ih == NULL) {
 			kmem_free(firq, sizeof(*firq));
@@ -201,6 +205,10 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	}
 	if (firq->intr_level != level) {
 		device_printf(dev, "cannot share edge and level interrupts\n");
+		return NULL;
+	}
+	if (firq->intr_mpsafe != mpsafe) {
+		device_printf(dev, "cannot share between mpsafe/non-mpsafe\n");
 		return NULL;
 	}
 
@@ -241,13 +249,8 @@ gic_fdt_intr(void *priv)
 	struct gic_fdt_irqhandler *firqh;
 	int handled = 0;
 
-	TAILQ_FOREACH(firqh, &firq->intr_handlers, ih_next) {
-		if (!firqh->ih_mpsafe)
-			KERNEL_LOCK(1, curlwp);
+	TAILQ_FOREACH(firqh, &firq->intr_handlers, ih_next)
 		handled += firqh->ih_fn(firqh->ih_arg);
-		if (!firqh->ih_mpsafe)
-			KERNEL_UNLOCK_ONE(curlwp);
-	}
 
 	return handled;
 }
