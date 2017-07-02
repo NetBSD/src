@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.148 2017/07/02 16:41:32 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.149 2017/07/02 17:13:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.148 2017/07/02 16:41:32 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.149 2017/07/02 17:13:07 joerg Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1385,6 +1385,9 @@ pthread__getenv(const char *name)
 {
 	extern char **environ;
 	size_t l_name, offset;
+
+	if (issetugid())
+		return (NULL);
 
 	l_name = strlen(name);
 	for (offset = 0; environ[offset] != NULL; offset++) {
