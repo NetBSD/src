@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.59 2017/02/08 09:39:32 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.60 2017/07/02 11:16:50 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -104,11 +104,19 @@
 #endif /* XEN */
 #define ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
 #define SEL_LDT		4		/* local descriptor table */
+
+/* Dynamically allocated TSSs and LDTs start (byte offset) */
+#define DYNSEL_START	(NGDT << 3)
+
 #define IDXSEL(s)	(((s) >> 3) & 0x1fff)		/* index of selector */
 #define IDXSELN(s)	(((s) >> 3))			/* index of selector */
+#define IDXDYNSEL(s)	((((s) & ~SEL_RPL) - DYNSEL_START) >> 3)
+
 #define GSEL(s,r)	(((s) << 3) | r)		/* a global selector */
+#define GSYSSEL(s,r)	GSEL(s,r)			/* compat with amd64 */
+#define GDYNSEL(s,r)	((((s) << 3) + DYNSEL_START) | r | SEL_KPL)
+
 #define LSEL(s,r)	(((s) << 3) | r | SEL_LDT)	/* a local selector */
-#define GSYSSEL(s,r)	GSEL(s,r)	/* compat with amd64 */
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
