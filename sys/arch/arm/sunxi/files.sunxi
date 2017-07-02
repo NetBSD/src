@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.8 2017/07/02 13:36:46 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.9 2017/07/02 18:06:45 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -69,6 +69,11 @@ file	dev/fdt/ohci_fdt.c			ohci_fdt
 device	sunxitwi: i2cbus, i2cexec, mvi2c
 attach	sunxitwi at fdt with sunxi_twi
 file	arch/arm/sunxi/sunxi_twi.c		sunxi_twi
+
+# P2WI/RSB
+device	sunxirsb: i2cbus, i2cexec
+attach	sunxirsb at fdt with sunxi_rsb
+file	arch/arm/sunxi/sunxi_rsb.c		sunxi_rsb
 
 # RTC
 device	sunxirtc
