@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_usbphy.c,v 1.2 2017/06/29 20:54:03 jmcneill Exp $ */
+/* $NetBSD: sunxi_usbphy.c,v 1.3 2017/07/02 00:14:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.2 2017/06/29 20:54:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.3 2017/07/02 00:14:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,9 +53,15 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.2 2017/06/29 20:54:03 jmcneill Ex
 static int sunxi_usbphy_match(device_t, cfdata_t, void *);
 static void sunxi_usbphy_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = {
-	"allwinner,sun8i-h3-usb-phy",
-	NULL
+enum sunxi_usbphy_type {
+	USBPHY_A31,
+	USBPHY_H3,
+};
+
+static const struct of_compat_data compat_data[] = {
+	{ "allwinner,sun6i-a31-usb-phy",	USBPHY_A31 },
+	{ "allwinner,sun8i-h3-usb-phy",		USBPHY_H3 },
+	{ NULL }
 };
 
 #define	SUNXI_MAXUSBPHY		4
@@ -70,6 +76,7 @@ struct sunxi_usbphy_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh_phy_ctrl;
+	enum sunxi_usbphy_type	sc_type;
 
 	struct sunxi_usbphy	sc_phys[SUNXI_MAXUSBPHY];
 	u_int			sc_nphys;
@@ -133,10 +140,12 @@ sunxi_usbphy_enable(device_t dev, void *priv, bool enable)
 		USBPHY_WRITE(sc, phy->phy_index, HCI_ICR, val);
 	}
 
-	/* H3-specific */
-	val = USBPHY_READ(sc, phy->phy_index, PMU_UNK_H3);
-	val &= ~PMU_UNK_H3_CLR;
-	USBPHY_WRITE(sc, phy->phy_index, PMU_UNK_H3, val);
+	if (sc->sc_type == USBPHY_H3) {
+		/* H3-specific */
+		val = USBPHY_READ(sc, phy->phy_index, PMU_UNK_H3);
+		val &= ~PMU_UNK_H3_CLR;
+		USBPHY_WRITE(sc, phy->phy_index, PMU_UNK_H3, val);
+	}
 
 	if (phy->phy_reg == NULL)
 		return 0;
@@ -162,7 +171,7 @@ sunxi_usbphy_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -181,6 +190,7 @@ sunxi_usbphy_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
+	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get phy ctrl registers\n");

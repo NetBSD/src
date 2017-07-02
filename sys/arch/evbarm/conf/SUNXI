@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.7 2017/07/01 16:25:15 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.8 2017/07/02 00:14:09 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -8,6 +8,13 @@ include	"arch/evbarm/conf/std.sunxi"
 include	"arch/evbarm/conf/GENERIC.common"
 
 makeoptions	DTS="
+	sun6i-a31-app4-evb1.dts
+	sun6i-a31-colombus.dts
+	sun6i-a31-hummingbird.dts
+	sun6i-a31-i7.dts
+	sun6i-a31-m9.dts
+	sun6i-a31-mele-a1000g-quad.dts
+
 	sun8i-h3-bananapi-m2-plus.dts
 	sun8i-h3-beelink-x2.dts
 	sun8i-h3-nanopi-m1.dts
@@ -21,6 +28,7 @@ makeoptions	DTS="
 "
 
 options 	CPU_CORTEXA7
+options 	SOC_SUN6I_A31
 options 	SOC_SUN8I_H3
 options 	MULTIPROCESSOR
 
@@ -52,9 +60,10 @@ cpu*		at cpus?
 psci*		at fdt?
 
 # Clock and reset controllers
+sun6ia31ccu*	at fdt? pass 4		# A31 CCU
 sun8ih3ccu*	at fdt? pass 4		# H3 CCU
 
-fclock*		at fdt? pass 4
+fclock*		at fdt? pass 3
 fregulator*	at fdt? pass 4
 gpiokeys*	at fdt?
 

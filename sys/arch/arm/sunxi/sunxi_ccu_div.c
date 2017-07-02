@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_nkmp.c,v 1.3 2017/07/02 00:14:09 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu_div.c,v 1.1 2017/07/02 00:14:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_nkmp.c,v 1.3 2017/07/02 00:14:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_div.c,v 1.1 2017/07/02 00:14:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,38 +36,16 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_nkmp.c,v 1.3 2017/07/02 00:14:09 jmcneill 
 
 #include <arm/sunxi/sunxi_ccu.h>
 
-int
-sunxi_ccu_nkmp_enable(struct sunxi_ccu_softc *sc, struct sunxi_ccu_clk *clk,
-    int enable)
-{
-	struct sunxi_ccu_nkmp *nkmp = &clk->u.nkmp;
-	uint32_t val;
-
-	KASSERT(clk->type == SUNXI_CCU_NKMP);
-
-	if (!nkmp->enable)
-		return enable ? 0 : EINVAL;
-
-	val = CCU_READ(sc, nkmp->reg);
-	if (enable)
-		val |= nkmp->enable;
-	else
-		val &= ~nkmp->enable;
-	CCU_WRITE(sc, nkmp->reg, val);
-
-	return 0;
-}
-
 u_int
-sunxi_ccu_nkmp_get_rate(struct sunxi_ccu_softc *sc,
+sunxi_ccu_div_get_rate(struct sunxi_ccu_softc *sc,
     struct sunxi_ccu_clk *clk)
 {
-	struct sunxi_ccu_nkmp *nkmp = &clk->u.nkmp;
+	struct sunxi_ccu_div *div = &clk->u.div;
 	struct clk *clkp, *clkp_parent;
-	u_int rate, n, k, m, p;
+	u_int rate, ratio;
 	uint32_t val;
 
-	KASSERT(clk->type == SUNXI_CCU_NKMP);
+	KASSERT(clk->type == SUNXI_CCU_DIV);
 
 	clkp = &clk->base;
 	clkp_parent = clk_get_parent(clkp);
@@ -78,46 +56,69 @@ sunxi_ccu_nkmp_get_rate(struct sunxi_ccu_softc *sc,
 	if (rate == 0)
 		return 0;
 
-	val = CCU_READ(sc, nkmp->reg);
-	n = __SHIFTOUT(val, nkmp->n);
-	k = __SHIFTOUT(val, nkmp->k);
-	if (nkmp->m)
-		m = __SHIFTOUT(val, nkmp->m);
+	val = CCU_READ(sc, div->reg);
+	ratio = __SHIFTOUT(val, div->div);
+	if ((div->flags & SUNXI_CCU_DIV_ZERO_IS_ONE) != 0 && ratio == 0)
+		ratio = 1;
+	if (div->flags & SUNXI_CCU_DIV_POWER_OF_TWO)
+		ratio = 1 << ratio;
 	else
-		m = 0;
-	if (nkmp->p)
-		p = __SHIFTOUT(val, nkmp->p);
-	else
-		p = 0;
+		ratio++;
 
-	if (nkmp->enable && !(val & nkmp->enable))
-		return 0;
-
-	n++;
-	k++;
-	m++;
-	p++;
-
-	if (nkmp->flags & SUNXI_CCU_NKMP_DIVIDE_BY_TWO)
-		m *= 2;
-
-	return (u_int)((uint64_t)rate * n * k) / (m * p);
+	return rate / ratio;
 }
 
 int
-sunxi_ccu_nkmp_set_rate(struct sunxi_ccu_softc *sc,
-    struct sunxi_ccu_clk *clk, u_int rate)
+sunxi_ccu_div_set_rate(struct sunxi_ccu_softc *sc,
+    struct sunxi_ccu_clk *clk, u_int new_rate)
 {
-	return EIO;
+	return EINVAL;
+}
+
+int
+sunxi_ccu_div_set_parent(struct sunxi_ccu_softc *sc,
+    struct sunxi_ccu_clk *clk, const char *name)
+{
+	struct sunxi_ccu_div *div = &clk->u.div;
+	uint32_t val;
+	u_int index;
+
+	KASSERT(clk->type == SUNXI_CCU_DIV);
+
+	if (div->sel == 0)
+		return ENODEV;
+
+	for (index = 0; index < div->nparents; index++) {
+		if (div->parents[index] != NULL &&
+		    strcmp(div->parents[index], name) == 0)
+			break;
+	}
+	if (index == div->nparents)
+		return EINVAL;
+
+	val = CCU_READ(sc, div->reg);
+	val &= ~div->sel;
+	val |= __SHIFTIN(index, div->sel);
+	CCU_WRITE(sc, div->reg, val);
+
+	return 0;
 }
 
 const char *
-sunxi_ccu_nkmp_get_parent(struct sunxi_ccu_softc *sc,
+sunxi_ccu_div_get_parent(struct sunxi_ccu_softc *sc,
     struct sunxi_ccu_clk *clk)
 {
-	struct sunxi_ccu_nkmp *nkmp = &clk->u.nkmp;
+	struct sunxi_ccu_div *div = &clk->u.div;
+	u_int index;
+	uint32_t val;
 
-	KASSERT(clk->type == SUNXI_CCU_NKMP);
+	KASSERT(clk->type == SUNXI_CCU_DIV);
 
-	return nkmp->parent;
+	if (div->sel == 0)
+		return div->parents[0];
+
+	val = CCU_READ(sc, div->reg);
+	index = __SHIFTOUT(val, div->sel);
+
+	return div->parents[index];
 }
