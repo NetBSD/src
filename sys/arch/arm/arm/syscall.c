@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.61 2017/07/02 16:06:42 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.62 2017/07/02 16:16:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.61 2017/07/02 16:06:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.62 2017/07/02 16:16:44 skrll Exp $");
 
 #include <sys/cpu.h>
 #include <sys/device.h>
@@ -155,7 +155,7 @@ swi_handler(trapframe_t *tf)
 #endif
 	}
 
-	lwp_settrapframe(l, tf);
+	KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf, lwp_trapframe(l));
 
 #ifdef CPU_ARM7
 	/*
