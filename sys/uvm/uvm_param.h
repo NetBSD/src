@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.36 2017/06/23 21:28:39 joerg Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.37 2017/07/02 16:41:33 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -178,6 +178,8 @@ extern const int *const uvmexp_pageshift;
 #define	VM_MINADDRESS	14
 #define	VM_MAXADDRESS	15
 #define	VM_PROC		16		/* process information */
+#define	VM_GUARD_SIZE	17		/* guard size for main thread */
+#define	VM_THREAD_GUARD_SIZE	18	/* default guard size for new threads */
 
 #define	VM_MAXID	17		/* number of valid vm ids */
 
@@ -201,6 +203,8 @@ extern const int *const uvmexp_pageshift;
 	{ "minaddress", CTLTYPE_LONG }, \
 	{ "maxaddress", CTLTYPE_LONG }, \
 	{ "proc", CTLTYPE_STRUCT }, \
+	{ "guard_size", CTLTYPE_INT }, \
+	{ "thread_guard_size", CTLTYPE_INT }, \
 }
 
 #ifndef ASSEMBLER
@@ -224,7 +228,8 @@ extern const int *const uvmexp_pageshift;
     round_page((vaddr_t)(da) + (vsize_t)maxdmap)
 #endif
 
-extern uint32_t user_stack_guard_size;
+extern unsigned int user_stack_guard_size;
+extern unsigned int user_thread_stack_guard_size;
 #ifndef VM_DEFAULT_ADDRESS_TOPDOWN
 #define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
     trunc_page(VM_MAXUSER_ADDRESS - MAXSSIZ - (sz) - user_stack_guard_size)
