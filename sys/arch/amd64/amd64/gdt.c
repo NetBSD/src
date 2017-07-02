@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.38 2017/03/25 15:05:16 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.39 2017/07/02 09:02:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.38 2017/03/25 15:05:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.39 2017/07/02 09:02:51 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -57,8 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.38 2017/03/25 15:05:16 maxv Exp $");
 #include <xen/hypervisor.h>
 #endif
 
-#define NDYNSLOTS \
-	((MAXGDTSIZ - DYNSEL_START) / sizeof(struct sys_segment_descriptor))
+#define NSLOTS(sz)	\
+	((sz - DYNSEL_START) / sizeof(struct sys_segment_descriptor))
+
+#define NDYNSLOTS	NSLOTS(MAXGDTSIZ)
 
 typedef struct {
 	bool busy[NDYNSLOTS];
@@ -131,8 +133,7 @@ gdt_init(void)
 	/* Initialize the global values */
 	gdt_size = MINGDTSIZ;
 	memset(&gdt_bitmap.busy, 0, sizeof(gdt_bitmap.busy));
-	gdt_bitmap.nslots =
-	    (gdt_size - DYNSEL_START) / sizeof(struct sys_segment_descriptor);
+	gdt_bitmap.nslots = NSLOTS(gdt_size);
 
 	old_gdt = gdtstore;
 
@@ -234,8 +235,7 @@ gdt_grow(void)
 	gdt_size *= 2;
 	if (gdt_size > MAXGDTSIZ)
 		gdt_size = MAXGDTSIZ;
-	gdt_bitmap.nslots =
-	    (gdt_size - DYNSEL_START) / sizeof(struct sys_segment_descriptor);
+	gdt_bitmap.nslots = NSLOTS(gdt_size);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		for (va = (vaddr_t)(ci->ci_gdt) + old_size;
