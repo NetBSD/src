@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.112 2016/07/16 01:49:42 mrg Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.113 2017/07/02 16:06:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.112 2016/07/16 01:49:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.113 2017/07/02 16:06:42 skrll Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -251,7 +251,7 @@ bootsync(void)
 /*
  * void cpu_startup(void)
  *
- * Machine dependent startup code. 
+ * Machine dependent startup code.
  *
  */
 void
