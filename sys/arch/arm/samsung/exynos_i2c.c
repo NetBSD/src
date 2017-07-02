@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.12 2017/06/11 00:54:26 jmcneill Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.13 2017/07/02 18:27:45 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_arm_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.12 2017/06/11 00:54:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.13 2017/07/02 18:27:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -177,8 +177,6 @@ exynos_i2c_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 	
-	fdtbus_pinctrl_set_config_index(phandle, 0);
-
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_acquire_bus = exynos_i2c_acquire_bus;
 	sc->sc_ic.ic_release_bus = exynos_i2c_release_bus;
