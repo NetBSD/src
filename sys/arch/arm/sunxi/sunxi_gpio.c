@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.1 2017/07/02 13:36:46 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.2 2017/07/02 15:28:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.1 2017/07/02 13:36:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.2 2017/07/02 15:28:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,11 +49,17 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.1 2017/07/02 13:36:46 jmcneill Exp 
 #define  SUNXI_GPIO_CFG_PINMASK(pin)	(0x7 << (((pin) % 8) * 4))
 #define	SUNXI_GPIO_DATA(port)		(SUNXI_GPIO_PORT(port) + 0x10)
 #define	SUNXI_GPIO_DRV(port, pin)	(SUNXI_GPIO_PORT(port) + 0x14 + (0x4 * ((pin) / 16)))
+#define  SUNXI_GPIO_DRV_PINMASK(pin)	(0x3 << (((pin) % 16) * 4))
 #define	SUNXI_GPIO_PULL(port, pin)	(SUNXI_GPIO_PORT(port) + 0x1c + (0x4 * ((pin) / 16)))
+#define	 SUNXI_GPIO_PULL_DISABLE	0
+#define	 SUNXI_GPIO_PULL_UP		1
+#define	 SUNXI_GPIO_PULL_DOWN		2
+#define  SUNXI_GPIO_PULL_PINMASK(pin)	(0x3 << (((pin) % 16) * 4))
 
 static const struct of_compat_data compat_data[] = {
 #ifdef SOC_SUN6I_A31
 	{ "allwinner,sun6i-a31-pinctrl",	(uintptr_t)&sun6i_a31_padconf },
+	{ "allwinner,sun6i-a31-r-pinctrl",	(uintptr_t)&sun6i_a31_r_padconf },
 #endif
 #ifdef SOC_SUN8I_H3
 	{ "allwinner,sun8i-h3-pinctrl",		(uintptr_t)&sun8i_h3_padconf },
@@ -102,6 +108,21 @@ sunxi_gpio_lookup(struct sunxi_gpio_softc *sc, uint8_t port, uint8_t pin)
 	return NULL;
 }
 
+static const struct sunxi_gpio_pins *
+sunxi_gpio_lookup_byname(struct sunxi_gpio_softc *sc, const char *name)
+{
+	const struct sunxi_gpio_pins *pin_def;
+	u_int n;
+
+	for (n = 0; n < sc->sc_padconf->npins; n++) {
+		pin_def = &sc->sc_padconf->pins[n];
+		if (strcmp(pin_def->name, name) == 0)
+			return pin_def;
+	}
+
+	return NULL;
+}
+
 static int
 sunxi_gpio_setfunc(struct sunxi_gpio_softc *sc,
     const struct sunxi_gpio_pins *pin_def, const char *func)
@@ -129,6 +150,48 @@ sunxi_gpio_setfunc(struct sunxi_gpio_softc *sc,
 	    func, pin_def->port + 'A', pin_def->pin);
 
 	return ENXIO;
+}
+
+static int
+sunxi_gpio_setpull(struct sunxi_gpio_softc *sc,
+    const struct sunxi_gpio_pins *pin_def, int flags)
+{
+	uint32_t pull;
+
+	const bus_size_t pull_reg = SUNXI_GPIO_PULL(pin_def->port, pin_def->pin);
+	const uint32_t pull_mask = SUNXI_GPIO_PULL_PINMASK(pin_def->pin);
+
+	pull = GPIO_READ(sc, pull_reg);
+	pull &= ~pull_mask;
+	if (flags & GPIO_PIN_PULLUP)
+		pull |= __SHIFTIN(SUNXI_GPIO_PULL_UP, pull_mask);
+	else if (flags & GPIO_PIN_PULLDOWN)
+		pull |= __SHIFTIN(SUNXI_GPIO_PULL_DOWN, pull_mask);
+	else
+		pull |= __SHIFTIN(SUNXI_GPIO_PULL_DISABLE, pull_mask);
+	GPIO_WRITE(sc, pull_reg, pull);
+
+	return 0;
+}
+
+static int
+sunxi_gpio_setdrv(struct sunxi_gpio_softc *sc,
+    const struct sunxi_gpio_pins *pin_def, int drive_strength)
+{
+	uint32_t drv;
+
+	if (drive_strength < 10 || drive_strength > 40)
+		return EINVAL;
+
+	const bus_size_t drv_reg = SUNXI_GPIO_DRV(pin_def->port, pin_def->pin);
+	const uint32_t drv_mask = SUNXI_GPIO_DRV_PINMASK(pin_def->pin);
+
+	drv = GPIO_READ(sc, drv_reg);
+	drv &= ~drv_mask;
+	drv |= __SHIFTIN((drive_strength / 10) - 1, drv_mask);
+	GPIO_WRITE(sc, drv_reg, drv);
+
+	return 0;
 }
 
 static int
@@ -256,6 +319,60 @@ static struct fdtbus_gpio_controller_func sunxi_gpio_funcs = {
 };
 
 static int
+sunxi_pinctrl_set_config(device_t dev, const void *data, size_t len)
+{
+	struct sunxi_gpio_softc * const sc = device_private(dev);
+	const struct sunxi_gpio_pins *pin_def;
+	u_int drive_strength;
+
+	if (len != 4)
+		return -1;
+
+	const int phandle = fdtbus_get_phandle_from_native(be32dec(data));
+
+	/*
+	 * Required: pins, function
+	 * Optional: bias-disable, bias-pull-up, bias-pull-down, drive-strength
+	 */
+
+	const char *function = fdtbus_get_string(phandle, "function");
+	if (function == NULL)
+		return -1;
+	int pins_len = OF_getproplen(phandle, "pins");
+	if (pins_len <= 0)
+		return -1;
+	const char *pins = fdtbus_get_string(phandle, "pins");
+
+	for (pins = fdtbus_get_string(phandle, "pins");
+	     pins_len > 0;
+	     pins_len -= strlen(pins) + 1, pins += strlen(pins) + 1) {
+		pin_def = sunxi_gpio_lookup_byname(sc, pins);
+		if (pin_def == NULL) {
+			aprint_error_dev(dev, "unknown pin name '%s'\n", pins);
+			continue;
+		}
+		if (sunxi_gpio_setfunc(sc, pin_def, function) != 0)
+			continue;
+
+		if (of_hasprop(phandle, "bias-disable"))
+			sunxi_gpio_setpull(sc, pin_def, 0);
+		else if (of_hasprop(phandle, "bias-pull-up"))
+			sunxi_gpio_setpull(sc, pin_def, GPIO_PIN_PULLUP);
+		else if (of_hasprop(phandle, "bias-pull-down"))
+			sunxi_gpio_setpull(sc, pin_def, GPIO_PIN_PULLDOWN);
+
+		if (of_getprop_uint32(phandle, "drive-strength", &drive_strength) == 0)
+			sunxi_gpio_setdrv(sc, pin_def, drive_strength);
+	}
+
+	return 0;
+}
+
+static struct fdtbus_pinctrl_controller_func sunxi_pinctrl_funcs = {
+	.set_config = sunxi_pinctrl_set_config,
+};
+
+static int
 sunxi_gpio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
@@ -271,6 +388,7 @@ sunxi_gpio_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
+	int child;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -289,4 +407,12 @@ sunxi_gpio_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": PIO\n");
 
 	fdtbus_register_gpio_controller(self, phandle, &sunxi_gpio_funcs);
+
+	for (child = OF_child(phandle); child; child = OF_peer(child)) {
+		if (!of_hasprop(child, "function") || !of_hasprop(child, "pins"))
+			continue;
+		fdtbus_register_pinctrl_config(self, child, &sunxi_pinctrl_funcs);
+	}
+
+	fdtbus_pinctrl_configure();
 }
