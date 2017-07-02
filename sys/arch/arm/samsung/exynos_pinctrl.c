@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_pinctrl.c,v 1.11 2017/07/02 16:19:46 jmcneill Exp $ */
+/*	$NetBSD: exynos_pinctrl.c,v 1.12 2017/07/02 18:21:52 jmcneill Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.11 2017/07/02 16:19:46 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.12 2017/07/02 18:21:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -131,6 +131,8 @@ exynos_pinctrl_attach(device_t parent, device_t self, void *aux)
 						       &exynos_pinctrl_controller_func);
 		}
 	}
+
+	fdtbus_pinctrl_configure();
 }
 
 static void
