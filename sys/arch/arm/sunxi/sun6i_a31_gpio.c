@@ -1,4 +1,4 @@
-/* $NetBSD: sun6i_a31_gpio.c,v 1.1 2017/07/02 13:36:46 jmcneill Exp $ */
+/* $NetBSD: sun6i_a31_gpio.c,v 1.2 2017/07/02 15:28:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Emmanuel Vadot <manu@freebsd.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_a31_gpio.c,v 1.1 2017/07/02 13:36:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_a31_gpio.c,v 1.2 2017/07/02 15:28:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,33 @@ static const struct sunxi_gpio_pins a31_pins[] = {
 	{"PH30", 7, 30, {"gpio_in", "gpio_out", "nand1", NULL, NULL, NULL, NULL, NULL}},
 };
 
+static const struct sunxi_gpio_pins a31_r_pins[] = {
+	{"PL0",  0, 0,  {"gpio_in", "gpio_out", "s_twi", "s_p2wi", NULL, NULL, NULL, NULL}},
+	{"PL1",  0, 1,  {"gpio_in", "gpio_out", "s_twi", "s_p2wi", NULL, NULL, NULL, NULL}},
+	{"PL2",  0, 2,  {"gpio_in", "gpio_out", "s_uart", NULL, NULL, NULL, NULL, NULL}},
+	{"PL3",  0, 3,  {"gpio_in", "gpio_out", "s_uart", NULL, NULL, NULL, NULL, NULL}},
+	{"PL4",  0, 4,  {"gpio_in", "gpio_out", "s_ir", NULL, NULL, NULL, NULL, NULL}},
+	{"PL5",  0, 5,  {"gpio_in", "gpio_out", "pl_eint0", "s_jtag", NULL, NULL, NULL, NULL}, 2, 0},
+	{"PL6",  0, 6,  {"gpio_in", "gpio_out", "pl_eint1", "s_jtag", NULL, NULL, NULL, NULL}, 2, 1},
+	{"PL7",  0, 7,  {"gpio_in", "gpio_out", "pl_eint2", "s_jtag", NULL, NULL, NULL, NULL}, 2, 2},
+	{"PL8",  0, 8,  {"gpio_in", "gpio_out", "pl_eint3", "s_jtag", NULL, NULL, NULL, NULL}, 2, 3},
+
+	{"PM0",  1, 0,  {"gpio_in", "gpio_out", "pm_eint0", NULL, NULL, NULL, NULL, NULL}, 2, 0},
+	{"PM1",  1, 1,  {"gpio_in", "gpio_out", "pm_eint1", NULL, NULL, NULL, NULL, NULL}, 2, 1},
+	{"PM2",  1, 2,  {"gpio_in", "gpio_out", "pm_eint2", "1wire", NULL, NULL, NULL, NULL}, 2, 2},
+	{"PM3",  1, 3,  {"gpio_in", "gpio_out", "pm_eint3", NULL, NULL, NULL, NULL, NULL}, 2, 3},
+	{"PM4",  1, 4,  {"gpio_in", "gpio_out", "pm_eint4", NULL, NULL, NULL, NULL, NULL}, 2, 4},
+	{"PM5",  1, 5,  {"gpio_in", "gpio_out", "pm_eint5", NULL, NULL, NULL, NULL, NULL}, 2, 5},
+	{"PM6",  1, 6,  {"gpio_in", "gpio_out", "pm_eint6", NULL, NULL, NULL, NULL, NULL}, 2, 6},
+	{"PM7",  1, 7,  {"gpio_in", "gpio_out", "pm_eint7", "rtc", NULL, NULL, NULL, NULL}, 2, 7},
+};
+
 const struct sunxi_gpio_padconf sun6i_a31_padconf = {
 	.npins = __arraycount(a31_pins),
 	.pins = a31_pins,
+};
+
+const struct sunxi_gpio_padconf sun6i_a31_r_padconf = {
+	.npins = __arraycount(a31_r_pins),
+	.pins = a31_r_pins,
 };
