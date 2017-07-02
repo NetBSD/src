@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.81 2017/06/23 21:28:38 joerg Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.82 2017/07/02 16:41:33 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.81 2017/06/23 21:28:38 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.82 2017/07/02 16:41:33 joerg Exp $");
 
 #include "opt_pax.h"
 
@@ -67,7 +67,8 @@ VMCMD_EVCNT_DECL(kills);
 #define DPRINTF(a)
 #endif
 
-uint32_t user_stack_guard_size = 1024 * 1024;
+unsigned int user_stack_guard_size = 1024 * 1024;
+unsigned int user_thread_stack_guard_size = 64 * 1024;
 
 /*
  * new_vmcmd():
