@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.135 2015/03/04 19:56:24 mlelstv Exp $	*/
+/*	$NetBSD: trap.c,v 1.136 2017/07/02 14:10:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.135 2015/03/04 19:56:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136 2017/07/02 14:10:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -538,8 +538,8 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 #endif
 #ifdef DEBUG
 	if (mmudebug & 2)
-	printf("trap: t %x c %x v %x pad %x adj %x sr %x pc %x fmt %x vc %x\n",
-	    type, code, v, fp->f_pad, fp->f_stackadj, fp->f_sr,
+	printf("%s: t %x c %x v %x adj %x sr %x pc %x fmt %x vc %x\n",
+	    __func__, type, code, v, fp->f_stackadj, fp->f_sr,
 	    fp->f_pc, fp->f_format, fp->f_vector);
 #endif
 	switch (type) {
