@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_ccu.c,v 1.5 2017/07/01 16:25:16 jmcneill Exp $ */
+/* $NetBSD: sun8i_h3_ccu.c,v 1.6 2017/07/02 13:36:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.5 2017/07/01 16:25:16 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.6 2017/07/02 13:36:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.5 2017/07/01 16:25:16 jmcneill Ex
 #define	AHB1_APB1_CFG_REG	0x054
 #define	APB2_CFG_REG		0x058
 #define	BUS_CLK_GATING_REG0	0x060
+#define	BUS_CLK_GATING_REG2	0x068
 #define	BUS_CLK_GATING_REG3	0x06c
 #define	SDMMC0_CLK_REG		0x088
 #define	SDMMC1_CLK_REG		0x08c
@@ -133,6 +134,7 @@ static struct sunxi_ccu_reset sun8i_h3_ccu_resets[] = {
 
 static const char *ahb1_parents[] = { "losc", "hosc", "axi", "pll_periph0" };
 static const char *ahb2_parents[] = { "ahb1", "pll_periph0" };
+static const char *apb1_parents[] = { "ahb1" };
 static const char *apb2_parents[] = { "losc", "hosc", "pll_periph0" };
 static const char *mod_parents[] = { "hosc", "pll_periph0", "pll_periph1" };
 
@@ -153,6 +155,7 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    __BITS(5,4),	/* div */
 	    __BITS(13,12),	/* sel */
 	    SUNXI_CCU_PREDIV_POWER_OF_TWO),
+
 	SUNXI_CCU_PREDIV(H3_CLK_AHB2, "ahb2", ahb2_parents,
 	    APB2_CFG_REG,	/* reg */
 	    0,			/* prediv */
@@ -160,6 +163,12 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    0,			/* div */
 	    __BITS(1,0),	/* sel */
 	    SUNXI_CCU_PREDIV_DIVIDE_BY_TWO),
+
+	SUNXI_CCU_DIV(H3_CLK_APB1, "apb1", apb1_parents,
+	    AHB1_APB1_CFG_REG,	/* reg */
+	    __BITS(9,8),	/* div */
+	    0,			/* sel */
+	    SUNXI_CCU_DIV_POWER_OF_TWO|SUNXI_CCU_DIV_ZERO_IS_ONE),
 
 	SUNXI_CCU_NM(H3_CLK_APB2, "apb2", apb2_parents,
 	    APB2_CFG_REG,	/* reg */
@@ -205,6 +214,9 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    BUS_CLK_GATING_REG0, 30),
 	SUNXI_CCU_GATE(H3_CLK_BUS_OHCI3, "bus-ohci3", "ahb2",
 	    BUS_CLK_GATING_REG0, 31),
+
+	SUNXI_CCU_GATE(H3_CLK_BUS_PIO, "bus-pio", "apb1",
+	    BUS_CLK_GATING_REG2, 5),
 
 	SUNXI_CCU_GATE(H3_CLK_BUS_I2C0, "bus-i2c0", "apb2",
 	    BUS_CLK_GATING_REG3, 0),

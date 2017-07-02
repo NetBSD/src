@@ -1,4 +1,4 @@
-/* $NetBSD: sun6i_a31_ccu.c,v 1.1 2017/07/02 00:14:09 jmcneill Exp $ */
+/* $NetBSD: sun6i_a31_ccu.c,v 1.2 2017/07/02 13:36:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun6i_a31_ccu.c,v 1.1 2017/07/02 00:14:09 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun6i_a31_ccu.c,v 1.2 2017/07/02 13:36:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -207,6 +207,9 @@ static struct sunxi_ccu_clk sun6i_a31_ccu_clks[] = {
 	    AHB1_GATING_REG0, 30),
 	SUNXI_CCU_GATE(A31_CLK_AHB1_OHCI2, "ahb1-ohci2", "ahb1",
 	    AHB1_GATING_REG0, 31),
+
+	SUNXI_CCU_GATE(A31_CLK_APB1_PIO, "ahb1-pio", "apb1",
+	    APB1_GATING_REG, 5),
 
 	SUNXI_CCU_GATE(A31_CLK_APB2_I2C0, "apb2-i2c0", "apb2",
 	    APB2_GATING_REG, 0),
