@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.4 2017/06/29 17:08:52 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.5 2017/07/02 00:14:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -60,6 +60,7 @@ enum sunxi_ccu_clktype {
 	SUNXI_CCU_NM,
 	SUNXI_CCU_NKMP,
 	SUNXI_CCU_PREDIV,
+	SUNXI_CCU_DIV,
 };
 
 struct sunxi_ccu_gate {
@@ -170,6 +171,44 @@ const char *sunxi_ccu_nm_get_parent(struct sunxi_ccu_softc *,
 		.get_parent = sunxi_ccu_nm_get_parent,		\
 	}
 
+struct sunxi_ccu_div {
+	bus_size_t	reg;
+	const char	**parents;
+	u_int		nparents;
+	uint32_t	div;
+	uint32_t	sel;
+	uint32_t	flags;
+#define	SUNXI_CCU_DIV_POWER_OF_TWO	__BIT(0)
+#define	SUNXI_CCU_DIV_ZERO_IS_ONE	__BIT(1)
+};
+
+u_int	sunxi_ccu_div_get_rate(struct sunxi_ccu_softc *,
+			       struct sunxi_ccu_clk *);
+int	sunxi_ccu_div_set_rate(struct sunxi_ccu_softc *,
+			       struct sunxi_ccu_clk *, u_int);
+int	sunxi_ccu_div_set_parent(struct sunxi_ccu_softc *,
+			         struct sunxi_ccu_clk *,
+			         const char *);
+const char *sunxi_ccu_div_get_parent(struct sunxi_ccu_softc *,
+				     struct sunxi_ccu_clk *);
+
+#define	SUNXI_CCU_DIV(_id, _name, _parents, _reg, _div,		\
+		      _sel, _flags)				\
+	[_id] = {						\
+		.type = SUNXI_CCU_DIV,				\
+		.base.name = (_name),				\
+		.u.div.reg = (_reg),				\
+		.u.div.parents = (_parents),			\
+		.u.div.nparents = __arraycount(_parents),	\
+		.u.div.div = (_div),				\
+		.u.div.sel = (_sel),				\
+		.u.div.flags = (_flags),			\
+		.get_rate = sunxi_ccu_div_get_rate,		\
+		.set_rate = sunxi_ccu_div_set_rate,		\
+		.set_parent = sunxi_ccu_div_set_parent,		\
+		.get_parent = sunxi_ccu_div_get_parent,		\
+	}
+
 struct sunxi_ccu_prediv {
 	bus_size_t	reg;
 	const char	**parents;
@@ -220,6 +259,7 @@ struct sunxi_ccu_clk {
 		struct sunxi_ccu_nm nm;
 		struct sunxi_ccu_nkmp nkmp;
 		struct sunxi_ccu_prediv prediv;
+		struct sunxi_ccu_div div;
 	} u;
 
 	int		(*enable)(struct sunxi_ccu_softc *,
