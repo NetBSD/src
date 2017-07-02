@@ -1,0 +1,292 @@
+/* $NetBSD: sunxi_gpio.c,v 1.1 2017/07/02 13:36:46 jmcneill Exp $ */
+
+/*-
+ * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#include "opt_soc.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.1 2017/07/02 13:36:46 jmcneill Exp $");
+
+#include <sys/param.h>
+#include <sys/bus.h>
+#include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/systm.h>
+#include <sys/mutex.h>
+#include <sys/kmem.h>
+#include <sys/gpio.h>
+
+#include <dev/fdt/fdtvar.h>
+
+#include <arm/sunxi/sunxi_gpio.h>
+
+#define	SUNXI_GPIO_PORT(port)		(0x20 * (port))
+#define SUNXI_GPIO_CFG(port, pin)	(SUNXI_GPIO_PORT(port) + (0x4 * ((pin) / 8)))
+#define  SUNXI_GPIO_CFG_PINMASK(pin)	(0x7 << (((pin) % 8) * 4))
+#define	SUNXI_GPIO_DATA(port)		(SUNXI_GPIO_PORT(port) + 0x10)
+#define	SUNXI_GPIO_DRV(port, pin)	(SUNXI_GPIO_PORT(port) + 0x14 + (0x4 * ((pin) / 16)))
+#define	SUNXI_GPIO_PULL(port, pin)	(SUNXI_GPIO_PORT(port) + 0x1c + (0x4 * ((pin) / 16)))
+
+static const struct of_compat_data compat_data[] = {
+#ifdef SOC_SUN6I_A31
+	{ "allwinner,sun6i-a31-pinctrl",	(uintptr_t)&sun6i_a31_padconf },
+#endif
+#ifdef SOC_SUN8I_H3
+	{ "allwinner,sun8i-h3-pinctrl",		(uintptr_t)&sun8i_h3_padconf },
+	{ "allwunner,sun8i-h3-r-pinctrl",	(uintptr_t)&sun8i_h3_r_padconf },
+#endif
+	{ NULL }
+};
+
+struct sunxi_gpio_softc {
+	device_t sc_dev;
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
+	const struct sunxi_gpio_padconf *sc_padconf;
+};
+
+struct sunxi_gpio_pin {
+	struct sunxi_gpio_softc *pin_sc;
+	const struct sunxi_gpio_pins *pin_def;
+	int pin_flags;
+	bool pin_actlo;
+};
+
+#define GPIO_READ(sc, reg) 		\
+    bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
+#define GPIO_WRITE(sc, reg, val) 	\
+    bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+
+static int	sunxi_gpio_match(device_t, cfdata_t, void *);
+static void	sunxi_gpio_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(sunxi_gpio, sizeof(struct sunxi_gpio_softc),
+	sunxi_gpio_match, sunxi_gpio_attach, NULL, NULL);
+
+static const struct sunxi_gpio_pins *
+sunxi_gpio_lookup(struct sunxi_gpio_softc *sc, uint8_t port, uint8_t pin)
+{
+	const struct sunxi_gpio_pins *pin_def;
+	u_int n;
+
+	for (n = 0; n < sc->sc_padconf->npins; n++) {
+		pin_def = &sc->sc_padconf->pins[n];
+		if (pin_def->port == port && pin_def->pin == pin)
+			return pin_def;
+	}
+
+	return NULL;
+}
+
+static int
+sunxi_gpio_setfunc(struct sunxi_gpio_softc *sc,
+    const struct sunxi_gpio_pins *pin_def, const char *func)
+{
+	uint32_t cfg;
+	u_int n;
+
+	const bus_size_t cfg_reg = SUNXI_GPIO_CFG(pin_def->port, pin_def->pin);
+	const uint32_t cfg_mask = SUNXI_GPIO_CFG_PINMASK(pin_def->pin);
+
+	for (n = 0; n < SUNXI_GPIO_MAXFUNC; n++) {
+		if (pin_def->functions[n] == NULL)
+			continue;
+		if (strcmp(pin_def->functions[n], func) == 0) {
+			cfg = GPIO_READ(sc, cfg_reg);
+			cfg &= ~cfg_mask;
+			cfg |= __SHIFTIN(n, cfg_mask);
+			GPIO_WRITE(sc, cfg_reg, cfg);
+			return 0;
+		}
+	}
+
+	/* Function not found */
+	device_printf(sc->sc_dev, "function '%s' not supported on P%c%02d\n",
+	    func, pin_def->port + 'A', pin_def->pin);
+
+	return ENXIO;
+}
+
+static int
+sunxi_gpio_ctl(struct sunxi_gpio_softc *sc, const struct sunxi_gpio_pins *pin_def,
+    int flags)
+{
+	if (flags & GPIO_PIN_INPUT)
+		return sunxi_gpio_setfunc(sc, pin_def, "gpio_in");
+	if (flags & GPIO_PIN_OUTPUT)
+		return sunxi_gpio_setfunc(sc, pin_def, "gpio_out");
+
+	return EINVAL;
+}
+
+static void *
+sunxi_gpio_acquire(device_t dev, const void *data, size_t len, int flags)
+{
+	struct sunxi_gpio_softc * const sc = device_private(dev);
+	const struct sunxi_gpio_pins *pin_def;
+	struct sunxi_gpio_pin *gpin;
+	const u_int *gpio = data;
+	int error;
+
+	if (len != 16)
+		return NULL;
+
+	const uint8_t port = be32toh(gpio[1]) & 0xff;
+	const uint8_t pin = be32toh(gpio[2]) & 0xff;
+	const bool actlo = be32toh(gpio[3]) & 1;
+
+	pin_def = sunxi_gpio_lookup(sc, port, pin);
+	if (pin_def == NULL)
+		return NULL;
+
+	error = sunxi_gpio_ctl(sc, pin_def, flags);
+	if (error != 0)
+		return NULL;
+
+	gpin = kmem_zalloc(sizeof(*gpin), KM_SLEEP);
+	gpin->pin_sc = sc;
+	gpin->pin_def = pin_def;
+	gpin->pin_flags = flags;
+	gpin->pin_actlo = actlo;
+
+	return gpin;
+}
+
+static void
+sunxi_gpio_release(device_t dev, void *priv)
+{
+	struct sunxi_gpio_pin *pin = priv;
+
+	sunxi_gpio_ctl(pin->pin_sc, pin->pin_def, GPIO_PIN_INPUT);
+
+	kmem_free(pin, sizeof(*pin));
+} 
+
+static int
+sunxi_gpio_read(device_t dev, void *priv, bool raw)
+{
+	struct sunxi_gpio_softc * const sc = device_private(dev);
+	struct sunxi_gpio_pin *pin = priv;
+	const struct sunxi_gpio_pins *pin_def = pin->pin_def;
+	uint32_t data;
+	int val;
+
+	KASSERT(sc == pin->pin_sc);
+
+	const bus_size_t data_reg = SUNXI_GPIO_DATA(pin_def->port);
+	const uint32_t data_mask = __BIT(pin_def->pin);
+
+	data = GPIO_READ(sc, data_reg);
+	val = __SHIFTOUT(data, data_mask);
+	if (!raw && pin->pin_actlo)
+		val = !val;
+
+#ifdef SUNXI_GPIO_DEBUG
+	device_printf(dev, "P%c%02d rd %08x (%d %d)\n",
+	    pin_def->port + 'A', pin_def->pin, data,
+	    __SHIFTOUT(val, data_mask), val);
+#endif
+
+	return val;
+}
+
+static void
+sunxi_gpio_write(device_t dev, void *priv, int val, bool raw)
+{
+	struct sunxi_gpio_softc * const sc = device_private(dev);
+	struct sunxi_gpio_pin *pin = priv;
+	const struct sunxi_gpio_pins *pin_def = pin->pin_def;
+	uint32_t data;
+#ifdef SUNXI_GPIO_DEBUG
+	uint32_t old_data;
+#endif
+
+	KASSERT(sc == pin->pin_sc);
+
+	const bus_size_t data_reg = SUNXI_GPIO_DATA(pin_def->port);
+	const uint32_t data_mask = __BIT(pin_def->pin);
+
+	if (!raw && pin->pin_actlo)
+		val = !val;
+
+	/* XXX locking */
+	data = GPIO_READ(sc, data_reg);
+#ifdef SUNXI_GPIO_DEBUG
+	old_data = data;
+#endif
+	data &= ~data_mask;
+	data |= __SHIFTIN(val, data_mask);
+	GPIO_WRITE(sc, data_reg, data_mask);
+
+#ifdef SUNXI_GPIO_DEBUG
+	device_printf(dev, "P%c%02d wr %08x -> %08x\n",
+	    pin_def->port + 'A', pin_def->pin, old_data, data);
+#endif
+}
+
+static struct fdtbus_gpio_controller_func sunxi_gpio_funcs = {
+	.acquire = sunxi_gpio_acquire,
+	.release = sunxi_gpio_release,
+	.read = sunxi_gpio_read,
+	.write = sunxi_gpio_write,
+};
+
+static int
+sunxi_gpio_match(device_t parent, cfdata_t cf, void *aux)
+{
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compat_data(faa->faa_phandle, compat_data);
+}
+
+static void
+sunxi_gpio_attach(device_t parent, device_t self, void *aux)
+{
+	struct sunxi_gpio_softc * const sc = device_private(self);
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
+	bus_addr_t addr;
+	bus_size_t size;
+
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
+
+	sc->sc_dev = self;
+	sc->sc_bst = faa->faa_bst;
+	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
+		aprint_error(": couldn't map registers\n");
+		return;
+	}
+	sc->sc_padconf = (void *)of_search_compatible(phandle, compat_data)->data;
+
+	aprint_naive("\n");
+	aprint_normal(": PIO\n");
+
+	fdtbus_register_gpio_controller(self, phandle, &sunxi_gpio_funcs);
+}
