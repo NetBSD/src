@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.39 2017/07/01 23:31:19 nat Exp $ */
+/* $NetBSD: pad.c,v 1.40 2017/07/02 05:59:27 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.39 2017/07/01 23:31:19 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.40 2017/07/02 05:59:27 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -488,8 +488,12 @@ pad_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 			wait_ticks = (hz * sc->sc_remainder) / 1000000;
 			if (wait_ticks > 0) {
 				sc->sc_remainder -= wait_ticks * 1000000 / hz;
-				kpause("padwait", TRUE, wait_ticks,
+				err = kpause("padwait", TRUE, wait_ticks,
 				    &sc->sc_lock);
+				if (err != EWOULDBLOCK) {
+					mutex_exit(&sc->sc_lock);
+					continue;
+				}
 			}
 		}
 
