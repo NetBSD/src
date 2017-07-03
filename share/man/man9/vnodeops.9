@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.98 2017/04/11 14:25:02 riastradh Exp $
+.\"     $NetBSD: vnodeops.9,v 1.99 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -336,7 +336,7 @@ mask for operation
 .El
 .Pp
 Valid values for
-.Em cn-\*[Gt]cn_flags
+.Em cn->cn_flags
 are:
 .Pp
 .Bl  -tag -offset indent -width LOCKPARENT -compact
@@ -378,7 +378,7 @@ If the pathname component is found, the address of the resulting
 unlocked vnode is returned in
 .Fa vpp .
 The operation specified in
-.Em cnp-\*[Gt]cn_nameiop
+.Em cnp->cn_nameiop
 indicates
 .Fn VOP_LOOKUP
 the reason for requesting the lookup and uses it to cache
@@ -440,15 +440,15 @@ when a file is being created.
 Normally,
 .Fn VOP_LOOKUP
 will have set the SAVENAME flag in
-.Em cnp-\*[Gt]cn_flags
+.Em cnp->cn_flags
 to keep the memory pointed to by
-.Em cnp-\*[Gt]cn_pnbuf
+.Em cnp->cn_pnbuf
 valid.
 If an error is detected when creating the file, this memory is
 released.
 If the file is created successfully it will be released unless the
 SAVESTART flags in specified in
-.Em cnp-\*[Gt]cn_flags .
+.Em cnp->cn_flags .
 .It Fn VOP_MKNOD "dvp" "vpp" "cnp" "vap"
 Make a new device-special file in a given directory.
 The argument
@@ -472,15 +472,15 @@ when a device-special file is being created.
 Normally,
 .Fn VOP_LOOKUP
 will have set the SAVENAME flag in
-.Em cnp-\*[Gt]cn_flags
+.Em cnp->cn_flags
 to keep the memory pointed to by
-.Em cnp-\*[Gt]cn_pnbuf
+.Em cnp->cn_pnbuf
 valid.
 If an error is detected when creating the device-special file,
 this memory is released.
 If the device-special file is created successfully it will be released
 unless the SAVESTART flags in specified in
-.Em cnp-\*[Gt]cn_flags .
+.Em cnp->cn_flags .
 .It Fn VOP_OPEN "vp" "mode" "cred"
 Open a file.
 The argument
@@ -552,11 +552,11 @@ The argument
 specifies the calling credentials.
 .Fn VOP_GETATTR
 uses the file system type specific data object
-.Em vp-\*[Gt]v_data
+.Em vp->v_data
 to reference the underlying file attributes.
 .\" Attributes associated with the file are collected by setting the
 .\" required attribute bits in
-.\" .Em vap-\*[Gt]va_mask .
+.\" .Em vap->va_mask .
 The attributes are returned in
 .Fa vap .
 Attributes which are not available are set to the value VNOVAL.
@@ -581,13 +581,13 @@ The argument
 specifies the calling credentials.
 .Fn VOP_SETATTR
 uses the file system type specific data object
-.Em vp-\*[Gt]v_data
+.Em vp->v_data
 to reference the underlying file attributes.
 The new attributes are defined in
 .Fa vap .
 .\" Attributes associated with the file are set by setting the required
 .\" attribute bits in
-.\" .Em vap-\*[Gt]va_mask .
+.\" .Em vap->va_mask .
 Attributes which are not being modified by
 .Fn VOP_SETATTR
 should be set to the value VNOVAL.
@@ -941,15 +941,15 @@ when a directory is being created.
 Normally,
 .Fn VOP_LOOKUP
 will have set the SAVENAME flag in
-.Em cnp-\*[Gt]cn_flags
+.Em cnp->cn_flags
 to keep the memory pointed to by
-.Em cnp-\*[Gt]cn_pnbuf
+.Em cnp->cn_pnbuf
 valid.
 If an error is detected when creating the directory, this memory is
 released.
 If the directory is created successfully it will be released unless
 the SAVESTART flags in specified in
-.Em cnp-\*[Gt]cn_flags .
+.Em cnp->cn_flags .
 .It Fn VOP_RMDIR "dvp" "vp" "cnp"
 Remove a directory in a given directory.
 The argument
@@ -991,15 +991,15 @@ when a symbolic link is being created.
 Normally,
 .Fn VOP_LOOKUP
 will have set the SAVENAME flag in
-.Em cnp-\*[Gt]cn_flags
+.Em cnp->cn_flags
 to keep the memory pointed to by
-.Em cnp-\*[Gt]cn_pnbuf
+.Em cnp->cn_pnbuf
 valid.
 If an error is detected when creating the symbolic link, this memory
 is released.
 If the symbolic link is created successfully it will be released
 unless the SAVESTART flags in specified in
-.Em cnp-\*[Gt]cn_flags .
+.Em cnp->cn_flags .
 .It Fn VOP_READDIR "vp" "uio" "cred" "eofflag" "cookies" "ncookies"
 Read directory entry.
 The argument
@@ -1035,7 +1035,7 @@ should be
 if they aren't required to be returned by
 .Fn VOP_READDIR .
 The directory contents are read into struct dirent structures and
-.Fa uio-\*[Gt]uio_offset
+.Fa uio->uio_offset
 is set to the offset of the next unread directory entry.
 This offset may be used in a following invocation to continue a
 sequential read of the directory contents.
@@ -1275,7 +1275,7 @@ is a description of the lock.
 In the case of
 .Dv SEEK_CUR ,
 The caller should add the current file offset to
-fl-\*[Gt]l_start beforehand.
+fl->l_start beforehand.
 .Fn VOP_ADVLOCK
 treats
 .Dv SEEK_CUR
@@ -1380,7 +1380,7 @@ The argument
 is the buffer to be read or written.
 .Fn VOP_STRATEGY
 will either read or write data to the file depending on the value of
-.Em bp-\*[Gt]b_flags .
+.Em bp->b_flags .
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .It Fn VOP_BWRITE "vp" "bp"

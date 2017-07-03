@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.50 2013/01/12 03:16:43 pgoyette Exp $
+.\"	$NetBSD: envsys.4,v 1.51 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,70 +89,70 @@ and all available properties set on it, plus another entry for the
 dictionary (which contains specific properties for a device):
 .Pp
 .Bd -literal
-\&\*[Lt]key\&\*[Gt]device0\&\*[Lt]\&/key\&\*[Gt]
-\&\*[Lt]array\&\*[Gt]
-	\&\*[Lt]dict\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]allow-rfact\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]true\&/\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]avg-value\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]integer\&\*[Gt]36400\&\*[Lt]\&/integer\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]battery-capacity\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]string\&\*[Gt]NORMAL\&\*[Lt]\&/string\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]critical-capacity\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]integer\&\*[Gt]21417\&\*[Lt]\&/integer\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]critical-max\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]integer\&\*[Gt]343150000\&\*[Lt]\&/integer\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]critical-min\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]integer\&\*[Gt]288150000\&\*[Lt]\&/integer\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]cur-value\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]integer\&\*[Gt]406000\&\*[Lt]\&/integer\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]description\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]string\&\*[Gt]CPU Temp\&\*[Lt]\&/string\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]high-capacity\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]integer\&\*[Gt]21417\&\*[Lt]\&/integer\&\*[Gt]
-		\&\*[Lt]string\&\*[Gt]index\&\*[Lt]\&/string\&\*[Gt]
-		\&\*[Lt]string\&\*[Gt]sensor0\&\*[Lt]\&/string\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]max-value\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]integer\&\*[Gt]3894000\&\*[Lt]\&/integer\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]maximum-capacity\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]integer\&\*[Gt]21417\&\*[Lt]\&/integer\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]min-value\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]integer\&\*[Gt]2894000\&\*[Lt]\&/integer\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]monitoring-state-critical\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]true\&/\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]monitoring-state-critover\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]true\&/\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]monitoring-state-critunder\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]true\&/\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]monitoring-state-state-changed\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]true\&/\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]monitoring-state-warnover\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]true\&/\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]monitoring-state-warnunder\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]true\&/\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]monitoring-supported\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]true\&/\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]state\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]string\&\*[Gt]valid\&\*[Lt]\&/string\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]type\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]string\&\*[Gt]Ampere hour\&\*[Lt]\&/string\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]want-percentage\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]true\&/\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]warning-capacity\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]integer\&\*[Gt]19234\&\*[Lt]\&/integer\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]warning-max\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]integer\&\*[Gt]323150000\&\*[Lt]\&/integer\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]warning-min\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]integer\&\*[Gt]298150000\&\*[Lt]\&/integer\&\*[Gt]
-	\&\*[Lt]\&/dict\&\*[Gt]
-	\&\*[Lt]dict\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]device-properties\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]dict\&\*[Gt]
-			\&\*[Lt]key\&\*[Gt]refresh-timeout\&\*[Lt]\&/key\&\*[Gt]
-			\&\*[Lt]integer\&\*[Gt]0xa\&\*[Lt]\&/integer\&\*[Gt]
-		\&\*[Lt]\&/dict\&\*[Gt]
-	\&\*[Lt]\&/dict\&\*[Gt]
-\&\*[Lt]\&/array\&\*[Gt]
+\&<key\&>device0\&<\&/key\&>
+\&<array\&>
+	\&<dict\&>
+		\&<key\&>allow-rfact\&<\&/key\&>
+		\&<true\&/\&>
+		\&<key\&>avg-value\&<\&/key\&>
+		\&<integer\&>36400\&<\&/integer\&>
+		\&<key\&>battery-capacity\&<\&/key\&>
+		\&<string\&>NORMAL\&<\&/string\&>
+		\&<key\&>critical-capacity\&<\&/key\&>
+		\&<integer\&>21417\&<\&/integer\&>
+		\&<key\&>critical-max\&<\&/key\&>
+		\&<integer\&>343150000\&<\&/integer\&>
+		\&<key\&>critical-min\&<\&/key\&>
+		\&<integer\&>288150000\&<\&/integer\&>
+		\&<key\&>cur-value\&<\&/key\&>
+		\&<integer\&>406000\&<\&/integer\&>
+		\&<key\&>description\&<\&/key\&>
+		\&<string\&>CPU Temp\&<\&/string\&>
+		\&<key\&>high-capacity\&<\&/key\&>
+		\&<integer\&>21417\&<\&/integer\&>
+		\&<string\&>index\&<\&/string\&>
+		\&<string\&>sensor0\&<\&/string\&>
+		\&<key\&>max-value\&<\&/key\&>
+		\&<integer\&>3894000\&<\&/integer\&>
+		\&<key\&>maximum-capacity\&<\&/key\&>
+		\&<integer\&>21417\&<\&/integer\&>
+		\&<key\&>min-value\&<\&/key\&>
+		\&<integer\&>2894000\&<\&/integer\&>
+		\&<key\&>monitoring-state-critical\&<\&/key\&>
+		\&<true\&/\&>
+		\&<key\&>monitoring-state-critover\&<\&/key\&>
+		\&<true\&/\&>
+		\&<key\&>monitoring-state-critunder\&<\&/key\&>
+		\&<true\&/\&>
+		\&<key\&>monitoring-state-state-changed\&<\&/key\&>
+		\&<true\&/\&>
+		\&<key\&>monitoring-state-warnover\&<\&/key\&>
+		\&<true\&/\&>
+		\&<key\&>monitoring-state-warnunder\&<\&/key\&>
+		\&<true\&/\&>
+		\&<key\&>monitoring-supported\&<\&/key\&>
+		\&<true\&/\&>
+		\&<key\&>state\&<\&/key\&>
+		\&<string\&>valid\&<\&/string\&>
+		\&<key\&>type\&<\&/key\&>
+		\&<string\&>Ampere hour\&<\&/string\&>
+		\&<key\&>want-percentage\&<\&/key\&>
+		\&<true\&/\&>
+		\&<key\&>warning-capacity\&<\&/key\&>
+		\&<integer\&>19234\&<\&/integer\&>
+		\&<key\&>warning-max\&<\&/key\&>
+		\&<integer\&>323150000\&<\&/integer\&>
+		\&<key\&>warning-min\&<\&/key\&>
+		\&<integer\&>298150000\&<\&/integer\&>
+	\&<\&/dict\&>
+	\&<dict\&>
+		\&<key\&>device-properties\&<\&/key\&>
+		\&<dict\&>
+			\&<key\&>refresh-timeout\&<\&/key\&>
+			\&<integer\&>0xa\&<\&/integer\&>
+		\&<\&/dict\&>
+	\&<\&/dict\&>
+\&<\&/array\&>
 .Ed
 .Pp
 Let's explain some more about those objects:
@@ -256,8 +256,8 @@ The values will be set to defaults, the ones that the device uses.
 .Pp
 Only one object is allowed on this dictionary:
 .Bd -literal -offset ident
-\*[Lt]key\*[Gt]envsys-remove-props\*[Lt]/key\*[Gt]
-\*[Lt]true/\*[Gt]
+<key>envsys-remove-props</key>
+<true/>
 .Ed
 .Pp
 It is a boolean object and must be set to
@@ -275,28 +275,28 @@ The following is the property list representation
 of a dictionary with all recognized and required keywords that
 a sensor understands:
 .Bd -literal
-\&\*[Lt]dict\&\*[Gt]
-	\&\*[Lt]key\&\*[Gt]description\&\*[Lt]\&/key\&\*[Gt]
-	\&\*[Lt]string\&\*[Gt]cpu temp\&\*[Lt]\&/string\&\*[Gt]
-	\&\*[Lt]key\&\*[Gt]rfact\&\*[Lt]\&/key\&\*[Gt]
-	\&\*[Lt]integer\&\*[Gt]56000\&\*[Lt]\&/integer\&\*[Gt]
-	\&\*[Lt]key\&\*[Gt]critical-capacity\&\*[Lt]\&/key\&\*[Gt]
-	\&\*[Lt]integer\&\*[Gt]10\&\*[Lt]\&/integer\&\*[Gt]
-	\&\*[Lt]key\&\*[Gt]critical-max\&\*[Lt]\&/key\&\*[Gt]
-	\&\*[Lt]integer\&\*[Gt]3400\&\*[Lt]\&/integer\&\*[Gt]
-	\&\*[Lt]key\&\*[Gt]critical-min\&\*[Lt]\&/key\&\*[Gt]
-	\&\*[Lt]integer\&\*[Gt]2800\&\*[Lt]\&/integer\&\*[Gt]
-	\&\*[Lt]key\&\*[Gt]high-capacity\&\*[Lt]\&/key\&\*[Gt]
-	\&\*[Lt]integer\&\*[Gt]95\&\*[Lt]\&/integer\&\*[Gt]
-	\&\*[Lt]key\&\*[Gt]maximum-capacity\&\*[Lt]\&/key\&\*[Gt]
-	\&\*[Lt]integer\&\*[Gt]100\&\*[Lt]\&/integer\&\*[Gt]
-	\&\*[Lt]key\&\*[Gt]warning-capacity\&\*[Lt]\&/key\&\*[Gt]
-	\&\*[Lt]integer\&\*[Gt]15\&\*[Lt]\&/integer\&\*[Gt]
-	\&\*[Lt]key\&\*[Gt]warning-max\&\*[Lt]\&/key\&\*[Gt]
-	\&\*[Lt]integer\&\*[Gt]3200\&\*[Lt]\&/integer\&\*[Gt]
-	\&\*[Lt]key\&\*[Gt]warning-min\&\*[Lt]\&/key\&\*[Gt]
-	\&\*[Lt]integer\&\*[Gt]2900\&\*[Lt]\&/integer\&\*[Gt]
-\&\*[Lt]\&/dict\&\*[Gt]
+\&<dict\&>
+	\&<key\&>description\&<\&/key\&>
+	\&<string\&>cpu temp\&<\&/string\&>
+	\&<key\&>rfact\&<\&/key\&>
+	\&<integer\&>56000\&<\&/integer\&>
+	\&<key\&>critical-capacity\&<\&/key\&>
+	\&<integer\&>10\&<\&/integer\&>
+	\&<key\&>critical-max\&<\&/key\&>
+	\&<integer\&>3400\&<\&/integer\&>
+	\&<key\&>critical-min\&<\&/key\&>
+	\&<integer\&>2800\&<\&/integer\&>
+	\&<key\&>high-capacity\&<\&/key\&>
+	\&<integer\&>95\&<\&/integer\&>
+	\&<key\&>maximum-capacity\&<\&/key\&>
+	\&<integer\&>100\&<\&/integer\&>
+	\&<key\&>warning-capacity\&<\&/key\&>
+	\&<integer\&>15\&<\&/integer\&>
+	\&<key\&>warning-max\&<\&/key\&>
+	\&<integer\&>3200\&<\&/integer\&>
+	\&<key\&>warning-min\&<\&/key\&>
+	\&<integer\&>2900\&<\&/integer\&>
+\&<\&/dict\&>
 .Ed
 .Pp
 Also if some properties in a device need to be changed, the
@@ -307,39 +307,39 @@ At this moment only the
 property is understood.
 This has the following structure:
 .Bd -literal
-\&\*[Lt]dict\&\*[Gt]
-	\&\*[Lt]key\&\*[Gt]device-properties\&\*[Lt]\&/key\&\*[Gt]
-	\&\*[Lt]dict\&\*[Gt]
-		\&\*[Lt]key\&\*[Gt]refresh-timeout\&\*[Lt]\&/key\&\*[Gt]
-		\&\*[Lt]integer\&\*[Gt]0xa\&\*[Lt]\&/integer\&\*[Gt]
-	\&\*[Lt]\&/dict\&\*[Gt]
-\&\*[Lt]\&/dict\&\*[Gt]
+\&<dict\&>
+	\&<key\&>device-properties\&<\&/key\&>
+	\&<dict\&>
+		\&<key\&>refresh-timeout\&<\&/key\&>
+		\&<integer\&>0xa\&<\&/integer\&>
+	\&<\&/dict\&>
+\&<\&/dict\&>
 .Ed
 .Pp
 A dictionary sent to the kernel with this
 .Xr ioctl 2
 should have the following structure:
 .Bd -literal
-\&\*[Lt]dict\&\*[Gt]
-	\&\*[Lt]key\&\*[Gt]device_name\&\*[Lt]\&/key\&\*[Gt]
-	\&\*[Lt]array\&\*[Gt]
-		\&\*[Lt]dict\&\*[Gt]
-			\&\*[Lt]key\&\*[Gt]index\&\*[Lt]\&/key\&\*[Gt]
-			\&\*[Lt]string\&\*[Gt]sensor0\&\*[Lt]\&/string\&\*[Gt]
-			\&\*[Lt]key\&\*[Gt]description\&\*[Lt]\&/key\&\*[Gt]
-			\&\*[Lt]string\&\*[Gt]cpu temp\&\*[Lt]\&/string\&\*[Gt]
+\&<dict\&>
+	\&<key\&>device_name\&<\&/key\&>
+	\&<array\&>
+		\&<dict\&>
+			\&<key\&>index\&<\&/key\&>
+			\&<string\&>sensor0\&<\&/string\&>
+			\&<key\&>description\&<\&/key\&>
+			\&<string\&>cpu temp\&<\&/string\&>
 			...
 			Another property for this sensor
 			...
-		\&\*[Lt]\&/dict\&\*[Gt]
+		\&<\&/dict\&>
 		...
 		Another dictionary for device-properties or sensor
 		...
-	\&\*[Lt]\&/array\&\*[Gt]
+	\&<\&/array\&>
 	...
 	Another device as above
 	...
-\&\*[Lt]\&/dict\&\*[Gt]
+\&<\&/dict\&>
 .Ed
 .Pp
 The named device will be an array and will contain dictionaries,

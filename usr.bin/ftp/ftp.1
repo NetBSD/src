@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.135 2015/04/23 23:31:23 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.136 2017/07/03 21:34:57 wiz Exp $
 .\"
 .\" Copyright (c) 1996-2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -334,7 +334,7 @@ from the user.
 When
 .Nm
 is awaiting commands from the user the prompt
-.Ql ftp\*[Gt]
+.Ql ftp>
 is provided to the user.
 The following commands are recognized
 by
@@ -528,7 +528,7 @@ When debugging is on,
 .Nm
 prints each command sent to the remote machine, preceded
 by the string
-.Ql \-\-\*[Gt] .
+.Ql \-\-> .
 .It Ic gate Op Ar host Op Ar port
 Toggle gate-ftp mode, which used to connect through the
 TIS FWTK and Gauntlet ftp proxies.
@@ -897,7 +897,7 @@ the output filename "myfile.data" for input filenames "myfile.data" and
 Spaces may be included in
 .Ar outpattern  ,
 as in the example:
-.Dl nmap $1 sed "s/  *$//" \*[Gt] $1
+.Dl nmap $1 sed "s/  *$//" > $1
 Use the
 .Sq \e
 character to prevent special treatment
@@ -2150,7 +2150,7 @@ By default, this is bound to the TAB key.
 By default,
 .Nm
 displays a command line prompt of
-.Dq "ftp\*[Gt] "
+.Dq "ftp> "
 to the user.
 This can be changed with the
 .Ic "set prompt"
@@ -2182,7 +2182,7 @@ the format
 .\" ``/<number>trailing''
 .Do
 .Sm off
-.Li / Li \*[Lt] Va number Li \*[Gt]
+.Li / Li < Va number Li >
 .Va trailing
 .Sm on
 .Dc
@@ -2234,7 +2234,7 @@ only
 .It Ev FTPPROMPT
 Command-line prompt to use.
 Defaults to
-.Dq "ftp\*[Gt] " .
+.Dq "ftp> " .
 Refer to
 .Sx COMMAND LINE PROMPT
 for more information.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.113 2017/03/18 19:01:01 riastradh Exp $
+.\"	$NetBSD: uvm.9,v 1.114 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -210,7 +210,7 @@ frees the physical page
 If the content of the page is known to be zero-filled,
 caller should set
 .Dv PG_ZERO
-in pg-\*[Gt]flags so that the page allocator will use
+in pg->flags so that the page allocator will use
 the page to serve future
 .Dv UVM_PGA_ZERO
 requests efficiently.
@@ -252,7 +252,7 @@ frees the list of pages pointed to by
 If the content of the page is known to be zero-filled,
 caller should set
 .Dv PG_ZERO
-in pg-\*[Gt]flags so that the page allocator will use
+in pg->flags so that the page allocator will use
 the page to serve future
 .Dv UVM_PGA_ZERO
 requests efficiently.

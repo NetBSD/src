@@ -1,4 +1,4 @@
-.\"	$NetBSD: hy.4,v 1.11 2003/08/07 10:31:11 agc Exp $
+.\"	$NetBSD: hy.4,v 1.12 2017/07/03 21:30:59 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,12 +88,12 @@ connections are dropped.
 Software does not shut down the network unless
 power has been off for a while.
 .Pp
-.It hy%d: RECVD MP \*[Gt] MPSIZE (%d).
+.It hy%d: RECVD MP > MPSIZE (%d).
 A message proper was received that is too big.
 Probable a driver bug.
 Shouldn't happen.
 .Pp
-.It "hy%d: xmit error \- len \*[Gt] hy_olen [%d \*[Gt] %d]."
+.It "hy%d: xmit error \- len > hy_olen [%d > %d]."
 Probable driver error.
 Shouldn't happen.
 .Pp

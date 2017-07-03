@@ -1,4 +1,4 @@
-.\"	$NetBSD: tree.3,v 1.11 2013/03/29 22:51:04 christos Exp $
+.\"	$NetBSD: tree.3,v 1.12 2017/07/03 21:30:58 wiz Exp $
 .\"	$OpenBSD: tree.3,v 1.23 2011/07/09 08:43:01 jmc Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -260,7 +260,7 @@ The splay tree can also be initialized statically by using the
 .Fn SPLAY_INITIALIZER
 macro like this:
 .Bd -literal -offset indent
-SPLAY_HEAD(HEADNAME, TYPE) head = SPLAY_INITIALIZER(\*[Am]head);
+SPLAY_HEAD(HEADNAME, TYPE) head = SPLAY_INITIALIZER(&head);
 .Ed
 .Pp
 The
@@ -292,7 +292,7 @@ macro can be used to find a particular element in the tree.
 .Bd -literal -offset indent
 struct TYPE find, *res;
 find.key = 30;
-res = SPLAY_FIND(NAME, \*[Am]head, \*[Am]find);
+res = SPLAY_FIND(NAME, &head, &find);
 .Ed
 .Pp
 The
@@ -303,7 +303,7 @@ and
 .Fn SPLAY_NEXT
 macros can be used to traverse the tree:
 .Bd -literal -offset indent
-for (np = SPLAY_MIN(NAME, \*[Am]head); np != NULL; np = SPLAY_NEXT(NAME, \*[Am]head, np))
+for (np = SPLAY_MIN(NAME, &head); np != NULL; np = SPLAY_NEXT(NAME, &head, np))
 .Ed
 .Pp
 Or, for simplicity, one can use the
@@ -405,7 +405,7 @@ The red-black tree can also be initialized statically by using the
 .Fn RB_INITIALIZER
 macro like this:
 .Bd -literal -offset indent
-RB_HEAD(HEADNAME, TYPE) head = RB_INITIALIZER(\*[Am]head);
+RB_HEAD(HEADNAME, TYPE) head = RB_INITIALIZER(&head);
 .Ed
 .Pp
 The
@@ -444,7 +444,7 @@ finds the first node greater than or equal to the search key.
 .Bd -literal -offset indent
 struct TYPE find, *res;
 find.key = 30;
-res = RB_FIND(NAME, \*[Am]head, \*[Am]find);
+res = RB_FIND(NAME, &head, &find);
 .Ed
 .Pp
 The
@@ -456,7 +456,7 @@ and
 .Fn RB_PREV
 macros can be used to traverse the tree:
 .Bd -literal -offset indent
-for (np = RB_MIN(NAME, \*[Am]head); np != NULL; np = RB_NEXT(NAME, \*[Am]head, np))
+for (np = RB_MIN(NAME, &head); np != NULL; np = RB_NEXT(NAME, &head, np))
 .Ed
 .Pp
 Or, for simplicity, one can use the
@@ -465,7 +465,7 @@ or
 .Fn RB_FOREACH_REVERSE
 macros:
 .Bd -literal -offset indent
-RB_FOREACH(np, NAME, \*[Am]head)
+RB_FOREACH(np, NAME, &head)
 .Ed
 .Pp
 The macros

@@ -1,4 +1,4 @@
-.\" $NetBSD: isdntel.8,v 1.7 2014/03/18 18:20:46 riastradh Exp $
+.\" $NetBSD: isdntel.8,v 1.8 2017/07/03 21:35:30 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD$
 .\"
-.\"	$Id: isdntel.8,v 1.7 2014/03/18 18:20:46 riastradh Exp $
+.\"	$Id: isdntel.8,v 1.8 2017/07/03 21:35:30 wiz Exp $
 .\"
 .Dd July 11, 1998
 .Dt ISDNTEL 8
@@ -79,7 +79,7 @@ as the command string to execute for playing a voice message to some audio
 output facility. The characters
 .Em %s
 are replaced by the currently selected filename. The default string is
-.Em cat %s | alaw2ulaw \*[Gt]/dev/audio
+.Em cat %s | alaw2ulaw >/dev/audio
 .It Fl t
 The value for
 .Ar timeout

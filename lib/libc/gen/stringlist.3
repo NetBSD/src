@@ -1,4 +1,4 @@
-.\"	$NetBSD: stringlist.3,v 1.15 2010/05/06 09:46:49 jruoho Exp $
+.\"	$NetBSD: stringlist.3,v 1.16 2017/07/03 21:32:49 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,22 +95,22 @@ in case of failure.
 Releases memory occupied by
 .Ar sl
 and the
-.Ar sl-\*[Gt]sl_str
+.Ar sl->sl_str
 array.
 If
 .Ar freeall
 is non-zero, then each of the items within
-.Ar sl-\*[Gt]sl_str
+.Ar sl->sl_str
 is released as well.
 .It Fn sl_add
 Add
 .Ar item
 to
-.Ar sl-\*[Gt]sl_str
+.Ar sl->sl_str
 at
-.Ar sl-\*[Gt]sl_cur ,
+.Ar sl->sl_cur ,
 extending the size of
-.Ar sl-\*[Gt]sl_str .
+.Ar sl->sl_str .
 Returns zero upon success, \-1 upon failure.
 .It Fn sl_find
 Find

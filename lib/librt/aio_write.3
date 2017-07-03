@@ -1,4 +1,4 @@
-.\" $NetBSD: aio_write.3,v 1.4 2010/05/17 19:22:31 jruoho Exp $
+.\" $NetBSD: aio_write.3,v 1.5 2017/07/03 21:32:51 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Softweyr LLC.
 .\" All rights reserved.
@@ -42,11 +42,11 @@
 The
 .Fn aio_write
 system call allows the calling process to write
-.Fa aiocbp-\*[Gt]aio_nbytes
+.Fa aiocbp->aio_nbytes
 from the buffer pointed to by
-.Fa aiocbp-\*[Gt]aio_buf
+.Fa aiocbp->aio_buf
 to the descriptor
-.Fa aiocbp-\*[Gt]aio_fildes .
+.Fa aiocbp->aio_fildes .
 The call returns immediately after the write request has been enqueued
 to the descriptor; the write may or may not have completed at the time
 the call returns.
@@ -57,7 +57,7 @@ request.
 If
 .Dv O_APPEND
 is set for
-.Fa aiocbp-\*[Gt]aio_fildes ,
+.Fa aiocbp->aio_fildes ,
 .Fn aio_write
 operations append to the file in the same order as the calls were
 made.
@@ -65,14 +65,14 @@ If
 .Dv O_APPEND
 is not set for the file descriptor, the write operation will occur at
 the absolute position from the beginning of the file plus
-.Fa aiocbp-\*[Gt]aio_offset .
+.Fa aiocbp->aio_offset .
 .Pp
 If
 .Dv _POSIX_PRIORITIZED_IO
 is defined, and the descriptor supports it, then the enqueued
 operation is submitted at a priority equal to that of the calling
 process minus
-.Fa aiocbp-\*[Gt]aio_reqprio .
+.Fa aiocbp->aio_reqprio .
 .Pp
 The
 .Fa aiocbp
@@ -84,14 +84,14 @@ in order to determine return or error status for the enqueued operation
 while it is in progress.
 .Pp
 If the request is successfully enqueued, the value of
-.Fa aiocbp-\*[Gt]aio_offset
+.Fa aiocbp->aio_offset
 can be modified during the request as context, so this value must not
 be referenced after the request is enqueued.
 .Sh RESTRICTIONS
 The Asynchronous I/O Control Block structure pointed to by
 .Fa aiocbp
 and the buffer that the
-.Fa aiocbp-\*[Gt]aio_buf
+.Fa aiocbp->aio_buf
 member of that structure references must remain valid until the
 operation has completed.
 For this reason, use of auto (stack) variables
@@ -108,9 +108,9 @@ buffer contents after the request has been enqueued, but before the
 request has completed, are not allowed.
 .Pp
 If the file offset in
-.Fa aiocbp-\*[Gt]aio_offset
+.Fa aiocbp->aio_offset
 is past the offset maximum for
-.Fa aiocbp-\*[Gt]aio_fildes ,
+.Fa aiocbp->aio_fildes ,
 no I/O will occur.
 .Sh RETURN VALUES
 .Rv -std aio_write
@@ -142,16 +142,16 @@ returned in
 .Bl -tag -width Er
 .It Bq Er EBADF
 The
-.Fa aiocbp-\*[Gt]aio_fildes
+.Fa aiocbp->aio_fildes
 argument
 is invalid, or is not opened for writing.
 .It Bq Er EINVAL
 The offset
-.Fa aiocbp-\*[Gt]aio_offset
+.Fa aiocbp->aio_offset
 is not valid, the priority specified by
-.Fa aiocbp-\*[Gt]aio_reqprio
+.Fa aiocbp->aio_reqprio
 is not a valid priority, or the number of bytes specified by
-.Fa aiocbp-\*[Gt]aio_nbytes
+.Fa aiocbp->aio_nbytes
 is not valid.
 .El
 .Pp
@@ -168,7 +168,7 @@ system call, or one of:
 .Bl -tag -width Er
 .It Bq Er EBADF
 The
-.Fa aiocbp-\*[Gt]aio_fildes
+.Fa aiocbp->aio_fildes
 argument
 is invalid for writing.
 .It Bq Er ECANCELED
@@ -176,7 +176,7 @@ The request was explicitly canceled via a call to
 .Fn aio_cancel .
 .It Bq Er EINVAL
 The offset
-.Fa aiocbp-\*[Gt]aio_offset
+.Fa aiocbp->aio_offset
 would be invalid.
 .El
 .Sh SEE ALSO

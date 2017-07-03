@@ -1,4 +1,4 @@
-.\"	$NetBSD: getmntopts.3,v 1.13 2017/03/30 19:41:41 abhinav Exp $
+.\"	$NetBSD: getmntopts.3,v 1.14 2017/07/03 21:32:51 wiz Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -229,7 +229,7 @@ flag, would also have an
 entry.
 This can be declared and used as follows:
 .Bd -literal -offset indent
-#include \*[Lt]mntopts.h\*[Gt]
+#include <mntopts.h>
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -245,7 +245,7 @@ mntflags = mntaltflags = 0;
 
 \&...
 
-mp = getmntopts(options, mopts, \*[Am]mntflags, \*[Am]mntaltflags);
+mp = getmntopts(options, mopts, &mntflags, &mntaltflags);
 
 if (mp == NULL)
 	err(EXIT_FAILURE, "getmntopts");

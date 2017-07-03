@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.31 2012/11/27 20:06:36 jkunz Exp $
+.\" $NetBSD: ugen.4,v 1.32 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -367,11 +367,11 @@ All endpoints (except the control endpoint) for the current configuration
 can be found by iterating the
 .Dv interface_index
 from 0 to
-.Dv config_desc-\*[Gt]bNumInterface-1
+.Dv config_desc->bNumInterface-1
 and for each of these iterating the
 .Dv endpoint_index
 from 0 to
-.Dv interface_desc-\*[Gt]bNumEndpoints .
+.Dv interface_desc->bNumEndpoints .
 The
 .Dv config_index
 should set to

@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.63 2017/01/02 09:53:04 wiz Exp $
+.\" $NetBSD: bus_dma.9,v 1.64 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -166,7 +166,7 @@ Arguments are as follows:
 .Bl -tag -width nsegments -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
-.Fa \*[Lt]bus\*[Gt]_attach_args .
+.Fa <bus>_attach_args .
 .It Fa size
 This is the maximum DMA transfer that can be mapped by the handle.
 .It Fa nsegments
@@ -228,7 +228,7 @@ Arguments are as follows:
 .Bl -tag -width dmam -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
-.Fa \*[Lt]bus\*[Gt]_attach_args .
+.Fa <bus>_attach_args .
 .It Fa dmam
 The DMA handle to destroy.
 .El
@@ -250,7 +250,7 @@ Arguments are as follows:
 .Bl -tag -width buflen -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
-.Fa \*[Lt]bus\*[Gt]_attach_args .
+.Fa <bus>_attach_args .
 .It Fa dmam
 The DMA handle with which to map the transfer.
 .It Fa buf
@@ -296,13 +296,13 @@ function.
 .It Dv BUS_DMA_READ
 This is a hint to the machine-dependent back-end that indicates the
 mapping will be used only for a
-.Em "device -\*[Gt] memory"
+.Em "device -> memory"
 transaction.
 The back-end may perform optimizations based on this information.
 .It Dv BUS_DMA_WRITE
 This is a hint to the machine-dependent back-end that indicates the
 mapping will be used only for a
-.Em "memory -\*[Gt] device"
+.Em "memory -> device"
 transaction.
 The back-end may perform optimizations based on this information.
 .It Dv BUS_DMA_BUS[1-4]
@@ -352,7 +352,7 @@ which maps buffers pointed to by
 for DMA transfers.
 Determination if the buffers are in user or kernel virtual address space
 is done internally, according to
-.Fa "uio-\*[Gt]uio_vmspace" .
+.Fa "uio->uio_vmspace" .
 See
 .Xr uiomove 9
 for details of the
@@ -382,7 +382,7 @@ Arguments are as follows:
 .Bl -tag -width dmam -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
-.Fa \*[Lt]bus\*[Gt]_attach_args .
+.Fa <bus>_attach_args .
 .It Fa dmam
 The DMA handle containing the mappings which are to be deleted.
 .El
@@ -422,7 +422,7 @@ Arguments are as follows:
 .Bl -tag -width offset -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
-.Fa \*[Lt]bus\*[Gt]_attach_args .
+.Fa <bus>_attach_args .
 .It Fa dmam
 The DMA mapping to be synchronized.
 .It Fa offset
@@ -455,11 +455,11 @@ operations is not allowed, and behavior is undefined if this is attempted.
 .Pp
 Synchronization operations are expressed from the perspective of
 the host RAM, e.g., a
-.Em "device -\*[Gt] memory"
+.Em "device -> memory"
 operation is a
 .Em READ
 and a
-.Em "memory -\*[Gt] device"
+.Em "memory -> device"
 operation is a
 .Em WRITE .
 .Pp
@@ -558,7 +558,7 @@ Arguments are as follows:
 .Bl -tag -width alignment -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
-.Fa \*[Lt]bus\*[Gt]_attach_args .
+.Fa <bus>_attach_args .
 .It Fa size
 The amount of memory to allocate.
 .It Fa alignment
@@ -628,7 +628,7 @@ Arguments are as follows:
 .Bl -tag -width nsegs -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
-.Fa \*[Lt]bus\*[Gt]_attach_args .
+.Fa <bus>_attach_args .
 .It Fa segs
 The array of bus_dma_segment_t's filled in by
 .Fn bus_dmamem_alloc .
@@ -651,7 +651,7 @@ Arguments are as follows:
 .Bl -tag -width flags -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
-.Fa \*[Lt]bus\*[Gt]_attach_args .
+.Fa <bus>_attach_args .
 .It Fa segs
 The array of bus_dma_segment_t's filled in by
 .Fn bus_dmamem_alloc ,
@@ -729,7 +729,7 @@ The arguments are as follows:
 .Bl -tag -width size -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
-.Fa \*[Lt]bus\*[Gt]_attach_args .
+.Fa <bus>_attach_args .
 .It Fa kva
 The kernel virtual address of the mapped memory.
 .It Fa size
@@ -752,7 +752,7 @@ The arguments are as follows:
 .Bl -tag -width nsegs -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
-.Fa \*[Lt]bus\*[Gt]_attach_args .
+.Fa <bus>_attach_args .
 .It Fa segs
 The array of bus_dma_segment_t's filled in by
 .Fn bus_dmamem_alloc ,

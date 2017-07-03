@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.58 2015/12/13 14:54:17 christos Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.59 2017/07/03 21:32:49 wiz Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"	$OpenBSD: getaddrinfo.3,v 1.35 2004/12/21 03:40:31 jaredy Exp $
 .\"
@@ -364,24 +364,24 @@ int error;
 int s;
 const char *cause = NULL;
 
-memset(\*[Am]hints, 0, sizeof(hints));
+memset(&hints, 0, sizeof(hints));
 hints.ai_family = AF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
-error = getaddrinfo("www.kame.net", "http", \*[Am]hints, \*[Am]res0);
+error = getaddrinfo("www.kame.net", "http", &hints, &res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
 	/*NOTREACHED*/
 }
 s = -1;
-for (res = res0; res; res = res-\*[Gt]ai_next) {
-	s = socket(res-\*[Gt]ai_family, res-\*[Gt]ai_socktype,
-	    res-\*[Gt]ai_protocol);
-	if (s \*[Lt] 0) {
+for (res = res0; res; res = res->ai_next) {
+	s = socket(res->ai_family, res->ai_socktype,
+	    res->ai_protocol);
+	if (s < 0) {
 		cause = "socket";
 		continue;
 	}
 
-	if (connect(s, res-\*[Gt]ai_addr, res-\*[Gt]ai_addrlen) \*[Lt] 0) {
+	if (connect(s, res->ai_addr, res->ai_addrlen) < 0) {
 		cause = "connect";
 		close(s);
 		s = -1;
@@ -390,7 +390,7 @@ for (res = res0; res; res = res-\*[Gt]ai_next) {
 
 	break;	/* okay we got one */
 }
-if (s \*[Lt] 0) {
+if (s < 0) {
 	err(1, "%s", cause);
 	/*NOTREACHED*/
 }
@@ -407,25 +407,25 @@ int s[MAXSOCK];
 int nsock;
 const char *cause = NULL;
 
-memset(\*[Am]hints, 0, sizeof(hints));
+memset(&hints, 0, sizeof(hints));
 hints.ai_family = AF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
 hints.ai_flags = AI_PASSIVE;
-error = getaddrinfo(NULL, "http", \*[Am]hints, \*[Am]res0);
+error = getaddrinfo(NULL, "http", &hints, &res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
 	/*NOTREACHED*/
 }
 nsock = 0;
-for (res = res0; res \*[Am]\*[Am] nsock \*[Lt] MAXSOCK; res = res-\*[Gt]ai_next) {
-	s[nsock] = socket(res-\*[Gt]ai_family, res-\*[Gt]ai_socktype,
-	    res-\*[Gt]ai_protocol);
-	if (s[nsock] \*[Lt] 0) {
+for (res = res0; res && nsock < MAXSOCK; res = res->ai_next) {
+	s[nsock] = socket(res->ai_family, res->ai_socktype,
+	    res->ai_protocol);
+	if (s[nsock] < 0) {
 		cause = "socket";
 		continue;
 	}
 
-	if (bind(s[nsock], res-\*[Gt]ai_addr, res-\*[Gt]ai_addrlen) \*[Lt] 0) {
+	if (bind(s[nsock], res->ai_addr, res->ai_addrlen) < 0) {
 		cause = "bind";
 		close(s[nsock]);
 		continue;

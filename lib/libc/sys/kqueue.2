@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.45 2017/06/07 20:54:59 kamil Exp $
+.\"	$NetBSD: kqueue.2,v 1.46 2017/07/03 21:32:50 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .Fn kqueue1 "int flags"
 .Ft int
 .Fn kevent "int kq" "const struct kevent *changelist" "size_t nchanges" "struct kevent *eventlist" "size_t nevents" "const struct timespec *timeout"
-.Fn EV_SET "\*[Am]kev" ident filter flags fflags data udata
+.Fn EV_SET "&kev" ident filter flags fflags data udata
 .Sh DESCRIPTION
 .Fn kqueue
 provides a generic method of notifying the user when an event
@@ -523,14 +523,14 @@ The following example program monitors a file (provided to it as the first
 argument) and prints information about some common events it receives
 notifications for:
 .Bd -literal -offset indent
-#include \*[Lt]sys/types.h\*[Gt]
-#include \*[Lt]sys/event.h\*[Gt]
-#include \*[Lt]sys/time.h\*[Gt]
-#include \*[Lt]stdio.h\*[Gt]
-#include \*[Lt]unistd.h\*[Gt]
-#include \*[Lt]stdlib.h\*[Gt]
-#include \*[Lt]fcntl.h\*[Gt]
-#include \*[Lt]err.h\*[Gt]
+#include <sys/types.h>
+#include <sys/event.h>
+#include <sys/time.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <err.h>
 
 int
 main(int argc, char *argv[])
@@ -545,44 +545,44 @@ main(int argc, char *argv[])
         if ((kq = kqueue()) == -1)
                 err(1, "Cannot create kqueue");
 
-        EV_SET(\*[Am]ev, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
+        EV_SET(&ev, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
             NOTE_DELETE|NOTE_WRITE|NOTE_EXTEND|NOTE_ATTRIB|NOTE_LINK|
             NOTE_RENAME|NOTE_REVOKE, 0, 0);
-        if (kevent(kq, \*[Am]ev, 1, NULL, 0, \*[Am]tout) == -1)
+        if (kevent(kq, &ev, 1, NULL, 0, &tout) == -1)
                 err(1, "kevent");
         for (;;) {
-                nev = kevent(kq, NULL, 0, \*[Am]ev, 1, \*[Am]tout);
+                nev = kevent(kq, NULL, 0, &ev, 1, &tout);
                 if (nev == -1)
                         err(1, "kevent");
                 if (nev == 0)
                         continue;
-                if (ev.fflags \*[Am] NOTE_DELETE) {
+                if (ev.fflags & NOTE_DELETE) {
                         printf("deleted ");
-                        ev.fflags \*[Am]= ~NOTE_DELETE;
+                        ev.fflags &= ~NOTE_DELETE;
                 }
-                if (ev.fflags \*[Am] NOTE_WRITE) {
+                if (ev.fflags & NOTE_WRITE) {
                         printf("written ");
-                        ev.fflags \*[Am]= ~NOTE_WRITE;
+                        ev.fflags &= ~NOTE_WRITE;
                 }
-                if (ev.fflags \*[Am] NOTE_EXTEND) {
+                if (ev.fflags & NOTE_EXTEND) {
                         printf("extended ");
-                        ev.fflags \*[Am]= ~NOTE_EXTEND;
+                        ev.fflags &= ~NOTE_EXTEND;
                 }
-                if (ev.fflags \*[Am] NOTE_ATTRIB) {
+                if (ev.fflags & NOTE_ATTRIB) {
                         printf("chmod/chown/utimes ");
-                        ev.fflags \*[Am]= ~NOTE_ATTRIB;
+                        ev.fflags &= ~NOTE_ATTRIB;
                 }
-                if (ev.fflags \*[Am] NOTE_LINK) {
+                if (ev.fflags & NOTE_LINK) {
                         printf("hardlinked ");
-                        ev.fflags \*[Am]= ~NOTE_LINK;
+                        ev.fflags &= ~NOTE_LINK;
                 }
-                if (ev.fflags \*[Am] NOTE_RENAME) {
+                if (ev.fflags & NOTE_RENAME) {
                         printf("renamed ");
-                        ev.fflags \*[Am]= ~NOTE_RENAME;
+                        ev.fflags &= ~NOTE_RENAME;
                 }
-                if (ev.fflags \*[Am] NOTE_REVOKE) {
+                if (ev.fflags & NOTE_REVOKE) {
                         printf("revoked ");
-                        ev.fflags \*[Am]= ~NOTE_REVOKE;
+                        ev.fflags &= ~NOTE_REVOKE;
                 }
                 printf("\\n");
                 if (ev.fflags)

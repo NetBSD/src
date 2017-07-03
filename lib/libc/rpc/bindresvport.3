@@ -1,5 +1,5 @@
 .\"	@(#)bindresvport.3n	2.2 88/08/02 4.0 RPCSRC; from 1.7 88/03/14 SMI
-.\"	$NetBSD: bindresvport.3,v 1.13 2007/01/27 07:58:47 cbiere Exp $
+.\"	$NetBSD: bindresvport.3,v 1.14 2017/07/03 21:32:49 wiz Exp $
 .\"
 .Dd January 27, 2007
 .Dt BINDRESVPORT 3
@@ -36,18 +36,18 @@ is a pointer to a
 .Ft "struct sockaddr_in"
 then the appropriate fields in the structure should be defined.
 Note that
-.Fa sin-\*[Gt]sin_family
+.Fa sin->sin_family
 must be initialized to the address family of the socket, passed by
 .Fa sd .
 If
-.Fa sin-\*[Gt]sin_port
+.Fa sin->sin_port
 is
 .Sq 0
 then a port (in the range 600-1023) will be
 chosen, and if
 .Xr bind 2
 is successful, the
-.Fa sin-\*[Gt]sin_port
+.Fa sin->sin_port
 will be updated to contain the allocated port.
 .Pp
 If

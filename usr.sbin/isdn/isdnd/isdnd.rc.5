@@ -1,4 +1,4 @@
-.\" $NetBSD: isdnd.rc.5,v 1.20 2014/03/18 18:20:46 riastradh Exp $
+.\" $NetBSD: isdnd.rc.5,v 1.21 2017/07/03 21:35:30 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.rc.5,v 1.20 2014/03/18 18:20:46 riastradh Exp $
+.\"	$Id: isdnd.rc.5,v 1.21 2017/07/03 21:35:30 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -705,7 +705,7 @@ The rate entry used from the rates file.
 .Pp
 For example, ratetype=0 selects lines beginning "ra0" in /etc/isdn/isdnd.rates;
 (typically ra0 lines are a set of tables for local call rates on different
-days of the week \*[Am] times per day).
+days of the week & times per day).
 .It Li recoverytime
 The time in seconds to wait between dial retries.
 (optional)
@@ -907,12 +907,12 @@ must be greater than 0 (zero);
 .Em earlyhangup
 must be \*[Ge] 0 (zero).
 .Bd -literal
-|\*[Lt]unchecked-window\*[Gt]|\*[Lt]checkwindow\*[Gt]|\*[Lt]safetywindow\*[Gt]|
+|<unchecked-window>|<checkwindow>|<safetywindow>|
 |                  |             |              |
 +------------------+-------------+--------------+
 |                  |             |              |
-|                  |\*[Lt]-idle-time-\*[Gt]|\*[Lt]earlyhangup-\*[Gt]|
-|\*[Lt]--------------unitlength---------------------\*[Gt]|
+|                  |<-idle-time->|<earlyhangup->|
+|<--------------unitlength--------------------->|
 .Ed
 .Pp
 During the unchecked window which is (unitlength - (idle-time+earlyhangup))
@@ -961,10 +961,10 @@ period if there is no traffic for
 seconds the call is disconnected.
 .Pp
 .Bd -literal
-|\*[Lt]---unchecked------------------\*[Gt]|\*[Lt]------checked------\*[Gt]
+|<---unchecked------------------>|<------checked------>
 +------------------+-------------+
-|                  |\*[Lt]-idle-time-\*[Gt]|
-|\*[Lt]--------------unitlength-------\*[Gt]|
+|                  |<-idle-time->|
+|<--------------unitlength------->|
 .Ed
 .Pp
 Experience shows that useful values for idle-time are from 15 to 30 seconds.

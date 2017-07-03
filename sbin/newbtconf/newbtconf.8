@@ -1,4 +1,4 @@
-.\"     $NetBSD: newbtconf.8,v 1.19 2005/09/30 20:18:12 rpaulo Exp $
+.\"     $NetBSD: newbtconf.8,v 1.20 2017/07/03 21:33:42 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Darren Reed.  All rights reserved.
 .\"
@@ -97,7 +97,7 @@ The following files are all moved into
 that directory and symbolic links put in their place, in
 .Pa /etc ,
 pointing to
-.Pa /etc/etc.current/\*[Lt]filename\*[Gt] :
+.Pa /etc/etc.current/<filename> :
 .Bd -literal -offset indent
 /etc/defaultdomain
 /etc/fstab
@@ -139,7 +139,7 @@ will use the current configuration files as the basis for this setup unless
 a second parameter is given - that of the configuration to use as the basis
 for the new one.
 Upon completion, a new directory,
-.Pa /etc/etc.\*[Lt]newname\*[Gt] ,
+.Pa /etc/etc.<newname> ,
 will have been created,
 priming the directory with the appropriate files for editing.
 For example, if we do
@@ -214,7 +214,7 @@ and
 are also removed so upon rebooting no configuration selection menu is
 displayed.
 Note that the previously created configurations (in
-.Pa /etc/etc.\*[Lt]name\*[Gt] )
+.Pa /etc/etc.<name> )
 are not removed.
 .Sh FILES
 .Bl -tag -width /etc/mrouted.current -compact

@@ -1,4 +1,4 @@
-.\" $NetBSD: mklocale.1,v 1.16 2013/07/15 18:46:47 joerg Exp $
+.\" $NetBSD: mklocale.1,v 1.17 2017/07/03 21:34:20 wiz Exp $
 .\" FreeBSD: src/usr.bin/mklocale/mklocale.1,v 1.6 1999/09/20 09:15:21 phantom Exp
 .\"
 .\" Copyright (c) 1993, 1994
@@ -43,9 +43,9 @@
 .Nm mklocale
 .Op Fl d
 .Op Fl t Ar type
-\*[Lt]
+<
 .Ar source
-\*[Gt]
+>
 .Ar language/LC_CTYPE
 .Nm mklocale
 .Op Fl d
@@ -61,7 +61,7 @@ utility reads an
 source file from standard input and produces an
 .Dv LC_CTYPE
 binary file on standard output suitable for placement in
-.Pa /usr/share/locale/\*[Lt]language\*[Gt]/LC_CTYPE .
+.Pa /usr/share/locale/<language>/LC_CTYPE .
 .Pp
 The format of
 .Ar source
@@ -125,11 +125,11 @@ or
 Used to indicate ranges.
 .It Ar literal
 The follow characters are taken literally:
-.Bl -tag -width "\*[Lt]\|\|(\|\|["
-.It Dv "\*[Lt]\|(\|["
+.Bl -tag -width "<\|\|(\|\|["
+.It Dv "<\|(\|["
 Used to start a mapping.
 All are equivalent.
-.It Dv "\*[Gt]\|\^)\|]"
+.It Dv ">\|\^)\|]"
 Used to end a mapping.
 All are equivalent.
 .It Dv \&:

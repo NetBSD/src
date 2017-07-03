@@ -1,4 +1,4 @@
-.\"	$NetBSD: operator.7,v 1.11 2011/01/18 23:36:07 uwe Exp $
+.\"	$NetBSD: operator.7,v 1.12 2017/07/03 21:30:59 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nd C and C++ operator precedence and associativity
 .Sh DESCRIPTION
 .Bl -column -offset indent \
-    ".Li \&! ~ ++ \-\- \- (type) * \*[Am] sizeof new delete" \
+    ".Li \&! ~ ++ \-\- \- (type) * & sizeof new delete" \
     ".Sy Associativity"
 .\"
 .It Sy Operator \
@@ -46,13 +46,13 @@
 .\" XXX: For some reason if anything but tab follows the last dot
 .\" XXX: the space before it is lost and we get ->. in the output.
 .\" XXX: My troff fu is weak, just work around with explicit \<space>.
-.It Li \&() [] \-\*[Gt]\ \. \
+.It Li \&() [] \->\ \. \
  Ta left to right
 .\"
-.It Li \&! ~ ++ \-\- \- (type) * \*[Am] sizeof new delete \
+.It Li \&! ~ ++ \-\- \- (type) * & sizeof new delete \
  Ta right to left
 .\"
-.It Li \&\-\*[Gt]* .* \
+.It Li \&\->* .* \
  Ta left to right
 .\"
 .It Li \&* / % \
@@ -61,16 +61,16 @@
 .It Li \&+ \- \
  Ta left to right
 .\"
-.It Li \&\*[Lt]\*[Lt] \*[Gt]\*[Gt] \
+.It Li \&<< >> \
  Ta left to right
 .\"
-.It Li \&\*[Lt] \*[Lt]= \*[Gt] \*[Gt]= \
+.It Li \&< <= > >= \
  Ta left to right
 .\"
 .It Li \&== != \
  Ta left to right
 .\"
-.It Li \&\*[Am] \
+.It Li \&& \
  Ta left to right
 .\"
 .It Li \&^ \
@@ -79,7 +79,7 @@
 .It Li \&| \
  Ta left to right
 .\"
-.It Li \&\*[Am]\*[Am] \
+.It Li \&&& \
  Ta left to right
 .\"
 .It Li \&|| \
@@ -88,7 +88,7 @@
 .It Li \&?: \
  Ta right to left
 .\"
-.It Li \&= += \-= *= /= %= \*[Lt]\*[Lt]= \*[Gt]\*[Gt]= \*[Am]= ^= |= throw \
+.It Li \&= += \-= *= /= %= <<= >>= &= ^= |= throw \
  Ta right to left
 .\"
 .It Li \&?: No (C++, third operand)\

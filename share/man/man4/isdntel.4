@@ -1,4 +1,4 @@
-.\" $NetBSD: isdntel.4,v 1.7 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: isdntel.4,v 1.8 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdntel.4,v 1.7 2014/03/18 18:20:39 riastradh Exp $
+.\"	$Id: isdntel.4,v 1.8 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -89,7 +89,7 @@ parameters are available:
 do no A-law/mu-law audio format conversion. The conversion path looks like
 this:
 .Pp
-USER \*[Lt]--\*[Gt] bitreversing \*[Lt]--\*[Gt] ISDN-line
+USER <--> bitreversing <--> ISDN-line
 .Pp
 .It Ar CVT_ALAW2ULAW
 set audio format conversion to do an audio conversion from A-law
@@ -98,13 +98,13 @@ The
 .Xr read 2
 conversion path looks like this:
 .Pp
-USER \*[Lt]-- mu-law/A-law \*[Lt]-- bitreversing \*[Lt]-- ISDN-line
+USER <-- mu-law/A-law <-- bitreversing <-- ISDN-line
 .Pp
 and the
 .Xr write 2
 conversion path looks like this:
 .Pp
-USER --\*[Gt] mu-law/A-law --\*[Gt] bitreversing --\*[Gt] ISDN-line
+USER --> mu-law/A-law --> bitreversing --> ISDN-line
 .Pp
 .It Ar CVT_ULAW2ALAW
 set audio format conversion to do an audio conversion from mu-law
@@ -113,13 +113,13 @@ The
 .Xr read 2
 conversion path looks like this:
 .Pp
-USER \*[Lt]-- A-law/mu-law \*[Lt]-- bitreversing \*[Lt]-- ISDN-line
+USER <-- A-law/mu-law <-- bitreversing <-- ISDN-line
 .Pp
 and the
 .Xr write 2
 conversion path looks like this:
 .Pp
-USER --\*[Gt] A-law/mu-law --\*[Gt] bitreversing --\*[Gt] ISDN-line
+USER --> A-law/mu-law --> bitreversing --> ISDN-line
 .El
 .Sh SEE ALSO
 .Xr isdnd.rc 5 ,

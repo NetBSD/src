@@ -1,4 +1,4 @@
-.\"	$NetBSD: altq.conf.5,v 1.15 2013/09/08 19:12:18 jakllsch Exp $
+.\"	$NetBSD: altq.conf.5,v 1.16 2017/07/03 21:35:29 wiz Exp $
 .\"	$KAME: altq.conf.5,v 1.15 2002/11/17 02:51:49 kjc Exp $
 .\"
 .\" Copyright (C) 2000
@@ -1330,14 +1330,14 @@ interface fxp0
 # a simple dropper
 # discard all packets from 192.168.0.83
 #
-conditioner fxp0 dropper \*[Lt]drop\*[Gt]
+conditioner fxp0 dropper <drop>
         filter fxp0 dropper 0 0 192.168.0.83 0 0
 
 #
 # EF conditioner
 # mark EF to all packets from 192.168.0.117
 #
-conditioner pvc1 ef_cdnr \*[Lt]tbmeter 6M 64K \*[Lt]mark 0xb8\*[Gt]\*[Lt]drop\*[Gt]\*[Gt]
+conditioner pvc1 ef_cdnr <tbmeter 6M 64K <mark 0xb8><drop>>
         filter fxp0 ef_cdnr 0 0 192.168.0.117 0 0
 
 #
@@ -1347,7 +1347,7 @@ conditioner pvc1 ef_cdnr \*[Lt]tbmeter 6M 64K \*[Lt]mark 0xb8\*[Gt]\*[Lt]drop\*[
 #       AF12 (medium drop precedence): more than 3Mbps and less than 10Mbps
 #       AF13 (high drop precedence):   more than 10Mbps
 #
-conditioner fxp0 af1x_cdnr \*[Lt]trtcm 3M 32K 10M 64K \*[Lt]mark 0x28\*[Gt]\*[Lt]mark 0x30\*[Gt]\*[Lt]mark 0x38\*[Gt]\*[Gt]
+conditioner fxp0 af1x_cdnr <trtcm 3M 32K 10M 64K <mark 0x28><mark 0x30><mark 0x38>>
         filter fxp0 af1x_cdnr 0 0 192.168.0.178 0 0
 .Ed
 .Sh SEE ALSO

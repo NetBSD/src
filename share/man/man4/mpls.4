@@ -1,4 +1,4 @@
-.\" $NetBSD: mpls.4,v 1.9 2013/07/24 07:00:16 wiz Exp $
+.\" $NetBSD: mpls.4,v 1.10 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -219,10 +219,10 @@ destination: 50
         Tag: 33
  local addr: 192.168.1.180
   interface: sk0
-      flags: \*[Lt]UP,GATEWAY,HOST,DONE,STATIC\*[Gt]
+      flags: <UP,GATEWAY,HOST,DONE,STATIC>
 recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
       0         0         0         0         0         0         0         0
-sockaddrs: \*[Lt]DST,GATEWAY,IFP,IFA,TAG\*[Gt]
+sockaddrs: <DST,GATEWAY,IFP,IFA,TAG>
 .Ed
 .It
 Route IP packets into MPLS domain but use a different source

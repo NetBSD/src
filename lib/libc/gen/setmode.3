@@ -1,4 +1,4 @@
-.\"	$NetBSD: setmode.3,v 1.21 2009/01/11 02:46:27 christos Exp $
+.\"	$NetBSD: setmode.3,v 1.22 2017/07/03 21:32:49 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -100,7 +100,7 @@ const char *file = "myscript.sh";
 struct stat st;
 mode_t newmode;
 
-stat(file, \*[Am]st);
+stat(file, &st);
 newmode = getmode(setmode("a+x"), st.st_mode);
 chmod(file, newmode);
 .Ed

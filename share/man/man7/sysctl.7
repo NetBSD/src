@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.113 2017/03/25 05:58:50 pgoyette Exp $
+.\"	$NetBSD: sysctl.7,v 1.114 2017/07/03 21:30:59 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -117,7 +117,7 @@ as a debugging variable, the following declaration would be used:
 .Pp
 .Bd -literal -offset indent -compact
 int dospecialcheck = 1;
-struct ctldebug debug5 = { "dospecialcheck", \*[Am]dospecialcheck };
+struct ctldebug debug5 = { "dospecialcheck", &dospecialcheck };
 .Ed
 .Pp
 Note that the dynamic implementation of
@@ -476,12 +476,12 @@ in the
 system.
 The available values are as follows:
 .Bl -tag -width XX0 -offset indent
-.It Dv \*[Lt] 0
+.It Dv < 0
 Always force userlevel requests to use software transforms.
 .It Dv = 0
 If present, use hardware and grant userlevel requests for
 non-accelerated transforms (handling the latter in software).
-.It Dv \*[Gt] 0
+.It Dv > 0
 Allow user requests only for transforms which are hardware-accelerated.
 .El
 .It Li kern.defcorename ( Dv KERN_DEFCORENAME )
@@ -2661,7 +2661,7 @@ The
 toplevel name is reserved to be used by vendors who wish to
 have their own private MIB tree.
 Intended use is to store values under
-.Dq vendor.\*[Lt]yourname\*[Gt].* .
+.Dq vendor.<yourname>.* .
 .Sh SEE ALSO
 .Xr sysctl 3 ,
 .Xr ipsec 4 ,

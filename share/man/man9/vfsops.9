@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.47 2015/07/12 08:11:27 hannken Exp $
+.\"     $NetBSD: vfsops.9,v 1.48 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -246,7 +246,7 @@ attributes of an existing file system.
 If the flag
 .Dv MNT_UPDATE
 is set in
-.Va mp-\*[Gt]mnt_flag ,
+.Va mp->mnt_flag ,
 the file system should update its state.
 This can be used, for instance, to convert a read-only file system to
 read-write.

@@ -1,4 +1,4 @@
-.\" $NetBSD: shquote.3,v 1.9 2008/09/07 08:55:46 apb Exp $
+.\" $NetBSD: shquote.3,v 1.10 2017/07/03 21:32:49 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Christopher G. Demetriou
 .\" All rights reserved.
@@ -156,7 +156,7 @@ int argc;
  * Size buffer to hold the command string, and allocate it.
  * Buffer of length one given to snprintf() for portability.
  */
-cmdlen = snprintf(\*[Am]c, 1, "${PROG-%s} ", PROG_DEFAULT);
+cmdlen = snprintf(&c, 1, "${PROG-%s} ", PROG_DEFAULT);
 qlen = shquotev(argc, argv, NULL, 0);
 if (qlen == (size_t)-1) {
 	\&...
@@ -194,8 +194,8 @@ int argc, i;
  * Size buffer to hold the command string, and allocate it.
  * Buffer of length one given to snprintf() for portability.
  */
-cmdlen = snprintf(\*[Am]c, 1, "${PROG-%s} ", PROG_DEFAULT);
-for (i = 0; i \*[Lt] argc; i++) {
+cmdlen = snprintf(&c, 1, "${PROG-%s} ", PROG_DEFAULT);
+for (i = 0; i < argc; i++) {
 	qlen = shquote(argv[i], NULL, 0);
 	if (qlen == (size_t)-1) {
 		\&...
@@ -211,7 +211,7 @@ if (cmd == NULL) {
 len = snprintf(cmd, cmdlen, "${PROG-%s} ", PROG_DEFAULT);
 
 /* Quote all of the arguments when copying them. */
-for (i = 0; i \*[Lt] argc; i++) {
+for (i = 0; i < argc; i++) {
 	qlen = shquote(argv[i], cmd + len, cmdlen - len);
 	if (qlen == (size_t)-1) {
 		/* Should not ever happen. */
