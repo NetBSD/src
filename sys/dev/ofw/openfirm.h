@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.35 2017/06/30 09:17:05 jmcneill Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.36 2017/07/03 00:47:34 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -110,6 +110,7 @@ int	openfirmware(void *);
  */
 int	of_compatible(int, const char * const *);
 int	of_match_compatible(int, const char * const *);
+int	of_match_compat_data(int, const struct of_compat_data *);
 const struct of_compat_data *
 	of_search_compatible(int, const struct of_compat_data *);
 int	of_decode_int(const unsigned char *);

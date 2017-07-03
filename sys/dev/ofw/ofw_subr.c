@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.29 2017/06/30 09:17:05 jmcneill Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.30 2017/07/03 00:47:34 jmcneill Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.29 2017/06/30 09:17:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.30 2017/07/03 00:47:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,6 +183,43 @@ int
 of_match_compatible(int phandle, const char * const *strings)
 {
 	return of_compatible(phandle, strings) + 1;
+}
+
+/*
+ * int of_match_compat_data(phandle, compat_data)
+ *
+ * This routine searches an array of compat_data structures for a
+ * matching "compatible" entry matching the supplied OFW node.
+ *
+ * It should be used when determining whether a driver can drive
+ * a particular device.
+ *
+ * Arguments:
+ *	phandle		OFW phandle of device to be checked for
+ *			compatibility.
+ *	compat_data	Array of possible compat entry strings and
+ *			associated metadata. The last entry in the
+ *			list should have a "compat" of NULL to terminate
+ *			the list.
+ *
+ * Return Value:
+ *	0 if none of the strings are found in phandle's "compatibility"
+ *	property, or a positive number based on the reverse index of the
+ *	matching string in the phandle's "compatibility" property, plus 1.
+ *
+ * Side Effects:
+ *	None.
+ */
+int
+of_match_compat_data(int phandle, const struct of_compat_data *compat_data)
+{
+	for (; compat_data->compat != NULL; compat_data++) {
+		const char *compat[] = { compat_data->compat, NULL };
+		const int match = of_match_compatible(phandle, compat);
+		if (match)
+			return match;
+	}
+	return 0;
 }
 
 /*
