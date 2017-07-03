@@ -1,4 +1,4 @@
-.\"	$NetBSD: math.3,v 1.26 2012/11/10 15:59:58 njoly Exp $
+.\"	$NetBSD: math.3,v 1.27 2017/07/03 21:32:50 wiz Exp $
 .\"
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
@@ -134,7 +134,7 @@ in which incidents like
 the following had been reported:
 .Bd -literal -offset indent
 sqrt(\-1.0) = 0.0 and log(\-1.0) = \-1.7e38.
-cos(1.0e\-11) \*[Gt] cos(0.0) \*[Gt] 1.0.
+cos(1.0e\-11) > cos(0.0) > 1.0.
 pow(x,1.0) \(!= x when x = 2.0, 3.0, 4.0, ..., 9.0.
 pow(\-1.0,1.0e10) trapped on Integer Overflow.
 sqrt(1.0e30) and sqrt(1.0e\-30) were very slow.
@@ -166,7 +166,7 @@ If x and x' are consecutive positive D_floating\-point
 numbers (they differ by 1
 .Dv ULP ) ,
 then
-.Dl 1.3e\-17 \*[Lt] 0.5**56 \*[Lt] (x'\-x)/x \*[Le] 0.5**55 \*[Lt] 2.8e\-17.
+.Dl 1.3e\-17 < 0.5**56 < (x'\-x)/x \*[Le] 0.5**55 < 2.8e\-17.
 .It Range :
 .Bl -column "Underflow thresholdX" "2.0**127X"
 .It Overflow threshold	= 2.0**127	= 1.7e38.
@@ -180,7 +180,7 @@ Underflow is customarily flushed quietly to zero.
 It is possible to have x
 \(!=
 y and yet x\-y = 0 because of underflow.
-Similarly x \*[Gt] y \*[Gt] 0 cannot prevent either x\(**y = 0
+Similarly x > y > 0 cannot prevent either x\(**y = 0
 or y/x = 0 from happening without warning.
 .It Zero is represented ambiguously :
 Although 2**55 different representations of zero are accepted by
@@ -254,7 +254,7 @@ produced by a host of manufacturers, among them ...
 .Bl -column "Intel i8070, i80287XX"
 .It Intel i8087, i80287	National Semiconductor  32081
 .It 68881	Weitek WTL-1032, ... , -1165
-.It Zilog Z8070	Western Electric (AT\*[Am]T) WE32106.
+.It Zilog Z8070	Western Electric (AT&T) WE32106.
 .El
 Other implementations range from software, done thoroughly
 in the Apple Macintosh, through VLSI in the Hewlett\-Packard
@@ -310,7 +310,7 @@ If x and x' are consecutive positive Double\-Precision
 numbers (they differ by 1
 .Dv ULP ) ,
 then
-.Dl 1.1e\-16 \*[Lt] 0.5**53 \*[Lt] (x'\-x)/x \*[Le] 0.5**52 \*[Lt] 2.3e\-16.
+.Dl 1.1e\-16 < 0.5**53 < (x'\-x)/x \*[Le] 0.5**52 < 2.3e\-16.
 .It Range :
 .Bl -column "Underflow thresholdX" "2.0**1024X"
 .It Overflow threshold	= 2.0**1024	= 1.8e308
@@ -328,7 +328,7 @@ with like signs; but x\-x yields +0 for every
 finite x.
 The only operations that reveal zero's
 sign are division by zero and copysign(x,\(+-0).
-In particular, comparison (x \*[Gt] y, x \*[Ge] y, etc.)
+In particular, comparison (x > y, x \*[Ge] y, etc.)
 cannot be affected by the sign of zero; but if
 finite x = y then \*(If
 \&= 1/(x\-y)
@@ -359,7 +359,7 @@ propagate through subsequent arithmetic operations.
 If x
 \(!=
 x then x is \*(Na; every other predicate
-(x \*[Gt] y, x = y, x \*[Lt] y, ...) is FALSE if \*(Na is involved.
+(x > y, x = y, x < y, ...) is FALSE if \*(Na is involved.
 .Pp
 .Em NOTE :
 Trichotomy is violated by \*(Na.

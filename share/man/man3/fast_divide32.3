@@ -1,4 +1,4 @@
-.\"	$NetBSD: fast_divide32.3,v 1.8 2011/05/10 12:09:00 jruoho Exp $
+.\"	$NetBSD: fast_divide32.3,v 1.9 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,7 +86,7 @@ and
 uint32_t a, b, q, r, m;
 uint8_t s1, s2;
 
-fast_divide32_prepare(b, \*[Am]m, \*[Am]s1, \*[Am]s2);
+fast_divide32_prepare(b, &m, &s1, &s2);
 
 q = fast_divide32(a, b, m, s1, s2);
 r = fast_remainder32(a, b, m, s1, s2);

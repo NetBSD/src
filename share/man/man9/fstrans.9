@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.25 2017/06/04 08:05:41 hannken Exp $
+.\"     $NetBSD: fstrans.9,v 1.26 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -261,7 +261,7 @@ int
 xxx_create(void *v)
 {
 	struct vop_create_args *ap = v;
-	struct mount *mp = ap-\*[Gt]a_dvp-\*[Gt]v_mount;
+	struct mount *mp = ap->a_dvp->v_mount;
 	int error;
 
 	fstrans_start(mp);

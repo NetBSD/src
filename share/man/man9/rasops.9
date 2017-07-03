@@ -1,4 +1,4 @@
-.\"     $NetBSD: rasops.9,v 1.16 2012/01/13 23:12:32 wiz Exp $
+.\"     $NetBSD: rasops.9,v 1.17 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -109,7 +109,7 @@ struct rasops_info {
 	u_char	*ri_origbits;	/* where screen bits actually start */
 	int	ri_xorigin;	/* where ri_bits begins (x) */
 	int	ri_yorigin;	/* where ri_bits begins (y) */
-	int32_t	ri_devcmap[16]; /* color -\*[Gt] framebuffer data */
+	int32_t	ri_devcmap[16]; /* color -> framebuffer data */
 
 	/*
 	 * The emulops you need to use, and the screen caps for wscons

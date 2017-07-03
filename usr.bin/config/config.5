@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.37 2016/07/19 17:01:04 maya Exp $
+.\" $NetBSD: config.5,v 1.38 2017/07/03 21:34:18 wiz Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -220,7 +220,7 @@ conditionals, referred to as
 .Ar condition
 later in this documentation.
 The syntax for those conditions uses well-known operators (
-.Dq \*[Am] ,
+.Dq & ,
 .Dq |
 and
 .Dq \&! )
@@ -305,7 +305,7 @@ the preamble may contain the following optional statements:
 .It Ic build Ar path
 Defines the build directory for the compilation of the kernel.
 It replaces the default of
-.Pa ../compile/\*[Lt]config-file\*[Gt]
+.Pa ../compile/<config-file>
 and is superseded by the
 .Fl b
 parameter of
@@ -346,7 +346,7 @@ The optional
 argument names a header file that will contain the C pre-processor definition
 for the option.
 If no file name is given, it will default to
-.Ar opt_\*[Lt]option\*[Gt].h .
+.Ar opt_<option>.h .
 .Xr config 1
 will always create the header file, but if the user choose not to select the
 option, it will be empty.
@@ -517,7 +517,7 @@ and
 .Ic needs-flag
 both produce a header file for each of the considered attributes.
 The name of that file is
-.Pa \*[Lt]attribute\*[Gt].h .
+.Pa <attribute>.h .
 It contains one pre-processor definition of
 .Dv NATTRIBUTE
 set to 0 if the attribute was not selected by the user, or to the number of
@@ -728,7 +728,7 @@ Adds or appends to a definition in the generated
 A definition cannot be overriden, it must be removed before it can be added
 again.
 Optionally, if an option
-.Pa makeoptions_\*[Lt]name\*[Gt]
+.Pa makeoptions_<name>
 is defined with
 .Ic defparam ,
 the

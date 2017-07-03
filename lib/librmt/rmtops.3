@@ -1,4 +1,4 @@
-.\"	$NetBSD: rmtops.3,v 1.14 2010/03/22 22:00:37 joerg Exp $
+.\"	$NetBSD: rmtops.3,v 1.15 2017/07/03 21:32:51 wiz Exp $
 .\"
 .Dd October 16, 2001
 .Dt RMTOPS 3
@@ -107,7 +107,7 @@ routines taking care of differentiating between local and remote files.
 This file should be included
 .Em before
 including the file
-.Pa \*[Lt]sys/stat.h\*[Gt] ,
+.Pa <sys/stat.h> ,
 since it redefines the identifier ``stat'' which is used to declare
 objects of type
 .Em "struct stat" .
@@ -162,7 +162,7 @@ Fred Fish redid them into a general purpose library.
 .Pp
 Arnold Robbins added the ability to specify a user name on the remote
 system, the
-.Pa \*[Lt]rmt.h\*[Gt]
+.Pa <rmt.h>
 include file, this man page, cleaned up the library a little, and made
 the appropriate changes for
 .Bx 4.3 .

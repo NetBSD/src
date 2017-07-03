@@ -1,4 +1,4 @@
-.\"	$NetBSD: getifaddrs.3,v 1.17 2016/09/21 10:53:24 roy Exp $
+.\"	$NetBSD: getifaddrs.3,v 1.18 2017/07/03 21:32:49 wiz Exp $
 .\"	BSDI	getifaddrs.3,v 2.5 2000/02/23 14:51:59 dab Exp
 .\"
 .\" Copyright (c) 1995, 1999
@@ -142,20 +142,20 @@ is set to indicate the error.
 The following example program prints a list of all addresses configured
 on the system.
 .Bd -literal -offset indent
-#include \*[Lt]sys/types.h\*[Gt]
-#include \*[Lt]sys/socket.h\*[Gt]
-#include \*[Lt]stdio.h\*[Gt]
-#include \*[Lt]ifaddrs.h\*[Gt]
-#include \*[Lt]util.h\*[Gt]
-#include \*[Lt]err.h\*[Gt]
-#include \*[Lt]stdlib.h\*[Gt]
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <stdio.h>
+#include <ifaddrs.h>
+#include <util.h>
+#include <err.h>
+#include <stdlib.h>
 
 int
 main(int argc, char *argv[])
 {
 	struct ifaddrs *ifa, *a;
 
-	if (getifaddrs(\*[Am]ifa) == -1)
+	if (getifaddrs(&ifa) == -1)
 		err(EXIT_FAILURE, "getifaddrs");
 
 	for (a = ifa; a; a = a->ifa_next) {

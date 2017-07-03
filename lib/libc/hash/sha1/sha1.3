@@ -1,4 +1,4 @@
-.\"	$NetBSD: sha1.3,v 1.6 2010/04/05 21:27:01 joerg Exp $
+.\"	$NetBSD: sha1.3,v 1.7 2017/07/03 21:32:49 wiz Exp $
 .\"	$OpenBSD: sha1.3,v 1.9 1998/03/07 22:18:12 millert Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -151,13 +151,13 @@ int n;
 
 buf = "abc";
 n = strlen(buf);
-SHA1Init(\*[Am]sha);
-SHA1Update(\*[Am]sha, (uint8_t *)buf, n);
-SHA1Final(results, \*[Am]sha);
+SHA1Init(&sha);
+SHA1Update(&sha, (uint8_t *)buf, n);
+SHA1Final(results, &sha);
 
 /* Print the digest as one long hex value */
 printf("0x");
-for (n = 0; n \*[Lt] 20; n++)
+for (n = 0; n < 20; n++)
 	printf("%02x", results[n]);
 putchar('\en');
 .Ed

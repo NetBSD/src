@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.9,v 1.19 2017/03/18 19:01:01 riastradh Exp $
+.\"	$NetBSD: sysctl.9,v 1.20 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -505,18 +505,18 @@ sysctl_helper(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 	int t, error;
 
-	t = *(int *)rnode-\*[Gt]sysctl_data;
+	t = *(int *)rnode->sysctl_data;
 
 	node = *rnode;
-	node.sysctl_data = \*[Am]t;
-	error = sysctl_lookup(SYSCTLFN_CALL(\*[Am]node));
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
 
-	if (t \*[Lt] 0 || t \*[Gt] 20)
+	if (t < 0 || t > 20)
 		return (EINVAL);
 
-	*(int *)rnode-\*[Gt]sysctl_data = t;
+	*(int *)rnode->sysctl_data = t;
 	return (0);
 }
 .Ed

@@ -1,4 +1,4 @@
-.\" $NetBSD: ppi.9,v 1.4 2005/12/26 19:48:12 perry Exp $
+.\" $NetBSD: ppi.9,v 1.5 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 1997
 .\"      Michael Smith
@@ -79,12 +79,12 @@ then high again, the following code fragment can be used:
 	uint8_t	val;
 
 	val = 0x5a;
-	ioctl(fd, PPISDATA, \*[Am]val);
-	ioctl(fd, PPIGCTRL, \*[Am]val);
+	ioctl(fd, PPISDATA, &val);
+	ioctl(fd, PPIGCTRL, &val);
 	val |= STROBE;
-	ioctl(fd, PPISCTRL, \*[Am]val);
-	val \*[Am]= ~STROBE;
-	ioctl(fd, PPISCTRL, \*[Am]val);
+	ioctl(fd, PPISCTRL, &val);
+	val &= ~STROBE;
+	ioctl(fd, PPISCTRL, &val);
 
 .Ed
 .Sh SEE ALSO

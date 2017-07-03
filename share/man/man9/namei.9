@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.49 2017/05/03 17:28:42 abhinav Exp $
+.\"     $NetBSD: namei.9,v 1.50 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006, 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -560,7 +560,7 @@ sets the credentials using
 .Xr kauth_cred_get 9 .
 In the rare case that another set of credentials is required for the
 namei operation,
-.Em ndp-\*[Gt]ni_cnd.cn_cred
+.Em ndp->ni_cnd.cn_cred
 must be set manually after
 .Fn NDINIT .
 .It Fn NDAT "ndp" "dvp"
@@ -586,9 +586,9 @@ Direct initialization of members of struct nameidata is
 supported and may (will) break silently in the future.
 .Pp
 The vnode for the pathname is returned in
-.Em ndp-\*[Gt]ni_vp .
+.Em ndp->ni_vp .
 The parent directory is returned locked in
-.Em ndp-\*[Gt]ni_dvp
+.Em ndp->ni_dvp
 iff
 .Dv LOCKPARENT
 is specified.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: randomid.3,v 1.7 2006/01/05 19:45:29 rpaulo Exp $
+.\"	$NetBSD: randomid.3,v 1.8 2017/07/03 21:32:49 wiz Exp $
 .\"
 .\" Copyright (C) 2006 The NetBSD Foundation
 .\" All rights reserved.
@@ -113,9 +113,9 @@ It must not be shared among multiple data streams with different usage.
 .\"
 .Sh EXAMPLES
 .Bd -literal -offset indent
-#include \*[Lt]stdio.h\*[Gt]
-#include \*[Lt]sys/types.h\*[Gt]
-#include \*[Lt]randomid.h\*[Gt]
+#include <stdio.h>
+#include <sys/types.h>
+#include <randomid.h>
 
 uint32_t
 genid(void)

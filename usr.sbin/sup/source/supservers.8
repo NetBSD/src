@@ -1,4 +1,4 @@
-.\"	$NetBSD: supservers.8,v 1.11 2013/05/28 20:13:16 spz Exp $
+.\"	$NetBSD: supservers.8,v 1.12 2017/07/03 21:35:32 wiz Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -210,18 +210,18 @@ base directory list for system collections
 /etc/supfiles/coll.host
 host name list for system collections
 .TP
-\*[Lt]base-directory\*[Gt]/sup/\*[Lt]collection\*[Gt]/*
+<base-directory>/sup/<collection>/*
 files used by file server (see
 .I
 sup(1))
 .TP
-\*[Lt]base-directory\*[Gt]/sup/\*[Lt]collection\*[Gt]/list
+<base-directory>/sup/<collection>/list
 list file used by
 .I
 supscan
 to create file list
 .TP
-\*[Lt]base-directory\*[Gt]/sup/\*[Lt]collection\*[Gt]/scan
+<base-directory>/sup/<collection>/scan
 file list created by
 .I
 supscan
