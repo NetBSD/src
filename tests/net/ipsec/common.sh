@@ -1,4 +1,4 @@
-#	$NetBSD: common.sh,v 1.3 2017/05/15 09:56:47 ozaki-r Exp $
+#	$NetBSD: common.sh,v 1.4 2017/07/03 06:01:16 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -52,4 +52,15 @@ check_sa_entries()
 	atf_check -s exit:0 -o match:"$remote_addr $local_addr" \
 	    $HIJACKING setkey -D
 	# TODO: more detail checks
+}
+
+generate_pktproto()
+{
+	local proto=$1
+
+	if [ $proto = ipcomp ]; then
+		echo IPComp
+	else
+		echo $proto | tr 'a-z' 'A-Z'
+	fi
 }
