@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.24 2017/07/03 19:31:16 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.25 2017/07/03 19:54:44 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.24 2017/07/03 19:31:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.25 2017/07/03 19:54:44 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -695,6 +695,10 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	KASSERT(bp == xfer->c_bio.bp || xfer->c_bio.bp == NULL);
 	xfer->c_bio.bp = bp;
 
+	/* Reset state flags, so that retries don't use stale info */
+	KASSERT((xfer->c_flags & (C_WAITACT|C_FREE)) == 0);
+	xfer->c_flags = 0;
+
 #ifdef WD_CHAOS_MONKEY
 	/*
 	 * Override blkno to be over device capacity to trigger error,
@@ -787,8 +791,6 @@ wddone(device_t self, struct ata_xfer *xfer)
 		return;
 	}
 
-	mutex_enter(&wd->sc_lock);
-
 	bp = xfer->c_bio.bp;
 	KASSERT(bp != NULL);
 
@@ -814,12 +816,14 @@ wddone(device_t self, struct ata_xfer *xfer)
 		errmsg = "error";
 		do_perror = 1;
 retry:		/* Just reset and retry. Can we do more ? */
-		(*wd->atabus->ata_reset_drive)(wd->drvp, 0, NULL);
+		(*wd->atabus->ata_reset_drive)(wd->drvp, AT_POLL, NULL);
 retry2:
+		mutex_enter(&wd->sc_lock);
+
 		diskerr(bp, "wd", errmsg, LOG_PRINTF,
 		    xfer->c_bio.blkdone, wd->sc_dk.dk_label);
 		if (xfer->c_bio.retries < WDIORETRIES)
-			printf(", retrying");
+			printf(", retrying %d", xfer->c_bio.retries + 1);
 		printf("\n");
 		if (do_perror)
 			wdperror(wd, xfer);
@@ -841,6 +845,8 @@ retry2:
 			return;
 		}
 
+		mutex_exit(&wd->sc_lock);
+
 #ifdef WD_SOFTBADSECT
 		/*
 		 * Not all errors indicate a failed block but those that do,
@@ -853,14 +859,24 @@ retry2:
 		     (wd->drvp->ata_vers < 4 && xfer->c_bio.r_error & 192))) {
 			struct disk_badsectors *dbs;
 
-			dbs = malloc(sizeof *dbs, M_TEMP, M_WAITOK);
+			dbs = malloc(sizeof *dbs, M_TEMP, M_NOWAIT);
+			if (dbs == NULL) {
+				aprint_error_dev(wd->sc_dev,
+				    "failed to add bad block to list\n");
+				goto out;
+			}
+
 			dbs->dbs_min = bp->b_rawblkno;
 			dbs->dbs_max = dbs->dbs_min +
 			    (bp->b_bcount /wd->sc_blksize) - 1;
 			microtime(&dbs->dbs_failedat);
+
+			mutex_enter(&wd->sc_lock);
 			SLIST_INSERT_HEAD(&wd->sc_bslist, dbs, dbs_next);
 			wd->sc_bscount++;
+			mutex_exit(&wd->sc_lock);
 		}
+out:
 #endif
 		bp->b_error = EIO;
 		break;
@@ -885,7 +901,6 @@ noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_bio.retries > 0)
 	    (bp->b_flags & B_READ));
 	rnd_add_uint32(&wd->rnd_source, bp->b_blkno);
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
-	mutex_exit(&wd->sc_lock);
 	biodone(bp);
 	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive);
 }
