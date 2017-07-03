@@ -1,12 +1,17 @@
-# $NetBSD: t_mixerctl.sh,v 1.5 2017/04/20 00:17:11 kre Exp $
+# $NetBSD: t_mixerctl.sh,v 1.6 2017/07/03 09:08:35 nat Exp $
 
 atf_test_case noargs_usage
 noargs_usage_head() {
 	atf_set "descr" "Ensure mixerctl(1) with no args prints a usage message"
 }
 noargs_usage_body() {
+	cat /dev/pad0 > /dev/null 2>&1 &
+	padpid=$!
+
 	atf_check -s exit:0 -o not-empty -e ignore \
 		mixerctl
+
+	kill -HUP ${padpid} 2>/dev/null
 }
 
 atf_test_case showvalue
