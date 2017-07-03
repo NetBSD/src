@@ -1,4 +1,4 @@
-.\"	$NetBSD: pserialize.9,v 1.12 2016/01/26 01:09:56 riastradh Exp $
+.\"	$NetBSD: pserialize.9,v 1.13 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -90,12 +90,12 @@ Given a global database of frotz records:
 .Pp
 Create a frotz and publish it, as a writer:
 .Bd -literal
-	struct frotz *f = pool_get(\*[Am]frotz_pool, PR_WAITOK);
+	struct frotz *f = pool_get(&frotz_pool, PR_WAITOK);
 
 	/* Initialize f.  */
 	...
 
-	mutex_enter(\*[Am]frobbotzim.lock);
+	mutex_enter(&frobbotzim.lock);
 	f->f_next = frobbotzim.first;
 	/*
 	 * Publish the contents of f->f_next before we publish the
@@ -103,7 +103,7 @@ Create a frotz and publish it, as a writer:
 	 */
 	membar_producer();
 	frobbotzim.first = f;
-	mutex_exit(\*[Am]frobbotzim.lock);
+	mutex_exit(&frobbotzim.lock);
 .Ed
 .Pp
 Find a frotz, as a reader:
@@ -139,8 +139,8 @@ readers:
 .Bd -literal
 	struct frotz **fp, *f;
 
-	mutex_enter(\*[Am]frobbotzim.lock);
-	for (fp = \*[Am]frobbotzim.first; (f = *fp) != NULL; fp = &f->f_next) {
+	mutex_enter(&frobbotzim.lock);
+	for (fp = &frobbotzim.first; (f = *fp) != NULL; fp = &f->f_next) {
 		if (f->f_... == key) {
 			/*
 			 * Unhook it from the list.  Readers may still
@@ -158,10 +158,10 @@ readers:
 	 */
 	pserialize_perform(frobbotzim.psz);
 	/* Now nobody else can be touching f, so it is safe to free.  */
-	mutex_exit(\*[Am]frobbotzim.lock);
+	mutex_exit(&frobbotzim.lock);
 
 	if (f != NULL)
-		pool_put(\*[Am]frotz_pool, f);
+		pool_put(&frotz_pool, f);
 .Ed
 .\" -----
 .Sh CODE REFERENCES

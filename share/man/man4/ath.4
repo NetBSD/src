@@ -1,4 +1,4 @@
-.\"     $NetBSD: ath.4,v 1.31 2012/03/13 19:25:39 njoly Exp $
+.\"     $NetBSD: ath.4,v 1.32 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
 .\" All rights reserved.
@@ -234,7 +234,7 @@ the set of available channels.
 A problem occurred while querying the HAL to find the set of available
 channels for the device.
 This should not happen.
-.It "ath%d: %s: %dM -\*[Gt] %dM (%d ok, %d err, %d retr)"
+.It "ath%d: %s: %dM -> %dM (%d ok, %d err, %d retr)"
 The driver's rate control algorithm changed the current rate for transmitting
 frames.
 This message is temporarily enabled for normal use to help in diagnosing

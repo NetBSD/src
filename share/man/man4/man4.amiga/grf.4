@@ -1,4 +1,4 @@
-.\" $NetBSD: grf.4,v 1.6 2017/02/18 22:39:00 wiz Exp $
+.\" $NetBSD: grf.4,v 1.7 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,10 +46,10 @@
 This is frame buffer device for Amiga.
 There is fixed mapping to the common video hardware.
 If the device is configured, the frame buffers are mapped as follows:
-.Bl -tag -width "grf1 \*[Am] grf2"
+.Bl -tag -width "grf1 & grf2"
 .It grf0
 custom chips
-.It grf1 \*[Am] grf2
+.It grf1 & grf2
 Retina Z2/Z3
 .It grf3
 Cirrus boards

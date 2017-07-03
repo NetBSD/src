@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.44 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: gre.4,v 1.45 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -116,7 +116,7 @@ This is the address the encapsulated packets are sent to (i.e. the
 real address of the remote tunnel endpoint.)
 .It GRESPROTO :
 Set the operation mode to the specified IP protocol value.
-The protocol is passed to the interface in (struct ifreq)-\*[Gt]ifr_flags.
+The protocol is passed to the interface in (struct ifreq)->ifr_flags.
 The operation mode can also be given as
 .Bl -tag -width link0xxx
 .It link0 link2
@@ -135,7 +135,7 @@ Query operation mode.
 Delegate a socket from userland to a tunnel interface in UDP
 encapsulation mode.
 The file descriptor for the socket is passed in
-(struct ifreq)-\*[Gt]ifr_value.
+(struct ifreq)->ifr_value.
 .El
 .Pp
 Note that the IP addresses of the tunnel endpoints may be the same as the
@@ -169,7 +169,7 @@ On Router D (Cisco):
     ip unnumbered D   ! e.g. address from Ethernet interface
     tunnel source D   ! e.g. address from Ethernet interface
     tunnel destination A
-   ip route C \*[Lt]some interface and mask\*[Gt]
+   ip route C <some interface and mask>
    ip route A mask C
    ip route X mask tunnelX
 .Ed
@@ -188,7 +188,7 @@ If all goes well, you should see packets flowing ;-)
 If you want to reach Router A over the tunnel (from Router D (Cisco)), then
 you have to have an alias on Router A for e.g. the Ethernet interface like:
 .Bd -literal
-     ifconfig \*[Lt]etherif\*[Gt] alias Y
+     ifconfig <etherif> alias Y
 .Ed
 .Pp
 and on the Cisco

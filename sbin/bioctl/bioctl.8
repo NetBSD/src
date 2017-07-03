@@ -1,4 +1,4 @@
-.\"	$NetBSD: bioctl.8,v 1.22 2016/09/11 01:03:15 sevan Exp $
+.\"	$NetBSD: bioctl.8,v 1.23 2017/07/03 21:33:41 wiz Exp $
 .\"	$OpenBSD: bioctl.8,v 1.43 2007/03/20 06:12:11 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Juan Romero Pardines
@@ -129,10 +129,10 @@ $ bioctl arcmsr0 show
 Volume Status       Size         Device/Label   RAID Level Stripe
 =================================================================
      0 Building     468G  sd0 ARC-1210-VOL#00       RAID 6  128KB  0% done
-   0:0 Online       234G         0:0.0 noencl \*[Lt]WDC WD2500YS-01SHB1 20.06C06\*[Gt]
-   0:1 Online       234G         0:1.0 noencl \*[Lt]WDC WD2500YS-01SHB1 20.06C06\*[Gt]
-   0:2 Online       234G         0:2.0 noencl \*[Lt]WDC WD2500YS-01SHB1 20.06C06\*[Gt]
-   0:3 Online       234G         0:3.0 noencl \*[Lt]WDC WD2500YS-01SHB1 20.06C06\*[Gt]
+   0:0 Online       234G         0:0.0 noencl <WDC WD2500YS-01SHB1 20.06C06>
+   0:1 Online       234G         0:1.0 noencl <WDC WD2500YS-01SHB1 20.06C06>
+   0:2 Online       234G         0:2.0 noencl <WDC WD2500YS-01SHB1 20.06C06>
+   0:3 Online       234G         0:3.0 noencl <WDC WD2500YS-01SHB1 20.06C06>
 .Ed
 .Pp
 To create a RAID 5 volume on the SCSI 0:15.0 location on the disks

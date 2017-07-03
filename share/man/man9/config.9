@@ -1,4 +1,4 @@
-.\"     $NetBSD: config.9,v 1.29 2010/12/02 12:54:13 wiz Exp $
+.\"     $NetBSD: config.9,v 1.30 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -114,16 +114,16 @@ kernel.
 The device definition files are separated into machine-dependent and
 machine-independent files.
 The machine-dependent file is located in
-.Pa sys/arch/\*[Lt]arch\*[Gt]/conf/files.\*[Lt]arch\*[Gt] ,
-where \*[Lt]arch\*[Gt] is the name of
+.Pa sys/arch/<arch>/conf/files.<arch> ,
+where <arch> is the name of
 .Nx
 architecture.
 The machine-independent file is located in
 .Pa sys/conf/files .
 It in turn includes files for the machine-independent drivers located
 in
-.Pa sys/dev/\*[Lt]bus\*[Gt]/files.\*[Lt]bus\*[Gt] ,
-where \*[Lt]bus\*[Gt] is the name of the machine-independent bus.
+.Pa sys/dev/<bus>/files.<bus> ,
+where <bus> is the name of the machine-independent bus.
 .Pp
 These files define all legal devices and pseudo-devices.
 They also define all attributes and interfaces, establishing the rules that
@@ -321,9 +321,9 @@ but the software interface requires them.
 .Sh CODE REFERENCES
 The device definition files are in
 .Pa sys/conf/files ,
-.Pa sys/arch/\*[Lt]arch\*[Gt]/conf/files.\*[Lt]arch\*[Gt] ,
+.Pa sys/arch/<arch>/conf/files.<arch> ,
 and
-.Pa sys/dev/\*[Lt]bus\*[Gt]/files.\*[Lt]bus\*[Gt] .
+.Pa sys/dev/<bus>/files.<bus> .
 .Pp
 The grammar for machine description files can be found in
 .Xr config 1 ,

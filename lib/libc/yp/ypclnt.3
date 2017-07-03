@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypclnt.3,v 1.27 2017/02/03 21:03:05 abhinav Exp $
+.\"	$NetBSD: ypclnt.3,v 1.28 2017/07/03 21:32:50 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -323,7 +323,7 @@ in the map, then they will not be terminated as such when given to the
 function, either.
 .It Fa indata
 This is the contents of the
-.Pa incallback-\*[Gt]data
+.Pa incallback->data
 element of the callback structure.
 It is provided as a means to share state between the
 .Pa foreach

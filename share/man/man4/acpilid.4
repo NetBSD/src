@@ -1,4 +1,4 @@
-.\" $NetBSD: acpilid.4,v 1.7 2011/01/09 15:55:48 jruoho Exp $
+.\" $NetBSD: acpilid.4,v 1.8 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,7 +70,7 @@ pressed)
 
         # Suspend.
         #
-        if /sbin/sysctl hw.acpi.sleep.state \*[Gt]/dev/null 2\*[Gt]\*[Am]1; then
+        if /sbin/sysctl hw.acpi.sleep.state >/dev/null 2>&1; then
                 /sbin/sysctl -w hw.acpi.sleep.state=3
 	fi
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.elf_so.1,v 1.16 2015/07/03 10:19:29 joerg Exp $
+.\"	$NetBSD: ld.elf_so.1,v 1.17 2017/07/03 21:35:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -129,14 +129,14 @@ and
 are recognized.
 .Pp
 The filename string can be considered free form, however, it will almost
-always take the form lib\*[Lt]name\*[Gt].so.\*[Lt]number\*[Gt],
+always take the form lib<name>.so.<number>,
 where name specifies the
 .Sq library
 name and number is conceptually the library's major version number.
 .Pp
-This name and another of the form lib\*[Lt]name\*[Gt].so are normally
+This name and another of the form lib<name>.so are normally
 symbolic links to the real shared object which has a filename of the form
-lib\*[Lt]name\*[Gt].so.\*[Lt]major\*[Gt].\*[Lt]minor\*[Gt][.\*[Lt]teeny\*[Gt]].
+lib<name>.so.<major>.<minor>[.<teeny>].
 This naming convention allows a versioning scheme similar to
 .Xr a.out 5 .
 .Ss Relocation

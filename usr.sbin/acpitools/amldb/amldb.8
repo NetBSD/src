@@ -1,4 +1,4 @@
-.\" $NetBSD: amldb.8,v 1.6 2014/03/18 18:20:46 riastradh Exp $
+.\" $NetBSD: amldb.8,v 1.7 2017/07/03 21:35:29 wiz Exp $
 .\" ACPI (ACPI Package)
 .\"
 .\" Copyright (c) 2000 Takanori Watanabe <takawata@FreeBSD.org>
@@ -93,7 +93,7 @@ In reading from a certain region, it fetches the value in the memory
 .Pq Em region contents ,
 prompts with it as the following:
 .Bd -literal -offset indent
-DEBUG[read(0, 0x100b6813)\*[Am]mask:0x1](default: 0x1 / 1) \*[Gt]\*[Gt]
+DEBUG[read(0, 0x100b6813)&mask:0x1](default: 0x1 / 1) >>
 .Ed
 .Pp
 for users to have the opportunity to modify it, and hands it to
@@ -270,7 +270,7 @@ Control Method by the AML interpreter.
 .Bd -literal -offset indent
 % amldb p2b.dsdt.dat
 Loading p2b.dsdt.dat...done
-AML\*[Gt]f _PRS
+AML>f _PRS
 \\_SB_.PCI0.ISA_.PS2M._PRS.
 \\_SB_.PCI0.ISA_.IRDA._PRS.
 \\_SB_.PCI0.ISA_.UAR2._PRS.
@@ -282,49 +282,49 @@ AML\*[Gt]f _PRS
 \\_SB_.LNKC._PRS.
 \\_SB_.LNKB._PRS.
 \\_SB_.LNKA._PRS.
-AML\*[Gt]r _PTS
+AML>r _PTS
 Method: Arg 1 From 0x2805f0a3 To 0x2805f0db
   Enter argument values (ex. number 1 / string foo). 'q' to quit.
   Arg0 ? n 5
 ==== Running _PTS. ====
-AML\*[Gt]s
+AML>s
 [\\_PTS. START]
 If(LNot(LEqual(Arg0, 0x5)))
-AML\*[Gt]
+AML>
 If(LEqual(Arg0, 0x1))
-AML\*[Gt]
+AML>
 If(LEqual(Arg0, 0x2))
-AML\*[Gt]
+AML>
 Store(One, TO12)
 [aml_region_write(1, 1, 0x1, 0xe42c, 0x18, 0x1)]
 amldb: region.ini: No such file or directory
-        [1:0x00@0xe42f]-\*[Gt][1:0x01@0xe42f]
+        [1:0x00@0xe42f]->[1:0x01@0xe42f]
 [write(1, 0x1, 0xe42f)]
 [aml_region_read(1, 1, 0xe42c, 0x18, 0x1)]
         [1:0x01@0xe42f]
-DEBUG[read(1, 0xe42f)\*[Am]mask:0x1](default: 0x1 / 1) \*[Gt]\*[Gt]
-[read(1, 0xe42f)-\*[Gt]0x1]
-AML\*[Gt]
+DEBUG[read(1, 0xe42f)&mask:0x1](default: 0x1 / 1) >>
+[read(1, 0xe42f)->0x1]
+AML>
 Or(Arg0, 0xf0, Local2)[Copy number 0xf5]
-AML\*[Gt]t
+AML>t
 _PTS  Method: Arg 1 From 0x2805f0a3 To 0x2805f0db
   Arg0    Num:0x5
   Local2  Num:0xf5
-AML\*[Gt]s
+AML>s
 Store(Local2, DBG1)
 [aml_region_write(1, 1, 0xf5, 0x80, 0x0, 0x8)]
-        [1:0x00@0x80]-\*[Gt][1:0xf5@0x80]
+        [1:0x00@0x80]->[1:0xf5@0x80]
 [write(1, 0xf5, 0x80)]
 [aml_region_read(1, 1, 0x80, 0x0, 0x8)]
         [1:0xf5@0x80]
-DEBUG[read(1, 0x80)\*[Am]mask:0xf5](default: 0xf5 / 245) \*[Gt]\*[Gt]
-[read(1, 0x80)-\*[Gt]0xf5]
-AML\*[Gt]
+DEBUG[read(1, 0x80)&mask:0xf5](default: 0xf5 / 245) >>
+[read(1, 0x80)->0xf5]
+AML>
 [\\_PTS. END]
 _PTS  Method: Arg 1 From 0x2805f0a3 To 0x2805f0db
 NO object
 ==== _PTS finished. ====
-AML\*[Gt]q
+AML>q
 %
 .Ed
 .Sh SEE ALSO

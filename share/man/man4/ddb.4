@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.166 2017/01/12 13:14:41 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.167 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -108,73 +108,73 @@ There are also key sequences for each port that will activate
 from the keyboard:
 .Bl -tag -offset indent -width "xen domU" -compact
 .It alpha
-\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt] on PC style keyboards.
+<Ctrl>-<Alt>-<Esc> on PC style keyboards.
 .It amd64
-\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
+<Ctrl>-<Alt>-<Esc>
 .It ""
-\*[Lt]Break\*[Gt] on serial console.
+<Break> on serial console.
 .It amiga
-\*[Lt]LAlt\*[Gt]-\*[Lt]LAmiga\*[Gt]-\*[Lt]F10\*[Gt]
+<LAlt>-<LAmiga>-<F10>
 .It atari
-\*[Lt]Alt\*[Gt]-\*[Lt]LeftShift\*[Gt]-\*[Lt]F9\*[Gt]
+<Alt>-<LeftShift>-<F9>
 .It hp300
-\*[Lt]Shift\*[Gt]-\*[Lt]Reset\*[Gt]
+<Shift>-<Reset>
 .It hpcarm
-\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
+<Ctrl>-<Alt>-<Esc>
 .It hpcmips
-\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
+<Ctrl>-<Alt>-<Esc>
 .It hpcsh
-\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
+<Ctrl>-<Alt>-<Esc>
 .It hppa
-\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt] on PC style keyboards.
+<Ctrl>-<Alt>-<Esc> on PC style keyboards.
 .It ""
 +++++
 (five plus signs) on PDC console
 .It ""
-\*[Lt]Break\*[Gt] on serial console.
+<Break> on serial console.
 .It i386
-\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
+<Ctrl>-<Alt>-<Esc>
 .It ""
-\*[Lt]Break\*[Gt] on serial console.
+<Break> on serial console.
 .It mac68k
-\*[Lt]Command\*[Gt]-\*[Lt]Power\*[Gt], or the Interrupt switch.
+<Command>-<Power>, or the Interrupt switch.
 .It macppc
 Some models:
-\*[Lt]Command\*[Gt]-\*[Lt]Option\*[Gt]-\*[Lt]Power\*[Gt]
+<Command>-<Option>-<Power>
 .It mvme68k
 Abort switch on CPU card.
 .It pmax
-\*[Lt]Do\*[Gt] on
+<Do> on
 .Tn LK-201
 rcons console.
 .It ""
-\*[Lt]Break\*[Gt] on serial console.
+<Break> on serial console.
 .It sandpoint
-\*[Lt]Break\*[Gt] on serial console.
+<Break> on serial console.
 .It sparc
-\*[Lt]L1\*[Gt]-A, or \*[Lt]Stop\*[Gt]-A on a
+<L1>-A, or <Stop>-A on a
 .Tn Sun
 keyboard.
 .It ""
-\*[Lt]Break\*[Gt] on serial console.
+<Break> on serial console.
 .It sparc64
-\*[Lt]L1\*[Gt]-A, or \*[Lt]Stop\*[Gt]-A on a
+<L1>-A, or <Stop>-A on a
 .Tn Sun
 keyboard.
 .It ""
-\*[Lt]Break\*[Gt] on serial console.
+<Break> on serial console.
 .It sun3
-\*[Lt]L1\*[Gt]-A, or \*[Lt]Stop\*[Gt]-A on a
+<L1>-A, or <Stop>-A on a
 .Tn Sun
 keyboard.
 .It ""
-\*[Lt]Break\*[Gt] on serial console.
+<Break> on serial console.
 .It vax
-\*[Lt]Esc\*[Gt]-\*[Lt]Shift\*[Gt]-D on serial console.
+<Esc>-<Shift>-D on serial console.
 .It x68k
 Interrupt switch on the body.
 .It xen dom0
-\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt] on PC style keyboards.
+<Ctrl>-<Alt>-<Esc> on PC style keyboards.
 .It ""
 +++++
 (five plus signs) on serial console.
@@ -182,7 +182,7 @@ Interrupt switch on the body.
 +++++
 (five plus signs) on serial console.
 .It zaurus
-\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
+<Ctrl>-<Alt>-<Esc>
 .El
 .Pp
 The key sequence to activate
@@ -276,7 +276,7 @@ variable, then
 displays
 .Dq "--db more--"
 and waits for a response, which may be one of:
-.Bl -tag -offset indent -width "\*[Lt]return\*[Gt]"
+.Bl -tag -offset indent -width "<return>"
 .It Aq return
 one more line.
 .It Aq space
@@ -297,10 +297,10 @@ kernel option), then a history of the last
 .Cm num
 commands is kept.
 The history can be manipulated with the following key sequences:
-.Bl -tag -offset indent -width "\*[Lt]Ctrl\*[Gt]-P"
-.It \*[Lt]Ctrl\*[Gt]-P
+.Bl -tag -offset indent -width "<Ctrl>-P"
+.It <Ctrl>-P
 retrieve previous command in history (if any).
-.It \*[Lt]Ctrl\*[Gt]-N
+.It <Ctrl>-N
 retrieve next command in history (if any).
 .El
 .Sh COMMANDS
@@ -797,7 +797,7 @@ object symbols display
 function symbols display
 .Sy * ,
 section symbols display
-.Sy \*[Am] ,
+.Sy & ,
 and file symbols display
 .Sy / .
 .Pp
@@ -1036,7 +1036,7 @@ option.
 .It Ic ctx
 Print process MMU context information.
 .It Ic pv
-Print PA-\*[Gt]VA mapping information.
+Print PA->VA mapping information.
 .It Ic reset
 Reset the system.
 .It Ic tf
@@ -1305,7 +1305,7 @@ Almost all expression operators in C are supported, except
 .Sq \&~ ,
 .Sq \&^ ,
 and unary
-.Sq \&\*[Am] .
+.Sq \&& .
 Special rules in
 .Nm
 are:

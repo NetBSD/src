@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.39 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: veriexecctl.8,v 1.40 2017/07/03 21:33:42 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.39 2014/03/18 18:20:39 riastradh Exp $
+.\"	$Id: veriexecctl.8,v 1.40 2017/07/03 21:33:42 wiz Exp $
 .\"
 .Dd August 31, 2008
 .Dt VERIEXECCTL 8
@@ -92,7 +92,7 @@ Only entries that have the filename will be presented.
 .Pp
 This can be used to recover a lost database:
 .Bd -literal -offset indent
-# veriexecctl dump \*[Gt] /etc/signatures
+# veriexecctl dump > /etc/signatures
 .Ed
 .It Cm flush
 Delete all entries in the

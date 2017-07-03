@@ -1,4 +1,4 @@
-.\"	$NetBSD: termios.4,v 1.36 2011/10/01 08:50:28 njoly Exp $
+.\"	$NetBSD: termios.4,v 1.37 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -112,7 +112,7 @@ sets the process group of the terminal back to its own process
 group (it puts itself into the foreground).
 .Pp
 If the job is to be started in the background (as denoted by the
-shell operator "\*[Am]"), it never changes the process group of the
+shell operator "&"), it never changes the process group of the
 terminal and doesn't wait for the job to complete (that is, it
 immediately attempts to read the next command).
 .Pp
@@ -409,7 +409,7 @@ and
 .Dv VTIME
 and
 their interactions are described below.
-.Ss "Case A: VMIN \*[Gt] 0, VTIME \*[Gt] 0"
+.Ss "Case A: VMIN > 0, VTIME > 0"
 In this case
 .Dv VTIME
 serves as an inter-byte timer and is activated after
@@ -438,9 +438,9 @@ expires at least one byte is returned because the timer would
 not have been enabled unless a byte was received.
 In this case
 .Pf \&( Dv VMIN
-\*[Gt] 0,
+> 0,
 .Dv VTIME
-\*[Gt] 0) the read blocks until the
+> 0) the read blocks until the
 .Dv VMIN
 and
 .Dv VTIME
@@ -450,7 +450,7 @@ If data is in the buffer at the time of the
 .Xr read 2 ,
 the result is as if data had been received immediately after the
 .Xr read 2 .
-.Ss "Case B: VMIN \*[Gt] 0, VTIME = 0"
+.Ss "Case B: VMIN > 0, VTIME = 0"
 In this case, since the value of
 .Dv VTIME
 is zero, the timer plays no role
@@ -468,7 +468,7 @@ read record-based terminal
 .Dv I/O
 may block indefinitely in the read
 operation.
-.Ss "Case C: VMIN = 0, VTIME \*[Gt] 0"
+.Ss "Case C: VMIN = 0, VTIME > 0"
 In this case, since
 .Dv VMIN
 = 0,

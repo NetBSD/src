@@ -1,4 +1,4 @@
-.\" $NetBSD: midi.4,v 1.31 2017/04/29 18:31:43 mrg Exp $
+.\" $NetBSD: midi.4,v 1.32 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -261,7 +261,7 @@ bytes will be read, but if a
 of
 size
 .Va m
-\*[Lt]
+<
 .Va n
 is issued, fewer than
 .Va m
@@ -276,13 +276,13 @@ access can be used to receive bulk dumps from synthesizers, download
 bulk data to them, and so on.
 Simple patching of one device to another can be
 done at the command line, as with
-.Dl $ cat -u 0\*[Lt]\*[Gt]/dev/rmidi0 1\*[Gt]\*[Am]0
+.Dl $ cat -u 0<>/dev/rmidi0 1>&0
 which will loop all messages received on the input stream of
 .Pa rmidi0
 input stream  back to its output
 stream in real time.
 However, an attempt to record and play back music with
-.Dl $ cat /dev/rmidiN \*[Gt]foo; cat foo \*[Gt]/dev/rmidiN
+.Dl $ cat /dev/rmidiN >foo; cat foo >/dev/rmidiN
 will be disappointing.
 The file
 .Pa foo
@@ -340,7 +340,7 @@ device.
 These rules support end-to-end Active Sensing behavior in simple cases
 without special action in an application.
 For example, in
-.Dl $ cat -u /dev/rmidi0 \*[Gt]/dev/rmidi1
+.Dl $ cat -u /dev/rmidi0 >/dev/rmidi1
 if the input stream to
 .Pa rmidi0
 is lost, the
@@ -408,7 +408,7 @@ an underlying output stream according to its
 .Va device
 index.
 Therefore
-.Dl $ cat /dev/music \*[Gt]foo; cat foo \*[Gt]/dev/music
+.Dl $ cat /dev/music >foo; cat foo >/dev/music
 can be expected to capture and reproduce an input performance including
 timing.
 .Pp

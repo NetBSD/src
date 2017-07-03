@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.48 2017/01/20 08:48:14 wiz Exp $
+.\"    $NetBSD: npf.conf.5,v 1.49 2017/07/03 21:35:31 wiz Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,7 +79,7 @@ Common variable definitions are for IP addresses, networks, ports,
 and interfaces.
 .Ss Tables
 Tables are specified using a name between angle brackets
-\*[Lt] and \*[Gt].
+< and >.
 The following is an example of table definition:
 .Bd -literal
 table <black> type hash dynamic
@@ -272,7 +272,7 @@ alg		= "alg" alg-name
 
 ; Table definition.  Table ID shall be numeric.  Path is in the double quotes.
 
-table-id	= \*[Lt]table-name\*[Gt]
+table-id	= <table-name>
 table-def	= "table" table-id "type" ( "hash" | "tree" | "cdb" )
 		  ( "dynamic" | "file" path )
 
@@ -360,7 +360,7 @@ procedure "log" {
 group "external" on $ext_if {
 	pass stateful out final all
 
-	block in final from \*[Lt]blacklist\*[Gt]
+	block in final from <blacklist>
 	pass stateful in final family inet4 proto tcp to $ext_if port ssh apply "log"
 	pass stateful in final proto tcp to $ext_if port $services_tcp
 	pass stateful in final proto udp to $ext_if port $services_udp
@@ -370,7 +370,7 @@ group "external" on $ext_if {
 
 group "internal" on $int_if {
 	block in all
-	block in final from \*[Lt]limited\*[Gt]
+	block in final from <limited>
 
 	# Ingress filtering as per BCP 38 / RFC 2827.
 	pass in final from $localnet
