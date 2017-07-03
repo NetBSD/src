@@ -1,4 +1,4 @@
-.\"	$NetBSD: cksum.1,v 1.47 2014/08/31 07:23:53 wiz Exp $
+.\"	$NetBSD: cksum.1,v 1.48 2017/07/03 21:34:18 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -132,8 +132,8 @@ The list is read from
 .Ar sumfile ,
 or from stdin if no filename is given.
 E.g. first run
-.Dl Ic md5 *.tgz \*[Gt] MD5
-.Dl Ic sha1 *.tgz \*[Gt] SHA1
+.Dl Ic md5 *.tgz > MD5
+.Dl Ic sha1 *.tgz > SHA1
 to generate a list of MD5 checksums in
 .Pa MD5 ,
 then use the following command to verify them:
@@ -259,7 +259,7 @@ The
 .Nm
 and
 .Nm sum
-utilities exit 0 on success, and \*[Gt]0 if an error occurs.
+utilities exit 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .Xr mtree 8

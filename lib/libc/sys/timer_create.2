@@ -1,4 +1,4 @@
-.\"	$NetBSD: timer_create.2,v 1.12 2012/11/06 21:16:21 uwe Exp $
+.\"	$NetBSD: timer_create.2,v 1.13 2017/07/03 21:32:50 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,11 +69,11 @@ If the
 argument is
 .Dv NULL ,
 then
-.Fa evp-\*[Gt]sigev_notify
+.Fa evp->sigev_notify
 defaults to
 .Dv SIGEV_SIGNAL
 and
-.Fa evp-\*[Gt]sigev_value
+.Fa evp->sigev_value
 is set to
 .Ar timerid .
 Refer to

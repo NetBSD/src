@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahdilabel.8,v 1.13 2017/02/18 21:47:11 wiz Exp $
+.\"	$NetBSD: ahdilabel.8,v 1.14 2017/07/03 21:31:00 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,9 +55,9 @@ The name of the disk you want to edit.
 .Nm
 will first try to open a disk of this name.  If this cannot
 be opened, it will attempt to open
-.Ar r Ns \*[Lt]disk\*[Gt] Ns Ar c .
+.Ar r Ns <disk> Ns Ar c .
 Finally, if this also cannot be opened, it will attempt to open
-.Ar /dev/r Ns \*[Lt]disk\*[Gt] Ns Ar c .
+.Ar /dev/r Ns <disk> Ns Ar c .
 .El
 .Pp
 .Nm
@@ -96,8 +96,8 @@ up. The filesystem type is msdos.
 .Pp
 The root, start and size parameters can be entered using sector,
 cylinder/track/sector or megabyte notations.  Whole numbers of cylinders can
-be entered using the shorthand \*[Lt]cylinder\*[Gt]/.  Likewise, whole numbers of tracks
-can be entered using the shorthand \*[Lt]cylinder\*[Gt]/\*[Lt]track\*[Gt]/.  Megabytes are entered
+be entered using the shorthand <cylinder>/.  Likewise, whole numbers of tracks
+can be entered using the shorthand <cylinder>/<track>/.  Megabytes are entered
 using the suffix
 .Em M .
 .Pp

@@ -1,4 +1,4 @@
-.\"	$NetBSD: format.8,v 1.13 2017/02/17 22:30:28 christos Exp $
+.\"	$NetBSD: format.8,v 1.14 2017/07/03 21:31:00 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -188,9 +188,9 @@ and
 .Dq @
 may be used to edit input.
 .Bd -literal -offset 0.5i
-\*[Gt]\*[Gt]\*[Gt]\fBL FORMAT\fP
+>>>\fBL FORMAT\fP
 	LOAD DONE, 00004400 BYTES LOADED
-\*[Gt]\*[Gt]\*[Gt]\fBS 2\fP
+>>>\fBS 2\fP
 Disk format/check utility
 .sp
 Enable debugging (0=none, 1=bse, 2=ecc, 3=bse+ecc)? \fB0\fP
@@ -253,22 +253,22 @@ Load the console floppy labeled,
 .Dq RX11 VAX DSK LD DEV #1
 in the console disk drive, and type the following commands:
 .Bd -literal -offset indent
-\*[Gt]\*[Gt]\*[Gt]BOOT
+>>>BOOT
 DIAGNOSTIC SUPERVISOR.  ZZ-ESSAA-X5.0-119  23-JAN-1980 12:44:40.03
-DS\*[Gt]ATTACH DW780 SBI DW0 3 5
-DS\*[Gt]ATTACH RK611 DMA
-DS\*[Gt]ATTACH RK07 DW0 DMA0
-DS\*[Gt]SELECT DMA0
-DS\*[Gt]LOAD EVRAC
-DS\*[Gt]START/SEC:PACKINIT
+DS>ATTACH DW780 SBI DW0 3 5
+DS>ATTACH RK611 DMA
+DS>ATTACH RK07 DW0 DMA0
+DS>SELECT DMA0
+DS>LOAD EVRAC
+DS>START/SEC:PACKINIT
 .Ed
 .Ss Formatting an RP0X
 Follow the above procedures except that the
 ATTACH and SELECT lines should read:
 .Bd -literal -offset indent
-DS\*[Gt]ATTACH RH780 SBI RH0 8 5
-DS\*[Gt]ATTACH RP0X RH0 DBA0		(RP0X is, e.g., RP06)
-DS\*[Gt]SELECT DBA0
+DS>ATTACH RH780 SBI RH0 8 5
+DS>ATTACH RP0X RH0 DBA0		(RP0X is, e.g., RP06)
+DS>SELECT DBA0
 .Ed
 .Pp
 This is for drive 0 on mba0; use 9 instead of 8 for mba1, etc.
@@ -276,9 +276,9 @@ This is for drive 0 on mba0; use 9 instead of 8 for mba1, etc.
 Follow the above procedures except that the
 ATTACH and SELECT lines should read:
 .Bd -literal -offset indent
-DS\*[Gt]ATTACH RH780 SBI RH0 8 5
-DS\*[Gt]ATTACH RM0X RH0 DRA0
-DS\*[Gt]SELECT DRA0
+DS>ATTACH RH780 SBI RH0 8 5
+DS>ATTACH RM0X RH0 DRA0
+DS>SELECT DRA0
 .Ed
 .Pp
 Don't forget to put your UNIX console floppy back in the floppy disk

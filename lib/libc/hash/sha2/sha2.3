@@ -1,4 +1,4 @@
-.\" $NetBSD: sha2.3,v 1.5 2009/05/26 08:04:12 joerg Exp $
+.\" $NetBSD: sha2.3,v 1.6 2017/07/03 21:32:49 wiz Exp $
 .\"	$OpenBSD: sha2.3,v 1.11 2004/06/22 01:57:29 jfb Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -250,13 +250,13 @@ int n;
 
 buf = "abc";
 n = strlen(buf);
-SHA256_Init(\*[Am]ctx);
-SHA256_Update(\*[Am]ctx, (uint8_t *)buf, n);
-SHA256_Final(results, \*[Am]ctx);
+SHA256_Init(&ctx);
+SHA256_Update(&ctx, (uint8_t *)buf, n);
+SHA256_Final(results, &ctx);
 
 /* Print the digest as one long hex value */
 printf("0x");
-for (n = 0; n \*[Lt] SHA256_DIGEST_LENGTH; n++)
+for (n = 0; n < SHA256_DIGEST_LENGTH; n++)
 	printf("%02x", results[n]);
 putchar('\en');
 .Ed

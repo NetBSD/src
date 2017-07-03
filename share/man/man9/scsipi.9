@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.30 2016/11/20 16:59:11 wiz Exp $
+.\"	$NetBSD: scsipi.9,v 1.31 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -410,7 +410,7 @@ Disable the adapter if
 .Va enable
 is zero, or enable it if non-zero.
 Returns 0 if operation is successful, or error from
-.Pa \*[Lt]sys/errno.h\*[Gt] .
+.Pa <sys/errno.h> .
 This callback is optional, and is useful mostly for hot-plug devices.
 For example, this callback would power on or off
 the relevant PCMCIA socket for a PCMCIA controller.
@@ -527,7 +527,7 @@ set.
 will call the
 .Fn adapt_request
 callback again only if called with
-.Fa xs-\*[Gt]error
+.Fa xs->error
 set to
 .Dv XS_NOERROR ,
 and

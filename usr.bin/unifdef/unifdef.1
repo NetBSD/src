@@ -1,4 +1,4 @@
-.\"	$NetBSD: unifdef.1,v 1.12 2009/06/11 03:16:34 ginsbach Exp $
+.\"	$NetBSD: unifdef.1,v 1.13 2017/07/03 21:34:22 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -116,7 +116,7 @@ the
 .Fn defined
 operator applied to symbols defined or undefined on the command line,
 the operators
-.Ic \&! , \*[Lt] , \*[Gt] , \*[Lt]= , \*[Gt]= , == , != , \*[Am]\*[Am] , || ,
+.Ic \&! , < , > , <= , >= , == , != , && , || ,
 and parenthesized expressions.
 Anything that it does not understand is passed through unharmed.
 It only processes

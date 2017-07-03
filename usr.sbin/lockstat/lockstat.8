@@ -1,4 +1,4 @@
-.\"	$NetBSD: lockstat.8,v 1.10 2013/03/06 11:49:06 yamt Exp $
+.\"	$NetBSD: lockstat.8,v 1.11 2017/07/03 21:35:31 wiz Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -147,7 +147,7 @@ Elapsed time: 10.01 seconds.
 
 Total%  Count   Time/ms          Lock                       Caller
 ------ ------- --------- ---------------------- ------------------------------
-100.00    1281      0.78 uvm_pageqlock          \*[Lt]all\*[Gt]
+100.00    1281      0.78 uvm_pageqlock          <all>
  39.81     385      0.31 uvm_pageqlock          uvm_fault_internal+11cc
  30.98     358      0.24 uvm_pageqlock          uvm_fault_internal+bb1
  28.06     522      0.22 uvm_pageqlock          uvm_anfree+132

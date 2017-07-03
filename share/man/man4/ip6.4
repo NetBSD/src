@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip6.4,v 1.30 2012/06/25 14:47:55 christos Exp $
+.\"	$NetBSD: ip6.4,v 1.31 2017/07/03 21:30:58 wiz Exp $
 .\"	$KAME: ip6.4,v 1.23 2005/01/11 05:56:25 itojun Exp $
 .\"	$OpenBSD: ip6.4,v 1.21 2005/01/06 03:50:46 itojun Exp $
 .\"
@@ -241,8 +241,8 @@ and their respective constants are in
 .In netinet/portalgo.h .
 For example,
 .Bd -literal
-int algo = PORTALGO_ALGO_RANDOM_PICK;       /* see \*[Lt]netinet/portalgo.h\*[Gt] */
-setsockopt(s, IPPROTO_IPV6, IPV6_PORTALGO, \*[Am]algo, sizeof(algo));
+int algo = PORTALGO_ALGO_RANDOM_PICK;       /* see <netinet/portalgo.h> */
+setsockopt(s, IPPROTO_IPV6, IPV6_PORTALGO, &algo, sizeof(algo));
 .Ed
 .Pp
 The port selection can be also viewed and controlled at a global level for all
@@ -592,13 +592,13 @@ u_char data[2048];
 
 /* Create socket. */
 
-(void)memset(\*[Am]m, 0, sizeof(m));
-(void)memset(\*[Am]iov, 0, sizeof(iov));
+(void)memset(&m, 0, sizeof(m));
+(void)memset(&iov, 0, sizeof(iov));
 
 iov[0].iov_base = data;		/* buffer for packet payload */
 iov[0].iov_len = sizeof(data);	/* expected packet length */
 
-m.msg_name = \*[Am]from;		/* sockaddr_in6 of peer */
+m.msg_name = &from;		/* sockaddr_in6 of peer */
 m.msg_namelen = sizeof(from);
 m.msg_iov = iov;
 m.msg_iovlen = 1;
@@ -610,19 +610,19 @@ m.msg_controllen = sizeof(buf);
  * returned along with the payload.
  */
 optval = 1;
-if (setsockopt(s, IPPROTO_IPV6, IPV6_HOPLIMIT, \*[Am]optval,
+if (setsockopt(s, IPPROTO_IPV6, IPV6_HOPLIMIT, &optval,
     sizeof(optval)) == -1)
 	err(1, "setsockopt");
 
 found = 0;
 while (!found) {
-	if (recvmsg(s, \*[Am]m, 0) == -1)
+	if (recvmsg(s, &m, 0) == -1)
 		err(1, "recvmsg");
-	for (cm = CMSG_FIRSTHDR(\*[Am]m); cm != NULL;
-	     cm = CMSG_NXTHDR(\*[Am]m, cm)) {
-		if (cm-\*[Gt]cmsg_level == IPPROTO_IPV6 \*[Am]\*[Am]
-		    cm-\*[Gt]cmsg_type == IPV6_HOPLIMIT \*[Am]\*[Am]
-		    cm-\*[Gt]cmsg_len == CMSG_LEN(sizeof(int))) {
+	for (cm = CMSG_FIRSTHDR(&m); cm != NULL;
+	     cm = CMSG_NXTHDR(&m, cm)) {
+		if (cm->cmsg_level == IPPROTO_IPV6 &&
+		    cm->cmsg_type == IPV6_HOPLIMIT &&
+		    cm->cmsg_len == CMSG_LEN(sizeof(int))) {
 			found = 1;
 			(void)printf("hop limit: %d\en",
 			    *(int *)CMSG_DATA(cm));

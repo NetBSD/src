@@ -1,4 +1,4 @@
-.\"	$NetBSD: routed.8,v 1.44 2004/05/17 15:38:20 wiz Exp $
+.\"	$NetBSD: routed.8,v 1.45 2017/07/03 21:33:42 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -446,9 +446,9 @@ Blank lines and lines starting with '#' are comments.
 .Ar Gname
 .Cm metric
 .Ar value
-.Pf \*[Lt] Cm passive No \&|
+.Pf < Cm passive No \&|
 .Cm active No \&|
-.Cm extern Ns \*[Gt]
+.Cm extern Ns >
 .Ed
 .Bd -ragged
 .Cm host
@@ -457,9 +457,9 @@ Blank lines and lines starting with '#' are comments.
 .Ar Gname
 .Cm metric
 .Ar value
-.Pf \*[Lt] Cm passive No \&|
+.Pf < Cm passive No \&|
 .Cm active No \&|
-.Cm extern Ns \*[Gt]
+.Cm extern Ns >
 .Ed
 .Pp
 .Ar Nname

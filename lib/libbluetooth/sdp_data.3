@@ -1,4 +1,4 @@
-.\" $NetBSD: sdp_data.3,v 1.9 2015/03/31 09:26:45 plunky Exp $
+.\" $NetBSD: sdp_data.3,v 1.10 2017/07/03 21:32:49 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -313,16 +313,16 @@ examining various attribute values:
 
 	/* rsp contains remote response */
 
-	while (sdp_get_attr(\*[Am]rsp, \*[Am]attr, \*[Am]val)) {
+	while (sdp_get_attr(&rsp, &attr, &val)) {
 		switch(attr) {
 		case SDP_ATTR_SERVICE_RECORD_HANDLE:
-			sdp_get_uint(\*[Am]val, \*[Am]handle);
+			sdp_get_uint(&val, &handle);
 			printf("ServiceRecordHandle: 0x%08x\\n", handle);
 			break;
 
 		case SDP_ATTR_PROFILE_DESCRIPTOR_LIST:
 			printf("ProfileDescriptorList:\\n");
-			sdp_data_print(\*[Am]val, 0);
+			sdp_data_print(&val, 0);
 			break;
 
 		default:
@@ -343,19 +343,19 @@ of known and unknown length.
 
 	seq.next = buf;
 	seq.end = buf + sizeof(buf);
-	sdp_put_seq(\*[Am]seq, -1);
+	sdp_put_seq(&seq, -1);
 
-	sdp_put_seq(\*[Am]seq, 6);
-	sdp_put_uuid16(\*[Am]seq, SDP_UUID_PROTOCOL_L2CAP);
-	sdp_put_uint16(\*[Am]seq, psm);
+	sdp_put_seq(&seq, 6);
+	sdp_put_uuid16(&seq, SDP_UUID_PROTOCOL_L2CAP);
+	sdp_put_uint16(&seq, psm);
 
-	sdp_put_seq(\*[Am]seq, 5);
-	sdp_put_uuid16(\*[Am]seq, SDP_UUID_PROTOCOL_RFCOMM);
-	sdp_put_uint8(\*[Am]seq, channel);
+	sdp_put_seq(&seq, 5);
+	sdp_put_uuid16(&seq, SDP_UUID_PROTOCOL_RFCOMM);
+	sdp_put_uint8(&seq, channel);
 
 	seq.end = seq.next;
 	seq.next = buf;
-	sdp_set_seq(\*[Am]seq, -1);
+	sdp_set_seq(&seq, -1);
 .Ed
 .Pp
 Note that although

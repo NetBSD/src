@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.conf.5,v 1.10 2010/12/03 21:41:40 jmmv Exp $
+.\"	$NetBSD: passwd.conf.5,v 1.11 2017/07/03 21:30:59 wiz Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -60,11 +60,11 @@ The cipher to use for local passwords.
 .Pp
 Possible values are:
 .Dq old ,
-.Dq newsalt,\*[Lt]rounds\*[Gt] ,
+.Dq newsalt,<rounds> ,
 .Dq md5 ,
-.Dq sha1,\*[Lt]rounds\*[Gt] ,
+.Dq sha1,<rounds> ,
 and
-.Dq blowfish,\*[Lt]rounds\*[Gt] .
+.Dq blowfish,<rounds> .
 For
 .Dq newsalt
 the value of rounds is a 24-bit integer with a minimum of 7250 rounds.
