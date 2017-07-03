@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.280 2017/07/03 16:43:01 roy Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.281 2017/07/03 18:54:11 khorben Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.280 2017/07/03 16:43:01 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.281 2017/07/03 18:54:11 khorben Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -699,7 +699,7 @@ sendit:
 
 	/*
 	 * We can't use HW checksumming if we're about to
-	 * to fragment the packet.
+	 * fragment the packet.
 	 *
 	 * XXX Some hardware can do this.
 	 */
