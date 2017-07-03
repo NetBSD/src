@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.94 2017/06/27 10:33:09 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.95 2017/07/03 08:29:58 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -71,6 +71,8 @@
 #include "vlan.h"
 
 #include <sys/cprng.h>
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 /*********************************************************************
  *  Driver version
@@ -720,6 +722,26 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		/* falls thru */
 	default:
 		break;
+	}
+
+	if (hw->phy.id != 0) {
+		uint16_t id1, id2;
+		int oui, model, rev;
+		const char *descr;
+
+		id1 = hw->phy.id >> 16;
+		id2 = hw->phy.id & 0xffff;
+		oui = MII_OUI(id1, id2);
+		model = MII_MODEL(id2);
+		rev = MII_REV(id2);
+		if ((descr = mii_get_descr(oui, model)) != NULL)
+			aprint_normal_dev(dev,
+			    "PHY: %s (OUI 0x%06x, model 0x%04x), rev. %d\n",
+			    descr, oui, model, rev);
+		else
+			aprint_normal_dev(dev,
+			    "PHY OUI 0x%06x, model 0x%04x, rev. %d\n",
+			    oui, model, rev);
 	}
 
 	/* hw.ix defaults init */
