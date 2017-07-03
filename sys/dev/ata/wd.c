@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.23 2017/06/24 00:00:10 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.24 2017/07/03 19:31:16 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.23 2017/06/24 00:00:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.24 2017/07/03 19:31:16 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -113,6 +113,10 @@ int wdcdebug_wd_mask = 0x0;
 		printf args
 #else
 #define ATADEBUG_PRINT(args, level)
+#endif
+
+#ifdef WD_CHAOS_MONKEY
+int wdcdebug_wd_chaos = 0;
 #endif
 
 int	wdprobe(device_t, cfdata_t, void *);
@@ -690,6 +694,20 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	xfer->c_bio.blkdone = 0;
 	KASSERT(bp == xfer->c_bio.bp || xfer->c_bio.bp == NULL);
 	xfer->c_bio.bp = bp;
+
+#ifdef WD_CHAOS_MONKEY
+	/*
+	 * Override blkno to be over device capacity to trigger error,
+	 * but only if it's read, to avoid trashing disk contents should
+	 * the command be clipped, or otherwise misinterpreted, by the
+	 * driver or controller.
+	 */
+	if (BUF_ISREAD(bp) && (++wdcdebug_wd_chaos % WD_CHAOS_MONKEY) == 0) {
+		aprint_normal_dev(wd->sc_dev, "%s: chaos xfer %d\n",
+		    __func__, xfer->c_slot);
+		xfer->c_bio.blkno = 7777777 + wd->sc_capacity;
+	}
+#endif
 
 	/*
 	 * If we're retrying, retry in single-sector mode. This will give us
