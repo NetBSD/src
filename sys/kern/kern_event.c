@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.92 2017/07/01 20:08:56 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.93 2017/07/03 00:53:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.92 2017/07/01 20:08:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.93 2017/07/03 00:53:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ extern const struct filterops sig_filtops;
  * These should be listed in the numeric order of the EVFILT_* defines.
  * If filtops is NULL, the filter isn't implemented in NetBSD.
  * End of list is when name is NULL.
- * 
+ *
  * Note that 'refcnt' is meaningless for built-in filters.
  */
 struct kfilter {
@@ -1020,7 +1020,6 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 			if (error != 0) {
 #ifdef DIAGNOSTIC
-				
 				printf("%s: event type %d not supported for "
 				    "file type %d (error %d)\n", __func__,
 				    kn->kn_filter, kn->kn_obj ?
@@ -1181,7 +1180,7 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 	} else {
 		/* no timeout, wait forever */
 		timeout = 0;
-	}	
+	}
 
 	memset(&morker, 0, sizeof(morker));
 	marker = &morker;
@@ -1614,7 +1613,7 @@ again:
 	mutex_spin_exit(&kq->kq_lock);
 
 	mutex_exit(&fdp->fd_lock);
-	if (kn->kn_fop->f_isfd)		
+	if (kn->kn_fop->f_isfd)
 		fd_putfile(kn->kn_id);
 	atomic_dec_uint(&kn->kn_kfilter->refcnt);
 	kmem_free(kn, sizeof(*kn));
