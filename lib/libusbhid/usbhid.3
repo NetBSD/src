@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbhid.3,v 1.14 2012/03/15 19:04:47 njoly Exp $
+.\"	$NetBSD: usbhid.3,v 1.15 2017/07/03 21:32:51 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2001 Lennart Augustsson <augustss@NetBSD.org>
 .\" All rights reserved.
@@ -118,7 +118,7 @@ To parse the report descriptor the
 function should be called with a report descriptor and a set that
 describes which items that are interesting.
 The set is obtained by or-ing together values
-.Fa "(1 \*[Lt]\*[Lt] k)"
+.Fa "(1 << k)"
 where
 .Fa k
 is an item of type

@@ -1,5 +1,5 @@
 .\"	@(#)rpc.3n	2.4 88/08/08 4.0 RPCSRC; from 1.19 88/06/24 SMI
-.\"	$NetBSD: rpc_soc.3,v 1.16 2016/12/29 22:07:12 wiz Exp $
+.\"	$NetBSD: rpc_soc.3,v 1.17 2017/07/03 21:32:49 wiz Exp $
 .\" Converted to mdoc by Thomas Klausner <wiz@NetBSD.org>
 .\"
 .Dd December 29, 2016
@@ -537,7 +537,7 @@ the client uses TCP/IP as a transport.
 The remote program is located at Internet address
 .Fa *addr .
 If
-.Fa addr-\*[Gt]sin_port
+.Fa addr->sin_port
 is zero, then it is set to the actual port that the remote
 program is listening on (the remote
 .Xr rpcbind 8
@@ -569,7 +569,7 @@ the client uses UDP/IP as a transport.
 The remote program is located at Internet address
 .Fa addr .
 If
-.Fa addr-\*[Gt]sin_port
+.Fa addr->sin_port
 is zero, then it is set to actual port that the remote
 program is listening on (the remote
 .Xr rpcbind 8
@@ -600,7 +600,7 @@ the client uses UDP/IP as a transport.
 The remote program is located at Internet address
 .Fa addr .
 If
-.Fa addr-\*[Gt]sin_port
+.Fa addr->sin_port
 is zero, then it is set to actual port that the remote
 program is listening on (the remote
 .Xr rpcbind 8
@@ -844,7 +844,7 @@ is non-zero, then a mapping of the triple
 .Fa versnum ,
 .Fa protocol ]
 to
-.Fa xprt-\*[Gt]xp_port
+.Fa xprt->xp_port
 is established with the local
 .Xr rpcbind 8
 service (generally
@@ -945,9 +945,9 @@ in which case a new socket is created.
 If the socket is not bound to a local TCP
 port, then this routine binds it to an arbitrary port.
 Upon completion,
-.Fa xprt-\*[Gt]xp_sock
+.Fa xprt->xp_sock
 is the transport's socket descriptor, and
-.Fa xprt-\*[Gt]xp_port
+.Fa xprt->xp_port
 is the transport's port number.
 This routine returns
 .Dv NULL
@@ -975,9 +975,9 @@ in which case a new socket is created.
 If the socket is not bound to a local UDP
 port, then this routine binds it to an arbitrary port.
 Upon completion,
-.Fa xprt-\*[Gt]xp_sock
+.Fa xprt->xp_sock
 is the transport's socket descriptor, and
-.Fa xprt-\*[Gt]xp_port
+.Fa xprt->xp_port
 is the transport's port number.
 This routine returns
 .Dv NULL

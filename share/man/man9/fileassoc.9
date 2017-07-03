@@ -1,4 +1,4 @@
-.\" $NetBSD: fileassoc.9,v 1.29 2016/12/01 01:06:12 pgoyette Exp $
+.\" $NetBSD: fileassoc.9,v 1.30 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -240,7 +240,7 @@ and/or file:
 fileassoc_t myhook_id;
 int error;
 
-error = fileassoc_register("my_hook", myhook_cleanup, \*[Am]myhook_id);
+error = fileassoc_register("my_hook", myhook_cleanup, &myhook_id);
 if (error != 0)
 	...handle error...
 .Ed

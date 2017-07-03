@@ -1,4 +1,4 @@
-.\" $NetBSD: ym.4,v 1.18 2008/04/30 13:10:55 martin Exp $
+.\" $NetBSD: ym.4,v 1.19 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,17 +65,17 @@ driver can be accessed by
 command.
 The layout is shown below.
 .Bd -literal
-            dac ------------------------\*[Lt]-----  -----------------
-midi(OPL3/ZV)-\*[Gt]-+----------------------------+-\*[Gt]|inputs.midi    |
-cd      -\*[Gt]------+-*--------------------------+-\*[Gt]|inputs.cd      |
-line    -\*[Gt]----*-+-+--------------------------+-\*[Gt]|inputs.line    |
-speaker -\*[Gt]----+-+-+--------------------------+-\*[Gt]|inputs.speaker |
-mic     -\*[Gt]--*-+-+-+--------------------------+-\*[Gt]|inputs.mic     |
+            dac ------------------------<-----  -----------------
+midi(OPL3/ZV)->-+----------------------------+->|inputs.midi    |
+cd      ->------+-*--------------------------+->|inputs.cd      |
+line    ->----*-+-+--------------------------+->|inputs.line    |
+speaker ->----+-+-+--------------------------+->|inputs.speaker |
+mic     ->--*-+-+-+--------------------------+->|inputs.mic     |
             v v v v      monitor.monitor     |  |               |
         ---------------  -------  |  ------- |  |               |
-        |record.record|-\*[Gt]| A/D |----\*[Gt]| D/A |-*-\*[Gt]|inputs.dac     |analog
-        |             |  |conv.|-- -\*[Gt]|conv.|    |               |output
-        ---------------  ------- | | -------    | outputs.master|--\*[Gt]
+        |record.record|->| A/D |---->| D/A |-*->|inputs.dac     |analog
+        |             |  |conv.|-- ->|conv.|    |               |output
+        ---------------  ------- | | -------    | outputs.master|-->
                            wave  v | wave       | equalization.*|
                          recording playback     -----------------
 .Ed

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.1,v 1.18 2014/04/13 01:45:34 snj Exp $
+.\"	$NetBSD: pmap.1,v 1.19 2017/07/03 21:34:20 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -229,10 +229,10 @@ output style is selected, the first thing printed is the contents of
 the vm_map structure, followed by the individual map entries.
 .Bd -literal -offset indent
 $ pmap -d
-MAP 0xcf7cac84: [0x0-\*[Gt]0xbfbfe000]
+MAP 0xcf7cac84: [0x0->0xbfbfe000]
         #ent=8, sz=34041856, ref=1, version=20, flags=0x41
-        pmap=0xcf44cee0(resident=\*[Lt]unknown\*[Gt])
- - 0xcfa3a358: 0x8048000-\*[Gt]0x80b1000: obj=0xcf45a8e8/0x0, amap=0x0/0
+        pmap=0xcf44cee0(resident=<unknown>)
+ - 0xcfa3a358: 0x8048000->0x80b1000: obj=0xcf45a8e8/0x0, amap=0x0/0
         submap=F, cow=T, nc=T, prot(max)=5/7, inh=1, wc=0, adv=0
 \&...
 .Ed

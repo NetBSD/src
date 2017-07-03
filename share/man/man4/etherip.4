@@ -1,4 +1,4 @@
-.\"     $NetBSD: etherip.4,v 1.7 2008/05/04 19:43:05 martin Exp $
+.\"     $NetBSD: etherip.4,v 1.8 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>.
 .\" All rights reserved.
@@ -126,7 +126,7 @@ device is created, it is assigned an Ethernet address
 of the form f2:0b:a5:xx:xx:xx.
 This address can later be changed through a sysctl node.
 .Pp
-The sysctl node is net.link.etherip.\*[Lt]iface\*[Gt].
+The sysctl node is net.link.etherip.<iface>.
 Any string of six colon-separated hexadecimal numbers will be accepted.
 Reading that node will provide a string representation of the current
 Ethernet address.

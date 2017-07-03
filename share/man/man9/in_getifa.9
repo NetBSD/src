@@ -1,4 +1,4 @@
-.\" $NetBSD: in_getifa.9,v 1.8 2014/03/18 18:20:40 riastradh Exp $
+.\" $NetBSD: in_getifa.9,v 1.9 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2006 David Young.  All rights reserved.
 .\"
@@ -194,7 +194,7 @@ net.inet.ip.interfaces.ath0.selectsrc = same-category,common-prefix-len,preferen
 The operator may set a new default,
 .Bd -literal -offset indent
 # sysctl -w net.inet.ip.selectsrc.debug=\
-\*[Gt] same-category,common-prefix-len,preference
+> same-category,common-prefix-len,preference
 # sysctl -w net.inet.ip.interfaces.ath0.selectsrc=
 .Ed
 .Pp

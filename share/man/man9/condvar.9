@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.15 2017/07/03 21:16:36 pgoyette Exp $
+.\"	$NetBSD: condvar.9,v 1.16 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -261,7 +261,7 @@ Consuming a resource:
 	 * Lock the resource.  Its mutex will also serve as the
 	 * interlock.
 	 */
-	mutex_enter(\*[Am]res-\*[Gt]mutex);
+	mutex_enter(&res->mutex);
 
 	/*
 	 * Wait for the resource to become available.  Timeout after
@@ -270,12 +270,12 @@ Consuming a resource:
 	 */
 	bt.sec = 5;
 	bt.frac = 0;
-	while (res-\*[Gt]state == BUSY \*[Am]\*[Am] (bt.sec || bt.frac))
-		cv_timedwaitbt(\*[Am]res-\*[Gt]condvar, \\
-		    \*[Am]res-\*[Gt]mutex, bt, epsilon);
+	while (res->state == BUSY && (bt.sec || bt.frac))
+		cv_timedwaitbt(&res->condvar, \\
+		    &res->mutex, bt, epsilon);
 
-	if (res-\*[Gt]state == BUSY) {
-		mutex_exit(\*[Am]res-\*[Gt]mutex);
+	if (res->state == BUSY) {
+		mutex_exit(&res->mutex);
 		return ETIMEDOUT;
 	}
 
@@ -283,16 +283,16 @@ Consuming a resource:
 	 * It's now available to us.  Take ownership of the
 	 * resource, and consume it.
 	 */
-	res-\*[Gt]state = BUSY;
-	mutex_exit(\*[Am]res-\*[Gt]mutex);
+	res->state = BUSY;
+	mutex_exit(&res->mutex);
 	consume(res);
 
 Releasing a resource for the next consumer to use:
 
-	mutex_enter(\*[Am]res-\*[Gt]mutex);
-	res-\*[Gt]state = IDLE;
-	cv_signal(\*[Am]res-\*[Gt]condvar);
-	mutex_exit(\*[Am]res-\*[Gt]mutex);
+	mutex_enter(&res->mutex);
+	res->state = IDLE;
+	cv_signal(&res->condvar);
+	mutex_exit(&res->mutex);
 .Ed
 .Sh CODE REFERENCES
 The core of the CV implementation is in

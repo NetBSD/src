@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtol.3,v 1.39 2016/11/04 20:19:58 riastradh Exp $
+.\"	$NetBSD: strtol.3,v 1.40 2017/07/03 21:32:50 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -224,7 +224,7 @@ long lval;
 \&...
 
 errno = 0;
-lval = strtol(buf, \*[Am]ep, 10);
+lval = strtol(buf, &ep, 10);
 if (ep == buf)
 	goto not_a_number;
 if (*ep != '\e0')
@@ -265,7 +265,7 @@ long lval;
 \&...
 
 errno = 0;
-lval = strtol(buf, \*[Am]ep, 10);
+lval = strtol(buf, &ep, 10);
 if (ep == buf)
 	goto not_a_number;
 if (*ep != '\e0')

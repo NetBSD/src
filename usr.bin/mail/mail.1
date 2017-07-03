@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.62 2017/01/23 10:05:25 abhinav Exp $
+.\"	$NetBSD: mail.1,v 1.63 2017/07/03 21:34:20 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -240,7 +240,7 @@ as described below.
 These message
 .Dq specs
 may be combined by the usual binary boolean operations
-.Ql \*[Am] ,
+.Ql & ,
 .Ql \&| ,
 and
 .Ql \&^ ,
@@ -355,7 +355,7 @@ from 1 12 3-5
 .Pp
 would display the headers from messages 1, 3, 4, 5, and 12.
 .Bd -literal -offset indent
-from anon \*[Am] ( /foo | /bar )
+from anon & ( /foo | /bar )
 .Ed
 .Pp
 would display all headers that had
@@ -765,7 +765,7 @@ means the previous file,
 means your system mailbox,
 .Ql %user
 means user's system mailbox,
-.Ql \*[Am]
+.Ql &
 means your
 .Ar mbox
 file, and
@@ -833,7 +833,7 @@ For example, one use might be something like:
 if headersonly
   set header-format="%P%Q%3i %-21.20f %m/%d %R %3K \e"%q\e""
 else
-  set header-format="%P%Q%?\*[Am] ?%3i %-21.20f %a %b %e %R %3K/%-5O \e"%q\e""
+  set header-format="%P%Q%?& ?%3i %-21.20f %a %b %e %R %3K/%-5O \e"%q\e""
 endif
 .Ed
 .It Ic ifdef
@@ -981,7 +981,7 @@ Arguments are of the form
 .Ar option .
 Quotation marks may be placed around any part of the assignment
 statement to quote blanks or tabs, i.e.
-.Dq Li "set indentprefix=\*q-\*[Gt]\*q"
+.Dq Li "set indentprefix=\*q->\*q"
 Inside single quotes everything is parsed literally, including
 .Sq \e
 escaped characters.
@@ -1373,7 +1373,7 @@ is set.
 Exits as with \&~q, except the message is not saved in
 .Dq Pa dead.letter .
 .It Ic \&~r Ns Ar filename
-.It Ic \&~\*[Lt] Ns Ar filename
+.It Ic \&~< Ns Ar filename
 Reads the named file into the message.
 If the argument begins with
 .Ql \&! ,
@@ -1491,7 +1491,7 @@ command or redirected to a file.
 The pipe/redirection is signaled by the first occurrence of a
 .Ql \&|
 or
-.Ql \*[Gt]
+.Ql >
 character that is not in a quoted string or in a parenthetical
 group.
 This character terminates the mail command line and the remaining
@@ -1505,7 +1505,7 @@ could be used to count how may replies were made by senders with
 .Ql john@
 in their address and
 .Bd -literal -offset indent
-  from john@ \*[Gt]\*[Gt] /tmp/john
+  from john@ >> /tmp/john
 .Ed
 .Pp
 would append all the headers from such senders to /tmp/john.
@@ -1829,7 +1829,7 @@ substitute
 times.
 This is intended to be used when displaying an
 .Dq exposed thread .
-.It Ar \&%?\*[Am]string?
+.It Ar \&%?&string?
 Like
 .Ar \&%?*string? ,
 but uses the depth relative to the current depth rather than the
@@ -1851,7 +1851,7 @@ The message size.
 .It Ar \&%P
 The current
 .Dq dot
-.Pq Sq \*[Gt]
+.Pq Sq >
 message.
 .It Ar \&%Q
 The message status flag.
@@ -1903,7 +1903,7 @@ the letters above will be displayed in lower case if the property is
 that of a hidden child with the case
 .Ql \&*
 being displayed as
-.Ql \*[Am] .
+.Ql & .
 .Pp
 Note 2:
 .Ar \&%n
@@ -2050,7 +2050,7 @@ in the user's home directory.
 .It Ar prompt
 If defined, it specifies the prompt to use when in command mode.
 Otherwise, the default
-.Ql \*[Am]
+.Ql &
 is used.
 The format syntax is the same as for
 .Ar header-format .
@@ -2127,7 +2127,7 @@ splits a message into a series of its smallest MIME parts and
 processes those parts as if they were messages themselves, passing the
 header and body through a pipeline of the form:
 .Pp
-.Dl mail -\*[Gt] MIME-decoder -\*[Gt] MIME-hook -\*[Gt] pager -\*[Gt] screen
+.Dl mail -> MIME-decoder -> MIME-hook -> pager -> screen
 .Pp
 The
 .Em MIME-decoder

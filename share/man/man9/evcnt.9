@@ -1,4 +1,4 @@
-.\" $NetBSD: evcnt.9,v 1.21 2011/01/14 18:34:44 dyoung Exp $
+.\" $NetBSD: evcnt.9,v 1.22 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou
 .\" All rights reserved.
@@ -247,12 +247,12 @@ fooattach(device_t parent, device_t self, void *aux)
 	[ . . . ]
 
 	/* Initialize and attach event counters. */
-	evcnt_attach_dynamic(\*[Am]sc-\*[Gt]sc_ev, EVCNT_TYPE_INTR,
+	evcnt_attach_dynamic(&sc->sc_ev, EVCNT_TYPE_INTR,
 	    NULL, device_xname(self), "intr");
-	evcnt_attach_dynamic(\*[Am]sc-\*[Gt]sc_ev_rd, EVCNT_TYPE_INTR,
-	    \*[Am]sc-\*[Gt]sc_ev, device_xname(self), "intr rd");
-	evcnt_attach_dynamic(\*[Am]sc-\*[Gt]sc_ev_wr, EVCNT_TYPE_INTR,
-	    \*[Am]sc-\*[Gt]sc_ev, device_xname(self), "intr wr");
+	evcnt_attach_dynamic(&sc->sc_ev_rd, EVCNT_TYPE_INTR,
+	    &sc->sc_ev, device_xname(self), "intr rd");
+	evcnt_attach_dynamic(&sc->sc_ev_wr, EVCNT_TYPE_INTR,
+	    &sc->sc_ev, device_xname(self), "intr wr");
 
 	[ . . . ]
 }
@@ -274,7 +274,7 @@ event counter (in this example, one used to track CPU alignment traps):
 .Pp
 To attach this event counter, code like the following could be used:
 .Bd -literal
-	evcnt_attach_static(\*[Am]aligntrap_ev);
+	evcnt_attach_static(&aligntrap_ev);
 .Ed
 .Sh CODE REFERENCES
 The event counter framework itself is implemented within the file

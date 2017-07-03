@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigaltstack.2,v 1.24 2014/09/27 12:11:13 njoly Exp $
+.\"	$NetBSD: sigaltstack.2,v 1.25 2017/07/03 21:32:50 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -110,7 +110,7 @@ if ((sigstk.ss_sp = malloc(SIGSTKSZ)) == NULL)
 	/* error return */
 sigstk.ss_size = SIGSTKSZ;
 sigstk.ss_flags = 0;
-if (sigaltstack(\*[Am]sigstk,0) \*[Lt] 0)
+if (sigaltstack(&sigstk,0) < 0)
 	perror("sigaltstack");
 .Ed
 .Pp

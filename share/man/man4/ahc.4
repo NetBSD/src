@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.33 2009/05/04 19:45:51 wiz Exp $
+.\"	$NetBSD: ahc.4,v 1.34 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -63,7 +63,7 @@ Change the default SCSI id for cards without a SEEPROM (default 7):
 .Cd options AHC_CARDBUS_DEFAULT_SCSI_ID=integer
 .Pp
 .\" To configure one or more controllers to assume the target role:
-.\" .Cd options AHC_TMODE_ENABLE \*[Lt]bitmask of units\*[Gt]
+.\" .Cd options AHC_TMODE_ENABLE <bitmask of units>
 .\" .Pp
 .\" For one or more SCSI buses:
 .\" .Cd device scbus0 at ahc0
@@ -152,7 +152,7 @@ Memory mapped I/O is more efficient than the alternative, programmed I/O.
 Most PCI BIOSes will map devices so that either technique for communicating
 with the card is available.
 In some cases,
-usually when the PCI device is sitting behind a PCI-\*[Gt]PCI bridge,
+usually when the PCI device is sitting behind a PCI->PCI bridge,
 the BIOS may fail to properly initialize the chip for memory mapped I/O.
 The typical symptom of this problem is a system hang if memory mapped I/O
 is attempted.
