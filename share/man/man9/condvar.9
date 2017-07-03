@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.14 2010/12/02 12:54:13 wiz Exp $
+.\"	$NetBSD: condvar.9,v 1.15 2017/07/03 21:16:36 pgoyette Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 4, 2008
+.Dd July 3, 2017
 .Dt CONDVAR 9
 .Os
 .Sh NAME
@@ -39,6 +39,8 @@
 .Nm cv_wait_sig ,
 .Nm cv_timedwait ,
 .Nm cv_timedwait_sig ,
+.Nm cv_timedwaitbt ,
+.Nm cv_timedwaitbt_sig ,
 .Nm cv_signal ,
 .Nm cv_broadcast ,
 .Nm cv_has_waiters
@@ -57,6 +59,12 @@
 .Fn cv_timedwait "kcondvar_t *cv" "kmutex_t *mtx" "int ticks"
 .Ft int
 .Fn cv_timedwait_sig "kcondvar_t *cv" "kmutex_t *mtx" "int ticks"
+.Ft int
+.Fn cv_timedwaitbt "kcondvar_t *cv" "kmutex_t *mtx" "struct bintime *bt" \
+"const struct bintime *epsilon"
+.Ft int
+.Fn cv_timedwaitbt_sig "kcondvar_t *cv" "kmutex_t *mtx" "struct bintime *bt" \
+"const struct bintime *epsilon"
 .Ft void
 .Fn cv_signal "kcondvar_t *cv"
 .Ft void
@@ -192,6 +200,22 @@ As per
 but also accepts a timeout value and will return
 .Er EWOULDBLOCK
 if the timeout expires.
+.It Fn cv_timedwaitbt "cv" "mtx" "bt" "epsilon"
+.It Fn cv_timedwaitbt_sig "cv" "mtx" "bt" "epsilon"
+.Pp
+Similar to
+.Fn cv_timedwait
+and
+.Fn cv_timedwait_sig ,
+however the
+.Fa bintime
+argument is decremented in place with the amount of time actually waited,
+and on return contains the amount of time remaining.
+.Pp
+The
+.Fa epsilon
+argument is currently reserved for future use in choosing between low
+and high-resolution timers.
 .It Fn cv_signal "cv"
 .Pp
 Awaken one LWP (potentially among many) that is waiting on the specified
@@ -240,10 +264,20 @@ Consuming a resource:
 	mutex_enter(\*[Am]res-\*[Gt]mutex);
 
 	/*
-	 * Wait for the resource to become available.
+	 * Wait for the resource to become available.  Timeout after
+	 * five seconds.  If the resource is not available within the
+	 * alloted time, return an error.
 	 */
-	while (res-\*[Gt]state == BUSY)
-		cv_wait(\*[Am]res-\*[Gt]condvar, \*[Am]res-\*[Gt]mutex);
+	bt.sec = 5;
+	bt.frac = 0;
+	while (res-\*[Gt]state == BUSY \*[Am]\*[Am] (bt.sec || bt.frac))
+		cv_timedwaitbt(\*[Am]res-\*[Gt]condvar, \\
+		    \*[Am]res-\*[Gt]mutex, bt, epsilon);
+
+	if (res-\*[Gt]state == BUSY) {
+		mutex_exit(\*[Am]res-\*[Gt]mutex);
+		return ETIMEDOUT;
+	}
 
 	/*
 	 * It's now available to us.  Take ownership of the
@@ -286,3 +320,9 @@ describes the public interface.
 .Sh HISTORY
 The CV primitives first appeared in
 .Nx 5.0 .
+The
+.Fn cv_timedwaitbt
+and
+.Fn cv_timedwaitbt_sig
+primitives first appeared in
+.Nx 9.0 .
