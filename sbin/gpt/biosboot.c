@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.27 2017/02/16 03:32:17 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.28 2017/07/03 06:44:58 mrg Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,17 +37,21 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.27 2017/02/16 03:32:17 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.28 2017/07/03 06:44:58 mrg Exp $");
 #endif
 
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#ifdef DIOCGWEDGEINFO
-#include <sys/disk.h>
-#endif
 #include <sys/param.h>
 #include <sys/bootblock.h>
+
+#if defined(DIOCGWEDGEINFO) && !defined(HAVE_NBTOOL_CONFIG_H)
+#define USE_WEDGES
+#endif
+#ifdef USE_WEDGES
+#include <sys/disk.h>
+#endif
 
 #include <err.h>
 #include <fcntl.h>
@@ -252,7 +256,7 @@ biosboot(gpt_t gpt, daddr_t start, uint64_t size, u_int entry, uint8_t *label,
 static int
 cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 {
-#ifdef DIOCGWEDGEINFO
+#ifdef USE_WEDGES
 	struct dkwedge_info dkw;
 #endif
 	int ch;
@@ -289,7 +293,7 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 	if (argc != optind)
 		return usage();
 
-#ifdef DIOCGWEDGEINFO
+#ifdef USE_WEDGES
 	if ((gpt->sb.st_mode & S_IFMT) != S_IFREG &&
 	    ioctl(gpt->fd, DIOCGWEDGEINFO, &dkw) != -1) {
 		if (entry > 0)
