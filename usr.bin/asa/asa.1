@@ -1,4 +1,4 @@
-.\"	$NetBSD: asa.1,v 1.13 2016/06/06 14:25:12 abhinav Exp $
+.\"	$NetBSD: asa.1,v 1.14 2017/07/03 21:34:18 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Winning Strategies, Inc.
 .\" All rights reserved.
@@ -47,20 +47,20 @@ and writes them to the standard output.
 .Pp
 The first character of each line is interpreted as a carriage-control
 character.  The following characters are interpreted as follows:
-.Bl -tag -width "\*[Lt]space\*[Gt]"
-.It \*[Lt]space\*[Gt]
+.Bl -tag -width "<space>"
+.It <space>
 Output the rest of the line without change.
 .It 0
-Output a \*[Lt]newline\*[Gt] character before printing the rest of the line.
+Output a <newline> character before printing the rest of the line.
 .It 1
-Output a \*[Lt]formfeed\*[Gt] character before printing the rest of the line.
+Output a <formfeed> character before printing the rest of the line.
 .It +
-The trailing \*[Lt]newline\*[Gt] of the previous line is replaced by a \*[Lt]carriage-return\*[Gt]
+The trailing <newline> of the previous line is replaced by a <carriage-return>
 before printing the rest of the line.
 .El
 .Pp
 Lines beginning with characters other than the above are treated as if they
-begin with \*[Lt]space\*[Gt].
+begin with <space>.
 .Sh EXIT STATUS
 .Ex -std
 .Sh EXAMPLES

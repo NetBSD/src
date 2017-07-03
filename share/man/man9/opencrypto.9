@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.16 2017/05/26 08:09:08 wiz Exp $
+.\"	$NetBSD: opencrypto.9,v 1.17 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -483,12 +483,12 @@ do asymmetric crypto requests.
 .It kern.cryptodevallowsoft
 Enable/disable access to hardware versus software operations:
 .Bl -tag -width xxx
-.It \*[Lt] 0
+.It < 0
 Force userlevel requests to use software operations, always.
 .It = 0
 Use hardware if present, grant userlevel requests for non-accelerated
 operations (handling the latter in software).
-.It \*[Gt] 0
+.It > 0
 Allow user requests only for operations which are hardware-accelerated.
 .El
 .It opencrypto.crypto_ret_q.maxlen

@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.45 2016/08/29 01:13:56 tnn Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.46 2017/07/03 21:32:51 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -434,7 +434,7 @@ can be called to specify the new node attributes, cached attributes
 time to live, and cached name time to live.
 .Pp
 The type of operation is found from
-.Va pcn-\*[Gt]pcn_nameiop :
+.Va pcn->pcn_nameiop :
 .Bl -tag -width XNAMEI_LOOKUPX
 .It Dv NAMEI_LOOKUP
 Normal lookup operation.
@@ -451,7 +451,7 @@ up using
 The final component from a pathname lookup usually requires special
 treatment.
 It can be identified by looking at the
-.Va pcn-\*[Gt]pcn_flags
+.Va pcn->pcn_flags
 fields for the flag
 .Dv PUFFSLOOKUP_ISLASTCN .
 For example, in most cases the lookup operation will want to check if
@@ -472,21 +472,21 @@ error code, for example
 .Pp
 Usually a null-terminated string for the next pathname component is
 provided in
-.Ar pcn-\*[Gt]pcn_name .
+.Ar pcn->pcn_name .
 In case the file system is using the option
 .Dv PUFFS_KFLAG_LOOKUP_FULLPNBUF ,
 the remainder of the complete pathname under lookup is found in
 the same location.
-.Ar pcn-\*[Gt]pcn_namelen
+.Ar pcn->pcn_namelen
 always specifies the length of the next component.
 If operating with a full path, the file system is allowed to consume
 more than the next component's length in node lookup.
 This is done by setting
-.Ar pcn-\*[Gt]pcn_consume
+.Ar pcn->pcn_consume
 to indicate the amount of
 .Em extra
 characters in addition to
-.Ar pcn-\*[Gt]pcn_namelen
+.Ar pcn->pcn_namelen
 processed.
 .It Fn puffs_node_create "pu" "opc" "pni" "pcn" "va"
 .It Fn puffs_node_mkdir "pu" "opc" "pni" "pcn" "va"
@@ -504,7 +504,7 @@ The only difference between these three is that they create a regular
 file, directory and device special file, respectively.
 .Pp
 In case of mknod, the device identifier can be found in
-.Fa va-\*[Gt]va_rdev .
+.Fa va->va_rdev .
 .It Fn puffs_node_open "pu" "opc" "mode" "pcr"
 .It Fn puffs_node_open2 "pu" "opc" "mode" "pcr" "oflags"
 Open the node denoted by the cookie

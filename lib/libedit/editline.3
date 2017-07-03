@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.95 2017/06/27 23:22:20 christos Exp $
+.\"	$NetBSD: editline.3,v 1.96 2017/07/03 21:32:50 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -860,7 +860,7 @@ The caller is responsible for free'ing the string in the returned
 .El
 .Pp
 .Fn history
-returns \*[Gt]= 0 if the operation
+returns >= 0 if the operation
 .Fa op
 succeeds.
 Otherwise, \-1 is returned and

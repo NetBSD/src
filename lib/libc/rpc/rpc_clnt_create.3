@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_clnt_create 1.5 89/07/24 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_clnt_create.3,v 1.12 2011/05/17 03:35:39 enami Exp $
+.\"	$NetBSD: rpc_clnt_create.3,v 1.13 2017/07/03 21:32:49 wiz Exp $
 .Dd May 23, 2009
 .Dt RPC_CLNT_CREATE 3
 .Os
@@ -228,7 +228,7 @@ was set using
 .Fn clnt_control ,
 the file descriptor will be closed.
 The caller should call
-.Fn auth_destroy "clnt-\*[Gt]cl_auth"
+.Fn auth_destroy "clnt->cl_auth"
 (before calling
 .Fn clnt_destroy )
 to destroy the associated

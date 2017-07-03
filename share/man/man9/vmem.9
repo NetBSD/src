@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmem.9,v 1.16 2016/02/29 00:34:17 chs Exp $
+.\"	$NetBSD: vmem.9,v 1.17 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -113,7 +113,7 @@ calls
 .Fa arg
 .Fa size
 .Fa flags
-.Fa "\*[Am]addrp"
+.Fa "&addrp"
 .Fc
 to import a span of size at least
 .Fa size .
@@ -214,9 +214,9 @@ calls
 .Fo "(*allocfn)"
 .Fa arg
 .Fa size
-.Fa "\*[Am]actualsize"
+.Fa "&actualsize"
 .Fa flags
-.Fa "\*[Am]addrp"
+.Fa "&addrp"
 .Fc
 to import a span of size at least
 .Fa size .

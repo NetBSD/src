@@ -1,6 +1,6 @@
 .\" @(#)rpc.3n 1.31 93/08/31 SMI; from SVr4
 .\" Copyright 1989 AT&T
-.\"	$NetBSD: rpc.3,v 1.24 2012/05/13 15:47:38 wiz Exp $
+.\"	$NetBSD: rpc.3,v 1.25 2017/07/03 21:32:49 wiz Exp $
 .Dd May 7, 1993
 .Dt RPC 3
 .Os
@@ -146,7 +146,7 @@ typedef struct {
     struct    opaque_auth    ah_verf;
     struct auth_ops {
         void    (*ah_nextverf)(\|);
-        int    (*ah_marshal)(\|);    /* nextverf \*[Am] serialize */
+        int    (*ah_marshal)(\|);    /* nextverf & serialize */
         int    (*ah_validate)(\|);    /* validate verifier */
         int    (*ah_refresh)(\|);    /* refresh credentials */
         void    (*ah_destroy)(\|);    /* destroy this structure */
@@ -281,7 +281,7 @@ typedef struct {
 } XDR;
 
 /*
- * The netbuf structure. This structure is defined in \*[Lt]xti.h\*[Gt] on SysV
+ * The netbuf structure. This structure is defined in <xti.h> on SysV
  * systems, but NetBSD does not use XTI.
  *
  * Usually, buf will point to a struct sockaddr, and len and maxlen

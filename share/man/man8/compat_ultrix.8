@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_ultrix.8,v 1.20 2011/11/21 15:11:45 wiz Exp $
+.\"	$NetBSD: compat_ultrix.8,v 1.21 2017/07/03 21:31:00 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -78,7 +78,7 @@ as below:
 .br
 .It # cd /emul/ultrix/etc
 .br
-.It # egrep 'domain|nameserver' /etc/resolv.conf  \*[Gt] ./resolv.conf
+.It # egrep 'domain|nameserver' /etc/resolv.conf  > ./resolv.conf
 .br
 .It # cp -p /usr/share/examples/emul/ultrix/etc/*	./
 .El

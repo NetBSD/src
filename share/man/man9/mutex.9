@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.28 2017/05/02 08:20:20 wiz Exp $
+.\"	$NetBSD: mutex.9,v 1.29 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -206,7 +206,7 @@ Otherwise, return zero.
 is provided for making diagnostic checks to verify that a lock is held.
 For example:
 .Bd -literal
-	KASSERT(mutex_owned(\*[Am]driver_lock));
+	KASSERT(mutex_owned(&driver_lock));
 .Ed
 .Pp
 It should not be used to make locking decisions at run time.
@@ -244,13 +244,13 @@ must be acquired before
 the following can be used to optimistically lock in reverse order:
 .Bd -literal
 	/* We hold second_lock, but not first_lock. */
-	KASSERT(mutex_owned(\*[Am]second_lock));
+	KASSERT(mutex_owned(&second_lock));
 
-	if (!mutex_tryenter(\*[Am]first_lock)) {
+	if (!mutex_tryenter(&first_lock)) {
 		/* Failed to get it - lock in the correct order. */
-		mutex_exit(\*[Am]second_lock);
-		mutex_enter(\*[Am]first_lock);
-		mutex_enter(\*[Am]second_lock);
+		mutex_exit(&second_lock);
+		mutex_enter(&first_lock);
+		mutex_enter(&second_lock);
 
 		/*
 		 * We may need to recheck any conditions the code

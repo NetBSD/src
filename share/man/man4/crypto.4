@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypto.4,v 1.25 2015/04/28 09:48:31 prlw1 Exp $
+.\"	$NetBSD: crypto.4,v 1.26 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -257,7 +257,7 @@ is not desired for this session.
 .Pp
 Multiple sessions may be bound to a single file descriptor.
 The session ID returned in
-.Fa sessp-\*[Gt]ses
+.Fa sessp->ses
 is supplied as a required field in the symmetric-operation structure
 .Fa crypt_op
 for future encryption or hashing requests.
@@ -269,19 +269,19 @@ extension.
 .Pp
 For non-zero symmetric-key privacy algorithms, the privacy algorithm
 must be specified in
-.Fa sessp-\*[Gt]cipher ,
+.Fa sessp->cipher ,
 the key length in
-.Fa sessp-\*[Gt]keylen ,
+.Fa sessp->keylen ,
 and the key value in the octets addressed by
-.Fa sessp-\*[Gt]key .
+.Fa sessp->key .
 .Pp
 For keyed one-way hash algorithms, the one-way hash must be specified
 in
-.Fa sessp-\*[Gt]mac ,
+.Fa sessp->mac ,
 the key length in
-.Fa sessp-\*[Gt]mackey ,
+.Fa sessp->mackey ,
 and the key value in the octets addressed by
-.Fa sessp-\*[Gt]mackeylen .
+.Fa sessp->mackeylen .
 .\"
 .Pp
 Support for a specific combination of fused privacy  and
@@ -317,9 +317,9 @@ Takes a counted array of
 structures in
 .Fa sgop .
 For each requested session (array element n), the session number is returned in
-.Fa sgop-\*[Gt]sessions[n].ses
+.Fa sgop->sessions[n].ses
 and the status for that session creation in
-.Fa sgop-\*[Gt]sessions[n].status .
+.Fa sgop->sessions[n].status .
 .\"
 .It Dv CIOCCRYPT Fa struct crypt_op *cr_op
 .Bd -literal
@@ -339,20 +339,20 @@ The file descriptor argument to
 .Xr ioctl 2
 must have been bound to a valid session.
 To encrypt, set
-.Fa cr_op-\*[Gt]op
+.Fa cr_op->op
 to
 .Dv COP_ENCRYPT .
 To decrypt, set
-.Fa cr_op-\*[Gt]op
+.Fa cr_op->op
 to
 .Dv COP_DECRYPT .
 The field
-.Fa cr_op-\*[Gt]len
+.Fa cr_op->len
 supplies the length of the input buffer; the fields
-.Fa cr_op-\*[Gt]src ,
-.Fa cr_op-\*[Gt]dst ,
-.Fa cr_op-\*[Gt]mac ,
-.Fa cr_op-\*[Gt]iv
+.Fa cr_op->src ,
+.Fa cr_op->dst ,
+.Fa cr_op->mac ,
+.Fa cr_op->iv
 supply the addresses of the input buffer, output buffer,
 one-way hash, and initialization vector, respectively.
 .It Dv CIOCNCRYPTM Fa struct crypt_mop *cr_mop
@@ -388,23 +388,23 @@ symmetric-key (or hash) operations to be started (see CIOCRYPT
 above for the details for each operation).
 .Pp
 The
-.Fa cr_mop-\*[Gt]count
+.Fa cr_mop->count
 field specifies the number of operations provided in the
-cr_mop-\*[Gt]reqs array.
+cr_mop->reqs array.
 .Pp
 Each operation is assigned a unique request id returned in the
-.Fa cr_mop-\*[Gt]reqs[n].reqid
+.Fa cr_mop->reqs[n].reqid
 field.
 .Pp
 Each operation can accept an opaque value from the user to be passed back
 to the user when the operation completes
 (e.g., to track context for the request).
 The opaque field is
-.Fa cr_mop-\*[Gt]reqs[n].opaque .
+.Fa cr_mop->reqs[n].opaque .
 .Pp
 If a problem occurs with starting any of the operations then that
 operation's
-.Fa cr_mop-\*[Gt]reqs[n].status
+.Fa cr_mop->reqs[n].status
 field is filled with the error code.
 The failure of an operation does not
 prevent the other operations from being started.
@@ -437,7 +437,7 @@ struct crypt_sfop {
 
 .Ed
 Destroys the
-.Fa sfop-\*[Gt]count
+.Fa sfop->count
 sessions specified by the
 .Fa sfop
 array of session identifiers.
@@ -476,7 +476,7 @@ is set.
 For example,
 .Dv CRK_MOD_EXP
 is available if and only if the bit
-.Pq 1 \*[Lt]\*[Lt] Dv CRK_MOD_EXP
+.Pq 1 << Dv CRK_MOD_EXP
 is set.
 .It Dv CIOCKEY Fa struct crypt_kop *kop
 .Bd -literal
@@ -498,19 +498,19 @@ struct crparam {
 .Ed
 Performs an asymmetric-key operation from the list above.
 The specific operation is supplied in
-.Fa kop-\*[Gt]crk_op ;
+.Fa kop->crk_op ;
 final status for the operation is returned in
-.Fa kop-\*[Gt]crk_status .
+.Fa kop->crk_status .
 The number of input arguments and the number of output arguments
 is specified in
-.Fa kop-\*[Gt]crk_iparams
+.Fa kop->crk_iparams
 and
-.Fa kop-\*[Gt]crk_iparams ,
+.Fa kop->crk_iparams ,
 respectively.
 The field
 .Fa crk_param[]
 must be filled in with exactly
-.Fa kop-\*[Gt]crk_iparams + kop-\*[Gt]crk_oparams
+.Fa kop->crk_iparams + kop->crk_oparams
 arguments, each encoded as a
 .Fa struct crparam
 (address, bitlength) pair.
@@ -543,12 +543,12 @@ above and
 .Dv CIOCNCRYPTRETM
 below
 for descriptions of the
-.Fa mkop\*[Gt]count ,
-.Fa mkop\*[Gt]reqs ,
-.Fa mkop\*[Gt]reqs[n].crk_reqid ,
-.Fa mkop\*[Gt]reqs[n].crk_status ,
+.Fa mkop>count ,
+.Fa mkop>reqs ,
+.Fa mkop>reqs[n].crk_reqid ,
+.Fa mkop>reqs[n].crk_status ,
 and
-.Fa  mkop\*[Gt]reqs[n].crk_opaque
+.Fa  mkop>reqs[n].crk_opaque
 fields of the argument structure, and result retrieval.
 .El
 .Ss Asynchronous status commands
@@ -575,13 +575,13 @@ struct crypt_result {
 
 .Ed
 Check for the status of the request specified by
-.Fa cres-\*[Gt]reqid .
+.Fa cres->reqid .
 This requires a linear search through all completed requests and should
 be used with extreme care if the number of requests pending on this
 file descriptor may be large.
 .Pp
 The
-.Fa cres-\*[Gt]status
+.Fa cres->status
 field is set as follows:
 .Bl -tag -width EINPROGRESS
 .It 0
@@ -614,11 +614,11 @@ an array (each array element is a
 structure as used by
 .Dv CIOCNCRYPTRET
 above) and fills the array with up to
-.Fa cret-\*[Gt]count
+.Fa cret->count
 results of completed requests.
 .Pp
 This ioctl fills in the
-.Fa cret-\*[Gt]results[n].reqid field ,
+.Fa cret->results[n].reqid field ,
 so that the request which has completed
 may be identified by the application.
 Note that the results may include

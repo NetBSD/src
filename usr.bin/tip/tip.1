@@ -1,4 +1,4 @@
-.\"	$NetBSD: tip.1,v 1.32 2012/03/22 07:58:20 wiz Exp $
+.\"	$NetBSD: tip.1,v 1.33 2017/07/03 21:34:22 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -177,11 +177,11 @@ implies change to your home directory).
 .It Ic \&~!
 Escape to a shell (exiting the shell will
 return you to tip).
-.It Ic \&~\*[Gt]
+.It Ic \&~>
 Copy file from local to remote.
 .Nm
 prompts for the name of a local file to transmit.
-.It Ic \&~\*[Lt]
+.It Ic \&~<
 Copy file from remote to local.
 .Nm
 prompts first for the name of the file to be sent, then for
@@ -192,14 +192,14 @@ Send a file to a remote
 host.
 The put command causes the remote
 .Ux
-system to run the command string ``cat \*[Gt] 'to''', while
+system to run the command string ``cat > 'to''', while
 .Nm
 sends it the ``from''
 file.
 If the ``to'' file isn't specified the ``from'' file name is used.
 This command is actually a
 .Ux
-specific version of the ``~\*[Gt]'' command.
+specific version of the ``~>'' command.
 .It Ic \&~t Ar from Op Ar to
 Take a file from a remote
 .Ux
@@ -229,10 +229,10 @@ such as
 .Tn XMODEM .
 The child program will be run with the following
 arrangement of file descriptors:
-.Bl -column -offset indent 0 "\*[Lt]-\*[Gt]" "remote tty in"
-.It 0 Ta \*[Lt]-\*[Gt] Ta remote tty in
-.It 1 Ta \*[Lt]-\*[Gt] Ta remote tty out
-.It 2 Ta \*[Lt]-\*[Gt] Ta local tty out
+.Bl -column -offset indent 0 "<->" "remote tty in"
+.It 0 Ta <-> Ta remote tty in
+.It 1 Ta <-> Ta remote tty out
+.It 2 Ta <-> Ta local tty out
 .El
 .It Ic \&~+
 Synonym for \&~C, provided for compatibility with other versions of
@@ -307,7 +307,7 @@ and by honoring the locking protocol used by
 During file transfers
 .Nm
 provides a running count of the number of lines transferred.
-When using the ~\*[Gt] and ~\*[Lt] commands, the ``eofread'' and ``eofwrite''
+When using the ~> and ~< commands, the ``eofread'' and ``eofwrite''
 variables are used to recognize end-of-file when reading, and
 specify end-of-file when writing (see below).
 File transfers normally depend on tandem mode for flow control.
@@ -396,11 +396,11 @@ waiting for the echo of the last character transmitted; default is
 .Ar off  .
 .It Ar eofread
 (str) The set of characters which signify an end-of-transmission
-during a ~\*[Lt] file transfer command; abbreviated
+during a ~< file transfer command; abbreviated
 .Ar eofr  .
 .It Ar eofwrite
 (str) The string sent to indicate end-of-transmission during
-a ~\*[Gt] file transfer command; abbreviated
+a ~> file transfer command; abbreviated
 .Ar eofw  .
 .It Ar eol
 (str) The set of characters which indicate an end-of-line.

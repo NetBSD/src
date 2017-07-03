@@ -1,4 +1,4 @@
-.\"	$NetBSD: ed.1,v 1.30 2010/05/14 02:09:58 joerg Exp $
+.\"	$NetBSD: ed.1,v 1.31 2017/07/03 21:33:23 wiz Exp $
 .\"	$OpenBSD: ed.1,v 1.42 2003/07/27 13:25:43 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
@@ -203,7 +203,7 @@ then the second address is set to the given address.
 If an
 .Em n Ns No -tuple
 of addresses is given where
-.Em n \*[Gt] 2 ,
+.Em n > 2 ,
 then the corresponding range is determined by the last two addresses in the
 .Em n Ns No -tuple.
 If only one address is expected, then the last address is used.
@@ -316,9 +316,9 @@ not listed below, including
 .Sq } ,
 .Sq \&( ,
 .Sq \&) ,
-.Sq \*[Lt] ,
+.Sq < ,
 and
-.Sq \*[Gt]
+.Sq >
 matches itself.
 .It Em \ec
 Any backslash-escaped character
@@ -328,9 +328,9 @@ except for
 .Sq } ,
 .Sq \&( ,
 .Sq \&) ,
-.Sq \*[Lt] ,
+.Sq < ,
 and
-.Sq \*[Gt]
+.Sq >
 matches itself.
 .It Em \&.
 Matches any single character.
@@ -356,11 +356,11 @@ If
 is the last character of a regular expression,
 it anchors the regular expression to the end of a line.
 Otherwise, it matches itself.
-.It Em \e\*[Lt]
+.It Em \e<
 Anchors the single character regular expression or subexpression
 immediately following it to the beginning of a word.
 (This may not be available.)
-.It Em \e\*[Gt]
+.It Em \e>
 Anchors the single character regular expression or subexpression
 immediately following it to the end of a word.
 (This may not be available.)
@@ -608,7 +608,7 @@ is the same as that of the
 command.
 A newline alone acts as a null command list.
 A single
-.Sq \*[Am]
+.Sq &
 repeats the last non-null command list.
 .It Ic H
 Toggles the printing of error explanations.
@@ -730,7 +730,7 @@ affected is printed as though the print suffix
 were specified.
 .Pp
 An unescaped
-.Ql \*[Am]
+.Ql &
 in
 .Ar replacement
 is replaced by the currently matched text.

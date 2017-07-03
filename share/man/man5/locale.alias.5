@@ -1,4 +1,4 @@
-.\" $NetBSD: locale.alias.5,v 1.2 2004/07/22 15:10:01 wiz Exp $
+.\" $NetBSD: locale.alias.5,v 1.3 2017/07/03 21:30:59 wiz Exp $
 .\"
 .\" Copyright (c)2004 Citrus Project,
 .\" All rights reserved.
@@ -41,7 +41,7 @@ Each line of this file can be described as the following BNF:
 line			:=	src ws dst
 src			:=	locale_name
 			|	locale_category_name
-ws			:=	\*[Lt]white spaces\*[Gt]
+ws			:=	<white spaces>
 dst			:=	locale_name
 			|	"/FORCE"
 locale_category_name	:=	locale_name '/' category_name
@@ -51,7 +51,7 @@ category_name		:=	"LC_CTYPE"
 			|	"LC_NUMERIC"
 			|	"LC_MONETARY"
 			|	"LC_MESSAGES"
-locale_name		:=	\*[Lt]locale name\*[Gt]
+locale_name		:=	<locale name>
 .Ed
 .Sh FILES
 .Bl -tag -width /usr/share/locale/locale.alias -compact

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mrinfo.8,v 1.8 2003/03/31 01:34:57 perry Exp $
+.\"	$NetBSD: mrinfo.8,v 1.9 2017/07/03 21:35:31 wiz Exp $
 .\"
 .\" Written Wed Mar 24 1993 by Van Jacobson (adapted from the
 .\" multicast mapper written by Pavel Curtis).
@@ -127,10 +127,10 @@ reply. Default timeout is 4 seconds.
 .nf
 .I mrinfo mbone.phony.dom.net
 127.148.176.10 (mbone.phony.dom.net) [version 3.3]:
- 127.148.176.10 -\*[Gt] 0.0.0.0 (?) [1/1/querier]
- 127.148.176.10 -\*[Gt] 127.0.8.4 (mbone2.phony.dom.net) [1/45/tunnel]
- 127.148.176.10 -\*[Gt] 105.1.41.9 (momoney.com) [1/32/tunnel/down]
- 127.148.176.10 -\*[Gt] 143.192.152.119 (mbone.dipu.edu) [1/32/tunnel]
+ 127.148.176.10 -> 0.0.0.0 (?) [1/1/querier]
+ 127.148.176.10 -> 127.0.8.4 (mbone2.phony.dom.net) [1/45/tunnel]
+ 127.148.176.10 -> 105.1.41.9 (momoney.com) [1/32/tunnel/down]
+ 127.148.176.10 -> 143.192.152.119 (mbone.dipu.edu) [1/32/tunnel]
 .fi
 .PP
 For each neighbor of the queried multicast router, the IP of the queried router

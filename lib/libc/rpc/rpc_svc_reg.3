@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_call 1.6 89/07/20 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_svc_reg.3,v 1.10 2013/03/04 17:29:03 christos Exp $
+.\"	$NetBSD: rpc_svc_reg.3,v 1.11 2017/07/03 21:32:49 wiz Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_REG 3
 .Os
@@ -100,9 +100,9 @@ then a mapping of the triple
 [
 .Fa prognum ,
 .Fa versnum ,
-.Fa netconf-\*[Gt]nc_netid ]
+.Fa netconf->nc_netid ]
 to
-.Fa xprt-\*[Gt]xp_ltaddr
+.Fa xprt->xp_ltaddr
 is established with the local rpcbind
 service.
 .Pp

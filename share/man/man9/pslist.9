@@ -1,4 +1,4 @@
-.\"	$NetBSD: pslist.9,v 1.17 2016/07/07 06:56:24 ozaki-r Exp $
+.\"	$NetBSD: pslist.9,v 1.18 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -350,10 +350,10 @@ Example frotz structure and global state:
 .Pp
 Initialize the global state:
 .Bd -literal
-	mutex_init(\*[Am]frobnitzem.lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&frobnitzem.lock, MUTEX_DEFAULT, IPL_NONE);
 	frobnitzem.psz = pserialize_create();
-	PSLIST_INIT(\*[Am]frobnitzem.list);
-	pool_init(\*[Am]frobnitzem.pool, sizeof(struct frotz), ...);
+	PSLIST_INIT(&frobnitzem.list);
+	pool_init(&frobnitzem.pool, sizeof(struct frotz), ...);
 .Ed
 .Pp
 Create and publish a frotz:
@@ -361,7 +361,7 @@ Create and publish a frotz:
 	uint64_t key = ...;
 	uint64_t datum = ...;
 
-	struct frotz *f = pool_get(\*[Am]frobnitzem.pool, PR_WAITOK);
+	struct frotz *f = pool_get(&frobnitzem.pool, PR_WAITOK);
 
 	/* Initialize f.  */
 	f->f_key = key;
@@ -369,9 +369,9 @@ Create and publish a frotz:
 	PSLIST_ENTRY_INIT(f, f_entry);
 
 	/* Publish it.  */
-	mutex_enter(\*[Am]frobnitzem.lock);
-	PSLIST_WRITER_INSERT_HEAD(\*[Am]frobnitzem.list, f, f_entry);
-	mutex_exit(\*[Am]frobnitzem.lock);
+	mutex_enter(&frobnitzem.lock);
+	PSLIST_WRITER_INSERT_HEAD(&frobnitzem.list, f, f_entry);
+	mutex_exit(&frobnitzem.lock);
 .Ed
 .Pp
 Look up a frotz and return its associated datum:
@@ -382,7 +382,7 @@ Look up a frotz and return its associated datum:
 	int s;
 
 	s = pserialize_read_enter();
-	PSLIST_READER_FOREACH(f, \*[Am]frobnitzem.list, struct frotz, f_entry) {
+	PSLIST_READER_FOREACH(f, &frobnitzem.list, struct frotz, f_entry) {
 		if (f->f_key == key) {
 			*datump = f->f_datum;
 			error = 0;
@@ -398,13 +398,13 @@ the memory allocated for it:
 .Bd -literal
 	struct frotz *f = ...;
 
-	mutex_enter(\*[Am]frobnitzem.lock);
+	mutex_enter(&frobnitzem.lock);
 	PSLIST_WRITER_REMOVE(f, f_entry);
-	pserialize_perform(\*[Am]frobnitzem.psz);
-	mutex_exit(\*[Am]frobnitzem.lock);
+	pserialize_perform(&frobnitzem.psz);
+	mutex_exit(&frobnitzem.lock);
 
 	PSLIST_ENTRY_DESTROY(f, f_entry);
-	pool_put(\*[Am]frobnitzem.pool, f);
+	pool_put(&frobnitzem.pool, f);
 .Ed
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh CODE REFERENCES

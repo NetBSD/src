@@ -1,4 +1,4 @@
-.\" $NetBSD: __arraycount.3,v 1.6 2010/12/16 10:40:04 jruoho Exp $
+.\" $NetBSD: __arraycount.3,v 1.7 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@ size_t i;
 
 \&...
 
-for (i = 0; i \*[Lt] __arraycount(buf); i++)
+for (i = 0; i < __arraycount(buf); i++)
 	\&...
 .Ed
 .Sh SEE ALSO

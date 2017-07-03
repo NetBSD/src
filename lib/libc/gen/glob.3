@@ -1,4 +1,4 @@
-.\"	$NetBSD: glob.3,v 1.42 2012/12/27 21:17:47 christos Exp $
+.\"	$NetBSD: glob.3,v 1.43 2017/07/03 21:32:49 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -448,9 +448,9 @@ Portable applications should use the
 constant instead.
 .Pp
 The arguments
-.Fa pglob\-\*[Gt]gl_pathc
+.Fa pglob\->gl_pathc
 and
-.Fa pglob\-\*[Gt]gl_pathv
+.Fa pglob\->gl_pathv
 are still set as specified above.
 .Sh ENVIRONMENT
 .Bl -tag -width HOME -compact
@@ -467,8 +467,8 @@ following code:
 glob_t g;
 
 g.gl_offs = 2;
-glob("*.c", GLOB_DOOFFS, NULL, \*[Am]g);
-glob("*.h", GLOB_DOOFFS | GLOB_APPEND, NULL, \*[Am]g);
+glob("*.c", GLOB_DOOFFS, NULL, &g);
+glob("*.h", GLOB_DOOFFS | GLOB_APPEND, NULL, &g);
 g.gl_pathv[0] = "ls";
 g.gl_pathv[1] = "-l";
 execvp("ls", g.gl_pathv);

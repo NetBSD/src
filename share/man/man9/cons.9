@@ -1,4 +1,4 @@
-.\"	$NetBSD: cons.9,v 1.18 2010/06/08 19:28:56 jruoho Exp $
+.\"	$NetBSD: cons.9,v 1.19 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,8 +104,8 @@ Number of read characters is
 .Fa size
 at maximum, user is notified by console bell when the end
 of input buffer is reached.
-\*[Lt]Backspace\*[Gt] key works as expected.
-\*[Lt]@\*[Gt] or \*[Lt]CTRL\*[Gt]-u make
+<Backspace> key works as expected.
+<@> or <CTRL>-u make
 .Fn cngetsn
 discard input read so far, print newline and
 wait for next input.
@@ -135,7 +135,7 @@ Commonly, kernel code uses
 rather than using this low-level interface.
 .El
 .Sh EXAMPLES
-This waits until a \*[Lt]Enter\*[Gt] key is pressed:
+This waits until a <Enter> key is pressed:
 .Pp
 .Bd -literal -offset indent
 int c;

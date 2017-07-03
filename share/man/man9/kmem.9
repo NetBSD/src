@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.20 2016/02/29 00:34:17 chs Exp $
+.\"	$NetBSD: kmem.9,v 1.21 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -286,8 +286,8 @@ option, which causes the debugger to be entered early during the kernel
 boot process.
 Issue commands such as the following:
 .Bd -literal
-db\*[Gt] w kmem_guard_depth 0t30000
-db\*[Gt] c
+db> w kmem_guard_depth 0t30000
+db> c
 .Ed
 .Pp
 This instructs

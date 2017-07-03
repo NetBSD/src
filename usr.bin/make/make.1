@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.270 2017/06/22 13:42:09 dholland Exp $
+.\"	$NetBSD: make.1,v 1.271 2017/07/03 21:34:20 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -679,7 +679,7 @@ The seven local variables are as follows:
 .Bl -tag -width ".ARCHIVE" -offset indent
 .It Va .ALLSRC
 The list of all sources for this target; also known as
-.Ql Va \&\*[Gt] .
+.Ql Va \&> .
 .It Va .ARCHIVE
 The name of the archive file; also known as
 .Ql Va \&! .
@@ -688,7 +688,7 @@ In suffix-transformation rules, the name/path of the source from which the
 target is to be transformed (the
 .Dq implied
 source); also known as
-.Ql Va \&\*[Lt] .
+.Ql Va \&< .
 It is not defined in explicit rules.
 .It Va .MEMBER
 The name of the archive member; also known as
@@ -713,9 +713,9 @@ in archive member rules.
 .El
 .Pp
 The shorter forms
-.Ql ( Va \*[Gt] ,
+.Ql ( Va > ,
 .Ql Va \&! ,
-.Ql Va \*[Lt] ,
+.Ql Va < ,
 .Ql Va % ,
 .Ql Va \&? ,
 .Ql Va * ,
@@ -1312,7 +1312,7 @@ it is anchored at the end of each word.
 Inside
 .Ar new_string ,
 an ampersand
-.Pq Ql \*[Am]
+.Pq Ql &
 is replaced by
 .Ar old_string
 (without any
@@ -1776,7 +1776,7 @@ may be any one of the following:
 .Bl -tag -width "Cm XX"
 .It Cm \&|\&|
 Logical OR.
-.It Cm \&\*[Am]\*[Am]
+.It Cm \&&&
 Logical
 .Tn AND ;
 of higher precedence than
@@ -1793,7 +1793,7 @@ The boolean operator
 may be used to logically negate an entire
 conditional.
 It is of higher precedence than
-.Ql Ic \&\*[Am]\*[Am] .
+.Ql Ic \&&& .
 .Pp
 The value of
 .Ar expression

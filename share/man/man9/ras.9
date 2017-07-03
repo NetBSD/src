@@ -1,4 +1,4 @@
-.\"     $NetBSD: ras.9,v 1.15 2010/12/02 12:54:13 wiz Exp $
+.\"     $NetBSD: ras.9,v 1.16 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -121,7 +121,7 @@ in
 Machine-dependent portions are implemented within
 .Xr cpu_switchto 9
 in the machine-dependent file
-.Pa sys/arch/\*[Lt]arch\*[Gt]/\*[Lt]arch\*[Gt]/locore.S .
+.Pa sys/arch/<arch>/<arch>/locore.S .
 .Sh SEE ALSO
 .Xr rasctl 2 ,
 .Xr cpu_switchto 9 ,

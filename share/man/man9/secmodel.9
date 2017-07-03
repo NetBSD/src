@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel.9,v 1.21 2017/03/18 19:01:01 riastradh Exp $
+.\" $NetBSD: secmodel.9,v 1.22 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Ft int
 .Fn secmodel_eval "const char *id" "const char *what" "void *arg" "void *ret"
 .Ft static int
-.Fn secmodel_\*[Lt]model\*[Gt]_eval "const char *what" "void *arg" \
+.Fn secmodel_<model>_eval "const char *what" "void *arg" \
     "void *ret"
 .Sh DESCRIPTION
 .Nx
@@ -106,14 +106,14 @@ that declares the behavior of this security model, like
 .Do copy credentials on fork . Dc
 .It Fa sm_eval
 (optional) the
-.Fn secmodel_\*[Lt]model\*[Gt]_eval
+.Fn secmodel_<model>_eval
 callback used by a
 .Nm
 to register an evaluation routine that can be queried later
 by another security model.
 .It Fa sm_setinfo
 (optional) the
-.Fn secmodel_\*[Lt]model\*[Gt]_setinfo
+.Fn secmodel_<model>_setinfo
 callback used by a
 .Nm
 to register a routine that permits other security models to
@@ -193,7 +193,7 @@ It is composed of (code-wise) the following components:
 routines, especially a
 .Fn MODULE
 declaration and a
-.Fn secmodel_\*[Lt]model\*[Gt]_modcmd
+.Fn secmodel_<model>_modcmd
 function used to start
 .Po through Dv MODULE_CMD_INIT Pc
 and stop
@@ -202,12 +202,12 @@ the
 .Nm .
 .It
 Entry routines, named
-.Fn secmodel_\*[Lt]model\*[Gt]_init
+.Fn secmodel_<model>_init
 and
-.Fn secmodel_\*[Lt]model\*[Gt]_start ,
+.Fn secmodel_<model>_start ,
 used to initialize and start the security model, and another
 function called
-.Fn secmodel_\*[Lt]model\*[Gt]_stop ,
+.Fn secmodel_<model>_stop ,
 to stop the security model in case the module is to be unloaded.
 .It
 A
@@ -215,7 +215,7 @@ A
 setup routine for the model.
 This should create an entry for the model in the
 .Xr sysctl 7
-namespace, under the "security.models.\*[Lt]model\*[Gt]" hierarchy.
+namespace, under the "security.models.<model>" hierarchy.
 .Pp
 All "knobs" for the model should be located under the new node, as well
 as a mandatory
@@ -235,7 +235,7 @@ the credentials scope,
 is required.
 .It
 Optionally, internal data-structures used by the model.
-These must all be prefixed with "secmodel_\*[Lt]model\*[Gt]_".
+These must all be prefixed with "secmodel_<model>_".
 .It
 A set of listeners, attached to various scopes, used to enforce the policy
 the model intends to implement.
@@ -276,7 +276,7 @@ secmodel_jenna_network_cb(kauth_cred_t cred, kauth_action_t action,
 			 * indicate a "reserved" user-id, allow the
 			 * request.
 			 */
-			if (kauth_cred_geteuid(cred) \*[Lt] 1000)
+			if (kauth_cred_geteuid(cred) < 1000)
 				result = KAUTH_RESULT_ALLOW;
 		}
 		break;
@@ -353,7 +353,7 @@ the fall-back security model.
 .Pp
 Here is example code that implements the above:
 .Bd -literal
-#include \*[Lt]secmodel/bsd44/bsd44.h\*[Gt]
+#include <secmodel/bsd44/bsd44.h>
 
 /*
  * Internal fall-back scope for the network scope.
@@ -398,7 +398,7 @@ secmodel_jenna_network_cb(kauth_cred_t cred, kauth_action_t action,
 		 * ports.
 		 */
 		if ((u_long)arg0 == KAUTH_REQ_NETWORK_BIND_PRIVPORT) {
-			if (kauth_cred_geteuid(cred) \*[Lt] 1000)
+			if (kauth_cred_geteuid(cred) < 1000)
 				result = KAUTH_RESULT_ALLOW;
 		}
 		break;
@@ -436,7 +436,7 @@ secmodel_jenna_network_cb(kauth_cred_t cred, kauth_action_t action,
 		 * ports.
 		 */
 		if ((u_long)arg0 == KAUTH_REQ_NETWORK_BIND_PRIVPORT) {
-			if (kauth_cred_geteuid(cred) \*[Lt] 1000)
+			if (kauth_cred_geteuid(cred) < 1000)
 				result = KAUTH_RESULT_ALLOW;
 		}
 		break;

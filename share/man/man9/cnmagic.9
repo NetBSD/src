@@ -1,4 +1,4 @@
-.\" $NetBSD: cnmagic.9,v 1.14 2010/06/08 19:44:28 jruoho Exp $
+.\" $NetBSD: cnmagic.9,v 1.15 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Eduardo Horvath
 .\" All rights reserved.
@@ -115,7 +115,7 @@ is the system console.
 This macro tests to see if
 .Fa dev
 is the same as
-.Va cn_tab-\*[Gt]cn_dev
+.Va cn_tab->cn_dev
 but can be overridden in MI header files.
 .It Fn cn_check_magic "dev" "k" "cnms"
 All input should be passed through

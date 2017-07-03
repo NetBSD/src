@@ -1,4 +1,4 @@
-.\"	$NetBSD: cat.1,v 1.38 2014/06/15 07:27:22 wiz Exp $
+.\"	$NetBSD: cat.1,v 1.39 2017/07/03 21:33:22 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -123,7 +123,7 @@ Non-ascii characters (with the high bit set) are printed as
 .Sh EXIT STATUS
 The
 .Nm
-utility exits 0 on success, and \*[Gt]0 if an error occurs.
+utility exits 0 on success, and >0 if an error occurs.
 .Sh EXAMPLES
 The command:
 .Bd -literal -offset indent
@@ -136,7 +136,7 @@ to the standard output.
 .Pp
 The command:
 .Bd -literal -offset indent
-.Ic cat file1 file2 \*[Gt] file3
+.Ic cat file1 file2 > file3
 .Ed
 .Pp
 will sequentially print the contents of
@@ -211,7 +211,7 @@ It appears to have been
 .Sh BUGS
 Because of the shell language mechanism used to perform output
 redirection, the command
-.Dq Li cat file1 file2 \*[Gt] file1
+.Dq Li cat file1 file2 > file1
 will cause the original data in file1 to be destroyed!
 This is performed by the shell before
 .Nm

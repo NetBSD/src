@@ -1,4 +1,4 @@
-.\"	$NetBSD: rsh.1,v 1.20 2005/03/11 02:45:24 ginsbach Exp $
+.\"	$NetBSD: rsh.1,v 1.21 2017/07/03 21:34:21 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -117,7 +117,7 @@ Shell metacharacters which are not quoted are interpreted on local machine,
 while quoted metacharacters are interpreted on the remote machine.
 For example, the command
 .Pp
-.Dl rsh otherhost cat remotefile \*[Gt]\*[Gt] localfile
+.Dl rsh otherhost cat remotefile >> localfile
 .Pp
 appends the remote file
 .Ar remotefile
@@ -125,7 +125,7 @@ to the local file
 .Ar localfile ,
 while
 .Pp
-.Dl rsh otherhost cat remotefile \&"\*[Gt]\*[Gt]\&" other_remotefile
+.Dl rsh otherhost cat remotefile \&">>\&" other_remotefile
 .Pp
 appends
 .Ar remotefile

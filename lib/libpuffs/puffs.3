@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.62 2016/04/11 00:47:19 christos Exp $
+.\"	$NetBSD: puffs.3,v 1.63 2017/07/03 21:32:51 wiz Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -209,7 +209,7 @@ This flag affects only the parameter
 .Fn puffs_node_lookup .
 If this flag is not given, only the next pathname component under
 lookup is found from
-.Ar pcn-\*[Gt]pcn_name .
+.Ar pcn->pcn_name .
 If this flag is given, the full path the kernel was
 asked to resolve can be found from there.
 .It Dv PUFFS_FLAG_BUILDPATH

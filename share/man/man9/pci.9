@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.45 2016/07/12 09:50:36 wiz Exp $
+.\"     $NetBSD: pci.9,v 1.46 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -843,7 +843,7 @@ The PCI subsystem itself is implemented within the files
 and
 .Pa sys/dev/pci/pciconf.c .
 Machine-dependent portions are implemented within the file
-.Pa sys/arch/\*[Lt]arch\*[Gt]/pci/pci_machdep.c .
+.Pa sys/arch/<arch>/pci/pci_machdep.c .
 .Pp
 The database of known devices exists within the file
 .Pa sys/dev/pci/pcidevs_data.h

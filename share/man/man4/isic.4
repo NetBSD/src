@@ -1,4 +1,4 @@
-.\" $NetBSD: isic.4,v 1.17 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: isic.4,v 1.18 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isic.4,v 1.17 2014/03/18 18:20:39 riastradh Exp $
+.\"	$Id: isic.4,v 1.18 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -68,7 +68,7 @@ Teles S0/16.3 PnP card
 .Cd options ISICPNP_TEL_S0_16_3_P
 .Cd "isic* at isapnp?"
 .Pp
-Creatix ISDN-S0 P\*[Am]P card
+Creatix ISDN-S0 P&P card
 .Cd options ISICPNP_CRTX_S0_P
 .Cd "isic* at isapnp?"
 .Pp
@@ -204,7 +204,7 @@ Possible interrupt configurations are 3, 5, 7, 10, 11 and 12.
 .Pp
 The card is autoconfigured by the PnP kernel subsystem.
 .Pp
-.It Ar Creatix ISDN-S0 P\*[Am]P
+.It Ar Creatix ISDN-S0 P&P
 .Pp
 Valid i/o port values are 0x120, 0x180 and 0x100.
 .Pp
@@ -258,9 +258,9 @@ The card is autoconfigured by the PCI kernel subsystem.
 .Pp
 .It Ar "ITK ix1 micro"
 .Pp
-Valid i/o port values must be in the range (\*[Lt]unknown\*[Gt]).
+Valid i/o port values must be in the range (<unknown>).
 .Pp
-Valid interrupt configurations are (\*[Lt]unknown\*[Gt]).
+Valid interrupt configurations are (<unknown>).
 .Pp
 The optional
 .Em flag

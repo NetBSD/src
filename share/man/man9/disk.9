@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.45 2017/03/05 23:15:35 wiz Exp $
+.\"	$NetBSD: disk.9,v 1.46 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -366,13 +366,13 @@ fooattach(device_t parent, device_t self, void *aux)
 	[ . . . ]
 
 	/* Initialize and attach the disk structure. */
-	disk_init(\*[Am]sc-\*[Gt]sc_dk, device_xname(self), \*[Am]foodkdriver);
-	disk_attach(\*[Am]sc-\*[Gt]sc_dk);
+	disk_init(&sc->sc_dk, device_xname(self), &foodkdriver);
+	disk_attach(&sc->sc_dk);
 
 	/* Read geometry and fill in pertinent parts of disklabel. */
 	/* Initialize geometry values of the disk structure */
 	[ . . . ]
-	disk_set_info(\*[Am]self\*[Gt], \*[Am]sc-\*[Gt]sc_dk, type);
+	disk_set_info(&self>, &sc->sc_dk, type);
 }
 .Ed
 .Pp
@@ -442,12 +442,12 @@ foostrategy(struct buf *bp)
 {
 	[ . . . ]
 
-	mutex_enter(\*[Am]sc-\*[Gt]sc_dk_mtx);
-	disk_wait(\*[Am]sc-\*[Gt]sc_dk);
+	mutex_enter(&sc->sc_dk_mtx);
+	disk_wait(&sc->sc_dk);
 
 	/* Put buffer onto drive's transfer queue */
 
-	mutex_exit(\*[Am]sc-\*[Gt]sc_dk_mtx);
+	mutex_exit(&sc->sc_dk_mtx);
 
 	foostart(sc);
 }
@@ -464,9 +464,9 @@ foostart(struct foo_softc *sc)
 	[ . . . ]
 
 	/* Tell the disk framework we're going busy. */
-	mutex_enter(\*[Am]sc-\*[Gt]sc_dk_mtx);
-	disk_busy(\*[Am]sc-\*[Gt]sc_dk);
-	mutex_exit(\*[Am]sc-\*[Gt]sc_dk_mtx);
+	mutex_enter(&sc->sc_dk_mtx);
+	disk_busy(&sc->sc_dk);
+	mutex_exit(&sc->sc_dk_mtx);
 
 	/* Send command to the drive. */
 	[ . . . ]
@@ -493,8 +493,8 @@ void
 foodone(xfer)
 	struct foo_xfer *xfer;
 {
-	struct foo_softc = (struct foo_softc *)xfer-\*[Gt]xf_softc;
-	struct buf *bp = xfer-\*[Gt]xf_buf;
+	struct foo_softc = (struct foo_softc *)xfer->xf_softc;
+	struct buf *bp = xfer->xf_buf;
 	long nbytes;
 	[ . . . ]
 
@@ -506,15 +506,15 @@ foodone(xfer)
 	if (bp == NULL)
 		nbytes = 0;
 	else
-		nbytes = bp-\*[Gt]b_bcount - bp-\*[Gt]b_resid;
+		nbytes = bp->b_bcount - bp->b_resid;
 
 	[ . . . ]
 
-	mutex_enter(\*[Am]sc-\*[Gt]sc_dk_mtx);
+	mutex_enter(&sc->sc_dk_mtx);
 	/* Notify the disk framework that we've completed the transfer. */
-	disk_unbusy(\*[Am]sc-\*[Gt]sc_dk, nbytes,
-	    bp != NULL ? bp-\*[Gt]b_flags \*[Am] B_READ : 0);
-	mutex_exit(\*[Am]sc-\*[Gt]sc_dk_mtx);
+	disk_unbusy(&sc->sc_dk, nbytes,
+	    bp != NULL ? bp->b_flags & B_READ : 0);
+	mutex_exit(&sc->sc_dk_mtx);
 
 	[ . . . ]
 }

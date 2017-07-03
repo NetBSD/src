@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdevmajor.3,v 1.5 2009/03/24 22:34:54 drochner Exp $
+.\"	$NetBSD: getdevmajor.3,v 1.6 2017/07/03 21:32:49 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,8 +67,8 @@ To retrieve the major number for
 .Xr pty 4
 slave devices (aka pts devices):
 .Bd -literal -offset indent
-#include \*[Lt]stdlib.h\*[Gt]
-#include \*[Lt]sys/stat.h\*[Gt]
+#include <stdlib.h>
+#include <sys/stat.h>
 .sp
 devmajor_t pts;
 pts = getdevmajor("pts", S_IFCHR);
@@ -78,8 +78,8 @@ To retrieve the major numbers for the block and character
 .Xr wd 4
 devices:
 .Bd -literal -offset indent
-#include \*[Lt]stdlib.h\*[Gt]
-#include \*[Lt]sys/stat.h\*[Gt]
+#include <stdlib.h>
+#include <sys/stat.h>
 .sp
 devmajor_t c, b;
 c = getdevmajor("wd", S_IFCHR);

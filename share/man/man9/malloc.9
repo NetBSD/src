@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.53 2015/08/07 13:56:48 maxv Exp $
+.\"	$NetBSD: malloc.9,v 1.54 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -205,12 +205,12 @@ code which needs to use the malloc type, providing the necessary
 extern declaration.
 .Pp
 Code which includes
-\*[Lt]sys/malloc.h\*[Gt]
+<sys/malloc.h>
 does not need to include
-\*[Lt]sys/mallocvar.h\*[Gt]
+<sys/mallocvar.h>
 to get these macro definitions.
 The
-\*[Lt]sys/mallocvar.h\*[Gt]
+<sys/mallocvar.h>
 header file is intended for other header files which need to use the
 .Fn MALLOC_DECLARE
 macro.

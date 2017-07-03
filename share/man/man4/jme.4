@@ -1,4 +1,4 @@
-.\"	$NetBSD: jme.4,v 1.6 2009/10/19 18:41:09 bouyer Exp $
+.\"	$NetBSD: jme.4,v 1.7 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 2008 Manuel Bouyer
 .\" All rights reserved.
@@ -58,13 +58,13 @@ be enabled if the configured MTU is larger than 4000 bytes.
 Interrupt coalescing can be controlled on a per-adapter basis through
 the following sysctls:
 .Bl -tag -width ".Cm hw.jme.jmeXxX.int_rxtos"
-.It Cm hw.jme.jme\*[Lt]x\*[Gt].int_rxtos
+.It Cm hw.jme.jme<x>.int_rxtos
 jme receive interrupt moderation timer, in microseconds (defaults to 100)
-.It Cm hw.jme.jme\*[Lt]x\*[Gt].int_rxct
+.It Cm hw.jme.jme<x>.int_rxct
 jme receive interrupt moderation packet counter (defaults to 128)
-.It Cm hw.jme.jme\*[Lt]x\*[Gt].int_txto
+.It Cm hw.jme.jme<x>.int_txto
 jme transmit interrupt moderation timer, in microseconds (defaults to 100)
-.It Cm hw.jme.jme\*[Lt]x\*[Gt].int_txct
+.It Cm hw.jme.jme<x>.int_txct
 jme transmit interrupt moderation packet counter (defaults to 128)
 .El
 .Sh SEE ALSO

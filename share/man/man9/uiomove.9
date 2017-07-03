@@ -1,4 +1,4 @@
-.\"	$NetBSD: uiomove.9,v 1.17 2010/04/26 07:51:36 jruoho Exp $
+.\"	$NetBSD: uiomove.9,v 1.18 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -114,7 +114,7 @@ A pointer to the address space which is being transferred to or from.
 .El
 .Pp
 The value of
-.Va uio-\*[Gt]uio_rw
+.Va uio->uio_rw
 controls whether
 .Fn uiomove
 copies data from
@@ -126,16 +126,16 @@ or vice versa.
 The lesser of
 .Fa n
 or
-.Va uio-\*[Gt]uio_resid
+.Va uio->uio_resid
 bytes are copied.
 .Pp
 .Fn uiomove
 changes fields of the structure pointed to by
 .Fa uio ,
 such that
-.Va uio-\*[Gt]uio_resid
+.Va uio->uio_resid
 is decremented by the amount of data moved,
-.Va uio-\*[Gt]uio_offset
+.Va uio->uio_offset
 is incremented by the same amount, and the array of iovecs is adjusted
 to point that much farther into the region described.
 This allows multiple calls to

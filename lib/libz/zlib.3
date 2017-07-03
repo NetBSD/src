@@ -1,4 +1,4 @@
-.\"	$NetBSD: zlib.3,v 1.10 2014/03/18 18:20:38 riastradh Exp $
+.\"	$NetBSD: zlib.3,v 1.11 2017/07/03 21:32:51 wiz Exp $
 .\"	$OpenBSD: zlib.3,v 1.1 2003/09/25 09:12:09 jmc Exp $
 .\"
 .\"  Copyright (C) 1995-2002 Jean-loup Gailly and Mark Adler
@@ -380,7 +380,7 @@ does not return
 then it must be called again as described above.
 .Pp
 .Fn deflate
-sets strm-\*[Gt]adler to the Adler-32 checksum of all input read so far
+sets strm->adler to the Adler-32 checksum of all input read so far
 (that is,
 .Fa total_in
 bytes).
@@ -601,10 +601,10 @@ If a preset dictionary is needed at this point (see
 .Fn inflateSetDictionary
 below),
 .Fn inflate
-sets strm-\*[Gt]adler to the Adler-32 checksum of the dictionary
+sets strm->adler to the Adler-32 checksum of the dictionary
 chosen by the compressor and returns
 .Dv Z_NEED_DICT ;
-otherwise it sets strm-\*[Gt]adler to the Adler-32 checksum of all output produced
+otherwise it sets strm->adler to the Adler-32 checksum of all output produced
 so far
 (that is,
 .Fa total_out
@@ -798,7 +798,7 @@ or
 Thus the strings most likely to be useful should be
 put at the end of the dictionary, not at the front.
 .Pp
-Upon return of this function, strm-\*[Gt]adler is set to the Adler-32 value
+Upon return of this function, strm->adler is set to the Adler-32 value
 of the dictionary; the decompressor may later use this value to determine
 which dictionary has been used by the compressor.
 (The Adler-32 value applies to the whole dictionary even if only a subset
@@ -891,7 +891,7 @@ Before the call to
 the stream state must be set as for a call to
 .Fn deflate ,
 since the currently available input may have to be compressed and flushed.
-In particular, strm-\*[Gt]avail_out must be non-zero.
+In particular, strm->avail_out must be non-zero.
 .Pp
 .Fn deflateParams
 returns
@@ -900,7 +900,7 @@ if successful,
 .Dv Z_STREAM_ERROR
 if the source stream state was inconsistent or if a parameter was invalid, or
 .Dv Z_BUF_ERROR
-if strm-\*[Gt]avail_out was zero.
+if strm->avail_out was zero.
 .It Fa int Fn inflateInit2 "z_streamp strm" "int windowBits" ;
 .Pp
 This is another version of
@@ -1599,7 +1599,7 @@ in a single step).
 #define Z_NULL  0  /* for initializing zalloc, zfree, opaque */
 
 #define zlib_version zlibVersion()
-/* for compatibility with versions \*[Lt] 1.0.2 */
+/* for compatibility with versions < 1.0.2 */
 .Ed
 .Sh VARIOUS HACKS
 deflateInit and inflateInit are macros to allow checking the

@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211.4,v 1.4 2009/02/26 12:53:35 njoly Exp $
+.\" $NetBSD: ieee80211.4,v 1.5 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	The Aerospace Corporation.  All rights reserved.
@@ -85,7 +85,7 @@ and setting
 to the length.
 If
 .Va i_val
-is \*[Gt]= 0 then the request refers to the configured value for that slot.
+is >= 0 then the request refers to the configured value for that slot.
 Generally, 0 is the only valid value, but some interfaces support more
 SSIDs.
 If

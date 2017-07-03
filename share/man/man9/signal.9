@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.9,v 1.23 2010/04/29 16:31:11 jruoho Exp $
+.\"	$NetBSD: signal.9,v 1.24 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -228,7 +228,7 @@ which is described below.
 .It Fn kpgsignal "pgrp" "ks" "data" "checkctty"
 .Pp
 Schedule the signal
-.Fa ks-\*[Gt]ksi_signo
+.Fa ks->ksi_signo
 to be delivered to all members of the process group
 .Fa pgrp .
 If
@@ -243,14 +243,14 @@ function below.
 .It Fn trapsignal "l" "ks"
 .Pp
 Sends the signal
-.Fa ks-\*[Gt]ksi_signo
+.Fa ks->ksi_signo
 caused by a hardware trap to the current process.
 .\"
 .\" XXX: Check for reality in 2010.
 .\"
 .\" This function is meant to be called by machine-dependent trap handling
 .\" code, through the
-.\" .Dv p-\*[Gt]p_emul-\*[Gt]e_trapsignal
+.\" .Dv p->p_emul->e_trapsignal
 .\" function pointer because some emulations define their own trapsignal
 .\" functions that remap the signal information to what the emulation
 .\" expects.
@@ -262,7 +262,7 @@ which is described below.
 .It Fn kpsignal "p" "ks" "data"
 .Pp
 Schedule the signal
-.Fa ks-\*[Gt]ksi_signo
+.Fa ks->ksi_signo
 to be delivered to the process
 .Fa p .
 The
@@ -453,7 +453,7 @@ debuggers to determine the characteristics of the signal handler
 and its arguments.
 Trampoline functions are named like so:
 .Bd -literal -offset indent
-__sigtramp_\*[Lt]flavor\*[Gt]_\*[Lt]version\*[Gt]
+__sigtramp_<flavor>_<version>
 .Ed
 .Pp
 where:

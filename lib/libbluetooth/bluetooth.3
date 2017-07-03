@@ -1,4 +1,4 @@
-.\" $NetBSD: bluetooth.3,v 1.8 2015/11/28 07:47:30 plunky Exp $
+.\" $NetBSD: bluetooth.3,v 1.9 2017/07/03 21:32:49 wiz Exp $
 .\"
 .\" Copyright (c) 2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>
 .\" All rights reserved.
@@ -199,14 +199,14 @@ const char *bdstr = "00:01:02:03:04:05";
 bdaddr_t bd;
 struct hostent *hp;
 
-if (!bt_aton(bdstr, \*[Am]bd))
+if (!bt_aton(bdstr, &bd))
 	errx(1, "can't parse BD_ADDR %s", bdstr);
 
-if ((hp = bt_gethostbyaddr((const char *)\*[Am]bd,
+if ((hp = bt_gethostbyaddr((const char *)&bd,
     sizeof(bd), AF_BLUETOOTH)) == NULL)
 	errx(1, "no name associated with %s", bdstr);
 
-printf("name associated with %s is %s\en", bdstr, hp-\*[Gt]h_name);
+printf("name associated with %s is %s\en", bdstr, hp->h_name);
 .Ed
 .Sh DIAGNOSTICS
 Error return status from

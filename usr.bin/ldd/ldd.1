@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldd.1,v 1.18 2009/09/07 20:06:21 wiz Exp $
+.\"	$NetBSD: ldd.1,v 1.19 2017/07/03 21:34:19 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,9 +56,9 @@ and allows customization of
 .Nm ldd Ns 's
 output.
 The first format argument is used for library objects and defaults to
-.Qq "\et-l%o.%m =\*[Gt] %p\en" .
+.Qq "\et-l%o.%m => %p\en" .
 The second format argument is used for non-library objects and defaults to
-.Qq "\et%o =\*[Gt] %p\en" .
+.Qq "\et%o => %p\en" .
 .Pp
 These arguments are interpreted as format strings a la
 .Xr printf 3
@@ -100,7 +100,7 @@ The
 .Fl o
 option is an alias for
 .Fl f
-.Ar \&%a:-l\&%o.\&%m =\*[Gt] \&%p\en ,
+.Ar \&%a:-l\&%o.\&%m => \&%p\en ,
 which makes
 .Nm
 behave analogously to

@@ -1,4 +1,4 @@
-.\" $NetBSD: aio_fsync.3,v 1.7 2010/09/15 07:28:46 yamt Exp $
+.\" $NetBSD: aio_fsync.3,v 1.8 2017/07/03 21:32:51 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@ The
 .Fn aio_fsync
 system call allows the calling process to force all modified data
 associated with the file descriptor
-.Fa aiocbp-\*[Gt]aio_fildes
+.Fa aiocbp->aio_fildes
 to be flushed to the stable storage device.
 The call returns immediately after the synchronization request has been
 enqueued to the descriptor; the synchronization may or may not have
@@ -73,7 +73,7 @@ If
 is defined, and the descriptor supports it, then the enqueued
 operation is submitted at a priority equal to that of the calling
 process minus
-.Fa aiocbp-\*[Gt]aio_reqprio .
+.Fa aiocbp->aio_reqprio .
 .Pp
 The
 .Fa aiocbp
@@ -111,7 +111,7 @@ returned in
 .Bl -tag -width Er
 .It Bq Er EBADF
 The
-.Fa aiocbp-\*[Gt]aio_fildes
+.Fa aiocbp->aio_fildes
 is invalid for writing.
 .It Bq Er EINVAL
 This implementation does not support synchronized I/O for this file,

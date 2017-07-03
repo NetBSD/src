@@ -1,4 +1,4 @@
-.\"	$NetBSD: bioscall.9,v 1.9 2010/05/05 05:49:38 jruoho Exp $
+.\"	$NetBSD: bioscall.9,v 1.10 2017/07/03 21:31:01 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -101,15 +101,15 @@ The
 returns these details in the registers:
 .Pp
 .Bd -literal -offset indent
-#include \*[Lt]i386/bioscall.h\*[Gt]
-#include \*[Lt]i386/apmvar.h\*[Gt]
+#include <i386/bioscall.h>
+#include <i386/apmvar.h>
 struct bioscallregs regs;
 
 regs.AX = APM_BIOS_FN(APM_INSTALLATION_CHECK);
 regs.BX = APM_DEV_APM_BIOS;
 regs.CX = regs.DX = 0;
 regs.ESI = regs.EDI = regs.EFLAGS = 0;
-bioscall(APM_SYSTEM_BIOS, \*[Am]regs);
+bioscall(APM_SYSTEM_BIOS, &regs);
 .Ed
 .Sh CODE REFERENCES
 .Pa sys/arch/i386/i386/bioscall.s ,

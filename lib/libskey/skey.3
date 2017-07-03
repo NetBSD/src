@@ -1,4 +1,4 @@
-.\"     $NetBSD: skey.3,v 1.10 2012/10/08 18:15:10 njoly Exp $
+.\"     $NetBSD: skey.3,v 1.11 2017/07/03 21:32:51 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -227,7 +227,7 @@ Returns a pointer to a static buffer in
 .It Fn etob "out" "e"
 Convert English to binary.
 Returns 0 if the word is not in the database, 1 if all good words and
-parity is valid, \-1 if badly formed input (i.e. \*[Gt] 4 char word)
+parity is valid, \-1 if badly formed input (i.e. > 4 char word)
 and -2 if words are valid but parity is wrong.
 .It Fn put8 "out" "s"
 Display 8 bytes

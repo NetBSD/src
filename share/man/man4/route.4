@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.4,v 1.30 2017/04/11 18:20:03 roy Exp $
+.\"	$NetBSD: route.4,v 1.31 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -232,7 +232,7 @@ struct rt_msghdr {
     u_char  rtm_version;       /* future binary compatibility */
     u_char  rtm_type;          /* message type */
     u_short rtm_index;         /* index for associated ifp */
-    int     rtm_flags;         /* flags, incl kern \*[Am] message, e.g. DONE */
+    int     rtm_flags;         /* flags, incl kern & message, e.g. DONE */
     int     rtm_addrs;         /* bitmask identifying sockaddrs in msg */
     pid_t   rtm_pid;           /* identify sender */
     int     rtm_seq;           /* for sender to identify action */

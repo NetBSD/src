@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.80 2017/05/28 16:39:41 hannken Exp $
+.\"     $NetBSD: vnode.9,v 1.81 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -531,7 +531,7 @@ directly.
 Mark the vnode
 .Fa vp
 as active by incrementing
-.Em vp-\*[Gt]v_holdcnt .
+.Em vp->v_holdcnt .
 Once held, the vnode will not be recycled until it is
 released with
 .Fn holdrele .
@@ -539,7 +539,7 @@ released with
 Mark the vnode
 .Fa vp
 as inactive by decrementing
-.Em vp-\*[Gt]v_holdcnt .
+.Em vp->v_holdcnt .
 .It Fn vcache_get "mp" "key" "key_len" "vpp"
 Allocate a new vnode.
 The new vnode is returned referenced in the address specified by
@@ -698,11 +698,11 @@ to
 .Fa maj .
 .It Fn vwakeup "bp"
 Update outstanding I/O count
-.Em vp-\*[Gt]v_numoutput
+.Em vp->v_numoutput
 for the vnode
-.Em bp-\*[Gt]b_vp
+.Em bp->b_vp
 and do a wakeup if requested and
-.Em vp-\*[Gt]vflag
+.Em vp->vflag
 has
 .Dv VBWAIT
 set.
@@ -714,9 +714,9 @@ The argument
 specifies whether the I/O should be synchronous and
 .Fn vflushbuf
 will sleep until
-.Em vp-\*[Gt]v_numoutput
+.Em vp->v_numoutput
 is zero and
-.Em vp-\*[Gt]v_dirtyblkhd
+.Em vp->v_dirtyblkhd
 is empty.
 .It Fn vinvalbuf "vp" "flags" "cred" "l" "slpflag" "slptimeo"
 Flush out and invalidate all buffers associated with locked vnode

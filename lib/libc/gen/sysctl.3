@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.202 2014/06/13 22:05:15 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.203 2017/07/03 21:32:49 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -240,7 +240,7 @@ size_t len;
 mib[0] = CTL_KERN;
 mib[1] = KERN_MAXPROC;
 len = sizeof(maxproc);
-sysctl(mib, 2, \*[Am]maxproc, \*[Am]len, NULL, 0);
+sysctl(mib, 2, &maxproc, &len, NULL, 0);
 .Ed
 .sp
 To retrieve the standard search path for the system utilities -
@@ -252,9 +252,9 @@ char *p;
 .sp
 mib[0] = CTL_USER;
 mib[1] = USER_CS_PATH;
-sysctl(mib, 2, NULL, \*[Am]len, NULL, 0);
+sysctl(mib, 2, NULL, &len, NULL, 0);
 p = malloc(len);
-sysctl(mib, 2, p, \*[Am]len, NULL, 0);
+sysctl(mib, 2, p, &len, NULL, 0);
 .Ed
 .Pp
 The
@@ -339,10 +339,10 @@ size_t len;
 .sp
 mib[0] = CTL_VFS;
 mib[1] = CTL_QUERY;
-memset(\*[Am]query, 0, sizeof(query));
+memset(&query, 0, sizeof(query));
 query.sysctl_flags = SYSCTL_VERSION;
 len = sizeof(vfs);
-sysctl(mib, 2, \*[Am]vfs[0], \*[Am]len, \*[Am]query, sizeof(query));
+sysctl(mib, 2, &vfs[0], &len, &query, sizeof(query));
 .Ed
 .Pp
 Note that a reference to an empty node with
@@ -446,21 +446,21 @@ size_t len;
 .sp
 mib[0] = CTL_CREATE;		/* create at top-level */
 len = sizeof(node);
-memset(\*[Am]node, 0, len);
+memset(&node, 0, len);
 node.sysctl_flags = SYSCTL_VERSION|CTLFLAG_READWRITE|CTLTYPE_NODE;
 snprintf(node.sysctl_name, sizeof(node.sysctl_name), "local");
 node.sysctl_num = CTL_CREATE;	/* request dynamic MIB number */
-sysctl(\*[Am]mib[0], 1, \*[Am]node, \*[Am]len, \*[Am]node, len);
+sysctl(&mib[0], 1, &node, &len, &node, len);
 .sp
 mib[0] = node.sysctl_num;	/* use new MIB number */
 mib[1] = CTL_CREATESYM;		/* create at second level */
 len = sizeof(node);
-memset(\*[Am]node, 0, len);
+memset(&node, 0, len);
 node.sysctl_flags = SYSCTL_VERSION|CTLFLAG_READWRITE|CTLTYPE_INT;
 snprintf(node.sysctl_name, sizeof(node.sysctl_name), "audiodebug");
 node.sysctl_num = CTL_CREATE;
 node.sysctl_data = "audiodebug"; /* kernel symbol to be used */
-sysctl(\*[Am]mib[0], 2, NULL, NULL, \*[Am]node, len);
+sysctl(&mib[0], 2, NULL, NULL, &node, len);
 .Ed
 .Pp
 The process for deleting nodes is similar, but less data needs to
@@ -490,17 +490,17 @@ above example:
 int mib[2];
 .sp
 len = sizeof(node);
-memset(\*[Am]node, 0, len);
+memset(&node, 0, len);
 node.sysctl_flags = SYSCTL_VERSION;
 .sp
 mib[0] = 3214;			/* assumed number for "local" */
 mib[1] = CTL_DESTROY;
 node.sysctl_num = 3215;		/* assumed number for "audiodebug" */
-sysctl(\*[Am]mib[0], 2, NULL, NULL, \*[Am]node, len);
+sysctl(&mib[0], 2, NULL, NULL, &node, len);
 .sp
 mib[0] = CTL_DESTROY;
 node.sysctl_num = 3214;		/* now deleting "local" */
-sysctl(\*[Am]mib[0], 1, NULL, NULL, \*[Am]node, len);
+sysctl(&mib[0], 1, NULL, NULL, &node, len);
 .Ed
 .Pp
 Descriptions of each of the nodes can also be retrieved, if they are
@@ -546,23 +546,23 @@ size_t len;
 /* retrieve kern-level descriptions */
 mib[0] = CTL_KERN;
 mib[1] = CTL_DESCRIBE;
-d = (struct sysctldesc *)\*[Am]buf[0];
+d = (struct sysctldesc *)&buf[0];
 len = sizeof(buf);
-sysctl(mib, 2, d, \*[Am]len, NULL, 0);
-while ((caddr_t)d \*[Lt] (caddr_t)\*[Am]buf[len]) {
-	printf("node %d: %.*s\\n", d-\*[Gt]descr_num, d-\*[Gt]descr_len,
-	    d-\*[Gt]descr_str);
+sysctl(mib, 2, d, &len, NULL, 0);
+while ((caddr_t)d < (caddr_t)&buf[len]) {
+	printf("node %d: %.*s\\n", d->descr_num, d->descr_len,
+	    d->descr_str);
 	d = NEXT_DESCR(d);
 }
 .sp
 /* retrieve description for kern.securelevel */
-memset(\*[Am]desc, 0, sizeof(desc));
+memset(&desc, 0, sizeof(desc));
 desc.sysctl_flags = SYSCTL_VERSION;
 desc.sysctl_num = KERN_SECURELEVEL;
-d = (struct sysctldesc *)\*[Am]buf[0];
+d = (struct sysctldesc *)&buf[0];
 len = sizeof(buf);
-sysctl(mib, 2, d, \*[Am]len, \*[Am]desc, sizeof(desc));
-printf("kern.securelevel: %.*s\\n", d-\*[Gt]descr_len, d-\*[Gt]descr_str);
+sysctl(mib, 2, d, &len, &desc, sizeof(desc));
+printf("kern.securelevel: %.*s\\n", d->descr_len, d->descr_str);
 .Ed
 .Pp
 Descriptions can also be set as follows, subject to the following rules:
@@ -586,11 +586,11 @@ int mib[2];
 /* presuming the given top-level node was just added... */
 mib[0] = 3214; /* mib numbers taken from previous examples */
 mib[1] = CTL_DESCRIBE;
-memset(\*[Am]desc, 0, sizeof(desc));
+memset(&desc, 0, sizeof(desc));
 desc.sysctl_flags = SYSCTL_VERSION;
 desc.sysctl_num = 3215;
 desc.sysctl_desc = "audio debug control knob";
-sysctl(mib, 2, NULL, NULL, \*[Am]desc, sizeof(desc));
+sysctl(mib, 2, NULL, NULL, &desc, sizeof(desc));
 .Ed
 .Pp
 Upon successfully setting a description, the new description will be
@@ -642,7 +642,7 @@ Otherwise \-1 is returned and
 .Va errno
 is set appropriately.
 .Sh FILES
-.Bl -tag -width \*[Lt]netinet6/udp6Xvar.h\*[Gt] -compact
+.Bl -tag -width <netinet6/udp6Xvar.h> -compact
 .It Aq Pa sys/sysctl.h
 definitions for top level identifiers, second level kernel and hardware
 identifiers, and user level identifiers

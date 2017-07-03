@@ -1,4 +1,4 @@
-.\" $NetBSD: microseq.9,v 1.5 2007/07/14 10:52:49 ad Exp $
+.\" $NetBSD: microseq.9,v 1.6 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999, Nicolas Souchu
 .\" All rights reserved.
@@ -114,26 +114,26 @@ The parallel port must be considered as the logical model described in
 .Pp
 Available microinstructions are:
 .Bd -literal
-#define MS_OP_GET       0	/* get \*[Lt]ptr\*[Gt], \*[Lt]len\*[Gt]			*/
-#define MS_OP_PUT       1	/* put \*[Lt]ptr\*[Gt], \*[Lt]len\*[Gt]			*/
-#define MS_OP_RFETCH	2	/* rfetch \*[Lt]reg\*[Gt], \*[Lt]mask\*[Gt], \*[Lt]ptr\*[Gt]		*/
-#define MS_OP_RSET	3	/* rset \*[Lt]reg\*[Gt], \*[Lt]mask\*[Gt], \*[Lt]mask\*[Gt]		*/
-#define MS_OP_RASSERT	4	/* rassert \*[Lt]reg\*[Gt], \*[Lt]mask\*[Gt]		*/
-#define MS_OP_DELAY     5	/* delay \*[Lt]val\*[Gt]				*/
-#define MS_OP_SET       6	/* set \*[Lt]val\*[Gt]				*/
-#define MS_OP_DBRA      7	/* dbra \*[Lt]offset\*[Gt]			*/
-#define MS_OP_BRSET     8	/* brset \*[Lt]mask\*[Gt], \*[Lt]offset\*[Gt]		*/
-#define MS_OP_BRCLEAR   9	/* brclear \*[Lt]mask\*[Gt], \*[Lt]offset\*[Gt]		*/
-#define MS_OP_RET       10	/* ret \*[Lt]retcode\*[Gt]			*/
-#define MS_OP_C_CALL	11	/* c_call \*[Lt]function\*[Gt], \*[Lt]parameter\*[Gt]	*/
-#define MS_OP_PTR	12	/* ptr \*[Lt]pointer\*[Gt]			*/
-#define MS_OP_ADELAY	13	/* adelay \*[Lt]val\*[Gt]				*/
-#define MS_OP_BRSTAT	14	/* brstat \*[Lt]mask\*[Gt], \*[Lt]mask\*[Gt], \*[Lt]offset\*[Gt]	*/
-#define MS_OP_SUBRET	15	/* subret \*[Lt]code\*[Gt]			*/
-#define MS_OP_CALL	16	/* call \*[Lt]microsequence\*[Gt]			*/
-#define MS_OP_RASSERT_P	17	/* rassert_p \*[Lt]iter\*[Gt], \*[Lt]reg\*[Gt]		*/
-#define MS_OP_RFETCH_P	18	/* rfetch_p \*[Lt]iter\*[Gt], \*[Lt]reg\*[Gt], \*[Lt]mask\*[Gt]	*/
-#define MS_OP_TRIG	19	/* trigger \*[Lt]reg\*[Gt], \*[Lt]len\*[Gt], \*[Lt]array\*[Gt]	*/
+#define MS_OP_GET       0	/* get <ptr>, <len>			*/
+#define MS_OP_PUT       1	/* put <ptr>, <len>			*/
+#define MS_OP_RFETCH	2	/* rfetch <reg>, <mask>, <ptr>		*/
+#define MS_OP_RSET	3	/* rset <reg>, <mask>, <mask>		*/
+#define MS_OP_RASSERT	4	/* rassert <reg>, <mask>		*/
+#define MS_OP_DELAY     5	/* delay <val>				*/
+#define MS_OP_SET       6	/* set <val>				*/
+#define MS_OP_DBRA      7	/* dbra <offset>			*/
+#define MS_OP_BRSET     8	/* brset <mask>, <offset>		*/
+#define MS_OP_BRCLEAR   9	/* brclear <mask>, <offset>		*/
+#define MS_OP_RET       10	/* ret <retcode>			*/
+#define MS_OP_C_CALL	11	/* c_call <function>, <parameter>	*/
+#define MS_OP_PTR	12	/* ptr <pointer>			*/
+#define MS_OP_ADELAY	13	/* adelay <val>				*/
+#define MS_OP_BRSTAT	14	/* brstat <mask>, <mask>, <offset>	*/
+#define MS_OP_SUBRET	15	/* subret <code>			*/
+#define MS_OP_CALL	16	/* call <microsequence>			*/
+#define MS_OP_RASSERT_P	17	/* rassert_p <iter>, <reg>		*/
+#define MS_OP_RFETCH_P	18	/* rfetch_p <iter>, <reg>, <mask>	*/
+#define MS_OP_TRIG	19	/* trigger <reg>, <len>, <array>	*/
 .Ed
 .Ss Execution context
 The
@@ -221,7 +221,7 @@ integer value
 .El
 .Pp
 Predefined macro: MS_SET(accum)
-.Ss MS_OP_DBRA - \\*[Am]Do BRAnch
+.Ss MS_OP_DBRA - \&Do BRAnch
 is used to branch if internal branch register decremented by one result value
 is positive.
 .Pp
@@ -470,8 +470,8 @@ should use the
 function like this:
 .Bd -literal -offset indent
 ppb_MS_init_msq(select_microseq, 2,
-		SELECT_TARGET, 1 \*[Lt]\*[Lt] target,
-		SELECT_INITIATOR, 1 \*[Lt]\*[Lt] initiator);
+		SELECT_TARGET, 1 << target,
+		SELECT_INITIATOR, 1 << initiator);
 .Ed
 .Pp
 and then execute the microsequence.

@@ -1,4 +1,4 @@
-.\"    $NetBSD: pax.1,v 1.68 2016/08/12 01:52:22 sevan Exp $
+.\"    $NetBSD: pax.1,v 1.69 2017/07/03 21:33:23 wiz Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -578,7 +578,7 @@ As in
 .Cm old
 is a basic regular expression and
 .Cm new
-can contain an ampersand (\*[Am]), \en (where n is a digit) back-references,
+can contain an ampersand (&), \en (where n is a digit) back-references,
 or subexpression matching.
 The
 .Cm old
@@ -604,7 +604,7 @@ The optional trailing
 will cause the final result of a successful substitution to be written to
 .Dv standard error
 in the following format:
-.Dl Ao "original pathname" Ac \*[Gt]\*[Gt] Ao "new pathname" Ac
+.Dl Ao "original pathname" Ac >> Ao "new pathname" Ac
 File or archive member names that substitute to the empty string
 are not selected and will be skipped.
 .It Fl t

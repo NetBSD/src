@@ -1,4 +1,4 @@
-.\"	$NetBSD: i386_vm86.2,v 1.13 2008/04/30 13:10:50 martin Exp $
+.\"	$NetBSD: i386_vm86.2,v 1.14 2017/07/03 21:32:48 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,14 +52,14 @@ will set the process into virtual 8086 mode using the registers and
 selectors specified by the context pointed to by
 .Ar vmcp .
 The processor registers are set from
-.Ar vmcp-\*[Gt]substr.regs ,
+.Ar vmcp->substr.regs ,
 and the emulated processor type from
-.Ar vmcp-\*[Gt]substr.ss_cpu_type .
+.Ar vmcp->substr.ss_cpu_type .
 .Pp
 The kernel keeps a pointer to the context, and uses the tables stored at
-.Ar vmcp-\*[Gt]int_byuser
+.Ar vmcp->int_byuser
 and
-.Ar vmcp-\*[Gt]int21_byuser
+.Ar vmcp->int21_byuser
 for fast virtual interrupt handling.
 If the
 .Ar n th
@@ -76,7 +76,7 @@ Since MS-DOS puts many DOS functions onto interrupt 21, it is handled
 specially:  the
 .Ar k
 th bit in the
-.Ar vmcp-\*[Gt]int21_byuser
+.Ar vmcp->int21_byuser
 array is checked when INT
 .Ar 21
 is requested and the

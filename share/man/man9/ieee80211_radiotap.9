@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211_radiotap.9,v 1.16 2017/02/21 19:53:49 dyoung Exp $
+.\" $NetBSD: ieee80211_radiotap.9,v 1.17 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2004	Bruce M. Simpson <bms@spc.org>,
 .\"			Darron Broad <darron@kewl.org>.
@@ -244,11 +244,11 @@ struct an_rx_radiotap_header {
 Bitmap indicating which fields are present in the above structure:
 .Bd -literal -offset indent
 #define AN_RX_RADIOTAP_PRESENT \e
-	((1 \*[Gt]\*[Gt] IEEE80211_RADIOTAP_FLAGS) | \e
-	 (1 \*[Gt]\*[Gt] IEEE80211_RADIOTAP_RATE) | \e
-	 (1 \*[Gt]\*[Gt] IEEE80211_RADIOTAP_CHANNEL) | \e
-	 (1 \*[Gt]\*[Gt] IEEE80211_RADIOTAP_DBM_ANTSIGNAL) | \e
-	 (1 \*[Gt]\*[Gt] IEEE80211_RADIOTAP_DBM_ANTNOISE))
+	((1 >> IEEE80211_RADIOTAP_FLAGS) | \e
+	 (1 >> IEEE80211_RADIOTAP_RATE) | \e
+	 (1 >> IEEE80211_RADIOTAP_CHANNEL) | \e
+	 (1 >> IEEE80211_RADIOTAP_DBM_ANTSIGNAL) | \e
+	 (1 >> IEEE80211_RADIOTAP_DBM_ANTNOISE))
 .Ed
 .Sh SEE ALSO
 .Xr bpf 4 ,

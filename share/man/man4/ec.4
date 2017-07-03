@@ -1,4 +1,4 @@
-.\"	$NetBSD: ec.4,v 1.13 2008/04/30 13:10:54 martin Exp $
+.\"	$NetBSD: ec.4,v 1.14 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,7 +93,7 @@ The
 .Tn IRQ
 was wildcarded in the kernel configuration file.
 This is not supported.
-.It "ec0: invalid IRQ \*[Lt]n\*[Gt], must be 3, 4, 5, or 9"
+.It "ec0: invalid IRQ <n>, must be 3, 4, 5, or 9"
 .Pp
 An
 .Tn IRQ
@@ -103,7 +103,7 @@ values was specified in the kernel configuration file.
 The EtherLink II hardware only supports the above listed
 .Tn IRQ
 values.
-.It "ec0: failed to clear shared memory at offset \*[Lt]off\*[Gt]"
+.It "ec0: failed to clear shared memory at offset <off>"
 .Pp
 The memory test was unable to clear shared the interface's shared memory
 region.

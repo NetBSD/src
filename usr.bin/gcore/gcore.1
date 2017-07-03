@@ -1,4 +1,4 @@
-.\"     $NetBSD: gcore.1,v 1.16 2017/03/26 22:00:04 kamil Exp $
+.\"     $NetBSD: gcore.1,v 1.17 2017/07/03 21:34:19 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,7 +45,7 @@ creates a core image of the specified processes
 suitable for use with
 .Xr gdb 1 .
 By default, the core is written to the file
-.Dq Pa \*[Lt]progname\*[Gt].core ,
+.Dq Pa <progname>.core ,
 where
 .Dq Aq Pa progname
 is the program name of the process corresponding to the pid that is given on
@@ -53,12 +53,12 @@ the command line.
 This filename can be changed by supplying the
 .Fl c Ar corename
 argument, or setting
-.Dq Pa proc.\*[Lt]pid\*[Gt].corename
+.Dq Pa proc.<pid>.corename
 with
 .Xr sysctl 8 .
 .Sh FILES
 .Bl -tag -width /var/log/messages -compact
-.It Pa \*[Lt]progname\*[Gt].core
+.It Pa <progname>.core
 The core image.
 .El
 .Sh SEE ALSO

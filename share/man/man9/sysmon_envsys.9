@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.45 2017/03/29 08:09:51 abhinav Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.46 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -193,7 +193,7 @@ This can be used to set the state and other properties of the
 sensor depending on the data returned by the driver.
 .Em NOTE :
 .Em You don't have to refresh all sensors, only the sensor specified by the
-.Sy edata-\*[Gt]sensor
+.Sy edata->sensor
 .Em index .
 If this member is not specified, the device driver will be totally
 responsible for all updates of this sensor; the
@@ -644,33 +644,33 @@ mydriver_initialize_sensors(struct mysoftc *sc)
 {
 	...
 	/* sensor is initialized with a valid state */
-	sc-\*[Gt]sc_sensor[0].state = ENVSYS_SVALID;
+	sc->sc_sensor[0].state = ENVSYS_SVALID;
 
 	/*
 	 * the monitor member must be true to enable
 	 * automatic monitoring.
 	 */
-	sc-\*[Gt]sc_sensor[0].monitor = true;
+	sc->sc_sensor[0].monitor = true;
 
 	/* and now we specify the type of the monitoring event */
-	sc-\*[Gt]sc_sensor[0].flags |= ENVSYS_FMONCRITICAL;
+	sc->sc_sensor[0].flags |= ENVSYS_FMONCRITICAL;
 	...
 }
 
 int
 mydriver_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
-	struct mysoftc *sc = sme-\*[Gt]sme_cookie;
+	struct mysoftc *sc = sme->sme_cookie;
 
 	/* we get current data from the driver */
-	edata-\*[Gt]value_cur = sc-\*[Gt]sc_getdata();
+	edata->value_cur = sc->sc_getdata();
 
 	/*
 	 * if value is too high, mark the sensor in
 	 * critical state.
 	 */
-	if (edata-\*[Gt]value_cur \*[Gt] MYDRIVER_SENSOR0_HIWAT) {
-		edata-\*[Gt]state = ENVSYS_SCRITICAL;
+	if (edata->value_cur > MYDRIVER_SENSOR0_HIWAT) {
+		edata->state = ENVSYS_SCRITICAL;
 		/* a critical event will be sent now automatically */
 	} else {
 		/*
@@ -678,7 +678,7 @@ mydriver_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		 * a critical state make sure to change sensor's state
 		 * to valid.
 		 */
-		edata-\*[Gt]state = ENVSYS_SVALID;
+		edata->state = ENVSYS_SVALID;
 	}
 	...
 }

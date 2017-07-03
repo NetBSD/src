@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_ext2fs.8,v 1.11 2010/02/25 13:09:17 tsutsui Exp $
+.\"	$NetBSD: newfs_ext2fs.8,v 1.12 2017/07/03 21:33:42 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -89,9 +89,9 @@ The default size depends upon the size of the file system:
 .Bl -tag -width "file system size" -compact -offset indent
 .It Sy "file system size"
 .Ar block-size
-.It \*[Lt]= 512 MB
+.It <= 512 MB
 1 KB
-.It \*[Gt] 512 MB
+.It > 512 MB
 4 KB
 .El
 .It Fl D Ar inodesize

@@ -1,4 +1,4 @@
-.\"	$NetBSD: release.7,v 1.36 2014/11/03 20:16:50 snj Exp $
+.\"	$NetBSD: release.7,v 1.37 2017/07/03 21:30:59 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2000, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@ This layout should be consistent between FTP servers and CD-ROMs,
 except possibly the path that leads to the release hierarchy.
 .Pp
 In this document, the following special words have these definitions:
-.Bl -tag -width "\*[Lt]machine_arch\*[Gt]"
+.Bl -tag -width "<machine_arch>"
 .It Aq Em machine
 The platform for which the release was built, corresponding to the
 .Em hw.machine
@@ -121,7 +121,7 @@ CD-ROM, but in all other cases it should be
 The root of the release hierarchy should contain the following
 files and subdirectories:
 .Pp
-.Bl -tag -width "\*[Lt]machine\*[Gt]"
+.Bl -tag -width "<machine>"
 .It Sy images/
 Image files intended for use in installing
 .Nx .
@@ -147,7 +147,7 @@ then it will also contain a
 .Dq source
 directory.
 These images are usually bootable.
-.Bl -tag -width "NetBSD-\*[Lt]rel\*[Gt]-\*[Lt]machine\*[Gt].iso"
+.Bl -tag -width "NetBSD-<rel>-<machine>.iso"
 .It Sy MD5
 .It Sy SHA512
 .It Sy NetBSD- Ns Ao Em rel Ac Ns Sy - Ns Ao Em machine Ac Ns Sy .iso
@@ -176,7 +176,7 @@ in
 .
 .It Sy shared/
 Files shared by two or more machine types.
-.Bl -tag -width "\*[Lt]machine_arch\*[Gt]"
+.Bl -tag -width "<machine_arch>"
 .It Ao Em machine_arch Ac Ns Pa /
 Files which may be shared by all systems of the same
 .Aq Em machine_arch

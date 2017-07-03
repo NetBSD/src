@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmoused.8,v 1.18 2012/01/02 18:04:34 wiz Exp $
+.\" $NetBSD: wsmoused.8,v 1.19 2017/07/03 21:35:32 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -159,7 +159,7 @@ when using the
 .Xr rc.subr 8
 framework.
 You should set
-.Sq wsmoused_user="\*[Lt]some_user\*[Gt]"
+.Sq wsmoused_user="<some_user>"
 in
 .Xr rc.conf 5
 to a safer user (and adjust file permissions accordingly) if the commands

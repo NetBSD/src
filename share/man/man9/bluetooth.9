@@ -1,4 +1,4 @@
-.\"	$NetBSD: bluetooth.9,v 1.5 2010/12/02 12:54:13 wiz Exp $
+.\"	$NetBSD: bluetooth.9,v 1.6 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -254,11 +254,11 @@ Initiate a connection by the protocol object described by
 to the remote device described by
 .Ar addr .
 This will result in a call to either
-.Fn proto-\*[Gt]connected
+.Fn proto->connected
 or
-.Fn proto-\*[Gt]disconnected ,
+.Fn proto->disconnected ,
 and optionally
-.Fn proto-\*[Gt]connecting
+.Fn proto->connecting
 with the appropriate reference as given to
 .Fn btproto_attach .
 .It Fn btproto_peeraddr "handle" "addr"
@@ -270,7 +270,7 @@ into
 Schedule a disconnection by the protocol object described by
 .Ar handle .
 This will result in a call to
-.Fn proto-\*[Gt]disconnected
+.Fn proto->disconnected
 with the appropriate reference when the connection is torn
 down.
 If linger is zero, the disconnection will be initiated
@@ -285,7 +285,7 @@ Use the protocol object described by
 .Ar handle
 as a listening post.
 This will result in calls to the
-.Fn proto-\*[Gt]newconn
+.Fn proto->newconn
 function when incoming connections are detected.
 .It Fn btproto_send "handle" "mbuf"
 Send data on the connection described by the protocol object.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: restore.8,v 1.53 2013/03/30 11:07:40 rodent Exp $
+.\"	$NetBSD: restore.8,v 1.54 2017/07/03 21:33:42 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -469,13 +469,13 @@ Common errors are given below.
 A dump tape created from the old file system has been loaded.
 It is automatically converted to the new file system format.
 .Pp
-.It \*[Lt]filename\*[Gt]: not found on tape
+.It <filename>: not found on tape
 The specified file name was listed in the tape directory,
 but was not found on the tape.
 This is caused by tape read errors while looking for the file,
 and from using a dump tape created on an active file system.
 .Pp
-.It expected next file \*[Lt]inumber\*[Gt], got \*[Lt]inumber\*[Gt]
+.It expected next file <inumber>, got <inumber>
 A file that was not listed in the directory showed up.
 This can occur when using a dump created on an active file system.
 .Pp
@@ -490,8 +490,8 @@ a dump that does not begin its coverage where the previous incremental
 dump left off,
 or that has too high an incremental level has been loaded.
 .Pp
-.It Tape read error while restoring \*[Lt]filename\*[Gt]
-.It Tape read error while skipping over inode \*[Lt]inumber\*[Gt]
+.It Tape read error while restoring <filename>
+.It Tape read error while skipping over inode <inumber>
 .It Tape read error while trying to resynchronize
 A tape (or other media) read error has occurred.
 If a file name is specified,
@@ -500,7 +500,7 @@ If an inode is being skipped or the tape is trying to resynchronize,
 then no extracted files have been corrupted,
 though files may not be found on the tape.
 .Pp
-.It resync restore, skipped \*[Lt]num\*[Gt] blocks
+.It resync restore, skipped <num> blocks
 After a dump read error,
 .Nm
 may have to resynchronize itself.

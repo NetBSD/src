@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypinit.8,v 1.16 2008/04/30 13:11:03 martin Exp $
+.\"	$NetBSD: ypinit.8,v 1.17 2017/07/03 21:35:33 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,7 @@ Create a
 .Tn NIS
 client.
 Initializes
-.Pa /var/yp/binding/\*[Lt]domain\*[Gt].ypservers
+.Pa /var/yp/binding/<domain>.ypservers
 to contain a list of ypservers for
 .Xr ypbind 8
 to connect to.
@@ -93,8 +93,8 @@ server.
 .Pp
 To rebuild or refresh the maps for the
 .Tn NIS
-domain \*[Lt]domain\*[Gt], change to the
-.Pa /var/yp/\*[Lt]domain\*[Gt]
+domain <domain>, change to the
+.Pa /var/yp/<domain>
 directory and run
 .Ic make .
 .Sh FILES
@@ -103,11 +103,11 @@ directory and run
 master
 .Tn NIS
 directory; contains the template makefiles.
-.It Pa /var/yp/\*[Lt]domain\*[Gt]
+.It Pa /var/yp/<domain>
 directory to store
 .Tn NIS
-maps for \*[Lt]domain\*[Gt].
-.It Pa /var/yp/binding/\*[Lt]domain\*[Gt].ypservers
+maps for <domain>.
+.It Pa /var/yp/binding/<domain>.ypservers
 list of
 .Tn NIS
 servers to bind to.

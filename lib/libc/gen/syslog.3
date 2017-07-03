@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.3,v 1.32 2017/03/23 12:31:57 wiz Exp $
+.\"	$NetBSD: syslog.3,v 1.33 2017/07/03 21:32:49 wiz Exp $
 .\"	$OpenBSD: syslog.3,v 1.25 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -463,7 +463,7 @@ For the multithread-safe functions:
 .Bd -literal -offset indent
 struct syslog_data sdata = SYSLOG_DATA_INIT;
 
-syslog_r(LOG_INFO|LOG_LOCAL2, \*[Am]sdata, "foobar error: %m");
+syslog_r(LOG_INFO|LOG_LOCAL2, &sdata, "foobar error: %m");
 .Ed
 .Sh SEE ALSO
 .Xr logger 1 ,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: zdump.8,v 1.16 2017/03/11 18:23:14 christos Exp $
+.\"	$NetBSD: zdump.8,v 1.17 2017/07/03 21:32:50 wiz Exp $
 .Dd March 11, 2017
 .Dt ZDUMP 8
 .Os
@@ -109,7 +109,7 @@ Dates are in
 format and times are in 24-hour
 .Dv hhmmss
 format where
-.Dv hh \*[Lt] 24 .
+.Dv hh < 24 .
 Times are in local time immediately after the transition.
 A time interval description consists of a UT offset in signed
 .Dv \&+- hh : mm : ss

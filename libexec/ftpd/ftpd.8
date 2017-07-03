@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.85 2009/05/01 10:53:27 wiz Exp $
+.\"	$NetBSD: ftpd.8,v 1.86 2017/07/03 21:35:48 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -278,7 +278,7 @@ style
 .Pa xferlog
 file suitable for input into a third-party log analysis tool with a command
 similar to:
-.Dl "sed -ne 's/^.*xferlog: //p' /var/log/xferlog \*[Gt] wuxferlog"
+.Dl "sed -ne 's/^.*xferlog: //p' /var/log/xferlog > wuxferlog"
 .El
 .Pp
 The file

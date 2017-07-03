@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtc.4,v 1.7 2009/03/11 13:41:25 joerg Exp $
+.\"	$NetBSD: rtc.4,v 1.8 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@ kernel expects the RTC to run in UTC.
 .It Pa /dev/rtc
 .El
 .Sh EXAMPLES
-date -u +%Y%m%d%H%M.%S \*[Gt] /dev/rtc
+date -u +%Y%m%d%H%M.%S > /dev/rtc
 .Sh SEE ALSO
 .Xr date 1 ,
 .Xr strftime 3

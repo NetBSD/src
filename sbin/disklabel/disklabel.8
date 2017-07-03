@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.67 2016/09/11 02:10:31 sevan Exp $
+.\"	$NetBSD: disklabel.8,v 1.68 2017/07/03 21:33:41 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -287,7 +287,7 @@ If you do not have an entry for your disk in
 you can use this style to put
 an initial label onto a new disk.
 Then dump the label to a file (using
-.Ic disklabel sd0 \*[Gt] protofile ) ,
+.Ic disklabel sd0 > protofile ) ,
 editing the file, and replacing the label with
 .Ic disklabel -R sd0 protofile .
 .Pp

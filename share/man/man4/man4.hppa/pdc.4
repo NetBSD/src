@@ -1,4 +1,4 @@
-.\" $NetBSD: pdc.4,v 1.2 2017/02/17 22:24:46 christos Exp $
+.\" $NetBSD: pdc.4,v 1.3 2017/07/03 21:30:59 wiz Exp $
 .\"
 .\" $OpenBSD: pdc.4,v 1.6 2007/06/01 19:54:10 aanriot Exp $
 .\"
@@ -149,7 +149,7 @@ The cache configuration word is formatted as follows:
 .It Sy "bit" Ta Sy "len" Ta Sy "contents"
 .It "0" Ta "12" Ta "reserved"
 .It "13" Ta "3" Ta "set 1 if coherent operation supported"
-.It "16" Ta "2" Ta "flush mode: 0 -- fdc \*[Am] fic; 1 -- fdc; 2 -- fic; 3 -- either"
+.It "16" Ta "2" Ta "flush mode: 0 -- fdc & fic; 1 -- fdc; 2 -- fic; 3 -- either"
 .It "18" Ta "1" Ta "write-thru D-cache if set"
 .It "19" Ta "2" Ta "reserved"
 .It "21" Ta "3" Ta "cache line size"

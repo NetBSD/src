@@ -1,4 +1,4 @@
-.\" $NetBSD: accf_http.9,v 1.7 2010/04/11 05:40:16 jruoho Exp $
+.\" $NetBSD: accf_http.9,v 1.8 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Alfred Perlstein
 .\"
@@ -81,9 +81,9 @@ on the socket
 .Bd -literal -offset 0i
 	struct accept_filter_arg afa;
 
-	bzero(\*[Am]afa, sizeof(afa));
+	bzero(&afa, sizeof(afa));
 	strcpy(afa.af_name, "httpready");
-	setsockopt(sok, SOL_SOCKET, SO_ACCEPTFILTER, \*[Am]afa, sizeof(afa));
+	setsockopt(sok, SOL_SOCKET, SO_ACCEPTFILTER, &afa, sizeof(afa));
 .Ed
 .Sh SEE ALSO
 .Xr setsockopt 2 ,

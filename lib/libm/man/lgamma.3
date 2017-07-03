@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
-.\"	$NetBSD: lgamma.3,v 1.22 2012/05/05 17:54:13 christos Exp $
+.\"	$NetBSD: lgamma.3,v 1.23 2017/07/03 21:32:50 wiz Exp $
 .\"
 .Dd May 4, 2012
 .Dt LGAMMA 3
@@ -75,9 +75,9 @@
 .if t \{\
 returns ln\||\(*G(x)| where
 .Bd -unfilled -offset indent
-\(*G(x) = \(is\d\s8\z0\s10\u\u\s8\(if\s10\d t\u\s8x\-1\s10\d e\u\s8\-t\s10\d dt	for x \*[Gt] 0 and
+\(*G(x) = \(is\d\s8\z0\s10\u\u\s8\(if\s10\d t\u\s8x\-1\s10\d e\u\s8\-t\s10\d dt	for x > 0 and
 .br
-\(*G(x) = \(*p/(\(*G(1\-x)\|sin(\(*px))	for x \*[Lt] 1.
+\(*G(x) = \(*p/(\(*G(1\-x)\|sin(\(*px))	for x < 1.
 .Ed
 .\}
 .if n \

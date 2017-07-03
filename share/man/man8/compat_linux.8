@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.37 2011/11/21 14:27:41 njoly Exp $
+.\"	$NetBSD: compat_linux.8,v 1.38 2017/07/03 21:31:00 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -137,9 +137,9 @@ needs by running
 .Sq ldd linuxxdoom :
 .Bd -literal -offset indent
 (me@linux) ldd linuxxdoom
-     libXt.so.3 (DLL Jump 3.1) =\*[Gt] /usr/X11/lib/libXt.so.3.1.0
-     libX11.so.3 (DLL Jump 3.1) =\*[Gt] /usr/X11/lib/libX11.so.3.1.0
-     libc.so.4 (DLL Jump 4.5pl26) =\*[Gt] /lib/libc.so.4.6.29
+     libXt.so.3 (DLL Jump 3.1) => /usr/X11/lib/libXt.so.3.1.0
+     libX11.so.3 (DLL Jump 3.1) => /usr/X11/lib/libX11.so.3.1.0
+     libc.so.4 (DLL Jump 4.5pl26) => /lib/libc.so.4.6.29
 .Ed
 .Pp
 You would need go get all the files from the last column, and
@@ -184,7 +184,7 @@ So, if you have these libraries on your system:
 .Pa /emul/linux/lib/libc.so.4.6.27
 .It
 .Pa /emul/linux/lib/libc.so.4
--\*[Gt]
+->
 .Pa /emul/linux/lib/libc.so.4.6.27
 .El
 .Pp
@@ -192,7 +192,7 @@ and you find that the
 .Ic ldd
 output for a new binary you want to install is:
 .Bd -literal
-libc.so.4 (DLL Jump 4.5pl26) =\*[Gt] /lib/libc.so.4.6.29
+libc.so.4 (DLL Jump 4.5pl26) => /lib/libc.so.4.6.29
 .Ed
 .Pp
 you won't need to worry about copying
@@ -205,7 +205,7 @@ you with:
 .Pa /emul/linux/lib/libc.so.4.6.29
 .It
 .Pa /emul/linux/lib/libc.so.4
--\*[Gt]
+->
 .Pa /emul/linux/lib/libc.so.4.6.29
 .El
 .Pp
@@ -319,7 +319,7 @@ it should produce something like:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It (me@netbsd) ldd-linux `which ldd-linux`
-libc.so.4 (DLL Jump 4.5pl26) =\*[Gt] /lib/libc.so.4.6.29
+libc.so.4 (DLL Jump 4.5pl26) => /lib/libc.so.4.6.29
 .El
 .Pp
 This being done, you are ready to install new Linux binaries.
@@ -339,7 +339,7 @@ of shared libraries that the program depends on, in the
 form
 .Aq majorname
 .Pq Aq jumpversion
-=\*[Gt]
+=>
 .Aq fullname .
 .Pp
 If it prints
@@ -349,8 +349,8 @@ instead of
 it means that you need an extra library.
 Which library this is, is shown in
 .Aq majorname ,
-which will be of the form libXXXX.so.\*[Lt]N\*[Gt]
-You will need to find a libXXXX.so.\*[Lt]N\*[Gt].\*[Lt]mm\*[Gt] on a
+which will be of the form libXXXX.so.<N>
+You will need to find a libXXXX.so.<N>.<mm> on a
 Linux ftp site, and install it on your system.
 The XXXX (name) and
 .Aq N
@@ -365,7 +365,7 @@ Set up linux specific devices:
 .br
 .It (me@netbsd) cp LINUX_MAKEDEV /emul/linux/dev
 .br
-.It (me@netbsd) cd /emul/linux/dev \*[Am]\*[Am] sh LINUX_MAKEDEV all
+.It (me@netbsd) cd /emul/linux/dev && sh LINUX_MAKEDEV all
 .El
 .El
 .Ss Setting up procfs
@@ -519,18 +519,18 @@ directory, namely:
 .Bl -item -compact
 .It
 .Pa /emul/linux/dev/console
--\*[Gt]
+->
 .Pa /dev/tty
 .It
 .Pa /emul/linux/dev/mouse
--\*[Gt] whatever device your mouse is connected to
+-> whatever device your mouse is connected to
 .It
 .Pa /emul/linux/dev/ttyS0
--\*[Gt]
+->
 .Pa /dev/tty00
 .It
 .Pa /emul/linux/dev/ttyS1
--\*[Gt]
+->
 .Pa /dev/tty01
 .El
 .Pp
@@ -545,7 +545,7 @@ shadow root when the symbolic link itself was found by an absolute
 pathname inside the shadow root.
 This is not consistent.
 .Pp
-Linux executables cannot handle directory offset cookies \*[Gt] 32 bits.
+Linux executables cannot handle directory offset cookies > 32 bits.
 Should such an offset occur, you will see the message
 .Dq linux_getdents: dir offset too large for emulated program .
 Currently, this can only

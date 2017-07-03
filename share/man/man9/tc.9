@@ -1,4 +1,4 @@
-.\"     $NetBSD: tc.9,v 1.12 2011/07/01 17:34:44 dyoung Exp $
+.\"     $NetBSD: tc.9,v 1.13 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -173,7 +173,7 @@ interface.
 The TURBOchannel subsystem itself is implemented within the file
 .Pa sys/dev/tc/tc_subr.c .
 Machine-dependent portions can be found in
-.Pa sys/arch/\*[Lt]arch\*[Gt]/tc/tcbus.c .
+.Pa sys/arch/<arch>/tc/tcbus.c .
 .Sh SEE ALSO
 .Xr tc 4 ,
 .Xr autoconf 9 ,

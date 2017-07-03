@@ -1,4 +1,4 @@
-.\"	$NetBSD: tzset.3,v 1.35 2016/10/07 15:29:42 christos Exp $
+.\"	$NetBSD: tzset.3,v 1.36 2017/07/03 21:32:50 wiz Exp $
 .Dd October 6, 2016
 .Dt TZSET 3
 .Os
@@ -187,11 +187,11 @@ Upper- and lowercase letters are explicitly allowed.
 Any characters except a leading colon (:), digits, comma (,), minus (-),
 plus (+), and NUL bytes are allowed.
 Alternatively, a designation can be surrounded by angle brackets
-.Dv \*[Lt]
+.Dv <
 and
-.Dv \*[Gt] ;
+.Dv > ;
 in this case, the designation can contain any characters other than
-.Dv \*[Gt]
+.Dv >
 and 
 .Dv NUL .
 .It Cm offset

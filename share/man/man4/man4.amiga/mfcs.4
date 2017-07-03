@@ -29,7 +29,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
-.\"	$NetBSD: mfcs.4,v 1.7 2003/08/07 10:31:05 agc Exp $
+.\"	$NetBSD: mfcs.4,v 1.8 2017/07/03 21:30:58 wiz Exp $
 .\"
 .Dd July 23, 1995
 .Dt MFCS 4 amiga
@@ -54,10 +54,10 @@ controls, among other things, a dual port
 communications interface with a multiple character buffer.
 .Pp
 Input and output for each MultiFaceCard III line may set to a maximum baud
-rates of 1152000.  Formula for baud rate:  Baud = 230400 / N with 1 \*[Lt] N \*[Lt] 65536.
+rates of 1152000.  Formula for baud rate:  Baud = 230400 / N with 1 < N < 65536.
 .Pp
 Input and output for each MultiFaceCard II line may set to a maximum baud
-rates of 57600.  Formula for baud rate:  Baud = 115200 / N with 1 \*[Lt] N \*[Lt] 65536.
+rates of 57600.  Formula for baud rate:  Baud = 115200 / N with 1 < N < 65536.
 .Sh FILES
 .Bl -tag -width Pa
 .It Pa /dev/ttyA?

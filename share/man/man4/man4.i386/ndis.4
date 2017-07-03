@@ -1,4 +1,4 @@
-.\" $NetBSD: ndis.4,v 1.5 2014/03/18 18:20:40 riastradh Exp $
+.\" $NetBSD: ndis.4,v 1.6 2017/07/03 21:30:59 wiz Exp $
 .\"
 .\" Copyright (c) 2003
 .\"     Bill Paul <wpaul@windriver.com>. All rights reserved.
@@ -165,7 +165,7 @@ $ cd src/sys/arch/i386/conf
 $ config NDIS
 $ cd ../compile/NDIS
 $ cp /path/to/ndis_driver_data.h .
-$ make depend \*[Am]\*[Am] make
+$ make depend && make
 $ su
 $ mv /netbsd /onetbsd
 $ cp netbsd /netbsd
@@ -182,7 +182,7 @@ The device can then be configured with
 .Xr ifconfig 8 :
 .Pp
 .Bd -literal -offset indent
-ndis0: flags=8843\*[Lt]UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST\*[Gt] mtu 1500
+ndis0: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
         ssid WWUwireless
         powersave on (100ms sleep)
         chan 6

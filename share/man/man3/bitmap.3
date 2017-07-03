@@ -1,4 +1,4 @@
-.\"	$NetBSD: bitmap.3,v 1.9 2014/03/18 18:20:39 riastradh Exp $
+.\"	$NetBSD: bitmap.3,v 1.10 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -115,7 +115,7 @@ The behavior of these macros is undefined for negative
 bit values or ones greater than the number of bits the bitmap can hold.
 .Sh EXAMPLES
 .Bd -literal
-#include \*[Lt]sys/bitops.h\*[Gt]
+#include <sys/bitops.h>
 
 int
 main(int argc, char **argv)
@@ -123,16 +123,16 @@ main(int argc, char **argv)
 	__BITMAP_TYPE(, uint32_t, 5000) bitmap;
 
 	/* Initialize the read set to null */
-	__BITMAP_ZERO(\*[Am]bitmap);
+	__BITMAP_ZERO(&bitmap);
 
 	/* Set bit 1 */
-	__BITMAP_SET(1, \*[Am]bitmap);
+	__BITMAP_SET(1, &bitmap);
 
-	for (size_t i = 0; i \*[Lt] 5000; i++) {
-		if (__BITMAP_ISSET(i, \*[Am]bitmap)) {
+	for (size_t i = 0; i < 5000; i++) {
+		if (__BITMAP_ISSET(i, &bitmap)) {
 			/* Should just print 1 */
 			printf("Bit %zu is set\en", i);
-			__BITMAP_CLR(i, \*[Am]bitmap);
+			__BITMAP_CLR(i, &bitmap);
 		}
 		break;
 	}

@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)regexp.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: regexp.3,v 1.17 2015/08/11 18:15:41 dholland Exp $
+.\"	$NetBSD: regexp.3,v 1.18 2017/07/03 21:32:50 wiz Exp $
 .\"
 .Dd June 4, 1993
 .Dt REGEXP 3
@@ -139,7 +139,7 @@ most recent
 .Fn regexec
 performed using
 .Fa prog .
-Each instance of `\*[Am]' in
+Each instance of `&' in
 .Fa source
 is replaced by the substring
 indicated by
@@ -155,12 +155,12 @@ the substring indicated by
 .Em startp Ns Bq Em n
 and
 .Em endp Ns Bq Em n .
-To get a literal `\*[Am]' or
+To get a literal `&' or
 .Sq \e Ns Em n
 into
 .Fa dest ,
 prefix it with `\e';
-to get a literal `\e' preceding `\*[Am]' or
+to get a literal `\e' preceding `&' or
 .Sq \e Ns Em n ,
 prefix it with
 another `\e'.

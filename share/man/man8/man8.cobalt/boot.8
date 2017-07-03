@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.9 2014/08/16 08:43:12 apb Exp $
+.\"	$NetBSD: boot.8,v 1.10 2017/07/03 21:31:00 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -151,7 +151,7 @@ For example, the
 .Sq bfd
 command can be used to boot a kernel image:
 .Bd -unfilled -offset indent
-Cobalt: bfd /boot/\*[Lt]kernel image\*[Gt] [options]
+Cobalt: bfd /boot/<kernel image> [options]
 .Ed
 .Pp
 where
@@ -221,11 +221,11 @@ like it is on other platforms.
 Once running, the boot loader prints a banner to the serial console
 similar to the following:
 .Bd -unfilled -offset indent
-\*[Gt]\*[Gt] NetBSD/cobalt 5.0 Bootloader, Revision 0.9 [@0x80f00000]
-\*[Gt]\*[Gt] (user@buildhost, builddate)
-\*[Gt]\*[Gt] Model:               Cobalt Qube 2
-\*[Gt]\*[Gt] Memory:              32768 k
-\*[Gt]\*[Gt] PROM boot string:    root=/dev/hda1 ro
+>> NetBSD/cobalt 5.0 Bootloader, Revision 0.9 [@0x80f00000]
+>> (user@buildhost, builddate)
+>> Model:               Cobalt Qube 2
+>> Memory:              32768 k
+>> PROM boot string:    root=/dev/hda1 ro
 Boot [wd0a:netbsd]: 
 Loading: wd0a:netbsd
 3763776+312244 [216944+209676]=0x44b97c
@@ -428,11 +428,11 @@ Note the boot loader binary needs to be
 Once the boot loader is successfully loaded it prints a banner as well as
 booting from disk:
 .Bd -unfilled -offset indent
-\*[Gt]\*[Gt] NetBSD/cobalt 5.0 Bootloader, Revision 0.9 [@0x80f00000]
-\*[Gt]\*[Gt] (user@buildhost, builddate)
-\*[Gt]\*[Gt] Model:               Cobalt Qube 2
-\*[Gt]\*[Gt] Memory:              32768 k
-\*[Gt]\*[Gt] PROM boot string:    root=/dev/nfs nfsroot=/nfsroot nfsaddrs=bootp
+>> NetBSD/cobalt 5.0 Bootloader, Revision 0.9 [@0x80f00000]
+>> (user@buildhost, builddate)
+>> Model:               Cobalt Qube 2
+>> Memory:              32768 k
+>> PROM boot string:    root=/dev/nfs nfsroot=/nfsroot nfsaddrs=bootp
 Boot [nfs:netbsd]: 
 Loading: nfs:netbsd
 3763776+312244 [216944+209676]=0x44b97c

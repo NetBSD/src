@@ -1,6 +1,6 @@
 .\" Copyright (c) 1988, 1989, 1991 Carnegie Mellon University
 .\"
-.\"	$NetBSD: bootpd.8,v 1.10 2006/06/17 04:58:15 reed Exp $
+.\"	$NetBSD: bootpd.8,v 1.11 2017/07/03 21:35:30 wiz Exp $
 .\"
 .TH BOOTPD 8 "November 06, 1993" "Carnegie Mellon University"
 .SH NAME
@@ -215,7 +215,7 @@ If the client is known,
 composes a BOOTREPLY packet using the database entry found above,
 and sends the reply to the client (possibly using a gateway).
 If the client is unknown, the request is discarded
-(with a notice if debug \*[Gt] 0).
+(with a notice if debug > 0).
 .PP
 If
 .I bootpd
@@ -262,7 +262,7 @@ Individual host entries must not exceed 1024 characters.
 .SH CREDITS
 .PP
 This distribution is currently maintained by
-Walter L. Wimer \*[Lt]walt+@cmu.edu\*[Gt].
+Walter L. Wimer <walt+@cmu.edu>.
 .PP
 The original BOOTP server was created by
 Bill Croft at Stanford University in January 1986.
@@ -276,19 +276,19 @@ at Carnegie Mellon University.
 Enhancements and bug\-fixes have been contributed by:
 (in alphabetical order)
 .br
-Danny Backx \*[Lt]db@sunbim.be\*[Gt]
+Danny Backx <db@sunbim.be>
 .br
-John Brezak \*[Lt]brezak@ch.hp.com\*[Gt]
+John Brezak <brezak@ch.hp.com>
 .br
-Frank da Cruz \*[Lt]fdc@cc.columbia.edu\*[Gt]
+Frank da Cruz <fdc@cc.columbia.edu>
 .br
-David R. Linn \*[Lt]drl@vuse.vanderbilt.edu\*[Gt]
+David R. Linn <drl@vuse.vanderbilt.edu>
 .br
-Jim McKim \*[Lt]mckim@lerc.nasa.gov\*[Gt]
+Jim McKim <mckim@lerc.nasa.gov>
 .br
-Gordon W. Ross \*[Lt]gwr@mc.com\*[Gt]
+Gordon W. Ross <gwr@mc.com>
 .br
-Jason Zions \*[Lt]jazz@hal.com\*[Gt]
+Jason Zions <jazz@hal.com>
 .SH "SEE ALSO"
 .LP
 bootptab(5), inetd(8), tftpd(8)

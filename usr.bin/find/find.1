@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.88 2017/06/04 08:48:05 abhinav Exp $
+.\"	$NetBSD: find.1,v 1.89 2017/07/03 21:34:57 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -477,7 +477,7 @@ If the file is a block or character special file, the major and minor numbers
 will be displayed instead of the size in bytes.
 If the file is a symbolic link, the pathname of the linked-to file will be
 displayed preceded by
-.Dq -\*[Gt] .
+.Dq -> .
 The format is identical to that produced by
 .Dq ls -dgils .
 .Pp
@@ -939,7 +939,7 @@ tree traversal options to be changed.
 .Sh HISTORY
 A much simpler
 .Nm
-command appeared in First Edition AT\*[Am]T Unix.
+command appeared in First Edition AT&T Unix.
 The syntax had become similar to the present version by
 the time of the Fifth Edition.
 .Sh BUGS

@@ -1,4 +1,4 @@
-.\" $NetBSD: wlanctl.8,v 1.8 2014/03/18 18:20:47 riastradh Exp $
+.\" $NetBSD: wlanctl.8,v 1.9 2017/07/03 21:35:32 wiz Exp $
 .\" Copyright (c) 2004 David Young.  All rights reserved.
 .\"
 .\" This code was written by David Young.
@@ -64,28 +64,28 @@ may print this node table, for example:
 .Pp
 .Bd -literal -offset indent -compact
 atw0: mac 00:02:6f:20:f6:2e bss 02:02:6f:20:f6:2e
-	node flags 0001\*[Lt]bss\*[Gt]
-	ess \*[Lt]netbsd\*[Gt]
-	chan 11 freq 2462MHz flags 00a0\*[Lt]cck,2.4GHz\*[Gt]
-	capabilities 0022\*[Lt]ibss,short preamble\*[Gt]
+	node flags 0001<bss>
+	ess <netbsd>
+	chan 11 freq 2462MHz flags 00a0<cck,2.4GHz>
+	capabilities 0022<ibss,short preamble>
 	beacon-interval 100 TU tsft 18425852102545544165 us
 	rates [1.0] 2.0 5.5 11.0
 	assoc-id 0 assoc-failed 0 inactivity 0s
 	rssi 161 txseq 10 rxseq 1420
 atw0: mac 00:02:2d:2e:3c:f4 bss 02:02:6f:20:f6:2e
 	node flags 0000
-	ess \*[Lt]netbsd\*[Gt]
-	chan 11 freq 2462MHz flags 00a0\*[Lt]cck,2.4GHz\*[Gt]
-	capabilities 0002\*[Lt]ibss\*[Gt]
+	ess <netbsd>
+	chan 11 freq 2462MHz flags 00a0<cck,2.4GHz>
+	capabilities 0002<ibss>
 	beacon-interval 100 TU tsft 18425852105450086784 us
 	rates [1.0] 2.0 5.5 11.0
 	assoc-id 0 assoc-failed 0 inactivity 0s
 	rssi 159 txseq 2 rxseq 551
 atw0: mac 00:02:6f:20:f6:2e bss 02:02:6f:20:f6:2e
 	node flags 0000
-	ess \*[Lt]netbsd\*[Gt]
-	chan 11 freq 2462MHz flags 00a0\*[Lt]cck,2.4GHz\*[Gt]
-	capabilities 0022\*[Lt]ibss,short preamble\*[Gt]
+	ess <netbsd>
+	chan 11 freq 2462MHz flags 00a0<cck,2.4GHz>
+	capabilities 0022<ibss,short preamble>
 	beacon-interval 100 TU tsft 18425852102558548069 us
 	rates [1.0] 2.0 5.5 6.0 9.0 11.0 12.0 18.0 24.0 36.0 48.0 54.0
 	assoc-id 0 assoc-failed 0 inactivity 145s

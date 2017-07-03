@@ -1,4 +1,4 @@
-.\"	$NetBSD: grfconfig.8,v 1.16 2008/09/27 04:16:15 reed Exp $
+.\"	$NetBSD: grfconfig.8,v 1.17 2017/07/03 21:35:30 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -118,12 +118,12 @@ Composite sync on green
  |        |                 vbe       !      |        |
  |        |                           !      |        |
  |        |                           !      |        |
- |\*[Lt]-hse   |\*[Lt]-hbe                      !      |\*[Lt]-hbs   |      |      |
- |        |                           !      |   hss-\*[Gt]| hse-\*[Gt]| hbe-\*[Gt]|
+ |<-hse   |<-hbe                      !      |<-hbs   |      |      |
+ |        |                           !      |   hss->| hse->| hbe->|
  |        |                          hi      |        |      |      |
  |        |                           !      |        |
  |        |                           !      |        |
- |        |\*[Lt]============ wid =========+=====\*[Gt]|        |
+ |        |<============ wid =========+=====>|        |
  |        |                           !      |        |
  |        |                           !      |        |
  |        |                           !      |        |

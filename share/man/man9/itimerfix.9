@@ -1,4 +1,4 @@
-.\"	$NetBSD: itimerfix.9,v 1.7 2008/04/30 13:10:58 martin Exp $
+.\"	$NetBSD: itimerfix.9,v 1.8 2017/07/03 21:28:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@ The
 .Nm
 function checks that the value in
 .Fa tv
-is valid (0 \*[Le] tv-\*[Gt]tv_sec \*[Am]\*[Am]  0 \*[Le] tv-\*[Gt]tv_usec \*[Lt] 1000000), and that the
+is valid (0 \*[Le] tv->tv_sec &&  0 \*[Le] tv->tv_usec < 1000000), and that the
 total time represented is at least one
 .Em tick ,
 or zero.

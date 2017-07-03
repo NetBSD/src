@@ -1,4 +1,4 @@
-.\" $NetBSD: plip.4,v 1.3 2009/03/09 19:24:28 joerg Exp $
+.\" $NetBSD: plip.4,v 1.4 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 1996 A.R.Gordon, andrew.gordon@net-tel.co.uk
 .\" All rights reserved.
@@ -109,16 +109,16 @@ for details on configuring network interfaces.
 The cable connecting the two parallel ports should be wired as follows:
 .Bd -literal
 	Pin	Pin	Description
-	2	15	Data0 -\*[Gt] ERROR*
-	3	13	Data1 -\*[Gt] SLCT
-	4	12	Data2 -\*[Gt] PE
-	5	10	Data3 -\*[Gt] ACK*
-	6	11	Data4 -\*[Gt] BUSY
-	15	2	ERROR* -\*[Gt] Data0
-	13	3	SLCT   -\*[Gt] Data1
-	12	4	PE     -\*[Gt] Data2
-	10	5	ACK*   -\*[Gt] Data3
-	11	6	BUSY   -\*[Gt] Data4
+	2	15	Data0 -> ERROR*
+	3	13	Data1 -> SLCT
+	4	12	Data2 -> PE
+	5	10	Data3 -> ACK*
+	6	11	Data4 -> BUSY
+	15	2	ERROR* -> Data0
+	13	3	SLCT   -> Data1
+	12	4	PE     -> Data2
+	10	5	ACK*   -> Data3
+	11	6	BUSY   -> Data4
 	18-25	18-25	Ground
 .Ed
 .Pp
@@ -217,7 +217,7 @@ Length (most significant byte)
 12 bytes of supposed MAC addresses (ignored by FreeBSD).
 Fixed byte 0x08
 Fixed byte 0x00
-\*[Lt]IP datagram\*[Gt]
+<IP datagram>
 Checksum byte.
 .Ed
 .Pp

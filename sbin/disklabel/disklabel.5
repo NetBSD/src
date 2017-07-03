@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.5,v 1.29 2016/10/15 06:23:28 snj Exp $
+.\"	$NetBSD: disklabel.5,v 1.30 2017/07/03 21:33:41 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -116,7 +116,7 @@ is
  * label can describe and the number of the "whole disk" (raw)
  * partition are machine dependent.
  */
-#include \*[Lt]machine/disklabel.h\*[Gt]
+#include <machine/disklabel.h>
 
 /*
  * The absolute maximum number of disk partitions allowed.
@@ -124,7 +124,7 @@ is
  * is \*[Le] DEV_BSIZE bytes long.  If MAXPARTITIONS is greater than this, beware.
  */
 #define MAXMAXPARTITIONS	22
-#if MAXPARTITIONS \*[Gt] MAXMAXPARTITIONS
+#if MAXPARTITIONS > MAXMAXPARTITIONS
 #warning beware: MAXPARTITIONS bigger than MAXMAXPARTITIONS
 #endif
 

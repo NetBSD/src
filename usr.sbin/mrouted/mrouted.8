@@ -1,4 +1,4 @@
-.\"	$NetBSD: mrouted.8,v 1.17 2009/03/15 10:16:28 joerg Exp $
+.\"	$NetBSD: mrouted.8,v 1.18 2017/07/03 21:35:31 wiz Exp $
 .\"	$OpenBSD: mrouted.8,v 1.11 2003/03/03 15:14:28 deraadt Exp $
 .\" The mrouted program is covered by the license in the accompanying file
 .\" named "LICENSE".  Use of the mrouted program represents acceptance of
@@ -123,24 +123,24 @@ option).
 There are four types of configuration commands:
 .Bl -item -offset indent
 .It
-.Tn phyint \*[Lt]local-addr\*[Gt] [disable] [metric \*[Lt]m\*[Gt]]
+.Tn phyint <local-addr> [disable] [metric <m>]
 .Bl -tag -width flag -compact -offset indent
-.It [threshold \*[Lt]t\*[Gt]] [rate_limit \*[Lt]b\*[Gt]]
-.It [boundary (\*[Lt]boundary-name\*[Gt]|\*[Lt]scoped-addr\*[Gt]/\*[Lt]mask-len\*[Gt])]
-.It [altnet \*[Lt]network\*[Gt]/\*[Lt]mask-len\*[Gt]]
+.It [threshold <t>] [rate_limit <b>]
+.It [boundary (<boundary-name>|<scoped-addr>/<mask-len>)]
+.It [altnet <network>/<mask-len>]
 .El
 .It
 .Bl -tag -width flag -compact -offset indent
-.It Tn tunnel \*[Lt]local-addr\*[Gt] \*[Lt]remote-addr\*[Gt] [metric \*[Lt]m\*[Gt]]
-.It [threshold \*[Lt]t\*[Gt]] [rate_limit \*[Lt]b\*[Gt]]
-.It [boundary (\*[Lt]boundary-name\*[Gt]|\*[Lt]scoped-addr\*[Gt]/\*[Lt]mask-len\*[Gt])]
+.It Tn tunnel <local-addr> <remote-addr> [metric <m>]
+.It [threshold <t>] [rate_limit <b>]
+.It [boundary (<boundary-name>|<scoped-addr>/<mask-len>)]
 .El
 .It
-.Tn cache_lifetime \*[Lt]ct\*[Gt]
+.Tn cache_lifetime <ct>
 .It
-.Tn pruning \*[Lt]off/on\*[Gt]
+.Tn pruning <off/on>
 .It
-.Tn name \*[Lt]boundary-name\*[Gt] \*[Lt]scoped-addr\*[Gt]/\*[Lt]mask-len\*[Gt]
+.Tn name <boundary-name> <scoped-addr>/<mask-len>
 .El
 .Pp
 The file format is free-form; whitespace (including newlines) is not
@@ -153,11 +153,11 @@ options may be specified as many times as necessary.
 .Pp
 The phyint command can be used to disable multicast routing on the physical
 interface identified by local IP address
-.Ar \*[Lt]local-addr\*[Gt] ,
+.Ar <local-addr> ,
 or to associate a non-default metric or threshold with the specified
 physical interface.
 The local IP address
-.Ar \*[Lt]local-addr\*[Gt]
+.Ar <local-addr>
 may be replaced by the interface name (e.g., le0).
 If a phyint is attached to multiple IP subnets, describe each additional subnet
 with the altnet keyword.
@@ -165,15 +165,15 @@ Phyint commands must precede tunnel commands.
 .Pp
 The tunnel command can be used to establish a tunnel link between local
 IP address
-.Ar \*[Lt]local-addr\*[Gt]
+.Ar <local-addr>
 and remote IP address
-.Ar \*[Lt]remote-addr\*[Gt] ,
+.Ar <remote-addr> ,
 and to associate a non-default metric or threshold with that tunnel.
 The local IP address
-.Ar \*[Lt]local-addr\*[Gt]
+.Ar <local-addr>
 may be replaced by the interface name (e.g., le0).
 The remote IP address
-.Ar \*[Lt]remote-addr\*[Gt]
+.Ar <remote-addr>
 may be replaced by a host name, if and only if the host name has a single
 IP address associated with it.
 The tunnel must be set up in the mrouted.conf files of both routers before
@@ -396,14 +396,14 @@ The cache tables look like this:
 Multicast Routing Cache Table (147 entries)
  Origin             Mcast-group     CTmr  Age Ptmr IVif Forwvifs
  13.2.116/22        224.2.127.255     3m   2m    -  0    1
-\*[Gt]13.2.116.19
-\*[Gt]13.2.116.196
+>13.2.116.19
+>13.2.116.196
  138.96.48/21       224.2.127.255     5m   2m    -  0    1
-\*[Gt]138.96.48.108
+>138.96.48.108
  128.9.160/20       224.2.127.255     3m   2m    -  0    1
-\*[Gt]128.9.160.45
+>128.9.160.45
  198.106.194/24     224.2.135.190     9m  28s   9m  0P
-\*[Gt]198.106.194.22
+>198.106.194.22
 .Ed
 .Pp
 Each entry is characterized by the origin subnet number and mask and the
@@ -436,7 +436,7 @@ members of the particular group on that subnet.
 A "b" on an interface
 indicates that it is a boundary interface, i.e., traffic will not be
 forwarded on the scoped address on that interface.
-An additional line with a "\*[Gt]" as the first character is printed for
+An additional line with a ">" as the first character is printed for
 each source on the subnet.
 Note that there can be many sources in one subnet.
 .Sh SEE ALSO

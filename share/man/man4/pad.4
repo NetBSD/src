@@ -1,4 +1,4 @@
-.\" $NetBSD: pad.4,v 1.5 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: pad.4,v 1.6 2017/07/03 21:30:58 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -55,7 +55,7 @@ and feeds the raw PCM output to
 .Sh EXAMPLES
 The following example streams an MP3 to an Apple AirTunes compatible device:
 .Bd -literal -offset indent
-$ rtunes - \*[Lt] /dev/pad0 \*[Am]
+$ rtunes - < /dev/pad0 &
 $ mpg123 -a /dev/sound1 mozart.mp3
 .Ed
 .Sh SEE ALSO

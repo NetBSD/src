@@ -1,4 +1,4 @@
-.\"	$NetBSD: __builtin_object_size.3,v 1.10 2012/07/19 06:44:12 wiz Exp $
+.\"	$NetBSD: __builtin_object_size.3,v 1.11 2017/07/03 21:32:49 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,10 +72,10 @@ knows that they can be pointed to by
 .Fa ptr
 when
 .Fa type
-.Dv \*[Am] 2 == 0 ,
+.Dv & 2 == 0 ,
 and the minimum size when
 .Fa type
-.Dv \*[Am] 2 != 0 .
+.Dv & 2 != 0 .
 .Sh SEE ALSO
 .Xr gcc 1 ,
 .Xr __builtin_return_address 3 ,
