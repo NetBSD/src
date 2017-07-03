@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.140 2017/06/30 23:02:56 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.141 2017/07/03 20:16:44 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.140 2017/06/30 23:02:56 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.141 2017/07/03 20:16:44 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -478,6 +478,12 @@ command(void)
 		 * paragraph shows one case is required, but the "Grammar"
 		 * section shows a grammar that explicitly allows the no
 		 * case option.
+		 *
+		 * The standard also says (section 2.10):
+		 *   This formal syntax shall take precedence over the
+		 *   preceding text syntax description.
+		 * ie: the "Grammar" section wins.  The text is just
+		 * a rough guide (introduction to the common case.)
 		 */
 		while (lasttoken != TESAC) {
 			*cpp = cp = stalloc(sizeof(struct nclist));
@@ -1760,12 +1766,15 @@ readtoken1(int firstc, char const *syn, int magicq)
 					} else
 						USTPUTC(/*(*/ ')', out);
 				} else {
+					break;	/* to synerror() just below */
+#if 0	/* the old way, causes weird errors on bad input */
 					/*
 					 * unbalanced parens
 					 *  (don't 2nd guess - no error)
 					 */
 					pungetc();
 					USTPUTC(/*(*/ ')', out);
+#endif
 				}
 			}
 			continue;
