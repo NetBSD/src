@@ -5,9 +5,16 @@ siisata - fix all new XXX and unmergable bits
 
 test wd* at umass?, confirm the ata_channel kludge works
 
-test device error handling (currently appears to not work well, at least in NCQ case)
+test non-NCQ device error handling
+- test retry code paths, locking
+- channel reset on fatal errors
 
 do proper NCQ error recovery (currently not even really attempted)
+- if fatal error, do channel reset
+- if tranfer error (both TFD.STS.BSY and DRQ is 0), need READ LOG EXT log
+  page 10h to read tag which caused the error, and reset the device to idle
+- need to cancel and restart the other active transfers in a way to not
+  increase retry count, and not trigger drive reset
 
 maybe do device error handling in not-interrupt-context (maybe this should be
 done on a mpata branch?)
