@@ -1,4 +1,4 @@
-/*	$NetBSD: drvstats.h,v 1.4 2017/03/05 23:07:12 mlelstv Exp $	*/
+/*	$NetBSD: drvstats.h,v 1.5 2017/07/04 21:19:33 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -39,7 +39,7 @@
 /* poseur disk entry to hold the information we're interested in. */
 struct _drive {
 	int		 *select;	/* Display stats for selected disks. */
-	char		**name;	/* Disk names (sd0, wd1, etc). */
+	char		 **name;	/* Disk names (sd0, wd1, etc). */
 	u_int64_t	 *rxfer;	/* # of read transfers. */
 	u_int64_t	 *wxfer;	/* # of write transfers. */
 	u_int64_t	 *seek;	/* # of seeks (currently unused). */
@@ -47,8 +47,9 @@ struct _drive {
 	u_int64_t	 *wbytes;	/* # of bytes written. */
 	struct timeval	 *time;		/* Time spent in disk i/o. */
 	struct timeval	 *wait;		/* Time spent in queue waiting. */
-	struct timeval   *busysum;	/* Time busy * queue length */
-	struct timeval   *waitsum;	/* Time waiting * queue length */
+	struct timeval	 *busysum;	/* Time busy * queue length */
+	struct timeval	 *waitsum;	/* Time waiting * queue length */
+	struct timeval	 *timestamp;	/* Disk sample time */
 	u_int64_t	  tk_nin;	/* TTY Chars in. */
 	u_int64_t	  tk_nout;	/* TTY Chars out. */
 	u_int64_t	  cp_time[CPUSTATES];	/* System timer ticks. */
