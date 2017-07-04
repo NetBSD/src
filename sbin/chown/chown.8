@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chown.8,v 1.11 2017/07/03 21:33:41 wiz Exp $
+.\"	$NetBSD: chown.8,v 1.12 2017/07/04 06:53:12 wiz Exp $
 .\"
 .Dd September 11, 2016
 .Dt CHOWN 8
@@ -151,10 +151,8 @@ Unless invoked by the super-user,
 clears the set-user-id and set-group-id bits on a file to prevent
 accidental or mischievous creation of set-user-id and set-group-id
 programs.
-.Pp
-The
-.Nm
-utility exits 0 on success, and >0 if an error occurs.
+.Sh EXIT STATUS
+.Ex -std chown
 .Sh COMPATIBILITY
 Previous versions of the
 .Nm
@@ -169,11 +167,6 @@ group names may contain the dot character.
 .Xr lchown 2 ,
 .Xr fts 3 ,
 .Xr symlink 7
-.Sh HISTORY
-A
-.Nm
-utility appeared in
-.At v1 .
 .Sh STANDARDS
 The
 .Nm
@@ -184,3 +177,8 @@ The
 option and the use of ``#'' to force a numeric lookup
 are extensions to
 .St -p1003.2 .
+.Sh HISTORY
+A
+.Nm
+utility appeared in
+.At v1 .
