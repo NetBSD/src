@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.15 2017/07/01 08:58:41 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.16 2017/07/04 12:59:12 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -1562,4 +1562,65 @@ sys/netinet/if_arp.c				1.253
 	Allow any ARP message we receieved from another interface to
 	be correctly dropped.
 	[roy, ticket #77]
+
+libexec/ld.elf_so/Makefile			1.137
+libexec/ld.elf_so/arch/aarch64/mdreloc.c	1.3
+libexec/ld.elf_so/arch/alpha/alpha_reloc.c	1.42
+libexec/ld.elf_so/arch/arm/mdreloc.c		1.39-1.41
+libexec/ld.elf_so/arch/hppa/hppa_reloc.c	1.44
+libexec/ld.elf_so/arch/i386/mdreloc.c		1.38
+libexec/ld.elf_so/arch/m68k/mdreloc.c		1.32
+libexec/ld.elf_so/arch/mips/mips_reloc.c	1.66-1.68
+libexec/ld.elf_so/arch/or1k/mdreloc.c		1.2
+libexec/ld.elf_so/arch/powerpc/ppc_reloc.c	1.54
+libexec/ld.elf_so/arch/riscv/mdreloc.c		1.3
+libexec/ld.elf_so/arch/sh3/mdreloc.c		1.33-1.34
+libexec/ld.elf_so/arch/sparc/mdreloc.c		1.49-1.50
+libexec/ld.elf_so/arch/sparc64/mdreloc.c	1.60-1.61
+libexec/ld.elf_so/arch/vax/mdreloc.c		1.32-1.33
+libexec/ld.elf_so/arch/x86_64/mdreloc.c		1.42
+libexec/ld.elf_so/map_object.c			1.58
+libexec/ld.elf_so/rtld.h			1.127
+libexec/ld.elf_so/symbol.c			1.68
+
+	Replace COMBREL with just-in-time check in
+	_rtld_relocate_nonplt_objects.
+
+	Drop symbol number from default branch diagnostic, it
+	isn't set at this point and most likely not valid
+	either.
+
+	Expand symnum, GCC's uninitialized used tracking is too imprecise.
+
+	Fix C&P bug. Deal with more MIPS hacks overriding def.
+
+	Add last_symnum, move up def and defobj,
+
+	Add back symnum, fix debug print.
+
+	Replace last use of r_type.
+
+	Fix indentation.
+	[joerg, ticket #64]
+
+lib/libc/net/Makefile.inc			1.87
+
+	Include IPv6 global variable in USE_INET6=no libc
+
+	This ensures a binary built with USE_INET6=yes libc can still link at
+	runtime with a USE_INET6=no libc. Of course IPv6 functionnality is not
+	available, but dynamic linking is not killed by missing symbols such
+	as in6addr_any.
+	[manu, ticket #78]
+
+distrib/utils/libhack/Makefile			1.25
+distrib/utils/libhack/Makefile.inc		1.27
+lib/libc/gen/getcap.c				1.57
+
+	Make shared -DSMALL libc buildable without breaking libhack
+
+	We used -DSMALL to exclude code from libc in order to build
+	libhack. Introduce -DLIBHACK to do this without so that
+	-DSMALL does not remove code necessary for building a shared libc
+	[manu, ticket #79]
 
