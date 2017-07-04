@@ -1,4 +1,4 @@
-/*	$NetBSD: drvstats.c,v 1.10 2017/03/05 23:07:12 mlelstv Exp $	*/
+/*	$NetBSD: drvstats.c,v 1.11 2017/07/04 21:19:33 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -97,6 +97,31 @@ drvswap(void)
 		if (!cur.select[i])
 			continue;
 
+		/*
+		 * When a drive is replaced with one of the same
+		 * name, the previous statistics are invalid. Try
+		 * to detect this by validating counters and timestamp
+		 */
+		if ((cur.rxfer[i] == 0 && cur.wxfer[i] == 0)
+		    || cur.rxfer[i] - last.rxfer[i] > INT64_MAX
+		    || cur.wxfer[i] - last.wxfer[i] > INT64_MAX
+		    || cur.seek[i] - last.seek[i] > INT64_MAX
+		    || (cur.timestamp[i].tv_sec == 0 &&
+		        cur.timestamp[i].tv_usec == 0)) {
+
+			last.rxfer[i] = cur.rxfer[i];
+			last.wxfer[i] = cur.wxfer[i];
+			last.seek[i] = cur.seek[i];
+			last.rbytes[i] = cur.rbytes[i];
+			last.wbytes[i] = cur.wbytes[i];
+
+			timerclear(&last.wait[i]);
+			timerclear(&last.time[i]);
+			timerclear(&last.waitsum[i]);
+			timerclear(&last.busysum[i]);
+			timerclear(&last.timestamp[i]);
+		}
+
 		/* Delta Values. */
 		SWAP(rxfer[i]);
 		SWAP(wxfer[i]);
@@ -108,6 +133,7 @@ drvswap(void)
 		DELTA(time[i]);
 		DELTA(waitsum[i]);
 		DELTA(busysum[i]);
+		DELTA(timestamp[i]);
 	}
 }
 
@@ -151,7 +177,7 @@ cpuswap(void)
 void
 drvreadstats(void)
 {
-	size_t		size, i;
+	size_t		size, i, j, count;
 	int		mib[3];
 
 	mib[0] = CTL_HW;
@@ -161,26 +187,45 @@ drvreadstats(void)
 	size = ndrive * sizeof(struct io_sysctl);
 	if (sysctl(mib, 3, drives, &size, NULL, 0) < 0)
 		err(1, "sysctl hw.iostats failed");
+	/* recalculate array length */
+	count = size / sizeof(struct io_sysctl);
 
-#define COPYF(x,k) cur.x[k] = drives[k].x
-#define COPYT(x,k) do {							\
-		cur.x[k].tv_sec = drives[k].x##_sec;			\
-		cur.x[k].tv_usec = drives[k].x##_usec;			\
+#define COPYF(x,k,l) cur.x[k] = drives[l].x
+#define COPYT(x,k,l) do {						\
+		cur.x[k].tv_sec = drives[l].x##_sec;			\
+		cur.x[k].tv_usec = drives[l].x##_usec;			\
 } while (/* CONSTCOND */0)
 
-	for (i = 0; i < ndrive; i++) {
+	for (i = 0, j = 0; i < ndrive && j < count; i++) {
 
-		COPYF(rxfer, i);
-		COPYF(wxfer, i);
-		COPYF(seek, i);
-		COPYF(rbytes, i);
-		COPYF(wbytes, i);
+		/*
+		 * skip removed entries
+		 *
+		 * we cannot detect entries replaced with
+		 * devices of the same name (e.g. unplug/replug).
+		 */
+		if (strcmp(cur.name[i], drives[j].name)) {
+			cur.select[i] = 0;
+			continue;
+		}
 
-		COPYT(wait, i);
-		COPYT(time, i);
-		COPYT(waitsum, i);
-		COPYT(busysum, i);
+		COPYF(rxfer, i, j);
+		COPYF(wxfer, i, j);
+		COPYF(seek, i, j);
+		COPYF(rbytes, i, j);
+		COPYF(wbytes, i, j);
+
+		COPYT(wait, i, j);
+		COPYT(time, i, j);
+		COPYT(waitsum, i, j);
+		COPYT(busysum, i, j);
+		COPYT(timestamp, i, j);
+
+		++j;
 	}
+
+	/* shrink table to new size */
+	ndrive = j;
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_TKSTAT;
@@ -295,6 +340,7 @@ drvinit(int selected)
 	cur.wait = calloc(ndrive, sizeof(struct timeval));
 	cur.waitsum = calloc(ndrive, sizeof(struct timeval));
 	cur.busysum = calloc(ndrive, sizeof(struct timeval));
+	cur.timestamp = calloc(ndrive, sizeof(struct timeval));
 	cur.rxfer = calloc(ndrive, sizeof(u_int64_t));
 	cur.wxfer = calloc(ndrive, sizeof(u_int64_t));
 	cur.seek = calloc(ndrive, sizeof(u_int64_t));
@@ -304,6 +350,7 @@ drvinit(int selected)
 	last.wait = calloc(ndrive, sizeof(struct timeval));
 	last.waitsum = calloc(ndrive, sizeof(struct timeval));
 	last.busysum = calloc(ndrive, sizeof(struct timeval));
+	last.timestamp = calloc(ndrive, sizeof(struct timeval));
 	last.rxfer = calloc(ndrive, sizeof(u_int64_t));
 	last.wxfer = calloc(ndrive, sizeof(u_int64_t));
 	last.seek = calloc(ndrive, sizeof(u_int64_t));
@@ -314,11 +361,13 @@ drvinit(int selected)
 
 	if (cur.time == NULL || cur.wait == NULL ||
 	    cur.waitsum == NULL || cur.busysum == NULL ||
+	    cur.timestamp == NULL ||
 	    cur.rxfer == NULL || cur.wxfer == NULL ||
 	    cur.seek == NULL || cur.rbytes == NULL ||
 	    cur.wbytes == NULL ||
 	    last.time == NULL || last.wait == NULL ||
 	    last.waitsum == NULL || last.busysum == NULL ||
+	    last.timestamp == NULL ||
 	    last.rxfer == NULL || last.wxfer == NULL ||
 	    last.seek == NULL || last.rbytes == NULL ||
 	    last.wbytes == NULL ||
@@ -335,8 +384,12 @@ drvinit(int selected)
 	mib[2] = sizeof(struct io_sysctl);
 	if (sysctl(mib, 3, drives, &size, NULL, 0) == -1)
 		err(1, "sysctl hw.iostats failed");
+	/* Recalculate array length */
+	ndrive = size / sizeof(struct io_sysctl);
 	for (i = 0; i < ndrive; i++) {
-		cur.name[i] = drives[i].name;
+		cur.name[i] = strndup(drives[i].name, sizeof(drives[i].name));
+		if (cur.name[i] == NULL)
+			errx(1, "Memory allocation failure");
 		cur.select[i] = selected;
 	}
 
