@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.216 2017/01/05 07:53:20 ryo Exp $ */
+/* $NetBSD: vmstat.c,v 1.217 2017/07/04 21:19:33 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.216 2017/01/05 07:53:20 ryo Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.217 2017/07/04 21:19:33 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -1113,20 +1113,23 @@ void
 drvstats(int *ovflwp)
 {
 	size_t dn;
-	double etime;
+	double dtime;
 	int ovflw = *ovflwp;
 
 	/* Calculate disk stat deltas. */
 	cpuswap();
 	drvswap();
 	tkswap();
-	etime = cur.cp_etime;
 
 	for (dn = 0; dn < ndrive; ++dn) {
+		/* elapsed time for disk stats */
+		dtime = (double)cur.timestamp[dn].tv_sec +
+			((double)cur.timestamp[dn].tv_usec / (double)1000000);
+
 		if (!drv_select[dn])
 	 		continue;
 		PRWORD(ovflw, " %*.0f", 3, 1,
-		    (cur.rxfer[dn] + cur.wxfer[dn]) / etime);
+		    (cur.rxfer[dn] + cur.wxfer[dn]) / dtime);
 	}
 	*ovflwp = ovflw;
 }
