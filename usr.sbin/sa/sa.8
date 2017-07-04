@@ -1,4 +1,4 @@
-.\" $NetBSD: sa.8,v 1.19 2017/07/03 21:35:32 wiz Exp $
+.\" $NetBSD: sa.8,v 1.20 2017/07/04 07:12:18 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -206,10 +206,6 @@ flag is specified, only the
 and
 .Fl s
 flags are honored.
-.Pp
-The
-.Nm
-utility exits 0 on success, and >0 if an error occurs.
 .Sh FILES
 .Bl -tag -width /var/account/usracct -compact
 .It Pa /var/account/acct
@@ -219,6 +215,8 @@ per-command accounting summary database
 .It Pa /var/account/usracct
 per-user accounting summary database
 .El
+.Sh EXIT STATUS
+.Ex -std sa
 .Sh SEE ALSO
 .Xr lastcomm 1 ,
 .Xr acct 5 ,
