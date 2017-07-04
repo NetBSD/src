@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.41 2017/07/04 08:09:19 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.42 2017/07/04 08:11:32 ozaki-r Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.41 2017/07/04 08:09:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.42 2017/07/04 08:11:32 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -111,9 +111,7 @@ ah4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 					   	IPPROTO_AH, ah->ah_spi, 0, 0);
 
 		if (sav) {
-        	if (sav->state == SADB_SASTATE_MATURE ||
-                sav->state == SADB_SASTATE_DYING) {
-
+			if (SADB_SASTATE_USABLE_P(sav)) {
 				/*
 				 * Now that we've validated that we are actually 
 				 * communicating with the host indicated in the 	
@@ -159,9 +157,7 @@ esp4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 					   	IPPROTO_ESP, esp->esp_spi, 0, 0);
 
 		if (sav) {
-        	if (sav->state == SADB_SASTATE_MATURE ||
-                sav->state == SADB_SASTATE_DYING) {
-
+			if (SADB_SASTATE_USABLE_P(sav)) {
 				/*
 				 * Now that we've validated that we are actually 
 				 * communicating with the host indicated in the 	
@@ -242,8 +238,7 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			    IPPROTO_AH, ahp->ah_spi, 0, 0);
 
 			if (sav) {
-				if (sav->state == SADB_SASTATE_MATURE ||
-				    sav->state == SADB_SASTATE_DYING)
+				if (SADB_SASTATE_USABLE_P(sav))
 					valid++;
 				KEY_FREESAV(&sav);
 			}
@@ -348,8 +343,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 					  IPPROTO_ESP, espp->esp_spi, 0, 0);
 
 			if (sav) {
-				if (sav->state == SADB_SASTATE_MATURE ||
-				    sav->state == SADB_SASTATE_DYING)
+				if (SADB_SASTATE_USABLE_P(sav))
 					valid++;
 				KEY_FREESAV(&sav);
 			}
