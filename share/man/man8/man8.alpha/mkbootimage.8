@@ -1,4 +1,4 @@
-.\" $NetBSD: mkbootimage.8,v 1.9 2017/07/03 21:31:00 wiz Exp $
+.\" $NetBSD: mkbootimage.8,v 1.10 2017/07/04 06:42:46 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Christopher G. Demetriou
 .\" All rights reserved.
@@ -48,10 +48,11 @@ The
 .Nm
 utility creates bootable image files from
 .Nx Ns Tn /alpha
-bootstrap programs.  Bootable image
-files can be placed directly on disk or tape to create bootable
-media which can be booted by the SRM console.  This is
-primarily useful for creating bootable tapes or disk sets with the
+bootstrap programs.
+Bootable image files can be placed directly on disk or tape to
+create bootable media which can be booted by the SRM console.
+This is primarily useful for creating bootable tapes or disk sets
+with the
 .Pa /usr/mdec/ustarboot
 bootstrap program, or for creating firmware upgrade media
 using firmware upgrade programs.
@@ -67,7 +68,8 @@ standard output.
 The
 .Nm
 utility does not install bootstrap programs to make
-disks bootable.  To do that, use
+disks bootable.
+To do that, use
 .Xr installboot 8 .
 Similarly, it is not necessary to use
 .Nm
@@ -86,16 +88,14 @@ Print information about what
 .Nm
 is doing.
 .El
-.Pp
-The
-.Nm
-utility exits 0 on success, and >0 if an error occurs.
 .Sh FILES
 .Bl -tag -width /usr/mdec/ustarboot -compact
 .It Pa /usr/mdec/ustarboot
 .Dq ustar
 file system bootstrap program
 .El
+.Sh EXIT STATUS
+.Ex -std mkbootimage
 .Sh EXAMPLES
 .Bd -literal -offset indent
 mkbootimage as200_v5_8.exe as200_v5_8.exe.bootimage
@@ -106,7 +106,6 @@ Create a bootable image from the (firmware image) file
 That bootable image could then be written to floppy,
 disk, CD-ROM, or tape to create bootable firmware
 update media.
-.Pp
 .Bd -literal -offset indent
 (mkbootimage /usr/mdec/ustarboot; tar cvf - netbsd) | \\
     dd of=/dev/rst0
@@ -115,8 +114,8 @@ update media.
 Make a bootable image from the bootstrap program
 .Pa /usr/mdec/ustarboot ,
 concatenate it with a tar file containing a kernel,
-and write the output to a tape.  This is an example of
-how to create a tape which boots a kernel.
+and write the output to a tape.
+This is an example of how to create a tape which boots a kernel.
 .Sh SEE ALSO
 .Xr alpha/boot 8 ,
 .Xr installboot 8
@@ -129,4 +128,5 @@ command first appeared in
 .Sh AUTHORS
 The
 .Nm
-utility was written by Chris Demetriou.
+utility was written by
+.An Chris Demetriou .
