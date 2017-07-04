@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.48 2017/05/19 04:34:09 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.49 2017/07/04 06:45:05 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.48 2017/05/19 04:34:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.49 2017/07/04 06:45:05 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -298,17 +298,17 @@ ipsec_nextisr(
 	int *error
 )
 {
-#define	IPSEC_OSTAT(x, y, z)						\
+#define	IPSEC_OSTAT(type)						\
 do {									\
 	switch (isr->saidx.proto) {					\
 	case IPPROTO_ESP:						\
-		ESP_STATINC(x);						\
+		ESP_STATINC(ESP_STAT_ ## type);				\
 		break;							\
 	case IPPROTO_AH:						\
-		AH_STATINC(y);						\
+		AH_STATINC(AH_STAT_ ## type);				\
 		break;							\
 	default:							\
-		IPCOMP_STATINC(z);					\
+		IPCOMP_STATINC(IPCOMP_STAT_ ## type);			\
 		break;							\
 	}								\
 } while (/*CONSTCOND*/0)
@@ -419,8 +419,7 @@ again:
 	    (isr->saidx.proto == IPPROTO_IPCOMP && !ipcomp_enable)) {
 		IPSECLOG(LOG_DEBUG, "IPsec outbound packet dropped due"
 		    " to policy (check your sysctls)\n");
-		IPSEC_OSTAT(ESP_STAT_PDROPS, AH_STAT_PDROPS,
-		    IPCOMP_STAT_PDROPS);
+		IPSEC_OSTAT(PDROPS);
 		*error = EHOSTUNREACH;
 		goto bad;
 	}
@@ -431,8 +430,7 @@ again:
 	 */
 	if (sav->tdb_xform == NULL) {
 		IPSECLOG(LOG_DEBUG, "no transform for SA\n");
-		IPSEC_OSTAT(ESP_STAT_NOXFORM, AH_STAT_NOXFORM,
-		    IPCOMP_STAT_NOXFORM);
+		IPSEC_OSTAT(NOXFORM);
 		*error = EHOSTUNREACH;
 		goto bad;
 	}
