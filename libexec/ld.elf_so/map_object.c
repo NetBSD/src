@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.57 2017/03/10 09:13:49 maya Exp $	 */
+/*	$NetBSD: map_object.c,v 1.57.4.1 2017/07/04 12:47:58 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.57 2017/03/10 09:13:49 maya Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.57.4.1 2017/07/04 12:47:58 martin Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -462,9 +462,6 @@ _rtld_obj_free(Obj_Entry *obj)
 	}
 	if (!obj->phdr_loaded)
 		xfree((void *)(uintptr_t)obj->phdr);
-#ifdef COMBRELOC
-	_rtld_combreloc_reset(obj);
-#endif
 	xfree(obj);
 }
 
