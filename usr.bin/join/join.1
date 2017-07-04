@@ -1,4 +1,4 @@
-.\"	$NetBSD: join.1,v 1.14 2017/07/03 21:34:19 wiz Exp $
+.\"	$NetBSD: join.1,v 1.15 2017/07/04 07:01:53 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"   The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,6 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)join.1	8.3 (Berkeley) 4/28/95
-.\"	$NetBSD: join.1,v 1.14 2017/07/03 21:34:19 wiz Exp $
 .\"
 .Dd April 28, 1995
 .Dt JOIN 1
@@ -152,10 +151,8 @@ If one of the arguments
 or
 .Ar file2
 is ``-'', the standard input is used.
-.Pp
-The
-.Nm
-utility exits 0 on success, and >0 if an error occurs.
+.Sh EXIT STATUS
+.Ex -std join
 .Sh COMPATIBILITY
 For compatibility with historic versions of
 .Nm ,
