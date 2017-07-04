@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.42 2017/07/04 08:11:32 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.43 2017/07/04 08:12:28 ozaki-r Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.42 2017/07/04 08:11:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.43 2017/07/04 08:12:28 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -120,9 +120,8 @@ ah4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		 		 * corresponding routing entry.
 		 		 */
 				icp = (struct icmp *)((char *)ip - 
-									  offsetof(struct icmp, icmp_ip));
+				    offsetof(struct icmp, icmp_ip));
 				icmp_mtudisc(icp, ip->ip_dst);
-
 			}
 			KEY_FREESAV(&sav);
 		}
@@ -165,11 +164,9 @@ esp4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 				 * recalculate the new MTU, and create the
 		 		 * corresponding routing entry.
 		 		 */
-
 				icp = (struct icmp *)((char *)ip - 
-									   offsetof(struct icmp, icmp_ip));
+				    offsetof(struct icmp, icmp_ip));
 				icmp_mtudisc(icp, ip->ip_dst);
-
 			}
 			KEY_FREESAV(&sav);
 		}
