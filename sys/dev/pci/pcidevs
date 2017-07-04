@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1291 2017/06/17 20:25:06 jdolecek Exp $
+$NetBSD: pcidevs,v 1.1292 2017/07/04 05:02:47 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3725,6 +3725,8 @@ product INTEL 82965Q_HB		0x2990  82965Q Host Bridge
 product INTEL 82965Q_EXP	0x2991  82965Q PCI Express Bridge
 product INTEL 82965Q_IGD	0x2992  82965Q Integrated Graphics Device
 product INTEL 82965Q_IGD_1	0x2993  82965Q Integrated Graphics Device
+product INTEL 82965Q_HECI_1	0x2994	82Q965 HECI
+product INTEL 82965Q_HECI_2	0x2995	82Q965 HECI
 product INTEL 82Q965_KT		0x2997  82Q965 KT
 product INTEL 82965G_HB		0x29a0  82965G Host Bridge
 product INTEL 82965G_EXP	0x29a1  82965G PCI Express Bridge
