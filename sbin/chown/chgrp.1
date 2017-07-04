@@ -29,7 +29,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chgrp.1	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chgrp.1,v 1.7 2017/07/03 21:33:41 wiz Exp $
+.\"	$NetBSD: chgrp.1,v 1.8 2017/07/04 06:52:20 wiz Exp $
 .\"
 .Dd October 22, 2012
 .Dt CHGRP 1
@@ -142,15 +142,13 @@ Unless invoked by the super-user,
 clears the set-user-id and set-group-id bits on a file to prevent
 accidental or mischievous creation of set-user-id or set-group-id
 programs.
-.Pp
-The
-.Nm
-utility exits 0 on success, and >0 if an error occurs.
 .Sh FILES
 .Bl -tag -width /etc/group -compact
 .It Pa /etc/group
 Group ID file
 .El
+.Sh EXIT STATUS
+.Ex -std chgrp
 .Sh SEE ALSO
 .Xr chown 2 ,
 .Xr lchown 2 ,
