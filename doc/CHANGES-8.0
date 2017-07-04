@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.16 2017/07/04 12:59:12 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.17 2017/07/04 16:36:40 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -1623,4 +1623,32 @@ lib/libc/gen/getcap.c				1.57
 	libhack. Introduce -DLIBHACK to do this without so that
 	-DSMALL does not remove code necessary for building a shared libc
 	[manu, ticket #79]
+
+sys/dev/pci/pci_subr.c				1.184-1.189
+sys/dev/pci/pcireg.h				1.131
+
+	Add missing return to print the Slot Power Limit Value correctly.
+
+	Fix to print the following bit fields correctly.
+	 -  Supported Link Speeds Vector in LCAP2
+	 -  Lower SKP OS Generation Supported Speed Vector  in LCAP2
+	 -  Lower SKP OS Reception Supported Speed Vector in LCAP2
+	 -  Enable Lower SKP OS Generation Vector in LCTL3
+
+	Fix a bug that LTR's latency in L1 PM Substates capability and Latency
+	Tolerance Reporting capability isn't printed correctly.
+	[msaitoh, ticket #80]
+
+sys/dev/pci/if_wm.c				1.509
+sys/dev/pci/ixgbe/ixgbe.c			1.89-1.90
+
+	Use IFM_1000_KX and IFM_2500_KX.
+	[msaitoh, ticket #81]
+
+sys/net/if_media.h				1.58-1.59
+
+	Stylistic changes.
+	Add some missing baudrate entries
+	Add 1000BASE-KX and 2500BASE-KX
+	[msaitoh, ticket #82]
 
