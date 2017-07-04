@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkdir.1,v 1.20 2017/07/03 21:33:23 wiz Exp $
+.\"	$NetBSD: mkdir.1,v 1.21 2017/07/04 06:49:35 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,6 @@ as modified by the current
 .Xr umask 2 .
 .Pp
 The options are as follows:
-.Pp
 .Bl -tag -width indent
 .It Fl m
 Set the file permission bits of the final created directory to
@@ -79,8 +78,7 @@ Do not consider it an error if the argument directory already exists.
 .Pp
 The user must have write permission in the parent directory.
 .Sh EXIT STATUS
-.Nm
-exits 0 if successful, and >0 if an error occurred.
+.Ex -std mkdir
 .Sh SEE ALSO
 .Xr chmod 1 ,
 .Xr rmdir 1 ,
