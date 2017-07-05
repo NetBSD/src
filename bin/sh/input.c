@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.59 2017/06/30 23:02:56 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.60 2017/07/05 19:54:21 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.59 2017/06/30 23:02:56 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.60 2017/07/05 19:54:21 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,6 +131,7 @@ SHELLPROC {
 #endif
 
 
+#if 0		/* this is unused */
 /*
  * Read a line from the script.
  */
@@ -156,7 +157,7 @@ pfgets(char *line, int len)
 	*p = '\0';
 	return line;
 }
-
+#endif
 
 
 /*
@@ -178,7 +179,7 @@ preadfd(void)
 	char *buf =  parsefile->buf;
 	parsenextc = buf;
 
-retry:
+ retry:
 #ifndef SMALL
 	if (parsefile->fd == 0 && el) {
 		static const char *rl_cp;
@@ -211,6 +212,7 @@ retry:
                                 goto retry;
                         if (parsefile->fd == 0 && errno == EWOULDBLOCK) {
                                 int flags = fcntl(0, F_GETFL, 0);
+
                                 if (flags >= 0 && flags & O_NONBLOCK) {
                                         flags &=~ O_NONBLOCK;
                                         if (fcntl(0, F_SETFL, flags) >= 0) {
@@ -255,7 +257,7 @@ preadbuffer(void)
 	flushout(&output);
 	flushout(&errout);
 
-again:
+ again:
 	if (parselleft <= 0) {
 		if ((parselleft = preadfd()) == -1) {
 			parselleft = parsenleft = EOF_NLEFT;
@@ -294,7 +296,7 @@ again:
 		}
 
 		*q++ = *p++;
-check:
+ check:
 		if (--parselleft <= 0) {
 			parsenleft = q - parsenextc - 1;
 			if (parsenleft < 0)
@@ -348,14 +350,20 @@ pushstring(const char *s, int len, struct alias *ap)
 {
 	struct strpush *sp;
 
+	VTRACE(DBG_INPUT,
+	    ("pushstring(\"%.*s\", %d)%s%s%s had: nl=%d ll=%d \"%.*s\"\n",
+	    len, s, len, ap ? " for alias:'" : "",
+	    ap ? ap->name : "", ap ? "'" : "",
+	    parsenleft, parselleft, parsenleft, parsenextc));
+
 	INTOFF;
-/*debugprintf("*** calling pushstring: %s, %d\n", s, len);*/
 	if (parsefile->strpush) {
 		sp = ckmalloc(sizeof (struct strpush));
 		sp->prev = parsefile->strpush;
 		parsefile->strpush = sp;
 	} else
 		sp = parsefile->strpush = &(parsefile->basestrpush);
+
 	sp->prevstring = parsenextc;
 	sp->prevnleft = parsenleft;
 	sp->prevlleft = parselleft;
@@ -376,7 +384,11 @@ popstring(void)
 	parsenextc = sp->prevstring;
 	parsenleft = sp->prevnleft;
 	parselleft = sp->prevlleft;
-/*debugprintf("*** calling popstring: restoring to '%s'\n", parsenextc);*/
+
+	VTRACE(DBG_INPUT, ("popstring()%s%s%s nl=%d ll=%d \"%.*s\"\n",
+	    sp->ap ? " from alias:'" : "", sp->ap ? sp->ap->name : "",
+	    sp->ap ? "'" : "", parsenleft, parselleft, parsenleft, parsenextc));
+
 	if (sp->ap)
 		sp->ap->flag &= ~ALIASINUSE;
 	parsefile->strpush = sp->prev;
@@ -397,6 +409,8 @@ setinputfile(const char *fname, int push)
 	int fd;
 	int fd2;
 	struct stat sb;
+
+	CTRACE(DBG_INPUT,("setinputfile(\"%s\", %spush)\n",fname,push?"":"no"));
 
 	INTOFF;
 	if ((fd = open(fname, O_RDONLY)) < 0)
@@ -458,12 +472,12 @@ input_fd_swap(int from, int to)
 void
 setinputfd(int fd, int push)
 {
+	VTRACE(DBG_INPUT, ("setinputfd(%d, %spush)\n", fd, push?"":"no"));
+
 	register_sh_fd(fd, input_fd_swap);
 	(void) fcntl(fd, F_SETFD, FD_CLOEXEC);
-	if (push) {
+	if (push)
 		pushfile();
-		parsefile->buf = ckmalloc(BUFSIZ);
-	}
 	if (parsefile->fd > 0)
 		sh_close(parsefile->fd);
 	parsefile->fd = fd;
@@ -471,7 +485,9 @@ setinputfd(int fd, int push)
 		parsefile->buf = ckmalloc(BUFSIZ);
 	parselleft = parsenleft = 0;
 	plinno = 1;
-	CTRACE(DBG_INPUT, ("setinputfd(%d, %d); plinno=1\n", fd, push));
+
+	CTRACE(DBG_INPUT, ("setinputfd(%d, %spush) done; plinno=1\n", fd,
+	    push ? "" : "no"));
 }
 
 
@@ -488,10 +504,11 @@ setinputstring(char *string, int push, int line1)
 		pushfile();
 	parsenextc = string;
 	parselleft = parsenleft = strlen(string);
-	parsefile->buf = NULL;
 	plinno = line1;
-	CTRACE(DBG_INPUT, ("setinputstring(\"%.20s%s\" (%d), %d, %d)\n", string,
-	    (parsenleft > 20 ? "..." : ""), parsenleft, push, line1));
+
+	CTRACE(DBG_INPUT,
+	    ("setinputstring(\"%.20s%s\" (%d), %push, @ %d)\n", string,
+	    (parsenleft > 20 ? "..." : ""), parsenleft, push?"":"no", line1));
 	INTON;
 }
 
@@ -507,8 +524,9 @@ pushfile(void)
 {
 	struct parsefile *pf;
 
-	VTRACE(DBG_INPUT, ("pushfile(): fd=%d nl=%d ll=%d \"%.*s\" plinno=%d\n",
-	    parsefile->fd, parsenleft, parselleft,
+	VTRACE(DBG_INPUT,
+	    ("pushfile(): fd=%d buf=%p nl=%d ll=%d \"%.*s\" plinno=%d\n",
+	    parsefile->fd, parsefile->buf, parsenleft, parselleft,
 	    parsenleft, parsenextc, plinno));
 
 	parsefile->nleft = parsenleft;
@@ -520,6 +538,7 @@ pushfile(void)
 	pf->fd = -1;
 	pf->strpush = NULL;
 	pf->basestrpush.prev = NULL;
+	pf->buf = NULL;
 	parsefile = pf;
 }
 
@@ -541,10 +560,12 @@ popfile(void)
 	parsenleft = parsefile->nleft;
 	parselleft = parsefile->lleft;
 	parsenextc = parsefile->nextc;
+
 	VTRACE(DBG_INPUT,
-	    ("popfile(): fd=%d nl=%d ll=%d \"%.*s\" plinno:%d->%d\n",
-	    parsefile->fd, parsenleft, parselleft,
+	    ("popfile(): fd=%d buf=%p nl=%d ll=%d \"%.*s\" plinno:%d->%d\n",
+	    parsefile->fd, parsefile->buf, parsenleft, parselleft,
 	    parsenleft, parsenextc, plinno, parsefile->linno));
+
 	plinno = parsefile->linno;
 	INTON;
 }
