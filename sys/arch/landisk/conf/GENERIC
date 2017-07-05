@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.54 2017/02/19 07:47:01 rin Exp $
+# $NetBSD: GENERIC,v 1.54.6.1 2017/07/05 13:58:48 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.54 $"
+#ident          "GENERIC-$Revision: 1.54.6.1 $"
 
 maxusers	16		# estimated number of users
 
@@ -497,8 +497,8 @@ options 	VERIFIED_EXEC_FP_SHA512
 options 	VERIFIED_EXEC_FP_SHA1
 options 	VERIFIED_EXEC_FP_MD5
 
-options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
+#options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
 options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
 options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions
-options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
+#options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
 options 	PAX_ASLR=1		# PaX Address Space Layout Randomization
