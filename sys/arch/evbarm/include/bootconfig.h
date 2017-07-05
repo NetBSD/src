@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.7 2017/07/05 01:08:45 jmcneill Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.8 2017/07/05 09:37:14 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -36,7 +36,9 @@
  * SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_machdep.h"
+#endif
 
 #include <arm/bootconfig.h>
 
