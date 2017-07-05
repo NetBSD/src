@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.17 2017/07/04 16:36:40 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.18 2017/07/05 16:03:19 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -1651,4 +1651,47 @@ sys/net/if_media.h				1.58-1.59
 	Add some missing baudrate entries
 	Add 1000BASE-KX and 2500BASE-KX
 	[msaitoh, ticket #82]
+
+sys/arch/amd64/conf/GENERIC			(patch)
+sys/arch/amd64/conf/XEN3_DOM0			(patch)
+sys/arch/amd64/conf/XEN3_DOMU			(patch)
+sys/arch/cobalt/conf/GENERIC			(patch)
+sys/arch/evbarm/conf/BEAGLEBOARD		(patch)
+sys/arch/evbarm/conf/BEAGLEBOARDXM		(patch)
+sys/arch/evbarm/conf/BEAGLEBONE			(patch)
+sys/arch/evbarm/conf/GENERIC.common		(patch)
+sys/arch/i386/conf/GENERIC			(patch)
+sys/arch/i386/conf/XEN3_DOM0			(patch)
+sys/arch/i386/conf/XEN3_DOMU			(patch)
+sys/arch/landisk/conf/GENERIC			(patch)
+sys/arch/mvmeppc/conf/GENERIC			(patch)
+sys/arch/pmax/conf/GENERIC			(patch)
+sys/arch/shark/conf/GENERIC			(patch)
+sys/arch/sparc64/conf/GENERIC			(patch)
+sys/arch/zaurus/conf/GENERIC			(patch)
+
+	Remove options DIAGNOSTIC/DEBUG and the PAX debug options.
+	[snj, #60]
+
+sys/arch/arm/footbridge/footbridge_io.c		1.23
+sys/arch/cats/cats/cats_machdep.c		1.84
+sys/arch/cats/conf/GENERIC			1.162
+
+	Use devmap if available.
+	Now that bus_space can use devmap - use it for early console.
+	Comment out a bunch of thing so that a GENERIC kernel boots on
+	cats with cyclone firmware.
+	[skrll, ticket #83]
+
+sys/miscfs/genfs/genfs_io.c			1.70
+
+	Add missing check for dead or dying vnode to the entry of
+	genfs_getpages().
+	[hannken, ticket #84]
+
+external/gpl3/gcc/usr.bin/backend/Makefile	1.37
+external/gpl3/gcc/usr.bin/host-libcpp/Makefile	1.3
+
+	Honor HOST_CXX - fixes the build on systems without g++.
+	[joerg, ticket #85]
 
