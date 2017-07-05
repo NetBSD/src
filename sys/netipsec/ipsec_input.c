@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.44 2017/06/28 13:12:37 christos Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.45 2017/07/05 03:44:59 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.44 2017/06/28 13:12:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.45 2017/07/05 03:44:59 ozaki-r Exp $");
 
 /*
  * IPsec input processing.
@@ -331,11 +331,10 @@ ipsec4_common_input(struct mbuf *m, ...)
  */
 int
 ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
-    int skip, int protoff, struct m_tag *mt)
+    int skip, int protoff)
 {
 	int prot, af __diagused, sproto;
 	struct ip *ip;
-	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct secasindex *saidx;
 	int error;
@@ -476,13 +475,10 @@ cantpull:
 
 	/*
 	 * Record what we've done to the packet (under what SA it was
-	 * processed). If we've been passed an mtag, it means the packet
-	 * was already processed by an ethernet/crypto combo card and
-	 * thus has a tag attached with all the right information, but
-	 * with a PACKET_TAG_IPSEC_IN_CRYPTO_DONE as opposed to
-	 * PACKET_TAG_IPSEC_IN_DONE type; in that case, just change the type.
+	 * processed).
 	 */
-	if (mt == NULL && sproto != IPPROTO_IPCOMP) {
+	if (sproto != IPPROTO_IPCOMP) {
+		struct m_tag *mtag;
 		mtag = m_tag_get(PACKET_TAG_IPSEC_IN_DONE,
 		    sizeof(struct tdb_ident), M_NOWAIT);
 		if (mtag == NULL) {
@@ -499,10 +495,6 @@ cantpull:
 		tdbi->spi = sav->spi;
 
 		m_tag_prepend(m, mtag);
-	} else {
-		if (mt != NULL)
-			mt->m_tag_id = PACKET_TAG_IPSEC_IN_DONE;
-			/* XXX do we need to mark m_flags??? */
 	}
 
 	key_sa_recordxfer(sav, m);		/* record data transfer */
@@ -580,12 +572,11 @@ extern	u_char ip6_protox[];
  * filtering and other sanity checks on the processed packet.
  */
 int
-ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int protoff,
-    struct m_tag *mt)
+ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
+    int protoff)
 {
 	int af __diagused, sproto;
 	struct ip6_hdr *ip6;
-	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct secasindex *saidx;
 	int nxt;
@@ -710,13 +701,10 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 
 	/*
 	 * Record what we've done to the packet (under what SA it was
-	 * processed). If we've been passed an mtag, it means the packet
-	 * was already processed by an ethernet/crypto combo card and
-	 * thus has a tag attached with all the right information, but
-	 * with a PACKET_TAG_IPSEC_IN_CRYPTO_DONE as opposed to
-	 * PACKET_TAG_IPSEC_IN_DONE type; in that case, just change the type.
+	 * processed).
 	 */
-	if (mt == NULL && sproto != IPPROTO_IPCOMP) {
+	if (sproto != IPPROTO_IPCOMP) {
+		struct m_tag *mtag;
 		mtag = m_tag_get(PACKET_TAG_IPSEC_IN_DONE,
 		    sizeof(struct tdb_ident), M_NOWAIT);
 		if (mtag == NULL) {
@@ -733,10 +721,6 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 		tdbi->spi = sav->spi;
 
 		m_tag_prepend(m, mtag);
-	} else {
-		if (mt != NULL)
-			mt->m_tag_id = PACKET_TAG_IPSEC_IN_DONE;
-			/* XXX do we need to mark m_flags??? */
 	}
 
 	key_sa_recordxfer(sav, m);
