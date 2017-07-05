@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.25 2014/12/04 21:15:48 joerg Exp $
+#	$NetBSD: files.evbarm,v 1.26 2017/07/05 01:08:44 jmcneill Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -47,5 +47,10 @@ defparam	opt_evbarm_boardtype.h EVBARM_BOARDTYPE
 defflag	opt_plcom.h	PLCOM_DEBUG
 device	plcom { }: tty
 file	arch/evbarm/dev/plcom.c			plcom needs-flag
+
+#
+# Maximum number of memory ranges
+#
+defparam	opt_machdep.h			DRAM_BLOCKS
 
 include "arch/arm/conf/majors.arm32"
