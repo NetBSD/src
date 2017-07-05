@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.98 2017/07/02 02:39:18 christos Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.99 2017/07/05 17:54:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.98 2017/07/02 02:39:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.99 2017/07/05 17:54:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -281,10 +281,12 @@ sockaddr_getsize_by_family(sa_family_t af)
 static void
 sockaddr_checklen(const struct sockaddr *sa)
 {
+	// Can't tell how much was allocated, if it was allocated.
+	if (sa->sa_family == AF_LINK)
+		return;
+
 	socklen_t len = sockaddr_getsize_by_family(sa->sa_family);
 	if (len == 0 || len == sa->sa_len)
-		return;
-	if (sa->sa_family == AF_LINK && sa->sa_len <= len)
 		return;
 
 	char buf[512];
