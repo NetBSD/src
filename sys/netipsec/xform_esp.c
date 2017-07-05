@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.56 2017/06/29 07:13:41 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.57 2017/07/05 03:44:59 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.56 2017/06/29 07:13:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.57 2017/07/05 03:44:59 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -298,10 +298,8 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 {
 	const struct auth_hash *esph;
 	const struct enc_xform *espx;
-	struct tdb_ident *tdbi;
 	struct tdb_crypto *tc;
 	int plen, alen, hlen, error;
-	struct m_tag *mtag;
 	struct newesp *esp;
 
 	struct cryptodesc *crde;
@@ -364,18 +362,6 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	/* Update the counters */
 	ESP_STATADD(ESP_STAT_IBYTES, m->m_pkthdr.len - skip - hlen - alen);
 
-	/* Find out if we've already done crypto */
-	for (mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_CRYPTO_DONE, NULL);
-	     mtag != NULL;
-	     mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_CRYPTO_DONE, mtag)) {
-		tdbi = (struct tdb_ident *) (mtag + 1);
-		if (tdbi->proto == sav->sah->saidx.proto &&
-		    tdbi->spi == sav->spi &&
-		    !memcmp(&tdbi->dst, &sav->sah->saidx.dst,
-			  sizeof(union sockaddr_union)))
-			break;
-	}
-
 	/* Get crypto descriptors */
 	crp = crypto_getreq(esph && espx ? 2 : 1);
 	if (crp == NULL) {
@@ -386,7 +372,7 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	}
 
 	/* Get IPsec-specific opaque pointer */
-	size_t extra = esph == NULL || mtag != NULL ? 0 : alen;
+	size_t extra = esph == NULL ? 0 : alen;
 	tc = malloc(sizeof(*tc) + extra, M_XDATA, M_NOWAIT|M_ZERO);
 	if (tc == NULL) {
 		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
@@ -399,8 +385,6 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 		DPRINTF(("%s: m_makewritable failed\n", __func__));
 		goto out2;
 	}
-
-	tc->tc_ptr = mtag;
 
 	if (esph) {
 		struct cryptodesc *crda;
@@ -427,8 +411,7 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 		}
 
 		/* Copy the authenticator */
-		if (mtag == NULL)
-			m_copydata(m, m->m_pkthdr.len - alen, alen, (tc + 1));
+		m_copydata(m, m->m_pkthdr.len - alen, alen, (tc + 1));
 
 		/* Chain authentication request */
 		crde = crda->crd_next;
@@ -467,10 +450,7 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 		/* XXX Rounds ? */
 	}
 
-	if (mtag == NULL)
-		return crypto_dispatch(crp);
-	else
-		return esp_input_cb(crp);
+	return crypto_dispatch(crp);
 
 out2:
 	free(tc, M_XDATA);
@@ -483,16 +463,16 @@ out:
 }
 
 #ifdef INET6
-#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff, mtag) do {		     \
+#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff) do {		     \
 	if (saidx->dst.sa.sa_family == AF_INET6) {			     \
-		error = ipsec6_common_input_cb(m, sav, skip, protoff, mtag); \
+		error = ipsec6_common_input_cb(m, sav, skip, protoff);	     \
 	} else {							     \
-		error = ipsec4_common_input_cb(m, sav, skip, protoff, mtag); \
+		error = ipsec4_common_input_cb(m, sav, skip, protoff);	     \
 	}								     \
 } while (0)
 #else
-#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff, mtag)		     \
-	(error = ipsec4_common_input_cb(m, sav, skip, protoff, mtag))
+#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff)			     \
+	(error = ipsec4_common_input_cb(m, sav, skip, protoff))
 #endif
 
 /*
@@ -507,7 +487,6 @@ esp_input_cb(struct cryptop *crp)
 	struct mbuf *m;
 	const struct auth_hash *esph;
 	struct tdb_crypto *tc;
-	struct m_tag *mtag;
 	struct secasvar *sav;
 	struct secasindex *saidx;
 	void *ptr;
@@ -520,7 +499,6 @@ esp_input_cb(struct cryptop *crp)
 	tc = crp->crp_opaque;
 	skip = tc->tc_skip;
 	protoff = tc->tc_protoff;
-	mtag = tc->tc_ptr;
 	m = crp->crp_buf;
 
 	/* find the source port for NAT-T */
@@ -583,23 +561,21 @@ esp_input_cb(struct cryptop *crp)
 		 * check the authentication calculation.
 		 */
 		AH_STATINC(AH_STAT_HIST + ah_stats[sav->alg_auth]);
-		if (mtag == NULL) {
-			/* Copy the authenticator from the packet */
-			m_copydata(m, m->m_pkthdr.len - esph->authsize,
-				esph->authsize, aalg);
+		/* Copy the authenticator from the packet */
+		m_copydata(m, m->m_pkthdr.len - esph->authsize,
+			esph->authsize, aalg);
 
-			ptr = (tc + 1);
+		ptr = (tc + 1);
 
-			/* Verify authenticator */
-			if (!consttime_memequal(ptr, aalg, esph->authsize)) {
-				DPRINTF(("%s: authentication hash mismatch "
-				    "for packet in SA %s/%08lx\n", __func__,
-				    ipsec_address(&saidx->dst, buf,
-				    sizeof(buf)), (u_long) ntohl(sav->spi)));
-				ESP_STATINC(ESP_STAT_BADAUTH);
-				error = EACCES;
-				goto bad;
-			}
+		/* Verify authenticator */
+		if (!consttime_memequal(ptr, aalg, esph->authsize)) {
+			DPRINTF(("%s: authentication hash mismatch "
+			    "for packet in SA %s/%08lx\n", __func__,
+			    ipsec_address(&saidx->dst, buf,
+			    sizeof(buf)), (u_long) ntohl(sav->spi)));
+			ESP_STATINC(ESP_STAT_BADAUTH);
+			error = EACCES;
+			goto bad;
 		}
 
 		/* Remove trailing authenticator */
@@ -685,7 +661,7 @@ esp_input_cb(struct cryptop *crp)
 	/* Restore the Next Protocol field */
 	m_copyback(m, protoff, sizeof(uint8_t), lastthree + 2);
 
-	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff, mtag);
+	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff);
 
 	KEY_FREESAV(&sav);
 	mutex_exit(softnet_lock);
