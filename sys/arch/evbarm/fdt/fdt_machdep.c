@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.8 2017/07/05 01:08:45 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.9 2017/07/05 19:30:51 chs Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.8 2017/07/05 01:08:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.9 2017/07/05 19:30:51 chs Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -410,8 +410,8 @@ initarm(void *arg)
 
 #if !defined(_LP64)
 	/* Cannot map memory above 4GB */
-	if (memory_addr + memory_size > 0x100000000)
-		memory_size = 0x100000000 - memory_addr;
+	if (memory_addr + memory_size >= 0x100000000)
+		memory_size = 0x100000000 - memory_addr - PAGE_SIZE;
 #endif
 
 	ram_size = (bus_size_t)memory_size;
