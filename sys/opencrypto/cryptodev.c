@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.92 2017/06/02 09:46:57 knakahara Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.92.2.1 2017/07/05 20:19:21 snj Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.92 2017/06/02 09:46:57 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.92.2.1 2017/07/05 20:19:21 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,6 +281,11 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 		break;
 	case CIOCNGSESSION:
 		sgop = (struct crypt_sgop *)data;
+		if (sgop->count <= 0
+		    || SIZE_MAX / sizeof(struct session_n_op) <= sgop->count) {
+			error = EINVAL;
+			break;
+		}
 		snop = kmem_alloc((sgop->count *
 				  sizeof(struct session_n_op)), KM_SLEEP);
 		error = copyin(sgop->sessions, snop, sgop->count *
@@ -320,6 +325,11 @@ mbail:
 		fcr->mtime = fcr->atime;
 		mutex_exit(&cryptodev_mtx);
 		sfop = (struct crypt_sfop *)data;
+		if (sfop->count <= 0
+		    || SIZE_MAX / sizeof(u_int32_t) <= sfop->count) {
+			error = EINVAL;
+			break;
+		}
 		sesid = kmem_alloc((sfop->count * sizeof(u_int32_t)), 
 		    KM_SLEEP);
 		error = copyin(sfop->sesid, sesid,
@@ -347,6 +357,11 @@ mbail:
 		fcr->mtime = fcr->atime;
 		mutex_exit(&cryptodev_mtx);
 		mop = (struct crypt_mop *)data;
+		if (mop->count <= 0
+		    || SIZE_MAX / sizeof(struct crypt_n_op) <= mop->count) {
+			error = EINVAL;
+			break;
+		}
 		cnop = kmem_alloc((mop->count * sizeof(struct crypt_n_op)),
 		    KM_SLEEP);
 		error = copyin(mop->reqs, cnop,
@@ -369,6 +384,11 @@ mbail:
 		fcr->mtime = fcr->atime;
 		mutex_exit(&cryptodev_mtx);
 		mkop = (struct crypt_mkop *)data;
+		if (mkop->count <= 0
+		    || SIZE_MAX / sizeof(struct crypt_n_kop) <= mkop->count) {
+			error = EINVAL;
+			break;
+		}
 		knop = kmem_alloc((mkop->count * sizeof(struct crypt_n_kop)),
 		    KM_SLEEP);
 		error = copyin(mkop->reqs, knop,
@@ -390,6 +410,11 @@ mbail:
 		mutex_exit(&cryptodev_mtx);
 		crypt_ret = (struct cryptret *)data;
 		count = crypt_ret->count;
+		if (count <= 0
+		    || SIZE_MAX / sizeof(struct crypt_result) <= count) {
+			error = EINVAL;
+			break;
+		}
 		crypt_res = kmem_alloc((count * sizeof(struct crypt_result)),  
 		    KM_SLEEP);
 		error = copyin(crypt_ret->results, crypt_res,
@@ -664,7 +689,7 @@ eagain:
 		goto bail;
 	}
 
-	while (!(crp->crp_flags & CRYPTO_F_DQRETQ)) {
+	while (!(crp->crp_devflags & CRYPTODEV_F_RET)) {
 		DPRINTF("cse->sid[%d]: sleeping on cv %p for crp %p\n",
 			(uint32_t)cse->sid, &crp->crp_cv, crp);
 		cv_wait(&crp->crp_cv, &cryptodev_mtx);	/* XXX cv_wait_sig? */
@@ -738,7 +763,7 @@ cryptodev_cb(void *op)
 		mutex_enter(&cryptodev_mtx);
 	}
 	if (error != 0 || (crp->crp_flags & CRYPTO_F_DONE)) {
-		crp->crp_flags |= CRYPTO_F_DQRETQ;
+		crp->crp_devflags |= CRYPTODEV_F_RET;
 		cv_signal(&crp->crp_cv);
 	}
 	mutex_exit(&cryptodev_mtx);
@@ -775,7 +800,7 @@ cryptodevkey_cb(void *op)
 	struct cryptkop *krp = op;
 	
 	mutex_enter(&cryptodev_mtx);
-	krp->krp_flags |= CRYPTO_F_DQRETQ;
+	krp->krp_devflags |= CRYPTODEV_F_RET;
 	cv_signal(&krp->krp_cv);
 	mutex_exit(&cryptodev_mtx);
 	return 0;
@@ -890,7 +915,7 @@ cryptodev_key(struct crypt_kop *kop)
 	}
 
 	mutex_enter(&cryptodev_mtx);
-	while (!(krp->krp_flags & CRYPTO_F_DQRETQ)) {
+	while (!(krp->krp_devflags & CRYPTODEV_F_RET)) {
 		cv_wait(&krp->krp_cv, &cryptodev_mtx);	/* XXX cv_wait_sig? */
 	}
 	mutex_exit(&cryptodev_mtx);
@@ -1154,6 +1179,12 @@ cryptodev_mop(struct fcrypt *fcr,
 				cnop[req].status = EINVAL;
 				continue;
 			}
+		}
+
+		/* sanitize */
+		if (cnop[req].len <= 0) {
+			cnop[req].status = ENOMEM;
+			goto bail;
 		}
 
 		crp = crypto_getreq((cse->txform != NULL) +
@@ -1745,12 +1776,14 @@ cryptodev_msession(struct fcrypt *fcr, struct session_n_op *sn_ops,
 		struct session_op s_op;
 		s_op.cipher =		sn_ops->cipher;
 		s_op.mac =		sn_ops->mac;
+		s_op.comp_alg =		sn_ops->comp_alg;
 		s_op.keylen =		sn_ops->keylen;
 		s_op.key =		sn_ops->key;
 		s_op.mackeylen =	sn_ops->mackeylen;
 		s_op.mackey =		sn_ops->mackey;
 
 		sn_ops->status = cryptodev_session(fcr, &s_op);
+
 		sn_ops->ses =		s_op.ses;
 	}
 
