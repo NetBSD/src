@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.78.2.1 2017/06/22 05:36:41 snj Exp $ */
+/*	$NetBSD: crypto.c,v 1.78.2.2 2017/07/05 20:19:21 snj Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.78.2.1 2017/06/22 05:36:41 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.78.2.2 2017/07/05 20:19:21 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -501,27 +501,50 @@ crypto_destroy(bool exit_kthread)
 	return 0;
 }
 
-/*
- * Create a new session.
- */
-int
-crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
+static bool
+crypto_driver_suitable(struct cryptocap *cap, struct cryptoini *cri)
 {
 	struct cryptoini *cr;
-	struct cryptocap *cap;
-	u_int32_t hid, lid;
-	int err = EINVAL;
 
-	mutex_enter(&crypto_drv_mtx);
+	for (cr = cri; cr; cr = cr->cri_next)
+		if (cap->cc_alg[cr->cri_alg] == 0) {
+			DPRINTF("alg %d not supported\n", cr->cri_alg);
+			return false;
+		}
 
+	return true;
+}
+
+#define CRYPTO_ACCEPT_HARDWARE 0x1
+#define CRYPTO_ACCEPT_SOFTWARE 0x2
+/*
+ * The algorithm we use here is pretty stupid; just use the
+ * first driver that supports all the algorithms we need.
+ * If there are multiple drivers we choose the driver with
+ * the fewest active sessions. We prefer hardware-backed
+ * drivers to software ones.
+ *
+ * XXX We need more smarts here (in real life too, but that's
+ * XXX another story altogether).
+ */
+static struct cryptocap *
+crypto_select_driver_lock(struct cryptoini *cri, int hard)
+{
+	u_int32_t hid;
+	int accept;
+	struct cryptocap *cap, *best;
+
+	best = NULL;
 	/*
-	 * The algorithm we use here is pretty stupid; just use the
-	 * first driver that supports all the algorithms we need.
-	 *
-	 * XXX We need more smarts here (in real life too, but that's
-	 * XXX another story altogether).
+	 * hard == 0 can use both hardware and software drivers.
+	 * We use hardware drivers prior to software drivers, so search
+	 * hardware drivers at first time.
 	 */
-
+	if (hard >= 0)
+		accept = CRYPTO_ACCEPT_HARDWARE;
+	else
+		accept = CRYPTO_ACCEPT_SOFTWARE;
+again:
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
 		cap = crypto_checkdriver(hid);
 		if (cap == NULL)
@@ -540,54 +563,85 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 		}
 
 		/* Hardware required -- ignore software drivers. */
-		if (hard > 0 && (cap->cc_flags & CRYPTOCAP_F_SOFTWARE)) {
+		if ((accept & CRYPTO_ACCEPT_SOFTWARE) == 0
+		    && (cap->cc_flags & CRYPTOCAP_F_SOFTWARE)) {
 			crypto_driver_unlock(cap);
 			continue;
 		}
 		/* Software required -- ignore hardware drivers. */
-		if (hard < 0 && (cap->cc_flags & CRYPTOCAP_F_SOFTWARE) == 0) {
+		if ((accept & CRYPTO_ACCEPT_HARDWARE) == 0
+		    && (cap->cc_flags & CRYPTOCAP_F_SOFTWARE) == 0) {
 			crypto_driver_unlock(cap);
 			continue;
 		}
 
 		/* See if all the algorithms are supported. */
-		for (cr = cri; cr; cr = cr->cri_next)
-			if (cap->cc_alg[cr->cri_alg] == 0) {
-				DPRINTF("alg %d not supported\n", cr->cri_alg);
-				break;
+		if (crypto_driver_suitable(cap, cri)) {
+			if (best == NULL) {
+				/* keep holding crypto_driver_lock(cap) */
+				best = cap;
+				continue;
+			} else if (cap->cc_sessions < best->cc_sessions) {
+				crypto_driver_unlock(best);
+				/* keep holding crypto_driver_lock(cap) */
+				best = cap;
+				continue;
 			}
-
-		if (cr == NULL) {
-			/* Ok, all algorithms are supported. */
-
-			/*
-			 * Can't do everything in one session.
-			 *
-			 * XXX Fix this. We need to inject a "virtual" session layer right
-			 * XXX about here.
-			 */
-
-			/* Call the driver initialization routine. */
-			lid = hid;		/* Pass the driver ID. */
-			err = cap->cc_newsession(cap->cc_arg, &lid, cri);
-			if (err == 0) {
-				(*sid) = hid;
-				(*sid) <<= 32;
-				(*sid) |= (lid & 0xffffffff);
-				(cap->cc_sessions)++;
-			} else {
-				DPRINTF("crypto_drivers[%d].cc_newsession() failed. error=%d\n",
-					hid, err);
-			}
-			crypto_driver_unlock(cap);
-			goto done;
-			/*break;*/
 		}
 
 		crypto_driver_unlock(cap);
 	}
-done:
+	if (best == NULL && hard == 0
+	    && (accept & CRYPTO_ACCEPT_SOFTWARE) == 0) {
+		accept = CRYPTO_ACCEPT_SOFTWARE;
+		goto again;
+	}
+
+	return best;
+}
+
+/*
+ * Create a new session.
+ */
+int
+crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
+{
+	struct cryptocap *cap;
+	int err = EINVAL;
+
+	mutex_enter(&crypto_drv_mtx);
+
+	cap = crypto_select_driver_lock(cri, hard);
+	if (cap != NULL) {
+		u_int32_t hid, lid;
+
+		hid = cap - crypto_drivers;
+		/*
+		 * Can't do everything in one session.
+		 *
+		 * XXX Fix this. We need to inject a "virtual" session layer right
+		 * XXX about here.
+		 */
+
+		/* Call the driver initialization routine. */
+		lid = hid;		/* Pass the driver ID. */
+		crypto_driver_unlock(cap);
+		err = cap->cc_newsession(cap->cc_arg, &lid, cri);
+		crypto_driver_lock(cap);
+		if (err == 0) {
+			(*sid) = hid;
+			(*sid) <<= 32;
+			(*sid) |= (lid & 0xffffffff);
+			(cap->cc_sessions)++;
+		} else {
+			DPRINTF("crypto_drivers[%d].cc_newsession() failed. error=%d\n",
+			    hid, err);
+		}
+		crypto_driver_unlock(cap);
+	}
+
 	mutex_exit(&crypto_drv_mtx);
+
 	return err;
 }
 
@@ -1063,8 +1117,8 @@ crypto_dispatch(struct cryptop *crp)
 		 * to other drivers in cryptointr() later.
 		 */
 		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
-		mutex_exit(&crypto_q_mtx);
-		return 0;
+		result = 0;
+		goto out;
 	}
 
 	if (cap->cc_qblocked != 0) {
@@ -1074,8 +1128,8 @@ crypto_dispatch(struct cryptop *crp)
 		 * it unblocks and the swi thread gets kicked.
 		 */
 		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
-		mutex_exit(&crypto_q_mtx);
-		return 0;
+		result = 0;
+		goto out;
 	}
 
 	/*
@@ -1105,6 +1159,7 @@ crypto_dispatch(struct cryptop *crp)
 		result = 0;
 	}
 
+out:
 	mutex_exit(&crypto_q_mtx);
 	return result;
 }
@@ -1132,8 +1187,8 @@ crypto_kdispatch(struct cryptkop *krp)
 	 */
 	if (cap == NULL) {
 		TAILQ_INSERT_TAIL(&crp_kq, krp, krp_next);
-		mutex_exit(&crypto_q_mtx);
-		return 0;
+		result = 0;
+		goto out;
 	}
 
 	if (cap->cc_kqblocked != 0) {
@@ -1143,8 +1198,8 @@ crypto_kdispatch(struct cryptkop *krp)
 		 * it unblocks and the swi thread gets kicked.
 		 */
 		TAILQ_INSERT_TAIL(&crp_kq, krp, krp_next);
-		mutex_exit(&crypto_q_mtx);
-		return 0;
+		result = 0;
+		goto out;
 	}
 
 	crypto_driver_unlock(cap);
@@ -1160,7 +1215,6 @@ crypto_kdispatch(struct cryptkop *krp)
 		crypto_driver_unlock(cap);
 		TAILQ_INSERT_HEAD(&crp_kq, krp, krp_next);
 		cryptostats.cs_kblocks++;
-		mutex_exit(&crypto_q_mtx);
 
 		/*
 		 * The krp is enqueued to crp_kq, that is,
@@ -1170,6 +1224,8 @@ crypto_kdispatch(struct cryptkop *krp)
 		result = 0;
 	}
 
+out:
+	mutex_exit(&crypto_q_mtx);
 	return result;
 }
 
@@ -1440,7 +1496,6 @@ crypto_kgetreq(int num __unused, int prflags)
 void
 crypto_done(struct cryptop *crp)
 {
-	int wasempty;
 
 	KASSERT(crp != NULL);
 
@@ -1466,9 +1521,7 @@ crypto_done(struct cryptop *crp)
   	 	* callback routine does very little (e.g. the
 	 	* /dev/crypto callback method just does a wakeup).
 	 	*/
-		mutex_spin_enter(&crypto_ret_q_mtx);
 		crp->crp_flags |= CRYPTO_F_DONE;
-		mutex_spin_exit(&crypto_ret_q_mtx);
 
 #ifdef CRYPTO_TIMING
 		if (crypto_timing) {
@@ -1485,7 +1538,6 @@ crypto_done(struct cryptop *crp)
 #endif
 		crp->crp_callback(crp);
 	} else {
-		mutex_spin_enter(&crypto_ret_q_mtx);
 		crp->crp_flags |= CRYPTO_F_DONE;
 #if 0
 		if (crp->crp_flags & CRYPTO_F_USER) {
@@ -1501,6 +1553,9 @@ crypto_done(struct cryptop *crp)
 		} else
 #endif
 		{
+			int wasempty;
+
+			mutex_spin_enter(&crypto_ret_q_mtx);
 			wasempty = TAILQ_EMPTY(&crp_ret_q);
 			DPRINTF("lid[%u]: queueing %p\n",
 				CRYPTO_SESID2LID(crp->crp_sid), crp);
@@ -1513,8 +1568,8 @@ crypto_done(struct cryptop *crp)
 					CRYPTO_SESID2LID(crp->crp_sid), crp);
 				cv_signal(&cryptoret_cv);
 			}
+			mutex_spin_exit(&crypto_ret_q_mtx);
 		}
-		mutex_spin_exit(&crypto_ret_q_mtx);
 	}
 }
 
@@ -1524,7 +1579,6 @@ crypto_done(struct cryptop *crp)
 void
 crypto_kdone(struct cryptkop *krp)
 {
-	int wasempty;
 
 	KASSERT(krp != NULL);
 
@@ -1542,6 +1596,8 @@ crypto_kdone(struct cryptkop *krp)
 	if (krp->krp_flags & CRYPTO_F_CBIMM) {
 		krp->krp_callback(krp);
 	} else {
+		int wasempty;
+
 		mutex_spin_enter(&crypto_ret_q_mtx);
 		wasempty = TAILQ_EMPTY(&crp_ret_kq);
 		krp->krp_flags |= CRYPTO_F_ONRETQ;
