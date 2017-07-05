@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.83 2017/03/19 12:46:21 skrll Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.83.6.1 2017/07/05 15:48:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.83 2017/03/19 12:46:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.83.6.1 2017/07/05 15:48:01 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -266,7 +266,7 @@ initarm(void *arm_bootargs)
 	pmap_devmap_bootstrap((vaddr_t)ebsabootinfo.bt_l1, cats_devmap);
 
 #ifdef FCOM_INIT_ARM
-	fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode);
+	fcomcnattach(DC21285_ARMCSR_VBASE, comcnspeed, comcnmode);
 #endif
 
 	/* Talk to the user */
