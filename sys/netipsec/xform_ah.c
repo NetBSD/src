@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.55 2017/06/29 07:13:41 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.56 2017/07/05 03:44:59 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.55 2017/06/29 07:13:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.56 2017/07/05 03:44:59 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -614,9 +614,7 @@ static int
 ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 {
 	const struct auth_hash *ahx;
-	struct tdb_ident *tdbi;
 	struct tdb_crypto *tc;
-	struct m_tag *mtag;
 	struct newah *ah;
 	int hl, rplen, authsize, error;
 
@@ -689,23 +687,10 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	crda->crd_key = _KEYBUF(sav->key_auth);
 	crda->crd_klen = _KEYBITS(sav->key_auth);
 
-	/* Find out if we've already done crypto. */
-	for (mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_CRYPTO_DONE, NULL);
-	     mtag != NULL;
-	     mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_CRYPTO_DONE, mtag)) {
-		tdbi = (struct tdb_ident *) (mtag + 1);
-		if (tdbi->proto == sav->sah->saidx.proto &&
-		    tdbi->spi == sav->spi &&
-		    !memcmp(&tdbi->dst, &sav->sah->saidx.dst,
-			  sizeof(union sockaddr_union)))
-			break;
-	}
-
 	/* Allocate IPsec-specific opaque crypto info. */
 	size_t size = sizeof(*tc);
 	size_t extra = skip + rplen + authsize;
-	if (mtag == NULL)
-		size += extra;
+	size += extra;
 
 	tc = malloc(size, M_XDATA, M_NOWAIT|M_ZERO);
 	if (tc == NULL) {
@@ -726,26 +711,23 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 		return error;
 	}
 
-	/* Only save information if crypto processing is needed. */
-	if (mtag == NULL) {
-		/*
-		 * Save the authenticator, the skipped portion of the packet,
-		 * and the AH header.
-		 */
-		m_copydata(m, 0, extra, (tc + 1));
-		/* Zeroize the authenticator on the packet. */
-		m_copyback(m, skip + rplen, authsize, ipseczeroes);
+	/*
+	 * Save the authenticator, the skipped portion of the packet,
+	 * and the AH header.
+	 */
+	m_copydata(m, 0, extra, (tc + 1));
+	/* Zeroize the authenticator on the packet. */
+	m_copyback(m, skip + rplen, authsize, ipseczeroes);
 
-		/* "Massage" the packet headers for crypto processing. */
-		error = ah_massage_headers(&m, sav->sah->saidx.dst.sa.sa_family,
-		    skip, ahx->type, 0);
-		if (error != 0) {
-			/* NB: mbuf is free'd by ah_massage_headers */
-			AH_STATINC(AH_STAT_HDROPS);
-			free(tc, M_XDATA);
-			crypto_freereq(crp);
-			return error;
-		}
+	/* "Massage" the packet headers for crypto processing. */
+	error = ah_massage_headers(&m, sav->sah->saidx.dst.sa.sa_family,
+	    skip, ahx->type, 0);
+	if (error != 0) {
+		/* NB: mbuf is free'd by ah_massage_headers */
+		AH_STATINC(AH_STAT_HDROPS);
+		free(tc, M_XDATA);
+		crypto_freereq(crp);
+		return error;
 	}
 
 	/* Crypto operation descriptor. */
@@ -763,30 +745,26 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	tc->tc_nxt = ah->ah_nxt;
 	tc->tc_protoff = protoff;
 	tc->tc_skip = skip;
-	tc->tc_ptr = mtag; /* Save the mtag we've identified. */
 
-	DPRINTF(("%s: mtag %p hash over %d bytes, skip %d: "
-		 "crda len %d skip %d inject %d\n", __func__, mtag,
+	DPRINTF(("%s: hash over %d bytes, skip %d: "
+		 "crda len %d skip %d inject %d\n", __func__,
 		 crp->crp_ilen, tc->tc_skip,
 		 crda->crd_len, crda->crd_skip, crda->crd_inject));
 
-	if (mtag == NULL)
-		return crypto_dispatch(crp);
-	else
-		return ah_input_cb(crp);
+	return crypto_dispatch(crp);
 }
 
 #ifdef INET6
-#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff, mtag) do {		     \
+#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff) do {		     \
 	if (saidx->dst.sa.sa_family == AF_INET6) {			     \
-		error = ipsec6_common_input_cb(m, sav, skip, protoff, mtag); \
+		error = ipsec6_common_input_cb(m, sav, skip, protoff);	     \
 	} else {							     \
-		error = ipsec4_common_input_cb(m, sav, skip, protoff, mtag); \
+		error = ipsec4_common_input_cb(m, sav, skip, protoff);	     \
 	}								     \
 } while (0)
 #else
-#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff, mtag)		     \
-	(error = ipsec4_common_input_cb(m, sav, skip, protoff, mtag))
+#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff)			     \
+	(error = ipsec4_common_input_cb(m, sav, skip, protoff))
 #endif
 
 /*
@@ -800,7 +778,6 @@ ah_input_cb(struct cryptop *crp)
 	unsigned char calc[AH_ALEN_MAX];
 	struct mbuf *m;
 	struct tdb_crypto *tc;
-	struct m_tag *mtag;
 	struct secasvar *sav;
 	struct secasindex *saidx;
 	uint8_t nxt;
@@ -814,7 +791,6 @@ ah_input_cb(struct cryptop *crp)
 	skip = tc->tc_skip;
 	nxt = tc->tc_nxt;
 	protoff = tc->tc_protoff;
-	mtag = tc->tc_ptr;
 	m = crp->crp_buf;
 
 
@@ -876,45 +852,36 @@ ah_input_cb(struct cryptop *crp)
 	/* Copy authenticator off the packet. */
 	m_copydata(m, skip + rplen, authsize, calc);
 
-	/*
-	 * If we have an mtag, we don't need to verify the authenticator --
-	 * it has been verified by an IPsec-aware NIC.
-	 */
-	if (mtag == NULL) {
-		ptr = (char *)(tc + 1);
-		const uint8_t *pppp = ptr + skip + rplen;
+	ptr = (char *)(tc + 1);
+	const uint8_t *pppp = ptr + skip + rplen;
 
-		/* Verify authenticator. */
-		if (!consttime_memequal(pppp, calc, authsize)) {
-			DPRINTF(("%s: authentication hash mismatch " \
-			    "over %d bytes " \
-			    "for packet in SA %s/%08lx:\n" \
-		    "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x, " \
-		    "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n",
-			    __func__, authsize,
-			    ipsec_address(&saidx->dst, buf, sizeof(buf)),
-			    (u_long) ntohl(sav->spi),
-				 calc[0], calc[1], calc[2], calc[3],
-				 calc[4], calc[5], calc[6], calc[7],
-				 calc[8], calc[9], calc[10], calc[11],
-				 pppp[0], pppp[1], pppp[2], pppp[3],
-				 pppp[4], pppp[5], pppp[6], pppp[7],
-				 pppp[8], pppp[9], pppp[10], pppp[11]
-				 ));
-			AH_STATINC(AH_STAT_BADAUTH);
-			error = EACCES;
-			goto bad;
-		}
-
-		/* Fix the Next Protocol field. */
-		ptr[protoff] = nxt;
-
-		/* Copyback the saved (uncooked) network headers. */
-		m_copyback(m, 0, skip, ptr);
-	} else {
-		/* Fix the Next Protocol field. */
-		m_copyback(m, protoff, sizeof(uint8_t), &nxt);
+	/* Verify authenticator. */
+	if (!consttime_memequal(pppp, calc, authsize)) {
+		DPRINTF(("%s: authentication hash mismatch " \
+		    "over %d bytes " \
+		    "for packet in SA %s/%08lx:\n" \
+	    "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x, " \
+	    "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n",
+		    __func__, authsize,
+		    ipsec_address(&saidx->dst, buf, sizeof(buf)),
+		    (u_long) ntohl(sav->spi),
+			 calc[0], calc[1], calc[2], calc[3],
+			 calc[4], calc[5], calc[6], calc[7],
+			 calc[8], calc[9], calc[10], calc[11],
+			 pppp[0], pppp[1], pppp[2], pppp[3],
+			 pppp[4], pppp[5], pppp[6], pppp[7],
+			 pppp[8], pppp[9], pppp[10], pppp[11]
+			 ));
+		AH_STATINC(AH_STAT_BADAUTH);
+		error = EACCES;
+		goto bad;
 	}
+
+	/* Fix the Next Protocol field. */
+	ptr[protoff] = nxt;
+
+	/* Copyback the saved (uncooked) network headers. */
+	m_copyback(m, 0, skip, ptr);
 
 	free(tc, M_XDATA), tc = NULL;			/* No longer needed */
 
@@ -951,7 +918,7 @@ ah_input_cb(struct cryptop *crp)
 		goto bad;
 	}
 
-	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff, mtag);
+	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff);
 
 	KEY_FREESAV(&sav);
 	mutex_exit(softnet_lock);

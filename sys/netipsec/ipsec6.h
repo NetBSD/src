@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.17 2017/04/20 08:46:07 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.18 2017/07/05 03:44:59 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -82,8 +82,7 @@ void * ah6_ctlinput(int, const struct sockaddr *, void *);
 
 struct m_tag;
 int ipsec6_common_input(struct mbuf **, int *, int);
-int ipsec6_common_input_cb(struct mbuf *, struct secasvar *, 
-									int, int, struct m_tag *);
+int ipsec6_common_input_cb(struct mbuf *, struct secasvar *, int, int);
 int ipsec6_process_packet (struct mbuf*,struct ipsecrequest *);
 #endif /*_KERNEL*/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.39 2017/06/29 07:13:41 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.40 2017/07/05 03:44:59 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.39 2017/06/29 07:13:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.40 2017/07/05 03:44:59 ozaki-r Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -187,8 +187,6 @@ ipcomp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	crdc->crd_len = m->m_pkthdr.len - (skip + hlen);
 	crdc->crd_inject = 0; /* unused */
 
-	tc->tc_ptr = 0;
-
 	/* Decompression operation */
 	crdc->crd_alg = sav->tdb_compalgxform->type;
 
@@ -212,16 +210,16 @@ ipcomp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 }
 
 #ifdef INET6
-#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff, mtag) do {		     \
+#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff) do {		     \
 	if (saidx->dst.sa.sa_family == AF_INET6) {			     \
-		error = ipsec6_common_input_cb(m, sav, skip, protoff, mtag); \
+		error = ipsec6_common_input_cb(m, sav, skip, protoff);	     \
 	} else {							     \
-		error = ipsec4_common_input_cb(m, sav, skip, protoff, mtag); \
+		error = ipsec4_common_input_cb(m, sav, skip, protoff);       \
 	}								     \
 } while (0)
 #else
-#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff, mtag)		     \
-	(error = ipsec4_common_input_cb(m, sav, skip, protoff, mtag))
+#define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff)			     \
+	(error = ipsec4_common_input_cb(m, sav, skip, protoff))
 #endif
 
 /*
@@ -344,7 +342,7 @@ ipcomp_input_cb(struct cryptop *crp)
 	/* Restore the Next Protocol field */
 	m_copyback(m, protoff, sizeof(uint8_t), (uint8_t *) &nproto);
 
-	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff, NULL);
+	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff);
 
 	KEY_FREESAV(&sav);
 	mutex_exit(softnet_lock);
