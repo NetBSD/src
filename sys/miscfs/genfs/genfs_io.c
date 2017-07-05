@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.68.6.1 2017/06/04 20:35:01 bouyer Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.68.6.2 2017/07/05 15:50:24 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.68.6.1 2017/06/04 20:35:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.68.6.2 2017/07/05 15:50:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,6 +138,13 @@ genfs_getpages(void *v)
 
 	KASSERT(vp->v_type == VREG || vp->v_type == VDIR ||
 	    vp->v_type == VLNK || vp->v_type == VBLK);
+
+	error = vdead_check(vp, VDEAD_NOWAIT);
+	if (error) {
+		if ((flags & PGO_LOCKED) == 0)
+			mutex_exit(uobj->vmobjlock);
+		return error;
+	}
 
 startover:
 	error = 0;
