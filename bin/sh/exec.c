@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.50 2017/06/17 07:22:12 kre Exp $	*/
+/*	$NetBSD: exec.c,v 1.51 2017/07/05 19:58:10 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.50 2017/06/17 07:22:12 kre Exp $");
+__RCSID("$NetBSD: exec.c,v 1.51 2017/07/05 19:58:10 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,18 +144,28 @@ shellexec(char **argv, char **envp, const char *path, int idx, int vforked)
 
 	/* Map to POSIX errors */
 	switch (e) {
-	case EACCES:
+	case EACCES:	/* particularly this (unless no search perm) */
+		/*
+		 * should perhaps check if this EACCES is an exec()
+		 * EACESS or a namei() EACESS - the latter should be 127
+		 * - but not today
+		 */
+	case EINVAL:	/* also explicitly these */
+	case ENOEXEC:
+	default:	/* and anything else */
 		exerrno = 126;
 		break;
-	case ENOENT:
+
+	case ENOENT:	/* these are the "pathname lookup failed" errors */
+	case ELOOP:
+	case ENOTDIR:
+	case ENAMETOOLONG:
 		exerrno = 127;
 		break;
-	default:
-		exerrno = 2;
-		break;
 	}
-	TRACE(("shellexec failed for %s, errno %d, vforked %d, suppressint %d\n",
-		argv[0], e, vforked, suppressint ));
+	CTRACE(DBG_ERRS|DBG_CMDS|DBG_EVAL,
+	    ("shellexec failed for %s, errno %d, vforked %d, suppressint %d\n",
+		argv[0], e, vforked, suppressint));
 	exerror(EXEXEC, "%s: %s", argv[0], errmsg(e, E_EXEC));
 	/* NOTREACHED */
 }
@@ -186,7 +196,7 @@ tryexec(char *cmd, char **argv, char **envp, int vforked)
 			exraise(EXSHELLPROC);
 		}
 #ifdef DEBUG
-		TRACE(("execve(cmd=%s) returned ENOEXEC\n", cmd));
+		VTRACE(DBG_CMDS, ("execve(cmd=%s) returned ENOEXEC\n", cmd));
 #endif
 		initshellproc();
 		setinputfile(cmd, 0);
@@ -600,7 +610,8 @@ loop:
 		if (fullname[0] == '/' && idx <= prev) {
 			if (idx < prev)
 				goto loop;
-			TRACE(("searchexec \"%s\": no change\n", name));
+			VTRACE(DBG_CMDS, ("searchexec \"%s\": no change\n",
+			    name));
 			goto success;
 		}
 		while (stat(fullname, &statb) < 0) {
@@ -643,7 +654,8 @@ loop:
 				goto loop;
 		}
 #endif
-		TRACE(("searchexec \"%s\" returns \"%s\"\n", name, fullname));
+		VTRACE(DBG_CMDS, ("searchexec \"%s\" returns \"%s\"\n", name,
+		    fullname));
 		INTOFF;
 		if (act & DO_ALTPATH) {
 		/*
