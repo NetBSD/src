@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.85 2017/07/02 22:39:44 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.86 2017/07/05 17:19:52 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -124,8 +124,8 @@ EVBARM_BOARDS.armv7+=		PANDABOARD
 EVBARM_BOARDS.armv7hf+= 	PANDABOARD
 EVBARM_BOARDS.armv7+=		RPI2
 EVBARM_BOARDS.armv7hf+=	 	RPI2
-EVBARM_BOARDS.armv7+=		SUNXI
-EVBARM_BOARDS.armv7hf+=		SUNXI
+KERNEL_SETS.armv7+=		SUNXI
+KERNEL_SETS.armv7hf+=		SUNXI
 .endif
 
 IMAGE.rel=	${RELEASEDIR}/${RELEASEMACHINEDIR}
