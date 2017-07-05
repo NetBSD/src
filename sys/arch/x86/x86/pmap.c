@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.245 2017/03/24 10:58:06 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.245.6.1 2017/07/05 20:23:08 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245 2017/03/24 10:58:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245.6.1 2017/07/05 20:23:08 snj Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1146,14 +1146,13 @@ pmap_kremove(vaddr_t sva, vsize_t len)
 /*
  * pmap_kremove_local: like pmap_kremove(), but only worry about
  * TLB invalidations on the current CPU.  this is only intended
- * for use while writing kernel crash dumps.
+ * for use while writing kernel crash dumps, either after panic
+ * or via reboot -d.
  */
 
 void
 pmap_kremove_local(vaddr_t sva, vsize_t len)
 {
-
-	KASSERT(panicstr != NULL);
 	pmap_kremove1(sva, len, true);
 }
 
