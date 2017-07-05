@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.18 2017/07/05 16:03:19 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.19 2017/07/05 20:27:50 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -1694,4 +1694,102 @@ external/gpl3/gcc/usr.bin/host-libcpp/Makefile	1.3
 
 	Honor HOST_CXX - fixes the build on systems without g++.
 	[joerg, ticket #85]
+
+lib/libexecinfo/execinfo.h			1.3
+
+	Make this standalone.  Makes Clang 5.0.0svn happy.
+	[kamil, ticket #86]
+
+sys/arch/evbarm/conf/std.tegra			1.14
+
+	Define __HAVE_CPU_UAREA_ALLOC_IDLELWP to make use of the
+	idlelwp stacks created by arm32_kvminit.c
+	[skrll, ticket #87]
+
+sys/arch/amd64/amd64/locore.S			1.124
+sys/arch/i386/i386/locore.S			1.146
+sys/arch/i386/i386/machdep.c			1.783
+sys/arch/i386/i386/trap.c			1.288
+
+	Remove the osyscall call gate on i386, and emulate it. There is
+	a one-instruction race in it that could panic the kernel.
+	[maxv, ticket #88]
+
+etc/mtree/NetBSD.dist.tests			1.148
+
+	Remove entries:
+	 - ./usr/libdata/debug/usr/tests/lib/libpthread_dbg
+	 - ./usr/tests/lib/libpthread_dbg
+	[kamil, ticket #89]
+
+sys/arch/i386/conf/kern.ldscript.Xen		1.14
+
+	Restore alignement of _end to rev 1.12.  Makes ddb work again
+	on Xen/i386
+	[bouyer, ticket #90]
+
+sys/kern/kern_event.c				1.92
+sys/miscfs/genfs/genfs_vnops.c			1.198
+sys/sys/event.h					1.30
+
+	Provide EVFILT_WRITE.  Fix file descriptor locking.
+	These make Go happy.
+	[christos, ticket #91]
+
+sys/arch/arm/allwinner/awin_can.c		1.3
+
+	Fix a hang under high traffic.
+	[bouyer, ticket #92]
+
+sbin/gpt/biosboot.c				1.28
+
+	Only do wedges if not the tools version.  Fixes build on netbsd-4,
+	and any other place that might have DIOCGWEDGEINFO and something
+	not quite right.
+	[mrg, ticket #93]
+
+sys/arch/evbarm/conf/files.integrator		1.12, 1.13
+
+	Fix plrtc conflict.
+	[christos, ticket #94]
+
+etc/etc.vax/MAKEDEV.conf			1.19
+etc/etc.vax/Makefile.inc			1.25
+sys/arch/vax/conf/GENERIC_USB			1.1
+sys/arch/vax/conf/files.vax			1.123
+sys/arch/vax/conf/majors.vax			1.27
+
+	Add VAX USB support.
+	[flxd, ticket #95]
+
+usr.bin/mkubootimage/mkubootimage.c		1.19
+
+	Load address is not required for "ramdisk" images.
+	[jmcneill, ticket #96]
+
+sys/opencrypto/crypto.c				1.87-1.91
+sys/opencrypto/cryptodev.c			1.93-1.95
+sys/opencrypto/cryptodev.h			1.37
+sys/opencrypto/cryptosoft.c			1.52
+sys/rump/dev/lib/libopencrypto/opencrypto_component.c 1.5
+
+	opencrypto:
+	- reduce rump waring message.
+	- simplify mutex_enter/exit(crypto_q_mtx), and fix missing exit
+	- fix cryptosoft.c:r1.51 mistake. swcrypto_attach() must not be
+	  called from module_init_class().
+	- Reduce crypto_ret_q_mtx lock regions.
+	- Divide crp_devflags from crp_flags to write exclusively.
+	- support multiple encryption drivers (port from FreeBSD).
+	- refactor crypto_newsession() like FreeBSD.
+	- must release cap->cc_lock before calling cap->cc_newsession()
+	  because of spinlock.
+	- sanitize in CIOCNCRYPTM and initialize comp_alg in CIOCNGSESSION
+	- sanitize count used for kmem_alloc size.
+	[knakahara, ticket #97]
+
+sys/arch/x86/x86/pmap.c				1.252
+
+	Fix "reboot -d".  PR kern/49610.
+	[jdolecek, ticket #98]
 
