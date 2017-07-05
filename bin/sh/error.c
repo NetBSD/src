@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.39 2016/06/01 02:50:02 kre Exp $	*/
+/*	$NetBSD: error.c,v 1.40 2017/07/05 20:00:27 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.39 2016/06/01 02:50:02 kre Exp $");
+__RCSID("$NetBSD: error.c,v 1.40 2017/07/05 20:00:27 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,11 +159,12 @@ exverror(int cond, const char *msg, va_list ap)
 
 #ifdef DEBUG
 	if (msg) {
-		TRACE(("exverror(%d, \"", cond));
-		TRACEV((msg, ap));
-		TRACE(("\") pid=%d\n", getpid()));
+		CTRACE(DBG_ERRS, ("exverror(%d, \"", cond));
+		CTRACEV(DBG_ERRS, (msg, ap));
+		CTRACE(DBG_ERRS, ("\") pid=%d\n", getpid()));
 	} else
-		TRACE(("exverror(%d, NULL) pid=%d\n", cond, getpid()));
+		CTRACE(DBG_ERRS, ("exverror(%d, NULL) pid=%d\n", cond,
+		    getpid()));
 #endif
 	if (msg)
 		exvwarning(-1, msg, ap);

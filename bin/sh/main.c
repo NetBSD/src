@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.71 2017/06/19 02:49:33 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.72 2017/07/05 20:00:27 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.71 2017/06/19 02:49:33 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.72 2017/07/05 20:00:27 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -263,7 +263,7 @@ cmdloop(int top)
 	int numeof = 0;
 	enum skipstate skip;
 
-	TRACE(("cmdloop(%d) called\n", top));
+	CTRACE(DBG_ALWAYS, ("cmdloop(%d) called\n", top));
 	setstackmark(&smark);
 	for (;;) {
 		if (pendingsigs)
@@ -277,8 +277,7 @@ cmdloop(int top)
 			nflag = 0;
 		}
 		n = parsecmd(inter);
-		TRACE(("cmdloop: "); showtree(n));
-		/* showtree(n); DEBUG */
+		VXTRACE(DBG_PARSE|DBG_EVAL|DBG_CMDS,("cmdloop: "),showtree(n));
 		if (n == NEOF) {
 			if (!top || numeof >= 50)
 				break;

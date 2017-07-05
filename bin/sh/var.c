@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.63 2017/06/30 23:05:45 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.64 2017/07/05 20:00:27 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.63 2017/06/30 23:05:45 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.64 2017/07/05 20:00:27 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -954,7 +954,7 @@ poplocalvars(void)
 	while ((lvp = localvars) != NULL) {
 		localvars = lvp->next;
 		vp = lvp->vp;
-		TRACE(("poplocalvar %s", vp ? vp->text : "-"));
+		VTRACE(DBG_VARS, ("poplocalvar %s", vp ? vp->text : "-"));
 		if (vp == NULL) {	/* $- saved */
 			memcpy(optlist, lvp->text, sizeof_optlist);
 			ckfree(lvp->text);
