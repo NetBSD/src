@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.7 2017/06/19 10:05:04 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.8 2017/07/05 01:25:03 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -38,24 +38,39 @@ setup_sasp()
 	local ip_local=$3
 	local ip_peer=$4
 	local lifetime=$5
+	local update=$6
 	local tmpfile=./tmp
+	local extra=
+
+	if [ "$update" = sa ]; then
+		extra="update $ip_local $ip_peer $proto 10000 $algo_args;
+		       update $ip_peer $ip_local $proto 10001 $algo_args;"
+	elif [ "$update" = sp ]; then
+		extra="spdupdate $ip_local $ip_peer any -P out ipsec $proto/transport//require;"
+	fi
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	cat > $tmpfile <<-EOF
 	add $ip_local $ip_peer $proto 10000 -lh $lifetime -ls $lifetime $algo_args;
 	add $ip_peer $ip_local $proto 10001 -lh $lifetime -ls $lifetime $algo_args;
 	spdadd $ip_local $ip_peer any -P out ipsec $proto/transport//require;
+	$extra
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
 	# XXX it can be expired if $lifetime is very short
 	#check_sa_entries $SOCK_LOCAL $ip_local $ip_peer
 
+	if [ "$update" = sp ]; then
+		extra="spdupdate $ip_peer $ip_local any -P out ipsec $proto/transport//require;"
+	fi
+
 	export RUMP_SERVER=$SOCK_PEER
 	cat > $tmpfile <<-EOF
 	add $ip_local $ip_peer $proto 10000 -lh $lifetime -ls $lifetime $algo_args;
 	add $ip_peer $ip_local $proto 10001 -lh $lifetime -ls $lifetime $algo_args;
 	spdadd $ip_peer $ip_local any -P out ipsec $proto/transport//require;
+	$extra
 	EOF
 	$DEBUG && cat $tmpfile
 	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
@@ -512,6 +527,74 @@ add_test_tcp()
 	atf_add_test_case ${name}
 }
 
+test_update()
+{
+	local proto=$1
+	local algo=$2
+	local update=$3
+	local ip_local=10.0.0.1
+	local ip_peer=10.0.0.2
+	local algo_args="$(generate_algo_args $proto $algo)"
+	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
+	local outfile=./out
+
+	rump_server_crypto_start $SOCK_LOCAL netipsec
+	rump_server_crypto_start $SOCK_PEER netipsec
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+	rump_server_add_iface $SOCK_PEER shmif0 $BUS
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_local/24
+
+	export RUMP_SERVER=$SOCK_PEER
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_peer/24
+
+	setup_sasp $proto "$algo_args" $ip_local $ip_peer 100 $update
+
+	extract_new_packets $BUS > $outfile
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
+
+	extract_new_packets $BUS > $outfile
+	atf_check -s exit:0 -o match:"$ip_local > $ip_peer: $proto_cap" \
+	    cat $outfile
+	atf_check -s exit:0 -o match:"$ip_peer > $ip_local: $proto_cap" \
+	    cat $outfile
+}
+
+add_test_update()
+{
+	local proto=$1
+	local algo=$2
+	local update=$3
+	local _update=$(echo $update |tr 'a-z' 'A-Z')
+	local _algo=$(echo $algo | sed 's/-//g')
+	local name= desc=
+
+	desc="Tests trying to udpate $_update of $proto ($algo)"
+	name="ipsec_update_${update}_${proto}_${_algo}"
+
+	atf_test_case ${name} cleanup
+	eval "								\
+	    ${name}_head() {						\
+	        atf_set \"descr\" \"$desc\";				\
+	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
+	    };								\
+	    ${name}_body() {						\
+	        test_update $proto $algo $update;			\
+	        rump_server_destroy_ifaces;				\
+	    };								\
+	    ${name}_cleanup() {						\
+	        $DEBUG && dump;						\
+	        cleanup;						\
+	    }								\
+	"
+	atf_add_test_case ${name}
+}
+
 atf_init_test_cases()
 {
 	local algo=
@@ -522,6 +605,8 @@ atf_init_test_cases()
 		add_test_tcp ipv4 esp $algo
 		add_test_tcp ipv6 esp $algo
 		add_test_tcp ipv4mappedipv6 esp $algo
+		add_test_update esp $algo sa
+		add_test_update esp $algo sp
 	done
 	for algo in $AH_AUTHENTICATION_ALGORITHMS_MINIMUM; do
 		add_test_lifetime ipv4 ah $algo
@@ -529,6 +614,8 @@ atf_init_test_cases()
 		add_test_tcp ipv4 ah $algo
 		add_test_tcp ipv6 ah $algo
 		add_test_tcp ipv4mappedipv6 ah $algo
+		add_test_update ah $algo sa
+		add_test_update ah $algo sp
 	done
 
 	add_test_tcp ipv4 none
