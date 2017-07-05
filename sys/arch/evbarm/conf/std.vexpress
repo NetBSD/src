@@ -1,4 +1,4 @@
-#       $NetBSD: std.vexpress,v 1.5 2017/07/02 10:52:35 skrll Exp $
+#       $NetBSD: std.vexpress,v 1.6 2017/07/05 01:08:44 jmcneill Exp $
 #
 # standard NetBSD/evbarm for VEXPRESS options
 
@@ -9,6 +9,7 @@ include 	"arch/evbarm/conf/std.evbarm"
 include 	"arch/evbarm/conf/files.vexpress"
 
 options 	FDT				# Flattened Device Tree support
+options 	DRAM_BLOCKS=256
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
 options 	ARM_HAS_VBAR

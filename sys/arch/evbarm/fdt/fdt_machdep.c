@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.7 2017/06/11 20:25:07 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.8 2017/07/05 01:08:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.7 2017/06/11 20:25:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.8 2017/07/05 01:08:45 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.7 2017/06/11 20:25:07 jmcneill Exp
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
+#include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -70,6 +71,10 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.7 2017/06/11 20:25:07 jmcneill Exp
 
 #include <arm/fdt/arm_fdtvar.h>
 
+#ifdef MEMORY_DISK_DYNAMIC
+#include <dev/md.h>
+#endif
+
 #ifndef FDT_MAX_BOOT_STRING
 #define FDT_MAX_BOOT_STRING 1024
 #endif
@@ -78,6 +83,11 @@ BootConfig bootconfig;
 char bootargs[FDT_MAX_BOOT_STRING] = "";
 char *boot_args = NULL;
 u_int uboot_args[4] = { 0 };	/* filled in by xxx_start.S (not in bss) */
+
+static char fdt_memory_ext_storage[EXTENT_FIXED_STORAGE_SIZE(DRAM_BLOCKS)];
+static struct extent *fdt_memory_ext;
+
+static uint64_t initrd_start, initrd_end;
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -165,6 +175,155 @@ fdt_get_memory(uint64_t *paddr, uint64_t *psize)
 		if (*paddr + *psize == cur_addr)
 			*psize += cur_size;
 	}
+}
+
+static void
+fdt_add_reserved_memory_range(uint64_t addr, uint64_t size)
+{
+	int error;
+
+	error = extent_free(fdt_memory_ext, addr, size, EX_NOWAIT);
+	if (error != 0)
+		printf("MEM ERROR: add %llx-%llx failed: %d\n",
+		    addr, size, error);
+	DPRINTF("MEM: res %llx-%llx: %d\n", addr, size);
+}
+
+/*
+ * Exclude memory ranges from memory config from a /reserved-memory/ child
+ */
+static void
+fdt_add_reserved_memory(int phandle, uint64_t max_addr)
+{
+	uint64_t addr, size;
+	int index;
+
+	for (index = 0;
+	     fdtbus_get_reg64(phandle, index, &addr, &size) == 0;
+	     index++) {
+		if (addr >= max_addr)
+			continue;
+		if (addr + size > max_addr)
+			size = max_addr - addr;
+		fdt_add_reserved_memory_range(addr, size);
+	}
+}
+
+/*
+ * Define usable memory regions.
+ */
+static void
+fdt_build_bootconfig(uint64_t mem_addr, uint64_t mem_size)
+{
+	const int memory = OF_finddevice("/memory");
+	const uint64_t max_addr = mem_addr + mem_size;
+	BootConfig *bc = &bootconfig;
+	struct extent_region *er;
+	uint64_t addr, size;
+	int index, child, error;
+ 
+	fdt_memory_ext = extent_create("FDT Memory", mem_addr, max_addr,
+	    fdt_memory_ext_storage, sizeof(fdt_memory_ext_storage), 0);
+
+	for (index = 0;
+	     fdtbus_get_reg64(memory, index, &addr, &size) == 0;
+	     index++) {
+		if (addr >= max_addr)
+			continue;
+		if (addr + size > max_addr)
+			size = max_addr - addr;
+
+		error = extent_alloc_region(fdt_memory_ext, addr, size,
+		    EX_NOWAIT);
+		if (error != 0)
+			printf("MEM ERROR: add %llx-%llx failed: %d\n",
+			    addr, size, error);
+		DPRINTF("MEM: add %llx-%llx\n", addr, size);
+	}
+
+	const int reserved = OF_finddevice("/reserved-memory");
+	if (reserved > 0)
+		for (child = OF_child(reserved); child; child = OF_peer(child))
+			fdt_add_reserved_memory(child, max_addr);
+
+	const uint64_t initrd_size = initrd_end - initrd_start;
+	if (initrd_size > 0)
+		fdt_add_reserved_memory_range(initrd_start, initrd_size);
+
+	DPRINTF("Usable memory:\n");
+	bc->dramblocks = 0;
+	LIST_FOREACH(er, &fdt_memory_ext->ex_regions, er_link) {
+		DPRINTF("  %lx - %lx\n", er->er_start, er->er_end);
+		bc->dram[bc->dramblocks].address = er->er_start;
+		bc->dram[bc->dramblocks].pages =
+		    (er->er_end - er->er_start) / PAGE_SIZE;
+		bc->dramblocks++;
+	}
+}
+
+static void
+fdt_probe_initrd(uint64_t *pstart, uint64_t *pend)
+{
+	*pstart = *pend = 0;
+
+#ifdef MEMORY_DISK_DYNAMIC
+	const int chosen = OF_finddevice("/chosen");
+	if (chosen < 0)
+		return;
+
+	int len;
+	const void *start_data = fdtbus_get_prop(chosen,
+	    "linux,initrd-start", &len);
+	const void *end_data = fdtbus_get_prop(chosen,
+	    "linux,initrd-end", NULL);
+	if (start_data == NULL || end_data == NULL)
+		return;
+
+	switch (len) {
+	case 4:
+		*pstart = be32dec(start_data);
+		*pend = be32dec(end_data);
+		break;
+	case 8:
+		*pstart = be64dec(start_data);
+		*pend = be64dec(end_data);
+		break;
+	default:
+		printf("Unsupported len %d for /chosen/initrd-start\n", len);
+		return;
+	}
+#endif
+}
+
+static void
+fdt_setup_initrd(void)
+{
+#ifdef MEMORY_DISK_DYNAMIC
+	const uint64_t initrd_size = initrd_end - initrd_start;
+	paddr_t startpa = trunc_page(initrd_start);
+	paddr_t endpa = round_page(initrd_end);
+	paddr_t pa;
+	vaddr_t va;
+	void *md_start;
+
+	if (initrd_size == 0)
+		return;
+
+	va = uvm_km_alloc(kernel_map, initrd_size, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+	if (va == 0) {
+		printf("Failed to allocate VA for initrd\n");
+		return;
+	}
+
+	md_start = (void *)va;
+
+	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
+		pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_update(pmap_kernel());
+
+	md_root_setconf(md_start, initrd_size);
+#endif
 }
 
 u_int
@@ -271,10 +430,11 @@ initarm(void *arg)
 	const bool mapallmem_p = false;
 #endif
 
-	/* Fake bootconfig structure for the benefit of pmap.c. */
-	bootconfig.dramblocks = 1;
-	bootconfig.dram[0].address = (bus_addr_t)memory_addr;
-	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
+	/* Parse ramdisk info */
+	fdt_probe_initrd(&initrd_start, &initrd_end);
+
+	/* Populate bootconfig structure for the benefit of pmap.c. */
+	fdt_build_bootconfig(memory_addr, memory_size);
 
 	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
 	    KERNEL_BASE_PHYS);
@@ -295,7 +455,6 @@ initarm(void *arg)
 #endif
 
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
-
 }
 
 static void
@@ -359,6 +518,9 @@ static void
 fdt_device_register(device_t self, void *aux)
 {
 	const struct arm_platform *plat = arm_fdt_platform();
+
+	if (device_is_a(self, "armfdt"))
+		fdt_setup_initrd();
 
 	if (plat && plat->device_register)
 		plat->device_register(self, aux);
