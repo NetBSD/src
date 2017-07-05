@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.120.10.1 2017/07/01 08:39:21 snj Exp $
+#	$NetBSD: files.vax,v 1.120.10.2 2017/07/05 20:13:37 snj Exp $
 #
 # new style config file for vax architecture
 #
@@ -179,6 +179,11 @@ include "dev/scsipi/files.scsipi"
 device	si: scsi, ncr5380sbc
 attach	si at vsbus with si_vsbus
 file	arch/vax/vsa/ncr.c		si_vsbus
+
+#
+# Machine-independent ATA drivers
+#
+include "dev/ata/files.ata"
 
 # Monochrome framebuffer on VS3100.
 device	smg: displaydev, wsemuldisplaydev
@@ -411,5 +416,13 @@ include "compat/vax1k/files.vax1k"
 #arch/vax/if/if_pcl.c		optional pcl device-driver
 #arch/vax/if/if_vv.c		optional vv device-driver
 #arch/vax/if/raw_hy.c		optional hy device-driver
+
+# this wants to be probed as late as possible.
+#
+# Machine-independent USB device support
+#
+include "dev/usb/files.usb"
+
+include "dev/bluetooth/files.bluetooth"
 
 include "arch/vax/conf/majors.vax"

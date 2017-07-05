@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2012/01/15 17:36:55 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.24.34.1 2017/07/05 20:13:36 snj Exp $
 #
 #	etc.vax/Makefile.inc -- vax-specific etc Makefile targets
 #
@@ -6,7 +6,7 @@
 # If you change the list of distributed kernels, don't forget
 # to update the release documentation in distrib/notes/common/contents
 
-KERNEL_SETS=		GENERIC GENERIC.MP
+KERNEL_SETS=		GENERIC GENERIC.MP GENERIC_USB
 
 BUILD_KERNELS=		INSTALL
 
