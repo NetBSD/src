@@ -1,4 +1,4 @@
-/*	$NetBSD: execinfo.h,v 1.2 2012/06/09 21:22:17 christos Exp $	*/
+/*	$NetBSD: execinfo.h,v 1.2.26.1 2017/07/05 19:55:21 snj Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,14 @@
 #ifndef _EXECINFO_H_
 #define _EXECINFO_H_
 
-#include <stddef.h>
+#include <sys/cdefs.h>
+#include <sys/featuretest.h>
+#include <sys/ansi.h>
+  
+#ifdef  _BSD_SIZE_T_
+typedef _BSD_SIZE_T_    size_t;
+#undef  _BSD_SIZE_T_
+#endif
 
 __BEGIN_DECLS
 size_t backtrace(void **, size_t);
