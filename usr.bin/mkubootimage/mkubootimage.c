@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.18 2014/09/30 10:21:50 msaitoh Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.19 2017/07/05 01:09:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.18 2014/09/30 10:21:50 msaitoh Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.19 2017/07/05 01:09:17 jmcneill Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -429,7 +429,8 @@ main(int argc, char *argv[])
 
 	if (image_arch == IH_ARCH_UNKNOWN ||
 	    image_type == IH_TYPE_UNKNOWN ||
-	    (image_type != IH_TYPE_SCRIPT && image_loadaddr == 0) ||
+	    (image_type != IH_TYPE_SCRIPT && image_type != IH_TYPE_RAMDISK &&
+	     image_loadaddr == 0) ||
 	    image_name == NULL)
 		usage();
 
