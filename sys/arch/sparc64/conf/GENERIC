@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.198 2017/03/25 13:24:08 martin Exp $
+# $NetBSD: GENERIC,v 1.198.6.1 2017/07/05 13:58:48 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.198 $"
+#ident		"GENERIC-$Revision: 1.198.6.1 $"
 
 maxusers	64
 
@@ -100,7 +100,7 @@ options 	DDB_VERBOSE_HELP	# enable verbose online help
 ## Adds code to the kernel that does internal consistency checks, and will
 ## cause the kernel to panic if corruption of internal data structures
 ## is detected.
-options 	DIAGNOSTIC	# extra kernel sanity checking
+#options 	DIAGNOSTIC	# extra kernel sanity checking
 
 ## Enable (possibly expensive) debugging code that may also display messages
 ## on the system console
@@ -1029,7 +1029,7 @@ pseudo-device	nsmb		# experimental - SMB requester
 # drvctl - needed to show device dictionary via drvctl(8)
 pseudo-device	drvctl
 
-options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
+#options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
 options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
 # XXX: there is no PLT format for sparc64 that cooperates with
 # MPROTECT, so disable it for now
