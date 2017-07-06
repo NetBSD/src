@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.39 2017/07/01 09:18:31 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.40 2017/07/06 15:09:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -124,7 +124,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.39 2017/07/01 09:18:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.40 2017/07/06 15:09:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -687,7 +687,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	text.pv_pa = bmi->bmi_kernelstart;
 	text.pv_va = KERN_PHYSTOV(bmi, bmi->bmi_kernelstart);
 	text.pv_size = textsize;
-	text.pv_prot = VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE;
+	text.pv_prot = VM_PROT_READ | VM_PROT_EXECUTE;
 	text.pv_cache = PTE_CACHE;
 
 #ifdef VERBOSE_INIT_ARM
