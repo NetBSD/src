@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.94 2017/06/21 16:46:44 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.95 2017/07/06 15:19:22 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -11939,4 +11939,9 @@ external/mit/expat/dist/xmlwf/xmlwf.dsp         delete
 
 	Update expat to 2.2.1.
 	[spz, ticket #1458]
+
+sys/kern/subr_xcall.c				1.19
+
+	Fix a race condition of low priority xcall.  PR kern/51632.
+	[ozaki-r, ticket #1419]
 
