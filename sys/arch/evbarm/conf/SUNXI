@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.11 2017/07/06 10:44:19 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.12 2017/07/06 22:10:14 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -29,6 +29,7 @@ makeoptions	DTS="
 
 options 	CPU_CORTEXA7
 options 	SOC_SUN6I_A31
+options 	SOC_SUN8I_A83T
 options 	SOC_SUN8I_H3
 options 	MULTIPROCESSOR
 
@@ -61,6 +62,7 @@ psci*		at fdt?
 
 # Clock and reset controllers
 sun6ia31ccu*	at fdt? pass 4		# A31 CCU
+sun8ia83tccu*	at fdt? pass 4		# A83T CCU
 sun8ih3ccu*	at fdt? pass 4		# H3 CCU
 
 fclock*		at fdt? pass 3
