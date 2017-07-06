@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.149 2017/07/06 15:07:56 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.150 2017/07/06 15:17:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -924,8 +924,10 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_armv6n
 #define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_armv6n
 
-/* These prototypes make writeable mappings, while the other MMU types
- * make read-only mappings. */
+/*
+ * These prototypes make writeable mappings, while the other MMU types
+ * make read-only mappings.
+ */
 #define	L1_SS_PROTO		L1_SS_PROTO_armv6
 #define	L1_S_PROTO		L1_S_PROTO_armv6
 #define	L1_C_PROTO		L1_C_PROTO_armv6
@@ -1007,8 +1009,10 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_armv7
 #define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_armv7
 
-/* These prototypes make writeable mappings, while the other MMU types
- * make read-only mappings. */
+/*
+ * These prototypes make writeable mappings, while the other MMU types
+ * make read-only mappings.
+ */
 #define	L1_SS_PROTO		L1_SS_PROTO_armv7
 #define	L1_S_PROTO		L1_S_PROTO_armv7
 #define	L1_C_PROTO		L1_C_PROTO_armv7
