@@ -1,8 +1,8 @@
-/*	$NetBSD: igphy.c,v 1.26 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: igphy.c,v 1.27 2017/07/06 08:09:05 msaitoh Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
- * (currently disabled) SmartSpeed workaround code.
+ * SmartSpeed workaround code.
  */
 
 /*******************************************************************************
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.26 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.27 2017/07/06 08:09:05 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mii.h"
