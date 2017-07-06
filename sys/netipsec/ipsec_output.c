@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.49 2017/07/04 06:45:05 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.50 2017/07/06 09:49:46 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.49 2017/07/04 06:45:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.50 2017/07/06 09:49:46 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -428,12 +428,7 @@ again:
 	 * Sanity check the SA contents for the caller
 	 * before they invoke the xform output method.
 	 */
-	if (sav->tdb_xform == NULL) {
-		IPSECLOG(LOG_DEBUG, "no transform for SA\n");
-		IPSEC_OSTAT(NOXFORM);
-		*error = EHOSTUNREACH;
-		goto bad;
-	}
+	KASSERT(sav->tdb_xform != NULL);
 	return isr;
 bad:
 	KASSERTMSG(*error != 0, "error return w/ no error code");
