@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.144 2017/02/03 16:06:45 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.145 2017/07/06 17:08:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -251,6 +251,9 @@ struct sockaddr_big;
 
 struct	mbuf *getsombuf(struct socket *, int);
 
+/* 0x400 is SO_OTIMESTAMP */
+#define SOOPT_TIMESTAMP(o)	((o) & (SO_TIMESTAMP | 0x400))
+
 /*
  * File operations on sockets.
  */
@@ -277,6 +280,8 @@ struct mbuf *
 	sbcreatecontrol(void *, int, int, int);
 struct mbuf *
 	sbcreatecontrol1(void **, int, int, int, int);
+struct mbuf **
+	sbsavetimestamp(int, struct mbuf *, struct mbuf **);
 void	sbdrop(struct sockbuf *, int);
 void	sbdroprecord(struct sockbuf *);
 void	sbflush(struct sockbuf *);

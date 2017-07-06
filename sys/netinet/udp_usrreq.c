@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.233 2017/04/20 08:46:07 ozaki-r Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.234 2017/07/06 17:08:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,11 +66,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.233 2017/04/20 08:46:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.234 2017/07/06 17:08:57 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
-#include "opt_compat_netbsd.h"
 #include "opt_ipsec.h"
 #include "opt_inet_csum.h"
 #include "opt_ipkdb.h"
@@ -126,10 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.233 2017/04/20 08:46:07 ozaki-r Exp
 #include <netipsec/ipsec6.h>
 #endif
 #endif	/* IPSEC */
-
-#ifdef COMPAT_50
-#include <compat/sys/socket.h>
-#endif
 
 #ifdef IPKDB
 #include <ipkdb/ipkdb.h>
@@ -488,10 +483,7 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 
 	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
 		if (inp->inp_flags & INP_CONTROLOPTS
-#ifdef SO_OTIMESTAMP
-			 || so->so_options & SO_OTIMESTAMP
-#endif
-			 || so->so_options & SO_TIMESTAMP) {
+		    || SOOPT_TIMESTAMP(so->so_options)) {
 			struct ip *ip = mtod(n, struct ip *);
 			ip_savecontrol(inp, &opts, ip, n);
 		}
