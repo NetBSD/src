@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.166 2017/07/06 09:04:26 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.167 2017/07/06 09:48:42 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.166 2017/07/06 09:04:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.167 2017/07/06 09:48:42 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -3150,6 +3150,9 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	KASSERT(mhp != NULL);
 	KASSERT(mhp->msg != NULL);
 
+	/* We shouldn't initialize sav variables while someone uses it. */
+	KASSERT(sav->refcnt == 0);
+
 	/* initialization */
 	key_freesaval(sav);
 	sav->tdb_xform = NULL;		/* transform */
@@ -5176,7 +5179,7 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	const struct sockaddr *src, *dst;
 	struct secasindex saidx;
 	struct secashead *sah;
-	struct secasvar *sav;
+	struct secasvar *sav, *newsav;
 	u_int16_t proto;
 	u_int8_t mode;
 	u_int16_t reqid;
@@ -5283,23 +5286,46 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 		return key_senderror(so, m, EINVAL);
 	}
 
+	/*
+	 * Allocate a new SA instead of modifying the existing SA directly
+	 * to avoid race conditions.
+	 */
+	newsav = kmem_zalloc(sizeof(struct secasvar), KM_SLEEP);
+
 	/* copy sav values */
-	error = key_setsaval(sav, m, mhp);
+	newsav->spi = sav->spi;
+	newsav->seq = sav->seq;
+	newsav->created = sav->created;
+	newsav->pid = sav->pid;
+
+	error = key_setsaval(newsav, m, mhp);
 	if (error) {
-		KEY_FREESAV(&sav);
+		KEY_FREESAV(&newsav);
 		return key_senderror(so, m, error);
 	}
 
-	error = key_handle_natt_info(sav,mhp);
-	if (error != 0)
-		return key_senderror(so, m, EINVAL);
+	error = key_handle_natt_info(newsav, mhp);
+	if (error != 0) {
+		KEY_FREESAV(&newsav);
+		return key_senderror(so, m, error);
+	}
+
+	/* add to satree */
+	newsav->sah = sah;
+	newsav->refcnt = 1;
+	newsav->state = sav->state;
+	/* We have to keep the order */
+	LIST_INSERT_AFTER(sav, newsav, chain);
 
 	/* check SA values to be mature. */
-	error = key_mature(sav);
+	error = key_mature(newsav);
 	if (error != 0) {
-		KEY_FREESAV(&sav);
+		KEY_FREESAV(&newsav);
 		return key_senderror(so, m, error);
 	}
+
+	key_sa_chgstate(sav, SADB_SASTATE_DEAD);
+	KEY_FREESAV(&sav);
 
     {
 	struct mbuf *n;
