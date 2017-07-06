@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.72 2017/07/06 09:24:47 kre Exp $
+# $NetBSD: network,v 1.73 2017/07/06 09:49:39 kre Exp $
 #
 
 # PROVIDE: network
@@ -435,7 +435,7 @@ network_start_ipv6_autoconf()
 	# IPv6 interface autoconfiguration.
 
 	# dhcpcd will ensure DAD completes before forking
-	if checkyesno rtsol && ! checkyesno dhcpcd; then
+	if checkyesnox rtsol && ! checkyesno dhcpcd; then
 		if [ "$ip6mode" = "autohost" ]; then
 			echo
 			warn "rtsol has been removed, " \
