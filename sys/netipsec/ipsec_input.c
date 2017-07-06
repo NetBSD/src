@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.45 2017/07/05 03:44:59 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.46 2017/07/06 09:49:46 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.45 2017/07/05 03:44:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.46 2017/07/06 09:49:46 ozaki-r Exp $");
 
 /*
  * IPsec input processing.
@@ -281,18 +281,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		return ENOENT;
 	}
 
-	if (sav->tdb_xform == NULL) {
-		IPSECLOG(LOG_DEBUG,
-		    "attempted to use uninitialized SA %s/%08lx/%u\n",
-		    ipsec_address(&dst_address, buf, sizeof(buf)),
-		    (u_long) ntohl(spi), sproto);
-		IPSEC_ISTAT(sproto, ESP_STAT_NOXFORM, AH_STAT_NOXFORM,
-		    IPCOMP_STAT_NOXFORM);
-		KEY_FREESAV(&sav);
-		splx(s);
-		m_freem(m);
-		return ENXIO;
-	}
+	KASSERT(sav->tdb_xform != NULL);
 
 	/*
 	 * Call appropriate transform and return -- callback takes care of
