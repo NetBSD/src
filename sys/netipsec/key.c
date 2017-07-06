@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.165 2017/07/04 08:11:32 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.166 2017/07/06 09:04:26 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.165 2017/07/04 08:11:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.166 2017/07/06 09:04:26 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -5295,10 +5295,10 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 		return key_senderror(so, m, EINVAL);
 
 	/* check SA values to be mature. */
-	mhp->msg->sadb_msg_errno = key_mature(sav);
-	if (mhp->msg->sadb_msg_errno != 0) {
+	error = key_mature(sav);
+	if (error != 0) {
 		KEY_FREESAV(&sav);
-		return key_senderror(so, m, 0);
+		return key_senderror(so, m, error);
 	}
 
     {
@@ -6523,7 +6523,7 @@ key_api_acquire(struct socket *so, struct mbuf *m,
 	error = key_acquire(&saidx, NULL);
 	if (error != 0) {
 		IPSECLOG(LOG_DEBUG, "error %d returned from key_acquire.\n",
-		    mhp->msg->sadb_msg_errno);
+		    error);
 		return key_senderror(so, m, error);
 	}
 
