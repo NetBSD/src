@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.124 2016/10/02 19:26:46 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.125 2017/07/06 17:08:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,11 +58,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.124 2016/10/02 19:26:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.125 2017/07/06 17:08:57 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
+#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
@@ -1526,4 +1527,36 @@ sowait(struct socket *so, bool catch_p, int timo)
 	if (__predict_false(lock != so->so_lock))
 		solockretry(so, lock);
 	return error;
+}
+
+#ifdef COMPAT_50
+#include <compat/sys/time.h>
+#include <compat/sys/socket.h>
+#endif
+
+struct mbuf **
+sbsavetimestamp(int opt, struct mbuf *m, struct mbuf **mp)
+{
+	struct timeval tv;
+	microtime(&tv);
+
+#ifdef SO_OTIMESTAMP
+	if (opt & SO_OTIMESTAMP) {
+		struct timeval50 tv50;
+
+		timeval_to_timeval50(&tv, &tv50);
+		*mp = sbcreatecontrol(&tv50, sizeof(tv50),
+		    SCM_OTIMESTAMP, SOL_SOCKET);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	} else
+#endif
+
+	if (opt & SO_TIMESTAMP) {
+		*mp = sbcreatecontrol(&tv, sizeof(tv),
+		    SCM_TIMESTAMP, SOL_SOCKET);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+	return mp;
 }
