@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.4 2017/07/02 21:13:06 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.5 2017/07/06 10:44:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.4 2017/07/02 21:13:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.5 2017/07/06 10:44:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.4 2017/07/02 21:13:06 jmcneill Exp 
 #include <sys/gpio.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/gpio/gpiovar.h>
 
 #include <arm/sunxi/sunxi_gpio.h>
 
@@ -73,6 +74,11 @@ struct sunxi_gpio_softc {
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
 	const struct sunxi_gpio_padconf *sc_padconf;
+	kmutex_t sc_lock;
+
+	struct gpio_chipset_tag sc_gp;
+	gpio_pin_t *sc_pins;
+	device_t sc_gpiodev;
 };
 
 struct sunxi_gpio_pin {
@@ -130,6 +136,8 @@ sunxi_gpio_setfunc(struct sunxi_gpio_softc *sc,
 	uint32_t cfg;
 	u_int n;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	const bus_size_t cfg_reg = SUNXI_GPIO_CFG(pin_def->port, pin_def->pin);
 	const uint32_t cfg_mask = SUNXI_GPIO_CFG_PINMASK(pin_def->pin);
 
@@ -162,6 +170,8 @@ sunxi_gpio_setpull(struct sunxi_gpio_softc *sc,
 {
 	uint32_t pull;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	const bus_size_t pull_reg = SUNXI_GPIO_PULL(pin_def->port, pin_def->pin);
 	const uint32_t pull_mask = SUNXI_GPIO_PULL_PINMASK(pin_def->pin);
 
@@ -188,6 +198,8 @@ sunxi_gpio_setdrv(struct sunxi_gpio_softc *sc,
 {
 	uint32_t drv;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	if (drive_strength < 10 || drive_strength > 40)
 		return EINVAL;
 
@@ -210,6 +222,8 @@ static int
 sunxi_gpio_ctl(struct sunxi_gpio_softc *sc, const struct sunxi_gpio_pins *pin_def,
     int flags)
 {
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	if (flags & GPIO_PIN_INPUT)
 		return sunxi_gpio_setfunc(sc, pin_def, "gpio_in");
 	if (flags & GPIO_PIN_OUTPUT)
@@ -238,7 +252,10 @@ sunxi_gpio_acquire(device_t dev, const void *data, size_t len, int flags)
 	if (pin_def == NULL)
 		return NULL;
 
+	mutex_enter(&sc->sc_lock);
 	error = sunxi_gpio_ctl(sc, pin_def, flags);
+	mutex_exit(&sc->sc_lock);
+
 	if (error != 0)
 		return NULL;
 
@@ -275,6 +292,7 @@ sunxi_gpio_read(device_t dev, void *priv, bool raw)
 	const bus_size_t data_reg = SUNXI_GPIO_DATA(pin_def->port);
 	const uint32_t data_mask = __BIT(pin_def->pin);
 
+	/* No lock required for reads */
 	data = GPIO_READ(sc, data_reg);
 	val = __SHIFTOUT(data, data_mask);
 	if (!raw && pin->pin_actlo)
@@ -305,7 +323,7 @@ sunxi_gpio_write(device_t dev, void *priv, int val, bool raw)
 	if (!raw && pin->pin_actlo)
 		val = !val;
 
-	/* XXX locking */
+	mutex_enter(&sc->sc_lock);
 	data = GPIO_READ(sc, data_reg);
 	data &= ~data_mask;
 	data |= __SHIFTIN(val, data_mask);
@@ -314,6 +332,7 @@ sunxi_gpio_write(device_t dev, void *priv, int val, bool raw)
 	    pin_def->port + 'A', pin_def->pin, GPIO_READ(sc, data_reg), data);
 #endif
 	GPIO_WRITE(sc, data_reg, data_mask);
+	mutex_exit(&sc->sc_lock);
 }
 
 static struct fdtbus_gpio_controller_func sunxi_gpio_funcs = {
@@ -348,6 +367,8 @@ sunxi_pinctrl_set_config(device_t dev, const void *data, size_t len)
 		return -1;
 	const char *pins = fdtbus_get_string(phandle, "pins");
 
+	mutex_enter(&sc->sc_lock);
+
 	for (pins = fdtbus_get_string(phandle, "pins");
 	     pins_len > 0;
 	     pins_len -= strlen(pins) + 1, pins += strlen(pins) + 1) {
@@ -370,12 +391,103 @@ sunxi_pinctrl_set_config(device_t dev, const void *data, size_t len)
 			sunxi_gpio_setdrv(sc, pin_def, drive_strength);
 	}
 
+	mutex_exit(&sc->sc_lock);
+
 	return 0;
 }
 
 static struct fdtbus_pinctrl_controller_func sunxi_pinctrl_funcs = {
 	.set_config = sunxi_pinctrl_set_config,
 };
+
+static int
+sunxi_gpio_pin_read(void *priv, int pin)
+{
+	struct sunxi_gpio_softc * const sc = priv;
+	const struct sunxi_gpio_pins *pin_def = &sc->sc_padconf->pins[pin];
+	uint32_t data;
+	int val;
+
+	KASSERT(pin < sc->sc_padconf->npins);
+
+	const bus_size_t data_reg = SUNXI_GPIO_DATA(pin_def->port);
+	const uint32_t data_mask = __BIT(pin_def->pin);
+
+	/* No lock required for reads */
+	data = GPIO_READ(sc, data_reg);
+	val = __SHIFTOUT(data, data_mask);
+
+	return val;
+}
+
+static void
+sunxi_gpio_pin_write(void *priv, int pin, int val)
+{
+	struct sunxi_gpio_softc * const sc = priv;
+	const struct sunxi_gpio_pins *pin_def = &sc->sc_padconf->pins[pin];
+	uint32_t data;
+
+	KASSERT(pin < sc->sc_padconf->npins);
+
+	const bus_size_t data_reg = SUNXI_GPIO_DATA(pin_def->port);
+	const uint32_t data_mask = __BIT(pin_def->pin);
+
+	mutex_enter(&sc->sc_lock);
+	data = GPIO_READ(sc, data_reg);
+	if (val)
+		data |= data_mask;
+	else
+		data &= ~data_mask;
+	GPIO_WRITE(sc, data_reg, data);
+	mutex_exit(&sc->sc_lock);
+}
+
+static void
+sunxi_gpio_pin_ctl(void *priv, int pin, int flags)
+{
+	struct sunxi_gpio_softc * const sc = priv;
+	const struct sunxi_gpio_pins *pin_def = &sc->sc_padconf->pins[pin];
+
+	KASSERT(pin < sc->sc_padconf->npins);
+
+	mutex_enter(&sc->sc_lock);
+	sunxi_gpio_ctl(sc, pin_def, flags);
+	sunxi_gpio_setpull(sc, pin_def, flags);
+	mutex_exit(&sc->sc_lock);
+}
+
+static void
+sunxi_gpio_attach_ports(struct sunxi_gpio_softc *sc)
+{
+	const struct sunxi_gpio_pins *pin_def;
+	struct gpio_chipset_tag *gp = &sc->sc_gp;
+	struct gpiobus_attach_args gba;
+	u_int pin;
+
+	gp->gp_cookie = sc;
+	gp->gp_pin_read = sunxi_gpio_pin_read;
+	gp->gp_pin_write = sunxi_gpio_pin_write;
+	gp->gp_pin_ctl = sunxi_gpio_pin_ctl;
+
+	const u_int npins = sc->sc_padconf->npins;
+	sc->sc_pins = kmem_zalloc(sizeof(*sc->sc_pins) * npins, KM_SLEEP);
+
+	for (pin = 0; pin < sc->sc_padconf->npins; pin++) {
+		pin_def = &sc->sc_padconf->pins[pin];
+		sc->sc_pins[pin].pin_num = pin;
+		sc->sc_pins[pin].pin_caps = GPIO_PIN_INPUT | GPIO_PIN_OUTPUT |
+		    GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN;
+		sc->sc_pins[pin].pin_state = sunxi_gpio_pin_read(sc, pin);
+		strlcpy(sc->sc_pins[pin].pin_defname, pin_def->name,
+		    sizeof(sc->sc_pins[pin].pin_defname));
+	}
+
+	memset(&gba, 0, sizeof(gba));
+	gba.gba_gc = gp;
+	gba.gba_pins = sc->sc_pins;
+	gba.gba_npins = npins;
+	sc->sc_gpiodev = config_found_ia(sc->sc_dev, "gpiobus", &gba, NULL);
+}
 
 static int
 sunxi_gpio_match(device_t parent, cfdata_t cf, void *aux)
@@ -406,6 +518,7 @@ sunxi_gpio_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 	sc->sc_padconf = (void *)of_search_compatible(phandle, compat_data)->data;
 
 	aprint_naive("\n");
@@ -420,4 +533,6 @@ sunxi_gpio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	fdtbus_pinctrl_configure();
+
+	sunxi_gpio_attach_ports(sc);
 }
