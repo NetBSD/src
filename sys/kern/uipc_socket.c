@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.255 2017/05/27 21:02:56 bouyer Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.256 2017/07/06 17:42:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.255 2017/05/27 21:02:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.256 2017/07/06 17:42:39 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2408,6 +2408,33 @@ sopoll(struct socket *so, int events)
 	sounlock(so);
 
 	return revents;
+}
+
+struct mbuf **
+sbsavetimestamp(int opt, struct mbuf *m, struct mbuf **mp)
+{
+	struct timeval tv;
+	microtime(&tv);
+
+#ifdef SO_OTIMESTAMP
+	if (opt & SO_OTIMESTAMP) {
+		struct timeval50 tv50;
+
+		timeval_to_timeval50(&tv, &tv50);
+		*mp = sbcreatecontrol(&tv50, sizeof(tv50),
+		    SCM_OTIMESTAMP, SOL_SOCKET);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	} else
+#endif
+
+	if (opt & SO_TIMESTAMP) {
+		*mp = sbcreatecontrol(&tv, sizeof(tv),
+		    SCM_TIMESTAMP, SOL_SOCKET);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+	return mp;
 }
 
 
