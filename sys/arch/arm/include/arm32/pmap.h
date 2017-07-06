@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.147 2017/05/25 20:42:41 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.148 2017/07/06 06:31:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -488,7 +488,7 @@ extern int pmap_needs_pte_sync;
  * Finally, MEMC, GENERIC and XSCALE MMUs do not need PTE syncs.
  *
  * Use run time evaluation for all other cases.
- * 
+ *
  */
 #if (ARM_NMMUS == 1)
 #if (ARM_MMU_SA1 + ARM_MMU_V6 != 0)
