@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.287 2017/06/21 16:56:53 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.288 2017/07/06 15:30:16 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -17892,4 +17892,37 @@ external/mit/expat/dist/xmlwf/xmlwf.dsp         delete
 
 	Update expat to 2.2.1.
 	[spz, ticket #1458]
+
+sys/kern/subr_xcall.c				1.19
+
+	Fix a race condition of low priority xcall.  PR kern/51632.
+	[ozaki-r, ticket #1419]
+
+share/man/man3/bits.3				1.17
+
+	These have been able to handle uintmax-width masks since creation.
+	[riastradh, ticket #1420]
+
+usr.bin/ftp/fetch.c				1.226
+
+	handle proxy authentication correctly.
+	[nonaka, ticket #1423]
+
+usr.sbin/traceroute6/traceroute6.c		1.43
+
+	PR/47304: -s (source IPv6 address to be used) option does not
+	work because the wrong variable is used.
+	[is, ticket #1427]
+
+usr.bin/ftp/fetch.c				1.227
+
+	Use the first name we requested the http/https URL for, not
+	any name we ended up with after random redirects.
+	[nonaka, ticket #1428]
+
+sys/miscfs/procfs/procfs_map.c			1.45
+
+	Maps don't change that frequently between reads, so don't give
+	up and do what linux does (support reading from an offset).
+	[tsutsui, ticket #1434]
 
