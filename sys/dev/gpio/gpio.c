@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.58 2016/05/11 18:33:40 bouyer Exp $ */
+/* $NetBSD: gpio.c,v 1.59 2017/07/06 10:43:06 jmcneill Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.58 2016/05/11 18:33:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.59 2017/07/06 10:43:06 jmcneill Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -202,6 +202,8 @@ gpio_attach(device_t parent, device_t self, void *aux)
 {
 	struct gpio_softc *sc = device_private(self);
 	struct gpiobus_attach_args *gba = aux;
+	struct gpio_name *nm;
+	int pin;
 
 	sc->sc_dev = self;
 	sc->sc_gc = gba->gba_gc;
@@ -210,6 +212,17 @@ gpio_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": %d pins\n", sc->sc_npins);
 	aprint_naive("\n");
+
+	/* Configure default pin names */
+	for (pin = 0; pin < sc->sc_npins; pin++) {
+		if (sc->sc_pins[pin].pin_defname[0] == '\0')
+			continue;
+		nm = kmem_alloc(sizeof(*nm), KM_SLEEP);
+		strlcpy(nm->gp_name, sc->sc_pins[pin].pin_defname,
+		    sizeof(nm->gp_name));
+		nm->gp_pin = pin;
+		LIST_INSERT_HEAD(&sc->sc_names, nm, gp_next);
+	}
 
 	if (!pmf_device_register(self, NULL, gpio_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");

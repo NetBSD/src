@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.16 2016/05/11 18:33:40 bouyer Exp $ */
+/* $NetBSD: gpiovar.h,v 1.17 2017/07/06 10:43:06 jmcneill Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.3 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -44,6 +44,7 @@ typedef struct gpio_pin {
 	gpio_chipset_tag_t	pin_gc;		/* reference the controller */
 	void			(*pin_callback)(void *); /* irq callback */
 	void *			pin_callback_arg; /* callback arg */
+	char			pin_defname[GPIOMAXNAME]; /* default name */
 } gpio_pin_t;
 
 /* Attach GPIO framework to the controller */
