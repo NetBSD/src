@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.64 2017/07/02 11:21:13 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.65 2017/07/06 20:23:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.64 2017/07/02 11:21:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.65 2017/07/06 20:23:57 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -202,13 +202,14 @@ gdt_init_cpu(struct cpu_info *ci)
 	setregion(&region, ci->ci_gdt, max_len - 1);
 	lgdt(&region);
 #else
-	size_t len = gdt_size;
+	size_t len = roundup(gdt_size, PAGE_SIZE);
 	unsigned long frames[len >> PAGE_SHIFT];
 	vaddr_t va;
 	pt_entry_t *ptp;
 	size_t f;
 
-	for (va = (vaddr_t)ci->ci_gdt, f = 0; va < (vaddr_t)ci->ci_gdt + len;
+	for (va = (vaddr_t)ci->ci_gdt, f = 0;
+	    va < (vaddr_t)ci->ci_gdt + gdt_size;
 	    va += PAGE_SIZE, f++) {
 		KASSERT(va >= VM_MIN_KERNEL_ADDRESS);
 		ptp = kvtopte(va);
@@ -226,7 +227,7 @@ gdt_init_cpu(struct cpu_info *ci)
 		}
 	}
 
-	if (HYPERVISOR_set_gdt(frames, gdt_size))
+	if (HYPERVISOR_set_gdt(frames, gdt_size / sizeof(gdtstore[0])))
 		panic("HYPERVISOR_set_gdt failed!\n");
 	lgdt_finish();
 #endif
