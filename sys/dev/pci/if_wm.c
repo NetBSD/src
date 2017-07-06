@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.517 2017/06/26 04:22:46 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.518 2017/07/06 08:50:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.517 2017/06/26 04:22:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.518 2017/07/06 08:50:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -5129,16 +5129,19 @@ wm_init_locked(struct ifnet *ifp)
 	ifp->if_collisions += CSR_READ(sc, WMREG_COLC);
 	ifp->if_ierrors += CSR_READ(sc, WMREG_RXERRC);
 
-	/* AMT based hardware can now take control from firmware */
-	if ((sc->sc_flags & WM_F_HAS_AMT) != 0)
-		wm_get_hw_control(sc);
-
 	/* PCH_SPT hardware workaround */
 	if (sc->sc_type == WM_T_PCH_SPT)
 		wm_flush_desc_rings(sc);
 
 	/* Reset the chip to a known state. */
 	wm_reset(sc);
+
+	/*
+	 * AMT based hardware can now take control from firmware
+	 * Do this after reset.
+	 */
+	if ((sc->sc_flags & WM_F_HAS_AMT) != 0)
+		wm_get_hw_control(sc);
 
 	if ((sc->sc_type == WM_T_PCH_SPT) &&
 	    pci_intr_type(sc->sc_pc, sc->sc_intrs[0]) == PCI_INTR_TYPE_INTX)
