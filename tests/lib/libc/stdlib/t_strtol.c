@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtol.c,v 1.6 2016/06/01 01:12:02 pgoyette Exp $ */
+/*	$NetBSD: t_strtol.c,v 1.7 2017/07/06 21:08:44 joerg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtol.c,v 1.6 2016/06/01 01:12:02 pgoyette Exp $");
+__RCSID("$NetBSD: t_strtol.c,v 1.7 2017/07/06 21:08:44 joerg Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -61,8 +61,8 @@ check(struct test *t, long int li, long long int lli, char *end)
 
 	if ((t->end != NULL && strcmp(t->end, end) != 0) ||
 	    (t->end == NULL && *end != '\0'))
-		atf_tc_fail_nonfatal("invalid end pointer ('%s') from "
-		    "strtol(%s, &end, %d)", end, t->str, t->base);
+		atf_tc_fail_nonfatal("invalid end pointer (%p) from "
+		    "strtol(%p, &end, %d)", end, t->str, t->base);
 }
 
 ATF_TC(strtol_base);
@@ -93,12 +93,18 @@ ATF_TC_BODY(strtol_base, tc)
 		{ "1234567",			    342391,  8, NULL	},
 		{ "01234567",			    342391,  0, NULL	},
 		{ "0123456789",			 123456789, 10, NULL	},
-		{ "0x75bcd15",		         123456789,  0, NULL	},
+		{ "0x75bcd15",			 123456789,  0, NULL	},
+		{ " 0xX",			         0,  0, "xX"	},
+		{ " 0xX",			         0, 16, "xX"	},
+		{ " 0XX",			         0,  0, "XX"	},
+		{ " 0XX",			         0, 16, "XX"	},
 	};
 
 	long long int lli;
 	long int li;
-	char *end;
+	long long int ulli;
+	long int uli;
+	char *end, *end2;
 	size_t i;
 
 	for (i = 0; i < __arraycount(t); i++) {
@@ -106,7 +112,20 @@ ATF_TC_BODY(strtol_base, tc)
 		li = strtol(t[i].str, &end, t[i].base);
 		lli = strtoll(t[i].str, NULL, t[i].base);
 
+		uli = strtoul(t[i].str, &end2, t[i].base);
+		ulli = strtoull(t[i].str, NULL, t[i].base);
+
 		check(&t[i], li, lli, end);
+
+		if (li != uli)
+			atf_tc_fail_nonfatal("strtoul(%s, NULL, %d) failed "
+			    "(rv = %lu)", t[i].str, t[i].base, uli);
+		if (end != end2)
+			atf_tc_fail_nonfatal("invalid end pointer ('%p') from "
+			    "strtoul(%s, &end, %d)", end2, t[i].str, t[i].base);
+		if (lli != ulli)
+			atf_tc_fail_nonfatal("strtoull(%s, NULL, %d) failed "
+			    "(rv = %llu)", t[i].str, t[i].base, ulli);
 	}
 }
 
