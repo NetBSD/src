@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.110 2017/03/23 18:08:06 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.111 2017/07/06 20:26:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.110 2017/03/23 18:08:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.111 2017/07/06 20:26:05 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -762,7 +762,7 @@ static void
 gdt_prepframes(paddr_t *frames, vaddr_t base, uint32_t entries)
 {
 	int i;
-	for (i = 0; i < roundup(entries, PAGE_SIZE) >> PAGE_SHIFT; i++) {
+	for (i = 0; i < entries; i++) {
 		frames[i] = ((paddr_t)xpmap_ptetomach(
 		    (pt_entry_t *)(base + (i << PAGE_SHIFT)))) >> PAGE_SHIFT;
 
