@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.19 2017/07/05 20:27:50 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.20 2017/07/06 05:29:43 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -1792,4 +1792,10 @@ sys/arch/x86/x86/pmap.c				1.252
 
 	Fix "reboot -d".  PR kern/49610.
 	[jdolecek, ticket #98]
+
+sys/arch/arm/cortex/a9_mpsubr.S			1.48
+
+	Make fp 0 on entry to idle_stack to ensure we mark that we're top of
+	stack.
+	[skrll, ticket #99]
 
