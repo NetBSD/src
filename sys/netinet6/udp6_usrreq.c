@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.129 2017/04/20 08:46:07 ozaki-r Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.130 2017/07/06 17:08:57 christos Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.129 2017/04/20 08:46:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.130 2017/07/06 17:08:57 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -363,10 +363,7 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 
 	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
 		if (in6p->in6p_flags & IN6P_CONTROLOPTS
-#ifdef SO_OTIMESTAMP
-		    || in6p->in6p_socket->so_options & SO_OTIMESTAMP
-#endif
-		    || in6p->in6p_socket->so_options & SO_TIMESTAMP) {
+		    || SOOPT_TIMESTAMP(in6p->in6p_socket->so_options)) {
 			struct ip6_hdr *ip6 = mtod(n, struct ip6_hdr *);
 			ip6_savecontrol(in6p, &opts, ip6, n);
 		}
