@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.87 2017/07/05 19:50:49 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.88 2017/07/06 00:17:04 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -134,6 +134,7 @@ IMAGE.kern=	${IMAGE.rel}/binary/kernel
 IMAGE.instk=	${IMAGE.rel}/installation/instkernel
 
 __mkimage: .USE
+	TOOL_MAKE=${MAKE} \
 	TOOL_MAKEFS=${TOOL_MAKEFS} \
 	TOOL_DISKLABEL=${TOOL_DISKLABEL} \
 	TOOL_FDISK=${TOOL_FDISK} \
@@ -143,6 +144,8 @@ __mkimage: .USE
 	TOOL_MKUBOOTIMAGE=${TOOL_MKUBOOTIMAGE} \
 	TOOL_MTREE=${TOOL_MTREE} \
 	HOST_SH=${HOST_SH} \
+	KERNOBJDIR=${KERNOBJDIR} \
+	MACHINE=${MACHINE} \
 	${HOST_SH} ${MKIMAGE} -x -h ${.TARGET:S/smp_//} -D ${DESTDIR} \
 	    -S ${NETBSDSRCDIR} -B ${IMAGEENDIAN} ${MKI_OPTS.${.TARGET}} \
 	    ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
