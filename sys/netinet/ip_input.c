@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.355 2017/06/01 02:45:14 chs Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.356 2017/07/06 17:08:57 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,11 +91,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.355 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.356 2017/07/06 17:08:57 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
-#include "opt_compat_netbsd.h"
 #include "opt_gateway.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
@@ -172,11 +171,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.355 2017/06/01 02:45:14 chs Exp $");
 #endif
 #ifndef IPMTUDISCTIMEOUT
 #define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
-#endif
-
-#ifdef COMPAT_50
-#include <compat/sys/time.h>
-#include <compat/sys/socket.h>
 #endif
 
 /*
@@ -1529,27 +1523,9 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 	if (__predict_false(ifp == NULL))
 		return; /* XXX should report error? */
 
-	if (so->so_options & SO_TIMESTAMP
-#ifdef SO_OTIMESTAMP
-	    || so->so_options & SO_OTIMESTAMP
-#endif
-	    ) {
-		struct timeval tv;
+	if (SOOPT_TIMESTAMP(so->so_options))
+		mp = sbsavetimestamp(so->so_options, m, mp);
 
-		microtime(&tv);
-#ifdef SO_OTIMESTAMP
-		if (so->so_options & SO_OTIMESTAMP) {
-			struct timeval50 tv50;
-			timeval_to_timeval50(&tv, &tv50);
-			*mp = sbcreatecontrol((void *) &tv50, sizeof(tv50),
-			    SCM_OTIMESTAMP, SOL_SOCKET);
-		} else
-#endif
-		*mp = sbcreatecontrol((void *) &tv, sizeof(tv),
-		    SCM_TIMESTAMP, SOL_SOCKET);
-		if (*mp)
-			mp = &(*mp)->m_next;
-	}
 	if (inpflags & INP_RECVDSTADDR) {
 		*mp = sbcreatecontrol((void *) &ip->ip_dst,
 		    sizeof(struct in_addr), IP_RECVDSTADDR, IPPROTO_IP);
