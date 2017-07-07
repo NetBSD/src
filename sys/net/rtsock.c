@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.213 2017/06/01 02:45:14 chs Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.213.2.1 2017/07/07 13:57:26 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.213 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.213.2.1 2017/07/07 13:57:26 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -474,7 +474,7 @@ COMPATNAME(route_purgeif)(struct socket *so, struct ifnet *ifp)
 	return EOPNOTSUPP;
 }
 
-#ifdef INET
+#if defined(INET) || defined(INET6)
 static int
 route_get_sdl_index(struct rt_addrinfo *info, int *sdl_index)
 {
@@ -493,7 +493,7 @@ route_get_sdl_index(struct rt_addrinfo *info, int *sdl_index)
 
 	return 0;
 }
-#endif /* INET */
+#endif
 
 static void
 route_get_sdl(const struct ifnet *ifp, const struct sockaddr *dst,
@@ -536,12 +536,11 @@ route_output_report(struct rtentry *rt, struct rt_addrinfo *info,
     struct rt_xmsghdr *rtm, struct rt_xmsghdr **new_rtm)
 {
 	int len;
-	struct ifnet *ifp;
 
-	if ((rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) == 0)
-		;
-	else if ((ifp = rt->rt_ifp) != NULL) {
+	if (rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) {
 		const struct ifaddr *rtifa;
+		const struct ifnet *ifp = rt->rt_ifp;
+
 		info->rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
 		/* rtifa used to be simply rt->rt_ifa.
 		 * If rt->rt_ifa != NULL, then
@@ -569,9 +568,6 @@ route_output_report(struct rtentry *rt, struct rt_addrinfo *info,
 		else
 			info->rti_info[RTAX_BRD] = NULL;
 		rtm->rtm_index = ifp->if_index;
-	} else {
-		info->rti_info[RTAX_IFP] = NULL;
-		info->rti_info[RTAX_IFA] = NULL;
 	}
 	(void)rt_msg2(rtm->rtm_type, info, NULL, NULL, &len);
 	if (len > rtm->rtm_msglen) {
@@ -645,7 +641,7 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 	struct ifnet *ifp = NULL, *new_ifp;
 	struct ifaddr *ifa = NULL, *new_ifa;
 	struct psref psref_ifa, psref_new_ifa, psref_ifp;
-	bool newgw;
+	bool newgw, ifp_changed = false;
 
 	/*
 	 * New gateway could require new ifaddr, ifp;
@@ -695,13 +691,16 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 				oifa->ifa_rtrequest(RTM_DELETE, rt, info);
 			rt_replace_ifa(rt, ifa);
 			rt->rt_ifp = new_ifp;
+			ifp_changed = true;
 		}
 		if (new_ifa == NULL)
 			ifa_release(ifa, &psref_ifa);
 	}
 	ifa_release(new_ifa, &psref_new_ifa);
-	if (new_ifp && rt->rt_ifp != new_ifp && !if_is_deactivated(new_ifp))
+	if (new_ifp && rt->rt_ifp != new_ifp && !if_is_deactivated(new_ifp)) {
 		rt->rt_ifp = new_ifp;
+		ifp_changed = true;
+	}
 	rt_setmetrics(rtm->rtm_inits, rtm, rt);
 	if (rt->rt_flags != info->rti_flags) {
 		rt->rt_flags = (info->rti_flags & ~PRESERVED_RTF) |
@@ -709,6 +708,13 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 	}
 	if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
 		rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, info);
+#if defined(INET) || defined(INET6)
+	if (ifp_changed && rt_mask(rt) != NULL)
+		lltable_prefix_free(rt_getkey(rt)->sa_family, rt_getkey(rt),
+		    rt_mask(rt), 0);
+#else
+	(void)ifp_changed; /* XXX gcc */
+#endif
 out:
 	if_put(ifp, &psref_ifp);
 
@@ -793,8 +799,8 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 		if (info.rti_info[RTAX_GATEWAY] == NULL) {
 			senderr(EINVAL);
 		}
-#ifdef INET
-		/* support for new ARP code with keeping backcompat */
+#if defined(INET) || defined(INET6)
+		/* support for new ARP/NDP code with keeping backcompat */
 		if (info.rti_info[RTAX_GATEWAY]->sa_family == AF_LINK) {
 			const struct sockaddr_dl *sdlp =
 			    satocsdl(info.rti_info[RTAX_GATEWAY]);
@@ -836,7 +842,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 			break;
 		}
 	fallback:
-#endif /* INET */
+#endif /* defined(INET) || defined(INET6) */
 		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
 		if (error == 0) {
 			rt_setmetrics(rtm->rtm_inits, rtm, saved_nrt);
@@ -845,16 +851,19 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 		break;
 
 	case RTM_DELETE:
-#ifdef INET
-		/* support for new ARP code */
+#if defined(INET) || defined(INET6)
+		/* support for new ARP/NDP code */
 		if (info.rti_info[RTAX_GATEWAY] &&
 		    (info.rti_info[RTAX_GATEWAY]->sa_family == AF_LINK) &&
 		    (rtm->rtm_flags & RTF_LLDATA) != 0) {
+			const struct sockaddr_dl *sdlp =
+			    satocsdl(info.rti_info[RTAX_GATEWAY]);
 			error = lla_rt_output(rtm->rtm_type, rtm->rtm_flags,
-			    rtm->rtm_rmx.rmx_expire, &info, 0);
+			    rtm->rtm_rmx.rmx_expire, &info, sdlp->sdl_index);
+			rtm->rtm_flags &= ~RTF_UP;
 			break;
 		}
-#endif /* INET */
+#endif
 		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
 		if (error != 0)
 			break;
@@ -920,6 +929,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 				rtm = new_rtm;
 			}
 			rtm->rtm_flags |= RTF_LLDATA;
+			rtm->rtm_flags &= ~RTF_CONNECTED;
 			rtm->rtm_flags |= (ll_flags & LLE_STATIC) ? RTF_STATIC : 0;
 			break;
 		}
@@ -1632,6 +1642,42 @@ COMPATNAME(rt_ieee80211msg)(struct ifnet *ifp, int what, void *data,
 	COMPATNAME(route_enqueue)(m, 0);
 }
 
+#ifndef COMPAT_RTSOCK
+/*
+ * Send a routing message as mimicing that a cloned route is added.
+ */
+void
+rt_clonedmsg(const struct sockaddr *dst, const struct ifnet *ifp,
+    const struct rtentry *rt)
+{
+	struct rt_addrinfo info;
+	/* Mimic flags exactly */
+#define RTF_LLINFO	0x400
+#define RTF_CLONED	0x2000
+	int flags = RTF_UP | RTF_HOST | RTF_DONE | RTF_LLINFO | RTF_CLONED;
+	union {
+		struct sockaddr sa;
+		struct sockaddr_storage ss;
+		struct sockaddr_dl sdl;
+	} u;
+	uint8_t namelen = strlen(ifp->if_xname);
+	uint8_t addrlen = ifp->if_addrlen;
+
+	if (rt == NULL)
+		return; /* XXX */
+
+	memset(&info, 0, sizeof(info));
+	info.rti_info[RTAX_DST] = dst;
+	sockaddr_dl_init(&u.sdl, sizeof(u.ss), ifp->if_index, ifp->if_type,
+	    NULL, namelen, NULL, addrlen);
+	info.rti_info[RTAX_GATEWAY] = &u.sa;
+
+	rt_missmsg(RTM_ADD, &info, flags, 0);
+#undef RTF_LLINFO
+#undef RTF_CLONED
+}
+#endif /* COMPAT_RTSOCK */
+
 /*
  * This is used in dumping the kernel table via sysctl().
  */
@@ -1871,7 +1917,7 @@ again:
 
 	case NET_RT_DUMP:
 	case NET_RT_FLAGS:
-#ifdef INET
+#if defined(INET) || defined(INET6)
 		/*
 		 * take care of llinfo entries, the caller must
 		 * specify an AF
@@ -1879,17 +1925,29 @@ again:
 		if (w.w_op == NET_RT_FLAGS &&
 		    (w.w_arg == 0 || w.w_arg & RTF_LLDATA)) {
 			if (af != 0)
-				error = lltable_sysctl_dumparp(af, &w);
+				error = lltable_sysctl_dump(af, &w);
 			else
 				error = EINVAL;
 			break;
 		}
-#endif /* INET */
+#endif
 
-		for (i = 1; i <= AF_MAX; i++)
-			if ((af == 0 || af == i) &&
-			    (error = rt_walktree(i, sysctl_dumpentry, &w)))
-				break;
+		for (i = 1; i <= AF_MAX; i++) {
+			if (af == 0 || af == i) {
+				error = rt_walktree(i, sysctl_dumpentry, &w);
+				if (error != 0)
+					break;
+#if defined(INET) || defined(INET6)
+				/*
+				 * Return ARP/NDP entries too for
+				 * backward compatibility.
+				 */
+				error = lltable_sysctl_dump(i, &w);
+				if (error != 0)
+					break;
+#endif
+			}
+		}
 		break;
 
 #ifdef COMPAT_14

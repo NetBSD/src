@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.232 2017/06/01 02:45:14 chs Exp $	*/
+/*	$NetBSD: nd6.c,v 1.232.2.1 2017/07/07 13:57:26 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.232 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.232.2.1 2017/07/07 13:57:26 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2298,6 +2298,7 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 	/* Slow path */
 	ln = nd6_lookup(&dst->sin6_addr, ifp, true);
 	if (ln == NULL && nd6_is_addr_neighbor(dst, ifp))  {
+		struct sockaddr_in6 sin6;
 		/*
 		 * Since nd6_is_addr_neighbor() internally calls nd6_lookup(),
 		 * the condition below is not very efficient.  But we believe
@@ -2313,6 +2314,10 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 			m_freem(m);
 			return ENOBUFS;
 		}
+
+		sockaddr_in6_init(&sin6, &ln->r_l3addr.addr6, 0, 0, 0);
+		rt_clonedmsg(sin6tosa(&sin6), ifp, rt);
+
 		created = true;
 	}
 
@@ -2416,61 +2421,6 @@ nd6_need_cache(struct ifnet *ifp)
 	default:
 		return 0;
 	}
-}
-
-/*
- * Add pernament ND6 link-layer record for given
- * interface address.
- *
- * Very similar to IPv4 arp_ifinit(), but:
- * 1) IPv6 DAD is performed in different place
- * 2) It is called by IPv6 protocol stack in contrast to
- * arp_ifinit() which is typically called in SIOCSIFADDR
- * driver ioctl handler.
- *
- */
-int
-nd6_add_ifa_lle(struct in6_ifaddr *ia)
-{
-	struct ifnet *ifp;
-	struct llentry *ln;
-
-	ifp = ia->ia_ifa.ifa_ifp;
-	if (nd6_need_cache(ifp) == 0)
-		return 0;
-	ia->ia_ifa.ifa_rtrequest = nd6_rtrequest;
-	ia->ia_ifa.ifa_flags |= RTF_CONNECTED;
-
-	IF_AFDATA_WLOCK(ifp);
-	ln = lla_create(LLTABLE6(ifp), LLE_IFADDR | LLE_EXCLUSIVE,
-	    sin6tosa(&ia->ia_addr));
-	IF_AFDATA_WUNLOCK(ifp);
-	if (ln == NULL)
-		return ENOBUFS;
-
-	ln->la_expire = 0;  /* for IPv6 this means permanent */
-	ln->ln_state = ND6_LLINFO_REACHABLE;
-
-	LLE_WUNLOCK(ln);
-	return 0;
-}
-
-/*
- * Removes ALL lle records for interface address prefix.
- * XXXME: That's probably not we really want to do, we need
- * to remove address record only and keep other records
- * until we determine if given prefix is really going
- * to be removed.
- */
-void
-nd6_rem_ifa_lle(struct in6_ifaddr *ia)
-{
-	struct sockaddr_in6 mask, addr;
-
-	memcpy(&addr, &ia->ia_addr, sizeof(ia->ia_addr));
-	memcpy(&mask, &ia->ia_prefixmask, sizeof(ia->ia_prefixmask));
-	lltable_prefix_free(AF_INET6, sin6tosa(&addr), sin6tosa(&mask),
-	    LLE_STATIC);
 }
 
 static void 

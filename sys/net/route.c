@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.194.6.1 2017/06/25 06:31:58 snj Exp $	*/
+/*	$NetBSD: route.c,v 1.194.6.2 2017/07/07 13:57:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.1 2017/06/25 06:31:58 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.2 2017/07/07 13:57:26 martin Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -123,6 +123,9 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.1 2017/06/25 06:31:58 snj Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
+#if defined(INET) || defined(INET6)
+#include <net/if_llatbl.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -1249,6 +1252,10 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		need_unlock = false;
 		rt_timer_remove_all(rt);
 		rtcache_clear_rtentry(dst->sa_family, rt);
+#if defined(INET) || defined(INET6)
+		if (netmask != NULL)
+			lltable_prefix_free(dst->sa_family, dst, netmask, 0);
+#endif
 		if (ret_nrt == NULL) {
 			/* Adjust the refcount */
 			rt_ref(rt);
@@ -1587,8 +1594,6 @@ rt_ifa_addlocal(struct ifaddr *ifa)
 
 		memset(&info, 0, sizeof(info));
 		info.rti_flags = RTF_HOST | RTF_LOCAL;
-		if (!(ifa->ifa_ifp->if_flags & (IFF_LOOPBACK|IFF_POINTOPOINT)))
-			info.rti_flags |= RTF_LLDATA;
 		info.rti_info[RTAX_DST] = ifa->ifa_addr;
 		info.rti_info[RTAX_GATEWAY] =
 		    (const struct sockaddr *)ifa->ifa_ifp->if_sadl;

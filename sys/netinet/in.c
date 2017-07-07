@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.203 2017/06/01 02:45:14 chs Exp $	*/
+/*	$NetBSD: in.c,v 1.203.2.1 2017/07/07 13:57:27 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.203 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.203.2.1 2017/07/07 13:57:27 martin Exp $");
 
 #include "arp.h"
 
@@ -1505,6 +1505,7 @@ in_if_down(struct ifnet *ifp)
 {
 
 	in_if_link_down(ifp);
+	lltable_purge_entries(LLTABLE(ifp));
 }
 
 void
@@ -1896,12 +1897,15 @@ in_lltable_match_prefix(const struct sockaddr *prefix,
 {
 	const struct sockaddr_in *pfx = (const struct sockaddr_in *)prefix;
 	const struct sockaddr_in *msk = (const struct sockaddr_in *)mask;
+	struct in_addr lle_addr;
+
+	lle_addr.s_addr = ntohl(lle->r_l3addr.addr4.s_addr);
 
 	/*
 	 * (flags & LLE_STATIC) means deleting all entries
 	 * including static ARP entries.
 	 */
-	if (IN_ARE_MASKED_ADDR_EQUAL(lle->r_l3addr.addr4, pfx, msk) &&
+	if (IN_ARE_MASKED_ADDR_EQUAL(lle_addr, pfx, msk) &&
 	    ((flags & LLE_STATIC) || !(lle->la_flags & LLE_STATIC)))
 		return (1);
 
