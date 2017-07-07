@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.20 2017/07/06 05:29:43 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.21 2017/07/07 14:12:21 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -1798,4 +1798,93 @@ sys/arch/arm/cortex/a9_mpsubr.S			1.48
 	Make fp 0 on entry to idle_stack to ensure we mark that we're top of
 	stack.
 	[skrll, ticket #99]
+
+sys/netinet/ip_output.c				1.280,1.282
+
+	When outputting, search for the sending address on the sending
+	interface rather than blindly picking the first matcing address
+	from any interface when testing source address validity.
+
+	This allows another interface to have the same address, but be
+	detached.
+
+	Fix a regression caused in r1.280.
+	[roy, ticket #100]
+
+sys/dev/fdt/gpiokeys.c				1.3-1.4
+
+	Read the initial key state at startup so we only trigger events on
+	state changes. Prevents a misconfigured power button from shutting
+	us down at boot.
+
+	Only read gpio pin if the pin is valid
+	[jmcneill, ticket #101]
+
+sys/netinet6/icmp6.c				1.212
+
+	Fix PR kern/52353.
+	[knakahara, ticket #106]
+
+sbin/route/route.8				1.57
+sbin/route/route.c				1.156
+sbin/route/rtutil.c				1.9
+sys/net/if_llatbl.c				1.19-1.21
+sys/net/if_llatbl.h				1.11-1.12
+sys/net/route.c					1.196-1.197
+sys/net/route.h					1.113
+sys/net/rtsock.c				1.214-1.224
+sys/netinet/if_arp.c				1.251-1.252
+sys/netinet/in.c				1.204-1.205
+sys/netinet6/in6.c				1.246-1.248
+sys/netinet6/nd6.c				1.233-1.235
+sys/netinet6/nd6.h				1.84-1.85
+tests/net/arp/t_arp.sh				1.23-1.20
+tests/net/ndp/t_ndp.sh				1.21-1.29
+tests/net/ndp/t_ra.sh				1.28-1.29
+tests/net/net/t_ipv6address.sh			1.14
+tests/net/net_common.sh				1.19
+tests/net/route/t_flags.sh			1.16-1.19
+tests/net/route/t_flags6.sh			1.13-1.15
+tests/net/route/t_route.sh			1.13
+usr.sbin/arp/arp.c				1.56-1.58
+usr.sbin/ndp/ndp.c				1.49-1.50
+
+	Simplify. Send a routing message (RTM_ADD) on adding an llentry.
+	Drop RTF_CONNECTED from a result of RTM_GET for ARP/NDP entries.
+	Support -c <count> option for route monitor.
+	Test routing messages emitted on operations of ARP/NDP entries.
+	Do netstat -a for an appropriate protocol.
+	Set net.inet.arp.keep only if it's required.
+	Don't create a permanent L2 cache entry on adding an address
+	to an interface.
+	Fix in_lltable_match_prefix.
+	Remove unused function (nd6_rem_ifa_lle).
+	Allow in6_lltable_free_entry to be called without holding the
+	afdata lock of ifp as well as in_lltable_free_entry.
+	Purge ARP/NDP entries on an interface when the interface is down.
+	Purge all related L2 caches on removing a route.
+	Purge L2 caches on changing an interface of a route.
+	Test implicit removals of ARP/NDP entries.
+	Tweak lltable_sysctl_dumparp.
+	Fix usage of routing messages on arp -d and ndp -d.
+	Improve backward compatibility of (fake) routing messages
+	on adding an ARP/NDP entry.
+	Drop RTF_UP from a routing message of a deleted ARP/NDP entry.
+	Check existence of ARP/NDP entries.
+	Drop RTF_LLINFO flag (now it's RTF_LLDATA) from local routes.
+	Restore ARP/NDP entries to route show and netstat -r.
+	Enable to remove multiple ARP/NDP entries for one destination.
+	Check if ARP/NDP entries are purged when a related route is deleted.
+	[ozaki-r, ticket #107]
+
+xsrc/external/mit/xorg-server.old/dist/Xi/sendexev.c	1.2
+xsrc/external/mit/xorg-server.old/dist/Xi/sendexev.c	1.3
+xsrc/external/mit/xorg-server.old/dist/dix/events.c	1.2
+xsrc/external/mit/xorg-server.old/dist/dix/swapreq.c	1.2
+xsrc/external/mit/xorg-server/dist/Xi/sendexev.c	1.4
+xsrc/external/mit/xorg-server/dist/dix/events.c		1.2
+xsrc/external/mit/xorg-server/dist/dix/swapreq.c	1.2
+
+	CVE-2017-10971 and CVE-2017-10972: apply fixes to the event loop.
+	[mrg, ticket #109]
 
