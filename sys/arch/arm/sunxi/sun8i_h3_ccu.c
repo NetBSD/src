@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_ccu.c,v 1.6 2017/07/02 13:36:46 jmcneill Exp $ */
+/* $NetBSD: sun8i_h3_ccu.c,v 1.7 2017/07/07 21:19:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.6 2017/07/02 13:36:46 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.7 2017/07/07 21:19:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +44,9 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.6 2017/07/02 13:36:46 jmcneill Ex
 #define	PLL_PERIPH0_CTRL_REG	0x028
 #define	AHB1_APB1_CFG_REG	0x054
 #define	APB2_CFG_REG		0x058
+#define	AHB2_CFG_REG		0x05c
+#define	 AHB2_CLK_CFG		__BITS(1,0)
+#define	 AHB2_CLK_CFG_PLL_PERIPH0_2	1
 #define	BUS_CLK_GATING_REG0	0x060
 #define	BUS_CLK_GATING_REG2	0x068
 #define	BUS_CLK_GATING_REG3	0x06c
@@ -157,7 +160,7 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    SUNXI_CCU_PREDIV_POWER_OF_TWO),
 
 	SUNXI_CCU_PREDIV(H3_CLK_AHB2, "ahb2", ahb2_parents,
-	    APB2_CFG_REG,	/* reg */
+	    AHB2_CFG_REG,	/* reg */
 	    0,			/* prediv */
 	    __BIT(1),		/* prediv_sel */
 	    0,			/* div */
@@ -251,6 +254,18 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    USBPHY_CFG_REG, 19),
 };
 
+static void
+sun8i_h3_ccu_init(struct sunxi_ccu_softc *sc)
+{
+	uint32_t val;
+
+	/* Set AHB2 source to PLL_PERIPH/2 */
+	val = CCU_READ(sc, AHB2_CFG_REG);
+	val &= ~AHB2_CLK_CFG;
+	val |= __SHIFTIN(AHB2_CLK_CFG_PLL_PERIPH0_2, AHB2_CLK_CFG);
+	CCU_WRITE(sc, AHB2_CFG_REG, val);
+}
+
 static int
 sun8i_h3_ccu_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -280,6 +295,8 @@ sun8i_h3_ccu_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": H3 CCU\n");
+
+	sun8i_h3_ccu_init(sc);
 
 	sunxi_ccu_print(sc);
 }
