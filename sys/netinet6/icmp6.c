@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.211 2017/03/14 04:24:04 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.211.6.1 2017/07/07 09:46:40 martin Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.211 2017/03/14 04:24:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.211.6.1 2017/07/07 09:46:40 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -492,6 +492,15 @@ _icmp6_input(struct mbuf *m, int off, int proto)
 		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		icmp6_ifstat_inc(rcvif, ifs6_in_error);
 		goto freeit;
+	}
+
+	if (m->m_len < sizeof(struct ip6_hdr)) {
+		m = m_pullup(m, sizeof(struct ip6_hdr));
+		if (m == NULL) {
+			ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
+			icmp6_ifstat_inc(rcvif, ifs6_in_error);
+			goto freeit;
+		}
 	}
 
 	ip6 = mtod(m, struct ip6_hdr *);
