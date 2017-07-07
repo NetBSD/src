@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1292 2017/07/04 05:02:47 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1293 2017/07/07 06:52:24 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3356,8 +3356,12 @@ product INTEL C2000_25GBE	0x1f45	C2000 Ethernet(2.5Gbe)
 product INTEL BSW_HB		0x2280	Braswell Soc Transaction Router
 product INTEL BSW_HDA		0x2284	Braswell HD Audio
 product INTEL BSW_SIO_DMA_2	0x2286	Braswell SIO DMA
+product INTEL Z8K_LPIO1_PWM_1	0x2288	Atom Z8000 LPIO1 PWM1
+product INTEL Z8K_LPIO1_PWM_2	0x2289	Atom Z8000 LPIO1 PWM2
 product INTEL BSW_SIO_HSUART_1	0x228a	Braswell Serial
 product INTEL BSW_SIO_HSUART_2	0x228c	Braswell Serial
+product INTEL Z8K_LPIO1_SPI_1	0x228e	Atom Z8000 LPIO1 SPI1
+product INTEL Z8K_LPIO1_SPI_2	0x2290	Atom Z8000 LPIO1 SPI2
 product INTEL BSW_PCU_SMB	0x2292	Braswell PCU SMBus
 product INTEL BSW_SSC_MMC	0x2294	Braswell SCC MMC Port
 product INTEL BSW_SSC_SDIO	0x2295	Braswell SCC SDIO Port
@@ -3366,11 +3370,13 @@ product INTEL BSW_TXE		0x2298	Braswell TXE
 product INTEL BSW_PCU_LPC	0x229c	Braswell PCU LPC
 product INTEL BSW_AHCI		0x22a3	Braswell AHCI
 product INTEL BSW_LPE_AUDIO	0x22a8	Braswell Low Power Engine Audio
+product INTEL Z8K_LPIO1_SPI_3	0x22ac	Atom Z8000 LPIO1 SPI3
 product INTEL CHV_IGD_1		0x22b0	HD Graphics
 product INTEL CHV_IGD_2		0x22b1	HD Graphics
 product INTEL CHV_IGD_3		0x22b2	HD Graphics
 product INTEL CHV_IGD_4		0x22b3	HD Graphics
 product INTEL BSW_XHCI		0x22b5	Braswell xHCI
+product INTEL Z8K_USBOTG	0x22b7	Atom Z8000 USB (OTG)
 product INTEL BSW_ISP_CAMERA	0x22b8	Braswell ISP Camera
 product INTEL BSW_SIO_DMA_1	0x22c0	Braswell SIO DMA
 product INTEL BSW_SIO_I2C_1	0x22c1	Braswell SIO I2C
@@ -3384,6 +3390,7 @@ product INTEL BSW_PCIE_1	0x22c8	Braswell PCIe
 product INTEL BSW_PCIE_2	0x22ca	Braswell PCIe
 product INTEL BSW_PCIE_3	0x22cc	Braswell PCIe
 product INTEL BSW_PCIE_4	0x22ce	Braswell PCIe
+product INTEL Z8K_IOSF2OCP	0x22d8	Atom Z8000 IOSF2OCP
 product INTEL BSW_PUINT		0x22dc	Braswell Power Management
 product INTEL DH89XXCC_LPC	0x2310	DH89xxCC LPC Controller
 product INTEL DH89XXCC_SATA_1	0x2323	DH89xxCC SATA Controller
