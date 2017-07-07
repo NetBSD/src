@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.40 2017/07/05 03:44:59 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.41 2017/07/07 01:37:34 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.40 2017/07/05 03:44:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.41 2017/07/07 01:37:34 ozaki-r Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -252,7 +252,7 @@ ipcomp_input_cb(struct cryptop *crp)
 	s = splsoftnet();
 	mutex_enter(softnet_lock);
 
-	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
+	sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
 	if (sav == NULL) {
 		IPCOMP_STATINC(IPCOMP_STAT_NOTDB);
 		DPRINTF(("%s: SA expired while in crypto\n", __func__));
@@ -527,7 +527,7 @@ ipcomp_output_cb(struct cryptop *crp)
 	mutex_enter(softnet_lock);
 
 	isr = tc->tc_isr;
-	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
+	sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
 	if (sav == NULL) {
 		IPCOMP_STATINC(IPCOMP_STAT_NOTDB);
 		DPRINTF(("%s: SA expired while in crypto\n", __func__));

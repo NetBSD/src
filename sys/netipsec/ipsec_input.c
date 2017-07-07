@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.46 2017/07/06 09:49:46 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.47 2017/07/07 01:37:34 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.46 2017/07/06 09:49:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.47 2017/07/07 01:37:34 ozaki-r Exp $");
 
 /*
  * IPsec input processing.
@@ -267,8 +267,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 
 	s = splsoftnet();
 
-	/* NB: only pass dst since key_allocsa follows RFC2401 */
-	sav = KEY_ALLOCSA(&dst_address, sproto, spi, sport, dport);
+	/* NB: only pass dst since key_lookup_sa follows RFC2401 */
+	sav = KEY_LOOKUP_SA(&dst_address, sproto, spi, sport, dport);
 	if (sav == NULL) {
 		IPSECLOG(LOG_DEBUG,
 		    "no key association found for SA %s/%08lx/%u/%u\n",

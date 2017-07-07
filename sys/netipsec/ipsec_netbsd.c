@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.43 2017/07/04 08:12:28 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.44 2017/07/07 01:37:34 ozaki-r Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.43 2017/07/04 08:12:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.44 2017/07/07 01:37:34 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -107,7 +107,7 @@ ah4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		 * the address in the ICMP message payload.
 		 */
 		ah = (struct ah *)((char *)ip + (ip->ip_hl << 2));
-		sav = KEY_ALLOCSA((const union sockaddr_union *)sa,
+		sav = KEY_LOOKUP_SA((const union sockaddr_union *)sa,
 					   	IPPROTO_AH, ah->ah_spi, 0, 0);
 
 		if (sav) {
@@ -152,7 +152,7 @@ esp4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		 * the address in the ICMP message payload.
 		 */
 		esp = (struct esp *)((char *)ip + (ip->ip_hl << 2));
-		sav = KEY_ALLOCSA((const union sockaddr_union *)sa,
+		sav = KEY_LOOKUP_SA((const union sockaddr_union *)sa,
 					   	IPPROTO_ESP, esp->esp_spi, 0, 0);
 
 		if (sav) {
@@ -231,7 +231,7 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 * Check to see if we have a valid SA corresponding
 			 * to the address in the ICMP message payload.
 			 */
-			sav = KEY_ALLOCSA((const union sockaddr_union*)sa,
+			sav = KEY_LOOKUP_SA((const union sockaddr_union*)sa,
 			    IPPROTO_AH, ahp->ah_spi, 0, 0);
 
 			if (sav) {
@@ -336,7 +336,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 * the address in the ICMP message payload.
 			 */
 
-			sav = KEY_ALLOCSA((const union sockaddr_union*)sa,
+			sav = KEY_LOOKUP_SA((const union sockaddr_union*)sa,
 					  IPPROTO_ESP, espp->esp_spi, 0, 0);
 
 			if (sav) {

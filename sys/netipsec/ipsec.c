@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.100 2017/06/14 02:00:43 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.101 2017/07/07 01:37:34 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.100 2017/06/14 02:00:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.101 2017/07/07 01:37:34 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -362,7 +362,7 @@ ipsec_invalpcbcacheall(void)
  * Return a held reference to the default SP.
  */
 static struct secpolicy *
-key_allocsp_default(int af, const char *where, int tag)
+key_get_default_sp(int af, const char *where, int tag)
 {
 	struct secpolicy *sp;
 
@@ -395,8 +395,8 @@ key_allocsp_default(int af, const char *where, int tag)
 	    sp, sp->refcnt);
 	return sp;
 }
-#define	KEY_ALLOCSP_DEFAULT(af) \
-	key_allocsp_default((af), __func__, __LINE__)
+#define	KEY_GET_DEFAULT_SP(af) \
+	key_get_default_sp((af), __func__, __LINE__)
 
 /*
  * For OUTBOUND packet having a socket. Searching SPD for packet,
@@ -418,9 +418,9 @@ ipsec_getpolicy(const struct tdb_ident *tdbi, u_int dir)
 	KASSERT(tdbi != NULL);
 	KASSERTMSG(IPSEC_DIR_IS_INOROUT(dir), "invalid direction %u", dir);
 
-	sp = KEY_ALLOCSP2(tdbi->spi, &tdbi->dst, tdbi->proto, dir);
+	sp = KEY_LOOKUP_SP(tdbi->spi, &tdbi->dst, tdbi->proto, dir);
 	if (sp == NULL)			/*XXX????*/
-		sp = KEY_ALLOCSP_DEFAULT(tdbi->dst.sa.sa_family);
+		sp = KEY_GET_DEFAULT_SP(tdbi->dst.sa.sa_family);
 	KASSERT(sp != NULL);
 	return sp;
 }
@@ -515,9 +515,9 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 
 		case IPSEC_POLICY_ENTRUST:
 			/* look for a policy in SPD */
-			sp = KEY_ALLOCSP(&currsp->spidx, dir);
+			sp = KEY_LOOKUP_SP_BYSPIDX(&currsp->spidx, dir);
 			if (sp == NULL)		/* no SP found */
-				sp = KEY_ALLOCSP_DEFAULT(af);
+				sp = KEY_GET_DEFAULT_SP(af);
 			break;
 
 		default:
@@ -527,7 +527,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 			return NULL;
 		}
 	} else {				/* unpriv, SPD has policy */
-		sp = KEY_ALLOCSP(&currsp->spidx, dir);
+		sp = KEY_LOOKUP_SP_BYSPIDX(&currsp->spidx, dir);
 		if (sp == NULL) {		/* no SP found */
 			switch (currsp->policy) {
 			case IPSEC_POLICY_BYPASS:
@@ -538,7 +538,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 				return NULL;
 
 			case IPSEC_POLICY_ENTRUST:
-				sp = KEY_ALLOCSP_DEFAULT(af);
+				sp = KEY_GET_DEFAULT_SP(af);
 				break;
 
 			case IPSEC_POLICY_IPSEC:
@@ -596,11 +596,11 @@ ipsec_getpolicybyaddr(struct mbuf *m, u_int dir, int flag, int *error)
 	spidx.dir = dir;
 
 	if (key_havesp(dir)) {
-		sp = KEY_ALLOCSP(&spidx, dir);
+		sp = KEY_LOOKUP_SP_BYSPIDX(&spidx, dir);
 	}
 
 	if (sp == NULL)			/* no SP found, use system default */
-		sp = KEY_ALLOCSP_DEFAULT(spidx.dst.sa.sa_family);
+		sp = KEY_GET_DEFAULT_SP(spidx.dst.sa.sa_family);
 	KASSERT(sp != NULL);
 	return sp;
 }

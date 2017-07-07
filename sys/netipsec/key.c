@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.167 2017/07/06 09:48:42 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.168 2017/07/07 01:37:34 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.167 2017/07/06 09:48:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.168 2017/07/07 01:37:34 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -644,7 +644,8 @@ key_havesp(u_int dir)
  *	others:	found and return the pointer.
  */
 struct secpolicy *
-key_allocsp(const struct secpolicyindex *spidx, u_int dir, const char* where, int tag)
+key_lookup_sp_byspidx(const struct secpolicyindex *spidx,
+    u_int dir, const char* where, int tag)
 {
 	struct secpolicy *sp;
 	int s;
@@ -697,7 +698,7 @@ found:
  *	others:	found and return the pointer.
  */
 struct secpolicy *
-key_allocsp2(u_int32_t spi,
+key_lookup_sp(u_int32_t spi,
 	     const union sockaddr_union *dst,
 	     u_int8_t proto,
 	     u_int dir,
@@ -1116,7 +1117,7 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
  * sport and dport are used for NAT-T. network order is always used.
  */
 struct secasvar *
-key_allocsa(
+key_lookup_sa(
 	const union sockaddr_union *dst,
 	u_int proto,
 	u_int32_t spi,
@@ -1254,7 +1255,7 @@ key_sp_ref(struct secpolicy *sp, const char* where, int tag)
 }
 
 /*
- * Must be called after calling key_allocsp().
+ * Must be called after calling key_lookup_sp*().
  * For both the packet without socket and key_freeso().
  */
 void
@@ -1279,7 +1280,7 @@ _key_freesp(struct secpolicy **spp, const char* where, int tag)
 
 #if 0
 /*
- * Must be called after calling key_allocsp().
+ * Must be called after calling key_lookup_sp*().
  * For the packet with socket.
  */
 static void
@@ -1353,7 +1354,7 @@ key_freesp_so(struct secpolicy **sp)
 #endif
 
 /*
- * Must be called after calling key_allocsa().
+ * Must be called after calling key_lookup_sa().
  * This function is called by key_freesp() to free some SA allocated
  * for a policy.
  */
