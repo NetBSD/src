@@ -78,8 +78,10 @@ smuiic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_node = ca->ca_node;
 	sc->sc_i2c = ca->ca_tag;
+	printf("\n");
 
 	iba.iba_tag = sc->sc_i2c;
+
 	config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
 
 	for (node = OF_child(sc->sc_node); node != 0; node = OF_peer(node)) {
@@ -95,8 +97,6 @@ smuiic_attach(device_t parent, device_t self, void *aux)
 		sca.ca_tag = sc->sc_i2c;
 		config_found_ia(sc->sc_dev, "smuiic", &sca, smuiic_print);
 	}
-
-	printf("\n");
 }
 
 static int
