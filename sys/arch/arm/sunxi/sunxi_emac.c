@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.2 2017/07/07 21:01:58 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.3 2017/07/07 21:21:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.2 2017/07/07 21:01:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.3 2017/07/07 21:21:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.2 2017/07/07 21:01:58 jmcneill Exp 
 #define	BURST_LEN_DEFAULT	8
 #define	RX_TX_PRI_DEFAULT	0
 #define	PAUSE_TIME_DEFAULT	0x400
-#define	TX_INTERVAL_DEFAULT	1
+#define	TX_INTERVAL_DEFAULT	64
 #define	RX_BATCH_DEFAULT	1
 
 /* syscon EMAC clock register */
