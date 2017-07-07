@@ -1,4 +1,4 @@
-/*	$NetBSD: rtutil.c,v 1.8 2016/04/04 07:37:07 ozaki-r Exp $	*/
+/*	$NetBSD: rtutil.c,v 1.8.8.1 2017/07/07 13:57:26 martin Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -59,6 +59,11 @@
 #include "prog_ops.h"
 #include "rtutil.h"
 
+/*
+ * Keep to handle ARP/NDP entries (fake routes)
+ * for backward compatibility.
+ */
+#define RTF_LLINFO	0x400
 
 #define PLEN    (LONG_BIT / 4 + 2)
 #define PFKEYV2_CHUNK sizeof(u_int64_t)
@@ -84,7 +89,7 @@ static const struct bits bits[] = {
 	/* { RTF_CLONING,	'C' }, */
 	{ RTF_CONNECTED, 'C' },
 	/* { RTF_XRESOLVE,	'X' }, */
-	/* { RTF_LLINFO,	'L' }, */
+	{ RTF_LLINFO,	'L' },
 	{ RTF_STATIC,	'S' },
 	{ RTF_PROTO1,	'1' },
 	{ RTF_PROTO2,	'2' },
@@ -262,6 +267,9 @@ p_rtentry(struct rt_msghdr *rtm, int flags, int interesting)
 #ifndef SMALL
 	char		 ifbuf[IF_NAMESIZE];
 #endif
+
+	if ((flags & RT_LFLAG) && (rtm->rtm_flags & RTF_LLINFO))
+		return;
 
 	if (old_af != sa->sa_family) {
 		old_af = sa->sa_family;

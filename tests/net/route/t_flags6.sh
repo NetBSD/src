@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags6.sh,v 1.12 2016/12/21 02:46:08 ozaki-r Exp $
+#	$NetBSD: t_flags6.sh,v 1.12.6.1 2017/07/07 13:57:26 martin Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -134,6 +134,9 @@ test_blackhole6()
 	# Delete an existing route first
 	atf_check -s exit:0 -o ignore \
 	    rump.route delete -inet6 -net fc00::/64
+	# Should be removed too
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' \
+	    rump.ndp -n $IP6_PEER
 
 	# Gateway must be lo0
 	atf_check -s exit:0 -o ignore \
@@ -149,6 +152,8 @@ test_blackhole6()
 
 	# Shouldn't be created
 	check_route_no_entry $IP6_PEER
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' \
+	    rump.ndp -n $IP6_PEER
 }
 
 test_reject6()
@@ -173,6 +178,8 @@ test_reject6()
 
 	# Shouldn't be created
 	check_route_no_entry $IP6_PEER
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' \
+	    rump.ndp -n $IP6_PEER
 
 	# Gateway is lo0 (RTF_GATEWAY)
 
@@ -193,6 +200,8 @@ test_reject6()
 
 	# Shouldn't be created
 	check_route_no_entry $IP6_PEER
+	atf_check -s not-exit:0 -o ignore -e match:'no entry' \
+	    rump.ndp -n $IP6_PEER
 
 	# Gateway is lo0 (RTF_HOST)
 
@@ -232,6 +241,20 @@ test_announce6()
 	# TODO test its behavior
 }
 
+test_llinfo6()
+{
+	local peer_macaddr=
+
+	peer_macaddr=$(get_macaddr $SOCK_PEER shmif0)
+
+	export RUMP_SERVER=$SOCK_LOCAL
+
+	atf_check -s exit:0 -o ignore rump.ping6 -n -X 1 -c 1 $IP6_PEER
+
+	# Up, Host, LLINFO
+	check_route $IP6_PEER $peer_macaddr UHL shmif0
+}
+
 add_test()
 {
 	local name=$1
@@ -265,4 +288,5 @@ atf_init_test_cases()
 	add_test blackhole6       "Tests route flags: blackhole route"
 	add_test reject6          "Tests route flags: reject route"
 	add_test announce6        "Tests route flags: announce flag"
+	add_test llinfo6          "Tests route flags: announce llinfo"
 }

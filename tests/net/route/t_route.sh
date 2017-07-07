@@ -1,4 +1,4 @@
-#	$NetBSD: t_route.sh,v 1.12 2017/03/24 03:47:25 ozaki-r Exp $
+#	$NetBSD: t_route.sh,v 1.12.4.1 2017/07/07 13:57:26 martin Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -234,7 +234,7 @@ test_route_get()
 destination: 10.0.1.2
  local addr: 10.0.1.2
   interface: lo0
-      flags: <UP,HOST,DONE,LLINFO,LOCAL>
+      flags: <UP,HOST,DONE,LOCAL>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get $IP4SRC > ./output
@@ -309,7 +309,7 @@ test_route_get6()
 destination: fc00:0:0:1::2
  local addr: fc00:0:0:1::2
   interface: lo0
-      flags: <UP,HOST,DONE,LLINFO,LOCAL>
+      flags: <UP,HOST,DONE,LOCAL>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get -inet6 $IP6SRC > ./output

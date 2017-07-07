@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.250.2.1 2017/07/01 08:56:06 snj Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.250.2.2 2017/07/07 13:57:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250.2.1 2017/07/01 08:56:06 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250.2.2 2017/07/07 13:57:27 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -760,8 +760,13 @@ notfound:
 		IF_AFDATA_WUNLOCK(ifp);
 		if (la == NULL)
 			ARP_STATINC(ARP_STAT_ALLOCFAIL);
-		else
+		else {
+			struct sockaddr_in sin;
+
 			arp_init_llentry(ifp, la);
+			sockaddr_in_init(&sin, &la->r_l3addr.addr4, 0);
+			rt_clonedmsg(sintosa(&sin), ifp, rt);
+		}
 	} else if (LLE_TRY_UPGRADE(la) == 0) {
 		create_lookup = "lookup";
 		LLE_RUNLOCK(la);
@@ -1468,41 +1473,13 @@ arpioctl(u_long cmd, void *data)
 void
 arp_ifinit(struct ifnet *ifp, struct ifaddr *ifa)
 {
-	struct in_addr *ip;
 	struct in_ifaddr *ia = (struct in_ifaddr *)ifa;
-
-	/*
-	 * Warn the user if another station has this IP address,
-	 * but only if the interface IP address is not zero.
-	 */
-	ip = &IA_SIN(ifa)->sin_addr;
-	if (!in_nullhost(*ip) &&
-	    (ia->ia4_flags & (IN_IFF_NOTREADY | IN_IFF_DETACHED)) == 0) {
-		struct llentry *lle;
-
-		/*
-		 * interface address is considered static entry
-		 * because the output of the arp utility shows
-		 * that L2 entry as permanent
-		 */
-		IF_AFDATA_WLOCK(ifp);
-		lle = lla_create(LLTABLE(ifp), (LLE_IFADDR | LLE_STATIC),
-				 (struct sockaddr *)IA_SIN(ifa));
-		IF_AFDATA_WUNLOCK(ifp);
-		if (lle == NULL)
-			log(LOG_INFO, "%s: cannot create arp entry for"
-			    " interface address\n", __func__);
-		else {
-			arp_init_llentry(ifp, lle);
-			LLE_RUNLOCK(lle);
-		}
-	}
 
 	ifa->ifa_rtrequest = arp_rtrequest;
 	ifa->ifa_flags |= RTF_CONNECTED;
 
 	/* ARP will handle DAD for this address. */
-	if (in_nullhost(*ip)) {
+	if (in_nullhost(IA_SIN(ifa)->sin_addr)) {
 		if (ia->ia_dad_stop != NULL)	/* safety */
 			ia->ia_dad_stop(ifa);
 		ia->ia_dad_start = NULL;

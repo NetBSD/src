@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.15 2016/12/21 02:46:08 ozaki-r Exp $
+#	$NetBSD: t_flags.sh,v 1.15.6.1 2017/07/07 13:57:26 martin Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -100,7 +100,7 @@ test_connected()
 
 	export RUMP_SERVER=$SOCK_LOCAL
 
-	# Up, Host, LLINFO, local
+	# Up, Host, local
 	check_route_flags 10.0.0.2 UHl
 
 	# Up, Cloning
@@ -148,6 +148,8 @@ test_blackhole()
 
 	# Delete an existing route first
 	atf_check -s exit:0 -o ignore rump.route delete -net 10.0.0.0/24
+	# Should be removed too
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n 10.0.0.1
 
 	# Gateway must be lo0
 	atf_check -s exit:0 -o ignore \
@@ -163,6 +165,7 @@ test_blackhole()
 
 	# Shouldn't be created
 	check_route_no_entry 10.0.0.1
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n 10.0.0.1
 }
 
 test_reject()
@@ -185,6 +188,7 @@ test_reject()
 
 	# Shouldn't be created
 	check_route_no_entry 10.0.0.1
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n 10.0.0.1
 
 	# Gateway is lo0 (RTF_GATEWAY)
 
@@ -204,6 +208,7 @@ test_reject()
 
 	# Shouldn't be created
 	check_route_no_entry 10.0.0.1
+	atf_check -s not-exit:0 -e match:'no entry' rump.arp -n 10.0.0.1
 
 	# Gateway is lo0 (RTF_HOST)
 
@@ -297,6 +302,20 @@ test_announce()
 	# TODO test its behavior
 }
 
+test_llinfo()
+{
+	local peer_macaddr=
+
+	peer_macaddr=$(get_macaddr $SOCK_PEER shmif0)
+
+	export RUMP_SERVER=$SOCK_LOCAL
+
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 10.0.0.1
+
+	# Up, Host, LLINFO
+	check_route 10.0.0.1 $peer_macaddr UHL shmif0
+}
+
 add_test()
 {
 	local name=$1
@@ -331,4 +350,5 @@ atf_init_test_cases()
 	add_test reject          "Tests route flags: reject route"
 	add_test icmp_redirect   "Tests route flags: icmp redirect"
 	add_test announce        "Tests route flags: announce flag"
+	add_test llinfo          "Tests route flags: ARP caches"
 }

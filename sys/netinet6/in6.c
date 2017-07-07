@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.245 2017/04/28 05:56:33 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.245.2.1 2017/07/07 13:57:26 martin Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.245 2017/04/28 05:56:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.245.2.1 2017/07/07 13:57:26 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1298,10 +1298,11 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			goto cleanup;
 	}
 
-	/* Add local address to lltable, if necessary (ex. on p2p link). */
-	error = nd6_add_ifa_lle(ia);
-	if (error != 0)
-		goto cleanup;
+	if (nd6_need_cache(ifp)) {
+		/* XXX maybe unnecessary */
+		ia->ia_ifa.ifa_rtrequest = nd6_rtrequest;
+		ia->ia_ifa.ifa_flags |= RTF_CONNECTED;
+	}
 
 	/*
 	 * Perform DAD, if needed.
@@ -2273,6 +2274,7 @@ in6_if_down(struct ifnet *ifp)
 {
 
 	in6_if_link_down(ifp);
+	lltable_purge_entries(LLTABLE6(ifp));
 }
 
 void
@@ -2415,15 +2417,16 @@ static void
 in6_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 {
 	struct ifnet *ifp = llt->llt_ifp;
+	bool locked = false;
 
-	IF_AFDATA_WLOCK_ASSERT(ifp);
 	LLE_WLOCK_ASSERT(lle);
 
 	/* Unlink entry from table */
 	if ((lle->la_flags & LLE_LINKED) != 0) {
-
+		IF_AFDATA_WLOCK_ASSERT(ifp);
 		lltable_unlink_entry(llt, lle);
 		KASSERT((lle->la_flags & LLE_LINKED) == 0);
+		locked = true;
 	}
 	/*
 	 * We need to release the lock here to lle_timer proceeds;
@@ -2433,7 +2436,8 @@ in6_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 	 */
 	LLE_ADDREF(lle);
 	LLE_WUNLOCK(lle);
-	IF_AFDATA_WUNLOCK(ifp);
+	if (locked)
+		IF_AFDATA_WUNLOCK(ifp);
 
 #ifdef NET_MPSAFE
 	callout_halt(&lle->lle_timer, NULL);
@@ -2449,7 +2453,8 @@ in6_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 	lltable_drop_entry_queue(lle);
 	LLE_FREE_LOCKED(lle);
 
-	IF_AFDATA_WLOCK(ifp);
+	if (locked)
+		IF_AFDATA_WLOCK(ifp);
 }
 
 static int
