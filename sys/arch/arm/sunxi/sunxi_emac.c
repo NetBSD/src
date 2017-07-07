@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.3 2017/07/07 21:21:52 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.4 2017/07/07 21:40:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.3 2017/07/07 21:21:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.4 2017/07/07 21:40:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.3 2017/07/07 21:21:52 jmcneill Exp 
 #define	RX_TX_PRI_DEFAULT	0
 #define	PAUSE_TIME_DEFAULT	0x400
 #define	TX_INTERVAL_DEFAULT	64
-#define	RX_BATCH_DEFAULT	1
 
 /* syscon EMAC clock register */
 #define	EMAC_CLK_EPHY_ADDR	(0x1f << 20)	/* H3 */
@@ -128,9 +127,6 @@ static int sunxi_emac_pause_time = PAUSE_TIME_DEFAULT;
 
 /* Request a TX interrupt every <n> descriptors */
 static int sunxi_emac_tx_interval = TX_INTERVAL_DEFAULT;
-
-/* Maximum number of mbufs to send to if_input */
-static int sunxi_emac_rx_batch = RX_BATCH_DEFAULT;
 
 enum sunxi_emac_type {
 	EMAC_A83T = 1,
@@ -709,12 +705,10 @@ static int
 sunxi_emac_rxintr(struct sunxi_emac_softc *sc)
 {
 	struct ifnet *ifp = &sc->ec.ec_if;
-	struct mbuf *m, *m0, *mh, *mt;
-	int error, index, len, cnt, npkt;
+	int error, index, len, npkt;
+	struct mbuf *m, *m0;
 	uint32_t status;
 
-	mh = mt = NULL;
-	cnt = 0;
 	npkt = 0;
 
 	for (index = sc->rx.cur; ; index = RX_NEXT(index)) {
@@ -738,6 +732,7 @@ sunxi_emac_rxintr(struct sunxi_emac_softc *sc)
 			m->m_flags |= M_HASFCS;
 			m->m_pkthdr.len = len;
 			m->m_len = len;
+			m->m_nextpkt = NULL;
 
 			if ((ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) != 0 &&
 			    (status & RX_FRM_TYPE) != 0) {
@@ -752,20 +747,9 @@ sunxi_emac_rxintr(struct sunxi_emac_softc *sc)
 				}
 			}
 
-			m->m_nextpkt = NULL;
-			if (mh == NULL)
-				mh = m;
-			else
-				mt->m_nextpkt = m;
-			mt = m;
-			++cnt;
 			++npkt;
 
-			if (cnt == sunxi_emac_rx_batch) {
-				if_percpuq_enqueue(ifp->if_percpuq, mh);
-				mh = mt = NULL;
-				cnt = 0;
-			}
+			if_percpuq_enqueue(ifp->if_percpuq, m);
 		}
 
 		if ((m0 = sunxi_emac_alloc_mbufcl(sc)) != NULL) {
@@ -782,9 +766,6 @@ sunxi_emac_rxintr(struct sunxi_emac_softc *sc)
 	}
 
 	sc->rx.cur = index;
-
-	if (mh != NULL)
-		if_percpuq_enqueue(ifp->if_percpuq, mh);
 
 	return npkt;
 }
