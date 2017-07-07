@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.23 2015/06/21 15:00:06 matt Exp $	*/
+/*	$NetBSD: exception.S,v 1.24 2017/07/07 00:34:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -51,7 +51,7 @@
 
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: exception.S,v 1.23 2015/06/21 15:00:06 matt Exp $")
+	RCSID("$NetBSD: exception.S,v 1.24 2017/07/07 00:34:09 chs Exp $")
 
 	.text	
 	.align	0
@@ -258,7 +258,9 @@ ASEND(undefined_entry)
  */
 
 ENTRY_NP(undefinedinstruction_bounce)
-	PUSHFRAMEINSVC
+	PUSHXXXREGSANDSWITCH
+	PUSHDTRACEGAP
+	PUSHTRAPFRAME(r2)
 	ENABLE_ALIGNMENT_FAULTS
 
 	mov	r0, sp
