@@ -1,4 +1,4 @@
-/* $NetBSD: gpiokeys.c,v 1.2 2015/12/16 19:33:55 jmcneill Exp $ */
+/* $NetBSD: gpiokeys.c,v 1.2.12.1 2017/07/07 09:29:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpiokeys.c,v 1.2 2015/12/16 19:33:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpiokeys.c,v 1.2.12.1 2017/07/07 09:29:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -128,6 +128,8 @@ gpiokeys_attach(device_t parent, device_t self, void *aux)
 		key->key_debounce = debounce;
 		key->key_pin = fdtbus_gpio_acquire(child, "gpios",
 		    GPIO_PIN_INPUT);
+		if (key->key_pin)
+			key->key_state = fdtbus_gpio_read(key->key_pin);
 
 		key->key_pswitch.smpsw_name = key->key_label;
 		switch (code) {
