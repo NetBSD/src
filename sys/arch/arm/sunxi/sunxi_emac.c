@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.1 2017/07/01 16:25:16 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.2 2017/07/07 21:01:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.1 2017/07/01 16:25:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.2 2017/07/07 21:01:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.1 2017/07/01 16:25:16 jmcneill Exp 
 #define	EMAC_UNLOCK(sc)		mutex_exit(&(sc)->mtx)
 #define	EMAC_ASSERT_LOCKED(sc)	KASSERT(mutex_owned(&(sc)->mtx))
 
-#define	DESC_ALIGN		8
+#define	DESC_ALIGN		sizeof(struct sunxi_emac_desc)
 #define	TX_DESC_COUNT		1024
 #define	TX_DESC_SIZE		(sizeof(struct sunxi_emac_desc) * TX_DESC_COUNT)
 #define	RX_DESC_COUNT		256
@@ -95,8 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.1 2017/07/01 16:25:16 jmcneill Exp 
 #define	BURST_LEN_DEFAULT	8
 #define	RX_TX_PRI_DEFAULT	0
 #define	PAUSE_TIME_DEFAULT	0x400
-#define	TX_INTERVAL_DEFAULT	64
-#define	RX_BATCH_DEFAULT	64
+#define	TX_INTERVAL_DEFAULT	1
+#define	RX_BATCH_DEFAULT	1
 
 /* syscon EMAC clock register */
 #define	EMAC_CLK_EPHY_ADDR	(0x1f << 20)	/* H3 */
@@ -318,8 +318,9 @@ sunxi_emac_dma_sync(struct sunxi_emac_softc *sc, bus_dma_tag_t dmat,
 	} else {
 		bus_dmamap_sync(dmat, map, DESC_OFF(start),
 		    DESC_OFF(total) - DESC_OFF(start), flags);
-		bus_dmamap_sync(dmat, map, DESC_OFF(0),
-		    DESC_OFF(end) - DESC_OFF(0), flags);
+		if (DESC_OFF(end) - DESC_OFF(0) > 0)
+			bus_dmamap_sync(dmat, map, DESC_OFF(0),
+			    DESC_OFF(end) - DESC_OFF(0), flags);
 	}
 }
 
@@ -376,9 +377,6 @@ sunxi_emac_setup_txbuf(struct sunxi_emac_softc *sc, int index, struct mbuf *m)
 		flags |= (csum_flags << TX_CHECKSUM_CTL_SHIFT);
 	}
 
-	bus_dmamap_sync(sc->tx.buf_tag, sc->tx.buf_map[index].map,
-	    0, sc->tx.buf_map[index].map->dm_mapsize, BUS_DMASYNC_PREWRITE);
-
 	for (cur = index, i = 0; i < nsegs; i++) {
 		sc->tx.buf_map[cur].mbuf = (i == 0 ? m : NULL);
 		if (i == nsegs - 1)
@@ -389,6 +387,9 @@ sunxi_emac_setup_txbuf(struct sunxi_emac_softc *sc, int index, struct mbuf *m)
 		flags &= ~TX_FIR_DESC;
 		cur = TX_NEXT(cur);
 	}
+
+	bus_dmamap_sync(sc->tx.buf_tag, sc->tx.buf_map[index].map,
+	    0, sc->tx.buf_map[index].map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	return nsegs;
 }
@@ -761,13 +762,10 @@ sunxi_emac_rxintr(struct sunxi_emac_softc *sc)
 			++npkt;
 
 			if (cnt == sunxi_emac_rx_batch) {
-				EMAC_UNLOCK(sc);
 				if_percpuq_enqueue(ifp->if_percpuq, mh);
-				EMAC_LOCK(sc);
 				mh = mt = NULL;
 				cnt = 0;
 			}
-			
 		}
 
 		if ((m0 = sunxi_emac_alloc_mbufcl(sc)) != NULL) {
@@ -780,16 +778,13 @@ sunxi_emac_rxintr(struct sunxi_emac_softc *sc)
 
 		sunxi_emac_dma_sync(sc, sc->rx.desc_tag, sc->rx.desc_map,
 		    index, index + 1,
-		    RX_DESC_COUNT, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-	}
-
-	if (mh != NULL) {
-		EMAC_UNLOCK(sc);
-		if_percpuq_enqueue(ifp->if_percpuq, mh);
-		EMAC_LOCK(sc);
+		    RX_DESC_COUNT, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 	}
 
 	sc->rx.cur = index;
+
+	if (mh != NULL)
+		if_percpuq_enqueue(ifp->if_percpuq, mh);
 
 	return npkt;
 }
@@ -825,6 +820,9 @@ sunxi_emac_txintr(struct sunxi_emac_softc *sc)
 		}
 
 		sunxi_emac_setup_txdesc(sc, i, 0, 0, 0);
+		sunxi_emac_dma_sync(sc, sc->tx.desc_tag, sc->tx.desc_map,
+		    i, i + 1, TX_DESC_COUNT,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_opackets++;
@@ -1200,7 +1198,7 @@ sunxi_emac_setup_dma(struct sunxi_emac_softc *sc)
 		return error;
 	error = bus_dmamem_map(sc->dmat, &sc->tx.desc_dmaseg, nsegs,
 	    TX_DESC_SIZE, (void *)&sc->tx.desc_ring,
-	    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
+	    BUS_DMA_WAITOK);
 	if (error)
 		return error;
 	error = bus_dmamap_load(sc->dmat, sc->tx.desc_map, sc->tx.desc_ring,
@@ -1211,7 +1209,7 @@ sunxi_emac_setup_dma(struct sunxi_emac_softc *sc)
 
 	memset(sc->tx.desc_ring, 0, TX_DESC_SIZE);
 	bus_dmamap_sync(sc->dmat, sc->tx.desc_map, 0, TX_DESC_SIZE,
-	    BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	for (i = 0; i < TX_DESC_COUNT; i++)
 		sc->tx.desc_ring[i].next =
@@ -1241,7 +1239,7 @@ sunxi_emac_setup_dma(struct sunxi_emac_softc *sc)
 		return error;
 	error = bus_dmamem_map(sc->dmat, &sc->rx.desc_dmaseg, nsegs,
 	    RX_DESC_SIZE, (void *)&sc->rx.desc_ring,
-	    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
+	    BUS_DMA_WAITOK);
 	if (error)
 		return error;
 	error = bus_dmamap_load(sc->dmat, sc->rx.desc_map, sc->rx.desc_ring,
@@ -1272,7 +1270,7 @@ sunxi_emac_setup_dma(struct sunxi_emac_softc *sc)
 	}
 	bus_dmamap_sync(sc->rx.desc_tag, sc->rx.desc_map,
 	    0, sc->rx.desc_map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/* Write transmit and receive descriptor base address registers */
 	WR4(sc, EMAC_TX_DMA_LIST, sc->tx.desc_ring_paddr);
