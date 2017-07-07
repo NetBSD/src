@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.279 2017/05/12 17:53:54 ryo Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.279.2.1 2017/07/07 09:23:01 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.279 2017/05/12 17:53:54 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.279.2.1 2017/07/07 09:23:01 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -236,18 +236,19 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	struct route iproute;
 	const struct sockaddr_in *dst;
 	struct in_ifaddr *ia = NULL;
+	struct ifaddr *ifa;
 	int isbroadcast;
 	int sw_csum;
 	u_long mtu;
 	bool natt_frag = false;
 	bool rtmtu_nolock;
 	union {
-		struct sockaddr		dst;
-		struct sockaddr_in	dst4;
-	} u;
-	struct sockaddr *rdst = &u.dst;	/* real IP destination, as opposed
-					 * to the nexthop
-					 */
+		struct sockaddr		sa;
+		struct sockaddr_in	sin;
+	} udst, usrc;
+	struct sockaddr *rdst = &udst.sa;	/* real IP destination, as
+						 * opposed to the nexthop
+						 */
 	struct psref psref, psref_ia;
 	int bound;
 	bool bind_need_restore = false;
@@ -288,7 +289,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		memset(&iproute, 0, sizeof(iproute));
 		ro = &iproute;
 	}
-	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
+	sockaddr_in_init(&udst.sin, &ip->ip_dst, 0);
 	dst = satocsin(rtcache_getdst(ro));
 
 	/*
@@ -303,8 +304,8 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 
 	if ((rt = rtcache_validate(ro)) == NULL &&
 	    (rt = rtcache_update(ro, 1)) == NULL) {
-		dst = &u.dst4;
-		error = rtcache_setdst(ro, &u.dst);
+		dst = &udst.sin;
+		error = rtcache_setdst(ro, &udst.sa);
 		if (error != 0)
 			goto bad;
 	}
@@ -315,8 +316,6 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	 * If routing to interface only, short circuit routing lookup.
 	 */
 	if (flags & IP_ROUTETOIF) {
-		struct ifaddr *ifa;
-
 		ifa = ifa_ifwithladdr_psref(sintocsa(dst), &psref_ia);
 		if (ifa == NULL) {
 			IP_STATINC(IP_STAT_NOROUTE);
@@ -448,7 +447,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			 * on the outgoing interface, and the caller did not
 			 * forbid loopback, loop back a copy.
 			 */
-			ip_mloopback(ifp, m, &u.dst4);
+			ip_mloopback(ifp, m, &udst.sin);
 		}
 #ifdef MROUTING
 		else {
@@ -612,7 +611,10 @@ sendit:
 	 * validity
 	 */
 	KASSERT(ia == NULL);
-	ia = in_get_ia_psref(ip->ip_src, &psref_ia);
+	sockaddr_in_init(&usrc.sin, &ip->ip_src, 0);
+	ifa = ifaof_ifpforaddr_psref(&usrc.sa, ifp, &psref_ia);
+	if (ifa != NULL)
+		ia = ifatoia(ifa);
 
 	/*
 	 * Ensure we only send from a valid address.
