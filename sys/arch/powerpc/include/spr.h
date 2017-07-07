@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.46 2017/07/07 22:11:36 macallan Exp $	*/
+/*	$NetBSD: spr.h,v 1.47 2017/07/07 22:50:02 macallan Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -28,7 +28,7 @@ mfspr(int reg)
 			"sldi %2,%2,32;" \
 			"or %2,%2,%1;" \
 			"sync;" \
-			"mtspr %0,%1;" \
+			"mtspr %0,%2;" \
 			"mfspr %1,%0;" \
 			"mfspr %1,%0;" \
 			"mfspr %1,%0;" \
