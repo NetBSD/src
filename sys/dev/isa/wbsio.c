@@ -1,5 +1,5 @@
-/*	$NetBSD: wbsio.c,v 1.10 2016/06/01 02:37:47 pgoyette Exp $	*/
-/*	$OpenBSD: wbsio.c,v 1.5 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.11 2017/07/07 08:42:15 msaitoh Exp $	*/
+/*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -30,37 +30,7 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-
-/* ISA bus registers */
-#define WBSIO_INDEX		0x00	/* Configuration Index Register */
-#define WBSIO_DATA		0x01	/* Configuration Data Register */
-
-#define WBSIO_IOSIZE		0x02	/* ISA I/O space size */
-
-#define WBSIO_CONF_EN_MAGIC	0x87	/* enable configuration mode */
-#define WBSIO_CONF_DS_MAGIC	0xaa	/* disable configuration mode */
-
-/* Configuration Space Registers */
-#define WBSIO_LDN		0x07	/* Logical Device Number */
-#define WBSIO_ID		0x20	/* Device ID */
-#define WBSIO_REV		0x21	/* Device Revision */
-
-#define WBSIO_ID_W83627HF	0x52
-#define WBSIO_ID_W83627THF	0x82
-#define WBSIO_ID_W83627EHF	0x88
-#define WBSIO_ID_W83627DHG	0xa0
-#define WBSIO_ID_W83627SF	0x59
-#define WBSIO_ID_W83637HF	0x70
-#define WBSIO_ID_W83667HG	0xa5
-#define WBSIO_ID_W83697HF	0x60
-#define WBSIO_ID_NCT6776F	0xc3
-
-/* Logical Device Number (LDN) Assignments */
-#define WBSIO_LDN_HM		0x0b
-
-/* Hardware Monitor Control Registers (LDN B) */
-#define WBSIO_HM_ADDR_MSB	0x60	/* Address [15:8] */
-#define WBSIO_HM_ADDR_LSB	0x61	/* Address [7:0] */
+#include <dev/isa/wbsioreg.h>
 
 struct wbsio_softc {
 	device_t	sc_dev;
@@ -143,12 +113,24 @@ wbsio_probe(device_t parent, cfdata_t match, void *aux)
 	bus_space_unmap(iot, ioh, WBSIO_IOSIZE);
 	switch (reg) {
 	case WBSIO_ID_W83627HF:
-	case WBSIO_ID_W83627THF:
-	case WBSIO_ID_W83627EHF:
 	case WBSIO_ID_W83627DHG:
+	case WBSIO_ID_W83627DHGP:
+	case WBSIO_ID_W83627EHF:
+	case WBSIO_ID_W83627SF:
+	case WBSIO_ID_W83627THF:
+	case WBSIO_ID_W83627UHG:
 	case WBSIO_ID_W83637HF:
+	case WBSIO_ID_W83667HG:
+	case WBSIO_ID_W83667HGB:
+	case WBSIO_ID_W83687THF:
 	case WBSIO_ID_W83697HF:
+	case WBSIO_ID_W83697UG:
+	case WBSIO_ID_NCT5104D:
+	case WBSIO_ID_NCT6775:
 	case WBSIO_ID_NCT6776F:
+	case WBSIO_ID_NCT6779:
+	case WBSIO_ID_NCT6791:
+	case WBSIO_ID_NCT6792:
 		ia->ia_nio = 1;
 		ia->ia_io[0].ir_size = WBSIO_IOSIZE;
 		ia->ia_niomem = 0;
@@ -190,14 +172,23 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 	case WBSIO_ID_W83627HF:
 		desc = "W83627HF";
 		break;
-	case WBSIO_ID_W83627THF:
-		desc = "W83627THF";
+	case WBSIO_ID_W83627DHG:
+		desc = "W83627DHG";
+		break;
+	case WBSIO_ID_W83627DHGP:
+		printf("W83627DHG-P");
 		break;
 	case WBSIO_ID_W83627EHF:
 		desc = "W83627EHF";
 		break;
-	case WBSIO_ID_W83627DHG:
-		desc = "W83627DHG";
+	case WBSIO_ID_W83627SF:
+		desc = "W83627SF";
+		break;
+	case WBSIO_ID_W83627THF:
+		desc = "W83627THF";
+		break;
+	case WBSIO_ID_W83627UHG:
+		printf("W83627UHG");
 		break;
 	case WBSIO_ID_W83637HF:
 		desc = "W83637HF";
@@ -205,12 +196,45 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 	case WBSIO_ID_W83667HG:
 		desc = "W83667HG";
 		break;
+	case WBSIO_ID_W83667HGB:
+		desc = "W83667HGB";
+		break;
+	case WBSIO_ID_W83687THF:
+		desc = "W83687THF";
+		break;
 	case WBSIO_ID_W83697HF:
 		desc = "W83697HF";
+		break;
+	case WBSIO_ID_W83697UG:
+		desc = "W83697UG";
+		break;
+	case WBSIO_ID_NCT5104D:
+		vendor = "Nuvoton";
+		printf("NCT5104D");
+		break;
+	case WBSIO_ID_NCT6775:
+		vendor = "Nuvoton";
+		desc = "NCT6775";
 		break;
 	case WBSIO_ID_NCT6776F:
 		vendor = "Nuvoton";
 		desc = "NCT6776F";
+		break;
+	case WBSIO_ID_NCT6779:
+		vendor = "Nuvoton";
+		desc = "NCT6779";
+		break;
+	case WBSIO_ID_NCT6791:
+		vendor = "Nuvoton";
+		desc = "NCT6791";
+		break;
+	case WBSIO_ID_NCT6792:
+		vendor = "Nuvoton";
+		desc = "NCT6792";
+		break;
+	case WBSIO_ID_NCT6793:
+		vendor = "Nuvoton";
+		desc = "NCT6793";
 		break;
 	}
 	/* Read device revision */
