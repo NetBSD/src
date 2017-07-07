@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.83 2017/07/07 22:30:28 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.84 2017/07/07 23:45:53 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.83 2017/07/07 22:30:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.84 2017/07/07 23:45:53 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -674,7 +674,6 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	
 #if HAVE_64BIT_HID0
 	if (bitmasku != NULL) {
-		printf("HID0 %llx\n", hid0);
 		snprintb(hidbuf, sizeof hidbuf, bitmask, hid0 & 0xffffffff);
 		snprintb(hidbuf_u, sizeof hidbuf_u, bitmasku, hid0 >> 32);
 		aprint_normal_dev(self, "HID0 %s %s, powersave: %d\n",
