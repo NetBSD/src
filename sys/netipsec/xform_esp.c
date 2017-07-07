@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.57 2017/07/05 03:44:59 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.58 2017/07/07 01:37:34 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.57 2017/07/05 03:44:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.58 2017/07/07 01:37:34 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -507,7 +507,7 @@ esp_input_cb(struct cryptop *crp)
 	s = splsoftnet();
 	mutex_enter(softnet_lock);
 
-	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
+	sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
 	if (sav == NULL) {
 		ESP_STATINC(ESP_STAT_NOTDB);
 		DPRINTF(("%s: SA expired while in crypto "
@@ -954,7 +954,7 @@ esp_output_cb(struct cryptop *crp)
 	mutex_enter(softnet_lock);
 
 	isr = tc->tc_isr;
-	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
+	sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
 	if (sav == NULL) {
 		char buf[IPSEC_ADDRSTRLEN];
 		ESP_STATINC(ESP_STAT_NOTDB);
