@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.19 2017/05/30 01:31:07 ozaki-r Exp $	*/
+/*	$NetBSD: key.h,v 1.20 2017/07/07 01:37:34 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -48,9 +48,9 @@ struct secasindex;
 union sockaddr_union;
 
 int key_havesp(u_int dir);
-struct secpolicy *key_allocsp(const struct secpolicyindex *, u_int,
+struct secpolicy *key_lookup_sp_byspidx(const struct secpolicyindex *, u_int,
 	const char*, int);
-struct secpolicy *key_allocsp2(u_int32_t spi, const union sockaddr_union *dst,
+struct secpolicy *key_lookup_sp(u_int32_t spi, const union sockaddr_union *dst,
 	u_int8_t proto, u_int dir, const char*, int);
 struct secpolicy *key_newsp(const char*, int);
 struct secpolicy *key_gettunnel(const struct sockaddr *,
@@ -67,10 +67,10 @@ void key_sp_ref(struct secpolicy *, const char*, int);
  * occur on crypto callbacks.  Much of this could go away if
  * key_checkrequest were redone.
  */
-#define	KEY_ALLOCSP(spidx, dir)					\
-	key_allocsp(spidx, dir, __func__, __LINE__)
-#define	KEY_ALLOCSP2(spi, dst, proto, dir)			\
-	key_allocsp2(spi, dst, proto, dir, __func__, __LINE__)
+#define	KEY_LOOKUP_SP_BYSPIDX(spidx, dir)			\
+	key_lookup_sp_byspidx(spidx, dir, __func__, __LINE__)
+#define	KEY_LOOKUP_SP(spi, dst, proto, dir)			\
+	key_lookup_sp(spi, dst, proto, dir, __func__, __LINE__)
 #define	KEY_NEWSP()						\
 	key_newsp(__func__, __LINE__)
 #define	KEY_GETTUNNEL(osrc, odst, isrc, idst)			\
@@ -80,12 +80,12 @@ void key_sp_ref(struct secpolicy *, const char*, int);
 #define	KEY_SP_REF(sp)						\
 	key_sp_ref(sp, __func__, __LINE__)
 
-struct secasvar *key_allocsa(const union sockaddr_union *, 
+struct secasvar *key_lookup_sa(const union sockaddr_union *,
 		u_int, u_int32_t, u_int16_t, u_int16_t, const char*, int);
 void key_freesav(struct secasvar **, const char*, int);
 
-#define	KEY_ALLOCSA(dst, proto, spi, sport, dport)				\
-	key_allocsa(dst, proto, spi, sport, dport,  __func__, __LINE__)
+#define	KEY_LOOKUP_SA(dst, proto, spi, sport, dport)		\
+	key_lookup_sa(dst, proto, spi, sport, dport,  __func__, __LINE__)
 #define	KEY_FREESAV(psav)					\
 	key_freesav(psav, __func__, __LINE__)
 
