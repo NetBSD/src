@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.44 2017/07/07 00:34:09 chs Exp $	*/
+/*	$NetBSD: frame.h,v 1.45 2017/07/07 16:59:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -455,7 +455,8 @@ LOCK_CAS_DEBUG_LOCALS
 	mov	r2, sp;							   \
 	subeq	r2, r2, #(4 * 16);	/* if so, leave a gap for dtrace */
 #else
-#define PUSHDTRACEGAP			/* nothing */
+#define PUSHDTRACEGAP							   \
+	mov	r2, sp
 #endif
 
 #define PUSHTRAPFRAME(rX)						   \
