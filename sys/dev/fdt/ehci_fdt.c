@@ -1,4 +1,4 @@
-/* $NetBSD: ehci_fdt.c,v 1.1 2017/06/29 17:04:53 jmcneill Exp $ */
+/* $NetBSD: ehci_fdt.c,v 1.2 2017/07/08 16:19:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_fdt.c,v 1.1 2017/06/29 17:04:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_fdt.c,v 1.2 2017/07/08 16:19:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,23 +51,6 @@ static void	ehci_fdt_attach(device_t, device_t, void *);
 CFATTACH_DECL2_NEW(ehci_fdt, sizeof(struct ehci_softc),
 	ehci_fdt_match, ehci_fdt_attach, NULL,
 	ehci_activate, NULL, ehci_childdet);
-
-static void
-ehci_fdt_find_companions(struct ehci_softc *sc)
-{
-	const char * drivers[] = { "ohci", "uhci", NULL };
-	device_t comp_dev;
-	int unit, n;
-
-	/* XXX find an ohci or uhci with the same unit as us */
-	unit = device_unit(sc->sc_dev);
-
-	for (n = 0; drivers[n] != NULL; n++) {
-		comp_dev = device_find_by_driver_unit(drivers[n], unit);
-		if (comp_dev != NULL)
-			sc->sc_comps[sc->sc_ncomp++] = comp_dev;
-	}
-}
 
 static int
 ehci_fdt_match(device_t parent, cfdata_t cf, void *aux)
@@ -129,7 +112,7 @@ ehci_fdt_attach(device_t parent, device_t self, void *aux)
 	if (of_hasprop(phandle, "has-transaction-translator"))
 		sc->sc_flags |= EHCIF_ETTF;
 	else
-		ehci_fdt_find_companions(sc);
+		sc->sc_ncomp = 1;
 	sc->sc_id_vendor = 0;
 	strlcpy(sc->sc_vendor, "Generic", sizeof(sc->sc_vendor));
 	sc->sc_size = size;
