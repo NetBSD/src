@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.12 2017/07/06 22:10:14 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.13 2017/07/08 00:55:21 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -68,6 +68,7 @@ sun8ih3ccu*	at fdt? pass 4		# H3 CCU
 fclock*		at fdt? pass 3
 fregulator*	at fdt? pass 4
 gpiokeys*	at fdt?
+gpioleds*	at fdt?
 
 # Timer
 gtmr*		at fdt? pass 1		# ARM Generic Timer
