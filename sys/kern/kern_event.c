@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.80.2.1 2015/04/14 04:39:58 snj Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.80.2.2 2017/07/08 16:53:24 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,11 +58,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.80.2.1 2015/04/14 04:39:58 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.80.2.2 2017/07/08 16:53:24 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/wait.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/select.h>
@@ -779,7 +780,7 @@ sys_kqueue1(struct lwp *l, const struct sys_kqueue1_args *uap,
  * kevent(2) system call.
  */
 int
-kevent_fetch_changes(void *private, const struct kevent *changelist,
+kevent_fetch_changes(void *ctx, const struct kevent *changelist,
     struct kevent *changes, size_t index, int n)
 {
 
@@ -787,7 +788,7 @@ kevent_fetch_changes(void *private, const struct kevent *changelist,
 }
 
 int
-kevent_put_events(void *private, struct kevent *events,
+kevent_put_events(void *ctx, struct kevent *events,
     struct kevent *eventlist, size_t index, int n)
 {
 
@@ -851,7 +852,7 @@ kevent1(register_t *retval, int fd,
 		timeout = &ts;
 	}
 
-	kq = (struct kqueue *)fp->f_data;
+	kq = fp->f_data;
 	nerrors = 0;
 	ichange = 0;
 
@@ -867,21 +868,19 @@ kevent1(register_t *retval, int fd,
 			kevp->flags &= ~EV_SYSFLAGS;
 			/* register each knote */
 			error = kqueue_register(kq, kevp);
-			if (error) {
-				if (nevents != 0) {
-					kevp->flags = EV_ERROR;
-					kevp->data = error;
-					error = (*keops->keo_put_events)
-					    (keops->keo_private, kevp,
-					    eventlist, nerrors, 1);
-					if (error)
-						goto done;
-					nevents--;
-					nerrors++;
-				} else {
-					goto done;
-				}
-			}
+			if (!error && !(kevp->flags & EV_RECEIPT))
+				continue;
+			if (nevents == 0)
+				goto done;
+			kevp->flags = EV_ERROR;
+			kevp->data = error;
+			error = (*keops->keo_put_events)
+				(keops->keo_private, kevp,
+				 eventlist, nerrors, 1);
+			if (error)
+				goto done;
+			nevents--;
+			nerrors++;
 		}
 		nchanges -= n;	/* update the results */
 		ichange += n;
@@ -934,8 +933,9 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	/* search if knote already exists */
 	if (kfilter->filtops->f_isfd) {
 		/* monitoring a file descriptor */
-		fd = kev->ident;
-		if ((fp = fd_getfile(fd)) == NULL) {
+		/* validate descriptor */
+		if (kev->ident > INT_MAX
+		    || (fp = fd_getfile(fd = kev->ident)) == NULL) {
 			rw_exit(&kqueue_filter_lock);
 			kmem_free(newkn, sizeof(*newkn));
 			return EBADF;
@@ -986,6 +986,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			kev->data = 0;
 			kn->kn_kevent = *kev;
 
+			KASSERT(kn->kn_fop != NULL);
 			/*
 			 * apply reference count to knote structure, and
 			 * do not release it at the end of this routine.
@@ -1019,8 +1020,11 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 			if (error != 0) {
 #ifdef DIAGNOSTIC
-				printf("%s: event not supported for file type"
-				    " %d\n", __func__, fp ? fp->f_type : -1);
+				
+				printf("%s: event type %d not supported for "
+				    "file type %d (error %d)\n", __func__,
+				    kn->kn_filter, kn->kn_obj ?
+				    ((file_t *)kn->kn_obj)->f_type : -1, error);
 #endif
 				/* knote_detach() drops fdp->fd_lock */
 				knote_detach(kn, fdp, false);
@@ -1043,6 +1047,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 		 * support events, and the attach routine is
 		 * broken and does not return an error.
 		 */
+		KASSERT(kn->kn_fop != NULL);
 		KASSERT(kn->kn_fop->f_event != NULL);
 		KERNEL_LOCK(1, NULL);			/* XXXSMP */
 		rv = (*kn->kn_fop->f_event)(kn, 0);
@@ -1150,7 +1155,7 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 	struct kqueue	*kq;
 	struct kevent	*kevp;
 	struct timespec	ats, sleepts;
-	struct knote	*kn, *marker;
+	struct knote	*kn, *marker, morker;
 	size_t		count, nkev, nevents;
 	int		timeout, error, rv;
 	filedesc_t	*fdp;
@@ -1178,7 +1183,8 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 		timeout = 0;
 	}	
 
-	marker = kmem_zalloc(sizeof(*marker), KM_SLEEP);
+	memset(&morker, 0, sizeof(morker));
+	marker = &morker;
 	marker->kn_status = KN_MARKER;
 	mutex_spin_enter(&kq->kq_lock);
  retry:
@@ -1199,9 +1205,18 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 					error = 0;
 			}
 		}
+		mutex_spin_exit(&kq->kq_lock);
 	} else {
 		/* mark end of knote list */
 		TAILQ_INSERT_TAIL(&kq->kq_head, marker, kn_tqe);
+
+		/*
+		 * Acquire the fdp->fd_lock interlock to avoid races with
+		 * file creation/destruction from other threads.
+		 */
+		mutex_spin_exit(&kq->kq_lock);
+		mutex_enter(&fdp->fd_lock);
+		mutex_spin_enter(&kq->kq_lock);
 
 		while (count != 0) {
 			kn = TAILQ_FIRST(&kq->kq_head);	/* get next knote */
@@ -1213,35 +1228,43 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 					    (timeout = gettimeleft(&ats,
 					    &sleepts)) <= 0))
 						goto done;
+					mutex_exit(&fdp->fd_lock);
 					goto retry;
 				}
 				/* someone else's marker. */
 				kn = TAILQ_NEXT(kn, kn_tqe);
 			}
 			kq_check(kq);
-			TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 			kq->kq_count--;
+			TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 			kn->kn_status &= ~KN_QUEUED;
+			kn->kn_status |= KN_BUSY;
 			kq_check(kq);
 			if (kn->kn_status & KN_DISABLED) {
+				kn->kn_status &= ~KN_BUSY;
 				/* don't want disabled events */
 				continue;
 			}
 			if ((kn->kn_flags & EV_ONESHOT) == 0) {
 				mutex_spin_exit(&kq->kq_lock);
+				KASSERT(kn->kn_fop != NULL);
+				KASSERT(kn->kn_fop->f_event != NULL);
 				KERNEL_LOCK(1, NULL);		/* XXXSMP */
+				KASSERT(mutex_owned(&fdp->fd_lock));
 				rv = (*kn->kn_fop->f_event)(kn, 0);
 				KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 				mutex_spin_enter(&kq->kq_lock);
 				/* Re-poll if note was re-enqueued. */
-				if ((kn->kn_status & KN_QUEUED) != 0)
+				if ((kn->kn_status & KN_QUEUED) != 0) {
+					kn->kn_status &= ~KN_BUSY;
 					continue;
+				}
 				if (rv == 0) {
 					/*
 					 * non-ONESHOT event that hasn't
 					 * triggered again, so de-queue.
 					 */
-					kn->kn_status &= ~KN_ACTIVE;
+					kn->kn_status &= ~(KN_ACTIVE|KN_BUSY);
 					continue;
 				}
 			}
@@ -1250,29 +1273,36 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 			nkev++;
 			if (kn->kn_flags & EV_ONESHOT) {
 				/* delete ONESHOT events after retrieval */
+				kn->kn_status &= ~KN_BUSY;
 				mutex_spin_exit(&kq->kq_lock);
-				mutex_enter(&fdp->fd_lock);
 				knote_detach(kn, fdp, true);
+				mutex_enter(&fdp->fd_lock);
 				mutex_spin_enter(&kq->kq_lock);
 			} else if (kn->kn_flags & EV_CLEAR) {
 				/* clear state after retrieval */
 				kn->kn_data = 0;
 				kn->kn_fflags = 0;
-				kn->kn_status &= ~KN_ACTIVE;
+				kn->kn_status &= ~(KN_QUEUED|KN_ACTIVE|KN_BUSY);
+			} else if (kn->kn_flags & EV_DISPATCH) {
+				kn->kn_status |= KN_DISABLED;
+				kn->kn_status &= ~(KN_QUEUED|KN_ACTIVE|KN_BUSY);
 			} else {
 				/* add event back on list */
 				kq_check(kq);
+				kn->kn_status |= KN_QUEUED;
+				kn->kn_status &= ~KN_BUSY;
 				TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 				kq->kq_count++;
-				kn->kn_status |= KN_QUEUED;
 				kq_check(kq);
 			}
 			if (nkev == kevcnt) {
 				/* do copyouts in kevcnt chunks */
 				mutex_spin_exit(&kq->kq_lock);
+				mutex_exit(&fdp->fd_lock);
 				error = (*keops->keo_put_events)
 				    (keops->keo_private,
 				    kevbuf, ulistp, nevents, nkev);
+				mutex_enter(&fdp->fd_lock);
 				mutex_spin_enter(&kq->kq_lock);
 				nevents += nkev;
 				nkev = 0;
@@ -1285,11 +1315,10 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 				break;
 			}
 		}
-	}
  done:
- 	mutex_spin_exit(&kq->kq_lock);
-	if (marker != NULL)
-		kmem_free(marker, sizeof(*marker));
+		mutex_spin_exit(&kq->kq_lock);
+		mutex_exit(&fdp->fd_lock);
+	}
 	if (nkev != 0) {
 		/* copyout remaining events */
 		error = (*keops->keo_put_events)(keops->keo_private,
@@ -1510,6 +1539,8 @@ knote(struct klist *list, long hint)
 	struct knote *kn, *tmpkn;
 
 	SLIST_FOREACH_SAFE(kn, list, kn_selnext, tmpkn) {
+		KASSERT(kn->kn_fop != NULL);
+		KASSERT(kn->kn_fop->f_event != NULL);
 		if ((*kn->kn_fop->f_event)(kn, hint))
 			knote_activate(kn);
 	}
@@ -1550,8 +1581,10 @@ knote_detach(struct knote *kn, filedesc_t *fdp, bool dofop)
 	KASSERT((kn->kn_status & KN_MARKER) == 0);
 	KASSERT(mutex_owned(&fdp->fd_lock));
 
+	KASSERT(kn->kn_fop != NULL);
 	/* Remove from monitored object. */
 	if (dofop) {
+		KASSERT(kn->kn_fop->f_detach != NULL);
 		KERNEL_LOCK(1, NULL);		/* XXXSMP */
 		(*kn->kn_fop->f_detach)(kn);
 		KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
@@ -1566,14 +1599,17 @@ knote_detach(struct knote *kn, filedesc_t *fdp, bool dofop)
 	SLIST_REMOVE(list, kn, knote, kn_link);
 
 	/* Remove from kqueue. */
-	/* XXXAD should verify not in use by kqueue_scan. */
+again:
 	mutex_spin_enter(&kq->kq_lock);
 	if ((kn->kn_status & KN_QUEUED) != 0) {
 		kq_check(kq);
+		kq->kq_count--;
 		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 		kn->kn_status &= ~KN_QUEUED;
-		kq->kq_count--;
 		kq_check(kq);
+	} else if (kn->kn_status & KN_BUSY) {
+		mutex_spin_exit(&kq->kq_lock);
+		goto again;
 	}
 	mutex_spin_exit(&kq->kq_lock);
 
@@ -1602,8 +1638,8 @@ knote_enqueue(struct knote *kn)
 	}
 	if ((kn->kn_status & (KN_ACTIVE | KN_QUEUED)) == KN_ACTIVE) {
 		kq_check(kq);
-		TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 		kn->kn_status |= KN_QUEUED;
+		TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 		kq->kq_count++;
 		kq_check(kq);
 		cv_broadcast(&kq->kq_cv);
@@ -1627,8 +1663,8 @@ knote_activate(struct knote *kn)
 	kn->kn_status |= KN_ACTIVE;
 	if ((kn->kn_status & (KN_QUEUED | KN_DISABLED)) == 0) {
 		kq_check(kq);
-		TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 		kn->kn_status |= KN_QUEUED;
+		TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 		kq->kq_count++;
 		kq_check(kq);
 		cv_broadcast(&kq->kq_cv);
