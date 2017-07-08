@@ -1,4 +1,4 @@
-/* $NetBSD: led.c,v 1.1 2017/07/08 00:54:37 jmcneill Exp $ */
+/* $NetBSD: led.c,v 1.2 2017/07/08 19:25:37 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: led.c,v 1.1 2017/07/08 00:54:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: led.c,v 1.2 2017/07/08 19:25:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +79,9 @@ led_lookup(const char *name)
 static void
 led_normalize_name(char *name)
 {
-	char *p;
+	unsigned char *p;
 
-	for (p = name; *p; p++)
+	for (p = (unsigned char *)name; *p; p++)
 		if (!isalpha(*p) && !isdigit(*p) && *p != '-' && *p != '_')
 			*p = '_';
 }
