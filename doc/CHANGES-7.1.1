@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.1,v 1.1.2.12 2017/06/21 17:18:06 snj Exp $
+# $NetBSD: CHANGES-7.1.1,v 1.1.2.13 2017/07/08 17:17:58 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.1.1
 release:
@@ -1649,4 +1649,34 @@ external/mit/expat/dist/xmlwf/xmlwf.dsp         delete
 
 	Update expat to 2.2.1.
 	[spz, ticket #1437]
+
+sys/dev/cgd.c					patch
+
+	Avoid crashes by checking if a cgd device has been configured
+	before processing most ioctls, and failing with ENXIO if the
+	device is not configured.
+	[chs, ticket #1429]
+
+external/bsd/dhcp/dist/relay/dhcrelay.c		1.7
+
+	Fix buggy dhcrelay(8) requirement to stay in foreground
+	[manu, ticket #1430]
+
+sys/kern/kern_event.c				1.92 via patch
+sys/miscfs/genfs/genfs_vnops.c			1.198
+sys/sys/event.h					1.30 via patch
+
+	Provide EVFILT_WRITE; this is what FreeBSD does and go wants it.
+	Makes go unit tests pass.
+
+	Fix file descriptor locking. Fixes kernel crashes by running go.
+	[christos, ticket #1442]
+
+xsrc/external/mit/xorg-server/dist/Xi/sendexev.c patch
+xsrc/external/mit/xorg-server/dist/dix/events.c	patch
+xsrc/external/mit/xorg-server/dist/dix/swapreq.c patch
+xsrc/xfree/xc/programs/Xserver/Xi/sendexev.c	patch
+
+	Fix CVE-2017-10971 and CVE-2017-10972.
+	[mrg, ticket #1446]
 
