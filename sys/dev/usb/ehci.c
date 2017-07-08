@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.254 2016/10/03 00:32:37 dholland Exp $ */
+/*	$NetBSD: ehci.c,v 1.255 2017/07/08 16:19:20 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.254 2016/10/03 00:32:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.255 2017/07/08 16:19:20 jmcneill Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -447,12 +447,18 @@ ehci_init(ehci_softc_t *sc)
 	}
 	if (sc->sc_ncomp > 0) {
 		KASSERT(!(sc->sc_flags & EHCIF_ETTF));
-		aprint_normal("%s: companion controller%s, %d port%s each:",
-		    device_xname(sc->sc_dev), sc->sc_ncomp!=1 ? "s" : "",
+		aprint_normal("%s: %d companion controller%s, %d port%s%s",
+		    device_xname(sc->sc_dev), sc->sc_ncomp,
+		    sc->sc_ncomp!=1 ? "s" : "",
 		    EHCI_HCS_N_PCC(sparams),
-		    EHCI_HCS_N_PCC(sparams)!=1 ? "s" : "");
-		for (i = 0; i < sc->sc_ncomp; i++)
-			aprint_normal(" %s", device_xname(sc->sc_comps[i]));
+		    EHCI_HCS_N_PCC(sparams)!=1 ? "s" : "",
+		    sc->sc_ncomp!=1 ? " each" : "");
+		if (sc->sc_comps[0]) {
+			aprint_normal(":");
+			for (i = 0; i < sc->sc_ncomp; i++)
+				aprint_normal(" %s",
+				    device_xname(sc->sc_comps[i]));
+		}
 		aprint_normal("\n");
 	}
 	sc->sc_noport = EHCI_HCS_N_PORTS(sparams);
@@ -2594,7 +2600,9 @@ ehci_disown(ehci_softc_t *sc, int index, int lowspeed)
 			       "port %d to %s\n",
 			       device_xname(sc->sc_dev),
 			       lowspeed ? "low" : "full",
-			       index, device_xname(sc->sc_comps[i]));
+			       index, sc->sc_comps[i] ?
+			         device_xname(sc->sc_comps[i]) :
+			         "companion controller");
 	} else {
 		printf("%s: npcomp == 0\n", device_xname(sc->sc_dev));
 	}
