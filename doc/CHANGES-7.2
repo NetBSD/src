@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.24 2017/06/29 12:25:04 sborrill Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.25 2017/07/08 17:19:31 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -2398,4 +2398,73 @@ sys/external/bsd/ipf/netinet/ip_frag.c		1.5
 	Free the right fragment. This will cause use after free issues and
 	eventually panic.
 	[christos, ticket #1412]
+
+usr.sbin/service/service			1.8
+
+	Only match first instance of name and rcvar in file.
+	[sborrill, ticket #1427]
+
+sys/gdbscripts/cpus				1.2, 1.3
+
+	Make cpus gdb script MI.
+	[skrll, ticket #1428]
+
+sys/dev/cgd.c					patch
+
+	Avoid crashes by checking if a cgd device has been configured
+	before processing most ioctls, and failing with ENXIO if the
+	device is not configured.
+	[chs, ticket #1429]
+
+external/bsd/dhcp/dist/relay/dhcrelay.c		1.7
+
+	Fix buggy dhcrelay(8) requirement to stay in foreground
+	[manu, ticket #1430]
+
+sys/dev/pci/ehci_pci.c				1.65
+
+	Deal with broken BIOSes that leave PCI interrupts disabled.
+	[sborrill, ticket #1431]
+
+sys/dev/audio.c					patch
+
+	Fix occasional stuttering that can be caused by
+	ringbuffer overflow.
+	[nat, ticket #1433]
+
+sys/kern/kern_event.c				1.92 via patch
+sys/miscfs/genfs/genfs_vnops.c			1.198
+sys/sys/event.h					1.30 via patch
+
+	Provide EVFILT_WRITE; this is what FreeBSD does and go wants it.
+	Makes go unit tests pass.
+
+	Fix file descriptor locking. Fixes kernel crashes by running go.
+	[christos, ticket #1442]
+
+external/bsd/tcpdump/bin/Makefile		patch
+
+	netbsd-7 clang doesn't support -Wno-error=address-of-packed-member
+	[maya, ticket #1443]
+
+sys/arch/arm/cortex/a9_mpsubr.S			1.48
+
+	Make fp 0 on entry to idle_stack to ensure we mark that
+	we're top of stack
+	[skrll, ticket #1444]
+
+sys/arch/amd64/conf/XEN3_DOM0			1.136
+sys/arch/i386/conf/XEN3_DOM0			1.113
+sys/arch/xen/conf/files.xen			1.148
+
+	Register support for SD card readers with Xen DOM0 kernels
+	[khorben, ticket #1445]
+
+xsrc/external/mit/xorg-server/dist/Xi/sendexev.c patch
+xsrc/external/mit/xorg-server/dist/dix/events.c	patch
+xsrc/external/mit/xorg-server/dist/dix/swapreq.c patch
+xsrc/xfree/xc/programs/Xserver/Xi/sendexev.c	patch
+
+	Fix CVE-2017-10971 and CVE-2017-10972.
+	[mrg, ticket #1446]
 
