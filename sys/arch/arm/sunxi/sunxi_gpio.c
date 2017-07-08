@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.6 2017/07/06 22:10:14 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.7 2017/07/08 00:26:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.6 2017/07/06 22:10:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.7 2017/07/08 00:26:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -335,7 +335,7 @@ sunxi_gpio_write(device_t dev, void *priv, int val, bool raw)
 	device_printf(dev, "P%c%02d wr %08x -> %08x\n",
 	    pin_def->port + 'A', pin_def->pin, GPIO_READ(sc, data_reg), data);
 #endif
-	GPIO_WRITE(sc, data_reg, data_mask);
+	GPIO_WRITE(sc, data_reg, data);
 	mutex_exit(&sc->sc_lock);
 }
 
