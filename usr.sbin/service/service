@@ -1,5 +1,5 @@
 #!/bin/sh
-#    $NetBSD: service,v 1.7.2.2 2015/04/21 05:22:58 snj Exp $
+#    $NetBSD: service,v 1.7.2.3 2017/07/08 16:06:00 snj Exp $
 #    service -- run or list system services
 #
 #  Taken from FreeBSD: releng/10.1/usr.sbin/service/service.sh 268098
@@ -84,8 +84,8 @@ if [ -n "${ENABLED}" ]; then
     _rc_files | $flt | while read file
     do
         if grep -q ^rcvar "$file"; then
-            eval $( grep ^name= "$file" )
-            eval $( grep ^rcvar "$file" )
+            eval $( grep -m 1 ^name= "$file" )
+            eval $( grep -m 1 ^rcvar "$file" )
             if [ -n "${rcvar}" ]; then
                 load_rc_config ${rcvar}
                 checkyesno ${rcvar} 2>/dev/null && echo ${file}
