@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.7 2017/07/08 00:26:19 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.8 2017/07/08 11:12:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.7 2017/07/08 00:26:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.8 2017/07/08 11:12:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -507,6 +507,8 @@ sunxi_gpio_attach(device_t parent, device_t self, void *aux)
 	struct sunxi_gpio_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	struct fdtbus_reset *rst;
+	struct clk *clk;
 	bus_addr_t addr;
 	bus_size_t size;
 	int child;
@@ -515,6 +517,18 @@ sunxi_gpio_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
+
+	if ((clk = fdtbus_clock_get_index(phandle, 0)) != NULL)
+		if (clk_enable(clk) != 0) {
+			aprint_error(": couldn't enable clock\n");
+			return;
+		}
+
+	if ((rst = fdtbus_reset_get_index(phandle, 0)) != NULL)
+		if (fdtbus_reset_deassert(rst) != 0) {
+			aprint_error(": couldn't de-assert reset\n");
+			return;
+		}
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
