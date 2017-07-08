@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.15 2017/07/08 12:37:34 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.16 2017/07/08 16:20:21 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -119,9 +119,9 @@ ld3		at sdmmc3
 ld*		at sdmmc?
 
 # USB 2.0
-sunxiusbphy*	at fdt?	pass 5		# USB PHY
-ehci*		at fdt?	pass 9		# EHCI
-ohci*		at fdt?	pass 8		# OHCI
+sunxiusbphy*	at fdt?	pass 9		# USB PHY
+ehci*		at fdt?			# EHCI
+ohci*		at fdt?			# OHCI
 usb*		at ehci?
 usb*		at ohci?
 
