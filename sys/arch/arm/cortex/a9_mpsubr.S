@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.18.2.4 2016/02/26 22:52:53 snj Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.18.2.5 2017/07/08 17:01:52 snj Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -736,6 +736,7 @@ cortex_mpcontinuation:
 	movw	r2, #:lower16:MD_CPU_HATCH	// pass md_cpu_hatch
 	movt	r2, #:upper16:MD_CPU_HATCH	// pass md_cpu_hatch
 	bl	_C_LABEL(cpu_hatch)
+	mov	fp, #0				// top stack frame
 	b	_C_LABEL(idle_loop)		// never to return
 ASEND(cortex_mpcontinuation)
 
