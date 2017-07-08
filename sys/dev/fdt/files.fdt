@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.17 2017/06/29 17:04:17 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.18 2017/07/08 00:55:02 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -21,6 +21,10 @@ file	dev/fdt/fixedclock.c			fclock
 device	gpiokeys: sysmon_envsys, sysmon_power
 attach	gpiokeys at fdt
 file	dev/fdt/gpiokeys.c			gpiokeys
+
+device	gpioleds: leds
+attach	gpioleds at fdt
+file	dev/fdt/gpioleds.c			gpioleds
 
 file	dev/fdt/fdt_openfirm.c			fdtbus
 file	dev/fdt/fdt_subr.c			fdtbus
