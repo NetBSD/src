@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.357 2017/07/06 17:12:34 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.358 2017/07/08 22:56:15 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.357 2017/07/06 17:12:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.358 2017/07/08 22:56:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1515,13 +1515,7 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
     struct mbuf *m)
 {
 	struct socket *so = inp->inp_socket;
-	ifnet_t *ifp;
 	int inpflags = inp->inp_flags;
-	struct psref psref;
-
-	ifp = m_get_rcvif_psref(m, &psref);
-	if (__predict_false(ifp == NULL))
-		return; /* XXX should report error? */
 
 	if (SOOPT_TIMESTAMP(so->so_options))
 		mp = sbsavetimestamp(so->so_options, m, mp);
@@ -1532,6 +1526,23 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
+
+	if (inpflags & INP_RECVTTL) {
+		*mp = sbcreatecontrol(&ip->ip_ttl,
+		    sizeof(uint8_t), IP_RECVTTL, IPPROTO_IP);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+
+	struct psref psref;
+	ifnet_t *ifp = m_get_rcvif_psref(m, &psref);
+	if (__predict_false(ifp == NULL)) {
+#ifdef DIAGNOSTIC
+		printf("%s: missing receive interface\n", __func__);
+#endif
+		return; /* XXX should report error? */
+	}
+
 	if (inpflags & INP_RECVPKTINFO) {
 		struct in_pktinfo ipi;
 		ipi.ipi_addr = ip->ip_src;
@@ -1556,12 +1567,6 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 		sockaddr_dl_init(&sdl, sizeof(sdl), ifp->if_index, 0, NULL, 0,
 		    NULL, 0);
 		*mp = sbcreatecontrol(&sdl, sdl.sdl_len, IP_RECVIF, IPPROTO_IP);
-		if (*mp)
-			mp = &(*mp)->m_next;
-	}
-	if (inpflags & INP_RECVTTL) {
-		*mp = sbcreatecontrol(&ip->ip_ttl,
-		    sizeof(uint8_t), IP_RECVTTL, IPPROTO_IP);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
