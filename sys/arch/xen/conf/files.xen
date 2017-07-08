@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.133.4.2 2016/12/18 07:50:37 snj Exp $
+#	$NetBSD: files.xen,v 1.133.4.3 2017/07/08 17:04:22 snj Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -367,6 +367,8 @@ include	"compat/ossaudio/files.ossaudio"
 
 # Bluetooth
 include "dev/bluetooth/files.bluetooth"
+
+include "dev/sdmmc/files.sdmmc"
 
 #
 # CARDBUS
