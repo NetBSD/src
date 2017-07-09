@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.199 2017/03/20 15:51:41 skrll Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.200 2017/07/09 20:53:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.199 2017/03/20 15:51:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.200 2017/07/09 20:53:09 christos Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -950,7 +950,7 @@ uvm_fault_check(
 		    "<- protection failure (prot=%#x, access=%#x)",
 		    ufi->entry->protection, flt->access_type, 0, 0);
 		uvmfault_unlockmaps(ufi, false);
-		return EACCES;
+		return EFAULT;
 	}
 
 	/*
