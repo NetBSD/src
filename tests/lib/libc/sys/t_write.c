@@ -1,4 +1,4 @@
-/* $NetBSD: t_write.c,v 1.5 2017/07/09 22:13:48 christos Exp $ */
+/* $NetBSD: t_write.c,v 1.6 2017/07/09 22:18:43 christos Exp $ */
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_write.c,v 1.5 2017/07/09 22:13:48 christos Exp $");
+__RCSID("$NetBSD: t_write.c,v 1.6 2017/07/09 22:18:43 christos Exp $");
 
 #include <sys/uio.h>
 #include <sys/mman.h>
@@ -265,6 +265,7 @@ ATF_TC_BODY(read_fault, tc)
 	ATF_REQUIRE_EQ_MSG(retval, -1, "got: %zd", retval);
 	ATF_REQUIRE_EQ_MSG(errno, EFAULT, "got: %s", strerror(errno));
 
+	munmap(map, SIZE);
 	close(fd);         
 }
 
