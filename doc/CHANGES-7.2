@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.25 2017/07/08 17:19:31 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.26 2017/07/09 04:37:40 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -2467,4 +2467,13 @@ xsrc/xfree/xc/programs/Xserver/Xi/sendexev.c	patch
 
 	Fix CVE-2017-10971 and CVE-2017-10972.
 	[mrg, ticket #1446]
+
+libexec/ld.elf_so/reloc.c			1.110
+
+	PR port-macppc/47464 - Old binutils generated bogus zero-sized
+	COPY relocations for _SDA_BASE_ and _SDA2_BASE_ that happened
+	to work by accident.  They no longer happen to work when old
+	binaries are run on newer systems.  Explicitly ignore these
+	bogus relocations.
+	[uwe, ticket #1411]
 
