@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.38 2017/06/25 06:26:40 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.39 2017/07/09 12:49:26 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.38 2017/06/25 06:26:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.39 2017/07/09 12:49:26 isaki Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -159,19 +159,6 @@ struct {
 };
 
 #define NUM_RATE	(sizeof(vs_l2r)/sizeof(vs_l2r[0]))
-
-struct {
-	const char *name;
-	int	encoding;
-	int	precision;
-} vs_encodings[] = {
-	{AudioEadpcm,      AUDIO_ENCODING_ADPCM,       4},
-	{AudioEslinear,    AUDIO_ENCODING_SLINEAR,     8},
-	{AudioEulinear,    AUDIO_ENCODING_ULINEAR,     8},
-	{AudioEmulaw,      AUDIO_ENCODING_ULAW,	       8},
-	{AudioEslinear_be, AUDIO_ENCODING_SLINEAR_BE, 16},
-	{AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE, 16},
-};
 
 static int
 vs_match(device_t parent, cfdata_t cf, void *aux)
@@ -338,17 +325,15 @@ vs_query_encoding(void *hdl, struct audio_encoding *fp)
 {
 
 	DPRINTF(1, ("vs_query_encoding\n"));
-	if (fp->index >= sizeof(vs_encodings) / sizeof(vs_encodings[0]))
-		return EINVAL;
 
-	strcpy(fp->name, vs_encodings[fp->index].name);
-	fp->encoding  = vs_encodings[fp->index].encoding;
-	fp->precision = vs_encodings[fp->index].precision;
-	if (fp->encoding == AUDIO_ENCODING_ADPCM)
+	if (fp->index == 0) {
+		strcpy(fp->name, AudioEslinear_be);
+		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
+		fp->precision = 16;
 		fp->flags = 0;
-	else
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-	return 0;
+		return 0;
+	}
+	return EINVAL;
 }
 
 static int
@@ -385,95 +370,48 @@ vs_set_params(void *hdl, int setmode, int usemode,
 	stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	struct vs_softc *sc;
-	struct audio_params *p;
-	int mode;
 	int rate;
-	audio_params_t hw;
-	int matched;
-
-	DPRINTF(1, ("vs_set_params: setmode=%d, usemode=%d\n",
-		setmode, usemode));
 
 	sc = hdl;
-	/* set first record info, then play info */
-	for (mode = AUMODE_RECORD; mode != -1;
-	     mode = (mode == AUMODE_RECORD) ? AUMODE_PLAY : -1) {
-		if ((setmode & mode) == 0)
-			continue;
 
-		p = (mode == AUMODE_PLAY) ? play : rec;
+	DPRINTF(1, ("vs_set_params: mode=%d enc=%d rate=%d prec=%d ch=%d: ",
+		setmode, play->encoding, play->sample_rate,
+		play->precision, play->channels));
 
-		if (p->channels != 1)
-			return EINVAL;
-
-		rate = p->sample_rate;
-		hw = *p;
-		hw.encoding = AUDIO_ENCODING_ADPCM;
-		hw.precision = hw.validbits = 4;
-		DPRINTF(1, ("vs_set_params: encoding=%d, precision=%d\n",
-			p->encoding, p->precision));
-		matched = 0;
-		switch (p->precision) {
-		case 4:
-			if (p->encoding == AUDIO_ENCODING_ADPCM)
-				matched = 1;
-			break;
-		case 8:
-			switch (p->encoding) {
-			case AUDIO_ENCODING_ULAW:
-				matched = 1;
-				hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
-				hw.precision = hw.validbits = 8;
-				pfil->prepend(pfil, mulaw_to_linear8, &hw);
-				hw.encoding = AUDIO_ENCODING_ADPCM;
-				hw.precision = hw.validbits = 4;
-				pfil->prepend(pfil, msm6258_linear8_to_adpcm, &hw);
-				rfil->append(rfil, msm6258_adpcm_to_linear8, &hw);
-				hw.encoding = AUDIO_ENCODING_ULINEAR_LE;
-				hw.precision = hw.validbits = 8;
-				rfil->append(rfil, linear8_to_mulaw, &hw);
-				break;
-			case AUDIO_ENCODING_SLINEAR:
-			case AUDIO_ENCODING_SLINEAR_LE:
-			case AUDIO_ENCODING_SLINEAR_BE:
-			case AUDIO_ENCODING_ULINEAR:
-			case AUDIO_ENCODING_ULINEAR_LE:
-			case AUDIO_ENCODING_ULINEAR_BE:
-				matched = 1;
-				pfil->append(pfil, msm6258_linear8_to_adpcm, &hw);
-				rfil->append(rfil, msm6258_adpcm_to_linear8, &hw);
-				break;
-			}
-			break;
-		case 16:
-			switch (p->encoding) {
-			case AUDIO_ENCODING_SLINEAR_LE:
-			case AUDIO_ENCODING_SLINEAR_BE:
-				matched = 1;
-				pfil->append(pfil, msm6258_slinear16_to_adpcm, &hw);
-				rfil->append(rfil, msm6258_adpcm_to_slinear16, &hw);
-				break;
-			}
-			break;
-		}
-		if (matched == 0) {
-			DPRINTF(1, ("vs_set_params: mode=%d, encoding=%d\n",
-				mode, p->encoding));
-			return EINVAL;
-		}
-
-		DPRINTF(1, ("vs_set_params: rate=%d -> ", rate));
-		rate = vs_round_sr(rate);
-		DPRINTF(1, ("%d\n", rate));
-		if (rate < 0)
-			return EINVAL;
-		if (mode == AUMODE_PLAY) {
-			sc->sc_current.prate = rate;
-		} else {
-			sc->sc_current.rrate = rate;
-		}
+	if (play->channels != 1) {
+		DPRINTF(1, ("channels not matched\n"));
+		return EINVAL;
 	}
 
+	rate = vs_round_sr(play->sample_rate);
+	if (rate < 0) {
+		DPRINTF(1, ("rate not matched\n"));
+		return EINVAL;
+	}
+
+	if (play->encoding != AUDIO_ENCODING_SLINEAR_BE) {
+		DPRINTF(1, ("encoding not matched\n"));
+		return EINVAL;
+	}
+	if (play->precision != 16) {
+		DPRINTF(1, ("precision not matched\n"));
+		return EINVAL;
+	}
+
+	play->encoding = AUDIO_ENCODING_ADPCM;
+	play->validbits = 4;
+	play->precision = 4;
+
+	pfil->prepend(pfil, msm6258_slinear16_to_adpcm, play);
+	rfil->prepend(rfil, msm6258_adpcm_to_slinear16, play);
+
+	sc->sc_current.prate = rate;
+	sc->sc_current.rrate = rate;
+
+	/* copy to rec because it's !AUDIO_PROP_INDEPENDENT */
+	*rec = *play;
+
+	DPRINTF(1, ("accepted\n"));
 	return 0;
 }
 
