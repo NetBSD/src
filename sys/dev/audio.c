@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.367 2017/07/01 05:44:52 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.368 2017/07/09 12:08:39 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.367 2017/07/01 05:44:52 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.368 2017/07/09 12:08:39 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2068,9 +2068,9 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 		sc->sc_pnintr = 0;
 		sc->sc_pblktime = (u_long)(
 		    (double)vc->sc_mpr.blksize * 100000 /
-		    (double)(vc->sc_pparams.precision / NBBY *
-			     vc->sc_pparams.channels *
-			     vc->sc_pparams.sample_rate)) * 10;
+		    (double)(vc->sc_pparams.channels *
+		             vc->sc_pparams.sample_rate *
+		             vc->sc_pparams.precision / NBBY)) * 10;
 		DPRINTF(("audio: play blktime = %lu for %d\n",
 			 sc->sc_pblktime, vc->sc_mpr.blksize));
 	}
@@ -2078,9 +2078,9 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 		sc->sc_rnintr = 0;
 		sc->sc_rblktime = (u_long)(
 		    (double)vc->sc_mrr.blksize * 100000 /
-		    (double)(vc->sc_rparams.precision / NBBY *
-			     vc->sc_rparams.channels *
-			     vc->sc_rparams.sample_rate)) * 10;
+		    (double)(vc->sc_rparams.channels *
+		             vc->sc_rparams.sample_rate *
+		             vc->sc_rparams.precision / NBBY)) * 10;
 		DPRINTF(("audio: record blktime = %lu for %d\n",
 			 sc->sc_rblktime, vc->sc_mrr.blksize));
 	}
