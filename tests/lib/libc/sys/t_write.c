@@ -1,4 +1,4 @@
-/* $NetBSD: t_write.c,v 1.4 2017/07/09 22:04:04 christos Exp $ */
+/* $NetBSD: t_write.c,v 1.5 2017/07/09 22:13:48 christos Exp $ */
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_write.c,v 1.4 2017/07/09 22:04:04 christos Exp $");
+__RCSID("$NetBSD: t_write.c,v 1.5 2017/07/09 22:13:48 christos Exp $");
 
 #include <sys/uio.h>
 #include <sys/mman.h>
@@ -223,20 +223,23 @@ ATF_TC_HEAD(write_fault, tc)
 	    "Check that writing to non-permitted space returns EFAULT");
 }
 
+#define SIZE 8192
+
 ATF_TC_BODY(write_fault, tc)
 {
 	int fd[2];
 	ATF_REQUIRE(pipe(fd) != -1);
 	// Can't use /dev/null cause it doesn't access the buffer.
 
-	void *map = mmap(NULL, 8192, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);  
+	void *map = mmap(NULL, SIZE, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);  
 	ATF_REQUIRE(map != MAP_FAILED);
 
-	ssize_t retval = write(fd[1], map, 8192); 
+	ssize_t retval = write(fd[1], map, SIZE); 
 
 	ATF_REQUIRE_EQ_MSG(retval, -1, "got: %zd", retval);
 	ATF_REQUIRE_EQ_MSG(errno, EFAULT, "got: %s", strerror(errno));
 
+	munmap(map, SIZE);
 	close(fd[0]);         
 	close(fd[1]);         
 }
@@ -254,10 +257,10 @@ ATF_TC_BODY(read_fault, tc)
 	int fd = open(_PATH_DEVZERO, O_RDONLY);
 	ATF_REQUIRE(fd != -1);
 
-	void *map = mmap(NULL, 8192, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);  
+	void *map = mmap(NULL, SIZE, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);  
 	ATF_REQUIRE(map != MAP_FAILED);
 
-	ssize_t retval = read(fd, map, 8192); 
+	ssize_t retval = read(fd, map, SIZE); 
 
 	ATF_REQUIRE_EQ_MSG(retval, -1, "got: %zd", retval);
 	ATF_REQUIRE_EQ_MSG(errno, EFAULT, "got: %s", strerror(errno));
