@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.127 2017/06/19 11:57:01 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.128 2017/07/09 17:57:59 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -345,8 +345,6 @@ extern Elf_Sym _rtld_sym_zero;
 #define	RTLD_STATIC_TLS_RESERVATION	64
 
 /* rtld.c */
-
-/* We export these symbols using _rtld_symbol_lookup and is_exported. */
 __dso_public char *dlerror(void);
 __dso_public void *dlopen(const char *, int);
 __dso_public void *dlsym(void *, const char *);
@@ -416,7 +414,6 @@ Elf_Addr _rtld_resolve_ifunc(const Obj_Entry *, const Elf_Sym *);
 Obj_Entry *_rtld_load_library(const char *, const Obj_Entry *, int);
 
 /* symbol.c */
-bool _rtld_is_exported(const Elf_Sym *);
 unsigned long _rtld_elf_hash(const char *);
 const Elf_Sym *_rtld_symlook_obj(const char *, unsigned long,
     const Obj_Entry *, u_int, const Ver_Entry *);
