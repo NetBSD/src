@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.171 2017/07/10 07:45:10 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.172 2017/07/10 07:46:02 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.171 2017/07/10 07:45:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.172 2017/07/10 07:46:02 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -3153,15 +3153,6 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 
 	/* We shouldn't initialize sav variables while someone uses it. */
 	KASSERT(sav->refcnt == 0);
-
-	/* initialization */
-	key_freesaval(sav);
-	sav->tdb_xform = NULL;		/* transform */
-	sav->tdb_encalgxform = NULL;	/* encoding algorithm */
-	sav->tdb_authalgxform = NULL;	/* authentication algorithm */
-	sav->tdb_compalgxform = NULL;	/* compression algorithm */
-	sav->natt_type = 0;
-	sav->esp_frag = 0;
 
 	/* SA */
 	if (mhp->ext[SADB_EXT_SA] != NULL) {
