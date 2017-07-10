@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.170 2017/07/10 07:40:23 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.171 2017/07/10 07:45:10 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.170 2017/07/10 07:40:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.171 2017/07/10 07:45:10 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -421,11 +421,10 @@ static u_int key_getspreqmsglen (const struct secpolicy *);
 static int key_spdexpire (struct secpolicy *);
 static struct secashead *key_newsah (const struct secasindex *);
 static void key_delsah (struct secashead *);
-static struct secasvar *key_newsav (struct mbuf *,
-	const struct sadb_msghdr *, struct secashead *, int *,
-	const char*, int);
-#define	KEY_NEWSAV(m, sadb, sah, e)				\
-	key_newsav(m, sadb, sah, e, __func__, __LINE__)
+static struct secasvar *key_newsav(struct mbuf *,
+	const struct sadb_msghdr *, int *, const char*, int);
+#define	KEY_NEWSAV(m, sadb, e)				\
+	key_newsav(m, sadb, e, __func__, __LINE__)
 static void key_delsav (struct secasvar *);
 static struct secashead *key_getsah(const struct secasindex *, int);
 static struct secasvar *key_checkspidup (const struct secasindex *, u_int32_t);
@@ -433,7 +432,7 @@ static struct secasvar *key_getsavbyspi (struct secashead *, u_int32_t);
 static int key_setsaval (struct secasvar *, struct mbuf *,
 	const struct sadb_msghdr *);
 static void key_freesaval(struct secasvar *);
-static int key_mature (struct secasvar *);
+static int key_init_xform(struct secasvar *);
 static void key_clear_xform(struct secasvar *);
 static struct mbuf *key_setdumpsa (struct secasvar *, u_int8_t,
 	u_int8_t, u_int32_t, u_int32_t);
@@ -1375,6 +1374,11 @@ key_freesav(struct secasvar **psav, const char* where, int tag)
 
 	if (nv == 0) {
 		*psav = NULL;
+
+		/* remove from SA header */
+		KASSERT(__LIST_CHAINED(sav));
+		LIST_REMOVE(sav, chain);
+
 		key_delsav(sav);
 	}
 }
@@ -2903,8 +2907,7 @@ key_delsah(struct secashead *sah)
  */
 static struct secasvar *
 key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
-	   struct secashead *sah, int *errp,
-	   const char* where, int tag)
+    int *errp, const char* where, int tag)
 {
 	struct secasvar *newsav;
 	const struct sadb_sa *xsa;
@@ -2913,7 +2916,6 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 	KASSERT(m != NULL);
 	KASSERT(mhp != NULL);
 	KASSERT(mhp->msg != NULL);
-	KASSERT(sah != NULL);
 
 	newsav = kmem_zalloc(sizeof(struct secasvar), KM_SLEEP);
 
@@ -2958,12 +2960,6 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 	newsav->created = time_uptime;
 	newsav->pid = mhp->msg->sadb_msg_pid;
 
-	/* add to satree */
-	newsav->sah = sah;
-	newsav->refcnt = 1;
-	newsav->state = SADB_SASTATE_LARVAL;
-	LIST_INSERT_TAIL(&sah->savtree[SADB_SASTATE_LARVAL], newsav,
-	    secasvar, chain);
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP from %s:%u return SA:%p\n", where, tag, newsav);
 	return newsav;
@@ -3007,10 +3003,6 @@ key_delsav(struct secasvar *sav)
 
 	KASSERT(sav != NULL);
 	KASSERTMSG(sav->refcnt == 0, "reference count %u > 0", sav->refcnt);
-
-	/* remove from SA header */
-	KASSERT(__LIST_CHAINED(sav));
-	LIST_REMOVE(sav, chain);
 
 	key_clear_xform(sav);
 	key_freesaval(sav);
@@ -3348,9 +3340,12 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
  *	other:	errno
  */
 static int
-key_mature(struct secasvar *sav)
+key_init_xform(struct secasvar *sav)
 {
 	int error;
+
+	/* We shouldn't initialize sav variables while someone uses it. */
+	KASSERT(sav->refcnt == 0);
 
 	/* check SPI value */
 	switch (sav->sah->saidx.proto) {
@@ -3416,9 +3411,8 @@ key_mature(struct secasvar *sav)
 		error = EPROTONOSUPPORT;
 		break;
 	}
-	if (error == 0)
-		key_sa_chgstate(sav, SADB_SASTATE_MATURE);
-	return (error);
+
+	return error;
 }
 
 /*
@@ -4887,7 +4881,7 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 
 	/* get a new SA */
 	/* XXX rewrite */
-	newsav = KEY_NEWSAV(m, mhp, newsah, &error);
+	newsav = KEY_NEWSAV(m, mhp, &error);
 	if (newsav == NULL) {
 		/* XXX don't free new SA index allocated in above. */
 		return key_senderror(so, m, error);
@@ -4895,6 +4889,13 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 
 	/* set spi */
 	newsav->spi = htonl(spi);
+
+	/* add to satree */
+	newsav->refcnt = 1;
+	newsav->sah = newsah;
+	newsav->state = SADB_SASTATE_LARVAL;
+	LIST_INSERT_TAIL(&newsah->savtree[SADB_SASTATE_LARVAL], newsav,
+	    secasvar, chain);
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	/* delete the entry in acqtree */
@@ -5306,32 +5307,31 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	newsav->seq = sav->seq;
 	newsav->created = sav->created;
 	newsav->pid = sav->pid;
+	newsav->sah = sav->sah;
 
 	error = key_setsaval(newsav, m, mhp);
 	if (error) {
-		KEY_FREESAV(&newsav);
+		key_delsav(newsav);
 		return key_senderror(so, m, error);
 	}
 
 	error = key_handle_natt_info(newsav, mhp);
 	if (error != 0) {
-		KEY_FREESAV(&newsav);
+		key_delsav(newsav);
+		return key_senderror(so, m, error);
+	}
+
+	error = key_init_xform(newsav);
+	if (error != 0) {
+		key_delsav(newsav);
 		return key_senderror(so, m, error);
 	}
 
 	/* add to satree */
-	newsav->sah = sah;
 	newsav->refcnt = 1;
-	newsav->state = sav->state;
-	/* We have to keep the order */
-	LIST_INSERT_AFTER(sav, newsav, chain);
-
-	/* check SA values to be mature. */
-	error = key_mature(newsav);
-	if (error != 0) {
-		KEY_FREESAV(&newsav);
-		return key_senderror(so, m, error);
-	}
+	newsav->state = SADB_SASTATE_MATURE;
+	LIST_INSERT_TAIL(&sah->savtree[SADB_SASTATE_MATURE], newsav,
+	    secasvar, chain);
 
 	key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 	KEY_FREESAV(&sav);
@@ -5486,23 +5486,29 @@ key_api_add(struct socket *so, struct mbuf *m,
 		IPSECLOG(LOG_DEBUG, "SA already exists.\n");
 		return key_senderror(so, m, EEXIST);
 	}
-	newsav = KEY_NEWSAV(m, mhp, newsah, &error);
+	newsav = KEY_NEWSAV(m, mhp, &error);
 	if (newsav == NULL) {
 		return key_senderror(so, m, error);
 	}
+	newsav->sah = newsah;
 
 	error = key_handle_natt_info(newsav, mhp);
 	if (error != 0) {
-		KEY_FREESAV(&newsav);
+		key_delsav(newsav);
 		return key_senderror(so, m, EINVAL);
 	}
 
-	/* check SA values to be mature. */
-	error = key_mature(newsav);
+	error = key_init_xform(newsav);
 	if (error != 0) {
-		KEY_FREESAV(&newsav);
+		key_delsav(newsav);
 		return key_senderror(so, m, error);
 	}
+
+	/* add to satree */
+	newsav->refcnt = 1;
+	newsav->state = SADB_SASTATE_MATURE;
+	LIST_INSERT_TAIL(&newsah->savtree[SADB_SASTATE_MATURE], newsav,
+	    secasvar, chain);
 
 	/*
 	 * don't call key_freesav() here, as we would like to keep the SA
