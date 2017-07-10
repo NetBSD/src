@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.168 2017/07/07 01:37:34 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.169 2017/07/10 07:27:35 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.168 2017/07/07 01:37:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.169 2017/07/10 07:27:35 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -434,6 +434,7 @@ static int key_setsaval (struct secasvar *, struct mbuf *,
 	const struct sadb_msghdr *);
 static void key_freesaval(struct secasvar *);
 static int key_mature (struct secasvar *);
+static void key_clear_xform(struct secasvar *);
 static struct mbuf *key_setdumpsa (struct secasvar *, u_int8_t,
 	u_int8_t, u_int32_t, u_int32_t);
 static struct mbuf *key_setsadbxport (u_int16_t, u_int16_t);
@@ -2975,19 +2976,10 @@ error:
 	return NULL;
 }
 
-/*
- * free() SA variable entry.
- */
+
 static void
-key_delsav(struct secasvar *sav)
+key_clear_xform(struct secasvar *sav)
 {
-
-	KASSERT(sav != NULL);
-	KASSERTMSG(sav->refcnt == 0, "reference count %u > 0", sav->refcnt);
-
-	/* remove from SA header */
-	KASSERT(__LIST_CHAINED(sav));
-	LIST_REMOVE(sav, chain);
 
 	/*
 	 * Cleanup xform state.  Note that zeroize'ing causes the
@@ -3004,7 +2996,23 @@ key_delsav(struct secasvar *sav)
 			explicit_memset(_KEYBUF(sav->key_enc), 0,
 			    _KEYLEN(sav->key_enc));
 	}
+}
 
+/*
+ * free() SA variable entry.
+ */
+static void
+key_delsav(struct secasvar *sav)
+{
+
+	KASSERT(sav != NULL);
+	KASSERTMSG(sav->refcnt == 0, "reference count %u > 0", sav->refcnt);
+
+	/* remove from SA header */
+	KASSERT(__LIST_CHAINED(sav));
+	LIST_REMOVE(sav, chain);
+
+	key_clear_xform(sav);
 	key_freesaval(sav);
 	kmem_intr_free(sav, sizeof(*sav));
 
@@ -3328,7 +3336,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	return 0;
 
  fail:
-	/* initialization */
+	key_clear_xform(sav);
 	key_freesaval(sav);
 
 	return error;
