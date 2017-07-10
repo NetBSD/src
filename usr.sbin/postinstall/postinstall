@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.214 2017/04/17 18:41:48 martin Exp $
+# $NetBSD: postinstall,v 1.214.4.1 2017/07/10 13:06:45 martin Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1427,6 +1427,7 @@ newsyslog
 nfsd
 nfslocking
 npf
+npfd
 ntpd
 ntpdate
 perusertmp
