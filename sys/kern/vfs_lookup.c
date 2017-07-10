@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.207 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.207.2.1 2017/07/10 13:02:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.207 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.207.2.1 2017/07/10 13:02:47 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -673,8 +673,10 @@ namei_start(struct namei_state *state, int isnfsd,
 	}
 
 	/* NDAT may feed us with a non directory namei_getstartdir */
-	if (startdir->v_type != VDIR)
+	if (startdir->v_type != VDIR) {
+		vrele(startdir);
 		return ENOTDIR;
+	}
 
 	vn_lock(startdir, LK_EXCLUSIVE | LK_RETRY);
 
