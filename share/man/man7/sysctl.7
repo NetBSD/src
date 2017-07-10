@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.114 2017/07/03 21:30:59 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.115 2017/07/10 22:41:46 joerg Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd March 25, 2017
+.Dd July 2, 2017
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -2381,6 +2381,8 @@ privilege may change the value.
 .It vm.uvmexp2	struct uvmexp_sysctl	no
 .It vm.vmmeter	struct vmtotal	no
 .It vm.proc.map	struct kinfo_vmentry	no
+.It vm.guard_size	unsigned int	no
+.It vm.thread_guard_size	unsigned int	yes
 .El
 .Bl -tag -width "123456"
 .It Li vm.anonmax ( Dv VM_ANONMAX )
@@ -2443,6 +2445,11 @@ The returned data consists of a
 Return system wide virtual memory statistics.
 The returned data consists of a
 .Vt struct uvmexp_sysctl .
+.It Li vm.guard_size
+Return system wide guard size for the main thread of a program.
+.It Li vm.thread_guard_size
+Return system wide default size for the guard area of all other threads
+of a program.
 .\" XXX vm.idlezero
 .El
 .Ss The ddb.* subtree ( Dv CTL_DDB )
