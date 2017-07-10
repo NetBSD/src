@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.57 2017/07/07 01:37:34 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.58 2017/07/10 07:17:12 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.57 2017/07/07 01:37:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.58 2017/07/10 07:17:12 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -249,8 +249,10 @@ ah_zeroize(struct secasvar *sav)
 {
 	int err;
 
-	if (sav->key_auth)
-		memset(_KEYBUF(sav->key_auth), 0, _KEYLEN(sav->key_auth));
+	if (sav->key_auth) {
+		explicit_memset(_KEYBUF(sav->key_auth), 0,
+		    _KEYLEN(sav->key_auth));
+	}
 
 	err = crypto_freesession(sav->tdb_cryptoid);
 	sav->tdb_cryptoid = 0;
