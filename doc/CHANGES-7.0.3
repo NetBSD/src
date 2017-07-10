@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.46 2017/07/08 17:17:41 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.47 2017/07/10 13:16:27 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -2986,4 +2986,10 @@ xsrc/xfree/xc/programs/Xserver/Xi/sendexev.c	patch
 
 	Fix CVE-2017-10971 and CVE-2017-10972.
 	[mrg, ticket #1446]
+
+sys/kern/vfs_lookup.c				1.208
+
+	Fix vnode leak on error, introduced by the openat family changes
+	in -r1.200.
+	[dh, ticket #1451]
 
