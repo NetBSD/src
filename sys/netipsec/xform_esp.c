@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.58 2017/07/07 01:37:34 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.59 2017/07/10 07:17:12 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.58 2017/07/07 01:37:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.59 2017/07/10 07:17:12 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -283,8 +283,10 @@ esp_zeroize(struct secasvar *sav)
 	/* NB: ah_zerorize free's the crypto session state */
 	int error = ah_zeroize(sav);
 
-	if (sav->key_enc)
-		memset(_KEYBUF(sav->key_enc), 0, _KEYLEN(sav->key_enc));
+	if (sav->key_enc) {
+		explicit_memset(_KEYBUF(sav->key_enc), 0,
+		    _KEYLEN(sav->key_enc));
+	}
 	sav->tdb_encalgxform = NULL;
 	sav->tdb_xform = NULL;
 	return error;
