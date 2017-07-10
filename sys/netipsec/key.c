@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.169 2017/07/10 07:27:35 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.170 2017/07/10 07:40:23 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.169 2017/07/10 07:27:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.170 2017/07/10 07:40:23 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -5492,8 +5492,10 @@ key_api_add(struct socket *so, struct mbuf *m,
 	}
 
 	error = key_handle_natt_info(newsav, mhp);
-	if (error != 0)
+	if (error != 0) {
+		KEY_FREESAV(&newsav);
 		return key_senderror(so, m, EINVAL);
+	}
 
 	/* check SA values to be mature. */
 	error = key_mature(newsav);
