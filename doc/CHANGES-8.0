@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.21 2017/07/07 14:12:21 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.22 2017/07/10 13:09:24 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -1887,4 +1887,43 @@ xsrc/external/mit/xorg-server/dist/dix/swapreq.c	1.2
 
 	CVE-2017-10971 and CVE-2017-10972: apply fixes to the event loop.
 	[mrg, ticket #109]
+
+sys/arch/x86/x86/lapic.c			1.59
+
+	PR/52266: use rdmsr_safe(9) instead of rdmsr(9) for compatibility
+	with old machines.
+	[nonaka, ticket #110]
+
+sys/dev/sdmmc/ld_sdmmc.c			1.29
+
+	The config_* APIs are not MPSAFE, so make sure the deferred attach
+	thread holds KERNEL_LOCK.
+	[jmcneill, ticket #111]
+
+common/lib/libc/stdlib/_strtol.h		1.11
+common/lib/libc/stdlib/_strtoul.h		1.11
+tests/lib/libc/stdlib/t_strtol.c		1.7
+
+	Fix ISO C compliance: strtol of "0xX" should give the largest valid
+	numeric prefix, which is 0.
+	[joerg, ticket #112]
+
+tests/lib/libc/db/h_lfsr.c			1.2
+
+	Reduce the number of iterations in the bsize_torture test from 65535
+	to 1000 to make the ATF test suite as a whole take less time.  Before
+	the change, this single test case could take more than two hours to
+	run on a qemu emulated ARM.
+	[jmcneill, ticket #115]
+
+sys/kern/vfs_lookup.c				1.208
+
+	Fix vnode leak on error, introduced by the openat family changes
+	in -r1.200.
+	[dh, ticket #116]
+
+usr.sbin/postinstall/postinstall		1.216
+
+	Add npfd to the list of rc.d scripts to check.
+	[simonb, ticket #117]
 
