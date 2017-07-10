@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.34 2014/01/20 14:11:03 yamt Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.35 2017/07/10 22:49:40 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.34 2014/01/20 14:11:03 yamt Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.35 2017/07/10 22:49:40 perseant Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -923,15 +923,15 @@ reswitch:	switch (ch) {
 			sign = '+';
 			goto rflag;
 		case '\'':
-			flags |= GROUPING;
 			thousands_sep = *(localeconv_l(loc)->thousands_sep);
 			grouping = localeconv_l(loc)->grouping;
-			/* If the locale doesn't define the above, use sane
-			 * defaults - otherwise silly things happen! */
-			if (thousands_sep == 0)
-				thousands_sep = ',';
-			if (!grouping || !*grouping)
-				grouping = "\3";
+			/* Use grouping if defined by locale */
+			if (thousands_sep && grouping && *grouping)
+				flags |= GROUPING;
+			else {
+				thousands_sep = '\0';
+				grouping = "";
+			}
 			goto rflag;
 		case '.':
 			if ((ch = *fmt++) == '*') {
