@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.29 2017/07/08 18:38:57 jmcneill Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.30 2017/07/10 10:35:07 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.29 2017/07/08 18:38:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.30 2017/07/10 10:35:07 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -153,8 +153,13 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	ld->sc_discard = ld_sdmmc_discard;
 
 	/*
-	 * It is avoided that the error occurs when the card attaches it,
-	 * when wedge is supported.
+	 * Defer attachment of ld + disk subsystem to a thread.
+	 *
+	 * This is necessary because wedge autodiscover needs to
+	 * open and call into the ld driver, which could deadlock
+	 * when the sdmmc driver isn't ready in early bootstrap.
+	 *
+	 * Don't mark thread as MPSAFE to keep aprint output sane.
 	 */
 	config_pending_incr(self);
 	if (kthread_create(PRI_NONE, 0, NULL,
