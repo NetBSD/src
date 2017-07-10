@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.26 2017/07/09 04:37:40 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.27 2017/07/10 13:12:40 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -2476,4 +2476,10 @@ libexec/ld.elf_so/reloc.c			1.110
 	binaries are run on newer systems.  Explicitly ignore these
 	bogus relocations.
 	[uwe, ticket #1411]
+
+sys/kern/vfs_lookup.c				1.208
+
+	Fix vnode leak on error, introduced by the openat family changes
+	in -r1.200.
+	[dh, ticket #1451]
 
