@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.9 2017/07/05 19:30:51 chs Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.10 2017/07/10 09:44:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.9 2017/07/05 19:30:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.10 2017/07/10 09:44:14 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -186,7 +186,7 @@ fdt_add_reserved_memory_range(uint64_t addr, uint64_t size)
 	if (error != 0)
 		printf("MEM ERROR: add %llx-%llx failed: %d\n",
 		    addr, size, error);
-	DPRINTF("MEM: res %llx-%llx: %d\n", addr, size);
+	DPRINTF("MEM: res %llx-%llx: %d\n", addr, size, error);
 }
 
 /*
