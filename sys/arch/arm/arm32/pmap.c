@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.349 2017/05/24 06:31:07 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.350 2017/07/10 09:30:58 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.349 2017/05/24 06:31:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.350 2017/07/10 09:30:58 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3361,7 +3361,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #endif /* !ARM_MMU_EXTENDED */
 
 #ifndef ARM_MMU_EXTENDED
-		UVMHIST_LOG(maphist, "  is_cached %d cs 0x%08x\n",
+		UVMHIST_LOG(maphist, "  is_cached %d cs 0x%08x",
 		    is_cached, pm->pm_cstate.cs_all, 0, 0);
 
 		if (pg != NULL) {
