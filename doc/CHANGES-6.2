@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.288 2017/07/06 15:30:16 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.289 2017/07/11 21:29:39 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -17925,4 +17925,29 @@ sys/miscfs/procfs/procfs_map.c			1.45
 	Maps don't change that frequently between reads, so don't give
 	up and do what linux does (support reading from an offset).
 	[tsutsui, ticket #1434]
+
+common/lib/libc/stdlib/_strtoul.h		1.10
+
+	Set *endptr in all paths out of strtoul and family.
+	[riastradh, ticket #1421]
+
+sbin/ping/ping.c				1.113 via patch
+
+	PR bin/36997 Zafer Aydogan: ping doesn't validate numeric inputs
+	enough.
+	[dholland, ticket #1424]
+
+etc/ssh/ssh_known_hosts				1.10
+
+	add ssh-ed25519 keys
+	verify keys (split vir functions off from mollari)
+	[spz, ticket #1447]
+
+xsrc/external/mit/xorg-server/dist/Xi/sendexev.c patch
+xsrc/external/mit/xorg-server/dist/dix/events.c	patch
+xsrc/external/mit/xorg-server/dist/dix/swapreq.c patch
+xsrc/xfree/xc/programs/Xserver/Xi/sendexev.c	patch
+
+	Fix CVE-2017-10971 and CVE-2017-10972.
+	[mrg, ticket #1459]
 
