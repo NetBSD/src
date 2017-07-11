@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.150 2017/07/06 15:17:47 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.151 2017/07/11 20:42:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -1043,13 +1043,16 @@ extern void (*pmap_zero_page_func)(paddr_t);
  * Note that the compiler will usually fold these at compile time.
  */
 #define	L1_S_PROT(ku, pr)	((((ku) == PTE_USER) ? L1_S_PROT_U : 0) | \
-				 (((pr) & VM_PROT_WRITE) ? L1_S_PROT_W : L1_S_PROT_RO))
+	(((pr) & VM_PROT_WRITE) ? L1_S_PROT_W :				  \
+	    (L1_S_PROT_W == L1_S_PROT_RO ? 0 : L1_S_PROT_RO)))
 
 #define	L2_L_PROT(ku, pr)	((((ku) == PTE_USER) ? L2_L_PROT_U : 0) | \
-				 (((pr) & VM_PROT_WRITE) ? L2_L_PROT_W : L2_L_PROT_RO))
+	(((pr) & VM_PROT_WRITE) ? L2_L_PROT_W :				  \
+	    (L2_L_PROT_W == L2_L_PROT_RO ? 0 : L2_L_PROT_RO)))
 
 #define	L2_S_PROT(ku, pr)	((((ku) == PTE_USER) ? L2_S_PROT_U : 0) | \
-				 (((pr) & VM_PROT_WRITE) ? L2_S_PROT_W : L2_S_PROT_RO))
+	(((pr) & VM_PROT_WRITE) ? L2_S_PROT_W :				  \
+	    (L2_S_PROT_W == L2_S_PROT_RO ? 0 : L2_S_PROT_RO)))
 
 /*
  * Macros to test if a mapping is mappable with an L1 SuperSection,
