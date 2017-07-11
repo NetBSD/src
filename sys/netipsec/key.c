@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.174 2017/07/11 04:55:39 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.175 2017/07/11 09:49:15 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.174 2017/07/11 04:55:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.175 2017/07/11 09:49:15 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -2747,8 +2747,8 @@ key_spdexpire(struct secpolicy *sp)
 	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
 	lt->sadb_lifetime_allocations = 0;
 	lt->sadb_lifetime_bytes = 0;
-	lt->sadb_lifetime_addtime = sp->created + time_second - time_uptime;
-	lt->sadb_lifetime_usetime = sp->lastused + time_second - time_uptime;
+	lt->sadb_lifetime_addtime = time_mono_to_wall(sp->created);
+	lt->sadb_lifetime_usetime = time_mono_to_wall(sp->lastused);
 	lt = (struct sadb_lifetime *)(mtod(m, char *) + len / 2);
 	lt->sadb_lifetime_len = PFKEY_UNIT64(sizeof(struct sadb_lifetime));
 	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
@@ -3480,8 +3480,10 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 				continue;
 			l = PFKEY_UNUNIT64(((struct sadb_ext *)sav->lft_c)->sadb_ext_len);
 			memcpy(&lt, sav->lft_c, sizeof(struct sadb_lifetime));
-			lt.sadb_lifetime_addtime += time_second - time_uptime;
-			lt.sadb_lifetime_usetime += time_second - time_uptime;
+			lt.sadb_lifetime_addtime =
+			    time_mono_to_wall(lt.sadb_lifetime_addtime);
+			lt.sadb_lifetime_usetime =
+			    time_mono_to_wall(lt.sadb_lifetime_usetime);
 			p = &lt;
 			break;
 
