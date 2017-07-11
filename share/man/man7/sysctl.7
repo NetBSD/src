@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.115 2017/07/10 22:41:46 joerg Exp $
+.\"	$NetBSD: sysctl.7,v 1.116 2017/07/11 08:32:17 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -315,7 +315,7 @@ privilege may change the value.
 .It kern.maxproc	integer	yes
 .It kern.maxptys	integer	yes
 .It kern.maxvnodes	integer	yes
-.It kern.messages	integer yes
+.It kern.messages	integer	yes
 .It kern.mbuf	node	not applicable
 .It kern.memlock	integer	no
 .It kern.memlock_range	integer	no
@@ -771,14 +771,14 @@ otherwise\ 0.
 .It Li kern.messages
 Kernel console message verbosity.
 See
-.Sy \<sys/reboot.h\>
+.Aq Pa sys/reboot.h
 .Bl -column "verbosity" "setting" -offset indent
-.It Sy Verbosity       Setting
-.It \ \ \ \ 0  Silent Sy AB_SILENT
-.It \ \ \ \ 1  Quiet Sy AB_QUIET
-.It \ \ \ \ 2  Normal Sy AB_NORMAL
-.It \ \ \ \ 3  Verbose Sy AB_VERBOSE
-.It \ \ \ \ 4  Debug Sy AB_DEBUG
+.It Sy Value Ta Sy Verbosity Ta Sy sys/reboot.h equivalent
+.It 0 Ta Silent Ta Sy AB_SILENT
+.It 1 Ta Quiet Ta Sy AB_QUIET
+.It 2 Ta Normal Ta Sy AB_NORMAL
+.It 3 Ta Verbose Ta Sy AB_VERBOSE
+.It 4 Ta Debug Ta Sy AB_DEBUG
 .El
 .It Li kern.module
 Settings related to kernel modules.
@@ -2428,7 +2428,7 @@ The returned data consists of a
 A flag which controls whether user processes can map virtual address\ 0.
 .It Li vm.proc.map ( Dv VM_PROC )
 The third level is
-.dv VM_PROC_MAP ,
+.Dv VM_PROC_MAP ,
 the fourth is the pid of the process to display the vm object entries for, and
 the fifth is the size of
 .Vt struct kinfo_vmentry .
