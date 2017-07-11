@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.11 2017/07/07 08:42:15 msaitoh Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.12 2017/07/11 10:10:51 msaitoh Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -126,11 +126,11 @@ wbsio_probe(device_t parent, cfdata_t match, void *aux)
 	case WBSIO_ID_W83697HF:
 	case WBSIO_ID_W83697UG:
 	case WBSIO_ID_NCT5104D:
-	case WBSIO_ID_NCT6775:
+	case WBSIO_ID_NCT6775F:
 	case WBSIO_ID_NCT6776F:
-	case WBSIO_ID_NCT6779:
-	case WBSIO_ID_NCT6791:
-	case WBSIO_ID_NCT6792:
+	case WBSIO_ID_NCT6779D:
+	case WBSIO_ID_NCT6791D:
+	case WBSIO_ID_NCT6792D:
 		ia->ia_nio = 1;
 		ia->ia_io[0].ir_size = WBSIO_IOSIZE;
 		ia->ia_niomem = 0;
@@ -212,29 +212,33 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 		vendor = "Nuvoton";
 		printf("NCT5104D");
 		break;
-	case WBSIO_ID_NCT6775:
+	case WBSIO_ID_NCT6775F:
 		vendor = "Nuvoton";
-		desc = "NCT6775";
+		desc = "NCT6775F";
 		break;
 	case WBSIO_ID_NCT6776F:
 		vendor = "Nuvoton";
 		desc = "NCT6776F";
 		break;
-	case WBSIO_ID_NCT6779:
+	case WBSIO_ID_NCT6779D:
 		vendor = "Nuvoton";
-		desc = "NCT6779";
+		desc = "NCT6779D";
 		break;
-	case WBSIO_ID_NCT6791:
+	case WBSIO_ID_NCT6791D:
 		vendor = "Nuvoton";
-		desc = "NCT6791";
+		desc = "NCT6791D";
 		break;
-	case WBSIO_ID_NCT6792:
+	case WBSIO_ID_NCT6792D:
 		vendor = "Nuvoton";
-		desc = "NCT6792";
+		desc = "NCT6792D";
 		break;
-	case WBSIO_ID_NCT6793:
+	case WBSIO_ID_NCT6793D:
 		vendor = "Nuvoton";
-		desc = "NCT6793";
+		desc = "NCT6793D";
+		break;
+	case WBSIO_ID_NCT6795D:
+		vendor = "Nuvoton";
+		desc = "NCT6795D";
 		break;
 	}
 	/* Read device revision */
