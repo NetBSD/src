@@ -1,4 +1,3 @@
-/* $Id */
 /* $OpenBSD: wbsioreg.h,v 1.4 2015/01/02 23:02:54 chris Exp $ */
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -47,13 +46,14 @@
 #define WBSIO_ID_W83667HG	0xa5
 #define WBSIO_ID_W83627DHGP	0xb0
 #define WBSIO_ID_W83667HGB	0xb3
-#define WBSIO_ID_NCT6775	0xb4
+#define WBSIO_ID_NCT6775F	0xb4
 #define WBSIO_ID_NCT6776F	0xc3
-#define WBSIO_ID_NCT5104D	0xc4 /* XXX 6102 or 6106? */
-#define WBSIO_ID_NCT6779	0xc5
-#define WBSIO_ID_NCT6791	0xc8
-#define WBSIO_ID_NCT6792	0xc9
-#define WBSIO_ID_NCT6793	0xd1
+#define WBSIO_ID_NCT5104D	0xc4 /* 610[246]D */
+#define WBSIO_ID_NCT6779D	0xc5
+#define WBSIO_ID_NCT6791D	0xc8
+#define WBSIO_ID_NCT6792D	0xc9
+#define WBSIO_ID_NCT6793D	0xd1
+#define WBSIO_ID_NCT6795D	0xd3
 
 /* Logical Device Number (LDN) Assignments */
 #define WBSIO_LDN_HM		0x0b
