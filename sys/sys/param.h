@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.543 2017/06/04 07:14:56 snj Exp $	*/
+/*	$NetBSD: param.h,v 1.544 2017/07/11 15:39:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -361,7 +361,7 @@
  * This is the maximum individual filename component length enforced by
  * namei. Filesystems cannot exceed this limit. The upper bound for that
  * limit is NAME_MAX. We don't bump it for now, for compatibility with
- * old binaries during the time where MAXPATHLEN was 511 and NAME_MAX was
+ * old binaries during the time where MAXNAMLEN was 511 and NAME_MAX was
  * 255
  */
 #define	KERNEL_NAME_MAX	255
