@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.95 2017/07/06 15:19:22 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.96 2017/07/11 21:29:14 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -11944,4 +11944,29 @@ sys/kern/subr_xcall.c				1.19
 
 	Fix a race condition of low priority xcall.  PR kern/51632.
 	[ozaki-r, ticket #1419]
+
+common/lib/libc/stdlib/_strtoul.h		1.10
+
+	Set *endptr in all paths out of strtoul and family.
+	[riastradh, ticket #1421]
+
+sbin/ping/ping.c				1.113 via patch
+
+	PR bin/36997 Zafer Aydogan: ping doesn't validate numeric inputs
+	enough.
+	[dholland, ticket #1424]
+
+etc/ssh/ssh_known_hosts				1.10
+
+	add ssh-ed25519 keys
+	verify keys (split vir functions off from mollari)
+	[spz, ticket #1447]
+
+xsrc/external/mit/xorg-server/dist/Xi/sendexev.c patch
+xsrc/external/mit/xorg-server/dist/dix/events.c	patch
+xsrc/external/mit/xorg-server/dist/dix/swapreq.c patch
+xsrc/xfree/xc/programs/Xserver/Xi/sendexev.c	patch
+
+	Fix CVE-2017-10971 and CVE-2017-10972.
+	[mrg, ticket #1459]
 
