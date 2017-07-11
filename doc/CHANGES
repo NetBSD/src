@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2299 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2300 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -41,3 +41,6 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	arm: Add support for Allwinner A83T SoC. [jmcneill 20170707]
 	MAKEDEV(8): Regenerate, documenting lua, dk, plcom, wmcom, hdmicec, mfi,
 		nvme, nvme ns, tpm, and dtrace devices. [sevan 20170710]
+	wbsio(4): Add support for NCT6795. [msaitoh 20170711]
+	lm(4): Add support for NCT5174D, NCT6775F, NCT6779D and NCT679[1235]D.
+		[msaitoh 20170711]
