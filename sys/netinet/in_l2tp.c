@@ -1,4 +1,4 @@
-/*	$NetBSD: in_l2tp.c,v 1.2 2017/03/30 23:13:54 knakahara Exp $	*/
+/*	$NetBSD: in_l2tp.c,v 1.3 2017/07/11 05:03:45 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.2 2017/03/30 23:13:54 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.3 2017/07/11 05:03:45 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -108,8 +108,10 @@ in_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 
 	ifp = &sc->l2tp_ec.ec_if;
 	error = l2tp_check_nesting(ifp, m);
-	if (error)
+	if (error) {
+		m_freem(m);
 		goto looped;
+	}
 
 #ifdef NETYET
 /* TODO: support ALTQ for innner frame */
