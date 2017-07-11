@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.5 2017/07/06 02:34:00 chs Exp $ */
+/* $NetBSD: dbsym.c,v 1.6 2017/07/11 21:19:42 joerg Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1996 Christopher G. Demetriou.\
   Copyright 2001 Simon Burge.\
   All rights reserved.");
-__RCSID("$NetBSD: dbsym.c,v 1.5 2017/07/06 02:34:00 chs Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.6 2017/07/11 21:19:42 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -426,7 +426,7 @@ load_symtab(bfd *abfd, int fd, char **symtab, u_int32_t *symtabsize)
 	shstridx = (ISELF64
 	   ? bfd_get_16(abfd, e64_hdr.e_shstrndx)
 	   : bfd_get_16(abfd, e32_hdr.e_shstrndx));
-	shstrtab = malloc(shstridx);
+	shstrtab = malloc(SH_SIZE(shstridx));
 	if (shstrtab == NULL)
 		goto out;
 	if (pread(fd, shstrtab, SH_SIZE(shstridx), SH_OFFSET(shstridx)) != 
