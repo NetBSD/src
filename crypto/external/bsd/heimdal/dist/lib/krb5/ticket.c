@@ -1,4 +1,4 @@
-/*	$NetBSD: ticket.c,v 1.3 2017/07/11 17:45:31 christos Exp $	*/
+/*	$NetBSD: ticket.c,v 1.4 2017/07/11 21:52:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -708,7 +708,7 @@ _krb5_extract_ticket(krb5_context context,
     ret = _krb5_principalname2krb5_principal (context,
 					      &tmp_principal,
 					      rep->enc_part.sname,
-					      rep->enc_part.realm);
+					      rep->enc_part.srealm);
     if (ret)
 	goto out;
     if((flags & EXTRACT_TICKET_ALLOW_SERVER_MISMATCH) == 0){
