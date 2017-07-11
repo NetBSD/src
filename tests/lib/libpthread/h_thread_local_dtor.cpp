@@ -1,11 +1,5 @@
-/*	$NetBSD: atexit.h,v 1.11 2008/04/28 20:23:00 martin Exp $	*/
-
-/*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+/*
+ * Copyright (c) 2016 Tavian Barnes. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,5 +23,58 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	__cxa_atexit(void (*)(void *), void *, void *);
-void	__cxa_finalize(void *);
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: h_thread_local_dtor.cpp,v 1.1 2017/07/11 15:21:36 joerg Exp $");
+
+#include <cstdlib>
+#include <thread>
+
+static int seq;
+
+class OrderChecker {
+public:
+  explicit OrderChecker(int n) : n_{n} { }
+
+  ~OrderChecker() {
+    if (seq != n_) {
+      printf("Unexpected sequence point: %d\n", 3);
+      _Exit(1);
+    }
+    ++seq;
+  }
+
+private:
+  int n_;
+};
+
+template <int ID>
+class CreatesThreadLocalInDestructor {
+public:
+  ~CreatesThreadLocalInDestructor() {
+    thread_local OrderChecker checker{ID};
+  }
+};
+
+OrderChecker global{7};
+
+void thread_fn() {
+  static OrderChecker fn_static{5};
+  thread_local CreatesThreadLocalInDestructor<2> creates_tl2;
+  thread_local OrderChecker fn_thread_local{1};
+  thread_local CreatesThreadLocalInDestructor<0> creates_tl0;
+}
+
+int main() {
+  static OrderChecker fn_static{6};
+
+  std::thread{thread_fn}.join();
+  if (seq != 3) {
+    printf("Unexpected sequence point: %d\n", 3);
+    _Exit(1);
+  }
+
+  thread_local OrderChecker fn_thread_local{4};
+  thread_local CreatesThreadLocalInDestructor<3> creates_tl;
+
+  return 0;
+}
