@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2014/08/25 20:40:53 joerg Exp $
+# $NetBSD: Makefile,v 1.9 2017/07/11 15:21:36 joerg Exp $
 #
 
 NOMAN=		# defined
@@ -7,7 +7,7 @@ NOMAN=		# defined
 
 .if ${MKPIC} != "no"
 
-SUBDIR+=	helper_dso1 .WAIT helper_dso2 .WAIT \
+SUBDIR+=	helper_dso1 helper_dso3 .WAIT helper_dso2 .WAIT \
 		helper_ifunc_dso \
 		helper_symver_dso0 .WAIT helper_symver_dso1 .WAIT \
 		helper_symver_dso2 .WAIT \
@@ -22,7 +22,7 @@ LDADD.t_dlvsym=		-Wl,-rpath,${TESTSDIR}/h_helper_symver_dso2
 LDADD.t_ifunc=		-Wl,-rpath,${TESTSDIR} -lutil
 DPADD.t_ifunc=		${LIBUTIL}
 
-TESTS_SH+=		t_df_1_noopen t_dl_symver
+TESTS_SH+=		t_df_1_noopen t_dl_symver t_thread_local_dtor
 
 BINDIR=			${TESTSDIR}
 PROGS+=			h_df_1_noopen1
@@ -31,6 +31,9 @@ SRCS.h_df_1_noopen1=	h_df_1_noopen.c
 PROGS+=			h_df_1_noopen2
 SRCS.h_df_1_noopen2=	h_df_1_noopen.c
 LDADD.h_df_1_noopen2=	-lpthread
+
+PROGS+=			h_thread_local_dtor
+LDADD.h_thread_local_dtor=	-Wl,-rpath,${TESTSDIR}  -lpthread
 
 PROGS+=			h_ifunc
 SRCS.h_ifunc=		h_ifunc.c
