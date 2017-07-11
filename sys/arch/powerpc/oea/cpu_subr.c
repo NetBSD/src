@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.84 2017/07/07 23:45:53 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.85 2017/07/11 03:07:22 maya Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.84 2017/07/07 23:45:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.85 2017/07/11 03:07:22 maya Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -487,8 +487,6 @@ cpu_attach_common(device_t self, int id)
 	return (ci);
 }
 
-#define HAVE_64BIT_HID0 (defined(PPC_OEA64_BRIDGE) || defined(_ARCH_PPC64))
-
 void
 cpu_setup(device_t self, struct cpu_info *ci)
 {
@@ -497,7 +495,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	const char *bitmask;
 	char hidbuf[128];
 	char model[80];
-#if HAVE_64BIT_HID0
+#if defined(PPC_OEA64_BRIDGE) || defined(_ARCH_PPC64)
 	char hidbuf_u[128];
 	const char *bitmasku = NULL;
 #endif
@@ -663,7 +661,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	case IBM970FX:
 	case IBM970MP:
 		bitmask = HID0_970_BITMASK;
-#if HAVE_64BIT_HID0
+#if defined(PPC_OEA64_BRIDGE) || defined(_ARCH_PPC64)
 		bitmasku = HID0_970_BITMASK_U;
 #endif
 		break;
@@ -672,7 +670,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 		break;
 	}
 	
-#if HAVE_64BIT_HID0
+#if defined(PPC_OEA64_BRIDGE) || defined(_ARCH_PPC64)
 	if (bitmasku != NULL) {
 		snprintb(hidbuf, sizeof hidbuf, bitmask, hid0 & 0xffffffff);
 		snprintb(hidbuf_u, sizeof hidbuf_u, bitmasku, hid0 >> 32);
