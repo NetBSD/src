@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.173 2017/07/11 04:50:59 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.174 2017/07/11 04:55:39 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.173 2017/07/11 04:50:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.174 2017/07/11 04:55:39 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -427,7 +427,7 @@ static struct secasvar *key_newsav(struct mbuf *,
 	key_newsav(m, sadb, e, __func__, __LINE__)
 static void key_delsav (struct secasvar *);
 static struct secashead *key_getsah(const struct secasindex *, int);
-static struct secasvar *key_checkspidup (const struct secasindex *, u_int32_t);
+static bool key_checkspidup(const struct secasindex *, u_int32_t);
 static struct secasvar *key_getsavbyspi (struct secashead *, u_int32_t);
 static int key_setsaval (struct secasvar *, struct mbuf *,
 	const struct sadb_msghdr *);
@@ -3033,7 +3033,7 @@ key_getsah(const struct secasindex *saidx, int flag)
  *	NULL	: not found
  *	others	: found, pointer to a SA.
  */
-static struct secasvar *
+static bool
 key_checkspidup(const struct secasindex *saidx, u_int32_t spi)
 {
 	struct secashead *sah;
@@ -3042,7 +3042,7 @@ key_checkspidup(const struct secasindex *saidx, u_int32_t spi)
 	/* check address family */
 	if (saidx->src.sa.sa_family != saidx->dst.sa.sa_family) {
 		IPSECLOG(LOG_DEBUG, "address family mismatched.\n");
-		return NULL;
+		return false;
 	}
 
 	/* check all SAD */
@@ -3050,11 +3050,13 @@ key_checkspidup(const struct secasindex *saidx, u_int32_t spi)
 		if (!key_ismyaddr((struct sockaddr *)&sah->saidx.dst))
 			continue;
 		sav = key_getsavbyspi(sah, spi);
-		if (sav != NULL)
-			return sav;
+		if (sav != NULL) {
+			KEY_FREESAV(&sav);
+			return true;
+		}
 	}
 
-	return NULL;
+	return false;
 }
 
 /*
@@ -3081,8 +3083,10 @@ key_getsavbyspi(struct secashead *sah, u_int32_t spi)
 				continue;
 			}
 
-			if (sav->spi == spi)
+			if (sav->spi == spi) {
+				SA_ADDREF(sav);
 				return sav;
+			}
 		}
 	}
 
@@ -4995,7 +4999,7 @@ key_do_getnewspi(const struct sadb_spirange *spirange,
 	}
 
 	if (spmin == spmax) {
-		if (key_checkspidup(saidx, htonl(spmin)) != NULL) {
+		if (key_checkspidup(saidx, htonl(spmin))) {
 			IPSECLOG(LOG_DEBUG, "SPI %u exists already.\n", spmin);
 			return 0;
 		}
@@ -5013,7 +5017,7 @@ key_do_getnewspi(const struct sadb_spirange *spirange,
 			/* generate pseudo-random SPI value ranged. */
 			newspi = spmin + (key_random() % (spmax - spmin + 1));
 
-			if (key_checkspidup(saidx, htonl(newspi)) == NULL)
+			if (!key_checkspidup(saidx, htonl(newspi)))
 				break;
 		}
 
@@ -5265,20 +5269,23 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	if (sav->sah->saidx.proto != proto) {
 		IPSECLOG(LOG_DEBUG, "protocol mismatched (DB=%u param=%u)\n",
 		    sav->sah->saidx.proto, proto);
-		return key_senderror(so, m, EINVAL);
+		error = EINVAL;
+		goto error;
 	}
 #ifdef IPSEC_DOSEQCHECK
 	if (sav->spi != sa0->sadb_sa_spi) {
 		IPSECLOG(LOG_DEBUG, "SPI mismatched (DB:%u param:%u)\n",
 		    (u_int32_t)ntohl(sav->spi),
 		    (u_int32_t)ntohl(sa0->sadb_sa_spi));
-		return key_senderror(so, m, EINVAL);
+		error = EINVAL;
+		goto error;
 	}
 #endif
 	if (sav->pid != mhp->msg->sadb_msg_pid) {
 		IPSECLOG(LOG_DEBUG, "pid mismatched (DB:%u param:%u)\n",
 		    sav->pid, mhp->msg->sadb_msg_pid);
-		return key_senderror(so, m, EINVAL);
+		error = EINVAL;
+		goto error;
 	}
 
 	/*
@@ -5297,19 +5304,19 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	error = key_setsaval(newsav, m, mhp);
 	if (error) {
 		key_delsav(newsav);
-		return key_senderror(so, m, error);
+		goto error;
 	}
 
 	error = key_handle_natt_info(newsav, mhp);
 	if (error != 0) {
 		key_delsav(newsav);
-		return key_senderror(so, m, error);
+		goto error;
 	}
 
 	error = key_init_xform(newsav);
 	if (error != 0) {
 		key_delsav(newsav);
-		return key_senderror(so, m, error);
+		goto error;
 	}
 
 	/* add to satree */
@@ -5319,6 +5326,7 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	    secasvar, chain);
 
 	key_sa_chgstate(sav, SADB_SASTATE_DEAD);
+	KEY_FREESAV(&sav);
 	KEY_FREESAV(&sav);
 
     {
@@ -5334,6 +5342,9 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
+error:
+	KEY_FREESAV(&sav);
+	return key_senderror(so, m, error);
 }
 
 /*
@@ -5465,12 +5476,19 @@ key_api_add(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, error);
 	}
 
-	/* create new SA entry. */
+    {
+	struct secasvar *sav;
+
 	/* We can create new SA only if SPI is differenct. */
-	if (key_getsavbyspi(newsah, sa0->sadb_sa_spi)) {
+	sav = key_getsavbyspi(newsah, sa0->sadb_sa_spi);
+	if (sav != NULL) {
+		KEY_FREESAV(&sav);
 		IPSECLOG(LOG_DEBUG, "SA already exists.\n");
 		return key_senderror(so, m, EEXIST);
 	}
+    }
+
+	/* create new SA entry. */
 	newsav = KEY_NEWSAV(m, mhp, &error);
 	if (newsav == NULL) {
 		return key_senderror(so, m, error);
@@ -5711,6 +5729,7 @@ key_api_delete(struct socket *so, struct mbuf *m,
 
 	key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 	KEY_FREESAV(&sav);
+	KEY_FREESAV(&sav);
 
     {
 	struct mbuf *n;
@@ -5868,6 +5887,7 @@ key_api_get(struct socket *so, struct mbuf *m,
 	/* map proto to satype */
 	satype = key_proto2satype(sah->saidx.proto);
 	if (satype == 0) {
+		KEY_FREESAV(&sav);
 		IPSECLOG(LOG_DEBUG, "there was invalid proto in SAD.\n");
 		return key_senderror(so, m, EINVAL);
 	}
@@ -5875,6 +5895,7 @@ key_api_get(struct socket *so, struct mbuf *m,
 	/* create new sadb_msg to reply. */
 	n = key_setdumpsa(sav, SADB_GET, satype, mhp->msg->sadb_msg_seq,
 	    mhp->msg->sadb_msg_pid);
+	KEY_FREESAV(&sav);
 	if (!n)
 		return key_senderror(so, m, ENOBUFS);
 
