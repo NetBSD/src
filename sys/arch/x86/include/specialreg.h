@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.99 2017/06/14 08:45:42 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.100 2017/07/11 14:00:15 gson Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -130,7 +130,7 @@
 #define CPUID_DE	0x00000004	/* has debugging extension */
 #define CPUID_PSE	0x00000008	/* has 4MB page size extension */
 #define CPUID_TSC	0x00000010	/* has time stamp counter */
-#define CPUID_MSR	0x00000020	/* has mode specific registers */
+#define CPUID_MSR	0x00000020	/* has model specific registers */
 #define CPUID_PAE	0x00000040	/* has phys address extension */
 #define CPUID_MCE	0x00000080	/* has machine check exception */
 #define CPUID_CX8	0x00000100	/* has CMPXCHG8B instruction */
