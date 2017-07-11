@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.102.2.1 2012/10/23 19:44:44 riz Exp $	*/
+/*	$NetBSD: ping.c,v 1.102.2.2 2017/07/11 21:16:07 snj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.102.2.1 2012/10/23 19:44:44 riz Exp $");
+__RCSID("$NetBSD: ping.c,v 1.102.2.2 2017/07/11 21:16:07 snj Exp $");
 #endif
 
 #include <stdio.h>
@@ -291,9 +291,17 @@ main(int argc, char *argv[])
 			compat = 1;
 			break;
 		case 'c':
-			npackets = strtol(optarg, &p, 0);
-			if (*p != '\0' || npackets <= 0)
-				errx(1, "Bad/invalid number of packets");
+			l = strtol(optarg, &p, 0);
+			if (*p != '\0' || l <= 0)
+				errx(EXIT_FAILURE,
+				    "Bad/invalid number of packets: %s",
+				    optarg);
+#if INT_MAX < LONG_MAX
+			if (l > INT_MAX)
+				errx(EXIT_FAILURE,
+				    "Too many packets to count: %ld", l);
+#endif
+			npackets = l;
 			break;
 		case 'D':
 			pingflags |= F_DF;
@@ -310,13 +318,29 @@ main(int argc, char *argv[])
 		case 'i':		/* wait between sending packets */
 			interval = strtod(optarg, &p);
 			if (*p != '\0' || interval <= 0)
-				errx(1, "Bad/invalid interval %s", optarg);
+				errx(EXIT_FAILURE, "Bad/invalid interval: %s",
+				    optarg);
+			/*
+			 * In order to avoid overflowing the microseconds
+			 * argument of poll() the interval must be less than
+			 * INT_MAX/1000. Limit it to one second less than
+			 * that to be safe.
+			 */
+			if (interval >= INT_MAX/1000.0 - 1.0)
+				errx(EXIT_FAILURE,
+				    "Timing interval %g too large", interval);
 			break;
 		case 'l':
-			preload = strtol(optarg, &p, 0);
-			if (*p != '\0' || preload < 0)
-				errx(1, "Bad/invalid preload value %s",
-				     optarg);
+			l = strtol(optarg, &p, 0);
+			if (*p != '\0' || l < 0)
+				errx(EXIT_FAILURE, "Bad/invalid preload value: "
+				    "%s", optarg);
+#if INT_MAX < LONG_MAX
+			if (l > INT_MAX)
+				errx(EXIT_FAILURE,
+				    "Too many preload packets: %ld", l);
+#endif
+			preload = l;
 			break;
 		case 'n':
 			pingflags |= F_NUMERIC;
