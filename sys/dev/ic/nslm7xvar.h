@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.29 2016/06/01 02:37:47 pgoyette Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.30 2017/07/11 10:10:51 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -144,9 +144,6 @@
 #define WB_CHIPID_W83627EHF	0xa1
 #define WB_CHIPID_W83627DHG	0xc1
 
-/* wbsio Device IDs */
-#define WBSIO_ID_NCT6776F	0xc3
-
 /* Config bits */
 #define WB_CONFIG_VMR9		0x01
 
@@ -154,7 +151,7 @@
 #define WB_VREF			3600
 #define WB_W83627EHF_VREF	2048
 
-#define WB_MAX_SENSORS		19
+#define WB_MAX_SENSORS		36
 
 struct lm_softc {
 	device_t sc_dev;
