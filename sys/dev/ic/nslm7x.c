@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.64 2016/06/01 08:06:38 pgoyette Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.65 2017/07/11 10:10:51 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.64 2016/06/01 08:06:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.65 2017/07/11 10:10:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.64 2016/06/01 08:06:38 pgoyette Exp $")
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#include <dev/isa/wbsioreg.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -93,6 +94,8 @@ static void wb_refresh_temp(struct lm_softc *, int);
 static void wb_refresh_fanrpm(struct lm_softc *, int);
 static void wb_w83792d_refresh_fanrpm(struct lm_softc *, int);
 static void wb_nct6776f_refresh_fanrpm(struct lm_softc *, int);
+static const char * wm_nct67xx_id2str(uint8_t);
+
 static void as_refresh_temp(struct lm_softc *, int);
 
 struct lm_chip {
@@ -103,6 +106,20 @@ static struct lm_chip lm_chips[] = {
 	{ wb_match },
 	{ lm_match },
 	{ def_match } /* Must be last */
+};
+
+static struct {
+	uint8_t id;
+	const char *str;
+} nct_chips[] = {
+	{WBSIO_ID_NCT6775F, "NCT6775F"},
+	{WBSIO_ID_NCT6776F, "NCT6776F"},
+	{WBSIO_ID_NCT5104D, "NCT5104D or 610[246]D"},
+	{WBSIO_ID_NCT6779D, "NCT6779D"},
+	{WBSIO_ID_NCT6791D, "NCT6791D"},
+	{WBSIO_ID_NCT6792D, "NCT6792D"},
+	{WBSIO_ID_NCT6793D, "NCT6793D"},
+	{WBSIO_ID_NCT6795D, "NCT6795D"},
 };
 
 /* LM78/78J/79/81 */
@@ -1619,7 +1636,7 @@ static struct lm_sensor as99127f_sensors[] = {
 	{ .desc = NULL }
 };
 
-/*  NCT6776F */
+/* NCT6776F */
 static struct lm_sensor nct6776f_sensors[] = {
 	/* Voltage */
 	{
@@ -1760,6 +1777,225 @@ static struct lm_sensor nct6776f_sensors[] = {
 		.type = ENVSYS_SFANRPM,
 		.bank = 6,
 		.reg = 0x5e,
+		.refresh = wb_nct6776f_refresh_fanrpm,
+		.rfact = 0
+	},
+
+	{ .desc = NULL }
+};
+
+/* NCT6779D */
+static struct lm_sensor nct6779d_sensors[] = {
+	/* Voltage */
+	{
+		.desc = "VCore",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x80,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE / 2
+	},
+	{
+		.desc = "VIN1",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x81,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(56, 10) / 2
+	},
+	{
+		.desc = "AVCC",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x82,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 34) / 2
+	},
+	{
+		.desc = "+3.3V",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x83,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 34) / 2
+	},
+	{
+		.desc = "VIN0",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x84,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(48600, 10000)
+	},
+	{
+		.desc = "VIN8",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x85,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE / 2
+	},
+	{
+		.desc = "VIN4",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x86,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "+3.3VSB",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x87,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(34, 34) / 2
+	},
+	{
+		.desc = "VBAT",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x88,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VTT",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x89,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VIN5",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x8a,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VIN6",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x8b,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VIN2",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x8c,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE
+	},
+	{
+		.desc = "VIN3",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x8d,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT(14414, 10000)
+	},
+	{
+		.desc = "VIN7",
+		.type = ENVSYS_SVOLTS_DC,
+		.bank = 4,
+		.reg = 0x8e,
+		.refresh = lm_refresh_volt,
+		.rfact = RFACT_NONE / 2
+	},
+
+	/* Temperature */
+	{
+		.desc = "MB Temperature",
+		.type = ENVSYS_STEMP,
+		.bank = 4,
+		.reg = 0x90,
+		.refresh = lm_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "CPU Temperature",
+		.type = ENVSYS_STEMP,
+		.bank = 4,
+		.reg = 0x91,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Temp0",
+		.type = ENVSYS_STEMP,
+		.bank = 4,
+		.reg = 0x92,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Temp1",
+		.type = ENVSYS_STEMP,
+		.bank = 4,
+		.reg = 0x93,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Temp2",
+		.type = ENVSYS_STEMP,
+		.bank = 4,
+		.reg = 0x94,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Temp3",
+		.type = ENVSYS_STEMP,
+		.bank = 4,
+		.reg = 0x95,
+		.refresh = wb_refresh_temp,
+		.rfact = 0
+	},
+
+	/* Fans */
+	{
+		.desc = "System Fan",
+		.type = ENVSYS_SFANRPM,
+		.bank = 4,
+		.reg = 0xb0,
+		.refresh = wb_nct6776f_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "CPU Fan",
+		.type = ENVSYS_SFANRPM,
+		.bank = 4,
+		.reg = 0xb2,
+		.refresh = wb_nct6776f_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Fan0",
+		.type = ENVSYS_SFANRPM,
+		.bank = 4,
+		.reg = 0xb4,
+		.refresh = wb_nct6776f_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Fan1",
+		.type = ENVSYS_SFANRPM,
+		.bank = 4,
+		.reg = 0xb6,
+		.refresh = wb_nct6776f_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Fan2",
+		.type = ENVSYS_SFANRPM,
+		.bank = 4,
+		.reg = 0xb8,
 		.refresh = wb_nct6776f_refresh_fanrpm,
 		.rfact = 0
 	},
@@ -2015,13 +2251,31 @@ wb_match(struct lm_softc *sc)
 		wb_temp_diode_type(sc, cf_flags);
 		break;
 	case WB_CHIPID_W83627DHG:
-		if (sc->sioid == WBSIO_ID_NCT6776F) {
+		model = wm_nct67xx_id2str(sc->sioid);
+		if (model != NULL) {
 			vendor = "Nuvoton";
-			model = "NCT6776F";
-			lm_setup_sensors(sc, nct6776f_sensors);
+			switch (sc->sioid) {
+			case WBSIO_ID_NCT6775F:
+			case WBSIO_ID_NCT6776F:
+			case WBSIO_ID_NCT5104D:
+				lm_setup_sensors(sc, nct6776f_sensors);
+				break;
+			case WBSIO_ID_NCT6779D:
+			case WBSIO_ID_NCT6791D:
+			case WBSIO_ID_NCT6792D:
+			case WBSIO_ID_NCT6793D:
+			case WBSIO_ID_NCT6795D:
+				lm_setup_sensors(sc, nct6779d_sensors);
+				break;
+			default:
+				panic("%s: unknown id (%02x)", __func__,
+				      sc->sioid);
+				break;
+			}
 		} else {
 			model = "W83627DHG";
 			lm_setup_sensors(sc, w83627dhg_sensors);
+			break;
 		}
 		wb_temp_diode_type(sc, cf_flags);
 		break;
@@ -2362,6 +2616,20 @@ wb_nct6776f_refresh_fanrpm(struct lm_softc *sc, int n)
 		sc->sensors[n].state = ENVSYS_SVALID;
 		sc->sensors[n].value_cur = (datah << 8) | datal;
 	}
+}
+
+static const char *
+wm_nct67xx_id2str(uint8_t id)
+{
+	int i;
+
+	for (i = 0; i < __arraycount(nct_chips); i++) {
+		if (nct_chips[i].id == id)
+		    return nct_chips[i].str;
+	}
+
+	/* Not Found */
+	return NULL;
 }
 
 static void
