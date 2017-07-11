@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.172 2017/07/10 07:46:02 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.173 2017/07/11 04:50:59 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.172 2017/07/10 07:46:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.173 2017/07/11 04:50:59 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -2845,7 +2845,7 @@ key_newsah(const struct secasindex *saidx)
 static void
 key_delsah(struct secashead *sah)
 {
-	struct secasvar *sav, *nextsav;
+	struct secasvar *sav;
 	u_int state;
 	int s;
 	int zombie = 0;
@@ -2857,15 +2857,9 @@ key_delsah(struct secashead *sah)
 
 	/* searching all SA registerd in the secindex. */
 	SASTATE_ANY_FOREACH(state) {
-		LIST_FOREACH_SAFE(sav, &sah->savtree[state], chain, nextsav) {
-			if (sav->refcnt == 0) {
-				/* sanity check */
-				KEY_CHKSASTATE(state, sav->state);
-				KEY_FREESAV(&sav);
-			} else {
-				/* give up to delete this sa */
-				zombie++;
-			}
+		LIST_FOREACH(sav, &sah->savtree[state], chain) {
+			/* give up to delete this sa */
+			zombie++;
 		}
 	}
 
