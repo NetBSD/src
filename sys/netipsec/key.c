@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.175 2017/07/11 09:49:15 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.176 2017/07/11 10:06:07 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.175 2017/07/11 09:49:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.176 2017/07/11 10:06:07 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -972,6 +972,60 @@ key_allocsa_policy(const struct secasindex *saidx)
 	return NULL;
 }
 
+static void
+key_sendup_message_delete(struct secasvar *sav)
+{
+	struct mbuf *m, *result = 0;
+	uint8_t satype;
+
+	satype = key_proto2satype(sav->sah->saidx.proto);
+	if (satype == 0)
+		goto msgfail;
+
+	m = key_setsadbmsg(SADB_DELETE, 0, satype, 0, 0, sav->refcnt - 1);
+	if (m == NULL)
+		goto msgfail;
+	result = m;
+
+	/* set sadb_address for saidx's. */
+	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC, &sav->sah->saidx.src.sa,
+	    sav->sah->saidx.src.sa.sa_len << 3, IPSEC_ULPROTO_ANY);
+	if (m == NULL)
+		goto msgfail;
+	m_cat(result, m);
+
+	/* set sadb_address for saidx's. */
+	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST, &sav->sah->saidx.src.sa,
+	    sav->sah->saidx.src.sa.sa_len << 3, IPSEC_ULPROTO_ANY);
+	if (m == NULL)
+		goto msgfail;
+	m_cat(result, m);
+
+	/* create SA extension */
+	m = key_setsadbsa(sav);
+	if (m == NULL)
+		goto msgfail;
+	m_cat(result, m);
+
+	if (result->m_len < sizeof(struct sadb_msg)) {
+		result = m_pullup(result, sizeof(struct sadb_msg));
+		if (result == NULL)
+			goto msgfail;
+	}
+
+	result->m_pkthdr.len = 0;
+	for (m = result; m; m = m->m_next)
+		result->m_pkthdr.len += m->m_len;
+	mtod(result, struct sadb_msg *)->sadb_msg_len =
+	    PFKEY_UNIT64(result->m_pkthdr.len);
+
+	key_sendup_mbuf(NULL, result, KEY_SENDUP_REGISTERED);
+	result = NULL;
+msgfail:
+	if (result)
+		m_freem(result);
+}
+
 /*
  * searching SAD with direction, protocol, mode and state.
  * called by key_allocsa_policy().
@@ -1027,65 +1081,9 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
 		 * permanent.
 		 */
 		if (d->lft_c->sadb_lifetime_addtime != 0) {
-			struct mbuf *m, *result = 0;
-			uint8_t satype;
-
 			key_sa_chgstate(d, SADB_SASTATE_DEAD);
-
 			KASSERT(d->refcnt > 0);
-
-			satype = key_proto2satype(d->sah->saidx.proto);
-			if (satype == 0)
-				goto msgfail;
-
-			m = key_setsadbmsg(SADB_DELETE, 0,
-			    satype, 0, 0, d->refcnt - 1);
-			if (!m)
-				goto msgfail;
-			result = m;
-
-			/* set sadb_address for saidx's. */
-			m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
-			    &d->sah->saidx.src.sa,
-			    d->sah->saidx.src.sa.sa_len << 3,
-			    IPSEC_ULPROTO_ANY);
-			if (!m)
-				goto msgfail;
-			m_cat(result, m);
-
-			/* set sadb_address for saidx's. */
-			m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
-			    &d->sah->saidx.src.sa,
-			    d->sah->saidx.src.sa.sa_len << 3,
-			    IPSEC_ULPROTO_ANY);
-			if (!m)
-				goto msgfail;
-			m_cat(result, m);
-
-			/* create SA extension */
-			m = key_setsadbsa(d);
-			if (!m)
-				goto msgfail;
-			m_cat(result, m);
-
-			if (result->m_len < sizeof(struct sadb_msg)) {
-				result = m_pullup(result,
-				    sizeof(struct sadb_msg));
-				if (result == NULL)
-					goto msgfail;
-			}
-
-			result->m_pkthdr.len = 0;
-			for (m = result; m; m = m->m_next)
-				result->m_pkthdr.len += m->m_len;
-			mtod(result, struct sadb_msg *)->sadb_msg_len =
-			    PFKEY_UNIT64(result->m_pkthdr.len);
-
-			key_sendup_mbuf(NULL, result, KEY_SENDUP_REGISTERED);
-			result = 0;
-		 msgfail:
-			if (result)
-				m_freem(result);
+			key_sendup_message_delete(d);
 			KEY_FREESAV(&d);
 		}
 	}
