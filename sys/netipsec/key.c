@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.178 2017/07/12 03:59:32 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.179 2017/07/12 07:00:40 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.178 2017/07/12 03:59:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.179 2017/07/12 07:00:40 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -866,8 +866,6 @@ key_checkrequest(struct ipsecrequest *isr, const struct secasindex *saidx)
 	 * SADB_SASTATE_DEAD.  The SA for outbound must be the oldest.
 	 */
 	if (isr->sav != NULL) {
-		if (isr->sav->sah == NULL)
-			panic("key_checkrequest: sah is null");
 		if (isr->sav == (struct secasvar *)LIST_FIRST(
 			    &isr->sav->sah->savtree[SADB_SASTATE_DEAD])) {
 			KEY_FREESAV(&isr->sav);
@@ -6768,7 +6766,6 @@ key_expire(struct secasvar *sav)
 	s = splsoftnet();	/*called from softclock()*/
 
 	KASSERT(sav != NULL);
-	KASSERT(sav->sah != NULL);
 
 	satype = key_proto2satype(sav->sah->saidx.proto);
 	KASSERTMSG(satype != 0, "invalid proto is passed");
@@ -7693,8 +7690,6 @@ key_checktunnelsanity(
     void *dst
 )
 {
-
-	KASSERT(sav->sah != NULL);
 
 	/* XXX: check inner IP header */
 
