@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.42 2017/06/19 11:57:02 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.43 2017/07/12 17:54:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.42 2017/06/19 11:57:02 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.43 2017/07/12 17:54:23 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -90,6 +90,9 @@ void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
 static inline int _rtld_relocate_plt_object(const Obj_Entry *,
     const Elf_Rela *, Elf_Addr *);
+
+#define rdbg_symnum(obj, rela) \
+    ((obj)->strtab + (obj)->symtab[ELF_R_SYM((rela)->r_info)].st_name)
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
@@ -180,7 +183,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			if (*where32 != tmp32)
 				*where32 = tmp32;
 			rdbg(("32/32S %s in %s --> %p in %s",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symnum(obj, rela),
 			    obj->path, (void *)(uintptr_t)*where32,
 			    defobj->path));
 			break;
@@ -191,7 +194,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			if (*where64 != tmp64)
 				*where64 = tmp64;
 			rdbg(("64 %s in %s --> %p in %s",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symnum(obj, rela),
 			    obj->path, (void *)*where64, defobj->path));
 			break;
 		case R_TYPE(PC32):	/* word32 S + A - P */
@@ -201,7 +204,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			if (*where32 != tmp32)
 				*where32 = tmp32;
 			rdbg(("PC32 %s in %s --> %p in %s",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symnum(obj, rela),
 			    obj->path, (void *)(unsigned long)*where32,
 			    defobj->path));
 			break;
@@ -211,7 +214,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			if (*where64 != tmp64)
 				*where64 = tmp64;
 			rdbg(("64 %s in %s --> %p in %s",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symnum(obj, rela),
 			    obj->path, (void *)*where64, defobj->path));
 			break;
 		case R_TYPE(RELATIVE):  /* word64 B + A */
@@ -231,7 +234,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    defobj->tlsoffset + rela->r_addend);
 
 			rdbg(("TPOFF64 %s in %s --> %p",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symnum(obj, rela),
 			    obj->path, (void *)*where64));
 
 			break;
@@ -240,7 +243,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			*where64 = (Elf64_Addr)defobj->tlsindex;
 
 			rdbg(("DTPMOD64 %s in %s --> %p",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symnum(obj, rela),
 			    obj->path, (void *)*where64));
 
 			break;
@@ -249,7 +252,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			*where64 = (Elf64_Addr)(def->st_value + rela->r_addend);
 
 			rdbg(("DTPOFF64 %s in %s --> %p",
-			    obj->strtab + obj->symtab[symnum].st_name,
+			    rdbg_symnum(obj, rela),
 			    obj->path, (void *)*where64));
 
 			break;
@@ -264,8 +267,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    (u_long)ELF_R_SYM(rela->r_info),
 			    (u_long)ELF_R_TYPE(rela->r_info),
 			    (void *)rela->r_offset, (void *)rela->r_addend,
-			    (void *)*where64,
-			    obj->strtab + obj->symtab[symnum].st_name));
+			    (void *)*where64, rdbg_symnum(obj, rela)));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations",
 			    obj->path, (u_long) ELF_R_TYPE(rela->r_info));
