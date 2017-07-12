@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.50 2017/07/06 09:49:46 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.51 2017/07/12 07:00:40 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.50 2017/07/06 09:49:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.51 2017/07/12 07:00:40 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -164,7 +164,6 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 	KASSERT(isr != NULL);
 	sav = isr->sav;
 	KASSERT(sav != NULL);
-	KASSERT(sav->sah != NULL);
 
 	saidx = &sav->sah->saidx;
 

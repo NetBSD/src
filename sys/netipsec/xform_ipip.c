@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.50 2017/06/29 07:13:41 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.51 2017/07/12 07:00:40 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.50 2017/06/29 07:13:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.51 2017/07/12 07:00:40 ozaki-r Exp $");
 
 /*
  * IP-inside-IP processing
@@ -419,7 +419,6 @@ ipip_output(
 
 	KASSERT(isr->sav != NULL);
 	sav = isr->sav;
-	KASSERT(sav->sah != NULL);
 
 	/* XXX Deal with empty TDB source/destination addresses. */
 

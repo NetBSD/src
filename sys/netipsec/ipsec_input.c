@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.47 2017/07/07 01:37:34 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.48 2017/07/12 07:00:40 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.47 2017/07/07 01:37:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.48 2017/07/12 07:00:40 ozaki-r Exp $");
 
 /*
  * IPsec input processing.
@@ -332,7 +332,6 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 
 	KASSERT(m != NULL);
 	KASSERT(sav != NULL);
-	KASSERT(sav->sah != NULL);
 	saidx = &sav->sah->saidx;
 	af = saidx->dst.sa.sa_family;
 	KASSERTMSG(af == AF_INET, "unexpected af %u", af);
@@ -574,7 +573,6 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
 
 	KASSERT(m != NULL);
 	KASSERT(sav != NULL);
-	KASSERT(sav->sah != NULL);
 	saidx = &sav->sah->saidx;
 	af = saidx->dst.sa.sa_family;
 	KASSERTMSG(af == AF_INET6, "unexpected af %u", af);
