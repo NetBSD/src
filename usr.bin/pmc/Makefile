@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2017/03/08 16:05:29 maxv Exp $
+#	$NetBSD: Makefile,v 1.5 2017/07/12 17:10:09 maxv Exp $
 
-.if (${MACHINE_ARCH} == "i386")
+.if (${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "x86_64")
 PROG=	pmc
 .else
 MAN=	pmc.1
