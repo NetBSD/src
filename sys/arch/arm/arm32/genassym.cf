@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.74 2015/06/09 08:09:24 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.75 2017/07/12 07:22:31 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -251,3 +251,6 @@ define	M_DATA				offsetof(struct mbuf, m_data)
 define	M_NEXT				offsetof(struct mbuf, m_next)
 define	IP_SRC				offsetof(struct ip, ip_src)
 define	IP_DST				offsetof(struct ip, ip_dst)
+
+# Cache information
+define	DCACHE_SIZE		offsetof(struct arm_cache_info, dcache_size)

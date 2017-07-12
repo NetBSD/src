@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.7 2014/07/30 13:31:17 skrll Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.8 2017/07/12 07:22:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -63,7 +63,7 @@
 #include <machine/asm.h>
 #include <arm/locore.h>
 
-RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.7 2014/07/30 13:31:17 skrll Exp $")
+RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.8 2017/07/12 07:22:31 skrll Exp $")
 
 #if 0
 #define Invalidate_I_cache(Rtmp1, Rtmp2) \
@@ -164,6 +164,11 @@ ENTRY_NP(arm11x6_icache_sync_range)
 END(arm11x6_icache_sync_range)
 
 ENTRY_NP(arm11x6_idcache_wbinv_range)
+	ldr	r2, .Larm_pcache
+	ldr	r2, [r2, #DCACHE_SIZE]
+	cmp	r1, r2
+	bge	arm11x6_idcache_wbinv_all
+
 	add	r1, r1, r0
 	sub	r1, r1, #1
 	/* Erratum ARM1136 371025, workaround #2 */
@@ -212,3 +217,6 @@ ENTRY_NP(arm11x6_sleep)
 	bne	1b
 	RET
 END(arm11x6_sleep)
+
+.Larm_pcache:
+	.word arm_pcache
