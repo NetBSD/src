@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.64 2017/07/05 20:00:27 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.65 2017/07/12 19:06:16 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.64 2017/07/05 20:00:27 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.65 2017/07/12 19:06:16 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -431,7 +431,7 @@ setvareq(char *s, int flags)
 				ckfree(s);
 			if (flags & VNOERROR)
 				return;
-			error("%.*s: is read only", vp->name_len, s);
+			error("%.*s: is read only", vp->name_len, vp->text);
 		}
 		if (flags & VNOSET) {
 			if ((flags & (VTEXTFIXED|VSTACK)) == 0)
