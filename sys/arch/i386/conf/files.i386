@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.378 2017/03/10 14:40:56 maxv Exp $
+#	$NetBSD: files.i386,v 1.379 2017/07/12 16:59:41 maxv Exp $
 #
 # new style config file for i386 architecture
 #
@@ -20,6 +20,8 @@ obsolete defflag	XBOX
 
 # VM86 emulation
 defflag			VM86
+
+defflag			PMC
 
 # User-settable LDT (used by WINE)
 defflag			USER_LDT
