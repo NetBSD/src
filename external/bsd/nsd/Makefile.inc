@@ -1,4 +1,6 @@
-# $NetBSD: Makefile.inc,v 1.1 2017/01/07 19:51:21 christos Exp $
+# $NetBSD: Makefile.inc,v 1.1.8.1 2017/07/12 13:56:46 martin Exp $
+
+.include <bsd.own.mk>
 
 USE_FORT?= yes  # network client/server
 
@@ -7,6 +9,10 @@ NSD:=${.PARSEDIR}/dist
 CPPFLAGS+=-D_OPENBSD_SOURCE
 CPPFLAGS+=-I${NSD} -I${NSD}/../include
 .PATH: ${NSD}
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=      -DINET6
+.endif
 
 DPLIBS+= event ${NETBSDSRCDIR}/external/bsd/libevent/lib/libevent
 DPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libssl
