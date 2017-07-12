@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.519 2017/07/12 08:15:31 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.520 2017/07/12 08:18:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.519 2017/07/12 08:15:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.520 2017/07/12 08:18:36 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -13379,8 +13379,6 @@ wm_lplu_d0_disable(struct wm_softc *sc)
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
-
-	printf("%s called\n", __func__);
 
 	if (sc->sc_phytype == WMPHY_IFE)
 		return;
