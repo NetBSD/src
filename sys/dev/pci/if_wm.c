@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.518 2017/07/06 08:50:52 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.519 2017/07/12 08:15:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -73,7 +73,6 @@
  * TODO (in order of importance):
  *
  *	- Check XXX'ed comments
- *	- Disable D0 LPLU on 8257[12356], 82580 and I350.
  *	- TX Multi queue improvement (refine queue selection logic)
  *	- Split header buffer for newer descriptors
  *	- EEE (Energy Efficiency Ethernet)
@@ -84,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.518 2017/07/06 08:50:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.519 2017/07/12 08:15:31 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -910,7 +909,6 @@ static void	wm_igp3_phy_powerdown_workaround_ich8lan(struct wm_softc *);
 static void	wm_enable_wakeup(struct wm_softc *);
 /* LPLU (Low Power Link Up) */
 static void	wm_lplu_d0_disable(struct wm_softc *);
-static void	wm_lplu_d0_disable_pch(struct wm_softc *);
 /* EEE */
 static void	wm_set_eee_i350(struct wm_softc *);
 
@@ -8954,6 +8952,8 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82571:
 	case WM_T_82572:
 	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
@@ -8963,10 +8963,6 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_I211:
 	case WM_T_80003:
 		/* null */
-		break;
-	case WM_T_82574:
-	case WM_T_82583:
-		wm_lplu_d0_disable(sc);
 		break;
 	case WM_T_82541:
 	case WM_T_82547:
@@ -9441,10 +9437,7 @@ wm_gmii_mediachange(struct ifnet *ifp)
 		return 0;
 
 	/* Disable D0 LPLU. */
-	if (sc->sc_type >= WM_T_PCH)	/* PCH* */
-		wm_lplu_d0_disable_pch(sc);
-	else
-		wm_lplu_d0_disable(sc);	/* ICH* */
+	wm_lplu_d0_disable(sc);
 
 	sc->sc_ctrl &= ~(CTRL_SPEED_MASK | CTRL_FD);
 	sc->sc_ctrl |= CTRL_SLU;
@@ -13381,28 +13374,58 @@ wm_enable_wakeup(struct wm_softc *sc)
 static void
 wm_lplu_d0_disable(struct wm_softc *sc)
 {
+	struct mii_data *mii = &sc->sc_mii;
 	uint32_t reg;
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
-	reg = CSR_READ(sc, WMREG_PHY_CTRL);
-	reg &= ~(PHY_CTRL_GBE_DIS | PHY_CTRL_D0A_LPLU);
-	CSR_WRITE(sc, WMREG_PHY_CTRL, reg);
-}
+	printf("%s called\n", __func__);
 
-static void
-wm_lplu_d0_disable_pch(struct wm_softc *sc)
-{
-	uint32_t reg;
+	if (sc->sc_phytype == WMPHY_IFE)
+		return;
 
-	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
-		device_xname(sc->sc_dev), __func__));
-
-	reg = wm_gmii_hv_readreg(sc->sc_dev, 1, HV_OEM_BITS);
-	reg &= ~(HV_OEM_BITS_A1KDIS | HV_OEM_BITS_LPLU);
-	reg |= HV_OEM_BITS_ANEGNOW;
-	wm_gmii_hv_writereg(sc->sc_dev, 1, HV_OEM_BITS, reg);
+	switch (sc->sc_type) {
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_82575:
+	case WM_T_82576:
+		reg = mii->mii_readreg(sc->sc_dev, 1, MII_IGPHY_POWER_MGMT);
+		reg &= ~PMR_D0_LPLU;
+		mii->mii_writereg(sc->sc_dev, 1, MII_IGPHY_POWER_MGMT, reg);
+		break;
+	case WM_T_82580:
+	case WM_T_I350:
+	case WM_T_I210:
+	case WM_T_I211:
+		reg = CSR_READ(sc, WMREG_PHPM);
+		reg &= ~PHPM_D0A_LPLU;
+		CSR_WRITE(sc, WMREG_PHPM, reg);
+		break;
+	case WM_T_82574:
+	case WM_T_82583:
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+		reg = CSR_READ(sc, WMREG_PHY_CTRL);
+		reg &= ~(PHY_CTRL_GBE_DIS | PHY_CTRL_D0A_LPLU);
+		CSR_WRITE(sc, WMREG_PHY_CTRL, reg);
+		CSR_WRITE_FLUSH(sc);
+		break;
+	case WM_T_PCH:
+	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
+	case WM_T_PCH_SPT:
+		reg = wm_gmii_hv_readreg(sc->sc_dev, 1, HV_OEM_BITS);
+		reg &= ~(HV_OEM_BITS_A1KDIS | HV_OEM_BITS_LPLU);
+		if (wm_phy_resetisblocked(sc) == false)
+			reg |= HV_OEM_BITS_ANEGNOW;
+		wm_gmii_hv_writereg(sc->sc_dev, 1, HV_OEM_BITS, reg);
+		break;
+	default:
+		break;
+	}
 }
 
 /* EEE */
