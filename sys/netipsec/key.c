@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.177 2017/07/12 03:53:55 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.178 2017/07/12 03:59:32 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.177 2017/07/12 03:53:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.178 2017/07/12 03:59:32 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -3461,8 +3461,7 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 			break;
 
 		case SADB_EXT_LIFETIME_CURRENT:
-			if (!sav->lft_c)
-				continue;
+			KASSERT(sav->lft_c != NULL);
 			l = PFKEY_UNUNIT64(((struct sadb_ext *)sav->lft_c)->sadb_ext_len);
 			memcpy(&lt, sav->lft_c, sizeof(struct sadb_lifetime));
 			lt.sadb_lifetime_addtime =
@@ -4478,11 +4477,7 @@ key_timehandler_sad(time_t now)
 				continue;
 
 			/* sanity check */
-			if (sav->lft_c == NULL) {
-				IPSECLOG(LOG_DEBUG,
-				    "There is no CURRENT time, why?\n");
-				continue;
-			}
+			KASSERT(sav->lft_c != NULL);
 
 			/* check SOFT lifetime */
 			if (sav->lft_s->sadb_lifetime_addtime != 0 &&
@@ -4532,11 +4527,7 @@ key_timehandler_sad(time_t now)
 				continue;
 
 			/* sanity check */
-			if (sav->lft_c == NULL) {
-				IPSECLOG(LOG_DEBUG,
-				    "There is no CURRENT time, why?\n");
-				continue;
-			}
+			KASSERT(sav->lft_c != NULL);
 
 			if (sav->lft_h->sadb_lifetime_addtime != 0 &&
 			    now - sav->created > sav->lft_h->sadb_lifetime_addtime) {
@@ -7780,9 +7771,8 @@ key_sa_recordxfer(struct secasvar *sav, struct mbuf *m)
 {
 
 	KASSERT(sav != NULL);
+	KASSERT(sav->lft_c != NULL);
 	KASSERT(m != NULL);
-	if (!sav->lft_c)
-		return;
 
 	/*
 	 * XXX Currently, there is a difference of bytes size
