@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.179 2017/07/12 07:00:40 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.180 2017/07/12 07:33:37 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.179 2017/07/12 07:00:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.180 2017/07/12 07:33:37 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -899,12 +899,8 @@ key_checkrequest(struct ipsecrequest *isr, const struct secasindex *saidx)
 		KEY_FREESAV(&oldsav);
 
 	/* When there is SA. */
-	if (isr->sav != NULL) {
-		if (isr->sav->state != SADB_SASTATE_MATURE &&
-		    isr->sav->state != SADB_SASTATE_DYING)
-			return EINVAL;
+	if (isr->sav != NULL)
 		return 0;
-	}
 
 	/* there is no SA */
 	error = key_acquire(saidx, isr->sp);
