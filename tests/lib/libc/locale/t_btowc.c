@@ -1,4 +1,4 @@
-/* $NetBSD: t_btowc.c,v 1.1 2017/06/01 15:45:02 perseant Exp $ */
+/* $NetBSD: t_btowc.c,v 1.2 2017/07/12 17:32:51 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,11 +32,12 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_btowc.c,v 1.1 2017/06/01 15:45:02 perseant Exp $");
+__RCSID("$NetBSD: t_btowc.c,v 1.2 2017/07/12 17:32:51 perseant Exp $");
 
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <string.h>
 #include <wchar.h>
 
@@ -85,18 +86,28 @@ static void
 h_iso10646(struct test *t)
 {
 	const char *cp;
-	unsigned char c;
+	int c, wc;
 	char *str;
 	const wchar_t *wcp;
 
+	ATF_REQUIRE_STREQ(setlocale(LC_ALL, "C"), "C");
+	printf("Trying locale: %s\n", t->locale);
+	ATF_REQUIRE(setlocale(LC_CTYPE, t->locale) != NULL);
+	ATF_REQUIRE((str = setlocale(LC_ALL, NULL)) != NULL);
+	(void)printf("Using locale: %s\n", str);
+
 	/* These should have valid wchar representations */
 	for (cp = t->legal, wcp = t->wlegal; *cp != '\0'; ++cp, ++wcp) {
-		c = (unsigned char)*cp;
+		c = (int)(unsigned char)*cp;
 		printf("Checking legal character 0x%x\n", c);
+		wc = btowc(c);
+
+		if (errno != 0)
+			printf(" btowc() failed with errno=%d\n", errno);
 
 		/* It should map to the known Unicode equivalent */
 		printf("btowc(0x%2.2x) = 0x%x, expecting 0x%x\n",
-			c, btowc(c), *wcp);
+		       c, wc, *wcp);
 		ATF_REQUIRE(btowc(c) == *wcp);
 	}
 
@@ -120,6 +131,8 @@ h_btowc(struct test *t)
 	ATF_REQUIRE_STREQ(setlocale(LC_ALL, "C"), "C");
 	printf("Trying locale: %s\n", t->locale);
 	ATF_REQUIRE(setlocale(LC_CTYPE, t->locale) != NULL);
+	ATF_REQUIRE((str = setlocale(LC_ALL, NULL)) != NULL);
+	(void)printf("Using locale: %s\n", str);
 
 	/* btowc(EOF) -> WEOF */
 	ATF_REQUIRE_EQ(btowc(EOF), WEOF);
