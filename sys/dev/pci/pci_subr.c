@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.189 2017/06/15 15:38:18 flxd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.190 2017/07/13 08:41:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.189 2017/06/15 15:38:18 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.190 2017/07/13 08:41:19 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2087,7 +2087,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		break;
 	}
 	printf("      OBFF Supported: ");
-	switch ((reg & PCIE_DCAP2_OBFF) >> 18) {
+	switch (__SHIFTOUT(reg, PCIE_DCAP2_OBFF)) {
 	case 0x0:
 		printf("Not supported\n");
 		break;
@@ -2139,7 +2139,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("Emergency Power Reduction Request", reg,
 	    PCIE_DCSR2_EMGPWRRED_REQ);
 	printf("      OBFF: ");
-	switch ((reg & PCIE_DCSR2_OBFF_EN) >> 13) {
+	switch (__SHIFTOUT(reg, PCIE_DCSR2_OBFF_EN)) {
 	case 0x0:
 		printf("Disabled\n");
 		break;
@@ -3939,7 +3939,7 @@ static struct {
 	  NULL },
 	{ PCI_EXTCAP_PASID,	"Process Address Space ID",
 	  pci_conf_print_pasid_cap },
-	{ PCI_EXTCAP_LN_REQ,	"LN Requester",
+	{ PCI_EXTCAP_LNR,	"LN Requester",
 	  pci_conf_print_lnr_cap },
 	{ PCI_EXTCAP_DPC,	"Downstream Port Containment",
 	  pci_conf_print_dpc_cap },
