@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.258 2017/06/17 17:08:49 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.259 2017/07/13 01:17:03 jmcneill Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -537,17 +537,18 @@ build_kernel: .USE
 # Begin DTS handling
 
 DTSINC?=$S/external/gpl2/dts/dist/include
-DTSPATH?=$S/external/gpl2/dts/dist/arch/${MACHINE_CPU}/boot/dts
+DTSGNUPATH?=$S/external/gpl2/dts/dist/arch/${MACHINE_CPU}/boot/dts
+DTSPATH?=$S/arch/${MACHINE_CPU}/dts
 DTSPADDING?=1024
 
 .SUFFIXES: .dtb .dts
 .dts.dtb:
-	${CPP} -P -xassembler-with-cpp -I ${DTSINC} -I ${DTSPATH} \
+	${CPP} -P -xassembler-with-cpp -I ${DTSINC} -I ${DTSPATH} -I ${DTSGNUPATH} \
 	    -include ${.IMPSRC} /dev/null | \
-	${TOOL_DTC} -i ${DTSINC} -i ${DTSPATH} -I dts -O dtb \
+	${TOOL_DTC} -i ${DTSINC} -i ${DTSPATH} -i ${DTSGNUPATH} -I dts -O dtb \
 	    -p ${DTSPADDING} -b 0 -o ${.TARGET}
 
-.PATH.dts: ${DTSPATH}
+.PATH.dts: ${DTSPATH} ${DTSGNUPATH}
 
 DTB= ${DTS:.dts=.dtb}
 all: ${DTB}
