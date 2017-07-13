@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_none.c,v 1.21 2017/07/13 15:46:26 joerg Exp $	*/
+/*	$NetBSD: citrus_none.c,v 1.22 2017/07/13 16:00:30 christos Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_none.c,v 1.21 2017/07/13 15:46:26 joerg Exp $");
+__RCSID("$NetBSD: citrus_none.c,v 1.22 2017/07/13 16:00:30 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -513,7 +513,10 @@ _citrus_NONE_stdenc_mbtowc(struct _citrus_stdenc * __restrict ce,
 			   void * __restrict pspriv,
 			   size_t * __restrict nresult)
 {
-	if (s == NULL || *s == NULL) {
+
+	_DIAGASSERT(s != NULL);
+
+	if (*s == NULL) {
 		*nresult = 0;
 		return (0);
 	}
