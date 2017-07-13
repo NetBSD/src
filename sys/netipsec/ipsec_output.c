@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.51 2017/07/12 07:00:40 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.52 2017/07/13 01:22:44 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.51 2017/07/12 07:00:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.52 2017/07/13 01:22:44 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -293,7 +293,6 @@ ipsec_nextisr(
 	struct mbuf *m,
 	struct ipsecrequest *isr,
 	int af,
-	struct secasindex *saidx,
 	int *error
 )
 {
@@ -313,6 +312,7 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 	struct secasvar *sav;
+	struct secasindex *saidx;
 
 	IPSEC_SPLASSERT_SOFTNET("ipsec_nextisr");
 	KASSERTMSG(af == AF_INET || af == AF_INET6,
@@ -323,7 +323,7 @@ again:
 	 * we only fillin unspecified SA peers for transport
 	 * mode; for tunnel mode they must already be filled in.
 	 */
-	*saidx = isr->saidx;
+	saidx = &isr->saidx;
 	if (isr->saidx.mode == IPSEC_MODE_TRANSPORT) {
 		/* Fillin unspecified SA peers only for transport mode */
 		if (af == AF_INET) {
@@ -380,7 +380,7 @@ again:
 	/*
 	 * Lookup SA and validate it.
 	 */
-	*error = key_checkrequest(isr, saidx);
+	*error = key_checkrequest(isr);
 	if (*error != 0) {
 		/*
 		 * IPsec processing is required, but no SA found.
@@ -442,7 +442,6 @@ bad:
 int
 ipsec4_process_packet(struct mbuf *m, struct ipsecrequest *isr)
 {
-	struct secasindex saidx;
 	struct secasvar *sav;
 	struct ip *ip;
 	int s, error, i, off;
@@ -454,7 +453,7 @@ ipsec4_process_packet(struct mbuf *m, struct ipsecrequest *isr)
 
 	s = splsoftnet();			/* insure SA contents don't change */
 
-	isr = ipsec_nextisr(m, isr, AF_INET, &saidx, &error);
+	isr = ipsec_nextisr(m, isr, AF_INET, &error);
 	if (isr == NULL) {
 		if (error != 0) {
 			goto bad;
@@ -674,7 +673,6 @@ ipsec6_process_packet(
  	struct ipsecrequest *isr
     )
 {
-	struct secasindex saidx;
 	struct secasvar *sav;
 	struct ip6_hdr *ip6;
 	int s, error, i, off;
@@ -685,7 +683,7 @@ ipsec6_process_packet(
 
 	s = splsoftnet();   /* insure SA contents don't change */
 
-	isr = ipsec_nextisr(m, isr, AF_INET6, &saidx, &error);
+	isr = ipsec_nextisr(m, isr, AF_INET6, &error);
 	if (isr == NULL) {
 		if (error != 0) {
 			/* XXX Should we send a notification ? */

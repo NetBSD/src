@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.20 2017/07/07 01:37:34 ozaki-r Exp $	*/
+/*	$NetBSD: key.h,v 1.21 2017/07/13 01:22:44 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -90,7 +90,7 @@ void key_freesav(struct secasvar **, const char*, int);
 	key_freesav(psav, __func__, __LINE__)
 
 int key_checktunnelsanity (struct secasvar *, u_int, void *, void *);
-int key_checkrequest (struct ipsecrequest *isr, const struct secasindex *);
+int key_checkrequest(struct ipsecrequest *);
 
 struct secpolicy *key_msg2sp (const struct sadb_x_policy *, size_t, int *);
 struct mbuf *key_sp2msg (const struct secpolicy *);
