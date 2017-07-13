@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.180 2017/07/12 07:33:37 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.181 2017/07/13 01:22:44 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.180 2017/07/12 07:33:37 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.181 2017/07/13 01:22:44 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -838,14 +838,14 @@ done:
  *	ENOENT: policy may be valid, but SA with REQUIRE is on acquiring.
  */
 int
-key_checkrequest(struct ipsecrequest *isr, const struct secasindex *saidx)
+key_checkrequest(struct ipsecrequest *isr)
 {
 	u_int level;
 	int error;
 	struct secasvar *oldsav = NULL;
+	const struct secasindex *saidx = &isr->saidx;
 
 	KASSERT(isr != NULL);
-	KASSERT(saidx != NULL);
 	KASSERTMSG(saidx->mode == IPSEC_MODE_TRANSPORT ||
 	    saidx->mode == IPSEC_MODE_TUNNEL,
 	    "unexpected policy %u", saidx->mode);
