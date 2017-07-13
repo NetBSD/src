@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmc.1,v 1.12 2017/07/12 17:38:15 maxv Exp $
+.\"	$NetBSD: pmc.1,v 1.13 2017/07/13 10:59:53 wiz Exp $
 .\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,6 +96,12 @@ specifies the source of the event; it must be a combination of
 Stop any performance counters that are currently running, and display the
 values of these counters.
 .El
+.Sh FILES
+.Pa src/sys/arch/x86/x86/pmc.c
+x86 implementation.
+.Pp
+.Pa src/usr.bin/pmc/pmc.c
+pmc tool.
 .Sh EXAMPLES
 The following command prints the available counters.
 .Dl # pmc list
@@ -114,12 +120,10 @@ track the same event.
 The latter will start one counter that tracks the event from all sources;
 it therefore does the sum of the two counters from the first command, but
 takes only one counter to do so.
-.El
 .Sh INTERPRETING RESULTS
 For each PMC on each CPU, the value reported by the
 .Nm
 tool is the number of events counted, encoded in a 64bit integer.
-.El
 .Sh DIAGNOSTICS
 .Bl -diag
 .It PMC support not compiled into the kernel
@@ -131,13 +135,6 @@ option.
 See
 .Xr options 4
 for details.
-.El
-.Sh FILES
-.Pa src/sys/arch/x86/x86/pmc.c
-x86 implementation.
-.Pp
-.Pa src/usr.bin/pmc/pmc.c
-pmc tool.
 .El
 .Sh SEE ALSO
 .Xr options 4
