@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.520 2017/07/12 08:18:36 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.521 2017/07/13 07:50:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.520 2017/07/12 08:18:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.521 2017/07/13 07:50:49 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9012,6 +9012,9 @@ wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t phy_oui,
 	mii_readreg_t new_readreg;
 	mii_writereg_t new_writereg;
 
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+
 	if (mii->mii_readreg == NULL) {
 		/*
 		 *  This is the first call of this function. For ICH and PCH
@@ -9570,9 +9573,9 @@ wm_i82543_mii_recvbits(struct wm_softc *sc)
  *	Read a PHY register on the GMII (i82543 version).
  */
 static int
-wm_gmii_i82543_readreg(device_t self, int phy, int reg)
+wm_gmii_i82543_readreg(device_t dev, int phy, int reg)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 	int rv;
 
 	wm_i82543_mii_sendbits(sc, 0xffffffffU, 32);
@@ -9581,7 +9584,7 @@ wm_gmii_i82543_readreg(device_t self, int phy, int reg)
 	rv = wm_i82543_mii_recvbits(sc) & 0xffff;
 
 	DPRINTF(WM_DEBUG_GMII, ("%s: GMII: read phy %d reg %d -> 0x%04x\n",
-	    device_xname(sc->sc_dev), phy, reg, rv));
+	    device_xname(dev), phy, reg, rv));
 
 	return rv;
 }
@@ -9592,9 +9595,9 @@ wm_gmii_i82543_readreg(device_t self, int phy, int reg)
  *	Write a PHY register on the GMII (i82543 version).
  */
 static void
-wm_gmii_i82543_writereg(device_t self, int phy, int reg, int val)
+wm_gmii_i82543_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 
 	wm_i82543_mii_sendbits(sc, 0xffffffffU, 32);
 	wm_i82543_mii_sendbits(sc, val | (MII_COMMAND_ACK << 16) |
@@ -9608,9 +9611,9 @@ wm_gmii_i82543_writereg(device_t self, int phy, int reg, int val)
  *	Read a PHY register on the GMII.
  */
 static int
-wm_gmii_mdic_readreg(device_t self, int phy, int reg)
+wm_gmii_mdic_readreg(device_t dev, int phy, int reg)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 	uint32_t mdic = 0;
 	int i, rv;
 
@@ -9626,12 +9629,12 @@ wm_gmii_mdic_readreg(device_t self, int phy, int reg)
 
 	if ((mdic & MDIC_READY) == 0) {
 		log(LOG_WARNING, "%s: MDIC read timed out: phy %d reg %d\n",
-		    device_xname(sc->sc_dev), phy, reg);
+		    device_xname(dev), phy, reg);
 		rv = 0;
 	} else if (mdic & MDIC_E) {
 #if 0 /* This is normal if no PHY is present. */
 		log(LOG_WARNING, "%s: MDIC read error: phy %d reg %d\n",
-		    device_xname(sc->sc_dev), phy, reg);
+		    device_xname(dev), phy, reg);
 #endif
 		rv = 0;
 	} else {
@@ -9649,9 +9652,9 @@ wm_gmii_mdic_readreg(device_t self, int phy, int reg)
  *	Write a PHY register on the GMII.
  */
 static void
-wm_gmii_mdic_writereg(device_t self, int phy, int reg, int val)
+wm_gmii_mdic_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 	uint32_t mdic = 0;
 	int i;
 
@@ -9667,10 +9670,10 @@ wm_gmii_mdic_writereg(device_t self, int phy, int reg, int val)
 
 	if ((mdic & MDIC_READY) == 0)
 		log(LOG_WARNING, "%s: MDIC write timed out: phy %d reg %d\n",
-		    device_xname(sc->sc_dev), phy, reg);
+		    device_xname(dev), phy, reg);
 	else if (mdic & MDIC_E)
 		log(LOG_WARNING, "%s: MDIC write error: phy %d reg %d\n",
-		    device_xname(sc->sc_dev), phy, reg);
+		    device_xname(dev), phy, reg);
 }
 
 /*
@@ -9679,17 +9682,16 @@ wm_gmii_mdic_writereg(device_t self, int phy, int reg, int val)
  *	Read a PHY register on the GMII.
  */
 static int
-wm_gmii_i82544_readreg(device_t self, int phy, int reg)
+wm_gmii_i82544_readreg(device_t dev, int phy, int reg)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 	int rv;
 
 	if (sc->phy.acquire(sc)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
+		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return 0;
 	}
-	rv = wm_gmii_mdic_readreg(self, phy, reg);
+	rv = wm_gmii_mdic_readreg(dev, phy, reg);
 	sc->phy.release(sc);
 
 	return rv;
@@ -9701,15 +9703,15 @@ wm_gmii_i82544_readreg(device_t self, int phy, int reg)
  *	Write a PHY register on the GMII.
  */
 static void
-wm_gmii_i82544_writereg(device_t self, int phy, int reg, int val)
+wm_gmii_i82544_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 
 	if (sc->phy.acquire(sc)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
+		device_printf(dev, "%s: failed to get semaphore\n", __func__);
+		return;
 	}
-	wm_gmii_mdic_writereg(self, phy, reg, val);
+	wm_gmii_mdic_writereg(dev, phy, reg, val);
 	sc->phy.release(sc);
 }
 
@@ -9721,30 +9723,29 @@ wm_gmii_i82544_writereg(device_t self, int phy, int reg, int val)
  * ressource ...
  */
 static int
-wm_gmii_i80003_readreg(device_t self, int phy, int reg)
+wm_gmii_i80003_readreg(device_t dev, int phy, int reg)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 	int rv;
 
 	if (phy != 1) /* only one PHY on kumeran bus */
 		return 0;
 
 	if (sc->phy.acquire(sc)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
+		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return 0;
 	}
 
 	if ((reg & MII_ADDRMASK) < GG82563_MIN_ALT_REG) {
-		wm_gmii_mdic_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
+		wm_gmii_mdic_writereg(dev, phy, GG82563_PHY_PAGE_SELECT,
 		    reg >> GG82563_PAGE_SHIFT);
 	} else {
-		wm_gmii_mdic_writereg(self, phy, GG82563_PHY_PAGE_SELECT_ALT,
+		wm_gmii_mdic_writereg(dev, phy, GG82563_PHY_PAGE_SELECT_ALT,
 		    reg >> GG82563_PAGE_SHIFT);
 	}
 	/* Wait more 200us for a bug of the ready bit in the MDIC register */
 	delay(200);
-	rv = wm_gmii_mdic_readreg(self, phy, reg & MII_ADDRMASK);
+	rv = wm_gmii_mdic_readreg(dev, phy, reg & MII_ADDRMASK);
 	delay(200);
 	sc->phy.release(sc);
 
@@ -9759,29 +9760,28 @@ wm_gmii_i80003_readreg(device_t self, int phy, int reg)
  * ressource ...
  */
 static void
-wm_gmii_i80003_writereg(device_t self, int phy, int reg, int val)
+wm_gmii_i80003_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 
 	if (phy != 1) /* only one PHY on kumeran bus */
 		return;
 
 	if (sc->phy.acquire(sc)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
+		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return;
 	}
 
 	if ((reg & MII_ADDRMASK) < GG82563_MIN_ALT_REG) {
-		wm_gmii_mdic_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
+		wm_gmii_mdic_writereg(dev, phy, GG82563_PHY_PAGE_SELECT,
 		    reg >> GG82563_PAGE_SHIFT);
 	} else {
-		wm_gmii_mdic_writereg(self, phy, GG82563_PHY_PAGE_SELECT_ALT,
+		wm_gmii_mdic_writereg(dev, phy, GG82563_PHY_PAGE_SELECT_ALT,
 		    reg >> GG82563_PAGE_SHIFT);
 	}
 	/* Wait more 200us for a bug of the ready bit in the MDIC register */
 	delay(200);
-	wm_gmii_mdic_writereg(self, phy, reg & MII_ADDRMASK, val);
+	wm_gmii_mdic_writereg(dev, phy, reg & MII_ADDRMASK, val);
 	delay(200);
 
 	sc->phy.release(sc);
@@ -9795,16 +9795,15 @@ wm_gmii_i80003_writereg(device_t self, int phy, int reg, int val)
  * ressource ...
  */
 static int
-wm_gmii_bm_readreg(device_t self, int phy, int reg)
+wm_gmii_bm_readreg(device_t dev, int phy, int reg)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 	uint16_t page = reg >> BME1000_PAGE_SHIFT;
 	uint16_t val;
 	int rv;
 
 	if (sc->phy.acquire(sc)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
+		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return 0;
 	}
 
@@ -9813,7 +9812,7 @@ wm_gmii_bm_readreg(device_t self, int phy, int reg)
 		    || (reg == 31)) ? 1 : phy;
 	/* Page 800 works differently than the rest so it has its own func */
 	if (page == BM_WUC_PAGE) {
-		wm_access_phy_wakeup_reg_bm(self, reg, &val, 1);
+		wm_access_phy_wakeup_reg_bm(dev, reg, &val, 1);
 		rv = val;
 		goto release;
 	}
@@ -9821,14 +9820,14 @@ wm_gmii_bm_readreg(device_t self, int phy, int reg)
 	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 		if ((phy == 1) && (sc->sc_type != WM_T_82574)
 		    && (sc->sc_type != WM_T_82583))
-			wm_gmii_mdic_writereg(self, phy,
+			wm_gmii_mdic_writereg(dev, phy,
 			    MII_IGPHY_PAGE_SELECT, page << BME1000_PAGE_SHIFT);
 		else
-			wm_gmii_mdic_writereg(self, phy,
+			wm_gmii_mdic_writereg(dev, phy,
 			    BME1000_PHY_PAGE_SELECT, page);
 	}
 
-	rv = wm_gmii_mdic_readreg(self, phy, reg & MII_ADDRMASK);
+	rv = wm_gmii_mdic_readreg(dev, phy, reg & MII_ADDRMASK);
 
 release:
 	sc->phy.release(sc);
@@ -9843,14 +9842,13 @@ release:
  * ressource ...
  */
 static void
-wm_gmii_bm_writereg(device_t self, int phy, int reg, int val)
+wm_gmii_bm_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 	uint16_t page = reg >> BME1000_PAGE_SHIFT;
 
 	if (sc->phy.acquire(sc)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
+		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return;
 	}
 
@@ -9862,35 +9860,35 @@ wm_gmii_bm_writereg(device_t self, int phy, int reg, int val)
 		uint16_t tmp;
 
 		tmp = val;
-		wm_access_phy_wakeup_reg_bm(self, reg, &tmp, 0);
+		wm_access_phy_wakeup_reg_bm(dev, reg, &tmp, 0);
 		goto release;
 	}
 
 	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 		if ((phy == 1) && (sc->sc_type != WM_T_82574)
 		    && (sc->sc_type != WM_T_82583))
-			wm_gmii_mdic_writereg(self, phy,
+			wm_gmii_mdic_writereg(dev, phy,
 			    MII_IGPHY_PAGE_SELECT, page << BME1000_PAGE_SHIFT);
 		else
-			wm_gmii_mdic_writereg(self, phy,
+			wm_gmii_mdic_writereg(dev, phy,
 			    BME1000_PHY_PAGE_SELECT, page);
 	}
 
-	wm_gmii_mdic_writereg(self, phy, reg & MII_ADDRMASK, val);
+	wm_gmii_mdic_writereg(dev, phy, reg & MII_ADDRMASK, val);
 
 release:
 	sc->phy.release(sc);
 }
 
 static void
-wm_access_phy_wakeup_reg_bm(device_t self, int offset, int16_t *val, int rd)
+wm_access_phy_wakeup_reg_bm(device_t dev, int offset, int16_t *val, int rd)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 	uint16_t regnum = BM_PHY_REG_NUM(offset);
 	uint16_t wuce, reg;
 
 	DPRINTF(WM_DEBUG_GMII, ("%s: %s called\n",
-		device_xname(sc->sc_dev), __func__));
+		device_xname(dev), __func__));
 	/* XXX Gig must be disabled for MDIO accesses to page 800 */
 	if (sc->sc_type == WM_T_PCH) {
 		/* XXX e1000 driver do nothing... why? */
@@ -9902,18 +9900,18 @@ wm_access_phy_wakeup_reg_bm(device_t self, int offset, int16_t *val, int rd)
 	 */
 
 	/* Set page 769 */
-	wm_gmii_mdic_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+	wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
 	    BM_WUC_ENABLE_PAGE << BME1000_PAGE_SHIFT);
 
 	/* Read WUCE and save it */
-	wuce = wm_gmii_mdic_readreg(self, 1, BM_WUC_ENABLE_REG);
+	wuce = wm_gmii_mdic_readreg(dev, 1, BM_WUC_ENABLE_REG);
 
 	reg = wuce | BM_WUC_ENABLE_BIT;
 	reg &= ~(BM_WUC_ME_WU_BIT | BM_WUC_HOST_WU_BIT);
-	wm_gmii_mdic_writereg(self, 1, BM_WUC_ENABLE_REG, reg);
+	wm_gmii_mdic_writereg(dev, 1, BM_WUC_ENABLE_REG, reg);
 
 	/* Select page 800 */
-	wm_gmii_mdic_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+	wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
 	    BM_WUC_PAGE << BME1000_PAGE_SHIFT);
 
 	/*
@@ -9922,22 +9920,22 @@ wm_access_phy_wakeup_reg_bm(device_t self, int offset, int16_t *val, int rd)
 	 */
 
 	/* Write page 800 */
-	wm_gmii_mdic_writereg(self, 1, BM_WUC_ADDRESS_OPCODE, regnum);
+	wm_gmii_mdic_writereg(dev, 1, BM_WUC_ADDRESS_OPCODE, regnum);
 
 	if (rd)
-		*val = wm_gmii_mdic_readreg(self, 1, BM_WUC_DATA_OPCODE);
+		*val = wm_gmii_mdic_readreg(dev, 1, BM_WUC_DATA_OPCODE);
 	else
-		wm_gmii_mdic_writereg(self, 1, BM_WUC_DATA_OPCODE, *val);
+		wm_gmii_mdic_writereg(dev, 1, BM_WUC_DATA_OPCODE, *val);
 
 	/*
 	 * 3) Disable PHY wakeup register.
 	 * See e1000_disable_phy_wakeup_reg_access_bm().
 	 */
 	/* Set page 769 */
-	wm_gmii_mdic_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+	wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
 	    BM_WUC_ENABLE_PAGE << BME1000_PAGE_SHIFT);
 
-	wm_gmii_mdic_writereg(self, 1, BM_WUC_ENABLE_REG, wuce);
+	wm_gmii_mdic_writereg(dev, 1, BM_WUC_ENABLE_REG, wuce);
 }
 
 /*
@@ -9948,26 +9946,25 @@ wm_access_phy_wakeup_reg_bm(device_t self, int offset, int16_t *val, int rd)
  * ressource ...
  */
 static int
-wm_gmii_hv_readreg(device_t self, int phy, int reg)
+wm_gmii_hv_readreg(device_t dev, int phy, int reg)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 	int rv;
 
 	DPRINTF(WM_DEBUG_GMII, ("%s: %s called\n",
-		device_xname(sc->sc_dev), __func__));
+		device_xname(dev), __func__));
 	if (sc->phy.acquire(sc)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
+		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return 0;
 	}
 
-	rv = wm_gmii_hv_readreg_locked(self, phy, reg);
+	rv = wm_gmii_hv_readreg_locked(dev, phy, reg);
 	sc->phy.release(sc);
 	return rv;
 }
 
 static int
-wm_gmii_hv_readreg_locked(device_t self, int phy, int reg)
+wm_gmii_hv_readreg_locked(device_t dev, int phy, int reg)
 {
 	uint16_t page = BM_PHY_REG_PAGE(reg);
 	uint16_t regnum = BM_PHY_REG_NUM(reg);
@@ -9978,7 +9975,7 @@ wm_gmii_hv_readreg_locked(device_t self, int phy, int reg)
 
 	/* Page 800 works differently than the rest so it has its own func */
 	if (page == BM_WUC_PAGE) {
-		wm_access_phy_wakeup_reg_bm(self, reg, &val, 1);
+		wm_access_phy_wakeup_reg_bm(dev, reg, &val, 1);
 		return val;
 	}
 
@@ -9992,11 +9989,11 @@ wm_gmii_hv_readreg_locked(device_t self, int phy, int reg)
 	}
 
 	if (regnum > BME1000_MAX_MULTI_PAGE_REG) {
-		wm_gmii_mdic_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+		wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
 		    page << BME1000_PAGE_SHIFT);
 	}
 
-	rv = wm_gmii_mdic_readreg(self, phy, regnum & MII_ADDRMASK);
+	rv = wm_gmii_mdic_readreg(dev, phy, regnum & MII_ADDRMASK);
 	return rv;
 }
 
@@ -10008,27 +10005,26 @@ wm_gmii_hv_readreg_locked(device_t self, int phy, int reg)
  * ressource ...
  */
 static void
-wm_gmii_hv_writereg(device_t self, int phy, int reg, int val)
+wm_gmii_hv_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 
 	DPRINTF(WM_DEBUG_GMII, ("%s: %s called\n",
-		device_xname(sc->sc_dev), __func__));
+		device_xname(dev), __func__));
 
 	if (sc->phy.acquire(sc)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
+		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return;
 	}
 
-	wm_gmii_hv_writereg_locked(self, phy, reg, val);
+	wm_gmii_hv_writereg_locked(dev, phy, reg, val);
 	sc->phy.release(sc);
 }
 
 static void
-wm_gmii_hv_writereg_locked(device_t self, int phy, int reg, int val)
+wm_gmii_hv_writereg_locked(device_t dev, int phy, int reg, int val)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 	uint16_t page = BM_PHY_REG_PAGE(reg);
 	uint16_t regnum = BM_PHY_REG_NUM(reg);
 
@@ -10039,7 +10035,7 @@ wm_gmii_hv_writereg_locked(device_t self, int phy, int reg, int val)
 		uint16_t tmp;
 
 		tmp = val;
-		wm_access_phy_wakeup_reg_bm(self, reg, &tmp, 0);
+		wm_access_phy_wakeup_reg_bm(dev, reg, &tmp, 0);
 		return;
 	}
 
@@ -10070,12 +10066,12 @@ wm_gmii_hv_writereg_locked(device_t self, int phy, int reg, int val)
 		}
 
 		if (regnum > BME1000_MAX_MULTI_PAGE_REG) {
-			wm_gmii_mdic_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+			wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
 			    page << BME1000_PAGE_SHIFT);
 		}
 	}
 
-	wm_gmii_mdic_writereg(self, phy, regnum & MII_ADDRMASK, val);
+	wm_gmii_mdic_writereg(dev, phy, regnum & MII_ADDRMASK, val);
 }
 
 /*
@@ -10086,18 +10082,17 @@ wm_gmii_hv_writereg_locked(device_t self, int phy, int reg, int val)
  * ressource ...
  */
 static int
-wm_gmii_82580_readreg(device_t self, int phy, int reg)
+wm_gmii_82580_readreg(device_t dev, int phy, int reg)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 	int rv;
 
 	if (sc->phy.acquire(sc) != 0) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
+		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return 0;
 	}
 
-	rv = wm_gmii_mdic_readreg(self, phy, reg);
+	rv = wm_gmii_mdic_readreg(dev, phy, reg);
 
 	sc->phy.release(sc);
 	return rv;
@@ -10111,17 +10106,16 @@ wm_gmii_82580_readreg(device_t self, int phy, int reg)
  * ressource ...
  */
 static void
-wm_gmii_82580_writereg(device_t self, int phy, int reg, int val)
+wm_gmii_82580_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 
 	if (sc->phy.acquire(sc) != 0) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
+		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return;
 	}
 
-	wm_gmii_mdic_writereg(self, phy, reg, val);
+	wm_gmii_mdic_writereg(dev, phy, reg, val);
 
 	sc->phy.release(sc);
 }
@@ -10134,26 +10128,25 @@ wm_gmii_82580_writereg(device_t self, int phy, int reg, int val)
  * ressource ...
  */
 static int
-wm_gmii_gs40g_readreg(device_t self, int phy, int reg)
+wm_gmii_gs40g_readreg(device_t dev, int phy, int reg)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 	int page, offset;
 	int rv;
 
 	/* Acquire semaphore */
 	if (sc->phy.acquire(sc)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
+		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return 0;
 	}
 
 	/* Page select */
 	page = reg >> GS40G_PAGE_SHIFT;
-	wm_gmii_mdic_writereg(self, phy, GS40G_PAGE_SELECT, page);
+	wm_gmii_mdic_writereg(dev, phy, GS40G_PAGE_SELECT, page);
 
 	/* Read reg */
 	offset = reg & GS40G_OFFSET_MASK;
-	rv = wm_gmii_mdic_readreg(self, phy, offset);
+	rv = wm_gmii_mdic_readreg(dev, phy, offset);
 
 	sc->phy.release(sc);
 	return rv;
@@ -10167,25 +10160,24 @@ wm_gmii_gs40g_readreg(device_t self, int phy, int reg)
  * ressource ...
  */
 static void
-wm_gmii_gs40g_writereg(device_t self, int phy, int reg, int val)
+wm_gmii_gs40g_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 	int page, offset;
 
 	/* Acquire semaphore */
 	if (sc->phy.acquire(sc)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
+		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return;
 	}
 
 	/* Page select */
 	page = reg >> GS40G_PAGE_SHIFT;
-	wm_gmii_mdic_writereg(self, phy, GS40G_PAGE_SELECT, page);
+	wm_gmii_mdic_writereg(dev, phy, GS40G_PAGE_SELECT, page);
 
 	/* Write reg */
 	offset = reg & GS40G_OFFSET_MASK;
-	wm_gmii_mdic_writereg(self, phy, offset, val);
+	wm_gmii_mdic_writereg(dev, phy, offset, val);
 
 	/* Release semaphore */
 	sc->phy.release(sc);
@@ -10272,8 +10264,8 @@ wm_kmrn_readreg(struct wm_softc *sc, int reg)
 	else
 		rv = sc->phy.acquire(sc);
 	if (rv != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "%s: failed to get semaphore\n", __func__);
+		device_printf(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
 		return 0;
 	}
 
@@ -10318,8 +10310,8 @@ wm_kmrn_writereg(struct wm_softc *sc, int reg, int val)
 	else
 		rv = sc->phy.acquire(sc);
 	if (rv != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "%s: failed to get semaphore\n", __func__);
+		device_printf(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
 		return;
 	}
 
@@ -10383,15 +10375,14 @@ wm_sgmii_uses_mdio(struct wm_softc *sc)
  * ressource ...
  */
 static int
-wm_sgmii_readreg(device_t self, int phy, int reg)
+wm_sgmii_readreg(device_t dev, int phy, int reg)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 	uint32_t i2ccmd;
 	int i, rv;
 
 	if (sc->phy.acquire(sc)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
+		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return 0;
 	}
 
@@ -10408,9 +10399,9 @@ wm_sgmii_readreg(device_t self, int phy, int reg)
 			break;
 	}
 	if ((i2ccmd & I2CCMD_READY) == 0)
-		aprint_error_dev(sc->sc_dev, "I2CCMD Read did not complete\n");
+		device_printf(dev, "I2CCMD Read did not complete\n");
 	if ((i2ccmd & I2CCMD_ERROR) != 0)
-		aprint_error_dev(sc->sc_dev, "I2CCMD Error bit set\n");
+		device_printf(dev, "I2CCMD Error bit set\n");
 
 	rv = ((i2ccmd >> 8) & 0x00ff) | ((i2ccmd << 8) & 0xff00);
 
@@ -10426,16 +10417,15 @@ wm_sgmii_readreg(device_t self, int phy, int reg)
  * ressource ...
  */
 static void
-wm_sgmii_writereg(device_t self, int phy, int reg, int val)
+wm_sgmii_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = device_private(dev);
 	uint32_t i2ccmd;
 	int i;
 	int val_swapped;
 
 	if (sc->phy.acquire(sc) != 0) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
+		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return;
 	}
 	/* Swap the data bytes for the I2C interface */
@@ -10453,9 +10443,9 @@ wm_sgmii_writereg(device_t self, int phy, int reg, int val)
 			break;
 	}
 	if ((i2ccmd & I2CCMD_READY) == 0)
-		aprint_error_dev(sc->sc_dev, "I2CCMD Write did not complete\n");
+		device_printf(dev, "I2CCMD Write did not complete\n");
 	if ((i2ccmd & I2CCMD_ERROR) != 0)
-		aprint_error_dev(sc->sc_dev, "I2CCMD Error bit set\n");
+		device_printf(dev, "I2CCMD Error bit set\n");
 
 	sc->phy.release(sc);
 }
