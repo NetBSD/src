@@ -12,6 +12,7 @@
 #ifndef __REGISTERS_HPP__
 #define __REGISTERS_HPP__
 
+#include <sys/endian.h>
 #include <cassert>
 #include <cstdint>
 
@@ -323,8 +324,8 @@ enum {
   DWARF_ARM32_R0 = 0,
   DWARF_ARM32_R15 = 15,
   DWARF_ARM32_SPSR = 128,
-  DWARF_ARM32_OLD_S0 = 64,
-  DWARF_ARM32_OLD_S31 = 91,
+  DWARF_ARM32_S0 = 64,
+  DWARF_ARM32_S31 = 91,
   DWARF_ARM32_D0 = 256,
   DWARF_ARM32_D31 = 287,
   REGNO_ARM32_R0 = 0,
@@ -334,6 +335,8 @@ enum {
   REGNO_ARM32_D0 = 17,
   REGNO_ARM32_D15 = 32,
   REGNO_ARM32_D31 = 48,
+  REGNO_ARM32_S0 = 49,
+  REGNO_ARM32_S31 = 70,
 };
 
 class Registers_arm32 {
@@ -354,9 +357,8 @@ public:
       return REGNO_ARM32_SPSR;
     if (num >= DWARF_ARM32_D0 && num <= DWARF_ARM32_D31)
       return REGNO_ARM32_D0 + (num - DWARF_ARM32_D0);
-    if (num >= DWARF_ARM32_OLD_S0 && num <= DWARF_ARM32_OLD_S31) {
-      assert(num % 2 == 0);
-      return REGNO_ARM32_D0 + (num - DWARF_ARM32_OLD_S0) / 2;
+    if (num >= DWARF_ARM32_S0 && num <= DWARF_ARM32_S31) {
+      return REGNO_ARM32_S0 + (num - DWARF_ARM32_S0);
     }
     return LAST_REGISTER + 1;
   }
@@ -384,10 +386,28 @@ public:
   void setSP(uint64_t value) { reg[REGNO_ARM32_SP] = value; }
 
   bool validFloatVectorRegister(int num) const {
-    return (num >= REGNO_ARM32_D0 && num <= REGNO_ARM32_D31);
+    return (num >= REGNO_ARM32_D0 && num <= REGNO_ARM32_S31);
   }
 
   void copyFloatVectorRegister(int num, uint64_t addr_) {
+    const void *addr = reinterpret_cast<const void *>(addr_);
+    if (num >= REGNO_ARM32_S0 && num <= REGNO_ARM32_S31) {
+      if ((flags & 1) == 0) {
+        lazyVFP1();
+        flags |= 1;
+      }
+      /*
+       * Emulate single precision register as half of the
+       * corresponding double register.
+       */
+      int dnum = (num - REGNO_ARM32_S0) / 2;
+      int part = (num - REGNO_ARM32_S0) % 2;
+#if _BYTE_ORDER == _BIG_ENDIAN
+      part = 1 - part;
+#endif
+      memcpy(fpreg + dnum + part * sizeof(fpreg[0]) / 2,
+        addr, sizeof(fpreg[0]) / 2);
+    }
     if (num <= REGNO_ARM32_D15) {
       if ((flags & 1) == 0) {
         lazyVFP1();
@@ -399,7 +419,6 @@ public:
         flags |= 2;
       }
     }
-    const void *addr = reinterpret_cast<const void *>(addr_);
     memcpy(fpreg + (num - REGNO_ARM32_D0), addr, sizeof(fpreg[0]));
   }
 
