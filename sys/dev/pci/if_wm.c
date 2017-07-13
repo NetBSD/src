@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.523 2017/07/13 08:22:21 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.524 2017/07/13 13:27:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.523 2017/07/13 08:22:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.524 2017/07/13 13:27:08 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4076,7 +4076,10 @@ wm_flush_desc_rings(struct wm_softc *sc)
 {
 	pcireg_t preg;
 	uint32_t reg;
+	struct wm_txqueue *txq;
+	wiseman_txdesc_t *txd;
 	int nexttx;
+	uint32_t rctl;
 
 	/* First, disable MULR fix in FEXTNVM11 */
 	reg = CSR_READ(sc, WMREG_FEXTNVM11);
@@ -4085,66 +4088,64 @@ wm_flush_desc_rings(struct wm_softc *sc)
 
 	preg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, WM_PCI_DESCRING_STATUS);
 	reg = CSR_READ(sc, WMREG_TDLEN(0));
-	if (((preg & DESCRING_STATUS_FLUSH_REQ) != 0) && (reg != 0)) {
-		struct wm_txqueue *txq;
-		wiseman_txdesc_t *txd;
+	if (((preg & DESCRING_STATUS_FLUSH_REQ) == 0) || (reg == 0))
+		return;
 
-		/* TX */
-		printf("%s: Need TX flush (reg = %08x, len = %u)\n",
-		    device_xname(sc->sc_dev), preg, reg);
-		reg = CSR_READ(sc, WMREG_TCTL);
-		CSR_WRITE(sc, WMREG_TCTL, reg | TCTL_EN);
+	/* TX */
+	printf("%s: Need TX flush (reg = %08x, len = %u)\n",
+	    device_xname(sc->sc_dev), preg, reg);
+	reg = CSR_READ(sc, WMREG_TCTL);
+	CSR_WRITE(sc, WMREG_TCTL, reg | TCTL_EN);
 
-		txq = &sc->sc_queue[0].wmq_txq;
-		nexttx = txq->txq_next;
-		txd = &txq->txq_descs[nexttx];
-		wm_set_dma_addr(&txd->wtx_addr, WM_CDTXADDR(txq, nexttx));
-		txd->wtx_cmdlen = htole32(WTX_CMD_IFCS| 512);
-		txd->wtx_fields.wtxu_status = 0;
-		txd->wtx_fields.wtxu_options = 0;
-		txd->wtx_fields.wtxu_vlan = 0;
+	txq = &sc->sc_queue[0].wmq_txq;
+	nexttx = txq->txq_next;
+	txd = &txq->txq_descs[nexttx];
+	wm_set_dma_addr(&txd->wtx_addr, WM_CDTXADDR(txq, nexttx));
+	txd->wtx_cmdlen = htole32(WTX_CMD_IFCS| 512);
+	txd->wtx_fields.wtxu_status = 0;
+	txd->wtx_fields.wtxu_options = 0;
+	txd->wtx_fields.wtxu_vlan = 0;
 
-		bus_space_barrier(sc->sc_st, sc->sc_sh, 0, 0,
-			BUS_SPACE_BARRIER_WRITE);
+	bus_space_barrier(sc->sc_st, sc->sc_sh, 0, 0,
+	    BUS_SPACE_BARRIER_WRITE);
 		
-		txq->txq_next = WM_NEXTTX(txq, txq->txq_next);
-		CSR_WRITE(sc, WMREG_TDT(0), txq->txq_next);
-		bus_space_barrier(sc->sc_st, sc->sc_sh, 0, 0,
-			BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
-		delay(250);
-	}
+	txq->txq_next = WM_NEXTTX(txq, txq->txq_next);
+	CSR_WRITE(sc, WMREG_TDT(0), txq->txq_next);
+	bus_space_barrier(sc->sc_st, sc->sc_sh, 0, 0,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	delay(250);
+
 	preg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, WM_PCI_DESCRING_STATUS);
-	if (preg & DESCRING_STATUS_FLUSH_REQ) {
-		uint32_t rctl;
+	if ((preg & DESCRING_STATUS_FLUSH_REQ) == 0)
+		return;
 
-		/* RX */
-		printf("%s: Need RX flush (reg = %08x)\n",
-		    device_xname(sc->sc_dev), preg);
-		rctl = CSR_READ(sc, WMREG_RCTL);
-		CSR_WRITE(sc, WMREG_RCTL, rctl & ~RCTL_EN);
-		CSR_WRITE_FLUSH(sc);
-		delay(150);
+	/* RX */
+	printf("%s: Need RX flush (reg = %08x)\n",
+	    device_xname(sc->sc_dev), preg);
+	rctl = CSR_READ(sc, WMREG_RCTL);
+	CSR_WRITE(sc, WMREG_RCTL, rctl & ~RCTL_EN);
+	CSR_WRITE_FLUSH(sc);
+	delay(150);
 
-		reg = CSR_READ(sc, WMREG_RXDCTL(0));
-		/* zero the lower 14 bits (prefetch and host thresholds) */
-		reg &= 0xffffc000;
-		/*
-		 * update thresholds: prefetch threshold to 31, host threshold
-		 * to 1 and make sure the granularity is "descriptors" and not
-		 * "cache lines"
-		 */
-		reg |= (0x1f | (1 << 8) | RXDCTL_GRAN);
-		CSR_WRITE(sc, WMREG_RXDCTL(0), reg);
+	reg = CSR_READ(sc, WMREG_RXDCTL(0));
+	/* zero the lower 14 bits (prefetch and host thresholds) */
+	reg &= 0xffffc000;
+	/*
+	 * update thresholds: prefetch threshold to 31, host threshold
+	 * to 1 and make sure the granularity is "descriptors" and not
+	 * "cache lines"
+	 */
+	reg |= (0x1f | (1 << 8) | RXDCTL_GRAN);
+	CSR_WRITE(sc, WMREG_RXDCTL(0), reg);
 
-		/*
-		 * momentarily enable the RX ring for the changes to take
-		 * effect
-		 */
-		CSR_WRITE(sc, WMREG_RCTL, rctl | RCTL_EN);
-		CSR_WRITE_FLUSH(sc);
-		delay(150);
-		CSR_WRITE(sc, WMREG_RCTL, rctl & ~RCTL_EN);
-	}
+	/*
+	 * momentarily enable the RX ring for the changes to take
+	 * effect
+	 */
+	CSR_WRITE(sc, WMREG_RCTL, rctl | RCTL_EN);
+	CSR_WRITE_FLUSH(sc);
+	delay(150);
+	CSR_WRITE(sc, WMREG_RCTL, rctl & ~RCTL_EN);
 }
 
 /*
