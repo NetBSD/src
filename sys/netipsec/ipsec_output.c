@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.52 2017/07/13 01:22:44 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.53 2017/07/13 01:48:52 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.52 2017/07/13 01:22:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.53 2017/07/13 01:48:52 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -712,14 +712,17 @@ ipsec6_process_packet(
 		struct mbuf *mp;
 
 		/* Fix IPv6 header payload length. */
-		if (m->m_len < sizeof(struct ip6_hdr))
-			if ((m = m_pullup(m,sizeof(struct ip6_hdr))) == NULL)
-				return ENOBUFS;
+		if (m->m_len < sizeof(struct ip6_hdr)) {
+			if ((m = m_pullup(m,sizeof(struct ip6_hdr))) == NULL) {
+				error = ENOBUFS;
+				goto bad;
+			}
+		}
 
 		if (m->m_pkthdr.len - sizeof(*ip6) > IPV6_MAXPACKET) {
 			/* No jumbogram support. */
-			m_freem(m);
-			return ENXIO;   /*XXX*/
+			error = ENXIO;   /*XXX*/
+			goto bad;
 		}
 
 		ip6 = mtod(m, struct ip6_hdr *);
