@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.101 2017/07/12 08:15:31 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.102 2017/07/13 08:22:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -589,6 +589,10 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_FCAL	0x0028	/* Flow Control Address Low */
 #define	FCAL_CONST	0x00c28001	/* Flow Control MAC addr low */
 
+#define	WMREG_FEXTNVM	0x0028	/* Future Extended NVM register */
+#define	FEXTNVM_SW_CONFIG	__BIT(1)
+#define	FEXTNVM_SW_CONFIG_ICH8M	__BIT(27)
+
 #define	WMREG_FCAH	0x002c	/* Flow Control Address High */
 #define	FCAH_CONST	0x00000100	/* Flow Control MAC addr high */
 
@@ -940,6 +944,8 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_AIT	0x0458	/* Adaptive IFS Throttle */
 #define	WMREG_VFTA	0x0600
 
+#define	WMREG_LEDCTL	0x0e00	/* LED Control - RW */
+
 #define	WMREG_MDICNFG	0x0e04	/* MDC/MDIO Configuration Register */
 #define MDICNFG_PHY_SHIFT	21
 #define MDICNFG_PHY_MASK	__BITS(25, 21)
@@ -972,14 +978,14 @@ struct livengood_tcpip_ctxdesc {
 
 #define WMREG_EXTCNFCTR	0x0f00  /* Extended Configuration Control */
 #define EXTCNFCTR_PCIE_WRITE_ENABLE	0x00000001
-#define EXTCNFCTR_PHY_WRITE_ENABLE	0x00000002
-#define EXTCNFCTR_D_UD_ENABLE		0x00000004
-#define EXTCNFCTR_D_UD_LATENCY		0x00000008
-#define EXTCNFCTR_D_UD_OWNER		0x00000010
+#define EXTCNFCTR_OEM_WRITE_ENABLE	0x00000008
 #define EXTCNFCTR_MDIO_SW_OWNERSHIP	0x00000020
 #define EXTCNFCTR_MDIO_HW_OWNERSHIP	0x00000040
 #define EXTCNFCTR_GATE_PHY_CFG		0x00000080
 #define EXTCNFCTR_EXT_CNF_POINTER	0x0FFF0000
+
+#define WMREG_EXTCNFSIZE 0x0f08  /* Extended Configuration Size */
+#define EXTCNFSIZE_LENGTH	__BITS(23, 16)
 
 #define	WMREG_PHY_CTRL	0x0f10	/* PHY control */
 #define	PHY_CTRL_SPD_EN		(1 << 0)
