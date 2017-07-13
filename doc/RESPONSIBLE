@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.112 2017/07/13 15:35:44 joerg Exp $
+#	$NetBSD: RESPONSIBLE,v 1.113 2017/07/13 15:36:20 joerg Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -110,8 +110,8 @@ Kernel:
 
 device support:
 
-acpi		thorpej*, kochi*, jmcneill*, joerg
-audio		augustss*, jmcneill*
+acpi		thorpej*, kochi*, jmcneill, joerg
+audio		augustss*, jmcneill
 cgd		elric
 firewire	jmc
 flash		ahoka
@@ -138,7 +138,7 @@ audio device drivers:
 auich		kent*
 dbri		macallan
 eap		pooka
-esa		jmcneill*
+esa		jmcneill
 
 console device drivers:
 
@@ -231,7 +231,7 @@ modules		jnemeth
 lwp/pthread	nathanw*
 ntp		simonb, jonathan*
 pipes		jdolecek*
-splash		jmcneill*
+splash		jmcneill
 uvm		chuck, chs, mrg, atatat*
 
 kern/compat:
