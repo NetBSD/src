@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.115 2017/07/13 16:46:43 uwe Exp $
+#	$NetBSD: RESPONSIBLE,v 1.116 2017/07/13 19:10:59 uwe Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -284,6 +284,7 @@ hppa		skrll
 i386		dsl
 ibmnws		matt
 iyonix		gavan
+landisk		uwe
 luna68k		nisimura
 mac68k		scottr
 macppc		macallan
