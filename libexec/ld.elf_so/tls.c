@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.10 2014/12/14 23:49:17 chs Exp $	*/
+/*	$NetBSD: tls.c,v 1.11 2017/07/13 14:10:38 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.10 2014/12/14 23:49:17 chs Exp $");
+__RCSID("$NetBSD: tls.c,v 1.11 2017/07/13 14:10:38 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -134,7 +134,7 @@ _rtld_tls_allocate_locked(void)
 	SET_DTV_GENERATION(tcb->tcb_dtv, _rtld_tls_dtv_generation);
 
 	for (obj = _rtld_objlist; obj != NULL; obj = obj->next) {
-		if (obj->tlsinitsize && obj->tls_done) {
+		if (obj->tls_done) {
 #ifdef __HAVE_TLS_VARIANT_I
 			q = p + obj->tlsoffset;
 #else
@@ -142,7 +142,8 @@ _rtld_tls_allocate_locked(void)
 #endif
 			dbg(("obj %p dtv %p tlsoffset %zu",
 			    obj, q, obj->tlsoffset));
-			memcpy(q, obj->tlsinit, obj->tlsinitsize);
+			if (obj->tlsinitsize)
+				memcpy(q, obj->tlsinit, obj->tlsinitsize);
 			tcb->tcb_dtv[obj->tlsindex] = q;
 		}
 	}
@@ -167,21 +168,25 @@ void
 _rtld_tls_free(struct tls_tcb *tcb)
 {
 	size_t i, max_index;
-	uint8_t *p;
+	uint8_t *p, *p_end;
 	sigset_t mask;
 
 	_rtld_exclusive_enter(&mask);
-
-	max_index = DTV_MAX_INDEX(tcb->tcb_dtv);
-	for (i = 1; i <= max_index; ++i)
-		xfree(tcb->tcb_dtv[i]);
-	xfree(tcb->tcb_dtv - 1);
 
 #ifdef __HAVE_TLS_VARIANT_I
 	p = (uint8_t *)tcb;
 #else
 	p = (uint8_t *)tcb - _rtld_tls_static_space;
 #endif
+	p_end = p + _rtld_tls_static_space;
+
+	max_index = DTV_MAX_INDEX(tcb->tcb_dtv);
+	for (i = 1; i <= max_index; ++i) {
+		if ((uint8_t *)tcb->tcb_dtv[i] < p ||
+		    (uint8_t *)tcb->tcb_dtv[i] >= p_end)
+			xfree(tcb->tcb_dtv[i]);
+	}
+	xfree(tcb->tcb_dtv - 1);
 	xfree(p);
 
 	_rtld_exclusive_exit(&mask);
