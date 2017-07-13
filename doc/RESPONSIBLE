@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.114 2017/07/13 15:38:23 joerg Exp $
+#	$NetBSD: RESPONSIBLE,v 1.115 2017/07/13 16:46:43 uwe Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -304,7 +304,7 @@ sandpoint	nisimura
 sbmips		simonb
 sgimips		core
 shark		core
-sh3		msaitoh
+sh3		msaitoh,uwe
 sparc		core
 sparc64		martin
 sun2		core
