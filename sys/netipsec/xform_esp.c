@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.59 2017/07/10 07:17:12 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.60 2017/07/13 03:00:46 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.59 2017/07/10 07:17:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.60 2017/07/13 03:00:46 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -163,7 +163,8 @@ esp_hdrsiz(const struct secasvar *sav)
 		 * + sizeof(next header field)
 		 * + max icv supported.
 		 */
-		size = sizeof(struct newesp) + esp_max_ivlen + 9 + 16;
+		size = sizeof(struct newesp) + esp_max_ivlen + 9 +
+		    ah_hdrsiz(NULL);
 	}
 	return size;
 }
