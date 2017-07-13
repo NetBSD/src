@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.522 2017/07/13 08:04:56 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.523 2017/07/13 08:22:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.522 2017/07/13 08:04:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.523 2017/07/13 08:22:21 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -679,6 +679,7 @@ static void	wm_get_auto_rd_done(struct wm_softc *);
 static void	wm_lan_init_done(struct wm_softc *);
 static void	wm_get_cfg_done(struct wm_softc *);
 static void	wm_phy_post_reset(struct wm_softc *);
+static void	wm_init_lcd_from_nvm(struct wm_softc *);
 static void	wm_initialize_hardware_bits(struct wm_softc *);
 static uint32_t	wm_rxpbs_adjust_82580(uint32_t);
 static void	wm_reset_phy(struct wm_softc *);
@@ -3692,13 +3693,101 @@ wm_phy_post_reset(struct wm_softc *sc)
 		    BM_PORT_GEN_CFG, reg);
 	}
 
-	/*
-	 * XXX Configure the LCD with th extended configuration region
-	 * in NVM
-	 */
+	/* Configure the LCD with the extended configuration region in NVM */
+	wm_init_lcd_from_nvm(sc);
 
 	/* Configure the LCD with the OEM bits in NVM */
 }
+
+void
+wm_init_lcd_from_nvm(struct wm_softc *sc)
+{
+	uint32_t extcnfctr, sw_cfg_mask, cnf_size, word_addr, i, reg;
+	uint16_t phy_page = 0;
+
+	switch (sc->sc_type) {
+	case WM_T_ICH8:
+		if (sc->sc_phytype != WMPHY_IGP_3)
+			return;
+
+		if ((sc->sc_pcidevid == PCI_PRODUCT_INTEL_82801H_AMT)
+		    || (sc->sc_pcidevid == PCI_PRODUCT_INTEL_82801H_LAN)) {
+			sw_cfg_mask = FEXTNVM_SW_CONFIG;
+			break;
+		}
+		/* FALLTHROUGH */
+	case WM_T_PCH:
+	case WM_T_PCH2:
+	case WM_T_PCH_LPT:
+	case WM_T_PCH_SPT:
+		sw_cfg_mask = FEXTNVM_SW_CONFIG_ICH8M;
+		break;
+	default:
+		return;
+	}
+
+	sc->phy.acquire(sc);
+
+	reg = CSR_READ(sc, WMREG_FEXTNVM);
+	if ((reg & sw_cfg_mask) == 0)
+		goto release;
+
+	/*
+	 * Make sure HW does not configure LCD from PHY extended configuration
+	 * before SW configuration
+	 */
+	extcnfctr = CSR_READ(sc, WMREG_EXTCNFCTR);
+	if ((sc->sc_type < WM_T_PCH2)
+	    && ((extcnfctr & EXTCNFCTR_PCIE_WRITE_ENABLE) != 0))
+		goto release;
+
+	/* word_addr is in DWORD */
+	word_addr = __SHIFTOUT(extcnfctr, EXTCNFCTR_EXT_CNF_POINTER) << 1;
+	
+	reg = CSR_READ(sc, WMREG_EXTCNFSIZE);
+	cnf_size = __SHIFTOUT(reg, EXTCNFSIZE_LENGTH);
+
+	if (((sc->sc_type == WM_T_PCH)
+		&& ((extcnfctr & EXTCNFCTR_OEM_WRITE_ENABLE) == 0))
+	    || (sc->sc_type > WM_T_PCH)) {
+		/*
+		 * HW configures the SMBus address and LEDs when the OEM and
+		 * LCD Write Enable bits are set in the NVM. When both NVM bits
+		 * are cleared, SW will configure them instead.
+		 */
+		device_printf(sc->sc_dev, "%s: need write_smbus()\n",
+		    __func__);
+
+		reg = CSR_READ(sc, WMREG_LEDCTL);
+		wm_gmii_hv_writereg_locked(sc->sc_dev, 1, HV_LED_CONFIG, reg);
+	}
+
+	/* Configure LCD from extended configuration region. */
+	for (i = 0; i < cnf_size; i++) {
+		uint16_t reg_data, reg_addr;
+
+		if (wm_nvm_read(sc, (word_addr + i * 2), 1, &reg_data) != 0)
+			goto release;
+
+		if (wm_nvm_read(sc, (word_addr + i * 2 + 1), 1, &reg_addr) !=0)
+			goto release;
+
+		if (reg_addr == MII_IGPHY_PAGE_SELECT)
+			phy_page = reg_data;
+
+		reg_addr &= IGPHY_MAXREGADDR;
+		reg_addr |= phy_page;
+
+		sc->phy.release(sc); /* XXX */
+		sc->sc_mii.mii_writereg(sc->sc_dev, 1, reg_addr, reg_data);
+		sc->phy.acquire(sc); /* XXX */
+	}
+
+release:	
+	sc->phy.release(sc);
+	return;
+}
+    
 
 /* Init hardware bits */
 void
@@ -8286,9 +8375,21 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 		uint32_t reg;
 		uint32_t status = CSR_READ(sc, WMREG_STATUS);
 
+		if ((status & STATUS_LU) != 0) {
+			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> up %s\n",
+				device_xname(sc->sc_dev),
+				(status & STATUS_FD) ? "FDX" : "HDX"));
+		} else {
+			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> down\n",
+				device_xname(sc->sc_dev)));
+		}
 		if ((sc->sc_type == WM_T_ICH8) && ((status & STATUS_LU) == 0))
 			wm_gig_downshift_workaround_ich8lan(sc);
 
+		if ((sc->sc_type == WM_T_ICH8)
+		    && (sc->sc_phytype == WMPHY_IGP_3)) {
+			wm_kmrn_lock_loss_workaround_ich8lan(sc);
+		}
 		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> mii_pollstat\n",
 			device_xname(sc->sc_dev)));
 		mii_pollstat(&sc->sc_mii);
@@ -8327,9 +8428,6 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 					sc->sc_ctrl |= CTRL_FD;
 				CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 			}
-		} else if ((sc->sc_type == WM_T_ICH8)
-		    && (sc->sc_phytype == WMPHY_IGP_3)) {
-			wm_kmrn_lock_loss_workaround_ich8lan(sc);
 		} else if (sc->sc_type == WM_T_PCH) {
 			wm_k1_gig_workaround_hv(sc,
 			    ((sc->sc_mii.mii_media_status & IFM_ACTIVE) != 0));
@@ -13512,31 +13610,32 @@ wm_set_eee_i350(struct wm_softc *sc)
 static void
 wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *sc)
 {
-#if 0
-	int miistatus, active, i;
+	struct mii_data *mii = &sc->sc_mii;
+	uint32_t status = CSR_READ(sc, WMREG_STATUS);
+	int i;
 	int reg;
 
-	miistatus = sc->sc_mii.mii_media_status;
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
 
 	/* If the link is not up, do nothing */
-	if ((miistatus & IFM_ACTIVE) == 0)
+	if ((status & STATUS_LU) == 0)
 		return;
-
-	active = sc->sc_mii.mii_media_active;
 
 	/* Nothing to do if the link is other than 1Gbps */
-	if (IFM_SUBTYPE(active) != IFM_1000_T)
+	if (__SHIFTOUT(status, STATUS_SPEED) != STATUS_SPEED_1000)
 		return;
 
+	reg = CSR_READ(sc, WMREG_PHY_CTRL);
 	for (i = 0; i < 10; i++) {
 		/* read twice */
-		reg = wm_gmii_i80003_readreg(sc->sc_dev, 1, IGP3_KMRN_DIAG);
-		reg = wm_gmii_i80003_readreg(sc->sc_dev, 1, IGP3_KMRN_DIAG);
+		reg = mii->mii_readreg(sc->sc_dev, 1, IGP3_KMRN_DIAG);
+		reg = mii->mii_readreg(sc->sc_dev, 1, IGP3_KMRN_DIAG);
 		if ((reg & IGP3_KMRN_DIAG_PCS_LOCK_LOSS) == 0)
 			goto out;	/* GOOD! */
 
 		/* Reset the PHY */
-		wm_gmii_reset(sc);
+		wm_reset_phy(sc);
 		delay(5*1000);
 	}
 
@@ -13553,7 +13652,6 @@ wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *sc)
 
 out:
 	return;
-#endif
 }
 
 /* WOL from S5 stops working */
