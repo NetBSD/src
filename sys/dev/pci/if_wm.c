@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.521 2017/07/13 07:50:49 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.522 2017/07/13 08:04:56 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.521 2017/07/13 07:50:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.522 2017/07/13 08:04:56 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9617,6 +9617,12 @@ wm_gmii_mdic_readreg(device_t dev, int phy, int reg)
 	uint32_t mdic = 0;
 	int i, rv;
 
+	if (reg > MII_ADDRMASK) {
+		device_printf(dev, "%s: PHYTYPE = %d, addr 0x%x > 0x1f\n",
+		    __func__, sc->sc_phytype, reg);
+		reg &= MII_ADDRMASK;
+	}
+
 	CSR_WRITE(sc, WMREG_MDIC, MDIC_OP_READ | MDIC_PHYADD(phy) |
 	    MDIC_REGADD(reg));
 
@@ -9658,6 +9664,12 @@ wm_gmii_mdic_writereg(device_t dev, int phy, int reg, int val)
 	uint32_t mdic = 0;
 	int i;
 
+	if (reg > MII_ADDRMASK) {
+		device_printf(dev, "%s: PHYTYPE = %d, addr 0x%x > 0x1f\n",
+		    __func__, sc->sc_phytype, reg);
+		reg &= MII_ADDRMASK;
+	}
+
 	CSR_WRITE(sc, WMREG_MDIC, MDIC_OP_WRITE | MDIC_PHYADD(phy) |
 	    MDIC_REGADD(reg) | MDIC_DATA(val));
 
@@ -9691,7 +9703,24 @@ wm_gmii_i82544_readreg(device_t dev, int phy, int reg)
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return 0;
 	}
-	rv = wm_gmii_mdic_readreg(dev, phy, reg);
+
+	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
+		switch (sc->sc_phytype) {
+		case WMPHY_IGP:
+		case WMPHY_IGP_2:
+		case WMPHY_IGP_3:
+			wm_gmii_mdic_writereg(dev, phy, MII_IGPHY_PAGE_SELECT, reg);
+			break;
+		default:
+#ifdef WM_DEBUG
+			device_printf(dev, "%s: PHYTYPE = 0x%x, addr = %02x\n",
+			    __func__, sc->sc_phytype, reg);
+#endif
+			break;
+		}
+	}
+	
+	rv = wm_gmii_mdic_readreg(dev, phy, reg & MII_ADDRMASK);
 	sc->phy.release(sc);
 
 	return rv;
@@ -9711,7 +9740,24 @@ wm_gmii_i82544_writereg(device_t dev, int phy, int reg, int val)
 		device_printf(dev, "%s: failed to get semaphore\n", __func__);
 		return;
 	}
-	wm_gmii_mdic_writereg(dev, phy, reg, val);
+
+	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
+		switch (sc->sc_phytype) {
+		case WMPHY_IGP:
+		case WMPHY_IGP_2:
+		case WMPHY_IGP_3:
+			wm_gmii_mdic_writereg(dev, phy, MII_IGPHY_PAGE_SELECT, reg);
+			break;
+		default:
+#ifdef WM_DEBUG
+			device_printf(dev, "%s: PHYTYPE == 0x%x, addr = %02x",
+			    __func__, sc->sc_phytype, reg);
+#endif
+			break;
+		}
+	}
+			
+	wm_gmii_mdic_writereg(dev, phy, reg & MII_ADDRMASK, val);
 	sc->phy.release(sc);
 }
 
@@ -10092,6 +10138,13 @@ wm_gmii_82580_readreg(device_t dev, int phy, int reg)
 		return 0;
 	}
 
+#ifdef DIAGNOSTIC
+	if (reg > MII_ADDRMASK) {
+		device_printf(dev, "%s: PHYTYPE = %d, addr 0x%x > 0x1f\n",
+		    __func__, sc->sc_phytype, reg);
+		reg &= MII_ADDRMASK;
+	}
+#endif
 	rv = wm_gmii_mdic_readreg(dev, phy, reg);
 
 	sc->phy.release(sc);
@@ -10115,6 +10168,13 @@ wm_gmii_82580_writereg(device_t dev, int phy, int reg, int val)
 		return;
 	}
 
+#ifdef DIAGNOSTIC
+	if (reg > MII_ADDRMASK) {
+		device_printf(dev, "%s: PHYTYPE = %d, addr 0x%x > 0x1f\n",
+		    __func__, sc->sc_phytype, reg);
+		reg &= MII_ADDRMASK;
+	}
+#endif
 	wm_gmii_mdic_writereg(dev, phy, reg, val);
 
 	sc->phy.release(sc);
