@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.118 2015/10/19 17:08:11 dholland Exp $
+#	$NetBSD: bsd.man.mk,v 1.119 2017/07/14 17:30:31 jmcneill Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -217,7 +217,7 @@ ${_MSECTIONS:@N@.$N.html$N@}: 				# build rule
 	${_MKTARGET_FORMAT}
 .if ${MKMANDOC} == yes && !defined(NOMANDOC)
 	if test ""${NOMANDOC.${.IMPSRC:T}:tl:Q} != "yes"; then \
-	    ${TOOL_MANDOC_HTML} -Oman=${HTMLLINKS} -Ostyle=${HTMLSTYLE} \
+	    ${TOOL_MANDOC_HTML} -Oman=${HTMLLINKS},style=${HTMLSTYLE} \
 		${.IMPSRC} > ${.TARGET}.tmp && \
 		mv ${.TARGET}.tmp ${.TARGET}; \
 	else \
