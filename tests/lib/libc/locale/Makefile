@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2017/06/01 15:45:02 perseant Exp $
+# $NetBSD: Makefile,v 1.10 2017/07/14 14:57:43 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ TESTS_C+=	t_digittoint
 TESTS_C+=	t_sprintf
 TESTS_C+=	t_wctype
 TESTS_C+=	t_btowc
+TESTS_C+=	t_wcscoll
 
 COPTS.t_wctomb.c += -Wno-stack-protector
 COPTS.t_digittoint.c += -Wno-unused-variable
