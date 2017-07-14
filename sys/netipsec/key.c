@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.181 2017/07/13 01:22:44 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.182 2017/07/14 01:24:23 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.181 2017/07/13 01:22:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.182 2017/07/14 01:24:23 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1244,6 +1244,17 @@ key_sp_ref(struct secpolicy *sp, const char* where, int tag)
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP SP:%p (ID=%u) from %s:%u; refcnt now %u\n",
 	    sp, sp->id, where, tag, sp->refcnt);
+}
+
+void
+key_sa_ref(struct secasvar *sav, const char* where, int tag)
+{
+
+	SA_ADDREF2(sav, where, tag);
+
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP cause refcnt++:%d SA:%p from %s:%u\n",
+	    sav->refcnt, sav, where, tag);
 }
 
 /*
