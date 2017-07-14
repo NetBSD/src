@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.182 2017/07/14 01:24:23 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.183 2017/07/14 01:30:08 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.182 2017/07/14 01:24:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.183 2017/07/14 01:30:08 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -391,7 +391,6 @@ static struct secasvar *key_allocsa_policy (const struct secasindex *);
 static void key_freeso(struct socket *);
 static void key_freesp_so(struct secpolicy **);
 #endif
-static struct secasvar *key_do_allocsa_policy (struct secashead *, u_int);
 static void key_delsp (struct secpolicy *);
 static struct secpolicy *key_getsp (const struct secpolicyindex *);
 static struct secpolicy *key_getspbyid (u_int32_t);
@@ -958,14 +957,29 @@ key_allocsa_policy(const struct secasindex *saidx)
 
 		state = saorder_state_valid[stateidx];
 
-		sav = key_do_allocsa_policy(sah, state);
-		if (sav != NULL)
+		if (key_prefered_oldsa)
+			sav = LIST_FIRST(&sah->savtree[state]);
+		else {
+			/* XXX need O(1) lookup */
+			struct secasvar *last = NULL;
+
+			LIST_FOREACH(sav, &sah->savtree[state], chain)
+				last = sav;
+			sav = last;
+		}
+		if (sav != NULL) {
+			SA_ADDREF(sav);
+			KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+			    "DP cause refcnt++:%d SA:%p\n",
+			    sav->refcnt, sav);
 			return sav;
+		}
 	}
 
 	return NULL;
 }
 
+#if 0
 static void
 key_sendup_message_delete(struct secasvar *sav)
 {
@@ -1019,77 +1033,7 @@ msgfail:
 	if (result)
 		m_freem(result);
 }
-
-/*
- * searching SAD with direction, protocol, mode and state.
- * called by key_allocsa_policy().
- * OUT:
- *	NULL	: not found
- *	others	: found, pointer to a SA.
- */
-static struct secasvar *
-key_do_allocsa_policy(struct secashead *sah, u_int state)
-{
-	struct secasvar *sav, *candidate, *d;
-
-	/* initilize */
-	candidate = NULL;
-
-	LIST_FOREACH(sav, &sah->savtree[state], chain) {
-		/* sanity check */
-		KEY_CHKSASTATE(sav->state, state);
-
-		/* initialize */
-		if (candidate == NULL) {
-			candidate = sav;
-			continue;
-		}
-
-		/* Which SA is the better ? */
-
-		/* sanity check 2 */
-		KASSERT(candidate->lft_c != NULL);
-		KASSERT(sav->lft_c != NULL);
-
-		/* What the best method is to compare ? */
-		if (key_prefered_oldsa) {
-			if (candidate->lft_c->sadb_lifetime_addtime >
-			    sav->lft_c->sadb_lifetime_addtime) {
-				candidate = sav;
-			}
-			continue;
-			/*NOTREACHED*/
-		}
-
-		/* prefered new sa rather than old sa */
-		if (candidate->lft_c->sadb_lifetime_addtime <
-		    sav->lft_c->sadb_lifetime_addtime) {
-			d = candidate;
-			candidate = sav;
-		} else
-			d = sav;
-
-		/*
-		 * prepared to delete the SA when there is more
-		 * suitable candidate and the lifetime of the SA is not
-		 * permanent.
-		 */
-		if (d->lft_c->sadb_lifetime_addtime != 0) {
-			key_sa_chgstate(d, SADB_SASTATE_DEAD);
-			KASSERT(d->refcnt > 0);
-			key_sendup_message_delete(d);
-			KEY_FREESAV(&d);
-		}
-	}
-
-	if (candidate) {
-		SA_ADDREF(candidate);
-		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
-		    "DP cause refcnt++:%d SA:%p\n",
-		    candidate->refcnt, candidate);
-	}
-	return candidate;
-}
+#endif
 
 /*
  * allocating a usable SA entry for a *INBOUND* packet.
@@ -1233,6 +1177,30 @@ done:
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP return SA:%p; refcnt %u\n", sav, sav ? sav->refcnt : 0);
 	return sav;
+}
+
+static void
+key_validate_savlist(const struct secashead *sah, const u_int state)
+{
+#ifdef DEBUG
+	struct secasvar *sav, *next;
+
+	/*
+	 * The list should be sorted by lft_c->sadb_lifetime_addtime
+	 * in ascending order.
+	 */
+	LIST_FOREACH_SAFE(sav, &sah->savtree[state], chain, next) {
+		if (next != NULL &&
+		    sav->lft_c != NULL && next->lft_c != NULL) {
+			KDASSERTMSG(sav->lft_c->sadb_lifetime_addtime <=
+			    next->lft_c->sadb_lifetime_addtime,
+			    "savlist is not sorted: sah=%p, state=%d, "
+			    "sav=%lu, next=%lu", sah, state,
+			    sav->lft_c->sadb_lifetime_addtime,
+			    next->lft_c->sadb_lifetime_addtime);
+		}
+	}
+#endif
 }
 
 void
@@ -4868,6 +4836,7 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 	newsav->state = SADB_SASTATE_LARVAL;
 	LIST_INSERT_TAIL(&newsah->savtree[SADB_SASTATE_LARVAL], newsav,
 	    secasvar, chain);
+	key_validate_savlist(newsah, SADB_SASTATE_LARVAL);
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	/* delete the entry in acqtree */
@@ -5307,6 +5276,7 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	newsav->state = SADB_SASTATE_MATURE;
 	LIST_INSERT_TAIL(&sah->savtree[SADB_SASTATE_MATURE], newsav,
 	    secasvar, chain);
+	key_validate_savlist(sah, SADB_SASTATE_MATURE);
 
 	key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 	KEY_FREESAV(&sav);
@@ -5495,6 +5465,7 @@ key_api_add(struct socket *so, struct mbuf *m,
 	newsav->state = SADB_SASTATE_MATURE;
 	LIST_INSERT_TAIL(&newsah->savtree[SADB_SASTATE_MATURE], newsav,
 	    secasvar, chain);
+	key_validate_savlist(newsah, SADB_SASTATE_MATURE);
 
 	/*
 	 * don't call key_freesav() here, as we would like to keep the SA
@@ -7841,6 +7812,7 @@ key_sa_chgstate(struct secasvar *sav, u_int8_t state)
 
 	sav->state = state;
 	LIST_INSERT_HEAD(&sav->sah->savtree[state], sav, chain);
+	key_validate_savlist(sav->sah, state);
 }
 
 /* XXX too much? */
