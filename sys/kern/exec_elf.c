@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.37.2.2 2014/02/14 23:21:20 bouyer Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.37.2.3 2017/07/14 06:18:25 snj Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.37.2.2 2014/02/14 23:21:20 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.37.2.3 2017/07/14 06:18:25 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -94,6 +94,7 @@ extern struct emul emul_netbsd;
 #define elf_load_psection	ELFNAME(load_psection)
 #define exec_elf_makecmds	ELFNAME2(exec,makecmds)
 #define netbsd_elf_signature	ELFNAME2(netbsd,signature)
+#define netbsd_elf_note       	ELFNAME2(netbsd,note)
 #define netbsd_elf_probe	ELFNAME2(netbsd,probe)
 #define	coredump		ELFNAMEEND(coredump)
 #define	elf_free_emul_arg	ELFNAME(free_emul_arg)
@@ -104,6 +105,8 @@ void	elf_load_psection(struct exec_vmcmd_set *, struct vnode *,
 	    const Elf_Phdr *, Elf_Addr *, u_long *, int *, int);
 
 int	netbsd_elf_signature(struct lwp *, struct exec_package *, Elf_Ehdr *);
+int	netbsd_elf_note(struct exec_package *, const Elf_Nhdr *, const char *,
+	    const char *);
 int	netbsd_elf_probe(struct lwp *, struct exec_package *, void *, char *,
 	    vaddr_t *);
 
@@ -860,99 +863,140 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
     Elf_Ehdr *eh)
 {
 	size_t i;
-	Elf_Shdr *sh;
-	Elf_Nhdr *np;
-	size_t shsize;
+	Elf_Phdr *ph;
+	size_t phsize;
+	char *nbuf;
 	int error;
 	int isnetbsd = 0;
-	char *ndata;
 
 	epp->ep_pax_flags = 0;
-	if (eh->e_shnum > MAXSHNUM || eh->e_shnum == 0)
+
+	if (eh->e_phnum > MAXPHNUM || eh->e_phnum == 0)
 		return ENOEXEC;
 
-	shsize = eh->e_shnum * sizeof(Elf_Shdr);
-	sh = kmem_alloc(shsize, KM_SLEEP);
-	error = exec_read_from(l, epp->ep_vp, eh->e_shoff, sh, shsize);
+	phsize = eh->e_phnum * sizeof(Elf_Phdr);
+	ph = kmem_alloc(phsize, KM_SLEEP);
+	error = exec_read_from(l, epp->ep_vp, eh->e_phoff, ph, phsize);
 	if (error)
 		goto out;
 
-	np = kmem_alloc(MAXNOTESIZE, KM_SLEEP);
-	for (i = 0; i < eh->e_shnum; i++) {
-		Elf_Shdr *shp = &sh[i];
+	nbuf = kmem_alloc(MAXNOTESIZE, KM_SLEEP);
+	for (i = 0; i < eh->e_phnum; i++) {
+		const char *nptr;
+		size_t nlen;
 
-		if (shp->sh_type != SHT_NOTE ||
-		    shp->sh_size > MAXNOTESIZE ||
-		    shp->sh_size < sizeof(Elf_Nhdr) + ELF_NOTE_NETBSD_NAMESZ)
+		if (ph[i].p_type != PT_NOTE ||
+		    ph[i].p_filesz > MAXNOTESIZE)
 			continue;
 
-		error = exec_read_from(l, epp->ep_vp, shp->sh_offset, np,
-		    shp->sh_size);
+		nlen = ph[i].p_filesz;
+		error = exec_read_from(l, epp->ep_vp, ph[i].p_offset,
+				       nbuf, nlen);
 		if (error)
 			continue;
 
-		ndata = (char *)(np + 1);
-		switch (np->n_type) {
-		case ELF_NOTE_TYPE_NETBSD_TAG:
-			if (np->n_namesz != ELF_NOTE_NETBSD_NAMESZ ||
-			    np->n_descsz != ELF_NOTE_NETBSD_DESCSZ ||
-			    memcmp(ndata, ELF_NOTE_NETBSD_NAME,
-			    ELF_NOTE_NETBSD_NAMESZ))
-				goto bad;
-			isnetbsd = 1;
-			break;
+		nptr = nbuf;
+		while (nlen > 0) {
+			const Elf_Nhdr *np;
+			const char *ndata, *ndesc;
 
-		case ELF_NOTE_TYPE_PAX_TAG:
-			if (np->n_namesz != ELF_NOTE_PAX_NAMESZ ||
-			    np->n_descsz != ELF_NOTE_PAX_DESCSZ ||
-			    memcmp(ndata, ELF_NOTE_PAX_NAME,
-			    ELF_NOTE_PAX_NAMESZ)) {
-bad:
-			    /*
-			     * Ignore GNU tags
-			     */
-			    if (np->n_namesz == ELF_NOTE_GNU_NAMESZ &&
-				memcmp(ndata, ELF_NOTE_GNU_NAME,
-				ELF_NOTE_GNU_NAMESZ) == 0)
-					break;
-#ifdef DIAGNOSTIC
-				printf("%s: bad tag %d: "
-				    "[%d %d, %d %d, %*.*s %*.*s]\n",
-				    epp->ep_kname,
-				    np->n_type,
-				    np->n_namesz, ELF_NOTE_PAX_NAMESZ,
-				    np->n_descsz, ELF_NOTE_PAX_DESCSZ,
-				    ELF_NOTE_PAX_NAMESZ,
-				    ELF_NOTE_PAX_NAMESZ,
-				    ndata,
-				    ELF_NOTE_PAX_NAMESZ,
-				    ELF_NOTE_PAX_NAMESZ,
-				    ELF_NOTE_PAX_NAME);
-#endif
-				continue;
+			/* note header */
+			np = (const Elf_Nhdr *)nptr;
+			if (nlen < sizeof(*np)) {
+				break;
 			}
-			(void)memcpy(&epp->ep_pax_flags,
-			    ndata + ELF_NOTE_PAX_NAMESZ,
-			    sizeof(epp->ep_pax_flags));
-			break;
+			nptr += sizeof(*np);
+			nlen -= sizeof(*np);
 
-		case ELF_NOTE_TYPE_SUSE_TAG:
-			break;
+			/* note name */
+			ndata = nptr;
+			if (nlen < roundup(np->n_namesz, 4)) {
+				break;
+			}
+			nptr += roundup(np->n_namesz, 4);
+			nlen -= roundup(np->n_namesz, 4);
 
-		default:
-#ifdef DIAGNOSTIC
-			printf("%s: unknown note type %d\n", epp->ep_kname,
-			    np->n_type);
-#endif
-			break;
+			/* note description */
+			ndesc = nptr;
+			if (nlen < roundup(np->n_descsz, 4)) {
+				break;
+			}
+			nptr += roundup(np->n_descsz, 4);
+			nlen -= roundup(np->n_descsz, 4);
+
+			isnetbsd |= netbsd_elf_note(epp, np, ndata, ndesc);
 		}
 	}
-	kmem_free(np, MAXNOTESIZE);
+	kmem_free(nbuf, MAXNOTESIZE);
 
 	error = isnetbsd ? 0 : ENOEXEC;
 out:
-	kmem_free(sh, shsize);
+	kmem_free(ph, phsize);
 	return error;
+}
+
+int
+netbsd_elf_note(struct exec_package *epp,
+		const Elf_Nhdr *np, const char *ndata, const char *ndesc)
+{
+	int isnetbsd = 0;
+
+	switch (np->n_type) {
+	case ELF_NOTE_TYPE_NETBSD_TAG:
+		if (np->n_namesz != ELF_NOTE_NETBSD_NAMESZ ||
+		    np->n_descsz != ELF_NOTE_NETBSD_DESCSZ ||
+		    memcmp(ndata, ELF_NOTE_NETBSD_NAME,
+		    ELF_NOTE_NETBSD_NAMESZ))
+			goto bad;
+		isnetbsd = 1;
+		break;
+
+	case ELF_NOTE_TYPE_PAX_TAG:
+		if (np->n_namesz != ELF_NOTE_PAX_NAMESZ ||
+		    np->n_descsz != ELF_NOTE_PAX_DESCSZ ||
+		    memcmp(ndata, ELF_NOTE_PAX_NAME,
+		    ELF_NOTE_PAX_NAMESZ)) {
+bad:
+		    /*
+		     * Ignore GNU tags
+		     */
+		    if (np->n_namesz == ELF_NOTE_GNU_NAMESZ &&
+			memcmp(ndata, ELF_NOTE_GNU_NAME,
+			ELF_NOTE_GNU_NAMESZ) == 0)
+				break;
+#ifdef DIAGNOSTIC
+			printf("%s: bad tag %d: "
+			    "[%d %d, %d %d, %*.*s %*.*s]\n",
+			    epp->ep_kname,
+			    np->n_type,
+			    np->n_namesz, ELF_NOTE_PAX_NAMESZ,
+			    np->n_descsz, ELF_NOTE_PAX_DESCSZ,
+			    ELF_NOTE_PAX_NAMESZ,
+			    ELF_NOTE_PAX_NAMESZ,
+			    ndata,
+			    ELF_NOTE_PAX_NAMESZ,
+			    ELF_NOTE_PAX_NAMESZ,
+			    ELF_NOTE_PAX_NAME);
+#endif
+			break;
+		}
+		(void)memcpy(&epp->ep_pax_flags,
+		    ndata + ELF_NOTE_PAX_NAMESZ,
+		    sizeof(epp->ep_pax_flags));
+		break;
+
+	case ELF_NOTE_TYPE_SUSE_TAG:
+		break;
+
+	default:
+#ifdef DIAGNOSTIC
+		printf("%s: unknown note type %d\n", epp->ep_kname,
+		    np->n_type);
+#endif
+		break;
+	}
+
+	return isnetbsd;
 }
 
 int
