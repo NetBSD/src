@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.755 2017/07/11 15:21:32 joerg Exp $
+# $NetBSD: mi,v 1.756 2017/07/14 14:57:43 perseant Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2551,6 +2551,7 @@
 ./usr/tests/lib/libc/locale/t_mbtowc		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_sprintf		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_toupper		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/locale/t_wcscoll		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wcscspn		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wcspbrk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wcsspn		tests-lib-tests		compattestfile,atf
