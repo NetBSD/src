@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.32 2017/07/14 13:02:20 maxv Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.33 2017/07/14 13:23:48 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.32 2017/07/14 13:02:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.33 2017/07/14 13:23:48 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -317,7 +317,8 @@ sched_pstats_hook(struct lwp *l, int batch)
 			return;
 		}
 	}
-	loadfac = 2 * (averunnable.ldavg[0]); /* XXX: should be loadfactor? */
+
+	loadfac = loadfactor(averunnable.ldavg[0]);
 	l->l_estcpu = decay_cpu(loadfac, l->l_estcpu);
 	resetpriority(l);
 }
