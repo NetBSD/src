@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.183 2017/07/14 01:30:08 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.184 2017/07/14 12:26:26 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.183 2017/07/14 01:30:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.184 2017/07/14 12:26:26 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -837,7 +837,7 @@ done:
  *	ENOENT: policy may be valid, but SA with REQUIRE is on acquiring.
  */
 int
-key_checkrequest(struct ipsecrequest *isr)
+key_checkrequest(struct ipsecrequest *isr, struct secasvar **ret)
 {
 	u_int level;
 	int error;
@@ -898,8 +898,11 @@ key_checkrequest(struct ipsecrequest *isr)
 		KEY_FREESAV(&oldsav);
 
 	/* When there is SA. */
-	if (isr->sav != NULL)
+	if (isr->sav != NULL) {
+		*ret = isr->sav;
+		SA_ADDREF(*ret);
 		return 0;
+	}
 
 	/* there is no SA */
 	error = key_acquire(saidx, isr->sp);
@@ -913,6 +916,7 @@ key_checkrequest(struct ipsecrequest *isr)
 	if (level != IPSEC_LEVEL_REQUIRE) {
 		/* XXX sigh, the interface to this routine is botched */
 		KASSERTMSG(isr->sav == NULL, "unexpected SA");
+		*ret = NULL;
 		return 0;
 	} else {
 		return ENOENT;

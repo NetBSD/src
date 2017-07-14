@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_tcp.c,v 1.14 2017/07/14 01:24:23 ozaki-r Exp $ */
+/*	$NetBSD: xform_tcp.c,v 1.15 2017/07/14 12:26:26 ozaki-r Exp $ */
 /*	$FreeBSD: sys/netipsec/xform_tcp.c,v 1.1.2.1 2004/02/14 22:24:09 bms Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 /* TCP MD5 Signature Option (RFC2385) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.14 2017/07/14 01:24:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.15 2017/07/14 12:26:26 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -155,7 +155,7 @@ tcpsignature_input(struct mbuf *m, struct secasvar *sav, int skip,
  */
 static int
 tcpsignature_output(struct mbuf *m, struct ipsecrequest *isr,
-    struct mbuf **mp, int skip, int protoff)
+    struct secasvar *sav, struct mbuf **mp, int skip, int protoff)
 {
 
 	return (EINVAL);
