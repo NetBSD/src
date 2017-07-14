@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.177 2017/06/19 20:52:20 mlelstv Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.178 2017/07/14 17:50:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.177 2017/06/19 20:52:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.178 2017/07/14 17:50:11 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -2238,8 +2238,10 @@ void
 scsipi_async_event(struct scsipi_channel *chan, scsipi_async_event_t event,
     void *arg)
 {
+	bool lock = chan_running(chan) > 0;
 
-	mutex_enter(chan_mtx(chan));
+	if (lock)
+		mutex_enter(chan_mtx(chan));
 	switch (event) {
 	case ASYNC_EVENT_MAX_OPENINGS:
 		scsipi_async_event_max_openings(chan,
@@ -2256,7 +2258,8 @@ scsipi_async_event(struct scsipi_channel *chan, scsipi_async_event_t event,
 		scsipi_async_event_channel_reset(chan);
 		break;
 	}
-	mutex_exit(chan_mtx(chan));
+	if (lock)
+		mutex_exit(chan_mtx(chan));
 }
 
 /*
