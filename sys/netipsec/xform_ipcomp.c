@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.41 2017/07/07 01:37:34 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.42 2017/07/14 01:24:23 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.41 2017/07/07 01:37:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.42 2017/07/14 01:24:23 ozaki-r Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -144,7 +144,7 @@ ipcomp_zeroize(struct secasvar *sav)
  * ipcomp_input() gets called to uncompress an input packet
  */
 static int
-ipcomp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
+ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 {
 	struct tdb_crypto *tc;
 	struct cryptodesc *crdc;
@@ -205,6 +205,8 @@ ipcomp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	tc->tc_proto = sav->sah->saidx.proto;
 	tc->tc_protoff = protoff;
 	tc->tc_skip = skip;
+	tc->tc_sav = sav;
+	KEY_SA_REF(sav);
 
 	return crypto_dispatch(crp);
 }
@@ -252,12 +254,17 @@ ipcomp_input_cb(struct cryptop *crp)
 	s = splsoftnet();
 	mutex_enter(softnet_lock);
 
-	sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
-	if (sav == NULL) {
-		IPCOMP_STATINC(IPCOMP_STAT_NOTDB);
-		DPRINTF(("%s: SA expired while in crypto\n", __func__));
-		error = ENOBUFS;		/*XXX*/
-		goto bad;
+	sav = tc->tc_sav;
+	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
+		KEY_FREESAV(&sav);
+		sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi,
+		    sport, dport);
+		if (sav == NULL) {
+			IPCOMP_STATINC(IPCOMP_STAT_NOTDB);
+			DPRINTF(("%s: SA expired while in crypto\n", __func__));
+			error = ENOBUFS;		/*XXX*/
+			goto bad;
+		}
 	}
 
 	saidx = &sav->sah->saidx;
@@ -375,7 +382,7 @@ ipcomp_output(
 )
 {
 	char buf[IPSEC_ADDRSTRLEN];
-	const struct secasvar *sav;
+	struct secasvar *sav;
 	const struct comp_algo *ipcompx;
 	int error, ralen, hlen, maxpacketsize;
 	struct cryptodesc *crdc;
@@ -485,6 +492,8 @@ ipcomp_output(
 	tc->tc_proto = sav->sah->saidx.proto;
 	tc->tc_skip = skip;
 	tc->tc_protoff = protoff;
+	tc->tc_sav = sav;
+	KEY_SA_REF(sav);
 
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len;	/* Total input length */
@@ -527,12 +536,16 @@ ipcomp_output_cb(struct cryptop *crp)
 	mutex_enter(softnet_lock);
 
 	isr = tc->tc_isr;
-	sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
-	if (sav == NULL) {
-		IPCOMP_STATINC(IPCOMP_STAT_NOTDB);
-		DPRINTF(("%s: SA expired while in crypto\n", __func__));
-		error = ENOBUFS;		/*XXX*/
-		goto bad;
+	sav = tc->tc_sav;
+	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
+		KEY_FREESAV(&sav);
+		sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
+		if (sav == NULL) {
+			IPCOMP_STATINC(IPCOMP_STAT_NOTDB);
+			DPRINTF(("%s: SA expired while in crypto\n", __func__));
+			error = ENOBUFS;		/*XXX*/
+			goto bad;
+		}
 	}
 	KASSERTMSG(isr->sav == sav, "SA changed");
 

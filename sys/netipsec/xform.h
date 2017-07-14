@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.9 2017/07/05 03:44:59 ozaki-r Exp $	*/
+/*	$NetBSD: xform.h,v 1.10 2017/07/14 01:24:23 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
@@ -62,6 +62,7 @@ struct tdb_ident {
 /*
  * Opaque data structure hung off a crypto operation descriptor.
  */
+struct secasvar;
 struct tdb_crypto {
 	struct ipsecrequest	*tc_isr;	/* ipsec request state */
 	u_int32_t		tc_spi;		/* associated SPI */
@@ -70,9 +71,9 @@ struct tdb_crypto {
 	u_int8_t		tc_nxt;		/* next protocol, e.g. IPV4 */
 	int			tc_protoff;	/* current protocol offset */
 	int			tc_skip;	/* data offset */
+	struct secasvar		*tc_sav;	/* ipsec SA */
 };
 
-struct secasvar;
 struct ipescrequest;
 
 struct xformsw {
@@ -89,7 +90,7 @@ struct xformsw {
 	const char	*xf_name;		/* human-readable name */
 	int	(*xf_init)(struct secasvar*, const struct xformsw*);/* setup */
 	int	(*xf_zeroize)(struct secasvar*);		/* cleanup */
-	int	(*xf_input)(struct mbuf*, const struct secasvar*, /* input */
+	int	(*xf_input)(struct mbuf*, struct secasvar*, /* input */
 			int, int);
 	int	(*xf_output)(struct mbuf*,	       		/* output */
 			struct ipsecrequest *, struct mbuf **, int, int);

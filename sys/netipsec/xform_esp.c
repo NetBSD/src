@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.60 2017/07/13 03:00:46 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.61 2017/07/14 01:24:23 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.60 2017/07/13 03:00:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.61 2017/07/14 01:24:23 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -297,7 +297,7 @@ esp_zeroize(struct secasvar *sav)
  * ESP input processing, called (eventually) through the protocol switch.
  */
 static int
-esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
+esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 {
 	const struct auth_hash *esph;
 	const struct enc_xform *espx;
@@ -436,6 +436,8 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	tc->tc_proto = sav->sah->saidx.proto;
 	tc->tc_protoff = protoff;
 	tc->tc_skip = skip;
+	tc->tc_sav = sav;
+	KEY_SA_REF(sav);
 
 	/* Decryption descriptor */
 	if (espx) {
@@ -510,15 +512,20 @@ esp_input_cb(struct cryptop *crp)
 	s = splsoftnet();
 	mutex_enter(softnet_lock);
 
-	sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
-	if (sav == NULL) {
-		ESP_STATINC(ESP_STAT_NOTDB);
-		DPRINTF(("%s: SA expired while in crypto "
-		    "(SA %s/%08lx proto %u)\n", __func__,
-		    ipsec_address(&tc->tc_dst, buf, sizeof(buf)),
-		    (u_long) ntohl(tc->tc_spi), tc->tc_proto));
-		error = ENOBUFS;		/*XXX*/
-		goto bad;
+	sav = tc->tc_sav;
+	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
+		KEY_FREESAV(&sav);
+		sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi,
+		    sport, dport);
+		if (sav == NULL) {
+			ESP_STATINC(ESP_STAT_NOTDB);
+			DPRINTF(("%s: SA expired while in crypto "
+			    "(SA %s/%08lx proto %u)\n", __func__,
+			    ipsec_address(&tc->tc_dst, buf, sizeof(buf)),
+			    (u_long) ntohl(tc->tc_spi), tc->tc_proto));
+			error = ENOBUFS;		/*XXX*/
+			goto bad;
+		}
 	}
 
 	saidx = &sav->sah->saidx;
@@ -702,7 +709,7 @@ esp_output(
 	int hlen, rlen, padding, blks, alen, i, roff;
 	struct mbuf *mo = NULL;
 	struct tdb_crypto *tc;
-	const struct secasvar *sav;
+	struct secasvar *sav;
 	struct secasindex *saidx;
 	unsigned char *pad;
 	uint8_t prot;
@@ -900,6 +907,8 @@ esp_output(
 	tc->tc_spi = sav->spi;
 	tc->tc_dst = saidx->dst;
 	tc->tc_proto = saidx->proto;
+	tc->tc_sav = sav;
+	KEY_SA_REF(sav);
 
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
@@ -957,16 +966,20 @@ esp_output_cb(struct cryptop *crp)
 	mutex_enter(softnet_lock);
 
 	isr = tc->tc_isr;
-	sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
-	if (sav == NULL) {
-		char buf[IPSEC_ADDRSTRLEN];
-		ESP_STATINC(ESP_STAT_NOTDB);
-		DPRINTF(("%s: SA expired while in crypto (SA %s/%08lx "
-		    "proto %u)\n", __func__,
-		    ipsec_address(&tc->tc_dst, buf, sizeof(buf)),
-		    (u_long) ntohl(tc->tc_spi), tc->tc_proto));
-		error = ENOBUFS;		/*XXX*/
-		goto bad;
+	sav = tc->tc_sav;
+	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
+		KEY_FREESAV(&sav);
+		sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
+		if (sav == NULL) {
+			char buf[IPSEC_ADDRSTRLEN];
+			ESP_STATINC(ESP_STAT_NOTDB);
+			DPRINTF(("%s: SA expired while in crypto (SA %s/%08lx "
+			    "proto %u)\n", __func__,
+			    ipsec_address(&tc->tc_dst, buf, sizeof(buf)),
+			    (u_long) ntohl(tc->tc_spi), tc->tc_proto));
+			error = ENOBUFS;		/*XXX*/
+			goto bad;
+		}
 	}
 	KASSERTMSG(isr->sav == sav,
 	    "SA changed was %p now %p", isr->sav, sav);
