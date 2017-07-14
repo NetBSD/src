@@ -1,4 +1,4 @@
-/* $NetBSD: _wctype.c,v 1.9 2010/06/13 04:14:57 tnozaki Exp $ */
+/* $NetBSD: _wctype.c,v 1.9.40.1 2017/07/14 15:53:08 perseant Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _wctype.c,v 1.9 2010/06/13 04:14:57 tnozaki Exp $");
+__RCSID("$NetBSD: _wctype.c,v 1.9.40.1 2017/07/14 15:53:08 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -68,11 +68,12 @@ __RCSID("$NetBSD: _wctype.c,v 1.9 2010/06/13 04:14:57 tnozaki Exp $");
 #include <wctype.h>
 
 #include "runetype_local.h"
+#include "rune_iso10646.h"
 #include "_wctrans_local.h"
 #include "_wctype_local.h"
 
 _RuneType
-_runetype_priv(_RuneLocale const *rl, wint_t wc)
+_runetype_priv(_RuneLocale const *rl, /* kuten */ wint_t wc)
 {
 	__nbrune_t wc0;
 	_RuneRange const *rr;
@@ -106,7 +107,7 @@ _runetype_priv(_RuneLocale const *rl, wint_t wc)
 
 int
 _iswctype_priv(_RuneLocale const *rl,
-    wint_t wc, _WCTypeEntry const *te)
+    /* kuten */ wint_t wc, _WCTypeEntry const *te)
 {
 	return !!(_runetype_priv(rl, wc) & te->te_mask);
 }

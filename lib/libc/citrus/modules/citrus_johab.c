@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_johab.c,v 1.6 2016/05/31 03:34:14 dholland Exp $ */
+/* $NetBSD: citrus_johab.c,v 1.6.10.1 2017/07/14 15:53:07 perseant Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -27,7 +27,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_johab.c,v 1.6 2016/05/31 03:34:14 dholland Exp $");
+__RCSID("$NetBSD: citrus_johab.c,v 1.6.10.1 2017/07/14 15:53:07 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -271,9 +271,9 @@ ilseq:
 
 }
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_JOHAB_stdenc_wctocs(_JOHABEncodingInfo * __restrict ei,
+_citrus_JOHAB_stdenc_wctocs(struct _citrus_stdenc *ce,
 	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_t wc)
 {
 	int m, l, t, linear;
@@ -321,9 +321,9 @@ _citrus_JOHAB_stdenc_wctocs(_JOHABEncodingInfo * __restrict ei,
 	return 0;
 }
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_JOHAB_stdenc_cstowc(_JOHABEncodingInfo * __restrict ei,
+_citrus_JOHAB_stdenc_cstowc(struct _citrus_stdenc *ce,
 	wchar_t * __restrict wc, _csid_t csid, _index_t idx)
 {
 	int m, n, l, t, linear;

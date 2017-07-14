@@ -1,4 +1,4 @@
-/*	$NetBSD: wcsxfrm.c,v 1.5 2013/05/17 12:55:57 joerg Exp $	*/
+/*	$NetBSD: wcsxfrm.c,v 1.5.22.1 2017/07/14 15:53:08 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcsxfrm.c,v 1.5 2013/05/17 12:55:57 joerg Exp $");
+__RCSID("$NetBSD: wcsxfrm.c,v 1.5.22.1 2017/07/14 15:53:08 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: wcsxfrm.c,v 1.5 2013/05/17 12:55:57 joerg Exp $");
 #include <wchar.h>
 #include <locale.h>
 #include "setlocale_local.h"
+#include "unicode_collate.h"
 
 /*
  * Compare strings with using collating information.
@@ -44,24 +45,7 @@ __RCSID("$NetBSD: wcsxfrm.c,v 1.5 2013/05/17 12:55:57 joerg Exp $");
 size_t
 wcsxfrm_l(wchar_t *s1, const wchar_t *s2, size_t n, locale_t loc)
 {
-	size_t len;
-
-	/* XXX: LC_COLLATE should be implemented. */
-	/* LINTED */(void)loc;
-
-	len = wcslen(s2);
-	if (len<n)
-		wcscpy(s1, s2);
-	else {
-		/*
-		 * SUSv3 says:
-		 *   If the value returned is n or more, the contents
-		 *   of the array pointed to by ws1 are unspecified.
-		 */
-		/* thus, do nothing */
-	}
-
-	return (len);
+	return unicode_wcsxfrm(s1, s2, n, loc);
 }
 
 size_t

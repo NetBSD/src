@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale.c,v 1.64 2013/09/13 13:13:32 joerg Exp $ */
+/* $NetBSD: setlocale.c,v 1.64.20.1 2017/07/14 15:53:08 perseant Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setlocale.c,v 1.64 2013/09/13 13:13:32 joerg Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.64.20.1 2017/07/14 15:53:08 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -46,7 +46,7 @@ const char *_PathLocale = NULL;
 
 static _locale_set_t all_categories[_LC_LAST] = {
 	[LC_ALL     ] = &_generic_LC_ALL_setlocale,
-	[LC_COLLATE ] = &_dummy_LC_COLLATE_setlocale,
+	[LC_COLLATE ] = &_citrus_LC_COLLATE_setlocale,
 	[LC_CTYPE   ] = &_citrus_LC_CTYPE_setlocale,
 	[LC_MONETARY] = &_citrus_LC_MONETARY_setlocale,
 	[LC_NUMERIC ] = &_citrus_LC_NUMERIC_setlocale,

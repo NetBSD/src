@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.25 2016/04/29 16:26:48 joerg Exp $ */
+/* $NetBSD: global_locale.c,v 1.25.10.1 2017/07/14 15:53:08 perseant Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.25 2016/04/29 16:26:48 joerg Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.25.10.1 2017/07/14 15:53:08 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: global_locale.c,v 1.25 2016/04/29 16:26:48 joerg Exp $");
 #include <locale.h>
 #include <stdlib.h>
 
+#include "collate_local.h"
 #include "runetype_local.h"
 #include "setlocale_local.h"
 
@@ -157,7 +158,8 @@ struct _locale _lc_global_locale = {
     },
     .part_impl = {
 	[(size_t)LC_ALL     ] = (_locale_part_t)NULL,
-	[(size_t)LC_COLLATE ] = (_locale_part_t)NULL,
+	[(size_t)LC_COLLATE ] = (_locale_part_t)
+	    __UNCONST(&_DefaultCollateLocale),
 	[(size_t)LC_CTYPE   ] = (_locale_part_t)
 	    __UNCONST(&_DefaultRuneLocale),
 	[(size_t)LC_MONETARY] = (_locale_part_t)

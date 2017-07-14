@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.46 2013/04/13 10:21:20 joerg Exp $	*/
+/*	$NetBSD: rune.c,v 1.46.22.1 2017/07/14 15:53:08 perseant Exp $	*/
 /*-
  * Copyright (c)2010 Citrus Project,
  * All rights reserved.
@@ -46,6 +46,7 @@
 #include "citrus_ctype.h"
 
 #include "runetype_local.h"
+#include "rune_iso10646.h"
 
 #include "multibyte.h"
 
@@ -58,6 +59,9 @@ typedef struct {
 	short		rlp_tolower_tab[_CTYPE_NUM_CHARS + 1];
 	short		rlp_toupper_tab[_CTYPE_NUM_CHARS + 1];
 	char		rlp_codeset[33]; /* XXX */
+
+	struct rb_tree  rlp_unicode2kuten_rbtree;
+	struct rb_tree  rlp_kuten2unicode_rbtree;
 
 #ifdef __BUILD_LEGACY
 	unsigned char	rlp_compat_bsdctype[_CTYPE_NUM_CHARS + 1];
@@ -97,7 +101,7 @@ _rune_init_priv(_RuneLocalePriv *rlp)
 		rlp->rlp_compat_bsdctype[i + 1] = 0;
 #endif
 	}
-#endif
+#endif /* _CTYPE_CACHE_SIZE != _CTYPE_NUM_CHARS */
 	rlp->rlp_ctype_tab  [0] = 0;
 	rlp->rlp_tolower_tab[0] = EOF;
 	rlp->rlp_toupper_tab[0] = EOF;
@@ -106,9 +110,12 @@ _rune_init_priv(_RuneLocalePriv *rlp)
 	rlp->rl.rl_tolower_tab = (const short *)&rlp->rlp_tolower_tab[0];
 	rlp->rl.rl_toupper_tab = (const short *)&rlp->rlp_toupper_tab[0];
 	rlp->rl.rl_codeset     = (const char *)&rlp->rlp_codeset[0];
+	rlp->rl.rl_kuten2unicode_rbtree = &rlp->rlp_kuten2unicode_rbtree;
+	rlp->rl.rl_unicode2kuten_rbtree = &rlp->rlp_unicode2kuten_rbtree;
 
 	_rune_wctype_init(&rlp->rl);
 	_rune_wctrans_init(&rlp->rl);
+	_rune_iso10646_init(&rlp->rl);
 
 #ifdef __BUILD_LEGACY
 	rlp->rlp_compat_bsdctype[0] = 0;

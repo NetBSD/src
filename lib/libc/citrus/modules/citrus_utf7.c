@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf7.c,v 1.6 2013/05/28 16:57:56 joerg Exp $	*/
+/*	$NetBSD: citrus_utf7.c,v 1.6.22.1 2017/07/14 15:53:07 perseant Exp $	*/
 
 /*-
  * Copyright (c)2004, 2005 Citrus Project,
@@ -29,7 +29,7 @@
  
 #include <sys/cdefs.h>
 #if defined(LIB_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf7.c,v 1.6 2013/05/28 16:57:56 joerg Exp $");
+__RCSID("$NetBSD: citrus_utf7.c,v 1.6.22.1 2017/07/14 15:53:07 perseant Exp $");
 #endif /* LIB_SCCS and not lint */
 
 #include <assert.h>
@@ -474,9 +474,9 @@ _citrus_UTF7_put_state_reset(_UTF7EncodingInfo * __restrict ei,
 	return 0;
 }
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_UTF7_stdenc_wctocs(_UTF7EncodingInfo * __restrict ei,
+_citrus_UTF7_stdenc_wctocs(struct _citrus_stdenc *ce,
 			   _csid_t * __restrict csid,
 			   _index_t * __restrict idx, wchar_t wc)
 {
@@ -490,9 +490,9 @@ _citrus_UTF7_stdenc_wctocs(_UTF7EncodingInfo * __restrict ei,
 	return 0;
 }
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_UTF7_stdenc_cstowc(_UTF7EncodingInfo * __restrict ei,
+_citrus_UTF7_stdenc_cstowc(struct _citrus_stdenc *ce,
 			   wchar_t * __restrict wc,
 			   _csid_t csid, _index_t idx)
 {

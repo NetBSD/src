@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.23 2013/05/28 16:57:56 joerg Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.23.22.1 2017/07/14 15:53:07 perseant Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.23 2013/05/28 16:57:56 joerg Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.23.22.1 2017/07/14 15:53:07 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -1266,9 +1266,9 @@ _citrus_ISO2022_wcrtomb_priv(_ISO2022EncodingInfo * __restrict ei,
 	return (0);
 }
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_ISO2022_stdenc_wctocs(_ISO2022EncodingInfo * __restrict ei,
+_citrus_ISO2022_stdenc_wctocs(struct _citrus_stdenc *ce,
 			      _csid_t * __restrict csid,
 			      _index_t * __restrict idx, wchar_t wc)
 {
@@ -1296,9 +1296,9 @@ _citrus_ISO2022_stdenc_wctocs(_ISO2022EncodingInfo * __restrict ei,
 	return (0);
 }
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_ISO2022_stdenc_cstowc(_ISO2022EncodingInfo * __restrict ei,
+_citrus_ISO2022_stdenc_cstowc(struct _citrus_stdenc *ce,
 			      wchar_t * __restrict wc,
 			      _csid_t csid, _index_t idx)
 {

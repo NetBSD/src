@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mskanji.c,v 1.14 2013/05/28 16:57:56 joerg Exp $	*/
+/*	$NetBSD: citrus_mskanji.c,v 1.14.22.1 2017/07/14 15:53:07 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mskanji.c,v 1.14 2013/05/28 16:57:56 joerg Exp $");
+__RCSID("$NetBSD: citrus_mskanji.c,v 1.14.22.1 2017/07/14 15:53:07 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -321,16 +321,20 @@ err:
 }
 
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_MSKanji_stdenc_wctocs(_MSKanjiEncodingInfo * __restrict ei,
+_citrus_MSKanji_stdenc_wctocs(struct _citrus_stdenc *ce,
 			      _csid_t * __restrict csid,
 			      _index_t * __restrict idx, wchar_t wc)
 {
 	_index_t row, col;
 	int offset;
+	_MSKanjiEncodingInfo *ei;	
 
-	_DIAGASSERT(csid != NULL && idx != NULL);
+	_DIAGASSERT(ce != NULL && csid != NULL && idx != NULL);
+
+	ei = (_ENCODING_INFO *)(ce->ce_closure);
+	_DIAGASSERT(ei != NULL);
 
 	if ((_wc_t)wc < 0x80) {
 		/* ISO-646 */
@@ -407,16 +411,20 @@ _citrus_MSKanji_stdenc_wctocs(_MSKanjiEncodingInfo * __restrict ei,
 	return 0;
 }
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_MSKanji_stdenc_cstowc(_MSKanjiEncodingInfo * __restrict ei,
+_citrus_MSKanji_stdenc_cstowc(struct _citrus_stdenc *ce,
 			      wchar_t * __restrict wc,
 			      _csid_t csid, _index_t idx)
 {
 	u_int32_t row, col;
 	int offset;
+	_MSKanjiEncodingInfo *ei;	
 
-	_DIAGASSERT(wc != NULL);
+	_DIAGASSERT(wc != NULL && ce != NULL);
+
+	ei = (_ENCODING_INFO *)(ce->ce_closure);
+	_DIAGASSERT(ei != NULL);
 
 	switch (csid) {
 	case 0:

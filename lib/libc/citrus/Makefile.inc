@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2010/05/30 08:28:53 tnozaki Exp $
+#	$NetBSD: Makefile.inc,v 1.8.40.1 2017/07/14 15:53:07 perseant Exp $
 
 # sources
 .PATH: ${ARCHDIR}/citrus ${.CURDIR}/citrus
@@ -15,7 +15,8 @@ SRCS+=	citrus_lc_ctype.c \
 	citrus_lc_monetary.c \
 	citrus_lc_numeric.c \
 	citrus_lc_time.c \
-	citrus_lc_messages.c
+	citrus_lc_messages.c \
+	citrus_lc_collate.c
 CPPFLAGS.citrus_bcs_strtol.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.citrus_bcs_strtoul.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.citrus_lc_ctype.c+=	-I${LIBCDIR}/locale
@@ -23,3 +24,4 @@ CPPFLAGS.citrus_lc_monetary.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.citrus_lc_numeric.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.citrus_lc_time.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.citrus_lc_messages.c+=	-I${LIBCDIR}/locale
+CPPFLAGS.citrus_lc_collate.c+=	-I${LIBCDIR}/locale

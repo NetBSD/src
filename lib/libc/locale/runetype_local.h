@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype_local.h,v 1.14 2013/08/18 20:03:48 joerg Exp $	*/
+/*	$NetBSD: runetype_local.h,v 1.14.20.1 2017/07/14 15:53:08 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,6 +40,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
+#include <sys/rbtree.h>
 #include <stdio.h>
 
 #include "ctype_local.h"
@@ -127,6 +128,10 @@ typedef struct _RuneLocale {
 	const unsigned short		*rl_ctype_tab;
 	const short			*rl_tolower_tab;
 	const short			*rl_toupper_tab;
+
+	/* To support __STDC_ISO_10646__ */
+	rb_tree_t			*rl_kuten2unicode_rbtree;
+	rb_tree_t			*rl_unicode2kuten_rbtree;
 
 #ifdef __BUILD_LEGACY
 	const unsigned char		*rl_compat_bsdctype;

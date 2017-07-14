@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_stdenc_template.h,v 1.4 2008/02/09 14:56:20 junyoung Exp $	*/
+/*	$NetBSD: citrus_stdenc_template.h,v 1.4.64.1 2017/07/14 15:53:07 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -123,7 +123,7 @@ _FUNCNAME(stdenc_mbtocs)(struct _citrus_stdenc * __restrict ce,
 				      _TO_STATE(ps), nresult);
 
 	if (!ret && *nresult != (size_t)-2)
-		_FUNCNAME(stdenc_wctocs)(_CE_TO_EI(ce), csid, idx, wc);
+		_FUNCNAME(stdenc_wctocs)(ce, csid, idx, wc);
 
 	return ret;
 }
@@ -142,7 +142,7 @@ _FUNCNAME(stdenc_cstomb)(struct _citrus_stdenc * __restrict ce,
 	wc = 0;
 
 	if (csid != _CITRUS_CSID_INVALID) {
-		ret = _FUNCNAME(stdenc_cstowc)(_CE_TO_EI(ce), &wc, csid, idx);
+		ret = _FUNCNAME(stdenc_cstowc)(ce, &wc, csid, idx);
 		if (ret)
 			return ret;
 	}

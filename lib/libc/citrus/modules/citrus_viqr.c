@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_viqr.c,v 1.6 2013/05/28 16:57:56 joerg Exp $ */
+/* $NetBSD: citrus_viqr.c,v 1.6.22.1 2017/07/14 15:53:07 perseant Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_viqr.c,v 1.6 2013/05/28 16:57:56 joerg Exp $");
+__RCSID("$NetBSD: citrus_viqr.c,v 1.6.22.1 2017/07/14 15:53:07 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -253,7 +253,7 @@ typedef struct {
 #define _ENCODING_IS_STATE_DEPENDENT		1
 #define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
 
-static __inline void
+static void
 /*ARGSUSED*/
 _citrus_VIQR_init_state(_VIQREncodingInfo * __restrict ei,
 	_VIQRState * __restrict psenc)
@@ -264,7 +264,7 @@ _citrus_VIQR_init_state(_VIQREncodingInfo * __restrict ei,
 	psenc->chlen = 0;
 }
 
-static __inline void
+static void
 /*ARGSUSED*/
 _citrus_VIQR_pack_state(_VIQREncodingInfo * __restrict ei,
 	void *__restrict pspriv, const _VIQRState * __restrict psenc)
@@ -452,7 +452,7 @@ _citrus_VIQR_put_state_reset(_VIQREncodingInfo * __restrict ei,
 
 static __inline int
 /*ARGSUSED*/
-_citrus_VIQR_stdenc_wctocs(_VIQREncodingInfo * __restrict ei,
+_citrus_VIQR_stdenc_wctocs(struct _citrus_stdenc *ce,
 	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_t wc)
 {
 	/* ei may be unused */
@@ -467,7 +467,7 @@ _citrus_VIQR_stdenc_wctocs(_VIQREncodingInfo * __restrict ei,
 
 static __inline int
 /*ARGSUSED*/
-_citrus_VIQR_stdenc_cstowc(_VIQREncodingInfo * __restrict ei,
+_citrus_VIQR_stdenc_cstowc(struct _citrus_stdenc *ce,
 	wchar_t * __restrict pwc, _csid_t csid, _index_t idx)
 {
 	/* ei may be unused */

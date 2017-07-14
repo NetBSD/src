@@ -1,4 +1,4 @@
-/* $NetBSD: iswctype_mb.c,v 1.13 2013/05/17 12:55:57 joerg Exp $ */
+/* $NetBSD: iswctype_mb.c,v 1.13.22.1 2017/07/14 15:53:08 perseant Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype_mb.c,v 1.13 2013/05/17 12:55:57 joerg Exp $");
+__RCSID("$NetBSD: iswctype_mb.c,v 1.13.22.1 2017/07/14 15:53:08 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: iswctype_mb.c,v 1.13 2013/05/17 12:55:57 joerg Exp $");
 #include "setlocale_local.h"
 
 #include "runetype_local.h"
+#include "rune_iso10646.h"
 #include "_wctype_local.h"
 #include "_wctrans_local.h"
 
@@ -59,6 +60,7 @@ isw##name##_l(wint_t wc, locale_t loc)			\
 							\
 	rl = _RUNE_LOCALE(loc);				\
 	te = &rl->rl_wctype[index];			\
+	_citrus_unicode_to_kuten(__UNCONST(_RUNE_LOCALE(loc)), wc, &wc);	\
 	return _iswctype_priv(rl, wc, te);		\
 }							\
 int							\
@@ -141,7 +143,7 @@ wctrans(const char *charmap)
 }
 
 int
-iswctype_l(wint_t wc, wctype_t charclass, locale_t loc)
+iswctype_l(wint_t wc, /* unicode */ wctype_t charclass, locale_t loc)
 {
 	_RuneLocale const *rl;
 	_WCTypeEntry const *te;
@@ -153,6 +155,8 @@ iswctype_l(wint_t wc, wctype_t charclass, locale_t loc)
 
 	rl = _RUNE_LOCALE(loc);
 	te = (_WCTypeEntry const *)(void *)charclass;
+	
+	_citrus_unicode_to_kuten(__UNCONST(_RUNE_LOCALE(loc)), wc, &wc);
 	return _iswctype_priv(rl, wc, te);
 }
 
@@ -165,6 +169,13 @@ iswctype(wint_t wc, wctype_t charclass)
 wint_t
 towctrans(wint_t wc, wctrans_t charmap)
 {
+	return towctrans_l(wc, charmap, _current_locale());
+}
+
+/* ARGSUSED */
+wint_t
+towctrans_l(wint_t wc, wctrans_t charmap, locale_t loc)
+{
 	_WCTransEntry const *te;
 
 	if (charmap == NULL) {
@@ -172,21 +183,17 @@ towctrans(wint_t wc, wctrans_t charmap)
 		return wc;
 	}
 	te = (_WCTransEntry const *)(void *)charmap;
-	return _towctrans_priv(wc, te);
-}
-
-/* ARGSUSED */
-wint_t
-towctrans_l(wint_t wc, wctrans_t charmap, locale_t loc)
-{
-	return towctrans(wc, charmap);
+	_citrus_unicode_to_kuten(__UNCONST(_RUNE_LOCALE(loc)), wc, &wc);
+	wc = _towctrans_priv(wc, te);
+	_citrus_kuten_to_unicode(__UNCONST(_RUNE_LOCALE(loc)), wc, &wc);
+	return wc;
 }
 
 __weak_alias(wcwidth,_wcwidth)
 __weak_alias(wcwidth_l,_wcwidth_l)
 
 int
-wcwidth_l(wchar_t wc, locale_t loc)
+wcwidth_l(/* unicode */ wchar_t wc, locale_t loc)
 {
 	_RuneLocale const *rl;
 	_RuneType x;
@@ -195,6 +202,7 @@ wcwidth_l(wchar_t wc, locale_t loc)
 		return 0;
 
 	rl = _RUNE_LOCALE(loc);
+	_citrus_unicode_to_kuten(__UNCONST(rl), wc, &wc);
 	x = _runetype_priv(rl, wc);
 	if (x & _RUNETYPE_R)
 		return ((unsigned)x & _RUNETYPE_SWM) >> _RUNETYPE_SWS;
@@ -208,18 +216,20 @@ wcwidth(wchar_t wc)
 }
 
 int
-wcswidth_l(const wchar_t * __restrict ws, size_t wn, locale_t loc)
+wcswidth_l(const /* unicode */ wchar_t * __restrict ws, size_t wn, locale_t loc)
 {
 	_RuneLocale const *rl;
 	_RuneType x;
 	int width;
+	wchar_t wc;
 
 	_DIAGASSERT(ws != NULL);
 
 	rl = _RUNE_LOCALE(loc);
 	width = 0;
 	while (wn > 0 && *ws != L'\0') {
-		x = _runetype_priv(rl, *ws);
+		_citrus_unicode_to_kuten(__UNCONST(rl), *ws, &wc);
+		x = _runetype_priv(rl, wc);
 		if ((x & _RUNETYPE_R) == 0)
 			return -1;
 		width += ((unsigned)x & _RUNETYPE_SWM) >> _RUNETYPE_SWS;

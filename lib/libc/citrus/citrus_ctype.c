@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype.c,v 1.7 2013/05/28 16:57:56 joerg Exp $	*/
+/*	$NetBSD: citrus_ctype.c,v 1.7.22.1 2017/07/14 15:53:07 perseant Exp $	*/
 
 /*-
  * Copyright (c)1999, 2000, 2001, 2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_ctype.c,v 1.7 2013/05/28 16:57:56 joerg Exp $");
+__RCSID("$NetBSD: citrus_ctype.c,v 1.7.22.1 2017/07/14 15:53:07 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -45,6 +45,8 @@ __RCSID("$NetBSD: citrus_ctype.c,v 1.7 2013/05/28 16:57:56 joerg Exp $");
 #include "citrus_ctype.h"
 #include "citrus_ctype_fallback.h"
 #include "citrus_none.h"
+#include "runetype_local.h"
+#include "rune_iso10646.h"
 #include _CITRUS_DEFAULT_CTYPE_HEADER
 
 _citrus_ctype_rec_t _citrus_ctype_default = {

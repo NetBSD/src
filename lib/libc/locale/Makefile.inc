@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.64 2013/08/18 20:03:48 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.64.20.1 2017/07/14 15:53:08 perseant Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -9,7 +9,7 @@ SRCS+=	setlocale.c __mb_cur_max.c \
 	freelocale.c localeconv.c newlocale.c nl_langinfo.c \
 	generic_lc_all.c dummy_lc_collate.c \
 	wcstol.c wcstoll.c wcstoimax.c wcstoul.c wcstoull.c wcstoumax.c \
-	wcstod.c wcstof.c wcstold.c wcscoll.c wcsxfrm.c wcsftime.c
+	wcstod.c wcstof.c wcstold.c wcsftime.c
 
 # citrus multibyte locale support
 # we have quirk for libc.a - see the last part of lib/libc/Makefile
@@ -20,6 +20,12 @@ CPPFLAGS.rune.c+=		-I${LIBCDIR}/citrus
 CPPFLAGS.runetable.c+=		-I${LIBCDIR}/citrus
 CPPFLAGS.multibyte_c90.c+=	-I${LIBCDIR}/citrus
 CPPFLAGS.multibyte_amd1.c+=	-I${LIBCDIR}/citrus
+
+SRCS+=	rune_iso10646.c unicode_collate.c unicode_ucd.c collate_locale.c
+CPPFLAGS.rune_iso10646.c+=	-I${LIBCDIR}/citrus
+CPPFLAGS.collate_locale.c+=	-I${LIBCDIR}/citrus
+COPTS.unicode_ucd.c = -Wno-missing-field-initializers -Wno-missing-braces
+COPTS.collate_locale.c = -Wno-missing-field-initializers -Wno-missing-braces
 
 MAN+=	setlocale.3 nl_langinfo.3
 

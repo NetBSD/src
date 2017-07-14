@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_gbk2k.c,v 1.8 2013/05/28 16:57:56 joerg Exp $ */
+/* $NetBSD: citrus_gbk2k.c,v 1.8.22.1 2017/07/14 15:53:07 perseant Exp $ */
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_gbk2k.c,v 1.8 2013/05/28 16:57:56 joerg Exp $");
+__RCSID("$NetBSD: citrus_gbk2k.c,v 1.8.22.1 2017/07/14 15:53:07 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -331,9 +331,9 @@ err:
 	return ret;
 }
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_GBK2K_stdenc_wctocs(_GBK2KEncodingInfo * __restrict ei,
+_citrus_GBK2K_stdenc_wctocs(struct _citrus_stdenc *ce,
 			    _csid_t * __restrict csid,
 			    _index_t * __restrict idx, wchar_t wc)
 {
@@ -366,14 +366,18 @@ _citrus_GBK2K_stdenc_wctocs(_GBK2KEncodingInfo * __restrict ei,
 	return 0;
 }
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_GBK2K_stdenc_cstowc(_GBK2KEncodingInfo * __restrict ei,
+_citrus_GBK2K_stdenc_cstowc(struct _citrus_stdenc *ce,
 			    wchar_t * __restrict wc,
 			    _csid_t csid, _index_t idx)
 {
+	_GBK2KEncodingInfo *ei;
 
-	_DIAGASSERT(wc != NULL);
+	_DIAGASSERT(wc != NULL && ce != NULL);
+
+	ei = (_ENCODING_INFO *)(ce->ce_closure);
+	_DIAGASSERT(ei != NULL);
 
 	switch (csid) {
 	case 0:
