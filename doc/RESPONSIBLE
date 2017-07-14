@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.117 2017/07/13 22:17:09 pgoyette Exp $
+#	$NetBSD: RESPONSIBLE,v 1.118 2017/07/14 04:56:11 spz Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -17,10 +17,10 @@ audioplay	mrg
 audiorecord	mrg
 awk		jdolecek*
 bc		phil*, simonb
-config		cube
+config		cube*
 csh		christos
 cvs		christos, wiz
-dhcp		mellon
+dhcp		mellon*
 edquota		dholland
 error		christos
 etcupdate	[nobody]
@@ -66,7 +66,7 @@ top		simonb
 user		agc
 vi		aymeric
 wakeonlan	mbalmer
-wpa_supplicant	scw
+wpa_supplicant	scw*
 ypbind		dholland
 
 Userland Libraries:
@@ -113,7 +113,7 @@ device support:
 acpi		thorpej*, kochi*, jmcneill, joerg
 audio		augustss*, jmcneill, nat
 cgd		elric
-firewire	jmc
+firewire	jmc*
 flash		ahoka
 gpio		mbalmer
 ide/atapi	bouyer
@@ -183,7 +183,7 @@ file systems:
 
 adosfs		?
 cd9660		?
-chfs		ttoth
+chfs		ttoth*
 coda		gdt
 efs		rumble*
 ext2fs		[nobody in particular]
@@ -209,7 +209,7 @@ udf		reinoud
 ufs		fvdl*
 union		[nobody]
 umapfs		[nobody]
-v7fs		uch
+v7fs		uch*
 
 kern/vfs:
 
@@ -274,7 +274,7 @@ cobalt		core
 emips		pooka
 evbarm		core
 evbmips		simonb
-evbppc		scw
+evbppc		scw*
 evbsh3		core
 ews4800mips	tsutsui
 hp300		tsutsui
@@ -287,12 +287,12 @@ ibmnws		matt
 iyonix		gavan
 landisk		uwe
 luna68k		nisimura
-mac68k		scottr
+mac68k		scottr*
 macppc		macallan
 mipsco		wdk*
 mmeye		core
-mvme68k		scw
-mvmeppc		scw
+mvme68k		scw*
+mvmeppc		scw*
 netwinder	matt
 news68k		tsutsui
 newsmips	core
@@ -310,7 +310,7 @@ sh3		msaitoh,uwe
 sparc		core
 sparc64		martin
 sun2		core
-sun3		jeremy
+sun3		jeremy*
 usermode	reinoud
 vax		core
 x68k		core
