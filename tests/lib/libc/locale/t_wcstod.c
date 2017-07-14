@@ -1,4 +1,4 @@
-/* $NetBSD: t_wcstod.c,v 1.4 2017/07/12 17:32:51 perseant Exp $ */
+/* $NetBSD: t_wcstod.c,v 1.5 2017/07/14 14:09:53 joerg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_wcstod.c,v 1.4 2017/07/12 17:32:51 perseant Exp $");
+__RCSID("$NetBSD: t_wcstod.c,v 1.5 2017/07/14 14:09:53 joerg Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -392,6 +392,7 @@ ATF_TC_HEAD(wcstombs, tc)
 }
 ATF_TC_BODY(wcstombs, tc)
 {
+#if !defined(__vax__)
 	struct test *t;
 	size_t n;
 	char *buf;
@@ -411,6 +412,7 @@ ATF_TC_BODY(wcstombs, tc)
 		
 		free(buf);
 	}
+#endif
 }
 
 ATF_TC(wcstod);
