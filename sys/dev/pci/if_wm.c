@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.524 2017/07/13 13:27:08 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.525 2017/07/14 04:34:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.524 2017/07/13 13:27:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.525 2017/07/14 04:34:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3702,6 +3702,7 @@ wm_phy_post_reset(struct wm_softc *sc)
 void
 wm_init_lcd_from_nvm(struct wm_softc *sc)
 {
+#if 0
 	uint32_t extcnfctr, sw_cfg_mask, cnf_size, word_addr, i, reg;
 	uint16_t phy_page = 0;
 
@@ -3786,6 +3787,7 @@ wm_init_lcd_from_nvm(struct wm_softc *sc)
 release:	
 	sc->phy.release(sc);
 	return;
+#endif
 }
     
 
