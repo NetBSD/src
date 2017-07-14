@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.h,v 1.1 2017/07/11 15:21:35 joerg Exp $	*/
+/*	$NetBSD: atexit.h,v 1.2 2017/07/14 19:24:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,5 +37,5 @@ void	__cxa_thread_run_atexit(void);
 int	__cxa_thread_atexit(void (*)(void *), void *, void *);
 
 #ifdef _LIBC
-__dso_hidden bool __cxa_thread_atexit_used;
+extern __dso_hidden bool __cxa_thread_atexit_used;
 #endif
