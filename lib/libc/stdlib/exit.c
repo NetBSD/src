@@ -1,4 +1,4 @@
-/*	$NetBSD: exit.c,v 1.16 2017/07/11 15:21:35 joerg Exp $	*/
+/*	$NetBSD: exit.c,v 1.17 2017/07/14 19:24:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,11 +34,10 @@
 #if 0
 static char sccsid[] = "@(#)exit.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: exit.c,v 1.16 2017/07/11 15:21:35 joerg Exp $");
+__RCSID("$NetBSD: exit.c,v 1.17 2017/07/14 19:24:52 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/tls.h>
 #include <stdlib.h>
 #include <unistd.h>
 #ifdef _LIBC
@@ -56,10 +55,8 @@ exit(int status)
 {
 
 #ifdef _LIBC
-#  if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 	if (__cxa_thread_atexit_used)
 		__cxa_thread_run_atexit();
-#  endif
 	__cxa_finalize(NULL);
 #endif
 	if (__cleanup)
