@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.312.2.4 2014/12/22 02:19:32 msaitoh Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.312.2.5 2017/07/14 15:39:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.312.2.4 2014/12/22 02:19:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.312.2.5 2017/07/14 15:39:32 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -251,6 +251,7 @@ struct raid_softc {
 #define RAIDF_SHUTDOWN	0x08	/* unit is being shutdown */
 #define RAIDF_WANTED	0x40	/* someone is waiting to obtain a lock */
 #define RAIDF_LOCKED	0x80	/* unit is locked */
+#define RAIDF_UNIT_CHANGED	0x100	/* unit is being changed */
 
 #define	raidunit(x)	DISKUNIT(x)
 
@@ -1761,6 +1762,19 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				  sizeof(RF_ProgressInfo_t));
 		return (retcode);
 
+	case RAIDFRAME_SET_LAST_UNIT:
+		for (column = 0; column < raidPtr->numCol; column++)
+			if (raidPtr->Disks[column].status != rf_ds_optimal)
+				return EBUSY;
+
+		for (column = 0; column < raidPtr->numCol; column++) {
+			clabel = raidget_component_label(raidPtr, column);
+			clabel->last_unit = *(int *)data;
+			raidflush_component_label(raidPtr, column);
+		}
+		rs->sc_cflags |= RAIDF_UNIT_CHANGED;
+		return 0;
+
 		/* the sparetable daemon calls this to wait for the kernel to
 		 * need a spare table. this ioctl does not return until a
 		 * spare table is needed. XXX -- calling mpsleep here in the
@@ -2849,6 +2863,7 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 	int c;
 	int j;
 	int scol;
+	struct raid_softc *rs = raidPtr->softc;
 
 	scol = -1;
 
@@ -2864,7 +2879,8 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 			clabel->status = rf_ds_optimal;
 			
 			/* note what unit we are configured as */
-			clabel->last_unit = raidPtr->raidid;
+			if ((rs->sc_cflags & RAIDF_UNIT_CHANGED) == 0)
+				clabel->last_unit = raidPtr->raidid;
 
 			raidflush_component_label(raidPtr, c);
 			if (final == RF_FINAL_COMPONENT_UPDATE) {
@@ -2904,7 +2920,8 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 
 			clabel->column = scol;
 			clabel->status = rf_ds_optimal;
-			clabel->last_unit = raidPtr->raidid;
+			if ((rs->sc_cflags & RAIDF_UNIT_CHANGED) == 0)
+				clabel->last_unit = raidPtr->raidid;
 
 			raidflush_component_label(raidPtr, sparecol);
 			if (final == RF_FINAL_COMPONENT_UPDATE) {
