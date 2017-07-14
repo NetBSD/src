@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.59 2017/07/13 03:25:38 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.60 2017/07/14 01:24:23 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.59 2017/07/13 03:25:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.60 2017/07/14 01:24:23 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -614,7 +614,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
  * passes authentication.
  */
 static int
-ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
+ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 {
 	const struct auth_hash *ahx;
 	struct tdb_crypto *tc;
@@ -748,6 +748,8 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	tc->tc_nxt = ah->ah_nxt;
 	tc->tc_protoff = protoff;
 	tc->tc_skip = skip;
+	tc->tc_sav = sav;
+	KEY_SA_REF(sav);
 
 	DPRINTF(("%s: hash over %d bytes, skip %d: "
 		 "crda len %d skip %d inject %d\n", __func__,
@@ -803,12 +805,17 @@ ah_input_cb(struct cryptop *crp)
 	s = splsoftnet();
 	mutex_enter(softnet_lock);
 
-	sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
-	if (sav == NULL) {
-		AH_STATINC(AH_STAT_NOTDB);
-		DPRINTF(("%s: SA expired while in crypto\n", __func__));
-		error = ENOBUFS;		/*XXX*/
-		goto bad;
+	sav = tc->tc_sav;
+	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
+		KEY_FREESAV(&sav);
+		sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi,
+		    sport, dport);
+		if (sav == NULL) {
+			AH_STATINC(AH_STAT_NOTDB);
+			DPRINTF(("%s: SA expired while in crypto\n", __func__));
+			error = ENOBUFS;		/*XXX*/
+			goto bad;
+		}
 	}
 
 	saidx = &sav->sah->saidx;
@@ -954,7 +961,7 @@ ah_output(
 )
 {
 	char buf[IPSEC_ADDRSTRLEN];
-	const struct secasvar *sav;
+	struct secasvar *sav;
 	const struct auth_hash *ahx;
 	struct cryptodesc *crda;
 	struct tdb_crypto *tc;
@@ -1150,6 +1157,8 @@ ah_output(
 	tc->tc_proto = sav->sah->saidx.proto;
 	tc->tc_skip = skip;
 	tc->tc_protoff = protoff;
+	tc->tc_sav = sav;
+	KEY_SA_REF(sav);
 
 	return crypto_dispatch(crp);
 bad:
@@ -1182,12 +1191,16 @@ ah_output_cb(struct cryptop *crp)
 	mutex_enter(softnet_lock);
 
 	isr = tc->tc_isr;
-	sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
-	if (sav == NULL) {
-		AH_STATINC(AH_STAT_NOTDB);
-		DPRINTF(("%s: SA expired while in crypto\n", __func__));
-		error = ENOBUFS;		/*XXX*/
-		goto bad;
+	sav = tc->tc_sav;
+	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
+		KEY_FREESAV(&sav);
+		sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
+		if (sav == NULL) {
+			AH_STATINC(AH_STAT_NOTDB);
+			DPRINTF(("%s: SA expired while in crypto\n", __func__));
+			error = ENOBUFS;		/*XXX*/
+			goto bad;
+		}
 	}
 	KASSERTMSG(isr->sav == sav, "SA changed");
 

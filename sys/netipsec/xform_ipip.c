@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.51 2017/07/12 07:00:40 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.52 2017/07/14 01:24:23 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.51 2017/07/12 07:00:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.52 2017/07/14 01:24:23 ozaki-r Exp $");
 
 /*
  * IP-inside-IP processing
@@ -403,7 +403,7 @@ ipip_output(
 )
 {
 	char buf[IPSEC_ADDRSTRLEN];
-	const struct secasvar *sav;
+	struct secasvar *sav;
 	uint8_t tp, otos;
 	struct secasindex *saidx;
 	int error;
@@ -638,7 +638,7 @@ ipe4_zeroize(struct secasvar *sav)
 static int
 ipe4_input(
     struct mbuf *m,
-    const struct secasvar *sav,
+    struct secasvar *sav,
     int skip,
     int protoff
 )
