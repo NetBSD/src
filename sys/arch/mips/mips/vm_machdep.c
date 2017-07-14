@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.158 2017/05/11 09:09:54 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.159 2017/07/14 17:54:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.158 2017/05/11 09:09:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.159 2017/07/14 17:54:00 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
@@ -154,10 +154,12 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	KASSERT(tf->tf_regs[_R_SR] & MIPS_SR_KX);
 	KASSERT(pcb2->pcb_context.val[_L_SR] & MIPS_SR_KX);
 #endif
+#ifndef MIPS1	/* XXX: broken */
 	KASSERTMSG(pcb2->pcb_context.val[_L_SR] & MIPS_SR_INT_IE,
 	    "%d.%d %#"PRIxREGISTER,
 	    l1->l_proc->p_pid, l1->l_lid,
 	    pcb2->pcb_context.val[_L_SR]);
+#endif
 }
 
 /*
