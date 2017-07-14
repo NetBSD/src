@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.243 2016/09/10 13:42:11 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.244 2017/07/14 20:32:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.243 2016/09/10 13:42:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.244 2017/07/14 20:32:32 christos Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -546,6 +546,9 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_addr = (void *)va;
 			ksi.ksi_code = TRAP_TRACE;
+			/* we broke, skip it to avoid infinite loop */
+			if (instr == MIPS_BREAK_INSTR)
+				tf->tf_regs[_R_PC] += 4;
 			break;
 		}
 		/*
