@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.61 2017/07/14 01:24:23 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.62 2017/07/14 12:26:26 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.61 2017/07/14 01:24:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.62 2017/07/14 12:26:26 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -698,6 +698,7 @@ static int
 esp_output(
     struct mbuf *m,
     struct ipsecrequest *isr,
+    struct secasvar *sav,
     struct mbuf **mp,
     int skip,
     int protoff
@@ -709,7 +710,6 @@ esp_output(
 	int hlen, rlen, padding, blks, alen, i, roff;
 	struct mbuf *mo = NULL;
 	struct tdb_crypto *tc;
-	struct secasvar *sav;
 	struct secasindex *saidx;
 	unsigned char *pad;
 	uint8_t prot;
@@ -720,8 +720,6 @@ esp_output(
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 
-	KASSERT(isr->sav != NULL);
-	sav = isr->sav;
 	esph = sav->tdb_authalgxform;
 	KASSERT(sav->tdb_encalgxform != NULL);
 	espx = sav->tdb_encalgxform;
@@ -981,8 +979,6 @@ esp_output_cb(struct cryptop *crp)
 			goto bad;
 		}
 	}
-	KASSERTMSG(isr->sav == sav,
-	    "SA changed was %p now %p", isr->sav, sav);
 
 	/* Check for crypto errors. */
 	if (crp->crp_etype) {
@@ -1037,7 +1033,7 @@ esp_output_cb(struct cryptop *crp)
 #endif
 
 	/* NB: m is reclaimed by ipsec_process_done. */
-	err = ipsec_process_done(m, isr);
+	err = ipsec_process_done(m, isr, sav);
 	KEY_FREESAV(&sav);
 	mutex_exit(softnet_lock);
 	splx(s);

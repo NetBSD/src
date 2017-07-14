@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.42 2017/07/14 01:24:23 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.43 2017/07/14 12:26:26 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.42 2017/07/14 01:24:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.43 2017/07/14 12:26:26 ozaki-r Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -376,13 +376,13 @@ static int
 ipcomp_output(
     struct mbuf *m,
     struct ipsecrequest *isr,
+    struct secasvar *sav,
     struct mbuf **mp,
     int skip,
     int protoff
 )
 {
 	char buf[IPSEC_ADDRSTRLEN];
-	struct secasvar *sav;
 	const struct comp_algo *ipcompx;
 	int error, ralen, hlen, maxpacketsize;
 	struct cryptodesc *crdc;
@@ -390,8 +390,7 @@ ipcomp_output(
 	struct tdb_crypto *tc;
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
-	KASSERT(isr->sav != NULL);
-	sav = isr->sav;
+	KASSERT(sav != NULL);
 	KASSERT(sav->tdb_compalgxform != NULL);
 	ipcompx = sav->tdb_compalgxform;
 
@@ -400,7 +399,7 @@ ipcomp_output(
     /* Don't process the packet if it is too short */
 	if (ralen < ipcompx->minlen) {
 		IPCOMP_STATINC(IPCOMP_STAT_MINLEN);
-		return ipsec_process_done(m,isr);
+		return ipsec_process_done(m, isr, sav);
 	}
 
 	hlen = IPCOMP_HLENGTH;
@@ -547,7 +546,6 @@ ipcomp_output_cb(struct cryptop *crp)
 			goto bad;
 		}
 	}
-	KASSERTMSG(isr->sav == sav, "SA changed");
 
 	/* Check for crypto errors */
 	if (crp->crp_etype) {
@@ -651,7 +649,7 @@ ipcomp_output_cb(struct cryptop *crp)
 	crypto_freereq(crp);
 
 	/* NB: m is reclaimed by ipsec_process_done. */
-	error = ipsec_process_done(m, isr);
+	error = ipsec_process_done(m, isr, sav);
 	KEY_FREESAV(&sav);
 	mutex_exit(softnet_lock);
 	splx(s);
