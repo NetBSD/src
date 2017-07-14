@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.8 2017/07/05 01:25:03 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.9 2017/07/14 11:54:52 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -595,6 +595,183 @@ add_test_update()
 	atf_add_test_case ${name}
 }
 
+add_sa()
+{
+	local proto=$1
+	local algo_args="$2"
+	local ip_local=$3
+	local ip_peer=$4
+	local lifetime=$5
+	local spi=$6
+	local tmpfile=./tmp
+	local extra=
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	cat > $tmpfile <<-EOF
+	add $ip_local $ip_peer $proto $((spi)) -lh $lifetime -ls $lifetime $algo_args;
+	add $ip_peer $ip_local $proto $((spi + 1)) -lh $lifetime -ls $lifetime $algo_args;
+	$extra
+	EOF
+	$DEBUG && cat $tmpfile
+	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
+	$DEBUG && $HIJACKING setkey -D
+	# XXX it can be expired if $lifetime is very short
+	#check_sa_entries $SOCK_LOCAL $ip_local $ip_peer
+
+	export RUMP_SERVER=$SOCK_PEER
+	cat > $tmpfile <<-EOF
+	add $ip_local $ip_peer $proto $((spi)) -lh $lifetime -ls $lifetime $algo_args;
+	add $ip_peer $ip_local $proto $((spi + 1)) -lh $lifetime -ls $lifetime $algo_args;
+	$extra
+	EOF
+	$DEBUG && cat $tmpfile
+	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
+	$DEBUG && $HIJACKING setkey -D
+	# XXX it can be expired if $lifetime is very short
+	#check_sa_entries $SOCK_PEER $ip_local $ip_peer
+}
+
+check_packet_spi()
+{
+	local outfile=$1
+	local ip_local=$2
+	local ip_peer=$3
+	local proto=$4
+	local spi=$5
+	local spistr=
+
+	$DEBUG && cat $outfile
+	spistr=$(printf "%08x" $spi)
+	atf_check -s exit:0 \
+	    -o match:"$ip_local > $ip_peer: $proto_cap\(spi=0x$spistr," \
+	    cat $outfile
+	spistr=$(printf "%08x" $((spi + 1)))
+	atf_check -s exit:0 \
+	    -o match:"$ip_peer > $ip_local: $proto_cap\(spi=0x$spistr," \
+	    cat $outfile
+}
+
+test_spi()
+{
+	local proto=$1
+	local algo=$2
+	local update=$3
+	local preferred=$4
+	local ip_local=10.0.0.1
+	local ip_peer=10.0.0.2
+	local algo_args="$(generate_algo_args $proto $algo)"
+	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
+	local outfile=./out
+	local spistr=
+
+	rump_server_crypto_start $SOCK_LOCAL netipsec
+	rump_server_crypto_start $SOCK_PEER netipsec
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+	rump_server_add_iface $SOCK_PEER shmif0 $BUS
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_local/24
+	if [ $preferred = old ]; then
+		atf_check -s exit:0 rump.sysctl -q -w net.key.prefered_oldsa=1
+	fi
+
+	export RUMP_SERVER=$SOCK_PEER
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_peer/24
+	if [ $preferred = old ]; then
+		atf_check -s exit:0 rump.sysctl -q -w net.key.prefered_oldsa=1
+	fi
+
+	setup_sasp $proto "$algo_args" $ip_local $ip_peer 100
+
+	extract_new_packets $BUS > $outfile
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
+	extract_new_packets $BUS > $outfile
+	check_packet_spi $outfile $ip_local $ip_peer $proto_cap 10000
+
+	# Add a new SA with a different SPI
+	add_sa $proto "$algo_args" $ip_local $ip_peer 6 10010
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
+	extract_new_packets $BUS > $outfile
+	if [ $preferred = old ]; then
+		check_packet_spi $outfile $ip_local $ip_peer $proto_cap 10000
+	else
+		# The new SA is preferred
+		check_packet_spi $outfile $ip_local $ip_peer $proto_cap 10010
+	fi
+
+	# Add another SA with a different SPI
+	add_sa $proto "$algo_args" $ip_local $ip_peer 3 10020
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
+	extract_new_packets $BUS > $outfile
+	if [ $preferred = old ]; then
+		check_packet_spi $outfile $ip_local $ip_peer $proto_cap 10000
+	else
+		# The newest SA is preferred
+		check_packet_spi $outfile $ip_local $ip_peer $proto_cap 10020
+	fi
+
+	sleep $((3 + 1))
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
+	extract_new_packets $BUS > $outfile
+	if [ $preferred = old ]; then
+		check_packet_spi $outfile $ip_local $ip_peer $proto_cap 10000
+	else
+		# The newest one is removed and the second one is used
+		check_packet_spi $outfile $ip_local $ip_peer $proto_cap 10010
+	fi
+
+	sleep $((6 + 1 - (3 + 1)))
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
+	extract_new_packets $BUS > $outfile
+	if [ $preferred = old ]; then
+		check_packet_spi $outfile $ip_local $ip_peer $proto_cap 10000
+	else
+		# The second one is removed and the original one is used
+		check_packet_spi $outfile $ip_local $ip_peer $proto_cap 10000
+	fi
+}
+
+add_test_spi()
+{
+	local proto=$1
+	local algo=$2
+	local preferred=$3
+	local _algo=$(echo $algo | sed 's/-//g')
+	local name= desc=
+
+	desc="Tests SAs with different SPIs of $proto ($algo) ($preferred SA preferred)"
+	name="ipsec_spi_${proto}_${_algo}_preferred_${preferred}"
+
+	atf_test_case ${name} cleanup
+	eval "								\
+	    ${name}_head() {						\
+	        atf_set \"descr\" \"$desc\";				\
+	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
+	    };								\
+	    ${name}_body() {						\
+	        test_spi $proto $algo $preferred;			\
+	        rump_server_destroy_ifaces;				\
+	    };								\
+	    ${name}_cleanup() {						\
+	        $DEBUG && dump;						\
+	        cleanup;						\
+	    }								\
+	"
+	atf_add_test_case ${name}
+}
+
 atf_init_test_cases()
 {
 	local algo=
@@ -607,6 +784,8 @@ atf_init_test_cases()
 		add_test_tcp ipv4mappedipv6 esp $algo
 		add_test_update esp $algo sa
 		add_test_update esp $algo sp
+		add_test_spi esp $algo new
+		add_test_spi esp $algo old
 	done
 	for algo in $AH_AUTHENTICATION_ALGORITHMS_MINIMUM; do
 		add_test_lifetime ipv4 ah $algo
@@ -616,6 +795,8 @@ atf_init_test_cases()
 		add_test_tcp ipv4mappedipv6 ah $algo
 		add_test_update ah $algo sa
 		add_test_update ah $algo sp
+		add_test_spi ah $algo new
+		add_test_spi ah $algo old
 	done
 
 	add_test_tcp ipv4 none
