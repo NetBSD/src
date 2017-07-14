@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.27.2.1 2012/08/08 15:37:49 martin Exp $	*/
+/*	$NetBSD: config.c,v 1.27.2.1.6.1 2017/07/14 06:24:16 snj Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ getconfig(const char *intface)
 		exit(1);
 	}
 
-	MAYHAVE(val, "rltime", tmp->maxinterval * 3);
+	MAYHAVE(val, "rltime", DEF_ADVROUTERLIFETIME);
 	if (val && (val < tmp->maxinterval || val > MAXROUTERLIFETIME)) {
 		syslog(LOG_ERR,
 		       "<%s> router lifetime (%d) on %s is invalid "

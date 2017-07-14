@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.h,v 1.11 2011/12/10 19:14:29 roy Exp $	*/
+/*	$NetBSD: rtadvd.h,v 1.11.10.1 2017/07/14 06:24:16 snj Exp $	*/
 /*	$KAME: rtadvd.h,v 1.30 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -50,6 +50,7 @@ extern struct sockaddr_in6 sin6_sitelocal_allrouters;
 #define DEF_ADVCURHOPLIMIT 64
 #define DEF_ADVVALIDLIFETIME 2592000
 #define DEF_ADVPREFERREDLIFETIME 604800
+#define DEF_ADVROUTERLIFETIME 1800
 
 #define MAXROUTERLIFETIME 9000
 #define MIN_MAXINTERVAL 4
