@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.31 2017/07/08 15:15:43 maxv Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.32 2017/07/14 13:02:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.31 2017/07/08 15:15:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.32 2017/07/14 13:02:20 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -250,7 +250,7 @@ sched_tick(struct cpu_info *ci)
  */
 
 /* See calculations above */
-#define	loadfactor(loadavg)  (2 * (loadavg) / ncpu)
+#define	loadfactor(loadavg)  (2 * (loadavg))
 
 static fixpt_t
 decay_cpu(fixpt_t loadfac, fixpt_t estcpu)
