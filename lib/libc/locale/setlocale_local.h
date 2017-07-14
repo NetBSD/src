@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale_local.h,v 1.17 2016/04/29 16:26:48 joerg Exp $ */
+/* $NetBSD: setlocale_local.h,v 1.17.10.1 2017/07/14 15:53:08 perseant Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -68,7 +68,7 @@ char			*__setlocale(int, const char *);
 
 const char *_generic_LC_ALL_setlocale(
     const char * __restrict, struct _locale * __restrict);
-const char *_dummy_LC_COLLATE_setlocale(
+const char *_citrus_LC_COLLATE_setlocale(
     const char * __restrict, struct _locale * __restrict);
 const char *_citrus_LC_CTYPE_setlocale(
     const char * __restrict, struct _locale * __restrict);

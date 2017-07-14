@@ -1,7 +1,7 @@
-/*	$NetBSD: wcscoll.c,v 1.4.22.1 2017/07/14 15:53:08 perseant Exp $	*/
+/* $NetBSD: unicode_lc_collate.c,v 1.1.2.1 2017/07/14 15:53:08 perseant Exp $ */
 
 /*-
- * Copyright (c)2003 Citrus Project,
+ * Copyright (c)2008 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,27 +28,26 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcscoll.c,v 1.4.22.1 2017/07/14 15:53:08 perseant Exp $");
+__RCSID("$NetBSD: unicode_lc_collate.c,v 1.1.2.1 2017/07/14 15:53:08 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#include "namespace.h"
-
+#include <sys/types.h>
 #include <assert.h>
-#include <wchar.h>
+#include <langinfo.h>
+#define __SETLOCALE_SOURCE__
 #include <locale.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "setlocale_local.h"
 
 /*
- * Compare strings using collating information.
+ * macro required by nb_lc_template.h
  */
-int
-wcscoll_l(const wchar_t *s1, const wchar_t *s2, locale_t loc)
-{
-	return unicode_wcscoll_l(s1, s2, loc);
-}
+#define _PREFIX(name)		__CONCAT(_unicode_LC_COLLATE_,name)
 
-int
-wcscoll(const wchar_t *s1, const wchar_t *s2)
-{
-	return wcscoll_l(s1, s2, _current_locale());
-}
+#define _CATEGORY_ID		LC_COLLATE
+#define _CATEGORY_NAME		"LC_COLLATE"
+
+#include "nb_lc_template.h"

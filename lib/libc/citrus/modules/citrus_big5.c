@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_big5.c,v 1.15 2014/06/24 22:24:18 spz Exp $	*/
+/*	$NetBSD: citrus_big5.c,v 1.15.18.1 2017/07/14 15:53:07 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_big5.c,v 1.15 2014/06/24 22:24:18 spz Exp $");
+__RCSID("$NetBSD: citrus_big5.c,v 1.15.18.1 2017/07/14 15:53:07 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -444,9 +444,9 @@ err:
 	return ret;
 }
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_BIG5_stdenc_wctocs(_BIG5EncodingInfo * __restrict ei,
+_citrus_BIG5_stdenc_wctocs(struct _citrus_stdenc *ce,
 			   _csid_t * __restrict csid,
 			   _index_t * __restrict idx, wchar_t wc)
 {
@@ -459,9 +459,9 @@ _citrus_BIG5_stdenc_wctocs(_BIG5EncodingInfo * __restrict ei,
 	return 0;
 }
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_BIG5_stdenc_cstowc(_BIG5EncodingInfo * __restrict ei,
+_citrus_BIG5_stdenc_cstowc(struct _citrus_stdenc *ce,
 			   wchar_t * __restrict wc,
 			   _csid_t csid, _index_t idx)
 {

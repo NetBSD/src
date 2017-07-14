@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.29 2013/08/18 20:03:48 joerg Exp $	*/
+/*	$NetBSD: runetable.c,v 1.29.20.1 2017/07/14 15:53:08 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.29 2013/08/18 20:03:48 joerg Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.29.20.1 2017/07/14 15:53:08 perseant Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -346,6 +346,9 @@ __dso_hidden const _RuneLocale _DefaultRuneLocale = {
     _C_ctype_tab_,
     _C_tolower_tab_,
     _C_toupper_tab_,
+
+    NULL,
+    NULL,
 
 #ifdef __BUILD_LEGACY
     _C_compat_bsdctype,

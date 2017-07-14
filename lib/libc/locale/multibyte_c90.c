@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte_c90.c,v 1.12 2013/08/18 20:03:48 joerg Exp $	*/
+/*	$NetBSD: multibyte_c90.c,v 1.12.20.1 2017/07/14 15:53:08 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002, 2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: multibyte_c90.c,v 1.12 2013/08/18 20:03:48 joerg Exp $");
+__RCSID("$NetBSD: multibyte_c90.c,v 1.12.20.1 2017/07/14 15:53:08 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: multibyte_c90.c,v 1.12 2013/08/18 20:03:48 joerg Exp $");
 #include "citrus_module.h"
 #include "citrus_ctype.h"
 #include "runetype_local.h"
+#include "rune_iso10646.h"
 #include "multibyte.h"
 
 int
@@ -76,6 +77,8 @@ mbstowcs_l(wchar_t *pwcs, const char *s, size_t n, locale_t loc)
 	err0 = _citrus_ctype_mbstowcs(_CITRUS_CTYPE(loc), pwcs, s, n, &ret);
 	if (err0)
 		errno = err0;
+	else
+		_citrus_wcs_kuten_to_unicode(_RUNE_LOCALE(loc), pwcs, pwcs, ret);
 
 	return ret;
 }
@@ -95,6 +98,8 @@ mbtowc_l(wchar_t *pw, const char *s, size_t n, locale_t loc)
 	err0 = _citrus_ctype_mbtowc(_CITRUS_CTYPE(loc), pw, s, n, &ret);
 	if (err0)
 		errno = err0;
+	else if (s != NULL && pw != NULL)
+		_citrus_kuten_to_unicode(_RUNE_LOCALE(loc), *pw, pw);
 
 	return ret;
 }
@@ -110,8 +115,19 @@ wcstombs_l(char *s, const wchar_t *wcs, size_t n, locale_t loc)
 {
 	size_t ret;
 	int err0;
+#ifdef __STDC_ISO_10646__
+	wchar_t *wcskt;
+	size_t nn;
 
+	nn = wcsnlen(wcs, (s == NULL ? (size_t)-1 : n)) + 1;
+	wcskt = (wchar_t *)malloc(nn * sizeof(*wcskt));
+	_citrus_wcs_unicode_to_kuten(_RUNE_LOCALE(loc), wcs, wcskt, nn);
+
+	err0 = _citrus_ctype_wcstombs(_CITRUS_CTYPE(loc), s, (const wchar_t *)wcskt, n, &ret);
+	free(wcskt);
+#else
 	err0 = _citrus_ctype_wcstombs(_CITRUS_CTYPE(loc), s, wcs, n, &ret);
+#endif
 	if (err0)
 		errno = err0;
 
@@ -130,11 +146,27 @@ wcsnrtombs_l(char *s, const wchar_t **ppwcs, size_t in, size_t n, mbstate_t *ps,
 {
 	size_t ret;
 	int err0;
+#ifdef __STDC_ISO_10646__
+	int nn;
+	wchar_t *wcskt, *owcskt;
+#endif
 
 	_fixup_ps(_RUNE_LOCALE(loc), ps, s == NULL);
 
+#ifdef __STDC_ISO_10646__
+	nn = wcsnlen(*ppwcs, n) + 1;
+	owcskt = wcskt = (wchar_t *)malloc(nn * sizeof(*wcskt));
+	_citrus_wcs_unicode_to_kuten(_RUNE_LOCALE(loc), *ppwcs, wcskt, nn);
+
+	err0 = _citrus_ctype_wcsnrtombs(_ps_to_ctype(ps, loc), s, (const wchar_t **)(void *)&wcskt, in, n,
+					_ps_to_private(ps), &ret);
+	if (wcskt == NULL)
+		*ppwcs = NULL;
+	free(owcskt);
+#else
 	err0 = _citrus_ctype_wcsnrtombs(_ps_to_ctype(ps, loc), s, ppwcs, in, n,
 					_ps_to_private(ps), &ret);
+#endif
 	if (err0)
 		errno = err0;
 
@@ -152,6 +184,8 @@ wctomb_l(char *s, wchar_t wc, locale_t loc)
 {
 	int ret;
 	int err0;
+
+	_citrus_unicode_to_kuten(_RUNE_LOCALE(loc), wc, &wc);
 
 	err0 = _citrus_ctype_wctomb(_CITRUS_CTYPE(loc), s, wc, &ret);
 	if (err0)

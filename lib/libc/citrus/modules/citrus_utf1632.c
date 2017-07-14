@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf1632.c,v 1.12 2012/02/12 13:51:29 wiz Exp $	*/
+/*	$NetBSD: citrus_utf1632.c,v 1.12.34.1 2017/07/14 15:53:07 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf1632.c,v 1.12 2012/02/12 13:51:29 wiz Exp $");
+__RCSID("$NetBSD: citrus_utf1632.c,v 1.12.34.1 2017/07/14 15:53:07 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -427,12 +427,12 @@ _citrus_UTF1632_encoding_module_uninit(_UTF1632EncodingInfo *ei)
 {
 }
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_UTF1632_stdenc_wctocs(_UTF1632EncodingInfo * __restrict ei,
+_citrus_UTF1632_stdenc_wctocs(struct _citrus_stdenc *ce,
 			      _csid_t * __restrict csid,
 			      _index_t * __restrict idx,
-			      _wc_t wc)
+			      wchar_t wc)
 {
 
 	_DIAGASSERT(csid != NULL && idx != NULL);
@@ -443,10 +443,10 @@ _citrus_UTF1632_stdenc_wctocs(_UTF1632EncodingInfo * __restrict ei,
 	return (0);
 }
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_UTF1632_stdenc_cstowc(_UTF1632EncodingInfo * __restrict ei,
-			      _wc_t * __restrict wc,
+_citrus_UTF1632_stdenc_cstowc(struct _citrus_stdenc *ce,
+			      wchar_t * __restrict wc,
 			      _csid_t csid, _index_t idx)
 {
 
@@ -455,7 +455,7 @@ _citrus_UTF1632_stdenc_cstowc(_UTF1632EncodingInfo * __restrict ei,
 	if (csid != 0)
 		return (EILSEQ);
 
-	*wc = (_wc_t)idx;
+	*wc = (wchar_t)idx;
 
 	return (0);
 }

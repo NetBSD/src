@@ -1,4 +1,4 @@
-/* $NetBSD: t_wcscoll.c,v 1.1 2017/07/14 14:57:43 perseant Exp $ */
+/* $NetBSD: t_wcscoll.c,v 1.1.2.1 2017/07/14 15:53:08 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_wcscoll.c,v 1.1 2017/07/14 14:57:43 perseant Exp $");
+__RCSID("$NetBSD: t_wcscoll.c,v 1.1.2.1 2017/07/14 15:53:08 perseant Exp $");
 
 #include <locale.h>
 #include <stdio.h>

@@ -1,8 +1,9 @@
-/*	$NetBSD: wcscoll.c,v 1.4.22.1 2017/07/14 15:53:08 perseant Exp $	*/
-
 /*-
- * Copyright (c)2003 Citrus Project,
+ * Copyright (c) 2017 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Konrad E. Schroder.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,29 +27,28 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcscoll.c,v 1.4.22.1 2017/07/14 15:53:08 perseant Exp $");
-#endif /* LIBC_SCCS and not lint */
+#include <sys/queue.h>
+#include "unicode_ucd.h"
 
-#include "namespace.h"
+#define COLL_BACKWARDS 0x0001
+#define COLLATE_MAX_LEVEL(x) (4)
+#define COLLATE_FLAGS(x, y) (0)
 
-#include <assert.h>
-#include <wchar.h>
-#include <locale.h>
-#include "setlocale_local.h"
+static wchar_t *
+unicode_recursive_decompose(const wchar_t *, wchar_t **);
+static void
+unicode_wchar2coll(struct collation_set *, const wchar_t *, locale_t);
+#if 0
+static unsigned char *
+unicode_coll2key(struct collation_set *, int, locale_t);
+#endif
+static uint16_t *
+unicode_coll2numkey(struct collation_set *, int *, locale_t);
+static void
+unicode_wcstokey(uint16_t **, size_t *, const wchar_t *, wchar_t **, locale_t);
 
-/*
- * Compare strings using collating information.
- */
-int
-wcscoll_l(const wchar_t *s1, const wchar_t *s2, locale_t loc)
-{
-	return unicode_wcscoll_l(s1, s2, loc);
-}
+int 
+unicode_wcscoll_l(const wchar_t *, const wchar_t *, locale_t);
+size_t
+unicode_wcsxfrm_l(wchar_t *, const wchar_t *, size_t, locale_t);
 
-int
-wcscoll(const wchar_t *s1, const wchar_t *s2)
-{
-	return wcscoll_l(s1, s2, _current_locale());
-}

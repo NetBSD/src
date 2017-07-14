@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_none.c,v 1.3 2011/05/23 14:45:44 joerg Exp $	*/
+/*	$NetBSD: citrus_iconv_none.c,v 1.3.38.1 2017/07/14 15:53:07 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_none.c,v 1.3 2011/05/23 14:45:44 joerg Exp $");
+__RCSID("$NetBSD: citrus_iconv_none.c,v 1.3.38.1 2017/07/14 15:53:07 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -94,6 +94,14 @@ static void
 /*ARGSUSED*/
 _citrus_iconv_none_iconv_uninit_context(struct _citrus_iconv *cv)
 {
+}
+
+static int
+_citrus_iconv_none_iconv_wchar_convert(struct _citrus_iconv * __restrict cv,
+				      wchar_t in,
+				      wchar_t *out)
+{
+	*out = in;
 }
 
 static int

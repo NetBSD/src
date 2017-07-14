@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euc.c,v 1.17 2014/01/18 15:21:41 christos Exp $	*/
+/*	$NetBSD: citrus_euc.c,v 1.17.20.1 2017/07/14 15:53:07 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euc.c,v 1.17 2014/01/18 15:21:41 christos Exp $");
+__RCSID("$NetBSD: citrus_euc.c,v 1.17.20.1 2017/07/14 15:53:07 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -350,15 +350,19 @@ err:
 	return ret;
 }
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_EUC_stdenc_wctocs(_EUCEncodingInfo * __restrict ei,
+_citrus_EUC_stdenc_wctocs(struct _citrus_stdenc *ce,
 			  _csid_t * __restrict csid,
 			  _index_t * __restrict idx, wchar_t wc)
 {
 	wchar_t m, nm;
+	_EUCEncodingInfo *ei;
 
-	_DIAGASSERT(ei != NULL && csid != NULL && idx != NULL);
+	_DIAGASSERT(ce != NULL && csid != NULL && idx != NULL);
+
+	ei = (_ENCODING_INFO *)(ce->ce_closure);
+	_DIAGASSERT(ei != NULL);
 
 	m = wc & ei->mask;
 	nm = wc & ~m;
@@ -369,14 +373,18 @@ _citrus_EUC_stdenc_wctocs(_EUCEncodingInfo * __restrict ei,
 	return (0);
 }
 
-static __inline int
+static int
 /*ARGSUSED*/
-_citrus_EUC_stdenc_cstowc(_EUCEncodingInfo * __restrict ei,
+_citrus_EUC_stdenc_cstowc(struct _citrus_stdenc *ce,
 			  wchar_t * __restrict wc,
 			  _csid_t csid, _index_t idx)
 {
+	_EUCEncodingInfo *ei;
 
-	_DIAGASSERT(ei != NULL && wc != NULL);
+	_DIAGASSERT(ce != NULL && wc != NULL);
+
+	ei = (_ENCODING_INFO *)(ce->ce_closure);
+	_DIAGASSERT(ei != NULL);
 
 	if ((csid & ~ei->mask) != 0 || (idx & ei->mask) != 0)
 		return (EINVAL);

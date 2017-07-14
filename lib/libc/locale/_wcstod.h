@@ -1,4 +1,4 @@
-/* $NetBSD: _wcstod.h,v 1.4 2013/05/17 12:55:57 joerg Exp $ */
+/* $NetBSD: _wcstod.h,v 1.4.22.1 2017/07/14 15:53:08 perseant Exp $ */
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins
@@ -116,17 +116,36 @@ INT_NAME(_int_, _FUNCNAME, _l)(const wchar_t * __restrict nptr,
 	 * where it ended, count multibyte characters to find the
 	 * corresponding position in the wide-char string.
 	 */
+#ifdef notyet
+	if (endptr != NULL) {
+		mbstate_t mbs;
+		size_t wsize;
+		memset(&mbs, 0, sizeof(mbs));
+		wsize = mbsnrtowcs_l(NULL, (const char **)((void *)&buf),
+				     (size_t)(end - buf),
+				     (size_t)-1, &mbs,
+				     loc);
+		*endptr = __UNCONST(start + wsize);
+	}
+#else
 	if (endptr != NULL)
 		/* XXX Assume each wide char is one byte. */
 		*endptr = __UNCONST(start + (size_t)(end - buf));
-
+#endif
 	free(buf);
+
+	/* Restrict ourselves to POSIX error codes */
+	if (errno != 0 && errno != ERANGE && errno != EINVAL)
+		errno = 0;
 
 	return val;
 
 no_convert:
 	if (endptr != NULL)
 		*endptr = __UNCONST(nptr);
+	/* Restrict ourselves to POSIX error codes */
+	if (errno != 0 && errno != ERANGE && errno != EINVAL)
+		errno = 0;
 	return 0;
 }
 

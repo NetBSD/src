@@ -1,7 +1,6 @@
-/*	$NetBSD: wcscoll.c,v 1.4.22.1 2017/07/14 15:53:08 perseant Exp $	*/
-
+/*	$NetBSD: collate_locale.c,v 1.1.2.1 2017/07/14 15:53:08 perseant Exp $	*/
 /*-
- * Copyright (c)2003 Citrus Project,
+ * Copyright (c)2010 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,29 +25,53 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcscoll.c,v 1.4.22.1 2017/07/14 15:53:08 perseant Exp $");
-#endif /* LIBC_SCCS and not lint */
-
-#include "namespace.h"
-
+#define __SETLOCALE_SOURCE__
 #include <assert.h>
-#include <wchar.h>
+#include <errno.h>
 #include <locale.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <wchar.h>
+
 #include "setlocale_local.h"
+#include "collate_local.h"
+#include "unicode_collation_data.h"
 
-/*
- * Compare strings using collating information.
- */
-int
-wcscoll_l(const wchar_t *s1, const wchar_t *s2, locale_t loc)
-{
-	return unicode_wcscoll_l(s1, s2, loc);
-}
+#include "citrus_module.h"
+
+const _CollateLocale _DefaultCollateLocale = {
+	__UNCONST("DUCET"),
+	5,
+	&ucd_collate_data[0],
+	UCD_COLLATE_DATA_LENGTH
+};
 
 int
-wcscoll(const wchar_t *s1, const wchar_t *s2)
+_collate_load(const char * __restrict var, size_t lenvar,
+    _CollateLocale ** __restrict prl)
 {
-	return wcscoll_l(s1, s2, _current_locale());
+	int ret;
+
+	_DIAGASSERT(var != NULL || lenvar < 1);
+	_DIAGASSERT(prl != NULL);
+
+	if (lenvar < 1)
+		return EFTYPE;
+	switch (*var) {
+	case 'U':
+#ifdef notyet
+		ret = _collate_read_file(var, lenvar, prl);
+#else
+		*prl = (_CollateLocale *)malloc(sizeof(**prl));
+		(*prl)->coll_variable = __UNCONST("FAKE");
+		(*prl)->coll_variable_len = 4;
+		(*prl)->coll_data = (struct ucd_coll *)malloc(sizeof(struct ucd_coll));
+		(*prl)->coll_data_len = 0;
+		ret = 0;
+#endif
+		break;
+	default:
+		ret = EFTYPE;
+	}
+	return ret;
 }
