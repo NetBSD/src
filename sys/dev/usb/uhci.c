@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.275 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: uhci.c,v 1.276 2017/07/14 10:37:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.275 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.276 2017/07/14 10:37:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1995,7 +1995,6 @@ uhci_alloc_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer, int len,
 
 	uxfer->ux_stds = NULL;
 	uxfer->ux_nstd = ntd;
-	p = NULL;
 	if (ntd == 0) {
 		*sp = NULL;
 		DPRINTF("ntd=0", 0, 0, 0, 0);
@@ -2004,11 +2003,13 @@ uhci_alloc_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer, int len,
 	uxfer->ux_stds = kmem_alloc(sizeof(uhci_soft_td_t *) * ntd,
 	    KM_SLEEP);
 
-	ntd--;
-	for (int i = ntd; i >= 0; i--) {
+	for (int i = 0; i < ntd; i++) {
 		p = uhci_alloc_std(sc);
 		if (p == NULL) {
-			uhci_free_stds(sc, uxfer);
+			if (i != 0) {
+				uxfer->ux_nstd = i;
+				uhci_free_stds(sc, uxfer);
+			}
 			kmem_free(uxfer->ux_stds,
 			    sizeof(uhci_soft_td_t *) * ntd);
 			return ENOMEM;
@@ -2212,9 +2213,10 @@ uhci_device_bulk_fini(struct usbd_xfer *xfer)
 
 	KASSERT(ux->ux_type == UX_BULK);
 
-	uhci_free_stds(sc, ux);
-	if (ux->ux_nstd)
+	if (ux->ux_nstd) {
+		uhci_free_stds(sc, ux);
 		kmem_free(ux->ux_stds, sizeof(uhci_soft_td_t *) * ux->ux_nstd);
+	}
 }
 
 usbd_status
@@ -2482,9 +2484,10 @@ uhci_device_ctrl_fini(struct usbd_xfer *xfer)
 
 	KASSERT(ux->ux_type == UX_CTRL);
 
-	uhci_free_stds(sc, ux);
-	if (ux->ux_nstd)
+	if (ux->ux_nstd) {
+		uhci_free_stds(sc, ux);
 		kmem_free(ux->ux_stds, sizeof(uhci_soft_td_t *) * ux->ux_nstd);
+	}
 }
 
 usbd_status
@@ -2687,9 +2690,10 @@ uhci_device_intr_fini(struct usbd_xfer *xfer)
 
 	KASSERT(ux->ux_type == UX_INTR);
 
-	uhci_free_stds(sc, ux);
-	if (ux->ux_nstd)
+	if (ux->ux_nstd) {
+		uhci_free_stds(sc, ux);
 		kmem_free(ux->ux_stds, sizeof(uhci_soft_td_t *) * ux->ux_nstd);
+	}
 }
 
 usbd_status
