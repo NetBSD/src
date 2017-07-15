@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.132 2017/02/08 17:59:35 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.133 2017/07/15 13:46:02 christos Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -374,6 +374,7 @@
 #endif
 
 #if defined(__lint__)
+#define __thread	/* delete */
 #define	__packed	__packed
 #define	__aligned(x)	/* delete */
 #define	__section(x)	/* delete */
