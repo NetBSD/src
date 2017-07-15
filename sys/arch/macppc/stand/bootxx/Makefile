@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2017/04/20 19:09:29 uwe Exp $
+#	$NetBSD: Makefile,v 1.17 2017/07/15 23:26:46 christos Exp $
 
 S!=	cd ${.CURDIR}/../../../..; pwd
 
@@ -23,7 +23,7 @@ CLEANFILES+=	${PROG}.sym
 
 ${PROG}: ${OBJS}
 	${_MKTARGET_LINK}
-	${LD} -o ${.TARGET}.sym ${LINKFLAGS} ${OBJS}
+	${LD} -o ${.TARGET}.sym ${LINKFLAGS} ${OBJS} ${DESTDIR}/usr/lib/libgcc.a
 	${OBJCOPY} -O binary ${.TARGET}.sym ${.TARGET}
 
 .include <bsd.klinks.mk>
