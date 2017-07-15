@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.184 2017/07/14 12:26:26 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.185 2017/07/15 22:48:32 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.184 2017/07/14 12:26:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.185 2017/07/15 22:48:32 christos Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1199,7 +1199,7 @@ key_validate_savlist(const struct secashead *sah, const u_int state)
 			KDASSERTMSG(sav->lft_c->sadb_lifetime_addtime <=
 			    next->lft_c->sadb_lifetime_addtime,
 			    "savlist is not sorted: sah=%p, state=%d, "
-			    "sav=%lu, next=%lu", sah, state,
+			    "sav=%" PRIu64 ", next=%" PRIu64, sah, state,
 			    sav->lft_c->sadb_lifetime_addtime,
 			    next->lft_c->sadb_lifetime_addtime);
 		}
