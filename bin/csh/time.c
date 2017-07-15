@@ -1,4 +1,4 @@
-/* $NetBSD: time.c,v 1.20 2013/07/16 17:47:43 christos Exp $ */
+/* $NetBSD: time.c,v 1.21 2017/07/15 14:35:55 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: time.c,v 1.20 2013/07/16 17:47:43 christos Exp $");
+__RCSID("$NetBSD: time.c,v 1.21 2017/07/15 14:35:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,32 +124,37 @@ ruadd(struct rusage *ru, struct rusage *ru2)
     ru->ru_nvcsw += ru2->ru_nvcsw;
     ru->ru_nivcsw += ru2->ru_nivcsw;
 }
-#endif /* NOT_CSH */
 
 void
 prusage(FILE *fp, struct rusage *r0, struct rusage *r1, struct timespec *e,
         struct timespec *b)
 {
-#ifndef NOT_CSH
     struct varent *vp;
-#endif
     const char *cp;
+
+    vp = adrof(STRtime);
+
+    if (vp && vp->vec[0] && vp->vec[1])
+	cp = short2str(vp->vec[1]);
+    else
+	cp = "%Uu %Ss %E %P %X+%Dk %I+%Oio %Fpf+%Ww";
+    prusage1(fp, cp, r0, r1, e, b);
+}
+#endif
+
+void
+prusage1(FILE *fp, const char *cp, struct rusage *r0, struct rusage *r1,
+    struct timespec *e, struct timespec *b)
+{
     long i;
     time_t t;
     time_t ms;
 
-    cp = "%Uu %Ss %E %P %X+%Dk %I+%Oio %Fpf+%Ww";
     ms = (e->tv_sec - b->tv_sec) * 100 + (e->tv_nsec - b->tv_nsec) / 10000000;
     t = (r1->ru_utime.tv_sec - r0->ru_utime.tv_sec) * 100 +
         (r1->ru_utime.tv_usec - r0->ru_utime.tv_usec) / 10000 +
         (r1->ru_stime.tv_sec - r0->ru_stime.tv_sec) * 100 +
         (r1->ru_stime.tv_usec - r0->ru_stime.tv_usec) / 10000;
-#ifndef NOT_CSH
-    vp = adrof(STRtime);
-
-    if (vp && vp->vec[0] && vp->vec[1])
-	cp = short2str(vp->vec[1]);
-#endif
 
     for (; *cp; cp++)
 	if (*cp != '%')
