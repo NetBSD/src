@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.19 2017/07/05 01:09:17 jmcneill Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.20 2017/07/15 11:13:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.19 2017/07/05 01:09:17 jmcneill Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.20 2017/07/15 11:13:08 jmcneill Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -144,11 +144,12 @@ static const struct uboot_type {
 	enum uboot_image_type type;
 	const char *name;
 } uboot_type[] = {
-	{ IH_TYPE_STANDALONE,	"standalone" },
-	{ IH_TYPE_KERNEL,	"kernel" },
-	{ IH_TYPE_RAMDISK,	"ramdisk" },
-	{ IH_TYPE_FILESYSTEM,	"fs" },
-	{ IH_TYPE_SCRIPT,	"script" },
+	{ IH_TYPE_STANDALONE,		"standalone" },
+	{ IH_TYPE_KERNEL,		"kernel" },
+	{ IH_TYPE_KERNEL_NOLOAD,	"kernel_noload" },
+	{ IH_TYPE_RAMDISK,		"ramdisk" },
+	{ IH_TYPE_FILESYSTEM,		"fs" },
+	{ IH_TYPE_SCRIPT,		"script" },
 };
 
 static enum uboot_image_type
@@ -221,7 +222,7 @@ usage(void)
 	    "<arm|arm64|i386|mips|mips64|or1k|powerpc>");
 	fprintf(stderr, " -C <none|bz2|gz|lzma|lzo>");
 	fprintf(stderr, " -O <openbsd|netbsd|freebsd|linux>");
-	fprintf(stderr, " -T <standalone|kernel|ramdisk|fs|script>");
+	fprintf(stderr, " -T <standalone|kernel|kernel_noload|ramdisk|fs|script>");
 	fprintf(stderr, " -a <addr> [-e <ep>] [-m <magic>] -n <name>");
 	fprintf(stderr, " <srcfile> <dstfile>\n");
 
@@ -429,10 +430,20 @@ main(int argc, char *argv[])
 
 	if (image_arch == IH_ARCH_UNKNOWN ||
 	    image_type == IH_TYPE_UNKNOWN ||
-	    (image_type != IH_TYPE_SCRIPT && image_type != IH_TYPE_RAMDISK &&
-	     image_loadaddr == 0) ||
 	    image_name == NULL)
 		usage();
+
+	switch (image_type) {
+	case IH_TYPE_SCRIPT:
+	case IH_TYPE_RAMDISK:
+	case IH_TYPE_KERNEL_NOLOAD:
+		break;
+	default:
+		if (image_loadaddr == 0)
+			usage();
+			/* NOTREACHED */
+		break;
+	}
 
 	src = argv[0];
 	dest = argv[1];
