@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.8 2017/07/12 07:22:31 skrll Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.9 2017/07/15 06:25:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -63,7 +63,7 @@
 #include <machine/asm.h>
 #include <arm/locore.h>
 
-RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.8 2017/07/12 07:22:31 skrll Exp $")
+RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.9 2017/07/15 06:25:20 skrll Exp $")
 
 #if 0
 #define Invalidate_I_cache(Rtmp1, Rtmp2) \
@@ -73,7 +73,7 @@ RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.8 2017/07/12 07:22:31 skrll Exp $")
  * Workaround for
  *
  *    Erratum 411920 in ARM1136 (fixed in r1p4)
- *    Erratum 415045 in ARM1176 (fixed in r0p5?)
+ *    Erratum 415045 in ARM1176 (fixed in r0p5)
  *
  *	- value of arg 'reg' Should Be Zero
  */
