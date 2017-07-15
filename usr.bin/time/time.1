@@ -1,4 +1,4 @@
-.\"	$NetBSD: time.1,v 1.27 2017/07/15 14:34:08 christos Exp $
+.\"	$NetBSD: time.1,v 1.28 2017/07/15 14:40:36 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,8 @@ Available options:
 Displays information in the format used by default the
 .Nm
 builtin of
-.Xr csh 1 uses (\&%Uu \&%Ss \&%E \&%P \&%X+\&%Dk \&%I+\&%Oio \&%Fpf+\&%Ww).
+.Xr csh 1
+uses (%Uu %Ss %E %P %X+%Dk %I+%Oio %Fpf+%Ww).
 .It Fl f
 Specify a time format using the
 .Xr csh 1
@@ -83,7 +84,7 @@ The time the process spent in kernel mode in cpu seconds.
 .It \&%E
 The elapsed (wall clock) time in seconds.
 .It \&%P
-The CPU percentage computed as (\&%U + \&%S) / \&%E.
+The CPU percentage computed as (%U + %S) / %E.
 .It \&%W
 Number of times the process was swapped.
 .It \&%X
@@ -91,7 +92,7 @@ The average amount in (shared) text space used in Kbytes.
 .It \&%D
 The average amount in (unshared) data/stack space used in Kbytes.
 .It \&%K
-The total space used (\&%X + \&%D) in Kbytes.
+The total space used (%X + %D) in Kbytes.
 .It \&%M
 The maximum memory the process had in use at any time in Kbytes.
 .It \&%F
