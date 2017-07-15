@@ -1,4 +1,4 @@
-# $NetBSD: t_arith.sh,v 1.7 2017/06/02 01:50:48 kre Exp $
+# $NetBSD: t_arith.sh,v 1.8 2017/07/15 18:50:42 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -937,6 +937,46 @@ operator_precedence_body()
 
 	atf_check -s exit:0 -o inline:'1\n' -e empty ${TEST_SH} -c \
 		'echo $(( 0xfD & 0xF == 0xF ))'
+
+	${TEST_SH} -c ': $(( 1 , 2 , 3 ))' 2>/dev/null  && {
+		atf_check -s exit:0 -o inline:'2\n' -e empty ${TEST_SH} -c \
+			'echo $(( 3 * 7 , 2 << 8 ,  9 - 7 ))'
+		atf_check -s exit:0 -o inline:'4\n' -e empty ${TEST_SH} -c \
+			'echo $(( 1 ? 2 : 3 , 0 ? 1 : 4 ))'
+	}
+
+	return 0
+}
+
+atf_test_case optional_comma
+optional_comma_head()
+{
+	atf_set "descr" "Test the optional comma operator"
+}
+optional_comma_body()
+{
+	# First, see if it is supported or not.
+	${TEST_SH} -c ': $(( 1 , 2 , 3 ))' 2>/dev/null  || atf_skip \
+	    "${TEST_SH} does not implement the ',' operator in"' $(( ))'
+
+
+	# Note ',' should be set off from numbers by spaces, as in some
+	# locales it is a valid chacacter in a number, and we want to
+	# avoid any possibility of confusing the parser.
+
+	atf_check -s exit:0 -o inline:'2\n' -e empty ${TEST_SH} -c \
+		'echo $(( 1 , 2 ))'
+	atf_check -s exit:0 -o inline:'3\n' -e empty ${TEST_SH} -c \
+		'echo $(( 1 , 2 , 3 ))'
+	atf_check -s exit:0 -o inline:'4\n' -e empty ${TEST_SH} -c \
+		'echo $(( 1 , 2 , 3 , 4 ))'
+
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
+		'echo $(( , 2 ))'
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
+		'echo $(( 2 , ))'
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
+		'echo $(( 1 , , 2 ))'
 }
 
 parentheses_head()
@@ -999,9 +1039,16 @@ parentheses_body()
 		'echo $(( 2 << ((3 >= 3) << 2) ))'
 
 	# sh inherits C's crazy operator precedence...
-
 	atf_check -s exit:0 -o inline:'0\n' -e empty ${TEST_SH} -c \
 		'echo $(( (0xfD & 0xF) == 0xF ))'
+
+	${TEST_SH} -c ': $(( 1 , 2 , 3 ))' 2>/dev/null  && {
+		atf_check -s exit:0 -o inline:'24\n' -e empty ${TEST_SH} -c \
+			'echo $(( 3 * (7 , 2) << (8 ,  9 - 7) ))'
+		atf_check -s exit:0 -o inline:'1\n' -e empty ${TEST_SH} -c \
+			'echo $(( 0 ? 2 : ( ( 0 , 3 ) ? 1 : 4) ))'
+	}
+	return 0
 }
 
 atf_test_case var_assign
@@ -1059,6 +1106,173 @@ var_assign_body()
 		'set -u; unset x; echo $(( x + 3 )); echo $x'
 	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
 		'set -u; unset x; echo $(( x+=3 )); echo $x'
+
+	${TEST_SH} -c ': $(( 1 , 2 , 3 ))' 2>/dev/null  && {
+		atf_check -s exit:0 -o inline:'3\n3\n' -e empty ${TEST_SH} -c \
+			'echo $((x=2 , x|=1)); echo $x'
+		atf_check -s exit:0 -o inline:'3\n3\n' -e empty ${TEST_SH} -c \
+			'set -u; echo $((x = 2   ,x |= 1)); echo $x'
+		atf_check -s exit:0 -o inline:'6\n1:2:3:6\n' -e empty \
+			${TEST_SH} -c \
+		    'echo $((a=1 , b=2 , c = 3 , x=a+b + c)); echo $a:$b:$c:$x'
+		atf_check -s exit:0 -o inline:'6\n1:2:3:6\n' -e empty \
+			${TEST_SH} -c \
+		    'set -u;echo $((a=1 ,b=2 ,c=3 ,x=a+b+c)); echo $a:$b:$c:$x'
+	}
+	return 0
+}
+
+atf_test_case var_postinc
+var_postinc_head()
+{
+	atf_set "descr" "Test suffix ++ operator"
+}
+var_postinc_body()
+{
+	${TEST_SH} -c 'X=1; : $(( X++ ))' 2>/dev/null ||
+		atf_skip "${TEST_SH} does not support the suffix ++ operator"
+
+	unset X		; # just in case ...
+
+	atf_check -s exit:0 -o inline:'1\n2\n' -e empty ${TEST_SH} -c \
+		'X=1; echo $(( X++ )); echo $X'
+	atf_check -s exit:0 -o inline:'0\n1\n' -e empty ${TEST_SH} -c \
+		'echo $(( X++ )); echo $X'
+
+	atf_check -s exit:0 -o inline:'0\n1:0\n' -e empty ${TEST_SH} -c \
+		'unset Y; echo $(( Y = X++ )); echo $X:$Y'
+	atf_check -s exit:0 -o inline:'12\n4:5\n' -e empty ${TEST_SH} -c \
+		'X=3 Y=4; echo $(( Y++*X++ )); echo $X:$Y'
+
+	atf_check -s exit:0 -o inline:'1\n2\n' -e empty ${TEST_SH} -c \
+		'set -u; X=1; echo $(( X++ )); echo $X'
+	atf_check -s exit:0 -o inline:'0\n1:0\n' -e empty ${TEST_SH} -c \
+		'set -u; X=0; unset Y; echo $(( Y = X++ )); echo $X:$Y'
+	atf_check -s exit:0 -o inline:'12\n4:5\n' -e empty ${TEST_SH} -c \
+		'set -u; X=3 Y=4; echo $(( Y++*X++ )); echo $X:$Y'
+
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
+		'set -u; echo $(( X++ ))'
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
+		'set -u; unset Y; echo $(( X = Y++ ))'
+
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
+		'X=3; readonly X; echo $(( X++ ))'
+
+}
+atf_test_case var_postdec
+var_postdec_head()
+{
+	atf_set "descr" "Test suffix -- operator"
+}
+var_postdec_body()
+{
+	${TEST_SH} -c 'X=1; : $(( X-- ))' 2>/dev/null ||
+		atf_skip "${TEST_SH} does not support the suffix -- operator"
+
+	unset X		; # just in case ...
+
+	atf_check -s exit:0 -o inline:'1\n0\n' -e empty ${TEST_SH} -c \
+		'X=1; echo $(( X-- )); echo $X'
+	atf_check -s exit:0 -o inline:'0\n-1\n' -e empty ${TEST_SH} -c \
+		'echo $(( X-- )); echo $X'
+
+	atf_check -s exit:0 -o inline:'0\n-1:0\n' -e empty ${TEST_SH} -c \
+		'unset Y; echo $(( Y = X-- )); echo $X:$Y'
+	atf_check -s exit:0 -o inline:'12\n2:3\n' -e empty ${TEST_SH} -c \
+		'X=3 Y=4; echo $(( Y--*X-- )); echo $X:$Y'
+
+	atf_check -s exit:0 -o inline:'1\n0\n' -e empty ${TEST_SH} -c \
+		'set -u; X=1; echo $(( X-- )); echo $X'
+	atf_check -s exit:0 -o inline:'0\n-1:0\n' -e empty ${TEST_SH} -c \
+		'set -u; X=0; unset Y; echo $(( Y = X-- )); echo $X:$Y'
+	atf_check -s exit:0 -o inline:'12\n2:3\n' -e empty ${TEST_SH} -c \
+		'set -u; X=3 Y=4; echo $(( Y--*X-- )); echo $X:$Y'
+
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
+		'set -u; echo $(( X-- ))'
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
+		'set -u; unset Y; echo $(( X = Y-- ))'
+
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
+		'X=3; readonly X; echo $(( X-- ))'
+
+}
+atf_test_case var_preinc
+var_preinc_head()
+{
+	atf_set "descr" "Test prefix ++ operator"
+}
+var_preinc_body()
+{
+	${TEST_SH} -c 'X=1; : $(( ++X ))' 2>/dev/null ||
+		atf_skip "${TEST_SH} does not support the prefix ++ operator"
+
+	unset X		; # just in case ...
+
+	atf_check -s exit:0 -o inline:'2\n2\n' -e empty ${TEST_SH} -c \
+		'X=1; echo $(( ++X )); echo $X'
+	atf_check -s exit:0 -o inline:'1\n1\n' -e empty ${TEST_SH} -c \
+		'echo $(( ++X )); echo $X'
+
+	atf_check -s exit:0 -o inline:'1\n1:1\n' -e empty ${TEST_SH} -c \
+		'unset Y; echo $(( Y = ++X )); echo $X:$Y'
+	atf_check -s exit:0 -o inline:'20\n4:5\n' -e empty ${TEST_SH} -c \
+		'X=3 Y=4; echo $(( ++Y*++X )); echo $X:$Y'
+
+	atf_check -s exit:0 -o inline:'2\n2\n' -e empty ${TEST_SH} -c \
+		'set -u; X=1; echo $(( ++X )); echo $X'
+	atf_check -s exit:0 -o inline:'1\n1:1\n' -e empty ${TEST_SH} -c \
+		'set -u; X=0; unset Y; echo $(( Y = ++X )); echo $X:$Y'
+	atf_check -s exit:0 -o inline:'20\n4:5\n' -e empty ${TEST_SH} -c \
+		'set -u; X=3 Y=4; echo $(( ++Y*++X )); echo $X:$Y'
+
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
+		'set -u; echo $(( ++X ))'
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
+		'set -u; unset Y; echo $(( X = ++Y ))'
+
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
+		'X=3; readonly X; echo $(( ++X ))'
+
+}
+atf_test_case var_predec
+var_predec_head()
+{
+	atf_set "descr" "Test prefix -- operator"
+}
+var_predec_body()
+{
+	${TEST_SH} -c 'X=1; : $(( --X ))' 2>/dev/null ||
+		atf_skip "${TEST_SH} does not support the prefix -- operator"
+
+	unset X		; # just in case ...
+
+	atf_check -s exit:0 -o inline:'0\n0\n' -e empty ${TEST_SH} -c \
+		'X=1; echo $(( --X )); echo $X'
+	atf_check -s exit:0 -o inline:'-1\n-1\n' -e empty ${TEST_SH} -c \
+		'echo $(( --X )); echo $X'
+
+	atf_check -s exit:0 -o inline:'-1\n-1:-1\n' -e empty ${TEST_SH} -c \
+		'unset Y; echo $(( Y = --X )); echo $X:$Y'
+	atf_check -s exit:0 -o inline:'6\n2:3\n' -e empty ${TEST_SH} -c \
+		'X=3 Y=4; echo $(( --Y*--X )); echo $X:$Y'
+
+	atf_check -s exit:0 -o inline:'0\n0\n' -e empty ${TEST_SH} -c \
+		'set -u; X=1; echo $(( --X )); echo $X'
+	atf_check -s exit:0 -o inline:'-1\n-1:-1\n' -e empty ${TEST_SH} -c \
+		'set -u; X=0; unset Y; echo $(( Y = --X )); echo $X:$Y'
+	atf_check -s exit:0 -o inline:'6\n2:3\n' -e empty ${TEST_SH} -c \
+		'set -u; X=3 Y=4; echo $(( --Y*--X )); echo $X:$Y'
+
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
+		'set -u; echo $(( --X ))'
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
+		'set -u; unset Y; echo $(( X = --Y ))'
+
+	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
+		'X=3; readonly X; echo $(( --X ))'
+
 }
 
 atf_test_case arithmetic_fails
@@ -1108,10 +1322,15 @@ atf_init_test_cases() {
 	atf_add_test_case make_selection
 	atf_add_test_case nested_arith
 	atf_add_test_case operator_precedence
+	atf_add_test_case optional_comma
 	atf_add_test_case parentheses
 	# atf_add_test_case progressive			# build up big expr
 	# atf_add_test_case test_errors			# erroneous input
 	# atf_add_test_case torture		# hard stuff (if there is any)
 	atf_add_test_case var_assign			# assignment ops
+	atf_add_test_case var_postinc			# var++
+	atf_add_test_case var_postdec			# var--
+	atf_add_test_case var_preinc			# ++var
+	atf_add_test_case var_predec			# --var
 	# atf_add_test_case vulgarity	# truly evil inputs (syntax in vars...)
 }
