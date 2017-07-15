@@ -1,4 +1,4 @@
-# $NetBSD: t_option.sh,v 1.4 2017/06/02 01:38:44 kre Exp $
+# $NetBSD: t_option.sh,v 1.5 2017/07/15 18:52:21 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -598,6 +598,56 @@ vi_emacs_VE_toggle_body() {
 	'
 }
 
+atf_test_case pipefail
+pipefail_head() {
+	atf_set "descr" "Basic tests of the pipefail option"
+}
+pipefail_body() {
+	${TEST_SH} -c 'set -o pipefail' 2>/dev/null ||
+		atf_skip "pipefail option not supported by ${TEST_SH}"
+
+	atf_check -s exit:0 -o match:'pipefail.*off' -e empty ${TEST_SH} -c \
+		'set -o | grep pipefail'
+	atf_check -s exit:0 -o match:'pipefail.*on' -e empty ${TEST_SH} -c \
+		'set -o pipefail; set -o | grep pipefail'
+
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+		'(exit 1) | (exit 2) | (exit 0)'
+	atf_check -s exit:2 -o empty -e empty ${TEST_SH} -c \
+		'set -o pipefail; (exit 1) | (exit 2) | (exit 0)'
+	atf_check -s exit:1 -o empty -e empty ${TEST_SH} -c \
+		'set -o pipefail; (exit 1) | (exit 0) | (exit 0)'
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+		'set -o pipefail; (exit 0) | (exit 0) | (exit 0)'
+
+	atf_check -s exit:1 -o empty -e empty ${TEST_SH} -c \
+		'! (exit 1) | (exit 2) | (exit 0)'
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+		'set -o pipefail; ! (exit 1) | (exit 2) | (exit 0)'
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+		'set -o pipefail; ! (exit 1) | (exit 0) | (exit 0)'
+	atf_check -s exit:1 -o empty -e empty ${TEST_SH} -c \
+		'set -o pipefail; ! (exit 0) | (exit 0) | (exit 0)'
+
+	atf_check -s exit:0 -o inline:'0\n' -e empty ${TEST_SH} -c \
+		'(exit 1) | (exit 2) | (exit 0); echo $?'
+	atf_check -s exit:0 -o inline:'2\n' -e empty ${TEST_SH} -c \
+		'set -o pipefail; (exit 1) | (exit 2) | (exit 0); echo $?'
+	atf_check -s exit:0 -o inline:'1\n' -e empty ${TEST_SH} -c \
+		'set -o pipefail; (exit 1) | (exit 0) | (exit 0); echo $?'
+	atf_check -s exit:0 -o inline:'0\n' -e empty ${TEST_SH} -c \
+		'set -o pipefail; (exit 0) | (exit 0) | (exit 0); echo $?'
+
+	atf_check -s exit:0 -o inline:'1\n' -e empty ${TEST_SH} -c \
+		'! (exit 1) | (exit 2) | (exit 0); echo $?'
+	atf_check -s exit:0 -o inline:'0\n' -e empty ${TEST_SH} -c \
+		'set -o pipefail; ! (exit 1) | (exit 2) | (exit 0); echo $?'
+	atf_check -s exit:0 -o inline:'0\n' -e empty ${TEST_SH} -c \
+		'set -o pipefail; ! (exit 1) | (exit 0) | (exit 0); echo $?'
+	atf_check -s exit:0 -o inline:'1\n' -e empty ${TEST_SH} -c \
+		'set -o pipefail; ! (exit 0) | (exit 0) | (exit 0); echo $?'
+}
+
 atf_test_case xx_bogus
 xx_bogus_head() {
 	atf_set "descr" "Tests that attempting to set a nonsense option fails."
@@ -672,5 +722,8 @@ atf_init_test_cases() {
 	atf_add_test_case set_x
 
 	atf_add_test_case vi_emacs_VE_toggle
+
+	atf_add_test_case pipefail
+
 	atf_add_test_case xx_bogus
 }
