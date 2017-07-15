@@ -1,0 +1,26 @@
+# $NetBSD: dts.mk,v 1.1 2017/07/15 15:20:52 christos Exp $
+
+DTSINC?=$S/external/gpl2/dts/dist/include
+DTSGNUPATH?=$S/external/gpl2/dts/dist/arch/${MACHINE_CPU}/boot/dts
+DTSPATH?=$S/arch/${MACHINE_CPU}/dts
+DTSPADDING?=1024
+
+.SUFFIXES: .dtd .dtb .dts
+
+.dts.dtd:
+	${TOOL_DTC} -i ${DTSINC} -i ${DTSPATH} -i ${DTSGNUPATH} -I dts -O dtb \
+	    -p ${DTSPADDING} -b 0 -o /dev/null -d /dev/stdout ${.IMPSRC} | \
+	${TOOL_SED} -e 's@/dev/null@${.TARGET:.dtd=.dtb}@' > ${.TARGET}
+
+.dts.dtb:
+	${CPP} -P -xassembler-with-cpp -I ${DTSINC} -I ${DTSPATH} \
+	    -I ${DTSGNUPATH} -include ${.IMPSRC} /dev/null | \
+	${TOOL_DTC} -i ${DTSINC} -i ${DTSPATH} -i ${DTSGNUPATH} -I dts -O dtb \
+	    -p ${DTSPADDING} -b 0 -o ${.TARGET}
+
+.PATH.dts: ${DTSPATH} ${DTSGNUPATH}
+
+DEPS+= ${DTS:.dts=.dtd}
+DTB= ${DTS:.dts=.dtb}
+
+all: ${DTB}
