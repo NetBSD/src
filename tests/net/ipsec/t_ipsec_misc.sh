@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.9 2017/07/14 11:54:52 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.10 2017/07/15 07:26:02 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -655,8 +655,7 @@ test_spi()
 {
 	local proto=$1
 	local algo=$2
-	local update=$3
-	local preferred=$4
+	local preferred=$3
 	local ip_local=10.0.0.1
 	local ip_peer=10.0.0.2
 	local algo_args="$(generate_algo_args $proto $algo)"
