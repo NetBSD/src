@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.185 2017/07/15 22:48:32 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.186 2017/07/16 10:36:52 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.185 2017/07/15 22:48:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.186 2017/07/16 10:36:52 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -7816,7 +7816,8 @@ key_sa_chgstate(struct secasvar *sav, u_int8_t state)
 
 	sav->state = state;
 	LIST_INSERT_HEAD(&sav->sah->savtree[state], sav, chain);
-	key_validate_savlist(sav->sah, state);
+	if (SADB_SASTATE_USABLE_P(sav))
+		key_validate_savlist(sav->sah, state);
 }
 
 /* XXX too much? */
