@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.186 2017/07/16 10:36:52 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.187 2017/07/16 10:46:45 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.186 2017/07/16 10:36:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.187 2017/07/16 10:46:45 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -7805,6 +7805,7 @@ key_sa_routechange(struct sockaddr *dst)
 static void
 key_sa_chgstate(struct secasvar *sav, u_int8_t state)
 {
+	struct secasvar *_sav;
 
 	KASSERT(sav != NULL);
 
@@ -7815,9 +7816,27 @@ key_sa_chgstate(struct secasvar *sav, u_int8_t state)
 	LIST_REMOVE(sav, chain);
 
 	sav->state = state;
-	LIST_INSERT_HEAD(&sav->sah->savtree[state], sav, chain);
-	if (SADB_SASTATE_USABLE_P(sav))
-		key_validate_savlist(sav->sah, state);
+	if (!SADB_SASTATE_USABLE_P(sav)) {
+		/* We don't need to care about the order */
+		LIST_INSERT_HEAD(&sav->sah->savtree[state], sav, chain);
+		return;
+	}
+	/*
+	 * Sort the list by lft_c->sadb_lifetime_addtime
+	 * in ascending order.
+	 */
+	LIST_FOREACH(_sav, &sav->sah->savtree[state], chain) {
+		if (_sav->lft_c->sadb_lifetime_addtime >
+		    sav->lft_c->sadb_lifetime_addtime) {
+			LIST_INSERT_BEFORE(_sav, sav, chain);
+			break;
+		}
+	}
+	if (_sav == NULL) {
+		LIST_INSERT_TAIL(&sav->sah->savtree[state], sav, secasvar,
+		    chain);
+	}
+	key_validate_savlist(sav->sah, state);
 }
 
 /* XXX too much? */
