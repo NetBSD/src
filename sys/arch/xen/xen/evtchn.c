@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.71 2015/03/14 10:49:36 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.72 2017/07/16 05:03:36 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.71 2015/03/14 10:49:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.72 2017/07/16 05:03:36 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -479,6 +479,26 @@ unbind_virq_from_evtch(int virq)
 }
 
 #if NPCI > 0 || NISA > 0
+int
+get_pirq_to_evtch(int pirq)
+{
+	int evtchn;
+
+	if (pirq == -1) /* Match previous behaviour */
+		return -1;
+	
+	if (pirq >= NR_PIRQS) {
+		panic("pirq %d out of bound, increase NR_PIRQS", pirq);
+	}
+	mutex_spin_enter(&evtchn_lock);
+
+	evtchn = pirq_to_evtch[pirq];
+
+	mutex_spin_exit(&evtchn_lock);
+
+	return evtchn;
+}
+
 int
 bind_pirq_to_evtch(int pirq)
 {
