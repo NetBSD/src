@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.58 2017/07/16 21:05:19 christos Exp $
+.\"	$NetBSD: inetd.8,v 1.59 2017/07/16 21:19:38 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -153,7 +153,8 @@ server program arguments
 .Pp
 For Internet services, the first field of the line may also have a host
 address specifier prefixed to it, separated from the service name or port
-number by a colon. If this is done, the string before the colon in the
+number by a colon.
+If this is done, the string before the colon in the
 first field indicates what local address
 .Nm
 should use when listening for that service, or the single character
@@ -179,7 +180,8 @@ The
 entry is the name of a valid service in
 the file
 .Pa /etc/services .
-Or an alternate port number. For
+Or an alternate port number.
+For
 .Dq internal
 services (discussed below), the service
 name
