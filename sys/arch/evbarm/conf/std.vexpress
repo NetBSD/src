@@ -1,4 +1,4 @@
-#       $NetBSD: std.vexpress,v 1.6 2017/07/05 01:08:44 jmcneill Exp $
+#       $NetBSD: std.vexpress,v 1.7 2017/07/16 21:40:28 jmcneill Exp $
 #
 # standard NetBSD/evbarm for VEXPRESS options
 
@@ -30,3 +30,7 @@ makeoptions     CPUFLAGS="-mcpu=cortex-a15 -mfpu=neon"
 options         ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
 options         ARM_GENERIC_TODR
 
+# initrd support
+options         MEMORY_DISK_HOOKS
+options         MEMORY_DISK_DYNAMIC
+pseudo-device   md
