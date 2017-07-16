@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.31 2017/05/23 08:54:39 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.32 2017/07/16 06:14:24 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -125,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.31 2017/05/23 08:54:39 nonaka Exp $");
 #include <machine/i8259.h>
 #include <machine/pio.h>
 #include <xen/evtchn.h>
+#include <xen/intr.h>
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -319,7 +320,9 @@ struct intr_extra_bus {
 LIST_HEAD(, intr_extra_bus) intr_extra_buses =
     LIST_HEAD_INITIALIZER(intr_extra_buses);
 
-static int intr_scan_bus(int, int, struct xen_intr_handle *);
+#if NPCI > 0
+static int intr_scan_bus(int, int, intr_handle_t *);
+#endif
 
 void
 intr_add_pcibus(struct pcibus_attach_args *pba)
@@ -364,8 +367,9 @@ intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
 	return ENOENT;
 }
 
+/* XXX: Unify with x86/intr.c */
 int
-intr_find_mpmapping(int bus, int pin, struct xen_intr_handle *handle)
+intr_find_mpmapping(int bus, int pin, intr_handle_t *handle)
 {
 #if NPCI > 0
 	int dev, func;
@@ -391,8 +395,9 @@ intr_find_mpmapping(int bus, int pin, struct xen_intr_handle *handle)
 #endif
 }
 
+#if NPCI > 0
 static int
-intr_scan_bus(int bus, int pin, struct xen_intr_handle *handle)
+intr_scan_bus(int bus, int pin, intr_handle_t *handle)
 {
 	struct mp_intr_map *mip, *intrs;
 
@@ -410,12 +415,13 @@ intr_scan_bus(int bus, int pin, struct xen_intr_handle *handle)
 				if (mpacpi_findintr_linkdev(mip) != 0)
 					continue;
 #endif
-			handle->pirq = mip->ioapic_ih;
+			*handle = mip->ioapic_ih;
 			return 0;
 		}
 	}
 	return ENOENT;
 }
+#endif /* NPCI > 0 */
 #endif /* NIOAPIC > 0 || NACPICA > 0 */
 #endif /* NPCI > 0 || NISA > 0 */
 

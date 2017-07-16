@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.26 2011/09/01 15:10:31 christos Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.27 2017/07/16 06:14:24 cherry Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.26 2011/09/01 15:10:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.27 2017/07/16 06:14:24 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,23 +131,23 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 {
 	int evtch;
 	char evname[16];
-	struct xen_intr_handle ih;
+	intr_handle_t ih;
 #if NIOAPIC > 0
 	struct ioapic_softc *pic = NULL;
 #endif
 
-	ih.pirq = 0;
+	ih = 0;
 
 #if NIOAPIC > 0
 	if (mp_busses != NULL) {
 		if (intr_find_mpmapping(mp_isa_bus, irq, &ih) == 0 ||
 		    intr_find_mpmapping(mp_eisa_bus, irq, &ih) == 0) {
-			if (!APIC_IRQ_ISLEGACY(ih.pirq)) {
-				pic = ioapic_find(APIC_IRQ_APIC(ih.pirq));
+			if (!APIC_IRQ_ISLEGACY(ih)) {
+				pic = ioapic_find(APIC_IRQ_APIC(ih));
 				if (pic == NULL) {
 					printf("isa_intr_establish: "
 					    "unknown apic %d\n",
-					    APIC_IRQ_APIC(ih.pirq));
+					    APIC_IRQ_APIC(ih));
 					return NULL;
 				}
 			}
@@ -155,15 +155,15 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 			printf("isa_intr_establish: no MP mapping found\n");
 	}
 #endif
-	ih.pirq |= (irq & 0xff);
+	ih |= (irq & 0xff);
 
-	evtch = xen_intr_map(&ih.pirq, type);
+	evtch = xen_intr_map((int *)&ih, type);
 	if (evtch == -1)
 		return NULL;
 #if NIOAPIC > 0
 	if (pic)
 		snprintf(evname, sizeof(evname), "%s pin %d",
-		    device_xname(pic->sc_dev), APIC_IRQ_PIN(ih.pirq));
+		    device_xname(pic->sc_dev), APIC_IRQ_PIN(ih));
 	else
 #endif
 		snprintf(evname, sizeof(evname), "irq%d", irq);
