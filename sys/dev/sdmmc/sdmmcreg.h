@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.31 2017/06/24 23:07:35 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.32 2017/07/16 17:11:46 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -121,6 +121,8 @@
 #define SD_ARG_BUS_WIDTH_4		2
 
 /* EXT_CSD fields */
+#define EXT_CSD_FLUSH_CACHE		32	/* W/E_P */
+#define EXT_CSD_CACHE_CTRL		33	/* R/W/E_P */
 #define EXT_CSD_RST_N_FUNCTION		162	/* R/W */
 #define EXT_CSD_BUS_WIDTH		183	/* W/E_P */
 #define EXT_CSD_HS_TIMING		185	/* R/W/E_P */
@@ -128,11 +130,19 @@
 #define EXT_CSD_STRUCTURE		194	/* R */
 #define EXT_CSD_CARD_TYPE		196	/* R */
 #define EXT_CSD_SEC_COUNT		212	/* R */
+#define EXT_CSD_CACHE_SIZE		249	/* R (4 bytes) */
 
 /* EXT_CSD field definitions */
 #define EXT_CSD_CMD_SET_NORMAL		(1U << 0)
 #define EXT_CSD_CMD_SET_SECURE		(1U << 1)
 #define EXT_CSD_CMD_SET_CPSECURE	(1U << 2)
+
+/* EXT_CSD_FLUSH_CACHE */
+#define EXT_CSD_FLUSH_CACHE_FLUSH	(1U << 0)
+#define EXT_CSD_FLUSH_CACHE_BARRIER	(1U << 1)
+
+/* EXT_CSD_CACHE_CTRL */
+#define EXT_CSD_CACHE_CTRL_CACHE_EN	(1U << 0)
 
 /* EXT_CSD_BUS_WIDTH */
 #define EXT_CSD_BUS_WIDTH_1		0	/* 1 bit mode */
