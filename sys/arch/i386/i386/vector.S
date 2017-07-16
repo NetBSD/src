@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.69 2017/05/23 08:54:38 nonaka Exp $	*/
+/*	$NetBSD: vector.S,v 1.70 2017/07/16 14:02:48 cherry Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.69 2017/05/23 08:54:38 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.70 2017/07/16 14:02:48 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -892,7 +892,9 @@ LABEL(x2apic_level_stubs)
 	.long _C_LABEL(Xresume_x2apic_level31)
 END(x2apic_level_stubs)
 #endif
-#else /* XEN */
+#endif /* XEN */
+
+#if defined(XEN)
 #define voidop(num)
 
 #define	XENINTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
@@ -916,7 +918,7 @@ IDTVEC(resume_ ## name ## num)						\
 	pushl	IH_ARG(%ebx)						;\
 	call	*IH_FUN(%ebx)		/* call it */			;\
 	addl	$4,%esp			/* toss the arg */		;\
-	movl	IH_IPL_NEXT(%ebx),%ebx	/* next handler in chain */	;\
+	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	6b							;\
 									\
