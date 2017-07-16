@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.57 2011/04/25 22:12:05 wiz Exp $
+.\"	$NetBSD: inetd.8,v 1.58 2017/07/16 21:05:19 christos Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .\"
 .\"     from: @(#)inetd.8       8.4 (Berkeley) 6/1/94
 .\"
-.Dd August 27, 2008
+.Dd July 16, 2017
 .Dt INETD 8
 .Os
 .Sh NAME
@@ -115,7 +115,7 @@ special case, described below).
 The fields of the configuration file are as follows:
 .Pp
 .Bd -unfilled -offset indent -compact
-[addr:]service-name
+[addr:]service-name/port-number
 socket-type[:accept_filter]
 protocol[,sndbuf=size][,rcvbuf=size]
 wait/nowait[:max]
@@ -152,9 +152,9 @@ server program arguments
 .Ed
 .Pp
 For Internet services, the first field of the line may also have a host
-address specifier prefixed to it, separated from the service name by a colon.
-If this is done, the string before the colon in the first field
-indicates what local address
+address specifier prefixed to it, separated from the service name or port
+number by a colon. If this is done, the string before the colon in the
+first field indicates what local address
 .Nm
 should use when listening for that service, or the single character
 .Dq \&*
@@ -175,11 +175,11 @@ interpreted in the traditional manner, with all services listened for
 on all local addresses.
 .Pp
 The
-.Em service-name
+.Em service-name/port-number
 entry is the name of a valid service in
 the file
 .Pa /etc/services .
-For
+Or an alternate port number. For
 .Dq internal
 services (discussed below), the service
 name
