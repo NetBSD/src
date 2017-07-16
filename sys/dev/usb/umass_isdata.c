@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.33.4.6 2017/06/24 00:23:39 jdolecek Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.33.4.7 2017/07/16 21:41:47 jdolecek Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.33.4.6 2017/06/24 00:23:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.33.4.7 2017/07/16 21:41:47 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -556,7 +556,7 @@ uisdata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 	xfer->c_ata_c.data = tb;
 	xfer->c_ata_c.bcount = DEV_BSIZE;
 	if (uisdata_exec_command(drvp, xfer) != ATACMD_COMPLETE) {
-		DPRINTF(("uisdata_get_parms: wdc_exec_command failed\n"));
+		DPRINTF(("uisdata_get_parms: uisdata_exec_command failed\n"));
 		rv = CMD_AGAIN;
 		goto out;
 	}
