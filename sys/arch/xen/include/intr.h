@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.40 2017/05/23 08:54:39 nonaka Exp $	*/
+/*	$NetBSD: intr.h,v 1.41 2017/07/16 06:14:24 cherry Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -175,7 +175,7 @@ int xen_intr_map(int *, int);
 #ifdef INTRDEBUG
 void intr_printconfig(void);
 #endif
-int intr_find_mpmapping(int, int, struct xen_intr_handle *);
+int intr_find_mpmapping(int, int, intr_handle_t *);
 struct pic *intr_findpic(int);
 void intr_add_pcibus(struct pcibus_attach_args *);
 
