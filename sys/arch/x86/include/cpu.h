@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.73 2017/06/16 18:17:42 jdolecek Exp $	*/
+/*	$NetBSD: cpu.h,v 1.74 2017/07/16 14:02:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -125,11 +125,10 @@ struct cpu_info {
 	uintptr_t ci_pmap_data[128 / sizeof(uintptr_t)];
 
 #ifdef XEN
-	struct iplsource  *ci_isources[NIPL];
 	u_long ci_evtmask[NR_EVENT_CHANNELS]; /* events allowed on this CPU */
-#else
-	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 #endif
+	struct intrsource *ci_isources[MAX_INTR_SOURCES];
+
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
 

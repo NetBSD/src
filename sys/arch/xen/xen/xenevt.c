@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.46 2017/06/01 02:45:08 chs Exp $      */
+/*      $NetBSD: xenevt.c,v 1.47 2017/07/16 14:02:48 cherry Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.46 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.47 2017/07/16 14:02:48 cherry Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -172,11 +172,11 @@ xenevtattach(int n)
 	ih->ih_level = level;
 	ih->ih_fun = ih->ih_realfun = xenevt_processevt;
 	ih->ih_arg = ih->ih_realarg = NULL;
-	ih->ih_ipl_next = NULL;
+	ih->ih_next = NULL;
 	ih->ih_cpu = &cpu_info_primary;
 #ifdef MULTIPROCESSOR
 	if (!mpsafe) {
-		ih->ih_fun = intr_biglock_wrapper;
+		ih->ih_fun = xen_intr_biglock_wrapper;
 		ih->ih_arg = ih;
 	}
 #endif /* MULTIPROCESSOR */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.49 2017/05/23 08:54:38 nonaka Exp $	*/
+/*	$NetBSD: vector.S,v 1.50 2017/07/16 14:02:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -829,7 +829,9 @@ LABEL(x2apic_level_stubs)
 END(x2apic_level_stubs)
 #endif
 
-#else	/* !XEN */
+#endif /* !defined(XEN) */
+
+#if defined(XEN)
 /* Resume/recurse procedures for spl() */
 #define	XENINTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
 IDTVEC(recurse_ ## name ## num)						;\
@@ -851,7 +853,7 @@ IDTVEC(resume_ ## name ## num)						\
 	movq	IH_ARG(%rbx),%rdi					;\
 	movq	%rsp,%rsi						;\
 	call	*IH_FUN(%rbx)		/* call it */			;\
-	movq	IH_IPL_NEXT(%rbx),%rbx	/* next handler in chain */	;\
+	movq	IH_NEXT(%rbx),%rbx	/* next handler in chain */	;\
 	testq	%rbx,%rbx						;\
 	jnz	6b							;\
 5:									\
