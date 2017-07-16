@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.2 2017/05/18 16:34:56 christos Exp $	*/
+/*	$NetBSD: bus.c,v 1.3 2017/07/16 17:35:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.2 2017/05/18 16:34:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.3 2017/07/16 17:35:20 christos Exp $");
 
 #include "opt_cputype.h"
 
@@ -117,10 +117,10 @@ _bus_dmamap_sync_r3k(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 #ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync_r3k: bad offset %lu (map size is %lu)",
-		      offset, map->dm_mapsize);
+		panic("%s: bad offset %ju (map size is %ju)", __func__,
+		      (uintmax_t)offset, (uintmax_t)map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
-		panic("_bus_dmamap_sync_r3k: bad length");
+		panic("%s: bad length", __func__);
 #endif
 
 	/*
@@ -222,10 +222,10 @@ _bus_dmamap_sync_r4k(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 #ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync_r4k: bad offset %lu (map size is %lu)",
-		      offset, map->dm_mapsize);
+		panic("%s: bad offset %ju (map size is %ju)", __func__,
+		      (uintmax_t)offset, (uintmax_t)map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
-		panic("_bus_dmamap_sync_r4k: bad length");
+		panic("%s: bad length", __func__);
 #endif
 
 	/*
