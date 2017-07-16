@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.99 2015/08/26 03:00:53 uebayasi Exp $
+#	$NetBSD: genassym.cf,v 1.100 2017/07/16 14:02:48 cherry Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -250,11 +250,7 @@ endif
 define	IH_FUN			offsetof(struct intrhand, ih_fun)
 define	IH_ARG			offsetof(struct intrhand, ih_arg)
 define	IH_LEVEL		offsetof(struct intrhand, ih_level)
-ifdef XEN
-define	IH_IPL_NEXT		offsetof(struct intrhand, ih_ipl_next)
-else
 define	IH_NEXT			offsetof(struct intrhand, ih_next)
-endif
 
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
@@ -322,13 +318,6 @@ endif
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
 define	SIZEOF_ISTUB		sizeof(struct intrstub)
 
-ifdef XEN
-define	SIZEOF_IPLSOURCE	sizeof(struct iplsource)
-define	IS_RECURSE		offsetof(struct iplsource, ipl_recurse)
-define	IS_RESUME		offsetof(struct iplsource, ipl_resume)
-define	IS_HANDLERS		offsetof(struct iplsource, ipl_handlers)
-define	EV_EVCNTL		offsetof(struct evcnt, ev_count)
-else
 define	SIZEOF_ISOURCE		sizeof(struct intrsource)
 define	IS_RECURSE		offsetof(struct intrsource, is_recurse)
 define	IS_RESUME		offsetof(struct intrsource, is_resume)
@@ -341,7 +330,6 @@ define	IS_PIN			offsetof(struct intrsource, is_pin)
 define	IS_TYPE			offsetof(struct intrsource, is_type)
 define	IS_MAXLEVEL		offsetof(struct intrsource, is_maxlevel)
 define	IS_LWP			offsetof(struct intrsource, is_lwp)
-endif
 
 define	TREC_SP			offsetof(struct trec, tr_sp)
 define	TREC_HPC		offsetof(struct trec, tr_hpc)

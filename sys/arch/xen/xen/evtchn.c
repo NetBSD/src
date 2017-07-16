@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.72 2017/07/16 05:03:36 cherry Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.73 2017/07/16 14:02:48 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.72 2017/07/16 05:03:36 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.73 2017/07/16 14:02:48 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -127,7 +127,7 @@ int debug_port = -1;
  */
 
 int
-intr_biglock_wrapper(void *vp)
+xen_intr_biglock_wrapper(void *vp)
 {
 	struct intrhand *ih = vp;
 	int ret;
@@ -336,8 +336,8 @@ splx:
 			while (iplmask & iplbit) {
 				ci->ci_ipending &= ~iplbit;
 				ci->ci_ilevel = i;
-				for (ih = ci->ci_isources[i]->ipl_handlers;
-				    ih != NULL; ih = ih->ih_ipl_next) {
+				for (ih = ci->ci_isources[i]->is_handlers;
+				    ih != NULL; ih = ih->ih_next) {
 					KASSERT(ih->ih_cpu == ci);
 					sti();
 					ih_fun = (void *)ih->ih_fun;
@@ -689,11 +689,11 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	ih->ih_fun = ih->ih_realfun = func;
 	ih->ih_arg = ih->ih_realarg = arg;
 	ih->ih_evt_next = NULL;
-	ih->ih_ipl_next = NULL;
+	ih->ih_next = NULL;
 	ih->ih_cpu = ci;
 #ifdef MULTIPROCESSOR
 	if (!mpsafe) {
-		ih->ih_fun = intr_biglock_wrapper;
+		ih->ih_fun = xen_intr_biglock_wrapper;
 		ih->ih_arg = ih;
 	}
 #endif /* MULTIPROCESSOR */
@@ -758,29 +758,29 @@ event_set_iplhandler(struct cpu_info *ci,
 		     struct intrhand *ih,
 		     int level)
 {
-	struct iplsource *ipls;
+	struct intrsource *ipls;
 
 	KASSERT(ci == ih->ih_cpu);
 	if (ci->ci_isources[level] == NULL) {
-		ipls = kmem_zalloc(sizeof (struct iplsource),
+		ipls = kmem_zalloc(sizeof (struct intrsource),
 		    KM_NOSLEEP);
 		if (ipls == NULL)
 			panic("can't allocate fixed interrupt source");
-		ipls->ipl_recurse = xenev_stubs[level].ist_recurse;
-		ipls->ipl_resume = xenev_stubs[level].ist_resume;
-		ipls->ipl_handlers = ih;
+		ipls->is_recurse = xenev_stubs[level].ist_recurse;
+		ipls->is_resume = xenev_stubs[level].ist_resume;
+		ipls->is_handlers = ih;
 		ci->ci_isources[level] = ipls;
 	} else {
 		ipls = ci->ci_isources[level];
-		ih->ih_ipl_next = ipls->ipl_handlers;
-		ipls->ipl_handlers = ih;
+		ih->ih_next = ipls->is_handlers;
+		ipls->is_handlers = ih;
 	}
 }
 
 int
 event_remove_handler(int evtch, int (*func)(void *), void *arg)
 {
-	struct iplsource *ipls;
+	struct intrsource *ipls;
 	struct evtsource *evts;
 	struct intrhand *ih;
 	struct intrhand **ihp;
@@ -805,15 +805,15 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	*ihp = ih->ih_evt_next;
 
 	ipls = ci->ci_isources[ih->ih_level];
-	for (ihp = &ipls->ipl_handlers, ih = ipls->ipl_handlers;
+	for (ihp = &ipls->is_handlers, ih = ipls->is_handlers;
 	    ih != NULL;
-	    ihp = &ih->ih_ipl_next, ih = ih->ih_ipl_next) {
+	    ihp = &ih->ih_next, ih = ih->ih_next) {
 		if (ih->ih_realfun == func && ih->ih_realarg == arg)
 			break;
 	}
 	if (ih == NULL)
 		panic("event_remove_handler");
-	*ihp = ih->ih_ipl_next;
+	*ihp = ih->ih_next;
 	mutex_spin_exit(&evtlock[evtch]);
 	kmem_free(ih, sizeof (struct intrhand));
 	if (evts->ev_handlers == NULL) {

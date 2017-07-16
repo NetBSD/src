@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.18 2017/07/16 06:14:24 cherry Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.19 2017/07/16 14:02:48 cherry Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.18 2017/07/16 06:14:24 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.19 2017/07/16 14:02:48 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -173,7 +173,7 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
 		return buf;
 	}
 #endif
-	snprintf(buf, len, "irq %d, event channel %d",
+	snprintf(buf, len, "irq %"PRIu64", event channel %d",
 	    ih, evtch);
 	return buf;
 }
@@ -215,7 +215,7 @@ pci_intr_establish(pci_chipset_tag_t pcitag, pci_intr_handle_t intrh,
 		    device_xname(pic->sc_dev), APIC_IRQ_PIN(intrh));
 	} else
 #endif
-		snprintf(evname, sizeof(evname), "irq%d", intrh);
+		snprintf(evname, sizeof(evname), "irq%"PRIu64, intrh);
 
 	return (void *)pirq_establish(APIC_IRQ_LEGACY_IRQ(intrh),
 	    get_pirq_to_evtch(APIC_IRQ_LEGACY_IRQ(intrh)), func, arg, level, evname);
