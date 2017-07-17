@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.28 2015/02/16 10:22:00 hannken Exp $	*/
+/*	$NetBSD: union.h,v 1.29 2017/07/17 09:22:36 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -158,8 +158,6 @@ extern int union_cn_close(struct vnode *, int, kauth_cred_t,
     struct lwp *);
 extern void union_removed_upper(struct union_node *un);
 extern struct vnode *union_lowervp(struct vnode *);
-extern void union_newlower(struct union_node *, struct vnode *);
-extern void union_newupper(struct union_node *, struct vnode *);
 extern void union_newsize(struct vnode *, off_t, off_t);
 int union_readdirhook(struct vnode **, struct file *, struct lwp *);
 
