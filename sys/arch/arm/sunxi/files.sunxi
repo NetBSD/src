@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.11 2017/07/08 11:12:24 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.12 2017/07/17 23:26:17 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -24,6 +24,7 @@ file	arch/arm/sunxi/sunxi_ccu_div.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_gate.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_nm.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_nkmp.c		sunxi_ccu
+file	arch/arm/sunxi/sunxi_ccu_phase.c	sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_prediv.c	sunxi_ccu
 
 # CCU (A31)
