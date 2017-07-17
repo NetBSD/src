@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.9 2013/08/15 22:37:29 matt Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.10 2017/07/17 20:24:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -72,7 +72,7 @@ pthread__sp(void)
 	(ucp)->uc_mcontext.__gregs[_REG_PC] =				\
 	 ((ucp)->uc_mcontext.__gregs[_REG_PC] & 0x3fffffc) | 0x0;
 #else
-/* Set CPSR to PSR_USE32_MODE (0x10) from arm/armreg.h */
+/* Set CPSR to PSR_USR32_MODE (0x10) from arm/armreg.h */
 #define _INITCONTEXT_U_MD(ucp)						\
 	(ucp)->uc_mcontext.__gregs[_REG_CPSR] = 0x10;
 #endif
