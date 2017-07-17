@@ -228,4 +228,4 @@ along with GCC; see the file COPYING3.  If not see
 #define WINT_TYPE "int"
 
 #undef TARGET_WRITABLE_EH_FRAME
-#define TARGET_WRITABLE_EH_FRAME (flag_pic && TARGET_SHARED)
+#define TARGET_WRITABLE_EH_FRAME 0
