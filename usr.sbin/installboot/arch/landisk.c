@@ -1,4 +1,4 @@
-/*	$NetBSD: landisk.c,v 1.6 2013/10/19 17:08:15 christos Exp $	*/
+/*	$NetBSD: landisk.c,v 1.7 2017/07/17 18:43:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: landisk.c,v 1.6 2013/10/19 17:08:15 christos Exp $");
+__RCSID("$NetBSD: landisk.c,v 1.7 2017/07/17 18:43:45 christos Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -100,12 +100,18 @@ landisk_setboot(ib_params *params)
 		goto done;
 	}
 	if (mbr.mbr_magic != le16toh(MBR_MAGIC)) {
-		if (params->flags & IB_VERBOSE) {
-			printf(
-		    "Ignoring MBR with invalid magic in sector 0 of `%s'\n",
-			    params->filesystem);
+		const char *p = (const char *)&mbr;
+		const char *e = p + sizeof(mbr);
+		while (p < e && !*p)
+			p++;
+		if (p != e) {
+			if (params->flags & IB_VERBOSE) {
+				printf(
+			"Ignoring MBR with invalid magic in sector 0 of `%s'\n",
+				    params->filesystem);
+			}
+			memset(&mbr, 0, sizeof(mbr));
 		}
-		memset(&mbr, 0, sizeof(mbr));
 	}
 
 	/*
