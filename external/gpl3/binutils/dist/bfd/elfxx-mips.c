@@ -8596,12 +8596,18 @@ _bfd_mips_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		  /* In the N32 and 64-bit ABIs there may be multiple
 		     consecutive relocations for the same offset.  If we have
 		     a R_MIPS_GPREL32 followed by a R_MIPS_64 then that
-		     relocation is complete and needs no futher adjustment.  */
+		     relocation is complete and needs no futher adjustment.
+		     
+		     Silently ignore absolute relocations in the .eh_frame
+		     section, they will be dropped latter.
+		   */
 		  if ((rel == relocs
 		      || rel[-1].r_offset != rel->r_offset
 		      || r_type != R_MIPS_64
 		      || ELF_R_TYPE(abfd, rel[-1].r_info) != R_MIPS_GPREL32)
-		      && MIPS_ELF_READONLY_SECTION (sec))
+		      && MIPS_ELF_READONLY_SECTION (sec)
+		      && !((r_type == R_MIPS_32 || r_type == R_MIPS_64)
+		           && strcmp(sec->name, ".eh_frame") == 0))
 		    {
 		      /* We tell the dynamic linker that there are
 		         relocations against the text segment.  */
