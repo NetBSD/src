@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.91 2017/06/26 05:34:48 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.92 2017/07/18 06:01:36 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.91 2017/06/26 05:34:48 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.92 2017/07/18 06:01:36 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.91 2017/06/26 05:34:48 knakahara Exp $"
 #include <sys/intr.h>
 #include <sys/errno.h>
 #include <sys/module.h>
+#include <sys/xcall.h>
 
 #if defined(_KERNEL_OPT)
 #include "opt_ocf.h"
@@ -77,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.91 2017/06/26 05:34:48 knakahara Exp $"
 
 static kmutex_t crypto_q_mtx;
 static kmutex_t crypto_ret_q_mtx;
-static kcondvar_t cryptoret_cv;
 
 /* below are kludges for residual code wrtitten to FreeBSD interfaces */
   #define SWI_CRYPTO 17
@@ -104,6 +104,8 @@ static	struct cryptocap *crypto_drivers;
 static	int crypto_drivers_num;
 static	void *softintr_cookie;
 static	int crypto_exit_flag;
+
+static	void *crypto_ret_si;
 
 /*
  * There are two queues for crypto requests; one for symmetric (e.g.
@@ -368,8 +370,7 @@ MALLOC_DEFINE(M_CRYPTO_DATA, "crypto", "crypto session records");
  * This scheme is not intended for SMP machines.
  */
 static	void cryptointr(void);		/* swi thread to dispatch ops */
-static	void cryptoret(void);		/* kernel thread for callbacks*/
-static	struct lwp *cryptothread;
+static	void cryptoret_softint(void *);	/* kernel thread for callbacks*/
 static	int crypto_destroy(bool);
 static	int crypto_invoke(struct cryptop *crp, int hint);
 static	int crypto_kinvoke(struct cryptkop *krp, int hint);
@@ -391,12 +392,10 @@ static struct sysctllog *sysctl_opencrypto_clog;
 static int
 crypto_init0(void)
 {
-	int error;
 
 	mutex_init(&crypto_drv_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&crypto_q_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&crypto_ret_q_mtx, MUTEX_DEFAULT, IPL_NET);
-	cv_init(&cryptoret_cv, "crypto_w");
 	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0,  
 		  0, "cryptop", NULL, IPL_NET);
 	pool_init(&cryptodesc_pool, sizeof(struct cryptodesc), 0, 0,
@@ -413,11 +412,15 @@ crypto_init0(void)
 	crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
 
 	softintr_cookie = register_swi(SWI_CRYPTO, cryptointr);
-	error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
-	    (void (*)(void *))cryptoret, NULL, &cryptothread, "cryptoret");
-	if (error) {
-		printf("crypto_init: cannot start cryptoret thread; error %d",
-			error);
+	if (softintr_cookie == NULL) {
+		printf("crypto_init: cannot establish request queue handler\n");
+		return crypto_destroy(false);
+	}
+
+	crypto_ret_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE|SOFTINT_RCPU,
+	    &cryptoret_softint, NULL);
+	if (crypto_ret_si == NULL) {
+		printf("crypto_init: cannot establish ret queue handler\n");
 		return crypto_destroy(false);
 	}
 
@@ -441,6 +444,7 @@ crypto_destroy(bool exit_kthread)
 
 	if (exit_kthread) {
 		struct cryptocap *cap = NULL;
+		uint64_t where;
 
 		/* if we have any in-progress requests, don't unload */
 		mutex_enter(&crypto_q_mtx);
@@ -468,20 +472,25 @@ crypto_destroy(bool exit_kthread)
 		 * prohibit touch crypto_drivers[] and each element after here.
 		 */
 
+		/*
+		 * Ensure cryptoret_softint() is never scheduled and then wait
+		 * for last softint_execute().
+		 */
 		mutex_spin_enter(&crypto_ret_q_mtx);
-		/* kick the cryptoret thread and wait for it to exit */
 		crypto_exit_flag = 1;
-		cv_signal(&cryptoret_cv);
-
-		while (crypto_exit_flag != 0)
-			cv_wait(&cryptoret_cv, &crypto_ret_q_mtx);
 		mutex_spin_exit(&crypto_ret_q_mtx);
+		where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
+		xc_wait(where);
 	}
 
 	if (sysctl_opencrypto_clog != NULL)
 		sysctl_teardown(&sysctl_opencrypto_clog);
 
-	unregister_swi(SWI_CRYPTO, cryptointr);
+	if (crypto_ret_si != NULL)
+		softint_disestablish(crypto_ret_si);
+
+	if (softintr_cookie != NULL)
+		unregister_swi(SWI_CRYPTO, cryptointr);
 
 	mutex_enter(&crypto_drv_mtx);
 	if (crypto_drivers != NULL)
@@ -491,8 +500,6 @@ crypto_destroy(bool exit_kthread)
 	pool_destroy(&cryptop_pool);
 	pool_destroy(&cryptodesc_pool);
 	pool_destroy(&cryptkop_pool);
-
-	cv_destroy(&cryptoret_cv);
 
 	mutex_destroy(&crypto_ret_q_mtx);
 	mutex_destroy(&crypto_q_mtx);
@@ -1278,6 +1285,7 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 		process = cap->cc_kprocess;
 		arg = cap->cc_karg;
 		krp->krp_hid = hid;
+		krp->reqcpu = curcpu();
 		crypto_driver_unlock(cap);
 		error = (*process)(arg, krp, hint);
 	} else {
@@ -1346,6 +1354,7 @@ crypto_invoke(struct cryptop *crp, int hint)
 
 		process = cap->cc_process;
 		arg = cap->cc_arg;
+		crp->reqcpu = curcpu();
 
 		/*
 		 * Invoke the driver to process the request.
@@ -1546,7 +1555,7 @@ crypto_done(struct cryptop *crp)
 			 * If crp->crp_flags & CRYPTO_F_USER and the used
 			 * encryption driver does all the processing in
 			 * the same context, we can skip enqueueing crp_ret_q
-			 * and cv_signal(&cryptoret_cv).
+			 * and softint_schedule(crypto_ret_si).
 			 */
 			DPRINTF("lid[%u]: crp %p CRYPTO_F_USER\n",
 				CRYPTO_SESID2LID(crp->crp_sid), crp);
@@ -1562,11 +1571,11 @@ crypto_done(struct cryptop *crp)
 			crp->crp_flags |= CRYPTO_F_ONRETQ;
 			TAILQ_INSERT_TAIL(&crp_ret_q, crp, crp_next);
 			CRYPTO_Q_INC(crp_ret_q);
-			if (wasempty) {
+			if (wasempty && crypto_exit_flag == 0) {
 				DPRINTF("lid[%u]: waking cryptoret, "
 					"crp %p hit empty queue\n.",
 					CRYPTO_SESID2LID(crp->crp_sid), crp);
-				cv_signal(&cryptoret_cv);
+				softint_schedule_cpu(crypto_ret_si, crp->reqcpu);
 			}
 			mutex_spin_exit(&crypto_ret_q_mtx);
 		}
@@ -1603,8 +1612,8 @@ crypto_kdone(struct cryptkop *krp)
 		krp->krp_flags |= CRYPTO_F_ONRETQ;
 		TAILQ_INSERT_TAIL(&crp_ret_kq, krp, krp_next);
 		CRYPTO_Q_INC(crp_ret_kq);
-		if (wasempty)
-			cv_signal(&cryptoret_cv);
+		if (wasempty && crypto_exit_flag == 0)
+			softint_schedule_cpu(crypto_ret_si, krp->reqcpu);
 		mutex_spin_exit(&crypto_ret_q_mtx);
 	}
 }
@@ -1791,16 +1800,17 @@ cryptointr(void)
 }
 
 /*
- * Kernel thread to do callbacks.
+ * softint handler to do callbacks.
  */
 static void
-cryptoret(void)
+cryptoret_softint(void *arg __unused)
 {
-	struct cryptop *crp;
-	struct cryptkop *krp;
 
 	mutex_spin_enter(&crypto_ret_q_mtx);
 	for (;;) {
+		struct cryptop *crp;
+		struct cryptkop *krp;
+
 		crp = TAILQ_FIRST(&crp_ret_q);
 		if (crp != NULL) {
 			TAILQ_REMOVE(&crp_ret_q, crp, crp_next);
@@ -1815,25 +1825,10 @@ cryptoret(void)
 		}
 
 		/* drop before calling any callbacks. */
-		if (crp == NULL && krp == NULL) {
-
-                        /* Check for the exit condition. */
-			if (crypto_exit_flag != 0) {
-
-        			/* Time to die. */
-				crypto_exit_flag = 0;
-        			cv_broadcast(&cryptoret_cv);
-				mutex_spin_exit(&crypto_ret_q_mtx);
-        			kthread_exit(0);
-			}
-
-			cryptostats.cs_rets++;
-			cv_wait(&cryptoret_cv, &crypto_ret_q_mtx);
-			continue;
-		}
+		if (crp == NULL && krp == NULL)
+			break;
 
 		mutex_spin_exit(&crypto_ret_q_mtx);
-			
 		if (crp != NULL) {
 #ifdef CRYPTO_TIMING
 			if (crypto_timing) {
@@ -1857,6 +1852,7 @@ cryptoret(void)
 
 		mutex_spin_enter(&crypto_ret_q_mtx);
 	}
+	mutex_spin_exit(&crypto_ret_q_mtx);
 }
 
 /* NetBSD module interface */
