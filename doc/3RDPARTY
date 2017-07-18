@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1444.2.3 2017/07/18 18:09:42 snj Exp $
+#	$NetBSD: 3RDPARTY,v 1.1444.2.4 2017/07/18 18:35:43 snj Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1702,3 +1702,14 @@ Responsible:	christos
 Location:	usr.bin/dc
 Notes:
 		Uses OpenSSL's bignum
+
+Package:	dts
+Version:	4.11.5
+Current Vers:	4.11.5
+Maintainer:	https://www.kernel.org/
+Archive Site:	https://cdn.kernel.org/pub/linux/kernel/v4.x/
+Home Page:	https://www.kernel.org/
+Mailing List:	mailto:devicetree@vger.kernel.org
+Responsible:	jmcneill
+License:	GPLv2 and dual GPLv2/X11 license
+Location:	sys/external/gpl2/dts
