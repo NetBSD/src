@@ -1,3 +1,5 @@
+/*	$NetBSD: fdt_sw.c,v 1.1.1.1.12.1 2017/07/18 17:08:08 snj Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  * Copyright (C) 2006 David Gibson, IBM Corporation.

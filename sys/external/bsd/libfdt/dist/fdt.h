@@ -1,3 +1,5 @@
+/*	$NetBSD: fdt.h,v 1.1.1.1.12.1 2017/07/18 17:08:08 snj Exp $	*/
+
 #ifndef _FDT_H
 #define _FDT_H
 /*
