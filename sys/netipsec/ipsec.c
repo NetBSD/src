@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.102 2017/07/12 07:00:40 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.103 2017/07/18 08:55:10 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.102 2017/07/12 07:00:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.103 2017/07/18 08:55:10 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -784,16 +784,6 @@ ipsec4_input(struct mbuf *m, int flags)
 
 	if (flags == 0) {
 		/* We are done. */
-		return 0;
-	}
-
-	/*
-	 * Peek at the outbound SP for this packet to determine if
-	 * it is a Fast Forward candidate.
-	 */
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_PENDING_TDB, NULL);
-	if (mtag != NULL) {
-		m->m_flags &= ~M_CANFASTFWD;
 		return 0;
 	}
 
