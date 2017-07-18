@@ -1,3 +1,5 @@
+/*	$NetBSD: mangle-layout.c,v 1.1.1.1.8.1 2017/07/18 17:17:53 snj Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Testcase/tool for rearranging blocks of a dtb
@@ -95,7 +97,7 @@ static void add_block(struct bufstate *buf, int version, char block, const void 
 	}
 
 	oldsize = buf->size;
-	offset = ALIGN(oldsize, align);
+	offset = FDTALIGN2(oldsize, align);
 	expand_buf(buf, offset+size);
 	memset(buf->buf + oldsize, 0, offset - oldsize);
 

@@ -119,6 +119,20 @@ Options:
 	Make space for <number> reserve map entries
 	Relevant for dtb and asm output only.
 
+    -@
+	Generates a __symbols__ node at the root node of the resulting blob
+	for any node labels used, and for any local references using phandles
+	it also generates a __local_fixups__ node that tracks them.
+
+	When using the /plugin/ tag all unresolved label references to
+	be tracked in the __fixups__ node, making dynamic resolution possible.
+
+    -A
+	Generate automatically aliases for all node labels. This is similar to
+	the -@ option (the __symbols__ node contain identical information) but
+	the semantics are slightly different since no phandles are automatically
+	generated for labeled nodes.
+
     -S <bytes>
 	Ensure the blob at least <bytes> long, adding additional
 	space if needed.
@@ -146,12 +160,17 @@ Additionally, dtc performs various sanity checks on the tree.
 Here is a very rough overview of the layout of a DTS source file:
 
 
-    sourcefile:   list_of_memreserve devicetree
+    sourcefile:   versioninfo plugindecl list_of_memreserve devicetree
 
     memreserve:   label 'memreserve' ADDR ADDR ';'
 		| label 'memreserve' ADDR '-' ADDR ';'
 
     devicetree:   '/' nodedef
+
+    versioninfo:  '/' 'dts-v1' '/' ';'
+
+    plugindecl:   '/' 'plugin' '/' ';'
+                | /* empty */
 
     nodedef:      '{' list_of_property list_of_subnode '}' ';'
 
@@ -209,7 +228,7 @@ Node may contain sub-nodes to obtain a hierarchical structure.
 For example:
 
     - A child node named "childnode" whose unit name is
-      "childnode at address".  It it turn has a string property
+      "childnode at address".  It in turn has a string property
       called "childprop".
 
 	childnode@addresss {

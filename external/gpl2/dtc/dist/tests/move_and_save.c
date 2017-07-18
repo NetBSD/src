@@ -1,3 +1,5 @@
+/*	$NetBSD: move_and_save.c,v 1.1.1.1.8.1 2017/07/18 17:17:53 snj Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Basic testcase for read-only access
@@ -43,7 +45,7 @@ int main(int argc, char *argv[])
 	fdt = load_blob_arg(argc, argv);
 	inname = argv[1];
 
-	shuntsize = ALIGN(fdt_totalsize(fdt) / 2, sizeof(uint64_t));
+	shuntsize = FDTALIGN2(fdt_totalsize(fdt) / 2, sizeof(uint64_t));
 	bufsize = fdt_totalsize(fdt) + shuntsize;
 	buf = xmalloc(bufsize);
 

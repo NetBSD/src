@@ -1,3 +1,5 @@
+/*	$NetBSD: dtbs_equal_ordered.c,v 1.1.1.1.8.1 2017/07/18 17:17:53 snj Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Tests if two given dtbs are structurally equal (including order)
@@ -28,7 +30,7 @@
 #include "tests.h"
 #include "testdata.h"
 
-int notequal; /* = 0 */
+static int notequal; /* = 0 */
 
 #define MISMATCH(fmt, ...)			\
 	do { \

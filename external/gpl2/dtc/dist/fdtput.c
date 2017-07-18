@@ -1,3 +1,5 @@
+/*	$NetBSD: fdtput.c,v 1.1.1.1.8.1 2017/07/18 17:17:52 snj Exp $	*/
+
 /*
  * Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
  *
@@ -67,7 +69,7 @@ static void report_error(const char *name, int namelen, int err)
  * @param arg		List of arguments from command line
  * @param arg_count	Number of arguments (may be 0)
  * @param valuep	Returns buffer containing value
- * @param *value_len	Returns length of value encoded
+ * @param value_len	Returns length of value encoded
  */
 static int encode_value(struct display_info *disp, char **arg, int arg_count,
 			char **valuep, int *value_len)
@@ -107,7 +109,7 @@ static int encode_value(struct display_info *disp, char **arg, int arg_count,
 			if (disp->verbose)
 				fprintf(stderr, "\tstring: '%s'\n", ptr);
 		} else {
-			int *iptr = (int *)ptr;
+			fdt32_t *iptr = (fdt32_t *)ptr;
 			sscanf(*arg, fmt, &ival);
 			if (len == 4)
 				*iptr = cpu_to_fdt32(ival);
@@ -128,7 +130,7 @@ static int encode_value(struct display_info *disp, char **arg, int arg_count,
 	return 0;
 }
 
-#define ALIGN(x)		(((x) + (FDT_TAGSIZE) - 1) & ~((FDT_TAGSIZE) - 1))
+#define FDTALIGN(x)		(((x) + (FDT_TAGSIZE) - 1) & ~((FDT_TAGSIZE) - 1))
 
 static char *_realloc_fdt(char *fdt, int delta)
 {
@@ -142,7 +144,7 @@ static char *realloc_node(char *fdt, const char *name)
 {
 	int delta;
 	/* FDT_BEGIN_NODE, node name in off_struct and FDT_END_NODE */
-	delta = sizeof(struct fdt_node_header) + ALIGN(strlen(name) + 1)
+	delta = sizeof(struct fdt_node_header) + FDTALIGN(strlen(name) + 1)
 			+ FDT_TAGSIZE;
 	return _realloc_fdt(fdt, delta);
 }
@@ -159,7 +161,7 @@ static char *realloc_property(char *fdt, int nodeoffset,
 
 	if (newlen > oldlen)
 		/* actual value in off_struct */
-		delta += ALIGN(newlen) - ALIGN(oldlen);
+		delta += FDTALIGN(newlen) - FDTALIGN(oldlen);
 
 	return _realloc_fdt(fdt, delta);
 }
@@ -328,7 +330,7 @@ static int delete_node(char *blob, const char *node_name)
 static int do_fdtput(struct display_info *disp, const char *filename,
 		    char **arg, int arg_count)
 {
-	char *value;
+	char *value = NULL;
 	char *blob;
 	char *node;
 	int len, ret = 0;
@@ -374,6 +376,11 @@ static int do_fdtput(struct display_info *disp, const char *filename,
 	}
 
 	free(blob);
+
+	if (value) {
+		free(value);
+	}
+
 	return ret;
 }
 

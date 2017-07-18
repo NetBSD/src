@@ -1,3 +1,5 @@
+/*	$NetBSD: boot-cpuid.c,v 1.1.1.1.8.1 2017/07/18 17:17:53 snj Exp $	*/
+
 /*
  * Copyright (C) 2008 David Gibson, IBM Corporation.
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: addr_size_cells.c,v 1.1.1.1.8.1 2017/07/18 17:17:53 snj Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Testcase for #address-cells and #size-cells handling
