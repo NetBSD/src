@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.187 2017/07/16 10:46:45 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.188 2017/07/18 02:10:33 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.187 2017/07/16 10:46:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.188 2017/07/18 02:10:33 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -386,7 +386,7 @@ key_fill_replymsg(struct mbuf *m, int seq)
 	return m;
 }
 
-static struct secasvar *key_allocsa_policy (const struct secasindex *);
+static struct secasvar *key_lookup_sa_bysaidx(const struct secasindex *);
 #if 0
 static void key_freeso(struct socket *);
 static void key_freesp_so(struct secpolicy **);
@@ -887,12 +887,7 @@ key_checkrequest(struct ipsecrequest *isr, struct secasvar **ret)
 		oldsav = isr->sav;
 #endif
 
-	/*
-	 * new SA allocation if no SA found.
-	 * key_allocsa_policy should allocate the oldest SA available.
-	 * See key_do_allocsa_policy(), and draft-jenkins-ipsec-rekeying-03.txt.
-	 */
-	isr->sav = key_allocsa_policy(saidx);
+	isr->sav = key_lookup_sa_bysaidx(saidx);
 	membar_producer();
 	if (oldsav != NULL)
 		KEY_FREESAV(&oldsav);
@@ -924,13 +919,13 @@ key_checkrequest(struct ipsecrequest *isr, struct secasvar **ret)
 }
 
 /*
- * allocating a SA for policy entry from SAD.
+ * looking up a SA for policy entry from SAD.
  * NOTE: searching SAD of aliving state.
  * OUT:	NULL:	not found.
  *	others:	found and return the pointer.
  */
 static struct secasvar *
-key_allocsa_policy(const struct secasindex *saidx)
+key_lookup_sa_bysaidx(const struct secasindex *saidx)
 {
 	struct secashead *sah;
 	struct secasvar *sav;
