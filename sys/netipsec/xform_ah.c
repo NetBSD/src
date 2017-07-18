@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.61 2017/07/14 12:26:26 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.62 2017/07/18 04:01:04 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.61 2017/07/14 12:26:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.62 2017/07/18 04:01:04 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -114,6 +114,8 @@ SYSCTL_STRUCT(_net_inet_ah, IPSECCTL_STATS,
 
 static unsigned char ipseczeroes[256];	/* larger than an ip6 extension hdr */
 
+static int ah_max_authsize;		/* max authsize over all algorithms */
+
 static int ah_input_cb(struct cryptop *);
 static int ah_output_cb(struct cryptop *);
 
@@ -164,8 +166,7 @@ ah_hdrsiz(const struct secasvar *sav)
 		size = roundup(authsize, sizeof(uint32_t)) + HDRSIZE(sav);
 	} else {
 		/* default guess */
-		size = sizeof(struct ah) + sizeof(uint32_t) +
-		    32 /* XXX need to update when max authsize is changed */;
+		size = sizeof(struct ah) + sizeof(uint32_t) + ah_max_authsize;
 	}
 	return size;
 }
@@ -1286,5 +1287,33 @@ void
 ah_attach(void)
 {
 	ahstat_percpu = percpu_alloc(sizeof(uint64_t) * AH_NSTATS);
+
+#define MAXAUTHSIZE(name)						\
+	if ((auth_hash_ ## name).authsize > ah_max_authsize)		\
+		ah_max_authsize = (auth_hash_ ## name).authsize
+
+	ah_max_authsize = 0;
+	MAXAUTHSIZE(null);
+	MAXAUTHSIZE(md5);
+	MAXAUTHSIZE(sha1);
+	MAXAUTHSIZE(key_md5);
+	MAXAUTHSIZE(key_sha1);
+	MAXAUTHSIZE(hmac_md5);
+	MAXAUTHSIZE(hmac_sha1);
+	MAXAUTHSIZE(hmac_ripemd_160);
+	MAXAUTHSIZE(hmac_md5_96);
+	MAXAUTHSIZE(hmac_sha1_96);
+	MAXAUTHSIZE(hmac_ripemd_160_96);
+	MAXAUTHSIZE(hmac_sha2_256);
+	MAXAUTHSIZE(hmac_sha2_384);
+	MAXAUTHSIZE(hmac_sha2_512);
+	MAXAUTHSIZE(aes_xcbc_mac_96);
+	MAXAUTHSIZE(gmac_aes_128);
+	MAXAUTHSIZE(gmac_aes_192);
+	MAXAUTHSIZE(gmac_aes_256);
+	IPSECLOG(LOG_DEBUG, "ah_max_authsize=%d\n", ah_max_authsize);
+
+#undef MAXAUTHSIZE
+
 	xform_register(&ah_xformsw);
 }
