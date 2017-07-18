@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:40 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.3 2017/07/18 17:15:45 gson Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -128,7 +128,7 @@ md_post_newfs(void)
 	cp_to_target("/usr/mdec/boot", "/boot");
 	bootxx = bootxx_name();
 	if (bootxx != NULL) {
-		error = run_program(RUN_DISPLAY | RUN_NO_CLEAR,
+		error = run_program(RUN_DISPLAY,
 		    "/usr/sbin/installboot -v /dev/r%sa %s", pm->diskdev, bootxx);
 		free(bootxx);
 	} else
