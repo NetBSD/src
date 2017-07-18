@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.527 2017/07/18 08:05:03 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.528 2017/07/18 08:22:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.527 2017/07/18 08:05:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.528 2017/07/18 08:22:55 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -134,6 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.527 2017/07/18 08:05:03 msaitoh Exp $");
 #include <dev/mii/igphyreg.h>
 #include <dev/mii/igphyvar.h>
 #include <dev/mii/inbmphyreg.h>
+#include <dev/mii/ihphyreg.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -679,6 +680,7 @@ static void	wm_get_auto_rd_done(struct wm_softc *);
 static void	wm_lan_init_done(struct wm_softc *);
 static void	wm_get_cfg_done(struct wm_softc *);
 static void	wm_phy_post_reset(struct wm_softc *);
+static void	wm_write_smbus_addr(struct wm_softc *);
 static void	wm_init_lcd_from_nvm(struct wm_softc *);
 static void	wm_initialize_hardware_bits(struct wm_softc *);
 static uint32_t	wm_rxpbs_adjust_82580(uint32_t);
@@ -3705,16 +3707,57 @@ wm_phy_post_reset(struct wm_softc *sc)
 	/* Configure the LCD with the OEM bits in NVM */
 }
 
+/* Only for PCH and newer */
+static void
+wm_write_smbus_addr(struct wm_softc *sc)
+{
+	uint32_t strap, freq;
+	uint32_t phy_data;
+
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+
+	strap = CSR_READ(sc, WMREG_STRAP);
+	freq = __SHIFTOUT(strap, STRAP_FREQ);
+
+	phy_data = wm_gmii_hv_readreg_locked(sc->sc_dev, 2, HV_SMB_ADDR);
+
+	phy_data &= ~HV_SMB_ADDR_ADDR;
+	phy_data |= __SHIFTOUT(strap, STRAP_SMBUSADDR);
+	phy_data |= HV_SMB_ADDR_PEC_EN | HV_SMB_ADDR_VALID;
+
+	if (sc->sc_phytype == WMPHY_I217) {
+		/* Restore SMBus frequency */
+		if (freq --) {
+			phy_data &= ~(HV_SMB_ADDR_FREQ_LOW
+			    | HV_SMB_ADDR_FREQ_HIGH);
+			phy_data |= __SHIFTIN((freq & 0x01) != 0,
+			    HV_SMB_ADDR_FREQ_LOW);
+			phy_data |= __SHIFTIN((freq & 0x02) != 0,
+			    HV_SMB_ADDR_FREQ_HIGH);
+		} else {
+			DPRINTF(WM_DEBUG_INIT,
+			    ("%s: %s Unsupported SMB frequency in PHY\n",
+				device_xname(sc->sc_dev), __func__));
+		}
+	}
+
+	wm_gmii_hv_writereg_locked(sc->sc_dev, 2, HV_SMB_ADDR, phy_data);
+}
+
 void
 wm_init_lcd_from_nvm(struct wm_softc *sc)
 {
-#if 0
 	uint32_t extcnfctr, sw_cfg_mask, cnf_size, word_addr, i, reg;
 	uint16_t phy_page = 0;
 
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+
 	switch (sc->sc_type) {
 	case WM_T_ICH8:
-		if (sc->sc_phytype != WMPHY_IGP_3)
+		if ((sc->sc_phytype == WMPHY_UNKNOWN)
+		    || (sc->sc_phytype != WMPHY_IGP_3))
 			return;
 
 		if ((sc->sc_pcidevid == PCI_PRODUCT_INTEL_82801H_AMT)
@@ -3748,6 +3791,8 @@ wm_init_lcd_from_nvm(struct wm_softc *sc)
 	    && ((extcnfctr & EXTCNFCTR_PCIE_WRITE_ENABLE) != 0))
 		goto release;
 
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s: Configure LCD by software\n",
+		device_xname(sc->sc_dev), __func__));
 	/* word_addr is in DWORD */
 	word_addr = __SHIFTOUT(extcnfctr, EXTCNFCTR_EXT_CNF_POINTER) << 1;
 	
@@ -3762,8 +3807,9 @@ wm_init_lcd_from_nvm(struct wm_softc *sc)
 		 * LCD Write Enable bits are set in the NVM. When both NVM bits
 		 * are cleared, SW will configure them instead.
 		 */
-		device_printf(sc->sc_dev, "%s: need write_smbus()\n",
-		    __func__);
+		DPRINTF(WM_DEBUG_INIT, ("%s: %s: Configure SMBus and LED\n",
+			device_xname(sc->sc_dev), __func__));
+		wm_write_smbus_addr(sc);
 
 		reg = CSR_READ(sc, WMREG_LEDCTL);
 		wm_gmii_hv_writereg_locked(sc->sc_dev, 1, HV_LED_CONFIG, reg);
@@ -3793,7 +3839,6 @@ wm_init_lcd_from_nvm(struct wm_softc *sc)
 release:	
 	sc->phy.release(sc);
 	return;
-#endif
 }
     
 
@@ -10135,6 +10180,13 @@ wm_gmii_hv_readreg_locked(device_t dev, int phy, int reg)
 		return 0;
 	}
 
+	/*
+	 * XXX I21[789] documents say that the SMBus Address register is at
+	 * PHY address 01, Page 0 (not 768), Register 26.
+	 */
+	if (page == HV_INTC_FC_PAGE_START)
+		page = 0;
+
 	if (regnum > BME1000_MAX_MULTI_PAGE_REG) {
 		wm_gmii_mdic_writereg(dev, 1, MII_IGPHY_PAGE_SELECT,
 		    page << BME1000_PAGE_SHIFT);
@@ -10196,6 +10248,13 @@ wm_gmii_hv_writereg_locked(device_t dev, int phy, int reg, int val)
 	}
 
 	{
+		/*
+		 * XXX I21[789] documents say that the SMBus Address register
+		 * is at PHY address 01, Page 0 (not 768), Register 26.
+		 */
+		if (page == HV_INTC_FC_PAGE_START)
+			page = 0;
+
 		/*
 		 * XXX Workaround MDIO accesses being disabled after entering
 		 * IEEE Power Down (whenever bit 11 of the PHY control
