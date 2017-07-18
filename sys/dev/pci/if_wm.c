@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.525 2017/07/14 04:34:29 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.526 2017/07/18 08:01:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.525 2017/07/14 04:34:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.526 2017/07/18 08:01:07 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -11964,13 +11964,6 @@ wm_nvm_read_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	 */
 	bank_offset = flash_bank * (sc->sc_ich8_flash_bank_size * 2);
 
-	error = wm_get_swfwhw_semaphore(sc);
-	if (error) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
-		return error;
-	}
-
 	for (i = 0; i < words; i++) {
 		/* The NVM part needs a byte offset, hence * 2 */
 		act_offset = bank_offset + ((offset + i) * 2);
@@ -11983,7 +11976,6 @@ wm_nvm_read_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 		data[i] = word;
 	}
 
-	wm_put_swfwhw_semaphore(sc);
 	return error;
 }
 
@@ -12028,13 +12020,6 @@ wm_nvm_read_spt(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	 */
 	bank_offset = flash_bank * (sc->sc_ich8_flash_bank_size * 2);
 
-	error = wm_get_swfwhw_semaphore(sc);
-	if (error) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		    __func__);
-		return error;
-	}
-
 	for (i = 0; i < words; i++) {
 		/* The NVM part needs a byte offset, hence * 2 */
 		act_offset = bank_offset + ((offset + i) * 2);
@@ -12052,7 +12037,6 @@ wm_nvm_read_spt(struct wm_softc *sc, int offset, int words, uint16_t *data)
 			data[i] = (uint16_t)((dword >> 16) & 0xFFFF);
 	}
 
-	wm_put_swfwhw_semaphore(sc);
 	return error;
 }
 
