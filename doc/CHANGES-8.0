@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.24 2017/07/14 08:42:07 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.25 2017/07/18 17:09:06 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -1963,4 +1963,10 @@ sys/arch/x86/x86/lapic.c			1.60
 
 	Before access MSR[APICBASE], need to check if APIC is present.
 	[nonaka, ticket #135]
+
+usr.bin/make/main.c				1.266-1.272
+usr.bin/make/make.1				1.267
+
+	Add "-v variable" flag that prints a fully-expanded variable.
+	[jmcneill, ticket #113]
 
