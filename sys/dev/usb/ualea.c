@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.7 2017/07/15 05:46:09 riastradh Exp $	*/
+/*	$NetBSD: ualea.c,v 1.8 2017/07/18 23:11:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.7 2017/07/15 05:46:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.8 2017/07/18 23:11:01 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -248,7 +248,7 @@ ualea_xfer_done(struct usbd_xfer *xfer, void *cookie, usbd_status status)
 	/* Check the transfer status.  */
 	if (status) {
 		aprint_error_dev(sc->sc_dev, "xfer failed: %d\n", status);
-		goto out;
+		return;
 	}
 
 	/* Get and sanity-check the transferred size.  */
