@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.526 2017/07/18 08:01:07 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.527 2017/07/18 08:05:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.526 2017/07/18 08:01:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.527 2017/07/18 08:05:03 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2188,9 +2188,6 @@ alloc_retry:
 		break;
 	}
 
-	/* Reset the chip to a known state. */
-	wm_reset(sc);
-
 	/* Ensure the SMBI bit is clear before first NVM or PHY access */
 	switch (sc->sc_type) {
 	case WM_T_82571:
@@ -2237,9 +2234,6 @@ alloc_retry:
 			sc->sc_flags |= WM_F_EEPROM_INVALID;
 	}
 
-	/* Set device properties (macflags) */
-	prop_dictionary_set_uint32(dict, "macflags", sc->sc_flags);
-
 	if (sc->sc_flags & WM_F_EEPROM_INVALID)
 		aprint_verbose_dev(sc->sc_dev, "No EEPROM");
 	else {
@@ -2262,6 +2256,15 @@ alloc_retry:
 	}
 	wm_nvm_version(sc);
 	aprint_verbose("\n");
+
+	/*
+	 * XXX The first call of wm_gmii_setup_phytype. The result might be
+	 * incorrect.
+	 */
+	wm_gmii_setup_phytype(sc, 0, 0);
+
+	/* Reset the chip to a known state. */
+	wm_reset(sc);
 
 	/* Check for I21[01] PLL workaround */
 	if (sc->sc_type == WM_T_I210)
@@ -2574,6 +2577,9 @@ alloc_retry:
 	}
 	snprintb(buf, sizeof(buf), WM_FLAGS, sc->sc_flags);
 	aprint_verbose_dev(sc->sc_dev, "%s\n", buf);
+
+	/* Set device properties (macflags) */
+	prop_dictionary_set_uint32(dict, "macflags", sc->sc_flags);
 
 	ifp = &sc->sc_ethercom.ec_if;
 	xname = device_xname(sc->sc_dev);
@@ -9416,12 +9422,6 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	/* Initialize our media structures and probe the GMII. */
 	mii->mii_ifp = ifp;
 
-	/*
-	 * The first call of wm_mii_setup_phytype. The result might be
-	 * incorrect.
-	 */
-	wm_gmii_setup_phytype(sc, 0, 0);
-
 	mii->mii_statchg = wm_gmii_statchg;
 
 	/* get PHY control from SMBus to PCIe */
@@ -9514,7 +9514,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 
 		/*
 		 * PHY Found! Check PHY type again by the second call of
-		 * wm_mii_setup_phytype.
+		 * wm_gmii_setup_phytype.
 		 */
 		wm_gmii_setup_phytype(sc, child->mii_mpd_oui,
 		    child->mii_mpd_model);
