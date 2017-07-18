@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.3 2017/05/30 22:00:25 jmcneill Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.3.2.1 2017/07/18 19:13:08 snj Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.3 2017/05/30 22:00:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.3.2.1 2017/07/18 19:13:08 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,4 +142,27 @@ void
 arm_fdt_irq_handler(void *tf)
 {
 	_arm_fdt_irq_handler(tf);
+}
+
+void
+arm_fdt_memory_dump(paddr_t pa)
+{
+	const struct arm_platform *plat = arm_fdt_platform();
+	struct fdt_attach_args faa;
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+
+	plat->init_attach_args(&faa);
+
+	bst = faa.faa_bst;
+	bus_space_map(bst, pa, 0x100, 0, &bsh);
+
+	for (int i = 0; i < 0x100; i += 0x10) {
+                printf("%" PRIxPTR ": %08x %08x %08x %08x\n",
+                    (uintptr_t)(pa + i),
+		    bus_space_read_4(bst, bsh, i + 0),
+		    bus_space_read_4(bst, bsh, i + 4),
+		    bus_space_read_4(bst, bsh, i + 8),
+		    bus_space_read_4(bst, bsh, i + 12));
+	}
 }

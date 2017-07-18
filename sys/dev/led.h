@@ -1,7 +1,7 @@
-/* $NetBSD: exynos_fdt.c,v 1.4 2017/04/16 15:52:16 jmcneill Exp $ */
+/* $NetBSD: led.h,v 1.1.4.2 2017/07/18 19:13:09 snj Exp $ */
 
 /*-
- * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,55 +26,26 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_exynos.h"
+#ifndef _DEV_LED_H
+#define _DEV_LED_H
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_fdt.c,v 1.4 2017/04/16 15:52:16 jmcneill Exp $");
+enum {
+	LED_STATE_OFF,
+	LED_STATE_ON
+};
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
+typedef int (*led_getstate_fn)(void *);
+typedef void (*led_setstate_fn)(void *, int);
 
-#include <machine/cpu.h>
-#include <sys/bus.h>
+/*
+ * Attach an LED device. Returns an opaque handle on success and NULL
+ * on failure.
+ */
+void *	led_attach(const char *, void *, led_getstate_fn, led_setstate_fn);
 
-#include <arm/mainbus/mainbus.h>
-#include <arm/samsung/exynos_reg.h>
-#include <arm/samsung/exynos_var.h>
+/*
+ * Detach a previously attached LED device.
+ */
+void	led_detach(void *);
 
-#include <dev/fdt/fdtvar.h>
-#include <dev/ofw/openfirm.h>
-
-static int	exynosfdt_match(device_t, cfdata_t, void *);
-static void	exynosfdt_attach(device_t, device_t, void *);
-
-CFATTACH_DECL_NEW(exynos_fdt, 0,
-    exynosfdt_match, exynosfdt_attach, NULL, NULL);
-
-static bool exynosfdt_found = false;
-
-int
-exynosfdt_match(device_t parent, cfdata_t cf, void *aux)
-{
-	if (exynosfdt_found)
-		return 0;
-	return 1;
-}
-
-void
-exynosfdt_attach(device_t parent, device_t self, void *aux)
-{
-	exynosfdt_found = true;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
-
-	struct fdt_attach_args faa = {
-		.faa_name = "",
-		.faa_bst = &armv7_generic_bs_tag,
-		.faa_a4x_bst = &armv7_generic_a4x_bs_tag,
-		.faa_dmat = &exynos_bus_dma_tag,
-		.faa_phandle = OF_peer(0),
-	};
-	config_found(self, &faa, NULL);
-}
+#endif /* !_DEV_LED_H */

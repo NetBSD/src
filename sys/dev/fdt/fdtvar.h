@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.20 2017/06/02 13:53:29 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.20.2.1 2017/07/18 19:13:09 snj Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -85,7 +85,7 @@ struct fdtbus_pinctrl_pin {
 };
 
 struct fdtbus_pinctrl_controller_func {
-	int (*set_config)(void *);
+	int (*set_config)(device_t, const void *, size_t);
 };
 
 struct fdtbus_regulator_controller;
@@ -172,6 +172,19 @@ struct fdtbus_power_controller_func {
 	void	(*poweroff)(device_t);
 };
 
+struct fdtbus_phy_controller;
+
+struct fdtbus_phy {
+	struct fdtbus_phy_controller *phy_pc;
+	void *phy_priv;
+};
+
+struct fdtbus_phy_controller_func {
+	void *	(*acquire)(device_t, const void *, size_t);
+	void	(*release)(device_t, void *);
+	int	(*enable)(device_t, void *, bool);
+};
+
 struct fdt_console {
 	int	(*match)(int);
 	void	(*consinit)(struct fdt_attach_args *, u_int);
@@ -198,7 +211,7 @@ int		fdtbus_register_i2c_controller(device_t, int,
 		    const struct fdtbus_i2c_controller_func *);
 int		fdtbus_register_gpio_controller(device_t, int,
 		    const struct fdtbus_gpio_controller_func *);
-int		fdtbus_register_pinctrl_config(void *, int,
+int		fdtbus_register_pinctrl_config(device_t, int,
 		    const struct fdtbus_pinctrl_controller_func *);
 int		fdtbus_register_regulator_controller(device_t, int,
 		    const struct fdtbus_regulator_controller_func *);
@@ -210,6 +223,8 @@ int		fdtbus_register_dma_controller(device_t, int,
 		    const struct fdtbus_dma_controller_func *);
 int		fdtbus_register_power_controller(device_t, int,
 		    const struct fdtbus_power_controller_func *);
+int		fdtbus_register_phy_controller(device_t, int,
+		    const struct fdtbus_phy_controller_func *);
 
 int		fdtbus_get_reg(int, u_int, bus_addr_t *, bus_size_t *);
 int		fdtbus_get_reg64(int, u_int, uint64_t *, uint64_t *);
@@ -226,6 +241,7 @@ int		fdtbus_gpio_read(struct fdtbus_gpio_pin *);
 void		fdtbus_gpio_write(struct fdtbus_gpio_pin *, int);
 int		fdtbus_gpio_read_raw(struct fdtbus_gpio_pin *);
 void		fdtbus_gpio_write_raw(struct fdtbus_gpio_pin *, int);
+void		fdtbus_pinctrl_configure(void);
 int		fdtbus_pinctrl_set_config_index(int, u_int);
 int		fdtbus_pinctrl_set_config(int, const char *);
 struct fdtbus_regulator *fdtbus_regulator_acquire(int, const char *);
@@ -254,6 +270,11 @@ void		fdtbus_reset_put(struct fdtbus_reset *);
 int		fdtbus_reset_assert(struct fdtbus_reset *);
 int		fdtbus_reset_deassert(struct fdtbus_reset *);
 
+struct fdtbus_phy *fdtbus_phy_get(int, const char *);
+struct fdtbus_phy *fdtbus_phy_get_index(int, u_int);
+void		fdtbus_phy_put(struct fdtbus_phy *);
+int		fdtbus_phy_enable(struct fdtbus_phy *, bool);
+
 int		fdtbus_todr_attach(device_t, int, todr_chip_handle_t);
 
 void		fdtbus_power_reset(void);
@@ -273,6 +294,10 @@ int		fdtbus_get_stdout_speed(void);
 tcflag_t	fdtbus_get_stdout_flags(void);
 
 bool		fdtbus_status_okay(int);
+
+const void *	fdtbus_get_prop(int, const char *, int *);
+const char *	fdtbus_get_string(int, const char *);
+const char *	fdtbus_get_string_index(int, const char *, u_int);
 
 int		fdtbus_print(void *, const char *);
 
