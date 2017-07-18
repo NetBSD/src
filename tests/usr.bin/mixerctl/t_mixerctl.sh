@@ -1,4 +1,4 @@
-# $NetBSD: t_mixerctl.sh,v 1.7 2017/07/18 12:40:57 kre Exp $
+# $NetBSD: t_mixerctl.sh,v 1.8 2017/07/18 13:17:37 kre Exp $
 
 audio_setup() {
 	# Open /dev/pad0 so we have a configured audio device.
@@ -17,7 +17,7 @@ audio_setup() {
 	# ATF appears to killpg() the process after the test finishes
 	# which is a good thing, otherwise a test that is skipped/fails
 	# would not kill the cat (doing it in a cleanup function is not
-	# convenient as it is a different execution environment, so shared
+	# convenient as it is a different execution environment, no shared
 	# variables, we would need to put $padpid in a file.)
 
 	unset padpid
