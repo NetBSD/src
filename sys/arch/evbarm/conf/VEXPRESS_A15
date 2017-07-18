@@ -1,11 +1,13 @@
 #
-#	$NetBSD: VEXPRESS_A15,v 1.12.2.3 2017/06/10 05:57:08 snj Exp $
+#	$NetBSD: VEXPRESS_A15,v 1.12.2.4 2017/07/18 19:13:09 snj Exp $
 #
 #	ARM Versatile Express A15
 #
 
 include	"arch/evbarm/conf/std.vexpress"
 include	"arch/evbarm/conf/GENERIC.common"
+
+makeoptions 	DTS="vexpress-v2p-ca15-tc1.dts"
 
 options 	CPU_CORTEXA15
 options 	MULTIPROCESSOR

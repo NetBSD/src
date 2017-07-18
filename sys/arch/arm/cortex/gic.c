@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.21.2.1 2017/06/05 08:20:36 snj Exp $	*/
+/*	$NetBSD: gic.c,v 1.21.2.2 2017/07/18 19:13:08 snj Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.21.2.1 2017/06/05 08:20:36 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.21.2.2 2017/07/18 19:13:08 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,7 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.21.2.1 2017/06/05 08:20:36 snj Exp $");
 
 void armgic_irq_handler(void *);
 
-#define	ARMGIC_SGI_IPIBASE	(16 - NIPI)
+#define	ARMGIC_SGI_IPIBASE	0
+
+/*
+ * SGIs 8-16 are reserved for use by ARM Trusted Firmware.
+ */
+__CTASSERT(ARMGIC_SGI_IPIBASE + NIPI <= 8);
 
 static int armgic_match(device_t, cfdata_t, void *);
 static void armgic_attach(device_t, device_t, void *);
@@ -100,6 +105,7 @@ static struct armgic_softc {
 #ifdef MULTIPROCESSOR
 	uint32_t sc_mptargets;
 #endif
+	uint32_t sc_bptargets;
 } armgic_softc = {
 	.sc_pic = {
 		.pic_ops = &armgic_picops,
@@ -137,6 +143,29 @@ static inline void
 gicd_write(struct armgic_softc *sc, bus_size_t o, uint32_t v)
 {
 	bus_space_write_4(sc->sc_memt, sc->sc_gicdh, o, v);
+}
+
+static uint32_t
+gicd_find_targets(struct armgic_softc *sc)
+{
+	uint32_t targets = 0;
+
+	/*
+	 * GICD_ITARGETSR0 through 7 are read-only, and each field returns
+	 * a value that corresponds only to the processor reading the
+	 * register. Use this to determine the current processor's
+	 * CPU interface number.
+	 */
+	for (int i = 0; i < 8; i++) {
+		targets = gicd_read(sc, GICD_ITARGETSRn(i));
+		if (targets != 0)
+			break;
+	}
+	targets |= (targets >> 16);
+	targets |= (targets >> 8);
+	targets &= 0xff;
+
+	return targets ? targets : 1;
 }
 
 /*
@@ -356,7 +385,7 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		} else
 #endif
 #endif
-		targets |= 1 << byte_shift;
+		targets |= sc->sc_bptargets << byte_shift;
 		gicd_write(sc, targets_reg, targets);
 
 		/*
@@ -458,11 +487,11 @@ void
 armgic_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 {
 	struct armgic_softc * const sc = PICTOSOFTC(pic);
-	sc->sc_mptargets |= 1 << cpu_index(ci);
+	sc->sc_mptargets |= gicd_find_targets(sc);
 	KASSERTMSG(ci->ci_cpl == IPL_HIGH, "ipl %d not IPL_HIGH", ci->ci_cpl);
 	armgic_cpu_init_priorities(sc);
 	if (!CPU_IS_PRIMARY(ci)) {
-		if (sc->sc_mptargets != 1) {
+		if (popcount(sc->sc_mptargets) != 1) {
 			armgic_cpu_init_targets(sc);
 		}
 		if (sc->sc_enabled_local) {
@@ -543,6 +572,11 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	gicc_write(sc, GICC_PMR, 0xff);
 	uint32_t pmr = gicc_read(sc, GICC_PMR);
 	u_int priorities = 1 << popcount32(pmr);
+
+	/*
+	 * Find the boot processor's CPU interface number.
+	 */
+	sc->sc_bptargets = gicd_find_targets(sc);
 
 	/*
 	 * Let's find out how many real sources we have.

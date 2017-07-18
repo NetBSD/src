@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2013/05/02 03:56:39 matt Exp $
+# $NetBSD: Makefile,v 1.4.22.1 2017/07/18 19:13:08 snj Exp $
 
 .include <bsd.init.mk>
 .include <bsd.endian.mk>
@@ -19,7 +19,7 @@ SRCS=		BootImageGenerator.cpp \
 		elftosb_parser.tab.cpp
 
 .ifdef HOSTPROG
-SRCS.lib!=cd ${.PARSEDIR}/../../lib && ${MAKE} -V '$${SRCS}'
+SRCS.lib!=cd ${.PARSEDIR}/../../lib && ${MAKE} -v SRCS
 SRCS+=${SRCS.lib}
 .endif
 

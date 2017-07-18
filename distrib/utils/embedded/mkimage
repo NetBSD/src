@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.64 2017/04/11 21:06:30 jmcneill Exp $
+# $NetBSD: mkimage,v 1.64.4.1 2017/07/18 19:13:07 snj Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -51,6 +51,7 @@ set -e
 DIR="$(cd "$(dirname "$0")" && pwd)"
 PROG="$(basename "$0")"
 
+MAKE=${TOOL_MAKE:-make}
 DISKLABEL=${TOOL_DISKLABEL:-disklabel}
 FDISK=${TOOL_FDISK:-fdisk}
 MAKEFS=${TOOL_MAKEFS:-makefs}
