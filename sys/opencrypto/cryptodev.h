@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.37 2017/06/15 12:41:18 knakahara Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.38 2017/07/18 06:01:36 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -483,7 +483,11 @@ struct cryptop {
 	void *		crp_opaque;	/* Opaque pointer, passed along */
 	struct cryptodesc *crp_desc;	/* Linked list of processing descriptors */
 
-	int (*crp_callback)(struct cryptop *); /* Callback function */
+	int (*crp_callback)(struct cryptop *); /*
+						* Callback function.
+						* That must not sleep as it is
+						* called in softint context.
+						*/
 
 	void *		crp_mac;
 
@@ -504,6 +508,10 @@ struct cryptop {
 	struct iovec	iovec[1];
 	struct uio	uio;
 	uint32_t	magic;
+	struct cpu_info	*reqcpu;	/*
+					 * save requested CPU to do cryptoret
+					 * softint in the same CPU.
+					 */
 };
 
 #define CRYPTO_BUF_CONTIG	0x0
@@ -530,12 +538,17 @@ struct cryptkop {
 	u_short		krp_oparams;	/* # of output parameters */
 	u_int32_t	krp_hid;
 	struct crparam	krp_param[CRK_MAXPARAM];	/* kvm */
-	int		(*krp_callback)(struct cryptkop *);
+	int		(*krp_callback)(struct cryptkop *);  /*
+							      * Callback function.
+							      * That must not sleep as it is
+							      * called in softint context.
+							      */
 	int		krp_flags;	/* same values as crp_flags */
 	int		krp_devflags;	/* same values as crp_devflags */
 	kcondvar_t	krp_cv;
 	struct fcrypt 	*fcrp;
 	struct crparam	crk_param[CRK_MAXPARAM];
+	struct cpu_info	*reqcpu;
 };
 
 /* Crypto capabilities structure */
