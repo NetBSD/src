@@ -1,17 +1,43 @@
-# $NetBSD: t_mixerctl.sh,v 1.6 2017/07/03 09:08:35 nat Exp $
+# $NetBSD: t_mixerctl.sh,v 1.7 2017/07/18 12:40:57 kre Exp $
+
+audio_setup() {
+	# Open /dev/pad0 so we have a configured audio device.
+	# Do it in a way that guarantees the open happens before
+	# we proceed to the (</dev/mixer) below (do not expect
+	# cat to be running in time to open the device.)
+
+	# Note: it is not important that the open of pad0 succeeds,
+	# if there is real audio hardware on the system, that can (will)
+	# be used instead, and having pad0 open is irrelevant.
+	# So, no errors reported if pad0 open fails.  If there turns
+	# out to be no audio device of any kind, then the open of the
+	# mixer will fail, causing the test to be skipped.
+
+	# Saving padpid and later killing it seems to be unnecessary,
+	# ATF appears to killpg() the process after the test finishes
+	# which is a good thing, otherwise a test that is skipped/fails
+	# would not kill the cat (doing it in a cleanup function is not
+	# convenient as it is a different execution environment, so shared
+	# variables, we would need to put $padpid in a file.)
+
+	unset padpid
+	{ { cat >/dev/null & } < /dev/pad0 ; } 2>/dev/null && padpid=$!
+
+	(</dev/mixer) >/dev/null 2>&1 ||
+	    atf_skip "no audio mixer available in kernel"
+}
 
 atf_test_case noargs_usage
 noargs_usage_head() {
 	atf_set "descr" "Ensure mixerctl(1) with no args prints a usage message"
 }
 noargs_usage_body() {
-	cat /dev/pad0 > /dev/null 2>&1 &
-	padpid=$!
+	audio_setup
 
 	atf_check -s exit:0 -o not-empty -e ignore \
 		mixerctl
 
-	kill -HUP ${padpid} 2>/dev/null
+	${padpid+kill -HUP ${padpid}} 2>/dev/null || :
 }
 
 atf_test_case showvalue
@@ -19,18 +45,14 @@ showvalue_head() {
 	atf_set "descr" "Ensure mixerctl(1) can print the value for all variables"
 }
 showvalue_body() {
-	cat /dev/pad0 > /dev/null 2>&1 &
-	padpid=$!
-
-	(</dev/mixer) >/dev/null 2>&1 ||
-	    atf_skip "no audio mixer available in kernel"
+	audio_setup
 
 	for var in $(mixerctl -a | awk -F= '{print $1}'); do
 		atf_check -s exit:0 -e ignore -o match:"^${var}=" \
 			mixerctl ${var}
 	done
 
-	kill -HUP ${padpid} 2>/dev/null		# may have exited already
+	${padpid+kill -HUP ${padpid}} 2>/dev/null || :
 }
 
 atf_test_case nflag
@@ -38,11 +60,7 @@ nflag_head() {
 	atf_set "descr" "Ensure 'mixerctl -n' actually suppresses some output"
 }
 nflag_body() {
-	cat /dev/pad0 > /dev/null 2>&1 &
-	padpid=$!
-
-	(</dev/mixer) >/dev/null 2>&1 ||
-	    atf_skip "no audio mixer available in kernel"
+	audio_setup
 
 	varname="$(mixerctl -a | sed -e 's/=.*//' -e q)"
 
@@ -52,7 +70,7 @@ nflag_body() {
 	atf_check -s exit:0 -o not-match:"${varname}" -e ignore \
 		mixerctl -n ${varname}
 
-	kill -HUP ${padpid} 2>/dev/null
+	${padpid+kill -HUP ${padpid}} 2>/dev/null || :
 }
 
 atf_test_case nonexistant_device
