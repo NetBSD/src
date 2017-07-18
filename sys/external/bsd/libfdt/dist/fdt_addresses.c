@@ -1,3 +1,5 @@
+/*	$NetBSD: fdt_addresses.c,v 1.1.1.1.12.1 2017/07/18 17:08:08 snj Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  * Copyright (C) 2014 David Gibson <david@gibson.dropbear.id.au>
