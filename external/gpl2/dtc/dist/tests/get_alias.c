@@ -1,3 +1,5 @@
+/*	$NetBSD: get_alias.c,v 1.1.1.1.8.1 2017/07/18 17:17:53 snj Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  *	Testcase for fdt_get_alias()

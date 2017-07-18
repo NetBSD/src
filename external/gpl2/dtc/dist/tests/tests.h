@@ -1,3 +1,5 @@
+/*	$NetBSD: tests.h,v 1.1.1.1.8.1 2017/07/18 17:17:53 snj Exp $	*/
+
 #ifndef _TESTS_H
 #define _TESTS_H
 /*
@@ -32,8 +34,8 @@ extern int verbose_test;
 extern char *test_name;
 void test_init(int argc, char *argv[]);
 
-#define ALIGN(x, a)	(((x) + (a) - 1) & ~((a) - 1))
-#define PALIGN(p, a)	((void *)ALIGN((unsigned long)(p), (a)))
+#define FDTALIGN2(x, a)	(((x) + (a) - 1) & ~((a) - 1))
+#define PALIGN(p, a)	((void *)FDTALIGN2((unsigned long)(p), (a)))
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 #define streq(s1, s2)	(strcmp((s1),(s2)) == 0)
@@ -99,7 +101,7 @@ void check_property(void *fdt, int nodeoffset, const char *name,
 		    int len, const void *val);
 #define check_property_cell(fdt, nodeoffset, name, val) \
 	({ \
-		uint32_t x = cpu_to_fdt32(val);			      \
+		fdt32_t x = cpu_to_fdt32(val);			      \
 		check_property(fdt, nodeoffset, name, sizeof(x), &x); \
 	})
 
@@ -108,12 +110,12 @@ const void *check_getprop(void *fdt, int nodeoffset, const char *name,
 			  int len, const void *val);
 #define check_getprop_cell(fdt, nodeoffset, name, val) \
 	({ \
-		uint32_t x = cpu_to_fdt32(val);			     \
+		fdt32_t x = cpu_to_fdt32(val);			     \
 		check_getprop(fdt, nodeoffset, name, sizeof(x), &x); \
 	})
 #define check_getprop_64(fdt, nodeoffset, name, val) \
 	({ \
-		uint64_t x = cpu_to_fdt64(val);			     \
+		fdt64_t x = cpu_to_fdt64(val);			     \
 		check_getprop(fdt, nodeoffset, name, sizeof(x), &x); \
 	})
 #define check_getprop_string(fdt, nodeoffset, name, s) \
