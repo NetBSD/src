@@ -964,10 +964,8 @@ extern int arm_arch_crc;
 /* DWARF unwinding uses the normal indirect/pcrel vs absptr format
    for 32bit platforms. */
 #define ASM_PREFERRED_EH_DATA_FORMAT(CODE, GLOBAL) \
-    ((flag_pic \
-     && ((GLOBAL) || (CODE))) \
-     ? ((GLOBAL) ? DW_EH_PE_indirect : 0) | DW_EH_PE_pcrel | DW_EH_PE_sdata4 \
-     : DW_EH_PE_absptr)
+  (flag_pic ? (((GLOBAL) ? DW_EH_PE_indirect : 0) | DW_EH_PE_pcrel | DW_EH_PE_sdata4) \
+            : DW_EH_PE_absptr)
 #else
 /* ttype entries (the only interesting data references used)
    use TARGET2 relocations.  */
