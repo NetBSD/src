@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.43.18.2 2017/04/24 22:20:23 jdolecek Exp $	*/
+/*	$NetBSD: atareg.h,v 1.43.18.3 2017/07/19 19:39:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -94,9 +94,16 @@
 #define	WDCC_RECAL		0x10	/* disk restore code -- resets cntlr */
 
 #define	WDCC_READ		0x20	/* disk read code */
+
+#define	WDCC_READ_LOG_EXT	0x2f
+#define	 WDCC_LOG_PAGE_NCQ	0x10
+#define	 WDCC_LOG_NQ		__BIT(7)
+
 #define	WDCC_WRITE		0x30	/* disk write code */
 #define	 WDCC__LONG		 0x02	/* modifier -- access ecc bytes */
 #define	 WDCC__NORETRY		 0x01	/* modifier -- no retrys */
+
+#define	WDCC_READ_LOG_DMA_EXT	0x47	/* DMA variant of READ_LOG_EXT */
 
 #define	WDCC_FORMAT		0x50	/* disk format code */
 #define	WDCC_DIAGNOSE		0x90	/* controller diagnostic */

@@ -1,4 +1,4 @@
-/* $NetBSD: satafis_subr.c,v 1.7.28.2 2017/04/19 20:49:17 jdolecek Exp $ */
+/* $NetBSD: satafis_subr.c,v 1.7.28.3 2017/07/19 19:39:28 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2009 Jonathan A. Kollasch.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.7.28.2 2017/04/19 20:49:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.7.28.3 2017/07/19 19:39:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,12 +160,11 @@ satafis_rhd_construct_atapi(struct ata_xfer *xfer, uint8_t *fis)
 }
 #endif /* NATAPIBUS */
 
-void
+int
 satafis_rdh_parse(struct ata_channel *chp, const uint8_t *fis)
 {
 
-	chp->ch_status = fis[rdh_status];
-	chp->ch_error = fis[rdh_error];
+	return ATACH_ERR_ST(fis[rdh_error], fis[rdh_status]);
 }
 
 void
