@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.105 2017/07/19 06:30:32 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.106 2017/07/19 06:31:54 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.105 2017/07/19 06:30:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.106 2017/07/19 06:31:54 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -826,11 +826,15 @@ ipsec4_forward(struct mbuf *m, int *destmtu)
 	/*
 	 * Find the correct route for outer IPv4 header, compute tunnel MTU.
 	 */
-	if (sp->req && sp->req->sav) {
+	if (sp->req) {
 		struct route *ro;
 		struct rtentry *rt;
+		struct secasvar *sav = NULL;
 
-		ro = &sp->req->sav->sah->sa_route;
+		error = key_checkrequest(sp->req, &sav);
+		if (error != 0)
+			return error;
+		ro = &sav->sah->sa_route;
 		rt = rtcache_validate(ro);
 		if (rt && rt->rt_ifp) {
 			*destmtu = rt->rt_rmx.rmx_mtu ?
@@ -838,6 +842,7 @@ ipsec4_forward(struct mbuf *m, int *destmtu)
 			*destmtu -= ipsechdr;
 		}
 		rtcache_unref(rt, ro);
+		KEY_FREESAV(&sav);
 	}
 	KEY_FREESP(&sp);
 	return 0;
