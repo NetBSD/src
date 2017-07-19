@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.12 2017/07/19 02:06:11 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.13 2017/07/19 02:06:47 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -418,6 +418,34 @@ add_sa()
 	#check_sa_entries $SOCK_PEER $ip_local $ip_peer
 }
 
+delete_sa()
+{
+	local proto=$1
+	local ip_local=$2
+	local ip_peer=$3
+	local spi=$4
+	local tmpfile=./tmp
+	local extra=
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	cat > $tmpfile <<-EOF
+	delete $ip_local $ip_peer $proto $((spi));
+	delete $ip_peer $ip_local $proto $((spi + 1));
+	EOF
+	$DEBUG && cat $tmpfile
+	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
+	$DEBUG && $HIJACKING setkey -D
+
+	export RUMP_SERVER=$SOCK_PEER
+	cat > $tmpfile <<-EOF
+	delete $ip_local $ip_peer $proto $((spi));
+	delete $ip_peer $ip_local $proto $((spi + 1));
+	EOF
+	$DEBUG && cat $tmpfile
+	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
+	$DEBUG && $HIJACKING setkey -D
+}
+
 check_packet_spi()
 {
 	local outfile=$1
@@ -468,6 +496,7 @@ test_spi()
 	local proto=$1
 	local algo=$2
 	local preferred=$3
+	local method=$4
 	local ip_local=10.0.0.1
 	local ip_peer=10.0.0.2
 	local algo_args="$(generate_algo_args $proto $algo)"
@@ -529,7 +558,11 @@ test_spi()
 		check_packet_spi $outfile $ip_local $ip_peer $proto_cap 10020
 	fi
 
-	wait_sa_disappeared 10020
+	if [ $method = delete ]; then
+		delete_sa $proto $ip_local $ip_peer 10020
+	else
+		wait_sa_disappeared 10020
+	fi
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
@@ -541,7 +574,11 @@ test_spi()
 		check_packet_spi $outfile $ip_local $ip_peer $proto_cap 10010
 	fi
 
-	wait_sa_disappeared 10010
+	if [ $method = delete ]; then
+		delete_sa $proto $ip_local $ip_peer 10010
+	else
+		wait_sa_disappeared 10010
+	fi
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
@@ -559,11 +596,12 @@ add_test_spi()
 	local proto=$1
 	local algo=$2
 	local preferred=$3
+	local method=$4
 	local _algo=$(echo $algo | sed 's/-//g')
 	local name= desc=
 
-	desc="Tests SAs with different SPIs of $proto ($algo) ($preferred SA preferred)"
-	name="ipsec_spi_${proto}_${_algo}_preferred_${preferred}"
+	desc="Tests SAs with different SPIs of $proto ($algo) ($preferred SA preferred) ($method)"
+	name="ipsec_spi_${proto}_${_algo}_preferred_${preferred}_${method}"
 
 	atf_test_case ${name} cleanup
 	eval "								\
@@ -572,7 +610,7 @@ add_test_spi()
 	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
 	    };								\
 	    ${name}_body() {						\
-	        test_spi $proto $algo $preferred;			\
+	        test_spi $proto $algo $preferred $method;		\
 	        rump_server_destroy_ifaces;				\
 	    };								\
 	    ${name}_cleanup() {						\
@@ -592,15 +630,19 @@ atf_init_test_cases()
 		add_test_lifetime ipv6 esp $algo
 		add_test_update esp $algo sa
 		add_test_update esp $algo sp
-		add_test_spi esp $algo new
-		add_test_spi esp $algo old
+		add_test_spi esp $algo new delete
+		add_test_spi esp $algo old delete
+		add_test_spi esp $algo new timeout
+		add_test_spi esp $algo old timeout
 	done
 	for algo in $AH_AUTHENTICATION_ALGORITHMS_MINIMUM; do
 		add_test_lifetime ipv4 ah $algo
 		add_test_lifetime ipv6 ah $algo
 		add_test_update ah $algo sa
 		add_test_update ah $algo sp
-		add_test_spi ah $algo new
-		add_test_spi ah $algo old
+		add_test_spi ah $algo new delete
+		add_test_spi ah $algo old delete
+		add_test_spi ah $algo new timeout
+		add_test_spi ah $algo old timeout
 	done
 }
