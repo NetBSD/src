@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.12 2012/10/17 23:40:42 matt Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.12.26.1 2017/07/19 20:21:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -247,6 +247,10 @@ struct ahci_r_fis {
 #define		AHCI_P_TFD_ERR_SHIFT	8
 #define		AHCI_P_TFD_ST		0x000000ff /* status register */
 #define		AHCI_P_TFD_ST_SHIFT	0
+#define		AHCI_TFD_ERR(tfd)	\
+	(((tfd) & AHCI_P_TFD_ERR_MASK) >> AHCI_P_TFD_ERR_SHIFT)
+#define		AHCI_TFD_ST(tfd)	\
+	(((tfd) & AHCI_P_TFD_ST) >> AHCI_P_TFD_ST_SHIFT)
 
 #define AHCI_P_SIG(p)	(0x124 + AHCI_P_OFFSET(p)) /* device signature */
 #define		AHCI_P_SIG_LBAH_MASK	0xff000000
@@ -272,3 +276,14 @@ struct ahci_r_fis {
 
 #define AHCI_P_FNTF(p)	(0x13c + AHCI_P_OFFSET(p)) /* SNotification */
 	/* one bit per port */
+
+#define AHCI_P_FBS(p)	(0x140 + AHCI_P_OFFSET(p)) /* Port task file data */
+#define		AHCI_P_FBS_EN		0x00000001 /* Enable */
+#define		AHCI_P_FBS_DEC		0x00000002 /* Device Error Clear */
+#define		AHCI_P_FBS_SDE		0x00000004 /* Single Device Error */
+#define		AHCI_P_FBS_DEV		0x00000f00 /* Device To Issue */
+#define		AHCI_P_FBS_DEV_SHIFT	8
+#define		AHCI_P_FBS_ADO		0x0000f000 /* Active Device Optimiz.*/
+#define		AHCI_P_FBS_ADO_SHIFT	12
+#define		AHCI_P_FBS_DWE		0x000f0000 /* Device With Error */
+#define		AHCI_P_FBS_DWE_SHIFT	16
