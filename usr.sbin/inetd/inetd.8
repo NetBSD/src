@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.59 2017/07/16 21:19:38 wiz Exp $
+.\"	$NetBSD: inetd.8,v 1.60 2017/07/19 16:37:17 dholland Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .\"
 .\"     from: @(#)inetd.8       8.4 (Berkeley) 6/1/94
 .\"
-.Dd July 16, 2017
+.Dd July 19, 2017
 .Dt INETD 8
 .Os
 .Sh NAME
@@ -115,8 +115,8 @@ special case, described below).
 The fields of the configuration file are as follows:
 .Pp
 .Bd -unfilled -offset indent -compact
-[addr:]service-name/port-number
-socket-type[:accept_filter]
+[listen-addr:]service-spec
+socket-type[:accept-filter]
 protocol[,sndbuf=size][,rcvbuf=size]
 wait/nowait[:max]
 user[:group]
@@ -124,81 +124,73 @@ server-program
 server program arguments
 .Ed
 .Pp
-To specify an
-.Em Sun-RPC
-based service, the entry would contain these fields:
-.Pp
-.Bd -unfilled -offset indent -compact
-service-name/version
-socket-type
-rpc/protocol[,sndbuf=size][,rcvbuf=size]
-wait/nowait[:max]
-user[:group]
-server-program
-server program arguments
-.Ed
-.Pp
-To specify a UNIX-domain (local) socket, the entry would contain
-these fields:
-.Pp
-.Bd -unfilled -offset indent -compact
-path
-socket-type
-unix[,sndbuf=size][,rcvbuf=size]
-wait/nowait[:max]
-user[:group]
-server-program
-server program arguments
-.Ed
-.Pp
-For Internet services, the first field of the line may also have a host
-address specifier prefixed to it, separated from the service name or port
-number by a colon.
-If this is done, the string before the colon in the
-first field indicates what local address
+The 
+.Em listen-addr
+specifies the local address
 .Nm
-should use when listening for that service, or the single character
+should use when listening.
+The single character
 .Dq \&*
-to indicate
-.Dv INADDR_ANY ,
-meaning
-.Sq all local addresses .
-To avoid repeating an address that occurs frequently, a line with a
-host address specifier and colon, but no further fields, causes the
-host address specifier to be remembered and used for all further lines
-with no explicit host specifier (until another such line or the end of
-the file).
-A line
-.Dl *:
-is implicitly provided at the top of the file; thus, traditional
-configuration files (which have no host address specifiers) will be
-interpreted in the traditional manner, with all services listened for
-on all local addresses.
+means
+.Dv INADDR_ANY :
+all local addresses.
+To avoid the need to repeat listen addresses over and over again,
+listen addresses are inherited from line to line, and the listen
+address can be changed without defining a service by including a line
+containing just
+a
+.Em listen-addr
+followed by a colon.
+The default (compatible with historical configuration files) is \&*
+.Ns .
+To return to this behavior after configuring some services with
+specific listen addresses, give \&* explicitly.
 .Pp
-The
-.Em service-name/port-number
-entry is the name of a valid service in
-the file
-.Pa /etc/services .
-Or an alternate port number.
+Note that restricted listen addresses are meaningless and ignored for
+UNIX-domain services, and are not supported for
+.Em Sun-RPC
+services.
+All 
+.Em Sun-RPC
+services always listen on all interfaces.
+.Pp
+The form of the
+.Em service-spec
+varies with the service type.
+For Internet services, the
+.Em service-spec
+can be either the name of a service from
+.Pa /etc/services
+or a decimal port number.
 For
 .Dq internal
-services (discussed below), the service
-name
+services (discussed below), the service name
 .Em must
 be the official name of the service (that is, the first entry in
-.Pa /etc/services ) .
-When used to specify a
+.Pa /etc/services )
+and not an alias for it.
+.Pp
+For
 .Em Sun-RPC
-based service, this field is a valid RPC service name in
+based services, the
+.Em service-spec
+has the form
+.Em service-name Ns Li / Ns Em version .
+The service name must be a valid RPC service name from
 the file
 .Pa /etc/rpc .
-The part on the right of the
+The
+.Em version
+on the right of the
 .Dq /
 is the RPC version number.
 This can simply be a single numeric argument or a range of versions.
-A range is bounded by the low version to the high version \-
+A range is bounded by the low version to the high version \- e.g.
 .Dq rusers/1-3 .
+.Pp
+For UNIX-domain (local) services, the
+.Em service-spec
+is the path name to listen on.
 .Pp
 The
 .Em socket-type
@@ -212,56 +204,55 @@ or
 depending on whether the socket is a stream, datagram, raw,
 reliably delivered message, or sequenced packet socket.
 .Pp
-Optionally, an
-.Xr accept_filter 9
-can be specified by appending a colon to the socket-type, followed by
+Optionally, for Internet services, an accept filter
+(see
+.Xr accept_filter 9 )
+can be specified by appending a colon to
+.Em socket-type ,
+followed by
 the name of the desired accept filter.
 In this case
 .Nm
 will not see new connections for the specified service until the accept
 filter decides they are ready to be handled.
+.\" XXX: do accept filters work for AF_UNIX sockets? nobody probably
+.\" cares, but...
 .Pp
 The
 .Em protocol
 must be a valid protocol as given in
 .Pa /etc/protocols
-or the string
+or (for UNIX-domain services) the string
 .Dq unix .
-Examples might be
+The most common are
 .Dq tcp
 and
 .Dq udp .
-Rpc based services are specified with the
+For TCP and UDP, the IP version (4 or 6) may be specified explicitly
+by appending 4 or 6 to the protocol name.
+Otherwise the default version (IPv4) is used.
+For
+.Em Sun-RPC
+the string
+.Dq rpc
+and a slash should be prepended:
 .Dq rpc/tcp
 or
-.Dq rpc/udp
-service type.
-.Dq tcp
-and
-.Dq udp
-will be recognized as
-.Dq TCP or UDP over default IP version .
-It is currently IPv4, but in the future it will be IPv6.
-If you need to specify IPv4 or IPv6 explicitly, use something like
-.Dq tcp4
-or
-.Dq udp6 .
+.Dq rpc/udp .
 If you would like to enable special support for
 .Xr faithd 8 ,
-prepend a keyword
+prepend the string
 .Dq faith
-into
-.Em protocol ,
-like
+and a slash:
 .Dq faith/tcp6 .
 .Pp
 In addition to the protocol, the configuration file may specify the
 send and receive socket buffer sizes for the listening socket.
 This is especially useful for
-.Tn TCP
-as the window scale factor, which is based on the receive socket
-buffer size, is advertised when the connection handshake occurs,
-thus the socket buffer size for the server must be set on the listen socket.
+.Tn TCP :
+the window scale factor, which is based on the receive socket
+buffer size, is advertised when the connection handshake occurs
+and thus the socket buffer size must be set on the listen socket.
 By increasing the socket buffer sizes, better
 .Tn TCP
 performance may be realized in some situations.
