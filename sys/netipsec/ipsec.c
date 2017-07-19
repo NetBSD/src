@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.104 2017/07/18 09:00:55 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.105 2017/07/19 06:30:32 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.104 2017/07/18 09:00:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.105 2017/07/19 06:30:32 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -1737,7 +1737,6 @@ int
 ipsec_in_reject(const struct secpolicy *sp, const struct mbuf *m)
 {
 	struct ipsecrequest *isr;
-	int need_auth;
 
 	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DATA)) {
 		printf("%s: using SP\n", __func__);
@@ -1758,7 +1757,6 @@ ipsec_in_reject(const struct secpolicy *sp, const struct mbuf *m)
 
 	/* XXX should compare policy against ipsec header history */
 
-	need_auth = 0;
 	for (isr = sp->req; isr != NULL; isr = isr->next) {
 		if (ipsec_get_reqlevel(isr) != IPSEC_LEVEL_REQUIRE)
 			continue;
@@ -1769,18 +1767,8 @@ ipsec_in_reject(const struct secpolicy *sp, const struct mbuf *m)
 				    "ESP m_flags:%x\n", m->m_flags);
 				return 1;
 			}
-
-			if (!need_auth &&
-				isr->sav != NULL &&
-				isr->sav->tdb_authalgxform != NULL &&
-				(m->m_flags & M_AUTHIPDGM) == 0) {
-				KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DUMP,
-				    "ESP/AH m_flags:%x\n", m->m_flags);
-				return 1;
-			}
 			break;
 		case IPPROTO_AH:
-			need_auth = 1;
 			if ((m->m_flags & M_AUTHIPHDR) == 0) {
 				KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DUMP,
 				    "AH m_flags:%x\n", m->m_flags);
