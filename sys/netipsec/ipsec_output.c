@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.54 2017/07/14 12:26:26 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.55 2017/07/19 09:03:52 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.54 2017/07/14 12:26:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.55 2017/07/19 09:03:52 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -275,7 +275,6 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr,
 	return ipsec_reinject_ipstack(m, saidx->dst.sa.sa_family);
 bad:
 	m_freem(m);
-	KEY_FREESAV(&sav);
 	return (error);
 }
 
