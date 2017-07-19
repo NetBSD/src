@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.26 2017/07/19 20:02:40 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.27 2017/07/19 20:24:59 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.26 2017/07/19 20:02:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.27 2017/07/19 20:24:59 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
