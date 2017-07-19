@@ -5,26 +5,24 @@ siisata - fix all new XXX and unmergable bits
 
 test wd* at umass?, confirm the ata_channel kludge works
 
-test non-NCQ device error handling
-- test retry code paths, locking
-- channel reset on fatal errors
+do proper NCQ error recovery
+- update mvsata to do same as ahcisata/siisata (read log ext, timeouts, et.al)
+- update also ic/wdc.c, scsipi/atapi_wdc.c, ata/ata_wdc.c to not use
+  ch_status/ch_error/ATACH_IRQ_WAIT
+- retest ATAPI
 
-do proper NCQ error recovery (currently not even really attempted)
-- if fatal error, do channel reset
-- if tranfer error (both TFD.STS.BSY and DRQ is 0), need READ LOG EXT log
-  page 10h to read tag which caused the error, and reset the device to idle
-- need to cancel and restart the other active transfers in a way to not
-  increase retry count, and not trigger drive reset
+ahcisata - use dynamic xfer in ahci_do_reset_drive() instead of hardcoding
+0, which can clash on drive reset after command failure
+
+Other random notes (do outside the NCQ branch):
+-----------------------------------------------------
+implement support for PM FIS-based switching, remove restriction in atastart()
+for hw which supports it, adjust error handling in controller drivers to handle
+xfers for several different drives
 
 maybe do device error handling in not-interrupt-context (maybe this should be
 done on a mpata branch?)
 
-in atastart(), restrict NCQ commands to commands for the same drive? it's
-fine for fis-based switching to have outstanding for several drives, but
-not non-FIS
-
-Other random notes (do outside the NCQ branch):
------------------------------------------------------
 queue is allocated regardless if there are any drives, fix? 
 
 change wd(4) to use dksubr
