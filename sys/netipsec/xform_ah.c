@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.62 2017/07/18 04:01:04 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.63 2017/07/19 09:03:08 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.62 2017/07/18 04:01:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.63 2017/07/19 09:03:08 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1209,7 +1209,6 @@ ah_output_cb(struct cryptop *crp)
 			sav->tdb_cryptoid = crp->crp_sid;
 
 		if (crp->crp_etype == EAGAIN) {
-			KEY_FREESAV(&sav);
 			mutex_exit(softnet_lock);
 			splx(s);
 			return crypto_dispatch(crp);
