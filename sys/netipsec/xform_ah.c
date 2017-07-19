@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.64 2017/07/19 09:38:57 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.65 2017/07/19 10:26:09 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.64 2017/07/19 09:38:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.65 2017/07/19 10:26:09 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1144,6 +1144,7 @@ ah_output(
 
 	/* These are passed as-is to the callback. */
 	tc->tc_isr = isr;
+	KEY_SP_REF(isr->sp);
 	tc->tc_spi = sav->spi;
 	tc->tc_dst = sav->sah->saidx.dst;
 	tc->tc_proto = sav->sah->saidx.proto;
@@ -1184,6 +1185,14 @@ ah_output_cb(struct cryptop *crp)
 
 	isr = tc->tc_isr;
 	sav = tc->tc_sav;
+	if (__predict_false(isr->sp->state == IPSEC_SPSTATE_DEAD)) {
+		AH_STATINC(AH_STAT_NOTDB);
+		IPSECLOG(LOG_DEBUG,
+		    "SP is being destroyed while in crypto (id=%u)\n",
+		    isr->sp->id);
+		error = ENOENT;
+		goto bad;
+	}
 	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
 		KEY_FREESAV(&sav);
 		sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
@@ -1241,12 +1250,14 @@ ah_output_cb(struct cryptop *crp)
 	/* NB: m is reclaimed by ipsec_process_done. */
 	err = ipsec_process_done(m, isr, sav);
 	KEY_FREESAV(&sav);
+	KEY_FREESP(&isr->sp);
 	mutex_exit(softnet_lock);
 	splx(s);
 	return err;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
+	KEY_FREESP(&isr->sp);
 	mutex_exit(softnet_lock);
 	splx(s);
 	if (m)
