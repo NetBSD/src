@@ -1,4 +1,4 @@
-/* $NetBSD: siisatareg.h,v 1.7.42.2 2017/06/12 23:51:40 jakllsch Exp $ */
+/* $NetBSD: siisatareg.h,v 1.7.42.3 2017/07/19 20:03:29 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 Jonathan A. Kollasch.
@@ -164,6 +164,8 @@ struct siisata_prb {
 #define PRSO_RTC	0x04		/* recieved transfer count */
 #define PRSO_FIS	0x08		/* base of FIS */
 
+#define PRO_PMPSTS(i)	(0x0f80 + i * 8)
+#define PRO_PMPQACT(i)	(0x0f80 + i * 8 + 4)
 #define PRO_PCS		0x1000		/* (write) port control set */
 #define PRO_PS		PRO_PCS		/* (read) port status */
 #define PRO_PCC		0x1004		/* port control clear */
@@ -186,6 +188,7 @@ struct siisata_prb {
 #define PRO_CARX(p,s)     (PRX(p, PRO_CAR) + (s) * sizeof(uint64_t))
 
 #define PRO_PCR		0x1e04		/* port context register */
+#define     PRO_PCR_PMP(x)	(((x) & __BITS(8, 5)) >> 5) /* PM Port */
 #define PRO_SCONTROL	0x1f00		/* SControl */
 #define PRO_SSTATUS	0x1f04		/* SStatus */
 #define PRO_SERROR	0x1f08		/* SError */

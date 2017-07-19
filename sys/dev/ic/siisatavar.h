@@ -1,4 +1,4 @@
-/* $NetBSD: siisatavar.h,v 1.6.48.1 2017/06/13 00:02:19 jakllsch Exp $ */
+/* $NetBSD: siisatavar.h,v 1.6.48.2 2017/07/19 20:03:29 jdolecek Exp $ */
 
 /* from ahcisatavar.h */
 
@@ -101,6 +101,8 @@ struct siisata_softc {
 		bus_dmamap_t sch_datad[SIISATA_MAX_SLOTS];
 
 		uint32_t sch_active_slots;
+		uint32_t sch_hold_slots;
+		bool sch_recovering;
 	} sc_channels[SIISATA_MAX_PORTS];
 };
 
