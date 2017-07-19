@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.11 2017/07/18 02:16:07 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.12 2017/07/19 02:06:11 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -438,6 +438,31 @@ check_packet_spi()
 	    cat $outfile
 }
 
+wait_sa_disappeared()
+{
+	local spi=$1
+	local i=
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	for i in $(seq 1 10); do
+		$HIJACKING setkey -D |grep -q "spi=$spi"
+		[ $? != 0 ] && break
+		sleep 1
+	done
+	if [ $i -eq 10 ]; then
+		atf_fail "SA (spi=$spi) didn't disappear in 10s"
+	fi
+	export RUMP_SERVER=$SOCK_PEER
+	for i in $(seq 1 10); do
+		$HIJACKING setkey -D |grep -q "spi=$spi"
+		[ $? != 0 ] && break
+		sleep 1
+	done
+	if [ $i -eq 10 ]; then
+		atf_fail "SA (spi=$spi) didn't disappear in 10s"
+	fi
+}
+
 test_spi()
 {
 	local proto=$1
@@ -504,7 +529,7 @@ test_spi()
 		check_packet_spi $outfile $ip_local $ip_peer $proto_cap 10020
 	fi
 
-	sleep $((3 + 1))
+	wait_sa_disappeared 10020
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
@@ -516,7 +541,7 @@ test_spi()
 		check_packet_spi $outfile $ip_local $ip_peer $proto_cap 10010
 	fi
 
-	sleep $((6 + 1 - (3 + 1)))
+	wait_sa_disappeared 10010
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
