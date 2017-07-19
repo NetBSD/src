@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.26 2017/07/19 19:39:28 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.27 2017/07/19 19:46:52 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,9 +54,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.26 2017/07/19 19:39:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.27 2017/07/19 19:46:52 jdolecek Exp $");
 
 #include "opt_ata.h"
+#include "opt_wd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
