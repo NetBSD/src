@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.43.4.6 2017/06/23 20:40:51 jdolecek Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.43.4.7 2017/07/19 19:39:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -38,7 +38,6 @@ struct wd_softc {
 	device_t sc_dev;
 	struct disk sc_dk;
 	struct bufq_state *sc_q;
-	struct callout sc_restart_ch;
 	kmutex_t sc_lock;
 	int sc_quirks;			/* any quirks drive might have */
 
@@ -69,8 +68,6 @@ struct wd_softc {
 	u_int sc_bscount;
 #endif
 	krndsource_t	rnd_source;
-
-	STAILQ_HEAD(, ata_xfer) xfer_restart;
 };
 
 #endif /* _DEV_ATA_WDVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.25 2017/07/03 19:54:44 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.26 2017/07/19 19:39:28 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.25 2017/07/03 19:54:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.26 2017/07/19 19:39:28 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -116,6 +116,7 @@ int wdcdebug_wd_mask = 0x0;
 #endif
 
 #ifdef WD_CHAOS_MONKEY
+int wdcdebug_wd_cnt = 200;
 int wdcdebug_wd_chaos = 0;
 #endif
 
@@ -198,7 +199,7 @@ void  wdgetdefaultlabel(struct wd_softc *, struct disklabel *);
 void  wdgetdisklabel(struct wd_softc *);
 void  wdstart(device_t);
 void  wdstart1(struct wd_softc *, struct buf *, struct ata_xfer *);
-void  wdrestart(void *);
+static void  wdbiorestart(void *);
 void  wddone(device_t, struct ata_xfer *);
 static void wd_params_to_properties(struct wd_softc *);
 int   wd_get_params(struct wd_softc *, uint8_t, struct ataparams *);
@@ -302,14 +303,11 @@ wdattach(device_t parent, device_t self, void *aux)
 	wd->sc_dev = self;
 
 	ATADEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
-	callout_init(&wd->sc_restart_ch, 0);
-	callout_setfunc(&wd->sc_restart_ch, wdrestart, wd);
 	mutex_init(&wd->sc_lock, MUTEX_DEFAULT, IPL_BIO);
 	bufq_alloc(&wd->sc_q, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 #ifdef WD_SOFTBADSECT
 	SLIST_INIT(&wd->sc_bslist);
 #endif
-	STAILQ_INIT(&wd->xfer_restart);
 	wd->atabus = adev->adev_bustype;
 	wd->drvp = adev->adev_drv_data;
 
@@ -525,7 +523,6 @@ wddetach(device_t self, int flags)
 	rnd_detach_source(&sc->rnd_source);
 
 	mutex_destroy(&sc->sc_lock);
-	callout_destroy(&sc->sc_restart_ch);
 
 	sc->drvp->drive_type = ATA_DRIVET_NONE; /* no drive any more here */
 	sc->drvp->drive_flags = 0;
@@ -674,7 +671,7 @@ wdstart(device_t self)
 		bp = bufq_get(wd->sc_q);
 		KASSERT(bp != NULL);
 
-		xfer->c_bio.retries = 0;
+		xfer->c_retries = 0;
 		wdstart1(wd, bp, xfer);
 	}
 
@@ -688,16 +685,20 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	/* must be locked on entry */
 	KASSERT(mutex_owned(&wd->sc_lock));
 
+	KASSERT(bp == xfer->c_bio.bp || xfer->c_bio.bp == NULL);
+	KASSERT((xfer->c_flags & (C_WAITACT|C_FREE)) == 0);
+
+	/* Reset state, so that retries don't use stale info */
+	if (__predict_false(xfer->c_retries > 0)) {
+		xfer->c_flags = 0;
+		memset(&xfer->c_bio, 0, sizeof(xfer->c_bio));
+	}
+
 	xfer->c_bio.blkno = bp->b_rawblkno;
 	xfer->c_bio.bcount = bp->b_bcount;
 	xfer->c_bio.databuf = bp->b_data;
 	xfer->c_bio.blkdone = 0;
-	KASSERT(bp == xfer->c_bio.bp || xfer->c_bio.bp == NULL);
 	xfer->c_bio.bp = bp;
-
-	/* Reset state flags, so that retries don't use stale info */
-	KASSERT((xfer->c_flags & (C_WAITACT|C_FREE)) == 0);
-	xfer->c_flags = 0;
 
 #ifdef WD_CHAOS_MONKEY
 	/*
@@ -706,7 +707,8 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	 * the command be clipped, or otherwise misinterpreted, by the
 	 * driver or controller.
 	 */
-	if (BUF_ISREAD(bp) && (++wdcdebug_wd_chaos % WD_CHAOS_MONKEY) == 0) {
+	if (BUF_ISREAD(bp) && xfer->c_retries == 0 && wdcdebug_wd_cnt > 0 &&
+	    (++wdcdebug_wd_chaos % wdcdebug_wd_cnt) == 0) {
 		aprint_normal_dev(wd->sc_dev, "%s: chaos xfer %d\n",
 		    __func__, xfer->c_slot);
 		xfer->c_bio.blkno = 7777777 + wd->sc_capacity;
@@ -718,7 +720,7 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	 * the sector number of the problem, and will eventually allow the
 	 * transfer to succeed.
 	 */
-	if (xfer->c_bio.retries >= WDIORETRIES_SINGLE)
+	if (xfer->c_retries >= WDIORETRIES_SINGLE)
 		xfer->c_bio.flags = ATA_SINGLE;
 	else
 		xfer->c_bio.flags = 0;
@@ -739,7 +741,7 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	 * retrying with NCQ.
 	 */
 	if (wd->drvp->drive_flags & ATA_DRIVE_NCQ &&
-	    (xfer->c_bio.retries == 0 || (bp->b_flags & B_MEDIA_FUA))) {
+	    (xfer->c_retries == 0 || (bp->b_flags & B_MEDIA_FUA))) {
 		xfer->c_bio.flags |= ATA_LBA48;
 		xfer->c_flags |= C_NCQ;
 
@@ -785,7 +787,8 @@ wddone(device_t self, struct ata_xfer *xfer)
 
 	ATADEBUG_PRINT(("wddone %s\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
-	if (wddoingadump) {
+
+	if (__predict_false(wddoingadump)) {
 		/* just drop it to the floor */
 		ata_free_xfer(wd->drvp->chnl_softc, xfer);
 		return;
@@ -805,6 +808,9 @@ wddone(device_t self, struct ata_xfer *xfer)
 	case TIMEOUT:
 		errmsg = "device timeout";
 		goto retry;
+	case REQUEUE:
+		errmsg = "requeue";
+		goto retry2;
 	case ERR_RESET:
 		errmsg = "channel reset";
 		goto retry2;
@@ -822,25 +828,27 @@ retry2:
 
 		diskerr(bp, "wd", errmsg, LOG_PRINTF,
 		    xfer->c_bio.blkdone, wd->sc_dk.dk_label);
-		if (xfer->c_bio.retries < WDIORETRIES)
-			printf(", retrying %d", xfer->c_bio.retries + 1);
+		if (xfer->c_retries < WDIORETRIES)
+			printf(", slot %d, retry %d", xfer->c_slot,
+			    xfer->c_retries + 1);
 		printf("\n");
 		if (do_perror)
 			wdperror(wd, xfer);
-		if (xfer->c_bio.retries < WDIORETRIES) {
-			xfer->c_bio.retries++;
-			STAILQ_INSERT_TAIL(&wd->xfer_restart, xfer,
-			    c_restartchain);
 
-			/*
-			 * Only restart the timer if it's not already pending,
-			 * so that we wouldn't postpone processing beyond
-			 * original schedule.
-			 */
-			if (!callout_pending(&wd->sc_restart_ch)) {
-				callout_schedule(&wd->sc_restart_ch,
-				    RECOVERYTIME);
+		if (xfer->c_retries < WDIORETRIES) {
+			int timo;
+
+			if (xfer->c_bio.error == REQUEUE) {
+				/* rerun ASAP, and do not count as retry */
+				timo = 1;
+			} else {
+				xfer->c_retries++;
+				timo = RECOVERYTIME;
 			}
+
+			callout_reset(&xfer->c_retry_callout, timo,
+			    wdbiorestart, xfer);
+
 			mutex_exit(&wd->sc_lock);
 			return;
 		}
@@ -881,7 +889,7 @@ out:
 		bp->b_error = EIO;
 		break;
 	case NOERROR:
-noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_bio.retries > 0)
+noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_retries > 0)
 			aprint_error_dev(wd->sc_dev,
 			    "soft error (corrected)\n");
 		break;
@@ -905,27 +913,18 @@ noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_bio.retries > 0)
 	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive);
 }
 
-void
-wdrestart(void *v)
+static void
+wdbiorestart(void *v)
 {
-	struct wd_softc *wd = v;
-	struct ata_xfer *xfer;
+	struct ata_xfer *xfer = v;
+	struct buf *bp = xfer->c_bio.bp;
+	struct wd_softc *wd = device_lookup_private(&wd_cd, WDUNIT(bp->b_dev));
 
 	ATADEBUG_PRINT(("wdrestart %s\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
 
-	/*
-	 * Resend all failed xfers out immediatelly regardless of original
-	 * schedule, so that we error out reasonably fast in case of massive
-	 * permanent errors.
-	 */
 	mutex_enter(&wd->sc_lock);
-	while (!STAILQ_EMPTY(&wd->xfer_restart)) {
-		xfer = STAILQ_FIRST(&wd->xfer_restart);
-		STAILQ_REMOVE_HEAD(&wd->xfer_restart, c_restartchain);
-
-		wdstart1(v, xfer->c_bio.bp, xfer);
-	}
+	wdstart1(wd, bp, xfer);
 	mutex_exit(&wd->sc_lock);
 }
 

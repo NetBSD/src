@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.16 2017/06/27 18:36:03 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.17 2017/07/19 19:39:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -65,8 +65,8 @@ struct ata_bio {
 #define	TIMEOUT		4	/* device timed out */
 #define	ERR_NODEV	5	/* device has been gone */
 #define ERR_RESET	6	/* command was terminated by channel reset */
+#define REQUEUE		7	/* different xfer failed, requeue command */
 	uint8_t		r_error;/* copy of error register */
-	int		retries;/* number of xfer retry */
 	struct buf	*bp;
 };
 
@@ -132,13 +132,15 @@ struct scsipi_xfer;
  */
 struct ata_xfer {
 	struct callout c_timo_callout;	/* timeout callout handle */
+	struct callout c_retry_callout;	/* retry callout handle */
 	kcondvar_t c_active;		/* somebody actively waiting for xfer */
+	int8_t c_slot;			/* queue slot # */
 
 #define c_startzero	c_chp
 	/* Channel and drive that are to process the request. */
 	struct ata_channel *c_chp;
-	uint16_t c_drive;
-	int8_t c_slot;			/* queue slot # */
+	uint16_t	c_drive;
+	uint16_t	c_retries;	/* number of xfer retry */
 
 	volatile u_int c_flags;		/* command state flags */
 	void	*c_databuf;		/* pointer to data buffer */
@@ -146,6 +148,12 @@ struct ata_xfer {
 	int	c_skip;			/* bytes already transferred */
 	int	c_dscpoll;		/* counter for dsc polling (ATAPI) */
 	int	c_lenoff;		/* offset to c_bcount (ATAPI) */
+#if 0 /* for now */
+	int	c_ata_status;		/* copy of ATA error + status */
+#endif
+#define ATACH_ERR_ST(error, status)	((error) << 8 | (status))
+#define ATACH_ERR(val)			(((val) >> 8) & 0xff)
+#define ATACH_ST(val)			(((val) >> 0) & 0xff)
 
 	union {
 		struct ata_bio	c_bio;		/* ATA transfer */
@@ -159,7 +167,6 @@ struct ata_xfer {
 	/* Link on the command queue. */
 	TAILQ_ENTRY(ata_xfer) c_xferchain;
 	TAILQ_ENTRY(ata_xfer) c_activechain;
-	STAILQ_ENTRY(ata_xfer) c_restartchain;
 
 	/* Low-level protocol handlers. */
 	void	(*c_start)(struct ata_channel *, struct ata_xfer *);
@@ -177,11 +184,14 @@ struct ata_xfer {
 #define C_FREE		0x0040		/* call ata_free_xfer() asap */
 #define C_PIOBM		0x0080		/* command uses busmastering PIO */
 #define	C_NCQ		0x0100		/* command is queued  */
+#define C_IMMEDIATE	0x0200		/* execute command without queuing */
+#define C_WAITTIMO	0x0400		/* race vs. timeout */
 
 /* reasons for c_kill_xfer() */
 #define KILL_GONE 1		/* device is gone while xfer was active */
 #define KILL_RESET 2		/* xfer was reset */
 #define KILL_GONE_INACTIVE 3	/* device is gone while xfer was pending */
+#define KILL_REQUEUE	4	/* xfer must be reissued to device, no err */
 
 /*
  * While hw supports up to 32 tags, in practice we must never
@@ -383,8 +393,10 @@ struct ata_channel {
 #define ATACH_TH_RUN   0x100	/* the kernel thread is working */
 #define ATACH_TH_RESET 0x200	/* someone ask the thread to reset */
 #define ATACH_TH_RESCAN 0x400	/* rescan requested */
+#if 1 /* for now */
 	uint8_t ch_status;	/* copy of status register */
 	uint8_t ch_error;	/* copy of error register */
+#endif
 
 	/* for the reset callback */
 	int ch_reset_flags;
@@ -483,6 +495,9 @@ void	atabus_free_drives(struct ata_channel *);
 struct ataparams;
 int	ata_get_params(struct ata_drive_datas *, uint8_t, struct ataparams *);
 int	ata_set_mode(struct ata_drive_datas *, uint8_t, uint8_t);
+int	ata_read_log_ext_ncq(struct ata_drive_datas *, uint8_t, uint8_t *,
+    uint8_t *, uint8_t *);
+
 /* return code for these cmds */
 #define CMD_OK    0
 #define CMD_ERR   1
@@ -491,10 +506,10 @@ int	ata_set_mode(struct ata_drive_datas *, uint8_t, uint8_t);
 struct ata_xfer *ata_get_xfer_ext(struct ata_channel *, bool, int8_t);
 #define ata_get_xfer(chp) ata_get_xfer_ext((chp), true, 0);
 void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
-
 void	ata_deactivate_xfer(struct ata_channel *, struct ata_xfer *);
-
 void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);
+
+void	ata_timeout(void *);
 void	ata_kill_pending(struct ata_drive_datas *);
 void	ata_kill_active(struct ata_channel *, int, int);
 void	ata_reset_channel(struct ata_channel *, int);
@@ -521,6 +536,8 @@ struct ata_xfer *
 	ata_queue_hwslot_to_xfer(struct ata_channel *, int);
 struct ata_xfer *
 	ata_queue_get_active_xfer(struct ata_channel *);
+struct ata_xfer *
+	ata_queue_drive_active_xfer(struct ata_channel *, int);
 
 void	ata_delay(int, const char *, int);
 
