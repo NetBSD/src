@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.358 2017/07/08 22:56:15 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.359 2017/07/19 07:24:46 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.358 2017/07/08 22:56:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.359 2017/07/19 07:24:46 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -752,7 +752,7 @@ ip_input(struct mbuf *m)
 			return;
 		}
 #ifdef IPSEC
-		/* Perform IPsec, if any. */
+		/* Check the security policy (SP) for the packet */
 		if (ipsec_used) {
 			SOFTNET_LOCK();
 			if (ipsec4_input(m, IP_FORWARDING |
