@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pmc.c,v 1.10 2017/05/25 23:52:10 jmcneill Exp $ */
+/* $NetBSD: tegra_pmc.c,v 1.11 2017/07/20 01:46:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.10 2017/05/25 23:52:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.11 2017/07/20 01:46:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -174,12 +174,8 @@ tegra_pmc_remove_clamping(u_int partid)
 		 * On Tegra124 and later, the GPU power clamping is
 		 * controlled by a separate register
 		 */
-		switch (tegra_chip_id()) {
-		case CHIP_ID_TEGRA124:
-		case CHIP_ID_TEGRA210:
-			bus_space_write_4(bst, bsh, PMC_GPU_RG_CNTRL_REG, 0);
-			return;
-		}
+		bus_space_write_4(bst, bsh, PMC_GPU_RG_CNTRL_REG, 0);
+		return;
 	}
 
 	bus_space_write_4(bst, bsh, PMC_REMOVE_CLAMPING_CMD_0_REG,
