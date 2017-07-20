@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.65 2017/07/19 10:26:09 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.66 2017/07/20 08:07:14 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.65 2017/07/19 10:26:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.66 2017/07/20 08:07:14 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.65 2017/07/19 10:26:09 ozaki-r Exp $
 #include <sys/sysctl.h>
 #include <sys/socketvar.h> /* for softnet_lock */
 #include <sys/cprng.h>
+#include <sys/pool.h>
 
 #include <net/if.h>
 
@@ -102,6 +103,9 @@ static int esp_input_cb(struct cryptop *op);
 static int esp_output_cb(struct cryptop *crp);
 
 const uint8_t esp_stats[256] = { SADB_EALG_STATS_INIT };
+
+static struct pool esp_tdb_crypto_pool;
+static size_t esp_pool_item_size;
 
 /*
  * NB: this is public for use by the PF_KEY support.
@@ -375,8 +379,11 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	}
 
 	/* Get IPsec-specific opaque pointer */
-	size_t extra = esph == NULL ? 0 : alen;
-	tc = malloc(sizeof(*tc) + extra, M_XDATA, M_NOWAIT|M_ZERO);
+	size_t extra __diagused = esph == NULL ? 0 : alen;
+	KASSERTMSG(sizeof(*tc) + extra <= esp_pool_item_size,
+	    "sizeof(*tc) + extra=%zu > esp_pool_item_size=%zu\n",
+	    sizeof(*tc) + extra, esp_pool_item_size);
+	tc = pool_get(&esp_tdb_crypto_pool, PR_NOWAIT);
 	if (tc == NULL) {
 		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
 		error = ENOBUFS;
@@ -458,7 +465,7 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	return crypto_dispatch(crp);
 
 out2:
-	free(tc, M_XDATA);
+	pool_put(&esp_tdb_crypto_pool, tc);
 out1:
 	crypto_freereq(crp);
 out:
@@ -586,7 +593,8 @@ esp_input_cb(struct cryptop *crp)
 	}
 
 	/* Release the crypto descriptors */
-	free(tc, M_XDATA), tc = NULL;
+	pool_put(&esp_tdb_crypto_pool, tc);
+	tc = NULL;
 	crypto_freereq(crp), crp = NULL;
 
 	/*
@@ -678,7 +686,7 @@ bad:
 	if (m != NULL)
 		m_freem(m);
 	if (tc != NULL)
-		free(tc, M_XDATA);
+		pool_put(&esp_tdb_crypto_pool, tc);
 	if (crp != NULL)
 		crypto_freereq(crp);
 	return error;
@@ -884,7 +892,7 @@ esp_output(
 		crda = crp->crp_desc;
 
 	/* IPsec-specific opaque crypto info. */
-	tc = malloc(sizeof(*tc), M_XDATA, M_NOWAIT|M_ZERO);
+	tc = pool_get(&esp_tdb_crypto_pool, PR_NOWAIT);
 	if (tc == NULL) {
 		crypto_freereq(crp);
 		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
@@ -1005,7 +1013,7 @@ esp_output_cb(struct cryptop *crp)
 		AH_STATINC(AH_STAT_HIST + ah_stats[sav->alg_auth]);
 
 	/* Release crypto descriptors. */
-	free(tc, M_XDATA);
+	pool_put(&esp_tdb_crypto_pool, tc);
 	crypto_freereq(crp);
 
 #ifdef IPSEC_DEBUG
@@ -1041,7 +1049,7 @@ bad:
 	splx(s);
 	if (m)
 		m_freem(m);
-	free(tc, M_XDATA);
+	pool_put(&esp_tdb_crypto_pool, tc);
 	crypto_freereq(crp);
 	return error;
 }
@@ -1062,6 +1070,12 @@ esp_attach(void)
 {
 
 	espstat_percpu = percpu_alloc(sizeof(uint64_t) * ESP_NSTATS);
+
+	extern int ah_max_authsize;
+	KASSERT(ah_max_authsize != 0);
+	esp_pool_item_size = sizeof(struct tdb_crypto) + ah_max_authsize;
+	pool_init(&esp_tdb_crypto_pool, esp_pool_item_size,
+	    0, 0, 0, "esp_tdb_crypto", NULL, IPL_SOFTNET);
 
 #define	MAXIV(xform)					\
 	if (xform.ivsize > esp_max_ivlen)		\
