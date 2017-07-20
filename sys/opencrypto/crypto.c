@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.92 2017/07/18 06:01:36 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.93 2017/07/20 09:31:36 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.92 2017/07/18 06:01:36 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.93 2017/07/20 09:31:36 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.92 2017/07/18 06:01:36 knakahara Exp $"
 #include <sys/errno.h>
 #include <sys/module.h>
 #include <sys/xcall.h>
+#include <sys/device.h>
 
 #if defined(_KERNEL_OPT)
 #include "opt_ocf.h"
@@ -382,6 +383,8 @@ static void crypto_driver_lock(struct cryptocap *);
 static void crypto_driver_unlock(struct cryptocap *);
 static void crypto_driver_clear(struct cryptocap *);
 
+static int crypto_init_finalize(device_t);
+
 static struct cryptostats cryptostats;
 #ifdef CRYPTO_TIMING
 static	int crypto_timing = 0;
@@ -417,14 +420,28 @@ crypto_init0(void)
 		return crypto_destroy(false);
 	}
 
-	crypto_ret_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE|SOFTINT_RCPU,
-	    &cryptoret_softint, NULL);
-	if (crypto_ret_si == NULL) {
-		printf("crypto_init: cannot establish ret queue handler\n");
+	/*
+	 * Some encryption devices(such as mvcesa) is attached before
+	 * ipi_sysinit(). That causes assertion in ipi_register() as
+	 * crypto_ret_si softint uses SOFTINT_RCPU.
+	 */
+	if (config_finalize_register(NULL, crypto_init_finalize) != 0) {
+		printf("crypto_init: cannot register crypto_init_finalize\n");
 		return crypto_destroy(false);
 	}
 
 	sysctl_opencrypto_setup(&sysctl_opencrypto_clog);
+
+	return 0;
+}
+
+static int
+crypto_init_finalize(device_t self __unused)
+{
+
+	crypto_ret_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE|SOFTINT_RCPU,
+	    &cryptoret_softint, NULL);
+	KASSERT(crypto_ret_si != NULL);
 
 	return 0;
 }
