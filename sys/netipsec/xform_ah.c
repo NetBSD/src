@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.67 2017/07/20 03:17:59 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.68 2017/07/20 08:07:14 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.67 2017/07/20 03:17:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.68 2017/07/20 08:07:14 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.67 2017/07/20 03:17:59 ozaki-r Exp $"
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
 #include <sys/socketvar.h> /* for softnet_lock */
+#include <sys/pool.h>
 
 #include <net/if.h>
 
@@ -61,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.67 2017/07/20 03:17:59 ozaki-r Exp $"
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_ecn.h>
+#include <netinet/ip_var.h>
 #include <netinet/ip6.h>
 
 #include <net/route.h>
@@ -114,12 +116,15 @@ SYSCTL_STRUCT(_net_inet_ah, IPSECCTL_STATS,
 
 static unsigned char ipseczeroes[256];	/* larger than an ip6 extension hdr */
 
-static int ah_max_authsize;		/* max authsize over all algorithms */
+int ah_max_authsize;			/* max authsize over all algorithms */
 
 static int ah_input_cb(struct cryptop *);
 static int ah_output_cb(struct cryptop *);
 
 const uint8_t ah_stats[256] = { SADB_AALG_STATS_INIT };
+
+static struct pool ah_tdb_crypto_pool;
+static size_t ah_pool_item_size;
 
 /*
  * NB: this is public for use by the PF_KEY support.
@@ -695,7 +700,9 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	size_t extra = skip + rplen + authsize;
 	size += extra;
 
-	tc = malloc(size, M_XDATA, M_NOWAIT|M_ZERO);
+	KASSERTMSG(size <= ah_pool_item_size,
+	    "size=%zu > ah_pool_item_size=%zu\n", size, ah_pool_item_size);
+	tc = pool_get(&ah_tdb_crypto_pool, PR_NOWAIT);
 	if (tc == NULL) {
 		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
 		stat = AH_STAT_CRYPTO;
@@ -753,7 +760,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 
 bad:
 	if (tc != NULL)
-		free(tc, M_XDATA);
+		pool_put(&ah_tdb_crypto_pool, tc);
 	if (crp != NULL)
 		crypto_freereq(crp);
 	if (m != NULL)
@@ -888,7 +895,8 @@ ah_input_cb(struct cryptop *crp)
 	/* Copyback the saved (uncooked) network headers. */
 	m_copyback(m, 0, skip, ptr);
 
-	free(tc, M_XDATA), tc = NULL;			/* No longer needed */
+	pool_put(&ah_tdb_crypto_pool, tc);
+	tc = NULL;
 
 	/*
 	 * Header is now authenticated.
@@ -937,7 +945,7 @@ bad:
 	if (m != NULL)
 		m_freem(m);
 	if (tc != NULL)
-		free(tc, M_XDATA);
+		pool_put(&ah_tdb_crypto_pool, tc);
 	if (crp != NULL)
 		crypto_freereq(crp);
 	return error;
@@ -1097,7 +1105,7 @@ ah_output(
 	crda->crd_klen = _KEYBITS(sav->key_auth);
 
 	/* Allocate IPsec-specific opaque crypto info. */
-	tc = malloc(sizeof(*tc) + skip, M_XDATA, M_NOWAIT|M_ZERO);
+	tc = pool_get(&ah_tdb_crypto_pool, PR_NOWAIT);
 	if (tc == NULL) {
 		crypto_freereq(crp);
 		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
@@ -1131,7 +1139,7 @@ ah_output(
 	    skip, ahx->type, 1);
 	if (error != 0) {
 		m = NULL;	/* mbuf was free'd by ah_massage_headers. */
-		free(tc, M_XDATA);
+		pool_put(&ah_tdb_crypto_pool, tc);
 		crypto_freereq(crp);
 		goto bad;
 	}
@@ -1232,7 +1240,7 @@ ah_output_cb(struct cryptop *crp)
 	m_copyback(m, 0, skip, ptr);
 
 	/* No longer needed. */
-	free(tc, M_XDATA);
+	pool_put(&ah_tdb_crypto_pool, tc);
 	crypto_freereq(crp);
 
 #ifdef IPSEC_DEBUG
@@ -1264,7 +1272,7 @@ bad:
 	splx(s);
 	if (m)
 		m_freem(m);
-	free(tc, M_XDATA);
+	pool_put(&ah_tdb_crypto_pool, tc);
 	crypto_freereq(crp);
 	return error;
 }
@@ -1311,6 +1319,12 @@ ah_attach(void)
 	IPSECLOG(LOG_DEBUG, "ah_max_authsize=%d\n", ah_max_authsize);
 
 #undef MAXAUTHSIZE
+
+	ah_pool_item_size = sizeof(struct tdb_crypto) +
+	    sizeof(struct ip) + MAX_IPOPTLEN +
+	    sizeof(struct ah) + sizeof(uint32_t) + ah_max_authsize;
+	pool_init(&ah_tdb_crypto_pool, ah_pool_item_size,
+	    0, 0, 0, "ah_tdb_crypto", NULL, IPL_SOFTNET);
 
 	xform_register(&ah_xformsw);
 }
