@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.66 2017/07/20 02:24:31 msaitoh Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.67 2017/07/20 02:27:36 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.66 2017/07/20 02:24:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.67 2017/07/20 02:27:36 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2619,7 +2619,7 @@ wb_nct6776f_refresh_fanrpm(struct lm_softc *sc, int n)
 }
 
 static const char *
-wm_nct67xx_id2str(uint8_t id)
+wb_nct67xx_id2str(uint8_t id)
 {
 	int i;
 
