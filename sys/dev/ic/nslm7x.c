@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.65 2017/07/11 10:10:51 msaitoh Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.66 2017/07/20 02:24:31 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.65 2017/07/11 10:10:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.66 2017/07/20 02:24:31 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ static void wb_refresh_temp(struct lm_softc *, int);
 static void wb_refresh_fanrpm(struct lm_softc *, int);
 static void wb_w83792d_refresh_fanrpm(struct lm_softc *, int);
 static void wb_nct6776f_refresh_fanrpm(struct lm_softc *, int);
-static const char * wm_nct67xx_id2str(uint8_t);
+static const char * wb_nct67xx_id2str(uint8_t);
 
 static void as_refresh_temp(struct lm_softc *, int);
 
@@ -1963,7 +1963,7 @@ static struct lm_sensor nct6779d_sensors[] = {
 		.desc = "System Fan",
 		.type = ENVSYS_SFANRPM,
 		.bank = 4,
-		.reg = 0xb0,
+		.reg = 0xc0,
 		.refresh = wb_nct6776f_refresh_fanrpm,
 		.rfact = 0
 	},
@@ -1971,7 +1971,7 @@ static struct lm_sensor nct6779d_sensors[] = {
 		.desc = "CPU Fan",
 		.type = ENVSYS_SFANRPM,
 		.bank = 4,
-		.reg = 0xb2,
+		.reg = 0xc2,
 		.refresh = wb_nct6776f_refresh_fanrpm,
 		.rfact = 0
 	},
@@ -1979,7 +1979,7 @@ static struct lm_sensor nct6779d_sensors[] = {
 		.desc = "Aux Fan0",
 		.type = ENVSYS_SFANRPM,
 		.bank = 4,
-		.reg = 0xb4,
+		.reg = 0xc4,
 		.refresh = wb_nct6776f_refresh_fanrpm,
 		.rfact = 0
 	},
@@ -1987,7 +1987,7 @@ static struct lm_sensor nct6779d_sensors[] = {
 		.desc = "Aux Fan1",
 		.type = ENVSYS_SFANRPM,
 		.bank = 4,
-		.reg = 0xb6,
+		.reg = 0xc6,
 		.refresh = wb_nct6776f_refresh_fanrpm,
 		.rfact = 0
 	},
@@ -1995,7 +1995,7 @@ static struct lm_sensor nct6779d_sensors[] = {
 		.desc = "Aux Fan2",
 		.type = ENVSYS_SFANRPM,
 		.bank = 4,
-		.reg = 0xb8,
+		.reg = 0xc8,
 		.refresh = wb_nct6776f_refresh_fanrpm,
 		.rfact = 0
 	},
@@ -2251,7 +2251,7 @@ wb_match(struct lm_softc *sc)
 		wb_temp_diode_type(sc, cf_flags);
 		break;
 	case WB_CHIPID_W83627DHG:
-		model = wm_nct67xx_id2str(sc->sioid);
+		model = wb_nct67xx_id2str(sc->sioid);
 		if (model != NULL) {
 			vendor = "Nuvoton";
 			switch (sc->sioid) {
