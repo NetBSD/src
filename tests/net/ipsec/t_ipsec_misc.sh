@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.13 2017/07/19 02:06:47 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.14 2017/07/20 01:10:57 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -503,6 +503,15 @@ test_spi()
 	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
 	local outfile=./out
 	local spistr=
+	local longtime= shorttime=
+
+	if [ $method = delete ]; then
+		shorttime=100
+		longtime=100
+	else
+		shorttime=3
+		longtime=6
+	fi
 
 	rump_server_crypto_start $SOCK_LOCAL netipsec
 	rump_server_crypto_start $SOCK_PEER netipsec
@@ -533,7 +542,7 @@ test_spi()
 	check_packet_spi $outfile $ip_local $ip_peer $proto_cap 10000
 
 	# Add a new SA with a different SPI
-	add_sa $proto "$algo_args" $ip_local $ip_peer 6 10010
+	add_sa $proto "$algo_args" $ip_local $ip_peer $longtime 10010
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
@@ -546,7 +555,7 @@ test_spi()
 	fi
 
 	# Add another SA with a different SPI
-	add_sa $proto "$algo_args" $ip_local $ip_peer 3 10020
+	add_sa $proto "$algo_args" $ip_local $ip_peer $shorttime 10020
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
