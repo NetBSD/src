@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.24 2017/06/16 21:37:11 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.25 2017/07/20 01:54:50 jmcneill Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -17,6 +17,7 @@ makeoptions	DTS="
 
 options 	CPU_CORTEXA15
 options 	SOC_TEGRA124
+options 	SOC_TEGRA210
 options 	MULTIPROCESSOR
 
 pseudo-device 	openfirm	# /dev/openfirm
