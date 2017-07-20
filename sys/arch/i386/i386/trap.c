@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.272.4.1 2017/03/25 16:57:40 snj Exp $	*/
+/*	$NetBSD: trap.c,v 1.272.4.2 2017/07/20 01:43:40 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.272.4.1 2017/03/25 16:57:40 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.272.4.2 2017/07/20 01:43:40 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.272.4.1 2017/03/25 16:57:40 snj Exp $");
 #include "opt_kstack_dr0.h"
 #include "opt_xen.h"
 #include "opt_dtrace.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,8 +266,7 @@ trap(struct trapframe *frame)
 	struct lwp *l = curlwp;
 	struct proc *p;
 	struct pcb *pcb;
-	extern char fusubail[], kcopy_fault[], return_address_fault[],
-	    IDTVEC(osyscall)[];
+	extern char fusubail[], kcopy_fault[], return_address_fault[];
 	struct trapframe *vframe;
 	ksiginfo_t ksi;
 	void *onfault;
@@ -439,6 +439,26 @@ kernelfault:
 		/* NOTREACHED */
 
 	case T_PROTFLT|T_USER:		/* protection fault */
+#if defined(COMPAT_10)
+	{
+		static const char lcall[7] = { 0x9a, 0, 0, 0, 0, 7, 0 };
+		const size_t sz = sizeof(lcall);
+		char tmp[sz];
+
+		/* Check for the osyscall lcall instruction. */
+		if (frame->tf_eip < VM_MAXUSER_ADDRESS - sz &&
+		    copyin((void *)frame->tf_eip, tmp, sz) == 0 &&
+		    memcmp(tmp, lcall, sz) == 0) {
+
+			/* Advance past the lcall. */
+			frame->tf_eip += sz;
+
+			/* Do the syscall. */
+			p->p_md.md_syscall(frame);
+			goto out;
+		}
+	}
+#endif
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
@@ -686,13 +706,6 @@ faultcommon:
 	}
 
 	case T_TRCTRAP:
-		/* Check whether they single-stepped into a lcall. */
-		if (frame->tf_eip == (int)IDTVEC(osyscall))
-			return;
-		if (frame->tf_eip == (int)IDTVEC(osyscall) + 1) {
-			frame->tf_eflags &= ~PSL_T;
-			return;
-		}
 		goto we_re_toast;
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */

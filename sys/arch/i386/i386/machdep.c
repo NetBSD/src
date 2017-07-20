@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.752 2014/02/23 22:36:43 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.752.4.1 2017/07/20 01:43:40 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752 2014/02/23 22:36:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752.4.1 2017/07/20 01:43:40 snj Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -924,7 +924,6 @@ setsegment(struct segment_descriptor *sd, const void *base, size_t limit,
 #define	IDTVEC(name)	__CONCAT(X, name)
 typedef void (vector)(void);
 extern vector IDTVEC(syscall);
-extern vector IDTVEC(osyscall);
 extern vector *IDTVEC(exceptions)[];
 extern vector IDTVEC(svr4_fasttrap);
 void (*svr4_fasttrap_vec)(void) = (void (*)(void))nullop;
@@ -1345,13 +1344,9 @@ init386(paddr_t first_avail)
 #endif /* XEN */
 
 	/* make ldt gates and memory segments */
-	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1,
-	    SDT_SYS386CGT, SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
-
 	ldt[LUCODE_SEL] = gdt[GUCODE_SEL];
 	ldt[LUCODEBIG_SEL] = gdt[GUCODEBIG_SEL];
 	ldt[LUDATA_SEL] = gdt[GUDATA_SEL];
-	ldt[LSOL26CALLS_SEL] = ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];
 
 #ifndef XEN
 	/* exceptions */
