@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.18 2017/05/26 20:14:17 jmcneill Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.19 2017/07/20 01:45:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.18 2017/05/26 20:14:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.19 2017/07/20 01:45:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -126,7 +126,9 @@ static int
 tegra_pcie_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const char * const compatible[] = {
+#if notyet
 		"nvidia,tegra210-pcie",
+#endif
 		"nvidia,tegra124-pcie",
 		NULL
 	};
