@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_fdt.c,v 1.3 2017/05/30 22:00:25 jmcneill Exp $ */
+/* $NetBSD: gtmr_fdt.c,v 1.4 2017/07/20 01:52:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.3 2017/05/30 22:00:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.4 2017/07/20 01:52:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,6 +56,7 @@ gtmr_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const char * const compatible[] = {
 		"arm,armv7-timer",
+		"arm,armv8-timer",
 		NULL
 	};
 	struct fdt_attach_args * const faa = aux;
