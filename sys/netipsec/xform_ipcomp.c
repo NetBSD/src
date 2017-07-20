@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.46 2017/07/19 10:26:09 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.47 2017/07/20 08:07:14 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.46 2017/07/19 10:26:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.47 2017/07/20 08:07:14 ozaki-r Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.46 2017/07/19 10:26:09 ozaki-r Ex
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
 #include <sys/socketvar.h> /* for softnet_lock */
+#include <sys/pool.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -87,6 +88,8 @@ static int ipcomp_input_cb(struct cryptop *crp);
 static int ipcomp_output_cb(struct cryptop *crp);
 
 const uint8_t ipcomp_stats[256] = { SADB_CALG_STATS_INIT };
+
+static struct pool ipcomp_tdb_crypto_pool;
 
 const struct comp_algo *
 ipcomp_algorithm_lookup(int alg)
@@ -162,7 +165,7 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		return ENOBUFS;
 	}
 	/* Get IPsec-specific opaque pointer */
-	tc = malloc(sizeof(*tc), M_XDATA, M_NOWAIT|M_ZERO);
+	tc = pool_get(&ipcomp_tdb_crypto_pool, PR_NOWAIT);
 	if (tc == NULL) {
 		m_freem(m);
 		crypto_freereq(crp);
@@ -175,7 +178,7 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	if (error) {
 		DPRINTF(("%s: m_makewritable failed\n", __func__));
 		m_freem(m);
-		free(tc, M_XDATA);
+		pool_put(&ipcomp_tdb_crypto_pool, tc);
 		crypto_freereq(crp);
 		IPCOMP_STATINC(IPCOMP_STAT_CRYPTO);
 		return error;
@@ -300,7 +303,8 @@ ipcomp_input_cb(struct cryptop *crp)
 	clen = crp->crp_olen;		/* Length of data after processing */
 
 	/* Release the crypto descriptors */
-	free(tc, M_XDATA), tc = NULL;
+	pool_put(&ipcomp_tdb_crypto_pool, tc);
+	tc = NULL;
 	crypto_freereq(crp), crp = NULL;
 
 	/* In case it's not done already, adjust the size of the mbuf chain */
@@ -357,7 +361,7 @@ bad:
 	if (m)
 		m_freem(m);
 	if (tc != NULL)
-		free(tc, M_XDATA);
+		pool_put(&ipcomp_tdb_crypto_pool, tc);
 	if (crp)
 		crypto_freereq(crp);
 	return error;
@@ -470,7 +474,7 @@ ipcomp_output(
 	crdc->crd_alg = ipcompx->type;
 
 	/* IPsec-specific opaque crypto info */
-	tc = malloc(sizeof(*tc), M_XDATA, M_NOWAIT|M_ZERO);
+	tc = pool_get(&ipcomp_tdb_crypto_pool, PR_NOWAIT);
 	if (tc == NULL) {
 		IPCOMP_STATINC(IPCOMP_STAT_CRYPTO);
 		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
@@ -641,7 +645,7 @@ ipcomp_output_cb(struct cryptop *crp)
 
 
 	/* Release the crypto descriptor */
-	free(tc, M_XDATA);
+	pool_put(&ipcomp_tdb_crypto_pool, tc);
 	crypto_freereq(crp);
 
 	/* NB: m is reclaimed by ipsec_process_done. */
@@ -659,7 +663,7 @@ bad:
 	splx(s);
 	if (m)
 		m_freem(m);
-	free(tc, M_XDATA);
+	pool_put(&ipcomp_tdb_crypto_pool, tc);
 	crypto_freereq(crp);
 	return error;
 }
@@ -679,5 +683,7 @@ void
 ipcomp_attach(void)
 {
 	ipcompstat_percpu = percpu_alloc(sizeof(uint64_t) * IPCOMP_NSTATS);
+	pool_init(&ipcomp_tdb_crypto_pool, sizeof(struct tdb_crypto),
+	    0, 0, 0, "ipcomp_tdb_crypto", NULL, IPL_SOFTNET);
 	xform_register(&ipcomp_xformsw);
 }
