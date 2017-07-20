@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.93 2017/07/20 09:31:36 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.94 2017/07/20 23:07:12 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.93 2017/07/20 09:31:36 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.94 2017/07/20 23:07:12 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -421,8 +421,8 @@ crypto_init0(void)
 	}
 
 	/*
-	 * Some encryption devices(such as mvcesa) is attached before
-	 * ipi_sysinit(). That causes assertion in ipi_register() as
+	 * Some encryption devices (such as mvcesa) are attached before
+	 * ipi_sysinit(). That causes an assertion in ipi_register() as
 	 * crypto_ret_si softint uses SOFTINT_RCPU.
 	 */
 	if (config_finalize_register(NULL, crypto_init_finalize) != 0) {
