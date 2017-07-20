@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.29 2017/07/14 15:41:23 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.30 2017/07/20 01:45:08 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -2503,4 +2503,13 @@ sys/dev/raidframe/rf_netbsdkintf.c		1.341
 	Access to the SET_LAST_UNIT ioctl.
 	[christos, ticket #1457]
 
+sys/arch/amd64/amd64/locore.S			1.124 via patch
+sys/arch/i386/i386/locore.S			1.146 via patch
+sys/arch/i386/i386/machdep.c			1.783 via patch
+sys/arch/i386/i386/trap.c			1.288 via patch
+
+	Remove the osyscall call gate on i386, and emulate it.
+	There is a one-instruction race in it that could panic
+	the kernel.
+	[maxv, ticket #1441]
 
