@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.1,v 1.1.2.16 2017/07/12 18:52:40 sborrill Exp $
+# $NetBSD: CHANGES-7.1.1,v 1.1.2.17 2017/07/20 01:43:30 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.1.1
 release:
@@ -1707,4 +1707,14 @@ sys/external/bsd/ipf/netinet/ip_frag.c		1.5
 	Free the right fragment. This will cause use after free issues and
 	eventually panic.
 	[christos, ticket #1412]
+
+sys/arch/amd64/amd64/locore.S			1.124 via patch
+sys/arch/i386/i386/locore.S			1.146 via patch
+sys/arch/i386/i386/machdep.c			1.783 via patch
+sys/arch/i386/i386/trap.c			1.288 via patch
+
+	Remove the osyscall call gate on i386, and emulate it.
+	There is a one-instruction race in it that could panic
+	the kernel.
+	[maxv, ticket #1441]
 
