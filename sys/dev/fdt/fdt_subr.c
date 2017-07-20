@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.13.2.1 2017/07/18 19:13:09 snj Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.13.2.2 2017/07/20 01:20:07 snj Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.13.2.1 2017/07/18 19:13:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.13.2.2 2017/07/20 01:20:07 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
-#include <sys/kmem.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -108,22 +107,15 @@ int
 fdtbus_get_phandle(int phandle, const char *prop)
 {
 	u_int phandle_ref;
-	u_int *buf;
+	const u_int *buf;
 	int len;
 
-	len = OF_getproplen(phandle, prop);
-	if (len < sizeof(phandle_ref))
+	buf = fdt_getprop(fdtbus_get_data(),
+	    fdtbus_phandle2offset(phandle), prop, &len);
+	if (buf == NULL || len < sizeof(phandle_ref))
 		return -1;
 
-	buf = kmem_alloc(len, KM_SLEEP);
-
-	if (OF_getprop(phandle, prop, buf, len) != len) {
-		kmem_free(buf, len);
-		return -1;
-	}
-
-	phandle_ref = fdt32_to_cpu(buf[0]);
-	kmem_free(buf, len);
+	phandle_ref = be32dec(buf);
 
 	return fdtbus_get_phandle_from_native(phandle_ref);
 }
