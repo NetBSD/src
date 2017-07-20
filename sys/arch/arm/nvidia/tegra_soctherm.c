@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soctherm.c,v 1.4 2017/04/16 12:28:21 jmcneill Exp $ */
+/* $NetBSD: tegra_soctherm.c,v 1.5 2017/07/20 01:46:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soctherm.c,v 1.4 2017/04/16 12:28:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soctherm.c,v 1.5 2017/07/20 01:46:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -159,13 +159,17 @@ CFATTACH_DECL_NEW(tegra_soctherm, sizeof(struct tegra_soctherm_softc),
 #define SENSOR_SET_CLEAR(sc, s, reg, set, clr)	\
     tegra_reg_set_clear((sc)->sc_bst, (sc)->sc_bsh, (s)->s_base + (reg), (set), (clr))
 
+static const struct of_compat_data compat_data[] = {
+	{ "nvidia,tegra124-soctherm",	(uintptr_t)&tegra124_soctherm_config },
+	{ NULL }
+};
+
 static int
 tegra_soctherm_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,tegra124-soctherm", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -173,25 +177,26 @@ tegra_soctherm_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_soctherm_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
 
-	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
-	sc->sc_clk_tsensor = fdtbus_clock_get(faa->faa_phandle, "tsensor");
+	sc->sc_clk_tsensor = fdtbus_clock_get(phandle, "tsensor");
 	if (sc->sc_clk_tsensor == NULL) {
 		aprint_error(": couldn't get clock tsensor\n");
 		return;
 	}
-	sc->sc_clk_soctherm = fdtbus_clock_get(faa->faa_phandle, "soctherm");
+	sc->sc_clk_soctherm = fdtbus_clock_get(phandle, "soctherm");
 	if (sc->sc_clk_soctherm == NULL) {
 		aprint_error(": couldn't get clock soctherm\n");
 		return;
 	}
-	sc->sc_rst_soctherm = fdtbus_reset_get(faa->faa_phandle, "soctherm");
+	sc->sc_rst_soctherm = fdtbus_reset_get(phandle, "soctherm");
 	if (sc->sc_rst_soctherm == NULL) {
 		aprint_error(": couldn't get reset soctherm\n");
 		return;
@@ -208,12 +213,9 @@ tegra_soctherm_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": SOC_THERM\n");
 
-	if (tegra_chip_id() == CHIP_ID_TEGRA124) {
-		sc->sc_config = &tegra124_soctherm_config;
-	}
-
+	sc->sc_config = (const void *)of_search_compatible(phandle, compat_data);
 	if (sc->sc_config == NULL) {
-		aprint_error_dev(self, "unsupported chip ID\n");
+		aprint_error_dev(self, "unsupported SoC\n");
 		return;
 	}
 
