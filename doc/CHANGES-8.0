@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.27 2017/07/19 00:19:51 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.28 2017/07/20 01:24:13 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -4499,4 +4499,15 @@ sys/arch/evbarm/include/bootconfig.h		1.8
 
 	Build fix for ticket #114.
 	[jmcneill, ticket #144]
+
+etc/etc.evbarm/Makefile.inc			1.85, 1.86
+
+	Replace HUMMINGBIRD_A31 with the SUNXI kernel.
+	[jmcneill, ticket #146]
+
+sys/dev/fdt/fdt_subr.c				1.17
+
+	Fix a problem with fdtbus_get_phandle where we were passing
+	size -1 to kmem_alloc when the property was not found.
+	[jmcneill, ticket #147]
 
