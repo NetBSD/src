@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.6 2017/06/02 13:53:29 jmcneill Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.7 2017/07/20 01:46:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.6 2017/06/02 13:53:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.7 2017/07/20 01:46:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -97,9 +97,19 @@ tegra_platform_devmap(void)
 }
 
 static void
-tegra_platform_bootstrap(void)
+tegra124_platform_bootstrap(void)
 {
 	tegra_bootstrap();
+
+	tegra124_mpinit();
+}
+
+static void
+tegra210_platform_bootstrap(void)
+{
+	tegra_bootstrap();
+
+	tegra210_mpinit();
 }
 
 static void
@@ -196,9 +206,9 @@ tegra_platform_uart_freq(void)
 	return PLLP_OUT0_FREQ;
 }
 
-static const struct arm_platform tegra_platform = {
+static const struct arm_platform tegra124_platform = {
 	.devmap = tegra_platform_devmap,
-	.bootstrap = tegra_platform_bootstrap,
+	.bootstrap = tegra124_platform_bootstrap,
 	.init_attach_args = tegra_platform_init_attach_args,
 	.early_putchar = tegra_platform_early_putchar,
 	.device_register = tegra_platform_device_register,
@@ -207,5 +217,17 @@ static const struct arm_platform tegra_platform = {
 	.uart_freq = tegra_platform_uart_freq,
 };
 
-ARM_PLATFORM(tegra124, "nvidia,tegra124", &tegra_platform);
-ARM_PLATFORM(tegra210, "nvidia,tegra210", &tegra_platform);
+ARM_PLATFORM(tegra124, "nvidia,tegra124", &tegra124_platform);
+
+static const struct arm_platform tegra210_platform = {
+	.devmap = tegra_platform_devmap,
+	.bootstrap = tegra210_platform_bootstrap,
+	.init_attach_args = tegra_platform_init_attach_args,
+	.early_putchar = tegra_platform_early_putchar,
+	.device_register = tegra_platform_device_register,
+	.reset = tegra_platform_reset,
+	.delay = tegra_platform_delay,
+	.uart_freq = tegra_platform_uart_freq,
+};
+
+ARM_PLATFORM(tegra210, "nvidia,tegra210", &tegra210_platform);
