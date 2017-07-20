@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.528 2017/07/18 08:22:55 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.529 2017/07/20 10:00:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.528 2017/07/18 08:22:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.529 2017/07/20 10:00:25 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2480,17 +2480,13 @@ alloc_retry:
 			sc->sc_nvm_k1_enabled = 0;
 	}
 
-	/*
-	 * Determine if we're TBI,GMII or SGMII mode, and initialize the
-	 * media structures accordingly.
-	 */
+	/* Determine if we're GMII, TBI, SERDES or SGMII mode */
 	if (sc->sc_type == WM_T_ICH8 || sc->sc_type == WM_T_ICH9
 	    || sc->sc_type == WM_T_ICH10 || sc->sc_type == WM_T_PCH
 	    || sc->sc_type == WM_T_PCH2 || sc->sc_type == WM_T_PCH_LPT
 	    || sc->sc_type == WM_T_PCH_SPT || sc->sc_type == WM_T_82573
 	    || sc->sc_type == WM_T_82574 || sc->sc_type == WM_T_82583) {
-		/* STATUS_TBIMODE reserved/reused, can't rely on it */
-		wm_gmii_mediainit(sc, wmp->wmp_product);
+		/* Copper only */
 	} else if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
 	    || (sc->sc_type ==WM_T_82580) || (sc->sc_type ==WM_T_I350)
 	    || (sc->sc_type ==WM_T_I354) || (sc->sc_type ==WM_T_I210)
@@ -2556,11 +2552,6 @@ alloc_retry:
 		else
 			reg &= ~CTRL_EXT_I2C_ENA;
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
-
-		if (sc->sc_mediatype == WM_MEDIATYPE_COPPER)
-			wm_gmii_mediainit(sc, wmp->wmp_product);
-		else
-			wm_tbi_mediainit(sc);
 	} else if (sc->sc_type < WM_T_82543 ||
 	    (CSR_READ(sc, WMREG_STATUS) & STATUS_TBIMODE) != 0) {
 		if (sc->sc_mediatype == WM_MEDIATYPE_COPPER) {
@@ -2568,20 +2559,24 @@ alloc_retry:
 			    "WARNING: TBIMODE set on 1000BASE-T product!\n");
 			sc->sc_mediatype = WM_MEDIATYPE_FIBER;
 		}
-		wm_tbi_mediainit(sc);
 	} else {
 		if (sc->sc_mediatype == WM_MEDIATYPE_FIBER) {
 			aprint_error_dev(sc->sc_dev,
 			    "WARNING: TBIMODE clear on 1000BASE-X product!\n");
 			sc->sc_mediatype = WM_MEDIATYPE_COPPER;
 		}
-		wm_gmii_mediainit(sc, wmp->wmp_product);
 	}
 	snprintb(buf, sizeof(buf), WM_FLAGS, sc->sc_flags);
 	aprint_verbose_dev(sc->sc_dev, "%s\n", buf);
 
 	/* Set device properties (macflags) */
 	prop_dictionary_set_uint32(dict, "macflags", sc->sc_flags);
+
+	/* Initialize the media structures accordingly. */
+	if (sc->sc_mediatype == WM_MEDIATYPE_COPPER)
+		wm_gmii_mediainit(sc, wmp->wmp_product);
+	else
+		wm_tbi_mediainit(sc); /* All others */
 
 	ifp = &sc->sc_ethercom.ec_if;
 	xname = device_xname(sc->sc_dev);
