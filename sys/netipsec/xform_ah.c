@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.66 2017/07/20 03:12:05 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.67 2017/07/20 03:17:59 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.66 2017/07/20 03:12:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.67 2017/07/20 03:17:59 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -618,12 +618,11 @@ static int
 ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 {
 	const struct auth_hash *ahx;
-	struct tdb_crypto *tc;
+	struct tdb_crypto *tc = NULL;
 	struct newah *ah;
-	int hl, rplen, authsize, error;
-
+	int hl, rplen, authsize, error, stat = AH_STAT_HDROPS;
 	struct cryptodesc *crda;
-	struct cryptop *crp;
+	struct cryptop *crp = NULL;
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 
@@ -638,19 +637,19 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	IP6_EXTHDR_GET(ah, struct newah *, m, skip, rplen);
 	if (ah == NULL) {
 		DPRINTF(("%s: cannot pullup header\n", __func__));
-		AH_STATINC(AH_STAT_HDROPS);	/*XXX*/
-		m_freem(m);
-		return ENOBUFS;
+		error = ENOBUFS;
+		stat = AH_STAT_HDROPS;	/*XXX*/
+		goto bad;
 	}
 
 	/* Check replay window, if applicable. */
 	if (sav->replay && !ipsec_chkreplay(ntohl(ah->ah_seq), sav)) {
 		char buf[IPSEC_LOGSASTRLEN];
-		AH_STATINC(AH_STAT_REPLAY);
 		DPRINTF(("%s: packet replay failure: %s\n", __func__,
 		    ipsec_logsastr(sav, buf, sizeof(buf))));
-		m_freem(m);
-		return ENOBUFS;
+		stat = AH_STAT_REPLAY;
+		error = ENOBUFS;
+		goto bad;
 	}
 
 	/* Verify AH header length. */
@@ -664,9 +663,9 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 			hl, (u_long) (authsize + rplen - sizeof(struct ah)),
 			ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 			(u_long) ntohl(sav->spi)));
-		AH_STATINC(AH_STAT_BADAUTHL);
-		m_freem(m);
-		return EACCES;
+		stat = AH_STAT_BADAUTHL;
+		error = EACCES;
+		goto bad;
 	}
 	AH_STATADD(AH_STAT_IBYTES, m->m_pkthdr.len - skip - hl);
 
@@ -674,9 +673,9 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	crp = crypto_getreq(1);
 	if (crp == NULL) {
 		DPRINTF(("%s: failed to acquire crypto descriptor\n", __func__));
-		AH_STATINC(AH_STAT_CRYPTO);
-		m_freem(m);
-		return ENOBUFS;
+		stat = AH_STAT_CRYPTO;
+		error = ENOBUFS;
+		goto bad;
 	}
 
 	crda = crp->crp_desc;
@@ -699,20 +698,15 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	tc = malloc(size, M_XDATA, M_NOWAIT|M_ZERO);
 	if (tc == NULL) {
 		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
-		AH_STATINC(AH_STAT_CRYPTO);
-		crypto_freereq(crp);
-		m_freem(m);
-		return ENOBUFS;
+		stat = AH_STAT_CRYPTO;
+		error = ENOBUFS;
+		goto bad;
 	}
 
 	error = m_makewritable(&m, 0, extra, M_NOWAIT);
 	if (error) {
-		m_freem(m);
 		DPRINTF(("%s: failed to m_makewritable\n", __func__));
-		AH_STATINC(AH_STAT_HDROPS);
-		free(tc, M_XDATA);
-		crypto_freereq(crp);
-		return error;
+		goto bad;
 	}
 
 	/*
@@ -728,10 +722,8 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	    skip, ahx->type, 0);
 	if (error != 0) {
 		/* NB: mbuf is free'd by ah_massage_headers */
-		AH_STATINC(AH_STAT_HDROPS);
-		free(tc, M_XDATA);
-		crypto_freereq(crp);
-		return error;
+		m = NULL;
+		goto bad;
 	}
 
 	/* Crypto operation descriptor. */
@@ -758,6 +750,16 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		 crda->crd_len, crda->crd_skip, crda->crd_inject));
 
 	return crypto_dispatch(crp);
+
+bad:
+	if (tc != NULL)
+		free(tc, M_XDATA);
+	if (crp != NULL)
+		crypto_freereq(crp);
+	if (m != NULL)
+		m_freem(m);
+	AH_STATINC(stat);
+	return error;
 }
 
 #ifdef INET6
