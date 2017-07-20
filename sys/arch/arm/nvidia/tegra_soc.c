@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soc.c,v 1.13 2017/05/28 23:32:14 jmcneill Exp $ */
+/* $NetBSD: tegra_soc.c,v 1.14 2017/07/20 01:46:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.13 2017/05/28 23:32:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soc.c,v 1.14 2017/07/20 01:46:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,8 +52,6 @@ bus_space_handle_t tegra_ppsb_bsh;
 bus_space_handle_t tegra_apb_bsh;
 bus_space_handle_t tegra_ahb_a2_bsh;
 
-static void	tegra_mpinit(void);
-
 void
 tegra_bootstrap(void)
 {
@@ -73,54 +71,4 @@ tegra_bootstrap(void)
 	    TEGRA_AHB_A2_BASE, TEGRA_AHB_A2_SIZE, 0,
 	    &tegra_ahb_a2_bsh) != 0)
 		panic("couldn't map AHB A2");
-
-	tegra_mpinit();
-}
-
-static void
-tegra_mpinit(void)
-{
-#if defined(MULTIPROCESSOR)
-	switch (tegra_chip_id()) {
-#ifdef SOC_TEGRA124
-	case CHIP_ID_TEGRA124:
-		tegra124_mpinit();
-		break;
-#endif
-#ifdef SOC_TEGRA210
-	case CHIP_ID_TEGRA210:
-		tegra210_mpinit();
-		break;
-#endif
-	default:
-		panic("Unsupported SOC ID %#x", tegra_chip_id());
-	}
-#endif
-}
-
-u_int
-tegra_chip_id(void)
-{
-	static u_int chip_id = 0;
-
-	if (!chip_id) {
-		const bus_space_tag_t bst = &armv7_generic_bs_tag;
-		const bus_space_handle_t bsh = tegra_apb_bsh;
-		const uint32_t v = bus_space_read_4(bst, bsh,
-		    APB_MISC_GP_HIDREV_0_REG);
-		chip_id = __SHIFTOUT(v, APB_MISC_GP_HIDREV_0_CHIPID);
-	}
-
-	return chip_id;
-}
-
-const char *
-tegra_chip_name(void)
-{
-	switch (tegra_chip_id()) {
-	case CHIP_ID_TEGRA124:	return "Tegra K1 (T124)";
-	case CHIP_ID_TEGRA132:	return "Tegra K1 (T132)";
-	case CHIP_ID_TEGRA210:	return "Tegra X1 (T210)";
-	default:		return "Unknown Tegra SoC";
-	}
 }
