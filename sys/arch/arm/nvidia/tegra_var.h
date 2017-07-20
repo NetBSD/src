@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.38 2017/06/02 00:16:27 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.39 2017/07/20 01:46:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,15 +40,6 @@ extern struct bus_space armv7_generic_a4x_bs_tag;
 extern bus_space_handle_t tegra_ppsb_bsh;
 extern bus_space_handle_t tegra_apb_bsh;
 
-#define CHIP_ID_TEGRA20		0x20
-#define CHIP_ID_TEGRA30		0x30
-#define CHIP_ID_TEGRA114	0x35
-#define CHIP_ID_TEGRA124	0x40
-#define CHIP_ID_TEGRA132	0x13
-#define CHIP_ID_TEGRA210	0x21
-
-u_int	tegra_chip_id(void);
-const char *tegra_chip_name(void);
 void	tegra_bootstrap(void);
 
 struct tegra_gpio_pin;
