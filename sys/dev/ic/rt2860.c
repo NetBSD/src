@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.26 2017/05/23 02:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.27 2017/07/20 18:17:25 maya Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$FreeBSD: head/sys/dev/ral/rt2860.c 306591 2016-10-02 20:35:55Z avos $ */
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.26 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.27 2017/07/20 18:17:25 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -466,7 +466,7 @@ rt2860_detach(void *xsc)
 	}
 
 	if (sc->ucode != NULL)
-		free(sc->ucode, M_DEVBUF);
+		firmware_free(sc->ucode, sc->ucsize);
 
 	return 0;
 }
