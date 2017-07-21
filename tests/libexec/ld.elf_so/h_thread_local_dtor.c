@@ -75,10 +75,6 @@ main(void)
 	pthread_cond_wait(&cond1, &mutex);
 	pthread_mutex_unlock(&mutex);
 
-	pthread_mutex_lock(&mutex);
-	pthread_cond_signal(&cond2);
-	pthread_mutex_unlock(&mutex);
-
 	printf("before dlclose\n");
 	dlclose(dso);
 	printf("after dlclose\n");
@@ -86,6 +82,11 @@ main(void)
 	if (dso == NULL)
 		errx(1, "%s", dlerror());
 	dlclose(dso);
+
+	pthread_mutex_lock(&mutex);
+	pthread_cond_signal(&cond2);
+	pthread_mutex_unlock(&mutex);
+
 	if (pthread_join(thread, NULL))
 		err(1, "pthread_join");
 	return 0;
