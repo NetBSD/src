@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.48 2017/07/12 07:00:40 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.49 2017/07/21 04:55:36 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.48 2017/07/12 07:00:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.49 2017/07/21 04:55:36 ozaki-r Exp $");
 
 /*
  * IPsec input processing.
@@ -324,7 +324,6 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 {
 	int prot, af __diagused, sproto;
 	struct ip *ip;
-	struct tdb_ident *tdbi;
 	struct secasindex *saidx;
 	int error;
 
@@ -461,30 +460,6 @@ cantpull:
 	}
 #endif /* INET6 */
 
-	/*
-	 * Record what we've done to the packet (under what SA it was
-	 * processed).
-	 */
-	if (sproto != IPPROTO_IPCOMP) {
-		struct m_tag *mtag;
-		mtag = m_tag_get(PACKET_TAG_IPSEC_IN_DONE,
-		    sizeof(struct tdb_ident), M_NOWAIT);
-		if (mtag == NULL) {
-			IPSECLOG(LOG_DEBUG, "failed to get tag\n");
-			IPSEC_ISTAT(sproto, ESP_STAT_HDROPS,
-			    AH_STAT_HDROPS, IPCOMP_STAT_HDROPS);
-			error = ENOMEM;
-			goto bad;
-		}
-
-		tdbi = (struct tdb_ident *)(mtag + 1);
-		memcpy(&tdbi->dst, &saidx->dst, saidx->dst.sa.sa_len);
-		tdbi->proto = sproto;
-		tdbi->spi = sav->spi;
-
-		m_tag_prepend(m, mtag);
-	}
-
 	key_sa_recordxfer(sav, m);		/* record data transfer */
 
 	if ((inetsw[ip_protox[prot]].pr_flags & PR_LASTHDR) != 0 &&
@@ -565,7 +540,6 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
 {
 	int af __diagused, sproto;
 	struct ip6_hdr *ip6;
-	struct tdb_ident *tdbi;
 	struct secasindex *saidx;
 	int nxt;
 	u_int8_t prot, nxt8;
@@ -684,30 +658,6 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
 			goto bad;
 		}
 #endif /*XXX*/
-	}
-
-	/*
-	 * Record what we've done to the packet (under what SA it was
-	 * processed).
-	 */
-	if (sproto != IPPROTO_IPCOMP) {
-		struct m_tag *mtag;
-		mtag = m_tag_get(PACKET_TAG_IPSEC_IN_DONE,
-		    sizeof(struct tdb_ident), M_NOWAIT);
-		if (mtag == NULL) {
-			IPSECLOG(LOG_DEBUG, "failed to get tag\n");
-			IPSEC_ISTAT(sproto, ESP_STAT_HDROPS,
-			    AH_STAT_HDROPS, IPCOMP_STAT_HDROPS);
-			error = ENOMEM;
-			goto bad;
-		}
-
-		tdbi = (struct tdb_ident *)(mtag + 1);
-		memcpy(&tdbi->dst, &saidx->dst, sizeof(union sockaddr_union));
-		tdbi->proto = sproto;
-		tdbi->spi = sav->spi;
-
-		m_tag_prepend(m, mtag);
 	}
 
 	key_sa_recordxfer(sav, m);
