@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_reg.h,v 1.23 2017/05/30 22:55:26 jmcneill Exp $ */
+/* $NetBSD: tegra_reg.h,v 1.24 2017/07/21 01:01:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -72,8 +72,6 @@
 #define TEGRA_PPSB_VBASE	0xfb000000
 #define TEGRA_APB_VBASE		0xfc000000
 #define TEGRA_AHB_A2_VBASE	0xfd000000
-
-#define TEGRA_REF_FREQ		12000000
 
 /* APB */
 #define TEGRA_MPIO_OFFSET	0x00000000
