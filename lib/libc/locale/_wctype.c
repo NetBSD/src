@@ -1,4 +1,4 @@
-/* $NetBSD: _wctype.c,v 1.9.40.1 2017/07/14 15:53:08 perseant Exp $ */
+/* $NetBSD: _wctype.c,v 1.9.40.2 2017/07/21 20:22:29 perseant Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -60,20 +60,20 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _wctype.c,v 1.9.40.1 2017/07/14 15:53:08 perseant Exp $");
+__RCSID("$NetBSD: _wctype.c,v 1.9.40.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <assert.h>
 #include <wctype.h>
 
+#include "citrus_ctype.h"
 #include "runetype_local.h"
-#include "rune_iso10646.h"
 #include "_wctrans_local.h"
 #include "_wctype_local.h"
 
 _RuneType
-_runetype_priv(_RuneLocale const *rl, /* kuten */ wint_t wc)
+_runetype_priv(_RuneLocale const *rl, wint_ucs4_t wc)
 {
 	__nbrune_t wc0;
 	_RuneRange const *rr;
@@ -82,10 +82,13 @@ _runetype_priv(_RuneLocale const *rl, /* kuten */ wint_t wc)
 
 	_DIAGASSERT(rl != NULL);
 
+	_citrus_ctype_ucs2kt(rl->rl_citrus_ctype, &wc, wc);
+
 	if (wc == WEOF)
 		return 0U;
 	if (_RUNE_ISCACHED(wc))
 		return rl->rl_runetype[(size_t)wc];
+
 	wc0 = (__nbrune_t)wc;
 	rr = &rl->rl_runetype_ext;
 	_DIAGASSERT(rr != NULL);
@@ -107,7 +110,7 @@ _runetype_priv(_RuneLocale const *rl, /* kuten */ wint_t wc)
 
 int
 _iswctype_priv(_RuneLocale const *rl,
-    /* kuten */ wint_t wc, _WCTypeEntry const *te)
+	       wint_kuten_t wc, _WCTypeEntry const *te)
 {
 	return !!(_runetype_priv(rl, wc) & te->te_mask);
 }

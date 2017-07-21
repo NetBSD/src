@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf1632.c,v 1.12.34.1 2017/07/14 15:53:07 perseant Exp $	*/
+/*	$NetBSD: citrus_utf1632.c,v 1.12.34.2 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf1632.c,v 1.12.34.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_utf1632.c,v 1.12.34.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -79,6 +79,7 @@ typedef struct {
 #define _ENCODING_IS_STATE_DEPENDENT	0
 #define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
 
+#include "citrus_u2k_template.h"
 
 static __inline void
 /*ARGSUSED*/
@@ -88,12 +89,12 @@ _citrus_UTF1632_init_state(_UTF1632EncodingInfo *ei, _UTF1632State *s)
 }
 
 static int
-_citrus_UTF1632_mbrtowc_priv(_UTF1632EncodingInfo *ei, wchar_t *pwc,
+_citrus_UTF1632_mbrtowc_priv(_UTF1632EncodingInfo *ei, wchar_ucs4_t *pwc,
 			     const char **s, size_t n, _UTF1632State *psenc,
 			     size_t *nresult)
 {
 	int chlenbak, endian, needlen;
-	wchar_t wc;
+	wchar_kuten_t wc;
 	size_t result;
 	const char *s0;
 
@@ -167,11 +168,11 @@ refetch:
 			switch (endian) {
 			case _ENDIAN_LITTLE:
 				wc = (psenc->ch[0] |
-				      ((wchar_t)psenc->ch[1] << 8));
+				      ((wchar_kuten_t)psenc->ch[1] << 8));
 				break;
 			case _ENDIAN_BIG:
 				wc = (psenc->ch[1] |
-				      ((wchar_t)psenc->ch[0] << 8));
+				      ((wchar_kuten_t)psenc->ch[0] << 8));
 				break;
 			default:
 				goto ilseq;
@@ -190,13 +191,13 @@ refetch:
 				if (psenc->ch[3]<0xDC || psenc->ch[3]>0xDF)
 					goto ilseq;
 				wc |= psenc->ch[2];
-				wc |= (wchar_t)(psenc->ch[3] & 3) << 8;
+				wc |= (wchar_kuten_t)(psenc->ch[3] & 3) << 8;
 				break;
 			case _ENDIAN_BIG:
 				if (psenc->ch[2]<0xDC || psenc->ch[2]>0xDF)
 					goto ilseq;
 				wc |= psenc->ch[3];
-				wc |= (wchar_t)(psenc->ch[2] & 3) << 8;
+				wc |= (wchar_kuten_t)(psenc->ch[2] & 3) << 8;
 				break;
 			default:
 				goto ilseq;
@@ -208,15 +209,15 @@ refetch:
 		switch (endian) {
 		case _ENDIAN_LITTLE:
 			wc = (psenc->ch[0] |
-			      ((wchar_t)psenc->ch[1] << 8) |
-			      ((wchar_t)psenc->ch[2] << 16) |
-			      ((wchar_t)psenc->ch[3] << 24));
+			      ((wchar_kuten_t)psenc->ch[1] << 8) |
+			      ((wchar_kuten_t)psenc->ch[2] << 16) |
+			      ((wchar_kuten_t)psenc->ch[3] << 24));
 			break;
 		case _ENDIAN_BIG:
 			wc = (psenc->ch[3] |
-			      ((wchar_t)psenc->ch[2] << 8) |
-			      ((wchar_t)psenc->ch[1] << 16) |
-			      ((wchar_t)psenc->ch[0] << 24));
+			      ((wchar_kuten_t)psenc->ch[2] << 8) |
+			      ((wchar_kuten_t)psenc->ch[1] << 16) |
+			      ((wchar_kuten_t)psenc->ch[0] << 24));
 			break;
 		default:
 			goto ilseq;
@@ -225,8 +226,7 @@ refetch:
 			goto ilseq;
 	}
 
-
-	*pwc = wc;
+	_citrus_UTF1632_kt2ucs(ei, pwc, wc);
 	psenc->chlen = 0;
 	*nresult = result;
 	*s = s0;
@@ -247,10 +247,10 @@ restart:
 
 static int
 _citrus_UTF1632_wcrtomb_priv(_UTF1632EncodingInfo *ei, char *s, size_t n,
-			     wchar_t wc, _UTF1632State *psenc,
+			     wchar_ucs4_t wc, _UTF1632State *psenc,
 			     size_t *nresult)
 {
-	wchar_t wc2;
+	wchar_kuten_t wc2;
 	static const char _bom[4] = {
 #if BYTE_ORDER == BIG_ENDIAN
 	    0x00, 0x00, 0xFE, 0xFF,
@@ -264,6 +264,8 @@ _citrus_UTF1632_wcrtomb_priv(_UTF1632EncodingInfo *ei, char *s, size_t n,
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(s != NULL);
+
+	_citrus_UTF1632_ucs2kt(ei, &wc, wc);
 
 	cnt = (size_t)0;
 	if (psenc->current_endian == _ENDIAN_UNKNOWN) {
@@ -432,7 +434,7 @@ static int
 _citrus_UTF1632_stdenc_wctocs(struct _citrus_stdenc *ce,
 			      _csid_t * __restrict csid,
 			      _index_t * __restrict idx,
-			      wchar_t wc)
+			      wchar_kuten_t wc)
 {
 
 	_DIAGASSERT(csid != NULL && idx != NULL);
@@ -446,7 +448,7 @@ _citrus_UTF1632_stdenc_wctocs(struct _citrus_stdenc *ce,
 static int
 /*ARGSUSED*/
 _citrus_UTF1632_stdenc_cstowc(struct _citrus_stdenc *ce,
-			      wchar_t * __restrict wc,
+			      wchar_kuten_t * __restrict wc,
 			      _csid_t csid, _index_t idx)
 {
 
@@ -455,7 +457,7 @@ _citrus_UTF1632_stdenc_cstowc(struct _citrus_stdenc *ce,
 	if (csid != 0)
 		return (EILSEQ);
 
-	*wc = (wchar_t)idx;
+	*wc = (wchar_kuten_t)idx;
 
 	return (0);
 }

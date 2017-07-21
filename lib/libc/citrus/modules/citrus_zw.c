@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_zw.c,v 1.5.22.1 2017/07/14 15:53:07 perseant Exp $ */
+/* $NetBSD: citrus_zw.c,v 1.5.22.2 2017/07/21 20:22:29 perseant Exp $ */
 
 /*-
  * Copyright (c)2004, 2006 Citrus Project,
@@ -29,7 +29,7 @@
  
 #include <sys/cdefs.h>
 #if defined(LIB_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_zw.c,v 1.5.22.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_zw.c,v 1.5.22.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIB_SCCS and not lint */
 
 #include <sys/types.h>
@@ -96,6 +96,8 @@ typedef struct {
 #define _ENCODING_IS_STATE_DEPENDENT		1
 #define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	((_ps_)->charset != NONE)
 
+#include "citrus_u2k_template.h"
+
 static __inline void
 /*ARGSUSED*/
 _citrus_ZW_init_state(_ZWEncodingInfo * __restrict ei,
@@ -134,12 +136,12 @@ _citrus_ZW_unpack_state(_ZWEncodingInfo * __restrict ei,
 
 static int
 _citrus_ZW_mbrtowc_priv(_ZWEncodingInfo * __restrict ei,
-	wchar_t * __restrict pwc, const char **__restrict s, size_t n,
+	wchar_ucs4_t * __restrict pwc, const char **__restrict s, size_t n,
 	_ZWState * __restrict psenc, size_t * __restrict nresult)
 {
 	const char *s0;
 	int ch, len;
-	wchar_t	 wc;
+	wchar_kuten_t	 wc;
 
 	/* ei may be unused */
 	/* pwc may be null */
@@ -187,7 +189,7 @@ loop:
 		ch = (unsigned char)psenc->ch[0];
 		if (ch > 0x7F)
 			goto ilseq;
-		wc = (wchar_t)ch;
+		wc = (wchar_kuten_t)ch;
 		psenc->chlen = 0;
 		break;
 	case NONE:
@@ -198,7 +200,7 @@ loop:
 		if (ch != 'z') {
 			if (ch != '\n' && ch != '\0')
 				psenc->charset = ASCII;
-			wc = (wchar_t)ch;
+			wc = (wchar_kuten_t)ch;
 			psenc->chlen = 0;
 			break;
 		}
@@ -224,7 +226,7 @@ loop:
 			ch = (unsigned char)psenc->ch[0];
 			if (ch == '\0') {
 				psenc->charset = NONE;
-				wc = (wchar_t)ch;
+				wc = (wchar_kuten_t)ch;
 				psenc->chlen = 0;
 				break;
 			} else if (ch == '\n') {
@@ -237,18 +239,18 @@ loop:
 			STORE;
 			if (psenc->ch[0] == ' ') {
 				ch = (unsigned char)psenc->ch[1];
-				wc = (wchar_t)ch;
+				wc = (wchar_kuten_t)ch;
 				psenc->chlen = 0;
 				break;
 			} else if (psenc->ch[0] == '#') {
 				ch = (unsigned char)psenc->ch[1];
 				if (ch == '\n') {
 					psenc->charset = NONE;
-					wc = (wchar_t)ch;
+					wc = (wchar_kuten_t)ch;
 					psenc->chlen = 0;
 					break;
 				} else if (ch == ' ') {
-					wc = (wchar_t)ch;
+					wc = (wchar_kuten_t)ch;
 					psenc->chlen = 0;
 					break;
 				}
@@ -256,14 +258,14 @@ loop:
 			ch = (unsigned char)psenc->ch[0];
 			if (ch < 0x21 || ch > 0x7E)
 				goto ilseq;
-			wc = (wchar_t)(ch << 8);
+			wc = (wchar_kuten_t)(ch << 8);
 			ch = (unsigned char)psenc->ch[1];
 			if (ch < 0x21 || ch > 0x7E) {
 ilseq:
 				*nresult = (size_t)-1;
 				return EILSEQ;
 			}
-			wc |= (wchar_t)ch;
+			wc |= (wchar_kuten_t)ch;
 			psenc->chlen = 0;
 			break;
 		default:
@@ -274,7 +276,7 @@ ilseq:
 		return EINVAL;
 	}
 	if (pwc != NULL)
-		*pwc = wc;
+	        _citrus_ZW_kt2ucs(ei, pwc, wc);
 
 	*nresult = (size_t)(wc == 0 ? 0 : len);
 	*s = s0;
@@ -285,7 +287,7 @@ ilseq:
 static int
 /*ARGSUSED*/
 _citrus_ZW_wcrtomb_priv(_ZWEncodingInfo * __restrict ei,
-	char *__restrict s, size_t n, wchar_t wc,
+	char *__restrict s, size_t n, wchar_ucs4_t wc,
 	_ZWState * __restrict psenc, size_t * __restrict nresult)
 {
 	int ch;
@@ -294,6 +296,8 @@ _citrus_ZW_wcrtomb_priv(_ZWEncodingInfo * __restrict ei,
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(psenc != NULL);
 	_DIAGASSERT(nresult != NULL);
+
+	_citrus_ZW_ucs2kt(ei, &wc, wc);
 
 	if (psenc->chlen != 0)
 		return EINVAL;
@@ -450,7 +454,7 @@ _citrus_ZW_stdenc_get_state_desc_generic(_ZWEncodingInfo * __restrict ei,
 static __inline int
 /*ARGSUSED*/
 _citrus_ZW_stdenc_wctocs(struct _citrus_stdenc *ce,
-	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_t wc)
+	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_kuten_t wc)
 {
 	/* ce seems to be unused */
 	_DIAGASSERT(csid != NULL);
@@ -465,7 +469,7 @@ _citrus_ZW_stdenc_wctocs(struct _citrus_stdenc *ce,
 static int
 /*ARGSUSED*/
 _citrus_ZW_stdenc_cstowc(struct _citrus_stdenc *ce,
-	 wchar_t * __restrict wc, _csid_t csid, _index_t idx)
+	 wchar_kuten_t * __restrict wc, _csid_t csid, _index_t idx)
 {
 	/* ce seems to be unused */
 	_DIAGASSERT(wc != NULL);
@@ -476,7 +480,7 @@ _citrus_ZW_stdenc_cstowc(struct _citrus_stdenc *ce,
 	default:
 		return EINVAL;
 	}
-	*wc = (wchar_t)idx;
+	*wc = (wchar_kuten_t)idx;
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_viqr.c,v 1.6.22.1 2017/07/14 15:53:07 perseant Exp $ */
+/* $NetBSD: citrus_viqr.c,v 1.6.22.2 2017/07/21 20:22:29 perseant Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_viqr.c,v 1.6.22.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_viqr.c,v 1.6.22.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -93,17 +93,17 @@ static const char *mnemonic_rfc1456[0x100] = {
 
 typedef struct {
 	const char *name;
-	wchar_t value;
+	wchar_kuten_t value;
 } mnemonic_def_t;
 
 static const mnemonic_def_t mnemonic_ext[] = {
-/* add extra mnemonic here (should be sorted by wchar_t order). */
+/* add extra mnemonic here (should be sorted by wchar_kuten_t order). */
 };
 static const size_t mnemonic_ext_size =
 	sizeof(mnemonic_ext) / sizeof(mnemonic_def_t);
 
 static const char *
-mnemonic_ext_find(wchar_t wc, const mnemonic_def_t *head, size_t n)
+mnemonic_ext_find(wchar_kuten_t wc, const mnemonic_def_t *head, size_t n)
 {
 	const mnemonic_def_t *mid;
 
@@ -128,7 +128,7 @@ typedef struct mnemonic_t {
 	int ascii;
 	struct mnemonic_t *parent;
 	mnemonic_list_t child;
-	wchar_t value;
+	wchar_kuten_t value;
 } mnemonic_t;
 
 static mnemonic_t *
@@ -147,7 +147,7 @@ mnemonic_list_find(mnemonic_list_t *ml, int ch)
 }
 
 static mnemonic_t *
-mnemonic_create(mnemonic_t *parent, int ascii, wchar_t value)
+mnemonic_create(mnemonic_t *parent, int ascii, wchar_kuten_t value)
 {
 	mnemonic_t *m;
 
@@ -166,7 +166,7 @@ mnemonic_create(mnemonic_t *parent, int ascii, wchar_t value)
 
 static int
 mnemonic_append_child(mnemonic_t *m, const char *s,
-	wchar_t value, wchar_t invalid)
+	wchar_kuten_t value, wchar_kuten_t invalid)
 {
 	int ch;
 	mnemonic_t *m0;
@@ -179,7 +179,7 @@ mnemonic_append_child(mnemonic_t *m, const char *s,
 		return EINVAL;
 	m0 = mnemonic_list_find(&m->child, ch);
 	if (m0 == NULL) {
-		m0 = mnemonic_create(m, ch, (wchar_t)ch);
+		m0 = mnemonic_create(m, ch, (wchar_kuten_t)ch);
 		if (m0 == NULL)
 			return ENOMEM;
 		TAILQ_INSERT_TAIL(&m->child, m0, entry);
@@ -216,7 +216,7 @@ mnemonic_destroy(mnemonic_t *m)
 
 typedef struct {
 	size_t mb_cur_max;
-	wchar_t invalid;
+	wchar_kuten_t invalid;
 	mnemonic_t *mroot;
 } _VIQREncodingInfo;
 
@@ -252,6 +252,8 @@ typedef struct {
 #define _ENCODING_MB_CUR_MAX(_ei_)	(_ei_)->mb_cur_max
 #define _ENCODING_IS_STATE_DEPENDENT		1
 #define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
+
+#include "citrus_u2k_template.h"
 
 static void
 /*ARGSUSED*/
@@ -290,11 +292,11 @@ _citrus_VIQR_unpack_state(_VIQREncodingInfo * __restrict ei,
 
 static int
 _citrus_VIQR_mbrtowc_priv(_VIQREncodingInfo * __restrict ei,
-	wchar_t * __restrict pwc, const char ** __restrict s, size_t n,
+	wchar_ucs4_t * __restrict pwc, const char ** __restrict s, size_t n,
 	_VIQRState * __restrict psenc, size_t * __restrict nresult)
 {
 	const char *s0;
-	wchar_t wc;
+	wchar_kuten_t wc;
 	mnemonic_t *m, *m0;
 	size_t i;
 	int ch, escape;
@@ -347,9 +349,9 @@ _citrus_VIQR_mbrtowc_priv(_VIQREncodingInfo * __restrict ei,
 		++i;
 	psenc->chlen -= i;
 	memmove(&psenc->ch[0], &psenc->ch[i], psenc->chlen);
-	wc = (m == ei->mroot) ? (wchar_t)ch : m->value;
+	wc = (m == ei->mroot) ? (wchar_kuten_t)ch : m->value;
 	if (pwc != NULL)
-		*pwc = wc;
+	        _citrus_VIQR_kt2ucs(ei, pwc, wc);
 	*nresult = (size_t)(wc == 0 ? 0 : s0 - *s);
 	*s = s0;
 
@@ -358,7 +360,7 @@ _citrus_VIQR_mbrtowc_priv(_VIQREncodingInfo * __restrict ei,
 
 static int
 _citrus_VIQR_wcrtomb_priv(_VIQREncodingInfo * __restrict ei,
-	char * __restrict s, size_t n, wchar_t wc,
+	char * __restrict s, size_t n, wchar_ucs4_t wc,
 	_VIQRState * __restrict psenc, size_t * __restrict nresult)
 {
 	mnemonic_t *m;
@@ -369,6 +371,8 @@ _citrus_VIQR_wcrtomb_priv(_VIQREncodingInfo * __restrict ei,
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(psenc != NULL);
 	_DIAGASSERT(nresult != NULL);
+
+	_citrus_VIQR_ucs2kt(ei, &wc, wc);
 
 	switch (psenc->chlen) {
 	case 0: case 1:
@@ -453,7 +457,7 @@ _citrus_VIQR_put_state_reset(_VIQREncodingInfo * __restrict ei,
 static __inline int
 /*ARGSUSED*/
 _citrus_VIQR_stdenc_wctocs(struct _citrus_stdenc *ce,
-	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_t wc)
+	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_kuten_t wc)
 {
 	/* ei may be unused */
 	_DIAGASSERT(csid != NULL);
@@ -468,14 +472,14 @@ _citrus_VIQR_stdenc_wctocs(struct _citrus_stdenc *ce,
 static __inline int
 /*ARGSUSED*/
 _citrus_VIQR_stdenc_cstowc(struct _citrus_stdenc *ce,
-	wchar_t * __restrict pwc, _csid_t csid, _index_t idx)
+	wchar_kuten_t * __restrict pwc, _csid_t csid, _index_t idx)
 {
 	/* ei may be unused */
 	_DIAGASSERT(pwc != NULL);
 
 	if (csid != 0)
 		return EILSEQ;
-	*pwc = (wchar_t)idx;
+	*pwc = (wchar_kuten_t)idx;
 
 	return 0;
 }
@@ -502,7 +506,7 @@ _citrus_VIQR_encoding_module_init(_VIQREncodingInfo * __restrict ei,
 	/* var may be unused */
 
 	ei->mb_cur_max = 1;
-	ei->invalid = (wchar_t)-1;
+	ei->invalid = (wchar_kuten_t)-1;
 	ei->mroot = mnemonic_create(NULL, '\0', ei->invalid);
 	if (ei->mroot == NULL)
 		return ENOMEM;
@@ -515,7 +519,7 @@ _citrus_VIQR_encoding_module_init(_VIQREncodingInfo * __restrict ei,
 		if (ei->mb_cur_max < n)
 			ei->mb_cur_max = n;
 		errnum = mnemonic_append_child(ei->mroot,
-		    s, (wchar_t)i, ei->invalid);
+		    s, (wchar_kuten_t)i, ei->invalid);
 		if (errnum != 0) {
 			_citrus_VIQR_encoding_module_uninit(ei);
 			return errnum;

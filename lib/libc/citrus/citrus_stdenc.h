@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_stdenc.h,v 1.4.80.1 2017/07/14 15:53:07 perseant Exp $	*/
+/*	$NetBSD: citrus_stdenc.h,v 1.4.80.2 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -116,23 +116,6 @@ _citrus_stdenc_put_state_reset(struct _citrus_stdenc * __restrict ce,
 	return (*ce->ce_ops->eo_put_state_reset)(ce, s, n, ps, nresult);
 }
 
-static __inline int
-_citrus_stdenc_wctocs(struct _citrus_stdenc *__restrict ce,
-		      _csid_t * __restrict csid,
-		      _index_t * __restrict idx, wchar_t wc)
-{
-	_DIAGASSERT(ce && ce->ce_ops && ce->ce_ops->eo_wctocs);
-	return (*ce->ce_ops->eo_wctocs)(ce, csid, idx, wc);
-}
-
-static __inline int
-_citrus_stdenc_cstowc(struct _citrus_stdenc * __restrict ce,
-		      wchar_t * __restrict wc, _csid_t csid, _index_t idx)
-{
-	_DIAGASSERT(ce && ce->ce_ops && ce->ce_ops->eo_cstowc);
-	return (*ce->ce_ops->eo_cstowc)(ce, wc, csid, idx);
-}
-
 static __inline size_t
 _citrus_stdenc_get_state_size(struct _citrus_stdenc *ce)
 {
@@ -159,4 +142,20 @@ _citrus_stdenc_get_state_desc(struct _citrus_stdenc * __restrict ce,
 	return (*ce->ce_ops->eo_get_state_desc)(ce, ps, id, d);
 }
 
+static __inline int
+_citrus_stdenc_wctocs(struct _citrus_stdenc *__restrict ce,
+		      _csid_t * __restrict csid,
+		      _index_t * __restrict idx, wchar_t wc)
+{
+	_DIAGASSERT(ce && ce->ce_ops && ce->ce_ops->eo_wctocs);
+	return (*ce->ce_ops->eo_wctocs)(ce, csid, idx, wc);
+}
+
+static __inline int
+_citrus_stdenc_cstowc(struct _citrus_stdenc * __restrict ce,
+		      wchar_t * __restrict wc, _csid_t csid, _index_t idx)
+{
+	_DIAGASSERT(ce && ce->ce_ops && ce->ce_ops->eo_cstowc);
+	return (*ce->ce_ops->eo_cstowc)(ce, wc, csid, idx);
+}
 #endif

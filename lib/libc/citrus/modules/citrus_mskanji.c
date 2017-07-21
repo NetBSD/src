@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mskanji.c,v 1.14.22.1 2017/07/14 15:53:07 perseant Exp $	*/
+/*	$NetBSD: citrus_mskanji.c,v 1.14.22.2 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mskanji.c,v 1.14.22.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_mskanji.c,v 1.14.22.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -126,6 +126,69 @@ typedef struct {
 #define _ENCODING_IS_STATE_DEPENDENT	0
 #define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
 
+#include "citrus_mskanji_data.h"
+
+static __inline int
+/*ARGSUSED*/
+_FUNCNAME(ucs2kt)(_ENCODING_INFO * __restrict ei,
+		  wchar_kuten_t * __restrict ktp, wchar_ucs4_t wc)
+{
+	struct unicode2kuten_lookup *uk;
+
+	_DIAGASSERT(ktp != NULL);
+
+	/* US-ASCII are not in the list */
+	if (wc < 0x80) {
+		*ktp = wc;
+		return 0;
+	}
+
+	uk = _citrus_uk_bsearch(wc, __shiftjis_mskanji_table__unicode2kuten_lookup, _SHIFTJIS_MSKANJI_TABLE__U2K_LIST_LENGTH);
+
+	if (uk == NULL)
+		*ktp = WEOF;
+	else
+		*ktp = uk->value;
+
+	return 0;
+}
+
+static __inline int
+/*ARGSUSED*/
+_FUNCNAME(kt2ucs)(_ENCODING_INFO * __restrict ei,
+		  wchar_ucs4_t * __restrict up, wchar_kuten_t kt)
+{
+	_csid_t csid;
+	_index_t idx;
+	struct unicode2kuten_lookup *uk, *table;
+
+	_DIAGASSERT(up != NULL);
+
+	table = NULL;
+
+	/* Special cases */
+	if (kt == 0x5c) { /* backslash -> Yen sign */
+		*up = 0x00A5;
+		return 0;
+	}
+	if (kt == 0x7E) { /* tilde -> overline */
+		*up = 0x203E;
+		return 0;
+	}
+	if (kt < 0x80) {
+		*up = kt;
+		return 0;
+	}
+
+	uk = _citrus_uk_bsearch(kt, __shiftjis_mskanji_table__kuten2unicode_lookup, _SHIFTJIS_MSKANJI_TABLE__K2U_LIST_LENGTH);
+
+	if (uk == NULL)
+		*up = WEOF;
+	else
+		*up = uk->value;
+
+	return 0;
+}
 
 static int
 _mskanji1(int c)
@@ -176,12 +239,12 @@ _citrus_MSKanji_unpack_state(_MSKanjiEncodingInfo * __restrict ei,
 static int
 /*ARGSUSED*/
 _citrus_MSKanji_mbrtowc_priv(_MSKanjiEncodingInfo * __restrict ei,
-			     wchar_t * __restrict pwc,
+			     wchar_ucs4_t * __restrict pwc,
 			     const char ** __restrict s, size_t n,
 			     _MSKanjiState * __restrict psenc,
 			     size_t * __restrict nresult)
 {
-	wchar_t wchar;
+	wchar_kuten_t wchar;
 	int len;
 	int chlenbak;
 	const char *s0;
@@ -245,7 +308,7 @@ _citrus_MSKanji_mbrtowc_priv(_MSKanjiEncodingInfo * __restrict ei,
 	psenc->chlen = 0;
 
 	if (pwc)
-		*pwc = wchar;
+	        _citrus_MSKanji_kt2ucs(ei, pwc, wchar);
 
 	if (!wchar)
 		*nresult = 0;
@@ -268,7 +331,7 @@ restart:
 
 static int
 _citrus_MSKanji_wcrtomb_priv(_MSKanjiEncodingInfo * __restrict ei,
-			     char * __restrict s, size_t n, wchar_t wc,
+			     char * __restrict s, size_t n, wchar_ucs4_t wc,
 			     _MSKanjiState * __restrict psenc,
 			     size_t * __restrict nresult)
 {
@@ -277,6 +340,8 @@ _citrus_MSKanji_wcrtomb_priv(_MSKanjiEncodingInfo * __restrict ei,
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(psenc != NULL);
 	_DIAGASSERT(s != NULL);
+
+	_citrus_MSKanji_ucs2kt(ei, &wc, wc);
 
 	/* check invalid sequence */
 	if (wc & ~0xffff) {
@@ -325,11 +390,11 @@ static int
 /*ARGSUSED*/
 _citrus_MSKanji_stdenc_wctocs(struct _citrus_stdenc *ce,
 			      _csid_t * __restrict csid,
-			      _index_t * __restrict idx, wchar_t wc)
+			      _index_t * __restrict idx, wchar_kuten_t wc)
 {
+	_MSKanjiEncodingInfo *ei;	
 	_index_t row, col;
 	int offset;
-	_MSKanjiEncodingInfo *ei;	
 
 	_DIAGASSERT(ce != NULL && csid != NULL && idx != NULL);
 
@@ -414,7 +479,7 @@ _citrus_MSKanji_stdenc_wctocs(struct _citrus_stdenc *ce,
 static int
 /*ARGSUSED*/
 _citrus_MSKanji_stdenc_cstowc(struct _citrus_stdenc *ce,
-			      wchar_t * __restrict wc,
+			      wchar_kuten_t * __restrict wc,
 			      _csid_t csid, _index_t idx)
 {
 	u_int32_t row, col;
@@ -431,13 +496,13 @@ _citrus_MSKanji_stdenc_cstowc(struct _citrus_stdenc *ce,
 		/* ISO-646 */
 		if (idx >= 0x80)
 			return EILSEQ;
-		*wc = (wchar_t)idx;
+		*wc = (wchar_kuten_t)idx;
 		break;
 	case 1:
 		/* kana */
 		if (idx >= 0x80)
 			return EILSEQ;
-		*wc = (wchar_t)idx + 0x80;
+		*wc = (wchar_kuten_t)idx + 0x80;
 		break;
 	case 3:
 		if ((ei->mode & MODE_JIS2004) == 0)
@@ -472,7 +537,7 @@ _citrus_MSKanji_stdenc_cstowc(struct _citrus_stdenc *ce,
 		} else
 			col += 0x9F;
 		row = row / 2 + offset;
-		*wc = ((wchar_t)row << 8) | col;
+		*wc = ((wchar_kuten_t)row << 8) | col;
 		break;
 	default:
 		return EILSEQ;

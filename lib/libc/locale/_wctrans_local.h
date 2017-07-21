@@ -1,4 +1,4 @@
-/*	$NetBSD: _wctrans_local.h,v 1.9 2010/06/02 15:47:25 tnozaki Exp $	*/
+/*	$NetBSD: _wctrans_local.h,v 1.9.40.1 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -29,16 +29,25 @@
 #ifndef _WCTRANS_LOCAL_H_
 #define _WCTRANS_LOCAL_H_
 
+#include "citrus_ctype_local.h"
+#include "citrus_ctype.h"
+#include "multibyte.h"
+
 __BEGIN_DECLS
 wint_t	_towctrans_ext(wint_t, _WCTransEntry const *);
 __END_DECLS
 
 static __inline wint_t
-_towctrans_priv(wint_t c, _WCTransEntry const *te)
+_towctrans_priv(wint_ucs4_t c, _WCTransEntry const *te, const _RuneLocale *rl)
 {
-	return (_RUNE_ISCACHED(c)
-		? (wint_t)te->te_cached[(size_t)c]
-		: _towctrans_ext(c, te));
+	wint_kuten_t ktc;
+
+	_citrus_ctype_ucs2kt(rl->rl_citrus_ctype, &ktc, c);
+	ktc = (_RUNE_ISCACHED(ktc)
+	       ? (wint_t)te->te_cached[(size_t)ktc]
+	       : _towctrans_ext(ktc, te));
+	_citrus_ctype_kt2ucs(rl->rl_citrus_ctype, &c, ktc);
+	return c;
 }
 
 static __inline struct _WCTransEntry *

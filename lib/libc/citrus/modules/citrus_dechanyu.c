@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_dechanyu.c,v 1.5.22.1 2017/07/14 15:53:07 perseant Exp $ */
+/* $NetBSD: citrus_dechanyu.c,v 1.5.22.2 2017/07/21 20:22:29 perseant Exp $ */
 
 /*-
  * Copyright (c)2007 Citrus Project,
@@ -27,7 +27,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_dechanyu.c,v 1.5.22.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_dechanyu.c,v 1.5.22.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -89,6 +89,8 @@ typedef struct {
 #define _ENCODING_MB_CUR_MAX(_ei_)		4
 #define _ENCODING_IS_STATE_DEPENDENT		0
 #define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
+
+#include "citrus_u2k_template.h"
 
 static __inline void
 /*ARGSUSED*/
@@ -185,12 +187,12 @@ is_94charset(int c)
 static int
 /*ARGSUSED*/
 _citrus_DECHanyu_mbrtowc_priv(_DECHanyuEncodingInfo * __restrict ei,
-	wchar_t * __restrict pwc, const char ** __restrict s, size_t n,
+	wchar_ucs4_t * __restrict pwc, const char ** __restrict s, size_t n,
 	_DECHanyuState * __restrict psenc, size_t * __restrict nresult)
 {
 	const char *s0;
 	int ch;
-	wchar_t wc;
+	wchar_kuten_t wc;
 
 	/* ei may be unused */
 	_DIAGASSERT(s != NULL);
@@ -204,7 +206,7 @@ _citrus_DECHanyu_mbrtowc_priv(_DECHanyuEncodingInfo * __restrict ei,
 	} 
 	s0 = *s;
 
-	wc = (wchar_t)0;
+	wc = (wchar_kuten_t)0;
 	switch (psenc->chlen) {
 	case 0:
 		if (n-- < 1)
@@ -212,7 +214,7 @@ _citrus_DECHanyu_mbrtowc_priv(_DECHanyuEncodingInfo * __restrict ei,
 		ch = *s0++ & 0xFF;
 		if (is_singlebyte(ch) != 0) {
 			if (pwc != NULL)
-				*pwc = (wchar_t)ch;
+			        _citrus_DECHanyu_kt2ucs(ei, pwc, (wchar_kuten_t)ch);
 			*nresult = (size_t)((ch == 0) ? 0 : 1);
 			*s = s0;
 			return 0;
@@ -231,7 +233,7 @@ _citrus_DECHanyu_mbrtowc_priv(_DECHanyuEncodingInfo * __restrict ei,
 		if (is_hanyu1(ch) != 0) {
 			ch = psenc->ch[1] & 0xFF;
 			if (is_hanyu2(ch) != 0) {
-				wc |= (wchar_t)HANYUBIT;
+				wc |= (wchar_kuten_t)HANYUBIT;
 				break;
 			}
 		}
@@ -249,7 +251,7 @@ _citrus_DECHanyu_mbrtowc_priv(_DECHanyuEncodingInfo * __restrict ei,
 			if (is_hanyu2(ch) == 0)
 				goto ilseq;
 			psenc->ch[psenc->chlen++] = ch;
-			wc |= (wchar_t)HANYUBIT;
+			wc |= (wchar_kuten_t)HANYUBIT;
 			if (n-- < 1)
 				goto restart;
 			ch = *s0++ & 0xFF;
@@ -273,13 +275,13 @@ _citrus_DECHanyu_mbrtowc_priv(_DECHanyuEncodingInfo * __restrict ei,
 	}
 	if (n-- < 1)
 		goto restart;
-	wc |= (wchar_t)(ch << 8);
+	wc |= (wchar_kuten_t)(ch << 8);
 	ch = *s0++ & 0xFF;
 	if (is_trailbyte(ch) == 0)
 		goto ilseq;
-	wc |= (wchar_t)ch;
+	wc |= (wchar_kuten_t)ch;
 	if (pwc != NULL)
-		*pwc = wc;
+	        _citrus_DECHanyu_kt2ucs(ei, pwc, wc);
 	*nresult = (size_t)(s0 - *s);
 	*s = s0;
 	psenc->chlen = 0;
@@ -299,7 +301,7 @@ ilseq:
 static int
 /*ARGSUSED*/
 _citrus_DECHanyu_wcrtomb_priv(_DECHanyuEncodingInfo * __restrict ei,
-	char * __restrict s, size_t n, wchar_t wc,
+	char * __restrict s, size_t n, wchar_ucs4_t wc,
 	_DECHanyuState * __restrict psenc, size_t * __restrict nresult)
 {
 	int ch;
@@ -312,7 +314,9 @@ _citrus_DECHanyu_wcrtomb_priv(_DECHanyuEncodingInfo * __restrict ei,
 	if (psenc->chlen != 0)
 		return EINVAL;
 
-	/* XXX: assume wchar_t as int */
+	_citrus_DECHanyu_ucs2kt(ei, &wc, wc);
+
+	/* XXX: assume wchar_kuten_t as int */
 	if ((uint32_t)wc <= 0x7F) {
 		ch = wc & 0xFF;
 	} else {
@@ -350,10 +354,10 @@ ilseq:
 static int
 /*ARGSUSED*/
 _citrus_DECHanyu_stdenc_wctocs(struct _citrus_stdenc *ce,
-	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_t wc)
+	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_kuten_t wc)
 {
 	int plane;
-	wchar_t mask;
+	wchar_kuten_t mask;
 
 	/* ei may be unused */
 	_DIAGASSERT(csid != NULL);
@@ -361,7 +365,7 @@ _citrus_DECHanyu_stdenc_wctocs(struct _citrus_stdenc *ce,
 
 	plane = 0;
 	mask = 0x7F;
-	/* XXX: assume wchar_t as int */
+	/* XXX: assume wchar_kuten_t as int */
 	if ((uint32_t)wc > 0x7F) {
 		if ((uint32_t)wc > 0xFFFF) {
 			if ((wc & ~0xFFFF) != HANYUBIT)
@@ -383,7 +387,7 @@ _citrus_DECHanyu_stdenc_wctocs(struct _citrus_stdenc *ce,
 static int
 /*ARGSUSED*/
 _citrus_DECHanyu_stdenc_cstowc(struct _citrus_stdenc *ce,
-	wchar_t * __restrict wc, _csid_t csid, _index_t idx)
+	wchar_kuten_t * __restrict wc, _csid_t csid, _index_t idx)
 {
 	/* ei may be unused */
 	_DIAGASSERT(wc != NULL);
@@ -403,7 +407,7 @@ _citrus_DECHanyu_stdenc_cstowc(struct _citrus_stdenc *ce,
 			idx |= HANYUBIT;
 	} else
 		return EILSEQ;
-	*wc = (wchar_t)idx;
+	*wc = (wchar_kuten_t)idx;
 	return 0;
 }
 

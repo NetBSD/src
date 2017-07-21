@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.36 2013/05/28 16:57:56 joerg Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.36.22.1 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -130,11 +130,16 @@ static void _FUNCNAME(pack_state)(_ENCODING_INFO * __restrict,
 static void _FUNCNAME(unpack_state)(_ENCODING_INFO * __restrict,
 				    _ENCODING_STATE * __restrict,
 				    const void * __restrict);
+static int _FUNCNAME(kt2ucs)(_ENCODING_INFO * __restrict,
+			     wchar_ucs4_t * __restrict, wchar_kuten_t);
+static int _FUNCNAME(ucs2kt)(_ENCODING_INFO * __restrict,
+			     wchar_kuten_t * __restrict, wchar_ucs4_t);
 #if _ENCODING_IS_STATE_DEPENDENT
 static int _FUNCNAME(put_state_reset)(_ENCODING_INFO * __restrict,
 				      char * __restrict, size_t,
 				      _ENCODING_STATE * __restrict,
 				      size_t * __restrict);
+
 #endif
 
 /*
@@ -152,7 +157,7 @@ static int _FUNCNAME(put_state_reset)(_ENCODING_INFO * __restrict,
  */
 
 static int _FUNCNAME(mbrtowc_priv)(_ENCODING_INFO * __restrict,
-				   wchar_t * __restrict,
+				   wchar_kuten_t * __restrict,
 				   const char ** __restrict,
 				   size_t, _ENCODING_STATE * __restrict,
 				   size_t * __restrict);
@@ -171,7 +176,7 @@ static int _FUNCNAME(mbrtowc_priv)(_ENCODING_INFO * __restrict,
  */
 
 static int _FUNCNAME(wcrtomb_priv)(_ENCODING_INFO * __restrict,
-				   char * __restrict, size_t, wchar_t,
+				   char * __restrict, size_t, wchar_kuten_t,
 				   _ENCODING_STATE * __restrict,
 				   size_t * __restrict);
 __END_DECLS
@@ -192,7 +197,7 @@ __END_DECLS
 
 static __inline int
 _FUNCNAME(mbtowc_priv)(_ENCODING_INFO * __restrict ei,
-		       wchar_t * __restrict pwc,  const char * __restrict s,
+		       wchar_kuten_t * __restrict pwc,  const char * __restrict s,
 		       size_t n, _ENCODING_STATE * __restrict psenc,
 		       int * __restrict nresult)
 {
@@ -227,7 +232,7 @@ _FUNCNAME(mbtowc_priv)(_ENCODING_INFO * __restrict ei,
 
 static int
 _FUNCNAME(mbsrtowcs_priv)(_ENCODING_INFO * __restrict ei,
-			  wchar_t * __restrict pwcs,
+			  wchar_ucs4_t * __restrict pwcs,
 			  const char ** __restrict s,
 			  size_t n, _ENCODING_STATE * __restrict psenc,
 			  size_t * __restrict nresult)
@@ -286,7 +291,7 @@ bye:
 
 static int
 _FUNCNAME(mbsnrtowcs_priv)(_ENCODING_INFO * __restrict ei,
-			  wchar_t * __restrict pwcs,
+			  wchar_ucs4_t * __restrict pwcs,
 			  const char ** __restrict s, size_t in,
 			  size_t n, _ENCODING_STATE * __restrict psenc,
 			  size_t * __restrict nresult)
@@ -347,14 +352,14 @@ bye:
 
 static int
 _FUNCNAME(wcsrtombs_priv)(_ENCODING_INFO * __restrict ei, char * __restrict s,
-			  const wchar_t ** __restrict pwcs,
+			  const wchar_ucs4_t ** __restrict pwcs,
 			  size_t n, _ENCODING_STATE * __restrict psenc,
 			  size_t * __restrict nresult)
 {
 	int err;
 	char buf[MB_LEN_MAX];
 	size_t cnt, siz;
-	const wchar_t* pwcs0;
+	const wchar_ucs4_t* pwcs0;
 #if _ENCODING_IS_STATE_DEPENDENT
 	_ENCODING_STATE state;
 #endif
@@ -407,14 +412,14 @@ _FUNCNAME(wcsrtombs_priv)(_ENCODING_INFO * __restrict ei, char * __restrict s,
 
 static int
 _FUNCNAME(wcsnrtombs_priv)(_ENCODING_INFO * __restrict ei, char * __restrict s,
-			  const wchar_t ** __restrict pwcs, size_t in,
+			  const wchar_ucs4_t ** __restrict pwcs, size_t in,
 			  size_t n, _ENCODING_STATE * __restrict psenc,
 			  size_t * __restrict nresult)
 {
 	int cnt = 0, err;
 	char buf[MB_LEN_MAX];
 	size_t siz;
-	const wchar_t* pwcs0;
+	const wchar_ucs4_t* pwcs0;
 #if _ENCODING_IS_STATE_DEPENDENT
 	_ENCODING_STATE state;
 #endif
@@ -585,7 +590,7 @@ _FUNCNAME(ctype_mbrlen)(void * __restrict cl, const char * __restrict s,
 }
 
 static int
-_FUNCNAME(ctype_mbrtowc)(void * __restrict cl, wchar_t * __restrict pwc,
+_FUNCNAME(ctype_mbrtowc)(void * __restrict cl, wchar_kuten_t * __restrict pwc,
 			 const char * __restrict s, size_t n,
 			 void * __restrict pspriv, size_t * __restrict nresult)
 {
@@ -629,7 +634,7 @@ _FUNCNAME(ctype_mbsinit)(void * __restrict cl, const void * __restrict pspriv,
 }
 
 static int
-_FUNCNAME(ctype_mbsrtowcs)(void * __restrict cl, wchar_t * __restrict pwcs,
+_FUNCNAME(ctype_mbsrtowcs)(void * __restrict cl, wchar_kuten_t * __restrict pwcs,
 			   const char ** __restrict s, size_t n,
 			   void * __restrict pspriv,
 			   size_t * __restrict nresult)
@@ -649,7 +654,7 @@ _FUNCNAME(ctype_mbsrtowcs)(void * __restrict cl, wchar_t * __restrict pwcs,
 }
 
 static int __used
-_FUNCNAME(ctype_mbsnrtowcs)(_citrus_ctype_rec_t * __restrict cc, wchar_t * __restrict pwcs,
+_FUNCNAME(ctype_mbsnrtowcs)(_citrus_ctype_rec_t * __restrict cc, wchar_kuten_t * __restrict pwcs,
 			   const char ** __restrict s, size_t in, size_t n,
 			   void * __restrict pspriv,
 			   size_t * __restrict nresult)
@@ -670,7 +675,7 @@ _FUNCNAME(ctype_mbsnrtowcs)(_citrus_ctype_rec_t * __restrict cc, wchar_t * __res
 }
 
 static int
-_FUNCNAME(ctype_mbstowcs)(void * __restrict cl, wchar_t * __restrict pwcs,
+_FUNCNAME(ctype_mbstowcs)(void * __restrict cl, wchar_ucs4_t * __restrict pwcs,
 			  const char * __restrict s, size_t n,
 			  size_t * __restrict nresult)
 {
@@ -693,7 +698,7 @@ _FUNCNAME(ctype_mbstowcs)(void * __restrict cl, wchar_t * __restrict pwcs,
 }
 
 static int
-_FUNCNAME(ctype_mbtowc)(void * __restrict cl, wchar_t * __restrict pwc,
+_FUNCNAME(ctype_mbtowc)(void * __restrict cl, wchar_kuten_t * __restrict pwc,
 			const char * __restrict s, size_t n,
 			int * __restrict nresult)
 {
@@ -710,7 +715,7 @@ _FUNCNAME(ctype_mbtowc)(void * __restrict cl, wchar_t * __restrict pwc,
 }
 
 static int
-_FUNCNAME(ctype_wcrtomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
+_FUNCNAME(ctype_wcrtomb)(void * __restrict cl, char * __restrict s, wchar_kuten_t wc,
 			 void * __restrict pspriv, size_t * __restrict nresult)
 {
 	_ENCODING_STATE *psenc;
@@ -763,7 +768,7 @@ quit:
 static int
 /*ARGSUSED*/
 _FUNCNAME(ctype_wcsrtombs)(void * __restrict cl, char * __restrict s,
-			   const wchar_t ** __restrict pwcs, size_t n,
+			   const wchar_kuten_t ** __restrict pwcs, size_t n,
 			   void * __restrict pspriv,
 			   size_t * __restrict nresult)
 {
@@ -785,7 +790,7 @@ static int __used
 /*ARGSUSED*/
 _FUNCNAME(ctype_wcsnrtombs)(_citrus_ctype_rec_t * __restrict cc,
 			   char * __restrict s,
-			   const wchar_t ** __restrict pwcs, size_t in,
+			   const wchar_kuten_t ** __restrict pwcs, size_t in,
 			   size_t n, void * __restrict pspriv,
 			   size_t * __restrict nresult)
 {
@@ -807,7 +812,7 @@ _FUNCNAME(ctype_wcsnrtombs)(_citrus_ctype_rec_t * __restrict cc,
 static int
 /*ARGSUSED*/
 _FUNCNAME(ctype_wcstombs)(void * __restrict cl, char * __restrict s,
-			  const wchar_t * __restrict pwcs, size_t n,
+			  const wchar_ucs4_t * __restrict pwcs, size_t n,
 			  size_t * __restrict nresult)
 {
 	_ENCODING_STATE state;
@@ -818,14 +823,14 @@ _FUNCNAME(ctype_wcstombs)(void * __restrict cl, char * __restrict s,
 
 	ei = _CEI_TO_EI(_TO_CEI(cl));
 	_FUNCNAME(init_state)(ei, &state);
-	err = _FUNCNAME(wcsrtombs_priv)(ei, s, (const wchar_t **)&pwcs, n,
+	err = _FUNCNAME(wcsrtombs_priv)(ei, s, (const wchar_ucs4_t **)&pwcs, n,
 					&state, nresult);
 
 	return err;
 }
 
 static int
-_FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
+_FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_ucs4_t wc,
 			int * __restrict nresult)
 {
 	_ENCODING_STATE *psenc;
@@ -875,13 +880,13 @@ _FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 static int
 /*ARGSUSED*/
 _FUNCNAME(ctype_btowc)(_citrus_ctype_rec_t * __restrict cc,
-		       int c, wint_t * __restrict wcresult)
+		       int c, wint_ucs4_t * __restrict wcresult)
 {
 	_ENCODING_STATE state;
 	_ENCODING_INFO *ei;
 	char mb;
 	char const *s;
-	wchar_t wc;
+	wchar_kuten_t wc;
 	size_t nr;
 	int err;
 
@@ -897,7 +902,7 @@ _FUNCNAME(ctype_btowc)(_citrus_ctype_rec_t * __restrict cc,
 	s = &mb;
 	err = _FUNCNAME(mbrtowc_priv)(ei, &wc, &s, 1, &state, &nr);
 	if (!err && (nr == 0 || nr == 1))
-		*wcresult = (wint_t)wc;
+		*wcresult = (wint_ucs4_t)wc;
 	else
 		*wcresult = WEOF;
 
@@ -907,7 +912,7 @@ _FUNCNAME(ctype_btowc)(_citrus_ctype_rec_t * __restrict cc,
 static int
 /*ARGSUSED*/
 _FUNCNAME(ctype_wctob)(_citrus_ctype_rec_t * __restrict cc,
-		       wint_t wc, int * __restrict cresult)
+		       wint_ucs4_t wc, int * __restrict cresult)
 {
 	_ENCODING_STATE state;
 	_ENCODING_INFO *ei;
@@ -924,7 +929,7 @@ _FUNCNAME(ctype_wctob)(_citrus_ctype_rec_t * __restrict cc,
 	ei = _CEI_TO_EI(_TO_CEI(cc->cc_closure));
 	_FUNCNAME(init_state)(ei, &state);
 	err = _FUNCNAME(wcrtomb_priv)(ei, buf, _ENCODING_MB_CUR_MAX(ei),
-				      (wchar_t)wc, &state, &nr);
+				      (wchar_ucs4_t)wc, &state, &nr);
 	if (!err && nr == 1)
 		*cresult = buf[0];
 	else
@@ -932,3 +937,20 @@ _FUNCNAME(ctype_wctob)(_citrus_ctype_rec_t * __restrict cc,
 
 	return 0;
 }
+
+static __inline int
+/*ARGSUSED*/
+_FUNCNAME(ctype_ucs2kt)(void * __restrict cl,
+			wchar_kuten_t * __restrict ktp, wchar_ucs4_t wc)
+{
+	return _FUNCNAME(ucs2kt)(_CEI_TO_EI(_TO_CEI(cl)), ktp, wc);
+}
+
+static __inline int
+/*ARGSUSED*/
+_FUNCNAME(ctype_kt2ucs)(void * __restrict cl,
+		         wchar_ucs4_t * __restrict up, wchar_kuten_t kt)
+{
+	return _FUNCNAME(kt2ucs)(_CEI_TO_EI(_TO_CEI(cl)), up, kt);
+}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euctw.c,v 1.12.22.1 2017/07/14 15:53:07 perseant Exp $	*/
+/*	$NetBSD: citrus_euctw.c,v 1.12.22.2 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -56,7 +56,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euctw.c,v 1.12.22.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_euctw.c,v 1.12.22.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -119,6 +119,8 @@ typedef struct {
 #define _ENCODING_MB_CUR_MAX(_ei_)	4
 #define _ENCODING_IS_STATE_DEPENDENT	0
 #define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
+
+#include "citrus_u2k_template.h"
 
 static __inline int
 _citrus_EUCTW_cs(u_int c)
@@ -192,12 +194,12 @@ _citrus_EUCTW_encoding_module_uninit(_EUCTWEncodingInfo *ei)
 
 static int
 _citrus_EUCTW_mbrtowc_priv(_EUCTWEncodingInfo * __restrict ei,
-			   wchar_t * __restrict pwc,
+			   wchar_ucs4_t * __restrict pwc,
 			   const char ** __restrict s,
 			   size_t n, _EUCTWState * __restrict psenc,
 			   size_t * __restrict nresult)
 {
-	wchar_t wchar;
+	wchar_kuten_t wchar;
 	int c, cs;
 	int chlenbak;
 	const char *s0;
@@ -274,7 +276,7 @@ _citrus_EUCTW_mbrtowc_priv(_EUCTWEncodingInfo * __restrict ei,
 	psenc->chlen = 0;
 
 	if (pwc)
-		*pwc = wchar;
+	        _citrus_EUCTW_kt2ucs(ei, pwc, wchar);
 
 	if (!wchar)
 		*nresult = 0;
@@ -296,17 +298,19 @@ restart:
 
 static int
 _citrus_EUCTW_wcrtomb_priv(_EUCTWEncodingInfo * __restrict ei,
-			   char * __restrict s, size_t n, wchar_t wc,
+			   char * __restrict s, size_t n, wchar_ucs4_t wc,
 			   _EUCTWState * __restrict psenc,
 			   size_t * __restrict nresult)
 {
-	wchar_t cs = wc & 0x7f000080;
-	wchar_t v;
+	wchar_kuten_t cs = wc & 0x7f000080;
+	wchar_kuten_t v;
 	int i, len, clen, ret;
 
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(s != NULL);
+
+	_citrus_EUCTW_ucs2kt(ei, &wc, wc);
 
 	clen = 1;
 	if (wc & 0x00007f00)
@@ -363,7 +367,7 @@ static int
 /*ARGSUSED*/
 _citrus_EUCTW_stdenc_wctocs(struct _citrus_stdenc *ce,
 			    _csid_t * __restrict csid,
-			    _index_t * __restrict idx, wchar_t wc)
+			    _index_t * __restrict idx, wchar_kuten_t wc)
 {
 
 	_DIAGASSERT(ei != NULL && csid != NULL && idx != NULL);
@@ -377,7 +381,7 @@ _citrus_EUCTW_stdenc_wctocs(struct _citrus_stdenc *ce,
 static int
 /*ARGSUSED*/
 _citrus_EUCTW_stdenc_cstowc(struct _citrus_stdenc *ce,
-			    wchar_t * __restrict wc,
+			    wchar_kuten_t * __restrict wc,
 			    _csid_t csid, _index_t idx)
 {
 
@@ -386,11 +390,11 @@ _citrus_EUCTW_stdenc_cstowc(struct _citrus_stdenc *ce,
 	if (csid==0) {
 		if ((idx & ~0x7F) != 0)
 			return (EINVAL);
-		*wc = (wchar_t)idx;
+		*wc = (wchar_kuten_t)idx;
 	} else {
 		if (csid < 'G' || csid > 'M' || (idx & ~0x7F7F) != 0)
 			return (EINVAL);
-		*wc = (wchar_t)idx | ((wchar_t)csid<<24);
+		*wc = (wchar_kuten_t)idx | ((wchar_kuten_t)csid<<24);
 	}
 
 	return (0);

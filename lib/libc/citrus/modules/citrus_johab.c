@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_johab.c,v 1.6.10.1 2017/07/14 15:53:07 perseant Exp $ */
+/* $NetBSD: citrus_johab.c,v 1.6.10.2 2017/07/21 20:22:29 perseant Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -27,7 +27,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_johab.c,v 1.6.10.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_johab.c,v 1.6.10.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -90,6 +90,7 @@ typedef struct {
 #define _ENCODING_IS_STATE_DEPENDENT		0
 #define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
 
+#include "citrus_u2k_template.h"
 
 static __inline void
 /*ARGSUSED*/
@@ -169,7 +170,7 @@ ishanja(int l, int t)
 static int
 /*ARGSUSED*/
 _citrus_JOHAB_mbrtowc_priv(_JOHABEncodingInfo * __restrict ei,
-	wchar_t * __restrict pwc, const char ** __restrict s, size_t n,
+	wchar_ucs4_t * __restrict pwc, const char ** __restrict s, size_t n,
 	_JOHABState * __restrict psenc, size_t * __restrict nresult)
 {
 	const char *s0;
@@ -194,7 +195,7 @@ _citrus_JOHAB_mbrtowc_priv(_JOHABEncodingInfo * __restrict ei,
 		l = *s0++ & 0xFF;
 		if (l <= 0x7F) {
 			if (pwc != NULL)
-				*pwc = (wchar_t)l;
+			        _citrus_JOHAB_kt2ucs(ei, pwc, (wchar_kuten_t)l);
 			*nresult = (l == 0) ? 0 : 1;
 			*s = s0;
 			return 0;
@@ -219,7 +220,7 @@ restart:
 		return EILSEQ;
 	}
 	if (pwc != NULL)
-		*pwc = (wchar_t)(l << 8 | t);
+		_citrus_JOHAB_kt2ucs(ei, pwc, (wchar_kuten_t)(l << 8 | t));
 	*nresult = s0 - *s;
 	*s = s0;
 	psenc->chlen = 0;
@@ -230,7 +231,7 @@ restart:
 static int
 /*ARGSUSED*/
 _citrus_JOHAB_wcrtomb_priv(_JOHABEncodingInfo * __restrict ei,
-	char * __restrict s, size_t n, wchar_t wc,
+	char * __restrict s, size_t n, wchar_ucs4_t wc,
 	_JOHABState * __restrict psenc, size_t * __restrict nresult)
 {
 	int l, t;
@@ -243,7 +244,9 @@ _citrus_JOHAB_wcrtomb_priv(_JOHABEncodingInfo * __restrict ei,
 	if (psenc->chlen != 0)
 		return EINVAL;
 
-	/* XXX assume wchar_t as int */
+	_citrus_JOHAB_ucs2kt(ei, &wc, wc);
+
+	/* XXX assume wchar_kuten_t as int */
 	if ((uint32_t)wc <= 0x7F) {
 		if (n < 1)
 			goto e2big;
@@ -274,7 +277,7 @@ ilseq:
 static int
 /*ARGSUSED*/
 _citrus_JOHAB_stdenc_wctocs(struct _citrus_stdenc *ce,
-	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_t wc)
+	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_kuten_t wc)
 {
 	int m, l, t, linear;
 
@@ -282,7 +285,7 @@ _citrus_JOHAB_stdenc_wctocs(struct _citrus_stdenc *ce,
 	_DIAGASSERT(csid != NULL);
 	_DIAGASSERT(idx != NULL);
 
-	/* XXX assume wchar_t as int */
+	/* XXX assume wchar_kuten_t as int */
 	if ((uint32_t)wc <= 0x7F) {
 		*idx = (_index_t)wc;
 		*csid = 0;
@@ -324,7 +327,7 @@ _citrus_JOHAB_stdenc_wctocs(struct _citrus_stdenc *ce,
 static int
 /*ARGSUSED*/
 _citrus_JOHAB_stdenc_cstowc(struct _citrus_stdenc *ce,
-	wchar_t * __restrict wc, _csid_t csid, _index_t idx)
+	wchar_kuten_t * __restrict wc, _csid_t csid, _index_t idx)
 {
 	int m, n, l, t, linear;
 
@@ -334,7 +337,7 @@ _citrus_JOHAB_stdenc_cstowc(struct _citrus_stdenc *ce,
 	switch (csid) {
 	case 0:
 	case 1:
-		*wc = (wchar_t)idx;
+		*wc = (wchar_kuten_t)idx;
 		break;
 	case 2:
 		if (idx >= 0x2121 && idx <= 0x2C71) {
