@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.190 2017/07/21 04:43:42 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.191 2017/07/21 04:50:11 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.190 2017/07/21 04:43:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.191 2017/07/21 04:50:11 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1277,11 +1277,6 @@ key_delsp(struct secpolicy *sp)
 	struct ipsecrequest *isr = sp->req, *nextisr;
 
 	while (isr != NULL) {
-		if (isr->sav != NULL) {
-			KEY_FREESAV(&isr->sav);
-			isr->sav = NULL;
-		}
-
 		nextisr = isr->next;
 		kmem_intr_free(isr, sizeof(*isr));
 		isr = nextisr;
@@ -1538,7 +1533,6 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 			memcpy(&(*p_isr)->saidx.dst, paddr, paddr->sa_len);
 		}
 
-		(*p_isr)->sav = NULL;
 		(*p_isr)->sp = newsp;
 
 		/* initialization for the next. */
