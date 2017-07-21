@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.106 2012/01/06 10:38:56 skrll Exp $	 */
+/*	$NetBSD: reloc.c,v 1.106.2.1 2017/07/21 03:53:08 snj Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.106 2012/01/06 10:38:56 skrll Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.106.2.1 2017/07/21 03:53:08 snj Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -72,6 +72,22 @@ _rtld_do_copy_relocation(const Obj_Entry *dstobj, const Elf_Rela *rela)
 	const void     *srcaddr;
 	const Elf_Sym  *srcsym = NULL;
 	Obj_Entry      *srcobj;
+
+	if (__predict_false(size == 0)) {
+#if defined(__powerpc__) && !defined(__LP64) /* PR port-macppc/47464 */
+		if (strcmp(name, "_SDA_BASE_") == 0
+		    || strcmp(name, "_SDA2_BASE_") == 0)
+		{
+			rdbg(("COPY %s %s --> ignoring old binutils bug",
+			      dstobj->path, name));
+			return 0;
+		}
+#endif
+#if 0 /* shall we warn? */
+		xwarnx("%s: zero size COPY relocation for \"%s\"",
+		       dstobj->path, name);
+#endif
+	}
 
 	for (srcobj = dstobj->next; srcobj != NULL; srcobj = srcobj->next) {
 		srcsym = _rtld_symlook_obj(name, hash, srcobj, 0,
