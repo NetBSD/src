@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.55 2017/07/19 09:03:52 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.56 2017/07/21 03:08:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.55 2017/07/19 09:03:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.56 2017/07/21 03:08:10 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -249,7 +249,7 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr,
 		switch ( saidx->dst.sa.sa_family ) {
 #ifdef INET
 		case AF_INET:
-			return ipsec4_process_packet(m, isr->next);
+			return ipsec4_process_packet(m, isr->next, NULL);
 #endif /* INET */
 #ifdef INET6
 		case AF_INET6:
@@ -441,7 +441,8 @@ bad:
  * IPsec output logic for IPv4.
  */
 int
-ipsec4_process_packet(struct mbuf *m, struct ipsecrequest *isr)
+ipsec4_process_packet(struct mbuf *m, struct ipsecrequest *isr,
+    u_long *mtu)
 {
 	struct secasvar *sav = NULL;
 	struct ip *ip;
@@ -468,6 +469,24 @@ ipsec4_process_packet(struct mbuf *m, struct ipsecrequest *isr)
 	}
 
 	KASSERT(sav != NULL);
+	/*
+	 * Check if we need to handle NAT-T fragmentation.
+	 */
+	if (isr == isr->sp->req) { /* Check only if called from ipsec4_output */
+		KASSERT(mtu != NULL);
+		ip = mtod(m, struct ip *);
+		if (!(sav->natt_type &
+		    (UDP_ENCAP_ESPINUDP|UDP_ENCAP_ESPINUDP_NON_IKE))) {
+			goto noneed;
+		}
+		if (ntohs(ip->ip_len) <= sav->esp_frag)
+			goto noneed;
+		*mtu = sav->esp_frag;
+		KEY_FREESAV(&sav);
+		splx(s);
+		return 0;
+	}
+noneed:
 	dst = &sav->sah->saidx.dst;
 
 	/*
