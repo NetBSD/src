@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.53 2017/07/21 03:08:10 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.54 2017/07/21 04:39:08 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -267,8 +267,6 @@ void ipsec_pcbconn (struct inpcbpolicy *);
 void ipsec_pcbdisconn (struct inpcbpolicy *);
 void ipsec_invalpcbcacheall (void);
 
-struct tdb_ident;
-struct secpolicy *ipsec_getpolicy (const struct tdb_ident*, u_int);
 struct inpcb;
 struct secpolicy *ipsec4_checkpolicy (struct mbuf *, u_int, u_int,
 	int *, struct inpcb *);
