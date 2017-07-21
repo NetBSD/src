@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.54 2017/07/21 04:39:08 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.55 2017/07/21 04:50:11 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -110,7 +110,6 @@ struct ipsecrequest {
 				/* if __ss_len == 0 then no address specified.*/
 	u_int level;		/* IPsec level defined below. */
 
-	struct secasvar *sav;	/* place holder of SA for use */
 	struct secpolicy *sp;	/* back pointer to SP */
 };
 

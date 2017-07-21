@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.109 2017/07/21 04:39:08 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.110 2017/07/21 04:50:11 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.109 2017/07/21 04:39:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.110 2017/07/21 04:50:11 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -1313,7 +1313,6 @@ ipsec_deepcopy_policy(const struct secpolicy *src)
 		memcpy(&(*q)->saidx.src, &p->saidx.src, sizeof((*q)->saidx.src));
 		memcpy(&(*q)->saidx.dst, &p->saidx.dst, sizeof((*q)->saidx.dst));
 
-		(*q)->sav = NULL;
 		(*q)->sp = dst;
 
 		q = &((*q)->next);
