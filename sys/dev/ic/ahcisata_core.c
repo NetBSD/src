@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.18 2017/07/19 20:21:42 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.19 2017/07/21 18:36:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.18 2017/07/19 20:21:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.19 2017/07/21 18:36:47 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -650,7 +650,7 @@ ahci_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 
 /* return error code from ata_bio */
 static int
-ahci_exec_fis(struct ata_channel *chp, int timeout, int flags)
+ahci_exec_fis(struct ata_channel *chp, int timeout, int flags, int slot)
 {
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
@@ -667,11 +667,13 @@ ahci_exec_fis(struct ata_channel *chp, int timeout, int flags)
 	else
 		timeout = timeout / 10;
 
-	AHCI_CMDH_SYNC(sc, achp, 0, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	AHCI_CMDH_SYNC(sc, achp, slot,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	/* start command */
-	AHCI_WRITE(sc, AHCI_P_CI(chp->ch_channel), 1 << 0);
+	AHCI_WRITE(sc, AHCI_P_CI(chp->ch_channel), 1 << slot);
 	for (i = 0; i < timeout; i++) {
-		if ((AHCI_READ(sc, AHCI_P_CI(chp->ch_channel)) & 1 << 0) == 0)
+		if ((AHCI_READ(sc, AHCI_P_CI(chp->ch_channel)) & (1 << slot)) ==
+		    0)
 			return 0;
 		is = AHCI_READ(sc, AHCI_P_IS(chp->ch_channel));
 		if (is & (AHCI_P_IX_TFES | AHCI_P_IX_HBFS | AHCI_P_IX_HBDS |
@@ -708,6 +710,7 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	struct ahci_cmd_header *cmd_h;
 	int i;
 	uint32_t sig;
+	struct ata_xfer *xfer = NULL;
 
 	KASSERT((AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_CR) == 0);
 again:
@@ -732,9 +735,15 @@ again:
 		goto skip_reset;
 
 	/* polled command, assume interrupts are disabled */
-	/* use slot 0 to send reset, the channel is idle */
-	cmd_h = &achp->ahcic_cmdh[0];
-	cmd_tbl = achp->ahcic_cmd_tbl[0];
+	/* use available slot to send reset, if none available fail */
+	xfer = ata_get_xfer_ext(chp, false, 0);
+	if (xfer == NULL) {
+		printf("%s: no xfer\n", __func__);
+		return 1;
+	}
+
+	cmd_h = &achp->ahcic_cmdh[xfer->c_slot];
+	cmd_tbl = achp->ahcic_cmd_tbl[xfer->c_slot];
 	cmd_h->cmdh_flags = htole16(AHCI_CMDH_F_RST | AHCI_CMDH_F_CBSY |
 	    RHD_FISLEN / 4 | (drive << AHCI_CMDH_F_PMP_SHIFT));
 	cmd_h->cmdh_prdbc = 0;
@@ -742,7 +751,7 @@ again:
 	cmd_tbl->cmdt_cfis[fis_type] = RHD_FISTYPE;
 	cmd_tbl->cmdt_cfis[rhd_c] = drive;
 	cmd_tbl->cmdt_cfis[rhd_control] = WDCTL_RST;
-	switch(ahci_exec_fis(chp, 100, flags)) {
+	switch(ahci_exec_fis(chp, 100, flags, xfer->c_slot)) {
 	case ERR_DF:
 	case TIMEOUT:
 		aprint_error("%s channel %d: setting WDCTL_RST failed "
@@ -760,7 +769,7 @@ again:
 	cmd_tbl->cmdt_cfis[fis_type] = RHD_FISTYPE;
 	cmd_tbl->cmdt_cfis[rhd_c] = drive;
 	cmd_tbl->cmdt_cfis[rhd_control] = 0;
-	switch(ahci_exec_fis(chp, 310, flags)) {
+	switch(ahci_exec_fis(chp, 310, flags, xfer->c_slot)) {
 	case ERR_DF:
 	case TIMEOUT:
 		if ((sc->sc_ahci_quirks & AHCI_QUIRK_BADPMPRESET) != 0 &&
@@ -811,6 +820,8 @@ skip_reset:
 	    AHCINAME(sc), chp->ch_channel, sig,
 	    AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel))), DEBUG_PROBE);
 end:
+	if (xfer != NULL)
+		ata_free_xfer(chp, xfer);
 	ahci_channel_stop(sc, chp, flags);
 	ata_delay(500, "ahcirst", flags);
 	/* clear port interrupt register */
