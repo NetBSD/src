@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.76 2011/11/13 23:03:24 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.76.10.1 2017/07/21 04:03:01 snj Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.76 2011/11/13 23:03:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.76.10.1 2017/07/21 04:03:01 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -549,12 +549,16 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 */
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
+		if ((dksc->sc_flags & DKF_INITED) == 0)
+			return ENXIO;
 
 		/*
 		 * We pass this call down to the underlying disk.
 		 */
 		return VOP_IOCTL(cs->sc_tvn, cmd, data, flag, l->l_cred);
 	default:
+		if ((dksc->sc_flags & DKF_INITED) == 0)
+			return ENXIO;
 		return dk_ioctl(di, dksc, dev, cmd, data, flag, l);
 	}
 }
