@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.189 2017/07/21 04:39:08 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.190 2017/07/21 04:43:42 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.189 2017/07/21 04:39:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.190 2017/07/21 04:43:42 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -777,8 +777,8 @@ key_checkrequest(struct ipsecrequest *isr, struct secasvar **ret)
 {
 	u_int level;
 	int error;
-	struct secasvar *oldsav = NULL;
 	const struct secasindex *saidx = &isr->saidx;
+	struct secasvar *sav;
 
 	KASSERT(isr != NULL);
 	KASSERTMSG(saidx->mode == IPSEC_MODE_TRANSPORT ||
@@ -795,43 +795,10 @@ key_checkrequest(struct ipsecrequest *isr, struct secasvar **ret)
 	 * handle bundled SA's in the callback thread.
 	 */
 	IPSEC_SPLASSERT_SOFTNET("key_checkrequest");
-#if 0
-	/*
-	 * We do allocate new SA only if the state of SA in the holder is
-	 * SADB_SASTATE_DEAD.  The SA for outbound must be the oldest.
-	 */
-	if (isr->sav != NULL) {
-		if (isr->sav == (struct secasvar *)LIST_FIRST(
-			    &isr->sav->sah->savtree[SADB_SASTATE_DEAD])) {
-			KEY_FREESAV(&isr->sav);
-			isr->sav = NULL;
-		}
-	}
-#else
-	/*
-	 * we free any SA stashed in the IPsec request because a different
-	 * SA may be involved each time this request is checked, either
-	 * because new SAs are being configured, or this request is
-	 * associated with an unconnected datagram socket, or this request
-	 * is associated with a system default policy.
-	 *
-	 * The operation may have negative impact to performance.  We may
-	 * want to check cached SA carefully, rather than picking new SA
-	 * every time.
-	 */
-	if (isr->sav != NULL)
-		oldsav = isr->sav;
-#endif
 
-	isr->sav = key_lookup_sa_bysaidx(saidx);
-	membar_producer();
-	if (oldsav != NULL)
-		KEY_FREESAV(&oldsav);
-
-	/* When there is SA. */
-	if (isr->sav != NULL) {
-		*ret = isr->sav;
-		SA_ADDREF(*ret);
+	sav = key_lookup_sa_bysaidx(saidx);
+	if (sav != NULL) {
+		*ret = sav;
 		return 0;
 	}
 
@@ -846,7 +813,6 @@ key_checkrequest(struct ipsecrequest *isr, struct secasvar **ret)
 
 	if (level != IPSEC_LEVEL_REQUIRE) {
 		/* XXX sigh, the interface to this routine is botched */
-		KASSERTMSG(isr->sav == NULL, "unexpected SA");
 		*ret = NULL;
 		return 0;
 	} else {
