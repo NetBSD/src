@@ -177,8 +177,8 @@ static int write_all(dnssd_sock_t sd, char *buf, size_t len)
 			else
 				syslog(LOG_INFO, "dnssd_clientstub write_all(%d) DEFUNCT", sd);
 			#else
-			syslog(LOG_WARNING, "dnssd_clientstub write_all(%d) failed %zd/%ld %d %s", sd,
-				(long)num_written, (long)len,
+			syslog(LOG_WARNING, "dnssd_clientstub write_all(%d) failed %zd/%zu %d %s", sd,
+				num_written, len,
 				(num_written < 0) ? dnssd_errno                 : 0,
 				(num_written < 0) ? dnssd_strerror(dnssd_errno) : "");
 			#endif
