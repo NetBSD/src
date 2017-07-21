@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.257.2.4 2012/06/13 19:14:17 riz Exp $	*/
+/*	$NetBSD: audio.c,v 1.257.2.5 2017/07/21 04:06:50 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.257.2.4 2012/06/13 19:14:17 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.257.2.5 2017/07/21 04:06:50 snj Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2950,6 +2950,9 @@ audio_pint(void *v)
 		return;
 	}
 
+	if (audio_stream_get_used(&cb->s) > (cb->usedhigh - cb->blksize))
+		goto done;
+
 #ifdef AUDIO_INTR_TIME
 	{
 		struct timeval tv;
@@ -3028,6 +3031,7 @@ audio_pint(void *v)
 	}
 
 	DPRINTFN(5, ("audio_pint: outp=%p cc=%d\n", cb->s.outp, blksize));
+done:
 	if (hw->trigger_output == NULL) {
 		error = hw->start_output(sc->hw_hdl, __UNCONST(cb->s.outp),
 		    blksize, audio_pint, (void *)sc);
