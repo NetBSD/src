@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.188 2017/07/18 02:10:33 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.189 2017/07/21 04:39:08 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.188 2017/07/18 02:10:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.189 2017/07/21 04:39:08 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -670,70 +670,6 @@ key_lookup_sp_byspidx(const struct secpolicyindex *spidx,
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
 		if (key_spidx_match_withmask(&sp->spidx, spidx))
-			goto found;
-	}
-	sp = NULL;
-found:
-	if (sp) {
-		/* sanity check */
-		KEY_CHKSPDIR(sp->spidx.dir, dir);
-
-		/* found a SPD entry */
-		sp->lastused = time_uptime;
-		SP_ADDREF2(sp, where, tag);
-	}
-	splx(s);
-
-	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
-	    "DP return SP:%p (ID=%u) refcnt %u\n",
-	    sp, sp ? sp->id : 0, sp ? sp->refcnt : 0);
-	return sp;
-}
-
-/*
- * allocating a SP for OUTBOUND or INBOUND packet.
- * Must call key_freesp() later.
- * OUT:	NULL:	not found
- *	others:	found and return the pointer.
- */
-struct secpolicy *
-key_lookup_sp(u_int32_t spi,
-	     const union sockaddr_union *dst,
-	     u_int8_t proto,
-	     u_int dir,
-	     const char* where, int tag)
-{
-	struct secpolicy *sp;
-	int s;
-
-	KASSERT(dst != NULL);
-	KASSERTMSG(IPSEC_DIR_IS_INOROUT(dir), "invalid direction %u", dir);
-
-	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP, "DP from %s:%u\n", where, tag);
-
-	/* get a SP entry */
-	s = splsoftnet();	/*called from softclock()*/
-	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DATA)) {
-		printf("*** objects\n");
-		printf("spi %u proto %u dir %u\n", spi, proto, dir);
-		kdebug_sockaddr(&dst->sa);
-	}
-
-	LIST_FOREACH(sp, &sptree[dir], chain) {
-		if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DATA)) {
-			printf("*** in SPD\n");
-			kdebug_secpolicyindex(&sp->spidx);
-		}
-
-		if (sp->state == IPSEC_SPSTATE_DEAD)
-			continue;
-		/* compare simple values, then dst address */
-		if (sp->spidx.ul_proto != proto)
-			continue;
-		/* NB: spi's must exist and match */
-		if (!sp->req || !sp->req->sav || sp->req->sav->spi != spi)
-			continue;
-		if (key_sockaddr_match(&sp->spidx.dst.sa, &dst->sa, PORT_STRICT))
 			goto found;
 	}
 	sp = NULL;
