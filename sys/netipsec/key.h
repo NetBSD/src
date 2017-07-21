@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.23 2017/07/14 12:26:26 ozaki-r Exp $	*/
+/*	$NetBSD: key.h,v 1.24 2017/07/21 04:39:08 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -50,8 +50,6 @@ union sockaddr_union;
 int key_havesp(u_int dir);
 struct secpolicy *key_lookup_sp_byspidx(const struct secpolicyindex *, u_int,
 	const char*, int);
-struct secpolicy *key_lookup_sp(u_int32_t spi, const union sockaddr_union *dst,
-	u_int8_t proto, u_int dir, const char*, int);
 struct secpolicy *key_newsp(const char*, int);
 struct secpolicy *key_gettunnel(const struct sockaddr *,
 	const struct sockaddr *, const struct sockaddr *,
@@ -70,8 +68,6 @@ void key_sa_ref(struct secasvar *, const char*, int);
  */
 #define	KEY_LOOKUP_SP_BYSPIDX(spidx, dir)			\
 	key_lookup_sp_byspidx(spidx, dir, __func__, __LINE__)
-#define	KEY_LOOKUP_SP(spi, dst, proto, dir)			\
-	key_lookup_sp(spi, dst, proto, dir, __func__, __LINE__)
 #define	KEY_NEWSP()						\
 	key_newsp(__func__, __LINE__)
 #define	KEY_GETTUNNEL(osrc, odst, isrc, idst)			\
