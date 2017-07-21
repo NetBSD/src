@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soctherm.c,v 1.5 2017/07/20 01:46:15 jmcneill Exp $ */
+/* $NetBSD: tegra_soctherm.c,v 1.6 2017/07/21 18:25:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soctherm.c,v 1.5 2017/07/20 01:46:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soctherm.c,v 1.6 2017/07/21 18:25:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -213,7 +213,7 @@ tegra_soctherm_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": SOC_THERM\n");
 
-	sc->sc_config = (const void *)of_search_compatible(phandle, compat_data);
+	sc->sc_config = (void *)of_search_compatible(phandle, compat_data)->data;
 	if (sc->sc_config == NULL) {
 		aprint_error_dev(self, "unsupported SoC\n");
 		return;
