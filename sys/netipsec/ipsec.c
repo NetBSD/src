@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.106 2017/07/19 06:31:54 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.107 2017/07/21 02:51:12 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.106 2017/07/19 06:31:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.107 2017/07/21 02:51:12 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -1876,7 +1876,7 @@ ipsec6_in_reject(struct mbuf *m, struct in6pcb *in6p)
 static size_t
 ipsec_hdrsiz(const struct secpolicy *sp)
 {
-	const struct ipsecrequest *isr;
+	struct ipsecrequest *isr;
 	size_t siz;
 
 	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DATA)) {
@@ -1897,13 +1897,25 @@ ipsec_hdrsiz(const struct secpolicy *sp)
 	siz = 0;
 	for (isr = sp->req; isr != NULL; isr = isr->next) {
 		size_t clen = 0;
+		struct secasvar *sav = NULL;
+		int error;
 
 		switch (isr->saidx.proto) {
 		case IPPROTO_ESP:
-			clen = esp_hdrsiz(isr->sav);
+			error = key_checkrequest(isr, &sav);
+			if (error == 0) {
+				clen = esp_hdrsiz(sav);
+				KEY_FREESAV(&sav);
+			} else
+				clen = esp_hdrsiz(NULL);
 			break;
 		case IPPROTO_AH:
-			clen = ah_hdrsiz(isr->sav);
+			error = key_checkrequest(isr, &sav);
+			if (error == 0) {
+				clen = ah_hdrsiz(sav);
+				KEY_FREESAV(&sav);
+			} else
+				clen = ah_hdrsiz(NULL);
 			break;
 		case IPPROTO_IPCOMP:
 			clen = sizeof(struct ipcomp);
