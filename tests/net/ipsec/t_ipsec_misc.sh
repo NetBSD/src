@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.14 2017/07/20 01:10:57 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.15 2017/07/21 04:43:42 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -152,21 +152,11 @@ test_ipsec4_lifetime()
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o empty $HIJACKING setkey -D
-	# The SA on output remain because sp/isr still refers it
-	atf_check -s exit:0 -o match:"$ip_local $ip_peer" \
-	    $HIJACKING setkey -D -a
-	atf_check -s exit:0 -o not-match:"$ip_peer $ip_local" \
-	    $HIJACKING setkey -D -a
+	atf_check -s exit:0 -o match:'No SAD entries.' $HIJACKING setkey -D -a
 
 	export RUMP_SERVER=$SOCK_PEER
 	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o empty $HIJACKING setkey -D
-	atf_check -s exit:0 -o not-match:"$ip_local $ip_peer" \
-	    $HIJACKING setkey -D -a
-	# The SA on output remain because sp/isr still refers it
-	atf_check -s exit:0 -o match:"$ip_peer $ip_local" \
-	    $HIJACKING setkey -D -a
+	atf_check -s exit:0 -o match:'No SAD entries.' $HIJACKING setkey -D -a
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s not-exit:0 -o match:'0 packets received' \
@@ -248,21 +238,11 @@ test_ipsec6_lifetime()
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o empty $HIJACKING setkey -D
-	# The SA on output remain because sp/isr still refers it
-	atf_check -s exit:0 -o match:"$ip_local $ip_peer" \
-	    $HIJACKING setkey -D -a
-	atf_check -s exit:0 -o not-match:"$ip_peer $ip_local" \
-	    $HIJACKING setkey -D -a
+	atf_check -s exit:0 -o match:'No SAD entries.' $HIJACKING setkey -D -a
 
 	export RUMP_SERVER=$SOCK_PEER
 	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o empty $HIJACKING setkey -D
-	atf_check -s exit:0 -o not-match:"$ip_local $ip_peer" \
-	    $HIJACKING setkey -D -a
-	# The SA on output remain because sp/isr still refers it
-	atf_check -s exit:0 -o match:"$ip_peer $ip_local" \
-	    $HIJACKING setkey -D -a
+	atf_check -s exit:0 -o match:'No SAD entries.' $HIJACKING setkey -D -a
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s not-exit:0 -o match:'0 packets received' \
