@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.13 2017/04/29 11:00:17 jmcneill Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.14 2017/07/21 01:01:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.13 2017/04/29 11:00:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.14 2017/07/21 01:01:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -427,7 +427,7 @@ static const char *mux_xusb_fs_p[] =
 	{ "clk_m", NULL, "pll_u_48", NULL, "pll_p_out0", NULL, "pll_u_480" };
 
 static struct tegra_clk tegra124_car_clocks[] = {
-	CLK_FIXED("clk_m", TEGRA_REF_FREQ),
+	CLK_FIXED("clk_m", TEGRA124_REF_FREQ),
 
 	CLK_PLL("pll_p", "clk_m", CAR_PLLP_BASE_REG,
 		CAR_PLLP_BASE_DIVM, CAR_PLLP_BASE_DIVN, CAR_PLLP_BASE_DIVP),
