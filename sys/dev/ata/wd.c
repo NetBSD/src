@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.27 2017/07/19 19:46:52 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.28 2017/07/21 17:32:27 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.27 2017/07/19 19:46:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.28 2017/07/21 17:32:27 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -713,6 +713,7 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 		aprint_normal_dev(wd->sc_dev, "%s: chaos xfer %d\n",
 		    __func__, xfer->c_slot);
 		xfer->c_bio.blkno = 7777777 + wd->sc_capacity;
+		xfer->c_flags |= C_CHAOS;
 	}
 #endif
 
@@ -893,6 +894,9 @@ out:
 noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_retries > 0)
 			aprint_error_dev(wd->sc_dev,
 			    "soft error (corrected)\n");
+#ifdef WD_CHAOS_MONKEY
+		KASSERT((xfer->c_flags & C_CHAOS) == 0);
+#endif
 		break;
 	case ERR_NODEV:
 		bp->b_error = EIO;

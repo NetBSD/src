@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.17 2017/07/19 19:39:28 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.18 2017/07/21 17:32:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -186,6 +186,7 @@ struct ata_xfer {
 #define	C_NCQ		0x0100		/* command is queued  */
 #define C_IMMEDIATE	0x0200		/* execute command without queuing */
 #define C_WAITTIMO	0x0400		/* race vs. timeout */
+#define C_CHAOS		0x0800		/* forced error xfer */
 
 /* reasons for c_kill_xfer() */
 #define KILL_GONE 1		/* device is gone while xfer was active */
