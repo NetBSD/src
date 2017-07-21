@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.17 2017/04/26 03:16:06 ozaki-r Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.18 2017/07/21 04:50:11 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_debug.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.c,v 1.26 2001/06/27 10:46:50 sakane Exp $	*/
 
@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.17 2017/04/26 03:16:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.18 2017/07/21 04:50:11 ozaki-r Exp $");
 #endif
 
 #if defined(_KERNEL_OPT)
@@ -479,9 +479,6 @@ kdebug_secpolicy(const struct secpolicy *sp)
 
 			printf("  level=%u\n", isr->level);
 			kdebug_secasindex(&isr->saidx);
-
-			if (isr->sav != NULL)
-				kdebug_secasv(isr->sav);
 		}
 		printf("  }\n");
 	    }
