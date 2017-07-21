@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.19 2017/07/19 19:39:28 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.20 2017/07/21 18:12:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.19 2017/07/19 19:39:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.20 2017/07/21 18:12:37 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1039,7 +1039,7 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	int rv;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
-	uint8_t *tb;
+	uint8_t *tb, cksum, page;
 
 	ATADEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
@@ -1072,12 +1072,12 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	 */
 	xfer->c_flags |= C_IMMEDIATE;
 	xfer->c_ata_c.r_command = WDCC_READ_LOG_EXT;
-	xfer->c_ata_c.r_lba = WDCC_LOG_PAGE_NCQ;
+	xfer->c_ata_c.r_lba = page = WDCC_LOG_PAGE_NCQ;
 	xfer->c_ata_c.r_st_bmask = WDCS_DRDY;
 	xfer->c_ata_c.r_st_pmask = WDCS_DRDY;
 	xfer->c_ata_c.r_count = 1;
 	xfer->c_ata_c.r_device = WDSD_LBA;
-	xfer->c_ata_c.flags = AT_READ | AT_LBA | flags;
+	xfer->c_ata_c.flags = AT_READ | AT_LBA | AT_LBA48 | flags;
 	xfer->c_ata_c.timeout = 1000; /* 1s */
 	xfer->c_ata_c.data = tb;
 	xfer->c_ata_c.bcount = DEV_BSIZE;
@@ -1092,10 +1092,19 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 		goto out2;
 	}
 
-	/* XXX verify checksum and refuse if not correct (QEMU) */
+	cksum = 0;
+	for (int i = 0; i < DEV_BSIZE; i++)
+		cksum += tb[i];
+	if (cksum != 0) {
+		aprint_error_dev(drvp->drv_softc,
+		    "invalid checksum %x for READ LOG EXT page %x\n",
+		    cksum, page);
+		rv = EINVAL;
+		goto out2;
+	}
 
 	if (tb[0] & WDCC_LOG_NQ) {
-		/* not a NCQ command */
+		/* not queued command */
 		rv = EOPNOTSUPP;
 		goto out2;
 	}
