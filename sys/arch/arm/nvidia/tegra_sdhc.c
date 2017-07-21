@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.20 2017/05/25 23:53:50 jmcneill Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.21 2017/07/21 01:00:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.20 2017/05/25 23:53:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.21 2017/07/21 01:00:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -165,6 +165,14 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	    "vqmmc-supply");
 	if (sc->sc_reg_vqmmc) {
 		sc->sc.sc_vendor_signal_voltage = tegra_sdhc_signal_voltage;
+	} else {
+		/* Regulator required for UHS signaling */
+		sc->sc.sc_flags |= SDHC_FLAG_HOSTCAPS;
+		sc->sc.sc_caps = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+		    SDHC_CAPABILITIES);
+		sc->sc.sc_caps2 = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+		    SDHC_CAPABILITIES2);
+		sc->sc.sc_caps2 &= ~(SDHC_SDR50_SUPP|SDHC_SDR104_SUPP|SDHC_DDR50_SUPP);
 	}
 
 	sc->sc_clk = fdtbus_clock_get_index(faa->faa_phandle, 0);
