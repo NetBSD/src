@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.107 2017/07/21 02:51:12 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.108 2017/07/21 03:08:10 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.107 2017/07/21 02:51:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.108 2017/07/21 03:08:10 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -655,7 +655,6 @@ int
 ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
     u_long *mtu, bool *natt_frag, bool *done)
 {
-	const struct ip *ip = mtod(m, const struct ip *);
 	struct secpolicy *sp = NULL;
 	int error, s;
 
@@ -704,21 +703,6 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 	}
 
 	/*
-	 * NAT-T ESP fragmentation: do not do IPSec processing now,
-	 * we will do it on each fragmented packet.
-	 */
-	if (sp->req->sav && (sp->req->sav->natt_type &
-	    (UDP_ENCAP_ESPINUDP|UDP_ENCAP_ESPINUDP_NON_IKE))) {
-		if (ntohs(ip->ip_len) > sp->req->sav->esp_frag) {
-			*mtu = sp->req->sav->esp_frag;
-			*natt_frag = true;
-			KEY_FREESP(&sp);
-			splx(s);
-			return 0;
-		}
-	}
-
-	/*
 	 * Do delayed checksums now because we send before
 	 * this is done in the normal processing path.
 	 */
@@ -727,8 +711,24 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}
 
+    {
+	u_long _mtu = 0;
+
 	/* Note: callee frees mbuf */
-	error = ipsec4_process_packet(m, sp->req);
+	error = ipsec4_process_packet(m, sp->req, &_mtu);
+
+	if (error == 0 && _mtu != 0) {
+		/*
+		 * NAT-T ESP fragmentation: do not do IPSec processing
+		 * now, we will do it on each fragmented packet.
+		 */
+		*mtu = _mtu;
+		*natt_frag = true;
+		KEY_FREESP(&sp);
+		splx(s);
+		return 0;
+    }
+	}
 	/*
 	 * Preserve KAME behaviour: ENOENT can be returned
 	 * when an SA acquire is in progress.  Don't propagate
