@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.108 2017/07/21 03:08:10 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.109 2017/07/21 04:39:08 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.108 2017/07/21 03:08:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.109 2017/07/21 04:39:08 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -410,33 +410,6 @@ key_get_default_sp(int af, const char *where, int tag)
  *
  * NOTE: IPv6 mapped address concern is implemented here.
  */
-struct secpolicy *
-ipsec_getpolicy(const struct tdb_ident *tdbi, u_int dir)
-{
-	struct secpolicy *sp;
-
-	KASSERT(tdbi != NULL);
-	KASSERTMSG(IPSEC_DIR_IS_INOROUT(dir), "invalid direction %u", dir);
-
-	sp = KEY_LOOKUP_SP(tdbi->spi, &tdbi->dst, tdbi->proto, dir);
-	if (sp == NULL)			/*XXX????*/
-		sp = KEY_GET_DEFAULT_SP(tdbi->dst.sa.sa_family);
-	KASSERT(sp != NULL);
-	return sp;
-}
-
-/*
- * For OUTBOUND packet having a socket. Searching SPD for packet,
- * and return a pointer to SP.
- * OUT:	NULL:	no apropreate SP found, the following value is set to error.
- *		0	: bypass
- *		EACCES	: discard packet.
- *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occurred.
- *	others:	a pointer to SP
- *
- * NOTE: IPv6 mapped address concern is implemented here.
- */
 static struct secpolicy *
 ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
     int *error)
@@ -747,26 +720,11 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 int
 ipsec4_input(struct mbuf *m, int flags)
 {
-	struct m_tag *mtag;
-	struct tdb_ident *tdbi;
 	struct secpolicy *sp;
 	int error, s;
 
-	/*
-	 * Check if the packet has already had IPsec processing done.
-	 * If so, then just pass it along.  This tag gets set during AH,
-	 * ESP, etc. input handling, before the packet is returned to
-	 * the IP input queue for delivery.
-	 */
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
 	s = splsoftnet();
-	if (mtag != NULL) {
-		tdbi = (struct tdb_ident *)(mtag + 1);
-		sp = ipsec_getpolicy(tdbi, IPSEC_DIR_INBOUND);
-	} else {
-		sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
-		    IP_FORWARDING, &error);
-	}
+	sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING, &error);
 	if (sp == NULL) {
 		splx(s);
 		return EINVAL;
@@ -2311,30 +2269,11 @@ skippolicycheck:;
 int
 ipsec6_input(struct mbuf *m)
 {
-	struct m_tag *mtag;
-	struct tdb_ident *tdbi;
 	struct secpolicy *sp;
 	int s, error;
 
-	/*
-	 * Check if the packet has already had IPsec
-	 * processing done. If so, then just pass it
-	 * along. This tag gets set during AH, ESP,
-	 * etc. input handling, before the packet is
-	 * returned to the ip input queue for delivery.
-	 */
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE,
-	    NULL);
 	s = splsoftnet();
-	if (mtag != NULL) {
-		tdbi = (struct tdb_ident *)(mtag + 1);
-		sp = ipsec_getpolicy(tdbi,
-		    IPSEC_DIR_INBOUND);
-	} else {
-		sp = ipsec_getpolicybyaddr(m,
-		    IPSEC_DIR_INBOUND, IP_FORWARDING,
-		    &error);
-	}
+	sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING, &error);
 	if (sp != NULL) {
 		/*
 		 * Check security policy against packet
