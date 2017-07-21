@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.98 2017/07/14 06:24:37 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.99 2017/07/21 04:56:46 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -11986,4 +11986,11 @@ usr.sbin/rtadvd/rtadvd.h			1.15
 
 	Fix the default value of rltime.  PR bin/51994
 	[ozaki-r, ticket #1440]
+
+sys/dev/cgd.c					patch
+
+	Avoid crashes by checking if a cgd device has been configured
+	before processing most ioctls, and failing with ENXIO if the
+	device is not configured.
+	[chs, ticket #1455]
 
