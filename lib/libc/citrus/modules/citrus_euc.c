@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euc.c,v 1.17.20.1 2017/07/14 15:53:07 perseant Exp $	*/
+/*	$NetBSD: citrus_euc.c,v 1.17.20.2 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euc.c,v 1.17.20.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_euc.c,v 1.17.20.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -93,8 +93,8 @@ typedef struct {
 
 typedef struct {
 	unsigned	count[4];
-	wchar_t		bits[4];
-	wchar_t		mask;
+	wchar_kuten_t		bits[4];
+	wchar_kuten_t		mask;
 	unsigned	mb_cur_max;
 } _EUCEncodingInfo;
 
@@ -129,6 +129,60 @@ typedef struct {
 #define _ENCODING_IS_STATE_DEPENDENT	0
 #define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
 
+#include "citrus_euc_data.h"
+
+static __inline int
+/*ARGSUSED*/
+_FUNCNAME(ucs2kt)(_ENCODING_INFO * __restrict ei,
+		  wchar_kuten_t * __restrict ktp, wchar_ucs4_t wc)
+{
+	struct unicode2kuten_lookup *uk;
+
+	_DIAGASSERT(ktp != NULL);
+
+	/* US-ASCII are not in the list */
+	if (wc < 0x80) {
+		*ktp = wc;
+		return 0;
+	}
+
+	uk = _citrus_uk_bsearch(wc, __euc_jp_jisx0213_table__unicode2kuten_lookup, _EUC_JP_JISX0213_TABLE__U2K_LIST_LENGTH);
+
+	if (uk == NULL)
+		*ktp = WEOF;
+	else
+		*ktp = uk->value;
+
+	return 0;
+}
+
+static __inline int
+/*ARGSUSED*/
+_FUNCNAME(kt2ucs)(_ENCODING_INFO * __restrict ei,
+		  wchar_ucs4_t * __restrict up, wchar_kuten_t kt)
+{
+	_csid_t csid;
+	_index_t idx;
+	struct unicode2kuten_lookup *uk, *table;
+
+	_DIAGASSERT(up != NULL);
+
+	table = NULL;
+
+	if (kt < 0x80) {
+		*up = kt;
+		return 0;
+	}
+
+	uk = _citrus_uk_bsearch(kt, __euc_jp_jisx0213_table__kuten2unicode_lookup, _EUC_JP_JISX0213_TABLE__K2U_LIST_LENGTH);
+
+	if (uk == NULL)
+		*up = WEOF;
+	else
+		*up = uk->value;
+
+	return 0;
+}
 
 static __inline int
 _citrus_EUC_cs(unsigned int c)
@@ -203,10 +257,10 @@ _citrus_EUC_unpack_state(_EUCEncodingInfo *ei, _EUCState *s,
 }
 
 static int
-_citrus_EUC_mbrtowc_priv(_EUCEncodingInfo *ei, wchar_t *pwc, const char **s,
+_citrus_EUC_mbrtowc_priv(_EUCEncodingInfo *ei, wchar_ucs4_t *pwc, const char **s,
 			 size_t n, _EUCState *psenc, size_t *nresult)
 {
-	wchar_t wchar;
+	wchar_kuten_t wchar;
 	int c, cs, len;
 	int chlenbak;
 	const char *s0, *s1 = NULL;
@@ -277,7 +331,7 @@ _citrus_EUC_mbrtowc_priv(_EUCEncodingInfo *ei, wchar_t *pwc, const char **s,
 
 	psenc->chlen = 0;
 	if (pwc)
-		*pwc = wchar;
+	        _citrus_EUC_kt2ucs(ei, pwc, wchar);
 
 	if (!wchar) {
 		*nresult = 0;
@@ -299,15 +353,17 @@ restart:
 }
 
 static int
-_citrus_EUC_wcrtomb_priv(_EUCEncodingInfo *ei, char *s, size_t n, wchar_t wc,
+_citrus_EUC_wcrtomb_priv(_EUCEncodingInfo *ei, char *s, size_t n, wchar_ucs4_t wc,
 			 _EUCState *psenc, size_t *nresult)
 {
-	wchar_t m, nm;
+	wchar_kuten_t m, nm;
 	int cs, i, ret;
 
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(s != NULL);
+
+	_citrus_EUC_ucs2kt(ei, &wc, wc);
 
 	m = wc & ei->mask;
 	nm = wc & ~m;
@@ -354,9 +410,9 @@ static int
 /*ARGSUSED*/
 _citrus_EUC_stdenc_wctocs(struct _citrus_stdenc *ce,
 			  _csid_t * __restrict csid,
-			  _index_t * __restrict idx, wchar_t wc)
+			  _index_t * __restrict idx, wchar_kuten_t wc)
 {
-	wchar_t m, nm;
+	wchar_kuten_t m, nm;
 	_EUCEncodingInfo *ei;
 
 	_DIAGASSERT(ce != NULL && csid != NULL && idx != NULL);
@@ -376,7 +432,7 @@ _citrus_EUC_stdenc_wctocs(struct _citrus_stdenc *ce,
 static int
 /*ARGSUSED*/
 _citrus_EUC_stdenc_cstowc(struct _citrus_stdenc *ce,
-			  wchar_t * __restrict wc,
+			  wchar_kuten_t * __restrict wc,
 			  _csid_t csid, _index_t idx)
 {
 	_EUCEncodingInfo *ei;
@@ -389,7 +445,7 @@ _citrus_EUC_stdenc_cstowc(struct _citrus_stdenc *ce,
 	if ((csid & ~ei->mask) != 0 || (idx & ei->mask) != 0)
 		return (EINVAL);
 
-	*wc = (wchar_t)csid | (wchar_t)idx;
+	*wc = (wchar_kuten_t)csid | (wchar_kuten_t)idx;
 
 	return (0);
 }

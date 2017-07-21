@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_ues.c,v 1.4.22.1 2017/07/14 15:53:07 perseant Exp $ */
+/* $NetBSD: citrus_ues.c,v 1.4.22.2 2017/07/21 20:22:29 perseant Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_ues.c,v 1.4.22.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_ues.c,v 1.4.22.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -87,6 +87,8 @@ typedef struct {
 #define _ENCODING_IS_STATE_DEPENDENT		0
 #define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
 
+#include "citrus_u2k_template.h"
+
 static __inline void
 /*ARGSUSED*/
 _citrus_UES_init_state(_UESEncodingInfo * __restrict ei,
@@ -144,7 +146,7 @@ to_int(int ch)
 static const char *xdig = "0123456789abcdef";
 
 static __inline int
-to_str(char *s, wchar_t wc, int bit)
+to_str(char *s, wchar_kuten_t wc, int bit)
 {
 	char *p;
 
@@ -167,19 +169,19 @@ to_str(char *s, wchar_t wc, int bit)
 }
 
 static __inline int
-is_hi_surrogate(wchar_t wc)
+is_hi_surrogate(wchar_kuten_t wc)
 {
 	return wc >= 0xD800 && wc <= 0xDBFF;
 }
 
 static __inline int
-is_lo_surrogate(wchar_t wc)
+is_lo_surrogate(wchar_kuten_t wc)
 {
 	return wc >= 0xDC00 && wc <= 0xDFFF;
 }
 
-static __inline wchar_t
-surrogate_to_ucs(wchar_t hi, wchar_t lo)
+static __inline wchar_kuten_t
+surrogate_to_ucs(wchar_kuten_t hi, wchar_kuten_t lo)
 {
 	_DIAGASSERT(is_hi_surrogate(hi));
 	_DIAGASSERT(is_lo_surrogate(lo));
@@ -190,7 +192,7 @@ surrogate_to_ucs(wchar_t hi, wchar_t lo)
 }
 
 static __inline void
-ucs_to_surrogate(wchar_t wc, wchar_t * __restrict hi, wchar_t * __restrict lo)
+ucs_to_surrogate(wchar_kuten_t wc, wchar_kuten_t * __restrict hi, wchar_kuten_t * __restrict lo)
 {
 	_DIAGASSERT(hi != NULL);
 	_DIAGASSERT(lo != NULL);
@@ -202,7 +204,7 @@ ucs_to_surrogate(wchar_t wc, wchar_t * __restrict hi, wchar_t * __restrict lo)
 }
 
 static __inline int
-is_basic(wchar_t wc)
+is_basic(wchar_kuten_t wc)
 {
 	return (uint32_t)wc <= 0x9F &&
 	    wc != 0x24 && wc != 0x40 && wc != 0x60;
@@ -210,12 +212,12 @@ is_basic(wchar_t wc)
 
 static int
 _citrus_UES_mbrtowc_priv(_UESEncodingInfo * __restrict ei,
-	wchar_t * __restrict pwc, const char ** __restrict s, size_t n,
+	wchar_ucs4_t * __restrict pwc, const char ** __restrict s, size_t n,
 	_UESState * __restrict psenc, size_t * __restrict nresult)
 {
 	const char *s0;
 	int ch, head, tail, num;
-	wchar_t hi, wc;
+	wchar_kuten_t hi, wc;
 
 	_DIAGASSERT(ei != NULL);
 	/* pwc may be null */
@@ -230,11 +232,11 @@ _citrus_UES_mbrtowc_priv(_UESEncodingInfo * __restrict ei,
 	}
 	s0 = *s;
 
-	hi = (wchar_t)0;
+	hi = (wchar_kuten_t)0;
 	tail = 0;
 
 surrogate:
-	wc = (wchar_t)0;
+	wc = (wchar_kuten_t)0;
 	head = tail;
 	if (psenc->chlen == head) {
 		if (n-- < 1)
@@ -285,7 +287,7 @@ restart:
 	case 0:
 		break;
 	case 6:
-		if (hi != (wchar_t)0)
+		if (hi != (wchar_kuten_t)0)
 			break;
 		if ((ei->mode & MODE_C99) == 0) {
 			if (is_hi_surrogate(wc) != 0) {
@@ -314,11 +316,11 @@ restart:
 	head = psenc->chlen;
 	if (--head > 0)
 		memmove(&psenc->ch[0], &psenc->ch[1], head);
-	wc = (wchar_t)ch;
+	wc = (wchar_kuten_t)ch;
 done:
 	psenc->chlen = head;
 	if (pwc != NULL)
-		*pwc = wc;
+	        _citrus_UES_kt2ucs(ei, pwc, wc);
 	*nresult = (size_t)((wc == 0) ? 0 : (s0 - *s));
 	*s = s0;
 
@@ -327,13 +329,15 @@ done:
 
 static int
 _citrus_UES_wcrtomb_priv(_UESEncodingInfo * __restrict ei,
-	char * __restrict s, size_t n, wchar_t wc,
+	char * __restrict s, size_t n, wchar_ucs4_t wc,
 	_UESState * __restrict psenc, size_t * __restrict nresult)
 {
-	wchar_t hi, lo;
+	wchar_kuten_t hi, lo;
 
 	if (psenc->chlen != 0)
 		return EINVAL;
+
+	_citrus_UES_ucs2kt(ei, &wc, wc);
 
 	if ((ei->mode & MODE_C99) ? is_basic(wc) : (uint32_t)wc <= 0x7F) {
 		if (n-- < 1)
@@ -371,7 +375,7 @@ e2big:
 /*ARGSUSED*/
 static int
 _citrus_UES_stdenc_wctocs(struct _citrus_stdenc *ce,
-	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_t wc)
+	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_kuten_t wc)
 {
 	/* ei seem to be unused */
 	_DIAGASSERT(csid != NULL);
@@ -386,14 +390,14 @@ _citrus_UES_stdenc_wctocs(struct _citrus_stdenc *ce,
 static int
 /*ARGSUSED*/
 _citrus_UES_stdenc_cstowc(struct _citrus_stdenc *ce,
-	wchar_t * __restrict wc, _csid_t csid, _index_t idx)
+	wchar_kuten_t * __restrict wc, _csid_t csid, _index_t idx)
 {
 	/* ei seem to be unused */
 	_DIAGASSERT(wc != NULL);
 
 	if (csid != 0)
 		return EILSEQ;
-	*wc = (wchar_t)idx;
+	*wc = (wchar_kuten_t)idx;
 
 	return 0;
 }

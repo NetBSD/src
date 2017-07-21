@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype.h,v 1.3 2013/05/28 16:57:56 joerg Exp $	*/
+/*	$NetBSD: citrus_ctype.h,v 1.3.22.1 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -67,7 +67,7 @@ _citrus_ctype_mbrlen(_citrus_ctype_t cc, const char *s, size_t n,
 }
 
 static __inline int
-_citrus_ctype_mbrtowc(_citrus_ctype_t cc, wchar_t *pwc, const char *s,
+_citrus_ctype_mbrtowc(_citrus_ctype_t cc, wchar_kuten_t *pwc, const char *s,
 		      size_t n, void *pspriv, size_t *nresult)
 {
 
@@ -85,7 +85,7 @@ _citrus_ctype_mbsinit(_citrus_ctype_t cc, void const *pspriv, int *nresult)
 }
 
 static __inline int
-_citrus_ctype_mbsrtowcs(_citrus_ctype_t cc, wchar_t *pwcs, const char **s,
+_citrus_ctype_mbsrtowcs(_citrus_ctype_t cc, wchar_kuten_t *pwcs, const char **s,
 			size_t n, void *pspriv, size_t *nresult)
 {
 
@@ -95,7 +95,7 @@ _citrus_ctype_mbsrtowcs(_citrus_ctype_t cc, wchar_t *pwcs, const char **s,
 }
 
 static __inline int
-_citrus_ctype_mbsnrtowcs(_citrus_ctype_t cc, wchar_t *pwcs, const char **s,
+_citrus_ctype_mbsnrtowcs(_citrus_ctype_t cc, wchar_kuten_t *pwcs, const char **s,
 			size_t in, size_t n, void *pspriv, size_t *nresult)
 {
 
@@ -105,7 +105,7 @@ _citrus_ctype_mbsnrtowcs(_citrus_ctype_t cc, wchar_t *pwcs, const char **s,
 }
 
 static __inline int
-_citrus_ctype_mbstowcs(_citrus_ctype_t cc, wchar_t *pwcs, const char *s,
+_citrus_ctype_mbstowcs(_citrus_ctype_t cc, wchar_kuten_t *pwcs, const char *s,
 		       size_t n, size_t *nresult)
 {
 
@@ -114,7 +114,7 @@ _citrus_ctype_mbstowcs(_citrus_ctype_t cc, wchar_t *pwcs, const char *s,
 }
 
 static __inline int
-_citrus_ctype_mbtowc(_citrus_ctype_t cc, wchar_t *pw, const char *s, size_t n,
+_citrus_ctype_mbtowc(_citrus_ctype_t cc, wchar_kuten_t *pw, const char *s, size_t n,
 		     int *nresult)
 {
 
@@ -123,7 +123,7 @@ _citrus_ctype_mbtowc(_citrus_ctype_t cc, wchar_t *pw, const char *s, size_t n,
 }
 
 static __inline int
-_citrus_ctype_wcrtomb(_citrus_ctype_t cc, char *s, wchar_t wc,
+_citrus_ctype_wcrtomb(_citrus_ctype_t cc, char *s, wchar_kuten_t wc,
 		      void *pspriv, size_t *nresult)
 {
 
@@ -133,7 +133,7 @@ _citrus_ctype_wcrtomb(_citrus_ctype_t cc, char *s, wchar_t wc,
 }
 
 static __inline int
-_citrus_ctype_wcsrtombs(_citrus_ctype_t cc, char *s, const wchar_t **ppwcs,
+_citrus_ctype_wcsrtombs(_citrus_ctype_t cc, char *s, const wchar_kuten_t **ppwcs,
 			size_t n, void *pspriv, size_t *nresult)
 {
 
@@ -143,7 +143,7 @@ _citrus_ctype_wcsrtombs(_citrus_ctype_t cc, char *s, const wchar_t **ppwcs,
 }
 
 static __inline int
-_citrus_ctype_wcsnrtombs(_citrus_ctype_t cc, char *s, const wchar_t **ppwcs,
+_citrus_ctype_wcsnrtombs(_citrus_ctype_t cc, char *s, const wchar_kuten_t **ppwcs,
 			size_t in, size_t n, void *pspriv, size_t *nresult)
 {
 
@@ -153,7 +153,7 @@ _citrus_ctype_wcsnrtombs(_citrus_ctype_t cc, char *s, const wchar_t **ppwcs,
 }
 
 static __inline int
-_citrus_ctype_wcstombs(_citrus_ctype_t cc, char *s, const wchar_t *wcs,
+_citrus_ctype_wcstombs(_citrus_ctype_t cc, char *s, const wchar_kuten_t *wcs,
 		       size_t n, size_t *nresult)
 {
 
@@ -162,7 +162,7 @@ _citrus_ctype_wcstombs(_citrus_ctype_t cc, char *s, const wchar_t *wcs,
 }
 
 static __inline int
-_citrus_ctype_wctomb(_citrus_ctype_t cc, char *s, wchar_t wc, int *nresult)
+_citrus_ctype_wctomb(_citrus_ctype_t cc, char *s, wchar_kuten_t wc, int *nresult)
 {
 
 	_DIAGASSERT(cc && cc->cc_ops && cc->cc_ops->co_wctomb && nresult);
@@ -170,7 +170,7 @@ _citrus_ctype_wctomb(_citrus_ctype_t cc, char *s, wchar_t wc, int *nresult)
 }
 
 static __inline int
-_citrus_ctype_btowc(_citrus_ctype_t cc, int c, wint_t *wcresult)
+_citrus_ctype_btowc(_citrus_ctype_t cc, int c, wint_kuten_t *wcresult)
 {
 
 	_DIAGASSERT(cc && cc->cc_ops && cc->cc_ops->co_btowc && wcresult);
@@ -178,11 +178,29 @@ _citrus_ctype_btowc(_citrus_ctype_t cc, int c, wint_t *wcresult)
 }
 
 static __inline int
-_citrus_ctype_wctob(_citrus_ctype_t cc, wint_t c, int *cresult)
+_citrus_ctype_wctob(_citrus_ctype_t cc, wint_kuten_t c, int *cresult)
 {
 
 	_DIAGASSERT(cc && cc->cc_ops && cc->cc_ops->co_wctob && cresult);
 	return (*cc->cc_ops->co_wctob)(cc, c, cresult);
+}
+
+static __inline int
+_citrus_ctype_ucs2kt(_citrus_ctype_t cc,
+		      wchar_kuten_t * __restrict ktp,
+		      wchar_ucs4_t wc)
+{
+	_DIAGASSERT(cc && cc->cc_ops && cc->cc_ops->co_ucs2kt);
+	return (*cc->cc_ops->co_ucs2kt)(cc->cc_closure, ktp, wc);
+}
+
+static __inline int
+_citrus_ctype_kt2ucs(_citrus_ctype_t cc,
+		      wchar_ucs4_t * __restrict up,
+		      wchar_kuten_t kt)
+{
+	_DIAGASSERT(cc && cc->cc_ops && cc->cc_ops->co_kt2ucs);
+	return (*cc->cc_ops->co_kt2ucs)(cc->cc_closure, up, kt);
 }
 
 extern _citrus_ctype_rec_t _citrus_ctype_default;

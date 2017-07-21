@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.46.22.1 2017/07/14 15:53:08 perseant Exp $	*/
+/*	$NetBSD: rune.c,v 1.46.22.2 2017/07/21 20:22:29 perseant Exp $	*/
 /*-
  * Copyright (c)2010 Citrus Project,
  * All rights reserved.
@@ -46,7 +46,6 @@
 #include "citrus_ctype.h"
 
 #include "runetype_local.h"
-#include "rune_iso10646.h"
 
 #include "multibyte.h"
 
@@ -115,7 +114,6 @@ _rune_init_priv(_RuneLocalePriv *rlp)
 
 	_rune_wctype_init(&rlp->rl);
 	_rune_wctrans_init(&rlp->rl);
-	_rune_iso10646_init(&rlp->rl);
 
 #ifdef __BUILD_LEGACY
 	rlp->rlp_compat_bsdctype[0] = 0;
@@ -277,11 +275,9 @@ do {									\
 	rl->rl_variable_len = variable_len;
 	rl->rl_variable = (void *)rune;
 
-	_rune_find_codeset(rlp->rlp_codeset, sizeof(rlp->rlp_codeset),
-	    (char *)rl->rl_variable, &rl->rl_variable_len);
-
 	ret = _citrus_ctype_open(&rl->rl_citrus_ctype, frl->frl_encoding,
 	    rl->rl_variable, rl->rl_variable_len, _PRIVSIZE);
+
 	if (ret)
 		goto err;
 	if (__mb_len_max_runtime <
@@ -290,8 +286,11 @@ do {									\
 		goto err;
 	}
 
+	_rune_find_codeset(rlp->rlp_codeset, sizeof(rlp->rlp_codeset),
+	    (char *)rl->rl_variable, &rl->rl_variable_len);
+
 	for (i = 0; i < _CTYPE_CACHE_SIZE; ++i) {
-		wint_t wc;
+		wint_ucs4_t wc;
 		_RuneType rc;
 
 		ret = _citrus_ctype_btowc(rl->rl_citrus_ctype, i, &wc);
@@ -313,10 +312,12 @@ do {									\
 
 #define CONVERT_MAP(name)						\
 do {									\
-	wint_t map;							\
+	wint_ucs4_t map;						\
+	wint_kuten_t kmap;						\
 	int c;								\
 									\
-	map = _towctrans_priv(wc, _wctrans_##name(rl));			\
+	map = _towctrans_priv(wc, _wctrans_##name(rl), rl);		\
+	_citrus_ctype_ucs2kt(rl->rl_citrus_ctype, &kmap, map);		\
 	if (map == wc || (_citrus_ctype_wctob(rl->rl_citrus_ctype,	\
 	    map, &c)  || c == EOF))					\
 		c = i;							\
@@ -327,6 +328,7 @@ do {									\
 			CONVERT_MAP(upper);
 		}
 	}
+
 	*prl = rl;
 	return 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_local.h,v 1.3.64.1 2017/07/14 15:53:07 perseant Exp $	*/
+/*	$NetBSD: citrus_iconv_local.h,v 1.3.64.2 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -51,9 +51,9 @@ static int	_citrus_##_m_##_iconv_init_context			\
 	(struct _citrus_iconv *);					\
 static void	_citrus_##_m_##_iconv_uninit_context			\
 	(struct _citrus_iconv *);					\
-static int	_citrus_##_m_##_iconv_wchar_convert			\
-	(struct _citrus_iconv * __restrict, wchar_t,			\
-	 wchar_t *__restrict);
+static int     _citrus_##_m_##_iconv_wchar_convert                     \
+       (struct _citrus_iconv * __restrict, wchar_t,                    \
+        wchar_t *__restrict);
 
 
 #define _CITRUS_ICONV_DEF_OPS(_m_)					\
@@ -64,7 +64,7 @@ struct _citrus_iconv_ops _citrus_##_m_##_iconv_ops = {			\
 	/* io_init_context */	&_citrus_##_m_##_iconv_init_context,	\
 	/* io_uninit_context */	&_citrus_##_m_##_iconv_uninit_context,	\
 	/* io_convert */	&_citrus_##_m_##_iconv_convert,		\
-	/* io_wchar_convert */  &_citrus_##_m_##_iconv_wchar_convert	\
+	/* io_wchar_convert */	&_citrus_##_m_##_iconv_wchar_convert,	\
 }
 
 typedef _CITRUS_ICONV_GETOPS_FUNC_BASE((*_citrus_iconv_getops_t));
@@ -81,7 +81,7 @@ typedef int	(*_citrus_iconv_convert_t)
 	 size_t * __restrict);
 typedef int	(*_citrus_iconv_init_context_t)(struct _citrus_iconv *);
 typedef void	(*_citrus_iconv_uninit_context_t)(struct _citrus_iconv *);
-typedef int	(*_citrus_iconv_wchar_convert_t)
+typedef int    (*_citrus_iconv_wchar_convert_t)
 	(struct _citrus_iconv * __restrict, wchar_t,
 	 wchar_t *__restrict);
 
@@ -92,7 +92,7 @@ struct _citrus_iconv_ops {
 	_citrus_iconv_init_context_t	io_init_context;
 	_citrus_iconv_uninit_context_t	io_uninit_context;
 	_citrus_iconv_convert_t		io_convert;
-	_citrus_iconv_wchar_convert_t	io_wchar_convert;
+	_citrus_iconv_wchar_convert_t   io_wchar_convert;
 };
 #define _CITRUS_ICONV_ABI_VERSION	3
 

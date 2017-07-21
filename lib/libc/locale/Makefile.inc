@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.64.20.1 2017/07/14 15:53:08 perseant Exp $
+#	$NetBSD: Makefile.inc,v 1.64.20.2 2017/07/21 20:22:29 perseant Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -16,13 +16,17 @@ SRCS+=	setlocale.c __mb_cur_max.c \
 CPPFLAGS+=	-DWITH_RUNE -I${.CURDIR}
 SRCS+=	_wctrans.c _wctype.c rune.c runetable.c \
 	multibyte_c90.c multibyte_amd1.c iswctype_mb.c
+CPPFLAGS._wctrans.c+=		-I${LIBCDIR}/citrus
+CPPFLAGS._wctype.c+=		-I${LIBCDIR}/citrus
 CPPFLAGS.rune.c+=		-I${LIBCDIR}/citrus
 CPPFLAGS.runetable.c+=		-I${LIBCDIR}/citrus
 CPPFLAGS.multibyte_c90.c+=	-I${LIBCDIR}/citrus
 CPPFLAGS.multibyte_amd1.c+=	-I${LIBCDIR}/citrus
+CPPFLAGS.iswctype_mb.c+=	-I${LIBCDIR}/citrus
 
-SRCS+=	rune_iso10646.c unicode_collate.c unicode_ucd.c collate_locale.c
-CPPFLAGS.rune_iso10646.c+=	-I${LIBCDIR}/citrus
+#SRCS+=	rune_iso10646.c
+#CPPFLAGS.rune_iso10646.c+=	-I${LIBCDIR}/citrus
+SRCS+= unicode_collate.c unicode_ucd.c collate_locale.c
 CPPFLAGS.collate_locale.c+=	-I${LIBCDIR}/citrus
 COPTS.unicode_ucd.c = -Wno-missing-field-initializers -Wno-missing-braces
 COPTS.collate_locale.c = -Wno-missing-field-initializers -Wno-missing-braces

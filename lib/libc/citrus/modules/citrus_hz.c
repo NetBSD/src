@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_hz.c,v 1.4.18.1 2017/07/14 15:53:07 perseant Exp $ */
+/* $NetBSD: citrus_hz.c,v 1.4.18.2 2017/07/21 20:22:29 perseant Exp $ */
 
 /*-
  * Copyright (c)2004, 2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_hz.c,v 1.4.18.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_hz.c,v 1.4.18.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: citrus_hz.c,v 1.4.18.1 2017/07/14 15:53:07 perseant Exp $");
 #include "citrus_prop.h"
 
 /*
- * wchar_t mapping:
+ * wchar_kuten_t mapping:
  *
  * CTRL/ASCII	00000000 00000000 00000000 gxxxxxxx
  * GB2312	00000000 00000000 0xxxxxxx gxxxxxxx
@@ -162,6 +162,8 @@ typedef struct {
 #define _ENCODING_IS_STATE_DEPENDENT		1
 #define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	((_ps_)->inuse == NULL)
 
+#include "citrus_u2k_template.h"
+
 static __inline void
 _citrus_HZ_init_state(_HZEncodingInfo * __restrict ei,
 	_HZState * __restrict psenc)
@@ -199,11 +201,11 @@ _citrus_HZ_unpack_state(_HZEncodingInfo * __restrict ei,
 
 static int
 _citrus_HZ_mbrtowc_priv(_HZEncodingInfo * __restrict ei,
-	wchar_t * __restrict pwc, const char ** __restrict s, size_t n,
+	wchar_ucs4_t * __restrict pwc, const char ** __restrict s, size_t n,
 	_HZState * __restrict psenc, size_t * __restrict nresult)
 {
 	const char *s0;
-	wchar_t wc;
+	wchar_kuten_t wc;
 	int bit, head, tail, len, ch;
 	graphic_t *graphic;
 	escape_t *candidate, *init;
@@ -224,7 +226,7 @@ _citrus_HZ_mbrtowc_priv(_HZEncodingInfo * __restrict ei,
 	if (psenc->chlen < 0 || psenc->inuse == NULL)
 		return EINVAL;
 
-	wc = (wchar_t)0;
+	wc = (wchar_kuten_t)0;
 	bit = head = tail = 0;
 	graphic = NULL;
 	for (len = 0; len <= MB_LEN_MAX; /**/) {
@@ -242,7 +244,7 @@ _citrus_HZ_mbrtowc_priv(_HZEncodingInfo * __restrict ei,
 			if ((ch & ~0x80) <= 0x1F) {
 				if (psenc->inuse != INIT0(ei))
 					break;
-				wc = (wchar_t)ch;
+				wc = (wchar_kuten_t)ch;
 				goto done;
 			}
 			if (ch & 0x80) {
@@ -320,7 +322,7 @@ done:
 		return EINVAL;
 	*s = s0;
 	if (pwc != NULL)
-		*pwc = wc;
+	       _citrus_HZ_kt2ucs(ei, pwc, wc);
 	psenc->chlen = 0;
 	*nresult = (wc == 0) ? 0 : len;
 
@@ -329,7 +331,7 @@ done:
 
 static int
 _citrus_HZ_wcrtomb_priv(_HZEncodingInfo * __restrict ei,
-	char * __restrict s, size_t n, wchar_t wc,
+	char * __restrict s, size_t n, wchar_ucs4_t wc,
 	_HZState * __restrict psenc, size_t * __restrict nresult)
 {
 	int bit, ch;
@@ -342,6 +344,8 @@ _citrus_HZ_wcrtomb_priv(_HZEncodingInfo * __restrict ei,
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(psenc != NULL);
 	_DIAGASSERT(nresult != NULL);
+
+	_citrus_HZ_ucs2kt(ei, &wc, wc);
 
 	if (psenc->chlen != 0 || psenc->inuse == NULL)
 		return EINVAL;
@@ -487,7 +491,7 @@ _citrus_HZ_stdenc_get_state_desc_generic(_HZEncodingInfo * __restrict ei,
 static int
 /*ARGSUSED*/
 _citrus_HZ_stdenc_wctocs(struct _citrus_stdenc *ce,
-	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_t wc)
+	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_kuten_t wc)
 {
 	int bit;
 
@@ -517,22 +521,22 @@ _citrus_HZ_stdenc_wctocs(struct _citrus_stdenc *ce,
 static int
 /*ARGSUSED*/
 _citrus_HZ_stdenc_cstowc(struct _citrus_stdenc *ce,
-	wchar_t * __restrict wc, _csid_t csid, _index_t idx)
+	wchar_kuten_t * __restrict wc, _csid_t csid, _index_t idx)
 {
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(wc != NULL);
 
-	*wc = (wchar_t)idx;
+	*wc = (wchar_kuten_t)idx;
 	switch (csid) {
 	case 0x80:
 	case 0x8080:
-		*wc |= (wchar_t)0x80;
+		*wc |= (wchar_kuten_t)0x80;
 	/*FALLTHROUGH*/
 	case 0x0:
 	case 0x8000:
 		break;
 	default:
-		*wc |= (wchar_t)csid;
+		*wc |= (wchar_kuten_t)csid;
 	}
 
 	return 0;

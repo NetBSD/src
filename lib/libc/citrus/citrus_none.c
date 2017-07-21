@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_none.c,v 1.22.2.1 2017/07/14 15:53:07 perseant Exp $	*/
+/*	$NetBSD: citrus_none.c,v 1.22.2.2 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,17 +28,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_none.c,v 1.22.2.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_none.c,v 1.22.2.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <paths.h>
 #include <wchar.h>
 #include <sys/types.h>
+#include <sys/queue.h>
 
 #include "citrus_namespace.h"
 #include "citrus_types.h"
@@ -46,6 +47,10 @@ __RCSID("$NetBSD: citrus_none.c,v 1.22.2.1 2017/07/14 15:53:07 perseant Exp $");
 #include "citrus_ctype.h"
 #include "citrus_none.h"
 #include "citrus_stdenc.h"
+#include "citrus_hash.h"
+#include "citrus_iconv.h"
+
+#define _ISO_10646_CHARSET_NAME "UCS-4"
 
 /* ---------------------------------------------------------------------- */
 
@@ -55,12 +60,65 @@ _CITRUS_CTYPE_DEF_OPS(NONE);
 
 /* ---------------------------------------------------------------------- */
 
+struct _NONE_Info {
+	char *charset;
+	wchar_t forward[0x100];
+	struct unicode2kuten_lookup reverse[0x100];
+};
+
+static int compare_unicode2kuten_lookup(const void *va, const void *vb)
+{
+	const struct unicode2kuten_lookup *a = (const struct unicode2kuten_lookup *)va;
+	const struct unicode2kuten_lookup *b = (const struct unicode2kuten_lookup *)vb;
+
+	return a->key - b->key;
+}
+
 static int
 /*ARGSUSED*/
 _citrus_NONE_ctype_init(void ** __restrict cl, void * __restrict var,
 			size_t lenvar, size_t lenps)
 {
-	*cl = NULL;
+	int ret;
+	char *t;
+	size_t idx;
+	wchar_t u;
+	struct _NONE_Info *nip;
+	struct _citrus_iconv *handle;
+
+	nip = *cl = (struct _NONE_Info *)calloc(1, sizeof(struct _NONE_Info));
+	for (idx = 0; idx < 0x100; ++idx) {
+		nip->forward[idx] = idx;
+		nip->reverse[idx].key = idx;
+		nip->reverse[idx].value = idx;
+	}
+	
+	for (t = var, idx = 0; t < ((char *)var) + lenvar; t++)
+		if (*t == 'C' && strncmp(t, "CODESET=", 8) == 0) { /* strlen("CODESET=") == 8 */
+			idx = 1;
+			break;
+		}
+	if (idx) {
+		nip->charset = strndup(t + 8, lenvar - 8);
+		idx = strcspn(t, " \t\r\n");
+		t[idx] = '\0';
+	}
+	if (nip->charset) {
+		int oerrno = errno; /* We will ignore any errors from iconv */
+		ret = _citrus_iconv_open(&handle, _PATH_ICONV, nip->charset, _ISO_10646_CHARSET_NAME);
+		if (ret == 0) {
+			for (idx = 0; idx < 0x100; ++idx) {
+				_citrus_iconv_wchar_convert(handle, (wchar_t)idx, &u);
+				nip->forward[idx] = u;
+				nip->reverse[idx].key = u;
+				nip->reverse[idx].value = (wchar_t)idx;
+			}
+			_citrus_iconv_close(handle);
+			qsort(nip->reverse, 0x100, sizeof(nip->reverse[0]), compare_unicode2kuten_lookup);
+		}
+		errno = oerrno;
+	}
+	
 	return (0);
 }
 
@@ -68,6 +126,7 @@ static void
 /*ARGSUSED*/
 _citrus_NONE_ctype_uninit(void *cl)
 {
+	free(cl);
 }
 
 static unsigned
@@ -114,7 +173,7 @@ _citrus_NONE_ctype_mbrlen(void * __restrict cl, const char * __restrict s,
 
 static int
 /*ARGSUSED*/
-_citrus_NONE_ctype_mbrtowc(void * __restrict cl, wchar_t * __restrict pwc,
+_citrus_NONE_ctype_mbrtowc(void * __restrict cl, wchar_ucs4_t * __restrict pwc,
 			   const char * __restrict s, size_t n,
 			   void * __restrict pspriv,
 			   size_t * __restrict nresult)
@@ -128,8 +187,9 @@ _citrus_NONE_ctype_mbrtowc(void * __restrict cl, wchar_t * __restrict pwc,
 		return (0);
 	}
 
-	if (pwc != NULL)
-		*pwc = (wchar_t)(unsigned char) *s;
+	if (pwc != NULL) {
+		_citrus_NONE_ctype_kt2ucs(cl, pwc, (wchar_kuten_t)(unsigned char)*s);
+	}
 
 	*nresult = *s == '\0' ? 0 : 1;
 	return (0);
@@ -147,7 +207,7 @@ _citrus_NONE_ctype_mbsinit(void * __restrict cl,
 
 static int
 /*ARGSUSED*/
-_citrus_NONE_ctype_mbsrtowcs(void * __restrict cl, wchar_t * __restrict pwcs,
+_citrus_NONE_ctype_mbsrtowcs(void * __restrict cl, wchar_ucs4_t * __restrict pwcs,
 			     const char ** __restrict s, size_t n,
 			     void * __restrict pspriv,
 			     size_t * __restrict nresult)
@@ -163,7 +223,7 @@ _citrus_NONE_ctype_mbsrtowcs(void * __restrict cl, wchar_t * __restrict pwcs,
 	s0 = *s; /* to keep *s unchanged for now, use copy instead. */
 	while (n > 0) {
 		if (pwcs != NULL) {
-			*pwcs = (wchar_t)(unsigned char)*s0;
+			_citrus_NONE_ctype_kt2ucs(cl, pwcs, (wchar_kuten_t)(unsigned char)*s0);
 		}
 		if (*s0 == '\0') {
 			s0 = NULL;
@@ -187,10 +247,10 @@ _citrus_NONE_ctype_mbsrtowcs(void * __restrict cl, wchar_t * __restrict pwcs,
 static int
 /*ARGSUSED*/
 _citrus_NONE_ctype_mbsnrtowcs(_citrus_ctype_rec_t * __restrict cc,
-			     wchar_t * __restrict pwcs,
-			     const char ** __restrict s, size_t in, size_t n,
-			     void * __restrict pspriv,
-			     size_t * __restrict nresult)
+			      wchar_ucs4_t * __restrict pwcs,
+			      const char ** __restrict s, size_t in, size_t n,
+			      void * __restrict pspriv,
+			      size_t * __restrict nresult)
 {
 	int cnt;
 	const char *s0;
@@ -203,7 +263,7 @@ _citrus_NONE_ctype_mbsnrtowcs(_citrus_ctype_rec_t * __restrict cc,
 	s0 = *s; /* to keep *s unchanged for now, use copy instead. */
 	while (in > 0 && n > 0) {
 		if (pwcs != NULL) {
-			*pwcs = (wchar_t)(unsigned char)*s0;
+			_citrus_NONE_ctype_kt2ucs(cc->cc_closure, pwcs, (wchar_kuten_t)(unsigned char)*s0);
 		}
 		if (*s0 == '\0') {
 			s0 = NULL;
@@ -226,7 +286,7 @@ _citrus_NONE_ctype_mbsnrtowcs(_citrus_ctype_rec_t * __restrict cc,
 }
 
 static int
-_citrus_NONE_ctype_mbstowcs(void * __restrict cl, wchar_t * __restrict wcs,
+_citrus_NONE_ctype_mbstowcs(void * __restrict cl, wchar_ucs4_t * __restrict wcs,
 			    const char * __restrict s, size_t n,
 			    size_t * __restrict nresult)
 {
@@ -237,7 +297,7 @@ _citrus_NONE_ctype_mbstowcs(void * __restrict cl, wchar_t * __restrict wcs,
 
 static int
 /*ARGSUSED*/
-_citrus_NONE_ctype_mbtowc(void * __restrict cl, wchar_t * __restrict pwc,
+_citrus_NONE_ctype_mbtowc(void * __restrict cl, wchar_ucs4_t * __restrict pwc,
 			  const char * __restrict s, size_t n,
 			  int * __restrict nresult)
 {
@@ -258,7 +318,7 @@ _citrus_NONE_ctype_mbtowc(void * __restrict cl, wchar_t * __restrict pwc,
 		return (0);
 	}
 
-	*pwc = (wchar_t)(unsigned char)*s;
+	_citrus_NONE_ctype_kt2ucs(cl, pwc, (wchar_t)(unsigned char)*s);
 	*nresult = *s == '\0' ? 0 : 1;
 
 	return (0);
@@ -267,7 +327,7 @@ _citrus_NONE_ctype_mbtowc(void * __restrict cl, wchar_t * __restrict pwc,
 static int
 /*ARGSUSED*/
 _citrus_NONE_ctype_wcrtomb(void * __restrict cl, char * __restrict s,
-			   wchar_t wc, void * __restrict pspriv,
+			   wchar_ucs4_t wc, void * __restrict pspriv,
 			   size_t * __restrict nresult)
 {
 	if ((wc&~0xFFU) != 0) {
@@ -277,6 +337,7 @@ _citrus_NONE_ctype_wcrtomb(void * __restrict cl, char * __restrict s,
 
 	*nresult = 1;
 	if (s!=NULL)
+		_citrus_NONE_ctype_ucs2kt(cl, &wc, wc);
 		*s = (char)wc;
 
 	return (0);
@@ -285,12 +346,13 @@ _citrus_NONE_ctype_wcrtomb(void * __restrict cl, char * __restrict s,
 static int
 /*ARGSUSED*/
 _citrus_NONE_ctype_wcsrtombs(void * __restrict cl, char * __restrict s,
-			     const wchar_t ** __restrict pwcs, size_t n,
+			     const wchar_ucs4_t ** __restrict pwcs, size_t n,
 			     void * __restrict pspriv,
 			     size_t * __restrict nresult)
 {
 	size_t count;
-	const wchar_t *pwcs0;
+	const wchar_ucs4_t *pwcs0;
+	wchar_kuten_t wc;
 
 	pwcs0 = *pwcs;
 	count = 0;
@@ -299,12 +361,13 @@ _citrus_NONE_ctype_wcsrtombs(void * __restrict cl, char * __restrict s,
 		n = 1;
 
 	while (n > 0) {
-		if ((*pwcs0 & ~0xFFU) != 0) {
+		_citrus_NONE_ctype_ucs2kt(cl, &wc, *pwcs0);
+		if ((wc & ~0xFFU) != 0) {
 			*nresult = (size_t)-1;
 			return (EILSEQ);
 		}
 		if (s != NULL) {
-			*s++ = (char)*pwcs0;
+			*s++ = (char)wc;
 			n--;
 		}
 		if (*pwcs0 == L'\0') {
@@ -326,12 +389,13 @@ static int
 /*ARGSUSED*/
 _citrus_NONE_ctype_wcsnrtombs(_citrus_ctype_rec_t * __restrict cc,
 			     char * __restrict s,
-			     const wchar_t ** __restrict pwcs, size_t in,
+			     const wchar_kuten_t ** __restrict pwcs, size_t in,
 			     size_t n, void * __restrict pspriv,
 			     size_t * __restrict nresult)
 {
 	size_t count;
-	const wchar_t *pwcs0;
+	const wchar_ucs4_t *pwcs0;
+	wchar_kuten_t wc;
 
 	pwcs0 = *pwcs;
 	count = 0;
@@ -340,12 +404,13 @@ _citrus_NONE_ctype_wcsnrtombs(_citrus_ctype_rec_t * __restrict cc,
 		n = 1;
 
 	while (in > 0 && n > 0) {
-		if ((*pwcs0 & ~0xFFU) != 0) {
+		_citrus_NONE_ctype_ucs2kt(cc->cc_closure, &wc, *pwcs0);
+		if ((wc & ~0xFFU) != 0) {
 			*nresult = (size_t)-1;
 			return (EILSEQ);
 		}
 		if (s != NULL) {
-			*s++ = (char)*pwcs0;
+			*s++ = (char)wc;
 			n--;
 		}
 		if (*pwcs0 == L'\0') {
@@ -366,17 +431,17 @@ _citrus_NONE_ctype_wcsnrtombs(_citrus_ctype_rec_t * __restrict cc,
 
 static int
 _citrus_NONE_ctype_wcstombs(void * __restrict cl, char * __restrict s,
-			    const wchar_t * __restrict pwcs, size_t n,
+			    const wchar_ucs4_t * __restrict pwcs, size_t n,
 			    size_t * __restrict nresult)
 {
-	const wchar_t *rpwcs = pwcs;
+	const wchar_kuten_t *rpwcs = pwcs;
 
 	return (_citrus_NONE_ctype_wcsrtombs(cl, s, &rpwcs, n, NULL, nresult));
 }
 
 static int
 _citrus_NONE_ctype_wctomb(void * __restrict cl, char * __restrict s,
-			  wchar_t wc, int * __restrict nresult)
+			  wchar_kuten_t wc, int * __restrict nresult)
 {
 	int ret;
 	size_t nr;
@@ -399,25 +464,71 @@ _citrus_NONE_ctype_wctomb(void * __restrict cl, char * __restrict s,
 static int
 /*ARGSUSED*/
 _citrus_NONE_ctype_btowc(_citrus_ctype_rec_t * __restrict cc,
-			 int c, wint_t * __restrict wcresult)
+			 int c, wint_kuten_t * __restrict wcresult)
 {
 	if (c == EOF || c & ~0xFF)
 		*wcresult = WEOF;
 	else
-		*wcresult = (wint_t)c;
+		_citrus_NONE_ctype_kt2ucs(cc->cc_closure, wcresult, (wint_kuten_t)(unsigned char)c);
 	return (0);
 }
 
 static int
 /*ARGSUSED*/
 _citrus_NONE_ctype_wctob(_citrus_ctype_rec_t * __restrict cc,
-			 wint_t wc, int * __restrict cresult)
+			 wint_kuten_t wc, int * __restrict cresult)
 {
+	_citrus_NONE_ctype_ucs2kt(cc->cc_closure, &wc, wc);
+
 	if (wc == WEOF || wc & ~0xFF)
 		*cresult = EOF;
 	else
 		*cresult = (int)wc;
 	return (0);
+}
+
+static int
+/*ARGSUSED*/
+_citrus_NONE_ctype_ucs2kt(void * __restrict cl,
+			  wchar_kuten_t * __restrict ktp,
+			  wchar_ucs4_t wc)
+{
+	struct _NONE_Info *nip = (struct _NONE_Info *)cl;
+	struct unicode2kuten_lookup *uk = NULL;
+
+	if (cl == NULL) {
+		*ktp = wc;
+		return 0;
+	}
+
+	/* If wc is small, it's likely that it is a direct match. */
+	if (wc < 0x100 && nip->reverse[wc].key == wc) {
+		*ktp = nip->reverse[wc].value;
+		return 0;
+	}
+	
+	uk = _citrus_uk_bsearch(wc, &nip->reverse[0], 0x100);
+
+	if (uk != NULL)
+		*ktp = uk->value;
+	else
+		*ktp = WEOF;
+	return 0;
+}
+
+static int
+/*ARGSUSED*/
+_citrus_NONE_ctype_kt2ucs(void * __restrict cl,
+			  wchar_ucs4_t * __restrict up,
+			  wchar_kuten_t kt)
+{
+	if (cl == NULL) {
+		*up = kt;
+		return 0;
+	}
+
+	*up = ((struct _NONE_Info *)cl)->forward[kt];
+	return 0;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -591,29 +702,29 @@ _citrus_NONE_stdenc_get_state_desc(struct _stdenc * __restrict ce,
 static int
 /*ARGSUSED*/
 _citrus_NONE_stdenc_wctocs(struct _stdenc * __restrict ce,
-	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_t wc)
+			   _csid_t * __restrict csid, _index_t * __restrict idx, wchar_t wc)
 {
-	/* ce may be unused */
-	_DIAGASSERT(csid != NULL);
-	_DIAGASSERT(idx != NULL);
+       /* ce may be unused */
+       _DIAGASSERT(csid != NULL);
+       _DIAGASSERT(idx != NULL);
 
-	*csid = 0;
-	*idx = (_index_t)wc;
+       *csid = 0;
+       *idx = (_index_t)wc;
 
-	return 0;
+       return 0;
 }
 
 static int
 /*ARGSUSED*/
 _citrus_NONE_stdenc_cstowc(struct _stdenc * __restrict ce,
-	wchar_t * __restrict pwc, _csid_t csid, _index_t idx)
+			   wchar_t * __restrict pwc, _csid_t csid, _index_t idx)
 {
-	/* ce may be unused */
-	_DIAGASSERT(pwc != NULL);
+       /* ce may be unused */
+       _DIAGASSERT(pwc != NULL);
 
-	if (csid != 0)
-		return EILSEQ;
-	*pwc = (wchar_t)idx;
+       if (csid != 0)
+               return EILSEQ;
+       *pwc = (wchar_t)idx;
 
-	return 0;
+       return 0;
 }

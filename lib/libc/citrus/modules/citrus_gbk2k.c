@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_gbk2k.c,v 1.8.22.1 2017/07/14 15:53:07 perseant Exp $ */
+/* $NetBSD: citrus_gbk2k.c,v 1.8.22.2 2017/07/21 20:22:29 perseant Exp $ */
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_gbk2k.c,v 1.8.22.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_gbk2k.c,v 1.8.22.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -91,6 +91,8 @@ typedef struct {
 #define _ENCODING_IS_STATE_DEPENDENT	0
 #define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
 
+#include "citrus_u2k_template.h"
+
 static __inline void
 /*ARGSUSED*/
 _citrus_GBK2K_init_state(_GBK2KEncodingInfo * __restrict ei,
@@ -146,7 +148,7 @@ _mb_surrogate(int c)
 }
 
 static __inline int
-_mb_count(wchar_t v)
+_mb_count(wchar_kuten_t v)
 {
 	u_int32_t c;
 
@@ -163,14 +165,14 @@ _mb_count(wchar_t v)
 
 static int
 _citrus_GBK2K_mbrtowc_priv(_GBK2KEncodingInfo * __restrict ei,
-			   wchar_t * __restrict pwc,
+			   wchar_ucs4_t * __restrict pwc,
 			   const char ** __restrict s, size_t n,
 			   _GBK2KState * __restrict psenc,
 			   size_t * __restrict nresult)
 {
 	int chlenbak, len;
 	const char *s0, *s1;
-	wchar_t wc;
+	wchar_kuten_t wc;
 
 	_DIAGASSERT(ei != NULL);
 	/* pwc may be NULL */
@@ -246,7 +248,7 @@ convert:
 		wc = (wc << 8) | (*s1++ & 0xff);
 
 	if (pwc != NULL)
-		*pwc = wc;
+	        _citrus_GBK2K_kt2ucs(ei, pwc, wc);
 	*s = s0;
 	*nresult = (wc == 0) ? 0 : psenc->chlen - chlenbak; 
 	/* _citrus_GBK2K_init_state(ei, psenc); */
@@ -270,7 +272,7 @@ ilseq:
 
 static int
 _citrus_GBK2K_wcrtomb_priv(_GBK2KEncodingInfo * __restrict ei,
-			   char * __restrict s, size_t n, wchar_t wc,
+			   char * __restrict s, size_t n, wchar_ucs4_t wc,
 			   _GBK2KState * __restrict psenc,
 			   size_t * __restrict nresult)
 {
@@ -279,6 +281,8 @@ _citrus_GBK2K_wcrtomb_priv(_GBK2KEncodingInfo * __restrict ei,
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(psenc != NULL);
+
+	_citrus_GBK2K_ucs2kt(ei, &wc, wc);
 
 	if (psenc->chlen != 0) {
 		ret = EINVAL;
@@ -335,7 +339,7 @@ static int
 /*ARGSUSED*/
 _citrus_GBK2K_stdenc_wctocs(struct _citrus_stdenc *ce,
 			    _csid_t * __restrict csid,
-			    _index_t * __restrict idx, wchar_t wc)
+			    _index_t * __restrict idx, wchar_kuten_t wc)
 {
 	u_int8_t ch, cl;
 
@@ -369,7 +373,7 @@ _citrus_GBK2K_stdenc_wctocs(struct _citrus_stdenc *ce,
 static int
 /*ARGSUSED*/
 _citrus_GBK2K_stdenc_cstowc(struct _citrus_stdenc *ce,
-			    wchar_t * __restrict wc,
+			    wchar_kuten_t * __restrict wc,
 			    _csid_t csid, _index_t idx)
 {
 	_GBK2KEncodingInfo *ei;
@@ -382,21 +386,21 @@ _citrus_GBK2K_stdenc_cstowc(struct _citrus_stdenc *ce,
 	switch (csid) {
 	case 0:
 		/* ISO646 */
-		*wc = (wchar_t)idx;
+		*wc = (wchar_kuten_t)idx;
 		break;
 	case 1:
 		/* EUC G1 */
-		*wc = (wchar_t)idx | 0x8080U;
+		*wc = (wchar_kuten_t)idx | 0x8080U;
 		break;
 	case 2:
 		/* extended area */
-		*wc = (wchar_t)idx;
+		*wc = (wchar_kuten_t)idx;
 		break;
 	case 3:
 		/* GBKUCS : XXX */
 		if (ei->mb_cur_max != 4)
 			return EINVAL;
-		*wc = (wchar_t)idx;
+		*wc = (wchar_kuten_t)idx;
 		break;
 	default:
 		return EILSEQ;

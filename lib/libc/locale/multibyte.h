@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.h,v 1.6 2013/08/18 20:03:48 joerg Exp $	*/
+/*	$NetBSD: multibyte.h,v 1.6.20.1 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -29,6 +29,9 @@
 #ifndef _MULTIBYTE_H_
 #define _MULTIBYTE_H_
 
+#include "setlocale_local.h"
+/*#include "runetype_local.h"*/
+
 /* mbstate_t private */
 
 #ifdef _BSD_MBSTATE_T_
@@ -49,8 +52,10 @@ typedef union _RuneState {
 } _RuneState;
 #define _PRIVSIZE	(sizeof(mbstate_t)-offsetof(_RuneStatePriv, __private))
 
+#ifndef _RUNE_LOCALE
 #define _RUNE_LOCALE(loc) \
     ((_RuneLocale *)((loc)->part_impl[(size_t)LC_CTYPE]))
+#endif
 
 #define _CITRUS_CTYPE(loc) \
     (((_RuneLocale *)((loc)->part_impl[(size_t)LC_CTYPE]))->rl_citrus_ctype)

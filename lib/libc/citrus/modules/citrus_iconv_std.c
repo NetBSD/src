@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.16.34.1 2017/07/14 15:53:07 perseant Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.16.34.2 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.16.34.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.16.34.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -455,7 +455,7 @@ _citrus_iconv_std_iconv_uninit_context(struct _citrus_iconv *cv)
 	free(cv->cv_closure);
 }
 
-static int
+ static int
 _citrus_iconv_std_iconv_wchar_convert(struct _citrus_iconv * __restrict cv,
 				      wchar_t in,
 				      wchar_t *out)
@@ -465,19 +465,19 @@ _citrus_iconv_std_iconv_wchar_convert(struct _citrus_iconv * __restrict cv,
 	_index_t idx;
 	_csid_t csid;
 	int ret;
-
-	ret = _stdenc_wctocs(sc->sc_src_encoding.se_handle, &csid, &idx, in);
+	
+	ret = _citrus_stdenc_wctocs(sc->sc_src_encoding.se_handle, &csid, &idx, in);
 	if (ret) {
 		return ret;
 	}
-
+	
 	ret = do_conv(is, sc, &csid, &idx);
 	if (ret) {
 		/* Translate all errors into EILSEQ for consumers */
 		return EILSEQ;
 	}
-
-	ret = _stdenc_cstowc(sc->sc_dst_encoding.se_handle, out, csid, idx);
+	
+	ret = _citrus_stdenc_cstowc(sc->sc_dst_encoding.se_handle, out, csid, idx);
 	return ret;
 }
 

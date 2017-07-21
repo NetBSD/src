@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_stdenc_template.h,v 1.4.64.1 2017/07/14 15:53:07 perseant Exp $	*/
+/*	$NetBSD: citrus_stdenc_template.h,v 1.4.64.2 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -115,7 +115,7 @@ _FUNCNAME(stdenc_mbtocs)(struct _citrus_stdenc * __restrict ce,
 			 void * __restrict ps, size_t * __restrict nresult)
 {
 	int ret;
-	wchar_t wc;
+	wchar_kuten_t wc;
 
 	_DIAGASSERT(nresult != NULL);
 
@@ -135,7 +135,7 @@ _FUNCNAME(stdenc_cstomb)(struct _citrus_stdenc * __restrict ce,
 			 void * __restrict ps, size_t * __restrict nresult)
 {
 	int ret;
-	wchar_t wc;
+	wchar_kuten_t wc;
 
 	_DIAGASSERT(nresult != NULL);
 

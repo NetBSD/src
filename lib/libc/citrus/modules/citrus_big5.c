@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_big5.c,v 1.15.18.1 2017/07/14 15:53:07 perseant Exp $	*/
+/*	$NetBSD: citrus_big5.c,v 1.15.18.2 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_big5.c,v 1.15.18.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_big5.c,v 1.15.18.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -96,7 +96,7 @@ typedef struct {
 
 typedef struct _BIG5Exclude {
 	TAILQ_ENTRY(_BIG5Exclude) entry;
-	wint_t start, end;
+	wint_kuten_t start, end;
 } _BIG5Exclude;
 
 typedef TAILQ_HEAD(_BIG5ExcludeList, _BIG5Exclude) _BIG5ExcludeList;
@@ -134,6 +134,60 @@ typedef struct {
 #define _ENCODING_IS_STATE_DEPENDENT	0
 #define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
 
+#include "citrus_big5_data.h"
+
+static __inline int
+/*ARGSUSED*/
+_FUNCNAME(ucs2kt)(_ENCODING_INFO * __restrict ei,
+		  wchar_kuten_t * __restrict ktp, wchar_ucs4_t wc)
+{
+	struct unicode2kuten_lookup *uk;
+
+	_DIAGASSERT(ktp != NULL);
+
+	/* US-ASCII are not in the list */
+	if (wc < 0x80) {
+		*ktp = wc;
+		return 0;
+	}
+
+	uk = _citrus_uk_bsearch(wc, __big5_table__unicode2kuten_lookup, _BIG5_TABLE__U2K_LIST_LENGTH);
+
+	if (uk == NULL)
+		*ktp = WEOF;
+	else
+		*ktp = uk->value;
+
+	return 0;
+}
+
+static __inline int
+/*ARGSUSED*/
+_FUNCNAME(kt2ucs)(_ENCODING_INFO * __restrict ei,
+		  wchar_ucs4_t * __restrict up, wchar_kuten_t kt)
+{
+	_csid_t csid;
+	_index_t idx;
+	struct unicode2kuten_lookup *uk, *table;
+
+	_DIAGASSERT(up != NULL);
+
+	table = NULL;
+
+	if (kt < 0x80) {
+		*up = kt;
+		return 0;
+	}
+
+	uk = _citrus_uk_bsearch(kt, __big5_table__kuten2unicode_lookup, _BIG5_TABLE__K2U_LIST_LENGTH);
+
+	if (uk == NULL)
+		*up = WEOF;
+	else
+		*up = uk->value;
+
+	return 0;
+}
 
 static __inline void
 /*ARGSUSED*/
@@ -178,7 +232,7 @@ _citrus_BIG5_check2(_BIG5EncodingInfo *ei, u_int c)
 }
 
 static __inline int
-_citrus_BIG5_check_excludes(_BIG5EncodingInfo *ei, wint_t c)
+_citrus_BIG5_check_excludes(_BIG5EncodingInfo *ei, wint_kuten_t c)
 {
 	_BIG5Exclude *exclude;
 
@@ -225,13 +279,13 @@ _citrus_BIG5_fill_excludes(void * __restrict ctx, const char * __restrict s,
 		return EINVAL;
 	ei = (_BIG5EncodingInfo *)ctx;
 	exclude = TAILQ_LAST(&ei->excludes, _BIG5ExcludeList);
-	if (exclude != NULL && (wint_t)start <= exclude->end)
+	if (exclude != NULL && (wint_kuten_t)start <= exclude->end)
 		return EINVAL;
 	exclude = (void *)malloc(sizeof(*exclude));
 	if (exclude == NULL)
 		return ENOMEM;
-	exclude->start = (wint_t)start;
-	exclude->end = (wint_t)end;
+	exclude->start = (wint_kuten_t)start;
+	exclude->end = (wint_kuten_t)end;
 	TAILQ_INSERT_TAIL(&ei->excludes, exclude, entry);
 
 	return 0;
@@ -296,12 +350,12 @@ _citrus_BIG5_encoding_module_init(_BIG5EncodingInfo * __restrict ei,
 static int
 /*ARGSUSED*/
 _citrus_BIG5_mbrtowc_priv(_BIG5EncodingInfo * __restrict ei,
-			  wchar_t * __restrict pwc,
+			  wchar_ucs4_t * __restrict pwc,
 			  const char ** __restrict s, size_t n,
 			  _BIG5State * __restrict psenc,
 			  size_t * __restrict nresult)
 {
-	wchar_t wchar;
+	wchar_kuten_t wchar;
 	int c;
 	int chlenbak;
 	const char *s0;
@@ -363,13 +417,13 @@ _citrus_BIG5_mbrtowc_priv(_BIG5EncodingInfo * __restrict ei,
 		goto ilseq;
 	}
 
-	if (_citrus_BIG5_check_excludes(ei, (wint_t)wchar) != 0)
+	if (_citrus_BIG5_check_excludes(ei, (wint_kuten_t)wchar) != 0)
 		goto ilseq;
 
 	*s = s0;
 	psenc->chlen = 0;
 	if (pwc)
-		*pwc = wchar;
+		_citrus_BIG5_kt2ucs(ei, pwc, wchar);
 	if (!wchar)
 		*nresult = 0;
 	else
@@ -392,7 +446,7 @@ static int
 /*ARGSUSED*/
 _citrus_BIG5_wcrtomb_priv(_BIG5EncodingInfo * __restrict ei,
 			  char * __restrict s,
-			  size_t n, wchar_t wc, _BIG5State * __restrict psenc,
+			  size_t n, wchar_ucs4_t wc, _BIG5State * __restrict psenc,
 			  size_t * __restrict nresult)
 {
 	size_t l, ret;
@@ -401,9 +455,11 @@ _citrus_BIG5_wcrtomb_priv(_BIG5EncodingInfo * __restrict ei,
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(s != NULL);
 
+	_citrus_BIG5_ucs2kt(ei, &wc, wc);
+
 	/* check invalid sequence */
 	if (wc & ~0xffff ||
-	    _citrus_BIG5_check_excludes(ei, (wint_t)wc) != 0) {
+	    _citrus_BIG5_check_excludes(ei, (wint_kuten_t)wc) != 0) {
 		ret = EILSEQ;
 		goto err;
 	}
@@ -448,7 +504,7 @@ static int
 /*ARGSUSED*/
 _citrus_BIG5_stdenc_wctocs(struct _citrus_stdenc *ce,
 			   _csid_t * __restrict csid,
-			   _index_t * __restrict idx, wchar_t wc)
+			   _index_t * __restrict idx, wchar_kuten_t wc)
 {
 
 	_DIAGASSERT(csid != NULL && idx != NULL);
@@ -462,7 +518,7 @@ _citrus_BIG5_stdenc_wctocs(struct _citrus_stdenc *ce,
 static int
 /*ARGSUSED*/
 _citrus_BIG5_stdenc_cstowc(struct _citrus_stdenc *ce,
-			   wchar_t * __restrict wc,
+			   wchar_kuten_t * __restrict wc,
 			   _csid_t csid, _index_t idx)
 {
 	_DIAGASSERT(wc != NULL);
@@ -470,7 +526,7 @@ _citrus_BIG5_stdenc_cstowc(struct _citrus_stdenc *ce,
 	switch (csid) {
 	case 0:
 	case 1:
-		*wc = (wchar_t)idx;
+		*wc = (wchar_kuten_t)idx;
 		break;
 	default:
 		return EILSEQ;

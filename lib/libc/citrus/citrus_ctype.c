@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype.c,v 1.7.22.1 2017/07/14 15:53:07 perseant Exp $	*/
+/*	$NetBSD: citrus_ctype.c,v 1.7.22.2 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)1999, 2000, 2001, 2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_ctype.c,v 1.7.22.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_ctype.c,v 1.7.22.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: citrus_ctype.c,v 1.7.22.1 2017/07/14 15:53:07 perseant Exp $")
 #include "citrus_ctype_fallback.h"
 #include "citrus_none.h"
 #include "runetype_local.h"
-#include "rune_iso10646.h"
 #include _CITRUS_DEFAULT_CTYPE_HEADER
 
 _citrus_ctype_rec_t _citrus_ctype_default = {
@@ -154,8 +153,9 @@ _citrus_ctype_open(_citrus_ctype_t *rcc,
 	_DIAGASSERT(rcc != NULL);
 
 	if (!strcmp(encname, _CITRUS_DEFAULT_CTYPE_NAME)) {
-		*rcc = &_citrus_ctype_default;
-		return (0);
+		cc = *rcc = &_citrus_ctype_default;
+		ret = (*cc->cc_ops->co_init)(&cc->cc_closure, variable, lenvar, szpriv);
+		return ret;
 	}
 	ret = _citrus_load_module(&handle, encname);
 	if (ret)
@@ -216,3 +216,23 @@ _citrus_ctype_close(_citrus_ctype_t cc)
 }
 
 #endif
+
+struct unicode2kuten_lookup *
+_citrus_uk_bsearch(wchar_t wc, struct unicode2kuten_lookup *base, int length) {
+    int l, r, m;
+    wchar_t u;
+
+    l = 0;
+    r = length - 1;
+    while (l <= r) {
+	m = (l + r) / 2;
+        u = base[m].key;
+        if (u == wc)
+	    return base + m;
+	if (u < wc)
+	    l = m + 1;
+        else
+	    r = m - 1;
+    }
+    return NULL;
+}

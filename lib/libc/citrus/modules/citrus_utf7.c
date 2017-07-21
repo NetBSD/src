@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf7.c,v 1.6.22.1 2017/07/14 15:53:07 perseant Exp $	*/
+/*	$NetBSD: citrus_utf7.c,v 1.6.22.2 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2004, 2005 Citrus Project,
@@ -29,7 +29,7 @@
  
 #include <sys/cdefs.h>
 #if defined(LIB_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf7.c,v 1.6.22.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_utf7.c,v 1.6.22.2 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIB_SCCS and not lint */
 
 #include <assert.h>
@@ -97,6 +97,8 @@ typedef struct {
 #define	_ENCODING_MB_CUR_MAX(_ei_)		4
 #define	_ENCODING_IS_STATE_DEPENDENT		1
 #define	_STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
+
+#include "citrus_u2k_template.h"
 
 static __inline void
 /*ARGSUSED*/
@@ -271,7 +273,7 @@ ilseq:
 
 static int
 _citrus_UTF7_mbrtowc_priv(_UTF7EncodingInfo * __restrict ei,
-	wchar_t * __restrict pwc, const char ** __restrict s, size_t n,
+	wchar_ucs4_t * __restrict pwc, const char ** __restrict s, size_t n,
 	_UTF7State * __restrict psenc, size_t * __restrict nresult)
 {
 	const char *s0;
@@ -326,7 +328,7 @@ _citrus_UTF7_mbrtowc_priv(_UTF7EncodingInfo * __restrict ei,
 done:
 	*s = s0;
 	if (pwc != NULL)
-		*pwc = (wchar_t)u32;
+	        _citrus_UTF7_kt2ucs(ei, pwc, (wchar_kuten_t)u32);
 	if (u32 == (uint32_t)0) {
 		*nresult = (size_t)0;
 		_citrus_UTF7_init_state(ei, psenc);
@@ -391,7 +393,7 @@ _citrus_UTF7_utf16tomb(_UTF7EncodingInfo * __restrict ei,
 
 static int
 _citrus_UTF7_wcrtomb_priv(_UTF7EncodingInfo * __restrict ei,
-	char * __restrict s, size_t n, wchar_t wchar,
+	char * __restrict s, size_t n, wchar_ucs4_t wchar,
 	_UTF7State * __restrict psenc, size_t * __restrict nresult)
 {
 	uint32_t u32;
@@ -403,6 +405,8 @@ _citrus_UTF7_wcrtomb_priv(_UTF7EncodingInfo * __restrict ei,
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(psenc != NULL);
 	_DIAGASSERT(nresult != NULL);
+
+	_citrus_UTF7_ucs2kt(ei, &wchar, wchar);
 
 	u32 = (uint32_t)wchar;
 	if (u32 <= UTF16_MAX) {
@@ -478,7 +482,7 @@ static int
 /*ARGSUSED*/
 _citrus_UTF7_stdenc_wctocs(struct _citrus_stdenc *ce,
 			   _csid_t * __restrict csid,
-			   _index_t * __restrict idx, wchar_t wc)
+			   _index_t * __restrict idx, wchar_kuten_t wc)
 {
 	/* ei seem to be unused */
 	_DIAGASSERT(csid != NULL);
@@ -493,7 +497,7 @@ _citrus_UTF7_stdenc_wctocs(struct _citrus_stdenc *ce,
 static int
 /*ARGSUSED*/
 _citrus_UTF7_stdenc_cstowc(struct _citrus_stdenc *ce,
-			   wchar_t * __restrict wc,
+			   wchar_kuten_t * __restrict wc,
 			   _csid_t csid, _index_t idx)
 {
 	/* ei seem to be unused */
@@ -501,7 +505,7 @@ _citrus_UTF7_stdenc_cstowc(struct _citrus_stdenc *ce,
 
 	if (csid != 0)
 		return EILSEQ;
-	*wc = (wchar_t)idx;
+	*wc = (wchar_kuten_t)idx;
 
 	return 0;
 }

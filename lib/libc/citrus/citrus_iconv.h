@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv.h,v 1.5.64.1 2017/07/14 15:53:07 perseant Exp $	*/
+/*	$NetBSD: citrus_iconv.h,v 1.5.64.2 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -68,17 +68,18 @@ _citrus_iconv_convert(struct _citrus_iconv * __restrict cv,
 
 /*
  * _citrus_iconv_wchar_convert:
- *	convert a wchar.
+ *     convert a wchar.
  */
 static __inline int
 _citrus_iconv_wchar_convert(struct _citrus_iconv * __restrict cv,
-			    wchar_t in, wchar_t *out)
+                           wchar_t in, wchar_t *out)
 {
 	_DIAGASSERT(cv && cv->cv_shared && cv->cv_shared->ci_ops &&
-	    cv->cv_shared->ci_ops->io_wchar_convert);
+		cv->cv_shared->ci_ops->io_wchar_convert);
 	_DIAGASSERT(out);
 
 	return (*cv->cv_shared->ci_ops->io_wchar_convert)(cv, in, out);
 }
+
 
 #endif

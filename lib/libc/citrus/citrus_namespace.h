@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_namespace.h,v 1.8.42.1 2017/07/14 15:53:07 perseant Exp $	*/
+/*	$NetBSD: citrus_namespace.h,v 1.8.42.2 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -220,8 +220,6 @@
 #define _stdenc_get_state_size	_citrus_stdenc_get_state_size
 #define _stdenc_get_mb_cur_max	_citrus_stdenc_get_mb_cur_max
 #define _stdenc_get_state_desc	_citrus_stdenc_get_state_desc
-#define _stdenc_cstowc		_citrus_stdenc_cstowc
-#define _stdenc_wctocs		_citrus_stdenc_wctocs
 #define _STDENC_SDID_GENERIC	_CITRUS_STDENC_SDID_GENERIC
 #define _STDENC_SDGEN_UNKNOWN	_CITRUS_STDENC_SDGEN_UNKNOWN
 #define _STDENC_SDGEN_INITIAL	_CITRUS_STDENC_SDGEN_INITIAL

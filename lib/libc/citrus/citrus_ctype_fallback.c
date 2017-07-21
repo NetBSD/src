@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_fallback.c,v 1.3 2013/05/28 16:57:56 joerg Exp $	*/
+/*	$NetBSD: citrus_ctype_fallback.c,v 1.3.22.1 2017/07/21 20:22:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_ctype_fallback.c,v 1.3 2013/05/28 16:57:56 joerg Exp $");
+__RCSID("$NetBSD: citrus_ctype_fallback.c,v 1.3.22.1 2017/07/21 20:22:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: citrus_ctype_fallback.c,v 1.3 2013/05/28 16:57:56 joerg Exp $"
 
 int
 _citrus_ctype_btowc_fallback(_citrus_ctype_rec_t * __restrict cc,
-			     int c, wint_t * __restrict wcresult)
+			     int c, wint_kuten_t * __restrict wcresult)
 {
 	char mb;
 	/*
@@ -59,7 +59,7 @@ _citrus_ctype_btowc_fallback(_citrus_ctype_rec_t * __restrict cc,
 	 * and we know that it's smaller than sizeof(mbstate_t).
 	 */
 	char pspriv[sizeof(mbstate_t)];
-	wchar_t wc;
+	wchar_kuten_t wc;
 	size_t nr;
 	int err;
 
@@ -83,7 +83,7 @@ _citrus_ctype_btowc_fallback(_citrus_ctype_rec_t * __restrict cc,
 
 int
 _citrus_ctype_wctob_fallback(_citrus_ctype_rec_t * __restrict cc,
-			     wint_t wc, int * __restrict cresult)
+			     wint_kuten_t wc, int * __restrict cresult)
 {
 	/*
 	 * what we need is _PRIVSIZE
@@ -101,7 +101,7 @@ _citrus_ctype_wctob_fallback(_citrus_ctype_rec_t * __restrict cc,
 		return 0;
 	}
 	memset(&pspriv, 0, sizeof(pspriv));
-	err = _citrus_ctype_wcrtomb(cc, buf, (wchar_t)wc, (void *)&pspriv, &nr);
+	err = _citrus_ctype_wcrtomb(cc, buf, (wchar_kuten_t)wc, (void *)&pspriv, &nr);
 	if (!err && nr == 1)
 		*cresult = buf[0];
 	else
@@ -116,7 +116,7 @@ _citrus_ctype_wctob_fallback(_citrus_ctype_rec_t * __restrict cc,
 
 int
 _citrus_ctype_mbsnrtowcs_fallback(_citrus_ctype_rec_t * __restrict cc,
-    wchar_t * __restrict pwcs, const char ** __restrict s, size_t in,
+    wchar_kuten_t * __restrict pwcs, const char ** __restrict s, size_t in,
     size_t n, void * __restrict psenc, size_t * __restrict nresult)
 {
 	int err;
@@ -177,14 +177,14 @@ bye:
 
 int
 _citrus_ctype_wcsnrtombs_fallback(_citrus_ctype_rec_t * __restrict cc,
-    char * __restrict s, const wchar_t ** __restrict pwcs, size_t in,
+    char * __restrict s, const wchar_kuten_t ** __restrict pwcs, size_t in,
     size_t n, void * __restrict psenc, size_t * __restrict nresult)
 {
 	size_t cnt = 0;
 	int err;
 	char buf[MB_LEN_MAX];
 	size_t siz;
-	const wchar_t* pwcs0;
+	const wchar_kuten_t* pwcs0;
 	mbstate_t state;
 
 	pwcs0 = *pwcs;
