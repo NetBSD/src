@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.291 2017/07/14 06:20:55 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.292 2017/07/21 04:53:34 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -17984,4 +17984,26 @@ usr.sbin/rtadvd/rtadvd.h			1.15
 
 	Fix the default value of rltime.  PR bin/51994
 	[ozaki-r, ticket #1440]
+
+libexec/ld.elf_so/reloc.c			1.110
+
+	PR port-macppc/47464 - Old binutils generated bogus zero-sized
+	COPY relocations for _SDA_BASE_ and _SDA2_BASE_ that happened
+	to work by accident.  They no longer happen to work when old
+	binaries are run on newer systems.  Explicitly ignore these
+	bogus relocations.
+	[uwe, ticket #1450]
+
+sys/dev/cgd.c					patch
+
+	Avoid crashes by checking if a cgd device has been configured
+	before processing most ioctls, and failing with ENXIO if the
+	device is not configured.
+	[chs, ticket #1455]
+
+sys/dev/audio.c					patch
+
+	Fix occasional stuttering that can be caused by ringbuffer
+	overflow.
+	[nat, ticket #1457]
 
