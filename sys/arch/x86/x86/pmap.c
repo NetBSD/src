@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.254 2017/06/25 22:16:46 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.255 2017/07/22 08:23:19 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.254 2017/06/25 22:16:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.255 2017/07/22 08:23:19 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1264,6 +1264,10 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	kcpuset_create(&kpm->pm_cpus, true);
 	kcpuset_create(&kpm->pm_kernel_cpus, true);
+
+	kpm->pm_ldt = NULL;
+	kpm->pm_ldt_len = 0;
+	kpm->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 
 	/*
 	 * the above is just a rough estimate and not critical to the proper
