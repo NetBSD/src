@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.784 2017/07/22 08:23:18 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.785 2017/07/22 09:01:46 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.784 2017/07/22 08:23:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.785 2017/07/22 09:01:46 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -266,7 +266,6 @@ void (*delay_func)(unsigned int) = i8254_delay;
 void (*initclock_func)(void) = i8254_initclocks;
 #endif
 
-
 /*
  * Size of memory segments, before any memory is stolen.
  */
@@ -275,6 +274,8 @@ int mem_cluster_cnt = 0;
 
 void init386(paddr_t);
 void initgdt(union descriptor *);
+
+static void i386_proc0_pcb_ldt_init(void);
 
 extern int time_adjusted;
 
@@ -481,7 +482,7 @@ cpu_startup(void)
 #endif
 
 	gdt_init();
-	i386_proc0_tss_ldt_init();
+	i386_proc0_pcb_ldt_init();
 
 #ifndef XEN
 	cpu_init_tss(&cpu_info_primary);
@@ -492,10 +493,10 @@ cpu_startup(void)
 }
 
 /*
- * Set up proc0's TSS and LDT.
+ * Set up proc0's PCB and LDT.
  */
-void
-i386_proc0_tss_ldt_init(void)
+static void
+i386_proc0_pcb_ldt_init(void)
 {
 	struct lwp *l = &lwp0;
 	struct pcb *pcb = lwp_getpcb(l);
