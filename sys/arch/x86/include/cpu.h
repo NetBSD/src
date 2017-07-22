@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.74 2017/07/16 14:02:48 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.75 2017/07/22 09:01:46 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -408,10 +408,6 @@ extern void (*x86_cpu_idle)(void);
 
 /* machdep.c */
 void	cpu_reset(void);
-void	i386_proc0_tss_ldt_init(void);
-void	cpu_reset(void);
-void	x86_64_proc0_tss_ldt_init(void);
-void	x86_64_init_pcb_tss_ldt(struct cpu_info *);
 
 /* longrun.c */
 u_int 	tmx86_get_longrun_mode(void);
