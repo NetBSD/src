@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.258 2017/07/22 09:01:46 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.259 2017/07/22 09:20:01 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.258 2017/07/22 09:01:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.259 2017/07/22 09:20:01 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -401,7 +401,7 @@ cpu_startup(void)
 	cpu_init_tss(&cpu_info_primary);
 #if !defined(XEN)
 	ltr(cpu_info_primary.ci_tss_sel);
-#endif /* !defined(XEN) */
+#endif
 
 	x86_startup();
 }
@@ -2001,38 +2001,33 @@ cpu_fsgs_zero(struct lwp *l)
 	struct pcb *pcb;
 	uint64_t zero = 0;
 
-	pcb = lwp_getpcb(l);
-	if (l == curlwp) {
-		kpreempt_disable();
-		tf->tf_fs = 0;
-		tf->tf_gs = 0;
-		setfs(0);
-#ifndef XEN
-		setusergs(0);
-#else
-		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, 0);
-#endif
-		if ((l->l_proc->p_flag & PK_32) == 0) {
-#ifndef XEN
-			wrmsr(MSR_FSBASE, 0);
-			wrmsr(MSR_KERNELGSBASE, 0);
-#else
-			HYPERVISOR_set_segment_base(SEGBASE_FS, 0);
-			HYPERVISOR_set_segment_base(SEGBASE_GS_USER, 0);
-#endif
-		}
-		pcb->pcb_fs = 0;
-		pcb->pcb_gs = 0;
-		update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &zero);
-		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &zero);
-		kpreempt_enable();
-	} else {
-		tf->tf_fs = 0;
-		tf->tf_gs = 0;
-		pcb->pcb_fs = 0;
-		pcb->pcb_gs = 0;
-	}
+	KASSERT(l == curlwp);
 
+	pcb = lwp_getpcb(l);
+
+	kpreempt_disable();
+	tf->tf_fs = 0;
+	tf->tf_gs = 0;
+	setfs(0);
+#ifndef XEN
+	setusergs(0);
+#else
+	HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, 0);
+#endif
+	if ((l->l_proc->p_flag & PK_32) == 0) {
+#ifndef XEN
+		wrmsr(MSR_FSBASE, 0);
+		wrmsr(MSR_KERNELGSBASE, 0);
+#else
+		HYPERVISOR_set_segment_base(SEGBASE_FS, 0);
+		HYPERVISOR_set_segment_base(SEGBASE_GS_USER, 0);
+#endif
+	}
+	pcb->pcb_fs = 0;
+	pcb->pcb_gs = 0;
+	update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &zero);
+	update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &zero);
+	kpreempt_enable();
 }
 
 /*
@@ -2047,25 +2042,23 @@ cpu_fsgs_reload(struct lwp *l, int fssel, int gssel)
 	struct pcb *pcb;
 
 	KASSERT(l->l_proc->p_flag & PK_32);
+	KASSERT(l == curlwp);
+
 	tf = l->l_md.md_regs;
-	if (l == curlwp) {
-		pcb = lwp_getpcb(l);
-		kpreempt_disable();
-		update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &pcb->pcb_fs);
-		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &pcb->pcb_gs);
-		setfs(fssel);
+
+	pcb = lwp_getpcb(l);
+	kpreempt_disable();
+	update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &pcb->pcb_fs);
+	update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &pcb->pcb_gs);
+	setfs(fssel);
 #ifndef XEN
-		setusergs(gssel);
+	setusergs(gssel);
 #else
-		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, gssel);
+	HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, gssel);
 #endif
-		tf->tf_fs = fssel;
-		tf->tf_gs = gssel;
-		kpreempt_enable();
-	} else {
-		tf->tf_fs = fssel;
-		tf->tf_gs = gssel;
-	}
+	tf->tf_fs = fssel;
+	tf->tf_gs = gssel;
+	kpreempt_enable();
 }
 
 
