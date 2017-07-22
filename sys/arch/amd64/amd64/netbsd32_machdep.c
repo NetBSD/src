@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.105 2017/06/01 02:45:05 chs Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.106 2017/07/22 13:00:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.105 2017/06/01 02:45:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.106 2017/07/22 13:00:42 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1042,34 +1042,44 @@ startlwp32(void *arg)
 
 /*
  * For various reasons, the amd64 port can't do what the i386 port does,
- * and rely on catching invalid user contexts on exit from the kernel.
+ * and relies on catching invalid user contexts on exit from the kernel.
  * These functions perform the needed checks.
  */
 
 static int
 check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 {
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	struct trapframe *tf;
 	struct pcb *pcb;
 
 	tf = l->l_md.md_regs;
 	pcb = lwp_getpcb(curlwp);
 
-	if (((scp->sc_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    !VALID_USER_CSEL32(scp->sc_cs))
+	if (((scp->sc_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
 		return EINVAL;
-	if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs) &&
-	    !(VALID_USER_FSEL32(scp->sc_fs) && pcb->pcb_fs != 0))
-		return EINVAL;
-	if (scp->sc_gs != 0 && !VALID_USER_DSEL32(scp->sc_gs) &&
-	    !(VALID_USER_GSEL32(scp->sc_gs) && pcb->pcb_gs != 0))
-		return EINVAL;
-	if (scp->sc_es != 0 && !VALID_USER_DSEL32(scp->sc_es))
-		return EINVAL;
-	if (!VALID_USER_DSEL32(scp->sc_ds) || !VALID_USER_DSEL32(scp->sc_ss))
-		return EINVAL;
-	if (scp->sc_eip >= VM_MAXUSER_ADDRESS32)
-		return EINVAL;
+
+	if (__predict_false(pmap->pm_ldt != NULL)) {
+		/* Only when the LDT is user-set (with USER_LDT) */
+		if (!USERMODE(scp->sc_cs, scp->sc_eflags))
+			return EINVAL;
+	} else {
+		if (!VALID_USER_CSEL32(scp->sc_cs))
+			return EINVAL;
+		if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs) &&
+			!(VALID_USER_FSEL32(scp->sc_fs) && pcb->pcb_fs != 0))
+			return EINVAL;
+		if (scp->sc_gs != 0 && !VALID_USER_DSEL32(scp->sc_gs) &&
+			!(VALID_USER_GSEL32(scp->sc_gs) && pcb->pcb_gs != 0))
+			return EINVAL;
+		if (scp->sc_es != 0 && !VALID_USER_DSEL32(scp->sc_es))
+			return EINVAL;
+		if (!VALID_USER_DSEL32(scp->sc_ds) || !VALID_USER_DSEL32(scp->sc_ss))
+			return EINVAL;
+		if (scp->sc_eip >= VM_MAXUSER_ADDRESS32)
+			return EINVAL;
+	}
+
 	return 0;
 }
 
