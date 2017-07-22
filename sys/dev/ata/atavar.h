@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.18 2017/07/21 17:32:27 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.19 2017/07/22 22:02:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -394,6 +394,7 @@ struct ata_channel {
 #define ATACH_TH_RUN   0x100	/* the kernel thread is working */
 #define ATACH_TH_RESET 0x200	/* someone ask the thread to reset */
 #define ATACH_TH_RESCAN 0x400	/* rescan requested */
+#define ATACH_NCQ	0x800	/* channel executing NCQ commands */
 #if 1 /* for now */
 	uint8_t ch_status;	/* copy of status register */
 	uint8_t ch_error;	/* copy of error register */

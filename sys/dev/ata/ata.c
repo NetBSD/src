@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.20 2017/07/21 18:12:37 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.21 2017/07/22 22:02:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.20 2017/07/21 18:12:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.21 2017/07/22 22:02:21 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1304,6 +1304,11 @@ atastart(struct ata_channel *chp)
 		drvp->drive_flags &= ~ATA_DRIVE_RESET;
 		drvp->state = 0;
 	}
+
+	if (ISSET(xfer->c_flags, C_NCQ))
+		SET(chp->ch_flags, ATACH_NCQ);
+	else
+		CLR(chp->ch_flags, ATACH_NCQ);
 
 	ata_activate_xfer_locked(chp, xfer);
 
