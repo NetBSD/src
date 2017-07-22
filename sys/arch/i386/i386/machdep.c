@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.783 2017/07/01 10:44:42 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.784 2017/07/22 08:23:18 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.783 2017/07/01 10:44:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.784 2017/07/22 08:23:18 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -497,13 +497,9 @@ cpu_startup(void)
 void
 i386_proc0_tss_ldt_init(void)
 {
-	struct lwp *l;
-	struct pcb *pcb __diagused;
+	struct lwp *l = &lwp0;
+	struct pcb *pcb = lwp_getpcb(l);
 
-	l = &lwp0;
-	pcb = lwp_getpcb(l);
-
-	pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	pcb->pcb_esp0 = uvm_lwp_getuarea(l) + USPACE - 16;
 	pcb->pcb_iopl = SEL_KPL;
@@ -513,7 +509,7 @@ i386_proc0_tss_ldt_init(void)
 	pcb->pcb_dbregs = NULL;
 
 #ifndef XEN
-	lldt(pmap_kernel()->pm_ldt_sel);
+	lldt(GSEL(GLDT_SEL, SEL_KPL));
 #else
 	HYPERVISOR_fpu_taskswitch(1);
 	XENPRINTF(("lwp tss sp %p ss %04x/%04x\n",
