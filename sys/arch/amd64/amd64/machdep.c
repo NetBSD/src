@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.256 2017/07/14 13:21:29 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.257 2017/07/22 08:23:19 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.256 2017/07/14 13:21:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.257 2017/07/22 08:23:19 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -472,25 +472,21 @@ x86_64_proc0_tss_ldt_init(void)
 	pcb->pcb_rsp0 = (uvm_lwp_getuarea(l) + USPACE - 16) & ~0xf;
 	pcb->pcb_iopl = SEL_KPL;
 	pcb->pcb_dbregs = NULL;
-
-	pmap_kernel()->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_rsp0 - 1;
 
 #if !defined(XEN)
-	lldt(pmap_kernel()->pm_ldt_sel);
+	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
 #else
-	{
 	struct physdev_op physop;
-	xen_set_ldt((vaddr_t) ldtstore, LDT_SIZE >> 3);
+	xen_set_ldt((vaddr_t)ldtstore, LDT_SIZE >> 3);
 	/* Reset TS bit and set kernel stack for interrupt handlers */
 	HYPERVISOR_fpu_taskswitch(1);
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_rsp0);
 	physop.cmd = PHYSDEVOP_SET_IOPL;
 	physop.u.set_iopl.iopl = pcb->pcb_iopl;
 	HYPERVISOR_physdev_op(&physop);
-	}
-#endif /* XEN */
+#endif
 }
 
 /*
