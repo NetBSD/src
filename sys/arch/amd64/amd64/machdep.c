@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.257 2017/07/22 08:23:19 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.258 2017/07/22 09:01:46 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.257 2017/07/22 08:23:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.258 2017/07/22 09:01:46 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -299,6 +299,8 @@ u_long cpu_dump_mempagecnt(void);
 void dodumpsys(void);
 void dumpsys(void);
 
+static void x86_64_proc0_pcb_ldt_init(void);
+
 extern int time_adjusted;	/* XXX no common header */
 
 void dump_misc_init(void);
@@ -394,7 +396,7 @@ cpu_startup(void)
 #endif
 
 	gdt_init();
-	x86_64_proc0_tss_ldt_init();
+	x86_64_proc0_pcb_ldt_init();
 
 	cpu_init_tss(&cpu_info_primary);
 #if !defined(XEN)
@@ -458,10 +460,10 @@ x86_64_tls_switch(struct lwp *l)
 #endif /* XEN */
 
 /*
- * Set up proc0's TSS and LDT.
+ * Set up proc0's PCB and LDT.
  */
-void
-x86_64_proc0_tss_ldt_init(void)
+static void
+x86_64_proc0_pcb_ldt_init(void)
 {
 	struct lwp *l = &lwp0;
 	struct pcb *pcb = lwp_getpcb(l);
