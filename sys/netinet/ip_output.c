@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.282 2017/07/04 10:25:45 roy Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.283 2017/07/23 10:55:00 para Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.282 2017/07/04 10:25:45 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.283 2017/07/23 10:55:00 para Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1810,7 +1810,7 @@ ip_setmoptions(struct ip_moptions **pimo, const struct sockopt *sopt)
 	    imo->imo_multicast_ttl == IP_DEFAULT_MULTICAST_TTL &&
 	    imo->imo_multicast_loop == IP_DEFAULT_MULTICAST_LOOP &&
 	    imo->imo_num_memberships == 0) {
-		kmem_free(imo, sizeof(*imo));
+		kmem_intr_free(imo, sizeof(*imo));
 		*pimo = NULL;
 	}
 
@@ -1885,7 +1885,7 @@ ip_freemoptions(struct ip_moptions *imo)
 	if (imo != NULL) {
 		for (i = 0; i < imo->imo_num_memberships; ++i)
 			in_delmulti(imo->imo_membership[i]);
-		kmem_free(imo, sizeof(*imo));
+		kmem_intr_free(imo, sizeof(*imo));
 	}
 }
 
