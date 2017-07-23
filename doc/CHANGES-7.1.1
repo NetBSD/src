@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.1,v 1.1.2.17 2017/07/20 01:43:30 snj Exp $
+# $NetBSD: CHANGES-7.1.1,v 1.1.2.18 2017/07/23 06:15:49 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.1.1
 release:
@@ -1717,4 +1717,10 @@ sys/arch/i386/i386/trap.c			1.288 via patch
 	There is a one-instruction race in it that could panic
 	the kernel.
 	[maxv, ticket #1441]
+
+sys/modules/lua/lua.c				1.21
+
+	Avoid possible null pointer dereferencing.
+	Fixes PR kern/52225.
+	[mbalmer, ticket #1418]
 
