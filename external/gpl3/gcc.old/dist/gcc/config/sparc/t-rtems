@@ -1,0 +1,36 @@
+# Copyright (C) 2012-2015 Free Software Foundation, Inc.
+#
+# This file is part of GCC.
+#
+# GCC is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# GCC is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GCC; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+#
+
+MULTILIB_OPTIONS = msoft-float mcpu=v8/mcpu=leon3/mcpu=leon3v7/mcpu=leon \
+		   mfix-ut699/mfix-at697f
+MULTILIB_DIRNAMES = soft v8 leon3 leon3v7 leon ut699 at697f
+MULTILIB_MATCHES = msoft-float=mno-fpu
+
+MULTILIB_EXCEPTIONS = mfix-ut699
+MULTILIB_EXCEPTIONS += msoft-float/mfix-ut699
+MULTILIB_EXCEPTIONS += msoft-float/mcpu=v8/mfix-ut699
+MULTILIB_EXCEPTIONS += msoft-float/mcpu=leon3*/mfix-ut699
+MULTILIB_EXCEPTIONS += mcpu=v8/mfix-ut699
+MULTILIB_EXCEPTIONS += mcpu=leon3*/mfix-ut699
+MULTILIB_EXCEPTIONS += mfix-at697f
+MULTILIB_EXCEPTIONS += msoft-float/mfix-at697f
+MULTILIB_EXCEPTIONS += msoft-float/mcpu=v8/mfix-at697f
+MULTILIB_EXCEPTIONS += msoft-float/mcpu=leon3*/mfix-at697f
+MULTILIB_EXCEPTIONS += mcpu=v8/mfix-at697f
+MULTILIB_EXCEPTIONS += mcpu=leon3*/mfix-at697f
