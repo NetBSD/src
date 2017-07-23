@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.146 2017/01/24 07:09:24 ozaki-r Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.147 2017/07/23 10:55:00 para Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.146 2017/01/24 07:09:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.147 2017/07/23 10:55:00 para Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1586,7 +1586,7 @@ expire_upcalls(void *v)
 				struct bw_meter *x = rt->mfc_bw_meter;
 
 				rt->mfc_bw_meter = x->bm_mfc_next;
-				kmem_free(x, sizeof(*x));
+				kmem_intr_free(x, sizeof(*x));
 			}
 
 			++mrtstat.mrts_cache_cleanups;
@@ -2530,7 +2530,7 @@ free_bw_list(struct bw_meter *list)
 
 	list = list->bm_mfc_next;
 	unschedule_bw_meter(x);
-	kmem_free(x, sizeof(*x));
+	kmem_intr_free(x, sizeof(*x));
     }
 }
 
@@ -2589,7 +2589,7 @@ del_bw_upcall(struct bw_upcall *req)
 	    unschedule_bw_meter(x);
 	    splx(s);
 	    /* Free the bw_meter entry */
-	    kmem_free(x, sizeof(*x));
+	    kmem_intr_free(x, sizeof(*x));
 	    return 0;
 	} else {
 	    splx(s);
