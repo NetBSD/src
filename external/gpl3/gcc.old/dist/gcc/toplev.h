@@ -1,5 +1,5 @@
 /* toplev.h - Various declarations for functions found in toplev.c
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -24,11 +24,29 @@ along with GCC; see the file COPYING3.  If not see
 extern struct cl_decoded_option *save_decoded_options;
 extern unsigned int save_decoded_options_count;
 
-extern int toplev_main (int, char **);
+/* Invoking the compiler.  */
+class toplev
+{
+public:
+  toplev (bool use_TV_TOTAL,
+	  bool init_signals);
+  ~toplev ();
+
+  int main (int argc, char **argv);
+
+  void finalize ();
+
+private:
+
+  void start_timevars ();
+
+  bool m_use_TV_TOTAL;
+  bool m_init_signals;
+};
+
 extern void rest_of_decl_compilation (tree, int, int);
 extern void rest_of_type_compilation (tree, int);
 extern void init_optimization_passes (void);
-extern void finish_optimization_passes (void);
 extern bool enable_rtl_dump_file (void);
 
 /* In except.c.  Initialize exception handling.  This is used by the Ada
@@ -62,7 +80,7 @@ extern bool user_defined_section_attribute;
 /* See toplev.c.  */
 extern int flag_rerun_cse_after_global_opts;
 
-extern void print_version (FILE *, const char *);
+extern void print_version (FILE *, const char *, bool);
 
 /* The hashtable, so that the C front ends can pass it to cpplib.  */
 extern struct ht *ident_hash;
@@ -77,5 +95,7 @@ extern bool set_src_pwd		       (const char *);
 
 extern HOST_WIDE_INT get_random_seed (bool);
 extern const char *set_random_seed (const char *);
+
+extern void initialize_rtl (void);
 
 #endif /* ! GCC_TOPLEV_H */

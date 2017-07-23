@@ -29,11 +29,15 @@
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxx2011.xml">
     </xi:include>
 
-    <!-- Section 01.3 : Status C++ TR1 -->
+    <!-- Section 01.3 : Status C++ 2014 -->
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxx2014.xml">
+    </xi:include>
+
+    <!-- Section 01.4 : Status C++ TR1 -->
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxxtr1.xml">
     </xi:include>
 
-    <!-- Section 01.4 : Status C++ TR24733 -->
+    <!-- Section 01.5 : Status C++ TR24733 -->
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxxtr24733.xml">
     </xi:include>
   </section>
@@ -787,12 +791,6 @@ requirements of the license of GCC.
     <listitem><para>Add the overload.
     </para></listitem></varlistentry>
 
-    <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#844">844</link>:
-	<emphasis>complex pow return type is ambiguous</emphasis>
-    </term>
-    <listitem><para>In C++11 mode, remove the pow(complex&lt;T&gt;, int) signature.
-    </para></listitem></varlistentry>
-
     <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#853">853</link>:
 	<emphasis>to_string needs updating with zero and one</emphasis>
     </term>
@@ -805,6 +803,13 @@ requirements of the license of GCC.
     <listitem><para>The traditional HP / SGI return type and value is blessed
 		    by the resolution of the DR.
     </para></listitem></varlistentry>
+
+    <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#1339">1339</link>:
+       <emphasis>uninitialized_fill_n should return the end of its range</emphasis>
+    </term>
+    <listitem><para>Return the end of the filled range.
+    </para></listitem></varlistentry>
+
   </variablelist>
 
  </section>
@@ -827,11 +832,11 @@ requirements of the license of GCC.
    </para>
 
    <programlisting>
-   <emphasis>get gcc sources</emphasis>
-   <emphasis>extract into gccsrcdir</emphasis>
-   mkdir <emphasis>gccbuilddir</emphasis>
-   cd <emphasis>gccbuilddir</emphasis>
-   <emphasis>gccsrcdir</emphasis>/configure --prefix=<emphasis>destdir</emphasis> --other-opts...
+   <replaceable>get gcc sources</replaceable>
+   <replaceable>extract into gccsrcdir</replaceable>
+   mkdir <replaceable>gccbuilddir</replaceable>
+   cd <replaceable>gccbuilddir</replaceable>
+   <replaceable>gccsrcdir</replaceable>/configure --prefix=<replaceable>destdir</replaceable> --other-opts...
    make
    make check
    make install

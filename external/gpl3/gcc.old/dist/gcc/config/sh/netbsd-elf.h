@@ -1,5 +1,5 @@
 /* Definitions for SH running NetBSD using ELF
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
 This file is part of GCC.
@@ -19,13 +19,6 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 /* Run-time Target Specification.  */
-
-/* Extra specs needed for NetBSD SuperH ELF targets.  */
-
-#undef SUBTARGET_EXTRA_SPECS
-#define SUBTARGET_EXTRA_SPECS						\
-  { "netbsd_entry_point", NETBSD_ENTRY_POINT },
-
 
 #define TARGET_OS_CPP_BUILTINS()					\
   do									\

@@ -1,5 +1,5 @@
 ;; Constraint definitions for Adaptiva epiphany
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 ;; Contributed by Embecosm on behalf of Adapteva, Inc.
 
 ;; This file is part of GCC.
@@ -38,6 +38,11 @@
   "A signed 11-bit constant."
   (and (match_code "const_int")
        (match_test "SIMM11 (ival)")))
+
+(define_constraint "CnL"
+  "A negated signed 11-bit constant."
+  (and (match_code "const_int")
+       (match_test "SIMM11 (-ival)")))
 
 (define_constraint "Cm1"
   "A signed 11-bit constant added to -1"

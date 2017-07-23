@@ -1,6 +1,6 @@
 // File descriptor layer for filebuf -*- C++ -*-
 
-// Copyright (C) 2002-2013 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -96,6 +96,15 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       */
       virtual
       ~stdio_filebuf();
+
+#if __cplusplus >= 201103L
+      stdio_filebuf(stdio_filebuf&&) = default;
+      stdio_filebuf& operator=(stdio_filebuf&&) = default;
+
+      void
+      swap(stdio_filebuf& __fb)
+      { std::basic_filebuf<_CharT, _Traits>::swap(__fb); }
+#endif
 
       /**
        *  @return  The underlying file descriptor.

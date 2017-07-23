@@ -1,6 +1,6 @@
 // SGI's rope class -*- C++ -*-
 
-// Copyright (C) 2001-2013 Free Software Foundation, Inc.
+// Copyright (C) 2001-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -923,7 +923,7 @@ protected:
 
       ~_Rope_self_destruct_ptr()
       { _Rope_RopeRep<_CharT, _Alloc>::_S_unref(_M_ptr); }
-#ifdef __EXCEPTIONS
+#if __cpp_exceptions
       _Rope_self_destruct_ptr() : _M_ptr(0) { };
 #else
       _Rope_self_destruct_ptr() { };

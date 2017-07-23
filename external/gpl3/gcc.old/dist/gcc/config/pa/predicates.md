@@ -1,5 +1,5 @@
 ;; Predicate definitions for HP PA-RISC.
-;; Copyright (C) 2005-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2015 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -301,6 +301,9 @@
 
   if (reg_plus_base_memory_operand (op, mode))
     {
+      if (reload_in_progress)
+	return true;
+
       /* Extract CONST_INT operand.  */
       if (GET_CODE (op) == SUBREG)
 	op = SUBREG_REG (op);
@@ -335,6 +338,9 @@
 
   if (reg_plus_base_memory_operand (op, mode))
     {
+      if (reload_in_progress)
+	return true;
+
       /* Extract CONST_INT operand.  */
       if (GET_CODE (op) == SUBREG)
 	op = SUBREG_REG (op);
@@ -528,20 +534,29 @@
 ;; This predicate is used for branch patterns that internally handle
 ;; register reloading.  We need to accept non-symbolic memory operands
 ;; after reload to ensure that the pattern is still valid if reload
-;; didn't find a hard register for the operand.
+;; didn't find a hard register for the operand.  We also reject index
+;; and lo_sum DLT address as these are invalid for move destinations.
 
 (define_predicate "reg_before_reload_operand"
   (match_code "reg,mem")
 {
+  rtx op0;
+
   if (register_operand (op, mode))
     return true;
 
-  if (reload_completed
-      && memory_operand (op, mode)
-      && !symbolic_memory_operand (op, mode))
-    return true;
+  if (!reload_in_progress && !reload_completed)
+    return false;
 
-  return false;
+  if (! MEM_P (op))
+    return false;
+
+  op0 = XEXP (op, 0);
+
+  return (memory_address_p (mode, op0)
+	  && !IS_INDEX_ADDR_P (op0)
+	  && !IS_LO_SUM_DLT_ADDR_P (op0)
+	  && !symbolic_memory_operand (op, mode));
 })
 
 ;; True iff OP is a register or const_0 operand for MODE.

@@ -1,5 +1,5 @@
 /* Mainly the interface between cpplib and the C front ends.
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,8 +21,18 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "stringpool.h"
+#include "stor-layout.h"
 #include "input.h"
 #include "c-common.h"
 #include "flags.h"
@@ -33,6 +43,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "splay-tree.h"
 #include "debug.h"
 #include "target.h"
+#include "wide-int.h"
+
+#include "attribs.h"
 
 /* We may keep statistics about how long which files took to compile.  */
 static int header_time, body_time;
@@ -47,9 +60,9 @@ static tree interpret_float (const cpp_token *, unsigned int, const char *,
 			     enum overflow_type *);
 static tree interpret_fixed (const cpp_token *, unsigned int);
 static enum integer_type_kind narrowest_unsigned_type
-	(unsigned HOST_WIDE_INT, unsigned HOST_WIDE_INT, unsigned int);
+	(const widest_int &, unsigned int);
 static enum integer_type_kind narrowest_signed_type
-	(unsigned HOST_WIDE_INT, unsigned HOST_WIDE_INT, unsigned int);
+	(const widest_int &, unsigned int);
 static enum cpp_ttype lex_string (const cpp_token *, tree *, bool, bool);
 static tree lex_charconst (const cpp_token *);
 static void update_header_times (const char *);
@@ -83,6 +96,7 @@ init_c_lex (void)
   cb->def_pragma = cb_def_pragma;
   cb->valid_pch = c_common_valid_pch;
   cb->read_pch = c_common_read_pch;
+  cb->has_attribute = c_common_has_attribute;
 
   /* Set the debug callbacks if we can use them.  */
   if ((debug_info_level == DINFO_LEVEL_VERBOSE
@@ -145,7 +159,7 @@ dump_one_header (splay_tree_node n, void * ARG_UNUSED (dummy))
 void
 dump_time_statistics (void)
 {
-  struct c_fileinfo *file = get_fileinfo (input_filename);
+  struct c_fileinfo *file = get_fileinfo (LOCATION_FILE (input_location));
   int this_time = get_run_time ();
   file->time += this_time - body_time;
 
@@ -241,7 +255,7 @@ cb_def_pragma (cpp_reader *pfile, source_location loc)
   /* Issue a warning message if we have been asked to do so.  Ignore
      unknown pragmas in system headers unless an explicit
      -Wunknown-pragmas has been given.  */
-  if (warn_unknown_pragmas > in_system_header)
+  if (warn_unknown_pragmas > in_system_header_at (input_location))
     {
       const unsigned char *space, *name;
       const cpp_token *s;
@@ -279,6 +293,100 @@ cb_undef (cpp_reader * ARG_UNUSED (pfile), source_location loc,
   const struct line_map *map = linemap_lookup (line_table, loc);
   (*debug_hooks->undef) (SOURCE_LINE (map, loc),
 			 (const char *) NODE_NAME (node));
+}
+
+/* Wrapper around cpp_get_token to skip CPP_PADDING tokens
+   and not consume CPP_EOF.  */
+static const cpp_token *
+get_token_no_padding (cpp_reader *pfile)
+{
+  for (;;)
+    {
+      const cpp_token *ret = cpp_peek_token (pfile, 0);
+      if (ret->type == CPP_EOF)
+	return ret;
+      ret = cpp_get_token (pfile);
+      if (ret->type != CPP_PADDING)
+	return ret;
+    }
+}
+
+/* Callback for has_attribute.  */
+int
+c_common_has_attribute (cpp_reader *pfile)
+{
+  int result = 0;
+  tree attr_name = NULL_TREE;
+  const cpp_token *token;
+
+  token = get_token_no_padding (pfile);
+  if (token->type != CPP_OPEN_PAREN)
+    {
+      cpp_error (pfile, CPP_DL_ERROR,
+		 "missing '(' after \"__has_attribute\"");
+      return 0;
+    }
+  token = get_token_no_padding (pfile);
+  if (token->type == CPP_NAME)
+    {
+      attr_name = get_identifier ((const char *)
+				  cpp_token_as_text (pfile, token));
+      if (c_dialect_cxx ())
+	{
+	  int idx = 0;
+	  const cpp_token *nxt_token;
+	  do
+	    nxt_token = cpp_peek_token (pfile, idx++);
+	  while (nxt_token->type == CPP_PADDING);
+	  if (nxt_token->type == CPP_SCOPE)
+	    {
+	      get_token_no_padding (pfile); // Eat scope.
+	      nxt_token = get_token_no_padding (pfile);
+	      if (nxt_token->type == CPP_NAME)
+		{
+		  tree attr_ns = attr_name;
+		  tree attr_id
+		    = get_identifier ((const char *)
+				      cpp_token_as_text (pfile, nxt_token));
+		  attr_name = build_tree_list (attr_ns, attr_id);
+		}
+	      else
+		{
+		  cpp_error (pfile, CPP_DL_ERROR,
+			     "attribute identifier required after scope");
+		  attr_name = NULL_TREE;
+		}
+	    }
+	}
+      if (attr_name)
+	{
+	  init_attributes ();
+	  const struct attribute_spec *attr = lookup_attribute_spec (attr_name);
+	  if (attr)
+	    {
+	      if (TREE_CODE (attr_name) == TREE_LIST)
+		attr_name = TREE_VALUE (attr_name);
+	      if (is_attribute_p ("noreturn", attr_name))
+		result = 200809;
+	      else if (is_attribute_p ("deprecated", attr_name))
+		result = 201309;
+	      else
+		result = 1;
+	    }
+	}
+    }
+  else
+    {
+      cpp_error (pfile, CPP_DL_ERROR,
+		 "macro \"__has_attribute\" requires an identifier");
+      return 0;
+    }
+
+  if (get_token_no_padding (pfile)->type != CPP_CLOSE_PAREN)
+    cpp_error (pfile, CPP_DL_ERROR,
+	       "missing ')' after \"__has_attribute\"");
+
+  return result;
 }
 
 /* Read a token and return its type.  Fill *VALUE with its value, if
@@ -525,9 +633,7 @@ c_lex_with_flags (tree *value, location_t *loc, unsigned char *cpp_flags,
    there isn't one.  */
 
 static enum integer_type_kind
-narrowest_unsigned_type (unsigned HOST_WIDE_INT low,
-			 unsigned HOST_WIDE_INT high,
-			 unsigned int flags)
+narrowest_unsigned_type (const widest_int &val, unsigned int flags)
 {
   int itk;
 
@@ -546,9 +652,7 @@ narrowest_unsigned_type (unsigned HOST_WIDE_INT low,
 	continue;
       upper = TYPE_MAX_VALUE (integer_types[itk]);
 
-      if ((unsigned HOST_WIDE_INT) TREE_INT_CST_HIGH (upper) > high
-	  || ((unsigned HOST_WIDE_INT) TREE_INT_CST_HIGH (upper) == high
-	      && TREE_INT_CST_LOW (upper) >= low))
+      if (wi::geu_p (wi::to_widest (upper), val))
 	return (enum integer_type_kind) itk;
     }
 
@@ -557,8 +661,7 @@ narrowest_unsigned_type (unsigned HOST_WIDE_INT low,
 
 /* Ditto, but narrowest signed type.  */
 static enum integer_type_kind
-narrowest_signed_type (unsigned HOST_WIDE_INT low,
-		       unsigned HOST_WIDE_INT high, unsigned int flags)
+narrowest_signed_type (const widest_int &val, unsigned int flags)
 {
   int itk;
 
@@ -569,7 +672,6 @@ narrowest_signed_type (unsigned HOST_WIDE_INT low,
   else
     itk = itk_long_long;
 
-
   for (; itk < itk_none; itk += 2 /* skip signed types */)
     {
       tree upper;
@@ -578,9 +680,7 @@ narrowest_signed_type (unsigned HOST_WIDE_INT low,
 	continue;
       upper = TYPE_MAX_VALUE (integer_types[itk]);
 
-      if ((unsigned HOST_WIDE_INT) TREE_INT_CST_HIGH (upper) > high
-	  || ((unsigned HOST_WIDE_INT) TREE_INT_CST_HIGH (upper) == high
-	      && TREE_INT_CST_LOW (upper) >= low))
+      if (wi::geu_p (wi::to_widest (upper), val))
 	return (enum integer_type_kind) itk;
     }
 
@@ -595,27 +695,31 @@ interpret_integer (const cpp_token *token, unsigned int flags,
   tree value, type;
   enum integer_type_kind itk;
   cpp_num integer;
-  cpp_options *options = cpp_get_options (parse_in);
+  HOST_WIDE_INT ival[3];
 
   *overflow = OT_NONE;
 
   integer = cpp_interpret_integer (parse_in, token, flags);
-  integer = cpp_num_sign_extend (integer, options->precision);
   if (integer.overflow)
     *overflow = OT_OVERFLOW;
 
+  ival[0] = integer.low;
+  ival[1] = integer.high;
+  ival[2] = 0;
+  widest_int wval = widest_int::from_array (ival, 3);
+
   /* The type of a constant with a U suffix is straightforward.  */
   if (flags & CPP_N_UNSIGNED)
-    itk = narrowest_unsigned_type (integer.low, integer.high, flags);
+    itk = narrowest_unsigned_type (wval, flags);
   else
     {
       /* The type of a potentially-signed integer constant varies
 	 depending on the base it's in, the standard in use, and the
 	 length suffixes.  */
       enum integer_type_kind itk_u
-	= narrowest_unsigned_type (integer.low, integer.high, flags);
+	= narrowest_unsigned_type (wval, flags);
       enum integer_type_kind itk_s
-	= narrowest_signed_type (integer.low, integer.high, flags);
+	= narrowest_signed_type (wval, flags);
 
       /* In both C89 and C99, octal and hex constants may be signed or
 	 unsigned, whichever fits tighter.  We do not warn about this
@@ -667,7 +771,7 @@ interpret_integer (const cpp_token *token, unsigned int flags,
 	   : "integer constant is too large for %<long%> type");
     }
 
-  value = build_int_cst_wide (type, integer.low, integer.high);
+  value = wide_int_to_tree (type, wval);
 
   /* Convert imaginary to a complex type.  */
   if (flags & CPP_N_IMAGINARY)
@@ -725,7 +829,7 @@ interpret_float (const cpp_token *token, unsigned int flags,
     if (flags & CPP_N_WIDTH_MD)
       {
 	char suffix;
-	enum machine_mode mode;
+	machine_mode mode;
 
 	if ((flags & CPP_N_WIDTH_MD) == CPP_N_MD_W)
 	  suffix = 'w';
@@ -776,8 +880,19 @@ interpret_float (const cpp_token *token, unsigned int flags,
     }
 
   copy = (char *) alloca (copylen + 1);
-  memcpy (copy, token->val.str.text, copylen);
-  copy[copylen] = '\0';
+  if (cxx_dialect > cxx11)
+    {
+      size_t maxlen = 0;
+      for (size_t i = 0; i < copylen; ++i)
+        if (token->val.str.text[i] != '\'')
+          copy[maxlen++] = token->val.str.text[i];
+      copy[maxlen] = '\0';
+    }
+  else
+    {
+      memcpy (copy, token->val.str.text, copylen);
+      copy[copylen] = '\0';
+    }
 
   real_from_string3 (&real, copy, TYPE_MODE (const_type));
   if (const_type != type)
@@ -1060,7 +1175,7 @@ lex_string (const cpp_token *tok, tree *valp, bool objc_string, bool translate)
   if (concats)
     strs = XOBFINISH (&str_ob, cpp_string *);
 
-  if (concats && !objc_string && !in_system_header)
+  if (concats && !objc_string && !in_system_header_at (input_location))
     warning (OPT_Wtraditional,
 	     "traditional C rejects string constant concatenation");
 
@@ -1154,9 +1269,9 @@ lex_charconst (const cpp_token *token)
   /* Cast to cppchar_signed_t to get correct sign-extension of RESULT
      before possibly widening to HOST_WIDE_INT for build_int_cst.  */
   if (unsignedp || (cppchar_signed_t) result >= 0)
-    value = build_int_cst_wide (type, result, 0);
+    value = build_int_cst (type, result);
   else
-    value = build_int_cst_wide (type, (cppchar_signed_t) result, -1);
+    value = build_int_cst (type, (cppchar_signed_t) result);
 
   return value;
 }

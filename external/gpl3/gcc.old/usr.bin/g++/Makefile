@@ -1,17 +1,13 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2015/09/23 03:03:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2017/07/23 01:05:11 mrg Exp $
 
 PROG=		gplusplus
 PROGNAME=	g++
-SRCS=		${G_GXX_OBJS:.o=.c}
+SRCS=		${G_GXX_OBJS:S/cp\///:.o=.c}
 
 NOMAN=		# Linked to gcc.1
 .include <bsd.own.mk>
 
-CPPFLAGS+=	-I${BACKENDOBJ}
-# XXX
-CPPFLAGS+=	-DCONFIGURE_SPECS="\"\"" \
-		-DDEFAULT_TARGET_VERSION=\"${G_version}\" \
-		-DDEFAULT_TARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\"
+.include "../Makefile.target-defines"
 
 LINKS+=		${BINDIR}/g++ ${BINDIR}/c++
 

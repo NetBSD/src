@@ -1,13 +1,14 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2015/09/23 03:03:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2017/07/23 01:05:11 mrg Exp $
 
 LIBISPRIVATE=	yes
 
 LIB=		backend
 
-SRCS=		${G_OBJS:.o=.c} ${G_out_file:T}
+SRCS=		${G_OBJS:.o=.c} ${G_out_file:T} regsub.c
 
 BOTH_CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 CPPFLAGS+=	${BOTH_CPPFLAGS} -DTARGET_NAME=\"${MACHINE_GNU_PLATFORM}\"
+HOST_CPPFLAGS+=	-I${HOST_LIBIBERTYOBJ}/libiberty
 HOST_CPPFLAGS+=	${BOTH_CPPFLAGS} -DGENERATOR_FILE
 DPSRCS+=	insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
 CPPFLAGS+=	-I${DIST}/libgcc
@@ -17,6 +18,20 @@ CPPFLAGS.cppdefault.c+=	-DPREFIX=\"/usr\" \
 			-DNATIVE_SYSTEM_HEADER_DIR=\"${G_NATIVE_SYSTEM_HEADER_DIR}\"
 
 HOSTPROG_CXX=	1
+
+.include <bsd.own.mk>
+
+HOST_LIBIBERTYOBJ!=	cd ${.CURDIR}/../host-libiberty && ${PRINTOBJDIR}
+
+# XXX ${G_OBJS:.o=.c} is invalid in GCC 5.3, but work around for now
+BUILDSYMLINKS+=	${GNUHOSTDIST}/gcc/wide-int-print.cc wide-int-print.c
+BUILDSYMLINKS+=	${GNUHOSTDIST}/gcc/wide-int.cc wide-int.c
+
+.if ${MACHINE_CPU} == "sh3"
+BUILDSYMLINKS+= ${GNUHOSTDIST}/gcc/config/sh/sh-mem.cc sh-mem.c
+BUILDSYMLINKS+= ${GNUHOSTDIST}/gcc/config/sh/sh_treg_combine.cc sh_treg_combine.c
+BUILDSYMLINKS+= ${GNUHOSTDIST}/gcc/config/sh/sh_optimize_sett_clrt.cc sh_optimize_sett_clrt.c
+.endif
 
 .include <bsd.lib.mk>
 
@@ -38,14 +53,12 @@ CLEANFILES+=	gengenrtl genrtl.h \
 		genflags genflags.h \
 		gencheck tree-check.h \
 		insn-preds.c genpreds tm-preds.h tm_p.h cs-tm_p.h \
-		genmodes insn-modes.c insn-modes.h min-insn-modes.c \
-		auto-host.h build-print-rtl.c \
-		build-rtl.c build-errors.c build-varray.c \
-		build-bitmap.c build-ggc-none.c \
+		auto-host.h \
 		gt-*.h *.o *.lo \
 		cs-config.h \
 		gcov-iov gcov-iov.h \
-		gtype-go.h gtype.state
+		gtype-go.h gtype.state \
+		pass-instances.def
 
 # XXX
 COPTS.varasm.c=			-Wno-error
@@ -87,7 +100,7 @@ gtyp-input.list.tmp: ${GCCARCH}/gtyp-input.list
 CLEANFILES+=	gtyp-input.list.tmp
 
 # XXX
-CLEANFILES+=	gtype-lto.h gtype-objcp.h tm-constrs.h
+CLEANFILES+=	gtype-lto.h gtype-objcp.h tm-constrs.h gtype-jit.h
 
 gtype-desc.c: gtype-desc.h
 gtype-desc.h: gengtype gtyp-input.list.tmp
@@ -107,6 +120,13 @@ gengtype.lo gengtype-lex.lo gengtype-parse.lo gengtype-state.lo version.lo: ${HH
 gengtype: gengtype.lo gengtype-lex.lo gengtype-parse.lo gengtype-state.lo build-errors.lo version.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
+
+# XXX fix this by properly marking all the files that should
+# XXX be built with -DGENERATOR_FILE
+COPTS.gengtype-lex.c=	-UGENERATOR_FILE -DHOST_GENERATOR_FILE
+COPTS.gengtype-parse.c=	-UGENERATOR_FILE -DHOST_GENERATOR_FILE
+COPTS.gengtype-state.c=	-UGENERATOR_FILE -DHOST_GENERATOR_FILE
+COPTS.gengtype.c=	-UGENERATOR_FILE -DHOST_GENERATOR_FILE
 
 gtyp-gen.h: Makefile
 	${_MKTARGET_CREATE}
@@ -130,9 +150,14 @@ gtyp-gen.h: Makefile
 insn-modes.c: genmodes
 	${_MKTARGET_CREATE}
 	./genmodes >${.TARGET}
-insn-modes.h: genmodes
+insn-modes.h-test: genmodes
 	${_MKTARGET_CREATE}
 	./genmodes -h >${.TARGET}
+	# Ensure that the checked in version matches
+	if ! cmp ${.TARGET} ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/insn-modes.h; then
+		echo "Checked in insn-modes.h does not match; rerun mknative-gcc." 1>&2
+		false
+	fi
 min-insn-modes.c: genmodes
 	${_MKTARGET_CREATE}
 	./genmodes -m >${.TARGET}
@@ -140,6 +165,21 @@ genmodes.lo: ${HH_NORTL}
 genmodes: genmodes.lo build-errors.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
+
+CLEANFILES+=	genmodes insn-modes.c insn-modes.h-test min-insn-modes.c
+
+gimple-match.c: genmatch
+	./genmatch --gimple ${GNUHOSTDIST}/gcc/match.pd > gimple-match.c.tmp
+	mv gimple-match.c.tmp gimple-match.c
+generic-match.c: genmatch
+	./genmatch --generic ${GNUHOSTDIST}/gcc/match.pd > generic-match.c.tmp
+	mv generic-match.c.tmp generic-match.c
+genmatch.lo: ${HH_NORTL} ${G_GGC_H}
+genmatch: genmatch.lo build-errors.lo build-vec.lo build-hash-table.lo
+	${_MKTARGET_LINK}
+	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBCPP} ${HOSTLIBIBERTY}
+
+CLEANFILES+=	genmatch gimple-match.c generic-match.c
 
 gcov-iov.h: gcov-iov
 	${_MKTARGET_CREATE}
@@ -170,18 +210,23 @@ auto-build.h: gmp.h Makefile
 	mkdir .ab && \
 	(cd .ab && \
 		AWK=${TOOL_AWK:Q} \
-		CC=${ORIGHOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} \
-		MAKE=${MAKE:Q} \
+		CC=${ORIGHOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} CXX=${HOST_CXX:Q} \
+		MAKE=${TOOL_GMAKE:Q} \
 		CONFIG_SHELL=${HOST_SH:Q} \
-		gcc_cv_ld=${LD} \
-		gcc_cv_as=${AS} \
+		gcc_cv_ld=${LD:Q} \
+		gcc_cv_as=${AS:Q} \
 		${HOST_SH} ${GNUHOSTDIST}/gcc/configure \
-			--enable-lto \
 			--build=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
 			--host=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
 			--target=${MACHINE_GNU_PLATFORM} && \
 		mv auto-host.h ../auto-build.h) && \
 	rm -rf .ab
+
+pass-instances.def: passes.def gen-pass-instances.awk
+	${_MKTARGET_CREATE}
+	${TOOL_AWK} -f ${GNUHOSTDIST}/gcc/gen-pass-instances.awk \
+	  ${GNUHOSTDIST}/gcc/passes.def > pass-instances.def
+CLEANFILES+=	pass-instances.def
 
 #
 # These are copies of files we build for the build host that are used
@@ -189,12 +234,13 @@ auto-build.h: gmp.h Makefile
 #
 
 build-rtl.c: rtl.c \
-  ${G_RTL_H} real.h ${G_GCC_H} errors.h gtype-desc.h
+  ${G_RTL_H} real.h ${G_GCC_H} ${G_GGC_H} errors.h
 	${_MKTARGET_CREATE}
 	rm -f build-rtl.c
 	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
 		${GNUHOSTDIST}/gcc/rtl.c >${.TARGET}
 build-rtl.lo: ${HH}
+CLEANFILES+=	build-rtl.c
 
 build-print-rtl.c: print-rtl.c \
   ${G_RTL_BASE_H} ${G_GTM_H} hard-reg-set.h
@@ -203,23 +249,25 @@ build-print-rtl.c: print-rtl.c \
 	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
 		${GNUHOSTDIST}/gcc/print-rtl.c >${.TARGET}
 build-print-rtl.lo: ${HH}
-build/print-rtl.o: print-rtl.c $(BCONFIG_H) $(SYSTEM_H) coretypes.h     \
+build-print-rtl.o: print-rtl.c $(BCONFIG_H) $(SYSTEM_H) coretypes.h     \
   $(GTM_H) $(RTL_BASE_H)
-
+CLEANFILES+=	build-print-rtl.c
 
 build-bitmap.c: bitmap.c \
-  ${G_RTL_H} flags.h ${G_BASIC_BLOCK_H} ${REGS_H} ${G_GCC_H} gtype-desc.h
+  ${G_RTL_H} flags.h ${G_BASIC_BLOCK_H} ${REGS_H} ${G_GCC_H} ${G_GGC_H}
 	${_MKTARGET_CREATE}
 	rm -f build-bitmap.c
 	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
 		${GNUHOSTDIST}/gcc/bitmap.c >${.TARGET}
 build-bitmap.lo: ${HH}
+CLEANFILES+=	build-bitmap.c
 
 build-errors.c: errors.c errors.h
 	${_MKTARGET_CREATE}
 	rm -f build-errors.c
 	cat ${GNUHOSTDIST}/gcc/errors.c >${.TARGET}
 build-errors.lo: ${HH_NORTL}
+CLEANFILES+=	build-errors.c
 
 build-varray.c: varray.c \
   ${G_RTL_H} ${G_GCC_H} ${TREE_H} bitmap.h errors.h
@@ -228,6 +276,7 @@ build-varray.c: varray.c \
 	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
 		${GNUHOSTDIST}/gcc/varray.c >${.TARGET}
 build-varray.lo: ${HH} gtype-desc.h
+CLEANFILES+=	build-varray.c
 
 build-ggc-none.c: ggc-none.c \
   ${G_GCC_H} gtype-desc.h
@@ -236,6 +285,21 @@ build-ggc-none.c: ggc-none.c \
 	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
 		${GNUHOSTDIST}/gcc/ggc-none.c >${.TARGET}
 build-ggc-none.lo: ${HH}
+CLEANFILES+=	build-ggc-none.c
+
+build-hash-table.c: hash-table.c hash-table.h ${G_GGC_H}
+	${_MKTARGET_CREATE}
+	rm -f build-hash-table.c
+	cat ${GNUHOSTDIST}/gcc/hash-table.c >${.TARGET}
+build-hash-table.lo: ${HH_NORTL}
+CLEANFILES+=	build-hash-table.c
+
+build-vec.c: vec.c vec.h ${G_GGC_H}
+	${_MKTARGET_CREATE}
+	rm -f build-vec.c
+	cat ${GNUHOSTDIST}/gcc/vec.c >${.TARGET}
+build-vec.lo: ${HH_NORTL}
+CLEANFILES+=	build-vec.c
 
 #
 # The normal insn-foo generators
@@ -374,6 +438,7 @@ data-streamer.o data-streamer-out.o coverage.o gcov-dump.o gcov-io.o gcov-iov.o 
 gcov-io.h: gcov-iov.h
 df-scan.d df-scan.o: target-hooks-def.h
 read-md.d read-md.o read-md.lo: auto-build.h
+cgraphunit.d cgraphunit.o: pass-instances.def
 
 # XXX make all hooks generated for now.
 final.o: target-hooks-def.h c-family/c-target-hooks-def.h common/common-target-hooks-def.h
@@ -384,6 +449,7 @@ alpha.d alpha.o: tm-constrs.h tm_p.h insn-opinit.h target-hooks-def.h
 
 .if ${MACHINE_CPU} == "arm"
 arm.d arm.o: insn-constants.h tm_p.h insn-opinit.h target-hooks-def.h
+arm-builtins.d arm-builtins.o: insn-opinit.h
 .endif
 
 .if ${GCC_MACHINE_ARCH} == "i386" || ${GCC_MACHINE_ARCH} == "x86_64"
@@ -392,18 +458,65 @@ i386.d i386.o: tm-constrs.h
 
 .if ${GCC_MACHINE_ARCH} == "vax"
 CPPFLAGS+=-I${.CURDIR}/../../lib/libgcc/libgcov/arch/${GCC_MACHINE_ARCH}
-COPTS.expmed.c=-O0
-COPTS.recog.c=-O0
+COPTS.builtins.c+=-O0
+COPTS.convert.c+=-O0
+COPTS.dwarf2out.c+=-O0
+COPTS.dse.c+=-O0					# XXX port-vax/51967
+COPTS.expmed.c+=-O0
+COPTS.expr.c+=-O0
+COPTS.fixed-value.c+=-O0
+COPTS.fold-const.c+=-O0
+COPTS.gimple-fold.c+=-O0
+COPTS.gimple-ssa-strength-reduction.c+=-O0
+COPTS.gimple.c+=-O0
+COPTS.internal-fn.c+=-O0
+COPTS.lto-streamer-out.c+=-O0
+COPTS.omp-low.c+=-O0
+COPTS.predict.c+=-O0
+COPTS.recog.c+=-O0
+COPTS.sanopt.c+=-O0
+COPTS.stmt.c+=-O0
+COPTS.stor-layout.c+=-O0
+COPTS.targhooks.c+=-O0
+COPTS.tree-affine.c+=-O0
+COPTS.tree-cfg.c+=-O0
+COPTS.tree-eh.c+=-O0
+COPTS.tree-object-size.c+=-O0
+COPTS.tree-predcom.c+=-O0
+COPTS.tree-pretty-print.c+=-O0
+COPTS.tree-ssa-alias.c+=-O0
+COPTS.tree-ssa-ccp.c+=-O0
+COPTS.tree-ssa-forwprop.c+=-O0
+COPTS.tree-ssa-loop-ivopts.c+=-O0
+COPTS.tree-ssa-loop-manip.c+=-O0
+COPTS.tree-ssa-loop-niter.c+=-O0
+COPTS.tree-ssa-math-opts.c+=-O0
+COPTS.tree-ssa-pre.c+=-O0
+COPTS.tree-ssa-reassoc.c+=-O0
+COPTS.tree-ssa-uninit.c+=-O0
+COPTS.tree-switch-conversion.c+=-O0
+COPTS.tree-vect-data-refs.c+=-O0
+COPTS.tree-vect-loop-manip.c+=-O0
+COPTS.tree-vect-patterns.c+=-O0
+COPTS.tree-vect-stmts.c+=-O0
+COPTS.tree-vrp.c+=-O0
+COPTS.tree.c+=-O0
+COPTS.ubsan.c+=-O0
+COPTS.varasm.c+=-O0
+COPTS.wide-int.c+=-O0
+.else
+COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
 .endif
 
 CFLAGS+=	-Wno-stack-protector
 
 .if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k" || \
 	${GCC_MACHINE_ARCH} == "coldfire"
-COPTS.tree-loop-distribution.c=	-O2
+COPTS.tree-loop-distribution.c+=-O2
+COPTS.generic-match.c+=-fno-jump-tables
+COPTS.gimple-match.c+=-fno-jump-tables
 .endif
 
-COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
 
 .PATH: ${DIST}/gcc ${DIST}/libiberty ${GCCARCH} ${G_out_file:H} ${DIST}/include
 .PATH: ${DIST}/gcc/config

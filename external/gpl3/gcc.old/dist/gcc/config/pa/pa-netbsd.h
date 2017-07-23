@@ -35,8 +35,8 @@ along with GCC; see the file COPYING3.  If not see
   "%{v:-V} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*}"
 
 #undef EXTRA_SPECS
-#define EXTRA_SPECS \
-  { "netbsd_entry_point",	NETBSD_ENTRY_POINT },
+#define EXTRA_SPECS NETBSD_SUBTARGET_EXTRA_SPECS
+#undef SUBTARGET_EXTRA_SPECS
 
 #define NETBSD_ENTRY_POINT "__start"
 
@@ -73,17 +73,11 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef ASM_OUTPUT_ADDR_VEC_ELT
 #define ASM_OUTPUT_ADDR_VEC_ELT(FILE, VALUE) \
-  if (TARGET_BIG_SWITCH)					\
-    fprintf (FILE, "\t.word .L%d\n", VALUE);			\
-  else								\
-    fprintf (FILE, "\tb .L%d\n\tnop\n", VALUE)
+  fprintf (FILE, "\t.word .L%d\n", VALUE)
 
 #undef ASM_OUTPUT_ADDR_DIFF_ELT
 #define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL) \
-  if (TARGET_BIG_SWITCH)					\
-    fprintf (FILE, "\t.word .L%d-.L%d\n", VALUE, REL);		\
-  else								\
-    fprintf (FILE, "\tb .L%d\n\tnop\n", VALUE)
+  fprintf (FILE, "\t.word .L%d-.L%d\n", VALUE, REL)
 
 /* Use the default.  */
 #undef ASM_OUTPUT_LABEL
@@ -136,11 +130,6 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE "long int"
-
-#if 0
-#undef TARGET_SYNC_LIBCALL
-#define TARGET_SYNC_LIBCALL 1
-#endif
 
 #if 0
 #undef TARGET_SYNC_LIBCALL

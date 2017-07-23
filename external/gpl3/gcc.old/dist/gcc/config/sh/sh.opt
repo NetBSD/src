@@ -1,6 +1,6 @@
 ; Options for the SH port of the compiler.
 
-; Copyright (C) 2005-2013 Free Software Foundation, Inc.
+; Copyright (C) 2005-2015 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -229,16 +229,20 @@ Target RejectNegative Joined UInteger Var(sh_branch_cost) Init(-1)
 Cost to assume for a branch insn
 
 mzdcbranch
-Target Var(TARGET_ZDCBRANCH)
+Target Report Var(TARGET_ZDCBRANCH)
 Assume that zero displacement conditional branches are fast
 
 mcbranchdi
-Target Var(TARGET_CBRANCHDI4)
+Target Undocumented Var(TARGET_CBRANCHDI4) Warn(%qs is deprecated and has no effect)
 Enable cbranchdi4 pattern
 
 mcmpeqdi
-Target Var(TARGET_CMPEQDI_T)
+Target Undocumented Var(TARGET_CMPEQDI_T) Warn(%qs is deprecated and has no effect)
 Emit cmpeqdi_t pattern even when -mcbranchdi is in effect.
+
+mcbranch-force-delay-slot
+Target Report RejectNegative Var(TARGET_CBRANCH_FORCE_DELAY_SLOT) Init(0)
+Force the usage of delay slots for conditional branches.
 
 mcut2-workaround
 Target RejectNegative Var(TARGET_SH5_CUT2_WORKAROUND)
@@ -360,3 +364,6 @@ mfsrra
 Target Var(TARGET_FSRRA)
 Enable the use of the fsrra instruction
 
+mlra
+Target Report Var(sh_lra_flag) Init(0) Save
+Use LRA instead of reload (transitional)

@@ -151,7 +151,7 @@ char *realloc ();
 #    include <string.h>
 #    ifndef bzero
 #     ifndef _LIBC
-#      define bzero(s, n)	(memset (s, '\0', n), (s))
+#      define bzero(s, n)	((void) memset (s, '\0', n))
 #     else
 #      define bzero(s, n)	__bzero (s, n)
 #     endif
@@ -3396,7 +3396,7 @@ PREFIX(regex_compile) (const char *ARG_PREFIX(pattern),
 			       class.  */
 			    PATFETCH (c);
 
-			    /* Now we have to go throught the whole table
+			    /* Now we have to go through the whole table
 			       and find all characters which have the same
 			       first level weight.
 
@@ -8093,12 +8093,12 @@ regerror (int errcode, const regex_t *preg ATTRIBUTE_UNUSED,
 #if defined HAVE_MEMPCPY || defined _LIBC
 	  *((char *) mempcpy (errbuf, msg, errbuf_size - 1)) = '\0';
 #else
-          memcpy (errbuf, msg, errbuf_size - 1);
+          (void) memcpy (errbuf, msg, errbuf_size - 1);
           errbuf[errbuf_size - 1] = 0;
 #endif
         }
       else
-        memcpy (errbuf, msg, msg_size);
+        (void) memcpy (errbuf, msg, msg_size);
     }
 
   return msg_size;

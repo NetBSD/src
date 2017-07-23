@@ -1,5 +1,5 @@
 /* CPP Library.
-   Copyright (C) 1986-2013 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
    Contributed by Per Bothner, 1994-95.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -27,7 +27,11 @@ along with this program; see the file COPYING3.  If not see
 #include "filenames.h"
 
 #ifndef ENABLE_CANONICAL_SYSTEM_HEADERS
+#ifdef HAVE_DOS_BASED_FILE_SYSTEM
+#define ENABLE_CANONICAL_SYSTEM_HEADERS 1
+#else
 #define ENABLE_CANONICAL_SYSTEM_HEADERS 0
+#endif
 #endif
 
 static void init_library (void);
@@ -77,32 +81,35 @@ struct lang_flags
   char cplusplus;
   char extended_numbers;
   char extended_identifiers;
+  char c11_identifiers;
   char std;
-  char cplusplus_comments;
   char digraphs;
   char uliterals;
   char rliterals;
   char user_literals;
+  char binary_constants;
+  char digit_separators;
+  char trigraphs;
 };
 
 static const struct lang_flags lang_defaults[] =
-{ /*              c99 c++ xnum xid std  //   digr ulit rlit user_literals */
-  /* GNUC89   */  { 0,  0,  1,   0,  0,   1,   1,   0,   0,    0 },
-  /* GNUC99   */  { 1,  0,  1,   0,  0,   1,   1,   1,   1,    0 },
-  /* GNUC11   */  { 1,  0,  1,   0,  0,   1,   1,   1,   1,    0 },
-  /* STDC89   */  { 0,  0,  0,   0,  1,   0,   0,   0,   0,    0 },
-  /* STDC94   */  { 0,  0,  0,   0,  1,   0,   1,   0,   0,    0 },
-  /* STDC99   */  { 1,  0,  1,   0,  1,   1,   1,   0,   0,    0 },
-  /* STDC11   */  { 1,  0,  1,   0,  1,   1,   1,   1,   0,    0 },
-  /* GNUCXX   */  { 0,  1,  1,   0,  0,   1,   1,   0,   0,    0 },
-  /* CXX98    */  { 0,  1,  1,   0,  1,   1,   1,   0,   0,    0 },
-  /* GNUCXX11 */  { 1,  1,  1,   0,  0,   1,   1,   1,   1,    1 },
-  /* CXX11    */  { 1,  1,  1,   0,  1,   1,   1,   1,   1,    1 },
-  /* ASM      */  { 0,  0,  1,   0,  0,   1,   0,   0,   0,    0 }
-  /* xid should be 1 for GNUC99, STDC99, GNUCXX, CXX98, GNUCXX11, and
-     CXX11 when no longer experimental (when all uses of identifiers
-     in the compiler have been audited for correct handling of
-     extended identifiers).  */
+{ /*              c99 c++ xnum xid c11 std digr ulit rlit udlit bincst digsep trig */
+  /* GNUC89   */  { 0,  0,  1,  0,  0,  0,  1,   0,   0,   0,    0,     0,     0 },
+  /* GNUC99   */  { 1,  0,  1,  1,  0,  0,  1,   1,   1,   0,    0,     0,     0 },
+  /* GNUC11   */  { 1,  0,  1,  1,  1,  0,  1,   1,   1,   0,    0,     0,     0 },
+  /* STDC89   */  { 0,  0,  0,  0,  0,  1,  0,   0,   0,   0,    0,     0,     1 },
+  /* STDC94   */  { 0,  0,  0,  0,  0,  1,  1,   0,   0,   0,    0,     0,     1 },
+  /* STDC99   */  { 1,  0,  1,  1,  0,  1,  1,   0,   0,   0,    0,     0,     1 },
+  /* STDC11   */  { 1,  0,  1,  1,  1,  1,  1,   1,   0,   0,    0,     0,     1 },
+  /* GNUCXX   */  { 0,  1,  1,  1,  0,  0,  1,   0,   0,   0,    0,     0,     0 },
+  /* CXX98    */  { 0,  1,  0,  1,  0,  1,  1,   0,   0,   0,    0,     0,     1 },
+  /* GNUCXX11 */  { 1,  1,  1,  1,  1,  0,  1,   1,   1,   1,    0,     0,     0 },
+  /* CXX11    */  { 1,  1,  1,  1,  1,  1,  1,   1,   1,   1,    0,     0,     1 },
+  /* GNUCXX14 */  { 1,  1,  1,  1,  1,  0,  1,   1,   1,   1,    1,     1,     0 },
+  /* CXX14    */  { 1,  1,  1,  1,  1,  1,  1,   1,   1,   1,    1,     1,     1 },
+  /* GNUCXX1Z */  { 1,  1,  1,  1,  1,  0,  1,   1,   1,   1,    1,     1,     0 },
+  /* CXX1Z    */  { 1,  1,  1,  1,  1,  1,  1,   1,   1,   1,    1,     1,     0 },
+  /* ASM      */  { 0,  0,  1,  0,  0,  0,  0,   0,   0,   0,    0,     0,     0 }
 };
 
 /* Sets internal flags correctly for a given language.  */
@@ -117,13 +124,15 @@ cpp_set_lang (cpp_reader *pfile, enum c_lang lang)
   CPP_OPTION (pfile, cplusplus)			 = l->cplusplus;
   CPP_OPTION (pfile, extended_numbers)		 = l->extended_numbers;
   CPP_OPTION (pfile, extended_identifiers)	 = l->extended_identifiers;
+  CPP_OPTION (pfile, c11_identifiers)		 = l->c11_identifiers;
   CPP_OPTION (pfile, std)			 = l->std;
-  CPP_OPTION (pfile, trigraphs)			 = l->std;
-  CPP_OPTION (pfile, cplusplus_comments)	 = l->cplusplus_comments;
   CPP_OPTION (pfile, digraphs)			 = l->digraphs;
   CPP_OPTION (pfile, uliterals)			 = l->uliterals;
   CPP_OPTION (pfile, rliterals)			 = l->rliterals;
   CPP_OPTION (pfile, user_literals)		 = l->user_literals;
+  CPP_OPTION (pfile, binary_constants)		 = l->binary_constants;
+  CPP_OPTION (pfile, digit_separators)		 = l->digit_separators;
+  CPP_OPTION (pfile, trigraphs)			 = l->trigraphs;
 }
 
 /* Initialize library global state.  */
@@ -170,6 +179,7 @@ cpp_create_reader (enum c_lang lang, cpp_hash_table *table,
   CPP_OPTION (pfile, operator_names) = 1;
   CPP_OPTION (pfile, warn_trigraphs) = 2;
   CPP_OPTION (pfile, warn_endif_labels) = 1;
+  CPP_OPTION (pfile, cpp_warn_c90_c99_compat) = -1;
   CPP_OPTION (pfile, cpp_warn_deprecated) = 1;
   CPP_OPTION (pfile, cpp_warn_long_long) = 0;
   CPP_OPTION (pfile, dollars_in_ident) = 1;
@@ -187,6 +197,7 @@ cpp_create_reader (enum c_lang lang, cpp_hash_table *table,
   CPP_OPTION (pfile, canonical_system_headers)
       = ENABLE_CANONICAL_SYSTEM_HEADERS;
   CPP_OPTION (pfile, ext_numeric_literals) = 1;
+  CPP_OPTION (pfile, warn_date_time) = 0;
 
   /* Default CPP arithmetic to something sensible for the host for the
      benefit of dumb users like fix-header.  */
@@ -247,9 +258,7 @@ cpp_create_reader (enum c_lang lang, cpp_hash_table *table,
   _cpp_expand_op_stack (pfile);
 
   /* Initialize the buffer obstack.  */
-  _obstack_begin (&pfile->buffer_ob, 0, 0,
-		  (void *(*) (long)) xmalloc,
-		  (void (*) (void *)) free);
+  obstack_specify_allocation (&pfile->buffer_ob, 0, 0, xmalloc, free);
 
   _cpp_init_files (pfile);
 
@@ -371,6 +380,8 @@ static const struct builtin_macro builtin_array[] =
   B("__LINE__",		 BT_SPECLINE,      true),
   B("__INCLUDE_LEVEL__", BT_INCLUDE_LEVEL, true),
   B("__COUNTER__",	 BT_COUNTER,       true),
+  B("__has_attribute",	 BT_HAS_ATTRIBUTE, true),
+  B("__has_cpp_attribute", BT_HAS_ATTRIBUTE, true),
   /* Keep builtins not used for -traditional-cpp at the end, and
      update init_builtins() if any more are added.  */
   B("_Pragma",		 BT_PRAGMA,        true),
@@ -451,11 +462,14 @@ cpp_init_special_builtins (cpp_reader *pfile)
 
   for (b = builtin_array; b < builtin_array + n; b++)
     {
+      if (b->value == BT_HAS_ATTRIBUTE
+	  && (CPP_OPTION (pfile, lang) == CLK_ASM
+	      || pfile->cb.has_attribute == NULL))
+	continue;
       cpp_hashnode *hp = cpp_lookup (pfile, b->name, b->len);
       hp->type = NT_MACRO;
       hp->flags |= NODE_BUILTIN;
-      if (b->always_warn_if_redefined
-          || CPP_OPTION (pfile, warn_builtin_macro_redefined))
+      if (b->always_warn_if_redefined)
 	hp->flags |= NODE_WARN;
       hp->value.builtin = (enum cpp_builtin_type) b->value;
     }
@@ -476,8 +490,14 @@ cpp_init_builtins (cpp_reader *pfile, int hosted)
 
   if (CPP_OPTION (pfile, cplusplus))
     {
-      if (CPP_OPTION (pfile, lang) == CLK_CXX11
-	   || CPP_OPTION (pfile, lang) == CLK_GNUCXX11)
+      if (CPP_OPTION (pfile, lang) == CLK_CXX1Z
+	  || CPP_OPTION (pfile, lang) == CLK_GNUCXX1Z)
+	_cpp_define_builtin (pfile, "__cplusplus 201500L");
+      else if (CPP_OPTION (pfile, lang) == CLK_CXX14
+	  || CPP_OPTION (pfile, lang) == CLK_GNUCXX14)
+	_cpp_define_builtin (pfile, "__cplusplus 201402L");
+      else if (CPP_OPTION (pfile, lang) == CLK_CXX11
+	       || CPP_OPTION (pfile, lang) == CLK_GNUCXX11)
 	_cpp_define_builtin (pfile, "__cplusplus 201103L");
       else
 	_cpp_define_builtin (pfile, "__cplusplus 199711L");
@@ -493,7 +513,9 @@ cpp_init_builtins (cpp_reader *pfile, int hosted)
     _cpp_define_builtin (pfile, "__STDC_VERSION__ 199901L");
 
   if (CPP_OPTION (pfile, uliterals)
-      && !CPP_OPTION (pfile, cplusplus))
+      && !(CPP_OPTION (pfile, cplusplus)
+	   && (CPP_OPTION (pfile, lang) == CLK_GNUCXX
+	    || CPP_OPTION (pfile, lang) == CLK_CXX98)))
     {
       _cpp_define_builtin (pfile, "__STDC_UTF_16__ 1");
       _cpp_define_builtin (pfile, "__STDC_UTF_32__ 1");
@@ -751,8 +773,6 @@ post_options (cpp_reader *pfile)
 
   if (CPP_OPTION (pfile, traditional))
     {
-      CPP_OPTION (pfile, cplusplus_comments) = 0;
-
       CPP_OPTION (pfile, trigraphs) = 0;
       CPP_OPTION (pfile, warn_trigraphs) = 0;
     }

@@ -1,5 +1,5 @@
 ;; Predicate definitions for Matsushita MN10300.
-;; Copyright (C) 2005-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2015 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -67,3 +67,7 @@
 (define_predicate "liw_operand"
   (ior (match_operand 0 "register_operand")
        (match_test "satisfies_constraint_O (op)")))
+
+(define_predicate "mn10300_store_multiple_operation"
+  (and (match_code "parallel")
+       (match_test "mn10300_store_multiple_regs (op) != 0")))

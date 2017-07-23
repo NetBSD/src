@@ -1,6 +1,6 @@
 // <future> -*- C++ -*-
 
-// Copyright (C) 2009-2013 Free Software Foundation, Inc.
+// Copyright (C) 2009-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -41,11 +41,13 @@
 #include <condition_variable>
 #include <system_error>
 #include <atomic>
+#include <bits/atomic_futex.h>
 #include <bits/functexcept.h>
 #include <bits/unique_ptr.h>
 #include <bits/shared_ptr.h>
 #include <bits/uses_allocator.h>
-#include <bits/alloc_traits.h>
+#include <bits/allocated_ptr.h>
+#include <ext/aligned_buffer.h>
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -96,7 +98,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   public:
     explicit future_error(error_code __ec)
-    : logic_error("std::future_error"), _M_code(__ec)
+    : logic_error("std::future_error: " + __ec.message()), _M_code(__ec)
     { }
 
     virtual ~future_error() noexcept;
@@ -201,17 +203,17 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       virtual ~_Result_base();
     };
 
-    /// Result.
+    /// A unique_ptr for result objects.
+    template<typename _Res>
+      using _Ptr = unique_ptr<_Res, _Result_base::_Deleter>;
+
+    /// A result object that has storage for an object of type _Res.
     template<typename _Res>
       struct _Result : _Result_base
       {
       private:
-	typedef alignment_of<_Res>				__a_of;
-	typedef aligned_storage<sizeof(_Res), __a_of::value>	__align_storage;
-	typedef typename __align_storage::type			__align_type;
-
-	__align_type		_M_storage;
-	bool 			_M_initialized;
+	__gnu_cxx::__aligned_buffer<_Res>	_M_storage;
+	bool 					_M_initialized;
 
       public:
 	typedef _Res result_type;
@@ -226,74 +228,59 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
 	// Return lvalue, future will add const or rvalue-reference
 	_Res&
-	_M_value() noexcept { return *static_cast<_Res*>(_M_addr()); }
+	_M_value() noexcept { return *_M_storage._M_ptr(); }
 
 	void
 	_M_set(const _Res& __res)
 	{
-	  ::new (_M_addr()) _Res(__res);
+	  ::new (_M_storage._M_addr()) _Res(__res);
 	  _M_initialized = true;
 	}
 
 	void
 	_M_set(_Res&& __res)
 	{
-	  ::new (_M_addr()) _Res(std::move(__res));
+	  ::new (_M_storage._M_addr()) _Res(std::move(__res));
 	  _M_initialized = true;
 	}
 
       private:
 	void _M_destroy() { delete this; }
-
-	void* _M_addr() noexcept { return static_cast<void*>(&_M_storage); }
     };
 
-    /// A unique_ptr based on the instantiating type.
-    template<typename _Res>
-      using _Ptr = unique_ptr<_Res, _Result_base::_Deleter>;
-
-    /// Result_alloc.
+    /// A result object that uses an allocator.
     template<typename _Res, typename _Alloc>
       struct _Result_alloc final : _Result<_Res>, _Alloc
       {
-        typedef typename allocator_traits<_Alloc>::template
-          rebind_alloc<_Result_alloc> __allocator_type;
+	using __allocator_type = __alloc_rebind<_Alloc, _Result_alloc>;
 
         explicit
 	_Result_alloc(const _Alloc& __a) : _Result<_Res>(), _Alloc(__a)
-        { }
+	{ }
 	
       private:
 	void _M_destroy()
-        {
-	  typedef allocator_traits<__allocator_type> __traits;
-          __allocator_type __a(*this);
-	  __traits::destroy(__a, this);
-	  __traits::deallocate(__a, this, 1);
-        }
+	{
+	  __allocator_type __a(*this);
+	  __allocated_ptr<__allocator_type> __guard_ptr{ __a, this };
+	  this->~_Result_alloc();
+	}
       };
 
+    // Create a result object that uses an allocator.
     template<typename _Res, typename _Allocator>
       static _Ptr<_Result_alloc<_Res, _Allocator>>
       _S_allocate_result(const _Allocator& __a)
       {
-        typedef _Result_alloc<_Res, _Allocator>	__result_type;
-	typedef allocator_traits<typename __result_type::__allocator_type>
-	  __traits;
-        typename __traits::allocator_type __a2(__a);
-        __result_type* __p = __traits::allocate(__a2, 1);
-        __try
-	  {
-	    __traits::construct(__a2, __p, __a);
-	  }
-        __catch(...)
-	  {
-	    __traits::deallocate(__a2, __p, 1);
-	    __throw_exception_again;
-	  }
-        return _Ptr<__result_type>(__p);
+	using __result_type = _Result_alloc<_Res, _Allocator>;
+	typename __result_type::__allocator_type __a2(__a);
+	auto __guard = std::__allocate_guarded(__a2);
+	__result_type* __p = ::new((void*)__guard.get()) __result_type{__a};
+	__guard = nullptr;
+	return _Ptr<__result_type>(__p);
       }
 
+    // Keep it simple for std::allocator.
     template<typename _Res, typename _Tp>
       static _Ptr<_Result<_Res>>
       _S_allocate_result(const std::allocator<_Tp>& __a)
@@ -301,30 +288,38 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	return _Ptr<_Result<_Res>>(new _Result<_Res>);
       }
 
-    /// Base class for state between a promise and one or more
-    /// associated futures.
-    class _State_base
+    // Base class for various types of shared state created by an
+    // asynchronous provider (such as a std::promise) and shared with one
+    // or more associated futures.
+    class _State_baseV2
     {
       typedef _Ptr<_Result_base> _Ptr_type;
 
+      enum _Status : unsigned {
+	__not_ready,
+	__ready
+      };
+
       _Ptr_type			_M_result;
-      mutex               	_M_mutex;
-      condition_variable  	_M_cond;
-      atomic_flag         	_M_retrieved;
+      __atomic_futex_unsigned<>	_M_status;
+      atomic_flag         	_M_retrieved = ATOMIC_FLAG_INIT;
       once_flag			_M_once;
 
     public:
-      _State_base() noexcept : _M_result(), _M_retrieved(ATOMIC_FLAG_INIT) { }
-      _State_base(const _State_base&) = delete;
-      _State_base& operator=(const _State_base&) = delete;
-      virtual ~_State_base();
+      _State_baseV2() noexcept : _M_result(), _M_status(_Status::__not_ready)
+	{ }
+      _State_baseV2(const _State_baseV2&) = delete;
+      _State_baseV2& operator=(const _State_baseV2&) = delete;
+      virtual ~_State_baseV2() = default;
 
       _Result_base&
       wait()
       {
-	_M_run_deferred();
-	unique_lock<mutex> __lock(_M_mutex);
-	_M_cond.wait(__lock, [&] { return _M_ready(); });
+	// Run any deferred function or join any asynchronous thread:
+	_M_complete_async();
+	// Acquire MO makes sure this synchronizes with the thread that made
+	// the future ready.
+	_M_status._M_load_when_equal(_Status::__ready, memory_order_acquire);
 	return *_M_result;
       }
 
@@ -332,9 +327,28 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
         future_status
         wait_for(const chrono::duration<_Rep, _Period>& __rel)
         {
-	  unique_lock<mutex> __lock(_M_mutex);
-	  if (_M_cond.wait_for(__lock, __rel, [&] { return _M_ready(); }))
+	  // First, check if the future has been made ready.  Use acquire MO
+	  // to synchronize with the thread that made it ready.
+	  if (_M_status._M_load(memory_order_acquire) == _Status::__ready)
 	    return future_status::ready;
+	  if (_M_is_deferred_future())
+	    return future_status::deferred;
+	  if (_M_status._M_load_when_equal_for(_Status::__ready,
+	      memory_order_acquire, __rel))
+	    {
+	      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+	      // 2100.  timed waiting functions must also join
+	      // This call is a no-op by default except on an async future,
+	      // in which case the async thread is joined.  It's also not a
+	      // no-op for a deferred future, but such a future will never
+	      // reach this point because it returns future_status::deferred
+	      // instead of waiting for the future to become ready (see
+	      // above).  Async futures synchronize in this call, so we need
+	      // no further synchronization here.
+	      _M_complete_async();
+
+	      return future_status::ready;
+	    }
 	  return future_status::timeout;
 	}
 
@@ -342,42 +356,83 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
         future_status
         wait_until(const chrono::time_point<_Clock, _Duration>& __abs)
         {
-	  unique_lock<mutex> __lock(_M_mutex);
-	  if (_M_cond.wait_until(__lock, __abs, [&] { return _M_ready(); }))
+	  // First, check if the future has been made ready.  Use acquire MO
+	  // to synchronize with the thread that made it ready.
+	  if (_M_status._M_load(memory_order_acquire) == _Status::__ready)
 	    return future_status::ready;
+	  if (_M_is_deferred_future())
+	    return future_status::deferred;
+	  if (_M_status._M_load_when_equal_until(_Status::__ready,
+	      memory_order_acquire, __abs))
+	    {
+	      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+	      // 2100.  timed waiting functions must also join
+	      // See wait_for(...) above.
+	      _M_complete_async();
+
+	      return future_status::ready;
+	    }
 	  return future_status::timeout;
 	}
 
+      // Provide a result to the shared state and make it ready.
+      // Calls at most once: _M_result = __res();
       void
       _M_set_result(function<_Ptr_type()> __res, bool __ignore_failure = false)
       {
-        bool __set = false;
+	bool __did_set = false;
         // all calls to this function are serialized,
         // side-effects of invoking __res only happen once
-        call_once(_M_once, &_State_base::_M_do_set, this, ref(__res),
-            ref(__set));
-	if (__set)
-	  _M_cond.notify_all();
+	call_once(_M_once, &_State_baseV2::_M_do_set, this,
+		  std::__addressof(__res), std::__addressof(__did_set));
+	if (__did_set)
+	  // Use release MO to synchronize with observers of the ready state.
+	  _M_status._M_store_notify_all(_Status::__ready,
+					memory_order_release);
 	else if (!__ignore_failure)
           __throw_future_error(int(future_errc::promise_already_satisfied));
       }
 
+      // Provide a result to the shared state but delay making it ready
+      // until the calling thread exits.
+      // Calls at most once: _M_result = __res();
+      void
+      _M_set_delayed_result(function<_Ptr_type()> __res,
+			    weak_ptr<_State_baseV2> __self)
+      {
+	bool __did_set = false;
+	unique_ptr<_Make_ready> __mr{new _Make_ready};
+        // all calls to this function are serialized,
+        // side-effects of invoking __res only happen once
+	call_once(_M_once, &_State_baseV2::_M_do_set, this,
+		  std::__addressof(__res), std::__addressof(__did_set));
+	if (!__did_set)
+          __throw_future_error(int(future_errc::promise_already_satisfied));
+	__mr->_M_shared_state = std::move(__self);
+	__mr->_M_set();
+	__mr.release();
+      }
+
+      // Abandon this shared state.
       void
       _M_break_promise(_Ptr_type __res)
       {
 	if (static_cast<bool>(__res))
 	  {
 	    error_code __ec(make_error_code(future_errc::broken_promise));
-	    __res->_M_error = copy_exception(future_error(__ec));
-	    {
-	      lock_guard<mutex> __lock(_M_mutex);
-	      _M_result.swap(__res);
-	    }
-	    _M_cond.notify_all();
+	    __res->_M_error = make_exception_ptr(future_error(__ec));
+	    // This function is only called when the last asynchronous result
+	    // provider is abandoning this shared state, so noone can be
+	    // trying to make the shared state ready at the same time, and
+	    // we can access _M_result directly instead of through call_once.
+	    _M_result.swap(__res);
+	    // Use release MO to synchronize with observers of the ready state.
+	    _M_status._M_store_notify_all(_Status::__ready,
+					  memory_order_release);
 	  }
       }
 
-      // Called when this object is passed to a future.
+      // Called when this object is first passed to a future.
       void
       _M_set_retrieved_flag()
       {
@@ -393,33 +448,35 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
         struct _Setter<_Res, _Arg&>
         {
           // check this is only used by promise<R>::set_value(const R&)
-          // or promise<R>::set_value(R&)
+          // or promise<R&>::set_value(R&)
           static_assert(is_same<_Res, _Arg&>::value  // promise<R&>
-              || is_same<const _Res, _Arg>::value,  // promise<R>
+              || is_same<const _Res, _Arg>::value,   // promise<R>
               "Invalid specialisation");
 
-          typename promise<_Res>::_Ptr_type operator()()
+	  // Used by std::promise to copy construct the result.
+          typename promise<_Res>::_Ptr_type operator()() const
           {
-            _State_base::_S_check(_M_promise->_M_future);
-            _M_promise->_M_storage->_M_set(_M_arg);
+            _State_baseV2::_S_check(_M_promise->_M_future);
+            _M_promise->_M_storage->_M_set(*_M_arg);
             return std::move(_M_promise->_M_storage);
           }
           promise<_Res>*    _M_promise;
-          _Arg&             _M_arg;
+          _Arg*             _M_arg;
         };
 
       // set rvalues
       template<typename _Res>
         struct _Setter<_Res, _Res&&>
         {
-          typename promise<_Res>::_Ptr_type operator()()
+	  // Used by std::promise to move construct the result.
+          typename promise<_Res>::_Ptr_type operator()() const
           {
-            _State_base::_S_check(_M_promise->_M_future);
-            _M_promise->_M_storage->_M_set(std::move(_M_arg));
+            _State_baseV2::_S_check(_M_promise->_M_future);
+            _M_promise->_M_storage->_M_set(std::move(*_M_arg));
             return std::move(_M_promise->_M_storage);
           }
           promise<_Res>*    _M_promise;
-          _Res&             _M_arg;
+          _Res*             _M_arg;
         };
 
       struct __exception_ptr_tag { };
@@ -428,33 +485,31 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       template<typename _Res>
         struct _Setter<_Res, __exception_ptr_tag>
         {
-          typename promise<_Res>::_Ptr_type operator()()
+	  // Used by std::promise to store an exception as the result.
+          typename promise<_Res>::_Ptr_type operator()() const
           {
-            _State_base::_S_check(_M_promise->_M_future);
-            _M_promise->_M_storage->_M_error = _M_ex;
+            _State_baseV2::_S_check(_M_promise->_M_future);
+            _M_promise->_M_storage->_M_error = *_M_ex;
             return std::move(_M_promise->_M_storage);
           }
 
           promise<_Res>*   _M_promise;
-          exception_ptr&    _M_ex;
+          exception_ptr*    _M_ex;
         };
 
       template<typename _Res, typename _Arg>
         static _Setter<_Res, _Arg&&>
         __setter(promise<_Res>* __prom, _Arg&& __arg)
         {
-          return _Setter<_Res, _Arg&&>{ __prom, __arg };
+          return _Setter<_Res, _Arg&&>{ __prom, &__arg };
         }
 
       template<typename _Res>
         static _Setter<_Res, __exception_ptr_tag>
         __setter(exception_ptr& __ex, promise<_Res>* __prom)
         {
-          return _Setter<_Res, __exception_ptr_tag>{ __prom, __ex };
+          return _Setter<_Res, __exception_ptr_tag>{ __prom, &__ex };
         }
-
-      static _Setter<void, void>
-      __setter(promise<void>* __prom);
 
       template<typename _Tp>
         static void
@@ -465,27 +520,42 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
         }
 
     private:
+      // The function invoked with std::call_once(_M_once, ...).
       void
-      _M_do_set(function<_Ptr_type()>& __f, bool& __set)
+      _M_do_set(function<_Ptr_type()>* __f, bool* __did_set)
       {
-        _Ptr_type __res = __f();
-        {
-          lock_guard<mutex> __lock(_M_mutex);
-          _M_result.swap(__res);
-        }
-        __set = true;
+        _Ptr_type __res = (*__f)();
+        // Notify the caller that we did try to set; if we do not throw an
+        // exception, the caller will be aware that it did set (e.g., see
+        // _M_set_result).
+	*__did_set = true;
+        _M_result.swap(__res); // nothrow
       }
 
-      bool _M_ready() const noexcept { return static_cast<bool>(_M_result); }
+      // Wait for completion of async function.
+      virtual void _M_complete_async() { }
 
-      // Misnamed: waits for completion of async function.
-      virtual void _M_run_deferred() { }
+      // Return true if state corresponds to a deferred function.
+      virtual bool _M_is_deferred_future() const { return false; }
+
+      struct _Make_ready final : __at_thread_exit_elt
+      {
+	weak_ptr<_State_baseV2> _M_shared_state;
+	static void _S_run(void*);
+	void _M_set();
+      };
     };
+
+#ifdef _GLIBCXX_ASYNC_ABI_COMPAT
+    class _State_base;
+    class _Async_state_common;
+#else
+    using _State_base = _State_baseV2;
+    class _Async_state_commonV2;
+#endif
 
     template<typename _BoundFn, typename = typename _BoundFn::result_type>
       class _Deferred_state;
-
-    class _Async_state_common;
 
     template<typename _BoundFn, typename = typename _BoundFn::result_type>
       class _Async_state_impl;
@@ -504,15 +574,15 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       static std::shared_ptr<_State_base>
       _S_make_async_state(_BoundFn&& __fn);
 
-    template<typename _Res_ptr,
+    template<typename _Res_ptr, typename _Fn,
 	     typename _Res = typename _Res_ptr::element_type::result_type>
       struct _Task_setter;
 
     template<typename _Res_ptr, typename _BoundFn>
-      static _Task_setter<_Res_ptr>
-      _S_task_setter(_Res_ptr& __ptr, _BoundFn&& __call)
+      static _Task_setter<_Res_ptr, _BoundFn>
+      _S_task_setter(_Res_ptr& __ptr, _BoundFn& __call)
       {
-	return _Task_setter<_Res_ptr>{ __ptr, std::ref(__call) };
+	return { std::__addressof(__ptr), std::__addressof(__call) };
       }
   };
 
@@ -524,7 +594,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       _Result() noexcept : _M_value_ptr() { }
 
-      void _M_set(_Res& __res) noexcept { _M_value_ptr = &__res; }
+      void
+      _M_set(_Res& __res) noexcept
+      { _M_value_ptr = std::addressof(__res); }
 
       _Res& _M_get() noexcept { return *_M_value_ptr; }
 
@@ -544,6 +616,19 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       void _M_destroy() { delete this; }
     };
 
+#ifndef _GLIBCXX_ASYNC_ABI_COMPAT
+
+  // Allow _Setter objects to be stored locally in std::function
+  template<typename _Res, typename _Arg>
+    struct __is_location_invariant
+    <__future_base::_State_base::_Setter<_Res, _Arg>>
+    : true_type { };
+
+  // Allow _Task_setter objects to be stored locally in std::function
+  template<typename _Res_ptr, typename _Fn, typename _Res>
+    struct __is_location_invariant
+    <__future_base::_Task_setter<_Res_ptr, _Fn, _Res>>
+    : true_type { };
 
   /// Common implementation for future and shared_future.
   template<typename _Res>
@@ -983,26 +1068,35 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       // Setting the result
       void
       set_value(const _Res& __r)
-      {
-	auto __future = _M_future;
-        auto __setter = _State::__setter(this, __r);
-        __future->_M_set_result(std::move(__setter));
-      }
+      { _M_future->_M_set_result(_State::__setter(this, __r)); }
 
       void
       set_value(_Res&& __r)
-      {
-	auto __future = _M_future;
-        auto __setter = _State::__setter(this, std::move(__r));
-        __future->_M_set_result(std::move(__setter));
-      }
+      { _M_future->_M_set_result(_State::__setter(this, std::move(__r))); }
 
       void
       set_exception(exception_ptr __p)
+      { _M_future->_M_set_result(_State::__setter(__p, this)); }
+
+      void
+      set_value_at_thread_exit(const _Res& __r)
       {
-	auto __future = _M_future;
-        auto __setter = _State::__setter(__p, this);
-        __future->_M_set_result(std::move(__setter));
+	_M_future->_M_set_delayed_result(_State::__setter(this, __r),
+					 _M_future);
+      }
+
+      void
+      set_value_at_thread_exit(_Res&& __r)
+      {
+	_M_future->_M_set_delayed_result(
+	    _State::__setter(this, std::move(__r)), _M_future);
+      }
+
+      void
+      set_exception_at_thread_exit(exception_ptr __p)
+      {
+	_M_future->_M_set_delayed_result(_State::__setter(__p, this),
+					 _M_future);
       }
     };
 
@@ -1084,18 +1178,24 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       // Setting the result
       void
       set_value(_Res& __r)
-      {
-	auto __future = _M_future;
-        auto __setter = _State::__setter(this, __r);
-        __future->_M_set_result(std::move(__setter));
-      }
+      { _M_future->_M_set_result(_State::__setter(this, __r)); }
 
       void
       set_exception(exception_ptr __p)
+      { _M_future->_M_set_result(_State::__setter(__p, this)); }
+
+      void
+      set_value_at_thread_exit(_Res& __r)
       {
-	auto __future = _M_future;
-        auto __setter = _State::__setter(__p, this);
-        __future->_M_set_result(std::move(__setter));
+	_M_future->_M_set_delayed_result(_State::__setter(this, __r),
+					 _M_future);
+      }
+
+      void
+      set_exception_at_thread_exit(exception_ptr __p)
+      {
+	_M_future->_M_set_delayed_result(_State::__setter(__p, this),
+					 _M_future);
       }
     };
 
@@ -1171,10 +1271,16 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       void
       set_exception(exception_ptr __p)
+      { _M_future->_M_set_result(_State::__setter(__p, this)); }
+
+      void
+      set_value_at_thread_exit();
+
+      void
+      set_exception_at_thread_exit(exception_ptr __p)
       {
-	auto __future = _M_future;
-        auto __setter = _State::__setter(__p, this);
-        __future->_M_set_result(std::move(__setter));
+	_M_future->_M_set_delayed_result(_State::__setter(__p, this),
+					 _M_future);
       }
     };
 
@@ -1182,7 +1288,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<>
     struct __future_base::_State_base::_Setter<void, void>
     {
-      promise<void>::_Ptr_type operator()()
+      promise<void>::_Ptr_type operator()() const
       {
         _State_base::_S_check(_M_promise->_M_future);
         return std::move(_M_promise->_M_storage);
@@ -1191,59 +1297,65 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       promise<void>*    _M_promise;
     };
 
-  inline __future_base::_State_base::_Setter<void, void>
-  __future_base::_State_base::__setter(promise<void>* __prom)
-  {
-    return _Setter<void, void>{ __prom };
-  }
-
   inline void
   promise<void>::set_value()
+  { _M_future->_M_set_result(_State::_Setter<void, void>{ this }); }
+
+  inline void
+  promise<void>::set_value_at_thread_exit()
   {
-    auto __future = _M_future;
-    auto __setter = _State::__setter(this);
-    __future->_M_set_result(std::move(__setter));
+    _M_future->_M_set_delayed_result(_State::_Setter<void, void>{this},
+				     _M_future);
   }
 
-
-  template<typename _Ptr_type, typename _Res>
+  template<typename _Ptr_type, typename _Fn, typename _Res>
     struct __future_base::_Task_setter
     {
-      _Ptr_type operator()()
+      // Invoke the function and provide the result to the caller.
+      _Ptr_type operator()() const
       {
 	__try
 	  {
-	    _M_result->_M_set(_M_fn());
+	    (*_M_result)->_M_set((*_M_fn)());
+	  }
+	__catch(const __cxxabiv1::__forced_unwind&)
+	  {
+	    __throw_exception_again; // will cause broken_promise
 	  }
 	__catch(...)
 	  {
-	    _M_result->_M_error = current_exception();
+	    (*_M_result)->_M_error = current_exception();
 	  }
-	return std::move(_M_result);
+	return std::move(*_M_result);
       }
-      _Ptr_type&                _M_result;
-      std::function<_Res()>     _M_fn;
+      _Ptr_type*	_M_result;
+      _Fn*		_M_fn;
     };
 
-  template<typename _Ptr_type>
-    struct __future_base::_Task_setter<_Ptr_type, void>
+  template<typename _Ptr_type, typename _Fn>
+    struct __future_base::_Task_setter<_Ptr_type, _Fn, void>
     {
-      _Ptr_type operator()()
+      _Ptr_type operator()() const
       {
 	__try
 	  {
-	    _M_fn();
+	    (*_M_fn)();
+	  }
+	__catch(const __cxxabiv1::__forced_unwind&)
+	  {
+	    __throw_exception_again; // will cause broken_promise
 	  }
 	__catch(...)
 	  {
-	    _M_result->_M_error = current_exception();
+	    (*_M_result)->_M_error = current_exception();
 	  }
-	return std::move(_M_result);
+	return std::move(*_M_result);
       }
-      _Ptr_type&                _M_result;
-      std::function<void()>     _M_fn;
+      _Ptr_type*	_M_result;
+      _Fn*		_M_fn;
     };
 
+  // Holds storage for a packaged_task's result.
   template<typename _Res, typename... _Args>
     struct __future_base::_Task_state_base<_Res(_Args...)>
     : __future_base::_State_base
@@ -1255,8 +1367,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	: _M_result(_S_allocate_result<_Res>(__a))
 	{ }
 
+      // Invoke the stored task and make the state ready.
       virtual void
-      _M_run(_Args... __args) = 0;
+      _M_run(_Args&&... __args) = 0;
+
+      // Invoke the stored task and make the state ready at thread exit.
+      virtual void
+      _M_run_delayed(_Args&&... __args, weak_ptr<_State_base>) = 0;
 
       virtual shared_ptr<_Task_state_base>
       _M_reset() = 0;
@@ -1265,6 +1382,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _Ptr_type _M_result;
     };
 
+  // Holds a packaged_task's stored task.
   template<typename _Fn, typename _Alloc, typename _Res, typename... _Args>
     struct __future_base::_Task_state<_Fn, _Alloc, _Res(_Args...)> final
     : __future_base::_Task_state_base<_Res(_Args...)>
@@ -1277,13 +1395,22 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
     private:
       virtual void
-      _M_run(_Args... __args)
+      _M_run(_Args&&... __args)
       {
 	// bound arguments decay so wrap lvalue references
 	auto __boundfn = std::__bind_simple(std::ref(_M_impl._M_fn),
 	    _S_maybe_wrap_ref(std::forward<_Args>(__args))...);
-	auto __setter = _S_task_setter(this->_M_result, std::move(__boundfn));
-	this->_M_set_result(std::move(__setter));
+	this->_M_set_result(_S_task_setter(this->_M_result, __boundfn));
+      }
+
+      virtual void
+      _M_run_delayed(_Args&&... __args, weak_ptr<_State_base> __self)
+      {
+	// bound arguments decay so wrap lvalue references
+	auto __boundfn = std::__bind_simple(std::ref(_M_impl._M_fn),
+	    _S_maybe_wrap_ref(std::forward<_Args>(__args))...);
+	this->_M_set_delayed_result(_S_task_setter(this->_M_result, __boundfn),
+				    std::move(__self));
       }
 
       virtual shared_ptr<_Task_state_base<_Res(_Args...)>>
@@ -1417,8 +1544,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator()(_ArgTypes... __args)
       {
 	__future_base::_State_base::_S_check(_M_state);
-	auto __state = _M_state;
-	__state->_M_run(std::forward<_ArgTypes>(__args)...);
+	_M_state->_M_run(std::forward<_ArgTypes>(__args)...);
+      }
+
+      void
+      make_ready_at_thread_exit(_ArgTypes... __args)
+      {
+	__future_base::_State_base::_S_check(_M_state);
+	_M_state->_M_run_delayed(std::forward<_ArgTypes>(__args)..., _M_state);
       }
 
       void
@@ -1443,6 +1576,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     : public true_type { };
 
 
+  // Shared state created by std::async().
+  // Holds a deferred function and storage for its result.
   template<typename _BoundFn, typename _Res>
     class __future_base::_Deferred_state final
     : public __future_base::_State_base
@@ -1458,26 +1593,47 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _Ptr_type _M_result;
       _BoundFn _M_fn;
 
+      // Run the deferred function.
       virtual void
-      _M_run_deferred()
+      _M_complete_async()
       {
-        // safe to call multiple times so ignore failure
+	// Multiple threads can call a waiting function on the future and
+	// reach this point at the same time. The call_once in _M_set_result
+	// ensures only the first one run the deferred function, stores the
+	// result in _M_result, swaps that with the base _M_result and makes
+	// the state ready. Tell _M_set_result to ignore failure so all later
+	// calls do nothing.
         _M_set_result(_S_task_setter(_M_result, _M_fn), true);
       }
+
+      // Caller should check whether the state is ready first, because this
+      // function will return true even after the deferred function has run.
+      virtual bool _M_is_deferred_future() const { return true; }
     };
 
-  class __future_base::_Async_state_common : public __future_base::_State_base
+  // Common functionality hoisted out of the _Async_state_impl template.
+  class __future_base::_Async_state_commonV2
+    : public __future_base::_State_base
   {
   protected:
-#ifdef _GLIBCXX_ASYNC_ABI_COMPAT
-    ~_Async_state_common();
-#else
-    ~_Async_state_common() = default;
-#endif
+    ~_Async_state_commonV2() = default;
 
-    // Allow non-timed waiting functions to block until the thread completes,
-    // as if joined.
-    virtual void _M_run_deferred() { _M_join(); }
+    // Make waiting functions block until the thread completes, as if joined.
+    //
+    // This function is used by wait() to satisfy the first requirement below
+    // and by wait_for() / wait_until() to satisfy the second.
+    //
+    // [futures.async]:
+    //
+    // — a call to a waiting function on an asynchronous return object that
+    // shares the shared state created by this async call shall block until
+    // the associated thread has completed, as if joined, or else time out.
+    //
+    // — the associated thread completion synchronizes with the return from
+    // the first function that successfully detects the ready status of the
+    // shared state or with the return from the last function that releases
+    // the shared state, whichever happens first.
+    virtual void _M_complete_async() { _M_join(); }
 
     void _M_join() { std::call_once(_M_once, &thread::join, ref(_M_thread)); }
 
@@ -1485,9 +1641,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     once_flag _M_once;
   };
 
+  // Shared state created by std::async().
+  // Starts a new thread that runs a function and makes the shared state ready.
   template<typename _BoundFn, typename _Res>
     class __future_base::_Async_state_impl final
-    : public __future_base::_Async_state_common
+    : public __future_base::_Async_state_commonV2
     {
     public:
       explicit
@@ -1495,11 +1653,24 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       : _M_result(new _Result<_Res>()), _M_fn(std::move(__fn))
       {
 	_M_thread = std::thread{ [this] {
-	  _M_set_result(_S_task_setter(_M_result, _M_fn));
+	    __try
+	      {
+		_M_set_result(_S_task_setter(_M_result, _M_fn));
+	      }
+	    __catch (const __cxxabiv1::__forced_unwind&)
+	      {
+		// make the shared state ready on thread cancellation
+		if (static_cast<bool>(_M_result))
+		  this->_M_break_promise(std::move(_M_result));
+		__throw_exception_again;
+	      }
         } };
       }
 
-      ~_Async_state_impl() { _M_join(); }
+      // Must not destroy _M_result and _M_fn until the thread finishes.
+      // Call join() directly rather than through _M_join() because no other
+      // thread can be referring to this state if it is being destroyed.
+      ~_Async_state_impl() { if (_M_thread.joinable()) _M_thread.join(); }
 
     private:
       typedef __future_base::_Ptr<_Result<_Res>> _Ptr_type;
@@ -1555,6 +1726,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		   std::forward<_Args>(__args)...);
     }
 
+#endif // _GLIBCXX_ASYNC_ABI_COMPAT
 #endif // _GLIBCXX_HAS_GTHREADS && _GLIBCXX_USE_C99_STDINT_TR1
        // && ATOMIC_INT_LOCK_FREE
 

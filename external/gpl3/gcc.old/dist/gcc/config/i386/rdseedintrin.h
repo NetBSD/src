@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -25,12 +25,15 @@
 # error "Never use <rdseedintrin.h> directly; include <x86intrin.h> instead."
 #endif
 
-#ifndef __RDSEED__
-# error "RDSEED instruction not enabled"
-#endif /* __RDSEED__ */
-
 #ifndef _RDSEEDINTRIN_H_INCLUDED
 #define _RDSEEDINTRIN_H_INCLUDED
+
+#ifndef __RDSEED__
+#pragma GCC push_options
+#pragma GCC target("rdseed")
+#define __DISABLE_RDSEED__
+#endif /* __RDSEED__ */
+
 
 extern __inline int
 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -54,5 +57,10 @@ _rdseed64_step (unsigned long long *p)
     return __builtin_ia32_rdseed_di_step (p);
 }
 #endif
+
+#ifdef __DISABLE_RDSEED__
+#undef __DISABLE_RDSEED__
+#pragma GCC pop_options
+#endif /* __DISABLE_RDSEED__ */
 
 #endif /* _RDSEEDINTRIN_H_INCLUDED */

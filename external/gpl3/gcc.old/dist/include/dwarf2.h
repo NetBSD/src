@@ -309,6 +309,12 @@ enum dwarf_source_language
     /* DWARF 5.  */
     DW_LANG_Go = 0x0016,
 
+    DW_LANG_C_plus_plus_11 = 0x001a, /* dwarf5.20141029.pdf DRAFT */
+    DW_LANG_C11 = 0x001d,
+    DW_LANG_C_plus_plus_14 = 0x0021,
+    DW_LANG_Fortran03 = 0x0022,
+    DW_LANG_Fortran08 = 0x0023,
+
     DW_LANG_lo_user = 0x8000,	/* Implementation-defined range start.  */
     DW_LANG_hi_user = 0xffff,	/* Implementation-defined range start.  */
 

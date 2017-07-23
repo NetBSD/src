@@ -1,5 +1,5 @@
 /* Wrapper for ar/ranlib/nm to pass the LTO plugin.
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Andi Kleen.
 
 This file is part of GCC.
@@ -123,7 +123,7 @@ setup_prefixes (const char *exec_path)
 }
 
 int 
-main(int ac, char **av)
+main (int ac, char **av)
 {
   const char *exe_name;
   char *plugin;
@@ -132,8 +132,51 @@ main(int ac, char **av)
   const char **nargv;
   bool is_ar = !strcmp (PERSONALITY, "ar");
   int exit_code = FATAL_EXIT_CODE;
+  int i;
 
   setup_prefixes (av[0]);
+
+  /* Not using getopt for now.  */
+  for (i = 0; i < ac; i++)
+      if (!strncmp (av[i], "-B", 2))
+	{
+	  const char *arg = av[i] + 2;
+	  const char *end;
+	  size_t len;
+
+	  memmove (av + i, av + i + 1, sizeof (char *) * ((ac + 1) - i));
+	  ac--;
+	  if (*arg == 0)
+	    {
+	      arg = av[i];
+	      if (!arg)
+		{
+		  fprintf (stderr, "Usage: gcc-ar [-B prefix] ar arguments ...\n");
+		  exit (EXIT_FAILURE);
+		}
+	      memmove (av + i, av + i + 1, sizeof (char *) * ((ac + 1) - i));
+	      ac--;
+	      i++;
+	    }
+	  /* else it's a joined argument  */
+
+	  len = strlen (arg);
+	  if (len > 0)
+		  len--;
+	  end = arg + len;
+
+	  /* Always add a dir separator for the prefix list.  */
+	  if (end > arg && !IS_DIR_SEPARATOR (*end))
+	    {
+	      static const char dir_separator_str[] = { DIR_SEPARATOR, 0 };
+	      arg = concat (arg, dir_separator_str, NULL);
+	    }
+
+	  add_prefix_begin (&path, arg);
+	  add_prefix_begin (&target_path, arg);
+	  break;
+	}
+
 
   /* Find the GCC LTO plugin */
   plugin = find_a_file (&target_path, LTOPLUGINSONAME, R_OK);
@@ -166,7 +209,7 @@ main(int ac, char **av)
   nargv[1] = "--plugin";
   nargv[2] = plugin;
   if (is_ar && av[1] && av[1][0] != '-')
-    av[1] = concat("-", av[1], NULL);
+    av[1] = concat ("-", av[1], NULL);
   for (k = 1; k < ac; k++)
     nargv[2 + k] = av[k];
   nargv[2 + k] = NULL;
@@ -176,18 +219,18 @@ main(int ac, char **av)
   err_msg = pex_one (PEX_LAST|PEX_SEARCH, 
 		     exe_name, 
 		     CONST_CAST2 (char * const *, const char **, nargv),
-		     concat("gcc-", exe_name, NULL), 
+		     concat ("gcc-", exe_name, NULL),
 		     NULL,NULL,  &status, &err);
   if (err_msg) 
-    fprintf(stderr, "Error running %s: %s\n", exe_name, err_msg);
+    fprintf (stderr, "Error running %s: %s\n", exe_name, err_msg);
   else if (status)
     {
       if (WIFSIGNALED (status))
 	{
 	  int sig = WTERMSIG (status);
 	  fprintf (stderr, "%s terminated with signal %d [%s]%s\n",
-		   exe_name, sig, strsignal(sig),
-		   WCOREDUMP(status) ? ", core dumped" : "");
+		   exe_name, sig, strsignal (sig),
+		   WCOREDUMP (status) ? ", core dumped" : "");
 	}
       else if (WIFEXITED (status))
 	exit_code = WEXITSTATUS (status);

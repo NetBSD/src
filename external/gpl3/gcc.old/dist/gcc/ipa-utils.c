@@ -1,5 +1,5 @@
 /* Utilities for ipa analysis.
-   Copyright (C) 2005-2013 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
 
 This file is part of GCC.
@@ -22,21 +22,49 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "options.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
-#include "tree-flow.h"
+#include "fold-const.h"
+#include "predict.h"
+#include "hard-reg-set.h"
+#include "input.h"
+#include "function.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "basic-block.h"
+#include "tree-ssa-alias.h"
+#include "internal-fn.h"
+#include "gimple-expr.h"
+#include "is-a.h"
+#include "gimple.h"
 #include "tree-inline.h"
 #include "dumpfile.h"
 #include "langhooks.h"
-#include "pointer-set.h"
 #include "splay-tree.h"
-#include "ggc.h"
-#include "ipa-utils.h"
-#include "ipa-reference.h"
-#include "gimple.h"
+#include "hash-map.h"
+#include "plugin-api.h"
+#include "ipa-ref.h"
 #include "cgraph.h"
+#include "ipa-utils.h"
+#include "bitmap.h"
+#include "ipa-reference.h"
 #include "flags.h"
 #include "diagnostic.h"
 #include "langhooks.h"
+#include "lto-streamer.h"
+#include "alloc-pool.h"
+#include "symbol-summary.h"
+#include "ipa-prop.h"
+#include "ipa-inline.h"
 
 /* Debugging function for postorder and inorder code. NOTE is a string
    that is printed before the nodes are printed.  ORDER is an array of
@@ -52,12 +80,12 @@ ipa_print_order (FILE* out,
   fprintf (out, "\n\n ordered call graph: %s\n", note);
 
   for (i = count - 1; i >= 0; i--)
-    dump_cgraph_node(dump_file, order[i]);
+    order[i]->dump (out);
   fprintf (out, "\n");
-  fflush(out);
+  fflush (out);
 }
 
-
+
 struct searchc_env {
   struct cgraph_node **stack;
   int stack_size;
@@ -84,7 +112,7 @@ searchc (struct searchc_env* env, struct cgraph_node *v,
 	 bool (*ignore_edge) (struct cgraph_edge *))
 {
   struct cgraph_edge *edge;
-  struct ipa_dfs_info *v_info = (struct ipa_dfs_info *) v->symbol.aux;
+  struct ipa_dfs_info *v_info = (struct ipa_dfs_info *) v->aux;
 
   /* mark node as old */
   v_info->new_node = false;
@@ -100,16 +128,16 @@ searchc (struct searchc_env* env, struct cgraph_node *v,
     {
       struct ipa_dfs_info * w_info;
       enum availability avail;
-      struct cgraph_node *w = cgraph_function_or_thunk_node (edge->callee, &avail);
+      struct cgraph_node *w = edge->callee->ultimate_alias_target (&avail);
 
       if (!w || (ignore_edge && ignore_edge (edge)))
         continue;
 
-      if (w->symbol.aux
-	  && (avail > AVAIL_OVERWRITABLE
-	      || (env->allow_overwritable && avail == AVAIL_OVERWRITABLE)))
+      if (w->aux
+	  && (avail > AVAIL_INTERPOSABLE
+	      || (env->allow_overwritable && avail == AVAIL_INTERPOSABLE)))
 	{
-	  w_info = (struct ipa_dfs_info *) w->symbol.aux;
+	  w_info = (struct ipa_dfs_info *) w->aux;
 	  if (w_info->new_node)
 	    {
 	      searchc (env, w, ignore_edge);
@@ -134,7 +162,7 @@ searchc (struct searchc_env* env, struct cgraph_node *v,
       struct ipa_dfs_info *x_info;
       do {
 	x = env->stack[--(env->stack_size)];
-	x_info = (struct ipa_dfs_info *) x->symbol.aux;
+	x_info = (struct ipa_dfs_info *) x->aux;
 	x_info->on_stack = false;
 	x_info->scc_no = v_info->dfn_number;
 
@@ -170,7 +198,7 @@ ipa_reduced_postorder (struct cgraph_node **order,
   struct cgraph_node *node;
   struct searchc_env env;
   splay_tree_node result;
-  env.stack = XCNEWVEC (struct cgraph_node *, cgraph_n_nodes);
+  env.stack = XCNEWVEC (struct cgraph_node *, symtab->cgraph_count);
   env.stack_size = 0;
   env.result = order;
   env.order_pos = 0;
@@ -181,27 +209,27 @@ ipa_reduced_postorder (struct cgraph_node **order,
 
   FOR_EACH_DEFINED_FUNCTION (node)
     {
-      enum availability avail = cgraph_function_body_availability (node);
+      enum availability avail = node->get_availability ();
 
-      if (avail > AVAIL_OVERWRITABLE
+      if (avail > AVAIL_INTERPOSABLE
 	  || (allow_overwritable
-	      && (avail == AVAIL_OVERWRITABLE)))
+	      && (avail == AVAIL_INTERPOSABLE)))
 	{
 	  /* Reuse the info if it is already there.  */
-	  struct ipa_dfs_info *info = (struct ipa_dfs_info *) node->symbol.aux;
+	  struct ipa_dfs_info *info = (struct ipa_dfs_info *) node->aux;
 	  if (!info)
 	    info = XCNEW (struct ipa_dfs_info);
 	  info->new_node = true;
 	  info->on_stack = false;
 	  info->next_cycle = NULL;
-	  node->symbol.aux = info;
+	  node->aux = info;
 
 	  splay_tree_insert (env.nodes_marked_new,
 			     (splay_tree_key)node->uid,
 			     (splay_tree_value)node);
 	}
       else
-	node->symbol.aux = NULL;
+	node->aux = NULL;
     }
   result = splay_tree_min (env.nodes_marked_new);
   while (result)
@@ -226,10 +254,10 @@ ipa_free_postorder_info (void)
   FOR_EACH_DEFINED_FUNCTION (node)
     {
       /* Get rid of the aux information.  */
-      if (node->symbol.aux)
+      if (node->aux)
 	{
-	  free (node->symbol.aux);
-	  node->symbol.aux = NULL;
+	  free (node->aux);
+	  node->aux = NULL;
 	}
     }
 }
@@ -237,18 +265,34 @@ ipa_free_postorder_info (void)
 /* Get the set of nodes for the cycle in the reduced call graph starting
    from NODE.  */
 
-vec<cgraph_node_ptr> 
+vec<cgraph_node *>
 ipa_get_nodes_in_cycle (struct cgraph_node *node)
 {
-  vec<cgraph_node_ptr> v = vNULL;
+  vec<cgraph_node *> v = vNULL;
   struct ipa_dfs_info *node_dfs_info;
   while (node)
     {
       v.safe_push (node);
-      node_dfs_info = (struct ipa_dfs_info *) node->symbol.aux;
+      node_dfs_info = (struct ipa_dfs_info *) node->aux;
       node = node_dfs_info->next_cycle;
     }
   return v;
+}
+
+/* Return true iff the CS is an edge within a strongly connected component as
+   computed by ipa_reduced_postorder.  */
+
+bool
+ipa_edge_within_scc (struct cgraph_edge *cs)
+{
+  struct ipa_dfs_info *caller_dfs = (struct ipa_dfs_info *) cs->caller->aux;
+  struct ipa_dfs_info *callee_dfs;
+  struct cgraph_node *callee = cs->callee->function_symbol ();
+
+  callee_dfs = (struct ipa_dfs_info *) callee->aux;
+  return (caller_dfs
+	  && callee_dfs
+	  && caller_dfs->scc_no == callee_dfs->scc_no);
 }
 
 struct postorder_stack
@@ -270,31 +314,31 @@ ipa_reverse_postorder (struct cgraph_node **order)
   int order_pos = 0;
   struct cgraph_edge *edge;
   int pass;
-  struct ipa_ref *ref;
+  struct ipa_ref *ref = NULL;
 
   struct postorder_stack *stack =
-    XCNEWVEC (struct postorder_stack, cgraph_n_nodes);
+    XCNEWVEC (struct postorder_stack, symtab->cgraph_count);
 
   /* We have to deal with cycles nicely, so use a depth first traversal
      output algorithm.  Ignore the fact that some functions won't need
      to be output and put them into order as well, so we get dependencies
      right through inline functions.  */
   FOR_EACH_FUNCTION (node)
-    node->symbol.aux = NULL;
+    node->aux = NULL;
   for (pass = 0; pass < 2; pass++)
     FOR_EACH_FUNCTION (node)
-      if (!node->symbol.aux
+      if (!node->aux
 	  && (pass
-	      || (!node->symbol.address_taken
+	      || (!node->address_taken
 		  && !node->global.inlined_to
 		  && !node->alias && !node->thunk.thunk_p
-		  && !cgraph_only_called_directly_p (node))))
+		  && !node->only_called_directly_p ())))
 	{
 	  stack_size = 0;
           stack[stack_size].node = node;
 	  stack[stack_size].edge = node->callers;
 	  stack[stack_size].ref = 0;
-	  node->symbol.aux = (void *)(size_t)1;
+	  node->aux = (void *)(size_t)1;
 	  while (stack_size >= 0)
 	    {
 	      while (true)
@@ -308,27 +352,27 @@ ipa_reverse_postorder (struct cgraph_node **order)
 		      /* Break possible cycles involving always-inline
 			 functions by ignoring edges from always-inline
 			 functions to non-always-inline functions.  */
-		      if (DECL_DISREGARD_INLINE_LIMITS (edge->caller->symbol.decl)
+		      if (DECL_DISREGARD_INLINE_LIMITS (edge->caller->decl)
 			  && !DECL_DISREGARD_INLINE_LIMITS
-			    (cgraph_function_node (edge->callee, NULL)->symbol.decl))
+			    (edge->callee->function_symbol ()->decl))
 			node2 = NULL;
 		    }
-		  for (;ipa_ref_list_referring_iterate (&stack[stack_size].node->symbol.ref_list,
+		  for (; stack[stack_size].node->iterate_referring (
 						       stack[stack_size].ref,
 						       ref) && !node2;
 		       stack[stack_size].ref++)
 		    {
 		      if (ref->use == IPA_REF_ALIAS)
-			node2 = ipa_ref_referring_node (ref);
+			node2 = dyn_cast <cgraph_node *> (ref->referring);
 		    }
 		  if (!node2)
 		    break;
-		  if (!node2->symbol.aux)
+		  if (!node2->aux)
 		    {
 		      stack[++stack_size].node = node2;
 		      stack[stack_size].edge = node2->callers;
 		      stack[stack_size].ref = 0;
-		      node2->symbol.aux = (void *)(size_t)1;
+		      node2->aux = (void *)(size_t)1;
 		    }
 		}
 	      order[order_pos++] = stack[stack_size--].node;
@@ -336,7 +380,7 @@ ipa_reverse_postorder (struct cgraph_node **order)
 	}
   free (stack);
   FOR_EACH_FUNCTION (node)
-    node->symbol.aux = NULL;
+    node->aux = NULL;
   return order_pos;
 }
 
@@ -362,259 +406,269 @@ get_base_var (tree t)
 }
 
 
-/* Create a new cgraph node set.  */
-
-cgraph_node_set
-cgraph_node_set_new (void)
-{
-  cgraph_node_set new_node_set;
-
-  new_node_set = XCNEW (struct cgraph_node_set_def);
-  new_node_set->map = pointer_map_create ();
-  new_node_set->nodes.create (0);
-  return new_node_set;
-}
-
-
-/* Add cgraph_node NODE to cgraph_node_set SET.  */
+/* SRC and DST are going to be merged.  Take SRC's profile and merge it into
+   DST so it is not going to be lost.  Possibly destroy SRC's body on the way
+   unless PRESERVE_BODY is set.  */
 
 void
-cgraph_node_set_add (cgraph_node_set set, struct cgraph_node *node)
+ipa_merge_profiles (struct cgraph_node *dst,
+		    struct cgraph_node *src,
+		    bool preserve_body)
 {
-  void **slot;
+  tree oldsrcdecl = src->decl;
+  struct function *srccfun, *dstcfun;
+  bool match = true;
 
-  slot = pointer_map_insert (set->map, node);
-
-  if (*slot)
-    {
-      int index = (size_t) *slot - 1;
-      gcc_checking_assert ((set->nodes[index]
-		           == node));
-      return;
-    }
-
-  *slot = (void *)(size_t) (set->nodes.length () + 1);
-
-  /* Insert into node vector.  */
-  set->nodes.safe_push (node);
-}
-
-
-/* Remove cgraph_node NODE from cgraph_node_set SET.  */
-
-void
-cgraph_node_set_remove (cgraph_node_set set, struct cgraph_node *node)
-{
-  void **slot, **last_slot;
-  int index;
-  struct cgraph_node *last_node;
-
-  slot = pointer_map_contains (set->map, node);
-  if (slot == NULL || !*slot)
+  if (!src->definition
+      || !dst->definition)
     return;
+  if (src->frequency < dst->frequency)
+    src->frequency = dst->frequency;
 
-  index = (size_t) *slot - 1;
-  gcc_checking_assert (set->nodes[index]
-	      	       == node);
+  /* Time profiles are merged.  */
+  if (dst->tp_first_run > src->tp_first_run && src->tp_first_run)
+    dst->tp_first_run = src->tp_first_run;
 
-  /* Remove from vector. We do this by swapping node with the last element
-     of the vector.  */
-  last_node = set->nodes.pop ();
-  if (last_node != node)
-    {
-      last_slot = pointer_map_contains (set->map, last_node);
-      gcc_checking_assert (last_slot && *last_slot);
-      *last_slot = (void *)(size_t) (index + 1);
+  if (src->profile_id && !dst->profile_id)
+    dst->profile_id = src->profile_id;
 
-      /* Move the last element to the original spot of NODE.  */
-      set->nodes[index] = last_node;
-    }
-
-  /* Remove element from hash table.  */
-  *slot = NULL;
-}
-
-
-/* Find NODE in SET and return an iterator to it if found.  A null iterator
-   is returned if NODE is not in SET.  */
-
-cgraph_node_set_iterator
-cgraph_node_set_find (cgraph_node_set set, struct cgraph_node *node)
-{
-  void **slot;
-  cgraph_node_set_iterator csi;
-
-  slot = pointer_map_contains (set->map, node);
-  if (slot == NULL || !*slot)
-    csi.index = (unsigned) ~0;
-  else
-    csi.index = (size_t)*slot - 1;
-  csi.set = set;
-
-  return csi;
-}
-
-
-/* Dump content of SET to file F.  */
-
-void
-dump_cgraph_node_set (FILE *f, cgraph_node_set set)
-{
-  cgraph_node_set_iterator iter;
-
-  for (iter = csi_start (set); !csi_end_p (iter); csi_next (&iter))
-    {
-      struct cgraph_node *node = csi_node (iter);
-      fprintf (f, " %s/%i", cgraph_node_name (node), node->uid);
-    }
-  fprintf (f, "\n");
-}
-
-
-/* Dump content of SET to stderr.  */
-
-DEBUG_FUNCTION void
-debug_cgraph_node_set (cgraph_node_set set)
-{
-  dump_cgraph_node_set (stderr, set);
-}
-
-
-/* Free varpool node set.  */
-
-void
-free_cgraph_node_set (cgraph_node_set set)
-{
-  set->nodes.release ();
-  pointer_map_destroy (set->map);
-  free (set);
-}
-
-
-/* Create a new varpool node set.  */
-
-varpool_node_set
-varpool_node_set_new (void)
-{
-  varpool_node_set new_node_set;
-
-  new_node_set = XCNEW (struct varpool_node_set_def);
-  new_node_set->map = pointer_map_create ();
-  new_node_set->nodes.create (0);
-  return new_node_set;
-}
-
-
-/* Add varpool_node NODE to varpool_node_set SET.  */
-
-void
-varpool_node_set_add (varpool_node_set set, struct varpool_node *node)
-{
-  void **slot;
-
-  slot = pointer_map_insert (set->map, node);
-
-  if (*slot)
-    {
-      int index = (size_t) *slot - 1;
-      gcc_checking_assert ((set->nodes[index]
-		           == node));
-      return;
-    }
-
-  *slot = (void *)(size_t) (set->nodes.length () + 1);
-
-  /* Insert into node vector.  */
-  set->nodes.safe_push (node);
-}
-
-
-/* Remove varpool_node NODE from varpool_node_set SET.  */
-
-void
-varpool_node_set_remove (varpool_node_set set, struct varpool_node *node)
-{
-  void **slot, **last_slot;
-  int index;
-  struct varpool_node *last_node;
-
-  slot = pointer_map_contains (set->map, node);
-  if (slot == NULL || !*slot)
+  if (!dst->count)
     return;
-
-  index = (size_t) *slot - 1;
-  gcc_checking_assert (set->nodes[index]
-	      	       == node);
-
-  /* Remove from vector. We do this by swapping node with the last element
-     of the vector.  */
-  last_node = set->nodes.pop ();
-  if (last_node != node)
+  if (symtab->dump_file)
     {
-      last_slot = pointer_map_contains (set->map, last_node);
-      gcc_checking_assert (last_slot && *last_slot);
-      *last_slot = (void *)(size_t) (index + 1);
-
-      /* Move the last element to the original spot of NODE.  */
-      set->nodes[index] = last_node;
+      fprintf (symtab->dump_file, "Merging profiles of %s/%i to %s/%i\n",
+	       xstrdup_for_dump (src->name ()), src->order,
+	       xstrdup_for_dump (dst->name ()), dst->order);
     }
+  dst->count += src->count;
 
-  /* Remove element from hash table.  */
-  *slot = NULL;
-}
-
-
-/* Find NODE in SET and return an iterator to it if found.  A null iterator
-   is returned if NODE is not in SET.  */
-
-varpool_node_set_iterator
-varpool_node_set_find (varpool_node_set set, struct varpool_node *node)
-{
-  void **slot;
-  varpool_node_set_iterator vsi;
-
-  slot = pointer_map_contains (set->map, node);
-  if (slot == NULL || !*slot)
-    vsi.index = (unsigned) ~0;
-  else
-    vsi.index = (size_t)*slot - 1;
-  vsi.set = set;
-
-  return vsi;
-}
-
-
-/* Dump content of SET to file F.  */
-
-void
-dump_varpool_node_set (FILE *f, varpool_node_set set)
-{
-  varpool_node_set_iterator iter;
-
-  for (iter = vsi_start (set); !vsi_end_p (iter); vsi_next (&iter))
+  /* This is ugly.  We need to get both function bodies into memory.
+     If declaration is merged, we need to duplicate it to be able
+     to load body that is being replaced.  This makes symbol table
+     temporarily inconsistent.  */
+  if (src->decl == dst->decl)
     {
-      struct varpool_node *node = vsi_node (iter);
-      fprintf (f, " %s", varpool_node_name (node));
+      struct lto_in_decl_state temp;
+      struct lto_in_decl_state *state;
+
+      /* We are going to move the decl, we want to remove its file decl data.
+	 and link these with the new decl. */
+      temp.fn_decl = src->decl;
+      lto_in_decl_state **slot
+	= src->lto_file_data->function_decl_states->find_slot (&temp,
+							       NO_INSERT);
+      state = *slot;
+      src->lto_file_data->function_decl_states->clear_slot (slot);
+      gcc_assert (state);
+
+      /* Duplicate the decl and be sure it does not link into body of DST.  */
+      src->decl = copy_node (src->decl);
+      DECL_STRUCT_FUNCTION (src->decl) = NULL;
+      DECL_ARGUMENTS (src->decl) = NULL;
+      DECL_INITIAL (src->decl) = NULL;
+      DECL_RESULT (src->decl) = NULL;
+
+      /* Associate the decl state with new declaration, so LTO streamer
+ 	 can look it up.  */
+      state->fn_decl = src->decl;
+      slot
+	= src->lto_file_data->function_decl_states->find_slot (state, INSERT);
+      gcc_assert (!*slot);
+      *slot = state;
     }
-  fprintf (f, "\n");
+  src->get_untransformed_body ();
+  dst->get_untransformed_body ();
+  srccfun = DECL_STRUCT_FUNCTION (src->decl);
+  dstcfun = DECL_STRUCT_FUNCTION (dst->decl);
+  if (n_basic_blocks_for_fn (srccfun)
+      != n_basic_blocks_for_fn (dstcfun))
+    {
+      if (symtab->dump_file)
+	fprintf (symtab->dump_file,
+		 "Giving up; number of basic block mismatch.\n");
+      match = false;
+    }
+  else if (last_basic_block_for_fn (srccfun)
+	   != last_basic_block_for_fn (dstcfun))
+    {
+      if (symtab->dump_file)
+	fprintf (symtab->dump_file,
+		 "Giving up; last block mismatch.\n");
+      match = false;
+    }
+  else 
+    {
+      basic_block srcbb, dstbb;
+
+      FOR_ALL_BB_FN (srcbb, srccfun)
+	{
+	  unsigned int i;
+
+	  dstbb = BASIC_BLOCK_FOR_FN (dstcfun, srcbb->index);
+	  if (dstbb == NULL)
+	    {
+	      if (symtab->dump_file)
+		fprintf (symtab->dump_file,
+			 "No matching block for bb %i.\n",
+			 srcbb->index);
+	      match = false;
+	      break;
+	    }
+	  if (EDGE_COUNT (srcbb->succs) != EDGE_COUNT (dstbb->succs))
+	    {
+	      if (symtab->dump_file)
+		fprintf (symtab->dump_file,
+			 "Edge count mistmatch for bb %i.\n",
+			 srcbb->index);
+	      match = false;
+	      break;
+	    }
+	  for (i = 0; i < EDGE_COUNT (srcbb->succs); i++)
+	    {
+	      edge srce = EDGE_SUCC (srcbb, i);
+	      edge dste = EDGE_SUCC (dstbb, i);
+	      if (srce->dest->index != dste->dest->index)
+		{
+		  if (symtab->dump_file)
+		    fprintf (symtab->dump_file,
+			     "Succ edge mistmatch for bb %i.\n",
+			     srce->dest->index);
+		  match = false;
+		  break;
+		}
+	    }
+	}
+    }
+  if (match)
+    {
+      struct cgraph_edge *e, *e2;
+      basic_block srcbb, dstbb;
+
+      /* TODO: merge also statement histograms.  */
+      FOR_ALL_BB_FN (srcbb, srccfun)
+	{
+	  unsigned int i;
+
+	  dstbb = BASIC_BLOCK_FOR_FN (dstcfun, srcbb->index);
+	  dstbb->count += srcbb->count;
+	  for (i = 0; i < EDGE_COUNT (srcbb->succs); i++)
+	    {
+	      edge srce = EDGE_SUCC (srcbb, i);
+	      edge dste = EDGE_SUCC (dstbb, i);
+	      dste->count += srce->count;
+	    }
+	}
+      push_cfun (dstcfun);
+      counts_to_freqs ();
+      compute_function_frequency ();
+      pop_cfun ();
+      for (e = dst->callees; e; e = e->next_callee)
+	{
+	  if (e->speculative)
+	    continue;
+	  e->count = gimple_bb (e->call_stmt)->count;
+	  e->frequency = compute_call_stmt_bb_frequency
+			     (dst->decl,
+			      gimple_bb (e->call_stmt));
+	}
+      for (e = dst->indirect_calls, e2 = src->indirect_calls; e;
+	   e2 = (e2 ? e2->next_callee : NULL), e = e->next_callee)
+	{
+	  gcov_type count = gimple_bb (e->call_stmt)->count;
+	  int freq = compute_call_stmt_bb_frequency
+			(dst->decl,
+			 gimple_bb (e->call_stmt));
+	  /* When call is speculative, we need to re-distribute probabilities
+	     the same way as they was.  This is not really correct because
+	     in the other copy the speculation may differ; but probably it
+	     is not really worth the effort.  */
+	  if (e->speculative)
+	    {
+	      cgraph_edge *direct, *indirect;
+	      cgraph_edge *direct2 = NULL, *indirect2 = NULL;
+	      ipa_ref *ref;
+
+	      e->speculative_call_info (direct, indirect, ref);
+	      gcc_assert (e == indirect);
+	      if (e2 && e2->speculative)
+	        e2->speculative_call_info (direct2, indirect2, ref);
+	      if (indirect->count || direct->count)
+		{
+		  /* We should mismatch earlier if there is no matching
+		     indirect edge.  */
+		  if (!e2)
+		    {
+		      if (dump_file)
+		        fprintf (dump_file,
+				 "Mismatch in merging indirect edges\n");
+		    }
+		  else if (!e2->speculative)
+		    indirect->count += e2->count;
+		  else if (e2->speculative)
+		    {
+		      if (DECL_ASSEMBLER_NAME (direct2->callee->decl)
+			  != DECL_ASSEMBLER_NAME (direct->callee->decl))
+			{
+			  if (direct2->count >= direct->count)
+			    {
+			      direct->redirect_callee (direct2->callee);
+			      indirect->count += indirect2->count
+						 + direct->count;
+			      direct->count = direct2->count;
+			    }
+			  else
+			    indirect->count += indirect2->count + direct2->count;
+			}
+		      else
+			{
+			   direct->count += direct2->count;
+			   indirect->count += indirect2->count;
+			}
+		    }
+		  int  prob = RDIV (direct->count * REG_BR_PROB_BASE ,
+				    direct->count + indirect->count);
+		  direct->frequency = RDIV (freq * prob, REG_BR_PROB_BASE);
+		  indirect->frequency = RDIV (freq * (REG_BR_PROB_BASE - prob),
+					      REG_BR_PROB_BASE);
+		}
+	      else
+		/* At the moment we should have only profile feedback based
+		   speculations when merging.  */
+		gcc_unreachable ();
+	    }
+	  else if (e2 && e2->speculative)
+	    {
+	      cgraph_edge *direct, *indirect;
+	      ipa_ref *ref;
+
+	      e2->speculative_call_info (direct, indirect, ref);
+	      e->count = count;
+	      e->frequency = freq;
+	      int prob = RDIV (direct->count * REG_BR_PROB_BASE, e->count);
+	      e->make_speculative (direct->callee, direct->count,
+				   RDIV (freq * prob, REG_BR_PROB_BASE));
+	    }
+	  else
+	    {
+	      e->count = count;
+	      e->frequency = freq;
+	    }
+	}
+      if (!preserve_body)
+        src->release_body ();
+      inline_update_overall_summary (dst);
+    }
+  /* TODO: if there is no match, we can scale up.  */
+  src->decl = oldsrcdecl;
 }
 
+/* Return true if call to DEST is known to be self-recusive call withing FUNC.   */
 
-/* Free varpool node set.  */
-
-void
-free_varpool_node_set (varpool_node_set set)
+bool
+recursive_call_p (tree func, tree dest)
 {
-  set->nodes.release ();
-  pointer_map_destroy (set->map);
-  free (set);
-}
+  struct cgraph_node *dest_node = cgraph_node::get_create (dest);
+  struct cgraph_node *cnode = cgraph_node::get_create (func);
 
-
-/* Dump content of SET to stderr.  */
-
-DEBUG_FUNCTION void
-debug_varpool_node_set (varpool_node_set set)
-{
-  dump_varpool_node_set (stderr, set);
+  return dest_node->semantically_equivalent_p (cnode);
 }

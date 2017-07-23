@@ -22,6 +22,7 @@
 #define _FP_NANSIGN_Q		0
 
 #define _FP_KEEPNANFRACP 1
+#define _FP_QNANNEGATEDP 0
 
 /* Someone please check this.  */
 #define _FP_CHOOSENAN(fs, wc, R, X, Y, OP)			\
@@ -39,6 +40,9 @@
       }								\
     R##_c = FP_CLS_NAN;						\
   } while (0)
+
+/* Not checked.  */
+#define _FP_TININESS_AFTER_ROUNDING 0
 
 #define	__LITTLE_ENDIAN	1234
 #define	__BIG_ENDIAN	4321

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.4 2015/09/23 03:03:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.5 2017/07/23 01:05:10 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -18,12 +18,20 @@ LIB=		gcc
 
 # XXX handle this better?  GCC 4.8 moved them.
 .if ${MACHINE} == "emips"
-G_LIB2ADD_HACK+=	${GNUHOSTDIST}/gcc/config/floatunsidf.c \
-			${GNUHOSTDIST}/gcc/config/floatunsisf.c
+LIB2ADD_HACK+=	${GNUHOSTDIST}/gcc/config/floatunsidf.c \
+		${GNUHOSTDIST}/gcc/config/floatunsisf.c
+.endif
+
+# XXXGCC5 GCC 5.3 has all these in libgcc and we have them in libc.
+.if ${MKSOFTFLOAT} != "no"
+LIB2ADD_EDITED= ${G_LIB2ADD:T:Nfloatsisf.c:Nfloatunsisf.c:Nfloatsidf.c:Nfloatunsidf.c:Nfixsfsi.c:Nextendsfdf2.c:Naddsf3.c:Nmulsf3.c:Ndivsf3.c:Nadddf3.c:Nsubdf3.c:Nmuldf3.c:Ndivdf3.c:Nfixdfsi.c:S/.asm/.S/}
+.else
+LIB2ADD_EDITED=	${G_LIB2ADD:T:S/.asm/.S/}
 .endif
 
 SRCS+=		${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} \
-		${G_LIB2ADD:T:S/.asm/.S/} ${G_LIB2ADD_HACK:T:S/.asm/.S/} \
+		${LIB2ADD_EDITED} \
+		${LIB2ADD_HACK:T:S/.asm/.S/} \
 		${G_LIB2ADD_ST:T} ${LIB1ASMFUNCS}
 .if ${MKPIC} == "no"
 .if empty(LIBGCC_MACHINE_ARCH:Mearm*)

@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -93,10 +93,8 @@ rounding_correction (unsigned int rnd_mode,
         // exp = exp - EXP_P1;
         unbexp = unbexp - 1;
         exp = (UINT64) (unbexp + 6176) << 49;
-      } else { // if exp = 0
-        if (is_midpoint_lt_even || is_midpoint_lt_even ||
-            is_inexact_gt_midpoint || is_inexact_gt_midpoint) // tiny & inexact
-          *ptrfpsf |= UNDERFLOW_EXCEPTION;
+      } else { // if exp = 0 the result is tiny & inexact
+        *ptrfpsf |= UNDERFLOW_EXCEPTION;
       }
     }
   } else {

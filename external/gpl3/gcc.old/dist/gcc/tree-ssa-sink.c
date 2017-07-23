@@ -1,5 +1,5 @@
 /* Code sinking for trees
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Contributed by Daniel Berlin <dan@dberlin.org>
 
 This file is part of GCC.
@@ -22,18 +22,42 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "fold-const.h"
+#include "stor-layout.h"
+#include "predict.h"
+#include "hard-reg-set.h"
+#include "input.h"
+#include "function.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "cfganal.h"
 #include "basic-block.h"
 #include "gimple-pretty-print.h"
 #include "tree-inline.h"
-#include "tree-flow.h"
+#include "tree-ssa-alias.h"
+#include "internal-fn.h"
+#include "gimple-expr.h"
+#include "is-a.h"
 #include "gimple.h"
-#include "hashtab.h"
+#include "gimple-iterator.h"
+#include "gimple-ssa.h"
+#include "tree-cfg.h"
+#include "tree-phinodes.h"
+#include "ssa-iterators.h"
 #include "tree-iterator.h"
 #include "alloc-pool.h"
 #include "tree-pass.h"
 #include "flags.h"
-#include "bitmap.h"
 #include "cfgloop.h"
 #include "params.h"
 
@@ -77,7 +101,7 @@ static struct
    we return NULL.  */
 
 static basic_block
-find_bb_for_arg (gimple phi, tree def)
+find_bb_for_arg (gphi *phi, tree def)
 {
   size_t i;
   bool foundone = false;
@@ -102,26 +126,22 @@ find_bb_for_arg (gimple phi, tree def)
    used in, so that you only have one place you can sink it to.  */
 
 static bool
-all_immediate_uses_same_place (gimple stmt)
+all_immediate_uses_same_place (def_operand_p def_p)
 {
-  gimple firstuse = NULL;
-  ssa_op_iter op_iter;
+  tree var = DEF_FROM_PTR (def_p);
   imm_use_iterator imm_iter;
   use_operand_p use_p;
-  tree var;
 
-  FOR_EACH_SSA_TREE_OPERAND (var, stmt, op_iter, SSA_OP_ALL_DEFS)
+  gimple firstuse = NULL;
+  FOR_EACH_IMM_USE_FAST (use_p, imm_iter, var)
     {
-      FOR_EACH_IMM_USE_FAST (use_p, imm_iter, var)
-        {
-	  if (is_gimple_debug (USE_STMT (use_p)))
-	    continue;
-	  if (firstuse == NULL)
-	    firstuse = USE_STMT (use_p);
-	  else
-	    if (firstuse != USE_STMT (use_p))
-	      return false;
-	}
+      if (is_gimple_debug (USE_STMT (use_p)))
+	continue;
+      if (firstuse == NULL)
+	firstuse = USE_STMT (use_p);
+      else
+	if (firstuse != USE_STMT (use_p))
+	  return false;
     }
 
   return true;
@@ -130,54 +150,49 @@ all_immediate_uses_same_place (gimple stmt)
 /* Find the nearest common dominator of all of the immediate uses in IMM.  */
 
 static basic_block
-nearest_common_dominator_of_uses (gimple stmt, bool *debug_stmts)
+nearest_common_dominator_of_uses (def_operand_p def_p, bool *debug_stmts)
 {
+  tree var = DEF_FROM_PTR (def_p);
   bitmap blocks = BITMAP_ALLOC (NULL);
   basic_block commondom;
   unsigned int j;
   bitmap_iterator bi;
-  ssa_op_iter op_iter;
   imm_use_iterator imm_iter;
   use_operand_p use_p;
-  tree var;
 
-  bitmap_clear (blocks);
-  FOR_EACH_SSA_TREE_OPERAND (var, stmt, op_iter, SSA_OP_ALL_DEFS)
+  FOR_EACH_IMM_USE_FAST (use_p, imm_iter, var)
     {
-      FOR_EACH_IMM_USE_FAST (use_p, imm_iter, var)
-        {
-	  gimple usestmt = USE_STMT (use_p);
-	  basic_block useblock;
+      gimple usestmt = USE_STMT (use_p);
+      basic_block useblock;
 
-	  if (gimple_code (usestmt) == GIMPLE_PHI)
-	    {
-	      int idx = PHI_ARG_INDEX_FROM_USE (use_p);
+      if (gphi *phi = dyn_cast <gphi *> (usestmt))
+	{
+	  int idx = PHI_ARG_INDEX_FROM_USE (use_p);
 
-	      useblock = gimple_phi_arg_edge (usestmt, idx)->src;
-	    }
-	  else if (is_gimple_debug (usestmt))
-	    {
-	      *debug_stmts = true;
-	      continue;
-	    }
-	  else
-	    {
-	      useblock = gimple_bb (usestmt);
-	    }
-
-	  /* Short circuit. Nothing dominates the entry block.  */
-	  if (useblock == ENTRY_BLOCK_PTR)
-	    {
-	      BITMAP_FREE (blocks);
-	      return NULL;
-	    }
-	  bitmap_set_bit (blocks, useblock->index);
+	  useblock = gimple_phi_arg_edge (phi, idx)->src;
 	}
+      else if (is_gimple_debug (usestmt))
+	{
+	  *debug_stmts = true;
+	  continue;
+	}
+      else
+	{
+	  useblock = gimple_bb (usestmt);
+	}
+
+      /* Short circuit. Nothing dominates the entry block.  */
+      if (useblock == ENTRY_BLOCK_PTR_FOR_FN (cfun))
+	{
+	  BITMAP_FREE (blocks);
+	  return NULL;
+	}
+      bitmap_set_bit (blocks, useblock->index);
     }
-  commondom = BASIC_BLOCK (bitmap_first_set_bit (blocks));
+  commondom = BASIC_BLOCK_FOR_FN (cfun, bitmap_first_set_bit (blocks));
   EXECUTE_IF_SET_IN_BITMAP (blocks, 0, j, bi)
     commondom = nearest_common_dominator (CDI_DOMINATORS, commondom,
-					  BASIC_BLOCK (j));
+					  BASIC_BLOCK_FOR_FN (cfun, j));
   BITMAP_FREE (blocks);
   return commondom;
 }
@@ -286,8 +301,6 @@ statement_sink_location (gimple stmt, basic_block frombb,
      be seen by an external routine that needs it depending on where it gets
      moved to.
 
-     We don't want to sink loads from memory.
-
      We can't sink statements that end basic blocks without splitting the
      incoming edge for the sink location to place it there.
 
@@ -305,7 +318,6 @@ statement_sink_location (gimple stmt, basic_block frombb,
   if (stmt_ends_bb_p (stmt)
       || gimple_has_side_effects (stmt)
       || gimple_has_volatile_ops (stmt)
-      || (gimple_vuse (stmt) && !gimple_vdef (stmt))
       || (cfun->has_local_explicit_reg_vars
 	  && TYPE_MODE (TREE_TYPE (gimple_assign_lhs (stmt))) == BLKmode))
     return false;
@@ -324,20 +336,20 @@ statement_sink_location (gimple stmt, basic_block frombb,
 
   /* If stmt is a store the one and only use needs to be the VOP
      merging PHI node.  */
-  if (gimple_vdef (stmt))
+  if (virtual_operand_p (DEF_FROM_PTR (def_p)))
     {
       FOR_EACH_IMM_USE_FAST (use_p, imm_iter, DEF_FROM_PTR (def_p))
 	{
 	  gimple use_stmt = USE_STMT (use_p);
 
 	  /* A killing definition is not a use.  */
-	  if (gimple_assign_single_p (use_stmt)
-	      && gimple_vdef (use_stmt)
-	      && operand_equal_p (gimple_assign_lhs (stmt),
-				  gimple_assign_lhs (use_stmt), 0))
+	  if ((gimple_has_lhs (use_stmt)
+	       && operand_equal_p (gimple_assign_lhs (stmt),
+				   gimple_get_lhs (use_stmt), 0))
+	      || stmt_kills_ref_p (use_stmt, gimple_assign_lhs (stmt)))
 	    {
 	      /* If use_stmt is or might be a nop assignment then USE_STMT
-		 acts as a use as well as definition.  */
+	         acts as a use as well as definition.  */
 	      if (stmt != use_stmt
 		  && ref_maybe_used_by_stmt_p (use_stmt,
 					       gimple_assign_lhs (stmt)))
@@ -361,14 +373,55 @@ statement_sink_location (gimple stmt, basic_block frombb,
      common dominator of all the immediate uses.  For PHI nodes, we have to
      find the nearest common dominator of all of the predecessor blocks, since
      that is where insertion would have to take place.  */
-  else if (!all_immediate_uses_same_place (stmt))
+  else if (gimple_vuse (stmt)
+	   || !all_immediate_uses_same_place (def_p))
     {
       bool debug_stmts = false;
-      basic_block commondom = nearest_common_dominator_of_uses (stmt,
+      basic_block commondom = nearest_common_dominator_of_uses (def_p,
 								&debug_stmts);
 
       if (commondom == frombb)
 	return false;
+
+      /* If this is a load then do not sink past any stores.
+	 ???  This is overly simple but cheap.  We basically look
+	 for an existing load with the same VUSE in the path to one
+	 of the sink candidate blocks and we adjust commondom to the
+	 nearest to commondom.  */
+      if (gimple_vuse (stmt))
+	{
+	  /* Do not sink loads from hard registers.  */
+	  if (gimple_assign_single_p (stmt)
+	      && TREE_CODE (gimple_assign_rhs1 (stmt)) == VAR_DECL
+	      && DECL_HARD_REGISTER (gimple_assign_rhs1 (stmt)))
+	    return false;
+
+	  imm_use_iterator imm_iter;
+	  use_operand_p use_p;
+	  basic_block found = NULL;
+	  FOR_EACH_IMM_USE_FAST (use_p, imm_iter, gimple_vuse (stmt))
+	    {
+	      gimple use_stmt = USE_STMT (use_p);
+	      basic_block bb = gimple_bb (use_stmt);
+	      /* For PHI nodes the block we know sth about
+		 is the incoming block with the use.  */
+	      if (gimple_code (use_stmt) == GIMPLE_PHI)
+		bb = EDGE_PRED (bb, PHI_ARG_INDEX_FROM_USE (use_p))->src;
+	      /* Any dominator of commondom would be ok with
+	         adjusting commondom to that block.  */
+	      bb = nearest_common_dominator (CDI_DOMINATORS, bb, commondom);
+	      if (!found)
+		found = bb;
+	      else if (dominated_by_p (CDI_DOMINATORS, bb, found))
+		found = bb;
+	      /* If we can't improve, stop.  */
+	      if (found == commondom)
+		break;
+	    }
+	  commondom = found;
+	  if (commondom == frombb)
+	    return false;
+	}
 
       /* Our common dominator has to be dominated by frombb in order to be a
 	 trivially safe place to put this statement, since it has multiple
@@ -409,7 +462,7 @@ statement_sink_location (gimple stmt, basic_block frombb,
 	}
     }
 
-  sinkbb = find_bb_for_arg (use, DEF_FROM_PTR (def_p));
+  sinkbb = find_bb_for_arg (as_a <gphi *> (use), DEF_FROM_PTR (def_p));
 
   /* This can happen if there are multiple uses in a PHI.  */
   if (!sinkbb)
@@ -555,8 +608,38 @@ sink_code_in_bb (basic_block bb)
    Note that this reduces the number of computations of a = b + c to 1
    when we take the else edge, instead of 2.
 */
-static void
-execute_sink_code (void)
+namespace {
+
+const pass_data pass_data_sink_code =
+{
+  GIMPLE_PASS, /* type */
+  "sink", /* name */
+  OPTGROUP_NONE, /* optinfo_flags */
+  TV_TREE_SINK, /* tv_id */
+  /* PROP_no_crit_edges is ensured by running split_critical_edges in
+     pass_data_sink_code::execute ().  */
+  ( PROP_cfg | PROP_ssa ), /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  TODO_update_ssa, /* todo_flags_finish */
+};
+
+class pass_sink_code : public gimple_opt_pass
+{
+public:
+  pass_sink_code (gcc::context *ctxt)
+    : gimple_opt_pass (pass_data_sink_code, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual bool gate (function *) { return flag_tree_sink != 0; }
+  virtual unsigned int execute (function *);
+
+}; // class pass_sink_code
+
+unsigned int
+pass_sink_code::execute (function *fun)
 {
   loop_optimizer_init (LOOPS_NORMAL);
   split_critical_edges ();
@@ -564,48 +647,19 @@ execute_sink_code (void)
   memset (&sink_stats, 0, sizeof (sink_stats));
   calculate_dominance_info (CDI_DOMINATORS);
   calculate_dominance_info (CDI_POST_DOMINATORS);
-  sink_code_in_bb (EXIT_BLOCK_PTR);
-  statistics_counter_event (cfun, "Sunk statements", sink_stats.sunk);
+  sink_code_in_bb (EXIT_BLOCK_PTR_FOR_FN (fun));
+  statistics_counter_event (fun, "Sunk statements", sink_stats.sunk);
   free_dominance_info (CDI_POST_DOMINATORS);
   remove_fake_exit_edges ();
   loop_optimizer_finalize ();
-}
 
-/* Gate and execute functions for PRE.  */
-
-static unsigned int
-do_sink (void)
-{
-  execute_sink_code ();
   return 0;
 }
 
-static bool
-gate_sink (void)
-{
-  return flag_tree_sink != 0;
-}
+} // anon namespace
 
-struct gimple_opt_pass pass_sink_code =
+gimple_opt_pass *
+make_pass_sink_code (gcc::context *ctxt)
 {
- {
-  GIMPLE_PASS,
-  "sink",				/* name */
-  OPTGROUP_NONE,                        /* optinfo_flags */
-  gate_sink,				/* gate */
-  do_sink,				/* execute */
-  NULL,					/* sub */
-  NULL,					/* next */
-  0,					/* static_pass_number */
-  TV_TREE_SINK,				/* tv_id */
-  PROP_no_crit_edges | PROP_cfg
-    | PROP_ssa,				/* properties_required */
-  0,					/* properties_provided */
-  0,					/* properties_destroyed */
-  0,					/* todo_flags_start */
-  TODO_update_ssa
-    | TODO_verify_ssa
-    | TODO_verify_flow
-    | TODO_ggc_collect			/* todo_flags_finish */
- }
-};
+  return new pass_sink_code (ctxt);
+}

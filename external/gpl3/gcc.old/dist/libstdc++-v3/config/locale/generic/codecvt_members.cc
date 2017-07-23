@@ -1,6 +1,6 @@
 // std::codecvt implementation details, generic version -*- C++ -*-
 
-// Copyright (C) 2002-2013 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -112,7 +112,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	intern_type*& __to_next) const
   {
     result __ret = ok;
-    // This temporary state object is neccessary so __state won't be modified
+    // This temporary state object is necessary so __state won't be modified
     // if [__from, __from_end) is a partial multibyte character.
     state_type __tmp_state(__state);
 

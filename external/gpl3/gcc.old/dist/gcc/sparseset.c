@@ -1,5 +1,5 @@
 /* SparseSet implementation.
-   Copyright (C) 2007-2013 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
    Contributed by Peter Bergner <bergner@vnet.ibm.com>
 
 This file is part of GCC.
@@ -30,7 +30,7 @@ sparseset_alloc (SPARSESET_ELT_TYPE n_elms)
   unsigned int n_bytes = sizeof (struct sparseset_def)
 			 + ((n_elms - 1) * 2 * sizeof (SPARSESET_ELT_TYPE));
 
-  sparseset set = XNEWVAR(struct sparseset_def, n_bytes);
+  sparseset set = XNEWVAR (struct sparseset_def, n_bytes);
 
   /* Mark the sparseset as defined to silence some valgrind uninitialized
      read errors when accessing set->sparse[n] when "n" is not, and never has

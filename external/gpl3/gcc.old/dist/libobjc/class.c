@@ -1,5 +1,5 @@
 /* GNU Objective C Runtime class related functions
-   Copyright (C) 1993-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Contributed by Kresten Krab Thorup and Dennis Glatting.
 
    Lock-free class table code designed and written from scratch by
@@ -764,7 +764,7 @@ objc_get_meta_class (const char *name)
 }
 
 /* This is not used by GCC, but the clang compiler seems to use it
-   when targetting the GNU runtime.  That's wrong, but we have it to
+   when targeting the GNU runtime.  That's wrong, but we have it to
    be compatible.  */
 Class
 objc_lookup_class (const char *name)

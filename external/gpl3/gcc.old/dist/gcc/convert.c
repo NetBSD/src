@@ -1,5 +1,5 @@
 /* Utility routines for data type conversion for GCC.
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -25,11 +25,27 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
+#include "real.h"
+#include "fixed-value.h"
 #include "tree.h"
+#include "fold-const.h"
+#include "stor-layout.h"
 #include "flags.h"
 #include "convert.h"
 #include "diagnostic-core.h"
+#include "target.h"
 #include "langhooks.h"
+#include "builtins.h"
+#include "ubsan.h"
 
 /* Convert EXPR to some pointer or reference type TYPE.
    EXPR must be pointer, reference, integer, enumeral, or literal zero;
@@ -143,16 +159,19 @@ convert_to_real (tree type, tree expr)
  	  CASE_MATHFN (COS)
  	  CASE_MATHFN (ERF)
  	  CASE_MATHFN (ERFC)
- 	  CASE_MATHFN (FABS)
 	  CASE_MATHFN (LOG)
 	  CASE_MATHFN (LOG10)
 	  CASE_MATHFN (LOG2)
  	  CASE_MATHFN (LOG1P)
- 	  CASE_MATHFN (LOGB)
  	  CASE_MATHFN (SIN)
-	  CASE_MATHFN (SQRT)
  	  CASE_MATHFN (TAN)
  	  CASE_MATHFN (TANH)
+	    /* The above functions are not safe to do this conversion.  */
+	    if (!flag_unsafe_math_optimizations)
+	      break;
+	  CASE_MATHFN (SQRT)
+	  CASE_MATHFN (FABS)
+	  CASE_MATHFN (LOGB)
 #undef CASE_MATHFN
 	    {
 	      tree arg0 = strip_float_extensions (CALL_EXPR_ARG (expr, 0));
@@ -163,13 +182,44 @@ convert_to_real (tree type, tree expr)
 	      if (TYPE_PRECISION (TREE_TYPE (arg0)) > TYPE_PRECISION (type))
 		newtype = TREE_TYPE (arg0);
 
+	      /* We consider to convert
+
+		     (T1) sqrtT2 ((T2) exprT3)
+		 to
+		     (T1) sqrtT4 ((T4) exprT3)
+
+		  , where T1 is TYPE, T2 is ITYPE, T3 is TREE_TYPE (ARG0),
+		 and T4 is NEWTYPE.  All those types are of floating point types.
+		 T4 (NEWTYPE) should be narrower than T2 (ITYPE). This conversion
+		 is safe only if P1 >= P2*2+2, where P1 and P2 are precisions of
+		 T2 and T4.  See the following URL for a reference:
+		 http://stackoverflow.com/questions/9235456/determining-
+                 floating-point-square-root
+		 */
+	      if ((fcode == BUILT_IN_SQRT || fcode == BUILT_IN_SQRTL)
+		  && !flag_unsafe_math_optimizations)
+		{
+		  /* The following conversion is unsafe even the precision condition
+		     below is satisfied:
+
+		     (float) sqrtl ((long double) double_val) -> (float) sqrt (double_val)
+		    */
+		  if (TYPE_MODE (type) != TYPE_MODE (newtype))
+		    break;
+
+		  int p1 = REAL_MODE_FORMAT (TYPE_MODE (itype))->p;
+		  int p2 = REAL_MODE_FORMAT (TYPE_MODE (newtype))->p;
+		  if (p1 < p2 * 2 + 2)
+		    break;
+		}
+
 	      /* Be careful about integer to fp conversions.
 		 These may overflow still.  */
 	      if (FLOAT_TYPE_P (TREE_TYPE (arg0))
 		  && TYPE_PRECISION (newtype) < TYPE_PRECISION (itype)
 		  && (TYPE_MODE (newtype) == TYPE_MODE (double_type_node)
 		      || TYPE_MODE (newtype) == TYPE_MODE (float_type_node)))
-	        {
+		{
 		  tree fn = mathfn_built_in (newtype, fcode);
 
 		  if (fn)
@@ -222,11 +272,12 @@ convert_to_real (tree type, tree expr)
     switch (TREE_CODE (expr))
       {
 	/* Convert (float)-x into -(float)x.  This is safe for
-	   round-to-nearest rounding mode.  */
+	   round-to-nearest rounding mode when the inner type is float.  */
 	case ABS_EXPR:
 	case NEGATE_EXPR:
 	  if (!flag_rounding_math
-	      && TYPE_PRECISION (type) < TYPE_PRECISION (TREE_TYPE (expr)))
+	      && FLOAT_TYPE_P (itype)
+	      && TYPE_PRECISION (type) < TYPE_PRECISION (itype))
 	    return build1 (TREE_CODE (expr), type,
 			   fold (convert_to_real (type,
 						  TREE_OPERAND (expr, 0))));
@@ -364,8 +415,9 @@ convert_to_integer (tree type, tree expr)
 {
   enum tree_code ex_form = TREE_CODE (expr);
   tree intype = TREE_TYPE (expr);
-  unsigned int inprec = TYPE_PRECISION (intype);
-  unsigned int outprec = TYPE_PRECISION (type);
+  unsigned int inprec = element_precision (intype);
+  unsigned int outprec = element_precision (type);
+  location_t loc = EXPR_LOCATION (expr);
 
   /* An INTEGER_TYPE cannot be incomplete, but an ENUMERAL_TYPE can
      be.  Consider `enum E = { a, b = (enum E) 3 };'.  */
@@ -403,7 +455,7 @@ convert_to_integer (tree type, tree expr)
         {
 	CASE_FLT_FN (BUILT_IN_CEIL):
 	  /* Only convert in ISO C99 mode.  */
-	  if (!TARGET_C99_FUNCTIONS)
+	  if (!targetm.libc_has_function (function_c99_misc))
 	    break;
 	  if (outprec < TYPE_PRECISION (integer_type_node)
 	      || (outprec == TYPE_PRECISION (integer_type_node)
@@ -419,7 +471,7 @@ convert_to_integer (tree type, tree expr)
 
 	CASE_FLT_FN (BUILT_IN_FLOOR):
 	  /* Only convert in ISO C99 mode.  */
-	  if (!TARGET_C99_FUNCTIONS)
+	  if (!targetm.libc_has_function (function_c99_misc))
 	    break;
 	  if (outprec < TYPE_PRECISION (integer_type_node)
 	      || (outprec == TYPE_PRECISION (integer_type_node)
@@ -434,8 +486,8 @@ convert_to_integer (tree type, tree expr)
 	  break;
 
 	CASE_FLT_FN (BUILT_IN_ROUND):
-	  /* Only convert in ISO C99 mode.  */
-	  if (!TARGET_C99_FUNCTIONS)
+	  /* Only convert in ISO C99 mode and with -fno-math-errno.  */
+	  if (!targetm.libc_has_function (function_c99_misc) || flag_errno_math)
 	    break;
 	  if (outprec < TYPE_PRECISION (integer_type_node)
 	      || (outprec == TYPE_PRECISION (integer_type_node)
@@ -455,8 +507,8 @@ convert_to_integer (tree type, tree expr)
 	    break;
 	  /* ... Fall through ...  */
 	CASE_FLT_FN (BUILT_IN_RINT):
-	  /* Only convert in ISO C99 mode.  */
-	  if (!TARGET_C99_FUNCTIONS)
+	  /* Only convert in ISO C99 mode and with -fno-math-errno.  */
+	  if (!targetm.libc_has_function (function_c99_misc) || flag_errno_math)
 	    break;
 	  if (outprec < TYPE_PRECISION (integer_type_node)
 	      || (outprec == TYPE_PRECISION (integer_type_node)
@@ -724,8 +776,9 @@ convert_to_integer (tree type, tree expr)
 		/* Can't do arithmetic in enumeral types
 		   so use an integer type that will hold the values.  */
 		if (TREE_CODE (typex) == ENUMERAL_TYPE)
-		  typex = lang_hooks.types.type_for_size
-		    (TYPE_PRECISION (typex), TYPE_UNSIGNED (typex));
+		  typex
+		    = lang_hooks.types.type_for_size (TYPE_PRECISION (typex),
+						      TYPE_UNSIGNED (typex));
 
 		/* But now perhaps TYPEX is as wide as INPREC.
 		   In that case, do nothing special here.
@@ -766,9 +819,15 @@ convert_to_integer (tree type, tree expr)
 			    && (ex_form == PLUS_EXPR
 				|| ex_form == MINUS_EXPR
 				|| ex_form == MULT_EXPR)))
-		      typex = unsigned_type_for (typex);
+		      {
+			if (!TYPE_UNSIGNED (typex))
+			  typex = unsigned_type_for (typex);
+		      }
 		    else
-		      typex = signed_type_for (typex);
+		      {
+			if (TYPE_UNSIGNED (typex))
+			  typex = signed_type_for (typex);
+		      }
 		    return convert (type,
 				    fold_build2 (ex_form, typex,
 						 convert (typex, arg0),
@@ -783,14 +842,26 @@ convert_to_integer (tree type, tree expr)
 	  /* This is not correct for ABS_EXPR,
 	     since we must test the sign before truncation.  */
 	  {
-	    tree typex = unsigned_type_for (type);
+	    /* Do the arithmetic in type TYPEX,
+	       then convert result to TYPE.  */
+	    tree typex = type;
+
+	    /* Can't do arithmetic in enumeral types
+	       so use an integer type that will hold the values.  */
+	    if (TREE_CODE (typex) == ENUMERAL_TYPE)
+	      typex
+		= lang_hooks.types.type_for_size (TYPE_PRECISION (typex),
+						  TYPE_UNSIGNED (typex));
+
+	    if (!TYPE_UNSIGNED (typex))
+	      typex = unsigned_type_for (typex);
 	    return convert (type,
 			    fold_build1 (ex_form, typex,
 					 convert (typex,
 						  TREE_OPERAND (expr, 0))));
 	  }
 
-	case NOP_EXPR:
+	CASE_CONVERT:
 	  /* Don't introduce a
 	     "can't convert between vector values of different size" error.  */
 	  if (TREE_CODE (TREE_TYPE (TREE_OPERAND (expr, 0))) == VECTOR_TYPE
@@ -825,7 +896,18 @@ convert_to_integer (tree type, tree expr)
       return build1 (CONVERT_EXPR, type, expr);
 
     case REAL_TYPE:
-      return build1 (FIX_TRUNC_EXPR, type, expr);
+      if (flag_sanitize & SANITIZE_FLOAT_CAST
+	  && do_ubsan_in_current_function ())
+	{
+	  expr = save_expr (expr);
+	  tree check = ubsan_instrument_float_cast (loc, type, expr, expr);
+	  expr = build1 (FIX_TRUNC_EXPR, type, expr);
+	  if (check == NULL)
+	    return expr;
+	  return fold_build2 (COMPOUND_EXPR, TREE_TYPE (expr), check, expr);
+	}
+      else
+	return build1 (FIX_TRUNC_EXPR, type, expr);
 
     case FIXED_POINT_TYPE:
       return build1 (FIXED_CONVERT_EXPR, type, expr);

@@ -1,5 +1,5 @@
 /* Output routines for Motorola MCore processor
-   Copyright (C) 1993-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -22,7 +22,21 @@
 #include "coretypes.h"
 #include "tm.h"
 #include "rtl.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "fold-const.h"
+#include "stor-layout.h"
+#include "varasm.h"
+#include "stringpool.h"
+#include "calls.h"
 #include "tm_p.h"
 #include "mcore.h"
 #include "regs.h"
@@ -33,15 +47,34 @@
 #include "insn-attr.h"
 #include "flags.h"
 #include "obstack.h"
+#include "hashtab.h"
+#include "function.h"
+#include "statistics.h"
+#include "real.h"
+#include "fixed-value.h"
+#include "expmed.h"
+#include "dojump.h"
+#include "explow.h"
+#include "emit-rtl.h"
+#include "stmt.h"
 #include "expr.h"
 #include "reload.h"
 #include "recog.h"
-#include "function.h"
 #include "ggc.h"
 #include "diagnostic-core.h"
 #include "target.h"
 #include "target-def.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "cfgrtl.h"
+#include "cfganal.h"
+#include "lcm.h"
+#include "cfgbuild.h"
+#include "cfgcleanup.h"
+#include "predict.h"
+#include "basic-block.h"
 #include "df.h"
+#include "builtins.h"
 
 /* For dumping information about frame sizes.  */
 char * mcore_current_function_name = 0;
@@ -92,16 +125,16 @@ cond_type;
 
 static void       output_stack_adjust           (int, int);
 static int        calc_live_regs                (int *);
-static int        try_constant_tricks           (long, HOST_WIDE_INT *, HOST_WIDE_INT *);
-static const char *     output_inline_const     (enum machine_mode, rtx *);
+static int        try_constant_tricks           (HOST_WIDE_INT, HOST_WIDE_INT *, HOST_WIDE_INT *);
+static const char *     output_inline_const     (machine_mode, rtx *);
 static void       layout_mcore_frame            (struct mcore_frame *);
-static void       mcore_setup_incoming_varargs	(cumulative_args_t, enum machine_mode, tree, int *, int);
+static void       mcore_setup_incoming_varargs	(cumulative_args_t, machine_mode, tree, int *, int);
 static cond_type  is_cond_candidate             (rtx);
-static rtx        emit_new_cond_insn            (rtx, int);
-static rtx        conditionalize_block          (rtx);
+static rtx_insn  *emit_new_cond_insn            (rtx, int);
+static rtx_insn  *conditionalize_block          (rtx_insn *);
 static void       conditionalize_optimization   (void);
 static void       mcore_reorg                   (void);
-static rtx        handle_structs_in_regs        (enum machine_mode, const_tree, int);
+static rtx        handle_structs_in_regs        (machine_mode, const_tree, int);
 static void       mcore_mark_dllexport          (tree);
 static void       mcore_mark_dllimport          (tree);
 static int        mcore_dllexport_p             (tree);
@@ -117,29 +150,29 @@ static bool       mcore_print_operand_punct_valid_p (unsigned char code);
 static void       mcore_unique_section	        (tree, int);
 static void mcore_encode_section_info		(tree, rtx, int);
 static const char *mcore_strip_name_encoding	(const char *);
-static int        mcore_const_costs            	(rtx, RTX_CODE);
-static int        mcore_and_cost               	(rtx);
-static int        mcore_ior_cost               	(rtx);
+static int        mcore_const_costs             (rtx, RTX_CODE);
+static int        mcore_and_cost                (rtx);
+static int        mcore_ior_cost                (rtx);
 static bool       mcore_rtx_costs		(rtx, int, int, int,
 						 int *, bool);
 static void       mcore_external_libcall	(rtx);
 static bool       mcore_return_in_memory	(const_tree, const_tree);
 static int        mcore_arg_partial_bytes       (cumulative_args_t,
-						 enum machine_mode,
+						 machine_mode,
 						 tree, bool);
 static rtx        mcore_function_arg            (cumulative_args_t,
-						 enum machine_mode,
+						 machine_mode,
 						 const_tree, bool);
 static void       mcore_function_arg_advance    (cumulative_args_t,
-						 enum machine_mode,
+						 machine_mode,
 						 const_tree, bool);
-static unsigned int mcore_function_arg_boundary (enum machine_mode,
+static unsigned int mcore_function_arg_boundary (machine_mode,
 						 const_tree);
 static void       mcore_asm_trampoline_template (FILE *);
 static void       mcore_trampoline_init		(rtx, tree, rtx);
 static bool       mcore_warn_func_return        (tree);
 static void       mcore_option_override		(void);
-static bool       mcore_legitimate_constant_p   (enum machine_mode, rtx);
+static bool       mcore_legitimate_constant_p   (machine_mode, rtx);
 
 /* MCore specific attributes.  */
 
@@ -898,9 +931,9 @@ try_constant_tricks (HOST_WIDE_INT value, HOST_WIDE_INT * x, HOST_WIDE_INT * y)
    can ignore subregs by extracting the actual register.  BRC  */
 
 int
-mcore_is_dead (rtx first, rtx reg)
+mcore_is_dead (rtx_insn *first, rtx reg)
 {
-  rtx insn;
+  rtx_insn *insn;
 
   /* For mcore, subregs can't live independently of their parent regs.  */
   if (GET_CODE (reg) == SUBREG)
@@ -914,10 +947,10 @@ mcore_is_dead (rtx first, rtx reg)
      to assume that it is live.  */
   for (insn = NEXT_INSN (first); insn; insn = NEXT_INSN (insn))
     {
-      if (GET_CODE (insn) == JUMP_INSN)
+      if (JUMP_P (insn))
 	return 0;	/* We lose track, assume it is alive.  */
 
-      else if (GET_CODE(insn) == CALL_INSN)
+      else if (CALL_P (insn))
 	{
 	  /* Call's might use it for target or register parms.  */
 	  if (reg_referenced_p (reg, PATTERN (insn))
@@ -926,7 +959,7 @@ mcore_is_dead (rtx first, rtx reg)
 	  else if (dead_or_set_p (insn, reg))
             return 1;
 	}
-      else if (GET_CODE (insn) == INSN)
+      else if (NONJUMP_INSN_P (insn))
 	{
 	  if (reg_referenced_p (reg, PATTERN (insn)))
             return 0;
@@ -1151,7 +1184,7 @@ mcore_output_andn (rtx insn ATTRIBUTE_UNUSED, rtx operands[])
 /* Output an inline constant.  */
 
 static const char *
-output_inline_const (enum machine_mode mode, rtx operands[])
+output_inline_const (machine_mode mode, rtx operands[])
 {
   HOST_WIDE_INT x = 0, y = 0;
   int trick_no;
@@ -1251,7 +1284,7 @@ output_inline_const (enum machine_mode mode, rtx operands[])
 
 const char *
 mcore_output_move (rtx insn ATTRIBUTE_UNUSED, rtx operands[],
-		   enum machine_mode mode ATTRIBUTE_UNUSED)
+		   machine_mode mode ATTRIBUTE_UNUSED)
 {
   rtx dst = operands[0];
   rtx src = operands[1];
@@ -1321,7 +1354,7 @@ mcore_output_move (rtx insn ATTRIBUTE_UNUSED, rtx operands[],
    to take care when we see overlapping source and dest registers.  */
 
 const char *
-mcore_output_movedouble (rtx operands[], enum machine_mode mode ATTRIBUTE_UNUSED)
+mcore_output_movedouble (rtx operands[], machine_mode mode ATTRIBUTE_UNUSED)
 {
   rtx dst = operands[0];
   rtx src = operands[1];
@@ -1543,7 +1576,7 @@ mcore_expand_insv (rtx operands[])
    known constants.  DEST and SRC are registers.  OFFSET is the known
    starting point for the output pattern.  */
 
-static const enum machine_mode mode_from_align[] =
+static const machine_mode mode_from_align[] =
 {
   VOIDmode, QImode, HImode, VOIDmode, SImode,
 };
@@ -1552,7 +1585,7 @@ static void
 block_move_sequence (rtx dst_mem, rtx src_mem, int size, int align)
 {
   rtx temp[2];
-  enum machine_mode mode[2];
+  machine_mode mode[2];
   int amount[2];
   bool active[2];
   int phase = 0;
@@ -1916,7 +1949,7 @@ mcore_initial_elimination_offset (int from, int to)
 
 static void
 mcore_setup_incoming_varargs (cumulative_args_t args_so_far_v,
-			      enum machine_mode mode, tree type,
+			      machine_mode mode, tree type,
 			      int * ptr_pretend_size ATTRIBUTE_UNUSED,
 			      int second_time ATTRIBUTE_UNUSED)
 {
@@ -2254,7 +2287,7 @@ is_cond_candidate (rtx insn)
      changed into a conditional.  Only bother with SImode items.  If 
      we wanted to be a little more aggressive, we could also do other
      modes such as DImode with reg-reg move or load 0.  */
-  if (GET_CODE (insn) == INSN)
+  if (NONJUMP_INSN_P (insn))
     {
       rtx pat = PATTERN (insn);
       rtx src, dst;
@@ -2305,9 +2338,9 @@ is_cond_candidate (rtx insn)
       */            
 
     }
-  else if (GET_CODE (insn) == JUMP_INSN &&
-	   GET_CODE (PATTERN (insn)) == SET &&
-	   GET_CODE (XEXP (PATTERN (insn), 1)) == LABEL_REF)
+  else if (JUMP_P (insn)
+	   && GET_CODE (PATTERN (insn)) == SET
+	   && GET_CODE (XEXP (PATTERN (insn), 1)) == LABEL_REF)
     return COND_BRANCH_INSN;
 
   return COND_NO;
@@ -2316,7 +2349,7 @@ is_cond_candidate (rtx insn)
 /* Emit a conditional version of insn and replace the old insn with the
    new one.  Return the new insn if emitted.  */
 
-static rtx
+static rtx_insn *
 emit_new_cond_insn (rtx insn, int cond)
 {
   rtx c_insn = 0;
@@ -2328,7 +2361,7 @@ emit_new_cond_insn (rtx insn, int cond)
 
   pat = PATTERN (insn);
 
-  if (GET_CODE (insn) == INSN)
+  if (NONJUMP_INSN_P (insn))
     {
       dst = SET_DEST (pat);
       src = SET_SRC (pat);
@@ -2401,7 +2434,7 @@ emit_new_cond_insn (rtx insn, int cond)
 
   delete_insn (insn);
   
-  return c_insn;
+  return as_a <rtx_insn *> (c_insn);
 }
 
 /* Attempt to change a basic block into a series of conditional insns.  This
@@ -2433,14 +2466,14 @@ emit_new_cond_insn (rtx insn, int cond)
    we can delete the L2 label if NUSES==1 and re-apply the optimization
    starting at the last instruction of block 2.  This may allow an entire
    if-then-else statement to be conditionalized.  BRC  */
-static rtx
-conditionalize_block (rtx first)
+static rtx_insn *
+conditionalize_block (rtx_insn *first)
 {
-  rtx insn;
+  rtx_insn *insn;
   rtx br_pat;
-  rtx end_blk_1_br = 0;
-  rtx end_blk_2_insn = 0;
-  rtx start_blk_3_lab = 0;
+  rtx_insn *end_blk_1_br = 0;
+  rtx_insn *end_blk_2_insn = 0;
+  rtx_insn *start_blk_3_lab = 0;
   int cond;
   int br_lab_num;
   int blk_size = 0;
@@ -2449,9 +2482,9 @@ conditionalize_block (rtx first)
   /* Check that the first insn is a candidate conditional jump.  This is
      the one that we'll eliminate.  If not, advance to the next insn to
      try.  */
-  if (GET_CODE (first) != JUMP_INSN ||
-      GET_CODE (PATTERN (first)) != SET ||
-      GET_CODE (XEXP (PATTERN (first), 1)) != IF_THEN_ELSE)
+  if (! JUMP_P (first)
+      || GET_CODE (PATTERN (first)) != SET
+      || GET_CODE (XEXP (PATTERN (first), 1)) != IF_THEN_ELSE)
     return NEXT_INSN (first);
 
   /* Extract some information we need.  */
@@ -2529,9 +2562,9 @@ conditionalize_block (rtx first)
   for (insn = NEXT_INSN (end_blk_1_br); insn != start_blk_3_lab; 
        insn = NEXT_INSN (insn))
     {
-      rtx newinsn;
+      rtx_insn *newinsn;
 
-      if (INSN_DELETED_P (insn))
+      if (insn->deleted ())
 	continue;
       
       /* Try to form a conditional variant of the instruction and emit it.  */
@@ -2577,7 +2610,7 @@ conditionalize_block (rtx first)
 static void
 conditionalize_optimization (void)
 {
-  rtx insn;
+  rtx_insn *insn;
 
   for (insn = get_insns (); insn; insn = conditionalize_block (insn))
     continue;
@@ -2626,7 +2659,7 @@ mcore_r15_operand_p (rtx x)
 
 enum reg_class
 mcore_secondary_reload_class (enum reg_class rclass,
-			      enum machine_mode mode ATTRIBUTE_UNUSED, rtx x)
+			      machine_mode mode ATTRIBUTE_UNUSED, rtx x)
 {
   if (TEST_HARD_REG_BIT (reg_class_contents[rclass], 15)
       && !mcore_r15_operand_p (x))
@@ -2682,7 +2715,7 @@ mcore_option_override (void)
    hold a function argument of mode MODE and type TYPE.  */
 
 int
-mcore_num_arg_regs (enum machine_mode mode, const_tree type)
+mcore_num_arg_regs (machine_mode mode, const_tree type)
 {
   int size;
 
@@ -2698,7 +2731,7 @@ mcore_num_arg_regs (enum machine_mode mode, const_tree type)
 }
 
 static rtx
-handle_structs_in_regs (enum machine_mode mode, const_tree type, int reg)
+handle_structs_in_regs (machine_mode mode, const_tree type, int reg)
 {
   int size;
 
@@ -2744,7 +2777,7 @@ handle_structs_in_regs (enum machine_mode mode, const_tree type, int reg)
 rtx
 mcore_function_value (const_tree valtype, const_tree func)
 {
-  enum machine_mode mode;
+  machine_mode mode;
   int unsigned_p;
   
   mode = TYPE_MODE (valtype);
@@ -2774,7 +2807,7 @@ mcore_function_value (const_tree valtype, const_tree func)
    its data type forbids.  */
 
 static rtx
-mcore_function_arg (cumulative_args_t cum, enum machine_mode mode,
+mcore_function_arg (cumulative_args_t cum, machine_mode mode,
 		    const_tree type, bool named)
 {
   int arg_reg;
@@ -2794,7 +2827,7 @@ mcore_function_arg (cumulative_args_t cum, enum machine_mode mode,
 }
 
 static void
-mcore_function_arg_advance (cumulative_args_t cum_v, enum machine_mode mode,
+mcore_function_arg_advance (cumulative_args_t cum_v, machine_mode mode,
 			    const_tree type, bool named ATTRIBUTE_UNUSED)
 {
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
@@ -2804,7 +2837,7 @@ mcore_function_arg_advance (cumulative_args_t cum_v, enum machine_mode mode,
 }
 
 static unsigned int
-mcore_function_arg_boundary (enum machine_mode mode,
+mcore_function_arg_boundary (machine_mode mode,
 			     const_tree type ATTRIBUTE_UNUSED)
 {
   /* Doubles must be aligned to an 8 byte boundary.  */
@@ -2821,7 +2854,7 @@ mcore_function_arg_boundary (enum machine_mode mode,
    the function.  */
 
 static int
-mcore_arg_partial_bytes (cumulative_args_t cum, enum machine_mode mode,
+mcore_arg_partial_bytes (cumulative_args_t cum, machine_mode mode,
 			 tree type, bool named)
 {
   int reg = ROUND_REG (*get_cumulative_args (cum), mode);
@@ -3084,7 +3117,7 @@ mcore_unique_section (tree decl, int reloc ATTRIBUTE_UNUSED)
   
   sprintf (string, "%s%s", prefix, name);
 
-  DECL_SECTION_NAME (decl) = build_string (len, string);
+  set_decl_section_name (decl, string);
 }
 
 int
@@ -3174,7 +3207,7 @@ mcore_trampoline_init (rtx m_tramp, tree fndecl, rtx chain_value)
    On the MCore, allow anything but a double.  */
 
 static bool
-mcore_legitimate_constant_p (enum machine_mode mode ATTRIBUTE_UNUSED, rtx x)
+mcore_legitimate_constant_p (machine_mode mode ATTRIBUTE_UNUSED, rtx x)
 {
   return GET_CODE (x) != CONST_DOUBLE;
 }

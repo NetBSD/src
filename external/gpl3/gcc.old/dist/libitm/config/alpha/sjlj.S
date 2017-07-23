@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU Transactional Memory Library (libitm).
@@ -107,6 +107,6 @@ GTM_longjmp:
 	ret
 .end GTM_longjmp
 
-#ifdef __linux__
+#if defined(__ELF__) && defined(__linux__)
 .section .note.GNU-stack, "", @progbits
 #endif

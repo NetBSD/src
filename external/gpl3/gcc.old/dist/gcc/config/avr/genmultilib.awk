@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2013 Free Software Foundation, Inc.
+# Copyright (C) 2011-2015 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -86,7 +86,7 @@ BEGIN {
     name = $2
     gsub ("\"", "", name)
 
-    if ($4 == "NULL")
+    if ($5 == "NULL")
     {
 	core = name
 
@@ -106,7 +106,17 @@ BEGIN {
     if (core == "avr1")
 	next
 
-    tiny_stack[name]  = $5
+    # split device specific feature list
+    n = split($4,dev_attribute,"|")
+
+    # set tiny_stack false by default
+    tiny_stack[name] = 0
+    for (i=1; i <= n; i++)
+      if (dev_attribute[i] == "AVR_SHORT_SP") {
+        tiny_stack[name]  = 1
+        break
+      }
+
     mcu[n_mcu] = name
     n_mcu++
     option[name]      = "mmcu=" name
@@ -125,7 +135,6 @@ BEGIN {
 #    m_options     <->    MULTILIB_OPTIONS         Makefile
 #    m_dirnames    <->    MULTILIB_DIRNAMES           "
 #    m_exceptions  <->    MULTILIB_EXCEPTIONS         "
-#    m_matches     <->    MULTILIB_MATCHES            "
 #
 ##################################################################
 
@@ -133,7 +142,6 @@ END {
     m_options    = "\nMULTILIB_OPTIONS = "
     m_dirnames   = "\nMULTILIB_DIRNAMES ="
     m_exceptions = "\nMULTILIB_EXCEPTIONS ="
-    m_matches    = "\nMULTILIB_MATCHES ="
 
     ##############################################################
     # Compose MULTILIB_OPTIONS.  This represents the Cross-Product
@@ -159,8 +167,6 @@ END {
 	line = option[core] ":" option[mcu[t]]
 	gsub ("=", "?", line)
 	gsub (":", "=", line)
-
-	m_matches = m_matches " \\\n\t" line
     }
 
     ####################################################################
@@ -211,6 +217,5 @@ END {
 	print m_options
 	print m_dirnames
 	print m_exceptions
-	print m_matches
     }
 }

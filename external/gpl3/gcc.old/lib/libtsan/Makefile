@@ -1,67 +1,47 @@
-# $NetBSD: Makefile,v 1.1.1.1 2015/09/23 03:03:39 mrg Exp $
+# $NetBSD: Makefile,v 1.1.1.2 2017/07/23 01:05:11 mrg Exp $
 
 .include <bsd.own.mk>
 
 .include "../Makefile.inc"
+.include "../Makefile.sanitizer"
 
-TSAN=${GCCDIST}/libsanitizer
-.PATH: ${TSAN}/tsan ${TSAN}/interception ${TSAN}/sanitizer_common
+.PATH: ${SANITIZER}/tsan
 
 TSAN_SRCS= \
-	tsan_clock.cc  \
-	tsan_fd.cc  \
-	tsan_flags.cc  \
-	tsan_interceptors.cc  \
-	tsan_interface.cc  \
-	tsan_interface_ann.cc  \
-	tsan_interface_atomic.cc  \
-	tsan_interface_java.cc  \
-	tsan_md5.cc  \
-	tsan_mman.cc  \
-	tsan_mutex.cc  \
-	tsan_mutexset.cc  \
-	tsan_platform_linux.cc  \
-	tsan_platform_mac.cc  \
-	tsan_report.cc  \
-	tsan_rtl.cc  \
-	tsan_rtl_amd64.S  \
-	tsan_rtl_mutex.cc  \
-	tsan_rtl_report.cc  \
-	tsan_rtl_thread.cc  \
-	tsan_stat.cc  \
-	tsan_suppressions.cc  \
-	tsan_symbolize.cc  \
-	tsan_symbolize_addr2line_linux.cc  \
-	tsan_sync.cc
+tsan_clock.o \
+tsan_fd.o \
+tsan_flags.o \
+tsan_ignoreset.o \
+tsan_interceptors.o \
+tsan_interface.o \
+tsan_interface_ann.o \
+tsan_interface_atomic.o \
+tsan_interface_java.o \
+tsan_md5.o \
+tsan_mman.o \
+tsan_mutex.o \
+tsan_mutexset.o \
+tsan_platform_linux.o \
+tsan_platform_mac.o \
+tsan_platform_windows.o \
+tsan_report.o \
+tsan_rtl.o \
+tsan_rtl_mutex.o \
+tsan_rtl_report.o \
+tsan_rtl_thread.o \
+tsan_stack_trace.o \
+tsan_stat.o \
+tsan_suppressions.o \
+tsan_symbolize.o \
+tsan_sync.o
 
-INTERCEPTION_SRCS= \
-	interception_linux.cc \
-	interception_type_test.cc
-
-SANITIZER_SRCS= \
-	sanitizer_allocator.cc \
-	sanitizer_common.cc \
-	sanitizer_flags.cc \
-	sanitizer_libc.cc \
-	sanitizer_netbsd.cc \
-	sanitizer_mac.cc \
-	sanitizer_posix.cc \
-	sanitizer_platform_limits_posix.cc \
-	sanitizer_printf.cc \
-	sanitizer_stackdepot.cc \
-	sanitizer_stacktrace.cc \
-	sanitizer_symbolizer.cc \
-	sanitizer_symbolizer_linux.cc \
-	sanitizer_win.cc
-
-# The linux build does this to avoid preinit sections on shared libraries
-CSHLIBFLAGS+= -DPIC
+.if exists(${SANITIZER}/tsan/tsan_rtl_${MACHINE}.S)
+TSAN_SRCS+= tsan_rtl_${MACHINE}.S
+.else
+TSAN_SRCS+= tsan_rtl_unimpl.cc
+.endif
 
 LIB=	tsan
-SRCS=	${TSAN_SRCS} ${INTERCEPTION_SRCS} ${SANITIZER_SRCS}
-CPPFLAGS+=-I${TSAN}/include -I${TSAN}
-
-LDADD+=	-lstdc++ -lpthread
-DPADD+= ${LIBSTDCXX} ${LIBPTHREAD}
+SRCS+=	${TSAN_SRCS}
 
 .include <bsd.lib.mk>

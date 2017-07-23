@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.3 2015/09/23 03:03:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.4 2017/07/23 01:05:10 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOPIC=		# defined
@@ -15,7 +15,13 @@ LIB=		gcov
 
 .include "${.CURDIR}/arch/${LIBGCC_MACHINE_ARCH}/defs.mk"
 
-LIBGCOVSRCS=	${G_LIBGCOV:=.c}
+LIBGCOVMERGESRCS=	${G_LIBGCOV_MERGE:=.c}
+LIBGCOVPROFILERSRCS=	${G_LIBGCOV_PROFILER:=.c}
+LIBGCOVINTERFACESRCS=	${G_LIBGCOV_INTERFACE:=.c}
+LIBGCOVDRIVERSRCS=	${G_LIBGCOV_DRIVER:=.c}
+
+LIBGCOVSRCS=	${LIBGCOVMERGESRCS} ${LIBGCOVPROFILERSRCS} \
+		${LIBGCOVINTERFACESRCS} ${LIBGCOVDRIVERSRCS}
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${LIBGCC_MACHINE_ARCH}
 CPPFLAGS+=	-Wno-stack-protector
@@ -25,9 +31,21 @@ SRCS+=		${LIBGCOVSRCS}
 
 CLEANFILES+=	${LIBGCOVSRCS}
 
-${LIBGCOVSRCS}: ${.CURDIR}/Makefile
+${LIBGCOVMERGESRCS}: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
-	printf '#define L${.PREFIX}\n#include <libgcov.c>\n' >${.TARGET}
+	printf '#define L${.PREFIX}\n#include <libgcov-merge.c>\n' >${.TARGET}
+
+${LIBGCOVPROFILERSRCS}: ${.CURDIR}/Makefile
+	${_MKTARGET_CREATE}
+	printf '#define L${.PREFIX}\n#include <libgcov-profiler.c>\n' >${.TARGET}
+
+${LIBGCOVINTERFACESRCS}: ${.CURDIR}/Makefile
+	${_MKTARGET_CREATE}
+	printf '#define L${.PREFIX}\n#include <libgcov-interface.c>\n' >${.TARGET}
+
+${LIBGCOVDRIVERSRCS}: ${.CURDIR}/Makefile
+	${_MKTARGET_CREATE}
+	printf '#define L${.PREFIX}\n#include <libgcov-driver.c>\n' >${.TARGET}
 
 .include <bsd.lib.mk>
 .else

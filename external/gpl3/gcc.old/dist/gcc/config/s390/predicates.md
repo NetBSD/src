@@ -1,5 +1,5 @@
 ;; Predicate definitions for S/390 and zSeries.
-;; Copyright (C) 2005-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2015 Free Software Foundation, Inc.
 ;; Contributed by Hartmut Penner (hpenner@de.ibm.com) and
 ;;                Ulrich Weigand (uweigand@de.ibm.com).
 ;;
@@ -24,16 +24,26 @@
 
 ;; operands --------------------------------------------------------------
 
-;; Return true if OP a (const_int 0) operand.
-
+;; Return true if OP a const 0 operand (int/float/vector).
 (define_predicate "const0_operand"
-  (and (match_code "const_int, const_double")
+  (and (match_code "const_int,const_double,const_vector")
        (match_test "op == CONST0_RTX (mode)")))
+
+;; Return true if OP an all ones operand (int/vector).
+(define_predicate "all_ones_operand"
+  (and (match_code "const_int, const_double, const_vector")
+       (match_test "INTEGRAL_MODE_P (GET_MODE (op))")
+       (match_test "op == CONSTM1_RTX (mode)")))
+
+;; Return true if OP is a 4 bit mask operand
+(define_predicate "const_mask_operand"
+  (and (match_code "const_int")
+       (match_test "UINTVAL (op) < 16")))
 
 ;; Return true if OP is constant.
 
 (define_special_predicate "consttable_operand"
-  (and (match_code "symbol_ref, label_ref, const, const_int, const_double")
+  (and (match_code "symbol_ref, label_ref, const, const_int, const_double, const_vector")
        (match_test "CONSTANT_P (op)")))
 
 ;; Return true if OP is a valid S-type operand.
@@ -314,7 +324,7 @@
 (define_special_predicate "load_multiple_operation"
   (match_code "parallel")
 {
-  enum machine_mode elt_mode;
+  machine_mode elt_mode;
   int count = XVECLEN (op, 0);
   unsigned int dest_regno;
   rtx src_addr;
@@ -374,7 +384,7 @@
   (match_code "parallel")
 {
   rtx pattern = op;
-  rtx insn;
+  rtx_insn *insn;
   int icode;
 
   /* This is redundant but since this predicate is evaluated
@@ -406,8 +416,7 @@
   if (icode < 0)
     return false;
 
-  extract_insn (insn);
-  constrain_operands (1);
+  extract_constrain_insn (insn);
 
   return which_alternative >= 0;
 })
@@ -418,7 +427,7 @@
 (define_special_predicate "store_multiple_operation"
   (match_code "parallel")
 {
-  enum machine_mode elt_mode;
+  machine_mode elt_mode;
   int count = XVECLEN (op, 0);
   unsigned int src_regno;
   rtx dest_addr;

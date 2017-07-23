@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2015/09/23 03:03:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2017/07/23 01:05:11 mrg Exp $
 
 PROG=		cc1plus
 SRCS=		${G_CXX_OBJS:S,c-family/,,:S,cp/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
@@ -38,6 +38,24 @@ CHECKSUM_OBJS= ${LIBBACKTRACEOBJ}/libbacktrace.a \
 # YUCK.  but see timevar.h:POP_TIMEVAR_AND_RETURN
 CFLAGS+=	-Wno-error # not good enough: -Wno-return-type
 COPTS+=		-Wno-stack-protector
+
+.if ${MACHINE_ARCH} == "vax"
+COPTS.call.c+=-O0
+COPTS.decl.c+=-O0
+COPTS.typeck2.c+=-O0
+COPTS.class.c+=-O0
+COPTS.typeck.c+=-O0
+COPTS.init.c+=-O0
+COPTS.semantics.c+=-O0
+COPTS.mangle.c+=-O0
+COPTS.constexpr.c+=-O0
+COPTS.c-common.c+=-O0
+COPTS.c-ada-spec.c+=-O0
+COPTS.cilk.c+=-O0
+COPTS.c-ubsan.c+=-O0
+COPTS.cc1plus-checksum.c+=-O0
+.endif
+
 
 LDADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} -lintl -lz -lm
 DPADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} ${LIBINTL} ${LIBZ} ${LIBM}

@@ -1,7 +1,8 @@
-/* Copyright (C) 2006-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2015 Free Software Foundation, Inc.
    Contributed by Jakub Jelinek <jakub@redhat.com>.
 
-   This file is part of the GNU OpenMP Library (libgomp).
+   This file is part of the GNU Offloading and Multi Processing Library
+   (libgomp).
 
    Libgomp is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by
@@ -32,7 +33,84 @@ gomp_init_affinity (void)
 }
 
 void
-gomp_init_thread_affinity (pthread_attr_t *attr)
+gomp_init_thread_affinity (pthread_attr_t *attr, unsigned int place)
 {
   (void) attr;
+  (void) place;
+}
+
+void **
+gomp_affinity_alloc (unsigned long count, bool quiet)
+{
+  (void) count;
+  if (!quiet)
+    gomp_error ("Affinity not supported on this configuration");
+  return NULL;
+}
+
+void
+gomp_affinity_init_place (void *p)
+{
+  (void) p;
+}
+
+bool
+gomp_affinity_add_cpus (void *p, unsigned long num,
+			unsigned long len, long stride, bool quiet)
+{
+  (void) p;
+  (void) num;
+  (void) len;
+  (void) stride;
+  (void) quiet;
+  return false;
+}
+
+bool
+gomp_affinity_remove_cpu (void *p, unsigned long num)
+{
+  (void) p;
+  (void) num;
+  return false;
+}
+
+bool
+gomp_affinity_copy_place (void *p, void *q, long stride)
+{
+  (void) p;
+  (void) q;
+  (void) stride;
+  return false;
+}
+
+bool
+gomp_affinity_same_place (void *p, void *q)
+{
+  (void) p;
+  (void) q;
+  return false;
+}
+
+bool
+gomp_affinity_finalize_place_list (bool quiet)
+{
+  (void) quiet;
+  return false;
+}
+
+bool
+gomp_affinity_init_level (int level, unsigned long count, bool quiet)
+{
+  (void) level;
+  (void) count;
+  (void) quiet;
+  if (!quiet)
+    gomp_error ("Affinity not supported on this configuration");
+  return NULL;
+}
+
+void
+gomp_affinity_print_place (void *p)
+{
+  (void) p;
 }

@@ -63,6 +63,21 @@ may need to use <samp><span class="option">--disable-stage1-checking</span></sam
 bootstrapping the compiler with such earlier compilers is strongly
 discouraged.
 
+     <br><dt>C standard library and headers<dd>
+In order to build GCC, the C standard library and headers must be present
+for all target variants for which target libraries will be built (and not
+only the variant of the host C++ compiler).
+
+     <p>This affects the popular &lsquo;<samp><span class="samp">x86_64-unknown-linux-gnu</span></samp>&rsquo; platform (among
+other multilib targets), for which 64-bit (&lsquo;<samp><span class="samp">x86_64</span></samp>&rsquo;) and 32-bit
+(&lsquo;<samp><span class="samp">i386</span></samp>&rsquo;) libc headers are usually packaged separately. If you do a
+build of a native compiler on &lsquo;<samp><span class="samp">x86_64-unknown-linux-gnu</span></samp>&rsquo;, make sure you
+either have the 32-bit libc developer package properly installed (the exact
+name of the package depends on your distro) or you must build GCC as a
+64-bit only compiler by configuring with the option
+<samp><span class="option">--disable-multilib</span></samp>.  Otherwise, you may encounter an error such as
+&lsquo;<samp><span class="samp">fatal error: gnu/stubs-32.h: No such file</span></samp>&rsquo;
+
      <br><dt>GNAT<dd>
 In order to build the Ada compiler (GNAT) you must already have GNAT
 installed because portions of the Ada frontend are written in Ada (with
@@ -162,23 +177,14 @@ installed but it is not in your default library search path, the
 <samp><span class="option">--with-mpc</span></samp> configure option should be used.  See also
 <samp><span class="option">--with-mpc-lib</span></samp> and <samp><span class="option">--with-mpc-include</span></samp>.
 
-     <br><dt>ISL Library version 0.11.1<dd>
+     <br><dt>ISL Library version 0.14 (or 0.12.2)<dd>
 Necessary to build GCC with the Graphite loop optimizations. 
 It can be downloaded from <a href="ftp://gcc.gnu.org/pub/gcc/infrastructure/">ftp://gcc.gnu.org/pub/gcc/infrastructure/</a>
-as <samp><span class="file">isl-0.11.1.tar.bz2</span></samp>.
-
-     <p>The <samp><span class="option">--with-isl</span></samp> configure option should be used if ISL is not
-installed in your default library search path.
-
-     <br><dt>CLooG 0.18.0<dd>
-Necessary to build GCC with the Graphite loop optimizations.  It can be
-downloaded from <a href="ftp://gcc.gnu.org/pub/gcc/infrastructure/">ftp://gcc.gnu.org/pub/gcc/infrastructure/</a> as
-<samp><span class="file">cloog-0.18.0.tar.gz</span></samp>.  The <samp><span class="option">--with-cloog</span></samp> configure option should
-be used if CLooG is not installed in your default library search path. 
-CLooG needs to be built against ISL 0.11.1.  Use <samp><span class="option">--with-isl=system</span></samp>
-to direct CLooG to pick up an already installed ISL, otherwise it will use
-ISL 0.11.1 as bundled with CLooG.  CLooG needs to be configured to use GMP
-internally, use <samp><span class="option">--with-bits=gmp</span></samp> to direct it to do that.
+as <samp><span class="file">isl-0.12.2.tar.bz2</span></samp>.  If an ISL source distribution is found
+in a subdirectory of your GCC sources named <samp><span class="file">isl</span></samp>, it will be
+built together with GCC.  Alternatively, the <samp><span class="option">--with-isl</span></samp> configure
+option should be used if ISL is not installed in your default library
+search path.
 
    </dl>
 
@@ -212,7 +218,11 @@ Necessary when modifying <samp><span class="command">gperf</span></samp> input f
 <samp><span class="file">gcc/cp/cfns.h</span></samp>.
 
      <br><dt>DejaGnu 1.4.4<dt>Expect<dt>Tcl<dd>
-Necessary to run the GCC testsuite; see the section on testing for details.
+Necessary to run the GCC testsuite; see the section on testing for
+details.  Tcl 8.6 has a known regression in RE pattern handling that
+make parts of the testsuite fail.  See
+<a href="http://core.tcl.tk/tcl/tktview/267b7e2334ee2e9de34c4b00d6e72e2f1997085f">http://core.tcl.tk/tcl/tktview/267b7e2334ee2e9de34c4b00d6e72e2f1997085f</a>
+for more information.  This bug has been fixed in 8.6.1.
 
      <br><dt>autogen version 5.5.4 (or later) and<dt>guile version 1.4.1 (or later)<dd>
 Necessary to regenerate <samp><span class="file">fixinc/fixincl.x</span></samp> from
@@ -246,6 +256,10 @@ included in releases.
 Necessary for running <samp><span class="command">texi2dvi</span></samp> and <samp><span class="command">texi2pdf</span></samp>, which
 are used when running <samp><span class="command">make dvi</span></samp> or <samp><span class="command">make pdf</span></samp> to create
 DVI or PDF files, respectively.
+
+     <br><dt>Sphinx version 1.0 (or later)<dd>
+Necessary to regenerate <samp><span class="file">jit/docs/_build/texinfo</span></samp> from the <samp><span class="file">.rst</span></samp>
+files in the directories below <samp><span class="file">jit/docs</span></samp>.
 
      <br><dt>SVN (any version)<dt>SSH (any version)<dd>
 Necessary to access the SVN repository.  Public releases and weekly

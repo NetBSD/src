@@ -1,5 +1,5 @@
 /* Base configuration file for all NetBSD targets.
-   Copyright (C) 1997-2013 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,6 +23,7 @@ along with GCC; see the file COPYING3.  If not see
     {						\
       builtin_define ("__NetBSD__");		\
       builtin_define ("__unix__");		\
+      builtin_define ("__syslog_attribute__");	\
       builtin_assert ("system=bsd");		\
       builtin_assert ("system=unix");		\
       builtin_assert ("system=NetBSD");		\
@@ -62,7 +63,7 @@ along with GCC; see the file COPYING3.  If not see
  * XXX figure out a better way to do this
  */
 #undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include/gcc-4.8"
+#define GCC_INCLUDE_DIR "/usr/include/gcc-5"
 
 /* Under NetBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
@@ -144,8 +145,10 @@ along with GCC; see the file COPYING3.  If not see
 #undef LIB_SPEC
 #define LIB_SPEC NETBSD_LIB_SPEC
 
+#if 0 // XXXMRG
 #undef STATIC_LIBASAN_LIBS
 #define STATIC_LIBASAN_LIBS "-lstdc++ -lpthread"
+#endif
 
 /* Pass -cxx-isystem to cc1/cc1plus.  */
 #define NETBSD_CC1_AND_CC1PLUS_SPEC		\
@@ -156,6 +159,9 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef CC1PLUS_SPEC
 #define CC1PLUS_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC
+
+#undef TARGET_LIBC_HAS_FUNCTION
+#define TARGET_LIBC_HAS_FUNCTION no_c99_libc_has_function
 
 /* When building shared libraries, the initialization and finalization 
    functions for the library are .init and .fini respectively.  */
@@ -191,7 +197,8 @@ along with GCC; see the file COPYING3.  If not see
 #undef WINT_TYPE
 #define WINT_TYPE "int"
 
-#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
+#undef LINK_EH_SPEC
+#define LINK_EH_SPEC "--eh-frame-hdr "
 
 /* Use --as-needed -lgcc_s for eh support.  */
 #ifdef HAVE_LD_AS_NEEDED

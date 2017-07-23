@@ -1,5 +1,5 @@
 ;; Machine description for TI C6X.
-;; Copyright (C) 2010-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2015 Free Software Foundation, Inc.
 ;; Contributed by Andrew Jenner <andrew@codesourcery.com>
 ;; Contributed by Bernd Schmidt <bernds@codesourcery.com>
 ;; Contributed by CodeSourcery.
@@ -469,7 +469,7 @@
   [(set (match_dup 2) (match_dup 3))]
 {
   unsigned HOST_WIDE_INT mask, val;
-  enum machine_mode inner_mode = GET_MODE_INNER (<MODE>mode);
+  machine_mode inner_mode = GET_MODE_INNER (<MODE>mode);
   int i;
 
   val = 0;
@@ -505,7 +505,7 @@
   unsigned HOST_WIDE_INT mask;
   unsigned HOST_WIDE_INT val[2];
   rtx lo_half, hi_half;
-  enum machine_mode inner_mode = GET_MODE_INNER (<MODE>mode);
+  machine_mode inner_mode = GET_MODE_INNER (<MODE>mode);
   int i, j;
 
   split_di (operands, 1, &lo_half, &hi_half);
@@ -775,7 +775,7 @@
 		       UNSPEC_MISALIGNED_ACCESS))]
   "TARGET_INSNS_64"
 {
-  if (memory_operand (operands[0], <MODE>mode))
+  if (MEM_P (operands[0]))
     {
       emit_insn (gen_movmisalign<mode>_store (operands[0], operands[1]));
       DONE;
@@ -1421,27 +1421,23 @@
 ;; -------------------------------------------------------------------------
 
 ; operand 0 is the loop count pseudo register
-; operand 1 is the number of loop iterations or 0 if it is unknown
-; operand 2 is the maximum number of loop iterations
-; operand 3 is the number of levels of enclosed loops
-; operand 4 is the label to jump to at the top of the loop
-; operand 5 indicates if the loop is entered at the top
+; operand 1 is the label to jump to at the top of the loop
 (define_expand "doloop_end"
   [(parallel [(set (pc) (if_then_else
 			  (ne (match_operand:SI 0 "" "")
 			      (const_int 1))
-			  (label_ref (match_operand 4 "" ""))
+			  (label_ref (match_operand 1 "" ""))
 			  (pc)))
 	      (set (match_dup 0)
 		   (plus:SI (match_dup 0)
 			    (const_int -1)))
-	      (clobber (match_operand 5 ""))])] ; match_scratch
+	      (clobber (match_dup 2))])] ; match_scratch
   "TARGET_INSNS_64PLUS && optimize"
 {
   /* The loop optimizer doesn't check the predicates... */
   if (GET_MODE (operands[0]) != SImode)
     FAIL;
-  operands[5] = gen_rtx_SCRATCH (SImode);
+  operands[2] = gen_rtx_SCRATCH (SImode);
 })
 
 (define_insn "mvilc"
@@ -1523,7 +1519,7 @@
 ;; -------------------------------------------------------------------------
 
 (define_insn "real_jump"
-  [(unspec [(match_operand 0 "c6x_jump_operand" "a,b,s") (const_int 0)]
+  [(unspec [(match_operand 0 "c6x_jump_operand" "a,b,S3") (const_int 0)]
 	   UNSPEC_REAL_JUMP)]
   ""
 {

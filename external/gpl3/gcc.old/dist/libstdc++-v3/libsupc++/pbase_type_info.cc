@@ -1,4 +1,4 @@
-// Copyright (C) 1994-2013 Free Software Foundation, Inc.
+// Copyright (C) 1994-2015 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -37,7 +37,7 @@ __do_catch (const type_info *thr_type,
   if (*this == *thr_type)
     return true;      // same type
 
-#ifdef __GXX_RTTI
+#if __cpp_rtti
   if (typeid (*this) != typeid (*thr_type))
     return false;     // not both same kind of pointers
 #endif

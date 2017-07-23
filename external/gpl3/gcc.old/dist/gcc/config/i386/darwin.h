@@ -1,5 +1,5 @@
 /* Target definitions for x86 running Darwin.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -26,7 +26,9 @@ along with GCC; see the file COPYING3.  If not see
 #define DARWIN_X86 1
 
 #undef  TARGET_64BIT
+#undef	TARGET_64BIT_P
 #define TARGET_64BIT TARGET_ISA_64BIT
+#define	TARGET_64BIT_P(x) TARGET_ISA_64BIT_P(x)
 
 #ifdef IN_LIBGCC2
 #undef TARGET_64BIT
@@ -151,12 +153,6 @@ extern int darwin_emit_branch_islands;
 
 #define SHIFT_DOUBLE_OMITS_COUNT 0
 
-/* Put all *tf routines in libgcc.  */
-#undef LIBGCC2_HAS_TF_MODE
-#define LIBGCC2_HAS_TF_MODE 1
-#define LIBGCC2_TF_CEXT q
-#define TF_SIZE 113
-
 #undef TARGET_ASM_FILE_END
 #define TARGET_ASM_FILE_END darwin_file_end
 
@@ -240,7 +236,11 @@ do {									\
    compiles default to stabs+.  darwin9+ defaults to dwarf-2.  */
 #ifndef DARWIN_PREFER_DWARF
 #undef PREFERRED_DEBUGGING_TYPE
+#ifdef HAVE_AS_STABS_DIRECTIVE
 #define PREFERRED_DEBUGGING_TYPE (TARGET_64BIT ? DWARF2_DEBUG : DBX_DEBUG)
+#else
+#define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
+#endif
 #endif
 
 /* Darwin uses the standard DWARF register numbers but the default

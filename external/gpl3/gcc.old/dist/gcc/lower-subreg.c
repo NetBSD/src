@@ -1,5 +1,5 @@
 /* Decompose multiword subregs.
-   Copyright (C) 2007-2013 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>
 		  Ian Lance Taylor <iant@google.com>
 
@@ -24,21 +24,49 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "machmode.h"
 #include "tm.h"
+#include "hash-set.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
+#include "tree.h"
 #include "rtl.h"
 #include "tm_p.h"
 #include "flags.h"
 #include "insn-config.h"
 #include "obstack.h"
+#include "predict.h"
+#include "hard-reg-set.h"
+#include "function.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "cfgrtl.h"
+#include "cfgbuild.h"
 #include "basic-block.h"
 #include "recog.h"
 #include "bitmap.h"
 #include "dce.h"
+#include "hashtab.h"
+#include "statistics.h"
+#include "real.h"
+#include "fixed-value.h"
+#include "expmed.h"
+#include "dojump.h"
+#include "explow.h"
+#include "calls.h"
+#include "emit-rtl.h"
+#include "varasm.h"
+#include "stmt.h"
 #include "expr.h"
 #include "except.h"
 #include "regs.h"
 #include "tree-pass.h"
 #include "df.h"
 #include "lower-subreg.h"
+#include "rtl-iter.h"
 
 #ifdef STACK_GROWS_DOWNWARD
 # undef STACK_GROWS_DOWNWARD
@@ -129,7 +157,7 @@ struct cost_rtxes {
 
 static int
 shift_cost (bool speed_p, struct cost_rtxes *rtxes, enum rtx_code code,
-	    enum machine_mode mode, int op1)
+	    machine_mode mode, int op1)
 {
   PUT_CODE (rtxes->shift, code);
   PUT_MODE (rtxes->shift, mode);
@@ -203,7 +231,7 @@ compute_costs (bool speed_p, struct cost_rtxes *rtxes)
 
   for (i = 0; i < MAX_MACHINE_MODE; i++)
     {
-      enum machine_mode mode = (enum machine_mode) i;
+      machine_mode mode = (machine_mode) i;
       int factor = GET_MODE_SIZE (mode) / UNITS_PER_WORD;
       if (factor > 1)
 	{
@@ -320,11 +348,11 @@ simple_move_operand (rtx x)
    is called.  */
 
 static rtx
-simple_move (rtx insn, bool speed_p)
+simple_move (rtx_insn *insn, bool speed_p)
 {
   rtx x;
   rtx set;
-  enum machine_mode mode;
+  machine_mode mode;
 
   if (recog_data.n_operands != 2)
     return NULL_RTX;
@@ -441,7 +469,7 @@ propagate_pseudo_copies (void)
 }
 
 /* A pointer to one of these values is passed to
-   find_decomposable_subregs via for_each_rtx.  */
+   find_decomposable_subregs.  */
 
 enum classify_move_insn
 {
@@ -453,120 +481,121 @@ enum classify_move_insn
   SIMPLE_MOVE
 };
 
-/* This is called via for_each_rtx.  If we find a SUBREG which we
-   could use to decompose a pseudo-register, set a bit in
-   DECOMPOSABLE_CONTEXT.  If we find an unadorned register which is
-   not a simple pseudo-register copy, DATA will point at the type of
-   move, and we set a bit in DECOMPOSABLE_CONTEXT or
-   NON_DECOMPOSABLE_CONTEXT as appropriate.  */
+/* If we find a SUBREG in *LOC which we could use to decompose a
+   pseudo-register, set a bit in DECOMPOSABLE_CONTEXT.  If we find an
+   unadorned register which is not a simple pseudo-register copy,
+   DATA will point at the type of move, and we set a bit in
+   DECOMPOSABLE_CONTEXT or NON_DECOMPOSABLE_CONTEXT as appropriate.  */
 
-static int
-find_decomposable_subregs (rtx *px, void *data)
+static void
+find_decomposable_subregs (rtx *loc, enum classify_move_insn *pcmi)
 {
-  enum classify_move_insn *pcmi = (enum classify_move_insn *) data;
-  rtx x = *px;
-
-  if (x == NULL_RTX)
-    return 0;
-
-  if (GET_CODE (x) == SUBREG)
+  subrtx_var_iterator::array_type array;
+  FOR_EACH_SUBRTX_VAR (iter, array, *loc, NONCONST)
     {
-      rtx inner = SUBREG_REG (x);
-      unsigned int regno, outer_size, inner_size, outer_words, inner_words;
-
-      if (!REG_P (inner))
-	return 0;
-
-      regno = REGNO (inner);
-      if (HARD_REGISTER_NUM_P (regno))
-	return -1;
-
-      outer_size = GET_MODE_SIZE (GET_MODE (x));
-      inner_size = GET_MODE_SIZE (GET_MODE (inner));
-      outer_words = (outer_size + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
-      inner_words = (inner_size + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
-
-      /* We only try to decompose single word subregs of multi-word
-	 registers.  When we find one, we return -1 to avoid iterating
-	 over the inner register.
-
-	 ??? This doesn't allow, e.g., DImode subregs of TImode values
-	 on 32-bit targets.  We would need to record the way the
-	 pseudo-register was used, and only decompose if all the uses
-	 were the same number and size of pieces.  Hopefully this
-	 doesn't happen much.  */
-
-      if (outer_words == 1 && inner_words > 1)
+      rtx x = *iter;
+      if (GET_CODE (x) == SUBREG)
 	{
-	  bitmap_set_bit (decomposable_context, regno);
-	  return -1;
-	}
+	  rtx inner = SUBREG_REG (x);
+	  unsigned int regno, outer_size, inner_size, outer_words, inner_words;
 
-      /* If this is a cast from one mode to another, where the modes
-	 have the same size, and they are not tieable, then mark this
-	 register as non-decomposable.  If we decompose it we are
-	 likely to mess up whatever the backend is trying to do.  */
-      if (outer_words > 1
-	  && outer_size == inner_size
-	  && !MODES_TIEABLE_P (GET_MODE (x), GET_MODE (inner)))
-	{
-	  bitmap_set_bit (non_decomposable_context, regno);
-	  bitmap_set_bit (subreg_context, regno);
-	  return -1;
-	}
-    }
-  else if (REG_P (x))
-    {
-      unsigned int regno;
+	  if (!REG_P (inner))
+	    continue;
 
-      /* We will see an outer SUBREG before we see the inner REG, so
-	 when we see a plain REG here it means a direct reference to
-	 the register.
-
-	 If this is not a simple copy from one location to another,
-	 then we can not decompose this register.  If this is a simple
-	 copy we want to decompose, and the mode is right,
-	 then we mark the register as decomposable.
-	 Otherwise we don't say anything about this register --
-	 it could be decomposed, but whether that would be
-	 profitable depends upon how it is used elsewhere.
-
-	 We only set bits in the bitmap for multi-word
-	 pseudo-registers, since those are the only ones we care about
-	 and it keeps the size of the bitmaps down.  */
-
-      regno = REGNO (x);
-      if (!HARD_REGISTER_NUM_P (regno)
-	  && GET_MODE_SIZE (GET_MODE (x)) > UNITS_PER_WORD)
-	{
-	  switch (*pcmi)
+	  regno = REGNO (inner);
+	  if (HARD_REGISTER_NUM_P (regno))
 	    {
-	    case NOT_SIMPLE_MOVE:
+	      iter.skip_subrtxes ();
+	      continue;
+	    }
+
+	  outer_size = GET_MODE_SIZE (GET_MODE (x));
+	  inner_size = GET_MODE_SIZE (GET_MODE (inner));
+	  outer_words = (outer_size + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
+	  inner_words = (inner_size + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
+
+	  /* We only try to decompose single word subregs of multi-word
+	     registers.  When we find one, we return -1 to avoid iterating
+	     over the inner register.
+
+	     ??? This doesn't allow, e.g., DImode subregs of TImode values
+	     on 32-bit targets.  We would need to record the way the
+	     pseudo-register was used, and only decompose if all the uses
+	     were the same number and size of pieces.  Hopefully this
+	     doesn't happen much.  */
+
+	  if (outer_words == 1 && inner_words > 1)
+	    {
+	      bitmap_set_bit (decomposable_context, regno);
+	      iter.skip_subrtxes ();
+	      continue;
+	    }
+
+	  /* If this is a cast from one mode to another, where the modes
+	     have the same size, and they are not tieable, then mark this
+	     register as non-decomposable.  If we decompose it we are
+	     likely to mess up whatever the backend is trying to do.  */
+	  if (outer_words > 1
+	      && outer_size == inner_size
+	      && !MODES_TIEABLE_P (GET_MODE (x), GET_MODE (inner)))
+	    {
 	      bitmap_set_bit (non_decomposable_context, regno);
-	      break;
-	    case DECOMPOSABLE_SIMPLE_MOVE:
-	      if (MODES_TIEABLE_P (GET_MODE (x), word_mode))
-		bitmap_set_bit (decomposable_context, regno);
-	      break;
-	    case SIMPLE_MOVE:
-	      break;
-	    default:
-	      gcc_unreachable ();
+	      bitmap_set_bit (subreg_context, regno);
+	      iter.skip_subrtxes ();
+	      continue;
 	    }
 	}
-    }
-  else if (MEM_P (x))
-    {
-      enum classify_move_insn cmi_mem = NOT_SIMPLE_MOVE;
+      else if (REG_P (x))
+	{
+	  unsigned int regno;
 
-      /* Any registers used in a MEM do not participate in a
-	 SIMPLE_MOVE or DECOMPOSABLE_SIMPLE_MOVE.  Do our own recursion
-	 here, and return -1 to block the parent's recursion.  */
-      for_each_rtx (&XEXP (x, 0), find_decomposable_subregs, &cmi_mem);
-      return -1;
-    }
+	  /* We will see an outer SUBREG before we see the inner REG, so
+	     when we see a plain REG here it means a direct reference to
+	     the register.
 
-  return 0;
+	     If this is not a simple copy from one location to another,
+	     then we can not decompose this register.  If this is a simple
+	     copy we want to decompose, and the mode is right,
+	     then we mark the register as decomposable.
+	     Otherwise we don't say anything about this register --
+	     it could be decomposed, but whether that would be
+	     profitable depends upon how it is used elsewhere.
+
+	     We only set bits in the bitmap for multi-word
+	     pseudo-registers, since those are the only ones we care about
+	     and it keeps the size of the bitmaps down.  */
+
+	  regno = REGNO (x);
+	  if (!HARD_REGISTER_NUM_P (regno)
+	      && GET_MODE_SIZE (GET_MODE (x)) > UNITS_PER_WORD)
+	    {
+	      switch (*pcmi)
+		{
+		case NOT_SIMPLE_MOVE:
+		  bitmap_set_bit (non_decomposable_context, regno);
+		  break;
+		case DECOMPOSABLE_SIMPLE_MOVE:
+		  if (MODES_TIEABLE_P (GET_MODE (x), word_mode))
+		    bitmap_set_bit (decomposable_context, regno);
+		  break;
+		case SIMPLE_MOVE:
+		  break;
+		default:
+		  gcc_unreachable ();
+		}
+	    }
+	}
+      else if (MEM_P (x))
+	{
+	  enum classify_move_insn cmi_mem = NOT_SIMPLE_MOVE;
+
+	  /* Any registers used in a MEM do not participate in a
+	     SIMPLE_MOVE or DECOMPOSABLE_SIMPLE_MOVE.  Do our own recursion
+	     here, and return -1 to block the parent's recursion.  */
+	  find_decomposable_subregs (&XEXP (x, 0), &cmi_mem);
+	  iter.skip_subrtxes ();
+	}
+    }
 }
 
 /* Decompose REGNO into word-sized components.  We smash the REG node
@@ -607,11 +636,11 @@ decompose_register (unsigned int regno)
 /* Get a SUBREG of a CONCATN.  */
 
 static rtx
-simplify_subreg_concatn (enum machine_mode outermode, rtx op,
+simplify_subreg_concatn (machine_mode outermode, rtx op,
 			 unsigned int byte)
 {
   unsigned int inner_size;
-  enum machine_mode innermode, partmode;
+  machine_mode innermode, partmode;
   rtx part;
   unsigned int final_offset;
 
@@ -647,8 +676,8 @@ simplify_subreg_concatn (enum machine_mode outermode, rtx op,
 /* Wrapper around simplify_gen_subreg which handles CONCATN.  */
 
 static rtx
-simplify_gen_subreg_concatn (enum machine_mode outermode, rtx op,
-			     enum machine_mode innermode, unsigned int byte)
+simplify_gen_subreg_concatn (machine_mode outermode, rtx op,
+			     machine_mode innermode, unsigned int byte)
 {
   rtx ret;
 
@@ -725,81 +754,49 @@ resolve_subreg_p (rtx x)
   return resolve_reg_p (SUBREG_REG (x));
 }
 
-/* This is called via for_each_rtx.  Look for SUBREGs which need to be
-   decomposed.  */
+/* Look for SUBREGs in *LOC which need to be decomposed.  */
 
-static int
-resolve_subreg_use (rtx *px, void *data)
+static bool
+resolve_subreg_use (rtx *loc, rtx insn)
 {
-  rtx insn = (rtx) data;
-  rtx x = *px;
-
-  if (x == NULL_RTX)
-    return 0;
-
-  if (resolve_subreg_p (x))
+  subrtx_ptr_iterator::array_type array;
+  FOR_EACH_SUBRTX_PTR (iter, array, loc, NONCONST)
     {
-      x = simplify_subreg_concatn (GET_MODE (x), SUBREG_REG (x),
-				   SUBREG_BYTE (x));
-
-      /* It is possible for a note to contain a reference which we can
-	 decompose.  In this case, return 1 to the caller to indicate
-	 that the note must be removed.  */
-      if (!x)
+      rtx *loc = *iter;
+      rtx x = *loc;
+      if (resolve_subreg_p (x))
 	{
-	  gcc_assert (!insn);
-	  return 1;
+	  x = simplify_subreg_concatn (GET_MODE (x), SUBREG_REG (x),
+				       SUBREG_BYTE (x));
+
+	  /* It is possible for a note to contain a reference which we can
+	     decompose.  In this case, return 1 to the caller to indicate
+	     that the note must be removed.  */
+	  if (!x)
+	    {
+	      gcc_assert (!insn);
+	      return true;
+	    }
+
+	  validate_change (insn, loc, x, 1);
+	  iter.skip_subrtxes ();
 	}
-
-      validate_change (insn, px, x, 1);
-      return -1;
+      else if (resolve_reg_p (x))
+	/* Return 1 to the caller to indicate that we found a direct
+	   reference to a register which is being decomposed.  This can
+	   happen inside notes, multiword shift or zero-extend
+	   instructions.  */
+	return true;
     }
 
-  if (resolve_reg_p (x))
-    {
-      /* Return 1 to the caller to indicate that we found a direct
-	 reference to a register which is being decomposed.  This can
-	 happen inside notes, multiword shift or zero-extend
-	 instructions.  */
-      return 1;
-    }
-
-  return 0;
-}
-
-/* This is called via for_each_rtx.  Look for SUBREGs which can be
-   decomposed and decomposed REGs that need copying.  */
-
-static int
-adjust_decomposed_uses (rtx *px, void *data ATTRIBUTE_UNUSED)
-{
-  rtx x = *px;
-
-  if (x == NULL_RTX)
-    return 0;
-
-  if (resolve_subreg_p (x))
-    {
-      x = simplify_subreg_concatn (GET_MODE (x), SUBREG_REG (x),
-				   SUBREG_BYTE (x));
-
-      if (x)
-	*px = x;
-      else
-	x = copy_rtx (*px);
-    }
-
-  if (resolve_reg_p (x))
-    *px = copy_rtx (x);
-
-  return 0;
+  return false;
 }
 
 /* Resolve any decomposed registers which appear in register notes on
    INSN.  */
 
 static void
-resolve_reg_notes (rtx insn)
+resolve_reg_notes (rtx_insn *insn)
 {
   rtx *pnote, note;
 
@@ -807,7 +804,7 @@ resolve_reg_notes (rtx insn)
   if (note)
     {
       int old_count = num_validated_changes ();
-      if (for_each_rtx (&XEXP (note, 0), resolve_subreg_use, NULL))
+      if (resolve_subreg_use (&XEXP (note, 0), NULL_RTX))
 	remove_note (insn, note);
       else
 	if (old_count != num_validated_changes ())
@@ -869,11 +866,12 @@ can_decompose_p (rtx x)
    we don't change anything, return INSN, otherwise return the start
    of the sequence of moves.  */
 
-static rtx
-resolve_simple_move (rtx set, rtx insn)
+static rtx_insn *
+resolve_simple_move (rtx set, rtx_insn *insn)
 {
-  rtx src, dest, real_dest, insns;
-  enum machine_mode orig_mode, dest_mode;
+  rtx src, dest, real_dest;
+  rtx_insn *insns;
+  machine_mode orig_mode, dest_mode;
   unsigned int words;
   bool pushing;
 
@@ -914,7 +912,8 @@ resolve_simple_move (rtx set, rtx insn)
 	  || (GET_MODE_SIZE (orig_mode)
 	      != GET_MODE_SIZE (GET_MODE (SUBREG_REG (dest))))))
     {
-      rtx reg, minsn, smove;
+      rtx reg, smove;
+      rtx_insn *minsn;
 
       reg = gen_reg_rtx (orig_mode);
       minsn = emit_move_insn (reg, src);
@@ -949,9 +948,9 @@ resolve_simple_move (rtx set, rtx insn)
       int acg;
 
       if (MEM_P (src))
-	for_each_rtx (&XEXP (src, 0), resolve_subreg_use, NULL_RTX);
+	resolve_subreg_use (&XEXP (src, 0), NULL_RTX);
       if (MEM_P (dest))
-	for_each_rtx (&XEXP (dest, 0), resolve_subreg_use, NULL_RTX);
+	resolve_subreg_use (&XEXP (dest, 0), NULL_RTX);
       acg = apply_change_group ();
       gcc_assert (acg);
     }
@@ -966,7 +965,20 @@ resolve_simple_move (rtx set, rtx insn)
       rtx reg;
 
       reg = gen_reg_rtx (orig_mode);
+
+#ifdef AUTO_INC_DEC
+      {
+	rtx move = emit_move_insn (reg, src);
+	if (MEM_P (src))
+	  {
+	    rtx note = find_reg_note (insn, REG_INC, NULL_RTX);
+	    if (note)
+	      add_reg_note (move, REG_INC, XEXP (note, 0));
+	  }
+      }
+#else
       emit_move_insn (reg, src);
+#endif
       src = reg;
     }
 
@@ -1048,13 +1060,24 @@ resolve_simple_move (rtx set, rtx insn)
 
   if (real_dest != NULL_RTX)
     {
-      rtx mdest, minsn, smove;
+      rtx mdest, smove;
+      rtx_insn *minsn;
 
       if (dest_mode == orig_mode)
 	mdest = dest;
       else
 	mdest = simplify_gen_subreg (orig_mode, dest, GET_MODE (dest), 0);
       minsn = emit_move_insn (real_dest, mdest);
+
+#ifdef AUTO_INC_DEC
+  if (MEM_P (real_dest)
+      && !(resolve_reg_p (real_dest) || resolve_subreg_p (real_dest)))
+    {
+      rtx note = find_reg_note (insn, REG_INC, NULL_RTX);
+      if (note)
+	add_reg_note (minsn, REG_INC, XEXP (note, 0));
+    }
+#endif
 
       smove = single_set (minsn);
       gcc_assert (smove != NULL_RTX);
@@ -1069,7 +1092,13 @@ resolve_simple_move (rtx set, rtx insn)
 
   emit_insn_before (insns, insn);
 
-  delete_insn (insn);
+  /* If we get here via self-recursion, then INSN is not yet in the insns
+     chain and delete_insn will fail.  We only want to remove INSN from the
+     current sequence.  See PR56738.  */
+  if (in_sequence_p ())
+    remove_insn (insn);
+  else
+    delete_insn (insn);
 
   return insns;
 }
@@ -1078,10 +1107,10 @@ resolve_simple_move (rtx set, rtx insn)
    component registers.  Return whether we changed something.  */
 
 static bool
-resolve_clobber (rtx pat, rtx insn)
+resolve_clobber (rtx pat, rtx_insn *insn)
 {
   rtx reg;
-  enum machine_mode orig_mode;
+  machine_mode orig_mode;
   unsigned int words, i;
   int ret;
 
@@ -1119,7 +1148,7 @@ resolve_clobber (rtx pat, rtx insn)
    whether we changed something.  */
 
 static bool
-resolve_use (rtx pat, rtx insn)
+resolve_use (rtx pat, rtx_insn *insn)
 {
   if (resolve_reg_p (XEXP (pat, 0)) || resolve_subreg_p (XEXP (pat, 0)))
     {
@@ -1135,9 +1164,26 @@ resolve_use (rtx pat, rtx insn)
 /* A VAR_LOCATION can be simplified.  */
 
 static void
-resolve_debug (rtx insn)
+resolve_debug (rtx_insn *insn)
 {
-  for_each_rtx (&PATTERN (insn), adjust_decomposed_uses, NULL_RTX);
+  subrtx_ptr_iterator::array_type array;
+  FOR_EACH_SUBRTX_PTR (iter, array, &PATTERN (insn), NONCONST)
+    {
+      rtx *loc = *iter;
+      rtx x = *loc;
+      if (resolve_subreg_p (x))
+	{
+	  x = simplify_subreg_concatn (GET_MODE (x), SUBREG_REG (x),
+				       SUBREG_BYTE (x));
+
+	  if (x)
+	    *loc = x;
+	  else
+	    x = copy_rtx (*loc);
+	}
+      if (resolve_reg_p (x))
+	*loc = copy_rtx (x);
+    }
 
   df_insn_rescan (insn);
 
@@ -1150,7 +1196,7 @@ resolve_debug (rtx insn)
    if INSN is decomposable.  */
 
 static bool
-find_decomposable_shift_zext (rtx insn, bool speed_p)
+find_decomposable_shift_zext (rtx_insn *insn, bool speed_p)
 {
   rtx set;
   rtx op;
@@ -1206,33 +1252,33 @@ find_decomposable_shift_zext (rtx insn, bool speed_p)
    and 'set to zero' insn.  Return a pointer to the new insn when a
    replacement was done.  */
 
-static rtx
-resolve_shift_zext (rtx insn)
+static rtx_insn *
+resolve_shift_zext (rtx_insn *insn)
 {
   rtx set;
   rtx op;
   rtx op_operand;
-  rtx insns;
+  rtx_insn *insns;
   rtx src_reg, dest_reg, dest_upper, upper_src = NULL_RTX;
   int src_reg_num, dest_reg_num, offset1, offset2, src_offset;
 
   set = single_set (insn);
   if (!set)
-    return NULL_RTX;
+    return NULL;
 
   op = SET_SRC (set);
   if (GET_CODE (op) != ASHIFT
       && GET_CODE (op) != LSHIFTRT
       && GET_CODE (op) != ASHIFTRT
       && GET_CODE (op) != ZERO_EXTEND)
-    return NULL_RTX;
+    return NULL;
 
   op_operand = XEXP (op, 0);
 
   /* We can tear this operation apart only if the regs were already
      torn apart.  */
   if (!resolve_reg_p (SET_DEST (set)) && !resolve_reg_p (op_operand))
-    return NULL_RTX;
+    return NULL;
 
   /* src_reg_num is the number of the word mode register which we
      are operating on.  For a left shift and a zero_extend on little
@@ -1296,7 +1342,7 @@ resolve_shift_zext (rtx insn)
 
   if (dump_file)
     {
-      rtx in;
+      rtx_insn *in;
       fprintf (dump_file, "; Replacing insn: %d with insns: ", INSN_UID (insn));
       for (in = insns; in != insn; in = NEXT_INSN (in))
 	fprintf (dump_file, "%d ", INSN_UID (in));
@@ -1341,12 +1387,12 @@ dump_choices (bool speed_p, const char *description)
   fprintf (dump_file, "Choices when optimizing for %s:\n", description);
 
   for (i = 0; i < MAX_MACHINE_MODE; i++)
-    if (GET_MODE_SIZE (i) > UNITS_PER_WORD)
+    if (GET_MODE_SIZE ((machine_mode) i) > UNITS_PER_WORD)
       fprintf (dump_file, "  %s mode %s for copy lowering.\n",
 	       choices[speed_p].move_modes_to_split[i]
 	       ? "Splitting"
 	       : "Skipping",
-	       GET_MODE_NAME ((enum machine_mode) i));
+	       GET_MODE_NAME ((machine_mode) i));
 
   fprintf (dump_file, "  %s mode %s for zero_extend lowering.\n",
 	   choices[speed_p].splitting_zext ? "Splitting" : "Skipping",
@@ -1396,7 +1442,7 @@ decompose_multiword_subregs (bool decompose_copies)
     for (i = FIRST_PSEUDO_REGISTER; i < max; ++i)
       if (regno_reg_rtx[i] != NULL)
 	{
-	  enum machine_mode mode = GET_MODE (regno_reg_rtx[i]);
+	  machine_mode mode = GET_MODE (regno_reg_rtx[i]);
 	  if (choices[false].move_modes_to_split[(int) mode]
 	      || choices[true].move_modes_to_split[(int) mode])
 	    {
@@ -1433,9 +1479,9 @@ decompose_multiword_subregs (bool decompose_copies)
   memset (reg_copy_graph.address (), 0, sizeof (bitmap) * max);
 
   speed_p = optimize_function_for_speed_p (cfun);
-  FOR_EACH_BB (bb)
+  FOR_EACH_BB_FN (bb, cfun)
     {
-      rtx insn;
+      rtx_insn *insn;
 
       FOR_BB_INSNS (bb, insn)
 	{
@@ -1477,9 +1523,7 @@ decompose_multiword_subregs (bool decompose_copies)
 	  n = recog_data.n_operands;
 	  for (i = 0; i < n; ++i)
 	    {
-	      for_each_rtx (&recog_data.operand[i],
-			    find_decomposable_subregs,
-			    &cmi);
+	      find_decomposable_subregs (&recog_data.operand[i], &cmi);
 
 	      /* We handle ASM_OPERANDS as a special case to support
 		 things like x86 rdtsc which returns a DImode value.
@@ -1507,15 +1551,15 @@ decompose_multiword_subregs (bool decompose_copies)
 
       propagate_pseudo_copies ();
 
-      sub_blocks = sbitmap_alloc (last_basic_block);
+      sub_blocks = sbitmap_alloc (last_basic_block_for_fn (cfun));
       bitmap_clear (sub_blocks);
 
       EXECUTE_IF_SET_IN_BITMAP (decomposable_context, 0, regno, iter)
 	decompose_register (regno);
 
-      FOR_EACH_BB (bb)
+      FOR_EACH_BB_FN (bb, cfun)
 	{
-	  rtx insn;
+	  rtx_insn *insn;
 
 	  FOR_BB_INSNS (bb, insn)
 	    {
@@ -1542,7 +1586,7 @@ decompose_multiword_subregs (bool decompose_copies)
 		  set = simple_move (insn, speed_p);
 		  if (set)
 		    {
-		      rtx orig_insn = insn;
+		      rtx_insn *orig_insn = insn;
 		      bool cfi = control_flow_insn_p (insn);
 
 		      /* We can end up splitting loads to multi-word pseudos
@@ -1572,7 +1616,7 @@ decompose_multiword_subregs (bool decompose_copies)
 		    }
 		  else
 		    {
-		      rtx decomposed_shift;
+		      rtx_insn *decomposed_shift;
 
 		      decomposed_shift = resolve_shift_zext (insn);
 		      if (decomposed_shift != NULL_RTX)
@@ -1584,9 +1628,7 @@ decompose_multiword_subregs (bool decompose_copies)
 		    }
 
 		  for (i = recog_data.n_operands - 1; i >= 0; --i)
-		    for_each_rtx (recog_data.operand_loc[i],
-				  resolve_subreg_use,
-				  insn);
+		    resolve_subreg_use (recog_data.operand_loc[i], insn);
 
 		  resolve_reg_notes (insn);
 
@@ -1614,10 +1656,10 @@ decompose_multiword_subregs (bool decompose_copies)
 	 loads to appear.  */
       EXECUTE_IF_SET_IN_BITMAP (sub_blocks, 0, i, sbi)
 	{
-	  rtx insn, end;
+	  rtx_insn *insn, *end;
 	  edge fallthru;
 
-	  bb = BASIC_BLOCK (i);
+	  bb = BASIC_BLOCK_FOR_FN (cfun, i);
 	  insn = BB_HEAD (bb);
 	  end = BB_END (bb);
 
@@ -1657,71 +1699,86 @@ decompose_multiword_subregs (bool decompose_copies)
   BITMAP_FREE (subreg_context);
 }
 
-/* Gate function for lower subreg pass.  */
-
-static bool
-gate_handle_lower_subreg (void)
-{
-  return flag_split_wide_types != 0;
-}
-
 /* Implement first lower subreg pass.  */
 
-static unsigned int
-rest_of_handle_lower_subreg (void)
+namespace {
+
+const pass_data pass_data_lower_subreg =
 {
-  decompose_multiword_subregs (false);
-  return 0;
+  RTL_PASS, /* type */
+  "subreg1", /* name */
+  OPTGROUP_NONE, /* optinfo_flags */
+  TV_LOWER_SUBREG, /* tv_id */
+  0, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  0, /* todo_flags_finish */
+};
+
+class pass_lower_subreg : public rtl_opt_pass
+{
+public:
+  pass_lower_subreg (gcc::context *ctxt)
+    : rtl_opt_pass (pass_data_lower_subreg, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual bool gate (function *) { return flag_split_wide_types != 0; }
+  virtual unsigned int execute (function *)
+    {
+      decompose_multiword_subregs (false);
+      return 0;
+    }
+
+}; // class pass_lower_subreg
+
+} // anon namespace
+
+rtl_opt_pass *
+make_pass_lower_subreg (gcc::context *ctxt)
+{
+  return new pass_lower_subreg (ctxt);
 }
 
 /* Implement second lower subreg pass.  */
 
-static unsigned int
-rest_of_handle_lower_subreg2 (void)
+namespace {
+
+const pass_data pass_data_lower_subreg2 =
 {
-  decompose_multiword_subregs (true);
-  return 0;
+  RTL_PASS, /* type */
+  "subreg2", /* name */
+  OPTGROUP_NONE, /* optinfo_flags */
+  TV_LOWER_SUBREG, /* tv_id */
+  0, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  TODO_df_finish, /* todo_flags_finish */
+};
+
+class pass_lower_subreg2 : public rtl_opt_pass
+{
+public:
+  pass_lower_subreg2 (gcc::context *ctxt)
+    : rtl_opt_pass (pass_data_lower_subreg2, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual bool gate (function *) { return flag_split_wide_types != 0; }
+  virtual unsigned int execute (function *)
+    {
+      decompose_multiword_subregs (true);
+      return 0;
+    }
+
+}; // class pass_lower_subreg2
+
+} // anon namespace
+
+rtl_opt_pass *
+make_pass_lower_subreg2 (gcc::context *ctxt)
+{
+  return new pass_lower_subreg2 (ctxt);
 }
-
-struct rtl_opt_pass pass_lower_subreg =
-{
- {
-  RTL_PASS,
-  "subreg1",	                        /* name */
-  OPTGROUP_NONE,                        /* optinfo_flags */
-  gate_handle_lower_subreg,             /* gate */
-  rest_of_handle_lower_subreg,          /* execute */
-  NULL,                                 /* sub */
-  NULL,                                 /* next */
-  0,                                    /* static_pass_number */
-  TV_LOWER_SUBREG,                      /* tv_id */
-  0,                                    /* properties_required */
-  0,                                    /* properties_provided */
-  0,                                    /* properties_destroyed */
-  0,                                    /* todo_flags_start */
-  TODO_ggc_collect |
-  TODO_verify_flow                      /* todo_flags_finish */
- }
-};
-
-struct rtl_opt_pass pass_lower_subreg2 =
-{
- {
-  RTL_PASS,
-  "subreg2",	                        /* name */
-  OPTGROUP_NONE,                        /* optinfo_flags */
-  gate_handle_lower_subreg,             /* gate */
-  rest_of_handle_lower_subreg2,          /* execute */
-  NULL,                                 /* sub */
-  NULL,                                 /* next */
-  0,                                    /* static_pass_number */
-  TV_LOWER_SUBREG,                      /* tv_id */
-  0,                                    /* properties_required */
-  0,                                    /* properties_provided */
-  0,                                    /* properties_destroyed */
-  0,                                    /* todo_flags_start */
-  TODO_df_finish | TODO_verify_rtl_sharing |
-  TODO_ggc_collect |
-  TODO_verify_flow                      /* todo_flags_finish */
- }
-};

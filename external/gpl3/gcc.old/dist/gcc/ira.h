@@ -1,6 +1,6 @@
 /* Communication between the Integrated Register Allocator (IRA) and
    the rest of the compiler.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -18,6 +18,9 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
+
+#ifndef GCC_IRA_H
+#define GCC_IRA_H
 
 /* True when we use LRA instead of reload pass for the current
    function.  */
@@ -61,7 +64,7 @@ struct target_ira
      class.  */
   enum reg_class x_ira_pressure_class_translate[N_REG_CLASSES];
 
-  /* Bigest pressure register class containing stack registers.
+  /* Biggest pressure register class containing stack registers.
      NO_REGS if there are no stack registers.  */
   enum reg_class x_ira_stack_reg_pressure_class;
 
@@ -107,6 +110,11 @@ struct target_ira
   /* Function specific hard registers can not be used for the register
      allocation.  */
   HARD_REG_SET x_ira_no_alloc_regs;
+
+  /* Array whose values are hard regset of hard registers available for
+     the allocation of given register class whose HARD_REGNO_MODE_OK
+     values for given mode are zero.  */
+  HARD_REG_SET x_ira_prohibited_class_mode_regs[N_REG_CLASSES][NUM_MACHINE_MODES];
 };
 
 extern struct target_ira default_target_ira;
@@ -152,9 +160,11 @@ extern struct target_ira *this_target_ira;
   (this_target_ira->x_ira_class_singleton)
 #define ira_no_alloc_regs \
   (this_target_ira->x_ira_no_alloc_regs)
+#define ira_prohibited_class_mode_regs \
+  (this_target_ira->x_ira_prohibited_class_mode_regs)
 
 /* Major structure describing equivalence info for a pseudo.  */
-struct ira_reg_equiv
+struct ira_reg_equiv_s
 {
   /* True if we can use this equivalence.  */
   bool defined_p;
@@ -166,24 +176,22 @@ struct ira_reg_equiv
   rtx constant;
   rtx invariant;
   /* Always NULL_RTX if defined_p is false.  */
-  rtx init_insns;
+  rtx_insn_list *init_insns;
 };
 
 /* The length of the following array.  */
 extern int ira_reg_equiv_len;
 
 /* Info about equiv. info for each register.  */
-extern struct ira_reg_equiv *ira_reg_equiv;
+extern struct ira_reg_equiv_s *ira_reg_equiv;
 
 extern void ira_init_once (void);
 extern void ira_init (void);
-extern void ira_finish_once (void);
-extern void ira_setup_eliminable_regset (bool);
-extern rtx ira_eliminate_regs (rtx, enum machine_mode);
+extern void ira_setup_eliminable_regset (void);
+extern rtx ira_eliminate_regs (rtx, machine_mode);
 extern void ira_set_pseudo_classes (bool, FILE *);
-extern void ira_implicitly_set_insn_hard_regs (HARD_REG_SET *);
 extern void ira_expand_reg_equiv (void);
-extern void ira_update_equiv_info_by_shuffle_insn (int, int, rtx);
+extern void ira_update_equiv_info_by_shuffle_insn (int, int, rtx_insn *);
 
 extern void ira_sort_regnos_for_alter_reg (int *, int, unsigned int *);
 extern void ira_mark_allocation_change (int);
@@ -196,3 +204,8 @@ extern bool ira_better_spill_reload_regno_p (int *, int *, rtx, rtx, rtx);
 extern bool ira_bad_reload_regno (int, rtx, rtx);
 
 extern void ira_adjust_equiv_reg_cost (unsigned, int);
+
+/* ira-costs.c */
+extern void ira_costs_c_finalize (void);
+
+#endif /* GCC_IRA_H */

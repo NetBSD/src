@@ -1,6 +1,6 @@
 /* Garbage collection for the GNU compiler.
 
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -54,6 +54,9 @@ extern int gt_pch_note_object (void *, void *, gt_note_pointers);
    function.  */
 extern void gt_pch_note_reorder (void *, void *, gt_handle_reorder);
 
+/* generated function to clear caches in gc memory.  */
+extern void gt_clear_caches ();
+
 /* Mark the object in the first parameter and anything it points to.  */
 typedef void (*gt_pointer_walker) (void *);
 
@@ -70,22 +73,7 @@ struct ggc_root_tab {
 /* Pointers to arrays of ggc_root_tab, terminated by NULL.  */
 extern const struct ggc_root_tab * const gt_ggc_rtab[];
 extern const struct ggc_root_tab * const gt_ggc_deletable_rtab[];
-extern const struct ggc_root_tab * const gt_pch_cache_rtab[];
 extern const struct ggc_root_tab * const gt_pch_scalar_rtab[];
-
-/* Structure for hash table cache marking.  */
-struct htab;
-struct ggc_cache_tab {
-  struct htab * *base;
-  size_t nelt;
-  size_t stride;
-  gt_pointer_walker cb;
-  gt_pointer_walker pchw;
-  int (*marked_p) (const void *);
-};
-#define LAST_GGC_CACHE_TAB { NULL, 0, 0, NULL, NULL, NULL }
-/* Pointers to arrays of ggc_cache_tab, terminated by NULL.  */
-extern const struct ggc_cache_tab * const gt_ggc_cache_rtab[];
 
 /* If EXPR is not NULL and previously unmarked, mark it and evaluate
    to true.  Otherwise evaluate to false.  */
@@ -136,101 +124,137 @@ extern void gt_pch_save (FILE *f);
 /* Allocation.  */
 
 /* The internal primitive.  */
-extern void *ggc_internal_alloc_stat (size_t MEM_STAT_DECL)
-  ATTRIBUTE_MALLOC;
+extern void *ggc_internal_alloc (size_t, void (*)(void *), size_t,
+				 size_t CXX_MEM_STAT_INFO)
+     ATTRIBUTE_MALLOC;
+
+     static inline
+     void *
+     ggc_internal_alloc (size_t s CXX_MEM_STAT_INFO)
+{
+  return ggc_internal_alloc (s, NULL, 0, 1 PASS_MEM_STAT);
+}
 
 extern size_t ggc_round_alloc_size (size_t requested_size);
 
-#define ggc_internal_alloc(s) ggc_internal_alloc_stat (s MEM_STAT_INFO)
-
 /* Allocates cleared memory.  */
-extern void *ggc_internal_cleared_alloc_stat (size_t MEM_STAT_DECL)
-  ATTRIBUTE_MALLOC;
+extern void *ggc_internal_cleared_alloc (size_t, void (*)(void *),
+					 size_t, size_t
+					 CXX_MEM_STAT_INFO) ATTRIBUTE_MALLOC;
+
+static inline
+void *
+ggc_internal_cleared_alloc (size_t s CXX_MEM_STAT_INFO)
+{
+  return ggc_internal_cleared_alloc (s, NULL, 0, 1 PASS_MEM_STAT);
+}
 
 /* Resize a block.  */
-extern void *ggc_realloc_stat (void *, size_t MEM_STAT_DECL);
+extern void *ggc_realloc (void *, size_t CXX_MEM_STAT_INFO);
 
 /* Free a block.  To be used when known for certain it's not reachable.  */
 extern void ggc_free (void *);
 
 extern void dump_ggc_loc_statistics (bool);
 
-/* Reallocators.  */
+/* Reallocator.  */
 #define GGC_RESIZEVEC(T, P, N) \
-    ((T *) ggc_realloc_stat ((P), (N) * sizeof (T) MEM_STAT_INFO))
+    ((T *) ggc_realloc ((P), (N) * sizeof (T) MEM_STAT_INFO))
 
-#define GGC_RESIZEVAR(T, P, N)                          \
-    ((T *) ggc_realloc_stat ((P), (N) MEM_STAT_INFO))
-
-static inline void *
-ggc_internal_vec_alloc_stat (size_t s, size_t c MEM_STAT_DECL)
+template<typename T>
+void
+finalize (void *p)
 {
-    return ggc_internal_alloc_stat (c * s PASS_MEM_STAT);
+  static_cast<T *> (p)->~T ();
+}
+
+template<typename T>
+static inline bool
+need_finalization_p ()
+{
+#if GCC_VERSION >= 4003
+  return !__has_trivial_destructor (T);
+#else
+  return true;
+#endif
+}
+
+template<typename T>
+static inline T *
+ggc_alloc (ALONE_CXX_MEM_STAT_INFO)
+{
+  if (need_finalization_p<T> ())
+    return static_cast<T *> (ggc_internal_alloc (sizeof (T), finalize<T>, 0, 1
+						 PASS_MEM_STAT));
+  else
+    return static_cast<T *> (ggc_internal_alloc (sizeof (T), NULL, 0, 1
+						 PASS_MEM_STAT));
+}
+
+template<typename T>
+static inline T *
+ggc_cleared_alloc (ALONE_CXX_MEM_STAT_INFO)
+{
+  if (need_finalization_p<T> ())
+    return static_cast<T *> (ggc_internal_cleared_alloc (sizeof (T),
+							 finalize<T>, 0, 1
+							 PASS_MEM_STAT));
+  else
+    return static_cast<T *> (ggc_internal_cleared_alloc (sizeof (T), NULL, 0, 1
+							 PASS_MEM_STAT));
+}
+
+template<typename T>
+static inline T *
+ggc_vec_alloc (size_t c CXX_MEM_STAT_INFO)
+{
+  if (need_finalization_p<T> ())
+    return static_cast<T *> (ggc_internal_alloc (c * sizeof (T), finalize<T>,
+						 sizeof (T), c PASS_MEM_STAT));
+  else
+    return static_cast<T *> (ggc_internal_alloc (c * sizeof (T), NULL, 0, 0
+						 PASS_MEM_STAT));
+}
+
+template<typename T>
+static inline T *
+ggc_cleared_vec_alloc (size_t c CXX_MEM_STAT_INFO)
+{
+  if (need_finalization_p<T> ())
+    return static_cast<T *> (ggc_internal_cleared_alloc (c * sizeof (T),
+							 finalize<T>,
+							 sizeof (T), c
+							 PASS_MEM_STAT));
+  else
+    return static_cast<T *> (ggc_internal_cleared_alloc (c * sizeof (T), NULL,
+							 0, 0 PASS_MEM_STAT));
 }
 
 static inline void *
-ggc_internal_cleared_vec_alloc_stat (size_t s, size_t c MEM_STAT_DECL)
+ggc_alloc_atomic (size_t s CXX_MEM_STAT_INFO)
 {
-    return ggc_internal_cleared_alloc_stat (c * s PASS_MEM_STAT);
+    return ggc_internal_alloc (s PASS_MEM_STAT);
 }
-
-#define ggc_internal_cleared_vec_alloc(s, c) \
-    (ggc_internal_cleared_vec_alloc_stat ((s), (c) MEM_STAT_INFO))
-
-static inline void *
-ggc_alloc_atomic_stat (size_t s MEM_STAT_DECL)
-{
-    return ggc_internal_alloc_stat (s PASS_MEM_STAT);
-}
-
-#define ggc_alloc_atomic(S)  (ggc_alloc_atomic_stat ((S) MEM_STAT_INFO))
-
-#define ggc_alloc_cleared_atomic(S)             \
-    (ggc_internal_cleared_alloc_stat ((S) MEM_STAT_INFO))
-
-extern void *ggc_cleared_alloc_htab_ignore_args (size_t, size_t)
-  ATTRIBUTE_MALLOC;
-
-extern void *ggc_cleared_alloc_ptr_array_two_args (size_t, size_t)
-  ATTRIBUTE_MALLOC;
-
-#define htab_create_ggc(SIZE, HASH, EQ, DEL) \
-  htab_create_typed_alloc (SIZE, HASH, EQ, DEL,	\
-			   ggc_cleared_alloc_htab_ignore_args,		\
-			   ggc_cleared_alloc_ptr_array_two_args,	\
-			   ggc_free)
-
-#define splay_tree_new_ggc(COMPARE, ALLOC_TREE, ALLOC_NODE)		     \
-  splay_tree_new_typed_alloc (COMPARE, NULL, NULL, &ALLOC_TREE, &ALLOC_NODE, \
-			      &ggc_splay_dont_free, NULL)
-
-extern void *ggc_splay_alloc (int, void *)
-  ATTRIBUTE_MALLOC;
-
-extern void ggc_splay_dont_free (void *, void *);
 
 /* Allocate a gc-able string, and fill it with LENGTH bytes from CONTENTS.
    If LENGTH is -1, then CONTENTS is assumed to be a
    null-terminated string and the memory sized accordingly.  */
-extern const char *ggc_alloc_string_stat (const char *contents, int length
-                                          MEM_STAT_DECL);
-
-#define ggc_alloc_string(c, l) ggc_alloc_string_stat (c, l MEM_STAT_INFO)
+extern const char *ggc_alloc_string (const char *contents, int length
+                                     CXX_MEM_STAT_INFO);
 
 /* Make a copy of S, in GC-able memory.  */
-#define ggc_strdup(S) ggc_alloc_string_stat ((S), -1 MEM_STAT_INFO)
+#define ggc_strdup(S) ggc_alloc_string ((S), -1 MEM_STAT_INFO)
 
 /* Invoke the collector.  Garbage collection occurs only when this
    function is called, not during allocations.  */
 extern void ggc_collect	(void);
 
+/* Assume that all GGC memory is reachable and grow the limits for next collection. */
+extern void ggc_grow (void);
+
 /* Register an additional root table.  This can be useful for some
    plugins.  Does nothing if the passed pointer is NULL. */
 extern void ggc_register_root_tab (const struct ggc_root_tab *);
-
-/* Register an additional cache table.  This can be useful for some
-   plugins.  Does nothing if the passed pointer is NULL. */
-extern void ggc_register_cache_tab (const struct ggc_cache_tab *);
 
 /* Read objects previously saved with gt_pch_save from F.  */
 extern void gt_pch_restore (FILE *f);
@@ -246,34 +270,60 @@ extern void stringpool_statistics (void);
 extern void init_ggc_heuristics (void);
 
 #define ggc_alloc_rtvec_sized(NELT)				\
-  ggc_alloc_rtvec_def (sizeof (struct rtvec_def)		\
+  (rtvec_def *) ggc_internal_alloc (sizeof (struct rtvec_def)		\
 		       + ((NELT) - 1) * sizeof (rtx))		\
 
 /* Memory statistics passing versions of some allocators.  Too few of them to
    make gengtype produce them, so just define the needed ones here.  */
 static inline struct rtx_def *
-ggc_alloc_rtx_def_stat (size_t s MEM_STAT_DECL)
+ggc_alloc_rtx_def_stat (size_t s CXX_MEM_STAT_INFO)
 {
-  return (struct rtx_def *) ggc_internal_alloc_stat (s PASS_MEM_STAT);
+  return (struct rtx_def *) ggc_internal_alloc (s PASS_MEM_STAT);
 }
 
 static inline union tree_node *
-ggc_alloc_tree_node_stat (size_t s MEM_STAT_DECL)
+ggc_alloc_tree_node_stat (size_t s CXX_MEM_STAT_INFO)
 {
-  return (union tree_node *) ggc_internal_alloc_stat (s PASS_MEM_STAT);
+  return (union tree_node *) ggc_internal_alloc (s PASS_MEM_STAT);
 }
 
 static inline union tree_node *
-ggc_alloc_cleared_tree_node_stat (size_t s MEM_STAT_DECL)
+ggc_alloc_cleared_tree_node_stat (size_t s CXX_MEM_STAT_INFO)
 {
-  return (union tree_node *) ggc_internal_cleared_alloc_stat (s PASS_MEM_STAT);
+  return (union tree_node *) ggc_internal_cleared_alloc (s PASS_MEM_STAT);
 }
 
-static inline union gimple_statement_d *
-ggc_alloc_cleared_gimple_statement_d_stat (size_t s MEM_STAT_DECL)
+static inline struct gimple_statement_base *
+ggc_alloc_cleared_gimple_statement_stat (size_t s CXX_MEM_STAT_INFO)
 {
-  return (union gimple_statement_d *)
-    ggc_internal_cleared_alloc_stat (s PASS_MEM_STAT);
+  return (struct gimple_statement_base *)
+    ggc_internal_cleared_alloc (s PASS_MEM_STAT);
+}
+
+static inline void
+gt_ggc_mx (const char *s)
+{
+  ggc_test_and_set_mark (const_cast<char *> (s));
+}
+
+static inline void
+gt_pch_nx (const char *)
+{
+}
+
+static inline void
+gt_ggc_mx (int)
+{
+}
+
+static inline void
+gt_pch_nx (int)
+{
+}
+
+static inline void
+gt_pch_nx (unsigned int)
+{
 }
 
 #endif

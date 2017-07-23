@@ -1,16 +1,17 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2015/09/23 03:03:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2017/07/23 01:05:10 mrg Exp $
 
 .include <bsd.own.mk>
 
 # crtstuff is built out of elsewhere, or not at all
-SUBDIR+= libgcc libiberty libobjc libgomp
-SUBDIR+= libmudflap libmudflapth libbacktrace
+SUBDIR+= libgcc .WAIT
+SUBDIR+= libiberty libobjc libgomp
+SUBDIR+= libbacktrace
 SUBDIR+= liblto_plugin
 
-.if (${MKLIBSTDCXX} != "no")
+.if (${MKLIBSTDCXX} != "no") && (${MKCXX} != "no")
 SUBDIR+= libsupc++ libstdc++-v3
 .endif
 
-SUBDIR+= libasan
+SUBDIR+= .WAIT libasan libubsan
 
 .include <bsd.subdir.mk>

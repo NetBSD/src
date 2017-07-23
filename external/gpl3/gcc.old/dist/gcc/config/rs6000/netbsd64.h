@@ -308,13 +308,6 @@ extern int dot_symbols;
    process.  XXXMRG?  */
 #define OS_MISSING_POWERPC64 !TARGET_64BIT
 
-/* NetBSD has float and long double forms of math functions.  */
-#undef  TARGET_C99_FUNCTIONS
-#define TARGET_C99_FUNCTIONS 1
-
-/* NetBSD doesn't have sincos that follows the GNU extension.  */
-#undef  TARGET_HAS_SINCOS
-
 #undef  TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS()			\
   do							\

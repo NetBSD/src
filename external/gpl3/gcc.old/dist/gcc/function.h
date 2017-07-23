@@ -1,5 +1,5 @@
 /* Structure for saving state for a nested function.
-   Copyright (C) 1989-2013 Free Software Foundation, Inc.
+   Copyright (C) 1989-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,12 +20,6 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_FUNCTION_H
 #define GCC_FUNCTION_H
 
-#include "hashtab.h"
-#include "vec.h"
-#include "machmode.h"
-#include "tm.h"			/* For CUMULATIVE_ARGS.  */
-#include "hard-reg-set.h"	/* For HARD_REG_SET in struct rtl_data. */
-#include "input.h"		/* For location_t.  */
 
 /* Stack of pending (incomplete) sequences saved by `start_sequence'.
    Each element describes one pending sequence.
@@ -34,8 +28,8 @@ along with GCC; see the file COPYING3.  If not see
 
 struct GTY(()) sequence_stack {
   /* First and last insns in the chain of the saved sequence.  */
-  rtx first;
-  rtx last;
+  rtx_insn *first;
+  rtx_insn *last;
   struct sequence_stack *next;
 };
 
@@ -52,8 +46,8 @@ struct GTY(()) emit_status {
 
      start_sequence saves both of these on `sequence_stack' and then starts
      a new, nested sequence of insns.  */
-  rtx x_first_insn;
-  rtx x_last_insn;
+  rtx_insn *x_first_insn;
+  rtx_insn *x_last_insn;
 
   /* Stack of pending (incomplete) sequences saved by `start_sequence'.
      Each element describes one pending sequence.
@@ -135,7 +129,7 @@ struct GTY(()) expr_status {
   rtx x_apply_args_value;
 
   /* List of labels that must never be deleted.  */
-  rtx x_forced_labels;
+  rtx_insn_list *x_forced_labels;
 };
 
 typedef struct call_site_record_d *call_site_record;
@@ -144,10 +138,10 @@ typedef struct call_site_record_d *call_site_record;
 struct GTY(()) rtl_eh {
   rtx ehr_stackadj;
   rtx ehr_handler;
-  rtx ehr_label;
+  rtx_code_label *ehr_label;
 
   rtx sjlj_fc;
-  rtx sjlj_exit_after;
+  rtx_insn *sjlj_exit_after;
 
   vec<uchar, va_gc> *action_record_data;
 
@@ -165,10 +159,10 @@ struct gimple_df;
 struct temp_slot;
 typedef struct temp_slot *temp_slot_p;
 struct call_site_record_d;
-struct dw_fde_struct;
+struct dw_fde_node;
 
-struct ipa_opt_pass_d;
-typedef struct ipa_opt_pass_d *ipa_opt_pass;
+class ipa_opt_pass_d;
+typedef ipa_opt_pass_d *ipa_opt_pass;
 
 
 struct GTY(()) varasm_status {
@@ -252,6 +246,9 @@ struct GTY(()) rtl_data {
      result in a register, current_function_return_rtx will always be
      the hard register containing the result.  */
   rtx return_rtx;
+  /* If nonxero, an RTL expression for the lcoation at which the current
+     function returns bounds for its result.  */
+  rtx return_bnd;
 
   /* Vector of initial-value pairs.  Each pair consists of a pseudo
      register of approprite mode that stores the initial value a hard
@@ -264,29 +261,29 @@ struct GTY(()) rtl_data {
      Used for detecting stack clobbers.  */
   tree stack_protect_guard;
 
-  /* List (chain of EXPR_LIST) of labels heading the current handlers for
+  /* List (chain of INSN_LIST) of labels heading the current handlers for
      nonlocal gotos.  */
-  rtx x_nonlocal_goto_handler_labels;
+  rtx_insn_list *x_nonlocal_goto_handler_labels;
 
   /* Label that will go on function epilogue.
      Jumping to this label serves as a "return" instruction
      on machines which require execution of the epilogue on all returns.  */
-  rtx x_return_label;
+  rtx_code_label *x_return_label;
 
   /* Label that will go on the end of function epilogue.
      Jumping to this label serves as a "naked return" instruction
      on machines which require execution of the epilogue on all returns.  */
-  rtx x_naked_return_label;
+  rtx_code_label *x_naked_return_label;
 
   /* List (chain of EXPR_LISTs) of all stack slots in this function.
      Made for the sake of unshare_all_rtl.  */
-  rtx x_stack_slot_list;
+  rtx_expr_list *x_stack_slot_list;
 
   /* List of empty areas in the stack frame.  */
   struct frame_space *frame_space_list;
 
   /* Place after which to insert the tail_recursion_label if we need one.  */
-  rtx x_stack_check_probe_note;
+  rtx_note *x_stack_check_probe_note;
 
   /* Location at which to save the argument pointer if it will need to be
      referenced.  There are two cases where this is done: if nonlocal gotos
@@ -303,7 +300,7 @@ struct GTY(()) rtl_data {
   HOST_WIDE_INT x_frame_offset;
 
   /* Insn after which register parms and SAVE_EXPRs are born, if nonopt.  */
-  rtx x_parm_birth_insn;
+  rtx_insn *x_parm_birth_insn;
 
   /* List of all used temporaries allocated, by level.  */
   vec<temp_slot_p, va_gc> *x_used_temp_slots;
@@ -446,6 +443,15 @@ struct GTY(()) rtl_data {
      sched2) and is useful only if the port defines LEAF_REGISTERS.  */
   bool uses_only_leaf_regs;
 
+  /* Nonzero if the function being compiled has undergone hot/cold partitioning
+     (under flag_reorder_blocks_and_partition) and has at least one cold
+     block.  */
+  bool has_bb_partition;
+
+  /* Nonzero if the function being compiled has completed the bb reordering
+     pass.  */
+  bool bb_reorder_complete;
+
   /* Like regs_ever_live, but 1 if a reg is set or clobbered from an
      asm.  Unlike regs_ever_live, elements of this array corresponding
      to eliminable regs (like the frame pointer) are set if an asm
@@ -543,6 +549,9 @@ struct GTY(()) function {
   /* Vector of function local variables, functions, types and constants.  */
   vec<tree, va_gc> *local_decls;
 
+  /* In a Cilk function, the VAR_DECL for the frame descriptor. */
+  tree cilk_frame_decl;
+
   /* For md files.  */
 
   /* tm.h can use this to store whatever it likes.  */
@@ -552,12 +561,12 @@ struct GTY(()) function {
   struct language_function * language;
 
   /* Used types hash table.  */
-  htab_t GTY ((param_is (union tree_node))) used_types_hash;
+  hash_set<tree> *GTY (()) used_types_hash;
 
   /* Dwarf2 Frame Description Entry, containing the Call Frame Instructions
      used for unwinding.  Only set when either dwarf2 unwinding or dwarf2
      debugging is enabled.  */
-  struct dw_fde_struct *fde;
+  struct dw_fde_node *fde;
 
   /* Last statement uid.  */
   int last_stmt_uid;
@@ -580,6 +589,9 @@ struct GTY(()) function {
      a string describing the reason for failure.  */
   const char * GTY((skip)) cannot_be_copied_reason;
 
+  /* Last assigned dependence info clique.  */
+  unsigned short last_clique;
+
   /* Collected bit flags.  */
 
   /* Number of units of general registers that need saving in stdarg
@@ -598,6 +610,12 @@ struct GTY(()) function {
      either as a subroutine or builtin.  */
   unsigned int calls_alloca : 1;
 
+  /* This will indicate whether a function is a cilk function */
+  unsigned int is_cilk_function : 1;
+
+  /* Nonzero if this is a Cilk function that spawns. */
+  unsigned int calls_cilk_spawn : 1;
+  
   /* Nonzero if function being compiled receives nonlocal gotos
      from nested functions.  */
   unsigned int has_nonlocal_label : 1;
@@ -641,15 +659,22 @@ struct GTY(()) function {
      adjusts one of its arguments and forwards to another
      function.  */
   unsigned int is_thunk : 1;
+
+  /* Nonzero if the current function contains any loops with
+     loop->force_vectorize set.  */
+  unsigned int has_force_vectorize_loops : 1;
+
+  /* Nonzero if the current function contains any loops with
+     nonzero value in loop->simduid.  */
+  unsigned int has_simduid_loops : 1;
+
+  /* Set when the tail call has been identified.  */
+  unsigned int tail_call_marked : 1;
 };
 
 /* Add the decl D to the local_decls list of FUN.  */
 
-static inline void
-add_local_decl (struct function *fun, tree d)
-{
-  vec_safe_push (fun->local_decls, d);
-}
+void add_local_decl (struct function *fun, tree d);
 
 #define FOR_EACH_LOCAL_DECL(FUN, I, D)		\
   FOR_EACH_VEC_SAFE_ELT_REVERSE ((FUN)->local_decls, I, D)
@@ -673,9 +698,15 @@ extern int virtuals_instantiated;
 /* Nonzero if at least one trampoline has been created.  */
 extern int trampolines_created;
 
-struct GTY(()) types_used_by_vars_entry {
+struct GTY((for_user)) types_used_by_vars_entry {
   tree type;
   tree var_decl;
+};
+
+struct used_type_hasher : ggc_hasher<types_used_by_vars_entry *>
+{
+  static hashval_t hash (types_used_by_vars_entry *);
+  static bool equal (types_used_by_vars_entry *, types_used_by_vars_entry *);
 };
 
 /* Hash table making the relationship between a global variable
@@ -683,22 +714,31 @@ struct GTY(()) types_used_by_vars_entry {
    entry is a referenced type, and the value is the DECL of the global
    variable. types_use_by_vars_do_hash and types_used_by_vars_eq below are
    the hash and equality functions to use for this hash table.  */
-extern GTY((param_is (struct types_used_by_vars_entry))) htab_t
-  types_used_by_vars_hash;
+extern GTY(()) hash_table<used_type_hasher> *types_used_by_vars_hash;
 
-hashval_t types_used_by_vars_do_hash (const void*);
-int types_used_by_vars_eq (const void *, const void *);
 void types_used_by_var_decl_insert (tree type, tree var_decl);
 
 /* During parsing of a global variable, this vector contains the types
    referenced by the global variable.  */
 extern GTY(()) vec<tree, va_gc> *types_used_by_cur_var_decl;
 
-/* cfun shouldn't be set directly; use one of these functions instead.  */
-extern void set_cfun (struct function *new_cfun);
-extern void push_cfun (struct function *new_cfun);
-extern void pop_cfun (void);
-extern void instantiate_decl_rtl (rtx x);
+
+/* Return the loop tree of FN.  */
+
+inline struct loops *
+loops_for_fn (struct function *fn)
+{
+  return fn->x_current_loops;
+}
+
+/* Set the loop tree of FN to LOOPS.  */
+
+inline void
+set_loops_for_fn (struct function *fn, struct loops *loops)
+{
+  gcc_checking_assert (fn->x_current_loops == NULL || loops == NULL);
+  fn->x_current_loops = loops;
+}
 
 /* For backward compatibility... eventually these should all go away.  */
 #define current_function_funcdef_no (cfun->funcdef_no)
@@ -708,16 +748,95 @@ extern void instantiate_decl_rtl (rtx x);
 #define n_bbs_in_dom_tree (cfun->cfg->x_n_bbs_in_dom_tree)
 #define VALUE_HISTOGRAMS(fun) (fun)->value_histograms
 
-/* Identify BLOCKs referenced by more than one NOTE_INSN_BLOCK_{BEG,END},
-   and create duplicate blocks.  */
-extern void reorder_blocks (void);
+/* A pointer to a function to create target specific, per-function
+   data structures.  */
+extern struct machine_function * (*init_machine_status) (void);
 
-/* Set BLOCK_NUMBER for all the blocks in FN.  */
-extern void number_blocks (tree);
+enum direction {none, upward, downward};
 
-extern void clear_block_marks (tree);
-extern tree blocks_nreverse (tree);
-extern tree block_chainon (tree, tree);
+/* Structure to record the size of a sequence of arguments
+   as the sum of a tree-expression and a constant.  This structure is
+   also used to store offsets from the stack, which might be negative,
+   so the variable part must be ssizetype, not sizetype.  */
+
+struct args_size
+{
+  HOST_WIDE_INT constant;
+  tree var;
+};
+
+/* Package up various arg related fields of struct args for
+   locate_and_pad_parm.  */
+struct locate_and_pad_arg_data
+{
+  /* Size of this argument on the stack, rounded up for any padding it
+     gets.  If REG_PARM_STACK_SPACE is defined, then register parms are
+     counted here, otherwise they aren't.  */
+  struct args_size size;
+  /* Offset of this argument from beginning of stack-args.  */
+  struct args_size offset;
+  /* Offset to the start of the stack slot.  Different from OFFSET
+     if this arg pads downward.  */
+  struct args_size slot_offset;
+  /* The amount that the stack pointer needs to be adjusted to
+     force alignment for the next argument.  */
+  struct args_size alignment_pad;
+  /* Which way we should pad this arg.  */
+  enum direction where_pad;
+  /* slot_offset is at least this aligned.  */
+  unsigned int boundary;
+};
+
+/* Add the value of the tree INC to the `struct args_size' TO.  */
+
+#define ADD_PARM_SIZE(TO, INC)					\
+do {								\
+  tree inc = (INC);						\
+  if (tree_fits_shwi_p (inc))					\
+    (TO).constant += tree_to_shwi (inc);			\
+  else if ((TO).var == 0)					\
+    (TO).var = fold_convert (ssizetype, inc);			\
+  else								\
+    (TO).var = size_binop (PLUS_EXPR, (TO).var,			\
+			   fold_convert (ssizetype, inc));	\
+} while (0)
+
+#define SUB_PARM_SIZE(TO, DEC)					\
+do {								\
+  tree dec = (DEC);						\
+  if (tree_fits_shwi_p (dec))					\
+    (TO).constant -= tree_to_shwi (dec);			\
+  else if ((TO).var == 0)					\
+    (TO).var = size_binop (MINUS_EXPR, ssize_int (0),		\
+			   fold_convert (ssizetype, dec));	\
+  else								\
+    (TO).var = size_binop (MINUS_EXPR, (TO).var,		\
+			   fold_convert (ssizetype, dec));	\
+} while (0)
+
+/* Convert the implicit sum in a `struct args_size' into a tree
+   of type ssizetype.  */
+#define ARGS_SIZE_TREE(SIZE)					\
+((SIZE).var == 0 ? ssize_int ((SIZE).constant)			\
+ : size_binop (PLUS_EXPR, fold_convert (ssizetype, (SIZE).var),	\
+	       ssize_int ((SIZE).constant)))
+
+/* Convert the implicit sum in a `struct args_size' into an rtx.  */
+#define ARGS_SIZE_RTX(SIZE)					\
+((SIZE).var == 0 ? GEN_INT ((SIZE).constant)			\
+ : expand_normal (ARGS_SIZE_TREE (SIZE)))
+
+#define ASLK_REDUCE_ALIGN 1
+#define ASLK_RECORD_PAD 2
+
+
+
+extern void push_function_context (void);
+extern void pop_function_context (void);
+
+/* Save and restore status information for a nested function.  */
+extern void free_after_parsing (struct function *);
+extern void free_after_compilation (struct function *);
 
 /* Return size needed for stack frame based on slots so far allocated.
    This size counts from zero.  It is not rounded to STACK_BOUNDARY;
@@ -729,54 +848,89 @@ extern HOST_WIDE_INT get_frame_size (void);
    return FALSE.  */
 extern bool frame_offset_overflow (HOST_WIDE_INT, tree);
 
-/* A pointer to a function to create target specific, per-function
-   data structures.  */
-extern struct machine_function * (*init_machine_status) (void);
+extern rtx assign_stack_local_1 (machine_mode, HOST_WIDE_INT, int, int);
+extern rtx assign_stack_local (machine_mode, HOST_WIDE_INT, int);
+extern rtx assign_stack_temp_for_type (machine_mode, HOST_WIDE_INT, tree);
+extern rtx assign_stack_temp (machine_mode, HOST_WIDE_INT);
+extern rtx assign_temp (tree, int, int);
+extern void update_temp_slot_address (rtx, rtx);
+extern void preserve_temp_slots (rtx);
+extern void free_temp_slots (void);
+extern void push_temp_slots (void);
+extern void pop_temp_slots (void);
+extern void init_temp_slots (void);
+extern rtx get_hard_reg_initial_reg (rtx);
+extern rtx get_hard_reg_initial_val (machine_mode, unsigned int);
+extern rtx has_hard_reg_initial_val (machine_mode, unsigned int);
 
-/* Save and restore status information for a nested function.  */
-extern void free_after_parsing (struct function *);
-extern void free_after_compilation (struct function *);
+/* Called from gimple_expand_cfg.  */
+extern unsigned int emit_initial_value_sets (void);
 
-extern void init_varasm_status (void);
+extern bool initial_value_entry (int i, rtx *, rtx *);
+extern void instantiate_decl_rtl (rtx x);
+extern int aggregate_value_p (const_tree, const_tree);
+extern bool use_register_for_decl (const_tree);
+extern bool pass_by_reference (CUMULATIVE_ARGS *, machine_mode,
+			       tree, bool);
+extern bool reference_callee_copied (CUMULATIVE_ARGS *, machine_mode,
+				     tree, bool);
+extern gimple_seq gimplify_parameters (void);
+extern void locate_and_pad_parm (machine_mode, tree, int, int, int,
+				 tree, struct args_size *,
+				 struct locate_and_pad_arg_data *);
+extern void generate_setjmp_warnings (void);
+
+/* Identify BLOCKs referenced by more than one NOTE_INSN_BLOCK_{BEG,END},
+   and create duplicate blocks.  */
+extern void reorder_blocks (void);
+extern void clear_block_marks (tree);
+extern tree blocks_nreverse (tree);
+extern tree block_chainon (tree, tree);
+
+/* Set BLOCK_NUMBER for all the blocks in FN.  */
+extern void number_blocks (tree);
+
+/* cfun shouldn't be set directly; use one of these functions instead.  */
+extern void set_cfun (struct function *new_cfun);
+extern void push_cfun (struct function *new_cfun);
+extern void pop_cfun (void);
+
+extern int get_next_funcdef_no (void);
+extern int get_last_funcdef_no (void);
+extern void allocate_struct_function (tree, bool);
+extern void push_struct_function (tree fndecl);
+extern void init_dummy_function_start (void);
+extern void init_function_start (tree);
+extern void stack_protect_epilogue (void);
+extern void expand_function_start (tree);
+extern void expand_dummy_function_end (void);
+
+extern void thread_prologue_and_epilogue_insns (void);
 
 #ifdef RTX_CODE
 extern void diddle_return_value (void (*)(rtx, void*), void*);
 extern void clobber_return_register (void);
 #endif
 
+extern void do_warn_unused_parameter (tree);
+extern void expand_function_end (void);
 extern rtx get_arg_pointer_save_area (void);
+extern void maybe_copy_prologue_epilogue_insn (rtx, rtx);
+extern int prologue_epilogue_contains (const_rtx);
+extern void emit_return_into_block (bool simple_p, basic_block bb);
+extern void set_return_jump_label (rtx);
+extern bool active_insn_between (rtx_insn *head, rtx_insn *tail);
+extern vec<edge> convert_jumps_to_returns (basic_block last_bb, bool simple_p,
+					   vec<edge> unconverted);
+extern basic_block emit_return_for_exit (edge exit_fallthru_edge,
+					 bool simple_p);
+extern void reposition_prologue_and_epilogue_notes (void);
 
 /* Returns the name of the current function.  */
 extern const char *fndecl_name (tree);
 extern const char *function_name (struct function *);
 extern const char *current_function_name (void);
 
-extern void do_warn_unused_parameter (tree);
-
-extern bool pass_by_reference (CUMULATIVE_ARGS *, enum machine_mode,
-			       tree, bool);
-extern bool reference_callee_copied (CUMULATIVE_ARGS *, enum machine_mode,
-				     tree, bool);
-
 extern void used_types_insert (tree);
-
-extern int get_next_funcdef_no (void);
-extern int get_last_funcdef_no (void);
-
-#ifdef HAVE_simple_return
-extern bool requires_stack_frame_p (rtx, HARD_REG_SET, HARD_REG_SET);
-#endif                        
-
-extern rtx get_hard_reg_initial_val (enum machine_mode, unsigned int);
-extern rtx has_hard_reg_initial_val (enum machine_mode, unsigned int);
-extern rtx get_hard_reg_initial_reg (rtx);
-extern bool initial_value_entry (int i, rtx *, rtx *);
-
-/* Called from gimple_expand_cfg.  */
-extern unsigned int emit_initial_value_sets (void);
-
-/* In predict.c */
-extern bool optimize_function_for_size_p (struct function *);
-extern bool optimize_function_for_speed_p (struct function *);
 
 #endif  /* GCC_FUNCTION_H */

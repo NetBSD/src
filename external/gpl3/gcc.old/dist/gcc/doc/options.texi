@@ -1,4 +1,4 @@
-@c Copyright (C) 2003-2013 Free Software Foundation, Inc.
+@c Copyright (C) 2003-2015 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -459,15 +459,18 @@ value of @option{-fmath-errno} for languages that do not use
 @code{errno}.
 
 @item EnabledBy(@var{opt})
+@itemx EnabledBy(@var{opt} || @var{opt2})
 @itemx EnabledBy(@var{opt} && @var{opt2})
 If not explicitly set, the option is set to the value of
-@option{-@var{opt}}.  The second form specifies that the option is
+@option{-@var{opt}}; multiple options can be given, separated by
+@code{||}.  The third form using @code{&&} specifies that the option is
 only set if both @var{opt} and @var{opt2} are set.
 
 @item LangEnabledBy(@var{language}, @var{opt})
 @itemx LangEnabledBy(@var{language}, @var{opt}, @var{posarg}, @var{negarg})
 When compiling for the given language, the option is set to the value
-of @option{-@var{opt}}, if not explicitly set. In the second form, if
+of @option{-@var{opt}}, if not explicitly set. @var{opt} can be also a list
+of @code{||} separated options. In the second form, if
 @var{opt} is used in the positive form then @var{posarg} is considered
 to be passed to the option, and if @var{opt} is used in the negative
 form then @var{negarg} is considered to be passed to the option.  It
@@ -478,4 +481,19 @@ record.  @xref{Option file format}.
 @item NoDWARFRecord
 The option is omitted from the producer string written by
 @option{-grecord-gcc-switches}.
+
+@item PchIgnore
+Even if this is a target option, this option will not be recorded / compared
+to determine if a precompiled header file matches.
+
+@item CPP(@var{var})
+The state of this option should be kept in sync with the preprocessor
+option @var{var}.  If this property is set, then properties @code{Var}
+and @code{Init} must be set as well.
+
+@item CppReason(@var{CPP_W_Enum})
+This warning option corresponds to @code{cpplib.h} warning reason code
+@var{CPP_W_Enum}.  This should only be used for warning options of the
+C-family front-ends.
+
 @end table

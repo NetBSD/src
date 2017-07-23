@@ -1,4 +1,4 @@
-// Copyright (C) 1997-2013 Free Software Foundation, Inc.
+// Copyright (C) 1997-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -20,6 +20,7 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
+#define _GLIBCXX_USE_CXX11_ABI 1
 #include <clocale>
 #include <cstring>
 #include <cstdlib>
@@ -170,10 +171,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
   }
 
+const int num_facets = _GLIBCXX_NUM_FACETS + _GLIBCXX_NUM_UNICODE_FACETS
+  + (_GLIBCXX_USE_DUAL_ABI ? _GLIBCXX_NUM_CXX11_FACETS : 0);
+
   // Construct named _Impl.
   locale::_Impl::
   _Impl(const char* __s, size_t __refs)
-  : _M_refcount(__refs), _M_facets(0), _M_facets_size(_GLIBCXX_NUM_FACETS),
+  : _M_refcount(__refs), _M_facets(0), _M_facets_size(num_facets),
     _M_caches(0), _M_names(0)
   {
     // Initialize the underlying locale model, which also checks to
@@ -184,15 +188,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
     __try
       {
-	_M_facets = new const facet*[_M_facets_size];
-	for (size_t __i = 0; __i < _M_facets_size; ++__i)
-	  _M_facets[__i] = 0;
-	_M_caches = new const facet*[_M_facets_size];
-	for (size_t __j = 0; __j < _M_facets_size; ++__j)
-	  _M_caches[__j] = 0;
-	_M_names = new char*[_S_categories_size];
-	for (size_t __k = 0; __k < _S_categories_size; ++__k)
-	  _M_names[__k] = 0;
+	_M_facets = new const facet*[_M_facets_size]();
+	_M_caches = new const facet*[_M_facets_size]();
+	_M_names = new char*[_S_categories_size]();
 
 	// Name the categories.
 	const char* __smon = __s;
@@ -269,7 +267,17 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	_M_init_facet(new time_get<wchar_t>);
 	_M_init_facet(new time_put<wchar_t>);
 	_M_init_facet(new std::messages<wchar_t>(__cloc, __s));
-#endif	  
+#endif
+
+#ifdef _GLIBCXX_USE_C99_STDINT_TR1
+        _M_init_facet(new codecvt<char16_t, char, mbstate_t>);
+        _M_init_facet(new codecvt<char32_t, char, mbstate_t>);
+#endif
+
+#if _GLIBCXX_USE_DUAL_ABI
+        _M_init_extra(&__cloc, &__clocm, __s, __smon);
+#endif
+
 	locale::facet::_S_destroy_c_locale(__cloc);
 	if (__clocm != __cloc)
 	  locale::facet::_S_destroy_c_locale(__clocm);

@@ -1,5 +1,5 @@
 /* Macros to support INSN_ADDRESSES
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -38,7 +38,7 @@ extern int insn_current_address;
 #define INSN_ADDRESSES_SIZE() (insn_addresses_.length ())
 
 static inline void
-insn_addresses_new (rtx insn, int insn_addr)
+insn_addresses_new (rtx_insn *insn, int insn_addr)
 {
   unsigned insn_uid = INSN_UID ((insn));
 

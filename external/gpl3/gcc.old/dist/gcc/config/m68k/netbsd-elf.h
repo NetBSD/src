@@ -1,7 +1,7 @@
 /* Definitions of target machine for GNU compiler,
    for m68k (including m68010) NetBSD platforms using the
    ELF object format.
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    Contributed by Wasabi Systems. Inc.
 
    This file is derived from <m68k/m68kv4.h>, <m68k/m68kelf.h>,
@@ -39,13 +39,6 @@ along with GCC; see the file COPYING3.  If not see
 #undef LONG_DOUBLE_TYPE_SIZE
 #define LONG_DOUBLE_TYPE_SIZE (TARGET_68020 ? 80 : 64)
 
-#undef LIBGCC2_LONG_DOUBLE_TYPE_SIZE
-#if defined(__mc68010__) || defined(__mcoldfire__)
-#define LIBGCC2_LONG_DOUBLE_TYPE_SIZE 64
-#else
-#define LIBGCC2_LONG_DOUBLE_TYPE_SIZE 80
-#endif
-
 #undef SUBTARGET_OVERRIDE_OPTIONS
 #define SUBTARGET_OVERRIDE_OPTIONS \
   { \
@@ -59,11 +52,6 @@ along with GCC; see the file COPYING3.  If not see
 	  } \
       } \
   }
-
-#undef SUBTARGET_EXTRA_SPECS
-#define SUBTARGET_EXTRA_SPECS \
-  { "netbsd_cpp_spec",      NETBSD_CPP_SPEC }, \
-  { "netbsd_entry_point",   NETBSD_ENTRY_POINT },
 
 
 /* Provide a CPP_SPEC appropriate for NetBSD m68k targets.  Currently we
@@ -94,6 +82,7 @@ along with GCC; see the file COPYING3.  If not see
 /* NetBSD/sun2 does not support shlibs, avoid using libgcc_pic.  */
 #if TARGET_DEFAULT_CPU == 0
 #undef REAL_LIBGCC_SPEC
+#define REAL_LIBGCC_SPEC	"-lgcc"
 #endif
 
 #define NETBSD_ENTRY_POINT "_start"
@@ -108,7 +97,7 @@ do									\
     if (TARGET_COLDFIRE)						\
       {									\
         asm_fprintf (FILE, "\tmovea.l #%LLP%d-.,%Ra1\n", (LABELNO));	\
-        asm_fprintf (FILE, "\tlea (-6,%Rpc,%Ra1),%Ra1\n", (LABELNO));	\
+        asm_fprintf (FILE, "\tlea (-6,%Rpc,%Ra1),%Ra1\n");	\
       }									\
     else								\
       asm_fprintf (FILE, "\tlea (%LLP%d,%Rpc),%Ra1\n", (LABELNO));	\

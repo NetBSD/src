@@ -1,5 +1,5 @@
 /* params.h - Run-time parameters.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Written by Mark Mitchell <mark@codesourcery.com>.
 
 This file is part of GCC.
@@ -38,7 +38,7 @@ along with GCC; see the file COPYING3.  If not see
 
 /* The information associated with each parameter.  */
 
-typedef struct param_info
+struct param_info
 {
   /* The name used with the `--param <name>=<value>' switch to set this
      value.  */
@@ -55,7 +55,7 @@ typedef struct param_info
 
   /* A short description of the option.  */
   const char *const help;
-} param_info;
+};
 
 /* An array containing the compiler parameters and their current
    values.  */
@@ -79,14 +79,14 @@ extern void set_param_value (const char *name, int value,
 
 /* The parameters in use by language-independent code.  */
 
-typedef enum compiler_param
+enum compiler_param
 {
 #define DEFPARAM(enumerator, option, msgid, default, min, max) \
   enumerator,
 #include "params.def"
 #undef DEFPARAM
   LAST_PARAM
-} compiler_param;
+};
 
 /* The value of the parameter given by ENUM.  Not an lvalue.  */
 #define PARAM_VALUE(ENUM) \
@@ -112,6 +112,10 @@ extern void global_init_params (void);
 /* Note that all parameters have been added and all default values
    set.  */
 extern void finish_params (void);
+
+/* Reset all state in params.c  */
+
+extern void params_c_finalize (void);
 
 /* Return the default value of parameter NUM.  */
 
@@ -196,6 +200,10 @@ extern void init_param_values (int *params);
   PARAM_VALUE (PARAM_IRA_MAX_CONFLICT_TABLE_SIZE)
 #define IRA_LOOP_RESERVED_REGS \
   PARAM_VALUE (PARAM_IRA_LOOP_RESERVED_REGS)
+#define LRA_MAX_CONSIDERED_RELOAD_PSEUDOS \
+  PARAM_VALUE (PARAM_LRA_MAX_CONSIDERED_RELOAD_PSEUDOS)
+#define LRA_INHERITANCE_EBB_PROBABILITY_CUTOFF \
+  PARAM_VALUE (PARAM_LRA_INHERITANCE_EBB_PROBABILITY_CUTOFF)
 #define SWITCH_CONVERSION_BRANCH_RATIO \
   PARAM_VALUE (PARAM_SWITCH_CONVERSION_BRANCH_RATIO)
 #define LOOP_INVARIANT_MAX_BBS_IN_LOOP \
@@ -218,5 +226,19 @@ extern void init_param_values (int *params);
   PARAM_VALUE (PARAM_ALLOW_PACKED_LOAD_DATA_RACES)
 #define ALLOW_PACKED_STORE_DATA_RACES \
   PARAM_VALUE (PARAM_ALLOW_PACKED_STORE_DATA_RACES)
+#define ASAN_STACK \
+  PARAM_VALUE (PARAM_ASAN_STACK)
+#define ASAN_GLOBALS \
+  PARAM_VALUE (PARAM_ASAN_GLOBALS)
+#define ASAN_INSTRUMENT_READS \
+  PARAM_VALUE (PARAM_ASAN_INSTRUMENT_READS)
+#define ASAN_INSTRUMENT_WRITES \
+  PARAM_VALUE (PARAM_ASAN_INSTRUMENT_WRITES)
+#define ASAN_MEMINTRIN \
+  PARAM_VALUE (PARAM_ASAN_MEMINTRIN)
+#define ASAN_USE_AFTER_RETURN \
+  PARAM_VALUE (PARAM_ASAN_USE_AFTER_RETURN)
+#define ASAN_INSTRUMENTATION_WITH_CALL_THRESHOLD \
+  PARAM_VALUE (PARAM_ASAN_INSTRUMENTATION_WITH_CALL_THRESHOLD)
 
 #endif /* ! GCC_PARAMS_H */

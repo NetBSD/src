@@ -16,10 +16,11 @@
 
 namespace __tsan {
 
+void EnterSymbolizer();
+void ExitSymbolizer();
 ReportStack *SymbolizeCode(uptr addr);
 ReportLocation *SymbolizeData(uptr addr);
-
-ReportStack *SymbolizeCodeAddr2Line(uptr addr);
+void SymbolizeFlush();
 
 ReportStack *NewReportStackEntry(uptr addr);
 

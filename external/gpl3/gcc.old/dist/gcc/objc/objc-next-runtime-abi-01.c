@@ -1,5 +1,5 @@
 /* Next Runtime (ABI-0/1) private.
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Iain Sandoe (split from objc-act.c)
 
 This file is part of GCC.
@@ -26,7 +26,19 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "options.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "fold-const.h"
+#include "stringpool.h"
 
 #ifdef OBJCPLUS
 #include "cp/cp-tree.h"
@@ -583,7 +595,7 @@ build_v1_protocol_template (void)
   objc_finish_struct (objc_protocol_template, decls);
 }
 
-/* --- names, decls identifers --- */
+/* --- names, decls identifiers --- */
 
 static tree
 next_runtime_abi_01_super_superclassfield_id (void)
@@ -881,7 +893,7 @@ build_objc_method_call (location_t loc, int super_flag, tree method_prototype,
   /* Build an obj_type_ref, with the correct cast for the method call.  */
   t = build3 (OBJ_TYPE_REF, sender_cast, method,
 			    lookup_object, size_zero_node);
-  t = build_function_call_vec (loc, t, parms, NULL);
+  t = build_function_call_vec (loc, vNULL, t, parms, NULL);
   vec_free (parms);
   return t;
 }
@@ -2865,7 +2877,8 @@ build_throw_stmt (location_t loc, tree throw_expr, bool rethrown ATTRIBUTE_UNUSE
   /* A throw is just a call to the runtime throw function with the
      object as a parameter.  */
   parms->quick_push (throw_expr);
-  t = build_function_call_vec (loc, objc_exception_throw_decl, parms, NULL);
+  t = build_function_call_vec (loc, vNULL, objc_exception_throw_decl, parms,
+			       NULL);
   vec_free (parms);
   return add_stmt (t);
 }

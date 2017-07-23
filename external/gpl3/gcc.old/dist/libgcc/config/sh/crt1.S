@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
    This file was pretty much copied from newlib.
 
 This file is part of GCC.
@@ -22,6 +22,7 @@ a copy of the GCC Runtime Library Exception along with this program;
 see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 <http://www.gnu.org/licenses/>.  */
 
+#include "crt.h"
 
 #ifdef MMU_SUPPORT
 	/* Section used for exception/timer interrupt stack area */
@@ -420,7 +421,7 @@ start:
 #endif /* MMU_SUPPORT */
 
 	pt/l	.Lzero_bss_loop, tr0
-	pt/l	_init, tr5
+	pt/l	GLOBAL(_init), tr5
 	pt/l	___setup_argv_and_call_main, tr6
 	pt/l	_exit, tr7
 
@@ -452,7 +453,7 @@ start:
 
 	! arrange for exit to call fini
 	pt/l	_atexit, tr1
-	LOAD_ADDR (_fini, r2)
+	LOAD_ADDR (GLOBAL(_fini), r2)
 	blink	tr1, r18
 
 	! call init
@@ -697,7 +698,7 @@ profiling_enabled:
 start:
 	mov.l	stack_k,r15
 
-#if defined (__SH3__) || (defined (__SH_FPU_ANY__) && ! defined (__SH2A__)) || defined (__SH4_NOFPU__)
+#if defined (__SH3__) || (defined (__SH_FPU_ANY__) && ! defined (__SH2E__) && ! defined (__SH2A__)) || defined (__SH4_NOFPU__)
 #define VBR_SETUP
 	! before zeroing the bss ...
 	! if the vbr is already set to vbr_start then the program has been restarted
@@ -850,9 +851,9 @@ exit_k:
 atexit_k:
 	.long	_atexit
 init_k:
-	.long	_init
+	.long	GLOBAL(_init)
 fini_k:
-	.long	_fini
+	.long	GLOBAL(_fini)
 #ifdef VBR_SETUP
 old_vbr_k:
 	.long	old_vbr
@@ -1116,9 +1117,7 @@ vbr_600:
 #if defined(__SH_FPU_ANY__)
 	.balign 4
 pervading_precision_k:
-#define CONCAT1(A,B) A##B
-#define CONCAT(A,B) CONCAT1(A,B)
-	.long CONCAT(__USER_LABEL_PREFIX__,__fpscr_values)+4
+	.long GLOBAL(__fpscr_values)+4
 #endif
 #else
 	mov.l 2f, r0     ! Load the old vbr setting (if any).

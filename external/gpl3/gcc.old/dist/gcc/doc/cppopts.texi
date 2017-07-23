@@ -1,4 +1,4 @@
-@c Copyright (C) 1999-2013 Free Software Foundation, Inc.
+@c Copyright (C) 1999-2015 Free Software Foundation, Inc.
 @c This is part of the CPP and GCC manuals.
 @c For copying conditions, see the file gcc.texi.
 
@@ -194,7 +194,7 @@ suitable for @command{make} describing the dependencies of the main
 source file.  The preprocessor outputs one @command{make} rule containing
 the object file name for that source file, a colon, and the names of all
 the included files, including those coming from @option{-include} or
-@option{-imacros} command line options.
+@option{-imacros} command-line options.
 
 Unless specified explicitly (with @option{-MT} or @option{-MQ}), the
 object file name consists of the name of the source file with any
@@ -576,8 +576,7 @@ Accept @samp{$} in identifiers.
 @item -fextended-identifiers
 @opindex fextended-identifiers
 Accept universal character names in identifiers.  This option is
-experimental; in a future version of GCC, it will be enabled by
-default for C99 and C++.
+enabled by default for C99 (and later C standard versions) and C++.
 
 @item -fno-canonical-system-headers
 @opindex fno-canonical-system-headers
@@ -636,7 +635,7 @@ tokens locations completely. This value is the most memory hungry.
 When this option is given no argument, the default parameter value is
 @samp{2}.
 
-Note that -ftrack-macro-expansion=2 is activated by default.
+Note that @code{-ftrack-macro-expansion=2} is activated by default.
 
 @item -fexec-charset=@var{charset}
 @opindex fexec-charset
@@ -662,7 +661,7 @@ Set the input character set, used for translation from the character
 set of the input file to the source character set used by GCC@.  If the
 locale does not specify, or GCC cannot get this information from the
 locale, the default is UTF-8.  This can be overridden by either the locale
-or this command line option.  Currently the command line option takes
+or this command-line option.  Currently the command-line option takes
 precedence if there's a conflict.  @var{charset} can be any encoding
 supported by the system's @code{iconv} library routine.
 
@@ -828,7 +827,7 @@ short file names, such as MS-DOS@.
 @itemx --target-help
 @opindex help
 @opindex target-help
-Print text describing all the command line options instead of
+Print text describing all the command-line options instead of
 preprocessing anything.
 
 @item -v

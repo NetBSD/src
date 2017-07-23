@@ -1,5 +1,5 @@
 /* Target Definitions for TI C6X.
-   Copyright (C) 2010-2013 Free Software Foundation, Inc.
+   Copyright (C) 2010-2015 Free Software Foundation, Inc.
    Contributed by Andrew Jenner <andrew@codesourcery.com>
    Contributed by Bernd Schmidt <bernds@codesourcery.com>
 
@@ -134,7 +134,7 @@ extern c6x_cpu_t c6x_arch;
    Really only externally visible arrays must be aligned this way, as
    only those are directly visible from another compilation unit.  But
    we don't have that information available here.  */
-#define DATA_ALIGNMENT(TYPE, ALIGN)					\
+#define DATA_ABI_ALIGNMENT(TYPE, ALIGN)					\
   (((ALIGN) < BITS_PER_UNIT * 8 && TREE_CODE (TYPE) == ARRAY_TYPE)	\
    ? BITS_PER_UNIT * 8 : (ALIGN))
 
@@ -359,7 +359,8 @@ struct c6x_args {
 #define DEFAULT_PCC_STRUCT_RETURN 0
 
 #define FUNCTION_PROFILER(file, labelno) \
-  fatal_error ("profiling is not yet implemented for this architecture")
+  fatal_error (input_location, \
+	       "profiling is not yet implemented for this architecture")
 
 
 /* Trampolines.  */

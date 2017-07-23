@@ -1,5 +1,5 @@
 /* Common hooks for Renesas RX.
-   Copyright (C) 2008-2013 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -51,13 +51,16 @@ rx_handle_option (struct gcc_options *opts,
       return value >= 0 && value <= 4;
 
     case OPT_mcpu_:
-      if ((enum rx_cpu_types) value == RX200)
+      if ((enum rx_cpu_types) value == RX200 || 
+          (enum rx_cpu_types) value == RX100)
 	opts->x_target_flags |= MASK_NO_USE_FPU;
       break;
       
     case OPT_fpu:
       if (opts->x_rx_cpu_type == RX200)
 	error_at (loc, "the RX200 cpu does not have FPU hardware");
+      else if (opts->x_rx_cpu_type == RX100)
+	error_at (loc, "the RX100 cpu does not have FPU hardware");
       break;
 
     default:

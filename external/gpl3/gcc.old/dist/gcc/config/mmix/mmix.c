@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for MMIX.
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Hans-Peter Nilsson (hp@bitrange.com)
 
 This file is part of GCC.
@@ -28,10 +28,38 @@ along with GCC; see the file COPYING3.  If not see
 #include "hashtab.h"
 #include "insn-config.h"
 #include "output.h"
+#include "predict.h"
+#include "vec.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "input.h"
+#include "function.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "cfgrtl.h"
+#include "cfganal.h"
+#include "lcm.h"
+#include "cfgbuild.h"
+#include "cfgcleanup.h"
 #include "basic-block.h"
 #include "flags.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
-#include "function.h"
+#include "varasm.h"
+#include "stor-layout.h"
+#include "calls.h"
+#include "statistics.h"
+#include "double-int.h"
+#include "real.h"
+#include "fixed-value.h"
+#include "alias.h"
+#include "expmed.h"
+#include "dojump.h"
+#include "explow.h"
+#include "emit-rtl.h"
+#include "stmt.h"
 #include "expr.h"
 #include "diagnostic-core.h"
 #include "recog.h"
@@ -43,6 +71,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "target-def.h"
 #include "df.h"
 #include "tm-constrs.h"
+#include "builtins.h"
 
 /* First some local helper definitions.  */
 #define MMIX_FIRST_GLOBAL_REGNUM 32
@@ -114,10 +143,10 @@ static int mmix_output_destination_register;
 static void mmix_option_override (void);
 static void mmix_asm_output_source_filename (FILE *, const char *);
 static void mmix_output_shiftvalue_op_from_str
-  (FILE *, const char *, HOST_WIDEST_INT);
-static void mmix_output_shifted_value (FILE *, HOST_WIDEST_INT);
+  (FILE *, const char *, int64_t);
+static void mmix_output_shifted_value (FILE *, int64_t);
 static void mmix_output_condition (FILE *, const_rtx, int);
-static void mmix_output_octa (FILE *, HOST_WIDEST_INT, int);
+static void mmix_output_octa (FILE *, int64_t, int);
 static bool mmix_assemble_integer (rtx, unsigned int, int);
 static struct machine_function *mmix_init_machine_status (void);
 static void mmix_encode_section_info (tree, rtx, int);
@@ -128,35 +157,35 @@ static void mmix_target_asm_function_end_prologue (FILE *);
 static void mmix_target_asm_function_epilogue (FILE *, HOST_WIDE_INT);
 static reg_class_t mmix_preferred_reload_class (rtx, reg_class_t);
 static reg_class_t mmix_preferred_output_reload_class (rtx, reg_class_t);
-static bool mmix_legitimate_address_p (enum machine_mode, rtx, bool);
-static bool mmix_legitimate_constant_p (enum machine_mode, rtx);
+static bool mmix_legitimate_address_p (machine_mode, rtx, bool);
+static bool mmix_legitimate_constant_p (machine_mode, rtx);
 static void mmix_reorg (void);
 static void mmix_asm_output_mi_thunk
   (FILE *, tree, HOST_WIDE_INT, HOST_WIDE_INT, tree);
 static void mmix_setup_incoming_varargs
-  (cumulative_args_t, enum machine_mode, tree, int *, int);
+  (cumulative_args_t, machine_mode, tree, int *, int);
 static void mmix_file_start (void);
 static void mmix_file_end (void);
 static bool mmix_rtx_costs (rtx, int, int, int, int *, bool);
-static int mmix_register_move_cost (enum machine_mode,
+static int mmix_register_move_cost (machine_mode,
 				    reg_class_t, reg_class_t);
 static rtx mmix_struct_value_rtx (tree, int);
-static enum machine_mode mmix_promote_function_mode (const_tree,
-						     enum machine_mode,
+static machine_mode mmix_promote_function_mode (const_tree,
+						     machine_mode,
 	                                             int *, const_tree, int);
-static void mmix_function_arg_advance (cumulative_args_t, enum machine_mode,
+static void mmix_function_arg_advance (cumulative_args_t, machine_mode,
 				       const_tree, bool);
-static rtx mmix_function_arg_1 (const cumulative_args_t, enum machine_mode,
+static rtx mmix_function_arg_1 (const cumulative_args_t, machine_mode,
 				const_tree, bool, bool);
-static rtx mmix_function_incoming_arg (cumulative_args_t, enum machine_mode,
+static rtx mmix_function_incoming_arg (cumulative_args_t, machine_mode,
 				       const_tree, bool);
-static rtx mmix_function_arg (cumulative_args_t, enum machine_mode,
+static rtx mmix_function_arg (cumulative_args_t, machine_mode,
 			      const_tree, bool);
 static rtx mmix_function_value (const_tree, const_tree, bool);
-static rtx mmix_libcall_value (enum machine_mode, const_rtx);
+static rtx mmix_libcall_value (machine_mode, const_rtx);
 static bool mmix_function_value_regno_p (const unsigned int);
 static bool mmix_pass_by_reference (cumulative_args_t,
-				    enum machine_mode, const_tree, bool);
+				    machine_mode, const_tree, bool);
 static bool mmix_frame_pointer_required (void);
 static void mmix_asm_trampoline_template (FILE *);
 static void mmix_trampoline_init (rtx, tree, rtx);
@@ -310,10 +339,10 @@ mmix_init_expanders (void)
 static struct machine_function *
 mmix_init_machine_status (void)
 {
-  return ggc_alloc_cleared_machine_function ();
+  return ggc_cleared_alloc<machine_function> ();
 }
 
-/* DATA_ALIGNMENT.
+/* DATA_ABI_ALIGNMENT.
    We have trouble getting the address of stuff that is located at other
    than 32-bit alignments (GETA requirements), so try to give everything
    at least 32-bit alignment.  */
@@ -463,7 +492,7 @@ mmix_preferred_output_reload_class (rtx x, reg_class_t rclass)
 
 enum reg_class
 mmix_secondary_reload_class (enum reg_class rclass,
-			     enum machine_mode mode ATTRIBUTE_UNUSED,
+			     machine_mode mode ATTRIBUTE_UNUSED,
 			     rtx x ATTRIBUTE_UNUSED,
 			     int in_p ATTRIBUTE_UNUSED)
 {
@@ -584,7 +613,7 @@ mmix_initial_elimination_offset (int fromreg, int toreg)
 }
 
 static void
-mmix_function_arg_advance (cumulative_args_t argsp_v, enum machine_mode mode,
+mmix_function_arg_advance (cumulative_args_t argsp_v, machine_mode mode,
 			   const_tree type, bool named ATTRIBUTE_UNUSED)
 {
   CUMULATIVE_ARGS *argsp = get_cumulative_args (argsp_v);
@@ -602,7 +631,7 @@ mmix_function_arg_advance (cumulative_args_t argsp_v, enum machine_mode mode,
 
 static rtx
 mmix_function_arg_1 (const cumulative_args_t argsp_v,
-		     enum machine_mode mode,
+		     machine_mode mode,
 		     const_tree type,
 		     bool named ATTRIBUTE_UNUSED,
 		     bool incoming)
@@ -636,7 +665,7 @@ mmix_function_arg_1 (const cumulative_args_t argsp_v,
 
 static rtx
 mmix_function_arg (cumulative_args_t argsp,
-		   enum machine_mode mode,
+		   machine_mode mode,
 		   const_tree type,
 		   bool named)
 {
@@ -645,7 +674,7 @@ mmix_function_arg (cumulative_args_t argsp,
 
 static rtx
 mmix_function_incoming_arg (cumulative_args_t argsp,
-			    enum machine_mode mode,
+			    machine_mode mode,
 			    const_tree type,
 			    bool named)
 {
@@ -656,7 +685,7 @@ mmix_function_incoming_arg (cumulative_args_t argsp,
    everything that goes by value.  */
 
 static bool
-mmix_pass_by_reference (cumulative_args_t argsp_v, enum machine_mode mode,
+mmix_pass_by_reference (cumulative_args_t argsp_v, machine_mode mode,
 			const_tree type, bool named ATTRIBUTE_UNUSED)
 {
   CUMULATIVE_ARGS *argsp = get_cumulative_args (argsp_v);
@@ -694,8 +723,8 @@ mmix_function_value (const_tree valtype,
 		     const_tree func ATTRIBUTE_UNUSED,
 		     bool outgoing)
 {
-  enum machine_mode mode = TYPE_MODE (valtype);
-  enum machine_mode cmode;
+  machine_mode mode = TYPE_MODE (valtype);
+  machine_mode cmode;
   int first_val_regnum = MMIX_OUTGOING_RETURN_VALUE_REGNUM;
   rtx vec[MMIX_MAX_REGS_FOR_VALUE];
   int i;
@@ -758,7 +787,7 @@ mmix_function_value (const_tree valtype,
 /* Implements TARGET_LIBCALL_VALUE.  */
 
 static rtx
-mmix_libcall_value (enum machine_mode mode,
+mmix_libcall_value (machine_mode mode,
 		    const_rtx fun ATTRIBUTE_UNUSED)
 {
   return gen_rtx_REG (mode, MMIX_RETURN_VALUE_REGNUM);
@@ -924,7 +953,7 @@ mmix_function_profiler (FILE *stream ATTRIBUTE_UNUSED,
 
 static void
 mmix_setup_incoming_varargs (cumulative_args_t args_so_farp_v,
-			     enum machine_mode mode,
+			     machine_mode mode,
 			     tree vartype,
 			     int *pretend_sizep,
 			     int second_time ATTRIBUTE_UNUSED)
@@ -1048,7 +1077,7 @@ mmix_constant_address_p (rtx x)
 /* Return 1 if the address is OK, otherwise 0.  */
 
 bool
-mmix_legitimate_address_p (enum machine_mode mode ATTRIBUTE_UNUSED,
+mmix_legitimate_address_p (machine_mode mode ATTRIBUTE_UNUSED,
 			   rtx x,
 			   bool strict_checking)
 {
@@ -1108,7 +1137,7 @@ mmix_legitimate_address_p (enum machine_mode mode ATTRIBUTE_UNUSED,
 /* Implement TARGET_LEGITIMATE_CONSTANT_P.  */
 
 static bool
-mmix_legitimate_constant_p (enum machine_mode mode ATTRIBUTE_UNUSED, rtx x)
+mmix_legitimate_constant_p (machine_mode mode ATTRIBUTE_UNUSED, rtx x)
 {
   RTX_CODE code = GET_CODE (x);
 
@@ -1123,7 +1152,7 @@ mmix_legitimate_constant_p (enum machine_mode mode ATTRIBUTE_UNUSED, rtx x)
 
 /* SELECT_CC_MODE.  */
 
-enum machine_mode
+machine_mode
 mmix_select_cc_mode (RTX_CODE op, rtx x, rtx y ATTRIBUTE_UNUSED)
 {
   /* We use CCmode, CC_UNSmode, CC_FPmode, CC_FPEQmode and CC_FUNmode to
@@ -1151,7 +1180,7 @@ mmix_select_cc_mode (RTX_CODE op, rtx x, rtx y ATTRIBUTE_UNUSED)
 /* REVERSIBLE_CC_MODE.  */
 
 int
-mmix_reversible_cc_mode (enum machine_mode mode)
+mmix_reversible_cc_mode (machine_mode mode)
 {
   /* That is, all integer and the EQ, NE, ORDERED and UNORDERED float
      compares.  */
@@ -1180,7 +1209,7 @@ mmix_rtx_costs (rtx x ATTRIBUTE_UNUSED,
    need to check that their constraints match, so say 3 for them.  */
 
 static int
-mmix_register_move_cost (enum machine_mode mode ATTRIBUTE_UNUSED,
+mmix_register_move_cost (machine_mode mode ATTRIBUTE_UNUSED,
 			 reg_class_t from,
 			 reg_class_t to)
 {
@@ -1531,7 +1560,7 @@ mmix_print_operand (FILE *stream, rtx x, int code)
       if (TARGET_BRANCH_PREDICT)
 	{
 	  x = find_reg_note (current_output_insn, REG_BR_PROB, 0);
-	  if (x && INTVAL (XEXP (x, 0)) > REG_BR_PROB_BASE / 2)
+	  if (x && XINT (x, 0) > REG_BR_PROB_BASE / 2)
 	    putc ('P', stream);
 	}
       return;
@@ -1585,25 +1614,25 @@ mmix_print_operand (FILE *stream, rtx x, int code)
 	 output.  */
     case 'A':
       mmix_output_shiftvalue_op_from_str (stream, "ANDN",
-					  ~(unsigned HOST_WIDEST_INT)
+					  ~(uint64_t)
 					  mmix_intval (x));
       return;
 
     case 'i':
       mmix_output_shiftvalue_op_from_str (stream, "INC",
-					  (unsigned HOST_WIDEST_INT)
+					  (uint64_t)
 					  mmix_intval (x));
       return;
 
     case 'o':
       mmix_output_shiftvalue_op_from_str (stream, "OR",
-					  (unsigned HOST_WIDEST_INT)
+					  (uint64_t)
 					  mmix_intval (x));
       return;
 
     case 's':
       mmix_output_shiftvalue_op_from_str (stream, "SET",
-					  (unsigned HOST_WIDEST_INT)
+					  (uint64_t)
 					  mmix_intval (x));
       return;
 
@@ -1625,8 +1654,8 @@ mmix_print_operand (FILE *stream, rtx x, int code)
 	  fatal_insn ("MMIX Internal: Bad value for 'm', not a CONST_INT",
 		      x);
 	}
-      fprintf (stream, HOST_WIDEST_INT_PRINT_DEC,
-	       (HOST_WIDEST_INT) (mmix_intval (x) - 1));
+      fprintf (stream, "%"PRId64,
+	       (int64_t) (mmix_intval (x) - 1));
       return;
 
     case 'p':
@@ -1664,11 +1693,11 @@ mmix_print_operand (FILE *stream, rtx x, int code)
       return;
 
     case 'v':
-      mmix_output_shifted_value (stream, (HOST_WIDEST_INT) mmix_intval (x));
+      mmix_output_shifted_value (stream, (int64_t) mmix_intval (x));
       return;
 
     case 'V':
-      mmix_output_shifted_value (stream, (HOST_WIDEST_INT) ~mmix_intval (x));
+      mmix_output_shifted_value (stream, (int64_t) ~mmix_intval (x));
       return;
 
     case 'W':
@@ -1728,7 +1757,7 @@ mmix_print_operand (FILE *stream, rtx x, int code)
       if (CONSTANT_P (modified_x)
 	  /* Strangely enough, this is not included in CONSTANT_P.
 	     FIXME: Ask/check about sanity here.  */
-	  || GET_CODE (modified_x) == CODE_LABEL)
+	  || LABEL_P (modified_x))
 	{
 	  output_addr_const (stream, modified_x);
 	  return;
@@ -1886,7 +1915,7 @@ mmix_dbx_register_number (unsigned regno)
    from insn-emit.c.  */
 
 rtx
-mmix_get_hard_reg_initial_val (enum machine_mode mode, int regno)
+mmix_get_hard_reg_initial_val (machine_mode mode, int regno)
 {
   return get_hard_reg_initial_val (mode, regno);
 }
@@ -2291,37 +2320,37 @@ mmix_expand_epilogue (void)
 void
 mmix_output_register_setting (FILE *stream,
 			      int regno,
-			      HOST_WIDEST_INT value,
+			      int64_t value,
 			      int do_begin_end)
 {
   if (do_begin_end)
     fprintf (stream, "\t");
 
   if (insn_const_int_ok_for_constraint (value, CONSTRAINT_K))
-    fprintf (stream, "NEGU %s,0," HOST_WIDEST_INT_PRINT_DEC, reg_names[regno], -value);
-  else if (mmix_shiftable_wyde_value ((unsigned HOST_WIDEST_INT) value))
+    fprintf (stream, "NEGU %s,0,%"PRId64, reg_names[regno], -value);
+  else if (mmix_shiftable_wyde_value ((uint64_t) value))
     {
       /* First, the one-insn cases.  */
       mmix_output_shiftvalue_op_from_str (stream, "SET",
-					  (unsigned HOST_WIDEST_INT)
+					  (uint64_t)
 					  value);
       fprintf (stream, " %s,", reg_names[regno]);
-      mmix_output_shifted_value (stream, (unsigned HOST_WIDEST_INT) value);
+      mmix_output_shifted_value (stream, (uint64_t) value);
     }
-  else if (mmix_shiftable_wyde_value (-(unsigned HOST_WIDEST_INT) value))
+  else if (mmix_shiftable_wyde_value (-(uint64_t) value))
     {
       /* We do this to get a bit more legible assembly code.  The next
 	 alternative is mostly redundant with this.  */
 
       mmix_output_shiftvalue_op_from_str (stream, "SET",
-					  -(unsigned HOST_WIDEST_INT)
+					  -(uint64_t)
 					  value);
       fprintf (stream, " %s,", reg_names[regno]);
-      mmix_output_shifted_value (stream, -(unsigned HOST_WIDEST_INT) value);
+      mmix_output_shifted_value (stream, -(uint64_t) value);
       fprintf (stream, "\n\tNEGU %s,0,%s", reg_names[regno],
 	       reg_names[regno]);
     }
-  else if (mmix_shiftable_wyde_value (~(unsigned HOST_WIDEST_INT) value))
+  else if (mmix_shiftable_wyde_value (~(uint64_t) value))
     {
       /* Slightly more expensive, the two-insn cases.  */
 
@@ -2332,10 +2361,10 @@ mmix_output_register_setting (FILE *stream,
 	 anyone else cares).  */
 
       mmix_output_shiftvalue_op_from_str (stream, "SET",
-					  ~(unsigned HOST_WIDEST_INT)
+					  ~(uint64_t)
 					  value);
       fprintf (stream, " %s,", reg_names[regno]);
-      mmix_output_shifted_value (stream, ~(unsigned HOST_WIDEST_INT) value);
+      mmix_output_shifted_value (stream, ~(uint64_t) value);
       fprintf (stream, "\n\tNOR %s,%s,0", reg_names[regno],
 	       reg_names[regno]);
     }
@@ -2347,7 +2376,7 @@ mmix_output_register_setting (FILE *stream,
       const char *line_begin = "";
       int insns = 0;
       int i;
-      HOST_WIDEST_INT tmpvalue = value;
+      int64_t tmpvalue = value;
 
       /* Compute the number of insns needed to output this constant.  */
       for (i = 0; i < 4 && tmpvalue != 0; i++)
@@ -2402,7 +2431,7 @@ mmix_output_register_setting (FILE *stream,
    else return 0.  */
 
 int
-mmix_shiftable_wyde_value (unsigned HOST_WIDEST_INT value)
+mmix_shiftable_wyde_value (uint64_t value)
 {
   /* Shift by 16 bits per group, stop when we've found two groups with
      nonzero bits.  */
@@ -2431,7 +2460,7 @@ mmix_shiftable_wyde_value (unsigned HOST_WIDEST_INT value)
 rtx
 mmix_gen_compare_reg (RTX_CODE code, rtx x, rtx y)
 {
-  enum machine_mode ccmode = SELECT_CC_MODE (code, x, y);
+  machine_mode ccmode = SELECT_CC_MODE (code, x, y);
   return gen_reg_rtx (ccmode);
 }
 
@@ -2484,7 +2513,7 @@ mmix_emit_sp_add (HOST_WIDE_INT offset)
 static void
 mmix_output_shiftvalue_op_from_str (FILE *stream,
 				    const char *mainop,
-				    HOST_WIDEST_INT value)
+				    int64_t value)
 {
   static const char *const op_part[] = {"L", "ML", "MH", "H"};
   int i;
@@ -2492,7 +2521,7 @@ mmix_output_shiftvalue_op_from_str (FILE *stream,
   if (! mmix_shiftable_wyde_value (value))
     {
       char s[sizeof ("0xffffffffffffffff")];
-      sprintf (s, HOST_WIDEST_INT_PRINT_HEX, value);
+      sprintf (s, "%#"PRIx64, value);
       internal_error ("MMIX Internal: %s is not a shiftable int", s);
     }
 
@@ -2515,26 +2544,26 @@ mmix_output_shiftvalue_op_from_str (FILE *stream,
 /* Print a 64-bit value, optionally prefixed by assembly pseudo.  */
 
 static void
-mmix_output_octa (FILE *stream, HOST_WIDEST_INT value, int do_begin_end)
+mmix_output_octa (FILE *stream, int64_t value, int do_begin_end)
 {
   if (do_begin_end)
     fprintf (stream, "\tOCTA ");
 
   /* Provide a few alternative output formats depending on the number, to
      improve legibility of assembler output.  */
-  if ((value < (HOST_WIDEST_INT) 0 && value > (HOST_WIDEST_INT) -10000)
-      || (value >= (HOST_WIDEST_INT) 0 && value <= (HOST_WIDEST_INT) 16384))
+  if ((value < (int64_t) 0 && value > (int64_t) -10000)
+      || (value >= (int64_t) 0 && value <= (int64_t) 16384))
     fprintf (stream, "%d", (int) value);
-  else if (value > (HOST_WIDEST_INT) 0
-	   && value < ((HOST_WIDEST_INT) 1 << 31) * 2)
+  else if (value > (int64_t) 0
+	   && value < ((int64_t) 1 << 31) * 2)
     fprintf (stream, "#%x", (unsigned int) value);
-  else if (sizeof (HOST_WIDE_INT) == sizeof (HOST_WIDEST_INT))
+  else if (sizeof (HOST_WIDE_INT) == sizeof (int64_t))
     /* We need to avoid the not-so-universal "0x" prefix; we need the
        pure hex-digits together with the mmixal "#" hex prefix.  */
     fprintf (stream, "#" HOST_WIDE_INT_PRINT_HEX_PURE,
 	     (HOST_WIDE_INT) value);
   else /* Need to avoid the hex output; there's no ...WIDEST...HEX_PURE.  */
-    fprintf (stream, HOST_WIDEST_INT_PRINT_UNSIGNED, value);
+    fprintf (stream, "%"PRIu64, value);
 
   if (do_begin_end)
     fprintf (stream, "\n");
@@ -2544,14 +2573,14 @@ mmix_output_octa (FILE *stream, HOST_WIDEST_INT value, int do_begin_end)
    be output with an operand).  */
 
 static void
-mmix_output_shifted_value (FILE *stream, HOST_WIDEST_INT value)
+mmix_output_shifted_value (FILE *stream, int64_t value)
 {
   int i;
 
   if (! mmix_shiftable_wyde_value (value))
     {
       char s[16+2+1];
-      sprintf (s, HOST_WIDEST_INT_PRINT_HEX, value);
+      sprintf (s, "%#"PRIx64, value);
       internal_error ("MMIX Internal: %s is not a shiftable int", s);
     }
 
@@ -2595,7 +2624,7 @@ mmix_output_condition (FILE *stream, const_rtx x, int reversed)
 
   struct cc_type_conv
   {
-    enum machine_mode cc_mode;
+    machine_mode cc_mode;
 
     /* Terminated with {UNKNOWN, NULL, NULL} */
     const struct cc_conv *const convs;
@@ -2653,7 +2682,7 @@ mmix_output_condition (FILE *stream, const_rtx x, int reversed)
   size_t i;
   int j;
 
-  enum machine_mode mode = GET_MODE (XEXP (x, 0));
+  machine_mode mode = GET_MODE (XEXP (x, 0));
   RTX_CODE cc = GET_CODE (x);
 
   for (i = 0; i < ARRAY_SIZE (cc_convs); i++)
@@ -2684,11 +2713,9 @@ mmix_output_condition (FILE *stream, const_rtx x, int reversed)
 
 /* Return the bit-value for a const_int or const_double.  */
 
-HOST_WIDEST_INT
+int64_t
 mmix_intval (const_rtx x)
 {
-  unsigned HOST_WIDEST_INT retval;
-
   if (GET_CODE (x) == CONST_INT)
     return INTVAL (x);
 
@@ -2696,22 +2723,7 @@ mmix_intval (const_rtx x)
      gcc-2.7.2 is broken.  I still want people to be able to use it for
      cross-compilation to MMIX.  */
   if (GET_CODE (x) == CONST_DOUBLE && GET_MODE (x) == VOIDmode)
-    {
-      if (sizeof (HOST_WIDE_INT) < sizeof (HOST_WIDEST_INT))
-	{
-	  retval = (unsigned) CONST_DOUBLE_LOW (x) / 2;
-	  retval *= 2;
-	  retval |= CONST_DOUBLE_LOW (x) & 1;
-
-	  retval |=
-	    (unsigned HOST_WIDEST_INT) CONST_DOUBLE_HIGH (x)
-	      << (HOST_BITS_PER_LONG)/2 << (HOST_BITS_PER_LONG)/2;
-	}
-      else
-	retval = CONST_DOUBLE_HIGH (x);
-
-      return retval;
-    }
+    return CONST_DOUBLE_HIGH (x);
 
   if (GET_CODE (x) == CONST_DOUBLE)
     {
@@ -2730,9 +2742,9 @@ mmix_intval (const_rtx x)
 	     sign-extended to unsigned long long(!) when they're of
 	     different size (usually 32-bit hosts).  */
 	  return
-	    ((unsigned HOST_WIDEST_INT) (unsigned long) bits[0]
-	     << (unsigned HOST_WIDEST_INT) 32U)
-	    | (unsigned HOST_WIDEST_INT) (unsigned long) bits[1];
+	    ((uint64_t) (unsigned long) bits[0]
+	     << (uint64_t) 32U)
+	    | (uint64_t) (unsigned long) bits[1];
 	}
       else if (GET_MODE (x) == SFmode)
 	{
@@ -2748,9 +2760,9 @@ mmix_intval (const_rtx x)
 
 /* Worker function for TARGET_PROMOTE_FUNCTION_MODE.  */
 
-enum machine_mode
+machine_mode
 mmix_promote_function_mode (const_tree type ATTRIBUTE_UNUSED,
-                            enum machine_mode mode,
+                            machine_mode mode,
                             int *punsignedp ATTRIBUTE_UNUSED,
                             const_tree fntype ATTRIBUTE_UNUSED,
                             int for_return)

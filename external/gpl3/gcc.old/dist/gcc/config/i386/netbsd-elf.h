@@ -1,6 +1,6 @@
 /* Definitions of target machine for GCC,
    for i386/ELF NetBSD systems.
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Contributed by matthew green <mrg@eterna.com.au>
 
 This file is part of GCC.
@@ -25,14 +25,6 @@ along with GCC; see the file COPYING3.  If not see
       NETBSD_OS_CPP_BUILTINS_ELF();		\
     }						\
   while (0)
-
-
-/* Extra specs needed for NetBSD/i386 ELF.  */
-
-#undef SUBTARGET_EXTRA_SPECS
-#define SUBTARGET_EXTRA_SPECS			\
-  { "netbsd_cpp_spec", NETBSD_CPP_SPEC },	\
-  { "netbsd_entry_point", NETBSD_ENTRY_POINT },
 
 
 /* Provide a LINK_SPEC appropriate for a NetBSD/i386 ELF target.  */
@@ -117,6 +109,8 @@ along with GCC; see the file COPYING3.  If not see
 /* Default to pcc-struct-return, because this is the ELF abi and
    we don't care about compatibility with older gcc versions.  */
 #define DEFAULT_PCC_STRUCT_RETURN 1
+
+#define IX86_MAYBE_NO_LIBGCC_TFMODE
 
 #undef X87_ENABLE_ARITH
 #define X87_ENABLE_ARITH(MODE) \

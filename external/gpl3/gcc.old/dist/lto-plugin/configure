@@ -622,6 +622,10 @@ EGREP
 GREP
 SED
 LIBTOOL
+real_target_noncanonical
+accel_dir_suffix
+gcc_build_dir
+ac_lto_plugin_ldflags
 ac_lto_plugin_warn_cflags
 am__fastdepCC_FALSE
 am__fastdepCC_TRUE
@@ -639,6 +643,7 @@ CPPFLAGS
 LDFLAGS
 CFLAGS
 CC
+with_libiberty
 MAINT
 MAINTAINER_MODE_FALSE
 MAINTAINER_MODE_TRUE
@@ -724,6 +729,7 @@ ac_user_opts='
 enable_option_checking
 with_build_libsubdir
 enable_maintainer_mode
+with_libiberty
 enable_dependency_tracking
 enable_largefile
 enable_shared
@@ -1377,6 +1383,8 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-build-libsubdir=DIR  Directory where to find libraries for build system
+  --with-libiberty=PATH   specify the directory where to find libiberty
+                          [../libiberty]
   --with-pic              try to use only PIC/non-PIC objects [default=use
                           both]
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
@@ -2888,6 +2896,15 @@ fi
   MAINT=$MAINTAINER_MODE_TRUE
 
 
+
+# Check whether --with-libiberty was given.
+if test "${with_libiberty+set}" = set; then :
+  withval=$with_libiberty;
+else
+  with_libiberty=../libiberty
+fi
+
+
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -4085,6 +4102,50 @@ $as_echo "$ac_res" >&6; }
 fi
   done
 CFLAGS="$save_CFLAGS"
+
+
+# Check whether -static-libgcc is supported.
+saved_LDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS -static-libgcc"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for -static-libgcc" >&5
+$as_echo_n "checking for -static-libgcc... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+  int main() {}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  have_static_libgcc=yes
+else
+  have_static_libgcc=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_static_libgcc" >&5
+$as_echo "$have_static_libgcc" >&6; };
+LDFLAGS="$saved_LDFLAGS"
+# Need -Wc to get it through libtool.
+if test "x$have_static_libgcc" = xyes; then
+   ac_lto_plugin_ldflags="-Wc,-static-libgcc"
+fi
+
+
+if test x"$host_subdir" = x.; then
+   gcc_build_dir=../gcc
+else
+   gcc_build_dir=../../$host_subdir/gcc
+fi
+
+
+# Used for constructing correct paths for offload compilers.
+accel_dir_suffix=
+real_target_noncanonical=${target_noncanonical}
+if test x"$enable_as_accelerator_for" != x; then
+  accel_dir_suffix=/accel/${target_noncanonical}
+  real_target_noncanonical=${enable_as_accelerator_for}
+fi
+
+
 
 case `pwd` in
   *\ * | *\	*)
@@ -6776,7 +6837,7 @@ $as_echo "$lt_cv_ld_force_load" >&6; }
       case ${MACOSX_DEPLOYMENT_TARGET-10.0},$host in
 	10.0,*86*-darwin8*|10.0,*-darwin[91]*)
 	  _lt_dar_allow_undefined='${wl}-undefined ${wl}dynamic_lookup' ;;
-	10.[012]*)
+	10.[012][,.]*)
 	  _lt_dar_allow_undefined='${wl}-flat_namespace ${wl}-undefined ${wl}suppress' ;;
 	10.*)
 	  _lt_dar_allow_undefined='${wl}-undefined ${wl}dynamic_lookup' ;;
@@ -8348,7 +8409,7 @@ _LT_EOF
       if $LD --help 2>&1 | $EGREP ': supported targets:.* elf' > /dev/null \
 	 && test "$tmp_diet" = no
       then
-	tmp_addflag=
+	tmp_addflag=' $pic_flag'
 	tmp_sharedflag='-shared'
 	case $cc_basename,$host_cpu in
         pgcc*)				# Portland Group C compiler
@@ -10558,7 +10619,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10561 "configure"
+#line 10622 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10664,7 +10725,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10667 "configure"
+#line 10728 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H

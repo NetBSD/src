@@ -1,5 +1,5 @@
 /* Simple bitmaps.
-   Copyright (C) 1999-2013 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -126,7 +126,7 @@ bitmap_clear_bit (sbitmap map, int bitno)
 }
 
 /* The iterator for sbitmap.  */
-typedef struct {
+struct sbitmap_iterator {
   /* The pointer to the first word of the bitmap.  */
   const SBITMAP_ELT_TYPE *ptr;
 
@@ -141,7 +141,7 @@ typedef struct {
 
   /* The words currently visited.  */
   SBITMAP_ELT_TYPE word;
-} sbitmap_iterator;
+};
 
 /* Initialize the iterator I with sbitmap BMP and the initial index
    MIN.  */
@@ -223,7 +223,11 @@ inline void sbitmap_vector_free (sbitmap * vec)
 }
 
 extern void dump_bitmap (FILE *, const_sbitmap);
+extern void debug_raw (const simple_bitmap_def &ref);
+extern void debug_raw (const simple_bitmap_def *ptr);
 extern void dump_bitmap_file (FILE *, const_sbitmap);
+extern void debug (const simple_bitmap_def &ref);
+extern void debug (const simple_bitmap_def *ptr);
 extern void dump_bitmap_vector (FILE *, const char *, const char *, sbitmap *,
 				 int);
 extern sbitmap sbitmap_alloc (unsigned int);

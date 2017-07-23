@@ -1,5 +1,5 @@
 /* Definitions for rtems targeting a microblaze using ELF.
-   Copyright (C) 2012-2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,3 +23,10 @@ along with GCC; see the file COPYING3.  If not see
   builtin_define( "__rtems__" );		\
   builtin_assert( "system=rtems" );		\
 } while (0)
+
+/* Redefine to include only items relevant for RTEMS */
+#undef LINK_SPEC
+#define LINK_SPEC "%{shared:-shared} -N -relax \
+  %{mbig-endian:-EB --oformat=elf32-microblaze} \
+  %{mlittle-endian:-EL --oformat=elf32-microblazeel} \
+  %{mxl-gp-opt:%{G*}} %{!mxl-gp-opt: -G 0}"

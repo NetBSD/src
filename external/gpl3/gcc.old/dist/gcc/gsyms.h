@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2013 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -18,6 +18,8 @@ along with GCC; see the file COPYING3.  If not see
 
 /* For cross compilation, use the portable definitions from the COFF
    documentation.  */
+#ifndef GCC_GSYMS_H
+#define GCC_GSYMS_H
 
 #define __GNU_SYMS__
 
@@ -102,3 +104,5 @@ enum sdb_masks
 #endif
   N_TSHIFT = 2
 };
+
+#endif /* GCC_GSYMS_H */
