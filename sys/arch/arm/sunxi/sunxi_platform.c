@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.5 2017/07/13 09:04:28 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.6 2017/07/23 10:16:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.5 2017/07/13 09:04:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.6 2017/07/23 10:16:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -142,6 +142,28 @@ sun6i_platform_reset(void)
 	bus_space_write_4(bst, bsh, SUN6I_WDT_MODE, SUN6I_WDT_MODE_EN);
 }
 
+static void
+sun50i_platform_bootstrap(void)
+{
+	/* XXX
+  	 * This should use psci_fdt_bootstrap, but it hangs
+  	 * (at least in aarch32 mode)
+  	 */
+}
+
+static const struct arm_platform sun6i_platform = {
+	.devmap = sunxi_platform_devmap,
+	.bootstrap = psci_fdt_bootstrap,
+	.init_attach_args = sunxi_platform_init_attach_args,
+	.early_putchar = sunxi_platform_early_putchar,
+	.device_register = sunxi_platform_device_register,
+	.reset = sun6i_platform_reset,
+	.delay = gtmr_delay,
+	.uart_freq = sunxi_platform_uart_freq,
+};
+
+ARM_PLATFORM(sun6i_a31, "allwinner,sun6i-a31", &sun6i_platform);
+
 static const struct arm_platform sun8i_platform = {
 	.devmap = sunxi_platform_devmap,
 	.bootstrap = psci_fdt_bootstrap,
@@ -157,9 +179,9 @@ ARM_PLATFORM(sun8i_h2plus, "allwinner,sun8i-h2-plus", &sun8i_platform);
 ARM_PLATFORM(sun8i_h3, "allwinner,sun8i-h3", &sun8i_platform);
 ARM_PLATFORM(sun8i_a83t, "allwinner,sun8i-a83t", &sun8i_platform);
 
-static const struct arm_platform sun6i_platform = {
+static const struct arm_platform sun50i_platform = {
 	.devmap = sunxi_platform_devmap,
-	.bootstrap = psci_fdt_bootstrap,
+	.bootstrap = sun50i_platform_bootstrap,
 	.init_attach_args = sunxi_platform_init_attach_args,
 	.early_putchar = sunxi_platform_early_putchar,
 	.device_register = sunxi_platform_device_register,
@@ -168,4 +190,4 @@ static const struct arm_platform sun6i_platform = {
 	.uart_freq = sunxi_platform_uart_freq,
 };
 
-ARM_PLATFORM(sun6i_a31, "allwinner,sun6i-a31", &sun6i_platform);
+ARM_PLATFORM(sun50i_a64, "allwinner,sun50i-a64", &sun50i_platform);
