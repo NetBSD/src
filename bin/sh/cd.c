@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.47.6.1 2017/06/05 08:10:24 snj Exp $	*/
+/*	$NetBSD: cd.c,v 1.47.6.2 2017/07/23 14:58:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.47.6.1 2017/06/05 08:10:24 snj Exp $");
+__RCSID("$NetBSD: cd.c,v 1.47.6.2 2017/07/23 14:58:14 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,7 +164,7 @@ docd(const char *dest, int print)
 	int first;
 	int badstat;
 
-	TRACE(("docd(\"%s\", %d) called\n", dest, print));
+	CTRACE(DBG_CMDS, ("docd(\"%s\", %d) called\n", dest, print));
 
 	/*
 	 *  Check each component of the path. If we find a symlink or
@@ -405,6 +405,7 @@ find_curdir(int noerror)
 		pwd = stalloc(i);
 		if (getcwd(pwd, i) != NULL) {
 			curdir = savestr(pwd);
+			stunalloc(pwd);
 			return;
 		}
 		stunalloc(pwd);
@@ -455,6 +456,7 @@ find_curdir(int noerror)
 		p[-1] = '\0';
 		INTON;
 		curdir = savestr(pwd);
+		stunalloc(pwd);
 		return;
 	}
 #endif

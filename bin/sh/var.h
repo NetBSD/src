@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.28 2016/03/31 16:16:35 christos Exp $	*/
+/*	$NetBSD: var.h,v 1.28.8.1 2017/07/23 14:58:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,30 +34,39 @@
  *	@(#)var.h	8.2 (Berkeley) 5/4/95
  */
 
+#ifndef	VUNSET		/* double include protection */
 /*
  * Shell variables.
  */
 
 /* flags */
-#define VEXPORT		0x0001	/* variable is exported */
-#define VREADONLY	0x0002	/* variable cannot be modified */
-#define VSTRFIXED	0x0004	/* variable struct is statically allocated */
-#define VTEXTFIXED	0x0008	/* text is statically allocated */
-#define VSTACK		0x0010	/* text is allocated on the stack */
-#define VUNSET		0x0020	/* the variable is not set */
-#define VNOFUNC		0x0040	/* don't call the callback function */
-#define VNOSET		0x0080	/* do not set variable - just readonly test */
-#define VNOEXPORT	0x0100	/* variable may not be exported */
+#define VUNSET		0x0001	/* the variable is not set */
+#define VEXPORT		0x0002	/* variable is exported */
+#define VREADONLY	0x0004	/* variable cannot be modified */
+#define VNOEXPORT	0x0008	/* variable may not be exported */
 
+#define VSTRFIXED	0x0010	/* variable struct is statically allocated */
+#define VTEXTFIXED	0x0020	/* text is statically allocated */
+#define VSTACK		0x0040	/* text is allocated on the stack */
+#define VNOFUNC		0x0100	/* don't call the callback function */
+#define VFUNCREF	0x0200	/* the function is called on ref, not set */
+
+#define VNOSET		0x4000	/* do not set variable - just readonly test */
+#define VNOERROR	0x8000	/* be quiet if set fails (no error msg) */
+
+struct var;
+
+union var_func_union {		/* function to be called when:  */
+	void (*set_func)(const char *);		/* variable gets set/unset */
+	char*(*ref_func)(struct var *);		/* variable is referenced */
+};
 
 struct var {
 	struct var *next;		/* next entry in hash list */
 	int flags;			/* flags are defined above */
 	char *text;			/* name=value */
 	int name_len;			/* length of name */
-	void (*func)(const char *);
-					/* function to be called when  */
-					/* the variable gets set/unset */
+	union var_func_union v_u;	/* function to apply (sometimes) */
 };
 
 
@@ -79,11 +88,21 @@ extern struct var vpath;
 extern struct var vps1;
 extern struct var vps2;
 extern struct var vps4;
+extern struct var line_num;
 #ifndef SMALL
+extern struct var editrc;
 extern struct var vterm;
 extern struct var vtermcap;
 extern struct var vhistsize;
+extern struct var ps_lit;
+extern struct var euname;
+extern struct var random_num;
+extern intmax_t sh_start_time;
 #endif
+
+extern int line_number;
+extern int funclinebase;
+extern int funclineabs;
 
 /*
  * The following macros access the values of the above variables.
@@ -124,3 +143,5 @@ int unsetvar(const char *, int);
 void choose_ps1(void);
 int setvarsafe(const char *, const char *, int);
 void print_quoted(const char *);
+
+#endif

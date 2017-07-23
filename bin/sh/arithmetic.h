@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.h,v 1.1 2017/03/20 11:26:07 kre Exp $	*/
+/*	$NetBSD: arithmetic.h,v 1.1.8.1 2017/07/23 14:58:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -39,4 +39,4 @@
 
 #define	ARITH_FORMAT_STR	"%" PRIdMAX
 
-intmax_t arith(const char *);
+intmax_t arith(const char *, int);

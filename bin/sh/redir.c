@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.57 2017/05/29 22:21:00 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.57.2.1 2017/07/23 14:58:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.57 2017/05/29 22:21:00 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.57.2.1 2017/07/23 14:58:14 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -877,4 +877,71 @@ fdflagscmd(int argc, char *argv[])
 			printone(fd, 1, verbose, argc > 1);
 	}
 	return 0;
+}
+
+#undef MAX		/* in case we inherited them from somewhere */
+#undef MIN
+
+#define	MIN(a,b)	(/*CONSTCOND*/((a)<=(b)) ? (a) : (b))
+#define	MAX(a,b)	(/*CONSTCOND*/((a)>=(b)) ? (a) : (b))
+
+		/* now make the compiler work for us... */
+#define	MIN_REDIR	MIN(MIN(MIN(MIN(NTO,NFROM), MIN(NTOFD,NFROMFD)), \
+		   MIN(MIN(NCLOBBER,NAPPEND), MIN(NHERE,NXHERE))), NFROMTO)
+#define	MAX_REDIR	MAX(MAX(MAX(MAX(NTO,NFROM), MAX(NTOFD,NFROMFD)), \
+		   MAX(MAX(NCLOBBER,NAPPEND), MAX(NHERE,NXHERE))), NFROMTO)
+
+static const char *redir_sym[MAX_REDIR - MIN_REDIR + 1] = {
+	[NTO      - MIN_REDIR]=	">",
+	[NFROM    - MIN_REDIR]=	"<",
+	[NTOFD    - MIN_REDIR]=	">&",
+	[NFROMFD  - MIN_REDIR]=	"<&",
+	[NCLOBBER - MIN_REDIR]=	">|",
+	[NAPPEND  - MIN_REDIR]=	">>",
+	[NHERE    - MIN_REDIR]=	"<<",
+	[NXHERE   - MIN_REDIR]=	"<<",
+	[NFROMTO  - MIN_REDIR]=	"<>",
+};
+
+int
+outredir(struct output *out, union node *n, int sep)
+{
+	if (n == NULL)
+		return 0;
+	if (n->type < MIN_REDIR || n->type > MAX_REDIR ||
+	    redir_sym[n->type - MIN_REDIR] == NULL)
+		return 0;
+
+	if (sep)
+		outc(sep, out);
+
+	/*
+	 * ugly, but all redir node types have "fd" in same slot...
+	 *	(and code other places assumes it as well)
+	 */
+	if ((redir_sym[n->type - MIN_REDIR][0] == '<' && n->nfile.fd != 0) ||
+	    (redir_sym[n->type - MIN_REDIR][0] == '>' && n->nfile.fd != 1))
+		outfmt(out, "%d", n->nfile.fd);
+
+	outstr(redir_sym[n->type - MIN_REDIR], out);
+
+	switch (n->type) {
+	case NHERE:
+		outstr("'...'", out);
+		break;
+	case NXHERE:
+		outstr("...", out);
+		break;
+	case NTOFD:
+	case NFROMFD:
+		if (n->ndup.dupfd < 0)
+			outc('-', out);
+		else
+			outfmt(out, "%d", n->ndup.dupfd);
+		break;
+	default:
+		outstr(n->nfile.expfname, out);
+		break;
+	}
+	return 1;
 }

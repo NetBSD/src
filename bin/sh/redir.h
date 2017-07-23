@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.h,v 1.23 2017/04/29 15:14:28 kre Exp $	*/
+/*	$NetBSD: redir.h,v 1.23.2.1 2017/07/23 14:58:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -49,5 +49,7 @@ int movefd(int, int);
 int to_upper_fd(int);
 void register_sh_fd(int, void (*)(int, int));
 void sh_close(int);
+struct output;
+int outredir(struct output *, union node *, int);
 
 int max_user_fd;		/* highest fd used by user */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.146.2.2 2017/06/09 16:53:39 snj Exp $
+.\"	$NetBSD: sh.1,v 1.146.2.3 2017/07/23 14:58:14 snj Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,9 +31,10 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd June 4, 2017
+.Dd July 1, 2017
 .Dt SH 1
-.ds flags abCEeFfhnuvxIimpqV
+.\" everything except c o and s (keep them ordered)
+.ds flags abCEeFfhIiLmnpquVvx
 .Os
 .Sh NAME
 .Nm sh
@@ -54,6 +55,7 @@
 .Nm
 .Fl c
 .Bk -words
+.Op Fl s
 .Op Fl \*[flags]
 .Op Cm +\*[flags]
 .Ek
@@ -83,7 +85,7 @@
 is the standard command interpreter for the system.
 The current version of
 .Nm
-is in the process of being changed to conform with the
+is in the process of being changed to conform more closely to the
 .Tn POSIX
 1003.2 and 1003.2a specifications for the shell.
 This version has many
@@ -95,8 +97,8 @@ to be a tutorial or a complete specification of the shell.
 .Ss Overview
 The shell is a command that reads lines from either a file or the
 terminal, interprets them, and generally executes other commands.
-It is the program that is running when a user logs into the system
-(although a user can select a different shell with the
+A shell is the program that is running when a user logs into the system.
+(Users can select which shell is executed for them at login with the
 .Xr chsh 1
 command).
 The shell implements a language that has flow control
@@ -188,12 +190,37 @@ below (these commands are described later):
 .Li esac
 .El
 .Pp
-If command line arguments besides the options have been specified, then
-the shell treats the first argument as the name of a file from which to
-read commands (a shell script), and the remaining arguments are set as the
+If command line arguments besides the options have been specified, and
+neither
+.Fl c
+nor
+.Fl s
+was given, then the shell treats the first argument
+as the name of a file from which to read commands (a shell script).
+This also becomes $0 and the remaining arguments are set as the
 positional parameters of the shell ($1, $2, etc).
-Otherwise, the shell
-reads commands from its standard input.
+Otherwise, if
+.Fl c
+was given, then the first argument, which must exist,
+is taken to be a string of
+.Nm
+commands to execute.
+Then if any additional arguments follow the command string,
+those arguments become $0, $1, ...
+Otherwise, if additional arguments were given
+(which implies that
+.Fl s
+was set)
+those arguments become $1, $2, ...
+If $0 has not been set by the preceding processing, it
+will be set to argv[0] as passed to the shell, which will
+usually be the name of the shell itself.
+If
+.Fl s
+was given, or if neither
+.Fl c
+nor any additional (non-option) arguments were present,
+the shell reads commands from its standard input.
 .Ss Argument List Processing
 Currently, all of the single letter options that can meaningfully
 be set using the
@@ -206,6 +233,14 @@ The set
 .Fl o
 name is provided next to the single letter option in
 the description below.
+Some options have only a long name, they are described after
+the flag options, they are used with
+.Fl o
+or
+.Cm +o
+only, either on the command line, or with the
+.Ic set
+built-in command.
 Other options described are for the command line only.
 Specifying a dash
 .Dq -
@@ -216,30 +251,51 @@ The following options can be set from the command line and,
 unless otherwise stated, with the
 .Ic set
 built-in (described later).
-.Bl -tag -width \-WXXlineno_fn_relativeXX -offset indent
+.\"
+.\" strlen("quietprofile") == strlen("local_lineno"): pick the latter
+.\" to give the indent as the _ in local_lineno, and the fi ligature in
+.\" quietprofile combine to make "local_lineno' slightly wider when printed
+.\" (in italics) in a variable width font.   Probably should test the actual
+.\" widths and use the wider, but I am not sure if mandoc is up to that...
+.\" (and I don't know how to get at the font that will be used easily anyway!)
+.\" The X's just provide a little extra space.
+.Bl -tag -width \-WXXlocal_linenoXX -offset indent
+.\"
 .It Fl a Em allexport
-Export all variables assigned to.
+Automatically export any variable to which a value is assigned
+while this flag is set.
 .It Fl b Em notify
 Enable asynchronous notification of background job completion.
 (Not implemented.)
+.It Fl C Em noclobber
+Don't overwrite existing files with
+.Dq > .
 .It Fl c
 Read commands from the
 .Ar command_string
-operand instead of from the standard input.
+operand instead of, or in addition to, from the standard input.
 Special parameter 0 will be set from the
 .Ar command_name
-operand and the positional parameters ($1, $2, etc.)
-set from the remaining argument operands.
+operand if given, and the positional parameters ($1, $2, etc.)
+set from the remaining argument operands, if any.
 .Fl c
 is only available at invocation, it cannot be
 .Ic set ,
 and there is no form using
 .Dq \&+ .
-.It Fl C Em noclobber
-Don't overwrite existing files with
-.Dq \*[Gt] .
+.It Fl E Em emacs
+Enable the built-in emacs style
+command line editor (disables
+.Fl V
+if it has been set).
+(See the
+.Sx Command Line Editing
+section below.)
 .It Fl e Em errexit
 If not interactive, exit immediately if any untested command fails.
+If interactive, and an untested command fails,
+cease all processing of the current command and return to
+prompt for a new command.
 The exit status of a command is considered to be
 explicitly tested if the command is used to control an
 .Ic if ,
@@ -248,7 +304,7 @@ explicitly tested if the command is used to control an
 or
 .Ic until ,
 or if the command is the left hand operand of an
-.Dq \*[Am]\*[Am]
+.Dq &&
 or
 .Dq ||
 operator,
@@ -260,16 +316,6 @@ With pipelines, only the status of the entire pipeline
 is tested when
 .Fl e
 is set to determine if the shell should exit.
-.It Fl E Em emacs
-Enable the built-in emacs style
-command line editor (disables
-.Fl V
-if it has been set).
-(See the
-.Sx Command Line Editing
-section below.)
-.It Fl f Em noglob
-Disable pathname expansion.
 .It Fl F Em fork
 Cause the shell to always use
 .Xr fork 2
@@ -285,33 +331,47 @@ can be compiled to always use
 in which case altering the
 .Fl F
 flag has no effect.
+.It Fl f Em noglob
+Disable pathname expansion.
 .It Fl h Em trackall
-Bind commands in functions to file system paths when the function is defined.
-When off,
+Functions defined while this option is set will have paths bound to
+commands to be executed by the function at the time of the definition.
+When off when a function is defined,
 the file system is searched for commands each time the function is invoked.
 (Not implemented.)
-.It Fl i Em interactive
-Force the shell to behave interactively.
 .It Fl I Em ignoreeof
 Ignore EOFs from input when interactive.
-.\" .It Fl L Em lineno_fn_relative
-.\" When set, before a function is defined,
-.\" causes the variable
-.\" .Ev LINENO
-.\" when used within the function,
-.\" to refer to the line number defined such that
-.\" first line of the function is line 1.
-.\" When reset,
-.\" .Ev LINENO
-.\" in a function refers to the line number within the file
-.\" in which the definition of the function occurs
-.\" (which can be the number of lines of shell input from standard input
-.\" when a function is defined interactively from the command prompt.)
+(After a large number of consecutive EOFs the shell will exit anyway.)
+.It Fl i Em interactive
+Force the shell to behave interactively.
+.It Fl L Em local_lineno
+When set, before a function is defined,
+causes the variable
+.Ev LINENO
+when used within the function,
+to refer to the line number defined such that
+first line of the function is line 1.
+When reset,
+.Ev LINENO
+in a function refers to the line number within the file
+within which the definition of the function occurs.
+This option defaults to
+.Dq on
+in this shell.
+For more details see the section
+.Sx LINENO
+below.
 .It Fl m Em monitor
 Turn on job control (set automatically when interactive).
 .It Fl n Em noexec
-If not interactive, read commands but do not execute them.
+Read and parse commands, but do not execute them.
 This is useful for checking the syntax of shell scripts.
+If
+.Fl n
+becomes set in an interactive shell, it will automatically be
+cleared just before the next time the command line prompt
+.Pq Ev PS1
+is written.
 .It Fl p Em nopriv
 Do not attempt to reset effective UID if it does not match UID.
 This is not set by default to help avoid incorrect usage by setuid
@@ -332,22 +392,37 @@ and the file specified by the
 .Ev ENV
 environment variable.
 .It Fl s Em stdin
-Read commands from standard input (set automatically if no file arguments
-are present).
+Read commands from standard input (set automatically if
+neither
+.Fl c
+nor file arguments are present).
+If after procesing a command_string with the
+.Fl c
+option, the shell has not exited, and the
+.Fl s
+option is set, it will continue reading more commands from standard input.
 This option has no effect when set or reset after the shell has
-already started running (i.e. with
-.Ic set ) .
+already started reading from the command_file, or from standard input.
+Note that the
+.Fl s
+flag being set does not cause the shell to be interactive.
 .It Fl u Em nounset
-Write a message to standard error when attempting to expand a variable
-that is not set, and if the shell is not interactive, exit immediately.
-.It Fl v Em verbose
-The shell writes its input to standard error as it is read.
-Useful for debugging.
-.It Fl x Em xtrace
-Write each command to standard error (preceded by a
-.Sq +\  )
-before it is executed.
-Useful for debugging.
+Write a message to standard error when attempting to obtain a
+value from a variable that is not set,
+and if the shell is not interactive, exit immediately.
+For interactive shells, instead return immediately to the command prompt
+and read the next command.
+Note that expansions (described later, see
+.Sx Word Expansions
+below) using the
+.Sq \&+ ,
+.Sq \&\- ,
+.Sq \&= ,
+or
+.Sq \&?
+operators test if the variable is set, before attempting to
+obtain its value, and hence are unaffected by
+.Fl u .
 .It Fl V Em vi
 Enable the built-in
 .Xr vi 1
@@ -357,6 +432,14 @@ if it has been set).
 (See the
 .Sx Command Line Editing
 section below.)
+.It Fl v Em verbose
+The shell writes its input to standard error as it is read.
+Useful for debugging.
+.It Fl x Em xtrace
+Write each command to standard error (preceded by the expanded value of
+.Dq $PS4 )
+before it is executed.
+Useful for debugging.
 .It "\ \ " Em cdprint
 Make an interactive shell always print the new directory name when
 changed by the
@@ -371,12 +454,12 @@ in the
 section.)
 (Not implemented.)
 .It "\ \ " Em posix
-Enables closer adherence to the shell standard.
+Enables closer adherence to the POSIX shell standard.
 This option will default set at shell startup if the
 environment variable
 .Ev POSIXLY_CORRECT
 is present.
-That can be overridden by the
+That can be overridden (set or reset) by the
 .Fl o
 option on the command line.
 Currently this option controls whether (!posix) or not (posix)
@@ -391,13 +474,25 @@ built-in command are passed on to utilities executed
 in posix mode),
 and whether the shell treats
 an empty brace-list compound statement as a syntax error
-(required by posix) or permits it.
+(expected by POSIX) or permits it.
 Such statements
 .Dq "{ }"
 can be useful when defining dummy functions.
 Lastly, in posix mode, only one
 .Dq \&!
 is permitted before a pipeline.
+.It "\ \ " Em promptcmds
+Allows command substitutions (as well as parameter
+and arithmetic expansions, which are always performed)
+upon the prompt strings
+.Ev PS1 ,
+.Ev PS2 ,
+and
+.Ev PS4
+each time, before they are output.
+This option should not be set until after the prompts
+have been set (or verified) to avoid accidentally importing
+unwanted command substitutions from the environment.
 .It "\ \ " Em tabcomplete
 Enables filename completion in the command line editor.
 Typing a tab character will extend the current input word to match a
@@ -420,9 +515,9 @@ operators (their meaning is discussed later).
 The following is a list of operators:
 .Bl -ohang -offset indent
 .It "Control operators:"
-.Dl \*[Am]  \*[Am]\*[Am]  \&(  \&)  \&;  ;; ;\*[Am] | || \*[Lt]newline\*[Gt]
+.Dl &  &&  \&(  \&)  \&;  ;; ;& | || <newline>
 .It "Redirection operators:"
-.Dl \*[Lt]  \*[Gt]  \*[Gt]|  \*[Lt]\*[Lt]  \*[Gt]\*[Gt]  \*[Lt]\*[Am]  \*[Gt]\*[Am]  \*[Lt]\*[Lt]-  \*[Lt]\*[Gt]
+.Dl <  >  >|  <<  >>  <&  >&  <<-  <>
 .El
 .Ss Quoting
 Quoting is used to remove the special meaning of certain characters or
@@ -450,7 +545,7 @@ and backslash
 .Pq \e .
 The backslash inside double quotes is historically weird, and serves to
 quote only the following characters (and these not in all contexts):
-.Dl $  `  \*q  \e  \*[Lt]newline\*[Gt] ,
+.Dl $  `  \*q  \e  <newline> ,
 where a backslash newline is a line continuation as above.
 Otherwise it remains literal.
 .Ss Reserved Words
@@ -550,39 +645,39 @@ If present it must occur immediately before the redirection
 operator, with no intervening white space, and becomes a
 part of that operator.
 .Bl -tag -width aaabsfiles -offset indent
-.It Oo Ar n Oc Ns \*[Gt] Ar file
+.It Oo Ar n Oc Ns > Ar file
 Redirect standard output (or n) to
 .Ar file .
-.It Oo Ar n Oc Ns \*[Gt]| file
+.It Oo Ar n Oc Ns >| file
 The same, but override the
 .Fl C
 option.
-.It Oo Ar n Oc Ns \*[Gt]\*[Gt] Ar file
+.It Oo Ar n Oc Ns >> Ar file
 Append standard output (or n) to
 .Ar file .
-.It Oo Ar n Oc Ns \*[Lt] Ar file
+.It Oo Ar n Oc Ns < Ar file
 Redirect standard input (or
 .Ar n )
 from
 .Ar file .
-.It Oo Ar n1 Oc Ns \*[Lt]\*[Am] Ns Ar n2
+.It Oo Ar n1 Oc Ns <& Ns Ar n2
 Duplicate standard input (or
 .Ar n1 )
 from file descriptor
 .Ar n2 .
 .Ar n2
 is expanded if not a digit string, the result must be a number.
-.It Oo Ar n Oc Ns \*[Lt]\*[Am]-
+.It Oo Ar n Oc Ns <&-
 Close standard input (or
 .Ar n ) .
-.It Oo Ar n1 Oc Ns \*[Gt]\*[Am] Ns Ar n2
+.It Oo Ar n1 Oc Ns >& Ns Ar n2
 Duplicate standard output (or
 .Ar n1 )
 to
 .Ar n2 .
-.It Oo Ar n Oc Ns \*[Gt]\*[Am]-
+.It Oo Ar n Oc Ns >&-
 Close standard output (or n).
-.It Oo Ar n Oc Ns \*[Lt]\*[Gt] Ar file
+.It Oo Ar n Oc Ns <> Ar file
 Open
 .Ar file
 for reading and writing on standard input (or
@@ -593,7 +688,7 @@ The following redirection is often called a
 .Dq here-document .
 .Bl -item -offset indent
 .It
-.Li [n]\*[Lt]\*[Lt] delimiter
+.Li [n]<< delimiter
 .Dl here-doc-text ...
 .Li delimiter
 .El
@@ -624,9 +719,9 @@ expansion as described in the
 .Sx Word Expansions
 section below.
 If the operator is
-.Dq \*[Lt]\*[Lt]\(mi
+.Dq <<\(mi
 instead of
-.Dq \*[Lt]\*[Lt] ,
+.Dq << ,
 then leading tabs in all lines in the here-doc-text, including before the
 end delimiter, are stripped.
 If the delimiter is not quoted, lines in here-doc-text that end with
@@ -781,7 +876,7 @@ Because pipeline assignment of standard input or standard output or both
 takes place before redirection, it can be modified by redirection.
 For example:
 .Pp
-.Dl $ command1 2\*[Gt]\*[Am]1 | command2
+.Dl $ command1 2>&1 | command2
 .Pp
 sends both the standard output and standard error of command1
 to the standard input of command2.
@@ -789,7 +884,7 @@ to the standard input of command2.
 A ; or
 .Aq newline
 terminator causes the preceding AND-OR-list (described
-next) to be executed sequentially; a \*[Am] causes asynchronous execution of
+next) to be executed sequentially; a & causes asynchronous execution of
 the preceding AND-OR-list.
 The exit status of an asynchronous AND-OR-list is zero.
 The actual status of the commands,
@@ -802,14 +897,14 @@ Note that unlike some other shells, each process in the pipeline is a
 child of the invoking shell (unless it is a shell built-in, in which case
 it executes in the current shell -- but any effect it has on the
 environment is wiped).
-.Ss Background Commands -- \*[Am]
-If a command is terminated by the control operator ampersand (\*[Am]), the
+.Ss Background Commands -- &
+If a command is terminated by the control operator ampersand (&), the
 shell executes the command asynchronously -- that is, the shell does not
 wait for the command to finish before executing the next command.
 .Pp
 The format for running a command in background is:
 .Pp
-.Dl command1 \*[Am] [command2 \*[Am] ...]
+.Dl command1 & [command2 & ...]
 .Pp
 If the shell is not interactive, the standard input of an asynchronous
 command is set to
@@ -833,22 +928,22 @@ when no other operator is present, and the command being input
 could syntactically correctly be terminated at the point where
 the newline is encountered, otherwise it is just whitespace.
 .Ss Short-Circuit List Operators
-.Dq \*[Am]\*[Am]
+.Dq &&
 and
 .Dq ||
 are AND-OR list operators.
-.Dq \*[Am]\*[Am]
+.Dq &&
 executes the first command, and then executes the second command if and only
 if the exit status of the first command is zero.
 .Dq ||
 is similar, but executes the second command if and only if the exit status
 of the first command is nonzero.
-.Dq \*[Am]\*[Am]
+.Dq &&
 and
 .Dq ||
 both have the same priority.
 Note that these operators are left-associative, so
-.Dq true || echo bar \*[Am]\*[Am] echo baz
+.Dq true || echo bar && echo baz
 writes
 .Dq baz
 and nothing else.
@@ -1010,7 +1105,7 @@ and allows for commands which do affect the current shell.
 Grouping commands together this way allows you to redirect
 their output as though they were one program:
 .Bd -literal -offset indent
-{ echo -n \*q hello \*q ; echo \*q world" ; } \*[Gt] greeting
+{ echo -n \*qhello \*q ; echo \*qworld\*q ; } > greeting
 .Ed
 .Pp
 Note that
@@ -1107,7 +1202,7 @@ numeric.
 A parameter can also be denoted by a number or a special
 character as explained below.
 .Ss Positional Parameters
-A positional parameter is a parameter denoted by a number (n \*[Gt] 0).
+A positional parameter is a parameter denoted by a number (n > 0).
 The shell sets these initially to the values of its command line arguments
 that follow the name of the shell script.
 The
@@ -2228,6 +2323,12 @@ differs amongst shell implementations.
 Using
 .Dq local \&\-
 is an extension not implemented by most shells.
+.Pp
+See the section
+.Sx LINENO
+below for details of the effects of making the variable
+.Ev LINENO
+local.
 .It pwd Op Fl \&LP
 Print the current directory.
 If
@@ -2378,8 +2479,8 @@ If no following arguments are present, the set command
 will clear all the positional parameters (equivalent to executing
 .Dq shift $# . )
 Otherwise the following arguments become
-.Do \&$1 Dc Ns \&,
-.Do \&$2 Dc Ns \&,
+.Dq \&$1 ,
+.Dq \&$2 ,
 \&...,
 and
 .Dq \&$#
@@ -2732,12 +2833,146 @@ and the default settings in
 and
 .Ar vi
 modes.
+Also see
+.Xr editrc 5
+for the commands that can be given to configure
+.Xr editline 7
+in the file named by the
+.Ev EDITRC
+parameter,
+or a file used with the
+.Ic inputrc
+built-in command,
+or using
+.Xr editline 7 Ap s
+configuration command line.
+.Pp
+When command line editing is enabled, the
+.Xr editline 7
+functions control printing of the
+.Ev PS1
+and
+.Ev PS2
+prompts when required.
+As, in this mode, the command line editor needs to
+keep track of what characters are in what position on
+the command line, care needs to be taken when setting
+the prompts.
+Normal printing characters are handled automatically,
+however mode setting sequences, which do not actually display
+on the terminal, need to be identified to
+.Xr editline 7 .
+This is done, when needed, by choosing a character that
+is not needed anywhere in the prompt, including in the mode
+setting sequences, any single character is acceptable,
+and assigning it to the shell parameter
+.Ev PSlit .
+Then that character should be used, in pairs, in the
+prompt string.
+Between each pair of
+.Ev PSlit
+characters are mode setting sequences, which affect the printing
+attributes of the following (normal) characters of the prompt,
+but do not themselves appear visibly, nor change the terminal's
+cursor position.
+.Pp
+Each such sequence, that is
+.Ev PSlit
+character, mode setting character sequence, and another
+.Ev PSlit
+character, must currently be followed by at least one following
+normal prompt character, or it will be ignored.
+That is, a
+.Ev PSlit
+character cannot be the final character of
+.Ev PS1
+or
+.Ev PS2 ,
+nor may two
+.Ev PSlit
+delimited sequences appear adjacent to each other.
+Each sequence can contain as many mode altering sequences as are
+required however.
+Only the first character from
+.Ev PSlit
+will be used.
+When set
+.Ev PSlit
+should usually be set to a string containing just one
+character, then it can simply be embedded in
+.Ev PS1
+(or
+.Ev PS2 )
+as in
+.Dl PS1="${PSlit}mset${PSlit}XYZ${PSlit}mclr${PSlit}ABC"
+The prompt visible will be
+.Dq XYZABC
+with the
+.Dq XYZ
+part shown according as defined by the mode setting characters
+.Dq mset ,
+and then cleared again by
+.Dq mclr .
+See
+.Xr tput 1
+for one method to generate appropriate mode sequences.
+Note that both parts, XYZ and ABC, must each contain at least one
+character.
+.Pp
+If
+.Ev PSlit
+is unset, which is its initial state, or set to a null string,
+no literal character will be defined,
+and all characters of the prompt strings will be assumed
+to be visible characters (which includes spaces etc.)
+To allow smooth use of prompts, without needing redefinition, when
+.Xr editline 7
+is disabled, the character chosen should be one which will be
+ignored by the terminal if received, as when
+.Xr edlitline 7
+is not in use, the prompt strings are simply written to the terminal.
+For example, setting:
+.Bd -compact -literal -offset left
+  PSlit="$(printf\ '\e1')"
+  PS1="${PSlit}$(tput\ bold\ blink)${PSlit}\e$${PSlit}$(tput\ sgr0)${PSlit}\ "
+.Ed
+will arrange for the primary prompt to be a bold blinking dollar sign,
+if supported by the current terminal, followed by an (ordinary) space,
+and, as the SOH (Control-A) character ('\e1') will not normally affect
+a terminal, this same prompt will usually work with
+.Xr editline 7
+enabled or disabled.
 .Sh ENVIRONMENT
 .Bl -tag -width MAILCHECK
 .It Ev CDPATH
 The search path used with the
 .Ic cd
 built-in.
+.It Ev EDITRC
+Gives the name of the file containing commands for
+.Xr editline 7 .
+See
+.Xr editrc 5
+for possible content and format.
+The file is processed, when in interactive mode with
+command line editing enabled, whenever
+.Ev EDITRC
+is set (even with no actual value change,)
+and if command line editing changes from disabled to enabled,
+or the editor style used is changed.
+(See the
+.Fl E
+and
+.Fl V
+options of the
+.Ic set
+builtin command, described in
+.Sx Built-ins
+above, which are documented further above in
+.Sx Argument List Processing . )
+If unset
+.Dq $HOME/.editrc
+is used.
 .It Ev HISTSIZE
 The number of lines in the history buffer for the shell.
 .It Ev HOME
@@ -2748,6 +2983,16 @@ from the user's login directory in the password file
 This environment variable also functions as the default argument for the
 .Ic cd
 built-in.
+.It Ev HOSTNAME
+Set to the current hostname of the system, as returned by
+.Xr gethostname 3 .
+This is obtained each time
+.Ev HOSTNAME
+is expanded, so changes to the system's name are reflected
+without further action.
+If unset, it returns nothing.
+Setting it does nothing except reverse the effect of an earlier
+.Ic unset .
 .It Ev IFS
 Input Field Separators.
 This is normally set to
@@ -2765,8 +3010,9 @@ See
 .Xr nls 7 .
 .It Ev LINENO
 The current line number in the script or function.
-The value of this variable is automatically set by the
-shell, even if made readonly.
+See the section
+.Sx LINENO
+below for more details.
 .It Ev MAIL
 The name of a mail file, that will be checked for the arrival of new mail.
 Overridden by
@@ -2808,18 +3054,139 @@ The primary prompt string, which defaults to
 .Dq $ \  ,
 unless you are the superuser, in which case it defaults to
 .Dq # \  .
+This string is subject to parameter, arithmetic, and if
+enabled by setting the
+.Ic promptcmds
+option, command substitution before being output.
+During execution of commands used by command substitution,
+execution tracing, the
+.Ic xtrace
+.Ic ( set Fl x )
+option is temporarily disabled.
+If
+.Ic promptcmds
+is not set and the prompt string uses command substitution,
+the prompt used will be an appropriate error string.
+For other expansion errors, a message will be output,
+and the unexpanded string will then be used as the prompt.
 .It Ev PS2
 The secondary prompt string, which defaults to
-.Dq \*[Gt] \  .
+.Dq > \  .
+After expansion (as for
+.Ev PS1 )
+it is written whenever more input is required to complete the
+current command.
 .It Ev PS4
-Output before each line when execution trace (set -x) is enabled,
+Output, after expansion like
+.Ev PS1 ,
+before each line when execution trace
+.Ic ( set Fl x )
+is enabled.
+.Ev PS4
 defaults to
 .Dq + \  .
+.It Ev PSc
+Initialised by the shell, ignoring any value from the environment,
+to a single character string, either
+.Sq \&#
+or
+.Sq \&$ ,
+depending upon whether the current user is the superuser or not.
+This is intended for use when building a custom
+.Ev PS1 .
+.It Ev PSlit
+Defines the character which may be embedded in pairs, in
+.Ev PS1
+or
+.Ev PS2
+to indicate to
+.Xr editline 7
+that the characters between each pair of occurrences of the
+.Ev PSlit
+character will not appear in the visible prompt, and will not
+cause the terminal's cursor to change position, but rather set terminal
+attributes for the following prompt character(s) at least one of
+which must be present.
+See
+.Sx Command Line Editing
+above for more information.
+.It Ev RANDOM
+Returns a different pseudo-random integer,
+in the range [0,32767] each time it is accessed.
+.Ev RANDOM
+can be assigned an integer value to seed the PRNG.
+If the value assigned is a constant, then the
+sequence of values produces on subsequent references of
+.Ev RANDOM
+will repeat after the next time the same constant is assigned.
+Note, this is not guaranteed to remain constant from one version
+of the shell to another \(en the PRNG algorithm, or seeding
+method is subject to change.
+If
+.Ev RANDOM
+is assigned an empty value (null string) then the next time
+.Ev RANDOM
+is accessed, it will be seeded from a more genuinely random source.
+The sequence of pseudo-random numbers generated will not be able to
+be generated again (except by luck, whether good or bad, depends!)
+This is also how the initial seed is generated, if none has been
+assigned before
+.Ev RANDOM
+is first accessed after shell initialization.
+.It Ev SECONDS
+Returns the number of seconds since the current shell was started.
+Attempts to set this variable are ignored.
+If unset, it remains unset, and returns nothing, unless set again.
+.It Ev START_TIME
+Initialised by the shell to the number of seconds since the Epoch
+(see
+.Xr localtime 3 )
+when the shell was started.
+The value of
+.Dl $(( Ns Ev START_TIME + Ev SECONDS Ns ))
+represents the current time, if
+.Ev START_TIME
+has not been modified, and
+.Ev SECONDS
+is not unset.
 .It Ev TERM
 The default terminal setting for the shell.
 This is inherited by
 children of the shell, and is used in the history editing modes.
 .\" This is explicitly last, not in sort order - please leave!
+.It Ev ToD
+When referenced, uses the value of
+.Ev ToD_FORMAT
+(or
+.Dq \&%T
+if
+.Ev ToD_FORMAT
+is unset) as the format argument to
+.Xr strftime 3
+to encode the current time of day, in the time zone
+defined by
+.Ev TZ
+if set, or current local time if not, and returns the result.
+If unset
+.Ev ToD
+returns nothing.
+Setting it has no effect, other than to reverse the effect of an earlier
+.Ic unset .
+.It Ev ToD_FORMAT
+Can be set to the
+.Xr strftime 3
+format string to be used when expanding
+.Ev ToD .
+Initially unset.
+.It Ev TZ
+If set, gives the time zone
+(see
+.Xr localtime 3 ,
+.Xr environ 7 )
+to use when formatting
+.Ev ToD
+and if exported, other utilities that deal with times.
+If unset, the system's local wall clock time zone is used.
 .It Ev NETBSD_SHELL
 Unlike the variables previously mentioned,
 this variable is somewhat strange,
@@ -2840,6 +3207,162 @@ that were used when building the shell will be listed.
 behaves like any other variable that has the read-only
 and un-exportable attributes set.
 .El
+.Ss Ev LINENO
+.Ev LINENO
+is in many respects a normal shell variable, containing an
+integer value. and can be expanded using any of the forms
+mentioned above which can be used for any other variable.
+.Pp
+.Ev LINENO
+can be exported,
+made readonly (which prevents attempts to assign to it,
+and to unset it, but which does not change the value,
+that is the current line number, from being obtained when
+.Ev LINENO
+is referenced,)
+and can be unset.
+All of those act as they would with any other variable.
+However,
+.Ev LINENO
+should normally not ever be set or unset.
+In this shell setting
+.Ev LINENO
+reverses the effect of an earlier
+.Ic unset ,
+but does not otherwise affect the value obtained.
+If unset,
+.Ev LINENO
+should not normally be set again, doing so is not portable.
+If
+.Ev LINENO
+is set or unset, different shells act differently.
+The value of
+.Ev LINENO
+is never imported from the environment when the shell is
+started, though if present there, as with any other variable,
+.Ev LINENO
+will be exported by this shell.
+.Pp
+.Ev LINENO
+is set automatically by the shell to be the number of the source
+line on which it occurs.
+When exported,
+.Ev LINENO
+is exported with its value set to the line number it would have
+had had it been referenced on the command line of the command to
+which it is exported.
+Line numbers are counted from 1, which is the first line the shell
+reads from any particular file.
+For this shell, standard input, including in an interactive shell,
+the user's terminal, is just another file and lines are counted
+there as well.
+However note that not all shells count interactive
+lines this way, it is not wise to rely upon
+.Ev LINENO
+having a useful value, except in a script, or a function.
+.Pp
+The role of
+.Ev LINENO
+in functions is less clear.
+In some shells,
+.Ev LINENO
+continues to refer to the line number in the script which defines
+the function,
+in others lines count from one within the function, always (and
+resume counting normally once the function definition is complete)
+and others count in functions from one if the function is defined
+interactively, but otherwise just reference the line number in the
+script in which the function is defined.
+This shell gives the user the option to choose.
+If the
+.Fl L
+flag (the
+.Ic local_lineno
+option, see
+.Sx Argument List Processing )
+is set, when the function is defined, then the function
+defaults to counting lines with one being the first line of the
+function.
+When the
+.Fl L
+flag is not set, the shell counts lines in a function definition
+in the same continuous sequence as the lines that surround the
+function definition.
+Further, if
+.Ev LINENO
+is made local
+(see
+.Sx Built-ins
+above)
+inside the function, the function can decide which
+behavior it prefers.
+If
+.Ev LINENO
+is made local and inherited, and not given a value, as in
+.Dl local Fl I Ev LINENO
+then from that point in the function,
+.Ev LINENO
+will give the line number as if lines are counted in sequence
+with the lines that surround the function definition (and
+any other function definitions in which this is nested.)
+If
+.Ev LINENO
+is made local, and in that same command, given a value, as
+.Dl local Oo Fl I Ns | Ns Fl N Oc Ev LINENO Ns = Ns Ar value
+then
+.Ev LINENO
+will give the line number as if lines are counted from one
+from the beginning of the function.
+The value nominally assigned in this case is irrelevant, and ignored.
+For completeness, if lineno is made local and unset, as in
+.Dl local Fl N Ev LINENO
+then
+.Ev LINENO
+is simply unset inside the function, and gives no value at all.
+.Pp
+Now for some technical details.
+The line on which
+.Ev LINENO
+occurs in a parameter expansion, is the line that contains the
+.Sq \&$
+that begins the expansion of
+.Ev LINENO .
+In the case of nested expansions, that
+.Sq \&$
+is the one that actually has
+.Ev LINENO
+as its parameter.
+In an arithmetic expansion, where no
+.Sq \&$
+is used to evaluate
+.Ev LINENO
+but
+.Ev LINENO
+is simply referenced as a variable, then the value is the
+line number of the line that contains the
+.Sq L
+of
+.Ev LINENO .
+For functions line one of the function definition (when relevant)
+is the line that contains the first character of the
+function name in the definition.
+When exported, the line number of the command is the line number
+where the first character of the word which becomes the command name occurs.
+.Pp
+When the shell opens a new file, for any reason,
+it counts lines from one in that file,
+and then resumes its original counting once it resumes reading the
+previous input stream.
+When handling a string passed to
+.Ic eval
+the line number starts at the line on which the string starts,
+and then if the string contains internal newline characters,
+those characters increase the line number.
+This means that references to
+.Ev LINENO
+in such a case can produce values larger than would be
+produced by a reference on the line after the
+.Ic eval .
 .Sh FILES
 .Bl -item
 .It
@@ -2885,13 +3408,6 @@ That was, however, unmaintainable so we wrote this one.
 .Sh BUGS
 Setuid shell scripts should be avoided at all costs, as they are a
 significant security risk.
-.Pp
-.Ev PS1 ,
-.Ev PS2 ,
-and
-.Ev PS4
-should be subject to parameter expansion before
-being displayed.
 .Pp
 The characters generated by filename completion should probably be quoted
 to ensure that the filename is still valid after the input line has been

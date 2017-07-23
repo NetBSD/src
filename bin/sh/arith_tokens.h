@@ -1,4 +1,4 @@
-/*	$NetBSD: arith_tokens.h,v 1.1 2017/03/20 11:26:07 kre Exp $	*/
+/*	$NetBSD: arith_tokens.h,v 1.1.8.1 2017/07/23 14:58:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -111,5 +111,7 @@ union a_token_val {
 };
 
 extern union a_token_val a_t_val;
+
+extern int arith_lno, arith_var_lno;
 
 int arith_token(void);

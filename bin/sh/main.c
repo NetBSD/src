@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.70 2017/05/29 14:03:23 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.70.2.1 2017/07/23 14:58:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.70 2017/05/29 14:03:23 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.70.2.1 2017/07/23 14:58:14 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,7 @@ main(int argc, char **argv)
 	opentrace();
 	trputs("Shell args:  ");  trargs(argv);
 #if DEBUG >= 3
-	set_debug(((DEBUG)==3 ? "_^" : "++"), 1);
+	set_debug(((DEBUG)==3 ? "_@" : "++"), 1);
 #endif
 #endif
 	rootpid = getpid();
@@ -217,6 +217,8 @@ state2:
 	}
 state3:
 	state = 4;
+	line_number = 1;	/* undo anything from profile files */
+
 	if (sflag == 0 || minusc) {
 		static int sigs[] =  {
 		    SIGINT, SIGQUIT, SIGHUP, 
@@ -261,7 +263,7 @@ cmdloop(int top)
 	int numeof = 0;
 	enum skipstate skip;
 
-	TRACE(("cmdloop(%d) called\n", top));
+	CTRACE(DBG_ALWAYS, ("cmdloop(%d) called\n", top));
 	setstackmark(&smark);
 	for (;;) {
 		if (pendingsigs)
@@ -275,8 +277,7 @@ cmdloop(int top)
 			nflag = 0;
 		}
 		n = parsecmd(inter);
-		TRACE(("cmdloop: "); showtree(n));
-		/* showtree(n); DEBUG */
+		VXTRACE(DBG_PARSE|DBG_EVAL|DBG_CMDS,("cmdloop: "),showtree(n));
 		if (n == NEOF) {
 			if (!top || numeof >= 50)
 				break;

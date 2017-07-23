@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.21 2016/03/31 23:11:05 christos Exp $	*/
+/*	$NetBSD: parser.h,v 1.21.8.1 2017/07/23 14:58:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,9 @@
 #define	CTLENDARI '\207'
 #define	CTLQUOTEMARK '\210'
 #define	CTLQUOTEEND '\211'	/* only inside ${...} */
-#define	CTL_LAST '\211'		/* last 'special' character */
+#define CTLNONL '\212'		/* The \n in a deleted \ \n sequence */
+			/* pure concidence that (CTLNONL & 0x7f) == '\n' */
+#define	CTL_LAST '\212'		/* last 'special' character */
 
 /* variable substitution byte (follows CTLVAR) */
 #define VSTYPE		0x0f	/* type of variable substitution */
@@ -68,18 +70,91 @@
 #define VSTRIMRIGHTMAX 	0x9		/* ${var%%pattern} */
 #define VSLENGTH	0xa		/* ${#var} */
 
+union node *parsecmd(int);
+void fixredir(union node *, const char *, int);
+int goodname(char *);
+const char *getprompt(void *);
+const char *expandstr(char *, int);
+
+struct HereDoc;
+union node;
+struct nodelist;
+
+struct parse_state {
+	int ps_noalias;			/* when set, don't handle aliases */
+	struct HereDoc *ps_heredoclist;	/* list of here documents to read */
+	int ps_parsebackquote;		/* nonzero inside backquotes */
+	int ps_doprompt;		/* if set, prompt the user */
+	int ps_needprompt;		/* true if interactive at line start */
+	int ps_lasttoken;		/* last token read */
+	int ps_tokpushback;		/* last token pushed back */
+	char *ps_wordtext;	/* text of last word returned by readtoken */
+	int ps_checkkwd;	/* 1 == check for kwds, 2 += eat newlines */
+	struct nodelist *ps_backquotelist; /* list of cmdsubs to process */
+	union node *ps_redirnode;	/* node for current redirect */
+	struct HereDoc *ps_heredoc;	/* current heredoc << beign parsed */
+	int ps_quoteflag;		/* set if (part) of token was quoted */
+	int ps_startlinno;		/* line # where last token started */
+	int ps_funclinno;		/* line # of the current function */
+	int ps_elided_nl;		/* count of \ \n pairs we have seen */
+};
+
+/*
+ * The parser references the elements of struct parse_state quite
+ * frequently - they used to be simple globals, so one memory ref
+ * per access, adding an indirect through global ptr would not be
+ * nice.   The following gross hack allows most of that cost to be
+ * avoided, by allowing the compiler to understand that the global
+ * pointer is in fact constant in any function, and so its value can
+ * be cached, rather than needing to be fetched every time in case
+ * some other called function has changed it.
+ *
+ * The rule to make this work is that any function that wants
+ * to alter the global must restore it before it returns (and thus
+ * must have an error trap handler).  That means that the struct
+ * used for the new parser state can be a local in that function's
+ * stack frame, it never needs to be malloc'd.
+ */
+
+union parse_state_p {
+	struct parse_state *const	c_current_parser;
+	struct parse_state *		v_current_parser;
+};
+
+extern union parse_state_p psp;
+
+#define	current_parser (psp.c_current_parser)
+
+/*
+ * Perhaps one day emulate "static" by moving most of these definitions into
+ * parser.c ...  (only checkkwd & tokpushback are used outside parser.c,
+ * and only in init.c as a RESET activity)
+ */
+#define	tokpushback	(current_parser->ps_tokpushback)
+#define	checkkwd	(current_parser->ps_checkkwd)
+
+#define	noalias		(current_parser->ps_noalias)
+#define	heredoclist	(current_parser->ps_heredoclist)
+#define	parsebackquote	(current_parser->ps_parsebackquote)
+#define	doprompt	(current_parser->ps_doprompt)
+#define	needprompt	(current_parser->ps_needprompt)
+#define	lasttoken	(current_parser->ps_lasttoken)
+#define	wordtext	(current_parser->ps_wordtext)
+#define	backquotelist	(current_parser->ps_backquotelist)
+#define	redirnode	(current_parser->ps_redirnode)
+#define	heredoc		(current_parser->ps_heredoc)
+#define	quoteflag	(current_parser->ps_quoteflag)
+#define	startlinno	(current_parser->ps_startlinno)
+#define	funclinno	(current_parser->ps_funclinno)
+#define	elided_nl	(current_parser->ps_elided_nl)
 
 /*
  * NEOF is returned by parsecmd when it encounters an end of file.  It
  * must be distinct from NULL, so we use the address of a variable that
  * happens to be handy.
  */
-extern int tokpushback;
-#define NEOF ((union node *)&tokpushback)
-extern int whichprompt;		/* 1 == PS1, 2 == PS2 */
+#define NEOF ((union node *)&psp)
 
-
-union node *parsecmd(int);
-void fixredir(union node *, const char *, int);
-int goodname(char *);
-const char *getprompt(void *);
+#ifdef DEBUG
+extern int parsing;
+#endif
