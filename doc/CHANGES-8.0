@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.29 2017/07/23 15:01:21 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.30 2017/07/23 15:06:16 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -4574,4 +4574,9 @@ bin/sh/var.h					1.29-1.35
 	newly expandable prompts and avoid requests for other magic
 	expansion methods), and fix some ancient memory management bugs.
 	[kre, ticket #103]
+
+share/man/man7/environ.7			1.27
+
+	Document EDITRC
+	[kre, ticket #105]
 
