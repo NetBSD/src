@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.220 2017/07/14 14:57:43 perseant Exp $
+# $NetBSD: mi,v 1.221 2017/07/23 19:26:05 perseant Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1947,6 +1947,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_ctype2.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_btowc.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_digittoint.debug	tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_ducet.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_io.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbrtowc.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbsnrtowcs.debug	tests-lib-debug		debug,atf,compattestfile
