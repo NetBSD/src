@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.13 2012/01/20 16:31:29 joerg Exp $	*/
+/*	$NetBSD: iconv.c,v 1.13.34.1 2017/07/23 18:51:21 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.13 2012/01/20 16:31:29 joerg Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.13.34.1 2017/07/23 18:51:21 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -36,6 +36,7 @@ __RCSID("$NetBSD: iconv.c,v 1.13 2012/01/20 16:31:29 joerg Exp $");
 #include <errno.h>
 #include <paths.h>
 #include <sys/queue.h>
+#include <wchar.h>
 
 #include <iconv.h>
 
