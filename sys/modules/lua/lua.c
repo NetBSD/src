@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.13.2.3 2016/05/22 10:28:49 martin Exp $ */
+/*	$NetBSD: lua.c,v 1.13.2.3.4.1 2017/07/23 05:56:36 snj Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -334,10 +334,12 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			}
 
 		K = kluaL_newstate(create->name, create->desc, IPL_NONE);
-		K->ks_user = true;
 
 		if (K == NULL)
 			return ENOMEM;
+
+		K->ks_user = true;
+
 		if (lua_verbose)
 			device_printf(sc->sc_dev, "state %s created\n",
 			    create->name);
