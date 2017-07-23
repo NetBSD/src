@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.25 2017/07/23 06:12:02 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.26 2017/07/23 06:19:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.25 2017/07/23 06:12:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.26 2017/07/23 06:19:00 christos Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -78,6 +78,9 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:
 # include <netinet/icmp6.h>
 # if (__NetBSD_Version__ >= 106000000)
 #  include <netinet6/nd6.h>
+# endif
+# if __NetBSD_Version__ >= 499001100
+#  include <netinet6/scope6_var.h>
 # endif
 #endif
 #include "netinet/ip_fil.h"
@@ -1420,9 +1423,12 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 		sockaddr_in6_init(&u.dst6, &fdp->fd_ip6.in6, 0, 0, 0);
 	else
 		sockaddr_in6_init(&u.dst6, &fin->fin_fi.fi_dst.in6, 0, 0, 0);
-	/* KAME */
-	if (IN6_IS_ADDR_LINKLOCAL(&u.dst6.sin6_addr))
-		u.dst6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+	if ((error = in6_setscope(&u.dst6.sin6_addr, ifp,
+	    &u.dst6.sin6_scope_id)) != 0)
+		return error;
+	if ((error = sa6_embedscope(&u.dst6, 0)) != 0)
+		return error;
+
 	dst = &u.dst;
 	rtcache_setdst(ro, dst);
 
