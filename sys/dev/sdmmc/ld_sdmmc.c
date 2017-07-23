@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.12.4.1 2015/05/26 01:29:53 msaitoh Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.12.4.2 2017/07/23 06:09:53 snj Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.12.4.1 2015/05/26 01:29:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.12.4.2 2017/07/23 06:09:53 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -136,7 +136,7 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	 * when wedge is supported.
 	 */
 	config_pending_incr(self);
-	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+	if (kthread_create(PRI_NONE, 0, NULL,
 	    ld_sdmmc_doattach, sc, &lwp, "%sattach", device_xname(self))) {
 		aprint_error_dev(self, "couldn't create thread\n");
 	}
