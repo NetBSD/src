@@ -1,4 +1,4 @@
-.\"	$NetBSD: editrc.5,v 1.32 2016/05/22 23:54:20 christos Exp $
+.\"	$NetBSD: editrc.5,v 1.32.8.1 2017/07/23 14:41:26 snj Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -293,10 +293,18 @@ then the character is set to
 List the values of all the terminal capabilities (see
 .Xr termcap 5 ) .
 .El
+.Sh ENVIRONMENT
+.Bl -tag -width "~/.editrcXXX"
+.It Ev EDITRC
+Names the default configuration file for the
+.Xr editline 3
+library.
+.El
 .Sh FILES
 .Bl -tag -width "~/.editrcXXX"
 .It Pa ~/.editrc
-User configuration file for the
+Last resort, if no other file is specified,
+user configuration file for the
 .Xr editline 3
 library.
 .El
