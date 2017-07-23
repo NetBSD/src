@@ -1,4 +1,4 @@
-/* $NetBSD: t_ducet.c,v 1.1.2.1 2017/07/14 15:53:08 perseant Exp $ */
+/* $NetBSD: t_ducet.c,v 1.1.2.2 2017/07/23 19:16:11 perseant Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ducet.c,v 1.1.2.1 2017/07/14 15:53:08 perseant Exp $");
+__RCSID("$NetBSD: t_ducet.c,v 1.1.2.2 2017/07/23 19:16:11 perseant Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -98,7 +98,7 @@ ATF_TC_BODY(wcsxfrm_ducet, tc)
 	wchar_t *tmp, *oline = NULL, *line;
 	wchar_t xfb1[BUFLEN], xfb2[BUFLEN]; /* Gross overestimates */
 	wchar_t *oxf = xfb1, *xf = xfb2;
-	int i, lineno = 0;
+	int i, lineno = 0, result;
 
 	setlocale(LC_COLLATE, "en_US.UTF-8"); /* should be "vanilla" DUCET, but en_US will do */
 	ATF_REQUIRE_STREQ("en_US.UTF-8", setlocale(LC_COLLATE, NULL));
@@ -122,7 +122,18 @@ ATF_TC_BODY(wcsxfrm_ducet, tc)
 		printf("\n");
 		
 		wcsxfrm(xf, line, BUFLEN);
-		ATF_CHECK(wcscmp(oxf, xf) < 0);
+		result = wcscmp(oxf, xf);
+		if (result > 0) {
+			printf("FAILED result was %d\nweights were ", result);
+			for (i = 0; oxf[i] != 0; i++)
+				printf("0x%lx ", (long)oline[i]);
+			printf(" and ");
+			for (i = 0; xf[i] != 0; i++)
+				printf("0x%lx ", (long)line[i]);
+			printf("\n");
+			
+		}
+		ATF_CHECK(result <= 0);
 
 		/* Swap buffers */
 		tmp = oxf;
