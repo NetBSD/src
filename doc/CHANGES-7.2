@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.30 2017/07/20 01:45:08 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.31 2017/07/23 06:29:48 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -2512,4 +2512,64 @@ sys/arch/i386/i386/trap.c			1.288 via patch
 	There is a one-instruction race in it that could panic
 	the kernel.
 	[maxv, ticket #1441]
+
+sys/modules/lua/lua.c				1.21
+
+	Avoid possible null pointer dereferencing.
+	Fixes PR kern/52225.
+	[mbalmer, ticket #1418]
+
+sys/modules/lua/lua.c				1.22 via patch
+
+	Only load a module if it is not already loaded in a state
+	(much like userland Lua handles require).  PR kern/52226.
+	[mbalmer, ticket #1422]
+
+sys/modules/lua/lua.c				1.23
+
+	always put the module on the stack
+	[mbalmer, ticket #1423]
+
+sys/dev/hpc/hpckbd.c				1.31
+
+	Restore wscons keymaps feature on hpcarm
+	[manu, ticket #1438]
+
+lib/libc/net/Makefile.inc			1.87
+
+	Include IPv6 global variable in USE_INET6=no libc.
+	This ensures a binary built with USE_INET6=yes libc can
+	still link at runtime with a USE_INET6=no libc.
+	[manu, ticket #1439]
+
+distrib/utils/libhack/Makefile			1.25
+distrib/utils/libhack/Makefile.inc		1.27
+lib/libc/gen/getcap.c				1.57
+
+	Make shared -DSMALL libc buildable without breaking libhack
+	[manu, ticket #1440]
+
+sys/dev/sdmmc/ld_sdmmc.c			1.29
+
+	The config_* APIs are not MPSAFE, so make sure the deferred
+	attach thread holds KERNEL_LOCK.
+	[jmcneill, ticket #1447]
+
+sys/dev/usb/uhci.c				1.276
+
+	Only call uhci_free_stds if there are TDs to free.
+
+	In uhci_alloc_std_chain ensure we fill the TD array correctly
+	and note the number of allocated TDs so that uhci_free_stds
+	will do the right thing
+	[skrll, ticket #1456]
+
+sys/arch/arm/arm/cpufunc_asm_arm11x6.S		1.8
+sys/arch/arm/arm32/genassym.cf			1.75
+
+	In idcache_wbinv_range if the range size is bigger than the
+	dcache size then call idcache_wbinv_all
+
+	Avoids a problem with large ranges as seen in port-evbarm/52169.
+	[skrll, ticket #1452]
 
