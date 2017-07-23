@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.242 2017/04/06 03:54:59 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.243 2017/07/23 10:55:00 para Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.242 2017/04/06 03:54:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.243 2017/07/23 10:55:00 para Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1013,7 +1013,7 @@ ether_ifdetach(struct ifnet *ifp)
 	mutex_enter(ec->ec_lock);
 	while ((enm = LIST_FIRST(&ec->ec_multiaddrs)) != NULL) {
 		LIST_REMOVE(enm, enm_list);
-		kmem_free(enm, sizeof(*enm));
+		kmem_intr_free(enm, sizeof(*enm));
 		ec->ec_multicnt--;
 	}
 	mutex_exit(ec->ec_lock);
@@ -1277,7 +1277,7 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 out:
 	mutex_exit(ec->ec_lock);
 	if (enm != NULL)
-		kmem_free(enm, sizeof(*enm));
+		kmem_intr_free(enm, sizeof(*enm));
 	return error;
 }
 
@@ -1319,7 +1319,7 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	ec->ec_multicnt--;
 	mutex_exit(ec->ec_lock);
 
-	kmem_free(enm, sizeof(*enm));
+	kmem_intr_free(enm, sizeof(*enm));
 	/*
 	 * Return ENETRESET to inform the driver that the list has changed
 	 * and its reception filter should be adjusted accordingly.
