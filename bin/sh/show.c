@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.42 2017/05/29 14:03:23 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.42.2.1 2017/07/23 14:58:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.42 2017/05/29 14:03:23 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.42.2.1 2017/07/23 14:58:14 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: show.c,v 1.42 2017/05/29 14:03:23 kre Exp $");
 #include "syntax.h"
 #include "input.h"
 #include "output.h"
+#include "var.h"
 #include "builtins.h"
 
 #if defined(DEBUG) && !defined(DBG_PID)
@@ -92,7 +93,7 @@ typedef struct traceinfo {
 	int	tfd;	/* file descriptor for open trace file */
 	int	nxtiov;	/* the buffer we should be writing to */
 	char	lastc;	/* the last non-white character output */
-	uint8_t	supr;	/* char classes to supress after \n */
+	uint8_t	supr;	/* char classes to suppress after \n */
 	pid_t	pid;	/* process id of process that opened that file */
 	size_t	llen;	/* number of chars in current output line */
 	size_t	blen;	/* chars used in current buffer being filled */
@@ -102,8 +103,8 @@ typedef struct traceinfo {
 
 /* These are auto turned off when non white space is printed */
 #define	SUP_NL	0x01	/* don't print \n */
-#define	SUP_SP	0x03	/* supress spaces */
-#define	SUP_WSP	0x04	/* supress all white space */
+#define	SUP_SP	0x03	/* suppress spaces */
+#define	SUP_WSP	0x04	/* suppress all white space */
 
 #ifdef DEBUG		/* from here to end of file ... */
 
@@ -297,9 +298,14 @@ trargs(char **ap)
 		trstring(*ap++);
 		if (*ap)
 			trace_putc(' ', tracetfile);
-		else
-			trace_putc('\n', tracetfile);
 	}
+	trace_putc('\n', tracetfile);
+}
+
+void
+trargstr(union node *n)
+{
+	sharg(n, tracetfile);
 }
 
 
@@ -654,12 +660,17 @@ sharg(union node *arg, TFILE *fp)
 			trace_putc(*++p, fp);
 			break;
 
+		case CTLNONL:
+			trace_putc('\\', fp);
+			trace_putc('\n', fp);
+			break;
+
 		case CTLVAR:
 			subtype = *++p;
 			if (!quoted != !(subtype & VSQUOTE))
 				trace_putc('"', fp);
 			trace_putc('$', fp);
-			trace_putc('{', fp);
+			trace_putc('{', fp);	/*}*/
 			if ((subtype & VSTYPE) == VSLENGTH)
 				trace_putc('#', fp);
 			if (subtype & VSLINENO)
@@ -750,6 +761,8 @@ sharg(union node *arg, TFILE *fp)
 			quoted--;
 			break;
 		case CTLARI:
+			if (*p == ' ')
+				p++;
 			trace_puts("$(( ", fp);
 			break;
 		case CTLENDARI:
@@ -926,6 +939,7 @@ trace_id(TFILE *tf)
 	char indent[16];
 	char *p;
 	int lno;
+	char c;
 
 	if (DFlags & DBG_NEST) {
 		if ((unsigned)ShNest >= sizeof indent - 1) {
@@ -943,25 +957,35 @@ trace_id(TFILE *tf)
 	} else
 		indent[0] = '\0';
 
-	lno = plinno;	/* only approximate for now - as good as we can do */
+	/*
+	 * If we are in the parser, then plinno is the current line
+	 * number being processed (parser line no).
+	 * If we are elsewhere, then line_number gives the source
+	 * line of whatever we are currently doing (close enough.)
+	 */
+	if (parsing)
+		lno = plinno;
+	else
+		lno = line_number;
+
+	c = ((i = getpid()) == tf->pid) ? ':' : '=';
 
 	if (DFlags & DBG_PID) {
-		i = getpid();
 		if (DFlags & DBG_LINE)
-			(void) asprintf(&p, "%5d%c%s\t%4d @\t", i,
-			    i == tf->pid ? ':' : '=', indent, lno);
+			(void) asprintf(&p, "%5d%c%s\t%4d%c@\t", i, c,
+			    indent, lno, parsing?'-':'+');
 		else
-			(void) asprintf(&p, "%5d%c%s\t", i,
-			    i == tf->pid ? ':' : '=', indent);
+			(void) asprintf(&p, "%5d%c%s\t", i, c, indent);
 		return p;
 	} else if (DFlags & DBG_NEST) {
 		if (DFlags & DBG_LINE)
-			(void) asprintf(&p, "%s\t%4d @\t", indent, lno);
+			(void) asprintf(&p, "%c%s\t%4d%c@\t", c, indent, lno,
+			    parsing?'-':'+');
 		else
-			(void) asprintf(&p, "%s\t", indent);
+			(void) asprintf(&p, "%c%s\t", c, indent);
 		return p;
 	} else if (DFlags & DBG_LINE) {
-		(void) asprintf(&p, "%4d @\t", lno);
+		(void) asprintf(&p, "%c%4d%c@\t", c, lno, parsing?'-':'+');
 		return p;
 	}
 	return NULL;

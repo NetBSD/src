@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40 2017/05/07 15:01:18 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.40.2.1 2017/07/23 14:58:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.40 2017/05/07 15:01:18 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.40.2.1 2017/07/23 14:58:14 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -484,6 +484,9 @@ SHELLPROC {
 void
 onsig(int signo)
 {
+	CTRACE(DBG_SIG, ("Signal %d, had: pending %d, gotsig[%d]=%d\n",
+	    signo, pendingsigs, signo, gotsig[signo]));
+
 	signal(signo, onsig);
 	if (signo == SIGINT && trap[SIGINT] == NULL) {
 		onint();
@@ -518,6 +521,8 @@ dotrap(void)
 		}
 		gotsig[i] = 0;
 		savestatus=exitstatus;
+		CTRACE(DBG_TRAP|DBG_SIG, ("dotrap %d: \"%s\"\n", i,
+		    trap[i] ? trap[i] : "-NULL-"));
 		tr = savestr(trap[i]);		/* trap code may free trap[i] */
 		evalstring(tr, 0);
 		ckfree(tr);
@@ -566,7 +571,9 @@ exitshell(int status)
 	struct jmploc loc1, loc2;
 	char *p;
 
-	TRACE(("pid %d, exitshell(%d)\n", getpid(), status));
+	CTRACE(DBG_ERRS|DBG_PROCS|DBG_CMDS|DBG_TRAP,
+	    ("pid %d, exitshell(%d)\n", getpid(), status));
+
 	if (setjmp(loc1.loc)) {
 		goto l1;
 	}
@@ -576,13 +583,14 @@ exitshell(int status)
 	handler = &loc1;
 	if ((p = trap[0]) != NULL && *p != '\0') {
 		trap[0] = NULL;
+		VTRACE(DBG_TRAP, ("exit trap: \"%s\"\n", p));
 		evalstring(p, 0);
 	}
-l1:   handler = &loc2;			/* probably unnecessary */
+ l1:	handler = &loc2;			/* probably unnecessary */
 	flushall();
 #if JOBS
 	setjobctl(0);
 #endif
-l2:   _exit(status);
+ l2:	_exit(status);
 	/* NOTREACHED */
 }

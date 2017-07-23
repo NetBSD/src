@@ -1,4 +1,4 @@
-#	$NetBSD: nodetypes,v 1.15 2017/05/09 05:14:03 kre Exp $
+#	$NetBSD: nodetypes,v 1.15.2.1 2017/07/23 14:58:14 snj Exp $
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
 #
@@ -58,6 +58,7 @@ NCMD ncmd			# a simple command
 	backgnd	  int			# set to run command in background
 	args	  nodeptr		# the arguments
 	redirect  nodeptr		# list of file redirections
+	lineno	  int
 
 NPIPE npipe			# a pipeline
 	type	  int
@@ -94,6 +95,7 @@ NCASE ncase			# a case statement
 	type	  int
 	expr	  nodeptr		# the word to switch on
 	cases	  nodeptr		# the list of cases (NCLIST nodes)
+	lineno	  int
 
 NCLISTCONT nclist		# a case terminated by ';&' (fall through)
 NCLIST nclist			# a case
@@ -101,6 +103,7 @@ NCLIST nclist			# a case
 	next	  nodeptr		# the next case in list
 	pattern	  nodeptr		# list of patterns for this case
 	body	  nodeptr		# code to execute for this case
+	lineno	  int
 
 
 NDEFUN narg			# define a function.  The "next" field contains
@@ -111,6 +114,7 @@ NARG narg			# represents a word
 	next	  nodeptr		# next word in list
 	text	  string		# the text of the word
 	backquote nodelist		# list of commands in back quotes
+	lineno	  int
 
 NTO nfile			# fd> fname
 NCLOBBER nfile			# fd>| fname

@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.48 2016/03/16 22:36:40 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.48.8.1 2017/07/23 14:58:14 snj Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.48 2016/03/16 22:36:40 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.48.8.1 2017/07/23 14:58:14 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,8 @@ histedit(void)
 			if (el != NULL) {
 				if (hist)
 					el_set(el, EL_HIST, history, hist);
-				el_set(el, EL_PROMPT, getprompt);
+
+				set_prompt_lit(lookupvar("PSlit"));
 				el_set(el, EL_SIGNAL, 1);
 				el_set(el, EL_ALIAS_TEXT, alias_text, NULL);
 				el_set(el, EL_ADDFN, "rl-complete",
@@ -152,13 +153,13 @@ bad:
 			INTON;
 		}
 		if (el) {
-			el_source(el, NULL);
 			if (Vflag)
 				el_set(el, EL_EDITOR, "vi");
 			else if (Eflag)
 				el_set(el, EL_EDITOR, "emacs");
 			el_set(el, EL_BIND, "^I", 
 			    tabcomplete ? "rl-complete" : "ed-insert", NULL);
+			el_source(el, lookupvar("EDITRC"));
 		}
 	} else {
 		INTOFF;
@@ -174,6 +175,33 @@ bad:
 	}
 }
 
+void
+set_prompt_lit(const char *lit_ch)
+{
+	wchar_t wc;
+
+	if (!(iflag && editing && el))
+		return;
+
+	if (lit_ch == NULL) {
+		el_set(el, EL_PROMPT, getprompt);
+		return;
+	}
+
+	mbtowc(&wc, NULL, 1);		/* state init */
+
+	if (mbtowc(&wc, lit_ch, strlen(lit_ch)) <= 0)
+		el_set(el, EL_PROMPT, getprompt);
+	else
+		el_set(el, EL_PROMPT_ESC, getprompt, (int)wc);
+}
+
+void
+set_editrc(const char *fname)
+{
+	if (iflag && editing && el)
+		el_source(el, fname);
+}
 
 void
 sethistsize(const char *hs)
