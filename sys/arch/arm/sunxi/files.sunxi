@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.12 2017/07/17 23:26:17 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.13 2017/07/23 10:16:08 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -59,6 +59,7 @@ file	arch/arm/sunxi/sunxi_gpio.c		sunxi_gpio
 file	arch/arm/sunxi/sun6i_a31_gpio.c		sunxi_gpio & soc_sun6i_a31
 file	arch/arm/sunxi/sun8i_a83t_gpio.c	sunxi_gpio & soc_sun8i_a83t
 file	arch/arm/sunxi/sun8i_h3_gpio.c		sunxi_gpio & soc_sun8i_h3
+file	arch/arm/sunxi/sun50i_a64_gpio.c	sunxi_gpio & soc_sun50i_a64
 
 # UART
 attach	com at fdt with sunxi_com
@@ -109,3 +110,5 @@ defflag	opt_soc.h			SOC_SUN8I_A83T: SOC_SUN8I
 defflag	opt_soc.h			SOC_SUN8I_H3: SOC_SUN8I
 defflag	opt_soc.h			SOC_SUN6I: SOC_SUNXI
 defflag	opt_soc.h			SOC_SUN6I_A31: SOC_SUN6I
+defflag	opt_soc.h			SOC_SUN50I: SOC_SUNXI
+defflag	opt_soc.h			SOC_SUN50I_A64: SOC_SUN50I
