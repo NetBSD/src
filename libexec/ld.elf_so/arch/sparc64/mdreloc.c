@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.61 2017/06/19 11:57:02 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.62 2017/07/23 14:37:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.61 2017/06/19 11:57:02 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.62 2017/07/23 14:37:51 martin Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -579,7 +579,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
-	Elf_Addr value, offset;
+	Elf_Addr value, offset, offBAA;
 	unsigned long info = rela->r_info;
 
 	assert(ELF_R_TYPE(info) == R_TYPE(JMP_SLOT));
@@ -625,6 +625,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 	 */
 
 	offset = ((Elf_Addr)where) - value;
+	offBAA = value - (((Elf_Addr)where) +4);	/* ba,a at where[1] */
 	if (rela->r_addend) {
 		Elf_Addr *ptr = (Elf_Addr *)where;
 		/*
@@ -634,7 +635,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		 */
 		ptr[0] += value - (Elf_Addr)obj->pltgot;
 
-	} else if (offset <= (1L<<20) && (Elf_SOff)offset >= -(1L<<20)) {
+	} else if (offBAA <= (1L<<20) && (Elf_SOff)offBAA >= -(1L<<20)) {
 		/* 
 		 * We're within 1MB -- we can use a direct branch insn.
 		 *
@@ -650,7 +651,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		 *	nop
 		 *
 		 */
-		where[1] = BAA | ((offset >> 2) & 0x7ffff);
+		where[1] = BAA | (offBAA >> 2);
 		__asm volatile("iflush %0+4" : : "r" (where));
 	} else if (value < (1L<<32)) {
 		/* 
