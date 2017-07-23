@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1011 2017/07/18 14:36:43 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1012 2017/07/23 20:45:31 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -81,7 +81,7 @@ MKGCCCMDS?=	no
 # set to the relevant subdirectory in src/external/gpl3 for his HAVE_GCC.
 #
 .if ${HAVE_GCC} == 53
-EXTERNAL_GCC_SUBDIR=	gcc
+EXTERNAL_GCC_SUBDIR=	gcc.old
 .else
 EXTERNAL_GCC_SUBDIR=	/does/not/exist
 .endif
@@ -1336,7 +1336,7 @@ X11USRLIBDIR?=		${X11ROOTDIR}/lib${MLIBDIR:D/${MLIBDIR}}
 X11SRCDIRMIT?=		${X11SRCDIR}/external/mit
 .for _lib in \
 	FS ICE SM X11 XScrnSaver XTrap Xau Xcomposite Xcursor Xdamage \
-	Xdmcp Xevie Xext Xfixes Xfont Xft Xi Xinerama Xmu Xpresent Xpm \
+	Xdmcp Xevie Xext Xfixes Xfont Xfont2 Xft Xi Xinerama Xmu Xpresent Xpm \
 	Xrandr Xrender Xres Xt Xtst Xv XvMC Xxf86dga Xxf86misc Xxf86vm drm \
 	epoxy fontenc xkbfile xkbui Xaw Xfontcache pciaccess xcb xshmfence \
 	pthread-stubs
