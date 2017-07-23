@@ -1,7 +1,7 @@
 /* Generate from machine description:
    - some flags HAVE_... saying which simple standard instructions are
    available for this machine.
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -109,7 +109,7 @@ gen_macro (const char *name, int real, int expect)
   for (i = 0; name[i]; i++)
     putchar (TOUPPER (name[i]));
 
-  putchar('(');
+  putchar ('(');
   for (i = 0; i < expect - 1; i++)
     printf ("%c, ", i + 'A');
   printf ("%c) gen_%s (", i + 'A', name);
@@ -290,7 +290,7 @@ main (int argc, char **argv)
   for (insn_ptr = insns; *insn_ptr; insn_ptr++)
     gen_proto (*insn_ptr);
 
-  puts("\n#endif /* GCC_INSN_FLAGS_H */");
+  puts ("\n#endif /* GCC_INSN_FLAGS_H */");
 
   if (have_error || ferror (stdout) || fflush (stdout) || fclose (stdout))
     return FATAL_EXIT_CODE;

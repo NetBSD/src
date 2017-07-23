@@ -1,4 +1,4 @@
-@c Copyright (C) 2004-2013 Free Software Foundation, Inc.
+@c Copyright (C) 2004-2015 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -13,7 +13,7 @@
 The purpose of GENERIC is simply to provide a
 language-independent way of representing an entire function in
 trees.  To this end, it was necessary to add a few new tree codes
-to the back end, but most everything was already there.  If you
+to the back end, but almost everything was already there.  If you
 can express it with the codes in @code{gcc/tree.def}, it's
 GENERIC@.
 
@@ -53,6 +53,7 @@ seems inelegant.
 @node Deficiencies
 @section Deficiencies
 
+@c The spelling of "incomplet" and "incorrekt" below is intentional.
 There are many places in which this document is incomplet and incorrekt.
 It is, as of yet, only @emph{preliminary} documentation.
 
@@ -203,7 +204,7 @@ operands, each of which is also a tree.
 @tindex IDENTIFIER_NODE
 
 An @code{IDENTIFIER_NODE} represents a slightly more general concept
-that the standard C or C++ concept of identifier.  In particular, an
+than the standard C or C++ concept of identifier.  In particular, an
 @code{IDENTIFIER_NODE} may contain a @samp{$}, or other extraordinary
 characters.
 
@@ -924,6 +925,11 @@ structures, something like the following should be used
    (BASE_STRUCT_CHECK(NODE)->base_struct.fieldname
 @end smallexample
 
+Reading them from the generated @file{all-tree.def} file (which in
+turn includes all the @file{tree.def} files), @file{gencheck.c} is
+used during GCC's build to generate the @code{*_CHECK} macros for all
+tree codes.
+
 @end table
 
 
@@ -1017,10 +1023,15 @@ As this example indicates, the operands are zero-indexed.
 @node Constant expressions
 @subsection Constant expressions
 @tindex INTEGER_CST
-@findex TREE_INT_CST_HIGH
-@findex TREE_INT_CST_LOW
 @findex tree_int_cst_lt
 @findex tree_int_cst_equal
+@tindex tree_fits_uhwi_p
+@tindex tree_fits_shwi_p
+@tindex tree_to_uhwi
+@tindex tree_to_shwi
+@tindex TREE_INT_CST_NUNITS
+@tindex TREE_INT_CST_ELT
+@tindex TREE_INT_CST_LOW
 @tindex REAL_CST
 @tindex FIXED_CST
 @tindex COMPLEX_CST
@@ -1039,36 +1050,18 @@ These nodes represent integer constants.  Note that the type of these
 constants is obtained with @code{TREE_TYPE}; they are not always of type
 @code{int}.  In particular, @code{char} constants are represented with
 @code{INTEGER_CST} nodes.  The value of the integer constant @code{e} is
-given by
-@smallexample
-((TREE_INT_CST_HIGH (e) << HOST_BITS_PER_WIDE_INT)
-+ TREE_INST_CST_LOW (e))
-@end smallexample
-@noindent
-HOST_BITS_PER_WIDE_INT is at least thirty-two on all platforms.  Both
-@code{TREE_INT_CST_HIGH} and @code{TREE_INT_CST_LOW} return a
-@code{HOST_WIDE_INT}.  The value of an @code{INTEGER_CST} is interpreted
-as a signed or unsigned quantity depending on the type of the constant.
-In general, the expression given above will overflow, so it should not
-be used to calculate the value of the constant.
+represented in an array of HOST_WIDE_INT.   There are enough elements
+in the array to represent the value without taking extra elements for
+redundant 0s or -1.  The number of elements used to represent @code{e}
+is available via @code{TREE_INT_CST_NUNITS}. Element @code{i} can be
+extracted by using @code{TREE_INT_CST_ELT (e, i)}.
+@code{TREE_INT_CST_LOW} is a shorthand for @code{TREE_INT_CST_ELT (e, 0)}.
 
-The variable @code{integer_zero_node} is an integer constant with value
-zero.  Similarly, @code{integer_one_node} is an integer constant with
-value one.  The @code{size_zero_node} and @code{size_one_node} variables
-are analogous, but have type @code{size_t} rather than @code{int}.
-
-The function @code{tree_int_cst_lt} is a predicate which holds if its
-first argument is less than its second.  Both constants are assumed to
-have the same signedness (i.e., either both should be signed or both
-should be unsigned.)  The full width of the constant is used when doing
-the comparison; the usual rules about promotions and conversions are
-ignored.  Similarly, @code{tree_int_cst_equal} holds if the two
-constants are equal.  The @code{tree_int_cst_sgn} function returns the
-sign of a constant.  The value is @code{1}, @code{0}, or @code{-1}
-according on whether the constant is greater than, equal to, or less
-than zero.  Again, the signedness of the constant's type is taken into
-account; an unsigned constant is never less than zero, no matter what
-its bit-pattern.
+The functions @code{tree_fits_shwi_p} and @code{tree_fits_uhwi_p}
+can be used to tell if the value is small enough to fit in a
+signed HOST_WIDE_INT or an unsigned HOST_WIDE_INT respectively.
+The value can then be extracted using @code{tree_to_shwi} and
+@code{tree_to_uhwi}.
 
 @item REAL_CST
 
@@ -1274,6 +1267,7 @@ the byte offset of the field, but should not be used directly; call
 @tindex SAVE_EXPR
 @tindex TARGET_EXPR
 @tindex VA_ARG_EXPR
+@tindex ANNOTATE_EXPR
 
 @table @code
 @item NEGATE_EXPR
@@ -1610,29 +1604,31 @@ of temporaries during the evaluation of that expression should be
 performed immediately after the expression is evaluated.
 
 @item CONSTRUCTOR
-These nodes represent the brace-enclosed initializers for a structure or
-array.  The first operand is reserved for use by the back end.  The
-second operand is a @code{TREE_LIST}.  If the @code{TREE_TYPE} of the
-@code{CONSTRUCTOR} is a @code{RECORD_TYPE} or @code{UNION_TYPE}, then
-the @code{TREE_PURPOSE} of each node in the @code{TREE_LIST} will be a
-@code{FIELD_DECL} and the @code{TREE_VALUE} of each node will be the
-expression used to initialize that field.
+These nodes represent the brace-enclosed initializers for a structure or an
+array.  They contain a sequence of component values made out of a vector of
+constructor_elt, which is a (@code{INDEX}, @code{VALUE}) pair.
 
-If the @code{TREE_TYPE} of the @code{CONSTRUCTOR} is an
-@code{ARRAY_TYPE}, then the @code{TREE_PURPOSE} of each element in the
-@code{TREE_LIST} will be an @code{INTEGER_CST} or a @code{RANGE_EXPR} of
-two @code{INTEGER_CST}s.  A single @code{INTEGER_CST} indicates which
-element of the array (indexed from zero) is being assigned to.  A
-@code{RANGE_EXPR} indicates an inclusive range of elements to
-initialize.  In both cases the @code{TREE_VALUE} is the corresponding
+If the @code{TREE_TYPE} of the @code{CONSTRUCTOR} is a @code{RECORD_TYPE},
+@code{UNION_TYPE} or @code{QUAL_UNION_TYPE} then the @code{INDEX} of each
+node in the sequence will be a @code{FIELD_DECL} and the @code{VALUE} will
+be the expression used to initialize that field.
+
+If the @code{TREE_TYPE} of the @code{CONSTRUCTOR} is an @code{ARRAY_TYPE},
+then the @code{INDEX} of each node in the sequence will be an
+@code{INTEGER_CST} or a @code{RANGE_EXPR} of two @code{INTEGER_CST}s.
+A single @code{INTEGER_CST} indicates which element of the array is being
+assigned to.  A @code{RANGE_EXPR} indicates an inclusive range of elements
+to initialize.  In both cases the @code{VALUE} is the corresponding
 initializer.  It is re-evaluated for each element of a
-@code{RANGE_EXPR}.  If the @code{TREE_PURPOSE} is @code{NULL_TREE}, then
+@code{RANGE_EXPR}.  If the @code{INDEX} is @code{NULL_TREE}, then
 the initializer is for the next available array element.
 
 In the front end, you should not depend on the fields appearing in any
 particular order.  However, in the middle end, fields must appear in
 declaration order.  You should not assume that all fields will be
-represented.  Unrepresented fields will be set to zero.
+represented.  Unrepresented fields will be cleared (zeroed), unless the
+CONSTRUCTOR_NO_CLEARING flag is set, in which case their value becomes
+undefined.
 
 @item COMPOUND_LITERAL_EXPR
 @findex COMPOUND_LITERAL_EXPR_DECL_EXPR
@@ -1687,7 +1683,12 @@ mechanism.  It represents expressions like @code{va_arg (ap, type)}.
 Its @code{TREE_TYPE} yields the tree representation for @code{type} and
 its sole argument yields the representation for @code{ap}.
 
+@item ANNOTATE_EXPR
+This node is used to attach markers to an expression. The first operand
+is the annotated expression, the second is an @code{INTEGER_CST} with
+a value from @code{enum annot_expr_kind}.
 @end table
+
 
 @node Vectors
 @subsection Vectors
@@ -1702,6 +1703,7 @@ its sole argument yields the representation for @code{ap}.
 @tindex VEC_PACK_TRUNC_EXPR
 @tindex VEC_PACK_SAT_EXPR
 @tindex VEC_PACK_FIX_TRUNC_EXPR
+@tindex SAD_EXPR
 
 @table @code
 @item VEC_LSHIFT_EXPR
@@ -1782,6 +1784,15 @@ value, it is taken from the second operand. It should never evaluate to
 any other value currently, but optimizations should not rely on that
 property. In contrast with a @code{COND_EXPR}, all operands are always
 evaluated.
+
+@item SAD_EXPR
+This node represents the Sum of Absolute Differences operation.  The three
+operands must be vectors of integral types.  The first and second operand
+must have the same type.  The size of the vector element of the third
+operand must be at lease twice of the size of the vector element of the
+first and second one.  The SAD is calculated between the first and second
+operands, added to the third operand, and returned.
+
 @end table
 
 
@@ -1808,6 +1819,7 @@ There are also several varieties of complex statements.
 * Jumps::
 * Cleanups::
 * OpenMP::
+* OpenACC::
 @end menu
 
 @node Basic Statements
@@ -2082,8 +2094,8 @@ variables.
 
 @item OMP_FOR
 
-Represents @code{#pragma omp for [clause1 @dots{} clauseN]}.  It
-has 5 operands:
+Represents @code{#pragma omp for [clause1 @dots{} clauseN]}.  It has
+six operands:
 
 Operand @code{OMP_FOR_BODY} contains the loop body.
 
@@ -2173,10 +2185,9 @@ building code (@code{omp-low.c}).
 @item OMP_CONTINUE
 
 Similarly, this instruction does not represent an OpenMP
-directive, it is used by @code{OMP_FOR} and
+directive, it is used by @code{OMP_FOR} (and similar codes) as well as
 @code{OMP_SECTIONS} to mark the place where the code needs to
-loop to the next iteration (in the case of @code{OMP_FOR}) or
-the next section (in the case of @code{OMP_SECTIONS}).
+loop to the next iteration, or the next section, respectively.
 
 In some cases, @code{OMP_CONTINUE} is placed right before
 @code{OMP_RETURN}.  But if there are cleanups that need to
@@ -2199,7 +2210,7 @@ regular critical section around the expression is used.
 @item OMP_CLAUSE
 
 Represents clauses associated with one of the @code{OMP_} directives.
-Clauses are represented by separate sub-codes defined in
+Clauses are represented by separate subcodes defined in
 @file{tree.h}.  Clauses codes can be one of:
 @code{OMP_CLAUSE_PRIVATE}, @code{OMP_CLAUSE_SHARED},
 @code{OMP_CLAUSE_FIRSTPRIVATE},
@@ -2219,6 +2230,67 @@ of variables are restricted to exactly one, accessed with
 same clause @code{C} need to be represented as multiple @code{C} clauses
 chained together.  This facilitates adding new clauses during
 compilation.
+
+@end table
+
+@node OpenACC
+@subsection OpenACC
+@tindex OACC_CACHE
+@tindex OACC_DATA
+@tindex OACC_DECLARE
+@tindex OACC_ENTER_DATA
+@tindex OACC_EXIT_DATA
+@tindex OACC_HOST_DATA
+@tindex OACC_KERNELS
+@tindex OACC_LOOP
+@tindex OACC_PARALLEL
+@tindex OACC_UPDATE
+
+All the statements starting with @code{OACC_} represent directives and
+clauses used by the OpenACC API @w{@uref{http://www.openacc.org/}}.
+
+@table @code
+@item OACC_CACHE
+
+Represents @code{#pragma acc cache (var @dots{})}.
+
+@item OACC_DATA
+
+Represents @code{#pragma acc data [clause1 @dots{} clauseN]}.
+
+@item OACC_DECLARE
+
+Represents @code{#pragma acc declare [clause1 @dots{} clauseN]}.
+
+@item OACC_ENTER_DATA
+
+Represents @code{#pragma acc enter data [clause1 @dots{} clauseN]}.
+
+@item OACC_EXIT_DATA
+
+Represents @code{#pragma acc exit data [clause1 @dots{} clauseN]}.
+
+@item OACC_HOST_DATA
+
+Represents @code{#pragma acc host_data [clause1 @dots{} clauseN]}.
+
+@item OACC_KERNELS
+
+Represents @code{#pragma acc kernels [clause1 @dots{} clauseN]}.
+
+@item OACC_LOOP
+
+Represents @code{#pragma acc loop [clause1 @dots{} clauseN]}.
+
+See the description of the @code{OMP_FOR} code.
+
+@item OACC_PARALLEL
+
+Represents @code{#pragma acc parallel [clause1 @dots{} clauseN]}.
+
+@item OACC_UPDATE
+
+Represents @code{#pragma acc update [clause1 @dots{} clauseN]}.
 
 @end table
 
@@ -3154,6 +3226,30 @@ several statements chained together.
 
 Used to represent a @code{break} statement.  There are no additional
 fields.
+
+@item CILK_SPAWN_STMT
+
+Used to represent a spawning function in the Cilk Plus language extension.  
+This tree has one field that holds the name of the spawning function.
+@code{_Cilk_spawn} can be written in C in the following way:
+
+@smallexample
+@code{_Cilk_spawn} <function_name> (<parameters>);
+@end smallexample
+
+Detailed description for usage and functionality of @code{_Cilk_spawn} can be 
+found at http://www.cilkplus.org
+
+@item CILK_SYNC_STMT
+
+This statement is part of the Cilk Plus language extension.  It indicates that
+the current function cannot continue in parallel with its spawned children.  
+There are no additional fields.  @code{_Cilk_sync} can be written in C in the 
+following way:
+
+@smallexample
+@code{_Cilk_sync};
+@end smallexample
 
 @item CLEANUP_STMT
 

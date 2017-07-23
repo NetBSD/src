@@ -1,4 +1,4 @@
-# NetBSD has (will have) "non-native" libraries in /usr/lib/<arch>.
+# NetBSD has "non-native" libraries in /usr/lib/<arch>.
 # For NetBSD/amd64 we thus have /usr/lib and /usr/lib/i386.
 
 MULTILIB_OPTIONS = m64/m32

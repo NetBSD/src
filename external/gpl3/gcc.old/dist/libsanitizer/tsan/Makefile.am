@@ -4,42 +4,51 @@ AM_CPPFLAGS = -I $(top_srcdir) -I $(top_srcdir)/include
 gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
 
 DEFS = -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS 
-AM_CXXFLAGS = -Wall -W -Wno-unused-parameter -Wwrite-strings -pedantic -Wno-long-long  -fPIC -fno-builtin -fno-exceptions -fomit-frame-pointer -funwind-tables -fvisibility=hidden -Wno-variadic-macros
+AM_CXXFLAGS = -Wall -W -Wno-unused-parameter -Wwrite-strings -pedantic -Wno-long-long  -fPIC -fno-builtin -fno-exceptions -fno-rtti -fomit-frame-pointer -funwind-tables -fvisibility=hidden -Wno-variadic-macros
 AM_CXXFLAGS += $(LIBSTDCXX_RAW_CXX_CXXFLAGS)
+AM_CXXFLAGS += -std=gnu++11
 ACLOCAL_AMFLAGS = -I m4
 
 toolexeclib_LTLIBRARIES = libtsan.la
 
 tsan_files = \
-        tsan_clock.cc \
-        tsan_interface_atomic.cc \
-        tsan_mutex.cc \
-        tsan_report.cc \
-        tsan_rtl_thread.cc \
-        tsan_symbolize.cc \
-        tsan_flags.cc \
-        tsan_interface.cc \
-        tsan_platform_linux.cc \
-        tsan_rtl.cc \
-        tsan_stat.cc \
-        tsan_sync.cc \
-        tsan_interceptors.cc \
-        tsan_md5.cc \
-        tsan_platform_mac.cc \
-        tsan_rtl_mutex.cc \
-        tsan_suppressions.cc \
-        tsan_interface_ann.cc \
-        tsan_mman.cc \
-        tsan_rtl_report.cc \
+	tsan_clock.cc \
 	tsan_fd.cc \
-        tsan_interface_java.cc \
-        tsan_mutexset.cc \
-        tsan_symbolize_addr2line_linux.cc \
-        tsan_rtl_amd64.S
+	tsan_flags.cc \
+	tsan_ignoreset.cc \
+	tsan_interceptors.cc \
+	tsan_interface_ann.cc \
+	tsan_interface_atomic.cc \
+	tsan_interface.cc \
+	tsan_interface_java.cc \
+	tsan_md5.cc \
+	tsan_mman.cc \
+	tsan_mutex.cc \
+	tsan_mutexset.cc \
+	tsan_platform_linux.cc \
+	tsan_platform_mac.cc \
+	tsan_platform_windows.cc \
+	tsan_report.cc \
+	tsan_rtl.cc \
+	tsan_rtl_mutex.cc \
+	tsan_rtl_report.cc \
+	tsan_rtl_thread.cc \
+	tsan_stack_trace.cc \
+	tsan_stat.cc \
+	tsan_suppressions.cc \
+	tsan_symbolize.cc \
+	tsan_sync.cc 
 
-libtsan_la_SOURCES = $(tsan_files) 
-libtsan_la_LIBADD = $(top_builddir)/sanitizer_common/libsanitizer_common.la $(top_builddir)/interception/libinterception.la $(LIBSTDCXX_RAW_CXX_LDFLAGS)
-libtsan_la_LDFLAGS = -version-info `grep -v '^\#' $(srcdir)/libtool-version` -lpthread -ldl
+libtsan_la_SOURCES = $(tsan_files)
+EXTRA_libtsan_la_SOURCES = tsan_rtl_amd64.S
+libtsan_la_LIBADD = $(top_builddir)/sanitizer_common/libsanitizer_common.la $(top_builddir)/interception/libinterception.la $(TSAN_TARGET_DEPENDENT_OBJECTS)
+libtsan_la_DEPENDENCIES = $(top_builddir)/sanitizer_common/libsanitizer_common.la $(top_builddir)/interception/libinterception.la $(TSAN_TARGET_DEPENDENT_OBJECTS)
+if LIBBACKTRACE_SUPPORTED
+libtsan_la_LIBADD += $(top_builddir)/libbacktrace/libsanitizer_libbacktrace.la
+libtsan_la_DEPENDENCIES +=$(top_builddir)/libbacktrace/libsanitizer_libbacktrace.la
+endif
+libtsan_la_LIBADD += $(LIBSTDCXX_RAW_CXX_LDFLAGS)
+libtsan_la_LDFLAGS = -version-info `grep -v '^\#' $(srcdir)/libtool-version` $(link_libtsan)
 
 # Work around what appears to be a GNU make bug handling MAKEFLAGS
 # values defined in terms of make variables, as is the case for CC and

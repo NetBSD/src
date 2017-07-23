@@ -1,13 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2015/09/23 03:03:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2017/07/23 01:05:11 mrg Exp $
 
 PROG=		gcc
 SRCS=		gccspec.c ${G_GCC_OBJS:.o=.c}
 
-CPPFLAGS+=	-I${BACKENDOBJ}
-# XXX
-CPPFLAGS+=	-DCONFIGURE_SPECS="\"\"" \
-		-DDEFAULT_TARGET_VERSION=\"${G_version}\" \
-		-DDEFAULT_TARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\"
+.include "../Makefile.target-defines"
 
 COPTS.builtins.c = -Wno-stack-protector
 

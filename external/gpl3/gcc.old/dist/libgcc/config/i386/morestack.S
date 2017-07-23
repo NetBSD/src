@@ -1,5 +1,5 @@
 # x86/x86_64 support for -fsplit-stack.
-# Copyright (C) 2009-2013 Free Software Foundation, Inc.
+# Copyright (C) 2009-2015 Free Software Foundation, Inc.
 # Contributed by Ian Lance Taylor <iant@google.com>.
 
 # This file is part of GCC.
@@ -732,6 +732,7 @@ __stack_split_initialize:
 
 	leal	-16000(%esp),%eax	# We should have at least 16K.
 	movl	%eax,%gs:0x30
+	subl	$4,%esp			# Align stack.
 	pushl	$16000
 	pushl	%esp
 #ifdef __PIC__
@@ -739,13 +740,14 @@ __stack_split_initialize:
 #else
 	call	__generic_morestack_set_initial_sp
 #endif
-	addl	$8,%esp
+	addl	$12,%esp
 	ret
 
 #else /* defined(__x86_64__) */
 
 	leaq	-16000(%rsp),%rax	# We should have at least 16K.
 	X86_64_SAVE_NEW_STACK_BOUNDARY (ax)
+	subq	$8,%rsp			# Align stack.
 	movq	%rsp,%rdi
 	movq	$16000,%rsi
 #ifdef __PIC__
@@ -753,6 +755,7 @@ __stack_split_initialize:
 #else
 	call	__generic_morestack_set_initial_sp
 #endif
+	addq	$8,%rsp
 	ret
 
 #endif /* defined(__x86_64__) */
@@ -853,7 +856,7 @@ __morestack_make_guard:
 	.quad	__morestack_load_mmap
 #endif
 
-#ifdef __ELF__
+#if defined(__ELF__) && defined(__linux__)
 	.section	.note.GNU-stack,"",@progbits
 	.section	.note.GNU-split-stack,"",@progbits
 	.section	.note.GNU-no-split-stack,"",@progbits

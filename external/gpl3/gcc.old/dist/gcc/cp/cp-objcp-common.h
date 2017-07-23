@@ -1,5 +1,5 @@
 /* Language hooks common to C++ and ObjC++ front ends.
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
    Contributed by Ziemowit Laski  <zlaski@apple.com>
 
 This file is part of GCC.
@@ -27,6 +27,7 @@ extern tree objcp_tsubst_copy_and_build (tree, tree, tsubst_flags_t,
 					 tree, bool);
 
 extern bool cp_function_decl_explicit_p (tree decl);
+extern bool cp_function_decl_deleted_p (tree decl);
 extern void cp_common_init_ts (void);
 
 /* Lang hooks that are shared between C++ and ObjC++ are defined here.  Hooks
@@ -131,6 +132,8 @@ extern void cp_common_init_ts (void);
 #define LANG_HOOKS_GIMPLIFY_EXPR cp_gimplify_expr
 #undef LANG_HOOKS_FUNCTION_DECL_EXPLICIT_P
 #define LANG_HOOKS_FUNCTION_DECL_EXPLICIT_P cp_function_decl_explicit_p
+#undef LANG_HOOKS_FUNCTION_DECL_DELETED_P
+#define LANG_HOOKS_FUNCTION_DECL_DELETED_P cp_function_decl_deleted_p
 #undef LANG_HOOKS_OMP_PREDETERMINED_SHARING
 #define LANG_HOOKS_OMP_PREDETERMINED_SHARING cxx_omp_predetermined_sharing
 #undef LANG_HOOKS_OMP_CLAUSE_DEFAULT_CTOR
@@ -145,11 +148,12 @@ extern void cp_common_init_ts (void);
 #define LANG_HOOKS_OMP_FINISH_CLAUSE cxx_omp_finish_clause
 #undef LANG_HOOKS_OMP_PRIVATIZE_BY_REFERENCE
 #define LANG_HOOKS_OMP_PRIVATIZE_BY_REFERENCE cxx_omp_privatize_by_reference
+#undef LANG_HOOKS_OMP_MAPPABLE_TYPE
+#define LANG_HOOKS_OMP_MAPPABLE_TYPE cp_omp_mappable_type
 
 #undef LANG_HOOKS_EH_USE_CXA_END_CLEANUP
 #define LANG_HOOKS_EH_USE_CXA_END_CLEANUP true
 
 #undef LANG_HOOKS_EH_PROTECT_CLEANUP_ACTIONS
 #define LANG_HOOKS_EH_PROTECT_CLEANUP_ACTIONS cp_protect_cleanup_actions
-
 #endif /* GCC_CP_OBJCP_COMMON */

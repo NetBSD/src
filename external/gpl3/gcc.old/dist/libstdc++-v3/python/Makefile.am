@@ -1,6 +1,6 @@
 ## Makefile for the python subdirectory of the GNU C++ Standard library.
 ##
-## Copyright (C) 2009-2013 Free Software Foundation, Inc.
+## Copyright (C) 2009-2015 Free Software Foundation, Inc.
 ##
 ## This file is part of the libstdc++ version 3 distribution.
 ## Process this file with automake to produce Makefile.in.
@@ -33,6 +33,7 @@ all-local: gdb.py
 
 nobase_python_DATA = \
     libstdcxx/v6/printers.py \
+    libstdcxx/v6/xmethods.py \
     libstdcxx/v6/__init__.py \
     libstdcxx/__init__.py
 
@@ -48,7 +49,7 @@ install-data-local: gdb.py
 ## fragile, but there does not seem to be a better option, because
 ## libtool hides the real names from us.
 	@here=`pwd`; cd $(DESTDIR)$(toolexeclibdir); \
-	  for file in libstdc++*; do \
+	  for file in libstdc++.*; do \
 	    case $$file in \
 	      *-gdb.py) ;; \
 	      *.la) ;; \

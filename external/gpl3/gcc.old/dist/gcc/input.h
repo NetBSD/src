@@ -1,6 +1,6 @@
 /* Declarations for variables relating to reading the source file.
    Used by parsers, lexical analyzers, and error message routines.
-   Copyright (C) 1993-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -36,8 +36,10 @@ extern GTY(()) struct line_maps *line_table;
 extern char builtins_location_check[(BUILTINS_LOCATION
 				     < RESERVED_LOCATION_COUNT) ? 1 : -1];
 
+extern bool is_location_from_builtin_token (source_location);
 extern expanded_location expand_location (source_location);
-extern const char * location_get_source_line(expanded_location xloc);
+extern const char *location_get_source_line (expanded_location xloc,
+					     int *line_size);
 extern expanded_location expand_location_to_spelling_point (source_location);
 extern source_location expansion_point_location_if_in_system_header (source_location);
 
@@ -51,17 +53,26 @@ extern location_t input_location;
 #define LOCATION_LINE(LOC) ((expand_location (LOC)).line)
 #define LOCATION_COLUMN(LOC)((expand_location (LOC)).column)
 #define LOCATION_LOCUS(LOC) \
-  ((IS_ADHOC_LOC(LOC)) ? get_location_from_adhoc_loc (line_table, LOC) : (LOC))
+  ((IS_ADHOC_LOC (LOC)) ? get_location_from_adhoc_loc (line_table, LOC) \
+   : (LOC))
 #define LOCATION_BLOCK(LOC) \
   ((tree) ((IS_ADHOC_LOC (LOC)) ? get_data_from_adhoc_loc (line_table, (LOC)) \
-  : NULL))
+   : NULL))
 
-#define input_line LOCATION_LINE (input_location)
-#define input_filename LOCATION_FILE (input_location)
+/* Return a positive value if LOCATION is the locus of a token that is
+   located in a system header, O otherwise. It returns 1 if LOCATION
+   is the locus of a token that is located in a system header, and 2
+   if LOCATION is the locus of a token located in a C system header
+   that therefore needs to be extern "C" protected in C++.
+
+   Note that this function returns 1 if LOCATION belongs to a token
+   that is part of a macro replacement-list defined in a system
+   header, but expanded in a non-system file.  */
 #define in_system_header_at(LOC) \
-  ((linemap_location_in_system_header_p (line_table, LOC)))
-#define in_system_header (in_system_header_at (input_location))
+  (linemap_location_in_system_header_p (line_table, LOC))
 
 void dump_line_table_statistics (void);
+
+void diagnostics_file_cache_fini (void);
 
 #endif

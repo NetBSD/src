@@ -1,7 +1,7 @@
 /* Threads compatibility routines for libgcc2 and libobjc.  */
 /* Compile this one with gcc.  */
 
-/* Copyright (C) 1999-2013 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2015 Free Software Foundation, Inc.
    Contributed by Mumit Khan <khan@xraylith.wisc.edu>.
 
 This file is part of GCC.
@@ -583,7 +583,7 @@ __gthread_once (__gthread_once_t *__once, void (*__func) (void))
    C++ EH. Mingw uses a thread-support DLL to work-around this problem.  */
 static inline int
 __gthread_key_create (__gthread_key_t *__key,
-		      void (*__dtor) (void *) __attribute__((unused)))
+		      void (*__dtor) (void *) __attribute__((__unused__)))
 {
   int __status = 0;
   DWORD __tls_index = TlsAlloc ();
@@ -635,7 +635,7 @@ static inline void
 __gthread_mutex_init_function (__gthread_mutex_t *__mutex)
 {
   __mutex->counter = -1;
-  __mutex->sema = CreateSemaphore (NULL, 0, 65535, NULL);
+  __mutex->sema = CreateSemaphoreW (NULL, 0, 65535, NULL);
 }
 
 static inline void
@@ -697,7 +697,7 @@ __gthread_recursive_mutex_init_function (__gthread_recursive_mutex_t *__mutex)
   __mutex->counter = -1;
   __mutex->depth = 0;
   __mutex->owner = 0;
-  __mutex->sema = CreateSemaphore (NULL, 0, 65535, NULL);
+  __mutex->sema = CreateSemaphoreW (NULL, 0, 65535, NULL);
 }
 
 static inline int

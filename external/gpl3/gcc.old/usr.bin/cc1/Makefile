@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2015/09/23 03:03:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2017/07/23 01:05:11 mrg Exp $
 
 PROG=		cc1
 SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
@@ -36,6 +36,7 @@ COPTS.c-ada-spec.c=	-Wno-stack-protector
 COPTS.c-aux-info.c=	-Wno-stack-protector
 COPTS.c-common.c=	-Wno-stack-protector
 COPTS.c-cppbuiltin.c=	-Wno-stack-protector
+COPTS.c-decl.c=		-Wno-stack-protector
 COPTS.c-format.c=	-Wno-stack-protector
 COPTS.c-format.h=	-Wno-stack-protector
 COPTS.c-lex.c=		-Wno-stack-protector
@@ -45,6 +46,21 @@ COPTS.c-pragma.c=	-Wno-stack-protector
 COPTS.c-typeck.c=	-Wno-stack-protector
 
 CPPFLAGS.default-c.c+=	-I${BACKENDOBJ}
+
+.if ${MACHINE_CPU} == "sh3"
+BUILDSYMLINKS+= ${GNUHOSTDIST}/gcc/config/sh/sh-c.cc sh-c.c
+.endif
+
+.if ${MACHINE_CPU} == "vax"
+COPTS.c-decl.c+=-O0
+COPTS.c-typeck.c+=-O0
+COPTS.c-array-notation.c+=-O0
+COPTS.c-common.c+=-O0
+COPTS.c-ada-spec.c+=-O0
+COPTS.cilk.c+=-O0
+COPTS.c-ubsan.c+=-O0
+COPTS.cc1-checksum.c+=-O0
+.endif
 
 LDADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} -lintl -lz -lm
 DPADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} ${LIBINTL} ${LIBZ} ${LIBM}

@@ -1,5 +1,5 @@
 /* Definitions for condition code handling in final.c and output routines.
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -16,6 +16,9 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
+
+#ifndef GCC_CONDITIONS_H
+#define GCC_CONDITIONS_H
 
 /* None of the things in the files exist if we don't use CC0.  */
 
@@ -51,7 +54,7 @@ along with GCC; see the file COPYING3.  If not see
 #define CC_STATUS_MDEP_INIT 0
 #endif
 
-typedef struct {int flags; rtx value1, value2; CC_STATUS_MDEP mdep;} CC_STATUS;
+struct CC_STATUS {int flags; rtx value1, value2; CC_STATUS_MDEP mdep;};
 
 /* While outputting an insn as assembler code,
    this is the status BEFORE that insn.  */
@@ -115,3 +118,5 @@ extern CC_STATUS cc_status;
   CC_STATUS_MDEP_INIT)
 
 #endif
+
+#endif /* GCC_CONDITIONS_H */

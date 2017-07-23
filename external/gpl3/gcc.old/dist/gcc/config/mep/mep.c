@@ -1,5 +1,5 @@
 /* Definitions for Toshiba Media Processor
-   Copyright (C) 2001-2013 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
 This file is part of GCC.
@@ -23,7 +23,21 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "tm.h"
 #include "rtl.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "fold-const.h"
+#include "varasm.h"
+#include "calls.h"
+#include "stringpool.h"
+#include "stor-layout.h"
 #include "regs.h"
 #include "hard-reg-set.h"
 #include "insn-config.h"
@@ -34,10 +48,19 @@ along with GCC; see the file COPYING3.  If not see
 #include "flags.h"
 #include "recog.h"
 #include "obstack.h"
-#include "tree.h"
+#include "hashtab.h"
+#include "function.h"
+#include "statistics.h"
+#include "real.h"
+#include "fixed-value.h"
+#include "expmed.h"
+#include "dojump.h"
+#include "explow.h"
+#include "emit-rtl.h"
+#include "stmt.h"
 #include "expr.h"
 #include "except.h"
-#include "function.h"
+#include "insn-codes.h"
 #include "optabs.h"
 #include "reload.h"
 #include "tm_p.h"
@@ -46,10 +69,29 @@ along with GCC; see the file COPYING3.  If not see
 #include "target.h"
 #include "target-def.h"
 #include "langhooks.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "cfgrtl.h"
+#include "cfganal.h"
+#include "lcm.h"
+#include "cfgbuild.h"
+#include "cfgcleanup.h"
+#include "predict.h"
+#include "basic-block.h"
 #include "df.h"
+#include "hash-table.h"
+#include "tree-ssa-alias.h"
+#include "internal-fn.h"
+#include "gimple-fold.h"
+#include "tree-eh.h"
+#include "gimple-expr.h"
+#include "is-a.h"
 #include "gimple.h"
+#include "gimplify.h"
 #include "opts.h"
 #include "dumpfile.h"
+#include "builtins.h"
+#include "rtl-iter.h"
 
 /* Structure of this file:
 
@@ -138,11 +180,11 @@ static bool symbolref_p (rtx);
 static void encode_pattern_1 (rtx);
 static void encode_pattern (rtx);
 static bool const_in_range (rtx, int, int);
-static void mep_rewrite_mult (rtx, rtx);
-static void mep_rewrite_mulsi3 (rtx, rtx, rtx, rtx);
-static void mep_rewrite_maddsi3 (rtx, rtx, rtx, rtx, rtx);
-static bool mep_reuse_lo_p_1 (rtx, rtx, rtx, bool);
-static bool move_needs_splitting (rtx, rtx, enum machine_mode);
+static void mep_rewrite_mult (rtx_insn *, rtx);
+static void mep_rewrite_mulsi3 (rtx_insn *, rtx, rtx, rtx);
+static void mep_rewrite_maddsi3 (rtx_insn *, rtx, rtx, rtx, rtx);
+static bool mep_reuse_lo_p_1 (rtx, rtx, rtx_insn *, bool);
+static bool move_needs_splitting (rtx, rtx, machine_mode);
 static bool mep_expand_setcc_1 (enum rtx_code, rtx, rtx, rtx);
 static bool mep_nongeneral_reg (rtx);
 static bool mep_general_copro_reg (rtx);
@@ -156,15 +198,15 @@ static bool mep_reg_set_p (rtx, rtx);
 static bool mep_reg_set_in_function (int);
 static bool mep_interrupt_saved_reg (int);
 static bool mep_call_saves_register (int);
-static rtx F (rtx);
+static rtx_insn *F (rtx_insn *);
 static void add_constant (int, int, int, int);
-static rtx maybe_dead_move (rtx, rtx, bool);
+static rtx_insn *maybe_dead_move (rtx, rtx, bool);
 static void mep_reload_pointer (int, const char *);
 static void mep_start_function (FILE *, HOST_WIDE_INT);
 static bool mep_function_ok_for_sibcall (tree, tree);
 static int unique_bit_in (HOST_WIDE_INT);
 static int bit_size_for_clip (HOST_WIDE_INT);
-static int bytesize (const_tree, enum machine_mode);
+static int bytesize (const_tree, machine_mode);
 static tree mep_validate_based_tiny (tree *, tree, tree, int, bool *);
 static tree mep_validate_near_far (tree *, tree, tree, int, bool *);
 static tree mep_validate_disinterrupt (tree *, tree, tree, int, bool *);
@@ -183,43 +225,44 @@ static void mep_unique_section (tree, int);
 static unsigned int mep_section_type_flags (tree, const char *, int);
 static void mep_asm_named_section (const char *, unsigned int, tree);
 static bool mep_mentioned_p (rtx, rtx, int);
-static void mep_reorg_regmove (rtx);
-static rtx mep_insert_repeat_label_last (rtx, rtx, bool, bool);
-static void mep_reorg_repeat (rtx);
-static bool mep_invertable_branch_p (rtx);
-static void mep_invert_branch (rtx, rtx);
-static void mep_reorg_erepeat (rtx);
-static void mep_jmp_return_reorg (rtx);
-static void mep_reorg_addcombine (rtx);
+static void mep_reorg_regmove (rtx_insn *);
+static rtx_insn *mep_insert_repeat_label_last (rtx_insn *, rtx_code_label *,
+					       bool, bool);
+static void mep_reorg_repeat (rtx_insn *);
+static bool mep_invertable_branch_p (rtx_insn *);
+static void mep_invert_branch (rtx_insn *, rtx_insn *);
+static void mep_reorg_erepeat (rtx_insn *);
+static void mep_jmp_return_reorg (rtx_insn *);
+static void mep_reorg_addcombine (rtx_insn *);
 static void mep_reorg (void);
 static void mep_init_intrinsics (void);
 static void mep_init_builtins (void);
 static void mep_intrinsic_unavailable (int);
 static bool mep_get_intrinsic_insn (int, const struct cgen_insn **);
 static bool mep_get_move_insn (int, const struct cgen_insn **);
-static rtx mep_convert_arg (enum machine_mode, rtx);
+static rtx mep_convert_arg (machine_mode, rtx);
 static rtx mep_convert_regnum (const struct cgen_regnum_operand *, rtx);
 static rtx mep_legitimize_arg (const struct insn_operand_data *, rtx, int);
 static void mep_incompatible_arg (const struct insn_operand_data *, rtx, int, tree);
-static rtx mep_expand_builtin (tree, rtx, rtx, enum machine_mode, int);
-static int mep_adjust_cost (rtx, rtx, rtx, int);
+static rtx mep_expand_builtin (tree, rtx, rtx, machine_mode, int);
+static int mep_adjust_cost (rtx_insn *, rtx, rtx_insn *, int);
 static int mep_issue_rate (void);
-static rtx mep_find_ready_insn (rtx *, int, enum attr_slot, int);
-static void mep_move_ready_insn (rtx *, int, rtx);
-static int mep_sched_reorder (FILE *, int, rtx *, int *, int);
-static rtx mep_make_bundle (rtx, rtx);
-static void mep_bundle_insns (rtx);
+static rtx_insn *mep_find_ready_insn (rtx_insn **, int, enum attr_slot, int);
+static void mep_move_ready_insn (rtx_insn **, int, rtx_insn *);
+static int mep_sched_reorder (FILE *, int, rtx_insn **, int *, int);
+static rtx_insn *mep_make_bundle (rtx, rtx_insn *);
+static void mep_bundle_insns (rtx_insn *);
 static bool mep_rtx_cost (rtx, int, int, int, int *, bool);
-static int mep_address_cost (rtx, enum machine_mode, addr_space_t, bool);
-static void mep_setup_incoming_varargs (cumulative_args_t, enum machine_mode,
+static int mep_address_cost (rtx, machine_mode, addr_space_t, bool);
+static void mep_setup_incoming_varargs (cumulative_args_t, machine_mode,
 					tree, int *, int);
-static bool mep_pass_by_reference (cumulative_args_t cum, enum machine_mode,
+static bool mep_pass_by_reference (cumulative_args_t cum, machine_mode,
 				   const_tree, bool);
-static rtx mep_function_arg (cumulative_args_t, enum machine_mode,
+static rtx mep_function_arg (cumulative_args_t, machine_mode,
 			     const_tree, bool);
-static void mep_function_arg_advance (cumulative_args_t, enum machine_mode,
+static void mep_function_arg_advance (cumulative_args_t, machine_mode,
 				      const_tree, bool);
-static bool mep_vector_mode_supported_p (enum machine_mode);
+static bool mep_vector_mode_supported_p (machine_mode);
 static rtx  mep_allocate_initial_value (rtx);
 static void mep_asm_init_sections (void);
 static int mep_comp_type_attributes (const_tree, const_tree);
@@ -608,7 +651,7 @@ const_in_range (rtx x, int minv, int maxv)
    at the end of the insn stream.  */
 
 rtx
-mep_mulr_source (rtx insn, rtx dest, rtx src1, rtx src2)
+mep_mulr_source (rtx_insn *insn, rtx dest, rtx src1, rtx src2)
 {
   if (rtx_equal_p (dest, src1))
     return src2;
@@ -629,7 +672,7 @@ mep_mulr_source (rtx insn, rtx dest, rtx src1, rtx src2)
    to (clobber (reg:SI HI_REGNO)).  */
 
 static void
-mep_rewrite_mult (rtx insn, rtx pattern)
+mep_rewrite_mult (rtx_insn *insn, rtx pattern)
 {
   rtx hi_clobber;
 
@@ -644,7 +687,7 @@ mep_rewrite_mult (rtx insn, rtx pattern)
    store the result in DEST if nonnull.  */
 
 static void
-mep_rewrite_mulsi3 (rtx insn, rtx dest, rtx src1, rtx src2)
+mep_rewrite_mulsi3 (rtx_insn *insn, rtx dest, rtx src1, rtx src2)
 {
   rtx lo, pattern;
 
@@ -662,7 +705,7 @@ mep_rewrite_mulsi3 (rtx insn, rtx dest, rtx src1, rtx src2)
    be deleted by a peephole2 if SRC3 is already in $lo.  */
 
 static void
-mep_rewrite_maddsi3 (rtx insn, rtx dest, rtx src1, rtx src2, rtx src3)
+mep_rewrite_maddsi3 (rtx_insn *insn, rtx dest, rtx src1, rtx src2, rtx src3)
 {
   rtx lo, pattern;
 
@@ -704,7 +747,7 @@ mep_rewrite_maddsi3 (rtx insn, rtx dest, rtx src1, rtx src2, rtx src3)
    if GPR is no longer used.  */
 
 static bool
-mep_reuse_lo_p_1 (rtx lo, rtx gpr, rtx insn, bool gpr_dead_p)
+mep_reuse_lo_p_1 (rtx lo, rtx gpr, rtx_insn *insn, bool gpr_dead_p)
 {
   do
     {
@@ -760,7 +803,7 @@ mep_reuse_lo_p_1 (rtx lo, rtx gpr, rtx insn, bool gpr_dead_p)
 /* A wrapper around mep_reuse_lo_p_1 that preserves recog_data.  */
 
 bool
-mep_reuse_lo_p (rtx lo, rtx gpr, rtx insn, bool gpr_dead_p)
+mep_reuse_lo_p (rtx lo, rtx gpr, rtx_insn *insn, bool gpr_dead_p)
 {
   bool result = mep_reuse_lo_p_1 (lo, gpr, insn, gpr_dead_p);
   extract_insn (insn);
@@ -781,7 +824,7 @@ mep_use_post_modify_for_set_p (rtx set, rtx gpr, rtx offset)
 {
   rtx *reg, *mem;
   unsigned int reg_bytes, mem_bytes;
-  enum machine_mode reg_mode, mem_mode;
+  machine_mode reg_mode, mem_mode;
 
   /* Only simple SETs can be converted.  */
   if (GET_CODE (set) != SET)
@@ -841,7 +884,7 @@ mep_use_post_modify_for_set_p (rtx set, rtx gpr, rtx offset)
 /* Return the effect of frame-related instruction INSN.  */
 
 static rtx
-mep_frame_expr (rtx insn)
+mep_frame_expr (rtx_insn *insn)
 {
   rtx note, expr;
 
@@ -855,7 +898,7 @@ mep_frame_expr (rtx insn)
    new pattern in INSN1; INSN2 will be deleted by the caller.  */
 
 static void
-mep_make_parallel (rtx insn1, rtx insn2)
+mep_make_parallel (rtx_insn *insn1, rtx_insn *insn2)
 {
   rtx expr;
 
@@ -880,9 +923,9 @@ mep_make_parallel (rtx insn1, rtx insn2)
    be persuaded to do SET_INSN as a side-effect.  Return true if so.  */
 
 static bool
-mep_use_post_modify_p_1 (rtx set_insn, rtx reg, rtx offset)
+mep_use_post_modify_p_1 (rtx_insn *set_insn, rtx reg, rtx offset)
 {
-  rtx insn;
+  rtx_insn *insn;
 
   insn = set_insn;
   do
@@ -909,7 +952,7 @@ mep_use_post_modify_p_1 (rtx set_insn, rtx reg, rtx offset)
 /* A wrapper around mep_use_post_modify_p_1 that preserves recog_data.  */
 
 bool
-mep_use_post_modify_p (rtx insn, rtx reg, rtx offset)
+mep_use_post_modify_p (rtx_insn *insn, rtx reg, rtx offset)
 {
   bool result = mep_use_post_modify_p_1 (insn, reg, offset);
   extract_insn (insn);
@@ -964,7 +1007,7 @@ mep_bit_position_p (rtx x, bool looking_for)
 
 static bool
 move_needs_splitting (rtx dest, rtx src,
-		      enum machine_mode mode ATTRIBUTE_UNUSED)
+		      machine_mode mode ATTRIBUTE_UNUSED)
 {
   int s = mep_section_tag (src);
 
@@ -1045,7 +1088,7 @@ mep_vliw_jmp_match (rtx tgt)
 }
 
 bool
-mep_multi_slot (rtx x)
+mep_multi_slot (rtx_insn *x)
 {
   return get_attr_slot (x) == SLOT_MULTI;
 }
@@ -1053,7 +1096,7 @@ mep_multi_slot (rtx x)
 /* Implement TARGET_LEGITIMATE_CONSTANT_P.  */
 
 static bool
-mep_legitimate_constant_p (enum machine_mode mode ATTRIBUTE_UNUSED, rtx x)
+mep_legitimate_constant_p (machine_mode mode ATTRIBUTE_UNUSED, rtx x)
 {
   /* We can't convert symbol values to gp- or tp-rel values after
      reload, as reload might have used $gp or $tp for other
@@ -1070,7 +1113,7 @@ mep_legitimate_constant_p (enum machine_mode mode ATTRIBUTE_UNUSED, rtx x)
    strict, and another way for not-strict, like REG_OK_FOR_BASE_P.  */
 
 bool
-mep_legitimate_address (enum machine_mode mode, rtx x, int strict)
+mep_legitimate_address (machine_mode mode, rtx x, int strict)
 {
   int the_tag;
 
@@ -1178,7 +1221,7 @@ mep_legitimate_address (enum machine_mode mode, rtx x, int strict)
 }
 
 int
-mep_legitimize_reload_address (rtx *x, enum machine_mode mode, int opnum,
+mep_legitimize_reload_address (rtx *x, machine_mode mode, int opnum,
 			       int type_i,
 			       int ind_levels ATTRIBUTE_UNUSED)
 {
@@ -1220,7 +1263,7 @@ mep_legitimize_reload_address (rtx *x, enum machine_mode mode, int opnum,
 }
 
 int
-mep_core_address_length (rtx insn, int opn)
+mep_core_address_length (rtx_insn *insn, int opn)
 {
   rtx set = single_set (insn);
   rtx mem = XEXP (set, opn);
@@ -1267,7 +1310,7 @@ mep_core_address_length (rtx insn, int opn)
 }
 
 int
-mep_cop_address_length (rtx insn, int opn)
+mep_cop_address_length (rtx_insn *insn, int opn)
 {
   rtx set = single_set (insn);
   rtx mem = XEXP (set, opn);
@@ -1285,7 +1328,7 @@ mep_cop_address_length (rtx insn, int opn)
 
 #define DEBUG_EXPAND_MOV 0
 bool
-mep_expand_mov (rtx *operands, enum machine_mode mode)
+mep_expand_mov (rtx *operands, machine_mode mode)
 {
   int i, t;
   int tag[2];
@@ -1479,7 +1522,7 @@ mep_expand_mov (rtx *operands, enum machine_mode mode)
 /* Cases where the pattern can't be made to use at all.  */
 
 bool
-mep_mov_ok (rtx *operands, enum machine_mode mode ATTRIBUTE_UNUSED)
+mep_mov_ok (rtx *operands, machine_mode mode ATTRIBUTE_UNUSED)
 {
   int i;
 
@@ -1545,7 +1588,7 @@ mep_mov_ok (rtx *operands, enum machine_mode mode ATTRIBUTE_UNUSED)
 
 #define DEBUG_SPLIT_WIDE_MOVE 0
 void
-mep_split_wide_move (rtx *operands, enum machine_mode mode)
+mep_split_wide_move (rtx *operands, machine_mode mode)
 {
   int i;
 
@@ -1913,7 +1956,7 @@ mep_find_base_term (rtx x)
    modes FROM to TO.  */
 
 bool
-mep_cannot_change_mode_class (enum machine_mode from, enum machine_mode to,
+mep_cannot_change_mode_class (machine_mode from, machine_mode to,
 			       enum reg_class regclass)
 {
   if (from == to)
@@ -2010,7 +2053,7 @@ mep_secondary_copro_reload_class (enum reg_class rclass, rtx x)
 
 enum reg_class
 mep_secondary_input_reload_class (enum reg_class rclass,
-				  enum machine_mode mode ATTRIBUTE_UNUSED,
+				  machine_mode mode ATTRIBUTE_UNUSED,
 				  rtx x)
 {
   int rv = NO_REGS;
@@ -2036,7 +2079,7 @@ mep_secondary_input_reload_class (enum reg_class rclass,
 
 enum reg_class
 mep_secondary_output_reload_class (enum reg_class rclass,
-				   enum machine_mode mode ATTRIBUTE_UNUSED,
+				   machine_mode mode ATTRIBUTE_UNUSED,
 				   rtx x)
 {
   int rv = NO_REGS;
@@ -2063,7 +2106,7 @@ mep_secondary_output_reload_class (enum reg_class rclass,
 
 bool
 mep_secondary_memory_needed (enum reg_class rclass1, enum reg_class rclass2,
-			     enum machine_mode mode ATTRIBUTE_UNUSED)
+			     machine_mode mode ATTRIBUTE_UNUSED)
 {
   if (!mep_have_core_copro_moves_p)
     {
@@ -2082,7 +2125,7 @@ mep_secondary_memory_needed (enum reg_class rclass1, enum reg_class rclass2,
 }
 
 void
-mep_expand_reload (rtx *operands, enum machine_mode mode)
+mep_expand_reload (rtx *operands, machine_mode mode)
 {
   /* There are three cases for each direction:
      register, farsym
@@ -2169,7 +2212,7 @@ mep_preferred_reload_class (rtx x, enum reg_class rclass)
    that requires a temporary register or temporary stack slot.  */
 
 int
-mep_register_move_cost (enum machine_mode mode, enum reg_class from, enum reg_class to)
+mep_register_move_cost (machine_mode mode, enum reg_class from, enum reg_class to)
 {
   if (mep_have_copro_copro_moves_p
       && reg_class_subset_p (from, CR_REGS)
@@ -2210,7 +2253,7 @@ mep_register_move_cost (enum machine_mode mode, enum reg_class from, enum reg_cl
 static struct machine_function *
 mep_init_machine_status (void)
 {
-  return ggc_alloc_cleared_machine_function ();
+  return ggc_cleared_alloc<machine_function> ();
 }
 
 static rtx
@@ -2322,7 +2365,8 @@ mep_reg_set_p (rtx reg, rtx insn)
 static bool
 mep_reg_set_in_function (int regno)
 {
-  rtx reg, insn;
+  rtx reg;
+  rtx_insn *insn;
 
   if (mep_interrupt_p () && df_regs_ever_live_p(regno))
     return true;
@@ -2350,7 +2394,7 @@ mep_asm_without_operands_p (void)
 {
   if (cfun->machine->asms_without_operands == 0)
     {
-      rtx insn;
+      rtx_insn *insn;
 
       push_topmost_sequence ();
       insn = get_insns ();
@@ -2521,8 +2565,8 @@ mep_elimination_offset (int from, int to)
   gcc_unreachable ();
 }
 
-static rtx
-F (rtx x)
+static rtx_insn *
+F (rtx_insn *x)
 {
   RTX_FRAME_RELATED_P (x) = 1;
   return x;
@@ -2536,7 +2580,7 @@ F (rtx x)
 static void
 add_constant (int dest, int src, int value, int mark_frame)
 {
-  rtx insn;
+  rtx_insn *insn;
   int hi, lo;
 
   if (src == dest && value == 0)
@@ -2596,10 +2640,10 @@ add_constant (int dest, int src, int value, int mark_frame)
 /* Move SRC to DEST.  Mark the move as being potentially dead if
    MAYBE_DEAD_P.  */
 
-static rtx
+static rtx_insn *
 maybe_dead_move (rtx dest, rtx src, bool ATTRIBUTE_UNUSED maybe_dead_p)
 {
-  rtx insn = emit_move_insn (dest, src);
+  rtx_insn *insn = emit_move_insn (dest, src);
 #if 0
   if (maybe_dead_p)
     REG_NOTES (insn) = gen_rtx_EXPR_LIST (REG_MAYBE_DEAD, const0_rtx, NULL);
@@ -2697,7 +2741,7 @@ mep_expand_prologue (void)
       {
 	rtx mem;
 	bool maybe_dead_p;
-	enum machine_mode rmode;
+	machine_mode rmode;
 
 	rss = cfun->machine->reg_save_slot[i];
 
@@ -2724,7 +2768,7 @@ mep_expand_prologue (void)
 	  F(maybe_dead_move (mem, gen_rtx_REG (rmode, i), maybe_dead_p));
 	else if (rmode == DImode)
 	  {
-	    rtx insn;
+	    rtx_insn *insn;
 	    int be = TARGET_BIG_ENDIAN ? 4 : 0;
 
 	    mem = gen_rtx_MEM (SImode,
@@ -2758,7 +2802,7 @@ mep_expand_prologue (void)
 	  }
 	else
 	  {
-	    rtx insn;
+	    rtx_insn *insn;
 	    maybe_dead_move (gen_rtx_REG (rmode, REGSAVE_CONTROL_TEMP),
 			     gen_rtx_REG (rmode, i),
 			     maybe_dead_p);
@@ -2937,7 +2981,7 @@ mep_expand_epilogue (void)
   for (i=FIRST_PSEUDO_REGISTER-1; i>=1; i--)
     if (mep_call_saves_register (i))
       {
-	enum machine_mode rmode;
+	machine_mode rmode;
 	int rss = cfun->machine->reg_save_slot[i];
 
 	if (mep_reg_size (i) == 8)
@@ -3355,7 +3399,7 @@ mep_print_operand (FILE *file, rtx x, int code)
 }
 
 void
-mep_final_prescan_insn (rtx insn, rtx *operands ATTRIBUTE_UNUSED,
+mep_final_prescan_insn (rtx_insn *insn, rtx *operands ATTRIBUTE_UNUSED,
 			int noperands ATTRIBUTE_UNUSED)
 {
   /* Despite the fact that MeP is perfectly capable of branching and
@@ -3371,7 +3415,7 @@ mep_final_prescan_insn (rtx insn, rtx *operands ATTRIBUTE_UNUSED,
 
 static void
 mep_setup_incoming_varargs (cumulative_args_t cum,
-			    enum machine_mode mode ATTRIBUTE_UNUSED,
+			    machine_mode mode ATTRIBUTE_UNUSED,
 			    tree type ATTRIBUTE_UNUSED, int *pretend_size,
 			    int second_time ATTRIBUTE_UNUSED)
 {
@@ -3383,7 +3427,7 @@ mep_setup_incoming_varargs (cumulative_args_t cum,
 }
 
 static int
-bytesize (const_tree type, enum machine_mode mode)
+bytesize (const_tree type, machine_mode mode)
 {
   if (mode == BLKmode)
     return int_size_in_bytes (type);
@@ -3427,8 +3471,6 @@ mep_expand_builtin_saveregs (void)
     }
   return XEXP (regbuf, 0);
 }
-
-#define VECTOR_TYPE_P(t) (TREE_CODE(t) == VECTOR_TYPE)
 
 static tree
 mep_build_builtin_va_list (void)
@@ -3568,7 +3610,7 @@ mep_gimplify_va_arg_expr (tree valist, tree type,
 
   label_sover = create_artificial_label (UNKNOWN_LOCATION);
   label_selse = create_artificial_label (UNKNOWN_LOCATION);
-  res_addr = create_tmp_var (ptr_type_node, NULL);
+  res_addr = create_tmp_var (ptr_type_node);
 
   tmp = build2 (GE_EXPR, boolean_type_node, next_gp,
 		unshare_expr (next_gp_limit));
@@ -3641,7 +3683,7 @@ mep_init_cumulative_args (CUMULATIVE_ARGS *pcum, tree fntype,
    first arg.  For varargs, we copy $1..$4 to the stack.  */
 
 static rtx
-mep_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
+mep_function_arg (cumulative_args_t cum_v, machine_mode mode,
 		  const_tree type ATTRIBUTE_UNUSED,
 		  bool named ATTRIBUTE_UNUSED)
 {
@@ -3668,7 +3710,7 @@ mep_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
 
 static bool
 mep_pass_by_reference (cumulative_args_t cum ATTRIBUTE_UNUSED,
-		       enum machine_mode mode,
+		       machine_mode mode,
 		       const_tree        type,
 		       bool              named ATTRIBUTE_UNUSED)
 {
@@ -3691,7 +3733,7 @@ mep_pass_by_reference (cumulative_args_t cum ATTRIBUTE_UNUSED,
 
 static void
 mep_function_arg_advance (cumulative_args_t pcum,
-			  enum machine_mode mode ATTRIBUTE_UNUSED,
+			  machine_mode mode ATTRIBUTE_UNUSED,
 			  const_tree type ATTRIBUTE_UNUSED,
 			  bool named ATTRIBUTE_UNUSED)
 {
@@ -3727,7 +3769,7 @@ mep_function_value (const_tree type, const_tree func ATTRIBUTE_UNUSED)
 /* Implement LIBCALL_VALUE, using the same rules as mep_function_value.  */
 
 rtx
-mep_libcall_value (enum machine_mode mode)
+mep_libcall_value (machine_mode mode)
 {
   return gen_rtx_REG (mode, RETURN_VALUE_REGNUM);
 }
@@ -3962,7 +4004,7 @@ mep_validate_vliw (tree *node, tree name, tree args ATTRIBUTE_UNUSED,
       static int gave_array_note = 0;
       static const char * given_type = NULL;
  
-      given_type = tree_code_name[TREE_CODE (*node)];
+      given_type = get_tree_code_name (TREE_CODE (*node));
       if (TREE_CODE (*node) == POINTER_TYPE)
  	given_type = "pointers";
       if (TREE_CODE (*node) == ARRAY_TYPE)
@@ -4046,69 +4088,53 @@ mep_can_inline_p (tree caller, tree callee)
 struct GTY(()) pragma_entry {
   int used;
   int flag;
-  const char *funcname;
 };
-typedef struct pragma_entry pragma_entry;
+
+struct pragma_traits : default_hashmap_traits
+{
+  static hashval_t hash (const char *s) { return htab_hash_string (s); }
+  static bool
+  equal_keys (const char *a, const char *b)
+  {
+    return strcmp (a, b) == 0;
+  }
+};
 
 /* Hash table of farcall-tagged sections.  */
-static GTY((param_is (pragma_entry))) htab_t pragma_htab;
-
-static int
-pragma_entry_eq (const void *p1, const void *p2)
-{
-  const pragma_entry *old = (const pragma_entry *) p1;
-  const char *new_name = (const char *) p2;
-
-  return strcmp (old->funcname, new_name) == 0;
-}
-
-static hashval_t
-pragma_entry_hash (const void *p)
-{
-  const pragma_entry *old = (const pragma_entry *) p;
-  return htab_hash_string (old->funcname);
-}
+static GTY(()) hash_map<const char *, pragma_entry, pragma_traits> *
+  pragma_htab;
 
 static void
 mep_note_pragma_flag (const char *funcname, int flag)
 {
-  pragma_entry **slot;
-
   if (!pragma_htab)
-    pragma_htab = htab_create_ggc (31, pragma_entry_hash,
-				    pragma_entry_eq, NULL);
+    pragma_htab
+      = hash_map<const char *, pragma_entry, pragma_traits>::create_ggc (31);
 
-  slot = (pragma_entry **)
-    htab_find_slot_with_hash (pragma_htab, funcname,
-			      htab_hash_string (funcname), INSERT);
-
-  if (!*slot)
+  bool existed;
+  const char *name = ggc_strdup (funcname);
+  pragma_entry *slot = &pragma_htab->get_or_insert (name, &existed);
+  if (!existed)
     {
-      *slot = ggc_alloc_pragma_entry ();
-      (*slot)->flag = 0;
-      (*slot)->used = 0;
-      (*slot)->funcname = ggc_strdup (funcname);
+      slot->flag = 0;
+      slot->used = 0;
     }
-  (*slot)->flag |= flag;
+  slot->flag |= flag;
 }
 
 static bool
 mep_lookup_pragma_flag (const char *funcname, int flag)
 {
-  pragma_entry **slot;
-
   if (!pragma_htab)
     return false;
 
   if (funcname[0] == '@' && funcname[2] == '.')
     funcname += 3;
 
-  slot = (pragma_entry **)
-    htab_find_slot_with_hash (pragma_htab, funcname,
-			      htab_hash_string (funcname), NO_INSERT);
-  if (slot && *slot && ((*slot)->flag & flag))
+  pragma_entry *slot = pragma_htab->get (funcname);
+  if (slot && (slot->flag & flag))
     {
-      (*slot)->used |= flag;
+      slot->used |= flag;
       return true;
     }
   return false;
@@ -4138,14 +4164,13 @@ mep_note_pragma_disinterrupt (const char *funcname)
   mep_note_pragma_flag (funcname, FUNC_DISINTERRUPT);
 }
 
-static int
-note_unused_pragma_disinterrupt (void **slot, void *data ATTRIBUTE_UNUSED)
+bool
+note_unused_pragma_disinterrupt (const char *const &s, const pragma_entry &e,
+				 void *)
 {
-  const pragma_entry *d = (const pragma_entry *)(*slot);
-
-  if ((d->flag & FUNC_DISINTERRUPT)
-      && !(d->used & FUNC_DISINTERRUPT))
-    warning (0, "\"#pragma disinterrupt %s\" not used", d->funcname);
+  if ((e.flag & FUNC_DISINTERRUPT)
+      && !(e.used & FUNC_DISINTERRUPT))
+    warning (0, "\"#pragma disinterrupt %s\" not used", s);
   return 1;
 }
 
@@ -4153,7 +4178,7 @@ void
 mep_file_cleanups (void)
 {
   if (pragma_htab)
-    htab_traverse (pragma_htab, note_unused_pragma_disinterrupt, NULL);
+    pragma_htab->traverse<void *, note_unused_pragma_disinterrupt> (NULL);
 }
 
 /* These three functions provide a bridge between the pramgas that
@@ -4517,7 +4542,7 @@ mep_select_section (tree decl, int reloc ATTRIBUTE_UNUSED,
       else
 	encoding = 0;
 
-      if (flag_function_sections || DECL_ONE_ONLY (decl))
+      if (flag_function_sections || DECL_COMDAT_GROUP (decl))
 	mep_unique_section (decl, 0);
       else if (lookup_attribute ("vliw", TYPE_ATTRIBUTES (TREE_TYPE (decl))))
 	{
@@ -4636,13 +4661,13 @@ mep_unique_section (tree decl, int reloc)
       name += 3;
     }
 
-  prefix = prefixes[sec][DECL_ONE_ONLY(decl)];
+  prefix = prefixes[sec][DECL_COMDAT_GROUP(decl) != NULL];
   len    = strlen (name) + strlen (prefix);
   string = (char *) alloca (len + 1);
 
   sprintf (string, "%s%s", prefix, name);
 
-  DECL_SECTION_NAME (decl) = build_string (len, string);
+  set_decl_section_name (decl, string);
 }
 
 /* Given a decl, a section name, and whether the decl initializer
@@ -4875,14 +4900,15 @@ mep_compatible_reg_class (int r1, int r2)
 }
 
 static void
-mep_reorg_regmove (rtx insns)
+mep_reorg_regmove (rtx_insn *insns)
 {
-  rtx insn, next, pat, follow, *where;
+  rtx_insn *insn, *next, *follow;
+  rtx pat, *where;
   int count = 0, done = 0, replace, before = 0;
 
   if (dump_file)
     for (insn = insns; insn; insn = NEXT_INSN (insn))
-      if (GET_CODE (insn) == INSN)
+      if (NONJUMP_INSN_P (insn))
 	before++;
 
   /* We're looking for (set r2 r1) moves where r1 dies, followed by a
@@ -4896,7 +4922,7 @@ mep_reorg_regmove (rtx insns)
       for (insn = insns; insn; insn = next)
 	{
 	  next = next_nonnote_nondebug_insn (insn);
-	  if (GET_CODE (insn) != INSN)
+	  if (! NONJUMP_INSN_P (insn))
 	    continue;
 	  pat = PATTERN (insn);
 
@@ -4912,7 +4938,7 @@ mep_reorg_regmove (rtx insns)
 	      if (dump_file)
 		fprintf (dump_file, "superfluous moves: considering %d\n", INSN_UID (insn));
 
-	      while (follow && GET_CODE (follow) == INSN
+	      while (follow && NONJUMP_INSN_P (follow)
 		     && GET_CODE (PATTERN (follow)) == SET
 		     && !dead_or_set_p (follow, SET_SRC (pat))
 		     && !mep_mentioned_p (PATTERN (follow), SET_SRC (pat), 0)
@@ -4925,7 +4951,7 @@ mep_reorg_regmove (rtx insns)
 
 	      if (dump_file)
 		fprintf (dump_file, "\tfollow is %d\n", INSN_UID (follow));
-	      if (follow && GET_CODE (follow) == INSN
+	      if (follow && NONJUMP_INSN_P (follow)
 		  && GET_CODE (PATTERN (follow)) == SET
 		  && find_regno_note (follow, REG_DEAD, REGNO (SET_DEST (pat))))
 		{
@@ -4953,7 +4979,7 @@ mep_reorg_regmove (rtx insns)
 	    {
 	      if (dump_file)
 		{
-		  rtx x;
+		  rtx_insn *x;
 
 		  fprintf (dump_file, "----- Candidate for superfluous move deletion:\n\n");
 		  for (x = insn; x ;x = NEXT_INSN (x))
@@ -4997,11 +5023,11 @@ mep_reorg_regmove (rtx insns)
 
    Return the last instruction in the adjusted loop.  */
 
-static rtx
-mep_insert_repeat_label_last (rtx last_insn, rtx label, bool including,
-			      bool shared)
+static rtx_insn *
+mep_insert_repeat_label_last (rtx_insn *last_insn, rtx_code_label *label,
+			      bool including, bool shared)
 {
-  rtx next, prev;
+  rtx_insn *next, *prev;
   int count = 0, code, icode;
 
   if (dump_file)
@@ -5025,7 +5051,7 @@ mep_insert_repeat_label_last (rtx last_insn, rtx label, bool including,
 	if (INSN_P (prev))
 	  {
 	    if (GET_CODE (PATTERN (prev)) == SEQUENCE)
-	      prev = XVECEXP (PATTERN (prev), 0, 1);
+	      prev = as_a <rtx_insn *> (XVECEXP (PATTERN (prev), 0, 1));
 
 	    /* Other insns that should not be in the last two opcodes.  */
 	    icode = recog_memoized (prev);
@@ -5103,7 +5129,7 @@ mep_emit_doloop (rtx *operands, int is_end)
 
   tag = GEN_INT (cfun->machine->doloop_tags - 1);
   if (is_end)
-    emit_jump_insn (gen_doloop_end_internal (operands[0], operands[4], tag));
+    emit_jump_insn (gen_doloop_end_internal (operands[0], operands[1], tag));
   else
     emit_insn (gen_doloop_begin_internal (operands[0], operands[0], tag));
 }
@@ -5195,7 +5221,7 @@ struct mep_doloop_begin {
   struct mep_doloop_begin *next;
 
   /* The instruction itself.  */
-  rtx insn;
+  rtx_insn *insn;
 
   /* The initial counter value.  This is known to be a general register.  */
   rtx counter;
@@ -5207,10 +5233,10 @@ struct mep_doloop_end {
   struct mep_doloop_end *next;
 
   /* The instruction itself.  */
-  rtx insn;
+  rtx_insn *insn;
 
   /* The first instruction after INSN when the branch isn't taken.  */
-  rtx fallthrough;
+  rtx_insn *fallthrough;
 
   /* The location of the counter value.  Since doloop_end_internal is a
      jump instruction, it has to allow the counter to be stored anywhere
@@ -5273,9 +5299,9 @@ mep_repeat_loop_p (struct mep_doloop *loop)
 /* The main repeat reorg function.  See comment above for details.  */
 
 static void
-mep_reorg_repeat (rtx insns)
+mep_reorg_repeat (rtx_insn *insns)
 {
-  rtx insn;
+  rtx_insn *insn;
   struct mep_doloop *loops, *loop;
   struct mep_doloop_begin *begin;
   struct mep_doloop_end *end;
@@ -5336,7 +5362,8 @@ mep_reorg_repeat (rtx insns)
     if (mep_repeat_loop_p (loop))
       {
 	/* Case (1) or (2).  */
-	rtx repeat_label, label_ref;
+	rtx_code_label *repeat_label;
+	rtx label_ref;
 
 	/* Create a new label for the repeat insn.  */
 	repeat_label = gen_label_rtx ();
@@ -5420,7 +5447,7 @@ mep_reorg_repeat (rtx insns)
 
 
 static bool
-mep_invertable_branch_p (rtx insn)
+mep_invertable_branch_p (rtx_insn *insn)
 {
   rtx cond, set;
   enum rtx_code old_code;
@@ -5458,7 +5485,7 @@ mep_invertable_branch_p (rtx insn)
 }
 
 static void
-mep_invert_branch (rtx insn, rtx after)
+mep_invert_branch (rtx_insn *insn, rtx_insn *after)
 {
   rtx cond, set, label;
   int i;
@@ -5504,14 +5531,15 @@ mep_invert_branch (rtx insn, rtx after)
 }
 
 static void
-mep_reorg_erepeat (rtx insns)
+mep_reorg_erepeat (rtx_insn *insns)
 {
-  rtx insn, prev, l, x;
+  rtx_insn *insn, *prev;
+  rtx_code_label *l;
+  rtx x;
   int count;
 
   for (insn = insns; insn; insn = NEXT_INSN (insn))
     if (JUMP_P (insn)
-	&& ! JUMP_TABLE_DATA_P (insn)
 	&& mep_invertable_branch_p (insn))
       {
 	if (dump_file)
@@ -5523,13 +5551,12 @@ mep_reorg_erepeat (rtx insns)
 	count = simplejump_p (insn) ? 0 : 1;
 	for (prev = PREV_INSN (insn); prev; prev = PREV_INSN (prev))
 	  {
-	    if (GET_CODE (prev) == CALL_INSN
-		|| BARRIER_P (prev))
+	    if (CALL_P (prev) || BARRIER_P (prev))
 	      break;
 
 	    if (prev == JUMP_LABEL (insn))
 	      {
-		rtx newlast;
+		rtx_insn *newlast;
 		if (dump_file)
 		  fprintf (dump_file, "found loop top, %d insns\n", count);
 
@@ -5541,12 +5568,12 @@ mep_reorg_erepeat (rtx insns)
 		       so, we know nobody inside the loop uses it.
 		       But we must be careful to put the erepeat
 		       *after* the label.  */
-		    rtx barrier;
+		    rtx_insn *barrier;
 		    for (barrier = PREV_INSN (prev);
-			 barrier && GET_CODE (barrier) == NOTE;
+			 barrier && NOTE_P (barrier);
 			 barrier = PREV_INSN (barrier))
 		      ;
-		    if (barrier && GET_CODE (barrier) != BARRIER)
+		    if (barrier && ! BARRIER_P (barrier))
 		      break;
 		  }
 		else
@@ -5585,15 +5612,14 @@ mep_reorg_erepeat (rtx insns)
 	      {
 		/* A label is OK if there is exactly one user, and we
 		   can find that user before the next label.  */
-		rtx user = 0;
+		rtx_insn *user = 0;
 		int safe = 0;
 		if (LABEL_NUSES (prev) == 1)
 		  {
 		    for (user = PREV_INSN (prev);
-			 user && (INSN_P (user) || GET_CODE (user) == NOTE);
+			 user && (INSN_P (user) || NOTE_P (user));
 			 user = PREV_INSN (user))
-		      if (GET_CODE (user) == JUMP_INSN
-			  && JUMP_LABEL (user) == prev)
+		      if (JUMP_P (user) && JUMP_LABEL (user) == prev)
 			{
 			  safe = INSN_UID (user);
 			  break;
@@ -5620,19 +5646,19 @@ mep_reorg_erepeat (rtx insns)
    always do this on its own.  */
 
 static void
-mep_jmp_return_reorg (rtx insns)
+mep_jmp_return_reorg (rtx_insn *insns)
 {
-  rtx insn, label, ret;
+  rtx_insn *insn, *label, *ret;
   int ret_code;
 
   for (insn = insns; insn; insn = NEXT_INSN (insn))
     if (simplejump_p (insn))
     {
       /* Find the fist real insn the jump jumps to.  */
-      label = ret = JUMP_LABEL (insn);
+      label = ret = safe_as_a <rtx_insn *> (JUMP_LABEL (insn));
       while (ret
-	     && (GET_CODE (ret) == NOTE
-		 || GET_CODE (ret) == CODE_LABEL
+	     && (NOTE_P (ret)
+		 || LABEL_P (ret)
 		 || GET_CODE (PATTERN (ret)) == USE))
 	ret = NEXT_INSN (ret);
 
@@ -5656,9 +5682,9 @@ mep_jmp_return_reorg (rtx insns)
 
 
 static void
-mep_reorg_addcombine (rtx insns)
+mep_reorg_addcombine (rtx_insn *insns)
 {
-  rtx i, n;
+  rtx_insn *i, *n;
 
   for (i = insns; i; i = NEXT_INSN (i))
     if (INSN_P (i)
@@ -5683,9 +5709,9 @@ mep_reorg_addcombine (rtx insns)
 		&& ic + nc > -32768)
 	      {
 		XEXP (SET_SRC (PATTERN (i)), 1) = GEN_INT (ic + nc);
-		NEXT_INSN (i) = NEXT_INSN (n);
+		SET_NEXT_INSN (i) = NEXT_INSN (n);
 		if (NEXT_INSN (i))
-		  PREV_INSN (NEXT_INSN (i)) = i;
+		  SET_PREV_INSN (NEXT_INSN (i)) = i;
 	      }
 	  }
       }
@@ -5694,7 +5720,7 @@ mep_reorg_addcombine (rtx insns)
 /* If this insn adjusts the stack, return the adjustment, else return
    zero.  */
 static int
-add_sp_insn_p (rtx insn)
+add_sp_insn_p (rtx_insn *insn)
 {
   rtx pat;
 
@@ -5719,10 +5745,10 @@ add_sp_insn_p (rtx insn)
 /* Check for trivial functions that set up an unneeded stack
    frame.  */
 static void
-mep_reorg_noframe (rtx insns)
+mep_reorg_noframe (rtx_insn *insns)
 {
-  rtx start_frame_insn;
-  rtx end_frame_insn = 0;
+  rtx_insn *start_frame_insn;
+  rtx_insn *end_frame_insn = 0;
   int sp_adjust, sp2;
   rtx sp;
 
@@ -5743,7 +5769,7 @@ mep_reorg_noframe (rtx insns)
 
   while (insns)
     {
-      rtx next = next_real_insn (insns);
+      rtx_insn *next = next_real_insn (insns);
       if (!next)
 	break;
 
@@ -5774,7 +5800,7 @@ mep_reorg_noframe (rtx insns)
 static void
 mep_reorg (void)
 {
-  rtx insns = get_insns ();
+  rtx_insn *insns = get_insns ();
 
   /* We require accurate REG_DEAD notes.  */
   compute_bb_for_insn ();
@@ -6057,7 +6083,7 @@ mep_get_move_insn (int intrinsic, const struct cgen_insn **cgen_insn)
    to MODE using a subreg.  Otherwise return ARG as-is.  */
 
 static rtx
-mep_convert_arg (enum machine_mode mode, rtx arg)
+mep_convert_arg (machine_mode mode, rtx arg)
 {
   if (GET_MODE (arg) != mode
       && register_operand (arg, VOIDmode)
@@ -6178,7 +6204,7 @@ mep_incompatible_arg (const struct insn_operand_data *operand, rtx arg,
 static rtx
 mep_expand_builtin (tree exp, rtx target ATTRIBUTE_UNUSED,
 		    rtx subtarget ATTRIBUTE_UNUSED,
-		    enum machine_mode mode ATTRIBUTE_UNUSED,
+		    machine_mode mode ATTRIBUTE_UNUSED,
 		    int ignore ATTRIBUTE_UNUSED)
 {
   rtx pat, op[10], arg[10];
@@ -6275,7 +6301,7 @@ mep_expand_builtin (tree exp, rtx target ATTRIBUTE_UNUSED,
       if (cgen_insn->regnums[a].reference_p)
 	{
 	  tree pointed_to = TREE_TYPE (TREE_TYPE (value));
-	  enum machine_mode pointed_mode = TYPE_MODE (pointed_to);
+	  machine_mode pointed_mode = TYPE_MODE (pointed_to);
 
 	  arg[a] = gen_rtx_MEM (pointed_mode, arg[a]);
 	}
@@ -6356,7 +6382,7 @@ mep_expand_builtin (tree exp, rtx target ATTRIBUTE_UNUSED,
 }
 
 static bool
-mep_vector_mode_supported_p (enum machine_mode mode ATTRIBUTE_UNUSED)
+mep_vector_mode_supported_p (machine_mode mode ATTRIBUTE_UNUSED)
 {
   return false;
 }
@@ -6364,14 +6390,10 @@ mep_vector_mode_supported_p (enum machine_mode mode ATTRIBUTE_UNUSED)
 /* A subroutine of global_reg_mentioned_p, returns 1 if *LOC mentions
    a global register.  */
 
-static int
-global_reg_mentioned_p_1 (rtx *loc, void *data ATTRIBUTE_UNUSED)
+static bool
+global_reg_mentioned_p_1 (const_rtx x)
 {
   int regno;
-  rtx x = *loc;
-
-  if (! x)
-    return 0;
 
   switch (GET_CODE (x))
     {
@@ -6380,40 +6402,31 @@ global_reg_mentioned_p_1 (rtx *loc, void *data ATTRIBUTE_UNUSED)
 	{
 	  if (REGNO (SUBREG_REG (x)) < FIRST_PSEUDO_REGISTER
 	      && global_regs[subreg_regno (x)])
-	    return 1;
-	  return 0;
+	    return true;
+	  return false;
 	}
       break;
 
     case REG:
       regno = REGNO (x);
       if (regno < FIRST_PSEUDO_REGISTER && global_regs[regno])
-	return 1;
-      return 0;
-
-    case SCRATCH:
-    case PC:
-    case CC0:
-    case CONST_INT:
-    case CONST_DOUBLE:
-    case CONST:
-    case LABEL_REF:
-      return 0;
+	return true;
+      return false;
 
     case CALL:
       /* A non-constant call might use a global register.  */
-      return 1;
+      return true;
 
     default:
       break;
     }
 
-  return 0;
+  return false;
 }
 
 /* Returns nonzero if X mentions a global register.  */
 
-static int
+static bool
 global_reg_mentioned_p (rtx x)
 {
   if (INSN_P (x))
@@ -6421,16 +6434,20 @@ global_reg_mentioned_p (rtx x)
       if (CALL_P (x))
 	{
 	  if (! RTL_CONST_OR_PURE_CALL_P (x))
-	    return 1;
+	    return true;
 	  x = CALL_INSN_FUNCTION_USAGE (x);
 	  if (x == 0)
-	    return 0;
+	    return false;
 	}
       else
 	x = PATTERN (x);
     }
 
-  return for_each_rtx (&x, global_reg_mentioned_p_1, NULL);
+  subrtx_iterator::array_type array;
+  FOR_EACH_SUBRTX (iter, array, x, NONCONST)
+    if (global_reg_mentioned_p_1 (*iter))
+      return true;
+  return false;
 }
 /* Scheduling hooks for VLIW mode.
 
@@ -6458,7 +6475,7 @@ global_reg_mentioned_p (rtx x)
    insns.  Not implemented.  */
 
 static int
-mep_adjust_cost (rtx insn, rtx link, rtx dep_insn, int cost)
+mep_adjust_cost (rtx_insn *insn, rtx link, rtx_insn *dep_insn, int cost)
 {
   int cost_specified;
 
@@ -6521,25 +6538,26 @@ mep_vliw_function_p (tree decl)
   return lookup_attribute ("vliw", TYPE_ATTRIBUTES (TREE_TYPE (decl))) != 0;
 }
 
-static rtx
-mep_find_ready_insn (rtx *ready, int nready, enum attr_slot slot, int length)
+static rtx_insn *
+mep_find_ready_insn (rtx_insn **ready, int nready, enum attr_slot slot,
+		     int length)
 {
   int i;
 
   for (i = nready - 1; i >= 0; --i)
     {
-      rtx insn = ready[i];
+      rtx_insn *insn = ready[i];
       if (recog_memoized (insn) >= 0
 	  && get_attr_slot (insn) == slot
 	  && get_attr_length (insn) == length)
 	return insn;
     }
 
-  return NULL_RTX;
+  return NULL;
 }
 
 static void
-mep_move_ready_insn (rtx *ready, int nready, rtx insn)
+mep_move_ready_insn (rtx_insn **ready, int nready, rtx_insn *insn)
 {
   int i;
 
@@ -6556,7 +6574,7 @@ mep_move_ready_insn (rtx *ready, int nready, rtx insn)
 }
 
 static void
-mep_print_sched_insn (FILE *dump, rtx insn)
+mep_print_sched_insn (FILE *dump, rtx_insn *insn)
 {
   const char *slots = "none";
   const char *name = NULL;
@@ -6601,11 +6619,11 @@ mep_print_sched_insn (FILE *dump, rtx insn)
 
 static int
 mep_sched_reorder (FILE *dump ATTRIBUTE_UNUSED,
-		   int sched_verbose ATTRIBUTE_UNUSED, rtx *ready,
+		   int sched_verbose ATTRIBUTE_UNUSED, rtx_insn **ready,
 		   int *pnready, int clock ATTRIBUTE_UNUSED)
 {
   int nready = *pnready;
-  rtx core_insn, cop_insn;
+  rtx_insn *core_insn, *cop_insn;
   int i;
 
   if (dump && sched_verbose > 1)
@@ -6648,20 +6666,23 @@ mep_sched_reorder (FILE *dump ATTRIBUTE_UNUSED,
   return 2;
 }
 
-/* A for_each_rtx callback.  Return true if *X is a register that is
-   set by insn PREV.  */
+/* Return true if X contains a register that is set by insn PREV.  */
 
-static int
-mep_store_find_set (rtx *x, void *prev)
+static bool
+mep_store_find_set (const_rtx x, const rtx_insn *prev)
 {
-  return REG_P (*x) && reg_set_p (*x, (const_rtx) prev);
+  subrtx_iterator::array_type array;
+  FOR_EACH_SUBRTX (iter, array, x, NONCONST)
+    if (REG_P (x) && reg_set_p (x, prev))
+      return true;
+  return false;
 }
 
 /* Like mep_store_bypass_p, but takes a pattern as the second argument,
    not the containing insn.  */
 
 static bool
-mep_store_data_bypass_1 (rtx prev, rtx pat)
+mep_store_data_bypass_1 (rtx_insn *prev, rtx pat)
 {
   /* Cope with intrinsics like swcpa.  */
   if (GET_CODE (pat) == PARALLEL)
@@ -6669,7 +6690,8 @@ mep_store_data_bypass_1 (rtx prev, rtx pat)
       int i;
 
       for (i = 0; i < XVECLEN (pat, 0); i++)
-	if (mep_store_data_bypass_p (prev, XVECEXP (pat, 0, i)))
+	if (mep_store_data_bypass_p (prev,
+				     as_a <rtx_insn *> (XVECEXP (pat, 0, i))))
 	  return true;
 
       return false;
@@ -6690,7 +6712,7 @@ mep_store_data_bypass_1 (rtx prev, rtx pat)
 
       src = SET_SRC (pat);
       for (i = 1; i < XVECLEN (src, 0); i++)
-	if (for_each_rtx (&XVECEXP (src, 0, i), mep_store_find_set, prev))
+	if (mep_store_find_set (XVECEXP (src, 0, i), prev))
 	  return false;
 
       return true;
@@ -6698,43 +6720,42 @@ mep_store_data_bypass_1 (rtx prev, rtx pat)
 
   /* Otherwise just check that PREV doesn't modify any register mentioned
      in the memory destination.  */
-  return !for_each_rtx (&SET_DEST (pat), mep_store_find_set, prev);
+  return !mep_store_find_set (SET_DEST (pat), prev);
 }
 
 /* Return true if INSN is a store instruction and if the store address
    has no true dependence on PREV.  */
 
 bool
-mep_store_data_bypass_p (rtx prev, rtx insn)
+mep_store_data_bypass_p (rtx_insn *prev, rtx_insn *insn)
 {
   return INSN_P (insn) ? mep_store_data_bypass_1 (prev, PATTERN (insn)) : false;
-}
-
-/* A for_each_rtx subroutine of mep_mul_hilo_bypass_p.  Return 1 if *X
-   is a register other than LO or HI and if PREV sets *X.  */
-
-static int
-mep_mul_hilo_bypass_1 (rtx *x, void *prev)
-{
-  return (REG_P (*x)
-	  && REGNO (*x) != LO_REGNO
-	  && REGNO (*x) != HI_REGNO
-	  && reg_set_p (*x, (const_rtx) prev));
 }
 
 /* Return true if, apart from HI/LO, there are no true dependencies
    between multiplication instructions PREV and INSN.  */
 
 bool
-mep_mul_hilo_bypass_p (rtx prev, rtx insn)
+mep_mul_hilo_bypass_p (rtx_insn *prev, rtx_insn *insn)
 {
   rtx pat;
 
   pat = PATTERN (insn);
   if (GET_CODE (pat) == PARALLEL)
     pat = XVECEXP (pat, 0, 0);
-  return (GET_CODE (pat) == SET
-	  && !for_each_rtx (&SET_SRC (pat), mep_mul_hilo_bypass_1, prev));
+  if (GET_CODE (pat) != SET)
+    return false;
+  subrtx_iterator::array_type array;
+  FOR_EACH_SUBRTX (iter, array, SET_SRC (pat), NONCONST)
+    {
+      const_rtx x = *iter;
+      if (REG_P (x)
+	  && REGNO (x) != LO_REGNO
+	  && REGNO (x) != HI_REGNO
+	  && reg_set_p (x, prev))
+	return false;
+    }
+  return true;
 }
 
 /* Return true if INSN is an ldc instruction that issues to the
@@ -6742,7 +6763,7 @@ mep_mul_hilo_bypass_p (rtx prev, rtx insn)
    read from PSW, LP, SAR, HI and LO.  */
 
 bool
-mep_ipipe_ldc_p (rtx insn)
+mep_ipipe_ldc_p (rtx_insn *insn)
 {
   rtx pat, src;
 
@@ -6782,38 +6803,43 @@ mep_ipipe_ldc_p (rtx insn)
 
    Emit the bundle in place of COP and return it.  */
 
-static rtx
-mep_make_bundle (rtx core, rtx cop)
+static rtx_insn *
+mep_make_bundle (rtx core_insn_or_pat, rtx_insn *cop)
 {
-  rtx insn;
+  rtx seq;
+  rtx_insn *core_insn;
+  rtx_insn *insn;
 
   /* If CORE is an existing instruction, remove it, otherwise put
      the new pattern in an INSN harness.  */
-  if (INSN_P (core))
-    remove_insn (core);
+  if (INSN_P (core_insn_or_pat))
+    {
+      core_insn = as_a <rtx_insn *> (core_insn_or_pat);
+      remove_insn (core_insn);
+    }
   else
-    core = make_insn_raw (core);
+    core_insn = make_insn_raw (core_insn_or_pat);
 
   /* Generate the bundle sequence and replace COP with it.  */
-  insn = gen_rtx_SEQUENCE (VOIDmode, gen_rtvec (2, core, cop));
-  insn = emit_insn_after (insn, cop);
+  seq = gen_rtx_SEQUENCE (VOIDmode, gen_rtvec (2, core_insn, cop));
+  insn = emit_insn_after (seq, cop);
   remove_insn (cop);
 
   /* Set up the links of the insns inside the SEQUENCE.  */
-  PREV_INSN (core) = PREV_INSN (insn);
-  NEXT_INSN (core) = cop;
-  PREV_INSN (cop) = core;
-  NEXT_INSN (cop) = NEXT_INSN (insn);
+  SET_PREV_INSN (core_insn) = PREV_INSN (insn);
+  SET_NEXT_INSN (core_insn) = cop;
+  SET_PREV_INSN (cop) = core_insn;
+  SET_NEXT_INSN (cop) = NEXT_INSN (insn);
 
   /* Set the VLIW flag for the coprocessor instruction.  */
-  PUT_MODE (core, VOIDmode);
+  PUT_MODE (core_insn, VOIDmode);
   PUT_MODE (cop, BImode);
 
   /* Derive a location for the bundle.  Individual instructions cannot
      have their own location because there can be no assembler labels
-     between CORE and COP.  */
-  INSN_LOCATION (insn) = INSN_LOCATION (INSN_LOCATION (core) ? core : cop);
-  INSN_LOCATION (core) = 0;
+     between CORE_INSN and COP.  */
+  INSN_LOCATION (insn) = INSN_LOCATION (INSN_LOCATION (core_insn) ? core_insn : cop);
+  INSN_LOCATION (core_insn) = 0;
   INSN_LOCATION (cop) = 0;
 
   return insn;
@@ -6855,7 +6881,7 @@ mep_insn_dependent_p (rtx x, rtx y)
 }
 
 static int
-core_insn_p (rtx insn)
+core_insn_p (rtx_insn *insn)
 {
   if (GET_CODE (PATTERN (insn)) == USE)
     return 0;
@@ -6876,9 +6902,9 @@ core_insn_p (rtx insn)
    Called from mep_insn_reorg.  */
 
 static void
-mep_bundle_insns (rtx insns)
+mep_bundle_insns (rtx_insn *insns)
 {
-  rtx insn, last = NULL_RTX, first = NULL_RTX;
+  rtx_insn *insn, *last = NULL, *first = NULL;
   int saw_scheduling = 0;
 
   /* Only do bundling if we're in vliw mode.  */
@@ -6903,7 +6929,7 @@ mep_bundle_insns (rtx insns)
 
       else if (NONJUMP_INSN_P (insn) && GET_MODE (insn) == VOIDmode && first)
 	{
-	  rtx note, prev;
+	  rtx_insn *note, *prev;
 
 	  /* INSN is part of a bundle; FIRST is the first insn in that
 	     bundle.  Move all intervening notes out of the bundle.
@@ -6921,13 +6947,13 @@ mep_bundle_insns (rtx insns)
 	      if (NOTE_P (note))
 		{
 		  /* Remove NOTE from here... */
-		  PREV_INSN (NEXT_INSN (note)) = PREV_INSN (note);
-		  NEXT_INSN (PREV_INSN (note)) = NEXT_INSN (note);
+		  SET_PREV_INSN (NEXT_INSN (note)) = PREV_INSN (note);
+		  SET_NEXT_INSN (PREV_INSN (note)) = NEXT_INSN (note);
 		  /* ...and put it in here.  */
-		  NEXT_INSN (note) = first;
-		  PREV_INSN (note) = PREV_INSN (first);
-		  NEXT_INSN (PREV_INSN (note)) = note;
-		  PREV_INSN (NEXT_INSN (note)) = note;
+		  SET_NEXT_INSN (note) = first;
+		  SET_PREV_INSN (note) = PREV_INSN (first);
+		  SET_NEXT_INSN (PREV_INSN (note)) = note;
+		  SET_PREV_INSN (NEXT_INSN (note)) = note;
 		}
 
 	      note = prev;
@@ -6959,7 +6985,7 @@ mep_bundle_insns (rtx insns)
 
       if (TARGET_IVC2)
 	{
-	  rtx core_insn = NULL_RTX;
+	  rtx_insn *core_insn = NULL;
 
 	  /* IVC2 slots are scheduled by DFA, so we just accept
 	     whatever the scheduler gives us.  However, we must make
@@ -6989,17 +7015,17 @@ mep_bundle_insns (rtx insns)
 
 		  /* Remove core insn.  */
 		  if (PREV_INSN (core_insn))
-		    NEXT_INSN (PREV_INSN (core_insn)) = NEXT_INSN (core_insn);
+		    SET_NEXT_INSN (PREV_INSN (core_insn)) = NEXT_INSN (core_insn);
 		  if (NEXT_INSN (core_insn))
-		    PREV_INSN (NEXT_INSN (core_insn)) = PREV_INSN (core_insn);
+		    SET_PREV_INSN (NEXT_INSN (core_insn)) = PREV_INSN (core_insn);
 
 		  /* Re-insert core insn.  */
-		  PREV_INSN (core_insn) = PREV_INSN (insn);
-		  NEXT_INSN (core_insn) = insn;
+		  SET_PREV_INSN (core_insn) = PREV_INSN (insn);
+		  SET_NEXT_INSN (core_insn) = insn;
 
 		  if (PREV_INSN (core_insn))
-		    NEXT_INSN (PREV_INSN (core_insn)) = core_insn;
-		  PREV_INSN (insn) = core_insn;
+		    SET_NEXT_INSN (PREV_INSN (core_insn)) = core_insn;
+		  SET_PREV_INSN (insn) = core_insn;
 
 		  PUT_MODE (core_insn, TImode);
 		  PUT_MODE (insn, VOIDmode);
@@ -7018,7 +7044,7 @@ mep_bundle_insns (rtx insns)
       if (recog_memoized (insn) >= 0
 	  && get_attr_slot (insn) == SLOT_COP)
 	{
-	  if (GET_CODE (insn) == JUMP_INSN
+	  if (JUMP_P (insn)
 	      || ! last
 	      || recog_memoized (last) < 0
 	      || get_attr_slot (last) != SLOT_CORE
@@ -7151,7 +7177,7 @@ mep_rtx_cost (rtx x, int code, int outer_code ATTRIBUTE_UNUSED,
 
 static int
 mep_address_cost (rtx addr ATTRIBUTE_UNUSED,
-		  enum machine_mode mode ATTRIBUTE_UNUSED,
+		  machine_mode mode ATTRIBUTE_UNUSED,
 		  addr_space_t as ATTRIBUTE_UNUSED,
 		  bool ATTRIBUTE_UNUSED speed_p)
 {
@@ -7283,6 +7309,8 @@ mep_asm_init_sections (void)
 #define TARGET_TRAMPOLINE_INIT		mep_trampoline_init
 #undef  TARGET_LEGITIMATE_CONSTANT_P
 #define TARGET_LEGITIMATE_CONSTANT_P	mep_legitimate_constant_p
+#undef  TARGET_CAN_USE_DOLOOP_P
+#define TARGET_CAN_USE_DOLOOP_P		can_use_doloop_if_innermost
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

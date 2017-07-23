@@ -1,7 +1,7 @@
 ;; Predicate definitions for Lattice Mico32 architecture.
 ;; Contributed by Jon Beniston <jon@beniston.com>
 ;;
-;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2015 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -70,8 +70,3 @@
   (ior (match_code "symbol_ref")
        (match_operand 0 "register_operand")))
 
-(define_predicate "movsi_rhs_operand"
-  (ior (match_operand 0 "nonimmediate_operand")
-       (ior (match_code "const_int")
-            (ior (match_test "satisfies_constraint_S (op)")
-                 (match_test "satisfies_constraint_Y (op)")))))

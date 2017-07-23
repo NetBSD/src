@@ -1,5 +1,5 @@
 // RTTI support internals for -*- C++ -*-
-// Copyright (C) 1994-2013 Free Software Foundation, Inc.
+// Copyright (C) 1994-2015 Free Software Foundation, Inc.
 
 // This file is part of GCC.
 //
@@ -30,14 +30,6 @@
 #include <cxxabi.h>
 
 namespace __cxxabiv1 {
-
-inline bool __pbase_type_info::
-__pointer_catch (const __pbase_type_info *thrown_type,
-                 void **thr_obj,
-                 unsigned outer) const
-{
-  return __pointee->__do_catch (thrown_type->__pointee, thr_obj, outer + 2);
-}
 
 namespace {
 

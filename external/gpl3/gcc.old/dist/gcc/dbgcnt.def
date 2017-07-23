@@ -1,5 +1,5 @@
 /* This file contains the list of the debug counter for GCC.
-   Copyright (C) 2006-2013 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -150,6 +150,7 @@ DEBUG_COUNTER (dce)
 DEBUG_COUNTER (dce_fast)
 DEBUG_COUNTER (dce_ud)
 DEBUG_COUNTER (delete_trivial_dead)
+DEBUG_COUNTER (devirt)
 DEBUG_COUNTER (df_byte_scan)
 DEBUG_COUNTER (dse)
 DEBUG_COUNTER (dse1)
@@ -172,6 +173,8 @@ DEBUG_COUNTER (pre_insn)
 DEBUG_COUNTER (treepre_insert)
 DEBUG_COUNTER (tree_sra)
 DEBUG_COUNTER (eipa_sra)
+DEBUG_COUNTER (vect_loop)
+DEBUG_COUNTER (vect_slp)
 DEBUG_COUNTER (sched2_func)
 DEBUG_COUNTER (sched_block)
 DEBUG_COUNTER (sched_func)
@@ -186,3 +189,4 @@ DEBUG_COUNTER (store_motion)
 DEBUG_COUNTER (split_for_sched2)
 DEBUG_COUNTER (tail_call)
 DEBUG_COUNTER (ira_move)
+DEBUG_COUNTER (registered_jump_thread)

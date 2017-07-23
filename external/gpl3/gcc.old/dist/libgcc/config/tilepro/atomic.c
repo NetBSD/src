@@ -1,5 +1,5 @@
 /* TILE atomics.
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Walter Lee (walt@tilera.com)
 
    This file is free software; you can redistribute it and/or modify it
@@ -21,9 +21,11 @@
    see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    <http://www.gnu.org/licenses/>.  */
 
-#include "system.h"
+#include "tconfig.h"
 #include "coretypes.h"
 #include "atomic.h"
+
+#define bool unsigned char
 
 /* This code should be inlined by the compiler, but for now support
    it as out-of-line methods in libgcc.  */

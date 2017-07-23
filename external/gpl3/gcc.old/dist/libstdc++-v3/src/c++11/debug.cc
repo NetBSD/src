@@ -1,6 +1,6 @@
 // Debugging mode support code -*- C++ -*-
 
-// Copyright (C) 2003-2013 Free Software Foundation, Inc.
+// Copyright (C) 2003-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -23,8 +23,8 @@
 // <http://www.gnu.org/licenses/>.
 
 #include <debug/debug.h>
-#include <debug/safe_sequence.h>
-#include <debug/safe_unordered_container.h>
+#include <debug/safe_base.h>
+#include <debug/safe_unordered_base.h>
 #include <debug/safe_iterator.h>
 #include <debug/safe_local_iterator.h>
 #include <algorithm>
@@ -181,7 +181,8 @@ namespace __gnu_debug
     "attempt to access container with out-of-bounds bucket index %2;,"
     " container only holds %3; buckets",
     "load factor shall be positive",
-    "allocators must be equal"
+    "allocators must be equal",
+    "attempt to insert with an iterator range [%1.name;, %2.name;) from this container"
   };
 
   void
@@ -234,7 +235,7 @@ namespace __gnu_debug
 
   void
   _Safe_sequence_base::
-  _M_swap(_Safe_sequence_base& __x)
+  _M_swap(_Safe_sequence_base& __x) noexcept
   {
     // We need to lock both sequences to swap
     using namespace __gnu_cxx;
@@ -381,7 +382,7 @@ namespace __gnu_debug
 
   _Safe_unordered_container_base*
   _Safe_local_iterator_base::
-  _M_get_container() const _GLIBCXX_NOEXCEPT
+  _M_get_container() const noexcept
   { return static_cast<_Safe_unordered_container_base*>(_M_sequence); }
 
   void
@@ -454,7 +455,7 @@ namespace __gnu_debug
 
   void
   _Safe_unordered_container_base::
-  _M_swap(_Safe_unordered_container_base& __x)
+  _M_swap(_Safe_unordered_container_base& __x) noexcept
   {
     // We need to lock both containers to swap
     using namespace __gnu_cxx;
@@ -695,7 +696,7 @@ namespace __gnu_debug
 	      }
 	    
 	    __formatter->_M_format_word(__buf, __bufsize, "@ 0x%p\n", 
-					_M_variant._M_sequence._M_address);
+					_M_variant._M_iterator._M_sequence);
 	    __formatter->_M_print_word(__buf);
 	  }
 	__formatter->_M_print_word("}\n");
@@ -808,8 +809,11 @@ namespace __gnu_debug
     if (__length == 0)
       return;
     
-    if ((_M_column + __length < _M_max_length)
-	|| (__length >= _M_max_length && _M_column == 1)) 
+    size_t __visual_length
+      = __word[__length - 1] == '\n' ? __length - 1 : __length;
+    if (__visual_length == 0
+	|| (_M_column + __visual_length < _M_max_length)
+	|| (__visual_length >= _M_max_length && _M_column == 1)) 
       {
 	// If this isn't the first line, indent
 	if (_M_column == 1 && !_M_first_line)
@@ -823,17 +827,17 @@ namespace __gnu_debug
 	  }
 	
 	fprintf(stderr, "%s", __word);
-	_M_column += __length;
 	
 	if (__word[__length - 1] == '\n') 
 	  {
 	    _M_first_line = false;
 	    _M_column = 1;
 	  }
+	else
+	  _M_column += __length;
       }
     else
       {
-	_M_column = 1;
 	_M_print_word("\n");
 	_M_print_word(__word);
       }

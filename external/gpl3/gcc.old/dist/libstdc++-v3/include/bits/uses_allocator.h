@@ -1,6 +1,6 @@
 // Uses-allocator Construction -*- C++ -*-
 
-// Copyright (C) 2010-2013 Free Software Foundation, Inc.
+// Copyright (C) 2010-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -40,40 +40,36 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   constexpr allocator_arg_t allocator_arg = allocator_arg_t();
 
-_GLIBCXX_HAS_NESTED_TYPE(allocator_type)
-
-  template<typename _Tp, typename _Alloc,
-	   bool = __has_allocator_type<_Tp>::value>
+  template<typename _Tp, typename _Alloc, typename = __void_t<>>
     struct __uses_allocator_helper
-    : public false_type { };
+    : false_type { };
 
   template<typename _Tp, typename _Alloc>
-    struct __uses_allocator_helper<_Tp, _Alloc, true>
-    : public integral_constant<bool, is_convertible<_Alloc,
-				     typename _Tp::allocator_type>::value>
+    struct __uses_allocator_helper<_Tp, _Alloc,
+				   __void_t<typename _Tp::allocator_type>>
+    : is_convertible<_Alloc, typename _Tp::allocator_type>::type
     { };
 
   /// [allocator.uses.trait]
   template<typename _Tp, typename _Alloc>
     struct uses_allocator
-    : public integral_constant<bool,
-			       __uses_allocator_helper<_Tp, _Alloc>::value>
+    : __uses_allocator_helper<_Tp, _Alloc>::type
     { };
 
-  template<typename _Tp, typename _Alloc, typename... _Args>
-    struct __uses_allocator_arg
-    : is_constructible<_Tp, _Alloc, _Args...>
-    { static_assert( uses_allocator<_Tp, _Alloc>::value, "uses allocator" ); };
-
   struct __uses_alloc_base { };
+
   struct __uses_alloc0 : __uses_alloc_base
-  { struct _Anything { _Anything(...) { } } _M_a; };
+  {
+    struct _Sink { void operator=(const void*) { } } _M_a;
+  };
+
   template<typename _Alloc>
     struct __uses_alloc1 : __uses_alloc_base { const _Alloc* _M_a; };
+
   template<typename _Alloc>
     struct __uses_alloc2 : __uses_alloc_base { const _Alloc* _M_a; };
 
-  template<bool, typename _Alloc, typename... _Args>
+  template<bool, typename _Tp, typename _Alloc, typename... _Args>
     struct __uses_alloc;
 
   template<typename _Tp, typename _Alloc, typename... _Args>
@@ -89,15 +85,14 @@ _GLIBCXX_HAS_NESTED_TYPE(allocator_type)
     : __uses_alloc0 { };
 
   template<typename _Tp, typename _Alloc, typename... _Args>
-    struct __uses_alloc_impl
-    : __uses_alloc<uses_allocator<_Tp, _Alloc>::value, _Tp,  _Alloc, _Args...>
-    { };
+    using __uses_alloc_t =
+      __uses_alloc<uses_allocator<_Tp, _Alloc>::value, _Tp, _Alloc, _Args...>;
 
   template<typename _Tp, typename _Alloc, typename... _Args>
-    __uses_alloc_impl<_Tp, _Alloc, _Args...>
+    inline __uses_alloc_t<_Tp, _Alloc, _Args...>
     __use_alloc(const _Alloc& __a)
     {
-      __uses_alloc_impl<_Tp, _Alloc, _Args...> __ret;
+      __uses_alloc_t<_Tp, _Alloc, _Args...> __ret;
       __ret._M_a = &__a;
       return __ret;
     }

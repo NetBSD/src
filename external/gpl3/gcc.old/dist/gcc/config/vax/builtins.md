@@ -1,5 +1,5 @@
 ;; builtin definitions for DEC VAX.
-;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -47,7 +47,7 @@
 
 (define_insn "ctzsi2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=rQ")
-	(ctz:SI (match_operand:SI 1 "general_operand" "nrmT")))
+	(ctz:SI (match_operand:SI 1 "general_operand" "nrQT")))
    (set (cc0) (match_dup 0))]
   ""
   "ffs $0,$32,%1,%0")

@@ -1,5 +1,5 @@
 /* Multiply table generator for tile.
-   Copyright (C) 2011-2013 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
    Contributed by Walter Lee (walt@tilera.com)
 
    This file is part of GCC.
@@ -1230,7 +1230,7 @@ main ()
 #else
   printf ("/* Constant multiply table for TILE-Gx.\n");
 #endif
-  printf ("   Copyright (C) 2011-2013 Free Software Foundation, Inc.\n");
+  printf ("   Copyright (C) 2011-2015 Free Software Foundation, Inc.\n");
   printf ("   Contributed by Walter Lee (walt@tilera.com)\n");
   printf ("\n");
   printf ("   This file is part of GCC.\n");
@@ -1249,10 +1249,41 @@ main ()
   printf ("   along with GCC; see the file COPYING3.  If not see\n");
   printf ("   <http://www.gnu.org/licenses/>.  */\n");
   printf ("\n");
+  printf ("/* Note this file is auto-generated from gen-mul-tables.cc.\n");
+  printf ("   Make any required changes there.  */\n");
+  printf ("\n");
   printf ("#include \"config.h\"\n");
   printf ("#include \"system.h\"\n");
   printf ("#include \"coretypes.h\"\n");
+  printf ("#include \"symtab.h\"\n");
+  printf ("#include \"hashtab.h\"\n");
+  printf ("#include \"hash-set.h\"\n");
+  printf ("#include \"vec.h\"\n");
+  printf ("#include \"machmode.h\"\n");
+  printf ("#include \"tm.h\"\n");
+  printf ("#include \"hard-reg-set.h\"\n");
+  printf ("#include \"input.h\"\n");
+  printf ("#include \"function.h\"\n");
+  printf ("#include \"rtl.h\"\n");
+  printf ("#include \"flags.h\"\n");
+  printf ("#include \"statistics.h\"\n");
+  printf ("#include \"double-int.h\"\n");
+  printf ("#include \"real.h\"\n");
+  printf ("#include \"fixed-value.h\"\n");
+  printf ("#include \"alias.h\"\n");
+  printf ("#include \"wide-int.h\"\n");
+  printf ("#include \"inchash.h\"\n");
+  printf ("#include \"tree.h\"\n");
+  printf ("#include \"insn-config.h\"\n");
+  printf ("#include \"expmed.h\"\n");
+  printf ("#include \"dojump.h\"\n");
+  printf ("#include \"explow.h\"\n");
+  printf ("#include \"calls.h\"\n");
+  printf ("#include \"emit-rtl.h\"\n");
+  printf ("#include \"varasm.h\"\n");
+  printf ("#include \"stmt.h\"\n");
   printf ("#include \"expr.h\"\n");
+  printf ("#include \"insn-codes.h\"\n");
   printf ("#include \"optabs.h\"\n");
   printf ("#include \"%s-multiply.h\"\n\n", ARCH);
   create_insn_code_compression_table ();

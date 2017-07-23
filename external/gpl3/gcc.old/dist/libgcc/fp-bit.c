@@ -1,6 +1,6 @@
 /* This is a software floating point library which can be used
    for targets without hardware floating point. 
-   Copyright (C) 1994-2013 Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -202,22 +202,21 @@ pack_d (const fp_number_type *src)
   int sign = src->sign;
   int exp = 0;
 
-  if (LARGEST_EXPONENT_IS_NORMAL (FRAC_NBITS) && (isnan (src) || isinf (src)))
-    {
-      /* We can't represent these values accurately.  By using the
-	 largest possible magnitude, we guarantee that the conversion
-	 of infinity is at least as big as any finite number.  */
-      exp = EXPMAX;
-      fraction = ((fractype) 1 << FRACBITS) - 1;
-    }
-  else if (isnan (src))
+  if (isnan (src))
     {
       exp = EXPMAX;
+      /* Restore the NaN's payload.  */
+      fraction >>= NGARDS;
+      fraction &= QUIET_NAN - 1;
       if (src->class == CLASS_QNAN || 1)
 	{
 #ifdef QUIET_NAN_NEGATED
-	  fraction |= QUIET_NAN - 1;
+	  /* The quiet/signaling bit remains unset.  */
+	  /* Make sure the fraction has a non-zero value.  */
+	  if (fraction == 0)
+	    fraction |= QUIET_NAN - 1;
 #else
+	  /* Set the quiet/signaling bit.  */
 	  fraction |= QUIET_NAN;
 #endif
 	}
@@ -284,8 +283,7 @@ pack_d (const fp_number_type *src)
 	  fraction >>= NGARDS;
 #endif /* NO_DENORMALS */
 	}
-      else if (!LARGEST_EXPONENT_IS_NORMAL (FRAC_NBITS)
-	       && __builtin_expect (src->normal_exp > EXPBIAS, 0))
+      else if (__builtin_expect (src->normal_exp > EXPBIAS, 0))
 	{
 	  exp = EXPMAX;
 	  fraction = 0;
@@ -293,35 +291,25 @@ pack_d (const fp_number_type *src)
       else
 	{
 	  exp = src->normal_exp + EXPBIAS;
-	  if (!ROUND_TOWARDS_ZERO)
+	  /* IF the gard bits are the all zero, but the first, then we're
+	     half way between two numbers, choose the one which makes the
+	     lsb of the answer 0.  */
+	  if ((fraction & GARDMASK) == GARDMSB)
 	    {
-	      /* IF the gard bits are the all zero, but the first, then we're
-		 half way between two numbers, choose the one which makes the
-		 lsb of the answer 0.  */
-	      if ((fraction & GARDMASK) == GARDMSB)
-		{
-		  if (fraction & (1 << NGARDS))
-		    fraction += GARDROUND + 1;
-		}
-	      else
-		{
-		  /* Add a one to the guards to round up */
-		  fraction += GARDROUND;
-		}
-	      if (fraction >= IMPLICIT_2)
-		{
-		  fraction >>= 1;
-		  exp += 1;
-		}
+	      if (fraction & (1 << NGARDS))
+		fraction += GARDROUND + 1;
+	    }
+	  else
+	    {
+	      /* Add a one to the guards to round up */
+	      fraction += GARDROUND;
+	    }
+	  if (fraction >= IMPLICIT_2)
+	    {
+	      fraction >>= 1;
+	      exp += 1;
 	    }
 	  fraction >>= NGARDS;
-
-	  if (LARGEST_EXPONENT_IS_NORMAL (FRAC_NBITS) && exp > EXPMAX)
-	    {
-	      /* Saturate on overflow.  */
-	      exp = EXPMAX;
-	      fraction = ((fractype) 1 << FRACBITS) - 1;
-	    }
 	}
     }
 
@@ -549,8 +537,7 @@ unpack_d (FLO_union_type * src, fp_number_type * dst)
 	  dst->fraction.ll = fraction;
 	}
     }
-  else if (!LARGEST_EXPONENT_IS_NORMAL (FRAC_NBITS)
-	   && __builtin_expect (exp == EXPMAX, 0))
+  else if (__builtin_expect (exp == EXPMAX, 0))
     {
       /* Huge exponent*/
       if (fraction == 0)
@@ -573,8 +560,10 @@ unpack_d (FLO_union_type * src, fp_number_type * dst)
 	    {
 	      dst->class = CLASS_SNAN;
 	    }
-	  /* Keep the fraction part as the nan number */
-	  dst->fraction.ll = fraction;
+	  /* Now that we know which kind of NaN we got, discard the
+	     quiet/signaling bit, but do preserve the NaN payload.  */
+	  fraction &= ~QUIET_NAN;
+	  dst->fraction.ll = fraction << NGARDS;
 	}
     }
   else
@@ -906,7 +895,7 @@ _fpmul_parts ( fp_number_type *  a,
       low <<= 1;
     }
 
-  if (!ROUND_TOWARDS_ZERO && (high & GARDMASK) == GARDMSB)
+  if ((high & GARDMASK) == GARDMSB)
     {
       if (high & (1 << NGARDS))
 	{
@@ -1026,7 +1015,7 @@ _fpdiv_parts (fp_number_type * a,
 	numerator *= 2;
       }
 
-    if (!ROUND_TOWARDS_ZERO && (quotient & GARDMASK) == GARDMSB)
+    if ((quotient & GARDMASK) == GARDMSB)
       {
 	if (quotient & (1 << NGARDS))
 	  {

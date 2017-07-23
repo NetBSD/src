@@ -1,5 +1,5 @@
 /* Declarations for C++ name lookup routines.
-   Copyright (C) 2003-2013 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
    Contributed by Gabriel Dos Reis <gdr@integrable-solutions.net>
 
 This file is part of GCC.
@@ -89,6 +89,7 @@ typedef struct GTY(()) cxx_saved_binding {
 extern tree identifier_type_value (tree);
 extern void set_identifier_type_value (tree, tree);
 extern void pop_binding (tree, tree);
+extern void pop_bindings_and_leave_scope (void);
 extern tree constructor_name (tree);
 extern bool constructor_name_p (tree, tree);
 
@@ -254,7 +255,14 @@ struct GTY(()) cp_binding_level {
   unsigned more_cleanups_ok : 1;
   unsigned have_cleanups : 1;
 
-  /* 24 bits left to fill a 32-bit word.  */
+  /* Transient state set if this scope is of sk_class kind
+     and is in the process of defining 'this_entity'.  Reset
+     on leaving the class definition to allow for the scope
+     to be subsequently re-used as a non-defining scope for
+     'this_entity'.  */
+  unsigned defining_class_p : 1;
+
+  /* 23 bits left to fill a 32-bit word.  */
 };
 
 /* The binding level currently in effect.  */
@@ -337,7 +345,7 @@ extern void do_toplevel_using_decl (tree, tree, tree);
 extern void do_local_using_decl (tree, tree, tree);
 extern tree do_class_using_decl (tree, tree);
 extern void do_using_directive (tree);
-extern tree lookup_arg_dependent (tree, tree, vec<tree, va_gc> *, bool);
+extern tree lookup_arg_dependent (tree, tree, vec<tree, va_gc> *);
 extern bool is_associated_namespace (tree, tree);
 extern void parse_using_directive (tree, tree);
 extern tree innermost_non_namespace_value (tree);
@@ -347,7 +355,7 @@ extern void cp_emit_debug_info_for_using (tree, tree);
 /* Set *DECL to the (non-hidden) declaration for ID at global scope,
    if present and return true; otherwise return false.  */
 
-static inline bool
+inline bool
 get_global_value_if_present (tree id, tree *decl)
 {
   tree global_value = namespace_binding (id, global_namespace);
@@ -358,7 +366,7 @@ get_global_value_if_present (tree id, tree *decl)
 
 /* True is the binding of IDENTIFIER at global scope names a type.  */
 
-static inline bool
+inline bool
 is_typename_at_global_scope (tree id)
 {
   tree global_value = namespace_binding (id, global_namespace);

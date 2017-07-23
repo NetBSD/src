@@ -1,5 +1,5 @@
 /* Subroutines used for macro/preprocessor support on the ia-32.
-   Copyright (C) 2008-2013 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,6 +21,16 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "options.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
 #include "tm_p.h"
 #include "flags.h"
@@ -117,6 +127,10 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
       def_or_undef (parse_in, "__bdver3");
       def_or_undef (parse_in, "__bdver3__");
       break;
+    case PROCESSOR_BDVER4:
+      def_or_undef (parse_in, "__bdver4");
+      def_or_undef (parse_in, "__bdver4__");
+      break;
     case PROCESSOR_BTVER1:
       def_or_undef (parse_in, "__btver1");
       def_or_undef (parse_in, "__btver1__");
@@ -137,23 +151,45 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
       def_or_undef (parse_in, "__core2");
       def_or_undef (parse_in, "__core2__");
       break;
-    case PROCESSOR_COREI7:
+    case PROCESSOR_NEHALEM:
       def_or_undef (parse_in, "__corei7");
       def_or_undef (parse_in, "__corei7__");
+      def_or_undef (parse_in, "__nehalem");
+      def_or_undef (parse_in, "__nehalem__");
+      break;
+    case PROCESSOR_SANDYBRIDGE:
+      def_or_undef (parse_in, "__corei7_avx");
+      def_or_undef (parse_in, "__corei7_avx__");
+      def_or_undef (parse_in, "__sandybridge");
+      def_or_undef (parse_in, "__sandybridge__");
       break;
     case PROCESSOR_HASWELL:
       def_or_undef (parse_in, "__core_avx2");
       def_or_undef (parse_in, "__core_avx2__");
+      def_or_undef (parse_in, "__haswell");
+      def_or_undef (parse_in, "__haswell__");
       break;
-    case PROCESSOR_ATOM:
+    case PROCESSOR_BONNELL:
       def_or_undef (parse_in, "__atom");
       def_or_undef (parse_in, "__atom__");
+      def_or_undef (parse_in, "__bonnell");
+      def_or_undef (parse_in, "__bonnell__");
+      break;
+    case PROCESSOR_SILVERMONT:
+      def_or_undef (parse_in, "__slm");
+      def_or_undef (parse_in, "__slm__");
+      def_or_undef (parse_in, "__silvermont");
+      def_or_undef (parse_in, "__silvermont__");
+      break;
+    case PROCESSOR_KNL:
+      def_or_undef (parse_in, "__knl");
+      def_or_undef (parse_in, "__knl__");
       break;
     /* use PROCESSOR_max to not set/unset the arch macro.  */
     case PROCESSOR_max:
       break;
-    case PROCESSOR_GENERIC32:
-    case PROCESSOR_GENERIC64:
+    case PROCESSOR_INTEL:
+    case PROCESSOR_GENERIC:
       gcc_unreachable ();
     }
 
@@ -217,6 +253,9 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
     case PROCESSOR_BDVER3:
       def_or_undef (parse_in, "__tune_bdver3__");
       break;
+    case PROCESSOR_BDVER4:
+      def_or_undef (parse_in, "__tune_bdver4__");
+      break;
     case PROCESSOR_BTVER1:
       def_or_undef (parse_in, "__tune_btver1__");
       break;
@@ -232,17 +271,31 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
     case PROCESSOR_CORE2:
       def_or_undef (parse_in, "__tune_core2__");
       break;
-    case PROCESSOR_COREI7:
+    case PROCESSOR_NEHALEM:
       def_or_undef (parse_in, "__tune_corei7__");
+      def_or_undef (parse_in, "__tune_nehalem__");
+      break;
+    case PROCESSOR_SANDYBRIDGE:
+      def_or_undef (parse_in, "__tune_corei7_avx__");
+      def_or_undef (parse_in, "__tune_sandybridge__");
       break;
     case PROCESSOR_HASWELL:
       def_or_undef (parse_in, "__tune_core_avx2__");
+      def_or_undef (parse_in, "__tune_haswell__");
       break;
-    case PROCESSOR_ATOM:
+    case PROCESSOR_BONNELL:
       def_or_undef (parse_in, "__tune_atom__");
+      def_or_undef (parse_in, "__tune_bonnell__");
       break;
-    case PROCESSOR_GENERIC32:
-    case PROCESSOR_GENERIC64:
+    case PROCESSOR_SILVERMONT:
+      def_or_undef (parse_in, "__tune_slm__");
+      def_or_undef (parse_in, "__tune_silvermont__");
+      break;
+    case PROCESSOR_KNL:
+      def_or_undef (parse_in, "__tune_knl__");
+      break;
+    case PROCESSOR_INTEL:
+    case PROCESSOR_GENERIC:
       break;
     /* use PROCESSOR_max to not set/unset the tune macro.  */
     case PROCESSOR_max:
@@ -293,12 +346,32 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
     def_or_undef (parse_in, "__SSE4_2__");
   if (isa_flag & OPTION_MASK_ISA_AES)
     def_or_undef (parse_in, "__AES__");
+  if (isa_flag & OPTION_MASK_ISA_SHA)
+    def_or_undef (parse_in, "__SHA__");
   if (isa_flag & OPTION_MASK_ISA_PCLMUL)
     def_or_undef (parse_in, "__PCLMUL__");
   if (isa_flag & OPTION_MASK_ISA_AVX)
     def_or_undef (parse_in, "__AVX__");
   if (isa_flag & OPTION_MASK_ISA_AVX2)
     def_or_undef (parse_in, "__AVX2__");
+  if (isa_flag & OPTION_MASK_ISA_AVX512F)
+    def_or_undef (parse_in, "__AVX512F__");
+  if (isa_flag & OPTION_MASK_ISA_AVX512ER)
+    def_or_undef (parse_in, "__AVX512ER__");
+  if (isa_flag & OPTION_MASK_ISA_AVX512CD)
+    def_or_undef (parse_in, "__AVX512CD__");
+  if (isa_flag & OPTION_MASK_ISA_AVX512PF)
+    def_or_undef (parse_in, "__AVX512PF__");
+  if (isa_flag & OPTION_MASK_ISA_AVX512DQ)
+    def_or_undef (parse_in, "__AVX512DQ__");
+  if (isa_flag & OPTION_MASK_ISA_AVX512BW)
+    def_or_undef (parse_in, "__AVX512BW__");
+  if (isa_flag & OPTION_MASK_ISA_AVX512VL)
+    def_or_undef (parse_in, "__AVX512VL__");
+  if (isa_flag & OPTION_MASK_ISA_AVX512VBMI)
+    def_or_undef (parse_in, "__AVX512VBMI__");
+  if (isa_flag & OPTION_MASK_ISA_AVX512IFMA)
+    def_or_undef (parse_in, "__AVX512IFMA__");
   if (isa_flag & OPTION_MASK_ISA_FMA)
     def_or_undef (parse_in, "__FMA__");
   if (isa_flag & OPTION_MASK_ISA_RTM)
@@ -341,10 +414,26 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
     def_or_undef (parse_in, "__XSAVE__");
   if (isa_flag & OPTION_MASK_ISA_XSAVEOPT)
     def_or_undef (parse_in, "__XSAVEOPT__");
+  if (isa_flag & OPTION_MASK_ISA_PREFETCHWT1)
+    def_or_undef (parse_in, "__PREFETCHWT1__");
   if ((fpmath & FPMATH_SSE) && (isa_flag & OPTION_MASK_ISA_SSE))
     def_or_undef (parse_in, "__SSE_MATH__");
   if ((fpmath & FPMATH_SSE) && (isa_flag & OPTION_MASK_ISA_SSE2))
     def_or_undef (parse_in, "__SSE2_MATH__");
+  if (isa_flag & OPTION_MASK_ISA_CLFLUSHOPT)
+    def_or_undef (parse_in, "__CLFLUSHOPT__");
+  if (isa_flag & OPTION_MASK_ISA_XSAVEC)
+    def_or_undef (parse_in, "__XSAVEC__");
+  if (isa_flag & OPTION_MASK_ISA_XSAVES)
+    def_or_undef (parse_in, "__XSAVES__");
+  if (isa_flag & OPTION_MASK_ISA_MPX)
+    def_or_undef (parse_in, "__MPX__");
+  if (isa_flag & OPTION_MASK_ISA_PCOMMIT)
+    def_or_undef (parse_in, "__PCOMMIT__");
+  if (isa_flag & OPTION_MASK_ISA_CLWB)
+    def_or_undef (parse_in, "__CLWB__");
+  if (isa_flag & OPTION_MASK_ISA_MWAITX)
+    def_or_undef (parse_in, "__MWAITX__");
 }
 
 
@@ -355,7 +444,7 @@ ix86_target_macros_internal (HOST_WIDE_INT isa_flag,
 static bool
 ix86_pragma_target_parse (tree args, tree pop_target)
 {
-  tree prev_tree = build_target_option_node ();
+  tree prev_tree = build_target_option_node (&global_options);
   tree cur_tree;
   struct cl_target_option *prev_opt;
   struct cl_target_option *cur_opt;
@@ -369,20 +458,24 @@ ix86_pragma_target_parse (tree args, tree pop_target)
 
   if (! args)
     {
-      cur_tree = ((pop_target)
-		  ? pop_target
-		  : target_option_default_node);
+      cur_tree = (pop_target ? pop_target : target_option_default_node);
       cl_target_option_restore (&global_options,
 				TREE_TARGET_OPTION (cur_tree));
     }
   else
     {
-      cur_tree = ix86_valid_target_attribute_tree (args);
-      if (!cur_tree)
-	return false;
+      cur_tree = ix86_valid_target_attribute_tree (args, &global_options,
+						   &global_options_set);
+      if (!cur_tree || cur_tree == error_mark_node)
+       {
+         cl_target_option_restore (&global_options,
+                                   TREE_TARGET_OPTION (prev_tree));
+         return false;
+       }
     }
 
   target_option_current_node = cur_tree;
+  ix86_reset_previous_fndecl ();
 
   /* Figure out the previous/current isa, arch, tune and the differences.  */
   prev_opt  = TREE_TARGET_OPTION (prev_tree);
@@ -410,12 +503,21 @@ ix86_pragma_target_parse (tree args, tree pop_target)
 			       (enum fpmath_unit) prev_opt->x_ix86_fpmath,
 			       cpp_undef);
 
+  /* For the definitions, ensure all newly defined macros are considered
+     as used for -Wunused-macros.  There is no point warning about the
+     compiler predefined macros.  */
+  cpp_options *cpp_opts = cpp_get_options (parse_in);
+  unsigned char saved_warn_unused_macros = cpp_opts->warn_unused_macros;
+  cpp_opts->warn_unused_macros = 0;
+
   /* Define all of the macros for new options that were just turned on.  */
   ix86_target_macros_internal (cur_isa & diff_isa,
 			       cur_arch,
 			       cur_tune,
 			       (enum fpmath_unit) cur_opt->x_ix86_fpmath,
 			       cpp_define);
+
+  cpp_opts->warn_unused_macros = saved_warn_unused_macros;
 
   return true;
 }
@@ -448,8 +550,21 @@ ix86_target_macros (void)
       builtin_define_std ("i386");
     }
 
+  if (!TARGET_80387)
+    cpp_define (parse_in, "_SOFT_FLOAT");
+
   if (TARGET_LONG_DOUBLE_64)
     cpp_define (parse_in, "__LONG_DOUBLE_64__");
+
+  if (TARGET_LONG_DOUBLE_128)
+    cpp_define (parse_in, "__LONG_DOUBLE_128__");
+
+  if (TARGET_128BIT_LONG_DOUBLE)
+    cpp_define (parse_in, "__SIZEOF_FLOAT80__=16");
+  else
+    cpp_define (parse_in, "__SIZEOF_FLOAT80__=12");
+
+  cpp_define (parse_in, "__SIZEOF_FLOAT128__=16");
 
   cpp_define_formatted (parse_in, "__ATOMIC_HLE_ACQUIRE=%d", IX86_HLE_ACQUIRE);
   cpp_define_formatted (parse_in, "__ATOMIC_HLE_RELEASE=%d", IX86_HLE_RELEASE);

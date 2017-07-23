@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler. NEC V850 series
-   Copyright (C) 1996-2013 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    Contributed by Jeff Law (law@cygnus.com).
 
    This file is part of GCC.
@@ -14,8 +14,13 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with GCC; see the file COPYING3.  If not see
+   Under Section 7 of GPL version 3, you are granted additional
+   permissions described in the GCC Runtime Library Exception, version
+   3.1, as published by the Free Software Foundation.
+
+   You should have received a copy of the GNU General Public License and
+   a copy of the GCC Runtime Library Exception along with this program;
+   see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    <http://www.gnu.org/licenses/>.  */
 
 #ifndef GCC_V850_H
@@ -106,6 +111,8 @@ extern GTY(()) rtx v850_compare_op1;
 #define ASM_SPEC "%{m850es:-mv850e1}%{!mv850es:%{mv*:-mv%*}} \
 %{mrelax:-mrelax} \
 %{m8byte-align:-m8byte-align} \
+%{msoft-float:-msoft-float} \
+%{mhard-float:-mhard-float} \
 %{mgcc-abi:-mgcc-abi}"
 
 #define LINK_SPEC "%{mgcc-abi:-m v850}"
@@ -911,7 +918,7 @@ typedef enum
    For the *normal* section kinds (like .data, .text, etc.) we do not
    want to explicitly force the name of these sections, but would rather
    let the linker (or at least the back end) choose the name of the 
-   section, UNLESS the user has force a specific name for these section
+   section, UNLESS the user has forced a specific name for these section
    kinds.  To accomplish this set the name in ghs_default_section_names
    to null.  */
 
@@ -947,16 +954,12 @@ typedef struct data_area_stack_element
 extern data_area_stack_element * data_area_stack;
 
 /* Names of the various data areas used on the v850.  */
-extern tree GHS_default_section_names [(int) COUNT_OF_GHS_SECTION_KINDS];
-extern tree GHS_current_section_names [(int) COUNT_OF_GHS_SECTION_KINDS];
+extern const char * GHS_default_section_names [(int) COUNT_OF_GHS_SECTION_KINDS];
+extern const char * GHS_current_section_names [(int) COUNT_OF_GHS_SECTION_KINDS];
 
 /* The assembler op to start the file.  */
 
 #define FILE_ASM_OP "\t.file\n"
-
-/* Enable the register move pass to improve code.  */
-#define ENABLE_REGMOVE_PASS
-
 
 /* Implement ZDA, TDA, and SDA */
 

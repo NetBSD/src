@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for MIPS NetBSD systems.
-   Copyright (C) 1993-2013 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -30,64 +30,60 @@ along with GCC; see the file COPYING3.  If not see
 	builtin_define ("__LONG64");			\
 							\
       if (TARGET_ABICALLS)				\
-	builtin_define ("__ABICALLS__");		\
+	builtin_define ("__mips_abicalls");		\
 							\
-    /* The GNU C++ standard library requires this.  */		\
-    if (c_dialect_cxx ())					\
-      builtin_define ("_GNU_SOURCE");				\
-    								\
-    if (mips_abi == ABI_N32)					\
-      {								\
+    if (mips_abi == ABI_N32)				\
+      {							\
 	builtin_define ("__mips_n32");			\
-        builtin_define ("_ABIN32=2");				\
-        builtin_define ("_MIPS_SIM=_ABIN32");			\
-        builtin_define ("_MIPS_SZLONG=32");			\
-        builtin_define ("_MIPS_SZPTR=32");			\
-      }								\
+        builtin_define ("_ABIN32=2");			\
+        builtin_define ("_MIPS_SIM=_ABIN32");		\
+        builtin_define ("_MIPS_SZLONG=32");		\
+        builtin_define ("_MIPS_SZPTR=32");		\
+      }							\
       else if (mips_abi == ABI_64)			\
-      {								\
+      {							\
 	builtin_define ("__mips_n64");			\
-        builtin_define ("_ABI64=3");				\
-        builtin_define ("_MIPS_SIM=_ABI64");			\
-        builtin_define ("_MIPS_SZLONG=64");			\
-        builtin_define ("_MIPS_SZPTR=64");			\
-      }								\
+        builtin_define ("_ABI64=3");			\
+        builtin_define ("_MIPS_SIM=_ABI64");		\
+        builtin_define ("_MIPS_SZLONG=64");		\
+        builtin_define ("_MIPS_SZPTR=64");		\
+      }							\
       else if (mips_abi == ABI_O64)			\
-      {								\
+      {							\
 	builtin_define ("__mips_o64");			\
-        builtin_define ("_ABIO64=4");				\
-        builtin_define ("_MIPS_SIM=_ABIO64");			\
-        builtin_define ("_MIPS_SZLONG=64");			\
-        builtin_define ("_MIPS_SZPTR=64");			\
+        builtin_define ("_ABIO64=4");			\
+        builtin_define ("_MIPS_SIM=_ABIO64");		\
+        builtin_define ("_MIPS_SZLONG=64");		\
+        builtin_define ("_MIPS_SZPTR=64");		\
     }							\
-    else if (mips_abi == ABI_EABI)				\
-      {								\
-	builtin_define ("__mips_eabi");				\
-        builtin_define ("_ABIEMB=5");				\
-        builtin_define ("_MIPS_SIM=_ABIEMB");			\
-	if (TARGET_LONG64)					\
-          builtin_define ("_MIPS_SZLONG=64");			\
-	else							\
-          builtin_define ("_MIPS_SZLONG=32");			\
-	if (TARGET_64BIT)					\
-          builtin_define ("_MIPS_SZPTR=64");			\
-	else							\
-          builtin_define ("_MIPS_SZPTR=32");			\
-      }								\
-    else							\
-      {								\
-	builtin_define ("__mips_o32");				\
-	builtin_define ("_ABIO32=1");				\
-	builtin_define ("_MIPS_SIM=_ABIO32");			\
-        builtin_define ("_MIPS_SZLONG=32");			\
-        builtin_define ("_MIPS_SZPTR=32");			\
-      }								\
-    if (TARGET_FLOAT64)						\
-      builtin_define ("_MIPS_FPSET=32");			\
-    else							\
-      builtin_define ("_MIPS_FPSET=16");			\
-    								\
-    builtin_define ("_MIPS_SZINT=32");				\
+    else if (mips_abi == ABI_EABI)			\
+      {							\
+	builtin_define ("__mips_eabi");			\
+        builtin_define ("_ABIEMB=5");			\
+        builtin_define ("_MIPS_SIM=_ABIEMB");		\
+	if (TARGET_LONG64)				\
+          builtin_define ("_MIPS_SZLONG=64");		\
+	else						\
+          builtin_define ("_MIPS_SZLONG=32");		\
+	if (TARGET_64BIT)				\
+          builtin_define ("_MIPS_SZPTR=64");		\
+	else						\
+          builtin_define ("_MIPS_SZPTR=32");		\
+      }							\
+    else						\
+      {							\
+	builtin_define ("__mips_o32");			\
+	builtin_define ("_ABIO32=1");			\
+	builtin_define ("_MIPS_SIM=_ABIO32");		\
+        builtin_define ("_MIPS_SZLONG=32");		\
+        builtin_define ("_MIPS_SZPTR=32");		\
+      }							\
+    if (TARGET_FLOAT64)					\
+      builtin_define ("_MIPS_FPSET=32");		\
+    else						\
+      builtin_define ("_MIPS_FPSET=16");		\
+    							\
+    builtin_define ("_MIPS_SZINT=32");			\
   } while (0)
 
 /* The generic MIPS TARGET_CPU_CPP_BUILTINS are incorrect for NetBSD.
@@ -129,26 +125,13 @@ along with GCC; see the file COPYING3.  If not see
 	builtin_define ("__mips=3");				\
       else if (ISA_MIPS4)					\
 	builtin_define ("__mips=4");				\
-      else if (ISA_MIPS32)					\
-	{							\
-	  builtin_define ("__mips=32");				\
-	  builtin_define ("__mips_isa_rev=1");			\
-	}							\
-      else if (ISA_MIPS32R2)					\
-	{							\
-	  builtin_define ("__mips=32");				\
-	  builtin_define ("__mips_isa_rev=2");			\
-	}							\
-      else if (ISA_MIPS64)					\
-	{							\
-	  builtin_define ("__mips=64");				\
-	  builtin_define ("__mips_isa_rev=1");			\
-	}							\
-      else if (ISA_MIPS64R2)					\
-	{							\
-	  builtin_define ("__mips=64");				\
-	  builtin_define ("__mips_isa_rev=2");			\
-	}							\
+      else if (mips_isa >= 32 && mips_isa < 64)			\
+	builtin_define ("__mips=32");				\
+      else if (mips_isa >= 64)					\
+	builtin_define ("__mips=64");				\
+      if (mips_isa_rev > 0)					\
+        builtin_define_with_int_value ("__mips_isa_rev",	\
+                                       mips_isa_rev);		\
 								\
       if (TARGET_HARD_FLOAT)					\
 	builtin_define ("__mips_hard_float");			\
@@ -175,13 +158,6 @@ along with GCC; see the file COPYING3.  If not see
   while (0)
 
 
-/* Extra specs we need.  */
-#undef SUBTARGET_EXTRA_SPECS
-#define SUBTARGET_EXTRA_SPECS						\
-  { "netbsd_cpp_spec",		NETBSD_CPP_SPEC },			\
-  { "netbsd_link_spec",		NETBSD_LINK_SPEC_ELF },			\
-  { "netbsd_entry_point",	NETBSD_ENTRY_POINT },
-
 /* Provide a SUBTARGET_CPP_SPEC appropriate for NetBSD.  */
 
 #undef SUBTARGET_CPP_SPEC
@@ -196,8 +172,8 @@ along with GCC; see the file COPYING3.  If not see
   "%{EL:-m elf32ltsmip} \
    %{EB:-m elf32btsmip} \
    %(endian_spec) \
-   %{G*} %{mips1} %{mips2} %{mips3} %{mips4} \
-   %{mips32} %{mips32r2} %{mips64} %{mips64r2} \
+   %{G*} %{mips1} %{mips2} %{mips3} %{mips4} %{mips32} %{mips32r2} \
+   %{mips32r6} %{mips64} %{mips64r2} %{mips64r6} \
    %{bestGnum} %{call_shared} %{no_archive} %{exact_version} \
    %(netbsd_link_spec)"
 
@@ -252,4 +228,4 @@ along with GCC; see the file COPYING3.  If not see
 #define WINT_TYPE "int"
 
 #undef TARGET_WRITABLE_EH_FRAME
-#define TARGET_WRITABLE_EH_FRAME (flag_pic && TARGET_SHARED)
+#define TARGET_WRITABLE_EH_FRAME 0

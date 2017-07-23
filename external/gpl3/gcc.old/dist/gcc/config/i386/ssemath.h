@@ -1,4 +1,4 @@
-/* Copyright (C) 2010-2013 Free Software Foundation, Inc.
+/* Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -18,6 +18,10 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef TARGET_FPMATH_DEFAULT
 #define TARGET_FPMATH_DEFAULT (TARGET_SSE2 ? FPMATH_SSE : FPMATH_387)
+
+#undef TARGET_FPMATH_DEFAULT_P
+#define TARGET_FPMATH_DEFAULT_P(x) \
+  (TARGET_SSE2_P(x) ? FPMATH_SSE : FPMATH_387)
 
 #undef TARGET_SUBTARGET32_ISA_DEFAULT
 #define TARGET_SUBTARGET32_ISA_DEFAULT \

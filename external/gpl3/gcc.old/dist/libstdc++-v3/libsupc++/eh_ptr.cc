@@ -1,5 +1,5 @@
 // -*- C++ -*- Implement the members of exception_ptr.
-// Copyright (C) 2008-2013 Free Software Foundation, Inc.
+// Copyright (C) 2008-2015 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -34,6 +34,34 @@
 #include "unwind-cxx.h"
 
 using namespace __cxxabiv1;
+
+// Verify assumptions about member layout in exception types
+namespace
+{
+template<typename Ex>
+  constexpr std::size_t unwindhdr()
+  { return offsetof(Ex, unwindHeader); }
+
+template<typename Ex>
+  constexpr std::size_t termHandler()
+  { return unwindhdr<Ex>() - offsetof(Ex, terminateHandler); }
+
+static_assert( termHandler<__cxa_exception>()
+	       == termHandler<__cxa_dependent_exception>(),
+	       "__cxa_dependent_exception::termHandler layout must be"
+	       " consistent with __cxa_exception::termHandler" );
+
+#ifndef __ARM_EABI_UNWINDER__
+template<typename Ex>
+  constexpr std::ptrdiff_t adjptr()
+  { return unwindhdr<Ex>() - offsetof(Ex, adjustedPtr); }
+
+static_assert( adjptr<__cxa_exception>()
+	       == adjptr<__cxa_dependent_exception>(),
+	       "__cxa_dependent_exception::adjustedPtr layout must be"
+	       " consistent with __cxa_exception::adjustedPtr" );
+#endif
+}
 
 std::__exception_ptr::exception_ptr::exception_ptr() _GLIBCXX_USE_NOEXCEPT
 : _M_exception_object(0) { }
@@ -212,10 +240,13 @@ std::rethrow_exception(std::exception_ptr ep)
   dep->primaryException = obj;
   __atomic_add_fetch (&eh->referenceCount, 1,  __ATOMIC_ACQ_REL);
 
-  dep->unexpectedHandler = __unexpected_handler;
-  dep->terminateHandler = __terminate_handler;
+  dep->unexpectedHandler = get_unexpected ();
+  dep->terminateHandler = get_terminate ();
   __GXX_INIT_DEPENDENT_EXCEPTION_CLASS(dep->unwindHeader.exception_class);
   dep->unwindHeader.exception_cleanup = __gxx_dependent_exception_cleanup;
+
+  __cxa_eh_globals *globals = __cxa_get_globals ();
+  globals->uncaughtExceptions += 1;
 
 #ifdef _GLIBCXX_SJLJ_EXCEPTIONS
   _Unwind_SjLj_RaiseException (&dep->unwindHeader);

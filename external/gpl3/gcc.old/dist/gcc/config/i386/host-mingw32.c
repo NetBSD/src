@@ -1,5 +1,5 @@
 /* mingw32 host-specific hook definitions.
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -83,7 +83,7 @@ mingw32_gt_pch_alloc_granularity (void)
    open file descriptor if the host would like to probe with mmap.  */
 
 static void *
-mingw32_gt_pch_get_address (size_t size, int fd  ATTRIBUTE_UNUSED)
+mingw32_gt_pch_get_address (size_t size, int)
 {
   void* res;
   size = (size + va_granularity - 1) & ~(va_granularity - 1);

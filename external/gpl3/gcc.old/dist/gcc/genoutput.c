@@ -1,5 +1,5 @@
 /* Generate code from to output assembler insns as recognized from rtl.
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -98,6 +98,8 @@ along with GCC; see the file COPYING3.  If not see
 
 #define MAX_MAX_OPERANDS 40
 
+static char general_mem[] = { TARGET_MEM_CONSTRAINT, 0 };
+
 static int n_occurrences		(int, const char *);
 static const char *strip_whitespace	(const char *);
 
@@ -124,7 +126,7 @@ struct operand_data
   int index;
   const char *predicate;
   const char *constraint;
-  enum machine_mode mode;
+  machine_mode mode;
   unsigned char n_alternatives;
   char address_p;
   char strict_low;
@@ -197,8 +199,6 @@ static void gen_peephole (rtx, int);
 static void gen_expand (rtx, int);
 static void gen_split (rtx, int);
 
-#ifdef USE_MD_CONSTRAINTS
-
 struct constraint_data
 {
   struct constraint_data *next_this_letter;
@@ -207,24 +207,15 @@ struct constraint_data
   const char name[1];
 };
 
-/* This is a complete list (unlike the one in genpreds.c) of constraint
-   letters and modifiers with machine-independent meaning.  The only
-   omission is digits, as these are handled specially.  */
-static const char indep_constraints[] = ",=+%*?!#&<>EFVXgimnoprs";
+/* All machine-independent constraint characters (except digits) that
+   are handled outside the define*_constraint mechanism.  */
+static const char indep_constraints[] = ",=+%*?!^$#&g";
 
 static struct constraint_data *
 constraints_by_letter_table[1 << CHAR_BIT];
 
 static int mdep_constraint_len (const char *, int, int);
 static void note_constraint (rtx, int);
-
-#else  /* !USE_MD_CONSTRAINTS */
-
-static void check_constraint_len (void);
-static int constraint_len (const char *, int);
-
-#endif /* !USE_MD_CONSTRAINTS */
-
 
 static void
 output_prologue (void)
@@ -238,14 +229,36 @@ output_prologue (void)
   printf ("#include \"tm.h\"\n");
   printf ("#include \"flags.h\"\n");
   printf ("#include \"ggc.h\"\n");
+  printf ("#include \"hash-set.h\"\n");
+  printf ("#include \"machmode.h\"\n");
+  printf ("#include \"vec.h\"\n");
+  printf ("#include \"double-int.h\"\n");
+  printf ("#include \"input.h\"\n");
+  printf ("#include \"alias.h\"\n");
+  printf ("#include \"symtab.h\"\n");
+  printf ("#include \"wide-int.h\"\n");
+  printf ("#include \"inchash.h\"\n");
+  printf ("#include \"tree.h\"\n");
+  printf ("#include \"varasm.h\"\n");
+  printf ("#include \"stor-layout.h\"\n");
+  printf ("#include \"calls.h\"\n");
   printf ("#include \"rtl.h\"\n");
+  printf ("#include \"hashtab.h\"\n");
+  printf ("#include \"hard-reg-set.h\"\n");
+  printf ("#include \"function.h\"\n");
+  printf ("#include \"statistics.h\"\n");
+  printf ("#include \"real.h\"\n");
+  printf ("#include \"fixed-value.h\"\n");
+  printf ("#include \"insn-config.h\"\n");
+  printf ("#include \"expmed.h\"\n");
+  printf ("#include \"dojump.h\"\n");
+  printf ("#include \"explow.h\"\n");
+  printf ("#include \"emit-rtl.h\"\n");
+  printf ("#include \"stmt.h\"\n");
   printf ("#include \"expr.h\"\n");
   printf ("#include \"insn-codes.h\"\n");
   printf ("#include \"tm_p.h\"\n");
-  printf ("#include \"function.h\"\n");
   printf ("#include \"regs.h\"\n");
-  printf ("#include \"hard-reg-set.h\"\n");
-  printf ("#include \"insn-config.h\"\n\n");
   printf ("#include \"conditions.h\"\n");
   printf ("#include \"insn-attr.h\"\n\n");
   printf ("#include \"recog.h\"\n\n");
@@ -253,6 +266,7 @@ output_prologue (void)
   printf ("#include \"output.h\"\n");
   printf ("#include \"target.h\"\n");
   printf ("#include \"tm-constrs.h\"\n");
+  printf ("#include \"predict.h\"\n");
 }
 
 static void
@@ -286,9 +300,9 @@ output_operand_data (void)
 	pred = lookup_predicate (d->predicate);
       printf ("    %d\n", pred && pred->codes[MEM]);
 
-      printf("  },\n");
+      printf ("  },\n");
     }
-  printf("};\n\n\n");
+  printf ("};\n\n\n");
 }
 
 static void
@@ -415,7 +429,7 @@ output_insn_data (void)
       printf ("    %d,\n", d->n_alternatives);
       printf ("    %d\n", d->output_format);
 
-      printf("  },\n");
+      printf ("  },\n");
     }
   printf ("};\n\n\n");
 }
@@ -648,7 +662,7 @@ process_template (struct data *d, const char *template_code)
       d->output_format = INSN_OUTPUT_FORMAT_FUNCTION;
 
       puts ("\nstatic const char *");
-      printf ("output_%d (rtx *operands ATTRIBUTE_UNUSED, rtx insn ATTRIBUTE_UNUSED)\n",
+      printf ("output_%d (rtx *operands ATTRIBUTE_UNUSED, rtx_insn *insn ATTRIBUTE_UNUSED)\n",
 	      d->code_number);
       puts ("{");
       print_md_ptr_loc (template_code);
@@ -677,7 +691,7 @@ process_template (struct data *d, const char *template_code)
 	  d->output_format = INSN_OUTPUT_FORMAT_FUNCTION;
 	  puts ("\nstatic const char *");
 	  printf ("output_%d (rtx *operands ATTRIBUTE_UNUSED, "
-		  "rtx insn ATTRIBUTE_UNUSED)\n", d->code_number);
+		  "rtx_insn *insn ATTRIBUTE_UNUSED)\n", d->code_number);
 	  puts ("{");
 	  puts ("  switch (which_alternative)\n    {");
 	}
@@ -774,10 +788,27 @@ validate_insn_alternatives (struct data *d)
 	char c;
 	int which_alternative = 0;
 	int alternative_count_unsure = 0;
+	bool seen_write = false;
 
 	for (p = d->operand[start].constraint; (c = *p); p += len)
 	  {
-#ifdef USE_MD_CONSTRAINTS
+	    if ((c == '%' || c == '=' || c == '+')
+		&& p != d->operand[start].constraint)
+	      error_with_line (d->lineno,
+			       "character '%c' can only be used at the"
+			       " beginning of a constraint string", c);
+
+	    if (c == '=' || c == '+')
+	      seen_write = true;
+
+	    /* Earlyclobber operands must always be marked write-only
+	       or read/write.  */
+	    if (!seen_write && c == '&')
+	      error_with_line (d->lineno,
+			       "earlyclobber operands may not be"
+			       " read-only in alternative %d",
+			       which_alternative);
+
 	    if (ISSPACE (c) || strchr (indep_constraints, c))
 	      len = 1;
 	    else if (ISDIGIT (c))
@@ -790,18 +821,6 @@ validate_insn_alternatives (struct data *d)
 	      }
 	    else
 	      len = mdep_constraint_len (p, d->lineno, start);
-#else
-	    len = CONSTRAINT_LEN (c, p);
-
-	    if (len < 1 || (len > 1 && strchr (",#*+=&%!0123456789", c)))
-	      {
-		error_with_line (d->lineno,
-				 "invalid length %d for char '%c' in"
-				 " alternative %d of operand %d",
-				 len, c, which_alternative, start);
-		len = 1;
-	      }
-#endif
 
 	    if (c == ',')
 	      {
@@ -905,9 +924,6 @@ gen_insn (rtx insn, int lineno)
   d->n_operands = stats.num_insn_operands;
   d->n_dups = stats.num_dups;
 
-#ifndef USE_MD_CONSTRAINTS
-  check_constraint_len ();
-#endif
   validate_insn_operands (d);
   validate_insn_alternatives (d);
   validate_optab_operands (d);
@@ -1097,14 +1113,12 @@ main (int argc, char **argv)
 	  gen_split (desc, line_no);
 	  break;
 
-#ifdef USE_MD_CONSTRAINTS
 	case DEFINE_CONSTRAINT:
 	case DEFINE_REGISTER_CONSTRAINT:
 	case DEFINE_ADDRESS_CONSTRAINT:
 	case DEFINE_MEMORY_CONSTRAINT:
 	  note_constraint (desc, line_no);
 	  break;
-#endif
 
 	default:
 	  break;
@@ -1112,7 +1126,7 @@ main (int argc, char **argv)
       next_index_number++;
     }
 
-  printf("\n\n");
+  printf ("\n\n");
   output_operand_data ();
   output_insn_data ();
   output_get_insn_name ();
@@ -1160,8 +1174,6 @@ strip_whitespace (const char *s)
   return q;
 }
 
-#ifdef USE_MD_CONSTRAINTS
-
 /* Record just enough information about a constraint to allow checking
    of operand constraint strings above, in validate_insn_alternatives.
    Does not validate most properties of the constraint itself; does
@@ -1172,13 +1184,13 @@ static void
 note_constraint (rtx exp, int lineno)
 {
   const char *name = XSTR (exp, 0);
-  unsigned int namelen = strlen (name);
   struct constraint_data **iter, **slot, *new_cdata;
 
-  /* The 'm' constraint is special here since that constraint letter
-     can be overridden by the back end by defining the
-     TARGET_MEM_CONSTRAINT macro.  */
-  if (strchr (indep_constraints, name[0]) && name[0] != 'm')
+  if (strcmp (name, "TARGET_MEM_CONSTRAINT") == 0)
+    name = general_mem;
+  unsigned int namelen = strlen (name);
+
+  if (strchr (indep_constraints, name[0]))
     {
       if (name[1] == '\0')
 	error_with_line (lineno, "constraint letter '%s' cannot be "
@@ -1223,7 +1235,7 @@ note_constraint (rtx exp, int lineno)
 	}
     }
   new_cdata = XNEWVAR (struct constraint_data, sizeof (struct constraint_data) + namelen);
-  strcpy (CONST_CAST(char *, new_cdata->name), name);
+  strcpy (CONST_CAST (char *, new_cdata->name), name);
   new_cdata->namelen = namelen;
   new_cdata->lineno = lineno;
   new_cdata->next_this_letter = *slot;
@@ -1252,39 +1264,3 @@ mdep_constraint_len (const char *s, int lineno, int opno)
   message_with_line (lineno, "note:  in operand %d", opno);
   return 1; /* safe */
 }
-
-#else
-/* Verify that DEFAULT_CONSTRAINT_LEN is used properly and not
-   tampered with.  This isn't bullet-proof, but it should catch
-   most genuine mistakes.  */
-static void
-check_constraint_len (void)
-{
-  const char *p;
-  int d;
-
-  for (p = ",#*+=&%!1234567890"; *p; p++)
-    for (d = -9; d < 9; d++)
-      gcc_assert (constraint_len (p, d) == d);
-}
-
-static int
-constraint_len (const char *p, int genoutput_default_constraint_len)
-{
-  /* Check that we still match defaults.h .  First we do a generation-time
-     check that fails if the value is not the expected one...  */
-  gcc_assert (DEFAULT_CONSTRAINT_LEN (*p, p) == 1);
-  /* And now a compile-time check that should give a diagnostic if the
-     definition doesn't exactly match.  */
-#define DEFAULT_CONSTRAINT_LEN(C,STR) 1
-  /* Now re-define DEFAULT_CONSTRAINT_LEN so that we can verify it is
-     being used.  */
-#undef DEFAULT_CONSTRAINT_LEN
-#define DEFAULT_CONSTRAINT_LEN(C,STR) \
-  ((C) != *p || STR != p ? -1 : genoutput_default_constraint_len)
-  return CONSTRAINT_LEN (*p, p);
-  /* And set it back.  */
-#undef DEFAULT_CONSTRAINT_LEN
-#define DEFAULT_CONSTRAINT_LEN(C,STR) 1
-}
-#endif

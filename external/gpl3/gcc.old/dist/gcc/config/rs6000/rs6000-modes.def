@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for IBM RS/6000.
-   Copyright (C) 2002-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
    This file is part of GCC.
@@ -46,4 +46,4 @@ VECTOR_MODES (FLOAT, 32);     /*       V16HF V8SF V4DF */
 /* Replacement for TImode that only is allowed in GPRs.  We also use PTImode
    for quad memory atomic operations to force getting an even/odd register
    combination.  */
-PARTIAL_INT_MODE (TI);
+PARTIAL_INT_MODE (TI, 128, PTI);

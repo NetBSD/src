@@ -1,5 +1,5 @@
 ;; Predicate definitions for ATMEL AVR micro controllers.
-;; Copyright (C) 2006-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2015 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -43,22 +43,26 @@
        (match_test "REGNO (op) == REG_SP")))
 
 ;; Return true if OP is a valid address for lower half of I/O space.
-(define_predicate "low_io_address_operand"
-  (and (match_code "const_int")
-       (match_test "IN_RANGE (INTVAL (op) - avr_current_arch->sfr_offset,
-                              0, 0x1f)")))
+(define_special_predicate "low_io_address_operand"
+  (ior (and (match_code "const_int")
+	    (match_test "IN_RANGE (INTVAL (op) - avr_arch->sfr_offset,
+				   0, 0x20 - GET_MODE_SIZE (mode))"))
+       (and (match_code "symbol_ref")
+	    (match_test "SYMBOL_REF_FLAGS (op) & SYMBOL_FLAG_IO_LOW"))))
 
 ;; Return true if OP is a valid address for high half of I/O space.
 (define_predicate "high_io_address_operand"
   (and (match_code "const_int")
-       (match_test "IN_RANGE (INTVAL (op) - avr_current_arch->sfr_offset,
+       (match_test "IN_RANGE (INTVAL (op) - avr_arch->sfr_offset,
                               0x20, 0x3F)")))
 
 ;; Return true if OP is a valid address of I/O space.
-(define_predicate "io_address_operand"
-  (and (match_code "const_int")
-       (match_test "IN_RANGE (INTVAL (op) - avr_current_arch->sfr_offset,
-                              0, 0x40 - GET_MODE_SIZE (mode))")))
+(define_special_predicate "io_address_operand"
+  (ior (and (match_code "const_int")
+	    (match_test "IN_RANGE (INTVAL (op) - avr_arch->sfr_offset,
+				   0, 0x40 - GET_MODE_SIZE (mode))"))
+       (and (match_code "symbol_ref")
+	    (match_test "SYMBOL_REF_FLAGS (op) & SYMBOL_FLAG_IO"))))
 
 ;; Return 1 if OP is a general operand not in flash memory
 (define_predicate "nop_general_operand"

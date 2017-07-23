@@ -1,6 +1,6 @@
 ; Options for the ARM port of the compiler.
 
-; Copyright (C) 2005-2013 Free Software Foundation, Inc.
+; Copyright (C) 2005-2015 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -77,7 +77,7 @@ mapcs-stack-check
 Target Report Mask(APCS_STACK) Undocumented
 
 march=
-Target RejectNegative Joined Enum(arm_arch) Var(arm_arch_option)
+Target RejectNegative ToLower Joined Enum(arm_arch) Var(arm_arch_option)
 Specify the name of the target architecture
 
 ; Other arm_arch values are loaded from arm-tables.opt
@@ -102,7 +102,7 @@ Target Report Mask(CALLER_INTERWORKING)
 Thumb: Assume function pointers may go to non-Thumb aware code
 
 mcpu=
-Target RejectNegative Joined Enum(processor_type) Var(arm_cpu_option) Init(arm_none)
+Target RejectNegative ToLower Joined Enum(processor_type) Var(arm_cpu_option) Init(arm_none)
 Specify the name of the target CPU
 
 mfloat-abi=
@@ -153,6 +153,10 @@ Assume target CPU is configured as little endian
 mlong-calls
 Target Report Mask(LONG_CALLS)
 Generate call insns as indirect calls, if necessary
+
+mpic-data-is-text-relative
+Target Report Var(arm_pic_data_is_text_relative) Init(TARGET_DEFAULT_PIC_DATA_IS_TEXT_RELATIVE)
+Assume data segments are relative to text segment.
 
 mpic-register=
 Target RejectNegative Joined Var(arm_pic_register_string)
@@ -215,17 +219,19 @@ Target Report Mask(TPCS_LEAF_FRAME)
 Thumb: Generate (leaf) stack frames even if not needed
 
 mtune=
-Target RejectNegative Joined Enum(processor_type) Var(arm_tune_option) Init(arm_none)
+Target RejectNegative ToLower Joined Enum(processor_type) Var(arm_tune_option) Init(arm_none)
 Tune code for the given processor
+
+mprint-tune-info
+Target Report RejectNegative Var(print_tune_info) Init(0)
+Print CPU tuning information as comment in assembler file.  This is
+an option used only for regression testing of the compiler and not
+intended for ordinary use in compiling code.
 
 ; Other processor_type values are loaded from arm-tables.opt
 ; but that is a generated file and this is an odd-one-out.
 EnumValue
 Enum(processor_type) String(native) Value(-1) DriverOnly
-
-mwords-little-endian
-Target Report RejectNegative Mask(LITTLE_WORDS)
-Assume big endian bytes, little endian words.  This option is deprecated.
 
 mvectorize-with-neon-quad
 Target Report RejectNegative InverseMask(NEON_VECTORIZE_DOUBLE)
@@ -239,6 +245,18 @@ mword-relocations
 Target Report Var(target_word_relocations) Init(TARGET_DEFAULT_WORD_RELOCATIONS)
 Only generate absolute relocations on word sized values.
 
+mrestrict-it
+Target Report Var(arm_restrict_it) Init(2)
+Generate IT blocks appropriate for ARMv8.
+
+mold-rtx-costs
+Target Report Mask(OLD_RTX_COSTS)
+Use the old RTX costing tables (transitional).
+
+mnew-generic-costs
+Target Report Mask(NEW_GENERIC_COSTS)
+Use the new generic RTX cost tables if new core-specific cost table not available (transitional).
+
 mfix-cortex-m3-ldrd
 Target Report Var(fix_cm3_ldrd) Init(2)
 Avoid overlapping destination and address registers on LDRD instructions
@@ -247,3 +265,15 @@ that may trigger Cortex-M3 errata.
 munaligned-access
 Target Report Var(unaligned_access) Init(2)
 Enable unaligned word and halfword accesses to packed data.
+
+mneon-for-64bits
+Target Report RejectNegative Var(use_neon_for_64bits) Init(0)
+Use Neon to perform 64-bits operations rather than core registers.
+
+mslow-flash-data
+Target Report Var(target_slow_flash_data) Init(0)
+Assume loading data from flash is slower than fetching instructions.
+
+masm-syntax-unified
+Target Report Var(inline_asm_unified) Init(0)
+Assume unified syntax for Thumb inline assembly code.

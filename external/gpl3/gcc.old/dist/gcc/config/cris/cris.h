@@ -1,5 +1,5 @@
 /* Definitions for GCC.  Part of the machine description for CRIS.
-   Copyright (C) 1998-2013 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
    Contributed by Axis Communications.  Written by Hans-Peter Nilsson.
 
 This file is part of GCC.
@@ -79,14 +79,6 @@ along with GCC; see the file COPYING3.  If not see
 
 /* Which CPU version this is.  The parsed and adjusted cris_cpu_str.  */
 extern int cris_cpu_version;
-
-/* Changing the order used to be necessary to put the fourth __make_dp
-   argument (a DImode parameter) in registers, to fit with the libfunc
-   parameter passing scheme used for intrinsic functions.  FIXME: Check
-   performance.  */
-#ifdef IN_LIBGCC2
-#define __make_dp(a,b,c,d) __cris_make_dp(d,a,b,c)
-#endif
 
 
 /* Node: Driver */
@@ -794,6 +786,12 @@ struct cum_args {int regs;};
     }									\
   while (0)
 
+/* The mode argument to cris_legitimate_constant_p isn't used, so just
+   pass a cheap dummy.  N.B. we have to cast away const from the
+   parameter rather than adjust the parameter, as it's type is mandated
+   by the TARGET_LEGITIMATE_CONSTANT_P target hook interface.  */
+#define CRIS_CONSTANT_P(X) \
+  (CONSTANT_P (X) && cris_legitimate_constant_p (VOIDmode, CONST_CAST_RTX (X)))
 
 /* Node: Condition Code */
 
@@ -833,13 +831,14 @@ struct cum_args {int regs;};
 
 /* Helper type.  */
 
-enum cris_pic_symbol_type
+enum cris_symbol_type
   {
     cris_no_symbol = 0,
     cris_got_symbol = 1,
     cris_rel_symbol = 2,
     cris_got_symbol_needing_fixup = 3,
-    cris_invalid_pic_symbol = 4
+    cris_unspec = 7,
+    cris_offsettable_symbol = 8
   };
 
 #define PIC_OFFSET_TABLE_REGNUM (flag_pic ? CRIS_GOT_REGNUM : INVALID_REGNUM)
@@ -852,7 +851,7 @@ enum cris_pic_symbol_type
 /* We don't want an .ident for gcc.  To avoid that but still support
    #ident, we override TARGET_ASM_OUTPUT_IDENT and, since the gcc .ident
    is its only use besides front-end .ident directives, we return if
-   the state if the cgraph is not CGRAPH_STATE_PARSING.  */
+   the state if the cgraph is not PARSING.  */
 #undef TARGET_ASM_OUTPUT_IDENT
 #define TARGET_ASM_OUTPUT_IDENT cris_asm_output_ident
 

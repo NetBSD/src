@@ -1,5 +1,5 @@
 /* Combine stack adjustments.
-   Copyright (C) 1987-2013 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -49,13 +49,39 @@ along with GCC; see the file COPYING3.  If not see
 #include "regs.h"
 #include "hard-reg-set.h"
 #include "flags.h"
+#include "hashtab.h"
+#include "hash-set.h"
+#include "vec.h"
+#include "machmode.h"
+#include "input.h"
 #include "function.h"
+#include "symtab.h"
+#include "statistics.h"
+#include "double-int.h"
+#include "real.h"
+#include "fixed-value.h"
+#include "alias.h"
+#include "wide-int.h"
+#include "inchash.h"
+#include "tree.h"
+#include "expmed.h"
+#include "dojump.h"
+#include "explow.h"
+#include "calls.h"
+#include "emit-rtl.h"
+#include "varasm.h"
+#include "stmt.h"
 #include "expr.h"
+#include "predict.h"
+#include "dominance.h"
+#include "cfg.h"
+#include "cfgrtl.h"
 #include "basic-block.h"
 #include "df.h"
 #include "except.h"
 #include "reload.h"
 #include "tree-pass.h"
+#include "rtl-iter.h"
 
 
 /* Turn STACK_GROWS_DOWNWARD into a boolean.  */
@@ -73,19 +99,19 @@ along with GCC; see the file COPYING3.  If not see
 struct csa_reflist
 {
   HOST_WIDE_INT sp_offset;
-  rtx insn, *ref;
+  rtx_insn *insn;
+  rtx *ref;
   struct csa_reflist *next;
 };
 
 static int stack_memref_p (rtx);
-static rtx single_set_for_csa (rtx);
+static rtx single_set_for_csa (rtx_insn *);
 static void free_csa_reflist (struct csa_reflist *);
-static struct csa_reflist *record_one_stack_ref (rtx, rtx *,
+static struct csa_reflist *record_one_stack_ref (rtx_insn *, rtx *,
 						 struct csa_reflist *);
-static int try_apply_stack_adjustment (rtx, struct csa_reflist *,
+static int try_apply_stack_adjustment (rtx_insn *, struct csa_reflist *,
 				       HOST_WIDE_INT, HOST_WIDE_INT);
 static void combine_stack_adjustments_for_block (basic_block);
-static int record_stack_refs (rtx *, void *);
 
 
 /* Main entry point for stack adjustment combination.  */
@@ -95,7 +121,7 @@ combine_stack_adjustments (void)
 {
   basic_block bb;
 
-  FOR_EACH_BB (bb)
+  FOR_EACH_BB_FN (bb, cfun)
     combine_stack_adjustments_for_block (bb);
 }
 
@@ -122,7 +148,7 @@ stack_memref_p (rtx x)
    tying fp and sp adjustments.  */
 
 static rtx
-single_set_for_csa (rtx insn)
+single_set_for_csa (rtx_insn *insn)
 {
   int i;
   rtx tmp = single_set (insn);
@@ -171,7 +197,7 @@ free_csa_reflist (struct csa_reflist *reflist)
    predicate stack_memref_p or a REG representing the stack pointer.  */
 
 static struct csa_reflist *
-record_one_stack_ref (rtx insn, rtx *ref, struct csa_reflist *next_reflist)
+record_one_stack_ref (rtx_insn *insn, rtx *ref, struct csa_reflist *next_reflist)
 {
   struct csa_reflist *ml;
 
@@ -189,12 +215,50 @@ record_one_stack_ref (rtx insn, rtx *ref, struct csa_reflist *next_reflist)
   return ml;
 }
 
+/* We only know how to adjust the CFA; no other frame-related changes
+   may appear in any insn to be deleted.  */
+
+static bool
+no_unhandled_cfa (rtx_insn *insn)
+{
+  if (!RTX_FRAME_RELATED_P (insn))
+    return true;
+
+  /* No CFA notes at all is a legacy interpretation like
+     FRAME_RELATED_EXPR, and is context sensitive within
+     the prologue state machine.  We can't handle that here.  */
+  bool has_cfa_adjust = false;
+
+  for (rtx link = REG_NOTES (insn); link; link = XEXP (link, 1))
+    switch (REG_NOTE_KIND (link))
+      {
+      default:
+        break;
+      case REG_CFA_ADJUST_CFA:
+	has_cfa_adjust = true;
+	break;
+
+      case REG_FRAME_RELATED_EXPR:
+      case REG_CFA_DEF_CFA:
+      case REG_CFA_OFFSET:
+      case REG_CFA_REGISTER:
+      case REG_CFA_EXPRESSION:
+      case REG_CFA_RESTORE:
+      case REG_CFA_SET_VDRAP:
+      case REG_CFA_WINDOW_SAVE:
+      case REG_CFA_FLUSH_QUEUE:
+	return false;
+      }
+
+  return has_cfa_adjust;
+}
+
 /* Attempt to apply ADJUST to the stack adjusting insn INSN, as well
    as each of the memories and stack references in REFLIST.  Return true
    on success.  */
 
 static int
-try_apply_stack_adjustment (rtx insn, struct csa_reflist *reflist,
+try_apply_stack_adjustment (rtx_insn *insn, struct csa_reflist *reflist,
 			    HOST_WIDE_INT new_adjust, HOST_WIDE_INT delta)
 {
   struct csa_reflist *ml;
@@ -236,68 +300,70 @@ try_apply_stack_adjustment (rtx insn, struct csa_reflist *reflist,
     return 0;
 }
 
-/* Called via for_each_rtx and used to record all stack memory and other
-   references in the insn and discard all other stack pointer references.  */
-struct record_stack_refs_data
-{
-  rtx insn;
-  struct csa_reflist *reflist;
-};
+/* For non-debug insns, record all stack memory references in INSN
+   and return true if there were no other (unrecorded) references to the
+   stack pointer.  For debug insns, record all stack references regardless
+   of context and unconditionally return true.  */
 
-static int
-record_stack_refs (rtx *xp, void *data)
+static bool
+record_stack_refs (rtx_insn *insn, struct csa_reflist **reflist)
 {
-  rtx x = *xp;
-  struct record_stack_refs_data *d =
-    (struct record_stack_refs_data *) data;
-  if (!x)
-    return 0;
-  switch (GET_CODE (x))
+  subrtx_ptr_iterator::array_type array;
+  FOR_EACH_SUBRTX_PTR (iter, array, &PATTERN (insn), NONCONST)
     {
-    case MEM:
-      if (!reg_mentioned_p (stack_pointer_rtx, x))
-	return -1;
-      /* We are not able to handle correctly all possible memrefs containing
-         stack pointer, so this check is necessary.  */
-      if (stack_memref_p (x))
+      rtx *loc = *iter;
+      rtx x = *loc;
+      switch (GET_CODE (x))
 	{
-	  d->reflist = record_one_stack_ref (d->insn, xp, d->reflist);
-	  return -1;
-	}
-      /* Try harder for DEBUG_INSNs, handle e.g. (mem (mem (sp + 16) + 4).  */
-      return !DEBUG_INSN_P (d->insn);
-    case REG:
-      /* ??? We want be able to handle non-memory stack pointer
-	 references later.  For now just discard all insns referring to
-	 stack pointer outside mem expressions.  We would probably
-	 want to teach validate_replace to simplify expressions first.
+	case MEM:
+	  if (!reg_mentioned_p (stack_pointer_rtx, x))
+	    iter.skip_subrtxes ();
+	  /* We are not able to handle correctly all possible memrefs
+	     containing stack pointer, so this check is necessary.  */
+	  else if (stack_memref_p (x))
+	    {
+	      *reflist = record_one_stack_ref (insn, loc, *reflist);
+	      iter.skip_subrtxes ();
+	    }
+	  /* Try harder for DEBUG_INSNs, handle e.g.
+	     (mem (mem (sp + 16) + 4).  */
+	  else if (!DEBUG_INSN_P (insn))
+	    return false;
+	  break;
 
-	 We can't just compare with STACK_POINTER_RTX because the
-	 reference to the stack pointer might be in some other mode.
-	 In particular, an explicit clobber in an asm statement will
-	 result in a QImode clobber.
+	case REG:
+	  /* ??? We want be able to handle non-memory stack pointer
+	     references later.  For now just discard all insns referring to
+	     stack pointer outside mem expressions.  We would probably
+	     want to teach validate_replace to simplify expressions first.
 
-	 In DEBUG_INSNs, we want to replace all occurrences, otherwise
-	 they will cause -fcompare-debug failures.  */
-      if (REGNO (x) == STACK_POINTER_REGNUM)
-	{
-	  if (!DEBUG_INSN_P (d->insn))
-	    return 1;
-	  d->reflist = record_one_stack_ref (d->insn, xp, d->reflist);
-	  return -1;
+	     We can't just compare with STACK_POINTER_RTX because the
+	     reference to the stack pointer might be in some other mode.
+	     In particular, an explicit clobber in an asm statement will
+	     result in a QImode clobber.
+
+	     In DEBUG_INSNs, we want to replace all occurrences, otherwise
+	     they will cause -fcompare-debug failures.  */
+	  if (REGNO (x) == STACK_POINTER_REGNUM)
+	    {
+	      if (!DEBUG_INSN_P (insn))
+		return false;
+	      *reflist = record_one_stack_ref (insn, loc, *reflist);
+	    }
+	  break;
+
+	default:
+	  break;
 	}
-      break;
-    default:
-      break;
     }
-  return 0;
+  return true;
 }
 
 /* If INSN has a REG_ARGS_SIZE note, move it to LAST.
    AFTER is true iff LAST follows INSN in the instruction stream.  */
 
 static void
-maybe_move_args_size_note (rtx last, rtx insn, bool after)
+maybe_move_args_size_note (rtx_insn *last, rtx_insn *insn, bool after)
 {
   rtx note, last_note;
 
@@ -317,37 +383,76 @@ maybe_move_args_size_note (rtx last, rtx insn, bool after)
     add_reg_note (last, REG_ARGS_SIZE, XEXP (note, 0));
 }
 
+/* Merge any REG_CFA_ADJUST_CFA note from SRC into DST.
+   AFTER is true iff DST follows SRC in the instruction stream.  */
+
+static void
+maybe_merge_cfa_adjust (rtx_insn *dst, rtx_insn *src, bool after)
+{
+  rtx snote = NULL, dnote = NULL;
+  rtx sexp, dexp;
+  rtx exp1, exp2;
+
+  if (RTX_FRAME_RELATED_P (src))
+    snote = find_reg_note (src, REG_CFA_ADJUST_CFA, NULL_RTX);
+  if (snote == NULL)
+    return;
+  sexp = XEXP (snote, 0);
+
+  if (RTX_FRAME_RELATED_P (dst))
+    dnote = find_reg_note (dst, REG_CFA_ADJUST_CFA, NULL_RTX);
+  if (dnote == NULL)
+    {
+      add_reg_note (dst, REG_CFA_ADJUST_CFA, sexp);
+      return;
+    }
+  dexp = XEXP (dnote, 0);
+
+  gcc_assert (GET_CODE (sexp) == SET);
+  gcc_assert (GET_CODE (dexp) == SET);
+
+  if (after)
+    exp1 = dexp, exp2 = sexp;
+  else
+    exp1 = sexp, exp2 = dexp;
+
+  SET_SRC (exp1) = simplify_replace_rtx (SET_SRC (exp1), SET_DEST (exp2),
+					 SET_SRC (exp2));
+  XEXP (dnote, 0) = exp1;
+}
+
 /* Return the next (or previous) active insn within BB.  */
 
-static rtx
-prev_active_insn_bb (basic_block bb, rtx insn)
+static rtx_insn *
+prev_active_insn_bb (basic_block bb, rtx_insn *insn)
 {
   for (insn = PREV_INSN (insn);
        insn != PREV_INSN (BB_HEAD (bb));
        insn = PREV_INSN (insn))
     if (active_insn_p (insn))
       return insn;
-  return NULL_RTX;
+  return NULL;
 }
 
-static rtx
-next_active_insn_bb (basic_block bb, rtx insn)
+static rtx_insn *
+next_active_insn_bb (basic_block bb, rtx_insn *insn)
 {
   for (insn = NEXT_INSN (insn);
        insn != NEXT_INSN (BB_END (bb));
        insn = NEXT_INSN (insn))
     if (active_insn_p (insn))
       return insn;
-  return NULL_RTX;
+  return NULL;
 }
 
 /* If INSN has a REG_ARGS_SIZE note, if possible move it to PREV.  Otherwise
    search for a nearby candidate within BB where we can stick the note.  */
 
 static void
-force_move_args_size_note (basic_block bb, rtx prev, rtx insn)
+force_move_args_size_note (basic_block bb, rtx_insn *prev, rtx_insn *insn)
 {
-  rtx note, test, next_candidate, prev_candidate;
+  rtx note;
+  rtx_insn *test, *next_candidate, *prev_candidate;
 
   /* If PREV exists, tail-call to the logic in the other function.  */
   if (prev)
@@ -425,11 +530,11 @@ static void
 combine_stack_adjustments_for_block (basic_block bb)
 {
   HOST_WIDE_INT last_sp_adjust = 0;
-  rtx last_sp_set = NULL_RTX;
-  rtx last2_sp_set = NULL_RTX;
+  rtx_insn *last_sp_set = NULL;
+  rtx_insn *last2_sp_set = NULL;
   struct csa_reflist *reflist = NULL;
-  rtx insn, next, set;
-  struct record_stack_refs_data data;
+  rtx_insn *insn, *next;
+  rtx set;
   bool end_of_block = false;
 
   for (insn = BB_HEAD (bb); !end_of_block ; insn = next)
@@ -487,12 +592,15 @@ combine_stack_adjustments_for_block (basic_block bb)
 	      /* Combine an allocation into the first instruction.  */
 	      if (STACK_GROWS_DOWNWARD ? this_adjust <= 0 : this_adjust >= 0)
 		{
-		  if (try_apply_stack_adjustment (last_sp_set, reflist,
-						  last_sp_adjust + this_adjust,
-						  this_adjust))
+		  if (no_unhandled_cfa (insn)
+		      && try_apply_stack_adjustment (last_sp_set, reflist,
+						     last_sp_adjust
+						     + this_adjust,
+						     this_adjust))
 		    {
 		      /* It worked!  */
 		      maybe_move_args_size_note (last_sp_set, insn, false);
+		      maybe_merge_cfa_adjust (last_sp_set, insn, false);
 		      delete_insn (insn);
 		      last_sp_adjust += this_adjust;
 		      continue;
@@ -504,12 +612,15 @@ combine_stack_adjustments_for_block (basic_block bb)
 	      else if (STACK_GROWS_DOWNWARD
 		       ? last_sp_adjust >= 0 : last_sp_adjust <= 0)
 		{
-		  if (try_apply_stack_adjustment (insn, reflist,
-						  last_sp_adjust + this_adjust,
-						  -last_sp_adjust))
+		  if (no_unhandled_cfa (last_sp_set)
+		      && try_apply_stack_adjustment (insn, reflist,
+						     last_sp_adjust
+						     + this_adjust,
+						     -last_sp_adjust))
 		    {
 		      /* It worked!  */
 		      maybe_move_args_size_note (insn, last_sp_set, true);
+		      maybe_merge_cfa_adjust (insn, last_sp_set, true);
 		      delete_insn (last_sp_set);
 		      last_sp_set = insn;
 		      last_sp_adjust += this_adjust;
@@ -524,9 +635,10 @@ combine_stack_adjustments_for_block (basic_block bb)
 		 delete the old deallocation insn.  */
 	      if (last_sp_set)
 		{
-		  if (last_sp_adjust == 0)
+		  if (last_sp_adjust == 0 && no_unhandled_cfa (last_sp_set))
 		    {
 		      maybe_move_args_size_note (insn, last_sp_set, true);
+		      maybe_merge_cfa_adjust (insn, last_sp_set, true);
 		      delete_insn (last_sp_set);
 		    }
 		  else
@@ -574,21 +686,15 @@ combine_stack_adjustments_for_block (basic_block bb)
 	      delete_insn (last_sp_set);
 	      free_csa_reflist (reflist);
 	      reflist = NULL;
-	      last_sp_set = NULL_RTX;
+	      last_sp_set = NULL;
 	      last_sp_adjust = 0;
 	      continue;
 	    }
 	}
 
-      data.insn = insn;
-      data.reflist = reflist;
       if (!CALL_P (insn) && last_sp_set
-	  && !for_each_rtx (&PATTERN (insn), record_stack_refs, &data))
-	{
-	   reflist = data.reflist;
-	   continue;
-	}
-      reflist = data.reflist;
+	  && record_stack_refs (insn, &reflist))
+	continue;
 
       /* Otherwise, we were not able to process the instruction.
 	 Do not continue collecting data across such a one.  */
@@ -603,8 +709,8 @@ combine_stack_adjustments_for_block (basic_block bb)
 	    }
 	  free_csa_reflist (reflist);
 	  reflist = NULL;
-	  last2_sp_set = NULL_RTX;
-	  last_sp_set = NULL_RTX;
+	  last2_sp_set = NULL;
+	  last_sp_set = NULL;
 	  last_sp_adjust = 0;
 	}
     }
@@ -619,9 +725,48 @@ combine_stack_adjustments_for_block (basic_block bb)
     free_csa_reflist (reflist);
 }
 
+static unsigned int
+rest_of_handle_stack_adjustments (void)
+{
+  df_note_add_problem ();
+  df_analyze ();
+  combine_stack_adjustments ();
+  return 0;
+}
 
-static bool
-gate_handle_stack_adjustments (void)
+namespace {
+
+const pass_data pass_data_stack_adjustments =
+{
+  RTL_PASS, /* type */
+  "csa", /* name */
+  OPTGROUP_NONE, /* optinfo_flags */
+  TV_COMBINE_STACK_ADJUST, /* tv_id */
+  0, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  TODO_df_finish, /* todo_flags_finish */
+};
+
+class pass_stack_adjustments : public rtl_opt_pass
+{
+public:
+  pass_stack_adjustments (gcc::context *ctxt)
+    : rtl_opt_pass (pass_data_stack_adjustments, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual bool gate (function *);
+  virtual unsigned int execute (function *)
+    {
+      return rest_of_handle_stack_adjustments ();
+    }
+
+}; // class pass_stack_adjustments
+
+bool
+pass_stack_adjustments::gate (function *)
 {
   /* This is kind of a heuristic.  We need to run combine_stack_adjustments
      even for machines with possibly nonzero TARGET_RETURN_POPS_ARGS
@@ -634,32 +779,10 @@ gate_handle_stack_adjustments (void)
   return flag_combine_stack_adjustments;
 }
 
-static unsigned int
-rest_of_handle_stack_adjustments (void)
-{
-  df_note_add_problem ();
-  df_analyze ();
-  combine_stack_adjustments ();
-  return 0;
-}
+} // anon namespace
 
-struct rtl_opt_pass pass_stack_adjustments =
+rtl_opt_pass *
+make_pass_stack_adjustments (gcc::context *ctxt)
 {
- {
-  RTL_PASS,
-  "csa",                                /* name */
-  OPTGROUP_NONE,                        /* optinfo_flags */
-  gate_handle_stack_adjustments,        /* gate */
-  rest_of_handle_stack_adjustments,     /* execute */
-  NULL,                                 /* sub */
-  NULL,                                 /* next */
-  0,                                    /* static_pass_number */
-  TV_COMBINE_STACK_ADJUST,              /* tv_id */
-  0,                                    /* properties_required */
-  0,                                    /* properties_provided */
-  0,                                    /* properties_destroyed */
-  0,                                    /* todo_flags_start */
-  TODO_df_finish | TODO_verify_rtl_sharing |
-  TODO_ggc_collect,                     /* todo_flags_finish */
- }
-};
+  return new pass_stack_adjustments (ctxt);
+}

@@ -1,6 +1,6 @@
 /* Routines to implement minimum-cost maximal flow algorithm used to smooth
    basic block and edge frequency counts.
-   Copyright (C) 2008-2013 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
    Contributed by Paul Yuan (yingbo.com@gmail.com) and
                   Vinodha Ramasamy (vinodha@google.com).
 
@@ -45,13 +45,24 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+#include "predict.h"
+#include "vec.h"
+#include "hashtab.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "tm.h"
+#include "hard-reg-set.h"
+#include "input.h"
+#include "function.h"
+#include "dominance.h"
+#include "cfg.h"
 #include "basic-block.h"
 #include "gcov-io.h"
 #include "profile.h"
 #include "dumpfile.h"
 
 /* CAP_INFINITY: Constant to represent infinite capacity.  */
-#define CAP_INFINITY INTTYPE_MAXIMUM (HOST_WIDEST_INT)
+#define CAP_INFINITY INTTYPE_MAXIMUM (int64_t)
 
 /* COST FUNCTION.  */
 #define K_POS(b)        ((b))
@@ -203,12 +214,12 @@ dump_fixup_edge (FILE *file, fixup_graph_type *fixup_graph, fixup_edge_p fedge)
 
   if (fedge->type)
     {
-      fprintf (file, "flow/capacity=" HOST_WIDEST_INT_PRINT_DEC "/",
+      fprintf (file, "flow/capacity=%"PRId64 "/",
 	       fedge->flow);
       if (fedge->max_capacity == CAP_INFINITY)
 	fputs ("+oo,", file);
       else
-	fprintf (file, "" HOST_WIDEST_INT_PRINT_DEC ",", fedge->max_capacity);
+	fprintf (file, "%"PRId64 ",", fedge->max_capacity);
     }
 
   if (fedge->is_rflow_valid)
@@ -216,10 +227,10 @@ dump_fixup_edge (FILE *file, fixup_graph_type *fixup_graph, fixup_edge_p fedge)
       if (fedge->rflow == CAP_INFINITY)
 	fputs (" rflow=+oo.", file);
       else
-	fprintf (file, " rflow=" HOST_WIDEST_INT_PRINT_DEC ",", fedge->rflow);
+	fprintf (file, " rflow=%"PRId64 ",", fedge->rflow);
     }
 
-  fprintf (file, " cost=" HOST_WIDEST_INT_PRINT_DEC ".", fedge->cost);
+  fprintf (file, " cost=%"PRId64 ".", fedge->cost);
 
   fprintf (file, "\t(%d->%d)", fedge->src, fedge->dest);
 
@@ -385,7 +396,7 @@ add_fixup_edge (fixup_graph_type *fixup_graph, int src, int dest,
 		edge_type type, gcov_type weight, gcov_type cost,
 		gcov_type max_capacity)
 {
-  fixup_edge_p curr_edge = add_edge(fixup_graph, src, dest, cost);
+  fixup_edge_p curr_edge = add_edge (fixup_graph, src, dest, cost);
   curr_edge->type = type;
   curr_edge->weight = weight;
   curr_edge->max_capacity = max_capacity;
@@ -471,12 +482,14 @@ create_fixup_graph (fixup_graph_type *fixup_graph)
   int fnum_edges;
 
   /* Each basic_block will be split into 2 during vertex transformation.  */
-  int fnum_vertices_after_transform =  2 * n_basic_blocks;
-  int fnum_edges_after_transform = n_edges + n_basic_blocks;
+  int fnum_vertices_after_transform =  2 * n_basic_blocks_for_fn (cfun);
+  int fnum_edges_after_transform =
+    n_edges_for_fn (cfun) + n_basic_blocks_for_fn (cfun);
 
   /* Count the new SOURCE and EXIT vertices to be added.  */
   int fmax_num_vertices =
-    fnum_vertices_after_transform + n_edges + n_basic_blocks + 2;
+    (fnum_vertices_after_transform + n_edges_for_fn (cfun)
+     + n_basic_blocks_for_fn (cfun) + 2);
 
   /* In create_fixup_graph: Each basic block and edge can be split into 3
      edges. Number of balance edges = n_basic_blocks. So after
@@ -486,10 +499,11 @@ create_fixup_graph (fixup_graph_type *fixup_graph)
      max_edges = 2 * (4 * n_basic_blocks + 3 * n_edges)
      = 8 * n_basic_blocks + 6 * n_edges
      < 8 * n_basic_blocks + 8 * n_edges.  */
-  int fmax_num_edges = 8 * (n_basic_blocks + n_edges);
+  int fmax_num_edges = 8 * (n_basic_blocks_for_fn (cfun) +
+			    n_edges_for_fn (cfun));
 
   /* Initial num of vertices in the fixup graph.  */
-  fixup_graph->num_vertices = n_basic_blocks;
+  fixup_graph->num_vertices = n_basic_blocks_for_fn (cfun);
 
   /* Fixup graph vertex list.  */
   fixup_graph->vertex_list =
@@ -505,10 +519,11 @@ create_fixup_graph (fixup_graph_type *fixup_graph)
 
   /* Compute constants b, k_pos, k_neg used in the cost function calculation.
      b = sqrt(avg_vertex_weight(cfg)); k_pos = b; k_neg = 50b.  */
-  FOR_BB_BETWEEN (bb, ENTRY_BLOCK_PTR, NULL, next_bb)
+  FOR_BB_BETWEEN (bb, ENTRY_BLOCK_PTR_FOR_FN (cfun), NULL, next_bb)
     total_vertex_weight += bb->count;
 
-  sqrt_avg_vertex_weight = mcf_sqrt (total_vertex_weight / n_basic_blocks);
+  sqrt_avg_vertex_weight = mcf_sqrt (total_vertex_weight /
+				     n_basic_blocks_for_fn (cfun));
 
   k_pos = K_POS (sqrt_avg_vertex_weight);
   k_neg = K_NEG (sqrt_avg_vertex_weight);
@@ -519,7 +534,7 @@ create_fixup_graph (fixup_graph_type *fixup_graph)
   if (dump_file)
     fprintf (dump_file, "\nVertex transformation:\n");
 
-  FOR_BB_BETWEEN (bb, ENTRY_BLOCK_PTR, NULL, next_bb)
+  FOR_BB_BETWEEN (bb, ENTRY_BLOCK_PTR_FOR_FN (cfun), NULL, next_bb)
   {
     /* v'->v'': index1->(index1+1).  */
     i = 2 * bb->index;
@@ -622,9 +637,9 @@ create_fixup_graph (fixup_graph_type *fixup_graph)
   if (dump_file)
     {
       fprintf (dump_file, "\nAdjust supply and demand:\n");
-      fprintf (dump_file, "supply_value=" HOST_WIDEST_INT_PRINT_DEC "\n",
+      fprintf (dump_file, "supply_value=%"PRId64 "\n",
 	       supply_value);
-      fprintf (dump_file, "demand_value=" HOST_WIDEST_INT_PRINT_DEC "\n",
+      fprintf (dump_file, "demand_value=%"PRId64 "\n",
 	       demand_value);
     }
 
@@ -894,10 +909,10 @@ cancel_negative_cycle (fixup_graph_type *fixup_graph,
     {
       fprintf (dump_file, "%d", cycle[k]);
       fprintf (dump_file,
-	       ": (" HOST_WIDEST_INT_PRINT_DEC ", " HOST_WIDEST_INT_PRINT_DEC
+	       ": (%"PRId64 ", %"PRId64
 	       ")\n", sum_cost, cycle_flow);
       fprintf (dump_file,
-	       "Augment cycle with " HOST_WIDEST_INT_PRINT_DEC "\n",
+	       "Augment cycle with %"PRId64 "\n",
 	       cycle_flow);
     }
 
@@ -1089,10 +1104,10 @@ find_max_flow (fixup_graph_type *fixup_graph, int source, int sink)
 	      fprintf (dump_file, "<-");
 	    }
 	  fprintf (dump_file,
-		   "ENTRY  (path_capacity=" HOST_WIDEST_INT_PRINT_DEC ")\n",
+		   "ENTRY  (path_capacity=%"PRId64 ")\n",
 		   increment);
 	  fprintf (dump_file,
-		   "Network flow is " HOST_WIDEST_INT_PRINT_DEC ".\n",
+		   "Network flow is %"PRId64 ".\n",
 		   max_flow);
 	}
     }
@@ -1121,14 +1136,15 @@ adjust_cfg_counts (fixup_graph_type *fixup_graph)
   if (dump_file)
     fprintf (dump_file, "\nadjust_cfg_counts():\n");
 
-  FOR_BB_BETWEEN (bb, ENTRY_BLOCK_PTR, EXIT_BLOCK_PTR, next_bb)
+  FOR_BB_BETWEEN (bb, ENTRY_BLOCK_PTR_FOR_FN (cfun),
+		  EXIT_BLOCK_PTR_FOR_FN (cfun), next_bb)
     {
       i = 2 * bb->index;
 
       /* Fixup BB.  */
       if (dump_file)
         fprintf (dump_file,
-                 "BB%d: " HOST_WIDEST_INT_PRINT_DEC "", bb->index, bb->count);
+                 "BB%d: %"PRId64 "", bb->index, bb->count);
 
       pfedge = find_fixup_edge (fixup_graph, i, i + 1);
       if (pfedge->flow)
@@ -1136,7 +1152,7 @@ adjust_cfg_counts (fixup_graph_type *fixup_graph)
           bb->count += pfedge->flow;
 	  if (dump_file)
 	    {
-	      fprintf (dump_file, " + " HOST_WIDEST_INT_PRINT_DEC "(",
+	      fprintf (dump_file, " + %"PRId64 "(",
 	               pfedge->flow);
 	      print_edge (dump_file, fixup_graph, i, i + 1);
 	      fprintf (dump_file, ")");
@@ -1151,7 +1167,7 @@ adjust_cfg_counts (fixup_graph_type *fixup_graph)
           bb->count -= pfedge_n->flow;
 	  if (dump_file)
 	    {
-	      fprintf (dump_file, " - " HOST_WIDEST_INT_PRINT_DEC "(",
+	      fprintf (dump_file, " - %"PRId64 "(",
 		       pfedge_n->flow);
 	      print_edge (dump_file, fixup_graph, i + 1,
 			  pfedge->norm_vertex_index);
@@ -1159,7 +1175,7 @@ adjust_cfg_counts (fixup_graph_type *fixup_graph)
 	    }
         }
       if (dump_file)
-        fprintf (dump_file, " = " HOST_WIDEST_INT_PRINT_DEC "\n", bb->count);
+        fprintf (dump_file, " = %"PRId64 "\n", bb->count);
 
       /* Fixup edge.  */
       FOR_EACH_EDGE (e, ei, bb->succs)
@@ -1170,7 +1186,7 @@ adjust_cfg_counts (fixup_graph_type *fixup_graph)
 
           j = 2 * e->dest->index;
           if (dump_file)
-	    fprintf (dump_file, "%d->%d: " HOST_WIDEST_INT_PRINT_DEC "",
+	    fprintf (dump_file, "%d->%d: %"PRId64 "",
 		     bb->index, e->dest->index, e->count);
 
           pfedge = find_fixup_edge (fixup_graph, i + 1, j);
@@ -1183,7 +1199,7 @@ adjust_cfg_counts (fixup_graph_type *fixup_graph)
 	          e->count += pfedge->flow;
 	          if (dump_file)
 		    {
-		      fprintf (dump_file, " + " HOST_WIDEST_INT_PRINT_DEC "(",
+		      fprintf (dump_file, " + %"PRId64 "(",
 			       pfedge->flow);
 		      print_edge (dump_file, fixup_graph, i + 1, j);
 		      fprintf (dump_file, ")");
@@ -1198,7 +1214,7 @@ adjust_cfg_counts (fixup_graph_type *fixup_graph)
 	          e->count -= pfedge_n->flow;
 	          if (dump_file)
 		    {
-		      fprintf (dump_file, " - " HOST_WIDEST_INT_PRINT_DEC "(",
+		      fprintf (dump_file, " - %"PRId64 "(",
 			       pfedge_n->flow);
 		      print_edge (dump_file, fixup_graph, j,
 			          pfedge->norm_vertex_index);
@@ -1218,7 +1234,7 @@ adjust_cfg_counts (fixup_graph_type *fixup_graph)
 	      if (dump_file)
 	        {
 	          fprintf (dump_file, "(self edge)");
-	          fprintf (dump_file, " + " HOST_WIDEST_INT_PRINT_DEC "(",
+	          fprintf (dump_file, " + %"PRId64 "(",
 		           pfedge_n->flow);
 	          print_edge (dump_file, fixup_graph, i + 1,
 			      pfedge->norm_vertex_index);
@@ -1229,16 +1245,18 @@ adjust_cfg_counts (fixup_graph_type *fixup_graph)
           if (bb->count)
 	    e->probability = REG_BR_PROB_BASE * e->count / bb->count;
           if (dump_file)
-	    fprintf (dump_file, " = " HOST_WIDEST_INT_PRINT_DEC "\t(%.1f%%)\n",
+	    fprintf (dump_file, " = %"PRId64 "\t(%.1f%%)\n",
 		     e->count, e->probability * 100.0 / REG_BR_PROB_BASE);
         }
     }
 
-  ENTRY_BLOCK_PTR->count = sum_edge_counts (ENTRY_BLOCK_PTR->succs);
-  EXIT_BLOCK_PTR->count = sum_edge_counts (EXIT_BLOCK_PTR->preds);
+  ENTRY_BLOCK_PTR_FOR_FN (cfun)->count =
+		     sum_edge_counts (ENTRY_BLOCK_PTR_FOR_FN (cfun)->succs);
+  EXIT_BLOCK_PTR_FOR_FN (cfun)->count =
+		     sum_edge_counts (EXIT_BLOCK_PTR_FOR_FN (cfun)->preds);
 
   /* Compute edge probabilities.  */
-  FOR_ALL_BB (bb)
+  FOR_ALL_BB_FN (bb, cfun)
     {
       if (bb->count)
         {
@@ -1274,20 +1292,20 @@ adjust_cfg_counts (fixup_graph_type *fixup_graph)
     {
       fprintf (dump_file, "\nCheck %s() CFG flow conservation:\n",
 	       current_function_name ());
-      FOR_EACH_BB (bb)
+      FOR_EACH_BB_FN (bb, cfun)
         {
           if ((bb->count != sum_edge_counts (bb->preds))
                || (bb->count != sum_edge_counts (bb->succs)))
             {
               fprintf (dump_file,
-                       "BB%d(" HOST_WIDEST_INT_PRINT_DEC ")  **INVALID**: ",
+                       "BB%d(%"PRId64 ")  **INVALID**: ",
                        bb->index, bb->count);
               fprintf (stderr,
-                       "******** BB%d(" HOST_WIDEST_INT_PRINT_DEC
+                       "******** BB%d(%"PRId64
                        ")  **INVALID**: \n", bb->index, bb->count);
-              fprintf (dump_file, "in_edges=" HOST_WIDEST_INT_PRINT_DEC " ",
+              fprintf (dump_file, "in_edges=%"PRId64 " ",
                        sum_edge_counts (bb->preds));
-              fprintf (dump_file, "out_edges=" HOST_WIDEST_INT_PRINT_DEC "\n",
+              fprintf (dump_file, "out_edges=%"PRId64 "\n",
                        sum_edge_counts (bb->succs));
             }
          }

@@ -1,5 +1,5 @@
 /* Single entry single exit control flow regions.
-   Copyright (C) 2008-2013 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
    Contributed by Jan Sjodin <jan.sjodin@amd.com> and
    Sebastian Pop <sebastian.pop@amd.com>.
 
@@ -58,8 +58,6 @@ extern void build_sese_loop_nests (sese);
 extern edge copy_bb_and_scalar_dependences (basic_block, sese, edge,
 					    vec<tree> , bool *);
 extern struct loop *outermost_loop_in_sese (sese, basic_block);
-extern void insert_loop_close_phis (htab_t, loop_p);
-extern void insert_guard_phis (basic_block, edge, edge, htab_t, htab_t);
 extern tree scalar_evolution_in_region (sese, loop_p, tree);
 
 /* Check that SESE contains LOOP.  */
@@ -249,58 +247,6 @@ static inline basic_block
 if_region_get_condition_block (ifsese if_region)
 {
   return if_region_entry (if_region)->dest;
-}
-
-/* Structure containing the mapping between the old names and the new
-   names used after block copy in the new loop context.  */
-typedef struct rename_map_elt_s
-{
-  tree old_name, expr;
-} *rename_map_elt;
-
-
-extern void debug_rename_map (htab_t);
-extern hashval_t rename_map_elt_info (const void *);
-extern int eq_rename_map_elts (const void *, const void *);
-
-/* Constructs a new SCEV_INFO_STR structure for VAR and INSTANTIATED_BELOW.  */
-
-static inline rename_map_elt
-new_rename_map_elt (tree old_name, tree expr)
-{
-  rename_map_elt res;
-
-  res = XNEW (struct rename_map_elt_s);
-  res->old_name = old_name;
-  res->expr = expr;
-
-  return res;
-}
-
-/* Structure containing the mapping between the CLooG's induction
-   variable and the type of the old induction variable.  */
-typedef struct ivtype_map_elt_s
-{
-  tree type;
-  const char *cloog_iv;
-} *ivtype_map_elt;
-
-extern void debug_ivtype_map (htab_t);
-extern hashval_t ivtype_map_elt_info (const void *);
-extern int eq_ivtype_map_elts (const void *, const void *);
-
-/* Constructs a new SCEV_INFO_STR structure for VAR and INSTANTIATED_BELOW.  */
-
-static inline ivtype_map_elt
-new_ivtype_map_elt (const char *cloog_iv, tree type)
-{
-  ivtype_map_elt res;
-
-  res = XNEW (struct ivtype_map_elt_s);
-  res->cloog_iv = cloog_iv;
-  res->type = type;
-
-  return res;
 }
 
 /* Free and compute again all the dominators information.  */

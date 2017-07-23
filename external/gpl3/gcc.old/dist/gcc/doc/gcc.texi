@@ -66,6 +66,7 @@ Texts being (a) (see below), and with the Back-Cover Texts being (b)
 * gcc: (gcc).                  The GNU Compiler Collection.
 * g++: (gcc).                  The GNU C++ compiler.
 * gcov: (gcc) Gcov.            @command{gcov}---a test coverage program.
+* gcov-tool: (gcc) Gcov-tool.  @command{gcov-tool}---an offline gcda profile processing program.
 @end direntry
 This file documents the use of the GNU compilers.
 @sp 1
@@ -83,11 +84,11 @@ This file documents the use of the GNU compilers.
 Published by:
 @multitable @columnfractions 0.5 0.5
 @item GNU Press
-@tab Website: www.gnupress.org
+@tab Website: @uref{http://www.gnupress.org}
 @item a division of the
-@tab General: @tex press@@gnu.org @end tex
+@tab General: @email{press@@gnu.org}
 @item Free Software Foundation
-@tab Orders:  @tex sales@@gnu.org @end tex
+@tab Orders:  @email{sales@@gnu.org}
 @item 51 Franklin Street, Fifth Floor
 @tab Tel 617-542-5942
 @item Boston, MA 02110-1301 USA
@@ -138,9 +139,10 @@ Introduction, gccint, GNU Compiler Collection (GCC) Internals}.
 * Objective-C::     GNU Objective-C runtime features.
 * Compatibility::   Binary Compatibility
 * Gcov::            @command{gcov}---a test coverage program.
+* Gcov-tool::       @command{gcov-tool}---an offline gcda profile processing program.
 * Trouble::         If you have trouble using GCC.
 * Bugs::            How, why and where to report bugs.
-* Service::         How to find suppliers of support for GCC.
+* Service::         How To Get Help with GCC
 * Contributing::    How to contribute to testing and developing GCC.
 
 * Funding::         How to help assure funding for free software.
@@ -164,6 +166,7 @@ Introduction, gccint, GNU Compiler Collection (GCC) Internals}.
 @include objc.texi
 @include compat.texi
 @include gcov.texi
+@include gcov-tool.texi
 @include trouble.texi
 @include bugreport.texi
 @include service.texi

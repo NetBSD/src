@@ -1,6 +1,6 @@
 // Locale support -*- C++ -*-
 
-// Copyright (C) 2007-2013 Free Software Foundation, Inc.
+// Copyright (C) 2007-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -68,8 +68,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     void
     __moneypunct_cache<_CharT, _Intl>::_M_cache(const locale& __loc)
     {
-      _M_allocated = true;
-
       const moneypunct<_CharT, _Intl>& __mp =
 	use_facet<moneypunct<_CharT, _Intl> >(__loc);
 
@@ -83,29 +81,29 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _CharT* __negative_sign = 0;     
       __try
 	{
-	  _M_grouping_size = __mp.grouping().size();
+	  const string& __g = __mp.grouping();
+	  _M_grouping_size = __g.size();
 	  __grouping = new char[_M_grouping_size];
-	  __mp.grouping().copy(__grouping, _M_grouping_size);
-	  _M_grouping = __grouping;
+	  __g.copy(__grouping, _M_grouping_size);
 	  _M_use_grouping = (_M_grouping_size
-			     && static_cast<signed char>(_M_grouping[0]) > 0
-			     && (_M_grouping[0]
+			     && static_cast<signed char>(__grouping[0]) > 0
+			     && (__grouping[0]
 				 != __gnu_cxx::__numeric_traits<char>::__max));
 
-	  _M_curr_symbol_size = __mp.curr_symbol().size();
+	  const basic_string<_CharT>& __cs = __mp.curr_symbol();
+	  _M_curr_symbol_size = __cs.size();
 	  __curr_symbol = new _CharT[_M_curr_symbol_size];
-	  __mp.curr_symbol().copy(__curr_symbol, _M_curr_symbol_size);
-	  _M_curr_symbol = __curr_symbol;
+	  __cs.copy(__curr_symbol, _M_curr_symbol_size);
 
-	  _M_positive_sign_size = __mp.positive_sign().size();
+	  const basic_string<_CharT>& __ps = __mp.positive_sign();
+	  _M_positive_sign_size = __ps.size();
 	  __positive_sign = new _CharT[_M_positive_sign_size];
-	  __mp.positive_sign().copy(__positive_sign, _M_positive_sign_size);
-	  _M_positive_sign = __positive_sign;
+	  __ps.copy(__positive_sign, _M_positive_sign_size);
 
-	  _M_negative_sign_size = __mp.negative_sign().size();
+	  const basic_string<_CharT>& __ns = __mp.negative_sign();
+	  _M_negative_sign_size = __ns.size();
 	  __negative_sign = new _CharT[_M_negative_sign_size];
-	  __mp.negative_sign().copy(__negative_sign, _M_negative_sign_size);
-	  _M_negative_sign = __negative_sign;
+	  __ns.copy(__negative_sign, _M_negative_sign_size);
 
 	  _M_pos_format = __mp.pos_format();
 	  _M_neg_format = __mp.neg_format();
@@ -113,6 +111,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  const ctype<_CharT>& __ct = use_facet<ctype<_CharT> >(__loc);
 	  __ct.widen(money_base::_S_atoms,
 		     money_base::_S_atoms + money_base::_S_end, _M_atoms);
+
+	  _M_grouping = __grouping;
+	  _M_curr_symbol = __curr_symbol;
+	  _M_positive_sign = __positive_sign;
+	  _M_negative_sign = __negative_sign;
+	  _M_allocated = true;
 	}
       __catch(...)
 	{
@@ -124,7 +128,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	}
     }
 
-_GLIBCXX_BEGIN_NAMESPACE_LDBL
+_GLIBCXX_BEGIN_NAMESPACE_LDBL_OR_CXX11
 
   template<typename _CharT, typename _InIter>
     template<bool _Intl>
@@ -344,7 +348,8 @@ _GLIBCXX_BEGIN_NAMESPACE_LDBL
 	return __beg;
       }
 
-#if defined _GLIBCXX_LONG_DOUBLE_COMPAT && defined __LONG_DOUBLE_128__
+#if defined _GLIBCXX_LONG_DOUBLE_COMPAT && defined __LONG_DOUBLE_128__ \
+      && _GLIBCXX_USE_CXX11_ABI == 0
   template<typename _CharT, typename _InIter>
     _InIter
     money_get<_CharT, _InIter>::
@@ -555,7 +560,8 @@ _GLIBCXX_BEGIN_NAMESPACE_LDBL
 	return __s;    
       }
 
-#if defined _GLIBCXX_LONG_DOUBLE_COMPAT && defined __LONG_DOUBLE_128__
+#if defined _GLIBCXX_LONG_DOUBLE_COMPAT && defined __LONG_DOUBLE_128__ \
+      && _GLIBCXX_USE_CXX11_ABI == 0
   template<typename _CharT, typename _OutIter>
     _OutIter
     money_put<_CharT, _OutIter>::
@@ -610,7 +616,7 @@ _GLIBCXX_BEGIN_NAMESPACE_LDBL
     { return __intl ? _M_insert<true>(__s, __io, __fill, __digits)
 	            : _M_insert<false>(__s, __io, __fill, __digits); }
 
-_GLIBCXX_END_NAMESPACE_LDBL
+_GLIBCXX_END_NAMESPACE_LDBL_OR_CXX11
 
   // NB: Not especially useful. Without an ios_base object or some
   // kind of locale reference, we are left clawing at the air where
@@ -1064,7 +1070,6 @@ _GLIBCXX_END_NAMESPACE_LDBL
     do_get_weekday(iter_type __beg, iter_type __end, ios_base& __io,
 		   ios_base::iostate& __err, tm* __tm) const
     {
-      typedef char_traits<_CharT>		__traits_type;
       const locale& __loc = __io._M_getloc();
       const __timepunct<_CharT>& __tp = use_facet<__timepunct<_CharT> >(__loc);
       const ctype<_CharT>& __ctype = use_facet<ctype<_CharT> >(__loc);
@@ -1092,7 +1097,6 @@ _GLIBCXX_END_NAMESPACE_LDBL
     do_get_monthname(iter_type __beg, iter_type __end,
                      ios_base& __io, ios_base::iostate& __err, tm* __tm) const
     {
-      typedef char_traits<_CharT>		__traits_type;
       const locale& __loc = __io._M_getloc();
       const __timepunct<_CharT>& __tp = use_facet<__timepunct<_CharT> >(__loc);
       const ctype<_CharT>& __ctype = use_facet<ctype<_CharT> >(__loc);
@@ -1136,6 +1140,113 @@ _GLIBCXX_END_NAMESPACE_LDBL
 	__err |= ios_base::eofbit;
       return __beg;
     }
+
+#if __cplusplus >= 201103L
+  template<typename _CharT, typename _InIter>
+    inline
+    _InIter
+    time_get<_CharT, _InIter>::
+    get(iter_type __s, iter_type __end, ios_base& __io,
+        ios_base::iostate& __err, tm* __tm, const char_type* __fmt,
+        const char_type* __fmtend) const
+    {
+      const locale& __loc = __io._M_getloc();
+      ctype<_CharT> const& __ctype = use_facet<ctype<_CharT> >(__loc);
+      __err = ios_base::goodbit;
+      while (__fmt != __fmtend &&
+             __err == ios_base::goodbit)
+        {
+          if (__s == __end)
+            {
+              __err = ios_base::eofbit | ios_base::failbit;
+              break;
+            }
+          else if (__ctype.narrow(*__fmt, 0) == '%')
+            {
+              char __format;
+              char __mod = 0;
+              if (++__fmt == __fmtend)
+                {
+                  __err = ios_base::failbit;
+                  break;
+                }
+              const char __c = __ctype.narrow(*__fmt, 0);
+              if (__c != 'E' && __c != 'O')
+                __format = __c;
+              else if (++__fmt != __fmtend)
+                {
+                  __mod = __c;
+                  __format = __ctype.narrow(*__fmt, 0);
+                }
+              else
+                {
+                  __err = ios_base::failbit;
+                  break;
+                }
+              __s = this->do_get(__s, __end, __io, __err, __tm, __format,
+				 __mod);
+              ++__fmt;
+            }
+          else if (__ctype.is(ctype_base::space, *__fmt))
+            {
+              ++__fmt;
+              while (__fmt != __fmtend &&
+                     __ctype.is(ctype_base::space, *__fmt))
+                ++__fmt;
+
+              while (__s != __end &&
+                     __ctype.is(ctype_base::space, *__s))
+                ++__s;
+            }
+          // TODO real case-insensitive comparison
+          else if (__ctype.tolower(*__s) == __ctype.tolower(*__fmt) ||
+                   __ctype.toupper(*__s) == __ctype.toupper(*__fmt))
+            {
+              ++__s;
+              ++__fmt;
+            }
+          else
+            {
+              __err = ios_base::failbit;
+              break;
+            }
+        }
+      return __s;
+    }
+
+  template<typename _CharT, typename _InIter>
+    inline
+    _InIter
+    time_get<_CharT, _InIter>::
+    do_get(iter_type __beg, iter_type __end, ios_base& __io,
+           ios_base::iostate& __err, tm* __tm,
+           char __format, char __mod) const
+    {
+      const locale& __loc = __io._M_getloc();
+      ctype<_CharT> const& __ctype = use_facet<ctype<_CharT> >(__loc);
+      __err = ios_base::goodbit;
+
+      char_type __fmt[4];
+      __fmt[0] = __ctype.widen('%');
+      if (!__mod)
+        {
+          __fmt[1] = __format;
+          __fmt[2] = char_type();
+        }
+      else
+        {
+          __fmt[1] = __mod;
+          __fmt[2] = __format;
+          __fmt[3] = char_type();
+        }
+
+      __beg = _M_extract_via_format(__beg, __end, __io, __err, __tm, __fmt);
+      if (__beg == __end)
+	__err |= ios_base::eofbit;
+      return __beg;
+    }
+
+#endif // __cplusplus >= 201103L
 
   template<typename _CharT, typename _OutIter>
     _OutIter
@@ -1220,8 +1331,8 @@ _GLIBCXX_END_NAMESPACE_LDBL
   extern template class moneypunct<char, true>;
   extern template class moneypunct_byname<char, false>;
   extern template class moneypunct_byname<char, true>;
-  extern template class _GLIBCXX_NAMESPACE_LDBL money_get<char>;
-  extern template class _GLIBCXX_NAMESPACE_LDBL money_put<char>;
+  extern template class _GLIBCXX_NAMESPACE_LDBL_OR_CXX11 money_get<char>;
+  extern template class _GLIBCXX_NAMESPACE_LDBL_OR_CXX11 money_put<char>;
   extern template class __timepunct<char>;
   extern template class time_put<char>;
   extern template class time_put_byname<char>;
@@ -1295,8 +1406,8 @@ _GLIBCXX_END_NAMESPACE_LDBL
   extern template class moneypunct<wchar_t, true>;
   extern template class moneypunct_byname<wchar_t, false>;
   extern template class moneypunct_byname<wchar_t, true>;
-  extern template class _GLIBCXX_NAMESPACE_LDBL money_get<wchar_t>;
-  extern template class _GLIBCXX_NAMESPACE_LDBL money_put<wchar_t>;
+  extern template class _GLIBCXX_NAMESPACE_LDBL_OR_CXX11 money_get<wchar_t>;
+  extern template class _GLIBCXX_NAMESPACE_LDBL_OR_CXX11 money_put<wchar_t>;
   extern template class __timepunct<wchar_t>;
   extern template class time_put<wchar_t>;
   extern template class time_put_byname<wchar_t>;

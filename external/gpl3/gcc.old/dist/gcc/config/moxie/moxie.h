@@ -1,5 +1,5 @@
 /* Target Definitions for moxie.
-   Copyright (C) 2008-2013 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
    Contributed by Anthony Green.
 
    This file is part of GCC.
@@ -59,7 +59,7 @@
 #define DOUBLE_TYPE_SIZE 64
 #define LONG_DOUBLE_TYPE_SIZE 64
 
-#define DEFAULT_SIGNED_CHAR 1
+#define DEFAULT_SIGNED_CHAR 0
 
 #undef  SIZE_TYPE
 #define SIZE_TYPE "unsigned int"
@@ -68,7 +68,7 @@
 #define PTRDIFF_TYPE "int"
 
 #undef  WCHAR_TYPE
-#define WCHAR_TYPE "long int"
+#define WCHAR_TYPE "unsigned int"
 
 #undef  WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE BITS_PER_WORD
@@ -362,7 +362,7 @@ enum reg_class
 #define FUNCTION_PROFILER(FILE,LABELNO) (abort (), 0)
 
 /* Trampolines for Nested Functions.  */
-#define TRAMPOLINE_SIZE (2 + 6 + 6 + 2 + 2 + 6)
+#define TRAMPOLINE_SIZE (2 + 6 + 4 + 2 + 6)
 
 /* Alignment required for trampolines, in bits.  */
 #define TRAMPOLINE_ALIGNMENT 32
@@ -462,7 +462,8 @@ enum reg_class
 	op1 = XEXP(X,0);				\
 	op2 = XEXP(X,1);				\
 	if (GET_CODE(op1) == REG			\
-	    && CONSTANT_ADDRESS_P(op2)			\
+	    && GET_CODE(op2) == CONST_INT 		\
+	    && IN_RANGE (INTVAL (op2), -32768, 32767)	\
 	    && REGNO_OK_FOR_BASE_P(REGNO(op1)))		\
 	  goto LABEL;					\
       }							\

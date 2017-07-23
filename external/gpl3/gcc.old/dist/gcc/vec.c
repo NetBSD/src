@@ -1,5 +1,5 @@
 /* Vector API for GNU compiler.
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
    Contributed by Nathan Sidwell <nathan@codesourcery.com>
    Re-implemented in C++ by Diego Novillo <dnovillo@google.com>
 
@@ -171,92 +171,28 @@ vec_prefix::release_overhead (void)
 
 
 /* Calculate the number of slots to reserve a vector, making sure that
-   RESERVE slots are free.  If EXACT grow exactly, otherwise grow
-   exponentially.  PFX is the control data for the vector.  */
+   it is of at least DESIRED size by growing ALLOC exponentially.  */
 
 unsigned
-vec_prefix::calculate_allocation (vec_prefix *pfx, unsigned reserve,
-				  bool exact)
+vec_prefix::calculate_allocation_1 (unsigned alloc, unsigned desired)
 {
-  unsigned alloc = 0;
-  unsigned num = 0;
-
-  if (pfx)
-    {
-      alloc = pfx->alloc_;
-      num = pfx->num_;
-    }
-  else if (!reserve)
-    /* If there's no vector, and we've not requested anything, then we
-       will create a NULL vector.  */
-    return 0;
-
   /* We must have run out of room.  */
-  gcc_assert (alloc - num < reserve);
+  gcc_assert (alloc < desired);
 
-  if (exact)
-    /* Exact size.  */
-    alloc = num + reserve;
+  /* Exponential growth. */
+  if (!alloc)
+    alloc = 4;
+  else if (alloc < 16)
+    /* Double when small.  */
+    alloc = alloc * 2;
   else
-    {
-      /* Exponential growth. */
-      if (!alloc)
-	alloc = 4;
-      else if (alloc < 16)
-	/* Double when small.  */
-	alloc = alloc * 2;
-      else
-	/* Grow slower when large.  */
-	alloc = (alloc * 3 / 2);
+    /* Grow slower when large.  */
+    alloc = (alloc * 3 / 2);
 
-      /* If this is still too small, set it to the right size. */
-      if (alloc < num + reserve)
-	alloc = num + reserve;
-    }
+  /* If this is still too small, set it to the right size. */
+  if (alloc < desired)
+    alloc = desired;
   return alloc;
-}
-
-
-/* Stack vectors are a little different.  VEC_alloc turns into a call
-   to vec<T, A>::stack_reserve and passes in space allocated via a
-   call to alloca.  We record that pointer so that we know that we
-   shouldn't free it.  If the vector is resized, we resize it on the
-   heap.  We record the pointers in a vector and search it in LIFO
-   order--i.e., we look for the newest stack vectors first.  We don't
-   expect too many stack vectors at any one level, and searching from
-   the end should normally be efficient even if they are used in a
-   recursive function.  */
-
-static vec<void *> stack_vecs;
-
-/* Add a stack vector to STACK_VECS.  */
-
-void
-register_stack_vec (void *vec)
-{
-  stack_vecs.safe_push (vec);
-}
-
-
-/* If VEC is registered in STACK_VECS, return its index.
-   Otherwise, return -1.  */
-
-int
-stack_vec_register_index (void *vec)
-{
-  for (unsigned ix = stack_vecs.length (); ix > 0; --ix)
-    if (stack_vecs[ix - 1] == vec)
-      return static_cast<int> (ix - 1);
-  return -1;
-}
-
-
-/* Remove vector at slot IX from the list of registered stack vectors.  */
-
-void
-unregister_stack_vec (unsigned ix)
-{
-  stack_vecs.unordered_remove (ix);
 }
 
 

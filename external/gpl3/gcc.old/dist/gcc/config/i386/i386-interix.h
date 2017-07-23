@@ -1,5 +1,5 @@
 /* Target definitions for GCC for Intel 80386 running Interix
-   Parts Copyright (C) 1991-2013 Free Software Foundation, Inc.
+   Parts Copyright (C) 1991-2015 Free Software Foundation, Inc.
 
    Parts:
      by Douglas B. Rupp (drupp@cs.washington.edu).
@@ -140,8 +140,11 @@ do {									\
 /* Turn off long double being 96 bits.  */
 #undef LONG_DOUBLE_TYPE_SIZE
 #define LONG_DOUBLE_TYPE_SIZE 64
-#undef LIBGCC2_LONG_DOUBLE_TYPE_SIZE
-#define LIBGCC2_LONG_DOUBLE_TYPE_SIZE 64
+
+#define IX86_NO_LIBGCC_TFMODE
+
+#undef TARGET_LIBC_HAS_FUNCTION
+#define TARGET_LIBC_HAS_FUNCTION no_c99_libc_has_function
 
 /* The following are needed for us to be able to use winnt.c, but are not
    otherwise meaningful to Interix.  (The functions that use these are
@@ -192,7 +195,7 @@ do {									\
  */
 #define MULTIPLE_SYMBOL_SPACES	1
 
-extern void i386_pe_unique_section PARAMS ((tree, int));
+extern void i386_pe_unique_section (tree, int);
 #define TARGET_ASM_UNIQUE_SECTION i386_pe_unique_section
 
 /* Switch into a generic section.  */

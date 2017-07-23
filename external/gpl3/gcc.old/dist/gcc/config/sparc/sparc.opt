@@ -1,6 +1,6 @@
 ; Options for the SPARC port of the compiler
 ;
-; Copyright (C) 2005-2013 Free Software Foundation, Inc.
+; Copyright (C) 2005-2015 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -114,8 +114,8 @@ Target
 Optimize tail call instructions in assembler and linker
 
 muser-mode
-Target Report Mask(USER_MODE)
-Do not generate code that can only run in supervisor mode
+Target Report InverseMask(SV_MODE)
+Do not generate code that can only run in supervisor mode (default)
 
 mcpu=
 Target RejectNegative Joined Var(sparc_cpu_and_features) Enum(sparc_processor_type) Init(PROCESSOR_V7)

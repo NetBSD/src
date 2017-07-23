@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2015/09/23 03:03:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2017/07/23 01:05:11 mrg Exp $
 
 NOMAN=1
 PROG=		lto-wrapper
-SRCS=		lto-wrapper.c
+SRCS=		lto-wrapper.c \
+		collect-utils.c
 CPPFLAGS+=	-DPREFIX=\"/usr\"
 
 .include "../Makefile.backend"
@@ -10,9 +11,11 @@ CPPFLAGS+=	-DPREFIX=\"/usr\"
 .include "../Makefile.common-target"
 .include "../Makefile.libcpp"
 
+COPTS.lto-wrapper.c=	-Wno-stack-protector
+
+
 DPADD+=                 ${LIBIBERTYOBJ}/libiberty.a
 LDADD+=                 ${LIBIBERTYOBJ}/libiberty.a
-
 
 # VER_CPPFLAGS from Makefile.inc
 

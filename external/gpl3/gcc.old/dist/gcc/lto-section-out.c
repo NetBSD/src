@@ -1,6 +1,6 @@
 /* Functions for writing LTO sections.
 
-   Copyright (C) 2009-2013 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
 
 This file is part of GCC.
@@ -23,21 +23,48 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "hash-set.h"
+#include "machmode.h"
+#include "vec.h"
+#include "double-int.h"
+#include "input.h"
+#include "alias.h"
+#include "symtab.h"
+#include "wide-int.h"
+#include "inchash.h"
 #include "tree.h"
+#include "fold-const.h"
+#include "predict.h"
+#include "hard-reg-set.h"
+#include "function.h"
+#include "basic-block.h"
+#include "tree-ssa-alias.h"
+#include "internal-fn.h"
+#include "gimple-expr.h"
+#include "is-a.h"
+#include "gimple.h"
+#include "hashtab.h"
+#include "rtl.h"
+#include "flags.h"
+#include "statistics.h"
+#include "real.h"
+#include "fixed-value.h"
+#include "insn-config.h"
+#include "expmed.h"
+#include "dojump.h"
+#include "explow.h"
+#include "calls.h"
+#include "emit-rtl.h"
+#include "varasm.h"
+#include "stmt.h"
 #include "expr.h"
 #include "params.h"
-#include "input.h"
-#include "hashtab.h"
-#include "basic-block.h"
-#include "tree-flow.h"
-#include "cgraph.h"
-#include "function.h"
-#include "ggc.h"
 #include "except.h"
-#include "vec.h"
-#include "pointer-set.h"
-#include "bitmap.h"
 #include "langhooks.h"
+#include "hash-map.h"
+#include "plugin-api.h"
+#include "ipa-ref.h"
+#include "cgraph.h"
 #include "data-streamer.h"
 #include "lto-streamer.h"
 #include "lto-compress.h"
@@ -48,59 +75,7 @@ static vec<lto_out_decl_state_ptr> decl_state_stack;
    generate the decl directory later. */
 
 vec<lto_out_decl_state_ptr> lto_function_decl_states;
-/* Returns a hash code for P.  */
 
-hashval_t
-lto_hash_decl_slot_node (const void *p)
-{
-  const struct lto_decl_slot *ds = (const struct lto_decl_slot *) p;
-
-  /*
-    return (hashval_t) DECL_UID (ds->t);
-  */
-  return (hashval_t) TREE_HASH (ds->t);
-}
-
-
-/* Returns nonzero if P1 and P2 are equal.  */
-
-int
-lto_eq_decl_slot_node (const void *p1, const void *p2)
-{
-  const struct lto_decl_slot *ds1 =
-    (const struct lto_decl_slot *) p1;
-  const struct lto_decl_slot *ds2 =
-    (const struct lto_decl_slot *) p2;
-
-  /*
-  return DECL_UID (ds1->t) == DECL_UID (ds2->t);
-  */
-  return ds1->t == ds2->t;
-}
-
-
-/* Returns a hash code for P.  */
-
-hashval_t
-lto_hash_type_slot_node (const void *p)
-{
-  const struct lto_decl_slot *ds = (const struct lto_decl_slot *) p;
-  return (hashval_t) TYPE_UID (ds->t);
-}
-
-
-/* Returns nonzero if P1 and P2 are equal.  */
-
-int
-lto_eq_type_slot_node (const void *p1, const void *p2)
-{
-  const struct lto_decl_slot *ds1 =
-    (const struct lto_decl_slot *) p1;
-  const struct lto_decl_slot *ds2 =
-    (const struct lto_decl_slot *) p2;
-
-  return TYPE_UID (ds1->t) == TYPE_UID (ds2->t);
-}
 
 /*****************************************************************************
    Output routines shared by all of the serialization passes.
@@ -151,6 +126,16 @@ lto_end_section (void)
   lang_hooks.lto.end_section ();
 }
 
+/* Write SIZE bytes starting at DATA to the assembler.  */
+
+void
+lto_write_data (const void *data, unsigned int size)
+{
+  if (compression_stream)
+    lto_compress_block (compression_stream, (const char *)data, size);
+  else
+    lang_hooks.lto.append_data ((const char *)data, size, NULL);
+}
 
 /* Write all of the chars in OBS to the assembler.  Recycle the blocks
    in obs as this is being done.  */
@@ -181,86 +166,11 @@ lto_write_stream (struct lto_output_stream *obs)
          blocks up output differently to the way it's blocked here.  So for
          now, we don't compress WPA output.  */
       if (compression_stream)
-	{
-	  lto_compress_block (compression_stream, base, num_chars);
-	  lang_hooks.lto.append_data (NULL, 0, block);
-	}
+	lto_compress_block (compression_stream, base, num_chars);
       else
 	lang_hooks.lto.append_data (base, num_chars, block);
+      free (block);
       block_size *= 2;
-    }
-}
-
-
-/* Adds a new block to output stream OBS.  */
-
-void
-lto_append_block (struct lto_output_stream *obs)
-{
-  struct lto_char_ptr_base *new_block;
-
-  gcc_assert (obs->left_in_block == 0);
-
-  if (obs->first_block == NULL)
-    {
-      /* This is the first time the stream has been written
-	 into.  */
-      obs->block_size = 1024;
-      new_block = (struct lto_char_ptr_base*) xmalloc (obs->block_size);
-      obs->first_block = new_block;
-    }
-  else
-    {
-      struct lto_char_ptr_base *tptr;
-      /* Get a new block that is twice as big as the last block
-	 and link it into the list.  */
-      obs->block_size *= 2;
-      new_block = (struct lto_char_ptr_base*) xmalloc (obs->block_size);
-      /* The first bytes of the block are reserved as a pointer to
-	 the next block.  Set the chain of the full block to the
-	 pointer to the new block.  */
-      tptr = obs->current_block;
-      tptr->ptr = (char *) new_block;
-    }
-
-  /* Set the place for the next char at the first position after the
-     chain to the next block.  */
-  obs->current_pointer
-    = ((char *) new_block) + sizeof (struct lto_char_ptr_base);
-  obs->current_block = new_block;
-  /* Null out the newly allocated block's pointer to the next block.  */
-  new_block->ptr = NULL;
-  obs->left_in_block = obs->block_size - sizeof (struct lto_char_ptr_base);
-}
-
-
-/* Write raw DATA of length LEN to the output block OB.  */
-
-void
-lto_output_data_stream (struct lto_output_stream *obs, const void *data,
-			size_t len)
-{
-  while (len)
-    {
-      size_t copy;
-
-      /* No space left.  */
-      if (obs->left_in_block == 0)
-	lto_append_block (obs);
-
-      /* Determine how many bytes to copy in this loop.  */
-      if (len <= obs->left_in_block)
-	copy = len;
-      else
-	copy = obs->left_in_block;
-
-      /* Copy the data and do bookkeeping.  */
-      memcpy (obs->current_pointer, data, copy);
-      obs->current_pointer += copy;
-      obs->total_size += copy;
-      obs->left_in_block -= copy;
-      data = (const char *) data + copy;
-      len -= copy;
     }
 }
 
@@ -277,29 +187,16 @@ lto_output_decl_index (struct lto_output_stream *obs,
 		       struct lto_tree_ref_encoder *encoder,
 		       tree name, unsigned int *this_index)
 {
-  void **slot;
-  struct lto_decl_slot d_slot;
-  int index;
   bool new_entry_p = FALSE;
+  bool existed_p;
 
-  d_slot.t = name;
-  slot = htab_find_slot (encoder->tree_hash_table, &d_slot, INSERT);
-  if (*slot == NULL)
+  unsigned int &index
+    = encoder->tree_hash_table->get_or_insert (name, &existed_p);
+  if (!existed_p)
     {
-      struct lto_decl_slot *new_slot
-	= (struct lto_decl_slot *) xmalloc (sizeof (struct lto_decl_slot));
-      index = encoder->next_index++;
-
-      new_slot->t = name;
-      new_slot->slot_num = index;
-      *slot = new_slot;
+      index = encoder->trees.length ();
       encoder->trees.safe_push (name);
       new_entry_p = TRUE;
-    }
-  else
-    {
-      struct lto_decl_slot *old_slot = (struct lto_decl_slot *)*slot;
-      index = old_slot->slot_num;
     }
 
   if (obs)
@@ -401,7 +298,6 @@ lto_destroy_simple_output_block (struct lto_simple_output_block *ob)
 {
   char *section_name;
   struct lto_simple_header header;
-  struct lto_output_stream *header_stream;
 
   section_name = lto_get_section_name (ob->section_type, NULL, NULL);
   lto_begin_section (section_name, !flag_wpa);
@@ -410,17 +306,10 @@ lto_destroy_simple_output_block (struct lto_simple_output_block *ob)
   /* Write the header which says how to decode the pieces of the
      t.  */
   memset (&header, 0, sizeof (struct lto_simple_header));
-  header.lto_header.major_version = LTO_major_version;
-  header.lto_header.minor_version = LTO_minor_version;
-
-  header.compressed_size = 0;
-
+  header.major_version = LTO_major_version;
+  header.minor_version = LTO_minor_version;
   header.main_size = ob->main_stream->total_size;
-
-  header_stream = XCNEW (struct lto_output_stream);
-  lto_output_data_stream (header_stream, &header, sizeof header);
-  lto_write_stream (header_stream);
-  free (header_stream);
+  lto_write_data (&header, sizeof header);
 
   lto_write_stream (ob->main_stream);
 
@@ -440,23 +329,9 @@ lto_new_out_decl_state (void)
 {
   struct lto_out_decl_state *state = XCNEW (struct lto_out_decl_state);
   int i;
-  htab_hash hash_fn;
-  htab_eq eq_fn;
 
   for (i = 0; i < LTO_N_DECL_STREAMS; i++)
-    {
-      if (i == LTO_DECL_STREAM_TYPE)
-	{
-	  hash_fn = lto_hash_type_slot_node;
-	  eq_fn = lto_eq_type_slot_node;
-	}
-      else
-	{
-	  hash_fn = lto_hash_decl_slot_node;
-	  eq_fn = lto_eq_decl_slot_node;
-	}
-      lto_init_tree_ref_encoder (&state->streams[i], hash_fn, eq_fn);
-    }
+    lto_init_tree_ref_encoder (&state->streams[i]);
 
   return state;
 }
@@ -514,7 +389,7 @@ lto_record_function_out_decl_state (tree fn_decl,
   for (i = 0; i < LTO_N_DECL_STREAMS; i++)
     if (state->streams[i].tree_hash_table)
       {
-	htab_delete (state->streams[i].tree_hash_table);
+	delete state->streams[i].tree_hash_table;
 	state->streams[i].tree_hash_table = NULL;
       }
   state->fn_decl = fn_decl;

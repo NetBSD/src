@@ -3,7 +3,7 @@
 ;; expander, and the actual vector instructions will be in altivec.md and
 ;; vsx.md
 
-;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2015 Free Software Foundation, Inc.
 ;; Contributed by Michael Meissner <meissner@linux.vnet.ibm.com>
 
 ;; This file is part of GCC.
@@ -52,10 +52,6 @@
 
 ;; Vector modes for 64-bit base types
 (define_mode_iterator VEC_64 [V2DI V2DF])
-
-;; Vector reload iterator
-(define_mode_iterator VEC_R [V16QI V8HI V4SI V2DI V4SF V2DF V1TI
-			     SF SD SI DF DD DI TI])
 
 ;; Base type from vector mode
 (define_mode_attr VEC_base [(V16QI "QI")
@@ -184,65 +180,6 @@
 }")
 
 
-
-;; Reload patterns for vector operations.  We may need an additional base
-;; register to convert the reg+offset addressing to reg+reg for vector
-;; registers and reg+reg or (reg+reg)&(-16) addressing to just an index
-;; register for gpr registers.
-(define_expand "reload_<VEC_R:mode>_<P:mptrsize>_store"
-  [(parallel [(match_operand:VEC_R 0 "memory_operand" "m")
-              (match_operand:VEC_R 1 "gpc_reg_operand" "r")
-              (match_operand:P 2 "register_operand" "=&b")])]
-  "<P:tptrsize>"
-{
-  rs6000_secondary_reload_inner (operands[1], operands[0], operands[2], true);
-  DONE;
-})
-
-(define_expand "reload_<VEC_R:mode>_<P:mptrsize>_load"
-  [(parallel [(match_operand:VEC_R 0 "gpc_reg_operand" "=&r")
-              (match_operand:VEC_R 1 "memory_operand" "m")
-              (match_operand:P 2 "register_operand" "=&b")])]
-  "<P:tptrsize>"
-{
-  rs6000_secondary_reload_inner (operands[0], operands[1], operands[2], false);
-  DONE;
-})
-
-;; Reload sometimes tries to move the address to a GPR, and can generate
-;; invalid RTL for addresses involving AND -16.  Allow addresses involving
-;; reg+reg, reg+small constant, or just reg, all wrapped in an AND -16.
-
-(define_insn_and_split "*vec_reload_and_plus_<mptrsize>"
-  [(set (match_operand:P 0 "gpc_reg_operand" "=b")
-	(and:P (plus:P (match_operand:P 1 "gpc_reg_operand" "r")
-		       (match_operand:P 2 "reg_or_cint_operand" "rI"))
-	       (const_int -16)))]
-  "(TARGET_ALTIVEC || TARGET_VSX) && (reload_in_progress || reload_completed)"
-  "#"
-  "&& reload_completed"
-  [(set (match_dup 0)
-	(plus:P (match_dup 1)
-		(match_dup 2)))
-   (parallel [(set (match_dup 0)
-		   (and:P (match_dup 0)
-			  (const_int -16)))
-	      (clobber:CC (scratch:CC))])])
-
-;; The normal ANDSI3/ANDDI3 won't match if reload decides to move an AND -16
-;; address to a register because there is no clobber of a (scratch), so we add
-;; it here.
-(define_insn_and_split "*vec_reload_and_reg_<mptrsize>"
-  [(set (match_operand:P 0 "gpc_reg_operand" "=b")
-	(and:P (match_operand:P 1 "gpc_reg_operand" "r")
-	       (const_int -16)))]
-  "(TARGET_ALTIVEC || TARGET_VSX) && (reload_in_progress || reload_completed)"
-  "#"
-  "&& reload_completed"
-  [(parallel [(set (match_dup 0)
-		   (and:P (match_dup 1)
-			  (const_int -16)))
-	      (clobber:CC (scratch:CC))])])
 
 ;; Generic floating point vector arithmetic support
 (define_expand "add<mode>3"
@@ -702,7 +639,9 @@
   [(set (match_operand:SI 0 "register_operand" "=r")
 	(eq:SI (reg:CC 74)
 	       (const_int 0)))
-   (set (match_dup 0) (minus:SI (const_int 1) (match_dup 0)))]
+   (set (match_dup 0)
+	(xor:SI (match_dup 0)
+		(const_int 1)))]
   "TARGET_ALTIVEC || TARGET_VSX"
   "")
 
@@ -717,7 +656,9 @@
   [(set (match_operand:SI 0 "register_operand" "=r")
 	(lt:SI (reg:CC 74)
 	       (const_int 0)))
-   (set (match_dup 0) (minus:SI (const_int 1) (match_dup 0)))]
+   (set (match_dup 0)
+	(xor:SI (match_dup 0)
+		(const_int 1)))]
   "TARGET_ALTIVEC || TARGET_VSX"
   "")
 
@@ -972,53 +913,13 @@
  "VECTOR_MEM_VSX_P (<MODE>mode) && TARGET_ALLOW_MOVMISALIGN"
  "")
 
-
-;; Vector shift left in bits.  Currently supported ony for shift
-;; amounts that can be expressed as byte shifts (divisible by 8).
-;; General shift amounts can be supported using vslo + vsl. We're
-;; not expecting to see these yet (the vectorizer currently
-;; generates only shifts divisible by byte_size).
-(define_expand "vec_shl_<mode>"
-  [(match_operand:VEC_L 0 "vlogical_operand" "")
-   (match_operand:VEC_L 1 "vlogical_operand" "")
-   (match_operand:QI 2 "reg_or_short_operand" "")]
-  "TARGET_ALTIVEC"
-  "
-{
-  rtx bitshift = operands[2];
-  rtx shift;
-  rtx insn;
-  HOST_WIDE_INT bitshift_val;
-  HOST_WIDE_INT byteshift_val;
-
-  if (! CONSTANT_P (bitshift))
-    FAIL;
-  bitshift_val = INTVAL (bitshift);
-  if (bitshift_val & 0x7)
-    FAIL;
-  byteshift_val = bitshift_val >> 3;
-  if (TARGET_VSX && (byteshift_val & 0x3) == 0)
-    {
-      shift = gen_rtx_CONST_INT (QImode, byteshift_val >> 2);
-      insn = gen_vsx_xxsldwi_<mode> (operands[0], operands[1], operands[1],
-				     shift);
-    }
-  else
-    {
-      shift = gen_rtx_CONST_INT (QImode, byteshift_val);
-      insn = gen_altivec_vsldoi_<mode> (operands[0], operands[1], operands[1],
-					shift);
-    }
-
-  emit_insn (insn);
-  DONE;
-}")
-
 ;; Vector shift right in bits. Currently supported ony for shift
 ;; amounts that can be expressed as byte shifts (divisible by 8).
 ;; General shift amounts can be supported using vsro + vsr. We're
 ;; not expecting to see these yet (the vectorizer currently
-;; generates only shifts divisible by byte_size).
+;; generates only shifts by a whole number of vector elements).
+;; Note that the vec_shr operation is actually defined as 
+;; 'shift toward element 0' so is a shr for LE and shl for BE.
 (define_expand "vec_shr_<mode>"
   [(match_operand:VEC_L 0 "vlogical_operand" "")
    (match_operand:VEC_L 1 "vlogical_operand" "")
@@ -1029,6 +930,7 @@
   rtx bitshift = operands[2];
   rtx shift;
   rtx insn;
+  rtx zero_reg, op1, op2;
   HOST_WIDE_INT bitshift_val;
   HOST_WIDE_INT byteshift_val;
 
@@ -1037,18 +939,30 @@
   bitshift_val = INTVAL (bitshift);
   if (bitshift_val & 0x7)
     FAIL;
-  byteshift_val = 16 - (bitshift_val >> 3);
+  byteshift_val = (bitshift_val >> 3);
+  zero_reg = gen_reg_rtx (<MODE>mode);
+  emit_move_insn (zero_reg, CONST0_RTX (<MODE>mode));
+  if (!BYTES_BIG_ENDIAN)
+    {
+      byteshift_val = 16 - byteshift_val;
+      op1 = zero_reg;
+      op2 = operands[1];
+    }
+  else
+    {
+      op1 = operands[1];
+      op2 = zero_reg;
+    }
+
   if (TARGET_VSX && (byteshift_val & 0x3) == 0)
     {
       shift = gen_rtx_CONST_INT (QImode, byteshift_val >> 2);
-      insn = gen_vsx_xxsldwi_<mode> (operands[0], operands[1], operands[1],
-				     shift);
+      insn = gen_vsx_xxsldwi_<mode> (operands[0], op1, op2, shift);
     }
   else
     {
       shift = gen_rtx_CONST_INT (QImode, byteshift_val);
-      insn = gen_altivec_vsldoi_<mode> (operands[0], operands[1], operands[1],
-					shift);
+      insn = gen_altivec_vsldoi_<mode> (operands[0], op1, op2, shift);
     }
 
   emit_insn (insn);

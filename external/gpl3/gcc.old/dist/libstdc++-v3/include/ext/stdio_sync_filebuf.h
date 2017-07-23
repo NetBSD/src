@@ -1,6 +1,6 @@
 // Iostreams wrapper for stdio FILE* -*- C++ -*-
 
-// Copyright (C) 2003-2013 Free Software Foundation, Inc.
+// Copyright (C) 2003-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <cstdio>
 #include <bits/c++io.h>  // For __c_file
+#include <bits/move.h>   // For __exchange
 
 #ifdef _GLIBCXX_USE_WCHAR_T
 #include <cwchar>
@@ -64,8 +65,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       typedef typename traits_type::off_type		off_type;
 
     private:
+      typedef std::basic_streambuf<_CharT, _Traits> __streambuf_type;
+
       // Underlying stdio FILE
-      std::__c_file* const _M_file;
+      std::__c_file* _M_file;
 
       // Last character gotten. This is used when pbackfail is
       // called from basic_streambuf::sungetc()
@@ -77,6 +80,33 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       : _M_file(__f), _M_unget_buf(traits_type::eof())
       { }
 
+#if __cplusplus >= 201103L
+      stdio_sync_filebuf(stdio_sync_filebuf&& __fb) noexcept
+      : __streambuf_type(std::move(__fb)),
+      _M_file(__fb._M_file), _M_unget_buf(__fb._M_unget_buf)
+      {
+	__fb._M_file = nullptr;
+	__fb._M_unget_buf = traits_type::eof();
+      }
+
+      stdio_sync_filebuf&
+      operator=(stdio_sync_filebuf&& __fb) noexcept
+      {
+	__streambuf_type::operator=(__fb);
+	_M_file = std::__exchange(__fb._M_file, nullptr);
+	_M_unget_buf = std::__exchange(__fb._M_unget_buf, traits_type::eof());
+	return *this;
+      }
+
+      void
+      swap(stdio_sync_filebuf& __fb)
+      {
+	__streambuf_type::swap(__fb);
+	std::swap(_M_file, __fb._M_file);
+	std::swap(_M_unget_buf, __fb._M_unget_buf);
+      }
+#endif
+
       /**
        *  @return  The underlying FILE*.
        *
@@ -84,7 +114,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
        *  Note that there is no way for the library to track what you do
        *  with the file, so be careful.
        */
-      std::__c_file* const
+      std::__c_file*
       file() { return this->_M_file; }
 
     protected:

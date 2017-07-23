@@ -1,6 +1,6 @@
 // -*- C++ -*- forwarding header.
 
-// Copyright (C) 1997-2013 Free Software Foundation, Inc.
+// Copyright (C) 1997-2015 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -45,7 +45,7 @@
 #include <stdio.h>
 
 #ifndef _GLIBCXX_HAVE_GETS
-extern "C" char* gets (char* __s) __attribute__((deprecated));
+extern "C" char* gets (char* __s) __attribute__((__deprecated__));
 #endif
 
 // Get rid of those macros defined in <stdio.h> in lieu of real functions.
@@ -70,7 +70,9 @@ extern "C" char* gets (char* __s) __attribute__((deprecated));
 #undef fwrite
 #undef getc
 #undef getchar
-#undef gets
+#if __cplusplus <= 201103L
+# undef gets
+#endif
 #undef perror
 #undef printf
 #undef putc
@@ -117,7 +119,10 @@ namespace std
   using ::fwrite;
   using ::getc;
   using ::getchar;
+#if __cplusplus <= 201103L
+  // LWG 2249
   using ::gets;
+#endif
   using ::perror;
   using ::printf;
   using ::putc;
