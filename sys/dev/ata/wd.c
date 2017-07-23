@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.28 2017/07/21 17:32:27 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.29 2017/07/23 13:50:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.28 2017/07/21 17:32:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.29 2017/07/23 13:50:43 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -766,7 +766,8 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	}
 
 	/* Instrumentation. */
-	disk_busy(&wd->sc_dk);
+	if (xfer->c_retries == 0)
+		disk_busy(&wd->sc_dk);
 	switch (wd->atabus->ata_bio(wd->drvp, xfer)) {
 	case ATACMD_TRY_AGAIN:
 		panic("wdstart1: try again");
