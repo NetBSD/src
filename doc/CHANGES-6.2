@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.292 2017/07/21 04:53:34 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.293 2017/07/23 14:30:15 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -18006,4 +18006,29 @@ sys/dev/audio.c					patch
 	Fix occasional stuttering that can be caused by ringbuffer
 	overflow.
 	[nat, ticket #1457]
+
+lib/lua/sqlite/sqlite.c				1.9
+
+	Guard against double freeing of objects (explicit by the Lua
+	program, then later by the garbage collector).
+	This fixes PR bin/52218.
+	[mbalmer, ticket #1452]
+
+libexec/ld.elf_so/tls.c				1.11 via patch
+
+	Fix two bugs related to promotion of DSO TLS blocks into
+	the static thread allocation:
+	(1) Set the DTV vector up whenever an offset into the
+	static allocation is assigned, even if the block itself
+	is not initialized. This has been seen in libstdc++.
+	(2) Do not free a DTV block if it is part of the static
+	thread allocation.
+	[joerg, ticket #1462]
+
+sys/dev/pci/aceride.c				1.37
+sys/dev/pci/pciide_acer_reg.h			1.13
+
+	Apply workaround from FreeBSD to fix read data corruption
+	observed on Fire V100 and mSATA-SSD with mSATA to IDE adapter.
+	[nakayama, ticket #1463]
 
