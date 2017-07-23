@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 2016/05/24 17:42:54 christos Exp $
+#	$NetBSD: Makefile,v 1.63.8.1 2017/07/23 14:41:26 snj Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -15,7 +15,7 @@ CWARNFLAGS.gcc+=	-Wconversion
 CWARNFLAGS.clang+=	-Wno-cast-qual
 
 SRCS =	chared.c chartype.c common.c el.c eln.c emacs.c filecomplete.c \
-	hist.c history.c historyn.c keymacro.c map.c \
+	hist.c history.c historyn.c keymacro.c literal.c map.c \
 	parse.c prompt.c read.c readline.c refresh.c search.c sig.c \
 	terminal.c tokenizer.c tokenizern.c tty.c vi.c
 
@@ -133,6 +133,7 @@ tc1:	libedit.a tc1.o
 # XXX
 .if defined(HAVE_GCC)
 COPTS.editline.c+=	-Wno-cast-qual
+COPTS.literal.c+=	-Wno-sign-conversion
 COPTS.tokenizer.c+=	-Wno-cast-qual
 COPTS.tokenizern.c+=	-Wno-cast-qual
 .endif
