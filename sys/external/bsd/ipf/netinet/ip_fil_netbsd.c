@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.24 2017/07/20 18:12:51 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.25 2017/07/23 06:12:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.24 2017/07/20 18:12:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.25 2017/07/23 06:12:02 christos Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -987,7 +987,7 @@ ipf_send_icmp_err(int type, fr_info_t *fin, int dst)
 		}
 		xtra = MIN(fin->fin_plen, avail - iclen - max_linkhdr);
 		xtra = MIN(xtra, IPV6_MMTU - iclen);
-		if (dst == 0) {
+		if (dst == 0 && !IN6_IS_ADDR_LINKLOCAL(&fin->fin_dst6.in6)) {
 			if (ipf_ifpaddr(&ipfmain, 6, FRI_NORMAL, ifp,
 				       &dst6, NULL) == -1) {
 				FREE_MB_T(m);
