@@ -1,4 +1,4 @@
-.\"	$NetBSD: environ.7,v 1.26 2017/02/25 15:55:45 abhinav Exp $
+.\"	$NetBSD: environ.7,v 1.26.4.1 2017/07/23 15:05:36 snj Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,6 +80,13 @@ by
 or
 .Ql g .
 Sizes less than 512 bytes or greater than a gigabyte are ignored.
+.It Ev EDITRC
+Gives the path name of the file used by
+.Xr editline 7
+when command line editing is enabled in various programs.
+See
+.Xr editrc 5
+for information on the format of the file.
 .It Ev EXINIT
 A startup list of commands read by
 .Xr ex 1
