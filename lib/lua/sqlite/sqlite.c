@@ -1,7 +1,7 @@
-/*	$NetBSD: sqlite.c,v 1.3 2011/10/15 12:58:20 mbalmer Exp $ */
+/*	$NetBSD: sqlite.c,v 1.3.4.1 2017/07/23 14:19:27 snj Exp $ */
 
 /*
- * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
+ * Copyright (c) 2011, 2013, 2016, 2017 Marc Balmer <marc@msys.ch>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -117,7 +117,11 @@ db_close(lua_State *L)
 	sqlite3 **db;
 
 	db = luaL_checkudata(L, 1, SQLITE_DB_METATABLE);
-	lua_pushinteger(L, sqlite3_close(*db));
+	if (*db) {
+		lua_pushinteger(L, sqlite3_close(*db));
+		*db = NULL;
+	} else
+		lua_pushnil(L);
 	return 1;
 
 }
@@ -339,7 +343,10 @@ stmt_finalize(lua_State *L)
 	sqlite3_stmt **stmt;
 
 	stmt = luaL_checkudata(L, 1, SQLITE_STMT_METATABLE);
-	sqlite3_finalize(*stmt);
+	if (*stmt) {
+		sqlite3_finalize(*stmt);
+		*stmt = NULL;
+	}
 	return 0;
 }
 
