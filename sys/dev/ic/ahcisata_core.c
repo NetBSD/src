@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.19 2017/07/21 18:36:47 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.20 2017/07/23 14:14:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.19 2017/07/21 18:36:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.20 2017/07/23 14:14:43 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -77,7 +77,8 @@ static void ahci_bio_kill_xfer(struct ata_channel *, struct ata_xfer *, int) ;
 static void ahci_channel_stop(struct ahci_softc *, struct ata_channel *, int);
 static void ahci_channel_start(struct ahci_softc *, struct ata_channel *,
 				int, int);
-static void ahci_channel_recover(struct ahci_softc *, struct ata_channel *);
+static void ahci_channel_recover(struct ahci_softc *, struct ata_channel *,
+    int);
 static int  ahci_dma_setup(struct ata_channel *, int, void *, size_t, int);
 
 #if NATAPIBUS > 0
@@ -563,6 +564,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 	struct ata_channel *chp = &achp->ata_channel;
 	struct ata_xfer *xfer;
 	int slot;
+	bool recover = false;
 
 	is = AHCI_READ(sc, AHCI_P_IS(chp->ch_channel));
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), is);
@@ -573,34 +575,30 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 	    AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel))),
 	    DEBUG_INTR);
 
-	active = AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))
-		| AHCI_READ(sc, AHCI_P_SACT(chp->ch_channel));
-
-	/* Complete all successful commands first */
-	for (slot=0; slot < sc->sc_ncmds; slot++) {
-		if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
-			continue;
-		if ((active & (1 << slot)) == 0) {
-			xfer = ata_queue_hwslot_to_xfer(chp, slot);
-			xfer->c_intr(chp, xfer, 0);
-		}
+	if ((chp->ch_flags & ATACH_NCQ) == 0) {
+		/* Non-NCQ operation */
+		active = AHCI_READ(sc, AHCI_P_CI(chp->ch_channel));
+		slot = (AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel))
+			& AHCI_P_CMD_CCS_MASK) >> AHCI_P_CMD_CCS_SHIFT;
+	} else {
+		/* NCQ operation */
+		active = AHCI_READ(sc, AHCI_P_SACT(chp->ch_channel));
+		slot = -1;
 	}
 
 	/* Handle errors */
 	if (is & (AHCI_P_IX_TFES | AHCI_P_IX_HBFS | AHCI_P_IX_HBDS |
 	    AHCI_P_IX_IFS | AHCI_P_IX_OFS | AHCI_P_IX_UFS)) {
+		/* Fatal errors */
 		if (is & AHCI_P_IX_TFES) {
 			tfd = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
-
-			if ((AHCI_TFD_ST(tfd) & (WDCS_DRQ|WDCS_BSY)) == 0 &&
-			    !achp->ahcic_recovering)
-				goto recover;
 
 			aprint_error("%s port %d: active %x is 0x%x tfd 0x%x\n",
 			    AHCINAME(sc), chp->ch_channel, active, is, tfd);
 		} else {
-			/* emulate a CRC error */
-			tfd = (WDCE_CRC << AHCI_P_TFD_ERR_SHIFT) | WDCS_ERR;
+			/* mark an error, and set BSY */
+			tfd = (WDCE_ABRT << AHCI_P_TFD_ERR_SHIFT) |
+			    WDCS_ERR | WDCS_BSY;
 		}
 
 		if (is & AHCI_P_IX_IFS) {
@@ -609,28 +607,51 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 			    AHCI_READ(sc, AHCI_P_SERR(chp->ch_channel)));
 		}
 
-		/* Request channel reset */
-		ata_reset_channel(chp, 0);
-		return;
+		if (!achp->ahcic_recovering)
+			recover = true;
 	} else if (is & (AHCI_P_IX_DHRS|AHCI_P_IX_SDBS)) {
-		/* D2H Register FIS or Set Device Bits */
 		tfd = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
+
+		/* D2H Register FIS or Set Device Bits */
 		if ((tfd & WDCS_ERR) != 0 && !achp->ahcic_recovering) {
-recover:
+			recover = true;
+
 			aprint_error("%s port %d: transfer aborted 0x%x\n",
 			    AHCINAME(sc), chp->ch_channel, tfd);
 
-			/*
-			 * Device indicated transfer aborted without any fatal
-			 * error. Transfers can be reissued after resetting
-			 * CMD.ST. Need to execute READ LOG EXT for NCQ
-			 * commands.
-			 */
-			ahci_channel_stop(sc, chp, AT_POLL);
-			ahci_channel_start(sc, chp, AT_POLL,
-	    		    (sc->sc_ahci_cap & AHCI_CAP_CLO) ? 1 : 0);
-			ahci_channel_recover(sc, chp);
 		}
+	} else {
+		tfd = 0;
+	}
+
+	if (recover)
+		ata_channel_freeze(chp);
+
+	if (slot >= 0) {
+		if ((achp->ahcic_cmds_active & (1 << slot)) != 0 &&
+		    (active & (1 << slot)) == 0) {
+			xfer = ata_queue_hwslot_to_xfer(chp, slot);
+			xfer->c_intr(chp, xfer, tfd);
+		}
+	} else {
+		/*
+		 * For NCQ, HBA halts processing when error is notified,
+		 * and any further D2H FISes are ignored until the error
+		 * condition is cleared. Hence if a command is inactive,
+		 * it means it actually already finished successfully.
+		 */
+		for (slot=0; slot < sc->sc_ncmds; slot++) {
+			if ((achp->ahcic_cmds_active & (1 << slot)) != 0 &&
+			    (active & (1 << slot)) == 0) {
+				xfer = ata_queue_hwslot_to_xfer(chp, slot);
+				xfer->c_intr(chp, xfer, 0);
+			}
+		}
+	}
+
+	if (recover) {
+		ata_channel_thaw(chp);
+		ahci_channel_recover(sc, chp, tfd);
 	}
 }
 
@@ -858,7 +879,7 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 			break;
 		ata_delay(10, "ahcid2h", flags);
 	}
-	if (i == AHCI_RST_WAIT)
+	if ((AHCI_TFD_ST(tfd) & WDCS_BSY) != 0)
 		aprint_error("%s: BSY never cleared, TD 0x%x\n",
 		    AHCINAME(sc), tfd);
 	AHCIDEBUG_PRINT(("%s: BSY took %d ms\n", AHCINAME(sc), i * 10),
@@ -1127,7 +1148,7 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 		ata_c->flags |= AT_TIMEOU;
 	}
 
-	if (AHCI_TFD_ERR(tfd) & WDCS_BSY) {
+	if (AHCI_TFD_ST(tfd) & WDCS_BSY) {
 		ata_c->flags |= AT_TIMEOU;
 	} else if (AHCI_TFD_ST(tfd) & WDCS_ERR) {
 		ata_c->r_error = AHCI_TFD_ERR(tfd);
@@ -1476,15 +1497,16 @@ ahci_unhold(struct ahci_channel *achp)
 	achp->ahcic_cmds_hold = 0;
 }
 
-/* Recover channel after transfer aborted */
+/* Recover channel after command failure */
 void
-ahci_channel_recover(struct ahci_softc *sc, struct ata_channel *chp)
+ahci_channel_recover(struct ahci_softc *sc, struct ata_channel *chp, int tfd)
 {
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	struct ata_drive_datas *drvp;
-	uint8_t slot, st, err;
+	uint8_t slot, eslot, st, err;
 	int drive = -1, error;
 	struct ata_xfer *xfer;
+	bool reset = false;
 
 	KASSERT(!achp->ahcic_recovering);
 
@@ -1496,7 +1518,7 @@ ahci_channel_recover(struct ahci_softc *sc, struct ata_channel *chp)
 	 * if FIS-based switching (FBSS) feature is supported, or disabled.
 	 * If FIS-based switching is not in use, it merely maintains single
 	 * pair of DRQ/BSY state, but it is enough since in that case we
-	 * never issue commands for more than one device at the time.
+	 * never issue commands for more than one device at the time anyway.
 	 * XXX untested
 	 */
 	if (chp->ch_ndrives > PMP_PORT_CTL) {
@@ -1519,18 +1541,39 @@ ahci_channel_recover(struct ahci_softc *sc, struct ata_channel *chp)
 			}
 			if ((fbs & AHCI_P_FBS_DEC) != 0) {
 				/* follow non-device specific recovery */
-				error = EINVAL;
-				goto reset;
+				drive = -1;
+				reset = true;
 			}
 		} else {
 			/* not device specific, reset channel */
-			error = EINVAL;
-			goto reset;
+			drive = -1;
+			reset = true;
 		}
 	} else
 		drive = 0;
 
 	drvp = &chp->ch_drive[drive];
+
+	/*
+	 * If BSY or DRQ bits are set, must execute COMRESET to return
+	 * device to idle state. Otherwise, commands can be reissued
+	 * after resetting CMD.ST. After resetting CMD.ST, need to execute
+	 * READ LOG EXT for NCQ to unblock device processing if COMRESET
+	 * was not done.
+	 */
+	if (reset || (AHCI_TFD_ST(tfd) & (WDCS_BSY|WDCS_DRQ)) != 0)
+		goto reset;
+
+	KASSERT(drive >= 0);
+	ahci_channel_stop(sc, chp, AT_POLL);
+	if (ahci_do_reset_drive(chp, drive, AT_POLL, NULL) != 0) {
+reset:
+		/* This will also kill all still outstanding transfers */
+		ahci_reset_channel(chp, AT_POLL);
+		goto out;
+	}
+	ahci_channel_start(sc, chp, AT_POLL,
+   	    (sc->sc_ahci_cap & AHCI_CAP_CLO) ? 1 : 0);
 
 	ahci_hold(achp);
 
@@ -1538,44 +1581,41 @@ ahci_channel_recover(struct ahci_softc *sc, struct ata_channel *chp)
 	 * When running NCQ commands, READ LOG EXT is necessary to clear the
 	 * error condition and unblock the device.
 	 */
-	error = ata_read_log_ext_ncq(drvp, AT_POLL, &slot, &st, &err);
+	error = ata_read_log_ext_ncq(drvp, AT_POLL, &eslot, &st, &err);
 
-reset:
 	ahci_unhold(achp);
 
-	if (error == EOPNOTSUPP) {
-		/*
-		 * Not NCQ command or not NCQ device, there is only
-		 * one outstanding tranfer, so find the active one,
-		 * and send the error.
-		 */
-		xfer = ata_queue_drive_active_xfer(chp, drive);
-		xfer->c_intr(chp, xfer,
-		    (WDCE_CRC << AHCI_P_TFD_ERR_SHIFT) | WDCS_ERR);
-
-	} else if (error == 0) {
-		xfer = ata_queue_hwslot_to_xfer(chp, slot);
+	if (error == 0) {
+		/* Error out the particular NCQ xfer, then requeue the others */
+		xfer = ata_queue_hwslot_to_xfer(chp, eslot);
 		xfer->c_intr(chp, xfer, (err << AHCI_P_TFD_ERR_SHIFT) | st);
+	} else if (error == EOPNOTSUPP) {
+		/* command already processed before entering recovery */
+		KASSERT(achp->ahcic_cmds_active == 0);
 	} else {
-		/* Other error, request channel reset */
-		drive = -1;
-		ata_reset_channel(chp, 0);
+		/*
+		 * Failed to get the slot, just kill all outstanding for
+		 * the same drive.
+		 */
 	}
 
-	/* Requeue the non-errorred commands */ 
+	/* Requeue all unfinished commands for same drive as failed command */ 
 	for (slot = 0; slot < sc->sc_ncmds; slot++) {
 		if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
 			continue;
 
 		xfer = ata_queue_hwslot_to_xfer(chp, slot);
-		if (drive >= 0 && xfer->c_drive != drive)
+		if (drive != xfer->c_drive)
 			continue;
 
 		xfer->c_kill_xfer(chp, xfer,
-		     drive >= 0 ? KILL_REQUEUE : KILL_RESET);
+		    (error == 0) ? KILL_REQUEUE : KILL_RESET);
 	}
 
+out:
+	/* Drive unblocked, back to normal operation */
 	achp->ahcic_recovering = false;
+	atastart(chp);
 }
 
 static int
