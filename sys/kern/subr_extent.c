@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.80 2016/12/19 13:02:14 cherry Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.81 2017/07/24 19:56:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.80 2016/12/19 13:02:14 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.81 2017/07/24 19:56:07 skrll Exp $");
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
@@ -126,17 +126,9 @@ static struct extent_region *
 extent_alloc_region_descriptor(struct extent *ex, int flags)
 {
 	struct extent_region *rp;
-	int exflags, error;
+	int error;
 
-	/*
-	 * XXX Make a static, create-time flags word, so we don't
-	 * XXX have to lock to read it!
-	 */
-	mutex_enter(&ex->ex_lock);
-	exflags = ex->ex_flags;
-	mutex_exit(&ex->ex_lock);
-
-	if (exflags & EXF_FIXED) {
+	if (ex->ex_flags & EXF_FIXED) {
 		struct extent_fixed *fex = (struct extent_fixed *)ex;
 
 		mutex_enter(&ex->ex_lock);
@@ -160,7 +152,7 @@ extent_alloc_region_descriptor(struct extent *ex, int flags)
 				mutex_exit(&ex->ex_lock);
 				return (NULL);
 			}
-			ex->ex_flags |= EXF_FLWANTED;
+			ex->ex_flwanted = true;
 			if ((flags & EX_CATCH) != 0)
 				error = cv_wait_sig(&ex->ex_cv, &ex->ex_lock);
 			else {
@@ -199,7 +191,7 @@ extent_free_region_descriptor(struct extent *ex, struct extent_region *rp)
 		 * just free'ing it back to the system.
 		 */
 		if (rp->er_flags & ER_ALLOC) {
-			if (ex->ex_flags & EXF_FLWANTED) {
+			if (ex->ex_flwanted) {
 				/* Clear all but ER_ALLOC flag. */
 				rp->er_flags = ER_ALLOC;
 				LIST_INSERT_HEAD(&fex->fex_freelist, rp,
@@ -214,7 +206,7 @@ extent_free_region_descriptor(struct extent *ex, struct extent_region *rp)
 		}
 
  wake_em_up:
-		ex->ex_flags &= ~EXF_FLWANTED;
+		ex->ex_flwanted = false;
 		cv_broadcast(&ex->ex_cv);
 		return;
 	}
@@ -300,6 +292,7 @@ extent_create(const char *name, u_long start, u_long end,
 	ex->ex_start = start;
 	ex->ex_end = end;
 	ex->ex_flags = 0;
+	ex->ex_flwanted = false;
 	if (fixed_extent)
 		ex->ex_flags |= EXF_FIXED;
 	if (flags & EX_NOCOALESCE)
@@ -1009,7 +1002,6 @@ extent_free(struct extent *ex, u_long start, u_long size, int flags)
 {
 	struct extent_region *rp, *nrp = NULL;
 	u_long end = start + (size - 1);
-	int coalesce;
 
 #ifdef DIAGNOSTIC
 	/*
@@ -1040,13 +1032,8 @@ extent_free(struct extent *ex, u_long start, u_long size, int flags)
 	/*
 	 * If we're allowing coalescing, we must allocate a region
 	 * descriptor now, since it might block.
-	 *
-	 * XXX Make a static, create-time flags word, so we don't
-	 * XXX have to lock to read it!
 	 */
-	mutex_enter(&ex->ex_lock);
-	coalesce = (ex->ex_flags & EXF_NOCOALESCE) == 0;
-	mutex_exit(&ex->ex_lock);
+	const bool coalesce = (ex->ex_flags & EXF_NOCOALESCE) == 0;
 
 	if (coalesce) {
 		/* Allocate a region descriptor. */
