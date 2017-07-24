@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.20 2017/07/24 19:22:32 skrll Exp $	*/
+/*	$NetBSD: extent.h,v 1.21 2017/07/24 19:56:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ struct extent {
 	u_long	ex_start;		/* start of extent */
 	u_long	ex_end;			/* end of extent */
 	int	ex_flags;		/* misc. information */
+	bool	ex_flwanted;		/* someone asleep on freelist */
 };
 
 struct extent_fixed {
