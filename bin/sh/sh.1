@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.161 2017/07/24 13:21:14 kre Exp $
+.\"	$NetBSD: sh.1,v 1.162 2017/07/24 14:17:11 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -453,6 +453,12 @@ in the
 .Sx Built-ins
 section.)
 (Not implemented.)
+.It "\ \ " Em pipefail
+If set, the way the exit status of a pipeline is determined
+is altered.
+See
+.Sx Pipelines
+below for the details.
 .It "\ \ " Em posix
 Enables closer adherence to the POSIX shell standard.
 This option will default set at shell startup if the
@@ -822,22 +828,26 @@ is returned.
 .Ss Complex Commands
 Complex commands are combinations of simple commands with control
 operators or reserved words, together creating a larger complex command.
-More generally, a command is one of the following:
-.Bl -bullet
-.It
-simple command
-.It
-pipeline
-.It
-list or compound-list
-.It
-compound command
-.It
-function definition
+Overall, a shell program is a:
+.Bl -tag -width XpipelineX
+.It list
+Which is a sequence of one or more AND-OR lists. 
+.It "AND-OR list"
+is a sequence of one or more pipelines.
+.It pipeline
+is a sequence of one or more commands.
+.It command
+is one of a simple command, a compound command, or a function definition.
+.It "simple command"
+has been explained above, and is the basic building block.
+.It "compound command"
+provides mechanisms to group lists to achieve different effects.
+.It "function definition"
+allows new simple commands to be created as groupings of existing commands.
 .El
 .Pp
-Unless otherwise stated, the exit status of a command is that of the last
-simple command executed by the command.
+Unless otherwise stated, the exit status of a list
+is that of the last simple command executed by the list.
 .Ss Pipelines
 A pipeline is a sequence of one or more commands separated
 by the control operator
@@ -845,11 +855,23 @@ by the control operator
 and optionally preceded by the
 .Dq \&!
 reserved word.
+Note that
+.Sq \&|
+is an operator, and so is recognized anywhere it appears unquoted,
+it does not require surrounding white space or other syntax elements.
+On the other hand
+.Dq \&!
+being a reserved word, must be separated from adjacent words by
+white space (or other operators, perhaps redirects) and is only
+recognized as the reserved word when it appears in a command word
+position (such as at the beginning of a pipeline.)
+.Pp
 The standard output of all but
-the last command is connected to the standard input
+the last command in the sequence is connected to the standard input
 of the next command.
 The standard output of the last
-command is inherited from the shell, as usual.
+command is inherited from the shell, as usual,
+as is the standard input of the first command.
 .Pp
 The format for a pipeline is:
 .Pp
@@ -857,20 +879,36 @@ The format for a pipeline is:
 .Pp
 The standard output of command1 is connected to the standard input of
 command2.
-The standard input, standard output, or both of a command is
+The standard input, standard output, or both of each command is
 considered to be assigned by the pipeline before any redirection specified
 by redirection operators that are part of the command are performed.
 .Pp
 If the pipeline is not in the background (discussed later), the shell
 waits for all commands to complete.
 .Pp
-If the reserved word ! does not precede the pipeline, the exit status is
-the exit status of the last command specified in the pipeline.
-Otherwise, the exit status is the logical NOT of the exit status of the
-last command.
-That is, if the last command returns zero, the exit status
-is 1; if the last command returns greater than zero, the exit status is
-zero.
+The commands in a pipeline can either be simple commands,
+or one of the compound commands described below.
+The simplest case of a pipeline is a single simple command.
+.Pp
+If the
+.Ic pipefail
+option is set when the pipeline completes and its status is
+collected, the pipeline status is the status of
+the last (rightmost) command in the pipeline to exit with non-zero exit
+status, or zero, if, and only if, all commands in the pipeline
+exited with a status of zero.
+If the
+.Ic pipefail
+option is not set, which is the default state,
+the pipeline status is the exit
+status of the last command in the pipeline,
+and the exit status of any other commands in the pipeline is ignored.
+.Pp
+If the reserved word ! precedes the pipeline, the exit status 
+becomes the logical NOT of the pipeline status as determined above.
+That is, if the pipeline status is zero, the exit status is 1;
+if the pipeline status is other than zero, the exit status is zero.
+If there is no ! reserved word, the pipeline status becomes the exit status.
 .Pp
 Because pipeline assignment of standard input or standard output or both
 takes place before redirection, it can be modified by redirection.
@@ -881,24 +919,29 @@ For example:
 sends both the standard output and standard error of command1
 to the standard input of command2.
 .Pp
+Note that unlike some other shells, each process in the pipeline is a
+child of the invoking shell (unless it is a shell built-in, in which case
+it executes in the current shell -- but any effect it has on the
+environment is wiped).
+.Pp
+A pipeline is a simple case of an AND-OR-list (described below.)
 A ; or
 .Aq newline
-terminator causes the preceding AND-OR-list (described
-next) to be executed sequentially; a & causes asynchronous execution of
-the preceding AND-OR-list.
+terminator causes the preceding pipeline, or more generally,
+the preceding AND-OR-list to be executed sequentially;
+that is, the shell executes the commands, and waits for them
+to finish before proceeding to following commands.
+An & terminator causes asynchronous (background) execution
+of the preceding AND-OR-list (see the next paragraph below).
 The exit status of an asynchronous AND-OR-list is zero.
 The actual status of the commands,
 after they have completed,
 can be obtained using the
 .Ic wait
 built-in command described later.
-.Pp
-Note that unlike some other shells, each process in the pipeline is a
-child of the invoking shell (unless it is a shell built-in, in which case
-it executes in the current shell -- but any effect it has on the
-environment is wiped).
 .Ss Background Commands -- &
-If a command is terminated by the control operator ampersand (&), the
+If a command, pipeline, or AND-OR-list
+is terminated by the control operator ampersand (&), the
 shell executes the command asynchronously -- that is, the shell does not
 wait for the command to finish before executing the next command.
 .Pp
@@ -913,11 +956,19 @@ The process identifier of the most recent command started in the
 background can be obtained from the value of the special parameter
 .Dq \&!
 (see
-.Sx Special Parameters ) .
+.Sx Special Parameters )
+provided it is accessed before the next asynchronous command is started.
 .Ss Lists -- Generally Speaking
 A list is a sequence of one or more commands separated by newlines,
 semicolons, or ampersands, and optionally terminated by one of these three
 characters.
+A shell program, which includes the commands given to an
+interactive shell, is a list.
+Each command in such a list is executed when it is fully parsed.
+Another use of a list is as a complete-command,
+which is parsed in its entirety, and then later the commands in
+the list are executed only if there were no parsing errors.
+.Pp
 The commands in a list are executed in the order they are written.
 If command is followed by an ampersand, the shell starts the
 command and immediately proceeds to the next command; otherwise it waits
@@ -927,28 +978,32 @@ A newline is equivalent to a
 when no other operator is present, and the command being input
 could syntactically correctly be terminated at the point where
 the newline is encountered, otherwise it is just whitespace.
-.Ss Short-Circuit List Operators
+.Ss AND-OR Lists (Short-Circuit List Operators)
 .Dq &&
 and
 .Dq ||
 are AND-OR list operators.
+After executing the commands that precede the
 .Dq &&
-executes the first command, and then executes the second command if and only
-if the exit status of the first command is zero.
+the subsequent command is executed
+if and only if the exit status of the preceding command(s) is zero.
 .Dq ||
-is similar, but executes the second command if and only if the exit status
-of the first command is nonzero.
+is similar, but executes the subsequent command if and only if the exit status
+of the preceding command is nonzero.
+If a command is not executed, the exit status remains unchanged
+and the following AND-OR list operator (if any) uses that status.
 .Dq &&
 and
 .Dq ||
 both have the same priority.
 Note that these operators are left-associative, so
-.Dq true || echo bar && echo baz
+.Dl true || echo bar && echo baz
 writes
 .Dq baz
 and nothing else.
 This is not the way it works in C.
-.Ss Flow-Control Constructs -- if, while, for, case
+.Ss Flow-Control Constructs -- if, while, until, for, case
+These commands are instances of compound commands.
 The syntax of the
 .Ic if
 command is
@@ -1002,9 +1057,15 @@ do   list
 done
 .Ed
 .Pp
-The words are expanded, or "$@" if no words are given,
+The words are expanded, or "$@" if
+.Dq in
+(and the following words) is not present,
 and then the list is executed repeatedly with the
 variable set to each word in turn.
+If
+.Dq in
+appears after the variable, but no words are
+present, the list is not executed, and the exit status is zero.
 .Ic do
 and
 .Ic done
@@ -1040,7 +1101,7 @@ innermost
 or
 .Ic until
 loops, and then continues with the next iteration of the enclosing loop.
-These are implemented as built-in commands.
+These are implemented as special built-in commands.
 The parameter
 .Ar num ,
 if given, must be an unsigned positive integer (greater than zero).
@@ -1051,8 +1112,8 @@ The syntax of the
 command is
 .Bd -literal -offset indent
 case word in
-[(] pattern ) list ;&
-[(] pattern ) list ;;
+[(] pattern ) [ list ] ;&
+[(] pattern ) [ list ] ;;
 \&...
 esac
 .Ed
@@ -1067,8 +1128,8 @@ Word is expanded and matched against each pattern in turn,
 from first to last,
 with each pattern being expanded just before the match is attempted.
 When a match is found, pattern comparisons cease, and the associated
-.Dq list
-(which may be empty)
+.Dq list ,
+if given,
 is evaluated.
 If the list is terminated with
 .Dq \&;&
@@ -1078,19 +1139,17 @@ When a list terminated with
 .Dq \&;;
 has been executed, or when
 .Ic esac
-is reached execution of the
+is reached, execution of the
 .Ic case
 statement is complete.
 The exit status is that of the last command executed
 from the last list evaluated, if any, or zero otherwise.
 .Ss Grouping Commands Together
 Commands may be grouped by writing either
-.Pp
 .Dl (list)
-.Pp
 or
-.Pp
 .Dl { list; }
+These also form compound commands.
 .Pp
 Note that while parentheses are operators, and do not require
 any extra syntax, braces are reserved words, so the opening brace
