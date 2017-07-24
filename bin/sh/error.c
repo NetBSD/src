@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.40 2017/07/05 20:00:27 kre Exp $	*/
+/*	$NetBSD: error.c,v 1.41 2017/07/24 12:35:12 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.40 2017/07/05 20:00:27 kre Exp $");
+__RCSID("$NetBSD: error.c,v 1.41 2017/07/24 12:35:12 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,8 @@ exvwarning(int sv_errno, const char *msg, va_list ap)
 	 *	printf '%d %d %d\n' 1 a 2
 	 * both generate sensible text when stdout and stderr are merged.
 	 */
-	if (output.nextc != output.buf && output.nextc[-1] == '\n')
+	if (output.buf != NULL && output.nextc != output.buf &&
+	    output.nextc[-1] == '\n')
 		flushout(&output);
 	if (commandname)
 		outfmt(&errout, "%s: ", commandname);
