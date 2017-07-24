@@ -1,4 +1,4 @@
-/* $NetBSD: getsecs.c,v 1.1.1.1 2017/07/24 08:56:29 mrg Exp $ */
+/* $NetBSD: getsecs.c,v 1.2 2017/07/24 10:34:55 mrg Exp $ */
 
 /*
  * Copyright 2001
@@ -42,7 +42,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 
-#include "stand/common/cfe_api.h"
+#include "stand/sbmips/common/cfe_api.h"
 
 satime_t
 getsecs(void)

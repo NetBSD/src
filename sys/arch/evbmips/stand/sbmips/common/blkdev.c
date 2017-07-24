@@ -1,4 +1,4 @@
-/* $NetBSD: blkdev.c,v 1.1.1.1 2017/07/24 08:56:29 mrg Exp $ */
+/* $NetBSD: blkdev.c,v 1.2 2017/07/24 10:34:54 mrg Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -70,9 +70,9 @@
 #include <sys/param.h>
 #include <sys/disklabel.h>
 
-#include "stand/common/cfe_api.h"
+#include "stand/sbmips/common/cfe_api.h"
 
-#include "stand/common/common.h"
+#include "stand/sbmips/common/common.h"
 #include "blkdev.h"
 
 /*

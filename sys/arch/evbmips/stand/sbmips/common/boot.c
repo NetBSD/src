@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.1.1.1 2017/07/24 08:56:29 mrg Exp $ */
+/* $NetBSD: boot.c,v 1.2 2017/07/24 10:34:54 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,10 +42,10 @@
 #include <sys/exec.h>
 #include <sys/exec_ecoff.h>
 
-#include "stand/common/common.h"
-#include "stand/common/cfe_api.h"
+#include "stand/sbmips/common/common.h"
+#include "stand/sbmips/common/cfe_api.h"
 
-#include <machine/autoconf.h>
+#include <sbmips/autoconf.h>
 
 #if !defined(UNIFIED_BOOTBLOCK) && !defined(SECONDARY_BOOTBLOCK)
 #error not UNIFIED_BOOTBLOCK and not SECONDARY_BOOTBLOCK
