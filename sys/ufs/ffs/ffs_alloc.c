@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.156 2017/03/18 05:20:04 riastradh Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.156.6.1 2017/07/24 06:21:57 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.156 2017/03/18 05:20:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.156.6.1 2017/07/24 06:21:57 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1379,8 +1379,8 @@ gotit:
 	}
 	mutex_exit(&ump->um_lock);
 	if (ibp != NULL) {
+		bwrite(ibp);
 		bwrite(bp);
-		bawrite(ibp);
 	} else
 		bdwrite(bp);
 	return (cg * fs->fs_ipg + ipref);
