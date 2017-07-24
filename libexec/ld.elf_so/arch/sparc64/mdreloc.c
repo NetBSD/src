@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.62 2017/07/23 14:37:51 martin Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.63 2017/07/24 08:08:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.62 2017/07/23 14:37:51 martin Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.63 2017/07/24 08:08:34 martin Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -651,7 +651,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		 *	nop
 		 *
 		 */
-		where[1] = BAA | (offBAA >> 2);
+		where[1] = BAA | ((offBAA >> 2) & 0x7ffff);
 		__asm volatile("iflush %0+4" : : "r" (where));
 	} else if (value < (1L<<32)) {
 		/* 
