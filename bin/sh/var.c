@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.65 2017/07/12 19:06:16 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.66 2017/07/24 13:36:15 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.65 2017/07/12 19:06:16 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.66 2017/07/24 13:36:15 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -422,10 +422,13 @@ setvareq(char *s, int flags)
 	struct var *vp, **vpp;
 	int nlen;
 
+	VTRACE(DBG_VARS, ("setvareq([%s],%#x) aflag=%d ", s, flags, aflag));
 	if (aflag && !(flags & VNOEXPORT))
 		flags |= VEXPORT;
 	vp = find_var(s, &vpp, &nlen);
 	if (vp != NULL) {
+		VTRACE(DBG_VARS, ("was [%s] fl:%#x\n", vp->text,
+		    vp->flags));
 		if (vp->flags & VREADONLY) {
 			if ((flags & (VTEXTFIXED|VSTACK)) == 0)
 				ckfree(s);
@@ -465,6 +468,7 @@ setvareq(char *s, int flags)
 		INTON;
 		return;
 	}
+	VTRACE(DBG_VARS, ("new\n"));
 	/* not found */
 	if (flags & VNOSET) {
 		if ((flags & (VTEXTFIXED|VSTACK)) == 0)
