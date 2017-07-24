@@ -1,4 +1,4 @@
-/*	$NetBSD: arith_tokens.h,v 1.2 2017/06/07 05:08:32 kre Exp $	*/
+/*	$NetBSD: arith_tokens.h,v 1.3 2017/07/24 13:21:14 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -98,6 +98,9 @@
 #define	ARITH_BNOT	36
 #define	ARITH_QMARK	37
 #define	ARITH_COLON	38
+#define	ARITH_INCR	39
+#define	ARITH_DECR	40
+#define	ARITH_COMMA	41
 
 /*
  * Globals shared between arith parser, and lexer

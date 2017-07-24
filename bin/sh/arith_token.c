@@ -1,4 +1,4 @@
-/*	$NetBSD: arith_token.c,v 1.5 2017/06/07 05:08:32 kre Exp $	*/
+/*	$NetBSD: arith_token.c,v 1.6 2017/07/24 13:21:14 kre Exp $	*/
 
 /*-
  * Copyright (c) 2002
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arith_token.c,v 1.5 2017/06/07 05:08:32 kre Exp $");
+__RCSID("$NetBSD: arith_token.c,v 1.6 2017/07/24 13:21:14 kre Exp $");
 #endif /* not lint */
 
 #include <inttypes.h>
@@ -212,13 +212,19 @@ arith_token(void)
 			goto checkeq;
 
 		case '+':
-			if (buf[1] == '+')
-				error("arithmetic: ++ operator unsupported");
+			if (buf[1] == '+') {
+				buf++;
+				token = ARITH_INCR;
+				break;
+			}
 			token = ARITH_ADD;
 			goto checkeq;
 		case '-':
-			if (buf[1] == '-')
-				error("arithmetic: -- operator unsupported");
+			if (buf[1] == '-') {
+				buf++;
+				token = ARITH_DECR;
+				break;
+			}
 			token = ARITH_SUB;
 			goto checkeq;
 		case '~':
@@ -233,6 +239,9 @@ arith_token(void)
 			break;
 		case ':':
 			token = ARITH_COLON;
+			break;
+		case ',':
+			token = ARITH_COMMA;
 			break;
 		}
 		break;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.160 2017/07/24 12:36:02 kre Exp $
+.\"	$NetBSD: sh.1,v 1.161 2017/07/24 13:21:14 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1528,13 +1528,24 @@ string, which might result in syntax errors.
 Referencing the value of a variable which is not numeric is an error.
 .Pp
 All of the C expression operators applicable to integers are supported,
-and operate as they would in a C expression, except the unary
-.Dq ++
-and
-.Dq --
-operators (in both prefix and postfix forms) and the
-.Dq \&,
-(comma) operator, which are currently not supported.
+and operate as they would in a C expression.
+Use white space, or parentheses, to disambiguate confusing syntax,
+otherwise, as in C, the longest sequence of consecutive characters
+which make a valid token (operator, variable name, or number) is taken
+to be that token, even if the token designated cannot be used
+and a different interpretation could produce a successful parse.
+This means, as an example, that
+.Dq a+++++b
+is parsed as the gibberish sequence
+.Dq "a ++ ++ + b" ,
+rather than as the valid alternative
+.Dq "a ++ + ++ b" .
+Similarly, separate the
+.Sq \&,
+operator from numbers with white space to avoid the possibility
+of confusion with the decimal indicator in some locales (though
+fractional, or floating-point, numbers are not supported in this
+implementation.)
 .Pp
 It should not be necessary to state that the C operators which
 operate on, or produce, pointer types, are not supported.
