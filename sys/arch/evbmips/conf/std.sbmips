@@ -1,6 +1,6 @@
-# $NetBSD: std.sbmips,v 1.1.1.1 2017/07/24 08:56:29 mrg Exp $
+# $NetBSD: std.sbmips,v 1.2 2017/07/24 09:56:45 mrg Exp $
 
-machine sbmips mips
+machine evbmips mips
 include		"conf/std"	# MI standard options
 
 options 	MIPS64
@@ -13,4 +13,5 @@ makeoptions	CFLAGS+="-mips64 -mtune=sb1"
 makeoptions	AFLAGS+="-mips64 -mtune=sb1"
 makeoptions	DEFTEXTADDR="0x80001000"
 
+include	"arch/evbmips/conf/files.sbmips"
 include	"arch/mips/conf/files.sibyte"
