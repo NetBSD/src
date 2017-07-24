@@ -89,7 +89,7 @@ ATF_TC_BODY(fe_round, tc)
 		    (fegetround() == values[i].round_mode),
 		    "Didn't get the same rounding mode out!\n"
 		    "(index %d) fed in %d rounding mode, got %d out\n",
-		    i, fegetround(), values[i].round_mode);
+		    i, values[i].round_mode, fegetround());
 	}
 }
 
