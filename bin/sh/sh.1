@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.159 2017/07/01 05:11:57 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.160 2017/07/24 12:36:02 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd July 1, 2017
+.Dd July 15, 2017
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvx
@@ -113,8 +113,8 @@ can be typed directly to the running shell or can be put into a file and
 the file can be executed directly by the shell.
 .Ss Invocation
 If no arguments are present and if the standard input,
-and output, of the shell
-are connected to a terminal (or if the
+and standard error output, of the shell
+are connected to a terminal (or terminals, or if the
 .Fl i
 flag is set),
 and the
@@ -396,7 +396,7 @@ Read commands from standard input (set automatically if
 neither
 .Fl c
 nor file arguments are present).
-If after procesing a command_string with the
+If after processing a command_string with the
 .Fl c
 option, the shell has not exited, and the
 .Fl s
@@ -2515,6 +2515,24 @@ The shift count must be less than or equal to the number of
 positional parameters (
 .Dq $# )
 before the shift.
+.It times
+Prints two lines to standard output.
+Each line contains two accumulated time values, expressed
+in minutes and seconds (including fractions of a second.)
+The first value gives the user time consumed, the second the system time.
+.Pp
+The first output line gives the cpu and system times consumed by the
+shell itself.
+The second line gives the accumulated times for children of this
+shell (and their descendants) which have exited, and then been
+successfully waited for by the relevant parent.
+See
+.Xr times 3
+for more information.
+.Pp
+.Ic times
+has no parameters, and exits with an exit status of 0 unless
+an attempt is made to give it an option.
 .It trap Ar action signal ...
 .It trap \-
 .It trap Oo Fl l Oc
@@ -3086,7 +3104,7 @@ is enabled.
 defaults to
 .Dq + \  .
 .It Ev PSc
-Initialised by the shell, ignoring any value from the environment,
+Initialized by the shell, ignoring any value from the environment,
 to a single character string, either
 .Sq \&#
 or
@@ -3138,7 +3156,7 @@ Returns the number of seconds since the current shell was started.
 Attempts to set this variable are ignored.
 If unset, it remains unset, and returns nothing, unless set again.
 .It Ev START_TIME
-Initialised by the shell to the number of seconds since the Epoch
+Initialized by the shell to the number of seconds since the Epoch
 (see
 .Xr localtime 3 )
 when the shell was started.
