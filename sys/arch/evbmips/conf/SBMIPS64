@@ -1,5 +1,6 @@
+# $NetBSD: SBMIPS64,v 1.2 2017/07/24 09:56:45 mrg Exp $
 
-include "arch/sbmips/conf/GENERIC"
+include "arch/evbmips/conf/SBMIPS"
 
 makeoptions	LP64="yes"
 options 	EXEC_ELF64

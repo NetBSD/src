@@ -1,4 +1,4 @@
-/* $NetBSD: zbbus.c,v 1.1.1.1 2017/07/24 08:56:29 mrg Exp $ */
+/* $NetBSD: zbbus.c,v 1.2 2017/07/24 09:56:45 mrg Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,13 +33,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbbus.c,v 1.1.1.1 2017/07/24 08:56:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbbus.c,v 1.2 2017/07/24 09:56:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <mips/sibyte/include/zbbusvar.h>
+
+#include <evbmips/sbmips/systemsw.h>
 
 #include "locators.h"
 
