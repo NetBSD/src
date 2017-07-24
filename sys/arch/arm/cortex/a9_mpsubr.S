@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.48 2017/07/05 20:53:40 skrll Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.49 2017/07/24 19:37:41 joerg Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,6 +50,10 @@
 	blx	ip
 #endif
 
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17)
+	.arch		armv7a
+	.arch_extension virt
+#endif
 
 // We'll modify va and pa at run time so we can use relocatable addresses.
 #define MMU_INIT(va,pa,n_sec,attr) \
