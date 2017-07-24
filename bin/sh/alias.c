@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.15 2014/06/18 18:17:30 christos Exp $	*/
+/*	$NetBSD: alias.c,v 1.16 2017/07/24 12:34:45 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: alias.c,v 1.15 2014/06/18 18:17:30 christos Exp $");
+__RCSID("$NetBSD: alias.c,v 1.16 2017/07/24 12:34:45 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -268,8 +268,8 @@ hashalias(const char *p)
 {
 	unsigned int hashval;
 
-	hashval = *p << 4;
+	hashval = *(const unsigned char *)p << 4;
 	while (*p)
-		hashval+= *p++;
+		hashval += *p++;
 	return &atab[hashval % ATABSIZE];
 }
