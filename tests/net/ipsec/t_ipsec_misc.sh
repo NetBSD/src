@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.15 2017/07/21 04:43:42 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.16 2017/07/24 02:07:43 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -484,6 +484,10 @@ test_spi()
 	local outfile=./out
 	local spistr=
 	local longtime= shorttime=
+
+	if [ $method = timeout -a $preferred = new ]; then
+		skip_if_qemu
+	fi
 
 	if [ $method = delete ]; then
 		shorttime=100
