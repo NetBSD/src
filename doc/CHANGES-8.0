@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.30 2017/07/23 15:06:16 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.31 2017/07/24 06:37:45 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -4579,4 +4579,51 @@ share/man/man7/environ.7			1.27
 
 	Document EDITRC
 	[kre, ticket #105]
+
+share/man/man8/MAKEDEV.8			1.46
+
+	MAKEDEV(8): Regenerate, documenting lua, dk, plcom, wmcom,
+	hdmicec, mfi, nvme, nvme ns, tpm, and dtrace devices.
+	[sevan, ticket #118]
+
+lib/libpthread/pthread_tsd.c			1.16
+
+	PR/52386: Use the number of iterations we document.
+	[kamil, ticket #119]
+
+sys/uvm/uvm_fault.c				1.200
+tests/lib/libc/sys/t_write.c			1.4-1.6`
+
+	PR/52384: make uvm_fault_check() return EFAULT not EACCES, like
+	our man pages (but not OpenGroup which does not document EFAULT
+	for read/write, and only documents EACCES for sockets) say for
+	read/write.
+	[kamil, ticket #120]
+
+share/man/man7/sysctl.7				1.115
+
+	Document vm.guard_size and vm.thread_guard_size
+	[joerg, ticket #125]
+
+libexec/ld.elf_so/rtld.h			1.128
+
+	Drop comments about symbol exporting, the relevant code is gone.
+	[joerg, ticket #126]
+
+sys/arch/arm/dts/sun8i-h3-nanopi-neo.dts	1.1
+sys/arch/arm/dts/sun8i-h3-orangepi-plus2e.dts	1.1
+sys/arch/arm/dts/sun8i-h3.dtsi			1.1
+sys/conf/Makefile.kern.inc			1.259
+
+	Add support for dts files outside of external/gpl2.
+
+	Add local patches to sun8i-h3-orangepi-plus2e and
+	sun8i-h3-nanopi-neo to enable ethernet support.
+	[jmcneill, ticket #128]
+
+sys/ufs/ffs/ffs_alloc.c				1.157
+
+	When initializing more inodes make sure to write them to disk
+	before writing the cylinder group with updated cg_initediblk.
+	[hannken, ticket #129]
 
