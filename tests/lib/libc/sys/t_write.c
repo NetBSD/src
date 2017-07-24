@@ -1,4 +1,4 @@
-/* $NetBSD: t_write.c,v 1.3 2017/01/13 19:27:23 christos Exp $ */
+/* $NetBSD: t_write.c,v 1.3.6.1 2017/07/24 06:03:42 snj Exp $ */
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -29,9 +29,10 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_write.c,v 1.3 2017/01/13 19:27:23 christos Exp $");
+__RCSID("$NetBSD: t_write.c,v 1.3.6.1 2017/07/24 06:03:42 snj Exp $");
 
 #include <sys/uio.h>
+#include <sys/mman.h>
 
 #include <atf-c.h>
 #include <errno.h>
@@ -42,6 +43,7 @@ __RCSID("$NetBSD: t_write.c,v 1.3 2017/01/13 19:27:23 christos Exp $");
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
+#include <paths.h>
 
 static void		 sighandler(int);
 
@@ -213,6 +215,60 @@ ATF_TC_BODY(writev_iovmax, tc)
 	ATF_REQUIRE_EQ_MSG(errno, EINVAL, "got: %s", strerror(errno));
 }
 
+ATF_TC(write_fault);
+
+ATF_TC_HEAD(write_fault, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Check that writing to non-permitted space returns EFAULT");
+}
+
+#define SIZE 8192
+
+ATF_TC_BODY(write_fault, tc)
+{
+	int fd[2];
+	ATF_REQUIRE(pipe(fd) != -1);
+	// Can't use /dev/null cause it doesn't access the buffer.
+
+	void *map = mmap(NULL, SIZE, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);  
+	ATF_REQUIRE(map != MAP_FAILED);
+
+	ssize_t retval = write(fd[1], map, SIZE); 
+
+	ATF_REQUIRE_EQ_MSG(retval, -1, "got: %zd", retval);
+	ATF_REQUIRE_EQ_MSG(errno, EFAULT, "got: %s", strerror(errno));
+
+	munmap(map, SIZE);
+	close(fd[0]);         
+	close(fd[1]);         
+}
+
+ATF_TC(read_fault);
+
+ATF_TC_HEAD(read_fault, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Check that reading from non-permitted space returns EFAULT");
+}
+
+ATF_TC_BODY(read_fault, tc)
+{
+	int fd = open(_PATH_DEVZERO, O_RDONLY);
+	ATF_REQUIRE(fd != -1);
+
+	void *map = mmap(NULL, SIZE, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);  
+	ATF_REQUIRE(map != MAP_FAILED);
+
+	ssize_t retval = read(fd, map, SIZE); 
+
+	ATF_REQUIRE_EQ_MSG(retval, -1, "got: %zd", retval);
+	ATF_REQUIRE_EQ_MSG(errno, EFAULT, "got: %s", strerror(errno));
+
+	munmap(map, SIZE);
+	close(fd);         
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -221,6 +277,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, write_pos);
 	ATF_TP_ADD_TC(tp, write_ret);
 	ATF_TP_ADD_TC(tp, writev_iovmax);
+	ATF_TP_ADD_TC(tp, write_fault);
+	ATF_TP_ADD_TC(tp, read_fault);
 
 	return atf_no_error();
 }
