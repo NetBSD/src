@@ -1,4 +1,4 @@
-/* $NetBSD: booted_dev.c,v 1.1.1.1 2017/07/24 08:56:29 mrg Exp $ */
+/* $NetBSD: booted_dev.c,v 1.2 2017/07/24 10:34:54 mrg Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -35,8 +35,8 @@
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 
-#include "stand/common/common.h"
-#include "stand/common/cfe_api.h"
+#include "stand/sbmips/common/common.h"
+#include "stand/sbmips/common/cfe_api.h"
 
 int	booted_dev_fd;
 #if defined(PRIMARY_BOOTBLOCK) || defined(UNIFIED_BOOTBLOCK)
