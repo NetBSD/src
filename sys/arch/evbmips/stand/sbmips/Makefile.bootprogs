@@ -1,11 +1,12 @@
-# $NetBSD: Makefile.bootprogs,v 1.1.1.1 2017/07/24 08:56:29 mrg Exp $
+# $NetBSD: Makefile.bootprogs,v 1.2 2017/07/24 10:34:54 mrg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
 
-S=	${.CURDIR}/../../../..
+S=	${.CURDIR}/../../../../..
+COMMON=	${.CURDIR}/../common
 
-.PATH:	${.CURDIR}/../common
+.PATH:	${COMMON}
 
 STRIPFLAG=
 BINMODE= 444
@@ -19,7 +20,7 @@ LIBCRTEND=
 
 STRIP?=	strip
 
-CHECKSIZE_CMD=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh
+CHECKSIZE_CMD=	SIZE=${SIZE} ${HOST_SH} ${COMMON}/checksize.sh
 
 AFLAGS+=	-DASSEMBLER -D_LOCORE -mno-abicalls -mips64
 # -I${.CURDIR}/../.. done by Makefile.inc
@@ -28,7 +29,7 @@ CFLAGS=		-Os -g -ffreestanding -mno-abicalls -msoft-float -G 0
 CFLAGS+=	-mips64
 CFLAGS+=	-Werror ${CWARNFLAGS}
 
-NETBSD_VERS!=${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
+NETBSD_VERS!=${HOST_SH} ${S}/conf/osrelease.sh
 CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
 
 CWARNFLAGS+=	-Wno-main 
@@ -45,7 +46,7 @@ VERSIONFLAGS+=-n
 REGION1_START=		0x20000000		# "Region 1 start"
 REGION1_SIZE!=		expr 256 \* 1024	# 256k
 
-LDSCRIPT=		${.CURDIR}/../common/boot.ldscript
+LDSCRIPT=		${COMMON}/boot.ldscript
 
 # our memory lauout:
 
