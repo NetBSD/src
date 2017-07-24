@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.87 2017/06/17 12:12:50 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.88 2017/07/24 14:17:11 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.87 2017/06/17 12:12:50 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.88 2017/07/24 14:17:11 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -649,7 +649,17 @@ waitcmd(int argc, char **argv)
 			if (dowait(WBLOCK|WNOFREE, job) == -1)
 			       return 128 + lastsig();
 		}
-		status = job->ps[job->nprocs ? job->nprocs - 1 : 0].status;
+		if (pipefail && job->nprocs) {
+			int i;
+
+			status = 0;
+			for (i = 0; i < job->nprocs; i++)
+				if (job->ps[i].status != 0)
+					status = job->ps[i].status;
+		} else
+			status =
+			    job->ps[job->nprocs ? job->nprocs - 1 : 0].status;
+
 		if (WIFEXITED(status))
 			retval = WEXITSTATUS(status);
 #if JOBS
@@ -1013,7 +1023,13 @@ waitforjob(struct job *jp)
 	if (jp->state == JOBSTOPPED && curjob != jp - jobtab)
 		set_curjob(jp, 2);
 #endif
-	status = jp->ps[jp->nprocs - 1].status;
+	if (pipefail) {
+		status = 0;
+		for (st = 0; st < jp->nprocs; st++)
+			if (jp->ps[st].status != 0)
+				status = jp->ps[st].status;
+	} else
+		status = jp->ps[jp->nprocs - 1].status;
 	/* convert to 8 bits */
 	if (WIFEXITED(status))
 		st = WEXITSTATUS(status);
