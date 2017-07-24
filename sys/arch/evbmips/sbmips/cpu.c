@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.1.1 2017/07/24 08:56:29 mrg Exp $ */
+/* $NetBSD: cpu.c,v 1.2 2017/07/24 09:56:45 mrg Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.1.1 2017/07/24 08:56:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2017/07/24 09:56:45 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -46,7 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.1.1 2017/07/24 08:56:29 mrg Exp $");
 #include <mips/locore.h>
 #include <mips/cache.h>
 
-#include <sbmips/cpuvar.h>
+#include <evbmips/sbmips/cpuvar.h>
+#include <evbmips/sbmips/systemsw.h>
 
 #include <mips/sibyte/include/zbbusvar.h>
 #include <mips/sibyte/include/sb1250_regs.h>

@@ -1,5 +1,6 @@
+# $NetBSD: SBMIPS.MP,v 1.2 2017/07/24 09:56:45 mrg Exp $
 
-include "arch/sbmips/conf/GENERIC"
+include "arch/evbmips/conf/SBMIPS"
 
 options 	MULTIPROCESSOR
 options 	LOCKDEBUG
