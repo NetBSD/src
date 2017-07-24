@@ -1,0 +1,10 @@
+
+include "arch/sbmips/conf/GENERIC"
+
+makeoptions	LP64="yes"
+options 	EXEC_ELF64
+options 	COMPAT_NETBSD32
+
+no makeoptions	COPY_SYMTAB
+makeoptions	COPY_SYMTAB=1
+
