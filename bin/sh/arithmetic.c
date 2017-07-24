@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.3 2017/06/07 05:08:32 kre Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.4 2017/07/24 13:21:14 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arithmetic.c,v 1.3 2017/06/07 05:08:32 kre Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.4 2017/07/24 13:21:14 kre Exp $");
 #endif /* not lint */
 
 #include <limits.h>
@@ -192,19 +192,21 @@ do_binop(int op, intmax_t a, intmax_t b)
 	}
 }
 
-static intmax_t assignment(int var, int noeval);
+static intmax_t assignment(int, int);
+static intmax_t comma_list(int, int);
 
 static intmax_t
 primary(int token, union a_token_val *val, int op, int noeval)
 {
 	intmax_t result;
+	char sresult[DIGITS(result) + 1];
 
 	VTRACE(DBG_ARITH, ("Arith primary: token %d op %d%s\n",
 	    token, op, noeval ? " noeval" : ""));
 
 	switch (token) {
 	case ARITH_LPAREN:
-		result = assignment(op, noeval);
+		result = comma_list(op, noeval);
 		if (last_token != ARITH_RPAREN)
 			arith_err("expecting ')'");
 		last_token = arith_token();
@@ -213,8 +215,18 @@ primary(int token, union a_token_val *val, int op, int noeval)
 		last_token = op;
 		return val->val;
 	case ARITH_VAR:
-		last_token = op;
-		return noeval ? val->val : arith_lookupvarint(val->name);
+		result = noeval ? val->val : arith_lookupvarint(val->name);
+		if (op == ARITH_INCR || op == ARITH_DECR) {
+			last_token = arith_token();
+			if (noeval)
+				return val->val;
+
+			snprintf(sresult, sizeof(sresult), ARITH_FORMAT_STR,
+			    result + (op == ARITH_INCR ? 1 : -1));
+			setvar(val->name, sresult, 0);
+		} else
+			last_token = op;
+		return result;
 	case ARITH_ADD:
 		*val = a_t_val;
 		return primary(op, val, arith_token(), noeval);
@@ -227,6 +239,18 @@ primary(int token, union a_token_val *val, int op, int noeval)
 	case ARITH_BNOT:
 		*val = a_t_val;
 		return ~primary(op, val, arith_token(), noeval);
+	case ARITH_INCR:
+	case ARITH_DECR:
+		if (op != ARITH_VAR)
+			arith_err("incr/decr require var name");
+		last_token = arith_token();
+		if (noeval)
+			return val->val;
+		result = arith_lookupvarint(a_t_val.name);
+		snprintf(sresult, sizeof(sresult), ARITH_FORMAT_STR,
+			    result += (token == ARITH_INCR ? 1 : -1));
+		setvar(a_t_val.name, sresult, 0);
+		return result;
 	default:
 		arith_err("expecting primary");
 	}
@@ -374,6 +398,20 @@ assignment(int var, int noeval)
 	return result;
 }
 
+static intmax_t
+comma_list(int token, int noeval)
+{
+	intmax_t result = assignment(token, noeval);
+
+	while (last_token == ARITH_COMMA) {
+		VTRACE(DBG_ARITH, ("Arith: comma discarding %jd%s\n", result,
+		    noeval ? " noeval" : ""));
+		result = assignment(arith_token(), noeval);
+	}
+
+	return result;
+}
+
 intmax_t
 arith(const char *s, int lno)
 {
@@ -405,7 +443,7 @@ arith(const char *s, int lno)
 
 	arith_buf = arith_startbuf = s;
 
-	result = assignment(arith_token(), 0);
+	result = comma_list(arith_token(), 0);
 
 	if (last_token)
 		arith_err("expecting end of expression");
