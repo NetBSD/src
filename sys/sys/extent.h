@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.19 2012/01/27 18:53:10 para Exp $	*/
+/*	$NetBSD: extent.h,v 1.20 2017/07/24 19:22:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -66,21 +66,21 @@ struct extent_fixed {
 };
 
 /* ex_flags; for internal use only */
-#define EXF_FIXED	0x01		/* extent uses fixed storage */
-#define EXF_NOCOALESCE	0x02		/* coalescing of regions not allowed */
-#define EXF_FLWANTED	0x08		/* someone asleep on freelist */
+#define EXF_FIXED	__BIT(1)	/* extent uses fixed storage */
+#define EXF_NOCOALESCE	__BIT(2)	/* coalescing of regions not allowed */
+#define EXF_FLWANTED	__BIT(4)	/* someone asleep on freelist */
 
 #define EXF_BITS	"\20\4FLWANTED\2NOCOALESCE\1FIXED"
 
 /* misc. flags passed to extent functions */
-#define EX_NOWAIT	0x00		/* not safe to sleep */
-#define EX_WAITOK	0x01		/* safe to sleep */
-#define EX_FAST		0x02		/* take first fit in extent_alloc() */
-#define EX_CATCH	0x04		/* catch signals while sleeping */
-#define EX_NOCOALESCE	0x08		/* create a non-coalescing extent */
-#define EX_MALLOCOK	0x10		/* safe to call kmem_alloc() */
-#define EX_WAITSPACE	0x20		/* wait for space to become free */
-#define EX_BOUNDZERO	0x40		/* boundary lines start at 0 */
+#define EX_NOWAIT	0		/* not safe to sleep */
+#define EX_WAITOK	__BIT(1)	/* safe to sleep */
+#define EX_FAST		__BIT(2)	/* take first fit in extent_alloc() */
+#define EX_CATCH	__BIT(3)	/* catch signals while sleeping */
+#define EX_NOCOALESCE	__BIT(4)	/* create a non-coalescing extent */
+#define EX_MALLOCOK	__BIT(5)	/* safe to call kmem_alloc() */
+#define EX_WAITSPACE	__BIT(6)	/* wait for space to become free */
+#define EX_BOUNDZERO	__BIT(7)	/* boundary lines start at 0 */
 
 /*
  * Special place holders for "alignment" and "boundary" arguments,
