@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.31 2017/07/23 06:29:48 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.32 2017/07/25 19:51:29 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -2572,4 +2572,46 @@ sys/arch/arm/arm32/genassym.cf			1.75
 
 	Avoids a problem with large ranges as seen in port-evbarm/52169.
 	[skrll, ticket #1452]
+
+distrib/sets/lists/base/mi			patch
+etc/mtree/NetBSD.dist.base			patch
+external/intel-fw-public/Makefile		patch
+external/intel-fw-public/iwl3160/Makefile	patch
+external/intel-fw-public/iwl3160/dist/LICENSE.iwlwifi-3160-ucode patch
+external/intel-fw-public/iwl3160/dist/README.iwlwifi-3160-ucode patch
+external/intel-fw-public/iwl3160/dist/iwlwifi-3160-17.ucode patch
+external/intel-fw-public/iwl3168/Makefile	patch
+external/intel-fw-public/iwl3168/dist/LICENSE.iwlwifi-3168-ucode patch
+external/intel-fw-public/iwl3168/dist/README.iwlwifi-3168-ucode patch
+external/intel-fw-public/iwl3168/dist/iwlwifi-3168-22.ucode patch
+external/intel-fw-public/iwl7260/Makefile	patch
+external/intel-fw-public/iwl7260/dist/LICENSE.iwlwifi-7260-ucode patch
+external/intel-fw-public/iwl7260/dist/README.iwlwifi-7260-ucode patch
+external/intel-fw-public/iwl7260/dist/iwlwifi-7260-17.ucode patch
+external/intel-fw-public/iwl7265/Makefile	patch
+external/intel-fw-public/iwl7265/dist/LICENSE.iwlwifi-7265-ucode patch
+external/intel-fw-public/iwl7265/dist/README.iwlwifi-7265-ucode patch
+external/intel-fw-public/iwl7265/dist/iwlwifi-7265-17.ucode patch
+external/intel-fw-public/iwl7265/dist/iwlwifi-7265D-22.ucode patch
+external/intel-fw-public/iwl8000/Makefile	patch
+external/intel-fw-public/iwl8000/dist/LICENSE.iwlwifi-8000-ucode patch
+external/intel-fw-public/iwl8000/dist/README.iwlwifi-8000-ucode patch
+external/intel-fw-public/iwl8000/dist/iwlwifi-8000C-22.ucode patch
+external/intel-fw-public/iwl8265/Makefile	patch
+external/intel-fw-public/iwl8265/dist/LICENSE.iwlwifi-8265-ucode patch
+external/intel-fw-public/iwl8265/dist/README.iwlwifi-8265-ucode patch
+external/intel-fw-public/iwl8265/dist/iwlwifi-8265-22.ucode patch
+sys/arch/amd64/conf/GENERIC			patch
+sys/arch/i386/conf/GENERIC			patch
+sys/dev/pci/files.pci				patch
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/if_iwm.c				patch
+sys/dev/pci/if_iwmreg.h				patch
+sys/dev/pci/if_iwmvar.h				patch
+
+	iwm(4): Add a driver for Intel Wireless 726x, 316x, 826x
+	and 416x series.  Ported from OpenBSD.
+	[nonaka, ticket #1413]
 
