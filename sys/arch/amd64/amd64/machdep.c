@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.259 2017/07/22 09:20:01 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.260 2017/07/25 17:43:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.259 2017/07/22 09:20:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.260 2017/07/25 17:43:44 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1898,66 +1898,46 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 int
 cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 {
-	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
-	struct proc *p = l->l_proc;
+	struct proc *p __diagused = l->l_proc;
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr;
 	uint16_t sel;
 
+	KASSERT((p->p_flag & PK_32) == 0);
 	gr = mcp->__gregs;
 
 	if (((gr[_REG_RFLAGS] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
 		return EINVAL;
 
-	if (__predict_false(pmap->pm_ldt != NULL)) {
-		/* Only when the LDT is user-set (with USER_LDT) */
-		if ((gr[_REG_DS] & 0xffff) == 0)
-			return EINVAL;
-#ifndef XEN
-		if ((gr[_REG_SS] & 0xffff) == 0)
-			return EINVAL;
-		if (!USERMODE(gr[_REG_CS], gr[_REG_RFLAGS]))
-			return EINVAL;
-#endif
-	} else {
-#define VUD(sel) \
-    ((p->p_flag & PK_32) ? VALID_USER_DSEL32(sel) : VALID_USER_DSEL(sel))
-#define VUF(sel) /* XXX: Shouldn't this be FSEL32? */ \
-    ((p->p_flag & PK_32) ? VALID_USER_DSEL32(sel) : VALID_USER_DSEL(sel))
-#define VUG(sel) \
-    ((p->p_flag & PK_32) ? VALID_USER_GSEL32(sel) : VALID_USER_DSEL(sel))
-#define VUC(sel) \
-    ((p->p_flag & PK_32) ? VALID_USER_CSEL32(sel) : VALID_USER_CSEL(sel))
+	sel = gr[_REG_ES] & 0xffff;
+	if (sel != 0 && !VALID_USER_DSEL(sel))
+		return EINVAL;
 
-		sel = gr[_REG_ES] & 0xffff;
-		if (sel != 0 && !VUD(sel))
-			return EINVAL;
+	sel = gr[_REG_FS] & 0xffff;
+	if (sel != 0 && !VALID_USER_DSEL(sel))
+		return EINVAL;
 
-		sel = gr[_REG_FS] & 0xffff;
-		if (sel != 0 && !VUF(sel))
-			return EINVAL;
+	sel = gr[_REG_GS] & 0xffff;
+	if (sel != 0 && !VALID_USER_DSEL(sel))
+		return EINVAL;
 
-		sel = gr[_REG_GS] & 0xffff;
-		if (sel != 0 && !VUG(sel))
-			return EINVAL;
-
-		sel = gr[_REG_DS] & 0xffff;
-		if (!VUD(sel))
-			return EINVAL;
+	sel = gr[_REG_DS] & 0xffff;
+	if (!VALID_USER_DSEL(sel))
+		return EINVAL;
 
 #ifndef XEN
-		sel = gr[_REG_SS] & 0xffff;
-		if (!VUD(sel))
-			return EINVAL;
+	sel = gr[_REG_SS] & 0xffff;
+	if (!VALID_USER_DSEL(sel))
+		return EINVAL;
 
-		sel = gr[_REG_CS] & 0xffff;
-		if (!VUC(sel))
-			return EINVAL;
+	sel = gr[_REG_CS] & 0xffff;
+	if (!VALID_USER_CSEL(sel))
+		return EINVAL;
 #endif
-	}
 
 	if (gr[_REG_RIP] >= VM_MAXUSER_ADDRESS)
 		return EINVAL;
+
 	return 0;
 }
 
