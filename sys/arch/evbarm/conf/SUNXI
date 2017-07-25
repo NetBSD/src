@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.17.4.2 2017/07/18 19:13:09 snj Exp $
+#	$NetBSD: SUNXI,v 1.17.4.3 2017/07/25 01:35:53 snj Exp $
 #
 #	Allwinner sunxi family
 #
@@ -14,6 +14,8 @@ makeoptions	DTS="
 	sun6i-a31-i7.dts
 	sun6i-a31-m9.dts
 	sun6i-a31-mele-a1000g-quad.dts
+
+	sun8i-h2-plus-orangepi-zero.dts
 
 	sun8i-h3-bananapi-m2-plus.dts
 	sun8i-h3-beelink-x2.dts
