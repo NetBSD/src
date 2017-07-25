@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkubootimage.1,v 1.8 2014/09/30 10:30:35 wiz Exp $
+.\"	$NetBSD: mkubootimage.1,v 1.8.8.1 2017/07/25 02:00:33 snj Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 30, 2014
+.Dd July 15, 2017
 .Dt MKUBOOTIMAGE 1
 .Os
 .Sh NAME
@@ -38,13 +38,13 @@
 .Op Fl h
 .Fl A No ( arm Ns | Ns arm64 Ns | Ns i386 Ns | Ns mips Ns | Ns mips64 Ns | Ns or1k Ns | Ns powerpc )
 .Fl a Ar address
-.Op Fl C No Po bz2 Ns | Ns gz Ns | Ns lzma Ns | Ns lzo Ns | Ns none Pc
+.Op Fl C Po bz2 Ns | Ns gz Ns | Ns lzma Ns | Ns lzo Ns | Ns none Pc
 .Op Fl E Ar address
 .Op Fl e Ar address
 .Op Fl m Ar magic
 .Fl n Ar image
-.Op Fl O No Po freebsd Ns | Ns linux Ns | Ns netbsd Ns | Ns openbsd Pc
-.Fl T No ( fs Ns | Ns kernel Ns | Ns ramdisk Ns | Ns standalone )
+.Op Fl O Po freebsd Ns | Ns linux Ns | Ns netbsd Ns | Ns openbsd Pc
+.Fl T No ( fs Ns | Ns kernel Ns | Ns kernel_noload Ns | Ns ramdisk Ns | Ns standalone )
 .Ar source destination
 .\"
 .Sh DESCRIPTION
@@ -62,7 +62,7 @@ This is required.
 Sets the image load address.
 This is an integer between 0 and
 .Dv UINT32_MAX .
-This is required.
+This is required for all image types except for script, ramdisk, and kernel_noload.
 .It Fl C No ( bz2 Ns | Ns gz Ns | Ns lzma Ns | Ns lzo Ns | Ns none )
 Defines the compression.
 The default is
@@ -108,7 +108,7 @@ This is required.
 Defines the operating system type.
 The default OS name is
 .Qq netbsd .
-.It Fl T No ( fs Ns | Ns kernel Ns | Ns ramdisk Ns | Ns standalone Ns | Ns script )
+.It Fl T No ( fs Ns | Ns kernel Ns | Ns kernel_noload Ns | Ns ramdisk Ns | Ns standalone Ns | Ns script )
 Defines the image type.
 This is required.
 .El
@@ -120,7 +120,7 @@ The required
 .Ar destination
 argument is the filename of the image file that is created.
 .\"
-.Sh RETURN VALUES
+.Sh EXIT STATUS
 .Nm
 returns 1 on failure to read the kernel,
 generate a header, or create the image.

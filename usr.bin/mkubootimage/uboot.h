@@ -1,4 +1,4 @@
-/* $NetBSD: uboot.h,v 1.6 2014/09/30 10:21:50 msaitoh Exp $ */
+/* $NetBSD: uboot.h,v 1.6.8.1 2017/07/25 02:00:33 snj Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -54,6 +54,7 @@ enum uboot_image_type {
 	IH_TYPE_RAMDISK = 3,
 	IH_TYPE_SCRIPT = 6,
 	IH_TYPE_FILESYSTEM = 7,
+	IH_TYPE_KERNEL_NOLOAD = 14,
 };
 
 enum uboot_image_comp {
