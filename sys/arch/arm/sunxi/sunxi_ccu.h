@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.7.4.2 2017/07/18 19:13:08 snj Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.7.4.3 2017/07/25 02:03:16 snj Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -61,6 +61,7 @@ enum sunxi_ccu_clktype {
 	SUNXI_CCU_NKMP,
 	SUNXI_CCU_PREDIV,
 	SUNXI_CCU_DIV,
+	SUNXI_CCU_PHASE,
 };
 
 struct sunxi_ccu_gate {
@@ -252,6 +253,31 @@ const char *sunxi_ccu_prediv_get_parent(struct sunxi_ccu_softc *,
 		.get_parent = sunxi_ccu_prediv_get_parent,	\
 	}
 
+struct sunxi_ccu_phase {
+	bus_size_t	reg;
+	const char	*parent;
+	uint32_t	mask;
+};
+
+u_int	sunxi_ccu_phase_get_rate(struct sunxi_ccu_softc *,
+				 struct sunxi_ccu_clk *);
+int	sunxi_ccu_phase_set_rate(struct sunxi_ccu_softc *,
+				 struct sunxi_ccu_clk *, u_int);
+const char *sunxi_ccu_phase_get_parent(struct sunxi_ccu_softc *,
+				       struct sunxi_ccu_clk *);
+
+#define	SUNXI_CCU_PHASE(_id, _name, _parent, _reg, _mask)	\
+	[_id] = {						\
+		.type = SUNXI_CCU_PHASE,			\
+		.base.name = (_name),				\
+		.u.phase.reg = (_reg),				\
+		.u.phase.parent = (_parent),			\
+		.u.phase.mask = (_mask),			\
+		.get_rate = sunxi_ccu_phase_get_rate,		\
+		.set_rate = sunxi_ccu_phase_set_rate,		\
+		.get_parent = sunxi_ccu_phase_get_parent,	\
+	}
+
 struct sunxi_ccu_clk {
 	struct clk	base;
 	enum sunxi_ccu_clktype type;
@@ -261,6 +287,7 @@ struct sunxi_ccu_clk {
 		struct sunxi_ccu_nkmp nkmp;
 		struct sunxi_ccu_prediv prediv;
 		struct sunxi_ccu_div div;
+		struct sunxi_ccu_phase phase;
 	} u;
 
 	int		(*enable)(struct sunxi_ccu_softc *,
