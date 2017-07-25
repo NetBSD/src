@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.64 2017/03/05 23:07:12 mlelstv Exp $	*/
+/*	$NetBSD: iostat.c,v 1.64.4.1 2017/07/25 01:43:37 snj Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.64 2017/03/05 23:07:12 mlelstv Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.64.4.1 2017/07/25 01:43:37 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,6 +112,7 @@ static int	wincols = 80;
 #define	SHOW_STATS_ALL	(SHOW_STATS_1 | SHOW_STATS_2 | SHOW_STATS_X | SHOW_STATS_Y)
 
 static void cpustats(void);
+static double drive_time(double, int);
 static void drive_stats(double);
 static void drive_stats2(double);
 static void drive_statsx(double);
@@ -321,15 +322,32 @@ header(void)
 	printf("\n");
 }
 
+static double
+drive_time(double etime, int dn)
+{
+	if (ISSET(todo, SHOW_TOTALS))
+		return etime;
+
+	if (cur.timestamp[dn].tv_sec || cur.timestamp[dn].tv_usec) {
+		etime = (double)cur.timestamp[dn].tv_sec +
+		    ((double)cur.timestamp[dn].tv_usec / (double)1000000);
+	}
+
+	return etime;
+}
+
 static void
 drive_stats(double etime)
 {
 	size_t dn;
-	double atime, mbps;
+	double atime, dtime, mbps;
 
 	for (dn = 0; dn < ndrive; ++dn) {
 		if (!cur.select[dn])
 			continue;
+
+		dtime = drive_time(etime, dn);
+
 					/* average Kbytes per transfer. */
 		if (cur.rxfer[dn] + cur.wxfer[dn])
 			mbps = ((cur.rbytes[dn] + cur.wbytes[dn]) /
@@ -341,7 +359,7 @@ drive_stats(double etime)
 
 					/* average transfers per second. */
 		(void)printf(" %4.0f",
-		    (cur.rxfer[dn] + cur.wxfer[dn]) / etime);
+		    (cur.rxfer[dn] + cur.wxfer[dn]) / dtime);
 
 					/* time busy in drive activity */
 		atime = (double)cur.time[dn].tv_sec +
@@ -353,7 +371,7 @@ drive_stats(double etime)
 			    (double)(1024 * 1024);
 		else
 			mbps = 0;
-		mbps /= etime;
+		mbps /= dtime;
 		(void)printf(" %5.*f ",
 		    MAX(0, 3 - (int)floor(log10(fmax(1.0, mbps)))), mbps);
 	}
@@ -363,24 +381,26 @@ static void
 drive_stats2(double etime)
 {
 	size_t dn;
-	double atime;
+	double atime, dtime;
 
 	for (dn = 0; dn < ndrive; ++dn) {
 		if (!cur.select[dn])
 			continue;
 
+		dtime = drive_time(etime, dn);
+
 					/* average kbytes per second. */
 		(void)printf(" %5.0f",
-		    (cur.rbytes[dn] + cur.wbytes[dn]) / 1024.0 / etime);
+		    (cur.rbytes[dn] + cur.wbytes[dn]) / 1024.0 / dtime);
 
 					/* average transfers per second. */
 		(void)printf(" %5.0f",
-		    (cur.rxfer[dn] + cur.wxfer[dn]) / etime);
+		    (cur.rxfer[dn] + cur.wxfer[dn]) / dtime);
 
 					/* average time busy in drive activity */
 		atime = (double)cur.time[dn].tv_sec +
 		    ((double)cur.time[dn].tv_usec / (double)1000000);
-		(void)printf(" %4.2f ", atime / etime);
+		(void)printf(" %4.2f ", atime / dtime);
 	}
 }
 
@@ -388,11 +408,13 @@ static void
 drive_statsx(double etime)
 {
 	size_t dn;
-	double atime, kbps;
+	double atime, dtime, kbps;
 
 	for (dn = 0; dn < ndrive; ++dn) {
 		if (!cur.select[dn])
 			continue;
+
+		dtime = drive_time(etime, dn);
 
 		(void)printf("%-8.8s", cur.name[dn]);
 
@@ -405,17 +427,17 @@ drive_statsx(double etime)
 
 					/* average read transfers
 					   (per second) */
-		(void)printf(" %6.0f", cur.rxfer[dn] / etime);
+		(void)printf(" %6.0f", cur.rxfer[dn] / dtime);
 
 					/* time read busy in drive activity */
 		atime = (double)cur.time[dn].tv_sec +
 		    ((double)cur.time[dn].tv_usec / (double)1000000);
-		(void)printf(" %6.2f", atime / etime);
+		(void)printf(" %6.2f", atime / dtime);
 
 					/* average read megabytes
 					   (per second) */
 		(void)printf(" %8.2f",
-		    cur.rbytes[dn] / (1024.0 * 1024) / etime);
+		    cur.rbytes[dn] / (1024.0 * 1024) / dtime);
 
 
 					/* average write Kbytes per transfer */
@@ -427,17 +449,17 @@ drive_statsx(double etime)
 
 					/* average write transfers
 					   (per second) */
-		(void)printf(" %6.0f", cur.wxfer[dn] / etime);
+		(void)printf(" %6.0f", cur.wxfer[dn] / dtime);
 
 					/* time write busy in drive activity */
 		atime = (double)cur.time[dn].tv_sec +
 		    ((double)cur.time[dn].tv_usec / (double)1000000);
-		(void)printf(" %6.2f", atime / etime);
+		(void)printf(" %6.2f", atime / dtime);
 
 					/* average write megabytes
 					   (per second) */
 		(void)printf(" %8.2f\n",
-		    cur.wbytes[dn] / (1024.0 * 1024) / etime);
+		    cur.wbytes[dn] / (1024.0 * 1024) / dtime);
 	}
 }
 
@@ -486,11 +508,13 @@ static void
 drive_statsy(double etime)
 {
 	size_t dn;
-	double atime, await, abusysum, awaitsum;
+	double atime, await, abusysum, awaitsum, dtime;
 
 	for (dn = 0; dn < ndrive; ++dn) {
 		if (!cur.select[dn])
 			continue;
+
+		dtime = drive_time(etime, dn);
 
 		(void)printf("%-8.8s", cur.name[dn]);
 
@@ -503,10 +527,10 @@ drive_statsy(double etime)
 		awaitsum = (double)cur.waitsum[dn].tv_sec +
 		    ((double)cur.waitsum[dn].tv_usec / (double)1000000);
 
-		drive_statsy_io(etime, cur.rxfer[dn], cur.rbytes[dn]);
+		drive_statsy_io(dtime, cur.rxfer[dn], cur.rbytes[dn]);
 		(void)printf("  ");
-		drive_statsy_io(etime, cur.wxfer[dn], cur.wbytes[dn]);
-		drive_statsy_q(etime, atime, await, abusysum, awaitsum, cur.rxfer[dn]+cur.wxfer[dn]);
+		drive_statsy_io(dtime, cur.wxfer[dn], cur.wbytes[dn]);
+		drive_statsy_q(dtime, atime, await, abusysum, awaitsum, cur.rxfer[dn]+cur.wxfer[dn]);
 
 		(void)printf("\n");
 	}
