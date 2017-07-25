@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_os.c,v 1.6 2017/01/27 17:25:34 ryo Exp $	*/
+/*	$NetBSD: npf_os.c,v 1.6.8.1 2017/07/25 02:17:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 2009-2016 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.6 2017/01/27 17:25:34 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.6.8.1 2017/07/25 02:17:16 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -79,10 +79,10 @@ __KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.6 2017/01/27 17:25:34 ryo Exp $");
  * So we make this misc; a better way would be to have early boot and late
  * boot drivers.
  */
-MODULE(MODULE_CLASS_MISC, npf, NULL);
+MODULE(MODULE_CLASS_MISC, npf, "bpf");
 #else
 /* This module autoloads via /dev/npf so it needs to be a driver */
-MODULE(MODULE_CLASS_DRIVER, npf, NULL);
+MODULE(MODULE_CLASS_DRIVER, npf, "bpf");
 #endif
 
 static int	npf_dev_open(dev_t, int, int, lwp_t *);
