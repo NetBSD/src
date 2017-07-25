@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.56.4.2 2017/07/01 08:45:03 snj Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.56.4.3 2017/07/25 01:49:13 snj Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.56.4.2 2017/07/01 08:45:03 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.56.4.3 2017/07/25 01:49:13 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -87,7 +87,7 @@ static int sdmmc_mem_send_cxd_data(struct sdmmc_softc *, int, void *, size_t);
 static int sdmmc_set_bus_width(struct sdmmc_function *, int);
 static int sdmmc_mem_sd_switch(struct sdmmc_function *, int, int, int, sdmmc_bitfield512_t *);
 static int sdmmc_mem_mmc_switch(struct sdmmc_function *, uint8_t, uint8_t,
-    uint8_t);
+    uint8_t, bool);
 static int sdmmc_mem_signal_voltage(struct sdmmc_softc *, int);
 static int sdmmc_mem_spi_read_ocr(struct sdmmc_softc *, uint32_t, uint32_t *);
 static int sdmmc_mem_single_read_block(struct sdmmc_function *, uint32_t,
@@ -981,7 +981,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 		if (width != 1) {
 			error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
-			    EXT_CSD_BUS_WIDTH, value);
+			    EXT_CSD_BUS_WIDTH, value, false);
 			if (error == 0)
 				error = sdmmc_chip_bus_width(sc->sc_sct,
 				    sc->sc_sch, width);
@@ -1002,7 +1002,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		}
 		if (hs_timing != EXT_CSD_HS_TIMING_LEGACY) {
 			error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
-			    EXT_CSD_HS_TIMING, hs_timing);
+			    EXT_CSD_HS_TIMING, hs_timing, false);
 			if (error) {
 				aprint_error_dev(sc->sc_dev,
 				    "can't change high speed %d, error %d\n",
@@ -1048,7 +1048,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			error = sdmmc_mem_mmc_switch(sf,
 			    EXT_CSD_CMD_SET_NORMAL, EXT_CSD_BUS_WIDTH,
 			    (width == 8) ? EXT_CSD_BUS_WIDTH_8_DDR :
-			      EXT_CSD_BUS_WIDTH_4_DDR);
+			      EXT_CSD_BUS_WIDTH_4_DDR, false);
 			if (error) {
 				DPRINTF(("%s: can't switch to DDR"
 				    " (%d bit)\n", SDMMCDEVNAME(sc), width));
@@ -1103,6 +1103,23 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		if (sf->ext_csd.rev >= 5) {
 			sf->ext_csd.rst_n_function =
 			    ext_csd[EXT_CSD_RST_N_FUNCTION];
+		}
+
+		if (sf->ext_csd.rev >= 6) {
+			sf->ext_csd.cache_size =
+			    le32dec(&ext_csd[EXT_CSD_CACHE_SIZE]) * 1024;
+		}
+		if (sf->ext_csd.cache_size > 0) {
+			/* eMMC cache present, enable it */
+			error = sdmmc_mem_mmc_switch(sf,
+			    EXT_CSD_CMD_SET_NORMAL, EXT_CSD_CACHE_CTRL,
+			    EXT_CSD_CACHE_CTRL_CACHE_EN, false);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+				    "can't enable cache: %d\n", error);
+			} else {
+				SET(sf->flags, SFF_CACHE_ENABLED);
+			}
 		}
 	} else {
 		if (sc->sc_busclk > sf->csd.tran_speed)
@@ -1600,7 +1617,7 @@ dmamem_free:
 
 static int
 sdmmc_mem_mmc_switch(struct sdmmc_function *sf, uint8_t set, uint8_t index,
-    uint8_t value)
+    uint8_t value, bool poll)
 {
 	struct sdmmc_softc *sc = sf->sc;
 	struct sdmmc_command cmd;
@@ -1611,6 +1628,9 @@ sdmmc_mem_mmc_switch(struct sdmmc_function *sf, uint8_t set, uint8_t index,
 	cmd.c_arg = (MMC_SWITCH_MODE_WRITE_BYTE << 24) |
 	    (index << 16) | (value << 8) | set;
 	cmd.c_flags = SCF_RSP_SPI_R1B | SCF_RSP_R1B | SCF_CMD_AC;
+
+	if (poll)
+		cmd.c_flags |= SCF_POLL;
 
 	error = sdmmc_mmc_command(sc, &cmd);
 	if (error)
@@ -1623,6 +1643,8 @@ sdmmc_mem_mmc_switch(struct sdmmc_function *sf, uint8_t set, uint8_t index,
 			if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE))
 				cmd.c_arg = MMC_ARG_RCA(sf->rca);
 			cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1 | SCF_RSP_SPI_R2;
+			if (poll)
+				cmd.c_flags |= SCF_POLL;
 			error = sdmmc_mmc_command(sc, &cmd);
 			if (error)
 				break;
@@ -2189,6 +2211,32 @@ out:
 #ifdef SDMMC_DEBUG
 	device_printf(sc->sc_dev, "discard blk %u-%u error %d\n",
 	    sblkno, eblkno, error);
+#endif
+
+	return error;
+}
+
+int
+sdmmc_mem_flush_cache(struct sdmmc_function *sf, bool poll)
+{
+	struct sdmmc_softc *sc = sf->sc;
+	int error;
+
+	if (!ISSET(sf->flags, SFF_CACHE_ENABLED))
+		return 0;
+
+	SDMMC_LOCK(sc);
+	mutex_enter(&sc->sc_mtx);
+
+	error = sdmmc_mem_mmc_switch(sf,
+	    EXT_CSD_CMD_SET_NORMAL, EXT_CSD_FLUSH_CACHE,
+	    EXT_CSD_FLUSH_CACHE_FLUSH, poll);
+
+	mutex_exit(&sc->sc_mtx);
+	SDMMC_UNLOCK(sc);
+
+#ifdef SDMMC_DEBUG
+	device_printf(sc->sc_dev, "mmc flush cache error %d\n", error);
 #endif
 
 	return error;
