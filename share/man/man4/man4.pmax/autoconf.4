@@ -1,4 +1,4 @@
-.\" $NetBSD: autoconf.4,v 1.5 2017/07/25 03:51:41 ryoon Exp $
+.\" $NetBSD: autoconf.4,v 1.6 2017/07/25 08:30:27 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -43,8 +43,9 @@ When
 .Nx
 bootstraps it probes the innards of the machine on which it is running
 and locates controllers, drives, and other devices, printing out what
-it finds on the console.  This procedure is driven by a system
-configuration table which is processed by
+it finds on the console.
+This procedure is driven by a system configuration table which is
+processed by
 .Xr config 1
 and compiled into each kernel.
 Devices which exist in the machine but are not configured into the
