@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.21 2017/07/24 19:56:07 skrll Exp $	*/
+/*	$NetBSD: extent.h,v 1.22 2017/07/25 04:36:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+
+#ifndef _KERNEL
+#include <stdbool.h>
+#endif
 
 struct extent_region {
 	LIST_ENTRY(extent_region) er_link;	/* link in region list */
