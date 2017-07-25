@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.4.2.3 2017/07/18 19:13:09 snj Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.4.2.4 2017/07/25 02:09:32 snj Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.4.2.3 2017/07/18 19:13:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.4.2.4 2017/07/25 02:09:32 snj Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -182,25 +182,32 @@ fdt_add_reserved_memory_range(uint64_t addr, uint64_t size)
 {
 	int error;
 
+	addr = trunc_page(addr);
+	size = round_page(size);
+
 	error = extent_free(fdt_memory_ext, addr, size, EX_NOWAIT);
 	if (error != 0)
-		printf("MEM ERROR: add %llx-%llx failed: %d\n",
-		    addr, size, error);
-	DPRINTF("MEM: res %llx-%llx: %d\n", addr, size, error);
+		printf("MEM ERROR: res %llx-%llx failed: %d\n",
+		    addr, addr + size, error);
+	else
+		DPRINTF("MEM: res %llx-%llx\n", addr, addr + size);
 }
 
 /*
- * Exclude memory ranges from memory config from a /reserved-memory/ child
+ * Exclude memory ranges from memory config from the device tree
  */
 static void
-fdt_add_reserved_memory(int phandle, uint64_t max_addr)
+fdt_add_reserved_memory(uint64_t max_addr)
 {
 	uint64_t addr, size;
-	int index;
+	int index, error;
 
-	for (index = 0;
-	     fdtbus_get_reg64(phandle, index, &addr, &size) == 0;
-	     index++) {
+	const int num = fdt_num_mem_rsv(fdtbus_get_data());
+	for (index = 0; index <= num; index++) {
+		error = fdt_get_mem_rsv(fdtbus_get_data(), index,
+		    &addr, &size);
+		if (error != 0 || size == 0)
+			continue;
 		if (addr >= max_addr)
 			continue;
 		if (addr + size > max_addr)
@@ -220,7 +227,7 @@ fdt_build_bootconfig(uint64_t mem_addr, uint64_t mem_size)
 	BootConfig *bc = &bootconfig;
 	struct extent_region *er;
 	uint64_t addr, size;
-	int index, child, error;
+	int index, error;
  
 	fdt_memory_ext = extent_create("FDT Memory", mem_addr, max_addr,
 	    fdt_memory_ext_storage, sizeof(fdt_memory_ext_storage), 0);
@@ -241,10 +248,7 @@ fdt_build_bootconfig(uint64_t mem_addr, uint64_t mem_size)
 		DPRINTF("MEM: add %llx-%llx\n", addr, size);
 	}
 
-	const int reserved = OF_finddevice("/reserved-memory");
-	if (reserved > 0)
-		for (child = OF_child(reserved); child; child = OF_peer(child))
-			fdt_add_reserved_memory(child, max_addr);
+	fdt_add_reserved_memory(max_addr);
 
 	const uint64_t initrd_size = initrd_end - initrd_start;
 	if (initrd_size > 0)
@@ -331,7 +335,6 @@ initarm(void *arg)
 {
 	const struct arm_platform *plat;
 	uint64_t memory_addr, memory_size;
-	psize_t ram_size = 0;
 
 	/* Load FDT */
 	const uint8_t *fdt_addr_r = (const uint8_t *)uboot_args[2];
@@ -414,16 +417,14 @@ initarm(void *arg)
 		memory_size = 0x100000000 - memory_addr - PAGE_SIZE;
 #endif
 
-	ram_size = (bus_size_t)memory_size;
-
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	const bool mapallmem_p = true;
 #ifndef PMAP_NEED_ALLOC_POOLPAGE
-	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
+	if (memory_size > KERNEL_VM_BASE - KERNEL_BASE) {
 		DPRINTF("%s: dropping RAM size from %luMB to %uMB\n",
-		    __func__, (unsigned long) (ram_size >> 20),     
+		    __func__, (unsigned long) (memory_size >> 20),     
 		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
-		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
+		memory_size = KERNEL_VM_BASE - KERNEL_BASE;
 	}
 #endif
 #else
@@ -436,7 +437,7 @@ initarm(void *arg)
 	/* Populate bootconfig structure for the benefit of pmap.c. */
 	fdt_build_bootconfig(memory_addr, memory_size);
 
-	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
+	arm32_bootmem_init(bootconfig.dram[0].address, memory_size,
 	    KERNEL_BASE_PHYS);
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0,
 	    plat->devmap(), mapallmem_p);
