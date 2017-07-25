@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.37 2009/04/13 23:20:27 lukem Exp $	*/
+/*	$NetBSD: iostat.c,v 1.37.38.1 2017/07/25 01:43:37 snj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.37 2009/04/13 23:20:27 lukem Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.37.38.1 2017/07/25 01:43:37 snj Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: iostat.c,v 1.37 2009/04/13 23:20:27 lukem Exp $");
 #include "drvstats.h"
 
 static  int linesperregion;
-static  double etime;
+static	double etime;
 static  int numbers = 0;		/* default display bar graphs */
 static  int secs = 0;			/* default seconds shown */
 static  int read_write = 0;		/* default read/write shown */
@@ -252,8 +252,14 @@ showiostat(void)
 static int
 stats(int row, int col, int dn)
 {
-	double atime, rwords, wwords;
+	double atime, dtime, rwords, wwords;
 	uint64_t rxfer;
+
+	/* elapsed time for disk stats */
+	dtime = etime;
+	if (cur.timestamp[dn].tv_sec || cur.timestamp[dn].tv_usec)
+		dtime = (double)cur.timestamp[dn].tv_sec +
+			((double)cur.timestamp[dn].tv_usec / (double)1000000);
 
 	/* time busy in disk activity */
 	atime = (double)cur.time[dn].tv_sec +
@@ -269,30 +275,30 @@ stats(int row, int col, int dn)
 	}
 	if (numbers) {
 		mvwprintw(wnd, row, col, "%5.0f%4.0f",
-		    rwords / etime, rxfer / etime);
+		    rwords / dtime, rxfer / dtime);
 		if (secs)
-			wprintw(wnd, "%5.1f", atime / etime);
+			wprintw(wnd, "%5.1f", atime / dtime);
 		if (read_write)
 			wprintw(wnd, " %5.0f%4.0f",
-			    wwords / etime, cur.wxfer[dn] / etime);
+			    wwords / dtime, cur.wxfer[dn] / dtime);
 		return (row);
 	}
 
 	wmove(wnd, row++, col);
-	histogram(rwords / etime, 50, 0.5);
+	histogram(rwords / dtime, 50, 0.5);
 	wmove(wnd, row++, col);
-	histogram(rxfer / etime, 50, 0.5);
+	histogram(rxfer / dtime, 50, 0.5);
 	if (read_write) {
 		wmove(wnd, row++, col);
-		histogram(wwords / etime, 50, 0.5);
+		histogram(wwords / dtime, 50, 0.5);
 		wmove(wnd, row++, col);
-		histogram(cur.wxfer[dn] / etime, 50, 0.5);
+		histogram(cur.wxfer[dn] / dtime, 50, 0.5);
 	}
 
 	if (secs) {
 		wmove(wnd, row++, col);
 		atime *= 1000;	/* In milliseconds */
-		histogram(atime / etime, 50, 0.5);
+		histogram(atime / dtime, 50, 0.5);
 	}
 	return (row);
 }

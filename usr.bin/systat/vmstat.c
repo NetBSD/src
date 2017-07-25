@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.81 2014/12/24 20:01:22 dennis Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.81.8.1 2017/07/25 01:43:37 snj Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.81 2014/12/24 20:01:22 dennis Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.81.8.1 2017/07/25 01:43:37 snj Exp $");
 #endif /* not lint */
 
 /*
@@ -827,24 +827,31 @@ copyinfo(struct Info *from, struct Info *to)
 static void
 dinfo(int dn, int r, int c)
 {
-	double atime;
+	double atime, dtime;
 #define ADV if (disk_horiz) r++; else c += DISKCOLWIDTH
+
+	/* elapsed time for disk stats */
+	dtime = etime;
+	if (cur.timestamp[dn].tv_sec || cur.timestamp[dn].tv_usec) {
+		dtime = (double)cur.timestamp[dn].tv_sec +
+			((double)cur.timestamp[dn].tv_usec / (double)1000000);
+	}
 
 	mvprintw(r, c, "%*.*s", DISKCOLWIDTH, DISKCOLWIDTH, dr_name[dn]);
 	ADV;
 
-	putint((int)(cur.seek[dn]/etime+0.5), r, c, DISKCOLWIDTH);
+	putint((int)(cur.seek[dn]/dtime+0.5), r, c, DISKCOLWIDTH);
 	ADV;
-	putint((int)((cur.rxfer[dn]+cur.wxfer[dn])/etime+0.5),
+	putint((int)((cur.rxfer[dn]+cur.wxfer[dn])/dtime+0.5),
 	    r, c, DISKCOLWIDTH);
 	ADV;
-	puthumanint((cur.rbytes[dn] + cur.wbytes[dn]) / etime + 0.5,
+	puthumanint((cur.rbytes[dn] + cur.wbytes[dn]) / dtime + 0.5,
 		    r, c, DISKCOLWIDTH);
 	ADV;
 
 	/* time busy in disk activity */
 	atime = cur.time[dn].tv_sec + cur.time[dn].tv_usec / 1000000.0;
-	atime = atime * 100.0 / etime;
+	atime = atime * 100.0 / dtime;
 	if (atime >= 100)
 		putint(100, r, c, DISKCOLWIDTH);
 	else
