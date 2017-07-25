@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.162 2017/07/24 14:17:11 kre Exp $
+.\"	$NetBSD: sh.1,v 1.163 2017/07/25 08:37:48 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -831,7 +831,7 @@ operators or reserved words, together creating a larger complex command.
 Overall, a shell program is a:
 .Bl -tag -width XpipelineX
 .It list
-Which is a sequence of one or more AND-OR lists. 
+Which is a sequence of one or more AND-OR lists.
 .It "AND-OR list"
 is a sequence of one or more pipelines.
 .It pipeline
@@ -904,7 +904,7 @@ the pipeline status is the exit
 status of the last command in the pipeline,
 and the exit status of any other commands in the pipeline is ignored.
 .Pp
-If the reserved word ! precedes the pipeline, the exit status 
+If the reserved word ! precedes the pipeline, the exit status
 becomes the logical NOT of the pipeline status as determined above.
 That is, if the pipeline status is zero, the exit status is 1;
 if the pipeline status is other than zero, the exit status is zero.
