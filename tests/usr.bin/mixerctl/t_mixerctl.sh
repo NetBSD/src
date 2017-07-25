@@ -1,4 +1,4 @@
-# $NetBSD: t_mixerctl.sh,v 1.8 2017/07/18 13:17:37 kre Exp $
+# $NetBSD: t_mixerctl.sh,v 1.9 2017/07/25 21:25:03 kre Exp $
 
 audio_setup() {
 	# Open /dev/pad0 so we have a configured audio device.
@@ -21,7 +21,8 @@ audio_setup() {
 	# variables, we would need to put $padpid in a file.)
 
 	unset padpid
-	{ { cat >/dev/null & } < /dev/pad0 ; } 2>/dev/null && padpid=$!
+	test -r /dev/pad0 && 
+	    { { cat >/dev/null & } < /dev/pad0 ; } 2>/dev/null && padpid=$!
 
 	(</dev/mixer) >/dev/null 2>&1 ||
 	    atf_skip "no audio mixer available in kernel"
