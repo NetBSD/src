@@ -1,4 +1,4 @@
-/*	$NetBSD: rtutil.c,v 1.8.8.1 2017/07/07 13:57:26 martin Exp $	*/
+/*	$NetBSD: rtutil.c,v 1.8.8.2 2017/07/25 01:34:23 snj Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -304,6 +304,8 @@ p_rtentry(struct rt_msghdr *rtm, int flags, int interesting)
 	putchar('\n');
 	if (flags & RT_VFLAG)
 		p_rtrmx(&rtm->rtm_rmx);
+#else
+	putchar('\n');
 #endif
 }
 
