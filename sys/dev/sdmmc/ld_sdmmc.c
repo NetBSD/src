@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.26.4.3 2017/07/10 12:29:47 martin Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.26.4.4 2017/07/25 01:49:13 snj Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.26.4.3 2017/07/10 12:29:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.26.4.4 2017/07/25 01:49:13 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -94,6 +94,7 @@ static int ld_sdmmc_dump(struct ld_softc *, void *, int, int);
 static int ld_sdmmc_start(struct ld_softc *, struct buf *);
 static void ld_sdmmc_restart(void *);
 static int ld_sdmmc_discard(struct ld_softc *, off_t, off_t);
+static int ld_sdmmc_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 
 static void ld_sdmmc_doattach(void *);
 static void ld_sdmmc_dobio(void *);
@@ -151,6 +152,7 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	ld->sc_dump = ld_sdmmc_dump;
 	ld->sc_start = ld_sdmmc_start;
 	ld->sc_discard = ld_sdmmc_discard;
+	ld->sc_ioctl = ld_sdmmc_ioctl;
 
 	/*
 	 * It is avoided that the error occurs when the card attaches it,
@@ -169,11 +171,19 @@ ld_sdmmc_doattach(void *arg)
 	struct ld_sdmmc_softc *sc = (struct ld_sdmmc_softc *)arg;
 	struct ld_softc *ld = &sc->sc_ld;
 	struct sdmmc_softc *ssc = device_private(device_parent(ld->sc_dv));
+	const u_int cache_size = sc->sc_sf->ext_csd.cache_size;
+	char buf[sizeof("9999 KB")];
 
 	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 	aprint_normal_dev(ld->sc_dv, "%d-bit width,", sc->sc_sf->width);
 	if (ssc->sc_transfer_mode != NULL)
 		aprint_normal(" %s,", ssc->sc_transfer_mode);
+	if (cache_size > 0) {
+		format_bytes(buf, sizeof(buf), cache_size);
+		aprint_normal(" %s cache%s,", buf,
+		    ISSET(sc->sc_sf->flags, SFF_CACHE_ENABLED) ? "" :
+		    " (disabled)");
+	}
 	if ((ssc->sc_busclk / 1000) != 0)
 		aprint_normal(" %u.%03u MHz\n",
 		    ssc->sc_busclk / 1000, ssc->sc_busclk % 1000);
@@ -305,6 +315,20 @@ ld_sdmmc_discard(struct ld_softc *ld, off_t pos, off_t len)
 	struct ld_sdmmc_softc *sc = device_private(ld->sc_dv);
 
 	return sdmmc_mem_discard(sc->sc_sf, pos, len);
+}
+
+static int
+ld_sdmmc_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag,
+    bool poll)
+{
+	struct ld_sdmmc_softc *sc = device_private(ld->sc_dv);
+
+	switch (cmd) {
+	case DIOCCACHESYNC:
+		return sdmmc_mem_flush_cache(sc->sc_sf, poll);
+	default:
+		return EPASSTHROUGH;
+	}
 }
 
 MODULE(MODULE_CLASS_DRIVER, ld_sdmmc, "ld");

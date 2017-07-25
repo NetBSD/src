@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.23.6.2 2017/07/01 08:45:03 snj Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.23.6.3 2017/07/25 01:49:13 snj Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -52,6 +52,7 @@ struct sdmmc_csd {
 struct sdmmc_ext_csd {
 	uint8_t	rev;
 	uint8_t	rst_n_function;	/* RST_n_FUNCTION */
+	uint32_t cache_size;
 };
 
 struct sdmmc_cid {
@@ -122,8 +123,9 @@ struct sdmmc_command {
 #define SCF_RSP_SPI_BSY	(1U << 13)
 /* Probing */
 #define SCF_TOUT_OK	(1U << 14)	/* command timeout expected */
-/* Transfer hints */
+/* Command hints */
 #define SCF_XFER_SDHC	(1U << 15)	/* card is SDHC */
+#define SCF_POLL	(1U << 16)	/* polling required */
 /* response types */
 #define SCF_RSP_R0	0	/* none */
 #define SCF_RSP_R1	(SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
@@ -185,6 +187,7 @@ struct sdmmc_function {
 	int flags;
 #define SFF_ERROR		0x0001	/* function is poo; ignore it */
 #define SFF_SDHC		0x0002	/* SD High Capacity card */
+#define SFF_CACHE_ENABLED	0x0004	/* cache enabled */
 	SIMPLEQ_ENTRY(sdmmc_function) sf_list;
 	/* SD card I/O function members */
 	int number;			/* I/O function number or -1 */
@@ -249,6 +252,7 @@ struct sdmmc_softc {
 				    | SMC_CAPS_UHS_SDR104 \
 				    | SMC_CAPS_UHS_DDR50)
 #define SMC_CAPS_MMC_HS200	__BIT(15)	/* eMMC HS200 timing */
+#define SMC_CAPS_POLLING	__BIT(30)	/* driver supports cmd polling */
 
 	/* function */
 	int sc_function_count;		/* number of I/O functions (SDIO) */
@@ -378,5 +382,6 @@ int	sdmmc_mem_read_block(struct sdmmc_function *, uint32_t, u_char *,
 int	sdmmc_mem_write_block(struct sdmmc_function *, uint32_t, u_char *,
 	    size_t);
 int	sdmmc_mem_discard(struct sdmmc_function *, off_t, off_t);
+int	sdmmc_mem_flush_cache(struct sdmmc_function *, bool);
 
 #endif	/* _SDMMCVAR_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.3.4.2 2017/07/18 19:13:08 snj Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.3.4.3 2017/07/25 01:49:13 snj Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.3.4.2 2017/07/18 19:13:08 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.3.4.3 2017/07/25 01:49:13 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -317,7 +317,8 @@ sunxi_mmc_attach_i(device_t self)
 		       SMC_CAPS_MULTI_SEG_DMA |
 		       SMC_CAPS_AUTO_STOP |
 		       SMC_CAPS_SD_HIGHSPEED |
-		       SMC_CAPS_MMC_HIGHSPEED;
+		       SMC_CAPS_MMC_HIGHSPEED |
+		       SMC_CAPS_POLLING;
 	if (width == 4)
 		saa.saa_caps |= SMC_CAPS_4BIT_MODE;
 	if (width == 8)
@@ -368,7 +369,8 @@ sunxi_mmc_intr(void *priv)
 }
 
 static int
-sunxi_mmc_wait_rint(struct sunxi_mmc_softc *sc, uint32_t mask, int timeout)
+sunxi_mmc_wait_rint(struct sunxi_mmc_softc *sc, uint32_t mask,
+    int timeout, bool poll)
 {
 	int retry;
 	int error;
@@ -378,15 +380,24 @@ sunxi_mmc_wait_rint(struct sunxi_mmc_softc *sc, uint32_t mask, int timeout)
 	if (sc->sc_intr_rint & mask)
 		return 0;
 
-	retry = timeout / hz;
+	if (poll)
+		retry = timeout / hz * 1000;
+	else
+		retry = timeout / hz;
 
 	while (retry > 0) {
-		error = cv_timedwait(&sc->sc_intr_cv,
-		    &sc->sc_intr_lock, hz);
-		if (error && error != EWOULDBLOCK)
-			return error;
+		if (poll) {
+			sc->sc_intr_rint |= MMC_READ(sc, SUNXI_MMC_RINT);
+		} else {
+			error = cv_timedwait(&sc->sc_intr_cv,
+			    &sc->sc_intr_lock, hz);
+			if (error && error != EWOULDBLOCK)
+				return error;
+		}
 		if (sc->sc_intr_rint & mask)
 			return 0;
+		if (poll)
+			delay(1000);	
 		--retry;
 	}
 
@@ -419,7 +430,6 @@ sunxi_mmc_host_reset(sdmmc_chipset_handle_t sch)
 
 	MMC_WRITE(sc, SUNXI_MMC_GCTRL,
 	    MMC_READ(sc, SUNXI_MMC_GCTRL) | SUNXI_MMC_GCTRL_INTEN);
-
 
 	return 0;
 }
@@ -680,13 +690,14 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 {
 	struct sunxi_mmc_softc *sc = sch;
 	uint32_t cmdval = SUNXI_MMC_CMD_START;
+	const bool poll = (cmd->c_flags & SCF_POLL) != 0;
 	int retry;
 
 #ifdef SUNXI_MMC_DEBUG
 	aprint_normal_dev(sc->sc_dev,
-	    "opcode %d flags 0x%x data %p datalen %d blklen %d\n",
+	    "opcode %d flags 0x%x data %p datalen %d blklen %d poll %d\n",
 	    cmd->c_opcode, cmd->c_flags, cmd->c_data, cmd->c_datalen,
-	    cmd->c_blklen);
+	    cmd->c_blklen, poll);
 #endif
 
 	mutex_enter(&sc->sc_intr_lock);
@@ -766,7 +777,7 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	}
 
 	cmd->c_error = sunxi_mmc_wait_rint(sc,
-	    SUNXI_MMC_INT_ERROR|SUNXI_MMC_INT_CMD_DONE, hz * 10);
+	    SUNXI_MMC_INT_ERROR|SUNXI_MMC_INT_CMD_DONE, hz * 10, poll);
 	if (cmd->c_error == 0 && (sc->sc_intr_rint & SUNXI_MMC_INT_ERROR)) {
 		if (sc->sc_intr_rint & SUNXI_MMC_INT_RESP_TIMEOUT) {
 			cmd->c_error = ETIMEDOUT;
@@ -787,7 +798,7 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		    SUNXI_MMC_INT_ERROR|
 		    SUNXI_MMC_INT_AUTO_CMD_DONE|
 		    SUNXI_MMC_INT_DATA_OVER,
-		    hz*10);
+		    hz*10, poll);
 		if (cmd->c_error == 0 &&
 		    (sc->sc_intr_rint & SUNXI_MMC_INT_ERROR)) {
 			cmd->c_error = ETIMEDOUT;
