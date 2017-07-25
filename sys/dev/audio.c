@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.368 2017/07/09 12:08:39 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.369 2017/07/25 13:29:16 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.368 2017/07/09 12:08:39 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.369 2017/07/25 13:29:16 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5807,6 +5807,9 @@ audio_query_devinfo(struct audio_softc *sc, mixer_devinfo_t *di)
 
 	KASSERT(mutex_owned(sc->sc_lock));
 
+	if (sc->sc_static_nmixer_states == 0 || sc->sc_nmixer_states == 0)
+		goto hardware;
+
 	if (di->index >= sc->sc_static_nmixer_states - 1 &&
 	    di->index < sc->sc_nmixer_states) {
 		if (di->index == sc->sc_static_nmixer_states - 1) {
@@ -5838,7 +5841,7 @@ audio_query_devinfo(struct audio_softc *sc, mixer_devinfo_t *di)
 		return 0;
 	}
 
-
+hardware:
 	return sc->hw_if->query_devinfo(sc->hw_hdl, di);
 }
 
