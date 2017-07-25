@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.213.2.1 2017/07/07 13:57:26 martin Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.213.2.2 2017/07/25 01:55:21 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.213.2.1 2017/07/07 13:57:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.213.2.2 2017/07/25 01:55:21 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -736,6 +736,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 	struct sockaddr_dl sdl;
 	int bound = curlwp_bind();
 	bool do_rt_free = false;
+	struct sockaddr_storage netmask;
 
 #define senderr(e) do { error = e; goto flush;} while (/*CONSTCOND*/ 0)
 	if (m == NULL || ((m->m_len < sizeof(int32_t)) &&
@@ -792,6 +793,25 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 	if (kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_ROUTE,
 	    0, rtm, NULL, NULL) != 0)
 		senderr(EACCES);
+
+	/*
+	 * route(8) passes a sockaddr truncated with prefixlen.
+	 * The kernel doesn't expect such sockaddr and need to 
+	 * use a buffer that is big enough for the sockaddr expected
+	 * (padded with 0's). We keep the original length of the sockaddr.
+	 */
+	if (info.rti_info[RTAX_NETMASK]) {
+		socklen_t sa_len = sockaddr_getsize_by_family(
+		    info.rti_info[RTAX_NETMASK]->sa_family);
+		socklen_t masklen = sockaddr_getlen(
+		    info.rti_info[RTAX_NETMASK]);
+		if (sa_len != 0 && sa_len > masklen) {
+			KASSERT(sa_len <= sizeof(netmask));
+			memcpy(&netmask, info.rti_info[RTAX_NETMASK], masklen);
+			memset((char *)&netmask + masklen, 0, sa_len - masklen);
+			info.rti_info[RTAX_NETMASK] = sstocsa(&netmask);
+		}
+	}
 
 	switch (rtm->rtm_type) {
 
