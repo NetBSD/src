@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.125 2017/02/07 02:33:54 ozaki-r Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.125.6.1 2017/07/25 02:07:11 snj Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.125 2017/02/07 02:33:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.125.6.1 2017/07/25 02:07:11 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1366,7 +1366,6 @@ pppoe_send_padi(struct pppoe_softc *sc)
 	}
 
 #ifdef PPPOE_DEBUG
-	p += sizeof sc;
 	if (p - mtod(m0, uint8_t *) != len + PPPOE_HEADERLEN)
 		panic("pppoe_send_padi: garbled output len, should be %ld, is %ld",
 		    (long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, uint8_t *)));
@@ -1666,7 +1665,6 @@ pppoe_send_padr(struct pppoe_softc *sc)
 	}
 
 #ifdef PPPOE_DEBUG
-	p += sizeof sc;
 	if (p - mtod(m0, uint8_t *) != len + PPPOE_HEADERLEN)
 		panic("pppoe_send_padr: garbled output len, should be %ld, is %ld",
 			(long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, uint8_t *)));
