@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_ccu.c,v 1.8.4.2 2017/07/18 19:13:08 snj Exp $ */
+/* $NetBSD: sun8i_h3_ccu.c,v 1.8.4.3 2017/07/25 02:03:16 snj Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.8.4.2 2017/07/18 19:13:08 snj Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.8.4.3 2017/07/25 02:03:16 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -184,12 +184,24 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	SUNXI_CCU_NM(H3_CLK_MMC0, "mmc0", mod_parents,
 	    SDMMC0_CLK_REG, __BITS(17, 16), __BITS(3,0), __BITS(25, 24), __BIT(31),
 	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
+	SUNXI_CCU_PHASE(H3_CLK_MMC0_SAMPLE, "mmc0_sample", "mmc0",
+	    SDMMC0_CLK_REG, __BITS(22,20)),
+	SUNXI_CCU_PHASE(H3_CLK_MMC0_OUTPUT, "mmc0_output", "mmc0",
+	    SDMMC0_CLK_REG, __BITS(10,8)),
 	SUNXI_CCU_NM(H3_CLK_MMC1, "mmc1", mod_parents,
 	    SDMMC1_CLK_REG, __BITS(17, 16), __BITS(3,0), __BITS(25, 24), __BIT(31),
 	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
+	SUNXI_CCU_PHASE(H3_CLK_MMC1_SAMPLE, "mmc1_sample", "mmc1",
+	    SDMMC1_CLK_REG, __BITS(22,20)),
+	SUNXI_CCU_PHASE(H3_CLK_MMC1_OUTPUT, "mmc1_output", "mmc1",
+	    SDMMC1_CLK_REG, __BITS(10,8)),
 	SUNXI_CCU_NM(H3_CLK_MMC2, "mmc2", mod_parents,
 	    SDMMC2_CLK_REG, __BITS(17, 16), __BITS(3,0), __BITS(25, 24), __BIT(31),
 	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
+	SUNXI_CCU_PHASE(H3_CLK_MMC2_SAMPLE, "mmc2_sample", "mmc2",
+	    SDMMC2_CLK_REG, __BITS(22,20)),
+	SUNXI_CCU_PHASE(H3_CLK_MMC2_OUTPUT, "mmc2_output", "mmc2",
+	    SDMMC2_CLK_REG, __BITS(10,8)),
 
 	SUNXI_CCU_GATE(H3_CLK_BUS_MMC0, "bus-mmc0", "ahb1",
 	    BUS_CLK_GATING_REG0, 8),
