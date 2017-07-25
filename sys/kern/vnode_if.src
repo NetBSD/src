@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.75.2.1 2017/06/04 20:35:01 bouyer Exp $
+#	$NetBSD: vnode_if.src,v 1.75.2.2 2017/07/25 01:29:23 snj Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -468,6 +468,7 @@ vop_pathconf {
 #% advlock    vp      U U U
 #
 vop_advlock {
+	FSTRANS=NO
 	IN LOCKED=NO struct vnode *vp;
 	IN void *id;
 	IN int op;
