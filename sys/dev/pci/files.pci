@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.371.4.4 2016/12/23 06:33:56 snj Exp $
+#	$NetBSD: files.pci,v 1.371.4.5 2017/07/25 19:43:03 snj Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -934,6 +934,11 @@ file	dev/pci/if_iwi.c		iwi
 device	wpi: ifnet, arp, wlan, firmload
 attach	wpi at pci
 file	dev/pci/if_wpi.c		wpi
+
+# Intel Wireless 726x/316x/826x Mini-PCIe Adapter
+device	iwm: ifnet, arp, wlan, firmload
+attach	iwm at pci
+file	dev/pci/if_iwm.c		iwm
 
 # Intel PRO/Wireless 4965AGN Mini-PCI Adapter
 device	iwn: ifnet, arp, wlan, firmload

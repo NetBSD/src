@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1107.2.10 2017/04/05 19:54:17 snj Exp $
+# $NetBSD: GENERIC,v 1.1107.2.11 2017/07/25 19:43:03 snj Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1107.2.10 $"
+#ident 		"GENERIC-$Revision: 1.1107.2.11 $"
 
 maxusers	64		# estimated number of users
 
@@ -981,6 +981,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
+iwm*	at pci? dev ? function ?	# Intel Wireless 726x/316x/826x
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
