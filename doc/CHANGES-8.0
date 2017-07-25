@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.31 2017/07/24 06:37:45 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.32 2017/07/25 02:23:33 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -4626,4 +4626,187 @@ sys/ufs/ffs/ffs_alloc.c				1.157
 	When initializing more inodes make sure to write them to disk
 	before writing the cylinder group with updated cg_initediblk.
 	[hannken, ticket #129]
+
+sys/kern/vnode_if.c				regen
+sys/kern/vnode_if.src				1.77
+sys/rump/include/rump/rumpvnode_if.h		regen
+sys/rump/librump/rumpvfs/rumpvnode_if.c		regen
+sys/sys/vnode_if.h				regen
+
+	As VOP_ADVLOCK() may block indefinitely we cannot take
+	fstrans here.  Fixes PR kern/52364.
+	[hannken, ticket #130]
+
+sbin/route/rtutil.c				1.10
+
+	Fix route and netstat -r output when built with -DSMALL
+	[manu, ticket #131]
+
+sys/arch/arm/sunxi/sunxi_platform.c		1.5
+sys/arch/evbarm/conf/SUNXI			1.17
+
+	Add support for Allwinner H2+ as found in the Orange Pi Zero.
+	[jmcneill, ticket #132]
+
+libexec/ld.elf_so/tls.c				1.11
+
+	Fix two bugs related to promotion of DSO TLS blocks into the
+	static thread allocation:
+	(1) Set the DTV vector up whenever an offset into the static
+	allocation is assigned, even if the block itself is not
+	initialized. This has been seen in libstdc++.
+	(2) Do not free a DTV block if it is part of the static thread
+	allocation.
+	[joerg, ticket #133]
+
+sys/lib/libunwind/Registers.hpp			1.20
+
+	GCC 5.3 likes to emit unwind data with float registers,
+	i.e. register halfs. Compensate.
+	[joerg, ticket #134]
+
+sys/dev/usb/uhci.c				1.276
+
+	Only call uhci_free_stds if there are TDs to free.
+
+	In uhci_alloc_std_chain ensure we fill the TD array correctly
+	and note the number of allocated TDs so that uhci_free_stds
+	will do the right thing.
+	[skrll, ticket #136]
+
+share/mk/bsd.man.mk				1.119
+
+	Latest mandoc no longer supports multiple -O options. Instead
+	it expects option values to be separated by commas.
+	PR toolchain/52402
+	[jmcneill, ticket #137]
+
+usr.bin/systat/iostat.c				1.38
+usr.bin/systat/vmstat.c				1.82
+usr.bin/vmstat/drvstats.c			1.11
+usr.bin/vmstat/drvstats.h			1.5
+usr.bin/vmstat/vmstat.c				1.217
+usr.sbin/iostat/iostat.c			1.65
+
+	Use I/O timestamps to compute disk statistics for better
+	precision.  Fix bug where garbage was printed if a disk was
+	detached while iostat was running.
+	[mlelstv, ticket #138]
+
+sys/arch/arm/sunxi/sunxi_mmc.c			1.2
+sys/dev/sdmmc/ld_sdmmc.c			1.31
+sys/dev/sdmmc/sdmmc_mem.c			1.61
+sys/dev/sdmmc/sdmmcreg.h			1.32
+sys/dev/sdmmc/sdmmcvar.h			1.28
+
+
+	Add support for eMMC 4.5's optional cache feature.
+	Enable in the sunxi mmc driver.
+	[jmcneill, ticket #139]
+
+sys/kern/uipc_domain.c				1.97-1.99
+sys/net/rtsock.c				1.225-1.227
+sys/sys/socket.h				1.123
+
+	route(8) passes a sockaddr for netmask that is truncated
+	with its prefixlen. However the kernel basically doesn't
+	expect such format and may read beyond the data. So restore
+	the original length of the the data at the beginning of the
+	kernel for the rest components.
+	[ozaki-r, ticket #140]
+
+sys/conf/Makefile.kern.inc			1.260
+sys/conf/dts.mk					1.1-1.2
+
+	Add dependency handling (#include and /include/) to the
+	.dts -> .dtb conversion code.
+	[jmcneill, ticket #141]
+
+usr.bin/mkubootimage/mkubootimage.1		1.9-1.10
+usr.bin/mkubootimage/mkubootimage.c		1.20
+usr.bin/mkubootimage/uboot.h			1.7
+
+	Add support for "kernel_noload" image types. This type is
+	the same as the "kernel" type, except it can run from any
+	load address.
+	[jmcneill, ticket #142]
+
+sys/arch/arm/sunxi/files.sunxi			1.12
+sys/arch/arm/sunxi/sun8i_h3_ccu.c		1.8
+sys/arch/arm/sunxi/sunxi_ccu.c			1.6
+sys/arch/arm/sunxi/sunxi_ccu.h			1.7
+sys/arch/arm/sunxi/sunxi_ccu_phase.c		1.1
+sys/arch/arm/sunxi/sunxi_mmc.c			1.3
+sys/arch/arm/sunxi/sunxi_mmc.h			1.2
+
+	Enable eMMC DDR52 support for sunxi boards.
+	[jmcneill, ticket #143]
+
+sys/fs/union/union.h				1.29
+sys/fs/union/union_subr.c			1.76
+
+	Make union_newlower() ans union_newupper() local to
+	union_subr.c, expand and remove union_updatevp() and take
+	care to transfer the vnode lock from the union vnode to
+	its new upper vnode without breaking the fstrans state.
+	[hannken, ticket #145]
+
+tests/lib/libc/arch/sh3/return_one.S		1.2
+
+	Don't execute random garbage.  Fixes mprotect_mremap_exec test.
+	[uwe, ticket #148]
+
+sys/net/if_pppoe.c				1.126
+
+	Fix panic when PPPOE_DEBUG is enabled.
+	[knakahara, ticket #149]
+
+sys/dev/ic/rt2860.c				1.27
+
+	Fix diagnostic crash on detach.
+	[maya, ticket #150]
+
+sys/arch/evbarm/fdt/fdt_machdep.c		1.11
+
+	Fix reserved memory handling.
+	[jmcneill, ticket #151]
+
+sys/arch/sparc/conf/files.sparc			1.157
+sys/arch/sparc/sparc/db_interface.c		1.94
+sys/arch/sparc/sparc/db_machdep.c		1.1
+usr.sbin/crash/Makefile				1.37
+
+	Move the ddb registers and empty command table used for
+	crash(8) into db_machdep.c like other archs.
+	[nakayama, ticket #152]
+
+sys/dev/pci/aceride.c				1.37
+sys/dev/pci/pciide_acer_reg.h			1.13
+
+	Apply workaround from FreeBSD to fix read data corruption
+	seen on Fire V100 and mSATA-SSD with mSATA to IDE adapter.
+	[nakayama, ticket #153]
+
+sys/arch/pmax/conf/files.pmax			patch
+sys/arch/pmax/include/bus.h			patch
+
+	Revert pmax switch to common MIPS bus_space and bus_dma.
+	[flxd, ticket #154]
+
+sys/net/npf/npf_os.c				1.7
+
+	The npf module depends on some stuff from the bpf module,
+	so set the required modules list accordingly.
+	[pgoyette, ticket #155]
+
+libexec/ld.elf_so/arch/sparc64/mdreloc.c	1.62, 1.63
+
+	Simplify and fix the offset calculation when doing a %pc
+	relative branch from the PLT slot to the target.
+	[martin, ticket #156]
+
+lib/libc/compiler_rt/Makefile.inc		1.35
+
+	Do not use IEEE 754 specific functions for VAX
+	[martin, ticket #157]
 
