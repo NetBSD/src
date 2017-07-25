@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.529 2017/07/20 10:00:25 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.530 2017/07/25 06:00:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.529 2017/07/20 10:00:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.530 2017/07/25 06:00:17 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -442,6 +442,12 @@ struct wm_phyop {
 	int reset_delay_us;
 };
 
+struct wm_nvmop {
+	int (*acquire)(struct wm_softc *);
+	void (*release)(struct wm_softc *);
+	int (*read)(struct wm_softc *, int, int, uint16_t *);
+};
+
 /*
  * Software state per device.
  */
@@ -564,6 +570,7 @@ struct wm_softc {
 	kmutex_t *sc_ich_nvmmtx;	/* ICH/PCH specific NVM mutex */
 
 	struct wm_phyop phy;
+	struct wm_nvmop nvm;
 };
 
 #define WM_CORE_LOCK(_sc)	if ((_sc)->sc_core_lock) mutex_enter((_sc)->sc_core_lock)
@@ -857,8 +864,6 @@ static int	wm_nvm_read_spt(struct wm_softc *, int, int, uint16_t *);
 static int	wm_nvm_read_word_invm(struct wm_softc *, uint16_t, uint16_t *);
 static int	wm_nvm_read_invm(struct wm_softc *, int, int, uint16_t *);
 /* Lock, detecting NVM type, validate checksum and read */
-static int	wm_nvm_acquire(struct wm_softc *);
-static void	wm_nvm_release(struct wm_softc *);
 static int	wm_nvm_is_onboard_eeprom(struct wm_softc *);
 static int	wm_nvm_get_flash_presence_i210(struct wm_softc *);
 static int	wm_nvm_validate_checksum(struct wm_softc *);
@@ -872,17 +877,23 @@ static int	wm_nvm_read(struct wm_softc *, int, int, uint16_t *);
  */
 static int	wm_get_null(struct wm_softc *);
 static void	wm_put_null(struct wm_softc *);
+static int	wm_get_eecd(struct wm_softc *);
+static void	wm_put_eecd(struct wm_softc *);
 static int	wm_get_swsm_semaphore(struct wm_softc *); /* 8257[123] */
 static void	wm_put_swsm_semaphore(struct wm_softc *);
 static int	wm_get_swfw_semaphore(struct wm_softc *, uint16_t);
 static void	wm_put_swfw_semaphore(struct wm_softc *, uint16_t);
+static int	wm_get_nvm_80003(struct wm_softc *);
+static void	wm_put_nvm_80003(struct wm_softc *);
+static int	wm_get_nvm_82571(struct wm_softc *);
+static void	wm_put_nvm_82571(struct wm_softc *);
 static int	wm_get_phy_82575(struct wm_softc *);
 static void	wm_put_phy_82575(struct wm_softc *);
 static int	wm_get_swfwhw_semaphore(struct wm_softc *); /* For 574/583 */
 static void	wm_put_swfwhw_semaphore(struct wm_softc *);
 static int	wm_get_swflag_ich8lan(struct wm_softc *);	/* For PHY */
 static void	wm_put_swflag_ich8lan(struct wm_softc *);
-static int	wm_get_nvm_ich8lan(struct wm_softc *);		/* For NVM */
+static int	wm_get_nvm_ich8lan(struct wm_softc *);
 static void	wm_put_nvm_ich8lan(struct wm_softc *);
 static int	wm_get_hw_semaphore_82573(struct wm_softc *);
 static void	wm_put_hw_semaphore_82573(struct wm_softc *);
@@ -1713,8 +1724,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_type = wmp->wmp_type;
 
 	/* Set default function pointers */
-	sc->phy.acquire = wm_get_null;
-	sc->phy.release = wm_put_null;
+	sc->phy.acquire = sc->nvm.acquire = wm_get_null;
+	sc->phy.release = sc->nvm.release = wm_put_null;
 	sc->phy.reset_delay_us = (sc->sc_type >= WM_T_82571) ? 100 : 10000;
 
 	if (sc->sc_type < WM_T_82543) {
@@ -2039,6 +2050,7 @@ alloc_retry:
 	case WM_T_82543:
 	case WM_T_82544:
 		/* Microwire */
+		sc->nvm.read = wm_nvm_read_uwire;
 		sc->sc_nvm_wordsize = 64;
 		sc->sc_nvm_addrbits = 6;
 		break;
@@ -2048,6 +2060,7 @@ alloc_retry:
 	case WM_T_82546:
 	case WM_T_82546_3:
 		/* Microwire */
+		sc->nvm.read = wm_nvm_read_uwire;
 		reg = CSR_READ(sc, WMREG_EECD);
 		if (reg & EECD_EE_SIZE) {
 			sc->sc_nvm_wordsize = 256;
@@ -2057,19 +2070,22 @@ alloc_retry:
 			sc->sc_nvm_addrbits = 6;
 		}
 		sc->sc_flags |= WM_F_LOCK_EECD;
+		sc->nvm.acquire = wm_get_eecd;
+		sc->nvm.release = wm_put_eecd;
 		break;
 	case WM_T_82541:
 	case WM_T_82541_2:
 	case WM_T_82547:
 	case WM_T_82547_2:
-		sc->sc_flags |= WM_F_LOCK_EECD;
 		reg = CSR_READ(sc, WMREG_EECD);
 		if (reg & EECD_EE_TYPE) {
 			/* SPI */
+			sc->nvm.read = wm_nvm_read_spi;
 			sc->sc_flags |= WM_F_EEPROM_SPI;
 			wm_nvm_set_addrbits_size_eecd(sc);
 		} else {
 			/* Microwire */
+			sc->nvm.read = wm_nvm_read_uwire;
 			if ((reg & EECD_EE_ABITS) != 0) {
 				sc->sc_nvm_wordsize = 256;
 				sc->sc_nvm_addrbits = 8;
@@ -2078,29 +2094,37 @@ alloc_retry:
 				sc->sc_nvm_addrbits = 6;
 			}
 		}
+		sc->sc_flags |= WM_F_LOCK_EECD;
+		sc->nvm.acquire = wm_get_eecd;
+		sc->nvm.release = wm_put_eecd;
 		break;
 	case WM_T_82571:
 	case WM_T_82572:
 		/* SPI */
+		sc->nvm.read = wm_nvm_read_eerd;
+		/* Not use WM_F_LOCK_EECD because we use EERD */
 		sc->sc_flags |= WM_F_EEPROM_SPI;
 		wm_nvm_set_addrbits_size_eecd(sc);
-		sc->sc_flags |= WM_F_LOCK_EECD | WM_F_LOCK_SWSM;
 		sc->phy.acquire = wm_get_swsm_semaphore;
 		sc->phy.release = wm_put_swsm_semaphore;
+		sc->nvm.acquire = wm_get_nvm_82571;
+		sc->nvm.release = wm_put_nvm_82571;
 		break;
 	case WM_T_82573:
 	case WM_T_82574:
 	case WM_T_82583:
+		sc->nvm.read = wm_nvm_read_eerd;
+		/* Not use WM_F_LOCK_EECD because we use EERD */
 		if (sc->sc_type == WM_T_82573) {
-			sc->sc_flags |= WM_F_LOCK_SWSM;
 			sc->phy.acquire = wm_get_swsm_semaphore;
 			sc->phy.release = wm_put_swsm_semaphore;
+			sc->nvm.acquire = wm_get_nvm_82571;
+			sc->nvm.release = wm_put_nvm_82571;
 		} else {
-			sc->sc_flags |= WM_F_LOCK_EXTCNF;
 			/* Both PHY and NVM use the same semaphore. */
-			sc->phy.acquire
+			sc->phy.acquire = sc->nvm.acquire
 			    = wm_get_swfwhw_semaphore;
-			sc->phy.release
+			sc->phy.release = sc->nvm.release
 			    = wm_put_swfwhw_semaphore;
 		}
 		if (wm_nvm_is_onboard_eeprom(sc) == 0) {
@@ -2111,7 +2135,6 @@ alloc_retry:
 			sc->sc_flags |= WM_F_EEPROM_SPI;
 			wm_nvm_set_addrbits_size_eecd(sc);
 		}
-		sc->sc_flags |= WM_F_EEPROM_EERDEEWR;
 		break;
 	case WM_T_82575:
 	case WM_T_82576:
@@ -2122,10 +2145,18 @@ alloc_retry:
 		/* SPI */
 		sc->sc_flags |= WM_F_EEPROM_SPI;
 		wm_nvm_set_addrbits_size_eecd(sc);
-		sc->sc_flags |= WM_F_EEPROM_EERDEEWR | WM_F_LOCK_SWFW
-		    | WM_F_LOCK_SWSM;
+		if((sc->sc_type == WM_T_80003)
+		    || (sc->sc_nvm_wordsize < (1 << 15))) {
+			sc->nvm.read = wm_nvm_read_eerd;
+			/* Don't use WM_F_LOCK_EECD because we use EERD */
+		} else {
+			sc->nvm.read = wm_nvm_read_spi;
+			sc->sc_flags |= WM_F_LOCK_EECD;
+		}
 		sc->phy.acquire = wm_get_phy_82575;
 		sc->phy.release = wm_put_phy_82575;
+		sc->nvm.acquire = wm_get_nvm_80003;	
+		sc->nvm.release = wm_put_nvm_80003;	
 		break;
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -2133,8 +2164,9 @@ alloc_retry:
 	case WM_T_PCH:
 	case WM_T_PCH2:
 	case WM_T_PCH_LPT:
+		sc->nvm.read = wm_nvm_read_ich8;
 		/* FLASH */
-		sc->sc_flags |= WM_F_EEPROM_FLASH | WM_F_LOCK_EXTCNF;
+		sc->sc_flags |= WM_F_EEPROM_FLASH;
 		sc->sc_nvm_wordsize = 2048;
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag,WM_ICH8_FLASH);
 		if (pci_mapreg_map(pa, WM_ICH8_FLASH, memtype, 0,
@@ -2154,10 +2186,13 @@ alloc_retry:
 		sc->sc_flashreg_offset = 0;
 		sc->phy.acquire = wm_get_swflag_ich8lan;
 		sc->phy.release = wm_put_swflag_ich8lan;
+		sc->nvm.acquire = wm_get_nvm_ich8lan;
+		sc->nvm.release = wm_put_nvm_ich8lan;
 		break;
 	case WM_T_PCH_SPT:
+		sc->nvm.read = wm_nvm_read_spt;
 		/* SPT has no GFPREG; flash registers mapped through BAR0 */
-		sc->sc_flags |= WM_F_EEPROM_FLASH | WM_F_LOCK_EXTCNF;
+		sc->sc_flags |= WM_F_EEPROM_FLASH;
 		sc->sc_flasht = sc->sc_st;
 		sc->sc_flashh = sc->sc_sh;
 		sc->sc_ich8_flash_base = 0;
@@ -2171,20 +2206,25 @@ alloc_retry:
 		sc->sc_flashreg_offset = WM_PCH_SPT_FLASHOFFSET;
 		sc->phy.acquire = wm_get_swflag_ich8lan;
 		sc->phy.release = wm_put_swflag_ich8lan;
+		sc->nvm.acquire = wm_get_nvm_ich8lan;
+		sc->nvm.release = wm_put_nvm_ich8lan;
 		break;
 	case WM_T_I210:
 	case WM_T_I211:
 		if (wm_nvm_get_flash_presence_i210(sc)) {
-			wm_nvm_set_addrbits_size_eecd(sc);
+			sc->nvm.read = wm_nvm_read_eerd;
+			/* Don't use WM_F_LOCK_EECD because we use EERD */
 			sc->sc_flags |= WM_F_EEPROM_FLASH_HW;
-			sc->sc_flags |= WM_F_EEPROM_EERDEEWR;
+			wm_nvm_set_addrbits_size_eecd(sc);
 		} else {
-			sc->sc_nvm_wordsize = INVM_SIZE;
+			sc->nvm.read = wm_nvm_read_invm;
 			sc->sc_flags |= WM_F_EEPROM_INVM;
+			sc->sc_nvm_wordsize = INVM_SIZE;
 		}
-		sc->sc_flags |= WM_F_LOCK_SWFW | WM_F_LOCK_SWSM;
 		sc->phy.acquire = wm_get_phy_82575;
 		sc->phy.release = wm_put_phy_82575;
+		sc->nvm.acquire = wm_get_nvm_80003;
+		sc->nvm.release = wm_put_nvm_80003;
 		break;
 	default:
 		break;
@@ -3674,7 +3714,7 @@ wm_phy_post_reset(struct wm_softc *sc)
 
 	if (wm_phy_resetisblocked(sc)) {
 		/* XXX */
-		device_printf(sc->sc_dev, " PHY is blocked\n");
+		device_printf(sc->sc_dev, "PHY is blocked\n");
 		return;
 	}
 
@@ -11422,6 +11462,9 @@ wm_nvm_read_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
+	if (sc->nvm.acquire(sc) != 0)
+		return -1;
+
 	for (i = 0; i < wordcnt; i++) {
 		/* Clear SK and DI. */
 		reg = CSR_READ(sc, WMREG_EECD) & ~(EECD_SK | EECD_DI);
@@ -11467,6 +11510,7 @@ wm_nvm_read_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		delay(2);
 	}
 
+	sc->nvm.release(sc);
 	return 0;
 }
 
@@ -11558,7 +11602,7 @@ wm_nvm_ready_spi(struct wm_softc *sc)
 	}
 	if (usec >= SPI_MAX_RETRIES) {
 		aprint_error_dev(sc->sc_dev,"EEPROM failed to become ready\n");
-		return 1;
+		return -1;
 	}
 	return 0;
 }
@@ -11574,9 +11618,13 @@ wm_nvm_read_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	uint32_t reg, val;
 	int i;
 	uint8_t opc;
+	int rv = 0;
 
 	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
+
+	if (sc->nvm.acquire(sc) != 0)
+		return -1;
 
 	/* Clear SK and CS. */
 	reg = CSR_READ(sc, WMREG_EECD) & ~(EECD_SK | EECD_CS);
@@ -11584,8 +11632,8 @@ wm_nvm_read_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	CSR_WRITE_FLUSH(sc);
 	delay(2);
 
-	if (wm_nvm_ready_spi(sc))
-		return 1;
+	if ((rv = wm_nvm_ready_spi(sc)) != 0)
+		goto out;
 
 	/* Toggle CS to flush commands. */
 	CSR_WRITE(sc, WMREG_EECD, reg | EECD_CS);
@@ -11613,7 +11661,9 @@ wm_nvm_read_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	CSR_WRITE_FLUSH(sc);
 	delay(2);
 
-	return 0;
+out:
+	sc->nvm.release(sc);
+	return rv;
 }
 
 /* Using with EERD */
@@ -11643,23 +11693,27 @@ wm_nvm_read_eerd(struct wm_softc *sc, int offset, int wordcnt,
     uint16_t *data)
 {
 	int i, eerd = 0;
-	int error = 0;
+	int rv = 0;
 
 	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
+	if (sc->nvm.acquire(sc) != 0)
+		return -1;
+
 	for (i = 0; i < wordcnt; i++) {
 		eerd = ((offset + i) << EERD_ADDR_SHIFT) | EERD_START;
-
 		CSR_WRITE(sc, WMREG_EERD, eerd);
-		error = wm_poll_eerd_eewr_done(sc, WMREG_EERD);
-		if (error != 0)
+		rv = wm_poll_eerd_eewr_done(sc, WMREG_EERD);
+		if (rv != 0) {
+			aprint_error_dev(sc->sc_dev, "EERD polling failed\n");
 			break;
-
+		}
 		data[i] = (CSR_READ(sc, WMREG_EERD) >> EERD_DATA_SHIFT);
 	}
 
-	return error;
+	sc->nvm.release(sc);
+	return rv;
 }
 
 /* Flash */
@@ -11989,7 +12043,7 @@ wm_read_ich8_dword(struct wm_softc *sc, uint32_t index, uint32_t *data)
 static int
 wm_nvm_read_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 {
-	int32_t  error = 0;
+	int32_t  rv = 0;
 	uint32_t flash_bank = 0;
 	uint32_t act_offset = 0;
 	uint32_t bank_offset = 0;
@@ -11999,14 +12053,17 @@ wm_nvm_read_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
+	if (sc->nvm.acquire(sc) != 0)
+		return -1;
+
 	/*
 	 * We need to know which is the valid flash bank.  In the event
 	 * that we didn't allocate eeprom_shadow_ram, we may not be
 	 * managing flash_bank.  So it cannot be trusted and needs
 	 * to be updated with each read.
 	 */
-	error = wm_nvm_valid_bank_detect_ich8lan(sc, &flash_bank);
-	if (error) {
+	rv = wm_nvm_valid_bank_detect_ich8lan(sc, &flash_bank);
+	if (rv) {
 		DPRINTF(WM_DEBUG_NVM, ("%s: failed to detect NVM bank\n",
 			device_xname(sc->sc_dev)));
 		flash_bank = 0;
@@ -12021,8 +12078,8 @@ wm_nvm_read_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	for (i = 0; i < words; i++) {
 		/* The NVM part needs a byte offset, hence * 2 */
 		act_offset = bank_offset + ((offset + i) * 2);
-		error = wm_read_ich8_word(sc, act_offset, &word);
-		if (error) {
+		rv = wm_read_ich8_word(sc, act_offset, &word);
+		if (rv) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: failed to read NVM\n", __func__);
 			break;
@@ -12030,7 +12087,8 @@ wm_nvm_read_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 		data[i] = word;
 	}
 
-	return error;
+	sc->nvm.release(sc);
+	return rv;
 }
 
 /******************************************************************************
@@ -12045,7 +12103,7 @@ wm_nvm_read_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 static int
 wm_nvm_read_spt(struct wm_softc *sc, int offset, int words, uint16_t *data)
 {
-	int32_t  error = 0;
+	int32_t  rv = 0;
 	uint32_t flash_bank = 0;
 	uint32_t act_offset = 0;
 	uint32_t bank_offset = 0;
@@ -12055,14 +12113,17 @@ wm_nvm_read_spt(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
+	if (sc->nvm.acquire(sc) != 0)
+		return -1;
+
 	/*
 	 * We need to know which is the valid flash bank.  In the event
 	 * that we didn't allocate eeprom_shadow_ram, we may not be
 	 * managing flash_bank.  So it cannot be trusted and needs
 	 * to be updated with each read.
 	 */
-	error = wm_nvm_valid_bank_detect_ich8lan(sc, &flash_bank);
-	if (error) {
+	rv = wm_nvm_valid_bank_detect_ich8lan(sc, &flash_bank);
+	if (rv) {
 		DPRINTF(WM_DEBUG_NVM, ("%s: failed to detect NVM bank\n",
 			device_xname(sc->sc_dev)));
 		flash_bank = 0;
@@ -12078,8 +12139,8 @@ wm_nvm_read_spt(struct wm_softc *sc, int offset, int words, uint16_t *data)
 		/* The NVM part needs a byte offset, hence * 2 */
 		act_offset = bank_offset + ((offset + i) * 2);
 		/* but we must read dword aligned, so mask ... */
-		error = wm_read_ich8_dword(sc, act_offset & ~0x3, &dword);
-		if (error) {
+		rv = wm_read_ich8_dword(sc, act_offset & ~0x3, &dword);
+		if (rv) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: failed to read NVM\n", __func__);
 			break;
@@ -12091,7 +12152,8 @@ wm_nvm_read_spt(struct wm_softc *sc, int offset, int words, uint16_t *data)
 			data[i] = (uint16_t)((dword >> 16) & 0xFFFF);
 	}
 
-	return error;
+	sc->nvm.release(sc);
+	return rv;
 }
 
 /* iNVM */
@@ -12138,6 +12200,9 @@ wm_nvm_read_invm(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	
 	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
+
+	if (sc->nvm.acquire(sc) != 0)
+		return -1;
 
 	for (i = 0; i < words; i++) {
 		switch (offset + i) {
@@ -12193,103 +12258,11 @@ wm_nvm_read_invm(struct wm_softc *sc, int offset, int words, uint16_t *data)
 		}
 	}
 
+	sc->nvm.release(sc);
 	return rv;
 }
 
 /* Lock, detecting NVM type, validate checksum, version and read */
-
-/*
- * wm_nvm_acquire:
- *
- *	Perform the EEPROM handshake required on some chips.
- */
-static int
-wm_nvm_acquire(struct wm_softc *sc)
-{
-	uint32_t reg;
-	int x;
-	int ret = 0;
-
-	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
-		device_xname(sc->sc_dev), __func__));
-
-	if (sc->sc_type >= WM_T_ICH8) {
-		ret = wm_get_nvm_ich8lan(sc);
-	} else if (sc->sc_flags & WM_F_LOCK_EXTCNF) {
-		ret = wm_get_swfwhw_semaphore(sc);
-	} else if (sc->sc_flags & WM_F_LOCK_SWFW) {
-		/* This will also do wm_get_swsm_semaphore() if needed */
-		ret = wm_get_swfw_semaphore(sc, SWFW_EEP_SM);
-	} else if (sc->sc_flags & WM_F_LOCK_SWSM) {
-		ret = wm_get_swsm_semaphore(sc);
-	}
-
-	if (ret) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-			__func__);
-		return 1;
-	}
-
-	if (sc->sc_flags & WM_F_LOCK_EECD) {
-		reg = CSR_READ(sc, WMREG_EECD);
-
-		/* Request EEPROM access. */
-		reg |= EECD_EE_REQ;
-		CSR_WRITE(sc, WMREG_EECD, reg);
-
-		/* ..and wait for it to be granted. */
-		for (x = 0; x < 1000; x++) {
-			reg = CSR_READ(sc, WMREG_EECD);
-			if (reg & EECD_EE_GNT)
-				break;
-			delay(5);
-		}
-		if ((reg & EECD_EE_GNT) == 0) {
-			aprint_error_dev(sc->sc_dev,
-			    "could not acquire EEPROM GNT\n");
-			reg &= ~EECD_EE_REQ;
-			CSR_WRITE(sc, WMREG_EECD, reg);
-			if (sc->sc_flags & WM_F_LOCK_EXTCNF)
-				wm_put_swfwhw_semaphore(sc);
-			if (sc->sc_flags & WM_F_LOCK_SWFW)
-				wm_put_swfw_semaphore(sc, SWFW_EEP_SM);
-			else if (sc->sc_flags & WM_F_LOCK_SWSM)
-				wm_put_swsm_semaphore(sc);
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
-/*
- * wm_nvm_release:
- *
- *	Release the EEPROM mutex.
- */
-static void
-wm_nvm_release(struct wm_softc *sc)
-{
-	uint32_t reg;
-
-	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
-		device_xname(sc->sc_dev), __func__));
-
-	if (sc->sc_flags & WM_F_LOCK_EECD) {
-		reg = CSR_READ(sc, WMREG_EECD);
-		reg &= ~EECD_EE_REQ;
-		CSR_WRITE(sc, WMREG_EECD, reg);
-	}
-
-	if (sc->sc_type >= WM_T_ICH8) {
-		wm_put_nvm_ich8lan(sc);
-	} else if (sc->sc_flags & WM_F_LOCK_EXTCNF)
-		wm_put_swfwhw_semaphore(sc);
-	else if (sc->sc_flags & WM_F_LOCK_SWFW)
-		wm_put_swfw_semaphore(sc, SWFW_EEP_SM);
-	else if (sc->sc_flags & WM_F_LOCK_SWSM)
-		wm_put_swsm_semaphore(sc);
-}
 
 static int
 wm_nvm_is_onboard_eeprom(struct wm_softc *sc)
@@ -12542,27 +12515,10 @@ wm_nvm_read(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_flags & WM_F_EEPROM_INVALID)
-		return 1;
+		return -1;
 
-	if (wm_nvm_acquire(sc))
-		return 1;
-
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
-	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
-	    || (sc->sc_type == WM_T_PCH2) || (sc->sc_type == WM_T_PCH_LPT))
-		rv = wm_nvm_read_ich8(sc, word, wordcnt, data);
-	else if (sc->sc_type == WM_T_PCH_SPT)
-		rv = wm_nvm_read_spt(sc, word, wordcnt, data);
-	else if (sc->sc_flags & WM_F_EEPROM_INVM)
-		rv = wm_nvm_read_invm(sc, word, wordcnt, data);
-	else if (sc->sc_flags & WM_F_EEPROM_EERDEEWR)
-		rv = wm_nvm_read_eerd(sc, word, wordcnt, data);
-	else if (sc->sc_flags & WM_F_EEPROM_SPI)
-		rv = wm_nvm_read_spi(sc, word, wordcnt, data);
-	else
-		rv = wm_nvm_read_uwire(sc, word, wordcnt, data);
-
-	wm_nvm_release(sc);
+	rv = sc->nvm.read(sc, word, wordcnt, data);
+	
 	return rv;
 }
 
@@ -12586,6 +12542,94 @@ wm_put_null(struct wm_softc *sc)
 
 	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
+	return;
+}
+
+static int
+wm_get_eecd(struct wm_softc *sc)
+{
+	uint32_t reg;
+	int x;
+
+	DPRINTF(WM_DEBUG_LOCK | WM_DEBUG_NVM, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+
+	reg = CSR_READ(sc, WMREG_EECD);
+
+	/* Request EEPROM access. */
+	reg |= EECD_EE_REQ;
+	CSR_WRITE(sc, WMREG_EECD, reg);
+
+	/* ..and wait for it to be granted. */
+	for (x = 0; x < 1000; x++) {
+		reg = CSR_READ(sc, WMREG_EECD);
+		if (reg & EECD_EE_GNT)
+			break;
+		delay(5);
+	}
+	if ((reg & EECD_EE_GNT) == 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "could not acquire EEPROM GNT\n");
+		reg &= ~EECD_EE_REQ;
+		CSR_WRITE(sc, WMREG_EECD, reg);
+		return -1;
+	}
+
+	return 0;
+}
+
+static void
+wm_nvm_eec_clock_raise(struct wm_softc *sc, uint32_t *eecd)
+{
+
+	*eecd |= EECD_SK;
+	CSR_WRITE(sc, WMREG_EECD, *eecd);
+	CSR_WRITE_FLUSH(sc);
+	if ((sc->sc_flags & WM_F_EEPROM_SPI) != 0)
+		delay(1);
+	else
+		delay(50);
+}
+
+static void
+wm_nvm_eec_clock_lower(struct wm_softc *sc, uint32_t *eecd)
+{
+
+	*eecd &= ~EECD_SK;
+	CSR_WRITE(sc, WMREG_EECD, *eecd);
+	CSR_WRITE_FLUSH(sc);
+	if ((sc->sc_flags & WM_F_EEPROM_SPI) != 0)
+		delay(1);
+	else
+		delay(50);
+}
+
+static void
+wm_put_eecd(struct wm_softc *sc)
+{
+	uint32_t reg;
+
+	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+
+	/* Stop nvm */
+	reg = CSR_READ(sc, WMREG_EECD);
+	if ((sc->sc_flags & WM_F_EEPROM_SPI) != 0) {
+		/* Pull CS high */
+		reg |= EECD_CS;
+		wm_nvm_eec_clock_lower(sc, &reg);
+	} else {
+		/* CS on Microwire is active-high */
+		reg &= ~(EECD_CS | EECD_DI);
+		CSR_WRITE(sc, WMREG_EECD, reg);
+		wm_nvm_eec_clock_raise(sc, &reg);
+		wm_nvm_eec_clock_lower(sc, &reg);
+	}
+	
+	reg = CSR_READ(sc, WMREG_EECD);
+	reg &= ~EECD_EE_REQ;
+	CSR_WRITE(sc, WMREG_EECD, reg);
+
 	return;
 }
 
@@ -12665,7 +12709,7 @@ wm_put_swsm_semaphore(struct wm_softc *sc)
 
 /*
  * Get SW/FW semaphore.
- * Same as e1000_acquire_swfw_sync_82575().
+ * Same as e1000_acquire_swfw_sync_{80003es2lan,82575}().
  */
 static int
 wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
@@ -12673,31 +12717,31 @@ wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
 	uint32_t swfw_sync;
 	uint32_t swmask = mask << SWFW_SOFT_SHIFT;
 	uint32_t fwmask = mask << SWFW_FIRM_SHIFT;
-	int timeout = 200;
+	int timeout;
 
 	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
-	KASSERT((sc->sc_flags & WM_F_LOCK_SWSM) != 0);
+
+	if (sc->sc_type == WM_T_80003)
+		timeout = 50;
+	else
+		timeout = 200;
 
 	for (timeout = 0; timeout < 200; timeout++) {
-		if (sc->sc_flags & WM_F_LOCK_SWSM) {
-			if (wm_get_swsm_semaphore(sc)) {
-				aprint_error_dev(sc->sc_dev,
-				    "%s: failed to get semaphore\n",
-				    __func__);
-				return 1;
-			}
+		if (wm_get_swsm_semaphore(sc)) {
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to get semaphore\n",
+			    __func__);
+			return 1;
 		}
 		swfw_sync = CSR_READ(sc, WMREG_SW_FW_SYNC);
 		if ((swfw_sync & (swmask | fwmask)) == 0) {
 			swfw_sync |= swmask;
 			CSR_WRITE(sc, WMREG_SW_FW_SYNC, swfw_sync);
-			if (sc->sc_flags & WM_F_LOCK_SWSM)
-				wm_put_swsm_semaphore(sc);
+			wm_put_swsm_semaphore(sc);
 			return 0;
 		}
-		if (sc->sc_flags & WM_F_LOCK_SWSM)
-			wm_put_swsm_semaphore(sc);
+		wm_put_swsm_semaphore(sc);
 		delay(5000);
 	}
 	printf("%s: failed to get swfw semaphore mask 0x%x swfw 0x%x\n",
@@ -12712,17 +12756,103 @@ wm_put_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
 
 	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
-	KASSERT((sc->sc_flags & WM_F_LOCK_SWSM) != 0);
 
-	if (sc->sc_flags & WM_F_LOCK_SWSM) {
-		while (wm_get_swsm_semaphore(sc) != 0)
-			continue;
-	}
+	while (wm_get_swsm_semaphore(sc) != 0)
+		continue;
+
 	swfw_sync = CSR_READ(sc, WMREG_SW_FW_SYNC);
 	swfw_sync &= ~(mask << SWFW_SOFT_SHIFT);
 	CSR_WRITE(sc, WMREG_SW_FW_SYNC, swfw_sync);
-	if (sc->sc_flags & WM_F_LOCK_SWSM)
+
+	wm_put_swsm_semaphore(sc);
+}
+
+static int
+wm_get_nvm_80003(struct wm_softc *sc)
+{
+	int rv;
+
+	DPRINTF(WM_DEBUG_LOCK | WM_DEBUG_NVM, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+
+	if ((rv = wm_get_swfw_semaphore(sc, SWFW_EEP_SM)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "%s: failed to get semaphore(SWFW)\n",
+		    __func__);
+		return rv;
+	}
+
+	if (((sc->sc_flags & WM_F_LOCK_EECD) != 0)
+	    && (rv = wm_get_eecd(sc)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "%s: failed to get semaphore(EECD)\n",
+		    __func__);
+		wm_put_swfw_semaphore(sc, SWFW_EEP_SM);
+		return rv;
+	}
+
+	return 0;
+}
+
+static void
+wm_put_nvm_80003(struct wm_softc *sc)
+{
+
+	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+
+	if ((sc->sc_flags & WM_F_LOCK_EECD) != 0)
+		wm_put_eecd(sc);
+	wm_put_swfw_semaphore(sc, SWFW_EEP_SM);
+}
+
+static int
+wm_get_nvm_82571(struct wm_softc *sc)
+{
+	int rv;
+
+	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+
+	if ((rv = wm_get_swsm_semaphore(sc)) != 0)
+		return rv;
+
+	switch (sc->sc_type) {
+	case WM_T_82573:
+		break;
+	default:
+		if ((sc->sc_flags & WM_F_LOCK_EECD) != 0)
+			rv = wm_get_eecd(sc);
+		break;
+	}
+
+	if (rv != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "%s: failed to get semaphore\n",
+		    __func__);
 		wm_put_swsm_semaphore(sc);
+	}
+
+	return rv;
+}
+
+static void
+wm_put_nvm_82571(struct wm_softc *sc)
+{
+
+	DPRINTF(WM_DEBUG_LOCK, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+
+	switch (sc->sc_type) {
+	case WM_T_82573:
+		break;
+	default:
+		if ((sc->sc_flags & WM_F_LOCK_EECD) != 0)
+			wm_put_eecd(sc);
+		break;
+	}
+
+	wm_put_swsm_semaphore(sc);
 }
 
 static int
