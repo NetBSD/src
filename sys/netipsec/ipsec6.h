@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.18 2017/07/05 03:44:59 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.19 2017/07/25 08:15:57 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -57,7 +57,6 @@ struct in6pcb;
 /* KAME compatibility shims */
 #define	ipsec6_getpolicybyaddr	ipsec_getpolicybyaddr
 #define	ipsec6_getpolicybysock	ipsec_getpolicybysock
-#define	key_freesp(_x)		KEY_FREESP(&_x)
 
 int ipsec6_delete_pcbpolicy (struct in6pcb *);
 int ipsec6_set_policy (struct in6pcb *, int, const void *, size_t, kauth_cred_t);
