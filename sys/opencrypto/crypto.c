@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.95 2017/07/26 06:40:42 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.96 2017/07/26 06:44:01 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.95 2017/07/26 06:40:42 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.96 2017/07/26 06:44:01 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -69,7 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.95 2017/07/26 06:40:42 knakahara Exp $"
 #include <sys/module.h>
 #include <sys/xcall.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 #include <sys/percpu.h>
+#include <sys/kmem.h>
 
 #if defined(_KERNEL_OPT)
 #include "opt_ocf.h"
@@ -77,8 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.95 2017/07/26 06:40:42 knakahara Exp $"
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>			/* XXX for M_XDATA */
-
-static kmutex_t crypto_ret_q_mtx;
 
 /* below are kludges for residual code wrtitten to FreeBSD interfaces */
   #define SWI_CRYPTO 17
@@ -104,7 +104,6 @@ static kmutex_t crypto_drv_mtx;
 static	struct cryptocap *crypto_drivers;
 static	int crypto_drivers_num;
 static	void *softintr_cookie;
-static	int crypto_exit_flag;
 
 static	void *crypto_ret_si;
 
@@ -166,50 +165,51 @@ crypto_crp_qs_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
  * but have two to avoid type futzing (cryptop vs. cryptkop).  See below
  * for how synchronization is handled.
  */
-static	TAILQ_HEAD(crprethead, cryptop) crp_ret_q =	/* callback queues */
-		TAILQ_HEAD_INITIALIZER(crp_ret_q);
-static	TAILQ_HEAD(krprethead, cryptkop) crp_ret_kq =
-		TAILQ_HEAD_INITIALIZER(crp_ret_kq);
+TAILQ_HEAD(crypto_crp_ret_q, cryptop);
+TAILQ_HEAD(crypto_crp_ret_kq, cryptkop);
+struct crypto_crp_ret_qs {
+	kmutex_t crp_ret_q_mtx;
+	bool crp_ret_q_exit_flag;
 
-#define DEFINIT_CRYPTO_Q_LEN(name)		\
-	static int crypto_##name##_len = 0
+	struct crypto_crp_ret_q crp_ret_q;
+	int crp_ret_q_len;
+	int crp_ret_q_maxlen; /* queue length limit. <=0 means unlimited. */
+	int crp_ret_q_drops;
 
-#define DEFINIT_CRYPTO_Q_DROPS(name)		\
-	static int crypto_##name##_drops = 0
+	struct crypto_crp_ret_kq crp_ret_kq;
+	int crp_ret_kq_len;
+	int crp_ret_kq_maxlen; /* queue length limit. <=0 means unlimited. */
+	int crp_ret_kq_drops;
+};
+struct crypto_crp_ret_qs **crypto_crp_ret_qs_list;
 
-#define DEFINIT_CRYPTO_Q_MAXLEN(name, defval)		\
-	static int crypto_##name##_maxlen = defval
 
-#define CRYPTO_Q_INC(name)			\
-	do {					\
-		crypto_##name##_len++;		\
-	} while(0);
+static inline struct crypto_crp_ret_qs *
+crypto_get_crp_ret_qs(struct cpu_info *ci)
+{
+	u_int cpuid;
+	struct crypto_crp_ret_qs *qs;
 
-#define CRYPTO_Q_DEC(name)			\
-	do {					\
-		crypto_##name##_len--;		\
-	} while(0);
+	KASSERT(ci != NULL);
 
-#define CRYPTO_Q_INC_DROPS(name)		\
-	do {					\
-		crypto_##name##_drops++;	\
-	} while(0);
+	cpuid = cpu_index(ci);
+	qs = crypto_crp_ret_qs_list[cpuid];
+	mutex_enter(&qs->crp_ret_q_mtx);
+	return qs;
+}
 
-#define CRYPTO_Q_IS_FULL(name)					\
-	(crypto_##name##_maxlen > 0				\
-	    && (crypto_##name##_len > crypto_##name##_maxlen))
+static inline void
+crypto_put_crp_ret_qs(struct cpu_info *ci)
+{
+	u_int cpuid;
+	struct crypto_crp_ret_qs *qs;
 
-/*
- * current queue length.
- */
-DEFINIT_CRYPTO_Q_LEN(crp_ret_q);
-DEFINIT_CRYPTO_Q_LEN(crp_ret_kq);
+	KASSERT(ci != NULL);
 
-/*
- * queue dropped count.
- */
-DEFINIT_CRYPTO_Q_DROPS(crp_ret_q);
-DEFINIT_CRYPTO_Q_DROPS(crp_ret_kq);
+	cpuid = cpu_index(ci);
+	qs = crypto_crp_ret_qs_list[cpuid];
+	mutex_exit(&qs->crp_ret_q_mtx);
+}
 
 #ifndef CRYPTO_RET_Q_MAXLEN
 #define CRYPTO_RET_Q_MAXLEN 0
@@ -217,56 +217,151 @@ DEFINIT_CRYPTO_Q_DROPS(crp_ret_kq);
 #ifndef CRYPTO_RET_KQ_MAXLEN
 #define CRYPTO_RET_KQ_MAXLEN 0
 #endif
-/*
- * queue length limit.
- * default value is 0. <=0 means unlimited.
- */
-DEFINIT_CRYPTO_Q_MAXLEN(crp_ret_q, CRYPTO_RET_Q_MAXLEN);
-DEFINIT_CRYPTO_Q_MAXLEN(crp_ret_kq, CRYPTO_RET_KQ_MAXLEN);
 
-/*
- * TODO:
- * make percpu
- */
 static int
 sysctl_opencrypto_q_len(SYSCTLFN_ARGS)
 {
-	int error;
+	int error, len = 0;
+	struct sysctlnode node = *rnode;
 
-	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	for (int i = 0; i < ncpu; i++) {
+		struct crypto_crp_ret_qs *qs;
+		struct cpu_info *ci = cpu_lookup(i);
+
+		qs = crypto_get_crp_ret_qs(ci);
+		len += qs->crp_ret_q_len;
+		crypto_put_crp_ret_qs(ci);
+	}
+
+	node.sysctl_data = &len;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
 
 	return 0;
 }
 
-/*
- * TODO:
- * make percpu
- */
 static int
 sysctl_opencrypto_q_drops(SYSCTLFN_ARGS)
 {
-	int error;
+	int error, drops = 0;
+	struct sysctlnode node = *rnode;
 
-	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	for (int i = 0; i < ncpu; i++) {
+		struct crypto_crp_ret_qs *qs;
+		struct cpu_info *ci = cpu_lookup(i);
+
+		qs = crypto_get_crp_ret_qs(ci);
+		drops += qs->crp_ret_q_drops;
+		crypto_put_crp_ret_qs(ci);
+	}
+
+	node.sysctl_data = &drops;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
 
 	return 0;
 }
 
-/*
- * need to make percpu?
- */
 static int
 sysctl_opencrypto_q_maxlen(SYSCTLFN_ARGS)
 {
-	int error;
+	int error, maxlen;
+	struct crypto_crp_ret_qs *qs;
+	struct sysctlnode node = *rnode;
 
-	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	/* each crp_ret_kq_maxlen is the same. */
+	qs = crypto_get_crp_ret_qs(curcpu());
+	maxlen = qs->crp_ret_q_maxlen;
+	crypto_put_crp_ret_qs(curcpu());
+
+	node.sysctl_data = &maxlen;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return error;
+
+	for (int i = 0; i < ncpu; i++) {
+		struct cpu_info *ci = cpu_lookup(i);
+
+		qs = crypto_get_crp_ret_qs(ci);
+		qs->crp_ret_q_maxlen = maxlen;
+		crypto_put_crp_ret_qs(ci);
+	}
+
+	return 0;
+}
+
+static int
+sysctl_opencrypto_kq_len(SYSCTLFN_ARGS)
+{
+	int error, len = 0;
+	struct sysctlnode node = *rnode;
+
+	for (int i = 0; i < ncpu; i++) {
+		struct crypto_crp_ret_qs *qs;
+		struct cpu_info *ci = cpu_lookup(i);
+
+		qs = crypto_get_crp_ret_qs(ci);
+		len += qs->crp_ret_kq_len;
+		crypto_put_crp_ret_qs(ci);
+	}
+
+	node.sysctl_data = &len;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	return 0;
+}
+
+static int
+sysctl_opencrypto_kq_drops(SYSCTLFN_ARGS)
+{
+	int error, drops = 0;
+	struct sysctlnode node = *rnode;
+
+	for (int i = 0; i < ncpu; i++) {
+		struct crypto_crp_ret_qs *qs;
+		struct cpu_info *ci = cpu_lookup(i);
+
+		qs = crypto_get_crp_ret_qs(ci);
+		drops += qs->crp_ret_kq_drops;
+		crypto_put_crp_ret_qs(ci);
+	}
+
+	node.sysctl_data = &drops;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	return 0;
+}
+
+static int
+sysctl_opencrypto_kq_maxlen(SYSCTLFN_ARGS)
+{
+	int error, maxlen;
+	struct crypto_crp_ret_qs *qs;
+	struct sysctlnode node = *rnode;
+
+	/* each crp_ret_kq_maxlen is the same. */
+	qs = crypto_get_crp_ret_qs(curcpu());
+	maxlen = qs->crp_ret_kq_maxlen;
+	crypto_put_crp_ret_qs(curcpu());
+
+	node.sysctl_data = &maxlen;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	for (int i = 0; i < ncpu; i++) {
+		struct cpu_info *ci = cpu_lookup(i);
+
+		qs = crypto_get_crp_ret_qs(ci);
+		qs->crp_ret_kq_maxlen = maxlen;
+		crypto_put_crp_ret_qs(ci);
+	}
 
 	return 0;
 }
@@ -341,22 +436,23 @@ sysctl_opencrypto_setup(struct sysctllog **clog)
 		       CTLTYPE_INT, "len",
 		       SYSCTL_DESCR("Current queue length"),
 		       sysctl_opencrypto_q_len, 0,
-		       (void *)&crypto_crp_ret_q_len, 0,
+		       NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &retqnode, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "drops",
 		       SYSCTL_DESCR("Crypto requests dropped due to full ret queue"),
 		       sysctl_opencrypto_q_drops, 0,
-		       (void *)&crypto_crp_ret_q_drops, 0,
+		       NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &retqnode, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxlen",
 		       SYSCTL_DESCR("Maximum allowed queue length"),
 		       sysctl_opencrypto_q_maxlen, 0,
-		       (void *)&crypto_crp_ret_q_maxlen, 0,
+		       NULL, 0,
 		       CTL_CREATE, CTL_EOL);
+
 
 	sysctl_createv(clog, 0, &ocnode, &retkqnode,
 		       CTLFLAG_PERMANENT,
@@ -368,22 +464,22 @@ sysctl_opencrypto_setup(struct sysctllog **clog)
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "len",
 		       SYSCTL_DESCR("Current queue length"),
-		       sysctl_opencrypto_q_len, 0,
-		       (void *)&crypto_crp_ret_kq_len, 0,
+		       sysctl_opencrypto_kq_len, 0,
+		       NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &retkqnode, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "drops",
 		       SYSCTL_DESCR("Crypto requests dropped due to full ret queue"),
-		       sysctl_opencrypto_q_drops, 0,
-		       (void *)&crypto_crp_ret_kq_drops, 0,
+		       sysctl_opencrypto_kq_drops, 0,
+		       NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &retkqnode, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxlen",
 		       SYSCTL_DESCR("Maximum allowed queue length"),
-		       sysctl_opencrypto_q_maxlen, 0,
-		       (void *)&crypto_crp_ret_kq_maxlen, 0,
+		       sysctl_opencrypto_kq_maxlen, 0,
+		       NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 }
 
@@ -435,11 +531,58 @@ static	int crypto_timing = 0;
 static struct sysctllog *sysctl_opencrypto_clog;
 
 static int
+crypto_crp_ret_qs_init(void)
+{
+	int i, j;
+
+	crypto_crp_ret_qs_list = kmem_alloc(sizeof(struct crypto_crp_ret_qs *) * ncpu,
+	    KM_NOSLEEP);
+	if (crypto_crp_ret_qs_list == NULL) {
+		printf("crypto_init: crypto_crp_qs_list\n");
+		return ENOMEM;
+	}
+
+	for (i = 0; i < ncpu; i++) {
+		struct crypto_crp_ret_qs *qs;
+		qs = kmem_alloc(sizeof(struct crypto_crp_ret_qs), KM_NOSLEEP);
+		if (qs == NULL)
+			break;
+
+		mutex_init(&qs->crp_ret_q_mtx, MUTEX_DEFAULT, IPL_NET);
+		qs->crp_ret_q_exit_flag = false;
+
+		TAILQ_INIT(&qs->crp_ret_q);
+		qs->crp_ret_q_len = 0;
+		qs->crp_ret_q_maxlen = CRYPTO_RET_Q_MAXLEN;
+		qs->crp_ret_q_drops = 0;
+
+		TAILQ_INIT(&qs->crp_ret_kq);
+		qs->crp_ret_kq_len = 0;
+		qs->crp_ret_kq_maxlen = CRYPTO_RET_KQ_MAXLEN;
+		qs->crp_ret_kq_drops = 0;
+
+		crypto_crp_ret_qs_list[i] = qs;
+	}
+	if (i == ncpu)
+		return 0;
+
+	for (j = 0; j < i; j++) {
+		struct crypto_crp_ret_qs *qs = crypto_crp_ret_qs_list[j];
+
+		mutex_destroy(&qs->crp_ret_q_mtx);
+		kmem_free(qs, sizeof(struct crypto_crp_ret_qs));
+	}
+	kmem_free(crypto_crp_ret_qs_list, sizeof(struct crypto_crp_ret_qs *) * ncpu);
+
+	return ENOMEM;
+}
+
+static int
 crypto_init0(void)
 {
+	int error;
 
 	mutex_init(&crypto_drv_mtx, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&crypto_ret_q_mtx, MUTEX_DEFAULT, IPL_NET);
 	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0,  
 		  0, "cryptop", NULL, IPL_NET);
 	pool_init(&cryptodesc_pool, sizeof(struct cryptodesc), 0, 0,
@@ -449,6 +592,12 @@ crypto_init0(void)
 
 	crypto_crp_qs_percpu = percpu_alloc(sizeof(struct crypto_crp_qs));
 	percpu_foreach(crypto_crp_qs_percpu, crypto_crp_qs_init_pc, NULL);
+
+	error = crypto_crp_ret_qs_init();
+	if (error) {
+		printf("crypto_init: cannot malloc ret_q list\n");
+		return ENOMEM;
+	}
 
 	crypto_drivers = malloc(CRYPTO_DRIVERS_INITIAL *
 	    sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT | M_ZERO);
@@ -536,9 +685,14 @@ crypto_destroy(bool exit_kthread)
 		 * Ensure cryptoret_softint() is never scheduled and then wait
 		 * for last softint_execute().
 		 */
-		mutex_spin_enter(&crypto_ret_q_mtx);
-		crypto_exit_flag = 1;
-		mutex_spin_exit(&crypto_ret_q_mtx);
+		for (i = 0; i < ncpu; i++) {
+			struct crypto_crp_ret_qs *qs;
+			struct cpu_info *ci = cpu_lookup(i);
+
+			qs = crypto_get_crp_ret_qs(ci);
+			qs->crp_ret_q_exit_flag = true;
+			crypto_put_crp_ret_qs(ci);
+		}
 		where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
 		xc_wait(where);
 	}
@@ -563,7 +717,6 @@ crypto_destroy(bool exit_kthread)
 	pool_destroy(&cryptodesc_pool);
 	pool_destroy(&cryptkop_pool);
 
-	mutex_destroy(&crypto_ret_q_mtx);
 	mutex_destroy(&crypto_drv_mtx);
 
 	return 0;
@@ -1489,15 +1642,20 @@ crypto_getreq(int num)
 {
 	struct cryptodesc *crd;
 	struct cryptop *crp;
+	struct crypto_crp_ret_qs *qs;
 
 	/*
 	 * When crp_ret_q is full, we restrict here to avoid crp_ret_q overflow
 	 * by error callback.
 	 */
-	if (CRYPTO_Q_IS_FULL(crp_ret_q)) {
-		CRYPTO_Q_INC_DROPS(crp_ret_q);
+	qs = crypto_get_crp_ret_qs(curcpu());
+	if (qs->crp_ret_q_maxlen > 0
+	    && qs->crp_ret_q_len > qs->crp_ret_q_maxlen) {
+		qs->crp_ret_q_drops++;
+		crypto_put_crp_ret_qs(curcpu());
 		return NULL;
 	}
+	crypto_put_crp_ret_qs(curcpu());
 
 	crp = pool_get(&cryptop_pool, 0);
 	if (crp == NULL) {
@@ -1549,15 +1707,20 @@ struct cryptkop *
 crypto_kgetreq(int num __unused, int prflags)
 {
 	struct cryptkop *krp;
+	struct crypto_crp_ret_qs *qs;
 
 	/*
 	 * When crp_ret_kq is full, we restrict here to avoid crp_ret_kq
 	 * overflow by error callback.
 	 */
-	if (CRYPTO_Q_IS_FULL(crp_ret_kq)) {
-		CRYPTO_Q_INC_DROPS(crp_ret_kq);
+	qs = crypto_get_crp_ret_qs(curcpu());
+	if (qs->crp_ret_kq_maxlen > 0
+	    && qs->crp_ret_kq_len > qs->crp_ret_kq_maxlen) {
+		qs->crp_ret_kq_drops++;
+		crypto_put_crp_ret_qs(curcpu());
 		return NULL;
 	}
+	crypto_put_crp_ret_qs(curcpu());
 
 	krp = pool_get(&cryptkop_pool, prflags);
 	if (krp == NULL) {
@@ -1632,21 +1795,24 @@ crypto_done(struct cryptop *crp)
 #endif
 		{
 			int wasempty;
+			struct crypto_crp_ret_qs *qs;
+			struct crypto_crp_ret_q *crp_ret_q;;
 
-			mutex_spin_enter(&crypto_ret_q_mtx);
-			wasempty = TAILQ_EMPTY(&crp_ret_q);
+			qs = crypto_get_crp_ret_qs(crp->reqcpu);
+			crp_ret_q = &qs->crp_ret_q;
+			wasempty = TAILQ_EMPTY(crp_ret_q);
 			DPRINTF("lid[%u]: queueing %p\n",
 				CRYPTO_SESID2LID(crp->crp_sid), crp);
 			crp->crp_flags |= CRYPTO_F_ONRETQ;
-			TAILQ_INSERT_TAIL(&crp_ret_q, crp, crp_next);
-			CRYPTO_Q_INC(crp_ret_q);
-			if (wasempty && crypto_exit_flag == 0) {
-				DPRINTF("lid[%u]: waking cryptoret, "
+			TAILQ_INSERT_TAIL(crp_ret_q, crp, crp_next);
+			qs->crp_ret_q_len++;
+			if (wasempty && !qs->crp_ret_q_exit_flag) {
+				DPRINTF("lid[%u]: waking cryptoret,"
 					"crp %p hit empty queue\n.",
 					CRYPTO_SESID2LID(crp->crp_sid), crp);
 				softint_schedule_cpu(crypto_ret_si, crp->reqcpu);
 			}
-			mutex_spin_exit(&crypto_ret_q_mtx);
+			crypto_put_crp_ret_qs(crp->reqcpu);
 		}
 	}
 }
@@ -1675,15 +1841,19 @@ crypto_kdone(struct cryptkop *krp)
 		krp->krp_callback(krp);
 	} else {
 		int wasempty;
+		struct crypto_crp_ret_qs *qs;
+		struct crypto_crp_ret_kq *crp_ret_kq;;
 
-		mutex_spin_enter(&crypto_ret_q_mtx);
-		wasempty = TAILQ_EMPTY(&crp_ret_kq);
+		qs = crypto_get_crp_ret_qs(krp->reqcpu);
+		crp_ret_kq = &qs->crp_ret_kq;
+
+		wasempty = TAILQ_EMPTY(crp_ret_kq);
 		krp->krp_flags |= CRYPTO_F_ONRETQ;
-		TAILQ_INSERT_TAIL(&crp_ret_kq, krp, krp_next);
-		CRYPTO_Q_INC(crp_ret_kq);
-		if (wasempty && crypto_exit_flag == 0)
+		TAILQ_INSERT_TAIL(crp_ret_kq, krp, krp_next);
+		qs->crp_ret_kq_len++;
+		if (wasempty && !qs->crp_ret_q_exit_flag)
 			softint_schedule_cpu(crypto_ret_si, krp->reqcpu);
-		mutex_spin_exit(&crypto_ret_q_mtx);
+		crypto_put_crp_ret_qs(krp->reqcpu);
 	}
 }
 
@@ -1879,22 +2049,27 @@ cryptointr(void)
 static void
 cryptoret_softint(void *arg __unused)
 {
+	struct crypto_crp_ret_qs *qs;
+	struct crypto_crp_ret_q *crp_ret_q;;
+	struct crypto_crp_ret_kq *crp_ret_kq;;
 
-	mutex_spin_enter(&crypto_ret_q_mtx);
+	qs = crypto_get_crp_ret_qs(curcpu());
+	crp_ret_q = &qs->crp_ret_q;
+	crp_ret_kq = &qs->crp_ret_kq;
 	for (;;) {
 		struct cryptop *crp;
 		struct cryptkop *krp;
 
-		crp = TAILQ_FIRST(&crp_ret_q);
+		crp = TAILQ_FIRST(crp_ret_q);
 		if (crp != NULL) {
-			TAILQ_REMOVE(&crp_ret_q, crp, crp_next);
-			CRYPTO_Q_DEC(crp_ret_q);
+			TAILQ_REMOVE(crp_ret_q, crp, crp_next);
+			qs->crp_ret_q_len--;
 			crp->crp_flags &= ~CRYPTO_F_ONRETQ;
 		}
-		krp = TAILQ_FIRST(&crp_ret_kq);
+		krp = TAILQ_FIRST(crp_ret_kq);
 		if (krp != NULL) {
-			TAILQ_REMOVE(&crp_ret_kq, krp, krp_next);
-			CRYPTO_Q_DEC(crp_ret_kq);
+			TAILQ_REMOVE(crp_ret_kq, krp, krp_next);
+			qs->crp_ret_q_len--;
 			krp->krp_flags &= ~CRYPTO_F_ONRETQ;
 		}
 
@@ -1902,7 +2077,7 @@ cryptoret_softint(void *arg __unused)
 		if (crp == NULL && krp == NULL)
 			break;
 
-		mutex_spin_exit(&crypto_ret_q_mtx);
+		mutex_spin_exit(&qs->crp_ret_q_mtx);
 		if (crp != NULL) {
 #ifdef CRYPTO_TIMING
 			if (crypto_timing) {
@@ -1924,9 +2099,9 @@ cryptoret_softint(void *arg __unused)
 		if (krp != NULL)
 			krp->krp_callback(krp);
 
-		mutex_spin_enter(&crypto_ret_q_mtx);
+		mutex_spin_enter(&qs->crp_ret_q_mtx);
 	}
-	mutex_spin_exit(&crypto_ret_q_mtx);
+	crypto_put_crp_ret_qs(curcpu());
 }
 
 /* NetBSD module interface */
