@@ -1,4 +1,4 @@
-# $NetBSD: G1IDE,v 1.1 2016/12/29 11:49:05 tsutsui Exp $
+# $NetBSD: G1IDE,v 1.1.12.1 2017/07/26 07:34:37 martin Exp $
 
 include 	"arch/dreamcast/conf/std.dreamcast"
 
@@ -190,7 +190,7 @@ rlphy*		at mii? phy ?
 mbe*		at g2bus?			# SEGA LAN Adapter
 
 #aica*		at g2bus?			# AICA Sound Processing Unit
-#audio*		at aica?
+#audio*		at audiobus?
 
 #spkr*		at audio?		# PC speaker (synthesized)
 
