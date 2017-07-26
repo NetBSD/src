@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1294 2017/07/22 08:58:24 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1295 2017/07/26 08:57:24 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3972,6 +3972,8 @@ product INTEL 82X58_PCIE_7	0x340e	5520/5500/X58 PCIE Root Port 7
 product INTEL 82X58_PCIE_8	0x340f	5520/5500/X58 PCIE Root Port 8
 product INTEL 82X58_PCIE_9	0x3410	5520/5500/X58 PCIE Root Port 9
 product INTEL 82X58_PCIE_10	0x3411	5520/5500/X58 PCIE Root Port 10
+product INTEL 82X58_QP0_PHY	0x3418	5520/X58 QuickPath
+product INTEL 5520_QP1_PHY	0x3419	5520 QuickPath
 product INTEL 82X58_PCIE_0_0	0x3420	5520/5500/X58 PCIE Root Port 0
 product INTEL 82X58_PCIE_0_1	0x3421	5520/5500/X58 PCIE Root Port 0
 product INTEL 82X58_GPIO	0x3422	5520/5500/X58 Scratchpads and GPIO
