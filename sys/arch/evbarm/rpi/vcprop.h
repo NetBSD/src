@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.9 2014/07/25 11:39:34 jmcneill Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.9.2.1 2017/07/26 15:22:37 snj Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -123,6 +123,28 @@ struct vcprop_tag_boardrev {
 	struct vcprop_tag tag;
 	uint32_t rev;
 } ;
+
+#define	VCPROP_REV_PCBREV	__BITS(3,0)
+#define	VCPROP_REV_MODEL	__BITS(11,4)
+#define	 RPI_MODEL_A		0
+#define	 RPI_MODEL_B		1
+#define	 RPI_MODEL_A_PLUS	2
+#define	 RPI_MODEL_B_PLUS	3
+#define	 RPI_MODEL_B_PI2	4
+#define	 RPI_MODEL_ALPHA	5
+#define	 RPI_MODEL_COMPUTE	6
+#define	 RPI_MODEL_ZERO		7
+#define	 RPI_MODEL_B_PI3	8
+#define	 RPI_MODEL_COMPUTE_PI3	9
+#define	 RPI_MODEL_ZERO_W	10
+#define	VCPROP_REV_PROCESSOR	__BITS(15,12)
+#define	 RPI_PROCESSOR_BCM2835	0
+#define	 RPI_PROCESSOR_BCM2836	1
+#define	 RPI_PROCESSOR_BCM2837	2
+#define	VCPROP_REV_MANUF	__BITS(19,16)
+#define	VCPROP_REV_MEMSIZE	__BITS(22,20)
+#define	VCPROP_REV_ENCFLAG	__BIT(23)
+#define	VCPROP_REV_WARRANTY	__BITS(25,24)
 
 struct vcprop_tag_macaddr {
 	struct vcprop_tag tag;

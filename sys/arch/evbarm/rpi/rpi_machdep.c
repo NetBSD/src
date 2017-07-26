@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.43.2.6 2016/02/26 22:52:53 snj Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.43.2.7 2017/07/26 15:22:37 snj Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43.2.6 2016/02/26 22:52:53 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43.2.7 2017/07/26 15:22:37 snj Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43.2.6 2016/02/26 22:52:53 snj Exp
 #include <arm/broadcom/bcm2835var.h>
 #include <arm/broadcom/bcm2835_pmvar.h>
 #include <arm/broadcom/bcm2835_mbox.h>
+#include <arm/broadcom/bcm2835_gpio_subr.h>
 
 #include <evbarm/rpi/vcio.h>
 #include <evbarm/rpi/vcpm.h>
@@ -130,6 +131,8 @@ static void rpi_device_register(device_t, void *);
 #define RPI_FB_HEIGHT	720
 #endif
 
+int uart_clk = BCM2835_UART0_CLK;
+
 #define	PLCONADDR BCM2835_UART0_BASE
 
 #ifndef CONSDEVNAME
@@ -173,6 +176,36 @@ static struct plcom_instance rpi_pi = {
 
 /* Smallest amount of RAM start.elf could give us. */
 #define RPI_MINIMUM_SPLIT (128U * 1024 * 1024)
+
+static struct __aligned(16) {
+	struct vcprop_buffer_hdr	vb_hdr;
+	struct vcprop_tag_clockrate	vbt_uartclockrate;
+	struct vcprop_tag_boardrev	vbt_boardrev;
+	struct vcprop_tag end;
+} vb_uart = {
+	.vb_hdr = {
+		.vpb_len = sizeof(vb_uart),
+		.vpb_rcode = VCPROP_PROCESS_REQUEST,
+	},
+	.vbt_uartclockrate = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
+			.vpt_len = VCPROPTAG_LEN(vb_uart.vbt_uartclockrate),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+		.id = VCPROP_CLK_UART
+	},
+	.vbt_boardrev = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_BOARDREVISION,
+			.vpt_len = VCPROPTAG_LEN(vb_uart.vbt_boardrev),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+	},
+	.end = {
+		.vpt_tag = VCPROPTAG_NULL
+	}
+};
 
 static struct __aligned(16) {
 	struct vcprop_buffer_hdr	vb_hdr;
@@ -377,6 +410,39 @@ extern void bcmgenfb_ddb_trap_callback(int where);
 #endif
 
 static void
+rpi_uartinit(void)
+{
+	const paddr_t pa = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE);
+	const bus_space_tag_t iot = &bcm2835_bs_tag;
+	const bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(pa);
+	uint32_t res;
+
+	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANARM2VC, KERN_VTOPHYS(&vb_uart));
+
+	bcm2835_mbox_read(iot, ioh, BCMMBOX_CHANARM2VC, &res);
+
+	cpu_dcache_inv_range((vaddr_t)&vb_uart, sizeof(vb_uart));
+
+	if (vcprop_tag_success_p(&vb_uart.vbt_boardrev.tag) &&
+	    (vb_uart.vbt_boardrev.rev & VCPROP_REV_ENCFLAG) != 0) {
+		const uint32_t rev = vb_uart.vbt_boardrev.rev;
+		switch (__SHIFTOUT(rev, VCPROP_REV_MODEL)) {
+		case RPI_MODEL_B_PI3:
+		case RPI_MODEL_ZERO_W:
+			/* Enable UART0 (PL011) on GPIO header */
+			bcm2835gpio_function_select(14, BCM2835_GPIO_ALT0);
+			bcm2835gpio_function_select(15, BCM2835_GPIO_ALT0);
+			break;
+		}
+	}
+
+	if (vcprop_tag_success_p(&vb_uart.vbt_uartclockrate.tag))
+		uart_clk = vb_uart.vbt_uartclockrate.rate;
+}
+
+
+
+static void
 rpi_bootparams(void)
 {
 	const paddr_t pa = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE);
@@ -407,13 +473,7 @@ rpi_bootparams(void)
 
 	bcm2835_mbox_read(iot, ioh, BCMMBOX_CHANARM2VC, &res);
 
-	/*
-	 * No need to invalid the cache as the memory has never been referenced
-	 * by the ARM.
-	 *
-	 * cpu_dcache_inv_range((vaddr_t)&vb, sizeof(vb));
-	 *
-	 */
+	cpu_dcache_inv_range((vaddr_t)&vb, sizeof(vb));
 
 	if (!vcprop_buffer_success_p(&vb.vb_hdr)) {
 		bootconfig.dramblocks = 1;
@@ -583,6 +643,8 @@ initarm(void *arg)
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 
+	rpi_uartinit();
+
 	consinit();
 
 	/* Talk to the user */
@@ -691,7 +753,7 @@ consinit(void)
 	 */
 	rpi_pi.pi_iobase = consaddr;
 
-	plcomcnattach(&rpi_pi, plcomcnspeed, BCM2835_UART0_CLK,
+	plcomcnattach(&rpi_pi, plcomcnspeed, uart_clk,
 	    plcomcnmode, PLCOMCNUNIT);
 
 #endif
@@ -715,7 +777,7 @@ static kgdb_port_init(void)
 
 	rpi_pi.pi_iobase = consaddr;
 
-	res = plcom_kgdb_attach(&rpi_pi, KGDB_DEVRATE, BCM2835_UART0_CLK,
+	res = plcom_kgdb_attach(&rpi_pi, KGDB_DEVRATE, uart_clk,
 	    KGDB_CONMODE, KGDB_PLCOMUNIT);
 	if (res)
 		panic("KGDB uart can not be initialized, err=%d.", res);
@@ -902,6 +964,12 @@ rpi_device_register(device_t dev, void *aux)
 	}
 #endif
 
+	if (device_is_a(dev, "plcom") &&
+	    vcprop_tag_success_p(&vb_uart.vbt_uartclockrate.tag) &&
+	    vb_uart.vbt_uartclockrate.rate > 0) {
+		prop_dictionary_set_uint32(dict,
+		    "frequency", vb_uart.vbt_uartclockrate.rate);
+	}
 	if (device_is_a(dev, "bcmdmac") &&
 	    vcprop_tag_success_p(&vb.vbt_dmachan.tag)) {
 		prop_dictionary_set_uint32(dict,
