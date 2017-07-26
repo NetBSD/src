@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.32 2017/07/25 02:23:33 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.33 2017/07/26 07:40:01 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -4809,4 +4809,29 @@ lib/libc/compiler_rt/Makefile.inc		1.35
 
 	Do not use IEEE 754 specific functions for VAX
 	[martin, ticket #157]
+
+sys/kern/sched_4bsd.c				1.31-1.33
+
+	Fix the load factor calculation.
+	[maxv, ticket #158]
+
+sys/arch/arm/sunxi/files.sunxi			1.14
+sys/arch/arm/sunxi/sunxi_wdt.c			1.1
+sys/arch/evbarm/conf/SUNXI			1.18
+
+	Add watchdog timer support.
+	[jmcneill, ticket #159]
+
+sys/arch/dreamcast/conf/G1IDE			1.2
+sys/arch/dreamcast/conf/GENERIC			1.126
+sys/arch/dreamcast/dev/g2/aica.c		1.23
+
+	Dreamcast audio only supports playback so set it in the props.
+	Use the correct attachment for dreamcast audio.
+	[nat, ticket #160]
+
+sys/rump/librump/rumpkern/Makefile.rumpkern	1.170
+
+	Add localcount to rump kernels
+	[ozaki-r, ticket #161]
 
