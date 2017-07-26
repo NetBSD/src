@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.17.4.3 2017/07/25 01:35:53 snj Exp $
+#	$NetBSD: SUNXI,v 1.17.4.4 2017/07/26 07:32:06 martin Exp $
 #
 #	Allwinner sunxi family
 #
@@ -78,6 +78,9 @@ gpioleds*	at fdt?
 # Timer
 gtmr*		at fdt? pass 1		# ARM Generic Timer
 armgtmr0	at gtmr?
+
+# Watchdog
+sunxiwdt*	at fdt?			# Allwinner watchdog
 
 # Interrupt controller
 gic*		at fdt? pass 1		# GIC
