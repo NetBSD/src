@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.531 2017/07/26 06:48:49 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.532 2017/07/26 08:09:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.531 2017/07/26 06:48:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.532 2017/07/26 08:09:59 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2078,6 +2078,13 @@ alloc_retry:
 	case WM_T_82547:
 	case WM_T_82547_2:
 		reg = CSR_READ(sc, WMREG_EECD);
+		/*
+		 * wm_nvm_set_addrbits_size_eecd() accesses SPI in it only
+		 * on 8254[17], so set flags and functios before calling it.
+		 */
+		sc->sc_flags |= WM_F_LOCK_EECD;
+		sc->nvm.acquire = wm_get_eecd;
+		sc->nvm.release = wm_put_eecd;
 		if (reg & EECD_EE_TYPE) {
 			/* SPI */
 			sc->nvm.read = wm_nvm_read_spi;
@@ -2094,9 +2101,6 @@ alloc_retry:
 				sc->sc_nvm_addrbits = 6;
 			}
 		}
-		sc->sc_flags |= WM_F_LOCK_EECD;
-		sc->nvm.acquire = wm_get_eecd;
-		sc->nvm.release = wm_put_eecd;
 		break;
 	case WM_T_82571:
 	case WM_T_82572:
