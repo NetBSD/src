@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.94 2017/07/20 23:07:12 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.95 2017/07/26 06:40:42 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.94 2017/07/20 23:07:12 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.95 2017/07/26 06:40:42 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.94 2017/07/20 23:07:12 knakahara Exp $"
 #include <sys/module.h>
 #include <sys/xcall.h>
 #include <sys/device.h>
+#include <sys/percpu.h>
 
 #if defined(_KERNEL_OPT)
 #include "opt_ocf.h"
@@ -77,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.94 2017/07/20 23:07:12 knakahara Exp $"
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>			/* XXX for M_XDATA */
 
-static kmutex_t crypto_q_mtx;
 static kmutex_t crypto_ret_q_mtx;
 
 /* below are kludges for residual code wrtitten to FreeBSD interfaces */
@@ -113,10 +113,52 @@ static	void *crypto_ret_si;
  * cipher) operations and one for asymmetric (e.g. MOD) operations.
  * See below for how synchronization is handled.
  */
-static	TAILQ_HEAD(,cryptop) crp_q =		/* request queues */
-		TAILQ_HEAD_INITIALIZER(crp_q);
-static	TAILQ_HEAD(,cryptkop) crp_kq =
-		TAILQ_HEAD_INITIALIZER(crp_kq);
+TAILQ_HEAD(crypto_crp_q, cryptop);
+TAILQ_HEAD(crypto_crp_kq, cryptkop);
+struct crypto_crp_qs {
+	struct crypto_crp_q crp_q;
+	struct crypto_crp_kq crp_kq;
+};
+static percpu_t *crypto_crp_qs_percpu;
+
+static inline struct crypto_crp_qs *
+crypto_get_crp_qs(int *s)
+{
+
+	KASSERT(s != NULL);
+
+	*s = splsoftnet();
+	return percpu_getref(crypto_crp_qs_percpu);
+}
+
+static inline void
+crypto_put_crp_qs(int *s)
+{
+
+	KASSERT(s != NULL);
+
+	percpu_putref(crypto_crp_qs_percpu);
+	splx(*s);
+}
+
+static void
+crypto_crp_q_is_busy_pc(void *p, void *arg, struct cpu_info *ci __unused)
+{
+	struct crypto_crp_qs *qs_pc = p;
+	bool *isempty = arg;
+
+	if (!TAILQ_EMPTY(&qs_pc->crp_q) || !TAILQ_EMPTY(&qs_pc->crp_kq))
+		*isempty = true;
+}
+
+static void
+crypto_crp_qs_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
+{
+	struct crypto_crp_qs *qs = p;
+
+	TAILQ_INIT(&qs->crp_q);
+	TAILQ_INIT(&qs->crp_kq);
+}
 
 /*
  * There are two queues for processing completed crypto requests; one
@@ -397,7 +439,6 @@ crypto_init0(void)
 {
 
 	mutex_init(&crypto_drv_mtx, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&crypto_q_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&crypto_ret_q_mtx, MUTEX_DEFAULT, IPL_NET);
 	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0,  
 		  0, "cryptop", NULL, IPL_NET);
@@ -405,6 +446,9 @@ crypto_init0(void)
 		  0, "cryptodesc", NULL, IPL_NET);
 	pool_init(&cryptkop_pool, sizeof(struct cryptkop), 0, 0,
 		  0, "cryptkop", NULL, IPL_NET);
+
+	crypto_crp_qs_percpu = percpu_alloc(sizeof(struct crypto_crp_qs));
+	percpu_foreach(crypto_crp_qs_percpu, crypto_crp_qs_init_pc, NULL);
 
 	crypto_drivers = malloc(CRYPTO_DRIVERS_INITIAL *
 	    sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT | M_ZERO);
@@ -462,14 +506,13 @@ crypto_destroy(bool exit_kthread)
 	if (exit_kthread) {
 		struct cryptocap *cap = NULL;
 		uint64_t where;
+		bool is_busy = false;
 
 		/* if we have any in-progress requests, don't unload */
-		mutex_enter(&crypto_q_mtx);
-		if (!TAILQ_EMPTY(&crp_q) || !TAILQ_EMPTY(&crp_kq)) {
-			mutex_exit(&crypto_q_mtx);
+		percpu_foreach(crypto_crp_qs_percpu, crypto_crp_q_is_busy_pc,
+				   &is_busy);
+		if (is_busy)
 			return EBUSY;
-		}
-		mutex_exit(&crypto_q_mtx);
 		/* FIXME:
 		 * prohibit enqueue to crp_q and crp_kq after here.
 		 */
@@ -514,12 +557,13 @@ crypto_destroy(bool exit_kthread)
 		free(crypto_drivers, M_CRYPTO_DATA);
 	mutex_exit(&crypto_drv_mtx);
 
+	percpu_free(crypto_crp_qs_percpu, sizeof(struct crypto_crp_qs));
+
 	pool_destroy(&cryptop_pool);
 	pool_destroy(&cryptodesc_pool);
 	pool_destroy(&cryptkop_pool);
 
 	mutex_destroy(&crypto_ret_q_mtx);
-	mutex_destroy(&crypto_q_mtx);
 	mutex_destroy(&crypto_drv_mtx);
 
 	return 0;
@@ -1094,8 +1138,10 @@ crypto_unblock(u_int32_t driverid, int what)
 int
 crypto_dispatch(struct cryptop *crp)
 {
-	int result;
+	int result, s;
 	struct cryptocap *cap;
+	struct crypto_crp_qs *crp_qs;
+	struct crypto_crp_q *crp_q;
 
 	KASSERT(crp != NULL);
 
@@ -1118,17 +1164,20 @@ crypto_dispatch(struct cryptop *crp)
 		 *
 		 * don't care list order in batch job.
 		 */
-		mutex_enter(&crypto_q_mtx);
-		wasempty  = TAILQ_EMPTY(&crp_q);
-		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
-		mutex_exit(&crypto_q_mtx);
+		crp_qs = crypto_get_crp_qs(&s);
+		crp_q = &crp_qs->crp_q;
+		wasempty  = TAILQ_EMPTY(crp_q);
+		TAILQ_INSERT_TAIL(crp_q, crp, crp_next);
+		crypto_put_crp_qs(&s);
+		crp_q = NULL;
 		if (wasempty)
 			setsoftcrypto(softintr_cookie);
 
 		return 0;
 	}
 
-	mutex_enter(&crypto_q_mtx);
+	crp_qs = crypto_get_crp_qs(&s);
+	crp_q = &crp_qs->crp_q;
 	cap = crypto_checkdriver_lock(CRYPTO_SESID2HID(crp->crp_sid));
 	/*
 	 * TODO:
@@ -1140,7 +1189,7 @@ crypto_dispatch(struct cryptop *crp)
 		 * The driver must be detached, so this request will migrate
 		 * to other drivers in cryptointr() later.
 		 */
-		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
+		TAILQ_INSERT_TAIL(crp_q, crp, crp_next);
 		result = 0;
 		goto out;
 	}
@@ -1151,7 +1200,7 @@ crypto_dispatch(struct cryptop *crp)
 		 * The driver is blocked, just queue the op until
 		 * it unblocks and the swi thread gets kicked.
 		 */
-		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
+		TAILQ_INSERT_TAIL(crp_q, crp, crp_next);
 		result = 0;
 		goto out;
 	}
@@ -1172,7 +1221,7 @@ crypto_dispatch(struct cryptop *crp)
 		crypto_driver_lock(cap);
 		cap->cc_qblocked = 1;
 		crypto_driver_unlock(cap);
-		TAILQ_INSERT_HEAD(&crp_q, crp, crp_next);
+		TAILQ_INSERT_HEAD(crp_q, crp, crp_next);
 		cryptostats.cs_blocks++;
 
 		/*
@@ -1184,7 +1233,7 @@ crypto_dispatch(struct cryptop *crp)
 	}
 
 out:
-	mutex_exit(&crypto_q_mtx);
+	crypto_put_crp_qs(&s);
 	return result;
 }
 
@@ -1195,14 +1244,17 @@ out:
 int
 crypto_kdispatch(struct cryptkop *krp)
 {
+	int result, s;
 	struct cryptocap *cap;
-	int result;
+	struct crypto_crp_qs *crp_qs;
+	struct crypto_crp_kq *crp_kq;
 
 	KASSERT(krp != NULL);
 
 	cryptostats.cs_kops++;
 
-	mutex_enter(&crypto_q_mtx);
+	crp_qs = crypto_get_crp_qs(&s);
+	crp_kq = &crp_qs->crp_kq;
 	cap = crypto_checkdriver_lock(krp->krp_hid);
 	/*
 	 * TODO:
@@ -1210,7 +1262,7 @@ crypto_kdispatch(struct cryptkop *krp)
 	 * done crypto_unregister(), this migrate operation is not required.
 	 */
 	if (cap == NULL) {
-		TAILQ_INSERT_TAIL(&crp_kq, krp, krp_next);
+		TAILQ_INSERT_TAIL(crp_kq, krp, krp_next);
 		result = 0;
 		goto out;
 	}
@@ -1221,7 +1273,7 @@ crypto_kdispatch(struct cryptkop *krp)
 		 * The driver is blocked, just queue the op until
 		 * it unblocks and the swi thread gets kicked.
 		 */
-		TAILQ_INSERT_TAIL(&crp_kq, krp, krp_next);
+		TAILQ_INSERT_TAIL(crp_kq, krp, krp_next);
 		result = 0;
 		goto out;
 	}
@@ -1237,7 +1289,7 @@ crypto_kdispatch(struct cryptkop *krp)
 		crypto_driver_lock(cap);
 		cap->cc_kqblocked = 1;
 		crypto_driver_unlock(cap);
-		TAILQ_INSERT_HEAD(&crp_kq, krp, krp_next);
+		TAILQ_INSERT_HEAD(crp_kq, krp, krp_next);
 		cryptostats.cs_kblocks++;
 
 		/*
@@ -1249,7 +1301,7 @@ crypto_kdispatch(struct cryptkop *krp)
 	}
 
 out:
-	mutex_exit(&crypto_q_mtx);
+	crypto_put_crp_qs(&s);
 	return result;
 }
 
@@ -1684,10 +1736,15 @@ cryptointr(void)
 	struct cryptop *crp, *submit, *cnext;
 	struct cryptkop *krp, *knext;
 	struct cryptocap *cap;
-	int result, hint;
+	struct crypto_crp_qs *crp_qs;
+	struct crypto_crp_q *crp_q;
+	struct crypto_crp_kq *crp_kq;
+	int result, hint, s;
 
 	cryptostats.cs_intrs++;
-	mutex_enter(&crypto_q_mtx);
+	crp_qs = crypto_get_crp_qs(&s);
+	crp_q = &crp_qs->crp_q;
+	crp_kq = &crp_qs->crp_kq;
 	do {
 		/*
 		 * Find the first element in the queue that can be
@@ -1696,7 +1753,7 @@ cryptointr(void)
 		 */
 		submit = NULL;
 		hint = 0;
-		TAILQ_FOREACH_SAFE(crp, &crp_q, crp_next, cnext) {
+		TAILQ_FOREACH_SAFE(crp, crp_q, crp_next, cnext) {
 			u_int32_t hid = CRYPTO_SESID2HID(crp->crp_sid);
 			cap = crypto_checkdriver_lock(hid);
 			if (cap == NULL || cap->cc_process == NULL) {
@@ -1742,7 +1799,7 @@ cryptointr(void)
 			break;
 		}
 		if (submit != NULL) {
-			TAILQ_REMOVE(&crp_q, submit, crp_next);
+			TAILQ_REMOVE(crp_q, submit, crp_next);
 			result = crypto_invoke(submit, hint);
 			/* we must take here as the TAILQ op or kinvoke
 			   may need this mutex below.  sigh. */
@@ -1760,18 +1817,18 @@ cryptointr(void)
 				cap = crypto_checkdriver_lock(CRYPTO_SESID2HID(submit->crp_sid));
 				if (cap == NULL) {
 					/* migrate again, sigh... */
-					TAILQ_INSERT_TAIL(&crp_q, submit, crp_next);
+					TAILQ_INSERT_TAIL(crp_q, submit, crp_next);
 				} else {
 					cap->cc_qblocked = 1;
 					crypto_driver_unlock(cap);
-					TAILQ_INSERT_HEAD(&crp_q, submit, crp_next);
+					TAILQ_INSERT_HEAD(crp_q, submit, crp_next);
 					cryptostats.cs_blocks++;
 				}
 			}
 		}
 
 		/* As above, but for key ops */
-		TAILQ_FOREACH_SAFE(krp, &crp_kq, krp_next, knext) {
+		TAILQ_FOREACH_SAFE(krp, crp_kq, krp_next, knext) {
 			cap = crypto_checkdriver_lock(krp->krp_hid);
 			if (cap == NULL || cap->cc_kprocess == NULL) {
 				if (cap != NULL)
@@ -1786,7 +1843,7 @@ cryptointr(void)
 			crypto_driver_unlock(cap);
 		}
 		if (krp != NULL) {
-			TAILQ_REMOVE(&crp_kq, krp, krp_next);
+			TAILQ_REMOVE(crp_kq, krp, krp_next);
 			result = crypto_kinvoke(krp, 0);
 			/* the next iteration will want the mutex. :-/ */
 			if (result == ERESTART) {
@@ -1803,17 +1860,17 @@ cryptointr(void)
 				cap = crypto_checkdriver_lock(krp->krp_hid);
 				if (cap == NULL) {
 					/* migrate again, sigh... */
-					TAILQ_INSERT_TAIL(&crp_kq, krp, krp_next);
+					TAILQ_INSERT_TAIL(crp_kq, krp, krp_next);
 				} else {
 					cap->cc_kqblocked = 1;
 					crypto_driver_unlock(cap);
-					TAILQ_INSERT_HEAD(&crp_kq, krp, krp_next);
+					TAILQ_INSERT_HEAD(crp_kq, krp, krp_next);
 					cryptostats.cs_kblocks++;
 				}
 			}
 		}
 	} while (submit != NULL || krp != NULL);
-	mutex_exit(&crypto_q_mtx);
+	crypto_put_crp_qs(&s);
 }
 
 /*
