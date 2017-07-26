@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.12.4.3 2017/07/25 02:03:16 snj Exp $
+#	$NetBSD: files.sunxi,v 1.12.4.4 2017/07/26 07:32:06 martin Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -101,6 +101,11 @@ file	arch/arm/sunxi/sunxi_rtc.c		sunxi_rtc
 device	sunxiemac: arp, ether, ifnet, mii
 attach	sunxiemac at fdt with sunxi_emac
 file	arch/arm/sunxi/sunxi_emac.c		sunxi_emac
+
+# Watchdog
+device	sunxiwdt: sysmon_wdog
+attach	sunxiwdt at fdt with sunxi_wdt
+file	arch/arm/sunxi/sunxi_wdt.c		sunxi_wdt
 
 # SOC parameters
 defflag	opt_soc.h			SOC_SUNXI
