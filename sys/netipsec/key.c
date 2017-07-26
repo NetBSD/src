@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.192 2017/07/26 01:33:35 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.193 2017/07/26 03:59:59 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.192 2017/07/26 01:33:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.193 2017/07/26 03:59:59 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -602,6 +602,15 @@ static struct work	key_timehandler_wk;
 	REFLOG("SP_DELREF", (p), (where), (tag));			\
 } while (0)
 
+u_int
+key_sp_refcnt(const struct secpolicy *sp)
+{
+
+	if (sp == NULL)
+		return 0;
+
+	return sp->refcnt;
+}
 
 static inline void
 key_sp_dead(struct secpolicy *sp)
@@ -686,7 +695,7 @@ found:
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP return SP:%p (ID=%u) refcnt %u\n",
-	    sp, sp ? sp->id : 0, sp ? sp->refcnt : 0);
+	    sp, sp ? sp->id : 0, key_sp_refcnt(sp));
 	return sp;
 }
 
@@ -762,7 +771,7 @@ found:
 done:
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP return SP:%p (ID=%u) refcnt %u\n",
-	    sp, sp ? sp->id : 0, sp ? sp->refcnt : 0);
+	    sp, sp ? sp->id : 0, key_sp_refcnt(sp));
 	return sp;
 }
 
@@ -1112,7 +1121,7 @@ key_sp_ref(struct secpolicy *sp, const char* where, int tag)
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP SP:%p (ID=%u) from %s:%u; refcnt now %u\n",
-	    sp, sp->id, where, tag, sp->refcnt);
+	    sp, sp->id, where, tag, key_sp_refcnt(sp));
 }
 
 void
@@ -2492,7 +2501,8 @@ key_setdumpsp(struct secpolicy *sp, u_int8_t type, u_int32_t seq, pid_t pid)
 {
 	struct mbuf *result = NULL, *m;
 
-	m = key_setsadbmsg(type, 0, SADB_SATYPE_UNSPEC, seq, pid, sp->refcnt);
+	m = key_setsadbmsg(type, 0, SADB_SATYPE_UNSPEC, seq, pid,
+	    key_sp_refcnt(sp));
 	if (!m)
 		goto fail;
 	result = m;
