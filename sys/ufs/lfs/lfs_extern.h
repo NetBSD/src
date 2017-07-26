@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.112 2017/06/08 01:23:01 chs Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.113 2017/07/26 16:42:37 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __BEGIN_DECLS
 
 #if defined(_KERNEL)
 
-extern int lfs_allclean_wakeup;
+extern kcondvar_t lfs_allclean_wakeup;
 extern struct pool lfs_inode_pool;		/* memory pool for inodes */
 extern struct pool lfs_dinode_pool;		/* memory pool for dinodes */
 extern struct pool lfs_inoext_pool;	/* memory pool for inode extension */
