@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.104.4.1 2015/04/06 01:57:57 snj Exp $	*/
+/*	$NetBSD: cpu.c,v 1.104.4.2 2017/07/26 15:22:36 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.104.4.1 2015/04/06 01:57:57 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.104.4.2 2017/07/26 15:22:36 snj Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -511,6 +511,14 @@ const struct cpuidtab cpuids[] = {
 	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA15R3,	CPU_CLASS_CORTEX,	"Cortex-A15 r3",
 	  pN_steppings, "7A" },
+	{ CPU_ID_CORTEXA53R0,	CPU_CLASS_CORTEX,	"Cortex-A53 r0",
+	  pN_steppings, "8A" },
+	{ CPU_ID_CORTEXA57R0,	CPU_CLASS_CORTEX,	"Cortex-A57 r0",
+	  pN_steppings, "8A" },
+	{ CPU_ID_CORTEXA57R1,	CPU_CLASS_CORTEX,	"Cortex-A57 r1",
+	  pN_steppings, "8A" },
+	{ CPU_ID_CORTEXA72R0,	CPU_CLASS_CORTEX,	"Cortex-A72 r0",
+	  pN_steppings, "8A" },
 
 	{ CPU_ID_MV88SV581X_V6, CPU_CLASS_PJ4B,      "Sheeva 88SV581x",
 	  generic_steppings },

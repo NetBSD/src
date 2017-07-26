@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.8.2.2 2015/04/06 01:55:53 snj Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.8.2.3 2017/07/26 15:22:36 snj Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.8.2.2 2015/04/06 01:55:53 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.8.2.3 2017/07/26 15:22:36 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -147,6 +147,10 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	gtmr_timecounter.tc_frequency = sc->sc_freq;
 
 	tc_init(&gtmr_timecounter);
+
+	/* Disable the timer until we are ready */
+	armreg_cntv_ctl_write(0);
+	armreg_cntp_ctl_write(0);
 }
 
 void
