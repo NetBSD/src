@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.192 2017/07/26 09:42:12 he Exp $
+#  $NetBSD: Makefile,v 1.193 2017/07/26 09:53:09 he Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -62,11 +62,11 @@ COMMON_SRCS+= fenv.c
 .endif
 COMMON_SRCS+= e_sqrtl.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
-.elif (${LIBC_MACHINE_ARCH} == "alpha")
 
+.elif (${LIBC_MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
 ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
-COMMON_SRCS+= fenv.c
+COMMON_SRCS+= fenv.c s_nearbyint.c
 COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 
 .elif (${LIBC_MACHINE_CPU} == "arm")
@@ -82,11 +82,11 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .if (${MKSOFTFLOAT} == "no")
 .PATH.S: ${.CURDIR}/arch/arm
 ARCH_SRCS = e_sqrt.S e_sqrtf.S lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
-
 .endif
+
 .elif (${LIBC_MACHINE_ARCH} == "ia64")
 .PATH: ${.CURDIR}/arch/ia64
-COMMON_SRCS += fenv.c
+COMMON_SRCS += fenv.c s_nearbyint.c
 
 .elif (${LIBC_MACHINE_ARCH} == "hppa")
 .PATH.c: ${.CURDIR}/arch/hppa
@@ -154,7 +154,7 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 	    e_log10.S e_remainder.S e_scalb.S e_sinh.S e_sqrt.S s_atan.S \
 	    s_ceil.S s_copysign.S s_cos.S s_expm1.S s_finite.S s_floor.S \
 	    s_log1p.S s_logb.S s_rint.S s_scalbn.S s_sin.S s_tan.S s_tanh.S
-COMMON_SRCS += fenv.c
+COMMON_SRCS += fenv.c s_nearbyint.c
 .endif
 .endif
 # end of m68k
@@ -174,7 +174,7 @@ WARNS?=5
 .PATH:	${.CURDIR}/arch/riscv
 
 .if ${MKSOFTFLOAT} == "no"
-COMMON_SRCS += fenv.c
+COMMON_SRCS += fenv.c s_nearbyint.c
 ARCH_SRCS = e_sqrt.S e_sqrtf.S
 ARCH_SRCS += s_copysign.S s_copysignf.S
 ARCH_SRCS += s_fabs.S s_fabsf.S
@@ -186,22 +186,22 @@ ARCH_SRCS += s_fmin.S s_fminf.S
 .elif (${LIBC_MACHINE_ARCH} == "powerpc")
 .PATH:	${.CURDIR}/arch/powerpc
 .if ${MKSOFTFLOAT} == "no"
-COMMON_SRCS += fenv.c
+COMMON_SRCS += fenv.c s_nearbyint.c
 .endif
 
 .elif (${LIBC_MACHINE_CPU} == "mips")
 .PATH:	${.CURDIR}/arch/mips
 .if ${MKSOFTFLOAT} == "no"
-COMMON_SRCS += fenv.c
+COMMON_SRCS += fenv.c s_nearbyint.c
 .endif
 
 .elif (${LIBC_MACHINE_CPU} == "sh3")
 .PATH:	${.CURDIR}/arch/sh3
 .if ${MKSOFTFLOAT} == "no"
-COMMON_SRCS += fenv.c
+COMMON_SRCS += fenv.c s_nearbyint.c
 .endif
 .endif
-# End of long list of CPU tests
+# End of list of CPU tests
 
 WARNS?=5
 
