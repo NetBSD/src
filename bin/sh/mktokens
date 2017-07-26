@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mktokens,v 1.13 2017/05/04 04:37:51 kre Exp $
+#	$NetBSD: mktokens,v 1.14 2017/07/26 03:46:54 kre Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -39,6 +39,9 @@
 # The following is a list of tokens.  The second column is nonzero if the
 # token marks the end of a list.  The third column is the name to print in
 # error messages.
+
+# Note that all the keyword tokens come after TWORD, and all the others
+# come before it.   We rely upon that relationship - keep it!
 
 cat > /tmp/ka$$ <<\!
 TEOF	1	end of file
@@ -87,7 +90,7 @@ ${SED} -e 's/"/\\"/g' \
 echo '};
 '
 ${SED} 's/"//g' /tmp/ka$$ | ${AWK} '
-/TIF/{print "#define KWDOFFSET " NR-1; print ""; 
+/TWORD/{print "#define KWDOFFSET " NR; print ""; 
       print "const char *const parsekwd[] = {"}
 /TIF/,/neverfound/{print "	\"" $3 "\","}'
 echo '	0
