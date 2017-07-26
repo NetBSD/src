@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.154 2017/06/09 10:11:20 nat Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.155 2017/07/26 07:45:05 maya Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.154 2017/06/09 10:11:20 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.155 2017/07/26 07:45:05 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -504,6 +504,9 @@ uaudio_attach(device_t parent, device_t self, void *aux)
 	DPRINTF("%s", "doing audio_attach_mi\n");
 	sc->sc_audiodev = audio_attach_mi(&uaudio_hw_if, sc, sc->sc_dev);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 }
 
@@ -534,9 +537,10 @@ int
 uaudio_detach(device_t self, int flags)
 {
 	struct uaudio_softc *sc = device_private(self);
-	int rv;
+	int rv = 0;
 
-	rv = 0;
+	pmf_device_deregister(self);
+
 	/* Wait for outstanding requests to complete. */
 	usbd_delay_ms(sc->sc_udev, UAUDIO_NCHANBUFS * UAUDIO_NFRAMES);
 
