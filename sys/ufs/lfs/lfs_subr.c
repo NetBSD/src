@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.96 2017/07/26 14:38:59 maya Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.97 2017/07/26 16:42:37 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.96 2017/07/26 14:38:59 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.97 2017/07/26 16:42:37 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -649,6 +649,6 @@ lfs_wakeup_cleaner(struct lfs *fs)
 	if (fs->lfs_nowrap > 0)
 		return;
 
-	wakeup(&fs->lfs_nextsegsleep);
-	wakeup(&lfs_allclean_wakeup);
+	cv_broadcast(&fs->lfs_nextsegsleep);
+	cv_broadcast(&lfs_allclean_wakeup);
 }
