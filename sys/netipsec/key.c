@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.191 2017/07/21 04:50:11 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.192 2017/07/26 01:33:35 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.191 2017/07/21 04:50:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.192 2017/07/26 01:33:35 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -5763,9 +5763,9 @@ key_getcomb_setlifetime(struct sadb_comb *comb)
 	comb->sadb_comb_soft_bytes = 0;
 	comb->sadb_comb_hard_bytes = 0;
 	comb->sadb_comb_hard_addtime = 86400;	/* 1 day */
-	comb->sadb_comb_soft_addtime = comb->sadb_comb_soft_addtime * 80 / 100;
-	comb->sadb_comb_soft_usetime = 28800;	/* 8 hours */
-	comb->sadb_comb_hard_usetime = comb->sadb_comb_hard_usetime * 80 / 100;
+	comb->sadb_comb_soft_addtime = comb->sadb_comb_hard_addtime * 80 / 100;
+	comb->sadb_comb_hard_usetime = 28800;	/* 8 hours */
+	comb->sadb_comb_soft_usetime = comb->sadb_comb_hard_usetime * 80 / 100;
 }
 
 /*
