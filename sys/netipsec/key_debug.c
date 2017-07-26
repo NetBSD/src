@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.18 2017/07/21 04:50:11 ozaki-r Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.19 2017/07/26 03:59:59 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_debug.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.c,v 1.26 2001/06/27 10:46:50 sakane Exp $	*/
 
@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.18 2017/07/21 04:50:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.19 2017/07/26 03:59:59 ozaki-r Exp $");
 #endif
 
 #if defined(_KERNEL_OPT)
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.18 2017/07/21 04:50:11 ozaki-r Exp $
 
 #include <net/route.h>
 
+#include <netipsec/key.h>
 #include <netipsec/key_var.h>
 #include <netipsec/key_debug.h>
 
@@ -461,7 +462,7 @@ kdebug_secpolicy(const struct secpolicy *sp)
 		panic("kdebug_secpolicy: NULL pointer was passed");
 
 	printf("secpolicy{ refcnt=%u state=%u policy=%u\n",
-		sp->refcnt, sp->state, sp->policy);
+	    key_sp_refcnt(sp), sp->state, sp->policy);
 
 	kdebug_secpolicyindex(&sp->spidx);
 
