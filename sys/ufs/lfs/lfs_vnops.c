@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.317 2017/06/10 05:29:36 maya Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.318 2017/07/26 16:42:37 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.317 2017/06/10 05:29:36 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.318 2017/07/26 16:42:37 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1305,8 +1305,7 @@ lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
 		lfs_wakeup_cleaner(fs);
 	}
 	if (waitfor) {
-		mtsleep(&fs->lfs_nextsegsleep, PCATCH | PUSER, "segment",
-		    0, &lfs_lock);
+		cv_wait_sig(&fs->lfs_nextsegsleep, &lfs_lock);
 	}
 
 	return 0;
