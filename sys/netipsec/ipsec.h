@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.56 2017/07/21 04:55:36 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.57 2017/07/26 09:18:15 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -74,7 +74,7 @@ struct secpolicyindex {
 
 /* Security Policy Data Base */
 struct secpolicy {
-	LIST_ENTRY(secpolicy) chain;
+	struct pslist_entry pslist_entry;
 
 	u_int refcnt;			/* reference count */
 	struct secpolicyindex spidx;	/* selector */
