@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.38 2017/07/18 06:01:36 knakahara Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.39 2017/07/26 06:44:50 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -670,12 +670,17 @@ extern int	cuio_getptr(struct uio *, int loc, int *off);
  * + crypto_drivers[i] and its all members are protected by
  *   crypto_drivers[i].cc_lock (a spin lock)
  *       spin lock as crypto_unblock() can be called in interrupt context
- * + crp_q and crp_kq are procted by crypto_q_mtx (an adaptive lock)
- * + crp_ret_q, crp_ret_kq and crypto_exit_flag are protected by
- *   crypto_ret_q_mtx (a spin lock)
+ * + percpu'ed crp_q and crp_kq are procted by splsoftnet.
+ * + crp_ret_q, crp_ret_kq and crypto_exit_flag that are members of
+ *   struct crypto_crp_ret_qs are protected by crypto_crp_ret_qs.crp_ret_q_mtx
+ *   (a spin lock)
  *       spin lock as crypto_done() can be called in interrupt context
+ *       NOTE:
+ *       It is not known whether crypto_done()(in interrupt context) is called
+ *       in the same CPU as crypto_dispatch() is called.
+ *       So, struct crypto_crp_ret_qs cannot be percpu(9).
  *
  * Locking order:
- *     - crypto_q_mtx => crypto_drv_mtx => crypto_drivers[i].cc_lock
+ *     - crypto_drv_mtx => crypto_drivers[i].cc_lock
  */
 #endif /* _CRYPTO_CRYPTO_H_ */
