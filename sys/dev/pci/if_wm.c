@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.530 2017/07/25 06:00:17 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.531 2017/07/26 06:48:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.530 2017/07/25 06:00:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.531 2017/07/26 06:48:49 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -809,10 +809,10 @@ static void	wm_gmii_statchg(struct ifnet *);
  * These functions are not for accessing MII registers but for accessing
  * kumeran specific registers.
  */
-static int	wm_kmrn_readreg(struct wm_softc *, int);
-static int	wm_kmrn_readreg_locked(struct wm_softc *, int);
-static void	wm_kmrn_writereg(struct wm_softc *, int, int);
-static void	wm_kmrn_writereg_locked(struct wm_softc *, int, int);
+static int	wm_kmrn_readreg(struct wm_softc *, int, uint16_t *);
+static int	wm_kmrn_readreg_locked(struct wm_softc *, int, uint16_t *);
+static int	wm_kmrn_writereg(struct wm_softc *, int, uint16_t);
+static int	wm_kmrn_writereg_locked(struct wm_softc *, int, uint16_t);
 /* SGMII */
 static bool	wm_sgmii_uses_mdio(struct wm_softc *);
 static int	wm_sgmii_readreg(device_t, int, int);
@@ -4247,6 +4247,8 @@ wm_reset(struct wm_softc *sc)
 	int phy_reset = 0;
 	int i, error = 0;
 	uint32_t reg;
+	uint16_t kmreg;
+	int rv;
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
@@ -4641,6 +4643,21 @@ wm_reset(struct wm_softc *sc)
 
 	if ((sc->sc_flags & WM_F_PLL_WA_I210) != 0)
 		wm_pll_workaround_i210(sc);
+
+	if (sc->sc_type == WM_T_80003) {
+		/* default to TRUE to enable the MDIC W/A */
+		sc->sc_flags |= WM_F_80003_MDIC_WA;
+	
+		rv = wm_kmrn_readreg(sc,
+		    KUMCTRLSTA_OFFSET >> KUMCTRLSTA_OFFSET_SHIFT, &kmreg);
+		if (rv == 0) {
+			if ((kmreg & KUMCTRLSTA_OPMODE_MASK)
+			    == KUMCTRLSTA_OPMODE_INBAND_MDIO)
+				sc->sc_flags &= ~WM_F_80003_MDIC_WA;
+			else
+				sc->sc_flags |= WM_F_80003_MDIC_WA;
+		}
+	}
 }
 
 /*
@@ -5414,7 +5431,7 @@ wm_init_locked(struct ifnet *ifp)
 	wm_set_vlan(sc);
 
 	if (sc->sc_flags & WM_F_HAS_MII) {
-		int val;
+		uint16_t kmreg;
 
 		switch (sc->sc_type) {
 		case WM_T_80003:
@@ -5433,19 +5450,20 @@ wm_init_locked(struct ifnet *ifp)
 			 */
 			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_TIMEOUTS,
 			    0xFFFF);
-			val = wm_kmrn_readreg(sc, KUMCTRLSTA_OFFSET_INB_PARAM);
-			val |= 0x3F;
-			wm_kmrn_writereg(sc,
-			    KUMCTRLSTA_OFFSET_INB_PARAM, val);
+			wm_kmrn_readreg(sc, KUMCTRLSTA_OFFSET_INB_PARAM,
+			    &kmreg);
+			kmreg |= 0x3F;
+			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_INB_PARAM,
+			    kmreg);
 			break;
 		default:
 			break;
 		}
 
 		if (sc->sc_type == WM_T_80003) {
-			val = CSR_READ(sc, WMREG_CTRL_EXT);
-			val &= ~CTRL_EXT_LINK_MODE_MASK;
-			CSR_WRITE(sc, WMREG_CTRL_EXT, val);
+			reg = CSR_READ(sc, WMREG_CTRL_EXT);
+			reg &= ~CTRL_EXT_LINK_MODE_MASK;
+			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 
 			/* Bypass RX and TX FIFO's */
 			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_FIFO_CTRL,
@@ -9953,6 +9971,7 @@ static int
 wm_gmii_i80003_readreg(device_t dev, int phy, int reg)
 {
 	struct wm_softc *sc = device_private(dev);
+	int page_select, temp;
 	int rv;
 
 	if (phy != 1) /* only one PHY on kumeran bus */
@@ -9963,19 +9982,35 @@ wm_gmii_i80003_readreg(device_t dev, int phy, int reg)
 		return 0;
 	}
 
-	if ((reg & MII_ADDRMASK) < GG82563_MIN_ALT_REG) {
-		wm_gmii_mdic_writereg(dev, phy, GG82563_PHY_PAGE_SELECT,
-		    reg >> GG82563_PAGE_SHIFT);
-	} else {
-		wm_gmii_mdic_writereg(dev, phy, GG82563_PHY_PAGE_SELECT_ALT,
-		    reg >> GG82563_PAGE_SHIFT);
+	if ((reg & MII_ADDRMASK) < GG82563_MIN_ALT_REG)
+		page_select = GG82563_PHY_PAGE_SELECT;
+	else {
+		/*
+		 * Use Alternative Page Select register to access registers
+		 * 30 and 31.
+		 */
+		page_select = GG82563_PHY_PAGE_SELECT_ALT;
 	}
-	/* Wait more 200us for a bug of the ready bit in the MDIC register */
-	delay(200);
-	rv = wm_gmii_mdic_readreg(dev, phy, reg & MII_ADDRMASK);
-	delay(200);
-	sc->phy.release(sc);
+	temp = (uint16_t)reg >> GG82563_PAGE_SHIFT;
+	wm_gmii_mdic_writereg(dev, phy, page_select, temp);
+	if ((sc->sc_flags & WM_F_80003_MDIC_WA) != 0) {
+		/*
+		 * Wait more 200us for a bug of the ready bit in the MDIC
+		 * register.
+		 */
+		delay(200);
+		if (wm_gmii_mdic_readreg(dev, phy, page_select) != temp) {
+			device_printf(dev, "%s failed\n", __func__);
+			rv = 0; /* XXX */
+			goto out;
+		}
+		rv = wm_gmii_mdic_readreg(dev, phy, reg & MII_ADDRMASK);
+		delay(200);
+	} else
+		rv = wm_gmii_mdic_readreg(dev, phy, reg & MII_ADDRMASK);
 
+out:
+	sc->phy.release(sc);
 	return rv;
 }
 
@@ -9990,6 +10025,7 @@ static void
 wm_gmii_i80003_writereg(device_t dev, int phy, int reg, int val)
 {
 	struct wm_softc *sc = device_private(dev);
+	int page_select, temp;
 
 	if (phy != 1) /* only one PHY on kumeran bus */
 		return;
@@ -9999,18 +10035,33 @@ wm_gmii_i80003_writereg(device_t dev, int phy, int reg, int val)
 		return;
 	}
 
-	if ((reg & MII_ADDRMASK) < GG82563_MIN_ALT_REG) {
-		wm_gmii_mdic_writereg(dev, phy, GG82563_PHY_PAGE_SELECT,
-		    reg >> GG82563_PAGE_SHIFT);
-	} else {
-		wm_gmii_mdic_writereg(dev, phy, GG82563_PHY_PAGE_SELECT_ALT,
-		    reg >> GG82563_PAGE_SHIFT);
+	if ((reg & MII_ADDRMASK) < GG82563_MIN_ALT_REG)
+		page_select = GG82563_PHY_PAGE_SELECT;
+	else {
+		/*
+		 * Use Alternative Page Select register to access registers
+		 * 30 and 31.
+		 */
+		page_select = GG82563_PHY_PAGE_SELECT_ALT;
 	}
-	/* Wait more 200us for a bug of the ready bit in the MDIC register */
-	delay(200);
-	wm_gmii_mdic_writereg(dev, phy, reg & MII_ADDRMASK, val);
-	delay(200);
+	temp = (uint16_t)reg >> GG82563_PAGE_SHIFT;
+	wm_gmii_mdic_writereg(dev, phy, page_select, temp);
+	if ((sc->sc_flags & WM_F_80003_MDIC_WA) != 0) {
+		/*
+		 * Wait more 200us for a bug of the ready bit in the MDIC
+		 * register.
+		 */
+		delay(200);
+		if (wm_gmii_mdic_readreg(dev, phy, page_select) != temp) {
+			device_printf(dev, "%s failed\n", __func__);
+			goto out;
+		}
+		wm_gmii_mdic_writereg(dev, phy, reg & MII_ADDRMASK, val);
+		delay(200);
+	} else
+		wm_gmii_mdic_writereg(dev, phy, reg & MII_ADDRMASK, val);
 
+out:
 	sc->phy.release(sc);
 }
 
@@ -10510,7 +10561,7 @@ wm_gmii_statchg(struct ifnet *ifp)
  *	Read a kumeran register
  */
 static int
-wm_kmrn_readreg(struct wm_softc *sc, int reg)
+wm_kmrn_readreg(struct wm_softc *sc, int reg, uint16_t *val)
 {
 	int rv;
 
@@ -10521,10 +10572,10 @@ wm_kmrn_readreg(struct wm_softc *sc, int reg)
 	if (rv != 0) {
 		device_printf(sc->sc_dev, "%s: failed to get semaphore\n",
 		    __func__);
-		return 0;
+		return rv;
 	}
 
-	rv = wm_kmrn_readreg_locked(sc, reg);
+	rv = wm_kmrn_readreg_locked(sc, reg, val);
 
 	if (sc->sc_type == WM_T_80003)
 		wm_put_swfw_semaphore(sc, SWFW_MAC_CSR_SM);
@@ -10535,9 +10586,8 @@ wm_kmrn_readreg(struct wm_softc *sc, int reg)
 }
 
 static int
-wm_kmrn_readreg_locked(struct wm_softc *sc, int reg)
+wm_kmrn_readreg_locked(struct wm_softc *sc, int reg, uint16_t *val)
 {
-	int rv;
 
 	CSR_WRITE(sc, WMREG_KUMCTRLSTA,
 	    ((reg << KUMCTRLSTA_OFFSET_SHIFT) & KUMCTRLSTA_OFFSET) |
@@ -10545,9 +10595,9 @@ wm_kmrn_readreg_locked(struct wm_softc *sc, int reg)
 	CSR_WRITE_FLUSH(sc);
 	delay(2);
 
-	rv = CSR_READ(sc, WMREG_KUMCTRLSTA) & KUMCTRLSTA_MASK;
+	*val = CSR_READ(sc, WMREG_KUMCTRLSTA) & KUMCTRLSTA_MASK;
 
-	return rv;
+	return 0;
 }
 
 /*
@@ -10555,8 +10605,8 @@ wm_kmrn_readreg_locked(struct wm_softc *sc, int reg)
  *
  *	Write a kumeran register
  */
-static void
-wm_kmrn_writereg(struct wm_softc *sc, int reg, int val)
+static int
+wm_kmrn_writereg(struct wm_softc *sc, int reg, uint16_t val)
 {
 	int rv;
 
@@ -10567,24 +10617,27 @@ wm_kmrn_writereg(struct wm_softc *sc, int reg, int val)
 	if (rv != 0) {
 		device_printf(sc->sc_dev, "%s: failed to get semaphore\n",
 		    __func__);
-		return;
+		return rv;
 	}
 
-	wm_kmrn_writereg_locked(sc, reg, val);
+	rv = wm_kmrn_writereg_locked(sc, reg, val);
 
 	if (sc->sc_type == WM_T_80003)
 		wm_put_swfw_semaphore(sc, SWFW_MAC_CSR_SM);
 	else
 		sc->phy.release(sc);
+
+	return rv;
 }
 
-static void
-wm_kmrn_writereg_locked(struct wm_softc *sc, int reg, int val)
+static int
+wm_kmrn_writereg_locked(struct wm_softc *sc, int reg, uint16_t val)
 {
 
 	CSR_WRITE(sc, WMREG_KUMCTRLSTA,
-	    ((reg << KUMCTRLSTA_OFFSET_SHIFT) & KUMCTRLSTA_OFFSET) |
-	    (val & KUMCTRLSTA_MASK));
+	    ((reg << KUMCTRLSTA_OFFSET_SHIFT) & KUMCTRLSTA_OFFSET) | val);
+
+	return 0;
 }
 
 /* SGMII related */
@@ -13829,15 +13882,17 @@ out:
 static void
 wm_gig_downshift_workaround_ich8lan(struct wm_softc *sc)
 {
-	uint16_t kmrn_reg;
+	uint16_t kmreg;
 
 	/* Only for igp3 */
 	if (sc->sc_phytype == WMPHY_IGP_3) {
-		kmrn_reg = wm_kmrn_readreg(sc, KUMCTRLSTA_OFFSET_DIAG);
-		kmrn_reg |= KUMCTRLSTA_DIAG_NELPBK;
-		wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_DIAG, kmrn_reg);
-		kmrn_reg &= ~KUMCTRLSTA_DIAG_NELPBK;
-		wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_DIAG, kmrn_reg);
+		if (wm_kmrn_readreg(sc, KUMCTRLSTA_OFFSET_DIAG, &kmreg) != 0)
+			return;
+		kmreg |= KUMCTRLSTA_DIAG_NELPBK;
+		if (wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_DIAG, kmreg) != 0)
+			return;
+		kmreg &= ~KUMCTRLSTA_DIAG_NELPBK;
+		wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_DIAG, kmreg);
 	}
 }
 
@@ -13941,16 +13996,21 @@ static void
 wm_configure_k1_ich8lan(struct wm_softc *sc, int k1_enable)
 {
 	uint32_t ctrl, ctrl_ext, tmp;
-	uint16_t kmrn_reg;
+	uint16_t kmreg;
+	int rv;
 
-	kmrn_reg = wm_kmrn_readreg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG);
+	rv = wm_kmrn_readreg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG, &kmreg);
+	if (rv != 0)
+		return;
 
 	if (k1_enable)
-		kmrn_reg |= KUMCTRLSTA_K1_ENABLE;
+		kmreg |= KUMCTRLSTA_K1_ENABLE;
 	else
-		kmrn_reg &= ~KUMCTRLSTA_K1_ENABLE;
+		kmreg &= ~KUMCTRLSTA_K1_ENABLE;
 
-	wm_kmrn_writereg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG, kmrn_reg);
+	rv = wm_kmrn_writereg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG, kmreg);
+	if (rv != 0)
+		return;
 
 	delay(20);
 
@@ -13969,6 +14029,8 @@ wm_configure_k1_ich8lan(struct wm_softc *sc, int k1_enable)
 	CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext);
 	CSR_WRITE_FLUSH(sc);
 	delay(20);
+
+	return;
 }
 
 /* special case - for 82575 - need to do manual init ... */
