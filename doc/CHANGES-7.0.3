@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.49 2017/07/20 01:42:54 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.50 2017/07/26 16:04:26 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -3013,4 +3013,21 @@ sys/arch/i386/i386/trap.c			1.288 via patch
 	There is a one-instruction race in it that could panic
 	the kernel.
 	[maxv, ticket #1441]
+
+gnu/dist/gettext/gettext-tools/doc/texi2html	patch
+
+	Don't use defined() on perl arrays.
+	[mrg, ticket #1449]
+
+doc/3RDPARTY					1.1425 via patch
+external/public-domain/tz/dist/NEWS             up to 1.1.1.18
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.8
+external/public-domain/tz/dist/africa           up to 1.1.1.11
+external/public-domain/tz/dist/iso3166.tab      up to 1.1.1.5
+external/public-domain/tz/dist/northamerica     up to 1.1.1.16
+external/public-domain/tz/dist/version          up to 1.1.1.5
+
+	Update tzdata to 2017b.  This makes a (current) change for
+	Haiti, and a change to historic data for Liberia.
+	[kre, ticket #1450]
 
