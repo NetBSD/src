@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.95 2017/06/19 12:09:37 maya Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.96 2017/07/26 14:38:59 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.95 2017/06/19 12:09:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.96 2017/07/26 14:38:59 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,7 +430,10 @@ lfs_segunlock(struct lfs *fs)
 	sp = fs->lfs_sp;
 
 	mutex_enter(&lfs_lock);
-	KASSERT(LFS_SEGLOCK_HELD(fs));
+
+	if (!LFS_SEGLOCK_HELD(fs))
+		panic("lfs seglock not held");
+
 	if (fs->lfs_seglock == 1) {
 		if ((sp->seg_flags & (SEGM_PROT | SEGM_CLEAN)) == 0)
 			do_unmark_dirop = 1;
@@ -534,9 +537,6 @@ lfs_segunlock(struct lfs *fs)
 		rw_exit(&fs->lfs_fraglock);
 		if (do_unmark_dirop)
 			lfs_unmark_dirop(fs);
-	} else if (fs->lfs_seglock == 0) {
-		mutex_exit(&lfs_lock);
-		panic ("Seglock not held");
 	} else {
 		--fs->lfs_seglock;
 		mutex_exit(&lfs_lock);
