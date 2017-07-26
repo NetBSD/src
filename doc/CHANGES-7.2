@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.32 2017/07/25 19:51:29 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.33 2017/07/26 16:11:31 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -2614,4 +2614,70 @@ sys/dev/pci/if_iwmvar.h				patch
 	iwm(4): Add a driver for Intel Wireless 726x, 316x, 826x
 	and 416x series.  Ported from OpenBSD.
 	[nonaka, ticket #1413]
+
+external/broadcom/rpi-firmware/dist/bootcode.bin up to 1.10
+external/broadcom/rpi-firmware/dist/fixup.dat	up to 1.10
+external/broadcom/rpi-firmware/dist/fixup_cd.dat up to 1.10
+external/broadcom/rpi-firmware/dist/start.elf	up to 1.10
+external/broadcom/rpi-firmware/dist/start_cd.elf up to 1.10
+sys/arch/arm/arm32/cpu.c			1.113 via patch
+sys/arch/arm/broadcom/bcm2835_bsc.c		1.6 via patch
+sys/arch/arm/broadcom/bcm2835_plcom.c		1.4 via patch
+sys/arch/arm/cortex/gtmr.c			1.18 via patch
+sys/arch/arm/include/armreg.h			1.110 via patch
+sys/arch/arm/include/vfpreg.h			1.15 via patch
+sys/arch/arm/vfp/vfp_init.c			1.50 via patch
+sys/arch/evbarm/rpi/rpi_machdep.c		1.59 via patch
+sys/arch/evbarm/rpi/rpi_machdep.c		1.70 via patch
+sys/arch/evbarm/rpi/rpi_machdep.c		1.71 via patch
+sys/arch/evbarm/rpi/rpi_machdep.c		1.72 via patch
+sys/arch/evbarm/rpi/vcprop.h			1.16 via patch
+
+	Add support for Raspberry Pi 3.
+	[jmcneill, ticket #1435]
+
+gnu/dist/gettext/gettext-tools/doc/texi2html	patch
+
+	Don't use defined() on perl arrays.
+	[mrg, ticket #1449]
+
+doc/3RDPARTY					1.1425 via patch
+external/public-domain/tz/dist/NEWS             up to 1.1.1.18
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.8
+external/public-domain/tz/dist/africa           up to 1.1.1.11
+external/public-domain/tz/dist/iso3166.tab      up to 1.1.1.5
+external/public-domain/tz/dist/northamerica     up to 1.1.1.16
+external/public-domain/tz/dist/version          up to 1.1.1.5
+
+	Update tzdata to 2017b.  This makes a (current) change for
+	Haiti, and a change to historic data for Liberia.
+	[kre, ticket #1450]
+
+sbin/route/rtutil.c				1.10
+
+	Fix route and netstat -r output when built with -DSMALL
+	[manu, ticket #1454]
+
+libexec/ld.elf_so/tls.c				1.11
+
+	Fix two bugs related to promotion of DSO TLS blocks into the
+	static thread allocation:
+	(1) Set the DTV vector up whenever an offset into the static
+	allocation is assigned, even if the block itself is not
+	initialized. This has been seen in libstdc++.
+	(2) Do not free a DTV block if it is part of the static
+	thread allocation.
+	[joerg, ticket #1455]
+
+sys/dev/pci/aceride.c				1.37
+sys/dev/pci/pciide_acer_reg.h			1.13
+
+	Apply workaround from FreeBSD to fix read data corruption
+	seen on Fire V100 and mSATA-SSD with mSATA to IDE adapter.
+	[nakayama, ticket #1458]
+
+sys/dev/pci/if_iwm.c				1.72
+
+	iwm(4): match Wireless 8265 device.
+	[nonaka, ticket #1459]
 
