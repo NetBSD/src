@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.24 2017/06/17 12:41:20 kre Exp $	*/
+/*	$NetBSD: shell.h,v 1.25 2017/07/26 03:44:43 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -123,6 +123,11 @@ extern	int		ShNest;
 					trace param;			\
 				} while (/*CONSTCOND*/ 0)
 
+#define CCTRACE(when,cond,param) do {					\
+				    if ((cond) && (DFlags & (when)) != 0) \
+					trace param;			\
+				} while (/*CONSTCOND*/ 0)
+
 #define CTRACEV(when, param)	do {					\
 				    if ((DFlags & (when)) != 0)		\
 					tracev param;			\
@@ -137,6 +142,12 @@ extern	int		ShNest;
 
 #define VTRACE(when, param)	do {					\
 				    if ((DFlags &			\
+					(when)<<DBG_VBOSE_SHIFT) != 0)	\
+					    trace param;		\
+				} while (/*CONSTCOND*/ 0)
+
+#define CVTRACE(when,cond,param) do {					\
+				    if ((cond) && (DFlags &		\
 					(when)<<DBG_VBOSE_SHIFT) != 0)	\
 					    trace param;		\
 				} while (/*CONSTCOND*/ 0)
@@ -204,9 +215,11 @@ extern void set_debug(const char *, int);
 #define TRACEV(param)			/* historic varargs trace */
 
 #define CTRACE(when, param)		/* conditional normal trace */
+#define CCTRACE(when, cond, param)	/* more conditional normal trace */
 #define CTRACEV(when, param)		/* conditional varargs trace */
 #define XTRACE(when, param, extra)	/* conditional trace, plus more */
 #define VTRACE(when, param)		/* conditional verbose trace */
+#define CVTRACE(when, cond, param)	/* more conditional verbose trace */
 #define VTRACEV(when, param)		/* conditional verbose varargs trace */
 #define VXTRACE(when, param, extra)	/* cond verbose trace, plus more */
 
