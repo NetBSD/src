@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.273 2017/07/26 15:07:27 maya Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.274 2017/07/26 16:42:37 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.273 2017/07/26 15:07:27 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.274 2017/07/26 16:42:37 maya Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -145,7 +145,7 @@ int	 lfs_writevnodes(struct lfs *fs, struct mount *mp,
 static void lfs_shellsort(struct lfs *, struct buf **, union lfs_blocks *,
 			  int, int);
 
-int	lfs_allclean_wakeup;		/* Cleaner wakeup address. */
+kcondvar_t	lfs_allclean_wakeup;	/* Cleaner wakeup address. */
 int	lfs_writeindir = 1;		/* whether to flush indir on non-ckp */
 int	lfs_clean_vnhead = 0;		/* Allow freeing to head of vn list */
 int	lfs_dirvcount = 0;		/* # active dirops */

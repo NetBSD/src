@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.202 2017/06/05 01:01:42 maya Exp $	*/
+/*	$NetBSD: lfs.h,v 1.203 2017/07/26 16:42:37 maya Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -1047,7 +1047,7 @@ struct lfs {
 	/* XXX: should be replaced with a condvar */
 	int lfs_availsleep;
 	/* This one replaces &lfs_nextseg... all ditto */
-	int lfs_nextsegsleep;
+	kcondvar_t lfs_nextsegsleep;
 
 	/* Cleaner lwp, set on first bmapv syscall. */
 	struct lwp *lfs_cleaner_thread;
