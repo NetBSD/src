@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.272 2017/06/15 14:37:30 maya Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.273 2017/07/26 15:07:27 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.272 2017/06/15 14:37:30 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.273 2017/07/26 15:07:27 maya Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -603,6 +603,7 @@ lfs_segwrite(struct mount *mp, int flags)
 	SEGUSE *segusep;
 	int do_ckp, did_ckp, error;
 	unsigned n, segleft, maxseg, sn, i, curseg;
+	int writer_set = 0;
 	int dirty;
 	int redo;
 	SEGSUM *ssp;
@@ -626,8 +627,6 @@ lfs_segwrite(struct mount *mp, int flags)
 	/* We can't do a partial write and checkpoint at the same time. */
 	if (do_ckp)
 		flags &= ~SEGM_SINGLE;
-
-	lfs_writer_enter(fs, "lfs segwrite");
 
 	lfs_seglock(fs, flags | (do_ckp ? SEGM_CKP : 0));
 	sp = fs->lfs_sp;
@@ -654,7 +653,11 @@ lfs_segwrite(struct mount *mp, int flags)
 				break;
 			}
 
-			if (do_ckp) {
+			if (do_ckp || fs->lfs_dirops == 0) {
+				if (!writer_set) {
+					lfs_writer_enter(fs, "lfs writer");
+					writer_set = 1;
+				}
 				error = lfs_writevnodes(fs, mp, sp, VN_DIROP);
 				if (um_error == 0)
 					um_error = error;
@@ -803,7 +806,8 @@ lfs_segwrite(struct mount *mp, int flags)
 
 	/* Note Ifile no longer needs to be written */
 	fs->lfs_doifile = 0;
-	lfs_writer_leave(fs);
+	if (writer_set)
+		lfs_writer_leave(fs);
 
 	/*
 	 * If we didn't write the Ifile, we didn't really do anything.
