@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.191 2017/05/06 18:03:24 christos Exp $
+#  $NetBSD: Makefile,v 1.192 2017/07/26 09:42:12 he Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -63,10 +63,12 @@ COMMON_SRCS+= fenv.c
 COMMON_SRCS+= e_sqrtl.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .elif (${LIBC_MACHINE_ARCH} == "alpha")
+
 .PATH: ${.CURDIR}/arch/alpha
 ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
 COMMON_SRCS+= fenv.c
 COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
+
 .elif (${LIBC_MACHINE_CPU} == "arm")
 .PATH.c: ${.CURDIR}/arch/arm
 .if ${MKSOFTFLOAT} == "no"
@@ -80,17 +82,21 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .if (${MKSOFTFLOAT} == "no")
 .PATH.S: ${.CURDIR}/arch/arm
 ARCH_SRCS = e_sqrt.S e_sqrtf.S lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
+
 .endif
 .elif (${LIBC_MACHINE_ARCH} == "ia64")
 .PATH: ${.CURDIR}/arch/ia64
 COMMON_SRCS += fenv.c
+
 .elif (${LIBC_MACHINE_ARCH} == "hppa")
 .PATH.c: ${.CURDIR}/arch/hppa
 COMMON_SRCS+= fenv.c s_nexttowardf.c s_nearbyint.c s_rintl.c
+
 .elif (${LIBC_MACHINE_ARCH} == "sparc")
 .PATH: ${.CURDIR}/arch/sparc
 COMMON_SRCS+= fenv.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
+
 .elif (${LIBC_MACHINE_ARCH} == "sparc64")
 .PATH: ${.CURDIR}/arch/sparc64
 COMMON_SRCS+= fenv.c
@@ -99,6 +105,7 @@ COMMON_SRCS+= s_nexttowardf.c s_nearbyint.c s_rintl.c
 COMMON_SRCS+= s_nexttoward.c
 .endif
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
+
 .elif ((${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "x86_64"))
 
 # XXX consider making this LIBC_MACHINE_ARCH?
@@ -128,6 +135,7 @@ s_${f}.o s_${f}.pico s_${f}.po s_${f}.go s_${f}.d: s_${f}.c
 .if (${MACHINE_ARCH} == "i386")
 SUBDIR=arch/i387
 .endif
+
 .elif (${LIBC_MACHINE_ARCH} == "m68k")
 .if defined(M68060)
 .PATH:	${.CURDIR}/arch/m68060
@@ -150,6 +158,7 @@ COMMON_SRCS += fenv.c
 .endif
 .endif
 # end of m68k
+
 .elif (${LIBC_MACHINE_ARCH} == "vax")
 .PATH:	${.CURDIR}/arch/vax
 
@@ -160,6 +169,7 @@ COMMON_SRCS += fenv.c
 # and emulation code isn't written yet.
 ARCH_SRCS = n_scalbn.S
 WARNS?=5
+
 .elif (${LIBC_MACHINE_CPU} == "riscv")
 .PATH:	${.CURDIR}/arch/riscv
 
@@ -172,22 +182,26 @@ ARCH_SRCS += s_fma.S s_fmaf.S
 ARCH_SRCS += s_fmax.S s_fmaxf.S
 ARCH_SRCS += s_fmin.S s_fminf.S
 .endif
+
 .elif (${LIBC_MACHINE_ARCH} == "powerpc")
 .PATH:	${.CURDIR}/arch/powerpc
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS += fenv.c
 .endif
+
 .elif (${LIBC_MACHINE_CPU} == "mips")
 .PATH:	${.CURDIR}/arch/mips
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS += fenv.c
 .endif
+
 .elif (${LIBC_MACHINE_CPU} == "sh3")
 .PATH:	${.CURDIR}/arch/sh3
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS += fenv.c
 .endif
 .endif
+# End of long list of CPU tests
 
 WARNS?=5
 
