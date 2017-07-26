@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.141 2017/07/03 20:16:44 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.142 2017/07/26 23:09:41 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.141 2017/07/03 20:16:44 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.142 2017/07/26 23:09:41 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,12 +103,12 @@ static const struct parse_state init_parse_state = {	/* all 0's ... */
 	.ps_elided_nl = 0,
 };
 
-STATIC union node *list(int, int);
+STATIC union node *list(int);
 STATIC union node *andor(void);
 STATIC union node *pipeline(void);
 STATIC union node *command(void);
 STATIC union node *simplecmd(union node **, union node *);
-STATIC union node *makename(void);
+STATIC union node *makename(int);
 STATIC void parsefname(void);
 STATIC int slurp_heredoc(char *const, const int, const int);
 STATIC void readheredocs(void);
@@ -117,6 +117,8 @@ STATIC int readtoken(void);
 STATIC int xxreadtoken(void);
 STATIC int readtoken1(int, char const *, int);
 STATIC int noexpand(char *);
+STATIC void linebreak(void);
+STATIC void consumetoken(int);
 STATIC void synexpect(int, const char *) __dead;
 STATIC void synerror(const char *) __dead;
 STATIC void setprompt(int);
@@ -143,6 +145,7 @@ parsecmd(int interact)
 	parsing++;
 #endif
 	tokpushback = 0;
+	checkkwd = 0;
 	doprompt = interact;
 	if (doprompt)
 		setprompt(1);
@@ -162,7 +165,7 @@ parsecmd(int interact)
 	parsing++;
 #endif
 	tokpushback++;
-	n = list(1, 0);
+	n = list(1);
 #ifdef DEBUG
 	parsing--;
 #endif
@@ -174,12 +177,12 @@ parsecmd(int interact)
 
 
 STATIC union node *
-list(int nlflag, int erflag)
+list(int nlflag)
 {
 	union node *n1, *n2, *n3;
 	int tok;
 
-	CTRACE(DBG_PARSE, ("list(%d,%d): entered @%d\n",nlflag,erflag,plinno));
+	CTRACE(DBG_PARSE, ("list(%d): entered @%d\n",nlflag,plinno));
 
 	checkkwd = 2;
 	if (nlflag == 0 && tokendlist[peektoken()])
@@ -189,11 +192,11 @@ list(int nlflag, int erflag)
 		n2 = andor();
 		tok = readtoken();
 		if (tok == TBACKGND) {
-			if (n2->type == NCMD || n2->type == NPIPE) {
+			if (n2->type == NCMD || n2->type == NPIPE)
 				n2->ncmd.backgnd = 1;
-			} else if (n2->type == NREDIR) {
+			else if (n2->type == NREDIR)
 				n2->type = NBACKGND;
-			} else {
+			else {
 				n3 = stalloc(sizeof(struct nredir));
 				n3->type = NBACKGND;
 				n3->nredir.n = n2;
@@ -201,16 +204,16 @@ list(int nlflag, int erflag)
 				n2 = n3;
 			}
 		}
-		if (n1 == NULL) {
-			n1 = n2;
-		}
-		else {
+
+		if (n1 != NULL) {
 			n3 = stalloc(sizeof(struct nbinary));
 			n3->type = NSEMI;
 			n3->nbinary.ch1 = n1;
 			n3->nbinary.ch2 = n2;
 			n1 = n3;
-		}
+		} else
+			n1 = n2;
+
 		switch (tok) {
 		case TBACKGND:
 		case TSEMI:
@@ -221,18 +224,20 @@ list(int nlflag, int erflag)
 				readheredocs();
 				if (nlflag)
 					return n1;
-			} else {
+			} else if (tok == TEOF && nlflag)
+				return n1;
+			else
 				tokpushback++;
-			}
+
 			checkkwd = 2;
-			if (tokendlist[peektoken()])
+			if (!nlflag && tokendlist[peektoken()])
 				return n1;
 			break;
 		case TEOF:
 			pungetc();	/* push back EOF on input */
 			return n1;
 		default:
-			if (nlflag || erflag)
+			if (nlflag)
 				synexpect(-1, 0);
 			tokpushback++;
 			return n1;
@@ -357,69 +362,55 @@ command(void)
 	case TIF:
 		n1 = stalloc(sizeof(struct nif));
 		n1->type = NIF;
-		n1->nif.test = list(0, 0);
-		if (readtoken() != TTHEN)
-			synexpect(TTHEN, 0);
-		n1->nif.ifpart = list(0, 0);
+		n1->nif.test = list(0);
+		consumetoken(TTHEN);
+		n1->nif.ifpart = list(0);
 		n2 = n1;
 		while (readtoken() == TELIF) {
 			n2->nif.elsepart = stalloc(sizeof(struct nif));
 			n2 = n2->nif.elsepart;
 			n2->type = NIF;
-			n2->nif.test = list(0, 0);
-			if (readtoken() != TTHEN)
-				synexpect(TTHEN, 0);
-			n2->nif.ifpart = list(0, 0);
+			n2->nif.test = list(0);
+			consumetoken(TTHEN);
+			n2->nif.ifpart = list(0);
 		}
 		if (lasttoken == TELSE)
-			n2->nif.elsepart = list(0, 0);
+			n2->nif.elsepart = list(0);
 		else {
 			n2->nif.elsepart = NULL;
 			tokpushback++;
 		}
-		if (readtoken() != TFI)
-			synexpect(TFI, 0);
+		consumetoken(TFI);
 		checkkwd = 1;
 		break;
 	case TWHILE:
-	case TUNTIL: {
-		int got;
-
+	case TUNTIL:
 		n1 = stalloc(sizeof(struct nbinary));
 		n1->type = (lasttoken == TWHILE)? NWHILE : NUNTIL;
-		n1->nbinary.ch1 = list(0, 0);
-		if ((got=readtoken()) != TDO) {
-			VTRACE(DBG_PARSE, ("expecting DO got %s %s\n",
-			    tokname[got], got == TWORD ? wordtext : ""));
-			synexpect(TDO, 0);
-		}
-		n1->nbinary.ch2 = list(0, 0);
-		if (readtoken() != TDONE)
-			synexpect(TDONE, 0);
+		n1->nbinary.ch1 = list(0);
+		consumetoken(TDO);
+		n1->nbinary.ch2 = list(0);
+		consumetoken(TDONE);
 		checkkwd = 1;
 		break;
-	}
 	case TFOR:
 		if (readtoken() != TWORD || quoteflag || ! goodname(wordtext))
 			synerror("Bad for loop variable");
 		n1 = stalloc(sizeof(struct nfor));
 		n1->type = NFOR;
 		n1->nfor.var = wordtext;
-		if (readtoken()==TWORD && !quoteflag && equal(wordtext,"in")) {
+		linebreak();
+		if (lasttoken==TWORD && !quoteflag && equal(wordtext,"in")) {
 			app = &ap;
 			while (readtoken() == TWORD) {
-				n2 = stalloc(sizeof(struct narg));
-				n2->type = NARG;
-				n2->narg.text = wordtext;
-				n2->narg.backquote = backquotelist;
-				n2->narg.lineno = startlinno;
+				n2 = makename(startlinno);
 				*app = n2;
 				app = &n2->narg.next;
 			}
 			*app = NULL;
 			n1->nfor.args = ap;
 			if (lasttoken != TNL && lasttoken != TSEMI)
-				synexpect(-1, 0);
+				synexpect(TSEMI, 0);
 		} else {
 			static char argvars[5] = {
 			    CTLVAR, VSNORMAL|VSQUOTE, '@', '=', '\0'
@@ -445,30 +436,24 @@ command(void)
 		else if (t == TBEGIN)
 			t = TEND;
 		else
-			synexpect(-1, 0);
-		n1->nfor.body = list(0, 0);
-		if (readtoken() != t)
-			synexpect(t, 0);
+			synexpect(TDO, 0);
+		n1->nfor.body = list(0);
+		consumetoken(t);
 		checkkwd = 1;
 		break;
 	case TCASE:
 		n1 = stalloc(sizeof(struct ncase));
 		n1->type = NCASE;
 		n1->ncase.lineno = startlinno - elided_nl;
-		if (readtoken() != TWORD)
-			synexpect(TWORD, 0);
-		n1->ncase.expr = n2 = stalloc(sizeof(struct narg));
-		n2->type = NARG;
-		n2->narg.text = wordtext;
-		n2->narg.backquote = backquotelist;
-		n2->narg.lineno = startlinno;
-		n2->narg.next = NULL;
-		while (readtoken() == TNL);
-		if (lasttoken != TWORD || ! equal(wordtext, "in"))
+		consumetoken(TWORD);
+		n1->ncase.expr = makename(startlinno);
+		linebreak();
+		if (lasttoken != TWORD || !equal(wordtext, "in"))
 			synexpect(-1, "in");
 		cpp = &n1->ncase.cases;
 		noalias = 1;
-		checkkwd = 2, readtoken();
+		checkkwd = 2;
+		readtoken();
 		/*
 		 * Both ksh and bash accept 'case x in esac'
 		 * so configure scripts started taking advantage of this.
@@ -487,28 +472,25 @@ command(void)
 		 */
 		while (lasttoken != TESAC) {
 			*cpp = cp = stalloc(sizeof(struct nclist));
-			if (lasttoken == TLP)
-				readtoken();
 			cp->type = NCLIST;
 			app = &cp->nclist.pattern;
+			if (lasttoken == TLP)
+				readtoken();
 			for (;;) {
-				*app = ap = stalloc(sizeof(struct narg));
-				ap->type = NARG;
-				ap->narg.lineno = startlinno;
-				ap->narg.text = wordtext;
-				ap->narg.backquote = backquotelist;
-				if (checkkwd = 2, readtoken() != TPIPE)
+				if (lasttoken < TWORD)
+					synexpect(TWORD, 0);
+				*app = ap = makename(startlinno);
+				checkkwd = 2;
+				if (readtoken() != TPIPE)
 					break;
 				app = &ap->narg.next;
 				readtoken();
 			}
-			ap->narg.next = NULL;
 			noalias = 0;
-			if (lasttoken != TRP) {
+			if (lasttoken != TRP)
 				synexpect(TRP, 0);
-			}
 			cp->nclist.lineno = startlinno;
-			cp->nclist.body = list(0, 0);
+			cp->nclist.body = list(0);
 
 			checkkwd = 2;
 			if ((t = readtoken()) != TESAC) {
@@ -532,23 +514,22 @@ command(void)
 	case TLP:
 		n1 = stalloc(sizeof(struct nredir));
 		n1->type = NSUBSHELL;
-		n1->nredir.n = list(0, 0);
+		n1->nredir.n = list(0);
 		n1->nredir.redirect = NULL;
 		if (n1->nredir.n == NULL)
 			synexpect(-1, 0);
-		if (readtoken() != TRP)
-			synexpect(TRP, 0);
+		consumetoken(TRP);
 		checkkwd = 1;
 		break;
 	case TBEGIN:
-		n1 = list(0, 0);
+		n1 = list(0);
 		if (posix && n1 == NULL)
 			synexpect(-1, 0);
-		if (readtoken() != TEND)
-			synexpect(TEND, 0);
+		consumetoken(TEND);
 		checkkwd = 1;
 		break;
 
+	case TBACKGND:
 	case TSEMI:
 	case TAND:
 	case TOR:
@@ -556,6 +537,8 @@ command(void)
 	case TNL:
 	case TEOF:
 	case TRP:
+	case TENDCASE:
+	case TCASEFALL:
 		/*
 		 * simple commands must have something in them,
 		 * either a word (which at this point includes a=b)
@@ -566,23 +549,25 @@ command(void)
 		 *
 		 * nb: it is still possible to end up with empty
 		 * simple commands, if the "command" is a var
-		 * expansion that produces nothing
+		 * expansion that produces nothing:
 		 *	X= ; $X && $X
 		 * -->          &&
-		 * I am not sure if this is intended to be legal or not.
+		 * That is OK and is handled after word expansions.
 		 */
 		if (!redir)
 			synexpect(-1, 0);
+		/*
+		 * continue to build a node containing the redirect.
+		 * the tokpushback means that our ending token will be
+		 * read again in simplecmd, causing it to terminate,
+		 * so only the redirect(s) will be contained in the
+		 * returned n1
+		 */
+		/* FALLTHROUGH */
 	case TWORD:
 		tokpushback++;
 		n1 = simplecmd(rpp, redir);
 		goto checkneg;
-	case TENDCASE:
-		if (redir) {
-			tokpushback++;
-			goto checkneg;
-		}
-		/* FALLTHROUGH */
 	default:
 		synexpect(-1, 0);
 		/* NOTREACHED */
@@ -656,11 +641,7 @@ simplecmd(union node **rpp, union node *redir)
 		if (readtoken() == TWORD) {
 			if (line == 0)
 				line = startlinno;
-			n = stalloc(sizeof(struct narg));
-			n->type = NARG;
-			n->narg.text = wordtext;
-			n->narg.backquote = backquotelist;
-			n->narg.lineno = startlinno;
+			n = makename(startlinno);
 			*app = n;
 			app = &n->narg.next;
 		} else if (lasttoken == TREDIR) {
@@ -672,8 +653,7 @@ simplecmd(union node **rpp, union node *redir)
 		} else if (lasttoken == TLP && app == &args->narg.next
 					    && redir == 0) {
 			/* We have a function */
-			if (readtoken() != TRP)
-				synexpect(TRP, 0);
+			consumetoken(TRP);
 			funclinno = plinno;
 			rmescapes(n->narg.text);
 			if (strchr(n->narg.text, '/'))
@@ -719,7 +699,7 @@ simplecmd(union node **rpp, union node *redir)
 }
 
 STATIC union node *
-makename(void)
+makename(int lno)
 {
 	union node *n;
 
@@ -727,9 +707,8 @@ makename(void)
 	n->type = NARG;
 	n->narg.next = NULL;
 	n->narg.text = wordtext;
-	n->narg.lineno = startlinno;
 	n->narg.backquote = backquotelist;
-	n->narg.lineno = startlinno - elided_nl;
+	n->narg.lineno = lno;
 	return n;
 }
 
@@ -750,7 +729,7 @@ fixredir(union node *n, const char *text, int err)
 		if (err)
 			synerror("Bad fd number");
 		else
-			n->ndup.vname = makename();
+			n->ndup.vname = makename(startlinno - elided_nl);
 	}
 }
 
@@ -801,7 +780,7 @@ parsefname(void)
 	} else if (n->type == NTOFD || n->type == NFROMFD) {
 		fixredir(n, wordtext, 0);
 	} else {
-		n->nfile.fname = makename();
+		n->nfile.fname = makename(startlinno - elided_nl);
 	}
 }
 
@@ -1467,17 +1446,15 @@ parsebackq(VSS *const stack, char * const in,
 		saveprompt = 0;
 
 	lno = -plinno;
-	n = list(0, oldstyle);
+	n = list(0);
 	lno += plinno;
 
-	if (oldstyle)
+	if (oldstyle) {
+		if (peektoken() != TEOF)
+			synexpect(-1, 0);
 		doprompt = saveprompt;
-	else {
-		if (readtoken() != TRP) {
-			cleanup_state_stack(stack);
-			synexpect(TRP, 0);
-		}
-	}
+	} else
+		consumetoken(TRP);
 
 	(*nlpp)->n = n;
 	if (oldstyle) {
@@ -2100,6 +2077,30 @@ goodname(char *name)
 	return 1;
 }
 
+/*
+ * skip past any \n's, and leave lasttoken set to whatever follows
+ */
+STATIC void
+linebreak(void)
+{
+	while (readtoken() == TNL)
+		;
+}
+
+/*
+ * The next token must be "token" -- check, then move past it
+ */
+STATIC void
+consumetoken(int token)
+{
+	if (readtoken() != token) {
+		VTRACE(DBG_PARSE, ("consumetoken(%d): expecting %s got %s",
+		    token, tokname[token], tokname[lasttoken]));
+		CVTRACE(DBG_PARSE, (lasttoken==TWORD), (" \"%s\"", wordtext));
+		VTRACE(DBG_PARSE, ("\n"));
+		synexpect(token, NULL);
+	}
+}
 
 /*
  * Called when an unexpected token is read during the parse.  The argument
