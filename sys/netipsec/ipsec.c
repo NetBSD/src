@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.110 2017/07/21 04:50:11 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.111 2017/07/26 03:59:59 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.110 2017/07/21 04:50:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.111 2017/07/26 03:59:59 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -256,7 +256,7 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 	KEY_SP_REF(pcbsp->sp_cache[dir].cachesp);
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP cause refcnt++:%d SP:%p\n",
-	    pcbsp->sp_cache[dir].cachesp->refcnt,
+	    key_sp_refcnt(pcbsp->sp_cache[dir].cachesp),
 	    pcbsp->sp_cache[dir].cachesp);
 	return pcbsp->sp_cache[dir].cachesp;
 }
@@ -282,7 +282,7 @@ ipsec_fillpcbcache(struct inpcbpolicy *pcbsp, struct mbuf *m,
 		KEY_SP_REF(pcbsp->sp_cache[dir].cachesp);
 		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 		    "DP cause refcnt++:%d SP:%p\n",
-		    pcbsp->sp_cache[dir].cachesp->refcnt,
+		    key_sp_refcnt(pcbsp->sp_cache[dir].cachesp),
 		    pcbsp->sp_cache[dir].cachesp);
 
 		/*
@@ -392,7 +392,7 @@ key_get_default_sp(int af, const char *where, int tag)
 	KEY_SP_REF(sp);
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP, "DP returns SP:%p (%u)\n",
-	    sp, sp->refcnt);
+	    sp, key_sp_refcnt(sp));
 	return sp;
 }
 #define	KEY_GET_DEFAULT_SP(af) \
@@ -531,7 +531,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 	    currsp->policy);
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP (priv %u policy %u) allocates SP:%p (refcnt %u)\n",
-	    pcbsp->priv, currsp->policy, sp, sp->refcnt);
+	    pcbsp->priv, currsp->policy, sp, key_sp_refcnt(sp));
 	ipsec_fillpcbcache(pcbsp, m, sp, dir);
 	return sp;
 }
