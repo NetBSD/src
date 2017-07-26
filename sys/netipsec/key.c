@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.193 2017/07/26 03:59:59 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.194 2017/07/26 09:18:15 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.193 2017/07/26 03:59:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.194 2017/07/26 09:18:15 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.193 2017/07/26 03:59:59 ozaki-r Exp $");
 #include <sys/kmem.h>
 #include <sys/cpu.h>
 #include <sys/atomic.h>
+#include <sys/pslist.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -142,7 +143,7 @@ static int key_prefered_oldsa = 0;	/* prefered old sa rather than new sa.*/
 
 static u_int32_t acq_seq = 0;
 
-static LIST_HEAD(_sptree, secpolicy) sptree[IPSEC_DIR_MAX];	/* SPD */
+static struct pslist_head sptree[IPSEC_DIR_MAX];		/* SPD */
 static LIST_HEAD(_sahtree, secashead) sahtree;			/* SAD */
 static LIST_HEAD(_regtree, secreg) regtree[SADB_SATYPE_MAX + 1];
 							/* registed list */
@@ -152,6 +153,46 @@ static LIST_HEAD(_acqtree, secacq) acqtree;		/* acquiring list */
 #ifdef notyet
 static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
 #endif
+
+#define SPLIST_ENTRY_INIT(sp)						\
+	PSLIST_ENTRY_INIT((sp), pslist_entry)
+#define SPLIST_ENTRY_DESTROY(sp)					\
+	PSLIST_ENTRY_DESTROY((sp), pslist_entry)
+#define SPLIST_WRITER_REMOVE(sp)					\
+	PSLIST_WRITER_REMOVE((sp), pslist_entry)
+#define SPLIST_READER_EMPTY(dir)					\
+	(PSLIST_READER_FIRST(&sptree[(dir)], struct secpolicy,		\
+	                     pslist_entry) == NULL)
+#define SPLIST_READER_FOREACH(sp, dir)					\
+	PSLIST_READER_FOREACH((sp), &sptree[(dir)], struct secpolicy,	\
+	                      pslist_entry)
+#define SPLIST_WRITER_FOREACH(sp, dir)					\
+	PSLIST_WRITER_FOREACH((sp), &sptree[(dir)], struct secpolicy,	\
+	                      pslist_entry)
+#define SPLIST_WRITER_INSERT_AFTER(sp, new)				\
+	PSLIST_WRITER_INSERT_AFTER((sp), (new), pslist_entry)
+#define SPLIST_WRITER_EMPTY(dir)					\
+	(PSLIST_WRITER_FIRST(&sptree[(dir)], struct secpolicy,		\
+	                     pslist_entry) == NULL)
+#define SPLIST_WRITER_INSERT_HEAD(dir, sp)				\
+	PSLIST_WRITER_INSERT_HEAD(&sptree[(dir)], (sp), pslist_entry)
+#define SPLIST_WRITER_NEXT(sp)						\
+	PSLIST_WRITER_NEXT((sp), struct secpolicy, pslist_entry)
+#define SPLIST_WRITER_INSERT_TAIL(dir, new)				\
+	do {								\
+		if (SPLIST_WRITER_EMPTY((dir))) {			\
+			SPLIST_WRITER_INSERT_HEAD((dir), (new));	\
+		} else {						\
+			struct secpolicy *__sp;				\
+			SPLIST_WRITER_FOREACH(__sp, (dir)) {		\
+				if (SPLIST_WRITER_NEXT(__sp) == NULL) {	\
+					SPLIST_WRITER_INSERT_AFTER(__sp,\
+					    (new));			\
+					break;				\
+				}					\
+			}						\
+		}							\
+	} while (0)
 
 /*
  * Protect regtree, acqtree and items stored in the lists.
@@ -625,8 +666,7 @@ key_sp_unlink(struct secpolicy *sp)
 {
 
 	/* remove from SP index */
-	KASSERT(__LIST_CHAINED(sp));
-	LIST_REMOVE(sp, chain);
+	SPLIST_WRITER_REMOVE(sp);
 	/* Release refcount held just for being on chain */
 	KEY_FREESP(&sp);
 }
@@ -641,7 +681,7 @@ int
 key_havesp(u_int dir)
 {
 	return (dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND ?
-		!LIST_EMPTY(&sptree[dir]) : 1);
+		!SPLIST_READER_EMPTY(dir) : 1);
 }
 
 /* %%% IPsec policy management */
@@ -670,7 +710,7 @@ key_lookup_sp_byspidx(const struct secpolicyindex *spidx,
 		kdebug_secpolicyindex(spidx);
 	}
 
-	LIST_FOREACH(sp, &sptree[dir], chain) {
+	SPLIST_READER_FOREACH(sp, dir) {
 		if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DATA)) {
 			printf("*** in SPD\n");
 			kdebug_secpolicyindex(&sp->spidx);
@@ -726,7 +766,7 @@ key_gettunnel(const struct sockaddr *osrc,
 	}
 
 	s = splsoftnet();	/*called from softclock()*/
-	LIST_FOREACH(sp, &sptree[dir], chain) {
+	SPLIST_READER_FOREACH(sp, dir) {
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
 
@@ -1292,6 +1332,7 @@ key_delsp(struct secpolicy *sp)
 	}
     }
 
+	SPLIST_ENTRY_DESTROY(sp);
 	kmem_intr_free(sp, sizeof(*sp));
 
 	splx(s);
@@ -1309,7 +1350,7 @@ key_getsp(const struct secpolicyindex *spidx)
 
 	KASSERT(spidx != NULL);
 
-	LIST_FOREACH(sp, &sptree[spidx->dir], chain) {
+	SPLIST_READER_FOREACH(sp, spidx->dir) {
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
 		if (key_spidx_match_exactly(spidx, &sp->spidx)) {
@@ -1331,7 +1372,7 @@ key_getspbyid(u_int32_t id)
 {
 	struct secpolicy *sp;
 
-	LIST_FOREACH(sp, &sptree[IPSEC_DIR_INBOUND], chain) {
+	SPLIST_READER_FOREACH(sp, IPSEC_DIR_INBOUND) {
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
 		if (sp->id == id) {
@@ -1340,7 +1381,7 @@ key_getspbyid(u_int32_t id)
 		}
 	}
 
-	LIST_FOREACH(sp, &sptree[IPSEC_DIR_OUTBOUND], chain) {
+	SPLIST_READER_FOREACH(sp, IPSEC_DIR_OUTBOUND) {
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
 		if (sp->id == id) {
@@ -1854,7 +1895,8 @@ key_api_spdadd(struct socket *so, struct mbuf *m,
 	newsp->state = IPSEC_SPSTATE_ALIVE;
 	if (newsp->policy == IPSEC_POLICY_IPSEC)
 		KASSERT(newsp->req != NULL);
-	LIST_INSERT_TAIL(&sptree[newsp->spidx.dir], newsp, secpolicy, chain);
+	SPLIST_ENTRY_INIT(newsp);
+	SPLIST_WRITER_INSERT_TAIL(newsp->spidx.dir, newsp);
 
 #ifdef notyet
 	/* delete the entry in spacqtree */
@@ -2274,14 +2316,13 @@ key_api_spdflush(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
-		struct secpolicy * nextsp;
-		LIST_FOREACH_SAFE(sp, &sptree[dir], chain, nextsp) {
+	    retry:
+		SPLIST_WRITER_FOREACH(sp, dir) {
 			if (sp->state == IPSEC_SPSTATE_DEAD)
 				continue;
 			key_sp_dead(sp);
 			key_sp_unlink(sp);
-			/* 'sp' dead; continue transfers to 'sp = nextsp' */
-			continue;
+			goto retry;
 		}
 	}
 
@@ -2325,7 +2366,7 @@ key_setspddump_chain(int *errorp, int *lenp, pid_t pid)
 	/* search SPD entry and get buffer size. */
 	cnt = 0;
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
-		LIST_FOREACH(sp, &sptree[dir], chain) {
+		SPLIST_READER_FOREACH(sp, dir) {
 			cnt++;
 		}
 	}
@@ -2339,7 +2380,7 @@ key_setspddump_chain(int *errorp, int *lenp, pid_t pid)
 	prev = m;
 	totlen = 0;
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
-		LIST_FOREACH(sp, &sptree[dir], chain) {
+		SPLIST_READER_FOREACH(sp, dir) {
 			--cnt;
 			n = key_setdumpsp(sp, SADB_X_SPDDUMP, cnt, pid);
 
@@ -4296,17 +4337,14 @@ static void
 key_timehandler_spd(time_t now)
 {
 	u_int dir;
-	struct secpolicy *sp, *nextsp;
+	struct secpolicy *sp;
 
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
-		LIST_FOREACH_SAFE(sp, &sptree[dir], chain, nextsp) {
+	    retry:
+		SPLIST_WRITER_FOREACH(sp, dir) {
 			if (sp->state == IPSEC_SPSTATE_DEAD) {
 				key_sp_unlink(sp);	/*XXX*/
-
-				/* 'sp' dead; continue transfers to
-				 * 'sp = nextsp'
-				 */
-				continue;
+				goto retry;
 			}
 
 			if (sp->lifetime == 0 && sp->validtime == 0)
@@ -4317,7 +4355,7 @@ key_timehandler_spd(time_t now)
 			    (sp->validtime && now - sp->lastused > sp->validtime)) {
 			  	key_sp_dead(sp);
 				key_spdexpire(sp);
-				continue;
+				goto retry;
 			}
 		}
 	}
@@ -7511,7 +7549,7 @@ key_do_init(void)
 		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 
 	for (i = 0; i < IPSEC_DIR_MAX; i++) {
-		LIST_INIT(&sptree[i]);
+		PSLIST_INIT(&sptree[i]);
 	}
 
 	LIST_INIT(&sahtree);
@@ -7874,7 +7912,7 @@ key_setspddump(int *errorp, pid_t pid)
 	/* search SPD entry and get buffer size. */
 	cnt = 0;
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
-		LIST_FOREACH(sp, &sptree[dir], chain) {
+		SPLIST_READER_FOREACH(sp, dir) {
 			cnt++;
 		}
 	}
@@ -7886,7 +7924,7 @@ key_setspddump(int *errorp, pid_t pid)
 
 	m = NULL;
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
-		LIST_FOREACH(sp, &sptree[dir], chain) {
+		SPLIST_READER_FOREACH(sp, dir) {
 			--cnt;
 			n = key_setdumpsp(sp, SADB_X_SPDDUMP, cnt, pid);
 
@@ -7910,8 +7948,8 @@ key_setspddump(int *errorp, pid_t pid)
 
 int
 key_get_used(void) {
-	return !LIST_EMPTY(&sptree[IPSEC_DIR_INBOUND]) ||
-	    !LIST_EMPTY(&sptree[IPSEC_DIR_OUTBOUND]);
+	return !SPLIST_READER_EMPTY(IPSEC_DIR_INBOUND) ||
+	    !SPLIST_READER_EMPTY(IPSEC_DIR_OUTBOUND);
 }
 
 void
