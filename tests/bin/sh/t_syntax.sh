@@ -1,4 +1,4 @@
-# $NetBSD: t_syntax.sh,v 1.5 2017/06/24 11:09:42 kre Exp $
+# $NetBSD: t_syntax.sh,v 1.6 2017/07/26 17:50:20 kre Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -988,6 +988,131 @@ x_functions_body() {
 		'f1() { eval "$1() { :; }"; }; f1 f2; f2'
 }
 
+atf_test_case z_PR_48498
+z_PR_48498_head() {
+	atf_set "descr" "Check for detecting the syntax error from PR bin/48498"
+}
+z_PR_48498_body() {
+
+	# reserved words/operators that end things,
+	# were completely ignored after a ';' or '&'
+	# many of these tests lifted directly from the PR
+
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'true; fi'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'false; fi'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'false; then echo wut'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'true; then echo wut'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'true; do echo wut'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'true; then'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'true; else'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'true; do'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'true; done'
+		# {
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		': ; }'
+		# (
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		':;)'
+
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'true& fi'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'false& fi'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'false& then echo wut'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'true& then echo wut'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'true& do echo wut'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'true& then'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'true& else'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'true& do'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'true&done'
+		# {
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		':&}'
+		# (
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		':&)'
+}
+
+atf_test_case z_PR_52426
+z_PR_52426_head() {
+	atf_set "descr" "Check for detecting the syntax error from PR bin/52426"
+}
+z_PR_52426_body() {
+	# Absoluely anything was permitted as a pattern of a case
+	# statement, any token (except 'esac') would serve
+	# What follows are a few "pretty" examples that were accepted.
+	# The first is the example from the PR
+
+	# Note we use only ;; type case lists, ;& should do the same, but
+	# only for shells that support it, we do not want the shell to
+	# object to any of these just because it does not support ;&
+
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'case x in <|() ;; esac'
+
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'case x in ((|)) ;; esac'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'case x in _|() ;; esac'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'case x in ()|() ;; esac'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'case x in -|;) ;; esac'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'case x in (;|-) ;; esac'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'case x in ;;|;) ;; esac'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'case x in (|| | ||) ;; esac'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'case x in (<<|>>) ;; esac'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'case x in (&&|&) ;; (|||>&) ;; &) esac'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'case x in (>||<) ;; esac'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'case x in( || | || | || | || | || );; esac'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'case x in (||| ||| ||| ||| ||) ;; esac'
+	atf_check -s not-exit:0 -o ignore -e not-empty ${TEST_SH} -c \
+		'case x in <> |          
+		) ;; esac'
+
+	# now check some similar looking cases that are supposed to work
+	# That is, make sure the fix for the PR does not break valid cases.
+
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+		'case fi in ({|}) ;; (!) ;; esac'
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+		'case esac in ([|]);; (][);; !!!|!!!|!!!|!!!);; esac'
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+		'case then in ({[]]}) ;; (^^);; (^|^);; ([!]);; (-);; esac'
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+		'case while in while   );;(if|then|elif|fi);;(do|done);; esac'
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+		'case until in($);;($$);;($4.50);;(1/2);;0.3333);;esac'
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+		'case return in !);; !$);; $!);; !#);; (@);; esac'
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
+		'case break in (/);; (\/);; (/\|/\));; (\\//);; esac'
+}
+
 atf_init_test_cases() {
 	atf_add_test_case a_basic_tokenisation
 	atf_add_test_case b_comments
@@ -1006,4 +1131,7 @@ atf_init_test_cases() {
 	atf_add_test_case t_loops
 	atf_add_test_case u_case_cont
 	atf_add_test_case x_functions
+
+	atf_add_test_case z_PR_48498
+	atf_add_test_case z_PR_52426
 }
