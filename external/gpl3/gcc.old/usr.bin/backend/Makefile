@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/07/23 01:12:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2017/07/27 16:05:15 he Exp $
 
 LIBISPRIVATE=	yes
 
@@ -445,6 +445,7 @@ final.o: target-hooks-def.h c-family/c-target-hooks-def.h common/common-target-h
 
 .if ${GCC_MACHINE_ARCH} == "alpha"
 alpha.d alpha.o: tm-constrs.h tm_p.h insn-opinit.h target-hooks-def.h
+alpha.d: pass-instances.def
 .endif
 
 .if ${MACHINE_CPU} == "arm"
