@@ -1,4 +1,4 @@
-/*	$NetBSD: mt2701-resets.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: mt2701-resets.h,v 1.1.1.2 2017/07/27 18:10:50 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2015 MediaTek, Shunli Wang <shunli.wang@mediatek.com>
@@ -81,5 +81,12 @@
 #define MT2701_HIFSYS_PCIE0_RST			24
 #define MT2701_HIFSYS_PCIE1_RST			25
 #define MT2701_HIFSYS_PCIE2_RST			26
+
+/* ETHSYS resets */
+#define MT2701_ETHSYS_SYS_RST			0
+#define MT2701_ETHSYS_MCM_RST			2
+#define MT2701_ETHSYS_FE_RST			6
+#define MT2701_ETHSYS_GMAC_RST			23
+#define MT2701_ETHSYS_PPE_RST			31
 
 #endif  /* _DT_BINDINGS_RESET_CONTROLLER_MT2701 */

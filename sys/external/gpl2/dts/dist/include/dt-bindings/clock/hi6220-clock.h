@@ -1,4 +1,4 @@
-/*	$NetBSD: hi6220-clock.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: hi6220-clock.h,v 1.1.1.2 2017/07/27 18:10:50 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2015 Hisilicon Limited.
@@ -126,7 +126,10 @@
 #define HI6220_CS_DAPB		57
 #define HI6220_CS_ATB_DIV	58
 
-#define HI6220_SYS_NR_CLKS	59
+/* gate clock */
+#define HI6220_DAPB_CLK		59
+
+#define HI6220_SYS_NR_CLKS	60
 
 /* clk in Hi6220 media controller */
 /* gate clocks */

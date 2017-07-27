@@ -1,4 +1,4 @@
-/*	$NetBSD: tegra30-car.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: tegra30-car.h,v 1.1.1.2 2017/07/27 18:10:51 jmcneill Exp $	*/
 
 /*
  * This header provides constants for binding nvidia,tegra30-car.
@@ -158,7 +158,7 @@
 /* 133 */
 /* 134 */
 /* 135 */
-/* 136 */
+#define TEGRA30_CLK_CEC 136
 /* 137 */
 /* 138 */
 /* 139 */
