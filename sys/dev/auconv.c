@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.28 2017/06/22 02:09:37 christos Exp $	*/
+/*	$NetBSD: auconv.c,v 1.29 2017/07/27 23:39:37 nat Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.28 2017/06/22 02:09:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.29 2017/07/27 23:39:37 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -453,6 +453,24 @@ DEFINE_FILTER(swap_bytes)
 		d[0] = s[1];
 		d[1] = s[0];
 	} FILTER_LOOP_EPILOGUE(this->src, dst);
+	return 0;
+}
+
+DEFINE_FILTER(null_filter)
+{
+	stream_filter_t *this;
+	int m, err;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used + 1) & ~1; /* round up to even */
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
+		return err;
+	m = (dst->end - dst->start) & ~1;
+	m = min(m, max_used);
+	FILTER_LOOP_PROLOGUE(this->src, 1, dst, 1, m) {
+		*d = *s;
+	} FILTER_LOOP_EPILOGUE(this->src, dst);
+	
 	return 0;
 }
 
