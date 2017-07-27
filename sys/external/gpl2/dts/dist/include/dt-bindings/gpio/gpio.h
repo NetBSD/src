@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: gpio.h,v 1.1.1.2 2017/07/27 18:10:50 jmcneill Exp $	*/
 
 /*
  * This header provides constants for most GPIO bindings.
@@ -19,11 +19,15 @@
 #define GPIO_PUSH_PULL 0
 #define GPIO_SINGLE_ENDED 2
 
+/* Bit 2 express Open drain or open source */
+#define GPIO_LINE_OPEN_SOURCE 0
+#define GPIO_LINE_OPEN_DRAIN 4
+
 /*
- * Open Drain/Collector is the combination of single-ended active low,
- * Open Source/Emitter is the combination of single-ended active high.
+ * Open Drain/Collector is the combination of single-ended open drain interface.
+ * Open Source/Emitter is the combination of single-ended open source interface.
  */
-#define GPIO_OPEN_DRAIN (GPIO_SINGLE_ENDED | GPIO_ACTIVE_LOW)
-#define GPIO_OPEN_SOURCE (GPIO_SINGLE_ENDED | GPIO_ACTIVE_HIGH)
+#define GPIO_OPEN_DRAIN (GPIO_SINGLE_ENDED | GPIO_LINE_OPEN_DRAIN)
+#define GPIO_OPEN_SOURCE (GPIO_SINGLE_ENDED | GPIO_LINE_OPEN_SOURCE)
 
 #endif

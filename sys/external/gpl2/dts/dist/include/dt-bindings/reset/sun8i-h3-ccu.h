@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i-h3-ccu.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: sun8i-h3-ccu.h,v 1.1.1.2 2017/07/27 18:10:50 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2016 Maxime Ripard <maxime.ripard@free-electrons.com>
@@ -100,6 +100,9 @@
 #define RST_BUS_UART1		50
 #define RST_BUS_UART2		51
 #define RST_BUS_UART3		52
-#define RST_BUS_SCR		53
+#define RST_BUS_SCR0		53
+
+/* New resets imported in H5 */
+#define RST_BUS_SCR1		54
 
 #endif /* _DT_BINDINGS_RST_SUN8I_H3_H_ */
