@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.18 2017/07/15 10:17:09 isaki Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.19 2017/07/27 07:53:54 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.18 2017/07/15 10:17:09 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.19 2017/07/27 07:53:54 isaki Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -233,7 +233,8 @@ DEFINE_FILTER(msm6258_linear8_to_adpcm)
 	d = dst->inp;
 	s = this->src->outp;
 	enc_src = this->src->param.encoding;
-	if (enc_src == AUDIO_ENCODING_SLINEAR_LE) {
+	if (enc_src == AUDIO_ENCODING_SLINEAR_LE
+	 || enc_src == AUDIO_ENCODING_SLINEAR_BE) {
 		while (dst->used < m && this->src->used >= 4) {
 			uint8_t f;
 			int16_t ss;
@@ -247,7 +248,8 @@ DEFINE_FILTER(msm6258_linear8_to_adpcm)
 			s = audio_stream_add_outp(this->src, s, 1);
 		}
 #if defined(DIAGNOSTIC)
-	} else if (enc_src == AUDIO_ENCODING_ULINEAR_LE) {
+	} else if (enc_src == AUDIO_ENCODING_ULINEAR_LE
+	        || enc_src == AUDIO_ENCODING_ULINEAR_BE) {
 #else
 	} else {
 #endif
