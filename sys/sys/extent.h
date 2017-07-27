@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.23 2017/07/27 09:27:11 skrll Exp $	*/
+/*	$NetBSD: extent.h,v 1.24 2017/07/27 10:03:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -84,8 +84,8 @@ struct extent_fixed {
 #define EX_CATCH	__BIT(2)	/* catch signals while sleeping */
 #define EX_NOCOALESCE	__BIT(3)	/* create a non-coalescing extent */
 #define EX_MALLOCOK	__BIT(4)	/* safe to call kmem_alloc() */
-#define EX_WAITSPACE	__BIT(6)	/* wait for space to become free */
-#define EX_BOUNDZERO	__BIT(7)	/* boundary lines start at 0 */
+#define EX_WAITSPACE	__BIT(5)	/* wait for space to become free */
+#define EX_BOUNDZERO	__BIT(6)	/* boundary lines start at 0 */
 
 /*
  * Special place holders for "alignment" and "boundary" arguments,
