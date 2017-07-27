@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.17 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.18 2017/07/27 02:11:24 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.17 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.18 2017/07/27 02:11:24 nonaka Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -243,11 +243,23 @@ drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
 	irq_cookie = kmem_alloc(sizeof(*irq_cookie), KM_SLEEP);
 
 	if (dev->pdev->msi_enabled) {
-		irq_cookie->intr_handles = dev->pdev->intr_handles;
-		dev->pdev->intr_handles = NULL;
+		if (dev->pdev->intr_handles == NULL) {
+			if (pci_msi_alloc_exact(pa, &irq_cookie->intr_handles,
+			    1)) {
+				aprint_error_dev(dev->dev,
+				    "couldn't allocate MSI (%s)\n", name);
+				goto error;
+			}
+		} else {
+			irq_cookie->intr_handles = dev->pdev->intr_handles;
+			dev->pdev->intr_handles = NULL;
+		}
 	} else {
-		if (pci_intx_alloc(pa, &irq_cookie->intr_handles))
-			return -ENOENT;
+		if (pci_intx_alloc(pa, &irq_cookie->intr_handles)) {
+			aprint_error_dev(dev->dev,
+			    "couldn't allocate INTx interrupt (%s)\n", name);
+			goto error;
+		}
 	}
 
 	intrstr = pci_intr_string(pa->pa_pc, irq_cookie->intr_handles[0],
@@ -257,12 +269,17 @@ drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
 	if (irq_cookie->ih_cookie == NULL) {
 		aprint_error_dev(dev->dev,
 		    "couldn't establish interrupt at %s (%s)\n", intrstr, name);
-		return -ENOENT;
+		pci_intr_release(pa->pa_pc, irq_cookie->intr_handles, 1);
+		goto error;
 	}
 
 	aprint_normal_dev(dev->dev, "interrupting at %s (%s)\n", intrstr, name);
 	*cookiep = irq_cookie;
 	return 0;
+
+error:
+	kmem_free(irq_cookie, sizeof(*irq_cookie));
+	return -ENOENT;
 }
 
 static void
