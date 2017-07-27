@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.194 2017/07/26 09:18:15 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.195 2017/07/27 06:59:28 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.194 2017/07/26 09:18:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.195 2017/07/27 06:59:28 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4540,11 +4540,10 @@ key_timehandler_spacq(time_t now)
 static void
 key_timehandler_work(struct work *wk, void *arg)
 {
-	int s;
 	time_t now = time_uptime;
+	IPSEC_DECLARE_LOCK_VARIABLE;
 
-	s = splsoftnet();
-	mutex_enter(softnet_lock);
+	IPSEC_ACQUIRE_GLOBAL_LOCKS();
 
 	key_timehandler_spd(now);
 	key_timehandler_sad(now);
@@ -4554,8 +4553,7 @@ key_timehandler_work(struct work *wk, void *arg)
 	/* do exchange to tick time !! */
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, NULL);
 
-	mutex_exit(softnet_lock);
-	splx(s);
+	IPSEC_RELEASE_GLOBAL_LOCKS();
 	return;
 }
 
