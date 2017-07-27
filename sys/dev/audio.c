@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.370 2017/07/27 08:28:18 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.371 2017/07/27 08:37:27 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.370 2017/07/27 08:28:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.371 2017/07/27 08:37:27 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4187,10 +4187,10 @@ audio_set_vchan_defaults(struct audio_softc *sc, u_int mode,
 	ai.play.pause         = false;
 	ai.mode		      = mode;
 
-	sc->sc_format->channels = sc->sc_channels;
-	sc->sc_format->precision = sc->sc_precision;
-	sc->sc_format->validbits = sc->sc_precision;
-	sc->sc_format->frequency[0] = sc->sc_frequency;
+	sc->sc_format[0].channels = sc->sc_channels;
+	sc->sc_format[0].precision = sc->sc_precision;
+	sc->sc_format[0].validbits = sc->sc_precision;
+	sc->sc_format[0].frequency[0] = sc->sc_frequency;
 
 	auconv_delete_encodings(sc->sc_encodings);
 	error = auconv_create_encodings(sc->sc_format, VAUDIO_NFORMATS,
