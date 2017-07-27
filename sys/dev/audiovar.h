@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.56 2017/06/20 07:45:01 nat Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.57 2017/07/27 08:28:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -263,14 +263,14 @@ struct audio_softc {
 	int		sc_monitor_port;
 
 #ifdef AUDIO_INTR_TIME
-	u_long	sc_pfirstintr;	/* first time we saw a play interrupt */
 	int	sc_pnintr;	/* number of interrupts */
-	u_long	sc_plastintr;	/* last time we saw a play interrupt */
-	long	sc_pblktime;	/* nominal time between interrupts */
-	u_long	sc_rfirstintr;	/* first time we saw a rec interrupt */
+	int64_t	sc_pfirstintr;	/* first time we saw a play interrupt */
+	int64_t	sc_plastintr;	/* last time we saw a play interrupt */
+	int64_t	sc_pblktime;	/* nominal time between interrupts */
 	int	sc_rnintr;	/* number of interrupts */
-	u_long	sc_rlastintr;	/* last time we saw a rec interrupt */
-	long	sc_rblktime;	/* nominal time between interrupts */
+	int64_t	sc_rfirstintr;	/* first time we saw a rec interrupt */
+	int64_t	sc_rlastintr;	/* last time we saw a rec interrupt */
+	int64_t	sc_rblktime;	/* nominal time between interrupts */
 #endif
 
 	u_int	sc_lastgain;
