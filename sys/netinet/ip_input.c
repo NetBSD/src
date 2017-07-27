@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.359 2017/07/19 07:24:46 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.360 2017/07/27 06:59:28 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.359 2017/07/19 07:24:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.360 2017/07/27 06:59:28 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -754,13 +754,10 @@ ip_input(struct mbuf *m)
 #ifdef IPSEC
 		/* Check the security policy (SP) for the packet */
 		if (ipsec_used) {
-			SOFTNET_LOCK();
 			if (ipsec4_input(m, IP_FORWARDING |
 			    (ip_directedbcast ? IP_ALLOWBROADCAST : 0)) != 0) {
-				SOFTNET_UNLOCK();
 				goto out;
 			}
-			SOFTNET_UNLOCK();
 		}
 #endif
 		ip_forward(m, srcrt, ifp);
@@ -803,12 +800,9 @@ ours:
 	 */
 	if (ipsec_used &&
 	    (inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0) {
-		SOFTNET_LOCK();
 		if (ipsec4_input(m, 0) != 0) {
-			SOFTNET_UNLOCK();
 			goto out;
 		}
-		SOFTNET_UNLOCK();
 	}
 #endif
 

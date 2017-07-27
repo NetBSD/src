@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.180 2017/07/06 17:14:35 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.181 2017/07/27 06:59:28 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.180 2017/07/06 17:14:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.181 2017/07/27 06:59:28 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -790,9 +790,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 			    & PR_LASTHDR) != 0) {
 				int error;
 
-				SOFTNET_LOCK();
 				error = ipsec6_input(m);
-				SOFTNET_UNLOCK();
 				if (error)
 					goto bad;
 			}
