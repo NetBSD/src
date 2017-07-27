@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.66 2017/07/20 08:07:14 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.67 2017/07/27 06:59:28 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.66 2017/07/20 08:07:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.67 2017/07/27 06:59:28 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.66 2017/07/20 08:07:14 ozaki-r Exp $
 #include <sys/syslog.h>
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
-#include <sys/socketvar.h> /* for softnet_lock */
 #include <sys/cprng.h>
 #include <sys/pool.h>
 
@@ -495,7 +494,7 @@ esp_input_cb(struct cryptop *crp)
 {
 	char buf[IPSEC_ADDRSTRLEN];
 	uint8_t lastthree[3], aalg[AH_ALEN_MAX];
-	int s, hlen, skip, protoff, error;
+	int hlen, skip, protoff, error;
 	struct mbuf *m;
 	const struct auth_hash *esph;
 	struct tdb_crypto *tc;
@@ -504,6 +503,7 @@ esp_input_cb(struct cryptop *crp)
 	void *ptr;
 	uint16_t dport;
 	uint16_t sport;
+	IPSEC_DECLARE_LOCK_VARIABLE;
 
 	KASSERT(crp->crp_desc != NULL);
 	KASSERT(crp->crp_opaque != NULL);
@@ -516,8 +516,7 @@ esp_input_cb(struct cryptop *crp)
 	/* find the source port for NAT-T */
 	nat_t_ports_get(m, &dport, &sport);
 
-	s = splsoftnet();
-	mutex_enter(softnet_lock);
+	IPSEC_ACQUIRE_GLOBAL_LOCKS();
 
 	sav = tc->tc_sav;
 	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
@@ -550,8 +549,7 @@ esp_input_cb(struct cryptop *crp)
 
 		if (crp->crp_etype == EAGAIN) {
 			KEY_FREESAV(&sav);
-			mutex_exit(softnet_lock);
-			splx(s);
+			IPSEC_RELEASE_GLOBAL_LOCKS();
 			return crypto_dispatch(crp);
 		}
 
@@ -675,14 +673,12 @@ esp_input_cb(struct cryptop *crp)
 	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff);
 
 	KEY_FREESAV(&sav);
-	mutex_exit(softnet_lock);
-	splx(s);
+	IPSEC_RELEASE_GLOBAL_LOCKS();
 	return error;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
-	mutex_exit(softnet_lock);
-	splx(s);
+	IPSEC_RELEASE_GLOBAL_LOCKS();
 	if (m != NULL)
 		m_freem(m);
 	if (tc != NULL)
@@ -956,14 +952,14 @@ esp_output_cb(struct cryptop *crp)
 	struct ipsecrequest *isr;
 	struct secasvar *sav;
 	struct mbuf *m;
-	int s, err, error;
+	int err, error;
+	IPSEC_DECLARE_LOCK_VARIABLE;
 
 	KASSERT(crp->crp_opaque != NULL);
 	tc = crp->crp_opaque;
 	m = crp->crp_buf;
 
-	s = splsoftnet();
-	mutex_enter(softnet_lock);
+	IPSEC_ACQUIRE_GLOBAL_LOCKS();
 
 	isr = tc->tc_isr;
 	sav = tc->tc_sav;
@@ -997,8 +993,7 @@ esp_output_cb(struct cryptop *crp)
 			sav->tdb_cryptoid = crp->crp_sid;
 
 		if (crp->crp_etype == EAGAIN) {
-			mutex_exit(softnet_lock);
-			splx(s);
+			IPSEC_RELEASE_GLOBAL_LOCKS();
 			return crypto_dispatch(crp);
 		}
 
@@ -1038,15 +1033,13 @@ esp_output_cb(struct cryptop *crp)
 	err = ipsec_process_done(m, isr, sav);
 	KEY_FREESAV(&sav);
 	KEY_FREESP(&isr->sp);
-	mutex_exit(softnet_lock);
-	splx(s);
+	IPSEC_RELEASE_GLOBAL_LOCKS();
 	return err;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
 	KEY_FREESP(&isr->sp);
-	mutex_exit(softnet_lock);
-	splx(s);
+	IPSEC_RELEASE_GLOBAL_LOCKS();
 	if (m)
 		m_freem(m);
 	pool_put(&esp_tdb_crypto_pool, tc);
