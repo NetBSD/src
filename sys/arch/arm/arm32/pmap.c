@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.351 2017/07/27 08:10:41 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.352 2017/07/27 10:56:42 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.351 2017/07/27 08:10:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.352 2017/07/27 10:56:42 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -6704,7 +6704,7 @@ pmap_link_l2pt(vaddr_t l1pt, vaddr_t va, pv_addr_t *l2pv)
 	KASSERT((va & ((L1_S_SIZE * (PAGE_SIZE / L2_T_SIZE)) - 1)) == 0);
 	KASSERT((l2pv->pv_pa & PGOFSET) == 0);
 
-	const pd_entry_t npde = L1_S_DOM(PMAP_DOMAIN_KERNEL) | L1_C_PROTO
+	const pd_entry_t npde = L1_C_DOM(PMAP_DOMAIN_KERNEL) | L1_C_PROTO
 	    | l2pv->pv_pa;
 
 	l1pte_set(pdep, npde);
