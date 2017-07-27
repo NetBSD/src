@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.532 2017/07/26 08:09:59 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.533 2017/07/27 03:21:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.532 2017/07/26 08:09:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.533 2017/07/27 03:21:42 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2215,6 +2215,8 @@ alloc_retry:
 		break;
 	case WM_T_I210:
 	case WM_T_I211:
+		/* Allow a single clear of the SW semaphore on I210 and newer*/
+		sc->sc_flags |= WM_F_WA_I210_CLSEM;
 		if (wm_nvm_get_flash_presence_i210(sc)) {
 			sc->nvm.read = wm_nvm_read_eerd;
 			/* Don't use WM_F_LOCK_EECD because we use EERD */
@@ -12704,6 +12706,7 @@ wm_get_swsm_semaphore(struct wm_softc *sc)
 		device_xname(sc->sc_dev), __func__));
 	KASSERT(sc->sc_nvm_wordsize > 0);
 
+retry:
 	/* Get the SW semaphore. */
 	timeout = sc->sc_nvm_wordsize + 1;
 	while (timeout) {
@@ -12717,6 +12720,16 @@ wm_get_swsm_semaphore(struct wm_softc *sc)
 	}
 
 	if (timeout == 0) {
+		if ((sc->sc_flags & WM_F_WA_I210_CLSEM) != 0) {
+			/*
+			 * In rare circumstances, the SW semaphore may already
+			 * be held unintentionally. Clear the semaphore once
+			 * before giving up.
+			 */
+			sc->sc_flags &= ~WM_F_WA_I210_CLSEM;
+			wm_put_swsm_semaphore(sc);
+			goto retry;
+		}
 		aprint_error_dev(sc->sc_dev,
 		    "could not acquire SWSM SMBI\n");
 		return 1;
