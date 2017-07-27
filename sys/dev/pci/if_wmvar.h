@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.36 2017/07/26 06:48:49 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.37 2017/07/27 03:21:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -96,6 +96,7 @@
 #define WM_F_80003_MDIC_WA	0x01000000 /* 80003 MDIC workaround */
 #define	WM_F_PCS_DIS_AUTONEGO	0x02000000 /* PCS Disable Autonego */
 #define	WM_F_PLL_WA_I210	0x04000000 /* I21[01] PLL workaround */
+#define	WM_F_WA_I210_CLSEM	0x08000000 /* I21[01] Semaphore workaround */
 
 #define WM_FLAGS "\20" \
 	"\1" "HAS_MII"	"\2" "LOCK_EECD" "\3" "_B02"	"\4" "_B03"	\
