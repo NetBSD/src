@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.195 2017/07/27 06:59:28 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.196 2017/07/27 09:53:57 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.195 2017/07/27 06:59:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.196 2017/07/27 09:53:57 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -7591,6 +7591,8 @@ key_init(void)
 	sysctl_net_key_compat_setup(NULL);
 
 	RUN_ONCE(&key_init_once, key_do_init);
+
+	key_init_so();
 }
 
 /*
