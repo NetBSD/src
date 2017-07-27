@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.350 2017/07/10 09:30:58 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.351 2017/07/27 08:10:41 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.350 2017/07/10 09:30:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.351 2017/07/27 08:10:41 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -6417,8 +6417,7 @@ pmap_alloc_specials(vaddr_t *availp, int pages, vaddr_t *vap, pt_entry_t **ptep)
 		if (l2b == NULL)
 			panic("pmap_alloc_specials: no l2b for 0x%lx", va);
 
-		if (ptep)
-			*ptep = &l2b->l2b_kva[l2pte_index(va)];
+		*ptep = &l2b->l2b_kva[l2pte_index(va)];
 	}
 
 	*vap = va;
