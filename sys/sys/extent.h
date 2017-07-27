@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.24 2017/07/27 10:03:38 skrll Exp $	*/
+/*	$NetBSD: extent.h,v 1.25 2017/07/27 10:04:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -73,9 +73,8 @@ struct extent_fixed {
 /* ex_flags; for internal use only */
 #define EXF_FIXED	__BIT(0)	/* extent uses fixed storage */
 #define EXF_NOCOALESCE	__BIT(1)	/* coalescing of regions not allowed */
-#define EXF_FLWANTED	__BIT(3)	/* someone asleep on freelist */
 
-#define EXF_BITS	"\20\4FLWANTED\2NOCOALESCE\1FIXED"
+#define EXF_BITS	"\20\2NOCOALESCE\1FIXED"
 
 /* misc. flags passed to extent functions */
 #define EX_NOWAIT	0		/* not safe to sleep */
