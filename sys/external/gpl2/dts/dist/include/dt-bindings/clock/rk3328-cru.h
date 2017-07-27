@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3328-cru.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: rk3328-cru.h,v 1.1.1.2 2017/07/27 18:10:51 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2016 Rockchip Electronics Co. Ltd.
@@ -99,6 +99,7 @@
 #define SCLK_MAC2IO_SRC		99
 #define SCLK_MAC2IO		100
 #define SCLK_MAC2PHY		101
+#define SCLK_MAC2IO_EXT		102
 
 /* dclk gates */
 #define DCLK_LCDC		120

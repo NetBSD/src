@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i-h3-ccu.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: sun8i-h3-ccu.h,v 1.1.1.2 2017/07/27 18:10:51 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2016 Maxime Ripard <maxime.ripard@free-electrons.com>
@@ -44,6 +44,8 @@
 
 #ifndef _DT_BINDINGS_CLK_SUN8I_H3_H_
 #define _DT_BINDINGS_CLK_SUN8I_H3_H_
+
+#define CLK_PLL_PERIPH0		9
 
 #define CLK_CPUX		14
 
@@ -93,7 +95,7 @@
 #define CLK_BUS_UART1		63
 #define CLK_BUS_UART2		64
 #define CLK_BUS_UART3		65
-#define CLK_BUS_SCR		66
+#define CLK_BUS_SCR0		66
 #define CLK_BUS_EPHY		67
 #define CLK_BUS_DBG		68
 
@@ -143,5 +145,8 @@
 #define CLK_HDMI_DDC		112
 
 #define CLK_GPU			114
+
+/* New clocks imported in H5 */
+#define CLK_BUS_SCR1		115
 
 #endif /* _DT_BINDINGS_CLK_SUN8I_H3_H_ */

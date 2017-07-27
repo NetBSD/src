@@ -1,4 +1,4 @@
-/*	$NetBSD: r8a7792-clock.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: r8a7792-clock.h,v 1.1.1.2 2017/07/27 18:10:50 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2016 Cogent Embedded, Inc.
@@ -19,7 +19,6 @@
 #define R8A7792_CLK_PLL3		3
 #define R8A7792_CLK_LB			4
 #define R8A7792_CLK_QSPI		5
-#define R8A7792_CLK_Z			6
 
 /* MSTP0 */
 #define R8A7792_CLK_MSIOF0		0
@@ -47,6 +46,7 @@
 
 /* MSTP4 */
 #define R8A7792_CLK_IRQC		7
+#define R8A7792_CLK_INTC_SYS		8
 
 /* MSTP5 */
 #define R8A7792_CLK_AUDIO_DMAC0		2

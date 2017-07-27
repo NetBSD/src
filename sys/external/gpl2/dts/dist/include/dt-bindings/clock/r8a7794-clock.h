@@ -1,4 +1,4 @@
-/*	$NetBSD: r8a7794-clock.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: r8a7794-clock.h,v 1.1.1.2 2017/07/27 18:10:50 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2014 Renesas Electronics Corporation
@@ -66,6 +66,7 @@
 
 /* MSTP4 */
 #define R8A7794_CLK_IRQC		7
+#define R8A7794_CLK_INTC_SYS		8
 
 /* MSTP5 */
 #define R8A7794_CLK_AUDIO_DMAC0		2
@@ -83,6 +84,7 @@
 #define R8A7794_CLK_SCIF2		19
 #define R8A7794_CLK_SCIF1		20
 #define R8A7794_CLK_SCIF0		21
+#define R8A7794_CLK_DU1			23
 #define R8A7794_CLK_DU0			24
 
 /* MSTP8 */
