@@ -1,4 +1,4 @@
-/*	$NetBSD: r8a7793-clock.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: r8a7793-clock.h,v 1.1.1.2 2017/07/27 18:10:50 jmcneill Exp $	*/
 
 /*
  * r8a7793 clock definition
@@ -79,10 +79,11 @@
 
 /* MSTP4 */
 #define R8A7793_CLK_IRQC		7
+#define R8A7793_CLK_INTC_SYS		8
 
 /* MSTP5 */
-#define R8A7793_CLK_AUDIO_DMAC1         1
-#define R8A7793_CLK_AUDIO_DMAC0         2
+#define R8A7793_CLK_AUDIO_DMAC1		1
+#define R8A7793_CLK_AUDIO_DMAC0		2
 #define R8A7793_CLK_ADSP_MOD		6
 #define R8A7793_CLK_THERMAL		22
 #define R8A7793_CLK_PWM			23
