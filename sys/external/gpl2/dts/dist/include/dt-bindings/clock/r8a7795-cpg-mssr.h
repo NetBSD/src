@@ -1,4 +1,4 @@
-/*	$NetBSD: r8a7795-cpg-mssr.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: r8a7795-cpg-mssr.h,v 1.1.1.2 2017/07/27 18:10:50 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2015 Renesas Electronics Corp.
@@ -61,5 +61,12 @@
 #define R8A7795_CLK_CPEX		44
 #define R8A7795_CLK_R			45
 #define R8A7795_CLK_OSC			46
+
+/* r8a7795 ES2.0 CPG Core Clocks */
+#define R8A7795_CLK_S0D2		47
+#define R8A7795_CLK_S0D3		48
+#define R8A7795_CLK_S0D6		49
+#define R8A7795_CLK_S0D8		50
+#define R8A7795_CLK_S0D12		51
 
 #endif /* __DT_BINDINGS_CLOCK_R8A7795_CPG_MSSR_H__ */
