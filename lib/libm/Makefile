@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.193 2017/07/26 09:53:09 he Exp $
+#  $NetBSD: Makefile,v 1.194 2017/07/27 07:01:58 he Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -154,7 +154,7 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 	    e_log10.S e_remainder.S e_scalb.S e_sinh.S e_sqrt.S s_atan.S \
 	    s_ceil.S s_copysign.S s_cos.S s_expm1.S s_finite.S s_floor.S \
 	    s_log1p.S s_logb.S s_rint.S s_scalbn.S s_sin.S s_tan.S s_tanh.S
-COMMON_SRCS += fenv.c s_nearbyint.c
+COMMON_SRCS += fenv.c s_nearbyint.c s_rintl.c
 .endif
 .endif
 # end of m68k
