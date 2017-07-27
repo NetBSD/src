@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.58 2017/05/25 04:45:59 ozaki-r Exp $	*/
+/*	$NetBSD: keysock.c,v 1.59 2017/07/27 09:53:57 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.58 2017/05/25 04:45:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.59 2017/07/27 09:53:57 ozaki-r Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -82,6 +82,15 @@ static const struct protosw keysw[];
 static int key_sendup0(struct rawcb *, struct mbuf *, int, int);
 
 int key_registered_sb_max = (2048 * MHLEN); /* XXX arbitrary */
+
+static kmutex_t *key_so_mtx;
+
+void
+key_init_so(void)
+{
+
+	key_so_mtx = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+}
 
 /*
  * key_output()
@@ -436,6 +445,12 @@ key_attach(struct socket *so, int proto)
 	so->so_pcb = kp;
 
 	s = splsoftnet();
+
+	KASSERT(so->so_lock == NULL);
+	mutex_obj_hold(key_so_mtx);
+	so->so_lock = key_so_mtx;
+	solock(so);
+
 	error = raw_attach(so, proto);
 	if (error) {
 		PFKEY_STATINC(PFKEY_STAT_SOCKERR);
