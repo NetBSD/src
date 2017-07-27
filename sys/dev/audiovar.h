@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.57 2017/07/27 08:28:18 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.58 2017/07/27 08:42:47 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -225,7 +225,7 @@ struct audio_softc {
 	 * play_thread
 	 *    sc_pr
 	 *      |
-	 *  vchan[0]->sc_pustream 	(First elemendt in sc_audiochan)
+	 *  vchan[0]->sc_pustream 	(First element in sc_audiochan)
 	 *      |
 	 *  vchan[0]->sc_mpr
 	 *      |
@@ -287,7 +287,7 @@ struct audio_softc {
 	lwp_t		*sc_recthread;
 	kcondvar_t	sc_rcondvar;
 	
-	/* These are chanable by sysctl to set the vchan common format */
+	/* These are changeable by sysctl to set the vchan common format */
 	struct sysctllog	*sc_log;	/* sysctl log */
 	int		sc_channels;
 	int		sc_precision;
