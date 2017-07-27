@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.194 2017/07/27 07:01:58 he Exp $
+#  $NetBSD: Makefile,v 1.195 2017/07/27 10:03:10 he Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -94,7 +94,7 @@ COMMON_SRCS+= fenv.c s_nexttowardf.c s_nearbyint.c s_rintl.c
 
 .elif (${LIBC_MACHINE_ARCH} == "sparc")
 .PATH: ${.CURDIR}/arch/sparc
-COMMON_SRCS+= fenv.c
+COMMON_SRCS+= fenv.c s_nearbyint.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 
 .elif (${LIBC_MACHINE_ARCH} == "sparc64")
