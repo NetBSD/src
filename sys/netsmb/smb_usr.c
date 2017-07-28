@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_usr.c,v 1.18 2017/07/28 14:37:27 riastradh Exp $	*/
+/*	$NetBSD: smb_usr.c,v 1.19 2017/07/28 14:40:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.18 2017/07/28 14:37:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.19 2017/07/28 14:40:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -300,7 +300,7 @@ smb_usr_t2request(struct smb_share *ssp, struct smbioc_t2rq *dp,
 	struct mdchain *mdp;
 	int error, len;
 
-	if (dp->ioc_setupcnt > 3)
+	if (dp->ioc_setupcnt < 0 || dp->ioc_setupcnt > 3)
 		return EINVAL;
 	error = smb_t2_alloc(SSTOCP(ssp), dp->ioc_setup[0], scred, &t2p);
 	if (error)
