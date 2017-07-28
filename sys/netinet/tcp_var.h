@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.178 2017/07/07 01:37:34 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.179 2017/07/28 19:16:41 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -811,7 +811,6 @@ extern	int tcp_init_win;	/* initial window */
 extern	int tcp_init_win_local;	/* initial window for local nets */
 extern	int tcp_init_win_max[11];/* max sizes for values of tcp_init_win_* */
 extern	int tcp_mss_ifmtu;	/* take MSS from interface, not in_maxmtu */
-extern	int tcp_compat_42;	/* work around ancient broken TCP peers */
 extern	int tcp_cwm;		/* enable Congestion Window Monitoring */
 extern	int tcp_cwm_burstsize;	/* burst size allowed by CWM */
 extern	int tcp_ack_on_push;	/* ACK immediately on PUSH */
@@ -877,7 +876,6 @@ extern int tcp_autosndbuf_max;
 	{ 1, 0, &tcp_do_sack },			\
 	{ 1, 0, &tcp_do_win_scale },		\
 	{ 1, 0, &tcp_do_timestamps },		\
-	{ 1, 0, &tcp_compat_42 },		\
 	{ 1, 0, &tcp_cwm },			\
 	{ 1, 0, &tcp_cwm_burstsize },		\
 	{ 1, 0, &tcp_ack_on_push },		\
