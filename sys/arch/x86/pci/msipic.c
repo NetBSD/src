@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.10 2017/06/01 02:45:08 chs Exp $	*/
+/*	$NetBSD: msipic.c,v 1.11 2017/07/28 14:26:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.10 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.11 2017/07/28 14:26:50 maxv Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.10 2017/06/01 02:45:08 chs Exp $");
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
 #include <sys/mutex.h>
 
 #include <dev/pci/pcivar.h>
