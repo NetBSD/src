@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.88 2017/04/26 03:02:48 riastradh Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.89 2017/07/28 16:55:48 riastradh Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.88 2017/04/26 03:02:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.89 2017/07/28 16:55:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -527,7 +527,8 @@ si_listen(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 	if (st == NULL)
 		return EINVAL;
 
-	if (ioc->len > sizeof(lst))
+	if (ioc->len < offsetof(struct svr4_strmcmd, pad) ||
+	    ioc->len > sizeof(lst))
 		return EINVAL;
 
 	if ((error = copyin(NETBSD32PTR(ioc->buf), &lst, ioc->len)) != 0)
@@ -717,7 +718,9 @@ ti_getinfo(file_t *fp, int fd, struct svr4_strioctl *ioc,
 
 	memset(&info, 0, sizeof(info));
 
-	if (ioc->len > sizeof(info))
+	/* tsdu is next after cmd, the only field we read */
+	if (ioc->len < offsetof(struct svr4_infocmd, tsdu) ||
+	    ioc->len > sizeof(info))
 		return EINVAL;
 
 	if ((error = copyin(NETBSD32PTR(ioc->buf), &info, ioc->len)) != 0)
@@ -763,7 +766,8 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 		return EINVAL;
 	}
 
-	if (ioc->len > sizeof(bnd))
+	if (ioc->len < offsetof(struct svr4_strmcmd, pad) ||
+	    ioc->len > sizeof(bnd))
 		return EINVAL;
 
 	if ((error = copyin(NETBSD32PTR(ioc->buf), &bnd, ioc->len)) != 0)
@@ -773,6 +777,8 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 		DPRINTF(("ti_bind: bad request %ld\n", bnd.cmd));
 		return EINVAL;
 	}
+	if (bnd.offs < 0)
+		return EINVAL;
 
 	switch (st->s_family) {
 	case AF_INET:
@@ -782,6 +788,9 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 		if (bnd.offs == 0)
 			goto reply;
 
+		if (ioc->len < sizeof(struct svr4_netaddr_in) ||
+		    bnd.offs > ioc->len - sizeof(struct svr4_netaddr_in))
+			return EINVAL;
 		netaddr_to_sockaddr_in(sain, &bnd);
 
 		DPRINTF(("TI_BIND: fam %d, port %d, addr %x\n",
@@ -795,6 +804,9 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 		if (bnd.offs == 0)
 			goto reply;
 
+		if (ioc->len < sizeof(struct svr4_netaddr_un) ||
+		    bnd.offs > ioc->len - sizeof(struct svr4_netaddr_un))
+			return EINVAL;
 		netaddr_to_sockaddr_un(saun, &bnd);
 
 		if (saun->sun_path[0] == '\0')
@@ -1412,7 +1424,8 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 		goto out;
 	}
 
-	if (ctl.len > sizeof(sc)) {
+	if (ctl.len < offsetof(struct svr4_strmcmd, pad) ||
+	    ctl.len > sizeof(sc)) {
 		DPRINTF(("putmsg: Bad control size %ld != %d\n",
 		    (unsigned long)sizeof(struct svr4_strmcmd), ctl.len));
 		error = EINVAL;
@@ -1421,6 +1434,10 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 
 	if ((error = copyin(NETBSD32PTR(ctl.buf), &sc, ctl.len)) != 0)
 		goto out;
+	if (sc.offs < 0) {
+		error = EINVAL;
+		goto out;
+	}
 
 	switch (st->s_family) {
 	case AF_INET:
@@ -1723,8 +1740,16 @@ svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_
 		if (ctl.len > sizeof(sc))
 			ctl.len = sizeof(sc);
 
+		if (ctl.len < offsetof(struct svr4_strmcmd, pad)) {
+			error = EINVAL;
+			goto out;
+		}
 		if ((error = copyin(NETBSD32PTR(ctl.buf), &sc, ctl.len)) != 0)
 			goto out;
+		if (sc.offs < 0) {
+			error = EINVAL;
+			goto out;
+		}
 
 		msg.msg_name = NULL;
 		msg.msg_namelen = 0;
