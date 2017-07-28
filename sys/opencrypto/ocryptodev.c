@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.10 2017/07/28 14:16:29 riastradh Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.11 2017/07/28 17:14:04 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.10 2017/07/28 14:16:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.11 2017/07/28 17:14:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,6 +127,11 @@ ocryptof_ioctl(struct file *fp, u_long cmd, void *data)
 		break;
 	case CIOCNGSESSION:
 		osgop = (struct ocrypt_sgop *)data;
+		if ((osgop->count <= 0) ||
+		    (SIZE_MAX/sizeof(struct osession_n_op) < osgop->count)) {
+			error = EINVAL;
+			break;
+		}
 		osnop = kmem_alloc((osgop->count *
 				  sizeof(struct osession_n_op)), KM_SLEEP);
 		error = copyin(osgop->sessions, osnop, osgop->count *
