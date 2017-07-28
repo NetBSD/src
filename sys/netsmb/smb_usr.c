@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_usr.c,v 1.16 2009/03/18 16:00:24 cegger Exp $	*/
+/*	$NetBSD: smb_usr.c,v 1.17 2017/07/28 14:20:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.16 2009/03/18 16:00:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.17 2017/07/28 14:20:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -75,11 +75,17 @@ smb_usr_vc2spec(struct smbioc_ossn *dp, struct smb_vcspec *spec)
 		SMBERROR(("no local charset ?\n"));
 		return EINVAL;
 	}
+	if (dp->ioc_svlen < sizeof(*spec->sap))
+		return EINVAL;
 
 	spec->sap = smb_memdupin(dp->ioc_server, dp->ioc_svlen);
 	if (spec->sap == NULL)
 		return ENOMEM;
 	if (dp->ioc_local) {
+		if (dp->ioc_lolen < sizeof(*spec->lap)) {
+			smb_usr_vcspec_free(spec);
+			return ENOMEM;
+		}
 		spec->lap = smb_memdupin(dp->ioc_local, dp->ioc_lolen);
 		if (spec->lap == NULL) {
 			smb_usr_vcspec_free(spec);
