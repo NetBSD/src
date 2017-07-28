@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.534 2017/07/28 09:12:40 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.535 2017/07/28 10:21:10 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.534 2017/07/28 09:12:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.535 2017/07/28 10:21:10 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -11598,7 +11598,10 @@ wm_nvm_set_addrbits_size_eecd(struct wm_softc *sc)
 	case WM_T_82547_2:
 		/* Set dummy value to access EEPROM */
 		sc->sc_nvm_wordsize = 64;
-		wm_nvm_read(sc, NVM_OFF_EEPROM_SIZE, 1, &data);
+		if (wm_nvm_read(sc, NVM_OFF_EEPROM_SIZE, 1, &data) != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to read EEPROM size\n", __func__);
+		}
 		reg = data;
 		size = __SHIFTOUT(reg, EECD_EE_SIZE_EX_MASK);
 		if (size == 0)
@@ -12483,9 +12486,8 @@ wm_nvm_version(struct wm_softc *sc)
 	 * Qemu's e1000e emulation (82574L)'s SPI has only 64 words.
 	 * I've never seen on real 82574 hardware with such small SPI ROM.
 	 */
-	if (sc->sc_nvm_wordsize >= NVM_OFF_IMAGE_UID1)
-		wm_nvm_read(sc, NVM_OFF_IMAGE_UID1, 1, &uid1);
-	else
+	if ((sc->sc_nvm_wordsize < NVM_OFF_IMAGE_UID1)
+	    || (wm_nvm_read(sc, NVM_OFF_IMAGE_UID1, 1, &uid1) != 0))
 		have_uid = false;
 
 	switch (sc->sc_type) {
@@ -12522,8 +12524,8 @@ wm_nvm_version(struct wm_softc *sc)
 	default:
 		return;
 	}
-	if (check_version) {
-		wm_nvm_read(sc, NVM_OFF_VERSION, 1, &nvm_data);
+	if (check_version
+	    && (wm_nvm_read(sc, NVM_OFF_VERSION, 1, &nvm_data) == 0)) {
 		major = (nvm_data & NVM_MAJOR_MASK) >> NVM_MAJOR_SHIFT;
 		if (have_build || ((nvm_data & 0x0f00) != 0x0000)) {
 			minor = (nvm_data & NVM_MINOR_MASK) >> NVM_MINOR_SHIFT;
@@ -12547,14 +12549,16 @@ printver:
 	}
 
 	/* Assume the Option ROM area is at avove NVM_SIZE */
-	if ((sc->sc_nvm_wordsize >= NVM_SIZE) && check_optionrom) {
-		wm_nvm_read(sc, NVM_OFF_COMB_VER_PTR, 1, &off);
+	if ((sc->sc_nvm_wordsize >= NVM_SIZE) && check_optionrom
+	    && (wm_nvm_read(sc, NVM_OFF_COMB_VER_PTR, 1, &off) == 0)) {
 		/* Option ROM Version */
 		if ((off != 0x0000) && (off != 0xffff)) {
+			int rv;
+
 			off += NVM_COMBO_VER_OFF;
-			wm_nvm_read(sc, off + 1, 1, &uid1);
-			wm_nvm_read(sc, off, 1, &uid0);
-			if ((uid0 != 0) && (uid0 != 0xffff)
+			rv = wm_nvm_read(sc, off + 1, 1, &uid1);
+			rv |= wm_nvm_read(sc, off, 1, &uid0);
+			if ((rv == 0) && (uid0 != 0) && (uid0 != 0xffff)
 			    && (uid1 != 0) && (uid1 != 0xffff)) {
 				/* 16bits */
 				major = uid0 >> 8;
@@ -12566,10 +12570,8 @@ printver:
 		}
 	}
 
-	if (have_uid) {
-		wm_nvm_read(sc, NVM_OFF_IMAGE_UID0, 1, &uid0);
+	if (have_uid && (wm_nvm_read(sc, NVM_OFF_IMAGE_UID0, 1, &uid0) == 0))
 		aprint_verbose(", Image Unique ID %08x", (uid1 << 16) | uid0);
-	}
 }
 
 /*
