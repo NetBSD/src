@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.373 2017/07/28 02:53:54 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.374 2017/07/28 03:29:19 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.373 2017/07/28 02:53:54 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.374 2017/07/28 03:29:19 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5873,15 +5873,9 @@ audio_set_params(struct audio_softc *sc, int setmode, int usemode,
 	    VAUDIO_NFORMATS, AUMODE_PLAY, play, true, pfil) < 0)
 		return EINVAL;
 
-	if (pfil->req_size > 0)
-		play = &pfil->filters[0].param;
-
 	if (setmode & AUMODE_RECORD && auconv_set_converter(sc->sc_format,
 	    VAUDIO_NFORMATS, AUMODE_RECORD, rec, true, rfil) < 0)
 		return EINVAL;
-
-	if (rfil->req_size > 0)
-		rec = &rfil->filters[0].param;
 
 	return 0;
 }
