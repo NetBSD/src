@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.27 2017/07/28 15:47:23 riastradh Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.28 2017/07/28 15:50:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.27 2017/07/28 15:47:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.28 2017/07/28 15:50:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,6 +454,10 @@ exec_ibcs2_coff_prep_zmagic(struct lwp *l, struct exec_package *epp, struct coff
 		}
 		bufp = tbuf;
 		while (len) {
+			if (len < sizeof(struct coff_slhdr)) {
+				free(tbuf, M_TEMP);
+				return ENOEXEC;
+			}
 			slhdr = (struct coff_slhdr *)bufp;
 
 			if (slhdr->path_index > LONG_MAX / sizeof(long) ||
