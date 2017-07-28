@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.533 2017/07/27 03:21:42 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.534 2017/07/28 09:12:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.533 2017/07/27 03:21:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.534 2017/07/28 09:12:40 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -12477,7 +12477,17 @@ wm_nvm_version(struct wm_softc *sc)
 	 *		0x2013	2.1.3?
 	 *	82583	0x10a0	1.10.0? (document says it's default vaule)
 	 */
-	wm_nvm_read(sc, NVM_OFF_IMAGE_UID1, 1, &uid1);
+
+	/*
+	 * XXX
+	 * Qemu's e1000e emulation (82574L)'s SPI has only 64 words.
+	 * I've never seen on real 82574 hardware with such small SPI ROM.
+	 */
+	if (sc->sc_nvm_wordsize >= NVM_OFF_IMAGE_UID1)
+		wm_nvm_read(sc, NVM_OFF_IMAGE_UID1, 1, &uid1);
+	else
+		have_uid = false;
+
 	switch (sc->sc_type) {
 	case WM_T_82571:
 	case WM_T_82572:
@@ -12535,7 +12545,9 @@ printver:
 			aprint_verbose(".%d", build);
 		}
 	}
-	if (check_optionrom) {
+
+	/* Assume the Option ROM area is at avove NVM_SIZE */
+	if ((sc->sc_nvm_wordsize >= NVM_SIZE) && check_optionrom) {
 		wm_nvm_read(sc, NVM_OFF_COMB_VER_PTR, 1, &off);
 		/* Option ROM Version */
 		if ((off != 0x0000) && (off != 0xffff)) {
