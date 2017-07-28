@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.91 2016/07/25 00:10:38 knakahara Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.92 2017/07/28 19:16:41 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.91 2016/07/25 00:10:38 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.92 2017/07/28 19:16:41 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -564,19 +564,11 @@ tcp_timer_keep(void *arg)
 		 * correspondent TCP to respond.
 		 */
 		TCP_STATINC(TCP_STAT_KEEPPROBE);
-		if (tcp_compat_42) {
-			/*
-			 * The keepalive packet must have nonzero
-			 * length to get a 4.2 host to respond.
-			 */
-			(void)tcp_respond(tp, tp->t_template,
-			    NULL, NULL, tp->rcv_nxt - 1,
-			    tp->snd_una - 1, 0);
-		} else {
-			(void)tcp_respond(tp, tp->t_template,
-			    NULL, NULL, tp->rcv_nxt,
-			    tp->snd_una - 1, 0);
-		}
+
+		(void)tcp_respond(tp, tp->t_template,
+		    NULL, NULL, tp->rcv_nxt,
+		    tp->snd_una - 1, 0);
+
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepintvl);
 	} else
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepidle);
