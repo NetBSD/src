@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.89 2017/07/28 16:55:48 riastradh Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.90 2017/07/28 17:43:46 riastradh Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.89 2017/07/28 16:55:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.90 2017/07/28 17:43:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1507,10 +1507,12 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
  	switch (st->s_cmd = sc.cmd) {
 	case SVR4_TI_CONNECT_REQUEST:	/* connect 	*/
 	 	KERNEL_UNLOCK_ONE(NULL);
+		fd_putfile(SCARG(uap, fd));
 		return do_sys_connect(l, SCARG(uap, fd), skp);
 
 	case SVR4_TI_SENDTO_REQUEST:	/* sendto 	*/
 	 	KERNEL_UNLOCK_ONE(NULL);
+		fd_putfile(SCARG(uap, fd));
 		msg.msg_name = skp;
 		msg.msg_namelen = skp->sa_len;
 		msg.msg_iov = &aiov;
