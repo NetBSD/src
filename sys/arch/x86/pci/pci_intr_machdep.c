@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.40 2017/06/01 02:45:08 chs Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.41 2017/07/28 14:26:50 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.40 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.41 2017/07/28 14:26:50 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.40 2017/06/01 02:45:08 chs Ex
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
 
 #include <dev/pci/pcivar.h>
 
