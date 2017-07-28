@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.29 2017/07/27 23:39:37 nat Exp $	*/
+/*	$NetBSD: auconv.c,v 1.30 2017/07/28 01:36:40 nat Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.29 2017/07/27 23:39:37 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.30 2017/07/28 01:36:40 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -1391,7 +1391,7 @@ int
 auconv_query_encoding(const struct audio_encoding_set *encodings,
 		      audio_encoding_t *aep)
 {
-	if (aep->index >= encodings->size)
+	if (aep->index < 0 || aep->index >= encodings->size)
 		return EINVAL;
 	strlcpy(aep->name, encodings->items[aep->index].name,
 		MAX_AUDIO_DEV_LEN);
