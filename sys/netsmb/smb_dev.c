@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.49 2016/07/18 21:03:01 pgoyette Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.50 2017/07/28 14:45:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.49 2016/07/18 21:03:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.50 2017/07/28 14:45:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -345,6 +345,8 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag,
 		struct uio auio;
 		struct iovec iov;
 
+		if (rwrq->ioc_cnt < 0 || rwrq->ioc_offset < 0)
+			return EINVAL;
 		if ((ssp = sdp->sd_share) == NULL)
 			return ENOTCONN;
 		iov.iov_base = rwrq->ioc_base;
