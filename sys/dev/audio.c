@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.372 2017/07/28 01:36:40 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.373 2017/07/28 02:53:54 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.372 2017/07/28 01:36:40 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.373 2017/07/28 02:53:54 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -447,8 +447,8 @@ const struct audio_params audio_default = {
 	.channels = 1,
 };
 
-int auto_config_precision[] = { 32, 16, 8 };
-int auto_config_channels[] = { 32, 24, 16, 8, 6, 4, 2, 1};
+int auto_config_precision[] = { 16, 8, 32 };
+int auto_config_channels[] = { 2, AUDIO_MAX_CHANNELS, 10, 8, 6, 4, 1 };
 int auto_config_freq[] = { 48000, 44100, 96000, 192000, 32000,
 			   22050, 16000, 11025, 8000, 4000 };
 
