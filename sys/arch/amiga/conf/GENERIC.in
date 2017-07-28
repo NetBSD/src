@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.132 2016/12/13 20:42:16 christos Exp $
+# $NetBSD: GENERIC.in,v 1.133 2017/07/28 19:26:15 maxv Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.132 $"
+#ident 		"GENERIC-$Revision: 1.133 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -180,7 +180,6 @@ options 	UFS_EXTATTR	# Extended attribute support for UFS1
 #
 
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_43	# compatibility with 4.3BSD interfaces
 options 	COMPAT_09	# NetBSD 0.9,
 options 	COMPAT_10	# NetBSD 1.0,

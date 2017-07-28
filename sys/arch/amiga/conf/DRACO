@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.180 2016/12/13 20:42:16 christos Exp $
+# $NetBSD: DRACO,v 1.181 2017/07/28 19:26:15 maxv Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.180 $"
+#ident 		"GENERIC-$Revision: 1.181 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -125,7 +125,6 @@ options 	NFSSERVER	# Network File System server side code
 # Compatibility options for various existing systems
 #
 
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_43	# compatibility with 4.3BSD interfaces
 options 	COMPAT_09	# NetBSD 0.9,
 options 	COMPAT_10	# NetBSD 1.0,
