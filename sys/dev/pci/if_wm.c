@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.535 2017/07/28 10:21:10 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.536 2017/07/28 10:34:58 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.535 2017/07/28 10:21:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.536 2017/07/28 10:34:58 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8805,6 +8805,11 @@ wm_intr_legacy(void *arg)
 			WM_Q_EVCNT_INCR(rxq, rxintr);
 		}
 #endif
+		/*
+		 * wm_rxeof() does *not* call upper layer functions directly,
+		 * as if_percpuq_enqueue() just call softint_schedule().
+		 * So, we can call wm_rxeof() in interrupt context.
+		 */
 		wm_rxeof(rxq, UINT_MAX);
 
 		mutex_exit(rxq->rxq_lock);
