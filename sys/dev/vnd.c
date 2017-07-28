@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.261 2017/07/28 16:22:01 riastradh Exp $	*/
+/*	$NetBSD: vnd.c,v 1.262 2017/07/28 16:30:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.261 2017/07/28 16:22:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.262 2017/07/28 16:30:41 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1303,9 +1303,20 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			}
 			KASSERT(0 < vnd->sc_comp_blksz);
 			KASSERT(0 < vnd->sc_comp_numoffs);
-			if ((SIZE_MAX/sizeof(uint64_t) <
-				vnd->sc_comp_numoffs) ||
-			    (vattr.va_size < sizeof(struct vnd_comp_header)) ||
+			/*
+			 * @#^@!$& gcc -Wtype-limits refuses to let me
+			 * write SIZE_MAX/sizeof(uint64_t) < numoffs,
+			 * because the range of the type on amd64 makes
+			 * the comparisons always false.
+			 */
+#if SIZE_MAX <= UINT32_MAX*(64/CHAR_BIT)
+			if (SIZE_MAX/sizeof(uint64_t) < vnd->sc_comp_numoffs) {
+				VOP_UNLOCK(nd.ni_vp);
+				error = EINVAL;
+				goto close_and_exit;
+			}
+#endif
+			if ((vattr.va_size < sizeof(struct vnd_comp_header)) ||
 			    (vattr.va_size - sizeof(struct vnd_comp_header) <
 				sizeof(uint64_t)*vnd->sc_comp_numoffs) ||
 			    (UQUAD_MAX/vnd->sc_comp_blksz <
