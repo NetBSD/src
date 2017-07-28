@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.136 2017/06/22 18:14:32 khorben Exp $
+# $NetBSD: XEN3_DOM0,v 1.137 2017/07/28 16:10:28 maxv Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -62,7 +62,7 @@ makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
 options DDB_COMMANDONENTER="trace;show registers"
 
 # Compatibility options
-options 	COMPAT_43	# 4.3BSD binary compatibility.
+#options 	COMPAT_43	# 4.3BSD binary compatibility.
 options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
