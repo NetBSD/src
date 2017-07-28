@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.170 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.171 2017/07/28 15:16:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.170 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.171 2017/07/28 15:16:39 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -926,7 +926,7 @@ ktruser(const char *id, void *addr, size_t len, int ustr)
 
 	user_dta = (void *)(ktp + 1);
 	if ((error = copyin(addr, user_dta, len)) != 0)
-		len = 0;
+		kte->kte_kth.ktr_len = 0;
 
 	ktraddentry(l, kte, KTA_WAITOK);
 	return error;
