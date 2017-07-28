@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.90 2017/07/28 17:43:46 riastradh Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.91 2017/07/28 17:52:47 riastradh Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.90 2017/07/28 17:43:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.91 2017/07/28 17:52:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -533,6 +533,11 @@ si_listen(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 
 	if ((error = copyin(NETBSD32PTR(ioc->buf), &lst, ioc->len)) != 0)
 		return error;
+	if (lst.offs < 0 ||
+	    lst.len < 0 ||
+	    lst.len > ioc->len ||
+	    ioc->len - lst.len < lst.offs)
+		return EINVAL;
 
 	if (lst.cmd != SVR4_TI_OLD_BIND_REQUEST) {
 		DPRINTF(("si_listen: bad request %ld\n", lst.cmd));
@@ -777,7 +782,10 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 		DPRINTF(("ti_bind: bad request %ld\n", bnd.cmd));
 		return EINVAL;
 	}
-	if (bnd.offs < 0)
+	if (bnd.offs < 0 ||
+	    bnd.len < 0 ||
+	    bnd.len > ioc->len ||
+	    ioc->len - bnd.len < bnd.offs)
 		return EINVAL;
 
 	switch (st->s_family) {
@@ -1434,7 +1442,10 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 
 	if ((error = copyin(NETBSD32PTR(ctl.buf), &sc, ctl.len)) != 0)
 		goto out;
-	if (sc.offs < 0) {
+	if (sc.offs < 0 ||
+	    sc.len < 0 ||
+	    sc.len > ctl.len ||
+	    sc.offs > ctl.len - sc.len) {
 		error = EINVAL;
 		goto out;
 	}
@@ -1481,8 +1492,11 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 			*retval = 0;
 			error = 0;
 			goto out;
-		}
-		else {
+		} else if (sc.len < sizeof(dev_t[2])) {
+			*retval = 0;
+			error = EINVAL;
+			goto out;
+		} else {
 			/* Maybe we've been given a device/inode pair */
 			dev_t *dev = SVR4_ADDROF(&sc);
 			svr4_ino_t *ino = (svr4_ino_t *) &dev[1];
