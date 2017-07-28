@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.35 2015/09/06 06:00:59 dholland Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.36 2017/07/28 15:52:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -147,8 +147,7 @@ struct vnd_softc {
 #define VNF_USE_VN_RDWR	0x1000	/* have to use vn_rdwr() */
 
 /* structure of header in a compressed file */
-struct vnd_comp_header
-{
+struct vnd_comp_header {
 	char preamble[128];
 	u_int32_t block_size;
 	u_int32_t num_blocks;
