@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.255 2017/07/22 08:23:19 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.256 2017/07/28 14:13:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.255 2017/07/22 08:23:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.256 2017/07/28 14:13:11 riastradh Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -984,15 +984,14 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	npte |= protection_codes[prot] | PG_V | pmap_pg_g;
 	npte |= pmap_pat_flags(flags);
 	opte = pmap_pte_testset(pte, npte); /* zap! */
-#if defined(DIAGNOSTIC)
+
 	/*
 	 * XXX: make sure we are not dealing with a large page, since the only
 	 * large pages created are for the kernel image, and they should never
 	 * be kentered.
 	 */
-	if (opte & PG_PS)
-		panic("%s: PG_PS va=%#" PRIxVADDR, __func__, va);
-#endif
+	KASSERTMSG(!(opte & PG_PS), "PG_PS va=%#"PRIxVADDR, va);
+
 	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
 		/* This should not happen. */
 		printf_nolog("%s: mapping already present\n", __func__);
@@ -3113,10 +3112,7 @@ pmap_zero_page(paddr_t pa)
 	zerova = ci->vpage[VPAGE_ZER];
 	zpte = ci->vpage_pte[VPAGE_ZER];
 
-#ifdef DIAGNOSTIC
-	if (*zpte)
-		panic("pmap_zero_page: lock botch");
-#endif
+	KASSERTMSG(!*zpte, "pmap_zero_page: lock botch");
 
 	pmap_pte_set(zpte, pmap_pa2pte(pa) | pteflags);
 	pmap_pte_flush();
@@ -3394,11 +3390,11 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	 * If we are not on a pv_head list - we are done.
 	 */
 	if ((opte & PG_PVLIST) == 0) {
-#if defined(DIAGNOSTIC) && !defined(DOM0OPS)
-		if (PHYS_TO_VM_PAGE(pmap_pte2pa(opte)) != NULL ||
-		    pmap_pv_tracked(pmap_pte2pa(opte)) != NULL)
-			panic("%s: managed or pv-tracked page"
-			    " without PG_PVLIST for %#"PRIxVADDR, __func__, va);
+#ifndef DOM0OPS
+		KASSERTMSG((PHYS_TO_VM_PAGE(pmap_pte2pa(opte)) == NULL),
+		    "managed page without PG_PVLIST for %#"PRIxVADDR, va);
+		KASSERTMSG((pmap_pv_tracked(pmap_pte2pa(opte)) == NULL),
+		    "pv-tracked page without PG_PVLIST for %#"PRIxVADDR, va);
 #endif
 		return true;
 	}
