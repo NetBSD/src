@@ -27,9 +27,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: sii.4,v 1.13 2017/07/25 03:51:41 ryoon Exp $
+.\"	$NetBSD: sii.4,v 1.14 2017/07/28 15:58:24 flxd Exp $
 .\"
-.Dd February 17, 2017
+.Dd July 28, 2017
 .Dt SII 4 pmax
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@ The
 driver provides support for the
 .Tn DEC
 SII SCSI adaptor ASIC used in
-the DECstation 2100, 3100, and 5100, and in the VAXstation 3100.
+the DECstation 2100, 3100, and 5100.
 .Pp
 The
 .Nm
@@ -65,6 +65,7 @@ to and from the DMA region.
 .Xr ch 4 ,
 .Xr pmax/ibus 4 ,
 .Xr pmax/intro 4 ,
+.Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr st 4
 .Sh HISTORY
