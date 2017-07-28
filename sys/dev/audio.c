@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.374 2017/07/28 03:29:19 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.375 2017/07/28 03:58:54 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.374 2017/07/28 03:29:19 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.375 2017/07/28 03:58:54 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2164,13 +2164,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	DPRINTF(("audio_open: flags=0x%x sc=%p hdl=%p\n",
 		 flags, sc, sc->hw_hdl));
 
-	if (((flags & FREAD) && (vc->sc_open & AUOPEN_READ)) ||
-	    ((flags & FWRITE) && (vc->sc_open & AUOPEN_WRITE))) {
-		kmem_free(vc, sizeof(struct virtual_channel));
-		kmem_free(chan, sizeof(struct audio_chan));
-		return EBUSY;
-	}
-
 	error = audio_alloc_ring(sc, &vc->sc_mpr,
 	    	    AUMODE_PLAY, AU_RING_SIZE);
 	if (!error) {
@@ -2178,6 +2171,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	    	    AUMODE_RECORD, AU_RING_SIZE);
 	}
 	if (error) {
+		audio_free_ring(sc, &vc->sc_mrr);
+		audio_free_ring(sc, &vc->sc_mpr);
 		kmem_free(vc, sizeof(struct virtual_channel));
 		kmem_free(chan, sizeof(struct audio_chan));
 		return error;
