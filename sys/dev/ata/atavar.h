@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.19 2017/07/22 22:02:21 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.20 2017/07/29 12:58:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -184,7 +184,7 @@ struct ata_xfer {
 #define C_FREE		0x0040		/* call ata_free_xfer() asap */
 #define C_PIOBM		0x0080		/* command uses busmastering PIO */
 #define	C_NCQ		0x0100		/* command is queued  */
-#define C_IMMEDIATE	0x0200		/* execute command without queuing */
+#define C_RECOVERY	0x0200		/* executed as part of recovery */
 #define C_WAITTIMO	0x0400		/* race vs. timeout */
 #define C_CHAOS		0x0800		/* forced error xfer */
 
@@ -197,9 +197,10 @@ struct ata_xfer {
 /*
  * While hw supports up to 32 tags, in practice we must never
  * allow 32 active commands, since that would signal same as
- * channel error. So just limit this to 31.
+ * channel error. We use slot 32 only for error recovery if available.
  */
-#define ATA_MAX_OPENINGS	31
+#define ATA_MAX_OPENINGS	32
+#define ATA_REAL_OPENINGS(op)	((op) > 1 ? (op) - 1 : 1)
 
 /* Per-channel queue of ata_xfers */
 #ifndef ATABUS_PRIVATE
@@ -210,7 +211,7 @@ struct ata_queue {
 #define QF_IDLE_WAIT	0x01    	/* someone wants the controller idle */
 #define QF_NEED_XFER	0x02    	/* someone wants xfer */
 	int8_t queue_active; 		/* number of active transfers */
-	int8_t queue_openings; 			/* max number of active xfers */
+	uint8_t queue_openings;			/* max number of active xfers */
 	TAILQ_HEAD(, ata_xfer) queue_xfer; 	/* queue of pending commands */
 	int queue_freeze; 			/* freeze count for the queue */
 	kcondvar_t queue_busy;			/* c: waiting of xfer */
@@ -424,6 +425,9 @@ struct ata_channel {
 
 	/* Number of sata PMP ports, if any */
 	int ch_satapmp_nports;
+
+	/* Recovery buffer */
+	uint8_t ch_recovery[DEV_BSIZE];
 };
 
 /*
@@ -505,8 +509,8 @@ int	ata_read_log_ext_ncq(struct ata_drive_datas *, uint8_t, uint8_t *,
 #define CMD_ERR   1
 #define CMD_AGAIN 2
 
-struct ata_xfer *ata_get_xfer_ext(struct ata_channel *, bool, int8_t);
-#define ata_get_xfer(chp) ata_get_xfer_ext((chp), true, 0);
+struct ata_xfer *ata_get_xfer_ext(struct ata_channel *, int, uint8_t);
+#define ata_get_xfer(chp) ata_get_xfer_ext((chp), C_WAIT, 0);
 void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_deactivate_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);

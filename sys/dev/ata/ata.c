@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.21 2017/07/22 22:02:21 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.22 2017/07/29 12:58:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.21 2017/07/22 22:02:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.22 2017/07/29 12:58:29 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -191,7 +191,7 @@ ata_queue_reset(struct ata_queue *chq)
 	chq->queue_freeze = 0;
 	chq->queue_active = 0;
 	chq->active_xfers_used = 0;
-	chq->queue_xfers_avail = (1 << chq->queue_openings) - 1;
+	chq->queue_xfers_avail = __BIT(chq->queue_openings) - 1;
 }
 
 struct ata_xfer *
@@ -202,7 +202,8 @@ ata_queue_hwslot_to_xfer(struct ata_channel *chp, int hwslot)
 
 	mutex_enter(&chp->ch_lock);
 
-	KASSERT(hwslot < chq->queue_openings);
+	KASSERTMSG(hwslot < chq->queue_openings, "hwslot %d > openings %d",
+	    hwslot, chq->queue_openings);
 	KASSERT((chq->active_xfers_used & __BIT(hwslot)) != 0);
 
 	/* Usually the first entry will be the one */
@@ -1048,20 +1049,9 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	    (drvp->drive_flags & ATA_DRIVE_NCQ) == 0)
 		return EOPNOTSUPP;
 
-	xfer = ata_get_xfer_ext(chp, false, 0);
-	if (xfer == NULL) {
-		ATADEBUG_PRINT(("%s: no xfer\n", __func__),
-		    DEBUG_FUNCS|DEBUG_XFERS);
-		return EAGAIN;
-	}
+	xfer = ata_get_xfer_ext(chp, C_RECOVERY, 0);
 
-	tb = malloc(DEV_BSIZE, M_DEVBUF, M_NOWAIT);
-	if (tb == NULL) {
-		ATADEBUG_PRINT(("%s: memory allocation failed\n", __func__),
-		    DEBUG_FUNCS|DEBUG_XFERS);
-		rv = EAGAIN;
-		goto out;
-	}
+	tb = chp->ch_recovery;
 	memset(tb, 0, DEV_BSIZE);
 
 	/*
@@ -1070,14 +1060,14 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	 * and to make this a little faster. Realistically, it
 	 * should not matter.
 	 */
-	xfer->c_flags |= C_IMMEDIATE;
+	xfer->c_flags |= C_RECOVERY;
 	xfer->c_ata_c.r_command = WDCC_READ_LOG_EXT;
 	xfer->c_ata_c.r_lba = page = WDCC_LOG_PAGE_NCQ;
 	xfer->c_ata_c.r_st_bmask = WDCS_DRDY;
 	xfer->c_ata_c.r_st_pmask = WDCS_DRDY;
 	xfer->c_ata_c.r_count = 1;
 	xfer->c_ata_c.r_device = WDSD_LBA;
-	xfer->c_ata_c.flags = AT_READ | AT_LBA | AT_LBA48 | flags;
+	xfer->c_ata_c.flags = AT_READ | AT_LBA | flags;
 	xfer->c_ata_c.timeout = 1000; /* 1s */
 	xfer->c_ata_c.data = tb;
 	xfer->c_ata_c.bcount = DEV_BSIZE;
@@ -1085,11 +1075,11 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
 						xfer) != ATACMD_COMPLETE) {
 		rv = EAGAIN;
-		goto out2;
+		goto out;
 	}
 	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		rv = EINVAL;
-		goto out2;
+		goto out;
 	}
 
 	cksum = 0;
@@ -1100,23 +1090,26 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 		    "invalid checksum %x for READ LOG EXT page %x\n",
 		    cksum, page);
 		rv = EINVAL;
-		goto out2;
+		goto out;
 	}
 
 	if (tb[0] & WDCC_LOG_NQ) {
 		/* not queued command */
 		rv = EOPNOTSUPP;
-		goto out2;
+		goto out;
 	}
 
 	*slot = tb[0] & 0x1f;
 	*status = tb[2];
 	*err = tb[3];
 
+	KASSERTMSG((*status & WDCS_ERR),
+	    "%s: non-error command slot %d reported by READ LOG EXT page %x: "
+	    "err %x status %x\n",
+	    device_xname(drvp->drv_softc), *slot, page, *err, *status);
+
 	rv = 0;
 
-out2:
-	free(tb, DEV_BSIZE);
 out:
 	ata_free_xfer(chp, xfer);
 	return rv;
@@ -1180,12 +1173,15 @@ ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	mutex_enter(&chp->ch_lock);
 
-	/* insert at the end of command list unless specially requested */
-	if (xfer->c_flags & C_IMMEDIATE)
-		TAILQ_INSERT_HEAD(&chp->ch_queue->queue_xfer, xfer,
+	/*
+	 * Standard commands are added to the end of command list, but
+	 * recovery commands must be run immediatelly.
+	 */
+	if ((xfer->c_flags & C_RECOVERY) == 0)
+		TAILQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer,
 		    c_xferchain);
 	else
-		TAILQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer,
+		TAILQ_INSERT_HEAD(&chp->ch_queue->queue_xfer, xfer,
 		    c_xferchain);
 	ATADEBUG_PRINT(("atastart from ata_exec_xfer, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
@@ -1255,7 +1251,7 @@ atastart(struct ata_channel *chp)
 	if ((xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) == NULL)
 		goto out;
 
-	immediate = ISSET(xfer->c_flags, C_IMMEDIATE);
+	immediate = ISSET(xfer->c_flags, C_RECOVERY);
 
 	/* is the queue frozen? */
 	if (__predict_false(!immediate && chq->queue_freeze > 0)) {
@@ -1330,28 +1326,56 @@ out:
 
 /*
  * Does it's own locking, does not require splbio().
- * wait - whether to block waiting for free xfer
+ * flags - whether to block waiting for free xfer
  * openings - limit of openings supported by device, <= 0 means tag not
  *     relevant, and any available xfer can be returned
  */
 struct ata_xfer *
-ata_get_xfer_ext(struct ata_channel *chp, bool wait, int8_t openings)
+ata_get_xfer_ext(struct ata_channel *chp, int flags, uint8_t openings)
 {
 	struct ata_queue *chq = chp->ch_queue;
 	struct ata_xfer *xfer = NULL;
 	uint32_t avail, slot, mask;
 	int error;
 
+	ATADEBUG_PRINT(("%s: channel %d flags %x openings %d\n",
+	    __func__, chp->ch_channel, flags, openings),
+	    DEBUG_XFERS);
+
 	mutex_enter(&chp->ch_lock);
 
-retry:
-	mask = (openings > 0)
-	    ? (__BIT(MIN(ATA_MAX_OPENINGS, openings)) - 1)
-	    : chq->queue_xfers_avail;
+	/*
+	 * When openings is just 1, can't reserve anything for
+	 * recovery. KASSERT() here is to catch code which naively
+	 * relies on C_RECOVERY to work under this condition.
+	 */
+	KASSERT((flags & C_RECOVERY) == 0 || chq->queue_openings > 1);
 
+	if (flags & C_RECOVERY) {
+		mask = UINT32_MAX;
+	} else {
+		if (openings <= 0 || openings > chq->queue_openings)
+			openings = chq->queue_openings;
+
+		if (openings > 1) {
+			mask = __BIT(openings - 1) - 1;
+		} else {
+			mask = UINT32_MAX;
+		}
+	}
+
+retry:
 	avail = ffs32(chq->queue_xfers_avail & mask);
 	if (avail == 0) {
-		if (wait) {
+		/*
+		 * Catch code which tries to get another recovery xfer while
+		 * already holding one (wrong recursion).
+		 */
+		KASSERTMSG((flags & C_RECOVERY) == 0,
+		    "recovery xfer busy openings %d mask %x avail %x",
+		    openings, mask, chq->queue_xfers_avail);
+
+		if (flags & C_WAIT) {
 			chq->queue_flags |= QF_NEED_XFER;
 			error = cv_wait_sig(&chq->queue_busy, &chp->ch_lock);
 			if (error == 0)
@@ -1786,7 +1810,7 @@ ata_print_modes(struct ata_channel *chp)
 
 		if (drvp->drive_flags & ATA_DRIVE_NCQ) {
 			aprint_verbose(", NCQ (%d tags)%s",
-			    chp->ch_queue->queue_openings,
+			    ATA_REAL_OPENINGS(chp->ch_queue->queue_openings),
 			    (drvp->drive_flags & ATA_DRIVE_NCQ_PRIO)
 			    ? " w/PRIO" : "");
 		} else if (drvp->drive_flags & ATA_DRIVE_WFUA)
