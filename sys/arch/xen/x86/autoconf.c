@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 2017/05/23 08:48:35 nonaka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 2017/07/29 06:29:32 maxv Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,10 +45,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2017/05/23 08:48:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2017/07/29 06:29:32 maxv Exp $");
 
 #include "opt_xen.h"
-#include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
 #include "opt_nfs_boot.h"
 
@@ -58,9 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2017/05/23 08:48:35 nonaka Exp $")
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/conf.h>
-#ifdef COMPAT_OLDBOOT
-#include <sys/reboot.h>
-#endif
 #include <sys/device.h>
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
