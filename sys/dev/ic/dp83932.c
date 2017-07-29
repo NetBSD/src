@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.40 2017/05/23 02:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.41 2017/07/29 01:34:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.40 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.41 2017/07/29 01:34:49 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -786,8 +786,10 @@ sonic_rxintr(struct sonic_softc *sc)
 				goto dropit;
 			if (len > (MHLEN - 2)) {
 				MCLGET(m, M_DONTWAIT);
-				if ((m->m_flags & M_EXT) == 0)
+				if ((m->m_flags & M_EXT) == 0) {
+					m_freem(m);
 					goto dropit;
+				}
 			}
 			m->m_data += 2;
 			/*
