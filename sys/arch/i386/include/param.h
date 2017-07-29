@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.81 2017/06/14 12:27:24 maxv Exp $	*/
+/*	$NetBSD: param.h,v 1.82 2017/07/29 13:05:15 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,10 +79,6 @@
 #if defined(_KERNEL_OPT)
 #include "opt_kernbase.h"
 #endif /* defined(_KERNEL_OPT) */
-
-#ifdef KERNBASE_LOCORE
-#error "You should only re-define KERNBASE"
-#endif
 
 #ifndef	KERNBASE
 #define	KERNBASE	0xc0000000UL	/* start of kernel virtual space */
