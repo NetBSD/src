@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.60 2017/07/28 15:34:06 riastradh Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.61 2017/07/29 04:02:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.60 2017/07/28 15:34:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.61 2017/07/29 04:02:49 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -524,8 +524,6 @@ static int
 sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
 {
         struct vfsconf vfc;
-        extern const char * const mountcompatnames[];
-        extern int nmountcompatnames;
 	struct sysctlnode node;
 	struct vfsops *vfsp;
 	u_int vfsnum;
@@ -560,7 +558,6 @@ sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
 void
 compat_sysctl_vfs(struct sysctllog **clog)
 {
-	extern int nmountcompatnames;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
