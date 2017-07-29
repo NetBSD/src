@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.130 2016/12/13 20:42:19 christos Exp $
+# $NetBSD: GENERIC,v 1.131 2017/07/29 18:08:58 maxv Exp $
 #
 # GENERIC machine description file
 # 
@@ -127,7 +127,6 @@ options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
