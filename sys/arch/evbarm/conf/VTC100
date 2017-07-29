@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VTC100,v 1.12 2017/03/22 22:53:06 sevan Exp $
+#	$NetBSD: VTC100,v 1.13 2017/07/29 18:08:57 maxv Exp $
 #
 #	VTC100 -- NEXCOM VTC100 Kernel
 #
@@ -100,7 +100,6 @@ options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options

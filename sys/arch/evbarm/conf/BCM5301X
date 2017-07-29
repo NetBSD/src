@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM5301X,v 1.27 2017/06/26 03:15:16 sevan Exp $
+#	$NetBSD: BCM5301X,v 1.28 2017/07/29 18:08:57 maxv Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -105,7 +105,6 @@ options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options

@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.85 2016/12/13 20:42:17 christos Exp $
+#	$NetBSD: MALTA,v 1.86 2017/07/29 18:08:57 maxv Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.85 $"
+#ident 		"MALTA-$Revision: 1.86 $"
 
 maxusers	32
 
@@ -103,9 +103,6 @@ options 	INET		# Internet protocols
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
-
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
-#options 	TCP_COMPAT_42
 
 # JIT compiler for bpfilter
 #options	SLJIT

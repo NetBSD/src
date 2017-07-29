@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.44 2015/08/07 13:53:28 maxv Exp $
+# $NetBSD: INSTALL,v 1.45 2017/07/29 18:08:56 maxv Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -72,7 +72,6 @@ options 	INET6		# IPV6
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.19 2017/02/25 07:55:06 skrll Exp $
+#	$NetBSD: ARMADAXP,v 1.20 2017/07/29 18:08:57 maxv Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -97,7 +97,6 @@ options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_30	# NetBSD 3.0,
 #options 	COMPAT_40	# NetBSD 4.0, and
 options 	COMPAT_50	# NetBSD 5.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options

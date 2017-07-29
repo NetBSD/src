@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.49 2017/02/19 07:47:00 rin Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.50 2017/07/29 18:08:57 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.49 $"
+#ident 		"GENERIC-$Revision: 1.50 $"
 
 maxusers	32		# estimated number of users
 
@@ -107,7 +107,6 @@ options 	COMPAT_20	# NetBSD 2.0, and
 options 	COMPAT_30	# NetBSD 3.0 binary compatibility
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 #options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 #options 	COMPAT_SVR4	# binary compatibility with SVR4

@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS600,v 1.22 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: OPENBLOCKS600,v 1.23 2017/07/29 18:08:57 maxv Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs600"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS600-$Revision: 1.22 $"
+#ident 		"OPENBLOCKS600-$Revision: 1.23 $"
 
 maxusers	32
 
@@ -127,7 +127,6 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.

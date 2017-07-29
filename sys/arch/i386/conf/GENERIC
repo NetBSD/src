@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1160 2017/07/29 12:00:56 maxv Exp $
+# $NetBSD: GENERIC,v 1.1161 2017/07/29 18:08:58 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1160 $"
+#ident		"GENERIC-$Revision: 1.1161 $"
 
 maxusers	64		# estimated number of users
 
@@ -141,7 +141,6 @@ options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC

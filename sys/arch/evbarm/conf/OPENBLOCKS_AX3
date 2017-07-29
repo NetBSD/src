@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.20 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.21 2017/07/29 18:08:57 maxv Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -113,7 +113,6 @@ options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 options 	COMPAT_LINUX	# binary compatibility with Linux

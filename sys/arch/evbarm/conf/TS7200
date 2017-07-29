@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.67 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: TS7200,v 1.68 2017/07/29 18:08:57 maxv Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -97,7 +97,6 @@ options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Shared memory options
 

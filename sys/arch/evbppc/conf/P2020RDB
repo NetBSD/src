@@ -1,4 +1,4 @@
-#	$NetBSD: P2020RDB,v 1.26 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: P2020RDB,v 1.27 2017/07/29 18:08:57 maxv Exp $
 #
 #	P2020RBD -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020RBD-$Revision: 1.26 $"
+ident 		"P2020RBD-$Revision: 1.27 $"
 
 maxusers	32
 
@@ -63,7 +63,6 @@ options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_43	# 4.3BSD binary compatibility.
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Wedge support

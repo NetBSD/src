@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.49 2016/12/13 20:42:16 christos Exp $
+# $NetBSD: NULL,v 1.50 2017/07/29 18:08:56 maxv Exp $
 #
 # NULL machine description file
 # 
@@ -7,7 +7,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 #options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.49 $"
+#ident          "GENERIC-$Revision: 1.50 $"
 
 maxusers	8
 
@@ -77,7 +77,6 @@ options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 #options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #

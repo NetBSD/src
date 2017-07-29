@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.60 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: INSTALL,v 1.61 2017/07/29 18:08:56 maxv Exp $
 #
 # First try for BeBox config file
 #
@@ -35,7 +35,6 @@ options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43	# 4.3BSD binary compatibility
 #options 	COMPAT_09	# NetBSD 0.9,
 #options 	COMPAT_10	# NetBSD 1.0,

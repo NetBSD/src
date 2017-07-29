@@ -1,4 +1,4 @@
-# $NetBSD: NITROGEN6X,v 1.10 2017/02/19 07:47:00 rin Exp $
+# $NetBSD: NITROGEN6X,v 1.11 2017/07/29 18:08:57 maxv Exp $
 #
 # Nitrogen6X
 # - http://boundarydevices.com/products/nitrogen6x-board-imx6-arm-cortex-a9-sbc/
@@ -91,7 +91,6 @@ options 	COMPAT_NETBSD32 # allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 #options 	COMPAT_NDIS	# NDIS network driver
