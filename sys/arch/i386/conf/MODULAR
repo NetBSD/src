@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.3 2016/09/15 20:03:36 jdolecek Exp $
+# $NetBSD: MODULAR,v 1.4 2017/07/29 12:00:56 maxv Exp $
 #
 # MODULAR kernel
 # This kernel config prefers loading kernel drivers from file system.
@@ -15,7 +15,6 @@ no options	NFSSERVER	# Network File System server
 # compatibility options, built as modules
 #
 no options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
-no options 	COMPAT_SVR4	# binary compatibility with SVR4
 no options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 no options 	COMPAT_LINUX	# binary compatibility with Linux
 
