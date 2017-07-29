@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.37 2014/01/13 10:33:03 njoly Exp $ */
+/*	$NetBSD: linux_time.c,v 1.38 2017/07/29 01:14:59 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.37 2014/01/13 10:33:03 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.38 2017/07/29 01:14:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -79,6 +79,9 @@ linux_sys_gettimeofday(struct lwp *l, const struct linux_sys_gettimeofday_args *
 	}
 
 	if (SCARG(uap, tzp)) {
+		if (kauth_authorize_generic(kauth_cred_get(),
+			KAUTH_GENERIC_ISSUSER, NULL) != 0)
+			return (EPERM);
 		error = copyout(&linux_sys_tz, SCARG(uap, tzp), sizeof(linux_sys_tz));
 		if (error)
 			return (error);
