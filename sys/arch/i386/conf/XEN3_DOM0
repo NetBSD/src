@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.114 2017/07/28 14:13:13 maxv Exp $
+#	$NetBSD: XEN3_DOM0,v 1.115 2017/07/29 05:59:08 maxv Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -93,7 +93,7 @@ options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+#options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
