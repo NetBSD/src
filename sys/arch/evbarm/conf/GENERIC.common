@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.18 2017/03/22 16:07:12 skrll Exp $
+#	$NetBSD: GENERIC.common,v 1.19 2017/07/29 18:08:57 maxv Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -81,7 +81,6 @@ options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options

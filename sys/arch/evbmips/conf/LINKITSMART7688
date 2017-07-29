@@ -1,4 +1,4 @@
-#	$NetBSD: LINKITSMART7688,v 1.2 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: LINKITSMART7688,v 1.3 2017/07/29 18:08:57 maxv Exp $
 #
 # MediaTek MT7688
 #
@@ -75,7 +75,6 @@ options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 #options 	COMPAT_SVR4	# binary compatibility with SVR4
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
