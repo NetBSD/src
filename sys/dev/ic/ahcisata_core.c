@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.23 2017/07/29 15:07:46 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.24 2017/07/29 16:50:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.23 2017/07/29 15:07:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.24 2017/07/29 16:50:32 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1609,7 +1609,6 @@ ahci_channel_recover(struct ahci_softc *sc, struct ata_channel *chp, int tfd)
 		/*
 		 * Failed to get resources to run the recovery command, must
 		 * reset the drive. This will also kill all still outstanding
-
 		 * transfers.
 		 */
 reset:
