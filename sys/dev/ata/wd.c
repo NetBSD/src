@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.29 2017/07/23 13:50:43 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.30 2017/07/29 12:51:22 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.29 2017/07/23 13:50:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.30 2017/07/29 12:51:22 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -662,7 +662,7 @@ wdstart(device_t self)
 
 	while (bufq_peek(wd->sc_q) != NULL) {
 		/* First try to get xfer. Limit to drive openings iff NCQ. */
-		xfer = ata_get_xfer_ext(wd->drvp->chnl_softc, false,
+		xfer = ata_get_xfer_ext(wd->drvp->chnl_softc, 0,
 		    ISSET(wd->drvp->drive_flags, ATA_DRIVE_NCQ)
 		        ? wd->drvp->drv_openings : 0);
 		if (xfer == NULL)
@@ -839,17 +839,11 @@ retry2:
 			wdperror(wd, xfer);
 
 		if (xfer->c_retries < WDIORETRIES) {
-			int timo;
+			xfer->c_retries++;
 
-			if (xfer->c_bio.error == REQUEUE) {
-				/* rerun ASAP, and do not count as retry */
-				timo = 1;
-			} else {
-				xfer->c_retries++;
-				timo = RECOVERYTIME;
-			}
-
-			callout_reset(&xfer->c_retry_callout, timo,
+			/* Rerun ASAP if just requeued */
+			callout_reset(&xfer->c_retry_callout,
+			    (xfer->c_bio.error == REQUEUE) ? 1 : RECOVERYTIME,
 			    wdbiorestart, xfer);
 
 			mutex_exit(&wd->sc_lock);
@@ -894,7 +888,7 @@ out:
 	case NOERROR:
 noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_retries > 0)
 			aprint_error_dev(wd->sc_dev,
-			    "soft error (corrected)\n");
+			    "soft error (corrected) slot %d\n", xfer->c_slot);
 #ifdef WD_CHAOS_MONKEY
 		KASSERT((xfer->c_flags & C_CHAOS) == 0);
 #endif
@@ -1692,7 +1686,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		wd->drvp->state = RESET;
 	}
 
-	xfer = ata_get_xfer_ext(wd->drvp->chnl_softc, false, 0);
+	xfer = ata_get_xfer_ext(wd->drvp->chnl_softc, 0, 0);
 	if (xfer == NULL) {
 		printf("%s: no xfer\n", __func__);
 		return EAGAIN;
