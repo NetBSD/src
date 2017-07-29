@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.7 2017/04/16 23:43:57 riastradh Exp $	*/
+/*	$NetBSD: common.h,v 1.8 2017/07/29 21:04:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -81,6 +81,16 @@
 #define	SET(t, f)	((t) |= (f))
 #define	CLR(t, f)	((t) &= ~(f))
 #define	ISSET(t, f)	((t) & (f))
+
+/*
+ * Bounds checks for arithmetic.
+ */
+#define	ADD_OK(T, A, B)	((A) <= __type_max(T) - (B))
+
+#define	MUL_OK(T, A, B)	((A) <= __type_max(T)/(B))
+
+#define	HOWMANY(X, N)		(((X) + ((N) - 1))/(N))
+#define	TOOMANY(T, X, N, M)	(!ADD_OK(T, X, (N) - 1) || HOWMANY(X, N) > (M))
 
 /*
  * We require:

@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.28 2017/04/17 00:02:45 riastradh Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.29 2017/07/29 21:04:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.28 2017/04/17 00:02:45 riastradh Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.29 2017/07/29 21:04:07 riastradh Exp $");
 
 #include <sys/endian.h>
 #include <sys/stat.h>
@@ -148,7 +148,7 @@ vndcompress(int argc, char **argv, const struct options *O)
 		err(1, "malloc uncompressed buffer");
 
 	/* XXX compression ratio bound */
-	__CTASSERT(MAX_BLOCKSIZE <= (SIZE_MAX / 2));
+	__CTASSERT(MUL_OK(size_t, 2, MAX_BLOCKSIZE));
 	void *const compbuf = malloc(2 * (size_t)S->blocksize);
 	if (compbuf == NULL)
 		err(1, "malloc compressed buffer");
@@ -178,10 +178,11 @@ vndcompress(int argc, char **argv, const struct options *O)
 
 		/* Fail noisily if we might be about to overflow.  */
 		/* XXX compression ratio bound */
-		__CTASSERT(MAX_BLOCKSIZE <= (UINTMAX_MAX / 2));
+		__CTASSERT(MUL_OK(uint64_t, 2, MAX_BLOCKSIZE));
+		__CTASSERT(MUL_OK(off_t, 2, MAX_BLOCKSIZE));
 		assert(S->offset <= MIN(UINT64_MAX, OFF_MAX));
-		if ((2 * (uintmax_t)readsize) >
-		    (MIN(UINT64_MAX, OFF_MAX) - S->offset))
+		if (!ADD_OK(uint64_t, S->offset, 2*(uintmax_t)readsize) ||
+		    !ADD_OK(off_t, S->offset, 2*(uintmax_t)readsize))
 			errx(1, "blkno %"PRIu32" may overflow: %ju + 2*%ju",
 			    S->blkno, (uintmax_t)S->offset,
 			    (uintmax_t)readsize);
@@ -197,8 +198,9 @@ vndcompress(int argc, char **argv, const struct options *O)
 		 * (b) how far we are now in the output file, and
 		 * (c) where the last block ended.
 		 */
-		assert(S->blkno <= (UINT32_MAX - 1));
-		assert(complen <= (MIN(UINT64_MAX, OFF_MAX) - S->offset));
+		assert(ADD_OK(uint32_t, S->blkno, 1));
+		assert(ADD_OK(uint64_t, S->offset, complen));
+		assert(ADD_OK(off_t, (off_t)S->offset, (off_t)complen));
 		assert((S->blkno + 1) < S->n_offsets);
 	    {
 		sigset_t old_sigmask;
@@ -231,7 +233,8 @@ vndcompress(int argc, char **argv, const struct options *O)
 			    (size_t)n_written, n_padding);
 
 		/* Account for the extra bytes in the output file.  */
-		assert(n_padding <= (MIN(UINT64_MAX, OFF_MAX) - S->offset));
+		assert(ADD_OK(uint64_t, S->offset, n_padding));
+		assert(ADD_OK(off_t, (off_t)S->offset, (off_t)n_padding));
 	    {
 		sigset_t old_sigmask;
 		block_signals(&old_sigmask);
@@ -304,14 +307,13 @@ info_signal_handler(int signo __unused)
 
 	/* Carefully calculate our I/O position.  */
 	assert(S->blocksize > 0);
-	__CTASSERT(MAX_N_BLOCKS <= (UINT64_MAX / MAX_BLOCKSIZE));
+	__CTASSERT(MUL_OK(uint64_t, MAX_N_BLOCKS, MAX_BLOCKSIZE));
 	const uint64_t nread = ((uint64_t)S->blkno * (uint64_t)S->blocksize);
 
 	assert(S->n_blocks > 0);
-	__CTASSERT(CLOOP2_OFFSET_TABLE_OFFSET <=
-	    (UINT64_MAX / sizeof(uint64_t)));
-	__CTASSERT(MAX_N_BLOCKS <= ((UINT64_MAX / sizeof(uint64_t)) -
-		CLOOP2_OFFSET_TABLE_OFFSET));
+	__CTASSERT(MUL_OK(uint64_t, MAX_N_BLOCKS, sizeof(uint64_t)));
+	__CTASSERT(ADD_OK(uint64_t, CLOOP2_OFFSET_TABLE_OFFSET,
+		MAX_N_BLOCKS*sizeof(uint64_t)));
 	const uint64_t nwritten = (S->offset <= (CLOOP2_OFFSET_TABLE_OFFSET +
 		((uint64_t)S->n_blocks * sizeof(uint64_t)))?
 	    0 : S->offset);
@@ -324,7 +326,9 @@ info_signal_handler(int signo __unused)
 		: 0);
 
 	/* Format the status.  */
-	assert(S->n_checkpointed_blocks <= (UINT64_MAX / S->blocksize));
+	assert(S->n_checkpointed_blocks <= MAX_N_BLOCKS);
+	assert(S->blocksize <= MAX_BLOCKSIZE);
+	__CTASSERT(MUL_OK(uint64_t, MAX_N_BLOCKS, MAX_BLOCKSIZE));
 	const int n = snprintf_ss(buf, sizeof(buf),
 	    "vndcompress: read %"PRIu64" bytes, wrote %"PRIu64" bytes, "
 	    "compression ratio %"PRIu64"%% (checkpointed %"PRIu64" bytes)\n",
@@ -360,8 +364,9 @@ checkpoint_signal_handler(int signo __unused)
 	assert(S->cloop2_fd >= 0);
 
 	/* Take a checkpoint.  */
-	assert(S->blocksize > 0);
-	assert(S->blkno <= (UINT64_MAX / S->blocksize));
+	assert(S->blkno <= MAX_N_BLOCKS);
+	assert(S->blocksize <= MAX_BLOCKSIZE);
+	__CTASSERT(MUL_OK(uint64_t, MAX_N_BLOCKS, MAX_BLOCKSIZE));
 	warnx_ss("checkpointing %"PRIu64" bytes",
 	    ((uint64_t)S->blkno * (uint64_t)S->blocksize));
 	compress_checkpoint(S);
@@ -465,15 +470,16 @@ compress_init(int argc, char **argv, const struct options *O,
 	assert(S->size <= OFF_MAX);
 
 	/* Find number of full blocks and whether there's a partial block.  */
-	S->n_full_blocks = (S->size / S->blocksize);
-	assert(S->n_full_blocks <=
-	    (UINT32_MAX - ((S->size % S->blocksize) > 0)));
-	S->n_blocks = (S->n_full_blocks + ((S->size % S->blocksize) > 0));
-	assert(S->n_full_blocks <= S->n_blocks);
-
-	if (S->n_blocks > MAX_N_BLOCKS)
+	__CTASSERT(0 < MIN_BLOCKSIZE);
+	assert(0 < S->blocksize);
+	if (TOOMANY(off_t, (off_t)S->size, (off_t)S->blocksize,
+		(off_t)MAX_N_BLOCKS))
 		errx(1, "image too large for block size %"PRIu32": %"PRIu64,
 		    S->blocksize, S->size);
+	__CTASSERT(MAX_N_BLOCKS <= UINT32_MAX);
+	S->n_full_blocks = S->size/S->blocksize;
+	S->n_blocks = HOWMANY(S->size, S->blocksize);
+	assert(S->n_full_blocks <= S->n_blocks);
 	assert(S->n_blocks <= MAX_N_BLOCKS);
 
 	/* Choose a window size.  */
@@ -481,10 +487,10 @@ compress_init(int argc, char **argv, const struct options *O,
 	    DEF_WINDOW_SIZE);
 
 	/* Create an offset table for the blocks; one extra for the end.  */
-	__CTASSERT(MAX_N_BLOCKS <= (UINT32_MAX - 1));
+	__CTASSERT(ADD_OK(uint32_t, MAX_N_BLOCKS, 1));
 	S->n_offsets = (S->n_blocks + 1);
 	__CTASSERT(MAX_N_OFFSETS == (MAX_N_BLOCKS + 1));
-	__CTASSERT(MAX_N_OFFSETS <= (SIZE_MAX / sizeof(uint64_t)));
+	__CTASSERT(MUL_OK(size_t, MAX_N_OFFSETS, sizeof(uint64_t)));
 	__CTASSERT(CLOOP2_OFFSET_TABLE_OFFSET <= OFFTAB_MAX_FDPOS);
 	offtab_init(&S->offtab, S->n_offsets, window_size, S->cloop2_fd,
 	    CLOOP2_OFFSET_TABLE_OFFSET);
@@ -607,10 +613,10 @@ compress_restart(struct compress_state *S)
 	if (!offtab_prepare_get(&S->offtab, 0))
 		return false;
 	const uint64_t first_offset = offtab_get(&S->offtab, 0);
-	__CTASSERT(MAX_N_OFFSETS <= UINT64_MAX/sizeof(uint64_t));
-	__CTASSERT(sizeof(struct cloop2_header) <=
-	    (UINT64_MAX - MAX_N_OFFSETS*sizeof(uint64_t)));
-	const uint64_t expected = sizeof(struct cloop2_header) + 
+	__CTASSERT(MUL_OK(uint64_t, MAX_N_OFFSETS, sizeof(uint64_t)));
+	__CTASSERT(ADD_OK(uint64_t, sizeof(struct cloop2_header),
+		MAX_N_OFFSETS*sizeof(uint64_t)));
+	const uint64_t expected = sizeof(struct cloop2_header) +
 	    ((uint64_t)S->n_offsets * sizeof(uint64_t));
 	if (first_offset != expected) {
 		warnx("first offset is not 0x%"PRIx64": 0x%"PRIx64,
@@ -638,7 +644,7 @@ compress_restart(struct compress_state *S)
 				return false;
 			}
 			/* XXX compression ratio bound */
-			__CTASSERT(MAX_BLOCKSIZE <= (SIZE_MAX / 2));
+			__CTASSERT(MUL_OK(size_t, 2, MAX_BLOCKSIZE));
 			if ((2 * (size_t)S->blocksize) <= (end - start)) {
 				warnx("block %"PRIu32" too large:"
 				    " %"PRIu64" bytes"
@@ -771,7 +777,7 @@ compress_block(int in_fd, int out_fd, uint32_t blkno, uint32_t blocksize,
 
 	/* Compress the block.  */
 	/* XXX compression ratio bound */
-	__CTASSERT(MAX_BLOCKSIZE <= (ULONG_MAX / 2));
+	__CTASSERT(MUL_OK(unsigned long, 2, MAX_BLOCKSIZE));
 	const unsigned long uncomplen =
 	    (VNDCOMPRESS_COMPAT? blocksize : readsize); /* XXX */
 	unsigned long complen = (uncomplen * 2);
