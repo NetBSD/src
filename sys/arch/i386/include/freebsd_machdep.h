@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.h,v 1.13 2014/02/12 23:24:09 dsl Exp $	*/
+/*	$NetBSD: freebsd_machdep.h,v 1.14 2017/07/29 13:05:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -109,9 +109,6 @@ struct freebsd_sigframe {
 	sig_t	sf_handler;
 	struct	freebsd_sigcontext sf_sc;
 };
-
-/* sys/i386/include/exec.h */
-#define FREEBSD___LDPGSZ	4096
 
 void freebsd_syscall_intern(struct proc *);
 
