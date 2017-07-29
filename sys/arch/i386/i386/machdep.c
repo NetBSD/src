@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.785 2017/07/22 09:01:46 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.786 2017/07/29 06:29:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.785 2017/07/22 09:01:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.786 2017/07/29 06:29:32 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -336,14 +336,6 @@ native_loader(int bl_boothowto, int bl_bootdev,
 #define RELOC(type, x) ((type)((vaddr_t)(x) - KERNBASE))
 
 	*RELOC(int *, &boothowto) = bl_boothowto;
-
-#ifdef COMPAT_OLDBOOT
-	/*
-	 * Pre-1.3 boot loaders gave the boot device as a parameter
-	 * (instead of a bootinfo entry).
-	 */
-	*RELOC(int *, &bootdev) = bl_bootdev;
-#endif
 
 	/*
 	 * The boot loader provides a physical, non-relocated address
