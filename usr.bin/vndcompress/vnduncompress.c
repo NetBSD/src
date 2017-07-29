@@ -1,4 +1,4 @@
-/*	$NetBSD: vnduncompress.c,v 1.13 2017/04/17 00:03:33 riastradh Exp $	*/
+/*	$NetBSD: vnduncompress.c,v 1.14 2017/07/29 21:04:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vnduncompress.c,v 1.13 2017/04/17 00:03:33 riastradh Exp $");
+__RCSID("$NetBSD: vnduncompress.c,v 1.14 2017/07/29 21:04:07 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -141,7 +141,7 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 
 	/* Allocate compression buffers.  */
 	/* XXX compression ratio bound */
-	__CTASSERT(MAX_BLOCKSIZE <= (SIZE_MAX / 2));
+	__CTASSERT(MUL_OK(size_t, 2, MAX_BLOCKSIZE));
 	void *const compbuf = malloc(2 * (size_t)blocksize);
 	if (compbuf == NULL)
 		err(1, "malloc compressed buffer");
@@ -154,9 +154,9 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 	/*
 	 * Uncompress the blocks.
 	 */
-	__CTASSERT(MAX_N_OFFSETS <= (OFF_MAX / sizeof(uint64_t)));
-	__CTASSERT(sizeof(header) <=
-	    (OFF_MAX - (MAX_N_OFFSETS * sizeof(uint64_t))));
+	__CTASSERT(MUL_OK(off_t, MAX_N_OFFSETS, sizeof(uint64_t)));
+	__CTASSERT(ADD_OK(off_t, sizeof(header),
+		(MAX_N_OFFSETS * sizeof(uint64_t))));
 	__CTASSERT(OFF_MAX <= UINT64_MAX);
 	uint64_t offset = (sizeof(header) +
 	    ((uint64_t)n_offsets * sizeof(uint64_t)));
@@ -175,7 +175,7 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 			    ": 0x%"PRIx64,
 			    blkno, start);
 		/* XXX compression ratio bound */
-		__CTASSERT(MAX_BLOCKSIZE <= (SIZE_MAX / 2));
+		__CTASSERT(MUL_OK(size_t, 2, MAX_BLOCKSIZE));
 		if ((2 * (size_t)blocksize) <= (end - start))
 			errx(1, "block %"PRIu32" too large"
 			    ": %"PRIu64" bytes from 0x%"PRIx64" to 0x%"PRIx64,
