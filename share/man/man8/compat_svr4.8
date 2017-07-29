@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_svr4.8,v 1.28 2017/07/29 12:15:12 maxv Exp $
+.\"	$NetBSD: compat_svr4.8,v 1.29 2017/07/29 22:47:55 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
 .\" All rights reserved.
@@ -29,10 +29,9 @@
 .Dt COMPAT_SVR4 8
 .Os
 .Sh NAME
-.Nm compat_svr4
-.Nd setup procedure for running SVR4/iBCS2 binaries
+.Nm compat_svr4 ,
 .Nm compat_svr4_32
-.Nd setup procedure for running 32-bit SVR4/iBCS2 binaries
+.Nd setup procedure for running (32-bit) SVR4/iBCS2 binaries
 .Sh DESCRIPTION
 .Nx
 supports running SVR4/iBCS2 binaries.
@@ -144,11 +143,8 @@ Make the necessary directories:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It (me@netbsd) mkdir -p /emul/svr4/{dev,etc}
-.br
 .It (me@netbsd) mkdir -p /emul/svr4/usr/{bin,lib,ucblib}
-.br
 .It (me@netbsd) mkdir -p /emul/svr4/usr/openwin/{bin,lib}
-.br
 .It (me@netbsd) mkdir -p /emul/svr4/usr/dt/{bin,lib}
 .El
 .Pp
@@ -157,37 +153,25 @@ Copy files from an svr4 system:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It (me@svr4) cd /usr/lib
-.br
 .It (me@svr4) tar -cf -\ . | \e
-.in +5
 .It rsh netbsd 'cd /emul/svr4/usr/lib && tar -xpf -'
-.in -5
 .El
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It (me@svr4) cd /usr/ucblib
-.br
 .It (me@svr4) tar -cf -\ . | \e
-.in +5
 .It rsh netbsd 'cd /emul/svr4/usr/ucblib && tar -xpf -'
-.in -5
 .El
 .Pp
 If you are running openwindows:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It (me@svr4) cd /usr/openwin/lib
-.br
 .It (me@svr4) tar -cf -\ . | \e
-.in +5
 .It rsh netbsd 'cd /emul/svr4/usr/openwin/lib && tar -xpf -'
-.in -5
 .It (me@svr4) cd /usr/dt/lib
-.br
 .It (me@svr4) tar -cf -\ . | \e
-.in +5
 .It rsh netbsd 'cd /emul/svr4/usr/dt/lib && tar -xpf -'
-.in -5
 .El
 .It
 You will also probably need the timezone files from your Solaris
@@ -195,30 +179,20 @@ system, otherwise emulated binaries will run on UTC time.
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It (me@netbsd) mkdir -p /emul/svr4/usr/share/lib/zoneinfo
-.br
 .It (me@netbsd) mkdir -p /emul/svr4/etc/default
-.br
 .It (me@svr4) cd /usr/share/lib/zoneinfo
-.br
 .It (me@solaris) tar -cf - . | \e
-.in +5
 .It rsh netbsd 'cd /emul/svr4/usr/share/lib/zoneinfo &&
 .It tar -xpf -'
-.in -5
-.br
 .It (me@netbsd) echo TZ=US/Pacific > /emul/svr4/etc/default/init
-.br
 .El
 .It
 Set up the configuration files and devices:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It (me@netbsd) cd /usr/share/examples/emul/svr4/etc
-.br
 .It (me@netbsd) cp netconfig nsswitch.conf /emul/svr4/etc
-.br
 .It (me@netbsd) cp SVR4_MAKEDEV /emul/svr4/dev
-.br
 .It (me@netbsd) cd /emul/svr4/dev && sh SVR4_MAKEDEV all
 .El
 .Pp
