@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.375 2017/07/28 03:58:54 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.376 2017/07/29 03:05:51 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.375 2017/07/28 03:58:54 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.376 2017/07/29 03:05:51 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -387,8 +387,7 @@ static int audio_set_params (struct audio_softc *, int, int,
 		 struct virtual_channel *);
 static int
 audio_query_encoding(struct audio_softc *, struct audio_encoding *);
-static int audio_set_vchan_defaults
-	(struct audio_softc *, u_int, const struct audio_format *);
+static int audio_set_vchan_defaults(struct audio_softc *, u_int);
 static int vchan_autoconfig(struct audio_softc *);
 int	au_get_lr_value(struct audio_softc *, mixer_ctrl_t *, int *, int *);
 int	au_set_lr_value(struct audio_softc *, mixer_ctrl_t *, int, int);
@@ -509,16 +508,6 @@ audioattach(device_t parent, device_t self, void *aux)
  	sc->sc_format[0].frequency_type = 1;
  	sc->sc_format[0].frequency[0] = 44100;
 
-	sc->sc_vchan_params.sample_rate = 44100;
-#if BYTE_ORDER == LITTLE_ENDIAN
-	sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_LE;
-#else
-	sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_BE;
-#endif
-	sc->sc_vchan_params.precision = 16;
-	sc->sc_vchan_params.validbits = 16;
-	sc->sc_vchan_params.channels = 2;
-
 	sc->sc_trigger_started = false;
 	sc->sc_rec_started = false;
 	sc->sc_dying = false;
@@ -535,9 +524,6 @@ audioattach(device_t parent, device_t self, void *aux)
 	vc->sc_lastinfovalid = false;
 	vc->sc_swvol = 255;
 	vc->sc_recswvol = 255;
-	sc->sc_frequency = 44100;
-	sc->sc_precision = 16;
-	sc->sc_channels = 2;
 
 	if (auconv_create_encodings(sc->sc_format, VAUDIO_NFORMATS,
 	    &sc->sc_encodings) != 0) {
@@ -4138,9 +4124,11 @@ audio_check_params(struct audio_params *p)
 	return 0;
 }
 
+/*
+ * set some parameters from sc->sc_vchan_params.
+ */
 static int
-audio_set_vchan_defaults(struct audio_softc *sc, u_int mode,
-     const struct audio_format *format)
+audio_set_vchan_defaults(struct audio_softc *sc, u_int mode)
 {
 	struct audio_chan *chan;
 	struct virtual_channel *vc;
@@ -4154,38 +4142,30 @@ audio_set_vchan_defaults(struct audio_softc *sc, u_int mode,
 		return EINVAL;
 	vc = chan->vc;
 
-	sc->sc_vchan_params.sample_rate = sc->sc_frequency;
-#if BYTE_ORDER == LITTLE_ENDIAN
-	sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_LE;
-#else
-	sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_BE;
-#endif
-	sc->sc_vchan_params.precision = sc->sc_precision;
-	sc->sc_vchan_params.validbits = sc->sc_precision;
-	sc->sc_vchan_params.channels = sc->sc_channels;
-
 	/* default parameters */
 	vc->sc_rparams = sc->sc_vchan_params;
 	vc->sc_pparams = sc->sc_vchan_params;
 	vc->sc_blkset = false;
 
 	AUDIO_INITINFO(&ai);
-	ai.record.sample_rate = sc->sc_frequency;
-	ai.record.encoding    = format->encoding;
-	ai.record.channels    = sc->sc_channels;
-	ai.record.precision   = sc->sc_precision;
+	ai.record.sample_rate = sc->sc_vchan_params.sample_rate;
+	ai.record.encoding    = sc->sc_vchan_params.encoding;
+	ai.record.channels    = sc->sc_vchan_params.channels;
+	ai.record.precision   = sc->sc_vchan_params.precision;
 	ai.record.pause	      = false;
-	ai.play.sample_rate   = sc->sc_frequency;
-	ai.play.encoding      = format->encoding;
-	ai.play.channels      = sc->sc_channels;
-	ai.play.precision     = sc->sc_precision;
+	ai.play.sample_rate   = sc->sc_vchan_params.sample_rate;
+	ai.play.encoding      = sc->sc_vchan_params.encoding;
+	ai.play.channels      = sc->sc_vchan_params.channels;
+	ai.play.precision     = sc->sc_vchan_params.precision;
 	ai.play.pause         = false;
 	ai.mode		      = mode;
 
-	sc->sc_format[0].channels = sc->sc_channels;
-	sc->sc_format[0].precision = sc->sc_precision;
-	sc->sc_format[0].validbits = sc->sc_precision;
-	sc->sc_format[0].frequency[0] = sc->sc_frequency;
+	sc->sc_format[0].encoding = sc->sc_vchan_params.encoding;
+	sc->sc_format[0].channels = sc->sc_vchan_params.channels;
+	sc->sc_format[0].precision = sc->sc_vchan_params.precision;
+	sc->sc_format[0].validbits = sc->sc_vchan_params.precision;
+	sc->sc_format[0].frequency_type = 1;
+	sc->sc_format[0].frequency[0] = sc->sc_vchan_params.sample_rate;
 
 	auconv_delete_encodings(sc->sc_encodings);
 	error = auconv_create_encodings(sc->sc_format, VAUDIO_NFORMATS,
@@ -5339,8 +5319,8 @@ audio_resume(device_t dv, const pmf_qual_t *qual)
 	sc->sc_trigger_started = false;
 	sc->sc_rec_started = false;
 
-	audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL |
-	    AUMODE_RECORD, &sc->sc_format[0]);
+	audio_set_vchan_defaults(sc,
+	    AUMODE_PLAY | AUMODE_PLAY_ALL | AUMODE_RECORD);
 
 	audio_mixer_restore(sc);
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
@@ -5667,7 +5647,7 @@ void
 mix_func(struct audio_softc *sc, struct audio_ringbuffer *cb,
 	 struct virtual_channel *vc)
 {
-	switch (sc->sc_precision) {
+	switch (sc->sc_vchan_params.precision) {
 	case 8:
 		mix_func8(sc, cb, vc);
 		break;
@@ -5719,7 +5699,7 @@ void
 recswvol_func(struct audio_softc *sc, struct audio_ringbuffer *cb,
     size_t blksize, struct virtual_channel *vc)
 {
-	switch (sc->sc_precision) {
+	switch (sc->sc_vchan_params.precision) {
 	case 8:
 		recswvol_func8(sc, cb, blksize, vc);
 		break;
@@ -5854,7 +5834,7 @@ audio_set_params(struct audio_softc *sc, int setmode, int usemode,
 
 	if (vc == chan->vc && sc->hw_if->set_params != NULL) {
 		sc->sc_ready = true;
-		if (sc->sc_precision == 8)
+		if (sc->sc_vchan_params.precision == 8)
 			play->encoding = rec->encoding = AUDIO_ENCODING_SLINEAR;
 		error = sc->hw_if->set_params(sc->hw_hdl, setmode, usemode,
  		    play, rec, pfil, rfil);
@@ -5943,7 +5923,7 @@ audio_sysctl_frequency(SYSCTLFN_ARGS)
 	node = *rnode;
 	sc = node.sysctl_data;
 
-	t = sc->sc_frequency;
+	t = sc->sc_vchan_params.sample_rate;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -5962,9 +5942,9 @@ audio_sysctl_frequency(SYSCTLFN_ARGS)
 		return EINVAL;
 	}
 
-	sc->sc_frequency = t;
-	error = audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL
-	    | AUMODE_RECORD, &sc->sc_format[0]);
+	sc->sc_vchan_params.sample_rate = t;
+	error = audio_set_vchan_defaults(sc,
+	    AUMODE_PLAY | AUMODE_PLAY_ALL | AUMODE_RECORD);
 	if (error)
 		aprint_error_dev(sc->sc_dev, "Error setting frequency, "
 				 "please check hardware capabilities\n");
@@ -5984,7 +5964,7 @@ audio_sysctl_precision(SYSCTLFN_ARGS)
 	node = *rnode;
 	sc = node.sysctl_data;
 
-	t = sc->sc_precision;
+	t = sc->sc_vchan_params.precision;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -6003,20 +5983,20 @@ audio_sysctl_precision(SYSCTLFN_ARGS)
 		return EINVAL;
 	}
 
-	sc->sc_precision = t;
+	sc->sc_vchan_params.precision = t;
 
-	if (sc->sc_precision != 8) {
- 		sc->sc_format[0].encoding =
+	if (sc->sc_vchan_params.precision != 8) {
+		sc->sc_vchan_params.encoding =
 #if BYTE_ORDER == LITTLE_ENDIAN
 			 AUDIO_ENCODING_SLINEAR_LE;
 #else
 			 AUDIO_ENCODING_SLINEAR_BE;
 #endif
 	} else
- 		sc->sc_format[0].encoding = AUDIO_ENCODING_SLINEAR_LE;
+		sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_LE;
 
-	error = audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL
-	    | AUMODE_RECORD, &sc->sc_format[0]);
+	error = audio_set_vchan_defaults(sc,
+	    AUMODE_PLAY | AUMODE_PLAY_ALL | AUMODE_RECORD);
 	if (error)
 		aprint_error_dev(sc->sc_dev, "Error setting precision, "
 				 "please check hardware capabilities\n");
@@ -6036,7 +6016,7 @@ audio_sysctl_channels(SYSCTLFN_ARGS)
 	node = *rnode;
 	sc = node.sysctl_data;
 
-	t = sc->sc_channels;
+	t = sc->sc_vchan_params.channels;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -6055,9 +6035,9 @@ audio_sysctl_channels(SYSCTLFN_ARGS)
 		return EINVAL;
 	}
 
-	sc->sc_channels = t;
-	error = audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL
-	    | AUMODE_RECORD, &sc->sc_format[0]);
+	sc->sc_vchan_params.channels = t;
+	error = audio_set_vchan_defaults(sc,
+	    AUMODE_PLAY | AUMODE_PLAY_ALL | AUMODE_RECORD);
 	if (error)
 		aprint_error_dev(sc->sc_dev, "Error setting channels, "
 				 "please check hardware capabilities\n");
@@ -6079,24 +6059,32 @@ vchan_autoconfig(struct audio_softc *sc)
 
 	mutex_enter(sc->sc_lock);
 
+#if BYTE_ORDER == LITTLE_ENDIAN
+	sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_LE;
+#else
+	sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_BE;
+#endif
+
 	for (i = 0; i < __arraycount(auto_config_precision); i++) {
-		sc->sc_precision = auto_config_precision[i];
+		sc->sc_vchan_params.precision = auto_config_precision[i];
+		sc->sc_vchan_params.validbits = auto_config_precision[i];
 		for (j = 0; j < __arraycount(auto_config_channels); j++) {
-			sc->sc_channels = auto_config_channels[j];
+			sc->sc_vchan_params.channels = auto_config_channels[j];
 			for (k = 0; k < __arraycount(auto_config_freq); k++) {
-				sc->sc_frequency = auto_config_freq[k];
+				sc->sc_vchan_params.sample_rate =
+				    auto_config_freq[k];
 				error = audio_set_vchan_defaults(sc,
 				    AUMODE_PLAY | AUMODE_PLAY_ALL |
-				    AUMODE_RECORD, &sc->sc_format[0]);
+				    AUMODE_RECORD);
 				if (vc->sc_npfilters > 0 &&
 				    (vc->sc_mpr.s.param.precision !=
-							sc->sc_precision ||
+				     sc->sc_vchan_params.precision ||
 				    vc->sc_mpr.s.param.validbits !=
-							sc->sc_precision ||
-				    vc->sc_mpr.s.param.
-					sample_rate != sc->sc_frequency ||
-				    vc->sc_mpr.s.param.
-					 channels != sc->sc_channels))
+				     sc->sc_vchan_params.precision ||
+				    vc->sc_mpr.s.param.sample_rate !=
+				     sc->sc_vchan_params.sample_rate ||
+				    vc->sc_mpr.s.param.channels !=
+				     sc->sc_vchan_params.channels))
 					error = EINVAL;
 
 				if (error == 0) {
@@ -6104,8 +6092,9 @@ vchan_autoconfig(struct audio_softc *sc)
 					    "Virtual format configured - "
 					    "Format SLINEAR, precision %d, "
 					    "channels %d, frequency %d\n",
-					    sc->sc_precision, sc->sc_channels,
-					    sc->sc_frequency);
+						sc->sc_vchan_params.precision,
+						sc->sc_vchan_params.channels,
+						sc->sc_vchan_params.sample_rate);
 					mutex_exit(sc->sc_lock);
 
 					return 0;
