@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.22 2015/08/07 14:12:04 maxv Exp $
+#	$NetBSD: XLSATX,v 1.23 2017/07/29 12:28:27 maxv Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.22 $"
+#ident 		"XLSATX-$Revision: 1.23 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -105,9 +105,6 @@ options 	INET6		# IPV6
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
-
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
-#options 	TCP_COMPAT_42
 
 # JIT compiler for bpfilter
 #options	SLJIT
