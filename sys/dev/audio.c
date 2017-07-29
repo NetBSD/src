@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.380 2017/07/29 06:33:45 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.381 2017/07/29 06:36:21 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.380 2017/07/29 06:33:45 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.381 2017/07/29 06:36:21 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -214,11 +214,15 @@ int	audiodebug = AUDIO_DEBUG;
 int	audio_idle_timeout = 30;
 #endif
 
-#define HW_LOCK(x)	if ((x) == SIMPLEQ_FIRST(&sc->sc_audiochan)->vc) \
-				mutex_enter(sc->sc_intr_lock);
+#define HW_LOCK(x)	do { \
+	if ((x) == SIMPLEQ_FIRST(&sc->sc_audiochan)->vc) \
+		mutex_enter(sc->sc_intr_lock); \
+} while (0)
 
-#define HW_UNLOCK(x)	if ((x) == SIMPLEQ_FIRST(&sc->sc_audiochan)->vc) \
-				mutex_exit(sc->sc_intr_lock);
+#define HW_UNLOCK(x)	do { \
+	if ((x) == SIMPLEQ_FIRST(&sc->sc_audiochan)->vc) \
+		mutex_exit(sc->sc_intr_lock); \
+} while (0)
 
 int	audio_blk_ms = AUDIO_BLK_MS;
 
