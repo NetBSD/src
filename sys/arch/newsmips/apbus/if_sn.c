@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.38 2017/02/22 09:45:16 nonaka Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.39 2017/07/29 02:21:30 riastradh Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.38 2017/02/22 09:45:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.39 2017/07/29 02:21:30 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -1090,7 +1090,10 @@ sonic_get(struct sn_softc *sc, void *pkt, int datalen)
 		if (datalen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
-				if (top) m_freem(top);
+				if (top)
+					m_freem(top);
+				else
+					m_freem(m);
 				return 0;
 			}
 			len = MCLBYTES;
