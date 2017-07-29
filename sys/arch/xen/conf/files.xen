@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.149 2017/07/16 14:02:48 cherry Exp $
+#	$NetBSD: files.xen,v 1.150 2017/07/29 11:54:14 maxv Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -321,9 +321,6 @@ file	arch/i386/i386/compat_16_machdep.c	compat_16 | compat_ibcs2
 
 # SVR4 binary compatibility (COMPAT_SVR4)
 include	"compat/svr4/files.svr4"
-file	arch/i386/i386/svr4_machdep.c		compat_svr4
-file	arch/i386/i386/svr4_sigcode.S		compat_svr4
-file	arch/i386/i386/svr4_syscall.c		compat_svr4
 
 # iBCS-2 binary compatibility (COMPAT_IBCS2)
 include	"compat/ibcs2/files.ibcs2"
