@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.148 2017/07/29 11:54:14 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.149 2017/07/29 12:34:34 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.148 2017/07/29 11:54:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.149 2017/07/29 12:34:34 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -840,24 +840,6 @@ begin:
 	call	_C_LABEL(init386)
 	addl	$PDE_SIZE,%esp		/* pop paddr_t */
 	addl	$NGDT*8,%esp		/* pop temporary gdt */
-
-#ifdef SAFARI_FIFO_HACK
-	movb	$5,%al
-	movw	$0x37b,%dx
-	outb	%al,%dx
-	movw	$0x37f,%dx
-	inb	%dx,%al
-	movb	%al,%cl
-
-	orb	$1,%cl
-
-	movb	$5,%al
-	movw	$0x37b,%dx
-	outb	%al,%dx
-	movw	$0x37f,%dx
-	movb	%cl,%al
-	outb	%al,%dx
-#endif /* SAFARI_FIFO_HACK */
 
 	call 	_C_LABEL(main)
 #else /* XEN */
