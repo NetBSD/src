@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.378 2017/07/29 06:00:47 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.379 2017/07/29 06:30:56 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.378 2017/07/29 06:00:47 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.379 2017/07/29 06:30:56 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -275,6 +275,7 @@ void	audio_calc_blksize(struct audio_softc *, int, struct virtual_channel *);
 void	audio_fill_silence(const struct audio_params *, uint8_t *, int);
 int	audio_silence_copyout(struct audio_softc *, int, struct uio *);
 
+static int	audio_allocbufs(struct audio_softc *, struct virtual_channel *);
 void	audio_init_ringbuffer(struct audio_softc *,
 			      struct audio_ringbuffer *, int);
 int	audio_initbufs(struct audio_softc *, struct virtual_channel *);
@@ -482,7 +483,6 @@ audioattach(device_t parent, device_t self, void *aux)
 	mixer_devinfo_t mi;
 	int iclass, mclass, oclass, rclass, props;
 	int record_master_found, record_source_found;
-	bool can_capture, can_playback;
 
 	sc = device_private(self);
 	sc->dev = self;
@@ -557,7 +557,6 @@ audioattach(device_t parent, device_t self, void *aux)
 	    hwp->query_devinfo == NULL ||
 	    hwp->get_props == NULL) {
 		aprint_error(": missing method\n");
-		sc->hw_if = NULL;
 		return;
 	}
 #endif
@@ -588,56 +587,16 @@ audioattach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	mutex_enter(sc->sc_lock);
-	can_playback = audio_can_playback(sc);
-	can_capture = audio_can_capture(sc);
-
-	if (can_playback) {
-		error = audio_alloc_ring(sc, &sc->sc_pr,
-	    	    AUMODE_PLAY, AU_RING_SIZE);
-		if (error)
-			goto bad_play;
-
-		error = audio_alloc_ring(sc, &vc->sc_mpr,
-	    	    AUMODE_PLAY, AU_RING_SIZE);
-bad_play:
-		if (error) {
-			if (sc->sc_pr.s.start != NULL)
-				audio_free_ring(sc, &sc->sc_pr);
-			sc->hw_if = NULL;
-			if (vc->sc_mpr.s.start != 0)
-				audio_free_ring(sc, &vc->sc_mpr);
-			sc->hw_if = NULL;
-			aprint_error_dev(sc->sc_dev, "could not allocate play "
-			    "buffer\n");
-			return;
-		}
+	if (audio_allocbufs(sc, vc) != 0) {
+		aprint_error_dev(sc->sc_dev,
+			"could not allocate ring buffer\n");
+		mutex_exit(sc->sc_lock);
+		return;
 	}
-	if (can_capture) {
-		error = audio_alloc_ring(sc, &sc->sc_rr,
-		    AUMODE_RECORD, AU_RING_SIZE);
-		if (error)
-			goto bad_rec;
-
-		error = audio_alloc_ring(sc, &vc->sc_mrr,
-		    AUMODE_RECORD, AU_RING_SIZE);
-bad_rec:
-		if (error) {
-			if (vc->sc_mrr.s.start != NULL)
-				audio_free_ring(sc, &vc->sc_mrr);
-			if (sc->sc_pr.s.start != NULL)
-				audio_free_ring(sc, &sc->sc_pr);
-			if (vc->sc_mpr.s.start != 0)
-				audio_free_ring(sc, &vc->sc_mpr);
-			sc->hw_if = NULL;
-			aprint_error_dev(sc->sc_dev, "could not allocate record"
-			   " buffer\n");
-			return;
-		}
-	}
+	mutex_exit(sc->sc_lock);
 
 	sc->sc_lastgain = 128;
 	sc->sc_multiuser = false;
-	mutex_exit(sc->sc_lock);
 
 	error = vchan_autoconfig(sc);
 	if (error != 0) {
@@ -1167,6 +1126,54 @@ audio_print_params(const char *s, struct audio_params *p)
 	       p->validbits, p->precision, p->sample_rate);
 }
 #endif
+
+/* Allocate all ring buffers. called from audioattach() */
+static int
+audio_allocbufs(struct audio_softc *sc, struct virtual_channel *vc)
+{
+	int error;
+
+	sc->sc_pr.s.start = NULL;
+	vc->sc_mpr.s.start = NULL;
+	sc->sc_rr.s.start = NULL;
+	vc->sc_mrr.s.start = NULL;
+
+	if (audio_can_playback(sc)) {
+		error = audio_alloc_ring(sc, &sc->sc_pr,
+		    AUMODE_PLAY, AU_RING_SIZE);
+		if (error)
+			goto bad_play1;
+
+		error = audio_alloc_ring(sc, &vc->sc_mpr,
+		    AUMODE_PLAY, AU_RING_SIZE);
+		if (error)
+			goto bad_play2;
+	}
+	if (audio_can_capture(sc)) {
+		error = audio_alloc_ring(sc, &sc->sc_rr,
+		    AUMODE_RECORD, AU_RING_SIZE);
+		if (error)
+			goto bad_rec1;
+
+		error = audio_alloc_ring(sc, &vc->sc_mrr,
+		    AUMODE_RECORD, AU_RING_SIZE);
+		if (error)
+			goto bad_rec2;
+	}
+	return 0;
+
+bad_rec2:
+	if (sc->sc_rr.s.start != NULL)
+		audio_free_ring(sc, &sc->sc_rr);
+bad_rec1:
+	if (vc->sc_mpr.s.start != NULL)
+		audio_free_ring(sc, &vc->sc_mpr);
+bad_play2:
+	if (sc->sc_pr.s.start != NULL)
+		audio_free_ring(sc, &sc->sc_pr);
+bad_play1:
+	return error;
+}
 
 int
 audio_alloc_ring(struct audio_softc *sc, struct audio_ringbuffer *r,
