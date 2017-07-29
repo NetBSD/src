@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.10 2017/07/29 03:29:49 macallan Exp $ */
+/*	$NetBSD: mgx.c,v 1.11 2017/07/29 03:32:00 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.10 2017/07/29 03:29:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.11 2017/07/29 03:32:00 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -752,7 +752,7 @@ mgx_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct mgx_softc *sc = scr->scr_cookie;
 	void *s, *d;
-	uint32_t fg, bg, scratch = (sc->sc_stride * sc->sc_height + 31) & ~31;
+	uint32_t fg, bg, scratch = (sc->sc_stride * sc->sc_height + 7) & ~7;
 	int x, y, wi, he;
 
 	wi = font->fontwidth;
@@ -785,7 +785,7 @@ mgx_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 	 * bitmaps need at least 16bit.
 	 */
 	sc->sc_buf = (sc->sc_buf + 1) & 3; /* rotate through 4 buffers */
-	scratch += sc->sc_buf * ((ri->ri_fontscale + 31) & ~31);
+	scratch += sc->sc_buf * ((ri->ri_fontscale + 7) & ~7);
 	s = WSFONT_GLYPH(c, font);
 	d = (uint8_t *)sc->sc_fbaddr + scratch;
 	memcpy(d, s, ri->ri_fontscale);
