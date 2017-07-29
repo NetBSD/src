@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.58 2017/07/27 08:42:47 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.59 2017/07/29 03:05:51 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -289,9 +289,6 @@ struct audio_softc {
 	
 	/* These are changeable by sysctl to set the vchan common format */
 	struct sysctllog	*sc_log;	/* sysctl log */
-	int		sc_channels;
-	int		sc_precision;
-	int		sc_frequency;
 	struct audio_info 	sc_ai;		/* Recent info for  dev sound */
 	bool			sc_aivalid;
 #define VAUDIO_NFORMATS	1
