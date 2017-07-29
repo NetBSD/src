@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.381 2017/07/29 06:36:21 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.382 2017/07/29 06:45:35 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.381 2017/07/29 06:36:21 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.382 2017/07/29 06:45:35 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5605,9 +5605,9 @@ done:
 	return error;
 }
 
-#define DEF_MIX_FUNC(name, type, bigger_type, MINVAL, MAXVAL)		\
+#define DEF_MIX_FUNC(bits, type, bigger_type, MINVAL, MAXVAL)		\
 	static void							\
-	mix_func##name(struct audio_softc *sc, struct audio_ringbuffer *cb, \
+	mix_func##bits(struct audio_softc *sc, struct audio_ringbuffer *cb, \
 		  struct virtual_channel *vc)				\
 	{								\
 		int blksize, cc, cc1, cc2, m, resid;			\
@@ -5630,7 +5630,7 @@ done:
 			if (cc > cc2)					\
 				cc = cc2;				\
 									\
-			for (m = 0; m < (cc / (name / NBBY)); m++) {	\
+			for (m = 0; m < (cc / (bits / NBBY)); m++) {	\
 				tomix[m] = (bigger_type)tomix[m] *	\
 				    (bigger_type)(vc->sc_swvol) / 255;	\
 				result = orig[m] + tomix[m];		\
@@ -5675,9 +5675,9 @@ mix_func(struct audio_softc *sc, struct audio_ringbuffer *cb,
 	}
 }
 
-#define DEF_RECSWVOL_FUNC(name, type, bigger_type)			\
+#define DEF_RECSWVOL_FUNC(bits, type, bigger_type)			\
 	static void						\
-	recswvol_func##name(struct audio_softc *sc,			\
+	recswvol_func##bits(struct audio_softc *sc,			\
 	    struct audio_ringbuffer *cb, size_t blksize,		\
 	    struct virtual_channel *vc)					\
 	{								\
@@ -5693,7 +5693,7 @@ mix_func(struct audio_softc *sc, struct audio_ringbuffer *cb,
 			if (cc > cc1)					\
 				cc = cc1;				\
 									\
-			for (m = 0; m < (cc / (name / 8)); m++) {	\
+			for (m = 0; m < (cc / (bits / 8)); m++) {	\
 				orig[m] = (bigger_type)(orig[m] *	\
 				    (bigger_type)(vc->sc_recswvol) / 256);\
 			}						\
