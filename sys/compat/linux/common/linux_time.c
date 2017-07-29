@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.38 2017/07/29 01:14:59 riastradh Exp $ */
+/*	$NetBSD: linux_time.c,v 1.39 2017/07/29 02:31:22 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.38 2017/07/29 01:14:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.39 2017/07/29 02:31:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -79,9 +79,6 @@ linux_sys_gettimeofday(struct lwp *l, const struct linux_sys_gettimeofday_args *
 	}
 
 	if (SCARG(uap, tzp)) {
-		if (kauth_authorize_generic(kauth_cred_get(),
-			KAUTH_GENERIC_ISSUSER, NULL) != 0)
-			return (EPERM);
 		error = copyout(&linux_sys_tz, SCARG(uap, tzp), sizeof(linux_sys_tz));
 		if (error)
 			return (error);
@@ -105,11 +102,10 @@ linux_sys_settimeofday(struct lwp *l, const struct linux_sys_settimeofday_args *
 			return (error);
 	}
 
-	/*
-	 * If user is not the superuser, we returned
-	 * after the sys_settimeofday() call.
-	 */
 	if (SCARG(uap, tzp)) {
+		if (kauth_authorize_generic(kauth_cred_get(),
+			KAUTH_GENERIC_ISSUSER, NULL) != 0)
+			return (EPERM);
 		error = copyin(SCARG(uap, tzp), &linux_sys_tz, sizeof(linux_sys_tz));
 		if (error)
 			return (error);
