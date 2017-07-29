@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.377 2017/07/29 05:55:58 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.378 2017/07/29 06:00:47 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.377 2017/07/29 05:55:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.378 2017/07/29 06:00:47 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -537,7 +537,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_condvar,"play");
 	cv_init(&sc->sc_rcondvar,"record");
 
-	if (hwp == 0 || hwp->get_locks == 0) {
+	if (hwp == NULL || hwp->get_locks == NULL) {
 		aprint_error(": missing method\n");
 		panic("audioattach");
 	}
@@ -545,17 +545,17 @@ audioattach(device_t parent, device_t self, void *aux)
 	hwp->get_locks(hdlp, &sc->sc_intr_lock, &sc->sc_lock);
 
 #ifdef DIAGNOSTIC
-	if (hwp->query_encoding == 0 ||
-	    hwp->set_params == 0 ||
-	    (hwp->start_output == 0 && hwp->trigger_output == 0) ||
-	    (hwp->start_input == 0 && hwp->trigger_input == 0) ||
-	    hwp->halt_output == 0 ||
-	    hwp->halt_input == 0 ||
-	    hwp->getdev == 0 ||
-	    hwp->set_port == 0 ||
-	    hwp->get_port == 0 ||
-	    hwp->query_devinfo == 0 ||
-	    hwp->get_props == 0) {
+	if (hwp->query_encoding == NULL ||
+	    hwp->set_params == NULL ||
+	    (hwp->start_output == NULL && hwp->trigger_output == NULL) ||
+	    (hwp->start_input == NULL && hwp->trigger_input == NULL) ||
+	    hwp->halt_output == NULL ||
+	    hwp->halt_input == NULL ||
+	    hwp->getdev == NULL ||
+	    hwp->set_port == NULL ||
+	    hwp->get_port == NULL ||
+	    hwp->query_devinfo == NULL ||
+	    hwp->get_props == NULL) {
 		aprint_error(": missing method\n");
 		sc->hw_if = NULL;
 		return;
