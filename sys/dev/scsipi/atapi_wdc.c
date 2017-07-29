@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.123.4.9 2017/06/27 18:36:03 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.123.4.10 2017/07/29 09:04:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.9 2017/06/27 18:36:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.10 2017/07/29 09:04:39 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -242,9 +242,9 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	delay(5000);
 	if (ata_get_params(&chp->ch_drive[drive], AT_WAIT, id) != 0) {
 		ATADEBUG_PRINT(("wdc_atapi_get_params: ATAPI_IDENTIFY_DEVICE "
-		    "failed for drive %s:%d:%d: error 0x%x\n",
-		    device_xname(atac->atac_dev), chp->ch_channel, drive,
-		    xfer->c_ata_c.r_error), DEBUG_PROBE);
+		    "failed for drive %s:%d:%d\n",
+		    device_xname(atac->atac_dev), chp->ch_channel, drive),
+		    DEBUG_PROBE);
 		rv = -1;
 		goto out;
 	}
