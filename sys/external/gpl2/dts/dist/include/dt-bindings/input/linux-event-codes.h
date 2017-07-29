@@ -1,4 +1,4 @@
-/*	$NetBSD: linux-event-codes.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: linux-event-codes.h,v 1.1.1.2 2017/07/29 23:07:09 jmcneill Exp $	*/
 
 /*
  * Input event codes
@@ -643,6 +643,7 @@
  * e.g. teletext or data broadcast application (MHEG, MHP, HbbTV, etc.)
  */
 #define KEY_DATA			0x277
+#define KEY_ONSCREEN_KEYBOARD		0x278
 
 #define BTN_TRIGGER_HAPPY		0x2c0
 #define BTN_TRIGGER_HAPPY1		0x2c0
