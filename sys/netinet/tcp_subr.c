@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.270 2017/03/03 07:13:06 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.271 2017/07/29 05:08:48 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,12 +91,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.270 2017/03/03 07:13:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.271 2017/07/29 05:08:48 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_ipsec.h"
-#include "opt_tcp_compat_42.h"
 #include "opt_inet_csum.h"
 #include "opt_mbuftrace.h"
 #endif
@@ -201,11 +200,6 @@ int tcp_init_win_max[] = {
 int	tcp_init_win = TCP_INIT_WIN;
 int	tcp_init_win_local = TCP_INIT_WIN_LOCAL;
 int	tcp_mss_ifmtu = 0;
-#ifdef TCP_COMPAT_42
-int	tcp_compat_42 = 1;
-#else
-int	tcp_compat_42 = 0;
-#endif
 int	tcp_rst_ppslim = 100;	/* 100pps */
 int	tcp_ackdrop_ppslim = 100;	/* 100pps */
 int	tcp_do_loopback_cksum = 0;
@@ -702,10 +696,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *mtemplate, struct mbuf *m,
 		if (m == NULL)
 			return (ENOBUFS);
 
-		if (tcp_compat_42)
-			tlen = 1;
-		else
-			tlen = 0;
+		tlen = 0;
 
 		m->m_data += max_linkhdr;
 		bcopy(mtod(mtemplate, void *), mtod(m, void *),
@@ -2345,16 +2336,6 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 			printf("ISS %08x\n", tcp_iss);
 #endif
 		}
-	}
-
-	if (tcp_compat_42) {
-		/*
-		 * Limit it to the positive range for really old TCP
-		 * implementations.
-		 * Just AND off the top bit instead of checking if
-		 * is set first - saves a branch 50% of the time.
-		 */
-		tcp_iss &= 0x7fffffff;		/* XXX */
 	}
 
 	return (tcp_iss);
