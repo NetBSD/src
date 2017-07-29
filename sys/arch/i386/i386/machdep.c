@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.786 2017/07/29 06:29:32 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.787 2017/07/29 11:54:14 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,13 +67,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.786 2017/07/29 06:29:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.787 2017/07/29 11:54:14 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
-#include "opt_compat_svr4.h"
 #include "opt_cpureset_delay.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -923,9 +922,6 @@ setsegment(struct segment_descriptor *sd, const void *base, size_t limit,
 typedef void (vector)(void);
 extern vector IDTVEC(syscall);
 extern vector *IDTVEC(exceptions)[];
-extern vector IDTVEC(svr4_fasttrap);
-void (*svr4_fasttrap_vec)(void) = (void (*)(void))nullop;
-krwlock_t svr4_fasttrap_lock;
 #ifdef XEN
 #define MAX_XEN_IDT 128
 trap_info_t xen_idt[MAX_XEN_IDT];
@@ -1295,9 +1291,6 @@ init386(paddr_t first_avail)
 	idt_vec_reserve(128);
 	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386IGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
-	idt_vec_reserve(0xd2);
-	setgate(&idt[0xd2], &IDTVEC(svr4_fasttrap), 0, SDT_SYS386IGT,
-	    SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
 
 	setregion(&region, gdtstore, NGDT * sizeof(gdtstore[0]) - 1);
 	lgdt(&region);
@@ -1336,11 +1329,6 @@ init386(paddr_t first_avail)
 	xen_idt[xen_idt_idx].address = (uint32_t)&IDTVEC(syscall);
 	xen_idt_idx++;
 	KASSERT(xen_idt_idx < MAX_XEN_IDT);
-	xen_idt[xen_idt_idx].vector = 0xd2;
-	xen_idt[xen_idt_idx].flags = SEL_UPL;
-	xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
-	xen_idt[xen_idt_idx].address = (uint32_t)&IDTVEC(svr4_fasttrap);
-	xen_idt_idx++;
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
 	cpu_init_idt();
 #endif /* XEN */
@@ -1389,8 +1377,6 @@ init386(paddr_t first_avail)
 		       (unsigned long)ptoa(physmem), 2*1024*1024UL);
 		cngetc();
 	}
-
-	rw_init(&svr4_fasttrap_lock);
 
 	pcb->pcb_dbregs = NULL;
 
