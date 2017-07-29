@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.22 2017/07/29 14:50:58 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.23 2017/07/29 15:07:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.22 2017/07/29 14:50:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.23 2017/07/29 15:07:46 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -967,9 +967,9 @@ ahci_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	int ret;
 	int s;
 
-	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	AHCIDEBUG_PRINT(("ahci_exec_command port %d CI 0x%x\n",
-	    chp->ch_channel, AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))),
+	    chp->ch_channel,
+	    AHCI_READ(AHCI_CH2SC(chp), AHCI_P_CI(chp->ch_channel))),
 	    DEBUG_XFERS);
 	if (ata_c->flags & AT_POLL)
 		xfer->c_flags |= C_POLL;
@@ -1007,17 +1007,17 @@ ahci_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 static void
 ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
-	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
+	struct ahci_softc *sc = AHCI_CH2SC(chp);
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	struct ata_command *ata_c = &xfer->c_ata_c;
 	int slot = xfer->c_slot;
 	struct ahci_cmd_tbl *cmd_tbl;
 	struct ahci_cmd_header *cmd_h;
 	int i;
-	int channel = chp->ch_channel;
 
 	AHCIDEBUG_PRINT(("ahci_cmd_start CI 0x%x timo %d\n slot %d",
-	    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel)), ata_c->timeout, slot),
+	    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel)),
+	    ata_c->timeout, slot),
 	    DEBUG_XFERS);
 
 	KASSERT((achp->ahcic_cmds_active & (1 << slot)) == 0);
@@ -1072,11 +1072,14 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		ahci_intr_port(sc, achp);
 		ata_delay(10, "ahcipl", ata_c->flags);
 	}
-	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), channel, 
+	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), chp->ch_channel, 
 	    AHCI_READ(sc, AHCI_GHC), AHCI_READ(sc, AHCI_IS),
-	    AHCI_READ(sc, AHCI_P_CLBU(channel)), AHCI_READ(sc, AHCI_P_CLB(channel)),
-	    AHCI_READ(sc, AHCI_P_FBU(channel)), AHCI_READ(sc, AHCI_P_FB(channel)),
-	    AHCI_READ(sc, AHCI_P_CMD(channel)), AHCI_READ(sc, AHCI_P_CI(channel))),
+	    AHCI_READ(sc, AHCI_P_CLBU(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_P_CLB(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_P_FBU(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_P_FB(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))),
 	    DEBUG_XFERS);
 	if ((ata_c->flags & AT_DONE) == 0) {
 		ata_c->flags |= AT_TIMEOU;
@@ -1127,12 +1130,12 @@ static int
 ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 {
 	struct ata_command *ata_c = &xfer->c_ata_c;
-	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 
 	AHCIDEBUG_PRINT(("ahci_cmd_complete channel %d CMD 0x%x CI 0x%x\n",
-	    chp->ch_channel, AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)),
-	    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))),
+	    chp->ch_channel,
+	    AHCI_READ(AHCI_CH2SC(chp), AHCI_P_CMD(chp->ch_channel)),
+	    AHCI_READ(AHCI_CH2SC(chp), AHCI_P_CI(chp->ch_channel))),
 	    DEBUG_FUNCS);
 
 	if (ata_waitdrain_xfer_check(chp, xfer))
@@ -1217,9 +1220,9 @@ ahci_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct ata_bio *ata_bio = &xfer->c_bio;
 
-	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	AHCIDEBUG_PRINT(("ahci_ata_bio port %d CI 0x%x\n",
-	    chp->ch_channel, AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))),
+	    chp->ch_channel,
+	    AHCI_READ(AHCI_CH2SC(chp), AHCI_P_CI(chp->ch_channel))),
 	    DEBUG_XFERS);
 	if (ata_bio->flags & ATA_POLL)
 		xfer->c_flags |= C_POLL;
@@ -1242,7 +1245,6 @@ ahci_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct ahci_cmd_tbl *cmd_tbl;
 	struct ahci_cmd_header *cmd_h;
 	int i;
-	int channel = chp->ch_channel;
 
 	AHCIDEBUG_PRINT(("ahci_bio_start CI 0x%x\n",
 	    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))), DEBUG_XFERS);
@@ -1297,11 +1299,14 @@ ahci_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		ahci_intr_port(sc, achp);
 		delay(100);
 	}
-	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), channel, 
+	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), chp->ch_channel, 
 	    AHCI_READ(sc, AHCI_GHC), AHCI_READ(sc, AHCI_IS),
-	    AHCI_READ(sc, AHCI_P_CLBU(channel)), AHCI_READ(sc, AHCI_P_CLB(channel)),
-	    AHCI_READ(sc, AHCI_P_FBU(channel)), AHCI_READ(sc, AHCI_P_FB(channel)),
-	    AHCI_READ(sc, AHCI_P_CMD(channel)), AHCI_READ(sc, AHCI_P_CI(channel))),
+	    AHCI_READ(sc, AHCI_P_CLBU(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_P_CLB(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_P_FBU(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_P_FB(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))),
 	    DEBUG_XFERS);
 	if ((ata_bio->flags & ATA_ITSDONE) == 0) {
 		ata_bio->error = TIMEOUT;
@@ -1805,7 +1810,6 @@ ahci_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct ahci_cmd_tbl *cmd_tbl;
 	struct ahci_cmd_header *cmd_h;
 	int i;
-	int channel = chp->ch_channel;
 
 	AHCIDEBUG_PRINT(("ahci_atapi_start CI 0x%x\n",
 	    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))), DEBUG_XFERS);
@@ -1863,11 +1867,14 @@ ahci_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		ahci_intr_port(sc, achp);
 		delay(10000);
 	}
-	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), channel, 
+	AHCIDEBUG_PRINT(("%s port %d poll end GHC 0x%x IS 0x%x list 0x%x%x fis 0x%x%x CMD 0x%x CI 0x%x\n", AHCINAME(sc), chp->ch_channel, 
 	    AHCI_READ(sc, AHCI_GHC), AHCI_READ(sc, AHCI_IS),
-	    AHCI_READ(sc, AHCI_P_CLBU(channel)), AHCI_READ(sc, AHCI_P_CLB(channel)),
-	    AHCI_READ(sc, AHCI_P_FBU(channel)), AHCI_READ(sc, AHCI_P_FB(channel)),
-	    AHCI_READ(sc, AHCI_P_CMD(channel)), AHCI_READ(sc, AHCI_P_CI(channel))),
+	    AHCI_READ(sc, AHCI_P_CLBU(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_P_CLB(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_P_FBU(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_P_FB(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))),
 	    DEBUG_XFERS);
 	if ((sc_xfer->xs_status & XS_STS_DONE) == 0) {
 		sc_xfer->error = XS_TIMEOUT;
