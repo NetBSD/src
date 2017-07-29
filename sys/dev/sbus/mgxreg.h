@@ -1,4 +1,4 @@
-/*	$NetBSD: mgxreg.h,v 1.4 2016/02/11 20:53:06 macallan Exp $ */
+/*	$NetBSD: mgxreg.h,v 1.5 2017/07/29 03:29:49 macallan Exp $ */
 
 /* register definitions based on OpenBSD's atxxreg.h: */
 
@@ -72,7 +72,7 @@
 #define ATR_PATTERN2                    0x004c
 #define ATR_SRC_X                       0x0050
 #define ATR_SRC_Y                       0x0052
-#define ATR_SRC_XY                      0x0050
+#define ATR_SRC_XY                      0x0050	/* pointer in vram if DEC_SRC_LINEAR */
 #define ATR_DST_X                       0x0054
 #define ATR_DST_Y                       0x0056
 #define ATR_DST_XY                      0x0054
