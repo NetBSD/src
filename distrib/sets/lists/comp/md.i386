@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.167 2017/03/08 22:55:20 kre Exp $
+# $NetBSD: md.i386,v 1.168 2017/07/29 19:39:58 kre Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -400,7 +400,7 @@
 ./usr/include/i386/specialreg.h			comp-c-include
 ./usr/include/i386/spkr.h			comp-c-include
 ./usr/include/i386/stdarg.h			comp-obsolete		obsolete
-./usr/include/i386/svr4_machdep.h		comp-c-include
+./usr/include/i386/svr4_machdep.h		comp-obsolete		obsolete
 ./usr/include/i386/sysarch.h			comp-c-include
 ./usr/include/i386/trap.h			comp-c-include
 ./usr/include/i386/tss.h			comp-c-include
