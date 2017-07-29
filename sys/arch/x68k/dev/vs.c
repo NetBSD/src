@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.39 2017/07/09 12:49:26 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.40 2017/07/29 07:30:39 nat Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.39 2017/07/09 12:49:26 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.40 2017/07/29 07:30:39 nat Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -159,6 +159,8 @@ struct {
 };
 
 #define NUM_RATE	(sizeof(vs_l2r)/sizeof(vs_l2r[0]))
+
+extern stream_filter_factory_t null_filter;
 
 static int
 vs_match(device_t parent, cfdata_t cf, void *aux)
@@ -404,6 +406,12 @@ vs_set_params(void *hdl, int setmode, int usemode,
 
 	pfil->prepend(pfil, msm6258_slinear16_to_adpcm, play);
 	rfil->prepend(rfil, msm6258_adpcm_to_slinear16, play);
+
+	play->validbits = 16;
+	play->precision = 16;
+
+	pfil->prepend(pfil, null_filter, play);
+	rfil->prepend(rfil, null_filter, play);
 
 	sc->sc_current.prate = rate;
 	sc->sc_current.rrate = rate;
