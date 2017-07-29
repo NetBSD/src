@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.21 2017/07/29 13:02:50 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.22 2017/07/29 14:50:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.21 2017/07/29 13:02:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.22 2017/07/29 14:50:58 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -77,8 +77,7 @@ static void ahci_bio_kill_xfer(struct ata_channel *, struct ata_xfer *, int) ;
 static void ahci_channel_stop(struct ahci_softc *, struct ata_channel *, int);
 static void ahci_channel_start(struct ahci_softc *, struct ata_channel *,
 				int, int);
-static void ahci_channel_recover(struct ahci_softc *, struct ata_channel *,
-    int);
+void ahci_channel_recover(struct ahci_softc *, struct ata_channel *, int);
 static int  ahci_dma_setup(struct ata_channel *, int, void *, size_t, int);
 
 #if NATAPIBUS > 0
@@ -627,7 +626,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 		tfd = 0;
 	}
 
-	if (recover)
+	if (__predict_false(recover))
 		ata_channel_freeze(chp);
 
 	if (slot >= 0) {
@@ -652,7 +651,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 		}
 	}
 
-	if (recover) {
+	if (__predict_false(recover)) {
 		ata_channel_thaw(chp);
 		ahci_channel_recover(sc, chp, tfd);
 	}
