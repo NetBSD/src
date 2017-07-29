@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.100 2017/07/16 14:02:48 cherry Exp $
+#	$NetBSD: genassym.cf,v 1.101 2017/07/29 12:07:45 maxv Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,6 @@
 #
 
 if defined(_KERNEL_OPT)
-include "opt_compat_svr4.h"
 include "opt_compat_freebsd.h"
 include "opt_compat_linux.h"
 include "opt_compat_netbsd.h"
@@ -107,10 +106,6 @@ include "ioapic.h"
 endif
 
 include <compat/sys/signal.h>
-
-ifdef COMPAT_SVR4
-include <compat/svr4/svr4_ucontext.h>
-endif
 
 ifdef COMPAT_LINUX
 include <compat/linux/common/linux_signal.h>
@@ -229,11 +224,6 @@ define	TF_EAX			offsetof(struct trapframe, tf_eax)
 define	TF_PUSHSIZE		offsetof(struct trapframe, tf_trapno)
 
 define	FRAMESIZE		sizeof(struct trapframe)
-
-ifdef COMPAT_SVR4
-define	SVR4_SIGF_HANDLER	offsetof(struct svr4_sigframe, sf_handler)
-define	SVR4_SIGF_UC		offsetof(struct svr4_sigframe, sf_uc)
-endif
 
 ifdef COMPAT_LINUX
 define	LINUX_SIGF_HANDLER	offsetof(struct linux_sigframe, sf_handler)
