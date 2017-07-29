@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.9 2016/05/07 15:32:08 macallan Exp $ */
+/*	$NetBSD: mgx.c,v 1.10 2017/07/29 03:29:49 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.9 2016/05/07 15:32:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.10 2017/07/29 03:29:49 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.9 2016/05/07 15:32:08 macallan Exp $");
 #include <sys/conf.h>
 #include <sys/kmem.h>
 #include <sys/kauth.h>
+#include <sys/atomic.h>
 
 #include <sys/bus.h>
 #include <machine/autoconf.h>
@@ -85,7 +86,7 @@ struct mgx_softc {
 	u_char		sc_cmap_blue[256];
 	int		sc_cursor_x, sc_cursor_y;
 	int		sc_hotspot_x, sc_hotspot_y;
-	int		sc_video;
+	int		sc_video, sc_buf;
 	void (*sc_putchar)(void *, int, int, u_int, long);
 	struct vcons_screen sc_console_screen;
 	struct wsscreen_descr sc_defaultscreen_descr;
@@ -114,7 +115,8 @@ static int	mgx_wait_fifo(struct mgx_softc *, unsigned int);
 static void	mgx_bitblt(void *, int, int, int, int, int, int, int);
 static void 	mgx_rectfill(void *, int, int, int, int, long);
 
-static void	mgx_putchar(void *, int, int, u_int, long);
+static void	mgx_putchar_aa(void *, int, int, u_int, long);
+static void	mgx_putchar_mono(void *, int, int, u_int, long);
 static void	mgx_cursor(void *, int, int, int);
 static void	mgx_copycols(void *, int, int, int, int);
 static void	mgx_erasecols(void *, int, int, int, long);
@@ -295,7 +297,8 @@ mgx_attach(device_t parent, device_t self, void *args)
 		0, 0,
 		NULL,
 		8, 16,
-		WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
+		WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		WSSCREEN_RESIZE,
 		NULL
 	};
 	
@@ -315,6 +318,8 @@ mgx_attach(device_t parent, device_t self, void *args)
 
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr, &mgx_accessops);
 	sc->vd.init_screen = mgx_init_screen;
+	sc->vd.show_screen_cookie = &sc->sc_gc;
+	sc->vd.show_screen_cb = glyphcache_adapt;
 
 	vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
 	sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
@@ -331,6 +336,10 @@ mgx_attach(device_t parent, device_t self, void *args)
 	sc->sc_gc.gc_blitcookie = sc;
 	sc->sc_gc.gc_rop = ROP_SRC;
 
+	/* 
+	 * leave some room between visible screen and glyph cache for upload
+	 * buffers used by putchar_mono()
+	 */
 	glyphcache_init(&sc->sc_gc,
 	    sc->sc_height + 5,
 	    (0x400000 / sc->sc_stride) - sc->sc_height - 5,
@@ -535,6 +544,7 @@ mgx_setup(struct mgx_softc *sc, int depth)
 	if (mgx_wait_fifo(sc, FIFO_AT24) == 0)
 		return;
 
+	sc->sc_buf = 0;
 	/* read name from sequencer */
 	for (i = 0; i < 8; i++) {
 		mgx_write_vga(sc, SEQ_INDEX, i + 0x11);
@@ -597,9 +607,12 @@ mgx_setup(struct mgx_softc *sc, int depth)
 		default:
 			return; /* not supported */
 	}
+	mgx_wait_fifo(sc, 4);
 	mgx_write_1(sc, ATR_CLIP_CONTROL, 0);
 	mgx_write_1(sc, ATR_BYTEMASK, 0xff);
 	mgx_write_1(sc, ATR_PIXEL, reg);
+	mgx_write_4(sc, ATR_OFFSET, 0);
+	mgx_wait_fifo(sc, 4);
 	mgx_write_vga(sc, CRTC_INDEX, 0x13);
 	mgx_write_vga(sc, CRTC_DATA, stride & 0xff);
 	mgx_write_vga(sc, CRTC_INDEX, 0x1c);
@@ -609,6 +622,7 @@ mgx_setup(struct mgx_softc *sc, int depth)
 	if (depth != MGX_DEPTH) 
 		mgx_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height, 0);	
 
+	mgx_wait_fifo(sc, 4);
 	/* initialize hardware cursor stuff */
 	mgx_write_2(sc, ATR_CURSOR_ADDRESS, (sc->sc_fbsize - 1024) >> 10);
 	mgx_write_1(sc, ATR_CURSOR_ENABLE, 0);
@@ -685,7 +699,7 @@ mgx_rectfill(void *cookie, int x, int y, int wi, int he, long fg)
 }
 
 static void
-mgx_putchar(void *cookie, int row, int col, u_int c, long attr)
+mgx_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
@@ -709,6 +723,7 @@ mgx_putchar(void *cookie, int row, int col, u_int c, long attr)
 			mgx_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
+
 	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
 	if (rv != GC_OK) {
 		volatile uint32_t junk;
@@ -725,6 +740,74 @@ mgx_putchar(void *cookie, int row, int col, u_int c, long attr)
 			glyphcache_add(&sc->sc_gc, c, x, y);
 		}
 	}
+	if (attr & 1)
+		mgx_rectfill(sc, x, y + he - 2, wi, 1, fg);
+}
+
+static void
+mgx_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct mgx_softc *sc = scr->scr_cookie;
+	void *s, *d;
+	uint32_t fg, bg, scratch = (sc->sc_stride * sc->sc_height + 31) & ~31;
+	int x, y, wi, he;
+
+	wi = font->fontwidth;
+	he = font->fontheight;
+
+	bg = (attr >> 16) & 0xf;
+	fg = (attr >> 24) & 0xf;
+
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+
+	if (c == 0x20) {
+		mgx_rectfill(sc, x, y, wi, he, bg);
+		if (attr & 1)
+			mgx_rectfill(sc, x, y + he - 2, wi, 1, fg);
+		return;
+	}
+
+	/*
+	 * do hardware colour expansion
+	 * there has to be an upload port somewhere, sinde there are host blit
+	 * commands, but it's not used or mentioned in the xf86-video-apm driver
+	 * so for now we use the vram-to-vram blits to draw characters.
+	 * Use rotating buffers since commands can be queued and just because
+	 * the blitter can accept another command that does not mean that the
+	 * previous command(s) have finished, so make sure we don't touch the
+	 * buffers used for the last few operations
+	 * Align everything to 64bit, one for memcpy and also for the chip -
+	 * I'm not sure what the exact alignment requirements are but mono
+	 * bitmaps need at least 16bit.
+	 */
+	sc->sc_buf = (sc->sc_buf + 1) & 3; /* rotate through 4 buffers */
+	scratch += sc->sc_buf * ((ri->ri_fontscale + 31) & ~31);
+	s = WSFONT_GLYPH(c, font);
+	d = (uint8_t *)sc->sc_fbaddr + scratch;
+	memcpy(d, s, ri->ri_fontscale);
+	/*
+	 * try to make sure the glyph made it into vram before kicking the
+	 * blitter
+	 */
+	membar_sync();
+	volatile uint32_t junk = *(volatile uint32_t *)sc->sc_fbaddr;
+	__USE(junk);
+	mgx_wait_fifo(sc, 3);
+	mgx_write_4(sc, ATR_FG, ri->ri_devcmap[fg]);
+	mgx_write_4(sc, ATR_BG, ri->ri_devcmap[bg]);
+	mgx_write_1(sc, ATR_ROP, ROP_SRC);
+	mgx_wait_fifo(sc, 5);
+	mgx_write_4(sc, ATR_DEC, sc->sc_dec | (DEC_COMMAND_BLT << DEC_COMMAND_SHIFT) |
+	       (DEC_START_DIMX << DEC_START_SHIFT) |
+	       DEC_SRC_LINEAR | DEC_SRC_CONTIGUOUS | DEC_MONOCHROME);
+	mgx_write_4(sc, ATR_SRC_XY, ((scratch & 0xfff000) << 4) | (scratch & 0xfff));
+	mgx_write_4(sc, ATR_DST_XY, (y << 16) | x);
+	mgx_write_4(sc, ATR_WH, (he << 16) | wi);
+
 	if (attr & 1)
 		mgx_rectfill(sc, x, y + he - 2, wi, 1, fg);
 }
@@ -848,6 +931,7 @@ mgx_init_screen(void *cookie, struct vcons_screen *scr,
 #ifdef MGX_NOACCEL
 	scr->scr_flags |= VCONS_DONT_READ;
 #endif
+	scr->scr_flags |= VCONS_LOADFONT;
 
 	ri->ri_rnum = 8;
 	ri->ri_rpos = 0;
@@ -859,9 +943,8 @@ mgx_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_bits = sc->sc_fbaddr;
 
 	rasops_init(ri, 0, 0);
-	sc->sc_putchar = ri->ri_ops.putchar;
 
-	ri->ri_caps = WSSCREEN_REVERSE | WSSCREEN_WSCOLORS;
+	ri->ri_caps = WSSCREEN_REVERSE | WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE;
 
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 		    ri->ri_width / ri->ri_font->fontwidth);
@@ -872,7 +955,12 @@ mgx_init_screen(void *cookie, struct vcons_screen *scr,
 if (0)
 #endif
 	{
-		ri->ri_ops.putchar   = mgx_putchar;
+		if (FONT_IS_ALPHA(ri->ri_font)) {
+			sc->sc_putchar = ri->ri_ops.putchar;
+			ri->ri_ops.putchar   = mgx_putchar_aa;
+		} else {
+			ri->ri_ops.putchar   = mgx_putchar_mono;
+		}
 		ri->ri_ops.cursor    = mgx_cursor;
 		ri->ri_ops.copyrows  = mgx_copyrows;
 		ri->ri_ops.eraserows = mgx_eraserows;
