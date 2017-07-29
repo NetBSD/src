@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.51 2015/08/21 01:52:07 uebayasi Exp $
+# $NetBSD: RPC44,v 1.52 2017/07/29 18:08:56 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.51 $"
+#ident		"GENERIC-$Revision: 1.52 $"
 
 maxusers	32		# estimated number of users
 
@@ -65,7 +65,6 @@ pseudo-device	ksyms
 #makeoptions	DEBUG="-g"		# compile full symbol table
 
 # Compatibility options
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_10	# NetBSD 1.0,
 options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# NetBSD 1.2,

@@ -1,4 +1,4 @@
-#	$NetBSD: MMTA,v 1.50 2015/08/07 13:53:28 maxv Exp $
+#	$NetBSD: MMTA,v 1.51 2017/07/29 18:08:58 maxv Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -51,7 +51,6 @@ options 	SYSCALL_DEBUG
 
 # Compatibility options
 options 	COMPAT_43	# and 4.3BSD
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	BSDDISKLABEL_EI	# endian independent disklabel support
 options 	COMPAT_MMEYE_OLDLABEL	# old mmeye's disklabel support
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
