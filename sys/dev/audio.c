@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.376 2017/07/29 03:05:51 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.377 2017/07/29 05:55:58 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.376 2017/07/29 03:05:51 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.377 2017/07/29 05:55:58 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -272,7 +272,7 @@ int	mix_read(void *);
 int	audio_check_params(struct audio_params *);
 
 void	audio_calc_blksize(struct audio_softc *, int, struct virtual_channel *);
-void	audio_fill_silence(struct audio_params *, uint8_t *, int);
+void	audio_fill_silence(const struct audio_params *, uint8_t *, int);
 int	audio_silence_copyout(struct audio_softc *, int, struct uio *);
 
 void	audio_init_ringbuffer(struct audio_softc *,
@@ -384,7 +384,7 @@ static int
 static int audio_set_params (struct audio_softc *, int, int,
 		 audio_params_t *, audio_params_t *,
 		 stream_filter_list_t *, stream_filter_list_t *,
-		 struct virtual_channel *);
+		 const struct virtual_channel *);
 static int
 audio_query_encoding(struct audio_softc *, struct audio_encoding *);
 static int audio_set_vchan_defaults(struct audio_softc *, u_int);
@@ -2681,7 +2681,7 @@ audio_calc_blksize(struct audio_softc *sc, int mode,
 }
 
 void
-audio_fill_silence(struct audio_params *params, uint8_t *p, int n)
+audio_fill_silence(const struct audio_params *params, uint8_t *p, int n)
 {
 	uint8_t auzero0, auzero1;
 	int nfill;
@@ -5824,7 +5824,7 @@ static int
 audio_set_params(struct audio_softc *sc, int setmode, int usemode,
 		 audio_params_t *play, audio_params_t *rec,
 		 stream_filter_list_t *pfil, stream_filter_list_t *rfil,
-		 struct virtual_channel *vc)
+		 const struct virtual_channel *vc)
 {
 	struct audio_chan *chan;
 	
