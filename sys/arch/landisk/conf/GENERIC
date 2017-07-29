@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.54 2017/02/19 07:47:01 rin Exp $
+# $NetBSD: GENERIC,v 1.55 2017/07/29 18:08:58 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.54 $"
+#ident          "GENERIC-$Revision: 1.55 $"
 
 maxusers	16		# estimated number of users
 
@@ -87,7 +87,6 @@ options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_43	# and 4.3BSD
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
