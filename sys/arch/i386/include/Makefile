@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2016/02/27 00:09:45 tls Exp $
+#	$NetBSD: Makefile,v 1.45 2017/07/29 12:07:45 maxv Exp $
 
 INCSDIR= /usr/include/i386
 
@@ -20,7 +20,7 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h \
 	pte.h ptrace.h \
 	reg.h rwlock.h \
 	segments.h setjmp.h signal.h sljit_machdep.h specialreg.h spkr.h \
-	svr4_machdep.h sysarch.h \
+	sysarch.h \
 	trap.h tss.h types.h \
 	vm86.h vmparam.h \
 	wchar_limits.h
