@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.12.26.1 2017/07/19 20:21:42 jdolecek Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.12.26.2 2017/07/29 13:04:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -234,8 +234,8 @@ struct ahci_r_fis {
 #define		AHCI_P_CMD_CR	0x00008000 /* command list running */
 #define		AHCI_P_CMD_FR	0x00004000 /* FIS receive running */
 #define		AHCI_P_CMD_MPSS	0x00002000 /* mechanical switch state */
-#define		AHCI_P_CMD_CCS_MASK 0x00001f00 /* current command slot */
-#define		AHCI_P_CMD_CCS_SHIFT 12
+#define		AHCI_P_CMD_CCS_MASK __BITS(12, 8) /* current command slot */
+#define		AHCI_P_CMD_CCS_SHIFT 8
 #define		AHCI_P_CMD_FRE	0x00000010 /* FIS receive enable */
 #define		AHCI_P_CMD_CLO	0x00000008 /* command list override */
 #define		AHCI_P_CMD_POD	0x00000004 /* power on device */
