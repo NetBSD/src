@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet,v 1.27 2015/10/13 21:28:35 rjs Exp $
+#	$NetBSD: files.netinet,v 1.28 2017/07/29 05:48:16 maxv Exp $
 
 defflag opt_tcp_debug.h		TCP_DEBUG
 defparam opt_tcp_debug.h	TCP_NDEBUG
@@ -8,7 +8,6 @@ defparam opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
 
 defflag				MROUTING
 defflag				PIM
-defflag				TCP_COMPAT_42
 
 defparam opt_tcp_space.h	TCP_RECVSPACE TCP_SENDSPACE
 
