@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.383 2017/07/30 00:47:48 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.384 2017/07/30 02:41:58 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.383 2017/07/30 00:47:48 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.384 2017/07/30 02:41:58 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1429,7 +1429,7 @@ audio_setup_rfilters(struct audio_softc *sc, const audio_params_t *rp,
 
 #ifdef AUDIO_DEBUG
 	if (audiodebug) {
-		printf("%s: HW-buffer=%p pustream=%p\n",
+		printf("%s: HW-buffer=%p rustream=%p\n",
 		       __func__, &vc->sc_mrr.s, vc->sc_rustream);
 		audio_print_params("[HW]", &vc->sc_mrr.s.param);
 		for (i = 0; i < rfilters->req_size; i++) {
