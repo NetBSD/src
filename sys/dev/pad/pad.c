@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.41 2017/07/02 13:32:50 nat Exp $ */
+/* $NetBSD: pad.c,v 1.42 2017/07/30 00:50:52 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.41 2017/07/02 13:32:50 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.42 2017/07/30 00:50:52 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -241,7 +241,7 @@ pad_get_block(pad_softc_t *sc, pad_block_t *pb, int blksize)
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(pb != NULL);
 
-	if (sc->sc_buflen < blksize)
+	if (sc->sc_buflen < (uint)blksize)
 		return ERESTART;
 
 	pb->pb_ptr = (sc->sc_audiobuf + sc->sc_rpos);
