@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.71 2016/12/13 20:42:17 christos Exp $
+#	$NetBSD: RPI,v 1.72 2017/07/30 16:54:36 jmcneill Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -95,6 +95,10 @@ bcmgpio1	at obio?	# pins 32 ... 53
 # Arasan SD/MMC Interface
 sdhc* at obio?
 sdmmc*  at sdhc?
+
+# SD host controller
+#sdhost* at obio?
+#sdmmc* at sdhost?
 
 ld*     at sdmmc?
 
