@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.73 2017/07/30 17:01:27 jmcneill Exp $
+#	$NetBSD: RPI,v 1.74 2017/07/30 23:48:32 jmcneill Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -72,6 +72,9 @@ spkr*		at audio?		# PC speaker (synthesized)
 
 # PL011 uart
 plcom0		at obio?
+
+# AUX UART
+com0		at obio?
 
 # Framebuffer console
 genfb0		at obio?

@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.27 2017/07/30 16:54:36 jmcneill Exp $
+#	$NetBSD: files.bcm2835,v 1.28 2017/07/30 23:48:32 jmcneill Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -56,6 +56,10 @@ file	arch/arm/broadcom/bcm2835_rng.c		bcmrng
 # UART Interface (BCM2835_UART0_BASE)
 attach	plcom at obio with bcmplcom
 file	arch/arm/broadcom/bcm2835_plcom.c	bcmplcom
+
+# AUX UART (BCM2835_AUX_UART_BASE)
+attach	com at obio with bcmcom
+file	arch/arm/broadcom/bcm2835_com.c		bcmcom
 
 # External Mass Media Controller (BCM2835_EMMC_BASE)
 attach	sdhc at obio with bcmemmc

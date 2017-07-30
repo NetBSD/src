@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.74 2017/07/30 17:32:59 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.75 2017/07/30 23:48:32 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.74 2017/07/30 17:32:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.75 2017/07/30 23:48:32 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1205,6 +1205,12 @@ rpi_device_register(device_t dev, void *aux)
 	    vb_uart.vbt_uartclockrate.rate > 0) {
 		prop_dictionary_set_uint32(dict,
 		    "frequency", vb_uart.vbt_uartclockrate.rate);
+	}
+	if (device_is_a(dev, "com") &&
+	    vcprop_tag_success_p(&vb.vbt_coreclockrate.tag) &&
+	    vb.vbt_coreclockrate.rate > 0) {
+		prop_dictionary_set_uint32(dict,
+		    "frequency", vb.vbt_coreclockrate.rate);
 	}
 	if (device_is_a(dev, "bcmdmac") &&
 	    vcprop_tag_success_p(&vb.vbt_dmachan.tag)) {
