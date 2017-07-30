@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.30 2017/07/29 12:51:22 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.31 2017/07/30 20:16:29 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.30 2017/07/29 12:51:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.31 2017/07/30 20:16:29 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -734,16 +734,10 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 		xfer->c_bio.flags |= ATA_LBA48;
 
 	/*
-	 * If NCQ was negotiated, always use it for the first attempt.
-	 * Since device cancels all outstanding requests on error, downgrade
-	 * to non-NCQ on retry, so that the retried transfer would not cause
-	 * cascade failure for the other transfers if it fails again.
-	 * If FUA was requested, we can't downgrade, as that would violate
-	 * the semantics - FUA would not be honored. In that case, continue
-	 * retrying with NCQ.
+	 * If NCQ was negotiated, always use it. Some drives return random
+	 * errors when switching between NCQ and non-NCQ I/O too often. 
 	 */
-	if (wd->drvp->drive_flags & ATA_DRIVE_NCQ &&
-	    (xfer->c_retries == 0 || (bp->b_flags & B_MEDIA_FUA))) {
+	if (wd->drvp->drive_flags & ATA_DRIVE_NCQ) {
 		xfer->c_bio.flags |= ATA_LBA48;
 		xfer->c_flags |= C_NCQ;
 
