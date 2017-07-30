@@ -1,4 +1,4 @@
-/*	$NetBSD: pwait.c,v 1.5 2015/03/04 16:36:12 christos Exp $	*/
+/*	$NetBSD: pwait.c,v 1.6 2017/07/30 20:37:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2004-2009, Jilles Tjoelker
@@ -37,7 +37,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/bin/pwait/pwait.c 245506 2013-01-16 18:15:25Z delphij $");
 #endif
-__RCSID("$NetBSD: pwait.c,v 1.5 2015/03/04 16:36:12 christos Exp $");
+__RCSID("$NetBSD: pwait.c,v 1.6 2017/07/30 20:37:35 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: pwait.c,v 1.5 2015/03/04 16:36:12 christos Exp $");
 #include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
+#include <assert.h>
 
 static __dead void
 usage(void)
@@ -171,6 +172,7 @@ main(int argc, char *argv[])
 			break;
 		}
 
+		assert(n > 0);
 		for (i = 0; i < n; i++) {
 			status = (int)e[i].data;
 			if (verbose) {
@@ -190,8 +192,7 @@ main(int argc, char *argv[])
 				return status;
 		}
 		nleft -= n;
-		// n != 0 here, belt-n-suspenders...
-		if (immediately && n)
+		if (immediately)
 			break;
 	}
 
