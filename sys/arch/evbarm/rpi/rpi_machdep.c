@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.73 2017/07/30 16:54:36 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.74 2017/07/30 17:32:59 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.73 2017/07/30 16:54:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.74 2017/07/30 17:32:59 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -492,6 +492,9 @@ rpi_pinctrl(void)
 	for (int pin = 34; pin <= 39; pin++) {
 		/* Enable SDHCI on SDIO */
 		bcm2835gpio_function_select(pin, BCM2835_GPIO_ALT3);
+		bcm2835gpio_function_setpull(pin,
+		    pin == 34 ? BCM2835_GPIO_GPPUD_PULLOFF :
+		    BCM2835_GPIO_GPPUD_PULLUP);
 	}
 #endif
 }
