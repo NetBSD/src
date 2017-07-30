@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.28 2017/07/30 20:24:45 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.29 2017/07/30 20:46:31 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.28 2017/07/30 20:24:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.29 2017/07/30 20:46:31 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -288,7 +288,7 @@ siisata_attach_port(struct siisata_softc *sc, int port)
 	sc->sc_chanarray[port] = chp;
 	chp->ch_channel = port;
 	chp->ch_atac = &sc->sc_atac;
-	chp->ch_queue = ata_queue_alloc(4) ; //SIISATA_MAX_SLOTS);
+	chp->ch_queue = ata_queue_alloc(SIISATA_MAX_SLOTS);
 	if (chp->ch_queue == NULL) {
 		aprint_error_dev(sc->sc_atac.atac_dev,
 		    "port %d: can't allocate memory "
