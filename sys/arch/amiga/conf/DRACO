@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.181 2017/07/28 19:26:15 maxv Exp $
+# $NetBSD: DRACO,v 1.182 2017/07/30 13:12:49 maxv Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.181 $"
+#ident 		"GENERIC-$Revision: 1.182 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -140,7 +140,7 @@ options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
-options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
+#options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
 
