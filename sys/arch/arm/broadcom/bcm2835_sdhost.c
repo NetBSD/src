@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_sdhost.c,v 1.1 2017/07/30 16:54:36 jmcneill Exp $ */
+/* $NetBSD: bcm2835_sdhost.c,v 1.2 2017/07/30 23:47:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_sdhost.c,v 1.1 2017/07/30 16:54:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_sdhost.c,v 1.2 2017/07/30 23:47:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -113,8 +113,6 @@ static void	sdhost_exec_command(sdmmc_chipset_handle_t,
 				      struct sdmmc_command *);
 static void	sdhost_card_enable_intr(sdmmc_chipset_handle_t, int);
 static void	sdhost_card_intr_ack(sdmmc_chipset_handle_t);
-
-void		sdhost_dump_regs(void);
 
 static struct sdmmc_chip_functions sdhost_chip_functions = {
 	.host_reset = sdhost_host_reset,
@@ -203,15 +201,13 @@ sdhost_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": SD HOST controller\n");
 
-sdhost_dump_regs();
-
 	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_rate);
 	if (sc->sc_rate == 0) {
 		aprint_error_dev(self, "couldn't get clock frequency\n");
 		return;
 	}
 
-	aprint_normal_dev(self, "ref freq %u Hz\n", sc->sc_rate);
+	aprint_debug_dev(self, "ref freq %u Hz\n", sc->sc_rate);
 
 	if (sdhost_dma_setup(sc) != 0) {
 		aprint_error_dev(self, "failed to setup DMA\n");
@@ -704,29 +700,4 @@ sdhost_card_enable_intr(sdmmc_chipset_handle_t sch, int enable)
 static void
 sdhost_card_intr_ack(sdmmc_chipset_handle_t sch)
 {
-}
-
-void
-sdhost_dump_regs(void)
-{
-	device_t dev = device_find_by_driver_unit("sdhost", 0);
-	if (dev == NULL)
-		return;
-	struct sdhost_softc * const sc = device_private(dev);
-
-	device_printf(dev, "SDCMD  = %08x\n", SDHOST_READ(sc, SDCMD));
-	device_printf(dev, "SDARG  = %08x\n", SDHOST_READ(sc, SDARG));
-	device_printf(dev, "SDTOUT = %08x\n", SDHOST_READ(sc, SDTOUT));
-	device_printf(dev, "SDCDIV = %08x\n", SDHOST_READ(sc, SDCDIV));
-	device_printf(dev, "SDRSP0 = %08x\n", SDHOST_READ(sc, SDRSP0));
-	device_printf(dev, "SDRSP1 = %08x\n", SDHOST_READ(sc, SDRSP1));
-	device_printf(dev, "SDRSP2 = %08x\n", SDHOST_READ(sc, SDRSP2));
-	device_printf(dev, "SDRSP3 = %08x\n", SDHOST_READ(sc, SDRSP3));
-	device_printf(dev, "SDHSTS = %08x\n", SDHOST_READ(sc, SDHSTS));
-	device_printf(dev, "SDVDD  = %08x\n", SDHOST_READ(sc, SDVDD));
-	device_printf(dev, "SDEDM  = %08x\n", SDHOST_READ(sc, SDEDM));
-	device_printf(dev, "SDHCFG = %08x\n", SDHOST_READ(sc, SDHCFG));
-	device_printf(dev, "SDHBCT = %08x\n", SDHOST_READ(sc, SDHBCT));
-	device_printf(dev, "SDDATA = ........\n");
-	device_printf(dev, "SDHBLC = %08x\n", SDHOST_READ(sc, SDHBLC));
 }
