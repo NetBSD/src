@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.116 2017/07/11 08:32:17 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.117 2017/07/30 16:07:06 maxv Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd July 2, 2017
+.Dd July 30, 2017
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1413,7 +1413,6 @@ The currently defined protocols and names are:
 .It tcp	mss_ifmtu	integer	yes
 .It tcp	win_scale	integer	yes
 .It tcp	timestamps	integer	yes
-.It tcp	compat_42	integer	yes
 .It tcp	cwm	integer	yes
 .It tcp	cwm_burstsize	integer	yes
 .It tcp	ack_on_push	integer	yes
@@ -1606,10 +1605,6 @@ This can avoid losing a round trip time in some rare situations,
 but has the caveat of potentially defeating TCP's delayed ACK algorithm.
 Use of this option is generally not recommended, but
 the variable exists in case your configuration really needs it.
-.It Li tcp.compat_42
-If set to 1, enables work-arounds for bugs in the 4.2BSD TCP implementation.
-Use of this option is not recommended, although it may be
-required in order to communicate with extremely old TCP implementations.
 .It Li tcp.cwm
 If set to 1, enables use of the Hughes/Touch/Heidemann Congestion Window
 Monitoring algorithm.
