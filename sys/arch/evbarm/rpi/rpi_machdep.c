@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.72 2017/06/17 22:50:23 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.73 2017/07/30 16:54:36 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.72 2017/06/17 22:50:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.73 2017/07/30 16:54:36 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.72 2017/06/17 22:50:23 jmcneill Ex
 #include "opt_vcprop.h"
 
 #include "sdhc.h"
+#include "bcmsdhost.h"
 #include "bcmdwctwo.h"
 #include "bcmspi.h"
 #include "bsciic.h"
@@ -220,6 +221,7 @@ static struct __aligned(16) {
 	struct vcprop_tag_cmdline	vbt_cmdline;
 	struct vcprop_tag_clockrate	vbt_emmcclockrate;
 	struct vcprop_tag_clockrate	vbt_armclockrate;
+	struct vcprop_tag_clockrate	vbt_coreclockrate;
 	struct vcprop_tag end;
 } vb = {
 	.vb_hdr = {
@@ -297,6 +299,14 @@ static struct __aligned(16) {
 			.vpt_rcode = VCPROPTAG_REQUEST
 		},
 		.id = VCPROP_CLK_ARM
+	},
+	.vbt_coreclockrate = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_coreclockrate),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+		.id = VCPROP_CLK_CORE
 	},
 	.end = {
 		.vpt_tag = VCPROPTAG_NULL
@@ -422,6 +432,23 @@ static uint8_t cursor_mask[8 * 64], cursor_bitmap[8 * 64];
 #endif
 #endif
 
+/*
+ * Return true if this model Raspberry Pi has Bluetooth/Wi-Fi support
+ */ 
+static bool
+rpi_rev_has_btwifi(uint32_t rev)
+{
+	if ((rev & VCPROP_REV_ENCFLAG) == 0)
+		return false;
+
+	switch (__SHIFTOUT(rev, VCPROP_REV_MODEL)) {
+	case RPI_MODEL_B_PI3:
+	case RPI_MODEL_ZERO_W:
+		return true;
+	default:
+		return false;
+	}
+}
 
 static void
 rpi_uartinit(void)
@@ -437,16 +464,11 @@ rpi_uartinit(void)
 
 	cpu_dcache_inv_range((vaddr_t)&vb_uart, sizeof(vb_uart));
 
-	if (vcprop_tag_success_p(&vb_uart.vbt_boardrev.tag) &&
-	    (vb_uart.vbt_boardrev.rev & VCPROP_REV_ENCFLAG) != 0) {
-		const uint32_t rev = vb_uart.vbt_boardrev.rev;
-		switch (__SHIFTOUT(rev, VCPROP_REV_MODEL)) {
-		case RPI_MODEL_B_PI3:
-		case RPI_MODEL_ZERO_W:
+	if (vcprop_tag_success_p(&vb_uart.vbt_boardrev.tag)) {
+		if (rpi_rev_has_btwifi(vb_uart.vbt_boardrev.rev)) {
 			/* Enable UART0 (PL011) on GPIO header */
 			bcm2835gpio_function_select(14, BCM2835_GPIO_ALT0);
 			bcm2835gpio_function_select(15, BCM2835_GPIO_ALT0);
-			break;
 		}
 	}
 
@@ -454,6 +476,25 @@ rpi_uartinit(void)
 		uart_clk = vb_uart.vbt_uartclockrate.rate;
 }
 
+
+static void
+rpi_pinctrl(void)
+{
+#if NBCMSDHOST > 0
+	/*
+	 * If the sdhost driver is present, map the SD card slot to the
+	 * SD host controller and the sdhci driver to the SDIO pins.
+	 */
+	for (int pin = 48; pin <= 53; pin++) {
+		/* Enable SDHOST on SD card slot */
+		bcm2835gpio_function_select(pin, BCM2835_GPIO_ALT0);
+	}
+	for (int pin = 34; pin <= 39; pin++) {
+		/* Enable SDHCI on SDIO */
+		bcm2835gpio_function_select(pin, BCM2835_GPIO_ALT3);
+	}
+#endif
+}
 
 
 static void
@@ -751,6 +792,9 @@ initarm(void *arg)
 
 	/* we've a specific device_register routine */
 	evbarm_device_register = rpi_device_register;
+
+	/* Change pinctrl settings */
+	rpi_pinctrl();
 
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 }
@@ -1164,12 +1208,23 @@ rpi_device_register(device_t dev, void *aux)
 		prop_dictionary_set_uint32(dict,
 		    "chanmask", vb.vbt_dmachan.mask);
 	}
-#if NSDHC > 0
 	if (device_is_a(dev, "sdhc") &&
 	    vcprop_tag_success_p(&vb.vbt_emmcclockrate.tag) &&
 	    vb.vbt_emmcclockrate.rate > 0) {
 		prop_dictionary_set_uint32(dict,
 		    "frequency", vb.vbt_emmcclockrate.rate);
+#if NBCMSDHOST > 0
+		if (!rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
+			/* No btwifi and sdhost driver is present */
+			prop_dictionary_set_bool(dict, "disable", true);
+		}
+#endif
+	}
+	if (device_is_a(dev, "sdhost") &&
+	    vcprop_tag_success_p(&vb.vbt_coreclockrate.tag) &&
+	    vb.vbt_coreclockrate.rate > 0) {
+		prop_dictionary_set_uint32(dict,
+		    "frequency", vb.vbt_coreclockrate.rate);
 	}
 	if (booted_device == NULL &&
 	    device_is_a(dev, "ld") &&
@@ -1177,7 +1232,6 @@ rpi_device_register(device_t dev, void *aux)
 		booted_partition = 0;
 		booted_device = dev;
 	}
-#endif
 	if (device_is_a(dev, "usmsc") &&
 	    vcprop_tag_success_p(&vb.vbt_macaddr.tag)) {
 		const uint8_t enaddr[ETHER_ADDR_LEN] = {
@@ -1227,15 +1281,8 @@ rpi_device_register(device_t dev, void *aux)
 	/* BSC0 is used internally on some boards */
 	if (device_is_a(dev, "bsciic") &&
 	    ((struct amba_attach_args *)aux)->aaa_addr == BCM2835_BSC0_BASE) {
-		const uint32_t rev = vb.vbt_boardrev.rev;
-
-		if ((rev & VCPROP_REV_ENCFLAG) != 0) {
-			switch (__SHIFTOUT(rev, VCPROP_REV_MODEL)) {
-			case RPI_MODEL_B_PI3:
-			case RPI_MODEL_ZERO_W:
-				prop_dictionary_set_bool(dict, "disable", true);
-				break;
-		    	}
+		if (rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
+			prop_dictionary_set_bool(dict, "disable", true);
 		}
 	}
 }
