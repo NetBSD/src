@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.19 2017/07/27 07:53:54 isaki Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.20 2017/07/30 05:51:34 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.19 2017/07/27 07:53:54 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.20 2017/07/30 05:51:34 isaki Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -74,6 +74,8 @@ static const int adpcm_estimstep[16] = {
 	-1, -1, -1, -1, 2, 4, 6, 8,
 	-1, -1, -1, -1, 2, 4, 6, 8
 };
+
+static int16_t buzzer;	/* sound for debug */
 
 static stream_filter_t *
 msm6258_factory(struct audio_softc *asc,
@@ -181,11 +183,7 @@ DEFINE_FILTER(msm6258_slinear16_to_adpcm)
 			d = audio_stream_add_inp(dst, d, 1);
 			s = audio_stream_add_outp(this->src, s, 2);
 		}
-#if defined(DIAGNOSTIC)
 	} else if (enc_src == AUDIO_ENCODING_SLINEAR_BE) {
-#else
-	} else {
-#endif
 		while (dst->used < m && this->src->used >= 4) {
 			uint8_t f;
 			int16_t ss;
@@ -205,12 +203,18 @@ DEFINE_FILTER(msm6258_slinear16_to_adpcm)
 			d = audio_stream_add_inp(dst, d, 1);
 			s = audio_stream_add_outp(this->src, s, 2);
 		}
-	}
+	} else {
 #if defined(DIAGNOSTIC)
-	else {
 		panic("msm6258_slinear16_to_adpcm: unsupported enc_src(%d)", enc_src);
-	}
 #endif
+		/* dummy run */
+		while (dst->used < m && this->src->used >= 4) {
+			s = audio_stream_add_outp(this->src, s, 2);
+			s = audio_stream_add_outp(this->src, s, 2);
+			*d = buzzer++;
+			d = audio_stream_add_inp(dst, d, 1);
+		}
+	}
 	dst->inp = d;
 	this->src->outp = s;
 	return 0;
@@ -247,12 +251,8 @@ DEFINE_FILTER(msm6258_linear8_to_adpcm)
 			d = audio_stream_add_inp(dst, d, 1);
 			s = audio_stream_add_outp(this->src, s, 1);
 		}
-#if defined(DIAGNOSTIC)
 	} else if (enc_src == AUDIO_ENCODING_ULINEAR_LE
 	        || enc_src == AUDIO_ENCODING_ULINEAR_BE) {
-#else
-	} else {
-#endif
 		while (dst->used < m && this->src->used >= 4) {
 			uint8_t f;
 			int16_t ss;
@@ -265,12 +265,18 @@ DEFINE_FILTER(msm6258_linear8_to_adpcm)
 			d = audio_stream_add_inp(dst, d, 1);
 			s = audio_stream_add_outp(this->src, s, 1);
 		}
-	}
+	} else {
 #if defined(DIAGNOSTIC)
-	else {
 		panic("msm6258_linear8_to_adpcm: unsupported enc_src(%d)", enc_src);
-	}
 #endif
+		/* dummy run */
+		while (dst->used < m && this->src->used >= 4) {
+			s = audio_stream_add_outp(this->src, s, 1);
+			s = audio_stream_add_outp(this->src, s, 1);
+			*d = buzzer++;
+			d = audio_stream_add_inp(dst, d, 1);
+		}
+	}
 	dst->inp = d;
 	this->src->outp = s;
 	return 0;
@@ -336,11 +342,7 @@ DEFINE_FILTER(msm6258_adpcm_to_slinear16)
 			d = audio_stream_add_inp(dst, d, 2);
 			s = audio_stream_add_outp(this->src, s, 1);
 		}
-#if defined(DIAGNOSTIC)
 	} else if (enc_dst == AUDIO_ENCODING_SLINEAR_BE) {
-#else
-	} else {
-#endif
 		while (dst->used < m && this->src->used >= 1) {
 			uint8_t a;
 			int16_t s1, s2;
@@ -361,12 +363,19 @@ DEFINE_FILTER(msm6258_adpcm_to_slinear16)
 			d = audio_stream_add_inp(dst, d, 2);
 			s = audio_stream_add_outp(this->src, s, 1);
 		}
-	}
+	} else {
 #if defined(DIAGNOSTIC)
-	else {
 		panic("msm6258_adpcm_to_slinear16: unsupported enc_dst(%d)", enc_dst);
-	}
 #endif
+		/* dummy run */
+		while (dst->used < m && this->src->used >= 1) {
+			*d = buzzer++;
+			d = audio_stream_add_inp(dst, d, 2);
+			*d = buzzer++;
+			d = audio_stream_add_inp(dst, d, 2);
+			s = audio_stream_add_outp(this->src, s, 1);
+		}
+	}
 	dst->inp = d;
 	this->src->outp = s;
 	return 0;
@@ -403,11 +412,7 @@ DEFINE_FILTER(msm6258_adpcm_to_linear8)
 			d = audio_stream_add_inp(dst, d, 1);
 			s = audio_stream_add_outp(this->src, s, 1);
 		}
-#if defined(DIAGNOSTIC)
 	} else if (enc_dst == AUDIO_ENCODING_ULINEAR_LE) {
-#else
-	} else {
-#endif
 		while (dst->used < m && this->src->used >= 1) {
 			uint8_t a;
 			int16_t s1, s2;
@@ -420,12 +425,19 @@ DEFINE_FILTER(msm6258_adpcm_to_linear8)
 			d = audio_stream_add_inp(dst, d, 1);
 			s = audio_stream_add_outp(this->src, s, 1);
 		}
-	}
+	} else {
 #if defined(DIAGNOSTIC)
-	else {
 		panic("msm6258_adpcm_to_linear8: unsupported enc_dst(%d)", enc_dst);
-	}
 #endif
+		/* dummy run */
+		while (dst->used < m && this->src->used >= 1) {
+			*d = buzzer++;
+			d = audio_stream_add_inp(dst, d, 1);
+			*d = buzzer++;
+			d = audio_stream_add_inp(dst, d, 1);
+			s = audio_stream_add_outp(this->src, s, 1);
+		}
+	}
 	dst->inp = d;
 	this->src->outp = s;
 	return 0;
