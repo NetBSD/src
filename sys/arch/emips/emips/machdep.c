@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2016/12/22 14:47:54 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2017/07/30 11:38:57 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2016/12/22 14:47:54 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2017/07/30 11:38:57 he Exp $");
 
 #include "opt_ddb.h"
 
@@ -82,8 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2016/12/22 14:47:54 cherry Exp $");
 #include <ddb/db_extern.h>
 #endif
 
-vaddr_t iospace = 64 * 1024; /* BUGBUG make it an option? */
-vsize_t iospace_size;
+vaddr_t iospace;
+vsize_t iospace_size = 64 * 1024; /* BUGBUG make it an option? */
 
 #include "ksyms.h"
 
