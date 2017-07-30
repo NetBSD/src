@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.30 2017/06/22 13:13:51 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.31 2017/07/30 16:54:36 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.30 2017/06/22 13:13:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.31 2017/07/30 16:54:36 jmcneill Exp $");
 
 #include "bcmdmac.h"
 
@@ -107,6 +107,7 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t dict = device_properties(self);
 	struct amba_attach_args *aaa = aux;
 	prop_number_t frequency;
+	bool disable = false;
 	int error;
 
 	sc->sc.sc_dev = self;
@@ -122,6 +123,13 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_clkbase = 50000;	/* Default to 50MHz */
 	sc->sc_iot = aaa->aaa_iot;
 
+	prop_dictionary_get_bool(dict, "disable", &disable);
+	if (disable) {
+		aprint_naive(": disabled\n");
+		aprint_normal(": disabled\n");
+		return;
+	}
+
 	/* Fetch the EMMC clock frequency from property if set. */
 	frequency = prop_dictionary_get(dict, "frequency");
 	if (frequency != NULL) {
@@ -131,8 +139,8 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	error = bus_space_map(sc->sc_iot, aaa->aaa_addr, aaa->aaa_size, 0,
 	    &sc->sc_ioh);
 	if (error) {
-		aprint_error_dev(self,
-		    "can't map registers for %s: %d\n", aaa->aaa_name, error);
+		aprint_error(": can't map registers for %s: %d\n",
+		    aaa->aaa_name, error);
 		return;
 	}
 	sc->sc_iob = aaa->aaa_addr;

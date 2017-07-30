@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.26 2015/11/21 07:41:29 mlelstv Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.27 2017/07/30 16:54:36 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.26 2015/11/21 07:41:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.27 2017/07/30 16:54:36 jmcneill Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -146,6 +146,13 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_addr = 0,
 		.ad_size = 0,
 		.ad_intr = -1,
+	},
+	{
+		/* SD host interface */
+		.ad_name = "sdhost",
+		.ad_addr = BCM2835_SDHOST_BASE,
+		.ad_size = BCM2835_SDHOST_SIZE,
+		.ad_intr = BCM2835_INT_SDHOST,
 	},
 	{
 		/* eMMC interface */
