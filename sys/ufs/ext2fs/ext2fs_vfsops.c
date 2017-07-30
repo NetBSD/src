@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.209 2017/05/28 16:38:55 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.210 2017/07/30 14:23:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.209 2017/05/28 16:38:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.210 2017/07/30 14:23:54 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -675,7 +675,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
-	m_fs = kmem_zalloc(sizeof(struct m_ext2fs), KM_SLEEP);
+	m_fs = kmem_zalloc(sizeof(*m_fs), KM_SLEEP);
 	e2fs_sbload(fs, &m_fs->e2fs);
 
 	brelse(bp, 0);
@@ -684,7 +684,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	/* Once swapped, validate and fill in the superblock. */
 	error = ext2fs_sbfill(m_fs, ronly);
 	if (error) {
-		kmem_free(m_fs, sizeof(struct m_ext2fs));
+		kmem_free(m_fs, sizeof(*m_fs));
 		goto out;
 	}
 	m_fs->e2fs_ronly = ronly;
@@ -755,7 +755,7 @@ out:
 	if (bp != NULL)
 		brelse(bp, 0);
 	if (ump) {
-		kmem_free(ump->um_e2fs, sizeof(struct m_ext2fs));
+		kmem_free(ump->um_e2fs, sizeof(*m_fs));
 		kmem_free(ump, sizeof(*ump));
 		mp->mnt_data = NULL;
 	}
