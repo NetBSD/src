@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.72 2017/07/30 16:54:36 jmcneill Exp $
+#	$NetBSD: RPI,v 1.73 2017/07/30 17:01:27 jmcneill Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -97,8 +97,8 @@ sdhc* at obio?
 sdmmc*  at sdhc?
 
 # SD host controller
-#sdhost* at obio?
-#sdmmc* at sdhost?
+sdhost* at obio?
+sdmmc* at sdhost?
 
 ld*     at sdmmc?
 
