@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.382 2017/07/29 06:45:35 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.383 2017/07/30 00:47:48 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.382 2017/07/29 06:45:35 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.383 2017/07/30 00:47:48 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -206,7 +206,7 @@ int	audiodebug = AUDIO_DEBUG;
 #endif
 
 #define ROUNDSIZE(x)	(x) &= -16	/* round to nice boundary */
-#define SPECIFIED(x)	((x) != ~0)
+#define SPECIFIED(x)	((int)(x) != ~0)
 #define SPECIFIED_CH(x)	((x) != (u_char)~0)
 
 /* #define AUDIO_PM_IDLE */
@@ -1986,7 +1986,7 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp,
 	blksize = rp->blksize;
 	if (blksize < AUMINBLK)
 		blksize = AUMINBLK;
-	if (blksize > rp->s.bufsize / AUMINNOBLK)
+	if (blksize > (int)(rp->s.bufsize / AUMINNOBLK))
 		blksize = rp->s.bufsize / AUMINNOBLK;
 	ROUNDSIZE(blksize);
 	DPRINTF(("audio_init_ringbuffer: MI blksize=%d\n", blksize));
@@ -2348,8 +2348,8 @@ audio_drain(struct audio_softc *sc, struct audio_chan *chan)
 {
 	struct audio_ringbuffer *cb;
 	struct virtual_channel *vc;
-	int error, drops;
-	int cc, i, used;
+	int error, cc, i, used;
+	uint drops;
 	bool hw = false;
 
 	KASSERT(mutex_owned(sc->sc_lock));
@@ -2537,7 +2537,8 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 	struct audio_ringbuffer *cb;
 	const uint8_t *outp;
 	uint8_t *inp;
-	int error, used, cc, n;
+	int error, used, n;
+	uint cc;
 
 	KASSERT(mutex_owned(sc->sc_lock));
 
@@ -3445,7 +3446,7 @@ audio_mmap(struct audio_softc *sc, off_t *offp, size_t len, int prot,
 	cb = &vc->sc_mpr;
 #endif
 
-	if (len > cb->s.bufsize || *offp > cb->s.bufsize - len)
+	if (len > cb->s.bufsize || *offp > (uint)(cb->s.bufsize - len))
 		return EOVERFLOW;
 
 	if (!cb->mmapped) {
@@ -4524,7 +4525,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 	int setmode;
 	int error;
 	int np, nr;
-	unsigned int blks;
+	int blks;
 	u_int gain;
 	bool rbus, pbus;
 	bool cleared, modechange, pausechange;
@@ -6063,7 +6064,8 @@ vchan_autoconfig(struct audio_softc *sc)
 {
 	struct audio_chan *chan;
 	struct virtual_channel *vc;
-	int error, i, j, k;
+	uint i, j, k;
+	int error;
 
 	chan = SIMPLEQ_FIRST(&sc->sc_audiochan);
 	vc = chan->vc;

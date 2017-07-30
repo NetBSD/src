@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.30 2017/07/28 01:36:40 nat Exp $	*/
+/*	$NetBSD: auconv.c,v 1.31 2017/07/30 00:47:48 nat Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.30 2017/07/28 01:36:40 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.31 2017/07/30 00:47:48 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -928,7 +928,7 @@ auconv_rateconv_check_rates(const struct audio_format *formats, int nformats,
 			if (formats[i].frequency[1] > maxrate)
 				maxrate = formats[i].frequency[1];
 		} else {
-			for (j = 0; j < formats[i].frequency_type; j++) {
+			for (j = 0; j < (int)formats[i].frequency_type; j++) {
 				if (formats[i].frequency[j] < minrate)
 					minrate = formats[i].frequency[j];
 				if (formats[i].frequency[j] > maxrate)
