@@ -1,4 +1,4 @@
-/*	$NetBSD: csplit.c,v 1.6 2011/08/31 13:35:46 joerg Exp $	*/
+/*	$NetBSD: csplit.c,v 1.7 2017/07/30 23:02:53 cheusov Exp $	*/
 /*	$FreeBSD: src/usr.bin/csplit/csplit.c,v 1.9 2004/03/22 11:15:03 tjr Exp$	*/
 
 /*-
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: csplit.c,v 1.6 2011/08/31 13:35:46 joerg Exp $");
+__RCSID("$NetBSD: csplit.c,v 1.7 2017/07/30 23:02:53 cheusov Exp $");
 #endif
 
 #include <sys/types.h>
@@ -201,7 +201,7 @@ main(int argc, char *argv[])
 	/* Copy the rest into a new file. */
 	if (!feof(infile)) {
 		ofp = newfile();
-		while ((p = get_line()) != NULL && fputs(p, ofp) == 0)
+		while ((p = get_line()) != NULL && fputs(p, ofp) != EOF)
 			;
 		if (!sflag)
 			(void)printf("%jd\n", (intmax_t)ftello(ofp));
@@ -403,7 +403,7 @@ do_rexp(const char *expr)
 	/* Read and output lines until we get a match. */
 	first = 1;
 	while ((p = get_line()) != NULL) {
-		if (fputs(p, ofp) != 0)
+		if (fputs(p, ofp) == EOF)
 			break;
 		if (!first && regexec(&cre, p, 0, NULL, 0) == 0)
 			break;
@@ -429,7 +429,7 @@ do_rexp(const char *expr)
 		 * after the match.
 		 */
 		while (--ofs > 0 && (p = get_line()) != NULL)
-			if (fputs(p, ofp) != 0)
+			if (fputs(p, ofp) == EOF)
 				break;
 		toomuch(NULL, 0L);
 		nwritten = (intmax_t)ftello(ofp);
@@ -465,7 +465,7 @@ do_lineno(const char *expr)
 		while (lineno + 1 != lastline) {
 			if ((p = get_line()) == NULL)
 				errx(1, "%ld: out of range", lastline);
-			if (fputs(p, ofp) != 0)
+			if (fputs(p, ofp) == EOF)
 				break;
 		}
 		if (!sflag)
