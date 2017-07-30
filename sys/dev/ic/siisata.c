@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.27 2017/07/19 20:24:59 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.28 2017/07/30 20:24:45 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.27 2017/07/19 20:24:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.28 2017/07/30 20:24:45 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -157,12 +157,12 @@ int siisata_bio_complete(struct ata_channel *, struct ata_xfer *, int);
 void siisata_bio_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
 int siisata_exec_command(struct ata_drive_datas *, struct ata_xfer *);
 
-static void siisata_reinit_port(struct ata_channel *);
+static void siisata_reinit_port(struct ata_channel *, int);
 static void siisata_device_reset(struct ata_channel *);
 static void siisata_activate_prb(struct siisata_channel *, int);
 static void siisata_deactivate_prb(struct siisata_channel *, int);
 static int siisata_dma_setup(struct ata_channel *, int, void *, size_t, int);
-static void siisata_channel_recover(struct ata_channel *, int, int);
+void siisata_channel_recover(struct ata_channel *, uint32_t);
 
 #if NATAPIBUS > 0
 void siisata_atapibus_attach(struct atabus_softc *);
@@ -266,7 +266,7 @@ siisata_init_port(struct siisata_softc *sc, int port)
 	PRWRITE(sc, PRX(chp->ch_channel, PRO_PCC),
 	    PR_PC_32BA | PR_PC_INCOR | PR_PC_PORT_RESET);
 	/* initialize port */
-	siisata_reinit_port(chp);
+	siisata_reinit_port(chp, -1);
 	/* enable CmdErrr+CmdCmpl interrupting */
 	siisata_enable_port_interrupt(chp);
 	/* enable port interrupt */
@@ -288,7 +288,7 @@ siisata_attach_port(struct siisata_softc *sc, int port)
 	sc->sc_chanarray[port] = chp;
 	chp->ch_channel = port;
 	chp->ch_atac = &sc->sc_atac;
-	chp->ch_queue = ata_queue_alloc(SIISATA_MAX_SLOTS);
+	chp->ch_queue = ata_queue_alloc(4) ; //SIISATA_MAX_SLOTS);
 	if (chp->ch_queue == NULL) {
 		aprint_error_dev(sc->sc_atac.atac_dev,
 		    "port %d: can't allocate memory "
@@ -471,54 +471,29 @@ siisata_intr(void *v)
 static void
 siisata_intr_port(struct siisata_channel *schp)
 {
-	struct siisata_softc *sc;
-	struct ata_channel *chp;
+	struct siisata_softc *sc =
+	    (struct siisata_softc *)schp->ata_channel.ch_atac;
+	struct ata_channel *chp = &schp->ata_channel;
 	struct ata_xfer *xfer;
-	u_int slot;
-	uint32_t pss, pis;
-
-	sc = (struct siisata_softc *)schp->ata_channel.ch_atac;
-	chp = &schp->ata_channel;
+	int slot = -1;
+	uint32_t pss, pis, tfd = 0;
+	bool recover = false;
 
 	/* get slot status, clearing completion interrupt (PR_PIS_CMDCMPL) */
 	pss = PRREAD(sc, PRX(chp->ch_channel, PRO_PSS));
+
 	SIISATA_DEBUG_PRINT(("%s: %s port %d, pss 0x%x\n",
 	    SIISATANAME(sc), __func__, chp->ch_channel, pss), DEBUG_INTR);
 
-	for (slot = 0; slot < SIISATA_MAX_SLOTS; slot++) {
-		if (((schp->sch_active_slots >> slot) & 1) == 0) {
-			/* there's nothing executing here, skip */
-			continue;
-		}
-		if (((pss >> slot) & 1) != 0) {
-			/* execution is incomplete or unsuccessful, skip
-			 * for now */
-			continue;
-		}
-		xfer = ata_queue_hwslot_to_xfer(chp, slot);
-		if (xfer->c_intr == NULL) {
-			wakeup(schp);
-			continue;
-		}
-		KASSERT(xfer != NULL);
-		KASSERT(xfer->c_intr != NULL);
-		xfer->c_intr(chp, xfer, 0);
-	}
-	/* if no errors, we're done now */
-	if ((pss & PR_PSS_ATTENTION) == 0) {
-		pis = PRREAD(sc, PRX(chp->ch_channel, PRO_PIS));
-		pis &= 0xffff;
-		if (pis) {
-			PRWRITE(sc, PRX(chp->ch_channel, PRO_PIS),
-			    pis & 0xfffcfffc);
-		}
-		return;
-	}
+	/* if no errors, just process finished commands and we're done */
+	if (__predict_true((pss & PR_PSS_ATTENTION) == 0))
+		goto process;
 
 	pis = PRREAD(sc, PRX(chp->ch_channel, PRO_PIS));
 
-	SIISATA_DEBUG_PRINT(("%s: %s port %d, pis 0x%x ", SIISATANAME(sc),
-	    __func__, chp->ch_channel, pis), DEBUG_INTR);
+	SIISATA_DEBUG_PRINT(("%s: %s port %d, pis 0x%x ",
+	    SIISATANAME(sc), __func__, chp->ch_channel, pis),
+	    DEBUG_INTR);
 
 	/* clear */
 	PRWRITE(sc, PRX(chp->ch_channel, PRO_PIS), pis);
@@ -530,32 +505,72 @@ siisata_intr_port(struct siisata_channel *schp)
 		SIISATA_DEBUG_PRINT(("ec %d\n", ec), DEBUG_INTR);
 
 		/* emulate a CRC error by default */
-		int tfd = ATACH_ERR_ST(WDCE_CRC, WDCS_ERR);
+		tfd = ATACH_ERR_ST(WDCE_CRC, WDCS_ERR);
 
-		if (ec <= PR_PCE_DATAFISERROR && !schp->sch_recovering) {
-			siisata_channel_recover(chp, ec, tfd);
+		if (ec <= PR_PCE_DATAFISERROR) {
+			if (ec == PR_PCE_DEVICEERROR
+			    && (chp->ch_flags & ATACH_NCQ) == 0) {
+				uint32_t ps = PRREAD(sc,
+				    PRX(chp->ch_channel, PRO_PS));
+				/* This is only relevant for non-NCQ commands */
+				slot = PR_PS_ACTIVE_SLOT(ps);
+
+				/* read in specific information about error */
+				uint32_t prbfis = bus_space_read_stream_4(
+				    sc->sc_prt, sc->sc_prh,
+    				    PRSX(chp->ch_channel, slot,
+				    PRSO_FIS));
+
+				/* get status and error */
+				int ntfd = satafis_rdh_parse(chp,
+				    (uint8_t *)&prbfis);
+
+				if (ATACH_ST(ntfd) & WDCS_ERR)
+					tfd = ntfd;
+			}
 		} else {
 			aprint_error_dev(sc->sc_atac.atac_dev, "fatal error %d"
 			    " on channel %d (ctx 0x%x), resetting\n",
 			    ec, chp->ch_channel,
 			    PRREAD(sc, PRX(chp->ch_channel, PRO_PCR)));
 
-			/* okay, we have a "Fatal Error" */
-			siisata_device_reset(chp);
+			tfd |= ATACH_ERR_ST(0, WDCS_BSY);
+		}
 
-			/* Complete any non-finished commands with the error */
-			for (slot = 0; slot < SIISATA_MAX_SLOTS; slot++) {
-				if (((schp->sch_active_slots >> slot) & 1) == 0) {
-					/* nothing executing here, skip */
-					continue;
-				}
+		if (!schp->sch_recovering)
+			recover = true;
+	} else {
+		/* Some other event, which we currently ignore */
+	}
+
+	if (__predict_false(recover))
+		ata_channel_freeze(chp);
+
+	if (slot >= 0) {
+		if ((schp->sch_active_slots & (1 << slot)) != 0 &&
+		    (pss & (1 << slot)) == 0) {
+			xfer = ata_queue_hwslot_to_xfer(chp, slot);
+			xfer->c_intr(chp, xfer, tfd);
+		}
+	} else {
+		/*
+		 * For NCQ, HBA halts processing when error is notified,
+		 * and any further D2H FISes are ignored until the error
+		 * condition is cleared. Hence if a command is inactive,
+		 * it means it actually already finished successfully.
+		 */
+process:
+		for (slot=0; slot < SIISATA_MAX_SLOTS; slot++) {
+			if ((schp->sch_active_slots & (1 << slot)) != 0 &&
+			    (pss & PR_PXSS(slot)) == 0) {
 				xfer = ata_queue_hwslot_to_xfer(chp, slot);
-				xfer->c_intr(chp, xfer, tfd);
+				xfer->c_intr(chp, xfer, 0);
 			}
 		}
 	}
 
-	return;
+	if (__predict_false(recover))
+		siisata_channel_recover(chp, tfd);
 }
 
 static void
@@ -573,23 +588,20 @@ siisata_unhold(struct siisata_channel *schp)
 }
 
 /* Recover channel after transfer aborted */
-static void
-siisata_channel_recover(struct ata_channel *chp, int ec, int tfd)
+void
+siisata_channel_recover(struct ata_channel *chp, uint32_t tfd)
 {
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
 	struct siisata_softc *sc =
 	    (struct siisata_softc *)schp->ata_channel.ch_atac;
 	struct ata_drive_datas *drvp;
-	int ps, drive, error;
-	uint8_t slot, st, err;
+	int drive, error;
+	uint8_t eslot, slot, st, err;
 	struct ata_xfer *xfer;
-	uint32_t prbfis;
 
 	KASSERT(!schp->sch_recovering);
 
 	schp->sch_recovering = true;
-
-	ps = PRREAD(sc, PRX(chp->ch_channel, PRO_PS));
 
 	if (chp->ch_ndrives > PMP_PORT_CTL) {
 		/* Get PM port number for the device in error */
@@ -600,49 +612,72 @@ siisata_channel_recover(struct ata_channel *chp, int ec, int tfd)
 
 	drvp = &chp->ch_drive[drive];
 
-	siisata_hold(schp);
+	/*
+	 * If BSY or DRQ bits are set, must execute COMRESET to return
+	 * device to idle state. Otherwise, commands can be reissued
+	 * after reinitalization of port. After that, need to execute
+	 * READ LOG EXT for NCQ to unblock device processing if COMRESET
+	 * was not done.
+	 */
+	if ((ATACH_ST(tfd) & (WDCS_BSY|WDCS_DRQ)) != 0)
+		goto reset;
 
-	siisata_reinit_port(chp);
+	KASSERT(drive >= 0);
+	siisata_reinit_port(chp, drive);
+
+	siisata_hold(schp);
 
 	/*
 	 * When running NCQ commands, READ LOG EXT is necessary to clear the
 	 * error condition and unblock the device.
 	 */
-	error = ata_read_log_ext_ncq(drvp, AT_POLL, &slot, &st, &err);
+	error = ata_read_log_ext_ncq(drvp, AT_POLL, &eslot, &st, &err);
 
 	siisata_unhold(schp);
 
-	if (error == EOPNOTSUPP) {
-		/*
-		 * Not NCQ command or not NCQ device, there is only
-		 * one outstanding tranfer, so find the active one,
-		 * and send the error.
-		 */
-		xfer = ata_queue_drive_active_xfer(chp, drive);
-		if (ec == PR_PCE_DEVICEERROR) {
-			slot = PR_PS_ACTIVE_SLOT(ps);
-
-			/* read in specific information about error */
-			prbfis = bus_space_read_stream_4(
-			    sc->sc_prt, sc->sc_prh,
-    			    PRSX(chp->ch_channel, slot,
-			    PRSO_FIS));
-
-			/* get status and error */
-			int ntfd = satafis_rdh_parse(chp, (uint8_t *)&prbfis);
-
-			if (ATACH_ST(ntfd) & WDCS_ERR)
-				tfd = ntfd;
+	switch (error) {
+	case 0:
+		/* Error out the particular NCQ xfer, then requeue the others */
+		if ((schp->sch_active_slots & (1 << eslot)) != 0) {
+			xfer = ata_queue_hwslot_to_xfer(chp, eslot);
+			xfer->c_intr(chp, xfer, ATACH_ERR_ST(err, st));
 		}
+		break;
 
-		xfer->c_intr(chp, xfer, tfd);
-	} else if (error == 0) {
-		xfer = ata_queue_hwslot_to_xfer(chp, slot);
-		xfer->c_intr(chp, xfer, ATACH_ERR_ST(err, st));
-	} else {
-		/* Other error, do full device reset */
-		drive = -1;
-		siisata_device_reset(chp);
+	case EOPNOTSUPP:
+		/*
+		 * Non-NCQ command error, just find the slot and end it with
+		 * the error.
+		 */
+		for (slot = 0; slot < SIISATA_MAX_SLOTS; slot++) {
+			if ((schp->sch_active_slots & (1 << slot)) != 0) {
+				xfer = ata_queue_hwslot_to_xfer(chp, slot);
+				if (xfer->c_drive != drive)
+					continue;
+
+				xfer->c_intr(chp, xfer, tfd);
+			}
+		}
+		break;
+
+	case EAGAIN:
+		/*
+		 * Failed to get resources to run the recovery command, must
+		 * reset the drive. This will also kill all still outstanding
+		 * transfers.
+		 */
+reset:
+		siisata_reset_channel(chp, AT_POLL);
+		goto out;
+		/* NOTREACHED */
+
+	default:
+		/*
+		 * The command to get the slot failed. Kill outstanding
+		 * commands for the same drive only. No need to reset
+		 * the drive, it's unblocked nevertheless.
+		 */
+		break;
 	}
 
 	/* Requeue the non-errorred commands */ 
@@ -651,14 +686,18 @@ siisata_channel_recover(struct ata_channel *chp, int ec, int tfd)
 			continue;
 
 		xfer = ata_queue_hwslot_to_xfer(chp, slot);
-		if (drive >= 0 && xfer->c_drive != drive)
+		if (xfer->c_drive != drive)
 			continue;
 
 		xfer->c_kill_xfer(chp, xfer,
-		     drive >= 0 ? KILL_REQUEUE : KILL_RESET);
+		    (error == 0) ? KILL_REQUEUE : KILL_RESET);
 	}
 
+out:
+	/* Drive unblocked, back to normal operation */
 	schp->sch_recovering = false;
+	ata_channel_thaw(chp);
+	atastart(chp);
 }
 
 void
@@ -672,20 +711,9 @@ siisata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 	uint32_t pss, pis;
 	int i;
 
-	/* wait for ready */
-	while (!(PRREAD(sc, PRX(chp->ch_channel, PRO_PS)) & PR_PS_PORT_READY))
-		DELAY(10);
+	siisata_reinit_port(chp, drvp->drive);
 
-	/*
-	 * Try to get available slot. If there is none available, must
-	 * do full channel reset.
-	 */
-	xfer = ata_get_xfer_ext(chp, false, 0);
-	if (xfer == NULL) {
-		printf("%s: no xfer\n", __func__);
-		siisata_reset_channel(chp, flags);
-		return;
-	}
+	xfer = ata_get_xfer_ext(chp, C_RECOVERY, 0);
 
 	prb = schp->sch_prb[xfer->c_slot];
 	memset(prb, 0, SIISATA_CMD_SIZE);
@@ -768,12 +796,11 @@ siisata_reset_channel(struct ata_channel *chp, int flags)
 		    SIISATANAME(sc), chp->ch_channel);
 		/* XXX and then ? */
 	}
-	/* wait for ready */
-	while (!(PRREAD(sc, PRX(chp->ch_channel, PRO_PS)) & PR_PS_PORT_READY))
-		DELAY(10);
+
+	siisata_device_reset(chp);
+
 	PRWRITE(sc, PRX(chp->ch_channel, PRO_SERROR),
 	    PRREAD(sc, PRX(chp->ch_channel, PRO_SERROR)));
-	ata_kill_active(chp, KILL_RESET, flags);
 
 	return;
 }
@@ -810,7 +837,7 @@ siisata_probe_drive(struct ata_channel *chp)
 	SIISATA_DEBUG_PRINT(("%s: %s: port %d start\n", SIISATANAME(sc),
 	    __func__, chp->ch_channel), DEBUG_FUNCS);
 
-	xfer = ata_get_xfer(chp);
+	xfer = ata_get_xfer_ext(chp, 0, 0);
 	if (xfer == NULL) {
 		aprint_error_dev(sc->sc_atac.atac_dev,
 		    "failed to get xfer port %d\n",
@@ -827,16 +854,24 @@ siisata_probe_drive(struct ata_channel *chp)
 	switch(sata_reset_interface(chp, sc->sc_prt, schp->sch_scontrol,
 		schp->sch_sstatus, AT_WAIT)) {
 	case SStatus_DET_DEV:
-#if 0		/* XXX Including this seems to cause problems. */
-		/* XXX DO NOT MERGE UNTIL THIS IS ADDRESSED PROPERLY XXX */
-		/* clear any interrupts */
-		(void)PRREAD(sc, PRX(chp->ch_channel, PRO_PSS));
-		PRWRITE(sc, PRX(chp->ch_channel, PRO_PIS), 0xffffffff);
-#endif
 		/* wait for ready */
-		while (!(PRREAD(sc, PRX(chp->ch_channel, PRO_PS))
-		    & PR_PS_PORT_READY))
-			DELAY(10);
+		timed_out = 1;
+		for (i = 0; i < ATA_DELAY / 10; i++) {
+			if (PRREAD(sc, PRX(chp->ch_channel, PRO_PS)) &
+			    PR_PS_PORT_READY) {
+				timed_out = 0;
+				break;
+			}
+
+			ata_delay(10, "siiprbrd", AT_WAIT);
+		}
+		if (timed_out) {
+			aprint_error_dev(sc->sc_atac.atac_dev,
+			    "timed out waiting for PORT_READY on port %d, " 
+			    "reinitializing\n", chp->ch_channel);
+			siisata_reinit_port(chp, -1);
+		}
+
 		prb = schp->sch_prb[xfer->c_slot];
 		memset(prb, 0, SIISATA_CMD_SIZE);
 		prb->prb_control = htole16(PRB_CF_SOFT_RESET);
@@ -853,23 +888,24 @@ siisata_probe_drive(struct ata_channel *chp)
 				break;
 			}
 			if (PRREAD(sc, PRX(chp->ch_channel, PRO_PIS)) &
-			    (PR_PIS_CMDERRR << 16)) {
+			    PR_PIS_CMDERRR) {
 				/* we got an error; handle as timeout */
 				break;
 			}
 
-			tsleep(schp, PRIBIO, "siiprb", mstohz(10));
+			ata_delay(10, "siiprb", AT_WAIT);
 		}
 
 		siisata_deactivate_prb(schp, xfer->c_slot);
 
 		if (timed_out) {
 			aprint_error_dev(sc->sc_atac.atac_dev,
-			    "SOFT_RESET failed on port %d (error %d PSS 0x%x), "
+			    "SOFT_RESET failed on port %d (error %d PSS 0x%x PIS 0x%x), "
 			    "resetting\n", chp->ch_channel,
 			    PRREAD(sc, PRX(chp->ch_channel, PRO_PCE)),
-			    PRREAD(sc, PRX(chp->ch_channel, PRO_PSS)));
-			siisata_reinit_port(chp);
+			    PRREAD(sc, PRX(chp->ch_channel, PRO_PSS)),
+			    PRREAD(sc, PRX(chp->ch_channel, PRO_PIS)));
+			siisata_reinit_port(chp, -1);
 			break;
 		}
 
@@ -1295,9 +1331,9 @@ siisata_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	struct ata_bio *ata_bio = &xfer->c_bio;
 	int drive = xfer->c_drive;
 
-	SIISATA_DEBUG_PRINT(("%s: %s: port %d slot %d drive %d\n",
+	SIISATA_DEBUG_PRINT(("%s: %s: port %d slot %d drive %d tfd %x\n",
 	    SIISATANAME((struct siisata_softc *)chp->ch_atac), __func__,
-	    chp->ch_channel, xfer->c_slot, xfer->c_drive), DEBUG_FUNCS);
+	    chp->ch_channel, xfer->c_slot, xfer->c_drive, tfd), DEBUG_FUNCS);
 
 	if (ata_waitdrain_xfer_check(chp, xfer))
 		return 0;
@@ -1426,7 +1462,7 @@ siisata_deactivate_prb(struct siisata_channel *schp, int slot)
 }
 
 static void
-siisata_reinit_port(struct ata_channel *chp)
+siisata_reinit_port(struct ata_channel *chp, int drive)
 {
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 	int ps;
@@ -1445,6 +1481,9 @@ siisata_reinit_port(struct ata_channel *chp)
 		PRWRITE(sc, PRX(chp->ch_channel, PRO_PCC), PR_PC_RESUME);
 
 	        for (int i = 0; i < chp->ch_ndrives; i++) {
+			if (drive >= 0 && i != drive)
+				continue;
+
 			PRWRITE(sc, PRX(chp->ch_channel, PRO_PMPSTS(i)), 0);
 			PRWRITE(sc, PRX(chp->ch_channel, PRO_PMPQACT(i)), 0);
 		}
@@ -1458,8 +1497,10 @@ siisata_reinit_port(struct ata_channel *chp)
 
 		DELAY(10);
 	}
-	if ((ps & PR_PS_PORT_READY) == 0)
-		printf("%s: timeout waiting for port to be ready", __func__);
+	if ((ps & PR_PS_PORT_READY) == 0) {
+		printf("%s: timeout waiting for port to be ready\n", __func__);
+		siisata_reset_channel(chp, AT_POLL);
+	}
 
 	if (chp->ch_ndrives > 1)
 		PRWRITE(sc, PRX(chp->ch_channel, PRO_PCS), PR_PC_PMP_ENABLE);
@@ -1471,6 +1512,11 @@ siisata_device_reset(struct ata_channel *chp)
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 	int ps;
 
+	/*
+	 * This is always called after siisata_reinit_port(), so don't
+	 * need to deal with RESUME and clearing device error state.
+	 */
+
 	PRWRITE(sc, PRX(chp->ch_channel, PRO_PCS), PR_PC_DEVICE_RESET);
 
 	for (int i = 0; i < ATA_DELAY * 100; i++) {
@@ -1480,8 +1526,12 @@ siisata_device_reset(struct ata_channel *chp)
 
 		DELAY(10);
 	}
-	if ((ps & PR_PS_PORT_READY) == 0)
-		printf("%s: timeout waiting for port to be ready", __func__);
+	if ((ps & PR_PS_PORT_READY) == 0) {
+		printf("%s: timeout waiting for port to be ready\n", __func__);
+		siisata_reset_channel(chp, AT_POLL);
+	}
+
+	ata_kill_active(chp, KILL_RESET, 0);
 }
 
 
@@ -1716,7 +1766,7 @@ siisata_atapi_scsipi_request(struct scsipi_channel *chan,
 			scsipi_done(sc_xfer);
 			return;
 		}
-		xfer = ata_get_xfer_ext(atac->atac_channels[channel], false, 0);
+		xfer = ata_get_xfer_ext(atac->atac_channels[channel], 0, 0);
 		if (xfer == NULL) {
 			sc_xfer->error = XS_RESOURCE_SHORTAGE;
 			scsipi_done(sc_xfer);
