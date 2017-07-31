@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_com.c,v 1.1 2017/07/30 23:48:32 jmcneill Exp $ */
+/* $NetBSD: bcm2835_com.c,v 1.2 2017/07/31 00:51:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.1 2017/07/30 23:48:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.2 2017/07/31 00:51:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,7 +68,7 @@ bcm_com_attach(device_t parent, device_t self, void *aux)
 	void *ih;
 
 	sc->sc_dev = self;
-	sc->sc_type = COM_TYPE_NORMAL;
+	sc->sc_type = COM_TYPE_BCMAUXUART;
 
 	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_frequency);
 	if (sc->sc_frequency == 0) {
