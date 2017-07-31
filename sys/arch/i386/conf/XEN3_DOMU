@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.81 2017/07/29 18:08:58 maxv Exp $
+# $NetBSD: XEN3_DOMU,v 1.82 2017/07/31 15:43:33 maxv Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -61,9 +61,9 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options DDB_COMMANDONENTER="trace;show registers"
 
 # Compatibility options
-options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
-options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
-options 	COMPAT_09	# NetBSD 0.9,
+#options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
+#options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
+#options 	COMPAT_09	# NetBSD 0.9,
 options 	COMPAT_10	# NetBSD 1.0,
 options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# NetBSD 1.2 (and 386BSD and BSDI),
