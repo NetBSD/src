@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.75 2017/07/30 23:48:32 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.76 2017/07/31 10:41:39 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.75 2017/07/30 23:48:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.76 2017/07/31 10:41:39 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -497,6 +497,14 @@ rpi_pinctrl(void)
 		    BCM2835_GPIO_GPPUD_PULLUP);
 	}
 #endif
+
+	if (rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
+		/* Enable AUX UART on BT */
+		bcm2835gpio_function_select(32, BCM2835_GPIO_ALT5);
+		bcm2835gpio_function_select(33, BCM2835_GPIO_ALT5);
+		bcm2835gpio_function_setpull(32, BCM2835_GPIO_GPPUD_PULLOFF);
+		bcm2835gpio_function_setpull(33, BCM2835_GPIO_GPPUD_PULLUP);
+	}
 }
 
 
