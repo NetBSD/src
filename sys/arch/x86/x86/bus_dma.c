@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.76 2017/06/01 02:45:08 chs Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.77 2017/07/31 19:29:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.76 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.77 2017/07/31 19:29:19 jdolecek Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -249,8 +249,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 			segs[curseg].ds_len += PAGE_SIZE;
 		} else {
 			curseg++;
-			if (curseg >= nsegs)
-				return EFBIG;
+			KASSERT(curseg < nsegs);
 			segs[curseg].ds_addr = curaddr;
 			segs[curseg].ds_len = PAGE_SIZE;
 		}
