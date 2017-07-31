@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.99 2017/07/31 04:23:48 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.100 2017/07/31 04:25:45 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.99 2017/07/31 04:23:48 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.100 2017/07/31 04:25:45 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -360,9 +360,9 @@ sysctl_opencrypto_kq_maxlen(SYSCTLFN_ARGS)
  * Crypto op and desciptor data structures are allocated
  * from separate private zones(FreeBSD)/pools(netBSD/OpenBSD) .
  */
-struct pool cryptop_pool;
-struct pool cryptodesc_pool;
-struct pool cryptkop_pool;
+static pool_cache_t cryptop_cache;
+static pool_cache_t cryptodesc_cache;
+static pool_cache_t cryptkop_cache;
 
 int	crypto_usercrypto = 1;		/* userland may open /dev/crypto */
 int	crypto_userasymcrypto = 1;	/* userland may do asym crypto reqs */
@@ -571,12 +571,12 @@ crypto_init0(void)
 	int error;
 
 	mutex_init(&crypto_drv_mtx, MUTEX_DEFAULT, IPL_NONE);
-	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0,  
-		  0, "cryptop", NULL, IPL_NET);
-	pool_init(&cryptodesc_pool, sizeof(struct cryptodesc), 0, 0,
-		  0, "cryptodesc", NULL, IPL_NET);
-	pool_init(&cryptkop_pool, sizeof(struct cryptkop), 0, 0,
-		  0, "cryptkop", NULL, IPL_NET);
+	cryptop_cache = pool_cache_init(sizeof(struct cryptop),
+	    coherency_unit, 0, 0, "cryptop", NULL, IPL_NET, NULL, NULL, NULL);
+	cryptodesc_cache = pool_cache_init(sizeof(struct cryptodesc),
+	    coherency_unit, 0, 0, "cryptdesc", NULL, IPL_NET, NULL, NULL, NULL);
+	cryptkop_cache = pool_cache_init(sizeof(struct cryptkop),
+	    coherency_unit, 0, 0, "cryptkop", NULL, IPL_NET, NULL, NULL, NULL);
 
 	crypto_crp_qs_percpu = percpu_alloc(sizeof(struct crypto_crp_qs));
 	percpu_foreach(crypto_crp_qs_percpu, crypto_crp_qs_init_pc, NULL);
@@ -702,9 +702,9 @@ crypto_destroy(bool exit_kthread)
 
 	percpu_free(crypto_crp_qs_percpu, sizeof(struct crypto_crp_qs));
 
-	pool_destroy(&cryptop_pool);
-	pool_destroy(&cryptodesc_pool);
-	pool_destroy(&cryptkop_pool);
+	pool_cache_destroy(cryptop_cache);
+	pool_cache_destroy(cryptodesc_cache);
+	pool_cache_destroy(cryptkop_cache);
 
 	mutex_destroy(&crypto_drv_mtx);
 
@@ -1624,9 +1624,9 @@ crypto_freereq(struct cryptop *crp)
 
 	while ((crd = crp->crp_desc) != NULL) {
 		crp->crp_desc = crd->crd_next;
-		pool_put(&cryptodesc_pool, crd);
+		pool_cache_put(cryptodesc_cache, crd);
 	}
-	pool_put(&cryptop_pool, crp);
+	pool_cache_put(cryptop_cache, crp);
 }
 
 /*
@@ -1652,14 +1652,14 @@ crypto_getreq(int num)
 	}
 	crypto_put_crp_ret_qs(curcpu());
 
-	crp = pool_get(&cryptop_pool, 0);
+	crp = pool_cache_get(cryptop_cache, 0);
 	if (crp == NULL) {
 		return NULL;
 	}
 	memset(crp, 0, sizeof(struct cryptop));
 
 	while (num--) {
-		crd = pool_get(&cryptodesc_pool, 0);
+		crd = pool_cache_get(cryptodesc_cache, 0);
 		if (crd == NULL) {
 			crypto_freereq(crp);
 			return NULL;
@@ -1691,7 +1691,7 @@ crypto_kfreereq(struct cryptkop *krp)
 		panic("crypto_kfreereq() freeing krp on RETQ\n");
 	}
 
-	pool_put(&cryptkop_pool, krp);
+	pool_cache_put(cryptkop_cache, krp);
 }
 
 /*
@@ -1717,7 +1717,7 @@ crypto_kgetreq(int num __unused, int prflags)
 	}
 	crypto_put_crp_ret_qs(curcpu());
 
-	krp = pool_get(&cryptkop_pool, prflags);
+	krp = pool_cache_get(cryptkop_cache, prflags);
 	if (krp == NULL) {
 		return NULL;
 	}
