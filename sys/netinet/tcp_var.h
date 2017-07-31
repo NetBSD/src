@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.179 2017/07/28 19:16:41 maxv Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.180 2017/07/31 15:51:27 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -730,7 +730,9 @@ struct syn_cache_head {
 #define	TCPCTL_SACK		10	/* RFC2018 selective acknowledgement */
 #define	TCPCTL_WSCALE		11	/* RFC1323 window scaling */
 #define	TCPCTL_TSTAMP		12	/* RFC1323 timestamps */
+#if 0	/*obsoleted*/
 #define	TCPCTL_COMPAT_42	13	/* 4.2BSD TCP bug work-arounds */
+#endif
 #define	TCPCTL_CWM		14	/* Congestion Window Monitoring */
 #define	TCPCTL_CWM_BURSTSIZE	15	/* burst size allowed by CWM */
 #define	TCPCTL_ACK_ON_PUSH	16	/* ACK immediately on PUSH */
@@ -770,7 +772,7 @@ struct syn_cache_head {
 	{ "sack", CTLTYPE_INT }, \
 	{ "win_scale", CTLTYPE_INT }, \
 	{ "timestamps", CTLTYPE_INT }, \
-	{ "compat_42", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "cwm", CTLTYPE_INT }, \
 	{ "cwm_burstsize", CTLTYPE_INT }, \
 	{ "ack_on_push", CTLTYPE_INT }, \
@@ -860,37 +862,6 @@ extern int tcp_autorcvbuf_max;
 extern int tcp_do_autosndbuf;
 extern int tcp_autosndbuf_inc;
 extern int tcp_autosndbuf_max;
-
-
-#define	TCPCTL_VARIABLES { \
-	{ 0 },					\
-	{ 1, 0, &tcp_do_rfc1323 },		\
-	{ 1, 0, &tcp_sendspace },		\
-	{ 1, 0, &tcp_recvspace },		\
-	{ 1, 0, &tcp_mssdflt },			\
-	{ 1, 0, &tcp_syn_cache_limit },		\
-	{ 1, 0, &tcp_syn_bucket_limit },	\
-	{ 0 },					\
-	{ 1, 0, &tcp_init_win },		\
-	{ 1, 0, &tcp_mss_ifmtu },		\
-	{ 1, 0, &tcp_do_sack },			\
-	{ 1, 0, &tcp_do_win_scale },		\
-	{ 1, 0, &tcp_do_timestamps },		\
-	{ 1, 0, &tcp_cwm },			\
-	{ 1, 0, &tcp_cwm_burstsize },		\
-	{ 1, 0, &tcp_ack_on_push },		\
-	{ 1, 0, &tcp_keepidle },		\
-	{ 1, 0, &tcp_keepintvl },		\
-	{ 1, 0, &tcp_keepcnt },			\
-	{ 1, 1, 0, PR_SLOWHZ },			\
-	{ 0 },					\
-	{ 1, 0, &tcp_log_refused },		\
-	{ 0 },					\
-	{ 1, 0, &tcp_rst_ppslim },		\
-	{ 1, 0, &tcp_delack_ticks },		\
-	{ 1, 0, &tcp_init_win_local },		\
-	{ 1, 0, &tcp_ackdrop_ppslim },		\
-}
 
 struct secasvar;
 
