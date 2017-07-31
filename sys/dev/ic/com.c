@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.340 2017/07/31 09:25:14 jmcneill Exp $ */
+/* $NetBSD: com.c,v 1.341 2017/07/31 23:53:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.340 2017/07/31 09:25:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.341 2017/07/31 23:53:25 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2115,6 +2115,9 @@ again:	do {
 			}
 #endif
 		}
+
+		if (sc->sc_type == COM_TYPE_BCMAUXUART && ISSET(iir, IIR_RXRDY))
+			lsr |= LSR_RXRDY;
 
 		if (ISSET(lsr, LSR_RCV_MASK) &&
 		    !ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
