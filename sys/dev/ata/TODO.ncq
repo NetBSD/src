@@ -11,8 +11,18 @@ do proper NCQ error recovery
   ch_status/ch_error/ATACH_IRQ_WAIT
 - retest ATAPI
 
-ahcisata - use dynamic xfer in ahci_do_reset_drive() instead of hardcoding
-0, which can clash on drive reset after command failure
+do biodone() in wddone() starting the dump to not leak bufs when dumping from
+active system? make sure to not trigger atastart()
+- call ata_kill_active() + ata_kill_pending() when dumping
+
+kill active transfers after software drive reset - race timeout vs.
+error recovery
+
+multi-pmp disk open+i/o on siisata fails - track down and fix
+#!/bin/sh
+for disk in $disks; do
+        (echo $disk; for i in `seq 0 3`; do dd if=/dev/r${disk}d bs=16m of=/dev/null count=1; done)&
+done;
 
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------
