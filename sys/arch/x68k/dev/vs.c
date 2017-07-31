@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.40 2017/07/29 07:30:39 nat Exp $	*/
+/*	$NetBSD: vs.c,v 1.41 2017/07/31 14:53:08 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.40 2017/07/29 07:30:39 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.41 2017/07/31 14:53:08 isaki Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.40 2017/07/29 07:30:39 nat Exp $");
 
 #include <arch/x68k/dev/vsvar.h>
 
+//#define VS_USE_PREC8 /* for debugging */
 #ifdef VS_DEBUG
 #define DPRINTF(y,x)	if (vs_debug >= (y)) printf x
 static int vs_debug;
@@ -329,9 +330,15 @@ vs_query_encoding(void *hdl, struct audio_encoding *fp)
 	DPRINTF(1, ("vs_query_encoding\n"));
 
 	if (fp->index == 0) {
+#if defined(VS_USE_PREC8)
+		strcpy(fp->name, AudioEslinear);
+		fp->encoding = AUDIO_ENCODING_SLINEAR;
+		fp->precision = 8;
+#else
 		strcpy(fp->name, AudioEslinear_be);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
+#endif
 		fp->flags = 0;
 		return 0;
 	}
@@ -380,6 +387,8 @@ vs_set_params(void *hdl, int setmode, int usemode,
 		setmode, play->encoding, play->sample_rate,
 		play->precision, play->channels));
 
+	/* *play and *rec are identical because !AUDIO_PROP_INDEPENDENT */
+
 	if (play->channels != 1) {
 		DPRINTF(1, ("channels not matched\n"));
 		return EINVAL;
@@ -391,33 +400,42 @@ vs_set_params(void *hdl, int setmode, int usemode,
 		return EINVAL;
 	}
 
-	if (play->encoding != AUDIO_ENCODING_SLINEAR_BE) {
-		DPRINTF(1, ("encoding not matched\n"));
+#if defined(VS_USE_PREC8)
+	if (play->precision != 8 || play->encoding != AUDIO_ENCODING_SLINEAR) {
+#else
+	if (play->precision != 16 || play->encoding != AUDIO_ENCODING_SLINEAR_BE) {
+#endif
+		DPRINTF(1, ("prec/enc not matched\n"));
 		return EINVAL;
 	}
-	if (play->precision != 16) {
-		DPRINTF(1, ("precision not matched\n"));
-		return EINVAL;
-	}
-
-	play->encoding = AUDIO_ENCODING_ADPCM;
-	play->validbits = 4;
-	play->precision = 4;
-
-	pfil->prepend(pfil, msm6258_slinear16_to_adpcm, play);
-	rfil->prepend(rfil, msm6258_adpcm_to_slinear16, play);
-
-	play->validbits = 16;
-	play->precision = 16;
-
-	pfil->prepend(pfil, null_filter, play);
-	rfil->prepend(rfil, null_filter, play);
 
 	sc->sc_current.prate = rate;
 	sc->sc_current.rrate = rate;
 
-	/* copy to rec because it's !AUDIO_PROP_INDEPENDENT */
-	*rec = *play;
+	/* pfil and rfil are independent even if !AUDIO_PROP_INDEPENDENT */
+
+	if ((setmode & AUMODE_PLAY) != 0) {
+		pfil->append(pfil, null_filter, play);
+		play->encoding = AUDIO_ENCODING_ADPCM;
+		play->validbits = 4;
+		play->precision = 4;
+#if defined(VS_USE_PREC8)
+		pfil->append(pfil, msm6258_linear8_to_adpcm, play);
+#else
+		pfil->append(pfil, msm6258_slinear16_to_adpcm, play);
+#endif
+	}
+	if ((setmode & AUMODE_RECORD) != 0) {
+		rfil->append(rfil, null_filter, rec);
+		rec->encoding = AUDIO_ENCODING_ADPCM;
+		rec->validbits = 4;
+		rec->precision = 4;
+#if defined(VS_USE_PREC8)
+		rfil->append(rfil, msm6258_adpcm_to_linear8, rec);
+#else
+		rfil->append(rfil, msm6258_adpcm_to_slinear16, rec);
+#endif
+	}
 
 	DPRINTF(1, ("accepted\n"));
 	return 0;
