@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.96 2017/07/26 06:44:01 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.97 2017/07/31 04:19:26 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.96 2017/07/26 06:44:01 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.97 2017/07/31 04:19:26 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -80,20 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.96 2017/07/26 06:44:01 knakahara Exp $"
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>			/* XXX for M_XDATA */
 
-/* below are kludges for residual code wrtitten to FreeBSD interfaces */
-  #define SWI_CRYPTO 17
-  #define register_swi(lvl, fn)  \
-  softint_establish(SOFTINT_NET|SOFTINT_MPSAFE, (void (*)(void *))fn, NULL)
-  #define unregister_swi(lvl, fn)  softint_disestablish(softintr_cookie)
-  #define setsoftcrypto(x)			\
-	do{					\
-		kpreempt_disable();		\
-		softint_schedule(x);		\
-		kpreempt_enable();		\
-	}while(0)
-
-int crypto_ret_q_check(struct cryptop *);
-
 /*
  * Crypto drivers register themselves by allocating a slot in the
  * crypto_drivers table with crypto_get_driverid() and then registering
@@ -103,8 +89,7 @@ static kmutex_t crypto_drv_mtx;
 /* Don't directly access crypto_drivers[i], use crypto_checkdriver(i). */
 static	struct cryptocap *crypto_drivers;
 static	int crypto_drivers_num;
-static	void *softintr_cookie;
-
+static	void *crypto_q_si;
 static	void *crypto_ret_si;
 
 /*
@@ -508,7 +493,7 @@ MALLOC_DEFINE(M_CRYPTO_DATA, "crypto", "crypto session records");
  *
  * This scheme is not intended for SMP machines.
  */
-static	void cryptointr(void);		/* swi thread to dispatch ops */
+static	void cryptointr(void *);	/* swi thread to dispatch ops */
 static	void cryptoret_softint(void *);	/* kernel thread for callbacks*/
 static	int crypto_destroy(bool);
 static	int crypto_invoke(struct cryptop *crp, int hint);
@@ -607,8 +592,8 @@ crypto_init0(void)
 	}
 	crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
 
-	softintr_cookie = register_swi(SWI_CRYPTO, cryptointr);
-	if (softintr_cookie == NULL) {
+	crypto_q_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE, cryptointr, NULL);
+	if (crypto_q_si == NULL) {
 		printf("crypto_init: cannot establish request queue handler\n");
 		return crypto_destroy(false);
 	}
@@ -703,8 +688,8 @@ crypto_destroy(bool exit_kthread)
 	if (crypto_ret_si != NULL)
 		softint_disestablish(crypto_ret_si);
 
-	if (softintr_cookie != NULL)
-		unregister_swi(SWI_CRYPTO, cryptointr);
+	if (crypto_q_si != NULL)
+		softint_disestablish(crypto_q_si);
 
 	mutex_enter(&crypto_drv_mtx);
 	if (crypto_drivers != NULL)
@@ -1278,8 +1263,11 @@ crypto_unblock(u_int32_t driverid, int what)
 		cap->cc_kqblocked = 0;
 	}
 	crypto_driver_unlock(cap);
-	if (needwakeup)
-		setsoftcrypto(softintr_cookie);
+	if (needwakeup) {
+		kpreempt_disable();
+		softint_schedule(crypto_q_si);
+		kpreempt_enable();
+	}
 
 	return 0;
 }
@@ -1323,8 +1311,11 @@ crypto_dispatch(struct cryptop *crp)
 		TAILQ_INSERT_TAIL(crp_q, crp, crp_next);
 		crypto_put_crp_qs(&s);
 		crp_q = NULL;
-		if (wasempty)
-			setsoftcrypto(softintr_cookie);
+		if (wasempty) {
+			kpreempt_disable();
+			softint_schedule(crypto_q_si);
+			kpreempt_enable();
+		}
 
 		return 0;
 	}
@@ -1901,7 +1892,7 @@ unlock:		crypto_driver_unlock(cap);
  * Software interrupt thread to dispatch crypto requests.
  */
 static void
-cryptointr(void)
+cryptointr(void *arg __unused)
 {
 	struct cryptop *crp, *submit, *cnext;
 	struct cryptkop *krp, *knext;
