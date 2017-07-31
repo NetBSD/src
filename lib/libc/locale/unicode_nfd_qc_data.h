@@ -1,3 +1,5 @@
+#define UCD_NFD_QC_DATA_LENGTH 13232
+
 static struct ucd_nfd_qc ucd_nfd_qc_data[] =  {
  { 0x000C0, 0x0 },
  { 0x000C1, 0x0 },
