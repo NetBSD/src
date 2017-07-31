@@ -27,13 +27,19 @@
  * SUCH DAMAGE.
  */
 
+#ifdef COLLATION_TEST
+#include "collation_test.h"
+#include <stdio.h>
+#endif
+
 #include <assert.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <locale.h>
 #include <wchar.h>
 #include "unicode_ucd.h"
-#include "unicode_decomp_data.h"
+#include "unicode_dm_data.h"
+/* #include "unicode_decomp_data.h" */
 /* #include "unicode_collation_data.h" - DUCET */
 #include "unicode_ccc_data.h"
 #include "unicode_nfd_qc_data.h"
@@ -43,30 +49,21 @@
 #include "setlocale_local.h"
 #include "collate_local.h"
 
-static const struct ucd_coll * ucd_get_collation_element(wchar_t *, const _CollateLocale *, int *, int);
+static int ucd_get_collation_element(wchar_t *, const struct xlocale_collate *, struct collation_element *, int);
 
-#define USE_NFD_QC_HASH_TABLE
+/* #define USE_NFD_QC_HASH_TABLE */
 #define USE_CCC_HASH_TABLE
-#define USE_DECOMP_HASH_TABLE
 /* #define USE_COLL_HASH_TABLE */
 
+#ifdef USE_NFD_QC_HASH_TABLE
 #define NFD_QC_WIDTH 1024
 #define NFD_QC_HASH(x) (((x) >> 2) & 0x3ff)
 static struct ucd_nfd_qc_head *nfd_qc_hash;
+#endif
 
 #define CCC_WIDTH 1024
 #define CCC_HASH(x) (((x) >> 2) & 0x3ff)
 static struct ucd_ccc_head *ccc_hash;
-
-#define DECOMP_WIDTH 1024
-#define DECOMP_HASH(x) (((x) >> 2) & 0x3ff)
-static struct ucd_decomp_head *decomp_hash;
-
-#ifdef USE_COLL_HASH_TABLE
-#define COLL_WIDTH 1024
-#define COLL_HASH(x) (((x) >> 2) & 0x3ff)
-static struct ucd_coll_head *coll_hash;
-#endif
 
 #define RESV_CP_WIDTH 1024
 #define RESV_CP_HASH(x) (((x) >> 2) & 0x3ff)
@@ -77,8 +74,8 @@ static struct ucd_resv_range_head resv_range_list;
 uint8_t unicode_get_nfd_qc(wchar_t wc)
 {
 	int dfl = 1;
-	struct ucd_nfd_qc *ccp;
 #ifdef USE_NFD_QC_HASH_TABLE
+	struct ucd_nfd_qc *ccp;
 	int i;
 
 	if (nfd_qc_hash == NULL) {
@@ -99,13 +96,22 @@ uint8_t unicode_get_nfd_qc(wchar_t wc)
 		}
 	}
 #else
-	for (ccp = ucd_nfd_qc_data; ccp->cp; ++ccp) {
-		if (ccp->cp > wc) {
-			return dfl;
+	int l, r, m;
+	wchar_t u;
+
+	/* Try single substitutions first */
+	l = 0;
+	r = UCD_NFD_QC_DATA_LENGTH - 1;
+	while (l <= r) {
+		m = (l + r) / 2;
+		u = ucd_nfd_qc_data[m].cp;
+		if (u == wc) {
+			return ucd_nfd_qc_data[m].nfd_qc;
 		}
-		if (ccp->cp == wc) {
-			return ccp->nfd_qc;
-		}
+		if (u < wc)
+			l = m + 1;
+		else
+			r = m - 1;
 	}
 #endif /* USE_NFD_QC_HASH_TABLE */
 	return dfl;
@@ -127,9 +133,11 @@ uint8_t unicode_get_ccc(wchar_t wc)
 	}
 
 	SLIST_FOREACH(ccp, &ccc_hash[CCC_HASH(wc)], hash_next) {
+#if 0
 		if (ccp->cp < wc) {
 			return 0;
 		}
+#endif
 		if (ccp->cp == wc) {
 			return ccp->ccc;
 		}
@@ -153,133 +161,252 @@ uint8_t unicode_get_ccc(wchar_t wc)
  */
 wchar_t *unicode_decomposition(wchar_t wc, int *np)
 {
-	struct ucd_decomp *ccp;
-#ifdef USE_DECOMP_HASH_TABLE
-	int i;
+	int l, r, m;
+	wchar_t u;
 
-	if (decomp_hash == NULL) {
-		decomp_hash = (struct ucd_decomp_head *)calloc(DECOMP_WIDTH, sizeof(*decomp_hash));
-		for (i = 0; i < DECOMP_WIDTH; i++)
-			SLIST_INIT(decomp_hash + i);
-		for (ccp = ucd_decomp_data; ccp->cp; ++ccp) {
-			SLIST_INSERT_HEAD(&decomp_hash[DECOMP_HASH(ccp->cp)], ccp, hash_next);
+	/* Try single substitutions first */
+	l = 0;
+	r = UCD_DECOMP_SINGLE_DATA_LENGTH - 1;
+	while (l <= r) {
+		m = (l + r) / 2;
+		u = ucd_decomp_single_data[m].cp;
+		if (u == wc) {
+			*np = 1;
+			return &ucd_decomp_single_data[m].dm;
 		}
+		if (u < wc)
+			l = m + 1;
+		else
+			r = m - 1;
+	}
+	
+	/* Then pairs */
+	l = 0;
+	r = UCD_DECOMP_PAIR_DATA_LENGTH - 1;
+	while (l <= r) {
+		m = (l + r) / 2;
+		u = ucd_decomp_pair_data[m].cp;
+		if (u == wc) {
+			*np = 2;
+			return ucd_decomp_pair_data[m].dm;
+		}
+		if (u < wc)
+			l = m + 1;
+		else
+			r = m - 1;
 	}
 
-	SLIST_FOREACH(ccp, &decomp_hash[DECOMP_HASH(wc)], hash_next) {
-		if (ccp->cp < wc) {
-			return NULL;
+	/* Then the rest */
+	l = 0;
+	r = UCD_DECOMP_MISC_DATA_LENGTH - 1;
+	while (l <= r) {
+		m = (l + r) / 2;
+		u = ucd_decomp_misc_data[m].cp;
+		if (u == wc) {
+			*np = ucd_decomp_misc_data[m].n;
+			return ucd_decomp_misc_data[m].dm;
 		}
-		if (ccp->cp == wc) {
-			*np = ccp->n;
-			return (wchar_t *)ccp->dm;
+		if (u < wc)
+			l = m + 1;
+		else
+			r = m - 1;
 		}
-	}
-#else /* ! USE_DECOMP_HASH_TABLE */
-	for (ccp = ucd_decomp_data; ccp->cp; ++ccp) {
-		if (ccp->cp > wc)
-			return NULL;
-		if (ccp->cp == wc) {
-			*np = ccp->n;
-			return (wchar_t *)ccp->dm;
-		}
-	}
-#endif /* ! USE_DECOMP_HASH_TABLE */
 	return NULL;
+	}
+
+int
+ucd_get_collation_element(wchar_t *wcp, const struct xlocale_collate *xc, struct collation_element *out, int do_ccc)
+{
+	struct collation_element sc;
+	wchar_t *wcccp, tmp, u;
+	size_t i, j, sclen, best = 0;
+	uint8_t ccc, this_ccc;
+	int m, l, r;
+
+	sc.flags = 0x0;
+	out->pri = NULL;
+	out->len = 1;
+
+	if (xc != NULL) {
+		/* Find the index of the leading character, if it appears */
+		l = m = 0;
+		r = xc->info->chain_count - 1;
+		while (l <= r) {
+			m = (l + r) / 2;
+			u = xc->chain_pri_table[m].str[0];
+			if (u == wcp[0]) {
+				break;
+		}
+			if (u < wcp[0])
+				l = m + 1;
+			else
+				r = m - 1;
+		}
+
+		/* Find the first element that begins with wcp[0] */
+		while (wcp[0] == xc->chain_pri_table[m].str[0])
+			--m;
+		++m;
+
+		if (wcp[0] == xc->chain_pri_table[m].str[0]) {
+			const wchar_t * pm = xc->chain_pri_table[m].str;
+			/* There is at least one matching chain. */
+			/* Walk through all the possibilities. */
+			while (wcp[0] == pm[0]) {
+				pm = xc->chain_pri_table[m].str;
+				/* Check that this element matches */
+				for (i = 0; pm[i]; i++) {
+					if (wcp[i] != pm[i])
+						break;
+	}
+				if (pm[i] == 0) {
+					/* It matches */
+					if (i > best) {
+						out->pri = xc->chain_pri_table[m].pri;
+						best = i;
+		}
+	}
+				++m;
+			}
 }
 
-static const struct ucd_coll *
-ucd_get_collation_element(wchar_t *wcp, const _CollateLocale *cloc, int *np, int do_ccc)
-{
-	const struct ucd_coll *cc, *best_cc = NULL, *sc;
-#ifdef USE_COLL_HASH_TABLE
-	struct ucd_coll *ccp;
-#endif
-	wchar_t *wcccp, tmp;
-	int best_len = 0;
-	int i, match;
-	uint8_t ccc, this_ccc;
-
-#ifdef USE_COLL_HASH_TABLE
-	if (coll_hash == NULL) {
-		coll_hash = (struct ucd_coll_head *)calloc(COLL_WIDTH, sizeof(*coll_hash));
-		for (i = 0; i < COLL_WIDTH; i++)
-			SLIST_INIT(coll_hash + i);
-		for (ccp = ucd_collate_data; ccp->cp < 0x0FFFFFFF; ++ccp) {
-			wchar_t wc = ccp->cp;
-			if (wc == 0x0)
-				wc = ccp->cpp[0];
-			SLIST_INSERT_HEAD(&coll_hash[COLL_HASH(wc)], ccp, hash_next);
+		/* Check double chains. */
+		if (best == 0) {
+			l = 0;
+			r = xc->info->dchain_count - 1;
+			while (l <= r) {
+				m = (l + r) / 2;
+				u = xc->dchain_pri_table[m].str[0];
+				if (u == wcp[0]) {
+					break;
 		}
+				if (u < wcp[0])
+					l = m + 1;
+				else
+					r = m - 1;
 	}
+			/* Find the first element that begins with wcp[0] */
+			while (wcp[0] == xc->dchain_pri_table[m].str[0])
+				--m;
+			++m;
 
-	SLIST_FOREACH(cc, &coll_hash[COLL_HASH(*wcp)], hash_next) {
-#else
-	for (cc = cloc->coll_data; cc->cp < 0x0FFFFFFF; ++cc) {
-		if (cc->cp > wcp[0]) {
+			if (wcp[0] == xc->dchain_pri_table[m].str[0]) {
+				const wchar_t * pm = xc->dchain_pri_table[m].str;
+				/* There is at least one matching chain. */
+				/* Walk through all the possibilities. */
+				while (wcp[0] == pm[0]) {
+					pm = xc->dchain_pri_table[m].str;
+					/* Check that this element matches */
+					for (i = 0; pm[i]; i++) {
+						if (wcp[i] != pm[i])
 			break;
 		}
-#endif
-
-		/*
-		 * Multi-character matches
-		 */
-		if (cc->cp == 0x0) {
-			match = 1;
-			for (i = 0; cc->cpp[i] != 0x0; ++i) {
-				if (cc->cpp[i] != wcp[i]) {
-					match = 0;
-					break;
+					if (pm[i] == 0) {
+						/* It matches */
+						if (i > best) {
+							out->pri = (weight_t *)xc->dchain_pri_table[m].pri;
+							for (j = 0; j < COLLATE_STR_LEN && xc->dchain_pri_table[m].pri[j][0] != (weight_t)0xFFFFFFFF; ++j)
+								;
+							out->len = j;
+							best = i;
+						}
+					}
+					++m;
 				}
 			}
-			if (match && i > best_len) {
-				best_cc = cc;
-				best_len = i;
+		}
+
+		if (best == 0) {
+			/* There is no matching chain. Look up individual weights. */
+			if (wcp[0] < 0x80) {
+				out->pri = xc->char_pri_table[wcp[0]].pri;
+				best = 1;
+			} else {
+				/* Now look at large matches */
+				l = 0;
+				r = xc->info->large_count;
+				while (l <= r) {
+					m = (l + r) / 2;
+					u = xc->large_pri_table[m].val;
+					if (u == wcp[0]) {
+						out->pri = xc->large_pri_table[m].pri;
+						best = 1;
+					break;
+				}
+					if (u < wcp[0])
+						l = m + 1;
+					else
+						r = m - 1;
 			}
-		} else if (cc->cp == wcp[0] && best_len == 0) {
-			/* Single-character match */
-			best_cc = cc;
-			best_len = 1;
+			}
+		}
+
+		/* Check reverse chains. */
+		if (best == 0) {
+			l = 0;
+			r = xc->info->rchain_count;
+			while (l <= r) {
+				m = (l + r) / 2;
+				u = xc->rchain_pri_table[m].val;
+				if (u == wcp[0]) {
+					out->pri = (weight_t *)xc->rchain_pri_table[m].pri;
+					for (i = 0; i < COLLATE_STR_LEN && xc->rchain_pri_table[m].pri[i][0] != (weight_t)0xFFFFFFFF; ++i)
+						;
+					out->len = i;
+					best = 1;
+					break;
+				}
+				if (u < wcp[0])
+					l = m + 1;
+				else
+					r = m - 1;
 		}
 	}
 
-	if (best_cc != NULL && do_ccc) {
+		if (best > 0 && do_ccc) {
 		/*
-		 * We have found the longest string S that matches in the table.
-		 * Now let the set of unblocked non-starters immediately following S
-		 * be called CC.  For any C in CC, if S+C has a match in the table,
-		 * replace S with S+C and remove C from CC.  Repeat as long as we
-		 * are expanding S.  Then copy the collation weights.
+			 * We have found the longest string S that matches in
+			 * the table.  Now let the set of unblocked
+			 * non-starters immediately following S be called CC.
+			 * For any C in CC, if S+C has a match in the table,
+			 * replace S with S+C and remove C from CC.  Repeat as
+			 * long as we are expanding S.  Then copy the
+			 * collation weights.
 		 */
 		ccc = 0xff;
-		for (wcccp = wcp + best_len; *wcccp; ++wcccp) {
+			for (wcccp = wcp + best; *wcccp; ++wcccp) {
 			this_ccc = unicode_get_ccc(*wcccp);
-			if (this_ccc == 0 || this_ccc > ccc)
+				if (this_ccc == 0)
 				break;
-			/* Swap this and wcp + best_len, and look for a match */
+				if (this_ccc == ccc)
+					continue;
+				ccc = this_ccc;
+
+				/* Swap this and wcp + best, and look for a match */
 			tmp = *wcccp;
-			*wcccp = *(wcp + best_len);
-			*(wcp + best_len) = tmp;
-			sc = ucd_get_collation_element(wcp, cloc, &best_len, 0);
-			if (sc != best_cc) {
-				best_cc = sc;
+				*wcccp = *(wcp + best);
+				*(wcp + best) = tmp;
+				sclen = ucd_get_collation_element(wcp, xc, &sc, 0);
+				if (sclen > best) {
+					*out = sc; /* Structure copy */
+					best = sclen;
 				/* Back up and start over */
-				wcccp = wcp + best_len;
+					wcccp = wcp + best;
 			} else {
-				/* swap back - best_len should be unchanged */
+					/* swap back */
 				tmp = *wcccp;
-				*wcccp = *(wcp + best_len);
-				*(wcp + best_len) = tmp;
+					*wcccp = *(wcp + best);
+					*(wcp + best) = tmp;
+				}
 			}
 		}
 	}
 
 	/* Fall back to DUCET if we don't find anything in the locale */
-	if (best_len == 0 && cloc != &_DefaultCollateLocale)
-		return ucd_get_collation_element(wcp, &_DefaultCollateLocale, np, do_ccc);
+	if (best == 0 && xc != &_DefaultCollateLocale)
+		return ucd_get_collation_element(wcp, &_DefaultCollateLocale, out, do_ccc);
 
-	*np = best_len;
-	return best_cc;
+	return best;
 }
 
 #define UNASSIGNED_CACHE_WIDTH 16
@@ -402,9 +529,6 @@ ucd_check_unassigned(wchar_t wc)
 	return unassigned;
 }
 
-#define _COLLATE_LOCALE(loc) \
-  ((_CollateLocale *)((loc)->part_impl[(size_t)LC_COLLATE]))
-
 /*
  * Add the collation element sequence that corresponds with
  * the beginning of the given string to head.
@@ -412,20 +536,27 @@ ucd_check_unassigned(wchar_t wc)
  */
 int unicode_get_collation_element(struct collation_set *head, wchar_t *wcp, locale_t loc)
 {
-	const struct ucd_coll *cc;
-	const weight_t *ce;
-	struct collation_element *new_element;
-	struct ucd_coll lcc;
-	int n, unassigned;
-	_CollateLocale *cloc = _COLLATE_LOCALE(loc);
+	struct collation_element *cc;
+	int n, unassigned, len;
+	struct xlocale_collate *cloc;
+	weight_t *wp;
+	weight_t aaaa = 0x0, bbbb = 0x0;
 
-	cc = ucd_get_collation_element(wcp, cloc, &n, 1);
+	cc = (struct collation_element *)malloc(sizeof(*cc));
+	cc->flags = 0x0;
 
-	if (cc == NULL) {
+	if (loc == NULL)
+		cloc = NULL;
+	else
+		cloc = _COLLATE_LOCALE(loc);
+	len = ucd_get_collation_element(wcp, cloc, cc, 1);
+
+	if (len)
+		n = len;
+	else {
 		unassigned = ucd_check_unassigned(*wcp);
 
 		/* If we couldn't find it, supply implicit weights. */
-		weight_t aaaa = 0x0, bbbb = 0x0;
 		if (!unassigned) {
 			if ((*wcp >= 0x17000 && *wcp <= 0x187FF) /* Tangut block */
 			    || (*wcp >= 0x18800 && *wcp <= 0x18AFF)) /* Tangut_Components block */
@@ -467,18 +598,18 @@ int unicode_get_collation_element(struct collation_set *head, wchar_t *wcp, loca
 			bbbb = (*wcp & 0x7FFF) | 0x8000;
 		}
 
-		lcc.ce[0] = (aaaa << 32) | 0x00200002;
-		lcc.ce[1] = (bbbb << 32) | 0x0;
-		lcc.ce[2] = 0x0;
-		cc = &lcc;
+		wp = (weight_t *)calloc(2 * COLL_WEIGHTS_MAX, sizeof(weight_t));
+		wp[0] = aaaa;
+		wp[1] = 0x0020;
+		wp[2] = 0x0002;
+		wp[1 * COLL_WEIGHTS_MAX + 0] = bbbb;
+		cc->pri = (const weight_t *)wp;
+		cc->len = 2;
+		cc->flags |= CE_FLAGS_NEEDSFREE;
 		n = 1;
 	}
 
-	for (ce = cc->ce; *ce; ++ce) {
-		new_element = (struct collation_element *)malloc(sizeof(*new_element));
-		new_element->weight = *ce;
-		TAILQ_INSERT_TAIL(head, new_element, tailq);
-	}
+	TAILQ_INSERT_TAIL(head, cc, tailq);
 
 	return n;
 }

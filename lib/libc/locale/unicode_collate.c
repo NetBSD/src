@@ -27,7 +27,12 @@
  * SUCH DAMAGE.
  */
 
+#ifdef COLLATION_TEST
+#include "collation_test.h"
+#endif /* COLLATION_TEST */
+
 #include <sys/queue.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>
 #include <string.h>
@@ -50,7 +55,7 @@
 int
 wcscoll_l(const wchar_t *s1, const wchar_t *s2, locale_t loc)
 {
-	if (loc->part_impl[LC_COLLATE] == _lc_C_locale.part_impl[LC_COLLATE])
+	if (loc && loc->part_impl[LC_COLLATE] == _lc_C_locale.part_impl[LC_COLLATE])
 		return wcscmp(s1, s2);
 	return unicode_wcscoll_l(s1, s2, loc);
 }
@@ -120,19 +125,21 @@ unicode_wcstokey(uint16_t **key, size_t *keylen, const wchar_t *arg0, wchar_t **
 	*keylen = clen0;
 
 #ifdef DEBUG_FINAL_WEIGHTS
-	fprintf(stderr, " final weights:");
-	for (ret = 0; (size_t)ret < *keylen; ++ret) {
-		if ((*key)[ret] == 0x0)
-			fprintf(stderr, " |");
+	printf(" final weights:");
+	for (clen0 = 0; (size_t)clen0 < *keylen; ++clen0) {
+		if ((*key)[clen0] == 0x0)
+			printf(" |");
 		else
-			fprintf(stderr, " %4.4hx", (*key)[ret]);
+			printf(" %4.4hx", (*key)[clen0]);
 	}
-	fprintf(stderr, "\n");
+	printf("\n");
 #endif
 
 	/* Free the tailq */
 	TAILQ_FOREACH_SAFE(entry, &c_arg0, tailq, tentry) {
 		TAILQ_REMOVE(&c_arg0, entry, tailq);
+		if (entry->flags & CE_FLAGS_NEEDSFREE)
+			free(__UNCONST(entry->pri));
 		free(entry);
 	}
 	TAILQ_INIT(&c_arg0);
@@ -265,7 +272,6 @@ unicode_wcscoll_l(const wchar_t *arg0, const wchar_t *arg1, locale_t loc)
 	 *    of the original strings.
 	 */
 	if (ret == 0) {
-		fprintf(stderr, " tie breaker: ");
 		fprint_unicode_string(stderr, (m_arg0 ? m_arg0 : arg0));
 		fprintf(stderr, " vs ");
 		fprint_unicode_string(stderr, (m_arg1 ? m_arg1 : arg1));
@@ -286,7 +292,7 @@ unicode_wcscoll_l(const wchar_t *arg0, const wchar_t *arg1, locale_t loc)
 static wchar_t *
 unicode_recursive_decompose(const wchar_t *arg0, wchar_t **m_arg0)
 {
-	wchar_t *wcp, *dst, *decomposition, *targ0;
+	wchar_t *wcp, *dst, *decomposition, *targ0, *dend;
 	int recurse = 0;
 	int swap_again = 0;
 	int max_factor = 1, n = 0;
@@ -330,16 +336,21 @@ unicode_recursive_decompose(const wchar_t *arg0, wchar_t **m_arg0)
 		wcscpy(dst, targ0);
 	} else {
 		for (wcp = targ0, dst = *m_arg0; *wcp; ++wcp) {
-			if (unicode_get_nfd_qc(*wcp) > 0)
+			if (*wcp < 0x80)
 				decomposition = NULL;
-			else
+			if (unicode_get_nfd_qc(*wcp) > 0) {
+				decomposition = NULL;
+			} else
 				decomposition = unicode_decomposition(*wcp, &n);
 			if (decomposition == NULL) {
 				*dst++ = *wcp;
 			} else {
-				while (*decomposition) {
-					int n2 = 0;
-					if (unicode_decomposition(*decomposition, &n2) != NULL) {
+				dend = decomposition + n;
+				while (decomposition < dend) {
+					/* int n2 = 0; */
+					if (*decomposition >= 0x80
+					    && unicode_get_nfd_qc(*decomposition) == 0
+					    /* && unicode_decomposition(*decomposition, &n2) != NULL */) {
 						recurse = 1;
 					}
 					*dst++ = *decomposition++;
@@ -396,30 +407,34 @@ static uint16_t *
 unicode_coll2numkey(struct collation_set *cc, int *lenp, locale_t loc)
 {
 	struct collation_element *ccp;
-	weight_t val;
+	int val;
 	uint16_t *ret, *rp;
 	int max_level = COLLATE_MAX_LEVEL(loc) - 1; /* 2 or 3 */
-	int shift, count;
+	int i, j, count;
 
 	/* Count the weights */
 	count = 0;
 	TAILQ_FOREACH(ccp, cc, tailq) {
-		count++;
+		count += ccp->len;
 	}
 
-	rp = ret = (uint16_t *)calloc((count + 1) * (max_level + 1), sizeof(*rp));
-	for (shift = 16 * max_level; shift >= 0; shift -= 16) {
-		if (COLLATE_FLAGS(loc, level) & COLL_BACKWARDS) {
+	rp = ret = (uint16_t *)calloc(2 * (count + 1) * (max_level + 1), sizeof(*rp));
+	for (i = 0; i < COLL_WEIGHTS_MAX; i++) {
+		if (loc && _COLLATE_LOCALE(loc)->info->directive[i] & COLL_BACKWARDS) {
 			TAILQ_FOREACH_REVERSE(ccp, cc, collation_set, tailq) {
-				val = (ccp->weight >> shift) & 0xffff;
-				if (val != 0) {
+			  	for (j = ccp->len - 1; j >= 0; --j) {
+					val = ccp->pri[j * COLL_WEIGHTS_MAX + i];
+					if (val != 0)
 					*rp++ = val;
 				}
 			}
 		} else {
 			TAILQ_FOREACH(ccp, cc, tailq) {
-				val = (ccp->weight >> shift) & 0xffff;
-				if (val != 0) {
+				if (ccp->pri == NULL)
+					continue;
+				for (j = 0; j < ccp->len; j++) {
+					val = ccp->pri[j * COLL_WEIGHTS_MAX + i];
+					if (val != 0)
 					*rp++ = val;
 				}
 			}
@@ -427,6 +442,7 @@ unicode_coll2numkey(struct collation_set *cc, int *lenp, locale_t loc)
 		/* Between each level we place a zero weight marker. */
 		*rp++ = 0;
 	}
+
 	*lenp = rp - ret;
 	return ret;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: collate_locale.c,v 1.1.2.1 2017/07/14 15:53:08 perseant Exp $	*/
+/*	$NetBSD: collate_locale.c,v 1.1.2.2 2017/07/31 04:29:50 perseant Exp $	*/
 /*-
  * Copyright (c)2010 Citrus Project,
  * All rights reserved.
@@ -25,53 +25,152 @@
  * SUCH DAMAGE.
  */
 
+#ifdef COLLATION_TEST
+#include "collation_test.h"
+#endif
+
 #define __SETLOCALE_SOURCE__
 #include <assert.h>
 #include <errno.h>
 #include <locale.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <wchar.h>
+
+#include "collate.h"
 
 #include "setlocale_local.h"
 #include "collate_local.h"
-#include "unicode_collation_data.h"
+#include "ducet_collation_data.h"
 
+#ifndef COLLATION_TEST
 #include "citrus_module.h"
+#endif
 
-const _CollateLocale _DefaultCollateLocale = {
-	__UNCONST("DUCET"),
-	5,
-	&ucd_collate_data[0],
-	UCD_COLLATE_DATA_LENGTH
+const struct collate_info _DefaultCollateInfo = {
+	4,     /* uint8_t directive_count;               */
+	{},    /* uint8_t directive[COLL_WEIGHTS_MAX];   */
+	{},    /* int32_t pri_count[COLL_WEIGHTS_MAX];   */
+	0,     /* int32_t flags;                         */
+	DUCET_COLLATE_CHAINS_LENGTH, /* int32_t chain_count;       */
+	DUCET_COLLATE_LARGE_LENGTH, /* int32_t large_count;       */
+	{ 0 }, /* int32_t subst_count[COLL_WEIGHTS_MAX]; */
+	{ 0 }, /* int32_t undef_pri[COLL_WEIGHTS_MAX];   */
+	DUCET_COLLATE_RCHAINS_LENGTH, /* int32_t rchain_count;       */
+	DUCET_COLLATE_DCHAINS_LENGTH, /* int32_t rchain_count;       */
 };
+
+const struct xlocale_collate _DefaultCollateLocale = {
+	0,    /* int __collate_load_error; */
+	NULL, /* char * map; */
+	0,    /* size_t maplen; */
+
+	&_DefaultCollateInfo, /* collate_info_t	*info; */
+	ducet_collate_chars, /* collate_char_t	*char_pri_table; */
+	ducet_collate_large, /* collate_large_t	*large_pri_table; */
+	ducet_collate_chains, /* collate_chain_t	*chain_pri_table; */
+	ducet_collate_rchains, /* collate_rchain_t	*rchain_pri_table; */
+	ducet_collate_dchains, /* collate_dchain_t	*dchain_pri_table; */
+	NULL, /* collate_subst_t	*subst_table[COLL_WEIGHTS_MAX]; */
+};
+
+static int
+_collate_read_file(const char * __restrict, size_t,
+		   struct xlocale_collate ** __restrict);
 
 int
 _collate_load(const char * __restrict var, size_t lenvar,
-    _CollateLocale ** __restrict prl)
+	      struct xlocale_collate ** __restrict prl)
 {
-	int ret;
-
 	_DIAGASSERT(var != NULL || lenvar < 1);
 	_DIAGASSERT(prl != NULL);
 
-	if (lenvar < 1)
+	if (lenvar < COLLATE_STR_LEN)
 		return EFTYPE;
-	switch (*var) {
-	case 'U':
-#ifdef notyet
-		ret = _collate_read_file(var, lenvar, prl);
-#else
-		*prl = (_CollateLocale *)malloc(sizeof(**prl));
-		(*prl)->coll_variable = __UNCONST("FAKE");
-		(*prl)->coll_variable_len = 4;
-		(*prl)->coll_data = (struct ucd_coll *)malloc(sizeof(struct ucd_coll));
-		(*prl)->coll_data_len = 0;
-		ret = 0;
-#endif
-		break;
-	default:
-		ret = EFTYPE;
+
+	if (strncmp(var, COLLATE_VERSION, COLLATE_STR_LEN))
+		return EFTYPE;
+
+	var += COLLATE_STR_LEN;
+	lenvar -= COLLATE_STR_LEN;
+
+	return _collate_read_file(var, lenvar, prl);
 	}
-	return ret;
+
+static int
+_collate_read_file(const char * __restrict var, size_t lenvar,
+		   struct xlocale_collate ** __restrict prl)
+{
+	struct xlocale_collate *clp;
+	size_t section_length;
+	char *ci;
+
+	if (lenvar < sizeof(struct collate_info))
+		return EFTYPE;
+
+	clp = (struct xlocale_collate *)malloc(sizeof(*clp));
+	ci = (char *)malloc(lenvar);
+	memcpy(ci, var, lenvar);
+
+	/* File header */
+	clp->info = (const struct collate_info *)ci;
+	ci += sizeof(*clp->info);
+	lenvar -= sizeof(*clp->info);
+
+	/* Table of narrow character priorities */
+	clp->char_pri_table = (const collate_char_t *)ci;
+	section_length = 0x80 * sizeof(collate_chain_t);
+	if (lenvar < section_length)
+		goto errout;
+	ci += section_length;
+	lenvar -= section_length;
+
+	/* Collation elements ("chains") */
+	clp->chain_pri_table = (const collate_chain_t *)ci;
+	section_length = clp->info->chain_count * sizeof(collate_chain_t);
+	if (lenvar < section_length)
+		goto errout;
+	ci += section_length;
+	lenvar -= section_length;
+
+	/* Collation weights for characters > 0x80 */
+	clp->large_pri_table = (const collate_large_t *)ci;
+	section_length = clp->info->large_count * sizeof(collate_large_t);
+	if (lenvar < section_length)
+		goto errout;
+	ci += section_length;
+	lenvar -= section_length;
+
+#if 0
+	/* Substitutions */
+	clp->subst_table = (collate_subst_t *)ci;
+	section_length = clp->info->subst_count * sizeof(collate_subst_t);
+	if (lenvar < section_length)
+		goto errout;
+	ci += section_length;
+	lenvar -= section_length;
+#endif
+
+	/* Characters that have more than one associated weight (reverse chains) */
+	clp->rchain_pri_table = (const collate_rchain_t *)ci;
+	section_length = clp->info->rchain_count * sizeof(collate_rchain_t);
+	if (lenvar < section_length)
+		goto errout;
+	ci += section_length;
+	lenvar -= section_length;
+
+	/* Double chains (>1 char to >1 weight mapping) */
+	clp->dchain_pri_table = (const collate_dchain_t *)ci;
+	section_length = clp->info->dchain_count * sizeof(collate_dchain_t);
+	if (lenvar < section_length)
+		goto errout;
+	ci += section_length;
+	lenvar -= section_length;
+
+	*prl = clp;
+	return 0;
+
+errout:
+	free(clp);
+	return EFTYPE;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_lc_collate.c,v 1.1.2.1 2017/07/14 15:53:07 perseant Exp $ */
+/* $NetBSD: citrus_lc_collate.c,v 1.1.2.2 2017/07/31 04:29:50 perseant Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lc_collate.c,v 1.1.2.1 2017/07/14 15:53:07 perseant Exp $");
+__RCSID("$NetBSD: citrus_lc_collate.c,v 1.1.2.2 2017/07/31 04:29:50 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -65,13 +65,13 @@ __RCSID("$NetBSD: citrus_lc_collate.c,v 1.1.2.1 2017/07/14 15:53:07 perseant Exp
 /*
  * macro required by nb_lc_template(_decl).h
  */
-#define _CATEGORY_TYPE          _CollateLocale
+#define _CATEGORY_TYPE          struct xlocale_collate
 
 #include "nb_lc_template_decl.h"
 
 static int
 _citrus_LC_COLLATE_create_impl(const char * __restrict root,
-    const char * __restrict name, _CollateLocale ** __restrict pdata)
+    const char * __restrict name, struct xlocale_collate ** __restrict pdata)
 {
 	char path[PATH_MAX + 1];
 	int ret;
@@ -92,7 +92,7 @@ _citrus_LC_COLLATE_create_impl(const char * __restrict root,
 }
 
 static __inline void
-_PREFIX(update_global)(_CollateLocale *data)
+_PREFIX(update_global)(struct xlocale_collate *data)
 {
 	_DIAGASSERT(data != NULL);
 }

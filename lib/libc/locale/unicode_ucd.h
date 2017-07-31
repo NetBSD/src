@@ -30,27 +30,53 @@
 #ifndef _UNICODE_UCD_H
 #define _UNICODE_UCD_H
 
+#ifdef COLLATION_TEST
+#include "collation_test.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <locale.h>
 
+#include "collate_local.h"
+#include "collate.h"
+
 typedef int32_t ucd_codepoint_t;
-typedef uint64_t weight_t;
 
 TAILQ_HEAD(collation_set, collation_element);
 SLIST_HEAD(ucd_nfd_qc_head, ucd_nfd_qc);
 SLIST_HEAD(ucd_ccc_head, ucd_ccc);
-SLIST_HEAD(ucd_decomp_head, ucd_decomp);
 SLIST_HEAD(ucd_coll_head, ucd_coll);
 SLIST_HEAD(ucd_resv_cp_head, ucd_resv_cp);
 SLIST_HEAD(ucd_resv_range_head, ucd_resv_range);
 
+#define _COLLATE_LOCALE(loc) \
+  ((struct xlocale_collate *)((loc)->part_impl[(size_t)LC_COLLATE]))
+
 /* Data definition */
+#if 0
 struct ucd_decomp {
 	ucd_codepoint_t cp;
 	int n;
 	ucd_codepoint_t dm[20]; /* At present, no more than 18 */
 	SLIST_ENTRY(ucd_decomp) hash_next;
+};
+#endif
+
+struct ucd_decomp_single {
+	ucd_codepoint_t cp;
+	ucd_codepoint_t dm;
+};
+
+struct ucd_decomp_pair {
+	ucd_codepoint_t cp;
+	ucd_codepoint_t dm[2];
+};
+
+struct ucd_decomp_misc {
+	ucd_codepoint_t cp;
+	int n;
+	ucd_codepoint_t dm[20]; /* At present, no more than 18 */
 };
 
 struct ucd_ccc {
@@ -65,13 +91,6 @@ struct ucd_nfd_qc {
 	SLIST_ENTRY(ucd_nfd_qc) hash_next;
 };
 
-struct ucd_coll {
-	ucd_codepoint_t cp;
-	ucd_codepoint_t cpp[5]; /* XXX */
-	weight_t ce[20]; /* XXX */
-	SLIST_ENTRY(ucd_coll) hash_next;
-};
-
 struct ucd_resv_cp {
 	ucd_codepoint_t cp;
 	SLIST_ENTRY(ucd_resv_cp) hash_next;
@@ -84,7 +103,10 @@ struct ucd_resv_range {
 };
 
 struct collation_element {
-	weight_t weight;
+	const weight_t *pri;
+	int len;
+#define CE_FLAGS_NEEDSFREE 0x00000001
+	u_int32_t flags;
 	TAILQ_ENTRY(collation_element) tailq;
 };
 
