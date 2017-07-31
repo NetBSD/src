@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.23.22.2 2017/07/21 20:22:29 perseant Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.23.22.3 2017/07/31 04:23:35 perseant Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.23.22.2 2017/07/21 20:22:29 perseant Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.23.22.3 2017/07/31 04:23:35 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -164,6 +164,7 @@ static __inline int isecma(__uint8_t x) { return (0x30 <= x && x <= 0x7f); }
 static __inline int isinterm(__uint8_t x) { return (0x20 <= x && x <= 0x2f); }
 static __inline int isthree(__uint8_t x) { return (0x60 <= x && x <= 0x6f); }
 
+#ifdef __STDC_ISO_10646__
 #include "citrus_iso2022_data.h"
 
 static __inline int
@@ -171,7 +172,6 @@ static __inline int
 _FUNCNAME(ucs2kt)(_ENCODING_INFO * __restrict ei,
 		  wchar_kuten_t * __restrict ktp, wchar_ucs4_t wc)
 {
-
 	_DIAGASSERT(ktp != NULL);
 
 	/* US-ASCII are not in the list */
@@ -195,7 +195,6 @@ static __inline int
 _FUNCNAME(kt2ucs)(_ENCODING_INFO * __restrict ei,
 		  wchar_ucs4_t * __restrict up, wchar_kuten_t kt)
 {
-
 	_DIAGASSERT(up != NULL);
 
 	/* US-ASCII are not in the list */
@@ -213,6 +212,9 @@ _FUNCNAME(kt2ucs)(_ENCODING_INFO * __restrict ei,
 
 	return 0;
 }
+#else
+#include "citrus_u2k_template.h"
+#endif
 
 static __inline int
 getcs(const char * __restrict p, _ISO2022Charset * __restrict cs)

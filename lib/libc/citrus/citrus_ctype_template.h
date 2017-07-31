@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.36.22.1 2017/07/21 20:22:29 perseant Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.36.22.2 2017/07/31 04:23:35 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -118,6 +118,7 @@
  *
  */
 
+#include <wchar.h> /* For __STDC_ISO_10646__ */
 
 /* prototypes */
 
@@ -938,6 +939,7 @@ _FUNCNAME(ctype_wctob)(_citrus_ctype_rec_t * __restrict cc,
 	return 0;
 }
 
+#ifdef __STDC_ISO_10646__
 static __inline int
 /*ARGSUSED*/
 _FUNCNAME(ctype_ucs2kt)(void * __restrict cl,
@@ -953,4 +955,8 @@ _FUNCNAME(ctype_kt2ucs)(void * __restrict cl,
 {
 	return _FUNCNAME(kt2ucs)(_CEI_TO_EI(_TO_CEI(cl)), up, kt);
 }
-
+#else
+/* Define away the calls to these functions */
+#define _FUNCNAME(ctype_ucs2kt)(cl, ktp, wc) do {} while (0)
+#define _FUNCNAME(ctype_kt2ucs)(cl, up, kt) do {} while (0)
+#endif
