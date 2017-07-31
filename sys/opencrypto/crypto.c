@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.97 2017/07/31 04:19:26 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.98 2017/07/31 04:21:59 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.97 2017/07/31 04:19:26 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.98 2017/07/31 04:21:59 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -85,10 +85,16 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.97 2017/07/31 04:19:26 knakahara Exp $"
  * crypto_drivers table with crypto_get_driverid() and then registering
  * each algorithm they support with crypto_register() and crypto_kregister().
  */
-static kmutex_t crypto_drv_mtx;
 /* Don't directly access crypto_drivers[i], use crypto_checkdriver(i). */
-static	struct cryptocap *crypto_drivers;
-static	int crypto_drivers_num;
+static struct {
+	kmutex_t mtx;
+	int num;
+	struct cryptocap *list;
+} crypto_drv __cacheline_aligned;
+#define crypto_drv_mtx		(crypto_drv.mtx)
+#define crypto_drivers_num	(crypto_drv.num)
+#define crypto_drivers		(crypto_drv.list)
+
 static	void *crypto_q_si;
 static	void *crypto_ret_si;
 
