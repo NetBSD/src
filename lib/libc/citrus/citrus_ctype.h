@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype.h,v 1.3.22.1 2017/07/21 20:22:29 perseant Exp $	*/
+/*	$NetBSD: citrus_ctype.h,v 1.3.22.2 2017/07/31 04:23:35 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -30,6 +30,7 @@
 #ifndef _CITRUS_CTYPE_H_
 #define _CITRUS_CTYPE_H_
 
+#include <wchar.h> /* For __STDC_ISO_10646__ */
 #include "citrus_ctype_local.h"
 
 typedef struct _citrus_ctype_rec *_citrus_ctype_t;
@@ -185,6 +186,7 @@ _citrus_ctype_wctob(_citrus_ctype_t cc, wint_kuten_t c, int *cresult)
 	return (*cc->cc_ops->co_wctob)(cc, c, cresult);
 }
 
+#ifdef __STDC_ISO_10646__
 static __inline int
 _citrus_ctype_ucs2kt(_citrus_ctype_t cc,
 		      wchar_kuten_t * __restrict ktp,
@@ -202,6 +204,11 @@ _citrus_ctype_kt2ucs(_citrus_ctype_t cc,
 	_DIAGASSERT(cc && cc->cc_ops && cc->cc_ops->co_kt2ucs);
 	return (*cc->cc_ops->co_kt2ucs)(cc->cc_closure, up, kt);
 }
+#else
+/* Define away the calls to these functions */
+#define _citrus_ctype_ucs2kt(cl, ktp, wc) do {} while (0)
+#define _citrus_ctype_kt2ucs(cl, up, kt) do {} while (0)
+#endif
 
 extern _citrus_ctype_rec_t _citrus_ctype_default;
 

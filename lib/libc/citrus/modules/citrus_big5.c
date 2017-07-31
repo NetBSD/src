@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_big5.c,v 1.15.18.2 2017/07/21 20:22:29 perseant Exp $	*/
+/*	$NetBSD: citrus_big5.c,v 1.15.18.3 2017/07/31 04:23:35 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_big5.c,v 1.15.18.2 2017/07/21 20:22:29 perseant Exp $");
+__RCSID("$NetBSD: citrus_big5.c,v 1.15.18.3 2017/07/31 04:23:35 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -134,6 +134,7 @@ typedef struct {
 #define _ENCODING_IS_STATE_DEPENDENT	0
 #define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
 
+#ifdef __STDC_ISO_10646__
 #include "citrus_big5_data.h"
 
 static __inline int
@@ -188,6 +189,9 @@ _FUNCNAME(kt2ucs)(_ENCODING_INFO * __restrict ei,
 
 	return 0;
 }
+#else
+#include "citrus_u2k_template.h"
+#endif
 
 static __inline void
 /*ARGSUSED*/
