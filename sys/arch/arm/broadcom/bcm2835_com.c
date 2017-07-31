@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_com.c,v 1.2 2017/07/31 00:51:20 jmcneill Exp $ */
+/* $NetBSD: bcm2835_com.c,v 1.3 2017/07/31 23:54:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.2 2017/07/31 00:51:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.3 2017/07/31 23:54:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -77,7 +77,8 @@ bcm_com_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_frequency *= 2;
 
-	if (bus_space_map(bst, aaa->aaa_addr, aaa->aaa_size, 0, &bsh) != 0) {
+	if (com_is_console(bst, aaa->aaa_addr, &bsh) == 0 &&
+	    bus_space_map(bst, aaa->aaa_addr, aaa->aaa_size, 0, &bsh) != 0) {
 		aprint_error(": can't map device\n");
 		return;
 	}
@@ -87,7 +88,8 @@ bcm_com_attach(device_t parent, device_t self, void *aux)
 	com_attach_subr(sc);
 	aprint_naive("\n");
 
-	ih = intr_establish(aaa->aaa_intr, IPL_SERIAL, IST_LEVEL, comintr, sc);
+	ih = intr_establish(aaa->aaa_intr, IPL_SERIAL, IST_LEVEL | IST_MPSAFE,
+	    comintr, sc);
 	if (ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
 		    aaa->aaa_intr);
