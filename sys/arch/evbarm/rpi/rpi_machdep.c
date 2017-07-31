@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.76 2017/07/31 10:41:39 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.77 2017/07/31 10:45:04 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.76 2017/07/31 10:41:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.77 2017/07/31 10:45:04 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -481,20 +481,22 @@ static void
 rpi_pinctrl(void)
 {
 #if NBCMSDHOST > 0
-	/*
-	 * If the sdhost driver is present, map the SD card slot to the
-	 * SD host controller and the sdhci driver to the SDIO pins.
-	 */
-	for (int pin = 48; pin <= 53; pin++) {
-		/* Enable SDHOST on SD card slot */
-		bcm2835gpio_function_select(pin, BCM2835_GPIO_ALT0);
-	}
-	for (int pin = 34; pin <= 39; pin++) {
-		/* Enable SDHCI on SDIO */
-		bcm2835gpio_function_select(pin, BCM2835_GPIO_ALT3);
-		bcm2835gpio_function_setpull(pin,
-		    pin == 34 ? BCM2835_GPIO_GPPUD_PULLOFF :
-		    BCM2835_GPIO_GPPUD_PULLUP);
+	if (rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
+		/*
+		 * If the sdhost driver is present, map the SD card slot to the
+		 * SD host controller and the sdhci driver to the SDIO pins.
+		 */
+		for (int pin = 48; pin <= 53; pin++) {
+			/* Enable SDHOST on SD card slot */
+			bcm2835gpio_function_select(pin, BCM2835_GPIO_ALT0);
+		}
+		for (int pin = 34; pin <= 39; pin++) {
+			/* Enable SDHCI on SDIO */
+			bcm2835gpio_function_select(pin, BCM2835_GPIO_ALT3);
+			bcm2835gpio_function_setpull(pin,
+			    pin == 34 ? BCM2835_GPIO_GPPUD_PULLOFF :
+			    BCM2835_GPIO_GPPUD_PULLUP);
+		}
 	}
 #endif
 
