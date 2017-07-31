@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.101 2017/06/01 02:45:08 chs Exp $	*/
+/*	$NetBSD: intr.c,v 1.102 2017/07/31 18:54:40 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.101 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.102 2017/07/31 18:54:40 maxv Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -267,9 +267,7 @@ intr_default_setup(void)
 	/* icu vectors */
 	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
 		idt_vec_reserve(ICU_OFFSET + i);
-		setgate(&idt[ICU_OFFSET + i],
-		    i8259_stubs[i].ist_entry, 0, SDT_SYS386IGT,
-		    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
+		idt_vec_set(ICU_OFFSET + i, i8259_stubs[i].ist_entry);
 	}
 
 	/*
@@ -894,8 +892,7 @@ intr_establish_xcall(void *arg1, void *arg2)
 		}
 		source->is_resume = stubp->ist_resume;
 		source->is_recurse = stubp->ist_recurse;
-		setgate(&idt[idt_vec], stubp->ist_entry, 0, SDT_SYS386IGT,
-		    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
+		idt_vec_set(idt_vec, stubp->ist_entry);
 	}
 
 	/* Re-enable interrupts locally. */
@@ -1777,8 +1774,7 @@ intr_activate_xcall(void *arg1, void *arg2)
 	}
 	source->is_resume = stubp->ist_resume;
 	source->is_recurse = stubp->ist_recurse;
-	setgate(&idt[idt_vec], stubp->ist_entry, 0, SDT_SYS386IGT,
-	    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
+	idt_vec_set(idt_vec, stubp->ist_entry);
 
 	x86_write_psl(psl);
 
