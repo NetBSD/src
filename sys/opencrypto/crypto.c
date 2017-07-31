@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.98 2017/07/31 04:21:59 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.99 2017/07/31 04:23:48 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,12 +53,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.98 2017/07/31 04:21:59 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.99 2017/07/31 04:23:48 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/kthread.h>
@@ -474,8 +473,6 @@ sysctl_opencrypto_setup(struct sysctllog **clog)
 		       CTL_CREATE, CTL_EOL);
 }
 
-MALLOC_DEFINE(M_CRYPTO_DATA, "crypto", "crypto session records");
-
 /*
  * Synchronization: read carefully, this is non-trivial.
  *
@@ -590,8 +587,8 @@ crypto_init0(void)
 		return ENOMEM;
 	}
 
-	crypto_drivers = malloc(CRYPTO_DRIVERS_INITIAL *
-	    sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT | M_ZERO);
+	crypto_drivers = kmem_zalloc(CRYPTO_DRIVERS_INITIAL *
+	    sizeof(struct cryptocap), KM_NOSLEEP);
 	if (crypto_drivers == NULL) {
 		printf("crypto_init: cannot malloc driver table\n");
 		return ENOMEM;
@@ -699,7 +696,8 @@ crypto_destroy(bool exit_kthread)
 
 	mutex_enter(&crypto_drv_mtx);
 	if (crypto_drivers != NULL)
-		free(crypto_drivers, M_CRYPTO_DATA);
+		kmem_free(crypto_drivers,
+		    crypto_drivers_num * sizeof(struct cryptocap));
 	mutex_exit(&crypto_drv_mtx);
 
 	percpu_free(crypto_crp_qs_percpu, sizeof(struct crypto_crp_qs));
@@ -931,8 +929,8 @@ crypto_get_driverid(u_int32_t flags)
 			return -1;
 		}
 
-		newdrv = malloc(2 * crypto_drivers_num *
-		    sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
+		newdrv = kmem_zalloc(2 * crypto_drivers_num *
+		    sizeof(struct cryptocap), KM_NOSLEEP);
 		if (newdrv == NULL) {
 			mutex_exit(&crypto_drv_mtx);
 			printf("crypto: no space to expand driver table!\n");
@@ -941,10 +939,10 @@ crypto_get_driverid(u_int32_t flags)
 
 		memcpy(newdrv, crypto_drivers,
 		    crypto_drivers_num * sizeof(struct cryptocap));
+		kmem_free(crypto_drivers,
+		    crypto_drivers_num * sizeof(struct cryptocap));
 
 		crypto_drivers_num *= 2;
-
-		free(crypto_drivers, M_CRYPTO_DATA);
 		crypto_drivers = newdrv;
 
 		cap = crypto_checkdriver_uninit(i);
