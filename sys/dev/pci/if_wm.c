@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.536 2017/07/28 10:34:58 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.537 2017/07/31 06:41:01 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.536 2017/07/28 10:34:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.537 2017/07/31 06:41:01 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -706,8 +706,8 @@ static int	wm_setup_legacy(struct wm_softc *);
 static int	wm_setup_msix(struct wm_softc *);
 static int	wm_init(struct ifnet *);
 static int	wm_init_locked(struct ifnet *);
-static void	wm_turnon(struct wm_softc *);
-static void	wm_turnoff(struct wm_softc *);
+static void	wm_unset_stopping_flags(struct wm_softc *);
+static void	wm_set_stopping_flags(struct wm_softc *);
 static void	wm_stop(struct ifnet *, int);
 static void	wm_stop_locked(struct ifnet *, int);
 static void	wm_dump_mbuf_chain(struct wm_softc *, struct mbuf *);
@@ -5121,7 +5121,7 @@ wm_setup_msix(struct wm_softc *sc)
 }
 
 static void
-wm_turnon(struct wm_softc *sc)
+wm_unset_stopping_flags(struct wm_softc *sc)
 {
 	int i;
 
@@ -5147,7 +5147,7 @@ wm_turnon(struct wm_softc *sc)
 }
 
 static void
-wm_turnoff(struct wm_softc *sc)
+wm_set_stopping_flags(struct wm_softc *sc)
 {
 	int i;
 
@@ -5812,7 +5812,7 @@ wm_init_locked(struct ifnet *ifp)
 	/* Set the receive filter. */
 	wm_set_filter(sc);
 
-	wm_turnon(sc);
+	wm_unset_stopping_flags(sc);
 
 	/* Start the one second link check clock. */
 	callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
@@ -5855,7 +5855,7 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 		device_xname(sc->sc_dev), __func__));
 	KASSERT(WM_CORE_LOCKED(sc));
 
-	wm_turnoff(sc);
+	wm_set_stopping_flags(sc);
 
 	/* Stop the one second clock. */
 	callout_stop(&sc->sc_tick_ch);
