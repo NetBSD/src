@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.24 2017/07/29 16:50:32 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.25 2017/08/01 22:02:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.24 2017/07/29 16:50:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.25 2017/08/01 22:02:32 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -559,7 +559,7 @@ ahci_intr(void *v)
 static void
 ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 {
-	uint32_t is, tfd, active;
+	uint32_t is, tfd, sact;
 	struct ata_channel *chp = &achp->ata_channel;
 	struct ata_xfer *xfer;
 	int slot;
@@ -578,12 +578,12 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 
 	if ((chp->ch_flags & ATACH_NCQ) == 0) {
 		/* Non-NCQ operation */
-		active = AHCI_READ(sc, AHCI_P_CI(chp->ch_channel));
+		sact = AHCI_READ(sc, AHCI_P_CI(chp->ch_channel));
 		slot = (AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel))
 			& AHCI_P_CMD_CCS_MASK) >> AHCI_P_CMD_CCS_SHIFT;
 	} else {
 		/* NCQ operation */
-		active = AHCI_READ(sc, AHCI_P_SACT(chp->ch_channel));
+		sact = AHCI_READ(sc, AHCI_P_SACT(chp->ch_channel));
 		slot = -1;
 	}
 
@@ -595,7 +595,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 			tfd = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
 
 			aprint_error("%s port %d: active %x is 0x%x tfd 0x%x\n",
-			    AHCINAME(sc), chp->ch_channel, active, is, tfd);
+			    AHCINAME(sc), chp->ch_channel, sact, is, tfd);
 		} else {
 			/* mark an error, and set BSY */
 			tfd = (WDCE_ABRT << AHCI_P_TFD_ERR_SHIFT) |
@@ -630,8 +630,8 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 		ata_channel_freeze(chp);
 
 	if (slot >= 0) {
-		if ((achp->ahcic_cmds_active & (1 << slot)) != 0 &&
-		    (active & (1 << slot)) == 0) {
+		if ((achp->ahcic_cmds_active & __BIT(slot)) != 0 &&
+		    (sact & __BIT(slot)) == 0) {
 			xfer = ata_queue_hwslot_to_xfer(chp, slot);
 			xfer->c_intr(chp, xfer, tfd);
 		}
@@ -641,10 +641,15 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 		 * and any further D2H FISes are ignored until the error
 		 * condition is cleared. Hence if a command is inactive,
 		 * it means it actually already finished successfully.
+		 * Note: active slots can change as c_intr() callback
+		 * can activate another command(s), so must only process
+		 * commands active before we start processing.
 		 */
+		uint32_t aslots = achp->ahcic_cmds_active;
+
 		for (slot=0; slot < sc->sc_ncmds; slot++) {
-			if ((achp->ahcic_cmds_active & (1 << slot)) != 0 &&
-			    (active & (1 << slot)) == 0) {
+			if ((aslots & __BIT(slot)) != 0 &&
+			    (sact & __BIT(slot)) == 0) {
 				xfer = ata_queue_hwslot_to_xfer(chp, slot);
 				xfer->c_intr(chp, xfer, 0);
 			}
