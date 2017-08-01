@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.77 2017/07/31 10:45:04 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.78 2017/08/01 00:01:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.77 2017/07/31 10:45:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.78 2017/08/01 00:01:56 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -506,6 +506,8 @@ rpi_pinctrl(void)
 		bcm2835gpio_function_select(33, BCM2835_GPIO_ALT5);
 		bcm2835gpio_function_setpull(32, BCM2835_GPIO_GPPUD_PULLOFF);
 		bcm2835gpio_function_setpull(33, BCM2835_GPIO_GPPUD_PULLUP);
+		bcm2835gpio_function_select(43, BCM2835_GPIO_ALT0);
+		bcm2835gpio_function_setpull(43, BCM2835_GPIO_GPPUD_PULLOFF);
 	}
 }
 
