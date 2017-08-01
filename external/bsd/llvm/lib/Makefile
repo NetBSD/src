@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.45 2017/08/01 20:07:40 joerg Exp $
+# $NetBSD: Makefile,v 1.46 2017/08/01 21:40:03 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -115,6 +115,7 @@ SUBDIR+= \
 	libLLVMLineEditor \
 	libLLVMObjectYAML \
 	libLLVMToolDrivers \
+	libLLVMToolDriversDlltool \
 	libLLVMXRay
 .endif
 
