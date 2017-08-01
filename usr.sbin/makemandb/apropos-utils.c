@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.38 2017/06/18 16:24:10 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.39 2017/08/01 16:16:32 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.38 2017/06/18 16:24:10 abhinav Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.39 2017/08/01 16:16:32 abhinav Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -81,6 +81,7 @@ static const double col_weights[] = {
 	1.00	//machine
 };
 
+#ifndef APROPOS_DEBUG
 static int
 register_tokenizer(sqlite3 *db)
 {
@@ -102,6 +103,7 @@ register_tokenizer(sqlite3 *db)
 
 	return sqlite3_finalize(stmt);
 }
+#endif
 
 /*
  * lower --
@@ -201,10 +203,12 @@ create_db(sqlite3 *db)
 	    "CREATE VIRTUAL TABLE mandb USING fts4(section, name, "
 		"name_desc, desc, lib, return_vals, env, files, "
 		"exit_status, diagnostics, errors, md5_hash UNIQUE, machine, "
-#ifndef DEBUG		
-		"compress=zip, uncompress=unzip, "
+#ifndef APROPOS_DEBUG		
+		"compress=zip, uncompress=unzip, tokenize=custom_apropos_tokenizer, "
+#else
+		"tokenize=porter, "
 #endif		
-		"tokenize=custom_apropos_tokenizer, notindexed=section, notindexed=md5_hash); "
+		"notindexed=section, notindexed=md5_hash); "
 	    //mandb_meta
 	    "CREATE TABLE IF NOT EXISTS mandb_meta(device, inode, mtime, "
 		"file UNIQUE, md5_hash UNIQUE, id  INTEGER PRIMARY KEY); "
@@ -391,11 +395,13 @@ init_db(mandb_access_mode db_flag, const char *manconf)
 
 	sqlite3_extended_result_codes(db, 1);
 
+#ifndef APROPOS_DEBUG
 	rc = register_tokenizer(db);
 	if (rc != SQLITE_OK) {
 		warnx("Unable to register custom tokenizer: %s", sqlite3_errmsg(db));
 		goto error;
 	}
+#endif
 
 	if (create_db_flag && create_db(db) < 0) {
 		warnx("%s", "Unable to create database schema");
