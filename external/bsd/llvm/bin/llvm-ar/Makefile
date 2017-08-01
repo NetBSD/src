@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2017/08/01 20:07:38 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2017/08/01 21:40:03 joerg Exp $
 
 PROG_CXX=	llvm-ar
 NOMAN=		yes
@@ -10,6 +10,8 @@ NOMAN=		yes
 SRCS=	llvm-ar.cpp
 
 LLVM_LIBS+= \
+	ToolDriversDlltool \
+	ToolDrivers \
 	AArch64AsmParser \
 	AArch64MCTargetDesc \
 	AArch64AsmPrinter \
@@ -45,7 +47,6 @@ LLVM_LIBS+= \
 	BitReader \
 	IR \
 	BinaryFormat \
-	ToolDrivers \
 	Option \
 	Support \
 	Demangle
