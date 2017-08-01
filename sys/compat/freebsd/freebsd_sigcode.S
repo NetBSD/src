@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sigcode.S,v 1.5 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: freebsd_sigcode.S,v 1.1 2017/08/01 14:43:54 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sigcode.S,v 1.5 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sigcode.S,v 1.1 2017/08/01 14:43:54 maxv Exp $");
 
 #include "assym.h"
 
