@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.16.42.1 2017/06/30 06:38:00 snj Exp $	*/
+/*	$NetBSD: auconv.h,v 1.16.42.2 2017/08/01 23:21:30 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ extern stream_filter_factory_t linear8_8_to_linear32;
 extern stream_filter_factory_t linear8_8_to_linear24;
 extern stream_filter_factory_t linear8_8_to_linear16;
 extern stream_filter_factory_t linear8_8_to_linear8;
+extern stream_filter_factory_t null_filter;
 
 #define linear16_to_linear8 linear16_16_to_linear8
 #define linear8_to_linear16 linear8_8_to_linear16
