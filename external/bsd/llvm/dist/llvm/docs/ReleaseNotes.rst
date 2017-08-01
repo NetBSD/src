@@ -1,21 +1,21 @@
 ========================
-LLVM 4.0.0 Release Notes
+LLVM 5.0.0 Release Notes
 ========================
 
 .. contents::
     :local:
 
 .. warning::
-   These are in-progress notes for the upcoming LLVM 4.0.0 release.  You may
-   prefer the `LLVM 3.9 Release Notes <http://llvm.org/releases/3.9.0/docs
-   /ReleaseNotes.html>`_.
+   These are in-progress notes for the upcoming LLVM 5 release.
+   Release notes for previous releases can be found on
+   `the Download Page <http://releases.llvm.org/download.html>`_.
 
 
 Introduction
 ============
 
 This document contains the release notes for the LLVM Compiler Infrastructure,
-release 4.0.0.  Here we describe the status of LLVM, including major improvements
+release 5.0.0.  Here we describe the status of LLVM, including major improvements
 from the previous release, improvements in various subprojects of LLVM, and
 some of the current users of the code.  All LLVM releases may be downloaded
 from the `LLVM releases web site <http://llvm.org/releases/>`_.
@@ -26,15 +26,13 @@ have questions or comments, the `LLVM Developer's Mailing List
 <http://lists.llvm.org/mailman/listinfo/llvm-dev>`_ is a good place to send
 them.
 
+Note that if you are reading this file from a Subversion checkout or the main
+LLVM web page, this document applies to the *next* release, not the current
+one.  To see the release notes for a specific release, please see the `releases
+page <http://llvm.org/releases/>`_.
+
 Non-comprehensive list of changes in this release
 =================================================
-* The C API functions LLVMAddFunctionAttr, LLVMGetFunctionAttr,
-  LLVMRemoveFunctionAttr, LLVMAddAttribute, LLVMRemoveAttribute,
-  LLVMGetAttribute, LLVMAddInstrAttribute and
-  LLVMRemoveInstrAttribute have been removed.
-
-* The C API enum LLVMAttribute has been deleted.
-
 .. NOTE
    For small 1-3 sentence descriptions, just add an entry at the end of
    this list. If your description won't fit comfortably in one bullet
@@ -42,20 +40,23 @@ Non-comprehensive list of changes in this release
    functionality, or simply have a lot to talk about), see the `NOTE` below
    for adding a new subsection.
 
-* The definition and uses of LLVM_ATRIBUTE_UNUSED_RESULT in the LLVM source
-  were replaced with LLVM_NODISCARD, which matches the C++17 [[nodiscard]]
-  semantics rather than gcc's __attribute__((warn_unused_result)).
-
-* Minimum compiler version to build has been raised to GCC 4.8 and VS 2015.
-
-* The Timer related APIs now expect a Name and Description. When upgrading code
-  the previously used names should become descriptions and a short name in the
-  style of a programming language identifier should be added.
-
-* LLVM now handles invariant.group across different basic blocks, which makes
-  it possible to devirtualize virtual calls inside loops.
-
-* ... next change ...
+* LLVM's ``WeakVH`` has been renamed to ``WeakTrackingVH`` and a new ``WeakVH``
+  has been introduced.  The new ``WeakVH`` nulls itself out on deletion, but
+  does not track values across RAUW.
+  
+* A new library named ``BinaryFormat`` has been created which holds a collection
+  of code which previously lived in ``Support``.  This includes the
+  ``file_magic`` structure and ``identify_magic`` functions, as well as all the
+  structure and type definitions for DWARF, ELF, COFF, WASM, and MachO file
+  formats.
+  
+* The tool ``llvm-pdbdump`` has been renamed ``llvm-pdbutil`` to better reflect
+  its nature as a general purpose PDB manipulation / diagnostics tool that does
+  more than just dumping contents.
+  
+* The ``BBVectorize`` pass has been removed. It was fully replaced and no
+  longer used back in 2014 but we didn't get around to removing it. Now it is
+  gone. The SLP vectorizer is the suggested non-loop vectorization pass.
 
 .. NOTE
    If you would like to document a larger change, then you can add a
@@ -67,46 +68,19 @@ Non-comprehensive list of changes in this release
 
    Makes programs 10x faster by doing Special New Thing.
 
-   Improvements to ThinLTO (-flto=thin)
-   ------------------------------------
-   * Integration with profile data (PGO). When available, profile data
-     enables more accurate function importing decisions, as well as
-     cross-module indirect call promotion.
-   * Significant build-time and binary-size improvements when compiling with
-     debug info (-g).
-
 Changes to the LLVM IR
 ----------------------
 
-Changes to the ARM Targets
+* The datalayout string may now indicate an address space to use for
+  the pointer type of alloca rather than the default of 0.
+
+* Added speculatable attribute indicating a function which does has no
+  side-effects which could inhibit hoisting of calls.
+
+Changes to the ARM Backend
 --------------------------
 
-**During this release the AArch64 target has:**
-
-* Gained support for ILP32 relocations.
-* Gained support for XRay.
-* Made even more progress on GlobalISel. There is still some work left before
-  it is production-ready though.
-* Refined the support for Qualcomm's Falkor and Samsung's Exynos CPUs.
-* Learned a few new tricks for lowering multiplications by constants, folding
-  spilled/refilled copies etc.
-
-**During this release the ARM target has:**
-
-* Gained support for ROPI (read-only position independence) and RWPI
-  (read-write position independence), which can be used to remove the need for
-  a dynamic linker.
-* Gained support for execute-only code, which is placed in pages without read
-  permissions.
-* Gained a machine scheduler for Cortex-R52.
-* Gained support for XRay.
-* Gained Thumb1 implementations for several compiler-rt builtins. It also
-  has some support for building the builtins for HF targets.
-* Started using the generic bitreverse intrinsic instead of rbit.
-* Gained very basic support for GlobalISel.
-
-A lot of work has also been done in LLD for ARM, which now supports more
-relocations and TLS.
+ During this release ...
 
 
 Changes to the MIPS Target
@@ -123,29 +97,68 @@ Changes to the PowerPC Target
 Changes to the X86 Target
 -------------------------
 
- During this release ...
+* Added initial AMD Ryzen (znver1) scheduler support.
+
+* Added support for Intel Goldmont CPUs.
+
+* Add support for avx512vpopcntdq instructions.
+
+* Added heuristics to convert CMOV into branches when it may be profitable.
+
+* More aggressive inlining of memcmp calls.
+
+* Improve vXi64 shuffles on 32-bit targets.
+
+* Improved use of PMOVMSKB for any_of/all_of comparision reductions.
+
+* Improved Silvermont, Sandybridge, and Jaguar (btver2) schedulers.
+
+* Improved support for AVX512 vector rotations.
+
+* Added support for AMD Lightweight Profiling (LWP) instructions.
 
 Changes to the AMDGPU Target
 -----------------------------
 
- During this release ...
+* Initial gfx9 support
 
 Changes to the AVR Target
 -----------------------------
 
-* The entire backend has been merged in-tree with all tests passing. All of
-  the instruction selection code and the machine code backend has landed
-  recently and is fully usable.
+This release consists mainly of bugfixes and implementations of features
+required for compiling basic Rust programs.
+
+* Enable the branch relaxation pass so that we don't crash on large
+  stack load/stores
+
+* Add support for lowering bit-rotations to the native `ror` and `rol`
+  instructions
+
+* Fix bug where function pointers were treated as pointers to RAM and not
+  pointers to program memory
+
+* Fix broken code generaton for shift-by-variable expressions
+
+* Support zero-sized types in argument lists; this is impossible in C,
+  but possible in Rust
 
 Changes to the OCaml bindings
 -----------------------------
 
-* The attribute API was completely overhauled, following the changes
-  to the C API.
+ During this release ...
 
 
-External Open Source Projects Using LLVM 4.0.0
-==============================================
+Changes to the C API
+--------------------
+
+* Deprecated the ``LLVMAddBBVectorizePass`` interface since the ``BBVectorize``
+  pass has been removed. It is now a no-op and will be removed in the next
+  release. Use ``LLVMAddSLPVectorizePass`` instead to get the supported SLP
+  vectorizer.
+
+
+External Open Source Projects Using LLVM 5
+==========================================
 
 * A project...
 

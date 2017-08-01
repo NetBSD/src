@@ -2,12 +2,13 @@
 
 # This tries to test defrange gap edge cases.
 
-# CHECK:         Local {
+# CHECK:         LocalSym {
 # CHECK:           Type: int (0x74)
 # CHECK:           VarName: p
 # CHECK:         }
-# CHECK-NOT:     Local {
-# CHECK:         DefRangeRegister {
+# CHECK-NOT:     LocalSym {
+# CHECK:         DefRangeRegisterSym {
+# CHECK-NEXT:      Kind: S_DEFRANGE_REGISTER (0x1141)
 # CHECK-NEXT:      Register: 23
 # CHECK-NEXT:      MayHaveNoName: 0
 # CHECK-NEXT:      LocalVariableAddrRange {
@@ -20,7 +21,8 @@
 # CHECK-NEXT:        Range: 0x1
 # CHECK-NEXT:      ]
 # CHECK-NEXT:    }
-# CHECK-NEXT:    DefRangeRegister {
+# CHECK-NEXT:    DefRangeRegisterSym {
+# CHECK-NEXT:      Kind: S_DEFRANGE_REGISTER (0x1141)
 # CHECK-NEXT:      Register: 23
 # CHECK-NEXT:      MayHaveNoName: 0
 # CHECK-NEXT:      LocalVariableAddrRange {
@@ -29,7 +31,8 @@
 # CHECK-NEXT:        Range: 0x6
 # CHECK-NEXT:      }
 # CHECK-NEXT:    }
-# CHECK-NEXT:    DefRangeRegister {
+# CHECK-NEXT:    DefRangeRegisterSym {
+# CHECK-NEXT:      Kind: S_DEFRANGE_REGISTER (0x1141)
 # CHECK-NEXT:      Register: 23
 # CHECK-NEXT:      MayHaveNoName: 0
 # CHECK-NEXT:      LocalVariableAddrRange {
@@ -37,6 +40,20 @@
 # CHECK-NEXT:        ISectStart: 0x0
 # CHECK-NEXT:        Range: 0x1
 # CHECK-NEXT:      }
+# CHECK-NEXT:    }
+# CHECK-NEXT:    DefRangeRegisterSym {
+# CHECK-NEXT:      Kind: S_DEFRANGE_REGISTER (0x1141)
+# CHECK-NEXT:      Register: 23
+# CHECK-NEXT:      MayHaveNoName: 0
+# CHECK-NEXT:      LocalVariableAddrRange {
+# CHECK-NEXT:        OffsetStart: .text+0x2001C
+# CHECK-NEXT:        ISectStart: 0x0
+# CHECK-NEXT:        Range: 0xF000
+# CHECK-NEXT:      }
+# CHECK-NEXT:      LocalVariableAddrGap [
+# CHECK-NEXT:        GapStartOffset: 0x1
+# CHECK-NEXT:        Range: 0xEFFE
+# CHECK-NEXT:      ]
 # CHECK-NEXT:    }
 
 	.text
@@ -62,6 +79,16 @@ f:                                      # @f
 .Lbegin3:
 	nop
 .Lend3:
+
+	# Create a range that is exactly 0xF000 bytes long with a gap in the
+	# middle.
+.Lbegin4:
+	nop
+.Lend4:
+	.fill 0xeffe, 1, 0x90
+.Lbegin5:
+	nop
+.Lend5:
 	ret
 .Lfunc_end0:
 
@@ -94,6 +121,7 @@ f:                                      # @f
 	.asciz	"p"
 .Ltmp19:
 	.cv_def_range	 .Lbegin0 .Lend0 .Lbegin1 .Lend1 .Lbegin2 .Lend2 .Lbegin3 .Lend3, "A\021\027\000\000\000"
+	.cv_def_range	 .Lbegin4 .Lend4 .Lbegin5 .Lend5, "A\021\027\000\000\000"
 	.short	2                       # Record length
 	.short	4431                    # Record kind: S_PROC_ID_END
 .Ltmp15:
