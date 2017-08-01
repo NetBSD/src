@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2017/01/11 12:02:30 joerg Exp $
+#	$NetBSD: Makefile,v 1.20 2017/08/01 20:07:41 joerg Exp $
 
 LIB=	LLVMMC
 
@@ -13,6 +13,7 @@ SRCS+=	ConstantPools.cpp \
 	MCAsmInfoCOFF.cpp \
 	MCAsmInfoDarwin.cpp \
 	MCAsmInfoELF.cpp \
+	MCAsmInfoWasm.cpp \
 	MCAsmStreamer.cpp \
 	MCAssembler.cpp \
 	MCCodeEmitter.cpp \
@@ -41,19 +42,23 @@ SRCS+=	ConstantPools.cpp \
 	MCSectionCOFF.cpp \
 	MCSectionELF.cpp \
 	MCSectionMachO.cpp \
+	MCSectionWasm.cpp \
 	MCStreamer.cpp \
 	MCSubtargetInfo.cpp \
 	MCSymbol.cpp \
 	MCSymbolELF.cpp \
 	MCTargetOptions.cpp \
 	MCValue.cpp \
+	MCWasmObjectTargetWriter.cpp \
+	MCWasmStreamer.cpp \
 	MCWin64EH.cpp \
+	MCWinCOFFStreamer.cpp \
 	MCWinEH.cpp \
 	MachObjectWriter.cpp \
-	WinCOFFStreamer.cpp \
-	WinCOFFObjectWriter.cpp \
 	StringTableBuilder.cpp \
-	SubtargetFeature.cpp
+	SubtargetFeature.cpp \
+	WasmObjectWriter.cpp \
+	WinCOFFObjectWriter.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

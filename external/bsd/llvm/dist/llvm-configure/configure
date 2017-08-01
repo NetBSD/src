@@ -10195,6 +10195,11 @@ fi
 $as_echo "#define LLVM_ENABLE_ABI_BREAKING_CHECKS 0" >>confdefs.h
 
 
+cat >>confdefs.h <<_ACEOF
+#define BACKTRACE_HEADER <execinfo.h>
+_ACEOF
+
+
 
 ac_config_headers="$ac_config_headers include/llvm/Config/config.h include/llvm/Config/llvm-config.h include/llvm/Config/abi-breaking.h"
 

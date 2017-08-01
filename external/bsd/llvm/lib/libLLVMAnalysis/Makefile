@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2017/02/09 17:58:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.24 2017/08/01 20:07:40 joerg Exp $
 
 LIB=	LLVMAnalysis
 
@@ -60,6 +60,8 @@ SRCS+=	AliasAnalysis.cpp \
 	MemoryBuiltins.cpp \
 	MemoryDependenceAnalysis.cpp \
 	MemoryLocation.cpp \
+	MemorySSAUpdater.cpp \
+	MemorySSA.cpp \
 	ModuleDebugInfoPrinter.cpp \
 	ModuleSummaryAnalysis.cpp \
 	ObjCARCAliasAnalysis.cpp \
