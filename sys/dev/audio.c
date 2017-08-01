@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.357.2.2 2017/06/30 06:43:07 snj Exp $	*/
+/*	$NetBSD: audio.c,v 1.357.2.3 2017/08/01 23:23:00 snj Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.2 2017/06/30 06:43:07 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.3 2017/08/01 23:23:00 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5123,7 +5123,7 @@ mixer_ioctl(struct audio_softc *sc, u_long cmd, void *addr, int flag,
 
 		if (device_is_active(sc->sc_dev))
 			error = audio_get_port(sc, mc);
-		else if (mc->dev >= sc->sc_nmixer_states)
+		else if (mc->dev < 0 || mc->dev >= sc->sc_nmixer_states)
 			error = ENXIO;
 		else {
 			int dev = mc->dev;
