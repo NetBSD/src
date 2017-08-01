@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.30 2017/08/01 21:43:49 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.31 2017/08/01 22:02:32 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.30 2017/08/01 21:43:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.31 2017/08/01 22:02:32 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -560,9 +560,14 @@ siisata_intr_port(struct siisata_channel *schp)
 		 * and any further D2H FISes are ignored until the error
 		 * condition is cleared. Hence if a command is inactive,
 		 * it means it actually already finished successfully.
+		 * Note: active slots can change as c_intr() callback
+		 * can activate another command(s), so must only process
+		 * commands active before we start processing.
 		 */
+		uint32_t aslots = schp->sch_active_slots;
+
 		for (int slot=0; slot < SIISATA_MAX_SLOTS; slot++) {
-			if ((schp->sch_active_slots & __BIT(slot)) != 0 &&
+			if ((aslots & __BIT(slot)) != 0 &&
 			    (pss & PR_PXSS(slot)) == 0) {
 				xfer = ata_queue_hwslot_to_xfer(chp, slot);
 				xfer->c_intr(chp, xfer, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsatavar.h,v 1.2.48.2 2017/06/24 14:33:06 jdolecek Exp $	*/
+/*	$NetBSD: mvsatavar.h,v 1.2.48.3 2017/08/01 22:02:32 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -73,7 +73,7 @@ struct mvsata_port {
 	enum mvsata_edmamode port_edmamode_negotiated;
 	enum mvsata_edmamode port_edmamode_curr;
 
-	uint32_t port_quetagidx;	/* Host Queue Tag valiable */
+	volatile uint32_t port_quetagidx;	/* Host Queue Tag valid */
 
 	int port_prev_erqqop;		/* previous Req Queue Out-Pointer */
 	bus_dma_tag_t port_dmat;
