@@ -18,12 +18,6 @@ active system? make sure to not trigger atastart()
 kill active transfers after software drive reset - race timeout vs.
 error recovery
 
-multi-pmp disk open+i/o on siisata fails - track down and fix
-#!/bin/sh
-for disk in $disks; do
-        (echo $disk; for i in `seq 0 3`; do dd if=/dev/r${disk}d bs=16m of=/dev/null count=1; done)&
-done;
-
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------
 implement support for PM FIS-based switching, remove restriction in atastart()
