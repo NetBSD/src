@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2017/01/11 12:02:30 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2017/08/01 20:07:41 joerg Exp $
 
 LIB=	LLVMObjectYAML
 
@@ -7,10 +7,16 @@ LIB=	LLVMObjectYAML
 .PATH: ${LLVM_SRCDIR}/lib/ObjectYAML
 
 SRCS+=	COFFYAML.cpp \
+	CodeViewYAMLDebugSections.cpp \
+	CodeViewYAMLSymbols.cpp \
+	CodeViewYAMLTypes.cpp \
+	DWARFEmitter.cpp \
+	DWARFVisitor.cpp \
 	DWARFYAML.cpp \
 	ELFYAML.cpp \
 	MachOYAML.cpp \
 	ObjectYAML.cpp \
+	WasmYAML.cpp \
 	YAML.cpp
 
 .if defined(HOSTLIB)

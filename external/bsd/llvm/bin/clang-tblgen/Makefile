@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/01/11 12:02:25 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2017/08/01 20:07:37 joerg Exp $
 
 PROG_CXX=	clang-tblgen
 NOMAN=		yes
@@ -13,6 +13,7 @@ SRCS=	ClangASTNodesEmitter.cpp \
 	ClangCommentHTMLNamedCharacterReferenceEmitter.cpp \
 	ClangCommentHTMLTagsEmitter.cpp \
 	ClangDiagnosticsEmitter.cpp \
+	ClangOptionDocEmitter.cpp \
 	ClangSACheckersEmitter.cpp \
 	NeonEmitter.cpp \
 	TableGen.cpp

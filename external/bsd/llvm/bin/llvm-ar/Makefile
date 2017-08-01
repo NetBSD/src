@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2017/01/11 12:02:25 joerg Exp $
+#	$NetBSD: Makefile,v 1.9 2017/08/01 20:07:38 joerg Exp $
 
 PROG_CXX=	llvm-ar
 NOMAN=		yes
@@ -44,7 +44,8 @@ LLVM_LIBS+= \
 	MC \
 	BitReader \
 	IR \
-	LibDriver \
+	BinaryFormat \
+	ToolDrivers \
 	Option \
 	Support \
 	Demangle

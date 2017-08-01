@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2017/01/11 12:02:30 joerg Exp $
+#	$NetBSD: Makefile,v 1.28 2017/08/01 20:07:41 joerg Exp $
 
 LIB=	LLVMMipsCodeGen
 
@@ -6,7 +6,8 @@ LIB=	LLVMMipsCodeGen
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/Mips
 
-SRCS+=	Mips16ISelDAGToDAG.cpp \
+SRCS+=	MicroMipsSizeReduction.cpp \
+	Mips16ISelDAGToDAG.cpp \
 	Mips16ISelLowering.cpp \
 	Mips16InstrInfo.cpp \
 	Mips16FrameLowering.cpp \
