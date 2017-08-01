@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.89 2017/07/12 16:59:41 maxv Exp $
+#	$NetBSD: files.amd64,v 1.90 2017/08/01 13:47:49 maxv Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -160,12 +160,6 @@ include "compat/linux32/files.linux32"
 include "compat/linux32/arch/amd64/files.linux32_amd64"
 file	arch/amd64/amd64/linux32_sigcode.S		compat_linux32
 file	arch/amd64/amd64/linux32_syscall.c		compat_linux32
-
-# SVR4 compatibility (COMPAT_SVR4)
-include "compat/svr4/files.svr4"
-
-# SVR4 compatibility (COMPAT_SVR4_32)
-include "compat/svr4_32/files.svr4_32"
 
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
