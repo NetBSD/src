@@ -1,4 +1,4 @@
-.\"	$NetBSD: hdh.4,v 1.12 2017/08/01 11:04:21 wiz Exp $
+.\"	$NetBSD: hdh.4,v 1.13 2017/08/01 11:11:17 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,7 +82,6 @@ as shown above in the
 The initialization routine was entered even though the device
 did not autoconfigure.
 This indicates a system problem.
-.Pp
 .It hdh%d: cannot get chan %d uba resources.
 Insufficient
 .Tn UNIBUS
@@ -90,7 +89,6 @@ resources existed to initialize the device.
 This is likely to be a shortage of
 .Tn UNIBUS
 mapping registers.
-.Pp
 .It hdh%d: LINE UP.
 This indicates that both the
 .Tn HDLC
@@ -100,12 +98,10 @@ protocols have declared the
 link to the
 .Tn IMP
 alive.
-.Pp
 .It hdh%d: LINE DOWN.
 This indicates that the link to the
 .Tn IMP
 has died.
-.Pp
 .It hdh%d: TIMEOUT.
 .It hdh%d: HOST DATA ERROR.
 .It hdh%d: IMP SEQUENCE ERROR.
@@ -113,7 +109,6 @@ has died.
 These errors indicate that an
 .Tn HDH
 protocol error has been detected.
-.Pp
 .It hdh%d: cannot get supervisor cmnd buffer.
 This error indicates that an
 .Em mbuf
