@@ -24,6 +24,7 @@
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/DemandedBits.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/OptimizationDiagnosticInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/Function.h"
@@ -40,8 +41,8 @@ class BoUpSLP;
 struct SLPVectorizerPass : public PassInfoMixin<SLPVectorizerPass> {
   typedef SmallVector<StoreInst *, 8> StoreList;
   typedef MapVector<Value *, StoreList> StoreListMap;
-  typedef SmallVector<WeakVH, 8> WeakVHList;
-  typedef MapVector<Value *, WeakVHList> WeakVHListMap;
+  typedef SmallVector<WeakTrackingVH, 8> WeakTrackingVHList;
+  typedef MapVector<Value *, WeakTrackingVHList> WeakTrackingVHListMap;
 
   ScalarEvolution *SE = nullptr;
   TargetTransformInfo *TTI = nullptr;
@@ -59,7 +60,8 @@ public:
   // Glue for old PM.
   bool runImpl(Function &F, ScalarEvolution *SE_, TargetTransformInfo *TTI_,
                TargetLibraryInfo *TLI_, AliasAnalysis *AA_, LoopInfo *LI_,
-               DominatorTree *DT_, AssumptionCache *AC_, DemandedBits *DB_);
+               DominatorTree *DT_, AssumptionCache *AC_, DemandedBits *DB_,
+               OptimizationRemarkEmitter *ORE_);
 
 private:
   /// \brief Collect store and getelementptr instructions and organize them
@@ -82,7 +84,7 @@ private:
                           ArrayRef<Value *> BuildVector = None,
                           bool AllowReorder = false);
 
-  /// \brief Try to vectorize a chain that may start at the operands of \V;
+  /// \brief Try to vectorize a chain that may start at the operands of \p V.
   bool tryToVectorize(BinaryOperator *V, slpvectorizer::BoUpSLP &R);
 
   /// \brief Vectorize the store instructions collected in Stores.
@@ -111,7 +113,7 @@ private:
   StoreListMap Stores;
 
   /// The getelementptr instructions in a basic block organized by base pointer.
-  WeakVHListMap GEPs;
+  WeakTrackingVHListMap GEPs;
 };
 }
 
