@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.73 2016/12/15 12:56:52 kre Exp $
+# $NetBSD: md.i386,v 1.74 2017/08/01 17:04:06 maya Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -56,8 +56,8 @@
 ./@MODULEDIR@/compat_ibcs2/compat_ibcs2.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_linux			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_linux/compat_linux.kmod	base-kernel-modules	kmod
-./@MODULEDIR@/compat_svr4			base-kernel-modules	kmod
-./@MODULEDIR@/compat_svr4/compat_svr4.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/compat_svr4			base-obsolete		obsolete
+./@MODULEDIR@/compat_svr4/compat_svr4.kmod	base-obsolete		obsolete
 ./@MODULEDIR@/coram				base-kernel-modules	kmod
 ./@MODULEDIR@/coram/coram.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/coretemp				base-kernel-modules	kmod
