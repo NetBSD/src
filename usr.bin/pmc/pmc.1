@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmc.1,v 1.11 2017/03/10 15:34:17 wiz Exp $
+.\"	$NetBSD: pmc.1,v 1.11.4.1 2017/08/01 23:18:31 snj Exp $
 .\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 10, 2017
+.Dd July 12, 2017
 .Dt PMC 1
 .Os
 .Sh NAME
@@ -71,7 +71,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-command can be used to control and inspect the state of CPUs in the system.
+tool can be used to control and inspect the state of the
+Performance-Monitoring Counters (PMCs) in the system.
 .Pp
 The first argument,
 .Ar command ,
@@ -95,24 +96,34 @@ specifies the source of the event; it must be a combination of
 Stop any performance counters that are currently running, and display the
 values of these counters.
 .El
+.Sh FILES
+.Pa src/sys/arch/x86/x86/pmc.c
+x86 implementation.
+.Pp
+.Pa src/usr.bin/pmc/pmc.c
+pmc tool.
 .Sh EXAMPLES
 The following command prints the available counters.
-.Dl $ pmc list
+.Dl # pmc list
 .Pp
 The following command starts two counters.
 The former will count the 'l2cache-access' events that are triggered from
 userland, the latter will count the 'l1cache-access' events triggered from
 both userland and the kernel.
-.Dl $ pmc start l2cache-access:u l1cache-access:uk
+.Dl # pmc start l2cache-access:u l1cache-access:uk
 .Pp
 Note that the two following commands are not exactly identical.
-.Dl $ pmc start l1cache-access:u l1cache-access:k
-.Dl $ pmc start l1cache-access:uk
+.Dl # pmc start l1cache-access:u l1cache-access:k
+.Dl # pmc start l1cache-access:uk
 The former will start two different counters that have a different source but
 track the same event.
 The latter will start one counter that tracks the event from all sources;
 it therefore does the sum of the two counters from the first command, but
 takes only one counter to do so.
+.Sh INTERPRETING RESULTS
+For each PMC on each CPU, the value reported by the
+.Nm
+tool is the number of events counted, encoded in a 64bit integer.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It PMC support not compiled into the kernel
@@ -132,9 +143,10 @@ The
 .Nm
 command first appeared in
 .Nx 1.6 .
-It was revamped in 2017.
+It was revamped in
+.Nx 8.0 .
 .Sh BUGS
 The
 .Nm
 command currently only supports performance-monitoring counters
-on the i386 architecture.
+on the i386 and amd64 architectures.

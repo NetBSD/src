@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1156.2.1 2017/07/05 13:58:48 martin Exp $
+# $NetBSD: GENERIC,v 1.1156.2.2 2017/08/01 23:18:30 snj Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1156.2.1 $"
+#ident		"GENERIC-$Revision: 1.1156.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -42,7 +42,7 @@ viac7temp*	at cpu?		# VIA C7 temperature sensor
 vmt0		at cpu0		# VMware Tools
 
 options 	MTRR		# memory-type range register syscall support
-#options 	PMC		# performance-monitoring counters support
+options 	PMC		# performance-monitoring counters support
 
 options 	MULTIBOOT	# Multiboot support (see multiboot(8))
 

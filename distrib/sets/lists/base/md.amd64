@@ -1,9 +1,10 @@
-# $NetBSD: md.amd64,v 1.268 2017/01/24 11:09:14 nonaka Exp $
+# $NetBSD: md.amd64,v 1.268.4.1 2017/08/01 23:18:30 snj Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
 ./usr/bin/fdformat				base-util-bin
 ./usr/bin/iasl					base-util-bin
+./usr/bin/pmc					base-util-bin
 ./usr/lib/i386/libi386.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libi386.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libproc.so.0			base-compat-shlib	compat,pic,dtrace
