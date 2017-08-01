@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.381 2017/07/29 11:54:14 maxv Exp $
+#	$NetBSD: files.i386,v 1.382 2017/08/01 13:47:49 maxv Exp $
 #
 # new style config file for i386 architecture
 #
@@ -324,9 +324,6 @@ file	arch/i386/i386/vm86.c			vm86
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/i386/i386/compat_13_machdep.c	compat_13
 file	arch/i386/i386/compat_16_machdep.c	compat_16 | compat_ibcs2
-
-# SVR4 binary compatibility (COMPAT_SVR4)
-include	"compat/svr4/files.svr4"
 
 # iBCS-2 binary compatibility (COMPAT_IBCS2)
 include	"compat/ibcs2/files.ibcs2"
