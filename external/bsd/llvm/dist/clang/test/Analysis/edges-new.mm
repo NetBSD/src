@@ -1,4 +1,4 @@
-// RUN: %clang -target x86_64-apple-darwin10 --analyze -Xclang -analyzer-config -Xclang path-diagnostics-alternate=true -Xclang -analyzer-output=plist -o %t %s
+// RUN: %clang_analyze_cc1 -triple x86_64-apple-darwin10 -analyzer-checker=core,deadcode.DeadStores,osx.cocoa.RetainCount,unix.Malloc,unix.MismatchedDeallocator -analyzer-eagerly-assume -analyzer-config path-diagnostics-alternate=true -analyzer-output=plist -o %t -w %s
 // RUN: FileCheck --input-file %t %s
 
 //===----------------------------------------------------------------------===//
@@ -230,7 +230,7 @@ void test_do_while() {
     p = 0;
 
   } while (i< 2);
-  
+
   *p = 0xDEADBEEF;
 }
 
@@ -20042,7 +20042,7 @@ namespace rdar14960554 {
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;buf&apos;</string>
-// CHECK-NEXT:    <key>category</key><string>Memory Error</string>
+// CHECK-NEXT:    <key>category</key><string>Memory error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
@@ -20284,7 +20284,7 @@ namespace rdar14960554 {
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>description</key><string>Memory allocated by &apos;new[]&apos; should be deallocated by &apos;delete[]&apos;, not &apos;delete&apos;</string>
-// CHECK-NEXT:    <key>category</key><string>Memory Error</string>
+// CHECK-NEXT:    <key>category</key><string>Memory error</string>
 // CHECK-NEXT:    <key>type</key><string>Bad deallocator</string>
 // CHECK-NEXT:    <key>check_name</key><string>unix.MismatchedDeallocator</string>
 // CHECK-NEXT:    <!-- This hash is experimental and going to change! -->
