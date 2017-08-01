@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.23 2017/08/01 21:39:51 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.24 2017/08/01 21:41:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.23 2017/08/01 21:39:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.24 2017/08/01 21:41:25 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1240,6 +1240,7 @@ atastart(struct ata_channel *chp)
 	splx(spl1);
 #endif /* ATA_DEBUG */
 
+again:
 	mutex_enter(&chp->ch_lock);
 
 	KASSERT(chq->queue_active <= chq->queue_openings);
@@ -1318,6 +1319,11 @@ atastart(struct ata_channel *chp)
 	 * routine for polled commands.
 	 */
 	xfer->c_start(chp, xfer);
+
+	/* Queue more commands if possible */
+	if (chq->queue_active < chq->queue_openings)
+		goto again;
+
 	return;
 
 out:
