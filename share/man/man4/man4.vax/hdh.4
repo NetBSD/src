@@ -1,4 +1,4 @@
-.\"	$NetBSD: hdh.4,v 1.11 2003/08/07 10:31:11 agc Exp $
+.\"	$NetBSD: hdh.4,v 1.12 2017/08/01 11:04:21 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,7 +64,8 @@ interface to an
 It is normally used when participating
 in the
 .Tn DARPA
-Internet.  The controller itself is not accessible
+Internet.
+The controller itself is not accessible
 to users, but instead provides the hardware support to the
 .Tn IMP
 interface described in
@@ -79,7 +80,8 @@ as shown above in the
 .Bl -diag
 .It hdh%d: not alive.
 The initialization routine was entered even though the device
-did not autoconfigure.  This indicates a system problem.
+did not autoconfigure.
+This indicates a system problem.
 .Pp
 .It hdh%d: cannot get chan %d uba resources.
 Insufficient
