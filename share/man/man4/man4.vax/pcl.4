@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcl.4,v 1.15 2017/08/01 11:04:21 wiz Exp $
+.\"	$NetBSD: pcl.4,v 1.16 2017/08/01 11:11:17 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -83,14 +83,11 @@ This is likely to occur when the device is run on a buffered
 data path on an 11/750 and other network interfaces are also
 configured to use buffered data paths, or when it is configured
 to use buffered data paths on an 11/730 (which has none).
-.Pp
 .It pcl%d: can't handle af%d.
 The interface was handed a message with addresses formatted in an
 unsuitable address family;  the packet was dropped.
-.Pp
 .It pcl%d: stray xmit interrupt.
 An interrupt occurred when no output had previously been started.
-.Pp
 .It pcl%d: master.
 The
 .Tn TDM
@@ -100,7 +97,6 @@ This message should only appear at most once per
 .Tn UNIBUS INIT
 on a single system.
 Unless there is a hardware failure, only one station may be master at a time.
-.Pp
 .It pcl%d: send error, tcr=%b, tsr=%b.
 The device indicated a problem sending data on output.
 If a ``receiver offline'' error is detected, it is not normally logged
@@ -112,10 +108,8 @@ However, this option
 is quite useful when debugging problems with the
 .Tn PCL
 interfaces.
-.Pp
 .It pcl%d: rcv error, rcr=%b rsr=%b.
 The device indicated a problem receiving data on input.
-.Pp
 .It pcl%d: bad len=%d.
 An input operation resulted in a data transfer of less than
 0 or more than 1008 bytes of

@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmv.4,v 1.13 2017/02/18 22:39:01 wiz Exp $
+.\"	$NetBSD: dmv.4,v 1.14 2017/08/01 11:11:17 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,40 +84,30 @@ on each end of the link.
 .It dmvprobe: can't start device.
 .It "dmvprobe: device init failed, bsel4=%o, bsel6=%o."
 The probe routine was unable to start the device.
-.Pp
 .It dmvinit: dmv%d not running.
 .It dmvrestart: can't start device.
 .It "dmv%d: device init failed, bsel4=%o, bsel6=%o."
 The initialization/restart routine was unable to start the device.
-.Pp
 .It dmv%d: far end on-line.
 The other end of the connection has come online.
-.Pp
 .It dmv%d: far end restart.
 The other end of the line has restarted.
-.Pp
 .It dmv%d: bad control %o.
 A bad parameter was passed to the
 .Em dmvload
 routine.
-.Pp
 .It "dmvxint: dmv%d bad rcv pkt addr 0x%x len 0x%x."
 A bad packet was received.
-.Pp
 .It "dmv%d: bad packet address 0x%x."
 An input packet was received which contained a type of
 address unknown to the driver.
-.Pp
 .It "dmvxint: dmv%d unallocated packet 0x%x."
 A protocol error has occurred with the board.
-.Pp
 .It "dmvoutput, dmv%d can't handle af%d."
 A packet for an unsupported address family has been sent.
-.Pp
 .It "dmv%d: output timeout, bsel0=%b bsel2=%b."
 A device timeout occurred.
 .El
-.Pp
 Numerous other device errors may be displayed.
 .Sh SEE ALSO
 .Xr inet 4 ,

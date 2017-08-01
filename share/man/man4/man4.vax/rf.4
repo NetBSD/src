@@ -1,4 +1,4 @@
-.\"	$NetBSD: rf.4,v 1.6 2017/07/31 18:45:43 ryoon Exp $
+.\"	$NetBSD: rf.4,v 1.7 2017/08/01 11:11:17 wiz Exp $
 .\" Copyright (c) 2002 Jochen Kunz.
 .\" All rights reserved.
 .\"
@@ -72,14 +72,12 @@ When a 512 byte block is written to LBN 501 the last 256 bytes are ignored.
 When this 512 byte block is read the last 256 bytes contain undefined data.
 .Pp
 This driver supports three minor devices corresponding to the slices:
-.Pp
 .Bl -column Slice -offset indent
 .It Sy Slice	Description
 .It a	Single density only mode.
 .It b	Double density only mode.
 .It c	Density autodetect.
 .El
-.Pp
 As the
 .Tn RX01
 and
@@ -89,13 +87,11 @@ no support for according IOCTLs.
 But there are clones from third party vendors that support formatting.
 Formatting a blank disk may be initiated
 by the following commands on the VAX chevron prompt:
-.Pp
 .Bl -column Otherx -offset indent
 .It Single density
 .It d/p/w 20001E78 9
 .It d/p/w 20001E7A 92
 .El
-.Pp
 .Bl -column Otherx -offset indent
 .It Double density
 .It d/p/w 20001E78 109

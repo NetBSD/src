@@ -1,4 +1,4 @@
-.\"	$NetBSD: ex.4,v 1.12 2003/08/07 10:31:11 agc Exp $
+.\"	$NetBSD: ex.4,v 1.13 2017/08/01 11:11:17 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,25 +75,20 @@ flag with an
 .It "ex%d: HW %c.%c, NX %c.%c, hardware address %s."
 This provides firmware revisions levels, and is expected during
 autoconfiguration.
-.Pp
 .It ex%d: can't initialize.
 There was a failure in allocating UNIBUS resources for the device.
-.Pp
 .It "ex%d: configuration failed; cc = %x."
 The hardware indicated an error when trying to initialize itself.
 The error code returned is described at length in the device
 Reference Manual.
-.Pp
 .It ex%d: receive error %b.
 The hardware indicated an error
 in reading a packet from the cable.
 Specific Error bits are provided
-.Pp
 .It ex%d: transmit error %b.
 The hardware indicated an error
 in transmitting a packet to the cable or an illegally sized packet.
 Specific Error bits are provided
-.Pp
 .It ex%d: can't handle af%d.
 The interface was handed
 a message with addresses formatted in an unsuitable address

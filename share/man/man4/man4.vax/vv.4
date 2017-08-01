@@ -1,4 +1,4 @@
-.\"	$NetBSD: vv.4,v 1.13 2017/08/01 11:04:21 wiz Exp $
+.\"	$NetBSD: vv.4,v 1.14 2017/08/01 11:11:17 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -89,29 +89,23 @@ flag with an
 .It vv%d: host %d.
 The software announces the host
 address discovered during autoconfiguration.
-.Pp
 .It vv%d: can't initialize.
 The software was unable to
 discover the address of this interface, so it deemed
 "dead" will not be enabled.
-.Pp
 .It vv%d: error vvocsr=%b.
 The hardware indicated an error on
 the previous transmission.
-.Pp
 .It vv%d: output timeout.
 The token timer has fired and the
 token will be recreated.
-.Pp
 .It vv%d: error vvicsr=%b.
 The hardware indicated an error
 in reading a packet off the ring.
-.Pp
 .It vv%d: can't handle af%d.
 The interface was handed
 a message with addresses formatted in an unsuitable address
 family; the packet was dropped.
-.Pp
 .It vv%d: vs_olen=%d.
 The ring output routine has been
 handed a message with a preposterous length.

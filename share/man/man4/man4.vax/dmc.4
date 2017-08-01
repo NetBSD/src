@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmc.4,v 1.16 2017/07/31 18:45:43 ryoon Exp $
+.\"	$NetBSD: dmc.4,v 1.17 2017/08/01 11:11:17 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -83,7 +83,6 @@ The configuration flags specify how to set up the device,
 .It 2	DDCMP Half Duplex, primary station
 .It 3	DDCMP Half Duplex, secondary station
 .El
-.Pp
 The host's address must be specified with an
 .Dv SIOCSIFADDR
 .Xr ioctl 2 ,
@@ -113,21 +112,17 @@ on each end of the link.
 A bad parameter was passed to the
 .Em dmcload
 routine.
-.Pp
 .It dmc%d: unknown address type %d.
 An input packet was received which contained a type of
 address unknown to the driver.
-.Pp
 .It DMC fatal error 0%o.
 A fatal error in
 .Tn DDMCP
 occurred, causing the device to be restarted.
-.Pp
 .It DMC soft error 0%o.
 A non-fatal error in
 .Tn DDMCP
 has occurred.
-.Pp
 .It dmc%d: af%d not supported.
 The interface was handed a message which has
 addresses formatted in an unsuitable address family.

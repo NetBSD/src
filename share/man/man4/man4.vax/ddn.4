@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddn.4,v 1.12 2017/08/01 11:04:21 wiz Exp $
+.\"	$NetBSD: ddn.4,v 1.13 2017/08/01 11:11:17 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -72,7 +72,6 @@ Internet Protocol described in
 The initialization routine was entered even though the device
 did not autoconfigure.
 This indicates a system problem.
-.Pp
 .It ddn%d: failed getting UBA resources for lcn %d."
 Insufficient
 .Tn UNIBUS
@@ -80,13 +79,11 @@ resources existed to initialize the device.
 This is likely to be a shortage of
 .Tn UNIBUS
 mapping registers.
-.Pp
 .It ddn%d: couldn't get X25 init buffer.
 This indicates that an
 .Em mbuf
 could not be allocated for sending the initialization message to the
 .Tn ACP Ns 625 .
-.Pp
 .It DDN: illegal X25 address length!
 .It DDN: illegal X25 address format!
 These errors indicate a problem with the called
@@ -95,7 +92,6 @@ address received
 from the
 .Tn IMP
 on an incoming call.
-.Pp
 .It X25 RESET on lcn = %d.
 This indicates that an unexpected
 .Tn X.25
@@ -103,7 +99,6 @@ This indicates that an unexpected
 was received on the
 indicated
 .Tn LCN .
-.Pp
 .It X25 INTERRUPT on lcn = %d, code = %d.
 This indicates that an unexpected
 .Tn X.25
@@ -111,7 +106,6 @@ This indicates that an unexpected
 Packet was received on the
 indicated
 .Tn LCN .
-.Pp
 .It ddn%d: failed to get supr msg bfr!
 This indicates that an
 .Em mbuf
