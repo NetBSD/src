@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.20 2017/07/29 12:58:29 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.21 2017/08/01 21:39:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -321,6 +321,9 @@ struct ata_drive_datas {
 	struct disklabel *lp;	/* pointer to drive's label info */
 	uint8_t		multi;	/* # of blocks to transfer in multi-mode */
 	daddr_t	badsect[127];	/* 126 plus trailing -1 marker */
+
+	/* Recovery buffer */
+	uint8_t recovery_blk[DEV_BSIZE];
 };
 
 /* User config flags that force (or disable) the use of a mode */
@@ -425,9 +428,6 @@ struct ata_channel {
 
 	/* Number of sata PMP ports, if any */
 	int ch_satapmp_nports;
-
-	/* Recovery buffer */
-	uint8_t ch_recovery[DEV_BSIZE];
 };
 
 /*
