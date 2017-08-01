@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.80 2017/06/01 02:45:11 chs Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.80.2.1 2017/08/01 23:23:00 snj Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.80 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.80.2.1 2017/08/01 23:23:00 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -2062,7 +2062,7 @@ generic_set_port(codec_t *this, mixer_ctrl_t *mc)
 {
 	const mixer_item_t *m;
 
-	if (mc->dev >= this->nmixers)
+	if (mc->dev < 0 || mc->dev >= this->nmixers)
 		return ENXIO;
 	m = &this->mixers[mc->dev];
 	if (mc->type != m->devinfo.type)
@@ -2077,7 +2077,7 @@ generic_get_port(codec_t *this, mixer_ctrl_t *mc)
 {
 	const mixer_item_t *m;
 
-	if (mc->dev >= this->nmixers)
+	if (mc->dev < 0 || mc->dev >= this->nmixers)
 		return ENXIO;
 	m = &this->mixers[mc->dev];
 	mc->type = m->devinfo.type;
@@ -2312,7 +2312,7 @@ alc260_set_port(codec_t *this, mixer_ctrl_t *mc)
 	uint32_t value;
 	int err;
 
-	if (mc->dev >= this->nmixers)
+	if (mc->dev < 0 || mc->dev >= this->nmixers)
 		return ENXIO;
 	m = &this->mixers[mc->dev];
 	if (mc->type != m->devinfo.type)
@@ -2370,7 +2370,7 @@ alc260_get_port(codec_t *this, mixer_ctrl_t *mc)
 {
 	const mixer_item_t *m;
 
-	if (mc->dev >= this->nmixers)
+	if (mc->dev < 0 || mc->dev >= this->nmixers)
 		return ENXIO;
 	m = &this->mixers[mc->dev];
 	mc->type = m->devinfo.type;
@@ -2871,7 +2871,7 @@ alc882_set_port(codec_t *this, mixer_ctrl_t *mc)
 	uint32_t mask, bit;
 	int i, err;
 
-	if (mc->dev >= this->nmixers)
+	if (mc->dev < 0 || mc->dev >= this->nmixers)
 		return ENXIO;
 	m = &this->mixers[mc->dev];
 	if (mc->type != m->devinfo.type)
@@ -2905,7 +2905,7 @@ alc882_get_port(codec_t *this, mixer_ctrl_t *mc)
 	uint32_t mask, bit, result;
 	int i, err;
 
-	if (mc->dev >= this->nmixers)
+	if (mc->dev < 0 || mc->dev >= this->nmixers)
 		return ENXIO;
 	m = &this->mixers[mc->dev];
 	mc->type = m->devinfo.type;
