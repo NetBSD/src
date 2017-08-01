@@ -1,4 +1,4 @@
-.\"	$NetBSD: np.4,v 1.16 2017/02/18 22:39:01 wiz Exp $
+.\"	$NetBSD: np.4,v 1.17 2017/08/01 11:11:17 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,40 +88,32 @@ for details.]
 An invalid
 .Xr ioctl 2
 was passed to the np driver.
-.Pp
 .It np%d: Panic NP100 bad buffer chain.
 An error occurred in an read or write operation causing it to
 run out of buffers before it finished the operation.
 This indicates a kernel failure rather than a device failure.
-.Pp
 .It NP100 unit %d not found!
 A failure occurred during initialization, such that the UNIBUS
 address expected for the board was found to be bad.
 Probably indicates hardware problems with the board, as do the following:
-.Pp
 .Bd -literal -offset indent -compact
 NP100 Unit %d timed out!
 NP100 Unit %d Failed diagnostics!
 Status from CSR0: %x.
 .Ed
-.Pp
 .It "Panic from NP100 unit %d!"
 .It "Panic Message: %s."
 An occurrence on the board was deemed serious enough
 to have the VAX print it out.
-.Pp
 .It NP100 unit #%d available!
 The board was successfully loaded and started.
-.Pp
 .It np%d: Bad Req: %x.
 The board made a maintenance request to the VAX that it did not
 understand.
-.Pp
 .It np%d: No more room on Command Queue!
 The np driver allowed an internal resource to be exhausted.
 This should never happen.
 .El
-.Pp
 There are 110 other diagnostic messages that can be enabled
 by setting bits in a debugging mask.
 Consult the driver for details.
