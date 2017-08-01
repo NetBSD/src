@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2017/01/11 12:02:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2017/08/01 20:07:40 joerg Exp $
 
 LIB=	LLVMDebugInfoDWARF
 
@@ -10,6 +10,7 @@ SRCS+=	DWARFAbbreviationDeclaration.cpp \
 	DWARFAcceleratorTable.cpp \
 	DWARFCompileUnit.cpp \
 	DWARFContext.cpp \
+	DWARFDataExtractor.cpp \
 	DWARFDebugAbbrev.cpp \
 	DWARFDebugArangeSet.cpp \
 	DWARFDebugAranges.cpp \
@@ -26,6 +27,7 @@ SRCS+=	DWARFAbbreviationDeclaration.cpp \
 	DWARFTypeUnit.cpp \
 	DWARFUnit.cpp \
 	DWARFUnitIndex.cpp \
+	DWARFVerifier.cpp \
 	SyntaxHighlighting.cpp
 
 .if defined(HOSTLIB)

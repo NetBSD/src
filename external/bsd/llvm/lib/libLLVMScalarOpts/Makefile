@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2017/02/09 17:58:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.23 2017/08/01 20:07:42 joerg Exp $
 
 LIB=	LLVMScalarOpts
 
@@ -19,13 +19,14 @@ SRCS+=	ADCE.cpp \
 	Float2Int.cpp \
 	GVN.cpp \
 	GVNHoist.cpp \
+	GVNSink.cpp \
 	GuardWidening.cpp \
 	IVUsersPrinter.cpp \
 	IndVarSimplify.cpp \
 	InductiveRangeCheckElimination.cpp \
+	InferAddressSpaces.cpp \
 	JumpThreading.cpp \
 	LICM.cpp \
-	LoadCombine.cpp \
 	LoopAccessAnalysisPrinter.cpp \
 	LoopDataPrefetch.cpp \
 	LoopDistribute.cpp \
@@ -35,6 +36,7 @@ SRCS+=	ADCE.cpp \
 	LoopInterchange.cpp \
 	LoopLoadElimination.cpp \
 	LoopPassManager.cpp \
+	LoopPredication.cpp \
 	LoopRerollPass.cpp \
 	LoopRotation.cpp \
 	LoopSimplifyCFG.cpp \
@@ -60,6 +62,7 @@ SRCS+=	ADCE.cpp \
 	Scalar.cpp \
 	Scalarizer.cpp \
 	SeparateConstOffsetFromGEP.cpp \
+	SimpleLoopUnswitch.cpp \
 	SimplifyCFGPass.cpp \
 	Sink.cpp \
 	SpeculativeExecution.cpp \

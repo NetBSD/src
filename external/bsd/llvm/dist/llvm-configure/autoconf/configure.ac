@@ -1959,6 +1959,7 @@ AC_SUBST(RDYNAMIC)
 
 AC_DEFINE([LLVM_ENABLE_ABI_BREAKING_CHECKS],[0],
           [Define to 1 to checks for ABI changes, and to 0 otherwise.])
+AC_DEFINE_UNQUOTED([BACKTRACE_HEADER], [<execinfo.h>], [Header containing the backtrace function])
 
 dnl===-----------------------------------------------------------------------===
 dnl===

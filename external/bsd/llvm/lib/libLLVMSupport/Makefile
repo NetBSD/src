@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2017/01/11 12:02:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.34 2017/08/01 20:07:42 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -6,12 +6,18 @@ LIB=	LLVMSupport
 
 .PATH: ${LLVM_SRCDIR}/lib/Support
 
-SRCS+=	APFloat.cpp \
+SRCS+=	AMDGPUCodeObjectMetadata.cpp \
+	APFloat.cpp \
 	APInt.cpp \
 	APSInt.cpp \
+	ARMAttributeParser.cpp \
 	ARMBuildAttrs.cpp \
 	ARMWinEH.cpp \
 	Allocator.cpp \
+	BinaryStreamError.cpp \
+	BinaryStreamReader.cpp \
+	BinaryStreamRef.cpp \
+	BinaryStreamWriter.cpp \
 	BlockFrequency.cpp \
 	BranchProbability.cpp \
 	COM.cpp \
@@ -23,10 +29,10 @@ SRCS+=	APFloat.cpp \
 	ConvertUTFWrapper.cpp \
 	CrashRecoveryContext.cpp \
 	DataExtractor.cpp \
+	DebugCounter.cpp \
 	Debug.cpp \
 	DeltaAlgorithm.cpp \
 	DAGDeltaAlgorithm.cpp \
-	Dwarf.cpp \
 	Error.cpp \
 	ErrorHandling.cpp \
 	FileOutputBuffer.cpp \
@@ -43,12 +49,14 @@ SRCS+=	APFloat.cpp \
 	LineIterator.cpp \
 	Locale.cpp \
 	LockFileManager.cpp \
+	LowLevelType.cpp \
 	MD5.cpp \
 	ManagedStatic.cpp \
 	MathExtras.cpp \
 	MemoryBuffer.cpp \
 	NativeFormatting.cpp \
 	Options.cpp \
+	Parallel.cpp \
 	PluginLoader.cpp \
 	PrettyStackTrace.cpp \
 	Regex.cpp \
@@ -100,7 +108,6 @@ SRCS+=	Atomic.cpp \
 	RWMutex.cpp \
 	RandomNumberGenerator.cpp \
 	ScaledNumber.cpp \
-	SearchForAddressOfSpecialSymbol.cpp \
 	Signals.cpp \
 	ThreadLocal.cpp \
 	ThreadPool.cpp \

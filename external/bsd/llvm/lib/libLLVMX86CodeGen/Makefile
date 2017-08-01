@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2017/01/11 12:02:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2017/08/01 20:07:42 joerg Exp $
 
 LIB=	LLVMX86CodeGen
 
@@ -6,12 +6,11 @@ LIB=	LLVMX86CodeGen
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/X86
 
-# Used only with GlobalISel:
-#	X86CallLowering.cpp
-
 SRCS+=	X86AsmPrinter.cpp \
 	X86CallFrameOptimization.cpp \
+	X86CallLowering.cpp \
 	X86CallingConv.cpp \
+	X86CmovConversion.cpp \
 	X86EvexToVex.cpp\
 	X86ExpandPseudo.cpp \
 	X86FastISel.cpp \
@@ -24,11 +23,15 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86ISelLowering.cpp \
 	X86InstrFMA3Info.cpp \
 	X86InstrInfo.cpp \
+	X86InstructionSelector.cpp \
 	X86InterleavedAccess.cpp \
+	X86LegalizerInfo.cpp \
 	X86MachineFunctionInfo.cpp \
+	X86MacroFusion.cpp \
 	X86MCInstLower.cpp \
 	X86OptimizeLEAs.cpp \
 	X86PadShortFunction.cpp \
+	X86RegisterBankInfo.cpp \
 	X86RegisterInfo.cpp \
 	X86SelectionDAGInfo.cpp \
 	X86ShuffleDecodeConstantPool.cpp \
@@ -49,8 +52,11 @@ TABLEGEN_OUTPUT= \
 	X86GenCallingConv.inc|-gen-callingconv \
 	X86GenDAGISel.inc|-gen-dag-isel \
 	X86GenDisassemblerTables.inc|-gen-disassembler \
+	X86GenEVEX2VEXTables.inc|-gen-x86-EVEX2VEX-tables \
 	X86GenFastISel.inc|-gen-fast-isel \
+	X86GenGlobalISel.inc|-gen-global-isel \
 	X86GenInstrInfo.inc|-gen-instr-info \
+	X86GenRegisterBank.inc|-gen-register-bank \
 	X86GenRegisterInfo.inc|-gen-register-info \
 	X86GenSubtargetInfo.inc|-gen-subtarget
 

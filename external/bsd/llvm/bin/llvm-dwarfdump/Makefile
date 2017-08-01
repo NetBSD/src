@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2017/01/11 12:02:26 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2017/08/01 20:07:38 joerg Exp $
 
 PROG_CXX=	llvm-dwarfdump
 NOMAN=		yes
@@ -14,6 +14,7 @@ LLVM_LIBS+= \
 	Object \
 	BitReader \
 	IR \
+	BinaryFormat \
 	MC \
 	MCParser \
 	Support \

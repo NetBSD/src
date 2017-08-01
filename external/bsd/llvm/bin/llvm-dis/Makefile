@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2017/01/11 12:02:26 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2017/08/01 20:07:38 joerg Exp $
 
 PROG_CXX=	llvm-dis
 NOMAN=		yes
@@ -13,6 +13,7 @@ LLVM_LIBS+= \
 	Analysis \
 	BitReader \
 	IR \
+	BinaryFormat \
 	Support \
 	Demangle
 

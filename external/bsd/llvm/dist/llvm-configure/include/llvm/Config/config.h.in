@@ -6,6 +6,9 @@
 /* Exported configuration */
 #include "llvm/Config/llvm-config.h"
 
+/* Header containing the backtrace function */
+#undef BACKTRACE_HEADER
+
 /* Bug report URL. */
 #undef BUG_REPORT_URL
 

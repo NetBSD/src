@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2017/02/09 17:58:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2017/08/01 20:07:40 joerg Exp $
 
 LIB=	LLVMDebugInfoCodeView
 
@@ -7,24 +7,37 @@ LIB=	LLVMDebugInfoCodeView
 .PATH: ${LLVM_SRCDIR}/lib/DebugInfo/CodeView
 
 SRCS+=	CVSymbolVisitor.cpp \
-	CVTypeDumper.cpp \
 	CVTypeVisitor.cpp \
 	CodeViewError.cpp \
 	CodeViewRecordIO.cpp \
+	DebugFrameDataSubsection.cpp \
+	DebugChecksumsSubsection.cpp \
+	DebugCrossExSubsection.cpp \
+	DebugSymbolsSubsection.cpp \
+	DebugCrossImpSubsection.cpp \
+	DebugInlineeLinesSubsection.cpp \
+	DebugSubsectionRecord.cpp \
+	DebugSubsection.cpp \
+	DebugSubsectionVisitor.cpp \
+	DebugLinesSubsection.cpp \
+	DebugStringTableSubsection.cpp \
 	EnumTables.cpp \
+	Formatters.cpp \
 	Line.cpp \
-	ModuleSubstream.cpp \
-	ModuleSubstreamVisitor.cpp \
 	RecordSerialization.cpp \
+	StringsAndChecksums.cpp \
 	SymbolDumper.cpp \
 	SymbolRecordMapping.cpp \
-	TypeDatabase.cpp \
-	TypeDatabaseVisitor.cpp \
+	SymbolSerializer.cpp \
 	TypeDumpVisitor.cpp \
-	TypeRecord.cpp \
+	TypeIndex.cpp \
+	TypeIndexDiscovery.cpp \
+	TypeName.cpp \
+	LazyRandomTypeCollection.cpp \
 	TypeRecordMapping.cpp \
 	TypeSerializer.cpp \
-	TypeStreamMerger.cpp
+	TypeStreamMerger.cpp \
+	TypeTableCollection.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

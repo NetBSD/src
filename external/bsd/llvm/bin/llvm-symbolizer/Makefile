@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/01/11 12:02:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2017/08/01 20:07:39 joerg Exp $
 
 PROG_CXX=	llvm-symbolizer
 NOMAN=		yes
@@ -13,12 +13,13 @@ LLVM_LIBS+= \
 	DebugInfoSymbolize \
 	DebugInfoDWARF \
 	DebugInfoPDB \
-	DebugInfoPDBRaw \
+	DebugInfoPDBNative \
 	Object \
 	MCParser \
 	MC \
 	BitReader \
 	IR \
+	BinaryFormat \
 	Support \
 	Demangle
 
