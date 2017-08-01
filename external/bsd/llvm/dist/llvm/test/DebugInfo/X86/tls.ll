@@ -4,7 +4,7 @@
 ; RUN: llc %s -o - -filetype=asm -O0 -mtriple=i386-linux-gnu \
 ; RUN:   | FileCheck --check-prefix=NOEMU --check-prefix=SINGLE --check-prefix=SINGLE-32 --check-prefix=GNUOP %s
 
-; RUN: llc %s -o - -filetype=asm -O0 -mtriple=x86_64-unknown-linux-gnu -split-dwarf=Enable \
+; RUN: llc %s -o - -filetype=asm -O0 -mtriple=x86_64-unknown-linux-gnu -split-dwarf-file=foo.dwo \
 ; RUN:   | FileCheck --check-prefix=NOEMU --check-prefix=FISSION --check-prefix=GNUOP %s
 
 ; RUN: llc %s -o - -filetype=asm -O0 -mtriple=x86_64-scei-ps4 \
@@ -78,7 +78,6 @@
 
 ; check that the expected TLS address description is the first thing in the debug_addr section
 ; FISSION: .section    .debug_addr
-; FISSION: addr_sec:
 ; FISSION-NEXT: .quad  tls@DTPOFF
 ; FISSION-NEXT: .quad  glbl
 ; FISSION-NOT: .quad  glbl
