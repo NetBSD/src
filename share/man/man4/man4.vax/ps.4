@@ -1,4 +1,4 @@
-.\"	$NetBSD: ps.4,v 1.10 2003/08/07 10:31:13 agc Exp $
+.\"	$NetBSD: ps.4,v 1.11 2017/08/01 11:04:21 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,8 +57,8 @@ with no system call overhead.
 .Tn DMA
 to and from the
 .Tn PS2
-is not supported. All read and write
-system calls will fail.
+is not supported.
+All read and write system calls will fail.
 All data is moved to and from the
 .Tn PS2
 via programmed
@@ -107,7 +107,8 @@ The second argument is the length of each double buffer.
 The refresh mechanism displays the current double buffer, in addition
 to its static refresh lists, when in double buffer mode.
 .It Dv PSIOSINGLEREFRESH
-Single step the refresh process. That is, the driver does not continually
+Single step the refresh process.
+That is, the driver does not continually
 refresh the screen.
 .It Dv PSIOSINGLEMAP
 Single step the matrix process.
@@ -116,7 +117,8 @@ The driver does not automatically feed display files through the matrix unit.
 Turn off double buffering.
 .It Dv PSIOTIMEREFRESH
 The argument is a count of the number of refresh interrupts to take
-before turning off the screen.  This is used to do time exposures.
+before turning off the screen.
+This is used to do time exposures.
 .It Dv PSIOWAITREFRESH
 Suspend the user process until a refresh interrupt has occurred.
 If in
