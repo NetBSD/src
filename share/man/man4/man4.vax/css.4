@@ -1,4 +1,4 @@
-.\"	$NetBSD: css.4,v 1.11 2017/08/01 11:04:21 wiz Exp $
+.\"	$NetBSD: css.4,v 1.12 2017/08/01 11:11:17 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -71,7 +71,6 @@ as shown above.
 The initialization routine was entered even though the device
 did not autoconfigure.
 This is indicates a system problem.
-.Pp
 .It css%d: can't initialize.
 Insufficient
 .Tn UNIBUS
@@ -80,22 +79,17 @@ This is likely to occur when the device is run on a buffered
 data path on an 11/750 and other network interfaces are also
 configured to use buffered data paths, or when it is configured
 to use buffered data paths on an 11/730 (which has none).
-.Pp
 .It css%d: imp doesn't respond, icsr=%b.
 The driver attempted to initialize the device, but the
 .Tn IMP
 failed to respond after 500 tries.
 Check the cabling.
-.Pp
 .It css%d: stray output interrupt csr=%b.
 An interrupt occurred when no output had previously been started.
-.Pp
 .It css%d: output error, ocsr=%b icsr=%b.
 The device indicated a problem sending data on output.
-.Pp
 .It css%d: recv error, csr=%b.
 The device indicated a problem receiving data on input.
-.Pp
 .It css%d: bad length=%d.
 An input operation resulted in a data transfer of less than
 0 or more than 1008 bytes of
