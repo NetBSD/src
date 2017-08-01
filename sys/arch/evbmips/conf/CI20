@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.22 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: CI20,v 1.22.6.1 2017/08/01 23:36:08 snj Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.22 $"
+#ident 		"CI20-$Revision: 1.22.6.1 $"
 
 maxusers	32
 
@@ -15,13 +15,13 @@ maxusers	32
 
 options 	MIPS32R2
 makeoptions	CPUFLAGS+="-mips32r2"
-makeoptions	NEED_MDSETIMAGE="yes"
 makeoptions	NEED_BINARY="yes"
 makeoptions	NEED_UBOOTIMAGE="gz"
 options 	COM_TOLERANCE=50	# +/- 5%
 options 	CONSPEED=115200	# u-boot default
 
 # Options for necessary to use MD
+#makeoptions	NEED_MDSETIMAGE="yes"
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
