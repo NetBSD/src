@@ -227,6 +227,10 @@
 // RUN:   | FileCheck %s --check-prefix=CHECK-PIE1
 // RUN: %clang -c %s -target i386-pc-openbsd -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-PIE1
+// RUN: %clang -c %s -target aarch64-unknown-openbsd -### 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=CHECK-PIE1
+// RUN: %clang -c %s -target arm-unknown-openbsd -### 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=CHECK-PIE1
 // RUN: %clang -c %s -target mips64-unknown-openbsd -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-PIE1
 // RUN: %clang -c %s -target mips64el-unknown-openbsd -### 2>&1 \
@@ -242,6 +246,9 @@
 //
 // On OpenBSD, -nopie needs to be passed through to the linker.
 // RUN: %clang %s -target i386-pc-openbsd -nopie -### 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=CHECK-NOPIE-LD
+// Try with the alias
+// RUN: %clang %s -target i386-pc-openbsd -no-pie -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-NOPIE-LD
 //
 // On Android PIC is enabled by default
