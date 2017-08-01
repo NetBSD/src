@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.245 2017/08/01 13:57:03 maxv Exp $
+# $NetBSD: md.amd64,v 1.246 2017/08/01 16:54:19 maya Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -468,6 +468,7 @@
 ./usr/include/i386/specialreg.h			comp-c-include
 ./usr/include/i386/spkr.h			comp-c-include
 ./usr/include/i386/stdarg.h			comp-obsolete		obsolete
+./usr/include/i386/svr4_machdep.h		comp-obsolete		obsolete
 ./usr/include/i386/sysarch.h			comp-c-include
 ./usr/include/i386/trap.h			comp-c-include
 ./usr/include/i386/tss.h			comp-c-include
