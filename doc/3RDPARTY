@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1461 2017/07/29 23:10:36 jmcneill Exp $
+#	$NetBSD: 3RDPARTY,v 1.1462 2017/08/01 16:44:19 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -859,9 +859,9 @@ Responsible:	tsarna
 Location:	external/apache2/mDNSResponder/dist
 Notes:
 
-Package:	mdocml
+Package:	mandoc
 Version:	1.14.1
-Current Vers:	1.14.1
+Current Vers:	1.14.2
 Maintainer:	Kristaps Džonsons
 Archive Site:	http://mdocml.bsd.lv/snapshots/
 Home Page:	http://mdocml.bsd.lv/
