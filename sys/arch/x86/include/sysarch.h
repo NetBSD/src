@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.11 2017/03/10 13:09:11 maxv Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.11.6.1 2017/08/01 23:18:30 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@ struct _X86_SYSARCH_L(pmc_info_args) {
 	int vers;
 	int type;
 	uint32_t nctrs;
+	uint64_t nsamp;
 };
 
 #define	PMC_VERSION		1

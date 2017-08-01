@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.25 2016/12/13 10:54:27 kamil Exp $
+#	$NetBSD: files.compat,v 1.25.8.1 2017/08/01 23:18:30 snj Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -27,6 +27,8 @@ defflag	opt_pcifixup.h		XXXOPT_PCIFIXUP
 
 # VM86 emulation
 defflag	opt_vm86.h			XXXVM86
+
+defflag opt_pmc.h			XXXPMC
 
 # User-settable LDT (used by WINE)
 defflag	opt_user_ldt.h			XXXUSER_LDT

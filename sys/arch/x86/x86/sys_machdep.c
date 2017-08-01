@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.35 2017/03/10 14:54:12 maxv Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.35.6.1 2017/08/01 23:18:30 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.35 2017/03/10 14:54:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.35.6.1 2017/08/01 23:18:30 snj Exp $");
 
 #include "opt_mtrr.h"
+#include "opt_pmc.h"
 #include "opt_user_ldt.h"
 #include "opt_compat_netbsd.h"
 #ifdef i386

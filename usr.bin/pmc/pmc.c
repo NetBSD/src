@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.23 2017/03/24 18:30:44 maxv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.23.4.1 2017/08/01 23:18:31 snj Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.23 2017/03/24 18:30:44 maxv Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.23.4.1 2017/08/01 23:18:31 snj Exp $");
 #endif
 
 #include <inttypes.h>
@@ -379,6 +379,7 @@ static int x86_pmc_startstop(x86_pmc_startstop_args_t *);
 static int x86_pmc_read(x86_pmc_read_args_t *);
 
 static uint32_t pmc_ncounters;
+static size_t pmc_nsamples;
 
 static struct cmdtab {
 	const char *label;
@@ -428,6 +429,7 @@ pmc_start(const pmc_name2val_cpu_t *pncp, char **argv)
 	uint32_t flags;
 	size_t n, i;
 
+	/* Get the source for each counter (kernel or userland) */
 	for (n = 0; n < pmc_ncounters; n++) {
 		if (argv[n] == NULL)
 			break;
@@ -437,6 +439,7 @@ pmc_start(const pmc_name2val_cpu_t *pncp, char **argv)
 			usage();
 	}
 
+	/* Initialize each pmcarg structure */
 	for (i = 0; i < n; i++) {
 		pmcarg = &pmcargs[i];
 		event = tokens[i][0];
@@ -460,6 +463,7 @@ pmc_start(const pmc_name2val_cpu_t *pncp, char **argv)
 		pmcarg->flags = flags;
 	}
 
+	/* Finally, start each counter */
 	for (i = 0; i < n; i++) {
 		pmcarg = &pmcargs[i];
 		if (x86_pmc_startstop(pmcarg) < 0)
@@ -475,6 +479,7 @@ pmc_stop(const pmc_name2val_cpu_t *pncp, char **argv)
 	x86_pmc_startstop_args_t pmcstop;
 	x86_pmc_read_args_t pmcread;
 	size_t i, j, n, nval = 0;
+	uint64_t val;
 
 	/* Read the values. */
 	for (n = 0; n < pmc_ncounters; n++) {
@@ -510,7 +515,9 @@ pmc_stop(const pmc_name2val_cpu_t *pncp, char **argv)
 	for (i = 0; i < n; i++) {
 		printf("%zu\t\t", i);
 		for (j = 0; j < nval; j++) {
-			printf("%" PRIu64 "\t\t", cpuval[i][j].ctrval);
+			val = cpuval[i][j].overfl * pmc_nsamples +
+			    cpuval[i][j].ctrval;
+			printf("%" PRIu64 "\t\t", val);
 		}
 		printf("\n");
 	}
@@ -585,11 +592,21 @@ main(int argc, char **argv)
 	setprogname(argv[0]);
 	argv += 1;
 
-	if (x86_pmc_info(&pmcinfo) < 0)
-		errx(EXIT_FAILURE, "PMC support not compiled into the kernel");
+	if (argc < 2)
+		usage();
+
+	if (x86_pmc_info(&pmcinfo) < 0) {
+		if (errno == EPERM)
+			errx(EXIT_FAILURE,
+			    "PMC operations require root privileges");
+		else
+			errx(EXIT_FAILURE,
+			    "PMC support not compiled into the kernel");
+	}
 	if (pmcinfo.vers != 1)
 		errx(EXIT_FAILURE, "Wrong PMC version");
 	pmc_ncounters = pmcinfo.nctrs;
+	pmc_nsamples = pmcinfo.nsamp;
 
 	pncp = pmc_lookup_cpu(pmcinfo.type);
 	if (pncp == NULL)
