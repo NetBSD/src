@@ -1,4 +1,4 @@
-.\"	$NetBSD: hp.4,v 1.17 2017/07/31 18:45:43 ryoon Exp $
+.\"	$NetBSD: hp.4,v 1.18 2017/08/01 11:11:17 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993, 19801988
 .\"	The Regents of the University of California.  All rights reserved.
@@ -123,7 +123,6 @@ disks).
 The error was either unrecoverable, or a large number of retry attempts
 (including offset positioning and drive recalibration) could not
 recover the error.
-.Pp
 .It "hp%d%c: soft ecc reading fsbn %d [of %d-%d] (hp%d bn %d cn %d tn %d sn %d)."
 A recoverable
 .Tn ECC
@@ -139,7 +138,6 @@ If it happens more frequently than
 this the sectors where the errors are occurring should be checked to see
 if certain cylinders on the pack, spots on the carriage of the drive
 or heads are indicated.
-.Pp
 .El
 .Sh SEE ALSO
 .Xr physio 4 ,
