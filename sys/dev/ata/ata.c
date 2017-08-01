@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.22 2017/07/29 12:58:29 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.23 2017/08/01 21:39:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.22 2017/07/29 12:58:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.23 2017/08/01 21:39:51 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1051,7 +1051,7 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 
 	xfer = ata_get_xfer_ext(chp, C_RECOVERY, 0);
 
-	tb = chp->ch_recovery;
+	tb = drvp->recovery_blk;
 	memset(tb, 0, DEV_BSIZE);
 
 	/*
