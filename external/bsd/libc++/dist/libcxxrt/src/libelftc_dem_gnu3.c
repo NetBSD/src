@@ -3624,7 +3624,7 @@ decode_fp_to_float80(const char *p, size_t len)
 #endif /* ELFTC_BYTE_ORDER == ELFTC_BYTE_ORDER_LITTLE_ENDIAN */
 		}
 
-		memset(&f, 0, FLOAT_QUADRUPLE_BYTES);
+		memset(&f, 0, sizeof(f));
 
 #if ELFTC_BYTE_ORDER == ELFTC_BYTE_ORDER_LITTLE_ENDIAN
 		memcpy(&f, buf, FLOAT_EXTENED_BYTES);
