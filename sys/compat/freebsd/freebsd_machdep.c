@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.60 2014/02/23 22:35:27 dsl Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.1 2017/08/01 14:43:54 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.60 2014/02/23 22:35:27 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.1 2017/08/01 14:43:54 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
