@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.193 2017/06/12 01:01:01 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.194 2017/08/01 13:49:50 maxv Exp $
 
 .include <bsd.own.mk>
 
@@ -266,7 +266,6 @@ SUBDIR+=	compat_netbsd32_sysvipc
 SUBDIR+=	ati_pcigart
 SUBDIR+=	compat_freebsd
 SUBDIR+=	compat_ibcs2
-SUBDIR+=	compat_svr4
 SUBDIR+=	mach64drm
 SUBDIR+=	mgadrm
 SUBDIR+=	nsclpcsio
