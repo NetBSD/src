@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2017/01/11 12:02:28 joerg Exp $
+#	$NetBSD: Makefile,v 1.17 2017/08/01 20:07:40 joerg Exp $
 
 LIB=	LLVMARMCodeGen
 
@@ -6,15 +6,10 @@ LIB=	LLVMARMCodeGen
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/ARM
 
-# Used only with GlobalISel:
-#	ARMCallLowering.cpp
-#	ARMInstructionSelector.cpp
-#	ARMLegalizerInfo.cpp
-#	ARMRegisterBankInfo.cpp
-
 SRCS+=	ARMAsmPrinter.cpp \
 	ARMBaseInstrInfo.cpp \
 	ARMBaseRegisterInfo.cpp \
+	ARMCallLowering.cpp \
 	ARMComputeBlockSize.cpp \
 	ARMConstantIslandPass.cpp \
 	ARMConstantPoolValue.cpp \
@@ -25,10 +20,14 @@ SRCS+=	ARMAsmPrinter.cpp \
 	ARMISelDAGToDAG.cpp \
 	ARMISelLowering.cpp \
 	ARMInstrInfo.cpp \
+	ARMInstructionSelector.cpp \
+	ARMLegalizerInfo.cpp \
 	ARMLoadStoreOptimizer.cpp \
 	ARMMCInstLower.cpp \
 	ARMMachineFunctionInfo.cpp \
+	ARMMacroFusion.cpp \
 	ARMOptimizeBarriersPass.cpp \
+	ARMRegisterBankInfo.cpp \
 	ARMRegisterInfo.cpp \
 	ARMSelectionDAGInfo.cpp \
 	ARMSubtarget.cpp \
@@ -47,18 +46,20 @@ SRCS+=	ARMAsmPrinter.cpp \
 TABLEGEN_SRC=		ARM.td
 TABLEGEN_INCLUDES=	-I${LLVM_SRCDIR}/lib/Target/ARM
 TABLEGEN_OUTPUT= \
-	ARMGenRegisterInfo.inc|-gen-register-info \
-	ARMGenInstrInfo.inc|-gen-instr-info \
+	ARMGenAsmMatcher.inc|-gen-asm-matcher \
+	ARMGenAsmWriter.inc|-gen-asm-writer \
+	ARMGenCallingConv.inc|-gen-callingconv \
 	ARMGenCodeEmitter.inc|-gen-emitter \
+	ARMGenDAGISel.inc|-gen-dag-isel \
+	ARMGenDisassemblerTables.inc|-gen-disassembler \
+	ARMGenFastISel.inc|-gen-fast-isel \
+	ARMGenGlobalISel.inc|-gen-global-isel \
+	ARMGenInstrInfo.inc|-gen-instr-info \
 	ARMGenMCCodeEmitter.inc|-gen-emitter \
 	ARMGenMCPseudoLowering.inc|-gen-pseudo-lowering \
-	ARMGenAsmWriter.inc|-gen-asm-writer \
-	ARMGenAsmMatcher.inc|-gen-asm-matcher \
-	ARMGenDAGISel.inc|-gen-dag-isel \
-	ARMGenFastISel.inc|-gen-fast-isel \
-	ARMGenCallingConv.inc|-gen-callingconv \
-	ARMGenSubtargetInfo.inc|-gen-subtarget \
-	ARMGenDisassemblerTables.inc|-gen-disassembler
+	ARMGenRegisterBank.inc|-gen-register-bank \
+	ARMGenRegisterInfo.inc|-gen-register-info \
+	ARMGenSubtargetInfo.inc|-gen-subtarget
 
 .include "${.PARSEDIR}/../../tablegen.mk"
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2017/01/11 12:02:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2017/08/01 20:07:41 joerg Exp $
 
 LIB=	LLVMDebugInfoPDB
 
@@ -44,7 +44,8 @@ SRCS+=	GenericError.cpp \
 	PDBSymbolTypeVTableShape.cpp \
 	PDBSymbolUnknown.cpp \
 	PDBSymbolUsingNamespace.cpp \
-	PDBSymDumper.cpp
+	PDBSymDumper.cpp \
+	UDTLayout.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2017/01/11 12:02:24 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2017/08/01 20:07:37 joerg Exp $
 
 PROG_CXX=	bugpoint
 NOMAN=		yes
@@ -18,26 +18,67 @@ SRCS=	BugDriver.cpp \
 	bugpoint.cpp
 
 LLVM_LIBS+= \
-	CodeGen \
 	ObjCARC \
+	ipo \
 	IRReader \
 	AsmParser \
 	BitReader \
 	BitWriter \
+	AArch64CodeGen \
+	AArch64TargetInfo \
+	AArch64AsmParser \
+	AArch64MCTargetDesc \
+	AArch64AsmPrinter \
+	AArch64Utils \
+	ARMCodeGen \
+	ARMTargetInfo \
+	ARMMCTargetDesc \
+	ARMAsmParser \
+	ARMAsmPrinter \
+	MipsCodeGen \
+	MipsTargetInfo \
+	MipsAsmPrinter \
+	MipsAsmParser \
+	MipsMCTargetDesc \
+	PowerPCCodeGen \
+	PowerPCTargetInfo \
+	PowerPCMCTargetDesc \
+	PowerPCAsmParser \
+	PowerPCAsmPrinter \
+	SparcCodeGen \
+	SparcTargetInfo \
+	SparcMCTargetDesc \
+	SparcAsmParser \
+	SparcAsmPrinter \
+	X86CodeGen \
+	X86MCTargetDesc \
+	X86TargetInfo \
+	X86Utils \
+	X86AsmParser \
+	X86AsmPrinter \
+	GlobalISel \
+	SelectionDAG \
+	AsmPrinter \
+	DebugInfoCodeView \
+	DebugInfoMSF \
+	Passes \
+	CodeGen \
+	Vectorize \
+	Target \
 	InstCombine \
 	Instrumentation \
-	Linker \
 	ScalarOpts \
-	ipo \
-	Object \
+	ProfileData \
+	MCDisassembler \
 	MCParser \
 	MC \
-	ProfileData \
-	Target \
-	Vectorize \
-	TransformsUtils \
 	Analysis \
+	Object \
+	Linker \
+	TransformsUtils \
 	IR \
+	Option \
+	BinaryFormat \
 	Support \
 	Demangle
 

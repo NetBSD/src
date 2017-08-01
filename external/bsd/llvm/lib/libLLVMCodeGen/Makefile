@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2017/01/11 12:02:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.33 2017/08/01 20:07:40 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -11,6 +11,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	Analysis.cpp \
 	AtomicExpandPass.cpp \
 	BasicTargetTransformInfo.cpp \
+	BranchCoalescing.cpp \
 	BranchFolding.cpp \
 	BranchRelaxation.cpp \
 	BuiltinGCs.cpp \
@@ -29,6 +30,8 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	ExecutionDepsFix.cpp \
 	ExpandISelPseudos.cpp \
 	ExpandPostRAPseudos.cpp \
+	ExpandReductions.cpp \
+	FEntryInserter.cpp \
 	FaultMaps.cpp \
 	FuncletLayout.cpp \
 	GCMetadata.cpp \
@@ -44,6 +47,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	IntrinsicLowering.cpp \
 	LLVMTargetMachine.cpp \
 	LatencyPriorityQueue.cpp \
+	LazyMachineBlockFrequencyInfo.cpp \
 	LexicalScopes.cpp \
 	LiveDebugValues.cpp \
 	LiveDebugVariables.cpp \
@@ -53,7 +57,9 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	LivePhysRegs.cpp \
 	LiveRangeCalc.cpp \
 	LiveRangeEdit.cpp \
+	LiveRangeShrink.cpp \
 	LiveRegMatrix.cpp \
+	LiveRegUnits.cpp \
 	LiveStackAnalysis.cpp \
 	LiveVariables.cpp \
 	LocalStackSlotAllocation.cpp \
@@ -70,6 +76,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineCombiner.cpp \
 	MachineDominanceFrontier.cpp \
 	MachineDominators.cpp \
+	MachineFrameInfo.cpp \
 	MachineFunction.cpp \
 	MachineFunctionPass.cpp \
 	MachineFunctionPrinterPass.cpp \
@@ -79,6 +86,8 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineLoopInfo.cpp \
 	MachineModuleInfo.cpp \
 	MachineModuleInfoImpls.cpp \
+	MachineOutliner.cpp \
+	MachineOptimizationRemarkEmitter.cpp \
 	MachinePassRegistry.cpp \
 	MachinePipeliner.cpp \
 	MachinePostDominators.cpp \
@@ -89,6 +98,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineSink.cpp \
 	MachineTraceMetrics.cpp \
 	MachineVerifier.cpp \
+	MacroFusion.cpp \
 	OptimizePHIs.cpp \
 	PHIElimination.cpp \
 	PHIEliminationUtils.cpp \
@@ -119,6 +129,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	SafeStack.cpp \
 	SafeStackColoring.cpp \
 	SafeStackLayout.cpp \
+	ScalarizeMaskedMemIntrin.cpp \
 	ScheduleDAG.cpp \
 	ScheduleDAGInstrs.cpp \
 	ScheduleDAGPrinter.cpp \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2017/01/11 12:02:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.20 2017/08/01 20:07:42 joerg Exp $
 
 LIB=	LLVMTransformsUtils
 
@@ -38,12 +38,14 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	LoopUtils.cpp \
 	LoopVersioning.cpp \
 	LowerInvoke.cpp \
+	LowerMemIntrinsics.cpp \
 	LowerSwitch.cpp \
 	Mem2Reg.cpp \
-	MemorySSA.cpp \
 	MetaRenamer.cpp \
 	ModuleUtils.cpp \
 	NameAnonGlobals.cpp \
+	OrderedInstructions.cpp \
+	PredicateInfo.cpp \
 	PromoteMemoryToRegister.cpp \
 	SSAUpdater.cpp \
 	SanitizerStats.cpp \
@@ -57,6 +59,7 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	SymbolRewriter.cpp \
 	UnifyFunctionExitNodes.cpp \
 	Utils.cpp \
+	VNCoercion.cpp \
 	ValueMapper.cpp
 
 .if defined(HOSTLIB)

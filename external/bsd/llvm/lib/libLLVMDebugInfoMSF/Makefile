@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2017/01/11 12:02:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2017/08/01 20:07:40 joerg Exp $
 
 LIB=	LLVMDebugInfoMSF
 
@@ -9,9 +9,7 @@ LIB=	LLVMDebugInfoMSF
 SRCS+=	MappedBlockStream.cpp \
 	MSFBuilder.cpp \
 	MSFCommon.cpp \
-	MSFError.cpp \
-	StreamReader.cpp \
-	StreamWriter.cpp
+	MSFError.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

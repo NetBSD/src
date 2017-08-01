@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2016/02/27 21:47:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2017/08/01 20:07:42 joerg Exp $
 
 LIB=	clangAST
 
@@ -12,6 +12,7 @@ SRCS+=	APValue.cpp \
 	ASTDiagnostic.cpp \
 	ASTDumper.cpp \
 	ASTImporter.cpp \
+	ASTStructuralEquivalence.cpp \
 	ASTTypeTraits.cpp \
 	AttrImpl.cpp \
 	CXXInheritance.cpp \
@@ -36,6 +37,7 @@ SRCS+=	APValue.cpp \
 	ExprConstant.cpp \
 	ExprCXX.cpp \
 	ExprObjC.cpp \
+	ExternalASTMerger.cpp \
 	ExternalASTSource.cpp \
 	InheritViz.cpp \
 	ItaniumCXXABI.cpp \
@@ -45,6 +47,7 @@ SRCS+=	APValue.cpp \
 	MicrosoftMangle.cpp \
 	NSAPI.cpp \
 	NestedNameSpecifier.cpp \
+	ODRHash.cpp \
 	OpenMPClause.cpp \
 	ParentMap.cpp \
 	RawCommentList.cpp \

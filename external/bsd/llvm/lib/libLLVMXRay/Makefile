@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2017/02/09 17:58:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2017/08/01 20:07:42 joerg Exp $
 
 LIB=	LLVMXRay
 
@@ -6,6 +6,11 @@ LIB=	LLVMXRay
 
 .PATH: ${LLVM_SRCDIR}/lib/XRay
 
-SRCS+=	Trace.cpp
+SRCS+=	InstrumentationMap.cpp \
+	Trace.cpp
 
+.if defined(HOSTLIB)
+.include <bsd.hostlib.mk>
+.else
 .include <bsd.lib.mk>
+.endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2017/01/11 12:02:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2017/08/01 20:07:42 joerg Exp $
 
 LIB=	clangCodeGen
 
@@ -10,7 +10,6 @@ SRCS+=	BackendUtil.cpp \
 	CGAtomic.cpp \
 	CGBlocks.cpp \
 	CGBuiltin.cpp \
-	CGCUDABuiltin.cpp \
 	CGCUDANV.cpp \
 	CGCUDARuntime.cpp \
 	CGCXX.cpp \
@@ -29,6 +28,7 @@ SRCS+=	BackendUtil.cpp \
 	CGExprConstant.cpp \
 	CGExprCXX.cpp \
 	CGExprScalar.cpp \
+	CGGPUBuiltin.cpp \
 	CGLoopInfo.cpp \
 	CGObjC.cpp \
 	CGObjCGNU.cpp \
@@ -49,8 +49,10 @@ SRCS+=	BackendUtil.cpp \
 	CodeGenPGO.cpp \
 	CodeGenTBAA.cpp \
 	CodeGenTypes.cpp \
+	ConstantInitBuilder.cpp \
 	CoverageMappingGen.cpp \
 	ItaniumCXXABI.cpp \
+	MacroPPCallbacks.cpp \
 	MicrosoftCXXABI.cpp \
 	ModuleBuilder.cpp \
 	ObjectFilePCHContainerOperations.cpp \

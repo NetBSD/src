@@ -7,6 +7,9 @@
 /* Exported configuration */
 #include "llvm/Config/llvm-config.h"
 
+/* Header containing the backtrace function */
+#define BACKTRACE_HEADER <execinfo.h>
+
 /* Bug report URL. */
 #define BUG_REPORT_URL "http://llvm.org/bugs/"
 
@@ -30,7 +33,7 @@
 #define CLANG_RESOURCE_DIR ""
 
 /* Directories clang will search for headers */
-#define C_INCLUDE_DIRS "/usr/include/clang-4.0:/usr/include"
+#define C_INCLUDE_DIRS "/usr/include/clang-5.0:/usr/include"
 
 /* Default <path> to all compiler invocations for --sysroot=<path>. */
 #define DEFAULT_SYSROOT ""

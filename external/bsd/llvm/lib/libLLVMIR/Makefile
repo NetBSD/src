@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2017/01/11 12:02:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2017/08/01 20:07:41 joerg Exp $
 
 LIB=	LLVMIR
 
@@ -51,6 +51,7 @@ SRCS+=	AsmWriter.cpp \
 	PassManager.cpp \
 	PassRegistry.cpp \
 	ProfileSummary.cpp \
+	SafepointIRVerifier.cpp \
 	Statepoint.cpp \
 	Type.cpp \
 	TypeFinder.cpp \

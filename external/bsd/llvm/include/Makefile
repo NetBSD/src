@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2017/01/11 12:02:28 joerg Exp $
+#	$NetBSD: Makefile,v 1.41 2017/08/01 20:07:40 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -24,10 +24,12 @@ INCS=	__wmmintrin_aes.h \
 	avx512vlcdintrin.h \
 	avx512vldqintrin.h \
 	avx512vlintrin.h \
+	avx512vpopcntdqintrin.h \
 	avxintrin.h \
 	bmi2intrin.h \
 	bmiintrin.h \
 	clflushoptintrin.h \
+	clzerointrin.h \
 	cpuid.h \
 	emmintrin.h \
 	f16cintrin.h \
@@ -36,6 +38,7 @@ INCS=	__wmmintrin_aes.h \
 	fxsrintrin.h \
 	ia32intrin.h \
 	immintrin.h \
+	lwpintrin.h \
 	lzcntintrin.h \
 	mm3dnow.h \
 	mmintrin.h \
@@ -72,7 +75,7 @@ INCS=	arm_acle.h \
 .elif ${MACHINE_CPU} == "mips" || ${MACHINE_CPU} == "mips64"
 INCS=	msa.h
 .endif
-INCS+=	stdalign.h stdatomic.h stdnoreturn.h
+INCS+=	stdatomic.h
 INCSDIR=	/usr/include/clang-${CLANG_VERSION:R}
 
 .PATH:	${LLVM_SRCDIR}/include/llvm/IR \
@@ -101,7 +104,9 @@ CLANG_TABLEGEN_OUTPUT.Attr.td= \
 	clang/AST/AttrVisitor.inc|-gen-clang-attr-ast-visitor \
 	clang/Basic/AttrList.inc|-gen-clang-attr-list \
 	clang/Basic/AttrHasAttributeImpl.inc|-gen-clang-attr-has-attribute-impl \
+	clang/Basic/AttrSubMatchRulesList.inc|-gen-clang-attr-subject-match-rule-list \
 	clang/Parse/AttrParserStringSwitches.inc|-gen-clang-attr-parser-string-switches \
+	clang/Parse/AttrSubMatchRulesParserStringSwitches.inc|-gen-clang-attr-subject-match-rules-parser-string-switches \
 	clang/Sema/AttrParsedAttrImpl.inc|-gen-clang-attr-parsed-attr-impl \
 	clang/Sema/AttrParsedAttrKinds.inc|-gen-clang-attr-parsed-attr-kinds \
 	clang/Sema/AttrParsedAttrList.inc|-gen-clang-attr-parsed-attr-list \
@@ -159,8 +164,8 @@ TABLEGEN_OUTPUT.Options.td= \
 
 .include "${.PARSEDIR}/../tablegen.mk"
 
-DPSRCS+=	clang/Basic/Version.inc
-CLEANFILES+=	clang/Basic/Version.inc
+DPSRCS+=	clang/Basic/Version.inc llvm/Support/VCSRevision.h
+CLEANFILES+=	clang/Basic/Version.inc llvm/Support/VCSRevision.h
 
 clang/Basic/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
 	mkdir -p ${.TARGET:H}
@@ -171,7 +176,11 @@ clang/Basic/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
 	printf '#define CLANG_VERSION_PATCHLEVEL ${CLANG_VERSION:R:R}\n' >> ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
 
-lld/Config/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
+llvm/Support/VCSRevision.h: ${LLVM_TOPLEVEL}/Makefile.inc
+	mkdir -p ${.TARGET:H}
+	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_REVISION "svn-r${LLVM_REVISION}"\n' >> ${.TARGET}.tmp
+	mv ${.TARGET}.tmp ${.TARGET}
 
 .if ${MKLLD} != "no"
 DPSRCS+=	lld/Config/Version.inc

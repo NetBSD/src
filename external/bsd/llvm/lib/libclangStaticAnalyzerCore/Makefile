@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2016/02/27 21:47:36 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2017/08/01 20:07:43 joerg Exp $
 
 LIB=	clangStaticAnalyzerCore
 
@@ -39,6 +39,7 @@ SRCS+=	APSIntType.cpp \
 	PlistDiagnostics.cpp \
 	ProgramState.cpp \
 	RangeConstraintManager.cpp \
+	RangedConstraintManager.cpp \
 	RegionStore.cpp \
 	SimpleConstraintManager.cpp \
 	SimpleSValBuilder.cpp \
@@ -46,7 +47,8 @@ SRCS+=	APSIntType.cpp \
 	SValBuilder.cpp \
 	SVals.cpp \
 	SubEngine.cpp \
-	SymbolManager.cpp
+	SymbolManager.cpp \
+	Z3ConstraintManager.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

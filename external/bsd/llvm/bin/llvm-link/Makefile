@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/01/11 12:02:26 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2017/08/01 20:07:38 joerg Exp $
 
 PROG_CXX=	llvm-link
 NOMAN=		yes
@@ -10,18 +10,20 @@ NOMAN=		yes
 SRCS=	llvm-link.cpp
 
 LLVM_LIBS+= \
-	Object \
-	MC \
 	IRReader \
 	AsmParser \
 	BitReader \
 	BitWriter \
+	Object \
+	MCParser \
+	MC \
 	ipo \
 	Linker \
 	TransformsUtils \
 	Analysis \
 	Target \
 	IR \
+	BinaryFormat \
 	Support \
 	Demangle
 

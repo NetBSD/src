@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2017/01/11 12:02:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2017/08/01 20:07:41 joerg Exp $
 
 LIB=	LLVMGlobalISel
 
@@ -15,6 +15,7 @@ SRCS+=	CallLowering.cpp \
 	Legalizer.cpp \
 	LegalizerHelper.cpp \
 	LegalizerInfo.cpp \
+	Localizer.cpp \
 	RegBankSelect.cpp \
 	RegisterBank.cpp \
 	RegisterBankInfo.cpp \

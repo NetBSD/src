@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/01/11 12:02:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2017/08/01 20:07:42 joerg Exp $
 
 LIB=	clangFormat
 
@@ -8,16 +8,17 @@ LIB=	clangFormat
 
 SRCS+=	AffectedRangeManager.cpp \
 	BreakableToken.cpp \
-	Comments.cpp \
 	ContinuationIndenter.cpp \
 	Format.cpp \
 	FormatToken.cpp \
 	FormatTokenLexer.cpp \
+	NamespaceEndCommentsFixer.cpp \
 	SortJavaScriptImports.cpp \
 	TokenAnalyzer.cpp \
 	TokenAnnotator.cpp \
 	UnwrappedLineFormatter.cpp \
 	UnwrappedLineParser.cpp \
+	UsingDeclarationsSorter.cpp \
 	WhitespaceManager.cpp
 
 .if defined(HOSTLIB)
