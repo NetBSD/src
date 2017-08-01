@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.382 2017/08/01 13:47:49 maxv Exp $
+#	$NetBSD: files.i386,v 1.383 2017/08/01 14:43:54 maxv Exp $
 #
 # new style config file for i386 architecture
 #
@@ -340,9 +340,6 @@ file	arch/x86/x86/linux_trap.c		compat_linux
 
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
 include	"compat/freebsd/files.freebsd"
-file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
-file	arch/i386/i386/freebsd_sigcode.S	compat_freebsd
-file	arch/i386/i386/freebsd_syscall.c	compat_freebsd
 
 # NDIS compatibilty (COMPAT_NDIS)
 include "compat/ndis/files.ndis"
