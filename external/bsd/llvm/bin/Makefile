@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2017/01/11 12:02:24 joerg Exp $
+#	$NetBSD: Makefile,v 1.17 2017/08/01 20:07:37 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,7 @@ SUBDIR+=	\
 SUBDIR+= \
 	bugpoint \
 	clang-format \
+	clang-rename \
 	llc \
 	lli \
 	llvm-ar \
@@ -47,6 +48,7 @@ SUBDIR+= \
 	llvm-size \
 	llvm-strings \
 	llvm-symbolizer \
+	llvm-xray \
 	opt \
 	sancov \
 	sanstats

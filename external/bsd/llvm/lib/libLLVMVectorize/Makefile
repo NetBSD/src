@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/01/11 12:02:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2017/08/01 20:07:42 joerg Exp $
 
 LIB=	LLVMVectorize
 
@@ -6,8 +6,7 @@ LIB=	LLVMVectorize
 
 .PATH: ${LLVM_SRCDIR}/lib/Transforms/Vectorize
 
-SRCS+=	BBVectorize.cpp \
-	LoadStoreVectorizer.cpp \
+SRCS+=	LoadStoreVectorizer.cpp \
 	LoopVectorize.cpp \
 	SLPVectorizer.cpp \
 	Vectorize.cpp

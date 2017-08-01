@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.44 2017/01/11 12:02:28 joerg Exp $
+# $NetBSD: Makefile,v 1.45 2017/08/01 20:07:40 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ SUBDIR=	\
 	libLLVMAnalysis \
 	libLLVMAsmParser \
 	libLLVMAsmPrinter \
+	libLLVMBinaryFormat \
 	libLLVMBitReader \
 	libLLVMBitWriter \
 	libLLVMCodeGen \
@@ -103,7 +104,7 @@ SUBDIR+= \
 SUBDIR+= \
 	libLLVMDebugInfoDWARF \
 	libLLVMDebugInfoPDB \
-	libLLVMDebugInfoPDBRaw \
+	libLLVMDebugInfoPDBNative \
 	libLLVMDebugInfoSymbolize
 .endif
 
@@ -111,9 +112,10 @@ SUBDIR+= \
 SUBDIR+= \
 	libLLVMHello \
 	libLLVMInterpreter \
-	libLLVMLibDriver \
 	libLLVMLineEditor \
-	libLLVMObjectYAML
+	libLLVMObjectYAML \
+	libLLVMToolDrivers \
+	libLLVMXRay
 .endif
 
 SUBDIR+= \
@@ -144,7 +146,8 @@ SUBDIR+= \
 	libclangFormat \
 	libclangIndex \
 	libclangTooling \
-	libclangToolingCore
+	libclangToolingCore \
+	libclangToolingRefactoring
 .endif
 
 .if ${MKLLD} != "no"
