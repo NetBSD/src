@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.357.2.3 2017/08/01 23:23:00 snj Exp $	*/
+/*	$NetBSD: audio.c,v 1.357.2.4 2017/08/01 23:25:11 snj Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.3 2017/08/01 23:23:00 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.4 2017/08/01 23:25:11 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -447,8 +447,8 @@ const struct audio_params audio_default = {
 	.channels = 1,
 };
 
-int auto_config_precision[] = { 32, 16, 8 };
-int auto_config_channels[] = { 32, 24, 16, 8, 6, 4, 2, 1};
+int auto_config_precision[] = { 16, 8, 32 };
+int auto_config_channels[] = { 2, AUDIO_MAX_CHANNELS, 10, 8, 6, 4, 1 };
 int auto_config_freq[] = { 48000, 44100, 96000, 192000, 32000,
 			   22050, 16000, 11025, 8000, 4000 };
 
@@ -2164,13 +2164,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	DPRINTF(("audio_open: flags=0x%x sc=%p hdl=%p\n",
 		 flags, sc, sc->hw_hdl));
 
-	if (((flags & FREAD) && (vc->sc_open & AUOPEN_READ)) ||
-	    ((flags & FWRITE) && (vc->sc_open & AUOPEN_WRITE))) {
-		kmem_free(vc, sizeof(struct virtual_channel));
-		kmem_free(chan, sizeof(struct audio_chan));
-		return EBUSY;
-	}
-
 	error = audio_alloc_ring(sc, &vc->sc_mpr,
 	    	    AUMODE_PLAY, AU_RING_SIZE);
 	if (!error) {
@@ -2178,6 +2171,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	    	    AUMODE_RECORD, AU_RING_SIZE);
 	}
 	if (error) {
+		audio_free_ring(sc, &vc->sc_mrr);
+		audio_free_ring(sc, &vc->sc_mpr);
 		kmem_free(vc, sizeof(struct virtual_channel));
 		kmem_free(chan, sizeof(struct audio_chan));
 		return error;
@@ -5866,15 +5861,9 @@ audio_set_params(struct audio_softc *sc, int setmode, int usemode,
 	    VAUDIO_NFORMATS, AUMODE_PLAY, play, true, pfil) < 0)
 		return EINVAL;
 
-	if (pfil->req_size > 0)
-		play = &pfil->filters[0].param;
-
 	if (setmode & AUMODE_RECORD && auconv_set_converter(sc->sc_format,
 	    VAUDIO_NFORMATS, AUMODE_RECORD, rec, true, rfil) < 0)
 		return EINVAL;
-
-	if (rfil->req_size > 0)
-		rec = &rfil->filters[0].param;
 
 	return 0;
 }
