@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.33 2017/07/26 07:40:01 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.34 2017/08/01 23:41:13 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -4834,4 +4834,159 @@ sys/rump/librump/rumpkern/Makefile.rumpkern	1.170
 
 	Add localcount to rump kernels
 	[ozaki-r, ticket #161]
+
+sys/dev/ic/rt2860.c				1.28
+sys/dev/ic/rt2860var.h				1.5
+sys/dev/pci/if_ral_pci.c			1.24
+
+	ral(4): Enable rt2860 power management code.
+	[maya, ticket #162]
+
+sys/external/bsd/drm2/pci/drm_pci.c		1.18
+
+	PR/52409: Avoid panic at resume.
+	[nonaka, ticket #163]
+
+distrib/sets/lists/base/md.amd64		1.269
+distrib/sets/lists/debug/md.amd64		1.97
+sys/arch/amd64/conf/GENERIC			1.460
+sys/arch/amd64/conf/files.amd64			1.89
+sys/arch/i386/conf/GENERIC			1.1157
+sys/arch/i386/conf/files.i386			1.379
+sys/arch/i386/i386/i386_trap.S			1.7-1.8
+sys/arch/i386/include/frameasm.h		1.16
+sys/arch/x86/include/sysarch.h			1.12
+sys/arch/x86/x86/pmc.c				1.8-1.10
+sys/arch/x86/x86/sys_machdep.c			1.36
+sys/arch/xen/conf/files.compat			1.26
+sys/secmodel/suser/secmodel_suser.c		1.43
+sys/sys/kauth.h					1.74
+usr.bin/pmc/Makefile				1.5
+usr.bin/pmc/pmc.1				1.12-1.13
+usr.bin/pmc/pmc.c				1.24-1.25
+
+	Enable PMCs (performance-monitoring counters) on amd64 and i386.
+	[maxv, ticket #164]
+
+sys/dev/auconv.c				1.29
+sys/dev/auconv.h				1.19
+sys/dev/ic/am7930.c				1.56
+
+	Add a null_filter to help with the audio autoconfig of pmax.
+	[nat, ticket #165]
+
+sys/dev/auconv.c				1.30
+sys/dev/audio.c					1.372
+sys/dev/ic/ac97.c				1.97
+sys/dev/pci/azalia_codec.c			1.81
+
+	Mixer device bounds checking.
+	[nat, ticket #166]
+
+sys/dev/audio.c					1.373-1.375
+
+	Refactoring of parameters for vchan_autoconfig.  Removal of
+	dead/unused code as found by isaki@.  PRs kern/52435,
+	kern/52434, and kern/52433.
+	[nat, ticket #167]
+
+sys/kern/kern_malloc.c				1.146
+
+	Avoid integer overflow in kern_malloc().
+	[martin, ticket #168]
+
+sys/dev/usb/if_ural.c				1.52
+
+	Free the RX list if ural_alloc_rx_list fails part way through.
+	[skrll, ticket #169]
+
+external/gpl3/gcc/dist/gcc/config/i386/i386.c	1.13
+
+	Apply upstream patch:
+	Incorrect codegen from rdseed intrinsic use (CVE-2017-11671)
+	[maya, ticket #171]
+
+sys/dev/pci/if_wmreg.h				1.99-1.103
+sys/dev/pci/if_wmvar.h				1.34-1.37
+sys/dev/pci/if_wm.c				1.510-1.537
+sys/dev/mii/ihphyreg.h				1.2
+sys/dev/mii/inbmphyreg.h			1.10
+sys/dev/mii/igphy.c				1.27
+
+	Sync wm(4) up to if_wm.c rev. 1.537:
+	- Set WMREG_KABGTXD not in wm_init_locked() but in wm_reset().
+	- If a legacy interrupt is a spurious interrupt, don't print debug
+	  message.
+	- Don't print the Image Unique ID if an NVM is iNVM (i210 and I211).
+	- Fix a bug that a RAL was written at incorrect address when the index
+	  number is more than 16 on 82544 and newer.
+	- The layout of RAL on PCH* are different from others. Fix it.
+	- Flush every MTA write. Same as Linux.
+	- Move the location of calling wm_set_filter. Same as some other OSes.
+	- Flush writing WMREG_CTRL in wm_gmii_mediachange().
+	- Make new wm_phy_post_reset() and use this function at all location
+	  after resetting phy.
+	- Add I219 specific workaround for legacy interrupt. From OpenBSD.
+	- Move the location of calling wm_lplu_d0_disable().
+	- Disable D0 LPLU on 8257[12356], 82580, I350 and I21[01], too. Before
+	  this commit, above devices and non-PCIe devices accessed wrong
+	  register.
+	- Fix latency calculation in wm_platform_pm_pch_lpt().
+	- Set OBFF water mark and enable OBFF on PCH_LPT and newer.
+	- Fix a bug that wm_gmii_i82544_{read,write}reg() didn't take care of
+	  page select. PHY access from igphy() automatically did it, but
+	  accessing from wm(4) for workaround didn't work correctly. This
+	  change affects 8254[17], 8257[12] ICH8, ICH9 and ICH10.
+	- Call wm_kmrn_lock_loss_workaround_ich8lan() before any PHY access in
+	  wm_linkintr_gmii().
+	- Register access in wm_kmrn_lock_loss_workaround_ich8lan() now works
+	  correctly. Enable this function.
+	- IF TX is not required to flush, RX is also not required to flush in
+	  wm_flush_desc_rings(). Same as other OSes.
+	- Remove wrong semaphore access in wm_nvm_{read,write}_{ich8,spt} to
+	  prevent hangup. A semaphore is get/put in wm_nvm_{read,write}.
+	- Move some initialization stuff in wm_attach() before wm_reset().
+	  Some flags and callback function is required to set correctly before
+	  wm_reset() because wm_reset() and some helper functions refer them.
+	- Add wm_write_smbus_addr() to set SMBus address by software.
+	- Modify wm_gmii_hv_{read,write}reg_locked() to make them access
+	  HV_SMB_ADDR correctly.
+	- Configure the LCD with the extended configuration region in NVM if
+	  it's required. Tested with Thinkpad X220.
+	- 8257[12]: Don't directly access SPI but use EERD register.
+	- 82575-I354: If the size of SPI ROM >= 32K words, use direct SPI
+	  access instead of EERD register access.
+	- Add wm_nvm_eec_clock_raise() and wm_nvm_eec_clock_lower() and use
+	  them for Microwire/SPI bus control. Same as Linux and FreeBSD.
+	- Reduce timeout value for 80003 in wm_get_swfw_semaphore(). Same as
+	  Linux and FreeBSD.
+	- Change API of kmrn_{read,write}reg() and check the return value.
+	- Check whether it's required to use MDIC workaround for 80003 or not
+	  in wm_reset(). If the workaround isn't required, don't use the
+	  workaround code in wm_gmii_i80003_{read,write}reg.
+	- Add WM_F_WA_I210_CLSEM flag for a workaround. FreeBSD/Linux drivers
+	  say "In rare circumstances, the SW semaphore may already be held
+	  unintentionally." on I21[01]. PXE boot is one of the case.
+	- Qemu's e1000e emulation (82574L)'s SPI has only 64 words. I've never
+	  seen on real 82574 hardware with such small SPI ROM. Check
+	  NVM word size before accessing higher address words to prevent
+	  timeout.
+	- Check some wm_nvm_read()'s return vale.
+	- Use device_printf() instead of aprint_error_dev() for PHY read/write
+	  functions because those are used not only in device attach.
+	- Print internal driver flags when attaching.
+	- Add debug printf()s.
+	- Rename variables.
+	- Add comment, update comment and remove wrong comment.
+	[msaitoh, ticket #173]
+
+external/gpl3/binutils/usr.sbin/mdsetimage/bin_bfd.c 1.2
+sys/arch/evbmips/conf/CI20			1.23
+
+	mdsetimage(8): initialise some stack variables to zero so that
+	later checking ensures they are considered "unfound" instead
+	of some random value.
+
+	CI20: don't set NEED_MDSETIMAGE when we don't enable the md_root.
+	[mrg, ticket #174]
 
