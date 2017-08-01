@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2017/01/11 12:02:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.27 2017/08/01 20:07:43 joerg Exp $
 
 LIB=	clangStaticAnalyzerCheckers
 
@@ -43,7 +43,7 @@ SRCS+=	AllocationDiagnostics.cpp \
 	GTestChecker.cpp \
 	GenericTaintChecker.cpp \
 	IdenticalExprChecker.cpp \
-	IteratorPastEndChecker.cpp \
+	IteratorChecker.cpp \
 	IvarInvalidationChecker.cpp \
 	LLVMConventionsChecker.cpp \
 	LocalizationChecker.cpp \
@@ -55,6 +55,7 @@ SRCS+=	AllocationDiagnostics.cpp \
 	MallocChecker.cpp \
 	MallocOverflowSecurityChecker.cpp \
 	MallocSizeofChecker.cpp \
+	MisusedMovedObjectChecker.cpp \
 	NSAutoreleasePoolChecker.cpp \
 	NSErrorChecker.cpp \
 	NoReturnFunctionChecker.cpp \

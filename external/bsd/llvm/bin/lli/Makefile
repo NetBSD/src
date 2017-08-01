@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2017/01/11 12:02:25 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2017/08/01 20:07:37 joerg Exp $
 
 PROG_CXX=	lli
 NOMAN=		yes
@@ -36,6 +36,7 @@ LLVM_LIBS+= \
 	Target \
 	MC \
 	IR \
+	BinaryFormat \
 	Support \
 	Demangle
 

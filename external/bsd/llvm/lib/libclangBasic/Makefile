@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2017/01/11 12:02:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.16 2017/08/01 20:07:42 joerg Exp $
 
 LIB=	clangBasic
 
@@ -17,6 +17,7 @@ SRCS+=	Attributes.cpp \
 	FileSystemStatCache.cpp \
 	IdentifierTable.cpp \
 	LangOptions.cpp \
+	MemoryBufferCache.cpp \
 	Module.cpp \
 	ObjCRuntime.cpp \
 	OpenMPKinds.cpp \
@@ -31,7 +32,8 @@ SRCS+=	Attributes.cpp \
 	Version.cpp \
 	VersionTuple.cpp \
 	VirtualFileSystem.cpp \
-	Warnings.cpp
+	Warnings.cpp \
+	XRayLists.cpp
 
 CPPFLAGS.Version.cpp=	-DSVN_REVISION=\"${CLANG_REVISION}\" \
 			-DLLVM_REVISION=\"${LLVM_REVISION}\"

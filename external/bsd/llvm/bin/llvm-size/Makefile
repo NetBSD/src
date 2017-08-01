@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2017/01/11 12:02:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2017/08/01 20:07:39 joerg Exp $
 
 PROG_CXX=	llvm-size
 NOMAN=		yes
@@ -15,6 +15,7 @@ LLVM_LIBS+= \
 	MC \
 	BitReader \
 	IR \
+	BinaryFormat \
 	Support \
 	Demangle
 
