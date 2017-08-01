@@ -1,10 +1,10 @@
-; RUN: llc -mtriple=aarch64-apple-ios %s -stop-after=irtranslator -o - -global-isel | FileCheck %s
+; RUN: llc -verify-machineinstrs -mtriple=aarch64-apple-ios %s -stop-after=irtranslator -o - -global-isel | FileCheck %s
 
 
 ; CHECK: name: test_stack_guard
 
 ; CHECK: stack:
-; CHECK:  - { id: 0, name: StackGuardSlot, offset: 0, size: 8, alignment: 8 }
+; CHECK:  - { id: 0, name: StackGuardSlot,  type: default, offset: 0, size: 8, alignment: 8,
 ; CHECK-NOT: id: 1
 
 ; CHECK: [[GUARD_SLOT:%[0-9]+]](p0) = G_FRAME_INDEX %stack.0.StackGuardSlot
