@@ -16,7 +16,7 @@
 // RUN: %clang_cc1 -std=c++11 -debug-info-kind=standalone \
 // RUN:     -dwarf-ext-refs -fmodule-format=obj \
 // RUN:     -triple %itanium_abi_triple \
-// RUN:     -include-pch %t.pch %s -emit-llvm -o %t-pch.ll %s
+// RUN:     -include-pch %t.pch %s -emit-llvm -o %t-pch.ll
 // RUN: cat %t-pch.ll |  FileCheck %s
 // RUN: cat %t-pch.ll |  FileCheck %s --check-prefix=CHECK-PCH
 
@@ -71,12 +71,14 @@ void foo() {
   anon.i = GlobalStruct.i = GlobalUnion.i = GlobalEnum;
 }
 
+// CHECK: ![[CPP:.*]] = !DIFile(filename: {{.*}}ExtDebugInfo.cpp"
+
 // CHECK: !DICompositeType(tag: DW_TAG_enumeration_type, name: "Enum",
 // CHECK-SAME:             scope: ![[NS:[0-9]+]],
 // CHECK-SAME:             flags: DIFlagFwdDecl,
 // CHECK-SAME:             identifier:  "_ZTSN8DebugCXX4EnumE")
 
-// CHECK: ![[NS]] = !DINamespace(name: "DebugCXX", scope: ![[MOD:[0-9]+]],
+// CHECK: ![[NS]] = !DINamespace(name: "DebugCXX", scope: ![[MOD:[0-9]+]])
 // CHECK: ![[MOD]] = !DIModule(scope: null, name: {{.*}}DebugCXX
 
 // This type is anchored in the module by an explicit template instantiation.
@@ -201,7 +203,7 @@ void foo() {
 // CHECK-SAME:              name: "InAnonymousNamespace", {{.*}}DIFlagFwdDecl)
 
 
-// CHECK: !DIImportedEntity(tag: DW_TAG_imported_declaration, scope: !{{[0-9]+}}, entity: ![[STRUCT]], line: 27)
+// CHECK: !DIImportedEntity(tag: DW_TAG_imported_declaration, scope: !{{[0-9]+}}, entity: ![[STRUCT]], file: ![[CPP]], line: 27)
 
 // CHECK: !DICompileUnit(
 // CHECK-SAME:           splitDebugFilename:

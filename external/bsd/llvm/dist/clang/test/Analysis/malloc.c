@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.deadcode.UnreachableCode,alpha.core.CastSize,unix.Malloc,debug.ExprInspection -analyzer-store=region -verify %s
+// RUN: %clang_analyze_cc1 -analyzer-checker=core,alpha.deadcode.UnreachableCode,alpha.core.CastSize,unix.Malloc,debug.ExprInspection -analyzer-store=region -verify %s
 
 #include "Inputs/system-header-simulator.h"
 
@@ -1772,6 +1772,16 @@ int testNoCheckerDataPropogationFromLogicalOpOperandToOpResult(void) {
    free(value);
    // Previously we ended up with 'Use of memory after it is freed' on return.
    return ok; // no warning
+}
+
+void (*fnptr)(int);
+void freeIndirectFunctionPtr() {
+  void *p = (void *)fnptr;
+  free(p); // expected-warning {{Argument to free() is a function pointer}}
+}
+
+void freeFunctionPtr() {
+  free((void *)fnptr); // expected-warning {{Argument to free() is a function pointer}}
 }
 
 // ----------------------------------------------------------------------------
