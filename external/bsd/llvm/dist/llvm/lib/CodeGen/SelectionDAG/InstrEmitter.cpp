@@ -161,7 +161,8 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
   if (VRBase) {
     DstRC = MRI->getRegClass(VRBase);
   } else if (UseRC) {
-    assert(UseRC->hasType(VT) && "Incompatible phys register def and uses!");
+    assert(TRI->isTypeLegalForClass(*UseRC, VT) &&
+           "Incompatible phys register def and uses!");
     DstRC = UseRC;
   } else {
     DstRC = TLI->getRegClassFor(VT);
@@ -235,7 +236,6 @@ void InstrEmitter::CreateVirtualRegisters(SDNode *Node,
 
     if (II.OpInfo[i].isOptionalDef()) {
       // Optional def must be a physical register.
-      unsigned NumResults = CountResults(Node);
       VRBase = cast<RegisterSDNode>(Node->getOperand(i-NumResults))->getReg();
       assert(TargetRegisterInfo::isPhysicalRegister(VRBase));
       MIB.addReg(VRBase, RegState::Define);
@@ -502,8 +502,17 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
     const TargetRegisterClass *TRC =
       TLI->getRegClassFor(Node->getSimpleValueType(0));
 
-    unsigned VReg = getVR(Node->getOperand(0), VRBaseMap);
-    MachineInstr *DefMI = MRI->getVRegDef(VReg);
+    unsigned Reg;
+    MachineInstr *DefMI;
+    RegisterSDNode *R = dyn_cast<RegisterSDNode>(Node->getOperand(0));
+    if (R && TargetRegisterInfo::isPhysicalRegister(R->getReg())) {
+      Reg = R->getReg();
+      DefMI = nullptr;
+    } else {
+      Reg = getVR(Node->getOperand(0), VRBaseMap);
+      DefMI = MRI->getVRegDef(Reg);
+    }
+
     unsigned SrcReg, DstReg, DefSubIdx;
     if (DefMI &&
         TII->isCoalescableExtInstr(*DefMI, SrcReg, DstReg, DefSubIdx) &&
@@ -519,20 +528,26 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
               TII->get(TargetOpcode::COPY), VRBase).addReg(SrcReg);
       MRI->clearKillFlags(SrcReg);
     } else {
-      // VReg may not support a SubIdx sub-register, and we may need to
+      // Reg may not support a SubIdx sub-register, and we may need to
       // constrain its register class or issue a COPY to a compatible register
       // class.
-      VReg = ConstrainForSubReg(VReg, SubIdx,
-                                Node->getOperand(0).getSimpleValueType(),
-                                Node->getDebugLoc());
+      if (TargetRegisterInfo::isVirtualRegister(Reg))
+        Reg = ConstrainForSubReg(Reg, SubIdx,
+                                 Node->getOperand(0).getSimpleValueType(),
+                                 Node->getDebugLoc());
 
       // Create the destreg if it is missing.
       if (VRBase == 0)
         VRBase = MRI->createVirtualRegister(TRC);
 
       // Create the extract_subreg machine instruction.
-      BuildMI(*MBB, InsertPos, Node->getDebugLoc(),
-              TII->get(TargetOpcode::COPY), VRBase).addReg(VReg, 0, SubIdx);
+      MachineInstrBuilder CopyMI =
+          BuildMI(*MBB, InsertPos, Node->getDebugLoc(),
+                  TII->get(TargetOpcode::COPY), VRBase);
+      if (TargetRegisterInfo::isVirtualRegister(Reg))
+        CopyMI.addReg(Reg, 0, SubIdx);
+      else
+        CopyMI.addReg(TRI->getSubReg(Reg, SubIdx));
     }
   } else if (Opc == TargetOpcode::INSERT_SUBREG ||
              Opc == TargetOpcode::SUBREG_TO_REG) {
@@ -574,7 +589,7 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
     } else
       AddOperand(MIB, N0, 0, nullptr, VRBaseMap, /*IsDebug=*/false,
                  IsClone, IsCloned);
-    // Add the subregster being inserted
+    // Add the subregister being inserted
     AddOperand(MIB, N1, 0, nullptr, VRBaseMap, /*IsDebug=*/false,
                IsClone, IsCloned);
     MIB.addImm(SubIdx);

@@ -1,4 +1,4 @@
-; RUN: llc -split-dwarf=Enable -mtriple=powerpc64-unknown-linux-gnu -O0 -filetype=asm < %s | FileCheck %s
+; RUN: llc -split-dwarf-file=foo.dwo -mtriple=powerpc64-unknown-linux-gnu -O0 -filetype=asm < %s | FileCheck %s
 
 ; FIXME: add relocation and DWARF expression support to llvm-dwarfdump & use
 ; that here instead of raw assembly printing
@@ -13,8 +13,7 @@
 ; DW_OP_GNU_push_tls_address
 ; CHECK-NEXT: .byte 224
 ; check that the expected TLS address description is the first thing in the debug_addr section
-; CHECK: debug_addr
-; CHECK-NEXT: .Laddr_sec:
+; CHECK: .section .debug_addr,"",@progbits
 ; CHECK-NEXT: .quad tls@DTPREL+32768
 
 source_filename = "test/DebugInfo/PowerPC/tls-fission.ll"

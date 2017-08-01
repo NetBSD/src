@@ -54,7 +54,7 @@ class MachineModuleInfo;
 ///
 /// Variables can be created from allocas, in which case they're generated from
 /// the MMI table.  Such variables can have multiple expressions and frame
-/// indices.  The \a Expr and \a FrameIndices array must match.
+/// indices.
 ///
 /// Variables can be created from \c DBG_VALUE instructions.  Those whose
 /// location changes over time use \a DebugLocListIndex, while those with a
@@ -64,11 +64,16 @@ class MachineModuleInfo;
 class DbgVariable {
   const DILocalVariable *Var;                /// Variable Descriptor.
   const DILocation *IA;                      /// Inlined at location.
-  SmallVector<const DIExpression *, 1> Expr; /// Complex address.
   DIE *TheDIE = nullptr;                     /// Variable DIE.
   unsigned DebugLocListIndex = ~0u;          /// Offset in DebugLocs.
   const MachineInstr *MInsn = nullptr;       /// DBG_VALUE instruction.
-  SmallVector<int, 1> FrameIndex;            /// Frame index.
+
+  struct FrameIndexExpr {
+    int FI;
+    const DIExpression *Expr;
+  };
+  mutable SmallVector<FrameIndexExpr, 1>
+      FrameIndexExprs; /// Frame index + expression.
 
 public:
   /// Construct a DbgVariable.
@@ -80,21 +85,18 @@ public:
 
   /// Initialize from the MMI table.
   void initializeMMI(const DIExpression *E, int FI) {
-    assert(Expr.empty() && "Already initialized?");
-    assert(FrameIndex.empty() && "Already initialized?");
+    assert(FrameIndexExprs.empty() && "Already initialized?");
     assert(!MInsn && "Already initialized?");
 
     assert((!E || E->isValid()) && "Expected valid expression");
-    assert(~FI && "Expected valid index");
+    assert(FI != INT_MAX && "Expected valid index");
 
-    Expr.push_back(E);
-    FrameIndex.push_back(FI);
+    FrameIndexExprs.push_back({FI, E});
   }
 
   /// Initialize from a DBG_VALUE instruction.
   void initializeDbgValue(const MachineInstr *DbgValue) {
-    assert(Expr.empty() && "Already initialized?");
-    assert(FrameIndex.empty() && "Already initialized?");
+    assert(FrameIndexExprs.empty() && "Already initialized?");
     assert(!MInsn && "Already initialized?");
 
     assert(Var == DbgValue->getDebugVariable() && "Wrong variable");
@@ -103,16 +105,15 @@ public:
     MInsn = DbgValue;
     if (auto *E = DbgValue->getDebugExpression())
       if (E->getNumElements())
-        Expr.push_back(E);
+        FrameIndexExprs.push_back({0, E});
   }
 
   // Accessors.
   const DILocalVariable *getVariable() const { return Var; }
   const DILocation *getInlinedAt() const { return IA; }
-  ArrayRef<const DIExpression *> getExpression() const { return Expr; }
   const DIExpression *getSingleExpression() const {
-    assert(MInsn && Expr.size() <= 1);
-    return Expr.size() ? Expr[0] : nullptr;
+    assert(MInsn && FrameIndexExprs.size() <= 1);
+    return FrameIndexExprs.size() ? FrameIndexExprs[0].Expr : nullptr;
   }
   void setDIE(DIE &D) { TheDIE = &D; }
   DIE *getDIE() const { return TheDIE; }
@@ -120,7 +121,9 @@ public:
   unsigned getDebugLocListIndex() const { return DebugLocListIndex; }
   StringRef getName() const { return Var->getName(); }
   const MachineInstr *getMInsn() const { return MInsn; }
-  ArrayRef<int> getFrameIndex() const { return FrameIndex; }
+  /// Get the FI entries, sorted by fragment offset.
+  ArrayRef<FrameIndexExpr> getFrameIndexExprs() const;
+  bool hasFrameIndexExprs() const { return !FrameIndexExprs.empty(); }
 
   void addMMIEntry(const DbgVariable &V) {
     assert(DebugLocListIndex == ~0U && !MInsn && "not an MMI entry");
@@ -128,16 +131,22 @@ public:
     assert(V.Var == Var && "conflicting variable");
     assert(V.IA == IA && "conflicting inlined-at location");
 
-    assert(!FrameIndex.empty() && "Expected an MMI entry");
-    assert(!V.FrameIndex.empty() && "Expected an MMI entry");
-    assert(Expr.size() == FrameIndex.size() && "Mismatched expressions");
-    assert(V.Expr.size() == V.FrameIndex.size() && "Mismatched expressions");
+    assert(!FrameIndexExprs.empty() && "Expected an MMI entry");
+    assert(!V.FrameIndexExprs.empty() && "Expected an MMI entry");
 
-    Expr.append(V.Expr.begin(), V.Expr.end());
-    FrameIndex.append(V.FrameIndex.begin(), V.FrameIndex.end());
-    assert(all_of(Expr, [](const DIExpression *E) {
-             return E && E->isFragment();
-           }) && "conflicting locations for variable");
+    if (FrameIndexExprs.size()) {
+      auto *Expr = FrameIndexExprs.back().Expr;
+      // Get rid of duplicate non-fragment entries. More than one non-fragment
+      // dbg.declare makes no sense so ignore all but the first.
+      if (!Expr || !Expr->isFragment())
+        return;
+    }
+    FrameIndexExprs.append(V.FrameIndexExprs.begin(), V.FrameIndexExprs.end());
+    assert(all_of(FrameIndexExprs,
+                  [](FrameIndexExpr &FIE) {
+                    return FIE.Expr && FIE.Expr->isFragment();
+                  }) &&
+           "conflicting locations for variable");
   }
 
   // Translate tag to proper Dwarf tag.
@@ -167,11 +176,11 @@ public:
 
   bool hasComplexAddress() const {
     assert(MInsn && "Expected DBG_VALUE, not MMI variable");
-    assert(FrameIndex.empty() && "Expected DBG_VALUE, not MMI variable");
-    assert(
-        (Expr.empty() || (Expr.size() == 1 && Expr.back()->getNumElements())) &&
-        "Invalid Expr for DBG_VALUE");
-    return !Expr.empty();
+    assert((FrameIndexExprs.empty() ||
+            (FrameIndexExprs.size() == 1 &&
+             FrameIndexExprs[0].Expr->getNumElements())) &&
+           "Invalid Expr for DBG_VALUE");
+    return !FrameIndexExprs.empty();
   }
   bool isBlockByrefVariable() const;
   const DIType *getType() const;
@@ -208,7 +217,6 @@ class DwarfDebug : public DebugHandlerBase {
   DenseMap<const MCSymbol *, uint64_t> SymSize;
 
   /// Collection of abstract variables.
-  DenseMap<const MDNode *, std::unique_ptr<DbgVariable>> AbstractVariables;
   SmallVector<std::unique_ptr<DbgVariable>, 64> ConcreteVariables;
 
   /// Collection of DebugLocEntry. Stored in a linked list so that DIELocLists
@@ -244,9 +252,6 @@ class DwarfDebug : public DebugHandlerBase {
   SmallVector<
       std::pair<std::unique_ptr<DwarfTypeUnit>, const DICompositeType *>, 1>
       TypeUnitsUnderConstruction;
-
-  /// Whether to emit the pubnames/pubtypes sections.
-  bool HasDwarfPubSections;
 
   /// Whether to use the GNU TLS opcode (instead of the standard opcode).
   bool UseGNUTLSOpcode;
@@ -311,20 +316,16 @@ class DwarfDebug : public DebugHandlerBase {
 
   typedef DbgValueHistoryMap::InlinedVariable InlinedVariable;
 
-  /// Find abstract variable associated with Var.
-  DbgVariable *getExistingAbstractVariable(InlinedVariable IV,
-                                           const DILocalVariable *&Cleansed);
-  DbgVariable *getExistingAbstractVariable(InlinedVariable IV);
-  void createAbstractVariable(const DILocalVariable *DV, LexicalScope *Scope);
-  void ensureAbstractVariableIsCreated(InlinedVariable Var,
+  void ensureAbstractVariableIsCreated(DwarfCompileUnit &CU, InlinedVariable Var,
                                        const MDNode *Scope);
-  void ensureAbstractVariableIsCreatedIfScoped(InlinedVariable Var,
+  void ensureAbstractVariableIsCreatedIfScoped(DwarfCompileUnit &CU, InlinedVariable Var,
                                                const MDNode *Scope);
 
-  DbgVariable *createConcreteVariable(LexicalScope &Scope, InlinedVariable IV);
+  DbgVariable *createConcreteVariable(DwarfCompileUnit &TheCU,
+                                      LexicalScope &Scope, InlinedVariable IV);
 
   /// Construct a DIE for this abstract scope.
-  void constructAbstractSubprogramScopeDIE(LexicalScope *Scope);
+  void constructAbstractSubprogramScopeDIE(DwarfCompileUnit &SrcCU, LexicalScope *Scope);
 
   void finishVariableDefinitions();
 
@@ -418,11 +419,11 @@ class DwarfDebug : public DebugHandlerBase {
 
   /// Flags to let the linker know we have emitted new style pubnames. Only
   /// emit it here if we don't have a skeleton CU for split dwarf.
-  void addGnuPubAttributes(DwarfUnit &U, DIE &D) const;
+  void addGnuPubAttributes(DwarfCompileUnit &U, DIE &D) const;
 
   /// Create new DwarfCompileUnit for the given metadata node with tag
   /// DW_TAG_compile_unit.
-  DwarfCompileUnit &constructDwarfCompileUnit(const DICompileUnit *DIUnit);
+  DwarfCompileUnit &getOrCreateDwarfCompileUnit(const DICompileUnit *DIUnit);
 
   /// Construct imported_module or imported_declaration DIE.
   void constructAndAddImportedEntityDIE(DwarfCompileUnit &TheCU,
@@ -444,7 +445,17 @@ class DwarfDebug : public DebugHandlerBase {
                          const DbgValueHistoryMap::InstrRanges &Ranges);
 
   /// Collect variable information from the side table maintained by MF.
-  void collectVariableInfoFromMFTable(DenseSet<InlinedVariable> &P);
+  void collectVariableInfoFromMFTable(DwarfCompileUnit &TheCU,
+                                      DenseSet<InlinedVariable> &P);
+
+protected:
+  /// Gather pre-function debug information.
+  void beginFunctionImpl(const MachineFunction *MF) override;
+
+  /// Gather and emit post-function debug information.
+  void endFunctionImpl(const MachineFunction *MF) override;
+
+  void skippedNonDebugFunction() override;
 
 public:
   //===--------------------------------------------------------------------===//
@@ -460,12 +471,6 @@ public:
 
   /// Emit all Dwarf sections that should come after the content.
   void endModule() override;
-
-  /// Gather pre-function debug information.
-  void beginFunction(const MachineFunction *MF) override;
-
-  /// Gather and emit post-function debug information.
-  void endFunction(const MachineFunction *MF) override;
 
   /// Process beginning of an instruction.
   void beginInstruction(const MachineInstr *MI) override;
@@ -513,6 +518,8 @@ public:
   /// split dwarf proposal support.
   bool useSplitDwarf() const { return HasSplitDwarf; }
 
+  bool shareAcrossDWOCUs() const;
+
   /// Returns the Dwarf Version.
   uint16_t getDwarfVersion() const;
 
@@ -553,6 +560,8 @@ public:
   /// A helper function to check whether the DIE for a given Scope is
   /// going to be null.
   bool isLexicalScopeDIENull(LexicalScope *Scope);
+
+  bool hasDwarfPubSections(bool includeMinimalInlineScopes) const;
 };
 } // End of namespace llvm
 
