@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.271 2017/04/20 09:29:11 ozaki-r Exp $
+#	$NetBSD: bsd.sys.mk,v 1.272 2017/08/01 21:50:36 mrg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -114,10 +114,8 @@ CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wpointer-sign -Wmissing-noreturn :}
 .endif
 .if (defined(HAVE_GCC) \
      && (${MACHINE_ARCH} == "coldfire" || \
-	 ${MACHINE_ARCH} == "sh3eb" || \
-	 ${MACHINE_ARCH} == "sh3el" || \
-	 ${MACHINE_ARCH} == "m68k" || \
-	 ${MACHINE_ARCH} == "m68000"))
+	 ${MACHINE_CPU} == "sh3" || \
+	 ${MACHINE_CPU} == "m68k"))
 # XXX GCC 4.5 for sh3 and m68k (which we compile with -Os) is extra noisy for
 # cases it should be better with
 CFLAGS+=	-Wno-uninitialized
