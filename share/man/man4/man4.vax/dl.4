@@ -1,4 +1,4 @@
-.\"	$NetBSD: dl.4,v 1.14 2017/07/04 06:39:17 wiz Exp $
+.\"	$NetBSD: dl.4,v 1.15 2017/08/01 11:04:21 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Ben Harris.  All rights reserved.
 .\"
@@ -41,8 +41,8 @@ The
 .Nm
 driver controls a
 .Tn DL-11 Ns -compatible
-asynchronous serial card, and probably things compatible with it.  A
-four-port
+asynchronous serial card, and probably things compatible with it.
+A four-port
 .Tn DLV-11J
 will appear four times in the device list, as the ports look like
 separate cards to the driver.
@@ -54,7 +54,8 @@ driver provides the normal interface described in
 .Xr tty 4 ,
 but many of the configuration calls are unsupported, since their
 functions are handled by jumpers or switches on the serial card
-itself.  Calls related to modem-control lines are also ignored, since
+itself.
+Calls related to modem-control lines are also ignored, since
 these cards lack them.
 .Pp
 There's a chance this driver might also work with an
@@ -94,8 +95,10 @@ The
 .Tn DL-11
 and friends only have single-character receive and transmit buffers,
 so an interrupt is generated for every character received or
-transmitted.  Attempting to receive data at even moderately high rates
-will cause rx overruns.  Fast transmission seems to be fine though.
+transmitted.
+Attempting to receive data at even moderately high rates
+will cause rx overruns.
+Fast transmission seems to be fine though.
 .Pp
 There is no support in the driver for the paper-tape reader on an
 .Tn LT33
@@ -111,7 +114,8 @@ interrupt vector is that of the transmitter.
 .Pp
 In order to determine the card's interrupt vector, the driver sends a
 .Dv NUL
-to each port.  This may confuse things attached to them.
+to each port.
+This may confuse things attached to them.
 .Pp
 The driver has so far only been tested on a
 .Tn DLV-11J .

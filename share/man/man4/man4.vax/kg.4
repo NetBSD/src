@@ -1,4 +1,4 @@
-.\"	$NetBSD: kg.4,v 1.13 2005/06/20 13:25:25 peter Exp $
+.\"	$NetBSD: kg.4,v 1.14 2017/08/01 11:04:21 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,14 +50,16 @@ or
 .Tn DL-11W
 can be used as an alternative real
 time clock
-source.  When configured, certain system
+source.
+When configured, certain system
 statistics and, optionally, system profiling work
-will be collected each time the clock interrupts.  For
-optimum accuracy in profiling, the
+will be collected each time the clock interrupts.
+For optimum accuracy in profiling, the
 .Tn DL-11W
 should be
 configured to interrupt at the highest possible priority
-level.  The
+level.
+The
 .Nm kg
 device driver automatically calibrates itself to the
 line clock frequency.

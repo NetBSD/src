@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmf.4,v 1.13 2017/07/31 18:45:43 ryoon Exp $
+.\"	$NetBSD: dmf.4,v 1.14 2017/08/01 11:04:21 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,7 +68,8 @@ bit number
 .Ar i
 is not properly
 connected, and should be treated as hard-wired with carrier
-always present.  Thus specifying
+always present.
+Thus specifying
 .Ql flags 0x04
 for
 .Li dmf0
@@ -126,10 +127,12 @@ driver.
 No response from
 .Tn UNIBUS
 on a DMA transfer
-within a timeout period.  This is often followed by a
+within a timeout period.
+This is often followed by a
 .Tn UNIBUS
 adapter
-error.  This occurs most frequently when the
+error.
+This occurs most frequently when the
 .Tn UNIBUS
 is heavily loaded
 and when devices which hog the bus (such as
@@ -139,8 +142,8 @@ It is not serious.
 .Pp
 .It dmf%d: silo overflow.
 The character input silo overflowed
-before it could be serviced.  This can happen if a hard error occurs
-when the
+before it could be serviced.
+This can happen if a hard error occurs when the
 .Tn CPU
 is running with elevated priority, as the system will
 then print a message on the console with interrupts disabled.
