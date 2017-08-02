@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.25 2017/07/26 03:59:59 ozaki-r Exp $	*/
+/*	$NetBSD: key.h,v 1.26 2017/08/02 01:28:03 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -55,10 +55,14 @@ struct secpolicy *key_gettunnel(const struct sockaddr *,
 	const struct sockaddr *, const struct sockaddr *,
 	const struct sockaddr *, const char*, int);
 /* NB: prepend with _ for KAME IPv6 compatbility */
-void _key_freesp(struct secpolicy **, const char*, int);
+void key_init_sp(struct secpolicy *);
+void key_free_sp(struct secpolicy *);
 u_int key_sp_refcnt(const struct secpolicy *);
 void key_sp_ref(struct secpolicy *, const char*, int);
+void key_sp_unref(struct secpolicy *, const char*, int);
 void key_sa_ref(struct secasvar *, const char*, int);
+
+void key_socksplist_add(struct secpolicy *);
 
 /*
  * Access to the SADB are interlocked with splsoftnet.  In particular,
@@ -73,8 +77,8 @@ void key_sa_ref(struct secasvar *, const char*, int);
 	key_newsp(__func__, __LINE__)
 #define	KEY_GETTUNNEL(osrc, odst, isrc, idst)			\
 	key_gettunnel(osrc, odst, isrc, idst, __func__, __LINE__)
-#define	KEY_FREESP(spp)						\
-	_key_freesp(spp, __func__, __LINE__)
+#define	KEY_SP_UNREF(spp)					\
+	key_sp_unref(*(spp), __func__, __LINE__)
 #define	KEY_SP_REF(sp)						\
 	key_sp_ref(sp, __func__, __LINE__)
 #define KEY_SA_REF(sav)						\

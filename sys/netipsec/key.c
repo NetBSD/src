@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.196 2017/07/27 09:53:57 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.197 2017/08/02 01:28:03 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.196 2017/07/27 09:53:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.197 2017/08/02 01:28:03 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.196 2017/07/27 09:53:57 ozaki-r Exp $");
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_gateway.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/types.h>
@@ -67,6 +68,10 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.196 2017/07/27 09:53:57 ozaki-r Exp $");
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 #include <sys/pslist.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
+#include <sys/localcount.h>
+#include <sys/pserialize.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -128,6 +133,50 @@ percpu_t *pfkeystat_percpu;
  *   in reference count field.  they are ready to be freed.  reference from
  *   SA header will be removed in key_delsav(), when the reference count
  *   field hits 0 (= no external reference other than from SA header.
+ */
+
+/*
+ * Locking notes on SPD:
+ * - Modifications to the sptree must be done with holding key_sp_mtx
+ *   which is a adaptive mutex
+ * - Read accesses to the sptree must be in critical sections of pserialize(9)
+ * - SP's lifetime is managed by localcount(9)
+ * - An SP that has been inserted to the sptree is initially referenced by none,
+ *   i.e., a reference from the pstree isn't counted
+ * - When an SP is being destroyed, we change its state as DEAD, wait for
+ *   references to the SP to be released, and then deallocate the SP
+ *   (see key_unlink_sp)
+ * - Getting an SP
+ *   - Normally we get an SP from the sptree by incrementing the reference count
+ *     of the SP
+ *   - We can gain another reference from a held SP only if we check its state
+ *     and take its reference in a critical section of pserialize
+ *     (see esp_output for example)
+ *   - We may get an SP from an SP cache. See below
+ * - Updating member variables of an SP
+ *   - Most member variables of an SP are immutable
+ *   - Only sp->state and sp->lastused can be changed
+ *   - sp->state of an SP is updated only when destroying it under key_sp_mtx
+ * - SP caches
+ *   - SPs can be cached in PCBs
+ *   - The lifetime of the caches is controlled by the global generation counter
+ *     (ipsec_spdgen)
+ *   - The global counter value is stored when an SP is cached
+ *   - If the stored value is different from the global counter then the cache
+ *     is considered invalidated
+ *   - The counter is incremented when an SP is being destroyed
+ *   - So checking the generation and taking a reference to an SP should be
+ *     in a critical section of pserialize
+ *   - Note that caching doesn't increment the reference counter of an SP
+ * - SPs in sockets
+ *   - Userland programs can set a policy to a socket by
+ *     setsockopt(IP_IPSEC_POLICY)
+ *   - Such policies (SPs) are set to a socket (PCB) and also inserted to
+ *     the key_socksplist list (not the sptree)
+ *   - Such a policy is destroyed when a corresponding socket is destroed,
+ *     however, a socket can be destroyed in softint so we cannot destroy
+ *     it directly instead we just mark it DEAD and delay the destruction
+ *     until GC by the timer
  */
 
 u_int32_t key_debug_level = 0;
@@ -195,9 +244,22 @@ static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
 	} while (0)
 
 /*
+ * The list has SPs that are set to a socket via setsockopt(IP_IPSEC_POLICY)
+ * from userland. See ipsec_set_policy.
+ */
+static struct pslist_head key_socksplist;
+
+#define SOCKSPLIST_WRITER_FOREACH(sp)					\
+	PSLIST_WRITER_FOREACH((sp), &key_socksplist, struct secpolicy,	\
+	                      pslist_entry)
+
+/*
  * Protect regtree, acqtree and items stored in the lists.
  */
 static kmutex_t key_mtx __cacheline_aligned;
+static pserialize_t key_psz;
+static kmutex_t key_sp_mtx __cacheline_aligned;
+static kcondvar_t key_sp_cv __cacheline_aligned;
 
 /* search order for SAs */
 	/*
@@ -432,9 +494,11 @@ static struct secasvar *key_lookup_sa_bysaidx(const struct secasindex *);
 static void key_freeso(struct socket *);
 static void key_freesp_so(struct secpolicy **);
 #endif
-static void key_delsp (struct secpolicy *);
 static struct secpolicy *key_getsp (const struct secpolicyindex *);
 static struct secpolicy *key_getspbyid (u_int32_t);
+static struct secpolicy *key_lookup_and_remove_sp(const struct secpolicyindex *);
+static struct secpolicy *key_lookupbyid_and_remove_sp(u_int32_t);
+static void key_destroy_sp(struct secpolicy *);
 static u_int16_t key_newreqid (void);
 static struct mbuf *key_gather_mbuf (struct mbuf *,
 	const struct sadb_msghdr *, int, int, ...);
@@ -582,8 +646,6 @@ static const char *key_getfqdn (void);
 static const char *key_getuserfqdn (void);
 #endif
 static void key_sa_chgstate (struct secasvar *, u_int8_t);
-static inline void key_sp_dead (struct secpolicy *);
-static void key_sp_unlink (struct secpolicy *sp);
 
 static struct mbuf *key_alloc_mbuf (int);
 
@@ -622,55 +684,37 @@ static struct work	key_timehandler_wk;
 	REFLOG("SA_DELREF", (p), (where), (tag));			\
 } while (0)
 
-#define	SP_ADDREF(p) do {						\
-	atomic_inc_uint(&(p)->refcnt);					\
-	REFLOG("SP_ADDREF", (p), __func__, __LINE__);			\
-	KASSERTMSG((p)->refcnt != 0, "SP refcnt overflow");		\
-} while (0)
-#define	SP_ADDREF2(p, where, tag) do {					\
-	atomic_inc_uint(&(p)->refcnt);					\
-	REFLOG("SP_ADDREF", (p), (where), (tag));			\
-	KASSERTMSG((p)->refcnt != 0, "SP refcnt overflow");		\
-} while (0)
-#define	SP_DELREF(p) do {						\
-	KASSERTMSG((p)->refcnt > 0, "SP refcnt underflow");		\
-	atomic_dec_uint(&(p)->refcnt);					\
-	REFLOG("SP_DELREF", (p), __func__, __LINE__);			\
-} while (0)
-#define	SP_DELREF2(p, nv, where, tag) do {				\
-	KASSERTMSG((p)->refcnt > 0, "SP refcnt underflow");		\
-	nv = atomic_dec_uint_nv(&(p)->refcnt);				\
-	REFLOG("SP_DELREF", (p), (where), (tag));			\
-} while (0)
-
 u_int
 key_sp_refcnt(const struct secpolicy *sp)
 {
 
-	if (sp == NULL)
-		return 0;
-
-	return sp->refcnt;
+	/* FIXME */
+	return 0;
 }
 
-static inline void
-key_sp_dead(struct secpolicy *sp)
-{
-
-	/* mark the SP dead */
-	sp->state = IPSEC_SPSTATE_DEAD;
-}
-
+/*
+ * Remove the sp from the sptree and wait for references to the sp
+ * to be released. key_sp_mtx must be held.
+ */
 static void
-key_sp_unlink(struct secpolicy *sp)
+key_unlink_sp(struct secpolicy *sp)
 {
 
-	/* remove from SP index */
-	SPLIST_WRITER_REMOVE(sp);
-	/* Release refcount held just for being on chain */
-	KEY_FREESP(&sp);
-}
+	KASSERT(mutex_owned(&key_sp_mtx));
 
+	sp->state = IPSEC_SPSTATE_DEAD;
+	SPLIST_WRITER_REMOVE(sp);
+
+	/* Invalidate all cached SPD pointers in the PCBs. */
+	ipsec_invalpcbcacheall();
+
+#ifdef NET_MPSAFE
+	KASSERT(mutex_ownable(softnet_lock));
+	pserialize_perform(key_psz);
+#endif
+
+	localcount_drain(&sp->localcount, &key_sp_cv, &key_sp_mtx);
+}
 
 /*
  * Return 0 when there are known to be no SP's for the specified
@@ -704,12 +748,12 @@ key_lookup_sp_byspidx(const struct secpolicyindex *spidx,
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP, "DP from %s:%u\n", where, tag);
 
 	/* get a SP entry */
-	s = splsoftnet();	/*called from softclock()*/
 	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DATA)) {
 		printf("*** objects\n");
 		kdebug_secpolicyindex(spidx);
 	}
 
+	s = pserialize_read_enter();
 	SPLIST_READER_FOREACH(sp, dir) {
 		if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DATA)) {
 			printf("*** in SPD\n");
@@ -729,9 +773,9 @@ found:
 
 		/* found a SPD entry */
 		sp->lastused = time_uptime;
-		SP_ADDREF2(sp, where, tag);
+		key_sp_ref(sp, where, tag);
 	}
-	splx(s);
+	pserialize_read_exit(s);
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP return SP:%p (ID=%u) refcnt %u\n",
@@ -765,7 +809,7 @@ key_gettunnel(const struct sockaddr *osrc,
 		goto done;
 	}
 
-	s = splsoftnet();	/*called from softclock()*/
+	s = pserialize_read_enter();
 	SPLIST_READER_FOREACH(sp, dir) {
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
@@ -805,9 +849,9 @@ key_gettunnel(const struct sockaddr *osrc,
 found:
 	if (sp) {
 		sp->lastused = time_uptime;
-		SP_ADDREF2(sp, where, tag);
+		key_sp_ref(sp, where, tag);
 	}
-	splx(s);
+	pserialize_read_exit(s);
 done:
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP return SP:%p (ID=%u) refcnt %u\n",
@@ -1154,14 +1198,40 @@ key_validate_savlist(const struct secashead *sah, const u_int state)
 }
 
 void
+key_init_sp(struct secpolicy *sp)
+{
+
+	ASSERT_SLEEPABLE();
+
+	sp->state = IPSEC_SPSTATE_ALIVE;
+	if (sp->policy == IPSEC_POLICY_IPSEC)
+		KASSERT(sp->req != NULL);
+	localcount_init(&sp->localcount);
+	SPLIST_ENTRY_INIT(sp);
+}
+
+void
 key_sp_ref(struct secpolicy *sp, const char* where, int tag)
 {
 
-	SP_ADDREF2(sp, where, tag);
+	localcount_acquire(&sp->localcount);
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
-	    "DP SP:%p (ID=%u) from %s:%u; refcnt now %u\n",
+	    "DP SP:%p (ID=%u) from %s:%u; refcnt++ now %u\n",
 	    sp, sp->id, where, tag, key_sp_refcnt(sp));
+}
+
+void
+key_sp_unref(struct secpolicy *sp, const char* where, int tag)
+{
+
+	KASSERT(mutex_ownable(&key_sp_mtx));
+
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP SP:%p (ID=%u) from %s:%u; refcnt-- now %u\n",
+	    sp, sp->id, where, tag, key_sp_refcnt(sp));
+
+	localcount_release(&sp->localcount, &key_sp_cv, &key_sp_mtx);
 }
 
 void
@@ -1173,30 +1243,6 @@ key_sa_ref(struct secasvar *sav, const char* where, int tag)
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP cause refcnt++:%d SA:%p from %s:%u\n",
 	    sav->refcnt, sav, where, tag);
-}
-
-/*
- * Must be called after calling key_lookup_sp*().
- * For both the packet without socket and key_freeso().
- */
-void
-_key_freesp(struct secpolicy **spp, const char* where, int tag)
-{
-	struct secpolicy *sp = *spp;
-	unsigned int nv;
-
-	KASSERT(sp != NULL);
-
-	SP_DELREF2(sp, nv, where, tag);
-
-	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
-	    "DP SP:%p (ID=%u) from %s:%u; refcnt now %u\n",
-	    sp, sp->id, where, tag, nv);
-
-	if (nv == 0) {
-		*spp = NULL;
-		key_delsp(sp);
-	}
 }
 
 #if 0
@@ -1270,7 +1316,7 @@ key_freesp_so(struct secpolicy **sp)
 
 	KASSERTMSG((*sp)->policy == IPSEC_POLICY_IPSEC,
 	    "invalid policy %u", (*sp)->policy);
-	KEY_FREESP(sp);
+	KEY_SP_UNREF(&sp);
 }
 #endif
 
@@ -1309,20 +1355,18 @@ key_freesav(struct secasvar **psav, const char* where, int tag)
  * free security policy entry.
  */
 static void
-key_delsp(struct secpolicy *sp)
+key_destroy_sp(struct secpolicy *sp)
 {
-	int s;
 
-	KASSERT(sp != NULL);
+	SPLIST_ENTRY_DESTROY(sp);
+	localcount_fini(&sp->localcount);
 
-	key_sp_dead(sp);
+	key_free_sp(sp);
+}
 
-	KASSERTMSG(sp->refcnt == 0,
-	    "SP with references deleted (refcnt %u)", sp->refcnt);
-
-	s = splsoftnet();	/*called from softclock()*/
-
-    {
+void
+key_free_sp(struct secpolicy *sp)
+{
 	struct ipsecrequest *isr = sp->req, *nextisr;
 
 	while (isr != NULL) {
@@ -1330,12 +1374,17 @@ key_delsp(struct secpolicy *sp)
 		kmem_intr_free(isr, sizeof(*isr));
 		isr = nextisr;
 	}
-    }
 
-	SPLIST_ENTRY_DESTROY(sp);
 	kmem_intr_free(sp, sizeof(*sp));
+}
 
-	splx(s);
+void
+key_socksplist_add(struct secpolicy *sp)
+{
+
+	mutex_enter(&key_sp_mtx);
+	PSLIST_WRITER_INSERT_HEAD(&key_socksplist, sp, pslist_entry);
+	mutex_exit(&key_sp_mtx);
 }
 
 /*
@@ -1347,19 +1396,49 @@ static struct secpolicy *
 key_getsp(const struct secpolicyindex *spidx)
 {
 	struct secpolicy *sp;
+	int s;
 
 	KASSERT(spidx != NULL);
 
+	s = pserialize_read_enter();
 	SPLIST_READER_FOREACH(sp, spidx->dir) {
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
 		if (key_spidx_match_exactly(spidx, &sp->spidx)) {
-			SP_ADDREF(sp);
+			KEY_SP_REF(sp);
+			pserialize_read_exit(s);
 			return sp;
 		}
 	}
+	pserialize_read_exit(s);
 
 	return NULL;
+}
+
+/*
+ * search SPD and remove found SP
+ * OUT:	NULL	: not found
+ *	others	: found, pointer to a SP.
+ */
+static struct secpolicy *
+key_lookup_and_remove_sp(const struct secpolicyindex *spidx)
+{
+	struct secpolicy *sp = NULL;
+
+	mutex_enter(&key_sp_mtx);
+	SPLIST_WRITER_FOREACH(sp, spidx->dir) {
+		KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
+
+		if (key_spidx_match_exactly(spidx, &sp->spidx)) {
+			key_unlink_sp(sp);
+			goto out;
+		}
+	}
+	sp = NULL;
+out:
+	mutex_exit(&key_sp_mtx);
+
+	return sp;
 }
 
 /*
@@ -1371,13 +1450,15 @@ static struct secpolicy *
 key_getspbyid(u_int32_t id)
 {
 	struct secpolicy *sp;
+	int s;
 
+	s = pserialize_read_enter();
 	SPLIST_READER_FOREACH(sp, IPSEC_DIR_INBOUND) {
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
 		if (sp->id == id) {
-			SP_ADDREF(sp);
-			return sp;
+			KEY_SP_REF(sp);
+			goto out;
 		}
 	}
 
@@ -1385,12 +1466,42 @@ key_getspbyid(u_int32_t id)
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
 		if (sp->id == id) {
-			SP_ADDREF(sp);
-			return sp;
+			KEY_SP_REF(sp);
+			goto out;
 		}
 	}
+out:
+	pserialize_read_exit(s);
+	return sp;
+}
 
-	return NULL;
+/*
+ * get SP by index, remove and return it.
+ * OUT:	NULL	: not found
+ *	others	: found, pointer to a SP.
+ */
+static struct secpolicy *
+key_lookupbyid_and_remove_sp(u_int32_t id)
+{
+	struct secpolicy *sp;
+
+	mutex_enter(&key_sp_mtx);
+	SPLIST_READER_FOREACH(sp, IPSEC_DIR_INBOUND) {
+		KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
+		if (sp->id == id)
+			goto out;
+	}
+
+	SPLIST_READER_FOREACH(sp, IPSEC_DIR_OUTBOUND) {
+		KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
+		if (sp->id == id)
+			goto out;
+	}
+out:
+	if (sp != NULL)
+		key_unlink_sp(sp);
+	mutex_exit(&key_sp_mtx);
+	return sp;
 }
 
 struct secpolicy *
@@ -1399,8 +1510,6 @@ key_newsp(const char* where, int tag)
 	struct secpolicy *newsp = NULL;
 
 	newsp = kmem_intr_zalloc(sizeof(struct secpolicy), KM_NOSLEEP);
-	if (newsp != NULL)
-		newsp->refcnt = 1;
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP from %s:%u return SP:%p\n", where, tag, newsp);
@@ -1451,7 +1560,7 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 		break;
 	default:
 		IPSECLOG(LOG_DEBUG, "invalid policy type.\n");
-		KEY_FREESP(&newsp);
+		key_free_sp(newsp);
 		*error = EINVAL;
 		return NULL;
 	}
@@ -1605,7 +1714,7 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 	return newsp;
 
 free_exit:
-	KEY_FREESP(&newsp);
+	key_free_sp(newsp);
 	return NULL;
 }
 
@@ -1857,16 +1966,14 @@ key_api_spdadd(struct socket *so, struct mbuf *m,
     {
 	struct secpolicy *sp;
 
-	sp = key_getsp(&spidx);
 	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
-		if (sp) {
-			key_sp_dead(sp);
-			key_sp_unlink(sp);	/* XXX jrs ordering */
-			KEY_FREESP(&sp);
-		}
+		sp = key_lookup_and_remove_sp(&spidx);
+		if (sp != NULL)
+			key_destroy_sp(sp);
 	} else {
+		sp = key_getsp(&spidx);
 		if (sp != NULL) {
-			KEY_FREESP(&sp);
+			KEY_SP_UNREF(&sp);
 			IPSECLOG(LOG_DEBUG, "a SP entry exists already.\n");
 			return key_senderror(so, m, EEXIST);
 		}
@@ -1891,12 +1998,11 @@ key_api_spdadd(struct socket *so, struct mbuf *m,
 	newsp->lifetime = lft ? lft->sadb_lifetime_addtime : 0;
 	newsp->validtime = lft ? lft->sadb_lifetime_usetime : 0;
 
-	newsp->refcnt = 1;	/* do not reclaim until I say I do */
-	newsp->state = IPSEC_SPSTATE_ALIVE;
-	if (newsp->policy == IPSEC_POLICY_IPSEC)
-		KASSERT(newsp->req != NULL);
-	SPLIST_ENTRY_INIT(newsp);
+	key_init_sp(newsp);
+
+	mutex_enter(&key_sp_mtx);
 	SPLIST_WRITER_INSERT_TAIL(newsp->spidx.dir, newsp);
+	mutex_exit(&key_sp_mtx);
 
 #ifdef notyet
 	/* delete the entry in spacqtree */
@@ -1984,7 +2090,7 @@ key_getnewspid(void)
 		if (sp == NULL)
 			break;
 
-		KEY_FREESP(&sp);
+		KEY_SP_UNREF(&sp);
 	}
 
 	if (count == 0 || newid == 0) {
@@ -2044,7 +2150,7 @@ key_api_spddelete(struct socket *so, struct mbuf *m,
 	key_init_spidx_bymsghdr(&spidx, mhp);
 
 	/* Is there SP in SPD ? */
-	sp = key_getsp(&spidx);
+	sp = key_lookup_and_remove_sp(&spidx);
 	if (sp == NULL) {
 		IPSECLOG(LOG_DEBUG, "no SP found.\n");
 		return key_senderror(so, m, EINVAL);
@@ -2053,12 +2159,7 @@ key_api_spddelete(struct socket *so, struct mbuf *m,
 	/* save policy id to buffer to be returned. */
 	xpl0->sadb_x_policy_id = sp->id;
 
-	key_sp_dead(sp);
-	key_sp_unlink(sp);	/* XXX jrs ordering */
-	KEY_FREESP(&sp);	/* ref gained by key_getspbyid */
-
-	/* Invalidate all cached SPD pointers in the PCBs. */
-	ipsec_invalpcbcacheall();
+	key_destroy_sp(sp);
 
 	/* We're deleting policy; no need to invalidate the ipflow cache. */
 
@@ -2109,19 +2210,13 @@ key_api_spddelete2(struct socket *so, struct mbuf *m,
 	id = ((struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY])->sadb_x_policy_id;
 
 	/* Is there SP in SPD ? */
-	sp = key_getspbyid(id);
+	sp = key_lookupbyid_and_remove_sp(id);
 	if (sp == NULL) {
 		IPSECLOG(LOG_DEBUG, "no SP found id:%u.\n", id);
 		return key_senderror(so, m, EINVAL);
 	}
 
-	key_sp_dead(sp);
-	key_sp_unlink(sp);	/* XXX jrs ordering */
-	KEY_FREESP(&sp);	/* ref gained by key_getsp */
-	sp = NULL;
-
-	/* Invalidate all cached SPD pointers in the PCBs. */
-	ipsec_invalpcbcacheall();
+	key_destroy_sp(sp);
 
 	/* We're deleting policy; no need to invalidate the ipflow cache. */
 
@@ -2211,7 +2306,7 @@ key_api_spdget(struct socket *so, struct mbuf *m,
 
 	n = key_setdumpsp(sp, SADB_X_SPDGET, mhp->msg->sadb_msg_seq,
 	    mhp->msg->sadb_msg_pid);
-	KEY_FREESP(&sp); /* ref gained by key_getspbyid */
+	KEY_SP_UNREF(&sp); /* ref gained by key_getspbyid */
 	if (n != NULL) {
 		m_freem(m);
 		return key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
@@ -2317,17 +2412,16 @@ key_api_spdflush(struct socket *so, struct mbuf *m,
 
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
 	    retry:
+		mutex_enter(&key_sp_mtx);
 		SPLIST_WRITER_FOREACH(sp, dir) {
-			if (sp->state == IPSEC_SPSTATE_DEAD)
-				continue;
-			key_sp_dead(sp);
-			key_sp_unlink(sp);
+			KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
+			key_unlink_sp(sp);
+			mutex_exit(&key_sp_mtx);
+			key_destroy_sp(sp);
 			goto retry;
 		}
+		mutex_exit(&key_sp_mtx);
 	}
-
-	/* Invalidate all cached SPD pointers in the PCBs. */
-	ipsec_invalpcbcacheall();
 
 	/* We're deleting policy; no need to invalidate the ipflow cache. */
 
@@ -2361,12 +2455,14 @@ key_setspddump_chain(int *errorp, int *lenp, pid_t pid)
 	struct mbuf *m, *n, *prev;
 	int totlen;
 
+	KASSERT(mutex_owned(&key_sp_mtx));
+
 	*lenp = 0;
 
 	/* search SPD entry and get buffer size. */
 	cnt = 0;
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
-		SPLIST_READER_FOREACH(sp, dir) {
+		SPLIST_WRITER_FOREACH(sp, dir) {
 			cnt++;
 		}
 	}
@@ -2380,7 +2476,7 @@ key_setspddump_chain(int *errorp, int *lenp, pid_t pid)
 	prev = m;
 	totlen = 0;
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
-		SPLIST_READER_FOREACH(sp, dir) {
+		SPLIST_WRITER_FOREACH(sp, dir) {
 			--cnt;
 			n = key_setdumpsp(sp, SADB_X_SPDDUMP, cnt, pid);
 
@@ -2423,7 +2519,7 @@ key_api_spddump(struct socket *so, struct mbuf *m0,
 {
 	struct mbuf *n;
 	int error, len;
-	int ok, s;
+	int ok;
 	pid_t pid;
 
 	pid = mhp->msg->sadb_msg_pid;
@@ -2438,9 +2534,9 @@ key_api_spddump(struct socket *so, struct mbuf *m0,
 		return key_senderror(so, m0, ENOBUFS);
 	}
 
-	s = splsoftnet();
+	mutex_enter(&key_sp_mtx);
 	n = key_setspddump_chain(&error, &len, pid);
-	splx(s);
+	mutex_exit(&key_sp_mtx);
 
 	if (n == NULL) {
 		return key_senderror(so, m0, ENOENT);
@@ -4341,24 +4437,37 @@ key_timehandler_spd(time_t now)
 
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
 	    retry:
+		mutex_enter(&key_sp_mtx);
 		SPLIST_WRITER_FOREACH(sp, dir) {
-			if (sp->state == IPSEC_SPSTATE_DEAD) {
-				key_sp_unlink(sp);	/*XXX*/
-				goto retry;
-			}
+			KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
 
 			if (sp->lifetime == 0 && sp->validtime == 0)
 				continue;
 
-			/* the deletion will occur next time */
 			if ((sp->lifetime && now - sp->created > sp->lifetime) ||
 			    (sp->validtime && now - sp->lastused > sp->validtime)) {
-			  	key_sp_dead(sp);
+				key_unlink_sp(sp);
+				mutex_exit(&key_sp_mtx);
 				key_spdexpire(sp);
+				key_destroy_sp(sp);
 				goto retry;
 			}
 		}
+		mutex_exit(&key_sp_mtx);
 	}
+
+    retry_socksplist:
+	mutex_enter(&key_sp_mtx);
+	SOCKSPLIST_WRITER_FOREACH(sp) {
+		if (sp->state != IPSEC_SPSTATE_DEAD)
+			continue;
+
+		key_unlink_sp(sp);
+		mutex_exit(&key_sp_mtx);
+		key_destroy_sp(sp);
+		goto retry_socksplist;
+	}
+	mutex_exit(&key_sp_mtx);
 }
 
 static void
@@ -7537,6 +7646,9 @@ key_do_init(void)
 	int i, error;
 
 	mutex_init(&key_mtx, MUTEX_DEFAULT, IPL_NONE);
+	key_psz = pserialize_create();
+	mutex_init(&key_sp_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&key_sp_cv, "key_sp");
 
 	pfkeystat_percpu = percpu_alloc(sizeof(uint64_t) * PFKEY_NSTATS);
 
@@ -7549,6 +7661,8 @@ key_do_init(void)
 	for (i = 0; i < IPSEC_DIR_MAX; i++) {
 		PSLIST_INIT(&sptree[i]);
 	}
+
+	PSLIST_INIT(&key_socksplist);
 
 	LIST_INIT(&sahtree);
 
@@ -7565,11 +7679,13 @@ key_do_init(void)
 
 	/* system default */
 	ip4_def_policy.policy = IPSEC_POLICY_NONE;
-	ip4_def_policy.refcnt++;	/*never reclaim this*/
+	ip4_def_policy.state = IPSEC_SPSTATE_ALIVE;
+	localcount_init(&ip4_def_policy.localcount);
 
 #ifdef INET6
 	ip6_def_policy.policy = IPSEC_POLICY_NONE;
-	ip6_def_policy.refcnt++;	/*never reclaim this*/
+	ip6_def_policy.state = IPSEC_SPSTATE_ALIVE;
+	localcount_init(&ip6_def_policy.localcount);
 #endif
 
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, NULL);
@@ -7909,10 +8025,12 @@ key_setspddump(int *errorp, pid_t pid)
 	u_int dir;
 	struct mbuf *m, *n;
 
+	KASSERT(mutex_owned(&key_sp_mtx));
+
 	/* search SPD entry and get buffer size. */
 	cnt = 0;
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
-		SPLIST_READER_FOREACH(sp, dir) {
+		SPLIST_WRITER_FOREACH(sp, dir) {
 			cnt++;
 		}
 	}
@@ -7924,7 +8042,7 @@ key_setspddump(int *errorp, pid_t pid)
 
 	m = NULL;
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
-		SPLIST_READER_FOREACH(sp, dir) {
+		SPLIST_WRITER_FOREACH(sp, dir) {
 			--cnt;
 			n = key_setdumpsp(sp, SADB_X_SPDDUMP, cnt, pid);
 
@@ -8029,16 +8147,16 @@ sysctl_net_key_dumpsp(SYSCTLFN_ARGS)
 	int err2 = 0;
 	char *p, *ep;
 	size_t len;
-	int s, error;
+	int error;
 
 	if (newp)
 		return (EPERM);
 	if (namelen != 0)
 		return (EINVAL);
 
-	s = splsoftnet();
+	mutex_enter(&key_sp_mtx);
 	m = key_setspddump(&error, l->l_proc->p_pid);
-	splx(s);
+	mutex_exit(&key_sp_mtx);
 	if (!m)
 		return (error);
 	if (!oldp)

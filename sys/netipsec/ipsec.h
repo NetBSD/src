@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.57 2017/07/26 09:18:15 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.58 2017/08/02 01:28:03 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -47,6 +47,7 @@
 
 #ifdef _KERNEL
 #include <sys/socketvar.h>
+#include <sys/localcount.h>
 
 #include <netinet/in_pcb_hdr.h>
 #include <netipsec/keydb.h>
@@ -76,7 +77,7 @@ struct secpolicyindex {
 struct secpolicy {
 	struct pslist_entry pslist_entry;
 
-	u_int refcnt;			/* reference count */
+	struct localcount localcount;	/* reference count */
 	struct secpolicyindex spidx;	/* selector */
 	u_int32_t id;			/* It's unique number on the system. */
 	u_int state;			/* 0: dead, others: alive */

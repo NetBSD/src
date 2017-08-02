@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.112 2017/07/26 07:39:54 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.113 2017/08/02 01:28:03 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.112 2017/07/26 07:39:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.113 2017/08/02 01:28:03 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.112 2017/07/26 07:39:54 ozaki-r Exp $");
 #include <sys/kauth.h>
 #include <sys/cpu.h>
 #include <sys/kmem.h>
+#include <sys/pserialize.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -201,6 +202,7 @@ static struct secpolicy *ipsec_deepcopy_policy (const struct secpolicy *);
 static int ipsec_set_policy (struct secpolicy **, int, const void *, size_t,
     kauth_cred_t);
 static int ipsec_get_policy (struct secpolicy *, struct mbuf **);
+static void ipsec_destroy_policy(struct secpolicy *);
 static void vshiftl (unsigned char *, int, int);
 static size_t ipsec_hdrsiz (const struct secpolicy *);
 
@@ -211,34 +213,49 @@ static struct secpolicy *
 ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 {
 	struct secpolicyindex spidx;
+	struct secpolicy *sp = NULL;
+	int s;
 
 	KASSERT(IPSEC_DIR_IS_VALID(dir));
 	KASSERT(pcbsp != NULL);
 	KASSERT(dir < __arraycount(pcbsp->sp_cache));
 	KASSERT(inph_locked(pcbsp->sp_inph));
 
+	/*
+	 * Checking the generation and sp->state and taking a reference to an SP
+	 * must be in a critical section of pserialize. See key_unlink_sp.
+	 */
+	s = pserialize_read_enter();
 	/* SPD table change invalidate all the caches. */
 	if (ipsec_spdgen != pcbsp->sp_cache[dir].cachegen) {
 		ipsec_invalpcbcache(pcbsp, dir);
-		return NULL;
+		goto out;
 	}
-	if (!pcbsp->sp_cache[dir].cachesp)
-		return NULL;
-	if (pcbsp->sp_cache[dir].cachesp->state != IPSEC_SPSTATE_ALIVE) {
+	sp = pcbsp->sp_cache[dir].cachesp;
+	if (sp == NULL)
+		goto out;
+	if (sp->state != IPSEC_SPSTATE_ALIVE) {
+		sp = NULL;
 		ipsec_invalpcbcache(pcbsp, dir);
-		return NULL;
+		goto out;
 	}
 	if ((pcbsp->sp_cacheflags & IPSEC_PCBSP_CONNECTED) == 0) {
-		if (ipsec_setspidx(m, &spidx, 1) != 0)
-			return NULL;
+		/* NB: assume ipsec_setspidx never sleep */
+		if (ipsec_setspidx(m, &spidx, 1) != 0) {
+			sp = NULL;
+			goto out;
+		}
 
 		/*
 		 * We have to make an exact match here since the cached rule
 		 * might have lower priority than a rule that would otherwise
 		 * have matched the packet. 
 		 */
-		if (memcmp(&pcbsp->sp_cache[dir].cacheidx, &spidx, sizeof(spidx))) 
-			return NULL;
+		if (memcmp(&pcbsp->sp_cache[dir].cacheidx, &spidx,
+		    sizeof(spidx))) {
+			sp = NULL;
+			goto out;
+		}
 	} else {
 		/*
 		 * The pcb is connected, and the L4 code is sure that:
@@ -252,13 +269,14 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 		 */
 	}
 
-	pcbsp->sp_cache[dir].cachesp->lastused = time_second;
-	KEY_SP_REF(pcbsp->sp_cache[dir].cachesp);
+	sp->lastused = time_second;
+	KEY_SP_REF(sp);
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP cause refcnt++:%d SP:%p\n",
-	    key_sp_refcnt(pcbsp->sp_cache[dir].cachesp),
-	    pcbsp->sp_cache[dir].cachesp);
-	return pcbsp->sp_cache[dir].cachesp;
+	    key_sp_refcnt(sp), pcbsp->sp_cache[dir].cachesp);
+out:
+	pserialize_read_exit(s);
+	return sp;
 }
 
 static int
@@ -270,8 +288,6 @@ ipsec_fillpcbcache(struct inpcbpolicy *pcbsp, struct mbuf *m,
 	KASSERT(dir < __arraycount(pcbsp->sp_cache));
 	KASSERT(inph_locked(pcbsp->sp_inph));
 
-	if (pcbsp->sp_cache[dir].cachesp)
-		KEY_FREESP(&pcbsp->sp_cache[dir].cachesp);
 	pcbsp->sp_cache[dir].cachesp = NULL;
 	pcbsp->sp_cache[dir].cachehint = IPSEC_PCBHINT_UNKNOWN;
 	if (ipsec_setspidx(m, &pcbsp->sp_cache[dir].cacheidx, 1) != 0) {
@@ -279,7 +295,6 @@ ipsec_fillpcbcache(struct inpcbpolicy *pcbsp, struct mbuf *m,
 	}
 	pcbsp->sp_cache[dir].cachesp = sp;
 	if (pcbsp->sp_cache[dir].cachesp) {
-		KEY_SP_REF(pcbsp->sp_cache[dir].cachesp);
 		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 		    "DP cause refcnt++:%d SP:%p\n",
 		    key_sp_refcnt(pcbsp->sp_cache[dir].cachesp),
@@ -317,8 +332,6 @@ ipsec_invalpcbcache(struct inpcbpolicy *pcbsp, int dir)
 	for (i = IPSEC_DIR_INBOUND; i <= IPSEC_DIR_OUTBOUND; i++) {
 		if (dir != IPSEC_DIR_ANY && i != dir)
 			continue;
-		if (pcbsp->sp_cache[i].cachesp)
-			KEY_FREESP(&pcbsp->sp_cache[i].cachesp);
 		pcbsp->sp_cache[i].cachesp = NULL;
 		pcbsp->sp_cache[i].cachehint = IPSEC_PCBHINT_UNKNOWN;
 		pcbsp->sp_cache[i].cachegen = 0;
@@ -609,7 +622,7 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 		break;
 	case IPSEC_POLICY_BYPASS:
 	case IPSEC_POLICY_NONE:
-		KEY_FREESP(&sp);
+		KEY_SP_UNREF(&sp);
 		sp = NULL;		/* NB: force NULL result */
 		break;
 	case IPSEC_POLICY_IPSEC:
@@ -617,7 +630,7 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 		break;
 	}
 	if (*error != 0) {
-		KEY_FREESP(&sp);
+		KEY_SP_UNREF(&sp);
 		sp = NULL;
 		IPSECLOG(LOG_DEBUG, "done, error %d\n", *error);
 	}
@@ -697,7 +710,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 		 */
 		*mtu = _mtu;
 		*natt_frag = true;
-		KEY_FREESP(&sp);
+		KEY_SP_UNREF(&sp);
 		splx(s);
 		return 0;
 	}
@@ -711,7 +724,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 	 */
 	if (error == ENOENT)
 		error = 0;
-	KEY_FREESP(&sp);
+	KEY_SP_UNREF(&sp);
 	splx(s);
 	*done = true;
 	return error;
@@ -734,7 +747,7 @@ ipsec4_input(struct mbuf *m, int flags)
 	 * Check security policy against packet attributes.
 	 */
 	error = ipsec_in_reject(sp, m);
-	KEY_FREESP(&sp);
+	KEY_SP_UNREF(&sp);
 	splx(s);
 	if (error) {
 		return error;
@@ -753,7 +766,7 @@ ipsec4_input(struct mbuf *m, int flags)
 	sp = ipsec4_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error, NULL);
 	if (sp != NULL) {
 		m->m_flags &= ~M_CANFASTFWD;
-		KEY_FREESP(&sp);
+		KEY_SP_UNREF(&sp);
 	}
 	splx(s);
 	return 0;
@@ -802,7 +815,7 @@ ipsec4_forward(struct mbuf *m, int *destmtu)
 		rtcache_unref(rt, ro);
 		KEY_FREESAV(&sav);
 	}
-	KEY_FREESP(&sp);
+	KEY_SP_UNREF(&sp);
 	return 0;
 }
 
@@ -838,7 +851,7 @@ ipsec6_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 		break;
 	case IPSEC_POLICY_BYPASS:
 	case IPSEC_POLICY_NONE:
-		KEY_FREESP(&sp);
+		KEY_SP_UNREF(&sp);
 		sp = NULL;	  /* NB: force NULL result */
 		break;
 	case IPSEC_POLICY_IPSEC:
@@ -846,7 +859,7 @@ ipsec6_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 		break;
 	}
 	if (*error != 0) {
-		KEY_FREESP(&sp);
+		KEY_SP_UNREF(&sp);
 		sp = NULL;
 		IPSECLOG(LOG_DEBUG, "done, error %d\n", *error);
 	}
@@ -1236,20 +1249,26 @@ ipsec_init_policy(struct socket *so, struct inpcbpolicy **policy)
 	else
 		new->priv = 0;
 
+	/*
+	 * These SPs are dummy. Never be used because the policy
+	 * is ENTRUST. See ipsec_getpolicybysock.
+	 */
 	if ((new->sp_in = KEY_NEWSP()) == NULL) {
 		ipsec_delpcbpolicy(new);
 		return ENOBUFS;
 	}
 	new->sp_in->state = IPSEC_SPSTATE_ALIVE;
 	new->sp_in->policy = IPSEC_POLICY_ENTRUST;
+	new->sp_in->created = 0; /* Indicates dummy */
 
 	if ((new->sp_out = KEY_NEWSP()) == NULL) {
-		KEY_FREESP(&new->sp_in);
+		KEY_SP_UNREF(&new->sp_in);
 		ipsec_delpcbpolicy(new);
 		return ENOBUFS;
 	}
 	new->sp_out->state = IPSEC_SPSTATE_ALIVE;
 	new->sp_out->policy = IPSEC_POLICY_ENTRUST;
+	new->sp_out->created = 0; /* Indicates dummy */
 
 	*policy = new;
 
@@ -1264,14 +1283,14 @@ ipsec_copy_policy(const struct inpcbpolicy *old, struct inpcbpolicy *new)
 
 	sp = ipsec_deepcopy_policy(old->sp_in);
 	if (sp) {
-		KEY_FREESP(&new->sp_in);
+		KEY_SP_UNREF(&new->sp_in);
 		new->sp_in = sp;
 	} else
 		return ENOBUFS;
 
 	sp = ipsec_deepcopy_policy(old->sp_out);
 	if (sp) {
-		KEY_FREESP(&new->sp_out);
+		KEY_SP_UNREF(&new->sp_out);
 		new->sp_out = sp;
 	} else
 		return ENOBUFS;
@@ -1326,6 +1345,23 @@ ipsec_deepcopy_policy(const struct secpolicy *src)
 	return dst;
 }
 
+static void
+ipsec_destroy_policy(struct secpolicy *sp)
+{
+
+	if (sp->created == 0)
+		/* It's dummy. We can simply free it */
+		key_free_sp(sp);
+	else {
+		/*
+		 * We cannot destroy here because it can be called in
+		 * softint. So mark the SP as DEAD and let the timer
+		 * destroy it. See key_timehandler_spd.
+		 */
+		sp->state = IPSEC_SPSTATE_DEAD;
+	}
+}
+
 /* set policy and ipsec request if present. */
 static int
 ipsec_set_policy(
@@ -1337,7 +1373,7 @@ ipsec_set_policy(
 )
 {
 	const struct sadb_x_policy *xpl;
-	struct secpolicy *newsp = NULL;
+	struct secpolicy *newsp = NULL, *oldsp;
 	int error;
 
 	KASSERT(!cpu_softintr_p());
@@ -1372,11 +1408,16 @@ ipsec_set_policy(
 	if ((newsp = key_msg2sp(xpl, len, &error)) == NULL)
 		return error;
 
-	newsp->state = IPSEC_SPSTATE_ALIVE;
+	key_init_sp(newsp);
+	newsp->created = time_uptime;
+	/* Insert the global list for SPs for sockets */
+	key_socksplist_add(newsp);
 
 	/* clear old SP and set new SP */
-	KEY_FREESP(policy);
+	oldsp = *policy;
 	*policy = newsp;
+	ipsec_destroy_policy(oldsp);
+
 	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DUMP)) {
 		printf("%s: new policy\n", __func__);
 		kdebug_secpolicy(newsp);
@@ -1416,6 +1457,7 @@ ipsec4_set_policy(struct inpcb *inp, int optname, const void *request,
 	struct secpolicy **policy;
 
 	KASSERT(!cpu_softintr_p());
+	KASSERT(inp_locked(inp));
 
 	/* sanity check. */
 	if (inp == NULL || request == NULL)
@@ -1486,10 +1528,10 @@ ipsec4_delete_pcbpolicy(struct inpcb *inp)
 		return 0;
 
 	if (inp->inp_sp->sp_in != NULL)
-		KEY_FREESP(&inp->inp_sp->sp_in);
+		ipsec_destroy_policy(inp->inp_sp->sp_in);
 
 	if (inp->inp_sp->sp_out != NULL)
-		KEY_FREESP(&inp->inp_sp->sp_out);
+		ipsec_destroy_policy(inp->inp_sp->sp_out);
 
 	ipsec_invalpcbcache(inp->inp_sp, IPSEC_DIR_ANY);
 
@@ -1508,6 +1550,7 @@ ipsec6_set_policy(struct in6pcb *in6p, int optname, const void *request,
 	struct secpolicy **policy;
 
 	KASSERT(!cpu_softintr_p());
+	KASSERT(in6p_locked(in6p));
 
 	/* sanity check. */
 	if (in6p == NULL || request == NULL)
@@ -1575,10 +1618,10 @@ ipsec6_delete_pcbpolicy(struct in6pcb *in6p)
 		return 0;
 
 	if (in6p->in6p_sp->sp_in != NULL)
-		KEY_FREESP(&in6p->in6p_sp->sp_in);
+		ipsec_destroy_policy(in6p->in6p_sp->sp_in);
 
 	if (in6p->in6p_sp->sp_out != NULL)
-		KEY_FREESP(&in6p->in6p_sp->sp_out);
+		ipsec_destroy_policy(in6p->in6p_sp->sp_out);
 
 	ipsec_invalpcbcache(in6p->in6p_sp, IPSEC_DIR_ANY);
 
@@ -1778,7 +1821,7 @@ ipsec4_in_reject(struct mbuf *m, struct inpcb *inp)
 		result = ipsec_in_reject(sp, m);
 		if (result)
 			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
-		KEY_FREESP(&sp);
+		KEY_SP_UNREF(&sp);
 	} else {
 		result = 0;	/* XXX should be panic ?
 				 * -> No, there may be error. */
@@ -1817,7 +1860,7 @@ ipsec6_in_reject(struct mbuf *m, struct in6pcb *in6p)
 		result = ipsec_in_reject(sp, m);
 		if (result)
 			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
-		KEY_FREESP(&sp);
+		KEY_SP_UNREF(&sp);
 	} else {
 		result = 0;
 	}
@@ -1929,7 +1972,7 @@ ipsec4_hdrsiz(struct mbuf *m, u_int dir, struct inpcb *inp)
 		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DATA, "size:%lu.\n",
 		    (unsigned long)size);
 
-		KEY_FREESP(&sp);
+		KEY_SP_UNREF(&sp);
 	} else {
 		size = 0;	/* XXX should be panic ? */
 	}
@@ -1964,7 +2007,7 @@ ipsec6_hdrsiz(struct mbuf *m, u_int dir, struct in6pcb *in6p)
 		return 0;
 	size = ipsec_hdrsiz(sp);
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DATA, "size:%zu.\n", size);
-	KEY_FREESP(&sp);
+	KEY_SP_UNREF(&sp);
 
 	return size;
 }
@@ -2279,7 +2322,7 @@ ipsec6_input(struct mbuf *m)
 		 * attributes.
 		 */
 		error = ipsec_in_reject(sp, m);
-		KEY_FREESP(&sp);
+		KEY_SP_UNREF(&sp);
 	} else {
 		/* XXX error stat??? */
 		error = EINVAL;
