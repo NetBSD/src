@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.114 2017/08/02 03:45:57 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.115 2017/08/02 04:03:28 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.114 2017/08/02 03:45:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.115 2017/08/02 04:03:28 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -198,7 +198,9 @@ static void ipsec6_get_ulp (struct mbuf *m, struct secpolicyindex *, int);
 static int ipsec6_setspidx_ipaddr (struct mbuf *, struct secpolicyindex *);
 #endif
 static void ipsec_delpcbpolicy (struct inpcbpolicy *);
+#if 0 /* unused */
 static struct secpolicy *ipsec_deepcopy_policy (const struct secpolicy *);
+#endif
 static int ipsec_set_policy (struct secpolicy **, int, const void *, size_t,
     kauth_cred_t);
 static int ipsec_get_policy (struct secpolicy *, struct mbuf **);
@@ -1277,6 +1279,7 @@ ipsec_init_policy(struct socket *so, struct inpcbpolicy **policy)
 	return 0;
 }
 
+#if 0 /* unused */
 /* copy old ipsec policy into new */
 int
 ipsec_copy_policy(const struct inpcbpolicy *old, struct inpcbpolicy *new)
@@ -1346,6 +1349,7 @@ ipsec_deepcopy_policy(const struct secpolicy *src)
 
 	return dst;
 }
+#endif
 
 static void
 ipsec_destroy_policy(struct secpolicy *sp)
