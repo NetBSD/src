@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.758 2017/07/23 19:26:06 perseant Exp $
+# $NetBSD: mi,v 1.759 2017/08/02 02:19:56 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3322,6 +3322,7 @@
 ./usr/tests/net/ipsec/t_ipsec_gif		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_l2tp		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_misc		tests-net-tests		atf,rump
+./usr/tests/net/ipsec/t_ipsec_sockopt		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_sysctl		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_tcp		tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/t_ipsec_transport		tests-net-tests		atf,rump
