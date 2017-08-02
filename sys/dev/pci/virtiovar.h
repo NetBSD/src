@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.9 2017/03/26 12:36:43 martin Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.10 2017/08/02 08:39:14 cherry Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -213,5 +213,10 @@ bus_dma_tag_t	virtio_dmat(struct virtio_softc *);
 device_t	virtio_child(struct virtio_softc *);
 int		virtio_intrhand(struct virtio_softc *);
 uint32_t	virtio_features(struct virtio_softc *);
+
+/* autoconf(9) common */
+void virtio_set_status(struct virtio_softc *, int);
+
+#define virtio_device_reset(sc)	virtio_set_status((sc), 0)
 
 #endif /* _DEV_PCI_VIRTIOVAR_H_ */
