@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.388 2017/04/13 10:37:36 knakahara Exp $
+#	$NetBSD: files.pci,v 1.389 2017/08/02 08:39:14 cherry Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1137,29 +1137,11 @@ device  sisfb: wsemuldisplaydev, rasops8, rasops15, rasops16, rasops32, vcons
 attach  sisfb at pci
 file    dev/pci/sisfb.c		sisfb	needs-flag
 
-# VirtIO
-device	virtio {}
-attach	virtio at pci
-file	dev/pci/virtio.c	virtio
+# VirtIO: XXX: move to dev/vmm/virtio
+include "dev/pci/files.virtio"
 
-attach	ld at virtio with ld_virtio
-file	dev/pci/ld_virtio.c	ld_virtio
-
-device	viomb
-attach	viomb at virtio
-file	dev/pci/viomb.c		viomb
-
-device	vioif: ether, ifnet, arp
-attach	vioif at virtio
-file	dev/pci/if_vioif.c	vioif
-
-device	viornd
-attach	viornd at virtio
-file	dev/pci/viornd.c	viornd
-
-device	vioscsi: scsi
-attach	vioscsi at virtio
-file	dev/pci/vioscsi.c	vioscsi
+attach	virtio at pci with virtio_pci
+file	dev/pci/virtio_pci.c	virtio_pci
 
 # Silicon Motion SM712(LynxEM+) frame buffer
 device	lynxfb: wsemuldisplaydev, rasops16
