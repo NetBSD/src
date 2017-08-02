@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.67 2017/07/27 06:59:28 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.68 2017/08/02 01:28:03 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.67 2017/07/27 06:59:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.68 2017/08/02 01:28:03 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.67 2017/07/27 06:59:28 ozaki-r Exp $
 #include <sys/sysctl.h>
 #include <sys/cprng.h>
 #include <sys/pool.h>
+#include <sys/pserialize.h>
 
 #include <net/if.h>
 
@@ -897,9 +898,23 @@ esp_output(
 		goto bad;
 	}
 
+    {
+	int s = pserialize_read_enter();
+
+	if (__predict_false(isr->sp->state == IPSEC_SPSTATE_DEAD)) {
+		pserialize_read_exit(s);
+		pool_put(&esp_tdb_crypto_pool, tc);
+		crypto_freereq(crp);
+		ESP_STATINC(ESP_STAT_NOTDB);
+		error = ENOENT;
+		goto bad;
+	}
+	KEY_SP_REF(isr->sp);
+	pserialize_read_exit(s);
+    }
+
 	/* Callback parameters */
 	tc->tc_isr = isr;
-	KEY_SP_REF(isr->sp);
 	tc->tc_spi = sav->spi;
 	tc->tc_dst = saidx->dst;
 	tc->tc_proto = saidx->proto;
@@ -1032,13 +1047,13 @@ esp_output_cb(struct cryptop *crp)
 	/* NB: m is reclaimed by ipsec_process_done. */
 	err = ipsec_process_done(m, isr, sav);
 	KEY_FREESAV(&sav);
-	KEY_FREESP(&isr->sp);
+	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	return err;
 bad:
 	if (sav)
 		KEY_FREESAV(&sav);
-	KEY_FREESP(&isr->sp);
+	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	if (m)
 		m_freem(m);
