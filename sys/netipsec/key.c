@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.197 2017/08/02 01:28:03 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.198 2017/08/02 01:59:26 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.197 2017/08/02 01:28:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.198 2017/08/02 01:59:26 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1362,6 +1362,8 @@ key_destroy_sp(struct secpolicy *sp)
 	localcount_fini(&sp->localcount);
 
 	key_free_sp(sp);
+
+	key_update_used();
 }
 
 void
@@ -2028,6 +2030,8 @@ key_api_spdadd(struct socket *so, struct mbuf *m,
 #endif /* INET6 */
 #endif /* GATEWAY */
 
+	key_update_used();
+
     {
 	struct mbuf *n, *mpolicy;
 	int off;
@@ -2064,7 +2068,6 @@ key_api_spdadd(struct socket *so, struct mbuf *m,
 	xpl->sadb_x_policy_id = newsp->id;
 
 	m_freem(m);
-	key_update_used();
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
 }
@@ -2177,7 +2180,6 @@ key_api_spddelete(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, ENOBUFS);
 
 	m_freem(m);
-	key_update_used();
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
 }
