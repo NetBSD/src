@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.198 2017/08/02 01:59:26 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.199 2017/08/02 02:12:42 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.198 2017/08/02 01:59:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.199 2017/08/02 02:12:42 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -252,6 +252,9 @@ static struct pslist_head key_socksplist;
 #define SOCKSPLIST_WRITER_FOREACH(sp)					\
 	PSLIST_WRITER_FOREACH((sp), &key_socksplist, struct secpolicy,	\
 	                      pslist_entry)
+#define SOCKSPLIST_READER_EMPTY()					\
+	(PSLIST_READER_FIRST(&key_socksplist, struct secpolicy,		\
+	                     pslist_entry) == NULL)
 
 /*
  * Protect regtree, acqtree and items stored in the lists.
@@ -1387,6 +1390,8 @@ key_socksplist_add(struct secpolicy *sp)
 	mutex_enter(&key_sp_mtx);
 	PSLIST_WRITER_INSERT_HEAD(&key_socksplist, sp, pslist_entry);
 	mutex_exit(&key_sp_mtx);
+
+	key_update_used();
 }
 
 /*
@@ -8069,7 +8074,8 @@ key_setspddump(int *errorp, pid_t pid)
 int
 key_get_used(void) {
 	return !SPLIST_READER_EMPTY(IPSEC_DIR_INBOUND) ||
-	    !SPLIST_READER_EMPTY(IPSEC_DIR_OUTBOUND);
+	    !SPLIST_READER_EMPTY(IPSEC_DIR_OUTBOUND) ||
+	    !SOCKSPLIST_READER_EMPTY();
 }
 
 void
