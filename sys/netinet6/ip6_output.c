@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.192 2017/06/26 08:01:53 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.193 2017/08/02 01:28:03 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.192 2017/06/26 08:01:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.193 2017/08/02 01:28:03 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1069,7 +1069,7 @@ done:
 
 #ifdef IPSEC
 	if (sp != NULL)
-		KEY_FREESP(&sp);
+		KEY_SP_UNREF(&sp);
 #endif /* IPSEC */
 
 	if_put(ifp, &psref);
