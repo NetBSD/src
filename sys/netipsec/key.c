@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.199 2017/08/02 02:12:42 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.200 2017/08/02 03:45:57 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.199 2017/08/02 02:12:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.200 2017/08/02 03:45:57 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1376,11 +1376,11 @@ key_free_sp(struct secpolicy *sp)
 
 	while (isr != NULL) {
 		nextisr = isr->next;
-		kmem_intr_free(isr, sizeof(*isr));
+		kmem_free(isr, sizeof(*isr));
 		isr = nextisr;
 	}
 
-	kmem_intr_free(sp, sizeof(*sp));
+	kmem_free(sp, sizeof(*sp));
 }
 
 void
@@ -1516,7 +1516,7 @@ key_newsp(const char* where, int tag)
 {
 	struct secpolicy *newsp = NULL;
 
-	newsp = kmem_intr_zalloc(sizeof(struct secpolicy), KM_NOSLEEP);
+	newsp = kmem_zalloc(sizeof(struct secpolicy), KM_SLEEP);
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP from %s:%u return SP:%p\n", where, tag, newsp);

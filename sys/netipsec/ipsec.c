@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.113 2017/08/02 01:28:03 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.114 2017/08/02 03:45:57 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.113 2017/08/02 01:28:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.114 2017/08/02 03:45:57 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -1253,7 +1253,8 @@ ipsec_init_policy(struct socket *so, struct inpcbpolicy **policy)
 	 * These SPs are dummy. Never be used because the policy
 	 * is ENTRUST. See ipsec_getpolicybysock.
 	 */
-	if ((new->sp_in = KEY_NEWSP()) == NULL) {
+	new->sp_in = kmem_intr_zalloc(sizeof(struct secpolicy), KM_NOSLEEP);
+	if (new->sp_in == NULL) {
 		ipsec_delpcbpolicy(new);
 		return ENOBUFS;
 	}
@@ -1261,8 +1262,9 @@ ipsec_init_policy(struct socket *so, struct inpcbpolicy **policy)
 	new->sp_in->policy = IPSEC_POLICY_ENTRUST;
 	new->sp_in->created = 0; /* Indicates dummy */
 
-	if ((new->sp_out = KEY_NEWSP()) == NULL) {
-		KEY_SP_UNREF(&new->sp_in);
+	new->sp_out = kmem_intr_zalloc(sizeof(struct secpolicy), KM_NOSLEEP);
+	if (new->sp_out == NULL) {
+		kmem_intr_free(new->sp_in, sizeof(struct secpolicy));
 		ipsec_delpcbpolicy(new);
 		return ENOBUFS;
 	}
@@ -1351,7 +1353,7 @@ ipsec_destroy_policy(struct secpolicy *sp)
 
 	if (sp->created == 0)
 		/* It's dummy. We can simply free it */
-		key_free_sp(sp);
+		kmem_intr_free(sp, sizeof(*sp));
 	else {
 		/*
 		 * We cannot destroy here because it can be called in
