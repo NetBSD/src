@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1295 2017/07/26 08:57:24 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1296 2017/08/02 07:35:05 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3378,7 +3378,7 @@ product INTEL BSW_PCU_LPC	0x229c	Braswell PCU LPC
 product INTEL BSW_AHCI		0x22a3	Braswell AHCI
 product INTEL BSW_LPE_AUDIO	0x22a8	Braswell Low Power Engine Audio
 product INTEL Z8K_LPIO1_SPI_3	0x22ac	Atom Z8000 LPIO1 SPI3
-product INTEL CHV_IGD_1		0x22b0	HD Graphics
+product INTEL CHV_IGD_1		0x22b0	HD Graphics 400
 product INTEL CHV_IGD_2		0x22b1	HD Graphics
 product INTEL CHV_IGD_3		0x22b2	HD Graphics
 product INTEL CHV_IGD_4		0x22b3	HD Graphics
