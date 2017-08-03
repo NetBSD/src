@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.6 2015/09/30 14:14:32 phx Exp $ */
+/* $NetBSD: siisata.c,v 1.7 2017/08/03 19:22:15 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -125,6 +125,15 @@ siisata_init(unsigned tag, void *data)
 			if (l->presense[n] == 0) {
 				DPRINTF(("port %d not present\n", n));
 				continue;
+			} else {
+				/*
+				 * XXX perform_atareset() does not work
+				 * when the drive is not completely spun up?
+				 * So insert another delay here.
+				 */
+				printf("Waiting 15 seconds for port %d "
+				    "to spin up.\n", n);
+				delay(15 * 1000 * 1000);
 			}
 		}
 		if (atachkpwr(l, n) != ATA_PWR_ACTIVE) {
