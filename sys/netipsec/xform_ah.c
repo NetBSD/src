@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.70 2017/08/02 01:28:03 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.71 2017/08/03 06:32:51 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.70 2017/08/02 01:28:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.71 2017/08/03 06:32:51 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -817,7 +817,7 @@ ah_input_cb(struct cryptop *crp)
 
 	sav = tc->tc_sav;
 	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 		sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi,
 		    sport, dport);
 		if (sav == NULL) {
@@ -932,12 +932,12 @@ ah_input_cb(struct cryptop *crp)
 
 	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff);
 
-	KEY_FREESAV(&sav);
+	KEY_SA_UNREF(&sav);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	return error;
 bad:
 	if (sav)
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	if (m != NULL)
 		m_freem(m);
@@ -1215,7 +1215,7 @@ ah_output_cb(struct cryptop *crp)
 		goto bad;
 	}
 	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 		sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
 		if (sav == NULL) {
 			AH_STATINC(AH_STAT_NOTDB);
@@ -1269,13 +1269,13 @@ ah_output_cb(struct cryptop *crp)
 
 	/* NB: m is reclaimed by ipsec_process_done. */
 	err = ipsec_process_done(m, isr, sav);
-	KEY_FREESAV(&sav);
+	KEY_SA_UNREF(&sav);
 	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	return err;
 bad:
 	if (sav)
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	if (m)

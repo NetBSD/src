@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.49 2017/08/02 01:28:03 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.50 2017/08/03 06:32:51 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.49 2017/08/02 01:28:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.50 2017/08/03 06:32:51 ozaki-r Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -259,7 +259,7 @@ ipcomp_input_cb(struct cryptop *crp)
 
 	sav = tc->tc_sav;
 	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 		sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi,
 		    sport, dport);
 		if (sav == NULL) {
@@ -282,7 +282,7 @@ ipcomp_input_cb(struct cryptop *crp)
 			sav->tdb_cryptoid = crp->crp_sid;
 
 		if (crp->crp_etype == EAGAIN) {
-			KEY_FREESAV(&sav);
+			KEY_SA_UNREF(&sav);
 			IPSEC_RELEASE_GLOBAL_LOCKS();
 			return crypto_dispatch(crp);
 		}
@@ -348,12 +348,12 @@ ipcomp_input_cb(struct cryptop *crp)
 
 	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff);
 
-	KEY_FREESAV(&sav);
+	KEY_SA_UNREF(&sav);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	return error;
 bad:
 	if (sav)
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	if (m)
 		m_freem(m);
@@ -555,7 +555,7 @@ ipcomp_output_cb(struct cryptop *crp)
 		goto bad;
 	}
 	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 		sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
 		if (sav == NULL) {
 			IPCOMP_STATINC(IPCOMP_STAT_NOTDB);
@@ -660,13 +660,13 @@ ipcomp_output_cb(struct cryptop *crp)
 
 	/* NB: m is reclaimed by ipsec_process_done. */
 	error = ipsec_process_done(m, isr, sav);
-	KEY_FREESAV(&sav);
+	KEY_SA_UNREF(&sav);
 	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	return error;
 bad:
 	if (sav)
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	if (m)
