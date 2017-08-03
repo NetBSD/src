@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_tunnel_ipcomp.sh,v 1.1 2017/07/03 06:01:16 ozaki-r Exp $
+#	$NetBSD: t_ipsec_tunnel_ipcomp.sh,v 1.2 2017/08/03 03:16:27 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -374,19 +374,19 @@ add_test_tunnel_mode()
 	desc="Tests of IPsec ($ipproto) tunnel mode with $proto ($algo) and ipcomp ($calgo)"
 
 	atf_test_case ${name} cleanup
-	eval "								\
-	    ${name}_head() {						\
-	        atf_set \"descr\" \"$desc\";				\
-	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
-	    };								\
-	    ${name}_body() {						\
-	        test_tunnel_ipcomp_common $ipproto $proto $algo $calgo;	\
-	        rump_server_destroy_ifaces;				\
-	    };								\
-	    ${name}_cleanup() {						\
-	        $DEBUG && dump;						\
-	        cleanup;						\
-	    }								\
+	eval "
+	    ${name}_head() {
+	        atf_set descr \"$desc\"
+	        atf_set require.progs rump_server setkey
+	    }
+	    ${name}_body() {
+	        test_tunnel_ipcomp_common $ipproto $proto $algo $calgo
+	        rump_server_destroy_ifaces
+	    }
+	    ${name}_cleanup() {
+	        \$DEBUG && dump
+	        cleanup
+	    }
 	"
 	atf_add_test_case ${name}
 }

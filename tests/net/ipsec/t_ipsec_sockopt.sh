@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_sockopt.sh,v 1.1 2017/08/02 02:19:56 ozaki-r Exp $
+#	$NetBSD: t_ipsec_sockopt.sh,v 1.2 2017/08/03 03:16:27 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -354,19 +354,19 @@ add_test_IP_IPSEC_POLICY()
 	desc="Tests of IP_IPSEC_POLICY socket option (${ipproto}, ${proto}, ${_algo})"
 
 	atf_test_case ${name} cleanup
-	eval "								\
-	    ${name}_head() {						\
-	        atf_set \"descr\" \"$desc\";				\
-	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
-	    };								\
-	    ${name}_body() {						\
-	        test_IP_IPSEC_POLICY_common $ipproto $proto $algo;	\
-	        rump_server_destroy_ifaces;				\
-	    };								\
-	    ${name}_cleanup() {						\
-	        $DEBUG && dump;						\
-	        cleanup;						\
-	    }								\
+	eval "
+	    ${name}_head() {
+	        atf_set descr \"$desc\"
+	        atf_set require.progs rump_server setkey
+	    }
+	    ${name}_body() {
+	        test_IP_IPSEC_POLICY_common $ipproto $proto $algo
+	        rump_server_destroy_ifaces
+	    }
+	    ${name}_cleanup() {
+	        \$DEBUG && dump
+	        cleanup
+	    }
 	"
 	atf_add_test_case ${name}
 }
