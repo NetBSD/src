@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.203 2017/08/03 06:30:40 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.204 2017/08/03 06:31:16 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.203 2017/08/03 06:30:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.204 2017/08/03 06:31:16 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4884,7 +4884,7 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 {
 	const struct sockaddr *src, *dst;
 	struct secasindex saidx;
-	struct secashead *newsah;
+	struct secashead *sah;
 	struct secasvar *newsav;
 	u_int8_t proto;
 	u_int32_t spi;
@@ -4936,11 +4936,11 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 
 	/* get a SA index */
-	newsah = key_getsah(&saidx, CMP_REQID);
-	if (newsah == NULL) {
+	sah = key_getsah(&saidx, CMP_REQID);
+	if (sah == NULL) {
 		/* create a new SA index */
-		newsah = key_newsah(&saidx);
-		if (newsah == NULL) {
+		sah = key_newsah(&saidx);
+		if (sah == NULL) {
 			IPSECLOG(LOG_DEBUG, "No more memory.\n");
 			return key_senderror(so, m, ENOBUFS);
 		}
@@ -4959,11 +4959,11 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 
 	/* add to satree */
 	newsav->refcnt = 1;
-	newsav->sah = newsah;
+	newsav->sah = sah;
 	newsav->state = SADB_SASTATE_LARVAL;
 	SAVLIST_ENTRY_INIT(newsav);
-	SAVLIST_WRITER_INSERT_TAIL(newsah, SADB_SASTATE_LARVAL, newsav);
-	key_validate_savlist(newsah, SADB_SASTATE_LARVAL);
+	SAVLIST_WRITER_INSERT_TAIL(sah, SADB_SASTATE_LARVAL, newsav);
+	key_validate_savlist(sah, SADB_SASTATE_LARVAL);
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	/* delete the entry in acqtree */
@@ -5482,7 +5482,7 @@ key_api_add(struct socket *so, struct mbuf *m,
 	struct sadb_sa *sa0;
 	const struct sockaddr *src, *dst;
 	struct secasindex saidx;
-	struct secashead *newsah;
+	struct secashead *sah;
 	struct secasvar *newsav;
 	u_int16_t proto;
 	u_int8_t mode;
@@ -5538,11 +5538,11 @@ key_api_add(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 
 	/* get a SA header */
-	newsah = key_getsah(&saidx, CMP_REQID);
-	if (newsah == NULL) {
+	sah = key_getsah(&saidx, CMP_REQID);
+	if (sah == NULL) {
 		/* create a new SA header */
-		newsah = key_newsah(&saidx);
-		if (newsah == NULL) {
+		sah = key_newsah(&saidx);
+		if (sah == NULL) {
 			IPSECLOG(LOG_DEBUG, "No more memory.\n");
 			return key_senderror(so, m, ENOBUFS);
 		}
@@ -5550,7 +5550,7 @@ key_api_add(struct socket *so, struct mbuf *m,
 
 	/* set spidx if there */
 	/* XXX rewrite */
-	error = key_setident(newsah, m, mhp);
+	error = key_setident(sah, m, mhp);
 	if (error) {
 		return key_senderror(so, m, error);
 	}
@@ -5559,7 +5559,7 @@ key_api_add(struct socket *so, struct mbuf *m,
 	struct secasvar *sav;
 
 	/* We can create new SA only if SPI is differenct. */
-	sav = key_getsavbyspi(newsah, sa0->sadb_sa_spi);
+	sav = key_getsavbyspi(sah, sa0->sadb_sa_spi);
 	if (sav != NULL) {
 		KEY_FREESAV(&sav);
 		IPSECLOG(LOG_DEBUG, "SA already exists.\n");
@@ -5572,7 +5572,7 @@ key_api_add(struct socket *so, struct mbuf *m,
 	if (newsav == NULL) {
 		return key_senderror(so, m, error);
 	}
-	newsav->sah = newsah;
+	newsav->sah = sah;
 
 	error = key_handle_natt_info(newsav, mhp);
 	if (error != 0) {
@@ -5590,8 +5590,8 @@ key_api_add(struct socket *so, struct mbuf *m,
 	newsav->refcnt = 1;
 	newsav->state = SADB_SASTATE_MATURE;
 	SAVLIST_ENTRY_INIT(newsav);
-	SAVLIST_WRITER_INSERT_TAIL(newsah, SADB_SASTATE_MATURE, newsav);
-	key_validate_savlist(newsah, SADB_SASTATE_MATURE);
+	SAVLIST_WRITER_INSERT_TAIL(sah, SADB_SASTATE_MATURE, newsav);
+	key_validate_savlist(sah, SADB_SASTATE_MATURE);
 
 	/*
 	 * don't call key_freesav() here, as we would like to keep the SA
