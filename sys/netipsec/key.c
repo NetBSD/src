@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.201 2017/08/03 03:12:02 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.202 2017/08/03 06:30:04 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.201 2017/08/03 03:12:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.202 2017/08/03 06:30:04 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -193,7 +193,7 @@ static int key_prefered_oldsa = 0;	/* prefered old sa rather than new sa.*/
 static u_int32_t acq_seq = 0;
 
 static struct pslist_head sptree[IPSEC_DIR_MAX];		/* SPD */
-static LIST_HEAD(_sahtree, secashead) sahtree;			/* SAD */
+static struct pslist_head sahtree;				/* SAD */
 static LIST_HEAD(_regtree, secreg) regtree[SADB_SATYPE_MAX + 1];
 							/* registed list */
 #ifndef IPSEC_NONBLOCK_ACQUIRE
@@ -242,6 +242,21 @@ static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
 			}						\
 		}							\
 	} while (0)
+
+#define SAHLIST_ENTRY_INIT(sah)						\
+	PSLIST_ENTRY_INIT((sah), pslist_entry)
+#define SAHLIST_ENTRY_DESTROY(sah)					\
+	PSLIST_ENTRY_DESTROY((sah), pslist_entry)
+#define SAHLIST_WRITER_REMOVE(sah)					\
+	PSLIST_WRITER_REMOVE((sah), pslist_entry)
+#define SAHLIST_READER_FOREACH(sah)					\
+	PSLIST_READER_FOREACH((sah), &sahtree, struct secashead,	\
+	                      pslist_entry)
+#define SAHLIST_WRITER_FOREACH(sah)					\
+	PSLIST_WRITER_FOREACH((sah), &sahtree, struct secashead,	\
+	                      pslist_entry)
+#define SAHLIST_WRITER_INSERT_HEAD(sah)					\
+	PSLIST_WRITER_INSERT_HEAD(&sahtree, (sah), pslist_entry)
 
 /*
  * The list has SPs that are set to a socket via setsockopt(IP_IPSEC_POLICY)
@@ -1114,7 +1129,7 @@ key_lookup_sa(
 		saorder_state_valid = saorder_state_valid_prefer_new;
 		arraysize = _ARRAYLEN(saorder_state_valid_prefer_new);
 	}
-	LIST_FOREACH(sah, &sahtree, chain) {
+	SAHLIST_READER_FOREACH(sah) {
 		/* search valid state */
 		for (stateidx = 0; stateidx < arraysize; stateidx++) {
 			state = saorder_state_valid[stateidx];
@@ -2854,7 +2869,8 @@ key_newsah(const struct secasindex *saidx)
 
 	/* add to saidxtree */
 	newsah->state = SADB_SASTATE_MATURE;
-	LIST_INSERT_HEAD(&sahtree, newsah, chain);
+	SAHLIST_ENTRY_INIT(newsah);
+	SAHLIST_WRITER_INSERT_HEAD(newsah);
 
 	return newsah;
 }
@@ -2892,14 +2908,14 @@ key_delsah(struct secashead *sah)
 	rtcache_free(&sah->sa_route);
 
 	/* remove from tree of SA index */
-	KASSERT(__LIST_CHAINED(sah));
-	LIST_REMOVE(sah, chain);
+	SAHLIST_WRITER_REMOVE(sah);
 
 	if (sah->idents != NULL)
 		kmem_free(sah->idents, sah->idents_len);
 	if (sah->identd != NULL)
 		kmem_free(sah->identd, sah->identd_len);
 
+	SAHLIST_ENTRY_DESTROY(sah);
 	kmem_free(sah, sizeof(*sah));
 
 	splx(s);
@@ -3040,7 +3056,7 @@ key_getsah(const struct secasindex *saidx, int flag)
 {
 	struct secashead *sah;
 
-	LIST_FOREACH(sah, &sahtree, chain) {
+	SAHLIST_READER_FOREACH(sah) {
 		if (sah->state == SADB_SASTATE_DEAD)
 			continue;
 		if (key_saidx_match(&sah->saidx, saidx, flag))
@@ -3070,7 +3086,7 @@ key_checkspidup(const struct secasindex *saidx, u_int32_t spi)
 	}
 
 	/* check all SAD */
-	LIST_FOREACH(sah, &sahtree, chain) {
+	SAHLIST_READER_FOREACH(sah) {
 		if (!key_ismyaddr((struct sockaddr *)&sah->saidx.dst))
 			continue;
 		sav = key_getsavbyspi(sah, spi);
@@ -4484,14 +4500,15 @@ key_timehandler_spd(time_t now)
 static void
 key_timehandler_sad(time_t now)
 {
-	struct secashead *sah, *nextsah;
+	struct secashead *sah;
 	struct secasvar *sav, *nextsav;
 
-	LIST_FOREACH_SAFE(sah, &sahtree, chain, nextsah) {
+restart:
+	SAHLIST_WRITER_FOREACH(sah) {
 		/* if sah has been dead, then delete it and process next sah. */
 		if (sah->state == SADB_SASTATE_DEAD) {
 			key_delsah(sah);
-			continue;
+			goto restart;
 		}
 
 		/* if LARVAL entry doesn't become MATURE, delete it. */
@@ -6935,7 +6952,7 @@ key_api_flush(struct socket *so, struct mbuf *m,
 	}
 
 	/* no SATYPE specified, i.e. flushing all SA. */
-	LIST_FOREACH(sah, &sahtree, chain) {
+	SAHLIST_READER_FOREACH(sah) {
 		if (mhp->msg->sadb_msg_satype != SADB_SATYPE_UNSPEC &&
 		    proto != sah->saidx.proto)
 			continue;
@@ -6991,7 +7008,7 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 
 	/* count sav entries to be sent to userland. */
 	cnt = 0;
-	LIST_FOREACH(sah, &sahtree, chain) {
+	SAHLIST_READER_FOREACH(sah) {
 		if (req_satype != SADB_SATYPE_UNSPEC &&
 		    proto != sah->saidx.proto)
 			continue;
@@ -7011,7 +7028,7 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 	/* send this to the userland, one at a time. */
 	m = NULL;
 	prev = m;
-	LIST_FOREACH(sah, &sahtree, chain) {
+	SAHLIST_READER_FOREACH(sah) {
 		if (req_satype != SADB_SATYPE_UNSPEC &&
 		    proto != sah->saidx.proto)
 			continue;
@@ -7675,7 +7692,7 @@ key_do_init(void)
 
 	PSLIST_INIT(&key_socksplist);
 
-	LIST_INIT(&sahtree);
+	PSLIST_INIT(&sahtree);
 
 	for (i = 0; i <= SADB_SATYPE_MAX; i++) {
 		LIST_INIT(&regtree[i]);
@@ -7857,7 +7874,7 @@ key_sa_routechange(struct sockaddr *dst)
 	struct route *ro;
 	const struct sockaddr *sa;
 
-	LIST_FOREACH(sah, &sahtree, chain) {
+	SAHLIST_READER_FOREACH(sah) {
 		ro = &sah->sa_route;
 		sa = rtcache_getdst(ro);
 		if (sa != NULL && dst->sa_len == sa->sa_len &&
@@ -7963,7 +7980,7 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 
 	/* count sav entries to be sent to the userland. */
 	cnt = 0;
-	LIST_FOREACH(sah, &sahtree, chain) {
+	SAHLIST_READER_FOREACH(sah) {
 		if (req_satype != SADB_SATYPE_UNSPEC &&
 		    proto != sah->saidx.proto)
 			continue;
@@ -7982,7 +7999,7 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 
 	/* send this to the userland, one at a time. */
 	m = NULL;
-	LIST_FOREACH(sah, &sahtree, chain) {
+	SAHLIST_READER_FOREACH(sah) {
 		if (req_satype != SADB_SATYPE_UNSPEC &&
 		    proto != sah->saidx.proto)
 			continue;
