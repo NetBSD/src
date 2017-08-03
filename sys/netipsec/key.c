@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.204 2017/08/03 06:31:16 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.205 2017/08/03 06:31:58 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.204 2017/08/03 06:31:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.205 2017/08/03 06:31:58 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -323,6 +323,7 @@ static kmutex_t key_mtx __cacheline_aligned;
 static pserialize_t key_psz;
 static kmutex_t key_sp_mtx __cacheline_aligned;
 static kcondvar_t key_sp_cv __cacheline_aligned;
+static kmutex_t key_sa_mtx __cacheline_aligned;
 
 /* search order for SAs */
 	/*
@@ -986,14 +987,16 @@ static struct secasvar *
 key_lookup_sa_bysaidx(const struct secasindex *saidx)
 {
 	struct secashead *sah;
-	struct secasvar *sav;
+	struct secasvar *sav = NULL;
 	u_int stateidx, state;
 	const u_int *saorder_state_valid;
 	int arraysize;
+	int s;
 
+	s = pserialize_read_enter();
 	sah = key_getsah(saidx, CMP_MODE_REQID);
 	if (sah == NULL)
-		return NULL;
+		goto out;
 
 	/*
 	 * search a valid state list for outbound packet.
@@ -1029,11 +1032,13 @@ key_lookup_sa_bysaidx(const struct secasindex *saidx)
 			KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 			    "DP cause refcnt++:%d SA:%p\n",
 			    sav->refcnt, sav);
-			return sav;
+			break;
 		}
 	}
+out:
+	pserialize_read_exit(s);
 
-	return NULL;
+	return sav;
 }
 
 #if 0
@@ -1166,7 +1171,6 @@ key_lookup_sa(
 	 * IPsec tunnel packet is received.  But ESP tunnel mode is
 	 * encrypted so we can't check internal IP header.
 	 */
-	s = splsoftnet();	/*called from softclock()*/
 	if (key_prefered_oldsa) {
 		saorder_state_valid = saorder_state_valid_prefer_old;
 		arraysize = _ARRAYLEN(saorder_state_valid_prefer_old);
@@ -1174,6 +1178,7 @@ key_lookup_sa(
 		saorder_state_valid = saorder_state_valid_prefer_new;
 		arraysize = _ARRAYLEN(saorder_state_valid_prefer_new);
 	}
+	s = pserialize_read_enter();
 	SAHLIST_READER_FOREACH(sah) {
 		/* search valid state */
 		for (stateidx = 0; stateidx < arraysize; stateidx++) {
@@ -1229,7 +1234,7 @@ key_lookup_sa(
 	}
 	sav = NULL;
 done:
-	splx(s);
+	pserialize_read_exit(s);
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP return SA:%p; refcnt %u\n", sav, sav ? sav->refcnt : 0);
@@ -1241,11 +1246,13 @@ key_validate_savlist(const struct secashead *sah, const u_int state)
 {
 #ifdef DEBUG
 	struct secasvar *sav, *next;
+	int s;
 
 	/*
 	 * The list should be sorted by lft_c->sadb_lifetime_addtime
 	 * in ascending order.
 	 */
+	s = pserialize_read_enter();
 	SAVLIST_READER_FOREACH(sav, sah, state) {
 		next = SAVLIST_READER_NEXT(sav);
 		if (next != NULL &&
@@ -1258,6 +1265,7 @@ key_validate_savlist(const struct secashead *sah, const u_int state)
 			    next->lft_c->sadb_lifetime_addtime);
 		}
 	}
+	pserialize_read_exit(s);
 #endif
 }
 
@@ -2915,7 +2923,9 @@ key_newsah(const struct secasindex *saidx)
 	/* add to saidxtree */
 	newsah->state = SADB_SASTATE_MATURE;
 	SAHLIST_ENTRY_INIT(newsah);
+	mutex_enter(&key_sa_mtx);
 	SAHLIST_WRITER_INSERT_HEAD(newsah);
+	mutex_exit(&key_sa_mtx);
 
 	return newsah;
 }
@@ -3154,10 +3164,12 @@ key_checkspidup(const struct secasindex *saidx, u_int32_t spi)
 static struct secasvar *
 key_getsavbyspi(struct secashead *sah, u_int32_t spi)
 {
-	struct secasvar *sav;
+	struct secasvar *sav = NULL;
 	u_int state;
+	int s;
 
 	/* search all status */
+	s = pserialize_read_enter();
 	SASTATE_ALIVE_FOREACH(state) {
 		SAVLIST_READER_FOREACH(sav, sah, state) {
 			/* sanity check */
@@ -3170,12 +3182,14 @@ key_getsavbyspi(struct secashead *sah, u_int32_t spi)
 
 			if (sav->spi == spi) {
 				SA_ADDREF(sav);
-				return sav;
+				goto out;
 			}
 		}
 	}
+out:
+	pserialize_read_exit(s);
 
-	return NULL;
+	return sav;
 }
 
 /*
@@ -4962,7 +4976,9 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 	newsav->sah = sah;
 	newsav->state = SADB_SASTATE_LARVAL;
 	SAVLIST_ENTRY_INIT(newsav);
+	mutex_enter(&key_sa_mtx);
 	SAVLIST_WRITER_INSERT_TAIL(sah, SADB_SASTATE_LARVAL, newsav);
+	mutex_exit(&key_sa_mtx);
 	key_validate_savlist(sah, SADB_SASTATE_LARVAL);
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
@@ -5440,10 +5456,12 @@ key_getsavbyseq(struct secashead *sah, u_int32_t seq)
 {
 	struct secasvar *sav;
 	u_int state;
+	int s;
 
 	state = SADB_SASTATE_LARVAL;
 
 	/* search SAD with sequence number ? */
+	s = pserialize_read_enter();
 	SAVLIST_READER_FOREACH(sav, sah, state) {
 		KEY_CHKSASTATE(state, sav->state);
 
@@ -5452,11 +5470,12 @@ key_getsavbyseq(struct secashead *sah, u_int32_t seq)
 			KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 			    "DP cause refcnt++:%d SA:%p\n",
 			    sav->refcnt, sav);
-			return sav;
+			break;
 		}
 	}
+	pserialize_read_exit(s);
 
-	return NULL;
+	return sav;
 }
 #endif
 
@@ -7047,6 +7066,8 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 	int cnt;
 	struct mbuf *m, *n, *prev;
 
+	KASSERT(mutex_owned(&key_sa_mtx));
+
 	*lenp = 0;
 
 	/* map satype to proto */
@@ -7058,13 +7079,13 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 
 	/* count sav entries to be sent to userland. */
 	cnt = 0;
-	SAHLIST_READER_FOREACH(sah) {
+	SAHLIST_WRITER_FOREACH(sah) {
 		if (req_satype != SADB_SATYPE_UNSPEC &&
 		    proto != sah->saidx.proto)
 			continue;
 
 		SASTATE_ANY_FOREACH(state) {
-			SAVLIST_READER_FOREACH(sav, sah, state) {
+			SAVLIST_WRITER_FOREACH(sav, sah, state) {
 				cnt++;
 			}
 		}
@@ -7078,7 +7099,7 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 	/* send this to the userland, one at a time. */
 	m = NULL;
 	prev = m;
-	SAHLIST_READER_FOREACH(sah) {
+	SAHLIST_WRITER_FOREACH(sah) {
 		if (req_satype != SADB_SATYPE_UNSPEC &&
 		    proto != sah->saidx.proto)
 			continue;
@@ -7092,7 +7113,7 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 		}
 
 		SASTATE_ANY_FOREACH(state) {
-			SAVLIST_READER_FOREACH(sav, sah, state) {
+			SAVLIST_WRITER_FOREACH(sav, sah, state) {
 				n = key_setdumpsa(sav, SADB_DUMP, satype,
 				    --cnt, pid);
 				if (!n) {
@@ -7144,7 +7165,6 @@ key_api_dump(struct socket *so, struct mbuf *m0,
 	u_int16_t proto;
 	u_int8_t satype;
 	struct mbuf *n;
-	int s;
 	int error, len, ok;
 
 	/* map satype to proto */
@@ -7166,9 +7186,9 @@ key_api_dump(struct socket *so, struct mbuf *m0,
 		return key_senderror(so, m0, ENOBUFS);
 	}
 
-	s = splsoftnet();
+	mutex_enter(&key_sa_mtx);
 	n = key_setdump_chain(satype, &error, &len, mhp->msg->sadb_msg_pid);
-	splx(s);
+	mutex_exit(&key_sa_mtx);
 
 	if (n == NULL) {
 		return key_senderror(so, m0, ENOENT);
@@ -7727,6 +7747,7 @@ key_do_init(void)
 	key_psz = pserialize_create();
 	mutex_init(&key_sp_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&key_sp_cv, "key_sp");
+	mutex_init(&key_sa_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	pfkeystat_percpu = percpu_alloc(sizeof(uint64_t) * PFKEY_NSTATS);
 
@@ -8021,6 +8042,8 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 	int cnt;
 	struct mbuf *m, *n;
 
+	KASSERT(mutex_owned(&key_sa_mtx));
+
 	/* map satype to proto */
 	proto = key_satype2proto(req_satype);
 	if (proto == 0) {
@@ -8030,13 +8053,13 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 
 	/* count sav entries to be sent to the userland. */
 	cnt = 0;
-	SAHLIST_READER_FOREACH(sah) {
+	SAHLIST_WRITER_FOREACH(sah) {
 		if (req_satype != SADB_SATYPE_UNSPEC &&
 		    proto != sah->saidx.proto)
 			continue;
 
 		SASTATE_ANY_FOREACH(state) {
-			SAVLIST_READER_FOREACH(sav, sah, state) {
+			SAVLIST_WRITER_FOREACH(sav, sah, state) {
 				cnt++;
 			}
 		}
@@ -8049,7 +8072,7 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 
 	/* send this to the userland, one at a time. */
 	m = NULL;
-	SAHLIST_READER_FOREACH(sah) {
+	SAHLIST_WRITER_FOREACH(sah) {
 		if (req_satype != SADB_SATYPE_UNSPEC &&
 		    proto != sah->saidx.proto)
 			continue;
@@ -8063,7 +8086,7 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 		}
 
 		SASTATE_ANY_FOREACH(state) {
-			SAVLIST_READER_FOREACH(sav, sah, state) {
+			SAVLIST_WRITER_FOREACH(sav, sah, state) {
 				n = key_setdumpsa(sav, SADB_DUMP, satype,
 				    --cnt, pid);
 				if (!n) {
@@ -8180,16 +8203,16 @@ sysctl_net_key_dumpsa(SYSCTLFN_ARGS)
 	int err2 = 0;
 	char *p, *ep;
 	size_t len;
-	int s, error;
+	int error;
 
 	if (newp)
 		return (EPERM);
 	if (namelen != 1)
 		return (EINVAL);
 
-	s = splsoftnet();
+	mutex_enter(&key_sa_mtx);
 	m = key_setdump(name[0], &error, l->l_proc->p_pid);
-	splx(s);
+	mutex_exit(&key_sa_mtx);
 	if (!m)
 		return (error);
 	if (!oldp)
