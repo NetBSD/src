@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.115 2017/08/02 04:03:28 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.116 2017/08/03 06:32:51 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.115 2017/08/02 04:03:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.116 2017/08/03 06:32:51 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -815,7 +815,7 @@ ipsec4_forward(struct mbuf *m, int *destmtu)
 			*destmtu -= ipsechdr;
 		}
 		rtcache_unref(rt, ro);
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	}
 	KEY_SP_UNREF(&sp);
 	return 0;
@@ -1911,7 +1911,7 @@ ipsec_hdrsiz(const struct secpolicy *sp)
 			error = key_checkrequest(isr, &sav);
 			if (error == 0) {
 				clen = esp_hdrsiz(sav);
-				KEY_FREESAV(&sav);
+				KEY_SA_UNREF(&sav);
 			} else
 				clen = esp_hdrsiz(NULL);
 			break;
@@ -1919,7 +1919,7 @@ ipsec_hdrsiz(const struct secpolicy *sp)
 			error = key_checkrequest(isr, &sav);
 			if (error == 0) {
 				clen = ah_hdrsiz(sav);
-				KEY_FREESAV(&sav);
+				KEY_SA_UNREF(&sav);
 			} else
 				clen = ah_hdrsiz(NULL);
 			break;

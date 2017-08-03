@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.359 2017/07/07 01:37:34 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.360 2017/08/03 06:32:51 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.359 2017/07/07 01:37:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.360 2017/08/03 06:32:51 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3448,12 +3448,12 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 			TCP_STATINC(TCP_STAT_GOODSIG);
 
 		key_sa_recordxfer(sav, m);
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	}
 	return 0;
 out:
 	if (sav != NULL)
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	return -1;
 #endif
 }
@@ -4714,7 +4714,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	if (sav) {
 		(void)tcp_signature(m, th, hlen, sav, sigp);
 		key_sa_recordxfer(sav, m);
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	}
 #endif
 

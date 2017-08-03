@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.44 2017/07/07 01:37:34 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.45 2017/08/03 06:32:51 ozaki-r Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.44 2017/07/07 01:37:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.45 2017/08/03 06:32:51 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -123,7 +123,7 @@ ah4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 				    offsetof(struct icmp, icmp_ip));
 				icmp_mtudisc(icp, ip->ip_dst);
 			}
-			KEY_FREESAV(&sav);
+			KEY_SA_UNREF(&sav);
 		}
 	}
 	return NULL;
@@ -168,7 +168,7 @@ esp4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 				    offsetof(struct icmp, icmp_ip));
 				icmp_mtudisc(icp, ip->ip_dst);
 			}
-			KEY_FREESAV(&sav);
+			KEY_SA_UNREF(&sav);
 		}
 	}
 	return NULL;
@@ -237,7 +237,7 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			if (sav) {
 				if (SADB_SASTATE_USABLE_P(sav))
 					valid++;
-				KEY_FREESAV(&sav);
+				KEY_SA_UNREF(&sav);
 			}
 
 			/* XXX Further validation? */
@@ -342,7 +342,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			if (sav) {
 				if (SADB_SASTATE_USABLE_P(sav))
 					valid++;
-				KEY_FREESAV(&sav);
+				KEY_SA_UNREF(&sav);
 			}
 
 			/* XXX Further validation? */

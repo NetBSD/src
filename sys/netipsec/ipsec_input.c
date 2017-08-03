@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.50 2017/08/03 04:42:26 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.51 2017/08/03 06:32:51 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.50 2017/08/03 04:42:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.51 2017/08/03 06:32:51 ozaki-r Exp $");
 
 /*
  * IPsec input processing.
@@ -288,7 +288,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	 * everything else.
 	 */
 	error = (*sav->tdb_xform->xf_input)(m, sav, skip, protoff);
-	KEY_FREESAV(&sav);
+	KEY_SA_UNREF(&sav);
 	splx(s);
 	return error;
 }
