@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.37 2015/10/15 12:00:02 nisimura Exp $ */
+/* $NetBSD: brdsetup.c,v 1.38 2017/08/03 09:42:34 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ static void send_iomega(int, int, int, int, int, int);
 static inline uint32_t mfmsr(void);
 static inline void mtmsr(uint32_t);
 static inline uint32_t cputype(void);
-static inline u_quad_t mftb(void);
+static inline uint64_t mftb(void);
 static void init_uart(unsigned, unsigned, uint8_t);
 static void send_sat(char *);
 static unsigned mpc107memsize(void);
@@ -1012,7 +1012,7 @@ _rtt(void)
 satime_t
 getsecs(void)
 {
-	u_quad_t tb = mftb();
+	uint64_t tb = mftb();
 
 	return (tb / ticks_per_sec);
 }
@@ -1021,13 +1021,13 @@ getsecs(void)
  * Wait for about n microseconds (at least!).
  */
 void
-delay(u_int n)
+delay(unsigned n)
 {
-	u_quad_t tb;
-	u_long scratch, tbh, tbl;
+	uint64_t tb;
+	uint32_t scratch, tbh, tbl;
 
 	tb = mftb();
-	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
+	tb += ((uint64_t)n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
 	asm volatile ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f; mftb %0; cmpw 0, %0,%2; blt 1b; 2:" : "=&r"(scratch) : "r"(tbh), "r"(tbl));
@@ -1113,11 +1113,11 @@ cputype(void)
 	return pvr >> 16;
 }
 
-static inline u_quad_t
+static inline uint64_t
 mftb(void)
 {
-	u_long scratch;
-	u_quad_t tb;
+	uint32_t scratch;
+	uint64_t tb;
 
 	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
 	    : "=r"(tb), "=r"(scratch));
