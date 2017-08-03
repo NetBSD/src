@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.200 2017/08/02 03:45:57 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.201 2017/08/03 03:12:02 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.200 2017/08/02 03:45:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.201 2017/08/03 03:12:02 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -2968,6 +2968,10 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 		*errp = key_setsaval(newsav, m, mhp);
 		if (*errp)
 			goto error;
+	} else {
+		/* We don't allow lft_c to be NULL */
+		newsav->lft_c = kmem_zalloc(sizeof(struct sadb_lifetime),
+		    KM_SLEEP);
 	}
 
 	/* reset created */
