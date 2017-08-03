@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.15 2017/05/17 02:19:09 ozaki-r Exp $	*/
+/*	$NetBSD: keydb.h,v 1.16 2017/08/03 06:30:04 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -65,7 +65,7 @@ struct secasindex {
 
 /* Security Association Data Base */
 struct secashead {
-	LIST_ENTRY(secashead) chain;
+	struct pslist_entry pslist_entry;
 
 	struct secasindex saidx;
 
