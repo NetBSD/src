@@ -1,4 +1,4 @@
-/*	$NetBSD: ldebug.c,v 1.9 2017/04/26 13:17:33 mbalmer Exp $	*/
+/*	$NetBSD: ldebug.c,v 1.10 2017/08/03 13:40:07 mbalmer Exp $	*/
 
 /*
 ** Id: ldebug.c,v 2.121 2016/10/19 12:32:10 roberto Exp 
@@ -661,6 +661,7 @@ l_noret luaG_runerror (lua_State *L, const char *fmt, ...) {
   CallInfo *ci = L->ci;
   const char *msg;
   va_list argp;
+  luaC_checkGC(L);  /* error message uses memory */
   va_start(argp, fmt);
   msg = luaO_pushvfstring(L, fmt, argp);  /* format message */
   va_end(argp);
