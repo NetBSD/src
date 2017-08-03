@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.49 2017/07/21 04:55:36 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.50 2017/08/03 04:42:26 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.49 2017/07/21 04:55:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.50 2017/08/03 04:42:26 ozaki-r Exp $");
 
 /*
  * IPsec input processing.
@@ -344,7 +344,6 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 		IPSECLOG(LOG_DEBUG, "null mbuf");
 		IPSEC_ISTAT(sproto, ESP_STAT_BADKCR, AH_STAT_BADKCR,
 		    IPCOMP_STAT_BADKCR);
-		KEY_FREESAV(&sav);
 		return EINVAL;
 	}
 
