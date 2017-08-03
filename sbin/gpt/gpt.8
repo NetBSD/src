@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.52 2017/02/16 03:32:17 christos Exp $
+.\" $NetBSD: gpt.8,v 1.53 2017/08/03 14:39:31 msaitoh Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd February 15, 2017
+.Dd August 3, 2017
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -534,6 +534,8 @@ by legacy BIOS boot code.
 See the
 .Ic biosboot
 command for more information.
+The bootme flag is used to indicate which partiotion should be booted
+by UEFI boot code.
 The other attributes are for compatibility with
 .Fx
 and are not currently used by any
