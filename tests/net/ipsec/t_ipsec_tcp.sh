@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_tcp.sh,v 1.1 2017/07/18 02:16:07 ozaki-r Exp $
+#	$NetBSD: t_ipsec_tcp.sh,v 1.2 2017/08/03 03:16:27 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -261,19 +261,19 @@ add_test_tcp()
 	fi
 
 	atf_test_case ${name} cleanup
-	eval "								\
-	    ${name}_head() {						\
-	        atf_set \"descr\" \"$desc\";				\
-	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
-	    };								\
-	    ${name}_body() {						\
-	        test_tcp_${ipproto} $proto $algo;			\
-	        rump_server_destroy_ifaces;				\
-	    };								\
-	    ${name}_cleanup() {						\
-	        $DEBUG && dump;						\
-	        cleanup;						\
-	    }								\
+	eval "
+	    ${name}_head() {
+	        atf_set descr \"$desc\"
+	        atf_set require.progs rump_server setkey
+	    }
+	    ${name}_body() {
+	        test_tcp_${ipproto} $proto $algo
+	        rump_server_destroy_ifaces
+	    }
+	    ${name}_cleanup() {
+	        \$DEBUG && dump
+	        cleanup
+	    }
 	"
 	atf_add_test_case ${name}
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_transport.sh,v 1.5 2017/07/03 06:01:16 ozaki-r Exp $
+#	$NetBSD: t_ipsec_transport.sh,v 1.6 2017/08/03 03:16:27 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -240,19 +240,19 @@ add_test_transport_mode()
 	desc="Tests of IPsec ($ipproto) transport mode with $proto ($algo)"
 
 	atf_test_case ${name} cleanup
-	eval "								\
-	    ${name}_head() {						\
-	        atf_set \"descr\" \"$desc\";				\
-	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
-	    };								\
-	    ${name}_body() {						\
-	        test_transport_common $ipproto $proto $algo;		\
-	        rump_server_destroy_ifaces;				\
-	    };								\
-	    ${name}_cleanup() {						\
-	        $DEBUG && dump;						\
-	        cleanup;						\
-	    }								\
+	eval "
+	    ${name}_head() {
+	        atf_set descr \"$desc\"
+	        atf_set require.progs rump_server setkey
+	    }
+	    ${name}_body() {
+	        test_transport_common $ipproto $proto $algo
+	        rump_server_destroy_ifaces
+	    }
+	    ${name}_cleanup() {
+	        \$DEBUG && dump
+	        cleanup
+	    }
 	"
 	atf_add_test_case ${name}
 }
