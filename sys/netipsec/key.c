@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.205 2017/08/03 06:31:58 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.206 2017/08/03 06:32:51 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.205 2017/08/03 06:31:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.206 2017/08/03 06:32:51 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -3147,7 +3147,7 @@ key_checkspidup(const struct secasindex *saidx, u_int32_t spi)
 			continue;
 		sav = key_getsavbyspi(sah, spi);
 		if (sav != NULL) {
-			KEY_FREESAV(&sav);
+			KEY_SA_UNREF(&sav);
 			return true;
 		}
 	}
@@ -5439,7 +5439,7 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
 error:
-	KEY_FREESAV(&sav);
+	KEY_SA_UNREF(&sav);
 	return key_senderror(so, m, error);
 }
 
@@ -5580,7 +5580,7 @@ key_api_add(struct socket *so, struct mbuf *m,
 	/* We can create new SA only if SPI is differenct. */
 	sav = key_getsavbyspi(sah, sa0->sadb_sa_spi);
 	if (sav != NULL) {
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 		IPSECLOG(LOG_DEBUG, "SA already exists.\n");
 		return key_senderror(so, m, EEXIST);
 	}
@@ -5987,7 +5987,7 @@ key_api_get(struct socket *so, struct mbuf *m,
 	/* map proto to satype */
 	satype = key_proto2satype(sah->saidx.proto);
 	if (satype == 0) {
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 		IPSECLOG(LOG_DEBUG, "there was invalid proto in SAD.\n");
 		return key_senderror(so, m, EINVAL);
 	}
@@ -5995,7 +5995,7 @@ key_api_get(struct socket *so, struct mbuf *m,
 	/* create new sadb_msg to reply. */
 	n = key_setdumpsa(sav, SADB_GET, satype, mhp->msg->sadb_msg_seq,
 	    mhp->msg->sadb_msg_pid);
-	KEY_FREESAV(&sav);
+	KEY_SA_UNREF(&sav);
 	if (!n)
 		return key_senderror(so, m, ENOBUFS);
 
