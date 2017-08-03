@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.38 2017/08/03 09:42:34 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.39 2017/08/03 19:22:15 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -269,7 +269,8 @@ brdsetup(void)
 				brdtype = BRD_KUROBOXT4;
 		}
 	}
-	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x11ab) {
+	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x1148
+	    || PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x11ab) {
 		/* SKnet/Marvell (sk) at dev 15 */
 		brdtype = BRD_SYNOLOGY;
 	}
@@ -873,8 +874,11 @@ synopcifix(struct brdprop *brd)
 		 * with several seconds delay, but no CPLD register to
 		 * monitor the power state. So all we can do is to
 		 * wait some more seconds during SATA-init.
+		 * Also wait some seconds now, to make sure the first
+		 * disk is ready after a cold start.
 		 */
 		sata_delay[1] = SYNO_DISK_DELAY;
+		delay(10 * 1024 * 1024);
 	}
 
   cpld_done:
