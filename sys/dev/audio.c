@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.384 2017/07/30 02:41:58 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.385 2017/08/03 11:39:06 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.384 2017/07/30 02:41:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.385 2017/08/03 11:39:06 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2162,19 +2162,12 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	DPRINTF(("audio_open: flags=0x%x sc=%p hdl=%p\n",
 		 flags, sc, sc->hw_hdl));
 
-	error = audio_alloc_ring(sc, &vc->sc_mpr,
-	    	    AUMODE_PLAY, AU_RING_SIZE);
-	if (!error) {
-		error = audio_alloc_ring(sc, &vc->sc_mrr,
-	    	    AUMODE_RECORD, AU_RING_SIZE);
-	}
-	if (error) {
-		audio_free_ring(sc, &vc->sc_mrr);
-		audio_free_ring(sc, &vc->sc_mpr);
-		kmem_free(vc, sizeof(struct virtual_channel));
-		kmem_free(chan, sizeof(struct audio_chan));
-		return error;
-	}
+	error = audio_alloc_ring(sc, &vc->sc_mpr, AUMODE_PLAY, AU_RING_SIZE);
+	if (error)
+		goto bad;
+	error = audio_alloc_ring(sc, &vc->sc_mrr, AUMODE_RECORD, AU_RING_SIZE);
+	if (error)
+		goto bad;
 
 	if (sc->sc_opens == 0) {
 		sc->sc_credentials = kauth_cred_get();
@@ -2184,11 +2177,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			error = hw->open(sc->hw_hdl, flags);
 			mutex_exit(sc->sc_intr_lock);
 			if (error) {
-				kmem_free(vc,
-				    sizeof(struct virtual_channel));
-				kmem_free(chan,
-				    sizeof(struct audio_chan));
-				return error;
+				goto bad;
 			}
 		}
 		audio_initbufs(sc, NULL);
@@ -2262,7 +2251,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 
 	error = fd_allocfile(&fp, &fd);
 	if (error)
-		return error;
+		goto bad;
 
 	DPRINTF(("audio_open: done sc_mode = 0x%x\n", vc->sc_mode));
 
