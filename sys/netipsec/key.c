@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.202 2017/08/03 06:30:04 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.203 2017/08/03 06:30:40 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.202 2017/08/03 06:30:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.203 2017/08/03 06:30:40 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -257,6 +257,51 @@ static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
 	                      pslist_entry)
 #define SAHLIST_WRITER_INSERT_HEAD(sah)					\
 	PSLIST_WRITER_INSERT_HEAD(&sahtree, (sah), pslist_entry)
+
+#define SAVLIST_ENTRY_INIT(sav)						\
+	PSLIST_ENTRY_INIT((sav), pslist_entry)
+#define SAVLIST_ENTRY_DESTROY(sav)					\
+	PSLIST_ENTRY_DESTROY((sav), pslist_entry)
+#define SAVLIST_READER_FIRST(sah, state)				\
+	PSLIST_READER_FIRST(&(sah)->savtree[(state)], struct secasvar,	\
+	                    pslist_entry)
+#define SAVLIST_WRITER_REMOVE(sav)					\
+	PSLIST_WRITER_REMOVE((sav), pslist_entry)
+#define SAVLIST_READER_FOREACH(sav, sah, state)				\
+	PSLIST_READER_FOREACH((sav), &(sah)->savtree[(state)],		\
+	                      struct secasvar, pslist_entry)
+#define SAVLIST_WRITER_FOREACH(sav, sah, state)				\
+	PSLIST_WRITER_FOREACH((sav), &(sah)->savtree[(state)],		\
+	                      struct secasvar, pslist_entry)
+#define SAVLIST_WRITER_INSERT_BEFORE(sav, new)				\
+	PSLIST_WRITER_INSERT_BEFORE((sav), (new), pslist_entry)
+#define SAVLIST_WRITER_INSERT_AFTER(sav, new)				\
+	PSLIST_WRITER_INSERT_AFTER((sav), (new), pslist_entry)
+#define SAVLIST_WRITER_EMPTY(sah, state)				\
+	(PSLIST_WRITER_FIRST(&(sah)->savtree[(state)], struct secasvar,	\
+	                     pslist_entry) == NULL)
+#define SAVLIST_WRITER_INSERT_HEAD(sah, state, sav)			\
+	PSLIST_WRITER_INSERT_HEAD(&(sah)->savtree[(state)], (sav),	\
+	                          pslist_entry)
+#define SAVLIST_WRITER_NEXT(sav)					\
+	PSLIST_WRITER_NEXT((sav), struct secasvar, pslist_entry)
+#define SAVLIST_WRITER_INSERT_TAIL(sah, state, new)			\
+	do {								\
+		if (SAVLIST_WRITER_EMPTY((sah), (state))) {		\
+			SAVLIST_WRITER_INSERT_HEAD((sah), (state), (new));\
+		} else {						\
+			struct secasvar *__sav;				\
+			SAVLIST_WRITER_FOREACH(__sav, (sah), (state)) {	\
+				if (SAVLIST_WRITER_NEXT(__sav) == NULL) {\
+					SAVLIST_WRITER_INSERT_AFTER(__sav,\
+					    (new));			\
+					break;				\
+				}					\
+			}						\
+		}							\
+	} while (0)
+#define SAVLIST_READER_NEXT(sav)					\
+	PSLIST_READER_NEXT((sav), struct secasvar, pslist_entry)
 
 /*
  * The list has SPs that are set to a socket via setsockopt(IP_IPSEC_POLICY)
@@ -970,12 +1015,12 @@ key_lookup_sa_bysaidx(const struct secasindex *saidx)
 		state = saorder_state_valid[stateidx];
 
 		if (key_prefered_oldsa)
-			sav = LIST_FIRST(&sah->savtree[state]);
+			sav = SAVLIST_READER_FIRST(sah, state);
 		else {
 			/* XXX need O(1) lookup */
 			struct secasvar *last = NULL;
 
-			LIST_FOREACH(sav, &sah->savtree[state], chain)
+			SAVLIST_READER_FOREACH(sav, sah, state)
 				last = sav;
 			sav = last;
 		}
@@ -1133,7 +1178,7 @@ key_lookup_sa(
 		/* search valid state */
 		for (stateidx = 0; stateidx < arraysize; stateidx++) {
 			state = saorder_state_valid[stateidx];
-			LIST_FOREACH(sav, &sah->savtree[state], chain) {
+			SAVLIST_READER_FOREACH(sav, sah, state) {
 				KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
 				    "try match spi %#x, %#x\n",
 				    ntohl(spi), ntohl(sav->spi));
@@ -1201,7 +1246,8 @@ key_validate_savlist(const struct secashead *sah, const u_int state)
 	 * The list should be sorted by lft_c->sadb_lifetime_addtime
 	 * in ascending order.
 	 */
-	LIST_FOREACH_SAFE(sav, &sah->savtree[state], chain, next) {
+	SAVLIST_READER_FOREACH(sav, sah, state) {
+		next = SAVLIST_READER_NEXT(sav);
 		if (next != NULL &&
 		    sav->lft_c != NULL && next->lft_c != NULL) {
 			KDASSERTMSG(sav->lft_c->sadb_lifetime_addtime <=
@@ -1361,8 +1407,7 @@ key_freesav(struct secasvar **psav, const char* where, int tag)
 		*psav = NULL;
 
 		/* remove from SA header */
-		KASSERT(__LIST_CHAINED(sav));
-		LIST_REMOVE(sav, chain);
+		SAVLIST_WRITER_REMOVE(sav);
 
 		key_delsav(sav);
 	}
@@ -2864,7 +2909,7 @@ key_newsah(const struct secasindex *saidx)
 
 	newsah = kmem_zalloc(sizeof(struct secashead), KM_SLEEP);
 	for (i = 0; i < __arraycount(newsah->savtree); i++)
-		LIST_INIT(&newsah->savtree[i]);
+		PSLIST_INIT(&newsah->savtree[i]);
 	newsah->saidx = *saidx;
 
 	/* add to saidxtree */
@@ -2893,7 +2938,7 @@ key_delsah(struct secashead *sah)
 
 	/* searching all SA registerd in the secindex. */
 	SASTATE_ANY_FOREACH(state) {
-		LIST_FOREACH(sav, &sah->savtree[state], chain) {
+		SAVLIST_READER_FOREACH(sav, sah, state) {
 			/* give up to delete this sa */
 			zombie++;
 		}
@@ -3040,6 +3085,7 @@ key_delsav(struct secasvar *sav)
 
 	key_clear_xform(sav);
 	key_freesaval(sav);
+	SAVLIST_ENTRY_DESTROY(sav);
 	kmem_intr_free(sav, sizeof(*sav));
 
 	return;
@@ -3113,8 +3159,7 @@ key_getsavbyspi(struct secashead *sah, u_int32_t spi)
 
 	/* search all status */
 	SASTATE_ALIVE_FOREACH(state) {
-		LIST_FOREACH(sav, &sah->savtree[state], chain) {
-
+		SAVLIST_READER_FOREACH(sav, sah, state) {
 			/* sanity check */
 			if (sav->state != state) {
 				IPSECLOG(LOG_DEBUG,
@@ -4501,7 +4546,7 @@ static void
 key_timehandler_sad(time_t now)
 {
 	struct secashead *sah;
-	struct secasvar *sav, *nextsav;
+	struct secasvar *sav;
 
 restart:
 	SAHLIST_WRITER_FOREACH(sah) {
@@ -4512,10 +4557,11 @@ restart:
 		}
 
 		/* if LARVAL entry doesn't become MATURE, delete it. */
-		LIST_FOREACH_SAFE(sav, &sah->savtree[SADB_SASTATE_LARVAL],
-		    chain, nextsav) {
+	restart_sav_LARVAL:
+		SAVLIST_READER_FOREACH(sav, sah, SADB_SASTATE_LARVAL) {
 			if (now - sav->created > key_larval_lifetime) {
 				KEY_FREESAV(&sav);
+				goto restart_sav_LARVAL;
 			}
 		}
 
@@ -4523,8 +4569,8 @@ restart:
 		 * check MATURE entry to start to send expire message
 		 * whether or not.
 		 */
-		LIST_FOREACH_SAFE(sav, &sah->savtree[SADB_SASTATE_MATURE],
-		    chain, nextsav) {
+	restart_sav_MATURE:
+		SAVLIST_READER_FOREACH(sav, sah, SADB_SASTATE_MATURE) {
 			/* we don't need to check. */
 			if (sav->lft_s == NULL)
 				continue;
@@ -4551,6 +4597,7 @@ restart:
 					 */
 					key_expire(sav);
 				}
+				goto restart_sav_MATURE;
 			}
 			/* check SOFT lifetime by bytes */
 			/*
@@ -4569,12 +4616,13 @@ restart:
 				 * DYING. Do remove below code.
 				 */
 				key_expire(sav);
+				goto restart_sav_MATURE;
 			}
 		}
 
 		/* check DYING entry to change status to DEAD. */
-		LIST_FOREACH_SAFE(sav, &sah->savtree[SADB_SASTATE_DYING],
-		    chain, nextsav) {
+	restart_sav_DYING:
+		SAVLIST_READER_FOREACH(sav, sah, SADB_SASTATE_DYING) {
 			/* we don't need to check. */
 			if (sav->lft_h == NULL)
 				continue;
@@ -4586,6 +4634,7 @@ restart:
 			    now - sav->created > sav->lft_h->sadb_lifetime_addtime) {
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 				KEY_FREESAV(&sav);
+				goto restart_sav_DYING;
 			}
 #if 0	/* XXX Should we keep to send expire message until HARD lifetime ? */
 			else if (sav->lft_s != NULL
@@ -4609,12 +4658,12 @@ restart:
 			         sav->lft_c->sadb_lifetime_bytes) {
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 				KEY_FREESAV(&sav);
+				goto restart_sav_DYING;
 			}
 		}
 
 		/* delete entry in DEAD */
-		LIST_FOREACH_SAFE(sav, &sah->savtree[SADB_SASTATE_DEAD],
-		    chain, nextsav) {
+		SAVLIST_READER_FOREACH(sav, sah, SADB_SASTATE_DEAD) {
 			/* sanity check */
 			if (sav->state != SADB_SASTATE_DEAD) {
 				IPSECLOG(LOG_DEBUG,
@@ -4912,8 +4961,8 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 	newsav->refcnt = 1;
 	newsav->sah = newsah;
 	newsav->state = SADB_SASTATE_LARVAL;
-	LIST_INSERT_TAIL(&newsah->savtree[SADB_SASTATE_LARVAL], newsav,
-	    secasvar, chain);
+	SAVLIST_ENTRY_INIT(newsav);
+	SAVLIST_WRITER_INSERT_TAIL(newsah, SADB_SASTATE_LARVAL, newsav);
 	key_validate_savlist(newsah, SADB_SASTATE_LARVAL);
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
@@ -5352,8 +5401,8 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	/* add to satree */
 	newsav->refcnt = 1;
 	newsav->state = SADB_SASTATE_MATURE;
-	LIST_INSERT_TAIL(&sah->savtree[SADB_SASTATE_MATURE], newsav,
-	    secasvar, chain);
+	SAVLIST_ENTRY_INIT(newsav);
+	SAVLIST_WRITER_INSERT_TAIL(sah, SADB_SASTATE_MATURE, newsav);
 	key_validate_savlist(sah, SADB_SASTATE_MATURE);
 
 	key_sa_chgstate(sav, SADB_SASTATE_DEAD);
@@ -5395,8 +5444,7 @@ key_getsavbyseq(struct secashead *sah, u_int32_t seq)
 	state = SADB_SASTATE_LARVAL;
 
 	/* search SAD with sequence number ? */
-	LIST_FOREACH(sav, &sah->savtree[state], chain) {
-
+	SAVLIST_READER_FOREACH(sav, sah, state) {
 		KEY_CHKSASTATE(state, sav->state);
 
 		if (sav->seq == seq) {
@@ -5541,8 +5589,8 @@ key_api_add(struct socket *so, struct mbuf *m,
 	/* add to satree */
 	newsav->refcnt = 1;
 	newsav->state = SADB_SASTATE_MATURE;
-	LIST_INSERT_TAIL(&newsah->savtree[SADB_SASTATE_MATURE], newsav,
-	    secasvar, chain);
+	SAVLIST_ENTRY_INIT(newsav);
+	SAVLIST_WRITER_INSERT_TAIL(newsah, SADB_SASTATE_MATURE, newsav);
 	key_validate_savlist(newsah, SADB_SASTATE_MATURE);
 
 	/*
@@ -5791,7 +5839,7 @@ key_delete_all(struct socket *so, struct mbuf *m,
 	const struct sockaddr *src, *dst;
 	struct secasindex saidx;
 	struct secashead *sah;
-	struct secasvar *sav, *nextsav;
+	struct secasvar *sav;
 	u_int state;
 	int error;
 
@@ -5812,8 +5860,8 @@ key_delete_all(struct socket *so, struct mbuf *m,
 		SASTATE_ALIVE_FOREACH(state) {
 			if (state == SADB_SASTATE_LARVAL)
 				continue;
-			LIST_FOREACH_SAFE(sav, &sah->savtree[state], chain,
-			    nextsav) {
+		restart:
+			SAVLIST_WRITER_FOREACH(sav, sah, state) {
 				/* sanity check */
 				if (sav->state != state) {
 					IPSECLOG(LOG_DEBUG,
@@ -5825,6 +5873,7 @@ key_delete_all(struct socket *so, struct mbuf *m,
 
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 				KEY_FREESAV(&sav);
+				goto restart;
 			}
 		}
 	}
@@ -6940,7 +6989,7 @@ key_api_flush(struct socket *so, struct mbuf *m,
 {
 	struct sadb_msg *newmsg;
 	struct secashead *sah;
-	struct secasvar *sav, *nextsav;
+	struct secasvar *sav;
 	u_int16_t proto;
 	u_int8_t state;
 
@@ -6958,10 +7007,11 @@ key_api_flush(struct socket *so, struct mbuf *m,
 			continue;
 
 		SASTATE_ALIVE_FOREACH(state) {
-			LIST_FOREACH_SAFE(sav, &sah->savtree[state], chain,
-			    nextsav) {
+		restart:
+			SAVLIST_WRITER_FOREACH(sav, sah, state) {
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 				KEY_FREESAV(&sav);
+				goto restart;
 			}
 		}
 
@@ -7014,7 +7064,7 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 			continue;
 
 		SASTATE_ANY_FOREACH(state) {
-			LIST_FOREACH(sav, &sah->savtree[state], chain) {
+			SAVLIST_READER_FOREACH(sav, sah, state) {
 				cnt++;
 			}
 		}
@@ -7042,7 +7092,7 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 		}
 
 		SASTATE_ANY_FOREACH(state) {
-			LIST_FOREACH(sav, &sah->savtree[state], chain) {
+			SAVLIST_READER_FOREACH(sav, sah, state) {
 				n = key_setdumpsa(sav, SADB_DUMP, satype,
 				    --cnt, pid);
 				if (!n) {
@@ -7895,29 +7945,29 @@ key_sa_chgstate(struct secasvar *sav, u_int8_t state)
 	if (sav->state == state)
 		return;
 
-	KASSERT(__LIST_CHAINED(sav));
-	LIST_REMOVE(sav, chain);
+	SAVLIST_WRITER_REMOVE(sav);
+	SAVLIST_ENTRY_DESTROY(sav);
+	SAVLIST_ENTRY_INIT(sav);
 
 	sav->state = state;
 	if (!SADB_SASTATE_USABLE_P(sav)) {
 		/* We don't need to care about the order */
-		LIST_INSERT_HEAD(&sav->sah->savtree[state], sav, chain);
+		SAVLIST_WRITER_INSERT_HEAD(sav->sah, state, sav);
 		return;
 	}
 	/*
 	 * Sort the list by lft_c->sadb_lifetime_addtime
 	 * in ascending order.
 	 */
-	LIST_FOREACH(_sav, &sav->sah->savtree[state], chain) {
+	SAVLIST_READER_FOREACH(_sav, sav->sah, state) {
 		if (_sav->lft_c->sadb_lifetime_addtime >
 		    sav->lft_c->sadb_lifetime_addtime) {
-			LIST_INSERT_BEFORE(_sav, sav, chain);
+			SAVLIST_WRITER_INSERT_BEFORE(_sav, sav);
 			break;
 		}
 	}
 	if (_sav == NULL) {
-		LIST_INSERT_TAIL(&sav->sah->savtree[state], sav, secasvar,
-		    chain);
+		SAVLIST_WRITER_INSERT_TAIL(sav->sah, state, sav);
 	}
 	key_validate_savlist(sav->sah, state);
 }
@@ -7986,7 +8036,7 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 			continue;
 
 		SASTATE_ANY_FOREACH(state) {
-			LIST_FOREACH(sav, &sah->savtree[state], chain) {
+			SAVLIST_READER_FOREACH(sav, sah, state) {
 				cnt++;
 			}
 		}
@@ -8013,7 +8063,7 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 		}
 
 		SASTATE_ANY_FOREACH(state) {
-			LIST_FOREACH(sav, &sah->savtree[state], chain) {
+			SAVLIST_READER_FOREACH(sav, sah, state) {
 				n = key_setdumpsa(sav, SADB_DUMP, satype,
 				    --cnt, pid);
 				if (!n) {
