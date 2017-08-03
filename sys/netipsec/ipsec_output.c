@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.57 2017/07/27 06:59:28 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.58 2017/08/03 06:32:51 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.57 2017/07/27 06:59:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.58 2017/08/03 06:32:51 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -428,7 +428,7 @@ again:
 		    " to policy (check your sysctls)\n");
 		IPSEC_OSTAT(PDROPS);
 		*error = EHOSTUNREACH;
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 		goto bad;
 	}
 
@@ -491,7 +491,7 @@ ipsec4_process_packet(struct mbuf *m, struct ipsecrequest *isr,
 		if (ntohs(ip->ip_len) <= sav->esp_frag)
 			goto noneed;
 		*mtu = sav->esp_frag;
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 		splx(s);
 		return 0;
 	}
@@ -605,11 +605,11 @@ noneed:
 	} else {
 		error = ipsec_process_done(m, isr, sav);
 	}
-	KEY_FREESAV(&sav);
+	KEY_SA_UNREF(&sav);
 	splx(s);
 	return error;
 unrefsav:
-	KEY_FREESAV(&sav);
+	KEY_SA_UNREF(&sav);
 bad:
 	splx(s);
 	if (m)
@@ -791,11 +791,11 @@ ipsec6_process_packet(
 		compute_ipsec_pos(m, &i, &off);
 	}
 	error = (*sav->tdb_xform->xf_output)(m, isr, sav, NULL, i, off);
-	KEY_FREESAV(&sav);
+	KEY_SA_UNREF(&sav);
 	splx(s);
 	return error;
 unrefsav:
-	KEY_FREESAV(&sav);
+	KEY_SA_UNREF(&sav);
 bad:
 	splx(s);
 	if (m)
