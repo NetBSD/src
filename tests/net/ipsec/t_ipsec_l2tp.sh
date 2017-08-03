@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_l2tp.sh,v 1.6 2017/06/14 02:33:37 ozaki-r Exp $
+#	$NetBSD: t_ipsec_l2tp.sh,v 1.7 2017/08/03 03:16:27 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -374,19 +374,19 @@ add_test_ipsec_l2tp()
 	desc="Tests of l2tp/IPsec ($ipproto) ${mode} mode with $proto ($algo)"
 
 	atf_test_case ${name} cleanup
-	eval "								\
-	    ${name}_head() {						\
-	        atf_set \"descr\" \"$desc\";				\
-	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
-	    };								\
-	    ${name}_body() {						\
-	        test_ipsec_l2tp_common $ipproto $mode $proto $algo;	\
-	        rump_server_destroy_ifaces;				\
-	    };								\
-	    ${name}_cleanup() {						\
-	        $DEBUG && dump;						\
-	        cleanup;						\
-	    }								\
+	eval "
+	    ${name}_head() {
+	        atf_set descr \"$desc\"
+	        atf_set require.progs rump_server setkey
+	    }
+	    ${name}_body() {
+	        test_ipsec_l2tp_common $ipproto $mode $proto $algo
+	        rump_server_destroy_ifaces
+	    }
+	    ${name}_cleanup() {
+	        \$DEBUG && dump
+	        cleanup
+	    }
 	"
 	atf_add_test_case ${name}
 }
