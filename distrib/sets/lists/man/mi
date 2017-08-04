@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1559 2017/06/16 22:39:34 pgoyette Exp $
+# $NetBSD: mi,v 1.1559.2.1 2017/08/04 21:43:11 perseant Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3467,6 +3467,7 @@
 ./usr/share/man/html1/linkfarm.html		man-obsolete		obsolete
 ./usr/share/man/html1/ln.html			man-util-htmlman	html
 ./usr/share/man/html1/locale.html		man-util-htmlman	html
+./usr/share/man/html1/localedef.html		man-util-htmlman	html
 ./usr/share/man/html1/locate.html		man-util-htmlman	html
 ./usr/share/man/html1/lock.html			man-util-htmlman	html
 ./usr/share/man/html1/logger.html		man-util-htmlman	html
@@ -6290,6 +6291,7 @@
 ./usr/share/man/man1/linkfarm.1			man-obsolete		obsolete
 ./usr/share/man/man1/ln.1			man-util-man		.man
 ./usr/share/man/man1/locale.1			man-util-man		.man
+./usr/share/man/man1/localedef.1		man-util-man		.man
 ./usr/share/man/man1/locate.1			man-util-man		.man
 ./usr/share/man/man1/lock.1			man-util-man		.man
 ./usr/share/man/man1/logger.1			man-util-man		.man

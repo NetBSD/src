@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.36.22.2 2017/07/31 04:23:35 perseant Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.36.22.3 2017/08/04 21:43:11 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -956,7 +956,21 @@ _FUNCNAME(ctype_kt2ucs)(void * __restrict cl,
 	return _FUNCNAME(kt2ucs)(_CEI_TO_EI(_TO_CEI(cl)), up, kt);
 }
 #else
-/* Define away the calls to these functions */
-#define _FUNCNAME(ctype_ucs2kt)(cl, ktp, wc) do {} while (0)
-#define _FUNCNAME(ctype_kt2ucs)(cl, up, kt) do {} while (0)
+static __inline int
+/*ARGSUSED*/
+_FUNCNAME(ctype_ucs2kt)(void * __restrict cl,
+			wchar_kuten_t * __restrict ktp, wchar_ucs4_t wc)
+{
+	*ktp = wc;
+	return 0;
+}
+
+static __inline int
+/*ARGSUSED*/
+_FUNCNAME(ctype_kt2ucs)(void * __restrict cl,
+		         wchar_ucs4_t * __restrict up, wchar_kuten_t kt)
+{
+	*up = kt;
+	return 0;
+}
 #endif
