@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.31 2017/08/01 22:02:32 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.32 2017/08/04 20:49:24 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.31 2017/08/01 22:02:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.32 2017/08/04 20:49:24 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -262,9 +262,12 @@ siisata_init_port(struct siisata_softc *sc, int port)
 	schp = &sc->sc_channels[port];
 	chp = (struct ata_channel *)schp;
 
-	/* come out of reset, 64-bit activation */
+	/*
+	 * Come out of reset. Disable no clearing of PR_PIS_CMDCMPL on read
+	 * of PR_PSS. Disable 32-bit PRB activation, we use 64-bit activation.
+	 */
 	PRWRITE(sc, PRX(chp->ch_channel, PRO_PCC),
-	    PR_PC_32BA | PR_PC_PORT_RESET);
+	    PR_PC_32BA | PR_PC_INCOR | PR_PC_PORT_RESET);
 	/* initialize port */
 	siisata_reinit_port(chp, -1);
 	/* enable CmdErrr+CmdCmpl interrupting */
@@ -478,21 +481,21 @@ siisata_intr_port(struct siisata_channel *schp)
 	uint32_t pss, pis, tfd = 0;
 	bool recover = false;
 
-	pis = PRREAD(sc, PRX(chp->ch_channel, PRO_PIS));
+	/* get slot status, clearing completion interrupt */
+	pss = PRREAD(sc, PRX(chp->ch_channel, PRO_PSS));
 
-	SIISATA_DEBUG_PRINT(("%s: %s port %d, pis 0x%x ",
-	    SIISATANAME(sc), __func__, chp->ch_channel, pis),
+	SIISATA_DEBUG_PRINT(("%s: %s port %d, pss 0x%x ",
+	    SIISATANAME(sc), __func__, chp->ch_channel, pss),
 	    DEBUG_INTR);
 
-	if (pis & PR_PIS_CMDCMPL) {
-		/* get slot status, clearing completion interrupt */
-		pss = PRREAD(sc, PRX(chp->ch_channel, PRO_PSS));
-
-		SIISATA_DEBUG_PRINT(("pss 0x%x\n", pss), DEBUG_INTR);
-	} else {
-		/* commands will be killed after recovery */
-		pss = 0xffffffff;
+	if (__predict_true((pss & PR_PSS_ATTENTION) == 0)) {
+		SIISATA_DEBUG_PRINT(("no attention"), DEBUG_INTR);
+		goto process;
 	}
+
+	pis = PRREAD(sc, PRX(chp->ch_channel, PRO_PIS));
+
+	SIISATA_DEBUG_PRINT(("pis 0x%x\n", pss), DEBUG_INTR);
 
 	if (pis & PR_PIS_CMDERRR) {
 		uint32_t ec;
@@ -552,6 +555,7 @@ siisata_intr_port(struct siisata_channel *schp)
 	if (__predict_false(recover))
 		ata_channel_freeze(chp);
 
+process:
 	if (xfer != NULL) {
 		xfer->c_intr(chp, xfer, tfd);
 	} else {
