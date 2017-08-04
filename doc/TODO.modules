@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.11 2017/01/26 04:24:20 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.12 2017/08/04 11:55:06 pgoyette Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -135,3 +135,11 @@ christos and pgoyette.
     loader time, an alternate value for the os-release portion of the
     default module path,  i.e. /stand/$MACHINE/$ALT-RELEASE/modules/
 
+15. The existing config(5) framework provides an excellent mechanism
+    for managing the content of kernels.  Unfortunately, this mechanism
+    does not apply for modules, and instead we need to manually manage
+    a list of files to include in the module, the set of compiler
+    definitions with which to build those files, and also the set of
+    other modules on which a module depends.  We really need a common
+    mechanism to define and build modules, whether they are included as
+    "built-in" modules or as separately-loadable modules.
