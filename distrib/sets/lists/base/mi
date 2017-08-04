@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1158 2017/05/27 21:02:54 bouyer Exp $
+# $NetBSD: mi,v 1.1158.4.1 2017/08/04 21:43:11 perseant Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -777,6 +777,7 @@
 ./usr/bin/lessecho				base-util-bin
 ./usr/bin/lesskey				base-util-bin
 ./usr/bin/locale				base-locale-bin
+./usr/bin/localedef				base-locale-bin
 ./usr/bin/locate				base-util-bin
 ./usr/bin/lock					base-util-bin
 ./usr/bin/logger				base-util-bin
