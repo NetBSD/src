@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.274 2017/06/08 01:23:01 chs Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.275 2017/08/04 07:00:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.274 2017/06/08 01:23:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.275 2017/08/04 07:00:17 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1543,7 +1543,7 @@ biowait(buf_t *bp)
 
 	mutex_enter(bp->b_objlock);
 
-	BIOHIST_CALLARGS(biohist, "bp=%p, oflags=0x%x, ret_addr %p",
+	BIOHIST_CALLARGS(biohist, "bp=%p, oflags=0x%x, ret_addr=%p",
 	    bp, bp->b_oflags, __builtin_return_address(0), 0);
 
 	while (!ISSET(bp->b_oflags, BO_DONE | BO_DELWRI)) {
