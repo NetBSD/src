@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.205 2017/06/22 09:53:24 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.206 2017/08/04 20:17:45 uwe Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.205 2017/06/22 09:53:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.206 2017/08/04 20:17:45 uwe Exp $");
 
 #include "arp.h"
 
@@ -1126,7 +1126,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	s = splsoftnet();
 	error = if_addr_init(ifp, &ia->ia_ifa, true);
 	splx(s);
-	/* Now clear the try tentative flag, it's job is done. */
+	/* Now clear the try tentative flag, its job is done. */
 	ia->ia4_flags &= ~IN_IFF_TRYTENTATIVE;
 	if (error != 0) {
 		ia->ia_addr = oldaddr;
