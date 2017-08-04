@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.15 2016/02/27 16:40:22 christos Exp $ */
+/* $NetBSD: acpi.c,v 1.16 2017/08/04 06:30:36 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -26,11 +26,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpi.c,v 1.37 2009/08/25 20:35:57 jhb Exp $
+ *	$FreeBSD: head/usr.sbin/acpi/acpidump/acpi.c 321299 2017-07-20 17:36:17Z emaste $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.15 2016/02/27 16:40:22 christos Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.16 2017/08/04 06:30:36 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -116,6 +116,71 @@ static void	acpi_walk_subtables(ACPI_TABLE_HEADER *table, void *first,
 /* Size of an address. 32-bit for ACPI 1.0, 64-bit for ACPI 2.0 and up. */
 static int addr_size;
 
+/* Strings used in the TCPA table */
+static const char *tcpa_event_type_strings[] = {
+	"PREBOOT Certificate",
+	"POST Code",
+	"Unused",
+	"No Action",
+	"Separator",
+	"Action",
+	"Event Tag",
+	"S-CRTM Contents",
+	"S-CRTM Version",
+	"CPU Microcode",
+	"Platform Config Flags",
+	"Table of Devices",
+	"Compact Hash",
+	"IPL",
+	"IPL Partition Data",
+	"Non-Host Code",
+	"Non-Host Config",
+	"Non-Host Info"
+};
+
+static const char *TCPA_pcclient_strings[] = {
+	"<undefined>",
+	"SMBIOS",
+	"BIS Certificate",
+	"POST BIOS ROM Strings",
+	"ESCD",
+	"CMOS",
+	"NVRAM",
+	"Option ROM Execute",
+	"Option ROM Configurateion",
+	"<undefined>",
+	"Option ROM Microcode Update ",
+	"S-CRTM Version String",
+	"S-CRTM Contents",
+	"POST Contents",
+	"Table of Devices",
+};
+
+#define	PRINTFLAG_END()		printflag_end()
+
+static char pf_sep = '{';
+
+static void
+printflag_end(void)
+{
+
+	if (pf_sep != '{') {
+		printf("}");
+		pf_sep = '{';
+	}
+	printf("\n");
+}
+
+static void
+printflag(uint64_t var, uint64_t mask, const char *name)
+{
+
+	if (var & mask) {
+		printf("%c%s", pf_sep, name);
+		pf_sep = ',';
+	}
+}
+
 static void
 acpi_print_string(char *s, size_t length)
 {
@@ -136,12 +201,18 @@ acpi_print_gas(ACPI_GENERIC_ADDRESS *gas)
 {
 	switch(gas->SpaceId) {
 	case ACPI_GAS_MEMORY:
-		printf("0x%08lx:%u[%u] (Memory)", (u_long)gas->Address,
-		       gas->BitOffset, gas->BitWidth);
+		if (gas->BitWidth <= 32)
+			printf("0x%08x:%u[%u] (Memory)",
+			    (u_int)gas->Address, gas->BitOffset,
+			    gas->BitWidth);
+		else
+			printf("0x%016jx:%u[%u] (Memory)",
+			    (uintmax_t)gas->Address, gas->BitOffset,
+			    gas->BitWidth);
 		break;
 	case ACPI_GAS_IO:
-		printf("0x%02lx:%u[%u] (IO)", (u_long)gas->Address,
-		       gas->BitOffset, gas->BitWidth);
+		printf("0x%02x:%u[%u] (IO)", (u_int)gas->Address,
+		    gas->BitOffset, gas->BitWidth);
 		break;
 	case ACPI_GAS_PCI:
 		printf("%x:%x+0x%x (PCI)", (uint16_t)(gas->Address >> 32),
@@ -162,7 +233,7 @@ acpi_print_gas(ACPI_GENERIC_ADDRESS *gas)
 	case ACPI_GAS_DATATABLE:
 	case ACPI_GAS_FIXED:
 	default:
-		printf("0x%08lx (?)", (u_long)gas->Address);
+		printf("0x%016jx (?)", (uintmax_t)gas->Address);
 		break;
 	}
 }
@@ -720,6 +791,10 @@ acpi_walk_subtables(ACPI_TABLE_HEADER *table, void *first,
 	end = (char *)table + table->Length;
 	while ((char *)subtable < end) {
 		printf("\n");
+		if (subtable->Length < sizeof(ACPI_SUBTABLE_HEADER)) {
+			warnx("invalid subtable length %u", subtable->Length);
+			return;
+		}
 		action(subtable);
 		subtable = (ACPI_SUBTABLE_HEADER *)((char *)subtable +
 		    subtable->Length);
@@ -806,6 +881,23 @@ acpi_print_mps_flags(uint16_t flags)
 }
 
 static void
+acpi_print_gicc_flags(uint32_t flags)
+{
+
+	printf("\tFlags={Performance intr=");
+	if (flags & ACPI_MADT_PERFORMANCE_IRQ_MODE)
+		printf("edge");
+	else
+		printf("level");
+	printf(", VGIC intr=");
+	if (flags & ACPI_MADT_VGIC_IRQ_MODE)
+		printf("edge");
+	else
+		printf("level");
+	printf("}\n");
+}
+
+static void
 acpi_print_intr(uint32_t intr, uint16_t mps_flags)
 {
 
@@ -821,12 +913,27 @@ acpi_print_local_nmi(u_int lint, uint16_t mps_flags)
 	acpi_print_mps_flags(mps_flags);
 }
 
-const char *apic_types[] = { "Local APIC", "IO APIC", "INT Override", "NMI",
-			     "Local APIC NMI", "Local APIC Override",
-			     "IO SAPIC", "Local SAPIC", "Platform Interrupt",
-			     "Local X2APIC", "Local X2APIC NMI" };
-const char *platform_int_types[] = { "0 (unknown)", "PMI", "INIT",
-				     "Corrected Platform Error" };
+static const char *apic_types[] = {
+    [ACPI_MADT_TYPE_LOCAL_APIC] = "Local APIC",
+    [ACPI_MADT_TYPE_IO_APIC] = "IO APIC",
+    [ACPI_MADT_TYPE_INTERRUPT_OVERRIDE] = "INT Override",
+    [ACPI_MADT_TYPE_NMI_SOURCE] = "NMI",
+    [ACPI_MADT_TYPE_LOCAL_APIC_NMI] = "Local APIC NMI",
+    [ACPI_MADT_TYPE_LOCAL_APIC_OVERRIDE] = "Local APIC Override",
+    [ACPI_MADT_TYPE_IO_SAPIC] = "IO SAPIC",
+    [ACPI_MADT_TYPE_LOCAL_SAPIC] = "Local SAPIC",
+    [ACPI_MADT_TYPE_INTERRUPT_SOURCE] = "Platform Interrupt",
+    [ACPI_MADT_TYPE_LOCAL_X2APIC] = "Local X2APIC",
+    [ACPI_MADT_TYPE_LOCAL_X2APIC_NMI] = "Local X2APIC NMI",
+    [ACPI_MADT_TYPE_GENERIC_INTERRUPT] = "GIC CPU Interface Structure",
+    [ACPI_MADT_TYPE_GENERIC_DISTRIBUTOR] = "GIC Distributor Structure",
+    [ACPI_MADT_TYPE_GENERIC_MSI_FRAME] = "GICv2m MSI Frame",
+    [ACPI_MADT_TYPE_GENERIC_REDISTRIBUTOR] = "GIC Redistributor Structure",
+    [ACPI_MADT_TYPE_GENERIC_TRANSLATOR] = "GIC ITS Structure"
+};
+
+static const char *platform_int_types[] = { "0 (unknown)", "PMI", "INIT",
+					    "Corrected Platform Error" };
 
 static void
 acpi_print_madt(ACPI_SUBTABLE_HEADER *mp)
@@ -842,8 +949,12 @@ acpi_print_madt(ACPI_SUBTABLE_HEADER *mp)
 	ACPI_MADT_INTERRUPT_SOURCE *isrc;
 	ACPI_MADT_LOCAL_X2APIC *x2apic;
 	ACPI_MADT_LOCAL_X2APIC_NMI *x2apic_nmi;
+	ACPI_MADT_GENERIC_INTERRUPT *gicc;
+	ACPI_MADT_GENERIC_DISTRIBUTOR *gicd;
+	ACPI_MADT_GENERIC_REDISTRIBUTOR *gicr;
+	ACPI_MADT_GENERIC_TRANSLATOR *gict;
 
-	if (mp->Type < sizeof(apic_types) / sizeof(apic_types[0]))
+	if (mp->Type < __arraycount(apic_types))
 		printf("\tType=%s\n", apic_types[mp->Type]);
 	else
 		printf("\tType=%d (unknown)\n", mp->Type);
@@ -893,8 +1004,7 @@ acpi_print_madt(ACPI_SUBTABLE_HEADER *mp)
 		break;
 	case ACPI_MADT_TYPE_INTERRUPT_SOURCE:
 		isrc = (ACPI_MADT_INTERRUPT_SOURCE *)mp;
-		if (isrc->Type < sizeof(platform_int_types) /
-		    sizeof(platform_int_types[0]))
+		if (isrc->Type < __arraycount(platform_int_types))
 			printf("\tType=%s\n", platform_int_types[isrc->Type]);
 		else
 			printf("\tType=%d (unknown)\n", isrc->Type);
@@ -912,6 +1022,41 @@ acpi_print_madt(ACPI_SUBTABLE_HEADER *mp)
 		x2apic_nmi = (ACPI_MADT_LOCAL_X2APIC_NMI *)mp;
 		acpi_print_cpu_uid(x2apic_nmi->Uid, NULL);
 		acpi_print_local_nmi(x2apic_nmi->Lint, x2apic_nmi->IntiFlags);
+		break;
+	case ACPI_MADT_TYPE_GENERIC_INTERRUPT:
+		gicc = (ACPI_MADT_GENERIC_INTERRUPT *)mp;
+		acpi_print_cpu_uid(gicc->Uid, NULL);
+		printf("\tCPU INTERFACE=%x\n", gicc->CpuInterfaceNumber);
+		acpi_print_gicc_flags(gicc->Flags);
+		printf("\tParking Protocol Version=%x\n", gicc->ParkingVersion);
+		printf("\tPERF INTR=%d\n", gicc->PerformanceInterrupt);
+		printf("\tParked ADDR=%016jx\n",
+		    (uintmax_t)gicc->ParkedAddress);
+		printf("\tBase ADDR=%016jx\n", (uintmax_t)gicc->BaseAddress);
+		printf("\tGICV=%016jx\n", (uintmax_t)gicc->GicvBaseAddress);
+		printf("\tGICH=%016jx\n", (uintmax_t)gicc->GichBaseAddress);
+		printf("\tVGIC INTR=%d\n", gicc->VgicInterrupt);
+		printf("\tGICR ADDR=%016jx\n",
+		    (uintmax_t)gicc->GicrBaseAddress);
+		printf("\tMPIDR=%jx\n", (uintmax_t)gicc->ArmMpidr);
+		printf("\tEfficency Class=%d\n", (u_int)gicc->EfficiencyClass);
+		break;
+	case ACPI_MADT_TYPE_GENERIC_DISTRIBUTOR:
+		gicd = (ACPI_MADT_GENERIC_DISTRIBUTOR *)mp;
+		printf("\tGIC ID=%d\n", (u_int)gicd->GicId);
+		printf("\tBase ADDR=%016jx\n", (uintmax_t)gicd->BaseAddress);
+		printf("\tVector Base=%d\n", gicd->GlobalIrqBase);
+		printf("\tGIC VERSION=%d\n", (u_int)gicd->Version);
+		break;
+	case ACPI_MADT_TYPE_GENERIC_REDISTRIBUTOR:
+		gicr = (ACPI_MADT_GENERIC_REDISTRIBUTOR *)mp;
+		printf("\tBase ADDR=%016jx\n", (uintmax_t)gicr->BaseAddress);
+		printf("\tLength=%08x\n", gicr->Length);
+		break;
+	case ACPI_MADT_TYPE_GENERIC_TRANSLATOR:
+		gict = (ACPI_MADT_GENERIC_TRANSLATOR *)mp;
+		printf("\tGIC ITS ID=%d\n", gict->TranslationId);
+		printf("\tBase ADDR=%016jx\n", (uintmax_t)gict->BaseAddress);
 		break;
 	}
 }
@@ -1349,6 +1494,7 @@ acpi_handle_hpet(ACPI_TABLE_HEADER *sdp)
 		printf("FALSE}\n");
 	printf("\tPCI Vendor ID=0x%04x\n", hpet->Id >> 16);
 	printf("\tMinimal Tick=%d\n", hpet->MinimumTick);
+	printf("\tFlags=0x%02x\n", hpet->Flags);
 	printf(END_COMMENT);
 }
 
@@ -1420,7 +1566,7 @@ acpi_handle_mcfg(ACPI_TABLE_HEADER *sdp)
 	alloc = (ACPI_MCFG_ALLOCATION *)(mcfg + 1);
 	for (i = 0; i < entries; i++, alloc++) {
 		printf("\n");
-		printf("\tBase Address=0x%016jx\n", alloc->Address);
+		printf("\tBase Address=0x%016jx\n", (uintmax_t)alloc->Address);
 		printf("\tSegment Group=0x%04x\n", alloc->PciSegment);
 		printf("\tStart Bus=%d\n", alloc->StartBusNumber);
 		printf("\tEnd Bus=%d\n", alloc->EndBusNumber);
@@ -1456,7 +1602,7 @@ acpi_handle_slit(ACPI_TABLE_HEADER *sdp)
 	slit = (ACPI_TABLE_SLIT *)sdp;
 
 	cnt = slit->LocalityCount * slit->LocalityCount;
-	printf("\tLocalityCount=%"PRIu64"\n", slit->LocalityCount);
+	printf("\tLocalityCount=%ju\n", (uintmax_t)slit->LocalityCount);
 	printf("\tEntry=\n\t");
 	for (idx = 0; idx < cnt; idx++) {
 		printf("%u ", slit->Entry[idx]);
@@ -1618,15 +1764,21 @@ acpi_print_srat_memory(ACPI_SRAT_MEM_AFFINITY *mp)
 	printf("\tProximity Domain=%d\n", mp->ProximityDomain);
 }
 
-const char *srat_types[] = { "CPU", "Memory", "X2APIC" };
+static const char *srat_types[] = {
+    [ACPI_SRAT_TYPE_CPU_AFFINITY] = "CPU",
+    [ACPI_SRAT_TYPE_MEMORY_AFFINITY] = "Memory",
+    [ACPI_SRAT_TYPE_X2APIC_CPU_AFFINITY] = "X2APIC",
+    [ACPI_SRAT_TYPE_GICC_AFFINITY] = "GICC",
+};
 
 static void
 acpi_print_srat(ACPI_SUBTABLE_HEADER *srat)
 {
 	ACPI_SRAT_CPU_AFFINITY *cpu;
 	ACPI_SRAT_X2APIC_CPU_AFFINITY *x2apic;
+	ACPI_SRAT_GICC_AFFINITY *gic;
 
-	if (srat->Type < sizeof(srat_types) / sizeof(srat_types[0]))
+	if (srat->Type < __arraycount(srat_types))
 		printf("\tType=%s\n", srat_types[srat->Type]);
 	else
 		printf("\tType=%d (unknown)\n", srat->Type);
@@ -1648,6 +1800,11 @@ acpi_print_srat(ACPI_SUBTABLE_HEADER *srat)
 		acpi_print_srat_cpu(x2apic->ApicId, x2apic->ProximityDomain,
 		    x2apic->Flags, x2apic->ClockDomain);
 		break;
+	case ACPI_SRAT_TYPE_GICC_AFFINITY:
+		gic = (ACPI_SRAT_GICC_AFFINITY *)srat;
+		acpi_print_srat_cpu(gic->AcpiProcessorUid, gic->ProximityDomain,
+		    gic->Flags, gic->ClockDomain);
+		break;
 	}
 }
 
@@ -1664,37 +1821,400 @@ acpi_handle_srat(ACPI_TABLE_HEADER *sdp)
 	printf(END_COMMENT);
 }
 
-static void
-acpi_handle_tcpa(ACPI_TABLE_HEADER *sdp)
+static char *
+acpi_tcpa_evname(struct TCPAevent *event)
 {
-	ACPI_TABLE_TCPA_HDR *tcpah;
-	ACPI_TABLE_TCPA_CLIENT *tcpac;
-	ACPI_TABLE_TCPA_SERVER *tcpas;
+	struct TCPApc_event *pc_event;
+	char *eventname = NULL;
 
-	printf(BEGIN_COMMENT);
-	acpi_print_sdt(sdp);
-	tcpah = (void *)sdp;
-	switch (tcpah->PlatformClass) {
-	case ACPI_TCPA_CLIENT_TABLE:
-		tcpac = (void *)((char *)sdp + sizeof(*tcpah));
-		printf("\tMinimum Length of Event Log Area=%"PRIu32"\n",
-		    tcpac->MinimumLogLength);
-		printf("\tPhysical Address of Log Area=0x%08"PRIx64"\n",
-		    tcpac->LogAddress);
+	pc_event = (struct TCPApc_event *)(event + 1);
+
+	switch(event->event_type) {
+	case PREBOOT:
+	case POST_CODE:
+	case UNUSED:
+	case NO_ACTION:
+	case SEPARATOR:
+	case SCRTM_CONTENTS:
+	case SCRTM_VERSION:
+	case CPU_MICROCODE:
+	case PLATFORM_CONFIG_FLAGS:
+	case TABLE_OF_DEVICES:
+	case COMPACT_HASH:
+	case IPL:
+	case IPL_PARTITION_DATA:
+	case NONHOST_CODE:
+	case NONHOST_CONFIG:
+	case NONHOST_INFO:
+		asprintf(&eventname, "%s",
+		    tcpa_event_type_strings[event->event_type]);
 		break;
 
-	case ACPI_TCPA_SERVER_TABLE:
-		tcpas = (void *)((char *)sdp + sizeof(*tcpah));
-		printf("\tMinimum Length of Event Log Area=%"PRIu64"\n",
-		    tcpas->MinimumLogLength);
-		printf("\tPhysical Address of Log Area=0x%08"PRIx64"\n",
-		    tcpas->LogAddress);
+	case ACTION:
+		eventname = calloc(event->event_size + 1, sizeof(char));
+		memcpy(eventname, pc_event, event->event_size);
+		break;
+
+	case EVENT_TAG:
+		switch (pc_event->event_id) {
+		case SMBIOS:
+		case BIS_CERT:
+		case CMOS:
+		case NVRAM:
+		case OPTION_ROM_EXEC:
+		case OPTION_ROM_CONFIG:
+		case S_CRTM_VERSION:
+		case POST_BIOS_ROM:
+		case ESCD:
+		case OPTION_ROM_MICROCODE:
+		case S_CRTM_CONTENTS:
+		case POST_CONTENTS:
+			asprintf(&eventname, "%s",
+			    TCPA_pcclient_strings[pc_event->event_id]);
+			break;
+
+		default:
+			asprintf(&eventname, "<unknown tag 0x%02x>",
+			    pc_event->event_id);
+			break;
+		}
 		break;
 
 	default:
-		printf ("\tUnknown TCPA Platform Class 0x%X\n",
-		    tcpah->PlatformClass);
+		asprintf(&eventname, "<unknown 0x%02x>", event->event_type);
 		break;
+	}
+
+	return eventname;
+}
+
+static void
+acpi_print_tcpa(struct TCPAevent *event)
+{
+	int i;
+	char *eventname;
+
+	eventname = acpi_tcpa_evname(event);
+
+	printf("\t%d", event->pcr_index);
+	printf(" 0x");
+	for (i = 0; i < 20; i++)
+		printf("%02x", event->pcr_value[i]);
+	printf(" [%s]\n", eventname ? eventname : "<unknown>");
+
+	free(eventname);
+}
+
+static void
+acpi_handle_tcpa(ACPI_TABLE_HEADER *sdp)
+{
+	struct TCPAbody *tcpa;
+	struct TCPAevent *event;
+	uintmax_t len, paddr;
+	unsigned char *vaddr = NULL;
+	unsigned char *vend = NULL;
+
+	printf(BEGIN_COMMENT);
+	acpi_print_sdt(sdp);
+	tcpa = (struct TCPAbody *) sdp;
+
+	switch (tcpa->platform_class) {
+	case ACPI_TCPA_BIOS_CLIENT:
+		len = tcpa->client.log_max_len;
+		paddr = tcpa->client.log_start_addr;
+		break;
+
+	case ACPI_TCPA_BIOS_SERVER:
+		len = tcpa->server.log_max_len;
+		paddr = tcpa->server.log_start_addr;
+		break;
+
+	default:
+		printf("XXX");
+		printf(END_COMMENT);
+		return;
+	}
+	printf("\tClass %u Base Address 0x%jx Length %ju\n\n",
+	    tcpa->platform_class, paddr, len);
+
+	if (len == 0) {
+		printf("\tEmpty TCPA table\n");
+		printf(END_COMMENT);
+		return;
+	}
+	if(sdp->Revision == 1) {
+		printf("\tOLD TCPA spec log found. Dumping not supported.\n");
+		printf(END_COMMENT);
+		return;
+	}
+
+	vaddr = (unsigned char *)acpi_map_physical(paddr, len);
+	vend = vaddr + len;
+
+	while (vaddr != NULL) {
+		if ((vaddr + sizeof(struct TCPAevent) >= vend)||
+		    (vaddr + sizeof(struct TCPAevent) < vaddr))
+			break;
+		event = (struct TCPAevent *)(void *)vaddr;
+		if (vaddr + event->event_size >= vend)
+			break;
+		if (vaddr + event->event_size < vaddr)
+			break;
+		if (event->event_type == 0 && event->event_size == 0)
+			break;
+#if 0
+		{
+		unsigned int i, j, k;
+
+		printf("\n\tsize %d\n\t\t%p ", event->event_size, vaddr);
+		for (j = 0, i = 0; i <
+		    sizeof(struct TCPAevent) + event->event_size; i++) {
+			printf("%02x ", vaddr[i]);
+			if ((i+1) % 8 == 0) {
+				for (k = 0; k < 8; k++)
+					printf("%c", isprint(vaddr[j+k]) ?
+					    vaddr[j+k] : '.');
+				printf("\n\t\t%p ", &vaddr[i + 1]);
+				j = i + 1;
+			}
+		}
+		printf("\n"); }
+#endif
+		acpi_print_tcpa(event);
+
+		vaddr += sizeof(struct TCPAevent) + event->event_size;
+	}
+
+	printf(END_COMMENT);
+}
+
+static const char *
+devscope_type2str(int type)
+{
+	static char typebuf[16];
+
+	switch (type) {
+	case 1:
+		return ("PCI Endpoint Device");
+	case 2:
+		return ("PCI Sub-Hierarchy");
+	case 3:
+		return ("IOAPIC");
+	case 4:
+		return ("HPET");
+	default:
+		snprintf(typebuf, sizeof(typebuf), "%d", type);
+		return (typebuf);
+	}
+}
+
+static int
+acpi_handle_dmar_devscope(void *addr, int remaining)
+{
+	char sep;
+	int pathlen;
+	ACPI_DMAR_PCI_PATH *path, *pathend;
+	ACPI_DMAR_DEVICE_SCOPE *devscope = addr;
+
+	if (remaining < (int)sizeof(ACPI_DMAR_DEVICE_SCOPE))
+		return (-1);
+
+	if (remaining < devscope->Length)
+		return (-1);
+
+	printf("\n");
+	printf("\t\tType=%s\n", devscope_type2str(devscope->EntryType));
+	printf("\t\tLength=%d\n", devscope->Length);
+	printf("\t\tEnumerationId=%d\n", devscope->EnumerationId);
+	printf("\t\tStartBusNumber=%d\n", devscope->Bus);
+
+	path = (ACPI_DMAR_PCI_PATH *)(devscope + 1);
+	pathlen = devscope->Length - sizeof(ACPI_DMAR_DEVICE_SCOPE);
+	pathend = path + pathlen / sizeof(ACPI_DMAR_PCI_PATH);
+	if (path < pathend) {
+		sep = '{';
+		printf("\t\tPath=");
+		do {
+			printf("%c%d:%d", sep, path->Device, path->Function);
+			sep=',';
+			path++;
+		} while (path < pathend);
+		printf("}\n");
+	}
+
+	return (devscope->Length);
+}
+
+static void
+acpi_handle_dmar_drhd(ACPI_DMAR_HARDWARE_UNIT *drhd)
+{
+	char *cp;
+	int remaining, consumed;
+
+	printf("\n");
+	printf("\tType=DRHD\n");
+	printf("\tLength=%d\n", drhd->Header.Length);
+
+#define	PRINTFLAG(var, flag)	printflag((var), ACPI_DMAR_## flag, #flag)
+
+	printf("\tFlags=");
+	PRINTFLAG(drhd->Flags, INCLUDE_ALL);
+	PRINTFLAG_END();
+
+#undef PRINTFLAG
+
+	printf("\tSegment=%d\n", drhd->Segment);
+	printf("\tAddress=0x%016jx\n", (uintmax_t)drhd->Address);
+
+	remaining = drhd->Header.Length - sizeof(ACPI_DMAR_HARDWARE_UNIT);
+	if (remaining > 0)
+		printf("\tDevice Scope:");
+	while (remaining > 0) {
+		cp = (char *)drhd + drhd->Header.Length - remaining;
+		consumed = acpi_handle_dmar_devscope(cp, remaining);
+		if (consumed <= 0)
+			break;
+		else
+			remaining -= consumed;
+	}
+}
+
+static void
+acpi_handle_dmar_rmrr(ACPI_DMAR_RESERVED_MEMORY *rmrr)
+{
+	char *cp;
+	int remaining, consumed;
+
+	printf("\n");
+	printf("\tType=RMRR\n");
+	printf("\tLength=%d\n", rmrr->Header.Length);
+	printf("\tSegment=%d\n", rmrr->Segment);
+	printf("\tBaseAddress=0x%016jx\n", (uintmax_t)rmrr->BaseAddress);
+	printf("\tLimitAddress=0x%016jx\n", (uintmax_t)rmrr->EndAddress);
+
+	remaining = rmrr->Header.Length - sizeof(ACPI_DMAR_RESERVED_MEMORY);
+	if (remaining > 0)
+		printf("\tDevice Scope:");
+	while (remaining > 0) {
+		cp = (char *)rmrr + rmrr->Header.Length - remaining;
+		consumed = acpi_handle_dmar_devscope(cp, remaining);
+		if (consumed <= 0)
+			break;
+		else
+			remaining -= consumed;
+	}
+}
+
+static void
+acpi_handle_dmar_atsr(ACPI_DMAR_ATSR *atsr)
+{
+	char *cp;
+	int remaining, consumed;
+
+	printf("\n");
+	printf("\tType=ATSR\n");
+	printf("\tLength=%d\n", atsr->Header.Length);
+
+#define	PRINTFLAG(var, flag)	printflag((var), ACPI_DMAR_## flag, #flag)
+
+	printf("\tFlags=");
+	PRINTFLAG(atsr->Flags, ALL_PORTS);
+	PRINTFLAG_END();
+
+#undef PRINTFLAG
+
+	printf("\tSegment=%d\n", atsr->Segment);
+
+	remaining = atsr->Header.Length - sizeof(ACPI_DMAR_ATSR);
+	if (remaining > 0)
+		printf("\tDevice Scope:");
+	while (remaining > 0) {
+		cp = (char *)atsr + atsr->Header.Length - remaining;
+		consumed = acpi_handle_dmar_devscope(cp, remaining);
+		if (consumed <= 0)
+			break;
+		else
+			remaining -= consumed;
+	}
+}
+
+static void
+acpi_handle_dmar_rhsa(ACPI_DMAR_RHSA *rhsa)
+{
+
+	printf("\n");
+	printf("\tType=RHSA\n");
+	printf("\tLength=%d\n", rhsa->Header.Length);
+	printf("\tBaseAddress=0x%016jx\n", (uintmax_t)rhsa->BaseAddress);
+	printf("\tProximityDomain=0x%08x\n", rhsa->ProximityDomain);
+}
+
+static int
+acpi_handle_dmar_remapping_structure(void *addr, int remaining)
+{
+	ACPI_DMAR_HEADER *hdr = addr;
+
+	if (remaining < (int)sizeof(ACPI_DMAR_HEADER))
+		return (-1);
+
+	if (remaining < hdr->Length)
+		return (-1);
+
+	switch (hdr->Type) {
+	case ACPI_DMAR_TYPE_HARDWARE_UNIT:
+		acpi_handle_dmar_drhd(addr);
+		break;
+	case ACPI_DMAR_TYPE_RESERVED_MEMORY:
+		acpi_handle_dmar_rmrr(addr);
+		break;
+	case ACPI_DMAR_TYPE_ROOT_ATS:
+		acpi_handle_dmar_atsr(addr);
+		break;
+	case ACPI_DMAR_TYPE_HARDWARE_AFFINITY:
+		acpi_handle_dmar_rhsa(addr);
+		break;
+	default:
+		printf("\n");
+		printf("\tType=%d\n", hdr->Type);
+		printf("\tLength=%d\n", hdr->Length);
+		break;
+	}
+	return (hdr->Length);
+}
+
+#ifndef ACPI_DMAR_X2APIC_OPT_OUT
+#define	ACPI_DMAR_X2APIC_OPT_OUT	(0x2)
+#endif
+
+static void
+acpi_handle_dmar(ACPI_TABLE_HEADER *sdp)
+{
+	char *cp;
+	int remaining, consumed;
+	ACPI_TABLE_DMAR *dmar;
+
+	printf(BEGIN_COMMENT);
+	acpi_print_sdt(sdp);
+	dmar = (ACPI_TABLE_DMAR *)sdp;
+	printf("\tHost Address Width=%d\n", dmar->Width + 1);
+
+#define PRINTFLAG(var, flag)	printflag((var), ACPI_DMAR_## flag, #flag)
+
+	printf("\tFlags=");
+	PRINTFLAG(dmar->Flags, INTR_REMAP);
+	PRINTFLAG(dmar->Flags, X2APIC_OPT_OUT);
+	PRINTFLAG_END();
+
+#undef PRINTFLAG
+
+	remaining = sdp->Length - sizeof(ACPI_TABLE_DMAR);
+	while (remaining > 0) {
+		cp = (char *)sdp + sdp->Length - remaining;
+		consumed = acpi_handle_dmar_remapping_structure(cp, remaining);
+		if (consumed <= 0)
+			break;
+		else
+			remaining -= consumed;
 	}
 
 	printf(END_COMMENT);
@@ -1950,7 +2470,6 @@ acpi_print_rsdt(ACPI_TABLE_HEADER *rsdp)
 	ACPI_TABLE_RSDT *rsdt;
 	ACPI_TABLE_XSDT *xsdt;
 	int	i, entries;
-	u_long	addr = 0;
 
 	rsdt = (ACPI_TABLE_RSDT *)rsdp;
 	xsdt = (ACPI_TABLE_XSDT *)rsdp;
@@ -1961,17 +2480,11 @@ acpi_print_rsdt(ACPI_TABLE_HEADER *rsdp)
 	for (i = 0; i < entries; i++) {
 		if (i > 0)
 			printf(", ");
-		switch (addr_size) {
-		case 4:
-			addr = le32toh(rsdt->TableOffsetEntry[i]);
-			break;
-		case 8:
-			addr = le64toh(xsdt->TableOffsetEntry[i]);
-			break;
-		default:
-			assert(addr == 0);
-		}
-		printf("0x%08lx", addr);
+		if (addr_size == 4)
+			printf("0x%08x", le32toh(rsdt->TableOffsetEntry[i]));
+		else
+			printf("0x%016jx",
+			    (uintmax_t)le64toh(xsdt->TableOffsetEntry[i]));
 	}
 	printf(" }\n");
 	printf(END_COMMENT);
@@ -1987,7 +2500,6 @@ acpi_print_fadt(ACPI_TABLE_HEADER *sdp)
 {
 	ACPI_TABLE_FADT *fadt;
 	const char *pm;
-	char	    sep;
 
 	fadt = (ACPI_TABLE_FADT *)sdp;
 	printf(BEGIN_COMMENT);
@@ -2047,25 +2559,18 @@ acpi_print_fadt(ACPI_TABLE_HEADER *sdp)
 	printf("\tDAY_ALRM=%d, MON_ALRM=%d, CENTURY=%d\n",
 	       fadt->DayAlarm, fadt->MonthAlarm, fadt->Century);
 
-#define PRINTFLAG(var, flag) do {			\
-	if ((var) & ACPI_FADT_## flag) {		\
-		printf("%c%s", sep, #flag); sep = ',';	\
-	}						\
-} while (0)
+#define PRINTFLAG(var, flag)	printflag((var), ACPI_FADT_## flag, #flag)
 
 	printf("\tIAPC_BOOT_ARCH=");
-	sep = '{';
 	PRINTFLAG(fadt->BootFlags, LEGACY_DEVICES);
 	PRINTFLAG(fadt->BootFlags, 8042);
 	PRINTFLAG(fadt->BootFlags, NO_VGA);
 	PRINTFLAG(fadt->BootFlags, NO_MSI);
 	PRINTFLAG(fadt->BootFlags, NO_ASPM);
-	if (fadt->BootFlags != 0)
-		printf("}");
-	printf("\n");
+	PRINTFLAG(fadt->BootFlags, NO_CMOS_RTC);
+	PRINTFLAG_END();
 
 	printf("\tFlags=");
-	sep = '{';
 	PRINTFLAG(fadt->Flags, WBINVD);
 	PRINTFLAG(fadt->Flags, WBINVD_FLUSH);
 	PRINTFLAG(fadt->Flags, C1_SUPPORTED);
@@ -2086,8 +2591,9 @@ acpi_print_fadt(ACPI_TABLE_HEADER *sdp)
 	PRINTFLAG(fadt->Flags, REMOTE_POWER_ON);
 	PRINTFLAG(fadt->Flags, APIC_CLUSTER);
 	PRINTFLAG(fadt->Flags, APIC_PHYSICAL);
-	if (fadt->Flags != 0)
-		printf("}\n");
+	PRINTFLAG(fadt->Flags, HW_REDUCED);
+	PRINTFLAG(fadt->Flags, LOW_POWER_S0);
+	PRINTFLAG_END();
 
 #undef PRINTFLAG
 
@@ -2097,8 +2603,8 @@ acpi_print_fadt(ACPI_TABLE_HEADER *sdp)
 		printf(", RESET_VALUE=%#x\n", fadt->ResetValue);
 	}
 	if (acpi_get_fadt_revision(fadt) > 1) {
-		printf("\tX_FACS=0x%08lx, ", (u_long)fadt->XFacs);
-		printf("X_DSDT=0x%08lx\n", (u_long)fadt->XDsdt);
+		printf("\tX_FACS=0x%016jx, ", (uintmax_t)fadt->XFacs);
+		printf("X_DSDT=0x%016jx\n", (uintmax_t)fadt->XDsdt);
 		printf("\tX_PM1a_EVT_BLK=");
 		acpi_print_gas(&fadt->XPm1aEventBlock);
 		if (fadt->XPm1bEventBlock.Address != 0) {
@@ -2153,10 +2659,9 @@ acpi_print_facs(ACPI_TABLE_FACS *facs)
 		printf("S4BIOS");
 	printf("\n");
 
-	if (facs->XFirmwareWakingVector != 0) {
-		printf("\tX_Firm_Wake_Vec=%08lx\n",
-		       (u_long)facs->XFirmwareWakingVector);
-	}
+	if (facs->XFirmwareWakingVector != 0)
+		printf("\tX_Firm_Wake_Vec=%016jx\n",
+		    (uintmax_t)facs->XFirmwareWakingVector);
 	printf("\tVersion=%u\n", facs->Version);
 
 	printf(END_COMMENT);
@@ -2206,8 +2711,8 @@ acpi_print_rsd_ptr(ACPI_TABLE_RSDP *rp)
 		printf("\tRSDT=0x%08x, cksum=%u\n", rp->RsdtPhysicalAddress,
 		    rp->Checksum);
 	} else {
-		printf("\tXSDT=0x%08lx, length=%u, cksum=%u\n",
-		    (u_long)rp->XsdtPhysicalAddress, rp->Length,
+		printf("\tXSDT=0x%016jx, length=%u, cksum=%u\n",
+		    (uintmax_t)rp->XsdtPhysicalAddress, rp->Length,
 		    rp->ExtendedChecksum);
 	}
 	printf(END_COMMENT);
@@ -2227,17 +2732,12 @@ acpi_handle_rsdt(ACPI_TABLE_HEADER *rsdp)
 	xsdt = (ACPI_TABLE_XSDT *)rsdp;
 	entries = (rsdp->Length - sizeof(ACPI_TABLE_HEADER)) / addr_size;
 	for (i = 0; i < entries; i++) {
-		switch (addr_size) {
-		case 4:
+		if (addr_size == 4)
 			addr = le32toh(rsdt->TableOffsetEntry[i]);
-			break;
-		case 8:
+		else
 			addr = le64toh(xsdt->TableOffsetEntry[i]);
-			break;
-		default:
-			assert(addr == 0);
-		}
-
+		if (addr == 0)
+			continue;
 		sdp = (ACPI_TABLE_HEADER *)acpi_map_sdt(addr);
 		if (acpi_checksum(sdp, sdp->Length)) {
 			warnx("RSDT entry %d (sig %.4s) is corrupt", i,
@@ -2255,6 +2755,8 @@ acpi_handle_rsdt(ACPI_TABLE_HEADER *rsdp)
 			acpi_handle_cpep(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_DBGP, 4))
 			acpi_handle_dbgp(sdp);
+		else if (!memcmp(sdp->Signature, ACPI_SIG_DMAR, 4))
+			acpi_handle_dmar(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_EINJ, 4))
 			acpi_handle_einj(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_ERST, 4))
@@ -2385,12 +2887,14 @@ dsdt_save_file(char *outfile, ACPI_TABLE_HEADER *rsdt, ACPI_TABLE_HEADER *dsdp)
 void
 aml_disassemble(ACPI_TABLE_HEADER *rsdt, ACPI_TABLE_HEADER *dsdp)
 {
-	char buf[MAXPATHLEN], tmpstr[MAXPATHLEN];
+	char buf[MAXPATHLEN], tmpstr[MAXPATHLEN], wrkdir[MAXPATHLEN];
+	const char *iname = "/acpdump.din";
+	const char *oname = "/acpdump.dsl";
 	const char *tmpdir;
-	char *tmpext;
 	FILE *fp;
 	size_t len;
-	int fd;
+	int fd, status;
+	pid_t pid;
 
 	if (rsdt == NULL)
 		errx(EXIT_FAILURE, "aml_disassemble: invalid rsdt");
@@ -2400,17 +2904,22 @@ aml_disassemble(ACPI_TABLE_HEADER *rsdt, ACPI_TABLE_HEADER *dsdp)
 	tmpdir = getenv("TMPDIR");
 	if (tmpdir == NULL)
 		tmpdir = _PATH_TMP;
-	strlcpy(tmpstr, tmpdir, sizeof(tmpstr));
-	if (realpath(tmpstr, buf) == NULL) {
-		perror("realpath tmp file");
+	if (realpath(tmpdir, buf) == NULL) {
+		perror("realpath tmp dir");
 		return;
 	}
-	strlcpy(tmpstr, buf, sizeof(tmpstr));
-	strlcat(tmpstr, "/acpidump.", sizeof(tmpstr));
-	len = strlen(tmpstr);
-	tmpext = tmpstr + len;
-	strlcpy(tmpext, "XXXXXX", sizeof(tmpstr) - len);
-	fd = mkstemp(tmpstr);
+	len = sizeof(wrkdir) - strlen(iname);
+	if ((size_t)snprintf(wrkdir, len, "%s/acpidump.XXXXXX", buf) > len-1 ) {
+		fprintf(stderr, "$TMPDIR too long\n");
+		return;
+	}
+	if  (mkdtemp(wrkdir) == NULL) {
+		perror("mkdtemp tmp working dir");
+		return;
+	}
+	len = (size_t)snprintf(tmpstr, sizeof(tmpstr), "%s%s", wrkdir, iname);
+	assert(len <= sizeof(tmpstr) - 1);
+	fd = open(tmpstr, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
 	if (fd < 0) {
 		perror("iasl tmp file");
 		return;
@@ -2419,28 +2928,46 @@ aml_disassemble(ACPI_TABLE_HEADER *rsdt, ACPI_TABLE_HEADER *dsdp)
 	close(fd);
 
 	/* Run iasl -d on the temp file */
-	if (fork() == 0) {
+	if ((pid = fork()) == 0) {
 		close(STDOUT_FILENO);
 		if (vflag == 0)
 			close(STDERR_FILENO);
 		execl("/usr/bin/iasl", "iasl", "-d", tmpstr, NULL);
 		err(EXIT_FAILURE, "exec");
 	}
-
-	wait(NULL);
-	unlink(tmpstr);
+	if (pid > 0)
+		wait(&status);
+	if (unlink(tmpstr) < 0) {
+		perror("unlink");
+		goto out;
+	}
+	if (pid < 0) {
+		perror("fork");
+		goto out;
+	}
+	if (status != 0) {
+		fprintf(stderr, "iast exit status = %d\n", status);
+	}
 
 	/* Dump iasl's output to stdout */
-	strlcpy(tmpext, "dsl", sizeof(tmpstr) - len);
+	len = (size_t)snprintf(tmpstr, sizeof(tmpstr), "%s%s", wrkdir, oname);
+	assert(len <= sizeof(tmpstr) - 1);
 	fp = fopen(tmpstr, "r");
-	unlink(tmpstr);
+	if (unlink(tmpstr) < 0) {
+		perror("unlink");
+		goto out;
+	}
 	if (fp == NULL) {
 		perror("iasl tmp file (read)");
-		return;
+		goto out;
 	}
 	while ((len = fread(buf, 1, sizeof(buf), fp)) > 0)
 		fwrite(buf, 1, len, stdout);
 	fclose(fp);
+
+    out:
+	if (rmdir(wrkdir) < 0)
+		perror("rmdir");
 }
 
 void
@@ -2463,16 +2990,12 @@ sdt_from_rsdt(ACPI_TABLE_HEADER *rsdp, const char *sig, ACPI_TABLE_HEADER *last)
 	xsdt = (ACPI_TABLE_XSDT *)rsdp;
 	entries = (rsdp->Length - sizeof(ACPI_TABLE_HEADER)) / addr_size;
 	for (i = 0; i < entries; i++) {
-		switch (addr_size) {
-		case 4:
+		if (addr_size == 4)
 			addr = le32toh(rsdt->TableOffsetEntry[i]);
-			break;
-		case 8:
+		else
 			addr = le64toh(xsdt->TableOffsetEntry[i]);
-			break;
-		default:
-			assert(addr == 0);
-		}
+		if (addr == 0)
+			continue;
 		sdt = (ACPI_TABLE_HEADER *)acpi_map_sdt(addr);
 		if (last != NULL) {
 			if (sdt == last)
