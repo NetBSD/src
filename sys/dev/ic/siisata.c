@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.32 2017/08/04 20:49:24 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.33 2017/08/04 20:53:46 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.32 2017/08/04 20:49:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.33 2017/08/04 20:53:46 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1039,7 +1039,7 @@ siisata_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if (xfer->c_flags & C_POLL) {
 		/* polled command, disable interrupts */
-		prb->prb_control = htole16(PRB_CF_INTERRUPT_MASK);
+		prb->prb_control |= htole16(PRB_CF_INTERRUPT_MASK);
 		siisata_disable_port_interrupt(chp);
 	}
 
@@ -1256,7 +1256,7 @@ siisata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if (xfer->c_flags & C_POLL) {
 		/* polled command, disable interrupts */
-		prb->prb_control = htole16(PRB_CF_INTERRUPT_MASK);
+		prb->prb_control |= htole16(PRB_CF_INTERRUPT_MASK);
 		siisata_disable_port_interrupt(chp);
 	}
 
@@ -1849,7 +1849,7 @@ siisata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if (xfer->c_flags & C_POLL) {
 		/* polled command, disable interrupts */
-		prbp->prb_control = htole16(PRB_CF_INTERRUPT_MASK);
+		prbp->prb_control |= htole16(PRB_CF_INTERRUPT_MASK);
 		siisata_disable_port_interrupt(chp);
 	}
 
