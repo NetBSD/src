@@ -1,7 +1,7 @@
-/*	$NetBSD: fsdb.c,v 1.49 2016/07/28 08:24:58 martin Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.50 2017/08/04 07:19:35 mrg Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.49 2016/07/28 08:24:58 martin Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.50 2017/08/04 07:19:35 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,6 +61,13 @@ __RCSID("$NetBSD: fsdb.c,v 1.49 2016/07/28 08:24:58 martin Exp $");
 #include "fsck.h"
 #include "extern.h"
 
+/* Used to keep state for "saveblks" command.  */
+struct wrinfo {
+	off_t size;
+	off_t written_size;
+	int fd;
+};
+
 __dead static void usage(void);
 static int cmdloop(void);
 static char *prompt(EditLine *);
@@ -69,12 +76,12 @@ static int dolookup(char *);
 static int chinumfunc(struct inodesc *);
 static int chnamefunc(struct inodesc *);
 static int dotime(char *, int32_t *, int32_t *);
-static void print_blks32(int32_t *buf, int size, uint64_t *blknum);
-static void print_blks64(int64_t *buf, int size, uint64_t *blknum);
+static void print_blks32(int32_t *buf, int size, uint64_t *blknum, struct wrinfo *wrp);
+static void print_blks64(int64_t *buf, int size, uint64_t *blknum, struct wrinfo *wrp);
 static void print_indirblks32(uint32_t blk, int ind_level,
-    uint64_t *blknum);
+    uint64_t *blknum, struct wrinfo *wrp);
 static void print_indirblks64(uint64_t blk, int ind_level,
-    uint64_t *blknum);
+    uint64_t *blknum, struct wrinfo *wrp);
 static int compare_blk32(uint32_t *, uint32_t);
 static int compare_blk64(uint64_t *, uint64_t);
 static int founddatablk(uint64_t);
@@ -191,6 +198,7 @@ static struct cmdtable cmds[] = {
 	{"linkcount", "Set link count to COUNT", 2, 2, linkcount},
 	{"ls", "List current inode as directory", 1, 1, ls},
 	{"blks", "List current inode's data blocks", 1, 1, blks},
+	{"saveblks", "Save current inode's data blocks", 2, 2, blks},
 	{"findblk", "Find inode owning disk block(s)", 2, 33, findblk},
 	{"rm", "Remove NAME from current inode directory", 2, 2, rm},
 	{"del", "Remove NAME from current inode directory", 2, 2, rm},
@@ -452,6 +460,18 @@ CMDFUNC(blks)
 {
 	uint64_t blkno = 0;
 	int i, type;
+	struct wrinfo wrinfo, *wrp = NULL;
+
+	if (strcmp(argv[0], "saveblks") == 0) {
+		wrinfo.fd = open(argv[1], O_WRONLY | O_TRUNC | O_CREAT, 0644);
+		if (wrinfo.fd == -1) {
+			warn("unable to create file %s", argv[1]);
+			return 0;
+		}
+		wrinfo.size = DIP(curinode, size);
+		wrinfo.written_size = 0;
+		wrp = &wrinfo;
+	}
 	if (!curinode) {
 		warnx("no current inode");
 		return 0;
@@ -471,18 +491,18 @@ CMDFUNC(blks)
 	}
 	printf("Direct blocks:\n");
 	if (is_ufs2)
-		print_blks64(curinode->dp2.di_db, UFS_NDADDR, &blkno);
+		print_blks64(curinode->dp2.di_db, UFS_NDADDR, &blkno, wrp);
 	else
-		print_blks32(curinode->dp1.di_db, UFS_NDADDR, &blkno);
+		print_blks32(curinode->dp1.di_db, UFS_NDADDR, &blkno, wrp);
 
 	if (is_ufs2) {
 		for (i = 0; i < UFS_NIADDR; i++)
 			print_indirblks64(iswap64(curinode->dp2.di_ib[i]), i,
-			    &blkno);
+			    &blkno, wrp);
 	} else {
 		for (i = 0; i < UFS_NIADDR; i++)
 			print_indirblks32(iswap32(curinode->dp1.di_ib[i]), i,
-			    &blkno);
+			    &blkno, wrp);
 	}
 	return 0;
 }
@@ -728,7 +748,7 @@ find_indirblks64(uint64_t blk, int ind_level, uint64_t *wantedblk)
 				if (founddatablk(iswap64(idblk[i])))
 					return 1;
 			}
-			if(idblk[i] != 0)
+			if (idblk[i] != 0)
 				if (find_indirblks64(iswap64(idblk[i]),
 				    ind_level, wantedblk))
 				return 1;
@@ -738,20 +758,46 @@ find_indirblks64(uint64_t blk, int ind_level, uint64_t *wantedblk)
 	return 0;
 }
 
+static int
+writefileblk(struct wrinfo *wrp, uint64_t blk)
+{
+	char buf[MAXBSIZE];
+	long long size;
+
+	size = wrp->size - wrp->written_size;
+	if (size > sblock->fs_bsize)
+		size = sblock->fs_bsize;
+	if (size > (long long)sizeof buf) {
+		warnx("sblock->fs_bsize > MAX_BSIZE");
+		return -1;
+	}
+
+	if (bread(fsreadfd, buf, FFS_FSBTODB(sblock, blk), size) != 0)
+		return -1;
+	if (write(wrp->fd, buf, size) != size)
+		return -1;
+	wrp->written_size += size;
+	return 0;
+}
+
 
 #define CHARS_PER_LINES 70
 
 static void
-print_blks32(int32_t *buf, int size, uint64_t *blknum)
+print_blks32(int32_t *buf, int size, uint64_t *blknum, struct wrinfo *wrp)
 {
 	int chars;
 	char prbuf[CHARS_PER_LINES+1];
 	int blk;
  
 	chars = 0;
-	for(blk = 0; blk < size; blk++, (*blknum)++) {
+	for (blk = 0; blk < size; blk++, (*blknum)++) {
 		if (buf[blk] == 0)
 			continue;
+		if (wrp && writefileblk(wrp, iswap32(buf[blk])) != 0) {
+			warn("unable to write block %d", iswap32(buf[blk]));
+			return;
+		}
 		snprintf(prbuf, CHARS_PER_LINES, "%d ", iswap32(buf[blk]));
 		if ((chars + strlen(prbuf)) > CHARS_PER_LINES) {
 			printf("\n");
@@ -766,16 +812,21 @@ print_blks32(int32_t *buf, int size, uint64_t *blknum)
 }
 
 static void
-print_blks64(int64_t *buf, int size, uint64_t *blknum)
+print_blks64(int64_t *buf, int size, uint64_t *blknum, struct wrinfo *wrp)
 {
 	int chars;
 	char prbuf[CHARS_PER_LINES+1];
 	int blk;
  
 	chars = 0;
-	for(blk = 0; blk < size; blk++, (*blknum)++) {
+	for (blk = 0; blk < size; blk++, (*blknum)++) {
 		if (buf[blk] == 0)
 			continue;
+		if (wrp && writefileblk(wrp, iswap64(buf[blk])) != 0) {
+			warn("unable to write block %lld",
+			     (long long)iswap64(buf[blk]));
+			return;
+		}
 		snprintf(prbuf, CHARS_PER_LINES, "%lld ",
 		    (long long)iswap64(buf[blk]));
 		if ((chars + strlen(prbuf)) > CHARS_PER_LINES) {
@@ -793,7 +844,7 @@ print_blks64(int64_t *buf, int size, uint64_t *blknum)
 #undef CHARS_PER_LINES
 
 static void
-print_indirblks32(uint32_t blk, int ind_level, uint64_t *blknum)
+print_indirblks32(uint32_t blk, int ind_level, uint64_t *blknum, struct wrinfo *wrp)
 {
 #define MAXNINDIR	(MAXBSIZE / sizeof(int32_t))
 	const int ptrperblk_shift = sblock->fs_bshift - 2;
@@ -811,17 +862,18 @@ print_indirblks32(uint32_t blk, int ind_level, uint64_t *blknum)
 	bread(fsreadfd, (char *)idblk, FFS_FSBTODB(sblock, blk),
 	    (int)sblock->fs_bsize);
 	if (ind_level <= 0) {
-		print_blks32(idblk, ptrperblk, blknum);
+		print_blks32(idblk, ptrperblk, blknum, wrp);
 	} else {
 		ind_level--;
 		for (i = 0; i < ptrperblk; i++)
-			print_indirblks32(iswap32(idblk[i]), ind_level, blknum);
+			print_indirblks32(iswap32(idblk[i]), ind_level, blknum,
+				wrp);
 	}
 #undef MAXNINDIR
 }
 
 static void
-print_indirblks64(uint64_t blk, int ind_level, uint64_t *blknum)
+print_indirblks64(uint64_t blk, int ind_level, uint64_t *blknum, struct wrinfo *wrp)
 {
 #define MAXNINDIR	(MAXBSIZE / sizeof(int64_t))
 	const int ptrperblk_shift = sblock->fs_bshift - 3;
@@ -839,11 +891,12 @@ print_indirblks64(uint64_t blk, int ind_level, uint64_t *blknum)
 	bread(fsreadfd, (char *)idblk, FFS_FSBTODB(sblock, blk),
 	    (int)sblock->fs_bsize);
 	if (ind_level <= 0) {
-		print_blks64(idblk, ptrperblk, blknum);
+		print_blks64(idblk, ptrperblk, blknum, wrp);
 	} else {
 		ind_level--;
 		for (i = 0; i < ptrperblk; i++)
-			print_indirblks64(iswap64(idblk[i]), ind_level, blknum);
+			print_indirblks64(iswap64(idblk[i]), ind_level, blknum,
+				wrp);
 	}
 #undef MAXNINDIR
 }
