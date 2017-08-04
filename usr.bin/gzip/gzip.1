@@ -1,6 +1,6 @@
-.\"	$NetBSD: gzip.1,v 1.28 2017/06/03 21:28:48 mrg Exp $
+.\"	$NetBSD: gzip.1,v 1.29 2017/08/04 07:27:08 mrg Exp $
 .\"
-.\" Copyright (c) 1997, 2003, 2004, 2008, 2009, 2015 Matthew R. Green
+.\" Copyright (c) 1997, 2003, 2004, 2008, 2009, 2015, 2017 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -179,6 +179,13 @@ The
 utility exits 0 on success,
 1 on errors,
 and 2 if a warning occurs.
+.Sh SIGNALS
+.Nm
+responds to the following signals:
+.Bl -tag -width indent
+.It Dv SIGINFO
+Report progress to standard error.
+.El
 .Sh SEE ALSO
 .Xr bzip2 1 ,
 .Xr compress 1 ,
@@ -202,7 +209,7 @@ program for
 This manual documents
 .Nx
 .Nm
-version 20150113.
+version 20170803.
 .Sh AUTHORS
 This implementation of
 .Nm
