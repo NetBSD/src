@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.backend,v 1.5 2017/07/23 01:12:16 mrg Exp $
+#	$NetBSD: Makefile.backend,v 1.6 2017/08/04 01:18:39 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_=1
@@ -32,9 +32,9 @@ CFLAGS:=	${CXXFLAGS}
 	@true
 
 # Find our (local) libraries
-LIBGMPDIR!=	cd ${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp && ${PRINTOBJDIR}
-LIBMPFRDIR!=	cd ${NETBSDSRCDIR}/external/lgpl3/mpfr/lib/libmpfr && ${PRINTOBJDIR}
-LIBMPCDIR!=	cd ${NETBSDSRCDIR}/external/lgpl3/mpc/lib/libmpc && ${PRINTOBJDIR}
+LIBGMPDIR!=	cd ${GMPDISTDIR}/lib/libgmp && ${PRINTOBJDIR}
+LIBMPFRDIR!=	cd ${MPFRDISTDIR}/lib/libmpfr && ${PRINTOBJDIR}
+LIBMPCDIR!=	cd ${MPCDISTDIR}/lib/libmpc && ${PRINTOBJDIR}
 
 LIBGMP=		${LIBGMPDIR}/libgmp.a
 LIBMPFR=	${LIBMPFRDIR}/libmpfr.a
