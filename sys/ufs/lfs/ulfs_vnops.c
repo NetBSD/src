@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.49 2017/06/10 05:29:36 maya Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.50 2017/08/04 07:27:42 maya Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.232 2016/05/19 18:32:03 riastradh Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.49 2017/06/10 05:29:36 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.50 2017/08/04 07:27:42 maya Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -826,7 +826,7 @@ ulfs_readdir(void *v)
 
 	off = uio->uio_offset;
 	if (ap->a_cookies) {
-		ccount = rcount / _DIRENT_RECLEN(ndp, 1);
+		ccount = rcount / LFS_DIRECTSIZ(fs, 1);
 		ccp = *(ap->a_cookies) = malloc(ccount * sizeof(*ccp),
 		    M_TEMP, M_WAITOK);
 	} else {
