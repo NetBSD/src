@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.53 2017/08/03 14:39:31 msaitoh Exp $
+.\" $NetBSD: gpt.8,v 1.54 2017/08/04 02:43:56 kre Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -247,8 +247,8 @@ bootstrap code, as installed via
 The
 .Fl L
 option selects the partition by label.
-If there are multiple partitions with the same label, it will use the
-first one found.
+If there are multiple partitions with the same label, the
+first one found will be used.
 .\" ==== create ====
 .It Nm Ic create Oo Fl AfP Oc Oo Fl p Ar partitions Oc
 The
@@ -534,16 +534,15 @@ by legacy BIOS boot code.
 See the
 .Ic biosboot
 command for more information.
-The bootme flag is used to indicate which partiotion should be booted
+The bootme flag is used to indicate which partition should be booted
 by UEFI boot code.
 The other attributes are for compatibility with
 .Fx
-and are not currently used by any
-.Nx
-code.
+and are not currently used by
+.Nx .
 They may be used by
 .Nx
-code in the future.
+in the future.
 .\" ==== show ====
 .It Nm Ic show Oo Fl aglu Oc Oo Fl i Ar index Oc
 The
