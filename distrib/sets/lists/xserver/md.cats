@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.56 2017/01/05 02:22:19 christos Exp $
+# $NetBSD: md.cats,v 1.57 2017/08/04 21:27:34 mrg Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -15,8 +15,10 @@
 ./usr/X11R7/lib/modules/drivers/apm_drv.so		-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/drivers/apm_drv.so.1		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/apm_drv.so.1		-unknown-	xorg,xorg_server_ver=118,obsolete
-./usr/X11R7/lib/modules/drivers/ark_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/ark_drv.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ark_drv.so		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/ark_drv.so		-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/lib/modules/drivers/ark_drv.so.0		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/ark_drv.so.0		-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/drivers/ast_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ast_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		-unknown-	xorg
