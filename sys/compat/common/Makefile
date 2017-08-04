@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2016/11/05 23:30:22 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.61 2017/08/04 09:33:03 maxv Exp $
 
 LIB=		compat
 NOPIC=		# defined
@@ -11,7 +11,7 @@ CPPFLAGS=	${COMPATCPPFLAGS} ${SKIP_AUTODEP::=}
 # Common compatibility code, used by all emulations
 SRCS=	compat_exec.c compat_util.c
 
-# Include compatability code common to libcompat and the compat module
+# Include compatibility code common to libcompat and the compat module
 
 .include "Makefile.sysio"
 .include "Makefile.sysv"
