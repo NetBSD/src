@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.8 2017/06/02 09:46:57 knakahara Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.8.2.1 2017/08/05 03:59:21 snj Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.8 2017/06/02 09:46:57 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.8.2.1 2017/08/05 03:59:21 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,6 +127,11 @@ ocryptof_ioctl(struct file *fp, u_long cmd, void *data)
 		break;
 	case CIOCNGSESSION:
 		osgop = (struct ocrypt_sgop *)data;
+		if ((osgop->count <= 0) ||
+		    (SIZE_MAX/sizeof(struct osession_n_op) < osgop->count)) {
+			error = EINVAL;
+			break;
+		}
 		osnop = kmem_alloc((osgop->count *
 				  sizeof(struct osession_n_op)), KM_SLEEP);
 		error = copyin(osgop->sessions, osnop, osgop->count *
@@ -159,6 +164,11 @@ mbail:
 		break;
 	case OCIOCNCRYPTM:
 		omop = (struct ocrypt_mop *)data;
+		if ((omop->count <= 0) ||
+		    (SIZE_MAX/sizeof(struct ocrypt_n_op) <= omop->count)) {
+			error = EINVAL;
+			break;
+		}
 		ocnop = kmem_alloc((omop->count * sizeof(struct ocrypt_n_op)),
 		    KM_SLEEP);
 		error = copyin(omop->reqs, ocnop,
@@ -245,8 +255,10 @@ ocryptodev_session(struct fcrypt *fcr, struct osession_op *osop)
 	sop.mackeylen = osop->mackeylen;
 	sop.mackey = osop->mackey;
 	res = cryptodev_session(fcr, &sop);
+	if (res)
+		return res;
 	osop->ses = sop.ses;
-	return res;
+	return 0;
 
 }
 
