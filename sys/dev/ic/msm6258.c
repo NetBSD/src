@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.21 2017/08/02 10:10:10 isaki Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.22 2017/08/05 05:04:30 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.21 2017/08/02 10:10:10 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.22 2017/08/05 05:04:30 isaki Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -377,9 +377,9 @@ DEFINE_FILTER(msm6258_adpcm_to_linear8)
 			s = audio_stream_add_outp(this->src, s, 1);
 			s1 = adpcm2pcm_step(mc, a & 0x0f);
 			s2 = adpcm2pcm_step(mc, a >> 4);
-			d[0] = s1 / 266;
+			d[0] = s1 / 256;
 			d = audio_stream_add_inp(dst, d, 1);
-			d[0] = s2 / 266;
+			d[0] = s2 / 256;
 			d = audio_stream_add_inp(dst, d, 1);
 		}
 	} else if (enc_dst == AUDIO_ENCODING_ULINEAR_LE) {
@@ -390,9 +390,9 @@ DEFINE_FILTER(msm6258_adpcm_to_linear8)
 			s = audio_stream_add_outp(this->src, s, 1);
 			s1 = adpcm2pcm_step(mc, a & 0x0f);
 			s2 = adpcm2pcm_step(mc, a >> 4);
-			d[0] = (s1 / 266) ^ 0x80;
+			d[0] = (s1 / 256) ^ 0x80;
 			d = audio_stream_add_inp(dst, d, 1);
-			d[0] = (s2 / 266) ^ 0x80;
+			d[0] = (s2 / 256) ^ 0x80;
 			d = audio_stream_add_inp(dst, d, 1);
 		}
 	} else {
