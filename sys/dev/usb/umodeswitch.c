@@ -1,4 +1,4 @@
-/*	$NetBSD: umodeswitch.c,v 1.1 2017/05/24 20:23:58 christos Exp $	*/
+/*	$NetBSD: umodeswitch.c,v 1.2 2017/08/05 12:29:38 khorben Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodeswitch.c,v 1.1 2017/05/24 20:23:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodeswitch.c,v 1.2 2017/08/05 12:29:38 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,14 +401,14 @@ umodeswitch_match(device_t parent, cfdata_t match, void *aux)
 		}
 		break;
 
-	case USB_VENDOR_SIERRA:
-		if (uaa->uaa_product == USB_PRODUCT_SIERRA_INSTALLER)
-			return u3g_sierra_reinit(uaa->uaa_device);
-		break;
-
 	case USB_VENDOR_QUALCOMM:
 		if (uaa->uaa_product == USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_STORAGE)
 			return u3g_bulk_scsi_eject(uaa->uaa_device);
+		break;
+
+	case USB_VENDOR_SIERRA:
+		if (uaa->uaa_product == USB_PRODUCT_SIERRA_INSTALLER)
+			return u3g_sierra_reinit(uaa->uaa_device);
 		break;
 
 	case USB_VENDOR_ZTE:
