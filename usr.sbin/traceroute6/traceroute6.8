@@ -1,4 +1,4 @@
-.\"	$NetBSD: traceroute6.8,v 1.16 2017/08/04 02:08:21 ginsbach Exp $
+.\"	$NetBSD: traceroute6.8,v 1.17 2017/08/05 20:24:17 wiz Exp $
 .\"	$KAME: traceroute6.8,v 1.8 2000/06/12 16:29:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@ is not specified, and only numeric addresses if
 is specified.
 .It Fl m Ar hoplimit
 Specify maximum
-.Ar hoplimit,
+.Ar hoplimit ,
 up to 255.
 The default is 30 hops.
 .It Fl n
@@ -151,7 +151,6 @@ in the same manner as traceroute.
 .Pp
 Here is a list of possible annotations after the
 round-trip time for each gateway:
-.Pp
 .Bl -hang -offset indent
 .It  !N
 Destination Unreachable - No Route to Host.
