@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.54 2017/08/04 02:43:56 kre Exp $
+.\" $NetBSD: gpt.8,v 1.55 2017/08/05 20:21:08 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -171,15 +171,20 @@ BIOS Boot
 .It Cm efi
 EFI System
 .It Cm fbsd-legacy
-FreeBSD legacy
+.Fx
+legacy
 .It Cm fbsd-swap
-FreeBSD swap
+.Fx
+swap
 .It Cm fbsd-ufs
-FreeBSD UFS/UFS2
+.Fx
+UFS/UFS2
 .It Cm fbsd-vinum
-FreeBSD vinum
+.Fx
+vinum
 .It Cm fbsd-zfs
-FreeBSD ZFS
+.Fx
+ZFS
 .It Cm linux-data
 Linux data
 .It Cm linux-raid
@@ -193,17 +198,23 @@ Windows basic data
 .It Cm windows-reserved
 Windows reserved
 .It Cm ccd
-NetBSD ccd component
+.Nx
+ccd component
 .It Cm cgd
-NetBSD Cryptographic Disk
+.Nx
+Cryptographic Disk
 .It Cm ffs
-NetBSD FFSv1/FFSv2
+.Nx
+FFSv1/FFSv2
 .It Cm lfs
-NetBSD LFS
+.Nx
+LFS
 .It Cm raid
-NetBSD RAIDFrame component
+.Nx
+RAIDFrame component
 .It Cm swap
-NetBSD swap
+.Nx
+swap
 .El
 as aliases for the most commonly used partition types.
 .\" ==== backup ====
