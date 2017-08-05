@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.12 2017/06/25 06:26:40 isaki Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.13 2017/08/05 05:53:27 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -91,8 +91,10 @@ struct vs_softc {
 	struct {
 		struct dmac_dma_xfer *xfer;
 		int prate, rrate;
+		int precision;
 		int bufsize, blksize;
 		int dmap;
+		void *rblock;		/* block specified by start_input() */
 	} sc_current;
 	int sc_active;
 
@@ -102,4 +104,11 @@ struct vs_softc {
 	void (*sc_rintr)(void *);
 	void *sc_parg;
 	void *sc_rarg;
+
+	/* local conversion */
+	void (*sc_pconv)(void *, void *, const void *, int);
+	void (*sc_rconv)(void *, void *, int, const void *);
+	void *sc_hwbuf;			/* ADPCM buffer */
+	int sc_hwbufsize;		/* buffer size */
+	void *sc_codec;			/* msm6258codecvar */
 };
