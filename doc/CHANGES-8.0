@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.34 2017/08/01 23:41:13 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.35 2017/08/05 05:12:46 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -4989,4 +4989,104 @@ sys/arch/evbmips/conf/CI20			1.23
 
 	CI20: don't set NEED_MDSETIMAGE when we don't enable the md_root.
 	[mrg, ticket #174]
+
+sys/dev/pci/ixgbe/ix_txrx.c		1.25-1.27
+sys/dev/pci/ixgbe/ixgbe.c		1.91-1.95
+sys/dev/pci/ixgbe/ixgbe_type.h		1.23-1.25
+sys/dev/pci/ixgbe/ixgbe_api.c		1.16
+
+	sync ixg(4) up to ixgbe.c rev. 1.95:
+	- Increase total number of RX buffers on multiqueue.
+	- Fix the partial chain check in ixgbe_rx_discard(). This bug was
+	  added in ixgbe.c rev. 1.33.
+	- Fix a double free in ixgbe_rxeof().
+	- Print verbose output in ixgbe_update_link_status() correctly on 5Gbps
+	  and 2.5Gbps (NBASE-T) for X550T[12] and newer.
+	- Change hw.ixgN.ts to hw.ixgN.thermal_test. Same as FreeBSD.
+	- Fix a bug that ifconfig ixgN media 1000baseT and 10Gbase-T advertised
+	  additional unwanted speeds.
+	- Print PHY ID.
+	- Remove unused variable.
+	[msaitoh, ticket #175]
+
+usr.sbin/makemandb/apropos.c			1.23
+
+	Make the 'no results found' message sound less harsh.
+	[jmcneill, ticket #176]
+
+sys/dev/pcmcia/aic_pcmcia.c			1.44
+
+	Make aic @ pcmcia work.
+	[christos, ticket #177]
+
+sys/opencrypto/crypto.c				1.92-1.100
+sys/opencrypto/cryptodev.h			1.38-1.39
+sys/opencrypto/ocryptodev.c			1.9-1.11
+sys/opencrypto/ocryptodev.c			1.9
+sys/opencrypto/xform.c				1.29
+sys/opencrypto/xform.h				1.20
+
+	opencrypto:
+	- use pool_cache(9) instead of pool(9) as they can be called
+	  concurrently.
+	- use kmem_alloc KPI instead of malloc KPI.
+	- pack crypto_drivers variables to struct and add cacheline_aligned
+	  qualifier.
+	- refactor: remove glue macros for FreeBSD code.
+	- Avoid another userland-controlled integer overflow.
+	- Avert userland-controlled integer overflow.
+	- Don't disclose uninitialized 32-bit word if cryptodev_session fails.
+	- update locking notes of opencrypto(9)
+	- divide crp_ret_{,k}q by CPU to avoid reordering.
+	- make crp_{,k}q percpu to scale crypto_dispatch().
+	- fix panic when using encryption devices attached earlier than
+	  ipi_sysinit().
+	- make cryptoret() context softint to balance dequeuing
+	  crypto_ret_q with enqueuing it.
+	- Apply C99-style struct initialization to enc_xform, auth_hash and
+	  comp_algo
+	- KNF
+	[knakahara, ticket #178]
+
+sys/arch/newsmips/apbus/if_sn.c			1.39
+
+	Avoid memory leak in sonic_get.
+	[spz, ticket #180]
+
+sys/arch/mac68k/nubus/if_netdock_nubus.c	1.26
+
+	Avoid memory leak in netdock_get.
+	[spz, ticket #181]
+
+sys/dev/pci/if_ipw.c				1.65
+
+	Fix double free in ipw_dma_alloc()
+	[spz, ticket #182]
+
+sys/dev/pci/if_et.c				1.15
+
+	Missing mbuf cluster allocation error checking in et_newbuf()
+	[spz, ticket #183]
+
+sys/dev/ic/i82596.c				1.37
+
+	potential double free in iee_init()/iee_stop()
+	[spz, ticket #184]
+
+sys/dev/ic/dp83932.c				1.41
+
+	Plug mbuf leak on MCLGET failure in sonic_rxintr.
+	[spz, ticket #185]
+
+sys/dev/ic/dm9000.c				1.12
+
+	Missing mbuf cluster allocation error checking in
+	dme_alloc_receive_buffer()
+	[spz, ticket #186]
+
+sys/dev/ic/bwi.c				1.32
+
+	wrong error checking in bwi_newbuf() can cause an mbuf to declare
+	an mbuf length that is too big
+	[spz, ticket #187]
 
