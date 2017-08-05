@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.22 2017/05/01 05:28:00 abhinav Exp $	*/
+/*	$NetBSD: apropos.c,v 1.22.2.1 2017/08/05 03:51:38 snj Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.22 2017/05/01 05:28:00 abhinav Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.22.2.1 2017/08/05 03:51:38 snj Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -273,7 +273,7 @@ main(int argc, char *argv[])
 	if (cbdata.count == 0) {
 		warnx("No relevant results obtained.\n"
 		    "Please make sure that you spelled all the terms correctly "
-		    "or try using better keywords.");
+		    "or try using different keywords.");
 	}
 	return 0;
 }
