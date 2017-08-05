@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_type.h 299200 2016-05-06 22:54:56Z pfg $*/
-/*$NetBSD: ixgbe_type.h,v 1.22 2017/06/02 08:16:52 msaitoh Exp $*/
+/*$NetBSD: ixgbe_type.h,v 1.22.2.1 2017/08/05 03:49:35 snj Exp $*/
 
 #ifndef _IXGBE_TYPE_H_
 #define _IXGBE_TYPE_H_
@@ -510,6 +510,7 @@
 /* Tx DCA Control register : 128 of these (0-127) */
 #define IXGBE_DCA_TXCTRL_82599(_i)	(0x0600C + ((_i) * 0x40))
 #define IXGBE_TIPG			0x0CB00
+#define IXGBE_TIPG_IPGT_MASK		0x000000FF
 #define IXGBE_TXPBSIZE(_i)		(0x0CC00 + ((_i) * 4)) /* 8 of these */
 #define IXGBE_MNGTXMAP			0x0CD10
 #define IXGBE_TIPG_FIBER_DEFAULT	3
@@ -1052,6 +1053,24 @@ struct ixgbe_dmac_config {
 #define IXGBE_GSCN_2		0x11028
 #define IXGBE_GSCN_3		0x1102C
 #define IXGBE_FACTPS		0x10150
+
+/* X550 */
+#define IXGBE_PCI_ICAUSE	0x11520
+#define IXGBE_PCI_IENA		0x11528
+#define IXGBE_PCI_VMINDEX	0x11530
+#define IXGBE_PCI_VMPEND	0x11538
+#define IXGBE_PCI_DREVID	0x11540
+#define IXGBE_PCI_BYTCTH	0x11544
+#define IXGBE_PCI_BYTCTL	0x11548
+#define IXGBE_PCI_LATCT		0x11720 /* Denverton */
+#define IXGBE_PCI_LCBDATA	0x11734
+#define IXGBE_PCI_PKTCT		0x11740 /* Denverton */
+#define IXGBE_PCI_LCBADD	0x11788
+#define IXGBE_GSCL_1_X550	0x11800
+#define IXGBE_GSCL_2_X550	0x11804
+#define IXGBE_PCI_GSCL(_i)	(0x011810 + ((_i) * 4))
+#define IXGBE_PCI_GSCN(_i)	(0x011820 + ((_i) * 4))
+
 #define IXGBE_FACTPS_X540	IXGBE_FACTPS
 #define IXGBE_FACTPS_X550	IXGBE_FACTPS
 #define IXGBE_FACTPS_X550EM_x	IXGBE_FACTPS
@@ -1741,6 +1760,7 @@ enum {
 
 /* PAP bit masks*/
 #define IXGBE_PAP_TXPAUSECNT_MASK	0x0000FFFF /* Pause counter mask */
+#define IXGBE_PAP_PACE_MASK		0x000F0000 /* Pace bit mask */
 
 /* RMCS Bit Masks */
 #define IXGBE_RMCS_RRM			0x00000002 /* Rx Recycle Mode enable */
@@ -3835,7 +3855,6 @@ struct ixgbe_mac_info {
 	u32				max_tx_queues;
 	u32				max_rx_queues;
 	u32				orig_autoc;
-	u32 cached_autoc;
 	u8  san_mac_rar_index;
 	bool get_link_status;
 	u32				orig_autoc2;

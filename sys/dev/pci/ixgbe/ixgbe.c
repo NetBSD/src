@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.88.2.1 2017/07/04 14:57:19 martin Exp $*/
+/*$NetBSD: ixgbe.c,v 1.88.2.2 2017/08/05 03:49:35 snj Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -71,6 +71,8 @@
 #include "vlan.h"
 
 #include <sys/cprng.h>
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 /*********************************************************************
  *  Driver version
@@ -720,6 +722,26 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		/* falls thru */
 	default:
 		break;
+	}
+
+	if (hw->phy.id != 0) {
+		uint16_t id1, id2;
+		int oui, model, rev;
+		const char *descr;
+
+		id1 = hw->phy.id >> 16;
+		id2 = hw->phy.id & 0xffff;
+		oui = MII_OUI(id1, id2);
+		model = MII_MODEL(id2);
+		rev = MII_REV(id2);
+		if ((descr = mii_get_descr(oui, model)) != NULL)
+			aprint_normal_dev(dev,
+			    "PHY: %s (OUI 0x%06x, model 0x%04x), rev. %d\n",
+			    descr, oui, model, rev);
+		else
+			aprint_normal_dev(dev,
+			    "PHY OUI 0x%06x, model 0x%04x, rev. %d\n",
+			    oui, model, rev);
 	}
 
 	/* hw.ix defaults init */
@@ -2131,6 +2153,9 @@ ixgbe_media_change(struct ifnet * ifp)
 	struct ifmedia *ifm = &adapter->media;
 	struct ixgbe_hw *hw = &adapter->hw;
 	ixgbe_link_speed speed = 0;
+	ixgbe_link_speed link_caps = 0;
+	bool negotiate = false;
+	s32 err = IXGBE_NOT_IMPLEMENTED;
 
 	INIT_DEBUGOUT("ixgbe_media_change: begin");
 
@@ -2147,10 +2172,19 @@ ixgbe_media_change(struct ifnet * ifp)
 	*/
 	switch (IFM_SUBTYPE(ifm->ifm_media)) {
 		case IFM_AUTO:
+			err = hw->mac.ops.get_link_capabilities(hw, &link_caps,
+			    &negotiate);
+			if (err != IXGBE_SUCCESS) {
+				device_printf(adapter->dev, "Unable to determine "
+				    "supported advertise speeds\n");
+				return (ENODEV);
+			}
+			speed |= link_caps;
+			break;
 		case IFM_10G_T:
-			speed |= IXGBE_LINK_SPEED_100_FULL;
 		case IFM_10G_LRM:
 		case IFM_10G_LR:
+		case IFM_10G_TWINAX:
 #ifndef IFM_ETH_XTYPE
 		case IFM_10G_SR: /* KR, too */
 		case IFM_10G_CX4: /* KX4 */
@@ -2158,12 +2192,9 @@ ixgbe_media_change(struct ifnet * ifp)
 		case IFM_10G_KR:
 		case IFM_10G_KX4:
 #endif
-			speed |= IXGBE_LINK_SPEED_1GB_FULL;
-		case IFM_10G_TWINAX:
 			speed |= IXGBE_LINK_SPEED_10GB_FULL;
 			break;
 		case IFM_1000_T:
-			speed |= IXGBE_LINK_SPEED_100_FULL;
 		case IFM_1000_LX:
 		case IFM_1000_SX:
 		case IFM_1000_KX:
@@ -2433,6 +2464,12 @@ ixgbe_update_link_status(struct adapter *adapter)
 				switch (adapter->link_speed) {
 				case IXGBE_LINK_SPEED_10GB_FULL:
 					bpsmsg = "10 Gbps";
+					break;
+				case IXGBE_LINK_SPEED_5GB_FULL:
+					bpsmsg = "5 Gbps";
+					break;
+				case IXGBE_LINK_SPEED_2_5GB_FULL:
+					bpsmsg = "2.5 Gbps";
 					break;
 				case IXGBE_LINK_SPEED_1GB_FULL:
 					bpsmsg = "1 Gbps";
@@ -4684,7 +4721,7 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
 	    CTLFLAG_READWRITE, CTLTYPE_INT,
-	    "ts", SYSCTL_DESCR("Thermal Test"),
+	    "thermal_test", SYSCTL_DESCR("Thermal Test"),
 	    ixgbe_sysctl_thermal_test, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
@@ -5468,8 +5505,8 @@ ixgbe_sysctl_thermal_test(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct adapter	*adapter = (struct adapter *)node.sysctl_data;
-	int		error, fire = 0;
 	struct ixgbe_hw *hw;
+	int error, fire = 0;
 
 	hw = &adapter->hw;
 
