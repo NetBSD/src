@@ -1,4 +1,4 @@
-/*	$NetBSD: umodeswitch.c,v 1.2 2017/08/05 12:29:38 khorben Exp $	*/
+/*	$NetBSD: umodeswitch.c,v 1.3 2017/08/05 12:38:08 khorben Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodeswitch.c,v 1.2 2017/08/05 12:29:38 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodeswitch.c,v 1.3 2017/08/05 12:38:08 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,6 +404,14 @@ umodeswitch_match(device_t parent, cfdata_t match, void *aux)
 	case USB_VENDOR_QUALCOMM:
 		if (uaa->uaa_product == USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_STORAGE)
 			return u3g_bulk_scsi_eject(uaa->uaa_device);
+		break;
+
+	case USB_VENDOR_RALINK:
+		switch (uaa->uaa_product){
+		case USB_PRODUCT_RALINK_RT73:
+			return u3g_bulk_scsi_eject(uaa->uaa_device);
+			break;
+		}
 		break;
 
 	case USB_VENDOR_SIERRA:
