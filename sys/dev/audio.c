@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.385 2017/08/03 11:39:06 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.386 2017/08/05 13:34:06 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.385 2017/08/03 11:39:06 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.386 2017/08/05 13:34:06 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2229,6 +2229,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	error = audio_set_defaults(sc, mode, vc);
 	if (!error && ISDEVSOUND(dev) && sc->sc_aivalid == true) {
 		sc->sc_ai.mode = mode;
+		sc->sc_ai.play.port = ~0;
+		sc->sc_ai.record.port = ~0;
 		error = audiosetinfo(sc, &sc->sc_ai, true, vc);
 	}
 	if (error)
