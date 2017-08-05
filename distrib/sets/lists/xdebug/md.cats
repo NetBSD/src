@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.8 2016/09/24 21:57:38 mrg Exp $
+# $NetBSD: md.cats,v 1.9 2017/08/05 19:41:03 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg,obsolete
@@ -34,7 +34,8 @@
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=118,obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=110
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=118,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ast_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/chips_drv.so.1.debug	-unknown-		xorg,debug

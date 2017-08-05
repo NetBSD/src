@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.57 2017/01/05 02:22:19 christos Exp $	x11
+# $NetBSD: md.sgimips,v 1.58 2017/08/05 19:41:03 mrg Exp $	x11
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -12,9 +12,9 @@
 ./usr/X11R7/lib/modules/drivers/cirrus_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/crime_drv.so		-unknown-	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/crime_drv.so		-unknown-	xorg,xorg_server_ver=118
+./usr/X11R7/lib/modules/drivers/crime_drv.so		-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/drivers/crime_drv.so.0		-unknown-	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/crime_drv.so.0		-unknown-	xorg,xorg_server_ver=118
+./usr/X11R7/lib/modules/drivers/crime_drv.so.0		-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/drivers/glint_drv.so.1		-unknown-	xorg,xorg_server_ver=110
