@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.43 2017/08/05 05:53:27 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.44 2017/08/05 06:05:37 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.43 2017/08/05 05:53:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.44 2017/08/05 06:05:37 isaki Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -404,8 +404,7 @@ vs_set_params(void *hdl, int setmode, int usemode,
 		return EINVAL;
 	}
 
-	sc->sc_current.prate = rate;
-	sc->sc_current.rrate = rate;
+	sc->sc_current.rate = rate;
 
 	/* pfil and rfil are independent even if !AUDIO_PROP_INDEPENDENT */
 
@@ -449,7 +448,7 @@ vs_init_output(void *hdl, void *buffer, int size)
 	sc = hdl;
 
 	/* Set rate and pan */
-	vs_set_sr(sc, sc->sc_current.prate);
+	vs_set_sr(sc, sc->sc_current.rate);
 	vs_set_po(sc, VS_PANOUT_LR);
 
 	return 0;
@@ -464,7 +463,7 @@ vs_init_input(void *hdl, void *buffer, int size)
 	sc = hdl;
 
 	/* Set rate */
-	vs_set_sr(sc, sc->sc_current.rrate);
+	vs_set_sr(sc, sc->sc_current.rate);
 
 	return 0;
 }
