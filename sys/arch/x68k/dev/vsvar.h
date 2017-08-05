@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.13 2017/08/05 05:53:27 isaki Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.14 2017/08/05 06:05:37 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -90,7 +90,7 @@ struct vs_softc {
 
 	struct {
 		struct dmac_dma_xfer *xfer;
-		int prate, rrate;
+		int rate;
 		int precision;
 		int bufsize, blksize;
 		int dmap;
