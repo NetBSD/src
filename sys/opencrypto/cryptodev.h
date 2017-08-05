@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.34.2.2 2017/07/05 20:19:21 snj Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.34.2.3 2017/08/05 03:59:21 snj Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -483,7 +483,11 @@ struct cryptop {
 	void *		crp_opaque;	/* Opaque pointer, passed along */
 	struct cryptodesc *crp_desc;	/* Linked list of processing descriptors */
 
-	int (*crp_callback)(struct cryptop *); /* Callback function */
+	int (*crp_callback)(struct cryptop *); /*
+						* Callback function.
+						* That must not sleep as it is
+						* called in softint context.
+						*/
 
 	void *		crp_mac;
 
@@ -504,6 +508,10 @@ struct cryptop {
 	struct iovec	iovec[1];
 	struct uio	uio;
 	uint32_t	magic;
+	struct cpu_info	*reqcpu;	/*
+					 * save requested CPU to do cryptoret
+					 * softint in the same CPU.
+					 */
 };
 
 #define CRYPTO_BUF_CONTIG	0x0
@@ -530,12 +538,17 @@ struct cryptkop {
 	u_short		krp_oparams;	/* # of output parameters */
 	u_int32_t	krp_hid;
 	struct crparam	krp_param[CRK_MAXPARAM];	/* kvm */
-	int		(*krp_callback)(struct cryptkop *);
+	int		(*krp_callback)(struct cryptkop *);  /*
+							      * Callback function.
+							      * That must not sleep as it is
+							      * called in softint context.
+							      */
 	int		krp_flags;	/* same values as crp_flags */
 	int		krp_devflags;	/* same values as crp_devflags */
 	kcondvar_t	krp_cv;
 	struct fcrypt 	*fcrp;
 	struct crparam	crk_param[CRK_MAXPARAM];
+	struct cpu_info	*reqcpu;
 };
 
 /* Crypto capabilities structure */
@@ -657,12 +670,17 @@ extern int	cuio_getptr(struct uio *, int loc, int *off);
  * + crypto_drivers[i] and its all members are protected by
  *   crypto_drivers[i].cc_lock (a spin lock)
  *       spin lock as crypto_unblock() can be called in interrupt context
- * + crp_q and crp_kq are procted by crypto_q_mtx (an adaptive lock)
- * + crp_ret_q, crp_ret_kq and crypto_exit_flag are protected by
- *   crypto_ret_q_mtx (a spin lock)
+ * + percpu'ed crp_q and crp_kq are procted by splsoftnet.
+ * + crp_ret_q, crp_ret_kq and crypto_exit_flag that are members of
+ *   struct crypto_crp_ret_qs are protected by crypto_crp_ret_qs.crp_ret_q_mtx
+ *   (a spin lock)
  *       spin lock as crypto_done() can be called in interrupt context
+ *       NOTE:
+ *       It is not known whether crypto_done()(in interrupt context) is called
+ *       in the same CPU as crypto_dispatch() is called.
+ *       So, struct crypto_crp_ret_qs cannot be percpu(9).
  *
  * Locking order:
- *     - crypto_q_mtx => crypto_drv_mtx => crypto_drivers[i].cc_lock
+ *     - crypto_drv_mtx => crypto_drivers[i].cc_lock
  */
 #endif /* _CRYPTO_CRYPTO_H_ */
