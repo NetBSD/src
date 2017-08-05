@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.1 2017/06/28 23:48:22 jmcneill Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.2 2017/08/05 11:58:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.1 2017/06/28 23:48:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.2 2017/08/05 11:58:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -115,6 +117,7 @@ psci_fdt_init(const int phandle)
 void
 psci_fdt_bootstrap(void)
 {
+#ifdef MULTIPROCESSOR
 	extern void cortex_mpstart(void);
 	bus_addr_t mpidr;
 	uint32_t bp_mpidr;
@@ -173,4 +176,5 @@ psci_fdt_bootstrap(void)
 		if (arm_cpu_hatched == started)
 			break;
 	}
+#endif
 }
