@@ -1,3 +1,5 @@
+.\" $NetBSD: localedef.1,v 1.1.2.2 2017/08/05 20:30:41 wiz Exp $
+.\"
 .\" Copyright (c) 1992, X/Open Company Limited  All Rights Reserved
 .\" Portions Copyright (c) 2003, Sun Microsystems, Inc.  All Rights Reserved
 .\" Portions Copyright 2013 DEY Storage Systems, Inc.
@@ -71,6 +73,8 @@ The following categories are supported:
 Defines character classification and case conversion.
 .It Ev LC_COLLATE
 Defines collation rules.
+.It Ev LC_MESSAGES
+Defines the format and values of affirmative and negative responses.
 .It Ev LC_MONETARY
 Defines the format and symbols used in formatting of monetary information.
 .It Ev LC_NUMERIC
@@ -78,8 +82,6 @@ Defines the decimal delimiter, grouping and grouping symbol for non-monetary
 numeric editing.
 .It Ev LC_TIME
 Defines the format and content of date and time information.
-.It Ev LC_MESSAGES
-Defines the format and values of affirmative and negative responses.
 .El
 .Pp
 The following options are supported:
@@ -112,17 +114,18 @@ option is not present, the default character mapping will be used.
 The path name of a file containing the source definitions.
 If this option is not present, source definitions will be read from
 standard input.
+.It Fl U
+Ignore the presence of character symbols that have no matching character
+definition.
+This facilitates the use of a common locale definition file
+to be used across multiple encodings, even when some symbols are not
+present in a given encoding.
 .It Fl u Ar codeset
 Specifies the name of a codeset used as the target mapping of character symbols
 and collating element symbols whose encoding values are defined in terms of the
 ISO/IEC 10646-1:2000 standard position constant values.
 See
 .Sx NOTES .
-.It Fl U
-Ignore the presence of character symbols that have no matching character
-definition.  This facilitates the use of a common locale definition file
-to be used across multiple encodings, even when some symbols are not
-present in a given encoding.
 .It Fl v
 Emit verbose debugging output on standard output.
 .It Fl w Ar widthfile
@@ -151,10 +154,9 @@ belonging to the same locale can be processed.)
 .Nm
 creates a directory of files that represents the locale's data,
 unless instructed otherwise by the
-.Fl D (
-BSD
-output) option.
-The contants of this directory should generally be copied into the
+.Fl D
+(BSD output) option.
+The contents of this directory should generally be copied into the
 appropriate subdirectory of
 .Pa /usr/share/locale
 in order the definitions to be visible to programs linked with libc.
@@ -170,7 +172,7 @@ execution of
 .Ev LC_CTYPE ,
 .Ev LC_MESSAGES ,
 .Ev LC_MONETARY ,
-.Ev LC_MUMERIC ,
+.Ev LC_NUMERIC ,
 .Ev LC_TIME ,
 and
 .Ev NLSPATH .
