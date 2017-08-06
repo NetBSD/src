@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.7 2017/07/17 23:26:17 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.8 2017/08/06 17:14:37 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -79,12 +79,21 @@ const char *sunxi_ccu_gate_get_parent(struct sunxi_ccu_softc *,
 	[_id] = {						\
 		.type = SUNXI_CCU_GATE,				\
 		.base.name = (_name),				\
+		.base.flags = CLK_SET_RATE_PARENT,		\
 		.u.gate.parent = (_pname),			\
 		.u.gate.reg = (_reg),				\
 		.u.gate.mask = __BIT(_bit),			\
 		.enable = sunxi_ccu_gate_enable,		\
 		.get_parent = sunxi_ccu_gate_get_parent,	\
 	}
+
+struct sunxi_ccu_nkmp_tbl {
+	u_int		rate;
+	uint32_t	n;
+	uint32_t	k;
+	uint32_t	m;
+	uint32_t	p;
+};
 
 struct sunxi_ccu_nkmp {
 	bus_size_t	reg;
@@ -96,6 +105,7 @@ struct sunxi_ccu_nkmp {
 	uint32_t	lock;
 	uint32_t	enable;
 	uint32_t	flags;
+	const struct sunxi_ccu_nkmp_tbl *table;
 #define	SUNXI_CCU_NKMP_DIVIDE_BY_TWO	__BIT(0)
 #define	SUNXI_CCU_NKMP_FACTOR_N_EXACT	__BIT(1)
 };
@@ -109,8 +119,8 @@ int	sunxi_ccu_nkmp_set_rate(struct sunxi_ccu_softc *,
 const char *sunxi_ccu_nkmp_get_parent(struct sunxi_ccu_softc *,
 				      struct sunxi_ccu_clk *);
 
-#define	SUNXI_CCU_NKMP(_id, _name, _parent, _reg, _n, _k, _m,	\
-		       _p, _enable, _flags)			\
+#define	SUNXI_CCU_NKMP_TABLE(_id, _name, _parent, _reg, _n, _k, _m, \
+		       _p, _enable, _lock, _tbl, _flags)	\
 	[_id] = {						\
 		.type = SUNXI_CCU_NKMP,				\
 		.base.name = (_name),				\
@@ -122,11 +132,19 @@ const char *sunxi_ccu_nkmp_get_parent(struct sunxi_ccu_softc *,
 		.u.nkmp.p = (_p),				\
 		.u.nkmp.enable = (_enable),			\
 		.u.nkmp.flags = (_flags),			\
+		.u.nkmp.lock = (_lock),				\
+		.u.nkmp.table = (_tbl),				\
 		.enable = sunxi_ccu_nkmp_enable,		\
 		.get_rate = sunxi_ccu_nkmp_get_rate,		\
 		.set_rate = sunxi_ccu_nkmp_set_rate,		\
 		.get_parent = sunxi_ccu_nkmp_get_parent,	\
 	}
+
+#define	SUNXI_CCU_NKMP(_id, _name, _parent, _reg, _n, _k, _m,	\
+		       _p, _enable, _flags)			\
+	SUNXI_CCU_NKMP_TABLE(_id, _name, _parent, _reg, _n, _k, _m, \
+			     _p, _enable, 0, NULL, _flags)
+
 
 struct sunxi_ccu_nm {
 	bus_size_t	reg;
