@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.386 2017/08/05 13:34:06 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.387 2017/08/06 10:07:31 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.386 2017/08/05 13:34:06 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.387 2017/08/06 10:07:31 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3682,12 +3682,10 @@ audio_pint(void *v)
 			    vc->sc_mpr.s.inp, cc);
 			used -= cc;
 		}
-		goto wake_mix;
 	}
 
 	mix_write(sc);
 
-wake_mix:
 	cv_broadcast(&sc->sc_condvar);
 }
 
