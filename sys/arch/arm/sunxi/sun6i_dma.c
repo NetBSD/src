@@ -1,4 +1,4 @@
-/* $NetBSD: sun6i_dma.c,v 1.1 2017/08/05 17:51:49 jmcneill Exp $ */
+/* $NetBSD: sun6i_dma.c,v 1.2 2017/08/06 17:13:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_ddb.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.1 2017/08/05 17:51:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.2 2017/08/06 17:13:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -212,8 +214,8 @@ sun6idma_transfer(device_t dev, void *priv, struct fdtbus_dma_req *req)
 
 	mem_width = DMA_CFG_DATA_WIDTH(req->dreq_mem_opt.opt_bus_width);
 	dev_width = DMA_CFG_DATA_WIDTH(req->dreq_dev_opt.opt_bus_width);
-	mem_burst = DMA_CFG_BST_LEN(req->dreq_mem_opt.opt_burst_len / NBBY);
-	dev_burst = DMA_CFG_BST_LEN(req->dreq_dev_opt.opt_burst_len / NBBY);
+	mem_burst = DMA_CFG_BST_LEN(req->dreq_mem_opt.opt_burst_len);
+	dev_burst = DMA_CFG_BST_LEN(req->dreq_dev_opt.opt_burst_len);
 
 	mem_cfg = __SHIFTIN(mem_width, DMA_CFG_SRC_DATA_WIDTH) |
 	    __SHIFTIN(mem_burst, DMA_CFG_SRC_BST_LEN) |
@@ -248,6 +250,12 @@ sun6idma_transfer(device_t dev, void *priv, struct fdtbus_dma_req *req)
 	DMA_WRITE(sc, DMA_START_ADDR_REG(ch->ch_index),
 	    ch->ch_dmamap->dm_segs[0].ds_addr);
 	DMA_WRITE(sc, DMA_EN_REG(ch->ch_index), DMA_EN_EN);
+
+	if ((DMA_READ(sc, DMA_EN_REG(ch->ch_index)) & DMA_EN_EN) == 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "DMA Channel %u failed to start\n", ch->ch_index);
+		return EIO;
+	}
 
 	return 0;
 }
@@ -406,3 +414,40 @@ sun6idma_attach(device_t parent, device_t self, void *aux)
 
 CFATTACH_DECL_NEW(sun6i_dma, sizeof(struct sun6idma_softc),
         sun6idma_match, sun6idma_attach, NULL, NULL);
+
+#ifdef DDB
+void sun6idma_dump(void);
+
+void
+sun6idma_dump(void)
+{
+	struct sun6idma_softc *sc;
+	device_t dev;
+	u_int index;
+
+	dev = device_find_by_driver_unit("sun6idma", 0);
+	if (dev == NULL)
+		return;
+	sc = device_private(dev);
+
+	device_printf(dev, "DMA_IRQ_EN_REG0_REG:   %08x\n", DMA_READ(sc, DMA_IRQ_EN_REG0_REG));
+	device_printf(dev, "DMA_IRQ_EN_REG1_REG:   %08x\n", DMA_READ(sc, DMA_IRQ_EN_REG1_REG));
+	device_printf(dev, "DMA_IRQ_PEND_REG0_REG: %08x\n", DMA_READ(sc, DMA_IRQ_PEND_REG0_REG));
+	device_printf(dev, "DMA_IRQ_PEND_REG1_REG: %08x\n", DMA_READ(sc, DMA_IRQ_PEND_REG1_REG));
+	device_printf(dev, "DMA_STA_REG:           %08x\n", DMA_READ(sc, DMA_STA_REG));
+
+	for (index = 0; index < sc->sc_nchan; index++) {
+		struct sun6idma_channel *ch = &sc->sc_chan[index];
+		if (ch->ch_callback == NULL)
+			continue;
+		device_printf(dev, " %2d: DMA_EN_REG:         %08x\n", index, DMA_READ(sc, DMA_EN_REG(index)));
+		device_printf(dev, " %2d: DMA_PAU_REG:        %08x\n", index, DMA_READ(sc, DMA_PAU_REG(index)));
+		device_printf(dev, " %2d: DMA_START_ADDR_REG: %08x\n", index, DMA_READ(sc, DMA_START_ADDR_REG(index)));
+		device_printf(dev, " %2d: DMA_CFG_REG:        %08x\n", index, DMA_READ(sc, DMA_CFG_REG(index)));
+		device_printf(dev, " %2d: DMA_CUR_SRC_REG:    %08x\n", index, DMA_READ(sc, DMA_CUR_SRC_REG(index)));
+		device_printf(dev, " %2d: DMA_CUR_DEST_REG:   %08x\n", index, DMA_READ(sc, DMA_CUR_DEST_REG(index)));
+		device_printf(dev, " %2d: DMA_BCNT_LEFT_REG:  %08x\n", index, DMA_READ(sc, DMA_BCNT_LEFT_REG(index)));
+		device_printf(dev, " %2d: DMA_PARA_REG:       %08x\n", index, DMA_READ(sc, DMA_PARA_REG(index)));
+	}
+}
+#endif
