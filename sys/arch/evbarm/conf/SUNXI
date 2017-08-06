@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.20 2017/08/05 17:52:06 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.21 2017/08/06 17:16:02 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -116,6 +116,12 @@ iic*		at i2cbus?
 
 # RTC
 sunxirtc*	at fdt?			# RTC
+
+# Audio
+sunxicodec*	at fdt?			# Audio codec
+h3codec*	at fdt?			# H3 audio codec (analog part)
+audio*		at audiobus?
+spkr*		at audio?
 
 # SDMMC
 sunximmc*	at fdt?			# SDMMC
