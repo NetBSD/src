@@ -1,4 +1,4 @@
-/*	$NetBSD: idt.c,v 1.4 2016/08/27 14:19:47 maxv Exp $	*/
+/*	$NetBSD: idt.c,v 1.5 2017/08/07 17:10:09 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.4 2016/08/27 14:19:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.5 2017/08/07 17:10:09 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,6 @@ void
 idt_vec_set(int vec, void (*function)(void))
 {
 
-	KASSERT(mutex_owned(&cpu_lock) || !mp_online);
 	KASSERT(idt_allocmap[vec] == 1);
 	setgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
