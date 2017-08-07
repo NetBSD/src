@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.93 2016/12/03 16:38:15 macallan Exp $
+#	$NetBSD: Makefile,v 1.94 2017/08/07 06:51:13 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -142,15 +142,12 @@ SUBDIR+= \
 
 .if ${MACHINE} == "cats"
 SUBDIR+= \
-	xf86-video-apm \
-	xf86-video-ark \
 	xf86-video-ast \
 	xf86-video-ati \
 	xf86-video-chips \
 	xf86-video-cirrus \
 	xf86-video-cirrus_alpine \
 	xf86-video-cirrus_laguna \
-	xf86-video-glint \
 	xf86-video-i128 \
 	xf86-video-i740 \
 	xf86-video-mga \
@@ -167,6 +164,12 @@ SUBDIR+= \
 	xf86-video-tseng \
 	xf86-video-vesa \
 	xf86-video-wsfb
+# needs porting for xorg-server 1.18
+.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
+	xf86-video-apm \
+	xf86-video-ark \
+	xf86-video-glint
+.endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 .endif	# ${MACHINE} == "cats"
 
 .if ${MACHINE} == "dreamcast"
