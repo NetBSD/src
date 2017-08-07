@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.17 2017/08/03 06:30:40 ozaki-r Exp $	*/
+/*	$NetBSD: keydb.h,v 1.18 2017/08/07 03:21:59 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -76,7 +76,7 @@ struct secashead {
 	size_t identd_len;		/* length of identd */
 
 	u_int8_t state;			/* MATURE or DEAD. */
-	struct pslist_head savtree[SADB_SASTATE_MAX+1];
+	struct pslist_head savlist[SADB_SASTATE_MAX+1];
 					/* SA chain */
 					/* The first of this list is newer SA */
 
