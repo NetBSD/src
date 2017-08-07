@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.21 2017/07/30 00:47:48 nat Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.22 2017/08/07 13:30:51 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.21 2017/07/30 00:47:48 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.22 2017/08/07 13:30:51 isaki Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -318,7 +318,7 @@ aurateconv_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
 				WRITE_S##BITS##EN(WP, 0); \
 				WP = audio_stream_add_inp(STREAM, WP, (BITS) / NBBY); \
 			} \
-		} else {	/* from->channels < to->channels */ \
+		} else {	/* from->channels > to->channels */ \
 			int j; \
 			for (j = 0; j < (int)(TO)->channels; j++) { \
 				WRITE_S##BITS##EN(WP, (V)[j]); \
