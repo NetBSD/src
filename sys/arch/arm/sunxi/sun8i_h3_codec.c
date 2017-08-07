@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_codec.c,v 1.1 2017/08/06 17:15:45 jmcneill Exp $ */
+/* $NetBSD: sun8i_h3_codec.c,v 1.2 2017/08/07 21:50:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_h3_codec.c,v 1.1 2017/08/06 17:15:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_h3_codec.c,v 1.2 2017/08/07 21:50:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -193,6 +193,10 @@ h3_codec_pr_write(struct h3_codec_softc *csc, u_int addr, u_int data)
 
 	/* Write mode */
 	val |= H3_AC_PR_RW;
+	WR4(csc, H3_PR_CFG, val);
+
+	/* Clear write mode */
+	val &= ~H3_AC_PR_RW;
 	WR4(csc, H3_PR_CFG, val);
 }
 
