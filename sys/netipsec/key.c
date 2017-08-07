@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.206 2017/08/03 06:32:51 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.207 2017/08/07 03:20:02 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.206 2017/08/03 06:32:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.207 2017/08/07 03:20:02 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1297,7 +1297,7 @@ void
 key_sp_unref(struct secpolicy *sp, const char* where, int tag)
 {
 
-	KASSERT(mutex_ownable(&key_sp_mtx));
+	KDASSERT(mutex_ownable(&key_sp_mtx));
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP SP:%p (ID=%u) from %s:%u; refcnt-- now %u\n",
