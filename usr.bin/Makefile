@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.229 2017/05/21 15:28:42 riastradh Exp $
+#	$NetBSD: Makefile,v 1.229.4.1 2017/08/07 14:27:11 perseant Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -15,7 +15,7 @@ SUBDIR= apply asa at audio audiocfg \
 	getopt gettext gprof \
 	head hexdump iconv id indent infocmp innetgr ipcrm ipcs join jot \
 	kdump ktrace ktruss lam last lastcomm ldd leave \
-	locale locate lock logger login logname look lorder m4 \
+	locale localedef locate lock logger login logname look lorder m4 \
 	machine mail make man menuc mesg midiplay midirecord mixerctl \
 	mkcsmapper mkdep mkesdb mkfifo mklocale mkstr mktemp mkubootimage \
 	moduli msgc msgs \

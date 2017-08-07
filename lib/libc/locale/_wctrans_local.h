@@ -1,4 +1,4 @@
-/*	$NetBSD: _wctrans_local.h,v 1.9.40.1 2017/07/21 20:22:29 perseant Exp $	*/
+/*	$NetBSD: _wctrans_local.h,v 1.9.40.2 2017/08/07 14:27:11 perseant Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -40,7 +40,7 @@ __END_DECLS
 static __inline wint_t
 _towctrans_priv(wint_ucs4_t c, _WCTransEntry const *te, const _RuneLocale *rl)
 {
-	wint_kuten_t ktc;
+	wint_kuten_t ktc = 0;
 
 	_citrus_ctype_ucs2kt(rl->rl_citrus_ctype, &ktc, c);
 	ktc = (_RUNE_ISCACHED(ktc)

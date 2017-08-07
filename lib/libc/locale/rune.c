@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.46.22.2 2017/07/21 20:22:29 perseant Exp $	*/
+/*	$NetBSD: rune.c,v 1.46.22.3 2017/08/07 14:27:11 perseant Exp $	*/
 /*-
  * Copyright (c)2010 Citrus Project,
  * All rights reserved.
@@ -312,12 +312,10 @@ do {									\
 
 #define CONVERT_MAP(name)						\
 do {									\
-	wint_ucs4_t map;						\
-	wint_kuten_t kmap;						\
+	wint_kuten_t map;						\
 	int c;								\
 									\
 	map = _towctrans_priv(wc, _wctrans_##name(rl), rl);		\
-	_citrus_ctype_ucs2kt(rl->rl_citrus_ctype, &kmap, map);		\
 	if (map == wc || (_citrus_ctype_wctob(rl->rl_citrus_ctype,	\
 	    map, &c)  || c == EOF))					\
 		c = i;							\
