@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.50 2017/08/04 07:27:42 maya Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.51 2017/08/07 06:53:49 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.232 2016/05/19 18:32:03 riastradh Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.50 2017/08/04 07:27:42 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.51 2017/08/07 06:53:49 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -769,129 +769,173 @@ ulfs_readdir(void *v)
 		kauth_cred_t	a_cred;
 		int		*a_eofflag;
 		off_t		**a_cookies;
-		int		*ncookies;
+		int		*a_ncookies;
 	} */ *ap = v;
+
+	/* vnode and fs */
 	struct vnode	*vp = ap->a_vp;
-	LFS_DIRHEADER	*cdp, *ecdp;
-	struct dirent	*ndp;
-	char		*cdbuf, *ndbuf, *endp;
-	struct uio	auio, *uio;
-	struct iovec	aiov;
-	int		error;
-	size_t		count, ccount, rcount, cdbufsz, ndbufsz;
-	off_t		off, *ccp;
-	off_t		startoff;
-	size_t		skipbytes;
 	struct ulfsmount *ump = VFSTOULFS(vp->v_mount);
 	struct lfs *fs = ump->um_lfs;
+	/* caller's buffer */
+	struct uio	*calleruio = ap->a_uio;
+	off_t		startoffset, endoffset;
+	size_t		callerbytes;
+	off_t		curoffset;
+	/* dirent production buffer */
+	char		*direntbuf;
+	size_t		direntbufmax;
+	struct dirent	*dirent, *stopdirent;
+	/* output cookies array */
+	off_t		*cookies;
+	size_t		numcookies, maxcookies;
+	/* disk buffer */
+	off_t		physstart, physend;
+	size_t		skipstart, dropend;
+	char		*rawbuf;
+	size_t		rawbufmax, rawbytes;
+	struct uio	rawuio;
+	struct iovec	rawiov;
+	LFS_DIRHEADER	*rawdp, *stoprawdp;
+	/* general */
+	int		error;
 
 	KASSERT(VOP_ISLOCKED(vp));
 
-	uio = ap->a_uio;
-	count = uio->uio_resid;
-	rcount = count - ((uio->uio_offset + count) & (fs->um_dirblksiz - 1));
+	/* figure out where we want to read */
+	callerbytes = calleruio->uio_resid;
+	startoffset = calleruio->uio_offset;
+	endoffset = startoffset + callerbytes;
 
-	if (rcount < LFS_DIRECTSIZ(fs, 0) || count < _DIRENT_MINSIZE(ndp))
+	if (callerbytes < _DIRENT_MINSIZE(dirent)) {
+		/* no room for even one struct dirent */
 		return EINVAL;
-
-	startoff = uio->uio_offset & ~(fs->um_dirblksiz - 1);
-	skipbytes = uio->uio_offset - startoff;
-	rcount += skipbytes;
-
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_offset = startoff;
-	auio.uio_resid = rcount;
-	UIO_SETUP_SYSSPACE(&auio);
-	auio.uio_rw = UIO_READ;
-	cdbufsz = rcount;
-	cdbuf = kmem_alloc(cdbufsz, KM_SLEEP);
-	aiov.iov_base = cdbuf;
-	aiov.iov_len = rcount;
-	error = VOP_READ(vp, &auio, 0, ap->a_cred);
-	if (error != 0) {
-		kmem_free(cdbuf, cdbufsz);
-		return error;
 	}
 
-	rcount -= auio.uio_resid;
+	/* round start and end down to block boundaries */
+	physstart = startoffset & ~(off_t)(fs->um_dirblksiz - 1);
+	physend = endoffset & ~(off_t)(fs->um_dirblksiz - 1);
+	skipstart = startoffset - physstart;
+	dropend = endoffset - physend;
 
-	cdp = (LFS_DIRHEADER *)(void *)cdbuf;
-	ecdp = (LFS_DIRHEADER *)(void *)&cdbuf[rcount];
+	if (callerbytes - dropend < LFS_DIRECTSIZ(fs, 0)) {
+		/* no room for even one dirheader + name */
+		return EINVAL;
+	}
 
-	ndbufsz = count;
-	ndbuf = kmem_alloc(ndbufsz, KM_SLEEP);
-	ndp = (struct dirent *)(void *)ndbuf;
-	endp = &ndbuf[count];
+	/* how much to actually read */
+	rawbufmax = callerbytes + skipstart - dropend;
 
-	off = uio->uio_offset;
+	/* read it */
+	rawbuf = kmem_alloc(rawbufmax, KM_SLEEP);
+	rawiov.iov_base = rawbuf;
+	rawiov.iov_len = rawbufmax;
+	rawuio.uio_iov = &rawiov;
+	rawuio.uio_iovcnt = 1;
+	rawuio.uio_offset = physstart;
+	rawuio.uio_resid = rawbufmax;
+	UIO_SETUP_SYSSPACE(&rawuio);
+	rawuio.uio_rw = UIO_READ;
+	error = VOP_READ(vp, &rawuio, 0, ap->a_cred);
+	if (error != 0) {
+		kmem_free(rawbuf, rawbufmax);
+		return error;
+	}
+	rawbytes = rawbufmax - rawuio.uio_resid;
+
+	/* the raw entries to iterate over */
+	rawdp = (LFS_DIRHEADER *)(void *)rawbuf;
+	stoprawdp = (LFS_DIRHEADER *)(void *)&rawbuf[rawbytes];
+
+	/* allocate space to produce dirents into */
+	direntbufmax = callerbytes;
+	direntbuf = kmem_alloc(direntbufmax, KM_SLEEP);
+
+	/* the dirents to iterate over */
+	dirent = (struct dirent *)(void *)direntbuf;
+	stopdirent = (struct dirent *)(void *)&direntbuf[direntbufmax];
+
+	/* the output "cookies" (seek positions of directory entries) */
 	if (ap->a_cookies) {
-		ccount = rcount / LFS_DIRECTSIZ(fs, 1);
-		ccp = *(ap->a_cookies) = malloc(ccount * sizeof(*ccp),
+		numcookies = 0;
+		maxcookies = rawbytes / LFS_DIRECTSIZ(fs, 1);
+		cookies = malloc(maxcookies * sizeof(*cookies),
 		    M_TEMP, M_WAITOK);
 	} else {
 		/* XXX: GCC */
-		ccount = 0;
-		ccp = NULL;
+		maxcookies = 0;
+		cookies = NULL;
 	}
 
-	while (cdp < ecdp) {
-		if (skipbytes > 0) {
-			if (lfs_dir_getreclen(fs, cdp) <= skipbytes) {
-				skipbytes -= lfs_dir_getreclen(fs, cdp);
-				cdp = LFS_NEXTDIR(fs, cdp);
+	/* now produce the dirents */
+	curoffset = calleruio->uio_offset;
+	while (rawdp < stoprawdp) {
+		if (skipstart > 0) {
+			/* drain skipstart */
+			if (lfs_dir_getreclen(fs, rawdp) <= skipstart) {
+				skipstart -= lfs_dir_getreclen(fs, rawdp);
+				rawdp = LFS_NEXTDIR(fs, rawdp);
 				continue;
 			}
-			/*
-			 * invalid cookie.
-			 */
+			/* caller's start position wasn't on an entry */
 			error = EINVAL;
 			goto out;
 		}
-		if (lfs_dir_getreclen(fs, cdp) == 0) {
-			struct dirent *ondp = ndp;
-			ndp->d_reclen = _DIRENT_MINSIZE(ndp);
-			ndp = _DIRENT_NEXT(ndp);
-			ondp->d_reclen = 0;
-			cdp = ecdp;
+		if (lfs_dir_getreclen(fs, rawdp) == 0) {
+			struct dirent *save = dirent;
+			dirent->d_reclen = _DIRENT_MINSIZE(dirent);
+			dirent = _DIRENT_NEXT(dirent);
+			save->d_reclen = 0;
+			rawdp = stoprawdp;
 			break;
 		}
-		ndp->d_type = lfs_dir_gettype(fs, cdp);
-		ndp->d_namlen = lfs_dir_getnamlen(fs, cdp);
-		ndp->d_reclen = _DIRENT_RECLEN(ndp, ndp->d_namlen);
-		if ((char *)(void *)ndp + ndp->d_reclen +
-		    _DIRENT_MINSIZE(ndp) > endp)
+
+		/* copy the header */
+		dirent->d_type = lfs_dir_gettype(fs, rawdp);
+		dirent->d_namlen = lfs_dir_getnamlen(fs, rawdp);
+		dirent->d_reclen = _DIRENT_RECLEN(dirent, dirent->d_namlen);
+
+		/* stop if there isn't room for the name AND another header */
+		if ((char *)(void *)dirent + dirent->d_reclen +
+		    _DIRENT_MINSIZE(dirent) > (char *)(void *)stopdirent)
 			break;
-		ndp->d_fileno = lfs_dir_getino(fs, cdp);
-		(void)memcpy(ndp->d_name, lfs_dir_nameptr(fs, cdp),
-			     ndp->d_namlen);
-		memset(&ndp->d_name[ndp->d_namlen], 0,
-		    ndp->d_reclen - _DIRENT_NAMEOFF(ndp) - ndp->d_namlen);
-		off += lfs_dir_getreclen(fs, cdp);
+
+		/* copy the name (and inode (XXX: why after the test?)) */
+		dirent->d_fileno = lfs_dir_getino(fs, rawdp);
+		(void)memcpy(dirent->d_name, lfs_dir_nameptr(fs, rawdp),
+			     dirent->d_namlen);
+		memset(&dirent->d_name[dirent->d_namlen], 0,
+		    dirent->d_reclen - _DIRENT_NAMEOFF(dirent)
+		    - dirent->d_namlen);
+
+		/* onward */
+		curoffset += lfs_dir_getreclen(fs, rawdp);
 		if (ap->a_cookies) {
-			KASSERT(ccp - *(ap->a_cookies) < ccount);
-			*(ccp++) = off;
+			KASSERT(numcookies < maxcookies);
+			cookies[numcookies++] = curoffset;
 		}
-		ndp = _DIRENT_NEXT(ndp);
-		cdp = LFS_NEXTDIR(fs, cdp);
+		dirent = _DIRENT_NEXT(dirent);
+		rawdp = LFS_NEXTDIR(fs, rawdp);
 	}
 
-	count = ((char *)(void *)ndp - ndbuf);
-	error = uiomove(ndbuf, count, uio);
+	/* transfer the dirents to the caller's buffer */
+	callerbytes = ((char *)(void *)dirent - direntbuf);
+	error = uiomove(direntbuf, callerbytes, calleruio);
+
 out:
+	calleruio->uio_offset = curoffset;
 	if (ap->a_cookies) {
 		if (error) {
-			free(*(ap->a_cookies), M_TEMP);
-			*(ap->a_cookies) = NULL;
-			*(ap->a_ncookies) = 0;
+			free(cookies, M_TEMP);
+			*ap->a_cookies = NULL;
+			*ap->a_ncookies = 0;
 		} else {
-			*ap->a_ncookies = ccp - *(ap->a_cookies);
+			*ap->a_cookies = cookies;
+			*ap->a_ncookies = numcookies;
 		}
 	}
-	uio->uio_offset = off;
-	kmem_free(ndbuf, ndbufsz);
-	kmem_free(cdbuf, cdbufsz);
-	*ap->a_eofflag = VTOI(vp)->i_size <= uio->uio_offset;
+	kmem_free(direntbuf, direntbufmax);
+	kmem_free(rawbuf, rawbufmax);
+	*ap->a_eofflag = VTOI(vp)->i_size <= calleruio->uio_offset;
 	return error;
 }
 
