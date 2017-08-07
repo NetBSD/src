@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.207 2017/08/07 03:20:02 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.208 2017/08/07 03:21:58 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.207 2017/08/07 03:20:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.208 2017/08/07 03:21:58 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -137,17 +137,17 @@ percpu_t *pfkeystat_percpu;
 
 /*
  * Locking notes on SPD:
- * - Modifications to the sptree must be done with holding key_sp_mtx
+ * - Modifications to the key_spd.splist must be done with holding key_spd.lock
  *   which is a adaptive mutex
- * - Read accesses to the sptree must be in critical sections of pserialize(9)
+ * - Read accesses to the key_spd.splist must be in critical sections of pserialize(9)
  * - SP's lifetime is managed by localcount(9)
- * - An SP that has been inserted to the sptree is initially referenced by none,
- *   i.e., a reference from the pstree isn't counted
+ * - An SP that has been inserted to the key_spd.splist is initially referenced by none,
+ *   i.e., a reference from the key_spd.splist isn't counted
  * - When an SP is being destroyed, we change its state as DEAD, wait for
  *   references to the SP to be released, and then deallocate the SP
  *   (see key_unlink_sp)
  * - Getting an SP
- *   - Normally we get an SP from the sptree by incrementing the reference count
+ *   - Normally we get an SP from the key_spd.splist by incrementing the reference count
  *     of the SP
  *   - We can gain another reference from a held SP only if we check its state
  *     and take its reference in a critical section of pserialize
@@ -156,7 +156,7 @@ percpu_t *pfkeystat_percpu;
  * - Updating member variables of an SP
  *   - Most member variables of an SP are immutable
  *   - Only sp->state and sp->lastused can be changed
- *   - sp->state of an SP is updated only when destroying it under key_sp_mtx
+ *   - sp->state of an SP is updated only when destroying it under key_spd.lock
  * - SP caches
  *   - SPs can be cached in PCBs
  *   - The lifetime of the caches is controlled by the global generation counter
@@ -172,7 +172,7 @@ percpu_t *pfkeystat_percpu;
  *   - Userland programs can set a policy to a socket by
  *     setsockopt(IP_IPSEC_POLICY)
  *   - Such policies (SPs) are set to a socket (PCB) and also inserted to
- *     the key_socksplist list (not the sptree)
+ *     the key_spd.socksplist list (not the key_spd.splist)
  *   - Such a policy is destroyed when a corresponding socket is destroed,
  *     however, a socket can be destroyed in softint so we cannot destroy
  *     it directly instead we just mark it DEAD and delay the destruction
@@ -192,17 +192,42 @@ static int key_prefered_oldsa = 0;	/* prefered old sa rather than new sa.*/
 
 static u_int32_t acq_seq = 0;
 
-static struct pslist_head sptree[IPSEC_DIR_MAX];		/* SPD */
-static struct pslist_head sahtree;				/* SAD */
-static LIST_HEAD(_regtree, secreg) regtree[SADB_SATYPE_MAX + 1];
-							/* registed list */
+static pserialize_t key_psz;
+
+/* SPD */
+static struct {
+	kmutex_t lock;
+	kcondvar_t cv;
+	struct pslist_head splist[IPSEC_DIR_MAX];
+	/*
+	 * The list has SPs that are set to a socket via
+	 * setsockopt(IP_IPSEC_POLICY) from userland. See ipsec_set_policy.
+	 */
+	struct pslist_head socksplist;
+} key_spd __cacheline_aligned;
+
+/* SAD */
+static struct {
+	kmutex_t lock;
+	struct pslist_head sahlist;
+} key_sad __cacheline_aligned;
+
+/* Misc data */
+static struct {
+	kmutex_t lock;
+	/* registed list */
+	LIST_HEAD(_reglist, secreg) reglist[SADB_SATYPE_MAX + 1];
 #ifndef IPSEC_NONBLOCK_ACQUIRE
-static LIST_HEAD(_acqtree, secacq) acqtree;		/* acquiring list */
+	/* acquiring list */
+	LIST_HEAD(_acqlist, secacq) acqlist;
 #endif
 #ifdef notyet
-static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
+	/* SP acquiring list */
+	LIST_HEAD(_spacqlist, secspacq) spacqlist;
 #endif
+} key_misc __cacheline_aligned;
 
+/* Macros for key_spd.splist */
 #define SPLIST_ENTRY_INIT(sp)						\
 	PSLIST_ENTRY_INIT((sp), pslist_entry)
 #define SPLIST_ENTRY_DESTROY(sp)					\
@@ -210,21 +235,22 @@ static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
 #define SPLIST_WRITER_REMOVE(sp)					\
 	PSLIST_WRITER_REMOVE((sp), pslist_entry)
 #define SPLIST_READER_EMPTY(dir)					\
-	(PSLIST_READER_FIRST(&sptree[(dir)], struct secpolicy,		\
+	(PSLIST_READER_FIRST(&key_spd.splist[(dir)], struct secpolicy,	\
 	                     pslist_entry) == NULL)
 #define SPLIST_READER_FOREACH(sp, dir)					\
-	PSLIST_READER_FOREACH((sp), &sptree[(dir)], struct secpolicy,	\
-	                      pslist_entry)
+	PSLIST_READER_FOREACH((sp), &key_spd.splist[(dir)],		\
+	                      struct secpolicy, pslist_entry)
 #define SPLIST_WRITER_FOREACH(sp, dir)					\
-	PSLIST_WRITER_FOREACH((sp), &sptree[(dir)], struct secpolicy,	\
-	                      pslist_entry)
+	PSLIST_WRITER_FOREACH((sp), &key_spd.splist[(dir)],		\
+	                      struct secpolicy, pslist_entry)
 #define SPLIST_WRITER_INSERT_AFTER(sp, new)				\
 	PSLIST_WRITER_INSERT_AFTER((sp), (new), pslist_entry)
 #define SPLIST_WRITER_EMPTY(dir)					\
-	(PSLIST_WRITER_FIRST(&sptree[(dir)], struct secpolicy,		\
+	(PSLIST_WRITER_FIRST(&key_spd.splist[(dir)], struct secpolicy,	\
 	                     pslist_entry) == NULL)
 #define SPLIST_WRITER_INSERT_HEAD(dir, sp)				\
-	PSLIST_WRITER_INSERT_HEAD(&sptree[(dir)], (sp), pslist_entry)
+	PSLIST_WRITER_INSERT_HEAD(&key_spd.splist[(dir)], (sp),		\
+	                          pslist_entry)
 #define SPLIST_WRITER_NEXT(sp)						\
 	PSLIST_WRITER_NEXT((sp), struct secpolicy, pslist_entry)
 #define SPLIST_WRITER_INSERT_TAIL(dir, new)				\
@@ -243,6 +269,15 @@ static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
 		}							\
 	} while (0)
 
+/* Macros for key_spd.socksplist */
+#define SOCKSPLIST_WRITER_FOREACH(sp)					\
+	PSLIST_WRITER_FOREACH((sp), &key_spd.socksplist,		\
+	                      struct secpolicy,	pslist_entry)
+#define SOCKSPLIST_READER_EMPTY()					\
+	(PSLIST_READER_FIRST(&key_spd.socksplist, struct secpolicy,	\
+	                     pslist_entry) == NULL)
+
+/* Macros for key_sad.sahlist */
 #define SAHLIST_ENTRY_INIT(sah)						\
 	PSLIST_ENTRY_INIT((sah), pslist_entry)
 #define SAHLIST_ENTRY_DESTROY(sah)					\
@@ -250,38 +285,39 @@ static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
 #define SAHLIST_WRITER_REMOVE(sah)					\
 	PSLIST_WRITER_REMOVE((sah), pslist_entry)
 #define SAHLIST_READER_FOREACH(sah)					\
-	PSLIST_READER_FOREACH((sah), &sahtree, struct secashead,	\
+	PSLIST_READER_FOREACH((sah), &key_sad.sahlist, struct secashead,\
 	                      pslist_entry)
 #define SAHLIST_WRITER_FOREACH(sah)					\
-	PSLIST_WRITER_FOREACH((sah), &sahtree, struct secashead,	\
+	PSLIST_WRITER_FOREACH((sah), &key_sad.sahlist, struct secashead,\
 	                      pslist_entry)
 #define SAHLIST_WRITER_INSERT_HEAD(sah)					\
-	PSLIST_WRITER_INSERT_HEAD(&sahtree, (sah), pslist_entry)
+	PSLIST_WRITER_INSERT_HEAD(&key_sad.sahlist, (sah), pslist_entry)
 
+/* Macros for key_sad.sahlist#savlist */
 #define SAVLIST_ENTRY_INIT(sav)						\
 	PSLIST_ENTRY_INIT((sav), pslist_entry)
 #define SAVLIST_ENTRY_DESTROY(sav)					\
 	PSLIST_ENTRY_DESTROY((sav), pslist_entry)
 #define SAVLIST_READER_FIRST(sah, state)				\
-	PSLIST_READER_FIRST(&(sah)->savtree[(state)], struct secasvar,	\
+	PSLIST_READER_FIRST(&(sah)->savlist[(state)], struct secasvar,	\
 	                    pslist_entry)
 #define SAVLIST_WRITER_REMOVE(sav)					\
 	PSLIST_WRITER_REMOVE((sav), pslist_entry)
 #define SAVLIST_READER_FOREACH(sav, sah, state)				\
-	PSLIST_READER_FOREACH((sav), &(sah)->savtree[(state)],		\
+	PSLIST_READER_FOREACH((sav), &(sah)->savlist[(state)],		\
 	                      struct secasvar, pslist_entry)
 #define SAVLIST_WRITER_FOREACH(sav, sah, state)				\
-	PSLIST_WRITER_FOREACH((sav), &(sah)->savtree[(state)],		\
+	PSLIST_WRITER_FOREACH((sav), &(sah)->savlist[(state)],		\
 	                      struct secasvar, pslist_entry)
 #define SAVLIST_WRITER_INSERT_BEFORE(sav, new)				\
 	PSLIST_WRITER_INSERT_BEFORE((sav), (new), pslist_entry)
 #define SAVLIST_WRITER_INSERT_AFTER(sav, new)				\
 	PSLIST_WRITER_INSERT_AFTER((sav), (new), pslist_entry)
 #define SAVLIST_WRITER_EMPTY(sah, state)				\
-	(PSLIST_WRITER_FIRST(&(sah)->savtree[(state)], struct secasvar,	\
+	(PSLIST_WRITER_FIRST(&(sah)->savlist[(state)], struct secasvar,	\
 	                     pslist_entry) == NULL)
 #define SAVLIST_WRITER_INSERT_HEAD(sah, state, sav)			\
-	PSLIST_WRITER_INSERT_HEAD(&(sah)->savtree[(state)], (sav),	\
+	PSLIST_WRITER_INSERT_HEAD(&(sah)->savlist[(state)], (sav),	\
 	                          pslist_entry)
 #define SAVLIST_WRITER_NEXT(sav)					\
 	PSLIST_WRITER_NEXT((sav), struct secasvar, pslist_entry)
@@ -303,27 +339,6 @@ static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
 #define SAVLIST_READER_NEXT(sav)					\
 	PSLIST_READER_NEXT((sav), struct secasvar, pslist_entry)
 
-/*
- * The list has SPs that are set to a socket via setsockopt(IP_IPSEC_POLICY)
- * from userland. See ipsec_set_policy.
- */
-static struct pslist_head key_socksplist;
-
-#define SOCKSPLIST_WRITER_FOREACH(sp)					\
-	PSLIST_WRITER_FOREACH((sp), &key_socksplist, struct secpolicy,	\
-	                      pslist_entry)
-#define SOCKSPLIST_READER_EMPTY()					\
-	(PSLIST_READER_FIRST(&key_socksplist, struct secpolicy,		\
-	                     pslist_entry) == NULL)
-
-/*
- * Protect regtree, acqtree and items stored in the lists.
- */
-static kmutex_t key_mtx __cacheline_aligned;
-static pserialize_t key_psz;
-static kmutex_t key_sp_mtx __cacheline_aligned;
-static kcondvar_t key_sp_cv __cacheline_aligned;
-static kmutex_t key_sa_mtx __cacheline_aligned;
 
 /* search order for SAs */
 	/*
@@ -757,14 +772,14 @@ key_sp_refcnt(const struct secpolicy *sp)
 }
 
 /*
- * Remove the sp from the sptree and wait for references to the sp
- * to be released. key_sp_mtx must be held.
+ * Remove the sp from the key_spd.splist and wait for references to the sp
+ * to be released. key_spd.lock must be held.
  */
 static void
 key_unlink_sp(struct secpolicy *sp)
 {
 
-	KASSERT(mutex_owned(&key_sp_mtx));
+	KASSERT(mutex_owned(&key_spd.lock));
 
 	sp->state = IPSEC_SPSTATE_DEAD;
 	SPLIST_WRITER_REMOVE(sp);
@@ -777,7 +792,7 @@ key_unlink_sp(struct secpolicy *sp)
 	pserialize_perform(key_psz);
 #endif
 
-	localcount_drain(&sp->localcount, &key_sp_cv, &key_sp_mtx);
+	localcount_drain(&sp->localcount, &key_spd.cv, &key_spd.lock);
 }
 
 /*
@@ -1297,13 +1312,13 @@ void
 key_sp_unref(struct secpolicy *sp, const char* where, int tag)
 {
 
-	KDASSERT(mutex_ownable(&key_sp_mtx));
+	KDASSERT(mutex_ownable(&key_spd.lock));
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 	    "DP SP:%p (ID=%u) from %s:%u; refcnt-- now %u\n",
 	    sp, sp->id, where, tag, key_sp_refcnt(sp));
 
-	localcount_release(&sp->localcount, &key_sp_cv, &key_sp_mtx);
+	localcount_release(&sp->localcount, &key_spd.cv, &key_spd.lock);
 }
 
 void
@@ -1455,9 +1470,9 @@ void
 key_socksplist_add(struct secpolicy *sp)
 {
 
-	mutex_enter(&key_sp_mtx);
-	PSLIST_WRITER_INSERT_HEAD(&key_socksplist, sp, pslist_entry);
-	mutex_exit(&key_sp_mtx);
+	mutex_enter(&key_spd.lock);
+	PSLIST_WRITER_INSERT_HEAD(&key_spd.socksplist, sp, pslist_entry);
+	mutex_exit(&key_spd.lock);
 
 	key_update_used();
 }
@@ -1500,7 +1515,7 @@ key_lookup_and_remove_sp(const struct secpolicyindex *spidx)
 {
 	struct secpolicy *sp = NULL;
 
-	mutex_enter(&key_sp_mtx);
+	mutex_enter(&key_spd.lock);
 	SPLIST_WRITER_FOREACH(sp, spidx->dir) {
 		KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
 
@@ -1511,7 +1526,7 @@ key_lookup_and_remove_sp(const struct secpolicyindex *spidx)
 	}
 	sp = NULL;
 out:
-	mutex_exit(&key_sp_mtx);
+	mutex_exit(&key_spd.lock);
 
 	return sp;
 }
@@ -1560,7 +1575,7 @@ key_lookupbyid_and_remove_sp(u_int32_t id)
 {
 	struct secpolicy *sp;
 
-	mutex_enter(&key_sp_mtx);
+	mutex_enter(&key_spd.lock);
 	SPLIST_READER_FOREACH(sp, IPSEC_DIR_INBOUND) {
 		KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
 		if (sp->id == id)
@@ -1575,7 +1590,7 @@ key_lookupbyid_and_remove_sp(u_int32_t id)
 out:
 	if (sp != NULL)
 		key_unlink_sp(sp);
-	mutex_exit(&key_sp_mtx);
+	mutex_exit(&key_spd.lock);
 	return sp;
 }
 
@@ -2075,12 +2090,12 @@ key_api_spdadd(struct socket *so, struct mbuf *m,
 
 	key_init_sp(newsp);
 
-	mutex_enter(&key_sp_mtx);
+	mutex_enter(&key_spd.lock);
 	SPLIST_WRITER_INSERT_TAIL(newsp->spidx.dir, newsp);
-	mutex_exit(&key_sp_mtx);
+	mutex_exit(&key_spd.lock);
 
 #ifdef notyet
-	/* delete the entry in spacqtree */
+	/* delete the entry in key_misc.spacqlist */
 	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
 		struct secspacq *spacq = key_getspacq(&spidx);
 		if (spacq != NULL) {
@@ -2434,8 +2449,8 @@ key_spdacquire(const struct secpolicy *sp)
 		if (newspacq == NULL)
 			return ENOBUFS;
 
-		/* add to acqtree */
-		LIST_INSERT_HEAD(&spacqtree, newspacq, chain);
+		/* add to key_misc.acqlist */
+		LIST_INSERT_HEAD(&key_misc.spacqlist, newspacq, chain);
 	}
 
 	/* create new sadb_msg to reply. */
@@ -2487,15 +2502,15 @@ key_api_spdflush(struct socket *so, struct mbuf *m,
 
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
 	    retry:
-		mutex_enter(&key_sp_mtx);
+		mutex_enter(&key_spd.lock);
 		SPLIST_WRITER_FOREACH(sp, dir) {
 			KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
 			key_unlink_sp(sp);
-			mutex_exit(&key_sp_mtx);
+			mutex_exit(&key_spd.lock);
 			key_destroy_sp(sp);
 			goto retry;
 		}
-		mutex_exit(&key_sp_mtx);
+		mutex_exit(&key_spd.lock);
 	}
 
 	/* We're deleting policy; no need to invalidate the ipflow cache. */
@@ -2530,7 +2545,7 @@ key_setspddump_chain(int *errorp, int *lenp, pid_t pid)
 	struct mbuf *m, *n, *prev;
 	int totlen;
 
-	KASSERT(mutex_owned(&key_sp_mtx));
+	KASSERT(mutex_owned(&key_spd.lock));
 
 	*lenp = 0;
 
@@ -2609,9 +2624,9 @@ key_api_spddump(struct socket *so, struct mbuf *m0,
 		return key_senderror(so, m0, ENOBUFS);
 	}
 
-	mutex_enter(&key_sp_mtx);
+	mutex_enter(&key_spd.lock);
 	n = key_setspddump_chain(&error, &len, pid);
-	mutex_exit(&key_sp_mtx);
+	mutex_exit(&key_spd.lock);
 
 	if (n == NULL) {
 		return key_senderror(so, m0, ENOENT);
@@ -2916,16 +2931,16 @@ key_newsah(const struct secasindex *saidx)
 	KASSERT(saidx != NULL);
 
 	newsah = kmem_zalloc(sizeof(struct secashead), KM_SLEEP);
-	for (i = 0; i < __arraycount(newsah->savtree); i++)
-		PSLIST_INIT(&newsah->savtree[i]);
+	for (i = 0; i < __arraycount(newsah->savlist); i++)
+		PSLIST_INIT(&newsah->savlist[i]);
 	newsah->saidx = *saidx;
 
 	/* add to saidxtree */
 	newsah->state = SADB_SASTATE_MATURE;
 	SAHLIST_ENTRY_INIT(newsah);
-	mutex_enter(&key_sa_mtx);
+	mutex_enter(&key_sad.lock);
 	SAHLIST_WRITER_INSERT_HEAD(newsah);
-	mutex_exit(&key_sa_mtx);
+	mutex_exit(&key_sad.lock);
 
 	return newsah;
 }
@@ -4523,7 +4538,7 @@ key_timehandler_spd(time_t now)
 
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
 	    retry:
-		mutex_enter(&key_sp_mtx);
+		mutex_enter(&key_spd.lock);
 		SPLIST_WRITER_FOREACH(sp, dir) {
 			KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
 
@@ -4533,27 +4548,27 @@ key_timehandler_spd(time_t now)
 			if ((sp->lifetime && now - sp->created > sp->lifetime) ||
 			    (sp->validtime && now - sp->lastused > sp->validtime)) {
 				key_unlink_sp(sp);
-				mutex_exit(&key_sp_mtx);
+				mutex_exit(&key_spd.lock);
 				key_spdexpire(sp);
 				key_destroy_sp(sp);
 				goto retry;
 			}
 		}
-		mutex_exit(&key_sp_mtx);
+		mutex_exit(&key_spd.lock);
 	}
 
     retry_socksplist:
-	mutex_enter(&key_sp_mtx);
+	mutex_enter(&key_spd.lock);
 	SOCKSPLIST_WRITER_FOREACH(sp) {
 		if (sp->state != IPSEC_SPSTATE_DEAD)
 			continue;
 
 		key_unlink_sp(sp);
-		mutex_exit(&key_sp_mtx);
+		mutex_exit(&key_spd.lock);
 		key_destroy_sp(sp);
 		goto retry_socksplist;
 	}
-	mutex_exit(&key_sp_mtx);
+	mutex_exit(&key_spd.lock);
 }
 
 static void
@@ -4703,16 +4718,16 @@ key_timehandler_acq(time_t now)
 	struct secacq *acq, *nextacq;
 
     restart:
-	mutex_enter(&key_mtx);
-	LIST_FOREACH_SAFE(acq, &acqtree, chain, nextacq) {
+	mutex_enter(&key_misc.lock);
+	LIST_FOREACH_SAFE(acq, &key_misc.acqlist, chain, nextacq) {
 		if (now - acq->created > key_blockacq_lifetime) {
 			LIST_REMOVE(acq, chain);
-			mutex_exit(&key_mtx);
+			mutex_exit(&key_misc.lock);
 			kmem_free(acq, sizeof(*acq));
 			goto restart;
 		}
 	}
-	mutex_exit(&key_mtx);
+	mutex_exit(&key_misc.lock);
 #endif
 }
 
@@ -4722,7 +4737,7 @@ key_timehandler_spacq(time_t now)
 #ifdef notyet
 	struct secspacq *acq, *nextacq;
 
-	LIST_FOREACH_SAFE(acq, &spacqtree, chain, nextacq) {
+	LIST_FOREACH_SAFE(acq, &key_misc.spacqlist, chain, nextacq) {
 		if (now - acq->created > key_blockacq_lifetime) {
 			KASSERT(__LIST_CHAINED(acq));
 			LIST_REMOVE(acq, chain);
@@ -4976,23 +4991,23 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 	newsav->sah = sah;
 	newsav->state = SADB_SASTATE_LARVAL;
 	SAVLIST_ENTRY_INIT(newsav);
-	mutex_enter(&key_sa_mtx);
+	mutex_enter(&key_sad.lock);
 	SAVLIST_WRITER_INSERT_TAIL(sah, SADB_SASTATE_LARVAL, newsav);
-	mutex_exit(&key_sa_mtx);
+	mutex_exit(&key_sad.lock);
 	key_validate_savlist(sah, SADB_SASTATE_LARVAL);
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
-	/* delete the entry in acqtree */
+	/* delete the entry in key_misc.acqlist */
 	if (mhp->msg->sadb_msg_seq != 0) {
 		struct secacq *acq;
-		mutex_enter(&key_mtx);
+		mutex_enter(&key_misc.lock);
 		acq = key_getacqbyseq(mhp->msg->sadb_msg_seq);
 		if (acq != NULL) {
 			/* reset counter in order to deletion by timehandler. */
 			acq->created = time_uptime;
 			acq->count = 0;
 		}
-		mutex_exit(&key_mtx);
+		mutex_exit(&key_misc.lock);
 	}
 #endif
 
@@ -6320,7 +6335,7 @@ key_acquire(const struct secasindex *saidx, struct secpolicy *sp)
 	 * managed with ACQUIRING list.
 	 */
 	/* Get an entry to check whether sending message or not. */
-	mutex_enter(&key_mtx);
+	mutex_enter(&key_misc.lock);
 	newacq = key_getacq(saidx);
 	if (newacq != NULL) {
 		if (key_blockacq_count < newacq->count) {
@@ -6329,7 +6344,7 @@ key_acquire(const struct secasindex *saidx, struct secpolicy *sp)
 		} else {
 			/* increment counter and do nothing. */
 			newacq->count++;
-			mutex_exit(&key_mtx);
+			mutex_exit(&key_misc.lock);
 			return 0;
 		}
 	} else {
@@ -6338,12 +6353,12 @@ key_acquire(const struct secasindex *saidx, struct secpolicy *sp)
 		if (newacq == NULL)
 			return ENOBUFS;
 
-		/* add to acqtree */
-		LIST_INSERT_HEAD(&acqtree, newacq, chain);
+		/* add to key_misc.acqlist */
+		LIST_INSERT_HEAD(&key_misc.acqlist, newacq, chain);
 	}
 
 	seq = newacq->seq;
-	mutex_exit(&key_mtx);
+	mutex_exit(&key_misc.lock);
 #else
 	seq = (acq_seq = (acq_seq == ~0 ? 1 : ++acq_seq));
 #endif
@@ -6502,9 +6517,9 @@ key_getacq(const struct secasindex *saidx)
 {
 	struct secacq *acq;
 
-	KASSERT(mutex_owned(&key_mtx));
+	KASSERT(mutex_owned(&key_misc.lock));
 
-	LIST_FOREACH(acq, &acqtree, chain) {
+	LIST_FOREACH(acq, &key_misc.acqlist, chain) {
 		if (key_saidx_match(saidx, &acq->saidx, CMP_EXACTLY))
 			return acq;
 	}
@@ -6517,9 +6532,9 @@ key_getacqbyseq(u_int32_t seq)
 {
 	struct secacq *acq;
 
-	KASSERT(mutex_owned(&key_mtx));
+	KASSERT(mutex_owned(&key_misc.lock));
 
-	LIST_FOREACH(acq, &acqtree, chain) {
+	LIST_FOREACH(acq, &key_misc.acqlist, chain) {
 		if (acq->seq == seq)
 			return acq;
 	}
@@ -6554,7 +6569,7 @@ key_getspacq(const struct secpolicyindex *spidx)
 {
 	struct secspacq *acq;
 
-	LIST_FOREACH(acq, &spacqtree, chain) {
+	LIST_FOREACH(acq, &key_misc.spacqlist, chain) {
 		if (key_spidx_match_exactly(spidx, &acq->spidx))
 			return acq;
 	}
@@ -6604,10 +6619,10 @@ key_api_acquire(struct socket *so, struct mbuf *m,
 			return 0;
 		}
 
-		mutex_enter(&key_mtx);
+		mutex_enter(&key_misc.lock);
 		acq = key_getacqbyseq(mhp->msg->sadb_msg_seq);
 		if (acq == NULL) {
-			mutex_exit(&key_mtx);
+			mutex_exit(&key_misc.lock);
 			/*
 			 * the specified larval SA is already gone, or we got
 			 * a bogus sequence number.  we can silently ignore it.
@@ -6619,7 +6634,7 @@ key_api_acquire(struct socket *so, struct mbuf *m,
 		/* reset acq counter in order to deletion by timehander. */
 		acq->created = time_uptime;
 		acq->count = 0;
-		mutex_exit(&key_mtx);
+		mutex_exit(&key_misc.lock);
 #endif
 		m_freem(m);
 		return 0;
@@ -6699,7 +6714,7 @@ key_api_register(struct socket *so, struct mbuf *m,
 	struct secreg *reg, *newreg = 0;
 
 	/* check for invalid register message */
-	if (mhp->msg->sadb_msg_satype >= __arraycount(regtree))
+	if (mhp->msg->sadb_msg_satype >= __arraycount(key_misc.reglist))
 		return key_senderror(so, m, EINVAL);
 
 	/* When SATYPE_UNSPEC is specified, only return sabd_supported. */
@@ -6710,11 +6725,11 @@ key_api_register(struct socket *so, struct mbuf *m,
 	newreg = kmem_zalloc(sizeof(*newreg), KM_SLEEP);
 
 	/* check whether existing or not */
-	mutex_enter(&key_mtx);
-	LIST_FOREACH(reg, &regtree[mhp->msg->sadb_msg_satype], chain) {
+	mutex_enter(&key_misc.lock);
+	LIST_FOREACH(reg, &key_misc.reglist[mhp->msg->sadb_msg_satype], chain) {
 		if (reg->so == so) {
 			IPSECLOG(LOG_DEBUG, "socket exists already.\n");
-			mutex_exit(&key_mtx);
+			mutex_exit(&key_misc.lock);
 			kmem_free(newreg, sizeof(*newreg));
 			return key_senderror(so, m, EEXIST);
 		}
@@ -6723,9 +6738,9 @@ key_api_register(struct socket *so, struct mbuf *m,
 	newreg->so = so;
 	((struct keycb *)sotorawcb(so))->kp_registered++;
 
-	/* add regnode to regtree. */
-	LIST_INSERT_HEAD(&regtree[mhp->msg->sadb_msg_satype], newreg, chain);
-	mutex_exit(&key_mtx);
+	/* add regnode to key_misc.reglist. */
+	LIST_INSERT_HEAD(&key_misc.reglist[mhp->msg->sadb_msg_satype], newreg, chain);
+	mutex_exit(&key_misc.lock);
 
   setmsg:
     {
@@ -6851,14 +6866,14 @@ key_freereg(struct socket *so)
 	 * one socket is registered to multiple type of SA.
 	 */
 	for (i = 0; i <= SADB_SATYPE_MAX; i++) {
-		mutex_enter(&key_mtx);
-		LIST_FOREACH(reg, &regtree[i], chain) {
+		mutex_enter(&key_misc.lock);
+		LIST_FOREACH(reg, &key_misc.reglist[i], chain) {
 			if (reg->so == so) {
 				LIST_REMOVE(reg, chain);
 				break;
 			}
 		}
-		mutex_exit(&key_mtx);
+		mutex_exit(&key_misc.lock);
 		if (reg != NULL)
 			kmem_free(reg, sizeof(*reg));
 	}
@@ -7066,7 +7081,7 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 	int cnt;
 	struct mbuf *m, *n, *prev;
 
-	KASSERT(mutex_owned(&key_sa_mtx));
+	KASSERT(mutex_owned(&key_sad.lock));
 
 	*lenp = 0;
 
@@ -7186,9 +7201,9 @@ key_api_dump(struct socket *so, struct mbuf *m0,
 		return key_senderror(so, m0, ENOBUFS);
 	}
 
-	mutex_enter(&key_sa_mtx);
+	mutex_enter(&key_sad.lock);
 	n = key_setdump_chain(satype, &error, &len, mhp->msg->sadb_msg_pid);
-	mutex_exit(&key_sa_mtx);
+	mutex_exit(&key_sad.lock);
 
 	if (n == NULL) {
 		return key_senderror(so, m0, ENOENT);
@@ -7743,11 +7758,11 @@ key_do_init(void)
 {
 	int i, error;
 
-	mutex_init(&key_mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&key_misc.lock, MUTEX_DEFAULT, IPL_NONE);
 	key_psz = pserialize_create();
-	mutex_init(&key_sp_mtx, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&key_sp_cv, "key_sp");
-	mutex_init(&key_sa_mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&key_spd.lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&key_spd.cv, "key_sp");
+	mutex_init(&key_sad.lock, MUTEX_DEFAULT, IPL_NONE);
 
 	pfkeystat_percpu = percpu_alloc(sizeof(uint64_t) * PFKEY_NSTATS);
 
@@ -7758,22 +7773,22 @@ key_do_init(void)
 		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 
 	for (i = 0; i < IPSEC_DIR_MAX; i++) {
-		PSLIST_INIT(&sptree[i]);
+		PSLIST_INIT(&key_spd.splist[i]);
 	}
 
-	PSLIST_INIT(&key_socksplist);
+	PSLIST_INIT(&key_spd.socksplist);
 
-	PSLIST_INIT(&sahtree);
+	PSLIST_INIT(&key_sad.sahlist);
 
 	for (i = 0; i <= SADB_SATYPE_MAX; i++) {
-		LIST_INIT(&regtree[i]);
+		LIST_INIT(&key_misc.reglist[i]);
 	}
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
-	LIST_INIT(&acqtree);
+	LIST_INIT(&key_misc.acqlist);
 #endif
 #ifdef notyet
-	LIST_INIT(&spacqtree);
+	LIST_INIT(&key_misc.spacqlist);
 #endif
 
 	/* system default */
@@ -8042,7 +8057,7 @@ key_setdump(u_int8_t req_satype, int *errorp, uint32_t pid)
 	int cnt;
 	struct mbuf *m, *n;
 
-	KASSERT(mutex_owned(&key_sa_mtx));
+	KASSERT(mutex_owned(&key_sad.lock));
 
 	/* map satype to proto */
 	proto = key_satype2proto(req_satype);
@@ -8126,7 +8141,7 @@ key_setspddump(int *errorp, pid_t pid)
 	u_int dir;
 	struct mbuf *m, *n;
 
-	KASSERT(mutex_owned(&key_sp_mtx));
+	KASSERT(mutex_owned(&key_spd.lock));
 
 	/* search SPD entry and get buffer size. */
 	cnt = 0;
@@ -8210,9 +8225,9 @@ sysctl_net_key_dumpsa(SYSCTLFN_ARGS)
 	if (namelen != 1)
 		return (EINVAL);
 
-	mutex_enter(&key_sa_mtx);
+	mutex_enter(&key_sad.lock);
 	m = key_setdump(name[0], &error, l->l_proc->p_pid);
-	mutex_exit(&key_sa_mtx);
+	mutex_exit(&key_sad.lock);
 	if (!m)
 		return (error);
 	if (!oldp)
@@ -8256,9 +8271,9 @@ sysctl_net_key_dumpsp(SYSCTLFN_ARGS)
 	if (namelen != 0)
 		return (EINVAL);
 
-	mutex_enter(&key_sp_mtx);
+	mutex_enter(&key_spd.lock);
 	m = key_setspddump(&error, l->l_proc->p_pid);
-	mutex_exit(&key_sp_mtx);
+	mutex_exit(&key_spd.lock);
 	if (!m)
 		return (error);
 	if (!oldp)
