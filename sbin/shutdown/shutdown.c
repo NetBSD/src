@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.56 2014/03/28 18:27:14 apb Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.57 2017/08/07 22:08:12 uwe Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.56 2014/03/28 18:27:14 apb Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.57 2017/08/07 22:08:12 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -409,7 +409,7 @@ die_you_gravy_sucking_pig_dog(void)
 		*arg++ = "-l";
 		if (bootstr)
 			*arg++ = bootstr;
-		*arg++ = 0;
+		*arg++ = NULL;
 #ifndef DEBUG
 		(void)unlink(_PATH_NOLOGIN);
 		(void)execve(path, __UNCONST(args), NULL);
