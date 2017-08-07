@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.10 2017/07/12 17:33:29 maxv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.11 2017/08/07 17:31:11 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.10 2017/07/12 17:33:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.11 2017/08/07 17:31:11 maxv Exp $");
 
 #include "opt_pmc.h"
 
@@ -138,7 +138,7 @@ static int
 pmc_nmi(const struct trapframe *tf, void *dummy)
 {
 	struct cpu_info *ci = curcpu();
-	pmc_state_t *pmc;
+	pmc_state_t *pmc = NULL;
 	pmc_cpu_t *cpu;
 	uint64_t ctr;
 	size_t i;
