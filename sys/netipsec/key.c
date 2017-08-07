@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.208 2017/08/07 03:21:58 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.209 2017/08/07 03:22:33 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.208 2017/08/07 03:21:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.209 2017/08/07 03:22:33 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -135,6 +135,19 @@ percpu_t *pfkeystat_percpu;
  *   field hits 0 (= no external reference other than from SA header.
  */
 
+u_int32_t key_debug_level = 0;
+static u_int key_spi_trycnt = 1000;
+static u_int32_t key_spi_minval = 0x100;
+static u_int32_t key_spi_maxval = 0x0fffffff;	/* XXX */
+static u_int32_t policy_id = 0;
+static u_int key_int_random = 60;	/*interval to initialize randseed,1(m)*/
+static u_int key_larval_lifetime = 30;	/* interval to expire acquiring, 30(s)*/
+static int key_blockacq_count = 10;	/* counter for blocking SADB_ACQUIRE.*/
+static int key_blockacq_lifetime = 20;	/* lifetime for blocking SADB_ACQUIRE.*/
+static int key_prefered_oldsa = 0;	/* prefered old sa rather than new sa.*/
+
+static u_int32_t acq_seq = 0;
+
 /*
  * Locking notes on SPD:
  * - Modifications to the key_spd.splist must be done with holding key_spd.lock
@@ -178,19 +191,6 @@ percpu_t *pfkeystat_percpu;
  *     it directly instead we just mark it DEAD and delay the destruction
  *     until GC by the timer
  */
-
-u_int32_t key_debug_level = 0;
-static u_int key_spi_trycnt = 1000;
-static u_int32_t key_spi_minval = 0x100;
-static u_int32_t key_spi_maxval = 0x0fffffff;	/* XXX */
-static u_int32_t policy_id = 0;
-static u_int key_int_random = 60;	/*interval to initialize randseed,1(m)*/
-static u_int key_larval_lifetime = 30;	/* interval to expire acquiring, 30(s)*/
-static int key_blockacq_count = 10;	/* counter for blocking SADB_ACQUIRE.*/
-static int key_blockacq_lifetime = 20;	/* lifetime for blocking SADB_ACQUIRE.*/
-static int key_prefered_oldsa = 0;	/* prefered old sa rather than new sa.*/
-
-static u_int32_t acq_seq = 0;
 
 static pserialize_t key_psz;
 
