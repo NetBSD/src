@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.210 2017/08/07 03:28:31 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.211 2017/08/07 03:30:45 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.210 2017/08/07 03:28:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.211 2017/08/07 03:30:45 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1309,6 +1309,10 @@ key_init_sp(struct secpolicy *sp)
 	SPLIST_ENTRY_INIT(sp);
 }
 
+/*
+ * Must be called in a pserialize critical section. A held SP
+ * must be released by key_sp_unref after use.
+ */
 void
 key_sp_ref(struct secpolicy *sp, const char* where, int tag)
 {
@@ -1320,6 +1324,10 @@ key_sp_ref(struct secpolicy *sp, const char* where, int tag)
 	    sp, sp->id, where, tag, key_sp_refcnt(sp));
 }
 
+/*
+ * Must be called without holding key_spd.lock because the lock
+ * would be held in localcount_release.
+ */
 void
 key_sp_unref(struct secpolicy *sp, const char* where, int tag)
 {
