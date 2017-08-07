@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.211 2017/08/07 03:30:45 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.212 2017/08/07 07:45:45 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.211 2017/08/07 03:30:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.212 2017/08/07 07:45:45 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -5453,7 +5453,9 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	newsav->refcnt = 1;
 	newsav->state = SADB_SASTATE_MATURE;
 	SAVLIST_ENTRY_INIT(newsav);
+	mutex_enter(&key_sad.lock);
 	SAVLIST_WRITER_INSERT_TAIL(sah, SADB_SASTATE_MATURE, newsav);
+	mutex_exit(&key_sad.lock);
 	key_validate_savlist(sah, SADB_SASTATE_MATURE);
 
 	key_sa_chgstate(sav, SADB_SASTATE_DEAD);
@@ -5644,7 +5646,9 @@ key_api_add(struct socket *so, struct mbuf *m,
 	newsav->refcnt = 1;
 	newsav->state = SADB_SASTATE_MATURE;
 	SAVLIST_ENTRY_INIT(newsav);
+	mutex_enter(&key_sad.lock);
 	SAVLIST_WRITER_INSERT_TAIL(sah, SADB_SASTATE_MATURE, newsav);
+	mutex_exit(&key_sad.lock);
 	key_validate_savlist(sah, SADB_SASTATE_MATURE);
 
 	/*
