@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.217 2017/08/08 08:23:10 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.218 2017/08/08 08:24:34 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.217 2017/08/08 08:23:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.218 2017/08/08 08:24:34 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4719,7 +4719,7 @@ restart:
 	restart_sav_LARVAL:
 		SAVLIST_READER_FOREACH(sav, sah, SADB_SASTATE_LARVAL) {
 			if (now - sav->created > key_larval_lifetime) {
-				KEY_FREESAV(&sav);
+				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 				goto restart_sav_LARVAL;
 			}
 		}
@@ -4746,7 +4746,6 @@ restart:
 				 */
 				if (sav->lft_c->sadb_lifetime_usetime == 0) {
 					key_sa_chgstate(sav, SADB_SASTATE_DEAD);
-					KEY_FREESAV(&sav);
 				} else {
 					key_sa_chgstate(sav, SADB_SASTATE_DYING);
 					/*
@@ -4792,7 +4791,6 @@ restart:
 			if (sav->lft_h->sadb_lifetime_addtime != 0 &&
 			    now - sav->created > sav->lft_h->sadb_lifetime_addtime) {
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
-				KEY_FREESAV(&sav);
 				goto restart_sav_DYING;
 			}
 #if 0	/* XXX Should we keep to send expire message until HARD lifetime ? */
@@ -4816,27 +4814,15 @@ restart:
 			         sav->lft_h->sadb_lifetime_bytes <
 			         sav->lft_c->sadb_lifetime_bytes) {
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
-				KEY_FREESAV(&sav);
 				goto restart_sav_DYING;
 			}
 		}
 
 		/* delete entry in DEAD */
+	restart_sav_DEAD:
 		SAVLIST_READER_FOREACH(sav, sah, SADB_SASTATE_DEAD) {
-			/* sanity check */
-			if (sav->state != SADB_SASTATE_DEAD) {
-				IPSECLOG(LOG_DEBUG,
-				    "invalid sav->state (queue: %d SA: %d): "
-				    "kill it anyway\n",
-				    SADB_SASTATE_DEAD, sav->state);
-			}
-
-			/*
-			 * do not call key_freesav() here.
-			 * sav should already be freed, and sav->refcnt
-			 * shows other references to sav
-			 * (such as from SPD).
-			 */
+			KEY_FREESAV(&sav);
+			goto restart_sav_DEAD;
 		}
 
 		s = pserialize_read_enter();
