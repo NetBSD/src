@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.213 2017/08/08 01:55:17 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.214 2017/08/08 01:56:10 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.213 2017/08/08 01:55:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.214 2017/08/08 01:56:10 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -156,8 +156,7 @@ static u_int32_t acq_seq = 0;
  * Locking notes on SPD:
  * - Modifications to the key_spd.splist must be done with holding key_spd.lock
  *   which is a adaptive mutex
- * - Read accesses to the key_spd.splist must be in critical sections of
- *   pserialize(9)
+ * - Read accesses to the key_spd.splist must be in pserialize(9) read sections
  * - SP's lifetime is managed by localcount(9)
  * - An SP that has been inserted to the key_spd.splist is initially referenced
  *   by none, i.e., a reference from the key_spd.splist isn't counted
@@ -167,9 +166,9 @@ static u_int32_t acq_seq = 0;
  * - Getting an SP
  *   - Normally we get an SP from the key_spd.splist (see key_lookup_sp_byspidx)
  *     - Must iterate the list and increment the reference count of a found SP
- *       (by key_sp_ref) in a pserialize critical section
+ *       (by key_sp_ref) in a pserialize read section
  *   - We can gain another reference from a held SP only if we check its state
- *     and take its reference in a critical section of pserialize
+ *     and take its reference in a pserialize read section
  *     (see esp_output for example)
  *   - We may get an SP from an SP cache. See below
  *   - A gotten SP must be released after use by KEY_SP_UNREF (key_sp_unref)
@@ -186,7 +185,7 @@ static u_int32_t acq_seq = 0;
  *     is considered invalidated
  *   - The counter is incremented when an SP is being destroyed
  *   - So checking the generation and taking a reference to an SP should be
- *     in a critical section of pserialize
+ *     in a pserialize read section
  *   - Note that caching doesn't increment the reference counter of an SP
  * - SPs in sockets
  *   - Userland programs can set a policy to a socket by
@@ -1310,7 +1309,7 @@ key_init_sp(struct secpolicy *sp)
 }
 
 /*
- * Must be called in a pserialize critical section. A held SP
+ * Must be called in a pserialize read section. A held SP
  * must be released by key_sp_unref after use.
  */
 void
