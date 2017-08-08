@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.101 2017/07/29 12:07:45 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.102 2017/08/08 08:04:05 maxv Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ include <compat/linux/common/linux_machdep.h>
 endif
 
 ifdef COMPAT_FREEBSD
-include <machine/freebsd_machdep.h>
+include <compat/freebsd/freebsd_machdep.h>
 endif
 
 if NIOAPIC > 0

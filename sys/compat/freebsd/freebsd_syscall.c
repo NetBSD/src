@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.1 2017/08/01 14:43:54 maxv Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.2 2017/08/08 08:04:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.1 2017/08/01 14:43:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.2 2017/08/08 08:04:06 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.1 2017/08/01 14:43:54 maxv Exp
 
 #include <compat/sys/signal.h>
 
-#include <machine/freebsd_machdep.h>
+#include <compat/freebsd/freebsd_machdep.h>
 #include <compat/freebsd/freebsd_syscall.h>
 
 void freebsd_syscall(struct trapframe *);
