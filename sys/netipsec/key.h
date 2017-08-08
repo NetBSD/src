@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.27 2017/08/03 06:32:51 ozaki-r Exp $	*/
+/*	$NetBSD: key.h,v 1.28 2017/08/08 08:23:10 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -61,6 +61,7 @@ u_int key_sp_refcnt(const struct secpolicy *);
 void key_sp_ref(struct secpolicy *, const char*, int);
 void key_sp_unref(struct secpolicy *, const char*, int);
 void key_sa_ref(struct secasvar *, const char*, int);
+u_int key_sa_refcnt(const struct secasvar *);
 
 void key_socksplist_add(struct secpolicy *);
 

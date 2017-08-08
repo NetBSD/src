@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.216 2017/08/08 04:17:34 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.217 2017/08/08 08:23:10 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.216 2017/08/08 04:17:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.217 2017/08/08 08:23:10 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1086,7 +1086,7 @@ key_lookup_sa_bysaidx(const struct secasindex *saidx)
 			SA_ADDREF(sav);
 			KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 			    "DP cause refcnt++:%d SA:%p\n",
-			    sav->refcnt, sav);
+			    key_sa_refcnt(sav), sav);
 			break;
 		}
 	}
@@ -1107,7 +1107,7 @@ key_sendup_message_delete(struct secasvar *sav)
 	if (satype == 0)
 		goto msgfail;
 
-	m = key_setsadbmsg(SADB_DELETE, 0, satype, 0, 0, sav->refcnt - 1);
+	m = key_setsadbmsg(SADB_DELETE, 0, satype, 0, 0, key_sa_refcnt(sav) - 1);
 	if (m == NULL)
 		goto msgfail;
 	result = m;
@@ -1292,7 +1292,7 @@ done:
 	pserialize_read_exit(s);
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
-	    "DP return SA:%p; refcnt %u\n", sav, sav ? sav->refcnt : 0);
+	    "DP return SA:%p; refcnt %u\n", sav, key_sa_refcnt(sav));
 	return sav;
 }
 
@@ -1367,6 +1367,16 @@ key_sp_unref(struct secpolicy *sp, const char* where, int tag)
 	    sp, sp->id, where, tag, key_sp_refcnt(sp));
 
 	localcount_release(&sp->localcount, &key_spd.cv, &key_spd.lock);
+}
+
+u_int
+key_sa_refcnt(const struct secasvar *sav)
+{
+
+	if (sav == NULL)
+		return 0;
+
+	return sav->refcnt;
 }
 
 void
@@ -3322,7 +3332,7 @@ static void
 key_freesaval(struct secasvar *sav)
 {
 
-	KASSERT(sav->refcnt == 0);
+	KASSERT(key_sa_refcnt(sav) == 0);
 
 	if (sav->replay != NULL)
 		kmem_intr_free(sav->replay, sav->replay_len);
@@ -3358,7 +3368,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	KASSERT(mhp->msg != NULL);
 
 	/* We shouldn't initialize sav variables while someone uses it. */
-	KASSERT(sav->refcnt == 0);
+	KASSERT(key_sa_refcnt(sav) == 0);
 
 	/* SA */
 	if (mhp->ext[SADB_EXT_SA] != NULL) {
@@ -3542,7 +3552,7 @@ key_init_xform(struct secasvar *sav)
 	int error;
 
 	/* We shouldn't initialize sav variables while someone uses it. */
-	KASSERT(sav->refcnt == 0);
+	KASSERT(key_sa_refcnt(sav) == 0);
 
 	/* check SPI value */
 	switch (sav->sah->saidx.proto) {
@@ -3638,7 +3648,7 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 
 	};
 
-	m = key_setsadbmsg(type, 0, satype, seq, pid, sav->refcnt);
+	m = key_setsadbmsg(type, 0, satype, seq, pid, key_sa_refcnt(sav));
 	if (m == NULL)
 		goto fail;
 	result = m;
@@ -5620,7 +5630,7 @@ key_getsavbyseq(struct secashead *sah, u_int32_t seq)
 			SA_ADDREF(sav);
 			KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 			    "DP cause refcnt++:%d SA:%p\n",
-			    sav->refcnt, sav);
+			    key_sa_refcnt(sav), sav);
 			break;
 		}
 	}
@@ -7069,7 +7079,7 @@ key_expire(struct secasvar *sav)
 	KASSERTMSG(satype != 0, "invalid proto is passed");
 
 	/* set msg header */
-	m = key_setsadbmsg(SADB_EXPIRE, 0, satype, sav->seq, 0, sav->refcnt);
+	m = key_setsadbmsg(SADB_EXPIRE, 0, satype, sav->seq, 0, key_sa_refcnt(sav));
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;
