@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.57 2017/07/03 21:30:58 wiz Exp $
+.\"	$NetBSD: queue.3,v 1.58 2017/08/08 03:58:43 isaki Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -764,13 +764,13 @@ returns the element after the element
 .Pp
 The macro
 .Fn SIMPLEQ_LAST
-returns the last item on the tail queue.
-If the tail queue is empty the return value is
+returns the last item on the simple queue.
+If the simple queue is empty the return value is
 .Dv NULL .
 .Pp
 The macro
 .Fn SIMPLEQ_FOREACH
-traverses the tail queue referenced by
+traverses the simple queue referenced by
 .Fa head
 in the forward direction, assigning each element
 in turn to
@@ -832,7 +832,7 @@ from the simple queue.
 .Pp
 The macro
 .Fn SIMPLEQ_CONCAT
-concatenates the tail queue headed by
+concatenates the simple queue headed by
 .Fa head2
 onto the end of the one headed by
 .Fa head1 ,
