@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.101 2017/08/08 09:33:41 maya Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.102 2017/08/08 09:34:59 maya Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1289,7 +1289,7 @@ NESTED_NOPROFILE(MIPSX(user_reserved_insn), CALLFRAME_SIZ, ra)
 	 * Save a minimum of registers to see if this is rdhwr $3,$29
 	 */
 #ifdef MIPS3_LOONGSON2
-	li	k0,  MIPS_DIAG_BTB_CLEAR | MIPS_DIAG_RAS_DISABLE 
+	li	k0, MIPS_DIAG_BTB_CLEAR | MIPS_DIAG_RAS_DISABLE
 	mtc0	k0, MIPS_COP_0_DIAG
 #endif
 	/* K1 already has CURLWP */
