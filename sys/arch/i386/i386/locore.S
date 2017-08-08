@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.95.10.2 2012/04/20 23:32:14 riz Exp $	*/
+/*	$NetBSD: locore.S,v 1.95.10.2.4.1 2017/08/08 11:55:20 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.95.10.2 2012/04/20 23:32:14 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.95.10.2.4.1 2017/08/08 11:55:20 martin Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -1112,30 +1112,12 @@ ENTRY(savectx)
 END(savectx)
 
 /*
- * osyscall()
- *
- * Old call gate entry for syscall
- */
-IDTVEC(osyscall)
-#ifndef XEN
-	/* XXX we are in trouble! interrupts be off here. */
-	cli			# must be first instruction
-#endif
-	pushfl			# set eflags in trap frame
-	popl	8(%esp)
-	orl	$PSL_I,(%esp)	# re-enable ints on return to user
-	pushl	$7		# size of instruction for restart
-	jmp	syscall1
-IDTVEC_END(osyscall)
-
-/*
  * syscall()
  *
  * Trap gate entry for syscall
  */
 IDTVEC(syscall)
 	pushl	$2		# size of instruction for restart
-syscall1:
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
 	STI(%eax)
