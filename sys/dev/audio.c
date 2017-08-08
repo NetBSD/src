@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.388 2017/08/08 05:42:30 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.389 2017/08/08 05:46:23 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.388 2017/08/08 05:42:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.389 2017/08/08 05:46:23 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -523,8 +523,9 @@ audioattach(device_t parent, device_t self, void *aux)
 	vc->sc_open = 0;
 	vc->sc_mode = 0;
 	vc->sc_npfilters = 0;
-	memset(vc->sc_pfilters, 0,
-	    sizeof(vc->sc_pfilters));
+	vc->sc_nrfilters = 0;
+	memset(vc->sc_pfilters, 0, sizeof(vc->sc_pfilters));
+	memset(vc->sc_rfilters, 0, sizeof(vc->sc_rfilters));
 	vc->sc_lastinfovalid = false;
 	vc->sc_swvol = 255;
 	vc->sc_recswvol = 255;
