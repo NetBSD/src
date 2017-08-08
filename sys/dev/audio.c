@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.387 2017/08/06 10:07:31 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.388 2017/08/08 05:42:30 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.387 2017/08/06 10:07:31 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.388 2017/08/08 05:42:30 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1816,7 +1816,6 @@ audioioctl(struct file *fp, u_long cmd, void *addr)
 
 	if ((error = audio_enter(dev, rw, &sc)) != 0)
 		return error;
-	chan = fp->f_audioctx;
 
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
