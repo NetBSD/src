@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.99 2017/07/21 04:56:46 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.100 2017/08/08 11:59:59 martin Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -11993,4 +11993,19 @@ sys/dev/cgd.c					patch
 	before processing most ioctls, and failing with ENXIO if the
 	device is not configured.
 	[chs, ticket #1455]
+
+sys/arch/i386/i386/trap.c:     		1.288		(patch)
+sys/arch/i386/i386/machdep.c:		1.783		(patch)
+sys/arch/i386/i386/locore.S:		1.146		(patch)
+sys/arch/amd64/amd64/locore.S:		1.122,1.124	(patch)
+sys/arch/amd64/amd64/machdep.c		1.254		(patch)
+sys/arch/amd64/amd64/trap.c:		1.95-1.96	(patch)
+
+	Remove the osyscall call gate and emulate it. There is a
+	one-instruction race in it that could panic the kernel.
+
+	Restore the ability to run netbsd 1.0 32-bit executables by
+	checking for the relevant lcall instruction in the trap handler
+	and treating it as a syscall.
+	[maxv, ticket #1464]
 
