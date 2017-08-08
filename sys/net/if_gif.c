@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.127 2017/06/22 09:26:43 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.128 2017/08/08 03:14:50 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.127 2017/06/22 09:26:43 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.128 2017/08/08 03:14:50 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -997,31 +997,34 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 
 	/*
 	 * Secondly, try to set new configurations.
-	 * If the setup failed, rollback to old configurations.
 	 */
-	do {
-		osrc = sc->gif_psrc;
-		odst = sc->gif_pdst;
-		sc->gif_psrc = nsrc;
-		sc->gif_pdst = ndst;
-
+	osrc = sc->gif_psrc;
+	odst = sc->gif_pdst;
+	sc->gif_psrc = nsrc;
+	sc->gif_pdst = ndst;
+	error = gif_encap_attach(sc);
+	if (error && osrc != NULL && odst != NULL) {
+		/*
+		 * Thirdly, when error occured, rollback to old configurations,
+		 * if last setting is valid.
+		 */
+		sc->gif_psrc = osrc;
+		sc->gif_pdst = odst;
+		osrc = nsrc; /* to free */
+		odst = ndst; /* to free */
 		error = gif_encap_attach(sc);
-		if (error) {
-			/* rollback to the last configuration. */
-			nsrc = osrc;
-			ndst = odst;
-			osrc = sc->gif_psrc;
-			odst = sc->gif_pdst;
-
-			continue;
-		}
-	} while (error != 0 && (nsrc != NULL && ndst != NULL));
-	/* Thirdly, even rollback failed, clear configurations. */
+	}
 	if (error) {
-		osrc = sc->gif_psrc;
-		odst = sc->gif_pdst;
+		/*
+		 * Fourthly, even rollback failed or last setting is not valid,
+		 * clear configurations.
+		 */
+		osrc = sc->gif_psrc; /* to free */
+		odst = sc->gif_pdst; /* to free */
 		sc->gif_psrc = NULL;
 		sc->gif_pdst = NULL;
+		sockaddr_free(nsrc);
+		sockaddr_free(ndst);
 	}
 
 	if (osrc)
