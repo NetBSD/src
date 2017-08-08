@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.247 2017/08/01 20:07:43 joerg Exp $
+# $NetBSD: md.amd64,v 1.248 2017/08/08 08:04:05 maxv Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -485,7 +485,7 @@
 ./usr/include/i386/fenv.h			comp-c-include
 ./usr/include/i386/float.h			comp-c-include
 ./usr/include/i386/frame.h			comp-c-include
-./usr/include/i386/freebsd_machdep.h		comp-c-include
+./usr/include/i386/freebsd_machdep.h		comp-obsolete		obsolete
 ./usr/include/i386/gdt.h			comp-c-include
 ./usr/include/i386/ibcs2_machdep.h		comp-c-include
 ./usr/include/i386/ieee.h			comp-c-include

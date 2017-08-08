@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_sysent.c,v 1.86 2017/05/10 06:19:48 riastradh Exp $ */
+/* $NetBSD: freebsd_sysent.c,v 1.87 2017/08/08 08:04:06 maxv Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysent.c,v 1.86 2017/05/10 06:19:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysent.c,v 1.87 2017/08/08 08:04:06 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -24,7 +24,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_sysent.c,v 1.86 2017/05/10 06:19:48 riastrad
 #include <compat/sys/signal.h>
 #include <compat/sys/time.h>
 #include <compat/freebsd/freebsd_syscallargs.h>
-#include <machine/freebsd_machdep.h>
+#include <compat/freebsd/freebsd_machdep.h>
 
 #define	s(type)	sizeof(type)
 #define	n(type)	(sizeof(type)/sizeof (register_t))
