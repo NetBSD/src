@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.391 2017/08/08 05:58:12 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.392 2017/08/08 22:21:35 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.391 2017/08/08 05:58:12 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.392 2017/08/08 22:21:35 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3662,12 +3662,12 @@ audio_pint(void *v)
 		DPRINTFN(3, ("HW RING - INSERT SILENCE\n"));
 		used = blksize;
 		while (used > 0) {
-			cc = vc->sc_mpr.s.end - vc->sc_mpr.s.inp;
+			cc = sc->sc_pr.s.end - sc->sc_pr.s.inp;
 			if (cc > used)
 				cc = used;
-			audio_fill_silence(&vc->sc_pparams, vc->sc_mpr.s.inp, cc);
-			vc->sc_mpr.s.inp = audio_stream_add_inp(&vc->sc_mpr.s,
-			    vc->sc_mpr.s.inp, cc);
+			audio_fill_silence(&vc->sc_pustream->param, sc->sc_pr.s.inp, cc);
+			sc->sc_pr.s.inp = audio_stream_add_inp(&sc->sc_pr.s,
+			    sc->sc_pr.s.inp, cc);
 			used -= cc;
 		}
 	}
