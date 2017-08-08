@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.32 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.33 2017/08/08 17:27:34 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32 2017/02/23 03:34:22 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.33 2017/08/08 17:27:34 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,7 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 	struct trapframe *tf = process_frame(l);
 	int error;
 	const long *regs = regp->regs;
+	int err, trapno;
 
 	/*
 	 * Check for security violations.
@@ -151,9 +152,15 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 	if (error != 0)
 		return error;
 
+	err = tf->tf_err;
+	trapno = tf->tf_trapno;
+
 #define copy_to_frame(reg, REG, idx) tf->tf_##reg = regs[_REG_##REG];
 	_FRAME_GREG(copy_to_frame)
 #undef copy_to_frame
+
+	tf->tf_err = err;
+	tf->tf_trapno = trapno;
 
 	return (0);
 }
