@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.214 2017/08/08 01:56:10 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.215 2017/08/08 01:56:49 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.214 2017/08/08 01:56:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.215 2017/08/08 01:56:49 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -6373,8 +6373,10 @@ key_acquire(const struct secasindex *saidx, struct secpolicy *sp)
 	} else {
 		/* make new entry for blocking to send SADB_ACQUIRE. */
 		newacq = key_newacq(saidx);
-		if (newacq == NULL)
+		if (newacq == NULL) {
+			mutex_exit(&key_misc.lock);
 			return ENOBUFS;
+		}
 
 		/* add to key_misc.acqlist */
 		LIST_INSERT_HEAD(&key_misc.acqlist, newacq, chain);
