@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.66.2.1 2012/04/20 23:32:14 riz Exp $	*/
+/*	$NetBSD: locore.S,v 1.66.2.2 2017/08/08 12:00:35 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1209,26 +1209,6 @@ NENTRY(child_trampoline)
 	.globl  _C_LABEL(osyscall_return)
 
 /*
- * oosyscall()
- *
- * Old call gate entry for syscall. only needed if we're
- * going to support running old i386 NetBSD 1.0 or ibcs2 binaries, etc,
- * on NetBSD/amd64.
- * The 64bit call gate can't request that arguments be copied from the
- * user stack (which the i386 code uses to get a gap for the flags).
- * push/pop are <read>:<modify_sp>:<write> cycles.
- */
-IDTVEC(oosyscall)
-	/* Set rflags in trap frame. */
-	pushq	(%rsp)		# move user's %eip
-	pushq	16(%rsp)	# and %cs
-	popq	8(%rsp)
-	pushfq
-	popq	16(%rsp)
-	pushq	$7		# size of instruction for restart
-	jmp	osyscall1
-
-/*
  * osyscall()
  *
  * Trap gate entry for int $80 syscall, also used by sigreturn.
@@ -1240,7 +1220,6 @@ IDTVEC(osyscall)
 	addq $0x10,%rsp
 #endif
 	pushq	$2		# size of instruction for restart
-osyscall1:
 	pushq	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
 	STI(si)
