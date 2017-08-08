@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.19 2017/07/26 03:59:59 ozaki-r Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.20 2017/08/08 08:23:10 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_debug.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.c,v 1.26 2001/06/27 10:46:50 sakane Exp $	*/
 
@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.19 2017/07/26 03:59:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.20 2017/08/08 08:23:10 ozaki-r Exp $");
 #endif
 
 #if defined(_KERNEL_OPT)
@@ -550,7 +550,7 @@ kdebug_secasv(const struct secasvar *sav)
 	kdebug_secasindex(&sav->sah->saidx);
 
 	printf("  refcnt=%u state=%u auth=%u enc=%u\n",
-	    sav->refcnt, sav->state, sav->alg_auth, sav->alg_enc);
+	    key_sa_refcnt(sav), sav->state, sav->alg_auth, sav->alg_enc);
 	printf("  spi=%u flags=%u\n",
 	    (u_int32_t)ntohl(sav->spi), sav->flags);
 
