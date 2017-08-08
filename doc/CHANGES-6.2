@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.293 2017/07/23 14:30:15 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.294 2017/08/08 12:01:20 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -18031,4 +18031,19 @@ sys/dev/pci/pciide_acer_reg.h			1.13
 	Apply workaround from FreeBSD to fix read data corruption
 	observed on Fire V100 and mSATA-SSD with mSATA to IDE adapter.
 	[nakayama, ticket #1463]
+
+sys/arch/i386/i386/trap.c:     		1.288		(patch)
+sys/arch/i386/i386/machdep.c:		1.783		(patch)
+sys/arch/i386/i386/locore.S:		1.146		(patch)
+sys/arch/amd64/amd64/locore.S:		1.122,1.124	(patch)
+sys/arch/amd64/amd64/machdep.c		1.254		(patch)
+sys/arch/amd64/amd64/trap.c:		1.95-1.96	(patch)
+
+	Remove the osyscall call gate and emulate it. There is a
+	one-instruction race in it that could panic the kernel.
+
+	Restore the ability to run netbsd 1.0 32-bit executables by
+	checking for the relevant lcall instruction in the trap handler
+	and treating it as a syscall.
+	[maxv, ticket #1464]
 
