@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.215 2017/08/08 01:56:49 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.216 2017/08/08 04:17:34 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.215 2017/08/08 01:56:49 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.216 2017/08/08 04:17:34 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -198,12 +198,35 @@ static u_int32_t acq_seq = 0;
  *     until GC by the timer
  */
 /*
+ * Locking notes on SAD:
+ * - Data structures
+ *   - SAs are managed by the list called key_sad.sahlist and sav lists of sah
+ *     entries
+ *   - A sah has sav lists for each SA state
+ *   - Multiple sahs with the same saidx can exist
+ *     - Only one entry has MATURE state and others should be DEAD
+ *     - DEAD entries are just ignored from searching
+ * - Modifications to the key_sad.sahlist must be done with holding key_sad.lock
+ *   which is a adaptive mutex
+ * - Read accesses to the key_sad.sahlist must be in pserialize(9) read sections
+ * - sah's lifetime is managed by localcount(9)
+ * - Getting an sah entry
+ *   - We get an SP from the key_spd.splist
+ *     - Must iterate the list and increment the reference count of a found sah
+ *       (by key_sah_ref) in a pserialize read section
+ *   - A gotten sah must be released after use by key_sah_unref
+ * - An sah is destroyed when its state become DEAD and no sav is
+ *   listed to the sah
+ *   - The destruction is done only in the timer (see key_timehandler_sad)
+ */
+/*
  * Locking notes on misc data:
  * - All lists of key_misc are protected by key_misc.lock
  *   - key_misc.lock must be held even for read accesses
  */
 
-static pserialize_t key_psz __read_mostly;
+static pserialize_t key_spd_psz __read_mostly;
+static pserialize_t key_sad_psz __read_mostly;
 
 /* SPD */
 static struct {
@@ -220,6 +243,7 @@ static struct {
 /* SAD */
 static struct {
 	kmutex_t lock;
+	kcondvar_t cv;
 	struct pslist_head sahlist;
 } key_sad __cacheline_aligned;
 
@@ -614,13 +638,18 @@ static struct mbuf *key_setdumpsp (struct secpolicy *,
 static u_int key_getspreqmsglen (const struct secpolicy *);
 static int key_spdexpire (struct secpolicy *);
 static struct secashead *key_newsah (const struct secasindex *);
-static void key_delsah (struct secashead *);
+static void key_unlink_sah(struct secashead *);
+static void key_destroy_sah(struct secashead *);
+static bool key_sah_has_sav(struct secashead *);
+static void key_sah_ref(struct secashead *);
+static void key_sah_unref(struct secashead *);
 static struct secasvar *key_newsav(struct mbuf *,
 	const struct sadb_msghdr *, int *, const char*, int);
 #define	KEY_NEWSAV(m, sadb, e)				\
 	key_newsav(m, sadb, e, __func__, __LINE__)
 static void key_delsav (struct secasvar *);
 static struct secashead *key_getsah(const struct secasindex *, int);
+static struct secashead *key_getsah_ref(const struct secasindex *, int);
 static bool key_checkspidup(const struct secasindex *, u_int32_t);
 static struct secasvar *key_getsavbyspi (struct secashead *, u_int32_t);
 static int key_setsaval (struct secasvar *, struct mbuf *,
@@ -800,7 +829,7 @@ key_unlink_sp(struct secpolicy *sp)
 
 #ifdef NET_MPSAFE
 	KASSERT(mutex_ownable(softnet_lock));
-	pserialize_perform(key_psz);
+	pserialize_perform(key_spd_psz);
 #endif
 
 	localcount_drain(&sp->localcount, &key_spd.cv, &key_spd.lock);
@@ -2954,9 +2983,13 @@ key_newsah(const struct secasindex *saidx)
 		PSLIST_INIT(&newsah->savlist[i]);
 	newsah->saidx = *saidx;
 
-	/* add to saidxtree */
-	newsah->state = SADB_SASTATE_MATURE;
+	localcount_init(&newsah->localcount);
+	/* Take a reference for the caller */
+	localcount_acquire(&newsah->localcount);
+
+	/* Add to the sah list */
 	SAHLIST_ENTRY_INIT(newsah);
+	newsah->state = SADB_SASTATE_MATURE;
 	mutex_enter(&key_sad.lock);
 	SAHLIST_WRITER_INSERT_HEAD(newsah);
 	mutex_exit(&key_sad.lock);
@@ -2964,51 +2997,55 @@ key_newsah(const struct secasindex *saidx)
 	return newsah;
 }
 
-/*
- * delete SA index and all SA registerd.
- */
-static void
-key_delsah(struct secashead *sah)
+static bool
+key_sah_has_sav(struct secashead *sah)
 {
-	struct secasvar *sav;
 	u_int state;
-	int s;
-	int zombie = 0;
+
+	KASSERT(mutex_owned(&key_sad.lock));
+
+	SASTATE_ANY_FOREACH(state) {
+		if (!SAVLIST_WRITER_EMPTY(sah, state))
+			return true;
+	}
+
+	return false;
+}
+
+static void
+key_unlink_sah(struct secashead *sah)
+{
 
 	KASSERT(!cpu_softintr_p());
-	KASSERT(sah != NULL);
+	KASSERT(mutex_owned(&key_sad.lock));
+	KASSERT(sah->state == SADB_SASTATE_DEAD);
 
-	s = splsoftnet();
+	/* Remove from the sah list */
+	SAHLIST_WRITER_REMOVE(sah);
 
-	/* searching all SA registerd in the secindex. */
-	SASTATE_ANY_FOREACH(state) {
-		SAVLIST_READER_FOREACH(sav, sah, state) {
-			/* give up to delete this sa */
-			zombie++;
-		}
-	}
+#ifdef NET_MPSAFE
+	KASSERT(mutex_ownable(softnet_lock));
+	pserialize_perform(key_sad_psz);
+#endif
 
-	/* don't delete sah only if there are savs. */
-	if (zombie) {
-		splx(s);
-		return;
-	}
+	localcount_drain(&sah->localcount, &key_sad.cv, &key_sad.lock);
+}
+
+static void
+key_destroy_sah(struct secashead *sah)
+{
 
 	rtcache_free(&sah->sa_route);
 
-	/* remove from tree of SA index */
-	SAHLIST_WRITER_REMOVE(sah);
+	SAHLIST_ENTRY_DESTROY(sah);
+	localcount_fini(&sah->localcount);
 
 	if (sah->idents != NULL)
 		kmem_free(sah->idents, sah->idents_len);
 	if (sah->identd != NULL)
 		kmem_free(sah->identd, sah->identd_len);
 
-	SAHLIST_ENTRY_DESTROY(sah);
 	kmem_free(sah, sizeof(*sah));
-
-	splx(s);
-	return;
 }
 
 /*
@@ -3136,7 +3173,32 @@ key_delsav(struct secasvar *sav)
 }
 
 /*
- * search SAD.
+ * Must be called in a pserialize read section. A held sah
+ * must be released by key_sah_unref after use.
+ */
+static void
+key_sah_ref(struct secashead *sah)
+{
+
+	localcount_acquire(&sah->localcount);
+}
+
+/*
+ * Must be called without holding key_sad.lock because the lock
+ * would be held in localcount_release.
+ */
+static void
+key_sah_unref(struct secashead *sah)
+{
+
+	KDASSERT(mutex_ownable(&key_sad.lock));
+
+	localcount_release(&sah->localcount, &key_sad.cv, &key_sad.lock);
+}
+
+/*
+ * Search SAD and return sah. Must be called in a pserialize
+ * read section.
  * OUT:
  *	NULL	: not found
  *	others	: found, pointer to a SA.
@@ -3157,6 +3219,28 @@ key_getsah(const struct secasindex *saidx, int flag)
 }
 
 /*
+ * Search SAD and return sah. If sah is returned, the caller must call
+ * key_sah_unref to releaset a reference.
+ * OUT:
+ *	NULL	: not found
+ *	others	: found, pointer to a SA.
+ */
+static struct secashead *
+key_getsah_ref(const struct secasindex *saidx, int flag)
+{
+	struct secashead *sah;
+	int s;
+
+	s = pserialize_read_enter();
+	sah = key_getsah(saidx, flag);
+	if (sah != NULL)
+		key_sah_ref(sah);
+	pserialize_read_exit(s);
+
+	return sah;
+}
+
+/*
  * check not to be duplicated SPI.
  * NOTE: this function is too slow due to searching all SAD.
  * OUT:
@@ -3168,6 +3252,7 @@ key_checkspidup(const struct secasindex *saidx, u_int32_t spi)
 {
 	struct secashead *sah;
 	struct secasvar *sav;
+	int s;
 
 	/* check address family */
 	if (saidx->src.sa.sa_family != saidx->dst.sa.sa_family) {
@@ -3176,15 +3261,18 @@ key_checkspidup(const struct secasindex *saidx, u_int32_t spi)
 	}
 
 	/* check all SAD */
+	s = pserialize_read_enter();
 	SAHLIST_READER_FOREACH(sah) {
 		if (!key_ismyaddr((struct sockaddr *)&sah->saidx.dst))
 			continue;
 		sav = key_getsavbyspi(sah, spi);
 		if (sav != NULL) {
+			pserialize_read_exit(s);
 			KEY_SA_UNREF(&sav);
 			return true;
 		}
 	}
+	pserialize_read_exit(s);
 
 	return false;
 }
@@ -4594,15 +4682,28 @@ static void
 key_timehandler_sad(time_t now)
 {
 	struct secashead *sah;
-	struct secasvar *sav;
+	int s;
 
 restart:
+	mutex_enter(&key_sad.lock);
 	SAHLIST_WRITER_FOREACH(sah) {
-		/* if sah has been dead, then delete it and process next sah. */
-		if (sah->state == SADB_SASTATE_DEAD) {
-			key_delsah(sah);
+		/* If sah has been dead and has no sav, then delete it */
+		if (sah->state == SADB_SASTATE_DEAD &&
+		    !key_sah_has_sav(sah)) {
+			key_unlink_sah(sah);
+			mutex_exit(&key_sad.lock);
+			key_destroy_sah(sah);
 			goto restart;
 		}
+	}
+	mutex_exit(&key_sad.lock);
+
+	s = pserialize_read_enter();
+	SAHLIST_READER_FOREACH(sah) {
+		struct secasvar *sav;
+
+		key_sah_ref(sah);
+		pserialize_read_exit(s);
 
 		/* if LARVAL entry doesn't become MATURE, delete it. */
 	restart_sav_LARVAL:
@@ -4727,7 +4828,11 @@ restart:
 			 * (such as from SPD).
 			 */
 		}
+
+		s = pserialize_read_enter();
+		key_sah_unref(sah);
 	}
+	pserialize_read_exit(s);
 }
 
 static void
@@ -4984,7 +5089,7 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 
 	/* get a SA index */
-	sah = key_getsah(&saidx, CMP_REQID);
+	sah = key_getsah_ref(&saidx, CMP_REQID);
 	if (sah == NULL) {
 		/* create a new SA index */
 		sah = key_newsah(&saidx);
@@ -4998,6 +5103,7 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 	/* XXX rewrite */
 	newsav = KEY_NEWSAV(m, mhp, &error);
 	if (newsav == NULL) {
+		key_sah_unref(sah);
 		/* XXX don't free new SA index allocated in above. */
 		return key_senderror(so, m, error);
 	}
@@ -5014,6 +5120,8 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 	SAVLIST_WRITER_INSERT_TAIL(sah, SADB_SASTATE_LARVAL, newsav);
 	mutex_exit(&key_sad.lock);
 	key_validate_savlist(sah, SADB_SASTATE_LARVAL);
+
+	key_sah_unref(sah);
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	/* delete the entry in key_misc.acqlist */
@@ -5362,7 +5470,7 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 		return key_senderror(so, m, EINVAL);
 
 	/* get a SA header */
-	sah = key_getsah(&saidx, CMP_REQID);
+	sah = key_getsah_ref(&saidx, CMP_REQID);
 	if (sah == NULL) {
 		IPSECLOG(LOG_DEBUG, "no SA index found.\n");
 		return key_senderror(so, m, ENOENT);
@@ -5372,7 +5480,7 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	/* XXX rewrite */
 	error = key_setident(sah, m, mhp);
 	if (error)
-		return key_senderror(so, m, error);
+		goto error_sah;
 
 	/* find a SA with sequence number. */
 #ifdef IPSEC_DOSEQCHECK
@@ -5382,7 +5490,8 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 			IPSECLOG(LOG_DEBUG,
 			    "no larval SA with sequence %u exists.\n",
 			    mhp->msg->sadb_msg_seq);
-			return key_senderror(so, m, ENOENT);
+			error = ENOENT;
+			goto error_sah;
 		}
 	}
 #else
@@ -5390,7 +5499,8 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	if (sav == NULL) {
 		IPSECLOG(LOG_DEBUG, "no such a SA found (spi:%u)\n",
 		    (u_int32_t)ntohl(sa0->sadb_sa_spi));
-		return key_senderror(so, m, EINVAL);
+		error = EINVAL;
+		goto error_sah;
 	}
 #endif
 
@@ -5461,6 +5571,9 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	KEY_FREESAV(&sav);
 	KEY_FREESAV(&sav);
 
+	key_sah_unref(sah);
+	sah = NULL;
+
     {
 	struct mbuf *n;
 
@@ -5476,6 +5589,8 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
     }
 error:
 	KEY_SA_UNREF(&sav);
+error_sah:
+	key_sah_unref(sah);
 	return key_senderror(so, m, error);
 }
 
@@ -5593,7 +5708,7 @@ key_api_add(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 
 	/* get a SA header */
-	sah = key_getsah(&saidx, CMP_REQID);
+	sah = key_getsah_ref(&saidx, CMP_REQID);
 	if (sah == NULL) {
 		/* create a new SA header */
 		sah = key_newsah(&saidx);
@@ -5606,9 +5721,8 @@ key_api_add(struct socket *so, struct mbuf *m,
 	/* set spidx if there */
 	/* XXX rewrite */
 	error = key_setident(sah, m, mhp);
-	if (error) {
-		return key_senderror(so, m, error);
-	}
+	if (error)
+		goto error;
 
     {
 	struct secasvar *sav;
@@ -5618,27 +5732,28 @@ key_api_add(struct socket *so, struct mbuf *m,
 	if (sav != NULL) {
 		KEY_SA_UNREF(&sav);
 		IPSECLOG(LOG_DEBUG, "SA already exists.\n");
-		return key_senderror(so, m, EEXIST);
+		error = EEXIST;
+		goto error;
 	}
     }
 
 	/* create new SA entry. */
 	newsav = KEY_NEWSAV(m, mhp, &error);
-	if (newsav == NULL) {
-		return key_senderror(so, m, error);
-	}
+	if (newsav == NULL)
+		goto error;
 	newsav->sah = sah;
 
 	error = key_handle_natt_info(newsav, mhp);
 	if (error != 0) {
 		key_delsav(newsav);
-		return key_senderror(so, m, EINVAL);
+		error = EINVAL;
+		goto error;
 	}
 
 	error = key_init_xform(newsav);
 	if (error != 0) {
 		key_delsav(newsav);
-		return key_senderror(so, m, error);
+		goto error;
 	}
 
 	/* add to satree */
@@ -5649,6 +5764,9 @@ key_api_add(struct socket *so, struct mbuf *m,
 	SAVLIST_WRITER_INSERT_TAIL(sah, SADB_SASTATE_MATURE, newsav);
 	mutex_exit(&key_sad.lock);
 	key_validate_savlist(sah, SADB_SASTATE_MATURE);
+
+	key_sah_unref(sah);
+	sah = NULL;
 
 	/*
 	 * don't call key_freesav() here, as we would like to keep the SA
@@ -5668,6 +5786,9 @@ key_api_add(struct socket *so, struct mbuf *m,
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
+error:
+	key_sah_unref(sah);
+	return key_senderror(so, m, error);
 }
 
 /* m is retained */
@@ -5853,10 +5974,11 @@ key_api_delete(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 
 	/* get a SA header */
-	sah = key_getsah(&saidx, CMP_HEAD);
+	sah = key_getsah_ref(&saidx, CMP_HEAD);
 	if (sah != NULL) {
 		/* get a SA with SPI. */
 		sav = key_getsavbyspi(sah, sa0->sadb_sa_spi);
+		key_sah_unref(sah);
 	}
 
 	if (sav == NULL) {
@@ -5911,7 +6033,7 @@ key_delete_all(struct socket *so, struct mbuf *m,
 	if (error != 0)
 		return key_senderror(so, m, EINVAL);
 
-	sah = key_getsah(&saidx, CMP_HEAD);
+	sah = key_getsah_ref(&saidx, CMP_HEAD);
 	if (sah != NULL) {
 		/* Delete all non-LARVAL SAs. */
 		SASTATE_ALIVE_FOREACH(state) {
@@ -5933,6 +6055,7 @@ key_delete_all(struct socket *so, struct mbuf *m,
 				goto restart;
 			}
 		}
+		key_sah_unref(sah);
 	}
     {
 	struct mbuf *n;
@@ -5971,7 +6094,6 @@ key_api_get(struct socket *so, struct mbuf *m,
 	struct sadb_sa *sa0;
 	const struct sockaddr *src, *dst;
 	struct secasindex saidx;
-	struct secashead *sah;
 	struct secasvar *sav = NULL;
 	u_int16_t proto;
 	int error;
@@ -6008,11 +6130,17 @@ key_api_get(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 
 	/* get a SA header */
+    {
+	struct secashead *sah;
+	int s = pserialize_read_enter();
+
 	sah = key_getsah(&saidx, CMP_HEAD);
 	if (sah != NULL) {
 		/* get a SA with SPI. */
 		sav = key_getsavbyspi(sah, sa0->sadb_sa_spi);
 	}
+	pserialize_read_exit(s);
+    }
 	if (sav == NULL) {
 		IPSECLOG(LOG_DEBUG, "no SA found.\n");
 		return key_senderror(so, m, ENOENT);
@@ -6023,7 +6151,7 @@ key_api_get(struct socket *so, struct mbuf *m,
 	u_int8_t satype;
 
 	/* map proto to satype */
-	satype = key_proto2satype(sah->saidx.proto);
+	satype = key_proto2satype(sav->sah->saidx.proto);
 	if (satype == 0) {
 		KEY_SA_UNREF(&sav);
 		IPSECLOG(LOG_DEBUG, "there was invalid proto in SAD.\n");
@@ -6623,7 +6751,6 @@ key_api_acquire(struct socket *so, struct mbuf *m,
 {
 	const struct sockaddr *src, *dst;
 	struct secasindex saidx;
-	struct secashead *sah;
 	u_int16_t proto;
 	int error;
 
@@ -6703,11 +6830,18 @@ key_api_acquire(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, EINVAL);
 
 	/* get a SA index */
+    {
+	struct secashead *sah;
+	int s = pserialize_read_enter();
+
 	sah = key_getsah(&saidx, CMP_MODE_REQID);
 	if (sah != NULL) {
+		pserialize_read_exit(s);
 		IPSECLOG(LOG_DEBUG, "a SA exists already.\n");
 		return key_senderror(so, m, EEXIST);
 	}
+	pserialize_read_exit(s);
+    }
 
 	error = key_acquire(&saidx, NULL);
 	if (error != 0) {
@@ -7051,6 +7185,7 @@ key_api_flush(struct socket *so, struct mbuf *m,
 	struct secasvar *sav;
 	u_int16_t proto;
 	u_int8_t state;
+	int s;
 
 	/* map satype to proto */
 	proto = key_satype2proto(mhp->msg->sadb_msg_satype);
@@ -7060,10 +7195,14 @@ key_api_flush(struct socket *so, struct mbuf *m,
 	}
 
 	/* no SATYPE specified, i.e. flushing all SA. */
+	s = pserialize_read_enter();
 	SAHLIST_READER_FOREACH(sah) {
 		if (mhp->msg->sadb_msg_satype != SADB_SATYPE_UNSPEC &&
 		    proto != sah->saidx.proto)
 			continue;
+
+		key_sah_ref(sah);
+		pserialize_read_exit(s);
 
 		SASTATE_ALIVE_FOREACH(state) {
 		restart:
@@ -7074,8 +7213,11 @@ key_api_flush(struct socket *so, struct mbuf *m,
 			}
 		}
 
+		s = pserialize_read_enter();
 		sah->state = SADB_SASTATE_DEAD;
+		key_sah_unref(sah);
 	}
+	pserialize_read_exit(s);
 
 	if (m->m_len < sizeof(struct sadb_msg) ||
 	    sizeof(struct sadb_msg) > m->m_len + M_TRAILINGSPACE(m)) {
@@ -7784,10 +7926,12 @@ key_do_init(void)
 	int i, error;
 
 	mutex_init(&key_misc.lock, MUTEX_DEFAULT, IPL_NONE);
-	key_psz = pserialize_create();
+	key_spd_psz = pserialize_create();
 	mutex_init(&key_spd.lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&key_spd.cv, "key_sp");
+	key_sad_psz = pserialize_create();
 	mutex_init(&key_sad.lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&key_sad.cv, "key_sa");
 
 	pfkeystat_percpu = percpu_alloc(sizeof(uint64_t) * PFKEY_NSTATS);
 
@@ -7982,16 +8126,26 @@ void
 key_sa_routechange(struct sockaddr *dst)
 {
 	struct secashead *sah;
-	struct route *ro;
-	const struct sockaddr *sa;
+	int s;
 
+	s = pserialize_read_enter();
 	SAHLIST_READER_FOREACH(sah) {
+		struct route *ro;
+		const struct sockaddr *sa;
+
+		key_sah_ref(sah);
+		pserialize_read_exit(s);
+
 		ro = &sah->sa_route;
 		sa = rtcache_getdst(ro);
 		if (sa != NULL && dst->sa_len == sa->sa_len &&
 		    memcmp(dst, sa, dst->sa_len) == 0)
 			rtcache_free(ro);
+
+		s = pserialize_read_enter();
+		key_sah_unref(sah);
 	}
+	pserialize_read_exit(s);
 
 	return;
 }

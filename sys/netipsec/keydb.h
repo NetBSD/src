@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.18 2017/08/07 03:21:59 ozaki-r Exp $	*/
+/*	$NetBSD: keydb.h,v 1.19 2017/08/08 04:17:34 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -36,6 +36,8 @@
 
 #ifdef _KERNEL
 
+#include <sys/localcount.h>
+
 #include <netipsec/key_var.h>
 #include <net/route.h>
 #include <netinet/in.h>
@@ -66,6 +68,7 @@ struct secasindex {
 /* Security Association Data Base */
 struct secashead {
 	struct pslist_entry pslist_entry;
+	struct localcount localcount;	/* reference count */
 
 	struct secasindex saidx;
 
