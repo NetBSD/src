@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.389 2017/08/08 05:46:23 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.390 2017/08/08 05:54:14 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.389 2017/08/08 05:46:23 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.390 2017/08/08 05:54:14 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -298,6 +298,8 @@ static int audio_setup_pfilters(struct audio_softc *, const audio_params_t *,
 			      stream_filter_list_t *, struct virtual_channel *);
 static int audio_setup_rfilters(struct audio_softc *, const audio_params_t *,
 			      stream_filter_list_t *, struct virtual_channel *);
+static void audio_destroy_pfilters(struct virtual_channel *);
+static void audio_destroy_rfilters(struct virtual_channel *);
 static void audio_stream_dtor(audio_stream_t *);
 static int audio_stream_ctor(audio_stream_t *, const audio_params_t *, int);
 static void stream_filter_list_append(stream_filter_list_t *,
@@ -864,7 +866,7 @@ audiodetach(device_t self, int flags)
 {
 	struct audio_softc *sc;
 	struct audio_chan *chan;
-	int maj, mn, i, rc;
+	int maj, mn, rc;
 
 	sc = device_private(self);
 	DPRINTF(("audio_detach: sc=%p flags=%d\n", sc, flags));
@@ -941,21 +943,8 @@ audiodetach(device_t self, int flags)
 
 		if (chan->chan == MIXER_INUSE)
 			continue;
-		for (i = 0; i < chan->vc->sc_npfilters; i++) {
-			chan->vc->sc_pfilters[i]->dtor
-			    (chan->vc->sc_pfilters[i]);
-			chan->vc->sc_pfilters[i] = NULL;
-			audio_stream_dtor(&chan->vc->sc_pstreams[i]);
-		}
-		chan->vc->sc_npfilters = 0;
-
-		for (i = 0; i < chan->vc->sc_nrfilters; i++) {
-			chan->vc->sc_rfilters[i]->dtor
-			    (chan->vc->sc_rfilters[i]);
-			chan->vc->sc_rfilters[i] = NULL;
-			audio_stream_dtor(&chan->vc->sc_rstreams[i]);
-		}
-		chan->vc->sc_nrfilters = 0;
+		audio_destroy_pfilters(chan->vc);
+		audio_destroy_rfilters(chan->vc);
 	}
 
 	auconv_delete_encodings(sc->sc_encodings);
@@ -1448,6 +1437,32 @@ audio_setup_rfilters(struct audio_softc *sc, const audio_params_t *rp,
 	}
 
 	return 0;
+}
+
+static void
+audio_destroy_pfilters(struct virtual_channel *vc)
+{
+	int i;
+
+	for (i = 0; i < vc->sc_npfilters; i++) {
+		vc->sc_pfilters[i]->dtor(vc->sc_pfilters[i]);
+		vc->sc_pfilters[i] = NULL;
+		audio_stream_dtor(&vc->sc_pstreams[i]);
+	}
+	vc->sc_npfilters = 0;
+}
+
+static void
+audio_destroy_rfilters(struct virtual_channel *vc)
+{
+	int i;
+
+	for (i = 0; i < vc->sc_nrfilters; i++) {
+		vc->sc_rfilters[i]->dtor(vc->sc_rfilters[i]);
+		vc->sc_rfilters[i] = NULL;
+		audio_stream_dtor(&vc->sc_pstreams[i]);
+	}
+	vc->sc_nrfilters = 0;
 }
 
 static void
@@ -2113,7 +2128,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
     struct lwp *l, struct file **nfp)
 {
 	struct file *fp;
-	int error, fd, i, n;
+	int error, fd, n;
 	u_int mode;
 	const struct audio_hw_if *hw;
 	struct virtual_channel *vc;
@@ -2273,18 +2288,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	return error;
 
 bad:
-	for (i = 0; i < vc->sc_npfilters; i++) {
-		vc->sc_pfilters[i]->dtor(vc->sc_pfilters[i]);
-		vc->sc_pfilters[i] = NULL;
-		audio_stream_dtor(&vc->sc_pstreams[i]);
-	}
-	vc->sc_npfilters = 0;
-	for (i = 0; i < vc->sc_nrfilters; i++) {
-		vc->sc_rfilters[i]->dtor(vc->sc_rfilters[i]);
-		vc->sc_rfilters[i] = NULL;
-		audio_stream_dtor(&vc->sc_rstreams[i]);
-	}
-	vc->sc_nrfilters = 0;
+	audio_destroy_pfilters(vc);
+	audio_destroy_rfilters(vc);
 	if (hw->close != NULL && sc->sc_opens == 0)
 		hw->close(sc->hw_hdl);
 	mutex_exit(sc->sc_lock);
@@ -2432,7 +2437,6 @@ audio_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 {
 	struct virtual_channel *vc;
 	const struct audio_hw_if *hw;
-	int o;
 
 	KASSERT(mutex_owned(sc->sc_lock));
 	
@@ -2493,19 +2497,9 @@ audio_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 	vc->sc_open = 0;
 	vc->sc_mode = 0;
 	vc->sc_full_duplex = 0;
-	
-	for (o = 0; o < vc->sc_npfilters; o++) {
-		vc->sc_pfilters[o]->dtor(vc->sc_pfilters[o]);
-		vc->sc_pfilters[o] = NULL;
-		audio_stream_dtor(&vc->sc_pstreams[o]);
-	}
-	vc->sc_npfilters = 0;
-	for (o = 0; o < vc->sc_nrfilters; o++) {
-		vc->sc_rfilters[o]->dtor(vc->sc_rfilters[o]);
-		vc->sc_rfilters[o] = NULL;
-		audio_stream_dtor(&vc->sc_rstreams[o]);
-	}
-	vc->sc_nrfilters = 0;
+
+	audio_destroy_pfilters(vc);
+	audio_destroy_rfilters(vc);
 
 	if (flags & FREAD)
 		sc->sc_recopens--;
