@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.212 2017/08/07 07:45:45 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.213 2017/08/08 01:55:17 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.212 2017/08/07 07:45:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.213 2017/08/08 01:55:17 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -204,7 +204,7 @@ static u_int32_t acq_seq = 0;
  *   - key_misc.lock must be held even for read accesses
  */
 
-static pserialize_t key_psz;
+static pserialize_t key_psz __read_mostly;
 
 /* SPD */
 static struct {
