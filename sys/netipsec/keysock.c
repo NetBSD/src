@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.59 2017/07/27 09:53:57 ozaki-r Exp $	*/
+/*	$NetBSD: keysock.c,v 1.60 2017/08/08 10:41:33 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.59 2017/07/27 09:53:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.60 2017/08/08 10:41:33 ozaki-r Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -300,8 +300,8 @@ key_sendup(struct socket *so, struct sadb_msg *msg, u_int len,
 }
 
 /* so can be NULL if target != KEY_SENDUP_ONE */
-int
-key_sendup_mbuf(struct socket *so, struct mbuf *m,
+static int
+_key_sendup_mbuf(struct socket *so, struct mbuf *m,
 		int target/*, sbprio */)
 {
 	struct mbuf *n;
@@ -430,6 +430,24 @@ key_sendup_mbuf(struct socket *so, struct mbuf *m,
 		error = 0;
 		m_freem(m);
 	}
+	return error;
+}
+
+int
+key_sendup_mbuf(struct socket *so, struct mbuf *m,
+		int target/*, sbprio */)
+{
+	int error;
+
+	if (so == NULL)
+		mutex_enter(key_so_mtx);
+	else
+		KASSERT(solocked(so));
+
+	error = _key_sendup_mbuf(so, m, target);
+
+	if (so == NULL)
+		mutex_exit(key_so_mtx);
 	return error;
 }
 
