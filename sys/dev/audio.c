@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.390 2017/08/08 05:54:14 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.391 2017/08/08 05:58:12 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.390 2017/08/08 05:54:14 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.391 2017/08/08 05:58:12 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -927,9 +927,6 @@ audiodetach(device_t self, int flags)
 
 	/* free resources */
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
-		if (chan == NULL)
-			break;
-
 		if (chan->chan == MIXER_INUSE)
 			continue;
 		audio_free_ring(sc, &chan->vc->sc_mpr);
@@ -938,9 +935,6 @@ audiodetach(device_t self, int flags)
 	audio_free_ring(sc, &sc->sc_pr);
 	audio_free_ring(sc, &sc->sc_rr);
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
-		if (chan == NULL)
-			break;
-
 		if (chan->chan == MIXER_INUSE)
 			continue;
 		audio_destroy_pfilters(chan->vc);
@@ -3710,9 +3704,6 @@ audio_mix(void *v)
 		if (!sc->sc_opens)
 			break;		/* ignore interrupt if not open */
 
-		if (chan == NULL)
-			break;
-
 		if (chan == SIMPLEQ_FIRST(&sc->sc_audiochan))
 			continue;
 
@@ -3926,9 +3917,6 @@ audio_upmix(void *v)
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
 		if (!sc->sc_opens)
 			break;		/* ignore interrupt if not open */
-
-		if (chan == NULL)
-			break;
 
 		if (chan == SIMPLEQ_FIRST(&sc->sc_audiochan))
 			continue;
