@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.100 2017/05/15 10:59:24 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.101 2017/08/08 09:33:41 maya Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1289,7 +1289,7 @@ NESTED_NOPROFILE(MIPSX(user_reserved_insn), CALLFRAME_SIZ, ra)
 	 * Save a minimum of registers to see if this is rdhwr $3,$29
 	 */
 #ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_BTB_CLEAR
+	li	k0,  MIPS_DIAG_BTB_CLEAR | MIPS_DIAG_RAS_DISABLE 
 	mtc0	k0, MIPS_COP_0_DIAG
 #endif
 	/* K1 already has CURLWP */
@@ -1354,7 +1354,7 @@ NESTED_NOPROFILE(MIPSX(user_gen_exception), CALLFRAME_SIZ, ra)
 	 * Save all the registers except the kernel temporaries onto the stack.
 	 */
 #ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_BTB_CLEAR
+	li	k0, MIPS_DIAG_BTB_CLEAR | MIPS_DIAG_RAS_DISABLE
 	mtc0	k0, MIPS_COP_0_DIAG
 #endif
 	/* K1 already has CURLWP */
@@ -1469,7 +1469,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
  * We don't need to save s0 - s8 because the compiler does it for us.
  */
 #ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_BTB_CLEAR
+	li	k0, MIPS_DIAG_BTB_CLEAR | MIPS_DIAG_RAS_DISABLE
 	mtc0	k0, MIPS_COP_0_DIAG
 #endif
 	/* k1 contains curlwp */
@@ -1661,7 +1661,7 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 	 * Save all the registers but kernel temporaries onto the stack.
 	 */
 #ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_BTB_CLEAR
+	li	k0, MIPS_DIAG_BTB_CLEAR | MIPS_DIAG_RAS_DISABLE
 	mtc0	k0, MIPS_COP_0_DIAG
 #endif
 	/* k1 already contains cpulwp */
@@ -2656,7 +2656,7 @@ MIPSX(user_return):
 	REG_L	s7, CALLFRAME_SIZ+TF_REG_S7(sp)		# $23
 	REG_L	s8, CALLFRAME_SIZ+TF_REG_S8(sp)		# $30
 #ifdef MIPS3_LOONGSON2
-	li	t0, (MIPS_DIAG_BTB_CLEAR|MIPS_DIAG_ITLB_CLEAR)
+	li	t0, (MIPS_DIAG_ITLB_CLEAR | MIPS_DIAG_BTB_CLEAR | MIPS_DIAG_RAS_DISABLE)
 	mtc0	t0, MIPS_COP_0_DIAG
 #endif
 MIPSX(user_intr_return):
