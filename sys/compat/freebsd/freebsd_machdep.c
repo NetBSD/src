@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.1 2017/08/01 14:43:54 maxv Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.2 2017/08/08 08:04:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.1 2017/08/01 14:43:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.2 2017/08/08 08:04:06 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.1 2017/08/01 14:43:54 maxv Exp
 #include <machine/reg.h>
 #include <machine/vm86.h>
 #include <machine/vmparam.h>
-#include <machine/freebsd_machdep.h>
+#include <compat/freebsd/freebsd_machdep.h>
 
 
 #include <compat/freebsd/freebsd_syscallargs.h>
@@ -249,4 +249,3 @@ freebsd_sys_sigreturn(struct lwp *l, const struct freebsd_sys_sigreturn_args *ua
 
 	return (EJUSTRETURN);
 }
-
