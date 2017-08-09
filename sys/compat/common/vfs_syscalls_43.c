@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.59 2017/01/13 20:25:35 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.59.8.1 2017/08/09 05:12:18 snj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.59 2017/01/13 20:25:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.59.8.1 2017/08/09 05:12:18 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -451,8 +451,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic(__func__);
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			if (cookie)

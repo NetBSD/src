@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_dirent.c,v 1.17 2017/01/28 21:54:57 christos Exp $ */
+/*	$NetBSD: linux32_dirent.c,v 1.17.6.1 2017/08/09 05:12:18 snj Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.17 2017/01/28 21:54:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.17.6.1 2017/08/09 05:12:18 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -178,8 +178,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic("linux32_readdir");
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			if (cookie)
