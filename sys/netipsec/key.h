@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.28 2017/08/08 08:23:10 ozaki-r Exp $	*/
+/*	$NetBSD: key.h,v 1.29 2017/08/09 09:48:11 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -61,6 +61,7 @@ u_int key_sp_refcnt(const struct secpolicy *);
 void key_sp_ref(struct secpolicy *, const char*, int);
 void key_sp_unref(struct secpolicy *, const char*, int);
 void key_sa_ref(struct secasvar *, const char*, int);
+void key_sa_unref(struct secasvar *, const char*, int);
 u_int key_sa_refcnt(const struct secasvar *);
 
 void key_socksplist_add(struct secpolicy *);
@@ -85,7 +86,7 @@ void key_socksplist_add(struct secpolicy *);
 #define KEY_SA_REF(sav)						\
 	key_sa_ref(sav, __func__, __LINE__)
 #define	KEY_SA_UNREF(psav)					\
-	key_freesav(psav, __func__, __LINE__)
+	key_sa_unref(*(psav), __func__, __LINE__)
 
 struct secasvar *key_lookup_sa(const union sockaddr_union *,
 		u_int, u_int32_t, u_int16_t, u_int16_t, const char*, int);
@@ -93,8 +94,6 @@ void key_freesav(struct secasvar **, const char*, int);
 
 #define	KEY_LOOKUP_SA(dst, proto, spi, sport, dport)		\
 	key_lookup_sa(dst, proto, spi, sport, dport,  __func__, __LINE__)
-#define	KEY_FREESAV(psav)					\
-	key_freesav(psav, __func__, __LINE__)
 
 int key_checktunnelsanity (struct secasvar *, u_int, void *, void *);
 int key_checkrequest(struct ipsecrequest *, struct secasvar **);
