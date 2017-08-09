@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.114 2017/07/28 15:34:06 riastradh Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.115 2017/08/09 18:55:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.114 2017/07/28 15:34:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.115 2017/08/09 18:55:21 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,10 +134,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.114 2017/07/28 15:34:06 riastradh E
 
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
-
-#if defined(__i386__)
-#include <i386/include/reg.h>
-#endif
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_dirent.h>
@@ -208,29 +204,16 @@ ibcs2_sys_ulimit(struct lwp *l, const struct ibcs2_sys_ulimit_args *uap, registe
 int
 ibcs2_sys_waitsys(struct lwp *l, const struct ibcs2_sys_waitsys_args *uap, register_t *retval)
 {
-#if defined(__i386__)
 	/* {
 		syscallarg(int) a1;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 	} */
-#endif
 	int error, options, status, pid;
 
-#if defined(__i386__)
-#define WAITPID_EFLAGS	0x8c4	/* OF, SF, ZF, PF */
-	if ((l->l_md.md_regs->tf_eflags & WAITPID_EFLAGS) == WAITPID_EFLAGS) {
-		/* waitpid */
-		pid = SCARG(uap, a1);
-		options = SCARG(uap, a3);
-	} else {
-#endif
-		/* wait */
-		pid = WAIT_ANY;
-		options = 0;
-#if defined(__i386__)
-	}
-#endif
+	/* wait */
+	pid = WAIT_ANY;
+	options = 0;
 
 	error = do_sys_wait(&pid, &status, options, NULL);
 	retval[0] = pid;
