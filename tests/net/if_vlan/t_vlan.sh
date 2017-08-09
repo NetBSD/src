@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.2 2017/06/14 02:32:29 ozaki-r Exp $
+#	$NetBSD: t_vlan.sh,v 1.3 2017/08/09 06:19:56 knakahara Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -182,6 +182,20 @@ vlan_basic_body_common()
 
 	extract_new_packets $BUS > $outfile
 	atf_check -s exit:0 -o match:'vlan 20' cat $outfile
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.ifconfig vlan0 -vlanif
+	atf_check -s exit:0 rump.ifconfig vlan0 vlan 10 vlanif shmif0
+	atf_check -s exit:0 rump.ifconfig vlan0 $af $local0/$prefix
+	atf_check -s exit:0 rump.ifconfig vlan0 up
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	atf_check -s exit:0 -o ignore rump.ifconfig -z vlan0
+	atf_check -s exit:0 -o ignore $ping_cmd $remote0
+	rump.ifconfig -v vlan0 > $outfile
+
+	atf_check -s exit:0 -o not-match:' 0 packets' cat $outfile
+	atf_check -s exit:0 -o not-match:' 0 bytes' cat $outfile
 }
 
 atf_test_case vlan_basic cleanup
