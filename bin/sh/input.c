@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.56.2.1 2017/07/23 14:58:14 snj Exp $	*/
+/*	$NetBSD: input.c,v 1.56.2.2 2017/08/09 05:35:18 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.56.2.1 2017/07/23 14:58:14 snj Exp $");
+__RCSID("$NetBSD: input.c,v 1.56.2.2 2017/08/09 05:35:18 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -310,10 +310,11 @@ preadbuffer(void)
 	*q = '\0';
 
 #ifndef SMALL
-	if (parsefile->fd == 0 && hist && something) {
+	if (parsefile->fd == 0 && hist && (something || whichprompt == 2)) {
 		HistEvent he;
+
 		INTOFF;
-		history(hist, &he, whichprompt == 1? H_ENTER : H_APPEND,
+		history(hist, &he, whichprompt != 2 ? H_ENTER : H_APPEND,
 		    parsenextc);
 		INTON;
 	}
