@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.172 2017/08/08 08:04:05 maxv Exp $
+# $NetBSD: md.i386,v 1.173 2017/08/09 18:58:51 maxv Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -416,7 +416,7 @@
 ./usr/include/i386/frame.h			comp-c-include
 ./usr/include/i386/freebsd_machdep.h		comp-obsolete		obsolete
 ./usr/include/i386/gdt.h			comp-c-include
-./usr/include/i386/ibcs2_machdep.h		comp-c-include
+./usr/include/i386/ibcs2_machdep.h		comp-obsolete		obsolete
 ./usr/include/i386/ieee.h			comp-c-include
 ./usr/include/i386/ieeefp.h			comp-c-include
 ./usr/include/i386/int_const.h			comp-c-include
