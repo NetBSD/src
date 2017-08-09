@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.26 2014/02/19 21:23:01 dsl Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.27 2017/08/09 18:45:30 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.26 2014/02/19 21:23:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.27 2017/08/09 18:45:30 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_vm86.h"
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.26 2014/02/19 21:23:01 dsl E
 #include <machine/vmparam.h>
 #include <x86/fpu.h>
 
-#if defined(COMPAT_16) || defined(COMPAT_IBCS2)
+#if defined(COMPAT_16)
 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
