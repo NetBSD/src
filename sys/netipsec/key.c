@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.222 2017/08/09 08:30:54 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.223 2017/08/09 09:48:11 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.222 2017/08/09 08:30:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.223 2017/08/09 09:48:11 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -202,13 +202,15 @@ static u_int32_t acq_seq = 0;
  * - Data structures
  *   - SAs are managed by the list called key_sad.sahlist and sav lists of sah
  *     entries
+ *     - An sav is supposed to be an SA from a viewpoint of users
  *   - A sah has sav lists for each SA state
  *   - Multiple sahs with the same saidx can exist
  *     - Only one entry has MATURE state and others should be DEAD
  *     - DEAD entries are just ignored from searching
- * - Modifications to the key_sad.sahlist must be done with holding key_sad.lock
- *   which is a adaptive mutex
- * - Read accesses to the key_sad.sahlist must be in pserialize(9) read sections
+ * - Modifications to the key_sad.sahlist and sah.savlist must be done with
+ *   holding key_sad.lock which is a adaptive mutex
+ * - Read accesses to the key_sad.sahlist and sah.savlist must be in
+ *   pserialize(9) read sections
  * - sah's lifetime is managed by localcount(9)
  * - Getting an sah entry
  *   - We get an sah from the key_sad.sahlist
@@ -218,6 +220,16 @@ static u_int32_t acq_seq = 0;
  * - An sah is destroyed when its state become DEAD and no sav is
  *   listed to the sah
  *   - The destruction is done only in the timer (see key_timehandler_sad)
+ * - sav's lifetime is managed by localcount(9)
+ * - Getting an sav entry
+ *   - First get an sah by saidx and get an sav from either of sah's savlists
+ *     - Must iterate the list and increment the reference count of a found sav
+ *       (by key_sa_ref) in a pserialize read section
+ *   - We can gain another reference from a held SA only if we check its state
+ *     and take its reference in a pserialize read section
+ *     (see esp_output for example)
+ *   - A gotten sav must be released after use by key_sa_unref
+ * - An sav is destroyed when its state become DEAD
  */
 /*
  * Locking notes on misc data:
@@ -643,6 +655,9 @@ static void key_destroy_sah(struct secashead *);
 static bool key_sah_has_sav(struct secashead *);
 static void key_sah_ref(struct secashead *);
 static void key_sah_unref(struct secashead *);
+static void key_init_sav(struct secasvar *);
+static void key_destroy_sav(struct secasvar *);
+static void key_destroy_sav_with_ref(struct secasvar *);
 static struct secasvar *key_newsav(struct mbuf *,
 	const struct sadb_msghdr *, int *, const char*, int);
 #define	KEY_NEWSAV(m, sadb, e)				\
@@ -775,35 +790,6 @@ static void key_timehandler_work(struct work *, void *);
 static struct callout	key_timehandler_ch;
 static struct workqueue	*key_timehandler_wq;
 static struct work	key_timehandler_wk;
-
-#ifdef IPSEC_REF_DEBUG
-#define REFLOG(label, p, where, tag)					\
-	log(LOG_DEBUG, "%s:%d: " label " : refcnt=%d (%p)\n.",		\
-	    (where), (tag), (p)->refcnt, (p))
-#else
-#define REFLOG(label, p, where, tag)	do {} while (0)
-#endif
-
-#define	SA_ADDREF(p) do {						\
-	atomic_inc_uint(&(p)->refcnt);					\
-	REFLOG("SA_ADDREF", (p), __func__, __LINE__);			\
-	KASSERTMSG((p)->refcnt != 0, "SA refcnt overflow");		\
-} while (0)
-#define	SA_ADDREF2(p, where, tag) do {					\
-	atomic_inc_uint(&(p)->refcnt);					\
-	REFLOG("SA_ADDREF", (p), (where), (tag));			\
-	KASSERTMSG((p)->refcnt != 0, "SA refcnt overflow");		\
-} while (0)
-#define	SA_DELREF(p) do {						\
-	KASSERTMSG((p)->refcnt > 0, "SA refcnt underflow");		\
-	atomic_dec_uint(&(p)->refcnt);					\
-	REFLOG("SA_DELREF", (p), __func__, __LINE__);			\
-} while (0)
-#define	SA_DELREF2(p, nv, where, tag) do {				\
-	KASSERTMSG((p)->refcnt > 0, "SA refcnt underflow");		\
-	nv = atomic_dec_uint_nv(&(p)->refcnt);				\
-	REFLOG("SA_DELREF", (p), (where), (tag));			\
-} while (0)
 
 u_int
 key_sp_refcnt(const struct secpolicy *sp)
@@ -1085,7 +1071,7 @@ key_lookup_sa_bysaidx(const struct secasindex *saidx)
 			sav = last;
 		}
 		if (sav != NULL) {
-			SA_ADDREF(sav);
+			KEY_SA_REF(sav);
 			KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
 			    "DP cause refcnt++:%d SA:%p\n",
 			    key_sa_refcnt(sav), sav);
@@ -1284,7 +1270,7 @@ key_lookup_sa(
 				/* check dst address */
 				if (!key_sockaddr_match(&dst->sa, &sav->sah->saidx.dst.sa, chkport))
 					continue;
-				SA_ADDREF2(sav, where, tag);
+				key_sa_ref(sav, where, tag);
 				goto done;
 			}
 		}
@@ -1371,25 +1357,46 @@ key_sp_unref(struct secpolicy *sp, const char* where, int tag)
 	localcount_release(&sp->localcount, &key_spd.cv, &key_spd.lock);
 }
 
+static void
+key_init_sav(struct secasvar *sav)
+{
+
+	ASSERT_SLEEPABLE();
+
+	localcount_init(&sav->localcount);
+	SAVLIST_ENTRY_INIT(sav);
+}
+
 u_int
 key_sa_refcnt(const struct secasvar *sav)
 {
 
-	if (sav == NULL)
-		return 0;
-
-	return sav->refcnt;
+	/* FIXME */
+	return 0;
 }
 
 void
 key_sa_ref(struct secasvar *sav, const char* where, int tag)
 {
 
-	SA_ADDREF2(sav, where, tag);
+	localcount_acquire(&sav->localcount);
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
-	    "DP cause refcnt++:%d SA:%p from %s:%u\n",
-	    sav->refcnt, sav, where, tag);
+	    "DP cause refcnt++: SA:%p from %s:%u\n",
+	    sav, where, tag);
+}
+
+void
+key_sa_unref(struct secasvar *sav, const char* where, int tag)
+{
+
+	KDASSERT(mutex_ownable(&key_sad.lock));
+
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP cause refcnt--: SA:%p from %s:%u\n",
+	    sav, where, tag);
+
+	localcount_release(&sav->localcount, &key_sad.cv, &key_sad.lock);
 }
 
 #if 0
@@ -1468,32 +1475,67 @@ key_freesp_so(struct secpolicy **sp)
 #endif
 
 /*
- * Must be called after calling key_lookup_sa().
- * This function is called by key_freesp() to free some SA allocated
- * for a policy.
+ * Remove the sav from the savlist of its sah and wait for references to the sav
+ * to be released. key_sad.lock must be held.
  */
-void
-key_freesav(struct secasvar **psav, const char* where, int tag)
+static void
+key_unlink_sav(struct secasvar *sav)
 {
-	struct secasvar *sav = *psav;
-	unsigned int nv;
 
-	KASSERT(sav != NULL);
+	KASSERT(mutex_owned(&key_sad.lock));
 
-	SA_DELREF2(sav, nv, where, tag);
+	SAVLIST_WRITER_REMOVE(sav);
 
-	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
-	    "DP SA:%p (SPI %lu) from %s:%u; refcnt now %u\n",
-	    sav, (u_long)ntohl(sav->spi), where, tag, nv);
+#ifdef NET_MPSAFE
+	KASSERT(mutex_ownable(softnet_lock));
+	pserialize_perform(key_sad_psz);
+#endif
 
-	if (nv == 0) {
-		*psav = NULL;
+	localcount_drain(&sav->localcount, &key_sad.cv, &key_sad.lock);
+}
 
-		/* remove from SA header */
-		SAVLIST_WRITER_REMOVE(sav);
+/*
+ * Destroy an sav where the sav must be unlinked from an sah
+ * by say key_unlink_sav.
+ */
+static void
+key_destroy_sav(struct secasvar *sav)
+{
 
-		key_delsav(sav);
-	}
+	ASSERT_SLEEPABLE();
+
+	localcount_fini(&sav->localcount);
+	SAVLIST_ENTRY_DESTROY(sav);
+
+	key_delsav(sav);
+}
+
+/*
+ * Destroy sav with holding its reference.
+ */
+static void
+key_destroy_sav_with_ref(struct secasvar *sav)
+{
+
+	ASSERT_SLEEPABLE();
+
+	mutex_enter(&key_sad.lock);
+	sav->state = SADB_SASTATE_DEAD;
+	SAVLIST_WRITER_REMOVE(sav);
+	mutex_exit(&key_sad.lock);
+
+	/* We cannot unref with holding key_sad.lock */
+	KEY_SA_UNREF(&sav);
+
+	mutex_enter(&key_sad.lock);
+#ifdef NET_MPSAFE
+	KASSERT(mutex_ownable(softnet_lock));
+	pserialize_perform(key_sad_psz);
+#endif
+	localcount_drain(&sav->localcount, &key_sad.cv, &key_sad.lock);
+	mutex_exit(&key_sad.lock);
+
+	key_destroy_sav(sav);
 }
 
 /* %%% SPD management */
@@ -3173,15 +3215,9 @@ static void
 key_delsav(struct secasvar *sav)
 {
 
-	KASSERT(sav != NULL);
-	KASSERTMSG(sav->refcnt == 0, "reference count %u > 0", sav->refcnt);
-
 	key_clear_xform(sav);
 	key_freesaval(sav);
-	SAVLIST_ENTRY_DESTROY(sav);
-	kmem_intr_free(sav, sizeof(*sav));
-
-	return;
+	kmem_free(sav, sizeof(*sav));
 }
 
 /*
@@ -3315,7 +3351,7 @@ key_getsavbyspi(struct secashead *sah, u_int32_t spi)
 			}
 
 			if (sav->spi == spi) {
-				SA_ADDREF(sav);
+				KEY_SA_REF(sav);
 				goto out;
 			}
 		}
@@ -4718,20 +4754,23 @@ restart:
 		pserialize_read_exit(s);
 
 		/* if LARVAL entry doesn't become MATURE, delete it. */
+		mutex_enter(&key_sad.lock);
 	restart_sav_LARVAL:
-		SAVLIST_READER_FOREACH(sav, sah, SADB_SASTATE_LARVAL) {
+		SAVLIST_WRITER_FOREACH(sav, sah, SADB_SASTATE_LARVAL) {
 			if (now - sav->created > key_larval_lifetime) {
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 				goto restart_sav_LARVAL;
 			}
 		}
+		mutex_exit(&key_sad.lock);
 
 		/*
 		 * check MATURE entry to start to send expire message
 		 * whether or not.
 		 */
 	restart_sav_MATURE:
-		SAVLIST_READER_FOREACH(sav, sah, SADB_SASTATE_MATURE) {
+		mutex_enter(&key_sad.lock);
+		SAVLIST_WRITER_FOREACH(sav, sah, SADB_SASTATE_MATURE) {
 			/* we don't need to check. */
 			if (sav->lft_s == NULL)
 				continue;
@@ -4748,8 +4787,10 @@ restart:
 				 */
 				if (sav->lft_c->sadb_lifetime_usetime == 0) {
 					key_sa_chgstate(sav, SADB_SASTATE_DEAD);
+					mutex_exit(&key_sad.lock);
 				} else {
 					key_sa_chgstate(sav, SADB_SASTATE_DYING);
+					mutex_exit(&key_sad.lock);
 					/*
 					 * XXX If we keep to send expire
 					 * message in the status of
@@ -4770,6 +4811,7 @@ restart:
 			         sav->lft_c->sadb_lifetime_bytes) {
 
 				key_sa_chgstate(sav, SADB_SASTATE_DYING);
+				mutex_exit(&key_sad.lock);
 				/*
 				 * XXX If we keep to send expire
 				 * message in the status of
@@ -4779,10 +4821,12 @@ restart:
 				goto restart_sav_MATURE;
 			}
 		}
+		mutex_exit(&key_sad.lock);
 
 		/* check DYING entry to change status to DEAD. */
+		mutex_enter(&key_sad.lock);
 	restart_sav_DYING:
-		SAVLIST_READER_FOREACH(sav, sah, SADB_SASTATE_DYING) {
+		SAVLIST_WRITER_FOREACH(sav, sah, SADB_SASTATE_DYING) {
 			/* we don't need to check. */
 			if (sav->lft_h == NULL)
 				continue;
@@ -4819,13 +4863,18 @@ restart:
 				goto restart_sav_DYING;
 			}
 		}
+		mutex_exit(&key_sad.lock);
 
 		/* delete entry in DEAD */
 	restart_sav_DEAD:
-		SAVLIST_READER_FOREACH(sav, sah, SADB_SASTATE_DEAD) {
-			KEY_FREESAV(&sav);
+		mutex_enter(&key_sad.lock);
+		SAVLIST_WRITER_FOREACH(sav, sah, SADB_SASTATE_DEAD) {
+			key_unlink_sav(sav);
+			mutex_exit(&key_sad.lock);
+			key_destroy_sav(sav);
 			goto restart_sav_DEAD;
 		}
+		mutex_exit(&key_sad.lock);
 
 		s = pserialize_read_enter();
 		key_sah_unref(sah);
@@ -5120,11 +5169,10 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 	/* set spi */
 	newsav->spi = htonl(spi);
 
-	/* add to satree */
-	newsav->refcnt = 1;
+	/* Add to sah#savlist */
+	key_init_sav(newsav);
 	newsav->sah = sah;
 	newsav->state = SADB_SASTATE_LARVAL;
-	SAVLIST_ENTRY_INIT(newsav);
 	mutex_enter(&key_sad.lock);
 	SAVLIST_WRITER_INSERT_TAIL(sah, SADB_SASTATE_LARVAL, newsav);
 	mutex_exit(&key_sad.lock);
@@ -5567,21 +5615,19 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 		goto error;
 	}
 
-	/* add to satree */
-	newsav->refcnt = 1;
+	/* Add to sah#savlist */
+	key_init_sav(newsav);
 	newsav->state = SADB_SASTATE_MATURE;
-	SAVLIST_ENTRY_INIT(newsav);
 	mutex_enter(&key_sad.lock);
 	SAVLIST_WRITER_INSERT_TAIL(sah, SADB_SASTATE_MATURE, newsav);
 	mutex_exit(&key_sad.lock);
 	key_validate_savlist(sah, SADB_SASTATE_MATURE);
 
-	key_sa_chgstate(sav, SADB_SASTATE_DEAD);
-	KEY_FREESAV(&sav);
-	KEY_FREESAV(&sav);
-
 	key_sah_unref(sah);
 	sah = NULL;
+
+	key_destroy_sav_with_ref(sav);
+	sav = NULL;
 
     {
 	struct mbuf *n;
@@ -5765,10 +5811,9 @@ key_api_add(struct socket *so, struct mbuf *m,
 		goto error;
 	}
 
-	/* add to satree */
-	newsav->refcnt = 1;
+	/* Add to sah#savlist */
+	key_init_sav(newsav);
 	newsav->state = SADB_SASTATE_MATURE;
-	SAVLIST_ENTRY_INIT(newsav);
 	mutex_enter(&key_sad.lock);
 	SAVLIST_WRITER_INSERT_TAIL(sah, SADB_SASTATE_MATURE, newsav);
 	mutex_exit(&key_sad.lock);
@@ -5995,9 +6040,8 @@ key_api_delete(struct socket *so, struct mbuf *m,
 		return key_senderror(so, m, ENOENT);
 	}
 
-	key_sa_chgstate(sav, SADB_SASTATE_DEAD);
-	KEY_FREESAV(&sav);
-	KEY_FREESAV(&sav);
+	key_destroy_sav_with_ref(sav);
+	sav = NULL;
 
     {
 	struct mbuf *n;
@@ -6049,20 +6093,15 @@ key_delete_all(struct socket *so, struct mbuf *m,
 			if (state == SADB_SASTATE_LARVAL)
 				continue;
 		restart:
+			mutex_enter(&key_sad.lock);
 			SAVLIST_WRITER_FOREACH(sav, sah, state) {
-				/* sanity check */
-				if (sav->state != state) {
-					IPSECLOG(LOG_DEBUG,
-					    "invalid sav->state "
-					    "(queue: %d SA: %d)\n",
-					    state, sav->state);
-					continue;
-				}
-
-				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
-				KEY_FREESAV(&sav);
+				sav->state = SADB_SASTATE_DEAD;
+				key_unlink_sav(sav);
+				mutex_exit(&key_sad.lock);
+				key_destroy_sav(sav);
 				goto restart;
 			}
+			mutex_exit(&key_sad.lock);
 		}
 		key_sah_unref(sah);
 	}
@@ -7292,11 +7331,15 @@ key_api_flush(struct socket *so, struct mbuf *m,
 
 		SASTATE_ALIVE_FOREACH(state) {
 		restart:
+			mutex_enter(&key_sad.lock);
 			SAVLIST_WRITER_FOREACH(sav, sah, state) {
-				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
-				KEY_FREESAV(&sav);
+				sav->state = SADB_SASTATE_DEAD;
+				key_unlink_sav(sav);
+				mutex_exit(&key_sad.lock);
+				key_destroy_sav(sav);
 				goto restart;
 			}
+			mutex_exit(&key_sad.lock);
 		}
 
 		s = pserialize_read_enter();
@@ -8241,14 +8284,15 @@ key_sa_chgstate(struct secasvar *sav, u_int8_t state)
 {
 	struct secasvar *_sav;
 
-	KASSERT(sav != NULL);
+	ASSERT_SLEEPABLE();
+	KASSERT(mutex_owned(&key_sad.lock));
 
 	if (sav->state == state)
 		return;
 
-	SAVLIST_WRITER_REMOVE(sav);
+	key_unlink_sav(sav);
 	SAVLIST_ENTRY_DESTROY(sav);
-	SAVLIST_ENTRY_INIT(sav);
+	key_init_sav(sav);
 
 	sav->state = state;
 	if (!SADB_SASTATE_USABLE_P(sav)) {
