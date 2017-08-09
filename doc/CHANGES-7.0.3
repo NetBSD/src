@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.50 2017/07/26 16:04:26 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.51 2017/08/09 07:32:43 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -3030,4 +3030,21 @@ external/public-domain/tz/dist/version          up to 1.1.1.5
 	Update tzdata to 2017b.  This makes a (current) change for
 	Haiti, and a change to historic data for Liberia.
 	[kre, ticket #1450]
+
+sys/dev/auconv.c				1.30 via patch
+sys/dev/ic/ac97.c				1.97 via patch
+sys/dev/pci/azalia_codec.c			1.81 via patch
+
+	Mixer device bounds checking.
+	[nat, ticket #1460]
+
+sys/kern/kern_malloc.c				1.146
+
+	Avoid integer overflow in kern_malloc().
+	[martin, ticket #1461]
+
+sys/dev/usb/if_ural.c				1.52
+
+	Free the RX list if ural_alloc_rx_list fails part way through.
+	[skrll, ticket #1462]
 
