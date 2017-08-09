@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.132.2.1 2017/07/23 14:58:14 snj Exp $	*/
+/*	$NetBSD: parser.c,v 1.132.2.2 2017/08/09 05:35:18 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.132.2.1 2017/07/23 14:58:14 snj Exp $");
+__RCSID("$NetBSD: parser.c,v 1.132.2.2 2017/08/09 05:35:18 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -2191,13 +2191,14 @@ getprompt(void *unused)
 {
 	char *p;
 	const char *cp;
+	int wp;
 
 	if (!doprompt)
 		return "";
 
 	VTRACE(DBG_PARSE|DBG_EXPAND, ("getprompt %d\n", whichprompt));
 
-	switch (whichprompt) {
+	switch (wp = whichprompt) {
 	case 0:
 		return "";
 	case 1:
@@ -2215,6 +2216,7 @@ getprompt(void *unused)
 	VTRACE(DBG_PARSE|DBG_EXPAND, ("prompt <<%s>>\n", p));
 
 	cp = expandstr(p, plinno);
+	whichprompt = wp;	/* history depends on it not changing */
 
 	VTRACE(DBG_PARSE|DBG_EXPAND, ("prompt -> <<%s>>\n", cp));
 
