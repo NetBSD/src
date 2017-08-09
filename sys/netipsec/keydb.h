@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.19 2017/08/08 04:17:34 ozaki-r Exp $	*/
+/*	$NetBSD: keydb.h,v 1.20 2017/08/09 09:48:11 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -94,8 +94,8 @@ struct comp_algo;
 /* Security Association */
 struct secasvar {
 	struct pslist_entry pslist_entry;
+	struct localcount localcount;	/* reference count */
 
-	u_int refcnt;			/* reference count */
 	u_int8_t state;			/* Status of this Association */
 
 	u_int8_t alg_auth;		/* Authentication Algorithm Identifier*/
