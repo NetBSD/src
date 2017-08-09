@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.98 2017/06/07 03:53:11 knakahara Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.99 2017/08/09 06:17:23 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.98 2017/06/07 03:53:11 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.99 2017/08/09 06:17:23 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1342,6 +1342,8 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 	struct ifvlan_linkmib *mib;
 	struct psref psref;
 	int error;
+	size_t pktlen = m->m_pkthdr.len;
+	bool mcast = (m->m_flags & M_MCAST) != 0;
 
 	mib = vlan_getref_linkmib(ifv, &psref);
 	if (mib == NULL) {
@@ -1451,10 +1453,11 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 		/* mbuf is already freed */
 		ifp->if_oerrors++;
 	} else {
+
 		ifp->if_opackets++;
-		/*
-		 * obytes is incremented at ether_output() or bridge_enqueue().
-		 */
+		ifp->if_obytes += pktlen;
+		if (mcast)
+			ifp->if_omcasts++;
 	}
 
 out:
