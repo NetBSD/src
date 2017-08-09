@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.17.4.4 2017/07/26 07:32:06 martin Exp $
+#	$NetBSD: SUNXI,v 1.17.4.5 2017/08/09 05:49:50 snj Exp $
 #
 #	Allwinner sunxi family
 #
@@ -89,6 +89,7 @@ armgic0		at gic?
 # Memory controller
 
 # DMA controller
+sun6idma*	at fdt?			# DMA controller
 
 # Clock and Reset controller
 
@@ -113,6 +114,12 @@ iic*		at i2cbus?
 
 # RTC
 sunxirtc*	at fdt?			# RTC
+
+# Audio
+sunxicodec*	at fdt?			# Audio codec
+h3codec*	at fdt?			# H3 audio codec (analog part)
+audio*		at audiobus?
+spkr*		at audio?
 
 # SDMMC
 sunximmc*	at fdt?			# SDMMC

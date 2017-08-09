@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_ccu.c,v 1.8.4.3 2017/07/25 02:03:16 snj Exp $ */
+/* $NetBSD: sun8i_h3_ccu.c,v 1.8.4.4 2017/08/09 05:49:50 snj Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.8.4.3 2017/07/25 02:03:16 snj Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.8.4.4 2017/08/09 05:49:50 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.8.4.3 2017/07/25 02:03:16 snj Exp
 #include <arm/sunxi/sunxi_ccu.h>
 #include <arm/sunxi/sun8i_h3_ccu.h>
 
+#define	PLL_AUDIO_CTRL_REG	0x008
 #define	PLL_PERIPH0_CTRL_REG	0x028
 #define	AHB1_APB1_CFG_REG	0x054
 #define	APB2_CFG_REG		0x058
@@ -55,6 +56,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.8.4.3 2017/07/25 02:03:16 snj Exp
 #define	SDMMC2_CLK_REG		0x090
 #define	USBPHY_CFG_REG		0x0cc
 #define	MBUS_RST_REG		0x0fc
+#define	AC_DIG_CLK_REG		0x140
 #define	BUS_SOFT_RST_REG0	0x2c0
 #define	BUS_SOFT_RST_REG1	0x2c4
 #define	BUS_SOFT_RST_REG2	0x2c8
@@ -141,6 +143,11 @@ static const char *apb1_parents[] = { "ahb1" };
 static const char *apb2_parents[] = { "losc", "hosc", "pll_periph0" };
 static const char *mod_parents[] = { "hosc", "pll_periph0", "pll_periph1" };
 
+static const struct sunxi_ccu_nkmp_tbl sunx8_h3_ac_dig_table[] = {
+	{ 24576000, 13, 0, 0, 13 },
+	{ 0 }
+};
+
 static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	SUNXI_CCU_NKMP(H3_CLK_PLL_PERIPH0, "pll_periph0", "hosc",
 	    PLL_PERIPH0_CTRL_REG,	/* reg */
@@ -150,6 +157,17 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    __BITS(17,16),		/* p */
 	    __BIT(31),			/* enable */
 	    SUNXI_CCU_NKMP_DIVIDE_BY_TWO),
+
+	SUNXI_CCU_NKMP_TABLE(H3_CLK_PLL_AUDIO_BASE, "pll_audio", "hosc",
+	    PLL_AUDIO_CTRL_REG,		/* reg */
+	    __BITS(14,8),		/* n */
+	    0,				/* k */
+	    __BITS(4,0),		/* m */
+	    __BITS(19,16),		/* p */
+	    __BIT(31),			/* enable */
+	    __BIT(28),			/* lock */
+	    sunx8_h3_ac_dig_table,	/* table */
+	    0),
 
 	SUNXI_CCU_PREDIV(H3_CLK_AHB1, "ahb1", ahb1_parents,
 	    AHB1_APB1_CFG_REG,	/* reg */
@@ -203,6 +221,11 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	SUNXI_CCU_PHASE(H3_CLK_MMC2_OUTPUT, "mmc2_output", "mmc2",
 	    SDMMC2_CLK_REG, __BITS(10,8)),
 
+	SUNXI_CCU_GATE(H3_CLK_AC_DIG, "ac_dig", "pll_audio",
+	    AC_DIG_CLK_REG, 31),
+
+	SUNXI_CCU_GATE(H3_CLK_BUS_DMA, "bus-dma", "ahb1",
+	    BUS_CLK_GATING_REG0, 6),
 	SUNXI_CCU_GATE(H3_CLK_BUS_MMC0, "bus-mmc0", "ahb1",
 	    BUS_CLK_GATING_REG0, 8),
 	SUNXI_CCU_GATE(H3_CLK_BUS_MMC1, "bus-mmc1", "ahb1",
@@ -230,6 +253,8 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	SUNXI_CCU_GATE(H3_CLK_BUS_OHCI3, "bus-ohci3", "ahb2",
 	    BUS_CLK_GATING_REG0, 31),
 
+	SUNXI_CCU_GATE(H3_CLK_BUS_CODEC, "bus-codec", "apb1",
+	    BUS_CLK_GATING_REG2, 0),
 	SUNXI_CCU_GATE(H3_CLK_BUS_PIO, "bus-pio", "apb1",
 	    BUS_CLK_GATING_REG2, 5),
 

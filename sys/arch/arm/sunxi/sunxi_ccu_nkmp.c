@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_nkmp.c,v 1.4.4.2 2017/07/18 19:13:08 snj Exp $ */
+/* $NetBSD: sunxi_ccu_nkmp.c,v 1.4.4.3 2017/08/09 05:49:50 snj Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_nkmp.c,v 1.4.4.2 2017/07/18 19:13:08 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_nkmp.c,v 1.4.4.3 2017/08/09 05:49:50 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +42,7 @@ sunxi_ccu_nkmp_enable(struct sunxi_ccu_softc *sc, struct sunxi_ccu_clk *clk,
 {
 	struct sunxi_ccu_nkmp *nkmp = &clk->u.nkmp;
 	uint32_t val;
+	int retry;
 
 	KASSERT(clk->type == SUNXI_CCU_NKMP);
 
@@ -54,6 +55,17 @@ sunxi_ccu_nkmp_enable(struct sunxi_ccu_softc *sc, struct sunxi_ccu_clk *clk,
 	else
 		val &= ~nkmp->enable;
 	CCU_WRITE(sc, nkmp->reg, val);
+
+	if (enable && nkmp->lock) {
+		for (retry = 1000; retry > 0; retry--) {
+			val = CCU_READ(sc, nkmp->reg);
+			if (val & nkmp->lock)
+				break;
+			delay(100);
+		}
+		if (retry == 0)
+			return ETIMEDOUT;
+	}
 
 	return 0;
 }
@@ -115,7 +127,41 @@ int
 sunxi_ccu_nkmp_set_rate(struct sunxi_ccu_softc *sc,
     struct sunxi_ccu_clk *clk, u_int rate)
 {
-	return EIO;
+	struct sunxi_ccu_nkmp *nkmp = &clk->u.nkmp;
+	const struct sunxi_ccu_nkmp_tbl *tab;
+	uint32_t val;
+
+	KASSERT(clk->type == SUNXI_CCU_NKMP);
+
+	if (nkmp->table == NULL || rate == 0)
+		return EIO;
+
+	for (tab = nkmp->table; tab->rate > 0; tab++)
+		if (tab->rate == rate)
+			break;
+	if (tab->rate == 0)
+		return EINVAL;
+
+	val = CCU_READ(sc, nkmp->reg);
+	if (nkmp->n) {
+		val &= ~nkmp->n;
+		val |= __SHIFTIN(tab->n, nkmp->n);
+	}
+	if (nkmp->k) {
+		val &= ~nkmp->k;
+		val |= __SHIFTIN(tab->k, nkmp->k);
+	}
+	if (nkmp->m) {
+		val &= ~nkmp->m;
+		val |= __SHIFTIN(tab->m, nkmp->m);
+	}
+	if (nkmp->p) {
+		val &= ~nkmp->p;
+		val |= __SHIFTIN(tab->p, nkmp->p);
+	}
+	CCU_WRITE(sc, nkmp->reg, val);
+
+	return 0;
 }
 
 const char *
