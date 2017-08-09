@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.101 2017/04/27 17:07:22 jdolecek Exp $	*/
+/*	$NetBSD: ld.c,v 1.102 2017/08/09 16:44:39 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.101 2017/04/27 17:07:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.102 2017/08/09 16:44:39 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,6 +419,9 @@ ld_diskstart(device_t dev, struct buf *bp)
 	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt)
 		return EAGAIN;
 
+	if ((sc->sc_flags & LDF_MPSAFE) == 0)
+		KERNEL_LOCK(1, curlwp);
+
 	mutex_enter(&sc->sc_mutex);
 
 	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt)
@@ -430,6 +433,9 @@ ld_diskstart(device_t dev, struct buf *bp)
 	}
 
 	mutex_exit(&sc->sc_mutex);
+
+	if ((sc->sc_flags & LDF_MPSAFE) == 0)
+		KERNEL_UNLOCK_ONE(curlwp);
 
 	return error;
 }
@@ -589,11 +595,22 @@ static int
 ld_discard(device_t dev, off_t pos, off_t len)
 {
 	struct ld_softc *sc = device_private(dev);
+	int rc;
 
 	if (sc->sc_discard == NULL)
 		return (ENODEV);
 
-	return (*sc->sc_discard)(sc, pos, len);
+	if ((sc->sc_flags & LDF_MPSAFE) == 0)
+		KERNEL_LOCK(1, curlwp);
+	mutex_enter(&sc->sc_mutex);
+
+	rc = (*sc->sc_discard)(sc, pos, len);
+
+	mutex_exit(&sc->sc_mutex);
+	if ((sc->sc_flags & LDF_MPSAFE) == 0)
+		KERNEL_UNLOCK_ONE(curlwp);
+
+	return rc;
 }
 
 static int

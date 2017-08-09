@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.31 2017/07/16 17:11:46 jmcneill Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.32 2017/08/09 16:44:40 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.31 2017/07/16 17:11:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.32 2017/08/09 16:44:40 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -144,7 +144,7 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hwunit = 0;	/* always 0? */
 	sc->sc_sf = sa->sf;
 
-	ld->sc_flags = LDF_ENABLED;
+	ld->sc_flags = LDF_ENABLED | LDF_MPSAFE;
 	ld->sc_secperunit = sc->sc_sf->csd.capacity;
 	ld->sc_secsize = SDMMC_SECTOR_SIZE;
 	ld->sc_maxxfer = MAXPHYS;
