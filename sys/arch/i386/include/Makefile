@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2017/08/08 08:04:06 maxv Exp $
+#	$NetBSD: Makefile,v 1.47 2017/08/09 18:58:51 maxv Exp $
 
 INCSDIR= /usr/include/i386
 
@@ -9,7 +9,7 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	fenv.h float.h frame.h \
 	gdt.h \
-	ibcs2_machdep.h ieee.h ieeefp.h \
+	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h intrdefs.h \
 	joystick.h \
