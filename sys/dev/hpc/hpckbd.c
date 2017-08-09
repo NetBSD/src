@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.30.30.1 2017/06/30 06:25:43 snj Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.30.30.2 2017/08/09 05:57:32 snj Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.30.30.1 2017/06/30 06:25:43 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.30.30.2 2017/08/09 05:57:32 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,6 +260,40 @@ hpckbd_getevent(struct hpckbd_core* hc, u_int *type, int *data)
 	return (1);
 }
 
+
+#ifdef hpcsh
+/*
+ * XXX: Use the old wrong code for now as hpcsh attaches console very
+ * early and it's convenient to be able to do early DDB on wscons.
+ */
+void
+hpckbd_keymap_setup(struct hpckbd_core *hc,
+		    const keysym_t *map, int mapsize)
+{
+	int i;
+	struct wscons_keydesc *desc;
+
+	/* fix keydesc table */
+	/* 
+	 * XXX The way this is done is really wrong.  The __UNCONST()
+	 * is a hint as to what is wrong.  This actually ends up modifying
+	 * initialized data which is marked "const".
+	 * The reason we get away with it here is that on sh3 kernel
+	 * is directly mapped.
+	 */
+	desc = (struct wscons_keydesc *)__UNCONST(hpckbd_keymapdata.keydesc);
+	for (i = 0; desc[i].name != 0; i++) {
+		if ((desc[i].name & KB_MACHDEP) && desc[i].map == NULL) {
+			desc[i].map = map;
+			desc[i].map_size = mapsize;
+		}
+	}
+
+	return;
+}
+
+#else
+
 void
 hpckbd_keymap_setup(struct hpckbd_core *hc,
 		    const keysym_t *map, int mapsize)
@@ -294,6 +328,7 @@ hpckbd_keymap_setup(struct hpckbd_core *hc,
 
 	return;
 }
+#endif
 
 void
 hpckbd_keymap_lookup(struct hpckbd_core *hc)
