@@ -1,4 +1,4 @@
-/* $NetBSD: md.h,v 1.1 2014/07/26 19:30:45 dholland Exp $ */
+/* $NetBSD: md.h,v 1.2 2017/08/09 23:01:06 maya Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,6 +41,9 @@
 
 /* Megs required for a full X installation. */
 #define XNEEDMB			50
+
+/* have support for booting from UFS2 */
+#define HAVE_UFS2_BOOT
 
 /*
  *  Default filesets to fetch and install during installation or upgrade.
