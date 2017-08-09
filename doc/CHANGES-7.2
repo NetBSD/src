@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.33 2017/07/26 16:11:31 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.34 2017/08/09 07:19:05 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -2680,4 +2680,36 @@ sys/dev/pci/if_iwm.c				1.72
 
 	iwm(4): match Wireless 8265 device.
 	[nonaka, ticket #1459]
+
+sys/dev/auconv.c				1.30 via patch
+sys/dev/ic/ac97.c				1.97 via patch
+sys/dev/pci/azalia_codec.c			1.81 via patch
+
+	Mixer device bounds checking.
+	[nat, ticket #1460]
+
+sys/kern/kern_malloc.c				1.146
+
+	Avoid integer overflow in kern_malloc().
+	[martin, ticket #1461]
+
+sys/dev/usb/if_ural.c				1.52
+
+	Free the RX list if ural_alloc_rx_list fails part way through.
+	[skrll, ticket #1462]
+
+sys/arch/evbarm/rpi/rpi_machdep.c		1.71 via patch
+
+	Disable BSC0 on Raspberry Pi 3 and Zero W boards.
+	[jmcneill, ticket #1464]
+
+sys/dev/hpc/hpckbd.c                            1.32
+
+        hpcsh: unbreak wscons console after ticket #1438.
+        [uwe, ticket #1465]
+
+sys/arch/hpcsh/dev/pfckbd.c			1.30
+
+	Make early ddb work with wscons console again.
+	[uwe, ticket #1466]
 
