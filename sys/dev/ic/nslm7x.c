@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.67 2017/07/20 02:27:36 msaitoh Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.68 2017/08/09 04:45:38 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.67 2017/07/20 02:27:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.68 2017/08/09 04:45:38 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ static void wb_temp_diode_type(struct lm_softc *, int);
 static void lm_refresh(void *);
 
 static void lm_generic_banksel(struct lm_softc *, int);
-static void lm_setup_sensors(struct lm_softc *, struct lm_sensor *);
+static void lm_setup_sensors(struct lm_softc *, const struct lm_sensor *);
 static void lm_refresh_sensor_data(struct lm_softc *);
 static void lm_refresh_volt(struct lm_softc *, int);
 static void lm_refresh_temp(struct lm_softc *, int);
@@ -123,7 +123,7 @@ static struct {
 };
 
 /* LM78/78J/79/81 */
-static struct lm_sensor lm78_sensors[] = {
+static const struct lm_sensor lm78_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore A",
@@ -222,7 +222,7 @@ static struct lm_sensor lm78_sensors[] = {
 };
 
 /* W83627HF */
-static struct lm_sensor w83627hf_sensors[] = {
+static const struct lm_sensor w83627hf_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore A",
@@ -361,7 +361,7 @@ static struct lm_sensor w83627hf_sensors[] = {
  * need special treatment, also because the reference voltage is 2.048 V
  * instead of the traditional 3.6 V.
  */
-static struct lm_sensor w83627ehf_sensors[] = {
+static const struct lm_sensor w83627ehf_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -500,7 +500,7 @@ static struct lm_sensor w83627ehf_sensors[] = {
 };
 
 /*  W83627DHG */
-static struct lm_sensor w83627dhg_sensors[] = {
+static const struct lm_sensor w83627dhg_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -631,7 +631,7 @@ static struct lm_sensor w83627dhg_sensors[] = {
 };
 
 /* W83637HF */
-static struct lm_sensor w83637hf_sensors[] = {
+static const struct lm_sensor w83637hf_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -746,7 +746,7 @@ static struct lm_sensor w83637hf_sensors[] = {
 };
 
 /* W83697HF */
-static struct lm_sensor w83697hf_sensors[] = {
+static const struct lm_sensor w83697hf_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -859,7 +859,7 @@ static struct lm_sensor w83697hf_sensors[] = {
  * +5V, but using the values from the W83782D datasheets seems to
  * provide sensible results.
  */
-static struct lm_sensor w83781d_sensors[] = {
+static const struct lm_sensor w83781d_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore A",
@@ -974,7 +974,7 @@ static struct lm_sensor w83781d_sensors[] = {
 };
 
 /* W83782D */
-static struct lm_sensor w83782d_sensors[] = {
+static const struct lm_sensor w83782d_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -1105,7 +1105,7 @@ static struct lm_sensor w83782d_sensors[] = {
 };
 
 /* W83783S */
-static struct lm_sensor w83783s_sensors[] = {
+static const struct lm_sensor w83783s_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -1204,7 +1204,7 @@ static struct lm_sensor w83783s_sensors[] = {
 };
 
 /* W83791D */
-static struct lm_sensor w83791d_sensors[] = {
+static const struct lm_sensor w83791d_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -1359,7 +1359,7 @@ static struct lm_sensor w83791d_sensors[] = {
 };
 
 /* W83792D */
-static struct lm_sensor w83792d_sensors[] = {
+static const struct lm_sensor w83792d_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore A",
@@ -1522,7 +1522,7 @@ static struct lm_sensor w83792d_sensors[] = {
 };
 
 /* AS99127F */
-static struct lm_sensor as99127f_sensors[] = {
+static const struct lm_sensor as99127f_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore A",
@@ -1637,7 +1637,7 @@ static struct lm_sensor as99127f_sensors[] = {
 };
 
 /* NCT6776F */
-static struct lm_sensor nct6776f_sensors[] = {
+static const struct lm_sensor nct6776f_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -1785,7 +1785,7 @@ static struct lm_sensor nct6776f_sensors[] = {
 };
 
 /* NCT6779D */
-static struct lm_sensor nct6779d_sensors[] = {
+static const struct lm_sensor nct6779d_sensors[] = {
 	/* Voltage */
 	{
 		.desc = "VCore",
@@ -2139,12 +2139,12 @@ lm_match(struct lm_softc *sc)
 static int
 def_match(struct lm_softc *sc)
 {
-	int chipid;
+	uint8_t chipid;
 
 	chipid = (*sc->lm_readreg)(sc, LMD_CHIPID) & LM_ID_MASK;
 	aprint_naive("\n");
 	aprint_normal("\n");
-	aprint_error_dev(sc->sc_dev, "Unknown chip (ID %d)\n", chipid);
+	aprint_error_dev(sc->sc_dev, "Unknown chip (ID %02x)\n", chipid);
 
 	lm_setup_sensors(sc, lm78_sensors);
 	sc->refresh_sensor_data = lm_refresh_sensor_data;
@@ -2346,7 +2346,7 @@ wb_match(struct lm_softc *sc)
 }
 
 static void
-lm_setup_sensors(struct lm_softc *sc, struct lm_sensor *sensors)
+lm_setup_sensors(struct lm_softc *sc, const struct lm_sensor *sensors)
 {
 	int i;
 
