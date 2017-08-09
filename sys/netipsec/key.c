@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.218 2017/08/08 08:24:34 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.219 2017/08/09 03:41:11 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.218 2017/08/08 08:24:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.219 2017/08/09 03:41:11 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -211,7 +211,7 @@ static u_int32_t acq_seq = 0;
  * - Read accesses to the key_sad.sahlist must be in pserialize(9) read sections
  * - sah's lifetime is managed by localcount(9)
  * - Getting an sah entry
- *   - We get an SP from the key_spd.splist
+ *   - We get an sah from the key_sad.sahlist
  *     - Must iterate the list and increment the reference count of a found sah
  *       (by key_sah_ref) in a pserialize read section
  *   - A gotten sah must be released after use by key_sah_unref
