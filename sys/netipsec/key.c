@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.219 2017/08/09 03:41:11 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.220 2017/08/09 04:29:36 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.219 2017/08/09 03:41:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.220 2017/08/09 04:29:36 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -735,6 +735,8 @@ static struct mbuf *key_getcomb_ipcomp (void);
 static struct mbuf *key_getprop (const struct secasindex *);
 
 static int key_acquire (const struct secasindex *, struct secpolicy *);
+static void key_acquire_sendup_mbuf_later(struct mbuf *);
+static void key_acquire_sendup_pending_mbuf(void);
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 static struct secacq *key_newacq (const struct secasindex *);
 static struct secacq *key_getacq (const struct secasindex *);
@@ -4867,6 +4869,8 @@ key_timehandler_spacq(time_t now)
 #endif
 }
 
+static unsigned int key_timehandler_work_enqueued = 0;
+
 /*
  * time handler.
  * scanning SPD and SAD to check status for each entries,
@@ -4878,12 +4882,17 @@ key_timehandler_work(struct work *wk, void *arg)
 	time_t now = time_uptime;
 	IPSEC_DECLARE_LOCK_VARIABLE;
 
+	/* We can allow enqueuing another work at this point */
+	atomic_swap_uint(&key_timehandler_work_enqueued, 0);
+
 	IPSEC_ACQUIRE_GLOBAL_LOCKS();
 
 	key_timehandler_spd(now);
 	key_timehandler_sad(now);
 	key_timehandler_acq(now);
 	key_timehandler_spacq(now);
+
+	key_acquire_sendup_pending_mbuf();
 
 	/* do exchange to tick time !! */
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, NULL);
@@ -4895,6 +4904,10 @@ key_timehandler_work(struct work *wk, void *arg)
 static void
 key_timehandler(void *arg)
 {
+
+	/* Avoid enqueuing another work when one is already enqueued */
+	if (atomic_swap_uint(&key_timehandler_work_enqueued, 1) == 1)
+		return;
 
 	workqueue_enqueue(key_timehandler_wq, &key_timehandler_wk, NULL);
 }
@@ -6631,12 +6644,76 @@ key_acquire(const struct secasindex *saidx, struct secpolicy *sp)
 	mtod(result, struct sadb_msg *)->sadb_msg_len =
 	    PFKEY_UNIT64(result->m_pkthdr.len);
 
-	return key_sendup_mbuf(NULL, result, KEY_SENDUP_REGISTERED);
+	/*
+	 * XXX we cannot call key_sendup_mbuf directly here because
+	 * it can cause a deadlock:
+	 * - We have a reference to an SP (and an SA) here
+	 * - key_sendup_mbuf will try to take key_so_mtx
+	 * - Some other thread may try to localcount_drain to the SP with
+	 *   holding key_so_mtx in say key_api_spdflush
+	 * - In this case localcount_drain never return because key_sendup_mbuf
+	 *   that has stuck on key_so_mtx never release a reference to the SP
+	 *
+	 * So defer key_sendup_mbuf to the timer.
+	 */
+	key_acquire_sendup_mbuf_later(result);
+	return 0;
 
  fail:
 	if (result)
 		m_freem(result);
 	return error;
+}
+
+static struct mbuf *key_acquire_mbuf_head = NULL;
+
+static void
+key_acquire_sendup_pending_mbuf(void)
+{
+	struct mbuf *m, *prev = NULL;
+	int error;
+
+again:
+	mutex_enter(&key_misc.lock);
+	m = key_acquire_mbuf_head;
+	/* Get an earliest mbuf (one at the tail of the list) */
+	while (m != NULL) {
+		if (m->m_nextpkt == NULL) {
+			if (prev != NULL)
+				prev->m_nextpkt = NULL;
+			if (m == key_acquire_mbuf_head)
+				key_acquire_mbuf_head = NULL;
+			break;
+		}
+		prev = m;
+		m = m->m_nextpkt;
+	}
+	mutex_exit(&key_misc.lock);
+
+	if (m == NULL)
+		return;
+
+	error = key_sendup_mbuf(NULL, m, KEY_SENDUP_REGISTERED);
+	if (error != 0)
+		IPSECLOG(LOG_WARNING, "key_sendup_mbuf failed (error=%d)\n",
+		    error);
+
+	if (prev != NULL)
+		goto again;
+}
+
+static void
+key_acquire_sendup_mbuf_later(struct mbuf *m)
+{
+
+	mutex_enter(&key_misc.lock);
+	/* Enqueue mbuf at the head of the list */
+	m->m_nextpkt = key_acquire_mbuf_head;
+	key_acquire_mbuf_head = m;
+	mutex_exit(&key_misc.lock);
+
+	/* Kick the timer */
+	key_timehandler(NULL);
 }
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
