@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.28.10.1 2017/08/08 16:05:37 martin Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.28.10.2 2017/08/09 13:03:18 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.28.10.1 2017/08/08 16:05:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.28.10.2 2017/08/09 13:03:18 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
@@ -397,16 +397,16 @@ svr4_32_sys_signal(struct lwp *l, const struct svr4_32_sys_signal_args *uap, reg
 		nbsa.sa_handler = (sig_t)SCARG(uap, handler);
 		sigemptyset(&nbsa.sa_mask);
 		nbsa.sa_flags = 0;
-		error = sigaction1(l, signum, &nbsa, &obsa, NULL, 0);
+		error = sigaction1(l, native_signo, &nbsa, &obsa, NULL, 0);
 		if (error)
-			return (error);
+			return error;
 		*retval = (u_int)(u_long)obsa.sa_handler;
-		return (0);
+		return 0;
 
 	case SVR4_SIGHOLD_MASK:
 	sighold:
 		sigemptyset(&ss);
-		sigaddset(&ss, signum);
+		sigaddset(&ss, native_signo);
 		mutex_enter(p->p_lock);
 		error = sigprocmask1(l, SIG_BLOCK, &ss, 0);
 		mutex_exit(p->p_lock);
@@ -414,7 +414,7 @@ svr4_32_sys_signal(struct lwp *l, const struct svr4_32_sys_signal_args *uap, reg
 
 	case SVR4_SIGRELSE_MASK:
 		sigemptyset(&ss);
-		sigaddset(&ss, signum);
+		sigaddset(&ss, native_signo);
 		mutex_enter(p->p_lock);
 		error = sigprocmask1(l, SIG_UNBLOCK, &ss, 0);
 		mutex_exit(p->p_lock);
@@ -424,17 +424,17 @@ svr4_32_sys_signal(struct lwp *l, const struct svr4_32_sys_signal_args *uap, reg
 		nbsa.sa_handler = SIG_IGN;
 		sigemptyset(&nbsa.sa_mask);
 		nbsa.sa_flags = 0;
-		return (sigaction1(l, signum, &nbsa, 0, NULL, 0));
+		return sigaction1(l, native_signo, &nbsa, 0, NULL, 0);
 
 	case SVR4_SIGPAUSE_MASK:
 		mutex_enter(p->p_lock);
 		ss = l->l_sigmask;
 		mutex_exit(p->p_lock);
-		sigdelset(&ss, signum);
-		return (sigsuspend1(l, &ss));
+		sigdelset(&ss, native_signo);
+		return sigsuspend1(l, &ss);
 
 	default:
-		return (ENOSYS);
+		return ENOSYS;
 	}
 }
 
