@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.71 2017/08/03 06:32:51 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.72 2017/08/09 09:48:11 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.71 2017/08/03 06:32:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.72 2017/08/09 09:48:11 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -733,6 +733,22 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		goto bad;
 	}
 
+    {
+	int s = pserialize_read_enter();
+
+	/*
+	 * Take another reference to the SA for opencrypto callback.
+	 */
+	if (__predict_false(sav->state == SADB_SASTATE_DEAD)) {
+		pserialize_read_exit(s);
+		stat = AH_STAT_NOTDB;
+		error = ENOENT;
+		goto bad;
+	}
+	KEY_SA_REF(sav);
+	pserialize_read_exit(s);
+    }
+
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
 	crp->crp_flags = CRYPTO_F_IMBUF;
@@ -749,7 +765,6 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	tc->tc_protoff = protoff;
 	tc->tc_skip = skip;
 	tc->tc_sav = sav;
-	KEY_SA_REF(sav);
 
 	DPRINTF(("%s: hash over %d bytes, skip %d: "
 		 "crda len %d skip %d inject %d\n", __func__,
@@ -1144,7 +1159,11 @@ ah_output(
     {
 	int s = pserialize_read_enter();
 
-	if (__predict_false(isr->sp->state == IPSEC_SPSTATE_DEAD)) {
+	/*
+	 * Take another reference to the SP and the SA for opencrypto callback.
+	 */
+	if (__predict_false(isr->sp->state == IPSEC_SPSTATE_DEAD ||
+	    sav->state == SADB_SASTATE_DEAD)) {
 		pserialize_read_exit(s);
 		pool_put(&ah_tdb_crypto_pool, tc);
 		crypto_freereq(crp);
@@ -1153,6 +1172,7 @@ ah_output(
 		goto bad;
 	}
 	KEY_SP_REF(isr->sp);
+	KEY_SA_REF(sav);
 	pserialize_read_exit(s);
     }
 
@@ -1172,7 +1192,6 @@ ah_output(
 	tc->tc_skip = skip;
 	tc->tc_protoff = protoff;
 	tc->tc_sav = sav;
-	KEY_SA_REF(sav);
 
 	return crypto_dispatch(crp);
 bad:
