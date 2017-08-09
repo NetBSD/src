@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.38 2017/08/09 16:09:16 mlelstv Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.39 2017/08/09 16:44:39 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.38 2017/08/09 16:09:16 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.39 2017/08/09 16:44:39 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,6 +171,7 @@ ld_iop_attach(device_t parent, device_t self, void *aux)
 	ld->sc_dump = ld_iop_dump;
 	ld->sc_ioctl = ld_iop_ioctl;
 	ld->sc_start = ld_iop_start;
+	ld->sc_flags = LDF_MPSAFE;
 
 	/* Say what the device is. */
 	printf(":");
@@ -221,7 +222,7 @@ ld_iop_attach(device_t parent, device_t self, void *aux)
 
 	if ((le32toh(param.p.bdi.capabilities) & I2O_RBS_CAP_REMOVABLE_MEDIA)
 	    != 0) {
-		/* ld->sc_flags = LDF_REMOVABLE; */
+		/* ld->sc_flags |= LDF_REMOVABLE; */
 		fixedstr = "removable";
 		enable = 0;
 	} else
