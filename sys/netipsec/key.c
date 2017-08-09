@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.221 2017/08/09 06:04:41 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.222 2017/08/09 08:30:54 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.221 2017/08/09 06:04:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.222 2017/08/09 08:30:54 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -735,7 +735,7 @@ static struct mbuf *key_getcomb_ipcomp (void);
 static struct mbuf *key_getprop (const struct secasindex *);
 
 static int key_acquire (const struct secasindex *, struct secpolicy *);
-static void key_acquire_sendup_mbuf_later(struct mbuf *);
+static int key_acquire_sendup_mbuf_later(struct mbuf *);
 static void key_acquire_sendup_pending_mbuf(void);
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 static struct secacq *key_newacq (const struct secasindex *);
@@ -6656,8 +6656,7 @@ key_acquire(const struct secasindex *saidx, struct secpolicy *sp)
 	 *
 	 * So defer key_sendup_mbuf to the timer.
 	 */
-	key_acquire_sendup_mbuf_later(result);
-	return 0;
+	return key_acquire_sendup_mbuf_later(result);
 
  fail:
 	if (result)
@@ -6666,6 +6665,8 @@ key_acquire(const struct secasindex *saidx, struct secpolicy *sp)
 }
 
 static struct mbuf *key_acquire_mbuf_head = NULL;
+static unsigned key_acquire_mbuf_count = 0;
+#define KEY_ACQUIRE_MBUF_MAX	10
 
 static void
 key_acquire_sendup_pending_mbuf(void)
@@ -6684,6 +6685,7 @@ again:
 				prev->m_nextpkt = NULL;
 			if (m == key_acquire_mbuf_head)
 				key_acquire_mbuf_head = NULL;
+			key_acquire_mbuf_count--;
 			break;
 		}
 		prev = m;
@@ -6694,6 +6696,7 @@ again:
 	if (m == NULL)
 		return;
 
+	m->m_nextpkt = NULL;
 	error = key_sendup_mbuf(NULL, m, KEY_SENDUP_REGISTERED);
 	if (error != 0)
 		IPSECLOG(LOG_WARNING, "key_sendup_mbuf failed (error=%d)\n",
@@ -6703,18 +6706,27 @@ again:
 		goto again;
 }
 
-static void
+static int
 key_acquire_sendup_mbuf_later(struct mbuf *m)
 {
 
 	mutex_enter(&key_misc.lock);
+	/* Avoid queuing too much mbufs */
+	if (key_acquire_mbuf_count >= KEY_ACQUIRE_MBUF_MAX) {
+		mutex_exit(&key_misc.lock);
+		m_freem(m);
+		return ENOBUFS; /* XXX */
+	}
 	/* Enqueue mbuf at the head of the list */
 	m->m_nextpkt = key_acquire_mbuf_head;
 	key_acquire_mbuf_head = m;
+	key_acquire_mbuf_count++;
 	mutex_exit(&key_misc.lock);
 
 	/* Kick the timer */
 	key_timehandler(NULL);
+
+	return 0;
 }
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
