@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.69 2017/08/03 06:32:51 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.70 2017/08/09 09:48:11 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.69 2017/08/03 06:32:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.70 2017/08/09 09:48:11 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -429,6 +429,23 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		crde = crp->crp_desc;
 	}
 
+    {
+	int s = pserialize_read_enter();
+
+	/*
+	 * Take another reference to the SA for opencrypto callback.
+	 */
+	if (__predict_false(sav->state == SADB_SASTATE_DEAD)) {
+		pserialize_read_exit(s);
+		pool_put(&esp_tdb_crypto_pool, tc);
+		crypto_freereq(crp);
+		ESP_STATINC(ESP_STAT_NOTDB);
+		return ENOENT;
+	}
+	KEY_SA_REF(sav);
+	pserialize_read_exit(s);
+    }
+
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length */
 	crp->crp_flags = CRYPTO_F_IMBUF;
@@ -444,7 +461,6 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	tc->tc_protoff = protoff;
 	tc->tc_skip = skip;
 	tc->tc_sav = sav;
-	KEY_SA_REF(sav);
 
 	/* Decryption descriptor */
 	if (espx) {
@@ -901,7 +917,11 @@ esp_output(
     {
 	int s = pserialize_read_enter();
 
-	if (__predict_false(isr->sp->state == IPSEC_SPSTATE_DEAD)) {
+	/*
+	 * Take another reference to the SP and the SA for opencrypto callback.
+	 */
+	if (__predict_false(isr->sp->state == IPSEC_SPSTATE_DEAD ||
+	    sav->state == SADB_SASTATE_DEAD)) {
 		pserialize_read_exit(s);
 		pool_put(&esp_tdb_crypto_pool, tc);
 		crypto_freereq(crp);
@@ -910,6 +930,7 @@ esp_output(
 		goto bad;
 	}
 	KEY_SP_REF(isr->sp);
+	KEY_SA_REF(sav);
 	pserialize_read_exit(s);
     }
 
@@ -919,7 +940,6 @@ esp_output(
 	tc->tc_dst = saidx->dst;
 	tc->tc_proto = saidx->proto;
 	tc->tc_sav = sav;
-	KEY_SA_REF(sav);
 
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */

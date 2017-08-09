@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.50 2017/08/03 06:32:51 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.51 2017/08/09 09:48:11 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.50 2017/08/03 06:32:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.51 2017/08/09 09:48:11 ozaki-r Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -184,6 +184,23 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		return error;
 	}
 
+    {
+	int s = pserialize_read_enter();
+
+	/*
+	 * Take another reference to the SA for opencrypto callback.
+	 */
+	if (__predict_false(sav->state == SADB_SASTATE_DEAD)) {
+		pserialize_read_exit(s);
+		pool_put(&ipcomp_tdb_crypto_pool, tc);
+		crypto_freereq(crp);
+		IPCOMP_STATINC(IPCOMP_STAT_NOTDB);
+		return ENOENT;
+	}
+	KEY_SA_REF(sav);
+	pserialize_read_exit(s);
+    }
+
 	crdc = crp->crp_desc;
 
 	crdc->crd_skip = skip + hlen;
@@ -209,7 +226,6 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	tc->tc_protoff = protoff;
 	tc->tc_skip = skip;
 	tc->tc_sav = sav;
-	KEY_SA_REF(sav);
 
 	return crypto_dispatch(crp);
 }
@@ -483,7 +499,11 @@ ipcomp_output(
     {
 	int s = pserialize_read_enter();
 
-	if (__predict_false(isr->sp->state == IPSEC_SPSTATE_DEAD)) {
+	/*
+	 * Take another reference to the SP and the SA for opencrypto callback.
+	 */
+	if (__predict_false(isr->sp->state == IPSEC_SPSTATE_DEAD ||
+	    sav->state == SADB_SASTATE_DEAD)) {
 		pserialize_read_exit(s);
 		pool_put(&ipcomp_tdb_crypto_pool, tc);
 		crypto_freereq(crp);
@@ -492,6 +512,7 @@ ipcomp_output(
 		goto bad;
 	}
 	KEY_SP_REF(isr->sp);
+	KEY_SA_REF(sav);
 	pserialize_read_exit(s);
     }
 
@@ -502,7 +523,6 @@ ipcomp_output(
 	tc->tc_skip = skip;
 	tc->tc_protoff = protoff;
 	tc->tc_sav = sav;
-	KEY_SA_REF(sav);
 
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len;	/* Total input length */
