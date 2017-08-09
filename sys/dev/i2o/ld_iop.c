@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.37 2017/02/27 21:32:33 jdolecek Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.38 2017/08/09 16:09:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.37 2017/02/27 21:32:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.38 2017/08/09 16:09:16 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -448,7 +448,7 @@ ld_iop_flush(struct ld_softc *ld, bool poll)
 
 	sc = device_private(ld->sc_dv);
 	iop = device_private(device_parent(ld->sc_dv));
-	im = iop_msg_alloc(iop, IM_WAIT);
+	im = iop_msg_alloc(iop, poll ? IM_POLL : IM_WAIT);
 
 	mf.msgflags = I2O_MSGFLAGS(i2o_rbs_cache_flush);
 	mf.msgfunc = I2O_MSGFUNC(sc->sc_ii.ii_tid, I2O_RBS_CACHE_FLUSH);
