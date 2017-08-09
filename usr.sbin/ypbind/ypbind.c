@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.98 2014/06/10 17:19:48 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.99 2017/08/09 01:56:42 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.98 2014/06/10 17:19:48 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.99 2017/08/09 01:56:42 ginsbach Exp $");
 #endif
 
 #include <sys/types.h>
@@ -314,7 +314,7 @@ domain_create(const char *name)
 	dom = malloc(sizeof *dom);
 	if (dom == NULL) {
 		yp_log(LOG_ERR, "domain_create: Out of memory");
-		exit(1);
+		return NULL;
 	}
 
 	dom->dom_next = NULL;
@@ -483,7 +483,7 @@ rpc_is_valid_response(char *name, struct sockaddr_in *addr)
  *
  * whose meaning isn't entirely clear.
  */
-static void
+static int
 rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 	     int is_ypset)
 {
@@ -498,7 +498,7 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 
 	/* validate some stuff */
 	if (!rpc_is_valid_response(dom_name, raddrp)) {
-		return;
+		return 0;
 	}
 
 	/* look for the domain */
@@ -509,8 +509,10 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 	/* if not found, create it, but only if FORCE; otherwise ignore */
 	if (dom == NULL) {
 		if (force == 0)
-			return;
+			return 0;
 		dom = domain_create(dom_name);
+		if (dom == NULL)
+			return 0;
 	}
 
 	/* the domain needs to know if it's been explicitly ypset */
@@ -536,7 +538,7 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 			       inet_ntoa(dom->dom_server_addr.sin_addr),
 			       dom->dom_name);
 		}
-		return;
+		return 0;
 	}
 
 	/*
@@ -563,7 +565,7 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 			       inet_ntoa(dom->dom_server_addr.sin_addr),
 			       dom->dom_name);
 		}
-		return;
+		return 0;
 	}
 
 #ifdef HEURISTIC
@@ -647,7 +649,7 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 		(void)close(dom->dom_lockfd);
 
 	if ((fd = makelock(dom)) == -1)
-		return;
+		return 0;
 
 	dom->dom_lockfd = fd;
 
@@ -672,7 +674,10 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 		(void)close(dom->dom_lockfd);
 		removelock(dom);
 		dom->dom_lockfd = -1;
+		return 0;
 	}
+
+	return 1;
 }
 
 /*
@@ -706,8 +711,10 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 	DPRINTF("ypbindproc_domain_2 %s\n", arg);
 
 	/* Reject invalid domains. */
-	if (_yp_invalid_domain(arg))
-		return NULL;
+	if (_yp_invalid_domain(arg)) {
+		res.ypbind_respbody.ypbind_error = YPBIND_ERR_NOSERV;
+		return &res;
+	}
 
 	(void)memset(&res, 0, sizeof res);
 	res.ypbind_status = YPBIND_FAIL_VAL;
@@ -724,8 +731,10 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 	for (count = 0, dom = domains;
 	    dom != NULL;
 	    dom = dom->dom_next, count++) {
-		if (count > 100)
-			return NULL;		/* prevent denial of service */
+		if (count > 100) {
+			res.ypbind_respbody.ypbind_error = YPBIND_ERR_RESC;
+			return &res;		/* prevent denial of service */
+		}
 		if (!strcmp(dom->dom_name, arg))
 			break;
 	}
@@ -742,15 +751,21 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 	 */
 	if (dom == NULL) {
 		dom = domain_create(arg);
-		removelock(dom);
-		check++;
-		DPRINTF("unknown domain %s\n", arg);
-		return NULL;
+		if (dom != NULL) {
+			removelock(dom);
+			check++;
+			DPRINTF("unknown domain %s\n", arg);
+			res.ypbind_respbody.ypbind_error = YPBIND_ERR_NOSERV;
+		} else {
+			res.ypbind_respbody.ypbind_error = YPBIND_ERR_RESC;
+		}
+		return &res;
 	}
 
 	if (dom->dom_state == DOM_NEW) {
 		DPRINTF("new domain %s\n", arg);
-		return NULL;
+		res.ypbind_respbody.ypbind_error = YPBIND_ERR_NOSERV;
+		return &res;
 	}
 
 #ifdef HEURISTIC
@@ -864,11 +879,12 @@ ypbindproc_setdom_2(SVCXPRT *transp, void *argp)
 	bindsin.sin_len = sizeof(bindsin);
 	bindsin.sin_addr = sd->ypsetdom_addr;
 	bindsin.sin_port = sd->ypsetdom_port;
-	rpc_received(sd->ypsetdom_domain, &bindsin, 1, 1);
+	if (rpc_received(sd->ypsetdom_domain, &bindsin, 1, 1)) {
+		DPRINTF("ypset to %s for domain %s succeeded\n",
+			inet_ntoa(bindsin.sin_addr), sd->ypsetdom_domain);
+		res = 1;
+	}
 
-	DPRINTF("ypset to %s for domain %s succeeded\n",
-		inet_ntoa(bindsin.sin_addr), sd->ypsetdom_domain);
-	res = 1;
 	return &res;
 }
 
@@ -1244,7 +1260,7 @@ try_again:
 			raddr.sin_port = htons((uint16_t)rmtcr_port);
 			dom = domain_find(msg.rm_xid);
 			if (dom != NULL)
-				rpc_received(dom->dom_name, &raddr, 0, 0);
+				(void)rpc_received(dom->dom_name, &raddr, 0, 0);
 		}
 	}
 	xdr.x_op = XDR_FREE;
@@ -1301,7 +1317,7 @@ try_again:
 		    (msg.acpted_rply.ar_stat == SUCCESS)) {
 			dom = domain_find(msg.rm_xid);
 			if (dom != NULL)
-				rpc_received(dom->dom_name, &raddr, 0, 0);
+				(void)rpc_received(dom->dom_name, &raddr, 0, 0);
 		}
 	}
 	xdr.x_op = XDR_FREE;
@@ -1689,13 +1705,10 @@ main(int argc, char *argv[])
 	/*
 	 * We start with one binding, for the default domain. It starts
 	 * out "unsuccessful".
-	 *
-	 * XXX: domain_create adds the new domain to 'domains' (the
-	 * global linked list) and therefore we shouldn't assign
-	 * 'domains' again on return.
 	 */
 
-	domains = domain_create(domainname);
+	if (domain_create(domainname) == NULL)
+		err(1, "initial domain binding failed");
 
 	/*
 	 * Delete the lock for the default domain again, just in case something
