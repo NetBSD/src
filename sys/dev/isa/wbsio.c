@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.12 2017/07/11 10:10:51 msaitoh Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.13 2017/08/09 04:45:38 msaitoh Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -43,14 +43,13 @@ struct wbsio_softc {
 	struct isa_io		sc_io;
 };
 
-int	wbsio_probe(device_t, cfdata_t, void *);
-void	wbsio_attach(device_t, device_t, void *);
-int	wbsio_detach(device_t, int);
-int	wbsio_rescan(device_t, const char *, const int *);
-void	wbsio_childdet(device_t, device_t);
-int	wbsio_print(void *, const char *);
-
-static int wbsio_search(device_t, cfdata_t, const int *, void *);
+static int	wbsio_probe(device_t, cfdata_t, void *);
+static void	wbsio_attach(device_t, device_t, void *);
+static int	wbsio_detach(device_t, int);
+static int	wbsio_rescan(device_t, const char *, const int *);
+static void	wbsio_childdet(device_t, device_t);
+static int	wbsio_print(void *, const char *);
+static int	wbsio_search(device_t, cfdata_t, const int *, void *);
 
 CFATTACH_DECL2_NEW(wbsio, sizeof(struct wbsio_softc),
     wbsio_probe, wbsio_attach, wbsio_detach, NULL,
