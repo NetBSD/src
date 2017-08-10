@@ -1,4 +1,4 @@
-/*	$NetBSD: init_bcm43xx.c,v 1.1 2017/08/10 13:34:29 nat Exp $	*/
+/*	$NetBSD: init_bcm43xx.c,v 1.2 2017/08/10 18:45:20 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2017 Iain Hibbert
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init_bcm43xx.c,v 1.1 2017/08/10 13:34:29 nat Exp $");
+__RCSID("$NetBSD: init_bcm43xx.c,v 1.2 2017/08/10 18:45:20 jakllsch Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -62,9 +62,8 @@ init_bcm43xx(int fd, unsigned int speed)
 	uint8_t rate[6];
 	uint8_t fw_buf[1024];
 	char fw[] = "./BCM43430A1.hcd";
-	int nr, fwfd, fw_len;
+	int fwfd, fw_len;
 	uint8_t resp[7];
-	uint8_t name[20];
 	uint16_t fw_cmd;
 
 	memset(rate, 0, sizeof(rate));
