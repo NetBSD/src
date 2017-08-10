@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2142 2017/08/01 20:07:43 joerg Exp $
+#	$NetBSD: mi,v 1.2143 2017/08/10 13:40:04 nat Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -384,6 +384,7 @@
 ./usr/include/dev/bluetooth			comp-c-include
 ./usr/include/dev/bluetooth/bcsp.h		comp-c-include
 ./usr/include/dev/bluetooth/btdev.h		comp-c-include
+./usr/include/dev/bluetooth/bth5.h		comp-c-include
 ./usr/include/dev/bluetooth/bthidev.h		comp-c-include
 ./usr/include/dev/bluetooth/bthset.h		comp-obsolete		obsolete
 ./usr/include/dev/bluetooth/btsco.h		comp-c-include
