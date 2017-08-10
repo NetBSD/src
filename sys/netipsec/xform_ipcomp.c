@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.51 2017/08/09 09:48:11 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.52 2017/08/10 06:33:51 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.51 2017/08/09 09:48:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.52 2017/08/10 06:33:51 ozaki-r Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -89,7 +89,7 @@ static int ipcomp_output_cb(struct cryptop *crp);
 
 const uint8_t ipcomp_stats[256] = { SADB_CALG_STATS_INIT };
 
-static struct pool ipcomp_tdb_crypto_pool;
+static pool_cache_t ipcomp_tdb_crypto_pool_cache;
 
 const struct comp_algo *
 ipcomp_algorithm_lookup(int alg)
@@ -165,7 +165,7 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		return ENOBUFS;
 	}
 	/* Get IPsec-specific opaque pointer */
-	tc = pool_get(&ipcomp_tdb_crypto_pool, PR_NOWAIT);
+	tc = pool_cache_get(ipcomp_tdb_crypto_pool_cache, PR_NOWAIT);
 	if (tc == NULL) {
 		m_freem(m);
 		crypto_freereq(crp);
@@ -178,7 +178,7 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	if (error) {
 		DPRINTF(("%s: m_makewritable failed\n", __func__));
 		m_freem(m);
-		pool_put(&ipcomp_tdb_crypto_pool, tc);
+		pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
 		crypto_freereq(crp);
 		IPCOMP_STATINC(IPCOMP_STAT_CRYPTO);
 		return error;
@@ -192,7 +192,7 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	 */
 	if (__predict_false(sav->state == SADB_SASTATE_DEAD)) {
 		pserialize_read_exit(s);
-		pool_put(&ipcomp_tdb_crypto_pool, tc);
+		pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
 		crypto_freereq(crp);
 		IPCOMP_STATINC(IPCOMP_STAT_NOTDB);
 		return ENOENT;
@@ -318,7 +318,7 @@ ipcomp_input_cb(struct cryptop *crp)
 	clen = crp->crp_olen;		/* Length of data after processing */
 
 	/* Release the crypto descriptors */
-	pool_put(&ipcomp_tdb_crypto_pool, tc);
+	pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
 	tc = NULL;
 	crypto_freereq(crp), crp = NULL;
 
@@ -374,7 +374,7 @@ bad:
 	if (m)
 		m_freem(m);
 	if (tc != NULL)
-		pool_put(&ipcomp_tdb_crypto_pool, tc);
+		pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
 	if (crp)
 		crypto_freereq(crp);
 	return error;
@@ -487,7 +487,7 @@ ipcomp_output(
 	crdc->crd_alg = ipcompx->type;
 
 	/* IPsec-specific opaque crypto info */
-	tc = pool_get(&ipcomp_tdb_crypto_pool, PR_NOWAIT);
+	tc = pool_cache_get(ipcomp_tdb_crypto_pool_cache, PR_NOWAIT);
 	if (tc == NULL) {
 		IPCOMP_STATINC(IPCOMP_STAT_CRYPTO);
 		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
@@ -505,7 +505,7 @@ ipcomp_output(
 	if (__predict_false(isr->sp->state == IPSEC_SPSTATE_DEAD ||
 	    sav->state == SADB_SASTATE_DEAD)) {
 		pserialize_read_exit(s);
-		pool_put(&ipcomp_tdb_crypto_pool, tc);
+		pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
 		crypto_freereq(crp);
 		IPCOMP_STATINC(IPCOMP_STAT_NOTDB);
 		error = ENOENT;
@@ -675,7 +675,7 @@ ipcomp_output_cb(struct cryptop *crp)
 
 
 	/* Release the crypto descriptor */
-	pool_put(&ipcomp_tdb_crypto_pool, tc);
+	pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
 	crypto_freereq(crp);
 
 	/* NB: m is reclaimed by ipsec_process_done. */
@@ -691,7 +691,7 @@ bad:
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	if (m)
 		m_freem(m);
-	pool_put(&ipcomp_tdb_crypto_pool, tc);
+	pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
 	crypto_freereq(crp);
 	return error;
 }
@@ -711,7 +711,8 @@ void
 ipcomp_attach(void)
 {
 	ipcompstat_percpu = percpu_alloc(sizeof(uint64_t) * IPCOMP_NSTATS);
-	pool_init(&ipcomp_tdb_crypto_pool, sizeof(struct tdb_crypto),
-	    0, 0, 0, "ipcomp_tdb_crypto", NULL, IPL_SOFTNET);
+	ipcomp_tdb_crypto_pool_cache = pool_cache_init(sizeof(struct tdb_crypto),
+	    coherency_unit, 0, 0, "ipcomp_tdb_crypto", NULL, IPL_SOFTNET,
+	    NULL, NULL, NULL);
 	xform_register(&ipcomp_xformsw);
 }
