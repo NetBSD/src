@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.59 2017/08/10 06:08:59 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.60 2017/08/10 06:11:24 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.59 2017/08/10 06:08:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.60 2017/08/10 06:11:24 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.59 2017/08/10 06:08:59 ozaki-r Ex
 
 #include <net/net_osdep.h>		/* ovbcopy() in ipsec6_encapsulate() */
 
+static percpu_t *ipsec_rtcache_percpu __cacheline_aligned;
 
 /*
  * Add a IPSEC_OUT_DONE tag to mark that we have finished the ipsec processing
@@ -112,16 +113,18 @@ static int
 ipsec_reinject_ipstack(struct mbuf *m, int af)
 {
 	int rv = -1;
+	struct route *ro;
 
 	KASSERT(af == AF_INET || af == AF_INET6);
 
 #ifndef NET_MPSAFE
 	KERNEL_LOCK(1, NULL);
 #endif
+	ro = percpu_getref(ipsec_rtcache_percpu);
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-		rv = ip_output(m, NULL, NULL, IP_RAWOUTPUT|IP_NOIPNEWID,
+		rv = ip_output(m, NULL, ro, IP_RAWOUTPUT|IP_NOIPNEWID,
 		    NULL, NULL);
 		break;
 #endif
@@ -131,10 +134,11 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 		 * We don't need massage, IPv6 header fields are always in
 		 * net endian.
 		 */
-		rv = ip6_output(m, NULL, NULL, 0, NULL, NULL, NULL);
+		rv = ip6_output(m, NULL, ro, 0, NULL, NULL, NULL);
 		break;
 #endif
 	}
+	percpu_putref(ipsec_rtcache_percpu);
 #ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 #endif
@@ -795,3 +799,10 @@ bad:
 	return error;
 }
 #endif /*INET6*/
+
+void
+ipsec_output_init(void)
+{
+
+	ipsec_rtcache_percpu = percpu_alloc(sizeof(struct route));
+}
