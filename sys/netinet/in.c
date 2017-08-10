@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.206 2017/08/04 20:17:45 uwe Exp $	*/
+/*	$NetBSD: in.c,v 1.207 2017/08/10 04:31:58 ryo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.206 2017/08/04 20:17:45 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.207 2017/08/10 04:31:58 ryo Exp $");
 
 #include "arp.h"
 
@@ -255,6 +255,43 @@ in_localaddr(struct in_addr in)
 	pserialize_read_exit(s);
 
 	return localaddr;
+}
+
+/*
+ * like in_localaddr() but can specify ifp.
+ */
+int
+in_direct(struct in_addr in, struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+	int localaddr = 0;
+	int s;
+
+	KASSERT(ifp != NULL);
+
+#define ia (ifatoia(ifa))
+	s = pserialize_read_enter();
+	if (subnetsarelocal) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
+			if (ifa->ifa_addr->sa_family == AF_INET &&
+			    ((in.s_addr & ia->ia_netmask) == ia->ia_net)) {
+				localaddr = 1;
+				break;
+			}
+		}
+	} else {
+		IFADDR_READER_FOREACH(ifa, ifp) {
+			if (ifa->ifa_addr->sa_family == AF_INET &&
+			    (in.s_addr & ia->ia_subnetmask) == ia->ia_subnet) {
+				localaddr = 1;
+				break;
+			}
+		}
+	}
+	pserialize_read_exit(s);
+
+	return localaddr;
+#undef ia
 }
 
 /*
