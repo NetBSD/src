@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.19 2017/07/29 18:08:57 maxv Exp $
+#	$NetBSD: GENERIC.common,v 1.20 2017/08/10 18:11:47 jakllsch Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -11,7 +11,7 @@ maxusers	32
 # Standard system options
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options 	NTP		# NTP phase/frequency locked loop
+options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
 options 	PMAPCOUNTERS
