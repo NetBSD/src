@@ -1,4 +1,4 @@
-/* $NetBSD: t_btowc.c,v 1.2 2017/07/12 17:32:51 perseant Exp $ */
+/* $NetBSD: t_btowc.c,v 1.3 2017/08/10 19:08:43 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_btowc.c,v 1.2 2017/07/12 17:32:51 perseant Exp $");
+__RCSID("$NetBSD: t_btowc.c,v 1.3 2017/08/10 19:08:43 perseant Exp $");
 
 #include <locale.h>
 #include <stdio.h>
@@ -51,13 +51,6 @@ struct test {
 	const wchar_t wlegal[8]; /* The same characters, but in ISO-10646 */
 	const wchar_t willegal[8]; /* ISO-10646 that do not map into charset */
 } tests[] = {
-	{
-		"C",
-		"\377",
-		"ABC123@\t",
-		{ 'A', 'B', 'C', '1', '2', '3', '@', '\t' },
-		{ 0x0430, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
-	},
 	{
 		"en_US.UTF-8",
 		"\200",
@@ -193,9 +186,39 @@ ATF_TC_BODY(stdc_iso_10646, tc)
 #endif /* ! __STDC_ISO_10646__ */
 }
 
+ATF_TC(btowc_posix);
+ATF_TC_HEAD(btowc_posix, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks btowc(3) and wctob(3) for POSIX locale");
+}
+ATF_TC_BODY(btowc_posix, tc)
+{
+	const char *cp;
+	unsigned char c;
+	char *str;
+	const wchar_t *wcp;
+	int i;
+
+	ATF_REQUIRE_STREQ(setlocale(LC_ALL, "POSIX"), "POSIX");
+
+	/* btowc(EOF) -> WEOF */
+	ATF_REQUIRE_EQ(btowc(EOF), WEOF);
+
+	/* wctob(WEOF) -> EOF */
+	ATF_REQUIRE_EQ(wctob(WEOF), EOF);
+
+	/* All characters from 0 to 255, inclusive, map
+	   onto their unsigned char equivalent */
+	for (i = 0; i <= 255; i++) {
+		ATF_REQUIRE_EQ(btowc(i), (wchar_t)(unsigned char)(i));
+		ATF_REQUIRE_EQ((unsigned char)wctob(i), (wchar_t)i);
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, btowc);
+	ATF_TP_ADD_TC(tp, btowc_posix);
 	ATF_TP_ADD_TC(tp, stdc_iso_10646);
 
 	return atf_no_error();
