@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.h,v 1.3 2009/12/06 12:55:46 kiyohara Exp $	*/
+/*	$NetBSD: btattach.h,v 1.4 2017/08/10 13:34:29 nat Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -40,6 +40,7 @@ struct devtype {
 };
 
 devinit_t init_bcm2035;
+devinit_t init_bcm43xx;
 devinit_t init_bgb2xx;
 devinit_t init_csr;
 devinit_t init_digi;
