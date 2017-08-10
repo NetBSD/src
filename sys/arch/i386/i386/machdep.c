@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.787 2017/07/29 11:54:14 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.788 2017/08/10 12:49:11 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,10 +67,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.787 2017/07/29 11:54:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.788 2017/08/10 12:49:11 maxv Exp $");
 
 #include "opt_beep.h"
-#include "opt_compat_ibcs2.h"
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
 #include "opt_cpureset_delay.h"
