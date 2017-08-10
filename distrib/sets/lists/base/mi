@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.984.2.22 2015/03/08 16:32:56 riz Exp $
+# $NetBSD: mi,v 1.984.2.23 2017/08/10 05:59:06 snj Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4371,9 +4371,9 @@
 ./usr/share/zoneinfo/America/Coral_Harbour	base-sys-share		share
 ./usr/share/zoneinfo/America/Cordoba		base-sys-share		share
 ./usr/share/zoneinfo/America/Costa_Rica		base-sys-share		share
+./usr/share/zoneinfo/America/Creston		base-sys-share		share
 ./usr/share/zoneinfo/America/Cuiaba		base-sys-share		share
 ./usr/share/zoneinfo/America/Curacao		base-sys-share		share
-./usr/share/zoneinfo/America/Creston		base-sys-share		share
 ./usr/share/zoneinfo/America/Danmarkshavn	base-sys-share		share
 ./usr/share/zoneinfo/America/Dawson		base-sys-share		share
 ./usr/share/zoneinfo/America/Dawson_Creek	base-sys-share		share
@@ -4384,6 +4384,7 @@
 ./usr/share/zoneinfo/America/Eirunepe		base-sys-share		share
 ./usr/share/zoneinfo/America/El_Salvador	base-sys-share		share
 ./usr/share/zoneinfo/America/Ensenada		base-sys-share		share
+./usr/share/zoneinfo/America/Fort_Nelson	base-sys-share		share
 ./usr/share/zoneinfo/America/Fort_Wayne		base-sys-share		share
 ./usr/share/zoneinfo/America/Fortaleza		base-sys-share		share
 ./usr/share/zoneinfo/America/Glace_Bay		base-sys-share		share
@@ -4460,6 +4461,7 @@
 ./usr/share/zoneinfo/America/Porto_Acre		base-sys-share		share
 ./usr/share/zoneinfo/America/Porto_Velho	base-sys-share		share
 ./usr/share/zoneinfo/America/Puerto_Rico	base-sys-share		share
+./usr/share/zoneinfo/America/Punta_Arenas	base-sys-share		share
 ./usr/share/zoneinfo/America/Rainy_River	base-sys-share		share
 ./usr/share/zoneinfo/America/Rankin_Inlet	base-sys-share		share
 ./usr/share/zoneinfo/America/Recife		base-sys-share		share
@@ -4520,10 +4522,12 @@
 ./usr/share/zoneinfo/Asia/Aqtobe		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Ashgabat		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Ashkhabad		base-sys-share		share
+./usr/share/zoneinfo/Asia/Atyrau		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Baghdad		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Bahrain		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Baku			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Bangkok		base-sys-share		share
+./usr/share/zoneinfo/Asia/Barnaul		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Beirut		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Bishkek		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Brunei		base-sys-share		share
@@ -4539,6 +4543,7 @@
 ./usr/share/zoneinfo/Asia/Dili			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Dubai			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Dushanbe		base-sys-share		share
+./usr/share/zoneinfo/Asia/Famagusta		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Gaza			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Harbin		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Hebron		base-sys-share		share
@@ -4608,6 +4613,7 @@
 ./usr/share/zoneinfo/Asia/Vientiane		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Vladivostok		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Yakutsk		base-sys-share		share
+./usr/share/zoneinfo/Asia/Yangon		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Yekaterinburg		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Yerevan		base-sys-share		share
 ./usr/share/zoneinfo/Atlantic			base-sys-share
@@ -4712,6 +4718,7 @@
 ./usr/share/zoneinfo/Europe			base-sys-share
 ./usr/share/zoneinfo/Europe/Amsterdam		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Andorra		base-sys-share		share
+./usr/share/zoneinfo/Europe/Astrakhan		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Athens		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Belfast		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Belgrade		base-sys-share		share
@@ -4732,6 +4739,7 @@
 ./usr/share/zoneinfo/Europe/Jersey		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Kaliningrad		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Kiev		base-sys-share		share
+./usr/share/zoneinfo/Europe/Kirov		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Kuybyshev		base-obsolete		obsolete
 ./usr/share/zoneinfo/Europe/Lisbon		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Ljubljana		base-sys-share		share
@@ -4753,6 +4761,7 @@
 ./usr/share/zoneinfo/Europe/Samara		base-sys-share		share
 ./usr/share/zoneinfo/Europe/San_Marino		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Sarajevo		base-sys-share		share
+./usr/share/zoneinfo/Europe/Saratov		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Simferopol		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Skopje		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Sofia		base-sys-share		share
@@ -4760,6 +4769,7 @@
 ./usr/share/zoneinfo/Europe/Tallinn		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Tirane		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Tiraspol		base-sys-share		share
+./usr/share/zoneinfo/Europe/Ulyanovsk		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Uzhgorod		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Vaduz		base-sys-share		share
 ./usr/share/zoneinfo/Europe/Vatican		base-sys-share		share
@@ -4917,6 +4927,7 @@
 ./usr/share/zoneinfo/SystemV/PST8PDT		base-obsolete		obsolete
 ./usr/share/zoneinfo/SystemV/YST9		base-obsolete		obsolete
 ./usr/share/zoneinfo/SystemV/YST9YDT		base-obsolete		obsolete
+./usr/share/zoneinfo/TZDATA_VERSION		base-sys-share		share
 ./usr/share/zoneinfo/Turkey			base-sys-share		share
 ./usr/share/zoneinfo/UCT			base-sys-share		share
 ./usr/share/zoneinfo/US				base-sys-share
