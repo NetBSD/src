@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.74 2017/07/30 23:48:32 jmcneill Exp $
+#	$NetBSD: RPI,v 1.75 2017/08/10 13:48:19 nat Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -219,3 +219,8 @@ pseudo-device	wsfont
 
 # local configuration
 cinclude "arch/evbarm/conf/RPI.local"
+
+# Bluetooth serial UART devices
+pseudo-device btuart
+pseudo-device bcsp
+pseudo-device bthfive
