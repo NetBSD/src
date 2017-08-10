@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.12 2017/08/10 09:08:54 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.13 2017/08/10 09:26:55 ozaki-r Exp $
 
 MP-safe components
 ==================
@@ -145,3 +145,11 @@ bpf#bd_dcount and bpf#bd_ccount) are also victims of this restriction; for
 scalability the statistic counters should be per-CPU and we should stop using
 atomic operations for them however we have to remain the counters and atomic
 operations.
+
+Scalability
+-----------
+
+ - Per-CPU rtcaches (used in say IP forwarding) aren't scalable on multiple
+   flows per CPU
+ - ipsec(4) isn't scalable on the number of SA/SP; the cost of a look-up
+   is O(n)
