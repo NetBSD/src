@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.58 2017/08/03 06:32:51 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.59 2017/08/10 06:08:59 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.58 2017/08/03 06:32:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.59 2017/08/10 06:08:59 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -111,43 +111,35 @@ ipsec_register_done(struct mbuf *m, int * error)
 static int
 ipsec_reinject_ipstack(struct mbuf *m, int af)
 {
-#if defined(INET) || defined(INET6)
-	int rv;
-#endif
+	int rv = -1;
 
+	KASSERT(af == AF_INET || af == AF_INET6);
+
+#ifndef NET_MPSAFE
+	KERNEL_LOCK(1, NULL);
+#endif
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-#ifndef NET_MPSAFE
-		KERNEL_LOCK(1, NULL);
-#endif
 		rv = ip_output(m, NULL, NULL, IP_RAWOUTPUT|IP_NOIPNEWID,
 		    NULL, NULL);
-#ifndef NET_MPSAFE
-		KERNEL_UNLOCK_ONE(NULL);
+		break;
 #endif
-		return rv;
-
-#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		/*
 		 * We don't need massage, IPv6 header fields are always in
 		 * net endian.
 		 */
-#ifndef NET_MPSAFE
-		KERNEL_LOCK(1, NULL);
-#endif
 		rv = ip6_output(m, NULL, NULL, 0, NULL, NULL, NULL);
-#ifndef NET_MPSAFE
-		KERNEL_UNLOCK_ONE(NULL);
+		break;
 #endif
-		return rv;
-#endif /* INET6 */
 	}
+#ifndef NET_MPSAFE
+	KERNEL_UNLOCK_ONE(NULL);
+#endif
 
-	panic("ipsec_reinject_ipstack : iunknown protocol family %u\n", af);
-	return -1; /* NOTREACHED */
+	return rv;
 }
 
 int
