@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.38 2017/08/09 13:03:38 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.39 2017/08/10 07:15:09 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5022,7 +5022,6 @@ sys/dev/pcmcia/aic_pcmcia.c			1.44
 sys/opencrypto/crypto.c				1.92-1.100
 sys/opencrypto/cryptodev.h			1.38-1.39
 sys/opencrypto/ocryptodev.c			1.9-1.11
-sys/opencrypto/ocryptodev.c			1.9
 sys/opencrypto/xform.c				1.29
 sys/opencrypto/xform.h				1.20
 
