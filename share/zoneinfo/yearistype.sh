@@ -1,7 +1,4 @@
 #! /bin/sh
-#
-#	$NetBSD: yearistype.sh,v 1.6.42.2 2014/08/15 23:34:17 riz Exp $
-#
 
 : 'This file is in the public domain, so clarified as of'
 : '2006-07-17 by Arthur David Olson.'
