@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.149 2017/07/29 12:34:34 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.150 2017/08/10 14:13:45 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.149 2017/07/29 12:34:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.150 2017/08/10 14:13:45 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -342,11 +342,13 @@ _C_LABEL(Multiboot_Header):
 	jne	1f
 
 	/*
-	 * Indeed, a multiboot-compliant boot loader executed us.  We copy
-	 * the received Multiboot information structure into kernel's data
-	 * space to process it later -- after we are relocated.  It will
-	 * be safer to run complex C code than doing it at this point.
+	 * Indeed, a multiboot-compliant boot loader executed us. We switch
+	 * to the temporary stack, and copy the received Multiboot information
+	 * structure into kernel's data space to process it later -- after we
+	 * are relocated. It will be safer to run complex C code than doing it
+	 * at this point.
 	 */
+	movl	$_RELOC(tmpstk),%esp
 	pushl	%ebx		/* Address of Multiboot information */
 	call	_C_LABEL(multiboot_pre_reloc)
 	addl	$4,%esp
