@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.c,v 1.13 2015/06/16 23:04:14 christos Exp $	*/
+/*	$NetBSD: btattach.c,v 1.14 2017/08/10 13:34:29 nat Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert.  All rights reserved.");
-__RCSID("$NetBSD: btattach.c,v 1.13 2015/06/16 23:04:14 christos Exp $");
+__RCSID("$NetBSD: btattach.c,v 1.14 2017/08/10 13:34:29 nat Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -59,6 +59,13 @@ static const struct devtype types[] = {
 	.line = "btuart",
 	.descr = "Broadcom BCM2035",
 	.init = &init_bcm2035,
+	.speed = B115200,
+    },
+    {
+	.name = "bcm43xx",
+	.line = "bth5",
+	.descr = "Broadcom BCM43xx",
+	.init = &init_bcm43xx,
 	.speed = B115200,
     },
     {
