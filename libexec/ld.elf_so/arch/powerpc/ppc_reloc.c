@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.54 2017/06/19 11:57:02 joerg Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.55 2017/08/10 19:03:26 joerg Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.54 2017/06/19 11:57:02 joerg Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.55 2017/08/10 19:03:26 joerg Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -303,24 +303,31 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_plt_lazy(const Obj_Entry *obj)
+_rtld_relocate_plt_lazy(Obj_Entry *obj)
 {
 #ifdef _LP64
 	/*
 	 * For PowerPC64, the plt stubs handle an empty function descriptor
 	 * so there's nothing to do.
 	 */
+	/* XXX ifunc support */
 #else
 	Elf_Addr * const pltresolve = obj->pltgot + 8;
 	const Elf_Rela *rela;
 	int reloff;
 
-	for (rela = obj->pltrela, reloff = 0;
-	     rela < obj->pltrelalim;
-	     rela++, reloff++) {
+	rela = obj->pltrelalim;
+	for (reloff = rela - obj->pltrela; rela-- > obj->pltrela; --reloff) {
 		Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
 
-		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
+		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT) ||
+		       ELF_R_TYPE(rela->r_info) == R_TYPE(IRELATIVE));
+
+		if (ELF_R_TYPE(rela->r_info) == R_TYPE(IRELATIVE)) {
+			/* No ifunc support for old-style insecure PLT. */
+			assert(obj->gotptr != NULL);
+			obj->ifunc_remaining = obj->pltrelalim - rela;
+		}
 
 		if (obj->gotptr != NULL) {
 			/*
@@ -355,6 +362,27 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 #endif /* !_LP64 */
 
 	return 0;
+}
+
+void
+_rtld_call_ifunc(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
+{
+	const Elf_Rela *rela;
+	Elf_Addr *where, target;
+
+	while (obj->ifunc_remaining > 0 && _rtld_objgen == cur_objgen) {
+		rela = obj->pltrelalim - obj->ifunc_remaining;
+		--obj->ifunc_remaining;
+		if (ELF_R_TYPE(rela->r_info) == R_TYPE(IRELATIVE)) {
+			where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+			target = (Elf_Addr)(obj->relocbase + rela->r_addend);
+			_rtld_exclusive_exit(mask);
+			target = _rtld_resolve_ifunc2(obj, target);
+			_rtld_exclusive_enter(mask);
+			if (*where != target)
+				*where = target;
+		}
+	}
 }
 
 static int
