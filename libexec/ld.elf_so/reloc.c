@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.110 2017/04/27 08:37:15 uwe Exp $	 */
+/*	$NetBSD: reloc.c,v 1.111 2017/08/10 19:03:25 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.110 2017/04/27 08:37:15 uwe Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.111 2017/08/10 19:03:25 joerg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -261,9 +261,18 @@ _rtld_resolve_ifunc(const Obj_Entry *obj, const Elf_Sym *def)
 	Elf_Addr target;
 
 	_rtld_shared_exit();
-	target = _rtld_call_function_addr(obj,
+	target = _rtld_resolve_ifunc2(obj,
 	    (Elf_Addr)obj->relocbase + def->st_value);
 	_rtld_shared_enter();
+	return target;
+}
+
+Elf_Addr
+_rtld_resolve_ifunc2(const Obj_Entry *obj, Elf_Addr addr)
+{
+	Elf_Addr target;
+
+	target = _rtld_call_function_addr(obj, addr);
 
 	return target;
 }

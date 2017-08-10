@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.68 2017/06/21 12:34:01 joerg Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.69 2017/08/10 19:03:26 joerg Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.68 2017/06/21 12:34:01 joerg Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.69 2017/08/10 19:03:26 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -480,7 +480,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_plt_lazy(const Obj_Entry *obj)
+_rtld_relocate_plt_lazy(Obj_Entry *obj)
 {
 	/* PLT fixups were done above in the GOT relocation. */
 	return 0;

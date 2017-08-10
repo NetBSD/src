@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.44 2017/07/12 17:55:24 christos Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.45 2017/08/10 19:03:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.44 2017/07/12 17:55:24 christos Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.45 2017/08/10 19:03:27 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -278,17 +278,21 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_plt_lazy(const Obj_Entry *obj)
+_rtld_relocate_plt_lazy(Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 
 	if (!obj->relocbase)
 		return 0;
 
-	for (rela = obj->pltrela; rela < obj->pltrelalim; rela++) {
+	for (rela = obj->pltrelalim; rela-- > obj->pltrela; ) {
 		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 
-		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT));
+		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT) ||
+		       ELF_R_TYPE(rela->r_info) == R_TYPE(IRELATIVE));
+
+		if (ELF_R_TYPE(rela->r_info) == R_TYPE(IRELATIVE))
+			obj->ifunc_remaining = obj->pltrelalim - rela;
 
 		/* Just relocate the GOT slots pointing into the PLT */
 		*where += (Elf_Addr)obj->relocbase;
@@ -296,6 +300,27 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 	}
 
 	return 0;
+}
+
+void
+_rtld_call_ifunc(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
+{
+	const Elf_Rela *rela;
+	Elf_Addr *where, target;
+
+	while (obj->ifunc_remaining > 0 && _rtld_objgen == cur_objgen) {
+		rela = obj->pltrelalim - obj->ifunc_remaining;
+		--obj->ifunc_remaining;
+		if (ELF_R_TYPE(rela->r_info) == R_TYPE(IRELATIVE)) {
+			where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+			target = (Elf_Addr)(obj->relocbase + rela->r_addend);
+			_rtld_exclusive_exit(mask);
+			target = _rtld_resolve_ifunc2(obj, target);
+			_rtld_exclusive_enter(mask);
+			if (*where != target)
+				*where = target;
+		}
+	}
 }
 
 static inline int
@@ -306,6 +331,9 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 	const Elf_Sym  *def;
 	const Obj_Entry *defobj;
 	unsigned long info = rela->r_info;
+
+	if (ELF_R_TYPE(info) == R_TYPE(IRELATIVE))
+		return 0;
 
 	assert(ELF_R_TYPE(info) == R_TYPE(JUMP_SLOT));
 
