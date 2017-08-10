@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.185 2017/07/11 15:21:35 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.186 2017/08/10 19:03:25 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.185 2017/07/11 15:21:35 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.186 2017/08/10 19:03:25 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -273,7 +273,20 @@ restart:
 	SIMPLEQ_INIT(&initlist);
 	_rtld_initlist_tsort(&initlist, 0);
 
-	/* First pass: objects marked with DF_1_INITFIRST. */
+	/* First pass: objects with IRELATIVE relocations. */
+	SIMPLEQ_FOREACH(elm, &initlist, link) {
+		Obj_Entry * const obj = elm->obj;
+		if (obj->ifunc_remaining) {
+			_rtld_call_ifunc(obj, mask, cur_objgen);
+			if (_rtld_objgen != cur_objgen) {
+				dbg(("restarting init iteration"));
+				_rtld_objlist_clear(&initlist);
+				goto restart;
+			}
+		}
+	}
+
+	/* Second pass: objects marked with DF_1_INITFIRST. */
 	SIMPLEQ_FOREACH(elm, &initlist, link) {
 		Obj_Entry * const obj = elm->obj;
 		if (obj->z_initfirst) {
@@ -286,7 +299,7 @@ restart:
 		}
 	}
 
-	/* Second pass: all other objects. */
+	/* Third pass: all other objects. */
 	SIMPLEQ_FOREACH(elm, &initlist, link) {
 		_rtld_call_init_function(elm->obj, mask, cur_objgen);
 		if (_rtld_objgen != cur_objgen) {
