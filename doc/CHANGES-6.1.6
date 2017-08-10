@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.100 2017/08/08 11:59:59 martin Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.101 2017/08/10 06:48:23 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -4036,8 +4036,8 @@ doc/3RDPARTY                                                 patch
 external/bsd/libevent/dist/buffer.c		patch
 
 	Fix CVE-2014-6272.
-	[spz, ticket #1243] 
- 
+	[spz, ticket #1243]
+
 sys/dev/usb/usbdi.c				1.163 (via patch)
 
 	Clip xfer->actlen also in the !DIAGNOSTIC case.
@@ -6746,7 +6746,7 @@ sys/kern/kern_exit.c				1.246, 1.247
 sys/kern/kern_synch.c				1.309
 
 	Various fixes related to proc's SSTOP state, related to wait(2)
-	in the parent, 
+	in the parent,
 	Fixes PR kern/50298, kern/50318 kern/50300, kern/50308 and kern/50330
 	[pgoyette, ticket #1333]
 
@@ -7501,7 +7501,7 @@ libexec/httpd/tilde-luzah-bozo.c                up to 1.14
 	o fixed few memory leaks
 	o bunch of minor tweaks
 	o removed -r support
-	o smarter redirects 
+	o smarter redirects
 	o fix redirection handling
 	o support transport stream (.ts) and video object (.vob) files
 	o directory listings show correct file sizes for large files
@@ -12008,4 +12008,29 @@ sys/arch/amd64/amd64/trap.c:		1.95-1.96	(patch)
 	checking for the relevant lcall instruction in the trap handler
 	and treating it as a syscall.
 	[maxv, ticket #1464]
+
+distrib/sets/lists/base/mi			patch
+doc/3RDPARTY					patch
+share/zoneinfo/Makefile				patch
+share/zoneinfo/NEWS				patch
+share/zoneinfo/africa share/zoneinfo/antarctica	patch
+share/zoneinfo/asia share/zoneinfo/australasia	patch
+share/zoneinfo/backward share/zoneinfo/backzone	patch
+share/zoneinfo/etcetera share/zoneinfo/europe	patch
+share/zoneinfo/factory share/zoneinfo/iso3166.tab patch
+share/zoneinfo/leap-seconds.list share/zoneinfo/leapseconds patch
+share/zoneinfo/leapseconds.awk share/zoneinfo/northamerica patch
+share/zoneinfo/southamerica share/zoneinfo/yearistype.sh patch
+share/zoneinfo/zone.tab share/zoneinfo/zone1970.tab patch
+share/zoneinfo/CONTRIBUTING share/zoneinfo/LICENSE patch
+share/zoneinfo/README share/zoneinfo/TZDATA_VERSION patch
+share/zoneinfo/Theory share/zoneinfo/checklinks.awk patch
+share/zoneinfo/checktab.awk share/zoneinfo/version patch
+share/zoneinfo/zoneinfo2tdf.pl			patch
+share/zoneinfo/solar87				 delete
+hare/zoneinfo/solar88				 delete
+share/zoneinfo/solar89				 delete
+
+	Update tzdata to 2017b.
+	[mrg, ticket #1467]
 
