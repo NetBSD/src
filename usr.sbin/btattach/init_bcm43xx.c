@@ -1,4 +1,4 @@
-/*	$NetBSD: init_bcm43xx.c,v 1.2 2017/08/10 18:45:20 jakllsch Exp $	*/
+/*	$NetBSD: init_bcm43xx.c,v 1.3 2017/08/10 20:43:12 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2017 Iain Hibbert
@@ -34,7 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init_bcm43xx.c,v 1.2 2017/08/10 18:45:20 jakllsch Exp $");
+__RCSID("$NetBSD: init_bcm43xx.c,v 1.3 2017/08/10 20:43:12 jmcneill Exp $");
+
+#include <sys/param.h>
 
 #include <bluetooth.h>
 #include <err.h>
@@ -46,6 +48,7 @@ __RCSID("$NetBSD: init_bcm43xx.c,v 1.2 2017/08/10 18:45:20 jakllsch Exp $");
 #include <unistd.h>
 
 #include "btattach.h"
+#include "firmload.h"
 
 #define HCI_CMD_BCM43XX_SET_UART_BAUD_RATE	\
 	HCI_OPCODE(HCI_OGF_VENDOR, 0x018)
@@ -56,25 +59,57 @@ __RCSID("$NetBSD: init_bcm43xx.c,v 1.2 2017/08/10 18:45:20 jakllsch Exp $");
 #define HCI_CMD_43XXFWDN 			\
 	HCI_OPCODE(HCI_OGF_VENDOR, 0x02e)
 
+#define HCI_CMD_GET_LOCAL_NAME			0x0c14
+
+static int
+bcm43xx_get_local_name(int fd, char *name, size_t namelen)
+{
+	char buf[256];
+	size_t len;
+
+	memset(buf, 0, sizeof(buf));
+
+	uart_send_cmd(fd, HCI_CMD_GET_LOCAL_NAME, NULL, 0);
+	len = uart_recv_cc(fd, HCI_CMD_GET_LOCAL_NAME, buf, sizeof(buf));
+	if (len == 0)
+		return EIO;
+
+	strlcpy(name, &buf[1], MIN(len - 1, namelen));
+
+	if (strlen(name) == 0)
+		return EIO;
+
+	return 0;
+}
+
 void
 init_bcm43xx(int fd, unsigned int speed)
 {
 	uint8_t rate[6];
 	uint8_t fw_buf[1024];
-	char fw[] = "./BCM43430A1.hcd";
 	int fwfd, fw_len;
 	uint8_t resp[7];
 	uint16_t fw_cmd;
+	char local_name[256];
+	char fw[260];
 
 	memset(rate, 0, sizeof(rate));
+	memset(local_name, 0, sizeof(local_name));
 
 	uart_send_cmd(fd, HCI_CMD_RESET, NULL, 0);
 	uart_recv_cc(fd, HCI_CMD_RESET, &resp, sizeof(resp));
 	/* assume it succeeded? */
 
-	fwfd = open(fw, O_RDONLY);
+	if (bcm43xx_get_local_name(fd, local_name, sizeof(local_name)) != 0) {
+		fprintf(stderr, "Couldn't read local name\n");
+		return;
+	}
+	snprintf(fw, sizeof(fw), "%s.hcd", local_name);
+
+	fwfd = firmware_open("bcm43xx", fw);
 	if (fwfd < 0) {
-		fprintf(stderr, "Unable to open firmware: %s\n", fw);
+		fprintf(stderr, "Unable to open firmware bcm43xx/%s: %s\n",
+		    fw, strerror(errno));
 		return;
 	}
 
