@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.125 2017/08/08 17:00:42 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.126 2017/08/10 12:49:11 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -158,7 +158,6 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
-#include "opt_compat_ibcs2.h"
 #include "opt_xen.h"
 
 #include "assym.h"
