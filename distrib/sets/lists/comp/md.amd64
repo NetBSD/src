@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.249 2017/08/09 18:58:51 maxv Exp $
+# $NetBSD: md.amd64,v 1.250 2017/08/10 13:39:08 maxv Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -13,7 +13,7 @@
 ./usr/include/amd64/cdefs.h			comp-c-include
 ./usr/include/amd64/cpu.h			comp-c-include
 ./usr/include/amd64/cpu_rng.h			comp-c-include
-./usr/include/amd64/cpufunc.h			comp-c-obsolete		obsolete
+./usr/include/amd64/cpufunc.h			comp-obsolete		obsolete
 ./usr/include/amd64/disklabel.h			comp-c-include
 ./usr/include/amd64/elf_machdep.h		comp-c-include
 ./usr/include/amd64/endian.h			comp-c-include
@@ -476,7 +476,7 @@
 ./usr/include/i386/cdefs.h			comp-c-include
 ./usr/include/i386/cpu.h			comp-c-include
 ./usr/include/i386/cpu_rng.h			comp-c-include
-./usr/include/i386/cpufunc.h			comp-c-obsolete		obsolete
+./usr/include/i386/cpufunc.h			comp-obsolete		obsolete
 ./usr/include/i386/cputypes.h			comp-c-include
 ./usr/include/i386/disklabel.h			comp-c-include
 ./usr/include/i386/elf_machdep.h		comp-c-include
