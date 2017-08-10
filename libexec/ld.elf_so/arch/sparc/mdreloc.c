@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.50 2017/06/19 11:57:02 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.51 2017/08/10 19:03:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.50 2017/06/19 11:57:02 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.51 2017/08/10 19:03:26 joerg Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -385,7 +385,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_plt_lazy(const Obj_Entry *obj)
+_rtld_relocate_plt_lazy(Obj_Entry *obj)
 {
 	return (0);
 }

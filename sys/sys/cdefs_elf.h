@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.52 2016/06/07 12:09:29 joerg Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.53 2017/08/10 19:03:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -117,9 +117,19 @@
 	__asm(".globl	" _C_LABEL_STRING(#name) "\n" \
 	      ".type	" _C_LABEL_STRING(#name) ", %gnu_indirect_function\n" \
 	       _C_LABEL_STRING(#name) " = " _C_LABEL_STRING(#resolver))
+#define __hidden_ifunc(name, resolver) \
+	__asm(".globl	" _C_LABEL_STRING(#name) "\n" \
+	      ".hidden	" _C_LABEL_STRING(#name) "\n" \
+	      ".type	" _C_LABEL_STRING(#name) ", %gnu_indirect_function\n" \
+	       _C_LABEL_STRING(#name) " = " _C_LABEL_STRING(#resolver))
 #else
 #define __ifunc(name, resolver) \
 	__asm(".globl	" _C_LABEL_STRING(#name) "\n" \
+	      ".type	" _C_LABEL_STRING(#name) ", @gnu_indirect_function\n" \
+	      _C_LABEL_STRING(#name) " = " _C_LABEL_STRING(#resolver))
+#define __hidden_ifunc(name, resolver) \
+	__asm(".globl	" _C_LABEL_STRING(#name) "\n" \
+	      ".hidden	" _C_LABEL_STRING(#name) "\n" \
 	      ".type	" _C_LABEL_STRING(#name) ", @gnu_indirect_function\n" \
 	      _C_LABEL_STRING(#name) " = " _C_LABEL_STRING(#resolver))
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ifunc.c,v 1.2 2017/01/13 21:30:42 christos Exp $	*/
+/*	$NetBSD: t_ifunc.c,v 1.3 2017/08/10 19:03:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -56,6 +56,10 @@ ATF_TC_BODY(rtld_ifunc, tc)
 	const char *error;
 	size_t i;
 
+#if !defined( __arm__) && !defined(__i386__) && !defined(__x86_64__) && !defined(__powerpc__)
+	atf_tc_expect_fail("Missing linker support for hidden ifunc relocations");
+#endif
+
 	for (i = 0; i < __arraycount(envstr); ++i) {
 		setenv("USE_IFUNC2", envstr[i], 1);
 
@@ -85,8 +89,59 @@ ATF_TC_BODY(rtld_ifunc, tc)
 	}
 }
 
+ATF_TC(rtld_hidden_ifunc);
+
+ATF_TC_HEAD(rtld_hidden_ifunc, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "hidden ifunc functions are resolved");
+}
+
+ATF_TC_BODY(rtld_hidden_ifunc, tc)
+{
+	const char *envstr[] = {
+	    "0", "1"
+	};
+	int expected_result[] = {
+	    0xdeadbeef, 0xbeefdead
+	};
+	void *handle;
+	int (*sym)(void);
+	int result;
+	const char *error;
+	size_t i;
+
+	for (i = 0; i < __arraycount(envstr); ++i) {
+		setenv("USE_IFUNC2", envstr[i], 1);
+
+		handle = dlopen("libh_helper_ifunc_dso.so", RTLD_LAZY);
+		error = dlerror();
+		ATF_CHECK(error == NULL);
+		ATF_CHECK(handle != NULL);
+
+		sym = dlsym(handle, "ifunc_plt");
+		error = dlerror();
+		ATF_CHECK(error == NULL);
+		ATF_CHECK(sym != NULL);
+
+		result = (*sym)();
+		ATF_CHECK(result == expected_result[!i]);
+
+		dlclose(handle);
+		error = dlerror();
+		ATF_CHECK(error == NULL);
+
+		char *command;
+		easprintf(&command, "%s/h_ifunc %d",
+		    atf_tc_get_config_var(tc, "srcdir"), expected_result[i]);
+		if (system(command) != EXIT_SUCCESS)
+			atf_tc_fail("Test failed; see output for details");
+		free(command);
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, rtld_ifunc);
+	ATF_TP_ADD_TC(tp, rtld_hidden_ifunc);
 	return 0;
 }

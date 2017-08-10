@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.38 2017/06/19 11:57:01 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.39 2017/08/10 19:03:26 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.38 2017/06/19 11:57:01 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.39 2017/08/10 19:03:26 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -194,17 +194,21 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_plt_lazy(const Obj_Entry *obj)
+_rtld_relocate_plt_lazy(Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
 
 	if (!obj->relocbase)
 		return 0;
 
-	for (rel = obj->pltrel; rel < obj->pltrellim; rel++) {
+	for (rel = obj->pltrellim; rel-- > obj->pltrel; ) {
 		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
 
-		assert(ELF_R_TYPE(rel->r_info) == R_TYPE(JMP_SLOT));
+		assert(ELF_R_TYPE(rel->r_info) == R_TYPE(JMP_SLOT) ||
+		       ELF_R_TYPE(rel->r_info) == R_TYPE(IRELATIVE));
+
+		if (ELF_R_TYPE(rel->r_info) == R_TYPE(IRELATIVE))
+			obj->ifunc_remaining = obj->pltrellim - rel;
 
 		/* Just relocate the GOT slots pointing into the PLT */
 		*where += (Elf_Addr)obj->relocbase;
@@ -212,6 +216,26 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 	}
 
 	return 0;
+}
+
+void
+_rtld_call_ifunc(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
+{
+	const Elf_Rel *rel;
+	Elf_Addr *where, target;
+
+	while (obj->ifunc_remaining > 0 && _rtld_objgen == cur_objgen) {
+		rel = obj->pltrellim - obj->ifunc_remaining;
+		--obj->ifunc_remaining;
+		if (ELF_R_TYPE(rel->r_info) == R_TYPE(IRELATIVE)) {
+			where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
+			_rtld_exclusive_exit(mask);
+			target = _rtld_resolve_ifunc2(obj, *where);
+			_rtld_exclusive_enter(mask);
+			if (*where != target)
+				*where = target;
+		}
+	}
 }
 
 static inline int
@@ -223,6 +247,9 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rel *rel,
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 	unsigned long info = rel->r_info;
+
+	if (ELF_R_TYPE(info) == R_TYPE(IRELATIVE))
+		return 0;
 
 	assert(ELF_R_TYPE(info) == R_TYPE(JMP_SLOT));
 

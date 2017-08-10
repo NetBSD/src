@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.129 2017/07/11 15:21:35 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.130 2017/08/10 19:03:25 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -298,6 +298,8 @@ typedef struct Struct_Obj_Entry {
 	size_t		init_arraysz;	/* # of entries in it */
 	Elf_Addr	*fini_array;	/* start of fini array */
 	size_t		fini_arraysz;	/* # of entries in it */
+	/* IRELATIVE relocations */
+	size_t		ifunc_remaining;
 	size_t		cxa_refcount;	/* For TLS destructors. */
 #ifdef __ARM_EABI__
 	void		*exidx_start;
@@ -328,6 +330,7 @@ extern bool _rtld_trust;
 extern Objlist _rtld_list_global;
 extern Objlist _rtld_list_main;
 extern Elf_Sym _rtld_sym_zero;
+extern u_int _rtld_objgen;
 
 #define	RTLD_MODEMASK 0x3
 
@@ -407,10 +410,13 @@ int _rtld_sysctl(const char *, void *, size_t *);
 int _rtld_do_copy_relocations(const Obj_Entry *);
 int _rtld_relocate_objects(Obj_Entry *, bool);
 int _rtld_relocate_nonplt_objects(Obj_Entry *);
-int _rtld_relocate_plt_lazy(const Obj_Entry *);
+int _rtld_relocate_plt_lazy(Obj_Entry *);
 int _rtld_relocate_plt_objects(const Obj_Entry *);
 void _rtld_setup_pltgot(const Obj_Entry *);
 Elf_Addr _rtld_resolve_ifunc(const Obj_Entry *, const Elf_Sym *);
+Elf_Addr _rtld_resolve_ifunc2(const Obj_Entry *, Elf_Addr);
+
+void _rtld_call_ifunc(Obj_Entry *, sigset_t *, u_int);
 
 /* search.c */
 Obj_Entry *_rtld_load_library(const char *, const Obj_Entry *, int);

@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.33 2017/06/20 15:02:54 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.34 2017/08/10 19:03:27 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.33 2017/06/20 15:02:54 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.34 2017/08/10 19:03:27 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -136,7 +136,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_plt_lazy(const Obj_Entry *obj)
+_rtld_relocate_plt_lazy(Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 

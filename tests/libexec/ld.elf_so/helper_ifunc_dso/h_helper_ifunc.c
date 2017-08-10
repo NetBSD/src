@@ -49,4 +49,20 @@ int (*resolve_ifunc(void))(void)
 	return e && strcmp(e, "1") == 0 ? ifunc2 : ifunc1;
 }
 
+static __attribute__((used))
+int (*resolve_ifunc2(void))(void)
+{
+	const char *e = getenv("USE_IFUNC2");
+	return e && strcmp(e, "1") == 0 ? ifunc1 : ifunc2;
+}
+
 __ifunc(ifunc, resolve_ifunc);
+__hidden_ifunc(ifunc_hidden, resolve_ifunc2);
+
+int ifunc_hidden(void);
+int ifunc_plt(void);
+
+int ifunc_plt(void)
+{
+	return ifunc_hidden();
+}
