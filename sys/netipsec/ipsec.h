@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.58 2017/08/02 01:28:03 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.59 2017/08/10 06:11:24 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -334,6 +334,7 @@ void ipsec_dumpmbuf (struct mbuf *);
 void *esp4_ctlinput(int, const struct sockaddr *, void *);
 void *ah4_ctlinput(int, const struct sockaddr *, void *);
 
+void ipsec_output_init(void);
 struct m_tag;
 void ipsec4_common_input(struct mbuf *m, ...);
 int ipsec4_common_input_cb(struct mbuf *, struct secasvar *,
