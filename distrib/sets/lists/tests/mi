@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.759 2017/08/02 02:19:56 ozaki-r Exp $
+# $NetBSD: mi,v 1.760 2017/08/10 04:31:58 ryo Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3361,6 +3361,7 @@
 ./usr/tests/net/net/t_ping6_opts		tests-net-tests		atf,rump
 ./usr/tests/net/net/t_ping_opts			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_pktinfo			tests-net-tests		compattestfile,atf
+./usr/tests/net/net/t_pktinfo_send		tests-net-tests		atf,rump
 ./usr/tests/net/net/t_raw			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_tcp			tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/t_udp			tests-net-tests		compattestfile,atf
