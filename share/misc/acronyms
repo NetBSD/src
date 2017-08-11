@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.255 2017/06/14 20:56:33 dholland Exp $
+$NetBSD: acronyms,v 1.256 2017/08/11 16:03:14 ginsbach Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -92,6 +92,7 @@ COB	close of business [day]
 COTS	commercial off-the-shelf
 CPC	cost per click
 CPE	customer premises equipment
+CRM	customer relationship management
 CTN	can't talk now
 CU	see you
 CUL	see you later
