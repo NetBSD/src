@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.75 2017/08/10 13:48:19 nat Exp $
+#	$NetBSD: RPI,v 1.76 2017/08/11 00:00:25 jmcneill Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -66,7 +66,7 @@ vchiq0		at obio?
 
 # AUDS
 vcaudio0	at vchiq0
-audio0		at vcaudio0
+audio*		at audiobus?
 
 spkr*		at audio?		# PC speaker (synthesized)
 
