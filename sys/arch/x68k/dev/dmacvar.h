@@ -1,4 +1,4 @@
-/*	$NetBSD: dmacvar.h,v 1.11 2017/08/11 07:08:40 isaki Exp $	*/
+/*	$NetBSD: dmacvar.h,v 1.12 2017/08/11 07:30:01 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,8 +55,6 @@ struct dmac_dma_xfer {
 	struct dmac_sg_array *dx_array;	/* DMAC array chain */
 	int		dx_done;
 #endif
-	int		dx_nextoff;	/* for continued operation */
-	int		dx_nextsize;
 };
 
 /*
