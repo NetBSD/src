@@ -1,4 +1,4 @@
-.\" $NetBSD: btattach.8,v 1.8 2014/03/18 18:20:46 riastradh Exp $
+.\" $NetBSD: btattach.8,v 1.9 2017/08/11 11:54:08 jmcneill Exp $
 .\"
 .\" Copyright (c) 2007 KIYOHARA Takashi
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 9, 2010
+.Dd August 11, 2017
 .Dt BTATTACH 8
 .Os
 .Sh NAME
@@ -58,6 +58,10 @@ Supported types are:
 .Bl -tag -compact -width ericssonxx -offset indent
 .It Cm bcm2035
 Broadcom BCM2035
+.It Cm bcm43xx
+Broadcom BCM43xx
+.It Cm bcm43xx-3wire
+Broadcom BCM43xx (3-wire)
 .It Cm bcsp
 Generic BCSP (BlueCore Serial Protocol)
 .It Cm bgb2xx
