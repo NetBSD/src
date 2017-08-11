@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.33 2017/08/04 20:53:46 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.34 2017/08/11 18:20:13 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.33 2017/08/04 20:53:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.34 2017/08/11 18:20:13 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,6 +109,7 @@ int siisata_debug_mask = 0;
 #endif
 
 #define ATA_DELAY 10000		/* 10s for a drive I/O */
+#define WDC_RESET_WAIT 31000	/* 31s for drive reset */
 
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
 #if _BYTE_ORDER == _LITTLE_ENDIAN
@@ -721,6 +722,7 @@ siisata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 	struct ata_xfer *xfer;
 	uint32_t pss, pis;
 	int i;
+	bool timed_out;
 
 	siisata_reinit_port(chp, drvp->drive);
 
@@ -737,10 +739,13 @@ siisata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 
 	siisata_activate_prb(schp, xfer->c_slot);
 
-	for(i = 0; i < 3100; i++) {
+	timed_out = true;
+	for(i = 0; i < WDC_RESET_WAIT / 10; i++) {
 		pss = PRREAD(sc, PRX(chp->ch_channel, PRO_PSS));
-		if ((pss & PR_PXSS(xfer->c_slot)) == 0)
+		if ((pss & PR_PXSS(xfer->c_slot)) == 0) {
+			timed_out = false;
 			break;
+		}
 		if (pss & PR_PSS_ATTENTION)
 			break;
 		ata_delay(10, "siiprb", flags);
@@ -764,7 +769,7 @@ siisata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 
 	siisata_enable_port_interrupt(chp);
 
-	if (i == 3100) {
+	if (timed_out) {
 		/* timeout */
 		siisata_device_reset(chp);	/* XXX is this right? */
 		if (sigp)
@@ -888,7 +893,7 @@ siisata_probe_drive(struct ata_channel *chp)
 		siisata_activate_prb(schp, xfer->c_slot);
 
 		timed_out = 1;
-		for(i = 0; i < 3100; i++) {
+		for(i = 0; i < WDC_RESET_WAIT / 10; i++) {
 			if ((PRREAD(sc, PRX(chp->ch_channel, PRO_PSS)) &
 			    PR_PXSS(xfer->c_slot)) == 0) {
 				/* prb completed */
