@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.194 2017/08/01 13:49:50 maxv Exp $
+#	$NetBSD: Makefile,v 1.195 2017/08/11 12:58:14 maxv Exp $
 
 .include <bsd.own.mk>
 
@@ -265,7 +265,6 @@ SUBDIR+=	compat_netbsd32_sysvipc
 .if ${MACHINE_ARCH} == "i386"
 SUBDIR+=	ati_pcigart
 SUBDIR+=	compat_freebsd
-SUBDIR+=	compat_ibcs2
 SUBDIR+=	mach64drm
 SUBDIR+=	mgadrm
 SUBDIR+=	nsclpcsio
