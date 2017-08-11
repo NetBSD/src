@@ -1,4 +1,4 @@
-/*	$NetBSD: bth5.c,v 1.1 2017/08/10 13:22:19 nat Exp $	*/
+/*	$NetBSD: bth5.c,v 1.2 2017/08/11 00:58:37 nat Exp $	*/
 /*
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bth5.c,v 1.1 2017/08/10 13:22:19 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bth5.c,v 1.2 2017/08/11 00:58:37 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -963,6 +963,7 @@ bth5_mux_transmit(struct bth5_softc *sc)
 		hdrp->flags |= BTH5_FLAGS_PROTOCOL_REL;		/* Reliable */
 		goto transmit;
 	}
+	sc->sc_flags &= ~BTH5_XMIT;
 	bth5_start(sc);
 	if (sc->sc_mux_send_ack == true) {
 		m = bth5_create_ackpkt();
