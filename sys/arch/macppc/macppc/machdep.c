@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165 2017/07/14 21:36:19 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.166 2017/08/11 22:55:49 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2017/07/14 21:36:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 2017/08/11 22:55:49 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -396,6 +396,10 @@ add_model_specifics(prop_dictionary_t dict)
 		"PowerBook4,3", "PowerBook6,3", "PowerBook6,5", NULL};
 	const char *pismo[] = {
 		"PowerBook3,1", NULL};
+	const char *mini1[] = {
+		"PowerMac10,1", NULL};
+	const char *mini2[] = {
+		"PowerMac10,2", NULL};
 	int node;
 
 	node = OF_finddevice("/");
@@ -409,6 +413,12 @@ add_model_specifics(prop_dictionary_t dict)
 		edid = prop_data_create_data(edid_pismo, sizeof(edid_pismo));
 		prop_dictionary_set(dict, "EDID", edid);
 		prop_object_release(edid);
+	}
+	if (of_compatible(node, mini1) != -1) {
+		prop_dictionary_set_bool(dict, "dvi-internal", 1);
+	}
+	if (of_compatible(node, mini2) != -1) {
+		prop_dictionary_set_bool(dict, "dvi-external", 1);
 	}
 }
 
