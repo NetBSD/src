@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.89 2017/06/02 22:08:00 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.90 2017/08/11 22:59:05 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.89 2017/06/02 22:08:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.90 2017/08/11 22:59:05 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,6 +379,9 @@ static struct {
 	{ PCI_PRODUCT_ATI_RADEON_R423_UT,	RADEON_R420, 0 },
 	{ PCI_PRODUCT_ATI_RADEON_R423_5D57,	RADEON_R420, 0 },
 	{ PCI_PRODUCT_ATI_RADEON_R430_554F,	RADEON_R420, 0 },
+
+	/* R5xx family */
+	{ 0x7240,	RADEON_R420, 0 },	
 #endif
 	{ 0, 0, 0 }
 };
@@ -1769,8 +1772,27 @@ radeonfb_getconnectors(struct radeonfb_softc *sc)
 
 nobios:
 	if (!found) {
+		bool dvi_ext = FALSE, dvi_int = FALSE;
 		DPRINTF(("No connector info in BIOS!\n"));
-		if IS_MOBILITY(sc) {
+		prop_dictionary_get_bool(device_properties(sc->sc_dev),
+		    "dvi-internal", &dvi_int);
+		prop_dictionary_get_bool(device_properties(sc->sc_dev),
+		    "dvi-external", &dvi_ext);
+		if (dvi_ext) {
+			sc->sc_ports[0].rp_mon_type = RADEON_MT_UNKNOWN;
+			sc->sc_ports[0].rp_ddc_type = RADEON_DDC_DVI;
+			sc->sc_ports[0].rp_dac_type = RADEON_DAC_TVDAC;
+			sc->sc_ports[0].rp_conn_type = RADEON_CONN_DVI_I;
+			sc->sc_ports[0].rp_tmds_type = RADEON_TMDS_EXT;
+			sc->sc_ports[0].rp_number = 1;
+		} else	if (dvi_int) {
+			sc->sc_ports[0].rp_mon_type = RADEON_MT_UNKNOWN;
+			sc->sc_ports[0].rp_ddc_type = RADEON_DDC_DVI;
+			sc->sc_ports[0].rp_dac_type = RADEON_DAC_TVDAC;
+			sc->sc_ports[0].rp_conn_type = RADEON_CONN_DVI_I;
+			sc->sc_ports[0].rp_tmds_type = RADEON_TMDS_INT;
+			sc->sc_ports[0].rp_number = 1;
+		} else if IS_MOBILITY(sc) {
 			/* default, port 0 = internal TMDS, port 1 = CRT */
 			sc->sc_ports[0].rp_mon_type = RADEON_MT_UNKNOWN;
 			sc->sc_ports[0].rp_ddc_type = RADEON_DDC_DVI;
@@ -2591,7 +2613,7 @@ radeonfb_putpal(struct radeonfb_display *dp, int idx, int r, int g, int b)
 	/* initialize the palette for every CRTC used by this display */
 	for (cc = 0; cc < dp->rd_ncrtcs; cc++) {
 		crtc = dp->rd_crtcs[cc].rc_number;
-		DPRINTF(("%s: doing crtc %d %d\n", __func__, cc, crtc));
+		//DPRINTF(("%s: doing crtc %d %d\n", __func__, cc, crtc));
 
 		if (crtc)
 			SET32(sc, RADEON_DAC_CNTL2, RADEON_DAC2_PALETTE_ACC_CTL);
