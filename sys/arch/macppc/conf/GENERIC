@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.330 2017/07/29 18:08:58 maxv Exp $
+# $NetBSD: GENERIC,v 1.331 2017/08/11 21:03:23 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.330 $"
+#ident 		"GENERIC-$Revision: 1.331 $"
 
 maxusers	32
 
@@ -642,6 +642,7 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	openfirm		# /dev/openfirm
 pseudo-device	wsmux			# mouse and keyboard multiplexer
+pseudo-device 	wsfont
 pseudo-device	swwdog			# software watchdog driver - swwdog(4)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
