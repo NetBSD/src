@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.44 2017/08/05 06:05:37 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.45 2017/08/11 06:47:35 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.44 2017/08/05 06:05:37 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.45 2017/08/11 06:47:35 isaki Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -490,7 +490,6 @@ vs_start_output(void *hdl, void *block, int blksize, void (*intr)(void *),
 {
 	struct vs_softc *sc;
 	struct vs_dma *vd;
-	struct dmac_dma_xfer *xf;
 	struct dmac_channel_stat *chan;
 	int hwblksize;
 
@@ -518,17 +517,17 @@ vs_start_output(void *hdl, void *block, int blksize, void (*intr)(void *),
 	vd = sc->sc_dmas;
 
 	chan = sc->sc_dma_ch;
-	xf = dmac_alloc_xfer(chan, sc->sc_dmat, vd->vd_map);
-	sc->sc_current.xfer = xf;
 	chan->ch_dcr = (DMAC_DCR_XRM_CSWOH | DMAC_DCR_OTYP_EASYNC |
 			DMAC_DCR_OPS_8BIT);
 	chan->ch_ocr = DMAC_OCR_REQG_EXTERNAL;
-	xf->dx_ocr = DMAC_OCR_DIR_MTD;
-	xf->dx_scr = DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT;
-	xf->dx_device = sc->sc_addr + MSM6258_DATA * 2 + 1;
 
-	dmac_load_xfer(chan->ch_softc, xf);
-	dmac_start_xfer_offset(chan->ch_softc, xf, 0, sc->sc_current.blksize);
+	sc->sc_current.xfer = dmac_prepare_xfer(chan, sc->sc_dmat, vd->vd_map,
+	    DMAC_OCR_DIR_MTD,
+	    (DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT),
+	    sc->sc_addr + MSM6258_DATA * 2 + 1);
+
+	dmac_start_xfer_offset(chan->ch_softc, sc->sc_current.xfer, 0,
+	    sc->sc_current.blksize);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 2);
 	sc->sc_active = 1;
 
@@ -541,7 +540,6 @@ vs_start_input(void *hdl, void *block, int blksize, void (*intr)(void *),
 {
 	struct vs_softc *sc;
 	struct vs_dma *vd;
-	struct dmac_dma_xfer *xf;
 	struct dmac_channel_stat *chan;
 	int hwblksize;
 
@@ -567,17 +565,17 @@ vs_start_input(void *hdl, void *block, int blksize, void (*intr)(void *),
 	vd = sc->sc_dmas;
 
 	chan = sc->sc_dma_ch;
-	xf = dmac_alloc_xfer(chan, sc->sc_dmat, vd->vd_map);
-	sc->sc_current.xfer = xf;
 	chan->ch_dcr = (DMAC_DCR_XRM_CSWOH | DMAC_DCR_OTYP_EASYNC |
 			DMAC_DCR_OPS_8BIT);
 	chan->ch_ocr = DMAC_OCR_REQG_EXTERNAL;
-	xf->dx_ocr = DMAC_OCR_DIR_DTM;
-	xf->dx_scr = DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT;
-	xf->dx_device = sc->sc_addr + MSM6258_DATA * 2 + 1;
 
-	dmac_load_xfer(chan->ch_softc, xf);
-	dmac_start_xfer_offset(chan->ch_softc, xf, 0, sc->sc_current.blksize);
+	sc->sc_current.xfer = dmac_prepare_xfer(chan, sc->sc_dmat, vd->vd_map,
+	    DMAC_OCR_DIR_DTM,
+	    (DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT),
+	    sc->sc_addr + MSM6258_DATA * 2 + 1);
+
+	dmac_start_xfer_offset(chan->ch_softc, sc->sc_current.xfer, 0,
+	    sc->sc_current.blksize);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 4);
 	sc->sc_active = 1;
 
