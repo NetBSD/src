@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.100 2017/07/11 14:00:15 gson Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.101 2017/08/11 06:27:12 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -554,6 +554,11 @@
 #define 	APICBASE_BSP		0x00000100	/* boot processor */
 #define 	APICBASE_EXTD		0x00000400	/* x2APIC mode */
 #define 	APICBASE_EN		0x00000800	/* software enable */
+/*
+ * APICBASE_PHYSADDR is actually variable-sized on some CPUs. But we're
+ * only interested in the initial value, which is guaranteed to fit the
+ * first 32 bits. So this macro is fine.
+ */
 #define 	APICBASE_PHYSADDR	0xfffff000	/* physical address */
 #define MSR_EBL_CR_POWERON	0x02a
 #define MSR_EBC_FREQUENCY_ID	0x02c	/* PIV only */
