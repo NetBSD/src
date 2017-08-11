@@ -1,4 +1,4 @@
-/*	$NetBSD: ypwhich.c,v 1.20 2014/10/18 08:33:30 snj Exp $	*/
+/*	$NetBSD: ypwhich.c,v 1.21 2017/08/11 20:32:34 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor
@@ -306,9 +306,6 @@ find_mapmaster(const char *host, const char *domain, const char *map,
          * now translate nicknames [unless inhibited]
          */
 	if (map && !inhibit) {
-/*###325 [cc] error: 'i' undeclared (first use in this function)%%%*/
-/*###325 [cc] error: (Each undeclared identifier is reported only once%%%*/
-/*###325 [cc] error: for each function it appears in.)%%%*/
 		for (i = 0; ypaliases[i].alias; i++) {
 			if (strcmp(map, ypaliases[i].alias) == 0) {
 				map = ypaliases[i].name;
