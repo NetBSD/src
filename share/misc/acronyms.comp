@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.183 2017/05/12 21:14:47 kamil Exp $
+$NetBSD: acronyms.comp,v 1.184 2017/08/11 16:03:14 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -213,8 +213,8 @@ CLUT	color look-up table
 CLV	constant linear velocity
 CM	configuration management
 CMA	concert multithread architecture
-CMI	control management interface
-CMI	control method interface
+CMS	{configuration,content,course} management system
+CMI	control {management,method} interface
 CMOS	complementary metal-oxide-semiconductor
 CMP	chip multi-processing
 CMS	content management system
