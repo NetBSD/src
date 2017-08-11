@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.35 2014/03/26 08:17:59 christos Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.36 2017/08/11 07:08:40 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.35 2014/03/26 08:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.36 2017/08/11 07:08:40 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,9 +159,10 @@ dmac_init_channels(struct dmac_softc *sc)
  * Channel initialization/deinitialization per user device.
  */
 struct dmac_channel_stat *
-dmac_alloc_channel(device_t self, int ch, const char *name, int normalv,
-    dmac_intr_handler_t normal, void *normalarg, int errorv,
-    dmac_intr_handler_t error, void *errorarg)
+dmac_alloc_channel(device_t self, int ch, const char *name,
+    int normalv, dmac_intr_handler_t normal, void *normalarg,
+    int errorv,  dmac_intr_handler_t error,  void *errorarg,
+    uint8_t dcr, uint8_t ocr)
 {
 	struct intio_softc *intio = device_private(self);
 	struct dmac_softc *dmac = device_private(intio->sc_dmac);
@@ -201,9 +202,8 @@ dmac_alloc_channel(device_t self, int ch, const char *name, int normalv,
 
 	/* fill the channel status structure by the default values. */
 	strcpy(chan->ch_name, name);
-	chan->ch_dcr = (DMAC_DCR_XRM_CSWH | DMAC_DCR_OTYP_EASYNC |
-			DMAC_DCR_OPS_8BIT);
-	chan->ch_ocr = (DMAC_OCR_SIZE_BYTE | DMAC_OCR_REQG_EXTERNAL);
+	chan->ch_dcr = dcr;
+	chan->ch_ocr = ocr;
 	chan->ch_normalv = normalv;
 	chan->ch_errorv = errorv;
 	chan->ch_normal = normal;
@@ -217,6 +217,7 @@ dmac_alloc_channel(device_t self, int ch, const char *name, int normalv,
 	bus_space_write_1(dmac->sc_bst, chan->ch_bht,
 			   DMAC_REG_DCR, chan->ch_dcr);
 	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CPR, 0);
+	/* OCR will be written at dmac_load_xfer() */
 
 	/*
 	 * X68k physical user space is a subset of the kernel space;

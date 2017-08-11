@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.45 2017/08/11 06:47:35 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.46 2017/08/11 07:08:40 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.45 2017/08/11 06:47:35 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.46 2017/08/11 07:08:40 isaki Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -235,7 +235,9 @@ vs_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = ia->ia_dmat;
 	sc->sc_dma_ch = dmac_alloc_channel(parent, ia->ia_dma, "vs",
 		ia->ia_dmaintr,   vs_dmaintr, sc,
-		ia->ia_dmaintr+1, vs_dmaerrintr, sc);
+		ia->ia_dmaintr+1, vs_dmaerrintr, sc,
+		(DMAC_DCR_XRM_CSWOH | DMAC_DCR_OTYP_EASYNC | DMAC_DCR_OPS_8BIT),
+		(DMAC_OCR_SIZE_BYTE | DMAC_OCR_REQG_EXTERNAL));
 
 	aprint_normal_dev(self, "MSM6258V ADPCM voice synthesizer\n");
 
@@ -517,9 +519,6 @@ vs_start_output(void *hdl, void *block, int blksize, void (*intr)(void *),
 	vd = sc->sc_dmas;
 
 	chan = sc->sc_dma_ch;
-	chan->ch_dcr = (DMAC_DCR_XRM_CSWOH | DMAC_DCR_OTYP_EASYNC |
-			DMAC_DCR_OPS_8BIT);
-	chan->ch_ocr = DMAC_OCR_REQG_EXTERNAL;
 
 	sc->sc_current.xfer = dmac_prepare_xfer(chan, sc->sc_dmat, vd->vd_map,
 	    DMAC_OCR_DIR_MTD,
@@ -565,9 +564,6 @@ vs_start_input(void *hdl, void *block, int blksize, void (*intr)(void *),
 	vd = sc->sc_dmas;
 
 	chan = sc->sc_dma_ch;
-	chan->ch_dcr = (DMAC_DCR_XRM_CSWOH | DMAC_DCR_OTYP_EASYNC |
-			DMAC_DCR_OPS_8BIT);
-	chan->ch_ocr = DMAC_OCR_REQG_EXTERNAL;
 
 	sc->sc_current.xfer = dmac_prepare_xfer(chan, sc->sc_dmat, vd->vd_map,
 	    DMAC_OCR_DIR_DTM,
