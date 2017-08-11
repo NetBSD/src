@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.51 2017/08/09 07:32:43 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.52 2017/08/11 15:32:14 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -3047,4 +3047,14 @@ sys/dev/usb/if_ural.c				1.52
 
 	Free the RX list if ural_alloc_rx_list fails part way through.
 	[skrll, ticket #1462]
+
+sys/arch/newsmips/apbus/if_sn.c			1.39
+
+	memory leak in sonic_get()
+	[mrg, ticket #1467]
+
+sys/arch/mac68k/nubus/if_netdock_nubus.c	1.26
+
+	memory leak in netdock_get()
+	[mrg, ticket #1468]
 
