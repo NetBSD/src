@@ -1,4 +1,4 @@
-/*	$NetBSD: readmsg.c,v 1.22 2008/02/16 07:30:15 matt Exp $	*/
+/*	$NetBSD: readmsg.c,v 1.23 2017/08/11 16:47:42 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)readmsg.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: readmsg.c,v 1.22 2008/02/16 07:30:15 matt Exp $");
+__RCSID("$NetBSD: readmsg.c,v 1.23 2017/08/11 16:47:42 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,15 +203,22 @@ again:
 			continue;
 		}
 		length = sizeof(from);
+		memset(&msgin, 0, sizeof(msgin));
 		if ((n = recvfrom(sock, &msgin, sizeof(struct tsp), 0,
 			     (struct sockaddr*)(void *)&from, &length)) < 0) {
 			syslog(LOG_ERR, "recvfrom: %m");
 			exit(EXIT_FAILURE);
 		}
-		if (n < (ssize_t)sizeof(struct tsp)) {
+		/*
+		 * The 4.3BSD protocol spec had a 32-byte tsp_name field, and
+		 * this is still OS-dependent.  Demand that the packet is at
+		 * least long enough to hold a 4.3BSD packet.
+		 */
+		if (n < (ssize_t)(sizeof(struct tsp) - MAXHOSTNAMELEN + 32)) {
 			syslog(LOG_NOTICE,
 			    "short packet (%lu/%lu bytes) from %s",
-			      (u_long)n, (u_long)sizeof(struct tsp),
+			      (u_long)n,
+			      (u_long)(sizeof(struct tsp) - MAXHOSTNAMELEN + 32),
 			      inet_ntoa(from.sin_addr));
 			continue;
 		}
