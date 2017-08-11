@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.34 2017/08/09 07:19:05 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.35 2017/08/11 15:33:19 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -2712,4 +2712,14 @@ sys/arch/hpcsh/dev/pfckbd.c			1.30
 
 	Make early ddb work with wscons console again.
 	[uwe, ticket #1466]
+
+sys/arch/newsmips/apbus/if_sn.c			1.39
+
+	memory leak in sonic_get()
+	[mrg, ticket #1467]
+
+sys/arch/mac68k/nubus/if_netdock_nubus.c	1.26
+
+	memory leak in netdock_get()
+	[mrg, ticket #1468]
 
