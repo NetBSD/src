@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.8.4.1 2015/08/04 21:16:43 snj Exp $	*/
+/*	$NetBSD: if_et.c,v 1.8.4.1.2.1 2017/08/12 03:26:20 snj Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.8.4.1 2015/08/04 21:16:43 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.8.4.1.2.1 2017/08/12 03:26:20 snj Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -2028,6 +2028,10 @@ et_newbuf(struct et_rxbuf_data *rbd, int buf_idx, int init, int len0)
 		if (m == NULL)
 			return (ENOBUFS);
 		MCLGET(m, init ? M_WAITOK : M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_freem(m);
+			return (ENOBUFS);
+		}
 		len = MCLBYTES;
 	} else {
 		MGETHDR(m, init ? M_WAITOK : M_DONTWAIT, MT_DATA);
