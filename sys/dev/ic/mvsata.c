@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.20 2017/08/12 09:52:28 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.21 2017/08/12 14:41:54 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.20 2017/08/12 09:52:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.21 2017/08/12 14:41:54 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1219,8 +1219,7 @@ do_pio:
 			 */
 			if ((xfer->c_flags & C_POLL) == 0 &&
 			    (chp->ch_flags & ATACH_TH_RUN) == 0) {
-				ata_channel_freeze(chp);
-				wakeup(&chp->ch_thread);
+				ata_thread_wake(chp);
 				return;
 			}
 			if (mvsata_bio_ready(mvport, ata_bio, xfer->c_drive,
@@ -1911,8 +1910,7 @@ mvsata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		/* If it's not a polled command, we need the kernel thread */
 		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0 &&
 		    (chp->ch_flags & ATACH_TH_RUN) == 0) {
-			ata_channel_freeze(chp);
-			wakeup(&chp->ch_thread);
+			ata_thread_wake(chp);
 			return;
 		}
 		/*

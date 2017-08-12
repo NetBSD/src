@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.283.2.12 2017/08/12 13:41:46 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.283.2.13 2017/08/12 14:41:54 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.12 2017/08/12 13:41:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.13 2017/08/12 14:41:54 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1252,8 +1252,7 @@ wdcwait(struct ata_channel *chp, int mask, int bits, int timeout, int flags,
 				 * we're probably in interrupt context,
 				 * ask the thread to come back here
 				 */
-				ata_channel_freeze(chp);
-				wakeup(&chp->ch_thread);
+				ata_thread_wake(chp);
 				return(WDCWAIT_THR);
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.22 2017/08/12 09:52:28 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.23 2017/08/12 14:41:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -417,6 +417,7 @@ struct ata_channel {
 
 	/* The channel kernel thread */
 	struct lwp *ch_thread;
+	kcondvar_t ch_thr_idle;		/* thread waiting for work */
 
 	/* Number of sata PMP ports, if any */
 	int ch_satapmp_nports;
@@ -515,6 +516,7 @@ void	ata_reset_channel(struct ata_channel *, int);
 void	ata_channel_freeze(struct ata_channel *);
 void	ata_channel_thaw(struct ata_channel *);
 void	ata_channel_start(struct ata_channel *, int);
+void	ata_thread_wake(struct ata_channel *);
 
 int	ata_addref(struct ata_channel *);
 void	ata_delref(struct ata_channel *);
