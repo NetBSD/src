@@ -7,9 +7,6 @@ test wd* at umass?, confirm the ata_channel kludge works
 
 do proper NCQ error recovery
 - update mvsata to do same as ahcisata/siisata (read log ext, timeouts, et.al)
-- update also ic/wdc.c, scsipi/atapi_wdc.c, ata/ata_wdc.c to not use
-  ch_status/ch_error/ATACH_IRQ_WAIT
-- retest ATAPI
 
 do biodone() in wddone() starting the dump to not leak bufs when dumping from
 active system? make sure to not trigger atastart()
@@ -17,6 +14,8 @@ active system? make sure to not trigger atastart()
 
 kill active transfers after software drive reset - race timeout vs.
 error recovery
+
+atabus_thread() protect run by mutex/condvar
 
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------

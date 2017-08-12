@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.24 2017/08/01 21:41:25 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.25 2017/08/12 09:52:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.24 2017/08/01 21:41:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.25 2017/08/12 09:52:28 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -622,15 +622,16 @@ atabus_thread(void *arg)
 			ata_reset_channel(chp, AT_WAIT | chp->ch_reset_flags);
 		} else if (chq->queue_active > 0 && chq->queue_freeze == 1) {
 			/*
-			 * Caller has bumped queue_freeze, decrease it.
+			 * Caller has bumped queue_freeze, decrease it. This
+			 * flow shalt never be executed for NCQ commands.
 			 */
+			KASSERT((chp->ch_flags & ATACH_NCQ) == 0);
+			KASSERT(chq->queue_active == 1);
+
 			ata_channel_thaw(chp);
-			u_int active __diagused = 0;
-			TAILQ_FOREACH(xfer, &chq->active_xfers, c_activechain) {
-				(*xfer->c_start)(xfer->c_chp, xfer);
-				active++;
-			}
-			KASSERT(active == chq->queue_active);
+			xfer = ata_queue_get_active_xfer(chp);
+			KASSERT(xfer != NULL);
+			(*xfer->c_start)(xfer->c_chp, xfer);
 		} else if (chq->queue_freeze > 1)
 			panic("ata_thread: queue_freeze");
 	}
@@ -1430,7 +1431,7 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 		/* finish the busmastering PIO */
 		(*wdc->piobm_done)(wdc->dma_arg,
 		    chp->ch_channel, xfer->c_drive);
-		chp->ch_flags &= ~(ATACH_DMA_WAIT | ATACH_PIOBM_WAIT | ATACH_IRQ_WAIT);
+		chp->ch_flags &= ~(ATACH_DMA_WAIT | ATACH_PIOBM_WAIT);
 	}
 #endif
 
@@ -1521,7 +1522,7 @@ ata_waitdrain_xfer_check(struct ata_channel *chp, struct ata_xfer *xfer)
 /*
  * Check for race of normal transfer handling vs. timeout.
  */
-static bool
+bool
 ata_timo_xfer_check(struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = xfer->c_chp;

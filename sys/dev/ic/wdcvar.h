@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.97.26.1 2017/04/15 17:14:11 jdolecek Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.97.26.2 2017/08/12 09:52:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ void	wdc_drvprobe(struct ata_channel *);
 
 void	wdcrestart(void*);
 
-int	wdcwait(struct ata_channel *, int, int, int, int);
+int	wdcwait(struct ata_channel *, int, int, int, int, int *);
 #define WDCWAIT_OK	0  /* we have what we asked */
 #define WDCWAIT_TOUT	-1 /* timed out */
 #define WDCWAIT_THR	1  /* return, the kernel thread has been awakened */
@@ -179,12 +179,12 @@ int	wdc_exec_command(struct ata_drive_datas *, struct ata_xfer *);
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
  * command is aborted.
  */
-#define wdc_wait_for_drq(chp, timeout, flags) \
-		wdcwait((chp), WDCS_DRQ, WDCS_DRQ, (timeout), (flags))
-#define wdc_wait_for_unbusy(chp, timeout, flags) \
-		wdcwait((chp), 0, 0, (timeout), (flags))
-#define wdc_wait_for_ready(chp, timeout, flags) \
-		wdcwait((chp), WDCS_DRDY, WDCS_DRDY, (timeout), (flags))
+#define wdc_wait_for_drq(chp, timeout, flags, tfd) \
+		wdcwait((chp), WDCS_DRQ, WDCS_DRQ, (timeout), (flags), (tfd))
+#define wdc_wait_for_unbusy(chp, timeout, flags, tfd) \
+		wdcwait((chp), 0, 0, (timeout), (flags), (tfd))
+#define wdc_wait_for_ready(chp, timeout, flags, tfd) \
+		wdcwait((chp), WDCS_DRDY, WDCS_DRDY, (timeout), (flags), (tfd))
 
 /* ATA/ATAPI specs says a device can take 31s to reset */
 #define WDC_RESET_WAIT 31000

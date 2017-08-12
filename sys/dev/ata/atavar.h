@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.21 2017/08/01 21:39:51 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.22 2017/08/12 09:52:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -148,9 +148,6 @@ struct ata_xfer {
 	int	c_skip;			/* bytes already transferred */
 	int	c_dscpoll;		/* counter for dsc polling (ATAPI) */
 	int	c_lenoff;		/* offset to c_bcount (ATAPI) */
-#if 0 /* for now */
-	int	c_ata_status;		/* copy of ATA error + status */
-#endif
 #define ATACH_ERR_ST(error, status)	((error) << 8 | (status))
 #define ATACH_ERR(val)			(((val) >> 8) & 0xff)
 #define ATACH_ST(val)			(((val) >> 0) & 0xff)
@@ -391,7 +388,6 @@ struct ata_channel {
 	/* Our state */
 	volatile int ch_flags;
 #define ATACH_SHUTDOWN 0x02	/* channel is shutting down */
-#define ATACH_IRQ_WAIT 0x10	/* controller is waiting for irq */
 #define ATACH_DMA_WAIT 0x20	/* controller is waiting for DMA */
 #define ATACH_PIOBM_WAIT 0x40	/* controller is waiting for busmastering PIO */
 #define	ATACH_DISABLED 0x80	/* channel is disabled */
@@ -399,10 +395,6 @@ struct ata_channel {
 #define ATACH_TH_RESET 0x200	/* someone ask the thread to reset */
 #define ATACH_TH_RESCAN 0x400	/* rescan requested */
 #define ATACH_NCQ	0x800	/* channel executing NCQ commands */
-#if 1 /* for now */
-	uint8_t ch_status;	/* copy of status register */
-	uint8_t ch_error;	/* copy of error register */
-#endif
 
 	/* for the reset callback */
 	int ch_reset_flags;
@@ -516,6 +508,7 @@ void	ata_deactivate_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);
 
 void	ata_timeout(void *);
+bool	ata_timo_xfer_check(struct ata_xfer *);
 void	ata_kill_pending(struct ata_drive_datas *);
 void	ata_kill_active(struct ata_channel *, int, int);
 void	ata_reset_channel(struct ata_channel *, int);
