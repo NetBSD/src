@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.2 2017/08/08 08:04:06 maxv Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.3 2017/08/12 07:07:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,11 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.2 2017/08/08 08:04:06 maxv Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_vm86.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.3 2017/08/12 07:07:53 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.2 2017/08/08 08:04:06 maxv Exp
 #include <machine/cpufunc.h>
 #include <x86/fpu.h>
 #include <machine/reg.h>
-#include <machine/vm86.h>
 #include <machine/vmparam.h>
 #include <compat/freebsd/freebsd_machdep.h>
 
@@ -101,23 +96,12 @@ freebsd_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_handler = catcher;
 
 	/* Save context. */
-#ifdef VM86
-	if (tf->tf_eflags & PSL_VM) {
-		frame.sf_sc.sc_gs = tf->tf_vm86_gs;
-		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
-		frame.sf_sc.sc_es = tf->tf_vm86_es;
-		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_efl = get_vflags(l);
-		(*p->p_emul->e_syscall_intern)(p);
-	} else
-#endif
-	{
-		frame.sf_sc.sc_gs = tf->tf_gs;
-		frame.sf_sc.sc_fs = tf->tf_fs;
-		frame.sf_sc.sc_es = tf->tf_es;
-		frame.sf_sc.sc_ds = tf->tf_ds;
-		frame.sf_sc.sc_efl = tf->tf_eflags;
-	}
+	frame.sf_sc.sc_gs = tf->tf_gs;
+	frame.sf_sc.sc_fs = tf->tf_fs;
+	frame.sf_sc.sc_es = tf->tf_es;
+	frame.sf_sc.sc_ds = tf->tf_ds;
+	frame.sf_sc.sc_efl = tf->tf_eflags;
+
 	frame.sf_sc.sc_edi = tf->tf_edi;
 	frame.sf_sc.sc_esi = tf->tf_esi;
 	frame.sf_sc.sc_ebp = tf->tf_ebp;
@@ -192,36 +176,24 @@ freebsd_sys_sigreturn(struct lwp *l, const struct freebsd_sys_sigreturn_args *ua
 
 	/* Restore register context. */
 	tf = l->l_md.md_regs;
-#ifdef VM86
-	if (context.sc_efl & PSL_VM) {
-		void syscall_vm86(struct trapframe *);
 
-		tf->tf_vm86_gs = context.sc_gs;
-		tf->tf_vm86_fs = context.sc_fs;
-		tf->tf_vm86_es = context.sc_es;
-		tf->tf_vm86_ds = context.sc_ds;
-		set_vflags(l, context.sc_efl);
-		p->p_md.md_syscall = syscall_vm86;
-	} else
-#endif
-	{
-		/*
-		 * Check for security violations.  If we're returning to
-		 * protected mode, the CPU will validate the segment registers
-		 * automatically and generate a trap on violations.  We handle
-		 * the trap, rather than doing all of the checking here.
-		 */
-		if (((context.sc_efl ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-		    !USERMODE(context.sc_cs, context.sc_efl))
-			return (EINVAL);
+	/*
+	 * Check for security violations.  If we're returning to
+	 * protected mode, the CPU will validate the segment registers
+	 * automatically and generate a trap on violations.  We handle
+	 * the trap, rather than doing all of the checking here.
+	 */
+	if (((context.sc_efl ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+	    !USERMODE(context.sc_cs, context.sc_efl))
+		return (EINVAL);
 
-		tf->tf_gs = context.sc_gs;
-		tf->tf_fs = context.sc_fs;
-		tf->tf_es = context.sc_es;
-		tf->tf_ds = context.sc_ds;
-		tf->tf_eflags &= ~PSL_USER;
-		tf->tf_eflags |= context.sc_efl & PSL_USER;
-	}
+	tf->tf_gs = context.sc_gs;
+	tf->tf_fs = context.sc_fs;
+	tf->tf_es = context.sc_es;
+	tf->tf_ds = context.sc_ds;
+	tf->tf_eflags &= ~PSL_USER;
+	tf->tf_eflags |= context.sc_efl & PSL_USER;
+
 	tf->tf_edi = context.sc_edi;
 	tf->tf_esi = context.sc_esi;
 	tf->tf_ebp = context.sc_ebp;
