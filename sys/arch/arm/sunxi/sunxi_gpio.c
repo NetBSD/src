@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.9 2017/07/23 10:16:08 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.10 2017/08/12 23:42:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.9 2017/07/23 10:16:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.10 2017/08/12 23:42:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -350,12 +350,87 @@ static struct fdtbus_gpio_controller_func sunxi_gpio_funcs = {
 	.write = sunxi_gpio_write,
 };
 
+static const char *
+sunxi_pinctrl_parse_function(int phandle)
+{
+	const char *function;
+
+	function = fdtbus_get_string(phandle, "function");
+	if (function != NULL)
+		return function;
+
+	return fdtbus_get_string(phandle, "allwinner,function");
+}
+
+static const char *
+sunxi_pinctrl_parse_pins(int phandle, int *pins_len)
+{
+	int len;
+
+	len = OF_getproplen(phandle, "pins");
+	if (len > 0) {
+		*pins_len = len;
+		return fdtbus_get_string(phandle, "pins");
+	}
+
+	len = OF_getproplen(phandle, "allwinner,pins");
+	if (len > 0) {
+		*pins_len = len;
+		return fdtbus_get_string(phandle, "allwinner,pins");
+	}
+
+	return NULL;
+}
+
+static int
+sunxi_pinctrl_parse_bias(int phandle)
+{
+	u_int pull;
+	int bias = -1;
+
+	if (of_hasprop(phandle, "bias-disable"))
+		bias = 0;
+	else if (of_hasprop(phandle, "bias-pull-up"))
+		bias = GPIO_PIN_PULLUP;
+	else if (of_hasprop(phandle, "bias-pull-down"))
+		bias = GPIO_PIN_PULLDOWN;
+	else if (of_getprop_uint32(phandle, "allwinner,pull", &pull) == 0) {
+		switch (pull) {
+		case 0:
+			bias = 0;
+			break;
+		case 1:
+			bias = GPIO_PIN_PULLUP;
+			break;
+		case 2:
+			bias = GPIO_PIN_PULLDOWN;
+			break;
+		}
+	}
+
+	return bias;
+}
+
+static int
+sunxi_pinctrl_parse_drive_strength(int phandle)
+{
+	int val;
+
+	if (of_getprop_uint32(phandle, "drive-strength", &val) == 0)
+		return val;
+
+	if (of_getprop_uint32(phandle, "allwinner,drive", &val) == 0)
+		return (val + 1) * 10;
+
+	return -1;
+}
+
 static int
 sunxi_pinctrl_set_config(device_t dev, const void *data, size_t len)
 {
 	struct sunxi_gpio_softc * const sc = device_private(dev);
 	const struct sunxi_gpio_pins *pin_def;
-	u_int drive_strength;
+	int pins_len;
 
 	if (len != 4)
 		return -1;
@@ -364,22 +439,23 @@ sunxi_pinctrl_set_config(device_t dev, const void *data, size_t len)
 
 	/*
 	 * Required: pins, function
-	 * Optional: bias-disable, bias-pull-up, bias-pull-down, drive-strength
+	 * Optional: bias, drive strength
 	 */
 
-	const char *function = fdtbus_get_string(phandle, "function");
+	const char *function = sunxi_pinctrl_parse_function(phandle);
 	if (function == NULL)
 		return -1;
-	int pins_len = OF_getproplen(phandle, "pins");
-	if (pins_len <= 0)
+	const char *pins = sunxi_pinctrl_parse_pins(phandle, &pins_len);
+	if (pins == NULL)
 		return -1;
-	const char *pins = fdtbus_get_string(phandle, "pins");
+
+	const int bias = sunxi_pinctrl_parse_bias(phandle);
+	const int drive_strength = sunxi_pinctrl_parse_drive_strength(phandle);
 
 	mutex_enter(&sc->sc_lock);
 
-	for (pins = fdtbus_get_string(phandle, "pins");
-	     pins_len > 0;
-	     pins_len -= strlen(pins) + 1, pins += strlen(pins) + 1) {
+	for (; pins_len > 0;
+	    pins_len -= strlen(pins) + 1, pins += strlen(pins) + 1) {
 		pin_def = sunxi_gpio_lookup_byname(sc, pins);
 		if (pin_def == NULL) {
 			aprint_error_dev(dev, "unknown pin name '%s'\n", pins);
@@ -388,14 +464,10 @@ sunxi_pinctrl_set_config(device_t dev, const void *data, size_t len)
 		if (sunxi_gpio_setfunc(sc, pin_def, function) != 0)
 			continue;
 
-		if (of_hasprop(phandle, "bias-disable"))
-			sunxi_gpio_setpull(sc, pin_def, 0);
-		else if (of_hasprop(phandle, "bias-pull-up"))
-			sunxi_gpio_setpull(sc, pin_def, GPIO_PIN_PULLUP);
-		else if (of_hasprop(phandle, "bias-pull-down"))
-			sunxi_gpio_setpull(sc, pin_def, GPIO_PIN_PULLDOWN);
+		if (bias != -1)
+			sunxi_gpio_setpull(sc, pin_def, bias);
 
-		if (of_getprop_uint32(phandle, "drive-strength", &drive_strength) == 0)
+		if (drive_strength != -1)
 			sunxi_gpio_setdrv(sc, pin_def, drive_strength);
 	}
 
