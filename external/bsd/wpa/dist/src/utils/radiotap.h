@@ -1,5 +1,5 @@
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.5 2005/01/22 20:12:05 sam Exp $ */
-/* $NetBSD: radiotap.h,v 1.3.4.1 2015/04/29 20:28:38 snj Exp $ */
+/* $NetBSD: radiotap.h,v 1.3.4.1.2.1 2017/08/12 05:31:35 snj Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
@@ -65,12 +65,12 @@ struct ieee80211_radiotap_header {
 				 * new fields does not count.
 				 */
 	uint8_t it_pad;
-	uint16_t it_len;	/* length of the whole
+	le16 it_len;		/* length of the whole
 				 * header in bytes, including
 				 * it_version, it_pad,
 				 * it_len, and data fields.
 				 */
-	uint32_t it_present;	/* A bitmap telling which
+	le32 it_present;	/* A bitmap telling which
 				 * fields are present. Set bit 31
 				 * (0x80000000) to extend the
 				 * bitmap by another 32 bits.
