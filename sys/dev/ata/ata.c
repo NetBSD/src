@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.26 2017/08/12 14:41:54 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.27 2017/08/12 15:08:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.26 2017/08/12 14:41:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.27 2017/08/12 15:08:38 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -711,7 +711,9 @@ atabus_attach(device_t parent, device_t self, void *aux)
 
 	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
 	initq->atabus_sc = sc;
+	mutex_enter(&atabus_qlock);
 	TAILQ_INSERT_TAIL(&atabus_initq_head, initq, atabus_initq);
+	mutex_exit(&atabus_qlock);
 	config_pending_incr(sc->sc_dev);
 
 	if ((error = kthread_create(PRI_NONE, 0, NULL, atabus_thread, sc,
@@ -2390,7 +2392,9 @@ atabus_rescan(device_t self, const char *ifattr, const int *locators)
 
 	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
 	initq->atabus_sc = sc;
+	mutex_enter(&atabus_qlock);
 	TAILQ_INSERT_TAIL(&atabus_initq_head, initq, atabus_initq);
+	mutex_exit(&atabus_qlock);
 	config_pending_incr(sc->sc_dev);
 
 	mutex_enter(&chp->ch_lock);
