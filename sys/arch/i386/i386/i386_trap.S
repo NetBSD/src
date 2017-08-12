@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.8 2017/06/14 17:21:04 maxv Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.9 2017/08/12 07:07:53 maxv Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.8 2017/06/14 17:21:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.9 2017/08/12 07:07:53 maxv Exp $");
 #endif
 
 /*
@@ -383,12 +383,7 @@ calltrap:
 _C_LABEL(trapreturn):	.globl	trapreturn
 	testb	$CHK_UPL,TF_CS(%esp)
 	jnz	.Lalltraps_checkast
-#ifdef VM86
-	testl	$PSL_VM,TF_EFLAGS(%esp)
-	jz	6f
-#else
 	jmp	6f
-#endif
 .Lalltraps_checkast:
 	/* Check for ASTs on exit to user mode. */
 	CLI(%eax)

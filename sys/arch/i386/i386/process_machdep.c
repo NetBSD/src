@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.89 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.90 2017/08/12 07:07:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -75,9 +75,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.89 2017/02/23 03:34:22 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.90 2017/08/12 07:07:53 maxv Exp $");
 
-#include "opt_vm86.h"
 #include "opt_ptrace.h"
 
 #include <sys/param.h>
@@ -97,10 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.89 2017/02/23 03:34:22 kamil E
 #include <x86/dbregs.h>
 #include <x86/fpu.h>
 
-#ifdef VM86
-#include <machine/vm86.h>
-#endif
-
 static inline struct trapframe *
 process_frame(struct lwp *l)
 {
@@ -113,22 +108,12 @@ process_read_regs(struct lwp *l, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(l);
 
-#ifdef VM86
-	if (tf->tf_eflags & PSL_VM) {
-		regs->r_gs = tf->tf_vm86_gs;
-		regs->r_fs = tf->tf_vm86_fs;
-		regs->r_es = tf->tf_vm86_es;
-		regs->r_ds = tf->tf_vm86_ds;
-		regs->r_eflags = get_vflags(l);
-	} else
-#endif
-	{
-		regs->r_gs = tf->tf_gs & 0xffff;
-		regs->r_fs = tf->tf_fs & 0xffff;
-		regs->r_es = tf->tf_es & 0xffff;
-		regs->r_ds = tf->tf_ds & 0xffff;
-		regs->r_eflags = tf->tf_eflags;
-	}
+	regs->r_gs = tf->tf_gs & 0xffff;
+	regs->r_fs = tf->tf_fs & 0xffff;
+	regs->r_es = tf->tf_es & 0xffff;
+	regs->r_ds = tf->tf_ds & 0xffff;
+	regs->r_eflags = tf->tf_eflags;
+
 	regs->r_edi = tf->tf_edi;
 	regs->r_esi = tf->tf_esi;
 	regs->r_ebp = tf->tf_ebp;
@@ -168,41 +153,19 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 {
 	struct trapframe *tf = process_frame(l);
 
-#ifdef VM86
-	if (regs->r_eflags & PSL_VM) {
-		void syscall_vm86(struct trapframe *);
+	/*
+	 * Check for security violations.
+	 */
+	if (((regs->r_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+	    !USERMODE(regs->r_cs, regs->r_eflags))
+		return (EINVAL);
 
-		tf->tf_vm86_gs = regs->r_gs;
-		tf->tf_vm86_fs = regs->r_fs;
-		tf->tf_vm86_es = regs->r_es;
-		tf->tf_vm86_ds = regs->r_ds;
-		set_vflags(l, regs->r_eflags);
-		/*
-		 * Make sure that attempts at system calls from vm86
-		 * mode die horribly.
-		 */
-		l->l_proc->p_md.md_syscall = syscall_vm86;
-	} else
-#endif
-	{
-		/*
-		 * Check for security violations.
-		 */
-		if (((regs->r_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-		    !USERMODE(regs->r_cs, regs->r_eflags))
-			return (EINVAL);
+	tf->tf_gs = regs->r_gs;
+	tf->tf_fs = regs->r_fs;
+	tf->tf_es = regs->r_es;
+	tf->tf_ds = regs->r_ds;
+	tf->tf_eflags = regs->r_eflags;
 
-		tf->tf_gs = regs->r_gs;
-		tf->tf_fs = regs->r_fs;
-		tf->tf_es = regs->r_es;
-		tf->tf_ds = regs->r_ds;
-#ifdef VM86
-		/* Restore normal syscall handler */
-		if (tf->tf_eflags & PSL_VM)
-			(*l->l_proc->p_emul->e_syscall_intern)(l->l_proc);
-#endif
-		tf->tf_eflags = regs->r_eflags;
-	}
 	tf->tf_edi = regs->r_edi;
 	tf->tf_esi = regs->r_esi;
 	tf->tf_ebp = regs->r_ebp;
