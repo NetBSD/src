@@ -28,6 +28,8 @@ extern "C" {
 #define WPA_EVENT_DISCONNECTED "CTRL-EVENT-DISCONNECTED "
 /** Association rejected during connection attempt */
 #define WPA_EVENT_ASSOC_REJECT "CTRL-EVENT-ASSOC-REJECT "
+/** Authentication rejected during connection attempt */
+#define WPA_EVENT_AUTH_REJECT "CTRL-EVENT-AUTH-REJECT "
 /** wpa_supplicant is exiting */
 #define WPA_EVENT_TERMINATING "CTRL-EVENT-TERMINATING "
 /** Password change was completed successfully */
@@ -68,10 +70,27 @@ extern "C" {
 #define WPA_EVENT_BSS_ADDED "CTRL-EVENT-BSS-ADDED "
 /** A BSS entry was removed (followed by BSS entry id and BSSID) */
 #define WPA_EVENT_BSS_REMOVED "CTRL-EVENT-BSS-REMOVED "
+/** No suitable network was found */
+#define WPA_EVENT_NETWORK_NOT_FOUND "CTRL-EVENT-NETWORK-NOT-FOUND "
 /** Change in the signal level was reported by the driver */
 #define WPA_EVENT_SIGNAL_CHANGE "CTRL-EVENT-SIGNAL-CHANGE "
 /** Regulatory domain channel */
 #define WPA_EVENT_REGDOM_CHANGE "CTRL-EVENT-REGDOM-CHANGE "
+/** Channel switch (followed by freq=<MHz> and other channel parameters) */
+#define WPA_EVENT_CHANNEL_SWITCH "CTRL-EVENT-CHANNEL-SWITCH "
+
+/** IP subnet status change notification
+ *
+ * When using an offloaded roaming mechanism where driver/firmware takes care
+ * of roaming and IP subnet validation checks post-roaming, this event can
+ * indicate whether IP subnet has changed.
+ *
+ * The event has a status=<0/1/2> parameter where
+ * 0 = unknown
+ * 1 = IP subnet unchanged (can continue to use the old IP address)
+ * 2 = IP subnet changed (need to get a new IP address)
+ */
+#define WPA_EVENT_SUBNET_STATUS_UPDATE "CTRL-EVENT-SUBNET-STATUS-UPDATE "
 
 /** RSN IBSS 4-way handshakes completed with specified peer */
 #define IBSS_RSN_COMPLETED "IBSS-RSN-COMPLETED "
@@ -170,6 +189,7 @@ extern "C" {
 #define P2P_EVENT_SERV_ASP_RESP "P2P-SERV-ASP-RESP "
 #define P2P_EVENT_INVITATION_RECEIVED "P2P-INVITATION-RECEIVED "
 #define P2P_EVENT_INVITATION_RESULT "P2P-INVITATION-RESULT "
+#define P2P_EVENT_INVITATION_ACCEPTED "P2P-INVITATION-ACCEPTED "
 #define P2P_EVENT_FIND_STOPPED "P2P-FIND-STOPPED "
 #define P2P_EVENT_PERSISTENT_PSK_FAIL "P2P-PERSISTENT-PSK-FAIL id="
 #define P2P_EVENT_PRESENCE_RESPONSE "P2P-PRESENCE-RESPONSE "
@@ -208,6 +228,11 @@ extern "C" {
 /* parameters: <addr> <result> */
 #define ANQP_QUERY_DONE "ANQP-QUERY-DONE "
 
+#define RX_ANQP "RX-ANQP "
+#define RX_HS20_ANQP "RX-HS20-ANQP "
+#define RX_HS20_ANQP_ICON "RX-HS20-ANQP-ICON "
+#define RX_HS20_ICON "RX-HS20-ICON "
+
 #define HS20_SUBSCRIPTION_REMEDIATION "HS20-SUBSCRIPTION-REMEDIATION "
 #define HS20_DEAUTH_IMMINENT_NOTICE "HS20-DEAUTH-IMMINENT-NOTICE "
 
@@ -227,6 +252,8 @@ extern "C" {
 #define WPS_EVENT_AP_PIN_DISABLED "WPS-AP-PIN-DISABLED "
 #define AP_STA_CONNECTED "AP-STA-CONNECTED "
 #define AP_STA_DISCONNECTED "AP-STA-DISCONNECTED "
+#define AP_STA_POSSIBLE_PSK_MISMATCH "AP-STA-POSSIBLE-PSK-MISMATCH "
+#define AP_STA_POLL_OK "AP-STA-POLL-OK "
 
 #define AP_REJECTED_MAX_STA "AP-REJECTED-MAX-STA "
 #define AP_REJECTED_BLOCKED_STA "AP-REJECTED-BLOCKED-STA "
@@ -249,8 +276,17 @@ extern "C" {
 
 #define AP_CSA_FINISHED "AP-CSA-FINISHED "
 
+#define P2P_EVENT_LISTEN_OFFLOAD_STOP "P2P-LISTEN-OFFLOAD-STOPPED "
+#define P2P_LISTEN_OFFLOAD_STOP_REASON "P2P-LISTEN-OFFLOAD-STOP-REASON "
+
 /* BSS Transition Management Response frame received */
 #define BSS_TM_RESP "BSS-TM-RESP "
+
+/* MBO IE with cellular data connection preference received */
+#define MBO_CELL_PREFERENCE "MBO-CELL-PREFERENCE "
+
+/* BSS Transition Management Request received with MBO transition reason */
+#define MBO_TRANSITION_REASON "MBO-TRANSITION-REASON "
 
 /* BSS command information masks */
 
@@ -276,6 +312,7 @@ extern "C" {
 #define WPA_BSS_MASK_MESH_SCAN		BIT(18)
 #define WPA_BSS_MASK_SNR		BIT(19)
 #define WPA_BSS_MASK_EST_THROUGHPUT	BIT(20)
+#define WPA_BSS_MASK_FST		BIT(21)
 
 
 /* VENDOR_ELEM_* frame id values */
@@ -294,6 +331,7 @@ enum wpa_vendor_elem_frame {
 	VENDOR_ELEM_P2P_ASSOC_REQ = 11,
 	VENDOR_ELEM_P2P_ASSOC_RESP = 12,
 	VENDOR_ELEM_ASSOC_REQ = 13,
+	VENDOR_ELEM_PROBE_REQ = 14,
 	NUM_VENDOR_ELEM_FRAMES
 };
 
@@ -311,6 +349,20 @@ enum wpa_vendor_elem_frame {
  * interface need to use matching path configuration.
  */
 struct wpa_ctrl * wpa_ctrl_open(const char *ctrl_path);
+
+/**
+ * wpa_ctrl_open2 - Open a control interface to wpa_supplicant/hostapd
+ * @ctrl_path: Path for UNIX domain sockets; ignored if UDP sockets are used.
+ * @cli_path: Path for client UNIX domain sockets; ignored if UDP socket
+ *            is used.
+ * Returns: Pointer to abstract control interface data or %NULL on failure
+ *
+ * This function is used to open a control interface to wpa_supplicant/hostapd
+ * when the socket path for client need to be specified explicitly. Default
+ * ctrl_path is usually /var/run/wpa_supplicant or /var/run/hostapd and client
+ * socket path is /tmp.
+ */
+struct wpa_ctrl * wpa_ctrl_open2(const char *ctrl_path, const char *cli_path);
 
 
 /**

@@ -53,15 +53,9 @@ static inline unsigned int bswap_32(unsigned int v)
 }
 #endif /* __APPLE__ */
 
-#ifdef CONFIG_TI_COMPILER
-#define __BIG_ENDIAN 4321
-#define __LITTLE_ENDIAN 1234
-#ifdef __big_endian__
-#define __BYTE_ORDER __BIG_ENDIAN
-#else
-#define __BYTE_ORDER __LITTLE_ENDIAN
+#ifdef __NetBSD__
+#include <net/if.h>
 #endif
-#endif /* CONFIG_TI_COMPILER */
 
 #ifdef CONFIG_NATIVE_WINDOWS
 #include <winsock.h>
@@ -109,22 +103,6 @@ typedef INT16 s16;
 typedef INT8 s8;
 #define WPA_TYPES_DEFINED
 #endif /* __vxworks */
-
-#ifdef CONFIG_TI_COMPILER
-#ifdef _LLONG_AVAILABLE
-typedef unsigned long long u64;
-#else
-/*
- * TODO: 64-bit variable not available. Using long as a workaround to test the
- * build, but this will likely not work for all operations.
- */
-typedef unsigned long u64;
-#endif
-typedef unsigned int u32;
-typedef unsigned short u16;
-typedef unsigned char u8;
-#define WPA_TYPES_DEFINED
-#endif /* CONFIG_TI_COMPILER */
 
 #ifndef WPA_TYPES_DEFINED
 #ifdef CONFIG_USE_INTTYPES_H
@@ -262,7 +240,7 @@ static inline void WPA_PUT_BE24(u8 *a, u32 val)
 
 static inline u32 WPA_GET_BE32(const u8 *a)
 {
-	return (a[0] << 24) | (a[1] << 16) | (a[2] << 8) | a[3];
+	return ((u32) a[0] << 24) | (a[1] << 16) | (a[2] << 8) | a[3];
 }
 
 static inline void WPA_PUT_BE32(u8 *a, u32 val)
@@ -275,7 +253,7 @@ static inline void WPA_PUT_BE32(u8 *a, u32 val)
 
 static inline u32 WPA_GET_LE32(const u8 *a)
 {
-	return (a[3] << 24) | (a[2] << 16) | (a[1] << 8) | a[0];
+	return ((u32) a[3] << 24) | (a[2] << 16) | (a[1] << 8) | a[0];
 }
 
 static inline void WPA_PUT_LE32(u8 *a, u32 val)
@@ -338,6 +316,9 @@ static inline void WPA_PUT_LE64(u8 *a, u64 val)
 #endif
 #ifndef ETH_P_ALL
 #define ETH_P_ALL 0x0003
+#endif
+#ifndef ETH_P_IP
+#define ETH_P_IP 0x0800
 #endif
 #ifndef ETH_P_80211_ENCAP
 #define ETH_P_80211_ENCAP 0x890d /* TDLS comes under this category */
@@ -433,7 +414,7 @@ void perror(const char *s);
 #endif
 
 #ifndef BIT
-#define BIT(x) (1 << (x))
+#define BIT(x) (1U << (x))
 #endif
 
 /*
@@ -442,6 +423,7 @@ void perror(const char *s);
  */
 #ifdef __CHECKER__
 #define __force __attribute__((force))
+#undef __bitwise
 #define __bitwise __attribute__((bitwise))
 #else
 #define __force
@@ -471,6 +453,13 @@ typedef u64 __bitwise le64;
 #endif /* __GNUC__ */
 #endif /* __must_check */
 
+#define SSID_MAX_LEN 32
+
+struct wpa_ssid_value {
+	u8 ssid[SSID_MAX_LEN];
+	size_t ssid_len;
+};
+
 int hwaddr_aton(const char *txt, u8 *addr);
 int hwaddr_masked_aton(const char *txt, u8 *addr, u8 *mask, u8 maskable);
 int hwaddr_compact_aton(const char *txt, u8 *addr);
@@ -480,11 +469,14 @@ int hexstr2bin(const char *hex, u8 *buf, size_t len);
 void inc_byte_array(u8 *counter, size_t len);
 void wpa_get_ntp_timestamp(u8 *buf);
 int wpa_scnprintf(char *buf, size_t size, const char *fmt, ...);
+int wpa_snprintf_hex_sep(char *buf, size_t buf_size, const u8 *data, size_t len,
+			 char sep);
 int wpa_snprintf_hex(char *buf, size_t buf_size, const u8 *data, size_t len);
 int wpa_snprintf_hex_uppercase(char *buf, size_t buf_size, const u8 *data,
 			       size_t len);
 
 int hwaddr_mask_txt(char *buf, size_t len, const u8 *addr, const u8 *mask);
+int ssid_parse(const char *buf, struct wpa_ssid_value *ssid);
 
 #ifdef CONFIG_NATIVE_WINDOWS
 void wpa_unicode2ascii_inplace(TCHAR *str);
@@ -501,6 +493,8 @@ const char * wpa_ssid_txt(const u8 *ssid, size_t ssid_len);
 
 char * wpa_config_parse_string(const char *value, size_t *len);
 int is_hex(const u8 *data, size_t len);
+int has_ctrl_char(const u8 *data, size_t len);
+int has_newline(const char *str);
 size_t merge_byte_arrays(u8 *res, size_t res_len,
 			 const u8 *src1, size_t src1_len,
 			 const u8 *src2, size_t src2_len);
@@ -514,6 +508,11 @@ static inline int is_zero_ether_addr(const u8 *a)
 static inline int is_broadcast_ether_addr(const u8 *a)
 {
 	return (a[0] & a[1] & a[2] & a[3] & a[4] & a[5]) == 0xff;
+}
+
+static inline int is_multicast_ether_addr(const u8 *a)
+{
+	return a[0] & 0x01;
 }
 
 #define broadcast_ether_addr (const u8 *) "\xff\xff\xff\xff\xff\xff"
@@ -547,11 +546,15 @@ void bin_clear_free(void *bin, size_t len);
 int random_mac_addr(u8 *addr);
 int random_mac_addr_keep_oui(u8 *addr);
 
+const char * cstr_token(const char *str, const char *delim, const char **last);
 char * str_token(char *str, const char *delim, char **context);
 size_t utf8_escape(const char *inp, size_t in_size,
 		   char *outp, size_t out_size);
 size_t utf8_unescape(const char *inp, size_t in_size,
 		     char *outp, size_t out_size);
+int is_ctrl_char(char c);
+
+int str_starts(const char *str, const char *start);
 
 
 /*

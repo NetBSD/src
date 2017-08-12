@@ -737,6 +737,10 @@ enum wpa_ctrl_req_type wpa_supplicant_ctrl_req_from_string(const char *field)
 		return WPA_CTRL_REQ_EAP_PASSPHRASE;
 	else if (os_strcmp(field, "SIM") == 0)
 		return WPA_CTRL_REQ_SIM;
+	else if (os_strcmp(field, "PSK_PASSPHRASE") == 0)
+		return WPA_CTRL_REQ_PSK_PASSPHRASE;
+	else if (os_strcmp(field, "EXT_CERT_CHECK") == 0)
+		return WPA_CTRL_REQ_EXT_CERT_CHECK;
 	return WPA_CTRL_REQ_UNKNOWN;
 }
 
@@ -776,6 +780,14 @@ const char * wpa_supplicant_ctrl_req_to_string(enum wpa_ctrl_req_type field,
 	case WPA_CTRL_REQ_SIM:
 		ret = "SIM";
 		break;
+	case WPA_CTRL_REQ_PSK_PASSPHRASE:
+		*txt = "PSK or passphrase";
+		ret = "PSK_PASSPHRASE";
+		break;
+	case WPA_CTRL_REQ_EXT_CERT_CHECK:
+		*txt = "External server certificate validation";
+		ret = "EXT_CERT_CHECK";
+		break;
 	default:
 		break;
 	}
@@ -789,6 +801,35 @@ const char * wpa_supplicant_ctrl_req_to_string(enum wpa_ctrl_req_type field,
 	return ret;
 }
 
+
+void wpas_send_ctrl_req(struct wpa_supplicant *wpa_s, struct wpa_ssid *ssid,
+			const char *field_name, const char *txt)
+{
+	char *buf;
+	size_t buflen;
+	int len;
+
+	buflen = 100 + os_strlen(txt) + ssid->ssid_len;
+	buf = os_malloc(buflen);
+	if (buf == NULL)
+		return;
+	len = os_snprintf(buf, buflen, "%s-%d:%s needed for SSID ",
+			  field_name, ssid->id, txt);
+	if (os_snprintf_error(buflen, len)) {
+		os_free(buf);
+		return;
+	}
+	if (ssid->ssid && buflen > len + ssid->ssid_len) {
+		os_memcpy(buf + len, ssid->ssid, ssid->ssid_len);
+		len += ssid->ssid_len;
+		buf[len] = '\0';
+	}
+	buf[buflen - 1] = '\0';
+	wpa_msg(wpa_s, MSG_INFO, WPA_CTRL_REQ "%s", buf);
+	os_free(buf);
+}
+
+
 #ifdef IEEE8021X_EAPOL
 #if defined(CONFIG_CTRL_IFACE) || !defined(CONFIG_NO_STDOUT_DEBUG)
 static void wpa_supplicant_eap_param_needed(void *ctx,
@@ -798,13 +839,12 @@ static void wpa_supplicant_eap_param_needed(void *ctx,
 	struct wpa_supplicant *wpa_s = ctx;
 	struct wpa_ssid *ssid = wpa_s->current_ssid;
 	const char *field_name, *txt = NULL;
-	char *buf;
-	size_t buflen;
-	int len;
 
 	if (ssid == NULL)
 		return;
 
+	if (field == WPA_CTRL_REQ_EXT_CERT_CHECK)
+		ssid->eap.pending_ext_cert_check = PENDING_CHECK;
 	wpas_notify_network_request(wpa_s, ssid, field, default_txt);
 
 	field_name = wpa_supplicant_ctrl_req_to_string(field, default_txt,
@@ -817,25 +857,7 @@ static void wpa_supplicant_eap_param_needed(void *ctx,
 
 	wpas_notify_eap_status(wpa_s, "eap parameter needed", field_name);
 
-	buflen = 100 + os_strlen(txt) + ssid->ssid_len;
-	buf = os_malloc(buflen);
-	if (buf == NULL)
-		return;
-	len = os_snprintf(buf, buflen,
-			  WPA_CTRL_REQ "%s-%d:%s needed for SSID ",
-			  field_name, ssid->id, txt);
-	if (os_snprintf_error(buflen, len)) {
-		os_free(buf);
-		return;
-	}
-	if (ssid->ssid && buflen > len + ssid->ssid_len) {
-		os_memcpy(buf + len, ssid->ssid, ssid->ssid_len);
-		len += ssid->ssid_len;
-		buf[len] = '\0';
-	}
-	buf[buflen - 1] = '\0';
-	wpa_msg(wpa_s, MSG_INFO, "%s", buf);
-	os_free(buf);
+	wpas_send_ctrl_req(wpa_s, ssid, field_name, txt);
 }
 #else /* CONFIG_CTRL_IFACE || !CONFIG_NO_STDOUT_DEBUG */
 #define wpa_supplicant_eap_param_needed NULL
@@ -999,7 +1021,6 @@ static void wpa_supplicant_set_rekey_offload(void *ctx,
 
 	wpa_drv_set_rekey_info(wpa_s, kek, kek_len, kck, kck_len, replay_ctr);
 }
-#endif /* CONFIG_NO_WPA */
 
 
 static int wpa_supplicant_key_mgmt_set_pmk(void *ctx, const u8 *pmk,
@@ -1007,12 +1028,14 @@ static int wpa_supplicant_key_mgmt_set_pmk(void *ctx, const u8 *pmk,
 {
 	struct wpa_supplicant *wpa_s = ctx;
 
-	if (wpa_s->conf->key_mgmt_offload)
+	if (wpa_s->conf->key_mgmt_offload &&
+	    (wpa_s->drv_flags & WPA_DRIVER_FLAGS_KEY_MGMT_OFFLOAD))
 		return wpa_drv_set_key(wpa_s, WPA_ALG_PMK, NULL, 0, 0,
 				       NULL, 0, pmk, pmk_len);
 	else
 		return 0;
 }
+#endif /* CONFIG_NO_WPA */
 
 
 int wpa_supplicant_init_wpa(struct wpa_supplicant *wpa_s)
@@ -1109,6 +1132,7 @@ void wpa_supplicant_rsn_supp_set_config(struct wpa_supplicant *wpa_s,
 			}
 		}
 #endif /* CONFIG_P2P */
+		conf.wpa_rsc_relaxation = wpa_s->conf->wpa_rsc_relaxation;
 	}
 	wpa_sm_set_config(wpa_s->wpa, ssid ? &conf : NULL);
 }

@@ -479,16 +479,10 @@ static int acs_usable_chan(struct hostapd_channel_data *chan)
 static int is_in_chanlist(struct hostapd_iface *iface,
 			  struct hostapd_channel_data *chan)
 {
-	int *entry;
-
-	if (!iface->conf->chanlist)
+	if (!iface->conf->acs_ch_list.num)
 		return 1;
 
-	for (entry = iface->conf->chanlist; *entry != -1; entry++) {
-		if (*entry == chan->chan)
-			return 1;
-	}
-	return 0;
+	return freq_range_list_includes(&iface->conf->acs_ch_list, chan->chan);
 }
 
 
@@ -605,8 +599,7 @@ acs_find_ideal_chan(struct hostapd_iface *iface)
 	wpa_printf(MSG_DEBUG, "ACS: Survey analysis for selected bandwidth %d MHz",
 		   n_chans == 1 ? 20 :
 		   n_chans == 2 ? 40 :
-		   n_chans == 4 ? 80 :
-		   -1);
+		   80);
 
 	for (i = 0; i < iface->current_mode->num_channels; i++) {
 		double total_weight;
@@ -900,6 +893,9 @@ static int acs_request_scan(struct hostapd_iface *iface)
 		if (chan->flag & HOSTAPD_CHAN_DISABLED)
 			continue;
 
+		if (!is_in_chanlist(iface, chan))
+			continue;
+
 		*freq++ = chan->freq;
 	}
 	*freq = 0;
@@ -935,6 +931,9 @@ enum hostapd_chan_status acs_init(struct hostapd_iface *iface)
 			return HOSTAPD_CHAN_INVALID;
 		return HOSTAPD_CHAN_ACS;
 	}
+
+	if (!iface->current_mode)
+		return HOSTAPD_CHAN_INVALID;
 
 	acs_cleanup(iface);
 

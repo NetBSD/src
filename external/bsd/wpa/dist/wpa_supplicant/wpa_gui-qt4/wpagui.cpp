@@ -31,7 +31,8 @@
 #endif
 
 
-WpaGui::WpaGui(QApplication *_app, QWidget *parent, const char *, Qt::WFlags)
+WpaGui::WpaGui(QApplication *_app, QWidget *parent, const char *,
+	       Qt::WindowFlags)
 	: QMainWindow(parent), app(_app)
 {
 	setupUi(this);
@@ -135,6 +136,7 @@ WpaGui::WpaGui(QApplication *_app, QWidget *parent, const char *, Qt::WFlags)
 	monitor_conn = NULL;
 	msgNotifier = NULL;
 	ctrl_iface_dir = strdup("/var/run/wpa_supplicant");
+	signalMeterInterval = 0;
 
 	parse_argv();
 
@@ -158,8 +160,12 @@ WpaGui::WpaGui(QApplication *_app, QWidget *parent, const char *, Qt::WFlags)
 	textStatus->setText(tr("connecting to wpa_supplicant"));
 	timer = new QTimer(this);
 	connect(timer, SIGNAL(timeout()), SLOT(ping()));
-	timer->setSingleShot(FALSE);
+	timer->setSingleShot(false);
 	timer->start(1000);
+
+	signalMeterTimer = new QTimer(this);
+	signalMeterTimer->setInterval(signalMeterInterval);
+	connect(signalMeterTimer, SIGNAL(timeout()), SLOT(signalMeterUpdate()));
 
 	if (openCtrlConnection(ctrl_iface) < 0) {
 		debug("Failed to open control connection to "
@@ -233,14 +239,18 @@ void WpaGui::languageChange()
 void WpaGui::parse_argv()
 {
 	int c;
+	WpaGuiApp *app = qobject_cast<WpaGuiApp*>(qApp);
 	for (;;) {
-		c = getopt(qApp->argc(), qApp->argv(), "i:p:tq");
+		c = getopt(app->argc, app->argv, "i:m:p:tq");
 		if (c < 0)
 			break;
 		switch (c) {
 		case 'i':
 			free(ctrl_iface);
 			ctrl_iface = strdup(optarg);
+			break;
+		case 'm':
+			signalMeterInterval = atoi(optarg) * 1000;
 			break;
 		case 'p':
 			free(ctrl_iface_dir);
@@ -496,6 +506,8 @@ void WpaGui::updateStatus()
 		textBssid->clear();
 		textIpAddress->clear();
 		updateTrayToolTip(tr("no status information"));
+		updateTrayIcon(TrayIconOffline);
+		signalMeterTimer->stop();
 
 #ifdef CONFIG_NATIVE_WINDOWS
 		static bool first = true;
@@ -544,6 +556,11 @@ void WpaGui::updateStatus()
 				ssid_updated = true;
 				textSsid->setText(pos);
 				updateTrayToolTip(pos + tr(" (associated)"));
+				if (!signalMeterInterval) {
+					/* if signal meter is not enabled show
+					 * full signal strength */
+					updateTrayIcon(TrayIconSignalExcellent);
+				}
 			} else if (strcmp(start, "ip_address") == 0) {
 				ipaddr_updated = true;
 				textIpAddress->setText(pos);
@@ -587,6 +604,23 @@ void WpaGui::updateStatus()
 	} else
 		textEncryption->clear();
 
+	if (signalMeterInterval) {
+		/*
+		 * Handle signal meter service. When network is not associated,
+		 * deactivate timer, otherwise keep it going. Tray icon has to
+		 * be initialized here, because of the initial delay of the
+		 * timer.
+		 */
+		if (ssid_updated) {
+			if (!signalMeterTimer->isActive()) {
+				updateTrayIcon(TrayIconConnected);
+				signalMeterTimer->start();
+			}
+		} else {
+			signalMeterTimer->stop();
+		}
+	}
+
 	if (!status_updated)
 		textStatus->clear();
 	if (!auth_updated)
@@ -594,6 +628,7 @@ void WpaGui::updateStatus()
 	if (!ssid_updated) {
 		textSsid->clear();
 		updateTrayToolTip(tr("(not-associated)"));
+		updateTrayIcon(TrayIconOffline);
 	}
 	if (!bssid_updated)
 		textBssid->clear();
@@ -604,7 +639,7 @@ void WpaGui::updateStatus()
 
 void WpaGui::updateNetworks()
 {
-	char buf[2048], *start, *end, *id, *ssid, *bssid, *flags;
+	char buf[4096], *start, *end, *id, *ssid, *bssid, *flags;
 	size_t len;
 	int first_active = -1;
 	int was_selected = -1;
@@ -717,7 +752,7 @@ void WpaGui::helpContents()
 void WpaGui::helpAbout()
 {
 	QMessageBox::about(this, "wpa_gui for wpa_supplicant",
-			   "Copyright (c) 2003-2013,\n"
+			   "Copyright (c) 2003-2015,\n"
 			   "Jouni Malinen <j@w1.fi>\n"
 			   "and contributors.\n"
 			   "\n"
@@ -825,6 +860,53 @@ void WpaGui::ping()
 	if (timer->interval() != interval)
 		timer->setInterval(interval);
 #endif /* CONFIG_CTRL_IFACE_NAMED_PIPE */
+}
+
+
+void WpaGui::signalMeterUpdate()
+{
+	char reply[128];
+	size_t reply_len = sizeof(reply);
+	char *rssi;
+	int rssi_value;
+
+	ctrlRequest("SIGNAL_POLL", reply, &reply_len);
+
+	/* In order to eliminate signal strength fluctuations, try
+	 * to obtain averaged RSSI value in the first place. */
+	if ((rssi = strstr(reply, "AVG_RSSI=")) != NULL)
+		rssi_value = atoi(&rssi[sizeof("AVG_RSSI")]);
+	else if ((rssi = strstr(reply, "RSSI=")) != NULL)
+		rssi_value = atoi(&rssi[sizeof("RSSI")]);
+	else {
+		debug("Failed to get RSSI value");
+		updateTrayIcon(TrayIconSignalNone);
+		return;
+	}
+
+	debug("RSSI value: %d", rssi_value);
+
+	/*
+	 * NOTE: The code below assumes, that the unit of the value returned
+	 * by the SIGNAL POLL request is dBm. It might not be true for all
+	 * wpa_supplicant drivers.
+	 */
+
+	/*
+	 * Calibration is based on "various Internet sources". Nonetheless,
+	 * it seems to be compatible with the Windows 8.1 strength meter -
+	 * tested on Intel Centrino Advanced-N 6235.
+	 */
+	if (rssi_value >= -60)
+		updateTrayIcon(TrayIconSignalExcellent);
+	else if (rssi_value >= -68)
+		updateTrayIcon(TrayIconSignalGood);
+	else if (rssi_value >= -76)
+		updateTrayIcon(TrayIconSignalOk);
+	else if (rssi_value >= -84)
+		updateTrayIcon(TrayIconSignalWeak);
+	else
+		updateTrayIcon(TrayIconSignalNone);
 }
 
 
@@ -986,7 +1068,7 @@ void WpaGui::selectNetwork( const QString &sel )
 	else
 		cmd = "any";
 	cmd.prepend("SELECT_NETWORK ");
-	ctrlRequest(cmd.toAscii().constData(), reply, &reply_len);
+	ctrlRequest(cmd.toLocal8Bit().constData(), reply, &reply_len);
 	triggerUpdate();
 	stopWpsRun(false);
 }
@@ -1002,11 +1084,11 @@ void WpaGui::enableNetwork(const QString &sel)
 		cmd.truncate(cmd.indexOf(':'));
 	else if (!cmd.startsWith("all")) {
 		debug("Invalid editNetwork '%s'",
-		      cmd.toAscii().constData());
+		      cmd.toLocal8Bit().constData());
 		return;
 	}
 	cmd.prepend("ENABLE_NETWORK ");
-	ctrlRequest(cmd.toAscii().constData(), reply, &reply_len);
+	ctrlRequest(cmd.toLocal8Bit().constData(), reply, &reply_len);
 	triggerUpdate();
 }
 
@@ -1021,11 +1103,11 @@ void WpaGui::disableNetwork(const QString &sel)
 		cmd.truncate(cmd.indexOf(':'));
 	else if (!cmd.startsWith("all")) {
 		debug("Invalid editNetwork '%s'",
-		      cmd.toAscii().constData());
+		      cmd.toLocal8Bit().constData());
 		return;
 	}
 	cmd.prepend("DISABLE_NETWORK ");
-	ctrlRequest(cmd.toAscii().constData(), reply, &reply_len);
+	ctrlRequest(cmd.toLocal8Bit().constData(), reply, &reply_len);
 	triggerUpdate();
 }
 
@@ -1111,11 +1193,11 @@ void WpaGui::removeNetwork(const QString &sel)
 		cmd.truncate(cmd.indexOf(':'));
 	else if (!cmd.startsWith("all")) {
 		debug("Invalid editNetwork '%s'",
-		      cmd.toAscii().constData());
+		      cmd.toLocal8Bit().constData());
 		return;
 	}
 	cmd.prepend("REMOVE_NETWORK ");
-	ctrlRequest(cmd.toAscii().constData(), reply, &reply_len);
+	ctrlRequest(cmd.toLocal8Bit().constData(), reply, &reply_len);
 	triggerUpdate();
 }
 
@@ -1175,14 +1257,14 @@ int WpaGui::getNetworkDisabled(const QString &sel)
 	int pos = cmd.indexOf(':');
 	if (pos < 0) {
 		debug("Invalid getNetworkDisabled '%s'",
-		      cmd.toAscii().constData());
+		      cmd.toLocal8Bit().constData());
 		return -1;
 	}
 	cmd.truncate(pos);
 	cmd.prepend("GET_NETWORK ");
 	cmd.append(" disabled");
 
-	if (ctrlRequest(cmd.toAscii().constData(), reply, &reply_len) >= 0
+	if (ctrlRequest(cmd.toLocal8Bit().constData(), reply, &reply_len) >= 0
 	    && reply_len >= 1) {
 		reply[reply_len] = '\0';
 		if (!str_match(reply, "FAIL"))
@@ -1265,7 +1347,7 @@ void WpaGui::saveConfig()
 
 void WpaGui::selectAdapter( const QString & sel )
 {
-	if (openCtrlConnection(sel.toAscii().constData()) < 0)
+	if (openCtrlConnection(sel.toLocal8Bit().constData()) < 0)
 		debug("Failed to open control connection to "
 		      "wpa_supplicant.");
 	updateStatus();
@@ -1278,10 +1360,7 @@ void WpaGui::createTrayIcon(bool trayOnly)
 	QApplication::setQuitOnLastWindowClosed(false);
 
 	tray_icon = new QSystemTrayIcon(this);
-	if (QImageReader::supportedImageFormats().contains(QByteArray("svg")))
-		tray_icon->setIcon(QIcon(":/icons/wpa_gui.svg"));
-	else
-		tray_icon->setIcon(QIcon(":/icons/wpa_gui.png"));
+	updateTrayIcon(TrayIconOffline);
 
 	connect(tray_icon,
 		SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
@@ -1418,6 +1497,77 @@ void WpaGui::updateTrayToolTip(const QString &msg)
 {
 	if (tray_icon)
 		tray_icon->setToolTip(msg);
+}
+
+
+void WpaGui::updateTrayIcon(TrayIconType type)
+{
+	if (!tray_icon || currentIconType == type)
+		return;
+
+	QIcon fallback_icon;
+	QStringList names;
+
+	if (QImageReader::supportedImageFormats().contains(QByteArray("svg")))
+		fallback_icon = QIcon(":/icons/wpa_gui.svg");
+	else
+		fallback_icon = QIcon(":/icons/wpa_gui.png");
+
+	switch (type) {
+	case TrayIconOffline:
+		names << "network-wireless-offline-symbolic"
+		      << "network-wireless-offline"
+		      << "network-wireless-signal-none-symbolic"
+		      << "network-wireless-signal-none";
+		break;
+	case TrayIconAcquiring:
+		names << "network-wireless-acquiring-symbolic"
+		      << "network-wireless-acquiring";
+		break;
+	case TrayIconConnected:
+		names << "network-wireless-connected-symbolic"
+		      << "network-wireless-connected";
+		break;
+	case TrayIconSignalNone:
+		names << "network-wireless-signal-none-symbolic"
+		      << "network-wireless-signal-none";
+		break;
+	case TrayIconSignalWeak:
+		names << "network-wireless-signal-weak-symbolic"
+		      << "network-wireless-signal-weak";
+		break;
+	case TrayIconSignalOk:
+		names << "network-wireless-signal-ok-symbolic"
+		      << "network-wireless-signal-ok";
+		break;
+	case TrayIconSignalGood:
+		names << "network-wireless-signal-good-symbolic"
+		      << "network-wireless-signal-good";
+		break;
+	case TrayIconSignalExcellent:
+		names << "network-wireless-signal-excellent-symbolic"
+		      << "network-wireless-signal-excellent";
+		break;
+	}
+
+	currentIconType = type;
+	tray_icon->setIcon(loadThemedIcon(names, fallback_icon));
+}
+
+
+QIcon WpaGui::loadThemedIcon(const QStringList &names,
+			     const QIcon &fallback)
+{
+	QIcon icon;
+
+	for (QStringList::ConstIterator it = names.begin();
+	     it != names.end(); it++) {
+		icon = QIcon::fromTheme(*it);
+		if (!icon.isNull())
+			return icon;
+	}
+
+	return fallback;
 }
 
 
@@ -1571,7 +1721,7 @@ void WpaGui::wpsApPin()
 	size_t reply_len = sizeof(reply);
 
 	QString cmd("WPS_REG " + bssFromScan + " " + wpsApPinEdit->text());
-	if (ctrlRequest(cmd.toAscii().constData(), reply, &reply_len) < 0)
+	if (ctrlRequest(cmd.toLocal8Bit().constData(), reply, &reply_len) < 0)
 		return;
 
 	wpsStatusText->setText(tr("Waiting for AP/Enrollee"));

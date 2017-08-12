@@ -29,8 +29,9 @@ L_CFLAGS += -Wno-unused-parameter
 
 # Set Android extended P2P functionality
 L_CFLAGS += -DANDROID_P2P
+
 ifeq ($(BOARD_HOSTAPD_PRIVATE_LIB),)
-L_CFLAGS += -DANDROID_P2P_STUB
+L_CFLAGS += -DANDROID_LIB_STUB
 endif
 
 # Use Android specific directory for control interface sockets
@@ -45,7 +46,6 @@ endif
 INCLUDES = $(LOCAL_PATH)
 INCLUDES += $(LOCAL_PATH)/src
 INCLUDES += $(LOCAL_PATH)/src/utils
-INCLUDES += external/openssl/include
 INCLUDES += system/security/keystore/include
 ifdef CONFIG_DRIVER_NL80211
 ifneq ($(wildcard external/libnl),)
@@ -96,6 +96,8 @@ OBJS += src/ap/pmksa_cache_auth.c
 OBJS += src/ap/ieee802_11_shared.c
 OBJS += src/ap/beacon.c
 OBJS += src/ap/bss_load.c
+OBJS += src/ap/neighbor_db.c
+OBJS += src/ap/rrm.c
 OBJS_d =
 OBJS_p =
 LIBS =
@@ -126,6 +128,15 @@ endif
 endif
 
 OBJS += src/utils/eloop.c
+
+ifdef CONFIG_ELOOP_POLL
+L_CFLAGS += -DCONFIG_ELOOP_POLL
+endif
+
+ifdef CONFIG_ELOOP_EPOLL
+L_CFLAGS += -DCONFIG_ELOOP_EPOLL
+endif
+
 OBJS += src/utils/common.c
 OBJS += src/utils/wpa_debug.c
 OBJS += src/utils/wpabuf.c
@@ -166,17 +177,25 @@ ifdef CONFIG_NO_VLAN
 L_CFLAGS += -DCONFIG_NO_VLAN
 else
 OBJS += src/ap/vlan_init.c
-ifdef CONFIG_VLAN_NETLINK
+OBJS += src/ap/vlan_ifconfig.c
+OBJS += src/ap/vlan.c
 ifdef CONFIG_FULL_DYNAMIC_VLAN
+# Define CONFIG_FULL_DYNAMIC_VLAN to have hostapd manipulate bridges
+# and VLAN interfaces for the VLAN feature.
+L_CFLAGS += -DCONFIG_FULL_DYNAMIC_VLAN
+OBJS += src/ap/vlan_full.c
+ifdef CONFIG_VLAN_NETLINK
 OBJS += src/ap/vlan_util.c
+else
+OBJS += src/ap/vlan_ioctl.c
 endif
-L_CFLAGS += -DCONFIG_VLAN_NETLINK
 endif
 endif
 
 ifdef CONFIG_NO_CTRL_IFACE
 L_CFLAGS += -DCONFIG_NO_CTRL_IFACE
 else
+OBJS += src/common/ctrl_iface_common.c
 OBJS += ctrl_iface.c
 OBJS += src/ap/ctrl_iface_ap.c
 endif
@@ -251,6 +270,27 @@ endif
 ifdef CONFIG_IEEE80211AC
 L_CFLAGS += -DCONFIG_IEEE80211AC
 endif
+
+ifdef CONFIG_MBO
+L_CFLAGS += -DCONFIG_MBO
+OBJS += src/ap/mbo_ap.c
+endif
+
+ifdef CONFIG_FST
+L_CFLAGS += -DCONFIG_FST
+OBJS += src/fst/fst.c
+OBJS += src/fst/fst_group.c
+OBJS += src/fst/fst_iface.c
+OBJS += src/fst/fst_session.c
+OBJS += src/fst/fst_ctrl_aux.c
+ifdef CONFIG_FST_TEST
+L_CFLAGS += -DCONFIG_FST_TEST
+endif
+ifndef CONFIG_NO_CTRL_IFACE
+OBJS += src/fst/fst_ctrl_iface.c
+endif
+endif
+
 
 include $(LOCAL_PATH)/src/drivers/drivers.mk
 
@@ -529,6 +569,7 @@ endif
 ifeq ($(CONFIG_TLS), openssl)
 ifdef TLS_FUNCS
 OBJS += src/crypto/tls_openssl.c
+OBJS += src/crypto/tls_openssl_ocsp.c
 LIBS += -lssl
 endif
 OBJS += src/crypto/crypto_openssl.c
@@ -536,6 +577,8 @@ HOBJS += src/crypto/crypto_openssl.c
 ifdef NEED_FIPS186_2_PRF
 OBJS += src/crypto/fips_prf_openssl.c
 endif
+NEED_SHA256=y
+NEED_TLS_PRF_SHA256=y
 LIBS += -lcrypto
 LIBS_h += -lcrypto
 endif
@@ -553,17 +596,6 @@ OBJS += src/crypto/sha1-internal.c
 endif
 LIBS += -lgcrypt
 LIBS_h += -lgcrypt
-CONFIG_INTERNAL_SHA256=y
-CONFIG_INTERNAL_RC4=y
-CONFIG_INTERNAL_DH_GROUP5=y
-endif
-
-ifeq ($(CONFIG_TLS), schannel)
-ifdef TLS_FUNCS
-OBJS += src/crypto/tls_schannel.c
-endif
-OBJS += src/crypto/crypto_cryptoapi.c
-OBJS_p += src/crypto/crypto_cryptoapi.c
 CONFIG_INTERNAL_SHA256=y
 CONFIG_INTERNAL_RC4=y
 CONFIG_INTERNAL_DH_GROUP5=y
@@ -634,6 +666,8 @@ CONFIG_INTERNAL_SHA1=y
 CONFIG_INTERNAL_MD4=y
 CONFIG_INTERNAL_MD5=y
 CONFIG_INTERNAL_SHA256=y
+CONFIG_INTERNAL_SHA384=y
+CONFIG_INTERNAL_SHA512=y
 CONFIG_INTERNAL_RC4=y
 CONFIG_INTERNAL_DH_GROUP5=y
 endif
@@ -699,7 +733,9 @@ endif
 endif
 ifdef NEED_AES_CBC
 NEED_AES_DEC=y
+ifneq ($(CONFIG_TLS), openssl)
 AESOBJS += src/crypto/aes-cbc.c
+endif
 endif
 ifdef NEED_AES_DEC
 ifdef CONFIG_INTERNAL_AES
@@ -760,9 +796,15 @@ OBJS += src/crypto/des-internal.c
 endif
 endif
 
+ifdef CONFIG_NO_RC4
+L_CFLAGS += -DCONFIG_NO_RC4
+endif
+
 ifdef NEED_RC4
 ifdef CONFIG_INTERNAL_RC4
+ifndef CONFIG_NO_RC4
 OBJS += src/crypto/rc4.c
+endif
 endif
 endif
 
@@ -781,6 +823,17 @@ endif
 endif
 ifdef NEED_SHA384
 L_CFLAGS += -DCONFIG_SHA384
+OBJS += src/crypto/sha384-prf.c
+endif
+
+ifdef CONFIG_INTERNAL_SHA384
+L_CFLAGS += -DCONFIG_INTERNAL_SHA384
+OBJS += src/crypto/sha384-internal.c
+endif
+
+ifdef CONFIG_INTERNAL_SHA512
+L_CFLAGS += -DCONFIG_INTERNAL_SHA512
+OBJS += src/crypto/sha512-internal.c
 endif
 
 ifdef NEED_DH_GROUPS
@@ -806,7 +859,9 @@ OBJS += src/crypto/random.c
 HOBJS += src/crypto/random.c
 HOBJS += src/utils/eloop.c
 HOBJS += $(SHA1OBJS)
+ifneq ($(CONFIG_TLS), openssl)
 HOBJS += src/crypto/md5.c
+endif
 endif
 
 ifdef CONFIG_RADIUS_SERVER
@@ -820,12 +875,6 @@ endif
 
 ifdef CONFIG_DRIVER_RADIUS_ACL
 L_CFLAGS += -DCONFIG_DRIVER_RADIUS_ACL
-endif
-
-ifdef CONFIG_FULL_DYNAMIC_VLAN
-# define CONFIG_FULL_DYNAMIC_VLAN to have hostapd manipulate bridges
-# and vlan interfaces for the vlan feature.
-L_CFLAGS += -DCONFIG_FULL_DYNAMIC_VLAN
 endif
 
 ifdef NEED_BASE64
@@ -898,8 +947,12 @@ ifdef CONFIG_ANDROID_LOG
 L_CFLAGS += -DCONFIG_ANDROID_LOG
 endif
 
-OBJS_c = hostapd_cli.c src/common/wpa_ctrl.c src/utils/os_$(CONFIG_OS).c
+OBJS_c = hostapd_cli.c
+OBJS_c += src/common/wpa_ctrl.c
+OBJS_c += src/utils/os_$(CONFIG_OS).c
+OBJS_c += src/common/cli.c
 OBJS_c += src/utils/eloop.c
+OBJS_c += src/utils/common.c
 ifdef CONFIG_WPA_TRACE
 OBJS_c += src/utils/trace.c
 endif
@@ -942,6 +995,7 @@ endif
 LOCAL_CFLAGS := $(L_CFLAGS)
 LOCAL_SRC_FILES := $(OBJS)
 LOCAL_C_INCLUDES := $(INCLUDES)
+LOCAL_INIT_RC := hostapd.android.rc
 include $(BUILD_EXECUTABLE)
 
 endif # ifeq ($(WPA_BUILD_HOSTAPD),true)
