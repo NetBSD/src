@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.55 2013/12/27 14:17:11 njoly Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.55.14.1 2017/08/12 04:16:52 snj Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.55 2013/12/27 14:17:11 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.55.14.1 2017/08/12 04:16:52 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,8 +325,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic("linux_readdir");
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			if (cookie)

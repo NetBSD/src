@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.112 2012/10/02 01:44:27 christos Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.112.18.1 2017/08/12 04:16:52 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.112 2012/10/02 01:44:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.112.18.1 2017/08/12 04:16:52 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,8 +427,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic("ibcs2_getdents: bad reclen");
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if (cookie && (*cookie >> 32) != 0) {
 			compat_offseterr(vp, "ibcs2_getdents");
 			error = EINVAL;
