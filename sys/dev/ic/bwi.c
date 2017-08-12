@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.24.4.1 2015/04/21 04:55:15 snj Exp $	*/
+/*	$NetBSD: bwi.c,v 1.24.4.1.6.1 2017/08/12 03:48:33 snj Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.24.4.1 2015/04/21 04:55:15 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.24.4.1.6.1 2017/08/12 03:48:33 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -8292,7 +8292,7 @@ bwi_newbuf(struct bwi_softc *sc, int buf_idx, int init)
 	if (m == NULL)
 		return (ENOBUFS);
 	MCLGET(m, init ? M_WAITOK : M_DONTWAIT);
-	if (m == NULL) {
+	if ((m->m_flags & M_EXT) == 0) {
 		error = ENOBUFS;
 
 		/*
