@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.60 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.61 2017/08/12 11:21:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.60 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.61 2017/08/12 11:21:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		/*
 		 * If we're not polling our PHY instance, just return.
 		 */
-		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
+		if (ife != NULL && IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 		break;
 
@@ -162,7 +162,7 @@ nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * If the media indicates a different PHY instance,
 		 * isolate ourselves.
 		 */
-		if (IFM_INST(ife->ifm_media) != sc->mii_inst) {
+		if (ife != NULL && IFM_INST(ife->ifm_media) != sc->mii_inst) {
 			reg = PHY_READ(sc, MII_BMCR);
 			PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
@@ -216,7 +216,7 @@ nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		/*
 		 * If we're not currently selected, just return.
 		 */
-		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
+		if (ife != NULL && IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
