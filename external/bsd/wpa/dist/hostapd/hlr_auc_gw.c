@@ -1,6 +1,6 @@
 /*
  * HLR/AuC testing gateway for hostapd EAP-SIM/AKA database/authenticator
- * Copyright (c) 2005-2007, 2012-2013, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2005-2007, 2012-2016, Jouni Malinen <j@w1.fi>
  *
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
@@ -87,6 +87,7 @@ struct milenage_parameters {
 	u8 amf[2];
 	u8 sqn[6];
 	int set;
+	size_t res_len;
 };
 
 static struct milenage_parameters *milenage_db = NULL;
@@ -96,6 +97,7 @@ static struct milenage_parameters *milenage_db = NULL;
 #define EAP_AKA_RAND_LEN 16
 #define EAP_AKA_AUTN_LEN 16
 #define EAP_AKA_AUTS_LEN 14
+#define EAP_AKA_RES_MIN_LEN 4
 #define EAP_AKA_RES_MAX_LEN 16
 #define EAP_AKA_IK_LEN 16
 #define EAP_AKA_CK_LEN 16
@@ -124,7 +126,8 @@ static int db_table_create_milenage(sqlite3 *db)
 		"  ki CHAR(32) NOT NULL,"
 		"  opc CHAR(32) NOT NULL,"
 		"  amf CHAR(4) NOT NULL,"
-		"  sqn CHAR(12) NOT NULL"
+		"  sqn CHAR(12) NOT NULL,"
+		"  res_len INTEGER"
 		");";
 
 	printf("Adding database table for milenage information\n");
@@ -190,6 +193,10 @@ static int get_milenage_cb(void *ctx, int argc, char *argv[], char *col[])
 			printf("Invalid sqn value in database\n");
 			return -1;
 		}
+
+		if (os_strcmp(col[i], "res_len") == 0 && argv[i]) {
+			m->res_len = atoi(argv[i]);
+		}
 	}
 
 	return 0;
@@ -206,8 +213,7 @@ static struct milenage_parameters * db_get_milenage(const char *imsi_txt)
 	os_snprintf(db_tmp_milenage.imsi, sizeof(db_tmp_milenage.imsi),
 		    "%llu", imsi);
 	os_snprintf(cmd, sizeof(cmd),
-		    "SELECT ki,opc,amf,sqn FROM milenage WHERE imsi=%llu;",
-		    imsi);
+		    "SELECT * FROM milenage WHERE imsi=%llu;", imsi);
 	if (sqlite3_exec(sqlite_db, cmd, get_milenage_cb, &db_tmp_milenage,
 			 NULL) != SQLITE_OK)
 		return NULL;
@@ -278,7 +284,7 @@ static int read_gsm_triplets(const char *fname)
 
 	f = fopen(fname, "r");
 	if (f == NULL) {
-		printf("Could not open GSM tripler data file '%s'\n", fname);
+		printf("Could not open GSM triplet data file '%s'\n", fname);
 		return -1;
 	}
 
@@ -306,66 +312,40 @@ static int read_gsm_triplets(const char *fname)
 		}
 
 		/* IMSI */
-		pos2 = strchr(pos, ':');
-		if (pos2 == NULL) {
-			printf("%s:%d - Invalid IMSI (%s)\n",
-			       fname, line, pos);
-			ret = -1;
-			break;
-		}
-		*pos2 = '\0';
-		if (strlen(pos) >= sizeof(g->imsi)) {
-			printf("%s:%d - Too long IMSI (%s)\n",
-			       fname, line, pos);
+		pos2 = NULL;
+		pos = str_token(buf, ":", &pos2);
+		if (!pos || os_strlen(pos) >= sizeof(g->imsi)) {
+			printf("%s:%d - Invalid IMSI\n", fname, line);
 			ret = -1;
 			break;
 		}
 		os_strlcpy(g->imsi, pos, sizeof(g->imsi));
-		pos = pos2 + 1;
 
 		/* Kc */
-		pos2 = strchr(pos, ':');
-		if (pos2 == NULL) {
-			printf("%s:%d - Invalid Kc (%s)\n", fname, line, pos);
+		pos = str_token(buf, ":", &pos2);
+		if (!pos || os_strlen(pos) != 16 || hexstr2bin(pos, g->kc, 8)) {
+			printf("%s:%d - Invalid Kc\n", fname, line);
 			ret = -1;
 			break;
 		}
-		*pos2 = '\0';
-		if (strlen(pos) != 16 || hexstr2bin(pos, g->kc, 8)) {
-			printf("%s:%d - Invalid Kc (%s)\n", fname, line, pos);
-			ret = -1;
-			break;
-		}
-		pos = pos2 + 1;
 
 		/* SRES */
-		pos2 = strchr(pos, ':');
-		if (pos2 == NULL) {
-			printf("%s:%d - Invalid SRES (%s)\n", fname, line,
-			       pos);
+		pos = str_token(buf, ":", &pos2);
+		if (!pos || os_strlen(pos) != 8 ||
+		    hexstr2bin(pos, g->sres, 4)) {
+			printf("%s:%d - Invalid SRES\n", fname, line);
 			ret = -1;
 			break;
 		}
-		*pos2 = '\0';
-		if (strlen(pos) != 8 || hexstr2bin(pos, g->sres, 4)) {
-			printf("%s:%d - Invalid SRES (%s)\n", fname, line,
-			       pos);
-			ret = -1;
-			break;
-		}
-		pos = pos2 + 1;
 
 		/* RAND */
-		pos2 = strchr(pos, ':');
-		if (pos2)
-			*pos2 = '\0';
-		if (strlen(pos) != 32 || hexstr2bin(pos, g->_rand, 16)) {
-			printf("%s:%d - Invalid RAND (%s)\n", fname, line,
-			       pos);
+		pos = str_token(buf, ":", &pos2);
+		if (!pos || os_strlen(pos) != 32 ||
+		    hexstr2bin(pos, g->_rand, 16)) {
+			printf("%s:%d - Invalid RAND\n", fname, line);
 			ret = -1;
 			break;
 		}
-		pos = pos2 + 1;
 
 		g->next = gsm_db;
 		gsm_db = g;
@@ -424,7 +404,7 @@ static int read_milenage(const char *fname)
 	while (fgets(buf, sizeof(buf), f)) {
 		line++;
 
-		/* Parse IMSI Ki OPc AMF SQN */
+		/* Parse IMSI Ki OPc AMF SQN [RES_len] */
 		buf[sizeof(buf) - 1] = '\0';
 		if (buf[0] == '#')
 			continue;
@@ -444,78 +424,62 @@ static int read_milenage(const char *fname)
 		}
 
 		/* IMSI */
-		pos2 = strchr(pos, ' ');
-		if (pos2 == NULL) {
-			printf("%s:%d - Invalid IMSI (%s)\n",
-			       fname, line, pos);
-			ret = -1;
-			break;
-		}
-		*pos2 = '\0';
-		if (strlen(pos) >= sizeof(m->imsi)) {
-			printf("%s:%d - Too long IMSI (%s)\n",
-			       fname, line, pos);
+		pos2 = NULL;
+		pos = str_token(buf, " ", &pos2);
+		if (!pos || os_strlen(pos) >= sizeof(m->imsi)) {
+			printf("%s:%d - Invalid IMSI\n", fname, line);
 			ret = -1;
 			break;
 		}
 		os_strlcpy(m->imsi, pos, sizeof(m->imsi));
-		pos = pos2 + 1;
 
 		/* Ki */
-		pos2 = strchr(pos, ' ');
-		if (pos2 == NULL) {
-			printf("%s:%d - Invalid Ki (%s)\n", fname, line, pos);
+		pos = str_token(buf, " ", &pos2);
+		if (!pos || os_strlen(pos) != 32 ||
+		    hexstr2bin(pos, m->ki, 16)) {
+			printf("%s:%d - Invalid Ki\n", fname, line);
 			ret = -1;
 			break;
 		}
-		*pos2 = '\0';
-		if (strlen(pos) != 32 || hexstr2bin(pos, m->ki, 16)) {
-			printf("%s:%d - Invalid Ki (%s)\n", fname, line, pos);
-			ret = -1;
-			break;
-		}
-		pos = pos2 + 1;
 
 		/* OPc */
-		pos2 = strchr(pos, ' ');
-		if (pos2 == NULL) {
-			printf("%s:%d - Invalid OPc (%s)\n", fname, line, pos);
+		pos = str_token(buf, " ", &pos2);
+		if (!pos || os_strlen(pos) != 32 ||
+		    hexstr2bin(pos, m->opc, 16)) {
+			printf("%s:%d - Invalid OPc\n", fname, line);
 			ret = -1;
 			break;
 		}
-		*pos2 = '\0';
-		if (strlen(pos) != 32 || hexstr2bin(pos, m->opc, 16)) {
-			printf("%s:%d - Invalid OPc (%s)\n", fname, line, pos);
-			ret = -1;
-			break;
-		}
-		pos = pos2 + 1;
 
 		/* AMF */
-		pos2 = strchr(pos, ' ');
-		if (pos2 == NULL) {
-			printf("%s:%d - Invalid AMF (%s)\n", fname, line, pos);
+		pos = str_token(buf, " ", &pos2);
+		if (!pos || os_strlen(pos) != 4 || hexstr2bin(pos, m->amf, 2)) {
+			printf("%s:%d - Invalid AMF\n", fname, line);
 			ret = -1;
 			break;
 		}
-		*pos2 = '\0';
-		if (strlen(pos) != 4 || hexstr2bin(pos, m->amf, 2)) {
-			printf("%s:%d - Invalid AMF (%s)\n", fname, line, pos);
-			ret = -1;
-			break;
-		}
-		pos = pos2 + 1;
 
 		/* SQN */
-		pos2 = strchr(pos, ' ');
-		if (pos2)
-			*pos2 = '\0';
-		if (strlen(pos) != 12 || hexstr2bin(pos, m->sqn, 6)) {
-			printf("%s:%d - Invalid SEQ (%s)\n", fname, line, pos);
+		pos = str_token(buf, " ", &pos2);
+		if (!pos || os_strlen(pos) != 12 ||
+		    hexstr2bin(pos, m->sqn, 6)) {
+			printf("%s:%d - Invalid SEQ\n", fname, line);
 			ret = -1;
 			break;
 		}
-		pos = pos2 + 1;
+
+		pos = str_token(buf, " ", &pos2);
+		if (pos) {
+			m->res_len = atoi(pos);
+			if (m->res_len &&
+			    (m->res_len < EAP_AKA_RES_MIN_LEN ||
+			     m->res_len > EAP_AKA_RES_MAX_LEN)) {
+				printf("%s:%d - Invalid RES_len\n",
+				       fname, line);
+				ret = -1;
+				break;
+			}
+		}
 
 		m->next = milenage_db;
 		milenage_db = m;
@@ -532,7 +496,7 @@ static int read_milenage(const char *fname)
 static void update_milenage_file(const char *fname)
 {
 	FILE *f, *f2;
-	char buf[500], *pos;
+	char name[500], buf[500], *pos;
 	char *end = buf + sizeof(buf);
 	struct milenage_parameters *m;
 	size_t imsi_len;
@@ -543,10 +507,10 @@ static void update_milenage_file(const char *fname)
 		return;
 	}
 
-	snprintf(buf, sizeof(buf), "%s.new", fname);
-	f2 = fopen(buf, "w");
+	snprintf(name, sizeof(name), "%s.new", fname);
+	f2 = fopen(name, "w");
 	if (f2 == NULL) {
-		printf("Could not write Milenage data file '%s'\n", buf);
+		printf("Could not write Milenage data file '%s'\n", name);
 		fclose(f);
 		return;
 	}
@@ -588,14 +552,14 @@ static void update_milenage_file(const char *fname)
 	fclose(f2);
 	fclose(f);
 
-	snprintf(buf, sizeof(buf), "%s.bak", fname);
-	if (rename(fname, buf) < 0) {
+	snprintf(name, sizeof(name), "%s.bak", fname);
+	if (rename(fname, name) < 0) {
 		perror("rename");
 		return;
 	}
 
-	snprintf(buf, sizeof(buf), "%s.new", fname);
-	if (rename(buf, fname) < 0) {
+	snprintf(name, sizeof(name), "%s.new", fname);
+	if (rename(name, fname) < 0) {
 		perror("rename");
 		return;
 	}
@@ -798,6 +762,10 @@ static int aka_req_auth(char *imsi, char *resp, size_t resp_len)
 		}
 		milenage_generate(m->opc, m->amf, m->ki, m->sqn, _rand,
 				  autn, ik, ck, res, &res_len);
+		if (m->res_len >= EAP_AKA_RES_MIN_LEN &&
+		    m->res_len <= EAP_AKA_RES_MAX_LEN &&
+		    m->res_len < res_len)
+			res_len = m->res_len;
 	} else {
 		printf("Unknown IMSI: %s\n", imsi);
 #ifdef AKA_USE_FIXED_TEST_VALUES
@@ -1005,7 +973,7 @@ static void usage(void)
 {
 	printf("HLR/AuC testing gateway for hostapd EAP-SIM/AKA "
 	       "database/authenticator\n"
-	       "Copyright (c) 2005-2007, 2012-2013, Jouni Malinen <j@w1.fi>\n"
+	       "Copyright (c) 2005-2016, Jouni Malinen <j@w1.fi>\n"
 	       "\n"
 	       "usage:\n"
 	       "hlr_auc_gw [-hu] [-s<socket path>] [-g<triplet file>] "
