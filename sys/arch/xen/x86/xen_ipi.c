@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.20 2016/07/07 06:55:40 msaitoh Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.21 2017/08/12 07:21:57 maxv Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.20 2016/07/07 06:55:40 msaitoh Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.21 2017/08/12 07:21:57 maxv Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.20 2016/07/07 06:55:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.21 2017/08/12 07:21:57 maxv Exp $");
 
 #include <sys/types.h>
 
@@ -253,13 +253,6 @@ xen_ipi_ddb(struct cpu_info *ci, struct intrframe *intrf)
 	tf.tf_eflags = intrf->if_eflags;
 	tf.tf_esp = intrf->if_esp;
 	tf.tf_ss = intrf->if_ss;
-
-	/* XXX: does i386/Xen have vm86 support ?
-	tf.tf_vm86_es;
-	tf.tf_vm86_ds;
-	tf.tf_vm86_fs;
-	tf.tf_vm86_gs;
-	   :XXX */
 
 	ddb_ipi(SEL_KPL, tf);
 #endif

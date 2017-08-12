@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.153 2017/08/09 18:48:53 maxv Exp $
+#	$NetBSD: files.xen,v 1.154 2017/08/12 07:21:57 maxv Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -312,8 +312,6 @@ file	arch/x86/x86/powernow.c		powernow
 #
 
 ifdef i386
-# VM86 mode
-file	arch/i386/i386/vm86.c			vm86
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/i386/i386/compat_13_machdep.c	compat_13

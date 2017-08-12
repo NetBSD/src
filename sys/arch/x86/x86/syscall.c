@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.15 2017/03/31 08:47:04 martin Exp $	*/
+/*	$NetBSD: syscall.c,v 1.16 2017/08/12 07:21:57 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2017/03/31 08:47:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16 2017/08/12 07:21:57 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,10 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2017/03/31 08:47:04 martin Exp $");
 #include "opt_dtrace.h"
 
 #ifndef __x86_64__
-#include "opt_vm86.h"
-#ifdef VM86
-void		syscall_vm86(struct trapframe *);
-#endif
 int		x86_copyargs(void *, void *, size_t);
 #endif
 
@@ -179,26 +175,3 @@ syscall_intern(struct proc *p)
 	p->p_md.md_syscall = syscall;
 }
 
-#ifdef VM86
-
-void
-syscall_vm86(struct trapframe *frame)
-{
-	struct lwp *l;
-	struct proc *p;
-	ksiginfo_t ksi;
-
-	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = SIGBUS;
-	ksi.ksi_code = BUS_OBJERR;
-	ksi.ksi_trap = T_PROTFLT;
-	ksi.ksi_addr = (void *)frame->tf_eip;
-
-	l = curlwp;
-	p = l->l_proc;
-
-	(*p->p_emul->e_trapsignal)(l, &ksi);
-	userret(l);
-}
-
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.150 2017/08/10 14:13:45 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.151 2017/08/12 07:21:57 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,14 +128,13 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.150 2017/08/10 14:13:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.151 2017/08/12 07:21:57 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
 #include "opt_modular.h"
 #include "opt_multiboot.h"
 #include "opt_realmem.h"
-#include "opt_vm86.h"
 #include "opt_xen.h"
 
 #include "assym.h"

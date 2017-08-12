@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.36 2017/07/12 16:59:41 maxv Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.37 2017/08/12 07:21:57 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,15 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.36 2017/07/12 16:59:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.37 2017/08/12 07:21:57 maxv Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_pmc.h"
 #include "opt_user_ldt.h"
 #include "opt_compat_netbsd.h"
-#ifdef i386
-#include "opt_vm86.h"
-#endif
 #include "opt_xen.h"
 
 #include <sys/param.h>
@@ -96,10 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.36 2017/07/12 16:59:41 maxv Exp $"
 
 #ifdef XEN
 #undef	PMC
-#endif
-
-#ifdef VM86
-#include <machine/vm86.h>
 #endif
 
 #ifdef PMC
@@ -840,15 +833,6 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 	case X86_SET_MTRR:
 		error = x86_set_mtrr(l, SCARG(uap, parms), retval);
 		break;
-
-#ifdef VM86
-	case X86_VM86:
-		error = x86_vm86(l, SCARG(uap, parms), retval);
-		break;
-	case X86_OLD_VM86:
-		error = compat_16_x86_vm86(l, SCARG(uap, parms), retval);
-		break;
-#endif
 
 #ifdef PMC
 	case X86_PMC_INFO:
