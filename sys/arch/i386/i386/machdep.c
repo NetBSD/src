@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.789 2017/08/12 07:07:53 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.790 2017/08/12 13:16:14 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.789 2017/08/12 07:07:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.790 2017/08/12 13:16:14 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -647,8 +647,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 
-	if (tf->tf_eflags & PSL_VM)
-		(*p->p_emul->e_syscall_intern)(p);
 	sendsig_reset(l, sig);
 
 	mutex_exit(p->p_lock);

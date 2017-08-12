@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.102 2017/08/08 08:04:05 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.103 2017/08/12 13:16:14 maxv Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -355,7 +355,6 @@ define	IREENT_MAGIC		IREENT_MAGIC
 define	PSL_AC			PSL_AC
 define	PSL_MBO			PSL_MBO
 define	PSL_ID			PSL_ID
-define	PSL_VM			PSL_VM
 define	PSL_I			PSL_I
 
 define	MTX_IPL			offsetof(struct kmutex, u.s.mtxs_ipl)
