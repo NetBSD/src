@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.50 2014/02/07 15:29:22 hannken Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.50.4.1 2017/08/12 04:12:10 snj Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.50 2014/02/07 15:29:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.50.4.1 2017/08/12 04:12:10 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,8 @@ unionread:
 				reclen = dp->d_reclen;
 
 				/* check for malformed directory.. */
-				if (reclen < _DIRENT_MINSIZE(dp)) {
+				if (reclen < _DIRENT_MINSIZE(dp) ||
+				    reclen > len) {
 					error = EINVAL;
 					goto out;
 				}
