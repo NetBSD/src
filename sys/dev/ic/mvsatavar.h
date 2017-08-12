@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsatavar.h,v 1.2.48.3 2017/08/01 22:02:32 jdolecek Exp $	*/
+/*	$NetBSD: mvsatavar.h,v 1.2.48.4 2017/08/12 22:43:22 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -96,6 +96,10 @@ struct mvsata_port {
 	bus_space_handle_t port_sata_sstatus;	/* SATA Interface status reg */
 
 	struct _fix_phy_param _fix_phy_param;
+
+	/* Recovery context */
+	uint32_t port_hold_slots;
+	bool port_recovering;
 };
 
 struct mvsata_hc {
