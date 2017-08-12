@@ -9,6 +9,7 @@
 #include "utils/includes.h"
 
 #include "utils/common.h"
+#include "utils/module_tests.h"
 #include "wps_attr_parse.h"
 
 struct wps_attr_parse_test {
@@ -17,7 +18,7 @@ struct wps_attr_parse_test {
 	int extra;
 };
 
-struct wps_attr_parse_test wps_attr_parse_test_cases[] = {
+static const struct wps_attr_parse_test wps_attr_parse_test_cases[] = {
 	/* Empty message */
 	{ "", 0, 0 },
 	/* Truncated attribute header */
@@ -271,7 +272,7 @@ static int wps_attr_parse_tests(void)
 	for (i = 0; i < ARRAY_SIZE(wps_attr_parse_test_cases); i++) {
 		struct wpabuf *buf;
 		size_t len;
-		struct wps_attr_parse_test *test =
+		const struct wps_attr_parse_test *test =
 			&wps_attr_parse_test_cases[i];
 
 		len = os_strlen(test->data) / 2;

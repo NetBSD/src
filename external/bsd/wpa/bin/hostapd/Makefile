@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5.4.1 2015/04/29 20:28:34 snj Exp $
+# $NetBSD: Makefile,v 1.5.4.2 2017/08/12 05:56:14 snj Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -21,19 +21,24 @@ hostapd.c \
 ieee802_11_auth.c \
 ieee802_11_shared.c \
 ieee802_1x.c \
+neighbor_db.c \
 peerkey_auth.c \
 pmksa_cache_auth.c \
 preauth_auth.c \
+rrm.c \
 sta_info.c \
 tkip_countermeasures.c \
 utils.c \
+vlan_ifconfig.c \
 vlan_init.c \
+vlan.c \
 wpa_auth.c \
 wpa_auth_glue.c \
 wpa_auth_ie.c
 
 # common
 SRCS+= \
+ctrl_iface_common.c \
 hw_features_common.c \
 ieee802_11_common.c \
 wpa_common.c \
@@ -86,12 +91,12 @@ eap_server_methods.c
 
 # crypto
 SRCS+= \
-crypto_openssl.c \
 random.c \
 sha1-prf.c
 
 # crypto for non-openssl
 NO_SRCS+= \
+aes-cbc.c \
 aes-wrap.c \
 md5.c
 
@@ -145,11 +150,11 @@ CPPFLAGS+= -DPKCS12_FUNCS
 
 # crypto
 SRCS+= \
-aes-cbc.c \
 aes-ctr.c \
 aes-eax.c \
 aes-encblock.c \
 aes-omac1.c \
+crypto_openssl.c \
 dh_groups.c \
 fips_prf_openssl.c \
 ms_funcs.c \
@@ -196,7 +201,9 @@ DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBDES}
 LDADD+= -lssl -lcrypto -ldes
 .else
 CPPFLAGS+= -DINTERNAL_AES -DINTERNAL_MD5 -DINTERNAL_SHA1 -DCONFIG_NO_PBKDF2
+CPPFLAGS+= -DCONFIG_CRYPTO_INTERNAL
 SRCS+=  tls_none.c sha1-internal.c md5-internal.c aes-xinternal.c rc4.c
+SRCS+= sha1-pbkdf2.c sha1.c md5.c
 .endif
 
 .include <bsd.prog.mk>
