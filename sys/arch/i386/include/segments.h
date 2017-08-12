@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.60 2017/07/02 11:16:50 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.61 2017/08/12 07:35:08 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -118,17 +118,8 @@
 
 #define LSEL(s,r)	(((s) << 3) | r | SEL_LDT)	/* a local selector */
 
-#if defined(_KERNEL_OPT)
-#include "opt_vm86.h"
-#endif
-
-#ifdef VM86
-#define USERMODE(c, f)		(ISPL(c) == SEL_UPL || ((f) & PSL_VM) != 0)
-#define KERNELMODE(c, f)	(ISPL(c) == SEL_KPL && ((f) & PSL_VM) == 0)
-#else
 #define USERMODE(c, f)		(ISPL(c) == SEL_UPL)
 #define KERNELMODE(c, f)	(ISPL(c) == SEL_KPL)
-#endif
 
 #ifndef _LOCORE
 
