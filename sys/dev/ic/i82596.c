@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.31.4.1 2015/02/21 19:27:49 martin Exp $ */
+/* $NetBSD: i82596.c,v 1.31.4.2 2017/08/12 03:30:30 snj Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.31.4.1 2015/02/21 19:27:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.31.4.2 2017/08/12 03:30:30 snj Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -754,6 +754,7 @@ iee_start(struct ifnet *ifp)
 				printf("%s: iee_start: can't allocate mbuf\n",
 				    device_xname(sc->sc_dev));
 				m_freem(sc->sc_tx_mbuf[t]);
+				sc->sc_tx_mbuf[t] = NULL;
 				t--;
 				continue;
 			}
@@ -763,6 +764,7 @@ iee_start(struct ifnet *ifp)
 				printf("%s: iee_start: can't allocate mbuf "
 				    "cluster\n", device_xname(sc->sc_dev));
 				m_freem(sc->sc_tx_mbuf[t]);
+				sc->sc_tx_mbuf[t] = NULL;
 				m_freem(m);
 				t--;
 				continue;
@@ -778,6 +780,7 @@ iee_start(struct ifnet *ifp)
 				printf("%s: iee_start: can't load TX DMA map\n",
 				    device_xname(sc->sc_dev));
 				m_freem(sc->sc_tx_mbuf[t]);
+				sc->sc_tx_mbuf[t] = NULL;
 				t--;
 				continue;
 			}
@@ -927,6 +930,7 @@ iee_init(struct ifnet *ifp)
 				printf("%s: iee_init: can't allocate mbuf"
 				    " cluster\n", device_xname(sc->sc_dev));
 				m_freem(sc->sc_rx_mbuf[r]);
+				sc->sc_rx_mbuf[r] = NULL;
 				err = 1;
 				break;
 			}
@@ -940,6 +944,7 @@ iee_init(struct ifnet *ifp)
 				printf("%s: iee_init: can't create RX "
 				    "DMA map\n", device_xname(sc->sc_dev));
 				m_freem(sc->sc_rx_mbuf[r]);
+				sc->sc_rx_mbuf[r] = NULL;
 				err = 1;
 				break;
 			}
@@ -949,6 +954,7 @@ iee_init(struct ifnet *ifp)
 			    device_xname(sc->sc_dev));
 			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rx_map[r]);
 			m_freem(sc->sc_rx_mbuf[r]);
+			sc->sc_rx_mbuf[r] = NULL;
 			err = 1;
 			break;
 		}
