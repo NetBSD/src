@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.250 2017/08/10 13:39:08 maxv Exp $
+# $NetBSD: md.amd64,v 1.251 2017/08/12 07:35:08 maxv Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -533,7 +533,7 @@
 ./usr/include/i386/tss.h			comp-c-include
 ./usr/include/i386/types.h			comp-c-include
 ./usr/include/i386/varargs.h			comp-obsolete		obsolete
-./usr/include/i386/vm86.h			comp-c-include
+./usr/include/i386/vm86.h			comp-obsolete		obsolete
 ./usr/include/i386/vmparam.h			comp-c-include
 ./usr/include/i386/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include

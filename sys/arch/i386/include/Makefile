@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2017/08/09 18:58:51 maxv Exp $
+#	$NetBSD: Makefile,v 1.48 2017/08/12 07:35:08 maxv Exp $
 
 INCSDIR= /usr/include/i386
 
@@ -22,7 +22,7 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h \
 	segments.h setjmp.h signal.h sljit_machdep.h specialreg.h spkr.h \
 	sysarch.h \
 	trap.h tss.h types.h \
-	vm86.h vmparam.h \
+	vmparam.h \
 	wchar_limits.h
 
 .include <bsd.kinc.mk>
