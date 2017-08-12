@@ -15,11 +15,29 @@
 #include "p2p_i.h"
 
 
+void p2p_copy_filter_devname(char *dst, size_t dst_len,
+			     const void *src, size_t src_len)
+{
+	size_t i;
+
+	if (src_len >= dst_len)
+		src_len = dst_len - 1;
+	os_memcpy(dst, src, src_len);
+	dst[src_len] = '\0';
+	for (i = 0; i < src_len; i++) {
+		if (dst[i] == '\0')
+			break;
+		if (is_ctrl_char(dst[i]))
+			dst[i] = '_';
+	}
+}
+
+
 static int p2p_parse_attribute(u8 id, const u8 *data, u16 len,
 			       struct p2p_message *msg)
 {
 	const u8 *pos;
-	size_t i, nlen;
+	u16 nlen;
 	char devtype[WPS_DEV_TYPE_BUFSIZE];
 
 	switch (id) {
@@ -149,21 +167,14 @@ static int p2p_parse_attribute(u8 id, const u8 *data, u16 len,
 		pos += 2;
 		nlen = WPA_GET_BE16(pos);
 		pos += 2;
-		if (data + len - pos < (int) nlen || nlen > 32) {
+		if (nlen > data + len - pos || nlen > WPS_DEV_NAME_MAX_LEN) {
 			wpa_printf(MSG_DEBUG, "P2P: Invalid Device Name "
-				   "length %d (buf len %d)", (int) nlen,
+				   "length %u (buf len %d)", nlen,
 				   (int) (data + len - pos));
 			return -1;
 		}
-		os_memcpy(msg->device_name, pos, nlen);
-		msg->device_name[nlen] = '\0';
-		for (i = 0; i < nlen; i++) {
-			if (msg->device_name[i] == '\0')
-				break;
-			if (msg->device_name[i] > 0 &&
-			    msg->device_name[i] < 32)
-				msg->device_name[i] = '_';
-		}
+		p2p_copy_filter_devname(msg->device_name,
+					sizeof(msg->device_name), pos, nlen);
 		wpa_printf(MSG_DEBUG, "P2P: * Device Info: addr " MACSTR
 			   " primary device type %s device name '%s' "
 			   "config methods 0x%x",
@@ -203,7 +214,7 @@ static int p2p_parse_attribute(u8 id, const u8 *data, u16 len,
 			   MAC2STR(msg->group_bssid));
 		break;
 	case P2P_ATTR_GROUP_ID:
-		if (len < ETH_ALEN || len > ETH_ALEN + 32) {
+		if (len < ETH_ALEN || len > ETH_ALEN + SSID_MAX_LEN) {
 			wpa_printf(MSG_DEBUG, "P2P: Invalid P2P Group ID "
 				   "attribute length %d", len);
 			return -1;
@@ -371,9 +382,9 @@ static int p2p_parse_attribute(u8 id, const u8 *data, u16 len,
 		break;
 	case P2P_ATTR_PERSISTENT_GROUP:
 	{
-		if (len < ETH_ALEN) {
+		if (len < ETH_ALEN || len > ETH_ALEN + SSID_MAX_LEN) {
 			wpa_printf(MSG_DEBUG,
-				   "P2P: Too short Persistent Group Info (length %u)",
+				   "P2P: Invalid Persistent Group Info (length %u)",
 				   len);
 			return -1;
 		}
@@ -516,7 +527,7 @@ int p2p_parse_ies(const u8 *data, size_t len, struct p2p_message *msg)
 	struct ieee802_11_elems elems;
 
 	ieee802_11_parse_elems(data, len, &elems, 0);
-	if (elems.ds_params && elems.ds_params_len >= 1)
+	if (elems.ds_params)
 		msg->ds_params = elems.ds_params;
 	if (elems.ssid)
 		msg->ssid = elems.ssid - 2;
@@ -547,6 +558,9 @@ int p2p_parse_ies(const u8 *data, size_t len, struct p2p_message *msg)
 			data, len, WFD_IE_VENDOR_TYPE);
 	}
 #endif /* CONFIG_WIFI_DISPLAY */
+
+	msg->pref_freq_list = elems.pref_freq_list;
+	msg->pref_freq_list_len = elems.pref_freq_list_len;
 
 	return 0;
 }
@@ -634,49 +648,48 @@ int p2p_group_info_parse(const u8 *gi, size_t gi_len,
 	gend = gi + gi_len;
 	while (g < gend) {
 		struct p2p_client_info *cli;
-		const u8 *t, *cend;
-		int count;
+		const u8 *cend;
+		u16 count;
+		u8 len;
 
 		cli = &info->client[info->num_clients];
-		cend = g + 1 + g[0];
-		if (cend > gend)
+		len = *g++;
+		if (len > gend - g || len < 2 * ETH_ALEN + 1 + 2 + 8 + 1)
 			return -1; /* invalid data */
+		cend = g + len;
 		/* g at start of P2P Client Info Descriptor */
-		/* t at Device Capability Bitmap */
-		t = g + 1 + 2 * ETH_ALEN;
-		if (t > cend)
-			return -1; /* invalid data */
-		cli->p2p_device_addr = g + 1;
-		cli->p2p_interface_addr = g + 1 + ETH_ALEN;
-		cli->dev_capab = t[0];
+		cli->p2p_device_addr = g;
+		g += ETH_ALEN;
+		cli->p2p_interface_addr = g;
+		g += ETH_ALEN;
+		cli->dev_capab = *g++;
 
-		if (t + 1 + 2 + 8 + 1 > cend)
-			return -1; /* invalid data */
+		cli->config_methods = WPA_GET_BE16(g);
+		g += 2;
+		cli->pri_dev_type = g;
+		g += 8;
 
-		cli->config_methods = WPA_GET_BE16(&t[1]);
-		cli->pri_dev_type = &t[3];
-
-		t += 1 + 2 + 8;
-		/* t at Number of Secondary Device Types */
-		cli->num_sec_dev_types = *t++;
-		if (t + 8 * cli->num_sec_dev_types > cend)
+		/* g at Number of Secondary Device Types */
+		len = *g++;
+		if (8 * len > cend - g)
 			return -1; /* invalid data */
-		cli->sec_dev_types = t;
-		t += 8 * cli->num_sec_dev_types;
+		cli->num_sec_dev_types = len;
+		cli->sec_dev_types = g;
+		g += 8 * len;
 
-		/* t at Device Name in WPS TLV format */
-		if (t + 2 + 2 > cend)
+		/* g at Device Name in WPS TLV format */
+		if (cend - g < 2 + 2)
 			return -1; /* invalid data */
-		if (WPA_GET_BE16(t) != ATTR_DEV_NAME)
+		if (WPA_GET_BE16(g) != ATTR_DEV_NAME)
 			return -1; /* invalid Device Name TLV */
-		t += 2;
-		count = WPA_GET_BE16(t);
-		t += 2;
-		if (count > cend - t)
+		g += 2;
+		count = WPA_GET_BE16(g);
+		g += 2;
+		if (count > cend - g)
 			return -1; /* invalid Device Name TLV */
-		if (count >= 32)
-			count = 32;
-		cli->dev_name = (const char *) t;
+		if (count >= WPS_DEV_NAME_MAX_LEN)
+			count = WPS_DEV_NAME_MAX_LEN;
+		cli->dev_name = (const char *) g;
 		cli->dev_name_len = count;
 
 		g = cend;
@@ -703,7 +716,7 @@ static int p2p_group_info_text(const u8 *gi, size_t gi_len, char *buf,
 
 	for (i = 0; i < info.num_clients; i++) {
 		struct p2p_client_info *cli;
-		char name[33];
+		char name[WPS_DEV_NAME_MAX_LEN + 1];
 		char devtype[WPS_DEV_TYPE_BUFSIZE];
 		u8 s;
 		int count;
@@ -742,7 +755,7 @@ static int p2p_group_info_text(const u8 *gi, size_t gi_len, char *buf,
 		name[cli->dev_name_len] = '\0';
 		count = (int) cli->dev_name_len - 1;
 		while (count >= 0) {
-			if (name[count] > 0 && name[count] < 32)
+			if (is_ctrl_char(name[count]))
 				name[count] = '_';
 			count--;
 		}
