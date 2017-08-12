@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.36 2017/06/14 00:40:05 chs Exp $	*/
+/*	$NetBSD: frame.h,v 1.37 2017/08/12 13:11:23 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,11 +100,6 @@ struct trapframe {
 	/* below used when transitting rings (e.g. user to kernel) */
 	int	tf_esp;
 	int	tf_ss;
-	/* below used when switching out of VM86 mode */
-	int	tf_vm86_es;
-	int	tf_vm86_ds;
-	int	tf_vm86_fs;
-	int	tf_vm86_gs;
 };
 
 /*
