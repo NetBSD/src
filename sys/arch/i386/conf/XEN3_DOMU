@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.84 2017/08/10 17:33:32 maxv Exp $
+# $NetBSD: XEN3_DOMU,v 1.85 2017/08/12 06:46:13 maxv Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -18,7 +18,6 @@ options 	XEN
 
 makeoptions	CPUFLAGS="-march=i686"
 
-#options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
 #options 	MTRR		# memory-type range register syscall support
