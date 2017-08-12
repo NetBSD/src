@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.27 2014/03/20 20:51:54 christos Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.27.4.1 2017/08/12 04:45:02 snj Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.27 2014/03/20 20:51:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.27.4.1 2017/08/12 04:45:02 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -472,6 +472,7 @@ cbq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 	if (*nbytes < sizeof(stats))
 		return (EINVAL);
 
+	memset(&stats, 0, sizeof(stats));
 	get_class_stats(&stats, cl);
 
 	if ((error = copyout((void *)&stats, ubuf, sizeof(stats))) != 0)
@@ -876,6 +877,7 @@ cbq_getstats(struct cbq_getstats *gsp)
 			if (++i >= CBQ_MAX_CLASSES)
 				goto out;
 
+		memset(&stats, 0, sizeof(stats));
 		get_class_stats(&stats, cl);
 		stats.handle = cl->stats_.handle;
 
