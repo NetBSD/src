@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.51 2017/08/10 19:03:26 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.52 2017/08/12 09:03:27 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.51 2017/08/10 19:03:26 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.52 2017/08/12 09:03:27 joerg Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -220,6 +220,13 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		if (type == R_TYPE(JMP_SLOT))
 			continue;
 
+		/* IFUNC relocations are handled in _rtld_call_ifunc */
+		if (type == R_TYPE(IRELATIVE)) {
+			if (obj->ifunc_remaining_nonplt == 0)
+				obj->ifunc_remaining_nonplt = rela - obj->rela + 1;
+			continue;
+		}
+
 		/* COPY relocs are also handled elsewhere */
 		if (type == R_TYPE(COPY))
 			continue;
@@ -387,7 +394,74 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 int
 _rtld_relocate_plt_lazy(Obj_Entry *obj)
 {
-	return (0);
+	const Elf_Rela *rela;
+
+	if (!obj->relocbase)
+		return 0;
+
+	for (rela = obj->pltrelalim; rela-- > obj->pltrela; ) {
+		if (ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_IREL))
+			obj->ifunc_remaining = obj->pltrelalim - rela + 1;
+	}
+
+	return 0;
+}
+
+static inline void
+_rtld_write_plt(Elf_Word *where, Elf_Addr value)
+{
+	/*
+	 * At the PLT entry pointed at by `where', we now construct
+	 * a direct transfer to the now fully resolved function
+	 * address.  The resulting code in the jump slot is:
+	 *
+	 *	sethi	%hi(roffset), %g1
+	 *	sethi	%hi(addr), %g1
+	 *	jmp	%g1+%lo(addr)
+	 *
+	 * We write the third instruction first, since that leaves the
+	 * previous `b,a' at the second word in place. Hence the whole
+	 * PLT slot can be atomically change to the new sequence by
+	 * writing the `sethi' instruction at word 2.
+	 */
+	const uint32_t SETHI = 0x03000000U;
+	const uint32_t JMP = 0x81c06000U;
+	where[2] = JMP   | (value & 0x000003ff);
+	where[1] = SETHI | ((value >> 10) & 0x003fffff);
+	__asm volatile("iflush %0+8" : : "r" (where));
+	__asm volatile("iflush %0+4" : : "r" (where));
+}
+
+void
+_rtld_call_ifunc(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
+{
+	const Elf_Rela *rela;
+	Elf_Addr *where, target;
+
+	while (obj->ifunc_remaining > 0 && _rtld_objgen == cur_objgen) {
+		rela = obj->pltrelalim - --obj->ifunc_remaining;
+		if (ELF_R_TYPE(rela->r_info) != R_TYPE(JMP_IREL))
+			continue;
+		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+		target = (Elf_Addr)(obj->relocbase + rela->r_addend);
+		_rtld_exclusive_exit(mask);
+		target = _rtld_resolve_ifunc2(obj, target);
+		_rtld_exclusive_enter(mask);
+		_rtld_write_plt(where, target);
+	}
+
+	while (obj->ifunc_remaining_nonplt > 0 && _rtld_objgen == cur_objgen) {
+		rela = obj->relalim - --obj->ifunc_remaining_nonplt;
+		if (ELF_R_TYPE(rela->r_info) != R_TYPE(IRELATIVE))
+			continue;
+		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+		target = (Elf_Addr)(obj->relocbase + rela->r_addend);
+		_rtld_exclusive_exit(mask);
+		target = _rtld_resolve_ifunc2(obj, target);
+		_rtld_exclusive_enter(mask);
+		if (*where != target)
+			*where = target;
+	}
 }
 
 caddr_t
@@ -429,6 +503,9 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 	Elf_Addr value;
 	unsigned long info = rela->r_info;
 
+	if (ELF_R_TYPE(info) == R_TYPE(JMP_IREL))
+		return 0;
+
 	assert(ELF_R_TYPE(info) == R_TYPE(JMP_SLOT));
 
 	def = _rtld_find_plt_symdef(ELF_R_SYM(info), obj, &defobj, tp != NULL);
@@ -447,27 +524,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 	rdbg(("bind now/fixup in %s --> new=%p", 
 	    defobj->strtab + def->st_name, (void *)value));
 
-	/*
-	 * At the PLT entry pointed at by `where', we now construct
-	 * a direct transfer to the now fully resolved function
-	 * address.  The resulting code in the jump slot is:
-	 *
-	 *	sethi	%hi(roffset), %g1
-	 *	sethi	%hi(addr), %g1
-	 *	jmp	%g1+%lo(addr)
-	 *
-	 * We write the third instruction first, since that leaves the
-	 * previous `b,a' at the second word in place. Hence the whole
-	 * PLT slot can be atomically change to the new sequence by
-	 * writing the `sethi' instruction at word 2.
-	 */
-#define SETHI	0x03000000
-#define JMP	0x81c06000
-#define NOP	0x01000000
-	where[2] = JMP   | (value & 0x000003ff);
-	where[1] = SETHI | ((value >> 10) & 0x003fffff);
-	__asm volatile("iflush %0+8" : : "r" (where));
-	__asm volatile("iflush %0+4" : : "r" (where));
+	_rtld_write_plt(where, value);
 
 	if (tp)
 		*tp = value;
