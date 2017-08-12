@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.52 2017/08/11 15:32:14 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.53 2017/08/12 04:57:21 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -3057,4 +3057,119 @@ sys/arch/mac68k/nubus/if_netdock_nubus.c	1.26
 
 	memory leak in netdock_get()
 	[mrg, ticket #1468]
+
+sys/dev/pci/if_ipw.c				1.65
+
+	double free in ipw_dma_alloc()
+	[mrg, ticket #1469]
+
+sys/dev/pci/if_et.c				1.15
+
+	missing mbuf cluster allocation error checking in et_newbuf()
+	[mrg, ticket #1470]
+
+sys/dev/ic/i82596.c				1.37
+
+	potential double free in iee_init()/iee_stop()
+	[mrg, ticket #1471]
+
+sys/dev/ic/dp83932.c				1.41
+
+	memory leak in sonic_rxintr()
+	[mrg, ticket #1472]
+
+sys/dev/ic/dm9000.c				1.12
+
+	missing mbuf cluster allocation error checking in
+	dme_alloc_receive_buffer()
+	[mrg, ticket #1473]
+
+sys/dev/ic/bwi.c				1.32
+
+	wrong error checking in bwi_newbuf() can cause an mbuf to
+	declare an mbuf length that is too big
+	[mrg, ticket #1474]
+
+sys/compat/svr4/svr4_lwp.c			1.20
+sys/compat/svr4/svr4_signal.c			1.67
+sys/compat/svr4/svr4_stream.c			1.89-1.91 via patch
+sys/compat/svr4_32/svr4_32_signal.c		1.29
+
+	Fix some of the multitudinous holes in svr4 streams.
+	Zero stack data before copyout.
+	Fix indexing of svr4 signals.
+	Attempt to get reference counting less bad.
+	Check bounds in svr4_sys_putmsg. Check more svr4_strmcmd bounds.
+	[mrg, ticket #1475]
+
+sys/compat/ibcs2/ibcs2_exec_coff.c		1.27-1.29
+sys/compat/ibcs2/ibcs2_ioctl.c			1.46
+sys/compat/ibcs2/ibcs2_stat.c			1.49-1.50
+
+	Out of bound read and endless loop in exec_ibcs2_coff_prep_zmagic().
+	Infoleak in ibcs2_sys_ioctl.
+	Potenial use of expired pointers in ibcs2_sys_statfs()/
+	ibcs2_sys_statvfs()
+	[mrg, ticket #1477]
+
+sys/kern/vfs_getcwd.c				1.52
+
+	out of bound read in getcwd_scandir()
+	[mrg, ticket #1478]
+
+sys/compat/common/vfs_syscalls_12.c		1.34
+sys/compat/common/vfs_syscalls_43.c		1.60
+sys/compat/ibcs2/ibcs2_misc.c			1.114
+sys/compat/linux/common/linux_file64.c		1.59
+sys/compat/linux/common/linux_misc.c		1.239
+sys/compat/linux32/common/linux32_dirent.c	1.18
+sys/compat/osf1/osf1_file.c			1.44
+sys/compat/sunos/sunos_misc.c			1.171
+sys/compat/sunos32/sunos32_misc.c		1.78
+sys/compat/svr4/svr4_misc.c			1.158
+sys/compat/svr4_32/svr4_32_misc.c		1.78
+sys/rump/kern/lib/libsys_sunos/rump_sunos_compat.c 1.2
+
+	puffs userland can trigger panic in compat getdents
+	[mrg, ticket #1479]
+
+sys/dev/ic/isp_netbsd.c				1.89
+
+	unvalidated channel index in ISP_FC_GETDLIST case of
+	ispioctl() can cause out of bound read
+	[mrg, ticket #1482]
+
+sys/dev/ic/ciss.c				1.37
+
+	out of bound read in ciss_ioctl_vol()
+	signedness bug in ciss_ioctl()
+	[mrg, ticket #1483]
+
+sys/netsmb/smb_dev.c				1.50
+sys/netsmb/smb_subr.c				1.38
+sys/netsmb/smb_subr.h				1.22
+sys/netsmb/smb_usr.c				1.17-1.19
+
+	netsmb:
+	- no length validation in smb_usr_vc2spec() can cause out
+	  of bound read.
+	- signedness bug in smb_usr_t2request() can cause out of
+	  bound read
+	[mrg, ticket #1484]
+
+sys/altq/altq_cbq.c				1.31
+sys/altq/altq_hfsc.c				1.27
+sys/altq/altq_jobs.c				1.11
+sys/altq/altq_priq.c				1.24
+sys/altq/altq_wfq.c				1.22
+
+	ALTQ:
+	- info leak in get_class_stats()
+	- signedness bug in wfq_getstats()
+	[mrg, ticket #1485]
+
+sys/compat/linux/common/linux_time.c		1.38-1.39 via patch
+
+	missing cred check in linux_sys_settimeofday()
+	[mrg, ticket #1486]
 
