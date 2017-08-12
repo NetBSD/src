@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.57 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.57.12.1 2017/08/12 03:23:45 snj Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.57 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.57.12.1 2017/08/12 03:23:45 snj Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -592,6 +592,7 @@ ipw_dma_alloc(struct ipw_softc *sc)
 		MCLGET(sbuf->m, M_DONTWAIT);
 		if (!(sbuf->m->m_flags & M_EXT)) {
 			m_freem(sbuf->m);
+			sbuf->m = NULL;
 			aprint_error_dev(sc->sc_dev, "could not allocate rx mbuf cluster\n");
 			error = ENOMEM;
 			goto fail;
@@ -604,6 +605,7 @@ ipw_dma_alloc(struct ipw_softc *sc)
 		if (error != 0) {
 			aprint_error_dev(sc->sc_dev, "could not create rxbuf dma map\n");
 			m_freem(sbuf->m);
+			sbuf->m = NULL;
 			goto fail;
 		}
 
@@ -611,7 +613,9 @@ ipw_dma_alloc(struct ipw_softc *sc)
 		    sbuf->m, BUS_DMA_READ | BUS_DMA_NOWAIT);
 		if (error != 0) {
 			bus_dmamap_destroy(sc->sc_dmat, sbuf->map);
+			sbuf->map = NULL;
 			m_freem(sbuf->m);
+			sbuf->m = NULL;
 			aprint_error_dev(sc->sc_dev, "could not map rxbuf dma memory\n");
 			goto fail;
 		}
