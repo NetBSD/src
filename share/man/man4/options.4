@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.469 2017/07/29 12:15:12 maxv Exp $
+.\"	$NetBSD: options.4,v 1.470 2017/08/12 08:03:57 maxv Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd July 29, 2017
+.Dd August 12, 2017
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -2500,10 +2500,6 @@ This gives the user a chance to see error messages from the shutdown
 operations (like NFS unmounts, buffer cache flush, etc ...).
 Setting this to 0 will disable the delay.
 Default is 2 seconds.
-.It Cd options VM86
-Include support for virtual 8086 mode, used by
-.Tn DOS
-emulators and X servers to run BIOS code, e.g., for some VESA routines.
 .It Cd options USER_LDT
 Include i386-specific system calls for modifying the local descriptor table,
 used by Windows emulators.
