@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1164 2017/08/09 18:45:30 maxv Exp $
+# $NetBSD: GENERIC,v 1.1165 2017/08/12 06:46:13 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,12 +22,11 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1164 $"
+#ident		"GENERIC-$Revision: 1.1165 $"
 
 maxusers	64		# estimated number of users
 
 # CPU-related options.
-#options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	PAE		# PAE mode (36 bits physical addressing)
 
