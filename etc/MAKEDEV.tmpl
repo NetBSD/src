@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.184 2017/06/08 03:42:37 kre Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.185 2017/08/12 11:41:21 jmcneill Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1985,6 +1985,7 @@ epcom[0-9]*)
 plcom[0-9]*)
 	unit=${i#plcom}
 	mkdev plcom$unit c %plcom_chr% $unit "" "" $u_uucp
+	mkdev dplcom$unit c %plcom_chr% $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
 wmcom[0-9]*)
