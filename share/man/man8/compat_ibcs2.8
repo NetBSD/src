@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_ibcs2.8,v 1.9 2017/06/01 02:03:07 maya Exp $
+.\"	$NetBSD: compat_ibcs2.8,v 1.10 2017/08/12 08:45:58 maxv Exp $
 .\"
 .\" Copyright (c) 1998 Scott Bartram
 .\" Copyright (c) 1995 Frank van der Linden
@@ -32,16 +32,17 @@
 .\"
 .\" Based on compat_linux.8
 .\"
-.Dd June 1, 2017
+.Dd August 12, 2017
 .Dt COMPAT_IBCS2 8
 .Os
 .Sh NAME
 .Nm compat_ibcs2
 .Nd setup procedure for running iBCS2 binaries
 .Sh DESCRIPTION
-.Nx
-supports running Intel Binary Compatibility Standard 2 (iBCS2) binaries.
-This only applies to i386 systems for now.
+Contrary to what its name indicates, compat_ibcs2 is not a compatibility
+for Intel Binary Compatibility Standard 2 (iBCS2) binaries, but rather
+a compatibility for SVR3 binaries.
+This only applies to vax systems.
 Binaries are supported from SCO
 .Ux
 and other systems derived from
