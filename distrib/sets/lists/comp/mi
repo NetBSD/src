@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2144 2017/08/12 07:59:42 maxv Exp $
+#	$NetBSD: mi,v 1.2145 2017/08/12 08:21:30 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4161,9 +4161,9 @@
 ./usr/share/man/cat2/i386_get_ldt.0		comp-c-catman		.cat
 ./usr/share/man/cat2/i386_get_mtrr.0		comp-c-catman		.cat
 ./usr/share/man/cat2/i386_iopl.0		comp-c-catman		.cat
-./usr/share/man/cat2/i386_pmc_info.0		comp-c-catman		.cat
-./usr/share/man/cat2/i386_pmc_read.0		comp-c-catman		.cat
-./usr/share/man/cat2/i386_pmc_startstop.0	comp-c-catman		.cat
+./usr/share/man/cat2/i386_pmc_info.0		comp-obsolete		obsolete
+./usr/share/man/cat2/i386_pmc_read.0		comp-obsolete		obsolete
+./usr/share/man/cat2/i386_pmc_startstop.0	comp-obsolete		obsolete
 ./usr/share/man/cat2/i386_set_ioperm.0		comp-obsolete		obsolete
 ./usr/share/man/cat2/i386_set_ldt.0		comp-c-catman		.cat
 ./usr/share/man/cat2/i386_set_mtrr.0		comp-c-catman		.cat
@@ -11814,9 +11814,9 @@
 ./usr/share/man/html2/i386_get_ldt.html		comp-c-htmlman		html
 ./usr/share/man/html2/i386_get_mtrr.html	comp-c-htmlman		html
 ./usr/share/man/html2/i386_iopl.html		comp-c-htmlman		html
-./usr/share/man/html2/i386_pmc_info.html	comp-c-htmlman		html
-./usr/share/man/html2/i386_pmc_read.html	comp-c-htmlman		html
-./usr/share/man/html2/i386_pmc_startstop.html	comp-c-htmlman		html
+./usr/share/man/html2/i386_pmc_info.html	comp-obsolete		obsolete
+./usr/share/man/html2/i386_pmc_read.html	comp-obsolete		obsolete
+./usr/share/man/html2/i386_pmc_startstop.html	comp-obsolete		obsolete
 ./usr/share/man/html2/i386_set_ldt.html		comp-c-htmlman		html
 ./usr/share/man/html2/i386_set_mtrr.html	comp-c-htmlman		html
 ./usr/share/man/html2/i386_vm86.html		comp-obsolete		obsolete
@@ -19245,9 +19245,9 @@
 ./usr/share/man/man2/i386_get_ldt.2		comp-c-man		.man
 ./usr/share/man/man2/i386_get_mtrr.2		comp-c-man		.man
 ./usr/share/man/man2/i386_iopl.2		comp-c-man		.man
-./usr/share/man/man2/i386_pmc_info.2		comp-c-man		.man
-./usr/share/man/man2/i386_pmc_read.2		comp-c-man		.man
-./usr/share/man/man2/i386_pmc_startstop.2	comp-c-man		.man
+./usr/share/man/man2/i386_pmc_info.2		comp-obsolete		obsolete
+./usr/share/man/man2/i386_pmc_read.2		comp-obsolete		obsolete
+./usr/share/man/man2/i386_pmc_startstop.2	comp-obsolete		obsolete
 ./usr/share/man/man2/i386_set_ioperm.2		comp-obsolete		obsolete
 ./usr/share/man/man2/i386_set_ldt.2		comp-c-man		.man
 ./usr/share/man/man2/i386_set_mtrr.2		comp-c-man		.man
