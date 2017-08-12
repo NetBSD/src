@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.13.2.2.2.5 2017/06/20 16:40:20 snj Exp $	*/
+/*	$NetBSD: message.c,v 1.13.2.2.2.6 2017/08/12 05:16:40 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -3060,12 +3060,19 @@ dns_message_signer(dns_message_t *msg, dns_name_t *signer) {
 
 		result = dns_rdata_tostruct(&rdata, &tsig, NULL);
 		INSIST(result == ISC_R_SUCCESS);
-		if (msg->tsigstatus != dns_rcode_noerror)
-			result = DNS_R_TSIGVERIFYFAILURE;
-		else if (tsig.error != dns_rcode_noerror)
-			result = DNS_R_TSIGERRORSET;
-		else
+		if (msg->verified_sig &&
+		    msg->tsigstatus == dns_rcode_noerror &&
+		    tsig.error == dns_rcode_noerror)
+		{
 			result = ISC_R_SUCCESS;
+		} else if ((!msg->verified_sig) ||
+			   (msg->tsigstatus != dns_rcode_noerror))
+		{
+			result = DNS_R_TSIGVERIFYFAILURE;
+		} else {
+			INSIST(tsig.error != dns_rcode_noerror);
+			result = DNS_R_TSIGERRORSET;
+		}
 		dns_rdata_freestruct(&tsig);
 
 		if (msg->tsigkey == NULL) {
