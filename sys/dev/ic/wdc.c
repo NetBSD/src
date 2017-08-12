@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.283.2.11 2017/08/12 09:52:28 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.283.2.12 2017/08/12 13:41:46 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.11 2017/08/12 09:52:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.12 2017/08/12 13:41:46 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1254,7 +1254,6 @@ wdcwait(struct ata_channel *chp, int mask, int bits, int timeout, int flags,
 				 */
 				ata_channel_freeze(chp);
 				wakeup(&chp->ch_thread);
-printf("wdcwait_thr");
 				return(WDCWAIT_THR);
 			}
 		}
