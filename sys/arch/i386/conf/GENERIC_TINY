@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.154 2017/08/10 17:33:32 maxv Exp $
+#	$NetBSD: GENERIC_TINY,v 1.155 2017/08/12 06:46:13 maxv Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -14,7 +14,6 @@ makeoptions	USE_SSP="no"
 maxusers	8		# estimated number of users
 
 # CPU-related options.
-#options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
 # This option allows you to force a serial console at the specified
