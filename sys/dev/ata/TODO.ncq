@@ -5,9 +5,6 @@ siisata - fix all new XXX and unmergable bits
 
 test wd* at umass?, confirm the ata_channel kludge works
 
-do proper NCQ error recovery
-- update mvsata to do same as ahcisata/siisata (read log ext, timeouts, et.al)
-
 do biodone() in wddone() starting the dump to not leak bufs when dumping from
 active system? make sure to not trigger atastart()
 - call ata_kill_active() + ata_kill_pending() when dumping
