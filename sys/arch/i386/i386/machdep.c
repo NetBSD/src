@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.788 2017/08/10 12:49:11 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.789 2017/08/12 07:07:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.788 2017/08/10 12:49:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.789 2017/08/12 07:07:53 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.788 2017/08/10 12:49:11 maxv Exp $");
 #include "opt_physmem.h"
 #include "opt_realmem.h"
 #include "opt_user_ldt.h"
-#include "opt_vm86.h"
 #include "opt_xen.h"
 #include "isa.h"
 #include "pci.h"
@@ -170,10 +169,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.788 2017/08/10 12:49:11 maxv Exp $");
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
-#endif
-
-#ifdef VM86
-#include <machine/vm86.h>
 #endif
 
 #include "acpica.h"
@@ -593,12 +588,7 @@ getframe(struct lwp *l, int sig, int *onstack)
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (*onstack)
 		return (char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
-#ifdef VM86
-	if (tf->tf_eflags & PSL_VM)
-		return (void *)(tf->tf_esp + (tf->tf_ss << 4));
-	else
-#endif
-		return (void *)tf->tf_esp;
+	return (void *)tf->tf_esp;
 }
 
 /*
@@ -1458,22 +1448,12 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	__greg_t ras_eip;
 
 	/* Save register context. */
-#ifdef VM86
-	if (tf->tf_eflags & PSL_VM) {
-		gr[_REG_GS]  = tf->tf_vm86_gs;
-		gr[_REG_FS]  = tf->tf_vm86_fs;
-		gr[_REG_ES]  = tf->tf_vm86_es;
-		gr[_REG_DS]  = tf->tf_vm86_ds;
-		gr[_REG_EFL] = get_vflags(l);
-	} else
-#endif
-	{
-		gr[_REG_GS]  = tf->tf_gs;
-		gr[_REG_FS]  = tf->tf_fs;
-		gr[_REG_ES]  = tf->tf_es;
-		gr[_REG_DS]  = tf->tf_ds;
-		gr[_REG_EFL] = tf->tf_eflags;
-	}
+	gr[_REG_GS]  = tf->tf_gs;
+	gr[_REG_FS]  = tf->tf_fs;
+	gr[_REG_ES]  = tf->tf_es;
+	gr[_REG_DS]  = tf->tf_ds;
+	gr[_REG_EFL] = tf->tf_eflags;
+
 	gr[_REG_EDI]    = tf->tf_edi;
 	gr[_REG_ESI]    = tf->tf_esi;
 	gr[_REG_EBP]    = tf->tf_ebp;
@@ -1545,32 +1525,18 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {
-#ifdef VM86
-		if (gr[_REG_EFL] & PSL_VM) {
-			tf->tf_vm86_gs = gr[_REG_GS];
-			tf->tf_vm86_fs = gr[_REG_FS];
-			tf->tf_vm86_es = gr[_REG_ES];
-			tf->tf_vm86_ds = gr[_REG_DS];
-			set_vflags(l, gr[_REG_EFL]);
-			if (flags & _UC_VM) {
-				void syscall_vm86(struct trapframe *);
-				l->l_proc->p_md.md_syscall = syscall_vm86;
-			}
-		} else
-#endif
-		{
-			error = cpu_mcontext_validate(l, mcp);
-			if (error)
-				return error;
+		error = cpu_mcontext_validate(l, mcp);
+		if (error)
+			return error;
 
-			tf->tf_gs = gr[_REG_GS];
-			tf->tf_fs = gr[_REG_FS];
-			tf->tf_es = gr[_REG_ES];
-			tf->tf_ds = gr[_REG_DS];
-			/* Only change the user-alterable part of eflags */
-			tf->tf_eflags &= ~PSL_USER;
-			tf->tf_eflags |= (gr[_REG_EFL] & PSL_USER);
-		}
+		tf->tf_gs = gr[_REG_GS];
+		tf->tf_fs = gr[_REG_FS];
+		tf->tf_es = gr[_REG_ES];
+		tf->tf_ds = gr[_REG_DS];
+		/* Only change the user-alterable part of eflags */
+		tf->tf_eflags &= ~PSL_USER;
+		tf->tf_eflags |= (gr[_REG_EFL] & PSL_USER);
+
 		tf->tf_edi    = gr[_REG_EDI];
 		tf->tf_esi    = gr[_REG_ESI];
 		tf->tf_ebp    = gr[_REG_EBP];
