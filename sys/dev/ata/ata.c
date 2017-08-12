@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.27 2017/08/12 15:08:38 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.28 2017/08/12 22:31:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.27 2017/08/12 15:08:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.28 2017/08/12 22:31:50 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1091,7 +1091,7 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	xfer->c_ata_c.r_st_pmask = WDCS_DRDY;
 	xfer->c_ata_c.r_count = 1;
 	xfer->c_ata_c.r_device = WDSD_LBA;
-	xfer->c_ata_c.flags = AT_READ | AT_LBA | flags;
+	xfer->c_ata_c.flags = AT_READ | AT_LBA | AT_LBA48 | flags;
 	xfer->c_ata_c.timeout = 1000; /* 1s */
 	xfer->c_ata_c.data = tb;
 	xfer->c_ata_c.bcount = DEV_BSIZE;
