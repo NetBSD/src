@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.64 2017/08/10 19:03:26 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.65 2017/08/12 09:03:27 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.64 2017/08/10 19:03:26 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.65 2017/08/12 09:03:27 joerg Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -332,6 +332,13 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		if (type == R_TYPE(JMP_SLOT))
 			continue;
 
+		/* IFUNC relocations are handled in _rtld_call_ifunc */
+		if (type == R_TYPE(IRELATIVE)) {
+			if (obj->ifunc_remaining_nonplt == 0)
+				obj->ifunc_remaining_nonplt = rela - obj->rela + 1;
+			continue;
+		}
+
 		/* COPY relocs are also handled elsewhere */
 		if (type == R_TYPE(COPY))
 			continue;
@@ -507,7 +514,17 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 int
 _rtld_relocate_plt_lazy(Obj_Entry *obj)
 {
-	return (0);
+	const Elf_Rela *rela;
+
+	if (!obj->relocbase)
+		return 0;
+
+	for (rela = obj->pltrelalim; rela-- > obj->pltrela; ) {
+		if (ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_IREL))
+			obj->ifunc_remaining = obj->pltrelalim - rela + 1;
+	}
+
+	return 0;
 }
 
 caddr_t
@@ -568,37 +585,11 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
 	return 0;
 }
 
-/*
- * New inline function that is called by _rtld_relocate_plt_object and
- * _rtld_bind
- */
-static inline int
-_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
-    Elf_Addr *tp)
+static inline void
+_rtld_write_plt(Elf_Word *where, Elf_Addr value, const Elf_Rela *rela,
+    const Obj_Entry *obj)
 {
-	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
-	const Elf_Sym *def;
-	const Obj_Entry *defobj;
-	Elf_Addr value, offset, offBAA;
-	unsigned long info = rela->r_info;
-
-	assert(ELF_R_TYPE(info) == R_TYPE(JMP_SLOT));
-
-	def = _rtld_find_plt_symdef(ELF_R_SYM(info), obj, &defobj, tp != NULL);
-	if (__predict_false(def == NULL))
-		return -1;
-	if (__predict_false(def == &_rtld_sym_zero))
-		return 0;
-
-	if (ELF_ST_TYPE(def->st_info) == STT_GNU_IFUNC) {
-		if (tp == NULL)
-			return 0;
-		value = _rtld_resolve_ifunc(defobj, def);
-	} else {
-		value = (Elf_Addr)(defobj->relocbase + def->st_value);
-	}
-	rdbg(("bind now/fixup in %s at %p --> new=%p", 
-	    defobj->strtab + def->st_name, (void*)where, (void *)value));
+	Elf_Addr offset, offBAA;
 
 	/*
 	 * At the PLT entry pointed at by `where', we now construct a direct
@@ -625,8 +616,8 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 	 */
 
 	offset = ((Elf_Addr)where) - value;
-	offBAA = value - (((Elf_Addr)where) +4);	/* ba,a at where[1] */
-	if (rela->r_addend) {
+	offBAA = value - (((Elf_Addr)where) + 4);	/* ba,a at where[1] */
+	if (rela && rela->r_addend) {
 		Elf_Addr *ptr = (Elf_Addr *)where;
 		/*
 		 * This entry is >= 32768.  The relocations points to a
@@ -634,7 +625,6 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		 * PLT section.  Update it to point to the target function.
 		 */
 		ptr[0] += value - (Elf_Addr)obj->pltgot;
-
 	} else if (offBAA <= (1L<<20) && (Elf_SOff)offBAA >= -(1L<<20)) {
 		/* 
 		 * We're within 1MB -- we can use a direct branch insn.
@@ -673,7 +663,6 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		where[1] = SETHI | HIVAL(value, 10);
 		__asm volatile("iflush %0+8" : : "r" (where));
 		__asm volatile("iflush %0+4" : : "r" (where));
-
 	} else if ((Elf_SOff)value <= 0 && (Elf_SOff)value > -(1L<<32)) {
 		/* 
 		 * We're within 32-bits of address -1.
@@ -696,7 +685,6 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		__asm volatile("iflush %0+12" : : "r" (where));
 		__asm volatile("iflush %0+8" : : "r" (where));
 		__asm volatile("iflush %0+4" : : "r" (where));
-
 	} else if ((offset+8) <= (1L<<31) &&
 	    (Elf_SOff)(offset+8) >= -((1L<<31) - 4)) {
 		/* 
@@ -721,7 +709,6 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		__asm volatile("iflush %0+12" : : "r" (where));
 		__asm volatile("iflush %0+8" : : "r" (where));
 		__asm volatile("iflush %0+4" : : "r" (where));
-
 	} else if ((Elf_SOff)value > 0 && value < (1L<<44)) {
 		/* 
 		 * We're within 44 bits.  We can generate this pattern:
@@ -746,7 +733,6 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		__asm volatile("iflush %0+12" : : "r" (where));
 		__asm volatile("iflush %0+8" : : "r" (where));
 		__asm volatile("iflush %0+4" : : "r" (where));
-
 	} else if ((Elf_SOff)value < 0 && (Elf_SOff)value > -(1L<<44)) {
 		/*
 		 *  We're within 44 bits.  We can generate this pattern:
@@ -774,7 +760,6 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		__asm volatile("iflush %0+12" : : "r" (where));
 		__asm volatile("iflush %0+8" : : "r" (where));
 		__asm volatile("iflush %0+4" : : "r" (where));
-
 	} else {
 		/* 
 		 * We need to load all 64-bits
@@ -803,11 +788,82 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		__asm volatile("iflush %0+12" : : "r" (where));
 		__asm volatile("iflush %0+8" : : "r" (where));
 		__asm volatile("iflush %0+4" : : "r" (where));
-
 	}
+}
+
+/*
+ * New inline function that is called by _rtld_relocate_plt_object and
+ * _rtld_bind
+ */
+static inline int
+_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
+    Elf_Addr *tp)
+{
+	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
+	const Elf_Sym *def;
+	const Obj_Entry *defobj;
+	Elf_Addr value;
+	unsigned long info = rela->r_info;
+
+	if (ELF_R_TYPE(info) == R_TYPE(JMP_IREL))
+		return 0;
+
+	assert(ELF_R_TYPE(info) == R_TYPE(JMP_SLOT));
+
+	def = _rtld_find_plt_symdef(ELF_R_SYM(info), obj, &defobj, tp != NULL);
+	if (__predict_false(def == NULL))
+		return -1;
+	if (__predict_false(def == &_rtld_sym_zero))
+		return 0;
+
+	if (ELF_ST_TYPE(def->st_info) == STT_GNU_IFUNC) {
+		if (tp == NULL)
+			return 0;
+		value = _rtld_resolve_ifunc(defobj, def);
+	} else {
+		value = (Elf_Addr)(defobj->relocbase + def->st_value);
+	}
+	rdbg(("bind now/fixup in %s at %p --> new=%p", 
+	    defobj->strtab + def->st_name, (void*)where, (void *)value));
+
+	_rtld_write_plt(where, value, rela, obj);
 
 	if (tp)
 		*tp = value;
 
 	return 0;
+}
+
+void
+_rtld_call_ifunc(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
+{
+	const Elf_Rela *rela;
+	Elf_Addr *where;
+	Elf_Word *where2;
+	Elf_Addr target;
+
+	while (obj->ifunc_remaining > 0 && _rtld_objgen == cur_objgen) {
+		rela = obj->pltrelalim - --obj->ifunc_remaining;
+		if (ELF_R_TYPE(rela->r_info) != R_TYPE(JMP_IREL))
+			continue;
+		where2 = (Elf_Word *)(obj->relocbase + rela->r_offset);
+		target = (Elf_Addr)(obj->relocbase + rela->r_addend);
+		_rtld_exclusive_exit(mask);
+		target = _rtld_resolve_ifunc2(obj, target);
+		_rtld_exclusive_enter(mask);
+		_rtld_write_plt(where2, target, NULL, obj);
+	}
+
+	while (obj->ifunc_remaining_nonplt > 0 && _rtld_objgen == cur_objgen) {
+		rela = obj->relalim - --obj->ifunc_remaining_nonplt;
+		if (ELF_R_TYPE(rela->r_info) != R_TYPE(IRELATIVE))
+			continue;
+		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
+		target = (Elf_Addr)(obj->relocbase + rela->r_addend);
+		_rtld_exclusive_exit(mask);
+		target = _rtld_resolve_ifunc2(obj, target);
+		_rtld_exclusive_enter(mask);
+		if (*where != target)
+			*where = target;
+	}
 }

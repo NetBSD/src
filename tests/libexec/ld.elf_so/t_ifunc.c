@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ifunc.c,v 1.3 2017/08/10 19:03:27 joerg Exp $	*/
+/*	$NetBSD: t_ifunc.c,v 1.4 2017/08/12 09:03:28 joerg Exp $	*/
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ ATF_TC_BODY(rtld_ifunc, tc)
 	const char *error;
 	size_t i;
 
-#if !defined( __arm__) && !defined(__i386__) && !defined(__x86_64__) && !defined(__powerpc__)
+#if !defined( __arm__) && !defined(__i386__) && !defined(__x86_64__) && !defined(__powerpc__) && !defined(__sparc__)
 	atf_tc_expect_fail("Missing linker support for hidden ifunc relocations");
 #endif
 
@@ -106,6 +106,7 @@ ATF_TC_BODY(rtld_hidden_ifunc, tc)
 	};
 	void *handle;
 	int (*sym)(void);
+	int (*(*sym2)(void))(void);
 	int result;
 	const char *error;
 	size_t i;
@@ -123,6 +124,15 @@ ATF_TC_BODY(rtld_hidden_ifunc, tc)
 		ATF_CHECK(error == NULL);
 		ATF_CHECK(sym != NULL);
 
+		result = (*sym)();
+		ATF_CHECK(result == expected_result[!i]);
+
+		sym2 = dlsym(handle, "ifunc_indirect");
+		error = dlerror();
+		ATF_CHECK(error == NULL);
+		ATF_CHECK(sym2 != NULL);
+
+		sym = (*sym2)();
 		result = (*sym)();
 		ATF_CHECK(result == expected_result[!i]);
 

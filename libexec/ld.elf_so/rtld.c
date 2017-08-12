@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.186 2017/08/10 19:03:25 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.187 2017/08/12 09:03:27 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.186 2017/08/10 19:03:25 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.187 2017/08/12 09:03:27 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -276,7 +276,11 @@ restart:
 	/* First pass: objects with IRELATIVE relocations. */
 	SIMPLEQ_FOREACH(elm, &initlist, link) {
 		Obj_Entry * const obj = elm->obj;
-		if (obj->ifunc_remaining) {
+		if (obj->ifunc_remaining
+#ifdef __sparc__
+		    || obj->ifunc_remaining_nonplt
+#endif
+		) {
 			_rtld_call_ifunc(obj, mask, cur_objgen);
 			if (_rtld_objgen != cur_objgen) {
 				dbg(("restarting init iteration"));

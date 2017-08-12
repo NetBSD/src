@@ -66,3 +66,10 @@ int ifunc_plt(void)
 {
 	return ifunc_hidden();
 }
+
+int (*ifunc_indirect(void))(void);
+
+int (*ifunc_indirect(void))(void)
+{
+	return ifunc_hidden;
+}
