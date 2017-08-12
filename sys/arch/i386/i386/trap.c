@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.288 2017/07/01 10:44:42 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.289 2017/08/12 07:07:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,13 +69,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.288 2017/07/01 10:44:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.289 2017/08/12 07:07:53 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
-#include "opt_vm86.h"
 #include "opt_xen.h"
 #include "opt_dtrace.h"
 #include "opt_compat_netbsd.h"
@@ -465,12 +464,6 @@ kernelfault:
 			ksi.ksi_code = BUS_ADRALN;
 			break;
 		case T_PROTFLT|T_USER:
-#ifdef VM86
-			if (frame->tf_eflags & PSL_VM) {
-				vm86_gpfault(l, type & ~T_USER);
-				goto out;
-			}
-#endif
 			/*
 			 * If pmap_exec_fixup does something,
 			 * let's retry the trap.
