@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.130 2017/08/10 19:03:25 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.131 2017/08/12 09:03:27 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -300,6 +300,10 @@ typedef struct Struct_Obj_Entry {
 	size_t		fini_arraysz;	/* # of entries in it */
 	/* IRELATIVE relocations */
 	size_t		ifunc_remaining;
+#ifdef __sparc__
+	/* On SPARC, the PLT variant is called JMP_IREL and counted above. */
+	size_t		ifunc_remaining_nonplt;
+#endif
 	size_t		cxa_refcount;	/* For TLS destructors. */
 #ifdef __ARM_EABI__
 	void		*exidx_start;
