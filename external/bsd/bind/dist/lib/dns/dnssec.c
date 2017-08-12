@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.9.4.4 2017/06/20 17:09:50 snj Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.9.4.5 2017/08/12 05:20:28 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -982,6 +982,8 @@ dns_dnssec_verifymessage(isc_buffer_t *source, dns_message_t *msg,
 	mctx = msg->mctx;
 
 	msg->verify_attempted = 1;
+	msg->verified_sig = 0;
+	msg->sig0status = dns_tsigerror_badsig;
 
 	if (is_response(msg)) {
 		if (msg->query.base == NULL)
@@ -1077,6 +1079,7 @@ dns_dnssec_verifymessage(isc_buffer_t *source, dns_message_t *msg,
 	}
 
 	msg->verified_sig = 1;
+	msg->sig0status = dns_rcode_noerror;
 
 	dst_context_destroy(&ctx);
 	dns_rdata_freestruct(&sig);
