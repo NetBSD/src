@@ -15,8 +15,6 @@ active system? make sure to not trigger atastart()
 kill active transfers after software drive reset - race timeout vs.
 error recovery
 
-atabus_thread() protect run by mutex/condvar
-
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------
 implement support for PM FIS-based switching, remove restriction in atastart()
