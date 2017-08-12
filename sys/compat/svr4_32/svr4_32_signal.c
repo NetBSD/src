@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.26 2008/04/28 20:23:46 martin Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.26.70.1 2017/08/12 03:59:55 snj Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.26 2008/04/28 20:23:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.26.70.1 2017/08/12 03:59:55 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
@@ -208,6 +208,21 @@ const int svr4_to_native_signo[SVR4_NSIG] = {
 };
 #endif
 
+static int
+svr4_32_decode_signum(int signum, int *native_signo, int *sigcall)
+{
+
+	if (SVR4_SIGNO(signum) >= SVR4_NSIG)
+		return EINVAL;
+
+	if (native_signo)
+		*native_signo = svr4_to_native_signo[SVR4_SIGNO(signum)];
+	if (sigcall)
+		*sigcall = SVR4_SIGCALL(signum);
+
+	return 0;
+}
+
 static inline void
 svr4_32_sigfillset(svr4_32_sigset_t *s)
 {
@@ -310,6 +325,7 @@ svr4_32_sys_sigaction(struct lwp *l, const struct svr4_32_sys_sigaction_args *ua
 	} */
 	struct svr4_32_sigaction nssa, ossa;
 	struct sigaction nbsa, obsa;
+	int native_signo;
 	int error;
 
 	if (SCARG_P32(uap, nsa)) {
@@ -319,8 +335,12 @@ svr4_32_sys_sigaction(struct lwp *l, const struct svr4_32_sys_sigaction_args *ua
 			return (error);
 		svr4_32_to_native_sigaction(&nssa, &nbsa);
 	}
-	error = sigaction1(l,
-			   svr4_to_native_signo[SVR4_SIGNO(SCARG(uap, signum))],
+
+	error = svr4_32_decode_signum(SCARG(uap, signum), &native_signo, NULL);
+	if (error)
+		return error;
+
+	error = sigaction1(l, native_signo,
 	    SCARG_P32(uap, nsa) ? &nbsa : 0, SCARG_P32(uap, osa) ? &obsa : 0,
 	    NULL, 0);
 	if (error)
@@ -357,15 +377,17 @@ svr4_32_sys_signal(struct lwp *l, const struct svr4_32_sys_signal_args *uap, reg
 		syscallarg(svr4_32_sig_t) handler;
 	} */
 	struct proc *p = l->l_proc;
-	int signum = svr4_to_native_signo[SVR4_SIGNO(SCARG(uap, signum))];
+	int native_signo, sigcall;
 	struct sigaction nbsa, obsa;
 	sigset_t ss;
 	int error;
 
-	if (signum <= 0 || signum >= SVR4_NSIG)
-		return (EINVAL);
+	error = svr4_32_decode_signum(SCARG(uap, signum), &native_signo,
+	    &sigcall);
+	if (error)
+		return error;
 
-	switch (SVR4_SIGCALL(SCARG(uap, signum))) {
+	switch (sigcall) {
 	case SVR4_SIGDEFER_MASK:
 		if (SCARG(uap, handler) == SVR4_SIG_HOLD)
 			goto sighold;
@@ -536,9 +558,15 @@ svr4_32_sys_kill(struct lwp *l, const struct svr4_32_sys_kill_args *uap, registe
 		syscallarg(int) signum;
 	} */
 	struct sys_kill_args ka;
+	int native_signo;
+	int error;
+
+	error = svr4_32_decode_signum(SCARG(uap, signum), &native_signo, NULL);
+	if (error)
+		return error;
 
 	SCARG(&ka, pid) = SCARG(uap, pid);
-	SCARG(&ka, signum) = svr4_to_native_signo[SVR4_SIGNO(SCARG(uap, signum))];
+	SCARG(&ka, signum) = native_signo;
 	return sys_kill(l, &ka, retval);
 }
 
