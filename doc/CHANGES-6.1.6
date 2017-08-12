@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.101 2017/08/10 06:48:23 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.102 2017/08/12 16:36:36 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -12033,4 +12033,29 @@ share/zoneinfo/solar89				 delete
 
 	Update tzdata to 2017b.
 	[mrg, ticket #1467]
+
+sys/compat/common/vfs_syscalls_12.c		1.30
+sys/compat/common/vfs_syscalls_43.c		1.56
+sys/compat/sys/dirent.h				1.3
+
+	It is wishful thinking that vn_readdir will return
+	dirent12 structures.
+	Fix the compat-4.3 getdirentries call (pre d_type).
+	Add a struct for the 4.3BSD struct dirent.
+	[mrg, ticket #1469]
+
+sys/dev/usb/if_ural.c				1.52
+
+	ural_alloc_rx_list() calls wrong destructor in case of failure
+	[mrg, ticket #1470]
+
+sys/arch/newsmips/apbus/if_sn.c			1.39
+
+	memory leak in sonic_get()
+	[mrg, ticket #1471]
+
+sys/arch/mac68k/nubus/if_netdock_nubus.c	1.26
+
+	memory leak in netdock_get()
+	[mrg, ticket #1472]
 
