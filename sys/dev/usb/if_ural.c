@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.39 2011/12/23 00:51:44 jakllsch Exp $ */
+/*	$NetBSD: if_ural.c,v 1.39.6.1 2017/08/12 16:27:44 snj Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.39 2011/12/23 00:51:44 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.39.6.1 2017/08/12 16:27:44 snj Exp $");
 
 
 #include <sys/param.h>
@@ -678,7 +678,7 @@ ural_alloc_rx_list(struct ural_softc *sc)
 
 	return 0;
 
-fail:	ural_free_tx_list(sc);
+fail:	ural_free_rx_list(sc);
 	return error;
 }
 
