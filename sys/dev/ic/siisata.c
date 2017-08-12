@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.34 2017/08/11 18:20:13 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.35 2017/08/12 22:12:04 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.34 2017/08/11 18:20:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.35 2017/08/12 22:12:04 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -653,6 +653,7 @@ siisata_channel_recover(struct ata_channel *chp, uint32_t tfd)
 		/* Error out the particular NCQ xfer, then requeue the others */
 		if ((schp->sch_active_slots & (1 << eslot)) != 0) {
 			xfer = ata_queue_hwslot_to_xfer(chp, eslot);
+			xfer->c_flags |= C_RECOVERED;
 			xfer->c_intr(chp, xfer, ATACH_ERR_ST(err, st));
 		}
 		break;

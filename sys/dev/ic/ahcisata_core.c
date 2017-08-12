@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.25 2017/08/01 22:02:32 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.26 2017/08/12 22:12:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.25 2017/08/01 22:02:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.26 2017/08/12 22:12:04 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1592,6 +1592,7 @@ ahci_channel_recover(struct ahci_softc *sc, struct ata_channel *chp, int tfd)
 		/* Error out the particular NCQ xfer, then requeue the others */
 		if ((achp->ahcic_cmds_active & (1 << eslot)) != 0) {
 			xfer = ata_queue_hwslot_to_xfer(chp, eslot);
+			xfer->c_flags |= C_RECOVERED;
 			xfer->c_intr(chp, xfer,
 			    (err << AHCI_P_TFD_ERR_SHIFT) | st);
 		}
