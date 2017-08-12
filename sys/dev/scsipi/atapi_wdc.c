@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.123.4.10 2017/07/29 09:04:39 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.123.4.11 2017/08/12 09:52:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.10 2017/07/29 09:04:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.11 2017/08/12 09:52:28 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -481,6 +481,7 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int wait_flags = (sc_xfer->xs_control & XS_CTL_POLL) ? AT_POLL : 0;
+	int tfd;
 	const char *errstring;
 
 	ATADEBUG_PRINT(("wdc_atapi_start %s:%d:%d, scsi flags 0x%x \n",
@@ -516,15 +517,16 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		if ((drvp->drive_flags & ATA_DRIVE_MODE) == 0)
 			goto ready;
 		errstring = "unbusy";
-		if (wdc_wait_for_unbusy(chp, ATAPI_DELAY, wait_flags))
+		if (wdc_wait_for_unbusy(chp, ATAPI_DELAY, wait_flags, &tfd))
 			goto timeout;
 		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 		    0x08 | drvp->PIO_mode, WDSF_SET_MODE);
 		errstring = "piomode";
-		if (wdc_wait_for_unbusy(chp, ATAPI_MODE_DELAY, wait_flags))
+		if (wdc_wait_for_unbusy(chp, ATAPI_MODE_DELAY, wait_flags,
+		    &tfd))
 			goto timeout;
-		if (chp->ch_status & WDCS_ERR) {
-			if (chp->ch_error == WDCE_ABRT) {
+		if (ATACH_ST(tfd) & WDCS_ERR) {
+			if (ATACH_ST(tfd) == WDCE_ABRT) {
 				/*
 				 * Some ATAPI drives reject PIO settings.
 				 * Fall back to PIO mode 3 since that's the
@@ -554,10 +556,11 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			goto ready;
 		}
 		errstring = "dmamode";
-		if (wdc_wait_for_unbusy(chp, ATAPI_MODE_DELAY, wait_flags))
+		if (wdc_wait_for_unbusy(chp, ATAPI_MODE_DELAY, wait_flags,
+		    &tfd))
 			goto timeout;
-		if (chp->ch_status & WDCS_ERR) {
-			if (chp->ch_error == WDCE_ABRT) {
+		if (ATACH_ST(tfd) & WDCS_ERR) {
+			if (ATACH_ERR(tfd) == WDCE_ABRT) {
 #if NATA_UDMA
 				if (drvp->drive_flags & ATA_DRIVE_UDMA)
 					goto error;
@@ -595,12 +598,12 @@ ready:
 		wdc->select(chp, xfer->c_drive);
 	bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
 	    WDSD_IBM | (xfer->c_drive << 4));
-	switch (wdc_wait_for_unbusy(chp, ATAPI_DELAY, wait_flags)) {
+	switch (wdc_wait_for_unbusy(chp, ATAPI_DELAY, wait_flags, &tfd)) {
 	case WDCWAIT_OK:
 		break;
 	case WDCWAIT_TOUT:
 		printf("wdc_atapi_start: not ready, st = %02x\n",
-		    chp->ch_status);
+		    ATACH_ST(tfd));
 		sc_xfer->error = XS_TIMEOUT;
 		wdc_atapi_reset(chp, xfer);
 		return;
@@ -669,8 +672,6 @@ ready:
 		/* Wait for at last 400ns for status bit to be valid */
 		DELAY(1);
 		wdc_atapi_intr(chp, xfer, 0);
-	} else {
-		chp->ch_flags |= ATACH_IRQ_WAIT;
 	}
 	if (sc_xfer->xs_control & XS_CTL_POLL) {
 #if NATA_DMA
@@ -699,9 +700,9 @@ error:
 	printf("%s:%d:%d: %s ",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
 	    errstring);
-	printf("error (0x%x)\n", chp->ch_error);
+	printf("error (0x%x)\n", ATACH_ERR(tfd));
 	sc_xfer->error = XS_SHORTSENSE;
-	sc_xfer->sense.atapi_sense = chp->ch_error;
+	sc_xfer->sense.atapi_sense = ATACH_ERR(tfd);
 	bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr, WDCTL_4BIT);
 	delay(10); /* some drives need a little delay here */
 	wdc_atapi_reset(chp, xfer);
@@ -709,7 +710,7 @@ error:
 }
 
 static int
-wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
+wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
@@ -717,7 +718,8 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int len, phase, i, retries=0;
-	int ire;
+	int ire, tfd;
+	int poll = ((xfer->c_flags & C_POLL) != 0);
 #if NATA_DMA
 	int error;
 #endif
@@ -770,8 +772,8 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
 	    WDSD_IBM | (xfer->c_drive << 4));
 	if (wdc_wait_for_unbusy(chp,
-	    (irq == 0) ? sc_xfer->timeout : 0, AT_POLL) == WDCWAIT_TOUT) {
-		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
+	    poll ? sc_xfer->timeout : 0, AT_POLL, &tfd) == WDCWAIT_TOUT) {
+		if (!poll && (xfer->c_flags & C_TIMEOU) == 0)
 			return 0; /* IRQ was not for us */
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip=%d\n",
 		    device_xname(atac->atac_dev), chp->ch_channel,
@@ -815,10 +817,10 @@ again:
 	len = bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_cyl_lo], 0) +
 	    256 * bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_cyl_hi], 0);
 	ire = bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_ireason], 0);
-	phase = (ire & (WDCI_CMD | WDCI_IN)) | (chp->ch_status & WDCS_DRQ);
+	phase = (ire & (WDCI_CMD | WDCI_IN)) | (ATACH_ST(tfd) & WDCS_DRQ);
 	ATADEBUG_PRINT(("wdc_atapi_intr: c_bcount %d len %d st 0x%x err 0x%x "
 	    "ire 0x%x :", xfer->c_bcount,
-	    len, chp->ch_status, chp->ch_error, ire), DEBUG_INTR);
+	    len, ATACH_ST(tfd), ATACH_ERR(tfd), ire), DEBUG_INTR);
 
 	switch (phase) {
 	case PHASE_CMDOUT:
@@ -859,10 +861,6 @@ again:
 			chp->ch_flags |= ATACH_DMA_WAIT;
 		}
 #endif
-
-		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0) {
-			chp->ch_flags |= ATACH_IRQ_WAIT;
-		}
 		return 1;
 
 	 case PHASE_DATAOUT:
@@ -894,8 +892,7 @@ again:
 			(*wdc->piobm_start)(wdc->dma_arg,
 			    chp->ch_channel, xfer->c_drive,
 			    xfer->c_skip, len, WDC_PIOBM_XFER_IRQ);
-			chp->ch_flags |= ATACH_DMA_WAIT | ATACH_IRQ_WAIT |
-			    ATACH_PIOBM_WAIT;
+			chp->ch_flags |= ATACH_DMA_WAIT | ATACH_PIOBM_WAIT;
 			return 1;
 		}
 #endif
@@ -911,9 +908,6 @@ again:
 
 		xfer->c_skip += len;
 		xfer->c_bcount -= len;
-		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0) {
-			chp->ch_flags |= ATACH_IRQ_WAIT;
-		}
 		return 1;
 
 	case PHASE_DATAIN:
@@ -945,8 +939,7 @@ again:
 			(*wdc->piobm_start)(wdc->dma_arg,
 			    chp->ch_channel, xfer->c_drive,
 			    xfer->c_skip, len, WDC_PIOBM_XFER_IRQ);
-			chp->ch_flags |= ATACH_DMA_WAIT | ATACH_IRQ_WAIT |
-			    ATACH_PIOBM_WAIT;
+			chp->ch_flags |= ATACH_DMA_WAIT | ATACH_PIOBM_WAIT;
 			return 1;
 		}
 #endif
@@ -961,9 +954,6 @@ again:
 
 		xfer->c_skip += len;
 		xfer->c_bcount -= len;
-		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0) {
-			chp->ch_flags |= ATACH_IRQ_WAIT;
-		}
 		return 1;
 
 	case PHASE_ABORTED:
@@ -981,16 +971,18 @@ again:
 	default:
 		if (++retries<500) {
 			DELAY(100);
-			chp->ch_status = bus_space_read_1(wdr->cmd_iot,
-			    wdr->cmd_iohs[wd_status], 0);
-			chp->ch_error = bus_space_read_1(wdr->cmd_iot,
-			    wdr->cmd_iohs[wd_error], 0);
+			tfd = ATACH_ERR_ST(
+			    bus_space_read_1(wdr->cmd_iot,
+				wdr->cmd_iohs[wd_error], 0),
+			    bus_space_read_1(wdr->cmd_iot,
+				wdr->cmd_iohs[wd_status], 0)
+			);
 			goto again;
 		}
 		printf("wdc_atapi_intr: unknown phase 0x%x\n", phase);
-		if (chp->ch_status & WDCS_ERR) {
+		if (ATACH_ST(tfd) & WDCS_ERR) {
 			sc_xfer->error = XS_SHORTSENSE;
-			sc_xfer->sense.atapi_sense = chp->ch_error;
+			sc_xfer->sense.atapi_sense = ATACH_ERR(tfd);
 		} else {
 #if NATA_DMA
 			if (xfer->c_flags & C_DMA) {
@@ -1020,6 +1012,7 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 #endif
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
+	int tfd;
 
 	/* wait for DSC if needed */
 	if (drvp->drive_flags & ATA_DRIVE_ATAPIDSCW) {
@@ -1032,7 +1025,7 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 			panic("wdc_atapi_phase_complete: cold");
 #endif
 		if (wdcwait(chp, WDCS_DSC, WDCS_DSC, 10,
-		    AT_POLL) == WDCWAIT_TOUT) {
+		    AT_POLL, &tfd) == WDCWAIT_TOUT) {
 			/* 10ms not enough, try again in 1 tick */
 			if (xfer->c_dscpoll++ >
 			    mstohz(sc_xfer->timeout)) {
@@ -1056,12 +1049,12 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 	 * register. If we read some data the sense is valid
 	 * anyway, so don't report the error.
 	 */
-	if (chp->ch_status & WDCS_ERR &&
+	if (ATACH_ST(tfd) & WDCS_ERR &&
 	    ((sc_xfer->xs_control & XS_CTL_REQSENSE) == 0 ||
 	    sc_xfer->resid == sc_xfer->datalen)) {
 		/* save the short sense */
 		sc_xfer->error = XS_SHORTSENSE;
-		sc_xfer->sense.atapi_sense = chp->ch_error;
+		sc_xfer->sense.atapi_sense = ATACH_ERR(tfd);
 		if ((sc_xfer->xs_periph->periph_quirks &
 		    PQUIRK_NOSENSE) == 0) {
 			/* ask scsipi to send a REQUEST_SENSE */
@@ -1126,10 +1119,11 @@ wdc_atapi_reset(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
+	int tfd;
 
 	wdccommandshort(chp, xfer->c_drive, ATAPI_SOFT_RESET);
 	drvp->state = 0;
-	if (wdc_wait_for_unbusy(chp, WDC_RESET_WAIT, AT_POLL) != 0) {
+	if (wdc_wait_for_unbusy(chp, WDC_RESET_WAIT, AT_POLL, &tfd) != 0) {
 		printf("%s:%d:%d: reset failed\n",
 		    device_xname(atac->atac_dev), chp->ch_channel,
 		    xfer->c_drive);
