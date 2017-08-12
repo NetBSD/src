@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.75 2017/07/22 09:01:46 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.76 2017/08/12 07:21:57 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -49,7 +49,6 @@
 #include "opt_xen.h"
 #ifdef i386
 #include "opt_user_ldt.h"
-#include "opt_vm86.h"
 #endif
 #endif
 
@@ -477,11 +476,6 @@ int	x86_set_ldt(struct lwp *, void *, register_t *);
 /* isa_machdep.c */
 void	isa_defaultirq(void);
 int	isa_nmi(void);
-
-#ifdef VM86
-/* vm86.c */
-void	vm86_gpfault(struct lwp *, int);
-#endif /* VM86 */
 
 /* consinit.c */
 void kgdb_port_init(void);
