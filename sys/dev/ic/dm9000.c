@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.4.22.1 2015/01/02 20:24:14 martin Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.4.22.1.2.1 2017/08/12 03:44:15 snj Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -1122,8 +1122,13 @@ dme_alloc_receive_buffer(struct ifnet *ifp, unsigned int frame_length)
 		sizeof(struct ether_header);
 	/* All our frames have the CRC attached */
 	m->m_flags |= M_HASFCS;
-	if (m->m_pkthdr.len + pad > MHLEN )
+	if (m->m_pkthdr.len + pad > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_freem(m);
+			return NULL;
+		}
+	}
 
 	m->m_data += pad;
 	m->m_len = frame_length + (frame_length % sc->sc_data_width);
