@@ -13,8 +13,6 @@
 #include "utils/list.h"
 #include "eap_peer/eap_config.h"
 
-#define MAX_SSID_LEN 32
-
 
 #define DEFAULT_EAP_WORKAROUND ((unsigned int) -1)
 #define DEFAULT_EAPOL_FLAGS (EAPOL_FLAG_REQUIRE_KEY_UNICAST | \
@@ -22,8 +20,7 @@
 #define DEFAULT_PROTO (WPA_PROTO_WPA | WPA_PROTO_RSN)
 #define DEFAULT_KEY_MGMT (WPA_KEY_MGMT_PSK | WPA_KEY_MGMT_IEEE8021X)
 #define DEFAULT_PAIRWISE (WPA_CIPHER_CCMP | WPA_CIPHER_TKIP)
-#define DEFAULT_GROUP (WPA_CIPHER_CCMP | WPA_CIPHER_TKIP | \
-		       WPA_CIPHER_WEP104 | WPA_CIPHER_WEP40)
+#define DEFAULT_GROUP (WPA_CIPHER_CCMP | WPA_CIPHER_TKIP)
 #define DEFAULT_FRAGMENT_SIZE 1398
 
 #define DEFAULT_BG_SCAN_PERIOD -1
@@ -181,6 +178,14 @@ struct wpa_ssid {
 	char *ext_psk;
 
 	/**
+	 * mem_only_psk - Whether to keep PSK/passphrase only in memory
+	 *
+	 * 0 = allow psk/passphrase to be stored to the configuration file
+	 * 1 = do not store psk/passphrase to the configuration file
+	 */
+	int mem_only_psk;
+
+	/**
 	 * pairwise_cipher - Bitfield of allowed pairwise ciphers, WPA_CIPHER_*
 	 */
 	int pairwise_cipher;
@@ -220,7 +225,9 @@ struct wpa_ssid {
 	 *
 	 * scan_ssid can be used to scan for APs using hidden SSIDs.
 	 * Note: Many drivers do not support this. ap_mode=2 can be used with
-	 * such drivers to use hidden SSIDs.
+	 * such drivers to use hidden SSIDs. Note2: Most nl80211-based drivers
+	 * do support scan_ssid=1 and that should be used with them instead of
+	 * ap_scan=2.
 	 */
 	int scan_ssid;
 
@@ -353,6 +360,19 @@ struct wpa_ssid {
 	} mode;
 
 	/**
+	 * pbss - Whether to use PBSS. Relevant to DMG networks only.
+	 * 0 = do not use PBSS
+	 * 1 = use PBSS
+	 * 2 = don't care (not allowed in AP mode)
+	 * Used together with mode configuration. When mode is AP, it
+	 * means to start a PCP instead of a regular AP. When mode is INFRA it
+	 * means connect to a PCP instead of AP. In this mode you can also
+	 * specify 2 (don't care) meaning connect to either AP or PCP.
+	 * P2P_GO and P2P_GROUP_FORMATION modes must use PBSS in DMG network.
+	 */
+	int pbss;
+
+	/**
 	 * disabled - Whether this network is currently disabled
 	 *
 	 * 0 = this network can be used (default).
@@ -424,6 +444,18 @@ struct wpa_ssid {
 	 */
 	int fixed_freq;
 
+#ifdef CONFIG_ACS
+	/**
+	 * ACS - Automatic Channel Selection for AP mode
+	 *
+	 * If present, it will be handled together with frequency.
+	 * frequency will be used to determine hardware mode only, when it is
+	 * used for both hardware mode and channel when used alone. This will
+	 * force the channel to be set to 0, thus enabling ACS.
+	 */
+	int acs;
+#endif /* CONFIG_ACS */
+
 	/**
 	 * mesh_basic_rates - BSS Basic rate set for mesh network
 	 *
@@ -442,6 +474,10 @@ struct wpa_ssid {
 
 	int vht;
 
+	u8 max_oper_chwidth;
+
+	unsigned int vht_center_freq2;
+
 	/**
 	 * wpa_ptk_rekey - Maximum lifetime for PTK in seconds
 	 *
@@ -449,6 +485,14 @@ struct wpa_ssid {
 	 * attacks against TKIP deficiencies.
 	 */
 	int wpa_ptk_rekey;
+
+	/**
+	 * group_rekey - Group rekeying time in seconds
+	 *
+	 * This value, if non-zero, is used as the dot11RSNAConfigGroupRekeyTime
+	 * parameter when operating in Authenticator role in IBSS.
+	 */
+	int group_rekey;
 
 	/**
 	 * scan_freq - Array of frequencies to scan or %NULL for all
@@ -712,6 +756,14 @@ struct wpa_ssid {
 	 * this MBSS will trigger a peering attempt.
 	 */
 	int no_auto_peer;
+
+	/**
+	 * wps_disabled - WPS disabled in AP mode
+	 *
+	 * 0 = WPS enabled and configured (default)
+	 * 1 = WPS disabled
+	 */
+	int wps_disabled;
 };
 
 #endif /* CONFIG_SSID_H */
