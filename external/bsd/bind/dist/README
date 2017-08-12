@@ -51,6 +51,11 @@ BIND 9
 	For up-to-date release notes and errata, see
 	http://www.isc.org/software/bind9/releasenotes
 
+BIND 9.10.5-P2
+
+        This version contains a fix for the security flaws
+        disclosed in CVE-2017-3142 and CVE-2017-3143.
+
 BIND 9.10.5-P1
 
         This version contains a fix for the security flaws
