@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.157 2017/07/12 09:30:16 hannken Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.158 2017/08/13 21:00:58 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.157 2017/07/12 09:30:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.158 2017/08/13 21:00:58 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1659,17 +1659,14 @@ ffs_discard_finish(void *vts, int flags)
 {
 	struct discarddata *ts = vts;
 	struct discardopdata *td = NULL;
-	int res = 0;
 
 	/* wait for workqueue to drain */
 	mutex_enter(&ts->wqlk);
 	if (ts->wqcnt) {
 		ts->wqdraining = 1;
-		res = cv_timedwait(&ts->wqcv, &ts->wqlk, mstohz(5000));
+		cv_wait(&ts->wqcv, &ts->wqlk);
 	}
 	mutex_exit(&ts->wqlk);
-	if (res)
-		printf("ffs_discarddata drain timeout\n");
 
 	mutex_enter(&ts->entrylk);
 	if (ts->entry) {
