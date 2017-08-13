@@ -1,6 +1,6 @@
-/*	$NetBSD: process_machdep.c,v 1.33 2017/08/08 17:27:34 maxv Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.34 2017/08/13 07:16:44 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -71,19 +71,16 @@
  *
  * process_set_pc(proc)
  *	Set the process's program counter.
- *
  */
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.33 2017/08/08 17:27:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.34 2017/08/13 07:16:44 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/vnode.h>
 #include <sys/ptrace.h>
 
 #include <machine/psl.h>
@@ -93,16 +90,12 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.33 2017/08/08 17:27:34 maxv Ex
 #include <x86/fpu.h>
 
 static inline struct trapframe *process_frame(struct lwp *);
-#if 0
-static inline int verr_gdt(struct pmap *, int sel);
-static inline int verr_ldt(struct pmap *, int sel);
-#endif
 
 static inline struct trapframe *
 process_frame(struct lwp *l)
 {
 
-	return (l->l_md.md_regs);
+	return l->l_md.md_regs;
 }
 
 int
@@ -114,7 +107,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 	_FRAME_GREG(copy_to_reg)
 #undef copy_to_reg
 
-	return (0);
+	return 0;
 }
 
 int
@@ -162,7 +155,7 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 	tf->tf_err = err;
 	tf->tf_trapno = trapno;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -200,7 +193,7 @@ process_sstep(struct lwp *l, int sstep)
 	else
 		tf->tf_rflags &= ~PSL_T;
 	
-	return (0);
+	return 0;
 }
 
 int
@@ -208,9 +201,9 @@ process_set_pc(struct lwp *l, void *addr)
 {
 	struct trapframe *tf = process_frame(l);
 
-	if ((uint64_t)addr > VM_MAXUSER_ADDRESS)
+	if ((uint64_t)addr >= VM_MAXUSER_ADDRESS)
 		return EINVAL;
 	tf->tf_rip = (uint64_t)addr;
 
-	return (0);
+	return 0;
 }
