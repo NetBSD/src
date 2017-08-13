@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.136 2017/01/20 02:25:24 maya Exp $        */
+/*      $NetBSD: ukbd.c,v 1.137 2017/08/13 21:11:45 jakllsch Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.136 2017/01/20 02:25:24 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.137 2017/08/13 21:11:45 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1078,26 +1078,36 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 			 "cnt=%d\n", imod,
 			 h.usage, h.flags, h.loc.pos, h.loc.size, h.loc.count));
 		if (h.flags & HIO_VARIABLE) {
-			if (h.loc.size != 1)
+			if (h.loc.size != 1) {
+				hid_end_parse(d);
 				return "bad modifier size";
+			}
 			/* Single item */
 			if (imod < MAXMOD) {
 				sc->sc_modloc[imod] = h.loc;
 				sc->sc_mods[imod].mask = 1 << imod;
 				sc->sc_mods[imod].key = HID_GET_USAGE(h.usage);
 				imod++;
-			} else
+			} else {
+				hid_end_parse(d);
 				return "too many modifier keys";
+			}
 		} else {
 			/* Array */
-			if (h.loc.size != 8)
+			if (h.loc.size != 8) {
+				hid_end_parse(d);
 				return "key code size != 8";
+			}
 			if (h.loc.count > MAXKEYCODE)
 				h.loc.count = MAXKEYCODE;
-			if (h.loc.pos % 8 != 0)
+			if (h.loc.pos % 8 != 0) {
+				hid_end_parse(d);
 				return "key codes not on byte boundary";
-			if (sc->sc_nkeycode != 0)
+			}
+			if (sc->sc_nkeycode != 0) {
+				hid_end_parse(d);
 				return "multiple key code arrays";
+			}
 			sc->sc_keycodeloc = h.loc;
 			sc->sc_nkeycode = h.loc.count;
 		}
