@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.32 2017/08/12 22:12:04 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.33 2017/08/13 11:40:25 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.32 2017/08/12 22:12:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.33 2017/08/13 11:40:25 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -720,9 +720,12 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	/*
 	 * If we're retrying, retry in single-sector mode. This will give us
 	 * the sector number of the problem, and will eventually allow the
-	 * transfer to succeed.
+	 * transfer to succeed. If FUA is requested, we can't actually
+	 * do this, as ATA_SINGLE is usually executed as PIO transfer by drivers
+	 * which support it, and that isn't compatible with NCQ/FUA.
 	 */
-	if (xfer->c_retries >= WDIORETRIES_SINGLE)
+	if (xfer->c_retries >= WDIORETRIES_SINGLE &&
+	    (bp->b_flags & B_MEDIA_FUA) == 0)
 		xfer->c_bio.flags = ATA_SINGLE;
 	else
 		xfer->c_bio.flags = 0;
@@ -734,10 +737,17 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 		xfer->c_bio.flags |= ATA_LBA48;
 
 	/*
-	 * If NCQ was negotiated, always use it. Some drives return random
-	 * errors when switching between NCQ and non-NCQ I/O too often. 
+	 * If NCQ was negotiated, always use it for the first several attempts.
+	 * Since device cancels all outstanding requests on error, downgrade
+	 * to non-NCQ on retry, so that the retried transfer would not cause
+	 * cascade failure for the other transfers if it fails again.
+	 * If FUA was requested, we can't downgrade, as that would violate
+	 * the semantics - FUA would not be honored. In that case, continue
+	 * retrying with NCQ.
 	 */
-	if (wd->drvp->drive_flags & ATA_DRIVE_NCQ) {
+	if (wd->drvp->drive_flags & ATA_DRIVE_NCQ &&
+	    (xfer->c_retries < WDIORETRIES_SINGLE ||
+	    (bp->b_flags & B_MEDIA_FUA) != 0)) {
 		xfer->c_bio.flags |= ATA_LBA48;
 		xfer->c_flags |= C_NCQ;
 
