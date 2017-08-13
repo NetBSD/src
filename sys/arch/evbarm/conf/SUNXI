@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.21 2017/08/06 17:16:02 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.22 2017/08/13 18:27:48 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -74,6 +74,7 @@ sunxigates*	at fdt? pass 1		# Misc. clock gates
 fclock*		at fdt? pass 1
 ffclock*	at fdt? pass 1
 fregulator*	at fdt? pass 4
+gregulator*	at fdt? pass 4
 gpiokeys*	at fdt?
 gpioleds*	at fdt?
 
