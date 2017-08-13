@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.61 2017/08/13 04:09:27 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.62 2017/08/13 05:04:08 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -116,7 +116,6 @@ struct audio_chan {
 	struct virtual_channel	*vc;
 	int	chan;			/* virtual channel */
 	int	deschan;		/* desired channel for ioctls*/
-#define MIXER_INUSE	-2
 	SIMPLEQ_ENTRY(audio_chan) entries;
 };
 
@@ -183,7 +182,7 @@ struct audio_softc {
 	void		*hw_hdl;	/* Hardware driver handle */
 	const struct audio_hw_if *hw_if; /* Hardware interface */
 	device_t	sc_dev;		/* Hardware device struct */
-	struct chan_queue sc_audiochan; /* queue of open chans */
+	struct chan_queue sc_audiochan; /* queue of open audio chans */
 
 	struct audio_encoding_set *sc_encodings;
 	struct	selinfo sc_wsel; /* write selector */
