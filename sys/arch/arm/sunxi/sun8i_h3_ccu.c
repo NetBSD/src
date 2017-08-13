@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_ccu.c,v 1.10 2017/08/06 17:14:37 jmcneill Exp $ */
+/* $NetBSD: sun8i_h3_ccu.c,v 1.11 2017/08/13 19:18:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.10 2017/08/06 17:14:37 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.11 2017/08/13 19:18:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.10 2017/08/06 17:14:37 jmcneill E
 #include <arm/sunxi/sunxi_ccu.h>
 #include <arm/sunxi/sun8i_h3_ccu.h>
 
+#define	PLL_CPUX_CTRL_REG	0x000
 #define	PLL_AUDIO_CTRL_REG	0x008
 #define	PLL_PERIPH0_CTRL_REG	0x028
 #define	AHB1_APB1_CFG_REG	0x054
@@ -143,12 +144,97 @@ static const char *apb1_parents[] = { "ahb1" };
 static const char *apb2_parents[] = { "losc", "hosc", "pll_periph0" };
 static const char *mod_parents[] = { "hosc", "pll_periph0", "pll_periph1" };
 
-static const struct sunxi_ccu_nkmp_tbl sunx8_h3_ac_dig_table[] = {
+static const struct sunxi_ccu_nkmp_tbl sun8i_h3_cpux_table[] = {
+	{ 60000000, 9, 0, 0, 2 },
+	{ 66000000, 10, 0, 0, 2 },
+	{ 72000000, 11, 0, 0, 2 },
+	{ 78000000, 12, 0, 0, 2 },
+	{ 84000000, 13, 0, 0, 2 },
+	{ 90000000, 14, 0, 0, 2 },
+	{ 96000000, 15, 0, 0, 2 },
+	{ 102000000, 16, 0, 0, 2 },
+	{ 108000000, 17, 0, 0, 2 },
+	{ 114000000, 18, 0, 0, 2 },
+	{ 120000000, 9, 0, 0, 1 },
+	{ 132000000, 10, 0, 0, 1 },
+	{ 144000000, 11, 0, 0, 1 },
+	{ 156000000, 12, 0, 0, 1 },
+	{ 168000000, 13, 0, 0, 1 },
+	{ 180000000, 14, 0, 0, 1 },
+	{ 192000000, 15, 0, 0, 1 },
+	{ 204000000, 16, 0, 0, 1 },
+	{ 216000000, 17, 0, 0, 1 },
+	{ 228000000, 18, 0, 0, 1 },
+	{ 240000000, 9, 0, 0, 0 },
+	{ 264000000, 10, 0, 0, 0 },
+	{ 288000000, 11, 0, 0, 0 },
+	{ 312000000, 12, 0, 0, 0 },
+	{ 336000000, 13, 0, 0, 0 },
+	{ 360000000, 14, 0, 0, 0 },
+	{ 384000000, 15, 0, 0, 0 },
+	{ 408000000, 16, 0, 0, 0 },
+	{ 432000000, 17, 0, 0, 0 },
+	{ 456000000, 18, 0, 0, 0 },
+	{ 480000000, 19, 0, 0, 0 },
+	{ 504000000, 20, 0, 0, 0 },
+	{ 528000000, 21, 0, 0, 0 },
+	{ 552000000, 22, 0, 0, 0 },
+	{ 576000000, 23, 0, 0, 0 },
+	{ 600000000, 24, 0, 0, 0 },
+	{ 624000000, 25, 0, 0, 0 },
+	{ 648000000, 26, 0, 0, 0 },
+	{ 672000000, 27, 0, 0, 0 },
+	{ 696000000, 28, 0, 0, 0 },
+	{ 720000000, 29, 0, 0, 0 },
+	{ 768000000, 15, 1, 0, 0 },
+	{ 792000000, 10, 2, 0, 0 },
+	{ 816000000, 16, 1, 0, 0 },
+	{ 864000000, 17, 1, 0, 0 },
+	{ 912000000, 18, 1, 0, 0 },
+	{ 936000000, 12, 2, 0, 0 },
+	{ 960000000, 19, 1, 0, 0 },
+	{ 1008000000, 20, 1, 0, 0 },
+	{ 1056000000, 21, 1, 0, 0 },
+	{ 1080000000, 14, 2, 0, 0 },
+	{ 1104000000, 22, 1, 0, 0 },
+	{ 1152000000, 23, 1, 0, 0 },
+	{ 1200000000, 24, 1, 0, 0 },
+	{ 1224000000, 16, 2, 0, 0 },
+	{ 1248000000, 25, 1, 0, 0 },
+	{ 1296000000, 26, 1, 0, 0 },
+	{ 1344000000, 27, 1, 0, 0 },
+	{ 1368000000, 18, 2, 0, 0 },
+	{ 1392000000, 28, 1, 0, 0 },
+	{ 1440000000, 29, 1, 0, 0 },
+	{ 1512000000, 20, 2, 0, 0 },
+	{ 1536000000, 15, 3, 0, 0 },
+	{ 1584000000, 21, 2, 0, 0 },
+	{ 1632000000, 16, 3, 0, 0 },
+	{ 1656000000, 22, 2, 0, 0 },
+	{ 1728000000, 23, 2, 0, 0 },
+	{ 1800000000, 24, 2, 0, 0 },
+	{ 1824000000, 18, 3, 0, 0 },
+	{ 1872000000, 25, 2, 0, 0 },
+	{ 0 }
+};
+
+static const struct sunxi_ccu_nkmp_tbl sun8i_h3_ac_dig_table[] = {
 	{ 24576000, 13, 0, 0, 13 },
 	{ 0 }
 };
 
 static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
+	SUNXI_CCU_NKMP_TABLE(H3_CLK_CPUX, "pll_cpux", "hosc",
+	    PLL_CPUX_CTRL_REG,		/* reg */
+	    __BITS(12,8),		/* n */
+	    __BITS(5,4),		/* k */
+	    __BITS(1,0),		/* m */
+	    __BITS(17,16),		/* p */
+	    __BIT(31),			/* enable */
+	    __BIT(28),			/* lock */
+	    sun8i_h3_cpux_table,	/* table */
+	    SUNXI_CCU_NKMP_SCALE_CLOCK | SUNXI_CCU_NKMP_FACTOR_P_POW2),
+	
 	SUNXI_CCU_NKMP(H3_CLK_PLL_PERIPH0, "pll_periph0", "hosc",
 	    PLL_PERIPH0_CTRL_REG,	/* reg */
 	    __BITS(12,8),		/* n */
@@ -166,7 +252,7 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    __BITS(19,16),		/* p */
 	    __BIT(31),			/* enable */
 	    __BIT(28),			/* lock */
-	    sunx8_h3_ac_dig_table,	/* table */
+	    sun8i_h3_ac_dig_table,	/* table */
 	    0),
 
 	SUNXI_CCU_PREDIV(H3_CLK_AHB1, "ahb1", ahb1_parents,
