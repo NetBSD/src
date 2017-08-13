@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.22 2017/08/12 22:43:22 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.23 2017/08/13 11:48:53 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.22 2017/08/12 22:43:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.23 2017/08/13 11:48:53 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1339,6 +1339,7 @@ do_pio:
 			    WDCC_READ : WDCC_WRITE;
 
 		/* EDMA disable, if enabled this channel. */
+		KASSERT((chp->ch_flags & ATACH_NCQ) == 0);
 		if (mvport->port_edmamode_curr != nodma)
 			mvsata_edma_disable(mvport, 10 /* ms */, wait_flags);
 
