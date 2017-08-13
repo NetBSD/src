@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.60 2017/07/30 00:47:48 nat Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.61 2017/08/13 04:09:27 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -113,15 +113,17 @@ struct audio_ringbuffer {
 
 struct audio_chan {
 	dev_t	dev;
-#define MIXER_INUSE	-2
 	struct virtual_channel	*vc;
 	int	chan;			/* virtual channel */
 	int	deschan;		/* desired channel for ioctls*/
+#define MIXER_INUSE	-2
 	SIMPLEQ_ENTRY(audio_chan) entries;
 };
 
 struct virtual_channel {
 	u_char			sc_open;	/* multiple use device */
+#define AUOPEN_READ	0x01
+#define AUOPEN_WRITE	0x02
 	u_char			sc_mode;	/* bitmask for RECORD/PLAY */
 
 	bool			sc_blkset;	/* Blocksize has been set */
@@ -182,8 +184,6 @@ struct audio_softc {
 	const struct audio_hw_if *hw_if; /* Hardware interface */
 	device_t	sc_dev;		/* Hardware device struct */
 	struct chan_queue sc_audiochan; /* queue of open chans */
-#define AUOPEN_READ	0x01
-#define AUOPEN_WRITE	0x02
 
 	struct audio_encoding_set *sc_encodings;
 	struct	selinfo sc_wsel; /* write selector */
