@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.33 2017/08/13 11:40:25 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.34 2017/08/13 15:12:04 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.33 2017/08/13 11:40:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.34 2017/08/13 15:12:04 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -117,7 +117,7 @@ int wdcdebug_wd_mask = 0x0;
 #endif
 
 #ifdef WD_CHAOS_MONKEY
-int wdcdebug_wd_cnt = 200;
+int wdcdebug_wd_cnt = 0;
 int wdcdebug_wd_chaos = 0;
 #endif
 
