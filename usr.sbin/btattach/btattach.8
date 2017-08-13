@@ -1,4 +1,4 @@
-.\" $NetBSD: btattach.8,v 1.9 2017/08/11 11:54:08 jmcneill Exp $
+.\" $NetBSD: btattach.8,v 1.10 2017/08/13 18:34:03 wiz Exp $
 .\"
 .\" Copyright (c) 2007 KIYOHARA Takashi
 .\" All rights reserved.
@@ -55,7 +55,7 @@ given device
 before activating the line discipline.
 .Pp
 Supported types are:
-.Bl -tag -compact -width ericssonxx -offset indent
+.Bl -tag -compact -width 15n -offset indent
 .It Cm bcm2035
 Broadcom BCM2035
 .It Cm bcm43xx
@@ -122,7 +122,7 @@ packet from HCI, or
 .Xr btuart 4 ,
 if there is no response.
 .Sh FILES
-.Bl -tag -compact
+.Bl -tag -compact -width 20n
 .It Pa /var/run/btattach- Ns Bro tty Brc Ns .pid
 .El
 .Sh SEE ALSO
@@ -134,7 +134,7 @@ if there is no response.
 The
 .Nm
 program was written with reference to
-.Xr hciattach 8
+.Nm hciattach
 as provided with the BlueZ tools for Linux and first appeared in
 .Nx 5.0 .
 .Sh AUTHORS
