@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.24 2017/07/08 12:36:51 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.25 2017/08/13 18:27:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -236,6 +236,7 @@ void *		fdtbus_intr_establish(int, u_int, int, int,
 void		fdtbus_intr_disestablish(int, void *);
 bool		fdtbus_intr_str(int, u_int, char *, size_t);
 struct fdtbus_gpio_pin *fdtbus_gpio_acquire(int, const char *, int);
+struct fdtbus_gpio_pin *fdtbus_gpio_acquire_index(int, const char *, int, int);
 void		fdtbus_gpio_release(struct fdtbus_gpio_pin *);
 int		fdtbus_gpio_read(struct fdtbus_gpio_pin *);
 void		fdtbus_gpio_write(struct fdtbus_gpio_pin *, int);
