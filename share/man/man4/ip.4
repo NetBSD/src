@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.38 2017/08/10 04:31:58 ryo Exp $
+.\"	$NetBSD: ip.4,v 1.39 2017/08/13 18:18:57 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,38 +41,24 @@
 .Ft int
 .Fn socket AF_INET SOCK_RAW proto
 .Sh DESCRIPTION
-.Tn IP
-is the network layer protocol used by the Internet protocol family.
+IP is the network layer protocol used by the Internet protocol family.
 Options may be set at the
-.Tn IP
-level when using higher-level protocols that are based on
-.Tn IP
-(such as
-.Tn TCP
-and
-.Tn UDP ) .
+IP level when using higher-level protocols that are based on
+IP (such as TCP and UDP).
 It may also be accessed through a
 .Dq raw socket
 when developing new protocols, or special-purpose applications.
 .Pp
-There are several
-.Tn IP-level
+There are several IP-level
 .Xr setsockopt 2 Ns / Ns Xr getsockopt 2
 options.
 .Dv IP_OPTIONS
-may be used to provide
-.Tn IP
-options to be transmitted in the
-.Tn IP
-header of each outgoing packet
+may be used to provide IP options to be transmitted in the
+IP header of each outgoing packet
 or to examine the header options on incoming packets.
-.Tn IP
-options may be used with any socket type in the Internet family.
-The format of
-.Tn IP
-options to be sent is that specified by the
-.Tn IP
-protocol specification (RFC 791), with one exception:
+IP options may be used with any socket type in the Internet family.
+The format of IP options to be sent is that specified by the
+IP protocol specification (RFC 791), with one exception:
 the list of addresses for Source Route options must include the first-hop
 gateway at the beginning of the list of gateways.
 The first-hop gateway address will be extracted from the option list
@@ -86,8 +72,7 @@ setsockopt(s, IPPROTO_IP, IP_OPTIONS, NULL, 0);
 and
 .Dv IP_TTL
 may be used to set the type-of-service and time-to-live fields in the
-.Tn IP
-header for
+IP header for
 .Dv SOCK_STREAM
 and
 .Dv SOCK_DGRAM
@@ -154,8 +139,7 @@ setsockopt(s, IPPROTO_IP, IP_PORTALGO, &algo, sizeof(algo));
 .Ed
 .Pp
 The port selection can be also viewed and controlled at a global level for all
-.Tn IP
-sockets using the following
+IP sockets using the following
 .Xr sysctl 7
 variables:
 .Dv net.inet.ip.anonportalgo.available
@@ -183,15 +167,9 @@ or
 socket,
 the
 .Xr recvmsg 2
-call will return the destination
-.Tn IP
-address for a
-.Tn UDP
-datagram.
+call will return the destination IP address for a UDP datagram.
 The msg_control field in the msghdr structure points to a buffer
-that contains a cmsghdr structure followed by the
-.Tn IP
-address.
+that contains a cmsghdr structure followed by the IP address.
 The cmsghdr fields have the following values:
 .Bd -literal
 cmsg_len = CMSG_LEN(sizeof(struct in_addr))
@@ -231,13 +209,9 @@ option is enabled on a
 .Dv SOCK_DGRAM
 socket, the
 .Xr recvmsg 2
-call will return the
-.Tn TTL
-of the received datagram.
+call will return the TTL of the received datagram.
 The msg_control field in the msghdr structure points to a buffer
-that contains a cmsghdr structure followed by the
-.Tn TTL
-value.
+that contains a cmsghdr structure followed by the TTL value.
 The cmsghdr fields have the following values:
 .Bd -literal
 cmsg_len = CMSG_LEN(sizeof(uint8_t))
@@ -261,8 +235,7 @@ int minttl = 255;
 setsockopt(s, IPPROTO_IP, IP_MINTTL, &minttl, sizeof(minttl));
 .Ed
 .Ss MULTICAST OPTIONS
-.Tn IP
-multicasting is supported only on
+IP multicasting is supported only on
 .Dv AF_INET
 sockets of type
 .Dv SOCK_DGRAM
@@ -298,9 +271,7 @@ struct in_addr addr;
 setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, &addr, sizeof(addr));
 .Ed
 .Pp
-where "addr" is the local
-.Tn IP
-address of the desired interface or
+where "addr" is the local IP address of the desired interface or
 .Dv INADDR_ANY
 to specify the default interface.
 An interface's local IP address and multicast capability can
@@ -371,8 +342,7 @@ struct ip_mreq {
 .Dv imr_interface
 should be
 .Dv INADDR_ANY
-to choose the default multicast interface, or the
-.Tn IP
+to choose the default multicast interface, or the IP
 address of a particular multicast-capable interface if
 the host is multihomed.
 Membership is associated with a single interface;
@@ -394,9 +364,7 @@ contains the same values as used to add the membership.
 Memberships are dropped when the socket is closed or the process exits.
 .\"-----------------------
 .Ss RAW IP SOCKETS
-Raw
-.Tn IP
-sockets are connectionless, and are normally used with the
+Raw IP sockets are connectionless, and are normally used with the
 .Xr sendto 2
 and
 .Xr recvfrom 2
@@ -424,15 +392,12 @@ If
 is non-zero, that protocol number will be used on outgoing packets
 and to filter incoming packets.
 .Pp
-Outgoing packets automatically have an
-.Tn IP
+Outgoing packets automatically have an IP
 header prepended to them (based on the destination address and the
 protocol number the socket is created with), unless the
 .Dv IP_HDRINCL
 option has been set.
-Incoming packets are received with
-.Tn IP
-header and options intact.
+Incoming packets are received with IP header and options intact.
 .Pp
 .Dv IP_HDRINCL
 indicates the complete IP header is included with the data and may
@@ -479,11 +444,8 @@ for which no network interface exists.
 when an attempt is made to create a raw IP socket by a non-privileged process.
 .El
 .Pp
-The following errors specific to
-.Tn IP
-may occur when setting or getting
-.Tn IP
-options:
+The following errors specific to IP may occur when setting or getting
+IP options:
 .Bl -tag -width EADDRNOTAVAILxx
 .It Bq Er EINVAL
 An unknown socket option name was given.
