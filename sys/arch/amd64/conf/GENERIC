@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.463 2017/08/04 09:30:19 maxv Exp $
+# $NetBSD: GENERIC,v 1.464 2017/08/13 08:48:30 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.463 $"
+#ident		"GENERIC-$Revision: 1.464 $"
 
 maxusers	64		# estimated number of users
 
@@ -394,6 +394,7 @@ pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
+options 	PMS_ALPS_TOUCHPAD	# Enable support for Alps Touchpads
 vga*		at pci? dev ? function ?
 genfb*		at pci? dev ? function ?
 options 	VCONS_DRAW_INTR

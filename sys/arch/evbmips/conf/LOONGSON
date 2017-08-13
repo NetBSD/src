@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.31 2017/05/11 07:56:43 maya Exp $
+# $NetBSD: LOONGSON,v 1.32 2017/08/13 08:48:30 christos Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.31 $"
+#ident 		"LOONGSON-$Revision: 1.32 $"
 
 maxusers	16
 
@@ -200,8 +200,10 @@ isa0		at pcib?
 pckbc0		at isa?				# PC keyboard controller
 pckbd*		at pckbc?			# PC keyboard
 pms*		at pckbc?			# PS/2 mouse for wsmouse
+#options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
+options 	PMS_ALPS_TOUCHPAD	# Enable support for Alps Touchpads
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
