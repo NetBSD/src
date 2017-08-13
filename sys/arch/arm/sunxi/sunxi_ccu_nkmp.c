@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_nkmp.c,v 1.5 2017/08/06 17:14:37 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu_nkmp.c,v 1.6 2017/08/13 19:18:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_nkmp.c,v 1.5 2017/08/06 17:14:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_nkmp.c,v 1.6 2017/08/13 19:18:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -113,10 +113,15 @@ sunxi_ccu_nkmp_get_rate(struct sunxi_ccu_softc *sc,
 
 	if ((nkmp->flags & SUNXI_CCU_NKMP_FACTOR_N_EXACT) == 0)
 		n++;
-	k++;
-	m++;
-	p++;
 
+	k++;
+
+	if ((nkmp->flags & SUNXI_CCU_NKMP_FACTOR_P_POW2) != 0)
+		p = 1 << p;
+	else
+		p++;
+
+	m++;
 	if (nkmp->flags & SUNXI_CCU_NKMP_DIVIDE_BY_TWO)
 		m *= 2;
 
@@ -143,23 +148,61 @@ sunxi_ccu_nkmp_set_rate(struct sunxi_ccu_softc *sc,
 		return EINVAL;
 
 	val = CCU_READ(sc, nkmp->reg);
-	if (nkmp->n) {
-		val &= ~nkmp->n;
-		val |= __SHIFTIN(tab->n, nkmp->n);
+
+	if (nkmp->flags & SUNXI_CCU_NKMP_SCALE_CLOCK) {
+		if (nkmp->p && __SHIFTOUT(val, nkmp->p) < tab->p) {
+			val &= ~nkmp->p;
+			val |= __SHIFTIN(tab->p, nkmp->p);
+			CCU_WRITE(sc, nkmp->reg, val);
+			delay(2000);
+		}
+		if (nkmp->m && __SHIFTOUT(val, nkmp->m) < tab->m) {
+			val &= ~nkmp->m;
+			val |= __SHIFTIN(tab->m, nkmp->m);
+			CCU_WRITE(sc, nkmp->reg, val);
+			delay(2000);
+		}
+		if (nkmp->n) {
+			val &= ~nkmp->n;
+			val |= __SHIFTIN(tab->n, nkmp->n);
+		}
+		if (nkmp->k) {
+			val &= ~nkmp->k;
+			val |= __SHIFTIN(tab->k, nkmp->k);
+		}
+		CCU_WRITE(sc, nkmp->reg, val);
+		delay(2000);
+		if (nkmp->m && __SHIFTOUT(val, nkmp->m) > tab->m) {
+			val &= ~nkmp->m;
+			val |= __SHIFTIN(tab->m, nkmp->m);
+			CCU_WRITE(sc, nkmp->reg, val);
+			delay(2000);
+		}
+		if (nkmp->p && __SHIFTOUT(val, nkmp->p) > tab->p) {
+			val &= ~nkmp->p;
+			val |= __SHIFTIN(tab->p, nkmp->p);
+			CCU_WRITE(sc, nkmp->reg, val);
+			delay(2000);
+		}
+	} else {
+		if (nkmp->n) {
+			val &= ~nkmp->n;
+			val |= __SHIFTIN(tab->n, nkmp->n);
+		}
+		if (nkmp->k) {
+			val &= ~nkmp->k;
+			val |= __SHIFTIN(tab->k, nkmp->k);
+		}
+		if (nkmp->m) {
+			val &= ~nkmp->m;
+			val |= __SHIFTIN(tab->m, nkmp->m);
+		}
+		if (nkmp->p) {
+			val &= ~nkmp->p;
+			val |= __SHIFTIN(tab->p, nkmp->p);
+		}
+		CCU_WRITE(sc, nkmp->reg, val);
 	}
-	if (nkmp->k) {
-		val &= ~nkmp->k;
-		val |= __SHIFTIN(tab->k, nkmp->k);
-	}
-	if (nkmp->m) {
-		val &= ~nkmp->m;
-		val |= __SHIFTIN(tab->m, nkmp->m);
-	}
-	if (nkmp->p) {
-		val &= ~nkmp->p;
-		val |= __SHIFTIN(tab->p, nkmp->p);
-	}
-	CCU_WRITE(sc, nkmp->reg, val);
 
 	return 0;
 }

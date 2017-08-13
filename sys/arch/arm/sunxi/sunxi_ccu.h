@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.8 2017/08/06 17:14:37 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.9 2017/08/13 19:18:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -108,6 +108,8 @@ struct sunxi_ccu_nkmp {
 	const struct sunxi_ccu_nkmp_tbl *table;
 #define	SUNXI_CCU_NKMP_DIVIDE_BY_TWO	__BIT(0)
 #define	SUNXI_CCU_NKMP_FACTOR_N_EXACT	__BIT(1)
+#define	SUNXI_CCU_NKMP_SCALE_CLOCK	__BIT(2)
+#define	SUNXI_CCU_NKMP_FACTOR_P_POW2	__BIT(3)
 };
 
 int	sunxi_ccu_nkmp_enable(struct sunxi_ccu_softc *,
