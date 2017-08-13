@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.392 2017/08/08 22:21:35 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.393 2017/08/13 05:04:08 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.392 2017/08/08 22:21:35 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.393 2017/08/13 05:04:08 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -927,16 +927,12 @@ audiodetach(device_t self, int flags)
 
 	/* free resources */
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
-		if (chan->chan == MIXER_INUSE)
-			continue;
 		audio_free_ring(sc, &chan->vc->sc_mpr);
 		audio_free_ring(sc, &chan->vc->sc_mrr);
 	}
 	audio_free_ring(sc, &sc->sc_pr);
 	audio_free_ring(sc, &sc->sc_rr);
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
-		if (chan->chan == MIXER_INUSE)
-			continue;
 		audio_destroy_pfilters(chan->vc);
 		audio_destroy_rfilters(chan->vc);
 	}
@@ -2139,8 +2135,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	n = 1;
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
 		if (chan == SIMPLEQ_FIRST(&sc->sc_audiochan))
-			continue;
-		if (chan->chan == MIXER_INUSE)
 			continue;
 		n = chan->chan + 1;
 	}
@@ -3707,9 +3701,6 @@ audio_mix(void *v)
 		if (chan == SIMPLEQ_FIRST(&sc->sc_audiochan))
 			continue;
 
-		if (chan->chan == MIXER_INUSE)
-			continue;
-
 		vc = chan->vc;
 
 		if (!vc->sc_open)
@@ -3919,9 +3910,6 @@ audio_upmix(void *v)
 			break;		/* ignore interrupt if not open */
 
 		if (chan == SIMPLEQ_FIRST(&sc->sc_audiochan))
-			continue;
-
-		if (chan->chan == MIXER_INUSE)
 			continue;
 
 		vc = chan->vc;
@@ -4964,9 +4952,6 @@ mixer_open(dev_t dev, struct audio_softc *sc, int flags,
 
 	chan = kmem_zalloc(sizeof(struct audio_chan), KM_SLEEP);
 	chan->dev = dev;
-	chan->chan = MIXER_INUSE;
-
-	SIMPLEQ_INSERT_TAIL(&sc->sc_audiochan, chan, entries);
 
 	error = fd_clone(fp, fd, flags, &audio_fileops, chan);
 	KASSERT(error == EMOVEFD);
@@ -5028,7 +5013,6 @@ mixer_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 
 	DPRINTF(("mixer_close: sc %p\n", sc));
 	mixer_remove(sc);
-	SIMPLEQ_REMOVE(&sc->sc_audiochan, chan, audio_chan, entries);
 
 	return 0;
 }
@@ -5268,8 +5252,7 @@ audio_suspend(device_t dv, const pmf_qual_t *qual)
 	mutex_enter(sc->sc_lock);
 	audio_mixer_capture(sc);
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
-		if (chan == SIMPLEQ_FIRST(&sc->sc_audiochan) ||
-			chan->chan == MIXER_INUSE)
+		if (chan == SIMPLEQ_FIRST(&sc->sc_audiochan))
 			continue;
 
 		vc = chan->vc;
@@ -5308,8 +5291,7 @@ audio_resume(device_t dv, const pmf_qual_t *qual)
 
 	audio_mixer_restore(sc);
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
-		if (chan == SIMPLEQ_FIRST(&sc->sc_audiochan) ||
-				chan->chan == MIXER_INUSE)
+		if (chan == SIMPLEQ_FIRST(&sc->sc_audiochan))
 			continue;
 		vc = chan->vc;
 
@@ -5707,8 +5689,7 @@ find_vchan_vol(struct audio_softc *sc, int d)
 	
 	j = 0;
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
-		if (chan == SIMPLEQ_FIRST(&sc->sc_audiochan) ||
-		    chan->chan == MIXER_INUSE)
+		if (chan == SIMPLEQ_FIRST(&sc->sc_audiochan))
 			continue;
 		if (j == n)
 			break;
