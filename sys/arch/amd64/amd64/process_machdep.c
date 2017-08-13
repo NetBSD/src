@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.34 2017/08/13 07:16:44 maxv Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.35 2017/08/13 08:07:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,8 +74,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.34 2017/08/13 07:16:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.35 2017/08/13 08:07:52 maxv Exp $");
 
+#include "opt_xen.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
@@ -154,6 +155,12 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 
 	tf->tf_err = err;
 	tf->tf_trapno = trapno;
+
+#ifdef XEN
+	/* see comment in cpu_setmcontext */
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+#endif
 
 	return 0;
 }
