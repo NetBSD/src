@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.39 2017/08/13 18:18:57 wiz Exp $
+.\"	$NetBSD: ip.4,v 1.40 2017/08/13 18:19:44 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -428,29 +428,28 @@ the kernel will choose an appropriate address.
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
 .Bl -tag -width [EADDRNOTAVAIL]
+.It Bq Er EACCES
+when an attempt is made to create a raw IP socket by a non-privileged process.
+.It Bq Er EADDRNOTAVAIL
+when an attempt is made to create a socket with a network address
+for which no network interface exists.
 .It Bq Er EISCONN
 when trying to establish a connection on a socket which already
 has one, or when trying to send a datagram with the destination
 address specified and the socket is already connected;
+.It Bq Er ENOBUFS
+when the system runs out of memory for an internal data structure;
 .It Bq Er ENOTCONN
 when trying to send a datagram, but no destination address is
 specified, and the socket hasn't been connected;
-.It Bq Er ENOBUFS
-when the system runs out of memory for an internal data structure;
-.It Bq Er EADDRNOTAVAIL
-when an attempt is made to create a socket with a network address
-for which no network interface exists.
-.It Bq Er EACCES
-when an attempt is made to create a raw IP socket by a non-privileged process.
 .El
 .Pp
 The following errors specific to IP may occur when setting or getting
 IP options:
 .Bl -tag -width EADDRNOTAVAILxx
 .It Bq Er EINVAL
-An unknown socket option name was given.
-.It Bq Er EINVAL
-The IP option field was improperly formed; an option field was
+An unknown socket option name was given; or
+the IP option field was improperly formed; an option field was
 shorter than the minimum value or longer than the option buffer provided.
 .El
 .Sh SEE ALSO
