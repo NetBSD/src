@@ -1,4 +1,4 @@
-/*	$NetBSD: init_bcm43xx.c,v 1.3 2017/08/10 20:43:12 jmcneill Exp $	*/
+/*	$NetBSD: init_bcm43xx.c,v 1.4 2017/08/14 05:28:23 nat Exp $	*/
 
 /*-
  * Copyright (c) 2017 Iain Hibbert
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init_bcm43xx.c,v 1.3 2017/08/10 20:43:12 jmcneill Exp $");
+__RCSID("$NetBSD: init_bcm43xx.c,v 1.4 2017/08/14 05:28:23 nat Exp $");
 
 #include <sys/param.h>
 
@@ -56,10 +56,16 @@ __RCSID("$NetBSD: init_bcm43xx.c,v 1.3 2017/08/10 20:43:12 jmcneill Exp $");
 #define HCI_CMD_BCM43XX_SET_BDADDR		\
 	HCI_OPCODE(HCI_OGF_VENDOR, 0x006)
 
+#define HCI_CMD_BCM43XX_SET_CLOCK		\
+	HCI_OPCODE(HCI_OGF_VENDOR, 0x045)
+
 #define HCI_CMD_43XXFWDN 			\
 	HCI_OPCODE(HCI_OGF_VENDOR, 0x02e)
 
 #define HCI_CMD_GET_LOCAL_NAME			0x0c14
+
+#define BCM43XX_CLK_48	1
+#define BCM43XX_CLK_24	2
 
 static int
 bcm43xx_get_local_name(int fd, char *name, size_t namelen)
@@ -85,7 +91,7 @@ bcm43xx_get_local_name(int fd, char *name, size_t namelen)
 void
 init_bcm43xx(int fd, unsigned int speed)
 {
-	uint8_t rate[6];
+	uint8_t rate[6], clock;
 	uint8_t fw_buf[1024];
 	int fwfd, fw_len;
 	uint8_t resp[7];
@@ -133,6 +139,14 @@ init_bcm43xx(int fd, unsigned int speed)
 	uart_send_cmd(fd, HCI_CMD_RESET, NULL, 0);
 	uart_recv_cc(fd, HCI_CMD_RESET, &resp, sizeof(resp));
 	/* assume it succeeded? */
+
+	if (speed >= 3000000) 
+		clock = BCM43XX_CLK_48;
+	else
+		clock = BCM43XX_CLK_24;
+
+	uart_send_cmd(fd, HCI_CMD_BCM43XX_SET_CLOCK, &clock, sizeof(clock));
+	uart_recv_cc(fd, HCI_CMD_BCM43XX_SET_CLOCK, &resp, sizeof(resp));
 
 	rate[2] = speed;
 	rate[3] = speed >> 8;
