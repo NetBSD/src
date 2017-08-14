@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.9 2017/01/24 22:29:28 christos Exp $	*/
+/*	$NetBSD: gencode.c,v 1.9.4.1 2017/08/14 23:56:35 snj Exp $	*/
 
 /*#define CHASE_CHAIN*/
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gencode.c,v 1.9 2017/01/24 22:29:28 christos Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.9.4.1 2017/08/14 23:56:35 snj Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -669,20 +669,15 @@ int
 pcap_compile(pcap_t *p, struct bpf_program *program,
 	     const char *buf, int optimize, bpf_u_int32 mask)
 {
+#ifdef _WIN32
+	static int done = 0;
+#endif
 	compiler_state_t cstate;
 	const char * volatile xbuf = buf;
 	yyscan_t scanner = NULL;
 	volatile YY_BUFFER_STATE in_buffer = NULL;
 	u_int len;
 	int  rc;
-
-#ifdef _WIN32
-	static int done = 0;
-
-	if (!done)
-		pcap_wsockinit();
-	done = 1;
-#endif
 
 	/*
 	 * If this pcap_t hasn't been activated, it doesn't have a
@@ -691,9 +686,14 @@ pcap_compile(pcap_t *p, struct bpf_program *program,
 	if (!p->activated) {
 		pcap_snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
 		    "not-yet-activated pcap_t passed to pcap_compile");
-		rc = -1;
-		goto quit;
+		return  -1;
 	}
+
+#ifdef _WIN32
+	if (!done)
+		pcap_wsockinit();
+	done = 1;
+#endif
 	initchunks(&cstate);
 	cstate.no_optimize = 0;
 	cstate.ai = NULL;
