@@ -1,4 +1,4 @@
-/*	$NetBSD: bth5.c,v 1.3 2017/08/14 05:33:30 nat Exp $	*/
+/*	$NetBSD: bth5.c,v 1.4 2017/08/14 12:51:11 nat Exp $	*/
 /*
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bth5.c,v 1.3 2017/08/14 05:33:30 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bth5.c,v 1.4 2017/08/14 12:51:11 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1149,7 +1149,7 @@ bth5_sequencing_receive(struct bth5_softc *sc, struct mbuf *m)
 	if (sc->sc_seq_expected_rxseq / sc->sc_seq_winsize  ==
 					 sc->sc_seq_winsize) {
 		bth5_send_ack_command(sc);
-		sc->sc_seq_txack = sc->sc_seq_expected_rxseq;
+		sc->sc_seq_txack = sc->sc_seq_expected_rxseq & BTH5_FLAGS_SEQ_MASK;
 	} else
 		sc->sc_seq_txack = rxseq;
 
