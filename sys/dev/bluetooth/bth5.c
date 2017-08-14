@@ -1,4 +1,4 @@
-/*	$NetBSD: bth5.c,v 1.2 2017/08/11 00:58:37 nat Exp $	*/
+/*	$NetBSD: bth5.c,v 1.3 2017/08/14 05:33:30 nat Exp $	*/
 /*
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bth5.c,v 1.2 2017/08/11 00:58:37 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bth5.c,v 1.3 2017/08/14 05:33:30 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1076,13 +1076,14 @@ static void
 bth5_sequencing_receive(struct bth5_softc *sc, struct mbuf *m)
 {
 	bth5_hdr_t hdr;
-	uint32_t rxseq;
+	uint32_t exp_rxseq, rxseq;
 
+	exp_rxseq = sc->sc_seq_expected_rxseq & BTH5_FLAGS_SEQ_MASK;
 	m_copydata(m, 0, sizeof(bth5_hdr_t), &hdr);
 	rxseq = BTH5_FLAGS_SEQ(hdr.flags);
 
 	DPRINTFN(1, ("%s: seq receive: rxseq=%d, expected %d\n",
-	    device_xname(sc->sc_dev), rxseq, sc->sc_seq_expected_rxseq));
+	    device_xname(sc->sc_dev), rxseq, exp_rxseq));
 #ifdef BTH5_DEBUG
 	if (bth5_debug == 2)
 		bth5_packet_print(m);
@@ -1094,9 +1095,10 @@ bth5_sequencing_receive(struct bth5_softc *sc, struct mbuf *m)
 	 */
 	m_adj(m, sizeof(bth5_hdr_t) - sizeof(uint8_t));
 
-	if (rxseq != sc->sc_seq_expected_rxseq) {
+	if (rxseq != exp_rxseq) {
 		m_freem(m);
 
+		bth5_send_ack_command(sc);
 		/* send ack packet, if needly */
 		bth5_mux_transmit(sc);
 
@@ -1144,10 +1146,15 @@ bth5_sequencing_receive(struct bth5_softc *sc, struct mbuf *m)
 		break;
 	}
 
+	if (sc->sc_seq_expected_rxseq / sc->sc_seq_winsize  ==
+					 sc->sc_seq_winsize) {
+		bth5_send_ack_command(sc);
+		sc->sc_seq_txack = sc->sc_seq_expected_rxseq;
+	} else
+		sc->sc_seq_txack = rxseq;
+
 	sc->sc_seq_expected_rxseq =
-	    (sc->sc_seq_expected_rxseq + 1) & BTH5_FLAGS_SEQ_MASK;
-	sc->sc_seq_txack = sc->sc_seq_expected_rxseq;
-	bth5_send_ack_command(sc);
+	    (sc->sc_seq_expected_rxseq + 1);
 }
 
 static bool
@@ -1539,7 +1546,7 @@ bth5_input_le(struct bth5_softc *sc, struct mbuf *m)
 		} else if (*rcvpkt == *(const uint16_t *)syncresp) {
 			DPRINTF(("%s: state change to curious\n",
 			    device_xname(sc->sc_dev)));
-
+			rplypkt = conf;
 			callout_schedule(&sc->sc_le_timer,
 			    BTH5_LE_TCONF_TIMEOUT);
 			sc->sc_le_state = le_state_curious;
@@ -1551,6 +1558,8 @@ bth5_input_le(struct bth5_softc *sc, struct mbuf *m)
 	case le_state_curious:
 		if (*rcvpkt == *(const uint16_t *)sync)
 			rplypkt = syncresp;
+		else if (*rcvpkt == *(const uint16_t *)syncresp)
+			rplypkt = conf;
 		else if (*rcvpkt == *(const uint16_t *)conf)
 			rplypkt = confresp;
 		else if (*rcvpkt == *(const uint16_t *)confresp) {
