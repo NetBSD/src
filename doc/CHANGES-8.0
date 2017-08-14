@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.39 2017/08/10 07:15:09 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.40 2017/08/14 23:57:50 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5223,4 +5223,31 @@ lib/libc/Makefile.in				patch
 
 	Don't define _DIAGNOSTIC in libc.
 	[mrg, ticket #204]
+
+sys/net/if_vlan.c				1.99
+
+	Fix vlan(4) obytes counter.
+	[knakahara, ticket #205]
+
+sys/external/bsd/ipf/netinet/ip_fil_netbsd.c	1.24-1.26
+
+	PR/52469: fix rst on link-local addresses
+	[christos, ticket #206]
+
+sys/arch/evbarm/conf/GENERIC.common		1.20
+
+	enable 'options NTP'
+	[jmcneill, ticket #207]
+
+bin/rmdir/rmdir.c				1.27
+
+	rmdir: avoid a spurious warning for the top-level directory
+	when rmdir -p <path> is absolute.  PR/48182.
+	[ginsbach, ticket #208]
+
+external/bsd/libpcap/dist/gencode.c		1.10
+
+	Prevent faulting in libpcap by not applying a filter to an
+	unactivated pcap_t handle.  PR lib/51952.
+	[ginsbach, ticket #209]
 
