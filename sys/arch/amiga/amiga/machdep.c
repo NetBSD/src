@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.247 2016/12/23 07:40:05 maya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.248 2017/08/15 09:51:43 maya Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.247 2016/12/23 07:40:05 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248 2017/08/15 09:51:43 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1181,17 +1181,14 @@ nmihand(struct frame frame)
 int
 cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
-	int error = ENOEXEC;
 #ifdef COMPAT_NOMID
 	struct exec *execp = epp->ep_hdr;
-#endif
 
-#ifdef COMPAT_NOMID
 	if (!((execp->a_midmag >> 16) & 0x0fff)
 	    && execp->a_midmag == ZMAGIC)
 		return(exec_aout_prep_zmagic(l, epp));
 #endif
-	return(error);
+	return ENOEXEC;
 }
 
 #ifdef MODULAR
