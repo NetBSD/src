@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.72 2017/05/23 08:54:38 nonaka Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.73 2017/08/15 06:57:53 maxv Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.72 2017/05/23 08:54:38 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.73 2017/08/15 06:57:53 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.72 2017/05/23 08:54:38 nonaka Exp
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
@@ -75,6 +73,7 @@ extern int trap_types;
 
 int	db_active = 0;
 db_regs_t ddb_regs;	/* register state */
+db_regs_t *ddb_regp = NULL;
 
 void db_mach_cpu (db_expr_t, bool, db_expr_t, const char *);
 
@@ -83,8 +82,7 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("cpu",	db_mach_cpu,	0,
 	  "switch to another cpu", "cpu-no", NULL) },
 #endif
-		
-	{ DDB_ADD_CMD(NULL, NULL, 0,  NULL,NULL,NULL) },
+	{ DDB_ADD_CMD(NULL, NULL, 0, NULL, NULL, NULL) },
 };
 
 void kdbprinttrap(int, int);
@@ -98,9 +96,7 @@ int ddb_vec;
 static bool ddb_mp_online;
 #endif
 
-db_regs_t *ddb_regp = 0;
-
-#define NOCPU -1
+#define NOCPU	-1
 
 int ddb_cpu = NOCPU;
 
@@ -246,6 +242,7 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	ddb_regs.tf_fs &= 0xffff;
 	ddb_regs.tf_gs &= 0xffff;
 	ddb_regs.tf_ss &= 0xffff;
+
 	s = splhigh();
 	db_active++;
 	cnpollc(true);
@@ -356,6 +353,7 @@ ddb_suspend(struct trapframe *frame)
 	ci->ci_ddb_regs = &regs;
 
 	atomic_or_32(&ci->ci_flags, CPUF_PAUSE);
+
 	while (ci->ci_flags & CPUF_PAUSE)
 		;
 	ci->ci_ddb_regs = 0;
@@ -366,11 +364,7 @@ ddb_suspend(struct trapframe *frame)
 extern void cpu_debug_dump(void); /* XXX */
 
 void
-db_mach_cpu(
-	db_expr_t	addr,
-	bool		have_addr,
-	db_expr_t	count,
-	const char *	modif)
+db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct cpu_info *ci;
 	if (!have_addr) {
@@ -400,6 +394,5 @@ db_mach_cpu(
 	db_printf("using CPU %ld", addr);
 	ddb_regp = ci->ci_ddb_regs;
 }
-
 
 #endif
