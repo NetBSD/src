@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.155 2017/08/15 06:27:39 maxv Exp $
+#	$NetBSD: files.xen,v 1.156 2017/08/15 08:51:38 maxv Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -45,7 +45,6 @@ file	arch/i386/i386/db_machdep.c	ddb
 file	arch/i386/i386/dumpsys.c
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
-file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/longrun.c
@@ -67,7 +66,6 @@ file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c		ddb
 file	arch/amd64/amd64/db_machdep.c		ddb
-file	arch/amd64/amd64/kgdb_machdep.c	 kgdb
 file	arch/amd64/amd64/kobj_machdep.c	 	modular
 file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
@@ -84,6 +82,7 @@ file	arch/x86/x86/db_trace.c		ddb
 file	arch/x86/x86/fpu.c
 file	arch/x86/x86/dbregs.c
 file	arch/xen/x86/hypervisor_machdep.c
+file	arch/x86/x86/kgdb_machdep.c	kgdb
 # file 	arch/x86/x86/mtrr_i686.c	mtrr
 file	arch/x86/x86/syscall.c
 file	arch/xen/x86/x86_xpmap.c
