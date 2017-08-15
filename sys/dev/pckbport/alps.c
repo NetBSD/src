@@ -1,4 +1,4 @@
-/* $NetBSD: alps.c,v 1.1 2017/08/13 08:49:27 christos Exp $ */
+/* $NetBSD: alps.c,v 1.2 2017/08/15 22:23:09 ryoon Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -30,7 +30,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.1 2017/08/13 08:49:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.2 2017/08/15 22:23:09 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -695,7 +695,7 @@ pms_alps_probe_init(void *opaque)
 	pckbport_flush(psc->sc_kbctag, psc->sc_kbcslot);
 
 	if ((res = pms_alps_e6sig(psc, e6sig)) != 0)
-		goto err;
+		return res; /* This is not ALPS device */
 
 	if ((res = pms_alps_e7sig(psc, e7sig)) != 0)
 		goto err;
