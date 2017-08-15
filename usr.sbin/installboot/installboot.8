@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.94 2017/08/15 10:11:31 mrg Exp $
+.\"	$NetBSD: installboot.8,v 1.95 2017/08/15 21:21:18 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -238,7 +238,7 @@ Supported options are (with the machines for they are valid in brackets):
 .Sy [ alpha ]
 Recalculate and restore the Alpha checksum.
 This is the default for
-.Nx Ns Tn /alpha .
+.Nx Ns /alpha .
 .
 .It Sy append
 .Sy [ alpha ,
@@ -312,11 +312,11 @@ BIOS) will be used.
 .Sy pmax ,
 .Sy vax ]
 Recalculate and restore the Sun and
-.Nx Ns Tn /sparc
+.Nx Ns /sparc
 compatible checksum.
 .Em Note :
 The existing
-.Nx Ns Tn /sparc
+.Nx Ns /sparc
 disklabel should use no more than 4 partitions.
 .
 .It Sy timeout=<seconds>
@@ -439,8 +439,7 @@ Installed into the bootstrap area of the file system by
 .Nm .
 .
 .It Pa /usr/mdec/bootxx_fat16
-Primary bootstrap for
-.Tn MS-DOS
+Primary bootstrap for MS-DOS
 .Sy FAT16
 file systems.
 This differs from
@@ -493,8 +492,7 @@ file systems
 (the default LFS version).
 .
 .It Pa /usr/mdec/bootxx_msdos
-Primary bootstrap for
-.Tn MS-DOS
+Primary bootstrap for MS-DOS
 .Sy FAT
 file systems.
 .
@@ -527,16 +525,16 @@ is not found.
 .
 .El
 .
-.Ss Nx Ns Tn /evbmips files
+.Ss Nx Ns /evbmips files
 .
 The
-.Nx Ns Tn /evbmips
+.Nx Ns /evbmips
 bootstrap files currently only apply to the SBMIPS kernels for the
 SiByte/Broadcom BCM1250 and BCM1480 CPUs.
 .Bl -tag -width /usr/mdec/sbmips/bootxx_cd9660
 .
 .It Pa /usr/mdec/sbmips/boot
-.Nx Ns Tn /evbmips
+.Nx Ns /evbmips
 secondary bootstrap for
 .Sy FFSv1 ,
 .Sy FFSv2 ,
@@ -558,12 +556,12 @@ does not currently support evbmips directly.
 .
 .El
 .
-.Ss Nx Ns Tn /hppa files
+.Ss Nx Ns /hppa files
 .
 .Bl -tag -width /usr/mdec/bootxx_ustarfs
 .
 .It Pa /usr/mdec/xxboot
-.Nx Ns Tn /hppa
+.Nx Ns /hppa
 primary bootstrap for
 .Sy FFSv1 ,
 .Sy FFSv2 ,
@@ -571,7 +569,7 @@ primary bootstrap for
 and
 .Sy LFSv2 .
 .It Pa /usr/mdec/cdboot
-.Nx Ns Tn /hppa
+.Nx Ns /hppa
 primary bootstrap for ISO 9660 file system.
 .It Pa /usr/mdec/sdboot
 Synonym for
@@ -579,50 +577,50 @@ Synonym for
 .
 .El
 .
-.Ss Nx Ns Tn /macppc files
+.Ss Nx Ns /macppc files
 .
 .Bl -tag -width /usr/mdec/bootxx_ustarfs
 .
 .It Pa /usr/mdec/bootxx
-.Nx Ns Tn /macppc
+.Nx Ns /macppc
 primary bootstrap.
 .
 .It Pa /usr/mdec/ofwboot
-.Nx Ns Tn /macppc
+.Nx Ns /macppc
 secondary bootstrap.
 .
 .It Pa /ofwboot
 Installed copy of
-.Nx Ns Tn /macppc
+.Nx Ns /macppc
 secondary bootstrap.
 .
 .El
 .
-.Ss Nx Ns Tn /next68k files
+.Ss Nx Ns /next68k files
 .
 .Bl -tag -width /usr/mdec/bootxx_ustarfs
 .
 .It Pa /usr/mdec/boot
-.Nx Ns Tn /next68k
+.Nx Ns /next68k
 bootstrap.
 .
 .El
 .
-.Ss Nx Ns Tn /sparc64 files
+.Ss Nx Ns /sparc64 files
 .
 .Bl -tag -width /usr/mdec/bootxx_ustarfs
 .
 .It Pa /usr/mdec/bootblk
-.Nx Ns Tn /sparc64
+.Nx Ns /sparc64
 primary bootstrap.
 .
 .It Pa /usr/mdec/ofwboot
-.Nx Ns Tn /sparc64
+.Nx Ns /sparc64
 secondary bootstrap.
 .
 .It Pa /ofwboot
 Installed copy of
-.Nx Ns Tn /sparc64
+.Nx Ns /sparc64
 secondary bootstrap.
 .
 .El
@@ -646,12 +644,12 @@ Remove the primary bootstrap from disk
 .Sq sd1 :
 .Dl Ic installboot -c /dev/rsd1c
 .
-.Ss Nx Ns Tn /amiga
+.Ss Nx Ns /amiga
 Modify the command line to change the default from "netbsd -ASn2" to
 "netbsd -S":
 .Dl Ic installboot -m amiga -o command="netbsd -S" /dev/rsd0a /usr/mdec/bootxx_ffs
 .
-.Ss Nx Ns Tn /ews4800mips
+.Ss Nx Ns /ews4800mips
 Install the System V Boot File System primary bootstrap on to disk
 .Sq sd0 ,
 with the secondary bootstrap
@@ -659,7 +657,7 @@ with the secondary bootstrap
 already present in the SysVBFS partition on the disk:
 .Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx_bfs
 .
-.Ss Nx Ns Tn /i386 and Nx Ns Tn /amd64
+.Ss Nx Ns /i386 and Nx Ns /amd64
 Install new boot blocks on an existing
 .Sy FFSv2
 mounted root file system on
@@ -753,7 +751,7 @@ to make the device itself bootable.
 Switch the existing installed bootstrap to use a serial console without
 reinstalling or altering other options such as timeout.
 .Dl Ic installboot -e -o console=com0 /dev/rwd0a
-.Ss Nx Ns Tn /macppc
+.Ss Nx Ns /macppc
 Note the
 .Nm
 utility is only required for macppc machines with OpenFirmware version 2
@@ -766,7 +764,7 @@ Install the Berkeley Fast File System primary bootstrap on to disk
 .Dl Ic installboot /dev/rwd0c /usr/mdec/bootxx /ofwboot
 .Pp
 The secondary
-.Nx Ns Tn /macppc
+.Nx Ns /macppc
 bootstrap is located in
 .Pa /usr/mdec/ofwboot .
 .Pp
@@ -775,17 +773,17 @@ The primary bootstrap requires the raw
 for the secondary bootstrap, not
 .Pa ofwboot.xcf ,
 which is used for the OpenFirmware to load kernels.
-.Ss Nx Ns Tn /next68k
+.Ss Nx Ns /next68k
 Install the bootstrap on to disk
 .Sq sd0 :
 .Dl Ic installboot /dev/rsd0c /usr/mdec/boot
 .
-.Ss Nx Ns Tn /pmax
+.Ss Nx Ns /pmax
 Install the Berkeley Fast File System primary bootstrap on to disk
 .Sq sd0 :
 .Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx_ffs
 .Pp
-.Nx Ns Tn /pmax
+.Nx Ns /pmax
 requires that this file system starts at block 0 of the disk.
 .Pp
 Install the ISO 9660 primary bootstrap in the file
@@ -806,7 +804,7 @@ and the secondary bootstrap
 .Dl ...
 .Dl Ic installboot -b `expr 48 \e* 4` /tmp/cd-image /usr/mdec/bootxx_cd9660
 .
-.Ss Nx Ns Tn /sparc
+.Ss Nx Ns /sparc
 Install the Berkeley Fast File System primary bootstrap on to disk
 .Sq sd0 ,
 with the secondary bootstrap
@@ -814,17 +812,17 @@ with the secondary bootstrap
 already present:
 .Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx /boot
 .
-.Ss Nx Ns Tn /sparc64
+.Ss Nx Ns /sparc64
 Install the primary bootstrap on to disk
 .Sq sd0 :
 .Dl Ic installboot /dev/rsd0c /usr/mdec/bootblk
 .Pp
 The secondary
-.Nx Ns Tn /sparc64
+.Nx Ns /sparc64
 bootstrap is located in
 .Pa /usr/mdec/ofwboot .
 .
-.Ss Nx Ns Tn /sun2 and Nx Ns Tn /sun3
+.Ss Nx Ns /sun2 and Nx Ns /sun3
 Install the Berkeley Fast File System primary bootstrap on to disk
 .Sq sd0 ,
 with the secondary bootstrap
@@ -899,9 +897,9 @@ In this case, the
 .Fl t Ar raid
 option must be provided.
 .
-.Ss Nx Ns Tn /alpha
+.Ss Nx Ns /alpha
 The
-.Nx Ns Tn /alpha
+.Nx Ns /alpha
 primary bootstrap program can only load the secondary bootstrap program
 from file systems starting at the beginning (block 0) of disks.
 Similarly, the secondary bootstrap program can only load kernels from
@@ -911,11 +909,11 @@ The size of primary bootstrap programs is restricted to 7.5KB, even
 though some file systems (e.g., ISO 9660) are able to accommodate larger
 ones.
 .
-.Ss Nx Ns Tn /hp300
+.Ss Nx Ns /hp300
 The disk must have a boot partition large enough to hold the bootstrap code.
 Currently the primary bootstrap must be a LIF format file.
 .
-.Ss Nx Ns Tn /i386 and Nx Ns Tn /amd64
+.Ss Nx Ns /i386 and Nx Ns /amd64
 The bootstrap must be installed in the
 .Nx
 partition that starts at the beginning of the mbr partition.
@@ -929,7 +927,7 @@ The size of primary bootstrap programs is restricted to 8KB, even
 though some file systems (e.g., ISO 9660) are able to accommodate larger
 ones.
 .
-.Ss Nx Ns Tn /macppc
+.Ss Nx Ns /macppc
 Due to restrictions in
 .Nm
 and the secondary bootstrap implementation, file systems where kernels exist
@@ -941,17 +939,17 @@ doesn't recognize an existing Apple partition map on the disk
 and always writes a faked map to make disks bootable.
 .Pp
 The
-.Nx Ns Tn /macppc
+.Nx Ns /macppc
 bootstrap program can't load kernels from
 .Sy FFSv2
 partitions.
-.Ss Nx Ns Tn /next68k
+.Ss Nx Ns /next68k
 The size of bootstrap programs is restricted to the free space before
 the file system at the beginning of the disk minus 8KB.
 .
-.Ss Nx Ns Tn /pmax
+.Ss Nx Ns /pmax
 The
-.Nx Ns Tn /pmax
+.Nx Ns /pmax
 secondary bootstrap program can only load kernels from file
 systems starting at the beginning of disks.
 .Pp
@@ -959,17 +957,17 @@ The size of primary bootstrap programs is restricted to 7.5KB, even
 though some file systems (e.g., ISO 9660) are able to accommodate larger
 ones.
 .
-.Ss Nx Ns Tn /sun2 and Nx Ns Tn /sun3
+.Ss Nx Ns /sun2 and Nx Ns /sun3
 The
-.Nx Ns Tn /sun2
+.Nx Ns /sun2
 and
-.Nx Ns Tn /sun3
+.Nx Ns /sun3
 secondary bootstrap program can only load kernels from file
 systems starting at the beginning of disks.
 .
-.Ss Nx Ns Tn /vax
+.Ss Nx Ns /vax
 The
-.Nx Ns Tn /vax
+.Nx Ns /vax
 secondary bootstrap program can only load kernels from file systems
 starting at the beginning of disks.
 .Pp
