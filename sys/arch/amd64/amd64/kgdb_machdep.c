@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.10 2015/11/22 13:41:24 maxv Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.11 2017/08/15 08:35:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.10 2015/11/22 13:41:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.11 2017/08/15 08:35:56 maxv Exp $");
 
 #include "opt_ddb.h"
 
@@ -93,7 +93,10 @@ kgdb_acc(vaddr_t va, size_t len)
 			pte = kvtopte(va);
 		if ((*pte & PG_V) == 0)
 			return (0);
-		va += PAGE_SIZE;
+		if (*pte & PG_PS)
+			va = (va & PG_LGFRAME) + NBPD_L2;
+		else
+			va += PAGE_SIZE;
 	} while (va < last_va);
 
 	return (1);
@@ -217,7 +220,6 @@ kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 void
 kgdb_connect(int verbose)
 {
-
 	if (kgdb_dev == NODEV)
 		return;
 
