@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.62 2017/08/13 05:04:08 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.63 2017/08/15 04:42:56 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -183,6 +183,7 @@ struct audio_softc {
 	const struct audio_hw_if *hw_if; /* Hardware interface */
 	device_t	sc_dev;		/* Hardware device struct */
 	struct chan_queue sc_audiochan; /* queue of open audio chans */
+	struct virtual_channel *sc_hwvc;
 
 	struct audio_encoding_set *sc_encodings;
 	struct	selinfo sc_wsel; /* write selector */
@@ -224,9 +225,9 @@ struct audio_softc {
 	 * play_thread
 	 *    sc_pr
 	 *      |
-	 *  vchan[0]->sc_pustream 	(First element in sc_audiochan)
+	 *  sc_hwvc->sc_pustream
 	 *      |
-	 *  vchan[0]->sc_mpr
+	 *  sc_hwvc->sc_mpr
 	 *      |
 	 *  hardware
 	 */
@@ -236,10 +237,10 @@ struct audio_softc {
 	/**
 	 *  hardware
 	 *      |
-	 * oc->sc_mrr		oc = sc->sc_vchan[0]
+	 * sc_hwvc->sc_mrr
 	 *      :		Transform though filters same process as each
 	 *      :		 vc to IF
-	 * oc->sc_rustream	Audio now in intermediate format (IF)
+	 * sc_hwvc->sc_rustream	Audio now in intermediate format (IF)
 	 *      |	mix_read();
 	 *    sc_rr
 	 *      |	audio_upmix	vc = sc->sc_vchan[n]
