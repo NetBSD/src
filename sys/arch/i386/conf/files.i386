@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.385 2017/08/12 06:46:13 maxv Exp $
+#	$NetBSD: files.i386,v 1.386 2017/08/15 06:27:40 maxv Exp $
 #
 # new style config file for i386 architecture
 #
@@ -116,10 +116,6 @@ include	"dev/i2o/files.i2o"
 # of certain devices/BIOS features
 define	bioscall
 file	arch/i386/i386/bioscall.S	bioscall needs-flag
-
-# BIOS32 routines
-define	bios32
-file	arch/i386/i386/bios32.c		bios32 needs-flag
 
 # i386 specific mainbus attributes
 define	apmbus {}
