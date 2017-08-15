@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.26 2017/08/15 06:57:53 maxv Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.27 2017/08/15 09:08:39 maxv Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.26 2017/08/15 06:57:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.27 2017/08/15 09:08:39 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -95,7 +95,7 @@ static bool ddb_mp_online;
 int ddb_cpu = NOCPU;
 
 typedef void (vector)(void);
-extern vector Xintrddb, Xx2apic_intrddb;
+extern vector Xintrddbipi, Xx2apic_intrddbipi;
 
 void
 db_machine_init(void)
@@ -103,10 +103,10 @@ db_machine_init(void)
 
 #ifdef MULTIPROCESSOR
 #ifndef XEN
-	vector *handler = &Xintrddb;
+	vector *handler = &Xintrddbipi;
 #if NLAPIC > 0
 	if (lapic_is_x2apic())
-		handler = &Xx2apic_intrddb;
+		handler = &Xx2apic_intrddbipi;
 #endif
 	ddb_vec = idt_vec_alloc(0xf0, 0xff);
 	setgate(&idt[ddb_vec], handler, 1, SDT_SYS386IGT, SEL_KPL,
