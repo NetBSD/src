@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.84 2017/06/13 15:24:05 skrll Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.85 2017/08/15 08:47:39 maya Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.84 2017/06/13 15:24:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.85 2017/08/15 08:47:39 maya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -465,18 +465,6 @@ initarm(void *arm_bootargs)
 
 #ifdef FCOM_INIT_ARM
 	fcomcndetach();
-#endif
-
-
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-#ifndef __ELF__		/* XXX */
-	{
-		extern int end;
-		extern int *esym;
-
-		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
-	}
-#endif /* __ELF__ */
 #endif
 
 #ifdef DDB
