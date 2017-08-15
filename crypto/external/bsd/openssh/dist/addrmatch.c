@@ -1,5 +1,5 @@
-/*	$NetBSD: addrmatch.c,v 1.4 2011/09/07 17:49:19 christos Exp $	*/
-/*	$OpenBSD: addrmatch.c,v 1.5 2010/02/26 20:29:54 djm Exp $ */
+/*	$NetBSD: addrmatch.c,v 1.4.4.1 2017/08/15 05:27:51 snj Exp $	*/
+/*	$OpenBSD: addrmatch.c,v 1.13 2016/09/21 16:55:42 djm Exp $ */
 
 /*
  * Copyright (c) 2004-2008 Damien Miller <djm@mindrot.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: addrmatch.c,v 1.4 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: addrmatch.c,v 1.4.4.1 2017/08/15 05:27:51 snj Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -32,7 +32,6 @@ __RCSID("$NetBSD: addrmatch.c,v 1.4 2011/09/07 17:49:19 christos Exp $");
 
 #include "match.h"
 #include "log.h"
-#include "xmalloc.h"
 
 struct xaddr {
 	sa_family_t	af;
@@ -89,13 +88,13 @@ addr_sa_to_xaddr(struct sockaddr *sa, socklen_t slen, struct xaddr *xa)
 
 	switch (sa->sa_family) {
 	case AF_INET:
-		if (slen < sizeof(*in4))
+		if (slen < (socklen_t)sizeof(*in4))
 			return -1;
 		xa->af = AF_INET;
 		memcpy(&xa->v4, &in4->sin_addr, sizeof(xa->v4));
 		break;
 	case AF_INET6:
-		if (slen < sizeof(*in6))
+		if (slen < (socklen_t)sizeof(*in6))
 			return -1;
 		xa->af = AF_INET6;
 		memcpy(&xa->v6, &in6->sin6_addr, sizeof(xa->v6));
@@ -317,7 +316,7 @@ addr_pton_cidr(const char *p, struct xaddr *n, u_int *l)
 	char addrbuf[64], *mp, *cp;
 
 	/* Don't modify argument */
-	if (p == NULL || strlcpy(addrbuf, p, sizeof(addrbuf)) > sizeof(addrbuf))
+	if (p == NULL || strlcpy(addrbuf, p, sizeof(addrbuf)) >= sizeof(addrbuf))
 		return -1;
 
 	if ((mp = strchr(addrbuf, '/')) != NULL) {
@@ -398,8 +397,8 @@ addr_match_list(const char *addr, const char *_list)
 		/* Prefer CIDR address matching */
 		r = addr_pton_cidr(cp, &match_addr, &masklen);
 		if (r == -2) {
-			error("Inconsistent mask length for "
-			    "network \"%.100s\"", cp);
+			debug2("%s: inconsistent mask length for "
+			    "match network \"%.100s\"", __func__, cp);
 			ret = -2;
 			break;
 		} else if (r == 0) {
@@ -419,7 +418,7 @@ addr_match_list(const char *addr, const char *_list)
 				goto foundit;
 		}
 	}
-	xfree(o);
+	free(o);
 
 	return ret;
 }
@@ -493,7 +492,7 @@ addr_match_cidr_list(const char *addr, const char *_list)
 			continue;
 		}
 	}
-	xfree(o);
+	free(o);
 
 	return ret;
 }

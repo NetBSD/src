@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_fdpass.c,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
-/* $OpenBSD: monitor_fdpass.c,v 1.19 2010/01/12 00:58:25 djm Exp $ */
+/*	$NetBSD: monitor_fdpass.c,v 1.3.8.1 2017/08/15 05:27:52 snj Exp $	*/
+/* $OpenBSD: monitor_fdpass.c,v 1.21 2016/02/29 20:22:36 jca Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_fdpass.c,v 1.3 2010/11/21 18:29:48 adam Exp $");
+__RCSID("$NetBSD: monitor_fdpass.c,v 1.3.8.1 2017/08/15 05:27:52 snj Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -60,6 +60,7 @@ mm_send_fd(int sock, int fd)
 	}
 
 	memset(&msg, 0, sizeof(msg));
+	memset(&cmsgbuf, 0, sizeof(cmsgbuf));
 	msg.msg_control = &cmsgbuf.buf;
 	msg.msg_controllen = CMSG_SPACE(sizeof(int));
 	cmsg = CMSG_FIRSTHDR(&msg);
@@ -88,8 +89,7 @@ mm_send_fd(int sock, int fd)
 	}
 
 	if (n != 1) {
-		error("%s: sendmsg: expected sent 1 got %ld",
-		    __func__, (long)n);
+		error("%s: sendmsg: expected sent 1 got %zd", __func__, n);
 		return -1;
 	}
 	return 0;
@@ -117,6 +117,7 @@ mm_receive_fd(int sock)
 	}
 
 	memset(&msg, 0, sizeof(msg));
+	memset(&cmsgbuf, 0, sizeof(cmsgbuf));
 	vec.iov_base = &ch;
 	vec.iov_len = 1;
 	msg.msg_iov = &vec;
@@ -137,8 +138,7 @@ mm_receive_fd(int sock)
 	}
 
 	if (n != 1) {
-		error("%s: recvmsg: expected received 1 got %ld",
-		    __func__, (long)n);
+		error("%s: recvmsg: expected received 1 got %zd", __func__, n);
 		return -1;
 	}
 

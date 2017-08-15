@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh2.h,v 1.4 2011/07/25 03:03:11 christos Exp $	*/
-/* $OpenBSD: ssh2.h,v 1.14 2010/08/31 11:54:45 djm Exp $ */
+/*	$NetBSD: ssh2.h,v 1.4.4.1 2017/08/15 05:27:53 snj Exp $	*/
+/* $OpenBSD: ssh2.h,v 1.18 2016/05/04 14:22:33 markus Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -56,6 +56,10 @@
  *     192-255  Local extensions
  */
 
+/* special marker for no message */
+
+#define SSH_MSG_NONE					0
+
 /* ranges */
 
 #define SSH2_MSG_TRANSPORT_MIN				1
@@ -81,6 +85,7 @@
 #define SSH2_MSG_DEBUG					4
 #define SSH2_MSG_SERVICE_REQUEST			5
 #define SSH2_MSG_SERVICE_ACCEPT				6
+#define SSH2_MSG_EXT_INFO				7
 
 /* transport layer: alg negotiation */
 
@@ -116,12 +121,6 @@
 #define SSH2_MSG_USERAUTH_PASSWD_CHANGEREQ		60
 #define SSH2_MSG_USERAUTH_INFO_REQUEST			60
 #define SSH2_MSG_USERAUTH_INFO_RESPONSE			61
-#define SSH2_MSG_USERAUTH_JPAKE_CLIENT_STEP1		60
-#define SSH2_MSG_USERAUTH_JPAKE_SERVER_STEP1		61
-#define SSH2_MSG_USERAUTH_JPAKE_CLIENT_STEP2		62
-#define SSH2_MSG_USERAUTH_JPAKE_SERVER_STEP2		63
-#define SSH2_MSG_USERAUTH_JPAKE_CLIENT_CONFIRM		64
-#define SSH2_MSG_USERAUTH_JPAKE_SERVER_CONFIRM		65
 
 /* connection protocol: generic */
 
@@ -170,13 +169,6 @@
 #define SSH2_OPEN_RESOURCE_SHORTAGE			4
 
 #define SSH2_EXTENDED_DATA_STDERR			1
-
-/* kex messages for resume@appgate.com */
-#define SSH2_MSG_KEX_ROAMING_RESUME			30
-#define SSH2_MSG_KEX_ROAMING_AUTH_REQUIRED		31
-#define SSH2_MSG_KEX_ROAMING_AUTH			32
-#define SSH2_MSG_KEX_ROAMING_AUTH_OK			33
-#define SSH2_MSG_KEX_ROAMING_AUTH_FAIL			34
 
 /* Certificate types for OpenSSH certificate keys extension */
 #define SSH2_CERT_TYPE_USER				1

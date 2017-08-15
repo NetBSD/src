@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh-pkcs11.c,v 1.4 2011/07/25 03:03:11 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11.c,v 1.6 2010/06/08 21:32:19 markus Exp $ */
+/*	$NetBSD: ssh-pkcs11.c,v 1.4.4.1 2017/08/15 05:27:53 snj Exp $	*/
+/* $OpenBSD: ssh-pkcs11.c,v 1.23 2016/10/28 03:33:52 djm Exp $ */
+
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -16,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11.c,v 1.4 2011/07/25 03:03:11 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11.c,v 1.4.4.1 2017/08/15 05:27:53 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -27,12 +28,14 @@ __RCSID("$NetBSD: ssh-pkcs11.c,v 1.4 2011/07/25 03:03:11 christos Exp $");
 #include <string.h>
 #include <dlfcn.h>
 
+#include <openssl/x509.h>
+
 #define CRYPTOKI_COMPAT
 #include "pkcs11.h"
 
 #include "log.h"
 #include "misc.h"
-#include "key.h"
+#include "sshkey.h"
 #include "ssh-pkcs11.h"
 #include "xmalloc.h"
 
@@ -118,9 +121,9 @@ pkcs11_provider_unref(struct pkcs11_provider *p)
 	if (--p->refcount <= 0) {
 		if (p->valid)
 			error("pkcs11_provider_unref: %p still valid", p);
-		xfree(p->slotlist);
-		xfree(p->slotinfo);
-		xfree(p);
+		free(p->slotlist);
+		free(p->slotinfo);
+		free(p);
 	}
 }
 
@@ -179,9 +182,8 @@ pkcs11_rsa_finish(RSA *rsa)
 			rv = k11->orig_finish(rsa);
 		if (k11->provider)
 			pkcs11_provider_unref(k11->provider);
-		if (k11->keyid)
-			xfree(k11->keyid);
-		xfree(k11);
+		free(k11->keyid);
+		free(k11);
 	}
 	return (rv);
 }
@@ -226,16 +228,16 @@ pkcs11_rsa_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
 	CK_ULONG		tlen = 0;
 	CK_RV			rv;
 	CK_OBJECT_CLASS		private_key_class = CKO_PRIVATE_KEY;
-	CK_BBOOL		true = CK_TRUE;
+	CK_BBOOL		true_val = CK_TRUE;
 	CK_MECHANISM		mech = {
 		CKM_RSA_PKCS, NULL_PTR, 0
 	};
 	CK_ATTRIBUTE		key_filter[] = {
 		{CKA_CLASS, &private_key_class, sizeof(private_key_class) },
 		{CKA_ID, NULL, 0},
-		{CKA_SIGN, &true, sizeof(true) }
+		{CKA_SIGN, &true_val, sizeof(true_val) }
 	};
-	char			*pin, prompt[1024];
+	char			*pin = NULL, prompt[1024];
 	int			rval = -1;
 
 	if ((k11 = RSA_get_app_data(rsa)) == NULL) {
@@ -250,21 +252,30 @@ pkcs11_rsa_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
 	si = &k11->provider->slotinfo[k11->slotidx];
 	if ((si->token.flags & CKF_LOGIN_REQUIRED) && !si->logged_in) {
 		if (!pkcs11_interactive) {
-			error("need pin");
+			error("need pin entry%s", (si->token.flags &
+			    CKF_PROTECTED_AUTHENTICATION_PATH) ?
+			    " on reader keypad" : "");
 			return (-1);
 		}
-		snprintf(prompt, sizeof(prompt), "Enter PIN for '%s': ",
-		    si->token.label);
-		pin = read_passphrase(prompt, RP_ALLOW_EOF);
-		if (pin == NULL)
-			return (-1);	/* bail out */
-		if ((rv = f->C_Login(si->session, CKU_USER, pin, strlen(pin)))
-		    != CKR_OK) {
-			xfree(pin);
+		if (si->token.flags & CKF_PROTECTED_AUTHENTICATION_PATH)
+			verbose("Deferring PIN entry to reader keypad.");
+		else {
+			snprintf(prompt, sizeof(prompt),
+			    "Enter PIN for '%s': ", si->token.label);
+			pin = read_passphrase(prompt, RP_ALLOW_EOF);
+			if (pin == NULL)
+				return (-1);	/* bail out */
+		}
+		rv = f->C_Login(si->session, CKU_USER, (u_char *)pin,
+		    (pin != NULL) ? strlen(pin) : 0);
+		if (pin != NULL) {
+			explicit_bzero(pin, strlen(pin));
+			free(pin);
+		}
+		if (rv != CKR_OK && rv != CKR_USER_ALREADY_LOGGED_IN) {
 			error("C_Login failed: %lu", rv);
 			return (-1);
 		}
-		xfree(pin);
 		si->logged_in = 1;
 	}
 	key_filter[1].pValue = k11->keyid;
@@ -308,8 +319,10 @@ pkcs11_rsa_wrap(struct pkcs11_provider *provider, CK_ULONG slotidx,
 	k11->slotidx = slotidx;
 	/* identify key object on smartcard */
 	k11->keyid_len = keyid_attrib->ulValueLen;
-	k11->keyid = xmalloc(k11->keyid_len);
-	memcpy(k11->keyid, keyid_attrib->pValue, k11->keyid_len);
+	if (k11->keyid_len > 0) {
+		k11->keyid = xmalloc(k11->keyid_len);
+		memcpy(k11->keyid, keyid_attrib->pValue, k11->keyid_len);
+	}
 	k11->orig_finish = def->finish;
 	memcpy(&k11->rsa_method, def, sizeof(k11->rsa_method));
 	k11->rsa_method.name = "pkcs11";
@@ -323,7 +336,7 @@ pkcs11_rsa_wrap(struct pkcs11_provider *provider, CK_ULONG slotidx,
 
 /* remove trailing spaces */
 static void
-rmspace(char *buf, size_t len)
+rmspace(u_char *buf, size_t len)
 {
 	size_t i;
 
@@ -361,8 +374,9 @@ pkcs11_open_session(struct pkcs11_provider *p, CK_ULONG slotidx, char *pin)
 		return (-1);
 	}
 	if (login_required && pin) {
-		if ((rv = f->C_Login(session, CKU_USER, pin, strlen(pin)))
-		    != CKR_OK) {
+		rv = f->C_Login(session, CKU_USER,
+		    (u_char *)pin, strlen(pin));
+		if (rv != CKR_OK && rv != CKR_USER_ALREADY_LOGGED_IN) {
 			error("C_Login failed: %lu", rv);
 			if ((rv = f->C_CloseSession(session)) != CKR_OK)
 				error("C_CloseSession failed: %lu", rv);
@@ -379,32 +393,73 @@ pkcs11_open_session(struct pkcs11_provider *p, CK_ULONG slotidx, char *pin)
  * add 'wrapped' public keys to the 'keysp' array and increment nkeys.
  * keysp points to an (possibly empty) array with *nkeys keys.
  */
+static int pkcs11_fetch_keys_filter(struct pkcs11_provider *, CK_ULONG,
+    CK_ATTRIBUTE [], CK_ATTRIBUTE [3], struct sshkey ***, int *)
+	__attribute__((__bounded__(__minbytes__,4, 3 * sizeof(CK_ATTRIBUTE))));
+
 static int
-pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx, Key ***keysp,
-    int *nkeys)
+pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx,
+    struct sshkey ***keysp, int *nkeys)
 {
-	Key			*key;
+	CK_OBJECT_CLASS		pubkey_class = CKO_PUBLIC_KEY;
+	CK_OBJECT_CLASS		cert_class = CKO_CERTIFICATE;
+	CK_ATTRIBUTE		pubkey_filter[] = {
+		{ CKA_CLASS, &pubkey_class, sizeof(pubkey_class) }
+	};
+	CK_ATTRIBUTE		cert_filter[] = {
+		{ CKA_CLASS, &cert_class, sizeof(cert_class) }
+	};
+	CK_ATTRIBUTE		pubkey_attribs[] = {
+		{ CKA_ID, NULL, 0 },
+		{ CKA_MODULUS, NULL, 0 },
+		{ CKA_PUBLIC_EXPONENT, NULL, 0 }
+	};
+	CK_ATTRIBUTE		cert_attribs[] = {
+		{ CKA_ID, NULL, 0 },
+		{ CKA_SUBJECT, NULL, 0 },
+		{ CKA_VALUE, NULL, 0 }
+	};
+
+	if (pkcs11_fetch_keys_filter(p, slotidx, pubkey_filter, pubkey_attribs,
+	    keysp, nkeys) < 0 ||
+	    pkcs11_fetch_keys_filter(p, slotidx, cert_filter, cert_attribs,
+	    keysp, nkeys) < 0)
+		return (-1);
+	return (0);
+}
+
+static int
+pkcs11_key_included(struct sshkey ***keysp, int *nkeys, struct sshkey *key)
+{
+	int i;
+
+	for (i = 0; i < *nkeys; i++)
+		if (sshkey_equal(key, (*keysp)[i]))
+			return (1);
+	return (0);
+}
+
+static int
+pkcs11_fetch_keys_filter(struct pkcs11_provider *p, CK_ULONG slotidx,
+    CK_ATTRIBUTE filter[], CK_ATTRIBUTE attribs[3],
+    struct sshkey ***keysp, int *nkeys)
+{
+	struct sshkey		*key;
 	RSA			*rsa;
+	X509 			*x509;
+	EVP_PKEY		*evp;
 	int			i;
+	const u_char		*cp;
 	CK_RV			rv;
 	CK_OBJECT_HANDLE	obj;
 	CK_ULONG		nfound;
 	CK_SESSION_HANDLE	session;
 	CK_FUNCTION_LIST	*f;
-	CK_OBJECT_CLASS		pubkey_class = CKO_PUBLIC_KEY;
-	CK_ATTRIBUTE		pubkey_filter[] = {
-		{ CKA_CLASS, &pubkey_class, sizeof(pubkey_class) }
-	};
-	CK_ATTRIBUTE		attribs[] = {
-		{ CKA_ID, NULL, 0 },
-		{ CKA_MODULUS, NULL, 0 },
-		{ CKA_PUBLIC_EXPONENT, NULL, 0 }
-	};
 
 	f = p->function_list;
 	session = p->slotinfo[slotidx].session;
 	/* setup a filter the looks for public keys */
-	if ((rv = f->C_FindObjectsInit(session, pubkey_filter, 1)) != CKR_OK) {
+	if ((rv = f->C_FindObjectsInit(session, filter, 1)) != CKR_OK) {
 		error("C_FindObjectsInit failed: %lu", rv);
 		return (-1);
 	}
@@ -423,44 +478,79 @@ pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx, Key ***keysp,
 			error("C_GetAttributeValue failed: %lu", rv);
 			continue;
 		}
-		/* check that none of the attributes are zero length */
-		if (attribs[0].ulValueLen == 0 ||
-		    attribs[1].ulValueLen == 0 ||
+		/*
+		 * Allow CKA_ID (always first attribute) to be empty, but
+		 * ensure that none of the others are zero length.
+		 * XXX assumes CKA_ID is always first.
+		 */
+		if (attribs[1].ulValueLen == 0 ||
 		    attribs[2].ulValueLen == 0) {
 			continue;
 		}
 		/* allocate buffers for attributes */
-		for (i = 0; i < 3; i++)
-			attribs[i].pValue = xmalloc(attribs[i].ulValueLen);
-		/* retrieve ID, modulus and public exponent of RSA key */
+		for (i = 0; i < 3; i++) {
+			if (attribs[i].ulValueLen > 0) {
+				attribs[i].pValue = xmalloc(
+				    attribs[i].ulValueLen);
+			}
+		}
+
+		/*
+		 * retrieve ID, modulus and public exponent of RSA key,
+		 * or ID, subject and value for certificates.
+		 */
+		rsa = NULL;
 		if ((rv = f->C_GetAttributeValue(session, obj, attribs, 3))
 		    != CKR_OK) {
 			error("C_GetAttributeValue failed: %lu", rv);
-		} else if ((rsa = RSA_new()) == NULL) {
-			error("RSA_new failed");
+		} else if (attribs[1].type == CKA_MODULUS ) {
+			if ((rsa = RSA_new()) == NULL) {
+				error("RSA_new failed");
+			} else {
+				rsa->n = BN_bin2bn(attribs[1].pValue,
+				    attribs[1].ulValueLen, NULL);
+				rsa->e = BN_bin2bn(attribs[2].pValue,
+				    attribs[2].ulValueLen, NULL);
+			}
 		} else {
-			rsa->n = BN_bin2bn(attribs[1].pValue,
-			    attribs[1].ulValueLen, NULL);
-			rsa->e = BN_bin2bn(attribs[2].pValue,
-			    attribs[2].ulValueLen, NULL);
-			if (rsa->n && rsa->e &&
-			    pkcs11_rsa_wrap(p, slotidx, &attribs[0], rsa) == 0) {
-				key = key_new(KEY_UNSPEC);
-				key->rsa = rsa;
-				key->type = KEY_RSA;
-				key->flags |= KEY_FLAG_EXT;
+			cp = attribs[2].pValue;
+			if ((x509 = X509_new()) == NULL) {
+				error("X509_new failed");
+			} else if (d2i_X509(&x509, &cp, attribs[2].ulValueLen)
+			    == NULL) {
+				error("d2i_X509 failed");
+			} else if ((evp = X509_get_pubkey(x509)) == NULL ||
+			    evp->type != EVP_PKEY_RSA ||
+			    evp->pkey.rsa == NULL) {
+				debug("X509_get_pubkey failed or no rsa");
+			} else if ((rsa = RSAPublicKey_dup(evp->pkey.rsa))
+			    == NULL) {
+				error("RSAPublicKey_dup");
+			}
+			if (x509)
+				X509_free(x509);
+		}
+		if (rsa && rsa->n && rsa->e &&
+		    pkcs11_rsa_wrap(p, slotidx, &attribs[0], rsa) == 0) {
+			key = sshkey_new(KEY_UNSPEC);
+			key->rsa = rsa;
+			key->type = KEY_RSA;
+			key->flags |= SSHKEY_FLAG_EXT;
+			if (pkcs11_key_included(keysp, nkeys, key)) {
+				sshkey_free(key);
+			} else {
 				/* expand key array and add key */
-				*keysp = xrealloc(*keysp, *nkeys + 1,
-				    sizeof(Key *));
+				*keysp = xreallocarray(*keysp, *nkeys + 1,
+				    sizeof(struct sshkey *));
 				(*keysp)[*nkeys] = key;
 				*nkeys = *nkeys + 1;
 				debug("have %d keys", *nkeys);
-			} else {
-				RSA_free(rsa);
 			}
+		} else if (rsa) {
+			RSA_free(rsa);
 		}
 		for (i = 0; i < 3; i++)
-			xfree(attribs[i].pValue);
+			free(attribs[i].pValue);
 	}
 	if ((rv = f->C_FindObjectsFinal(session)) != CKR_OK)
 		error("C_FindObjectsFinal failed: %lu", rv);
@@ -469,7 +559,7 @@ pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx, Key ***keysp,
 
 /* register a new provider, fails if provider already exists */
 int
-pkcs11_add_provider(char *provider_id, char *pin, Key ***keyp)
+pkcs11_add_provider(char *provider_id, char *pin, struct sshkey ***keyp)
 {
 	int nkeys, need_finalize = 0;
 	struct pkcs11_provider *p = NULL;
@@ -482,7 +572,8 @@ pkcs11_add_provider(char *provider_id, char *pin, Key ***keyp)
 
 	*keyp = NULL;
 	if (pkcs11_provider_lookup(provider_id) != NULL) {
-		error("provider already registered: %s", provider_id);
+		debug("%s: provider already registered: %s",
+		    __func__, provider_id);
 		goto fail;
 	}
 	/* open shared pkcs11-libarary */
@@ -499,23 +590,27 @@ pkcs11_add_provider(char *provider_id, char *pin, Key ***keyp)
 	p->handle = handle;
 	/* setup the pkcs11 callbacks */
 	if ((rv = (*getfunctionlist)(&f)) != CKR_OK) {
-		error("C_GetFunctionList failed: %lu", rv);
+		error("C_GetFunctionList for provider %s failed: %lu",
+		    provider_id, rv);
 		goto fail;
 	}
 	p->function_list = f;
 	if ((rv = f->C_Initialize(NULL)) != CKR_OK) {
-		error("C_Initialize failed: %lu", rv);
+		error("C_Initialize for provider %s failed: %lu",
+		    provider_id, rv);
 		goto fail;
 	}
 	need_finalize = 1;
 	if ((rv = f->C_GetInfo(&p->info)) != CKR_OK) {
-		error("C_GetInfo failed: %lu", rv);
+		error("C_GetInfo for provider %s failed: %lu",
+		    provider_id, rv);
 		goto fail;
 	}
 	rmspace(p->info.manufacturerID, sizeof(p->info.manufacturerID));
 	rmspace(p->info.libraryDescription, sizeof(p->info.libraryDescription));
-	debug("manufacturerID <%s> cryptokiVersion %d.%d"
+	debug("provider %s: manufacturerID <%s> cryptokiVersion %d.%d"
 	    " libraryDescription <%s> libraryVersion %d.%d",
+	    provider_id,
 	    p->info.manufacturerID,
 	    p->info.cryptokiVersion.major,
 	    p->info.cryptokiVersion.minor,
@@ -527,13 +622,15 @@ pkcs11_add_provider(char *provider_id, char *pin, Key ***keyp)
 		goto fail;
 	}
 	if (p->nslots == 0) {
-		error("no slots");
+		debug("%s: provider %s returned no slots", __func__,
+		    provider_id);
 		goto fail;
 	}
 	p->slotlist = xcalloc(p->nslots, sizeof(CK_SLOT_ID));
 	if ((rv = f->C_GetSlotList(CK_TRUE, p->slotlist, &p->nslots))
 	    != CKR_OK) {
-		error("C_GetSlotList failed: %lu", rv);
+		error("C_GetSlotList for provider %s failed: %lu",
+		    provider_id, rv);
 		goto fail;
 	}
 	p->slotinfo = xcalloc(p->nslots, sizeof(struct pkcs11_slotinfo));
@@ -543,15 +640,23 @@ pkcs11_add_provider(char *provider_id, char *pin, Key ***keyp)
 		token = &p->slotinfo[i].token;
 		if ((rv = f->C_GetTokenInfo(p->slotlist[i], token))
 		    != CKR_OK) {
-			error("C_GetTokenInfo failed: %lu", rv);
+			error("C_GetTokenInfo for provider %s slot %lu "
+			    "failed: %lu", provider_id, (unsigned long)i, rv);
+			continue;
+		}
+		if ((token->flags & CKF_TOKEN_INITIALIZED) == 0) {
+			debug2("%s: ignoring uninitialised token in "
+			    "provider %s slot %lu", __func__,
+			    provider_id, (unsigned long)i);
 			continue;
 		}
 		rmspace(token->label, sizeof(token->label));
 		rmspace(token->manufacturerID, sizeof(token->manufacturerID));
 		rmspace(token->model, sizeof(token->model));
 		rmspace(token->serialNumber, sizeof(token->serialNumber));
-		debug("label <%s> manufacturerID <%s> model <%s> serial <%s>"
-		    " flags 0x%lx",
+		debug("provider %s slot %lu: label <%s> manufacturerID <%s> "
+		    "model <%s> serial <%s> flags 0x%lx",
+		    provider_id, (unsigned long)i,
 		    token->label, token->manufacturerID, token->model,
 		    token->serialNumber, token->flags);
 		/* open session, login with pin and retrieve public keys */
@@ -563,17 +668,16 @@ pkcs11_add_provider(char *provider_id, char *pin, Key ***keyp)
 		p->refcount++;	/* add to provider list */
 		return (nkeys);
 	}
-	error("no keys");
+	debug("%s: provider %s returned no keys", __func__, provider_id);
 	/* don't add the provider, since it does not have any keys */
 fail:
 	if (need_finalize && (rv = f->C_Finalize(NULL)) != CKR_OK)
-		error("C_Finalize failed: %lu", rv);
+		error("C_Finalize for provider %s failed: %lu",
+		    provider_id, rv);
 	if (p) {
-		if (p->slotlist)
-			xfree(p->slotlist);
-		if (p->slotinfo)
-			xfree(p->slotinfo);
-		xfree(p);
+		free(p->slotlist);
+		free(p->slotinfo);
+		free(p);
 	}
 	if (handle)
 		dlclose(handle);
@@ -581,7 +685,7 @@ fail:
 }
 #else
 int
-pkcs11_add_provider(char *provider_id, char *pin, Key ***keyp)
+pkcs11_add_provider(char *provider_id, char *pin, struct sshkey ***keyp)
 {
 	error("dlopen() not supported");
 	return (-1);

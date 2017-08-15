@@ -1,3 +1,10 @@
-/*	$NetBSD: includes.h,v 1.2 2011/07/25 03:03:10 christos Exp $	*/
+/*	$NetBSD: includes.h,v 1.2.4.1 2017/08/15 05:27:52 snj Exp $	*/
 #include <sys/cdefs.h>
+#ifndef __OpenBSD__
+#define __bounded__(a, b, c)
+#define explicit_bzero(a, b) explicit_memset((a), 0, (b))
+#define timingsafe_bcmp(a, b, c) (!consttime_memequal((a), (b), (c)))
+#endif
+
 #include "namespace.h"
+#include "netbsd_ssh_compat.h"
