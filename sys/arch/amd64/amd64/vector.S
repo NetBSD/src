@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.50 2017/07/16 14:02:48 cherry Exp $	*/
+/*	$NetBSD: vector.S,v 1.51 2017/08/15 09:08:39 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ IDTVEC(resume_lapic_ipi)
 IDTVEC_END(resume_lapic_ipi)
 
 #if defined(DDB)
-IDTVEC(intrddb)
+IDTVEC(intrddbipi)
 1:
 	pushq	$0
 	pushq	$T_BPTFLT
@@ -169,9 +169,9 @@ IDTVEC(intrddb)
 	xorl	%eax,%eax
 	movq	%rax,%cr8
 	INTRFASTEXIT
-IDTVEC_END(intrddb)
+IDTVEC_END(intrddbipi)
 
-IDTVEC(x2apic_intrddb)
+IDTVEC(x2apic_intrddbipi)
 1:
 	pushq	$0
 	pushq	$T_BPTFLT
@@ -187,7 +187,7 @@ IDTVEC(x2apic_intrddb)
 	xorl	%eax,%eax
 	movq	%rax,%cr8
 	INTRFASTEXIT
-IDTVEC_END(x2apic_intrddb)
+IDTVEC_END(x2apic_intrddbipi)
 #endif /* DDB */
 #endif /* MULTIPROCESSOR */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.61 2017/08/11 06:18:29 maxv Exp $	*/
+/*	$NetBSD: lapic.c,v 1.62 2017/08/15 09:08:39 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.61 2017/08/11 06:18:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.62 2017/08/15 09:08:39 maxv Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.61 2017/08/11 06:18:29 maxv Exp $");
 #ifdef MULTIPROCESSOR
 #ifdef __x86_64__
 typedef void (vector)(void);
-extern vector Xx2apic_intrddb;
+extern vector Xx2apic_intrddbipi;
 extern int ddb_vec;
 #endif
 #endif
@@ -333,8 +333,8 @@ lapic_setup_bsp(paddr_t lapic_base)
 #endif
 #if defined(DDB) && defined(MULTIPROCESSOR)
 #ifdef __x86_64__
-		setgate(&idt[ddb_vec], &Xx2apic_intrddb, 1, SDT_SYS386IGT, SEL_KPL,
-		    GSEL(GCODE_SEL, SEL_KPL));
+		setgate(&idt[ddb_vec], &Xx2apic_intrddbipi, 1, SDT_SYS386IGT,
+		    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
 #else
 		/* Set DDB IPI handler in cpu_set_tss_gates() when cpu0 is attached. */
 #endif
