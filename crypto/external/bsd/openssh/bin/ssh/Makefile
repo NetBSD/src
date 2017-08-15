@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/08/17 05:32:09 christos Exp $
+#	$NetBSD: Makefile,v 1.7.10.1 2017/08/15 04:40:15 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -6,14 +6,12 @@ BINDIR = /usr/bin
 
 PROG=	ssh
 SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
-	sshconnect.c sshconnect1.c sshconnect2.c mux.c \
-	roaming_common.c roaming_client.c
+	sshconnect.c sshconnect1.c sshconnect2.c mux.c auth.c
 
+COPTS.auth.c=	-DHOST_ONLY
 COPTS.sshconnect1.c=	-fno-strict-aliasing
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.mux.c=		-Wno-pointer-sign
 COPTS.sshconnect2.c=	-Wno-pointer-sign
-.endif
 
 LINKS=	${BINDIR}/ssh ${BINDIR}/slogin
 MAN=	ssh.1 ssh_config.5
@@ -31,8 +29,8 @@ DPADD+=	${LIBKRB5} ${LIBHX509} ${LIBHEIMBASE} ${LIBWIND}
 LDADD+=	-lkafs -lasn1 -lcrypt
 DPADD+=	${LIBKAFS} ${LIBASN1} ${LIBCRYPT}
 
-LDADD+=	-lcom_err -lroken -lutil
-DPADD+=	${LIBCOM_ERR} ${LIBROKEN} ${LIBUTIL}
+LDADD+=	-lcom_err -lroken -lsqlite3 -lutil
+DPADD+=	${LIBCOM_ERR} ${LIBROKEN} ${LIBSQLITE3} ${LIBUTIL}
 .endif
 
 .include <bsd.prog.mk>

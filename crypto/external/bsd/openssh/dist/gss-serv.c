@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-serv.c,v 1.4 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: gss-serv.c,v 1.23 2011/08/01 19:18:15 markus Exp $ */
+/*	$NetBSD: gss-serv.c,v 1.4.18.1 2017/08/15 04:40:16 snj Exp $	*/
+/* $OpenBSD: gss-serv.c,v 1.29 2015/05/22 03:50:02 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -26,15 +26,19 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv.c,v 1.4 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: gss-serv.c,v 1.4.18.1 2017/08/15 04:40:16 snj Exp $");
 #include <sys/types.h>
+
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/queue.h>
 
 #ifdef GSSAPI
 
 #include <string.h>
 #include <unistd.h>
+#include <netdb.h>
+#include <limits.h>
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -45,8 +49,11 @@ __RCSID("$NetBSD: gss-serv.c,v 1.4 2011/09/07 17:49:19 christos Exp $");
 #include "channels.h"
 #include "session.h"
 #include "misc.h"
+#include "servconf.h"
 
 #include "ssh-gss.h"
+
+extern ServerOptions options;
 
 static ssh_gssapi_client gssapi_client =
     { GSS_C_EMPTY_BUFFER, GSS_C_EMPTY_BUFFER,
@@ -66,6 +73,25 @@ ssh_gssapi_mech* supported_mechs[]= {
 	&gssapi_null_mech,
 };
 
+/*
+ * ssh_gssapi_supported_oids() can cause sandbox violations, so prepare the
+ * list of supported mechanisms before privsep is set up.
+ */
+static gss_OID_set supported_oids;
+
+void
+ssh_gssapi_prepare_supported_oids(void)
+{
+	ssh_gssapi_supported_oids(&supported_oids);
+}
+
+OM_uint32
+ssh_gssapi_test_oid_supported(OM_uint32 *ms, gss_OID member, int *present)
+{
+	if (supported_oids == NULL)
+		ssh_gssapi_prepare_supported_oids();
+	return gss_test_oid_set_member(ms, member, supported_oids, present);
+}
 
 /*
  * Acquire credentials for a server running on the current host.
@@ -78,28 +104,35 @@ static OM_uint32
 ssh_gssapi_acquire_cred(Gssctxt *ctx)
 {
 	OM_uint32 status;
-	char lname[MAXHOSTNAMELEN];
+	char lname[NI_MAXHOST];
 	gss_OID_set oidset;
 
-	gss_create_empty_oid_set(&status, &oidset);
-	gss_add_oid_set_member(&status, ctx->oid, &oidset);
+	if (options.gss_strict_acceptor) {
+		gss_create_empty_oid_set(&status, &oidset);
+		gss_add_oid_set_member(&status, ctx->oid, &oidset);
 
-	if (gethostname(lname, MAXHOSTNAMELEN)) {
-		gss_release_oid_set(&status, &oidset);
-		return (-1);
-	}
+		if (gethostname(lname, MAXHOSTNAMELEN)) {
+			gss_release_oid_set(&status, &oidset);
+			return (-1);
+		}
 
-	if (GSS_ERROR(ssh_gssapi_import_name(ctx, lname))) {
+		if (GSS_ERROR(ssh_gssapi_import_name(ctx, lname))) {
+			gss_release_oid_set(&status, &oidset);
+			return (ctx->major);
+		}
+
+		if ((ctx->major = gss_acquire_cred(&ctx->minor,
+		    ctx->name, 0, oidset, GSS_C_ACCEPT, &ctx->creds,
+		    NULL, NULL)))
+			ssh_gssapi_error(ctx);
+
 		gss_release_oid_set(&status, &oidset);
 		return (ctx->major);
+	} else {
+		ctx->name = GSS_C_NO_NAME;
+		ctx->creds = GSS_C_NO_CREDENTIAL;
 	}
-
-	if ((ctx->major = gss_acquire_cred(&ctx->minor,
-	    ctx->name, 0, oidset, GSS_C_ACCEPT, &ctx->creds, NULL, NULL)))
-		ssh_gssapi_error(ctx);
-
-	gss_release_oid_set(&status, &oidset);
-	return (ctx->major);
+	return GSS_S_COMPLETE;
 }
 
 /* Privileged */
@@ -346,7 +379,8 @@ ssh_gssapi_userok(char *user)
 			gss_release_buffer(&lmin, &gssapi_client.displayname);
 			gss_release_buffer(&lmin, &gssapi_client.exportedname);
 			gss_release_cred(&lmin, &gssapi_client.creds);
-			memset(&gssapi_client, 0, sizeof(ssh_gssapi_client));
+			explicit_bzero(&gssapi_client,
+			    sizeof(ssh_gssapi_client));
 			return 0;
 		}
 	else

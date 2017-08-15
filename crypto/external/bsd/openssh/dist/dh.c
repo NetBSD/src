@@ -1,5 +1,5 @@
-/*	$NetBSD: dh.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: dh.c,v 1.48 2009/10/01 11:37:33 grunk Exp $ */
+/*	$NetBSD: dh.c,v 1.4.10.1 2017/08/15 04:40:16 snj Exp $	*/
+/* $OpenBSD: dh.c,v 1.62 2016/12/15 21:20:41 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -25,22 +25,26 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dh.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: dh.c,v 1.4.10.1 2017/08/15 04:40:16 snj Exp $");
 #include <sys/param.h>
 
+#include <sys/param.h>	/* MIN */
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <limits.h>
 
 #include "dh.h"
 #include "pathnames.h"
 #include "log.h"
 #include "misc.h"
 #include "random.h"
+#include "ssherr.h"
 
 static int
 parse_prime(int linenum, char *line, struct dhgroup *dhg)
@@ -50,6 +54,7 @@ parse_prime(int linenum, char *line, struct dhgroup *dhg)
 	const char *errstr = NULL;
 	long long n;
 
+	dhg->p = dhg->g = NULL;
 	cp = line;
 	if ((arg = strdelim(&cp)) == NULL)
 		return 0;
@@ -61,66 +66,84 @@ parse_prime(int linenum, char *line, struct dhgroup *dhg)
 
 	/* time */
 	if (cp == NULL || *arg == '\0')
-		goto fail;
+		goto truncated;
 	arg = strsep(&cp, " "); /* type */
 	if (cp == NULL || *arg == '\0')
-		goto fail;
+		goto truncated;
 	/* Ensure this is a safe prime */
 	n = strtonum(arg, 0, 5, &errstr);
-	if (errstr != NULL || n != MODULI_TYPE_SAFE)
+	if (errstr != NULL || n != MODULI_TYPE_SAFE) {
+		error("moduli:%d: type is not %d", linenum, MODULI_TYPE_SAFE);
 		goto fail;
+	}
 	arg = strsep(&cp, " "); /* tests */
 	if (cp == NULL || *arg == '\0')
-		goto fail;
+		goto truncated;
 	/* Ensure prime has been tested and is not composite */
 	n = strtonum(arg, 0, 0x1f, &errstr);
 	if (errstr != NULL ||
-	    (n & MODULI_TESTS_COMPOSITE) || !(n & ~MODULI_TESTS_COMPOSITE))
+	    (n & MODULI_TESTS_COMPOSITE) || !(n & ~MODULI_TESTS_COMPOSITE)) {
+		error("moduli:%d: invalid moduli tests flag", linenum);
 		goto fail;
+	}
 	arg = strsep(&cp, " "); /* tries */
 	if (cp == NULL || *arg == '\0')
-		goto fail;
+		goto truncated;
 	n = strtonum(arg, 0, 1<<30, &errstr);
-	if (errstr != NULL || n == 0)
+	if (errstr != NULL || n == 0) {
+		error("moduli:%d: invalid primality trial count", linenum);
 		goto fail;
+	}
 	strsize = strsep(&cp, " "); /* size */
 	if (cp == NULL || *strsize == '\0' ||
 	    (dhg->size = (int)strtonum(strsize, 0, 64*1024, &errstr)) == 0 ||
-	    errstr)
+	    errstr) {
+		error("moduli:%d: invalid prime length", linenum);
 		goto fail;
+	}
 	/* The whole group is one bit larger */
 	dhg->size++;
 	gen = strsep(&cp, " "); /* gen */
 	if (cp == NULL || *gen == '\0')
-		goto fail;
+		goto truncated;
 	prime = strsep(&cp, " "); /* prime */
-	if (cp != NULL || *prime == '\0')
+	if (cp != NULL || *prime == '\0') {
+ truncated:
+		error("moduli:%d: truncated", linenum);
 		goto fail;
+	}
 
-	if ((dhg->g = BN_new()) == NULL)
-		fatal("parse_prime: BN_new failed");
-	if ((dhg->p = BN_new()) == NULL)
-		fatal("parse_prime: BN_new failed");
-	if (BN_hex2bn(&dhg->g, gen) == 0)
-		goto failclean;
+	if ((dhg->g = BN_new()) == NULL ||
+	    (dhg->p = BN_new()) == NULL) {
+		error("parse_prime: BN_new failed");
+		goto fail;
+	}
+	if (BN_hex2bn(&dhg->g, gen) == 0) {
+		error("moduli:%d: could not parse generator value", linenum);
+		goto fail;
+	}
+	if (BN_hex2bn(&dhg->p, prime) == 0) {
+		error("moduli:%d: could not parse prime value", linenum);
+		goto fail;
+	}
+	if (BN_num_bits(dhg->p) != dhg->size) {
+		error("moduli:%d: prime has wrong size: actual %d listed %d",
+		    linenum, BN_num_bits(dhg->p), dhg->size - 1);
+		goto fail;
+	}
+	if (BN_cmp(dhg->g, BN_value_one()) <= 0) {
+		error("moduli:%d: generator is invalid", linenum);
+		goto fail;
+	}
+	return 1;
 
-	if (BN_hex2bn(&dhg->p, prime) == 0)
-		goto failclean;
-
-	if (BN_num_bits(dhg->p) != dhg->size)
-		goto failclean;
-
-	if (BN_is_zero(dhg->g) || BN_is_one(dhg->g))
-		goto failclean;
-
-	return (1);
-
- failclean:
-	BN_clear_free(dhg->g);
-	BN_clear_free(dhg->p);
  fail:
-	error("Bad prime description in line %d", linenum);
-	return (0);
+	if (dhg->g != NULL)
+		BN_clear_free(dhg->g);
+	if (dhg->p != NULL)
+		BN_clear_free(dhg->p);
+	dhg->g = dhg->p = NULL;
+	return 0;
 }
 
 DH *
@@ -132,11 +155,10 @@ choose_dh(int min, int wantbits, int max)
 	int linenum;
 	struct dhgroup dhg;
 
-	if ((f = fopen(_PATH_DH_MODULI, "r")) == NULL &&
-	    (f = fopen(_PATH_DH_PRIMES, "r")) == NULL) {
-		logit("WARNING: %s does not exist, using fixed modulus",
-		    _PATH_DH_MODULI);
-		return (dh_new_group14());
+	if ((f = fopen(_PATH_DH_MODULI, "r")) == NULL) {
+		logit("WARNING: could not open %s (%s), using fixed modulus",
+		    _PATH_DH_MODULI, strerror(errno));
+		return (dh_new_group_fallback(max));
 	}
 
 	linenum = 0;
@@ -163,8 +185,8 @@ choose_dh(int min, int wantbits, int max)
 
 	if (bestcount == 0) {
 		fclose(f);
-		logit("WARNING: no suitable primes in %s", _PATH_DH_PRIMES);
-		return (dh_new_group14());
+		logit("WARNING: no suitable primes in %s", _PATH_DH_MODULI);
+		return (dh_new_group_fallback(max));
 	}
 
 	linenum = 0;
@@ -182,9 +204,11 @@ choose_dh(int min, int wantbits, int max)
 		break;
 	}
 	fclose(f);
-	if (linenum != which+1)
-		fatal("WARNING: line %d disappeared in %s, giving up",
-		    which, _PATH_DH_PRIMES);
+	if (linenum != which+1) {
+		logit("WARNING: line %d disappeared in %s, giving up",
+		    which, _PATH_DH_MODULI);
+		return (dh_new_group_fallback(max));
+	}
 
 	return (dh_new_group(dhg.g, dhg.p));
 }
@@ -225,42 +249,39 @@ dh_pub_is_valid(DH *dh, BIGNUM *dh_pub)
 			bits_set++;
 	debug2("bits set: %d/%d", bits_set, BN_num_bits(dh->p));
 
-	/* if g==2 and bits_set==1 then computing log_g(dh_pub) is trivial */
-	if (bits_set > 1)
-		return 1;
-
-	logit("invalid public DH value (%d/%d)", bits_set, BN_num_bits(dh->p));
-	return 0;
+	/*
+	 * if g==2 and bits_set==1 then computing log_g(dh_pub) is trivial
+	 */
+	if (bits_set < 4) {
+		logit("invalid public DH value (%d/%d)",
+		   bits_set, BN_num_bits(dh->p));
+		return 0;
+	}
+	return 1;
 }
 
-void
+int
 dh_gen_key(DH *dh, int need)
 {
-	int i, bits_set, tries = 0;
+	int pbits;
 
-	if (dh->p == NULL)
-		fatal("dh_gen_key: dh->p == NULL");
-	if (need > INT_MAX / 2 || 2 * need >= BN_num_bits(dh->p))
-		fatal("dh_gen_key: group too small: %d (2*need %d)",
-		    BN_num_bits(dh->p), 2*need);
-	do {
-		if (dh->priv_key != NULL)
-			BN_clear_free(dh->priv_key);
-		if ((dh->priv_key = BN_new()) == NULL)
-			fatal("dh_gen_key: BN_new failed");
-		/* generate a 2*need bits random private exponent */
-		if (!BN_rand(dh->priv_key, 2*need, 0, 0))
-			fatal("dh_gen_key: BN_rand failed");
-		if (DH_generate_key(dh) == 0)
-			fatal("DH_generate_key");
-		for (i = 0, bits_set = 0; i <= BN_num_bits(dh->priv_key); i++)
-			if (BN_is_bit_set(dh->priv_key, i))
-				bits_set++;
-		debug2("dh_gen_key: priv key bits set: %d/%d",
-		    bits_set, BN_num_bits(dh->priv_key));
-		if (tries++ > 10)
-			fatal("dh_gen_key: too many bad keys: giving up");
-	} while (!dh_pub_is_valid(dh, dh->pub_key));
+	if (need < 0 || dh->p == NULL ||
+	    (pbits = BN_num_bits(dh->p)) <= 0 ||
+	    need > INT_MAX / 2 || 2 * need > pbits)
+		return SSH_ERR_INVALID_ARGUMENT;
+	if (need < 256)
+		need = 256;
+	/*
+	 * Pollard Rho, Big step/Little Step attacks are O(sqrt(n)),
+	 * so double requested need here.
+	 */
+	dh->length = MINIMUM(need * 2, pbits - 1);
+	if (DH_generate_key(dh) == 0 ||
+	    !dh_pub_is_valid(dh, dh->pub_key)) {
+		BN_clear_free(dh->priv_key);
+		return SSH_ERR_LIBCRYPTO_ERROR;
+	}
+	return 0;
 }
 
 DH *
@@ -269,13 +290,12 @@ dh_new_group_asc(const char *gen, const char *modulus)
 	DH *dh;
 
 	if ((dh = DH_new()) == NULL)
-		fatal("dh_new_group_asc: DH_new");
-
-	if (BN_hex2bn(&dh->p, modulus) == 0)
-		fatal("BN_hex2bn p");
-	if (BN_hex2bn(&dh->g, gen) == 0)
-		fatal("BN_hex2bn g");
-
+		return NULL;
+	if (BN_hex2bn(&dh->p, modulus) == 0 ||
+	    BN_hex2bn(&dh->g, gen) == 0) {
+		DH_free(dh);
+		return NULL;
+	}
 	return (dh);
 }
 
@@ -290,13 +310,14 @@ dh_new_group(BIGNUM *gen, BIGNUM *modulus)
 	DH *dh;
 
 	if ((dh = DH_new()) == NULL)
-		fatal("dh_new_group: DH_new");
+		return NULL;
 	dh->p = modulus;
 	dh->g = gen;
 
 	return (dh);
 }
 
+/* rfc2409 "Second Oakley Group" (1024 bits) */
 DH *
 dh_new_group1(void)
 {
@@ -311,6 +332,7 @@ dh_new_group1(void)
 	return (dh_new_group_asc(gen, group1));
 }
 
+/* rfc3526 group 14 "2048-bit MODP Group" */
 DH *
 dh_new_group14(void)
 {
@@ -330,19 +352,120 @@ dh_new_group14(void)
 	return (dh_new_group_asc(gen, group14));
 }
 
+/* rfc3526 group 16 "4096-bit MODP Group" */
+DH *
+dh_new_group16(void)
+{
+	static const char *gen = "2", *group16 =
+	    "FFFFFFFF" "FFFFFFFF" "C90FDAA2" "2168C234" "C4C6628B" "80DC1CD1"
+	    "29024E08" "8A67CC74" "020BBEA6" "3B139B22" "514A0879" "8E3404DD"
+	    "EF9519B3" "CD3A431B" "302B0A6D" "F25F1437" "4FE1356D" "6D51C245"
+	    "E485B576" "625E7EC6" "F44C42E9" "A637ED6B" "0BFF5CB6" "F406B7ED"
+	    "EE386BFB" "5A899FA5" "AE9F2411" "7C4B1FE6" "49286651" "ECE45B3D"
+	    "C2007CB8" "A163BF05" "98DA4836" "1C55D39A" "69163FA8" "FD24CF5F"
+	    "83655D23" "DCA3AD96" "1C62F356" "208552BB" "9ED52907" "7096966D"
+	    "670C354E" "4ABC9804" "F1746C08" "CA18217C" "32905E46" "2E36CE3B"
+	    "E39E772C" "180E8603" "9B2783A2" "EC07A28F" "B5C55DF0" "6F4C52C9"
+	    "DE2BCBF6" "95581718" "3995497C" "EA956AE5" "15D22618" "98FA0510"
+	    "15728E5A" "8AAAC42D" "AD33170D" "04507A33" "A85521AB" "DF1CBA64"
+	    "ECFB8504" "58DBEF0A" "8AEA7157" "5D060C7D" "B3970F85" "A6E1E4C7"
+	    "ABF5AE8C" "DB0933D7" "1E8C94E0" "4A25619D" "CEE3D226" "1AD2EE6B"
+	    "F12FFA06" "D98A0864" "D8760273" "3EC86A64" "521F2B18" "177B200C"
+	    "BBE11757" "7A615D6C" "770988C0" "BAD946E2" "08E24FA0" "74E5AB31"
+	    "43DB5BFC" "E0FD108E" "4B82D120" "A9210801" "1A723C12" "A787E6D7"
+	    "88719A10" "BDBA5B26" "99C32718" "6AF4E23C" "1A946834" "B6150BDA"
+	    "2583E9CA" "2AD44CE8" "DBBBC2DB" "04DE8EF9" "2E8EFC14" "1FBECAA6"
+	    "287C5947" "4E6BC05D" "99B2964F" "A090C3A2" "233BA186" "515BE7ED"
+	    "1F612970" "CEE2D7AF" "B81BDD76" "2170481C" "D0069127" "D5B05AA9"
+	    "93B4EA98" "8D8FDDC1" "86FFB7DC" "90A6C08F" "4DF435C9" "34063199"
+	    "FFFFFFFF" "FFFFFFFF";
+
+	return (dh_new_group_asc(gen, group16));
+}
+
+/* rfc3526 group 18 "8192-bit MODP Group" */
+DH *
+dh_new_group18(void)
+{
+	static const char *gen = "2", *group16 =
+	    "FFFFFFFF" "FFFFFFFF" "C90FDAA2" "2168C234" "C4C6628B" "80DC1CD1"
+	    "29024E08" "8A67CC74" "020BBEA6" "3B139B22" "514A0879" "8E3404DD"
+	    "EF9519B3" "CD3A431B" "302B0A6D" "F25F1437" "4FE1356D" "6D51C245"
+	    "E485B576" "625E7EC6" "F44C42E9" "A637ED6B" "0BFF5CB6" "F406B7ED"
+	    "EE386BFB" "5A899FA5" "AE9F2411" "7C4B1FE6" "49286651" "ECE45B3D"
+	    "C2007CB8" "A163BF05" "98DA4836" "1C55D39A" "69163FA8" "FD24CF5F"
+	    "83655D23" "DCA3AD96" "1C62F356" "208552BB" "9ED52907" "7096966D"
+	    "670C354E" "4ABC9804" "F1746C08" "CA18217C" "32905E46" "2E36CE3B"
+	    "E39E772C" "180E8603" "9B2783A2" "EC07A28F" "B5C55DF0" "6F4C52C9"
+	    "DE2BCBF6" "95581718" "3995497C" "EA956AE5" "15D22618" "98FA0510"
+	    "15728E5A" "8AAAC42D" "AD33170D" "04507A33" "A85521AB" "DF1CBA64"
+	    "ECFB8504" "58DBEF0A" "8AEA7157" "5D060C7D" "B3970F85" "A6E1E4C7"
+	    "ABF5AE8C" "DB0933D7" "1E8C94E0" "4A25619D" "CEE3D226" "1AD2EE6B"
+	    "F12FFA06" "D98A0864" "D8760273" "3EC86A64" "521F2B18" "177B200C"
+	    "BBE11757" "7A615D6C" "770988C0" "BAD946E2" "08E24FA0" "74E5AB31"
+	    "43DB5BFC" "E0FD108E" "4B82D120" "A9210801" "1A723C12" "A787E6D7"
+	    "88719A10" "BDBA5B26" "99C32718" "6AF4E23C" "1A946834" "B6150BDA"
+	    "2583E9CA" "2AD44CE8" "DBBBC2DB" "04DE8EF9" "2E8EFC14" "1FBECAA6"
+	    "287C5947" "4E6BC05D" "99B2964F" "A090C3A2" "233BA186" "515BE7ED"
+	    "1F612970" "CEE2D7AF" "B81BDD76" "2170481C" "D0069127" "D5B05AA9"
+	    "93B4EA98" "8D8FDDC1" "86FFB7DC" "90A6C08F" "4DF435C9" "34028492"
+	    "36C3FAB4" "D27C7026" "C1D4DCB2" "602646DE" "C9751E76" "3DBA37BD"
+	    "F8FF9406" "AD9E530E" "E5DB382F" "413001AE" "B06A53ED" "9027D831"
+	    "179727B0" "865A8918" "DA3EDBEB" "CF9B14ED" "44CE6CBA" "CED4BB1B"
+	    "DB7F1447" "E6CC254B" "33205151" "2BD7AF42" "6FB8F401" "378CD2BF"
+	    "5983CA01" "C64B92EC" "F032EA15" "D1721D03" "F482D7CE" "6E74FEF6"
+	    "D55E702F" "46980C82" "B5A84031" "900B1C9E" "59E7C97F" "BEC7E8F3"
+	    "23A97A7E" "36CC88BE" "0F1D45B7" "FF585AC5" "4BD407B2" "2B4154AA"
+	    "CC8F6D7E" "BF48E1D8" "14CC5ED2" "0F8037E0" "A79715EE" "F29BE328"
+	    "06A1D58B" "B7C5DA76" "F550AA3D" "8A1FBFF0" "EB19CCB1" "A313D55C"
+	    "DA56C9EC" "2EF29632" "387FE8D7" "6E3C0468" "043E8F66" "3F4860EE"
+	    "12BF2D5B" "0B7474D6" "E694F91E" "6DBE1159" "74A3926F" "12FEE5E4"
+	    "38777CB6" "A932DF8C" "D8BEC4D0" "73B931BA" "3BC832B6" "8D9DD300"
+	    "741FA7BF" "8AFC47ED" "2576F693" "6BA42466" "3AAB639C" "5AE4F568"
+	    "3423B474" "2BF1C978" "238F16CB" "E39D652D" "E3FDB8BE" "FC848AD9"
+	    "22222E04" "A4037C07" "13EB57A8" "1A23F0C7" "3473FC64" "6CEA306B"
+	    "4BCBC886" "2F8385DD" "FA9D4B7F" "A2C087E8" "79683303" "ED5BDD3A"
+	    "062B3CF5" "B3A278A6" "6D2A13F8" "3F44F82D" "DF310EE0" "74AB6A36"
+	    "4597E899" "A0255DC1" "64F31CC5" "0846851D" "F9AB4819" "5DED7EA1"
+	    "B1D510BD" "7EE74D73" "FAF36BC3" "1ECFA268" "359046F4" "EB879F92"
+	    "4009438B" "481C6CD7" "889A002E" "D5EE382B" "C9190DA6" "FC026E47"
+	    "9558E447" "5677E9AA" "9E3050E2" "765694DF" "C81F56E8" "80B96E71"
+	    "60C980DD" "98EDD3DF" "FFFFFFFF" "FFFFFFFF";
+
+	return (dh_new_group_asc(gen, group16));
+}
+
+/* Select fallback group used by DH-GEX if moduli file cannot be read. */
+DH *
+dh_new_group_fallback(int max)
+{
+	debug3("%s: requested max size %d", __func__, max);
+	if (max < 3072) {
+		debug3("using 2k bit group 14");
+		return dh_new_group14();
+	} else if (max < 6144) {
+		debug3("using 4k bit group 16");
+		return dh_new_group16();
+	}
+	debug3("using 8k bit group 18");
+	return dh_new_group18();
+}
+
 /*
  * Estimates the group order for a Diffie-Hellman group that has an
- * attack complexity approximately the same as O(2**bits).  Estimate
- * with:  O(exp(1.9223 * (ln q)^(1/3) (ln ln q)^(2/3)))
+ * attack complexity approximately the same as O(2**bits).
+ * Values from NIST Special Publication 800-57: Recommendation for Key
+ * Management Part 1 (rev 3) limited by the recommended maximum value
+ * from RFC4419 section 3.
  */
-
-int
+u_int
 dh_estimate(int bits)
 {
-
+	if (bits <= 112)
+		return 2048;
 	if (bits <= 128)
-		return (1024);	/* O(2**86) */
+		return 3072;
 	if (bits <= 192)
-		return (2048);	/* O(2**116) */
-	return (4096);		/* O(2**156) */
+		return 7680;
+	return 8192;
 }
