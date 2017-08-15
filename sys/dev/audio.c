@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.397 2017/08/15 05:31:52 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.398 2017/08/15 08:28:21 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.397 2017/08/15 05:31:52 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.398 2017/08/15 08:28:21 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5515,8 +5515,8 @@ done:
 		  struct virtual_channel *vc)				\
 	{								\
 		int blksize, cc, cc1, cc2, m, resid;			\
-		int64_t product;					\
-		int64_t result;						\
+		bigger_type product;					\
+		bigger_type result;					\
 		type *orig, *tomix;					\
 									\
 		blksize = sc->sc_pr.blksize;				\
@@ -5537,8 +5537,8 @@ done:
 			for (m = 0; m < (cc / (bits / NBBY)); m++) {	\
 				tomix[m] = (bigger_type)tomix[m] *	\
 				    (bigger_type)(vc->sc_swvol) / 255;	\
-				result = orig[m] + tomix[m];		\
-				product = orig[m] * tomix[m];		\
+				result = (bigger_type)orig[m] + tomix[m]; \
+				product = (bigger_type)orig[m] * tomix[m]; \
 				if (orig[m] > 0 && tomix[m] > 0)	\
 					result -= product / MAXVAL;	\
 				else if (orig[m] < 0 && tomix[m] < 0)	\
