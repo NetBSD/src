@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-ecdsa.c,v 1.2 2011/07/25 03:03:11 christos Exp $	*/
-/* $OpenBSD: ssh-ecdsa.c,v 1.4 2010/09/10 01:04:10 djm Exp $ */
+/*	$NetBSD: ssh-ecdsa.c,v 1.2.10.1 2017/08/15 04:40:16 snj Exp $	*/
+/* $OpenBSD: ssh-ecdsa.c,v 1.13 2016/04/21 06:08:02 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-ecdsa.c,v 1.2 2011/07/25 03:03:11 christos Exp $");
+__RCSID("$NetBSD: ssh-ecdsa.c,v 1.2.10.1 2017/08/15 04:40:16 snj Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -36,130 +36,151 @@ __RCSID("$NetBSD: ssh-ecdsa.c,v 1.2 2011/07/25 03:03:11 christos Exp $");
 
 #include <string.h>
 
-#include "xmalloc.h"
-#include "buffer.h"
-#include "compat.h"
-#include "log.h"
-#include "key.h"
+#include "sshbuf.h"
+#include "ssherr.h"
+#include "digest.h"
+#define SSHKEY_INTERNAL
+#include "sshkey.h"
 
+/* ARGSUSED */
 int
-ssh_ecdsa_sign(const Key *key, u_char **sigp, u_int *lenp,
-    const u_char *data, u_int datalen)
+ssh_ecdsa_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
+    const u_char *data, size_t datalen, u_int compat)
 {
-	ECDSA_SIG *sig;
-	const EVP_MD *evp_md;
-	EVP_MD_CTX md;
-	u_char digest[EVP_MAX_MD_SIZE];
-	u_int len, dlen;
-	Buffer b, bb;
+	ECDSA_SIG *sig = NULL;
+	int hash_alg;
+	u_char digest[SSH_DIGEST_MAX_LENGTH];
+	size_t len, dlen;
+	struct sshbuf *b = NULL, *bb = NULL;
+	int ret = SSH_ERR_INTERNAL_ERROR;
+
+	if (lenp != NULL)
+		*lenp = 0;
+	if (sigp != NULL)
+		*sigp = NULL;
 
 	if (key == NULL || key->ecdsa == NULL ||
-	    (key->type != KEY_ECDSA && key->type != KEY_ECDSA_CERT)) {
-		error("%s: no ECDSA key", __func__);
-		return -1;
-	}
-	evp_md = key_ec_nid_to_evpmd(key->ecdsa_nid);
-	EVP_DigestInit(&md, evp_md);
-	EVP_DigestUpdate(&md, data, datalen);
-	EVP_DigestFinal(&md, digest, &dlen);
+	    sshkey_type_plain(key->type) != KEY_ECDSA)
+		return SSH_ERR_INVALID_ARGUMENT;
 
-	sig = ECDSA_do_sign(digest, dlen, key->ecdsa);
-	memset(digest, 'd', sizeof(digest));
+	if ((hash_alg = sshkey_ec_nid_to_hash_alg(key->ecdsa_nid)) == -1 ||
+	    (dlen = ssh_digest_bytes(hash_alg)) == 0)
+		return SSH_ERR_INTERNAL_ERROR;
+	if ((ret = ssh_digest_memory(hash_alg, data, datalen,
+	    digest, sizeof(digest))) != 0)
+		goto out;
 
-	if (sig == NULL) {
-		error("%s: sign failed", __func__);
-		return -1;
+	if ((sig = ECDSA_do_sign(digest, dlen, key->ecdsa)) == NULL) {
+		ret = SSH_ERR_LIBCRYPTO_ERROR;
+		goto out;
 	}
 
-	buffer_init(&bb);
-	buffer_put_bignum2(&bb, sig->r);
-	buffer_put_bignum2(&bb, sig->s);
-	ECDSA_SIG_free(sig);
-
-	buffer_init(&b);
-	buffer_put_cstring(&b, key_ssh_name_plain(key));
-	buffer_put_string(&b, buffer_ptr(&bb), buffer_len(&bb));
-	buffer_free(&bb);
-	len = buffer_len(&b);
+	if ((bb = sshbuf_new()) == NULL || (b = sshbuf_new()) == NULL) {
+		ret = SSH_ERR_ALLOC_FAIL;
+		goto out;
+	}
+	if ((ret = sshbuf_put_bignum2(bb, sig->r)) != 0 ||
+	    (ret = sshbuf_put_bignum2(bb, sig->s)) != 0)
+		goto out;
+	if ((ret = sshbuf_put_cstring(b, sshkey_ssh_name_plain(key))) != 0 ||
+	    (ret = sshbuf_put_stringb(b, bb)) != 0)
+		goto out;
+	len = sshbuf_len(b);
+	if (sigp != NULL) {
+		if ((*sigp = malloc(len)) == NULL) {
+			ret = SSH_ERR_ALLOC_FAIL;
+			goto out;
+		}
+		memcpy(*sigp, sshbuf_ptr(b), len);
+	}
 	if (lenp != NULL)
 		*lenp = len;
-	if (sigp != NULL) {
-		*sigp = xmalloc(len);
-		memcpy(*sigp, buffer_ptr(&b), len);
-	}
-	buffer_free(&b);
-
-	return 0;
+	ret = 0;
+ out:
+	explicit_bzero(digest, sizeof(digest));
+	sshbuf_free(b);
+	sshbuf_free(bb);
+	if (sig != NULL)
+		ECDSA_SIG_free(sig);
+	return ret;
 }
+
+/* ARGSUSED */
 int
-ssh_ecdsa_verify(const Key *key, const u_char *signature, u_int signaturelen,
-    const u_char *data, u_int datalen)
+ssh_ecdsa_verify(const struct sshkey *key,
+    const u_char *signature, size_t signaturelen,
+    const u_char *data, size_t datalen, u_int compat)
 {
-	ECDSA_SIG *sig;
-	const EVP_MD *evp_md;
-	EVP_MD_CTX md;
-	u_char digest[EVP_MAX_MD_SIZE], *sigblob;
-	u_int len, dlen;
-	int rlen, ret;
-	Buffer b, bb;
-	char *ktype;
+	ECDSA_SIG *sig = NULL;
+	int hash_alg;
+	u_char digest[SSH_DIGEST_MAX_LENGTH];
+	size_t dlen;
+	int ret = SSH_ERR_INTERNAL_ERROR;
+	struct sshbuf *b = NULL, *sigbuf = NULL;
+	char *ktype = NULL;
 
 	if (key == NULL || key->ecdsa == NULL ||
-	    (key->type != KEY_ECDSA && key->type != KEY_ECDSA_CERT)) {
-		error("%s: no ECDSA key", __func__);
-		return -1;
-	}
-	evp_md = key_ec_nid_to_evpmd(key->ecdsa_nid);
+	    sshkey_type_plain(key->type) != KEY_ECDSA ||
+	    signature == NULL || signaturelen == 0)
+		return SSH_ERR_INVALID_ARGUMENT;
+
+	if ((hash_alg = sshkey_ec_nid_to_hash_alg(key->ecdsa_nid)) == -1 ||
+	    (dlen = ssh_digest_bytes(hash_alg)) == 0)
+		return SSH_ERR_INTERNAL_ERROR;
 
 	/* fetch signature */
-	buffer_init(&b);
-	buffer_append(&b, signature, signaturelen);
-	ktype = buffer_get_string(&b, NULL);
-	if (strcmp(key_ssh_name_plain(key), ktype) != 0) {
-		error("%s: cannot handle type %s", __func__, ktype);
-		buffer_free(&b);
-		xfree(ktype);
-		return -1;
+	if ((b = sshbuf_from(signature, signaturelen)) == NULL)
+		return SSH_ERR_ALLOC_FAIL;
+	if (sshbuf_get_cstring(b, &ktype, NULL) != 0 ||
+	    sshbuf_froms(b, &sigbuf) != 0) {
+		ret = SSH_ERR_INVALID_FORMAT;
+		goto out;
 	}
-	xfree(ktype);
-	sigblob = buffer_get_string(&b, &len);
-	rlen = buffer_len(&b);
-	buffer_free(&b);
-	if (rlen != 0) {
-		error("%s: remaining bytes in signature %d", __func__, rlen);
-		xfree(sigblob);
-		return -1;
+	if (strcmp(sshkey_ssh_name_plain(key), ktype) != 0) {
+		ret = SSH_ERR_KEY_TYPE_MISMATCH;
+		goto out;
+	}
+	if (sshbuf_len(b) != 0) {
+		ret = SSH_ERR_UNEXPECTED_TRAILING_DATA;
+		goto out;
 	}
 
 	/* parse signature */
-	if ((sig = ECDSA_SIG_new()) == NULL)
-		fatal("%s: ECDSA_SIG_new failed", __func__);
-	if ((sig->r = BN_new()) == NULL ||
-	    (sig->s = BN_new()) == NULL)
-		fatal("%s: BN_new failed", __func__);
+	if ((sig = ECDSA_SIG_new()) == NULL) {
+		ret = SSH_ERR_ALLOC_FAIL;
+		goto out;
+	}
+	if (sshbuf_get_bignum2(sigbuf, sig->r) != 0 ||
+	    sshbuf_get_bignum2(sigbuf, sig->s) != 0) {
+		ret = SSH_ERR_INVALID_FORMAT;
+		goto out;
+	}
+	if (sshbuf_len(sigbuf) != 0) {
+		ret = SSH_ERR_UNEXPECTED_TRAILING_DATA;
+		goto out;
+	}
+	if ((ret = ssh_digest_memory(hash_alg, data, datalen,
+	    digest, sizeof(digest))) != 0)
+		goto out;
 
-	buffer_init(&bb);
-	buffer_append(&bb, sigblob, len);
-	buffer_get_bignum2(&bb, sig->r);
-	buffer_get_bignum2(&bb, sig->s);
-	if (buffer_len(&bb) != 0)
-		fatal("%s: remaining bytes in inner sigblob", __func__);
+	switch (ECDSA_do_verify(digest, dlen, sig, key->ecdsa)) {
+	case 1:
+		ret = 0;
+		break;
+	case 0:
+		ret = SSH_ERR_SIGNATURE_INVALID;
+		goto out;
+	default:
+		ret = SSH_ERR_LIBCRYPTO_ERROR;
+		goto out;
+	}
 
-	/* clean up */
-	memset(sigblob, 0, len);
-	xfree(sigblob);
-
-	/* hash the data */
-	EVP_DigestInit(&md, evp_md);
-	EVP_DigestUpdate(&md, data, datalen);
-	EVP_DigestFinal(&md, digest, &dlen);
-
-	ret = ECDSA_do_verify(digest, dlen, sig, key->ecdsa);
-	memset(digest, 'd', sizeof(digest));
-
-	ECDSA_SIG_free(sig);
-
-	debug("%s: signature %s", __func__,
-	    ret == 1 ? "correct" : ret == 0 ? "incorrect" : "error");
+ out:
+	explicit_bzero(digest, sizeof(digest));
+	sshbuf_free(sigbuf);
+	sshbuf_free(b);
+	if (sig != NULL)
+		ECDSA_SIG_free(sig);
+	free(ktype);
 	return ret;
 }

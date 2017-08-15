@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh1.h,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
-/* $OpenBSD: ssh1.h,v 1.6 2006/03/25 22:22:43 djm Exp $ */
+/*	$NetBSD: ssh1.h,v 1.2.22.1 2017/08/15 04:40:17 snj Exp $	*/
+/* $OpenBSD: ssh1.h,v 1.7 2016/05/04 14:22:33 markus Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -23,7 +23,6 @@
 #define SSH_MSG_MIN				1
 #define SSH_MSG_MAX				254
 /* Message name */			/* msg code */	/* arguments */
-#define SSH_MSG_NONE				0	/* no message */
 #define SSH_MSG_DISCONNECT			1	/* cause (string) */
 #define SSH_SMSG_PUBLIC_KEY			2	/* ck,msk,srvk,hostk */
 #define SSH_CMSG_SESSION_KEY			3	/* key (BIGNUM) */

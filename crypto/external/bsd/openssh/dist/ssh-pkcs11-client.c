@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh-pkcs11-client.c,v 1.2 2010/11/21 18:59:04 adam Exp $	*/
-/* $OpenBSD: ssh-pkcs11-client.c,v 1.2 2010/02/24 06:12:53 djm Exp $ */
+/*	$NetBSD: ssh-pkcs11-client.c,v 1.2.14.1 2017/08/15 04:40:16 snj Exp $	*/
+/* $OpenBSD: ssh-pkcs11-client.c,v 1.6 2015/12/11 00:20:04 mmcc Exp $ */
+
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -16,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.2 2010/11/21 18:59:04 adam Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.2.14.1 2017/08/15 04:40:16 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -26,6 +27,8 @@ __RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.2 2010/11/21 18:59:04 adam Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+
+#include <openssl/rsa.h>
 
 #include "pathnames.h"
 #include "xmalloc.h"
@@ -118,8 +121,9 @@ pkcs11_rsa_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
 	buffer_put_string(&msg, blob, blen);
 	buffer_put_string(&msg, from, flen);
 	buffer_put_int(&msg, 0);
-	xfree(blob);
+	free(blob);
 	send_msg(&msg);
+	buffer_clear(&msg);
 
 	if (recv_msg(&msg) == SSH2_AGENT_SIGN_RESPONSE) {
 		signature = buffer_get_string(&msg, &slen);
@@ -127,8 +131,9 @@ pkcs11_rsa_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
 			memcpy(to, signature, slen);
 			ret = slen;
 		}
-		xfree(signature);
+		free(signature);
 	}
+	buffer_free(&msg);
 	return (ret);
 }
 
@@ -166,7 +171,7 @@ pkcs11_start_helper(void)
 		close(pair[0]);
 		close(pair[1]);
 		execlp(_PATH_SSH_PKCS11_HELPER, _PATH_SSH_PKCS11_HELPER,
-		    (char *) 0);
+		    (char *)NULL);
 		fprintf(stderr, "exec: %s: %s\n", _PATH_SSH_PKCS11_HELPER,
 		    strerror(errno));
 		_exit(1);
@@ -200,11 +205,11 @@ pkcs11_add_provider(char *name, char *pin, Key ***keysp)
 		*keysp = xcalloc(nkeys, sizeof(Key *));
 		for (i = 0; i < nkeys; i++) {
 			blob = buffer_get_string(&msg, &blen);
-			xfree(buffer_get_string(&msg, NULL));
+			free(buffer_get_string(&msg, NULL));
 			k = key_from_blob(blob, blen);
 			wrap_key(k->rsa);
 			(*keysp)[i] = k;
-			xfree(blob);
+			free(blob);
 		}
 	} else {
 		nkeys = -1;

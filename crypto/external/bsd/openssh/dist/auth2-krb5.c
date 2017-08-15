@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-krb5.c,v 1.1 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: auth2-krb5.c,v 1.1.22.1 2017/08/15 04:40:16 snj Exp $	*/
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-krb5.c,v 1.1 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: auth2-krb5.c,v 1.1.22.1 2017/08/15 04:40:16 snj Exp $");
 
 #include <krb5.h>
 #include <stdio.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: auth2-krb5.c,v 1.1 2009/06/07 22:38:46 christos Exp $");
 #include "ssh-gss.h"
 #endif
 #include "monitor_wrap.h"
+#include "misc.h"
 #include "servconf.h"
 
 /* import */
@@ -61,11 +62,11 @@ userauth_kerberos(Authctxt *authctxt)
 	if (PRIVSEP(auth_krb5(authctxt, &tkt, &client, &reply))) {
 		authenticated = 1;
 		if (reply.length)
-			xfree(reply.data);
+			free(reply.data);
 	}
 	if (client)
-		xfree(client);
-	xfree(tkt.data);
+		free(client);
+	free(tkt.data);
 	return (authenticated);
 }
 
