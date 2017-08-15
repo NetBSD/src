@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.196 2017/08/11 20:24:56 he Exp $
+#  $NetBSD: Makefile,v 1.197 2017/08/15 10:40:28 mlelstv Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -193,6 +193,7 @@ COMMON_SRCS += fenv.c
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS += fenv.c
 .endif
+COMMON_SRCS+= s_nexttowardf.c s_rintl.c
 
 .elif (${LIBC_MACHINE_CPU} == "sh3")
 .PATH:	${.CURDIR}/arch/sh3
