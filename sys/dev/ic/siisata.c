@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.35 2017/08/12 22:12:04 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.36 2017/08/15 20:12:28 jakllsch Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.35 2017/08/12 22:12:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.36 2017/08/15 20:12:28 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -426,7 +426,8 @@ siisata_detach(struct siisata_softc *sc, int flags)
 		bus_dmamem_free(sc->sc_dmat,
 		    &schp->sch_prb_seg, schp->sch_prb_nseg);
 
-		free(chp->ch_queue, M_DEVBUF);
+		ata_queue_free(chp->ch_queue);
+		chp->ch_queue = NULL;
 		chp->atabus = NULL;
 
 		ata_channel_detach(chp);
