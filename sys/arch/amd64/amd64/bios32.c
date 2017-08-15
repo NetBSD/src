@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.22 2017/03/11 07:21:10 nonaka Exp $	*/
+/*	$NetBSD: bios32.c,v 1.23 2017/08/15 06:04:28 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.22 2017/03/11 07:21:10 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.23 2017/08/15 06:04:28 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,12 +99,12 @@ bios32_init(void)
 {
 #if 0	/* XXXfvdl need to set up compatibility segment for this */
 	paddr_t entry = 0;
-	void *p;
+	uint8_t *p;
 	unsigned char cksum;
 	int i;
 
-	for (p = (void *)ISA_HOLE_VADDR(BIOS32_START);
-	     p < (void *)ISA_HOLE_VADDR(BIOS32_END);
+	for (p = (uint8_t *)ISA_HOLE_VADDR(BIOS32_START);
+	     p < (uint8_t *)ISA_HOLE_VADDR(BIOS32_END);
 	     p += 16) {
 		if (*(int *)p != BIOS32_MAKESIG('_', '3', '2', '_'))
 			continue;
@@ -120,7 +120,7 @@ bios32_init(void)
 
 		entry = *(uint32_t *)(p + 4);
 
-		aprint_verbose("BIOS32 rev. %d found at 0x%lx\n",
+		aprint_debug("BIOS32 rev. %d found at 0x%lx\n",
 		    *(p + 8), entry);
 
 		if (entry < BIOS32_START ||
@@ -139,7 +139,7 @@ bios32_init(void)
 #endif
 	uint8_t *p;
 
-	/* see if we have SMBIOS extentions */
+	/* see if we have SMBIOS extensions */
 #ifndef XEN
 	if (efi_probe()) {
 		p = efi_getcfgtbl(&EFI_UUID_SMBIOS3);
@@ -261,7 +261,7 @@ smbios3_map_kva(const uint8_t *p)
 	if (eva == 0)
 		return;
 
-	smbios_entry.addr = (uint8_t *)(eva + (sh->addr & PGOFSET));
+	smbios_entry.addr = (uint8_t *)(eva + ((vaddr_t)sh->addr & PGOFSET));
 	smbios_entry.len = sh->size;
 	smbios_entry.rev = sh->eprev;
 	smbios_entry.mjr = sh->majrev;
@@ -288,38 +288,10 @@ smbios3_map_kva(const uint8_t *p)
 int
 bios32_service(uint32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 {
-	uint32_t eax, ebx, ecx, edx;
-	paddr_t entry;
-
-	if (bios32_entry.offset == 0)
-		return (0);	/* BIOS32 not present */
-
-	__asm volatile("lcall *(%%rdi)"
-		: "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
-		: "0" (service), "1" (0), "D" (&bios32_entry));
-
-	if ((eax & 0xff) != 0)
-		return (0);	/* service not found */
-
-	entry = ebx + edx;
-
-	if (entry < BIOS32_START || entry >= BIOS32_END) {
-		aprint_error(
-		    "bios32: entry point for service %c%c%c%c is outside "
-		    "allowable range\n",
-		    service & 0xff,
-		    (service >> 8) & 0xff,
-		    (service >> 16) & 0xff,
-		    (service >> 24) & 0xff);
-		return (0);
-	}
-
-	e->offset = (void *)ISA_HOLE_VADDR(entry);
-	e->segment = GSEL(GCODE_SEL, SEL_KPL);
-
-	ei->bei_base = ebx;
-	ei->bei_size = ecx;
-	ei->bei_entry = entry;
+	(void)service;
+	(void)e;
+	(void)ei;
+	panic("bios32_service not implemented on amd64");
 
 	return (1);
 }
