@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.23 2017/08/15 06:04:28 maxv Exp $	*/
+/*	$NetBSD: bios32.c,v 1.1 2017/08/15 06:27:40 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -56,11 +56,37 @@
  */
 
 /*
+ * Copyright (c) 1997-2001 Michael Shalayeff
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
  * Basic interface to BIOS32 services.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.23 2017/08/15 06:04:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.1 2017/08/15 06:27:40 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,9 +123,9 @@ static void smbios3_map_kva(const uint8_t *);
 void
 bios32_init(void)
 {
-#if 0	/* XXXfvdl need to set up compatibility segment for this */
-	paddr_t entry = 0;
 	uint8_t *p;
+#ifdef i386
+	paddr_t entry = 0;
 	unsigned char cksum;
 	int i;
 
@@ -121,7 +147,7 @@ bios32_init(void)
 		entry = *(uint32_t *)(p + 4);
 
 		aprint_debug("BIOS32 rev. %d found at 0x%lx\n",
-		    *(p + 8), entry);
+		    *(p + 8), (u_long)entry);
 
 		if (entry < BIOS32_START ||
 		    entry >= BIOS32_END) {
@@ -137,7 +163,6 @@ bios32_init(void)
 		bios32_entry.segment = GSEL(GCODE_SEL, SEL_KPL);
 	}
 #endif
-	uint8_t *p;
 
 	/* see if we have SMBIOS extensions */
 #ifndef XEN
@@ -288,10 +313,44 @@ smbios3_map_kva(const uint8_t *p)
 int
 bios32_service(uint32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 {
+#ifdef i386
+	uint32_t eax, ebx, ecx, edx;
+	paddr_t entry;
+
+	if (bios32_entry.offset == 0)
+		return (0);	/* BIOS32 not present */
+
+	__asm volatile("lcall *(%%edi)"
+		: "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
+		: "0" (service), "1" (0), "D" (&bios32_entry));
+
+	if ((eax & 0xff) != 0)
+		return (0);	/* service not found */
+
+	entry = ebx + edx;
+
+	if (entry < BIOS32_START || entry >= BIOS32_END) {
+		aprint_error("BIOS32: entry point for service %c%c%c%c is "
+		    "outside allowable range\n",
+		    service & 0xff,
+		    (service >> 8) & 0xff,
+		    (service >> 16) & 0xff,
+		    (service >> 24) & 0xff);
+		return (0);
+	}
+
+	e->offset = (void *)ISA_HOLE_VADDR(entry);
+	e->segment = GSEL(GCODE_SEL, SEL_KPL);
+
+	ei->bei_base = ebx;
+	ei->bei_size = ecx;
+	ei->bei_entry = entry;
+#else
 	(void)service;
 	(void)e;
 	(void)ei;
 	panic("bios32_service not implemented on amd64");
+#endif
 
 	return (1);
 }
