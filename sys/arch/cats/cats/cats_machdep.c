@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.85 2017/08/15 08:47:39 maya Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.86 2017/08/15 08:52:41 maya Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.85 2017/08/15 08:47:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.86 2017/08/15 08:52:41 maya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.85 2017/08/15 08:47:39 maya Exp $
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>
 #include <sys/proc.h>
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
