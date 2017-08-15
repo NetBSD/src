@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.398 2017/08/15 08:28:21 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.399 2017/08/15 08:30:21 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.398 2017/08/15 08:28:21 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.399 2017/08/15 08:30:21 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5436,18 +5436,18 @@ mix_write(void *arg)
 	stream_fetcher_t *fetcher;
 	stream_fetcher_t null_fetcher;
 	int cc, cc1, cc2, blksize, error, used;
-	uint8_t *inp, *orig, *tocopy;
+	const uint8_t *orig;
+	uint8_t *tocopy;
 
 	vc = sc->sc_hwvc;
 	blksize = vc->sc_mpr.blksize;
-	cc = blksize;
 	error = 0;
 
 	if (audio_stream_get_used(vc->sc_pustream) > blksize)
 		goto done;
 
 	tocopy = vc->sc_pustream->inp;
-	orig = __UNCONST(sc->sc_pr.s.outp);
+	orig = sc->sc_pr.s.outp;
 	used = blksize;
 	while (used > 0) {
 		cc = used;
@@ -5469,9 +5469,8 @@ mix_write(void *arg)
 		used -= cc;
  	}
 
-	inp = vc->sc_pustream->inp;
 	vc->sc_pustream->inp = audio_stream_add_inp(vc->sc_pustream,
-	    inp, blksize);
+	    vc->sc_pustream->inp, blksize);
 
 	sc->sc_pr.s.outp = audio_stream_add_outp(&sc->sc_pr.s,
 	    sc->sc_pr.s.outp, blksize);
