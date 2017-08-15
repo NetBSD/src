@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.154 2017/08/12 07:21:57 maxv Exp $
+#	$NetBSD: files.xen,v 1.155 2017/08/15 06:27:39 maxv Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -152,11 +152,7 @@ include	"arch/xen/conf/files.compat"
 
 # BIOS32 routines
 define	bios32
-ifdef i386
-file	arch/i386/i386/bios32.c		bios32 needs-flag
-elifdef amd64
-file	arch/amd64/amd64/bios32.c	bios32 needs-flag
-endif
+file	arch/x86/x86/bios32.c		bios32 needs-flag
 
 # xen specific mainbus attributes
 define cpubus { [apid = -1] }
