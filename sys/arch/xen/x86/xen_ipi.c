@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.21 2017/08/12 07:21:57 maxv Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.22 2017/08/15 09:16:59 maxv Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.21 2017/08/12 07:21:57 maxv Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.22 2017/08/15 09:16:59 maxv Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.21 2017/08/12 07:21:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.22 2017/08/15 09:16:59 maxv Exp $");
 
 #include <sys/types.h>
 
@@ -59,11 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.21 2017/08/12 07:21:57 maxv Exp $");
 #include <xen/hypervisor.h>
 #include <xen/xen-public/vcpu.h>
 
-#ifdef __x86_64__
 extern void ddb_ipi(struct trapframe);
-#else
-extern void ddb_ipi(int, struct trapframe);
-#endif /* __x86_64__ */
 
 static void xen_ipi_halt(struct cpu_info *, struct intrframe *);
 static void xen_ipi_synch_fpu(struct cpu_info *, struct intrframe *);
@@ -254,7 +250,7 @@ xen_ipi_ddb(struct cpu_info *ci, struct intrframe *intrf)
 	tf.tf_esp = intrf->if_esp;
 	tf.tf_ss = intrf->if_ss;
 
-	ddb_ipi(SEL_KPL, tf);
+	ddb_ipi(tf);
 #endif
 }
 
