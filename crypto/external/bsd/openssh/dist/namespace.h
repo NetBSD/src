@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.1 2009/06/07 22:38:47 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.1.8.1 2017/08/15 05:27:52 snj Exp $	*/
 #ifndef _SSH_NAMESPACE_H_
 #define _SSH_NAMESPACE_H_
 #define addargs		ssh_addargs
@@ -22,12 +22,10 @@
 #define pwcopy		ssh_pwcopy
 #define replacearg	ssh_replacearg
 #define strdelim	ssh_strdelim
-#define strtonum	ssh_strtonum
 #define tohex		ssh_tohex
 #define uudecode	ssh_uudecode
 #define uuencode	ssh_uuencode
 #define verbose		ssh_verbose
-#define xfree		ssh_free
 #define xmalloc		ssh_malloc
 #define xrealloc	ssh_realloc
 #define xstrdup		ssh_strdup

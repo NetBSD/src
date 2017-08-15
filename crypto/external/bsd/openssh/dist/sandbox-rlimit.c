@@ -16,9 +16,8 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sandbox-rlimit.c,v 1.2 2011/09/07 17:49:19 christos Exp $");
+__RCSID("$NetBSD: sandbox-rlimit.c,v 1.2.4.1 2017/08/15 05:27:52 snj Exp $");
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 

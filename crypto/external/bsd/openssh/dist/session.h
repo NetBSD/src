@@ -1,5 +1,5 @@
-/*	$NetBSD: session.h,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
-/* $OpenBSD: session.h,v 1.30 2008/05/08 12:21:16 djm Exp $ */
+/*	$NetBSD: session.h,v 1.2.8.1 2017/08/15 05:27:52 snj Exp $	*/
+/* $OpenBSD: session.h,v 1.33 2016/08/13 17:47:41 markus Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -54,10 +54,10 @@ struct Session {
 	char	*auth_data;
 	int	single_connection;
 
-	/* proto 2 */
 	int	chanid;
 	int	*x11_chanids;
 	int	is_subsystem;
+	char	*subsys;
 	u_int	num_env;
 	struct {
 		char	*name;
@@ -82,5 +82,7 @@ void	 session_close(Session *);
 void	 do_setusercontext(struct passwd *);
 void	 child_set_env(char ***envp, u_int *envsizep, const char *name,
 		       const char *value);
+
+const char	*session_get_remote_name_or_ip(struct ssh *, u_int, int);
 
 #endif

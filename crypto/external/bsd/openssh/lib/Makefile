@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 2011/07/25 03:03:33 christos Exp $
+#	$NetBSD: Makefile,v 1.10.4.1 2017/08/15 05:27:53 snj Exp $
 
 .include <bsd.own.mk>
+
+.include "../Makefile.inc"
 
 LIB=	ssh
 SRCS=\
@@ -8,6 +10,10 @@ addrmatch.c \
 atomicio.c \
 authfd.c \
 authfile.c \
+bcrypt_pbkdf.c \
+bitmap.c \
+blocks.c \
+blowfish.c \
 bufaux.c \
 bufbn.c \
 bufec.c \
@@ -16,19 +22,23 @@ canohost.c \
 channels.c \
 cipher-3des1.c \
 cipher-bf1.c \
-cipher-ctr.c \
+cipher-chachapoly.c \
 cipher.c \
+chacha.c \
 cleanup.c \
 compat.c \
-compress.c \
 crc32.c \
 deattack.c \
 dh.c \
 dispatch.c \
 dns.c \
+ed25519.c \
 fatal.c \
+fe25519.c \
+ge25519.c \
+hash.c \
+hmac.c \
 hostfile.c \
-jpake.c \
 kex.c \
 kexdh.c \
 kexdhc.c \
@@ -37,6 +47,7 @@ kexecdhc.c \
 kexgex.c \
 kexgexc.c \
 key.c \
+krl.c \
 log.c \
 mac.c \
 match.c \
@@ -44,27 +55,52 @@ misc.c \
 monitor_fdpass.c \
 msg.c \
 nchan.c \
+opacket.c \
 packet.c \
+poly1305.c \
 progressmeter.c \
 readpass.c \
-roaming_dummy.c \
 rsa.c \
-schnorr.c \
-ssh-dss.c \
-ssh-ecdsa.c \
+sc25519.c \
+smult_curve25519_ref.c \
+sshbuf-getput-basic.c \
+sshbuf-misc.c \
+sshbuf-getput-crypto.c \
+sshbuf.c \
+ssherr.c \
+sshkey.c \
+ssh-ed25519.c \
 ssh-pkcs11.c \
-ssh-rsa.c \
 ttymodes.c \
 uidswap.c \
+umac.c \
+umac128.c \
+utf8.c \
 uuencode.c \
+verify.c \
 xmalloc.c
 
-#	umac.c
-SRCS+=	fmt_scaled.c strtonum.c
+OPENSSL_SRCS=\
+digest-openssl.c \
+kexc25519.c \
+kexc25519c.c \
+kexc25519s.c \
+ssh-dss.c \
+ssh-ecdsa.c \
+ssh-rsa.c
+
+SRCS+=	fmt_scaled.c
 SRCS+=	readpassphrase.c getpeereid.c getrrsetbyname.c
 COPTS.monitor_fdpass.c = -Wno-stack-protector
 
-SSHDIST=	${NETBSDSRCDIR}/crypto/external/bsd/openssh/dist
+.if WITH_OPENSSL
+SRCS+=		${OPENSSL_SRCS}
+.else
+SRCS+=		digest-libc.c
+.endif
+
+CPPFLAGS+= -DHAVE_BLF_H
+
 CPPFLAGS+=	-I${SSHDIST}
 .PATH:		${SSHDIST}
 
@@ -72,13 +108,25 @@ LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto \
 		crypt	${NETBSDSRCDIR}/lib/libcrypt \
 		z	${NETBSDSRCDIR}/lib/libz
 
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 .for f in dns channels hostfile ssh-pkcs11
 COPTS.${f}.c+=	-Wno-pointer-sign
 .endfor
-.endif
-
-.include <bsd.lib.mk>
 
 # XXX
 COPTS.channels.c+=	-fno-strict-aliasing
+
+# XXX
+.if ${MACHINE} == "vax"
+COPTS.poly1305.c+=	-O0
+COPTS.umac.c+=		-O0
+.endif
+
+# XXX netbsd-6 specials
+SRCS+=	consttime_memequal.c \
+	explicit_memset.c \
+	reallocarr.c \
+	reallocarray.c \
+	strtoi.c \
+	strtonum.c
+
+.include <bsd.lib.mk>

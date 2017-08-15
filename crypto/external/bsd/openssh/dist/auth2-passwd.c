@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-passwd.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
-/* $OpenBSD: auth2-passwd.c,v 1.9 2006/08/03 03:34:41 deraadt Exp $ */
+/*	$NetBSD: auth2-passwd.c,v 1.2.8.1 2017/08/15 05:27:51 snj Exp $	*/
+/* $OpenBSD: auth2-passwd.c,v 1.12 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-passwd.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: auth2-passwd.c,v 1.2.8.1 2017/08/15 05:27:51 snj Exp $");
 #include <sys/types.h>
 
 #include <string.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: auth2-passwd.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include "ssh-gss.h"
 #endif
 #include "monitor_wrap.h"
+#include "misc.h"
 #include "servconf.h"
 
 /* import */
@@ -60,8 +61,8 @@ userauth_passwd(Authctxt *authctxt)
 	if (change) {
 		/* discard new password from packet */
 		newpass = packet_get_string(&newlen);
-		memset(newpass, 0, newlen);
-		xfree(newpass);
+		explicit_bzero(newpass, newlen);
+		free(newpass);
 	}
 	packet_check_eom();
 
@@ -69,8 +70,8 @@ userauth_passwd(Authctxt *authctxt)
 		logit("password change not supported");
 	else if (PRIVSEP(auth_password(authctxt, password)) == 1)
 		authenticated = 1;
-	memset(password, 0, len);
-	xfree(password);
+	explicit_bzero(password, len);
+	free(password);
 	return authenticated;
 }
 

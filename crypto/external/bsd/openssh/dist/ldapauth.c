@@ -1,6 +1,4 @@
-/*	$NetBSD: ldapauth.c,v 1.3 2011/08/16 09:43:03 christos Exp $	*/
-/* $Id: ldapauth.c,v 1.3 2011/08/16 09:43:03 christos Exp $
- */
+/*	$NetBSD: ldapauth.c,v 1.3.4.1 2017/08/15 05:27:52 snj Exp $	*/
 
 /*
  *
@@ -23,7 +21,7 @@
  *
  */
 #include "includes.h"
-__RCSID("$NetBSD: ldapauth.c,v 1.3 2011/08/16 09:43:03 christos Exp $");
+__RCSID("$NetBSD: ldapauth.c,v 1.3.4.1 2017/08/15 05:27:52 snj Exp $");
 
 #ifdef WITH_LDAP_PUBKEY
 #include <stdarg.h>
