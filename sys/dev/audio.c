@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.394 2017/08/15 04:42:56 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.395 2017/08/15 05:05:32 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.394 2017/08/15 04:42:56 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.395 2017/08/15 05:05:32 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3669,9 +3669,6 @@ audio_mix(void *v)
 
 	blksize = sc->sc_pr.blksize;
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
-		if (!sc->sc_opens)
-			break;		/* ignore interrupt if not open */
-
 		vc = chan->vc;
 
 		if (!vc->sc_open)
@@ -3877,9 +3874,6 @@ audio_upmix(void *v)
 	blksize = sc->sc_rr.blksize;
 
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
-		if (!sc->sc_opens)
-			break;		/* ignore interrupt if not open */
-
 		vc = chan->vc;
 
 		if (!(vc->sc_open & AUOPEN_READ))
