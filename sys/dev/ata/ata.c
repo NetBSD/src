@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.28 2017/08/12 22:31:50 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.29 2017/08/15 11:21:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.28 2017/08/12 22:31:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.29 2017/08/15 11:21:32 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1249,7 +1249,7 @@ atastart(struct ata_channel *chp)
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_queue *chq = chp->ch_queue;
 	struct ata_xfer *xfer, *axfer;
-	bool immediate;
+	bool recovery;
 
 #ifdef ATA_DEBUG
 	int spl1, spl2;
@@ -1276,10 +1276,10 @@ again:
 	if ((xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) == NULL)
 		goto out;
 
-	immediate = ISSET(xfer->c_flags, C_RECOVERY);
+	recovery = ISSET(xfer->c_flags, C_RECOVERY);
 
 	/* is the queue frozen? */
-	if (__predict_false(!immediate && chq->queue_freeze > 0)) {
+	if (__predict_false(!recovery && chq->queue_freeze > 0)) {
 		if (chq->queue_flags & QF_IDLE_WAIT) {
 			chq->queue_flags &= ~QF_IDLE_WAIT;
 			wakeup(&chq->queue_flags);
@@ -1298,7 +1298,7 @@ again:
 	 * Need only check first xfer.
 	 * XXX FIS-based switching - revisit
 	 */
-	if (!immediate && (axfer = TAILQ_FIRST(&chp->ch_queue->active_xfers))) {
+	if (!recovery && (axfer = TAILQ_FIRST(&chp->ch_queue->active_xfers))) {
 		if (!ISSET(xfer->c_flags, C_NCQ) ||
 		    !ISSET(axfer->c_flags, C_NCQ) ||
 		    xfer->c_drive != axfer->c_drive)
@@ -1344,8 +1344,8 @@ again:
 	 */
 	xfer->c_start(chp, xfer);
 
-	/* Queue more commands if possible */
-	if (chq->queue_active < chq->queue_openings)
+	/* Queue more commands if possible, but not during recovery */
+	if (!recovery && chq->queue_active < chq->queue_openings)
 		goto again;
 
 	return;
