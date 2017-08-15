@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.396 2017/08/15 05:11:25 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.397 2017/08/15 05:31:52 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.396 2017/08/15 05:11:25 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.397 2017/08/15 05:31:52 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2124,12 +2124,11 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	hw = sc->hw_if;
 	if (hw == NULL)
 		return ENXIO;
+
 	n = 1;
-	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
+	chan = SIMPLEQ_LAST(&sc->sc_audiochan, audio_chan, entries);
+	if (chan != NULL)
 		n = chan->chan + 1;
-	}
-	if (n < 0)
-		return ENOMEM;
 
 	chan = kmem_zalloc(sizeof(struct audio_chan), KM_SLEEP);
 	vc = kmem_zalloc(sizeof(struct virtual_channel), KM_SLEEP);
