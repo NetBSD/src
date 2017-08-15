@@ -1,7 +1,7 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1 2017/08/15 08:51:38 maxv Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.2 2017/08/15 08:57:19 maxv Exp $	*/
 
-/*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 1997, 2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.1 2017/08/15 08:51:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.2 2017/08/15 08:57:19 maxv Exp $");
 
 #include "opt_ddb.h"
 
@@ -92,14 +92,14 @@ kgdb_acc(vaddr_t va, size_t len)
 		else
 			pte = kvtopte(va);
 		if ((*pte & PG_V) == 0)
-			return (0);
+			return 0;
 		if (*pte & PG_PS)
 			va = (va & PG_LGFRAME) + NBPD_L2;
 		else
 			va += PAGE_SIZE;
 	} while (va < last_va);
 
-	return (1);
+	return 1;
 }
 
 void
@@ -118,25 +118,25 @@ kgdb_signal(int type)
 {
 	switch (type) {
 	case T_NMI:
-		return (SIGINT);
+		return SIGINT;
 
 	case T_ALIGNFLT:
-		return (SIGILL);
+		return SIGILL;
 
 	case T_BPTFLT:
 	case T_TRCTRAP:
-		return (SIGTRAP);
+		return SIGTRAP;
 
 	case T_ASTFLT:
 	case T_DOUBLEFLT:
-		return (SIGEMT);
+		return SIGEMT;
 
 	case T_ARITHTRAP:
 	case T_DIVIDE:
 	case T_OFLOW:
 	case T_DNA:
 	case T_FPOPFLT:
-		return (SIGFPE);
+		return SIGFPE;
 
 	case T_PRIVINFLT:
 	case T_PROTFLT:
@@ -144,13 +144,13 @@ kgdb_signal(int type)
 	case T_TSSFLT:
 	case T_SEGNPFLT:
 	case T_STKFLT:
-		return (SIGSEGV);
+		return SIGSEGV;
 
 	case T_BOUND:
-		return (SIGURG);
+		return SIGURG;
 
 	default:
-		return (SIGEMT);
+		return SIGEMT;
 	}
 }
 
