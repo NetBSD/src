@@ -1,5 +1,5 @@
-/*	$NetBSD: progressmeter.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: progressmeter.c,v 1.37 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: progressmeter.c,v 1.4.10.1 2017/08/15 04:39:21 snj Exp $	*/
+/* $OpenBSD: progressmeter.c,v 1.45 2016/06/30 05:17:05 dtucker Exp $ */
 /*
  * Copyright (c) 2003 Nils Nordman.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: progressmeter.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: progressmeter.c,v 1.4.10.1 2017/08/15 04:39:21 snj Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: progressmeter.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
 
 #include "progressmeter.h"
 #include "atomicio.h"
+#include "misc.h"
 
 #define DEFAULT_WINSIZE 80
 #define MAX_WINSIZE 512
@@ -63,9 +64,10 @@ void refresh_progress_meter(void);
 /* signal handler for updating the progress meter */
 static void update_progress_meter(int);
 
-static time_t start;		/* start progress */
-static time_t last_update;	/* last progress update */
-static char *file;		/* name of the file being transferred */
+static double start;		/* start progress */
+static double last_update;	/* last progress update */
+static const char *file;	/* name of the file being transferred */
+static off_t start_pos;		/* initial position of transfer */
 static off_t end_pos;		/* ending position of transfer */
 static off_t cur_pos;		/* transfer position as of last refresh */
 static off_t last_pos;
@@ -121,9 +123,8 @@ void
 refresh_progress_meter(void)
 {
 	char buf[MAX_WINSIZE + 1];
-	time_t now;
 	off_t transferred;
-	double elapsed;
+	double elapsed, now;
 	int percent;
 	off_t bytes_left;
 	int cur_speed;
@@ -132,9 +133,9 @@ refresh_progress_meter(void)
 	int file_len;
 	off_t delta_pos;
 
-	transferred = *counter - cur_pos;
+	transferred = *counter - (cur_pos ? cur_pos : start_pos);
 	cur_pos = *counter;
-	now = time(NULL);
+	now = monotime_double();
 	bytes_left = end_pos - cur_pos;
 
 	delta_pos = cur_pos - last_pos;
@@ -146,7 +147,7 @@ refresh_progress_meter(void)
 	else {
 		elapsed = now - start;
 		/* Calculate true total speed when done */
-		transferred = end_pos;
+		transferred = end_pos - start_pos;
 		bytes_per_second = 0;
 	}
 
@@ -178,11 +179,11 @@ refresh_progress_meter(void)
 	}
 
 	/* percent of transfer done */
-	if (end_pos != 0)
-		percent = ((float)cur_pos / end_pos) * 100;
-	else
+	if (end_pos == 0 || cur_pos == end_pos)
 		percent = 100;
-	snprintf(buf + strlen(buf), win_size - strlen(buf) - 8,
+	else
+		percent = ((float)cur_pos / end_pos) * 100;
+	snprintf(buf + strlen(buf), win_size - strlen(buf),
 	    " %3d%% ", percent);
 
 	/* amount transferred */
@@ -264,10 +265,11 @@ update_progress_meter(int ignore)
 }
 
 void
-start_progress_meter(char *f, off_t filesize, off_t *ctr)
+start_progress_meter(const char *f, off_t filesize, off_t *ctr)
 {
-	start = last_update = time(NULL);
+	start = last_update = monotime_double();
 	file = f;
+	start_pos = *ctr;
 	end_pos = filesize;
 	cur_pos = 0;
 	counter = ctr;

@@ -1,5 +1,5 @@
-/*	$NetBSD: sshpty.h,v 1.3 2010/11/21 18:29:49 adam Exp $	*/
-/* $OpenBSD: sshpty.h,v 1.12 2010/01/09 05:04:24 djm Exp $ */
+/*	$NetBSD: sshpty.h,v 1.3.14.1 2017/08/15 04:39:21 snj Exp $	*/
+/* $OpenBSD: sshpty.h,v 1.13 2016/11/29 03:54:50 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -26,3 +26,4 @@ void	 pty_release(const char *);
 void	 pty_make_controlling_tty(int *, const char *);
 void	 pty_change_window_size(int, u_int, u_int, u_int, u_int);
 void	 pty_setowner(struct passwd *, const char *);
+void	 disconnect_controlling_tty(void);

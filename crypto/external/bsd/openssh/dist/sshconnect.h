@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.h,v 1.4 2011/07/25 03:03:11 christos Exp $	*/
-/* $OpenBSD: sshconnect.h,v 1.27 2010/11/29 23:45:51 djm Exp $ */
+/*	$NetBSD: sshconnect.h,v 1.4.10.1 2017/08/15 04:39:21 snj Exp $	*/
+/* $OpenBSD: sshconnect.h,v 1.29 2015/11/15 22:26:49 jcs Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -32,9 +32,9 @@ struct Sensitive {
 	int	external_keysign;
 };
 
-int
-ssh_connect(const char *, struct sockaddr_storage *, u_short, int, int,
-    int *, int, int, const char *);
+struct addrinfo;
+int	 ssh_connect(const char *, struct addrinfo *, struct sockaddr_storage *,
+    u_short, int, int, int *, int, int);
 void	 ssh_kill_proxy_command(void);
 
 void	 ssh_login(Sensitive *, const char *, struct sockaddr *, u_short,
@@ -55,6 +55,8 @@ void	 ssh_userauth2(const char *, const char *, char *, Sensitive *);
 
 void	 ssh_put_password(char *);
 int	 ssh_local_cmd(const char *);
+
+void	 maybe_add_key_to_agent(char *, Key *, char *, char *);
 
 /*
  * Macros to raise/lower permissions.
