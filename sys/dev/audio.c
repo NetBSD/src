@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.395 2017/08/15 05:05:32 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.396 2017/08/15 05:11:25 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.395 2017/08/15 05:05:32 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.396 2017/08/15 05:11:25 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -279,7 +279,7 @@ void	audio_calc_blksize(struct audio_softc *, int, struct virtual_channel *);
 void	audio_fill_silence(const struct audio_params *, uint8_t *, int);
 int	audio_silence_copyout(struct audio_softc *, int, struct uio *);
 
-static int	audio_allocbufs(struct audio_softc *, struct virtual_channel *);
+static int	audio_allocbufs(struct audio_softc *);
 void	audio_init_ringbuffer(struct audio_softc *,
 			      struct audio_ringbuffer *, int);
 int	audio_initbufs(struct audio_softc *, struct virtual_channel *);
@@ -592,7 +592,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	mutex_enter(sc->sc_lock);
-	if (audio_allocbufs(sc, vc) != 0) {
+	if (audio_allocbufs(sc) != 0) {
 		aprint_error_dev(sc->sc_dev,
 			"could not allocate ring buffer\n");
 		mutex_exit(sc->sc_lock);
@@ -1107,9 +1107,12 @@ audio_print_params(const char *s, struct audio_params *p)
 
 /* Allocate all ring buffers. called from audioattach() */
 static int
-audio_allocbufs(struct audio_softc *sc, struct virtual_channel *vc)
+audio_allocbufs(struct audio_softc *sc)
 {
+	struct virtual_channel *vc;
 	int error;
+
+	vc = sc->sc_hwvc;
 
 	sc->sc_pr.s.start = NULL;
 	vc->sc_mpr.s.start = NULL;
