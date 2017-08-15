@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.73 2017/08/15 06:57:53 maxv Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.74 2017/08/15 09:16:59 maxv Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.73 2017/08/15 06:57:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.74 2017/08/15 09:16:59 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -87,7 +87,7 @@ const struct db_command db_machine_command_table[] = {
 
 void kdbprinttrap(int, int);
 #ifdef MULTIPROCESSOR
-extern void ddb_ipi(int, struct trapframe);
+extern void ddb_ipi(struct trapframe);
 extern void ddb_ipi_tss(struct i386tss *);
 static void ddb_suspend(struct trapframe *);
 #ifndef XEN
@@ -299,7 +299,7 @@ cpu_Debugger(void)
  * that the effect is as if the arguments were passed call by reference.
  */
 void
-ddb_ipi(int cpl, struct trapframe frame)
+ddb_ipi(struct trapframe frame)
 {
 
 	ddb_suspend(&frame);
