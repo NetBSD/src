@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.22 2011/04/03 22:29:26 dyoung Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.23 2017/08/15 08:35:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.22 2011/04/03 22:29:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.23 2017/08/15 08:35:56 maxv Exp $");
 
 #include "opt_ddb.h"
 
@@ -70,10 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.22 2011/04/03 22:29:26 dyoung Exp
 #include <sys/kgdb.h>
 #include <sys/systm.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <machine/pte.h>
-#include <machine/reg.h>
 #include <machine/trap.h>
 
 /*
@@ -116,7 +113,7 @@ kgdb_entry_notice(int type, db_regs_t *regs)
  * Translate a trap number into a unix compatible signal value.
  * (gdb only understands unix signal numbers).
  */
-int 
+int
 kgdb_signal(int type)
 {
 	switch (type) {
