@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.31 2017/03/11 23:39:49 nonaka Exp $	*/
+/*	$NetBSD: bios32.c,v 1.32 2017/08/15 06:04:28 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,12 +86,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.31 2017/03/11 23:39:49 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.32 2017/08/15 06:04:28 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h> 
-#include <sys/malloc.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
@@ -125,12 +124,12 @@ void
 bios32_init(void)
 {
 	paddr_t entry = 0;
-	char *p;
+	uint8_t *p;
 	unsigned char cksum;
 	int i;
 
-	for (p = (char *)ISA_HOLE_VADDR(BIOS32_START);
-	     p < (char *)ISA_HOLE_VADDR(BIOS32_END);
+	for (p = (uint8_t *)ISA_HOLE_VADDR(BIOS32_START);
+	     p < (uint8_t *)ISA_HOLE_VADDR(BIOS32_END);
 	     p += 16) {
 		if (*(int *)p != BIOS32_MAKESIG('_', '3', '2', '_'))
 			continue;
@@ -169,27 +168,26 @@ bios32_init(void)
 		p = efi_getcfgtbl(&EFI_UUID_SMBIOS3);
 		if (p != NULL && smbios3_check_header(p)) {
 			smbios3_map_kva(p);
-			goto out;
+			return;
 		}
 		p = efi_getcfgtbl(&EFI_UUID_SMBIOS);
 		if (p != NULL && smbios2_check_header(p)) {
 			smbios2_map_kva(p);
-			goto out;
+			return;
 		}
 	}
 #endif
 	for (p = ISA_HOLE_VADDR(SMBIOS_START);
-	    p < (char *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
+	    p < (uint8_t *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
 		if (smbios3_check_header(p)) {
 			smbios3_map_kva(p);
-			goto out;
-		} else if (smbios2_check_header(p)) {
+			return;
+		}
+		if (smbios2_check_header(p)) {
 			smbios2_map_kva(p);
-			goto out;
+			return;
 		}
 	}
-out:
-	pmap_update(pmap_kernel());
 }
 
 static int
@@ -245,6 +243,7 @@ smbios2_map_kva(const uint8_t *p)
 #else
 		pmap_kenter_pa(eva, pa, VM_PROT_READ, 0);
 #endif
+	pmap_update(pmap_kernel());
 
 	aprint_debug("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
 		    sh->majrev, sh->minrev, (u_long)sh->addr,
@@ -304,6 +303,7 @@ smbios3_map_kva(const uint8_t *p)
 #else
 		pmap_kenter_pa(eva, pa, VM_PROT_READ, 0);
 #endif
+	pmap_update(pmap_kernel());
 
 	aprint_debug("SMBIOS rev. %d.%d.%d @ 0x%lx\n",
 		    sh->majrev, sh->minrev, sh->docrev, (u_long)sh->addr);
