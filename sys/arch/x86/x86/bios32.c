@@ -1,6 +1,6 @@
-/*	$NetBSD: bios32.c,v 1.1 2017/08/15 06:27:40 maxv Exp $	*/
+/*	$NetBSD: bios32.c,v 1.2 2017/08/15 06:37:50 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -41,18 +41,18 @@
  *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the developer may NOT be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND 
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
- * SUCH DAMAGE. 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 /*
@@ -86,11 +86,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.1 2017/08/15 06:27:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.2 2017/08/15 06:37:50 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h> 
+#include <sys/device.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
@@ -192,6 +192,55 @@ bios32_init(void)
 	}
 }
 
+/*
+ * Call BIOS32 to locate the specified BIOS32 service, and fill
+ * in the entry point information.
+ */
+int
+bios32_service(uint32_t service, bios32_entry_t e, bios32_entry_info_t ei)
+{
+#ifdef i386
+	uint32_t eax, ebx, ecx, edx;
+	paddr_t entry;
+
+	if (bios32_entry.offset == 0)
+		return 0;	/* BIOS32 not present */
+
+	__asm volatile("lcall *(%%edi)"
+		: "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
+		: "0" (service), "1" (0), "D" (&bios32_entry));
+
+	if ((eax & 0xff) != 0)
+		return 0;	/* service not found */
+
+	entry = ebx + edx;
+
+	if (entry < BIOS32_START || entry >= BIOS32_END) {
+		aprint_error("BIOS32: entry point for service %c%c%c%c is "
+		    "outside allowable range\n",
+		    service & 0xff,
+		    (service >> 8) & 0xff,
+		    (service >> 16) & 0xff,
+		    (service >> 24) & 0xff);
+		return 0;
+	}
+
+	e->offset = (void *)ISA_HOLE_VADDR(entry);
+	e->segment = GSEL(GCODE_SEL, SEL_KPL);
+
+	ei->bei_base = ebx;
+	ei->bei_size = ecx;
+	ei->bei_entry = entry;
+#else
+	(void)service;
+	(void)e;
+	(void)ei;
+	panic("bios32_service not implemented on amd64");
+#endif
+
+	return 1;
+}
+
 static int
 smbios2_check_header(const uint8_t *p)
 {
@@ -248,8 +297,7 @@ smbios2_map_kva(const uint8_t *p)
 	pmap_update(pmap_kernel());
 
 	aprint_debug("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
-		    sh->majrev, sh->minrev, (u_long)sh->addr,
-		    sh->count);
+	    sh->majrev, sh->minrev, (u_long)sh->addr, sh->count);
 }
 
 static int
@@ -302,57 +350,8 @@ smbios3_map_kva(const uint8_t *p)
 #endif
 	pmap_update(pmap_kernel());
 
-	aprint_debug("SMBIOS rev. %d.%d.%d @ 0x%lx\n",
-		    sh->majrev, sh->minrev, sh->docrev, (u_long)sh->addr);
-}
-
-/*
- * Call BIOS32 to locate the specified BIOS32 service, and fill
- * in the entry point information.
- */
-int
-bios32_service(uint32_t service, bios32_entry_t e, bios32_entry_info_t ei)
-{
-#ifdef i386
-	uint32_t eax, ebx, ecx, edx;
-	paddr_t entry;
-
-	if (bios32_entry.offset == 0)
-		return (0);	/* BIOS32 not present */
-
-	__asm volatile("lcall *(%%edi)"
-		: "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
-		: "0" (service), "1" (0), "D" (&bios32_entry));
-
-	if ((eax & 0xff) != 0)
-		return (0);	/* service not found */
-
-	entry = ebx + edx;
-
-	if (entry < BIOS32_START || entry >= BIOS32_END) {
-		aprint_error("BIOS32: entry point for service %c%c%c%c is "
-		    "outside allowable range\n",
-		    service & 0xff,
-		    (service >> 8) & 0xff,
-		    (service >> 16) & 0xff,
-		    (service >> 24) & 0xff);
-		return (0);
-	}
-
-	e->offset = (void *)ISA_HOLE_VADDR(entry);
-	e->segment = GSEL(GCODE_SEL, SEL_KPL);
-
-	ei->bei_base = ebx;
-	ei->bei_size = ecx;
-	ei->bei_entry = entry;
-#else
-	(void)service;
-	(void)e;
-	(void)ei;
-	panic("bios32_service not implemented on amd64");
-#endif
-
-	return (1);
+	aprint_debug("SMBIOS rev. %d.%d.%d @ 0x%lx\n", sh->majrev,
+	    sh->minrev, sh->docrev, (u_long)sh->addr);
 }
 
 /*
