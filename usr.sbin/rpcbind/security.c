@@ -1,4 +1,5 @@
-/*	$NetBSD: security.c,v 1.11 2009/01/18 10:17:38 lukem Exp $	*/
+/*	$NetBSD: security.c,v 1.12 2017/08/16 08:44:40 christos Exp $	*/
+/*	$FreeBSD: head/usr.sbin/rpcbind/security.c 262860 2014-03-06 17:33:27Z mav $ */
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -9,6 +10,7 @@
 #include <rpc/rpcb_prot.h>
 #include <rpc/pmap_prot.h>
 #include <err.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -57,7 +59,7 @@ int log_severity = PORTMAP_LOG_FACILITY|PORTMAP_LOG_SEVERITY;
 extern int verboselog;
 
 int 
-check_access(SVCXPRT *xprt, rpcproc_t proc, void *args, unsigned long rpcbvers)
+check_access(SVCXPRT *xprt, rpcproc_t proc, void *args, unsigned int rpcbvers)
 {
 	struct netbuf *caller = svc_getrpccaller(xprt);
 	struct sockaddr *addr = (struct sockaddr *)caller->buf;
@@ -106,13 +108,15 @@ check_access(SVCXPRT *xprt, rpcproc_t proc, void *args, unsigned long rpcbvers)
 	}
 
 #ifdef LIBWRAP
-	if (addr->sa_family == AF_LOCAL)
-		return 1;
-	request_init(&req, RQ_DAEMON, "rpcbind", RQ_CLIENT_SIN, addr, 0);
-	sock_methods(&req);
-	if(!hosts_access(&req)) {
-		logit(deny_severity, addr, proc, prog, ": request from unauthorized host");
-		return 0;
+	if (libwrap && addr->sa_family != AF_LOCAL) {
+		request_init(&req, RQ_DAEMON, "rpcbind", RQ_CLIENT_SIN, addr,
+		    0);
+		sock_methods(&req);
+		if(!hosts_access(&req)) {
+			logit(deny_severity, addr, proc, prog,
+			    ": request from unauthorized host");
+			return 0;
+		}
 	}
 #endif
 	if (verboselog)
@@ -224,7 +228,7 @@ logit(int severity, struct sockaddr *addr, rpcproc_t procnum, rpcprog_t prognum,
 }
 
 int
-check_callit(SVCXPRT *xprt, struct r_rmtcall_args *args, int versnum)
+check_callit(SVCXPRT *xprt, struct r_rmtcall_args *args, int versnum __unused)
 {
 	struct sockaddr *sa = (struct sockaddr *)svc_getrpccaller(xprt)->buf;
 
@@ -275,8 +279,12 @@ check_callit(SVCXPRT *xprt, struct r_rmtcall_args *args, int versnum)
 
 	return 1;
 deny:
+#ifdef LIBWRAP
 	logit(deny_severity, sa, args->rmt_proc, args->rmt_prog,
 	    ": indirect call not allowed");
-
+#else
+	logit(0, sa, args->rmt_proc, args->rmt_prog,
+	    ": indirect call not allowed");
+#endif
 	return 0;
 }

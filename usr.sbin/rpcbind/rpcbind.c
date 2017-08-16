@@ -1,32 +1,31 @@
-/*	$NetBSD: rpcbind.c,v 1.23 2015/11/08 16:36:28 christos Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.24 2017/08/16 08:44:40 christos Exp $	*/
 
-/*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
+/*-
+ * Copyright (c) 2009, Sun Microsystems, Inc.
+ * All rights reserved.
  * 
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * - Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ * - Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * - Neither the name of Sun Microsystems, Inc. nor the names of its
+ *   contributors may be used to endorse or promote products derived
+ *   from this software without specific prior written permission.
  * 
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- * 
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- * 
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- * 
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 /*
  * Copyright (c) 1984 - 1991 by Sun Microsystems, Inc.
@@ -56,9 +55,12 @@ static	char sccsid[] = "@(#)rpcbind.c 1.35 89/04/21 Copyr 1984 Sun Micro";
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <rpc/rpc.h>
+#include <rpc/rpc_com.h>
 #ifdef PORTMAP
 #include <netinet/in.h>
 #endif
+#include <arpa/inet.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <netconfig.h>
@@ -94,14 +96,26 @@ rpcblist_ptr list_rbl;	/* A list of version 3/4 rpcbind services */
 /* who to suid to if -s is given */
 #define RUN_AS  "daemon"
 
-int runasdaemon = 0;
+#define RPCBINDDLOCK "/var/run/rpcbind.lock"
+
+static int runasdaemon = 0;
 int insecure = 0;
 int oldstyle_local = 0;
+#ifdef LIBWRAP
+int libwrap = 0;
+#endif
 int verboselog = 0;
+
+static char **hosts = NULL;
+static struct sockaddr **bound_sa;
+static int ipv6_only = 0;
+static int nhosts = 0;
+static int on = 1;
+static int rpcbindlockfd;
 
 #ifdef WARMSTART
 /* Local Variable */
-static int warmstart = 0;	/* Grab a old copy of registrations */
+static int warmstart = 0;	/* Grab an old copy of registrations */
 #endif
 
 #ifdef PORTMAP
@@ -120,6 +134,7 @@ static int init_transport(struct netconfig *);
 static void rbllist_add(rpcprog_t, rpcvers_t, struct netconfig *,
     struct netbuf *);
 __dead static void terminate(int);
+static void update_bound_sa(void);
 #ifndef RPCBIND_RUMP
 static void parseargs(int, char *[]);
 
@@ -153,9 +168,23 @@ rpcbind_main(void *arg)
 		if (setrlimit(RLIMIT_NOFILE, &rl) < 0)
 			err(EXIT_FAILURE, "setrlimit(RLIMIT_NOFILE)");
 	}
+	update_bound_sa();
+ 
+	/* Check that another rpcbind isn't already running. */
+	if ((rpcbindlockfd = open(RPCBINDDLOCK, O_RDONLY|O_CREAT, 0444)) == -1)
+		err(1, "%s", RPCBINDDLOCK);
+
+	if (flock(rpcbindlockfd, LOCK_EX|LOCK_NB) == -1 && errno == EWOULDBLOCK)
+		errx(1, "another rpcbind is already running. Aborting");
+
+#ifndef RPCBIND_RUMP
+	if (geteuid()) /* This command allowed only to root */
+		errx(EXIT_FAILURE, "Sorry. You are not superuser\n");
+#endif
 	nc_handle = setnetconfig(); 	/* open netconfig file */
 	if (nc_handle == NULL)
 		errx(EXIT_FAILURE, "could not read /etc/netconfig");
+
 #ifdef PORTMAP
 	udptrans = "";
 	tcptrans = "";
@@ -170,8 +199,13 @@ rpcbind_main(void *arg)
 	init_transport(nconf);
 
 	while ((nconf = getnetconfig(nc_handle))) {
-		if (nconf->nc_flag & NC_VISIBLE)
-			init_transport(nconf);
+		if (nconf->nc_flag & NC_VISIBLE) {
+			if (ipv6_only == 1 && strcmp(nconf->nc_protofmly,
+			    "inet") == 0) {
+			    /* DO NOTHING */
+			} else
+				init_transport(nconf);
+		}
 	}
 	endnetconfig(nc_handle);
 
@@ -249,9 +283,14 @@ init_transport(struct netconfig *nconf)
 	int status;	/* bound checking ? */
 	int aicode;
 	int addrlen;
+	int nhostsbak;
+	int bound;
+	u_int32_t host_addr[4];  /* IPv4 or IPv6 */
 	struct sockaddr *sa;
 	struct sockaddr_un sun;
-	const int one = 1;
+#ifndef RPCBIND_RUMP
+	mode_t oldmask;
+#endif
 
 	if ((nconf->nc_semantics != NC_TPI_CLTS) &&
 		(nconf->nc_semantics != NC_TPI_COTS) &&
@@ -273,32 +312,29 @@ init_transport(struct netconfig *nconf)
 	/*
 	 * XXX - using RPC library internal functions.
 	 */
-	if ((fd = __rpc_nconf2fd(nconf)) < 0) {
-		if (errno == EAFNOSUPPORT)
-			return 1;
-		warn("Cannot create socket for `%s'", nconf->nc_netid);
-		return 1;
-	}
-
-	if (!__rpc_nconf2sockinfo(nconf, &si)) {
-		warnx("Cannot get information for `%s'", nconf->nc_netid);
-		return 1;
-	}
-
-	if (si.si_af == AF_INET6) {
-		/*
-		 * We're doing host-based access checks here, so don't allow
-		 * v4-in-v6 to confuse things.
+	if (strcmp(nconf->nc_netid, "local") == 0) {
+		/* 
+		 * For other transports we call this later, for each socket we
+		 * like to bind.
 		 */
-		if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &one,
-		    sizeof one) < 0) {
-			warn("Can't make socket ipv6 only");
+		if ((fd = __rpc_nconf2fd(nconf)) < 0) {
+			int non_fatal = 0;
+			if (errno == EAFNOSUPPORT)
+				non_fatal = 1;
+			syslog(non_fatal ? LOG_DEBUG : LOG_ERR,
+			    "Cannot create socket for `%s'", nconf->nc_netid);
 			return 1;
 		}
+	} else
+		fd = -1;
+
+	if (!__rpc_nconf2sockinfo(nconf, &si)) {
+		syslog(LOG_ERR, "Cannot get information for `%s'",
+		    nconf->nc_netid);
+		return 1;
 	}
 
-
-	if (!strcmp(nconf->nc_netid, "local")) {
+	if (strcmp(nconf->nc_netid, "local") == 0) {
 		(void)memset(&sun, 0, sizeof sun);
 		sun.sun_family = AF_LOCAL;
 #ifdef RPCBIND_RUMP
@@ -319,64 +355,214 @@ init_transport(struct netconfig *nconf)
 		hints.ai_family = si.si_af;
 		hints.ai_socktype = si.si_socktype;
 		hints.ai_protocol = si.si_proto;
-		if ((aicode = getaddrinfo(NULL, servname, &hints, &res)) != 0) {
-			warnx("Cannot get local address for `%s' (%s)",
-			    nconf->nc_netid, gai_strerror(aicode));
+	}
+
+	if (strcmp(nconf->nc_netid, "local") != 0) {
+		/*
+		 * If no hosts were specified, just bind to INADDR_ANY.
+		 * Otherwise  make sure 127.0.0.1 is added to the list.
+		 */
+		nhostsbak = nhosts + 1;
+		hosts = realloc(hosts, nhostsbak * sizeof(char *));
+		if (nhostsbak == 1)
+			hosts[0] = __UNCONST("*");
+		else {
+			if (hints.ai_family == AF_INET) {
+				hosts[nhostsbak - 1] = __UNCONST("127.0.0.1");
+			} else if (hints.ai_family == AF_INET6) {
+				hosts[nhostsbak - 1] = __UNCONST("::1");
+			} else
+				return 1;
+		}
+
+		/*
+		 * Bind to specific IPs if asked to
+		 */
+		bound = 0;
+		while (nhostsbak > 0) {
+			--nhostsbak;
+			/*
+			 * XXX - using RPC library internal functions.
+			 */
+			if ((fd = __rpc_nconf2fd(nconf)) < 0) {
+				int non_fatal = 0;
+				if (errno == EAFNOSUPPORT &&
+				    nconf->nc_semantics != NC_TPI_CLTS) 
+					non_fatal = 1;
+				syslog(non_fatal ? LOG_DEBUG : LOG_ERR, 
+				    "cannot create socket for %s",
+				    nconf->nc_netid);
+				return 1;
+			}
+			switch (hints.ai_family) {
+			case AF_INET:
+				if (inet_pton(AF_INET, hosts[nhostsbak],
+				    host_addr) == 1) {
+					hints.ai_flags &= AI_NUMERICHOST;
+				} else {
+					/*
+					 * Skip if we have an AF_INET6 address.
+					 */
+					if (inet_pton(AF_INET6,
+					    hosts[nhostsbak], host_addr) == 1) {
+						close(fd);
+						continue;
+					}
+				}
+				break;
+			case AF_INET6:
+				if (inet_pton(AF_INET6, hosts[nhostsbak],
+				    host_addr) == 1) {
+					hints.ai_flags &= AI_NUMERICHOST;
+				} else {
+					/*
+					 * Skip if we have an AF_INET address.
+					 */
+					if (inet_pton(AF_INET, hosts[nhostsbak],
+					    host_addr) == 1) {
+						close(fd);
+						continue;
+					}
+				}
+				if (setsockopt(fd, IPPROTO_IPV6,
+				    IPV6_V6ONLY, &on, sizeof on) < 0) {
+					syslog(LOG_ERR,
+					    "can't set v6-only binding for "
+					    "ipv6 socket: %m");
+					continue;
+				    }
+				break;
+			default:
+				break;
+			}
+
+			/*
+			 * If no hosts were specified, just bind to INADDR_ANY
+			 */
+			if (strcmp("*", hosts[nhostsbak]) == 0)
+				hosts[nhostsbak] = NULL;
+			if (strcmp(nconf->nc_netid, "local") != 0) {
+				if ((aicode = getaddrinfo(hosts[nhostsbak],
+				    servname, &hints, &res)) != 0) {
+					syslog(LOG_ERR,
+					"cannot get local address for %s: %s",
+					    nconf->nc_netid,
+					    gai_strerror(aicode));
+					continue;
+				}
+				addrlen = res->ai_addrlen;
+				sa = (struct sockaddr *)res->ai_addr;
+			}
+#ifndef RPCBIND_RUMP
+			oldmask = umask(S_IXUSR|S_IXGRP|S_IXOTH);
+#endif
+			if (bind(fd, sa, addrlen) != 0) {
+				syslog(LOG_ERR, "cannot bind %s on %s: %m",
+				    (hosts[nhostsbak] == NULL) ? "*" :
+					hosts[nhostsbak], nconf->nc_netid);
+				if (res != NULL)
+					freeaddrinfo(res);
+				continue;
+			} else
+				bound = 1;
+#ifndef RPCBIND_RUMP
+			(void)umask(oldmask);
+#endif
+
+			/* Copy the address */
+			taddr.addr.len = taddr.addr.maxlen = addrlen;
+			taddr.addr.buf = malloc(addrlen);
+			if (taddr.addr.buf == NULL) {
+				syslog(LOG_ERR,
+				    "cannot allocate memory for %s address",
+				    nconf->nc_netid);
+				if (res != NULL)
+					freeaddrinfo(res);
+				return 1;
+			}
+			memcpy(taddr.addr.buf, sa, addrlen);
+#ifdef RPCBIND_DEBUG
+			if (debugging) {
+				/*
+				 * for debugging print out our universal
+				 * address
+				 */
+				char *uaddr;
+				struct netbuf nb;
+
+				nb.buf = sa;
+				nb.len = nb.maxlen = sa->sa_len;
+				uaddr = taddr2uaddr(nconf, &nb);
+				(void)fprintf(stderr,
+				    "rpcbind : my address is %s\n", uaddr);
+				(void)free(uaddr);
+			}
+#endif
+
+			if (nconf->nc_semantics != NC_TPI_CLTS)
+				listen(fd, SOMAXCONN);
+				
+			my_xprt = (SVCXPRT *)svc_tli_create(fd, nconf, &taddr,
+			    RPC_MAXDATASIZE, RPC_MAXDATASIZE);
+			if (my_xprt == NULL) {
+				syslog(LOG_ERR,
+				    "Could not create service for `%s'",
+				    nconf->nc_netid);
+				goto error;
+			}
+		}
+		if (!bound)
+			return 1;
+	} else {
+#ifndef RPCBIND_RUMP
+		oldmask = umask(S_IXUSR|S_IXGRP|S_IXOTH);
+#endif
+		if (bind(fd, sa, addrlen) < 0) {
+			syslog(LOG_ERR, "cannot bind %s: %m", nconf->nc_netid);
+			if (res != NULL)
+				freeaddrinfo(res);
 			return 1;
 		}
-		addrlen = res->ai_addrlen;
-		sa = (struct sockaddr *)res->ai_addr;
-	}
-
-	if (bind(fd, sa, addrlen) < 0) {
-		warn("Cannot bind `%s'", nconf->nc_netid);
-		if (res != NULL)
-			freeaddrinfo(res);
-		return 1;
-	}
 #ifndef RPCBIND_RUMP
-	if (sa->sa_family == AF_LOCAL)
-		if (chmod(sun.sun_path, S_IRWXU|S_IRWXG|S_IRWXO) == -1)
-			warn("Cannot chmod `%s'", sun.sun_path);
+		(void) umask(oldmask);
 #endif
 
-	/* Copy the address */
-	taddr.addr.len = taddr.addr.maxlen = addrlen;
-	taddr.addr.buf = malloc(addrlen);
-	if (taddr.addr.buf == NULL) {
-		warn("Cannot allocate memory for `%s' address",
-		    nconf->nc_netid);
-		if (res != NULL)
-			freeaddrinfo(res);
-		return 1;
-	}
-	(void)memcpy(taddr.addr.buf, sa, addrlen);
+		/* Copy the address */
+		taddr.addr.len = taddr.addr.maxlen = addrlen;
+		taddr.addr.buf = malloc(addrlen);
+		if (taddr.addr.buf == NULL) {
+			syslog(LOG_ERR, "cannot allocate memory for %s address",
+			    nconf->nc_netid);
+			if (res != NULL)
+			    freeaddrinfo(res);
+			return 1;
+		}
+		memcpy(taddr.addr.buf, sa, addrlen);
 #ifdef RPCBIND_DEBUG
-	if (debugging) {
-		/* for debugging print out our universal address */
-		char *uaddr;
-		struct netbuf nb;
+		if (debugging) {
+			/* for debugging print out our universal address */
+			char *uaddr;
+			struct netbuf nb;
 
-		nb.buf = sa;
-		nb.len = nb.maxlen = sa->sa_len;
-		uaddr = taddr2uaddr(nconf, &nb);
-		(void)fprintf(stderr, "rpcbind: my address is %s fd=%d\n",
-		    uaddr, fd);
-		(void)free(uaddr);
-	}
+			nb.buf = sa;
+			nb.len = nb.maxlen = sa->sa_len;
+			uaddr = taddr2uaddr(nconf, &nb);
+			(void) fprintf(stderr, "rpcbind : my address is %s\n",
+			    uaddr);
+			(void) free(uaddr);
+		}
 #endif
 
-	if (res != NULL)
-		freeaddrinfo(res);
+		if (nconf->nc_semantics != NC_TPI_CLTS)
+			listen(fd, SOMAXCONN);
 
-	if (nconf->nc_semantics != NC_TPI_CLTS)
-		listen(fd, SOMAXCONN);
-		
-	my_xprt = (SVCXPRT *)svc_tli_create(fd, nconf, &taddr, RPC_MAXDATASIZE,
-	    RPC_MAXDATASIZE);
-	if (my_xprt == NULL) {
-		warnx("Could not create service for `%s'", nconf->nc_netid);
-		goto error;
+		my_xprt = (SVCXPRT *)svc_tli_create(fd, nconf, &taddr,
+		    RPC_MAXDATASIZE, RPC_MAXDATASIZE);
+		if (my_xprt == (SVCXPRT *)NULL) {
+			syslog(LOG_ERR, "%s: could not create service",
+			    nconf->nc_netid);
+			goto error;
+		}
 	}
 
 #ifdef PORTMAP
@@ -391,20 +577,22 @@ init_transport(struct netconfig *nconf)
 
 		if (!svc_register(my_xprt, PMAPPROG, PMAPVERS,
 			pmap_service, 0)) {
-			warn("Could not register on `%s'", nconf->nc_netid);
+			syslog(LOG_ERR, "Could not register on `%s'",
+			    nconf->nc_netid);
 			goto error;
 		}
 		pml = malloc(sizeof (struct pmaplist));
 		if (pml == NULL) {
-			warn("Cannot allocate memory");
+			syslog(LOG_ERR, "Cannot allocate memory");
 			goto error;
 		}
+
 		pml->pml_map.pm_prog = PMAPPROG;
 		pml->pml_map.pm_vers = PMAPVERS;
 		pml->pml_map.pm_port = PMAPPORT;
 		if (strcmp(nconf->nc_proto, NC_TCP) == 0) {
 			if (tcptrans[0]) {
-				warnx(
+				syslog(LOG_ERR,
 				    "Cannot have more than one TCP transport");
 				free(pml);
 				goto error;
@@ -412,7 +600,7 @@ init_transport(struct netconfig *nconf)
 			tcptrans = strdup(nconf->nc_netid);
 			if (tcptrans == NULL) {
 				free(pml);
-				warn("Cannot allocate memory");
+				syslog(LOG_ERR, "Cannot allocate memory");
 				goto error;
 			}
 			pml->pml_map.pm_prot = IPPROTO_TCP;
@@ -423,14 +611,14 @@ init_transport(struct netconfig *nconf)
 		} else if (strcmp(nconf->nc_proto, NC_UDP) == 0) {
 			if (udptrans[0]) {
 				free(pml);
-				warnx(
+				syslog(LOG_ERR,
 				"Cannot have more than one UDP transport");
 				goto error;
 			}
 			udptrans = strdup(nconf->nc_netid);
 			if (udptrans == NULL) {
 				free(pml);
-				warn("Cannot allocate memory");
+				syslog(LOG_ERR, "Cannot allocate memory");
 				goto error;
 			}
 			pml->pml_map.pm_prot = IPPROTO_UDP;
@@ -439,13 +627,17 @@ init_transport(struct netconfig *nconf)
 			/* "h1.h2.h3.h4.p1.p2" */
 			udp_uaddr = taddr2uaddr(nconf, &taddr.addr);
 		}
+#ifdef IPPROTO_ST
+		else if (strcmp(nconf->nc_netid, "local") == 0)
+			pml->pml_map.pm_prot = IPPROTO_ST;
+#endif
 		pml->pml_next = list_pml;
 		list_pml = pml;
 
 		/* Add version 3 information */
 		pml = malloc(sizeof (struct pmaplist));
 		if (pml == NULL) {
-			warn("Cannot allocate memory");
+			syslog(LOG_ERR, "Cannot allocate memory");
 			goto error;
 		}
 		pml->pml_map = list_pml->pml_map;
@@ -456,7 +648,7 @@ init_transport(struct netconfig *nconf)
 		/* Add version 4 information */
 		pml = malloc(sizeof (struct pmaplist));
 		if (pml == NULL) {
-			warn("Cannot allocate memory");
+			syslog(LOG_ERR, "Cannot allocate memory");
 			goto error;
 		}
 		pml->pml_map = list_pml->pml_map;
@@ -471,14 +663,16 @@ init_transport(struct netconfig *nconf)
 
 	/* version 3 registration */
 	if (!svc_reg(my_xprt, RPCBPROG, RPCBVERS, rpcb_service_3, NULL)) {
-		warn("Could not register %s version 3", nconf->nc_netid);
+		syslog(LOG_ERR, "Could not register %s version 3",
+		    nconf->nc_netid);
 		goto error;
 	}
 	rbllist_add(RPCBPROG, RPCBVERS, nconf, &taddr.addr);
 
 	/* version 4 registration */
 	if (!svc_reg(my_xprt, RPCBPROG, RPCBVERS4, rpcb_service_4, NULL)) {
-		warn("Could not register %s version 4", nconf->nc_netid);
+		syslog(LOG_ERR, "Could not register %s version 4",
+		    nconf->nc_netid);
 		goto error;
 	}
 	rbllist_add(RPCBPROG, RPCBVERS4, nconf, &taddr.addr);
@@ -530,6 +724,75 @@ error:
 	return (1);
 }
 
+/*
+ * Create the list of addresses that we're bound to.  Normally, this
+ * list is empty because we're listening on the wildcard address
+ * (nhost == 0).  If -h is specified on the command line, then
+ * bound_sa will have a list of the addresses that the program binds
+ * to specifically.  This function takes that list and converts them to
+ * struct sockaddr * and stores them in bound_sa.
+ */
+static void
+update_bound_sa(void)
+{
+	struct addrinfo hints, *res = NULL;
+	int i;
+
+	if (nhosts == 0)
+		return;
+	bound_sa = malloc(sizeof(*bound_sa) * nhosts);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	for (i = 0; i < nhosts; i++)  {
+		if (getaddrinfo(hosts[i], NULL, &hints, &res) != 0)
+			continue;
+		bound_sa[i] = malloc(res->ai_addrlen);
+		memcpy(bound_sa[i], res->ai_addr, res->ai_addrlen);
+	}
+}
+
+/*
+ * Match the sa against the list of addresses we've bound to.  If
+ * we've not specifically bound to anything, we match everything.
+ * Otherwise, if the IPv4 or IPv6 address matches one of the addresses
+ * in bound_sa, we return true.  If not, we return false.
+ */
+int
+listen_addr(const struct sockaddr *sa)
+{
+	int i;
+
+	/*
+	 * If nhosts == 0, then there were no -h options on the
+	 * command line, so all addresses are addresses we're
+	 * listening to.
+	 */
+	if (nhosts == 0)
+		return 1;
+	for (i = 0; i < nhosts; i++) {
+		if (bound_sa[i] == NULL ||
+		    sa->sa_family != bound_sa[i]->sa_family)
+			continue;
+		switch (sa->sa_family) {
+		case AF_INET:
+		  	if (memcmp(&SA2SINADDR(sa), &SA2SINADDR(bound_sa[i]),
+			    sizeof(struct in_addr)) == 0)
+				return (1);
+			break;
+#ifdef INET6
+		case AF_INET6:
+		  	if (memcmp(&SA2SIN6ADDR(sa), &SA2SIN6ADDR(bound_sa[i]),
+			    sizeof(struct in6_addr)) == 0)
+				return (1);
+			break;
+#endif
+		default:
+			break;
+		}
+	}
+	return (0);
+}
+
 static void
 rbllist_add(rpcprog_t prog, rpcvers_t vers, struct netconfig *nconf,
 	    struct netbuf *addr)
@@ -538,7 +801,7 @@ rbllist_add(rpcprog_t prog, rpcvers_t vers, struct netconfig *nconf,
 
 	rbl = malloc(sizeof(rpcblist));
 	if (rbl == NULL) {
-		warn("Out of memory");
+		syslog(LOG_ERR, "Out of memory");
 		return;
 	}
 
@@ -555,11 +818,13 @@ rbllist_add(rpcprog_t prog, rpcvers_t vers, struct netconfig *nconf,
  * Catch the signal and die
  */
 static void
-terminate(int dummy)
+terminate(int signum __unused)
 {
+	close(rpcbindlockfd);
 #ifdef WARMSTART
 	syslog(LOG_ERR,
-		"rpcbind terminating on signal. Restart with \"rpcbind -w\"");
+	    "rpcbind terminating on signal %d. Restart with \"rpcbind -w\"",
+	    signum);
 	write_warmstart();	/* Dump yourself */
 #endif
 #ifdef RPCBIND_RUMP
@@ -570,7 +835,7 @@ terminate(int dummy)
 }
 
 void
-rpcbind_abort()
+rpcbind_abort(void)
 {
 #ifdef WARMSTART
 	write_warmstart();	/* Dump yourself */
@@ -585,14 +850,36 @@ parseargs(int argc, char *argv[])
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "dwailLs")) != -1) {
+#ifdef WARMSTART
+#define	WSOP	"w"
+#else
+#define	WSOP	""
+#endif
+#ifdef LIBWRAP
+#define WRAPOP	"W"
+#else
+#define WRAPOP	""
+#endif
+	while ((c = getopt(argc, argv, "6adh:iLls" WRAPOP WSOP)) != -1) {
 		switch (c) {
+		case '6':
+			ipv6_only = 1;
+			break;
 		case 'a':
 			doabort = 1;	/* when debugging, do an abort on */
 			break;		/* errors; for rpcbind developers */
 					/* only! */
 		case 'd':
 			debugging = 1;
+			break;
+		case 'h':
+			++nhosts;
+			hosts = realloc(hosts, nhosts * sizeof(char *));
+			if (hosts == NULL)
+				errx(1, "Out of memory");
+			hosts[nhosts - 1] = strdup(optarg);
+			if (hosts[nhosts - 1] == NULL)
+				errx(1, "Out of memory");
 			break;
 		case 'i':
 			insecure = 1;
@@ -606,6 +893,11 @@ parseargs(int argc, char *argv[])
 		case 's':
 			runasdaemon = 1;
 			break;
+#ifdef LIBWRAP
+		case 'W':
+			libwrap = 1;
+			break;
+#endif
 #ifdef WARMSTART
 		case 'w':
 			warmstart = 1;
@@ -613,6 +905,9 @@ parseargs(int argc, char *argv[])
 #endif
 		default:	/* error */
 			fprintf(stderr,	"usage: rpcbind [-Idwils]\n");
+			fprintf(stderr,
+			    "Usage: %s [-6adiLls%s%s] [-h bindip]\n",
+			    getprogname(), WRAPOP, WSOP);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -621,11 +916,13 @@ parseargs(int argc, char *argv[])
 		"-a (abort) specified without -d (debugging) -- ignored.\n");
 	    doabort = 0;
 	}
+#undef WRAPOP
+#undef WSOP
 }
 #endif
 
 void
-reap(int dummy)
+reap(int dummy __unused)
 {
 	int save_errno = errno;
  
@@ -635,7 +932,7 @@ reap(int dummy)
 }
 
 void
-toggle_verboselog(int dummy)
+toggle_verboselog(int dummy __unused)
 {
 	verboselog = !verboselog;
 }

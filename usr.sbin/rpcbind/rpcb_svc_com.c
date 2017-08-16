@@ -1,32 +1,32 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.19 2017/05/03 21:28:00 christos Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.20 2017/08/16 08:44:40 christos Exp $	*/
+/*	$FreeBSD: head/usr.sbin/rpcbind/rpcb_svc_com.c 301770 2016-06-09 22:25:00Z pfg $ */
 
-/*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- * 
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- * 
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- * 
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- * 
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
+/*-
+ * Copyright (c) 2009, Sun Microsystems, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * - Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ * - Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * - Neither the name of Sun Microsystems, Inc. nor the names of its
+ *   contributors may be used to endorse or promote products derived
+ *   from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 /*
  * Copyright (c) 1986 - 1991 by Sun Microsystems, Inc.
@@ -46,6 +46,7 @@
 #include <rpc/rpc.h>
 #include <rpc/rpcb_prot.h>
 #include <rpc/rpc_com.h>
+#include <assert.h>
 #include <netconfig.h>
 #include <errno.h>
 #include <syslog.h>
@@ -64,15 +65,15 @@
 #include <rump/rump_syscalls.h>
 #endif
 
-#include "rpcbind.h"
 #include "svc_dg.h"
+#include "rpcbind.h"
 #ifdef RPCBIND_RUMP
 #include "svc_fdset.h"
 #endif
 
 #define RPC_BUF_MAX	65536	/* can be raised if required */
 
-static char emptystring[] = "";
+static char nullstring[] = "";
 static int rpcb_rmtcalls;
 
 struct rmtcallfd_list {
@@ -106,8 +107,8 @@ static bool_t xdr_rmtcall_result(XDR *, struct r_rmtcall_args *);
 static bool_t xdr_opaque_parms(XDR *, struct r_rmtcall_args *);
 static int find_rmtcallfd_by_netid(char *);
 static SVCXPRT *find_rmtcallxprt_by_fd(int);
-static u_int32_t forward_register(u_int32_t, struct netbuf *, int, char *,
-				    rpcproc_t, rpcvers_t);
+static int forward_register(u_int32_t, struct netbuf *, int, char *,
+    rpcproc_t, rpcvers_t, u_int32_t *);
 static struct finfo *forward_find(u_int32_t);
 static int free_slot_by_xid(u_int32_t);
 static int free_slot_by_index(int);
@@ -129,10 +130,10 @@ static int del_pmaplist(RPCB *);
  */
 /* ARGSUSED */
 void *
-rpcbproc_set_com(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
+rpcbproc_set_com(void *arg, struct svc_req *rqstp __unused, SVCXPRT *transp,
 		 rpcvers_t rpcbversnum)
 {
-	RPCB *regp = (RPCB *)arg;
+	RPCB *regp = arg;
 	static bool_t ans;
 	char owner[64];
 
@@ -178,10 +179,9 @@ map_set(RPCB *regp, char *owner)
 	/*
 	 * add to the end of the list
 	 */
-	rbl = (rpcblist_ptr) malloc((u_int)sizeof (RPCBLIST));
-	if (rbl == NULL) {
+	rbl = malloc(sizeof(RPCBLIST));
+	if (rbl == NULL)
 		return (FALSE);
-	}
 	a = &(rbl->rpcb_map);
 	a->r_prog = reg.r_prog;
 	a->r_vers = reg.r_vers;
@@ -190,12 +190,12 @@ map_set(RPCB *regp, char *owner)
 	a->r_owner = strdup(owner);
 	if (!a->r_addr || !a->r_netid || !a->r_owner) {
 		if (a->r_netid)
-			free((void *) a->r_netid);
+			free(a->r_netid);
 		if (a->r_addr)
-			free((void *) a->r_addr);
+			free(a->r_addr);
 		if (a->r_owner)
-			free((void *) a->r_owner);
-		free((void *)rbl);
+			free(a->r_owner);
+		free(rbl);
 		return (FALSE);
 	}
 	rbl->rpcb_next = NULL;
@@ -218,10 +218,10 @@ map_set(RPCB *regp, char *owner)
  */
 /* ARGSUSED */
 void *
-rpcbproc_unset_com(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
+rpcbproc_unset_com(void *arg, struct svc_req *rqstp __unused, SVCXPRT *transp,
 		   rpcvers_t rpcbversnum)
 {
-	RPCB *regp = (RPCB *)arg;
+	RPCB *regp = arg;
 	static bool_t ans;
 	char owner[64];
 
@@ -275,10 +275,10 @@ map_unset(RPCB *regp, const char *owner)
 			list_rbl = rbl;
 		else
 			prev->rpcb_next = rbl;
-		free((void *) tmp->rpcb_map.r_addr);
-		free((void *) tmp->rpcb_map.r_netid);
-		free((void *) tmp->rpcb_map.r_owner);
-		free((void *) tmp);
+		free(tmp->rpcb_map.r_addr);
+		free(tmp->rpcb_map.r_netid);
+		free(tmp->rpcb_map.r_owner);
+		free(tmp);
 	}
 #ifdef PORTMAP
 	if (ans)
@@ -312,15 +312,17 @@ delete_prog(rpcprog_t prog)
 }
 
 void *
-rpcbproc_getaddr_com(RPCB *regp, struct svc_req *rqstp, SVCXPRT *transp,
-		     rpcvers_t rpcbversnum, rpcvers_t verstype)
+rpcbproc_getaddr_com(RPCB *regp, struct svc_req *rqstp __unused,
+    SVCXPRT *transp, rpcvers_t rpcbversnum, rpcvers_t verstype)
 {
 	static char *uaddr;
 	char *saddr = NULL;
 	rpcblist_ptr fnd;
 
-	if (uaddr && uaddr[0])
-		free((void *) uaddr);
+	if (uaddr != NULL && uaddr != nullstring) {
+		free(uaddr);
+		uaddr = NULL;
+	}
 	fnd = find_service(regp->r_prog, regp->r_vers, transp->xp_netid);
 	if (fnd && ((verstype == RPCB_ALLVERS) ||
 		    (regp->r_vers == fnd->rpcb_map.r_vers))) {
@@ -336,10 +338,10 @@ rpcbproc_getaddr_com(RPCB *regp, struct svc_req *rqstp, SVCXPRT *transp,
 			 * The server died.  Unset all versions of this prog.
 			 */
 			delete_prog(regp->r_prog);
-			uaddr = emptystring;
+			uaddr = nullstring;
 		}
 	} else {
-		uaddr = emptystring;
+		uaddr = nullstring;
 	}
 #ifdef RPCBIND_DEBUG
 	if (debugging)
@@ -353,13 +355,13 @@ rpcbproc_getaddr_com(RPCB *regp, struct svc_req *rqstp, SVCXPRT *transp,
 
 /* ARGSUSED */
 void *
-rpcbproc_gettime_com(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
-		     rpcvers_t rpcbversnum)
+rpcbproc_gettime_com(void *arg __unused, struct svc_req *rqstp __unused,
+    SVCXPRT *transp __unused, rpcvers_t rpcbversnum __unused)
 {
 	static time_t curtime;
 
 	(void) time(&curtime);
-	return (void *)&curtime;
+	return &curtime;
 }
 
 /*
@@ -368,24 +370,25 @@ rpcbproc_gettime_com(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
  */
 /* ARGSUSED */
 void *
-rpcbproc_uaddr2taddr_com(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
-			 rpcvers_t rpcbversnum)
+rpcbproc_uaddr2taddr_com(void *arg, struct svc_req *rqstp __unused,
+    SVCXPRT *transp, rpcvers_t rpcbversnum __unused)
 {
-	char **uaddrp = (char **)arg;
+	char **uaddrp = arg;
 	struct netconfig *nconf;
 	static struct netbuf nbuf;
 	static struct netbuf *taddr;
 
 	if (taddr) {
-		free((void *) taddr->buf);
-		free((void *) taddr);
+		free(taddr->buf);
+		free(taddr);
+		taddr = NULL;
 	}
 	if (((nconf = rpcbind_get_conf(transp->xp_netid)) == NULL) ||
 	    ((taddr = uaddr2taddr(nconf, *uaddrp)) == NULL)) {
-		(void) memset((char *)&nbuf, 0, sizeof (struct netbuf));
-		return (void *)&nbuf;
+		(void) memset(&nbuf, 0, sizeof (struct netbuf));
+		return &nbuf;
 	}
-	return (void *)taddr;
+	return taddr;
 }
 
 /*
@@ -394,10 +397,10 @@ rpcbproc_uaddr2taddr_com(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
  */
 /* ARGSUSED */
 void *
-rpcbproc_taddr2uaddr_com(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
-			 rpcvers_t rpcbversnum)
+rpcbproc_taddr2uaddr_com(void *arg, struct svc_req *rqstp __unused,
+    SVCXPRT *transp, rpcvers_t rpcbversnum __unused)
 {
-	struct netbuf *taddr = (struct netbuf *)arg;
+	struct netbuf *taddr = arg;
 	static char *uaddr;
 	struct netconfig *nconf;
 
@@ -409,11 +412,13 @@ rpcbproc_taddr2uaddr_com(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
 		return (&uaddr);
 	}
 #endif /* CHEW_FDS */
-	if (uaddr && !uaddr[0])
-		free((void *) uaddr);
+	if (uaddr != NULL && uaddr != nullstring) {
+		free(uaddr);
+		uaddr = NULL;
+	}
 	if (((nconf = rpcbind_get_conf(transp->xp_netid)) == NULL) ||
 		((uaddr = taddr2uaddr(nconf, taddr)) == NULL)) {
-		uaddr = emptystring;
+		uaddr = nullstring;
 	}
 	return (void *)&uaddr;
 }
@@ -434,9 +439,9 @@ static bool_t
 xdr_rmtcall_args(XDR *xdrs, struct r_rmtcall_args *cap)
 {
 	/* does not get the address or the arguments */
-	if (xdr_u_int32_t(xdrs, &(cap->rmt_prog)) &&
-	    xdr_u_int32_t(xdrs, &(cap->rmt_vers)) &&
-	    xdr_u_int32_t(xdrs, &(cap->rmt_proc))) {
+	if (xdr_rpcprog(xdrs, &(cap->rmt_prog)) &&
+	    xdr_rpcvers(xdrs, &(cap->rmt_vers)) &&
+	    xdr_rpcproc(xdrs, &(cap->rmt_proc))) {
 		return (xdr_encap_parms(xdrs, &(cap->rmt_args)));
 	}
 	return (FALSE);
@@ -510,8 +515,7 @@ create_rmtcall_fd(struct netconfig *nconf)
 				"create_rmtcall_fd: svc_tli_create failed\n");
 		return (-1);
 	}
-	rmt = (struct rmtcallfd_list *)malloc((u_int)
-		sizeof (struct rmtcallfd_list));
+	rmt = malloc(sizeof(struct rmtcallfd_list));
 	if (rmt == NULL) {
 		syslog(LOG_ERR, "create_rmtcall_fd: no memory!");
 		return (-1);
@@ -615,7 +619,7 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 	XDR outxdr;
 	AUTH *auth;
 	int fd = -1;
-	char *uaddr, *m_uaddr, *local_uaddr = NULL;
+	char *uaddr, *m_uaddr = NULL, *local_uaddr = NULL;
 	u_int32_t *xidp;
 	struct __rpc_sockinfo si;
 	struct sockaddr *localsa;
@@ -637,7 +641,7 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 	/*
 	 * Should be multiple of 4 for XDR.
 	 */
-	sendsz = ((sendsz + 3) / 4) * 4;
+	sendsz = roundup(sendsz, 4);
 	if (sendsz > RPC_BUF_MAX) {
 #ifdef	notyet
 		buf_alloc = alloca(sendsz);		/* not in IDR2? */
@@ -686,7 +690,7 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 			(unsigned long)a.rmt_proc, transp->xp_netid,
 			uaddr ? uaddr : rpcbind_unknown);
 		if (uaddr)
-			free((void *) uaddr);
+			free(uaddr);
 	}
 #endif
 
@@ -728,16 +732,12 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 	if (reply_type == RPCBPROC_INDIRECT) {
 		uaddr = mergeaddr(transp, transp->xp_netid,
 			rbl->rpcb_map.r_addr, NULL);
-		if ((uaddr == NULL) || uaddr[0] == '\0') {
+		if (uaddr == NULL || uaddr[0] == '\0') {
 			svcerr_noprog(transp);
-			if (uaddr != NULL) {
-				free((void *) uaddr);
-			}
+			free(uaddr);
 			goto error;
 		}
-		if (uaddr != NULL) {
-			free((void *) uaddr);
-		}
+		free(uaddr);
 	}
 	nconf = rpcbind_get_conf(transp->xp_netid);
 	if (nconf == NULL) {
@@ -768,13 +768,16 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 	if ((fd = find_rmtcallfd_by_netid(nconf->nc_netid)) == -1) {
 		if (reply_type == RPCBPROC_INDIRECT)
 			svcerr_systemerr(transp);
-		free((void *) m_uaddr);
 		goto error;
 	}
 	xidp = __rpcb_get_dg_xidp(transp);
-	call_msg.rm_xid = forward_register(*xidp,
-			caller, fd, m_uaddr, reply_type, versnum);
-	if (call_msg.rm_xid == 0) {
+	switch (forward_register(*xidp, caller, fd, m_uaddr, reply_type,
+	    versnum, &call_msg.rm_xid)) {
+	case 1:
+		/* Success; forward_register() will free m_uaddr for us. */
+		m_uaddr = NULL;
+		break;
+	case 0:
 		/*
 		 * A duplicate request for the slow server.  Let's not
 		 * beat on it any more.
@@ -782,14 +785,12 @@ rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 		if (debugging)
 			fprintf(stderr,
 			"rpcbproc_callit_com:  duplicate request\n");
-		free((void *) m_uaddr);
 		goto error;
-	} else 	if (call_msg.rm_xid == (uint32_t)-1) {
+	case -1:
 		/*  forward_register failed.  Perhaps no memory. */
 		if (debugging)
 			fprintf(stderr,
 			"rpcbproc_callit_com:  forward_register failed\n");
-		free((void *) m_uaddr);
 		goto error;
 	}
 
@@ -915,23 +916,26 @@ out:
 	if (local_uaddr)
 		free(local_uaddr);
 	if (buf_alloc)
-		free((void *) buf_alloc);
+		free(buf_alloc);
 	if (outbuf_alloc)
-		free((void *) outbuf_alloc);
+		free(outbuf_alloc);
 	if (na) {
 		free(na->buf);
 		free(na);
 	}
+	if (m_uaddr != NULL)
+		free(m_uaddr);
 }
 
 /*
  * Makes an entry into the FIFO for the given request.
- * If duplicate request, returns a 0, else returns the xid of its call.
+ * Returns 1 on success, 0 if this is a duplicate request, or -1 on error.
+ * *callxidp is set to the xid of the call.
  */
-static u_int32_t
+static int
 forward_register(u_int32_t caller_xid, struct netbuf *caller_addr,
-		 int forward_fd, char *uaddr, rpcproc_t reply_type,
-		 rpcvers_t versnum)
+    int forward_fd, char *uaddr, rpcproc_t reply_type,
+     rpcvers_t versnum, u_int32_t *callxidp)
 {
 	int		i;
 	int		j = 0;
@@ -946,7 +950,7 @@ forward_register(u_int32_t caller_xid, struct netbuf *caller_addr,
 		lastxid = time_now * NFORWARD;
 
 	/*
-	 * Check if it is an duplicate entry. Then,
+	 * Check if it is a duplicate entry. Then,
 	 * try to find an empty slot.  If not available, then
 	 * use the slot with the earliest time.
 	 */
@@ -996,8 +1000,12 @@ forward_register(u_int32_t caller_xid, struct netbuf *caller_addr,
 	 */
 	FINFO[j].uaddr = uaddr;
 	lastxid = lastxid + NFORWARD;
+	/* Don't allow a zero xid below. */
+	if ((u_int32_t)(lastxid + NFORWARD) <= NFORWARD)
+		lastxid = NFORWARD;
 	FINFO[j].forward_xid = lastxid + j;	/* encode slot */
-	return (FINFO[j].forward_xid);		/* forward on this xid */
+	*callxidp = FINFO[j].forward_xid;	/* forward on this xid */
+	return (1);
 }
 
 static struct finfo *
@@ -1037,7 +1045,7 @@ free_slot_by_index(int idx)
 		/* XXX may be too big, but can't access xprt array here */
 		if (fi->forward_fd >= *svc_fdset_getmax())
 			(*svc_fdset_getmax())--;
-		free((void *) fi->uaddr);
+		free(fi->uaddr);
 		fi->flag &= ~FINFO_ACTIVE;
 		rpcb_rmtcalls--;
 		return (1);
@@ -1051,16 +1059,35 @@ netbufcmp(struct netbuf *n1, struct netbuf *n2)
 	return ((n1->len != n2->len) || memcmp(n1->buf, n2->buf, n1->len));
 }
 
+static bool_t
+netbuf_copybuf(struct netbuf *dst, const struct netbuf *src)
+{
+	assert(src->len <= src->maxlen);
+
+	if (dst->maxlen < src->len || dst->buf == NULL) {
+		if (dst->buf != NULL)
+			free(dst->buf);
+		if ((dst->buf = calloc(1, src->maxlen)) == NULL)
+			return (FALSE);
+		dst->maxlen = src->maxlen;
+	}
+
+	dst->len = src->len;
+	memcpy(dst->buf, src->buf, src->len);
+
+	return (TRUE);
+}
+
 static struct netbuf *
 netbufdup(struct netbuf *ap)
 {
 	struct netbuf  *np;
 
-	np = (struct netbuf *) malloc(sizeof (struct netbuf) + ap->len);
-	if (np) {
-		np->maxlen = np->len = ap->len;
-		np->buf = ((char *) np) + sizeof (struct netbuf);
-		(void) memcpy(np->buf, ap->buf, ap->len);
+	if ((np = calloc(1, sizeof(struct netbuf))) == NULL)
+		return (NULL);
+	if (netbuf_copybuf(np, ap) == FALSE) {
+		free(np);
+		return (NULL);
 	}
 	return (np);
 }
@@ -1068,7 +1095,9 @@ netbufdup(struct netbuf *ap)
 static void
 netbuffree(struct netbuf *ap)
 {
-	free((void *) ap);
+	free(ap->buf);
+	ap->buf = NULL;
+	free(ap);
 }
 
 
@@ -1150,7 +1179,7 @@ out:
 				fprintf(stderr, "poll returned read fds < ");
 				for (i = 0, p = pollfds; i < nfds; i++, p++)
 					if (p->revents)
-						fprintf(stderr, "%d (0x%x)",
+						fprintf(stderr, "%d (%#x)",
 						    p->fd, p->revents);
 				fprintf(stderr, ">\n");
 			}
@@ -1212,7 +1241,7 @@ xprt_set_caller(SVCXPRT *xprt, struct finfo *fi)
 {
 	u_int32_t *xidp;
 
-	*(svc_getrpccaller(xprt)) = *(fi->caller_addr);
+	netbuf_copybuf(svc_getrpccaller(xprt), fi->caller_addr);
 	xidp = __rpcb_get_dg_xidp(xprt);
 	*xidp = fi->caller_xid;
 }
@@ -1251,7 +1280,7 @@ handle_reply(int fd, SVCXPRT *xprt)
 		goto done;
 
 	do {
-		fromlen = sizeof ss;
+		fromlen = sizeof(ss);
 		inlen = recvfrom(fd, buffer, RPC_BUF_MAX, 0,
 			    (struct sockaddr *)&ss, &fromlen);
 	} while (inlen < 0 && errno == EINTR);
@@ -1307,7 +1336,7 @@ handle_reply(int fd, SVCXPRT *xprt)
 			a.rmt_uaddr, uaddr ? uaddr : rpcbind_unknown);
 	}
 	if (uaddr)
-		free((void *) uaddr);
+		free(uaddr);
 #endif
 	svc_sendreply(xprt, (xdrproc_t) xdr_rmtcall_result, (char *) &a);
 done:
@@ -1418,7 +1447,7 @@ add_pmaplist(RPCB *arg)
 		/* It is TCP */
 		pmap.pm_prot = IPPROTO_TCP;
 	} else
-		/* Not a IP protocol */
+		/* Not an IP protocol */
 		return (0);
 
 	/* interpret the universal address for TCP/IP */
@@ -1431,7 +1460,7 @@ add_pmaplist(RPCB *arg)
 	/*
 	 * add to END of list
 	 */
-	pml = (struct pmaplist *) malloc((u_int)sizeof (struct pmaplist));
+	pml = malloc(sizeof(struct pmaplist));
 	if (pml == NULL) {
 		(void) syslog(LOG_ERR, "rpcbind: no memory!\n");
 		return (1);
@@ -1470,7 +1499,7 @@ del_pmaplist(RPCB *arg)
 	} else if (arg->r_netid[0] == 0) {
 		prot = 0;	/* Remove all occurrences */
 	} else {
-		/* Not a IP protocol */
+		/* Not an IP protocol */
 		return (0);
 	}
 	for (prevpml = NULL, pml = list_pml; pml; /* cstyle */) {
@@ -1489,7 +1518,7 @@ del_pmaplist(RPCB *arg)
 			list_pml = pml;
 		else
 			prevpml->pml_next = pml;
-		free((void *) fnd);
+		free(fnd);
 	}
 	return (0);
 }

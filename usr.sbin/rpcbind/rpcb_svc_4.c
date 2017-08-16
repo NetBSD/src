@@ -1,32 +1,32 @@
-/*	$NetBSD: rpcb_svc_4.c,v 1.7 2011/08/31 16:25:00 plunky Exp $	*/
+/*	$NetBSD: rpcb_svc_4.c,v 1.8 2017/08/16 08:44:40 christos Exp $	*/
+/* $FreeBSD: head/usr.sbin/rpcbind/rpcb_svc_4.c 258564 2013-11-25 16:44:02Z hrs $ */
 
-/*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- * 
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
- * 
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
- * 
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
- * 
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
+/*-
+ * Copyright (c) 2009, Sun Microsystems, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * - Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ * - Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * - Neither the name of Sun Microsystems, Inc. nor the names of its
+ *   contributors may be used to endorse or promote products derived
+ *   from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 /*
  * Copyright (c) 1986 - 1991 by Sun Microsystems, Inc.
@@ -260,7 +260,7 @@ done:
 /* ARGSUSED */
 static void *
 rpcbproc_getaddr_4_local(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
-			 rpcvers_t rpcbversnum)
+			 rpcvers_t rpcbversnum __unused)
 {
 	RPCB *regp = (RPCB *)arg;
 #ifdef RPCBIND_DEBUG
@@ -290,7 +290,7 @@ rpcbproc_getaddr_4_local(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
 /* ARGSUSED */
 static void *
 rpcbproc_getversaddr_4_local(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
-			     rpcvers_t versnum)
+			     rpcvers_t versnum __unused)
 {
 	RPCB *regp = (RPCB *)arg;
 #ifdef RPCBIND_DEBUG
@@ -317,13 +317,13 @@ rpcbproc_getversaddr_4_local(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
  */
 /* ARGSUSED */
 static void *
-rpcbproc_getaddrlist_4_local(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
-			     rpcvers_t versnum)
+rpcbproc_getaddrlist_4_local(void *arg, struct svc_req *rqstp __unused,
+    SVCXPRT *transp, rpcvers_t versnum __unused)
 {
 	RPCB *regp = (RPCB *)arg;
 	static rpcb_entry_list_ptr rlist;
 	register rpcblist_ptr rbl;
-	rpcb_entry_list_ptr rp, tail = NULL;
+	rpcb_entry_list_ptr rp, tail;
 	rpcprog_t prog;
 	rpcvers_t vers;
 	rpcb_entry *a;
@@ -332,6 +332,7 @@ rpcbproc_getaddrlist_4_local(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
 	char *saddr, *maddr = NULL;
 
 	free_rpcb_entry_list(&rlist);
+	tail = NULL;
 	prog = regp->r_prog;
 	vers = regp->r_vers;
 	reg_nconf = rpcbind_get_conf(transp->xp_netid);
@@ -360,7 +361,8 @@ rpcbproc_getaddrlist_4_local(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
 		}
 #ifdef RPCBIND_DEBUG
 		if (debugging)
-			fprintf(stderr, "\tmerge with: %s\n", rbl->rpcb_map.r_addr);
+			fprintf(stderr, "\tmerge with: %s\n",
+			    rbl->rpcb_map.r_addr);
 #endif
 		if ((maddr = mergeaddr(transp, rbl->rpcb_map.r_netid,
 				rbl->rpcb_map.r_addr, saddr)) == NULL) {
@@ -376,7 +378,6 @@ rpcbproc_getaddrlist_4_local(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
 #endif
 			/* The server died. Unset this combination */
 			delete_prog(regp->r_prog);
-			free(maddr);
 			continue;
 		}
 #ifdef RPCBIND_DEBUG
@@ -386,12 +387,9 @@ rpcbproc_getaddrlist_4_local(void *arg, struct svc_req *rqstp, SVCXPRT *transp,
 		/*
 		 * Add it to rlist.
 		 */
-		rp = (rpcb_entry_list_ptr)
-			malloc((u_int)sizeof (rpcb_entry_list));
-		if (rp == NULL) {
-			free(maddr);
+		rp = malloc(sizeof(rpcb_entry_list));
+		if (rp == NULL)
 			goto fail;
-		}
 		a = &rp->rpcb_entry_map;
 		a->r_maddr = maddr;
 		a->r_nc_netid = nconf->nc_netid;
@@ -448,8 +446,8 @@ free_rpcb_entry_list(rpcb_entry_list_ptr *rlistp)
 
 /* ARGSUSED */
 static void *
-rpcbproc_dump_4_local(void *arg, struct svc_req *req, SVCXPRT *xprt,
-		      rpcvers_t versnum)
+rpcbproc_dump_4_local(void *arg __unused, struct svc_req *req __unused,
+    SVCXPRT *xprt __unused, rpcvers_t versnum __unused)
 {
 	return ((void *)&list_rbl);
 }
