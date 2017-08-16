@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.79 2017/08/12 11:44:26 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.80 2017/08/16 20:54:19 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.79 2017/08/12 11:44:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.80 2017/08/16 20:54:19 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1293,18 +1293,16 @@ rpi_device_register(device_t dev, void *aux)
 	    vb.vbt_emmcclockrate.rate > 0) {
 		prop_dictionary_set_uint32(dict,
 		    "frequency", vb.vbt_emmcclockrate.rate);
-#if NBCMSDHOST > 0
-		if (!rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
-			/* No btwifi and sdhost driver is present */
-			prop_dictionary_set_bool(dict, "disable", true);
-		}
-#endif
 	}
 	if (device_is_a(dev, "sdhost") &&
 	    vcprop_tag_success_p(&vb.vbt_coreclockrate.tag) &&
 	    vb.vbt_coreclockrate.rate > 0) {
 		prop_dictionary_set_uint32(dict,
 		    "frequency", vb.vbt_coreclockrate.rate);
+		if (!rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
+			/* No btwifi and sdhost driver is present */
+			prop_dictionary_set_bool(dict, "disable", true);
+		}
 	}
 	if (booted_device == NULL &&
 	    device_is_a(dev, "ld") &&
