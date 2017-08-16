@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_nextafter.c,v 1.15 2017/08/16 09:15:48 he Exp $");
+__RCSID("$NetBSD: s_nextafter.c,v 1.16 2017/08/16 11:22:52 he Exp $");
 #endif
 
 /* IEEE functions
@@ -28,7 +28,6 @@ __RCSID("$NetBSD: s_nextafter.c,v 1.15 2017/08/16 09:15:48 he Exp $");
 #ifndef __HAVE_LONG_DOUBLE
 __strong_alias(nextafterl, nextafter)
 __strong_alias(nexttoward, nextafter)
-__strong_alias(nexttowardl, nextafter)
 #endif
 
 double
