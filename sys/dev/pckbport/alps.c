@@ -1,4 +1,4 @@
-/* $NetBSD: alps.c,v 1.3 2017/08/16 21:09:48 nat Exp $ */
+/* $NetBSD: alps.c,v 1.4 2017/08/16 21:18:58 nat Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -30,7 +30,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.3 2017/08/16 21:09:48 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.4 2017/08/16 21:18:58 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -686,7 +686,6 @@ pms_alps_probe_init(void *opaque)
 	uint8_t ecsig[3];
 	int res;
 	u_char cmd[1], resp[3];
-
 
 	sc->last_x1 = 0;
 	sc->last_y1 = 0;
