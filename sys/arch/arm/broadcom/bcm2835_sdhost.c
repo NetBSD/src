@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_sdhost.c,v 1.2 2017/07/30 23:47:58 jmcneill Exp $ */
+/* $NetBSD: bcm2835_sdhost.c,v 1.3 2017/08/16 20:54:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_sdhost.c,v 1.2 2017/07/30 23:47:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_sdhost.c,v 1.3 2017/08/16 20:54:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -183,6 +183,7 @@ sdhost_attach(device_t parent, device_t self, void *aux)
 	struct sdhost_softc * const sc = device_private(self);
 	struct amba_attach_args * const aaa = aux;
 	prop_dictionary_t dict = device_properties(self);
+	bool disable = false;
 
 	sc->sc_dev = self;
 	sc->sc_bst = aaa->aaa_iot;
@@ -200,6 +201,13 @@ sdhost_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": SD HOST controller\n");
+
+	prop_dictionary_get_bool(dict, "disable", &disable);
+	if (disable) {
+		aprint_naive(": disabled\n");
+		aprint_normal(": disabled\n");
+		return;
+	}
 
 	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_rate);
 	if (sc->sc_rate == 0) {
