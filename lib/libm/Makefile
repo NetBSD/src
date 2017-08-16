@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.198 2017/08/16 09:18:24 he Exp $
+#  $NetBSD: Makefile,v 1.199 2017/08/16 13:34:59 nisimura Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -60,6 +60,7 @@ ARCH_SRCS+= s_fma.S s_fmaf.S s_fmax.S s_fmaxf.S s_fmin.S s_fminf.S
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS+= fenv.c
 .endif
+COMMON_SRCS+= s_rintl.c
 COMMON_SRCS+= e_sqrtl.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 
