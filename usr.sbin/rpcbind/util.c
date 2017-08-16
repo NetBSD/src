@@ -1,4 +1,5 @@
-/*	$NetBSD: util.c,v 1.20 2015/11/08 16:36:28 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.21 2017/08/16 08:44:40 christos Exp $	*/
+/* $FreeBSD: head/usr.sbin/rpcbind/util.c 300973 2016-05-29 20:28:01Z ngie $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -64,7 +65,8 @@ static int bitmaskcmp(void *, void *, void *, int);
 
 /*
  * For all bits set in "mask", compare the corresponding bits in
- * "dst" and "src", and see if they match.
+ * "dst" and "src", and see if they match. Returns 0 if the addresses
+ * match.
  */
 static int
 bitmaskcmp(void *dst, void *src, void *mask, int bytelen)
@@ -88,7 +90,7 @@ bitmaskcmp(void *dst, void *src, void *mask, int bytelen)
 
 char *
 addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
-	  char *netid)
+    const char *netid)
 {
 	struct ifaddrs *ifap, *ifp, *bestif;
 #ifdef INET6
