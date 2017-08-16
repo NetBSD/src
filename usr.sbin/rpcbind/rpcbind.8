@@ -1,9 +1,9 @@
-.\" $NetBSD: rpcbind.8,v 1.12 2017/08/16 08:44:40 christos Exp $
+.\" $NetBSD: rpcbind.8,v 1.13 2017/08/16 14:22:58 christos Exp $
 .\" @(#)rpcbind.1m 1.19 92/09/14 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright 1991 Sun Microsystems, Inc.
 .\" $FreeBSD: head/usr.sbin/rpcbind/rpcbind.8 317163 2017-04-19 20:23:27Z ngie $
-.Dd October 19, 2008
+.Dd August 18, 2017
 .Dt RPCBIND 8
 .Os
 .Sh NAME
@@ -16,7 +16,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-utiltity is a server that converts
+utility is a server that converts
 .Tn RPC
 program numbers into
 universal addresses.
@@ -127,6 +127,10 @@ accepts these requests only from the loopback interface for security reasons.
 This change is necessary for programs that were compiled with earlier
 versions of the rpc library and do not make those requests using the
 loopback interface.
+.It Fl L
+Allows old-style local connections over the loopback interface.
+Without this flag, local connections are only allowed over a local socket,
+.Pa /var/run/rpcbind.sock .
 .It Fl l
 Turns on libwrap connection logging.
 .It Fl s
