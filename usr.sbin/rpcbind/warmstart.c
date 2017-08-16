@@ -1,4 +1,4 @@
-/*	$NetBSD: warmstart.c,v 1.6 2017/08/16 08:44:40 christos Exp $	*/
+/*	$NetBSD: warmstart.c,v 1.7 2017/08/16 23:38:16 ginsbach Exp $	*/
 /* $FreeBSD: head/usr.sbin/rpcbind/warmstart.c 258564 2013-11-25 16:44:02Z hrs $*/
 
 /*-
@@ -42,6 +42,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <err.h>
+#include <paths.h>
 #include <rpc/rpc.h>
 #include <rpc/rpcb_prot.h>
 #include <rpc/xdr.h>
@@ -61,9 +62,9 @@
 
 
 /* These files keep the pmap_list and rpcb_list in XDR format */
-#define	RPCBFILE	"/tmp/rpcbind.file"
+#define	RPCBFILE	_PATH_VARRUN "rpcbind.file"
 #ifdef PORTMAP
-#define	PMAPFILE	"/tmp/portmap.file"
+#define	PMAPFILE	_PATH_VARRUN "portmap.file"
 #endif
 
 static bool_t write_struct(const char *, xdrproc_t, void *);
