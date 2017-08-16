@@ -1,9 +1,9 @@
-.\" $NetBSD: rpcbind.8,v 1.13 2017/08/16 14:22:58 christos Exp $
+.\" $NetBSD: rpcbind.8,v 1.14 2017/08/16 18:23:03 wiz Exp $
 .\" @(#)rpcbind.1m 1.19 92/09/14 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright 1991 Sun Microsystems, Inc.
 .\" $FreeBSD: head/usr.sbin/rpcbind/rpcbind.8 317163 2017-04-19 20:23:27Z ngie $
-.Dd August 18, 2017
+.Dd August 16, 2017
 .Dt RPCBIND 8
 .Os
 .Sh NAME
@@ -11,45 +11,31 @@
 .Nd universal addresses to RPC program number mapper
 .Sh SYNOPSIS
 .Nm
-.Op Fl 6adiLlswW
+.Op Fl 6adiLlsWw
 .Op Fl h Ar bindip
 .Sh DESCRIPTION
 The
 .Nm
-utility is a server that converts
-.Tn RPC
-program numbers into
+utility is a server that converts RPC program numbers into
 universal addresses.
-It must be running on the host to be able to make
-.Tn RPC
-calls
+It must be running on the host to be able to make RPC calls
 on a server on that machine.
 .Pp
-When an
-.Tn RPC
-service is started,
+When an RPC service is started,
 it tells
 .Nm
 the address at which it is listening,
-and the
-.Tn RPC
-program numbers it is prepared to serve.
-When a client wishes to make an
-.Tn RPC
-call to a given program number,
+and the RPC program numbers it is prepared to serve.
+When a client wishes to make an RPC call to a given program number,
 it first contacts
 .Nm
 on the server machine to determine
-the address where
-.Tn RPC
-requests should be sent.
+the address where RPC requests should be sent.
 .Pp
 The
 .Nm
 utility should be started before any other RPC service.
-Normally, standard
-.Tn RPC
-servers are started by port monitors, so
+Normally, standard RPC servers are started by port monitors, so
 .Nm
 must be started before port monitors are invoked.
 .Pp
@@ -58,9 +44,7 @@ When
 is started, it checks that certain name-to-address
 translation-calls function correctly.
 If they fail, the network configuration databases may be corrupt.
-Since
-.Tn RPC
-services cannot function correctly in this situation,
+Since RPC services cannot function correctly in this situation,
 .Nm
 reports the condition and terminates.
 .Pp
@@ -83,7 +67,7 @@ Bind to AF_INET6 (IPv6) addresses only.
 .It Fl a
 When debugging
 .Pq Fl d ,
-do an abort on errors.
+abort on errors.
 .It Fl d
 Run in debug mode.
 In this mode,
