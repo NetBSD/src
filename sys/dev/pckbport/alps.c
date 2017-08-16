@@ -1,4 +1,4 @@
-/* $NetBSD: alps.c,v 1.2 2017/08/15 22:23:09 ryoon Exp $ */
+/* $NetBSD: alps.c,v 1.3 2017/08/16 21:09:48 nat Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -30,7 +30,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.2 2017/08/15 22:23:09 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.3 2017/08/16 21:09:48 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -685,6 +685,8 @@ pms_alps_probe_init(void *opaque)
 	uint8_t e7sig[3];
 	uint8_t ecsig[3];
 	int res;
+	u_char cmd[1], resp[3];
+
 
 	sc->last_x1 = 0;
 	sc->last_y1 = 0;
@@ -726,8 +728,8 @@ pms_alps_probe_init(void *opaque)
 		aprint_normal_dev(psc->sc_dev,
 			"ALPS PS/2 V2 pointing device\n");
 	} else {
-		aprint_error_dev(psc->sc_dev, "No supported device found.\n");
-		return EINVAL;
+		res = EINVAL;
+		goto err;
 	}
 
 	/* From sysctl */
@@ -740,14 +742,17 @@ pms_alps_probe_init(void *opaque)
 		pckbport_set_inputhandler(psc->sc_kbctag, psc->sc_kbcslot,
 			pms_alps_input_v2, psc, device_xname(psc->sc_dev));
 	} else {
-		aprint_error_dev(psc->sc_dev, "No supported device found.\n");
-		return EINVAL;
+		res = EINVAL;
+		goto err;
 	}
 	/* Palm detection is enabled. */
 
 	return 0;
 
 err:
+	cmd[0] = PMS_RESET;
+	(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd,
+	    1, 2, resp, 1);
 	aprint_error_dev(psc->sc_dev, "Failed to initialize an ALPS device.\n");
 	return res;
 }
