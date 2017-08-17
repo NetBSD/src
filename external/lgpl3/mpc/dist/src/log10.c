@@ -77,16 +77,6 @@ mpc_log10_aux (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd, int flag, int nb)
             ret = mpfr_set (mpc_imagref (rop), mpc_imagref (tmp),
                             MPC_RND_IM (rnd));
           break;
-        case 3: /* real <- log(y) */
-          mpfr_log (mpc_realref (tmp), mpc_imagref (op), MPC_RND_RE (rnd));
-          mpfr_div (mpc_realref (tmp), mpc_realref (tmp), log10, GMP_RNDN);
-          ok = mpfr_can_round (mpc_realref (tmp), prec - 2, GMP_RNDN,
-                               GMP_RNDZ, MPC_PREC_RE(rop) +
-                               (MPC_RND_RE (rnd) == GMP_RNDN));
-          if (ok)
-            ret = mpfr_set (mpc_realref (rop), mpc_realref (tmp),
-                            MPC_RND_RE (rnd));
-          break;
         }
       prec += prec / 2;
       mpc_set_prec (tmp, prec);
@@ -197,17 +187,16 @@ mpc_log10 (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
      {
        if (im_cmp > 0)
          {
-           inex_re = mpc_log10_aux (rop, op, rnd, 0, 3);
+           inex_re = mpfr_log10 (mpc_realref (rop), mpc_imagref (op), MPC_RND_RE (rnd));
            inex_im = mpc_log10_aux (rop, op, rnd, 1, 2);
            /* division by 2 does not change the ternary flag */
            mpfr_div_2ui (mpc_imagref (rop), mpc_imagref (rop), 1, GMP_RNDN);
          }
        else
          {
-           ww->re[0] = *mpc_realref (op);
-           ww->im[0] = *mpc_imagref (op);
-           MPFR_CHANGE_SIGN (ww->im);
-           inex_re = mpc_log10_aux (rop, ww, rnd, 0, 3);
+           w [0] = *mpc_imagref (op);
+           MPFR_CHANGE_SIGN (w);
+           inex_re = mpfr_log10 (mpc_realref (rop), w, MPC_RND_RE (rnd));
            invrnd = MPC_RND (0, INV_RND (MPC_RND_IM (rnd)));
            inex_im = mpc_log10_aux (rop, op, invrnd, 1, 2);
            /* division by 2 does not change the ternary flag */

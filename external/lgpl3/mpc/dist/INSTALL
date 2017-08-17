@@ -1,4 +1,4 @@
-Copyright (C) INRIA 2003, 2005, 2007, 2008, 2009, 2010, 2011, 2012
+Copyright (C) INRIA 2003, 2005, 2007, 2008, 2009, 2010, 2011, 2012, 2014
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
@@ -19,8 +19,8 @@ This is for the impatient, for deeper explanations see the chapter
 
 1. In the directory of the GNU MPC archive, type
 
-      tar xzf mpc-1.0.1.tar.gz
-      cd mpc-1.0.1
+      tar xzf mpc-1.0.3.tar.gz
+      cd mpc-1.0.3
       ./configure
       make
 

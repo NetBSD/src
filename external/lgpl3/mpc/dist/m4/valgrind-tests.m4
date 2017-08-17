@@ -1,5 +1,5 @@
-# valgrind-tests.m4 serial 2
-dnl Copyright (C) 2008-2011 Free Software Foundation, Inc.
+# valgrind-tests.m4 serial 3
+dnl Copyright (C) 2008-2014 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -17,9 +17,12 @@ AC_DEFUN([gl_VALGRIND_TESTS],
     AC_CHECK_PROGS(VALGRIND, valgrind)
   fi
 
-  if test -n "$VALGRIND" && $VALGRIND -q true > /dev/null 2>&1; then
+  OPTS="-q --error-exitcode=1 --leak-check=full"
+
+  if test -n "$VALGRIND" \
+     && $VALGRIND $OPTS $SHELL -c 'exit 0' > /dev/null 2>&1; then
     opt_valgrind_tests=yes
-    VALGRIND="$VALGRIND -q --error-exitcode=1 --leak-check=full"
+    VALGRIND="$VALGRIND $OPTS"
 # Addition AE: enable suppression file through a shell variable
     AC_MSG_CHECKING([for valgrind suppression file])
     if test -n "$VALGRIND_SUPPRESSION"; then

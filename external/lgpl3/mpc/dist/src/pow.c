@@ -645,7 +645,7 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
   pi = mpfr_get_prec (mpc_imagref(z));
   p = (pr > pi) ? pr : pi;
   p += 12; /* experimentally, seems to give less than 10% of failures in
-              Ziv's strategy; probably wrong now since q is not computed      */
+              Ziv's strategy; probably wrong now since q is not computed */
   if (p < 64)
     p = 64;
   mpc_init2 (u, p);
@@ -658,18 +658,17 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
     {
       int ret_exp;
       mpfr_exp_t dr, di;
-      mpfr_prec_t q=0;
-      /* to avoid warning message, real initialisation below */
+      mpfr_prec_t q;
 
       mpc_log (t, x, MPC_RNDNN);
       mpc_mul (t, t, y, MPC_RNDNN);
 
-      if (loop == 0) {
-         /* compute q such that |Re (y log x)|, |Im (y log x)| < 2^q */
-         q = mpfr_get_exp (mpc_realref(t)) > 0 ? mpfr_get_exp (mpc_realref(t)) : 0;
-         if (mpfr_get_exp (mpc_imagref(t)) > (mpfr_exp_t) q)
-            q = mpfr_get_exp (mpc_imagref(t));
-      }
+      /* Compute q such that |Re (y log x)|, |Im (y log x)| < 2^q.
+         We recompute it at each loop since we might get different
+         bounds if the precision is not enough. */
+      q = mpfr_get_exp (mpc_realref(t)) > 0 ? mpfr_get_exp (mpc_realref(t)) : 0;
+      if (mpfr_get_exp (mpc_imagref(t)) > (mpfr_exp_t) q)
+        q = mpfr_get_exp (mpc_imagref(t));
 
       mpfr_clear_overflow ();
       mpfr_clear_underflow ();
