@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1464 2017/08/03 00:05:56 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.1465 2017/08/17 00:14:17 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -451,8 +451,8 @@ Notes:
 There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
-Version:	4.8.5/5.4
-Current Vers:	4.8.5/5.4/6.4/7.1
+Version:	5.4
+Current Vers:	5.4/6.4/7.2
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	http://www.gnu.org/software/gcc/
@@ -1508,7 +1508,7 @@ Notes:
 3. Carefully check for GPL components leaked into the dist area.
 
 Package:	mpc
-Version:	1.0.1
+Version:	1.0.3
 Current Vers:	1.0.3
 Maintainer:	
 Archive Site:	http://www.multiprecision.org/mpc/download/
