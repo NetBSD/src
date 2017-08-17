@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.6 2013/12/04 11:43:52 mrg Exp $
+$NetBSD: README,v 1.7 2017/08/17 23:00:38 mrg Exp $
 
 GMP in NetBSD.  We need GMP for GCC >= 4.2.
 
@@ -22,7 +22,6 @@ There are a few steps to this:
 		config.m4
 		gmp-mparam.h
 		gmp.h
-		mp.h
 
 	  some of these files might have src/obj references.  in particular
 	  fix GMP_MPARAM_H_SUGGEST to start from ./mpn/... and make sure
@@ -44,8 +43,7 @@ There are a few steps to this:
 	  used is m4 to parse, and we and create .s files from the .asm
 	  files that we then we feed into $CC.
 
-The amd64 port is a good reference to compare.  The trialdivtab.h
-generation may need to be moved the into libgmp/Makefile itself.
+The amd64 port is a good reference to compare.
 
 This mips64* ports need some minor hacks to the generated gmp*.h
 files to fix their library builds for compat issues.  See these
