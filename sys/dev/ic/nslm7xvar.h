@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.31 2017/08/09 04:45:38 msaitoh Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.32 2017/08/17 05:27:48 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ struct lm_softc {
 	void (*refresh_sensor_data)(struct lm_softc *);
 
 	uint8_t (*lm_readreg)(struct lm_softc *, int);
-	void (*lm_writereg)(struct lm_softc *, int, int);
+	void (*lm_writereg)(struct lm_softc *, int, uint8_t);
 
 	const struct lm_sensor *lm_sensors;
 	uint8_t	chipid;
