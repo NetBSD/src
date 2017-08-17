@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.199 2017/08/16 13:34:59 nisimura Exp $
+#  $NetBSD: Makefile,v 1.200 2017/08/17 09:06:21 he Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -75,7 +75,7 @@ COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS+= fenv.c
 .endif
-COMMON_SRCS+= s_nexttowardf.c s_rintl.c
+COMMON_SRCS+= s_rintl.c
 .for f in fenv.c lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
 COPTS.$f +=	-mfpu=vfp
 .endfor
@@ -91,7 +91,7 @@ COMMON_SRCS += fenv.c
 
 .elif (${LIBC_MACHINE_ARCH} == "hppa")
 .PATH.c: ${.CURDIR}/arch/hppa
-COMMON_SRCS+= fenv.c s_nexttowardf.c s_rintl.c
+COMMON_SRCS+= fenv.c s_rintl.c
 
 .elif (${LIBC_MACHINE_ARCH} == "sparc")
 .PATH: ${.CURDIR}/arch/sparc
@@ -101,7 +101,7 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .elif (${LIBC_MACHINE_ARCH} == "sparc64")
 .PATH: ${.CURDIR}/arch/sparc64
 COMMON_SRCS+= fenv.c
-COMMON_SRCS+= s_nexttowardf.c s_rintl.c
+COMMON_SRCS+= s_rintl.c
 .ifndef _COMPAT_M32_MK_
 COMMON_SRCS+= s_nexttoward.c
 .endif
@@ -115,7 +115,7 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .endif
 .PATH:	${.CURDIR}/arch/i387
 
-COMMON_SRCS+= fenv.c s_nexttoward.c s_nexttowardf.c s_rintl.c
+COMMON_SRCS+= fenv.c s_nexttoward.c s_rintl.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
@@ -154,7 +154,7 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 	    e_log10.S e_remainder.S e_scalb.S e_sinh.S e_sqrt.S s_atan.S \
 	    s_ceil.S s_copysign.S s_cos.S s_expm1.S s_finite.S s_floor.S \
 	    s_log1p.S s_logb.S s_rint.S s_scalbn.S s_sin.S s_tan.S s_tanh.S
-COMMON_SRCS += fenv.c s_nexttoward.c s_nexttowardf.c s_rintl.c
+COMMON_SRCS += fenv.c s_nexttoward.c s_rintl.c
 .endif
 .endif
 # end of m68k
@@ -194,7 +194,7 @@ COMMON_SRCS += fenv.c
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS += fenv.c
 .endif
-COMMON_SRCS+= s_nexttowardf.c s_rintl.c
+COMMON_SRCS+= s_rintl.c
 
 .elif (${LIBC_MACHINE_CPU} == "sh3")
 .PATH:	${.CURDIR}/arch/sh3
@@ -240,6 +240,10 @@ COMMON_SRCS += \
 	fesetround.c \
 	fetestexcept.c \
 	feupdateenv.c
+.endif
+
+.if (${MKSOFTFLOAT} == "no")
+COMMON_SRCS+= s_nexttowardf.c
 .endif
 
 LIB=	m
