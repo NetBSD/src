@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.200 2017/08/17 09:06:21 he Exp $
+#  $NetBSD: Makefile,v 1.201 2017/08/17 13:58:39 he Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -242,10 +242,6 @@ COMMON_SRCS += \
 	feupdateenv.c
 .endif
 
-.if (${MKSOFTFLOAT} == "no")
-COMMON_SRCS+= s_nexttowardf.c
-.endif
-
 LIB=	m
 COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
@@ -273,7 +269,7 @@ COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	s_lround.c s_lroundf.c s_lroundl.c \
 	s_log1pf.c s_logb.c s_logbf.c s_logbl.c \
 	s_matherr.c s_modff.c s_modfl.c s_nearbyint.c s_nextafter.c s_nextafterl.c \
-	s_nextafterf.c s_remquo.c s_remquof.c s_rint.c s_rintf.c \
+	s_nextafterf.c s_nexttowardf.c s_remquo.c s_remquof.c s_rint.c s_rintf.c \
 	s_round.c s_roundf.c s_roundl.c s_scalbn.c \
 	s_scalbnf.c s_scalbnl.c s_signgam.c s_significand.c s_significandf.c s_sin.c \
 	s_sinf.c s_tan.c s_tanf.c s_tanh.c s_tanhf.c s_tgammaf.c \
