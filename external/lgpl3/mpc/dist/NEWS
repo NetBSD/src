@@ -1,3 +1,14 @@
+Changes in version 1.0.3:
+  - Fixed mpc_pow, see
+    http://lists.gforge.inria.fr/pipermail/mpc-discuss/2014-October/001315.html
+  - #18257: Switched to libtool 2.4.5.
+
+Changes in version 1.0.2:
+  - Fixed mpc_atan, mpc_atanh for (+-0, +-1), see
+    http://gcc.gnu.org/bugzilla/show_bug.cgi?id=57994#c7
+  - Fixed mpc_log10 for purely imaginary argument, see
+    http://lists.gforge.inria.fr/pipermail/mpc-discuss/2012-September/001208.html
+
 Changes in version 1.0.1:
   - Switched to automake 1.11.6, see
     https://lists.gnu.org/archive/html/automake/2012-07/msg00023.html
