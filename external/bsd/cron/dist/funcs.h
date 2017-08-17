@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.h,v 1.4 2017/06/09 17:36:30 christos Exp $	*/
+/*	$NetBSD: funcs.h,v 1.5 2017/08/17 08:53:00 christos Exp $	*/
 
 /*
  * Id: funcs.h,v 1.9 2004/01/23 18:56:42 vixie Exp
@@ -43,6 +43,11 @@ void		set_cron_uid(void),
 		skip_comments(FILE *),
 		log_it(const char *, int, const char *, const char *),
 		log_close(void);
+
+
+void
+		log_itx(const char *, int, const char *, const char *, ...)
+		    __printflike(4, 5);
 
 int		job_runqueue(void),
 		set_debug_flags(const char *),
