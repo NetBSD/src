@@ -1,7 +1,7 @@
 /* auxiliary functions for MPFR tests.
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -67,7 +67,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 extern "C" {
 #endif
 
-void test_version _MPFR_PROTO ((void));
+int test_version _MPFR_PROTO ((void));
 
 void tests_memory_start _MPFR_PROTO ((void));
 void tests_memory_end _MPFR_PROTO ((void));
@@ -90,7 +90,8 @@ void ld_trace _MPFR_PROTO ((const char *, long double));
 FILE *src_fopen _MPFR_PROTO ((const char *, const char *));
 void set_emin _MPFR_PROTO ((mpfr_exp_t));
 void set_emax _MPFR_PROTO ((mpfr_exp_t));
-void tests_default_random _MPFR_PROTO ((mpfr_ptr, int, mpfr_exp_t, mpfr_exp_t));
+void tests_default_random _MPFR_PROTO ((mpfr_ptr, int, mpfr_exp_t, mpfr_exp_t,
+                                        int));
 void data_check _MPFR_PROTO ((const char *, int (*) (FLIST), const char *));
 void bad_cases _MPFR_PROTO ((int (*)(FLIST), int (*)(FLIST),
                              const char *, int, mpfr_exp_t, mpfr_exp_t,
@@ -103,6 +104,11 @@ int mpfr_cmp_str _MPFR_PROTO ((mpfr_srcptr x, const char *, int, mpfr_rnd_t));
 
 #define mpfr_cmp0(x,y) (MPFR_ASSERTN (!MPFR_IS_NAN (x) && !MPFR_IS_NAN (y)), mpfr_cmp (x,y))
 #define mpfr_cmp_ui0(x,i) (MPFR_ASSERTN (!MPFR_IS_NAN (x)), mpfr_cmp_ui (x,i))
+
+/* Allocation */
+void *tests_allocate _MPFR_PROTO ((size_t));
+void *tests_reallocate _MPFR_PROTO ((void *, size_t, size_t));
+void tests_free _MPFR_PROTO ((void *, size_t));
 
 #if defined (__cplusplus)
 }

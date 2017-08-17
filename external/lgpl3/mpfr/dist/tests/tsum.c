@@ -1,7 +1,7 @@
 /* tsum -- test file for the list summation function
 
-Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2004-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -126,13 +126,14 @@ test_sort (mpfr_prec_t f, unsigned long n)
   mpfr_ptr *tabtmp;
   mpfr_srcptr *perm;
   unsigned long i;
+  mpfr_prec_t prec = MPFR_PREC_MIN;
 
   /* Init stuff */
-  tab = (mpfr_t *) (*__gmp_allocate_func) (n * sizeof (mpfr_t));
+  tab = (mpfr_t *) tests_allocate (n * sizeof (mpfr_t));
   for (i = 0; i < n; i++)
     mpfr_init2 (tab[i], f);
-  tabtmp = (mpfr_ptr *) (*__gmp_allocate_func) (n * sizeof(mpfr_ptr));
-  perm = (mpfr_srcptr *) (*__gmp_allocate_func) (n * sizeof(mpfr_srcptr));
+  tabtmp = (mpfr_ptr *) tests_allocate (n * sizeof(mpfr_ptr));
+  perm = (mpfr_srcptr *) tests_allocate (n * sizeof(mpfr_srcptr));
 
   for (i = 0; i < n; i++)
     {
@@ -140,7 +141,7 @@ test_sort (mpfr_prec_t f, unsigned long n)
       tabtmp[i] = tab[i];
     }
 
-  mpfr_sum_sort ((mpfr_srcptr *)tabtmp, n, perm);
+  mpfr_sum_sort ((mpfr_srcptr *)tabtmp, n, perm, &prec);
 
   if (check_is_sorted (n, perm) == 0)
     {
@@ -153,9 +154,9 @@ test_sort (mpfr_prec_t f, unsigned long n)
   /* Clear stuff */
   for (i = 0; i < n; i++)
     mpfr_clear (tab[i]);
-  (*__gmp_free_func) (tab, n * sizeof (mpfr_t));
-  (*__gmp_free_func) (tabtmp, n * sizeof(mpfr_ptr));
-  (*__gmp_free_func) (perm, n * sizeof(mpfr_srcptr));
+  tests_free (tab, n * sizeof (mpfr_t));
+  tests_free (tabtmp, n * sizeof(mpfr_ptr));
+  tests_free (perm, n * sizeof(mpfr_srcptr));
 }
 
 static void
@@ -167,7 +168,7 @@ test_sum (mpfr_prec_t f, unsigned long n)
   int rnd_mode;
 
   /* Init */
-  tab = (mpfr_t *) (*__gmp_allocate_func) (n * sizeof(mpfr_t));
+  tab = (mpfr_t *) tests_allocate (n * sizeof(mpfr_t));
   for (i = 0; i < n; i++)
     mpfr_init2 (tab[i], f);
   mpfr_inits2 (f, sum, real_sum, real_non_rounded, (mpfr_ptr) 0);
@@ -214,7 +215,7 @@ test_sum (mpfr_prec_t f, unsigned long n)
   for (i = 0; i < n; i++)
     mpfr_clear (tab[i]);
   mpfr_clears (sum, real_sum, real_non_rounded, (mpfr_ptr) 0);
-  (*__gmp_free_func) (tab, n * sizeof(mpfr_t));
+  tests_free (tab, n * sizeof(mpfr_t));
 }
 
 static
@@ -300,6 +301,41 @@ void check_special (void)
   mpfr_clears (tab[0], tab[1], tab[2], r, (mpfr_ptr) 0);
 }
 
+/* bug reported by Joseph S. Myers on 2013-10-27
+   https://sympa.inria.fr/sympa/arc/mpfr/2013-10/msg00015.html */
+static void
+bug20131027 (void)
+{
+  mpfr_t r, t[4];
+  mpfr_ptr p[4];
+  char *s[4] = {
+    "0x1p1000",
+    "-0x0.fffffffffffff80000000000000001p1000",
+    "-0x1p947",
+    "0x1p880"
+  };
+  int i;
+
+  mpfr_init2 (r, 53);
+  for (i = 0; i < 4; i++)
+    {
+      mpfr_init2 (t[i], i == 0 ? 53 : 1000);
+      mpfr_set_str (t[i], s[i], 0, MPFR_RNDN);
+      p[i] = t[i];
+    }
+  mpfr_sum (r, p, 4, MPFR_RNDN);
+
+  if (MPFR_NOTZERO (r))
+    {
+      printf ("mpfr_sum incorrect in bug20131027: expected 0, got\n");
+      mpfr_dump (r);
+      exit (1);
+    }
+
+  for (i = 0; i < 4; i++)
+    mpfr_clear (t[i]);
+  mpfr_clear (r);
+}
 
 int
 main (void)
@@ -310,6 +346,7 @@ main (void)
   tests_start_mpfr ();
 
   check_special ();
+  bug20131027 ();
   test_sort (1764, 1026);
   for (p = 2 ; p < 444 ; p += 17)
     for (n = 2 ; n < 1026 ; n += 42 + p)

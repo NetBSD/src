@@ -1,7 +1,7 @@
 /* mpfr_round_raw_generic -- Generic rounding function
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -47,7 +47,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
  * Note: yprec may be < MPFR_PREC_MIN; in particular, it may be equal
  * to 1. In this case, the even rounding is done away from 0, which is
  * a natural generalization. Indeed, a number with 1-bit precision can
- * be seen as a denormalized number with more precision.
+ * be seen as a subnormal number with more precision.
  */
 
 int

@@ -1,8 +1,8 @@
 /* mpfr_ui_div -- divide a machine integer by a floating-point number
    mpfr_si_div -- divide a machine number by a floating-point number
 
-Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2000-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -28,10 +28,6 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 int
 mpfr_ui_div (mpfr_ptr y, unsigned long int u, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
 {
-  mpfr_t uu;
-  mp_limb_t up[1];
-  unsigned long cnt;
-
   MPFR_LOG_FUNC
     (("u=%lu x[%Pu]=%.*Rg rnd=%d",
       u, mpfr_get_prec(x), mpfr_log_prec, x, rnd_mode),
@@ -71,12 +67,26 @@ mpfr_ui_div (mpfr_ptr y, unsigned long int u, mpfr_srcptr x, mpfr_rnd_t rnd_mode
     }
   else if (MPFR_LIKELY(u != 0))
     {
+      mpfr_t uu;
+      mp_limb_t up[1];
+      int cnt;
+      int inex;
+
+      MPFR_SAVE_EXPO_DECL (expo);
+
       MPFR_TMP_INIT1(up, uu, GMP_NUMB_BITS);
       MPFR_ASSERTN(u == (mp_limb_t) u);
       count_leading_zeros(cnt, (mp_limb_t) u);
       up[0] = (mp_limb_t) u << cnt;
+
+      /* Optimization note: Exponent save/restore operations may be
+         removed if mpfr_div works even when uu is out-of-range. */
+      MPFR_SAVE_EXPO_MARK (expo);
       MPFR_SET_EXP (uu, GMP_NUMB_BITS - cnt);
-      return mpfr_div (y, uu, x, rnd_mode);
+      inex = mpfr_div (y, uu, x, rnd_mode);
+      MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
+      MPFR_SAVE_EXPO_FREE (expo);
+      return mpfr_check_range (y, inex, rnd_mode);
     }
   else /* u = 0, and x != 0 */
     {
@@ -96,7 +106,8 @@ mpfr_si_div (mpfr_ptr y, long int u, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
     res = mpfr_ui_div (y, u, x, rnd_mode);
   else
     {
-      res = -mpfr_ui_div (y, -u, x, MPFR_INVERT_RND(rnd_mode));
+      res = - mpfr_ui_div (y, - (unsigned long) u, x,
+                           MPFR_INVERT_RND(rnd_mode));
       MPFR_CHANGE_SIGN (y);
     }
   return res;

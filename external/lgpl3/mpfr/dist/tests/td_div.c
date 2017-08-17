@@ -1,7 +1,7 @@
 /* Test file for mpfr_d_div
 
-Copyright 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2007-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -147,7 +147,7 @@ check_nans (void)
   mpfr_clear (y);
 }
 
-#define TEST_FUNCTION mpfr_d_sub
+#define TEST_FUNCTION mpfr_d_div
 #define DOUBLE_ARG1
 #define RAND_FUNCTION(x) mpfr_random2(x, MPFR_LIMB_SIZE (x), 1, RANDS)
 #include "tgeneric.c"

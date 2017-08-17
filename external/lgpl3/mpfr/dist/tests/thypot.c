@@ -1,7 +1,7 @@
 /* Test file for mpfr_hypot.
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2001-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -39,7 +39,12 @@ special (void)
   mpfr_init (z);
 
   mpfr_set_nan (x);
+  mpfr_set_ui (y, 0, MPFR_RNDN);
+  mpfr_hypot (z, x, x, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_nan_p (z));
   mpfr_hypot (z, x, y, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_nan_p (z));
+  mpfr_hypot (z, y, x, MPFR_RNDN);
   MPFR_ASSERTN(mpfr_nan_p (z));
 
   mpfr_set_inf (x, 1);

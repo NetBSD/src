@@ -1,7 +1,7 @@
 /* mpfr_lngamma -- lngamma function
 
-Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2005-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -603,16 +603,17 @@ mpfr_lngamma (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
       mpfr_get_prec (y), mpfr_log_prec, y, inex));
 
   /* special cases */
-  if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))
+  if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x) ||
+                     (MPFR_IS_NEG (x) && mpfr_integer_p (x))))
     {
-      if (MPFR_IS_NAN (x) || MPFR_IS_NEG (x))
+      if (MPFR_IS_NAN (x))
         {
           MPFR_SET_NAN (y);
           MPFR_RET_NAN;
         }
-      else /* lngamma(+Inf) = lngamma(+0) = +Inf */
+      else /* lngamma(+/-Inf) = lngamma(nonpositive integer) = +Inf */
         {
-          if (MPFR_IS_ZERO (x))
+          if (!MPFR_IS_INF (x))
             mpfr_set_divby0 ();
           MPFR_SET_INF (y);
           MPFR_SET_POS (y);
@@ -620,8 +621,8 @@ mpfr_lngamma (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
         }
     }
 
-  /* if x < 0 and -2k-1 <= x <= -2k, then lngamma(x) = NaN */
-  if (MPFR_IS_NEG (x) && (unit_bit (x) == 0 || mpfr_integer_p (x)))
+  /* if -2k-1 < x < -2k <= 0, then lngamma(x) = NaN */
+  if (MPFR_IS_NEG (x) && unit_bit (x) == 0)
     {
       MPFR_SET_NAN (y);
       MPFR_RET_NAN;

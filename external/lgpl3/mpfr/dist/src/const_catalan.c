@@ -1,7 +1,7 @@
 /* mpfr_const_catalan -- compute Catalan's constant.
 
-Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2005-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -25,6 +25,14 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 /* Declare the cache */
 MPFR_DECL_INIT_CACHE(__gmpfr_cache_const_catalan, mpfr_const_catalan_internal);
+
+#ifdef MPFR_WIN_THREAD_SAFE_DLL
+mpfr_cache_t *
+__gmpfr_cache_const_catalan_f()
+{
+  return &__gmpfr_cache_const_catalan;
+}
+#endif
 
 /* Set User Interface */
 #undef mpfr_const_catalan

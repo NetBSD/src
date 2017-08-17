@@ -1,7 +1,7 @@
 /* Test file for mpfr_sub.
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2001-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -630,6 +630,158 @@ check_rounding (void)
     }
 }
 
+/* Check a = b - c, where the significand of b has all 1's, c is small
+   compared to b, and PREC(a) = PREC(b) - 1. Thus b is a midpoint for
+   the precision of the result a. The test is done with the extended
+   exponent range and with some reduced exponent range. Two choices
+   are made for the exponent of b: the maximum exponent - 1 (similar
+   to some normal case) and the maximum exponent (overflow case or
+   near overflow case, depending on the rounding mode).
+   This test is useful to trigger a bug in r10382: Since c is small,
+   the computation in sub1.c was done by first rounding b in the
+   precision of a, then correcting the result if b was a breakpoint
+   for this precision (exactly representable number for the directed
+   rounding modes, or midpoint for the round-to-nearest mode). The
+   problem was that for a midpoint in the round-to-nearest mode, the
+   rounding of b gave a spurious overflow; not only the overflow flag
+   was incorrect, but the result could not be corrected, since due to
+   this overflow, the "even rounding" information was lost.
+   In the case of reduced exponent range, an additional test is done
+   for consistency checks: the subtraction is done in the extended
+   exponent range (no overflow), then the result is converted to the
+   initial exponent range with mpfr_check_range. */
+static void
+check_max_almosteven (void)
+{
+  mpfr_exp_t old_emin, old_emax;
+  mpfr_exp_t emin[2] = { MPFR_EMIN_MIN, -1000 };
+  mpfr_exp_t emax[2] = { MPFR_EMAX_MAX, 1000 };
+  int i;
+
+  old_emin = mpfr_get_emin ();
+  old_emax = mpfr_get_emax ();
+
+  for (i = 0; i < 2; i++)
+    {
+      mpfr_t a1, a2, b, c;
+      mpfr_prec_t p;
+      int neg, j, rnd;
+
+      set_emin (emin[i]);
+      set_emax (emax[i]);
+
+      p = MPFR_PREC_MIN + randlimb () % 70;
+      mpfr_init2 (a1, p);
+      mpfr_init2 (a2, p);
+      mpfr_init2 (b, p+1);
+      mpfr_init2 (c, MPFR_PREC_MIN);
+
+      mpfr_setmax (b, 0);
+      mpfr_set_ui (c, 1, MPFR_RNDN);
+
+      for (neg = 0; neg < 2; neg++)
+        {
+          for (j = 1; j >= 0; j--)
+            {
+              mpfr_set_exp (b, __gmpfr_emax - j);
+              RND_LOOP (rnd)
+                {
+                  unsigned int flags1, flags2;
+                  int inex1, inex2;
+
+                  /* Expected result. */
+                  flags1 = MPFR_FLAGS_INEXACT;
+                  if (rnd == MPFR_RNDN || MPFR_IS_LIKE_RNDZ (rnd, neg))
+                    {
+                      inex1 = neg ? 1 : -1;
+                      mpfr_setmax (a1, __gmpfr_emax - j);
+                    }
+                  else
+                    {
+                      inex1 = neg ? -1 : 1;
+                      if (j == 0)
+                        {
+                          flags1 |= MPFR_FLAGS_OVERFLOW;
+                          mpfr_set_inf (a1, 1);
+                        }
+                      else
+                        {
+                          mpfr_setmin (a1, __gmpfr_emax);
+                        }
+                    }
+                  MPFR_SET_SIGN (a1, neg ? -1 : 1);
+
+                  /* Computed result. */
+                  mpfr_clear_flags ();
+                  inex2 = mpfr_sub (a2, b, c, (mpfr_rnd_t) rnd);
+                  flags2 = __gmpfr_flags;
+
+                  if (! (flags1 == flags2 && SAME_SIGN (inex1, inex2) &&
+                         mpfr_equal_p (a1, a2)))
+                    {
+                      printf ("Error 1 in check_max_almosteven for %s,"
+                              " i = %d, j = %d, neg = %d\n",
+                              mpfr_print_rnd_mode ((mpfr_rnd_t) rnd),
+                              i, j, neg);
+                      printf ("     b = ");
+                      mpfr_dump (b);
+                      printf ("Expected ");
+                      mpfr_dump (a1);
+                      printf ("  with inex = %d, flags =", inex1);
+                      flags_out (flags1);
+                      printf ("Got      ");
+                      mpfr_dump (a2);
+                      printf ("  with inex = %d, flags =", inex2);
+                      flags_out (flags2);
+                      exit (1);
+                    }
+
+                  if (i == 0)
+                    break;
+
+                  /* Additional test for the reduced exponent range. */
+                  mpfr_clear_flags ();
+                  set_emin (MPFR_EMIN_MIN);
+                  set_emax (MPFR_EMAX_MAX);
+                  inex2 = mpfr_sub (a2, b, c, (mpfr_rnd_t) rnd);
+                  set_emin (emin[i]);
+                  set_emax (emax[i]);
+                  inex2 = mpfr_check_range (a2, inex2, (mpfr_rnd_t) rnd);
+                  flags2 = __gmpfr_flags;
+
+                  if (! (flags1 == flags2 && SAME_SIGN (inex1, inex2) &&
+                         mpfr_equal_p (a1, a2)))
+                    {
+                      printf ("Error 2 in check_max_almosteven for %s,"
+                              " i = %d, j = %d, neg = %d\n",
+                              mpfr_print_rnd_mode ((mpfr_rnd_t) rnd),
+                              i, j, neg);
+                      printf ("     b = ");
+                      mpfr_dump (b);
+                      printf ("Expected ");
+                      mpfr_dump (a1);
+                      printf ("  with inex = %d, flags =", inex1);
+                      flags_out (flags1);
+                      printf ("Got      ");
+                      mpfr_dump (a2);
+                      printf ("  with inex = %d, flags =", inex2);
+                      flags_out (flags2);
+                      exit (1);
+                    }
+                }
+            }  /* j */
+
+          mpfr_neg (b, b, MPFR_RNDN);
+          mpfr_neg (c, c, MPFR_RNDN);
+        }  /* neg */
+
+      mpfr_clears (a1, a2, b, c, (mpfr_ptr) 0);
+    }  /* i */
+
+  set_emin (old_emin);
+  set_emax (old_emax);
+}
+
 #define TEST_FUNCTION test_sub
 #define TWO_ARGS
 #define RAND_FUNCTION(x) mpfr_random2(x, MPFR_LIMB_SIZE (x), randlimb () % 100, RANDS)
@@ -647,6 +799,7 @@ main (void)
   check_rounding ();
   check_diverse ();
   check_inexact ();
+  check_max_almosteven ();
   bug_ddefour ();
   for (p=2; p<200; p++)
     for (i=0; i<50; i++)
