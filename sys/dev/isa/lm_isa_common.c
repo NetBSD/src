@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa_common.c,v 1.4 2016/06/01 02:37:47 pgoyette Exp $ */
+/*	$NetBSD: lm_isa_common.c,v 1.5 2017/08/17 05:27:48 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa_common.c,v 1.4 2016/06/01 02:37:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa_common.c,v 1.5 2017/08/17 05:27:48 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ void 	lm_isa_attach(device_t, device_t, void *);
 int 	lm_isa_detach(device_t, int);
 
 static uint8_t 	lm_isa_readreg(struct lm_softc *, int);
-static void 	lm_isa_writereg(struct lm_softc *, int, int);
+static void 	lm_isa_writereg(struct lm_softc *, int, uint8_t);
 
 struct lm_isa_softc {
 	struct lm_softc lmsc;
@@ -147,7 +147,7 @@ lm_isa_readreg(struct lm_softc *lmsc, int reg)
 }
 
 static void
-lm_isa_writereg(struct lm_softc *lmsc, int reg, int val)
+lm_isa_writereg(struct lm_softc *lmsc, int reg, uint8_t val)
 {
 	struct lm_isa_softc *sc = (struct lm_isa_softc *)lmsc;
 
