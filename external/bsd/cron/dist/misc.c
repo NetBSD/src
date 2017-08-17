@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 2017/06/09 17:36:30 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.5 2017/08/17 08:53:00 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: misc.c,v 1.16 2004/01/23 18:56:43 vixie Exp";
 #else
-__RCSID("$NetBSD: misc.c,v 1.4 2017/06/09 17:36:30 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.5 2017/08/17 08:53:00 christos Exp $");
 #endif
 #endif
 
@@ -312,18 +312,16 @@ acquire_daemonlock(int closeflag) {
 		pidfile = _PATH_CRON_PID;
 		/* Initial mode is 0600 to prevent flock() race/DoS. */
 		if ((fd = open(pidfile, O_RDWR|O_CREAT, 0600)) == -1) {
-			(void)snprintf(buf, sizeof(buf),
-				"can't open or create %s: %s",
-				pidfile, strerror(errno));
-			log_it("CRON", getpid(), "DEATH", buf);
-			errx(ERROR_EXIT, "%s", buf);
+			log_itx("CRON", getpid(), "DEATH",
+			    "can't open or create %s: %s",
+			    pidfile, strerror(errno));
+			exit(ERROR_EXIT);
 		}
 		/* fd must be > STDERR since we dup fd 0-2 to /dev/null */
 		if (fd <= STDERR) {
 			if (dup2(fd, STDERR + 1) < 0) {
-				snprintf(buf, sizeof buf,
+				log_itx("CRON", getpid(), "DEATH",
 				    "can't dup pid fd: %s", strerror(errno));
-				log_it("CRON", getpid(), "DEATH", buf);
  				exit(ERROR_EXIT);
  			}
 			close(fd);
@@ -337,16 +335,15 @@ acquire_daemonlock(int closeflag) {
 			if ((num = read(fd, buf, sizeof(buf) - 1)) > 0 &&
 			    (otherpid = strtol(buf, &ep, 10)) > 0 &&
 			    ep != buf && *ep == '\n' && otherpid != LONG_MAX) {
-				(void)snprintf(buf, sizeof(buf),
+				log_itx("CRON", getpid(), "DEATH",
 				    "can't lock %s, otherpid may be %ld: %s",
 				    pidfile, otherpid, strerror(save_errno));
 			} else {
-				(void)snprintf(buf, sizeof(buf),
+				log_itx("CRON", getpid(), "DEATH",
 				    "can't lock %s, otherpid unknown: %s",
 				    pidfile, strerror(save_errno));
 			}
-			log_it("CRON", getpid(), "DEATH", buf);
-			errx(ERROR_EXIT, "%s", buf);
+			exit(ERROR_EXIT);
 		}
 		(void) fchmod(fd, 0644);
 		(void) fcntl(fd, F_SETFD, 1);
@@ -444,25 +441,30 @@ skip_comments(FILE *file) {
 }
 
 void
+log_itx(const char *username, PID_T xpid, const char *event, const char *fmt,
+    ...)
+{
+	char *detail;
+	va_list ap;
+	va_start(ap, fmt);
+	if (vasprintf(&detail, fmt, ap) == -1) {
+		va_end(ap);
+		return;
+	}
+	log_it(username, xpid, event, detail);
+	free(detail);
+}
+
+void
 log_it(const char *username, PID_T xpid, const char *event, const char *detail) {
 #if defined(LOG_FILE) || DEBUGGING
 	PID_T pid = xpid;
 #endif
 #if defined(LOG_FILE)
 	char *msg;
-	size_t msglen;
+	int msglen;
 	TIME_T now = time((TIME_T) 0);
 	struct tm *t = localtime(&now);
-#endif /*LOG_FILE*/
-
-#if defined(LOG_FILE)
-	/* we assume that MAX_TEMPSTR will hold the date, time, &punctuation.
-	 */
-	msglen = strlen(username) + strlen(event) + strlen(detail) +
-	    MAX_TEMPSTR);
-	msg = malloc(msglen);
-	if (msg == NULL)
-		return;
 
 	if (LogFD < OK) {
 		LogFD = open(LOG_FILE, O_WRONLY|O_APPEND|O_CREAT, 0600);
@@ -477,17 +479,16 @@ log_it(const char *username, PID_T xpid, const char *event, const char *detail) 
 	 * everything out in one chunk and this has to be atomically appended
 	 * to the log file.
 	 */
-	(void)snprintf(msg, msglen,
-		"%s (%02d/%02d-%02d:%02d:%02d-%d) %s (%s)\n",
-		username,
-		t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, pid,
-		event, detail);
+	msglen = asprintf(&msg,
+	    "%s (%02d/%02d-%02d:%02d:%02d-%d) %s (%s)\n", username,
+	    t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, pid,
+	    event, detail);
+	if (msglen == -1)
+		return;
 
-	/* we have to run strlen() because sprintf() returns (char*) on old BSD
-	 */
-	if (LogFD < OK || write(LogFD, msg, strlen(msg)) < OK) {
+	if (LogFD < OK || write(LogFD, msg, (size_t)msglen) < OK) {
 		warn("can't write to log file");
-		write(STDERR, msg, strlen(msg));
+		write(STDERR, msg, (size_t)msglen);
 	}
 
 	free(msg);
