@@ -173,3 +173,7 @@
 
 # log10(3+I) has an exact real part (from Joseph S. Myers)
 0 + 53 0.5 53 0x8f168ee8415e7p-54 2 3 2 1 N N
+
+# bug found by Mickael Gastineau on 29 Sep 2012
+0 + 2 +0 2  0.75 2 +0 2  1 N N
+0 - 2 +0 2 -0.75 2 +0 2 -1 N N

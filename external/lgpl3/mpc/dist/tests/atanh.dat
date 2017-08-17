@@ -1,6 +1,6 @@
 # Data file for mpc_atanh.
 #
-# Copyright (C) 2009 INRIA
+# Copyright (C) 2009, 2013 INRIA
 #
 # This file is part of GNU MPC.
 #
@@ -85,6 +85,7 @@
 0 0 53  nan 53                   nan    53  nan 53   +1 N N
 0 - 53    0 53 +0x1921FB54442D18p-52    53  nan 53 +inf N N
 0 0 53  nan 53                   nan    53  nan 53  nan N N
+0 0 53 +inf 53                    +0    53  1   53  +0  N N
 
 # pure real argument
 - + 53 -0x1E27076E2AF2E6p-57 53 -0x1921FB54442D18p-52    53  -17 53   -0 N N
