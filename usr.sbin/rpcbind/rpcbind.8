@@ -1,9 +1,9 @@
-.\" $NetBSD: rpcbind.8,v 1.14 2017/08/16 18:23:03 wiz Exp $
+.\" $NetBSD: rpcbind.8,v 1.15 2017/08/17 07:45:24 christos Exp $
 .\" @(#)rpcbind.1m 1.19 92/09/14 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright 1991 Sun Microsystems, Inc.
 .\" $FreeBSD: head/usr.sbin/rpcbind/rpcbind.8 317163 2017-04-19 20:23:27Z ngie $
-.Dd August 16, 2017
+.Dd August 17, 2017
 .Dt RPCBIND 8
 .Os
 .Sh NAME
@@ -152,9 +152,9 @@ All RPC servers must be restarted if
 is restarted.
 .Sh FILES
 .Bl -tag -width "/var/run/rpcbind.sock" -compact
-.It Pa /tmp/portmap.file
+.It Pa /var/run/portmap.file
 saved portmap registrations file.
-.It Pa /tmp/rpcbind.file
+.It Pa /var/run/rpcbind.file
 saved
 .Nm
 registrations file.
