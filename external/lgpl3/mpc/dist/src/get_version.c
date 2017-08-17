@@ -1,6 +1,6 @@
 /* mpc_get_version -- MPC version
 
-Copyright (C) 2008, 2009, 2010, 2011, 2012 INRIA
+Copyright (C) 2008, 2009, 2010, 2011, 2012, 2014, 2015 INRIA
 
 This file is part of GNU MPC.
 
@@ -44,5 +44,6 @@ mpfr_regular_p (mpfr_srcptr z)
 const char *
 mpc_get_version (void)
 {
-  return "1.0.1";
+  return "1.0.3";
 }
+
