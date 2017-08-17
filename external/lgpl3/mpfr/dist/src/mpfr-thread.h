@@ -1,7 +1,7 @@
 /* MPFR internal header related to thread-local variables.
 
-Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2005-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -31,12 +31,9 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #ifndef MPFR_THREAD_ATTR
 # ifdef MPFR_USE_THREAD_SAFE
 #  if defined(_MSC_VER)
-#   if defined(_WINDLL)
-#    error "Can't build MPFR DLL as thread safe."
-#    define MPFR_THREAD_ATTR
-#   else
-#    define MPFR_THREAD_ATTR __declspec( thread )
-#   endif
+#   define MPFR_THREAD_ATTR __declspec( thread )
+#  elif defined(MPFR_USE_C11_THREAD_SAFE)
+#   define MPFR_THREAD_ATTR _Thread_local
 #  else
 #   define MPFR_THREAD_ATTR __thread
 #  endif

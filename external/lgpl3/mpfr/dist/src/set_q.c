@@ -1,7 +1,7 @@
 /* mpfr_set_q -- set a floating-point number from a multiple-precision rational
 
-Copyright 2000, 2001, 2002, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2000-2002, 2004-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -104,11 +104,13 @@ mpfr_set_q (mpfr_ptr f, mpq_srcptr q, mpfr_rnd_t rnd)
   sn -= sd;
   if (MPFR_UNLIKELY (sn > MPFR_EMAX_MAX / GMP_NUMB_BITS))
     {
+      MPFR_SAVE_EXPO_FREE (expo);
       inexact = mpfr_overflow (f, rnd, MPFR_SIGN (f));
       goto end;
     }
   if (MPFR_UNLIKELY (sn < MPFR_EMIN_MIN / GMP_NUMB_BITS -1))
     {
+      MPFR_SAVE_EXPO_FREE (expo);
       if (rnd == MPFR_RNDN)
         rnd = MPFR_RNDZ;
       inexact = mpfr_underflow (f, rnd, MPFR_SIGN (f));
@@ -127,7 +129,7 @@ mpfr_set_q (mpfr_ptr f, mpq_srcptr q, mpfr_rnd_t rnd)
  end:
   mpfr_clear (d);
   mpfr_clear (n);
-  return inexact;
+  MPFR_RET (inexact);
 }
 
 

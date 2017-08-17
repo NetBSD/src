@@ -1,7 +1,7 @@
 /* tzeta -- test file for the Riemann Zeta function
 
-Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2003-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -243,7 +243,6 @@ main (int argc, char *argv[])
   mpfr_set_str_binary (s, "1.10010e4");
   mpfr_zeta (z, s, MPFR_RNDZ);
 
-
   mpfr_set_prec (s, 53);
   mpfr_set_prec (y, 53);
   mpfr_set_prec (z, 53);
@@ -394,11 +393,35 @@ main (int argc, char *argv[])
   mpfr_nextabove (s);
   MPFR_ASSERTN (mpfr_equal_p (z, s) && inex > 0);
 
+  /* bug reported by Fredrik Johansson on 19 Jan 2016 */
+  mpfr_set_prec (s, 536);
+  mpfr_set_ui_2exp (s, 1, -424, MPFR_RNDN);
+  mpfr_sub_ui (s, s, 128, MPFR_RNDN);  /* -128 + 2^(-424) */
+  for (prec = 6; prec <= 536; prec += 8) /* should go through 318 */
+    {
+      mpfr_set_prec (z, prec);
+      mpfr_zeta (z, s, MPFR_RNDD);
+      mpfr_set_prec (y, prec + 10);
+      mpfr_zeta (y, s, MPFR_RNDD);
+      mpfr_prec_round (y, prec, MPFR_RNDD);
+      if (! mpfr_equal_p (z, y))
+        {
+          printf ("mpfr_zeta fails near -128 for inprec=%lu outprec=%lu\n",
+                  (unsigned long) mpfr_get_prec (s), (unsigned long) prec);
+          printf ("expected "); mpfr_dump (y);
+          printf ("got      "); mpfr_dump (z);
+          exit (1);
+        }
+    }
+
   mpfr_clear (s);
   mpfr_clear (y);
   mpfr_clear (z);
 
-  test_generic (2, 70, 5);
+  /* FIXME: change the last argument back to 5 once the working precision
+     in the mpfr_zeta implementation no longer depends on the precision of
+     the input. */
+  test_generic (MPFR_PREC_MIN, 70, 1);
   test2 ();
 
   tests_end_mpfr ();

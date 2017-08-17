@@ -1,8 +1,8 @@
 /* mpfr_vasprintf -- main function for the printf functions family
    plus helper macros & functions.
 
-Copyright 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2007-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -370,7 +370,7 @@ parse_arg_type (const char *format, struct printf_spec *specinfo)
 
 /* With a C++ compiler wchar_t and enumeration in va_list are converted to
    integer type : int, unsigned int, long or unsigned long (unfortunately,
-   this is implementation dependant).
+   this is implementation dependent).
    We follow gmp which assumes in print/doprnt.c that wchar_t is converted
    to int (because wchar_t <= int).
    For wint_t, we assume that the case WINT_MAX < INT_MAX yields an
@@ -884,14 +884,18 @@ regular_ab (struct number_parts *np, mpfr_srcptr p,
            first digit, we want the exponent for radix two and the decimal
            point AFTER the first digit. */
         {
-          MPFR_ASSERTN (exp > MPFR_EMIN_MIN /4); /* possible overflow */
+          /* An integer overflow is normally not possible since MPFR_EXP_MIN
+             is twice as large as MPFR_EMIN_MIN. */
+          MPFR_ASSERTN (exp > (MPFR_EXP_MIN + 3) / 4);
           exp = (exp - 1) * 4;
         }
       else
         /* EXP is the exponent for decimal point BEFORE the first digit, we
            want the exponent for decimal point AFTER the first digit. */
         {
-          MPFR_ASSERTN (exp > MPFR_EMIN_MIN); /* possible overflow */
+          /* An integer overflow is normally not possible since MPFR_EXP_MIN
+             is twice as large as MPFR_EMIN_MIN. */
+          MPFR_ASSERTN (exp > MPFR_EXP_MIN);
           --exp;
         }
     }
@@ -1040,7 +1044,7 @@ regular_ab (struct number_parts *np, mpfr_srcptr p,
 }
 
 /* Determine the different parts of the string representation of the regular
-   number P when SPEC.SPEC is 'e', 'E', 'g', or 'G'.
+   number P when spec.spec is 'e', 'E', 'g', or 'G'.
    DEC_INFO contains the previously computed exponent and string or is NULL.
 
    return -1 if some field > INT_MAX */
@@ -1167,7 +1171,7 @@ regular_eg (struct number_parts *np, mpfr_srcptr p,
 }
 
 /* Determine the different parts of the string representation of the regular
-   number P when SPEC.SPEC is 'f', 'F', 'g', or 'G'.
+   number P when spec.spec is 'f', 'F', 'g', or 'G'.
    DEC_INFO contains the previously computed exponent and string or is NULL.
 
    return -1 if some field of number_parts is greater than INT_MAX */
@@ -1559,7 +1563,7 @@ partition_number (struct number_parts *np, mpfr_srcptr p,
             /* fractional part */
             {
               np->point = MPFR_DECIMAL_POINT;
-              np->fp_trailing_zeros = (spec.spec == 'g' && spec.spec == 'G') ?
+              np->fp_trailing_zeros = (spec.spec == 'g' || spec.spec == 'G') ?
                 spec.prec - 1 : spec.prec;
             }
           else if (spec.alt)
@@ -1980,7 +1984,7 @@ mpfr_vasprintf (char **ptr, const char *fmt, va_list ap)
           va_copy (ap2, ap);
           start = fmt;
 
-          /* construct format string, like "%*.*hu" "%*.*u" or "%*.*lu" */
+          /* construct format string, like "%*.*hd" "%*.*d" or "%*.*ld" */
           format[0] = '%';
           format[1] = '*';
           format[2] = '.';
