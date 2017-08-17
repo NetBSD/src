@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.13 2017/08/09 04:45:38 msaitoh Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.14 2017/08/17 05:32:04 msaitoh Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -175,7 +175,7 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 		desc = "W83627DHG";
 		break;
 	case WBSIO_ID_W83627DHGP:
-		printf("W83627DHG-P");
+		desc = "W83627DHG-P";
 		break;
 	case WBSIO_ID_W83627EHF:
 		desc = "W83627EHF";
@@ -187,7 +187,7 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 		desc = "W83627THF";
 		break;
 	case WBSIO_ID_W83627UHG:
-		printf("W83627UHG");
+		desc = "W83627UHG";
 		break;
 	case WBSIO_ID_W83637HF:
 		desc = "W83637HF";
@@ -209,7 +209,7 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 		break;
 	case WBSIO_ID_NCT5104D:
 		vendor = "Nuvoton";
-		printf("NCT5104D");
+		desc = "NCT5104D";
 		break;
 	case WBSIO_ID_NCT6775F:
 		vendor = "Nuvoton";
