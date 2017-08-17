@@ -1,7 +1,7 @@
 /* Test file for mpfr_cmp_d.
 
-Copyright 1999, 2001, 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999, 2001-2004, 2006-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -29,9 +29,10 @@ int
 main (void)
 {
   mpfr_t x;
-  int c;
+  mpfr_exp_t emin;
 
   tests_start_mpfr ();
+  emin = mpfr_get_emin ();
 
   mpfr_init2(x, IEEE_DBL_MANT_DIG);
 
@@ -68,33 +69,58 @@ main (void)
       exit (1);
     }
 
+  /* Test in reduced exponent range. */
+  set_emin (1);
+  mpfr_set_ui (x, 1, MPFR_RNDN);
+  if (mpfr_cmp_d (x, 0.9) <= 0)
+    {
+      printf ("Error in reduced exponent range.\n");
+      exit (1);
+    }
+  set_emin (emin);
+
 #if !defined(MPFR_ERRDIVZERO)
   /* Check NAN */
-  mpfr_clear_erangeflag ();
-  c = mpfr_cmp_d (x, DBL_NAN);
-  if (c != 0 || !mpfr_erangeflag_p ())
-    {
-      printf ("ERROR for NAN (1)\n");
+  {
+    int c;
+
+    mpfr_clear_flags ();
+    c = mpfr_cmp_d (x, DBL_NAN);
+    if (c != 0 || __gmpfr_flags != MPFR_FLAGS_ERANGE)
+      {
+        printf ("ERROR for NAN (1)\n");
+        printf ("Expected 0, got %d\n", c);
+        printf ("Expected flags:");
+        flags_out (MPFR_FLAGS_ERANGE);
+        printf ("Got flags:     ");
+        flags_out (__gmpfr_flags);
 #ifdef MPFR_NANISNAN
-      printf ("The reason is that NAN == NAN. Please look at the configure "
-              "output\nand Section \"In case of problem\" of the INSTALL "
-              "file.\n");
+        printf ("The reason is that NAN == NAN. Please look at the configure "
+                "output\nand Section \"In case of problem\" of the INSTALL "
+                "file.\n");
 #endif
-      exit (1);
-    }
-  mpfr_set_nan (x);
-  mpfr_clear_erangeflag ();
-  c = mpfr_cmp_d (x, 2.0);
-  if (c != 0 || !mpfr_erangeflag_p ())
-    {
-      printf ("ERROR for NAN (2)\n");
+        exit (1);
+      }
+
+    mpfr_set_nan (x);
+    mpfr_clear_flags ();
+    c = mpfr_cmp_d (x, 2.0);
+    if (c != 0 || __gmpfr_flags != MPFR_FLAGS_ERANGE)
+      {
+        printf ("ERROR for NAN (2)\n");
+        printf ("Expected 0, got %d\n", c);
+        printf ("Expected flags:");
+        flags_out (MPFR_FLAGS_ERANGE);
+        printf ("Got flags:     ");
+        flags_out (__gmpfr_flags);
 #ifdef MPFR_NANISNAN
-      printf ("The reason is that NAN == NAN. Please look at the configure "
-              "output\nand Section \"In case of problem\" of the INSTALL "
-              "file.\n");
+        printf ("The reason is that NAN == NAN. Please look at the configure "
+                "output\nand Section \"In case of problem\" of the INSTALL "
+                "file.\n");
 #endif
-      exit (1);
-    }
+        exit (1);
+      }
+  }
 #endif  /* MPFR_ERRDIVZERO */
 
   mpfr_clear(x);

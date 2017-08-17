@@ -1,7 +1,7 @@
 /* Exception flags and utilities.
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2001-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -22,10 +22,16 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #include "mpfr-impl.h"
 
-unsigned int MPFR_THREAD_ATTR __gmpfr_flags = 0;
+MPFR_THREAD_ATTR unsigned int __gmpfr_flags = 0;
 
-mpfr_exp_t MPFR_THREAD_ATTR __gmpfr_emin = MPFR_EMIN_DEFAULT;
-mpfr_exp_t MPFR_THREAD_ATTR __gmpfr_emax = MPFR_EMAX_DEFAULT;
+MPFR_THREAD_ATTR mpfr_exp_t __gmpfr_emin = MPFR_EMIN_DEFAULT;
+MPFR_THREAD_ATTR mpfr_exp_t __gmpfr_emax = MPFR_EMAX_DEFAULT;
+
+#ifdef MPFR_WIN_THREAD_SAFE_DLL
+unsigned int * __gmpfr_flags_f() { return &__gmpfr_flags; }
+mpfr_exp_t *   __gmpfr_emin_f()  { return &__gmpfr_emin; }
+mpfr_exp_t *   __gmpfr_emax_f()  { return &__gmpfr_emax; }
+#endif
 
 #undef mpfr_get_emin
 

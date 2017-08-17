@@ -1,7 +1,7 @@
 /* Miscellaneous support for test programs.
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2001-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -112,10 +112,57 @@ extern void (*dummy_func) (mpfr_srcptr);
 void (*dummy_func)(mpfr_srcptr) = mpfr_dump;
 #endif
 
-void
+/* Various version checks.
+   A mismatch on the GMP version is not regarded as fatal. A mismatch
+   on the MPFR version is regarded as fatal, since this means that we
+   would not check the MPFR library that has just been built (the goal
+   of "make check") but a different library that is already installed,
+   i.e. any test result would be meaningless; in such a case, we exit
+   immediately with an error (exit status = 1).
+   Return value: 0 for no errors, 1 in case of any non-fatal error. */
+int
 test_version (void)
 {
   const char *version;
+  char buffer[256];
+  int err = 0;
+
+  sprintf (buffer, "%d.%d.%d", __GNU_MP_VERSION, __GNU_MP_VERSION_MINOR,
+           __GNU_MP_VERSION_PATCHLEVEL);
+  if (strcmp (buffer, gmp_version) != 0 &&
+      (__GNU_MP_VERSION_PATCHLEVEL != 0 ||
+       (sprintf (buffer, "%d.%d", __GNU_MP_VERSION, __GNU_MP_VERSION_MINOR),
+        strcmp (buffer, gmp_version) != 0)))
+    err = 1;
+
+  /* In some cases, it may be acceptable to have different versions for
+     the header and the library, in particular when shared libraries are
+     used (e.g., after a bug-fix upgrade of the library, and versioning
+     ensures that this can be done only when the binary interface is
+     compatible). However, when recompiling software like here, this
+     should never happen (except if GMP has been upgraded between two
+     "make check" runs, but there's no reason for that). A difference
+     between the versions of gmp.h and libgmp probably indicates either
+     a bad configuration or some other inconsistency in the development
+     environment, and it is better to fail (in particular for automatic
+     installations). */
+  if (err)
+    {
+      printf ("ERROR! The versions of gmp.h (%s) and libgmp (%s) do not "
+              "match.\nThe possible causes are:\n", buffer, gmp_version);
+      printf ("  * A bad configuration in your include/library search paths.\n"
+              "  * An inconsistency in the include/library search paths of\n"
+              "    your development environment; an example:\n"
+              "      http://gcc.gnu.org/ml/gcc-help/2010-11/msg00359.html\n"
+              "  * GMP has been upgraded after the first \"make check\".\n"
+              "    In such a case, try again after a \"make clean\".\n"
+              "  * A new or non-standard version naming is used in GMP.\n"
+              "    In this case, a patch may already be available on the\n"
+              "    MPFR web site.  Otherwise please report the problem.\n");
+      printf ("In the first two cases, this may lead to errors, in particular"
+              " with MPFR.\nIf some other tests fail, please solve that"
+              " problem first.\n");
+    }
 
   /* VL: I get the following error on an OpenSUSE machine, and changing
      the value of shlibpath_overrides_runpath in the libtool file from
@@ -131,25 +178,40 @@ test_version (void)
                MPFR_VERSION_PATCHLEVEL);
       for (i = 0; buffer[i] == version[i]; i++)
         if (buffer[i] == '\0')
-          return;
+          return err;
       if (buffer[i] == '\0' && version[i] == '-')
-        return;
-      printf ("MPFR_VERSION_MAJOR.MPFR_VERSION_MINOR.MPFR_VERSION_PATCHLEVEL"
+        return err;
+      printf ("%sMPFR_VERSION_MAJOR.MPFR_VERSION_MINOR.MPFR_VERSION_PATCHLEVEL"
               " (%s)\nand MPFR_VERSION_STRING (%s) do not match!\nIt seems "
-              "that the mpfr.h file has been corrupted.\n", buffer, version);
-      exit (1);
+              "that the mpfr.h file has been corrupted.\n", err ? "\n" : "",
+              buffer, version);
     }
-
-  printf ("Incorrect MPFR version! (%s header vs %s library)\n"
-          "Nothing else has been tested since for this reason,\n"
-          "any other test may fail. Please fix this one first.\n\n"
-          "You can try to avoid this problem by changing the value of\n"
-          "shlibpath_overrides_runpath in the libtool file and rebuild\n"
-          "MPFR (make clean && make && make check).\n"
-          "Otherwise this error may be due to a corrupted mpfr.h, an\n"
-          "incomplete build (try to rebuild MPFR from scratch and/or\n"
-          "use 'make clean'), or something wrong in the system.\n",
-          MPFR_VERSION_STRING, version);
+  else
+    printf (
+      "%sIncorrect MPFR version! (%s header vs %s library)\n"
+      "Nothing else has been tested since for this reason, any other test\n"
+      "may fail.  Please fix this problem first, as suggested below.  It\n"
+      "probably comes from libtool (included in the MPFR tarball), which\n"
+      "is responsible for setting up the search paths depending on the\n"
+      "platform, or automake.\n"
+      "  * On some platforms such as Solaris, $LD_LIBRARY_PATH overrides\n"
+      "    the rpath, and if the MPFR library is already installed in a\n"
+      "    $LD_LIBRARY_PATH directory, you typically get this error.  Do\n"
+      "    not use $LD_LIBRARY_PATH on such platforms; it may also break\n"
+      "    other things.\n"
+      "  * Then look at http://www.mpfr.org/mpfr-current/ for any update.\n"
+      "  * Try again on a completely clean source (some errors might come\n"
+      "    from a previous build or previous source changes).\n"
+      "  * If the error still occurs, you can try to change the value of\n"
+      "    shlibpath_overrides_runpath ('yes' or 'no') in the \"libtool\"\n"
+      "    file and rebuild MPFR (make clean && make && make check).  You\n"
+      "    may want to report the problem to the libtool and/or automake\n"
+      "    developers, with the effect of this change.\n",
+      err ? "\n" : "", MPFR_VERSION_STRING, version);
+  /* Note about $LD_LIBRARY_PATH under Solaris:
+   *   https://en.wikipedia.org/wiki/Rpath#Solaris_ld.so
+   * This cause has been confirmed by a user who got this error.
+   */
   exit (1);
 }
 
@@ -315,22 +377,24 @@ tests_rand_end (void)
 void
 mpfr_test_init (void)
 {
-  double d;
 #ifdef HAVE_FPC_CSR
-  /* to get denormalized numbers on IRIX64 */
+  /* to get subnormal numbers on IRIX64 */
   union fpc_csr exp;
 
   exp.fc_word = get_fpc_csr();
   exp.fc_struct.flush = 0;
   set_fpc_csr(exp.fc_word);
 #endif
+
 #ifdef HAVE_DENORMS
-  d = DBL_MIN;
-  if (2.0 * (d / 2.0) != d)
-    {
-      printf ("Error: HAVE_DENORMS defined, but no subnormals.\n");
-      exit (1);
-    }
+  {
+    double d = DBL_MIN;
+    if (2.0 * (d / 2.0) != d)
+      {
+        printf ("Error: HAVE_DENORMS defined, but no subnormals.\n");
+        exit (1);
+      }
+  }
 #endif
 
   /* generate DBL_EPSILON with a loop to avoid that the compiler
@@ -477,7 +541,7 @@ src_fopen (const char *filename, const char *mode)
   FILE *f;
 
   buffsize = strlen (filename) + strlen (srcdir) + 2;
-  buffer = (char *) (*__gmp_allocate_func) (buffsize);
+  buffer = (char *) tests_allocate (buffsize);
   if (buffer == NULL)
     {
       printf ("src_fopen: failed to alloc memory)\n");
@@ -485,7 +549,7 @@ src_fopen (const char *filename, const char *mode)
     }
   sprintf (buffer, "%s/%s", srcdir, filename);
   f = fopen (buffer, mode);
-  (*__gmp_free_func) (buffer, buffsize);
+  tests_free (buffer, buffsize);
   return f;
 #endif
 }
@@ -515,7 +579,8 @@ set_emax (mpfr_exp_t exponent)
    If pos=0, all generated numbers are positive.
 */
 void
-tests_default_random (mpfr_ptr x, int pos, mpfr_exp_t emin, mpfr_exp_t emax)
+tests_default_random (mpfr_ptr x, int pos, mpfr_exp_t emin, mpfr_exp_t emax,
+                      int always_scale)
 {
   MPFR_ASSERTN (emin <= emax);
   MPFR_ASSERTN (emin >= MPFR_EMIN_MIN);
@@ -525,11 +590,11 @@ tests_default_random (mpfr_ptr x, int pos, mpfr_exp_t emin, mpfr_exp_t emax)
      can be done on 64-bit machines. */
 
   mpfr_urandomb (x, RANDS);
-  if (MPFR_IS_PURE_FP (x) && (emin >= 1 || (randlimb () & 1)))
+  if (MPFR_IS_PURE_FP (x) && (emin >= 1 || always_scale || (randlimb () & 1)))
     {
       mpfr_exp_t e;
       e = MPFR_GET_EXP (x) +
-        (emin + (long) (randlimb () % (emax - emin + 1)));
+        (emin + (mpfr_exp_t) (randlimb () % (emax - emin + 1)));
       /* Note: There should be no overflow here because both terms are
          between MPFR_EMIN_MIN and MPFR_EMAX_MAX, but the sum e isn't
          necessarily between MPFR_EMIN_MIN and MPFR_EMAX_MAX. */
@@ -663,7 +728,7 @@ void
 data_check (const char *f, int (*foo) (FLIST), const char *name)
 {
   FILE *fp;
-  int xprec, yprec;  /* not mpfr_prec_t because of the fscanf */
+  long int xprec, yprec;  /* not mpfr_prec_t because of the fscanf */
   mpfr_t x, y, z;
   mpfr_rnd_t rnd;
   char r;
@@ -731,7 +796,7 @@ data_check (const char *f, int (*foo) (FLIST), const char *name)
         {
           ungetc (c, fp);
 
-          c = fscanf (fp, "%d %d %c", &xprec, &yprec, &r);
+          c = fscanf (fp, "%ld %ld %c", &xprec, &yprec, &r);
           MPFR_ASSERTN (xprec >= MPFR_PREC_MIN && xprec <= MPFR_PREC_MAX);
           MPFR_ASSERTN (yprec >= MPFR_PREC_MIN && yprec <= MPFR_PREC_MAX);
           if (c == EOF)
@@ -843,7 +908,7 @@ bad_cases (int (*fct)(FLIST), int (*inv)(FLIST), const char *name,
         printf ("bad_cases: i = %d\n", i);
       py = pymin + (randlimb () % (pymax - pymin + 1));
       mpfr_set_prec (y, py);
-      tests_default_random (y, pos, emin, emax);
+      tests_default_random (y, pos, emin, emax, 0);
       if (dbg)
         {
           printf ("bad_cases: yprec =%4ld, y = ", (long) py);

@@ -1,7 +1,7 @@
 /* mpfr_fma -- Floating multiply-add
 
-Copyright 2001, 2002, 2004, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2001-2002, 2004, 2006-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -122,8 +122,11 @@ mpfr_fma (mpfr_ptr s, mpfr_srcptr x, mpfr_srcptr y, mpfr_srcptr z,
          It is an overflow iff u is an infinity (since MPFR_RNDN was used).
          Alternatively, we could test the overflow flag, but in this case,
          mpfr_clear_flags would have been necessary. */
+
       if (MPFR_IS_INF (u))  /* overflow */
         {
+          MPFR_LOG_MSG (("Overflow on x*y\n", 0));
+
           /* Let's eliminate the obvious case where x*y and z have the
              same sign. No possible cancellation -> real overflow.
              Also, we know that |z| < 2^emax. If E(x) + E(y) >= emax+3,
@@ -209,11 +212,15 @@ mpfr_fma (mpfr_ptr s, mpfr_srcptr x, mpfr_srcptr y, mpfr_srcptr z,
           mpfr_prec_t pzs;
           int xy_underflows;
 
+          MPFR_LOG_MSG (("Underflow on x*y\n", 0));
+
           /* Let's scale z so that ulp(z) > 2^emin and ulp(s) > 2^emin
              (the + 1 on MPFR_PREC (s) is necessary because the exponent
              of the result can be EXP(z) - 1). */
           diffexp = MPFR_GET_EXP (z) - __gmpfr_emin;
           pzs = MAX (MPFR_PREC (z), MPFR_PREC (s) + 1);
+          MPFR_LOG_MSG (("diffexp=%" MPFR_EXP_FSPEC "d pzs=%Pd\n",
+                         diffexp, pzs));
           if (diffexp <= pzs)
             {
               mpfr_uexp_t uscale;
@@ -252,6 +259,9 @@ mpfr_fma (mpfr_ptr s, mpfr_srcptr x, mpfr_srcptr y, mpfr_srcptr z,
               xy_underflows = 1;
             }
 
+          MPFR_LOG_MSG (("scale=%lu xy_underflows=%d\n",
+                         scale, xy_underflows));
+
           if (xy_underflows)
             {
               /* Let's replace xy by sign(xy) * 2^(emin-1). */
@@ -265,6 +275,7 @@ mpfr_fma (mpfr_ptr s, mpfr_srcptr x, mpfr_srcptr y, mpfr_srcptr z,
             MPFR_BLOCK_DECL (flags);
 
             MPFR_BLOCK (flags, inexact = mpfr_add (s, u, new_z, rnd_mode));
+            MPFR_LOG_MSG (("inexact=%d\n", inexact));
             MPFR_GROUP_CLEAR (group);
             if (scale != 0)
               {
@@ -276,10 +287,16 @@ mpfr_fma (mpfr_ptr s, mpfr_srcptr x, mpfr_srcptr y, mpfr_srcptr z,
                    is not possible, but let's check that anyway. */
                 MPFR_ASSERTN (! MPFR_OVERFLOW (flags));  /* TODO... */
                 MPFR_ASSERTN (! MPFR_UNDERFLOW (flags));  /* not possible */
-                inex2 = mpfr_div_2ui (s, s, scale, MPFR_RNDN);
-                /* FIXME: this seems incorrect. MPFR_RNDN -> rnd_mode?
-                   Also, handle the double rounding case:
-                   s / 2^scale = 2^(emin - 2) in MPFR_RNDN. */
+                if (rnd_mode == MPFR_RNDN &&
+                    MPFR_GET_EXP (s) == __gmpfr_emin - 1 + scale &&
+                    mpfr_powerof2_raw (s))
+                  {
+                    MPFR_LOG_MSG (("Double rounding\n", 0));
+                    rnd_mode = (MPFR_IS_NEG (s) ? inexact <= 0 : inexact >= 0)
+                      ? MPFR_RNDZ : MPFR_RNDA;
+                  }
+                inex2 = mpfr_div_2ui (s, s, scale, rnd_mode);
+                MPFR_LOG_MSG (("inex2=%d\n", inex2));
                 if (inex2)  /* underflow */
                   inexact = inex2;
               }

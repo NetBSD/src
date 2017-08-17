@@ -1,7 +1,7 @@
 /* mpfr_set_default_prec, mpfr_get_default_prec -- set/get default precision
 
-Copyright 1999, 2000, 2001, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2001, 2004-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -23,8 +23,15 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include "mpfr-impl.h"
 
 /* default is IEEE double precision, i.e. 53 bits */
-mpfr_prec_t MPFR_THREAD_ATTR __gmpfr_default_fp_bit_precision \
+MPFR_THREAD_ATTR mpfr_prec_t __gmpfr_default_fp_bit_precision \
   = IEEE_DBL_MANT_DIG;
+
+#ifdef MPFR_WIN_THREAD_SAFE_DLL
+mpfr_prec_t * __gmpfr_default_fp_bit_precision_f()
+{
+  return &__gmpfr_default_fp_bit_precision;
+}
+#endif
 
 void
 mpfr_set_default_prec (mpfr_prec_t prec)

@@ -1,8 +1,8 @@
 /* mpfr_exp_2 -- exponential of a floating-point number
                  using algorithms in O(n^(1/2)*M(n)) and O(n^(1/3)*M(n))
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -204,7 +204,7 @@ mpfr_exp_2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
           for (k = 0; k < K; k++)
             {
               mpz_mul (ss, ss, ss);
-              exps <<= 1;
+              exps *= 2;
               exps += mpz_normalize (ss, ss, q);
             }
           mpfr_set_z (s, ss, MPFR_RNDN);
