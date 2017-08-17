@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.68 2017/08/09 04:45:38 msaitoh Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.69 2017/08/17 05:27:48 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.68 2017/08/09 04:45:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.69 2017/08/17 05:27:48 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ static void wb_temp_diode_type(struct lm_softc *, int);
 
 static void lm_refresh(void *);
 
-static void lm_generic_banksel(struct lm_softc *, int);
+static void lm_generic_banksel(struct lm_softc *, uint8_t);
 static void lm_setup_sensors(struct lm_softc *, const struct lm_sensor *);
 static void lm_refresh_sensor_data(struct lm_softc *);
 static void lm_refresh_volt(struct lm_softc *, int);
@@ -2004,7 +2004,7 @@ static const struct lm_sensor nct6779d_sensors[] = {
 };
 
 static void
-lm_generic_banksel(struct lm_softc *lmsc, int bank)
+lm_generic_banksel(struct lm_softc *lmsc, uint8_t bank)
 {
 	(*lmsc->lm_writereg)(lmsc, WB_BANKSEL, bank);
 }
@@ -2105,7 +2105,7 @@ static int
 lm_match(struct lm_softc *sc)
 {
 	const char *model = NULL;
-	int chipid;
+	uint8_t chipid;
 
 	/* See if we have an LM78/LM78J/LM79 or LM81 */
 	chipid = (*sc->lm_readreg)(sc, LMD_CHIPID) & LM_ID_MASK;
@@ -2154,7 +2154,7 @@ def_match(struct lm_softc *sc)
 static void
 wb_temp_diode_type(struct lm_softc *sc, int diode_type)
 {
-	int regval, banksel;
+	uint8_t regval, banksel;
 
 	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
 	switch (diode_type) {
@@ -2204,7 +2204,9 @@ wb_match(struct lm_softc *sc)
 {
 	const char *model = NULL;
 	const char *vendor = "Winbond";
-	int banksel, vendid, cf_flags;
+	uint16_t vendid;
+	uint8_t banksel;
+	int cf_flags;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -2452,7 +2454,8 @@ lm_refresh_fanrpm(struct lm_softc *sc, int n)
 static void
 wb_refresh_sensor_data(struct lm_softc *sc)
 {
-	int banksel, bank, i;
+	uint8_t banksel, bank;
+	int i;
 
 	/*
 	 * Properly save and restore bank selection register.
@@ -2635,7 +2638,8 @@ wb_nct67xx_id2str(uint8_t id)
 static void
 wb_w83792d_refresh_fanrpm(struct lm_softc *sc, int n)
 {
-	int reg, shift, data, divisor = 1;
+	int shift, data, divisor = 1;
+	uint8_t reg;
 
 	shift = 0;
 
