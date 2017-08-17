@@ -122,11 +122,74 @@ ATF_TC_BODY(fe_nearbyint, tc)
 	}
 }
 
+static const struct {
+	double input;
+	double toward;
+	double expected;
+} values2[] = {
+	{ 10.0, 11.0, 10.0 },
+	{ -5.0, -6.0, -5.0 },
+};
+
+ATF_TC(fe_nextafter);
+ATF_TC_HEAD(fe_nextafter, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checking IEEE 754 rounding using nextafter()");
+}
+
+ATF_TC_BODY(fe_nextafter, tc)
+{
+	double received;
+	int res;
+
+	for (unsigned int i = 0; i < __arraycount(values2); i++) {
+		received = nextafter(values2[i].input, values2[i].toward);
+		if (values2[i].input < values2[i].toward) {
+			res = (received > values2[i].input);
+		} else {
+			res = (received < values2[i].input);
+		}
+		ATF_CHECK_MSG(
+			res && (fabs(received - values2[i].expected) < EPSILON),
+			"nextafter() rounding wrong, difference too large\n"
+			"input: %f (index %d): got %f, expected %f, res %d\n",
+			values2[i].input, i, received, values2[i].expected, res);
+	}
+}
+
+ATF_TC(fe_nexttoward);
+ATF_TC_HEAD(fe_nexttoward, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checking IEEE 754 rounding using nexttoward()");
+}
+
+ATF_TC_BODY(fe_nexttoward, tc)
+{
+	double received;
+	int res;
+
+	for (unsigned int i = 0; i < __arraycount(values2); i++) {
+		received = nexttoward(values2[i].input, values2[i].toward);
+		if (values2[i].input < values2[i].toward) {
+			res = (received > values2[i].input);
+		} else {
+			res = (received < values2[i].input);
+		}
+		ATF_CHECK_MSG(
+			res && (fabs(received - values2[i].expected) < EPSILON),
+			"nexttoward() rounding wrong, difference too large\n"
+			"input: %f (index %d): got %f, expected %f, res %d\n",
+			values2[i].input, i, received, values2[i].expected, res);
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, fe_round);
 	ATF_TP_ADD_TC(tp, fe_nearbyint);
+	ATF_TP_ADD_TC(tp, fe_nextafter);
+	ATF_TP_ADD_TC(tp, fe_nexttoward);
 
 	return atf_no_error();
 }
@@ -138,7 +201,6 @@ ATF_TC_HEAD(t_nofe_round, tc)
 	atf_tc_set_md_var(tc, "descr",
 	    "dummy test case - no fenv.h support");
 }
-
 
 ATF_TC_BODY(t_nofe_round, tc)
 {
@@ -158,11 +220,38 @@ ATF_TC_BODY(t_nofe_nearbyint, tc)
 	atf_tc_skip("no fenv.h support on this architecture");
 }
 
+ATF_TC(t_nofe_nextafter);
+
+ATF_TC_HEAD(t_nofe_nextafter, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "dummy test case - no fenv.h support");
+}
+
+ATF_TC_BODY(t_nofe_nextafter, tc)
+{
+	atf_tc_skip("no fenv.h support on this architecture");
+}
+
+ATF_TC(t_nofe_nexttoward);
+
+ATF_TC_HEAD(t_nofe_nexttoward, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "dummy test case - no fenv.h support");
+}
+
+ATF_TC_BODY(t_nofe_nexttoward, tc)
+{
+	atf_tc_skip("no fenv.h support on this architecture");
+}
 
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, t_nofe_round);
 	ATF_TP_ADD_TC(tp, t_nofe_nearbyint);
+	ATF_TP_ADD_TC(tp, t_nofe_nextafter);
+	ATF_TP_ADD_TC(tp, t_nofe_nexttoward);
 	return atf_no_error();
 }
 
