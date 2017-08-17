@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.105 2017/08/15 05:44:22 snj Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.106 2017/08/17 09:40:03 martin Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -12680,4 +12680,10 @@ lib/libpam/modules/pam_ssh/pam_ssh.c		patch
 
 	Update OpenSSH to 7.5.
 	[mrg, ticket #1468]
+
+include/resolv.h				1.40
+sys/netinet/ip.h				1.33-1.34
+
+	Make some include files idempotent.
+	[mrg, ticket #721]
 
