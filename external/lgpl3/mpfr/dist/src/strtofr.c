@@ -1,7 +1,7 @@
 /* mpfr_strtofr -- set a floating-point number from a string
 
-Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2004-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -473,8 +473,10 @@ parsed_string_to_mpfr (mpfr_t x, struct parsed_string *pstr, mpfr_rnd_t rnd)
       /* prec bits corresponds to ysize limbs */
       ysize_bits = ysize * GMP_NUMB_BITS;
       /* and to ysize_bits >= prec > MPFR_PREC (x) bits */
-      y = MPFR_TMP_LIMBS_ALLOC (2 * ysize + 1);
-      y += ysize; /* y has (ysize+1) allocated limbs */
+      /* we need to allocate one more limb to work around bug
+         https://gmplib.org/list-archives/gmp-bugs/2013-December/003267.html */
+      y = MPFR_TMP_LIMBS_ALLOC (2 * ysize + 2);
+      y += ysize; /* y has (ysize+2) allocated limbs */
 
       /* pstr_size is the number of characters we read in pstr->mant
          to have at least ysize full limbs.
@@ -564,7 +566,7 @@ parsed_string_to_mpfr (mpfr_t x, struct parsed_string *pstr, mpfr_rnd_t rnd)
           MPFR_ASSERTD (0 < pow2 && pow2 <= 5);
           /* exp += pow2 * (pstr->exp_base - pstr_size) + pstr->exp_bin
              with overflow checking
-             and check that we can add/substract 2 to exp without overflow */
+             and check that we can add/subtract 2 to exp without overflow */
           MPFR_SADD_OVERFLOW (tmp, pstr->exp_base, -(mpfr_exp_t) pstr_size,
                               mpfr_exp_t, mpfr_uexp_t,
                               MPFR_EXP_MIN, MPFR_EXP_MAX,
@@ -624,7 +626,7 @@ parsed_string_to_mpfr (mpfr_t x, struct parsed_string *pstr, mpfr_rnd_t rnd)
 
           /* compute the exponent of y */
           /* exp += exp_z + ysize_bits with overflow checking
-             and check that we can add/substract 2 to exp without overflow */
+             and check that we can add/subtract 2 to exp without overflow */
           MPFR_SADD_OVERFLOW (exp_z, exp_z, ysize_bits,
                               mpfr_exp_t, mpfr_uexp_t,
                               MPFR_EXP_MIN, MPFR_EXP_MAX,
@@ -696,7 +698,7 @@ parsed_string_to_mpfr (mpfr_t x, struct parsed_string *pstr, mpfr_rnd_t rnd)
                        2 * ysize, z, ysize);
 
           /* exp -= exp_z + ysize_bits with overflow checking
-             and check that we can add/substract 2 to exp without overflow */
+             and check that we can add/subtract 2 to exp without overflow */
           MPFR_SADD_OVERFLOW (exp_z, exp_z, ysize_bits,
                               mpfr_exp_t, mpfr_uexp_t,
                               MPFR_EXP_MIN, MPFR_EXP_MAX,

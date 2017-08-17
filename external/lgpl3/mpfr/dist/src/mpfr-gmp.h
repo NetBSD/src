@@ -1,7 +1,7 @@
 /* Interface to replace gmp-impl.h
 
-Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2004-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -72,7 +72,6 @@ extern "C" {
 #endif
 
 /* Define some macros */
-#define BYTES_PER_MP_LIMB (GMP_NUMB_BITS/CHAR_BIT)
 
 #define MP_LIMB_T_MAX (~(mp_limb_t)0)
 
@@ -96,19 +95,19 @@ extern "C" {
 #define SHRT_HIGHBIT       SHRT_MIN
 
 /* MP_LIMB macros */
-#define MPN_ZERO(dst, n) memset((dst), 0, (n)*BYTES_PER_MP_LIMB)
-#define MPN_COPY_DECR(dst,src,n) memmove((dst),(src),(n)*BYTES_PER_MP_LIMB)
-#define MPN_COPY_INCR(dst,src,n) memmove((dst),(src),(n)*BYTES_PER_MP_LIMB)
+#define MPN_ZERO(dst, n) memset((dst), 0, (n)*MPFR_BYTES_PER_MP_LIMB)
+#define MPN_COPY_DECR(dst,src,n) memmove((dst),(src),(n)*MPFR_BYTES_PER_MP_LIMB)
+#define MPN_COPY_INCR(dst,src,n) memmove((dst),(src),(n)*MPFR_BYTES_PER_MP_LIMB)
 #define MPN_COPY(dst,src,n) \
   do                                                                  \
     {                                                                 \
       if ((dst) != (src))                                             \
         {                                                             \
           MPFR_ASSERTD ((char *) (dst) >= (char *) (src) +            \
-                                          (n) * BYTES_PER_MP_LIMB ||  \
+                                     (n) * MPFR_BYTES_PER_MP_LIMB ||  \
                         (char *) (src) >= (char *) (dst) +            \
-                                          (n) * BYTES_PER_MP_LIMB);   \
-          memcpy ((dst), (src), (n) * BYTES_PER_MP_LIMB);             \
+                                     (n) * MPFR_BYTES_PER_MP_LIMB);   \
+          memcpy ((dst), (src), (n) * MPFR_BYTES_PER_MP_LIMB);        \
         }                                                             \
     }                                                                 \
   while (0)
@@ -159,7 +158,7 @@ __MPFR_DECLSPEC void mpfr_assert_fail _MPFR_PROTO((const char *, int,
 #define ASSERT_FAIL(expr)  mpfr_assert_fail (__FILE__, __LINE__, #expr)
 #define ASSERT(expr)       MPFR_ASSERTD(expr)
 
-/* Access fileds of GMP struct */
+/* Access fields of GMP struct */
 #define SIZ(x) ((x)->_mp_size)
 #define ABSIZ(x) ABS (SIZ (x))
 #define PTR(x) ((x)->_mp_d)
@@ -263,15 +262,17 @@ typedef __gmp_randstate_struct *gmp_randstate_ptr;
 #undef __gmp_allocate_func
 #undef __gmp_reallocate_func
 #undef __gmp_free_func
-#define MPFR_GET_MEMFUNC mp_get_memory_functions(&mpfr_allocate_func, &mpfr_reallocate_func, &mpfr_free_func)
+#define MPFR_GET_MEMFUNC                                        \
+  ((void) (MPFR_LIKELY (mpfr_allocate_func != 0) ||             \
+           (mp_get_memory_functions(&mpfr_allocate_func,        \
+                                    &mpfr_reallocate_func,      \
+                                    &mpfr_free_func), 1)))
 #define __gmp_allocate_func   (MPFR_GET_MEMFUNC, mpfr_allocate_func)
 #define __gmp_reallocate_func (MPFR_GET_MEMFUNC, mpfr_reallocate_func)
 #define __gmp_free_func       (MPFR_GET_MEMFUNC, mpfr_free_func)
-__MPFR_DECLSPEC extern void * (*mpfr_allocate_func)   _MPFR_PROTO ((size_t));
-__MPFR_DECLSPEC extern void * (*mpfr_reallocate_func) _MPFR_PROTO ((void *,
-                                                          size_t, size_t));
-__MPFR_DECLSPEC extern void   (*mpfr_free_func)       _MPFR_PROTO ((void *,
-                                                                    size_t));
+__MPFR_DECLSPEC extern MPFR_THREAD_ATTR void * (*mpfr_allocate_func)   _MPFR_PROTO ((size_t));
+__MPFR_DECLSPEC extern MPFR_THREAD_ATTR void * (*mpfr_reallocate_func) _MPFR_PROTO ((void *, size_t, size_t));
+__MPFR_DECLSPEC extern MPFR_THREAD_ATTR void   (*mpfr_free_func)       _MPFR_PROTO ((void *, size_t));
 
 #endif
 

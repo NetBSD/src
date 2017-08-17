@@ -1,7 +1,7 @@
 /* Test file for mpfr_fma.
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2001-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -67,7 +67,7 @@ test_exact (void)
                         i, j, k, rnd);
                 exit (1);
               }
-            if (mpfr_cmp (r1, r2) || MPFR_SIGN (r1) != MPFR_SIGN (r2))
+            if (! mpfr_equal_p (r1, r2) || MPFR_SIGN (r1) != MPFR_SIGN (r2))
               {
                 printf ("test_exact(%d,%d,%d,%d):\nexpected ", i, j, k, rnd);
                 mpfr_out_str (stdout, 10, 0, r1, MPFR_RNDN);
@@ -338,6 +338,67 @@ test_underflow2 (void)
 }
 
 static void
+test_underflow3 (int n)
+{
+  mpfr_t x, y, z, t1, t2;
+  int sign, k, s, rnd, inex1, inex2;
+  mpfr_exp_t e;
+  unsigned int flags1, flags2;
+
+  mpfr_inits2 (4, x, z, t1, t2, (mpfr_ptr) 0);
+  mpfr_init2 (y, 6);
+
+  e = mpfr_get_emin () - 1;
+
+  for (sign = 1; sign >= -1; sign -= 2)
+    for (k = 1; k <= 7; k++)
+      for (s = -1; s <= 1; s++)
+        {
+          mpfr_set_si_2exp (x, sign, e, MPFR_RNDN);
+          mpfr_set_si_2exp (y, 8*k+s, -6, MPFR_RNDN);
+          mpfr_neg (z, x, MPFR_RNDN);
+          /* x = sign * 2^(emin-1)
+             y = (8 * k + s) * 2^(-6) = k / 8 + s * 2^(-6)
+             z = -x = -sign * 2^(emin-1)
+             FMA(x,y,z) = sign * ((k-8) * 2^(emin-4) + s * 2^(emin-7)) exactly.
+             Note: The purpose of the s * 2^(emin-7) term is to yield
+             double rounding when scaling for k = 4, s != 0, MPFR_RNDN. */
+
+          RND_LOOP (rnd)
+            {
+              mpfr_clear_flags ();
+              inex1 = mpfr_set_si_2exp (t1, sign * (8*k+s-64), e-6,
+                                        (mpfr_rnd_t) rnd);
+              flags1 = __gmpfr_flags;
+
+              mpfr_clear_flags ();
+              inex2 = mpfr_fma (t2, x, y, z, (mpfr_rnd_t) rnd);
+              flags2 = __gmpfr_flags;
+
+              if (! (mpfr_equal_p (t1, t2) &&
+                     SAME_SIGN (inex1, inex2) &&
+                     flags1 == flags2))
+                {
+                  printf ("Error in test_underflow3, n = %d, sign = %d,"
+                          " k = %d, s = %d, %s\n", n, sign, k, s,
+                          mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
+                  printf ("Expected ");
+                  mpfr_dump (t1);
+                  printf ("  with inex ~ %d, flags =", inex1);
+                  flags_out (flags1);
+                  printf ("Got      ");
+                  mpfr_dump (t2);
+                  printf ("  with inex ~ %d, flags =", inex2);
+                  flags_out (flags2);
+                  exit (1);
+                }
+            }
+        }
+
+  mpfr_clears (x, y, z, t1, t2, (mpfr_ptr) 0);
+}
+
+static void
 bug20101018 (void)
 {
   mpfr_t x, y, z, t, u;
@@ -354,7 +415,7 @@ bug20101018 (void)
   mpfr_set_str (z, "0x8.3ffffffffffe3ffp-14443", 16, MPFR_RNDN);
   mpfr_set_str (t, "0x8.7ffffffffffc7ffp-14444", 16, MPFR_RNDN);
   i = mpfr_fma (u, x, y, z, MPFR_RNDN);
-  if (mpfr_cmp (u, t) != 0)
+  if (! mpfr_equal_p (u, t))
     {
       printf ("Wrong result in bug20101018 (a)\n");
       printf ("Expected ");
@@ -377,7 +438,7 @@ bug20101018 (void)
   mpfr_set_str (z, "0x8.fffff80ffffffffp-1551", 16, MPFR_RNDN);
   mpfr_set_str (t, "0x9.fffff01ffffffffp-1552", 16, MPFR_RNDN);
   i = mpfr_fma (u, x, y, z, MPFR_RNDN);
-  if (mpfr_cmp (u, t) != 0)
+  if (! mpfr_equal_p (u, t))
     {
       printf ("Wrong result in bug20101018 (b)\n");
       printf ("Expected ");
@@ -400,7 +461,7 @@ bug20101018 (void)
   mpfr_set_str (z, "0x8p-8119", 16, MPFR_RNDN);
   mpfr_set_str (t, "0x8.000000000000001p-8120", 16, MPFR_RNDN);
   i = mpfr_fma (u, x, y, z, MPFR_RNDN);
-  if (mpfr_cmp (u, t) != 0)
+  if (! mpfr_equal_p (u, t))
     {
       printf ("Wrong result in bug20101018 (c)\n");
       printf ("Expected ");
@@ -429,9 +490,12 @@ int
 main (int argc, char *argv[])
 {
   mpfr_t x, y, z, s;
-  MPFR_SAVE_EXPO_DECL (expo);
+  mpfr_exp_t emin, emax;
 
   tests_start_mpfr ();
+
+  emin = mpfr_get_emin ();
+  emax = mpfr_get_emax ();
 
   bug20101018 ();
 
@@ -612,7 +676,7 @@ main (int argc, char *argv[])
   mpfr_urandomb (y, RANDS);
   mpfr_urandomb (z, RANDS);
   mpfr_fma (s, x, y, z, MPFR_RNDN);
-  if (mpfr_cmp (s, z))
+  if (! mpfr_equal_p (s, z))
     {
       printf ("evaluation of function in x=0 does not return z\n");
       exit (1);
@@ -622,7 +686,7 @@ main (int argc, char *argv[])
   mpfr_urandomb (x, RANDS);
   mpfr_urandomb (z, RANDS);
   mpfr_fma (s, x, y, z, MPFR_RNDN);
-  if (mpfr_cmp (s, z))
+  if (! mpfr_equal_p (s, z))
     {
       printf ("evaluation of function in y=0 does not return z\n");
       exit (1);
@@ -635,81 +699,79 @@ main (int argc, char *argv[])
     int inexact, compare;
     unsigned int n;
 
-    mpfr_prec_t p0=2, p1=200;
-    unsigned int N=200;
+    mpfr_prec_t p0 = 2, p1 = 200;
+    unsigned int N = 200;
 
     mpfr_init (t);
     mpfr_init (slong);
 
     /* generic test */
     for (prec = p0; prec <= p1; prec++)
-    {
-      mpfr_set_prec (x, prec);
-      mpfr_set_prec (y, prec);
-      mpfr_set_prec (z, prec);
-      mpfr_set_prec (s, prec);
-      mpfr_set_prec (t, prec);
+      {
+        mpfr_set_prec (x, prec);
+        mpfr_set_prec (y, prec);
+        mpfr_set_prec (z, prec);
+        mpfr_set_prec (s, prec);
+        mpfr_set_prec (t, prec);
 
-      for (n=0; n<N; n++)
-        {
-          mpfr_urandomb (x, RANDS);
-          mpfr_urandomb (y, RANDS);
-          mpfr_urandomb (z, RANDS);
+        for (n = 0; n < N; n++)
+          {
+            mpfr_urandomb (x, RANDS);
+            mpfr_urandomb (y, RANDS);
+            mpfr_urandomb (z, RANDS);
 
-          if (randlimb () % 2)
-            mpfr_neg (x, x, MPFR_RNDN);
-          if (randlimb () % 2)
-            mpfr_neg (y, y, MPFR_RNDN);
-          if (randlimb () % 2)
-            mpfr_neg (z, z, MPFR_RNDN);
+            if (randlimb () % 2)
+              mpfr_neg (x, x, MPFR_RNDN);
+            if (randlimb () % 2)
+              mpfr_neg (y, y, MPFR_RNDN);
+            if (randlimb () % 2)
+              mpfr_neg (z, z, MPFR_RNDN);
 
-          rnd = RND_RAND ();
-          mpfr_set_prec (slong, 2 * prec);
-          if (mpfr_mul (slong, x, y, rnd))
-            {
-              printf ("x*y should be exact\n");
-              exit (1);
-            }
-          compare = mpfr_add (t, slong, z, rnd);
-          inexact = mpfr_fma (s, x, y, z, rnd);
-          if (mpfr_cmp (s, t))
-            {
-              printf ("results differ for x=");
-              mpfr_out_str (stdout, 2, prec, x, MPFR_RNDN);
-              printf ("  y=");
-              mpfr_out_str (stdout, 2, prec, y, MPFR_RNDN);
-              printf ("  z=");
-              mpfr_out_str (stdout, 2, prec, z, MPFR_RNDN);
-              printf (" prec=%u rnd_mode=%s\n", (unsigned int) prec,
-                      mpfr_print_rnd_mode (rnd));
-              printf ("got      ");
-              mpfr_out_str (stdout, 2, prec, s, MPFR_RNDN);
-              puts ("");
-              printf ("expected ");
-              mpfr_out_str (stdout, 2, prec, t, MPFR_RNDN);
-              puts ("");
-              printf ("approx  ");
-              mpfr_print_binary (slong);
-              puts ("");
-              exit (1);
-            }
-          if (((inexact == 0) && (compare != 0)) ||
-              ((inexact < 0) && (compare >= 0)) ||
-              ((inexact > 0) && (compare <= 0)))
-            {
-              printf ("Wrong inexact flag for rnd=%s: expected %d, got %d\n",
-                      mpfr_print_rnd_mode (rnd), compare, inexact);
-              printf (" x="); mpfr_out_str (stdout, 2, 0, x, MPFR_RNDN);
-              printf (" y="); mpfr_out_str (stdout, 2, 0, y, MPFR_RNDN);
-              printf (" z="); mpfr_out_str (stdout, 2, 0, z, MPFR_RNDN);
-              printf (" s="); mpfr_out_str (stdout, 2, 0, s, MPFR_RNDN);
-              printf ("\n");
-              exit (1);
-            }
-        }
-    }
-  mpfr_clear (t);
-  mpfr_clear (slong);
+            rnd = RND_RAND ();
+            mpfr_set_prec (slong, 2 * prec);
+            if (mpfr_mul (slong, x, y, rnd))
+              {
+                printf ("x*y should be exact\n");
+                exit (1);
+              }
+            compare = mpfr_add (t, slong, z, rnd);
+            inexact = mpfr_fma (s, x, y, z, rnd);
+            if (! mpfr_equal_p (s, t))
+              {
+                printf ("results differ for x=");
+                mpfr_out_str (stdout, 2, prec, x, MPFR_RNDN);
+                printf ("  y=");
+                mpfr_out_str (stdout, 2, prec, y, MPFR_RNDN);
+                printf ("  z=");
+                mpfr_out_str (stdout, 2, prec, z, MPFR_RNDN);
+                printf (" prec=%u rnd_mode=%s\n", (unsigned int) prec,
+                        mpfr_print_rnd_mode (rnd));
+                printf ("got      ");
+                mpfr_out_str (stdout, 2, prec, s, MPFR_RNDN);
+                puts ("");
+                printf ("expected ");
+                mpfr_out_str (stdout, 2, prec, t, MPFR_RNDN);
+                puts ("");
+                printf ("approx  ");
+                mpfr_print_binary (slong);
+                puts ("");
+                exit (1);
+              }
+            if (! SAME_SIGN (inexact, compare))
+              {
+                printf ("Wrong inexact flag for rnd=%s: expected %d, got %d\n",
+                        mpfr_print_rnd_mode (rnd), compare, inexact);
+                printf (" x="); mpfr_out_str (stdout, 2, 0, x, MPFR_RNDN);
+                printf (" y="); mpfr_out_str (stdout, 2, 0, y, MPFR_RNDN);
+                printf (" z="); mpfr_out_str (stdout, 2, 0, z, MPFR_RNDN);
+                printf (" s="); mpfr_out_str (stdout, 2, 0, s, MPFR_RNDN);
+                printf ("\n");
+                exit (1);
+              }
+          }
+      }
+    mpfr_clear (t);
+    mpfr_clear (slong);
 
   }
   mpfr_clear (x);
@@ -719,12 +781,21 @@ main (int argc, char *argv[])
 
   test_exact ();
 
-  MPFR_SAVE_EXPO_MARK (expo);
   test_overflow1 ();
   test_overflow2 ();
   test_underflow1 ();
   test_underflow2 ();
-  MPFR_SAVE_EXPO_FREE (expo);
+  test_underflow3 (1);
+
+  set_emin (MPFR_EMIN_MIN);
+  set_emax (MPFR_EMAX_MAX);
+  test_overflow1 ();
+  test_overflow2 ();
+  test_underflow1 ();
+  test_underflow2 ();
+  test_underflow3 (2);
+  set_emin (emin);
+  set_emax (emax);
 
   tests_end_mpfr ();
   return 0;

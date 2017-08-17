@@ -2,8 +2,8 @@
    mpfr_sub_si -- sub  a floating-point number with a machine integer
    mpfr_si_sub -- sub  a machine number with a floating-point number
 
-Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2004-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -30,7 +30,7 @@ mpfr_add_si (mpfr_ptr y, mpfr_srcptr x, long int u, mpfr_rnd_t rnd_mode)
   if (u >= 0)
     return mpfr_add_ui (y, x, u, rnd_mode);
   else
-    return mpfr_sub_ui (y, x, -u, rnd_mode);
+    return mpfr_sub_ui (y, x, - (unsigned long) u, rnd_mode);
 }
 
 int
@@ -39,7 +39,7 @@ mpfr_sub_si (mpfr_ptr y, mpfr_srcptr x, long int u, mpfr_rnd_t rnd_mode)
   if (u >= 0)
     return mpfr_sub_ui (y, x, u, rnd_mode);
   else
-    return mpfr_add_ui (y, x, -u, rnd_mode);
+    return mpfr_add_ui (y, x, - (unsigned long) u, rnd_mode);
 }
 
 int
@@ -49,9 +49,9 @@ mpfr_si_sub (mpfr_ptr y, long int u, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
     return mpfr_ui_sub (y, u, x, rnd_mode);
   else
     {
-    int res = -mpfr_add_ui (y, x, -u, MPFR_INVERT_RND (rnd_mode));
-    MPFR_CHANGE_SIGN (y);
-    return res;
+      int res = - mpfr_add_ui (y, x, - (unsigned long) u,
+                               MPFR_INVERT_RND (rnd_mode));
+      MPFR_CHANGE_SIGN (y);
+      return res;
     }
 }
-

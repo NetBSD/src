@@ -1,7 +1,8 @@
-/* Test file for mpfr_rint, mpfr_trunc, mpfr_floor, mpfr_ceil, mpfr_round.
+/* Test file for mpfr_rint, mpfr_trunc, mpfr_floor, mpfr_ceil, mpfr_round,
+   mpfr_rint_trunc, mpfr_rint_floor, mpfr_rint_ceil, mpfr_rint_round.
 
-Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2002-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -150,6 +151,156 @@ special (void)
   mpfr_clear (y);
 }
 
+#define BASIC_TEST(F,J)                                                 \
+  do                                                                    \
+    {                                                                   \
+      int red;                                                          \
+      for (red = 0; red <= 1; red++)                                    \
+        {                                                               \
+          int inex1, inex2;                                             \
+          unsigned int ex_flags, flags;                                 \
+                                                                        \
+          if (red)                                                      \
+            {                                                           \
+              set_emin (e);                                             \
+              set_emax (e);                                             \
+            }                                                           \
+                                                                        \
+          mpfr_clear_flags ();                                          \
+          inex1 = mpfr_set_si (y, J, (mpfr_rnd_t) r);                   \
+          ex_flags = __gmpfr_flags;                                     \
+          mpfr_clear_flags ();                                          \
+          inex2 = mpfr_rint_##F (z, x, (mpfr_rnd_t) r);                 \
+          flags = __gmpfr_flags;                                        \
+          if (! (mpfr_equal_p (y, z) &&                                 \
+                 SAME_SIGN (inex1, inex2) &&                            \
+                 flags == ex_flags))                                    \
+            {                                                           \
+              printf ("Basic test failed on mpfr_rint_" #F              \
+                      ", prec = %d, i = %d, %s\n", prec, s * i,         \
+                      mpfr_print_rnd_mode ((mpfr_rnd_t) r));            \
+              printf ("i.e. x = ");                                     \
+              mpfr_dump (x);                                            \
+              if (red)                                                  \
+                printf ("with emin = emax = %d\n", e);                  \
+              printf ("Expected ");                                     \
+              mpfr_dump (y);                                            \
+              printf ("with inex = %d (or equivalent)\n", inex1);       \
+              printf ("     flags:");                                   \
+              flags_out (ex_flags);                                     \
+              printf ("Got      ");                                     \
+              mpfr_dump (z);                                            \
+              printf ("with inex = %d (or equivalent)\n", inex2);       \
+              printf ("     flags:");                                   \
+              flags_out (flags);                                        \
+              exit (1);                                                 \
+            }                                                           \
+        }                                                               \
+      set_emin (emin);                                                  \
+      set_emax (emax);                                                  \
+    }                                                                   \
+  while (0)
+
+#define BASIC_TEST2(F,J,INEX)                                   \
+  do                                                            \
+    {                                                           \
+      int red;                                                  \
+      for (red = 0; red <= 1; red++)                            \
+        {                                                       \
+          int inex;                                             \
+          unsigned int ex_flags, flags;                         \
+                                                                \
+          if (red)                                              \
+            {                                                   \
+              set_emin (e);                                     \
+              set_emax (e);                                     \
+            }                                                   \
+                                                                \
+          mpfr_clear_flags ();                                  \
+          inex = mpfr_set_si (y, J, MPFR_RNDN);                 \
+          MPFR_ASSERTN (inex == 0 || mpfr_overflow_p ());       \
+          ex_flags = __gmpfr_flags;                             \
+          mpfr_clear_flags ();                                  \
+          inex = mpfr_##F (z, x);                               \
+          if (inex != 0)                                        \
+            ex_flags |= MPFR_FLAGS_INEXACT;                     \
+          flags = __gmpfr_flags;                                \
+          if (! (mpfr_equal_p (y, z) &&                         \
+                 inex == (INEX) &&                              \
+                 flags == ex_flags))                            \
+            {                                                   \
+              printf ("Basic test failed on mpfr_" #F           \
+                      ", prec = %d, i = %d\n", prec, s * i);    \
+              printf ("i.e. x = ");                             \
+              mpfr_dump (x);                                    \
+              if (red)                                          \
+                printf ("with emin = emax = %d\n", e);          \
+              printf ("Expected ");                             \
+              mpfr_dump (y);                                    \
+              printf ("with inex = %d\n", (INEX));              \
+              printf ("     flags:");                           \
+              flags_out (ex_flags);                             \
+              printf ("Got      ");                             \
+              mpfr_dump (z);                                    \
+              printf ("with inex = %d\n", inex);                \
+              printf ("     flags:");                           \
+              flags_out (flags);                                \
+              exit (1);                                         \
+            }                                                   \
+        }                                                       \
+      set_emin (emin);                                          \
+      set_emax (emax);                                          \
+    }                                                           \
+  while (0)
+
+/* Test mpfr_rint_* on i/4 with |i| between 1 and 72. */
+static void
+basic_tests (void)
+{
+  mpfr_t x, y, z;
+  int prec, s, i, r;
+  mpfr_exp_t emin, emax;
+
+  emin = mpfr_get_emin ();
+  emax = mpfr_get_emax ();
+
+  mpfr_init2 (x, 16);
+  for (prec = 2; prec <= 7; prec++)
+    {
+      mpfr_inits2 (prec, y, z, (mpfr_ptr) 0);
+      for (s = 1; s >= -1; s -= 2)
+        for (i = 1; i <= 72; i++)
+          {
+            int k, t, u, v, f, e;
+
+            for (t = i/4, k = 0; t >= 1 << prec; t >>= 1, k++)
+              ;
+            t <<= k;
+            for (u = (i+3)/4, k = 0; u >= 1 << prec; u = (u+1)/2, k++)
+              ;
+            u <<= k;
+            v = i < (t+u) << 1 ? t : u;
+            f = t == u ? 0 : i % 4 == 0 ? 1 : 2;
+
+            mpfr_set_si_2exp (x, s * i, -2, MPFR_RNDN);
+            e = mpfr_get_exp (x);
+            RND_LOOP(r)
+              {
+                BASIC_TEST (trunc, s * (i/4));
+                BASIC_TEST (floor, s > 0 ? i/4 : - ((i+3)/4));
+                BASIC_TEST (ceil, s > 0 ? (i+3)/4 : - (i/4));
+                BASIC_TEST (round, s * ((i+2)/4));
+              }
+            BASIC_TEST2 (trunc, s * t, - s * f);
+            BASIC_TEST2 (floor, s > 0 ? t : - u, - f);
+            BASIC_TEST2 (ceil, s > 0 ? u : - t, f);
+            BASIC_TEST2 (round, s * v, v == t ? - s * f : s * f);
+          }
+      mpfr_clears (y, z, (mpfr_ptr) 0);
+    }
+  mpfr_clear (x);
+}
+
 #if __MPFR_STDC (199901L)
 
 static void
@@ -189,6 +340,7 @@ test_against_libc (void)
 {
   mpfr_rnd_t r = MPFR_RNDN;
 
+  (void) r;  /* avoid a warning by using r */
 #if HAVE_ROUND
   TEST_FCT (round);
 #endif
@@ -288,6 +440,30 @@ coverage_03032011 (void)
   mpfr_clear (out);
   mpfr_clear (in);
 }
+
+#define TEST_FUNCTION mpfr_rint_trunc
+#define TEST_RANDOM_EMIN -20
+#define TEST_RANDOM_ALWAYS_SCALE 1
+#define test_generic test_generic_trunc
+#include "tgeneric.c"
+
+#define TEST_FUNCTION mpfr_rint_floor
+#define TEST_RANDOM_EMIN -20
+#define TEST_RANDOM_ALWAYS_SCALE 1
+#define test_generic test_generic_floor
+#include "tgeneric.c"
+
+#define TEST_FUNCTION mpfr_rint_ceil
+#define TEST_RANDOM_EMIN -20
+#define TEST_RANDOM_ALWAYS_SCALE 1
+#define test_generic test_generic_ceil
+#include "tgeneric.c"
+
+#define TEST_FUNCTION mpfr_rint_round
+#define TEST_RANDOM_EMIN -20
+#define TEST_RANDOM_ALWAYS_SCALE 1
+#define test_generic test_generic_round
+#include "tgeneric.c"
 
 int
 main (int argc, char *argv[])
@@ -436,7 +612,13 @@ main (int argc, char *argv[])
   mpfr_clear (v);
 
   special ();
+  basic_tests ();
   coverage_03032011 ();
+
+  test_generic_trunc (2, 300, 20);
+  test_generic_floor (2, 300, 20);
+  test_generic_ceil (2, 300, 20);
+  test_generic_round (2, 300, 20);
 
 #if __MPFR_STDC (199901L)
   if (argc > 1 && strcmp (argv[1], "-s") == 0)

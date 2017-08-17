@@ -1,8 +1,8 @@
 /* mpfr_set_d -- convert a machine double precision float to
                  a multiple precision floating-point number
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2004, 2006-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -66,7 +66,7 @@ __gmpfr_extract_double (mpfr_limb_ptr rp, double d)
         manl = x.s.manl << 11;
 #endif
       }
-    else /* denormalized number */
+    else /* subnormal number */
       {
 #if GMP_NUMB_BITS >= 64
         manl = ((mp_limb_t) x.s.manh << 43) | ((mp_limb_t) x.s.manl << 11);
@@ -213,7 +213,7 @@ mpfr_set_d (mpfr_ptr r, double d, mpfr_rnd_t rnd_mode)
   /* don't use MPFR_SET_EXP here since the exponent may be out of range */
   MPFR_EXP(tmp) = __gmpfr_extract_double (tmpmant, d);
 
-#ifdef WANT_ASSERT
+#ifdef MPFR_WANT_ASSERT
   /* Failed assertion if the stored value is 0 (e.g., if the exponent range
      has been reduced at the wrong moment and an underflow to 0 occurred).
      Probably a bug in the C implementation if this happens. */

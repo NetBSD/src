@@ -1,7 +1,7 @@
 /* Test file for mpfr_ui_div.
 
-Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2000-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -58,7 +58,7 @@ check_inexact (void)
   mpfr_init (y);
   mpfr_init (z);
 
-  for (px=2; px<300; px++)
+  for (px = 2; px < 300; px++)
     {
       mpfr_set_prec (x, px);
       do
@@ -67,7 +67,7 @@ check_inexact (void)
         }
       while (mpfr_cmp_ui (x, 0) == 0);
       u = randlimb ();
-      for (py=2; py<300; py++)
+      for (py = 2; py < 300; py++)
         {
           mpfr_set_prec (y, py);
           mpfr_set_prec (z, py + px);
@@ -80,16 +80,14 @@ check_inexact (void)
                   exit (1);
                 }
               cmp = mpfr_cmp_ui (z, u);
-              if (((inexact == 0) && (cmp != 0)) ||
-                  ((inexact > 0) && (cmp <= 0)) ||
-                  ((inexact < 0) && (cmp >= 0)))
+              if (! SAME_SIGN (inexact, cmp))
                 {
                   printf ("Wrong inexact flag for u=%lu, rnd=%s\n",
                           u, mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
                   printf ("expected %d, got %d\n", cmp, inexact);
-                  printf ("x="); mpfr_print_binary (x); puts ("");
-                  printf ("y="); mpfr_print_binary (y); puts ("");
-                  printf ("y*x="); mpfr_print_binary (z); puts ("");
+                  printf ("x = "); mpfr_dump (x);
+                  printf ("y = "); mpfr_dump (y);
+                  printf ("y*x = "); mpfr_dump (z);
                   exit (1);
                 }
             }
@@ -180,6 +178,56 @@ mpfr_inv (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t r)
   return mpfr_ui_div (y, 1, x, r);
 }
 
+static void
+check_overflow (void)
+{
+  mpfr_exp_t emin, emax;
+  mpfr_t x, y1, y2;
+  int inex1, inex2, rnd_mode;
+  unsigned int flags1, flags2;
+
+  emin = mpfr_get_emin ();
+  emax = mpfr_get_emax ();
+  set_emin (MPFR_EMIN_MIN);
+  set_emax (MPFR_EMAX_MAX);
+
+  mpfr_inits2 (32, x, y1, y2, (mpfr_ptr) 0);
+  mpfr_setmin (x, MPFR_EMIN_MIN);
+  RND_LOOP (rnd_mode)
+    {
+      inex1 = mpfr_overflow (y1, (mpfr_rnd_t) rnd_mode, 1);
+      flags1 = MPFR_FLAGS_OVERFLOW | MPFR_FLAGS_INEXACT;
+      mpfr_clear_flags ();
+      inex2 = mpfr_ui_div (y2, 1, x, (mpfr_rnd_t) rnd_mode);
+      flags2 = __gmpfr_flags;
+      if (!(mpfr_equal_p (y1, y2) &&
+            SAME_SIGN (inex1, inex2) &&
+            flags1 == flags2))
+        {
+          printf ("Error in check_overflow for %s\n",
+                  mpfr_print_rnd_mode ((mpfr_rnd_t) rnd_mode));
+          printf ("Expected ");
+          mpfr_dump (y1);
+          printf ("  with inex = %d, flags =", inex1);
+          flags_out (flags1);
+          printf ("Got      ");
+          mpfr_dump (y2);
+          printf ("  with inex = %d, flags =", inex2);
+          flags_out (flags2);
+          exit (1);
+        }
+    }
+  mpfr_clears (x, y1, y2, (mpfr_ptr) 0);
+
+  set_emin (emin);
+  set_emax (emax);
+}
+
+#define TEST_FUNCTION mpfr_ui_div
+#define ULONG_ARG1
+#define RAND_FUNCTION(x) mpfr_random2(x, MPFR_LIMB_SIZE (x), 1, RANDS)
+#include "tgeneric.c"
+
 int
 main (int argc, char *argv[])
 {
@@ -197,6 +245,9 @@ main (int argc, char *argv[])
         "1.3178666932321966062e285");
   check(1476599377, "-2.14191393656148625995e+305", MPFR_RNDD,
         "-6.8938315017943889615e-297");
+  check_overflow ();
+
+  test_generic (2, 1000, 100);
 
   /* inv is for 1/x */
   data_check ("data/inv", mpfr_inv, "mpfr_ui_div(1,x)");

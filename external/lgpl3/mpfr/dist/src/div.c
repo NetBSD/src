@@ -1,7 +1,7 @@
 /* mpfr_div -- divide two floating-point numbers
 
-Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999, 2001-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -310,24 +310,23 @@ mpfr_div (mpfr_ptr q, mpfr_srcptr u, mpfr_srcptr v, mpfr_rnd_t rnd_mode)
 
       qp = MPFR_TMP_LIMBS_ALLOC (n);
       qh = mpfr_divhigh_n (qp, ap, bp, n);
+      MPFR_ASSERTD (qh == 0 || qh == 1);
       /* in all cases, the error is at most (2n+2) ulps on qh*B^n+{qp,n},
          cf algorithms.tex */
 
       p = n * GMP_NUMB_BITS - MPFR_INT_CEIL_LOG2 (2 * n + 2);
-      /* if qh is 1, then we need only PREC(q)-1 bits of {qp,n},
-         if rnd=RNDN, we need to be able to round with a directed rounding
-            and one more bit */
+      /* If rnd=RNDN, we need to be able to round with a directed rounding
+         and one more bit. */
+      if (qh == 1)
+        {
+          mpn_rshift (qp, qp, n, 1);
+          qp[n - 1] |= MPFR_LIMB_HIGHBIT;
+        }
       if (MPFR_LIKELY (mpfr_round_p (qp, n, p,
-                                 MPFR_PREC(q) + (rnd_mode == MPFR_RNDN) - qh)))
+                                     MPFR_PREC(q) + (rnd_mode == MPFR_RNDN))))
         {
           /* we can round correctly whatever the rounding mode */
-          if (qh == 0)
-            MPN_COPY (q0p, qp + 1, q0size);
-          else
-            {
-              mpn_rshift (q0p, qp + 1, q0size, 1);
-              q0p[q0size - 1] ^= MPFR_LIMB_HIGHBIT;
-            }
+          MPN_COPY (q0p, qp + 1, q0size);
           q0p[0] &= ~MPFR_LIMB_MASK(sh); /* put to zero low sh bits */
 
           if (rnd_mode == MPFR_RNDN) /* round to nearest */
@@ -335,15 +334,10 @@ mpfr_div (mpfr_ptr q, mpfr_srcptr u, mpfr_srcptr v, mpfr_rnd_t rnd_mode)
               /* we know we can round, thus we are never in the even rule case:
                  if the round bit is 0, we truncate
                  if the round bit is 1, we add 1 */
-              if (qh == 0)
-                {
-                  if (sh > 0)
-                    round_bit = (qp[1] >> (sh - 1)) & 1;
-                  else
-                    round_bit = qp[0] >> (GMP_NUMB_BITS - 1);
-                }
-              else /* qh = 1 */
-                round_bit = (qp[1] >> sh) & 1;
+              if (sh > 0)
+                round_bit = (qp[1] >> (sh - 1)) & 1;
+              else
+                round_bit = qp[0] >> (GMP_NUMB_BITS - 1);
               if (round_bit == 0)
                 {
                   inex = -1;
@@ -750,7 +744,9 @@ mpfr_div (mpfr_ptr q, mpfr_srcptr u, mpfr_srcptr v, mpfr_rnd_t rnd_mode)
  truncate_check_qh:
   if (qh)
     {
-      qexp ++;
+      if (MPFR_LIKELY (qexp < MPFR_EXP_MAX))
+        qexp ++;
+      /* else qexp is now incorrect, but one will still get an overflow */
       q0p[q0size - 1] = MPFR_LIMB_HIGHBIT;
     }
   goto truncate;
@@ -765,7 +761,9 @@ mpfr_div (mpfr_ptr q, mpfr_srcptr u, mpfr_srcptr v, mpfr_rnd_t rnd_mode)
   inex = 1; /* always here */
   if (mpn_add_1 (q0p, q0p, q0size, MPFR_LIMB_ONE << sh))
     {
-      qexp ++;
+      if (MPFR_LIKELY (qexp < MPFR_EXP_MAX))
+        qexp ++;
+      /* else qexp is now incorrect, but one will still get an overflow */
       q0p[q0size - 1] = MPFR_LIMB_HIGHBIT;
     }
 
