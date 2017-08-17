@@ -1,4 +1,4 @@
-/*	$NetBSD: warmstart.c,v 1.7 2017/08/16 23:38:16 ginsbach Exp $	*/
+/*	$NetBSD: warmstart.c,v 1.8 2017/08/17 00:08:10 ginsbach Exp $	*/
 /* $FreeBSD: head/usr.sbin/rpcbind/warmstart.c 258564 2013-11-25 16:44:02Z hrs $*/
 
 /*-
@@ -136,9 +136,9 @@ error:	warnx("Will start from scratch");
 void
 write_warmstart(void)
 {
-	(void)write_struct(RPCBFILE, xdr_rpcblist_ptr, &list_rbl);
+	(void)write_struct(RPCBFILE, (xdrproc_t) xdr_rpcblist_ptr, &list_rbl);
 #ifdef PORTMAP
-	(void)write_struct(PMAPFILE, xdr_pmaplist_ptr, &list_pml);
+	(void)write_struct(PMAPFILE, (xdrproc_t) xdr_pmaplist_ptr, &list_pml);
 #endif
 
 }
@@ -152,11 +152,11 @@ read_warmstart(void)
 #endif
 	int ok1, ok2 = TRUE;
 
-	ok1 = read_struct(RPCBFILE, xdr_rpcblist_ptr, &tmp_rpcbl);
+	ok1 = read_struct(RPCBFILE, (xdrproc_t) xdr_rpcblist_ptr, &tmp_rpcbl);
 	if (ok1 == FALSE)
 		return;
 #ifdef PORTMAP
-	ok2 = read_struct(PMAPFILE, xdr_pmaplist_ptr, &tmp_pmapl);
+	ok2 = read_struct(PMAPFILE, (xdrproc_t) xdr_pmaplist_ptr, &tmp_pmapl);
 #endif
 	if (ok2 == FALSE) {
 		xdr_free((xdrproc_t) xdr_rpcblist_ptr, (char *)&tmp_rpcbl);
