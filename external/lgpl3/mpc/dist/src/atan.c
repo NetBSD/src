@@ -1,6 +1,6 @@
 /* mpc_atan -- arctangent of a complex number.
 
-Copyright (C) 2009, 2010, 2011, 2012 INRIA
+Copyright (C) 2009, 2010, 2011, 2012, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -133,10 +133,10 @@ mpc_atan (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
         }
       else if (cmp_1 == 0)
         {
-          /* atan(+/-0+i) = NaN +i*inf
-             atan(+/-0-i) = NaN -i*inf */
-          mpfr_set_nan (mpc_realref (rop));
-          mpfr_set_inf (mpc_imagref (rop), s_im ? -1 : +1);
+          /* atan(+/-0 +i) = +/-0 +i*inf
+             atan(+/-0 -i) = +/-0 -i*inf */
+          mpfr_set_zero (mpc_realref (rop), s_re ? -1 : +1);
+          mpfr_set_inf  (mpc_imagref (rop), s_im ? -1 : +1);
         }
       else
         {
