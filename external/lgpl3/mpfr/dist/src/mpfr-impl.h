@@ -1,7 +1,7 @@
 /* Utilities for MPFR developers, not exported.
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -62,7 +62,12 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 # include "config.h"
 #endif
 
-#ifdef  MPFR_HAVE_GMP_IMPL /* Build with gmp internals*/
+/* For the definition of MPFR_THREAD_ATTR. GCC/ICC detection macros are
+   no longer used, as they sometimes gave incorrect information about
+   the support of thread-local variables. A configure check is now done. */
+#include "mpfr-thread.h"
+
+#ifdef  MPFR_HAVE_GMP_IMPL /* Build with gmp internals */
 
 # ifndef __GMP_H__
 #  include "gmp.h"
@@ -103,13 +108,6 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #ifndef mpn_sqr_n
 # define mpn_sqr_n(dst,src,n) mpn_mul((dst),(src),(n),(src),(n))
 #endif
-
-/* For the definition of MPFR_THREAD_ATTR. GCC/ICC detection macros are
-   no longer used, as they sometimes gave incorrect information about
-   the support of thread-local variables. A configure check is now done.
-   If the use of detection macros is needed in the future, this could be
-   moved below (after the detection macros are defined). */
-#include "mpfr-thread.h"
 
 
 /******************************************************
@@ -191,7 +189,7 @@ typedef __gmp_const mp_limb_t *mpfr_limb_srcptr;
 # endif
 #endif
 
-
+#define MPFR_BYTES_PER_MP_LIMB (GMP_NUMB_BITS/CHAR_BIT)
 
 /******************************************************
  ******************** Check GMP ***********************
@@ -237,6 +235,10 @@ typedef __gmp_const mp_limb_t *mpfr_limb_srcptr;
  ************* Global Internal Variables **************
  ******************************************************/
 
+#if defined (__cplusplus)
+extern "C" {
+#endif
+
 /* Cache struct */
 struct __gmpfr_cache_s {
   mpfr_t x;
@@ -246,32 +248,73 @@ struct __gmpfr_cache_s {
 typedef struct __gmpfr_cache_s mpfr_cache_t[1];
 typedef struct __gmpfr_cache_s *mpfr_cache_ptr;
 
-#if defined (__cplusplus)
-extern "C" {
+#if __GMP_LIBGMP_DLL
+# define MPFR_WIN_THREAD_SAFE_DLL 1
 #endif
 
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR unsigned int __gmpfr_flags;
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR mpfr_exp_t   __gmpfr_emin;
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR mpfr_exp_t   __gmpfr_emax;
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR mpfr_prec_t  __gmpfr_default_fp_bit_precision;
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR mpfr_rnd_t   __gmpfr_default_rounding_mode;
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR mpfr_cache_t __gmpfr_cache_const_euler;
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR mpfr_cache_t __gmpfr_cache_const_catalan;
-
-#ifndef MPFR_USE_LOGGING
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR mpfr_cache_t __gmpfr_cache_const_pi;
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR mpfr_cache_t __gmpfr_cache_const_log2;
-#else
+#if defined(__MPFR_WITHIN_MPFR) || !defined(MPFR_WIN_THREAD_SAFE_DLL)
+extern MPFR_THREAD_ATTR unsigned int __gmpfr_flags;
+extern MPFR_THREAD_ATTR mpfr_exp_t   __gmpfr_emin;
+extern MPFR_THREAD_ATTR mpfr_exp_t   __gmpfr_emax;
+extern MPFR_THREAD_ATTR mpfr_prec_t  __gmpfr_default_fp_bit_precision;
+extern MPFR_THREAD_ATTR mpfr_rnd_t   __gmpfr_default_rounding_mode;
+extern MPFR_THREAD_ATTR mpfr_cache_t __gmpfr_cache_const_euler;
+extern MPFR_THREAD_ATTR mpfr_cache_t __gmpfr_cache_const_catalan;
+# ifndef MPFR_USE_LOGGING
+extern MPFR_THREAD_ATTR mpfr_cache_t __gmpfr_cache_const_pi;
+extern MPFR_THREAD_ATTR mpfr_cache_t __gmpfr_cache_const_log2;
+# else
 /* Two constants are used by the logging functions (via mpfr_fprintf,
    then mpfr_log, for the base conversion): pi and log(2). Since the
    mpfr_cache function isn't re-entrant when working on the same cache,
    we need to define two caches for each constant. */
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR mpfr_cache_t __gmpfr_normal_pi;
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR mpfr_cache_t __gmpfr_normal_log2;
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR mpfr_cache_t __gmpfr_logging_pi;
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR mpfr_cache_t __gmpfr_logging_log2;
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR mpfr_cache_ptr __gmpfr_cache_const_pi;
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR mpfr_cache_ptr __gmpfr_cache_const_log2;
+extern MPFR_THREAD_ATTR mpfr_cache_t   __gmpfr_normal_pi;
+extern MPFR_THREAD_ATTR mpfr_cache_t   __gmpfr_normal_log2;
+extern MPFR_THREAD_ATTR mpfr_cache_t   __gmpfr_logging_pi;
+extern MPFR_THREAD_ATTR mpfr_cache_t   __gmpfr_logging_log2;
+extern MPFR_THREAD_ATTR mpfr_cache_ptr __gmpfr_cache_const_pi;
+extern MPFR_THREAD_ATTR mpfr_cache_ptr __gmpfr_cache_const_log2;
+# endif
+#endif
+
+#ifdef MPFR_WIN_THREAD_SAFE_DLL
+__MPFR_DECLSPEC unsigned int * __gmpfr_flags_f();
+__MPFR_DECLSPEC mpfr_exp_t *   __gmpfr_emin_f();
+__MPFR_DECLSPEC mpfr_exp_t *   __gmpfr_emax_f();
+__MPFR_DECLSPEC mpfr_prec_t *  __gmpfr_default_fp_bit_precision_f();
+__MPFR_DECLSPEC mpfr_rnd_t *   __gmpfr_default_rounding_mode_f();
+__MPFR_DECLSPEC mpfr_cache_t * __gmpfr_cache_const_euler_f();
+__MPFR_DECLSPEC mpfr_cache_t * __gmpfr_cache_const_catalan_f();
+# ifndef MPFR_USE_LOGGING
+__MPFR_DECLSPEC mpfr_cache_t * __gmpfr_cache_const_pi_f();
+__MPFR_DECLSPEC mpfr_cache_t * __gmpfr_cache_const_log2_f();
+# else
+__MPFR_DECLSPEC mpfr_cache_t *   __gmpfr_normal_pi_f();
+__MPFR_DECLSPEC mpfr_cache_t *   __gmpfr_normal_log2_f();
+__MPFR_DECLSPEC mpfr_cache_t *   __gmpfr_logging_pi_f();
+__MPFR_DECLSPEC mpfr_cache_t *   __gmpfr_logging_log2_f();
+__MPFR_DECLSPEC mpfr_cache_ptr * __gmpfr_cache_const_pi_f();
+__MPFR_DECLSPEC mpfr_cache_ptr * __gmpfr_cache_const_log2_f();
+# endif
+# ifndef __MPFR_WITHIN_MPFR
+#  define __gmpfr_flags                    (*__gmpfr_flags_f())
+#  define __gmpfr_emin                     (*__gmpfr_emin_f())
+#  define __gmpfr_emax                     (*__gmpfr_emax_f())
+#  define __gmpfr_default_fp_bit_precision (*__gmpfr_default_fp_bit_precision_f())
+#  define __gmpfr_default_rounding_mode    (*__gmpfr_default_rounding_mode_f())
+#  define __gmpfr_cache_const_euler        (*__gmpfr_cache_const_euler_f())
+#  define __gmpfr_cache_const_catalan      (*__gmpfr_cache_const_catalan_f())
+#  ifndef MPFR_USE_LOGGING
+#   define __gmpfr_cache_const_pi         (*__gmpfr_cache_const_pi_f())
+#   define __gmpfr_cache_const_log2       (*__gmpfr_cache_const_log2_f())
+#  else
+#   define __gmpfr_normal_pi              (*__gmpfr_normal_pi_f())
+#   define __gmpfr_logging_pi             (*__gmpfr_logging_pi_f())
+#   define __gmpfr_logging_log2           (*__gmpfr_logging_log2_f())
+#   define __gmpfr_cache_const_pi         (*__gmpfr_cache_const_pi_f())
+#   define __gmpfr_cache_const_log2       (*__gmpfr_cache_const_log2_f())
+#  endif
+# endif
 #endif
 
 #define BASE_MAX 62
@@ -377,7 +420,7 @@ __MPFR_DECLSPEC extern const mpfr_t __gmpfr_four;
  ******************** Assertions **********************
  ******************************************************/
 
-/* Compile with -DWANT_ASSERT to check all assert statements */
+/* Compile with -DMPFR_WANT_ASSERT to check all assert statements */
 
 /* Note: do not use GMP macros ASSERT_ALWAYS and ASSERT as they are not
    expressions, and as a consequence, they cannot be used in a for(),
@@ -388,7 +431,7 @@ __MPFR_DECLSPEC extern const mpfr_t __gmpfr_four;
    ((void) ((MPFR_UNLIKELY(expr)) || MPFR_UNLIKELY( (ASSERT_FAIL(expr),0) )))
 
 /* MPFR_ASSERTD(expr): assertions that should be checked when testing */
-#ifdef WANT_ASSERT
+#ifdef MPFR_WANT_ASSERT
 # define MPFR_EXP_CHECK 1
 # define MPFR_ASSERTD(expr)  MPFR_ASSERTN (expr)
 #else
@@ -468,8 +511,16 @@ __MPFR_DECLSPEC extern const mpfr_t __gmpfr_four;
 #define MPFR_LIMBS_PER_FLT ((IEEE_FLT_MANT_DIG-1)/GMP_NUMB_BITS+1)
 
 /* Visual C++ doesn't support +1.0/0.0, -1.0/0.0 and 0.0/0.0
-   at compile time. */
-#if defined(_MSC_VER) && defined(_WIN32) && (_MSC_VER >= 1200)
+   at compile time.
+   Clang with -fsanitize=undefined is a bit similar due to a bug:
+     http://llvm.org/bugs/show_bug.cgi?id=17381
+   but even without its sanitizer, it may be better to use the
+   double_zero version until IEEE 754 division by zero is properly
+   supported:
+     http://llvm.org/bugs/show_bug.cgi?id=17000
+*/
+#if (defined(_MSC_VER) && defined(_WIN32) && (_MSC_VER >= 1200)) || \
+    defined(__clang__)
 static double double_zero = 0.0;
 # define DBL_NAN (double_zero/double_zero)
 # define DBL_POS_INF ((double) 1.0/double_zero)
@@ -501,6 +552,8 @@ static double double_zero = 0.0;
    (with Xcode 2.4.1, i.e. the latest one). */
 #define LVALUE(x) (&(x) == &(x) || &(x) != &(x))
 #define DOUBLE_ISINF(x) (LVALUE(x) && ((x) > DBL_MAX || (x) < -DBL_MAX))
+/* The DOUBLE_ISNAN(x) macro is also valid on long double x
+   (assuming that the compiler isn't too broken). */
 #ifdef MPFR_NANISNAN
 /* Avoid MIPSpro / IRIX64 / gcc -ffast-math (incorrect) optimizations.
    The + must not be replaced by a ||. With gcc -ffast-math, NaN is
@@ -727,8 +780,8 @@ typedef intmax_t mpfr_eexp_t;
 /* Use MPFR_GET_EXP and MPFR_SET_EXP instead of MPFR_EXP directly,
    unless when the exponent may be out-of-range, for instance when
    setting the exponent before calling mpfr_check_range.
-   MPFR_EXP_CHECK is defined when WANT_ASSERT is defined, but if you
-   don't use WANT_ASSERT (for speed reasons), you can still define
+   MPFR_EXP_CHECK is defined when MPFR_WANT_ASSERT is defined, but if you
+   don't use MPFR_WANT_ASSERT (for speed reasons), you can still define
    MPFR_EXP_CHECK by setting -DMPFR_EXP_CHECK in $CFLAGS. */
 
 #ifdef MPFR_EXP_CHECK
@@ -796,8 +849,8 @@ typedef intmax_t mpfr_eexp_t;
  (MPFR_ASSERTD((s) == MPFR_SIGN_POS || (s) == MPFR_SIGN_NEG))
 #define MPFR_SET_SIGN(x, s) \
   (MPFR_ASSERT_SIGN(s), MPFR_SIGN(x) = s)
-#define MPFR_IS_POS_SIGN(s1) (s1 > 0)
-#define MPFR_IS_NEG_SIGN(s1) (s1 < 0)
+#define MPFR_IS_POS_SIGN(s1) ((s1) > 0)
+#define MPFR_IS_NEG_SIGN(s1) ((s1) < 0)
 #define MPFR_MULT_SIGN(s1, s2) ((s1) * (s2))
 /* Transform a sign to 1 or -1 */
 #define MPFR_FROM_SIGN_TO_INT(s) (s)
@@ -849,33 +902,37 @@ typedef intmax_t mpfr_eexp_t;
 /* We want to test if rnd = Zero, or Away.
    'test' is 1 if negative, and 0 if positive. */
 #define MPFR_IS_LIKE_RNDZ(rnd, test) \
-  ((rnd==MPFR_RNDZ) || MPFR_IS_RNDUTEST_OR_RNDDNOTTEST (rnd, test))
+  ((rnd) == MPFR_RNDZ || MPFR_IS_RNDUTEST_OR_RNDDNOTTEST (rnd, test))
 
-#define MPFR_IS_LIKE_RNDU(rnd, sign) \
-  ((rnd==MPFR_RNDU) || (rnd==MPFR_RNDZ && sign<0) || (rnd==MPFR_RNDA && sign>0))
+#define MPFR_IS_LIKE_RNDU(rnd, sign)                    \
+  (((rnd) == MPFR_RNDU) ||                              \
+   ((rnd) == MPFR_RNDZ && MPFR_IS_NEG_SIGN (sign)) ||   \
+   ((rnd) == MPFR_RNDA && MPFR_IS_POS_SIGN (sign)))
 
-#define MPFR_IS_LIKE_RNDD(rnd, sign) \
-  ((rnd==MPFR_RNDD) || (rnd==MPFR_RNDZ && sign>0) || (rnd==MPFR_RNDA && sign<0))
+#define MPFR_IS_LIKE_RNDD(rnd, sign)                    \
+  (((rnd) == MPFR_RNDD) ||                              \
+   ((rnd) == MPFR_RNDZ && MPFR_IS_POS_SIGN (sign)) ||   \
+   ((rnd) == MPFR_RNDA && MPFR_IS_NEG_SIGN (sign)))
 
-/* Invert a rounding mode, RNDZ and RNDA are unchanged */
-#define MPFR_INVERT_RND(rnd) ((rnd == MPFR_RNDU) ? MPFR_RNDD : \
-                             ((rnd == MPFR_RNDD) ? MPFR_RNDU : rnd))
+/* Invert a rounding mode, RNDN, RNDZ and RNDA are unchanged */
+#define MPFR_INVERT_RND(rnd) ((rnd) == MPFR_RNDU ? MPFR_RNDD :          \
+                              (rnd) == MPFR_RNDD ? MPFR_RNDU : (rnd))
 
 /* Transform RNDU and RNDD to RNDZ according to test */
-#define MPFR_UPDATE_RND_MODE(rnd, test)                            \
-  do {                                                             \
-    if (MPFR_UNLIKELY(MPFR_IS_RNDUTEST_OR_RNDDNOTTEST(rnd, test))) \
+#define MPFR_UPDATE_RND_MODE(rnd, test)                             \
+  do {                                                              \
+    if (MPFR_UNLIKELY(MPFR_IS_RNDUTEST_OR_RNDDNOTTEST(rnd, test)))  \
       rnd = MPFR_RNDZ;                                              \
   } while (0)
 
 /* Transform RNDU and RNDD to RNDZ or RNDA according to sign,
    leave the other modes unchanged */
-#define MPFR_UPDATE2_RND_MODE(rnd, sign)        \
-  do {                                          \
-  if (rnd == MPFR_RNDU)                          \
-    rnd = (sign > 0) ? MPFR_RNDA : MPFR_RNDZ;     \
-  else if (rnd == MPFR_RNDD)                     \
-    rnd = (sign < 0) ? MPFR_RNDA : MPFR_RNDZ;     \
+#define MPFR_UPDATE2_RND_MODE(rnd, sign)                       \
+  do {                                                         \
+    if (rnd == MPFR_RNDU)                                      \
+      rnd = MPFR_IS_POS_SIGN (sign) ? MPFR_RNDA : MPFR_RNDZ;   \
+    else if (rnd == MPFR_RNDD)                                 \
+      rnd = MPFR_IS_NEG_SIGN (sign) ? MPFR_RNDA : MPFR_RNDZ;   \
   } while (0)
 
 
@@ -920,7 +977,7 @@ typedef union { mp_size_t s; mp_limb_t l; } mpfr_size_limb_t;
 #define MPFR_SET_ALLOC_SIZE(x, n) \
  ( ((mp_size_t*) MPFR_MANT(x))[-1] = n)
 #define MPFR_MALLOC_SIZE(s) \
-  ( sizeof(mpfr_size_limb_t) + BYTES_PER_MP_LIMB * ((size_t) s) )
+  ( sizeof(mpfr_size_limb_t) + MPFR_BYTES_PER_MP_LIMB * ((size_t) s) )
 #define MPFR_SET_MANT_PTR(x,p) \
    (MPFR_MANT(x) = (mp_limb_t*) ((mpfr_size_limb_t*) p + 1))
 #define MPFR_GET_REAL_PTR(x) \
@@ -954,7 +1011,7 @@ extern unsigned char *mpfr_stack;
 #endif
 
 #define MPFR_TMP_LIMBS_ALLOC(N) \
-  ((mp_limb_t *) MPFR_TMP_ALLOC ((size_t) (N) * BYTES_PER_MP_LIMB))
+  ((mp_limb_t *) MPFR_TMP_ALLOC ((size_t) (N) * MPFR_BYTES_PER_MP_LIMB))
 
 /* temporary allocate 1 limb at xp, and initialize mpfr variable x */
 /* The temporary var doesn't have any size field, but it doesn't matter
@@ -987,7 +1044,7 @@ extern unsigned char *mpfr_stack;
 #define mpfr_const_catalan(_d,_r) mpfr_cache(_d,__gmpfr_cache_const_catalan,_r)
 
 #define MPFR_DECL_INIT_CACHE(_cache,_func)                           \
- mpfr_cache_t MPFR_THREAD_ATTR _cache =                              \
+  MPFR_THREAD_ATTR mpfr_cache_t _cache =                             \
     {{{{0,MPFR_SIGN_POS,0,(mp_limb_t*)0}},0,_func}}
 
 
@@ -1130,8 +1187,18 @@ do {                                                                  \
    (r) = _size * GMP_NUMB_BITS - _cnt;       \
   } while (0)
 
-/* Needs <locale.h> */
-#ifdef HAVE_LOCALE_H
+/* MPFR_LCONV_DPTS can also be forced to 0 or 1 by the user. */
+#ifndef MPFR_LCONV_DPTS
+# if defined(HAVE_LOCALE_H) && \
+     defined(HAVE_STRUCT_LCONV_DECIMAL_POINT) && \
+     defined(HAVE_STRUCT_LCONV_THOUSANDS_SEP)
+#  define MPFR_LCONV_DPTS 1
+# else
+#  define MPFR_LCONV_DPTS 0
+# endif
+#endif
+
+#if MPFR_LCONV_DPTS
 #include <locale.h>
 /* Warning! In case of signed char, the value of MPFR_DECIMAL_POINT may
    be negative (the ISO C99 does not seem to forbid negative values). */
@@ -1822,6 +1889,7 @@ __MPFR_DECLSPEC mpfr_exp_t mpfr_ceil_mul _MPFR_PROTO ((mpfr_exp_t, int, int));
 __MPFR_DECLSPEC int mpfr_exp_2 _MPFR_PROTO ((mpfr_ptr, mpfr_srcptr,mpfr_rnd_t));
 __MPFR_DECLSPEC int mpfr_exp_3 _MPFR_PROTO ((mpfr_ptr, mpfr_srcptr,mpfr_rnd_t));
 __MPFR_DECLSPEC int mpfr_powerof2_raw _MPFR_PROTO ((mpfr_srcptr));
+__MPFR_DECLSPEC int mpfr_powerof2_raw2 (const mp_limb_t *, mp_size_t);
 
 __MPFR_DECLSPEC int mpfr_pow_general _MPFR_PROTO ((mpfr_ptr, mpfr_srcptr,
                            mpfr_srcptr, mpfr_rnd_t, int, mpfr_save_expo_t *));
@@ -1858,7 +1926,8 @@ __MPFR_DECLSPEC int mpfr_round_raw_4 _MPFR_PROTO ((mp_limb_t *,
 __MPFR_DECLSPEC int mpfr_check _MPFR_PROTO ((mpfr_srcptr));
 
 __MPFR_DECLSPEC int mpfr_sum_sort _MPFR_PROTO ((mpfr_srcptr *const,
-                                                unsigned long, mpfr_srcptr *));
+                                                unsigned long, mpfr_srcptr *,
+                                                mpfr_prec_t *));
 
 __MPFR_DECLSPEC int mpfr_get_cputime _MPFR_PROTO ((void));
 

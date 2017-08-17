@@ -1,7 +1,7 @@
 /* Memory allocation used during tests.
 
-Copyright 2001, 2002, 2003, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2001-2003, 2006-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -68,7 +68,7 @@ tests_memory_valid (void *ptr)
 }
 */
 
-static void *
+void *
 tests_allocate (size_t size)
 {
   struct header  *h;
@@ -88,7 +88,7 @@ tests_allocate (size_t size)
   return h->ptr;
 }
 
-static void *
+void *
 tests_reallocate (void *ptr, size_t old_size, size_t new_size)
 {
   struct header  **hp, *h;
@@ -148,7 +148,7 @@ tests_free_nosize (void *ptr)
   __gmp_default_free (h, sizeof (*h));
 }
 
-static void
+void
 tests_free (void *ptr, size_t size)
 {
   struct header  **hp = tests_free_find (ptr);

@@ -1,7 +1,7 @@
 /* Test file for mpfr_pow_z -- power function x^z with z a MPZ
 
-Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2005-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -26,7 +26,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #include "mpfr-test.h"
 
-#define ERROR(str) do { printf("Error for "str"\n"); exit (1); } while (0)
+#define ERROR(str) do { printf ("Error for " str "\n"); exit (1); } while (0)
 
 static void
 check_special (void)

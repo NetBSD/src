@@ -1,7 +1,7 @@
 /* Test file for multiple mpfr.h inclusion and intmax_t related functions
 
-Copyright 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2010-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -22,6 +22,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #if HAVE_STDINT_H
 
+#include <stdlib.h>
+
 #if _MPFR_EXP_FORMAT == 4
 /* If mpfr_exp_t is defined as intmax_t, intmax_t must be defined before
    the inclusion of mpfr.h (this test doesn't use mpfr-impl.h). */
@@ -38,16 +40,27 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define MPFR_USE_INTMAX_T
 #include <mpfr.h>
 
+#include "mpfr-test.h"
+
 int
 main (void)
 {
   mpfr_t x;
   intmax_t j;
 
+  tests_start_mpfr ();
+
   mpfr_init_set_ui (x, 1, MPFR_RNDN);
   j = mpfr_get_uj (x, MPFR_RNDN);
   mpfr_clear (x);
-  return j == 1 ? 0 : 1;
+  if (j != 1)
+    {
+      printf ("Error: got %jd instead of 1.\n", j);
+      exit (1);
+    }
+
+  tests_end_mpfr ();
+  return 0;
 }
 
 #else  /* HAVE_STDINT_H */

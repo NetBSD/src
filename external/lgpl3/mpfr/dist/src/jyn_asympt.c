@@ -1,7 +1,7 @@
 /* mpfr_jn_asympt, mpfr_yn_asympt -- shared code for mpfr_jn and mpfr_yn
 
-Copyright 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2007-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -253,9 +253,9 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
         break;
       if (diverge != 0)
         {
-          mpfr_set (c, z, r); /* will force inex=0 below, which means the
-                               asymptotic expansion failed */
-          break;
+          MPFR_ZIV_FREE (loop);
+          mpfr_clear (c);
+          return 0; /* means that the asymptotic expansion failed */
         }
       MPFR_ZIV_NEXT (loop, w);
     }

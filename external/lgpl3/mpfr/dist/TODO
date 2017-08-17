@@ -1,5 +1,5 @@
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -68,7 +68,7 @@ Table of contents:
    2^(MPFR_EXP(b)-MPFR_PREC(b)+err).
 
 - mpfr_set_q first tries to convert the numerator and the denominator
-  to mpfr_t. But this convertion may fail even if the correctly rounded
+  to mpfr_t. But this conversion may fail even if the correctly rounded
   result is representable. New way to implement:
   Function q = a/b.  nq = PREC(q) na = PREC(a) nb = PREC(b)
     If na < nb
@@ -154,7 +154,7 @@ Table of contents:
      j_n(x) = sqrt(Pi/(2x)) J_{n+1/2}(x). They should not be mixed with the
      classical Bessel Functions, also noted j0, j1, jn, y0, y1, yn in C99
      and mpfr.
-     Cf http://en.wikipedia.org/wiki/Bessel_function#Spherical_Bessel_functions
+     Cf https://en.wikipedia.org/wiki/Bessel_function#Spherical_Bessel_functions
    *Irregular Spherical Bessel Functions y_n: y_0(x) = -\cos(x)/x,
      y_1(x)= -(\cos(x)/x+\sin(x))/x &
      y_2(x)= (-3/x^3+1/x)\cos(x)-(3/x^2)\sin(x)
@@ -242,7 +242,7 @@ Table of contents:
   (see Exercise 4.11 from Modern Computer Arithmetic, version 0.3)
   The same method can be used for log, using the series for atanh, i.e.,
   atanh(x) = 1/2*log((1+x)/(1-x)).
-- improve mpfr_gamma (see http://code.google.com/p/fastfunlib/). A possible
+- improve mpfr_gamma (see https://code.google.com/p/fastfunlib/). A possible
   idea is to implement a fast algorithm for the argument reconstruction
   gamma(x+k). One could also use the series for 1/gamma(x), see for example
   http://dlmf.nist.gov/5/7/ or formula (36) from
@@ -431,4 +431,4 @@ Table of contents:
   strings into newly allocated memory.  I thought I'd done that in a
   couple of places already.  Arrays of chars are not much fun.
 
-- use http://gcc.gnu.org/viewcvs/trunk/config/stdint.m4 for mpfr-gmp.h
+- use https://gcc.gnu.org/viewcvs/gcc/trunk/config/stdint.m4 for mpfr-gmp.h

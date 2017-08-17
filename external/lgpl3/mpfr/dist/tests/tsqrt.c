@@ -1,7 +1,7 @@
 /* Test file for mpfr_sqrt.
 
-Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999, 2001-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -569,6 +569,35 @@ test_property2 (mpfr_prec_t p, mpfr_rnd_t r)
   mpfr_clear (y);
 }
 
+/* Bug reported by Fredrik Johansson, occurring when:
+   - the precision of the result is a multiple of the number of bits
+     per word (GMP_NUMB_BITS),
+   - the rounding mode is to nearest (MPFR_RNDN),
+   - internally, the result has to be rounded up to a power of 2.
+*/
+static void
+bug20160120 (void)
+{
+  mpfr_t x, y;
+
+  mpfr_init2 (x, 4 * GMP_NUMB_BITS);
+  mpfr_init2 (y, GMP_NUMB_BITS);
+
+  mpfr_set_ui (x, 1, MPFR_RNDN);
+  mpfr_nextbelow (x);
+  mpfr_sqrt (y, x, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_check (y));
+  MPFR_ASSERTN(mpfr_cmp_ui (y, 1) == 0);
+
+  mpfr_set_prec (y, 2 * GMP_NUMB_BITS);
+  mpfr_sqrt (y, x, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_check (y));
+  MPFR_ASSERTN(mpfr_cmp_ui (y, 1) == 0);
+
+  mpfr_clear(x);
+  mpfr_clear(y);
+}
+
 #define TEST_FUNCTION test_sqrt
 #define TEST_RANDOM_POS 8
 #include "tgeneric.c"
@@ -703,6 +732,8 @@ main (void)
   test_generic (2, 300, 15);
   data_check ("data/sqrt", mpfr_sqrt, "mpfr_sqrt");
   bad_cases (mpfr_sqrt, mpfr_sqr, "mpfr_sqrt", 8, -256, 255, 4, 128, 800, 50);
+
+  bug20160120 ();
 
   tests_end_mpfr ();
   return 0;
