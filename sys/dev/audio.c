@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.399 2017/08/15 08:30:21 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.400 2017/08/17 04:33:22 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.399 2017/08/15 08:30:21 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.400 2017/08/17 04:33:22 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2020,7 +2020,7 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 
 	if (vc == NULL) {
 		vc = sc->sc_hwvc;
-		sc->sc_pr.blksize = vc->sc_mrr.blksize;
+		sc->sc_pr.blksize = vc->sc_mpr.blksize;
 		sc->sc_rr.blksize = vc->sc_mrr.blksize;
 	}
 
