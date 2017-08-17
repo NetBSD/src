@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2017/08/16 23:38:16 ginsbach Exp $
+#	$NetBSD: Makefile,v 1.14 2017/08/17 00:06:00 ginsbach Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,6 @@ CPPFLAGS+=	-DINET6
 # Uncomment these to get any useful output from 'rpcbind -d'
 # CPPFLAGS+=	-DRPCBIND_DEBUG
 # CPPFLAGS+=	-DSVC_RUN_DEBUG
-CPPFLAGS+= -DWARMSTART
 
 LDADD+= -lwrap -lutil
 DPADD+= ${LIBWRAP} ${LIBUTIL}
