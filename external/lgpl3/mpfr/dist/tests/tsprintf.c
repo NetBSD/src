@@ -1,8 +1,8 @@
 /* tsprintf.c -- test file for mpfr_sprintf, mpfr_vsprintf, mpfr_snprintf,
    and mpfr_vsnprintf
 
-Copyright 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2007-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -456,10 +456,16 @@ decimal (void)
   check_sprintf ("1.999900  ", "%-#10.7RG", x);
   check_sprintf ("1.9999    ", "%-10.7RG", x);
   mpfr_set_ui (x, 1, MPFR_RNDN);
+  check_sprintf ("1.", "%#.1Rg", x);
+  check_sprintf ("1.   ", "%-#5.1Rg", x);
+  check_sprintf ("  1.0", "%#5.2Rg", x);
   check_sprintf ("1.00000000000000000000000000000", "%#.30Rg", x);
   check_sprintf ("1", "%.30Rg", x);
   mpfr_set_ui (x, 0, MPFR_RNDN);
-  check_sprintf ("0.000000000000000000000000000000", "%#.30Rg", x);
+  check_sprintf ("0.", "%#.1Rg", x);
+  check_sprintf ("0.   ", "%-#5.1Rg", x);
+  check_sprintf ("  0.0", "%#5.2Rg", x);
+  check_sprintf ("0.00000000000000000000000000000", "%#.30Rg", x);
   check_sprintf ("0", "%.30Rg", x);
 
   /* following tests with precision 53 bits */
@@ -830,6 +836,8 @@ mixed (void)
   return 0;
 }
 
+#if MPFR_LCONV_DPTS
+
 /* Check with locale "da_DK". On most platforms, decimal point is ','
    and thousands separator is '.'; the test is not performed if this
    is not the case or if the locale doesn't exist. */
@@ -875,6 +883,8 @@ locale_da_DK (void)
   mpfr_clear (x);
   return 0;
 }
+
+#endif  /* MPFR_LCONV_DPTS */
 
 /* check concordance between mpfr_asprintf result with a regular mpfr float
    and with a regular double float */
@@ -1178,6 +1188,69 @@ check_emax (void)
   check_emax_aux (MPFR_EMAX_MAX);
 }
 
+static void
+check_emin_aux (mpfr_exp_t e)
+{
+  mpfr_t x;
+  char *s1, s2[256];
+  int i;
+  mpfr_exp_t emin;
+  mpz_t ee;
+
+  MPFR_ASSERTN (e >= LONG_MIN);
+  emin = mpfr_get_emin ();
+  set_emin (e);
+
+  mpfr_init2 (x, 16);
+  mpz_init (ee);
+
+  mpfr_setmin (x, e);
+  mpz_set_si (ee, e);
+  mpz_sub_ui (ee, ee, 1);
+
+  i = mpfr_asprintf (&s1, "%Ra", x);
+  MPFR_ASSERTN (i > 0);
+
+  gmp_snprintf (s2, 256, "0x1p%Zd", ee);
+
+  if (strcmp (s1, s2) != 0)
+    {
+      printf ("Error in check_emin_aux for emin = %ld\n", (long) e);
+      printf ("Expected %s\n", s2);
+      printf ("Got      %s\n", s1);
+      exit (1);
+    }
+
+  mpfr_free_str (s1);
+
+  i = mpfr_asprintf (&s1, "%Rb", x);
+  MPFR_ASSERTN (i > 0);
+
+  gmp_snprintf (s2, 256, "1p%Zd", ee);
+
+  if (strcmp (s1, s2) != 0)
+    {
+      printf ("Error in check_emin_aux for emin = %ld\n", (long) e);
+      printf ("Expected %s\n", s2);
+      printf ("Got      %s\n", s1);
+      exit (1);
+    }
+
+  mpfr_free_str (s1);
+
+  mpfr_clear (x);
+  mpz_clear (ee);
+  set_emin (emin);
+}
+
+static void
+check_emin (void)
+{
+  check_emin_aux (-15);
+  check_emin_aux (mpfr_get_emin ());
+  check_emin_aux (MPFR_EMIN_MIN);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -1197,10 +1270,13 @@ main (int argc, char **argv)
   decimal ();
   mixed ();
   check_emax ();
+  check_emin ();
 
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
+#if MPFR_LCONV_DPTS
   locale_da_DK ();
-
+  /* Avoid a warning by doing the setlocale outside of this #if */
+#endif
   setlocale (LC_ALL, locale);
 #endif
 

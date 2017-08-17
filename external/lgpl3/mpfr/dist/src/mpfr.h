@@ -1,7 +1,7 @@
 /* mpfr.h -- Include file for mpfr.
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -26,8 +26,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 /* Define MPFR version number */
 #define MPFR_VERSION_MAJOR 3
 #define MPFR_VERSION_MINOR 1
-#define MPFR_VERSION_PATCHLEVEL 2
-#define MPFR_VERSION_STRING "3.1.2"
+#define MPFR_VERSION_PATCHLEVEL 5
+#define MPFR_VERSION_STRING "3.1.5"
 
 /* Macros dealing with MPFR VERSION */
 #define MPFR_VERSION_NUM(a,b,c) (((a) << 16L) | ((b) << 8) | (c))
@@ -861,7 +861,7 @@ __MPFR_DECLSPEC int    mpfr_custom_get_kind   _MPFR_PROTO ((mpfr_srcptr));
     _t = (mpfr_kind_t) _k;                                     \
     _s = 1;                                                    \
   } else {                                                     \
-    _t = (mpfr_kind_t) -k;                                     \
+    _t = (mpfr_kind_t) - _k;                                   \
     _s = -1;                                                   \
   }                                                            \
   _e = _t == MPFR_REGULAR_KIND ? (e) :                         \

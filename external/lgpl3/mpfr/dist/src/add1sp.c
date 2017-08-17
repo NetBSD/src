@@ -1,8 +1,8 @@
 /* mpfr_add1sp -- internal function to perform a "real" addition
    All the op must have the same precision
 
-Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2004-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -25,8 +25,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include "mpfr-impl.h"
 
 /* Check if we have to check the result of mpfr_add1sp with mpfr_add1 */
-#ifdef WANT_ASSERT
-# if WANT_ASSERT >= 2
+#ifdef MPFR_WANT_ASSERT
+# if MPFR_WANT_ASSERT >= 2
 
 int mpfr_add1sp2 (mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
 int mpfr_add1sp (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)

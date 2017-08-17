@@ -1,7 +1,7 @@
 /* Test file for mpfr_get_d
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -99,17 +99,17 @@ check_inf_nan (void)
 
   mpfr_set_inf (x, 1);
   d = mpfr_get_d (x, MPFR_RNDZ);
-  ASSERT_ALWAYS (d > 0);
-  ASSERT_ALWAYS (DOUBLE_ISINF (d));
+  MPFR_ASSERTN (d > 0);
+  MPFR_ASSERTN (DOUBLE_ISINF (d));
 
   mpfr_set_inf (x, -1);
   d = mpfr_get_d (x, MPFR_RNDZ);
-  ASSERT_ALWAYS (d < 0);
-  ASSERT_ALWAYS (DOUBLE_ISINF (d));
+  MPFR_ASSERTN (d < 0);
+  MPFR_ASSERTN (DOUBLE_ISINF (d));
 
   mpfr_set_nan (x);
   d = mpfr_get_d (x, MPFR_RNDZ);
-  ASSERT_ALWAYS (DOUBLE_ISNAN (d));
+  MPFR_ASSERTN (DOUBLE_ISNAN (d));
 
   mpfr_clear (x);
 #endif
@@ -187,11 +187,11 @@ check_min(void)
 static void
 check_get_d_2exp_inf_nan (void)
 {
+#if !defined(MPFR_ERRDIVZERO)
+
   double var_d;
   long exp;
   mpfr_t var;
-
-#if !defined(MPFR_ERRDIVZERO)
 
   mpfr_init2 (var, MPFR_PREC_MIN);
 

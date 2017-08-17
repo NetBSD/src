@@ -1,7 +1,7 @@
 /* mpfr_erfc -- The Complementary Error Function of a floating-point number
 
-Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2005-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -266,7 +266,7 @@ mpfr_erfc (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
       MPFR_ZIV_NEXT (loop, prec);        /* Increase used precision */
       mpfr_set_prec (tmp, prec);
     }
-  MPFR_ZIV_FREE (loop);                  /* Free the ZivLoop Controler */
+  MPFR_ZIV_FREE (loop);                  /* Free the ZivLoop Controller */
 
   inex = mpfr_set (y, tmp, rnd);    /* Set y to the computed value */
   mpfr_clear (tmp);

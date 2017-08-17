@@ -1,7 +1,7 @@
 /* mpfr_cos -- cosine of a floating-point number
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2001-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -169,8 +169,8 @@ mpfr_cos (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
 
   if (precy >= MPFR_SINCOS_THRESHOLD)
     {
-      MPFR_SAVE_EXPO_FREE (expo);
-      return mpfr_cos_fast (y, x, rnd_mode);
+      inexact = mpfr_cos_fast (y, x, rnd_mode);
+      goto end;
     }
 
   K0 = __gmpfr_isqrt (precy / 3);
@@ -293,6 +293,7 @@ mpfr_cos (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
       mpfr_clear (c);
     }
 
+ end:
   MPFR_SAVE_EXPO_FREE (expo);
   return mpfr_check_range (y, inexact, rnd_mode);
 }

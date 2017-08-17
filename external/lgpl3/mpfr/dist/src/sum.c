@@ -1,7 +1,7 @@
 /* Sum -- efficiently sum a list of floating-point numbers
 
-Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2004-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -45,9 +45,13 @@ static void count_sort (mpfr_srcptr *const, unsigned long, mpfr_srcptr *,
                         mpfr_exp_t, mpfr_uexp_t);
 
 /* Either sort the tab in perm and returns 0
-   Or returns 1 for +INF, -1 for -INF and 2 for NAN */
+   Or returns 1 for +INF, -1 for -INF and 2 for NAN.
+   Also set *maxprec to the maximal precision of tab[0..n-1] and of the
+   initial value of *maxprec.
+*/
 int
-mpfr_sum_sort (mpfr_srcptr *const tab, unsigned long n, mpfr_srcptr *perm)
+mpfr_sum_sort (mpfr_srcptr *const tab, unsigned long n, mpfr_srcptr *perm,
+               mpfr_prec_t *maxprec)
 {
   mpfr_exp_t min, max;
   mpfr_uexp_t exp_num;
@@ -79,6 +83,8 @@ mpfr_sum_sort (mpfr_srcptr *const tab, unsigned long n, mpfr_srcptr *perm)
           if (MPFR_GET_EXP (tab[i]) > max)
             max = MPFR_GET_EXP(tab[i]);
         }
+      if (MPFR_PREC (tab[i]) > *maxprec)
+        *maxprec = MPFR_PREC (tab[i]);
     }
   if (MPFR_UNLIKELY (sign_inf != 0))
     return sign_inf;
@@ -213,7 +219,8 @@ heap_sort (mpfr_srcptr *const tab, unsigned long n, mpfr_srcptr *perm)
 
 
 /* Sum a list of float with order given by permutation perm,
- * intermediate size set to F.
+ * intermediate size set to F. Return non-zero if at least one of
+ * the operations is inexact (thus 0 implies that the sum is exact).
  * Internal use function.
  */
 static int
@@ -230,16 +237,19 @@ sum_once (mpfr_ptr ret, mpfr_srcptr *const tab, unsigned long n, mpfr_prec_t F)
   for (i = 1; i < n - 1; i++)
     {
       MPFR_ASSERTD (!MPFR_IS_NAN (sum) && !MPFR_IS_INF (sum));
-      error_trap |= mpfr_add (sum, sum, tab[i], MPFR_RNDN);
+      if (mpfr_add (sum, sum, tab[i], MPFR_RNDN))
+        error_trap = 1;
     }
-  error_trap |= mpfr_add (ret, sum, tab[n - 1], MPFR_RNDN);
+  if (mpfr_add (ret, sum, tab[n - 1], MPFR_RNDN))
+    error_trap = 1;
   mpfr_clear (sum);
   return error_trap;
 }
 
 /* Sum a list of floating-point numbers.
+ * If the return value is 0, then the sum is exact.
+ * Otherwise the return value gives no information.
  */
-
 int
 mpfr_sum (mpfr_ptr ret, mpfr_ptr *const tab_p, unsigned long n, mpfr_rnd_t rnd)
 {
@@ -266,7 +276,8 @@ mpfr_sum (mpfr_ptr ret, mpfr_ptr *const tab_p, unsigned long n, mpfr_rnd_t rnd)
   /* Sort and treat special cases */
   MPFR_TMP_MARK (marker);
   perm = (mpfr_srcptr *) MPFR_TMP_ALLOC (n * sizeof *perm);
-  error_trap = mpfr_sum_sort (tab, n, perm);
+  prec = MPFR_PREC (ret);
+  error_trap = mpfr_sum_sort (tab, n, perm, &prec);
   /* Check if there was a NAN or a INF */
   if (MPFR_UNLIKELY (error_trap != 0))
     {
@@ -281,8 +292,7 @@ mpfr_sum (mpfr_ptr ret, mpfr_ptr *const tab_p, unsigned long n, mpfr_rnd_t rnd)
       MPFR_RET (0);
     }
 
-  /* Initial precision */
-  prec = MAX (MPFR_PREC (tab[0]), MPFR_PREC (ret));
+  /* Initial precision is max(prec(ret),prec(tab[0]),...,prec(tab[n-1])) */
   k = MPFR_INT_CEIL_LOG2 (n) + 1;
   prec += k + 2;
   mpfr_init2 (cur_sum, prec);
@@ -295,8 +305,7 @@ mpfr_sum (mpfr_ptr ret, mpfr_ptr *const tab_p, unsigned long n, mpfr_rnd_t rnd)
       error_trap = sum_once (cur_sum, perm, n, prec + k);
       if (MPFR_LIKELY (error_trap == 0 ||
                        (!MPFR_IS_ZERO (cur_sum) &&
-                        mpfr_can_round (cur_sum,
-                                        MPFR_GET_EXP (cur_sum) - prec + 2,
+                        mpfr_can_round (cur_sum, prec - 2,
                                         MPFR_RNDN, rnd, MPFR_PREC (ret)))))
         break;
       MPFR_ZIV_NEXT (loop, prec);
@@ -305,11 +314,13 @@ mpfr_sum (mpfr_ptr ret, mpfr_ptr *const tab_p, unsigned long n, mpfr_rnd_t rnd)
   MPFR_ZIV_FREE (loop);
   MPFR_TMP_FREE (marker);
 
-  error_trap |= mpfr_set (ret, cur_sum, rnd);
+  if (mpfr_set (ret, cur_sum, rnd))
+    error_trap = 1;
   mpfr_clear (cur_sum);
 
   MPFR_SAVE_EXPO_FREE (expo);
-  error_trap |= mpfr_check_range (ret, 0, rnd);
+  if (mpfr_check_range (ret, 0, rnd))
+    error_trap = 1;
   return error_trap; /* It doesn't return the ternary value */
 }
 

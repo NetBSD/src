@@ -1,7 +1,7 @@
 /* mpfr_powerof2_raw -- test whether a floating-point number is a power of 2
 
-Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2002-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -31,16 +31,17 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 int
 mpfr_powerof2_raw (mpfr_srcptr x)
 {
-  mp_limb_t *xp;
-  mp_size_t xn;
-
   /* This is an internal function, and we may call it with some
      wrong numbers (ie good mantissa but wrong flags or exp)
      So we don't want to test if it is a pure FP.
      MPFR_ASSERTN(MPFR_IS_PURE_FP(x)); */
-  xp = MPFR_MANT(x);
-  xn = (MPFR_PREC(x) - 1) / GMP_NUMB_BITS;
-  if (xp[xn] != MPFR_LIMB_HIGHBIT)
+  return mpfr_powerof2_raw2 (MPFR_MANT(x), MPFR_LIMB_SIZE(x));
+}
+
+int
+mpfr_powerof2_raw2 (const mp_limb_t *xp, mp_size_t xn)
+{
+  if (xp[--xn] != MPFR_LIMB_HIGHBIT)
     return 0;
   while (xn > 0)
     if (xp[--xn] != 0)

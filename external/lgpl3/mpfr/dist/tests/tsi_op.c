@@ -1,8 +1,8 @@
 /* Test file for mpfr_add_si, mpfr_sub_si, mpfr_si_sub, mpfr_mul_si,
    mpfr_div_si, mpfr_si_div
 
-Copyright 2004, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2004, 2006-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -26,14 +26,16 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #include "mpfr-test.h"
 
-#define ERROR1(s, i, z, exp) \
-{\
-  printf("Error for "s" and i=%d\n", i);\
-  printf("Expected %s\n", exp);\
-  printf("Got      "); mpfr_out_str (stdout, 16, 0, z, MPFR_RNDN);\
-  putchar ('\n');\
-  exit(1);\
-}
+#define ERROR1(s,i,z,exp)                                               \
+  do                                                                    \
+    {                                                                   \
+      printf ("Error for " s " and i=%d\n", i);                         \
+      printf ("Expected %s\n", exp);                                    \
+      printf ("Got      "); mpfr_out_str (stdout, 16, 0, z, MPFR_RNDN); \
+      putchar ('\n');                                                   \
+      exit(1);                                                          \
+    }                                                                   \
+  while (0)
 
 const struct {
   const char * op1;
