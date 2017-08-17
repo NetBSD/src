@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.8 2017/06/09 17:36:30 christos Exp $	*/
+/*	$NetBSD: do_command.c,v 1.9 2017/08/17 08:53:00 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 1.9 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.8 2017/06/09 17:36:30 christos Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.9 2017/08/17 08:53:00 christos Exp $");
 #endif
 #endif
 
@@ -484,14 +484,16 @@ child_process(entry *e) {
 				(void)gethostname(hostname, MAXHOSTNAMELEN);
 				if (strlens(MAILFMT, MAILARG, NULL) + 1
 				    >= sizeof mailcmd) {
-					warnx("mailcmd too long");
+					log_it(usernm, getpid(), "MAIL",
+					    "mailcmd too long");
 					retval = ERROR_EXIT;
 					goto child_process_end;
 				}
 				(void)snprintf(mailcmd, sizeof(mailcmd), 
 				    MAILFMT, MAILARG);
 				if (!(mail = cron_popen(mailcmd, "w", e->pwd))) {
-					warn("cannot run `%s'", mailcmd);
+					log_itx(usernm, getpid(), "MAIL",
+					    "cannot run `%s'", mailcmd);
 					retval = ERROR_EXIT;
 					goto child_process_end;
 				}
@@ -549,13 +551,10 @@ child_process(entry *e) {
 			 * what's going on.
 			 */
 			if (mailto && status) {
-				char buf[MAX_TEMPSTR];
-
-				(void)snprintf(buf, sizeof(buf),
-			"mailed %d byte%s of output but got status 0x%04x\n",
-					bytes, (bytes==1)?"":"s",
-					status);
-				log_it(usernm, getpid(), "MAIL", buf);
+				log_itx(usernm, getpid(), "MAIL",
+				    "mailed %d byte%s of output but got status"
+				    " %#04x", bytes, bytes == 1 ? "" : "s",
+				    status);
 			}
 
 		} /*if data from grandchild*/
