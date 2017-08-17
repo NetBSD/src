@@ -1,8 +1,8 @@
 /* mpfr_gmp -- Limited gmp-impl emulator
    Modified version of the GMP files.
 
-Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2004-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -314,9 +314,9 @@ mpfr_assert_fail (const char *filename, int linenum,
    and http://software.intel.com/en-us/articles/intelr-fortran-compiler-for-mac-os-non_lazy_ptr-unresolved-references-from-linking
    Note that using ranlib -c or libtool -c is another fix.
 */
-void * (*mpfr_allocate_func) (size_t) = 0;
-void * (*mpfr_reallocate_func) (void *,size_t, size_t) = 0;
-void   (*mpfr_free_func) (void *, size_t) = 0;
+MPFR_THREAD_ATTR void * (*mpfr_allocate_func) (size_t) = 0;
+MPFR_THREAD_ATTR void * (*mpfr_reallocate_func) (void *, size_t, size_t) = 0;
+MPFR_THREAD_ATTR void   (*mpfr_free_func) (void *, size_t) = 0;
 
 #endif
 

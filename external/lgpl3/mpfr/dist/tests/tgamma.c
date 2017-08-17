@@ -1,7 +1,7 @@
 /* mpfr_tgamma -- test file for gamma function
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2001-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -189,6 +189,18 @@ special (void)
   if (mpfr_cmp (x, y))
     {
       printf ("Error for gamma(-0.1100E-66)\n");
+      exit (1);
+    }
+
+  mpfr_set_prec (x, 2);
+  mpfr_set_prec (y, 2);
+  mpfr_set_ui (x, 2, MPFR_RNDN);
+  mpfr_clear_inexflag ();
+  mpfr_gamma (y, x, MPFR_RNDN);
+  if (mpfr_inexflag_p ())
+    {
+      printf ("Wrong inexact flag for gamma(2)\n");
+      printf ("expected 0, got 1\n");
       exit (1);
     }
 

@@ -1,7 +1,7 @@
 /* mpfr_const_euler -- Euler's constant
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2001-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -25,6 +25,14 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 /* Declare the cache */
 MPFR_DECL_INIT_CACHE(__gmpfr_cache_const_euler, mpfr_const_euler_internal);
+
+#ifdef MPFR_WIN_THREAD_SAFE_DLL
+mpfr_cache_t *
+__gmpfr_cache_const_euler_f()
+{
+  return &__gmpfr_cache_const_euler;
+}
+#endif
 
 /* Set User Interface */
 #undef mpfr_const_euler

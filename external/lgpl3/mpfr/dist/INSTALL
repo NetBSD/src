@@ -1,5 +1,5 @@
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -37,17 +37,17 @@ MPFR).
    not been done yet and if patches are available. You can check
    on the release page:
 
-     http://www.mpfr.org/mpfr-3.1.2/
+     http://www.mpfr.org/mpfr-3.1.5/
 
    which may have additional information. The patches can be applied
    with commands like:
 
-     wget http://www.mpfr.org/mpfr-3.1.2/allpatches
+     wget http://www.mpfr.org/mpfr-3.1.5/allpatches
      patch -N -Z -p1 < allpatches
 
    or
 
-     curl http://www.mpfr.org/mpfr-3.1.2/allpatches | patch -N -Z -p1
+     curl http://www.mpfr.org/mpfr-3.1.5/allpatches | patch -N -Z -p1
 
    (Those instructions are for the GNU patch command, for example
    /usr/bin/gpatch on Solaris.)
@@ -71,6 +71,14 @@ MPFR).
 
 5. To check the built library (runs the test files), type:
      make check
+
+   Note: If any test fails, information about this failure can be found in
+   the tests/test-suite.log file; you should provide this file in your bug
+   reports (in addition to other useful information, as mentioned later).
+   If you want the contents of this file to be automatically output in case
+   of failure, you can set the VERBOSE environment variable to 1 before
+   running "make check", for instance by typing:
+     VERBOSE=1 make check
 
 6. To install it (default "/usr/local" | see "--prefix" option), type:
      make install
@@ -330,7 +338,7 @@ Several documents may help you to solve the problem:
   * the FAQ (either the FAQ.html file distributed with MPFR, or the
     on-line version <http://www.mpfr.org/faq.html>, which may be more
     up-to-date);
-  * the MPFR web page for this version <http://www.mpfr.org/mpfr-3.1.2/>,
+  * the MPFR web page for this version <http://www.mpfr.org/mpfr-3.1.5/>,
     which lists bugs found in this version and provides some patches.
 
 If the "configure" fails, please check that the C compiler and its
@@ -397,8 +405,8 @@ the library of the old GMP version will be used! The best solution
 is to make sure that the dynamic linker configuration is consistent
 with GCC's behavior, for instance by having /usr/local/lib in
 /etc/ld.so.conf or in some file from /etc/ld.so.conf.d (as Debian
-did: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=395177). See
-also http://gcc.gnu.org/ml/gcc-help/2010-01/msg00171.html for more
+did: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=395177). See
+also https://gcc.gnu.org/ml/gcc-help/2010-01/msg00171.html for more
 information. Alternatively you can use:
   * environment variables. This may sometimes be necessary. If DIR
     is the installation directory of GMP, add DIR/include to your
@@ -438,7 +446,8 @@ mailing-list <mpfr@inria.fr>, indicating the machine and operating system
 used (uname -a), the compiler and version used (gcc -v if you use gcc),
 the configure options used if any (including variables such as CC and
 CFLAGS), the version of GMP and MPFR used, and a description of the
-problem encountered. Please send us also the log of the "configure"
+problem encountered, in particular the tests/test-suite.log file if
+"make check" failed. Please send us also the log of the "configure"
 (config.log).
 
 Note that even if you can build MPFR with a C++ compiler, you can't run
@@ -488,22 +497,20 @@ not use conversions with the long double type.
 Notes on AIX/PowerPC
 ====================
 
-The following has been tested on AIX 5.3 (powerpc-ibm-aix5.3.0.0) with
-gcc 3.3.2 and GMP 4.2.1.
+The following has been tested on AIX 7.1.3 (gcc111.fsffrance.org)
+with gcc 4.8.1 and GMP 6.1.0.
 
 If GMP was built with the 64-bit ABI, before building and testing MPFR,
 you should set the OBJECT_MODE environment variable to 64, e.g., with:
 
   export OBJECT_MODE=64
 
-(in a sh-compatible shell). But you should also provide a correct CFLAGS
-value to the "configure" script: using --with-gmp-build is not sufficient
-due to the early compiler tests, as gcc will not compile any program if
-OBJECT_MODE is 64 and the -maix64 option is not provided.
+(in a sh-compatible shell). Alternatively add the following to the configure
+line: AR="ar -X64" NM="nm -B -X64".
 
 
-MPFR for use with 32-bit Windows Applications (win32)
-=====================================================
+MPFR for use with Windows Applications
+======================================
 
 There are several ways of building MPFR on Windows, the most appropriate
 approach depending on how you intend to use the resulting libraries.
@@ -511,71 +518,24 @@ approach depending on how you intend to use the resulting libraries.
 a. Using MinGW
 ==============
 
-1 - We advise to use MinGW (http://www.mingw.org/), which is simpler and
-    less demanding than Cygwin. Contrary to Cygwin, it also provides native
-    Windows code.
+1 - We advise to use MinGW (http://www.mingw.org/ for 32-bit, and
+    https://sourceforge.net/projects/mingw-w64/ for 32- and 64-bit),
+    which is simpler and less demanding than Cygwin. Contrary to Cygwin,
+    it also provides native Windows code.
 
 2 - If you just want to make a binary with gcc, there is nothing to do:
     GMP, MPFR and the program compile exactly as under Linux.
-    But if you want to generate a library for MinGW from a Cygwin
-    environment, you may need the -mno-cygwin gcc option (otherwise
-    a typical error is _P_WAIT being undeclared).
 
-3 - If you want to make libraries work under another Windows compiler
-    like Visual C / C++, since the unix-like *.a library files are compatible
-    with Windows *.lib files, you can simply rename all *.a libraries to *.lib.
-
-    With gmp-4.1.3, the only remaining problem seems to be the "alloca" calls
-    in GMP. Configuring GMP and MPFR with --enable-alloca=malloc-reentrant
-    should work (if you build MPFR with GMP internal files).
-
-    Or you could add the library
-     "$MINGWIN$/lib/gcc-lib/mingw32/$VERSION$/libgcc.a"
-    to your project: it contains all the extra-functions needed by a program
-    compiled by gcc (division of 64-bit integer, bcopy, alloca...).
-    Of course, include it if and only if your compiler is not gcc.
-
-4 - On Windows32 / MinGW, if all the tests fail, try to run the test suite
-    with "make check EXEEXT=".
-
-5 - To avoid using the Microsoft runtime (which might not be conform to ISO C),
+3 - To avoid using the Microsoft runtime (which might not be conform to ISO C),
     you can use the MinGW runtime package (which is an integral part of MinGW).
     For example, with MinGW versions 3.15 and later you can get an
     ISO-compliant printf() if you compile your application with either
-    '-ansi', '-posix' or '-D__USE_MINGW_ANSI_STDIO'. For example, you can
-    compile and test MPFR with CC="gcc -D__USE_MINGW_ANSI_STDIO".
-
-    For example under Win32, the following problem has been experienced with
-    MPFR 2.4.0 RC1 and the MSVC runtime (msvcrt.dll):
-
-       Error in mpfr_vsprintf (s, "%.*Zi, %R*e, %Lf%n", ...);
-       expected: "00000010610209857723, -1.2345678875e+07, 0.032258"
-       got:      "00000010610209857723, -1.2345678875e+07, -0.000000"
-       FAIL: tsprintf.exe
-
-    This error is due to the MSVC runtime not supporting the L length modifier
-    for formatted output (e.g. printf with %Lf). You can check this with the
-    following program:
-
-       #include <stdio.h>
-       int main (void)
-       {
-         long double d = 1. / 31.;
-         printf ("%Lf\n", d);
-         return 0;
-       }
-
-    The expected output is 0.032258.
-
-    Note: The L modifier has been standard for a long time (it was added
-    in ISO C89).
-
-    Note 2: this now works correctly with Visual C++ 2008 and 2010
-    (tested on Microsoft (R) 32-bit C/C++ Optimizing Compiler Version
-     15.00.21022.08 for 80x86, Microsoft (R) C/C++ Optimizing Compiler
-     Version 15.00.21022.08 for x64, Microsoft (R) 32-bit C/C++ Optimizing
-     Compiler Version 16.00.30319.01 for 80x86, Microsoft (R) C/C++ Optimizing
-     Compiler Version 16.00.30319.01 for x64).
+    '-ansi', '-posix' or '-D__USE_MINGW_ANSI_STDIO'. In order to have the
+    MPFR formatted output functions based on ISO-compliant printf(), you
+    need to compile GMP (not MPFR) with CC="gcc -D__USE_MINGW_ANSI_STDIO"
+    (since the standard printf modifiers %Ld and %td are passed to GMP).
+    Building MPFR with -D__USE_MINGW_ANSI_STDIO is useless except for some
+    error messages in the test suite.
 
 b. Using Cygwin
 ===============
@@ -590,62 +550,20 @@ In case of failure, you may need to pass LDFLAGS='-shared-libgcc' at the
 end of the configure line due to a bug in GCC. Otherwise, if threading
 support is not needed, you can configure MPFR with --disable-thread-safe.
 
-c. Using Visual C++ 2008/2010
-=============================
+c. Using Microsoft Visual C++ and Intel C++ Compilers
+=====================================================
 
-Win32 versions of the MPFR library can be built using Microsoft Visual
-C++ 2008 or 2010 using the build projects available here:
+Static and dynamic MPFR libraries for the 32- and 64-bit versions of
+Windows can be built with Microsoft Visual Studio 2015 using the
+Microsoft Visual C++ compiler, see:
 
-http://gladman.plushost.co.uk/oldsite/computing/gmp4win.php
+  https://www.visualstudio.com/
 
-These build projects contain both win32 and x64 builds but the latter
-will give errors if your version of Visual C++ lacks the 64-bit
-compiler and tools.   The 32-bit build projects should however work
-on Visual C++ 2008, Visual C++ Express 2008 (SP1), Visual C++ 2010
-and Visual C++ Express 2010.
+The Intel C++ compiler provided as a part of Intel Parallel Studio XE
+can also be used:
 
-MPFR for use with 64-bit Windows Applications (x64)
-===================================================
+  https://software.intel.com/en-us/intel-parallel-studio-xe
 
-There are two ways of building MPFR for use with 64-bit Windows
-applications.
+The relevant build projects are available here:
 
-a. Using MinGW64
-================
-
-The MinGW64 version of the GCC compiler is now available here:
-
-http://sourceforge.net/projects/mingw-w64/
-
-It can build both GMP and MPFR for 64-bit Windows applications.
-
-b. Using Visual C++ 2008/2010
-=============================
-
-x64 versions of the MPFR library can be built using Microsoft Visual
-C++ 2008 or 2010 using the build projects available here:
-
-http://gladman.plushost.co.uk/oldsite/computing/gmp4win.php
-
-These build projects contain both win32 and x64 builds but the latter
-can only be built if your version of Visual C++ contains the 64-bit
-compiler and tools.  On Visual C++ 2008, the 64-bit tools are an
-option during installation so if you don't have them you will need
-to start the Visual Studio installer and add them to your IDE
-configuration.  On Visual C++ 2010 they are installed by default.
-
-As delivered, Visual C++ Express 2008 SP1 cannot build x64 projects
-but the Windows SDK can be added to it to allow this. The IDE then
-needs to be configured as described here:
-
-http://msdn.microsoft.com/en-us/library/9yb4317s(VS.80).aspx
-
-to allow x64 builds.
-
-Visual C++ Express 2010 requires the Windows 7 SDK to be installed
-in order to build x64 projects. This SDK is available here:
-
-http://tinyurl.com/25zz8r6
-
-In this case, once this SDK has been installed, Visual C++ Express 2010
-will build x64 projects without further changes.
+  https://github.com/BrianGladman

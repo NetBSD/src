@@ -1,11 +1,12 @@
 # size_max.m4 serial 6
-dnl Copyright (C) 2003, 2005-2006, 2010 Free Software Foundation, Inc.
+dnl Copyright (C) 2003, 2005-2006, 2010, 2012 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl From Bruno Haible.
 dnl Change by Vincent Lefevre: added <inttypes.h> for consistency with MPFR
+dnl Update with autoupdate.
 
 AC_DEFUN([gl_SIZE_MAX],
 [
@@ -39,10 +40,10 @@ Found it
         if test $fits_in_uint = 1; then
           dnl Even though SIZE_MAX fits in an unsigned int, it must be of type
           dnl 'unsigned long' if the type 'size_t' is the same as 'unsigned long'.
-          AC_TRY_COMPILE([#include <stddef.h>
+          AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stddef.h>
             extern size_t foo;
             extern unsigned long foo;
-            ], [], fits_in_uint=0)
+            ]], [[]])], fits_in_uint=0)
         fi
         dnl We cannot use 'expr' to simplify this expression, because 'expr'
         dnl works only with 'long' integers in the host environment, while we

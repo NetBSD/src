@@ -1,8 +1,8 @@
 /* mpfr_j0, mpfr_j1, mpfr_jn -- Bessel functions of 1st kind, integer order.
    http://www.opengroup.org/onlinepubs/009695399/functions/j0.html
 
-Copyright 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2007-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 

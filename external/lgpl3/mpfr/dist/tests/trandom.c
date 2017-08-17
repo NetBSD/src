@@ -1,7 +1,7 @@
 /* Test file for mpfr_urandomb
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2004, 2006-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -24,7 +24,6 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include <stdlib.h>
 
 #include "mpfr-test.h"
-
 
 static void
 test_urandomb (long nbtests, mpfr_prec_t prec, int verbose)
@@ -178,6 +177,40 @@ main (int argc, char *argv[])
     }
 
   bug20100914 ();
+
+#if __MPFR_GMP(4,2,0)
+  /* Get a non-zero fixed-point number whose first 32 bits are 0 with the
+     default GMP PRNG. This corresponds to the case cnt == 0 && k != 0 in
+     src/urandomb.c with the 32-bit ABI. */
+  {
+    gmp_randstate_t s;
+    mpfr_t x;
+    char *str = "0.1010111100000000000000000000000000000000E-32";
+    int k;
+
+    gmp_randinit_default (s);
+    gmp_randseed_ui (s, 4518);
+    mpfr_init2 (x, 40);
+
+    for (k = 0; k < 575123; k++)
+      {
+        mpfr_urandomb (x, s);
+        MPFR_ASSERTN (MPFR_IS_FP (x));
+      }
+
+    if (mpfr_cmp_str (x, str, 2, MPFR_RNDN) != 0)
+      {
+        printf ("Error in test_urandomb:\n");
+        printf ("Expected %s\n", str);
+        printf ("Got      ");
+        mpfr_dump (x);
+        exit (1);
+      }
+
+    mpfr_clear (x);
+    gmp_randclear (s);
+  }
+#endif
 
   tests_end_mpfr ();
   return 0;

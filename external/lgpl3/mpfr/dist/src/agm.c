@@ -1,7 +1,7 @@
 /* mpfr_agm -- arithmetic-geometric mean of two floating-point numbers
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -96,10 +96,7 @@ mpfr_agm (mpfr_ptr r, mpfr_srcptr op2, mpfr_srcptr op1, mpfr_rnd_t rnd_mode)
   /* b (op2) and a (op1) are the 2 operands but we want b >= a */
   compare = mpfr_cmp (op1, op2);
   if (MPFR_UNLIKELY( compare == 0 ))
-    {
-      mpfr_set (r, op1, rnd_mode);
-      MPFR_RET (0); /* exact */
-    }
+    return mpfr_set (r, op1, rnd_mode);
   else if (compare > 0)
     {
       mpfr_srcptr t = op1;

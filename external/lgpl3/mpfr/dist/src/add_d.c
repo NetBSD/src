@@ -1,8 +1,8 @@
 /* mpfr_add_d -- add a multiple precision floating-point number
                  to a machine double precision float
 
-Copyright 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2007-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 

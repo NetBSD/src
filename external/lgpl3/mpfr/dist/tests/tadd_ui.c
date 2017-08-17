@@ -1,7 +1,7 @@
 /* Test file for mpfr_add_ui
 
-Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2000-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -69,7 +69,9 @@ check_nans (void)
 
   /* nan + 2394875 == nan */
   mpfr_set_nan (x);
+  mpfr_clear_nanflag ();
   mpfr_add_ui (y, x, 2394875L, MPFR_RNDN);
+  MPFR_ASSERTN (mpfr_nanflag_p ());
   MPFR_ASSERTN (mpfr_nan_p (y));
 
   /* +inf + 2394875 == +inf */
@@ -89,9 +91,9 @@ check_nans (void)
 }
 
 #define TEST_FUNCTION mpfr_add_ui
-#define INTEGER_TYPE  unsigned long
+#define ULONG_ARG2
 #define RAND_FUNCTION(x) mpfr_random2(x, MPFR_LIMB_SIZE (x), 1, RANDS)
-#include "tgeneric_ui.c"
+#include "tgeneric.c"
 
 int
 main (int argc, char *argv[])
@@ -109,7 +111,8 @@ main (int argc, char *argv[])
           "2.0008781209999997615e9");
   check3 ("-2.0769715792901673e-5", 880524, MPFR_RNDN,
           "8.8052399997923023e5");
-  test_generic_ui (2, 1000, 100);
+
+  test_generic (2, 1000, 100);
 
   tests_end_mpfr ();
   return 0;

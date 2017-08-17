@@ -1,7 +1,7 @@
 /* Test file for mpfr_set_d and mpfr_get_d.
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -92,6 +92,7 @@ main (int argc, char *argv[])
     }
 #endif  /* MPFR_ERRDIVZERO */
 
+#ifdef HAVE_SIGNEDZ
   d = 0.0;
   mpfr_set_d (x, d, MPFR_RNDN);
   MPFR_ASSERTN(mpfr_cmp_ui (x, 0) == 0 && MPFR_IS_POS(x));
@@ -102,6 +103,7 @@ main (int argc, char *argv[])
       printf ("Error in mpfr_set_d on -0\n");
       exit (1);
     }
+#endif  /* HAVE_SIGNEDZ */
 
 #if !defined(MPFR_ERRDIVZERO)
   mpfr_set_inf (x, 1);
@@ -119,7 +121,7 @@ main (int argc, char *argv[])
 
   mpfr_set_prec (x, 2);
 
-  /* checks that denormalized are not flushed to zero */
+  /* checks that subnormals are not flushed to zero */
   d = DBL_MIN; /* 2^(-1022) */
   for (n=0; n<52; n++, d /= 2.0)
     if (d != 0.0) /* should be 2^(-1022-n) */

@@ -1,7 +1,7 @@
 /* mpfr_mul -- multiply two floating-point numbers
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -28,8 +28,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 /* Check if we have to check the result of mpfr_mul.
    TODO: Find a better (and faster?) check than using old implementation */
-#ifdef WANT_ASSERT
-# if WANT_ASSERT >= 3
+#ifdef MPFR_WANT_ASSERT
+# if MPFR_WANT_ASSERT >= 3
 
 int mpfr_mul2 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode);
 static int
@@ -106,7 +106,7 @@ mpfr_mul3 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
   MPFR_ASSERTD(tn <= k);
 
   /* Check for no size_t overflow*/
-  MPFR_ASSERTD((size_t) k <= ((size_t) -1) / BYTES_PER_MP_LIMB);
+  MPFR_ASSERTD((size_t) k <= ((size_t) -1) / MPFR_BYTES_PER_MP_LIMB);
   MPFR_TMP_MARK(marker);
   tmp = MPFR_TMP_LIMBS_ALLOC (k);
 
@@ -301,7 +301,7 @@ mpfr_mul (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
   MPFR_ASSERTD (tn <= k); /* tn <= k, thus no int overflow */
 
   /* Check for no size_t overflow*/
-  MPFR_ASSERTD ((size_t) k <= ((size_t) -1) / BYTES_PER_MP_LIMB);
+  MPFR_ASSERTD ((size_t) k <= ((size_t) -1) / MPFR_BYTES_PER_MP_LIMB);
   MPFR_TMP_MARK (marker);
   tmp = MPFR_TMP_LIMBS_ALLOC (k);
 

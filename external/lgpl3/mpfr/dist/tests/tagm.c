@@ -1,7 +1,7 @@
 /* Test file for mpfr_agm.
 
-Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999, 2001-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -169,6 +169,45 @@ check_large (void)
 }
 
 static void
+check_eq (void)
+{
+  mpfr_t a, b, agm;
+  int p;
+
+  mpfr_init2 (a, 17);
+  mpfr_init2 (b, 9);
+
+  mpfr_set_str_binary (b, "0.101000000E-3");
+  mpfr_set (a, b, MPFR_RNDN);
+
+  for (p = MPFR_PREC_MIN; p <= 2; p++)
+    {
+      int inex;
+
+      mpfr_init2 (agm, p);
+      inex = mpfr_agm (agm, a, b, MPFR_RNDU);
+      if (mpfr_cmp_ui_2exp (agm, 5 - p, -5) != 0)
+        {
+          printf ("Error in check_eq for p = %d: expected %d*2^(-5), got ",
+                  p, 5 - p);
+          mpfr_dump (agm);
+          exit (1);
+        }
+      if (inex <= 0)
+        {
+          printf ("Wrong ternary value in check_eq for p = %d\n", p);
+          printf ("expected 1\n");
+          printf ("got      %d\n", inex);
+          exit (1);
+        }
+      mpfr_clear (agm);
+    }
+
+  mpfr_clear (a);
+  mpfr_clear (b);
+}
+
+static void
 check_nans (void)
 {
   mpfr_t  x, y, m;
@@ -260,6 +299,7 @@ main (int argc, char* argv[])
   check_nans ();
 
   check_large ();
+  check_eq ();
   check4 ("2.0", "1.0", MPFR_RNDN, "1.456791031046906869", -1);
   check4 ("6.0", "4.0", MPFR_RNDN, "4.949360872472608925", 1);
   check4 ("62.0", "61.0", MPFR_RNDN, "61.498983718845075902", -1);

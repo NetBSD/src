@@ -1,7 +1,7 @@
 /* tfprintf.c -- test file for mpfr_fprintf and mpfr_vfprintf
 
-Copyright 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2008-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -311,7 +311,7 @@ check_random (FILE *fout, int nb_tests)
       char fmt[FMT_SIZE]; /* at most something like "%-+ #0'.*R*f" */
       char *ptr = fmt;
 
-      tests_default_random (x, 256, MPFR_EMIN_MIN, MPFR_EMAX_MAX);
+      tests_default_random (x, 256, MPFR_EMIN_MIN, MPFR_EMAX_MAX, 0);
       rnd = RND_RAND ();
 
       spec = (int) (randlimb () % 5);

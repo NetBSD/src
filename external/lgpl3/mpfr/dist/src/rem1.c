@@ -2,8 +2,8 @@
    mpfr_fmod -- compute the floating-point remainder of x/y
    mpfr_remquo and mpfr_remainder -- argument reduction functions
 
-Copyright 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2007-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -59,6 +59,7 @@ mpfr_rem1 (mpfr_ptr rem, long *quo, mpfr_rnd_t rnd_q,
   mpfr_exp_t ex, ey;
   int compare, inex, q_is_odd, sign, signx = MPFR_SIGN (x);
   mpz_t mx, my, r;
+  int tiny = 0;
 
   MPFR_ASSERTD (rnd_q == MPFR_RNDN || rnd_q == MPFR_RNDZ);
 
@@ -109,13 +110,27 @@ mpfr_rem1 (mpfr_ptr rem, long *quo, mpfr_rnd_t rnd_q,
   if (ex <= ey)
     {
       /* q = x/y = mx/(my*2^(ey-ex)) */
-      mpz_mul_2exp (my, my, ey - ex);   /* divide mx by my*2^(ey-ex) */
-      if (rnd_q == MPFR_RNDZ)
-        /* 0 <= |r| <= |my|, r has the same sign as mx */
-        mpz_tdiv_qr (mx, r, mx, my);
+
+      /* First detect cases where q=0, to avoid creating a huge number
+         my*2^(ey-ex): if sx = mpz_sizeinbase (mx, 2) and sy =
+         mpz_sizeinbase (my, 2), we have x < 2^(ex + sx) and
+         y >= 2^(ey + sy - 1), thus if ex + sx <= ey + sy - 1
+         the quotient is 0 */
+      if (ex + (mpfr_exp_t) mpz_sizeinbase (mx, 2) <
+          ey + (mpfr_exp_t) mpz_sizeinbase (my, 2))
+        {
+          tiny = 1;
+          mpz_set (r, mx);
+          mpz_set_ui (mx, 0);
+        }
       else
-        /* 0 <= |r| <= |my|, r has the same sign as my */
-        mpz_fdiv_qr (mx, r, mx, my);
+        {
+          mpz_mul_2exp (my, my, ey - ex);   /* divide mx by my*2^(ey-ex) */
+
+          /* since mx > 0 and my > 0, we can use mpz_tdiv_qr in all cases */
+          mpz_tdiv_qr (mx, r, mx, my);
+          /* 0 <= |r| <= |my|, r has the same sign as mx */
+        }
 
       if (rnd_q == MPFR_RNDN)
         q_is_odd = mpz_tstbit (mx, 0);
@@ -181,7 +196,20 @@ mpfr_rem1 (mpfr_ptr rem, long *quo, mpfr_rnd_t rnd_q,
           /* FIXME: the comparison 2*r < my could be done more efficiently
              at the mpn level */
           mpz_mul_2exp (r, r, 1);
-          compare = mpz_cmpabs (r, my);
+          /* if tiny=1, we should compare r with my*2^(ey-ex) */
+          if (tiny)
+            {
+              if (ex + (mpfr_exp_t) mpz_sizeinbase (r, 2) <
+                  ey + (mpfr_exp_t) mpz_sizeinbase (my, 2))
+                compare = 0; /* r*2^ex < my*2^ey */
+              else
+                {
+                  mpz_mul_2exp (my, my, ey - ex);
+                  compare = mpz_cmpabs (r, my);
+                }
+            }
+          else
+            compare = mpz_cmpabs (r, my);
           mpz_fdiv_q_2exp (r, r, 1);
           compare = ((compare > 0) ||
                      ((rnd_q == MPFR_RNDN) && (compare == 0) && q_is_odd));

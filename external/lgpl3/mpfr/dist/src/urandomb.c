@@ -3,8 +3,8 @@
    using STATE as the random state previously initialized by a call to
    gmp_randinit_lc_2exp_size().
 
-Copyright 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2000-2004, 2006-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -98,6 +98,8 @@ mpfr_urandomb (mpfr_ptr rop, gmp_randstate_t rstate)
         }
       if (cnt != 0)
         mpn_lshift (rp + k, rp, nlimbs, cnt);
+      else if (k != 0)
+        MPN_COPY (rp + k, rp, nlimbs);
       if (k != 0)
         MPN_ZERO (rp, k);
     }

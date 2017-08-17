@@ -1,7 +1,7 @@
 /* Test file for multiple mpfr.h inclusion and va_list related functions
 
-Copyright 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2011-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -41,6 +41,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define MPFR_USE_FILE /* necessary due to GMP bug concerning inclusions */
 #include <mpfr.h>
 
+#include "mpfr-test.h"
+
 static void
 test (FILE *fout, const char *fmt, ...)
 {
@@ -59,7 +61,9 @@ test (FILE *fout, const char *fmt, ...)
 int
 main (void)
 {
+  tests_start_mpfr ();
   test (stdout, "%d\n", 0);
+  tests_end_mpfr ();
   return 0;
 }
 

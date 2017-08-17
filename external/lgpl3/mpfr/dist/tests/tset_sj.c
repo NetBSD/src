@@ -1,8 +1,8 @@
 /* Test file for
    mpfr_set_sj, mpfr_set_uj, mpfr_set_sj_2exp and mpfr_set_uj_2exp.
 
-Copyright 2004, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2004, 2006-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -42,7 +42,7 @@ main (void)
 
 #else
 
-#define ERROR(str) {printf("Error for "str"\n"); exit(1);}
+#define ERROR(str) do { printf ("Error for " str "\n"); exit (1); } while (0)
 
 static int
 inexact_sign (int x)

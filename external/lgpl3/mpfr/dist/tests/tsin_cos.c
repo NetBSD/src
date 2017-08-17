@@ -1,7 +1,7 @@
 /* Test file for mpfr_sin_cos.
 
-Copyright 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2000-2004, 2006-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -588,7 +588,7 @@ consistency (void)
         }
       else
         {
-          tests_default_random (x, 256, -5, 50);
+          tests_default_random (x, 256, -5, 50, 0);
           rnd = RND_RAND ();
           flags_before = (randlimb () & 1) ?
             (unsigned int) (MPFR_FLAGS_ALL ^ MPFR_FLAGS_ERANGE) :

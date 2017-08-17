@@ -1,7 +1,7 @@
 /* mpfr_zeta_ui -- compute the Riemann Zeta function for integer argument.
 
-Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2005-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -28,12 +28,13 @@ mpfr_zeta_ui (mpfr_ptr z, unsigned long m, mpfr_rnd_t r)
 {
   MPFR_ZIV_DECL (loop);
 
+  MPFR_LOG_FUNC
+    (("m=%lu rnd=%d prec=%Pu", m, r, mpfr_get_prec (z)),
+     ("z[%Pu]=%.*Rg", mpfr_get_prec (z), mpfr_log_prec, z));
+
   if (m == 0)
     {
-      mpfr_set_ui (z, 1, r);
-      mpfr_div_2ui (z, z, 1, r);
-      MPFR_CHANGE_SIGN (z);
-      MPFR_RET (0);
+      return mpfr_set_si_2exp (z, -1, -1, r);
     }
   else if (m == 1)
     {
@@ -49,28 +50,32 @@ mpfr_zeta_ui (mpfr_ptr z, unsigned long m, mpfr_rnd_t r)
       mpz_t d, t, s, q;
       mpfr_t y;
       int inex;
+      MPFR_SAVE_EXPO_DECL (expo);
 
       if (r == MPFR_RNDA)
         r = MPFR_RNDU; /* since the result is always positive */
 
+      MPFR_SAVE_EXPO_MARK (expo);
+
       if (m >= p) /* 2^(-m) < ulp(1) = 2^(1-p). This means that
                      2^(-m) <= 1/2*ulp(1). We have 3^(-m)+4^(-m)+... < 2^(-m)
                      i.e. zeta(m) < 1+2*2^(-m) for m >= 3 */
-
         {
           if (m == 2) /* necessarily p=2 */
-            return mpfr_set_ui_2exp (z, 13, -3, r);
-          else if (r == MPFR_RNDZ || r == MPFR_RNDD || (r == MPFR_RNDN && m > p))
+            inex = mpfr_set_ui_2exp (z, 13, -3, r);
+          else if (r == MPFR_RNDZ || r == MPFR_RNDD ||
+                   (r == MPFR_RNDN && m > p))
             {
               mpfr_set_ui (z, 1, r);
-              return -1;
+              inex = -1;
             }
           else
             {
               mpfr_set_ui (z, 1, r);
               mpfr_nextabove (z);
-              return 1;
+              inex = 1;
             }
+          goto end;
         }
 
       /* now treat also the case where zeta(m) - (1+1/2^m) < 1/2*ulp(1),
@@ -89,9 +94,13 @@ mpfr_zeta_ui (mpfr_ptr z, unsigned long m, mpfr_rnd_t r)
               mpfr_div_2ui (z, z, m, MPFR_RNDZ);
               mpfr_add_ui (z, z, 1, MPFR_RNDZ);
               if (r != MPFR_RNDU)
-                return -1;
-              mpfr_nextabove (z);
-              return 1;
+                inex = -1;
+              else
+                {
+                  mpfr_nextabove (z);
+                  inex = 1;
+                }
+              goto end;
             }
         }
 
@@ -225,6 +234,11 @@ mpfr_zeta_ui (mpfr_ptr z, unsigned long m, mpfr_rnd_t r)
       mpz_clear (s);
       inex = mpfr_set (z, y, r);
       mpfr_clear (y);
-      return inex;
+
+    end:
+      MPFR_LOG_VAR (z);
+      MPFR_LOG_MSG (("inex = %d before mpfr_check_range\n", inex));
+      MPFR_SAVE_EXPO_FREE (expo);
+      return mpfr_check_range (z, inex, r);
     }
 }

@@ -1,7 +1,7 @@
 /* mpfr_tlngamma -- test file for lngamma function
 
-Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2005-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -33,7 +33,7 @@ static void
 special (void)
 {
   mpfr_t x, y;
-  int inex;
+  int i, inex;
 
   mpfr_init (x);
   mpfr_init (y);
@@ -46,25 +46,29 @@ special (void)
       exit (1);
     }
 
-  mpfr_set_inf (x, -1);
-  mpfr_lngamma (y, x, MPFR_RNDN);
-  if (!mpfr_nan_p (y))
-    {
-      printf ("Error for lngamma(-Inf)\n");
-      exit (1);
-    }
-
   mpfr_set_inf (x, 1);
+  mpfr_clear_flags ();
   mpfr_lngamma (y, x, MPFR_RNDN);
-  if (!mpfr_inf_p (y) || mpfr_sgn (y) < 0)
+  if (!mpfr_inf_p (y) || mpfr_sgn (y) < 0 || __gmpfr_flags != 0)
     {
       printf ("Error for lngamma(+Inf)\n");
       exit (1);
     }
 
-  mpfr_set_ui (x, 0, MPFR_RNDN);
+  mpfr_set_inf (x, -1);
+  mpfr_clear_flags ();
   mpfr_lngamma (y, x, MPFR_RNDN);
-  if (!mpfr_inf_p (y) || mpfr_sgn (y) < 0)
+  if (!mpfr_inf_p (y) || mpfr_sgn (y) < 0 || __gmpfr_flags != 0)
+    {
+      printf ("Error for lngamma(-Inf)\n");
+      exit (1);
+    }
+
+  mpfr_set_ui (x, 0, MPFR_RNDN);
+  mpfr_clear_flags ();
+  mpfr_lngamma (y, x, MPFR_RNDN);
+  if (!mpfr_inf_p (y) || mpfr_sgn (y) < 0 ||
+      __gmpfr_flags != MPFR_FLAGS_DIVBY0)
     {
       printf ("Error for lngamma(+0)\n");
       exit (1);
@@ -72,32 +76,58 @@ special (void)
 
   mpfr_set_ui (x, 0, MPFR_RNDN);
   mpfr_neg (x, x, MPFR_RNDN);
+  mpfr_clear_flags ();
   mpfr_lngamma (y, x, MPFR_RNDN);
-  if (!mpfr_nan_p (y))
+  if (!mpfr_inf_p (y) || mpfr_sgn (y) < 0 ||
+      __gmpfr_flags != MPFR_FLAGS_DIVBY0)
     {
       printf ("Error for lngamma(-0)\n");
       exit (1);
     }
 
   mpfr_set_ui (x, 1, MPFR_RNDN);
+  mpfr_clear_flags ();
   mpfr_lngamma (y, x, MPFR_RNDN);
-  if (MPFR_IS_NAN (y) || mpfr_cmp_ui (y, 0) || MPFR_IS_NEG (y))
+  if (mpfr_cmp_ui0 (y, 0) || MPFR_IS_NEG (y))
     {
       printf ("Error for lngamma(1)\n");
       exit (1);
     }
 
-  mpfr_set_si (x, -1, MPFR_RNDN);
-  mpfr_lngamma (y, x, MPFR_RNDN);
-  if (!mpfr_nan_p (y))
+  for (i = 1; i <= 5; i++)
     {
-      printf ("Error for lngamma(-1)\n");
-      exit (1);
+      int c;
+
+      mpfr_set_si (x, -i, MPFR_RNDN);
+      mpfr_clear_flags ();
+      mpfr_lngamma (y, x, MPFR_RNDN);
+      if (!mpfr_inf_p (y) || mpfr_sgn (y) < 0 ||
+          __gmpfr_flags != MPFR_FLAGS_DIVBY0)
+        {
+          printf ("Error for lngamma(-%d)\n", i);
+          exit (1);
+        }
+      if (i & 1)
+        {
+          mpfr_nextabove (x);
+          c = '+';
+        }
+      else
+        {
+          mpfr_nextbelow (x);
+          c = '-';
+        }
+      mpfr_lngamma (y, x, MPFR_RNDN);
+      if (!mpfr_nan_p (y))
+        {
+          printf ("Error for lngamma(-%d%cepsilon)\n", i, c);
+          exit (1);
+        }
     }
 
   mpfr_set_ui (x, 2, MPFR_RNDN);
   mpfr_lngamma (y, x, MPFR_RNDN);
-  if (MPFR_IS_NAN (y) || mpfr_cmp_ui (y, 0) || MPFR_IS_NEG (y))
+  if (mpfr_cmp_ui0 (y, 0) || MPFR_IS_NEG (y))
     {
       printf ("Error for lngamma(2)\n");
       exit (1);
@@ -127,7 +157,7 @@ special (void)
   mpfr_set_str (x, CHECK_X2, 10, MPFR_RNDN);
   mpfr_lngamma (y, x, MPFR_RNDN);
   mpfr_set_str (x, CHECK_Y2, 10, MPFR_RNDN);
-  if (MPFR_IS_NAN (y) || mpfr_cmp (y, x))
+  if (mpfr_cmp0 (y, x))
     {
       printf ("mpfr_lngamma("CHECK_X2") is wrong:\n"
               "expected ");
@@ -143,7 +173,7 @@ special (void)
   mpfr_lngamma (y, x, MPFR_RNDU);
   mpfr_set_prec (x, 175);
   mpfr_set_str_binary (x, "0.1010001100011101101011001101110010100001000001000001110011000001101100001111001001000101011011100100010101011110100111110101010100010011010010000101010111001100011000101111E7");
-  if (MPFR_IS_NAN (y) || mpfr_cmp (x, y))
+  if (mpfr_cmp0 (x, y))
     {
       printf ("Error in mpfr_lngamma (1)\n");
       exit (1);
@@ -155,7 +185,7 @@ special (void)
   mpfr_lngamma (x, y, MPFR_RNDZ);
   mpfr_set_prec (y, 21);
   mpfr_set_str_binary (y, "0.111000101000001100101E9");
-  if (MPFR_IS_NAN (x) || mpfr_cmp (x, y))
+  if (mpfr_cmp0 (x, y))
     {
       printf ("Error in mpfr_lngamma (120)\n");
       printf ("Expected "); mpfr_print_binary (y); puts ("");
@@ -169,7 +199,7 @@ special (void)
   inex = mpfr_lngamma (y, x, MPFR_RNDN);
   mpfr_set_prec (x, 206);
   mpfr_set_str_binary (x, "0.10000111011000000011100010101001100110001110000111100011000100100110110010001011011110101001111011110110000001010100111011010000000011100110110101100111000111010011110010000100010111101010001101000110101001E13");
-  if (MPFR_IS_NAN (y) || mpfr_cmp (x, y))
+  if (mpfr_cmp0 (x, y))
     {
       printf ("Error in mpfr_lngamma (768)\n");
       exit (1);
@@ -185,7 +215,7 @@ special (void)
   mpfr_set_str_binary (x, "0.1100E-66");
   mpfr_lngamma (y, x, MPFR_RNDN);
   mpfr_set_str_binary (x, "0.1100E6");
-  if (MPFR_IS_NAN (y) || mpfr_cmp (x, y))
+  if (mpfr_cmp0 (x, y))
     {
       printf ("Error for lngamma(0.1100E-66)\n");
       exit (1);
@@ -199,7 +229,7 @@ special (void)
   mpfr_lngamma (y, x, MPFR_RNDN);
   mpfr_set_prec (x, 32);
   mpfr_set_str_binary (x, "-0.10001000111011111011000010100010E207");
-  if (MPFR_IS_NAN (y) || mpfr_cmp (x, y))
+  if (mpfr_cmp0 (x, y))
     {
       printf ("Error for lngamma(-2^199+0.5)\n");
       printf ("Got        ");

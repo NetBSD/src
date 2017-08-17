@@ -1,7 +1,7 @@
 /* Test file for mpfr_div_ui.
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -197,9 +197,9 @@ check_inexact (void)
 }
 
 #define TEST_FUNCTION mpfr_div_ui
-#define INTEGER_TYPE  unsigned long
+#define ULONG_ARG2
 #define RAND_FUNCTION(x) mpfr_random2(x, MPFR_LIMB_SIZE (x), 1, RANDS)
-#include "tgeneric_ui.c"
+#include "tgeneric.c"
 
 int
 main (int argc, char **argv)
@@ -230,7 +230,7 @@ main (int argc, char **argv)
     }
   mpfr_clear (x);
 
-  test_generic_ui (2, 200, 100);
+  test_generic (2, 200, 100);
 
   tests_end_mpfr ();
   return 0;

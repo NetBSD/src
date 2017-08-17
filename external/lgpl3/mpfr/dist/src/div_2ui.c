@@ -1,7 +1,7 @@
 /* mpfr_div_2ui -- divide a floating-point number by a power of two
 
-Copyright 1999, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999, 2001-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -32,7 +32,7 @@ mpfr_div_2ui (mpfr_ptr y, mpfr_srcptr x, unsigned long n, mpfr_rnd_t rnd_mode)
      rnd_mode),
     ("y[%Pu]=%.*Rg inexact=%d", mpfr_get_prec(y), mpfr_log_prec, y, inexact));
 
-  if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))
+  if (MPFR_UNLIKELY (n == 0 || MPFR_IS_SINGULAR (x)))
     return mpfr_set (y, x, rnd_mode);
   else
     {
@@ -44,7 +44,9 @@ mpfr_div_2ui (mpfr_ptr y, mpfr_srcptr x, unsigned long n, mpfr_rnd_t rnd_mode)
       if (MPFR_UNLIKELY (n >= diffexp))  /* exp - n <= emin - 1 */
         {
           if (rnd_mode == MPFR_RNDN &&
-              (n > diffexp || (inexact >= 0 && mpfr_powerof2_raw (y))))
+              (n > diffexp ||
+               ((MPFR_IS_NEG (y) ? inexact <= 0 : inexact >= 0) &&
+                mpfr_powerof2_raw (y))))
             rnd_mode = MPFR_RNDZ;
           return mpfr_underflow (y, rnd_mode, MPFR_SIGN (y));
         }

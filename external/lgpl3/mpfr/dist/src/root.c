@@ -1,7 +1,7 @@
 /* mpfr_root -- kth root.
 
-Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2005-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -23,13 +23,15 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
 
- /* The computation of y = x^(1/k) is done as follows:
+ /* The computation of y = x^(1/k) is done as follows, except for large
+    values of k, for which this would be inefficient or yield internal
+    integer overflows:
 
     Let x = sign * m * 2^(k*e) where m is an integer
 
     with 2^(k*(n-1)) <= m < 2^(k*n) where n = PREC(y)
 
-    and m = s^k + r where 0 <= r and m < (s+1)^k
+    and m = s^k + t where 0 <= t and m < (s+1)^k
 
     we want that s has n bits i.e. s >= 2^(n-1), or m >= 2^(k*(n-1))
     i.e. m must have at least k*(n-1)+1 bits
@@ -38,11 +40,15 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
     x^(1/k) = s * 2^e or (s+1) * 2^e according to the rounding mode.
  */
 
+static int
+mpfr_root_aux (mpfr_ptr y, mpfr_srcptr x, unsigned long k,
+               mpfr_rnd_t rnd_mode);
+
 int
 mpfr_root (mpfr_ptr y, mpfr_srcptr x, unsigned long k, mpfr_rnd_t rnd_mode)
 {
   mpz_t m;
-  mpfr_exp_t e, r, sh;
+  mpfr_exp_t e, r, sh, f;
   mpfr_prec_t n, size_m, tmp;
   int inexact, negative;
   MPFR_SAVE_EXPO_DECL (expo);
@@ -55,50 +61,27 @@ mpfr_root (mpfr_ptr y, mpfr_srcptr x, unsigned long k, mpfr_rnd_t rnd_mode)
 
   if (MPFR_UNLIKELY (k <= 1))
     {
-      if (k < 1) /* k==0 => y=x^(1/0)=x^(+Inf) */
-#if 0
-        /* For 0 <= x < 1 => +0.
-           For x = 1      => 1.
-           For x > 1,     => +Inf.
-           For x < 0      => NaN.
-        */
+      if (k == 0)
         {
-          if (MPFR_IS_NEG (x) && !MPFR_IS_ZERO (x))
-            {
-              MPFR_SET_NAN (y);
-              MPFR_RET_NAN;
-            }
-          inexact = mpfr_cmp (x, __gmpfr_one);
-          if (inexact == 0)
-            return mpfr_set_ui (y, 1, rnd_mode); /* 1 may be Out of Range */
-          else if (inexact < 0)
-            return mpfr_set_ui (y, 0, rnd_mode); /* 0+ */
-          else
-            {
-              mpfr_set_inf (y, 1);
-              return 0;
-            }
+          MPFR_SET_NAN (y);
+          MPFR_RET_NAN;
         }
-#endif
-      {
-        MPFR_SET_NAN (y);
-        MPFR_RET_NAN;
-      }
-      else /* y =x^(1/1)=x */
+      else /* y = x^(1/1) = x */
         return mpfr_set (y, x, rnd_mode);
     }
 
   /* Singular values */
-  else if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))
+  if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))
     {
       if (MPFR_IS_NAN (x))
         {
           MPFR_SET_NAN (y); /* NaN^(1/k) = NaN */
           MPFR_RET_NAN;
         }
-      else if (MPFR_IS_INF (x)) /* +Inf^(1/k) = +Inf
-                                   -Inf^(1/k) = -Inf if k odd
-                                   -Inf^(1/k) = NaN if k even */
+
+      if (MPFR_IS_INF (x)) /* +Inf^(1/k) = +Inf
+                              -Inf^(1/k) = -Inf if k odd
+                              -Inf^(1/k) = NaN if k even */
         {
           if (MPFR_IS_NEG(x) && (k % 2 == 0))
             {
@@ -106,27 +89,31 @@ mpfr_root (mpfr_ptr y, mpfr_srcptr x, unsigned long k, mpfr_rnd_t rnd_mode)
               MPFR_RET_NAN;
             }
           MPFR_SET_INF (y);
-          MPFR_SET_SAME_SIGN (y, x);
-          MPFR_RET (0);
         }
       else /* x is necessarily 0: (+0)^(1/k) = +0
                                   (-0)^(1/k) = -0 */
         {
           MPFR_ASSERTD (MPFR_IS_ZERO (x));
           MPFR_SET_ZERO (y);
-          MPFR_SET_SAME_SIGN (y, x);
-          MPFR_RET (0);
         }
+      MPFR_SET_SAME_SIGN (y, x);
+      MPFR_RET (0);
     }
 
   /* Returns NAN for x < 0 and k even */
-  else if (MPFR_IS_NEG (x) && (k % 2 == 0))
+  if (MPFR_UNLIKELY (MPFR_IS_NEG (x) && (k % 2 == 0)))
     {
       MPFR_SET_NAN (y);
       MPFR_RET_NAN;
     }
 
   /* General case */
+
+  /* For large k, use exp(log(x)/k). The threshold of 100 seems to be quite
+     good when the precision goes to infinity. */
+  if (k > 100)
+    return mpfr_root_aux (y, x, k, rnd_mode);
+
   MPFR_SAVE_EXPO_MARK (expo);
   mpz_init (m);
 
@@ -135,31 +122,24 @@ mpfr_root (mpfr_ptr y, mpfr_srcptr x, unsigned long k, mpfr_rnd_t rnd_mode)
     mpz_neg (m, m);
   r = e % (mpfr_exp_t) k;
   if (r < 0)
-    r += k; /* now r = e (mod k) with 0 <= e < r */
+    r += k; /* now r = e (mod k) with 0 <= r < k */
+  MPFR_ASSERTD (0 <= r && r < k);
   /* x = (m*2^r) * 2^(e-r) where e-r is a multiple of k */
 
   MPFR_MPZ_SIZEINBASE2 (size_m, m);
   /* for rounding to nearest, we want the round bit to be in the root */
   n = MPFR_PREC (y) + (rnd_mode == MPFR_RNDN);
 
-  /* we now multiply m by 2^(r+k*sh) so that root(m,k) will give
-     exactly n bits: we want k*(n-1)+1 <= size_m + k*sh + r <= k*n
-     i.e. sh = floor ((kn-size_m-r)/k) */
-  if ((mpfr_exp_t) size_m + r > k * (mpfr_exp_t) n)
-    sh = 0; /* we already have too many bits */
+  /* we now multiply m by 2^sh so that root(m,k) will give
+     exactly n bits: we want k*(n-1)+1 <= size_m + sh <= k*n
+     i.e. sh = k*f + r with f = max(floor((k*n-size_m-r)/k),0) */
+  if ((mpfr_exp_t) size_m + r >= k * (mpfr_exp_t) n)
+    f = 0; /* we already have too many bits */
   else
-    sh = (k * (mpfr_exp_t) n - (mpfr_exp_t) size_m - r) / k;
-  sh = k * sh + r;
-  if (sh >= 0)
-    {
-      mpz_mul_2exp (m, m, sh);
-      e = e - sh;
-    }
-  else if (r > 0)
-    {
-      mpz_mul_2exp (m, m, r);
-      e = e - r;
-    }
+    f = (k * (mpfr_exp_t) n - (mpfr_exp_t) size_m - r) / k;
+  sh = k * f + r;
+  mpz_mul_2exp (m, m, sh);
+  e = e - sh;
 
   /* invariant: x = m*2^e, with e divisible by k */
 
@@ -201,5 +181,99 @@ mpfr_root (mpfr_ptr y, mpfr_srcptr x, unsigned long k, mpfr_rnd_t rnd_mode)
 
   mpz_clear (m);
   MPFR_SAVE_EXPO_FREE (expo);
+  return mpfr_check_range (y, inexact, rnd_mode);
+}
+
+/* Compute y <- x^(1/k) using exp(log(x)/k).
+   Assume all special cases have been eliminated before.
+   In the extended exponent range, overflows/underflows are not possible.
+   Assume x > 0, or x < 0 and k odd.
+*/
+static int
+mpfr_root_aux (mpfr_ptr y, mpfr_srcptr x, unsigned long k, mpfr_rnd_t rnd_mode)
+{
+  int inexact, exact_root = 0;
+  mpfr_prec_t w; /* working precision */
+  mpfr_t absx, t;
+  MPFR_GROUP_DECL(group);
+  MPFR_TMP_DECL(marker);
+  MPFR_ZIV_DECL(loop);
+  MPFR_SAVE_EXPO_DECL (expo);
+
+  MPFR_TMP_INIT_ABS (absx, x);
+
+  MPFR_TMP_MARK(marker);
+  w = MPFR_PREC(y) + 10;
+  /* Take some guard bits to prepare for the 'expt' lost bits below.
+     If |x| < 2^k, then log|x| < k, thus taking log2(k) bits should be fine. */
+  if (MPFR_GET_EXP(x) > 0)
+    w += MPFR_INT_CEIL_LOG2 (MPFR_GET_EXP(x));
+  MPFR_GROUP_INIT_1(group, w, t);
+  MPFR_SAVE_EXPO_MARK (expo);
+  MPFR_ZIV_INIT (loop, w);
+  for (;;)
+    {
+      mpfr_exp_t expt;
+      unsigned int err;
+
+      mpfr_log (t, absx, MPFR_RNDN);
+      /* t = log|x| * (1 + theta) with |theta| <= 2^(-w) */
+      mpfr_div_ui (t, t, k, MPFR_RNDN);
+      expt = MPFR_GET_EXP (t);
+      /* t = log|x|/k * (1 + theta) + eps with |theta| <= 2^(-w)
+         and |eps| <= 1/2 ulp(t), thus the total error is bounded
+         by 1.5 * 2^(expt - w) */
+      mpfr_exp (t, t, MPFR_RNDN);
+      /* t = |x|^(1/k) * exp(tau) * (1 + theta1) with
+         |tau| <= 1.5 * 2^(expt - w) and |theta1| <= 2^(-w).
+         For |tau| <= 0.5 we have |exp(tau)-1| < 4/3*tau, thus
+         for w >= expt + 2 we have:
+         t = |x|^(1/k) * (1 + 2^(expt+2)*theta2) * (1 + theta1) with
+         |theta1|, |theta2| <= 2^(-w).
+         If expt+2 > 0, as long as w >= 1, we have:
+         t = |x|^(1/k) * (1 + 2^(expt+3)*theta3) with |theta3| < 2^(-w).
+         For expt+2 = 0, we have:
+         t = |x|^(1/k) * (1 + 2^2*theta3) with |theta3| < 2^(-w).
+         Finally for expt+2 < 0 we have:
+         t = |x|^(1/k) * (1 + 2*theta3) with |theta3| < 2^(-w).
+      */
+      err = (expt + 2 > 0) ? expt + 3
+        : (expt + 2 == 0) ? 2 : 1;
+      /* now t = |x|^(1/k) * (1 + 2^(err-w)) thus the error is at most
+         2^(EXP(t) - w + err) */
+      if (MPFR_LIKELY (MPFR_CAN_ROUND(t, w - err, MPFR_PREC(y), rnd_mode)))
+        break;
+
+      /* If we fail to round correctly, check for an exact result or a
+         midpoint result with MPFR_RNDN (regarded as hard-to-round in
+         all precisions in order to determine the ternary value). */
+      {
+        mpfr_t z, zk;
+
+        mpfr_init2 (z, MPFR_PREC(y) + (rnd_mode == MPFR_RNDN));
+        mpfr_init2 (zk, MPFR_PREC(x));
+        mpfr_set (z, t, MPFR_RNDN);
+        inexact = mpfr_pow_ui (zk, z, k, MPFR_RNDN);
+        exact_root = !inexact && mpfr_equal_p (zk, absx);
+        if (exact_root) /* z is the exact root, thus round z directly */
+          inexact = mpfr_set4 (y, z, rnd_mode, MPFR_SIGN (x));
+        mpfr_clear (zk);
+        mpfr_clear (z);
+        if (exact_root)
+          break;
+      }
+
+      MPFR_ZIV_NEXT (loop, w);
+      MPFR_GROUP_REPREC_1(group, w, t);
+    }
+  MPFR_ZIV_FREE (loop);
+
+  if (!exact_root)
+    inexact = mpfr_set4 (y, t, rnd_mode, MPFR_SIGN (x));
+
+  MPFR_GROUP_CLEAR(group);
+  MPFR_TMP_FREE(marker);
+  MPFR_SAVE_EXPO_FREE (expo);
+
   return mpfr_check_range (y, inexact, rnd_mode);
 }

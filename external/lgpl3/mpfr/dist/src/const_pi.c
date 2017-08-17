@@ -1,7 +1,7 @@
 /* mpfr_const_pi -- compute Pi
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -28,7 +28,17 @@ MPFR_DECL_INIT_CACHE(__gmpfr_cache_const_pi, mpfr_const_pi_internal);
 #else
 MPFR_DECL_INIT_CACHE(__gmpfr_normal_pi, mpfr_const_pi_internal);
 MPFR_DECL_INIT_CACHE(__gmpfr_logging_pi, mpfr_const_pi_internal);
-mpfr_cache_ptr MPFR_THREAD_ATTR __gmpfr_cache_const_pi = __gmpfr_normal_pi;
+MPFR_THREAD_ATTR mpfr_cache_ptr __gmpfr_cache_const_pi = __gmpfr_normal_pi;
+#endif
+
+#ifdef MPFR_WIN_THREAD_SAFE_DLL
+# ifndef MPFR_USE_LOGGING
+mpfr_cache_t   * __gmpfr_cache_const_pi_f() { return &__gmpfr_cache_const_pi; }
+# else
+mpfr_cache_t   * __gmpfr_normal_pi_f()      { return &__gmpfr_normal_pi; }
+mpfr_cache_t   * __gmpfr_logging_pi_f()     { return &__gmpfr_logging_pi; }
+mpfr_cache_ptr * __gmpfr_cache_const_pi_f() { return &__gmpfr_cache_const_pi; }
+# endif
 #endif
 
 /* Set User Interface */

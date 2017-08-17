@@ -5,8 +5,8 @@ See http://gcc.gnu.org/ml/gcc/2006-06/msg00691.html,
 http://gcc.gnu.org/onlinedocs/gcc/Decimal-Float.html,
 and TR 24732 <http://www.open-std.org/jtc1/sc22/wg14/www/projects#24732>.
 
-Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2006-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 

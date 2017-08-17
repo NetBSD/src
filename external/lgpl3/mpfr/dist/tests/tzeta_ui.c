@@ -1,7 +1,7 @@
 /* Test file for mpfr_zeta_ui.
 
-Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2005-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -36,8 +36,14 @@ main (int argc, char *argv[])
   mpfr_t x, y, z, t;
   unsigned long n;
   int inex;
+  mpfr_exp_t emin, emax;
+  unsigned int flags, ex_flags;
+  int i;
 
   tests_start_mpfr ();
+
+  emin = mpfr_get_emin ();
+  emax = mpfr_get_emax ();
 
   mpfr_init (x);
   mpfr_init (y);
@@ -66,10 +72,73 @@ main (int argc, char *argv[])
       exit (1);
     }
 
-  mpfr_clear_divby0 ();
+  mpfr_clear_flags ();
   inex = mpfr_zeta_ui (x, 0, MPFR_RNDN);
-  MPFR_ASSERTN (inex == 0 && mpfr_cmp_si_2exp (x, -1, -1) == 0
-                && !mpfr_divby0_p ());
+  flags = __gmpfr_flags;
+  MPFR_ASSERTN (inex == 0 && mpfr_cmp_si_2exp (x, -1, -1) == 0 && flags == 0);
+
+  for (i = -2; i <= 2; i += 2)
+    RND_LOOP (rnd)
+      {
+        int ex_inex;
+
+        set_emin (i);
+        set_emax (i);
+        mpfr_clear_flags ();
+        inex = mpfr_zeta_ui (x, 0, (mpfr_rnd_t) rnd);
+        flags = __gmpfr_flags;
+        if (i < 0)
+          {
+            mpfr_set_inf (y, -1);
+            if (rnd == MPFR_RNDU || rnd == MPFR_RNDZ)
+              {
+                mpfr_nextabove (y);
+                ex_inex = 1;
+              }
+            else
+              {
+                ex_inex = -1;
+              }
+            ex_flags = MPFR_FLAGS_OVERFLOW | MPFR_FLAGS_INEXACT;
+          }
+        else if (i > 0)
+          {
+            mpfr_set_zero (y, -1);
+            if (rnd == MPFR_RNDD || rnd == MPFR_RNDA)
+              {
+                mpfr_nextbelow (y);
+                ex_inex = -1;
+              }
+            else
+              {
+                ex_inex = 1;
+              }
+            ex_flags = MPFR_FLAGS_UNDERFLOW | MPFR_FLAGS_INEXACT;
+          }
+        else
+          {
+            mpfr_set_str_binary (y, "-1e-1");
+            ex_inex = 0;
+            ex_flags = 0;
+          }
+        set_emin (emin);
+        set_emax (emax);
+        if (! (mpfr_equal_p (x, y) && MPFR_IS_NEG (x) &&
+               SAME_SIGN (inex, ex_inex) && flags == ex_flags))
+          {
+            printf ("Failure for zeta(0) in %s, exponent range [%d,%d]\n",
+                    mpfr_print_rnd_mode ((mpfr_rnd_t) rnd), i, i);
+            printf ("Expected ");
+            mpfr_dump (y);
+            printf ("  with inex ~ %d, flags =", ex_inex);
+            flags_out (ex_flags);
+            printf ("Got      ");
+            mpfr_dump (x);
+            printf ("  with inex = %d, flags =", inex);
+            flags_out (flags);
+            exit (1);
+          }
+      }
 
   mpfr_clear_divby0 ();
   inex = mpfr_zeta_ui (x, 1, MPFR_RNDN);
@@ -85,26 +154,45 @@ main (int argc, char *argv[])
       mpfr_set_prec (y, yprec);
 
       for (n = 0; n < 50; n++)
-        for (rnd = 0; rnd < MPFR_RND_MAX; rnd++)
+        RND_LOOP (rnd)
           {
             mpfr_zeta_ui (y, n, MPFR_RNDN);
             if (mpfr_can_round (y, yprec, MPFR_RNDN, MPFR_RNDZ, prec
                                 + (rnd == MPFR_RNDN)))
               {
                 mpfr_set (t, y, (mpfr_rnd_t) rnd);
-                mpfr_zeta_ui (z, n, (mpfr_rnd_t) rnd);
-                if (mpfr_cmp (t, z))
+                for (i = 0; i <= 1; i++)
                   {
-                    printf ("results differ for n=%lu", n);
-                    printf (" prec=%u rnd_mode=%s\n", prec,
-                            mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
-                    printf ("   got      ");
-                    mpfr_dump (z);
-                    printf ("   expected ");
-                    mpfr_dump (t);
-                    printf ("   approx   ");
-                    mpfr_dump (y);
-                    exit (1);
+                    if (i)
+                      {
+                        mpfr_exp_t e;
+
+                        if (MPFR_IS_SINGULAR (t))
+                          break;
+                        e = mpfr_get_exp (t);
+                        set_emin (e);
+                        set_emax (e);
+                      }
+                    mpfr_zeta_ui (z, n, (mpfr_rnd_t) rnd);
+                    if (i)
+                      {
+                        set_emin (emin);
+                        set_emax (emax);
+                      }
+                    if (mpfr_cmp (t, z))
+                      {
+                        printf ("results differ for n = %lu, prec = %u,"
+                                " %s%s\n", n, prec,
+                                mpfr_print_rnd_mode ((mpfr_rnd_t) rnd),
+                                i ? ", reduced exponent range" : "");
+                        printf ("  got      ");
+                        mpfr_dump (z);
+                        printf ("  expected ");
+                        mpfr_dump (t);
+                        printf ("  approx   ");
+                        mpfr_dump (y);
+                        exit (1);
+                      }
                   }
               }
           }

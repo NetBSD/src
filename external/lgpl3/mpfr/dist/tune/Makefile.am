@@ -1,4 +1,4 @@
-# Copyright 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+# Copyright 2010-2016 Free Software Foundation, Inc.
 # This Makefile.am is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -23,7 +23,7 @@ bidimensional_sample_SOURCES = bidimensional_sample.c
 bidimensional_sample_LDADD = -lspeed $(top_builddir)/src/libmpfr.la $(TUNE_LIBS)
 bidimensional_sample_LDFLAGS = -static
 
-INCLUDES = -I$(top_srcdir)/src -I$(top_builddir)/src
+AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_builddir)/src
 
 tune:
 	$(MAKE) $(AM_MAKEFLAGS) tuneup$(EXEEXT)

@@ -3,7 +3,7 @@
    THE CONTENTS OF THIS FILE ARE FOR INTERNAL USE AND MAY CHANGE
    INCOMPATIBLY OR DISAPPEAR IN A FUTURE GNU MPFR RELEASE.
 
-Copyright 1991, 1993, 1994, 1996, 1997, 2000, 2001, 2004, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Copyright 1991, 1993-1994, 1996-1997, 2000-2001, 2004, 2006-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU MPFR Library.
 It has been copied and adapted from the GNU MP Library.

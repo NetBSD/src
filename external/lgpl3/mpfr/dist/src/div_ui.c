@@ -1,7 +1,7 @@
 /* mpfr_div_{ui,si} -- divide a floating-point number by a machine integer
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 1999-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -174,7 +174,7 @@ mpfr_div_ui (mpfr_ptr y, mpfr_srcptr x, unsigned long int u, mpfr_rnd_t rnd_mode
       else
         { /* this happens only if u == 1 and xp[xn-1] >=
              1<<(GMP_NUMB_BITS-1). It might be better to handle the
-             u == 1 case seperately ?
+             u == 1 case separately?
           */
 
              MPN_COPY (yp, tmp + 1, yn);
@@ -274,7 +274,8 @@ mpfr_div_si (mpfr_ptr y, mpfr_srcptr x, long int u, mpfr_rnd_t rnd_mode)
     res = mpfr_div_ui (y, x, u, rnd_mode);
   else
     {
-      res = -mpfr_div_ui (y, x, -u, MPFR_INVERT_RND (rnd_mode));
+      res = - mpfr_div_ui (y, x, - (unsigned long) u,
+                           MPFR_INVERT_RND (rnd_mode));
       MPFR_CHANGE_SIGN (y);
     }
   return res;

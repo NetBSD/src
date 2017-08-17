@@ -1,7 +1,7 @@
 /* mpfr_zeta -- compute the Riemann Zeta function
 
-Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Copyright 2003-2016 Free Software Foundation, Inc.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -377,8 +377,8 @@ mpfr_zeta (mpfr_t z, mpfr_srcptr s, mpfr_rnd_t rnd_mode)
         }
     }
 
-  /* Check for case s= 1 before changing the exponent range */
-  if (mpfr_cmp (s, __gmpfr_one) ==0)
+  /* Check for case s=1 before changing the exponent range */
+  if (mpfr_cmp (s, __gmpfr_one) == 0)
     {
       MPFR_SET_INF (z);
       MPFR_SET_POS (z);
@@ -420,7 +420,7 @@ mpfr_zeta (mpfr_t z, mpfr_srcptr s, mpfr_rnd_t rnd_mode)
       MPFR_ZIV_INIT (loop, prec1);
       for (;;)
         {
-          mpfr_sub (s1, __gmpfr_one, s, MPFR_RNDN);/* s1 = 1-s */
+          mpfr_sub (s1, __gmpfr_one, s, MPFR_RNDN); /* s1 = 1-s */
           mpfr_zeta_pos (z_pre, s1, MPFR_RNDN);   /* zeta(1-s)  */
           mpfr_gamma (y, s1, MPFR_RNDN);          /* gamma(1-s) */
           if (MPFR_IS_INF (y)) /* Zeta(s) < 0 for -4k-2 < s < -4k,
@@ -432,16 +432,31 @@ mpfr_zeta (mpfr_t z, mpfr_srcptr s, mpfr_rnd_t rnd_mode)
               break;
             }
           mpfr_mul (z_pre, z_pre, y, MPFR_RNDN);  /* gamma(1-s)*zeta(1-s) */
-          mpfr_const_pi (p, MPFR_RNDD);
-          mpfr_mul (y, s, p, MPFR_RNDN);
-          mpfr_div_2ui (y, y, 1, MPFR_RNDN);      /* s*Pi/2 */
-          mpfr_sin (y, y, MPFR_RNDN);             /* sin(Pi*s/2) */
-          mpfr_mul (z_pre, z_pre, y, MPFR_RNDN);
+
+          mpfr_const_pi (p, MPFR_RNDD); /* p is Pi */
+
+          /* multiply z_pre by 2^s*Pi^(s-1) where p=Pi, s1=1-s */
           mpfr_mul_2ui (y, p, 1, MPFR_RNDN);      /* 2*Pi */
           mpfr_neg (s1, s1, MPFR_RNDN);           /* s-1 */
           mpfr_pow (y, y, s1, MPFR_RNDN);         /* (2*Pi)^(s-1) */
           mpfr_mul (z_pre, z_pre, y, MPFR_RNDN);
           mpfr_mul_2ui (z_pre, z_pre, 1, MPFR_RNDN);
+
+          /* multiply z_pre by sin(Pi*s/2) */
+          mpfr_mul (y, s, p, MPFR_RNDN);
+          mpfr_div_2ui (p, y, 1, MPFR_RNDN);      /* p = s*Pi/2 */
+          mpfr_sin (y, p, MPFR_RNDN);             /* y = sin(Pi*s/2) */
+          if (MPFR_GET_EXP(y) < 0) /* take account of cancellation in sin(p) */
+            {
+              mpfr_t t;
+              mpfr_init2 (t, prec1 - MPFR_GET_EXP(y));
+              mpfr_const_pi (t, MPFR_RNDD);
+              mpfr_mul (t, s, t, MPFR_RNDN);
+              mpfr_div_2ui (t, t, 1, MPFR_RNDN);
+              mpfr_sin (y, t, MPFR_RNDN);
+              mpfr_clear (t);
+            }
+          mpfr_mul (z_pre, z_pre, y, MPFR_RNDN);
 
           if (MPFR_LIKELY (MPFR_CAN_ROUND (z_pre, prec1 - add, precz,
                                            rnd_mode)))
