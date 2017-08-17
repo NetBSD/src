@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6var.h,v 1.6 2017/06/09 18:14:59 ryo Exp $	*/
+/*	$NetBSD: imx6var.h,v 1.7 2017/08/17 09:11:04 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -42,7 +42,7 @@ struct axi_attach_args {
 };
 
 extern struct bus_space armv7_generic_bs_tag;
-extern struct arm32_bus_dma_tag imx_bus_dma_tag;
+extern struct arm32_bus_dma_tag armv7_generic_dma_tag;
 extern bus_space_tag_t imx6_armcore_bst;
 extern bus_space_handle_t imx6_armcore_bsh;
 

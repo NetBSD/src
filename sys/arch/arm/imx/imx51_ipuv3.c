@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ipuv3.c,v 1.5 2017/06/25 12:11:30 maxv Exp $	*/
+/*	$NetBSD: imx51_ipuv3.c,v 1.6 2017/08/17 09:11:04 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2011, 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_ipuv3.c,v 1.5 2017/06/25 12:11:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_ipuv3.c,v 1.6 2017/08/17 09:11:04 hkenken Exp $");
 
 #include "opt_imx51_ipuv3.h"
 
@@ -579,7 +579,7 @@ imx51_ipuv3_attach_sub(struct imx51_ipuv3_softc *sc,
 	LIST_INIT(&sc->screens);
 
 	sc->iot = iot;
-	sc->dma_tag = &imx_bus_dma_tag;
+	sc->dma_tag = &armv7_generic_dma_tag;
 
 	/* map controller registers */
 	error = bus_space_map(iot, IPU_CM_BASE, IPU_CM_SIZE, 0, &sc->cm_ioh);
