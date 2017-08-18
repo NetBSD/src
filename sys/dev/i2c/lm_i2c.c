@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_i2c.c,v 1.3 2017/08/17 05:27:48 msaitoh Exp $	*/
+/*	$NetBSD: lm_i2c.c,v 1.4 2017/08/18 04:07:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_i2c.c,v 1.3 2017/08/17 05:27:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_i2c.c,v 1.4 2017/08/18 04:07:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ lm_i2c_match(device_t parent, cfdata_t match, void *aux)
 	sc.sc_lmsc.lm_readreg = lm_i2c_readreg;
 	sc.sc_tag = ia->ia_tag;
 	sc.sc_addr = ia->ia_addr;
-	rv = lm_probe(&sc.sc_lmsc);
+	rv = lm_match(&sc.sc_lmsc);
 
 	return rv;
 }
