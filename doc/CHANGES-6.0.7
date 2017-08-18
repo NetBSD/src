@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.107 2017/08/18 05:37:22 snj Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.108 2017/08/18 15:10:26 snj Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -12731,4 +12731,35 @@ crypto/external/bsd/openssl/dist/ssl/ssl_sess.c	patch
 	rename free_func to freefunc, following -current, to avoid
 	namespace clashes with zlib.h.
 	[mrg, ticket #1497]
+
+sys/kern/kern_malloc.c				1.146
+
+	Avoid integer overflow in kern_malloc().
+	[martin, ticket #1465]
+
+sys/dev/pci/if_ipw.c				1.65 via patch
+
+	double free in ipw_dma_alloc()
+	[mrg, ticket #1473]
+
+sys/dev/pci/if_et.c				1.15
+
+	missing mbuf cluster allocation error checking in et_newbuf()
+	[mrg, ticket #1474]
+
+sys/dev/ic/i82596.c				1.37
+
+	potential double free in iee_init()/iee_stop()
+	[mrg, ticket #1475]
+
+sys/dev/ic/dp83932.c				1.41
+
+	Plug mbuf leak on MCLGET failure in sonic_rxintr.
+	[mrg, ticket #1476]
+
+sys/dev/ic/dm9000.c				1.12
+
+	missing mbuf cluster allocation error checking in
+	dme_alloc_receive_buffer()
+	[mrg, ticket #1477]
 
