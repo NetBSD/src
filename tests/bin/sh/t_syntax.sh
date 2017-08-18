@@ -1,4 +1,4 @@
-# $NetBSD: t_syntax.sh,v 1.6 2017/07/26 17:50:20 kre Exp $
+# $NetBSD: t_syntax.sh,v 1.7 2017/08/18 21:22:30 kre Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -261,7 +261,7 @@ c_line_wrapping_body() {
 	done
 
 	# inspired by pkgsrc/pkgtools/cwrappers :: libnbcompat/configure
-	# failure with (broken) sh LINENO core .. avoid recurrence
+	# failure with (broken) sh LINENO code .. avoid recurrence
 	# This test would have failed.
 	cat <<- 'DONE' | atf_check -s exit:0 -o inline:'/tmp\n' ${TEST_SH}
 		dn=/tmp/foo
@@ -295,11 +295,83 @@ c_line_wrapping_body() {
 	return 0
 }
 
-atf_test_case d_redirects
-d_redirects_head() {
+atf_test_case d_cstrings
+d_cstrings_head() {
+	atf_set "descr" "Check processing of $' ' quoting (C style strings)"
+}
+d_cstrings_body() {
+	set -xv
+	unset ENV
+	if ! ${TEST_SH} -c ": \$'abc'" ||
+	     test $( ${TEST_SH} -c "printf %s \$'abc'" ) != abc
+	then
+		atf_skip "\$'...' (C style quoted strings) not supported"
+	fi
+
+	# simple stuff
+	atf_check -s exit:0 -e empty -o inline:'abc\tdef\n' ${TEST_SH} -c \
+		"printf '%s\\n' \$'abc\tdef'"
+	atf_check -s exit:0 -e empty -o inline:'abc\tdef\n' ${TEST_SH} -c \
+		"printf '%s\\n' \$'abc\011def'"
+	atf_check -s exit:0 -e empty -o inline:'abc\tdef\n' ${TEST_SH} -c \
+		"printf '%s\\n' \$'abc\x09'def"
+	atf_check -s exit:0 -e empty -o inline:'abc$def\n' ${TEST_SH} -c \
+		"def=xyz; printf '%s\\n' \$'abc\$def'"
+
+	# control chars (\c) and unicode \u
+	atf_check -s exit:0 -e empty -o empty ${TEST_SH} -c \
+		"test \$'\\1-\\2-\\3' = \$'\\ca-\\cb-\\cc'"
+	atf_check -s exit:0 -e empty -o empty ${TEST_SH} -c \
+		"test \$'\\r-\\n-\\f' = \$'\\cm-\\cj-\\cl'"
+	atf_check -s exit:0 -e empty -o empty ${TEST_SH} -c \
+		"test \$'\\u0123' = \$'\\304\\243'"
+	atf_check -s exit:0 -e empty -o empty ${TEST_SH} -c \
+		"test \$'\\u0123' = \$'\\xC4\\xA3'"
+	atf_check -s exit:0 -e empty -o empty ${TEST_SH} -c \
+		"test \$'\\c\\\\' = \$'\\x1C'"
+	atf_check -s exit:0 -e empty -o empty ${TEST_SH} -c \
+		"test \$'\\c[\\c]\\c^\\c_\\c?' = \$'\\x1B\\x1D\\x1E\\x1F\\x7F'"
+
+	# all the \X sequences for a single char X (ie: not hex/octal/unicode)
+	atf_check -s exit:0 -e empty -o inline:'\n\r\t\n' \
+		${TEST_SH} -c "printf '%s\\n' \$'\\a\\b\\e\\f\\n\\r\\t\\v'"
+#	atf_check -s exit:0 -e empty -o inline:'\7\10\33\14\12\15\11\13' \
+	atf_check -s exit:0 -e empty -o inline:'\n\r\t\n' \
+	   ${TEST_SH} -c "printf '%s\\n' \$'\\cG\\cH\\x1b\\cl\\cJ\\cm\\cI\\ck'"
+	atf_check -s exit:0 -e empty -o inline:"'"'"\\\n' \
+		${TEST_SH} -c "printf '%s\\n' \$'\\'\\\"\\\\'"
+
+	# various invalid $'...' sequences
+	atf_check -s not-exit:0 -e not-empty -o ignore ${TEST_SH} -c \
+		": \$'\\q'"
+	atf_check -s not-exit:0 -e not-empty -o ignore ${TEST_SH} -c \
+		": \$'\\c\\q'"
+	atf_check -s not-exit:0 -e not-empty -o ignore ${TEST_SH} -c \
+		": \$'\\uDEFF'"
+	atf_check -s not-exit:0 -e not-empty -o ignore ${TEST_SH} -c \
+		": \$'\\u00'"
+	atf_check -s not-exit:0 -e not-empty -o ignore ${TEST_SH} -c \
+		": \$'\\u8'"
+	atf_check -s not-exit:0 -e not-empty -o ignore ${TEST_SH} -c \
+		": \$'abcd"
+	atf_check -s not-exit:0 -e not-empty -o ignore ${TEST_SH} -c \
+		": \$'abcd\\"
+
+	# anything that generates \0 ends the $'...' immediately (\u cannot)
+	atf_check -s exit:0 -e empty -o inline:'aAa' ${TEST_SH} -c \
+		"printf '%s' \$'a\\0x'\$'A\\x00X'\$'a\\c@x'"
+
+	# \newline in a $'...' is dropped (just like in "" strings)
+	atf_check -s exit:0 -e empty -o inline:'abcdef' ${TEST_SH} -c \
+		"printf '%s' \$'abc\\
+def'"
+}
+
+atf_test_case f_redirects
+f_redirects_head() {
 	atf_set "descr" "Check parsing of redirect operators"
 }
-d_redirects_body() {
+f_redirects_body() {
 
 	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -c \
 		'>/dev/null'
@@ -355,11 +427,11 @@ d_redirects_body() {
 	return 0
 }
 
-atf_test_case f_variable_syntax
-f_variable_syntax_head() {
+atf_test_case g_variable_syntax
+g_variable_syntax_head() {
 	atf_set "descr" "Check that var names of all legal forms work"
 }
-f_variable_syntax_body() {
+g_variable_syntax_body() {
 	# don't test _ as a variable, it can be "unusual"
 	for vname in a ab _a _9 a123 a_1_2_3 __ ___ ____ __1__ _0 \
 	    A AA AAA AaBb _A_a A_a_ a1_ abc_123 ab_12_cd_ef_34_99 \
@@ -453,11 +525,11 @@ f_variable_syntax_body() {
 
 }
 
-atf_test_case g_var_assign
-g_var_assign_head() {
+atf_test_case h_var_assign
+h_var_assign_head() {
 	atf_set "descr" "Check var assignments "
 }
-g_var_assign_body() {
+h_var_assign_body() {
 	atf_check -s exit:0 -e empty -o empty ${TEST_SH} -c \
 		'a=b'
 	atf_check -s not-exit:0 -e not-empty -o empty ${TEST_SH} -c \
@@ -1117,9 +1189,10 @@ atf_init_test_cases() {
 	atf_add_test_case a_basic_tokenisation
 	atf_add_test_case b_comments
 	atf_add_test_case c_line_wrapping
-	atf_add_test_case d_redirects
-	atf_add_test_case f_variable_syntax
-	atf_add_test_case g_var_assign
+	atf_add_test_case d_cstrings
+	atf_add_test_case f_redirects
+	atf_add_test_case g_variable_syntax
+	atf_add_test_case h_var_assign
 	atf_add_test_case i_pipelines
 	atf_add_test_case j_and_or_lists
 	atf_add_test_case k_lists
