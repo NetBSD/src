@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.14 2017/08/17 05:32:04 msaitoh Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.15 2017/08/18 04:07:51 msaitoh Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -43,7 +43,36 @@ struct wbsio_softc {
 	struct isa_io		sc_io;
 };
 
-static int	wbsio_probe(device_t, cfdata_t, void *);
+static const struct wbsio_product {
+	uint16_t id;
+	bool	idis12bits;
+	const char *str;
+} wbsio_products[] = {
+	{ WBSIO_ID_W83627HF,	false,	"W83627HF" },
+	{ WBSIO_ID_W83697HF,	false,	"W83697HF" },
+	{ WBSIO_ID_W83637HF,	false,	"W83637HF" },
+	{ WBSIO_ID_W83627THF,	false,	"W83627THF" },
+	{ WBSIO_ID_W83687THF,	false,	"W83687THF" },
+	{ WBSIO_ID_W83627DHG,	true,	"W83627DHG" },
+	{ WBSIO_ID_W83627DHGP,	true,	"W83627DHG-P" },
+	{ WBSIO_ID_W83627EHF,	true,	"W83627EHF" },
+	{ WBSIO_ID_W83627SF,	true,	"W83627SF" },
+	{ WBSIO_ID_W83627UHG,	true,	"W83627UHG" },
+	{ WBSIO_ID_W83667HG,	true,	"W83667HG" },
+	{ WBSIO_ID_W83667HGB,	true,	"W83667HGB" },
+	{ WBSIO_ID_W83697UG,	true,	"W83697UG" },
+	{ WBSIO_ID_NCT6775F,	true,	"NCT6775F" },
+	{ WBSIO_ID_NCT6776F,	true,	"NCT6776F" },
+	{ WBSIO_ID_NCT5104D,	true,	"NCT5104D or 610[246]D" },
+	{ WBSIO_ID_NCT6779D,	true,	"NCT6779D" },
+	{ WBSIO_ID_NCT6791D,	true,	"NCT6791D" },
+	{ WBSIO_ID_NCT6792D,	true,	"NCT6792D" },
+	{ WBSIO_ID_NCT6793D,	true,	"NCT6793D" },
+	{ WBSIO_ID_NCT6795D,	true,	"NCT6795D" },
+};
+
+static const struct wbsio_product *wbsio_lookup(uint8_t id, uint8_t rev);
+static int	wbsio_match(device_t, cfdata_t, void *);
 static void	wbsio_attach(device_t, device_t, void *);
 static int	wbsio_detach(device_t, int);
 static int	wbsio_rescan(device_t, const char *, const int *);
@@ -52,7 +81,7 @@ static int	wbsio_print(void *, const char *);
 static int	wbsio_search(device_t, cfdata_t, const int *, void *);
 
 CFATTACH_DECL2_NEW(wbsio, sizeof(struct wbsio_softc),
-    wbsio_probe, wbsio_attach, wbsio_detach, NULL,
+    wbsio_match, wbsio_attach, wbsio_detach, NULL,
     wbsio_rescan, wbsio_childdet);
 
 static __inline void
@@ -83,13 +112,34 @@ wbsio_conf_write(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t index,
 	bus_space_write_1(iot, ioh, WBSIO_DATA, data);
 }
 
+static const struct wbsio_product *
+wbsio_lookup(uint8_t id, uint8_t rev)
+{
+	uint16_t wid = ((uint16_t)id << 4) | (rev >> 4);
+	int i;
+
+	for (i = 0; i < __arraycount(wbsio_products); i++) {
+		if (wbsio_products[i].idis12bits) {
+			if (wbsio_products[i].id == wid)
+				return &wbsio_products[i];
+		} else {
+			if (wbsio_products[i].id == id)
+				return &wbsio_products[i];
+		}
+	}
+
+	/* Not found */
+	return NULL;
+}
+
 int
-wbsio_probe(device_t parent, cfdata_t match, void *aux)
+wbsio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
+	const struct wbsio_product *product;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	uint8_t reg;
+	uint8_t id, rev;
 
 	/* Must supply an address */
 	if (ia->ia_nio < 1)
@@ -106,39 +156,21 @@ wbsio_probe(device_t parent, cfdata_t match, void *aux)
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, WBSIO_IOSIZE, 0, &ioh))
 		return 0;
 	wbsio_conf_enable(iot, ioh);
-	reg = wbsio_conf_read(iot, ioh, WBSIO_ID);
-	aprint_debug("wbsio_probe: id 0x%02x\n", reg);
+	id = wbsio_conf_read(iot, ioh, WBSIO_ID);
+	rev = wbsio_conf_read(iot, ioh, WBSIO_REV);
+	aprint_debug("wbsio_probe: id 0x%02x, rev 0x%02x\n", id, rev);
 	wbsio_conf_disable(iot, ioh);
 	bus_space_unmap(iot, ioh, WBSIO_IOSIZE);
-	switch (reg) {
-	case WBSIO_ID_W83627HF:
-	case WBSIO_ID_W83627DHG:
-	case WBSIO_ID_W83627DHGP:
-	case WBSIO_ID_W83627EHF:
-	case WBSIO_ID_W83627SF:
-	case WBSIO_ID_W83627THF:
-	case WBSIO_ID_W83627UHG:
-	case WBSIO_ID_W83637HF:
-	case WBSIO_ID_W83667HG:
-	case WBSIO_ID_W83667HGB:
-	case WBSIO_ID_W83687THF:
-	case WBSIO_ID_W83697HF:
-	case WBSIO_ID_W83697UG:
-	case WBSIO_ID_NCT5104D:
-	case WBSIO_ID_NCT6775F:
-	case WBSIO_ID_NCT6776F:
-	case WBSIO_ID_NCT6779D:
-	case WBSIO_ID_NCT6791D:
-	case WBSIO_ID_NCT6792D:
-		ia->ia_nio = 1;
-		ia->ia_io[0].ir_size = WBSIO_IOSIZE;
-		ia->ia_niomem = 0;
-		ia->ia_nirq = 0;
-		ia->ia_ndrq = 0;
-		return 1;
-	}
 
-	return 0;
+	if ((product = wbsio_lookup(id, rev)) == NULL)
+		return 0;
+
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = WBSIO_IOSIZE;
+	ia->ia_niomem = 0;
+	ia->ia_nirq = 0;
+	ia->ia_ndrq = 0;
+	return 1;
 }
 
 void
@@ -146,9 +178,10 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 {
 	struct wbsio_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
-	const char *desc = NULL;
-	const char *vendor = "Winbond";
-	uint8_t reg;
+	const struct wbsio_product *product;
+	const char *desc;
+	const char *vendor;
+	uint8_t id, rev;
 
 	sc->sc_dev = self;
 
@@ -166,88 +199,32 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
 
 	/* Read device ID */
-	reg = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_ID);
-	switch (reg) {
-	case WBSIO_ID_W83627HF:
-		desc = "W83627HF";
-		break;
-	case WBSIO_ID_W83627DHG:
-		desc = "W83627DHG";
-		break;
-	case WBSIO_ID_W83627DHGP:
-		desc = "W83627DHG-P";
-		break;
-	case WBSIO_ID_W83627EHF:
-		desc = "W83627EHF";
-		break;
-	case WBSIO_ID_W83627SF:
-		desc = "W83627SF";
-		break;
-	case WBSIO_ID_W83627THF:
-		desc = "W83627THF";
-		break;
-	case WBSIO_ID_W83627UHG:
-		desc = "W83627UHG";
-		break;
-	case WBSIO_ID_W83637HF:
-		desc = "W83637HF";
-		break;
-	case WBSIO_ID_W83667HG:
-		desc = "W83667HG";
-		break;
-	case WBSIO_ID_W83667HGB:
-		desc = "W83667HGB";
-		break;
-	case WBSIO_ID_W83687THF:
-		desc = "W83687THF";
-		break;
-	case WBSIO_ID_W83697HF:
-		desc = "W83697HF";
-		break;
-	case WBSIO_ID_W83697UG:
-		desc = "W83697UG";
-		break;
-	case WBSIO_ID_NCT5104D:
-		vendor = "Nuvoton";
-		desc = "NCT5104D";
-		break;
-	case WBSIO_ID_NCT6775F:
-		vendor = "Nuvoton";
-		desc = "NCT6775F";
-		break;
-	case WBSIO_ID_NCT6776F:
-		vendor = "Nuvoton";
-		desc = "NCT6776F";
-		break;
-	case WBSIO_ID_NCT6779D:
-		vendor = "Nuvoton";
-		desc = "NCT6779D";
-		break;
-	case WBSIO_ID_NCT6791D:
-		vendor = "Nuvoton";
-		desc = "NCT6791D";
-		break;
-	case WBSIO_ID_NCT6792D:
-		vendor = "Nuvoton";
-		desc = "NCT6792D";
-		break;
-	case WBSIO_ID_NCT6793D:
-		vendor = "Nuvoton";
-		desc = "NCT6793D";
-		break;
-	case WBSIO_ID_NCT6795D:
-		vendor = "Nuvoton";
-		desc = "NCT6795D";
-		break;
-	}
+	id = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_ID);
 	/* Read device revision */
-	reg = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_REV);
-
-	aprint_naive("\n");
-	aprint_normal(": %s LPC Super I/O %s rev 0x%02x\n", vendor, desc, reg);
+	rev = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_REV);
 
 	/* Escape from configuration mode */
 	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+
+	if ((product = wbsio_lookup(id, rev)) == NULL) {
+		aprint_error_dev(self, "Unknown device. Failed to attach\n");
+		return;
+	}
+	if (product->idis12bits)
+		rev &= 0x0f; /* Revision is low 4bits */
+
+	desc = product->str;
+	if (desc[0] == 'W')
+		vendor = "Winbond";
+	else
+		vendor = "Nuvoton";
+	aprint_naive("\n");
+	aprint_normal(": %s LPC Super I/O %s rev ", vendor, desc);
+	if (product->idis12bits) {
+		/* Revision filed is 4bit only */
+		aprint_normal("%c\n", 'A' + rev);
+	} else
+		aprint_normal("0x%02x\n", rev);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -289,8 +266,10 @@ static int
 wbsio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 {
 	struct wbsio_softc *sc = device_private(parent);
+	const struct wbsio_product *product;
 	uint16_t iobase;
-	uint8_t reg0, reg1, devid;
+	uint16_t devid;
+	uint8_t reg0, reg1, rev;
 
 	/* Enter configuration mode */
 	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
@@ -317,10 +296,18 @@ wbsio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 
 	/* Enter configuration mode */
 	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
-	/* Read device ID */
+	/* Read device ID and revision */
 	devid = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_ID);
+	rev = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_REV);
 	/* Escape from configuration mode */
 	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+
+	if ((product = wbsio_lookup(devid, rev)) == NULL) {
+		aprint_error_dev(parent, "%s: Unknown device.\n", __func__);
+		return -1;
+	}
+	if (product->idis12bits)
+		devid = (devid << 4) | (rev >> 4);
 
 	sc->sc_ia.ia_nio = 1;
 	sc->sc_ia.ia_io = &sc->sc_io;
