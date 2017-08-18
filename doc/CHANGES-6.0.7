@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.106 2017/08/17 09:40:03 martin Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.107 2017/08/18 05:37:22 snj Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -12686,4 +12686,49 @@ sys/netinet/ip.h				1.33-1.34
 
 	Make some include files idempotent.
 	[mrg, ticket #721]
+
+crypto/external/bsd/openssl/dist/crypto/crypto.h patch
+crypto/external/bsd/openssl/dist/crypto/ex_data.c patch
+crypto/external/bsd/openssl/dist/crypto/mem.c	patch
+crypto/external/bsd/openssl/dist/crypto/asn1/a_set.c patch
+crypto/external/bsd/openssl/dist/crypto/asn1/asn1.h patch
+crypto/external/bsd/openssl/dist/crypto/asn1/asn1_mac.h patch
+crypto/external/bsd/openssl/dist/crypto/asn1/asn_pack.c patch
+crypto/external/bsd/openssl/dist/crypto/asn1/x_x509.c patch
+crypto/external/bsd/openssl/dist/crypto/bio/bio.h patch
+crypto/external/bsd/openssl/dist/crypto/bio/bio_lib.c patch
+crypto/external/bsd/openssl/dist/crypto/comp/c_zlib.c patch
+crypto/external/bsd/openssl/dist/crypto/dh/dh.h	patch
+crypto/external/bsd/openssl/dist/crypto/dh/dh_lib.c patch
+crypto/external/bsd/openssl/dist/crypto/dsa/dsa.h patch
+crypto/external/bsd/openssl/dist/crypto/dsa/dsa_lib.c patch
+crypto/external/bsd/openssl/dist/crypto/ec/ec.h	patch
+crypto/external/bsd/openssl/dist/crypto/ec/ec_key.c patch
+crypto/external/bsd/openssl/dist/crypto/ec/ec_lcl.h patch
+crypto/external/bsd/openssl/dist/crypto/ec/ec_lib.c patch
+crypto/external/bsd/openssl/dist/crypto/ecdh/ecdh.h patch
+crypto/external/bsd/openssl/dist/crypto/ecdh/ech_lib.c patch
+crypto/external/bsd/openssl/dist/crypto/ecdsa/ecdsa.h patch
+crypto/external/bsd/openssl/dist/crypto/ecdsa/ecs_lib.c patch
+crypto/external/bsd/openssl/dist/crypto/engine/eng_lib.c patch
+crypto/external/bsd/openssl/dist/crypto/engine/engine.h patch
+crypto/external/bsd/openssl/dist/crypto/objects/o_names.c patch
+crypto/external/bsd/openssl/dist/crypto/objects/objects.h patch
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa.h patch
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa_lib.c patch
+crypto/external/bsd/openssl/dist/crypto/stack/safestack.h patch
+crypto/external/bsd/openssl/dist/crypto/store/store.h patch
+crypto/external/bsd/openssl/dist/crypto/store/str_lib.c patch
+crypto/external/bsd/openssl/dist/crypto/ui/ui.h	patch
+crypto/external/bsd/openssl/dist/crypto/ui/ui_lib.c patch
+crypto/external/bsd/openssl/dist/crypto/x509/x509.h patch
+crypto/external/bsd/openssl/dist/crypto/x509/x509_vfy.c patch
+crypto/external/bsd/openssl/dist/crypto/x509/x509_vfy.h patch
+crypto/external/bsd/openssl/dist/ssl/ssl.h	patch
+crypto/external/bsd/openssl/dist/ssl/ssl_lib.c	patch
+crypto/external/bsd/openssl/dist/ssl/ssl_sess.c	patch
+
+	rename free_func to freefunc, following -current, to avoid
+	namespace clashes with zlib.h.
+	[mrg, ticket #1497]
 
