@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.72 2017/08/18 10:02:37 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.73 2017/08/18 14:52:19 maxv Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.72 2017/08/18 10:02:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.73 2017/08/18 14:52:19 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -124,6 +124,23 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.72 2017/08/18 10:02:37 maxv Exp $");
 	movzbl	7(%eax),%eax				;\
 	shl	$24,%eax				;\
 	orl	%edx,%eax
+
+#ifdef KDTRACE_HOOKS
+	.bss
+	.globl	dtrace_invop_jump_addr
+	.align	4
+	.type	dtrace_invop_jump_addr, @object
+	.size	dtrace_invop_jump_addr, 4
+dtrace_invop_jump_addr:
+	.zero	4
+	.globl	dtrace_invop_calltrap_addr
+	.align	4
+	.type	dtrace_invop_calltrap_addr, @object
+	.size	dtrace_invop_calltrap_addr, 4
+dtrace_invop_calltrap_addr:
+	.zero	8
+	.text
+#endif
 
 #ifndef XEN
 #if NLAPIC > 0
