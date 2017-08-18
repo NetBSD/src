@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.6 2017/08/18 10:02:37 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.7 2017/08/18 14:52:19 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.6 2017/08/18 10:02:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.7 2017/08/18 14:52:19 maxv Exp $");
 #endif
 
 /*
@@ -154,7 +154,47 @@ nmileave:
 IDTVEC_END(trap02)
 
 IDTVEC(trap03)
+#ifndef KDTRACE_HOOKS
 	ZTRAP(T_BPTFLT)
+#else
+	ZTRAP_NJ(T_BPTFLT)
+	INTRENTRY
+	STI(si)
+	/*
+	 * DTrace Function Boundary Trace (fbt) probes are triggered
+	 * by int3 (0xcc).
+	 */
+	/* Check if there is no DTrace hook registered. */
+	cmpq	$0,dtrace_invop_jump_addr
+	je	calltrap
+
+	/*
+	 * Set our jump address for the jump back in the event that
+	 * the exception wasn't caused by DTrace at all.
+	 */
+	/* XXX: This doesn't look right for SMP - unless it is a
+	 * constant - so why set it everytime. (dsl) */
+	movq	$calltrap, dtrace_invop_calltrap_addr(%rip)
+
+	/* Jump to the code hooked in by DTrace. */
+	movq	dtrace_invop_jump_addr, %rax
+	jmpq	*dtrace_invop_jump_addr
+
+	.bss
+	.globl	dtrace_invop_jump_addr
+	.align	8
+	.type	dtrace_invop_jump_addr, @object
+	.size	dtrace_invop_jump_addr, 8
+dtrace_invop_jump_addr:
+	.zero	8
+	.globl	dtrace_invop_calltrap_addr
+	.align	8
+	.type	dtrace_invop_calltrap_addr, @object
+	.size	dtrace_invop_calltrap_addr, 8
+dtrace_invop_calltrap_addr:
+	.zero	8
+	.text
+#endif
 IDTVEC_END(trap03)
 
 IDTVEC(trap04)
