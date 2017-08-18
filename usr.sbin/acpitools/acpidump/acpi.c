@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.16 2017/08/04 06:30:36 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.17 2017/08/18 09:49:24 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.16 2017/08/04 06:30:36 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.17 2017/08/18 09:49:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -775,6 +775,8 @@ acpi_handle_fadt(ACPI_TABLE_HEADER *sdp)
 		dsdp = (ACPI_TABLE_HEADER *)acpi_map_sdt(fadt->Dsdt);
 	else
 		dsdp = (ACPI_TABLE_HEADER *)acpi_map_sdt(fadt->XDsdt);
+	if (memcmp(dsdp->Signature, ACPI_SIG_DSDT, 4) != 0)
+		errx(EXIT_FAILURE, "DSDT signature mismatch");
 	if (acpi_checksum(dsdp, dsdp->Length))
 		errx(EXIT_FAILURE, "DSDT is corrupt");
 	acpi_print_dsdt(dsdp);
