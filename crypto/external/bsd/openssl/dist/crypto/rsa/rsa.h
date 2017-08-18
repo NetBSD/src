@@ -445,7 +445,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
                                    int sLen);
 
 int RSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
+                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *freefunc);
 int RSA_set_ex_data(RSA *r, int idx, void *arg);
 void *RSA_get_ex_data(const RSA *r, int idx);
 
