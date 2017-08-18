@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.138 2012/02/06 12:13:44 drochner Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.138.6.1 2017/08/18 14:52:09 snj Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.138 2012/02/06 12:13:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.138.6.1 2017/08/18 14:52:09 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -113,7 +113,10 @@ kern_malloc(unsigned long size, struct malloc_type *ksp, int flags)
 	void *p;
 
 	if (size >= PAGE_SIZE) {
-		allocsize = PAGE_SIZE + size; /* for page alignment */
+		if (size > (ULONG_MAX-PAGE_SIZE))
+			allocsize = ULONG_MAX;	/* this will fail later */
+		else
+			allocsize = PAGE_SIZE + size; /* for page alignment */
 		hdroffset = PAGE_SIZE - sizeof(struct malloc_header);
 	} else {
 		allocsize = sizeof(struct malloc_header) + size;
