@@ -305,7 +305,7 @@ typedef struct crypto_ex_data_func_st {
     long argl;                  /* Arbitary long */
     void *argp;                 /* Arbitary void * */
     CRYPTO_EX_new *new_func;
-    CRYPTO_EX_free *free_func;
+    CRYPTO_EX_free *freefunc;
     CRYPTO_EX_dup *dup_func;
 } CRYPTO_EX_DATA_FUNCS;
 
@@ -409,7 +409,7 @@ int CRYPTO_ex_data_new_class(void);
 /* Within a given class, get/register a new index */
 int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
                             CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
-                            CRYPTO_EX_free *free_func);
+                            CRYPTO_EX_free *freefunc);
 /*
  * Initialise/duplicate/free CRYPTO_EX_DATA variables corresponding to a
  * given class (invokes whatever per-class callbacks are applicable)
