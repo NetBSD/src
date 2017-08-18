@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.9 2017/08/12 07:07:53 maxv Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.10 2017/08/18 10:02:37 maxv Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.9 2017/08/12 07:07:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.10 2017/08/18 10:02:37 maxv Exp $");
 #endif
 
 /*
@@ -132,48 +132,9 @@ IDTVEC(trap05)
 	ZTRAP(T_BOUND)
 IDTVEC_END(trap05)
 
-/*
- * Privileged instruction fault.
- */
-#ifdef KDTRACE_HOOKS
-	SUPERALIGN_TEXT
-IDTVEC(trap06)
-	/* Check if there is no DTrace hook registered. */
-	cmpl	$0,dtrace_invop_jump_addr
-	je	norm_ill
-
-	/* Check if this is a user fault. */
-	/* XXX this was 0x0020 in FreeBSD */
-	cmpl	$GSEL(GCODE_SEL, SEL_KPL),4(%esp) /* Check code segment. */
-
-	/* If so, just handle it as a normal trap. */
-	jne	norm_ill
-
-	/*
-	 * This is a kernel instruction fault that might have been caused
-	 * by a DTrace provider.
-	 */
-
-	/*
-	 * Set our jump address for the jump back in the event that
-	 * the exception wasn't caused by DTrace at all.
-	 */
-	movl	$norm_ill,dtrace_invop_calltrap_addr
-
-	/* Jump to the code hooked in by DTrace. */
-	jmpl	*dtrace_invop_jump_addr
-
-	/*
-	 * Process the instruction fault in the normal way.
-	 */
-norm_ill:
-	ZTRAP(T_PRIVINFLT)
-IDTVEC_END(trap06)
-#else
 IDTVEC(trap06)
 	ZTRAP(T_PRIVINFLT)
 IDTVEC_END(trap06)
-#endif
 
 IDTVEC(trap07)
 	pushl	$0			/* dummy error code */
