@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.32 2017/08/17 05:27:48 msaitoh Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.33 2017/08/18 04:07:51 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@
 #define WB_PIN		0x4b	/* Pin Control */
 #define WB_BANKSEL	0x4e	/* Bank Select */
 #define WB_VENDID	0x4f	/* Vendor ID */
+#define WB_NCT6102_VENDID 0xfe	/* Vendor ID for NCT610[246] */
 
 /* Bank 0 regs */
 #define WB_BANK0_CHIPID	0x58	/* Chip ID */
@@ -96,6 +97,7 @@
 #define WB_BANK0_FAN5	0xbb	/* Fan 5 reading (W83791D only) */
 
 #define WB_BANK0_CONFIG	0x18	/* VRM & OVT Config (W83627THF/W83637HF) */
+#define WB_BANK0_NCT6102_CHIPID	0xff /* Chip ID for NCT610[246] */
 
 /* Bank 1 registers */
 #define WB_BANK1_T2H	0x50	/* Temperature 2 High Byte */
@@ -170,7 +172,7 @@ struct lm_softc {
 	const struct lm_sensor *lm_sensors;
 	uint8_t	chipid;
 	uint8_t	vrm9;
-	uint8_t sioid;
+	uint16_t sioid;
 };
 
 struct lm_sensor {
@@ -182,8 +184,15 @@ struct lm_sensor {
 	int rfact;
 };
 
+struct wb_product {
+	uint16_t id; /* WB_CHIPID(8b) or WBSIO_ID(16b) or WB_VENDID(16b) */
+	const char *str;
+	const struct lm_sensor *sensors;
+	void (*extattach)(struct lm_softc *);
+};
+
+int 	lm_match(struct lm_softc *);
 void 	lm_attach(struct lm_softc *);
 void	lm_detach(struct lm_softc *);
-int 	lm_probe(struct lm_softc *);
 
 #endif /* _DEV_ISA_NSLM7XVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa_common.c,v 1.5 2017/08/17 05:27:48 msaitoh Exp $ */
+/*	$NetBSD: lm_isa_common.c,v 1.6 2017/08/18 04:07:51 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa_common.c,v 1.5 2017/08/17 05:27:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa_common.c,v 1.6 2017/08/18 04:07:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,13 +80,12 @@ lm_isa_match(device_t parent, cfdata_t match, void *aux)
 	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, 8, 0, &ioh))
 		return 0;
 
-
 	/* Bus independent probe */
 	sc.lm_iot = ia->ia_iot;
 	sc.lm_ioh = ioh;
 	sc.lmsc.lm_writereg = lm_isa_writereg;
 	sc.lmsc.lm_readreg = lm_isa_readreg;
-	rv = lm_probe(&sc.lmsc);
+	rv = lm_match(&sc.lmsc);
 
 	bus_space_unmap(ia->ia_iot, ioh, 8);
 
@@ -122,7 +121,7 @@ lm_isa_attach(device_t parent, device_t self, void *aux)
 	sc->lmsc.lm_writereg = lm_isa_writereg;
 	sc->lmsc.lm_readreg = lm_isa_readreg;
 	/* pass wbsio Device ID */
-	sc->lmsc.sioid = (uint8_t)(uintptr_t)ia->ia_aux;
+	sc->lmsc.sioid = (uint16_t)(uintptr_t)ia->ia_aux;
 
 	lm_attach(&sc->lmsc);
 }
