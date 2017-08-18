@@ -1947,14 +1947,14 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 int X509_STORE_CTX_get_ex_new_index(long argl, void *argp,
                                     CRYPTO_EX_new *new_func,
                                     CRYPTO_EX_dup *dup_func,
-                                    CRYPTO_EX_free *free_func)
+                                    CRYPTO_EX_free *freefunc)
 {
     /*
      * This function is (usually) called only once, by
      * SSL_get_ex_data_X509_STORE_CTX_idx (ssl/ssl_cert.c).
      */
     return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509_STORE_CTX, argl, argp,
-                                   new_func, dup_func, free_func);
+                                   new_func, dup_func, freefunc);
 }
 
 int X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx, int idx, void *data)
