@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.61 2017/07/29 18:08:57 maxv Exp $
+#	$NetBSD: ALCHEMY,v 1.62 2017/08/19 09:10:24 maya Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.61 $"
+#ident 		"ALCHEMY-$Revision: 1.62 $"
 
 maxusers	32
 
@@ -40,7 +40,7 @@ options 	NTP		# network time protocol
 
 # Debugging options
 options 	DIAGNOSTIC	# extra kernel sanity checking
-options 	DEBUG		# extra kernel debugging support
+#options 	DEBUG		# extra kernel debugging support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
