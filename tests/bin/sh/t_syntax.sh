@@ -1,4 +1,4 @@
-# $NetBSD: t_syntax.sh,v 1.7 2017/08/18 21:22:30 kre Exp $
+# $NetBSD: t_syntax.sh,v 1.8 2017/08/19 21:18:47 kre Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -300,8 +300,8 @@ d_cstrings_head() {
 	atf_set "descr" "Check processing of $' ' quoting (C style strings)"
 }
 d_cstrings_body() {
-	set -xv
 	unset ENV
+
 	if ! ${TEST_SH} -c ": \$'abc'" ||
 	     test $( ${TEST_SH} -c "printf %s \$'abc'" ) != abc
 	then
@@ -335,7 +335,6 @@ d_cstrings_body() {
 	# all the \X sequences for a single char X (ie: not hex/octal/unicode)
 	atf_check -s exit:0 -e empty -o inline:'\n\r\t\n' \
 		${TEST_SH} -c "printf '%s\\n' \$'\\a\\b\\e\\f\\n\\r\\t\\v'"
-#	atf_check -s exit:0 -e empty -o inline:'\7\10\33\14\12\15\11\13' \
 	atf_check -s exit:0 -e empty -o inline:'\n\r\t\n' \
 	   ${TEST_SH} -c "printf '%s\\n' \$'\\cG\\cH\\x1b\\cl\\cJ\\cm\\cI\\ck'"
 	atf_check -s exit:0 -e empty -o inline:"'"'"\\\n' \
@@ -363,8 +362,24 @@ d_cstrings_body() {
 
 	# \newline in a $'...' is dropped (just like in "" strings)
 	atf_check -s exit:0 -e empty -o inline:'abcdef' ${TEST_SH} -c \
-		"printf '%s' \$'abc\\
+"printf '%s' \$'abc\\
 def'"
+	# but a normal newline in a $'...' is just a newline
+	atf_check -s exit:0 -e empty -o inline:'abc\ndef' ${TEST_SH} -c \
+"printf '%s' \$'abc
+def'"
+	# and should work when elided line wrap occurs between $ and '
+	atf_check -s exit:0 -e empty -o inline:'abc\ndef' ${TEST_SH} -c \
+"printf '%s' \$\\
+'abc\\ndef'"
+
+	# $'...' only works when the $ is unquoted.
+	atf_check -s exit:0 -e empty -o inline:"abc\$'def'g" ${TEST_SH} -c \
+		"printf '%s' \"abc\$'def'g\""
+	atf_check -s exit:0 -e empty -o inline:'abc$defg' ${TEST_SH} -c \
+		"printf '%s' abc\\\$'def'g"
+	atf_check -s exit:0 -e empty -o inline:'abc$def' ${TEST_SH} -c \
+		"printf '%s' abc'\$'def"
 }
 
 atf_test_case f_redirects
