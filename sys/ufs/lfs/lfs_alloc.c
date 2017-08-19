@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.136 2017/06/10 05:29:36 maya Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.137 2017/08/19 11:27:42 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.136 2017/06/10 05:29:36 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.137 2017/08/19 11:27:42 maya Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -510,7 +510,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	 * not updated together in one function? (and why do both exist,
 	 * anyway?)
 	 */
-	lfs_unmark_vnode(vp);
+	UNMARK_VNODE(vp);
 
 	mutex_enter(&lfs_lock);
 	if (vp->v_uflag & VU_DIROP) {
