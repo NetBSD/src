@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.61 2017/08/05 11:33:05 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.62 2017/08/19 21:13:11 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.61 2017/08/05 11:33:05 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.62 2017/08/19 21:13:11 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -508,7 +508,7 @@ setinputstring(char *string, int push, int line1)
 	plinno = line1;
 
 	CTRACE(DBG_INPUT,
-	    ("setinputstring(\"%.20s%s\" (%d), %push, @ %d)\n", string,
+	    ("setinputstring(\"%.20s%s\" (%d), %spush, @ %d)\n", string,
 	    (parsenleft > 20 ? "..." : ""), parsenleft, push?"":"no", line1));
 	INTON;
 }
