@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.300 2017/08/19 05:06:56 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.301 2017/08/19 05:26:02 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -18580,4 +18580,9 @@ sys/compat/linux/common/linux_time.c		1.38-1.39 via patch
 
 	missing cred check in linux_sys_settimeofday()
 	[mrg, ticket #1489]
+
+bin/rmdir/rmdir.c				1.27
+
+	PR/48182: Fix rmdir -p handling of top-level (root) directory.
+	[ginsbach, ticket #1490]
 
