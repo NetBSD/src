@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.74 2012/02/12 16:34:11 matt Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.74.16.1 2017/08/19 04:19:59 snj Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.74 2012/02/12 16:34:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.74.16.1 2017/08/19 04:19:59 snj Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -659,8 +659,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic("sunos_getdents");
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if (cookie && (*cookie >> 32) != 0) {
 			compat_offseterr(vp, "sunos_getdents");
 			error = EINVAL;
