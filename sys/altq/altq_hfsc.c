@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.24 2008/06/18 09:06:27 yamt Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.24.52.1 2017/08/19 05:37:04 snj Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.26 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.24 2008/06/18 09:06:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.24.52.1 2017/08/19 05:37:04 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -313,6 +313,7 @@ hfsc_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 	if (*nbytes < sizeof(stats))
 		return (EINVAL);
 
+	memset(&stats, 0, sizeof(stats));
 	get_class_stats(&stats, cl);
 
 	if ((error = copyout((void *)&stats, ubuf, sizeof(stats))) != 0)
