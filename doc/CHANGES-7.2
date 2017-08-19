@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.38 2017/08/12 19:08:20 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.39 2017/08/19 05:24:10 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -3459,4 +3459,20 @@ external/bsd/wpa/dist/wpa_supplicant/wps_supplicant.h up to 1.1.1.6
 
 	Update wpa_supplicant/hostapd to 2.6.
 	[mrg, ticket #1490]
+
+sys/dev/vnd.c					1.260, 1.262 via patch
+
+	int overflows / truncation issues in vndioctl can cause
+	memory corruption
+	[mrg, ticket #1476]
+
+sys/kern/kern_ktrace.c				1.171 via patch
+
+	infoleak in ktruser() if copyin fails.
+	[mrg, ticket #1481]
+
+bin/rmdir/rmdir.c				1.27
+
+	PR/48182: Fix rmdir -p handling of top-level (root) directory.
+	[ginsbach, ticket #1488]
 
