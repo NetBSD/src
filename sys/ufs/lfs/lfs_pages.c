@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.14 2017/06/10 05:29:36 maya Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.15 2017/08/19 14:22:49 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.14 2017/06/10 05:29:36 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.15 2017/08/19 14:22:49 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -728,8 +728,11 @@ retry:
 		mutex_enter(vp->v_interlock);
 		lfs_writer_leave(fs);
 
-		/* The flush will have cleaned out this vnode as well,
-		   no need to do more to it. */
+		/*
+		 * The flush will have cleaned out this vnode as well,
+		 *  no need to do more to it.
+		 *  XXX then why are we falling through and continuing?
+		 */
 	}
 
 	/*
