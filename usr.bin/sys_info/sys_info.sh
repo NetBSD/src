@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.2 2017/08/19 03:06:50 agc Exp $
+# $NetBSD: sys_info.sh,v 1.3 2017/08/19 18:36:31 agc Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -122,19 +122,20 @@ getversion() {
 	esac
 }
 
-case $# in
-0)	all=true ;;
-*)	all=false ;;
-esac
-
-while [ $# -gt 0 ]; do
-	case "$1" in
-	-a)	all=true ;;
-	-v)	set -x ;;
+all=false
+while getopts "av" a; do
+	case "${a}" in
+	a)	all=true ;;
+	v)	set -x ;;
 	*)	break ;;
 	esac
 	shift
 done
+
+# if no arg specified, we want them all
+if [ $# -eq 0 ]; then
+	all=true
+fi
 
 # if we want to do every one, then let's get the arguments
 # not really scalable
