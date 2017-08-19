@@ -1,10 +1,10 @@
-#	$NetBSD: RB153,v 1.18 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: RB153,v 1.19 2017/08/19 09:10:24 maya Exp $
 #
 # Example kernel config for the RouterBOARD 153.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"RB153-$Revision: 1.18 $"
+#ident 		"RB153-$Revision: 1.19 $"
 
 maxusers	32
 
@@ -27,7 +27,7 @@ options 	TCP_OUTPUT_COUNTERS
 
 # Debugging options
 options 	DIAGNOSTIC	# extra kernel sanity checking
-options 	DEBUG		# extra kernel debugging support
+#options 	DEBUG		# extra kernel debugging support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
