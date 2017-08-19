@@ -1,10 +1,10 @@
-#	$NetBSD: RB433UAH,v 1.14 2017/07/29 12:28:27 maxv Exp $
+#	$NetBSD: RB433UAH,v 1.15 2017/08/19 09:10:24 maya Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"RB433UAH-$Revision: 1.14 $"
+#ident 		"RB433UAH-$Revision: 1.15 $"
 
 maxusers	32
 
@@ -38,7 +38,7 @@ options 	NTP		# network time protocol
 
 # Debugging options
 options 	DIAGNOSTIC	# extra kernel sanity checking
-options 	DEBUG		# extra kernel debugging support
+#options 	DEBUG		# extra kernel debugging support
 #options 	USERCONF	# userconf(4) support
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# kernel dynamic debugger
