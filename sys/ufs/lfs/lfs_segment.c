@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.274 2017/07/26 16:42:37 maya Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.275 2017/08/20 00:03:12 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.274 2017/07/26 16:42:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.275 2017/08/20 00:03:12 maya Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -661,7 +661,11 @@ lfs_segwrite(struct mount *mp, int flags)
 				error = lfs_writevnodes(fs, mp, sp, VN_DIROP);
 				if (um_error == 0)
 					um_error = error;
-				/* In case writevnodes errored out */
+				/*
+				 * In case writevnodes errored out
+				 * XXX why are we always doing this and not
+				 * just on error?
+				 */
 				lfs_flush_dirops(fs);
 				ssp = (SEGSUM *)(sp->segsum);
 				lfs_ss_setflags(fs, ssp,
