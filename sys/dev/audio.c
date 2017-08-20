@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.400 2017/08/17 04:33:22 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.401 2017/08/20 03:02:36 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.400 2017/08/17 04:33:22 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.401 2017/08/20 03:02:36 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5443,39 +5443,37 @@ mix_write(void *arg)
 	blksize = vc->sc_mpr.blksize;
 	error = 0;
 
-	if (audio_stream_get_used(vc->sc_pustream) > blksize)
-		goto done;
+	if (audio_stream_get_used(vc->sc_pustream) <= blksize) {
+		tocopy = vc->sc_pustream->inp;
+		orig = sc->sc_pr.s.outp;
+		used = blksize;
+		while (used > 0) {
+			cc = used;
+			cc1 = vc->sc_pustream->end - tocopy;
+			cc2 = sc->sc_pr.s.end - orig;
+			if (cc > cc1)
+				cc = cc1;
+			if (cc > cc2)
+				cc = cc2;
+			memcpy(tocopy, orig, cc);
+			orig += cc;
+			tocopy += cc;
 
-	tocopy = vc->sc_pustream->inp;
-	orig = sc->sc_pr.s.outp;
-	used = blksize;
-	while (used > 0) {
-		cc = used;
-		cc1 = vc->sc_pustream->end - tocopy;
-		cc2 = sc->sc_pr.s.end - orig;
-		if (cc > cc1)
-			cc = cc1;
-		if (cc > cc2)
-			cc = cc2;
-		memcpy(tocopy, orig, cc);
-		orig += cc;
-		tocopy += cc;
+			if (tocopy >= vc->sc_pustream->end)
+				tocopy = vc->sc_pustream->start;
+			if (orig >= sc->sc_pr.s.end)
+				orig = sc->sc_pr.s.start;
 
-		if (tocopy >= vc->sc_pustream->end)
-			tocopy = vc->sc_pustream->start;
-		if (orig >= sc->sc_pr.s.end)
-			orig = sc->sc_pr.s.start;
+			used -= cc;
+		}
 
-		used -= cc;
- 	}
+		vc->sc_pustream->inp = audio_stream_add_inp(vc->sc_pustream,
+		    vc->sc_pustream->inp, blksize);
 
-	vc->sc_pustream->inp = audio_stream_add_inp(vc->sc_pustream,
-	    vc->sc_pustream->inp, blksize);
+		sc->sc_pr.s.outp = audio_stream_add_outp(&sc->sc_pr.s,
+		    sc->sc_pr.s.outp, blksize);
+	}
 
-	sc->sc_pr.s.outp = audio_stream_add_outp(&sc->sc_pr.s,
-	    sc->sc_pr.s.outp, blksize);
-
-done:
 	if (vc->sc_npfilters > 0) {
 		null_fetcher.fetch_to = null_fetcher_fetch_to;
 		filter = vc->sc_pfilters[0];
