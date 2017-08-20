@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.40 2017/08/14 23:57:50 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.41 2017/08/20 04:56:55 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5250,4 +5250,25 @@ external/bsd/libpcap/dist/gencode.c		1.10
 	Prevent faulting in libpcap by not applying a filter to an
 	unactivated pcap_t handle.  PR lib/51952.
 	[ginsbach, ticket #209]
+
+sys/dev/hdaudio/hdafg.c				1.13
+sys/dev/hdaudio/hdafg_dd.c			1.2
+
+	put all the ELD debugging messages under
+	#ifdef HDAFG_HDMI_DEBUG.
+	[mrg, ticket #210]
+
+lib/libc/rpc/rpcb_st_xdr.c			1.12
+
+	Fixed NetBSD RPCBPROC_GETSTAT endocde/decode interoperability
+	issues with other operating systems. The get statistics option
+	(-m) of rpcifno now works correctly against other
+	implementations of rpcbind and vice versa.  PR lib/15802.
+	[ginsbach, ticket #213]
+
+lib/libc/stdlib/merge.c				1.15
+
+	Gracefully handle a zero number of members argument in
+	mergesort(3).  PR lib/50316.
+	[ginsbach, ticket #214]
 
