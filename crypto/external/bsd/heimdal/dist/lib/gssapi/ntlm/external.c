@@ -1,4 +1,4 @@
-/*	$NetBSD: external.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: external.c,v 1.1.1.2.4.1 2017/08/20 05:42:04 snj Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -116,6 +116,9 @@ static gssapi_mech_interface_desc ntlm_mech = {
     NULL,
     ntlm_mo,
     sizeof(ntlm_mo) / sizeof(ntlm_mo[0]),
+    NULL,
+    NULL,
+    NULL,
     NULL,
     NULL,
     NULL,
