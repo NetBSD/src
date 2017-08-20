@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.11 2017/07/21 01:00:08 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.12 2017/08/20 21:00:01 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.11 2017/07/21 01:00:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.12 2017/08/20 21:00:01 jakllsch Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -235,7 +235,7 @@ fdt_build_bootconfig(uint64_t mem_addr, uint64_t mem_size)
 	for (index = 0;
 	     fdtbus_get_reg64(memory, index, &addr, &size) == 0;
 	     index++) {
-		if (addr >= max_addr)
+		if (addr >= max_addr || size == 0)
 			continue;
 		if (addr + size > max_addr)
 			size = max_addr - addr;
