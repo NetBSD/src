@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.89 2017/07/06 00:35:28 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.90 2017/08/20 15:35:31 christos Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -200,5 +200,4 @@ snap_md_post: check_DESTDIR check_RELEASEDIR snap_post .WAIT ${SNAP_MD_POST_DEPS
 KERNEL_SUFFIXES=	bin srec ub
 
 INSTALLATION_DIRS+=	binary/gzimg		\
-			installation/instkernel	\
-			installation/ramdisk
+			installation/instkernel
