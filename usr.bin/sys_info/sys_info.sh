@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.3 2017/08/19 18:36:31 agc Exp $
+# $NetBSD: sys_info.sh,v 1.4 2017/08/20 10:17:55 martin Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -107,7 +107,7 @@ getversion() {
 		sshd -V 2>&1 | awk '/OpenSSH/ { sub("_", "D-", $1); print tolower($1) }'
 		;;
 	tcsh)
-		grep '/tcsh' /etc/shells > /dev/null 2>&1 && tcsh -c 'echo $version' | awk '{ print $1 "-" $2 }'
+		grep '/tcsh' /etc/shells > /dev/null 2>&1 && tcsh --version | awk '{ print $1 "-" $2 }'
 		;;
 	unbound)
 		case $(uname -s) in
