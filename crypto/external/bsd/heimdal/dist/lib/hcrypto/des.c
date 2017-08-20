@@ -1,4 +1,4 @@
-/*	$NetBSD: des.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
+/*	$NetBSD: des.c,v 1.1.1.2.2.1 2017/08/20 05:46:37 snj Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -85,16 +85,11 @@
  */
 
 #include <config.h>
+#include <krb5/roken.h>
 
 #define HC_DEPRECATED
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <krb5/krb5-types.h>
 #include <assert.h>
-
-#include <krb5/roken.h>
 
 #include "des.h"
 #include "ui.h"
