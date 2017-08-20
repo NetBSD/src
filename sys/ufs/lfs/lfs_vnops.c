@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.320 2017/08/19 12:01:08 maya Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.321 2017/08/20 05:37:03 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.320 2017/08/19 12:01:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.321 2017/08/20 05:37:03 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -473,7 +473,7 @@ lfs_fsync(void *v)
 	}
 
 	/*
-	 * If a vnode is bring cleaned, flush it out before we try to
+	 * If a vnode is being cleaned, flush it out before we try to
 	 * reuse it.  This prevents the cleaner from writing files twice
 	 * in the same partial segment, causing an accounting underflow.
 	 */
