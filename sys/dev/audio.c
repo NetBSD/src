@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.401 2017/08/20 03:02:36 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.402 2017/08/20 03:13:04 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.401 2017/08/20 03:02:36 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.402 2017/08/20 03:13:04 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2146,7 +2146,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	    sizeof(vc->sc_pfilters));
 	vc->sc_draining = false;
 	vc->sc_pbus = false;
-	vc->sc_blkset = false;
 	vc->sc_lastinfovalid = false;
 	vc->sc_swvol = 255;
 	vc->sc_recswvol = 255;
@@ -2632,9 +2631,6 @@ audio_calc_blksize(struct audio_softc *sc, int mode,
 	const audio_params_t *parm;
 	struct audio_stream *rb;
 	int *blksize;
-
-	if (vc->sc_blkset)
-		return;
 
 	if (mode == AUMODE_PLAY) {
 		rb = vc->sc_pustream;
@@ -4077,7 +4073,6 @@ audio_set_vchan_defaults(struct audio_softc *sc, u_int mode)
 	/* default parameters */
 	vc->sc_rparams = sc->sc_vchan_params;
 	vc->sc_pparams = sc->sc_vchan_params;
-	vc->sc_blkset = false;
 
 	AUDIO_INITINFO(&ai);
 	ai.record.sample_rate = sc->sc_vchan_params.sample_rate;
@@ -4120,7 +4115,6 @@ audio_set_defaults(struct audio_softc *sc, u_int mode,
 	/* default parameters */
 	vc->sc_rparams = audio_default;
 	vc->sc_pparams = audio_default;
-	vc->sc_blkset = false;
 
 	AUDIO_INITINFO(&ai);
 	ai.record.sample_rate = vc->sc_rparams.sample_rate;
@@ -4625,7 +4619,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 
 	/* Play params can affect the record params, so recalculate blksize. */
 	if (nr > 0 || np > 0 || reset) {
-		vc->sc_blkset = false;
 		if (nr > 0)
 			audio_calc_blksize(sc, AUMODE_RECORD, vc);
 		if (np > 0)
@@ -4714,7 +4707,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 			audio_clear_intr_unlocked(sc, vc);
 			cleared = true;
 		}
-		vc->sc_blkset = false;
 		if (nr > 0)
 			audio_calc_blksize(sc, AUMODE_RECORD, vc);
 		if (np > 0)
@@ -4722,7 +4714,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 		sc->sc_pr.blksize = vc->sc_mpr.blksize;
 		sc->sc_rr.blksize = vc->sc_mrr.blksize;
 	} else {
-		vc->sc_blkset = true;
 		vc->sc_mpr.blksize = sc->sc_pr.blksize;
 		vc->sc_mrr.blksize = sc->sc_rr.blksize;
 	}
