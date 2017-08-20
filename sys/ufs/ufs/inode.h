@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.75 2016/08/14 11:31:41 jdolecek Exp $	*/
+/*	$NetBSD: inode.h,v 1.76 2017/08/20 12:09:06 maya Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -144,7 +144,7 @@ struct inode {
 	 * These fields are currently only used by FFS and LFS,
 	 * do NOT use them with ext2fs.
 	 */
-	u_int16_t i_mode;	/* IFMT, permissions; see below. */
+	u_int16_t i_mode;	/* IFMT, permissions; see dinode.h. */
 	int16_t   i_nlink;	/* File link count. */
 	u_int64_t i_size;	/* File byte count. */
 	u_int32_t i_flags;	/* Status flags (chflags). */
