@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.2.2.7.2.4 2017/06/20 16:53:42 snj Exp $
+# $NetBSD: ad.aarch64,v 1.2.2.7.2.5 2017/08/20 05:42:13 snj Exp $
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetmask.debug
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetround.debug
 ./usr/lib/eabi/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib
@@ -57,7 +57,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libamu.so.4.0.debug		comp-amd-debug	debug,compat,pic
 ./usr/libdata/debug/usr/lib/eabi/libarchive.so.3.1.debug	comp-sys-debug	debug,compat,pic
 ./usr/libdata/debug/usr/lib/eabi/libarm.so.0.0.debug		comp-sys-debug	debug,compat,pic
-./usr/libdata/debug/usr/lib/eabi/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/eabi/libasn1.so.10.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/eabi/libatf-c++.so.1.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/eabi/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/eabi/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
@@ -68,7 +68,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libc.so.12.193.1.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/eabi/libcom_err.so.8.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/eabi/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libcrypto.so.8.5.debug	comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat
@@ -96,11 +96,11 @@
 ./usr/libdata/debug/usr/lib/eabi/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libgomp.so.1.0.debug	comp-sys-debug	debug,compat,gcc=45,notyet
 ./usr/libdata/debug/usr/lib/eabi/libgomp.so.1.1.debug	comp-sys-debug	debug,compat,gcc=48,notyet
-./usr/libdata/debug/usr/lib/eabi/libgssapi.so.10.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/eabi/libhdb.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/eabi/libheimbase.so.1.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/eabi/libheimntlm.so.4.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/eabi/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/eabi/libgssapi.so.11.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/eabi/libhdb.so.15.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/eabi/libheimbase.so.2.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/eabi/libheimntlm.so.5.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/eabi/libhx509.so.6.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libipsec.so.3.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libirs.so.8.5.debug		comp-bind-debug	debug,compat
@@ -109,11 +109,11 @@
 ./usr/libdata/debug/usr/lib/eabi/libisccfg.so.8.5.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libisns.so.0.0.debug	comp-isns-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libkadm5clnt.so.13.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/eabi/libkadm5srv.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/eabi/libkafs.so.12.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/eabi/libkdc.so.2.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/eabi/libkrb5.so.26.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/eabi/libkadm5clnt.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/eabi/libkadm5srv.so.15.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/eabi/libkafs.so.13.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/eabi/libkdc.so.3.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/eabi/libkrb5.so.27.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/eabi/libkvm.so.6.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/liblber.so.3.3.debug	comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libldap.so.4.3.debug	comp-ldap-debug	ldap,debug,compat
@@ -152,7 +152,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libradius.so.4.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/librefuse.so.2.0.debug	comp-refuse-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libresolv.so.3.0.debug	comp-net-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libroken.so.19.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/eabi/libroken.so.20.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/eabi/librpcsvc.so.1.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/librt.so.1.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/librump.so.0.0.debug	comp-rump-debug	debug,compat,rump
@@ -164,7 +164,7 @@
 ./usr/libdata/debug/usr/lib/eabi/librumpvfs.so.0.0.debug	comp-rump-debug	debug,compat,rump
 ./usr/libdata/debug/usr/lib/eabi/libsaslc.so.0.0.debug	comp-sys-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libskey.so.2.0.debug	comp-sys-debug	skey,debug,compat
-./usr/libdata/debug/usr/lib/eabi/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/eabi/libsl.so.6.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libsqlite3.so.1.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libssh.so.24.0.debug	comp-secsh-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libssl.so.10.6.debug		comp-crypto-debug	crypto,debug,compat
@@ -179,7 +179,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libusbhid.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libutil.so.7.21.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libuutil.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug,compat
-./usr/libdata/debug/usr/lib/eabi/libwind.so.0.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/eabi/libwind.so.1.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/eabi/libwrap.so.1.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libz.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libzfs.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
@@ -210,7 +210,7 @@
 #./usr/libdata/debug/usr/lib/eabihf/libamu.so.4.0.debug		comp-amd-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libarchive.so.3.1.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libarm.so.0.0.debug		comp-sys-debug	debug,compat,pic
-#./usr/libdata/debug/usr/lib/eabihf/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+#./usr/libdata/debug/usr/lib/eabihf/libasn1.so.10.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
 #./usr/libdata/debug/usr/lib/eabihf/libatf-c++.so.1.0.debug		comp-compat-shlib	compat,pic,atf,debug
 #./usr/libdata/debug/usr/lib/eabihf/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 #./usr/libdata/debug/usr/lib/eabihf/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
@@ -220,7 +220,7 @@
 #./usr/libdata/debug/usr/lib/eabihf/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libc.so.12.193.1.debug	comp-sys-debug	debug,compat
-#./usr/libdata/debug/usr/lib/eabihf/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+#./usr/libdata/debug/usr/lib/eabihf/libcom_err.so.8.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 #./usr/libdata/debug/usr/lib/eabihf/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libcrypto.so.8.5.debug	comp-crypto-debug	crypto,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat
@@ -248,11 +248,11 @@
 #./usr/libdata/debug/usr/lib/eabihf/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libgomp.so.1.0.debug	comp-sys-debug	debug,compat,gcc=45,notyet
 #./usr/libdata/debug/usr/lib/eabihf/libgomp.so.1.1.debug	comp-sys-debug	debug,compat,gcc=48,notyet
-#./usr/libdata/debug/usr/lib/eabihf/libgssapi.so.10.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-#./usr/libdata/debug/usr/lib/eabihf/libhdb.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-#./usr/libdata/debug/usr/lib/eabihf/libheimbase.so.1.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-#./usr/libdata/debug/usr/lib/eabihf/libheimntlm.so.4.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-#./usr/libdata/debug/usr/lib/eabihf/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
+#./usr/libdata/debug/usr/lib/eabihf/libgssapi.so.11.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+#./usr/libdata/debug/usr/lib/eabihf/libhdb.so.15.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+#./usr/libdata/debug/usr/lib/eabihf/libheimbase.so.2.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+#./usr/libdata/debug/usr/lib/eabihf/libheimntlm.so.5.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+#./usr/libdata/debug/usr/lib/eabihf/libhx509.so.6.0.debug	comp-krb5-debug	kerberos,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libipsec.so.3.0.debug	comp-net-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libirs.so.8.5.debug		comp-bind-debug	debug,compat
@@ -261,11 +261,11 @@
 #./usr/libdata/debug/usr/lib/eabihf/libisccfg.so.8.5.debug	comp-bind-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libisns.so.0.0.debug	comp-isns-debug	debug,compat
-#./usr/libdata/debug/usr/lib/eabihf/libkadm5clnt.so.13.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-#./usr/libdata/debug/usr/lib/eabihf/libkadm5srv.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-#./usr/libdata/debug/usr/lib/eabihf/libkafs.so.12.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
-#./usr/libdata/debug/usr/lib/eabihf/libkdc.so.2.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-#./usr/libdata/debug/usr/lib/eabihf/libkrb5.so.26.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+#./usr/libdata/debug/usr/lib/eabihf/libkadm5clnt.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+#./usr/libdata/debug/usr/lib/eabihf/libkadm5srv.so.15.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+#./usr/libdata/debug/usr/lib/eabihf/libkafs.so.13.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+#./usr/libdata/debug/usr/lib/eabihf/libkdc.so.3.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+#./usr/libdata/debug/usr/lib/eabihf/libkrb5.so.27.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
 #./usr/libdata/debug/usr/lib/eabihf/libkvm.so.6.0.debug		comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/liblber.so.3.2.debug	comp-ldap-debug	ldap,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libldap.so.4.2.debug	comp-ldap-debug	ldap,debug,compat
@@ -304,7 +304,7 @@
 #./usr/libdata/debug/usr/lib/eabihf/libradius.so.4.0.debug	comp-net-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/librefuse.so.2.0.debug	comp-refuse-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libresolv.so.3.0.debug	comp-net-debug	debug,compat
-#./usr/libdata/debug/usr/lib/eabihf/libroken.so.19.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+#./usr/libdata/debug/usr/lib/eabihf/libroken.so.20.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 #./usr/libdata/debug/usr/lib/eabihf/librpcsvc.so.1.0.debug	comp-net-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/librt.so.1.1.debug		comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/librump.so.0.0.debug	comp-rump-debug	debug,compat,rump
@@ -316,7 +316,7 @@
 #./usr/libdata/debug/usr/lib/eabihf/librumpvfs.so.0.0.debug	comp-rump-debug	debug,compat,rump
 #./usr/libdata/debug/usr/lib/eabihf/libsaslc.so.0.0.debug	comp-sys-debug	crypto,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libskey.so.2.0.debug	comp-sys-debug	skey,debug,compat
-#./usr/libdata/debug/usr/lib/eabihf/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
+#./usr/libdata/debug/usr/lib/eabihf/libsl.so.6.0.debug		comp-krb5-debug	kerberos,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libsqlite3.so.1.2.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libssh.so.24.0.debug	comp-secsh-debug	crypto,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libssl.so.10.6.debug		comp-crypto-debug	crypto,debug,compat
@@ -331,7 +331,7 @@
 #./usr/libdata/debug/usr/lib/eabihf/libusbhid.so.1.0.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libutil.so.7.21.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libuutil.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug,compat
-#./usr/libdata/debug/usr/lib/eabihf/libwind.so.0.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+#./usr/libdata/debug/usr/lib/eabihf/libwind.so.1.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 #./usr/libdata/debug/usr/lib/eabihf/libwrap.so.1.0.debug	comp-net-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libz.so.1.0.debug		comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libzfs.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
@@ -362,7 +362,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libamu.so.4.0.debug		comp-amd-debug	debug,compat,pic
 ./usr/libdata/debug/usr/lib/oabi/libarchive.so.3.1.debug	comp-sys-debug	debug,compat,pic
 ./usr/libdata/debug/usr/lib/oabi/libarm.so.0.0.debug		comp-sys-debug	debug,compat,pic
-./usr/libdata/debug/usr/lib/oabi/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/oabi/libasn1.so.10.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/libatf-c++.so.1.0.debug	comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/oabi/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/oabi/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
@@ -373,7 +373,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libc.so.12.193.1.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/oabi/libcom_err.so.8.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/libcrypt.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libcrypto.so.8.5.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat
@@ -401,11 +401,11 @@
 ./usr/libdata/debug/usr/lib/oabi/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libgomp.so.1.0.debug		comp-sys-debug	debug,compat,gcc=45
 ./usr/libdata/debug/usr/lib/oabi/libgomp.so.1.1.debug		comp-sys-debug	debug,compat,gcc=48
-./usr/libdata/debug/usr/lib/oabi/libgssapi.so.10.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/oabi/libhdb.so.14.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/oabi/libheimbase.so.1.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/oabi/libheimntlm.so.4.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/oabi/libhx509.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libgssapi.so.11.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/oabi/libhdb.so.15.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/oabi/libheimbase.so.2.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/oabi/libheimntlm.so.5.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/oabi/libhx509.so.6.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libintl.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libipsec.so.3.0.debug		comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libirs.so.8.5.debug		comp-bind-debug	debug,compat
@@ -414,11 +414,11 @@
 ./usr/libdata/debug/usr/lib/oabi/libisccfg.so.8.5.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libiscsi.so.2.0.debug		comp-iscsi-debug	iscsi,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisns.so.0.0.debug		comp-isns-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libkadm5clnt.so.13.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/oabi/libkadm5srv.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/oabi/libkafs.so.12.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/oabi/libkdc.so.2.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/oabi/libkrb5.so.26.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/oabi/libkadm5clnt.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/oabi/libkadm5srv.so.15.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/oabi/libkafs.so.13.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/oabi/libkdc.so.3.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/oabi/libkrb5.so.27.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/libkvm.so.6.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/liblber.so.3.3.debug		comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libldap.so.4.3.debug		comp-ldap-debug	ldap,debug,compat
@@ -457,7 +457,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libradius.so.4.0.debug		comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/librefuse.so.2.0.debug		comp-refuse-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libresolv.so.3.0.debug		comp-net-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libroken.so.19.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/oabi/libroken.so.20.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/librpcsvc.so.1.0.debug		comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/librt.so.1.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/librump.so.0.0.debug		comp-rump-debug	debug,compat,rump
@@ -469,7 +469,7 @@
 ./usr/libdata/debug/usr/lib/oabi/librumpvfs.so.0.0.debug	comp-rump-debug	debug,compat,rump
 ./usr/libdata/debug/usr/lib/oabi/libsaslc.so.0.0.debug		comp-sys-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libskey.so.2.0.debug		comp-sys-debug	skey,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/oabi/libsl.so.6.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libsqlite3.so.1.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libssh.so.24.0.debug		comp-secsh-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libssl.so.10.6.debug		comp-crypto-debug	crypto,debug,compat
@@ -484,7 +484,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libusbhid.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libutil.so.7.21.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libuutil.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
-./usr/libdata/debug/usr/lib/oabi/libwind.so.0.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/oabi/libwind.so.1.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/libwrap.so.1.0.debug		comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libz.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libzfs.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
