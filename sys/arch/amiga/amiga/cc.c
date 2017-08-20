@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.26 2014/01/22 00:25:16 christos Exp $	*/
+/*	$NetBSD: cc.c,v 1.27 2017/08/20 11:03:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.26 2014/01/22 00:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.27 2017/08/20 11:03:04 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -503,8 +503,10 @@ alloc_chipmem(u_long size)
 		if (size <= mn->size)
 			break;
 
-	if (mn == NULL)
+	if (mn == NULL) {
+		splx(s);
 		return NULL;
+	}
 
 	if ((mn->size - size) <= sizeof (*mn)) {
 		/*
