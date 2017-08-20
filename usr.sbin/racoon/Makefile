@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2013/11/09 00:33:48 christos Exp $
+# $NetBSD: Makefile,v 1.27.14.1 2017/08/20 05:44:31 snj Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -47,9 +47,9 @@ DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
 .if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-DHAVE_GSSAPI
 LDADD+= -lgssapi -lkrb5 -lhx509 -lheimntlm -lcom_err \
-	-lroken -lasn1
+	-lroken -lasn1 -lsqlite3
 DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBCOM_ERR} \
-	${LIBROKEN} ${LIBASN1}
+	${LIBROKEN} ${LIBASN1} ${LIBSQLITE3}
 .endif
 CPPFLAGS+=-DHAVE_OPENSSL_IDEA_H
 .if (${MKCRYPTO_RC5} != "no")

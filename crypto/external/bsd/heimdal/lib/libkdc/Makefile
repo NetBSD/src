@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2013/09/11 23:04:09 joerg Exp $
+# $NetBSD: Makefile,v 1.2.14.1 2017/08/20 05:44:29 snj Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -21,9 +21,11 @@ LIBDPLIBS+=	krb5		${.CURDIR}/../libkrb5		\
 SRCS =	default_config.c	\
         set_dbinfo.c		\
         digest.c		\
+        fast.c			\
         kerberos5.c		\
         krb5tgs.c		\
         pkinit.c		\
+        pkinit-ec.c		\
         log.c			\
         misc.c			\
         kx509.c			\
