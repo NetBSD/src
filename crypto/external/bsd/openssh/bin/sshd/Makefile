@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9.12.1 2015/04/30 06:07:29 riz Exp $
+#	$NetBSD: Makefile,v 1.9.12.1.6.1 2017/08/20 05:44:30 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -51,8 +51,8 @@ SRCS+=	auth-krb5.c auth2-krb5.c
 LDADD+=	-lkrb5 -lasn1
 DPADD+=	${LIBKRB5} ${LIBASN1}
 
-LDADD+=	-lcom_err -lroken
-DPADD+=	${LIBCOM_ERR} ${LIBROKEN}
+LDADD+=	-lcom_err -lroken -lsqlite3
+DPADD+=	${LIBCOM_ERR} ${LIBROKEN} ${LIBSQLITE3}
 .endif
 
 .if (${USE_LDAP} != "no")

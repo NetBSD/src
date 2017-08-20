@@ -1,4 +1,4 @@
-/*	$NetBSD: bump_pw_expire.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
+/*	$NetBSD: bump_pw_expire.c,v 1.1.1.2.12.1 2017/08/20 05:44:20 snj Exp $	*/
 
 /*
  * Copyright (c) 2000 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: bump_pw_expire.c,v 1.1.1.2.12.1 2017/08/20 05:44:20 snj Exp $");
 
 /*
  * extend password_expiration if it's defined

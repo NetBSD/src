@@ -1,4 +1,4 @@
-/*	$NetBSD: rename.c,v 1.1.1.2 2014/04/24 12:45:26 pettai Exp $	*/
+/*	$NetBSD: rename.c,v 1.1.1.2.12.1 2017/08/20 05:44:12 snj Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "ktutil_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: rename.c,v 1.1.1.2.12.1 2017/08/20 05:44:12 snj Exp $");
 
 int
 kt_rename(struct rename_options *opt, int argc, char **argv)

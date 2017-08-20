@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm_wrap.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
+/*	$NetBSD: ndbm_wrap.c,v 1.1.1.2.12.1 2017/08/20 05:44:23 snj Exp $	*/
 
 /*
  * Copyright (c) 2002 Kungliga Tekniska Högskolan
@@ -113,20 +113,20 @@ static datum
 dbm_get (DB *db, int flags)
 {
     DBT key, value;
-    datum datum;
+    datum d;
 #ifdef HAVE_DB3
     if(cursor == NULL)
 	db->cursor(db, NULL, &cursor, 0);
     if(cursor->c_get(cursor, &key, &value, flags) != 0) {
-	datum.dptr = NULL;
-	datum.dsize = 0;
+	d.dptr = NULL;
+	d.dsize = 0;
     } else
-	DBT2DATUM(&value, &datum);
+	DBT2DATUM(&value, &d);
 #else
     db->seq(db, &key, &value, flags);
-    DBT2DATUM(&value, &datum);
+    DBT2DATUM(&value, &d);
 #endif
-    return datum;
+    return d;
 }
 
 #ifndef DB_FIRST
