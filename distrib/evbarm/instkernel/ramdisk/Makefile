@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2017/07/05 19:50:49 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.18 2017/08/20 15:38:22 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -38,11 +38,13 @@ ${CRUNCHBIN}:	libhack.o
 .include "${DISTRIBDIR}/common/Makefile.makedev"
 .include "${DISTRIBDIR}/common/Makefile.image"
 
+RAMDISKDIR=${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/ramdisk
+
 release:	${IMAGE}
-	${RELEASE_INSTALL} ${IMAGE} \
-	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/ramdisk/
+	${INSTALL} -d -m 755 ${RAMDISKDIR}
+	${RELEASE_INSTALL} ${IMAGE}  ${RAMDISKDIR}
 	${TOOL_MKUBOOTIMAGE} -A arm -C none -O linux -T ramdisk \
 	    -a 0 -n "NetBSD/${MACHINE_ARCH} ramdisk" ${IMAGE} \
-	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/ramdisk/${IMAGE:S/.fs/.ub/}
+	    ${RAMDISKDIR}/${IMAGE:S/.fs/.ub/}
 
 .include <bsd.prog.mk>
