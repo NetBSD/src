@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.353 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.354 2017/08/20 12:51:38 maya Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.353 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.354 2017/08/20 12:51:38 maya Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2132,7 +2132,7 @@ ffs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 
 	ip = VTOI(vp);
 	if (ip->i_mode) {
-		panic("%s: dup alloc ino=%" PRId64 " on %s: mode %x/%x "
+		panic("%s: dup alloc ino=%" PRId64 " on %s: mode %o/%o "
 		    "gen %x/%x size %" PRIx64 " blocks %" PRIx64,
 		    __func__, ino, fs->fs_fsmnt, DIP(ip, mode), ip->i_mode,
 		    DIP(ip, gen), ip->i_gen, DIP(ip, size), DIP(ip, blocks));
