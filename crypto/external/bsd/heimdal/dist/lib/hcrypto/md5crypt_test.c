@@ -1,4 +1,4 @@
-/*	$NetBSD: md5crypt_test.c,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: md5crypt_test.c,v 1.1.1.1.24.1 2017/08/20 05:46:37 snj Exp $	*/
 
 /*
  * Copyright (c) 1999 Kungliga Tekniska Högskolan
@@ -34,9 +34,7 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <string.h>
+#include <krb5/roken.h>
 #include <des.h>
 
 struct test {

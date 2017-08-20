@@ -1,4 +1,4 @@
-/*	$NetBSD: change.c,v 1.1.1.2 2014/04/24 12:45:26 pettai Exp $	*/
+/*	$NetBSD: change.c,v 1.1.1.2.2.1 2017/08/20 05:46:31 snj Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "ktutil_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: change.c,v 1.1.1.2.2.1 2017/08/20 05:46:31 snj Exp $");
 
 static krb5_error_code
 change_entry (krb5_keytab keytab,
