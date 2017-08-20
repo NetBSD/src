@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.402 2017/08/20 03:13:04 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.403 2017/08/20 05:12:17 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.402 2017/08/20 03:13:04 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.403 2017/08/20 05:12:17 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5731,7 +5731,7 @@ audio_set_params(struct audio_softc *sc, int setmode, int usemode,
 
 	KASSERT(mutex_owned(sc->sc_lock));
 
-	if (vc == sc->sc_hwvc && sc->hw_if->set_params != NULL) {
+	if (vc == sc->sc_hwvc) {
 		sc->sc_ready = true;
 		if (sc->sc_vchan_params.precision == 8)
 			play->encoding = rec->encoding = AUDIO_ENCODING_SLINEAR;
