@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.102 2017/08/08 09:34:59 maya Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.103 2017/08/20 09:21:54 maya Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2655,10 +2655,6 @@ MIPSX(user_return):
 	REG_L	s6, CALLFRAME_SIZ+TF_REG_S6(sp)		# $22
 	REG_L	s7, CALLFRAME_SIZ+TF_REG_S7(sp)		# $23
 	REG_L	s8, CALLFRAME_SIZ+TF_REG_S8(sp)		# $30
-#ifdef MIPS3_LOONGSON2
-	li	t0, (MIPS_DIAG_ITLB_CLEAR | MIPS_DIAG_BTB_CLEAR | MIPS_DIAG_RAS_DISABLE)
-	mtc0	t0, MIPS_COP_0_DIAG
-#endif
 MIPSX(user_intr_return):
 #ifdef PARANOIA
 	PTR_L	t0, L_CPU(MIPS_CURLWP)
