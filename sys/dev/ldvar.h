@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.31 2017/08/09 16:44:39 mlelstv Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.32 2017/08/20 15:58:43 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ struct ld_softc {
 	int		(*sc_dump)(struct ld_softc *, void *, int, int);
 	int		(*sc_ioctl)(struct ld_softc *, u_long, void *, int32_t, bool);
 	int		(*sc_start)(struct ld_softc *, struct buf *);
-	int		(*sc_discard)(struct ld_softc *, off_t, off_t);
+	int		(*sc_discard)(struct ld_softc *, struct buf *);
 };
 
 /* sc_flags */
@@ -75,5 +75,6 @@ void	ldattach(struct ld_softc *, const char *);
 int	ldbegindetach(struct ld_softc *, int);
 void	ldenddetach(struct ld_softc *);
 void	lddone(struct ld_softc *, struct buf *);
+void	lddiscardend(struct ld_softc *, struct buf *);
 
 #endif	/* !_DEV_LDVAR_H_ */
