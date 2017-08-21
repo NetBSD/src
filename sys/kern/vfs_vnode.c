@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.96 2017/06/04 08:05:42 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.97 2017/08/21 08:56:45 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.96 2017/06/04 08:05:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.97 2017/08/21 08:56:45 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1028,6 +1028,8 @@ vcache_hash(const struct vcache_key *key)
 {
 	uint32_t hash = HASH32_BUF_INIT;
 
+	KASSERT(key->vk_key_len > 0);
+
 	hash = hash32_buf(&key->vk_mount, sizeof(struct mount *), hash);
 	hash = hash32_buf(key->vk_key, key->vk_key_len, hash);
 	return hash;
@@ -1381,23 +1383,29 @@ vcache_new(struct mount *mp, struct vnode *dvp, struct vattr *vap,
 		KASSERT(*vpp == NULL);
 		return error;
 	}
-	KASSERT(vip->vi_key.vk_key != NULL);
 	KASSERT(vp->v_op != NULL);
-	hash = vcache_hash(&vip->vi_key);
+	KASSERT((vip->vi_key.vk_key_len == 0) == (mp == dead_rootmount));
+	if (vip->vi_key.vk_key_len > 0) {
+		KASSERT(vip->vi_key.vk_key != NULL);
+		hash = vcache_hash(&vip->vi_key);
 
-	/* Wait for previous instance to be reclaimed, then insert new node. */
-	mutex_enter(&vcache_lock);
-	while ((ovip = vcache_hash_lookup(&vip->vi_key, hash))) {
-		ovp = VIMPL_TO_VNODE(ovip);
-		mutex_enter(ovp->v_interlock);
-		mutex_exit(&vcache_lock);
-		error = vcache_vget(ovp);
-		KASSERT(error == ENOENT);
+		/*
+		 * Wait for previous instance to be reclaimed,
+		 * then insert new node.
+		 */
 		mutex_enter(&vcache_lock);
+		while ((ovip = vcache_hash_lookup(&vip->vi_key, hash))) {
+			ovp = VIMPL_TO_VNODE(ovip);
+			mutex_enter(ovp->v_interlock);
+			mutex_exit(&vcache_lock);
+			error = vcache_vget(ovp);
+			KASSERT(error == ENOENT);
+			mutex_enter(&vcache_lock);
+		}
+		SLIST_INSERT_HEAD(&vcache_hashtab[hash & vcache_hashmask],
+		    vip, vi_hash);
+		mutex_exit(&vcache_lock);
 	}
-	SLIST_INSERT_HEAD(&vcache_hashtab[hash & vcache_hashmask],
-	    vip, vi_hash);
-	mutex_exit(&vcache_lock);
 	vfs_insmntque(vp, mp);
 	if ((mp->mnt_iflag & IMNT_MPSAFE) != 0)
 		vp->v_vflag |= VV_MPSAFE;
@@ -1556,10 +1564,12 @@ vcache_reclaim(vnode_t *vp)
 	} else {
 		temp_key = temp_buf;
 	}
-	mutex_enter(&vcache_lock);
-	memcpy(temp_key, vip->vi_key.vk_key, temp_key_len);
-	vip->vi_key.vk_key = temp_key;
-	mutex_exit(&vcache_lock);
+	if (vip->vi_key.vk_key_len > 0) {
+		mutex_enter(&vcache_lock);
+		memcpy(temp_key, vip->vi_key.vk_key, temp_key_len);
+		vip->vi_key.vk_key = temp_key;
+		mutex_exit(&vcache_lock);
+	}
 
 	fstrans_start(mp);
 
@@ -1604,13 +1614,15 @@ vcache_reclaim(vnode_t *vp)
 	/* Purge name cache. */
 	cache_purge(vp);
 
+	if (vip->vi_key.vk_key_len > 0) {
 	/* Remove from vnode cache. */
-	hash = vcache_hash(&vip->vi_key);
-	mutex_enter(&vcache_lock);
-	KASSERT(vip == vcache_hash_lookup(&vip->vi_key, hash));
-	SLIST_REMOVE(&vcache_hashtab[hash & vcache_hashmask],
-	    vip, vnode_impl, vi_hash);
-	mutex_exit(&vcache_lock);
+		hash = vcache_hash(&vip->vi_key);
+		mutex_enter(&vcache_lock);
+		KASSERT(vip == vcache_hash_lookup(&vip->vi_key, hash));
+		SLIST_REMOVE(&vcache_hashtab[hash & vcache_hashmask],
+		    vip, vnode_impl, vi_hash);
+		mutex_exit(&vcache_lock);
+	}
 	if (temp_key != temp_buf)
 		kmem_free(temp_key, temp_key_len);
 
