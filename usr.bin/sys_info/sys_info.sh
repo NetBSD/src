@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.6 2017/08/21 19:36:57 agc Exp $
+# $NetBSD: sys_info.sh,v 1.7 2017/08/21 19:51:32 agc Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -141,6 +141,11 @@ getversion() {
 			echo "tcsh: not found"
 		fi
 		;;
+	tzdata)
+		if [ -f /usr/share/zoneinfo/TZDATA_VERSION ]; then
+			cat /usr/share/zoneinfo/TZDATA_VERSION
+		fi
+		;;
 	unbound)
 		if which_prog unboundpath unbound-control; then
 			${unboundpath} -h | awk '/^Version/ { print "unbound-" $2 }'
@@ -174,7 +179,7 @@ fi
 if ${all}; then
 	args='awk bind bzip2 calendar ftpd g++ gcc grep gzip httpd netbsd netpgp'
 	args="${args} netpgpverify ntp openssl sqlite ssh sshd sys_info tcsh"
-	args="${args} unbound xz"
+	args="${args} tzdata unbound xz"
 else
 	args=$(echo $@ | tr ' ' '\n' | sort | uniq)
 fi
