@@ -1,4 +1,4 @@
-# $NetBSD: t_syntax.sh,v 1.8 2017/08/19 21:18:47 kre Exp $
+# $NetBSD: t_syntax.sh,v 1.9 2017/08/21 00:56:22 kre Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -324,7 +324,8 @@ d_cstrings_body() {
 	atf_check -s exit:0 -e empty -o empty ${TEST_SH} -c \
 		"test \$'\\r-\\n-\\f' = \$'\\cm-\\cj-\\cl'"
 	atf_check -s exit:0 -e empty -o empty ${TEST_SH} -c \
-		"test \$'\\u0123' = \$'\\304\\243'"
+		"unset LC_ALL; export LC_CTYPE=en_AU.UTF-8;
+		test \$'\\u0123' = \$'\\304\\243'"
 	atf_check -s exit:0 -e empty -o empty ${TEST_SH} -c \
 		"test \$'\\u0123' = \$'\\xC4\\xA3'"
 	atf_check -s exit:0 -e empty -o empty ${TEST_SH} -c \
@@ -348,17 +349,13 @@ d_cstrings_body() {
 	atf_check -s not-exit:0 -e not-empty -o ignore ${TEST_SH} -c \
 		": \$'\\uDEFF'"
 	atf_check -s not-exit:0 -e not-empty -o ignore ${TEST_SH} -c \
-		": \$'\\u00'"
-	atf_check -s not-exit:0 -e not-empty -o ignore ${TEST_SH} -c \
-		": \$'\\u8'"
-	atf_check -s not-exit:0 -e not-empty -o ignore ${TEST_SH} -c \
 		": \$'abcd"
 	atf_check -s not-exit:0 -e not-empty -o ignore ${TEST_SH} -c \
 		": \$'abcd\\"
 
-	# anything that generates \0 ends the $'...' immediately (\u cannot)
-	atf_check -s exit:0 -e empty -o inline:'aAa' ${TEST_SH} -c \
-		"printf '%s' \$'a\\0x'\$'A\\x00X'\$'a\\c@x'"
+	# anything that generates \0 ends the $'...' immediately
+	atf_check -s exit:0 -e empty -o inline:'aAaA' ${TEST_SH} -c \
+		"printf '%s' \$'a\\0x'\$'A\\x00X'\$'a\\c@x'\$'A\\u0000X'"
 
 	# \newline in a $'...' is dropped (just like in "" strings)
 	atf_check -s exit:0 -e empty -o inline:'abcdef' ${TEST_SH} -c \
