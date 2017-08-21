@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.223 2017/08/09 09:48:11 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.224 2017/08/21 02:35:13 knakahara Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.223 2017/08/09 09:48:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.224 2017/08/21 02:35:13 knakahara Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -8291,6 +8291,7 @@ key_sa_chgstate(struct secasvar *sav, u_int8_t state)
 		return;
 
 	key_unlink_sav(sav);
+	localcount_fini(&sav->localcount); /* XXXX fixed by ozaki-r */
 	SAVLIST_ENTRY_DESTROY(sav);
 	key_init_sav(sav);
 
