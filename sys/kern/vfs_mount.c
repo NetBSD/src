@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.66 2017/06/04 08:05:42 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.67 2017/08/21 09:00:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.66 2017/06/04 08:05:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.67 2017/08/21 09:00:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -558,9 +558,16 @@ vflush_one(vnode_t *vp, vnode_t *skipvp, int flags)
 		return 0;
 	/*
 	 * If FORCECLOSE is set, forcibly close the vnode.
+	 * For block or character devices, revert to an
+	 * anonymous device.  For all other files, just
+	 * kill them.
 	 */
 	if (flags & FORCECLOSE) {
-		vgone(vp);
+		if (vp->v_usecount > 1 &&
+		    (vp->v_type == VBLK || vp->v_type == VCHR))
+			vcache_make_anon(vp);
+		else
+			vgone(vp);
 		return 0;
 	}
 	vrele(vp);
