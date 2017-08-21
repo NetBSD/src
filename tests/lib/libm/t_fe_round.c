@@ -168,9 +168,6 @@ ATF_TC_BODY(fe_nexttoward, tc)
 	double received;
 	int res;
 
-#if defined(_LP64) && (defined(__mips__) || defined(__arm__))
-	ATF_CHECK_MSG(0, "nexttoward not supported yet on mips64 or aarch64");
-#else
 	for (unsigned int i = 0; i < __arraycount(values2); i++) {
 		received = nexttoward(values2[i].input, values2[i].toward);
 		if (values2[i].input < values2[i].toward) {
@@ -184,7 +181,6 @@ ATF_TC_BODY(fe_nexttoward, tc)
 			"input: %f (index %d): got %f, expected %f, res %d\n",
 			values2[i].input, i, received, values2[i].expected, res);
 	}
-#endif
 }
 
 ATF_TP_ADD_TCS(tp)
