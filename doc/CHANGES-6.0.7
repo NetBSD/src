@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.109 2017/08/19 05:06:29 snj Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.110 2017/08/21 23:31:09 snj Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -12398,22 +12398,22 @@ crypto/external/bsd/openssh/dist/PROTOCOL.mux	patch
 crypto/external/bsd/openssh/dist/addrmatch.c	patch
 crypto/external/bsd/openssh/dist/atomicio.c	patch
 crypto/external/bsd/openssh/dist/auth-bsdauth.c	patch
-crypto/external/bsd/openssh/dist/auth-chall.c	patch
+crypto/external/bsd/openssh/dist/auth-chall.c	delete
 crypto/external/bsd/openssh/dist/auth-krb5.c	patch
 crypto/external/bsd/openssh/dist/auth-options.c	patch
 crypto/external/bsd/openssh/dist/auth-options.h	patch
 crypto/external/bsd/openssh/dist/auth-pam.c	patch
 crypto/external/bsd/openssh/dist/auth-passwd.c	patch
-crypto/external/bsd/openssh/dist/auth-rh-rsa.c	patch
+crypto/external/bsd/openssh/dist/auth-rh-rsa.c	delete
 crypto/external/bsd/openssh/dist/auth-rhosts.c	patch
-crypto/external/bsd/openssh/dist/auth-rsa.c	patch
+crypto/external/bsd/openssh/dist/auth-rsa.c	delete
 crypto/external/bsd/openssh/dist/auth.c		patch
 crypto/external/bsd/openssh/dist/auth.h		patch
-crypto/external/bsd/openssh/dist/auth1.c	patch
+crypto/external/bsd/openssh/dist/auth1.c	delete
 crypto/external/bsd/openssh/dist/auth2-chall.c	patch
 crypto/external/bsd/openssh/dist/auth2-gss.c	patch
 crypto/external/bsd/openssh/dist/auth2-hostbased.c patch
-crypto/external/bsd/openssh/dist/auth2-jpake.c	patch
+crypto/external/bsd/openssh/dist/auth2-jpake.c	delete
 crypto/external/bsd/openssh/dist/auth2-kbdint.c	patch
 crypto/external/bsd/openssh/dist/auth2-krb5.c	patch
 crypto/external/bsd/openssh/dist/auth2-none.c	patch
@@ -12448,15 +12448,15 @@ crypto/external/bsd/openssh/dist/cipher-bf1.c	patch
 crypto/external/bsd/openssh/dist/cipher-chachapoly.c patch
 crypto/external/bsd/openssh/dist/cipher-chachapoly.h patch
 crypto/external/bsd/openssh/dist/cipher-ctr-mt.c patch
-crypto/external/bsd/openssh/dist/cipher-ctr.c	patch
+crypto/external/bsd/openssh/dist/cipher-ctr.c	delete
 crypto/external/bsd/openssh/dist/cipher.c	patch
 crypto/external/bsd/openssh/dist/cipher.h	patch
 crypto/external/bsd/openssh/dist/clientloop.c	patch
 crypto/external/bsd/openssh/dist/clientloop.h	patch
 crypto/external/bsd/openssh/dist/compat.c	patch
 crypto/external/bsd/openssh/dist/compat.h	patch
-crypto/external/bsd/openssh/dist/compress.c	patch
-crypto/external/bsd/openssh/dist/compress.h	patch
+crypto/external/bsd/openssh/dist/compress.c	delete
+crypto/external/bsd/openssh/dist/compress.h	delete
 crypto/external/bsd/openssh/dist/crypto_api.h	patch
 crypto/external/bsd/openssh/dist/deattack.c	patch
 crypto/external/bsd/openssh/dist/deattack.h	patch
@@ -12487,8 +12487,8 @@ crypto/external/bsd/openssh/dist/hmac.h		patch
 crypto/external/bsd/openssh/dist/hostfile.c	patch
 crypto/external/bsd/openssh/dist/hostfile.h	patch
 crypto/external/bsd/openssh/dist/includes.h	patch
-crypto/external/bsd/openssh/dist/jpake.c	patch
-crypto/external/bsd/openssh/dist/jpake.h	patch
+crypto/external/bsd/openssh/dist/jpake.c	delete
+crypto/external/bsd/openssh/dist/jpake.h	delete
 crypto/external/bsd/openssh/dist/kex.c		patch
 crypto/external/bsd/openssh/dist/kex.h		patch
 crypto/external/bsd/openssh/dist/kexc25519.c	patch
@@ -12529,8 +12529,8 @@ crypto/external/bsd/openssh/dist/moduli.c	patch
 crypto/external/bsd/openssh/dist/monitor.c	patch
 crypto/external/bsd/openssh/dist/monitor.h	patch
 crypto/external/bsd/openssh/dist/monitor_fdpass.c patch
-crypto/external/bsd/openssh/dist/monitor_mm.c	patch
-crypto/external/bsd/openssh/dist/monitor_mm.h	patch
+crypto/external/bsd/openssh/dist/monitor_mm.c	delete
+crypto/external/bsd/openssh/dist/monitor_mm.h	delete
 crypto/external/bsd/openssh/dist/monitor_wrap.c	patch
 crypto/external/bsd/openssh/dist/monitor_wrap.h	patch
 crypto/external/bsd/openssh/dist/msg.c		patch
@@ -12540,7 +12540,7 @@ crypto/external/bsd/openssh/dist/myproposal.h	patch
 crypto/external/bsd/openssh/dist/namespace.h	patch
 crypto/external/bsd/openssh/dist/opacket.c	patch
 crypto/external/bsd/openssh/dist/opacket.h	patch
-crypto/external/bsd/openssh/dist/openssh2netbsd	patch
+crypto/external/bsd/openssh/dist/openssh2netbsd	delete
 crypto/external/bsd/openssh/dist/packet.c	patch
 crypto/external/bsd/openssh/dist/packet.h	patch
 crypto/external/bsd/openssh/dist/pathnames.h	patch
@@ -12557,20 +12557,20 @@ crypto/external/bsd/openssh/dist/readpass.c	patch
 crypto/external/bsd/openssh/dist/readpassphrase.c patch
 crypto/external/bsd/openssh/dist/rijndael.c	patch
 crypto/external/bsd/openssh/dist/rijndael.h	patch
-crypto/external/bsd/openssh/dist/roaming.h	patch
-crypto/external/bsd/openssh/dist/roaming_client.c patch
-crypto/external/bsd/openssh/dist/roaming_common.c patch
-crypto/external/bsd/openssh/dist/roaming_dummy.c patch
-crypto/external/bsd/openssh/dist/roaming_serv.c	patch
+crypto/external/bsd/openssh/dist/roaming.h	delete
+crypto/external/bsd/openssh/dist/roaming_client.c delete
+crypto/external/bsd/openssh/dist/roaming_common.c delete
+crypto/external/bsd/openssh/dist/roaming_dummy.c delete
+crypto/external/bsd/openssh/dist/roaming_serv.c	delete
 crypto/external/bsd/openssh/dist/rsa.c		patch
 crypto/external/bsd/openssh/dist/rsa.h		patch
 crypto/external/bsd/openssh/dist/sandbox-pledge.c patch
 crypto/external/bsd/openssh/dist/sandbox-rlimit.c patch
-crypto/external/bsd/openssh/dist/sandbox-systrace.c patch
+crypto/external/bsd/openssh/dist/sandbox-systrace.c delete
 crypto/external/bsd/openssh/dist/sc25519.c	patch
 crypto/external/bsd/openssh/dist/sc25519.h	patch
-crypto/external/bsd/openssh/dist/schnorr.c	patch
-crypto/external/bsd/openssh/dist/schnorr.h	patch
+crypto/external/bsd/openssh/dist/schnorr.c	delete
+crypto/external/bsd/openssh/dist/schnorr.h	delete
 crypto/external/bsd/openssh/dist/scp.1		patch
 crypto/external/bsd/openssh/dist/scp.c		patch
 crypto/external/bsd/openssh/dist/servconf.c	patch
@@ -12662,7 +12662,7 @@ crypto/external/bsd/openssh/lib/reallocarr.c	patch
 crypto/external/bsd/openssh/lib/reallocarray.c	patch
 crypto/external/bsd/openssh/lib/shlib_version	patch
 crypto/external/bsd/openssh/lib/strtoi.c	patch
-crypto/external/bsd/openssh/lib/strtonum.c	patch
+crypto/external/bsd/openssh/lib/strtonum.c	delete
 crypto/external/bsd/openssh/openssh2netbsd	patch
 distrib/sets/lists/base/ad.mips64eb		patch
 distrib/sets/lists/base/ad.mips64el		patch
