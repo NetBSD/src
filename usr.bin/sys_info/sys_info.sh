@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.5 2017/08/21 19:22:31 agc Exp $
+# $NetBSD: sys_info.sh,v 1.6 2017/08/21 19:36:57 agc Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -136,7 +136,7 @@ getversion() {
 		;;
 	tcsh)
 		if which_prog tcshpath tcsh; then
-			${tcshpath} -c 'echo $version' | awk '{ print $1 "-" $2 }'
+			${tcshpath} --version | awk '{ print $1 "-" $2 }'
 		else
 			echo "tcsh: not found"
 		fi
