@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.12 2017/08/04 11:55:06 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.13 2017/08/21 10:38:19 pgoyette Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -134,6 +134,26 @@ christos and pgoyette.
     One additional option mentioned is to be able to specify, at boot
     loader time, an alternate value for the os-release portion of the
     default module path,  i.e. /stand/$MACHINE/$ALT-RELEASE/modules/
+
+    The following statement regarding this issue was previously issued
+    by the "core" group:
+
+    Date: Fri, 27 Jul 2012 08:02:56 +0200
+    From: <redacted>
+    To: <redacted>
+    Subject: Core statement on directory naming for kernel modules
+
+    The core group would also like to see the following changes in
+    the near future:
+
+       Implementation of the scheme described by Luke Mewburn in
+       <http://mail-index.NetBSD.org/current-users/2009/05/10/msg009372.html>
+       to allow a kernel and its modules to be kept together.
+       Changes to config(1) to extend the existing notion of whether or not
+       an option is built-in to the kernel, to three states: built-in, not
+       built-in but loadable as a module, entirely excluded and not even
+       loadable as a module.
+
 
 15. The existing config(5) framework provides an excellent mechanism
     for managing the content of kernels.  Unfortunately, this mechanism
