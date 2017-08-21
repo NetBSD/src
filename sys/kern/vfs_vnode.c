@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.97 2017/08/21 08:56:45 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.98 2017/08/21 09:00:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.97 2017/08/21 08:56:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.98 2017/08/21 09:00:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -225,6 +225,7 @@ static void		vnpanic(vnode_t *, const char *, ...)
 /* Routines having to do with the management of the vnode table. */
 extern struct mount	*dead_rootmount;
 extern int		(**dead_vnodeop_p)(void *);
+extern int		(**spec_vnodeop_p)(void *);
 extern struct vfsops	dead_vfsops;
 
 /* Vnode state operations and diagnostics. */
@@ -1647,6 +1648,72 @@ vcache_reclaim(vnode_t *vp)
 	mutex_enter(vp->v_interlock);
 	fstrans_done(mp);
 	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
+}
+
+/*
+ * Disassociate the underlying file system from an open device vnode
+ * and make it anonymous.
+ *
+ * Vnode unlocked on entry, drops a reference to the vnode.
+ */
+void
+vcache_make_anon(vnode_t *vp)
+{
+	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
+	uint32_t hash;
+	bool recycle;
+
+	KASSERT(vp->v_type == VBLK || vp->v_type == VCHR);
+	KASSERT((vp->v_mount->mnt_iflag & IMNT_HAS_TRANS) == 0 ||
+	    fstrans_is_owner(vp->v_mount));
+	VSTATE_ASSERT_UNLOCKED(vp, VS_ACTIVE);
+
+	/* Remove from vnode cache. */
+	hash = vcache_hash(&vip->vi_key);
+	mutex_enter(&vcache_lock);
+	KASSERT(vip == vcache_hash_lookup(&vip->vi_key, hash));
+	SLIST_REMOVE(&vcache_hashtab[hash & vcache_hashmask],
+	    vip, vnode_impl, vi_hash);
+	vip->vi_key.vk_mount = dead_rootmount;
+	vip->vi_key.vk_key_len = 0;
+	vip->vi_key.vk_key = NULL;
+	mutex_exit(&vcache_lock);
+
+	/*
+	 * Disassociate the underlying file system from the vnode.
+	 * VOP_INACTIVE leaves the vnode locked; VOP_RECLAIM unlocks
+	 * the vnode, and may destroy the vnode so that VOP_UNLOCK
+	 * would no longer function.
+	 */
+	if (vn_lock(vp, LK_EXCLUSIVE)) {
+		vnpanic(vp, "%s: cannot lock", __func__);
+	}
+	VOP_INACTIVE(vp, &recycle);
+	KASSERT((vp->v_vflag & VV_LOCKSWORK) == 0 ||
+	    VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+	if (VOP_RECLAIM(vp)) {
+		vnpanic(vp, "%s: cannot reclaim", __func__);
+	}
+
+	/* Purge name cache. */
+	cache_purge(vp);
+
+	/* Done with purge, change operations vector. */
+	mutex_enter(vp->v_interlock);
+	vp->v_op = spec_vnodeop_p;
+	vp->v_vflag |= VV_MPSAFE;
+	vp->v_vflag &= ~VV_LOCKSWORK;
+	mutex_exit(vp->v_interlock);
+
+	/*
+	 * Move to dead mount.  Must be after changing the operations
+	 * vector as vnode operations enter the mount before using the
+	 * operations vector.  See sys/kern/vnode_if.c.
+	 */
+	vfs_ref(dead_rootmount);
+	vfs_insmntque(vp, dead_rootmount);
+
+	vrele(vp);
 }
 
 /*

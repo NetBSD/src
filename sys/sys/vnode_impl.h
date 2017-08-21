@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.15 2017/06/04 08:02:26 hannken Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.16 2017/08/21 09:00:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@ vnode_t *
 	vnalloc_marker(struct mount *);
 void	vnfree_marker(vnode_t *);
 bool	vnis_marker(vnode_t *);
+void	vcache_make_anon(vnode_t *);
 int	vcache_vget(vnode_t *);
 int	vcache_tryvget(vnode_t *);
 int	vfs_drainvnodes(void);
