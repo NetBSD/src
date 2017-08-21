@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.143 2017/08/05 11:33:05 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.144 2017/08/21 13:20:49 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.143 2017/08/05 11:33:05 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.144 2017/08/21 13:20:49 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1212,6 +1212,7 @@ struct tokenstate {
 #define	NQ	0x00	/* Unquoted */
 #define	SQ	0x01	/* Single Quotes */
 #define	DQ	0x02	/* Double Quotes (or equivalent) */
+#define	CQ	0x03	/* C style Single Quotes */
 #define	QF	0x0F		/* Mask to extract previous values */
 #define	QS	0x10	/* Quoting started at this level in stack */
 
@@ -1562,6 +1563,165 @@ parseredir(const char *out,  int c)
 	redirnode = np;		/* this is the "value" of TRENODE */
 }
 
+/*
+ * Called to parse a backslash escape sequence inside $'...'.
+ * The backslash has already been read.
+ */
+static char *
+readcstyleesc(char *out)
+{
+	int c, vc, i, n;
+	unsigned int v;
+
+	c = pgetc();
+	switch (c) {
+	case '\0':
+	case PEOF:
+		synerror("Unterminated quoted string");
+	case '\n':
+		plinno++;
+		if (doprompt)
+			setprompt(2);
+		else
+			setprompt(0);
+		return out;
+
+	case '\\':
+	case '\'':
+	case '"':
+		v = c;
+		break;
+
+	case 'a': v = '\a'; break;
+	case 'b': v = '\b'; break;
+	case 'e': v = '\033'; break;
+	case 'f': v = '\f'; break;
+	case 'n': v = '\n'; break;
+	case 'r': v = '\r'; break;
+	case 't': v = '\t'; break;
+	case 'v': v = '\v'; break;
+
+	case '0': case '1': case '2': case '3':
+	case '4': case '5': case '6': case '7':
+		v = c - '0';
+		c = pgetc();
+		if (c >= '0' && c <= '7') {
+			v <<= 3;
+			v += c - '0';
+			c = pgetc();
+			if (c >= '0' && c <= '7') {
+				v <<= 3;
+				v += c - '0';
+			} else
+				pungetc();
+		} else
+			pungetc();
+		break;
+
+	case 'c':
+		c = pgetc();
+		if (c < 0x3f || c > 0x7a || c == 0x60)
+			synerror("Bad \\c escape sequence");
+		if (c == '\\' && pgetc() != '\\')
+			synerror("Bad \\c\\ escape sequence");
+		if (c == '?')
+			v = 127;
+		else
+			v = c & 0x1f;
+		break;
+
+	case 'x':
+		n = 2;
+		goto hexval;
+	case 'u':
+		n = 4;
+		goto hexval;
+	case 'U':
+		n = 8;
+	hexval:
+		v = 0;
+		for (i = 0; i < n; i++) {
+			c = pgetc();
+			if (c >= '0' && c <= '9')
+				v = (v << 4) + c - '0';
+			else if (c >= 'A' && c <= 'F')
+				v = (v << 4) + c - 'A' + 10;
+			else if (c >= 'a' && c <= 'f')
+				v = (v << 4) + c - 'a' + 10;
+			else {
+				pungetc();
+				break;
+			}
+		}
+		if (n > 2 && v > 127) {
+			if (v >= 0xd800 && v <= 0xdfff)
+				synerror("Invalid \\u escape sequence");
+
+			/* XXX should we use iconv here. What locale? */
+			CHECKSTRSPACE(4, out);
+
+			if (v <= 0x7ff) {
+				USTPUTC(0xc0 | v >> 6, out);
+				USTPUTC(0x80 | (v & 0x3f), out);
+				return out;
+			} else if (v <= 0xffff) {
+				USTPUTC(0xe0 | v >> 12, out);
+				USTPUTC(0x80 | ((v >> 6) & 0x3f), out);
+				USTPUTC(0x80 | (v & 0x3f), out);
+				return out;
+			} else if (v <= 0x10ffff) {
+				USTPUTC(0xf0 | v >> 18, out);
+				USTPUTC(0x80 | ((v >> 12) & 0x3f), out);
+				USTPUTC(0x80 | ((v >> 6) & 0x3f), out);
+				USTPUTC(0x80 | (v & 0x3f), out);
+				return out;
+			}
+			if (v > 127)
+				v = '?';
+		}
+		break;
+	default:
+		synerror("Unknown $'' escape sequence");
+	}
+	vc = (char)v;
+
+	/*
+	 * If we managed to create a \n from a \ sequence (no matter how)
+	 * then we replace it with the magic CRTCNL control char, which
+	 * will turn into a \n again later, but in the meantime, never
+	 * causes LINENO increments.
+	 */
+	if (vc == '\n') {
+		USTPUTC(CTLCNL, out);
+		return out;
+	}
+
+	/*
+	 * We can't handle NUL bytes.
+	 * POSIX says we should skip till the closing quote.
+	 */
+	if (vc == '\0') {
+		while ((c = pgetc()) != '\'') {
+			if (c == '\\')
+				c = pgetc();
+			if (c == PEOF)
+				synerror("Unterminated quoted string");
+			if (c == '\n') {
+				plinno++;
+				if (doprompt)
+					setprompt(2);
+				else
+					setprompt(0);
+			}
+		}
+		pungetc();
+		return out;
+	}
+	if (SQSYNTAX[vc] == CCTL)
+		USTPUTC(CTLESC, out);
+	USTPUTC(vc, out);
+	return out;
+}
 
 /*
  * The lowest level basic tokenizer.
@@ -1623,9 +1783,16 @@ readtoken1(int firstc, char const *syn, int magicq)
 				setprompt(0);
 			continue;
 
+		case CSBACK:	/* single quoted backslash */
+			if ((quoted & QF) == CQ) {
+				out = readcstyleesc(out);
+				continue;
+			}
+			/* FALLTHROUGH */
 		case CWORD:
 			USTPUTC(c, out);
 			continue;
+
 		case CCTL:
 			if (!magicq || ISDBLQUOTE())
 				USTPUTC(CTLESC, out);
@@ -1826,10 +1993,7 @@ parsesub: {
 	static const char types[] = "}-+?=";
 
 	c = pgetc_linecont();
-	if (c != '('/*)*/ && c != OPENBRACE && !is_name(c) && !is_special(c)) {
-		USTPUTC('$', out);
-		pungetc();
-	} else if (c == '('/*)*/) {	/* $(command) or $((arith)) */
+	if (c == '(' /*)*/) {	/* $(command) or $((arith)) */
 		if (pgetc_linecont() == '(' /*')'*/ ) {
 			out = insert_elided_nl(out);
 			PARSEARITH();
@@ -1838,7 +2002,7 @@ parsesub: {
 			pungetc();
 			out = parsebackq(stack, out, &bqlist, 0, magicq);
 		}
-	} else {
+	} else if (c == OPENBRACE || is_name(c) || is_special(c)) {
 		USTPUTC(CTLVAR, out);
 		typeloc = out - stackblock();
 		USTPUTC(VSNORMAL, out);
@@ -1974,6 +2138,15 @@ parsesub: {
 				CLRDBLQUOTE();
 			}
 		}
+	} else if (c == '\'' && syntax == BASESYNTAX) {
+		USTPUTC(CTLQUOTEMARK, out);
+		quotef = 1;
+		TS_PUSH();
+		syntax = SQSYNTAX;
+		quoted = CQ;
+	} else {
+		USTPUTC('$', out);
+		pungetc();
 	}
 	goto parsesub_return;
 }

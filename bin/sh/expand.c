@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.119 2017/06/30 23:02:56 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.120 2017/08/21 13:20:49 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.119 2017/06/30 23:02:56 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.120 2017/08/21 13:20:49 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -266,6 +266,9 @@ argstr(const char *p, int flag)
 			if (flag & EXP_NL)
 				STPUTC(c, expdest);
 			line_number++;
+			break;
+		case CTLCNL:
+			STPUTC('\n', expdest);	/* no line_number++ */
 			break;
 		case CTLQUOTEEND:
 			ifs_split = EXP_IFS_SPLIT;
@@ -1842,6 +1845,11 @@ rmescapes(char *str)
 			p++;
 			continue;
 		}
+		if (*p == CTLCNL) {
+			p++;
+			*q++ = '\n';
+			continue;
+		}
 		if (*p == CTLESC)
 			p++;
 		*q++ = *p++;
@@ -1881,6 +1889,11 @@ rmescapes_nl(char *str)
 		if (*p == CTLNONL) {
 			p++;
 			nls++;
+			continue;
+		}
+		if (*p == CTLCNL) {
+			p++;
+			*q++ = '\n';
 			continue;
 		}
 		if (*p == CTLESC)

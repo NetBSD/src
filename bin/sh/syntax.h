@@ -1,4 +1,4 @@
-/*	$NetBSD: syntax.h,v 1.8 2017/06/07 05:08:32 kre Exp $	*/
+/*	$NetBSD: syntax.h,v 1.9 2017/08/21 13:20:49 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -49,6 +49,7 @@
 #define CEOF 10			/* end of file */
 #define CCTL 11			/* like CWORD, except it must be escaped */
 #define CSPCL 12		/* these terminate a word */
+#define CSBACK 13		/* a backslash in a single quote syntax */
 
 /* Syntax classes for is_ functions */
 #define ISDIGIT 01		/* a digit */
@@ -56,7 +57,7 @@
 #define ISLOWER 04		/* a lower case letter */
 #define ISUNDER 010		/* an underscore */
 #define ISSPECL 020		/* the name of a special parameter */
-#define	ISSPACE 040		/* a white space character */
+#define ISSPACE 040		/* a white space character */
 
 #define PEOF (CHAR_MIN - 1)
 #define SYNBASE (-PEOF)
@@ -69,15 +70,15 @@
 
 /* These defines assume that the digits are contiguous (which is guaranteed) */
 #define	is_digit(c)	((unsigned)((c) - '0') <= 9)
-#define sh_ctype(c)	(is_type+SYNBASE)[(int)(c)]
+#define	sh_ctype(c)	(is_type+SYNBASE)[(int)(c)]
 #define	is_upper(c)	(sh_ctype(c) & ISUPPER)
 #define	is_lower(c)	(sh_ctype(c) & ISLOWER)
 #define	is_alpha(c)	(sh_ctype(c) & (ISUPPER|ISLOWER))
 #define	is_name(c)	(sh_ctype(c) & (ISUPPER|ISLOWER|ISUNDER))
 #define	is_in_name(c)	(sh_ctype(c) & (ISUPPER|ISLOWER|ISUNDER|ISDIGIT))
-#define is_special(c)	(sh_ctype(c) & (ISSPECL|ISDIGIT))
-#define is_space(c)	(sh_ctype(c) & ISSPACE)
-#define digit_val(c)	((c) - '0')
+#define	is_special(c)	(sh_ctype(c) & (ISSPECL|ISDIGIT))
+#define	is_space(c)	(sh_ctype(c) & ISSPACE)
+#define	digit_val(c)	((c) - '0')
 
 extern const char basesyntax[];
 extern const char dqsyntax[];

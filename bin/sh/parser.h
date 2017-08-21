@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.23 2017/06/30 23:02:56 kre Exp $	*/
+/*	$NetBSD: parser.h,v 1.24 2017/08/21 13:20:49 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,9 +46,10 @@
 #define	CTLENDARI '\207'
 #define	CTLQUOTEMARK '\210'
 #define	CTLQUOTEEND '\211'	/* only inside ${...} */
-#define CTLNONL '\212'		/* The \n in a deleted \ \n sequence */
+#define	CTLNONL '\212'		/* The \n in a deleted \ \n sequence */
 			/* pure concidence that (CTLNONL & 0x7f) == '\n' */
-#define	CTL_LAST '\212'		/* last 'special' character */
+#define	CTLCNL	'\213'		/* A $'\n' - newline not counted */
+#define	CTL_LAST '\213'		/* last 'special' character */
 
 /* variable substitution byte (follows CTLVAR) */
 #define VSTYPE		0x0f	/* type of variable substitution */
