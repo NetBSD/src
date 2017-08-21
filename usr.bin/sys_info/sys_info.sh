@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.4 2017/08/20 10:17:55 martin Exp $
+# $NetBSD: sys_info.sh,v 1.5 2017/08/21 19:22:31 agc Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -26,7 +26,32 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+SYS_INFO_VERSION=20170821
 LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-/usr/lib:/usr/X11R7/lib}
+
+# short script to look for an executable $2, and if found, to place
+# path in $1
+# taken from pkgsrc bootstrap
+which_prog()
+{
+	_var="$1"; _name="$2"
+
+	eval _tmp=\"\$$_var\"
+	if [ "x$_tmp" != "x" ]; then
+		# Variable is already set (by the user, for example)
+		return 0
+	fi
+
+	for _d in `echo $PATH | tr ':' ' '`; do
+		if [ -f "$_d/$_name" ] && [ -x "$_d/$_name" ]; then
+			# Program found
+			eval $_var=\""$_d/$_name"\"
+			return 0
+		fi
+	done
+
+	return 1
+}
 
 # print out the version for the given argument
 getversion() {
@@ -106,15 +131,22 @@ getversion() {
 	sshd)
 		sshd -V 2>&1 | awk '/OpenSSH/ { sub("_", "D-", $1); print tolower($1) }'
 		;;
+	sys_info)
+		echo sys_info-${SYS_INFO_VERSION}
+		;;
 	tcsh)
-		grep '/tcsh' /etc/shells > /dev/null 2>&1 && tcsh --version | awk '{ print $1 "-" $2 }'
+		if which_prog tcshpath tcsh; then
+			${tcshpath} -c 'echo $version' | awk '{ print $1 "-" $2 }'
+		else
+			echo "tcsh: not found"
+		fi
 		;;
 	unbound)
-		case $(uname -s) in
-		FreeBSD)
-			unbound-control -h | awk '/^Version/ { print "unbound-" $2 }'
-			;;
-		esac
+		if which_prog unboundpath unbound-control; then
+			${unboundpath} -h | awk '/^Version/ { print "unbound-" $2 }'
+		else
+			echo "unbound: not found"
+		fi
 		;;
 	xz)
 		xz --version | awk '{ print $1 "-" $4; exit }'
@@ -122,16 +154,16 @@ getversion() {
 	esac
 }
 
-all=false
-while getopts "av" a; do
-	case "${a}" in
-	a)	all=true ;;
-	v)	set -x ;;
+# check if we have our only option
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-v)	set -x ;;
 	*)	break ;;
 	esac
 	shift
 done
 
+all=false
 # if no arg specified, we want them all
 if [ $# -eq 0 ]; then
 	all=true
@@ -141,9 +173,12 @@ fi
 # not really scalable
 if ${all}; then
 	args='awk bind bzip2 calendar ftpd g++ gcc grep gzip httpd netbsd netpgp'
-	args="${args} netpgpverify ntp openssl sqlite ssh sshd tcsh unbound xz"
-	set -- ${args}
+	args="${args} netpgpverify ntp openssl sqlite ssh sshd sys_info tcsh"
+	args="${args} unbound xz"
+else
+	args=$(echo $@ | tr ' ' '\n' | sort | uniq)
 fi
+set -- ${args}
 
 while [ $# -gt 0 ]; do
 	getversion $1
