@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.163 2017/07/25 08:37:48 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.164 2017/08/21 13:20:49 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd July 15, 2017
+.Dd August 20, 2017
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvx
@@ -528,8 +528,12 @@ The following is a list of operators:
 .Ss Quoting
 Quoting is used to remove the special meaning of certain characters or
 words to the shell, such as operators, whitespace, or keywords.
-There are three types of quoting: matched single quotes,
-matched double quotes, and backslash.
+There are four types of quoting:
+matched single quotes,
+matched double quotes,
+backslash,
+and
+dollar preceding matched single quotes (enhanced C style strings.)
 .Ss Backslash
 An unquoted backslash preserves the literal meaning of the following
 character, with the exception of
@@ -554,6 +558,192 @@ quote only the following characters (and these not in all contexts):
 .Dl $  `  \*q  \e  <newline> ,
 where a backslash newline is a line continuation as above.
 Otherwise it remains literal.
+.Ss Dollar Single Quotes (\&$'...')
+.Bd -filled -offset indent
+.Bf Em
+Note: this form of quoting is still somewhat experimental,
+and yet to be included in the
+.Tn POSIX
+standard.
+This implementation is based upon the current proposals for
+standardization, and is subject to change should the eventual
+adopted text differ.
+.Ef
+.Ed
+.Pp
+Enclosing characters in a matched pair of single quotes, with the
+first immediately preceded by an unquoted dollar sign
+.Pq \&$
+provides a quoting mechanism similar to single quotes, except
+that within the sequence of characters, any backslash
+.Pq \e ,
+is an escape character, which causes the following character to
+be treated specially.
+Only a subset of the characters that can occur in the string
+are defined after a backslash, others are reserved for future
+definition, and currently generate a syntax error if used.
+The escape sequences are modeled after the similar sequences
+in strings in the C programming language, with some extensions.
+.Pp
+The following characters are treated literally when following
+the escape character (backslash):
+.Dl \e \&' \&"
+The sequence
+.Dq \e\e
+allows the escape character (backslash) to appear in the string literally.
+.Dq \e'
+allows a single quote character into the string, such an
+escaped single quote does not terminate the quoted string.
+.Dq \e"
+is for compatibility with C strings, the double quote has
+no special meaning in a shell C-style string,
+and does not need to be escaped, but may be.
+.Pp
+A newline following the escape character is treated as a line continuation,
+like the same sequence in a double quoted string,
+or when not quoted \(en
+the two characters, escape and newline, are removed from the input string.
+.Pp
+The following characters, when escaped, are converted in a
+manner similar to the way they would be in a string in the C language:
+.Dl a b e f n r t v
+An escaped
+.Sq a
+generates an alert (or
+.Sq Tn BEL )
+character, that is, control-G, or 0x07.
+In a similar way,
+.Sq b
+is backspace (0x08),
+.Sq e
+(an extension to C) is escape (0x1B),
+.Sq f
+is form feed (0x0C),
+.Sq n
+is newline (or line feed, 0x0A),
+.Sq r
+is return (0x0D),
+.Sq t
+is horizontal tab (0x09),
+and
+.Sq v
+is vertical tab (0x13).
+.Pp
+In addition to those there are 5 forms that need additional
+data, which is obtained from the subsequent characters.
+An escape
+.Pq \e
+followed by one, two or three, octal digits 
+.Po So 0 Sc Ns \&.. Ns So 7 Sc Ns Pc
+is processed to form an 8 bit character value.
+If only one or two digits are present, the following
+character must be something other than an octal digit.
+It is safest to always use all 3 digits, with leading
+zeroes if needed.
+If all three digits are present, the first must be one of
+.So 0 Sc Ns \&.. Ns So 3 Sc .
+.Pp
+An escape followed by
+.Sq x
+(lower case only) can be followed by one or two
+hexadecimal digits
+.Po So 0 Sc Ns \&.. Ns So 9 Sc Ns , So A Sc Ns \&.. Ns So F Sc Ns , or So a Sc Ns \&.. Ns So f Sc Ns . Pc
+As with octal, if only one hex digit is present, the following
+character must be something other than a hex digit,
+so always giving 2 hex digits is best.
+However, unlike octal, it is unspecified in the standard
+how many hex digits can be consumed.
+This
+.Nm
+takes at most two, but other shells will continue consuming
+characters as long as they remain valid hex digits.
+Consequently, users should ensure that the character
+following the hex escape sequence is something other than
+a hex digit.
+One way to achieve this is to end the $'...' string immediately
+after the final hex digit, and then, immediately start
+another, so
+.Dl \&$'\ex33'$'4...'
+always gives the character with value 0x33
+.Pq Sq 3 ,
+followed by the character
+.Sq 4 ,
+whereas
+.Dl \&$'\ex334'
+in some other shells would be the hex value 0x334 (10, or more, bits).
+.Pp
+There are two escape sequences beginning with
+.Sq \eu
+or
+.Sq \eU .
+The former is followed by from 1 to 4 hex digits, the latter by
+from 1 to 8 hex digits.
+Leading zeroes can be used to pad the sequences to the maximum
+permitted length, to avoid any possible ambiguity problem with
+the following character, and because there are some shells that
+insist on exactly 4 (or 8) hex digits.
+These sequences are evaluated to form the value of a Unicode code
+point, which is then encoded into UTF-8 form, and entered into the
+string.
+(The code point should be converted to the appropriate
+code point value for the corresponding character in the character
+set given by the current locale, or perhaps the locale in use
+when the shell was started, but is not... currently.)
+Not all values that are possible to write are valid, values that
+specify (known) invalid Unicode code points will be rejected, or
+simply produce
+.Sq \&? .
+.Pp
+Lastly, as another addition to what is available in C, the escape
+character (backslash), followed by
+.Sq c
+(lower case only) followed by one additional character, which must
+be an alphabetic character (a letter), or one of the following:
+.Dl \&@ \&[ \&\e \&] \&^ \&_ \&?
+Other than
+.Sq \ec?
+the value obtained is the least significant 5 bits of the
+.Tn ASCII
+value of the character following the
+.Sq \ec
+escape sequence.
+That is what is commonly known as the
+.Dq control
+character obtained from the given character.
+The escape sequence
+.Sq \ec?
+yields the
+.Tn ASCII
+.Tn DEL
+character (0x7F).
+Note that to obtain the
+.Tn ASCII
+.Tn FS
+character (0x1C) this way,
+.Pq "that is control-\e"
+the trailing
+.Sq \e
+must be escaped itself, and so for this one case, the full
+escape sequence is
+.Dq \ec\e\e .
+The sequence
+.Dq \ec\eX
+where
+.Sq X
+is some character other than
+.Sq \e
+is reserved for future use, its meaning is unspecified.
+In this
+.Nm
+an error is generated.
+.Pp
+If any of the preceding escape sequences generate the value
+.Sq \e0
+(a nul character) that character, and all that follow in the
+same $'...' string, are omitted from the resulting word.
+.Pp
+After the $'...' string has had any included escape sequences
+converted, it is treated as if it had been a single quoted string.
 .Ss Reserved Words
 Reserved words are words that have special meaning to the
 shell and are recognized at the beginning of a line and
@@ -634,7 +824,7 @@ In general, redirections open, close, or duplicate an
 existing reference to a file.
 The overall format used for redirection is:
 .Pp
-.Dl [n] Va redir-op Ar file
+.Dl [n] Ns Va redir-op Ar file
 .Pp
 where
 .Va redir-op
