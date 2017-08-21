@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.17 2017/08/18 09:49:24 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.18 2017/08/21 02:58:49 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.17 2017/08/18 09:49:24 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.18 2017/08/21 02:58:49 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -67,6 +67,7 @@ static void	acpi_print_whea(ACPI_WHEA_HEADER *whea,
 		    void (*print_ins)(ACPI_WHEA_HEADER *),
 		    void (*print_flags)(ACPI_WHEA_HEADER *));
 static int	acpi_get_fadt_revision(ACPI_TABLE_FADT *fadt);
+static uint64_t	acpi_select_address(uint32_t, uint64_t);
 static void	acpi_handle_fadt(ACPI_TABLE_HEADER *fadt);
 static void	acpi_print_cpu(u_char cpu_id);
 static void	acpi_print_cpu_uid(uint32_t uid, char *uid_string);
@@ -751,30 +752,45 @@ acpi_get_fadt_revision(ACPI_TABLE_FADT *fadt)
 	return (fadt_revision);
 }
 
+static uint64_t
+acpi_select_address(uint32_t addr32, uint64_t addr64)
+{
+
+	if (addr64 == 0)
+		return addr32;
+
+	if ((addr32 != 0) && ((addr64 & 0xfffffff) != addr32)) {
+		/*
+		 * A few systems (e.g., IBM T23) have an RSDP that claims
+		 * revision 2 but the 64 bit addresses are invalid.  If
+		 * revision 2 and the 32 bit address is non-zero but the
+		 * 32 and 64 bit versions don't match, prefer the 32 bit
+		 * version for all subsequent tables.
+		 */
+		return addr32;
+	}
+
+	return addr64;
+}
+
 static void
 acpi_handle_fadt(ACPI_TABLE_HEADER *sdp)
 {
 	ACPI_TABLE_HEADER *dsdp;
 	ACPI_TABLE_FACS	*facs;
 	ACPI_TABLE_FADT *fadt;
-	int		fadt_revision;
 
 	fadt = (ACPI_TABLE_FADT *)sdp;
 	acpi_print_fadt(sdp);
 
-	fadt_revision = acpi_get_fadt_revision(fadt);
-	if (fadt_revision == 1)
-		facs = (ACPI_TABLE_FACS *)acpi_map_sdt(fadt->Facs);
-	else
-		facs = (ACPI_TABLE_FACS *)acpi_map_sdt(fadt->XFacs);
+	facs = (ACPI_TABLE_FACS *)acpi_map_sdt(
+		acpi_select_address(fadt->Facs, fadt->XFacs));
 	if (memcmp(facs->Signature, ACPI_SIG_FACS, 4) != 0 || facs->Length < 64)
 		errx(EXIT_FAILURE, "FACS is corrupt");
 	acpi_print_facs(facs);
 
-	if (fadt_revision == 1)
-		dsdp = (ACPI_TABLE_HEADER *)acpi_map_sdt(fadt->Dsdt);
-	else
-		dsdp = (ACPI_TABLE_HEADER *)acpi_map_sdt(fadt->XDsdt);
+	dsdp = (ACPI_TABLE_HEADER *)acpi_map_sdt(
+		acpi_select_address(fadt->Dsdt, fadt->XDsdt));
 	if (memcmp(dsdp->Signature, ACPI_SIG_DSDT, 4) != 0)
 		errx(EXIT_FAILURE, "DSDT signature mismatch");
 	if (acpi_checksum(dsdp, dsdp->Length))
@@ -3020,10 +3036,8 @@ dsdt_from_fadt(ACPI_TABLE_FADT *fadt)
 	ACPI_TABLE_HEADER	*sdt;
 
 	/* Use the DSDT address if it is version 1, otherwise use XDSDT. */
-	if (acpi_get_fadt_revision(fadt) == 1)
-		sdt = (ACPI_TABLE_HEADER *)acpi_map_sdt(fadt->Dsdt);
-	else
-		sdt = (ACPI_TABLE_HEADER *)acpi_map_sdt(fadt->XDsdt);
+	sdt = (ACPI_TABLE_HEADER *)acpi_map_sdt(
+		acpi_select_address(fadt->Dsdt, fadt->XDsdt));
 	if (acpi_checksum(sdt, sdt->Length))
 		errx(EXIT_FAILURE, "DSDT is corrupt");
 	return (sdt);
