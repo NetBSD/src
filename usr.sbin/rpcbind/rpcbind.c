@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.24 2017/08/16 08:44:40 christos Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.25 2017/08/21 17:01:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009, Sun Microsystems, Inc.
@@ -111,7 +111,9 @@ static struct sockaddr **bound_sa;
 static int ipv6_only = 0;
 static int nhosts = 0;
 static int on = 1;
+#ifndef RPCBIND_RUMP
 static int rpcbindlockfd;
+#endif
 
 #ifdef WARMSTART
 /* Local Variable */
@@ -170,6 +172,7 @@ rpcbind_main(void *arg)
 	}
 	update_bound_sa();
  
+#ifndef RPCBIND_RUMP
 	/* Check that another rpcbind isn't already running. */
 	if ((rpcbindlockfd = open(RPCBINDDLOCK, O_RDONLY|O_CREAT, 0444)) == -1)
 		err(1, "%s", RPCBINDDLOCK);
@@ -177,7 +180,6 @@ rpcbind_main(void *arg)
 	if (flock(rpcbindlockfd, LOCK_EX|LOCK_NB) == -1 && errno == EWOULDBLOCK)
 		errx(1, "another rpcbind is already running. Aborting");
 
-#ifndef RPCBIND_RUMP
 	if (geteuid()) /* This command allowed only to root */
 		errx(EXIT_FAILURE, "Sorry. You are not superuser\n");
 #endif
@@ -820,7 +822,9 @@ rbllist_add(rpcprog_t prog, rpcvers_t vers, struct netconfig *nconf,
 static void
 terminate(int signum __unused)
 {
+#ifndef RPCBIND_RUMP
 	close(rpcbindlockfd);
+#endif
 #ifdef WARMSTART
 	syslog(LOG_ERR,
 	    "rpcbind terminating on signal %d. Restart with \"rpcbind -w\"",
