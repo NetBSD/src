@@ -1,7 +1,6 @@
 /* Tests support prototypes etc.
 
-Copyright 2000, 2001, 2002, 2003, 2004, 2008, 2009, 2010, 2011, 2012 Free
-Software Foundation, Inc.
+Copyright 2000-2004, 2008-2013 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -16,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 
 #ifndef __TESTS_H__
@@ -162,8 +161,8 @@ int refmpf_validate (const char *, mpf_srcptr, mpf_srcptr);
 int refmpf_validate_division (const char *, mpf_srcptr, mpf_srcptr, mpf_srcptr);
 
 
-mp_limb_t refmpn_addcnd_n (mp_ptr, mp_srcptr, mp_srcptr, mp_size_t, mp_limb_t);
-mp_limb_t refmpn_subcnd_n (mp_ptr, mp_srcptr, mp_srcptr, mp_size_t, mp_limb_t);
+mp_limb_t refmpn_cnd_add_n (mp_limb_t, mp_ptr, mp_srcptr, mp_srcptr, mp_size_t);
+mp_limb_t refmpn_cnd_sub_n (mp_limb_t, mp_ptr, mp_srcptr, mp_srcptr, mp_size_t);
 
 mp_limb_t refmpn_add (mp_ptr, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t);
 mp_limb_t refmpn_add_1 (mp_ptr, mp_srcptr, mp_size_t, mp_limb_t);
@@ -300,6 +299,7 @@ unsigned long refmpn_scan0 (mp_srcptr, unsigned long);
 unsigned long refmpn_scan1 (mp_srcptr, unsigned long);
 void refmpn_setbit (mp_ptr, unsigned long);
 void refmpn_sqr (mp_ptr, mp_srcptr, mp_size_t);
+void refmpn_sqrlo (mp_ptr, mp_srcptr, mp_size_t);
 mp_size_t refmpn_sqrtrem (mp_ptr, mp_ptr, mp_srcptr, mp_size_t);
 
 void refmpn_sub_ddmmss (mp_limb_t *, mp_limb_t *, mp_limb_t, mp_limb_t, mp_limb_t, mp_limb_t);
@@ -431,6 +431,7 @@ istringstream : public std::istrstream {
 	  exit (1);							\
 	}								\
       count *= repfactor;						\
+      count = MAX (count, 1);						\
       reps_nondefault = 1;						\
     }									\
   if (reps_nondefault)							\

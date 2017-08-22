@@ -1,22 +1,32 @@
 dnl  x86-64 mpn_divrem_1 -- mpn by limb division.
 
-dnl  Copyright 2004, 2005, 2007, 2008, 2009, 2010, 2012 Free Software
-dnl  Foundation, Inc.
+dnl  Copyright 2004, 2005, 2007-2010, 2012, 2014 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -128,9 +138,14 @@ L(44):
 IFSTD(`	push	%rdi		')
 IFSTD(`	push	%rsi		')
 	push	%r8
+IFSTD(`	sub	$8, %rsp	')
 IFSTD(`	mov	d, %rdi		')
+IFDOS(`	sub	$40, %rsp	')
 IFDOS(`	mov	d, %rcx		')
+	ASSERT(nz, `test $15, %rsp')
 	CALL(	mpn_invert_limb)
+IFSTD(`	add	$8, %rsp	')
+IFDOS(`	add	$40, %rsp	')
 	pop	%r8
 IFSTD(`	pop	%rsi		')
 IFSTD(`	pop	%rdi		')
@@ -140,6 +155,7 @@ IFSTD(`	pop	%rdi		')
 	mov	%rbp, %rax
 	test	un, un
 	je	L(frac)
+
 L(ent):	mov	-8(up,un,8), %rbp
 	shr	R8(%rcx), %rax
 	shld	R8(%rcx), %rbp, %rax

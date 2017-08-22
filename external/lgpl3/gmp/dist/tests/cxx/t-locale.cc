@@ -1,6 +1,6 @@
 /* Test locale support in C++ functions.
 
-Copyright 2001, 2002, 2003, 2007 Free Software Foundation, Inc.
+Copyright 2001-2003, 2007 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <clocale>
 #include <iostream>
@@ -105,7 +105,7 @@ check_input (void)
                   cout << "  point " << point[i] << "\n";
                   cout << "  str   \"" << str << "\"\n";
                   cout << "  localeconv point \""
-                       << localeconv()->decimal_point << "\"\n";
+                       << GMP_DECIMAL_POINT << "\"\n";
                   abort ();
                 }
 
@@ -120,7 +120,7 @@ check_input (void)
                   cout << "  got   " << got << "\n";
                   cout << "  want  " << want << "\n";
                   cout << "  localeconv point \""
-                       << localeconv()->decimal_point << "\"\n";
+                       << GMP_DECIMAL_POINT << "\"\n";
                   abort ();
                 }
             }

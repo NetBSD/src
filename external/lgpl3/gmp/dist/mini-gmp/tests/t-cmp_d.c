@@ -1,6 +1,6 @@
 /* Test mpz_cmp_d and mpz_cmpabs_d.
 
-Copyright 2001, 2002, 2003, 2005, 2013 Free Software Foundation, Inc.
+Copyright 2001-2003, 2005, 2013 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <math.h>
 
@@ -36,7 +36,7 @@ check_one (const char *name, mpz_srcptr x, double y, int cmp, int cmpabs)
   got = mpz_cmp_d (x, y);
   if (SGN(got) != cmp)
     {
-      int i;
+      unsigned i;
       printf    ("mpz_cmp_d wrong (from %s)\n", name);
       printf    ("  got  %d\n", got);
       printf    ("  want %d\n", cmp);
@@ -61,18 +61,6 @@ check_one (const char *name, mpz_srcptr x, double y, int cmp, int cmpabs)
       printf    ("  got  %d\n", got);
       printf    ("  want %d\n", cmpabs);
       goto fail;
-    }
-}
-
-static void
-mpz_set_str_or_abort (mpz_ptr z, const char *str, int base)
-{
-  if (mpz_set_str (z, str, base) != 0)
-    {
-      fprintf (stderr, "ERROR: mpz_set_str failed\n");
-      fprintf (stderr, "   str  = \"%s\"\n", str);
-      fprintf (stderr, "   base = %d\n", base);
-      abort();
     }
 }
 
@@ -109,8 +97,8 @@ check_data (void)
     { "-2", -1.5,  -1,  1 },
   };
 
-  mpz_t  x;
-  int    i;
+  mpz_t    x;
+  unsigned i;
 
   mpz_init (x);
 

@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +35,7 @@ check_one (const char *name, gmp_randstate_ptr rstate)
   for (bits = 0; bits < BITS_PER_ULONG; bits++)
     {
       /* will demand got < limit */
-      limit = (1L << bits);
+      limit = (1UL << bits);
 
       for (i = 0; i < 5; i++)
         {

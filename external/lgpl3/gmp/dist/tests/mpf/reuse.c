@@ -1,6 +1,6 @@
 /* Test that routines allow reusing a source variable as destination.
 
-Copyright 1996, 2000, 2001, 2002, 2012 Free Software Foundation, Inc.
+Copyright 1996, 2000-2002, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -148,14 +148,22 @@ main (int argc, char **argv)
       in2i = urandom ();
       for (i = 0; i < sizeof (dsi_funcs) / sizeof (dsi_func); i++)
 	{
+	  unsigned long this_in2i = in2i;
+
 	  /* Don't divide by 0.  */
-	  if (strcmp (dsi_func_names[i], "mpf_div_ui") == 0 && in2i == 0)
+	  if (dsi_funcs[i] == mpf_div_ui && this_in2i == 0)
 	    continue;
 
-	  (dsi_funcs[i]) (res1, in1, in2i);
+	  /* Avoid overflow/underflow in the exponent.  */
+	  if (dsi_funcs[i] == mpf_mul_2exp || dsi_funcs[i] == mpf_div_2exp)
+	    this_in2i %= 0x100000;
+	  else if (dsi_funcs[i] == mpf_pow_ui)
+	    this_in2i %= 0x1000;
+
+	  (dsi_funcs[i]) (res1, in1, this_in2i);
 
 	  mpf_set (out1, in1);
-	  (dsi_funcs[i]) (out1, out1, in2i);
+	  (dsi_funcs[i]) (out1, out1, this_in2i);
 	  mpf_set (res2, out1);
 
 	  if (mpf_cmp (res1, res2) != 0)
@@ -166,7 +174,7 @@ main (int argc, char **argv)
       for (i = 0; i < sizeof (dis_funcs) / sizeof (dis_func); i++)
 	{
 	  /* Don't divide by 0.  */
-	  if (strcmp (dis_func_names[i], "mpf_ui_div") == 0
+	  if (dis_funcs[i] == mpf_ui_div
 	      && mpf_cmp_ui (in2, 0) == 0)
 	    continue;
 

@@ -1,7 +1,6 @@
 /* Test mpz_add, mpz_add_ui, mpz_cmp, mpz_cmp, mpz_mul, mpz_sqrtrem.
 
-Copyright 1991, 1993, 1994, 1996, 2000, 2001, 2002 Free Software Foundation,
-Inc.
+Copyright 1991, 1993, 1994, 1996, 2000-2002 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -16,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,9 +64,16 @@ main (int argc, char **argv)
 
       /* printf ("%ld\n", SIZ (x2)); */
 
+      mpz_sqrt (temp, x2);
+      MPZ_CHECK_FORMAT (temp);
+
       mpz_sqrtrem (x, rem, x2);
       MPZ_CHECK_FORMAT (x);
       MPZ_CHECK_FORMAT (rem);
+
+      /* Are results different?  */
+      if (mpz_cmp (temp, x) != 0)
+	dump_abort (x2, x, rem);
 
       mpz_mul (temp, x, x);
 

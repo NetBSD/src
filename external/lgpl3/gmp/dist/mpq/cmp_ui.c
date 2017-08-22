@@ -2,29 +2,39 @@
    negative based on if U > V, U == V, or U < V.  Vn and Vd may have
    common factors.
 
-Copyright 1993, 1994, 1996, 2000, 2001, 2002, 2003, 2005 Free Software
-Foundation, Inc.
+Copyright 1993, 1994, 1996, 2000-2003, 2005, 2014 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
 
 int
-_mpq_cmp_ui (const MP_RAT *op1, unsigned long int num2, unsigned long int den2)
+_mpq_cmp_ui (mpq_srcptr op1, unsigned long int num2, unsigned long int den2)
 {
   mp_size_t num1_size = SIZ(NUM(op1));
   mp_size_t den1_size = SIZ(DEN(op1));
@@ -53,12 +63,10 @@ _mpq_cmp_ui (const MP_RAT *op1, unsigned long int num2, unsigned long int den2)
   if (UNLIKELY (den2 == 0))
     DIVIDE_BY_ZERO;
 
-  if (num1_size == 0)
-    return -(num2 != 0);
-  if (num1_size < 0)
-    return num1_size;
   if (num2 == 0)
     return num1_size;
+  if (num1_size <= 0)
+    return -1;
 
   /* NUM1 x DEN2 is either TMP1_SIZE limbs or TMP1_SIZE-1 limbs.
      Same for NUM1 x DEN1 with respect to TMP2_SIZE.  */
@@ -70,8 +78,7 @@ _mpq_cmp_ui (const MP_RAT *op1, unsigned long int num2, unsigned long int den2)
     return -num1_size;
 
   TMP_MARK;
-  tmp1_ptr = TMP_ALLOC_LIMBS (num1_size + 1);
-  tmp2_ptr = TMP_ALLOC_LIMBS (den1_size + 1);
+  TMP_ALLOC_LIMBS_2 (tmp1_ptr, num1_size + 1, tmp2_ptr, den1_size + 1);
 
   cy_limb = mpn_mul_1 (tmp1_ptr, PTR(NUM(op1)), num1_size,
                        (mp_limb_t) den2);

@@ -1,22 +1,32 @@
 /* Header for speed and threshold things.
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2008, 2009, 2010, 2011,
-2012 Free Software Foundation, Inc.
+Copyright 1999-2003, 2005, 2006, 2008-2015 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #ifndef __SPEED_H__
 #define __SPEED_H__
@@ -56,7 +66,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 */
 #define CACHE_LINE_SIZE   64 /* bytes */
 
-#define SPEED_TMP_ALLOC_ADJUST_MASK  (CACHE_LINE_SIZE/BYTES_PER_MP_LIMB - 1)
+#define SPEED_TMP_ALLOC_ADJUST_MASK  (CACHE_LINE_SIZE/GMP_LIMB_BYTES - 1)
 
 /* Set ptr to a TMP_ALLOC block of the given limbs, with the given limb
    alignment.  */
@@ -65,7 +75,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
     mp_ptr     __ptr;							\
     mp_size_t  __ptr_align, __ptr_add;					\
 									\
-    ASSERT ((CACHE_LINE_SIZE % BYTES_PER_MP_LIMB) == 0);		\
+    ASSERT ((CACHE_LINE_SIZE % GMP_LIMB_BYTES) == 0);		\
     __ptr = TMP_ALLOC_LIMBS ((limbs) + SPEED_TMP_ALLOC_ADJUST_MASK);	\
     __ptr_align = (__ptr - (mp_ptr) NULL);				\
     __ptr_add = ((align) - __ptr_align) & SPEED_TMP_ALLOC_ADJUST_MASK;	\
@@ -145,10 +155,11 @@ double speed_binvert_limb_arith (struct speed_params *);
 double speed_mpf_init_clear (struct speed_params *);
 
 double speed_mpn_add_n (struct speed_params *);
+double speed_mpn_add_1 (struct speed_params *);
+double speed_mpn_add_1_inplace (struct speed_params *);
 double speed_mpn_add_err1_n (struct speed_params *);
 double speed_mpn_add_err2_n (struct speed_params *);
 double speed_mpn_add_err3_n (struct speed_params *);
-double speed_mpn_addcnd_n (struct speed_params *);
 double speed_mpn_addlsh_n (struct speed_params *);
 double speed_mpn_addlsh1_n (struct speed_params *);
 double speed_mpn_addlsh2_n (struct speed_params *);
@@ -169,13 +180,16 @@ double speed_mpn_addmul_5 (struct speed_params *);
 double speed_mpn_addmul_6 (struct speed_params *);
 double speed_mpn_addmul_7 (struct speed_params *);
 double speed_mpn_addmul_8 (struct speed_params *);
+double speed_mpn_cnd_add_n (struct speed_params *);
+double speed_mpn_cnd_sub_n (struct speed_params *);
 double speed_mpn_com (struct speed_params *);
+double speed_mpn_neg (struct speed_params *);
 double speed_mpn_copyd (struct speed_params *);
 double speed_mpn_copyi (struct speed_params *);
 double speed_MPN_COPY (struct speed_params *);
 double speed_MPN_COPY_DECR (struct speed_params *);
 double speed_MPN_COPY_INCR (struct speed_params *);
-double speed_mpn_tabselect (struct speed_params *);
+double speed_mpn_sec_tabselect (struct speed_params *);
 double speed_mpn_divexact_1 (struct speed_params *);
 double speed_mpn_divexact_by3 (struct speed_params *);
 double speed_mpn_bdiv_q_1 (struct speed_params *);
@@ -192,6 +206,10 @@ double speed_mpn_divrem_1f_inv (struct speed_params *);
 double speed_mpn_divrem_2 (struct speed_params *);
 double speed_mpn_divrem_2_div (struct speed_params *);
 double speed_mpn_divrem_2_inv (struct speed_params *);
+double speed_mpn_div_qr_1n_pi1 (struct speed_params *);
+double speed_mpn_div_qr_1n_pi1_1 (struct speed_params *);
+double speed_mpn_div_qr_1n_pi1_2 (struct speed_params *);
+double speed_mpn_div_qr_1 (struct speed_params *);
 double speed_mpn_div_qr_2n (struct speed_params *);
 double speed_mpn_div_qr_2u (struct speed_params *);
 double speed_mpn_fib2_ui (struct speed_params *);
@@ -259,6 +277,8 @@ double speed_mpn_nussbaumer_mul_sqr (struct speed_params *);
 double speed_mpn_mul_n (struct speed_params *);
 double speed_mpn_mul_n_sqr (struct speed_params *);
 double speed_mpn_mulmid_n (struct speed_params *);
+double speed_mpn_sqrlo (struct speed_params *);
+double speed_mpn_sqrlo_basecase (struct speed_params *);
 double speed_mpn_mullo_n (struct speed_params *);
 double speed_mpn_mullo_basecase (struct speed_params *);
 double speed_mpn_nand_n (struct speed_params *);
@@ -287,6 +307,7 @@ double speed_mpn_brootinv (struct speed_params *);
 double speed_mpn_invert (struct speed_params *);
 double speed_mpn_invertappr (struct speed_params *);
 double speed_mpn_ni_invertappr (struct speed_params *);
+double speed_mpn_sec_invert (struct speed_params *s);
 double speed_mpn_binvert (struct speed_params *);
 double speed_mpn_redc_1 (struct speed_params *);
 double speed_mpn_redc_2 (struct speed_params *);
@@ -310,11 +331,14 @@ double speed_mpn_sqr_diagonal (struct speed_params *);
 double speed_mpn_sqr (struct speed_params *);
 double speed_mpn_sqrtrem (struct speed_params *);
 double speed_mpn_rootrem (struct speed_params *);
+double speed_mpn_sqrt (struct speed_params *);
+double speed_mpn_root (struct speed_params *);
 double speed_mpn_sub_n (struct speed_params *);
+double speed_mpn_sub_1 (struct speed_params *);
+double speed_mpn_sub_1_inplace (struct speed_params *);
 double speed_mpn_sub_err1_n (struct speed_params *);
 double speed_mpn_sub_err2_n (struct speed_params *);
 double speed_mpn_sub_err3_n (struct speed_params *);
-double speed_mpn_subcnd_n (struct speed_params *);
 double speed_mpn_sublsh_n (struct speed_params *);
 double speed_mpn_sublsh1_n (struct speed_params *);
 double speed_mpn_sublsh2_n (struct speed_params *);
@@ -363,6 +387,7 @@ double speed_mpz_add (struct speed_params *);
 double speed_mpz_bin_uiui (struct speed_params *);
 double speed_mpz_bin_ui (struct speed_params *);
 double speed_mpz_fac_ui (struct speed_params *);
+double speed_mpz_2fac_ui (struct speed_params *);
 double speed_mpz_fib_ui (struct speed_params *);
 double speed_mpz_fib2_ui (struct speed_params *);
 double speed_mpz_init_clear (struct speed_params *);
@@ -397,46 +422,18 @@ double speed_umul_ppmm (struct speed_params *);
 
 /* Prototypes for other routines */
 
+#if defined (__cplusplus)
+extern "C" {
+#endif
+
 /* low 32-bits in p[0], high 32-bits in p[1] */
 void speed_cyclecounter (unsigned p[2]);
 
-void mftb_function (unsigned p[2]);
+#if defined (__cplusplus)
+}
+#endif
 
-/* In i386 gcc -fPIC, ebx is a fixed register and can't be declared a dummy
-   output or a clobber for the cpuid, hence an explicit save and restore.  A
-   clobber as such doesn't provoke an error unfortunately (gcc 3.0), so use
-   the dummy output style in non-PIC, so there's an error if somehow -fPIC
-   is used without a -DPIC to tell us about it.  */
-#if defined(__GNUC__) && ! defined (NO_ASM)	\
-  && (defined (__i386__) || defined (__i486__))
-#if defined (PIC) || defined (__APPLE_CC__)
-#define speed_cyclecounter(p)						\
-  do {									\
-    int	 __speed_cyclecounter__save_ebx;				\
-    int	 __speed_cyclecounter__dummy;					\
-    __asm__ __volatile__ ("movl %%ebx, %1\n"				\
-			  "cpuid\n"					\
-			  "movl %1, %%ebx\n"				\
-			  "rdtsc"					\
-			  : "=a"   ((p)[0]),				\
-			    "=&rm" (__speed_cyclecounter__save_ebx),	\
-			    "=c"   (__speed_cyclecounter__dummy),	\
-			    "=d"   ((p)[1]));				\
-  } while (0)
-#else
-#define speed_cyclecounter(p)						\
-  do {									\
-    int	 __speed_cyclecounter__dummy1;					\
-    int	 __speed_cyclecounter__dummy2;					\
-    __asm__ __volatile__ ("cpuid\n"					\
-			  "rdtsc"					\
-			  : "=a" ((p)[0]),				\
-			    "=b" (__speed_cyclecounter__dummy1),	\
-			    "=c" (__speed_cyclecounter__dummy2),	\
-			    "=d" ((p)[1]));				\
-  } while (0)
-#endif
-#endif
+void mftb_function (unsigned p[2]);
 
 double speed_cyclecounter_diff (const unsigned [2], const unsigned [2]);
 int gettimeofday_microseconds_p (void);
@@ -464,6 +461,9 @@ extern int  speed_option_verbose;
 extern int  speed_option_cycles_broken;
 void speed_option_set (const char *);
 
+mp_limb_t mpn_div_qr_1n_pi1_1 (mp_ptr, mp_srcptr, mp_size_t, mp_limb_t, mp_limb_t, mp_limb_t);
+mp_limb_t mpn_div_qr_1n_pi1_2 (mp_ptr, mp_srcptr, mp_size_t, mp_limb_t, mp_limb_t, mp_limb_t);
+
 mp_limb_t mpn_divrem_1_div (mp_ptr, mp_size_t, mp_srcptr, mp_size_t, mp_limb_t);
 mp_limb_t mpn_divrem_1_inv (mp_ptr, mp_size_t, mp_srcptr, mp_size_t, mp_limb_t);
 mp_limb_t mpn_divrem_2_div (mp_ptr, mp_size_t, mp_ptr, mp_size_t, mp_srcptr);
@@ -477,8 +477,8 @@ int mpn_jacobi_base_4 (mp_limb_t, mp_limb_t, int);
 mp_limb_t mpn_mod_1_div (mp_srcptr, mp_size_t, mp_limb_t);
 mp_limb_t mpn_mod_1_inv (mp_srcptr, mp_size_t, mp_limb_t);
 
-mp_limb_t mpn_mod_1_1p_1 (mp_srcptr, mp_size_t, mp_limb_t, mp_limb_t [4]);
-mp_limb_t mpn_mod_1_1p_2 (mp_srcptr, mp_size_t, mp_limb_t, mp_limb_t [4]);
+mp_limb_t mpn_mod_1_1p_1 (mp_srcptr, mp_size_t, mp_limb_t, const mp_limb_t [4]);
+mp_limb_t mpn_mod_1_1p_2 (mp_srcptr, mp_size_t, mp_limb_t, const mp_limb_t [4]);
 
 void mpn_mod_1_1p_cps_1 (mp_limb_t [4], mp_limb_t);
 void mpn_mod_1_1p_cps_2 (mp_limb_t [4], mp_limb_t);
@@ -635,7 +635,36 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
   SPEED_ROUTINE_MPN_COPY_CALL (function (wp, s->xp, s->size))
 
 #define SPEED_ROUTINE_MPN_TABSELECT(function)				\
-  SPEED_ROUTINE_MPN_COPY_CALL (function (wp, s->xp, s->size, 1, s->r))
+  {									\
+    mp_ptr    xp, wp;							\
+    unsigned  i;							\
+    double    t;							\
+    TMP_DECL;								\
+									\
+    SPEED_RESTRICT_COND (s->size >= 0);					\
+									\
+    if (s->r == 0)							\
+      s->r = s->size;	/* default to a quadratic shape */		\
+									\
+    TMP_MARK;								\
+    SPEED_TMP_ALLOC_LIMBS (xp, s->size * s->r, s->align_xp);		\
+    SPEED_TMP_ALLOC_LIMBS (wp, s->size, s->align_wp);			\
+									\
+    speed_operand_src (s, xp, s->size * s->r);				\
+    speed_operand_dst (s, wp, s->size);					\
+    speed_cache_fill (s);						\
+									\
+    speed_starttime ();							\
+    i = s->reps;							\
+    do									\
+      function (wp, xp, s->size, s->r, (s->r) / 2);			\
+    while (--i != 0);							\
+    t = speed_endtime () / s->r;					\
+									\
+    TMP_FREE;								\
+    return t;								\
+  }
+
 
 #define SPEED_ROUTINE_MPN_COPYC(function)				\
   {									\
@@ -685,7 +714,7 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
     speed_starttime ();							\
     i = s->reps;							\
     do									\
-      function (wp, s->xp, s->size * BYTES_PER_MP_LIMB);		\
+      function (wp, s->xp, s->size * GMP_LIMB_BYTES);		\
     while (--i != 0);							\
     t = speed_endtime ();						\
 									\
@@ -758,7 +787,7 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
     TMP_MARK;								\
     SPEED_TMP_ALLOC_LIMBS (wp, s->size, s->align_wp);			\
 									\
-    /* (don't have a mechnanism to specify zp alignments) */		\
+    /* (don't have a mechanism to specify zp alignments) */		\
     for (i = 0; i < K; i++)						\
       SPEED_TMP_ALLOC_LIMBS (zp[i], s->size, 0);			\
 									\
@@ -1116,8 +1145,10 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
 #define SPEED_ROUTINE_MPN_MULLO_N(function)				\
   SPEED_ROUTINE_MPN_MULLO_N_CALL (function (wp, s->xp, s->yp, s->size));
 
-/* For mpn_mul_basecase, xsize=r, ysize=s->size. */
 #define SPEED_ROUTINE_MPN_MULLO_BASECASE(function)			\
+  SPEED_ROUTINE_MPN_MULLO_N_CALL (function (wp, s->xp, s->yp, s->size));
+
+#define SPEED_ROUTINE_MPN_SQRLO(function)				\
   {									\
     mp_ptr    wp;							\
     unsigned  i;							\
@@ -1130,14 +1161,13 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
     SPEED_TMP_ALLOC_LIMBS (wp, s->size, s->align_wp);			\
 									\
     speed_operand_src (s, s->xp, s->size);				\
-    speed_operand_src (s, s->yp, s->size);				\
     speed_operand_dst (s, wp, s->size);					\
     speed_cache_fill (s);						\
 									\
     speed_starttime ();							\
     i = s->reps;							\
     do									\
-      function (wp, s->xp, s->yp, s->size);				\
+      function (wp, s->xp, s->size);					\
     while (--i != 0);							\
     t = speed_endtime ();						\
 									\
@@ -2255,6 +2285,43 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
     return t;								\
   }
 
+#define SPEED_ROUTINE_MPN_SEC_INVERT(function,itchfn)			\
+  {									\
+    long  i;								\
+    mp_ptr    up, mp, tp, ip;						\
+    double    t;							\
+    TMP_DECL;								\
+									\
+    SPEED_RESTRICT_COND (s->size >= 1);					\
+									\
+    TMP_MARK;								\
+    SPEED_TMP_ALLOC_LIMBS (ip, s->size, s->align_xp);			\
+    SPEED_TMP_ALLOC_LIMBS (up, s->size, s->align_yp);			\
+    SPEED_TMP_ALLOC_LIMBS (mp, s->size, s->align_yp);			\
+    SPEED_TMP_ALLOC_LIMBS (tp, itchfn (s->size), s->align_wp);		\
+									\
+    speed_operand_src (s, up, s->size);					\
+    speed_operand_dst (s, tp, s->size);					\
+    speed_operand_dst (s, ip, s->size);					\
+    speed_cache_fill (s);						\
+									\
+    MPN_COPY (mp, s->yp, s->size);					\
+    /* Must be odd */							\
+    mp[0] |= 1;								\
+    speed_starttime ();							\
+    i = s->reps;							\
+    do									\
+      {									\
+	MPN_COPY (up, s->xp, s->size);					\
+	function (ip, up, mp, s->size, 2*s->size*GMP_NUMB_BITS, tp);	\
+      }									\
+    while (--i != 0);							\
+    t = speed_endtime ();						\
+									\
+    TMP_FREE;								\
+    return t;								\
+  }
+
 #define SPEED_ROUTINE_REDC_1(function)					\
   {									\
     unsigned   i;							\
@@ -3085,6 +3152,71 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
     return t;								\
   }
 
+#define SPEED_ROUTINE_MPN_DIV_QR_1(function)				\
+  {									\
+    mp_ptr    wp, xp;							\
+    mp_limb_t d;							\
+    mp_limb_t r;							\
+    unsigned  i;							\
+    double    t;							\
+    TMP_DECL;								\
+									\
+    SPEED_RESTRICT_COND (s->size >= 1);					\
+									\
+    TMP_MARK;								\
+    SPEED_TMP_ALLOC_LIMBS (wp, s->size, s->align_wp);			\
+									\
+    d = s->r;								\
+    if (d == 0)								\
+      d = 1;								\
+    speed_operand_src (s, s->xp, s->size);				\
+    speed_operand_dst (s, wp, s->size);					\
+    speed_cache_fill (s);						\
+									\
+    speed_starttime ();							\
+    i = s->reps;							\
+    do									\
+      r = function (wp, wp+s->size-1, s->xp, s->size, d);		\
+    while (--i != 0);							\
+    t = speed_endtime ();						\
+									\
+    TMP_FREE;								\
+    return t;								\
+  }
+
+#define SPEED_ROUTINE_MPN_DIV_QR_1N_PI1(function)			\
+  {									\
+    mp_ptr    wp, xp;							\
+    mp_limb_t d, dinv;							\
+    mp_limb_t r;							\
+    unsigned  i;							\
+    double    t;							\
+    TMP_DECL;								\
+									\
+    SPEED_RESTRICT_COND (s->size >= 1);					\
+									\
+    TMP_MARK;								\
+    SPEED_TMP_ALLOC_LIMBS (wp, s->size, s->align_wp);			\
+									\
+    d = s->r;								\
+    /* divisor must be normalized */					\
+    SPEED_RESTRICT_COND (d & GMP_NUMB_HIGHBIT);				\
+    invert_limb (dinv, d);						\
+    speed_operand_src (s, s->xp, s->size);				\
+    speed_operand_dst (s, wp, s->size);					\
+    speed_cache_fill (s);						\
+									\
+    speed_starttime ();							\
+    i = s->reps;							\
+    do									\
+      r = function (wp, s->xp, s->size, 0, d, dinv);			\
+    while (--i != 0);							\
+    t = speed_endtime ();						\
+									\
+    TMP_FREE;								\
+    return t;								\
+  }
+
 #define SPEED_ROUTINE_MPN_DIV_QR_2(function, norm)			\
   {									\
     mp_ptr    wp, xp;							\
@@ -3163,7 +3295,7 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
   }
 
 
-#define SPEED_ROUTINE_MPN_SQRTREM(function)				\
+#define SPEED_ROUTINE_MPN_SQRTROOT_CALL(call)				\
   {									\
     mp_ptr    wp, wp2;							\
     unsigned  i;							\
@@ -3184,36 +3316,7 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
     speed_starttime ();							\
     i = s->reps;							\
     do									\
-      function (wp, wp2, s->xp, s->size);				\
-    while (--i != 0);							\
-    t = speed_endtime ();						\
-									\
-    TMP_FREE;								\
-    return t;								\
-  }
-
-#define SPEED_ROUTINE_MPN_ROOTREM(function)				\
-  {									\
-    mp_ptr    wp, wp2;							\
-    unsigned  i;							\
-    double    t;							\
-    TMP_DECL;								\
-									\
-    SPEED_RESTRICT_COND (s->size >= 1);					\
-									\
-    TMP_MARK;								\
-    SPEED_TMP_ALLOC_LIMBS (wp,	s->size, s->align_wp);			\
-    SPEED_TMP_ALLOC_LIMBS (wp2, s->size, s->align_wp2);			\
-									\
-    speed_operand_src (s, s->xp, s->size);				\
-    speed_operand_dst (s, wp, s->size);					\
-    speed_operand_dst (s, wp2, s->size);				\
-    speed_cache_fill (s);						\
-									\
-    speed_starttime ();							\
-    i = s->reps;							\
-    do									\
-      function (wp, wp2, s->xp, s->size, s->r);				\
+      call;								\
     while (--i != 0);							\
     t = speed_endtime ();						\
 									\
@@ -3243,7 +3346,7 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
     SPEED_TMP_ALLOC_LIMBS (xp, s->size + 1, s->align_xp);		\
 									\
     MPN_SIZEINBASE (wn, s->xp, s->size, base);				\
-    wp = TMP_ALLOC (wn);						\
+    wp = (unsigned char *) TMP_ALLOC (wn);				\
 									\
     /* use this during development to guard against overflowing wp */	\
     /*									\
@@ -3253,7 +3356,7 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
 									\
     speed_operand_src (s, s->xp, s->size);				\
     speed_operand_dst (s, xp, s->size);					\
-    speed_operand_dst (s, (mp_ptr) wp, wn/BYTES_PER_MP_LIMB);		\
+    speed_operand_dst (s, (mp_ptr) wp, wn/GMP_LIMB_BYTES);		\
     speed_cache_fill (s);						\
 									\
     speed_starttime ();							\
@@ -3289,7 +3392,7 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
 									\
     TMP_MARK;								\
 									\
-    xp = TMP_ALLOC (s->size);						\
+    xp = (unsigned char *) TMP_ALLOC (s->size);				\
     for (i = 0; i < s->size; i++)					\
       xp[i] = s->xp[i] % base;						\
 									\
@@ -3301,7 +3404,7 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
     ASSERT_ALWAYS (mpn_set_str (wp, xp, s->size, base) <= wn);		\
     */									\
 									\
-    speed_operand_src (s, (mp_ptr) xp, s->size/BYTES_PER_MP_LIMB);	\
+    speed_operand_src (s, (mp_ptr) xp, s->size/GMP_LIMB_BYTES);	\
     speed_operand_dst (s, wp, wn);					\
     speed_cache_fill (s);						\
 									\

@@ -1,22 +1,33 @@
 /* mpf_sqrt_ui -- Compute the square root of an unsigned integer.
 
-Copyright 1993, 1994, 1996, 2000, 2001, 2004, 2005 Free Software Foundation,
-Inc.
+Copyright 1993, 1994, 1996, 2000, 2001, 2004, 2005, 2015 Free Software
+Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h> /* for NULL */
 #include "gmp.h"
@@ -64,16 +75,16 @@ mpf_sqrt_ui (mpf_ptr r, unsigned long int u)
   mp_size_t prec;
   TMP_DECL;
 
-  if (UNLIKELY (u == 0))
+  if (UNLIKELY (u <= 1))
     {
-      r->_mp_size = 0;
-      r->_mp_exp = 0;
+      SIZ (r) = EXP (r) = u;
+      *PTR (r) = u;
       return;
     }
 
   TMP_MARK;
 
-  prec = r->_mp_prec;
+  prec = PREC (r);
   zeros = 2 * prec - 2;
   rsize = zeros + 1 + U2;
 
@@ -90,9 +101,9 @@ mpf_sqrt_ui (mpf_ptr r, unsigned long int u)
   }
 #endif
 
-  mpn_sqrtrem (r->_mp_d, NULL, tp, rsize);
+  mpn_sqrtrem (PTR (r), NULL, tp, rsize);
 
-  r->_mp_size = prec;
-  r->_mp_exp = 1;
+  SIZ (r) = prec;
+  EXP (r) = 1;
   TMP_FREE;
 }
