@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.251 2017/05/21 15:28:41 riastradh Exp $
+#	$NetBSD: Makefile,v 1.252 2017/08/22 08:21:36 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -86,7 +86,7 @@ SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgomp
 # Should probably move GMP, MPFR and MPC builds into the GCC >= 4.5
 # specific build area, but we get better parallelism this way.
 # We don't build compat versions of these.
-. if !defined(MLIBDIR)
+. if !defined(MLIBDIR) && (${MKGCCCMDS} != "no")
 SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
 SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
 SUBDIR+=	../external/lgpl3/mpc/lib/libmpc
