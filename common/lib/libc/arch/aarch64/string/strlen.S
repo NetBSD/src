@@ -1,4 +1,4 @@
-/* $NetBSD: strlen.S,v 1.1 2014/08/10 05:47:35 matt Exp $ */
+/* $NetBSD: strlen.S,v 1.2 2017/08/22 06:45:07 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen.S,v 1.1 2014/08/10 05:47:35 matt Exp $")
+RCSID("$NetBSD: strlen.S,v 1.2 2017/08/22 06:45:07 ryo Exp $")
 
 #ifdef STRNLEN
 #define FUNCNAME	strnlen
@@ -47,6 +47,7 @@ RCSID("$NetBSD: strlen.S,v 1.1 2014/08/10 05:47:35 matt Exp $")
 ENTRY(FUNCNAME)
 	mov	x4, x0			/* need x0 for return */
 	add	x9, x0, #8		/* start + dword */
+	bic	x9, x9, #7		/* and aligned */
 #ifdef STRNLEN
 	add	x10, x0, x1		/* don't go past here */
 #endif
@@ -93,16 +94,16 @@ ENTRY(FUNCNAME)
 	 * We know there is a NUL in this dword.  Use clz to find it.
 	 */
 #ifdef __AARCH64EL__
-	rev	x7, x7			/* convert to BE */
+	rev	x6, x6			/* convert to BE */
 #endif
-	clz	x7, x7			/* find null byte */
-	add	x0, x0, x7, lsr #3	/* add offset to the length */
+	clz	x6, x6			/* find null byte */
+	add	x0, x0, x6, lsr #3	/* add offset to the length */
 
 	add	x0, x0, x4		/* add end to the length */
 	sub	x0, x0, x9		/* subtract start from the length */
 #ifdef STRNLEN
 	cmp	x0, x1			/* did we go too far? */
-        csel    x0, x0, x1, lt		/* yes, return max length */
+	csel	x0, x0, x1, lt		/* yes, return max length */
 #endif
 	ret
 #ifdef STRNLEN
