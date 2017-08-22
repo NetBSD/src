@@ -1,25 +1,36 @@
-c     Helper for mpn_mul_1, mpn_addmul_1, and mpn_submul_1 for Cray PVP.
+c    Helper for mpn_mul_1, mpn_addmul_1, and mpn_submul_1 for Cray PVP.
 
-c     Copyright 1996, 2000 Free Software Foundation, Inc.
+c    Copyright 1996, 2000 Free Software Foundation, Inc.
 
-c     This file is part of the GNU MP Library.
+c    This file is part of the GNU MP Library.
+c  
+c    The GNU MP Library is free software; you can redistribute it and/or modify
+c    it under the terms of either:
+c  
+c      * the GNU Lesser General Public License as published by the Free
+c        Software Foundation; either version 3 of the License, or (at your
+c        option) any later version.
+c  
+c    or
+c  
+c      * the GNU General Public License as published by the Free Software
+c        Foundation; either version 2 of the License, or (at your option) any
+c        later version.
+c  
+c    or both in parallel, as here.
+c  
+c    The GNU MP Library is distributed in the hope that it will be useful, but
+c    WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+c    or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+c    for more details.
+c  
+c    You should have received copies of the GNU General Public License and the
+c    GNU Lesser General Public License along with the GNU MP Library.  If not,
+c    see https://www.gnu.org/licenses/.
 
-c     The GNU MP Library is free software; you can redistribute it and/or
-c     modify it under the terms of the GNU Lesser General Public License as
-c     published by the Free Software Foundation; either version 3 of the
-c     License, or (at your option) any later version.
-
-c     The GNU MP Library is distributed in the hope that it will be useful,
-c     but WITHOUT ANY WARRANTY; without even the implied warranty of
-c     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-c     Lesser General Public License for more details.
-
-c     You should have received a copy of the GNU Lesser General Public License
-c     along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
-
-c     p1[] = hi(a[]*s); the upper limbs of each product
-c     p0[] = low(a[]*s); the corresponding lower limbs
-c     n is number of limbs in the vectors
+c    p1[] = hi(a[]*s); the upper limbs of each product
+c    p0[] = low(a[]*s); the corresponding lower limbs
+c    n is number of limbs in the vectors
 
       subroutine gmpn_mulww(p1,p0,a,n,s)
       integer*8 p1(0:*),p0(0:*),a(0:*),s

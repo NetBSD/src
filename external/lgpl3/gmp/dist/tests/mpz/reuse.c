@@ -6,8 +6,7 @@
 	mpz_mul_si
 	mpz_addmul_ui (should this really allow a+=a*c?)
 
-Copyright 1996, 1999, 2000, 2001, 2002, 2009, 2012, 2013 Free Software
-Foundation, Inc.
+Copyright 1996, 1999-2002, 2009, 2012, 2013 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -22,7 +21,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,7 +73,7 @@ struct {
   const char *fname;
   int isdivision;
   int isslow;
-} dss[] =
+} static dss[] =
   { { mpz_add,     "mpz_add",	  0, 0 },
     { mpz_sub,     "mpz_sub",	  0, 0 },
     { mpz_mul,     "mpz_mul",	  0, 0 },
@@ -98,7 +97,7 @@ struct {
   dsi_func fptr;
   const char *fname;
   int mod;
-} dsi[] =
+} static dsi[] =
 {
   /* Don't change order here without changing the code in main(). */
   { mpz_add_ui,         "mpz_add_ui",	     0 },
@@ -117,7 +116,7 @@ struct {
 struct {
   dsi_div_func fptr;
   const char *fname;
-} dsi_div[] =
+} static dsi_div[] =
 {
   { mpz_cdiv_q_ui,       "mpz_cdiv_q_ui" },
   { mpz_cdiv_r_ui,       "mpz_cdiv_r_ui" },
@@ -131,7 +130,7 @@ struct {
   ddsi_div_func fptr;
   const char *fname;
   int isslow;
-} ddsi_div[] =
+} static ddsi_div[] =
 {
   { mpz_cdiv_qr_ui,     "mpz_cdiv_qr_ui",    0 },
   { mpz_fdiv_qr_ui,     "mpz_fdiv_qr_ui",    0 },
@@ -143,7 +142,7 @@ struct {
   ddss_div_func fptr;
   const char *fname;
   int isslow;
-} ddss_div[] =
+} static ddss_div[] =
 {
   { mpz_cdiv_qr,  "mpz_cdiv_qr",    0 },
   { mpz_fdiv_qr,  "mpz_fdiv_qr",    0 },
@@ -154,7 +153,7 @@ struct {
   ds_func fptr;
   const char *fname;
   int nonneg;
-} ds[] =
+} static ds[] =
 {
   { mpz_abs,    "mpz_abs",    0 },
   { mpz_com,    "mpz_com",    0 },
@@ -469,7 +468,7 @@ main (int argc, char **argv)
 	    FAIL2 (mpz_rootrem, in1, in2, NULL);
 	}
 
-      if (size_range < 18)	/* run fewer tests since gcdext lots of time */
+      if (size_range < 18)	/* run fewer tests since gcdext is slow */
 	{
 	  mpz_gcdext (ref1, ref2, ref3, in1, in2);
 	  MPZ_CHECK_FORMAT (ref1);

@@ -1,21 +1,32 @@
 dnl  X86-32 and X86-64 mpn_popcount using SSE2.
 
-dnl  Copyright 2006, 2007, 2011 Free Software Foundation, Inc.
-dnl
+dnl  Copyright 2006, 2007, 2011, 2015 Free Software Foundation, Inc.
+
 dnl  This file is part of the GNU MP Library.
 dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
 dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
 dnl
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 
 include(`../config.m4')
@@ -47,9 +58,9 @@ C Intel atom		       10.8
 C VIA nano			6.5
 
 C TODO
-C  * Make a mpn_hamdist based on this.  Alignment could either be handled by
+C  * Make an mpn_hamdist based on this.  Alignment could either be handled by
 C    using movdqu for one operand and movdqa for the other, or by painfully
-C    shifting as we go.  Unfortunately, there seem to be no useable shift
+C    shifting as we go.  Unfortunately, there seem to be no usable shift
 C    instruction, except for one that takes an immediate count.
 C  * It would probably be possible to cut a few cycles/limb using software
 C    pipelining.
@@ -88,6 +99,10 @@ define(`LIMBS_PER_2XMM', eval(32/GMP_LIMB_BYTES))
 
 undefine(`psadbw')			C override inherited m4 version
 
+C This file is shared between 32-bit and 64-bit builds.  Only the former has
+C LEAL.  Default LEAL as an alias of LEA.
+ifdef(`LEAL',,`define(`LEAL', `LEA($1,$2)')')
+
 ASM_START()
 
 C Make cnsts global to work around Apple relocation bug.
@@ -106,7 +121,7 @@ LIMB32(`push	%ebx		')
 	pxor	%xmm3, %xmm3		C zero grand total count
 LIMB64(`pxor	zero, zero	')
 ifdef(`PIC',`
-	LEA(	cnsts, breg)
+	LEAL(	cnsts, breg)
 ',`
 LIMB32(`mov	$cnsts, breg	')
 LIMB64(`movabs	$cnsts, breg	')
@@ -267,3 +282,4 @@ C Masks for low end of number
 	.byte	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 	.byte	0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff
 END_OBJECT(dummy)
+ASM_END()

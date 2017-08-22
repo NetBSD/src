@@ -5,19 +5,30 @@ dnl  Contributed by David Harvey.
 dnl  Copyright 2011 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -90,20 +101,20 @@ L(3mod4):
 	lea	-24(yp,n,8), yp
 	neg	n
 
-        shr     $1, %al            C restore carry
-        mov     (up,n,8), w0
-        mov     8(up,n,8), w1
-        ADCSBB  (vp,n,8), w0
+	shr	$1, %al		   C restore carry
+	mov	(up,n,8), w0
+	mov	8(up,n,8), w1
+	ADCSBB	(vp,n,8), w0
 	mov	w0, (rp,n,8)
 	cmovc	16(yp), el
-        ADCSBB  8(vp,n,8), w1
+	ADCSBB	8(vp,n,8), w1
 	mov	w1, 8(rp,n,8)
 	cmovc	8(yp), t0
-        mov     16(up,n,8), w0
-        ADCSBB  16(vp,n,8), w0
+	mov	16(up,n,8), w0
+	ADCSBB	16(vp,n,8), w0
 	mov	w0, 16(rp,n,8)
 	cmovc	(yp), t1
-	setc	%al                C save carry
+	setc	%al		   C save carry
 	add	t0, el
 	adc	$0, eh
 	add	t1, el
@@ -128,12 +139,12 @@ L(1mod4):
 	lea	-8(yp,n,8), yp
 	neg	n
 
-        shr     $1, %al            C restore carry
-        mov     (up,n,8), w0
-        ADCSBB  (vp,n,8), w0
-        mov     w0, (rp,n,8)
+	shr	$1, %al		   C restore carry
+	mov	(up,n,8), w0
+	ADCSBB	(vp,n,8), w0
+	mov	w0, (rp,n,8)
 	cmovc	(yp), el
-	setc	%al                C save carry
+	setc	%al		   C save carry
 
 	add	$1, n
 	jnz	L(loop)
@@ -147,16 +158,16 @@ L(2mod4):
 	lea	-16(yp,n,8), yp
 	neg	n
 
-        shr     $1, %al            C restore carry
-        mov     (up,n,8), w0
-        mov     8(up,n,8), w1
-        ADCSBB  (vp,n,8), w0
-        mov     w0, (rp,n,8)
+	shr	$1, %al		   C restore carry
+	mov	(up,n,8), w0
+	mov	8(up,n,8), w1
+	ADCSBB	(vp,n,8), w0
+	mov	w0, (rp,n,8)
 	cmovc	8(yp), el
-        ADCSBB  8(vp,n,8), w1
-        mov     w1, 8(rp,n,8)
+	ADCSBB	8(vp,n,8), w1
+	mov	w1, 8(rp,n,8)
 	cmovc	(yp), t0
-	setc	%al                C save carry
+	setc	%al		   C save carry
 	add	t0, el
 	adc	$0, eh
 
@@ -166,39 +177,39 @@ L(2mod4):
 
 	ALIGN(32)
 L(loop):
-        mov     (up,n,8), w0
-        shr     $1, %al            C restore carry
-        mov     -8(yp), t0
+	mov	(up,n,8), w0
+	shr	$1, %al		   C restore carry
+	mov	-8(yp), t0
 	mov	$0, R32(t3)
-        ADCSBB  (vp,n,8), w0
-        cmovnc  t3, t0
-        mov     w0, (rp,n,8)
-        mov     8(up,n,8), w1
-        mov     16(up,n,8), w0
-        ADCSBB  8(vp,n,8), w1
-        mov     -16(yp), t1
-        cmovnc  t3, t1
-        mov     -24(yp), t2
-        mov     w1, 8(rp,n,8)
-        ADCSBB  16(vp,n,8), w0
-        cmovnc  t3, t2
-        mov     24(up,n,8), w1
-        ADCSBB  24(vp,n,8), w1
-        cmovc   -32(yp), t3
-	setc	%al                C save carry
-        add     t0, el
-        adc     $0, eh
-        add     t1, el
-        adc     $0, eh
-        add     t2, el
-        adc     $0, eh
-        lea     -32(yp), yp
-        mov     w0, 16(rp,n,8)
-        add     t3, el
-        adc     $0, eh
-        add     $4, n
-        mov     w1, -8(rp,n,8)
-	jnz     L(loop)
+	ADCSBB	(vp,n,8), w0
+	cmovnc	t3, t0
+	mov	w0, (rp,n,8)
+	mov	8(up,n,8), w1
+	mov	16(up,n,8), w0
+	ADCSBB	8(vp,n,8), w1
+	mov	-16(yp), t1
+	cmovnc	t3, t1
+	mov	-24(yp), t2
+	mov	w1, 8(rp,n,8)
+	ADCSBB	16(vp,n,8), w0
+	cmovnc	t3, t2
+	mov	24(up,n,8), w1
+	ADCSBB	24(vp,n,8), w1
+	cmovc	-32(yp), t3
+	setc	%al		   C save carry
+	add	t0, el
+	adc	$0, eh
+	add	t1, el
+	adc	$0, eh
+	add	t2, el
+	adc	$0, eh
+	lea	-32(yp), yp
+	mov	w0, 16(rp,n,8)
+	add	t3, el
+	adc	$0, eh
+	add	$4, n
+	mov	w1, -8(rp,n,8)
+	jnz	L(loop)
 
 L(end):
 	mov	el, (ep)

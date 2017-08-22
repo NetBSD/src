@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +44,7 @@ ref_mpq_cmp (mpq_t a, mpq_t b)
 }
 
 #ifndef SIZE
-#define SIZE 8	/* increasing this lowers the probabilty of finding an error */
+#define SIZE 8	/* increasing this lowers the probability of finding an error */
 #endif
 
 int

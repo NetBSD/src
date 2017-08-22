@@ -11,22 +11,33 @@
    SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT THEY WILL CHANGE OR DISAPPEAR IN A FUTURE GMP RELEASE.
 
-Copyright 2005, 2006, 2007, 2009, 2010 Free Software Foundation, Inc.
+Copyright 2005-2007, 2009, 2010 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 
 /*
@@ -176,7 +187,7 @@ mpn_mu_div_qr2 (mp_ptr qp,
     {
       MPN_COPY (tp + 1, dp, in);
       tp[0] = 1;
-      mpn_invertappr (ip, tp, in + 1, NULL);
+      mpn_invertappr (ip, tp, in + 1, tp + in + 1);
       MPN_COPY_INCR (ip, ip + 1, in);
     }
   else
@@ -186,7 +197,7 @@ mpn_mu_div_qr2 (mp_ptr qp,
 	MPN_ZERO (ip, in);
       else
 	{
-	  mpn_invertappr (ip, tp, in + 1, NULL);
+	  mpn_invertappr (ip, tp, in + 1, tp + in + 1);
 	  MPN_COPY_INCR (ip, ip + 1, in);
 	}
     }
@@ -249,8 +260,8 @@ mpn_preinv_mu_div_qr (mp_ptr qp,
   else
     MPN_COPY_INCR (rp, np, dn);
 
-  if (qn == 0)
-    return qh;			/* Degenerate use.  Should we allow this? */
+  /* if (qn == 0) */			/* The while below handles this case */
+  /*   return qh; */			/* Degenerate use.  Should we allow this? */
 
   while (qn > 0)
     {
@@ -388,11 +399,12 @@ mpn_mu_div_qr_choose_in (mp_size_t qn, mp_size_t dn, int k)
 mp_size_t
 mpn_mu_div_qr_itch (mp_size_t nn, mp_size_t dn, int mua_k)
 {
-  mp_size_t itch_local = mpn_mulmod_bnm1_next_size (dn + 1);
   mp_size_t in = mpn_mu_div_qr_choose_in (nn - dn, dn, mua_k);
-  mp_size_t itch_out = mpn_mulmod_bnm1_itch (itch_local, dn, in);
+  mp_size_t itch_preinv = mpn_preinv_mu_div_qr_itch (nn, dn, in);
+  mp_size_t itch_invapp = mpn_invertappr_itch (in + 1) + in + 2; /* 3in + 4 */
 
-  return in + itch_local + itch_out;
+  ASSERT (itch_preinv >= itch_invapp);
+  return in + MAX (itch_invapp, itch_preinv);
 }
 
 mp_size_t

@@ -1,21 +1,32 @@
 /* mpn_powlo -- Compute R = U^E mod B^n, where B is the limb base.
 
-Copyright 2007, 2008, 2009, 2012 Free Software Foundation, Inc.
+Copyright 2007-2009, 2012, 2015 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 
 #include "gmp.h"
@@ -55,7 +66,8 @@ win_size (mp_bitcnt_t eb)
 {
   int k;
   static mp_bitcnt_t x[] = {1,7,25,81,241,673,1793,4609,11521,28161,~(mp_bitcnt_t)0};
-  for (k = 0; eb > x[k]; k++)
+  ASSERT (eb > 1);
+  for (k = 1; eb > x[k]; ++k)
     ;
   return k;
 }
@@ -63,6 +75,8 @@ win_size (mp_bitcnt_t eb)
 /* rp[n-1..0] = bp[n-1..0] ^ ep[en-1..0] mod B^n, B is the limb base.
    Requires that ep[en-1] is non-zero.
    Uses scratch space tp[3n-1..0], i.e., 3n words.  */
+/* We only use n words in the scratch space, we should pass tp + n to
+   mullo/sqrlo as a temporary area, it is needed. */
 void
 mpn_powlo (mp_ptr rp, mp_srcptr bp,
 	   mp_srcptr ep, mp_size_t en,
@@ -73,7 +87,6 @@ mpn_powlo (mp_ptr rp, mp_srcptr bp,
   int windowsize, this_windowsize;
   mp_limb_t expbits;
   mp_limb_t *pp, *this_pp, *last_pp;
-  mp_limb_t *b2p;
   long i;
   TMP_DECL;
 
@@ -84,47 +97,42 @@ mpn_powlo (mp_ptr rp, mp_srcptr bp,
   MPN_SIZEINBASE_2EXP(ebi, ep, en, 1);
 
   windowsize = win_size (ebi);
+  ASSERT (windowsize < ebi);
 
-  pp = TMP_ALLOC_LIMBS ((n << (windowsize - 1)) + n); /* + n is for mullo ign part */
+  pp = TMP_ALLOC_LIMBS ((n << (windowsize - 1)));
 
   this_pp = pp;
 
   MPN_COPY (this_pp, bp, n);
 
-  b2p = tp + 2*n;
-
-  /* Store b^2 in b2.  */
-  mpn_sqr (tp, bp, n);	/* FIXME: Use "mpn_sqrlo" */
-  MPN_COPY (b2p, tp, n);
+  /* Store b^2 in tp.  */
+  mpn_sqrlo (tp, bp, n);
 
   /* Precompute odd powers of b and put them in the temporary area at pp.  */
   for (i = (1 << (windowsize - 1)) - 1; i > 0; i--)
     {
       last_pp = this_pp;
       this_pp += n;
-      mpn_mullo_n (this_pp, last_pp, b2p, n);
+      mpn_mullo_n (this_pp, last_pp, tp, n);
     }
 
   expbits = getbits (ep, ebi, windowsize);
-  if (ebi < windowsize)
-    ebi = 0;
-  else
-    ebi -= windowsize;
 
+  /* FIXME: for even expbits, we can init with a mullo. */
   count_trailing_zeros (cnt, expbits);
+  ebi -= windowsize;
   ebi += cnt;
   expbits >>= cnt;
 
   MPN_COPY (rp, pp + n * (expbits >> 1), n);
 
-  while (ebi != 0)
+  do
     {
       while (getbit (ep, ebi) == 0)
 	{
-	  mpn_sqr (tp, rp, n);	/* FIXME: Use "mpn_sqrlo" */
+	  mpn_sqrlo (tp, rp, n);
 	  MPN_COPY (rp, tp, n);
-	  ebi--;
-	  if (ebi == 0)
+	  if (--ebi == 0)
 	    goto done;
 	}
 
@@ -146,17 +154,20 @@ mpn_powlo (mp_ptr rp, mp_srcptr bp,
       ebi += cnt;
       expbits >>= cnt;
 
-      do
+      while (this_windowsize > 1)
 	{
-	  mpn_sqr (tp, rp, n);
-	  MPN_COPY (rp, tp, n);
-	  this_windowsize--;
+	  mpn_sqrlo (tp, rp, n);
+	  mpn_sqrlo (rp, tp, n);
+	  this_windowsize -= 2;
 	}
-      while (this_windowsize != 0);
 
-      mpn_mullo_n (tp, rp, pp + n * (expbits >> 1), n);
-      MPN_COPY (rp, tp, n);
-    }
+      if (this_windowsize != 0)
+	mpn_sqrlo (tp, rp, n);
+      else
+	MPN_COPY (tp, rp, n);
+      
+      mpn_mullo_n (rp, tp, pp + n * (expbits >> 1), n);
+    } while (ebi != 0);
 
  done:
   TMP_FREE;
