@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2306 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2307 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -51,3 +51,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	ichsmb(4): Add support for Intel C3000. [msaitoh 20170817]
 	ismt(4): Add support for Intel C3000. [msaitoh 20170817]
 	powerpc: Bump MAXTSIZ to 128MB for OEA based systems [sevan 20170818]
+	GMP/MPFR/MPC: Update to 6.1.2, 3.1.5 and 1.0.3. [mrg 20170821]
