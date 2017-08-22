@@ -1,6 +1,7 @@
 dnl config.m4.  Generated automatically by configure.
 changequote(<,>)
 ifdef(<__CONFIG_M4_INCLUDED__>,,<
+
 define(<WANT_ASSERT>,0)
 define(<WANT_PROFILING>,<`no'>)
 define(<M4WRAP_SPURIOUS>,<no>)
@@ -18,8 +19,8 @@ define(<W32>, <.long>)
 define(<ALIGN_LOGARITHMIC>,<yes>)
 define(<PIC_ALWAYS>,<no>)
 define(<WANT_R_REGISTERS>,<no>)
-define(<SQR_TOOM2_THRESHOLD>,<26>)
-define(<BMOD_1_TO_MOD_1_THRESHOLD>,<66>)
+define(<SQR_TOOM2_THRESHOLD>,<22>)
+define(<BMOD_1_TO_MOD_1_THRESHOLD>,<69>)
 define(<SIZEOF_UNSIGNED>,<4>)
 define(<GMP_LIMB_BITS>,32)
 define(<GMP_NAIL_BITS>,0)
