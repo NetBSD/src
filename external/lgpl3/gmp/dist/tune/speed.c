@@ -1,22 +1,32 @@
 /* Speed measuring program.
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2008, 2009, 2010,
-2011, 2012 Free Software Foundation, Inc.
+Copyright 1999-2003, 2005, 2006, 2008-2015 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 /* Usage message is in the code below, run with no arguments to print it.
    See README for interesting applications.
@@ -81,15 +91,6 @@ SPEED_EXTRA_PROTOS2
 #endif
 
 
-#define MPN_FILL(ptr, size, n)          \
-  do {                                  \
-    mp_size_t __i;                      \
-    ASSERT ((size) >= 0);               \
-    for (__i = 0; __i < (size); __i++)  \
-      (ptr)[__i] = (n);                 \
-  } while (0)
-
-
 #if GMP_LIMB_BITS == 32
 #define GMP_NUMB_0xAA  (CNST_LIMB(0xAAAAAAAA) & GMP_NUMB_MASK)
 #endif
@@ -152,6 +153,10 @@ const struct routine_t {
 
   { "mpn_add_n",         speed_mpn_add_n,     FLAG_R_OPTIONAL },
   { "mpn_sub_n",         speed_mpn_sub_n,     FLAG_R_OPTIONAL },
+  { "mpn_add_1",         speed_mpn_add_1,     FLAG_R },
+  { "mpn_add_1_inplace", speed_mpn_add_1_inplace, FLAG_R },
+  { "mpn_sub_1",         speed_mpn_sub_1,     FLAG_R },
+  { "mpn_sub_1_inplace", speed_mpn_sub_1_inplace, FLAG_R },
 
   { "mpn_add_err1_n",    speed_mpn_add_err1_n    },
   { "mpn_add_err2_n",    speed_mpn_add_err2_n    },
@@ -237,6 +242,11 @@ const struct routine_t {
   { "mpn_divrem_2_div",  speed_mpn_divrem_2_div,    },
   { "mpn_divrem_2_inv",  speed_mpn_divrem_2_inv,    },
 
+  { "mpn_div_qr_1n_pi1", speed_mpn_div_qr_1n_pi1, FLAG_R  },
+  { "mpn_div_qr_1n_pi1_1",speed_mpn_div_qr_1n_pi1_1, FLAG_R  },
+  { "mpn_div_qr_1n_pi1_2",speed_mpn_div_qr_1n_pi1_2, FLAG_R  },
+  { "mpn_div_qr_1",      speed_mpn_div_qr_1,      FLAG_R },
+
   { "mpn_div_qr_2n",     speed_mpn_div_qr_2n,       },
   { "mpn_div_qr_2u",     speed_mpn_div_qr_2u,       },
 
@@ -269,6 +279,7 @@ const struct routine_t {
   { "mpn_xor_n",         speed_mpn_xor_n,  FLAG_R_OPTIONAL },
   { "mpn_xnor_n",        speed_mpn_xnor_n, FLAG_R_OPTIONAL },
   { "mpn_com",           speed_mpn_com              },
+  { "mpn_neg",           speed_mpn_neg              },
 
   { "mpn_popcount",      speed_mpn_popcount         },
   { "mpn_hamdist",       speed_mpn_hamdist          },
@@ -340,6 +351,8 @@ const struct routine_t {
   { "mpn_mul_fft",       speed_mpn_mul_fft,     FLAG_R_OPTIONAL },
   { "mpn_mul_fft_sqr",   speed_mpn_mul_fft_sqr, FLAG_R_OPTIONAL },
 
+  { "mpn_sqrlo",          speed_mpn_sqrlo           },
+  { "mpn_sqrlo_basecase", speed_mpn_sqrlo_basecase  },
   { "mpn_mullo_n",        speed_mpn_mullo_n         },
   { "mpn_mullo_basecase", speed_mpn_mullo_basecase  },
 
@@ -357,6 +370,7 @@ const struct routine_t {
   { "mpn_invertappr",          speed_mpn_invertappr          },
   { "mpn_ni_invertappr",       speed_mpn_ni_invertappr       },
   { "mpn_binvert",             speed_mpn_binvert             },
+  { "mpn_sec_invert",          speed_mpn_sec_invert          },
 
   { "mpn_sbpi1_div_qr",        speed_mpn_sbpi1_div_qr,    FLAG_R_OPTIONAL},
   { "mpn_dcpi1_div_qr",        speed_mpn_dcpi1_div_qr,    FLAG_R_OPTIONAL},
@@ -380,6 +394,8 @@ const struct routine_t {
 
   { "mpn_sqrtrem",       speed_mpn_sqrtrem          },
   { "mpn_rootrem",       speed_mpn_rootrem, FLAG_R  },
+  { "mpn_sqrt",          speed_mpn_sqrt             },
+  { "mpn_root",          speed_mpn_root, FLAG_R     },
 
   { "mpn_fib2_ui",       speed_mpn_fib2_ui,    FLAG_NODATA },
   { "mpz_fib_ui",        speed_mpz_fib_ui,     FLAG_NODATA },
@@ -391,6 +407,7 @@ const struct routine_t {
   { "mpz_bin_uiui",      speed_mpz_bin_uiui, FLAG_NODATA | FLAG_R_OPTIONAL },
   { "mpz_bin_ui",        speed_mpz_bin_ui,   FLAG_NODATA | FLAG_R_OPTIONAL },
   { "mpz_fac_ui",        speed_mpz_fac_ui,   FLAG_NODATA   },
+  { "mpz_2fac_ui",       speed_mpz_2fac_ui,  FLAG_NODATA   },
   { "mpz_powm",          speed_mpz_powm             },
   { "mpz_powm_mod",      speed_mpz_powm_mod         },
   { "mpz_powm_redc",     speed_mpz_powm_redc        },
@@ -412,11 +429,11 @@ const struct routine_t {
 #if HAVE_NATIVE_mpn_copyd
   { "mpn_copyd",         speed_mpn_copyd            },
 #endif
-  { "mpn_tabselect",     speed_mpn_tabselect, FLAG_R_OPTIONAL },
-#if HAVE_NATIVE_mpn_addlsh1_n
+  { "mpn_sec_tabselect", speed_mpn_sec_tabselect, FLAG_R_OPTIONAL },
+#if HAVE_NATIVE_mpn_addlsh1_n == 1
   { "mpn_addlsh1_n",     speed_mpn_addlsh1_n, FLAG_R_OPTIONAL },
 #endif
-#if HAVE_NATIVE_mpn_sublsh1_n
+#if HAVE_NATIVE_mpn_sublsh1_n == 1
   { "mpn_sublsh1_n",     speed_mpn_sublsh1_n, FLAG_R_OPTIONAL },
 #endif
 #if HAVE_NATIVE_mpn_addlsh1_n_ip1
@@ -428,13 +445,13 @@ const struct routine_t {
 #if HAVE_NATIVE_mpn_sublsh1_n_ip1
   { "mpn_sublsh1_n_ip1", speed_mpn_sublsh1_n_ip1    },
 #endif
-#if HAVE_NATIVE_mpn_rsblsh1_n
+#if HAVE_NATIVE_mpn_rsblsh1_n == 1
   { "mpn_rsblsh1_n",     speed_mpn_rsblsh1_n, FLAG_R_OPTIONAL },
 #endif
-#if HAVE_NATIVE_mpn_addlsh2_n
+#if HAVE_NATIVE_mpn_addlsh2_n == 1
   { "mpn_addlsh2_n",     speed_mpn_addlsh2_n, FLAG_R_OPTIONAL },
 #endif
-#if HAVE_NATIVE_mpn_sublsh2_n
+#if HAVE_NATIVE_mpn_sublsh2_n == 1
   { "mpn_sublsh2_n",     speed_mpn_sublsh2_n, FLAG_R_OPTIONAL },
 #endif
 #if HAVE_NATIVE_mpn_addlsh2_n_ip1
@@ -446,7 +463,7 @@ const struct routine_t {
 #if HAVE_NATIVE_mpn_sublsh2_n_ip1
   { "mpn_sublsh2_n_ip1", speed_mpn_sublsh2_n_ip1    },
 #endif
-#if HAVE_NATIVE_mpn_rsblsh2_n
+#if HAVE_NATIVE_mpn_rsblsh2_n == 1
   { "mpn_rsblsh2_n",     speed_mpn_rsblsh2_n, FLAG_R_OPTIONAL },
 #endif
 #if HAVE_NATIVE_mpn_addlsh_n
@@ -474,8 +491,8 @@ const struct routine_t {
   { "mpn_rsh1sub_n",     speed_mpn_rsh1sub_n, FLAG_R_OPTIONAL },
 #endif
 
-  { "mpn_addcnd_n",     speed_mpn_addcnd_n, FLAG_R_OPTIONAL },
-  { "mpn_subcnd_n",     speed_mpn_subcnd_n, FLAG_R_OPTIONAL },
+  { "mpn_cnd_add_n",     speed_mpn_cnd_add_n, FLAG_R_OPTIONAL },
+  { "mpn_cnd_sub_n",     speed_mpn_cnd_sub_n, FLAG_R_OPTIONAL },
 
   { "MPN_ZERO",          speed_MPN_ZERO             },
 

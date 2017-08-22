@@ -1,22 +1,33 @@
 /* mpz_setbit -- set a specified bit.
 
-Copyright 1991, 1993, 1994, 1995, 1997, 1999, 2001, 2002, 2012 Free Software
+Copyright 1991, 1993-1995, 1997, 1999, 2001, 2002, 2012 Free Software
 Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -49,8 +60,6 @@ mpz_setbit (mpz_ptr d, mp_bitcnt_t bit_idx)
     }
   else
     {
-      mp_size_t zero_bound;
-
       /* Simulate two's complement arithmetic, i.e. simulate
 	 1. Set OP = ~(OP - 1) [with infinitely many leading ones].
 	 2. Set the bit.
@@ -58,40 +67,39 @@ mpz_setbit (mpz_ptr d, mp_bitcnt_t bit_idx)
 
       dsize = -dsize;
 
-      /* No index upper bound on this loop, we're sure there's a non-zero limb
-	 sooner or later.  */
-      zero_bound = 0;
-      while (dp[zero_bound] == 0)
-	zero_bound++;
-
-      if (limb_idx > zero_bound)
+      if (limb_idx < dsize)
 	{
-	  if (limb_idx < dsize)
+	  mp_size_t zero_bound;
+	  /* No index upper bound on this loop, we're sure there's a non-zero limb
+	     sooner or later.  */
+	  zero_bound = 0;
+	  while (dp[zero_bound] == 0)
+	    zero_bound++;
+
+	  if (limb_idx > zero_bound)
 	    {
 	      mp_limb_t	 dlimb;
 	      dlimb = dp[limb_idx] & ~mask;
 	      dp[limb_idx] = dlimb;
 
-	      if (UNLIKELY (dlimb == 0 && limb_idx == dsize-1))
+	      if (UNLIKELY ((dlimb == 0) + limb_idx == dsize)) /* dsize == limb_idx + 1 */
 		{
 		  /* high limb became zero, must normalize */
-		  do {
-		    dsize--;
-		  } while (dsize > 0 && dp[dsize-1] == 0);
-		  SIZ (d) = -dsize;
+		  MPN_NORMALIZE (dp, limb_idx);
+		  SIZ (d) = -limb_idx;
 		}
 	    }
-	}
-      else if (limb_idx == zero_bound)
-	{
-	  dp[limb_idx] = ((dp[limb_idx] - 1) & ~mask) + 1;
-	  ASSERT (dp[limb_idx] != 0);
-	}
-      else
-	{
-	  MPN_DECR_U (dp + limb_idx, dsize - limb_idx, mask);
-	  dsize -= dp[dsize - 1] == 0;
-	  SIZ (d) = -dsize;
+	  else if (limb_idx == zero_bound)
+	    {
+	      dp[limb_idx] = ((dp[limb_idx] - 1) & ~mask) + 1;
+	      ASSERT (dp[limb_idx] != 0);
+	    }
+	  else
+	    {
+	      MPN_DECR_U (dp + limb_idx, dsize - limb_idx, mask);
+	      dsize -= dp[dsize - 1] == 0;
+	      SIZ (d) = -dsize;
+	    }
 	}
     }
 }

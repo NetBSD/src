@@ -1,22 +1,33 @@
 dnl  PowerPC-64 mpn_addmul_1 and mpn_submul_1 optimised for power6.
 
-dnl  Copyright 1999, 2000, 2001, 2003, 2004, 2005, 2006, 2008, 2010, 2011
-dnl  Free Software Foundation, Inc.
+dnl  Copyright 1999-2001, 2003-2006, 2008, 2010, 2011 Free Software Foundation,
+dnl  Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -33,7 +44,7 @@ C  * Reduce register usage.
 C  * Schedule function entry code.
 C  * Unroll more.  8-way unrolling would bring us to 10 c/l, 16-way unrolling
 C    would bring us to 9 c/l.
-C  * Handle n = 1 and perhaps n = 2 seperately, without saving any registers.
+C  * Handle n = 1 and perhaps n = 2 separately, without saving any registers.
 
 C INPUT PARAMETERS
 define(`rp',  `r3')
@@ -59,6 +70,8 @@ ifdef(`OPERATION_submul_1',`
   define(SM,		`$1')
   define(CLRRSC,	`subfc	$1, r0, r0')
 ')
+
+MULFUNC_PROLOGUE(mpn_addmul_1 mpn_submul_1)
 
 ASM_START()
 PROLOGUE(func)

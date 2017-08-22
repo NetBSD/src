@@ -5,19 +5,30 @@ dnl  Contributed by David Harvey.
 dnl  Copyright 2011 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -110,39 +121,39 @@ L(odd):
 
 	ALIGN(16)
 L(top):
-        mov     (up,n,8), w
-	shr     $1, cy2         C restore carry
-	ADCSBB  (vp,n,8), w
-	mov     w, (rp,n,8)
-	sbb     cy1, cy1        C generate mask, preserve CF
+	mov	(up,n,8), w
+	shr	$1, cy2		C restore carry
+	ADCSBB	(vp,n,8), w
+	mov	w, (rp,n,8)
+	sbb	cy1, cy1	C generate mask, preserve CF
 
-	mov     8(up,n,8), w
-	ADCSBB  8(vp,n,8), w
-	mov     w, 8(rp,n,8)
-	sbb     cy2, cy2        C generate mask, preserve CF
+	mov	8(up,n,8), w
+	ADCSBB	8(vp,n,8), w
+	mov	w, 8(rp,n,8)
+	sbb	cy2, cy2	C generate mask, preserve CF
 
-	mov     (yp1), w	C (e1h:e1l) += cy1 * yp1 limb
-	and     cy1, w
-	add     w, e1l
-	adc     $0, e1h
+	mov	(yp1), w	C (e1h:e1l) += cy1 * yp1 limb
+	and	cy1, w
+	add	w, e1l
+	adc	$0, e1h
 
-	and     (yp1,yp2), cy1	C (e2h:e2l) += cy1 * yp2 limb
-	add     cy1, e2l
-	adc     $0, e2h
+	and	(yp1,yp2), cy1	C (e2h:e2l) += cy1 * yp2 limb
+	add	cy1, e2l
+	adc	$0, e2h
 
-	mov     -8(yp1), w	C (e1h:e1l) += cy2 * next yp1 limb
-	and     cy2, w
-	add     w, e1l
-	adc     $0, e1h
+	mov	-8(yp1), w	C (e1h:e1l) += cy2 * next yp1 limb
+	and	cy2, w
+	add	w, e1l
+	adc	$0, e1h
 
-	mov     -8(yp1,yp2), w	C (e2h:e2l) += cy2 * next yp2 limb
-	and     cy2, w
-	add     w, e2l
-	adc     $0, e2h
+	mov	-8(yp1,yp2), w	C (e2h:e2l) += cy2 * next yp2 limb
+	and	cy2, w
+	add	w, e2l
+	adc	$0, e2h
 
-	add     $2, n
-	lea     -16(yp1), yp1
-	jnz     L(top)
+	add	$2, n
+	lea	-16(yp1), yp1
+	jnz	L(top)
 L(end):
 
 	mov	e1l, (ep)

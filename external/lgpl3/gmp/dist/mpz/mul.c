@@ -6,17 +6,28 @@ Software Foundation, Inc.
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h> /* for NULL */
 #include "gmp.h"
@@ -99,10 +110,10 @@ mpz_mul (mpz_ptr w, mpz_srcptr u, mpz_srcptr v)
 	  free_me_size = ALLOC (w);
 	}
       else
-	(*__gmp_free_func) (wp, ALLOC (w) * BYTES_PER_MP_LIMB);
+	(*__gmp_free_func) (wp, (size_t) ALLOC (w) * GMP_LIMB_BYTES);
 
       ALLOC (w) = wsize;
-      wp = (mp_ptr) (*__gmp_allocate_func) (wsize * BYTES_PER_MP_LIMB);
+      wp = __GMP_ALLOCATE_FUNC_LIMBS (wsize);
       PTR (w) = wp;
     }
   else
@@ -141,6 +152,6 @@ mpz_mul (mpz_ptr w, mpz_srcptr u, mpz_srcptr v)
 
   SIZ (w) = sign_product < 0 ? -wsize : wsize;
   if (free_me != NULL)
-    (*__gmp_free_func) (free_me, free_me_size * BYTES_PER_MP_LIMB);
+    (*__gmp_free_func) (free_me, free_me_size * GMP_LIMB_BYTES);
   TMP_FREE;
 }

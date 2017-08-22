@@ -1,6 +1,6 @@
 /* Test mpz_powm_ui, mpz_mul, mpz_mod.
 
-Copyright 1991, 1993, 1994, 1996, 1997, 2000, 2001, 2002, 2013 Free Software
+Copyright 1991, 1993, 1994, 1996, 1997, 2000-2002, 2013 Free Software
 Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,8 +24,6 @@ the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp.h"
 #include "gmp-impl.h"
 #include "tests.h"
-
-void debug_mp (mpz_t, int);
 
 int
 main (int argc, char **argv)
@@ -43,17 +41,9 @@ main (int argc, char **argv)
   tests_start ();
   rands = RANDS;
 
-  mpz_init (bs);
+  TESTS_REPS (reps, argv, argc);
 
-  if (argc == 2)
-     reps = atoi (argv[1]);
-
-  mpz_init (base);
-  mpz_init (exp);
-  mpz_init (mod);
-  mpz_init (r1);
-  mpz_init (r2);
-  mpz_init (base2);
+  mpz_inits (bs, base, exp, mod, r1, r2, base2, NULL);
 
   for (i = 0; i < reps; i++)
     {
@@ -90,16 +80,13 @@ main (int argc, char **argv)
 
 #if 0
       putc ('\n', stderr);
-      debug_mp (base, -16);
-      debug_mp (mod, -16);
+      gmp_fprintf (stderr, "B = 0x%Zx\n", base);
+      gmp_fprintf (stderr, "M = 0x%Zx\n", mod);
 #endif
 
-      mpz_powm_ui (r1, base, exp2, mod);
-      MPZ_CHECK_FORMAT (r1);
-
+      exp2 = mpz_getlimbn (exp, (mp_size_t) 0);
       mpz_set_ui (r2, 1);
       mpz_set (base2, base);
-
       mpz_mod (r2, r2, mod);	/* needed when exp==0 and mod==1 */
       while (exp2 != 0)
 	{
@@ -113,39 +100,29 @@ main (int argc, char **argv)
 	  exp2 = exp2 / 2;
 	}
 
+      exp2 = mpz_getlimbn (exp, (mp_size_t) 0);
+      mpz_powm_ui (r1, base, exp2, mod);
+      MPZ_CHECK_FORMAT (r1);
+
 #if 0
-      debug_mp (r1, -16);
-      debug_mp (r2, -16);
+      gmp_fprintf (stderr, "R   = 0x%Zx\n", r1);
+      gmp_fprintf (stderr, "REF = 0x%Zx\n", r2);
 #endif
 
       if (mpz_cmp (r1, r2) != 0)
 	{
 	  fprintf (stderr, "\ntest %d: Incorrect results for operands:\n", i);
-	  debug_mp (base, -16);
-	  debug_mp (exp, -16);
-	  debug_mp (mod, -16);
-	  fprintf (stderr, "mpz_powm_ui result:\n");
-	  debug_mp (r1, -16);
-	  fprintf (stderr, "reference result:\n");
-	  debug_mp (r2, -16);
+	  gmp_fprintf (stderr, "B = 0x%Zx\n", base);
+	  gmp_fprintf (stderr, "E = 0x%Zx\n", exp);
+	  gmp_fprintf (stderr, "M = 0x%Zx\n", mod);
+	  gmp_fprintf (stderr, "R   = 0x%Zx\n", r1);
+	  gmp_fprintf (stderr, "REF = 0x%Zx\n", r2);
 	  abort ();
 	}
     }
 
-  mpz_clear (bs);
-  mpz_clear (base);
-  mpz_clear (exp);
-  mpz_clear (mod);
-  mpz_clear (r1);
-  mpz_clear (r2);
-  mpz_clear (base2);
+  mpz_clears (bs, base, exp, mod, r1, r2, base2, NULL);
 
   tests_end ();
   exit (0);
-}
-
-void
-debug_mp (mpz_t x, int base)
-{
-  mpz_out_str (stderr, base, x); fputc ('\n', stderr);
 }

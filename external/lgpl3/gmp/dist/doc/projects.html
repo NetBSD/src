@@ -4,7 +4,7 @@
   <title>GMP Development Projects</title>
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="stylesheet" href="gmp.css">
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 
 <center>
@@ -15,30 +15,40 @@
 
 <font size=-1>
 <pre>
-Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2008, 2009, 2010, 2011
-Free Software Foundation, Inc.
+Copyright 2000-2006, 2008-2011 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published
-by the Free Software Foundation; either version 3 of the License, or (at
-your option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.
 </pre>
 </font>
 
 <hr>
 <!-- NB. timestamp updated automatically by emacs -->
-  This file current as of 5 Dec 2011.  An up-to-date version is available at
-  <a href="http://gmplib.org/projects.html">http://gmplib.org/projects.html</a>.
+  This file current as of 29 Jan 2014.  An up-to-date version is available at
+  <a href="https://gmplib.org/projects.html">https://gmplib.org/projects.html</a>.
   Please send comments about this page to gmp-devel<font>@</font>gmplib.org.
 
 <p> This file lists projects suitable for volunteers.  Please see the
@@ -72,7 +82,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 	 lose in more expensive CRT. <br><br>
 
 	 <p> [We now have two implementations of this algorithm, one by Tommy
-	 Färnqvist and one by Niels Möller.]
+	 FÃ¤rnqvist and one by Niels MÃ¶ller.]
 
     <li> Work on short products.  Our mullo and mulmid are probably K, but we
          lack mulhi.
@@ -151,7 +161,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
   <p> Add more functions to the set of fat functions.
 
-  <p> The speed of multipliciaton is today highly dependent on combination
+  <p> The speed of multiplication is today highly dependent on combination
   functions like <code>addlsh1_n</code>.  A fat binary will never use any such
   functions, since they are classified as optional.  Ideally, we should use
   them, but making the current compile-time selections of optional functions
@@ -318,17 +328,6 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
       <code>__declspec(restrict)</code>, so a <code>#define</code> of
       <code>restrict</code> should be avoided.  It might be wisest to setup a
       <code>gmp_restrict</code>.
-
-
-
-<li> <strong>Factorial</strong>
-
-  <p> Rewrite for simplicty and speed.  Work is in progress.
-
-
-<li> <strong>Binomial Coefficients</strong>
-
-  <p> Rewrite for simplicty and speed.  Work is in progress.
 
 
 <li> <strong>Prime Testing</strong>

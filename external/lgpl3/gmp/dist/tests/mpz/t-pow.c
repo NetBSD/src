@@ -1,6 +1,6 @@
 /* Test mpz_pow_ui and mpz_ui_pow_ui.
 
-Copyright 1997, 1999, 2000, 2001 Free Software Foundation, Inc.
+Copyright 1997, 1999-2001 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>

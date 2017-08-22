@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,11 +39,7 @@ the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
       error = 1;                                                        \
     }
 
-#if HAVE_STRINGIZE
 #define EXPECT(fun,answer)  EXPECT_S(fun,#fun,answer)
-#else
-#define EXPECT(fun,answer)  EXPECT_S(fun,"fun",answer)
-#endif
 
 int
 main (void)

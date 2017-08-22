@@ -1,25 +1,35 @@
-dnl  AMD64 mpn_addlsh1_n -- rp[] = up[] + (vp[] << 1)
-dnl  AMD64 mpn_rsblsh1_n -- rp[] = (vp[] << 1) - up[]
-dnl  Optimised for Intel Atom.
+dnl  AMD64 mpn_addlsh1_n, mpn_rsblsh1_n optimised for Intel Atom.
+dnl  Used also for AMD bd1.
 
 dnl  Contributed to the GNU project by Torbjorn Granlund.
 
 dnl  Copyright 2011, 2012 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -30,6 +40,8 @@ C  * sublsh1_n.asm and this file use the same basic pattern.
 C	     cycles/limb
 C AMD K8,K9	 ?
 C AMD K10	 ?
+C AMD bd1	 2.3
+C AMD bobcat	 ?
 C Intel P4	 ?
 C Intel core2	 ?
 C Intel NHM	 ?

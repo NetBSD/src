@@ -1,22 +1,32 @@
-/* Time routines for speed measurments.
+/* Time routines for speed measurements.
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2010, 2011, 2012 Free Software
-Foundation, Inc.
+Copyright 1999-2004, 2010-2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 
 /* Usage:
@@ -764,8 +774,8 @@ cgt_works_p (void)
     }
 
   cgt_unittime = unit.tv_sec + unit.tv_nsec * 1e-9;
-  printf ("clock_gettime is %s accurate\n",
-	  unittime_string (cgt_unittime));
+  if (speed_option_verbose)
+    printf ("clock_gettime is %s accurate\n", unittime_string (cgt_unittime));
 
   if (cgt_unittime < 10e-9)
     {
@@ -794,7 +804,7 @@ cgt_works_p (void)
       duration = (end.tv_sec + end.tv_nsec * 1e-9
 		  - start.tv_sec - start.tv_nsec * 1e-9);
       if (speed_option_verbose)
-	printf ("delay loop of %d rounds took %s (according to clock_get_time)\n",
+	printf ("delay loop of %d rounds took %s (according to clock_gettime)\n",
 		CGT_DELAY_COUNT, unittime_string (duration));
       if (duration < 100e-9)
 	{
