@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.285 2017/08/17 01:16:55 mrg Exp $
+$NetBSD: UPDATING,v 1.286 2017/08/22 10:04:44 mrg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20170822:
+	a new version of GMP has been imported and probably
+	will break parts of builds related to themselves or GCC, both
+	in the tools and the native section.  Remove all GCC, GMP, MPFR
+	and MPC objdirs or build once without -u.
 
 20170816:
 	a new version of MPFR and MPC have been imported and probably
