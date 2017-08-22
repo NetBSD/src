@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1015 2017/08/16 13:53:54 tsutsui Exp $
+#	$NetBSD: bsd.own.mk,v 1.1016 2017/08/22 11:14:28 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -625,6 +625,7 @@ OBJCOPY_ELF2AOUT_FLAGS?=	\
 	-R .debug_pubtypes	\
 	-R .debug_ranges	\
 	-R .debug_str		\
+	-R .debug_macinfo	\
 	-R .eh_frame		\
 	-R .note.netbsd.ident
 .endif
