@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.25 2016/04/12 19:38:41 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2017/08/22 09:17:50 mrg Exp $
 
 .include <bsd.init.mk>
 
 # We don't install gmp, just provide it for GCC.
 LIBISPRIVATE?=	yes
 
-GMP_MACHINE_ARCH?=	${MACHINE_ARCH:S/earmv4/arm/:C/armv[5-7]/arm/}
+.include "../../Makefile.arch"
 
 .if ${LIBISPRIVATE} != "yes"
 INCS=         gmp.h
