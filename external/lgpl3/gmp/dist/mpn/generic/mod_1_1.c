@@ -1,29 +1,40 @@
 /* mpn_mod_1_1p (ap, n, b, cps)
    Divide (ap,,n) by b.  Return the single-limb remainder.
 
-   Contributed to the GNU project by Torbjorn Granlund and Niels Möller.
+   Contributed to the GNU project by Torbjorn Granlund and Niels MÃ¶ller.
    Based on a suggestion by Peter L. Montgomery.
 
    THE FUNCTIONS IN THIS FILE ARE INTERNAL WITH MUTABLE INTERFACES.  IT IS ONLY
    SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT THEY WILL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
-Copyright 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+Copyright 2008-2011, 2013 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -37,7 +48,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
  * add_mssaaaa is like longlong.h's add_ssaaaa, but also generates
  * carry out, in the form of a mask. */
 
-#if defined (__GNUC__)
+#if defined (__GNUC__) && ! defined (NO_ASM)
 
 #if HAVE_HOST_CPU_FAMILY_x86 && W_TYPE_SIZE == 32
 #define add_mssaaaa(m, s1, s0, a1, a0, b1, b0)				\
@@ -80,6 +91,17 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 	   : "rJ" (ah), "rI" (bh), "%rJ" (al), "rI" (bl),		\
 	     "rJ" ((al) >> 32), "rI" ((bl) >> 32)			\
 	 __CLOBBER_CC)
+#if __VIS__ >= 0x300
+#undef add_mssaaaa
+#define add_mssaaaa(m, sh, sl, ah, al, bh, bl)				\
+  __asm__ (  "addcc	%r5, %6, %2\n\t"				\
+	     "addxccc	%r3, %4, %1\n\t"				\
+	     "clr	%0\n\t"						\
+	     "movcs	%%xcc, -1, %0"					\
+	   : "=r" (m), "=r" (sh), "=&r" (sl)				\
+	   : "rJ" (ah), "rI" (bh), "%rJ" (al), "rI" (bl)		\
+	 __CLOBBER_CC)
+#endif
 #endif
 
 #if HAVE_HOST_CPU_FAMILY_powerpc && !defined (_LONG_LONG_LIMB)
@@ -107,7 +129,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 	     "%2" ((UDItype)(a0)), "r" ((UDItype)(b0)) __CLOBBER_CC)
 #endif
 
-#if defined (__arm__) && W_TYPE_SIZE == 32
+#if defined (__arm__) && !defined (__thumb__) && W_TYPE_SIZE == 32
 #define add_mssaaaa(m, sh, sl, ah, al, bh, bl)				\
   __asm__ (  "adds	%2, %5, %6\n\t"					\
 	     "adcs	%1, %3, %4\n\t"					\
@@ -160,12 +182,12 @@ mpn_mod_1_1p_cps (mp_limb_t cps[4], mp_limb_t b)
    *   B2modb = - b * bi;
    *   ASSERT (B2modb <= b);    // NB: equality iff b = B/2
    */
-  udiv_rnnd_preinv (B2modb, B1modb, 0, b, bi);
+  udiv_rnnd_preinv (B2modb, B1modb, CNST_LIMB(0), b, bi);
   cps[3] = B2modb >> cnt;
 }
 
 mp_limb_t
-mpn_mod_1_1p (mp_srcptr ap, mp_size_t n, mp_limb_t b, mp_limb_t bmodb[4])
+mpn_mod_1_1p (mp_srcptr ap, mp_size_t n, mp_limb_t b, const mp_limb_t bmodb[4])
 {
   mp_limb_t rh, rl, bi, ph, pl, r;
   mp_limb_t B1modb, B2modb;
@@ -180,7 +202,7 @@ mpn_mod_1_1p (mp_srcptr ap, mp_size_t n, mp_limb_t b, mp_limb_t bmodb[4])
 
   rl = ap[n - 1];
   umul_ppmm (ph, pl, rl, B1modb);
-  add_ssaaaa (rh, rl, ph, pl, 0, ap[n - 2]);
+  add_ssaaaa (rh, rl, ph, pl, CNST_LIMB(0), ap[n - 2]);
 
   for (i = n - 3; i >= 0; i -= 1)
     {
@@ -189,7 +211,7 @@ mpn_mod_1_1p (mp_srcptr ap, mp_size_t n, mp_limb_t b, mp_limb_t bmodb[4])
 	    + HI(rr)  * (B^2 mod b)		<= (B-1)(b-1)
       */
       umul_ppmm (ph, pl, rl, B1modb);
-      add_ssaaaa (ph, pl, ph, pl, 0, ap[i]);
+      add_ssaaaa (ph, pl, ph, pl, CNST_LIMB(0), ap[i]);
 
       umul_ppmm (rh, rl, rh, B2modb);
       add_ssaaaa (rh, rl, rh, rl, ph, pl);
@@ -239,7 +261,7 @@ mpn_mod_1_1p_cps (mp_limb_t cps[4], mp_limb_t b)
 }
 
 mp_limb_t
-mpn_mod_1_1p (mp_srcptr ap, mp_size_t n, mp_limb_t b, mp_limb_t bmodb[4])
+mpn_mod_1_1p (mp_srcptr ap, mp_size_t n, mp_limb_t b, const mp_limb_t bmodb[4])
 {
   int cnt;
   mp_limb_t bi, B1modb;
@@ -294,8 +316,7 @@ mpn_mod_1_1p (mp_srcptr ap, mp_size_t n, mp_limb_t b, mp_limb_t bmodb[4])
       r1 = (r1 << cnt) | (r0 >> (GMP_LIMB_BITS - cnt));
       r0 <<= cnt;
 
-      /* NOTE: Might get r1 == b here, but udiv_rnnd_preinv allows
-	 that. */
+      /* NOTE: Might get r1 == b here, but udiv_rnnd_preinv allows that. */
     }
   else
     {

@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,6 +133,8 @@ check_add_1 (void)
 
   mp_limb_t  got[ASIZE];
   mp_limb_t  got_c;
+  /* mpn_sec_add_a_itch(n) <= n */
+  mp_limb_t  scratch[ASIZE];
   int        i;
 
   for (i = 0; i < numberof (data); i++)
@@ -145,6 +147,16 @@ check_add_1 (void)
       got_c = mpn_add_1 (got, got, data[i].size, data[i].n);
       VERIFY ("check_add_1 (in-place)");
 
+      SETUP ();
+      scratch [mpn_sec_add_1_itch(data[i].size)] = MAGIC;
+      got_c = mpn_sec_add_1 (got, data[i].src, data[i].size, data[i].n, scratch);
+      got_c ^= scratch [mpn_sec_add_1_itch(data[i].size)] ^ MAGIC;
+      VERIFY ("check_sec_add_1 (separate)");
+
+      SETUP_INPLACE ();
+      got_c = mpn_sec_add_1 (got, got, data[i].size, data[i].n, scratch);
+      VERIFY ("check_sec_add_1 (in-place)");
+
       if (data[i].n == 1)
         {
           SETUP ();
@@ -154,6 +166,16 @@ check_add_1 (void)
           SETUP_INPLACE ();
           got_c = mpn_add_1 (got, got, data[i].size, CNST_LIMB(1));
           VERIFY ("check_add_1 (in-place, const 1)");
+
+          SETUP ();
+          got_c = mpn_sec_add_1 (got, data[i].src, data[i].size,
+				 CNST_LIMB(1), scratch);
+          VERIFY ("check_sec_add_1 (separate, const 1)");
+
+          SETUP_INPLACE ();
+          got_c = mpn_sec_add_1 (got, got, data[i].size,
+				 CNST_LIMB(1), scratch);
+          VERIFY ("check_sec_add_1 (in-place, const 1)");
         }
 
       /* Same again on functions, not inlines. */
@@ -212,6 +234,8 @@ check_sub_1 (void)
 
   mp_limb_t  got[ASIZE];
   mp_limb_t  got_c;
+  /* mpn_sec_sub_1_itch(n) <= n */
+  mp_limb_t  scratch[ASIZE];
   int        i;
 
   for (i = 0; i < numberof (data); i++)
@@ -224,6 +248,16 @@ check_sub_1 (void)
       got_c = mpn_sub_1 (got, got, data[i].size, data[i].n);
       VERIFY ("check_sub_1 (in-place)");
 
+      SETUP ();
+      scratch [mpn_sec_sub_1_itch(data[i].size)] = MAGIC;
+      got_c = mpn_sec_sub_1 (got, data[i].src, data[i].size, data[i].n, scratch);
+      got_c ^= scratch [mpn_sec_sub_1_itch(data[i].size)] ^ MAGIC;
+      VERIFY ("check_sec_sub_1 (separate)");
+
+      SETUP_INPLACE ();
+      got_c = mpn_sec_sub_1 (got, got, data[i].size, data[i].n, scratch);
+      VERIFY ("check_sec_sub_1 (in-place)");
+
       if (data[i].n == 1)
         {
           SETUP ();
@@ -233,6 +267,16 @@ check_sub_1 (void)
           SETUP_INPLACE ();
           got_c = mpn_sub_1 (got, got, data[i].size, CNST_LIMB(1));
           VERIFY ("check_sub_1 (in-place, const 1)");
+
+          SETUP ();
+          got_c = mpn_sec_sub_1 (got, data[i].src, data[i].size,
+				 CNST_LIMB(1), scratch);
+          VERIFY ("check_sec_sub_1 (separate, const 1)");
+
+          SETUP_INPLACE ();
+          got_c = mpn_sec_sub_1 (got, got, data[i].size,
+				 CNST_LIMB(1), scratch);
+          VERIFY ("check_sec_sub_1 (in-place, const 1)");
         }
 
       /* Same again on functions, not inlines. */

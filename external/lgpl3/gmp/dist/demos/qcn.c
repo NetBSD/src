@@ -2,7 +2,7 @@
    class number h(d), for a given negative fundamental discriminant, using
    Dirichlet's analytic formula.
 
-Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+Copyright 1999-2002 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -17,7 +17,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
 more details.
 
 You should have received a copy of the GNU General Public License along with
-this program.  If not, see http://www.gnu.org/licenses/.  */
+this program.  If not, see https://www.gnu.org/licenses/.  */
 
 
 /* Usage: qcn [-p limit] <discriminant>...

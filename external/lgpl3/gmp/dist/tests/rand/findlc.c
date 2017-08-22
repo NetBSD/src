@@ -14,7 +14,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,7 +27,7 @@ the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 #define RCSID(msg) \
 static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 
-RCSID("$Id: findlc.c,v 1.1.1.2 2013/11/29 07:49:48 mrg Exp $");
+RCSID("$Id: findlc.c,v 1.1.1.3 2017/08/22 09:40:48 mrg Exp $");
 
 int g_debug = 0;
 

@@ -9,22 +9,33 @@
    SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT THEY WILL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
-Copyright 2008, 2009, 2010 Free Software Foundation, Inc.
+Copyright 2008-2010 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -51,10 +62,10 @@ mpn_mod_1s_2p_cps (mp_limb_t cps[5], mp_limb_t b)
   ASSERT (B1modb <= b);		/* NB: not fully reduced mod b */
   cps[2] = B1modb >> cnt;
 
-  udiv_rnnd_preinv (B2modb, B1modb, 0, b, bi);
+  udiv_rnnd_preinv (B2modb, B1modb, CNST_LIMB(0), b, bi);
   cps[3] = B2modb >> cnt;
 
-  udiv_rnnd_preinv (B3modb, B2modb, 0, b, bi);
+  udiv_rnnd_preinv (B3modb, B2modb, CNST_LIMB(0), b, bi);
   cps[4] = B3modb >> cnt;
 
 #if WANT_ASSERT
@@ -71,7 +82,7 @@ mpn_mod_1s_2p_cps (mp_limb_t cps[5], mp_limb_t b)
 }
 
 mp_limb_t
-mpn_mod_1s_2p (mp_srcptr ap, mp_size_t n, mp_limb_t b, mp_limb_t cps[5])
+mpn_mod_1s_2p (mp_srcptr ap, mp_size_t n, mp_limb_t b, const mp_limb_t cps[5])
 {
   mp_limb_t rh, rl, bi, ph, pl, ch, cl, r;
   mp_limb_t B1modb, B2modb, B3modb;
@@ -97,7 +108,7 @@ mpn_mod_1s_2p (mp_srcptr ap, mp_size_t n, mp_limb_t b, mp_limb_t cps[5])
 	}
 
       umul_ppmm (ph, pl, ap[n - 2], B1modb);
-      add_ssaaaa (ph, pl, ph, pl, 0, ap[n - 3]);
+      add_ssaaaa (ph, pl, ph, pl, CNST_LIMB(0), ap[n - 3]);
       umul_ppmm (rh, rl, ap[n - 1], B2modb);
       add_ssaaaa (rh, rl, rh, rl, ph, pl);
       n--;
@@ -116,7 +127,7 @@ mpn_mod_1s_2p (mp_srcptr ap, mp_size_t n, mp_limb_t b, mp_limb_t cps[5])
 	    + HI(rr)  * (B^3 mod b)		<= (B-1)(b-1)
       */
       umul_ppmm (ph, pl, ap[i + 1], B1modb);
-      add_ssaaaa (ph, pl, ph, pl, 0, ap[i + 0]);
+      add_ssaaaa (ph, pl, ph, pl, CNST_LIMB(0), ap[i + 0]);
 
       umul_ppmm (ch, cl, rl, B2modb);
       add_ssaaaa (ph, pl, ph, pl, ch, cl);
@@ -126,7 +137,7 @@ mpn_mod_1s_2p (mp_srcptr ap, mp_size_t n, mp_limb_t b, mp_limb_t cps[5])
     }
 
   umul_ppmm (rh, cl, rh, B1modb);
-  add_ssaaaa (rh, rl, rh, rl, 0, cl);
+  add_ssaaaa (rh, rl, rh, rl, CNST_LIMB(0), cl);
 
   cnt = cps[1];
   bi = cps[0];

@@ -1,6 +1,5 @@
 /*
-Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2009 Free
-Software Foundation, Inc.
+Copyright 1996-2004, 2009 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -15,7 +14,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdlib.h>
 #include <stdio.h>

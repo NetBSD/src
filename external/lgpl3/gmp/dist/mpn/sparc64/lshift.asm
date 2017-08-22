@@ -1,152 +1,140 @@
 dnl  SPARC v9 mpn_lshift
 
-dnl  Copyright 1996, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+dnl  Contributed to the GNU project by David Miller.
+
+dnl  Copyright 2013 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
-
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C		   cycles/limb
-C UltraSPARC 1&2:     2
-C UltraSPARC 3:	      3.25
+C		    cycles/limb
+C UltraSPARC 1&2:	 2
+C UltraSPARC 3:		 2.5
+C UltraSPARC T1:	17.5
+C UltraSPARC T3:	 8
+C UltraSPARC T4:	 3
 
 C INPUT PARAMETERS
-define(`rp',`%i0')
-define(`up',`%i1')
-define(`n',`%i2')
-define(`cnt',`%i3')
+define(`rp',     `%i0')
+define(`up',     `%i1')
+define(`n',      `%i2')
+define(`cnt',    `%i3')
 
-define(`u0',`%l0')
-define(`u1',`%l2')
-define(`u2',`%l4')
-define(`u3',`%l6')
-
-define(`tnc',`%i4')
-
-define(`fanop',`fitod %f0,%f2')		dnl  A quasi nop running in the FA pipe
-define(`fmnop',`fmuld %f0,%f0,%f4')	dnl  A quasi nop running in the FM pipe
+define(`tcnt',   `%i4')
+define(`retval', `%i5')
+define(`u0',     `%l0')
+define(`u1',     `%l1')
+define(`r0',     `%l6')
+define(`r1',     `%l7')
+define(`u0_off', `%o0')
+define(`u1_off', `%o1')
+define(`r0_off', `%o2')
+define(`r1_off', `%o3')
 
 ASM_START()
 	REGISTER(%g2,#scratch)
 	REGISTER(%g3,#scratch)
 PROLOGUE(mpn_lshift)
-	save	%sp,-160,%sp
+	save	%sp, -176, %sp
 
-	sllx	n,3,%g1
-	sub	%g0,cnt,tnc		C negate shift count
-	add	up,%g1,up		C make %o1 point at end of src
-	add	rp,%g1,rp		C make %o0 point at end of res
-	ldx	[up-8],u3		C load first limb
-	subcc	n,5,n
-	srlx	u3,tnc,%i5		C compute function result
-	sllx	u3,cnt,%g3
-	bl,pn	%icc,.Lend1234
-	fanop
+	sllx	n, 3, n
+	sub	%g0, cnt, tcnt
 
-	subcc	n,4,n
-	ldx	[up-16],u0
-	ldx	[up-24],u1
-	add	up,-32,up
-	ldx	[up-0],u2
-	ldx	[up-8],u3
-	srlx	u0,tnc,%g2
+	sub	up, 8, u1_off
+	add	rp, (5 * 8), r1_off
 
-	bl,pn	%icc,.Lend5678
-	fanop
+	ldx	[n + u1_off], u1	C WAS: up - 8
+	add	u1_off, (3 * 8), u1_off
 
-	b,a	.Loop
-	.align	16
-.Loop:
-	sllx	u0,cnt,%g1
-	or	%g3,%g2,%g3
-	ldx	[up-16],u0
-	fanop
-C --
-	srlx	u1,tnc,%g2
-	subcc	n,4,n
-	stx	%g3,[rp-8]
-	fanop
-C --
-	sllx	u1,cnt,%g3
-	or	%g1,%g2,%g1
-	ldx	[up-24],u1
-	fanop
-C --
-	srlx	u2,tnc,%g2
-	stx	%g1,[rp-16]
-	add	up,-32,up
-	fanop
-C --
-	sllx	u2,cnt,%g1
-	or	%g3,%g2,%g3
-	ldx	[up-0],u2
-	fanop
-C --
-	srlx	u3,tnc,%g2
-	stx	%g3,[rp-24]
-	add	rp,-32,rp
-	fanop
-C --
-	sllx	u3,cnt,%g3
-	or	%g1,%g2,%g1
-	ldx	[up-8],u3
-	fanop
-C --
-	srlx	u0,tnc,%g2
-	stx	%g1,[rp-0]
-	bge,pt	%icc,.Loop
-	fanop
-C --
-.Lend5678:
-	sllx	u0,cnt,%g1
-	or	%g3,%g2,%g3
-	srlx	u1,tnc,%g2
-	stx	%g3,[rp-8]
-	sllx	u1,cnt,%g3
-	or	%g1,%g2,%g1
-	srlx	u2,tnc,%g2
-	stx	%g1,[rp-16]
-	sllx	u2,cnt,%g1
-	or	%g3,%g2,%g3
-	srlx	u3,tnc,%g2
-	stx	%g3,[rp-24]
-	add	rp,-32,rp
-	sllx	u3,cnt,%g3		C carry...
-	or	%g1,%g2,%g1
-	stx	%g1,[rp-0]
+	sub	r1_off, 8, r0_off
+	sub	u1_off, 8, u0_off
 
-.Lend1234:
-	addcc	n,4,n
-	bz,pn	%icc,.Lret
-	fanop
-.Loop0:
-	add	rp,-8,rp
-	subcc	n,1,n
-	ldx	[up-16],u3
-	add	up,-8,up
-	srlx	u3,tnc,%g2
-	or	%g3,%g2,%g3
-	stx	%g3,[rp]
-	sllx	u3,cnt,%g3
-	bnz,pt	%icc,.Loop0
-	fanop
-.Lret:
-	stx	%g3,[rp-8]
-	mov	%i5,%i0
+	subcc	n, (3 * 8), n
+	srlx	u1, tcnt, retval
+
+	bl,pn	%xcc, L(end12)
+	 sllx	u1, cnt, %l3
+
+	ldx	[n + u0_off], u0	C WAS: up - 16
+	subcc	n, (2 * 8), n
+
+	ldx	[n + u1_off], u1	C WAS: up - 24
+
+	bl,pn	%xcc, L(end34)
+	 srlx	u0, tcnt, %l4
+
+	b,a	L(top)
+	ALIGN(16)
+L(top):
+	sllx	u0, cnt, %l2
+	or	%l4, %l3, r0
+
+	ldx	[n + u0_off], u0	C WAS: up - 16
+	srlx	u1, tcnt, %l5
+
+	stx	r0, [n + r0_off]	C WAS: rp - 8
+	subcc	n, (2 * 8), n
+
+	sllx	u1, cnt, %l3
+	or	%l2, %l5, r1
+
+	ldx	[n + u1_off], u1	C WAS: up - 24
+	srlx	u0, tcnt, %l4
+
+	bge,pt	%xcc, L(top)
+	 stx	r1, [n + r1_off]	C WAS: rp - 16
+
+L(end34):
+	sllx	u0, cnt, %l2
+	or	%l4, %l3, r0
+
+	srlx	u1, tcnt, %l5
+	stx	r0, [n + r0_off]	C WAS: rp - 8
+
+	or	%l2, %l5, r1
+	sub	n, (2 * 8), %o5
+
+	sllx	u1, cnt, %l3
+	stx	r1, [%o5 + r1_off]	C WAS: rp - 16
+
+L(end12):
+	andcc	n, 8, %g0
+	bz,pn	%xcc, L(done)
+	 nop
+
+	ldx	[n + u0_off], u1
+	srlx	u1, tcnt, %l4
+	or	%l4, %l3, r0
+	stx	r0, [r0_off - 24]
+	sllx	u1, cnt, %l3
+L(done):
+	stx	%l3, [r0_off - 32]
+
 	ret
-	restore
-EPILOGUE(mpn_lshift)
+	restore retval, 0, %o0
+EPILOGUE()

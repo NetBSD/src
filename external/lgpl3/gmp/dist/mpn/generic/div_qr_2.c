@@ -1,31 +1,40 @@
 /* mpn_div_qr_2 -- Divide natural numbers, producing both remainder and
    quotient.  The divisor is two limbs.
 
-   Contributed to the GNU project by Torbjorn Granlund and Niels Möller
+   Contributed to the GNU project by Torbjorn Granlund and Niels MÃ¶ller
 
-   THIS FILE CONTAINS INTERNAL FUNCTIONS WITH MUTABLE INTERFACES.  IT IS
-   ONLY SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS
-   ALMOST GUARANTEED THAT THEY'LL CHANGE OR DISAPPEAR IN A FUTURE GNU MP
-   RELEASE.
+   THIS FILE CONTAINS INTERNAL FUNCTIONS WITH MUTABLE INTERFACES.  IT IS ONLY
+   SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
+   GUARANTEED THAT THEY'LL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
 
-Copyright 1993, 1994, 1995, 1996, 1999, 2000, 2001, 2002, 2011 Free Software
-Foundation, Inc.
+Copyright 1993-1996, 1999-2002, 2011 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -42,13 +51,13 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 /* Define some longlong.h-style macros, but for wider operations.
    * add_sssaaaa is like longlong.h's add_ssaaaa but the propagating
-     carry-out into an additional sum opeand.
+     carry-out into an additional sum operand.
    * add_csaac accepts two addends and a carry in, and generates a sum
      and a carry out.  A little like a "full adder".
 */
-#if defined (__GNUC__)  && ! defined (__INTEL_COMPILER)
+#if defined (__GNUC__)  && ! defined (__INTEL_COMPILER) && ! defined (NO_ASM)
 
-#if (defined (__i386__) || defined (__i486__)) && W_TYPE_SIZE == 32
+#if HAVE_HOST_CPU_FAMILY_x86 && W_TYPE_SIZE == 32
 #define add_sssaaaa(s2, s1, s0, a1, a0, b1, b0)				\
   __asm__ ("add\t%7, %k2\n\tadc\t%5, %k1\n\tadc\t$0, %k0"		\
 	   : "=r" (s2), "=&r" (s1), "=&r" (s0)				\
@@ -116,7 +125,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #endif
 
 /* Typically used with r1, r0 same as n3, n2. Other types of overlap
-   between inputs and outputs not supported. */
+   between inputs and outputs are not supported. */
 #define udiv_qr_4by2(q1,q0, r1,r0, n3,n2,n1,n0, d1,d0, di1,di0)		\
   do {									\
     mp_limb_t _q3, _q2a, _q2, _q1, _q2c, _q1c, _q1d, _q0;		\
@@ -130,10 +139,10 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
     umul_ppmm (_q1d,_q0, n2, di0);					\
     add_sssaaaa (_q3,_q2,_q1, _q2,_q1, _q2a,_q1d);			\
 									\
-    add_ssaaaa (r1, r0, n3, n2, 0, 1); /* FIXME: combine as in x86_64 asm */ \
+    add_ssaaaa (r1, r0, n3, n2, CNST_LIMB(0), CNST_LIMB(1));		\
 									\
     /* [q3,q2,q1,q0] += [n3,n3,n1,n0] */				\
-    add_csaac (_c, _q0, _q0, n0, 0);					\
+    add_csaac (_c, _q0, _q0, n0, CNST_LIMB(0));				\
     add_csaac (_c, _q1, _q1, n1, _c);					\
     add_csaac (_c, _q2, _q2, r0, _c);					\
     _q3 = _q3 + r1 + _c;						\
@@ -143,16 +152,16 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 									\
     sub_ddmmss (r1, r0, n1, n0, _t1, _t0);				\
 									\
-    _mask = -(mp_limb_t) (r1 >= _q1 & (r1 > _q1 | r0 >= _q0));  /* (r1,r0) >= (q1,q0) */  \
+    _mask = -(mp_limb_t) ((r1 >= _q1) & ((r1 > _q1) | (r0 >= _q0)));  /* (r1,r0) >= (q1,q0) */  \
     add_ssaaaa (r1, r0, r1, r0, d1 & _mask, d0 & _mask);		\
-    sub_ddmmss (_q3, _q2, _q3, _q2, 0, -_mask);				\
+    sub_ddmmss (_q3, _q2, _q3, _q2, CNST_LIMB(0), -_mask);		\
 									\
     if (UNLIKELY (r1 >= d1))						\
       {									\
 	if (r1 > d1 || r0 >= d0)					\
 	  {								\
 	    sub_ddmmss (r1, r0, r1, r0, d1, d0);			\
-	    add_ssaaaa (_q3, _q2, _q3, _q2, 0, 1);			\
+	    add_ssaaaa (_q3, _q2, _q3, _q2, CNST_LIMB(0), CNST_LIMB(1));\
 	  }								\
       }									\
     (q1) = _q3;								\

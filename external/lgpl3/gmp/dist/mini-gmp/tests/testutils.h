@@ -1,6 +1,6 @@
 /*
 
-Copyright 2013, Free Software Foundation, Inc.
+Copyright 2013, 2014, Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,3 +29,9 @@ void testmain (int argc, char **argv);
 void testhalves (int count, void (*tested_fun) (int));
 
 void testfree (void *p);
+
+void
+dump (const char *label, const mpz_t x);
+
+void
+mpz_set_str_or_abort (mpz_ptr z, const char *str, int base);

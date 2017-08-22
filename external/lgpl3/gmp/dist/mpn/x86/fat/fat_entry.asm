@@ -1,21 +1,32 @@
 dnl  x86 fat binary entrypoints.
 
-dnl  Copyright 2003, 2012 Free Software Foundation, Inc.
-dnl
+dnl  Copyright 2003, 2012, 2014 Free Software Foundation, Inc.
+
 dnl  This file is part of the GNU MP Library.
 dnl
-dnl  The GNU MP Library is free software; you can redistribute it and/or
-dnl  modify it under the terms of the GNU Lesser General Public License as
-dnl  published by the Free Software Foundation; either version 3 of the
-dnl  License, or (at your option) any later version.
+dnl  The GNU MP Library is free software; you can redistribute it and/or modify
+dnl  it under the terms of either:
 dnl
-dnl  The GNU MP Library is distributed in the hope that it will be useful,
-dnl  but WITHOUT ANY WARRANTY; without even the implied warranty of
-dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-dnl  Lesser General Public License for more details.
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
 dnl
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
+dnl  The GNU MP Library is distributed in the hope that it will be useful, but
+dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -55,13 +66,19 @@ dnl  $1 in it.
 define(FAT_ENTRY,
 m4_assert_numargs(2)
 `	ALIGN(ifdef(`PIC',16,8))
-`'PROLOGUE($1)
-ifdef(`PIC',
-`	call	L(movl_eip_edx)
+`'PROLOGUE($1)dnl
+ifdef(`PIC',`dnl
+ifdef(`DARWIN',`
+	call	L(movl_eip_edx)
+	movl	L(___gmpn_cpuvec)$non_lazy_ptr-.(%edx), %edx
+	jmp	*m4_empty_if_zero($2)(%edx)
+',`dnl
+	call	L(movl_eip_edx)
 L(entry_here$2):
 	addl	$_GLOBAL_OFFSET_TABLE_+[.-L(entry_here$2)], %edx
 	movl	GSYM_PREFIX`'__gmpn_cpuvec@GOT(%edx), %edx
 	jmp	*m4_empty_if_zero($2)(%edx)
+')
 ',`dnl non-PIC
 	jmp	*GSYM_PREFIX`'__gmpn_cpuvec+$2
 ')
@@ -83,6 +100,13 @@ ifdef(`PIC',`
 L(movl_eip_edx):
 	movl	(%esp), %edx
 	ret_internal
+ifdef(`DARWIN',`
+	.section	__IMPORT,__pointers,non_lazy_symbol_pointers
+L(___gmpn_cpuvec)$non_lazy_ptr:
+	.indirect_symbol	___gmpn_cpuvec
+	.long	0
+	TEXT
+')
 ')
 
 
@@ -109,7 +133,7 @@ dnl  something with $1 in it.
 
 define(FAT_INIT,
 m4_assert_numargs(2)
-`PROLOGUE($1)
+`PROLOGUE($1)dnl
 	movb	$`'$2, %al
 	jmp	L(fat_init)
 EPILOGUE()
@@ -121,23 +145,32 @@ L(fat_init):
 	movzbl	%al, %eax
 	pushl	%eax
 
-ifdef(`PIC',`
+ifdef(`PIC',`dnl
+ifdef(`DARWIN',`
+	sub	$8, %esp
+	CALL(	__gmpn_cpuvec_init)
+	add	$8, %esp
+	call	L(movl_eip_edx)
+	movl	L(___gmpn_cpuvec)$non_lazy_ptr-.(%edx), %edx
+',`dnl
 	pushl	%ebx
 	call	L(movl_eip_ebx)
 L(init_here):
 	addl	$_GLOBAL_OFFSET_TABLE_+[.-L(init_here)], %ebx
-	call	GSYM_PREFIX`'__gmpn_cpuvec_init@PLT
+	CALL(	__gmpn_cpuvec_init)
 	movl	GSYM_PREFIX`'__gmpn_cpuvec@GOT(%ebx), %edx
 	popl	%ebx
+')
 	popl	%eax
 	jmp	*(%edx,%eax)
 
 L(movl_eip_ebx):
 	movl	(%esp), %ebx
 	ret_internal
-
 ',`dnl non-PIC
-	call	GSYM_PREFIX`'__gmpn_cpuvec_init
+	sub	$8, %esp		C needed on Darwin, harmless elsewhere
+	CALL(	__gmpn_cpuvec_init)
+	add	$8, %esp		C needed on Darwin, harmless elsewhere
 	popl	%eax
 	jmp	*GSYM_PREFIX`'__gmpn_cpuvec(%eax)
 ')
@@ -207,3 +240,4 @@ PROLOGUE(__gmpn_cpuid_available)
 L(available):
 	ret
 EPILOGUE()
+ASM_END()

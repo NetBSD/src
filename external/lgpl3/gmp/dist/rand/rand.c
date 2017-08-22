@@ -1,55 +1,43 @@
 /* gmp_randinit (state, algorithm, ...) -- Initialize a random state.
 
-Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+Copyright 1999-2002 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
-#include "config.h"
-
-#include <stdio.h> /* for NULL */
-
-#if HAVE_STDARG
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "gmp.h"
 #include "gmp-impl.h"
 
 void
-#if HAVE_STDARG
-gmp_randinit (gmp_randstate_t rstate,
-	      gmp_randalg_t alg,
-	      ...)
-#else
-gmp_randinit (va_alist)
-     va_dcl
-#endif
+gmp_randinit (gmp_randstate_t rstate, gmp_randalg_t alg, ...)
 {
   va_list ap;
-#if HAVE_STDARG
   va_start (ap, alg);
-#else
-  __gmp_randstate_struct *rstate;
-  gmp_randalg_t alg;
-  va_start (ap);
-  rstate = va_arg (ap, __gmp_randstate_struct *);
-  alg = va_arg (ap, gmp_randalg_t);
-#endif
 
   switch (alg) {
   case GMP_RAND_ALG_LC:

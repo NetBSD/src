@@ -3,22 +3,33 @@ divert(-1)
 dnl  m4 macros for alpha assembler (everywhere except unicos).
 
 
-dnl  Copyright 2000, 2002, 2003, 2004 Free Software Foundation, Inc.
-dnl
+dnl  Copyright 2000, 2002-2004, 2013 Free Software Foundation, Inc.
+
 dnl  This file is part of the GNU MP Library.
 dnl
-dnl  The GNU MP Library is free software; you can redistribute it and/or
-dnl  modify it under the terms of the GNU Lesser General Public License as
-dnl  published by the Free Software Foundation; either version 3 of the
-dnl  License, or (at your option) any later version.
+dnl  The GNU MP Library is free software; you can redistribute it and/or modify
+dnl  it under the terms of either:
 dnl
-dnl  The GNU MP Library is distributed in the hope that it will be useful,
-dnl  but WITHOUT ANY WARRANTY; without even the implied warranty of
-dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-dnl  Lesser General Public License for more details.
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
 dnl
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
+dnl  The GNU MP Library is distributed in the hope that it will be useful, but
+dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 
 dnl  Usage: ASM_START()
@@ -53,8 +64,9 @@ ifelse(`$2',noalign,,`	ALIGN(16)')
 	.globl	$1
 	.ent	$1
 $1:
-ifelse(`$2',gp,`	ldgp	r29,0(r27)')
-	.frame r30,0,r26
+	.frame r30,0,r26,0
+ifelse(`$2',gp,`	ldgp	r29, 0(r27)
+`$'$1..ng:')
 	.prologue ifelse(`$2',gp,1,0)')
 
 define(`EPILOGUE_cpu',
@@ -90,12 +102,13 @@ forloop(i,0,31,`defreg(`r'i,$i)')
 forloop(i,0,31,`deflit(`f'i,``$f''i)')
 
 
-dnl  Usage: DATASTART(name)
+dnl  Usage: DATASTART(name,align)  or  DATASTART(name)
 dnl         DATAEND()
 
 define(`DATASTART',
-m4_assert_numargs(1)
-`	DATA
+m4_assert_numargs_range(1,2)
+`	RODATA
+	ALIGN(ifelse($#,1,2,$2))
 $1:')
 define(`DATAEND',
 m4_assert_numargs(0)
@@ -104,7 +117,7 @@ m4_assert_numargs(0)
 dnl  Load a symbolic address into a register
 define(`LEA',
 m4_assert_numargs(2)
-`lda   $1,  $2')
+`lda	$1, $2')
 
 dnl  Usage: ASM_END()
 define(`ASM_END',
