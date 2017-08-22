@@ -1,8 +1,8 @@
-/*	$NetBSD: if_cnmac.c,v 1.5 2016/12/15 09:28:03 ozaki-r Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.6 2017/08/22 07:09:00 maya Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.5 2016/12/15 09:28:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.6 2017/08/22 07:09:00 maya Exp $");
 #endif
 
 #include "opt_octeon.h"
@@ -1436,8 +1436,8 @@ octeon_eth_recv_check(struct octeon_eth_softc *sc, uint64_t word2)
 			if (ratecheck(&sc->sc_rate_recv_check_code_last,
 			    &sc->sc_rate_recv_check_code_cap)) 
 				log(LOG_WARNING,
-				    "%s: the reception error had occured, "
-				    "the packet was dropped (error code = %" PRId64 ")\n",
+				    "%s: reception error, packet dropped "
+				    "(error code = %" PRId64 ")\n",
 				    device_xname(sc->sc_dev), word2 & PIP_WQE_WORD2_NOIP_OPECODE);
 		}
 		OCTEON_EVCNT_INC(sc, rxerrcode);
