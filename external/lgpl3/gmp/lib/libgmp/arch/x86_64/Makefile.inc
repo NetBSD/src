@@ -1,150 +1,162 @@
-#	$NetBSD: Makefile.inc,v 1.6 2013/12/04 00:49:19 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2017/08/22 09:59:40 mrg Exp $
 
-SRCS+= \
-	random.c \
-	toom_interpolate_7pts.c \
-	sbpi1_divappr_q.c \
-	random2.c \
-	mu_bdiv_q.c \
-	jacobi_2.c \
-	toom32_mul.c \
-	toom44_mul.c \
-	toom8h_mul.c \
-	toom2_sqr.c \
-	zero.c \
-	gcdext.c \
-	binvert.c \
-	mu_div_q.c \
-	invertappr.c \
-	add_n_sub_n.c \
-	dump.c \
-	hgcd_reduce.c \
-	dcpi1_div_qr.c \
-	mu_divappr_q.c \
-	matrix22_mul1_inverse_vector.c \
-	toom6_sqr.c \
-	hgcd_step.c \
-	mod_1.c \
-	toom42_mulmid.c \
-	divexact.c \
-	jacobi.c \
-	powlo.c \
-	mul.c \
-	set_str.c \
-	toom42_mul.c \
-	toom54_mul.c \
-	toom_interpolate_6pts.c \
-	dcpi1_divappr_q.c \
-	toom_eval_dgr3_pm2.c \
-	mod_1_3.c \
-	toom_couple_handling.c \
-	add.c \
-	toom_interpolate_12pts.c \
-	div_qr_2.c \
-	perfsqr.c \
-	toom53_mul.c \
-	toom_eval_pm2exp.c \
-	toom_interpolate_16pts.c \
-	mu_div_qr.c \
-	bdiv_q.c \
-	toom22_mul.c \
-	bsqrtinv.c \
-	toom4_sqr.c \
-	div_q.c \
-	jacbase.c \
-	hgcd_matrix.c \
-	mullo_n.c \
-	toom33_mul.c \
-	toom_eval_dgr3_pm1.c \
-	sub_1.c \
-	trialdiv.c \
-	add_1.c \
-	toom_interpolate_5pts.c \
-	sbpi1_bdiv_q.c \
-	pre_mod_1.c \
-	hgcd.c \
-	sqrtrem.c \
-	gcdext_1.c \
-	toom63_mul.c \
-	toom8_sqr.c \
-	neg.c \
-	gcdext_lehmer.c \
-	divis.c \
-	dcpi1_div_q.c \
-	toom_eval_pm2.c \
-	hgcd2.c \
-	toom62_mul.c \
-	comb_tables.c \
-	sbpi1_bdiv_qr.c \
-	scan1.c \
-	brootinv.c \
-	perfpow.c \
-	get_str.c \
-	mulmod_bnm1.c \
-	tdiv_qr.c \
-	toom43_mul.c \
-	matrix22_mul.c \
-	powm_sec.c \
-	divrem.c \
-	bsqrt.c \
-	dcpi1_bdiv_qr.c \
-	mul_n.c \
-	redc_2.c \
-	toom6h_mul.c \
-	mul_fft.c \
-	sqrmod_bnm1.c \
-	mulmid.c \
-	powm.c \
-	rootrem.c \
-	toom_interpolate_8pts.c \
-	remove.c \
-	cmp.c \
-	toom_eval_pm1.c \
-	hgcd_appr.c \
-	scan0.c \
-	gcd_subdiv_step.c \
-	sbpi1_div_qr.c \
-	invert.c \
-	sub.c \
-	toom_eval_pm2rexp.c \
-	broot.c \
-	dcpi1_bdiv_q.c \
-	hgcd2_jacobi.c \
-	mulmid_n.c \
-	sqr.c \
-	nussbaumer_mul.c \
-	mu_bdiv_qr.c \
-	pow_1.c \
-	get_d.c \
-	toom52_mul.c \
-	sbpi1_div_q.c \
-	diveby3.c \
-	fib2_ui.c \
-	bdiv_qr.c \
-	hgcd_jacobi.c \
-	toom3_sqr.c \
-	gcd.c \
-	redc_n.c \
+GMP_LIMB_BITS=64
 
 C_SRCS_LIST= \
-	sb_div_r_sec.c		mpn/generic/sb_div_sec.c \
-	sbpi1_div_qr_sec.c		mpn/generic/sbpi1_div_sec.c \
-	sb_div_qr_sec.c		mpn/generic/sb_div_sec.c \
-	sbpi1_div_r_sec.c		mpn/generic/sbpi1_div_sec.c \
+	random.c		mpn/generic/random.c \
+	toom_interpolate_7pts.c		mpn/generic/toom_interpolate_7pts.c \
+	sbpi1_divappr_q.c		mpn/generic/sbpi1_divappr_q.c \
+	random2.c		mpn/generic/random2.c \
+	mu_bdiv_q.c		mpn/generic/mu_bdiv_q.c \
+	jacobi_2.c		mpn/generic/jacobi_2.c \
+	toom32_mul.c		mpn/generic/toom32_mul.c \
+	toom44_mul.c		mpn/generic/toom44_mul.c \
+	toom8h_mul.c		mpn/generic/toom8h_mul.c \
+	toom2_sqr.c		mpn/generic/toom2_sqr.c \
+	zero.c		mpn/generic/zero.c \
+	gcdext.c		mpn/generic/gcdext.c \
+	sec_powm.c		mpn/generic/sec_powm.c \
+	binvert.c		mpn/generic/binvert.c \
+	mu_div_q.c		mpn/generic/mu_div_q.c \
+	invertappr.c		mpn/generic/invertappr.c \
+	add_n_sub_n.c		mpn/generic/add_n_sub_n.c \
+	dump.c		mpn/generic/dump.c \
+	mu_divappr_q.c		mpn/generic/mu_divappr_q.c \
+	dcpi1_div_qr.c		mpn/generic/dcpi1_div_qr.c \
+	hgcd_reduce.c		mpn/generic/hgcd_reduce.c \
+	matrix22_mul1_inverse_vector.c		mpn/generic/matrix22_mul1_inverse_vector.c \
+	toom6_sqr.c		mpn/generic/toom6_sqr.c \
+	hgcd_step.c		mpn/generic/hgcd_step.c \
+	mod_1.c		mpn/generic/mod_1.c \
+	toom42_mulmid.c		mpn/generic/toom42_mulmid.c \
+	sec_div_qr.c		mpn/generic/sec_div.c \
+	divexact.c		mpn/generic/divexact.c \
+	jacobi.c		mpn/generic/jacobi.c \
+	powlo.c		mpn/generic/powlo.c \
+	mul.c		mpn/generic/mul.c \
+	set_str.c		mpn/generic/set_str.c \
+	toom42_mul.c		mpn/generic/toom42_mul.c \
+	toom54_mul.c		mpn/generic/toom54_mul.c \
+	toom_interpolate_6pts.c		mpn/generic/toom_interpolate_6pts.c \
+	dcpi1_divappr_q.c		mpn/generic/dcpi1_divappr_q.c \
+	toom_eval_dgr3_pm2.c		mpn/generic/toom_eval_dgr3_pm2.c \
+	mod_1_3.c		mpn/generic/mod_1_3.c \
+	toom_couple_handling.c		mpn/generic/toom_couple_handling.c \
+	add.c		mpn/generic/add.c \
+	toom_interpolate_12pts.c		mpn/generic/toom_interpolate_12pts.c \
+	div_qr_2.c		mpn/generic/div_qr_2.c \
+	perfsqr.c		mpn/generic/perfsqr.c \
+	toom53_mul.c		mpn/generic/toom53_mul.c \
+	toom_eval_pm2exp.c		mpn/generic/toom_eval_pm2exp.c \
+	mu_div_qr.c		mpn/generic/mu_div_qr.c \
+	toom_interpolate_16pts.c		mpn/generic/toom_interpolate_16pts.c \
+	bdiv_q.c		mpn/generic/bdiv_q.c \
+	sec_invert.c		mpn/generic/sec_invert.c \
+	toom22_mul.c		mpn/generic/toom22_mul.c \
+	bsqrtinv.c		mpn/generic/bsqrtinv.c \
+	toom4_sqr.c		mpn/generic/toom4_sqr.c \
+	div_q.c		mpn/generic/div_q.c \
+	jacbase.c		mpn/generic/jacbase.c \
+	sec_sqr.c		mpn/generic/sec_sqr.c \
+	hgcd_matrix.c		mpn/generic/hgcd_matrix.c \
+	mullo_n.c		mpn/generic/mullo_n.c \
+	toom33_mul.c		mpn/generic/toom33_mul.c \
+	toom_eval_dgr3_pm1.c		mpn/generic/toom_eval_dgr3_pm1.c \
+	sqrlo.c		mpn/generic/sqrlo.c \
+	sub_1.c		mpn/generic/sub_1.c \
+	trialdiv.c		mpn/generic/trialdiv.c \
+	add_1.c		mpn/generic/add_1.c \
+	toom_interpolate_5pts.c		mpn/generic/toom_interpolate_5pts.c \
+	sbpi1_bdiv_q.c		mpn/generic/sbpi1_bdiv_q.c \
+	pre_mod_1.c		mpn/generic/pre_mod_1.c \
+	hgcd.c		mpn/generic/hgcd.c \
+	div_qr_1.c		mpn/generic/div_qr_1.c \
+	sqrtrem.c		mpn/generic/sqrtrem.c \
+	gcdext_1.c		mpn/generic/gcdext_1.c \
+	toom63_mul.c		mpn/generic/toom63_mul.c \
+	toom8_sqr.c		mpn/generic/toom8_sqr.c \
+	neg.c		mpn/generic/neg.c \
+	gcdext_lehmer.c		mpn/generic/gcdext_lehmer.c \
+	divis.c		mpn/generic/divis.c \
+	dcpi1_div_q.c		mpn/generic/dcpi1_div_q.c \
+	sec_div_r.c		mpn/generic/sec_div.c \
+	toom_eval_pm2.c		mpn/generic/toom_eval_pm2.c \
+	hgcd2.c		mpn/generic/hgcd2.c \
+	toom62_mul.c		mpn/generic/toom62_mul.c \
+	comb_tables.c		mpn/generic/comb_tables.c \
+	sbpi1_bdiv_qr.c		mpn/generic/sbpi1_bdiv_qr.c \
+	scan1.c		mpn/generic/scan1.c \
+	brootinv.c		mpn/generic/brootinv.c \
+	perfpow.c		mpn/generic/perfpow.c \
+	get_str.c		mpn/generic/get_str.c \
+	mulmod_bnm1.c		mpn/generic/mulmod_bnm1.c \
+	tdiv_qr.c		mpn/generic/tdiv_qr.c \
+	sec_pi1_div_qr.c		mpn/generic/sec_pi1_div.c \
+	toom43_mul.c		mpn/generic/toom43_mul.c \
+	matrix22_mul.c		mpn/generic/matrix22_mul.c \
+	sec_pi1_div_r.c		mpn/generic/sec_pi1_div.c \
+	divrem.c		mpn/generic/divrem.c \
+	bsqrt.c		mpn/generic/bsqrt.c \
+	dcpi1_bdiv_qr.c		mpn/generic/dcpi1_bdiv_qr.c \
+	mul_n.c		mpn/generic/mul_n.c \
+	redc_2.c		mpn/generic/redc_2.c \
+	toom6h_mul.c		mpn/generic/toom6h_mul.c \
+	mul_fft.c		mpn/generic/mul_fft.c \
+	sqrmod_bnm1.c		mpn/generic/sqrmod_bnm1.c \
+	mulmid.c		mpn/generic/mulmid.c \
+	powm.c		mpn/generic/powm.c \
+	rootrem.c		mpn/generic/rootrem.c \
+	toom_interpolate_8pts.c		mpn/generic/toom_interpolate_8pts.c \
+	remove.c		mpn/generic/remove.c \
+	sec_mul.c		mpn/generic/sec_mul.c \
+	cmp.c		mpn/generic/cmp.c \
+	toom_eval_pm1.c		mpn/generic/toom_eval_pm1.c \
+	hgcd_appr.c		mpn/generic/hgcd_appr.c \
+	cnd_swap.c		mpn/generic/cnd_swap.c \
+	scan0.c		mpn/generic/scan0.c \
+	gcd_subdiv_step.c		mpn/generic/gcd_subdiv_step.c \
+	sbpi1_div_qr.c		mpn/generic/sbpi1_div_qr.c \
+	invert.c		mpn/generic/invert.c \
+	sub.c		mpn/generic/sub.c \
+	sqrlo_basecase.c		mpn/generic/sqrlo_basecase.c \
+	toom_eval_pm2rexp.c		mpn/generic/toom_eval_pm2rexp.c \
+	sec_sub_1.c		mpn/generic/sec_aors_1.c \
+	broot.c		mpn/generic/broot.c \
+	sec_add_1.c		mpn/generic/sec_aors_1.c \
+	dcpi1_bdiv_q.c		mpn/generic/dcpi1_bdiv_q.c \
+	hgcd2_jacobi.c		mpn/generic/hgcd2_jacobi.c \
+	mulmid_n.c		mpn/generic/mulmid_n.c \
+	sqr.c		mpn/generic/sqr.c \
+	nussbaumer_mul.c		mpn/generic/nussbaumer_mul.c \
+	zero_p.c		mpn/generic/zero_p.c \
+	mu_bdiv_qr.c		mpn/generic/mu_bdiv_qr.c \
+	pow_1.c		mpn/generic/pow_1.c \
+	get_d.c		mpn/generic/get_d.c \
+	toom52_mul.c		mpn/generic/toom52_mul.c \
+	sbpi1_div_q.c		mpn/generic/sbpi1_div_q.c \
+	diveby3.c		mpn/generic/diveby3.c \
+	fib2_ui.c		mpn/generic/fib2_ui.c \
+	bdiv_qr.c		mpn/generic/bdiv_qr.c \
+	hgcd_jacobi.c		mpn/generic/hgcd_jacobi.c \
+	sizeinbase.c		mpn/generic/sizeinbase.c \
+	toom3_sqr.c		mpn/generic/toom3_sqr.c \
+	gcd.c		mpn/generic/gcd.c \
+	redc_n.c		mpn/generic/redc_n.c \
 
 ASM_SRCS_LIST= \
+	sqr_diag_addlsh1.asm		mpn/x86_64/sqr_diag_addlsh1.asm \
 	nand_n.asm		mpn/x86_64/logops_n.asm \
 	sub_err1_n.asm		mpn/x86_64/aors_err1_n.asm \
 	add_err2_n.asm		mpn/x86_64/aors_err2_n.asm \
 	rsh1sub_n.asm		mpn/x86_64/rsh1aors_n.asm \
+	sec_tabselect.asm		mpn/x86_64/sec_tabselect.asm \
 	mod_1_2.asm		mpn/x86_64/mod_1_2.asm \
 	add_n.asm		mpn/x86_64/aors_n.asm \
 	rsh1add_n.asm		mpn/x86_64/rsh1aors_n.asm \
-	sqr_basecase.asm		mpn/x86_64/sqr_basecase.asm \
+	sqr_basecase.asm		mpn/x86_64/k8/sqr_basecase.asm \
 	rsblsh2_n.asm		mpn/x86_64/aorrlsh2_n.asm \
 	sublsh1_n.asm		mpn/x86_64/sublsh1_n.asm \
 	bdiv_q_1.asm		mpn/x86_64/bdiv_q_1.asm \
-	addcnd_n.asm		mpn/x86_64/aorscnd_n.asm \
 	addaddmul_1msb0.asm		mpn/x86_64/addaddmul_1msb0.asm \
 	xor_n.asm		mpn/x86_64/logops_n.asm \
 	sub_err3_n.asm		mpn/x86_64/aors_err3_n.asm \
@@ -152,14 +164,14 @@ ASM_SRCS_LIST= \
 	addmul_2.asm		mpn/x86_64/addmul_2.asm \
 	submul_1.asm		mpn/x86_64/aorsmul_1.asm \
 	nior_n.asm		mpn/x86_64/logops_n.asm \
-	mul_basecase.asm		mpn/x86_64/mul_basecase.asm \
-	tabselect.asm		mpn/x86_64/tabselect.asm \
+	mul_basecase.asm		mpn/x86_64/k8/mul_basecase.asm \
 	lshift.asm		mpn/x86_64/lshift.asm \
 	add_err1_n.asm		mpn/x86_64/aors_err1_n.asm \
 	and_n.asm		mpn/x86_64/logops_n.asm \
 	hamdist.asm		mpn/x86_64/popham.asm \
+	cnd_sub_n.asm		mpn/x86_64/cnd_aors_n.asm \
 	div_qr_2u_pi1.asm		mpn/x86_64/div_qr_2u_pi1.asm \
-	mulmid_basecase.asm		mpn/x86_64/mulmid_basecase.asm \
+	mulmid_basecase.asm		mpn/x86_64/k8/mulmid_basecase.asm \
 	mul_1.asm		mpn/x86_64/mul_1.asm \
 	addlsh2_n.asm		mpn/x86_64/aorrlsh2_n.asm \
 	divrem_1.asm		mpn/x86_64/divrem_1.asm \
@@ -168,13 +180,14 @@ ASM_SRCS_LIST= \
 	div_qr_2n_pi1.asm		mpn/x86_64/div_qr_2n_pi1.asm \
 	rsblsh1_n.asm		mpn/x86_64/aorrlsh1_n.asm \
 	dive_1.asm		mpn/x86_64/dive_1.asm \
+	cnd_add_n.asm		mpn/x86_64/cnd_aors_n.asm \
 	andn_n.asm		mpn/x86_64/logops_n.asm \
 	com.asm		mpn/x86_64/com.asm \
 	copyi.asm		mpn/x86_64/copyi.asm \
+	div_qr_1n_pi1.asm		mpn/x86_64/k8/div_qr_1n_pi1.asm \
 	sub_err2_n.asm		mpn/x86_64/aors_err2_n.asm \
 	add_err3_n.asm		mpn/x86_64/aors_err3_n.asm \
 	mod_1_1.asm		mpn/x86_64/mod_1_1.asm \
-	subcnd_n.asm		mpn/x86_64/aorscnd_n.asm \
 	rshift.asm		mpn/x86_64/rshift.asm \
 	addlsh_n.asm		mpn/x86_64/k8/aorrlsh_n.asm \
 	iorn_n.asm		mpn/x86_64/logops_n.asm \
@@ -183,10 +196,10 @@ ASM_SRCS_LIST= \
 	popcount.asm		mpn/x86_64/popham.asm \
 	invert_limb_table.asm		mpn/x86_64/invert_limb_table.asm \
 	xnor_n.asm		mpn/x86_64/logops_n.asm \
-	redc_1.asm		mpn/x86_64/redc_1.asm \
+	redc_1.asm		mpn/x86_64/k8/redc_1.asm \
 	lshiftc.asm		mpn/x86_64/lshiftc.asm \
 	mode1o.asm		mpn/x86_64/mode1o.asm \
-	mullo_basecase.asm		mpn/x86_64/mullo_basecase.asm \
+	mullo_basecase.asm		mpn/x86_64/k8/mullo_basecase.asm \
 	addlsh1_n.asm		mpn/x86_64/aorrlsh1_n.asm \
 	mul_2.asm		mpn/x86_64/mul_2.asm \
 	invert_limb.asm		mpn/x86_64/invert_limb.asm \
@@ -195,11 +208,3 @@ ASM_SRCS_LIST= \
 	mod_1_4.asm		mpn/x86_64/mod_1_4.asm \
 	sub_n.asm		mpn/x86_64/aors_n.asm \
 	gcd_1.asm		mpn/x86_64/gcd_1.asm \
-
-# XXX using C versions
-#	redc_1.asm		mpn/x86_64/redc_1.asm
-#	gcd_1.asm		mpn/x86_64/gcd_1.asm
-#	mod_1_4.asm		mpn/x86_64/mod_1_4.asm
-#SRCS+=	redc_1.c gcd_1.c mod_1_4.c
-
-GMP_LIMB_BITS=64

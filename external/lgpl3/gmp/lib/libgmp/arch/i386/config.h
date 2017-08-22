@@ -3,23 +3,33 @@
 
 /*
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Copyright 1996-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published
-by the Free Software Foundation; either version 3 of the License, or (at
-your option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.
 */
 
 /* Define if building universal (internal helper macro) */
@@ -129,6 +139,10 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* Define to 1 if you have the `gettimeofday' function. */
 #define HAVE_GETTIMEOFDAY 1
 
+/* Define to 1 if the compiler accepts gcc style __attribute__ ((visibility))
+   and __attribute__ ((alias)) */
+#define HAVE_HIDDEN_ALIAS 1
+
 /* Define one of these to 1 for the host CPU family.
    If your CPU is not in any of these families, leave all undefined.
    For an AMD64 chip, define "x86" in ABI=32, but not in ABI=64. */
@@ -225,7 +239,6 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_add_n_sub_n */
 #define HAVE_NATIVE_mpn_add_nc 1
 /* #undef HAVE_NATIVE_mpn_addaddmul_1msb0 */
-/* #undef HAVE_NATIVE_mpn_addcnd_n */
 /* #undef HAVE_NATIVE_mpn_addlsh1_n */
 /* #undef HAVE_NATIVE_mpn_addlsh2_n */
 /* #undef HAVE_NATIVE_mpn_addlsh_n */
@@ -258,9 +271,12 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 #define HAVE_NATIVE_mpn_bdiv_dbm1c 1
 #define HAVE_NATIVE_mpn_bdiv_q_1 1
 #define HAVE_NATIVE_mpn_pi1_bdiv_q_1 1
+#define HAVE_NATIVE_mpn_cnd_add_n 1
+#define HAVE_NATIVE_mpn_cnd_sub_n 1
 /* #undef HAVE_NATIVE_mpn_com */
 #define HAVE_NATIVE_mpn_copyd 1
 #define HAVE_NATIVE_mpn_copyi 1
+/* #undef HAVE_NATIVE_mpn_div_qr_1n_pi1 */
 /* #undef HAVE_NATIVE_mpn_div_qr_2 */
 #define HAVE_NATIVE_mpn_divexact_1 1
 /* #undef HAVE_NATIVE_mpn_divexact_by3c */
@@ -291,6 +307,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_mul_5 */
 /* #undef HAVE_NATIVE_mpn_mul_6 */
 #define HAVE_NATIVE_mpn_mul_basecase 1
+/* #undef HAVE_NATIVE_mpn_mullo_basecase */
 /* #undef HAVE_NATIVE_mpn_nand_n */
 /* #undef HAVE_NATIVE_mpn_nior_n */
 /* #undef HAVE_NATIVE_mpn_popcount */
@@ -314,7 +331,6 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_sqr_diag_addlsh1 */
 #define HAVE_NATIVE_mpn_sub_n 1
 #define HAVE_NATIVE_mpn_sub_nc 1
-/* #undef HAVE_NATIVE_mpn_subcnd_n */
 /* #undef HAVE_NATIVE_mpn_sublsh1_n */
 /* #undef HAVE_NATIVE_mpn_sublsh2_n */
 /* #undef HAVE_NATIVE_mpn_sublsh_n */
@@ -328,7 +344,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef HAVE_NATIVE_mpn_sublsh2_nc_ip1 */
 /* #undef HAVE_NATIVE_mpn_sublsh_nc_ip1 */
 /* #undef HAVE_NATIVE_mpn_submul_1c */
-#define HAVE_NATIVE_mpn_tabselect 1
+/* #undef HAVE_NATIVE_mpn_tabselect */
 #define HAVE_NATIVE_mpn_udiv_qrnnd 1
 /* #undef HAVE_NATIVE_mpn_udiv_qrnnd_r */
 #define HAVE_NATIVE_mpn_umul_ppmm 1
@@ -359,7 +375,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef HAVE_PSTAT_GETPROCESSOR */
 
 /* Define to 1 if the system has the type `ptrdiff_t'. */
-/* #undef HAVE_PTRDIFF_T */
+#define HAVE_PTRDIFF_T 1
 
 /* Define to 1 if the system has the type `quad_t'. */
 #define HAVE_QUAD_T 1
@@ -388,9 +404,6 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* Define to 1 if the system has the type `stack_t'. */
 #define HAVE_STACK_T 1
 
-/* Define to 1 if <stdarg.h> exists and works */
-#define HAVE_STDARG 1
-
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
 
@@ -405,9 +418,6 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 /* Define to 1 if you have the `strerror' function. */
 #define HAVE_STRERROR 1
-
-/* Define to 1 if cpp supports the ANSI # stringizing operator. */
-#define HAVE_STRINGIZE 1
 
 /* Define to 1 if you have the <strings.h> header file. */
 #define HAVE_STRINGS_H 1
@@ -499,21 +509,23 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* Assembler local label prefix */
 #define LSYM_PREFIX ".L"
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
+
+/* Define to 1 to disable the use of inline assembly */
+/* #undef NO_ASM */
 
 /* Name of package */
 #define PACKAGE "gmp"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "gmp-bugs@gmplib.org, see http://gmplib.org/manual/Reporting-Bugs.html"
+#define PACKAGE_BUGREPORT "gmp-bugs@gmplib.org, see https://gmplib.org/manual/Reporting-Bugs.html"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "GNU MP"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "GNU MP 5.1.3"
+#define PACKAGE_STRING "GNU MP 6.1.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "gmp"
@@ -522,7 +534,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 #define PACKAGE_URL "http://www.gnu.org/software/gmp/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "5.1.3"
+#define PACKAGE_VERSION "6.1.2"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -546,7 +558,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef SSCANF_WRITABLE_INPUT */
 
 /* Define to 1 if you have the ANSI C header files. */
-/* #undef STDC_HEADERS */
+#define STDC_HEADERS 1
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #define TIME_WITH_SYS_TIME 1
@@ -555,13 +567,13 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 /* #undef TUNE_SQR_TOOM2_MAX */
 
 /* Version number of package */
-#define VERSION "5.1.3"
-
-/* Defined to 1 as per --enable-assembly */
-#define WANT_ASSEMBLY 1
+#define VERSION "6.1.2"
 
 /* Define to 1 to enable ASSERT checking, per --enable-assert */
 /* #undef WANT_ASSERT */
+
+/* Define to 1 to enable GMP_CPU_TYPE faking cpuid, per --enable-fake-cpuid */
+/* #undef WANT_FAKE_CPUID */
 
 /* Define to 1 when building a fat binary. */
 /* #undef WANT_FAT_BINARY */
