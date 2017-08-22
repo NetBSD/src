@@ -1,21 +1,32 @@
 /* mpq_set_d(mpq_t q, double d) -- Set q to d without rounding.
 
-Copyright 2000, 2002, 2003, 2012 Free Software Foundation, Inc.
+Copyright 2000, 2002, 2003, 2012, 2014 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include "config.h"
 
@@ -70,9 +81,8 @@ mpq_set_d (mpq_ptr dest, double d)
 	  return;
 	}
 
-      dn = -exp;
-      np = MPZ_NEWALLOC (NUM(dest), 3);
 #if LIMBS_PER_DOUBLE == 4
+      np = MPZ_NEWALLOC (NUM(dest), 4);
       if ((tp[0] | tp[1] | tp[2]) == 0)
 	np[0] = tp[3], nn = 1;
       else if ((tp[0] | tp[1]) == 0)
@@ -83,6 +93,7 @@ mpq_set_d (mpq_ptr dest, double d)
 	np[3] = tp[3], np[2] = tp[2], np[1] = tp[1], np[0] = tp[0], nn = 4;
 #endif
 #if LIMBS_PER_DOUBLE == 3
+      np = MPZ_NEWALLOC (NUM(dest), 3);
       if ((tp[0] | tp[1]) == 0)
 	np[0] = tp[2], nn = 1;
       else if (tp[0] == 0)
@@ -91,13 +102,14 @@ mpq_set_d (mpq_ptr dest, double d)
 	np[2] = tp[2], np[1] = tp[1], np[0] = tp[0], nn = 3;
 #endif
 #if LIMBS_PER_DOUBLE == 2
+      np = MPZ_NEWALLOC (NUM(dest), 2);
       if (tp[0] == 0)
 	np[0] = tp[1], nn = 1;
       else
 	np[1] = tp[1], np[0] = tp[0], nn = 2;
 #endif
-      dn += nn + 1;
-      ASSERT_ALWAYS (dn > 0);
+      dn = nn + 1 - exp;
+      ASSERT (dn > 0); /* -exp >= -1; nn >= 1*/
       dp = MPZ_NEWALLOC (DEN(dest), dn);
       MPN_ZERO (dp, dn - 1);
       dp[dn - 1] = 1;
@@ -106,11 +118,10 @@ mpq_set_d (mpq_ptr dest, double d)
 	{
 	  mpn_rshift (np, np, nn, c);
 	  nn -= np[nn - 1] == 0;
-	  mpn_rshift (dp, dp, dn, c);
-	  dn -= dp[dn - 1] == 0;
+	  --dn;
+	  dp[dn - 1] = CNST_LIMB(1) << (GMP_LIMB_BITS - c);
 	}
       SIZ(DEN(dest)) = dn;
-      SIZ(NUM(dest)) = negative ? -nn : nn;
     }
   else
     {
@@ -147,9 +158,8 @@ mpq_set_d (mpq_ptr dest, double d)
 	  break;
 #endif
 	}
-      dp = PTR(DEN(dest));
-      dp[0] = 1;
+      *PTR(DEN(dest)) = 1;
       SIZ(DEN(dest)) = 1;
-      SIZ(NUM(dest)) = negative ? -nn : nn;
     }
+  SIZ(NUM(dest)) = negative ? -nn : nn;
 }

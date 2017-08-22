@@ -1,22 +1,32 @@
 dnl  PowerPC-32 mpn_add_n/mpn_sub_n -- mpn addition and subtraction.
 
-dnl  Copyright 1999, 2000, 2001, 2003, 2004, 2005, 2007, 2011 Free Software
-dnl  Foundation, Inc.
+dnl  Copyright 1999-2001, 2003-2005, 2007, 2011 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -64,16 +74,16 @@ EPILOGUE()
 
 PROLOGUE(func)
 	CLRCB
-L(ent):	stw	r31, -4(r1)
-	stw	r30, -8(r1)
-	stw	r29, -12(r1)
-	stw	r28, -16(r1)
-
+L(ent):	stwu	r1, -32(r1)
 	rlwinm.	r0, r6, 0,30,31	C r0 = n & 3, set cr0
 	cmpwi	cr6, r0, 2
+	stw	r28, 8(r1)
 	addi	r6, r6, 3	C compute count...
+	stw	r29, 12(r1)
 	srwi	r6, r6, 2	C ...for ctr
+	stw	r30, 16(r1)
 	mtctr	r6		C copy count into ctr
+	stw	r31, 20(r1)
 	beq	cr0, L(b00)
 	blt	cr6, L(b01)
 	beq	cr6, L(b10)
@@ -165,12 +175,13 @@ L(end):	ADDSUBC	r28, r7, r6
 	stw	r30, 8(r3)
 	stw	r31, 12(r3)
 
-L(ret):	lwz	r31, -4(r1)
-	lwz	r30, -8(r1)
-	lwz	r29, -12(r1)
-	lwz	r28, -16(r1)
-
+L(ret):
+	lwz	r28, 8(r1)
+	lwz	r29, 12(r1)
 	subfe	r3, r0, r0	C -cy
+	lwz	r30, 16(r1)
 	GENRVAL
+	lwz	r31, 20(r1)
+	addi	r1, r1, 32
 	blr
 EPILOGUE()

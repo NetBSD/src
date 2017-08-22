@@ -1,6 +1,6 @@
 dnl  x86 calling conventions checking.
 
-dnl  Copyright 2000, 2003, 2010 Free Software Foundation, Inc.
+dnl  Copyright 2000, 2003, 2010, 2013 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library test suite.
 
@@ -16,7 +16,7 @@ dnl  Public License for more details.
 
 dnl  You should have received a copy of the GNU General Public License along
 dnl  with the GNU MP Library test suite.  If not, see
-dnl  http://www.gnu.org/licenses/.
+dnl  https://www.gnu.org/licenses/.
 
 
 dnl  The current version of the code attempts to keep the call/return
@@ -40,10 +40,10 @@ C
 C Execute an fstcw, returning the current x87 control word.
 
 PROLOGUE(x86_fstcw)
-	xorl	%eax, %eax
-	pushl	%eax
+	xor	%eax, %eax
+	push	%eax
 	fstcw	(%esp)
-	popl	%eax
+	pop	%eax
 	ret
 EPILOGUE()
 
@@ -96,24 +96,24 @@ m4_assert_numargs(1)
 	ALIGN(8)
 PROLOGUE(calling_conventions)
 	LEA(	G(calling_conventions_values), %ecx)
-	popl	RETADDR(%ecx)
+	pop	RETADDR(%ecx)
 
-	movl	%ebx, SAVE_EBX(%ecx)
-	movl	%ebp, SAVE_EBP(%ecx)
-	movl	%esi, SAVE_ESI(%ecx)
-	movl	%edi, SAVE_EDI(%ecx)
+	mov	%ebx, SAVE_EBX(%ecx)
+	mov	%ebp, SAVE_EBP(%ecx)
+	mov	%esi, SAVE_ESI(%ecx)
+	mov	%edi, SAVE_EDI(%ecx)
 
 	C Values we expect to see unchanged, as per amd64check.c
-	movl	WANT_EBX(%ecx), %ebx
-	movl	WANT_EBP(%ecx), %ebp
-	movl	WANT_ESI(%ecx), %esi
-	movl	WANT_EDI(%ecx), %edi
+	mov	WANT_EBX(%ecx), %ebx
+	mov	WANT_EBP(%ecx), %ebp
+	mov	WANT_ESI(%ecx), %esi
+	mov	WANT_EDI(%ecx), %edi
 
 	C Try to provoke a problem by starting with junk in the caller-saves
 	C registers, especially in %eax and %edx which will be return values
-	movl	JUNK_EAX(%ecx), %eax
-	movl	JUNK_EDX(%ecx), %edx
-C	movl	JUNK_ECX(%ecx), %ecx
+	mov	JUNK_EAX(%ecx), %eax
+	mov	JUNK_EDX(%ecx), %edx
+C	mov	JUNK_ECX(%ecx), %ecx
 
 ifdef(`PIC',`
 	LEA(	G(calling_conventions_function), %ecx)
@@ -124,21 +124,21 @@ ifdef(`PIC',`
 
 	LEA(	G(calling_conventions_values), %ecx)
 
-	movl	%ebx, EBX(%ecx)
-	movl	%ebp, EBP(%ecx)
-	movl	%esi, ESI(%ecx)
-	movl	%edi, EDI(%ecx)
+	mov	%ebx, EBX(%ecx)
+	mov	%ebp, EBP(%ecx)
+	mov	%esi, ESI(%ecx)
+	mov	%edi, EDI(%ecx)
 
 	pushf
-	popl	%ebx
-	movl	%ebx, EFLAGS(%ecx)
+	pop	%ebx
+	mov	%ebx, EFLAGS(%ecx)
 
-	movl	SAVE_EBX(%ecx), %ebx
-	movl	SAVE_ESI(%ecx), %esi
-	movl	SAVE_EDI(%ecx), %edi
-	movl	SAVE_EBP(%ecx), %ebp
+	mov	SAVE_EBX(%ecx), %ebx
+	mov	SAVE_ESI(%ecx), %esi
+	mov	SAVE_EDI(%ecx), %edi
+	mov	SAVE_EBP(%ecx), %ebp
 
-	pushl	RETADDR(%ecx)
+	push	RETADDR(%ecx)
 
 ifdef(`PIC',`
 	LEA(	G(calling_conventions_fenv), %ecx)
@@ -151,3 +151,4 @@ ifdef(`PIC',`
 	ret
 
 EPILOGUE()
+ASM_END()

@@ -1,22 +1,32 @@
 /* mpf_sub -- Subtract two floats.
 
-Copyright 1993, 1994, 1995, 1996, 1999, 2000, 2001, 2002, 2004, 2005, 2011 Free
-Software Foundation, Inc.
+Copyright 1993-1996, 1999-2002, 2004, 2005, 2011, 2014 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -33,8 +43,8 @@ mpf_sub (mpf_ptr r, mpf_srcptr u, mpf_srcptr v)
   int negate;
   TMP_DECL;
 
-  usize = u->_mp_size;
-  vsize = v->_mp_size;
+  usize = SIZ (u);
+  vsize = SIZ (v);
 
   /* Handle special cases that don't work in generic code below.  */
   if (usize == 0)
@@ -54,8 +64,8 @@ mpf_sub (mpf_ptr r, mpf_srcptr u, mpf_srcptr v)
     {
       __mpf_struct v_negated;
       v_negated._mp_size = -vsize;
-      v_negated._mp_exp = v->_mp_exp;
-      v_negated._mp_d = v->_mp_d;
+      v_negated._mp_exp = EXP (v);
+      v_negated._mp_d = PTR (v);
       mpf_add (r, u, &v_negated);
       return;
     }
@@ -66,23 +76,23 @@ mpf_sub (mpf_ptr r, mpf_srcptr u, mpf_srcptr v)
   negate = usize < 0;
 
   /* Make U be the operand with the largest exponent.  */
-  if (u->_mp_exp < v->_mp_exp)
+  if (EXP (u) < EXP (v))
     {
       mpf_srcptr t;
       t = u; u = v; v = t;
       negate ^= 1;
-      usize = u->_mp_size;
-      vsize = v->_mp_size;
+      usize = SIZ (u);
+      vsize = SIZ (v);
     }
 
   usize = ABS (usize);
   vsize = ABS (vsize);
-  up = u->_mp_d;
-  vp = v->_mp_d;
-  rp = r->_mp_d;
-  prec = r->_mp_prec + 1;
-  exp = u->_mp_exp;
-  ediff = u->_mp_exp - v->_mp_exp;
+  up = PTR (u);
+  vp = PTR (v);
+  rp = PTR (r);
+  prec = PREC (r) + 1;
+  exp = EXP (u);
+  ediff = exp - EXP (v);
 
   /* If ediff is 0 or 1, we might have a situation where the operands are
      extremely close.  We need to scan the operands from the most significant
@@ -92,10 +102,8 @@ mpf_sub (mpf_ptr r, mpf_srcptr u, mpf_srcptr v)
       if (ediff == 0)
 	{
 	  /* Skip leading limbs in U and V that are equal.  */
-	  if (up[usize - 1] == vp[vsize - 1])
-	    {
 	      /* This loop normally exits immediately.  Optimize for that.  */
-	      do
+	      while (up[usize - 1] == vp[vsize - 1])
 		{
 		  usize--;
 		  vsize--;
@@ -128,8 +136,6 @@ mpf_sub (mpf_ptr r, mpf_srcptr u, mpf_srcptr v)
                       goto cancellation;
 		    }
 		}
-	      while (up[usize - 1] == vp[vsize - 1]);
-	    }
 
 	  if (up[usize - 1] < vp[vsize - 1])
 	    {
@@ -182,8 +188,7 @@ mpf_sub (mpf_ptr r, mpf_srcptr u, mpf_srcptr v)
 	      exp--;
 	    }
 	}
-
-      if (usize > prec - 1)
+      else if (usize > prec - 1)
 	{
 	  up += usize - (prec - 1);
 	  usize = prec - 1;
@@ -199,32 +204,18 @@ mpf_sub (mpf_ptr r, mpf_srcptr u, mpf_srcptr v)
 	mp_limb_t cy_limb;
 	if (vsize == 0)
 	  {
-	    mp_size_t size, i;
-	    size = usize;
-	    for (i = 0; i < size; i++)
-	      tp[i] = up[i];
-	    tp[size] = 1;
-	    rsize = size + 1;
+	    MPN_COPY (tp, up, usize);
+	    tp[usize] = 1;
+	    rsize = usize + 1;
 	    exp++;
-	    goto normalize;
+	    goto normalized;
 	  }
 	if (usize == 0)
 	  {
-	    mp_size_t size, i;
-	    size = vsize;
-	    for (i = 0; i < size; i++)
-	      tp[i] = ~vp[i] & GMP_NUMB_MASK;
-	    cy_limb = 1 - mpn_add_1 (tp, tp, vsize, (mp_limb_t) 1);
+	    cy_limb = mpn_neg (tp, vp, vsize);
 	    rsize = vsize;
-	    if (cy_limb == 0)
-	      {
-		tp[rsize] = 1;
-		rsize++;
-		exp++;
-	      }
-	    goto normalize;
 	  }
-	if (usize >= vsize)
+	else if (usize >= vsize)
 	  {
 	    /* uuuu     */
 	    /* vv       */
@@ -238,13 +229,10 @@ mpf_sub (mpf_ptr r, mpf_srcptr u, mpf_srcptr v)
 	  {
 	    /* uuuu     */
 	    /* vvvvvvv  */
-	    mp_size_t size, i;
+	    mp_size_t size;
 	    size = vsize - usize;
-	    for (i = 0; i < size; i++)
-	      tp[i] = ~vp[i] & GMP_NUMB_MASK;
-	    cy_limb = mpn_sub_n (tp + size, up, vp + size, usize);
-	    cy_limb+= mpn_sub_1 (tp + size, tp + size, usize, (mp_limb_t) 1);
-	    cy_limb-= mpn_add_1 (tp, tp, vsize, (mp_limb_t) 1);
+	    cy_limb = mpn_neg (tp, vp, size);
+	    cy_limb = mpn_sub_nc (tp + size, up, vp + size, usize, cy_limb);
 	    rsize = vsize;
 	  }
 	if (cy_limb == 0)
@@ -252,6 +240,7 @@ mpf_sub (mpf_ptr r, mpf_srcptr u, mpf_srcptr v)
 	    tp[rsize] = 1;
 	    rsize++;
 	    exp++;
+	    goto normalized;
 	  }
 	goto normalize;
       }
@@ -338,13 +327,10 @@ general_case:
 		{
 		  /* uuuu     */
 		  /* vvvvvvv  */
-		  mp_size_t size, i;
+		  mp_size_t size;
 		  size = vsize - usize;
-		  tp[0] = -vp[0] & GMP_NUMB_MASK;
-		  for (i = 1; i < size; i++)
-		    tp[i] = ~vp[i] & GMP_NUMB_MASK;
-		  mpn_sub_n (tp + size, up, vp + size, usize);
-		  mpn_sub_1 (tp + size, tp + size, usize, (mp_limb_t) 1);
+		  ASSERT_CARRY (mpn_neg (tp, vp, size));
+		  mpn_sub_nc (tp + size, up, vp + size, usize, CNST_LIMB (1));
 		  rsize = vsize;
 		}
 	    }
@@ -364,14 +350,13 @@ general_case:
 		{
 		  /* uuuu     */
 		  /*   vvvvv  */
-		  mp_size_t size, i;
-		  size = vsize + ediff - usize;
-		  tp[0] = -vp[0] & GMP_NUMB_MASK;
-		  for (i = 1; i < size; i++)
-		    tp[i] = ~vp[i] & GMP_NUMB_MASK;
-		  mpn_sub (tp + size, up, usize, vp + size, usize - ediff);
-		  mpn_sub_1 (tp + size, tp + size, usize, (mp_limb_t) 1);
+		  mp_size_t size;
 		  rsize = vsize + ediff;
+		  size = rsize - usize;
+		  ASSERT_CARRY (mpn_neg (tp, vp, size));
+		  mpn_sub (tp + size, up, usize, vp + size, usize - ediff);
+		  /* Should we use sub_nc then sub_1? */
+		  MPN_DECR_U (tp + size, usize, CNST_LIMB (1));
 		}
 	    }
 	}
@@ -381,9 +366,7 @@ general_case:
 	  /*      vv  */
 	  mp_size_t size, i;
 	  size = vsize + ediff - usize;
-	  tp[0] = -vp[0] & GMP_NUMB_MASK;
-	  for (i = 1; i < vsize; i++)
-	    tp[i] = ~vp[i] & GMP_NUMB_MASK;
+	  ASSERT_CARRY (mpn_neg (tp, vp, vsize));
 	  for (i = vsize; i < size; i++)
 	    tp[i] = GMP_NUMB_MAX;
 	  mpn_sub_1 (tp + size, up, usize, (mp_limb_t) 1);
@@ -397,13 +380,17 @@ general_case:
 	  rsize--;
 	  exp--;
 	}
+    normalized:
       MPN_COPY (rp, tp, rsize);
     }
 
  done:
-  r->_mp_size = negate ? -rsize : rsize;
-  if (rsize == 0)
-    exp = 0;
-  r->_mp_exp = exp;
   TMP_FREE;
+  if (rsize == 0) {
+    SIZ (r) = 0;
+    EXP (r) = 0;
+  } else {
+    SIZ (r) = negate ? -rsize : rsize;
+    EXP (r) = exp;
+  }
 }

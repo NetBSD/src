@@ -1,21 +1,32 @@
 /* mpz_inp_raw -- read an mpz_t in raw format.
 
-Copyright 2001, 2002, 2005, 2012 Free Software Foundation, Inc.
+Copyright 2001, 2002, 2005, 2012, 2016 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include "gmp.h"
@@ -40,7 +51,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
     mp_limb_t  __limb;                                          \
     int        __i;                                             \
     __limb = 0;                                                 \
-    for (__i = 0; __i < BYTES_PER_MP_LIMB; __i++)               \
+    for (__i = 0; __i < GMP_LIMB_BYTES; __i++)               \
       __limb = (__limb << 8) | __p[__i];                        \
     (limb) = __limb;                                            \
   } while (0)
@@ -55,6 +66,7 @@ mpz_inp_raw (mpz_ptr x, FILE *fp)
 {
   unsigned char  csize_bytes[4];
   mp_size_t      csize, abs_xsize, i;
+  size_t         size;
   size_t         abs_csize;
   char           *cp;
   mp_ptr         xp, sp, ep;
@@ -67,26 +79,22 @@ mpz_inp_raw (mpz_ptr x, FILE *fp)
   if (fread (csize_bytes, sizeof (csize_bytes), 1, fp) != 1)
     return 0;
 
-  csize =
-    (  (mp_size_t) csize_bytes[0] << 24)
-    + ((mp_size_t) csize_bytes[1] << 16)
-    + ((mp_size_t) csize_bytes[2] << 8)
-    + ((mp_size_t) csize_bytes[3]);
+  size = (((size_t) csize_bytes[0] << 24) + ((size_t) csize_bytes[1] << 16) +
+	  ((size_t) csize_bytes[2] << 8)  + ((size_t) csize_bytes[3]));
 
-  /* Sign extend if necessary.
-     Could write "csize -= ((csize & 0x80000000L) << 1)", but that tickles a
-     bug in gcc 3.0 for powerpc64 on AIX.  */
-  if (sizeof (csize) > 4 && csize & 0x80000000L)
-    csize -= 0x80000000L << 1;
+  if (size < 0x80000000u)
+    csize = size;
+  else
+    csize = size - 0x80000000u - 0x80000000u;
 
   abs_csize = ABS (csize);
 
   /* round up to a multiple of limbs */
-  abs_xsize = (abs_csize*8 + GMP_NUMB_BITS-1) / GMP_NUMB_BITS;
+  abs_xsize = BITS_TO_LIMBS (abs_csize*8);
 
   if (abs_xsize != 0)
     {
-      xp = MPZ_REALLOC (x, abs_xsize);
+      xp = MPZ_NEWALLOC (x, abs_xsize);
 
       /* Get limb boundaries right in the read, for the benefit of the
 	 non-nails case.  */

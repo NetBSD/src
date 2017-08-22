@@ -9,17 +9,28 @@ Copyright 2011, 2012 Free Software Foundation, Inc.
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -43,12 +54,8 @@ submul (mp_ptr rp, mp_size_t rn,
   tp = TMP_ALLOC_LIMBS (an + bn);
 
   mpn_mul (tp, ap, an, bp, bn);
-  if (an + bn > rn)
-    {
-      ASSERT (tp[rn] == 0);
-      bn--;
-    }
-  ASSERT_NOCARRY (mpn_sub (rp, rp, rn, tp, an + bn));
+  ASSERT ((an + bn <= rn) || (tp[rn] == 0));
+  ASSERT_NOCARRY (mpn_sub (rp, rp, rn, tp, an + bn - (an + bn > rn)));
   TMP_FREE;
 
   while (rn > an && (rp[rn-1] == 0))
@@ -132,9 +139,9 @@ hgcd_matrix_apply (const struct hgcd_matrix *M,
       /* In the range of interest, mulmod_bnm1 should always beat mullo. */
       modn = mpn_mulmod_bnm1_next_size (nn + 1);
 
-      scratch = TMP_ALLOC_LIMBS (mpn_mulmod_bnm1_itch (modn, modn, M->n));
-      tp = TMP_ALLOC_LIMBS (modn);
-      sp = TMP_ALLOC_LIMBS (modn);
+      TMP_ALLOC_LIMBS_3 (tp, modn,
+			 sp, modn,
+			 scratch, mpn_mulmod_bnm1_itch (modn, modn, M->n));
 
       ASSERT (n <= 2*modn);
 

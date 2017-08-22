@@ -1,7 +1,7 @@
 /* Test mpn_and, mpn_ior, mpn_xor, mpn_andn, mpn_iorn, mpn_xnor, mpn_nand, and
    mpn_nior.
 
-Copyright 2011, 2012, 2013 Free Software Foundation, Inc.
+Copyright 2011-2013 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 
 #include <stdlib.h>
@@ -41,7 +41,7 @@ the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 
 void
-check_one (mp_srcptr refp, mp_srcptr rp, mp_srcptr ap, mp_srcptr bp, mp_size_t n, char *funcname)
+check_one (mp_srcptr refp, mp_srcptr rp, mp_srcptr ap, mp_srcptr bp, mp_size_t n, const char *funcname)
 {
   if (mpn_cmp (refp, rp, n))
     {
@@ -57,31 +57,37 @@ check_one (mp_srcptr refp, mp_srcptr rp, mp_srcptr ap, mp_srcptr bp, mp_size_t n
 int
 main (int argc, char **argv)
 {
+  mpz_t a, b;
   mp_ptr ap, bp, rp, refp;
-  mp_size_t max_n, n;
+  mp_size_t max_n, n, i;
   gmp_randstate_ptr rands;
   long test, reps = 1000;
-  TMP_SDECL;
-  TMP_SMARK;
+  TMP_DECL;
+  TMP_MARK;
 
   tests_start ();
   TESTS_REPS (reps, argv, argc);
 
-  rands = RANDS;
+  mpz_inits (a, b, NULL);
 
-  max_n = 32;
+  rands = RANDS;		/* FIXME: not used */
 
-  ap = TMP_SALLOC_LIMBS (max_n);
-  bp = TMP_SALLOC_LIMBS (max_n);
-  rp = TMP_SALLOC_LIMBS (max_n);
-  refp = TMP_SALLOC_LIMBS (max_n);
+  max_n = 100;
+
+  rp = TMP_ALLOC_LIMBS (1 + max_n * 8 / GMP_LIMB_BITS);
+  refp = TMP_ALLOC_LIMBS (1 + max_n * 8 / GMP_LIMB_BITS);
 
   for (test = 0; test < reps; test++)
     {
-      for (n = 1; n <= max_n; n++)
+      for (i = 1; i <= max_n; i++)
 	{
-	  mpn_random2 (ap, n);
-	  mpn_random2 (bp, n);
+	  mpz_rrandomb (a, rands, i * 8);
+	  mpz_rrandomb (b, rands, i * 8);
+	  mpz_setbit (a, i * 8 - 1);
+	  mpz_setbit (b, i * 8 - 1);
+	  ap = PTR(a);
+	  bp = PTR(b);
+	  n = SIZ(a);
 
 	  refmpn_and_n (refp, ap, bp, n);
 	  mpn_and_n (rp, ap, bp, n);
@@ -121,7 +127,8 @@ main (int argc, char **argv)
 	}
     }
 
-  TMP_SFREE;
+  TMP_FREE;
+  mpz_clears (a, b, NULL);
   tests_end ();
   return 0;
 }

@@ -1,6 +1,6 @@
 /* Lexical analyzer for calc program.
 
-Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
+Copyright 2000-2002 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -14,7 +14,7 @@ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-this program.  If not, see http://www.gnu.org/licenses/.  */
+this program.  If not, see https://www.gnu.org/licenses/.  */
 
 %{
 #include <string.h>

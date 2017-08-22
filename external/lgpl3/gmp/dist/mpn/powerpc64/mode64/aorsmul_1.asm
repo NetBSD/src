@@ -1,32 +1,42 @@
 dnl  PowerPC-64 mpn_addmul_1 and mpn_submul_1.
 
-dnl  Copyright 1999, 2000, 2001, 2003, 2004, 2005, 2006, 2010, 2011, 2012
-dnl  Free Software Foundation, Inc.
+dnl  Copyright 1999-2001, 2003-2006, 2010-2012 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C               mpn_addmul_1    mpn_submul_1
-C               cycles/limb     cycles/limb
-C POWER3/PPC630   6-18             6-18
-C POWER4/PPC970    8                8.3
-C POWER5           8                8.25
-C POWER6          16.25            16.75
-C POWER7           3.77             4.9
+C                   mpn_addmul_1    mpn_submul_1
+C                   cycles/limb     cycles/limb
+C POWER3/PPC630		6-18		6-18
+C POWER4/PPC970		 8		 8.3
+C POWER5		 8		 8.25
+C POWER6		16.25		16.75
+C POWER7		 3.77		 4.9
 
 C TODO
 C  * Try to reduce the number of needed live registers

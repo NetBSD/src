@@ -1,6 +1,6 @@
 /* Exercise mpz_*_kronecker_*() and mpz_jacobi() functions.
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+Copyright 1999-2004, 2013 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 
 /* With no arguments the various Kronecker/Jacobi symbol routines are
@@ -631,11 +631,11 @@ check_data (void)
       "4902678867794567120224500687210807069172039735", 0 },
     { "2666617146103764067061017961903284334497474492754652499788571378062969111250584288683585223600172138551198546085281683283672592", "2666617146103764067061017961903284334497474492754652499788571378062969111250584288683585223600172138551198546085281683290481773", 1 },
 
-    /* Exersizes the case asize == 1, btwos > 0 in mpz_jacobi. */
+    /* Exercises the case asize == 1, btwos > 0 in mpz_jacobi. */
     { "804609", "421248363205206617296534688032638102314410556521742428832362659824", 1 } ,
     { "4190209", "2239744742177804210557442048984321017460028974602978995388383905961079286530650825925074203175536427000", 1 },
 
-    /* Exersizes the case asize == 1, btwos = 63 in mpz_jacobi
+    /* Exercises the case asize == 1, btwos = 63 in mpz_jacobi
        (relevant when GMP_LIMB_BITS == 64). */
     { "17311973299000934401", "1675975991242824637446753124775689449936871337036614677577044717424700351103148799107651171694863695242089956242888229458836426332300124417011114380886016", 1 },
     { "3220569220116583677", "41859917623035396746", -1 },
@@ -912,8 +912,6 @@ check_large_quotients (void)
 
   for (i = 0; i < COUNT; i++)
     {
-      unsigned j;
-      unsigned chain_len;
       int answer;
       mp_bitcnt_t msize;
 

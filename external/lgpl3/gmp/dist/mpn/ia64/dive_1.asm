@@ -2,22 +2,33 @@ dnl  IA-64 mpn_divexact_1 -- mpn by limb exact division.
 
 dnl  Contributed to the GNU project by Torbjorn Granlund and Kevin Ryde.
 
-dnl  Copyright 2003, 2004, 2005, 2010 Free Software Foundation, Inc.
+dnl  Copyright 2003-2005, 2010 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -38,7 +49,7 @@ C This code is a bit messy, and not as similar to mode1o.asm as desired.
 
 C The critical path during initialization is for computing the inverse of the
 C divisor.  Since odd divisors are probably common, we conditionally execute
-C the initial count_traling_zeros code and the downshift.
+C the initial count_trailing_zeros code and the downshift.
 
 C Possible improvement: Merge more of the feed-in code into the inverse
 C computation.

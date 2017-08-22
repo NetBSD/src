@@ -1,21 +1,32 @@
 dnl  Intel P5 mpn_popcount -- mpn bit population count.
 
-dnl  Copyright 2001, 2002 Free Software Foundation, Inc.
-dnl
+dnl  Copyright 2001, 2002, 2014, 2015 Free Software Foundation, Inc.
+
 dnl  This file is part of the GNU MP Library.
 dnl
-dnl  The GNU MP Library is free software; you can redistribute it and/or
-dnl  modify it under the terms of the GNU Lesser General Public License as
-dnl  published by the Free Software Foundation; either version 3 of the
-dnl  License, or (at your option) any later version.
+dnl  The GNU MP Library is free software; you can redistribute it and/or modify
+dnl  it under the terms of either:
 dnl
-dnl  The GNU MP Library is distributed in the hope that it will be useful,
-dnl  but WITHOUT ANY WARRANTY; without even the implied warranty of
-dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-dnl  Lesser General Public License for more details.
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
 dnl
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
+dnl  The GNU MP Library is distributed in the hope that it will be useful, but
+dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -32,6 +43,9 @@ C The slightly strange quoting here helps the renaming done by tune/many.pl.
 deflit(TABLE_NAME,
 m4_assert_defined(`GSYM_PREFIX')
 GSYM_PREFIX`'mpn_popcount``'_table')
+
+C FIXME: exporting the table to hamdist is incorrect as it hurt incremental
+C linking.
 
 	RODATA
 	ALIGN(8)
@@ -56,7 +70,14 @@ deflit(`FRAME',0)
 ifdef(`PIC',`
 	pushl	%ebx	FRAME_pushl()
 	pushl	%ebp	FRAME_pushl()
-
+ifdef(`DARWIN',`
+	shll	%ecx		C size in byte pairs
+	LEA(	TABLE_NAME, %ebp)
+	movl	PARAM_SRC, %esi
+	xorl	%eax, %eax	C total
+	xorl	%ebx, %ebx	C byte
+	xorl	%edx, %edx	C byte
+',`
 	call	L(here)
 L(here):
 	popl	%ebp
@@ -70,6 +91,7 @@ L(here):
 
 	movl	TABLE_NAME@GOT(%ebp), %ebp
 	xorl	%edx, %edx	C byte
+')
 define(TABLE,`(%ebp,$1)')
 ',`
 dnl non-PIC
@@ -121,3 +143,4 @@ ifdef(`PIC',`
 	ret
 
 EPILOGUE()
+ASM_END()
