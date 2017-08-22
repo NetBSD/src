@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.81 2017/03/22 23:11:10 chs Exp $
+#	$NetBSD: Makefile,v 1.82 2017/08/22 09:17:50 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -161,7 +161,7 @@ MPCOBJ!=	cd ${MPC}/lib/libmpc && ${PRINTOBJDIR}
 MPFROBJ!=	cd ${MPFR}/lib/libmpfr && ${PRINTOBJDIR}
 GMPOBJ!=	cd ${GMP}/lib/libgmp && ${PRINTOBJDIR}
 
-GMP_MACHINE_ARCH?=	${MACHINE_ARCH:S/earmv4/arm/:C/armv[5-7]/arm/}
+.include "../../external/lgpl3/gmp/Makefile.arch"
 
 NATIVE_CONFIGURE_ARGS+=	\
 			--with-mpc-lib=${MPCOBJ} \
