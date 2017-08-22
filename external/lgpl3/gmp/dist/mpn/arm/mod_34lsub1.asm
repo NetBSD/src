@@ -1,30 +1,42 @@
 dnl  ARM mpn_mod_34lsub1 -- remainder modulo 2^24-1.
 
-dnl  Copyright 2012 Free Software Foundation, Inc.
+dnl  Copyright 2012, 2013 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
 C	     cycles/limb
 C StrongARM	 ?
 C XScale	 ?
+C Cortex-A7	 ?
 C Cortex-A8	 ?
 C Cortex-A9	 1.33
-C Cortex-A15	 ?
+C Cortex-A15	 1.33
 
 define(`ap',	r0)
 define(`n',	r1)
@@ -48,7 +60,7 @@ PROLOGUE(mpn_mod_34lsub1)
 	ldmia	ap!, { r2, r3, r12 }
 	subs	n, n, #3
 	blt	L(sum)			C n <= 5
-	adds	r0, r0, #0		C clear carry
+	cmn	r0, #0			C clear carry
 	sub	n, n, #3
 	b	L(mid)
 
@@ -83,21 +95,18 @@ L(sum2):
 	add	r0, r0, r2, lsr #24
 	add	r0, r0, r7
 
-	lsl	r7, r3, #8
+	mov	r7, r3, lsl #8
 	bic	r1, r7, #0xff000000
 	add	r0, r0, r1
 	add	r0, r0, r3, lsr #16
 
-	lsl	r7, r12, #16
+	mov	r7, r12, lsl #16
 	bic	r1, r7, #0xff000000
 	add	r0, r0, r1
 	add	r0, r0, r12, lsr #8
 
 	pop	{ r4, r5, r6, r7 }
-ifdef(`ARM_THUMB_MODE',
-`	bx	lr
-',`	mov	pc, lr
-')
+	ret	lr
 
 L(le2):	cmn	n, #1
 	bne	L(1)
@@ -108,8 +117,5 @@ L(1):	ldr	r2, [ap]
 	bic	r0, r2, #0xff000000
 	add	r0, r0, r2, lsr #24
 	pop	{ r4, r5, r6, r7 }
-ifdef(`ARM_THUMB_MODE',
-`	bx	lr
-',`	mov	pc, lr
-')
+	ret	lr
 EPILOGUE()
