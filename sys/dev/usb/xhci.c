@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.72 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: xhci.c,v 1.73 2017/08/22 16:57:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.72 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.73 2017/08/22 16:57:00 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1211,6 +1211,12 @@ xhci_init(struct xhci_softc *sc)
 	return rv;
 }
 
+static inline bool
+xhci_polling_p(struct xhci_softc * const sc)
+{
+	return sc->sc_bus.ub_usepolling || sc->sc_bus2.ub_usepolling;
+}
+
 int
 xhci_intr(void *v)
 {
@@ -1228,7 +1234,7 @@ xhci_intr(void *v)
 		goto done;
 
 	/* If we get an interrupt while polling, then just ignore it. */
-	if (sc->sc_bus.ub_usepolling) {
+	if (xhci_polling_p(sc)) {
 #ifdef DIAGNOSTIC
 		DPRINTFN(16, "ignored interrupt while polling", 0, 0, 0, 0);
 #endif
@@ -1236,6 +1242,9 @@ xhci_intr(void *v)
 	}
 
 	ret = xhci_intr1(sc);
+	if (ret) {
+		usb_schedsoftintr(&sc->sc_bus);
+	}
 done:
 	mutex_spin_exit(&sc->sc_intr_lock);
 	return ret;
@@ -1269,8 +1278,6 @@ xhci_intr1(struct xhci_softc * const sc)
 	DPRINTFN(16, "IMAN0 %08x", iman, 0, 0, 0);
 	usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
 	DPRINTFN(16, "USBSTS %08x", usbsts, 0, 0, 0);
-
-	usb_schedsoftintr(&sc->sc_bus);
 
 	return 1;
 }
@@ -2106,7 +2113,7 @@ xhci_softintr(void *v)
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
+	KASSERT(xhci_polling_p(sc) || mutex_owned(&sc->sc_lock));
 
 	i = er->xr_ep;
 	j = er->xr_cs;
@@ -2150,7 +2157,10 @@ xhci_poll(struct usbd_bus *bus)
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
 	mutex_spin_enter(&sc->sc_intr_lock);
-	xhci_intr1(sc);
+	int ret = xhci_intr1(sc);
+	if (ret) {
+		xhci_softintr(bus);
+	}
 	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return;
@@ -3771,7 +3781,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
 
-	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
+	if (xfer->ux_timeout && !xhci_polling_p(sc)) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 		    xhci_timeout, xfer);
 	}
@@ -3887,7 +3897,7 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
 
-	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
+	if (xfer->ux_timeout && !xhci_polling_p(sc)) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 		    xhci_timeout, xfer);
 	}
@@ -3993,7 +4003,7 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
 
-	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
+	if (xfer->ux_timeout && !xhci_polling_p(sc)) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 		    xhci_timeout, xfer);
 	}
@@ -4015,7 +4025,7 @@ xhci_device_intr_done(struct usbd_xfer *xfer)
 
 	DPRINTFN(15, "%p slot %u dci %u", xfer, xs->xs_idx, dci, 0);
 
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
+	KASSERT(xhci_polling_p(sc) || mutex_owned(&sc->sc_lock));
 
 	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
 	    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
