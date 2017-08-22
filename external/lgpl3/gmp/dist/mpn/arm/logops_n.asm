@@ -1,23 +1,34 @@
 dnl  ARM mpn_and_n, mpn_andn_n. mpn_nand_n, etc.
 
-dnl  Contributed to the GNU project by Torbjorn Granlund.
+dnl  Contributed to the GNU project by Torbjörn Granlund.
 
 dnl  Copyright 1997, 2000, 2001, 2012 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -25,9 +36,10 @@ C            cycles/limb             cycles/limb
 C          and andn ior xor         nand iorn nior xnor
 C StrongARM	 ?			 ?
 C XScale	 ?			 ?
+C Cortex-A7	 ?			 ?
 C Cortex-A8	 ?			 ?
 C Cortex-A9	2.5-2.72		2.75-3
-C Cortex-A15	 ?			 ?
+C Cortex-A15	2.25			2.75
 
 C TODO
 C  * It seems that 2.25 c/l and 2.75 c/l is possible for A9.
@@ -123,8 +135,5 @@ L(mid):	sub	n, n, #4
 	pop	{ r4, r5, r6, r7 }	C popping r8-r10 here strangely fails
 
 L(rtn):	pop	{ r8, r9, r10 }
-ifdef(`ARM_THUMB_MODE',
-`	bx	r14
-',`	mov	pc, r14
-')
+	ret	r14
 EPILOGUE()

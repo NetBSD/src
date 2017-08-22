@@ -1,23 +1,33 @@
 dnl  GMP specific autoconf macros
 
 
-dnl  Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2009, 2011 Free
-dnl  Software Foundation, Inc.
+dnl  Copyright 2000-2006, 2009, 2011, 2013-2015 Free Software Foundation, Inc.
 dnl
 dnl  This file is part of the GNU MP Library.
 dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
 dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
 dnl
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 
 dnl  Some tests use, or must delete, the default compiler output.  The
@@ -56,7 +66,7 @@ define(X86_PATTERN,
 [[i?86*-*-* | k[5-8]*-*-* | pentium*-*-* | athlon-*-* | viac3*-*-* | geode*-*-* | atom-*-*]])
 
 define(X86_64_PATTERN,
-[[athlon64-*-* | k8-*-* | k10-*-* | bobcat-*-* | bulldozer-*-* | pentium4-*-* | atom-*-* | core2-*-* | corei*-*-* | x86_64-*-* | nano-*-*]])
+[[athlon64-*-* | k8-*-* | k10-*-* | bobcat-*-* | jaguar*-*-* | bulldozer*-*-* | piledriver*-*-* | steamroller*-*-* | excavator*-*-* | pentium4-*-* | atom-*-* | silvermont-*-* | goldmont-*-* | core2-*-* | corei*-*-* | x86_64-*-* | nano-*-* | nehalem*-*-* | westmere*-*-* | sandybridge*-*-* | ivybridge*-*-* | haswell*-*-* | broadwell*-*-* | skylake*-*-* | kabylake*-*-*]])
 
 dnl  GMP_FAT_SUFFIX(DSTVAR, DIRECTORY)
 dnl  ---------------------------------
@@ -313,7 +323,9 @@ dnl  macros.
 ``bad: $][# not supported (SunOS /usr/bin/m4)
 '')ifelse(eval(89),89,`define(t2,Y)',
 `bad: eval() doesnt support 8 or 9 in a constant (OpenBSD 2.6 m4)
-')ifelse(t1`'t2,YY,`good
+')ifelse(eval(9,9),10,`define(t3,Y)',
+`bad: eval() doesnt support radix in eval (FreeBSD 8.x,9.0,9.1,9.2 m4)
+')ifelse(t1`'t2`'t3,YYY,`good
 ')]
 EOF
 dnl ' <- balance the quotes for emacs sh-mode
@@ -600,11 +612,12 @@ GMP_PROG_CC_WORKS_PART([$1], [long long reliability test 1],
 
 #if defined (__GNUC__) && ! defined (__cplusplus)
 typedef unsigned long long t1;typedef t1*t2;
+void g(){}
+void h(){}
 static __inline__ t1 e(t2 rp,t2 up,int n,t1 v0)
 {t1 c,x,r;int i;if(v0){c=1;for(i=1;i<n;i++){x=up[i];r=x+1;rp[i]=r;}}return c;}
-f(){static const struct{t1 n;t1 src[9];t1 want[9];}d[]={{1,{0},{1}},};t1 got[9];int i;
+void f(){static const struct{t1 n;t1 src[9];t1 want[9];}d[]={{1,{0},{1}},};t1 got[9];int i;
 for(i=0;i<1;i++){if(e(got,got,9,d[i].n)==0)h();g(i,d[i].src,d[i].n,got,d[i].want,9);if(d[i].n)h();}}
-h(){}g(){}
 #else
 int dummy;
 #endif
@@ -616,8 +629,23 @@ GMP_PROG_CC_WORKS_PART([$1], [long long reliability test 2],
    1666 to get an ICE with -O1 -mpowerpc64.  */
 
 #if defined (__GNUC__) && ! defined (__cplusplus)
-f(int u){int i;long long x;x=u?~0:0;if(x)for(i=0;i<9;i++);x&=g();if(x)g();}
-g(){}
+int g();
+void f(int u){int i;long long x;x=u?~0:0;if(x)for(i=0;i<9;i++);x&=g();if(x)g();}
+int g(){return 0;}
+#else
+int dummy;
+#endif
+])
+
+GMP_PROG_CC_WORKS_PART([$1], [freebsd hacked gcc],
+[/* Provokes an ICE on i386-freebsd with the FreeBSD-hacked gcc, under
+   -O2 -march=amdfam10.  We call helper functions here "open" and "close" in
+   order for linking to succeed.  */
+
+#if defined (__GNUC__) && ! defined (__cplusplus)
+int open(int*,int*,int);void*close(int);void g(int*rp,int*up,int un){
+__builtin_expect(un<=0x7f00,1)?__builtin_alloca(un):close(un);if(__builtin_clzl
+(up[un])){open(rp,up,un);while(1){if(rp[un-1]!=0)break;un--;}}}
 #else
 int dummy;
 #endif
@@ -678,7 +706,7 @@ main ()
 
 GMP_PROG_CC_WORKS_PART_MAIN([$1], [mpn_lshift_com optimization 2],
 [/* The following is mis-compiled by Intel ia-64 icc version 1.8 under
-    "icc -O3",  After several calls, the function writes parial garbage to
+    "icc -O3",  After several calls, the function writes partial garbage to
     the result vector.  Perhaps relates to the chk.a.nc insn.  This code needs
     to be run to show the problem, but that's fine, the offending cc is a
     native-only compiler so we don't have to worry about cross compiling.  */
@@ -718,7 +746,7 @@ main ()
     a[i] = ~0L;
   r = malloc (10000 * sizeof (unsigned long));
   r2 = r;
-  for (i = 0; i < 528; i += 22)
+  for (i = 0; i < 528; i += 23)
     {
       lshift_com (r2, a,
 		  i / (8 * sizeof (unsigned long)) + 1,
@@ -728,6 +756,7 @@ main ()
   if (r[2048] != 0 || r[2049] != 0 || r[2050] != 0 || r[2051] != 0 ||
       r[2052] != 0 || r[2053] != 0 || r[2054] != 0)
     abort ();
+  free (r);
   return 0;
 }
 #else
@@ -1638,8 +1667,11 @@ rm -f conftest*
 
 
 dnl Checks whether the stack can be marked nonexecutable by passing an option
-dnl to the C-compiler when acting on .s files. Appends that option to ASFLAGS.
+dnl to the C-compiler when acting on .s files. Appends that option to ASMFLAGS.
 dnl This macro is adapted from one found in GLIBC-2.3.5.
+dnl FIXME: This test looks broken. It tests that a file with .note.GNU-stack...
+dnl can be compiled/assembled with -Wa,--noexecstack.  It does not determine
+dnl if that command-line option has any effect on general asm code.
 AC_DEFUN([CL_AS_NOEXECSTACK],[
 dnl AC_REQUIRE([AC_PROG_CC]) GMP uses something else
 AC_CACHE_CHECK([whether assembler supports --noexecstack option],
@@ -1726,9 +1758,9 @@ EOF
 gmp_compile="$CC $CFLAGS $CPPFLAGS -c conftest.c >&AC_FD_CC"
 if AC_TRY_EVAL(gmp_compile); then
   $NM conftest.$OBJEXT >conftest.out
-  if grep _gurkmacka conftest.out >/dev/null; then
+  if grep "[[ 	]]_gurkmacka" conftest.out >/dev/null; then
     gmp_cv_asm_underscore=yes
-  elif grep gurkmacka conftest.out >/dev/null; then
+  elif grep "[[ 	]]gurkmacka" conftest.out >/dev/null; then
     gmp_cv_asm_underscore=no
   else
     echo "configure: $NM doesn't have gurkmacka:" >&AC_FD_CC
@@ -1834,7 +1866,7 @@ AC_CACHE_CHECK([if the .align directive accepts an 0x90 fill in .text],
 	.byte   0
       	.align  4, 0x90],
 [if grep "Warning: Fill parameter ignored for executable section" conftest.out >/dev/null; then
-  echo "Supressing this warning by omitting 0x90" 1>&AC_FD_CC
+  echo "Suppressing this warning by omitting 0x90" 1>&AC_FD_CC
   gmp_cv_asm_align_fill_0x90=no
 else
   gmp_cv_asm_align_fill_0x90=yes
@@ -2609,6 +2641,83 @@ esac
 ])
 
 
+dnl  GMP_ASM_X86_MULX([ACTION-IF-YES][,ACTION-IF-NO])
+dnl  ------------------------------------------------
+dnl  Determine whether the assembler supports the mulx instruction which debut
+dnl  with Haswell.
+dnl
+dnl  This macro is wanted before GMP_ASM_TEXT, so ".text" is hard coded
+dnl  here.  ".text" is believed to be correct on all x86 systems, certainly
+dnl  it's all GMP_ASM_TEXT gives currently.  Actually ".text" probably isn't
+dnl  needed at all, at least for just checking instruction syntax.
+
+AC_DEFUN([GMP_ASM_X86_MULX],
+[AC_CACHE_CHECK([if the assembler knows about the mulx instruction],
+		gmp_cv_asm_x86_mulx,
+[GMP_TRY_ASSEMBLE(
+[	.text
+	mulx	%r8, %r9, %r10],
+  [gmp_cv_asm_x86_mulx=yes],
+  [gmp_cv_asm_x86_mulx=no])
+])
+case $gmp_cv_asm_x86_mulx in
+yes)
+  ifelse([$1],,:,[$1])
+  ;;
+*)
+  AC_MSG_WARN([+----------------------------------------------------------])
+  AC_MSG_WARN([| WARNING WARNING WARNING])
+  AC_MSG_WARN([| Host CPU has the mulx instruction, but it can't be])
+  AC_MSG_WARN([| assembled by])
+  AC_MSG_WARN([|     $CCAS $CFLAGS $CPPFLAGS])
+  AC_MSG_WARN([| Older x86 instructions will be used.])
+  AC_MSG_WARN([| This will be an inferior build.])
+  AC_MSG_WARN([+----------------------------------------------------------])
+  ifelse([$2],,:,[$2])
+  ;;
+esac
+])
+
+
+dnl  GMP_ASM_X86_ADX([ACTION-IF-YES][,ACTION-IF-NO])
+dnl  ------------------------------------------------
+dnl  Determine whether the assembler supports the adcx and adox instructions
+dnl  which debut with the Haswell shrink Broadwell.
+dnl
+dnl  This macro is wanted before GMP_ASM_TEXT, so ".text" is hard coded
+dnl  here.  ".text" is believed to be correct on all x86 systems, certainly
+dnl  it's all GMP_ASM_TEXT gives currently.  Actually ".text" probably isn't
+dnl  needed at all, at least for just checking instruction syntax.
+
+AC_DEFUN([GMP_ASM_X86_ADX],
+[AC_CACHE_CHECK([if the assembler knows about the adox instruction],
+		gmp_cv_asm_x86_adx,
+[GMP_TRY_ASSEMBLE(
+[	.text
+	adox	%r8, %r9
+	adcx	%r8, %r9],
+  [gmp_cv_asm_x86_adx=yes],
+  [gmp_cv_asm_x86_adx=no])
+])
+case $gmp_cv_asm_x86_adx in
+yes)
+  ifelse([$1],,:,[$1])
+  ;;
+*)
+  AC_MSG_WARN([+----------------------------------------------------------])
+  AC_MSG_WARN([| WARNING WARNING WARNING])
+  AC_MSG_WARN([| Host CPU has the adcx and adox instructions, but they])
+  AC_MSG_WARN([| can't be assembled by])
+  AC_MSG_WARN([|     $CCAS $CFLAGS $CPPFLAGS])
+  AC_MSG_WARN([| Older x86 instructions will be used.])
+  AC_MSG_WARN([| This will be an inferior build.])
+  AC_MSG_WARN([+----------------------------------------------------------])
+  ifelse([$2],,:,[$2])
+  ;;
+esac
+])
+
+
 dnl  GMP_ASM_X86_MCOUNT
 dnl  ------------------
 dnl  Find out how to call mcount for profiling on an x86 system.
@@ -3016,6 +3125,57 @@ GMP_DEFINE_RAW(["define(<HAVE_REGISTER>,<$gmp_cv_asm_sparc_register>)"])
 ])
 
 
+dnl  GMP_ASM_SPARC_GOTDATA
+dnl  ----------------------
+dnl  Determine whether the assembler accepts gotdata relocations.
+dnl
+dnl  See also mpn/sparc32/sparc-defs.m4 which uses the result of this test.
+
+AC_DEFUN([GMP_ASM_SPARC_GOTDATA],
+[AC_REQUIRE([GMP_ASM_TEXT])
+AC_CACHE_CHECK([if the assembler accepts gotdata relocations],
+               gmp_cv_asm_sparc_gotdata,
+[GMP_TRY_ASSEMBLE(
+[	$gmp_cv_asm_text
+	.text
+	sethi	%gdop_hix22(symbol), %g1
+	or	%g1, %gdop_lox10(symbol), %g1
+],
+[gmp_cv_asm_sparc_gotdata=yes],
+[gmp_cv_asm_sparc_gotdata=no])])
+
+GMP_DEFINE_RAW(["define(<HAVE_GOTDATA>,<$gmp_cv_asm_sparc_gotdata>)"])
+])
+
+
+dnl  GMP_ASM_SPARC_SHARED_THUNKS
+dnl  ----------------------
+dnl  Determine whether the assembler supports all of the features
+dnl  necessary in order to emit shared PIC thunks on sparc.
+dnl
+dnl  See also mpn/sparc32/sparc-defs.m4 which uses the result of this test.
+
+AC_DEFUN([GMP_ASM_SPARC_SHARED_THUNKS],
+[AC_REQUIRE([GMP_ASM_TEXT])
+AC_CACHE_CHECK([if the assembler can support shared PIC thunks],
+               gmp_cv_asm_sparc_shared_thunks,
+[GMP_TRY_ASSEMBLE(
+[	$gmp_cv_asm_text
+	.section	.text.__sparc_get_pc_thunk.l7,"axG",@progbits,__sparc_get_pc_thunk.l7,comdat
+	.weak	__sparc_get_pc_thunk.l7
+	.hidden	__sparc_get_pc_thunk.l7
+	.type	__sparc_get_pc_thunk.l7, #function
+__sparc_get_pc_thunk.l7:
+	jmp	%o7+8
+	 add	%o7, %l7, %l7
+],
+[gmp_cv_asm_sparc_shared_thunks=yes],
+[gmp_cv_asm_sparc_shared_thunks=no])])
+
+GMP_DEFINE_RAW(["define(<HAVE_SHARED_THUNKS>,<$gmp_cv_asm_sparc_shared_thunks>)"])
+])
+
+
 dnl  GMP_C_ATTRIBUTE_CONST
 dnl  ---------------------
 
@@ -3096,6 +3256,24 @@ if test $gmp_cv_c_attribute_noreturn = yes; then
 fi
 ])
 
+dnl  GMP_C_HIDDEN_ALIAS
+dnl  ------------------------
+
+AC_DEFUN([GMP_C_HIDDEN_ALIAS],
+[AC_CACHE_CHECK([whether gcc hidden aliases work],
+                gmp_cv_c_hidden_alias,
+[AC_TRY_COMPILE(
+[void hid() __attribute__ ((visibility("hidden")));
+void hid() {}
+void pub() __attribute__ ((alias("hid")));],
+, gmp_cv_c_hidden_alias=yes, gmp_cv_c_hidden_alias=no)
+])
+if test $gmp_cv_c_hidden_alias = yes; then
+  AC_DEFINE(HAVE_HIDDEN_ALIAS, 1,
+  [Define to 1 if the compiler accepts gcc style __attribute__ ((visibility))
+and __attribute__ ((alias))])
+fi
+])
 
 dnl  GMP_C_DOUBLE_FORMAT
 dnl  -------------------
@@ -3344,7 +3522,7 @@ esac
 
 dnl  GMP_C_STDARG
 dnl  ------------
-dnl  Test whether to use <stdarg.h> or <varargs.h>.
+dnl  Test whether to use <stdarg.h>.
 dnl
 dnl  Notice the AC_DEFINE here is HAVE_STDARG to avoid clashing with
 dnl  HAVE_STDARG_H which could arise from AC_CHECK_HEADERS.
@@ -3354,26 +3532,26 @@ dnl  to be ANSI or K&R and the two can be differentiated by AC_PROG_CC_STDC
 dnl  or very likely by the setups for _PROTO in gmp.h.  On the other hand
 dnl  this test is nice and direct, being what we're going to actually use.
 
-AC_DEFUN([GMP_C_STDARG],
-[AC_CACHE_CHECK([whether <stdarg.h> exists and works],
-                gmp_cv_c_stdarg,
-[AC_TRY_COMPILE(
-[#include <stdarg.h>
-int foo (int x, ...)
-{
-  va_list  ap;
-  int      y;
-  va_start (ap, x);
-  y = va_arg (ap, int);
-  va_end (ap);
-  return y;
-}],,
-gmp_cv_c_stdarg=yes, gmp_cv_c_stdarg=no)
-])
-if test $gmp_cv_c_stdarg = yes; then
-  AC_DEFINE(HAVE_STDARG, 1, [Define to 1 if <stdarg.h> exists and works])
-fi
-])
+dnl  AC_DEFUN([GMP_C_STDARG],
+dnl  [AC_CACHE_CHECK([whether <stdarg.h> exists and works],
+dnl                  gmp_cv_c_stdarg,
+dnl  [AC_TRY_COMPILE(
+dnl  [#include <stdarg.h>
+dnl  int foo (int x, ...)
+dnl  {
+dnl    va_list  ap;
+dnl    int      y;
+dnl    va_start (ap, x);
+dnl    y = va_arg (ap, int);
+dnl    va_end (ap);
+dnl    return y;
+dnl  }],,
+dnl  gmp_cv_c_stdarg=yes, gmp_cv_c_stdarg=no)
+dnl  ])
+dnl  if test $gmp_cv_c_stdarg = yes; then
+dnl    AC_DEFINE(HAVE_STDARG, 1, [Define to 1 if <stdarg.h> exists and works])
+dnl  fi
+dnl  ])
 
 
 dnl  GMP_FUNC_ALLOCA
@@ -3527,8 +3705,7 @@ dnl  not sure which 2.0.x does which), but still puts the correct null
 dnl  terminated result into the buffer.
 
 AC_DEFUN([GMP_FUNC_VSNPRINTF],
-[AC_REQUIRE([GMP_C_STDARG])
-AC_CHECK_FUNC(vsnprintf,
+[AC_CHECK_FUNC(vsnprintf,
               [gmp_vsnprintf_exists=yes],
               [gmp_vsnprintf_exists=no])
 if test "$gmp_vsnprintf_exists" = no; then
@@ -3542,31 +3719,16 @@ else
 #include <string.h>  /* for strcmp */
 #include <stdio.h>   /* for vsnprintf */
 
-#if HAVE_STDARG
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 int
-#if HAVE_STDARG
 check (const char *fmt, ...)
-#else
-check (va_alist)
-     va_dcl
-#endif
 {
   static char  buf[128];
   va_list  ap;
   int      ret;
 
-#if HAVE_STDARG
   va_start (ap, fmt);
-#else
-  char *fmt;
-  va_start (ap);
-  fmt = va_arg (ap, char *);
-#endif
 
   ret = vsnprintf (buf, 4, fmt, ap);
 
@@ -3694,7 +3856,7 @@ cat >conftest.c <<EOF
 int
 main ()
 {
-  exit(0);
+  return 0;
 }
 EOF
 gmp_compile="$1 conftest.c"
@@ -3768,7 +3930,7 @@ AC_CACHE_CHECK([for build system executable suffix],
 int
 main ()
 {
-  exit (0);
+  return 0;
 }
 EOF
 for i in .exe ,ff8 ""; do
@@ -3804,7 +3966,7 @@ AC_CACHE_CHECK([whether build system compiler is ANSI],
 int
 main (int argc, char **argv)
 {
-  exit(0);
+  return 0;
 }
 EOF
 gmp_compile="$CC_FOR_BUILD conftest.c"
@@ -3835,10 +3997,11 @@ AC_DEFUN([GMP_CHECK_LIBM_FOR_BUILD],
 AC_CACHE_CHECK([for build system compiler math library],
                gmp_cv_check_libm_for_build,
 [cat >conftest.c <<EOF
+#include <math.h>
 int
 main ()
 {
-  exit(0);
+  return 0;
 }
 double d;
 double
