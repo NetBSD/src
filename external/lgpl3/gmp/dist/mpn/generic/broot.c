@@ -1,6 +1,6 @@
 /* mpn_broot -- Compute hensel sqrt
 
-   Contributed to the GNU project by Niels Möller
+   Contributed to the GNU project by Niels MÃ¶ller
 
    THE FUNCTIONS IN THIS FILE ARE INTERNAL WITH MUTABLE INTERFACES.  IT IS ONLY
    SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
@@ -11,17 +11,28 @@ Copyright 2012 Free Software Foundation, Inc.
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -59,14 +70,14 @@ powlimb (mp_limb_t a, mp_limb_t e)
 
      r' = r - (a^{k-1} r^{k+1} - r) / k
 
-   where we still have cancelation of low limbs.
+   where we still have cancellation of low limbs.
 
  */
 void
 mpn_broot_invm1 (mp_ptr rp, mp_srcptr ap, mp_size_t n, mp_limb_t k)
 {
   mp_size_t sizes[GMP_LIMB_BITS * 2];
-  mp_ptr akm1, tp, rnp, ep, scratch;
+  mp_ptr akm1, tp, rnp, ep;
   mp_limb_t a0, r0, km1, kp1h, kinv;
   mp_size_t rn;
   unsigned i;
@@ -142,11 +153,10 @@ mpn_broot_invm1 (mp_ptr rp, mp_srcptr ap, mp_size_t n, mp_limb_t k)
     {
       /* Compute x^{k+1}. */
       mpn_sqr (ep, rp, rn); /* For odd n, writes n+1 limbs in the
-			       final iteration.*/
+			       final iteration. */
       mpn_powlo (rnp, ep, &kp1h, 1, sizes[i], tp);
 
-      /* Multiply by a^{k-1}. Can use wraparound; low part equals
-	 r. */
+      /* Multiply by a^{k-1}. Can use wraparound; low part equals r. */
 
       mpn_mullo_n (ep, rnp, akm1, sizes[i]);
       ASSERT (mpn_cmp (ep, rp, rn) == 0);

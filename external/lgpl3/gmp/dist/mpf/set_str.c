@@ -2,23 +2,34 @@
    in base BASE to a float in dest.  If BASE is zero, the leading characters
    of STRING is used to figure out the base.
 
-Copyright 1993, 1994, 1995, 1996, 1997, 2000, 2001, 2002, 2003, 2005, 2007,
-2008, 2011 Free Software Foundation, Inc.
+Copyright 1993-1997, 2000-2003, 2005, 2007, 2008, 2011, 2013 Free Software
+Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 /*
   This still needs work, as suggested by some FIXME comments.
@@ -154,19 +165,19 @@ mpf_set_str (mpf_ptr x, const char *str, int base)
     {
       /* For bases > 36, use the collating sequence
 	 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.  */
-      digit_value += 224;
+      digit_value += 208;
       if (base > 62)
 	return -1;		/* too large base */
     }
 
   /* Require at least one digit, possibly after an initial decimal point.  */
-  if (digit_value[c] >= (base == 0 ? 10 : base))
+  if (digit_value[c] >= base)
     {
       /* not a digit, must be a decimal point */
       for (i = 0; i < pointlen; i++)
 	if (str[i] != point[i])
 	  return -1;
-      if (digit_value[(unsigned char) str[pointlen]] >= (base == 0 ? 10 : base))
+      if (digit_value[(unsigned char) str[pointlen]] >= base)
 	return -1;
     }
 

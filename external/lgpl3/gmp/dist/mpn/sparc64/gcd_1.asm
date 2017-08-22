@@ -1,33 +1,45 @@
 dnl  SPARC64 mpn_gcd_1.
 
-dnl  Based on the K7 gcd_1.asm, by Kevin Ryde.  Rehacked for SPARC by Torbjorn
+dnl  Based on the K7 gcd_1.asm, by Kevin Ryde.  Rehacked for SPARC by Torbjörn
 dnl  Granlund.
 
-dnl  Copyright 2000, 2001, 2002, 2005, 2009, 2011, 2012 Free Software
-dnl  Foundation, Inc.
+dnl  Copyright 2000-2002, 2005, 2009, 2011-2013 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
 
 C		  cycles/bit (approx)
-C UltraSPARC 1&2:      5.1
-C UltraSPARC 3:        5.0
-C UltraSPARC T1:      12.8
+C UltraSPARC 1&2:	 5.1
+C UltraSPARC 3:		 5.0
+C UltraSPARC T1:	11.4
+C UltraSPARC T3:	10
+C UltraSPARC T4:	 6
 C Numbers measured with: speed -CD -s32-64 -t32 mpn_gcd_1
 
 C ctz_table[n] is the number of trailing zeros on n, or MAXSHIFT if n==0.
@@ -35,13 +47,14 @@ C ctz_table[n] is the number of trailing zeros on n, or MAXSHIFT if n==0.
 deflit(MAXSHIFT, 7)
 deflit(MASK, eval((m4_lshift(1,MAXSHIFT))-1))
 
-	.section	".rodata"
+	RODATA
+	TYPE(ctz_table,object)
 ctz_table:
 	.byte	MAXSHIFT
 forloop(i,1,MASK,
 `	.byte	m4_count_trailing_zeros(i)
 ')
-
+	SIZE(ctz_table,.-ctz_table)
 
 C Threshold of when to call bmod when U is one limb.  Should be about
 C (time_in_cycles(bmod_1,1) + call_overhead) / (cycles/bit).
@@ -92,25 +105,11 @@ L(bmod):
 
 L(noreduce):
 
-ifdef(`PIC',`
-	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), %l7
-	call	L(LGETPC0)
-	add	%l7, %lo(_GLOBAL_OFFSET_TABLE_+4), %l7
-	sethi	%hi(ctz_table), %g1
-	or	%g1, %lo(ctz_table), %g1
-	ldx	[%l7+%g1], %i5
-',`
-	sethi	%hh(ctz_table), %l7
-	or	%l7, %hm(ctz_table), %l7
-	sllx	%l7, 32, %l7
-	sethi	%lm(ctz_table), %g1
-	add	%l7, %g1, %l7
-	or	%l7, %lo(ctz_table), %i5
-')
+	LEA64(ctz_table, i5, g4)
 
 	cmp	%o0, 0
 	bnz	%xcc, L(mid)
-	 andcc	%o0, MASK, %g3		C
+	 and	%o0, MASK, %g3		C
 
 	return	%i7+8
 	 sllx	%o2, %o4, %o0		C CAUTION: v0 alias for o2
@@ -118,15 +117,13 @@ ifdef(`PIC',`
 	ALIGN(16)
 L(top):	movcc	%xcc, %l4, v0		C v = min(u,v)
 	movcc	%xcc, %l2, %o0		C u = |v - u]
-	cmp	%g3, 0			C are all MAXSHIFT low bits zero?
-L(mid):	ldub	[%i5+%g3], %g3		C
-	bz,a	%xcc, L(shift_alot)	C
+L(mid):	ldub	[%i5+%g3], %g5		C
+	brz,a,pn %g3, L(shift_alot)	C
 	 srlx	%o0, MAXSHIFT, %o0
-	srlx	%o0, %g3, %l4		C new u, odd
-	nop				C force parallel exec of sub insns
+	srlx	%o0, %g5, %l4		C new u, odd
 	subcc	v0, %l4, %l2		C v - u, set flags for branch and movcc
 	sub	%l4, v0, %o0		C u - v
-	bnz	%xcc, L(top)		C
+	bnz,pt	%xcc, L(top)		C
 	 and	%l2, MASK, %g3		C extract low MAXSHIFT bits from (v-u)
 
 	return	%i7+8
@@ -134,11 +131,5 @@ L(mid):	ldub	[%i5+%g3], %g3		C
 
 L(shift_alot):
 	b	L(mid)
-	 andcc	%o0, MASK, %g3		C
-
-ifdef(`PIC',`
-L(LGETPC0):
-	retl
-	add	%o7, %l7, %l7
-')
+	 and	%o0, MASK, %g3		C
 EPILOGUE()

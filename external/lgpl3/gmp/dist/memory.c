@@ -1,22 +1,32 @@
 /* Memory allocation routines.
 
-Copyright 1991, 1993, 1994, 2000, 2001, 2002, 2012 Free Software Foundation,
-Inc.
+Copyright 1991, 1993, 1994, 2000-2002, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h> /* for malloc, realloc, free */
@@ -39,7 +49,7 @@ __gmp_default_allocate (size_t size)
   void *ret;
 #ifdef DEBUG
   size_t req_size = size;
-  size += 2 * BYTES_PER_MP_LIMB;
+  size += 2 * GMP_LIMB_BYTES;
 #endif
   ret = malloc (size);
   if (ret == 0)
@@ -53,8 +63,8 @@ __gmp_default_allocate (size_t size)
     mp_ptr p = ret;
     p++;
     p[-1] = (0xdeadbeef << 31) + 0xdeafdeed;
-    if (req_size % BYTES_PER_MP_LIMB == 0)
-      p[req_size / BYTES_PER_MP_LIMB] = ~((0xdeadbeef << 31) + 0xdeafdeed);
+    if (req_size % GMP_LIMB_BYTES == 0)
+      p[req_size / GMP_LIMB_BYTES] = ~((0xdeadbeef << 31) + 0xdeafdeed);
     ret = p;
   }
 #endif
@@ -77,8 +87,8 @@ __gmp_default_reallocate (void *oldptr, size_t old_size, size_t new_size)
 	  fprintf (stderr, "gmp: (realloc) data clobbered before allocation block\n");
 	  abort ();
 	}
-      if (old_size % BYTES_PER_MP_LIMB == 0)
-	if (p[old_size / BYTES_PER_MP_LIMB] != ~((0xdeadbeef << 31) + 0xdeafdeed))
+      if (old_size % GMP_LIMB_BYTES == 0)
+	if (p[old_size / GMP_LIMB_BYTES] != ~((0xdeadbeef << 31) + 0xdeafdeed))
 	  {
 	    fprintf (stderr, "gmp: (realloc) data clobbered after allocation block\n");
 	    abort ();
@@ -86,7 +96,7 @@ __gmp_default_reallocate (void *oldptr, size_t old_size, size_t new_size)
       oldptr = p - 1;
     }
 
-  new_size += 2 * BYTES_PER_MP_LIMB;
+  new_size += 2 * GMP_LIMB_BYTES;
 #endif
 
   ret = realloc (oldptr, new_size);
@@ -101,8 +111,8 @@ __gmp_default_reallocate (void *oldptr, size_t old_size, size_t new_size)
     mp_ptr p = ret;
     p++;
     p[-1] = (0xdeadbeef << 31) + 0xdeafdeed;
-    if (req_size % BYTES_PER_MP_LIMB == 0)
-      p[req_size / BYTES_PER_MP_LIMB] = ~((0xdeadbeef << 31) + 0xdeafdeed);
+    if (req_size % GMP_LIMB_BYTES == 0)
+      p[req_size / GMP_LIMB_BYTES] = ~((0xdeadbeef << 31) + 0xdeafdeed);
     ret = p;
   }
 #endif
@@ -122,8 +132,8 @@ __gmp_default_free (void *blk_ptr, size_t blk_size)
 	    fprintf (stderr, "gmp: (free) data clobbered before allocation block\n");
 	    abort ();
 	  }
-	if (blk_size % BYTES_PER_MP_LIMB == 0)
-	  if (p[blk_size / BYTES_PER_MP_LIMB] != ~((0xdeadbeef << 31) + 0xdeafdeed))
+	if (blk_size % GMP_LIMB_BYTES == 0)
+	  if (p[blk_size / GMP_LIMB_BYTES] != ~((0xdeadbeef << 31) + 0xdeafdeed))
 	    {
 	      fprintf (stderr, "gmp: (free) data clobbered after allocation block\n");
 	      abort ();

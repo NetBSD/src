@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include "config.h"
 
@@ -42,6 +42,8 @@ void check_noexcept ()
 
 void check_common_type ()
 {
+#define CHECK_COMMON_TYPE1(T, Res) \
+  static_assert(std::is_same<std::common_type<T>::type, Res>::value, "sorry")
 #define CHECK_COMMON_TYPE(T, U, Res) \
   static_assert(std::is_same<std::common_type<T, U>::type, Res>::value, "sorry")
 #define CHECK_COMMON_TYPE_BUILTIN1(T, Res) \
@@ -101,10 +103,13 @@ void check_common_type ()
   CHECK_COMMON_TYPE (decltype(-z), decltype(-f), mpf_class);
   CHECK_COMMON_TYPE (decltype(-q), decltype(-f), mpf_class);
 
-  /* These could be broken by a naive common_type specialization */
-  CHECK_COMMON_TYPE (decltype(-z), decltype(-z), decltype(-z));
-  CHECK_COMMON_TYPE (decltype(-q), decltype(-q), decltype(-q));
-  CHECK_COMMON_TYPE (decltype(-f), decltype(-f), decltype(-f));
+  /* common_type now decays */
+  CHECK_COMMON_TYPE (decltype(-z), decltype(-z), mpz_class);
+  CHECK_COMMON_TYPE (decltype(-q), decltype(-q), mpq_class);
+  CHECK_COMMON_TYPE (decltype(-f), decltype(-f), mpf_class);
+  CHECK_COMMON_TYPE1 (decltype(-z), mpz_class);
+  CHECK_COMMON_TYPE1 (decltype(-q), mpq_class);
+  CHECK_COMMON_TYPE1 (decltype(-f), mpf_class);
 
   /* Painful */
   CHECK_COMMON_TYPE_BUILTIN (decltype(-z), mpz_class);

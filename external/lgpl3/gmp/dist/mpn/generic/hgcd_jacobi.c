@@ -4,22 +4,33 @@
    SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT THEY'LL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
-Copyright 2003, 2004, 2005, 2008, 2011, 2012 Free Software Foundation, Inc.
+Copyright 2003-2005, 2008, 2011, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -60,7 +71,7 @@ hgcd_jacobi_hook (void *p, mp_srcptr gp, mp_size_t gn,
    below the given size s. Return new size for a and b, or 0 if no
    more steps are possible.
 
-   If hgcd2 succeds, needs temporary space for hgcd_matrix_mul_1, M->n
+   If hgcd2 succeeds, needs temporary space for hgcd_matrix_mul_1, M->n
    limbs, and hgcd_mul_matrix1_inverse_vector, n limbs. If hgcd2
    fails, needs space for the quotient, qn <= n - s + 1 limbs, for and
    hgcd_matrix_update_q, qn + (size of the appropriate column of M) <=

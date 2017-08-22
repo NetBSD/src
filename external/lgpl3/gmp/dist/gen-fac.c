@@ -1,21 +1,32 @@
 /* Generate data for combinatorics: fac_ui, bin_uiui, ...
 
-Copyright 2002, 2011, 2012 Free Software Foundation, Inc.
+Copyright 2002, 2011-2015 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,9 +36,8 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 int
 mpz_remove_twos (mpz_t x)
 {
-  int r = 0;
-  for (;mpz_even_p (x);r++)
-    mpz_tdiv_q_2exp (x, x, 1);
+  mp_bitcnt_t r = mpz_scan1(x, 0);
+  mpz_tdiv_q_2exp (x, x, r);
   return r;
 }
 
@@ -75,8 +85,8 @@ gen_consts (int numb, int nail, int limb)
   for (b = 3;; b++)
     {
       for (a = b; (a & 1) == 0; a >>= 1);
-      mpz_set (last, x);
-      mpz_mul_ui (x, x, a);
+      mpz_swap (last, x);
+      mpz_mul_ui (x, last, a);
       if (mpz_sizeinbase (x, 2) > numb)
 	break;
       printf ("),CNST_LIMB(0x");
@@ -91,7 +101,7 @@ gen_consts (int numb, int nail, int limb)
   ofl = b - 1;
   printf
     ("#define ODD_FACTORIAL_TABLE_LIMIT (%lu)\n", ofl);
-  mpz_init (mask);
+  mpz_init2 (mask, numb + 1);
   mpz_setbit (mask, numb);
   mpz_sub_ui (mask, mask, 1);
   printf
@@ -130,8 +140,8 @@ gen_consts (int numb, int nail, int limb)
   mpz_set_ui (x, 1);
   for (b = 3;; b+=2)
     {
-      mpz_set (last, x);
-      mpz_mul_ui (x, x, b);
+      mpz_swap (last, x);
+      mpz_mul_ui (x, last, b);
       if (mpz_sizeinbase (x, 2) > numb)
 	break;
       printf ("),CNST_LIMB(0x");
@@ -248,61 +258,6 @@ gen_consts (int numb, int nail, int limb)
     }
   printf ("\n");
 
-#if 0
-  mpz_set_ui (x, 1);
-  mpz_mul_2exp (x, x, limb + 1);	/* x=2^(limb+1)        */
-  mpz_init (y);
-  mpz_set_ui (y, 10000);
-  mpz_mul (x, x, y);		/* x=2^(limb+1)*10^4     */
-  mpz_set_ui (y, 27182);	/* exp(1)*10^4      */
-  mpz_tdiv_q (x, x, y);		/* x=2^(limb+1)/exp(1)        */
-  printf ("\n/* is 2^(GMP_LIMB_BITS+1)/exp(1) */\n");
-  printf ("#define FAC2OVERE CNST_LIMB(0x");
-  mpz_out_str (stdout, 16, x);
-  printf (")\n");
-
-
-  printf
-    ("\n/* FACMULn is largest odd x such that x*(x+2)*...*(x+2(n-1))<=2^GMP_NUMB_BITS-1 */\n\n");
-  mpz_init (z);
-  mpz_init (t);
-  for (a = 2; a <= 4; a++)
-    {
-      mpz_set_ui (x, 1);
-      mpz_mul_2exp (x, x, numb);
-      mpz_root (x, x, a);
-      /* so x is approx sol       */
-      if (mpz_even_p (x))
-	mpz_sub_ui (x, x, 1);
-      mpz_set_ui (y, 1);
-      mpz_mul_2exp (y, y, numb);
-      mpz_sub_ui (y, y, 1);
-      /* decrement x until we are <= real sol     */
-      do
-	{
-	  mpz_sub_ui (x, x, 2);
-	  odd_products (t, x, a);
-	  if (mpz_cmp (t, y) <= 0)
-	    break;
-	}
-      while (1);
-      /* increment x until > real sol     */
-      do
-	{
-	  mpz_add_ui (x, x, 2);
-	  odd_products (t, x, a);
-	  if (mpz_cmp (t, y) > 0)
-	    break;
-	}
-      while (1);
-      /* dec once to get real sol */
-      mpz_sub_ui (x, x, 2);
-      printf ("#define FACMUL%lu CNST_LIMB(0x", a);
-      mpz_out_str (stdout, 16, x);
-      printf (")\n");
-    }
-#endif
-
   return 0;
 }
 
@@ -313,7 +268,7 @@ main (int argc, char *argv[])
 
   if (argc != 3)
     {
-      fprintf (stderr, "Usage: gen-fac_ui limbbits nailbits\n");
+      fprintf (stderr, "Usage: gen-fac limbbits nailbits\n");
       exit (1);
     }
   limb_bits = atoi (argv[1]);

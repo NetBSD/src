@@ -1,25 +1,37 @@
 divert(-1)
-dnl  Copyright 2007, 2011, 2012 Free Software Foundation, Inc.
-dnl
+dnl  Copyright 2007, 2011, 2012, 2014 Free Software Foundation, Inc.
+
 dnl  This file is part of the GNU MP Library.
 dnl
-dnl  The GNU MP Library is free software; you can redistribute it and/or
-dnl  modify it under the terms of the GNU Lesser General Public License as
-dnl  published by the Free Software Foundation; either version 3 of the
-dnl  License, or (at your option) any later version.
+dnl  The GNU MP Library is free software; you can redistribute it and/or modify
+dnl  it under the terms of either:
 dnl
-dnl  The GNU MP Library is distributed in the hope that it will be useful,
-dnl  but WITHOUT ANY WARRANTY; without even the implied warranty of
-dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-dnl  Lesser General Public License for more details.
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
 dnl
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
+dnl  The GNU MP Library is distributed in the hope that it will be useful, but
+dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 define(`DARWIN')
 
 
 dnl  Usage LEA(symbol,reg)
+dnl  Usage LEAL(symbol_local_to_file,reg)
 dnl
 dnl  We maintain lists of stuff to append in load_eip and darwin_bd.  The
 dnl  `index' stuff is needed to suppress repeated definitions.  To avoid
@@ -32,7 +44,9 @@ m4_assert_numargs(2)
 `ifdef(`PIC',`
 ifelse(index(defn(`load_eip'), `$2'),-1,
 `m4append(`load_eip',
-`L(movl_eip_`'substr($2,1)):
+`	TEXT
+	ALIGN(16)
+L(movl_eip_`'substr($2,1)):
 	movl	(%esp), $2
 	ret_internal
 ')')
@@ -50,10 +64,27 @@ L($1`'$non_lazy_ptr):
 	movl	`$'$1, $2
 ')')
 
+define(`LEAL',
+m4_assert_numargs(2)
+`ifdef(`PIC',`
+ifelse(index(defn(`load_eip'), `$2'),-1,
+`m4append(`load_eip',
+`	TEXT
+	ALIGN(16)
+L(movl_eip_`'substr($2,1)):
+	movl	(%esp), $2
+	ret_internal
+')')
+	call	L(movl_eip_`'substr($2,1))
+	leal	$1-.($2), $2
+',`
+	movl	`$'$1, $2
+')')
 
-dnl EPILOGUE_cpu
 
-define(`EPILOGUE_cpu',`load_eip`'darwin_bd')
+dnl ASM_END
+
+define(`ASM_END',`load_eip`'darwin_bd')
 
 define(`load_eip', `')		dnl updated in LEA
 define(`darwin_bd', `')		dnl updated in LEA

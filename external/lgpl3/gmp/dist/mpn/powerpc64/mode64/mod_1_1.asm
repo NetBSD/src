@@ -3,19 +3,30 @@ dnl  PowerPC-64 mpn_mod_1_1p
 dnl  Copyright 2010, 2011 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -69,7 +80,10 @@ L(top):	ld	r4, -24(r3)
 	adde	r9, r9, r10
 	bdnz	L(top)
 
-L(end):	lwz	r0, 12(r6)
+L(end):
+ifdef(`HAVE_LIMB_LITTLE_ENDIAN',
+`	lwz	r0, 8(r6)',
+`	lwz	r0, 12(r6)')
 	ld	r3, 0(r6)
 	cmpdi	cr7, r0, 0
 	beq-	cr7, L(4)
@@ -103,7 +117,7 @@ L(10):	subf	r3, r5, r3
 	blr
 EPILOGUE()
 
-PROLOGUE(mpn_mod_1_1p_cps)
+PROLOGUE(mpn_mod_1_1p_cps,toc)
 	mflr	r0
 	std	r29, -24(r1)
 	std	r30, -16(r1)
@@ -116,7 +130,6 @@ PROLOGUE(mpn_mod_1_1p_cps)
 	sld	r30, r4, r31
 	mr	r3, r30
 	CALL(	mpn_invert_limb)
-	nop
 	cmpdi	cr7, r31, 0
 	neg	r0, r30
 	beq-	cr7, L(13)

@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -101,12 +101,89 @@ check_small (void)
   mpz_clear (n);
 }
 
-int
-main (void)
+void
+check_composites (int count)
 {
+  int i;
+  mpz_t a, b, n, bs;
+  unsigned long size_range, size;
+  gmp_randstate_ptr rands = RANDS;
+
+  mpz_init (a);
+  mpz_init (b);
+  mpz_init (n);
+  mpz_init (bs);
+
+  for (i = 0; i < count; i++)
+    {
+      mpz_urandomb (bs, rands, 32);
+      size_range = mpz_get_ui (bs) % 13 + 1; /* 0..8192 bit operands */
+
+      mpz_urandomb (bs, rands, size_range);
+      size = mpz_get_ui (bs);
+      mpz_rrandomb (a, rands, size);
+
+      mpz_urandomb (bs, rands, 32);
+      size_range = mpz_get_ui (bs) % 13 + 1; /* 0..8192 bit operands */
+      mpz_rrandomb (b, rands, size);
+
+      /* Exclude trivial factors */
+      if (mpz_cmp_ui (a, 1) == 0)
+	mpz_set_ui (a, 2);
+      if (mpz_cmp_ui (b, 1) == 0)
+	mpz_set_ui (b, 2);
+
+      mpz_mul (n, a, b);
+
+      check_pn (n, 0);
+    }
+  mpz_clear (a);
+  mpz_clear (b);
+  mpz_clear (n);
+  mpz_clear (bs);
+}
+
+static void
+check_primes (void)
+{
+  static const char * const primes[] = {
+    "2", "17", "65537",
+    /* diffie-hellman-group1-sha1, also "Well known group 2" in RFC
+       2412, 2^1024 - 2^960 - 1 + 2^64 * { [2^894 pi] + 129093 } */
+    "0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
+    "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
+    "EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245"
+    "E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED"
+    "EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE65381"
+    "FFFFFFFFFFFFFFFF",
+    NULL
+  };
+
+  mpz_t n;
+  int i;
+
+  mpz_init (n);
+
+  for (i = 0; primes[i]; i++)
+    {
+      mpz_set_str_or_abort (n, primes[i], 0);
+      check_one (n, 1);
+    }
+  mpz_clear (n);
+}
+
+int
+main (int argc, char **argv)
+{
+  int count = 1000;
+
+  TESTS_REPS (count, argv, argc);
+
   tests_start ();
 
   check_small ();
+  check_composites (count);
+  check_primes ();
 
   tests_end ();
   exit (0);

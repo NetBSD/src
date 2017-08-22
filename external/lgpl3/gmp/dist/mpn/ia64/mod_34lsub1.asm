@@ -2,22 +2,33 @@ dnl  IA-64 mpn_mod_34lsub1
 
 dnl  Contributed to the GNU project by Torbjorn Granlund.
 
-dnl  Copyright 2003, 2004, 2005, 2010 Free Software Foundation, Inc.
+dnl  Copyright 2003-2005, 2010 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -59,6 +70,7 @@ PROLOGUE(mpn_mod_34lsub1)
 	.body
 ifdef(`HAVE_ABI_32',`
 	addp4		up = 0, up		C			M I
+	nop.m		0
 	zxt4		n = n			C			I
 	;;
 ')
@@ -90,60 +102,60 @@ ifelse(0,1,`
 
 
 L(gt1):
-.mmi;	nop.m	0
+ {.mmi;	nop.m	0
 	mov	a0 = 0
 	add	n = -2, n
-.mmi;	mov	c0 = 0
+}{.mmi;	mov	c0 = 0
 	mov	c1 = 0
 	mov	c2 = 0
 	;;
-.mmi;	ld8	u1 = [up], 8
+}{.mmi;	ld8	u1 = [up], 8
 	mov	a1 = 0
 	cmp.ltu	p6, p0 = r0, r0		C clear p6
-.mmb;	cmp.gt	p9, p0 = 3, n
+}{.mmb;	cmp.gt	p9, p0 = 3, n
 	mov	a2 = 0
   (p9)	br.cond.dptk	L(end)
 	;;
-
+}
 	ALIGN(32)
 L(top):
-.mmi;	ld8	u2 = [up], 8
+ {.mmi;	ld8	u2 = [up], 8
   (p6)	add	c0 = 1, c0
 	cmp.ltu	p7, p0 = a0, u0
-.mmb;	sub	a0 = a0, u0
+}{.mmb;	sub	a0 = a0, u0
 	add	n = -3, n
 	nop.b	0
 	;;
-.mmi;	ld8	u0 = [up], 8
+}{.mmi;	ld8	u0 = [up], 8
   (p7)	add	c1 = 1, c1
 	cmp.ltu	p8, p0 = a1, u1
-.mmb;	sub	a1 = a1, u1
+}{.mmb;	sub	a1 = a1, u1
 	cmp.le	p9, p0 = 3, n
 	nop.b	0
 	;;
-.mmi;	ld8	u1 = [up], 8
+}{.mmi;	ld8	u1 = [up], 8
   (p8)	add	c2 = 1, c2
 	cmp.ltu	p6, p0 = a2, u2
-.mmb;	sub	a2 = a2, u2
+}{.mmb;	sub	a2 = a2, u2
 	nop.m	0
 dnl	br.cloop.dptk	L(top)
   (p9)	br.cond.dptk	L(top)
 	;;
-
+}
 L(end):
 	cmp.eq	p10, p0 = 0, n
 	cmp.eq	p11, p0 = 1, n
   (p10)	br	L(0)
 
 L(2):
-.mmi;	ld8	u2 = [up], 8
+ {.mmi;	ld8	u2 = [up], 8
   (p6)	add	c0 = 1, c0
 	cmp.ltu	p7, p0 = a0, u0
-.mmb;	sub	a0 = a0, u0
+}{.mmb;	sub	a0 = a0, u0
 	nop.m	0
   (p11)	br	L(1)
 	;;
-	ld8	u0 = [up], 8
+}	ld8	u0 = [up], 8
   (p7)	add	c1 = 1, c1
 	cmp.ltu	p8, p0 = a1, u1
 	sub	a1 = a1, u1
@@ -202,13 +214,14 @@ C |        |        |        |        |
 	dep.z	r14 = c1, 16, 32	C 48 bits
 	dep.z	r15 = c2, 32, 16	C 48 bits
 	;;
-.mmi;	add	r24 = r24, r25
+ {.mmi;	add	r24 = r24, r25
 	add	r26 = r26, r27
 	add	r28 = r28, r29
-.mmi;	add	r10 = r10, r11
+}{.mmi;	add	r10 = r10, r11
 	add	r30 = r30, r31
 	add	r14 = r14, r15
 	;;
+}
 	movl	r8 = 0xffffffffffff0
 	add	r24 = r24, r26
 	add	r10 = r10, r30

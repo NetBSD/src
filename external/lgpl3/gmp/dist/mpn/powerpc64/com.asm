@@ -1,77 +1,136 @@
 dnl  PowerPC-64 mpn_com.
 
-dnl  Copyright 2003, 2004, 2005 Free Software Foundation, Inc.
+dnl  Copyright 2004, 2005, 2013 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
 C                  cycles/limb
-C POWER3/PPC630          1?
-C POWER4/PPC970          1.6
+C POWER3/PPC630          ?
+C POWER4/PPC970          1.25
 C POWER5                 ?
-C POWER6                 ?
-C POWER7                 1.45
-
-C TODO
-C  * 8-way unrolling brings timing down to about 1.3 cycles/limb.
+C POWER6                 1.32
+C POWER7                 1.13
 
 C INPUT PARAMETERS
-C rp	r3
-C up	r4
-C n	r5
+define(`rp',	`r3')
+define(`up',	`r4')
+define(`n',	`r5')
 
 ASM_START()
 PROLOGUE(mpn_com)
-	rldic.	r0, r5, 3, 59	C r0 = (r5 & 3) << 3; cr0 = (n == 4t)?
-	cmpldi	cr6, r0, 16	C cr6 = (n cmp 4t + 2)?
 
-	addi	r5, r5, 3	C compute...
 ifdef(`HAVE_ABI_mode32',
-`	rldicl	r5, r5, 62,34',	C ...branch count
-`	rldicl	r5, r5, 62, 2')	C ...branch count
-	mtctr	r5
+`	rldicl	n, n, 0,32')
 
-	add	r4, r4, r0	C offset up
-	add	r3, r3, r0	C offset rp
+	cmpdi	cr0, n, 4
+	blt	L(sml)
 
-	beq	cr0, L(L00)
-	blt	cr6, L(L01)
-	beq	cr6, L(L10)
-	b	L(L11)
+	addi	r10, n, 4
+	srdi	r10, r10, 3
+	mtctr	r10
 
-L(L00):	addi	r4, r4, 32
-	addi	r3, r3, 32
+	andi.	r0, n, 1
+	rlwinm	r11, n, 0,30,30
+	rlwinm	r12, n, 0,29,29
+	cmpdi	cr6, r11, 0
+	cmpdi	cr7, r12, 0
 
-	ALIGN(16)
-L(oop):	ld	r6, -32(r4)
+	beq	cr0, L(xx0)
+L(xx1):	ld	r6, 0(up)
+	addi	up, up, 8
 	nor	r6, r6, r6
-	std	r6, -32(r3)
-L(L11):	ld	r6, -24(r4)
-	nor	r6, r6, r6
-	std	r6, -24(r3)
-L(L10):	ld	r6, -16(r4)
-	nor	r6, r6, r6
-	std	r6, -16(r3)
-L(L01):	ld	r6, -8(r4)
-	nor	r6, r6, r6
-	addi	r4, r4, 32
-	std	r6, -8(r3)
-	addi	r3, r3, 32
-	bdnz	L(oop)
+	std	r6, 0(rp)
+	addi	rp, rp, 8
 
+L(xx0):	bne	cr6, L(x10)
+L(x00):	ld	r6, 0(r4)
+	ld	r7, 8(r4)
+	bne	cr7, L(100)
+L(000):	addi	rp, rp, -32
+	b	L(lo0)
+L(100):	addi	up, up, -32
+	b	L(lo4)
+L(x10):	ld	r8, 0(r4)
+	ld	r9, 8(r4)
+	bne	cr7, L(110)
+L(010):	addi	up, up, 16
+	addi	rp, rp, -16
+	b	L(lo2)
+L(110):	addi	up, up, -16
+	addi	rp, rp, -48
+	b	L(lo6)
+
+L(sml):	mtctr	n
+L(t):	ld	r6, 0(up)
+	addi	up, up, 8
+	nor	r6, r6, r6
+	std	r6, 0(rp)
+	addi	rp, rp, 8
+	bdnz	L(t)
+	blr
+
+	ALIGN(32)
+L(top):	nor	r6, r6, r6
+	nor	r7, r7, r7
+	std	r6, 0(rp)
+	std	r7, 8(rp)
+L(lo2):	ld	r6, 0(up)
+	ld	r7, 8(up)
+	nor	r8, r8, r8
+	nor	r9, r9, r9
+	std	r8, 16(rp)
+	std	r9, 24(rp)
+L(lo0):	ld	r8, 16(up)
+	ld	r9, 24(up)
+	nor	r6, r6, r6
+	nor	r7, r7, r7
+	std	r6, 32(rp)
+	std	r7, 40(rp)
+L(lo6):	ld	r6, 32(up)
+	ld	r7, 40(up)
+	nor	r8, r8, r8
+	nor	r9, r9, r9
+	std	r8, 48(rp)
+	std	r9, 56(rp)
+	addi	rp, rp, 64
+L(lo4):	ld	r8, 48(up)
+	ld	r9, 56(up)
+	addi	up, up, 64
+	bdnz	L(top)
+
+L(end):	nor	r6, r6, r6
+	nor	r7, r7, r7
+	std	r6, 0(rp)
+	std	r7, 8(rp)
+	nor	r8, r8, r8
+	nor	r9, r9, r9
+	std	r8, 16(rp)
+	std	r9, 24(rp)
 	blr
 EPILOGUE()

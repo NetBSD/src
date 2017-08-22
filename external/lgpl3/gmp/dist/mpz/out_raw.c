@@ -5,17 +5,28 @@ Copyright 2001, 2002 Free Software Foundation, Inc.
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include "gmp.h"
@@ -40,8 +51,8 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
     mp_limb_t  __limb = (limb);                                         \
     char      *__p = (char *) (dst);                                    \
     int        __i;                                                     \
-    for (__i = 0; __i < BYTES_PER_MP_LIMB; __i++)                       \
-      __p[__i] = (char) (__limb >> ((BYTES_PER_MP_LIMB-1 - __i) * 8));  \
+    for (__i = 0; __i < GMP_LIMB_BYTES; __i++)                       \
+      __p[__i] = (char) (__limb >> ((GMP_LIMB_BYTES-1 - __i) * 8));  \
   } while (0)
 #endif
 
@@ -59,10 +70,10 @@ mpz_out_raw (FILE *fp, mpz_srcptr x)
   xsize = SIZ(x);
   abs_xsize = ABS (xsize);
   bytes = (abs_xsize * GMP_NUMB_BITS + 7) / 8;
-  tsize = ROUND_UP_MULTIPLE ((unsigned) 4, BYTES_PER_MP_LIMB) + bytes;
+  tsize = ROUND_UP_MULTIPLE ((unsigned) 4, GMP_LIMB_BYTES) + bytes;
 
   tp = __GMP_ALLOCATE_FUNC_TYPE (tsize, char);
-  bp = tp + ROUND_UP_MULTIPLE ((unsigned) 4, BYTES_PER_MP_LIMB);
+  bp = tp + ROUND_UP_MULTIPLE ((unsigned) 4, GMP_LIMB_BYTES);
 
   if (bytes != 0)
     {
@@ -78,7 +89,7 @@ mpz_out_raw (FILE *fp, mpz_srcptr x)
 #endif
 	  do
 	    {
-	      bp -= BYTES_PER_MP_LIMB;
+	      bp -= GMP_LIMB_BYTES;
 	      xlimb = *xp;
 	      HTON_LIMB_STORE ((mp_ptr) bp, xlimb);
 	      xp++;

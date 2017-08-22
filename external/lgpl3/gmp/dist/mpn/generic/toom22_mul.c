@@ -7,22 +7,33 @@
    SAFE TO REACH IT THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT IT WILL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
-Copyright 2006, 2007, 2008, 2009, 2010, 2012 Free Software Foundation, Inc.
+Copyright 2006-2010, 2012, 2014 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 
 #include "gmp.h"
@@ -98,7 +109,7 @@ mpn_toom22_mul (mp_ptr pp,
 
   ASSERT (an >= bn);
 
-  ASSERT (0 < s && s <= n);
+  ASSERT (0 < s && s <= n && s >= n - 1);
   ASSERT (0 < t && t <= s);
 
   asm1 = pp;
@@ -119,17 +130,17 @@ mpn_toom22_mul (mp_ptr pp,
 	  mpn_sub_n (asm1, a0, a1, n);
 	}
     }
-  else
+  else /* n - s == 1 */
     {
-      if (mpn_zero_p (a0 + s, n - s) && mpn_cmp (a0, a1, s) < 0)
+      if (a0[s] == 0 && mpn_cmp (a0, a1, s) < 0)
 	{
 	  mpn_sub_n (asm1, a1, a0, s);
-	  MPN_ZERO (asm1 + s, n - s);
+	  asm1[s] = 0;
 	  vm1_neg = 1;
 	}
       else
 	{
-	  mpn_sub (asm1, a0, n, a1, s);
+	  asm1[s] = a0[s] - mpn_sub_n (asm1, a0, a1, s);
 	}
     }
 
@@ -191,9 +202,10 @@ mpn_toom22_mul (mp_ptr pp,
   ASSERT (cy + 1  <= 3);
   ASSERT (cy2 <= 2);
 
-  mpn_incr_u (pp + 2 * n, cy2);
+  MPN_INCR_U (pp + 2 * n, s + t, cy2);
   if (LIKELY (cy <= 2))
-    mpn_incr_u (pp + 3 * n, cy);
+    /* if s+t==n, cy is zero, but we should not acces pp[3*n] at all. */
+    MPN_INCR_U (pp + 3 * n, s + t - n, cy);
   else
-    mpn_decr_u (pp + 3 * n, 1);
+    MPN_DECR_U (pp + 3 * n, s + t - n, 1);
 }

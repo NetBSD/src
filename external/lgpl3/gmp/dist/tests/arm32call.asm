@@ -17,7 +17,7 @@ dnl  Public License for more details.
 
 dnl  You should have received a copy of the GNU General Public License along
 dnl  with the GNU MP Library test suite.  If not, see
-dnl  http://www.gnu.org/licenses/.
+dnl  https://www.gnu.org/licenses/.
 
 
 dnl  The current version of the code attempts to keep the call/return
@@ -59,7 +59,7 @@ PROLOGUE(calling_conventions)
 	LEA(	r12, calling_conventions_function)
 	ldr	r12, [r12]
 	mov	r14, pc
-	bx	r12
+	ret	r12
 
 	LEA(	r12, calling_conventions_values)
 
@@ -79,5 +79,5 @@ PROLOGUE(calling_conventions)
 	add	r12, r12, #JUNK_PARAMS
 	ldm	r12, {r1-r3}
 
-	bx	r14
+	ret	r14
 EPILOGUE()

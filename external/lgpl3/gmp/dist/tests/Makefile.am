@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 
-# Copyright 2000, 2001, 2002, 2003, 2004, 2013 Free Software Foundation, Inc.
+# Copyright 2000-2004, 2013 Free Software Foundation, Inc.
 #
 # This file is part of the GNU MP Library test suite.
 #
@@ -15,14 +15,14 @@
 # Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along with
-# the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.
+# the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.
 
 
 SUBDIRS = . devel mpn mpz mpq mpf rand misc cxx
 
 include ../mpn/Makeasm.am
 
-INCLUDES = -I$(top_srcdir)
+AM_CPPFLAGS = -I$(top_srcdir)
 LDADD = libtests.la $(top_builddir)/libgmp.la
 
 check_LTLIBRARIES = libtests.la
@@ -34,6 +34,6 @@ libtests_la_SOURCES = tests.h \
 libtests_la_DEPENDENCIES = @CALLING_CONVENTIONS_OBJS@
 libtests_la_LIBADD = $(libtests_la_DEPENDENCIES) $(top_builddir)/libgmp.la
 
-check_PROGRAMS = t-bswap t-constants t-count_zeros t-gmpmax t-hightomask \
+check_PROGRAMS = t-bswap t-constants t-count_zeros t-hightomask \
   t-modlinv t-popc t-parity t-sub
 TESTS = $(check_PROGRAMS)

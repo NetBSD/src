@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 
 #include <stdlib.h>		/* for strtol */
@@ -40,7 +40,7 @@ dumpy (mp_srcptr p, mp_size_t n)
       for (i = 3; i >= 0; i--)
 	{
 	  printf ("%0*lx", (int) (2 * sizeof (mp_limb_t)), p[i]);
-	  printf (" " + (i == 0));
+	  printf (i == 0 ? "" : " ");
 	}
     }
   else
@@ -48,7 +48,7 @@ dumpy (mp_srcptr p, mp_size_t n)
       for (i = n - 1; i >= 0; i--)
 	{
 	  printf ("%0*lx", (int) (2 * sizeof (mp_limb_t)), p[i]);
-	  printf (" " + (i == 0));
+	  printf (i == 0 ? "" : " ");
 	}
     }
   puts ("");

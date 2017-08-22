@@ -1,22 +1,32 @@
 dnl  mc68020 mpn_lshift -- mpn left shift.
 
-dnl  Copyright 1996, 1999, 2000, 2001, 2002, 2003 Free Software Foundation,
-dnl  Inc.
-dnl
+dnl  Copyright 1996, 1999-2003 Free Software Foundation, Inc.
+
 dnl  This file is part of the GNU MP Library.
 dnl
-dnl  The GNU MP Library is free software; you can redistribute it and/or
-dnl  modify it under the terms of the GNU Lesser General Public License as
-dnl  published by the Free Software Foundation; either version 3 of the
-dnl  License, or (at your option) any later version.
+dnl  The GNU MP Library is free software; you can redistribute it and/or modify
+dnl  it under the terms of either:
 dnl
-dnl  The GNU MP Library is distributed in the hope that it will be useful,
-dnl  but WITHOUT ANY WARRANTY; without even the implied warranty of
-dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-dnl  Lesser General Public License for more details.
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
 dnl
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
+dnl  The GNU MP Library is distributed in the hope that it will be useful, but
+dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -104,14 +114,14 @@ ifelse(scale_available_p,1,`
 	bcs	L(L1)
 	subql	#1, s_size
 
-L(Loop:)
+L(Loop):
 	movel	M(-,s_ptr), d2
 	movel	d2, d3
 	lsrl	d5, d3
 	orl	d3, d1
 	movel	d1, M(-,res_ptr)
 	lsll	cnt, d2
-L(L1:)
+L(L1):
 	movel	M(-,s_ptr), d1
 	movel	d1, d3
 	lsrl	d5, d3
@@ -123,7 +133,7 @@ L(L1:)
 	subl	#0x10000, s_size
 	bcc	L(Loop)
 
-L(Lend:)
+L(Lend):
 	movel	d1, M(-,res_ptr)	C store least significant limb
 
 C Restore used registers from stack frame.

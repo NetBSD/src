@@ -1,7 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 
-# Copyright 2001, 2002, 2003, 2009, 2010, 2011, 2012 Free Software Foundation,
-# Inc.
+# Copyright 2001-2003, 2009-2014 Free Software Foundation, Inc.
 #
 # This file is part of the GNU MP Library test suite.
 #
@@ -16,10 +15,10 @@
 # Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along with
-# the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.
+# the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.
 
 
-INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/tests
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/tests
 LDADD = $(top_builddir)/tests/libtests.la $(top_builddir)/libgmp.la
 
 check_PROGRAMS = t-asmtype t-aors_1 t-divrem_1 t-mod_1 t-fat t-get_d	\
@@ -27,9 +26,9 @@ check_PROGRAMS = t-asmtype t-aors_1 t-divrem_1 t-mod_1 t-fat t-get_d	\
   t-toom22 t-toom32 t-toom33 t-toom42 t-toom43 t-toom44			\
   t-toom52 t-toom53 t-toom54 t-toom62 t-toom63 t-toom6h t-toom8h	\
   t-toom2-sqr t-toom3-sqr t-toom4-sqr t-toom6-sqr t-toom8-sqr		\
-  t-mul t-mullo t-mulmod_bnm1 t-sqrmod_bnm1 t-mulmid			\
-  t-hgcd t-hgcd_appr t-matrix22 t-invert t-div t-bdiv			\
-  t-broot t-brootinv
+  t-div t-mul t-mullo t-sqrlo t-mulmod_bnm1 t-sqrmod_bnm1 t-mulmid	\
+  t-hgcd t-hgcd_appr t-matrix22 t-invert t-bdiv				\
+  t-broot t-brootinv t-minvert t-sizeinbase
 
 EXTRA_DIST = toom-shared.h toom-sqr-shared.h
 

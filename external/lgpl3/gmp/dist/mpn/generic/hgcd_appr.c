@@ -9,17 +9,28 @@ Copyright 2011, 2012 Free Software Foundation, Inc.
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -97,7 +108,7 @@ mpn_hgcd_appr (mp_ptr ap, mp_ptr bp, mp_size_t n,
 	     sbits <-- sbits + 1 - p,
 
 	     rather than just sbits <-- sbits - p. This adjustment makes
-	     the produced matrix sligthly smaller than it could be. */
+	     the produced matrix slightly smaller than it could be. */
 
 	  if (GMP_NUMB_BITS * (n + 1) + 2 * extra_bits <= 2*GMP_NUMB_BITS * s)
 	    {
@@ -130,14 +141,13 @@ mpn_hgcd_appr (mp_ptr ap, mp_ptr bp, mp_size_t n,
 
       if (extra_bits > 0)
 	{
-	  /* We can get here only of we have dropped at least one of the
-	     least significant bits, so we can decrement ap and bp. We can
-	     then shift left extra bits using mpn_shiftr. */
-	  /* NOTE: In the unlikely case that n is large, it would be
-	     preferable to do an initial subdiv step to reduce the size
-	     before shifting, but that would mean daplicating
-	     mpn_gcd_subdiv_step with a bit count rather than a limb
-	     count. */
+	  /* We can get here only of we have dropped at least one of the least
+	     significant bits, so we can decrement ap and bp. We can then shift
+	     left extra bits using mpn_rshift. */
+	  /* NOTE: In the unlikely case that n is large, it would be preferable
+	     to do an initial subdiv step to reduce the size before shifting,
+	     but that would mean duplicating mpn_gcd_subdiv_step with a bit
+	     count rather than a limb count. */
 	  ap--; bp--;
 	  ap[0] = mpn_rshift (ap+1, ap+1, n, GMP_NUMB_BITS - extra_bits);
 	  bp[0] = mpn_rshift (bp+1, bp+1, n, GMP_NUMB_BITS - extra_bits);

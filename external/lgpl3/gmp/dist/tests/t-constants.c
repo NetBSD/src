@@ -1,6 +1,6 @@
 /* Check the values of some constants.
 
-Copyright 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright 2000-2003, 2014 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -176,21 +176,12 @@ const char *shrt_max_def = "not defined";
   } while (0)
 
 
-#if HAVE_STRINGIZE
 #define CHECK_LIMB(x,y)      CHECK_LIMB_S (x, #x, y, #y)
 #define CHECK_INT(x,y)       CHECK_INT_S (x, #x, y, #y)
 #define CHECK_CONDITION(x)   CHECK_CONDITION_S (x, #x)
 #define CHECK_BITS(c,t)      CHECK_BITS_S (c, #c, t)
 #define CHECK_MAX(m,n,t,f)   CHECK_MAX_S (m, #m, n, #n, t, f)
 #define CHECK_HIGHBIT(n,t,f) CHECK_HIGHBIT_S (n, #n, t, f)
-#else
-#define CHECK_LIMB(x,y)      CHECK_LIMB_S (x, "x", y, "y")
-#define CHECK_INT(x,y)       CHECK_INT_S (x, "x", y, "y")
-#define CHECK_CONDITION(x)   CHECK_CONDITION_S (x, "x")
-#define CHECK_BITS(c,t)      CHECK_BITS_S (c, "c", t)
-#define CHECK_MAX(m,n,t,f)   CHECK_MAX_S (m, "m", n, "n", t, f)
-#define CHECK_HIGHBIT(n,t,f) CHECK_HIGHBIT_S (n, "n", t, f)
-#endif
 
 
 /* The tests below marked "Bad!" fail on Cray T90 systems, where int, short
@@ -208,7 +199,7 @@ main (int argc, char *argv[])
 {
   int  error = 0;
 
-  CHECK_INT (BYTES_PER_MP_LIMB, (int) sizeof(mp_limb_t));
+  CHECK_INT (GMP_LIMB_BYTES, (int) sizeof(mp_limb_t));
   CHECK_INT (mp_bits_per_limb, GMP_LIMB_BITS);
 
   CHECK_BITS (GMP_LIMB_BITS, mp_limb_t);
@@ -218,8 +209,8 @@ main (int argc, char *argv[])
   CHECK_HIGHBIT (ULONG_HIGHBIT,     unsigned long,  "0x%lX");
   CHECK_HIGHBIT (UINT_HIGHBIT,      unsigned int,   "0x%X");
   CHECK_HIGHBIT (USHRT_HIGHBIT,     unsigned short, "0x%hX");
-  CHECK_HIGHBIT (LONG_HIGHBIT,      long,           "0x%lX");
 #if 0 /* Bad! */
+  CHECK_HIGHBIT (LONG_HIGHBIT,      long,           "0x%lX");
   CHECK_HIGHBIT (INT_HIGHBIT,       int,            "0x%X");
   CHECK_HIGHBIT (SHRT_HIGHBIT,      short,          "0x%hX");
 #endif
@@ -329,10 +320,10 @@ main (int argc, char *argv[])
       printf ("INT_MAX        %X\n", INT_MAX);
       printf ("INT_MIN        %X\n", INT_MIN);
 
-      printf ("USHRT_MAX      %hX\n", USHRT_MAX);
-      printf ("USHRT_HIGHBIT  %hX\n", USHRT_HIGHBIT);
-      printf ("SHRT_MAX       %hX\n", SHRT_MAX);
-      printf ("SHRT_MIN       %hX\n", SHRT_MIN);
+      printf ("USHRT_MAX      %X\n", USHRT_MAX);
+      printf ("USHRT_HIGHBIT  %X\n", USHRT_HIGHBIT);
+      printf ("SHRT_MAX       %X\n", SHRT_MAX);
+      printf ("SHRT_MIN       %X\n", SHRT_MIN);
 
       printf ("\n");
       printf ("Bits\n");

@@ -1,21 +1,32 @@
 /* doc/configuration (in Emacs -*-outline-*- format). */
 
-Copyright 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+Copyright 2000-2004 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.
 
 
 
@@ -46,7 +57,7 @@ The same applies to mpf, mpq, scanf and printf.
 
 The way we build libmpn (in the `mpn' subdirectory) is quite special.
 
-Currently only mpn/mp_bases.c is truely generic and included in every
+Currently only mpn/mp_bases.c is truly generic and included in every
 configuration.  All other files are linked at build time into the mpn
 build directory from one of the CPU specific sub-directories, or from
 the mpn/generic directory.
@@ -280,9 +291,8 @@ At build time:
 
     */Makefile.in  \   configure    / */Makefile
     config.in      | -------------> | config.h
-    gmp-h.in       |                | config.m4
-    mp-h.in        /                | gmp.h
-                                    | mp.h
+    gmp-h.in       /                | config.m4
+                                    | gmp.h
                                     \ fat.h  (fat binary build only)
 
 When configured with --enable-maintainer-mode the Makefiles include

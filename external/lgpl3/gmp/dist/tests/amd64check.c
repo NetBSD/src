@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include "gmp.h"
@@ -50,12 +50,18 @@ mp_limb_t calling_conventions_values[23] =
 #define RFLAGS	22
 
 /* values to check */
+#ifdef __cplusplus
+extern "C" {
+#endif
 struct {
   int  control;
   int  status;
   int  tag;
   int  other[4];
 } calling_conventions_fenv;
+#ifdef __cplusplus
+}
+#endif
 
 
 const char *regname[6] = {"rbx", "rbp", "r12", "r13", "r14", "r15"};

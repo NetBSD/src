@@ -1,7 +1,7 @@
 /* Test mpz_invert.
 
-Copyright 1991, 1993, 1994, 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2005,
-2008, 2009, 2012 Free Software Foundation, Inc.
+Copyright 1991, 1993, 1994, 1996, 1997, 2000-2005, 2008, 2009, 2012, 2014 Free
+Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,11 +71,12 @@ main (int argc, char **argv)
 	{
 	  MPZ_CHECK_FORMAT (ainv);
 
-	  if (mpz_cmp_ui (ainv, 0) <= 0 || mpz_cmpabs (ainv, m) >= 0)
+	  if (mpz_cmp_ui (ainv, 0) < 0 || mpz_cmpabs (ainv, m) >= 0)
 	    {
 	      fprintf (stderr, "ERROR in test %d\n", test);
 	      gmp_fprintf (stderr, "Inverse out of range.\n");
 	      gmp_fprintf (stderr, "a = %Zx\n", a);
+	      gmp_fprintf (stderr, "1/a = %Zx\n", ainv);
 	      gmp_fprintf (stderr, "m = %Zx\n", m);
 	      abort ();
 	    }
@@ -83,7 +84,7 @@ main (int argc, char **argv)
 	  mpz_mul (t, ainv, a);
 	  mpz_mod (t, t, m);
 
-	  if (mpz_cmp_ui (t, 1) != 0)
+	  if (mpz_cmp_ui (t, mpz_cmpabs_ui (m, 1) != 0) != 0)
 	    {
 	      fprintf (stderr, "ERROR in test %d\n", test);
 	      gmp_fprintf (stderr, "a^(-1)*a != 1 (mod m)\n");

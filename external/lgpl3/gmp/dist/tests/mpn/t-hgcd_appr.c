@@ -1,7 +1,7 @@
 /* Test mpn_hgcd_appr.
 
-Copyright 1991, 1993, 1994, 1996, 1997, 2000, 2001, 2002, 2003, 2004, 2011 Free
-Software Foundation, Inc.
+Copyright 1991, 1993, 1994, 1996, 1997, 2000-2004, 2011 Free Software
+Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -156,9 +156,6 @@ debug_mp (mpz_t x, int base)
 {
   mpz_out_str (stderr, base, x); fputc ('\n', stderr);
 }
-
-static int
-mpz_mpn_equal (const mpz_t a, mp_srcptr bp, mp_size_t bsize);
 
 static mp_size_t
 one_test (mpz_t a, mpz_t b, int i)
@@ -384,16 +381,6 @@ hgcd_ref (struct hgcd_ref *hgcd, mpz_t a, mpz_t b)
 }
 
 static int
-mpz_mpn_equal (const mpz_t a, mp_srcptr bp, mp_size_t bsize)
-{
-  mp_srcptr ap = a->_mp_d;
-  mp_size_t asize = a->_mp_size;
-
-  MPN_NORMALIZE (bp, bsize);
-  return asize == bsize && mpn_cmp (ap, bp, asize) == 0;
-}
-
-static int
 hgcd_ref_equal (const struct hgcd_ref *A, const struct hgcd_ref *B)
 {
   unsigned i;
@@ -525,7 +512,7 @@ hgcd_appr_valid_p (mpz_t a, mpz_t b, mp_size_t res0,
     fprintf (stderr, "n = %u: sbits = %u: ref #(r0-r1): %u, appr #(r0-r1): %u excess: %d, margin: %u\n",
 	     (unsigned) n, (unsigned) s*GMP_NUMB_BITS,
 	     (unsigned) dbits, (unsigned) abits,
-	     (int) abits - s * GMP_NUMB_BITS, (unsigned) margin);
+	     (int) (abits - s * GMP_NUMB_BITS), (unsigned) margin);
 
   if (abits > s*GMP_NUMB_BITS + margin)
     {

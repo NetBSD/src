@@ -2,23 +2,34 @@ dnl  x86 mpn_gcd_1 optimised for processors with fast BSF.
 
 dnl  Based on the K7 gcd_1.asm, by Kevin Ryde.  Rehacked by Torbjorn Granlund.
 
-dnl  Copyright 2000, 2001, 2002, 2005, 2009, 2011, 2012 Free Software
+dnl  Copyright 2000-2002, 2005, 2009, 2011, 2012, 2015 Free Software
 dnl  Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -84,8 +95,9 @@ C Both U and V are single limbs, reduce with bmod if u0 >> v0.
 L(reduce_nby1):
 	cmp	$BMOD_1_TO_MOD_1_THRESHOLD, n
 	jl	L(bmod)
-ifdef(`PIC_WITH_EBX',`
+ifdef(`PIC_WITH_EBX',`dnl
 	push	%ebx
+	add	$-4, %esp
 	call	L(movl_eip_to_ebx)
 	add	$_GLOBAL_OFFSET_TABLE_, %ebx
 ')
@@ -98,6 +110,7 @@ ifdef(`PIC_WITH_EBX',`
 L(bmod):
 ifdef(`PIC_WITH_EBX',`dnl
 	push	%ebx
+	add	$-4, %esp
 	call	L(movl_eip_to_ebx)
 	add	$_GLOBAL_OFFSET_TABLE_, %ebx
 ')
@@ -107,9 +120,11 @@ ifdef(`PIC_WITH_EBX',`dnl
 	CALL(	mpn_modexact_1_odd)
 
 L(called):
-	add	$12, %esp	C deallocate params
 ifdef(`PIC_WITH_EBX',`dnl
+	add	$16, %esp	C deallocate params
 	pop	%ebx
+',`
+	add	$12, %esp	C deallocate params
 ')
 L(reduced):
 	pop	%edx

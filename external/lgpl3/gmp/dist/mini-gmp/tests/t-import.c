@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,14 +25,6 @@ the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 #define MAX_WORDS 20
 #define MAX_WORD_SIZE 10
-
-static void
-dump (const char *label, const mpz_t x)
-{
-  char *buf = mpz_get_str (NULL, 16, x);
-  fprintf (stderr, "%s: %s\n", label, buf);
-  testfree (buf);
-}
 
 static void
 dump_bytes (const char *label, const unsigned char *s, size_t n)

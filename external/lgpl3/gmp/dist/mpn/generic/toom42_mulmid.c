@@ -11,17 +11,28 @@ Copyright 2011 Free Software Foundation, Inc.
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 
 #include "gmp.h"
@@ -219,7 +230,7 @@ mpn_toom42_mulmid (mp_ptr rp, mp_srcptr ap, mp_srcptr bp, mp_size_t n,
       /* FIXME: should probably define an interface "mpn_mulmid_diag_1"
          that can handle the sum below. Currently we're relying on
          mulmid_basecase being pretty fast for a diagonal sum like this,
-	 which is true at least for the K8 asm verion, but surely false
+	 which is true at least for the K8 asm version, but surely false
 	 for the generic version. */
       mpn_mulmid_basecase (e, ap + n - 1, n - 1, bp, n - 1);
       mpn_add_n (rp + n - 1, rp + n - 1, e, 3);

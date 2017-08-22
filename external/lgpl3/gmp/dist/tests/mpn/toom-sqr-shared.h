@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 
 #include <stdlib.h>
@@ -29,7 +29,7 @@ the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
  * MIN_AN, MAX_AN and then include this file. */
 
 #ifndef COUNT
-#define COUNT 500
+#define COUNT 2000
 #endif
 
 int
@@ -66,8 +66,6 @@ main (int argc, char **argv)
 
     for (test = 0; test < count; test++)
       {
-	unsigned size_min;
-	unsigned size_range;
 	mp_size_t an;
 	mp_size_t itch;
 	mp_limb_t p_before, p_after, s_before, s_after;

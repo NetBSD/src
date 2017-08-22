@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 
 #include <stdlib.h>
@@ -78,7 +78,7 @@ main (int argc, char **argv)
       if (mpn_cmp (refp, rp, rn))
 	{
 	  printf ("ERROR in test %d, an = %d, bn = %d, rn = %d\n",
-		  test, an, bn, rn);
+		  test, (int) an, (int) bn, (int) rn);
 	  printf("a: "); mpn_dump (ap, an);
 	  printf("b: "); mpn_dump (bp, bn);
 	  printf("r:   "); mpn_dump (rp, rn);

@@ -9,17 +9,28 @@ Copyright 2001, 2002, 2005, 2009 Free Software Foundation, Inc.
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include "gmp.h"
@@ -121,12 +132,8 @@ mpn_fib2_ui (mp_ptr fp, mp_ptr f1p, unsigned long int n)
 
 	  /* Calculate F[2k+1] = 4*F[k]^2 - F[k-1]^2 + 2*(-1)^k.
 	     n&mask is the low bit of our implied k.  */
-#if HAVE_NATIVE_mpn_rsblsh2_n || HAVE_NATIVE_mpn_rsblsh_n
 #if HAVE_NATIVE_mpn_rsblsh2_n
 	  fp[size] = mpn_rsblsh2_n (fp, fp, xp, size);
-#else /* HAVE_NATIVE_mpn_rsblsh_n */
-	  fp[size] = mpn_rsblsh_n (fp, fp, xp, size, 2);
-#endif
 	  if ((n & mask) == 0)
 	    MPN_INCR_U(fp, size + 1, 2);	/* possible +2 */
 	  else

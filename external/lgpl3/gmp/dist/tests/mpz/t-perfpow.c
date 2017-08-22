@@ -2,7 +2,7 @@
 
    Contributed to the GNU project by Torbjorn Granlund and Martin Boij.
 
-Copyright 2008, 2009, 2010 Free Software Foundation, Inc.
+Copyright 2008-2010, 2014 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -17,7 +17,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,7 +30,7 @@ struct
 {
   const char *num_as_str;
   char want;
-} tests[] =
+} static tests[] =
   {
     { "0", 1},
     { "1", 1},
@@ -163,7 +163,7 @@ check_random (int reps)
 	  else
 	    {
 	      mpz_urandomb (np, rands, 32);
-	      destroy = mpz_get_ui (np) % (nrprimes - 2) + 1;
+	      destroy = mpz_get_ui (np) % (nrprimes - 2);
 	    }
 
 	  g = exp[destroy];
@@ -208,9 +208,14 @@ check_random (int reps)
 	}
       else
 	{
-	  if (res == 1)
+	  if (res == 1 && destroy != 0)
 	    {
 	      gmp_printf("n = %Zu\nn was destroyed, but perfpow_p still believes n is a perfect power\n", n);
+	      abort ();
+	    }
+	  else if (res == 0 && destroy == 0)
+	    {
+	      gmp_printf("n = %Zu\nn is a perfect power, perfpow_p disagrees\n", n);
 	      abort ();
 	    }
 	}

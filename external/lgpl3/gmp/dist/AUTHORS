@@ -1,6 +1,6 @@
 Authors of GNU MP (in chronological order of initial contribution)
 
-Torbjörn Granlund	Main author
+TorbjÃ¶rn Granlund	Main author
 
 John Amanatides		Original version of mpz/pprime_p.c
 
@@ -30,7 +30,7 @@ Pedro Gimeno		Mersenne Twister random generator, other random number
 
 Jason Moxham		Previous versions of mpz/fac_ui.c and gen-fac_ui.c
 
-Niels Möller		gen-jacobitab.c,
+Niels MÃ¶ller		gen-jacobitab.c,
 			mpn/generic/hgcd2.c, hgcd.c, hgcd_step.c,
 			hgcd_appr.c, hgcd_matrix.c, hgcd_reduce.c,
 			gcd.c, gcdext.c, matrix22_mul.c,
@@ -40,6 +40,7 @@ Niels Möller		gen-jacobitab.c,
 			matrix22_mul1_inverse_vector.c,
 			toom_interpolate_7pts, mulmod_bnm1.c, dcpi1_bdiv_qr.c,
 			dcpi1_bdiv_q.c, sbpi1_bdiv_qr.c, sbpi1_bdiv_q.c,
+			sec_invert.c,
 			toom_eval_dgr3_pm1.c, toom_eval_dgr3_pm2.c,
 			toom_eval_pm1.c, toom_eval_pm2.c, toom_eval_pm2exp.c,
 			divexact.c, mod_1_1.c, div_qr_2.c,
@@ -61,7 +62,7 @@ Marco Bodrato		mpn/generic/toom44_mul.c, toom4_sqr.c, toom53_mul.c,
 			toom8h_mul.c, toom8_sqr.c, toom_interpolate_16pts.c,
 			mulmod_bnm1.c, sqrmod_bnm1.c, nussbaumer_mul.c,
 			toom_eval_pm2.c, toom_eval_pm2rexp.c,
-			mullo_n.c, invert.c, invertappr.c;
+			mullo_n.c, sqrlo.c, invert.c, invertappr.c;
 			mpz/fac_ui.c, 2fac_ui.c, mfac_uiui.c, oddfac_1.c,
 			primorial_ui.c, prodlimbs.c, goetgheluck_bin_uiui.c.
 
@@ -77,3 +78,23 @@ David Harvey		mpn/generic/add_err1_n.c, add_err2_n.c,
 Martin Boij		mpn/generic/perfpow.c
 
 Marc Glisse		gmpxx.h improvements
+
+David Miller		mpn/sparc32/ultrasparct1/{addmul_1,mul_1,submul_1}.asm
+			mpn/sparc64/ultrasparct3/{mul_1,addmul_1,submul_1}.asm
+			mpn/sparc64/ultrasparct3/{add_n,sub_n}.asm
+			mpn/sparc64/ultrasparct3/{popcount,hamdist}.asm
+			mpn/sparc64/ultrasparct3/cnd_aors_n.asm
+			mpn/sparc64/{rshift,lshift,lshiftc}.asm
+			mpn/sparc64/tabselect.asm
+
+Mark Sofroniou		mpn/generic/mul_fft.c type cleanup.
+
+Ulrich Weigand		Changes to support powerpc64le:
+			configure.ac, mpn/powerpc64/{elf,aix,darwin}.m4,
+			mpn/powerpc32/{darwin,elf}.m4,
+			mpn/powerpc64/mode64/{dive_1,divrem_1,divrem_2}.asm,
+			mpn/powerpc64/mode64/{gcd_1,invert_limb,mode1o}.asm,
+			mpn/powerpc64/mode64/{mod_1_1,mod_1_4}.asm,
+			mpn/powerpc64/mode64/p7/gcd_1.asm,
+			mpn/powerpc64/p6/{lshift,lshiftc,rshift}.asm,
+			mpn/powerpc64/vmx/popcount.asm.

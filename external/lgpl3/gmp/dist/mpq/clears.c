@@ -1,56 +1,50 @@
 /* mpq_clears() -- Clear multiple mpq_t variables.
 
-Copyright 2009 Free Software Foundation, Inc.
+Copyright 2009, 2014, 2015 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
-#include "config.h"
-
-#if HAVE_STDARG
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-#include <stdio.h>		/* for NULL */
 #include "gmp.h"
 #include "gmp-impl.h"
 
 void
-#if HAVE_STDARG
 mpq_clears (mpq_ptr x, ...)
-#else
-mpq_clears (va_alist)
-     va_dcl
-#endif
 {
   va_list  ap;
 
-#if HAVE_STDARG
   va_start (ap, x);
-#else
-  mpq_ptr x;
-  va_start (ap);
-  x = va_arg (ap, mpq_ptr);
-#endif
 
   while (x != NULL)
     {
-      mpq_clear (x);
+      __GMP_FREE_FUNC_LIMBS (PTR(NUM(x)), ALLOC(NUM(x)));
+      __GMP_FREE_FUNC_LIMBS (PTR(DEN(x)), ALLOC(DEN(x)));
       x = va_arg (ap, mpq_ptr);
     }
+
   va_end (ap);
 }

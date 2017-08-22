@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +44,7 @@ ref_mpq_cmp_ui (mpq_t a, unsigned long int bn, unsigned long int bd)
 }
 
 #ifndef SIZE
-#define SIZE 8	/* increasing this lowers the probabilty of finding an error */
+#define SIZE 8	/* increasing this lowers the probability of finding an error */
 #endif
 
 int
@@ -86,6 +86,18 @@ main (int argc, char **argv)
 
       mpq_canonicalize (a);
       mpq_canonicalize (b);
+
+      ccref = ref_mpq_cmp_ui (a, 1, 1);
+      cc = mpq_cmp_ui (a, 1, 1);
+
+      if (SGN (ccref) != SGN (cc))
+	abort ();
+
+      ccref = ref_mpq_cmp_ui (a, 0, 1);
+      cc = mpq_cmp_ui (a, 0, 1);
+
+      if (SGN (ccref) != SGN (cc))
+	abort ();
 
       bn = mpz_get_ui (NUM (b));
       bd = mpz_get_ui (DEN (b));

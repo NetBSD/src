@@ -1,22 +1,34 @@
 dnl  X86-64 mpn_mul_1 optimised for Intel Sandy Bridge.
 
-dnl  Copyright 2003, 2004, 2005, 2007, 2008, 2011, 2012 Free Software
-dnl  Foundation, Inc.
+dnl  Contributed to the GNU project by Torbjörn Granlund.
+
+dnl  Copyright 2003-2005, 2007, 2008, 2011-2013 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -28,7 +40,8 @@ C AMD bobcat
 C Intel P4
 C Intel core2
 C Intel NHM
-C Intel SBR
+C Intel SBR	 2.5
+C Intel IBR	 2.4
 C Intel atom
 C VIA nano
 
@@ -38,6 +51,8 @@ C optimisation tool suite written by David Harvey and Torbjorn Granlund.
 C TODO
 C  * The loop is great, but the prologue code was quickly written.  Tune it!
 C  * Add mul_1c entry point.
+C  * We could preserve one less register under DOS64 calling conventions, using
+C    r10 instead of rsi.
 
 define(`rp',      `%rdi')   C rcx
 define(`up',      `%rsi')   C rdx
@@ -46,29 +61,29 @@ define(`v0',      `%rcx')   C r9
 
 define(`n',	  `%r11')
 
-dnl Disable until tested ABI_SUPPORT(DOS64)
+ABI_SUPPORT(DOS64)
 ABI_SUPPORT(STD64)
 
-IFDOS(`	define(`up', ``%rsi'')	') dnl
-IFDOS(`	define(`rp', ``%rcx'')	') dnl
-IFDOS(`	define(`v0', ``%r9'')	') dnl
-IFDOS(`	define(`r9', ``rdi'')	') dnl
-IFDOS(`	define(`n',  ``%r8'')	') dnl
-IFDOS(`	define(`r8', ``r11'')	') dnl
+IFDOS(`	define(`up',     ``%rsi'')') dnl
+IFDOS(`	define(`rp',     ``%rcx'')') dnl
+IFDOS(`	define(`v0',     ``%r9'')') dnl
+IFDOS(`	define(`r9',     ``rdi'')') dnl
+IFDOS(`	define(`n_param',``%r8'')') dnl
+IFDOS(`	define(`n',      ``%r8'')') dnl
+IFDOS(`	define(`r8',     ``r11'')') dnl
 
 ASM_START()
 	TEXT
 	ALIGN(16)
-
 PROLOGUE(mpn_mul_1)
+
 IFDOS(``push	%rsi		'')
 IFDOS(``push	%rdi		'')
 IFDOS(``mov	%rdx, %rsi	'')
 
 	mov	(up), %rax
-IFSTD(`	mov	R32(n_param), R32(%r10)	')
-IFDOS(`	mov	n, %r10			')
-IFSTD(`	mov	R32(n_param), R32(n)	')
+	mov	R32(`n_param'), R32(%r10)
+IFSTD(`	mov	n_param, n		')
 
 	lea	(up,n_param,8), up
 	lea	-8(rp,n_param,8), rp
@@ -92,6 +107,8 @@ L(b1):	mov	%rax, %r9
 	jnc	L(L1)
 	mov	%rax, (rp)
 	mov	%rdx, %rax
+IFDOS(``pop	%rdi		'')
+IFDOS(``pop	%rsi		'')
 	ret
 
 L(b2):	add	$-2, n

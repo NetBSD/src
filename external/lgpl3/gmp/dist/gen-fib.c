@@ -1,21 +1,32 @@
 /* Generate Fibonacci table data.
 
-Copyright 2001, 2002, 2004, 2012 Free Software Foundation, Inc.
+Copyright 2001, 2002, 2004, 2012, 2014, 2015 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include "bootstrap.c"
@@ -29,12 +40,12 @@ generate (int numb_bits)
   mpz_t  limit, l;
   int    falloc, i;
 
-  mpz_init_set_ui (limit, 1L);
-  mpz_mul_2exp (limit, limit, numb_bits);
+  mpz_init2 (limit, numb_bits + 1);
+  mpz_setbit (limit, numb_bits);
 
   /* fib(2n) > 2^n, so use 2n as a limit for the table size */
   falloc = 2 * numb_bits;
-  f = xmalloc (falloc * sizeof (*f));
+  f = (mpz_t*) xmalloc (falloc * sizeof (*f));
 
   mpz_init_set_ui (f[0], 1L);  /* F[-1] */
   mpz_init_set_ui (f[1], 0L);  /* F[0] */
@@ -112,7 +123,7 @@ main (int argc, char *argv[])
 
   if (argc != 4)
     {
-      fprintf (stderr, "Usage: gen-bases <header|table> <limbbits> <nailbits>\n");
+      fprintf (stderr, "Usage: gen-fib <header|table> <limbbits> <nailbits>\n");
       exit (1);
     }
 

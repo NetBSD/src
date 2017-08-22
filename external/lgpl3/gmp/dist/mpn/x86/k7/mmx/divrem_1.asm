@@ -1,22 +1,33 @@
 dnl  AMD K7 mpn_divrem_1, mpn_divrem_1c, mpn_preinv_divrem_1 -- mpn by limb
 dnl  division.
 
-dnl  Copyright 1999, 2000, 2001, 2002, 2004 Free Software Foundation, Inc.
-dnl
+dnl  Copyright 1999-2002, 2004 Free Software Foundation, Inc.
+
 dnl  This file is part of the GNU MP Library.
 dnl
-dnl  The GNU MP Library is free software; you can redistribute it and/or
-dnl  modify it under the terms of the GNU Lesser General Public License as
-dnl  published by the Free Software Foundation; either version 3 of the
-dnl  License, or (at your option) any later version.
+dnl  The GNU MP Library is free software; you can redistribute it and/or modify
+dnl  it under the terms of either:
 dnl
-dnl  The GNU MP Library is distributed in the hope that it will be useful,
-dnl  but WITHOUT ANY WARRANTY; without even the implied warranty of
-dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-dnl  Lesser General Public License for more details.
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
 dnl
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
+dnl  The GNU MP Library is distributed in the hope that it will be useful, but
+dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -445,7 +456,7 @@ C chain, and nothing better than 18 cycles has been found when using it.
 C The jump is taken only when q1 is 0xFFFFFFFF, and on random data this will
 C be an extremely rare event.
 C
-C Branch mispredictions will hit random occurrances of q1==0xFFFFFFFF, but
+C Branch mispredictions will hit random occurrences of q1==0xFFFFFFFF, but
 C if some special data is coming out with this always, the q1_ff special
 C case actually runs at 15 c/l.  0x2FFF...FFFD divided by 3 is a good way to
 C induce the q1_ff case, for speed measurements or testing.  Note that

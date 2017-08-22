@@ -3,17 +3,28 @@ Copyright 1991, 1996, 1999, 2000, 2007 Free Software Foundation, Inc.
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.
 
 
 
@@ -38,14 +49,14 @@ increases with operand sizes for certain operations, since GNU MP in many
 cases has asymptotically faster algorithms.
 
 GNU MP is free software and may be freely copied on the terms contained in the
-files COPYING.LIB and COPYING (most of GNU MP is under the former, some under
-the latter).
+files COPYING* (see the manual for information on which license(s) applies to
+which components of GNU MP).
 
 
 
 			OVERVIEW OF GNU MP
 
-There are five classes of functions in GNU MP.
+There are four classes of functions in GNU MP.
 
  1. Signed integer arithmetic functions (mpz).  These functions are intended
     to be easy to use, with their regular interface.  The associated type is
@@ -71,11 +82,6 @@ There are five classes of functions in GNU MP.
     Almost all calculations, in the entire package, are made by calling these
     low-level functions.
 
- 5. Berkeley MP compatible functions.
-
-    To use these functions, include the file "mp.h".  You can test if you are
-    using the GNU version by testing if the symbol __GNU_MP__ is defined.
-
 For more information on how to use GNU MP, please refer to the documentation.
 It is composed from the file doc/gmp.texi, and can be displayed on the screen
 or printed.  How to do that, as well how to build the library, is described in
@@ -87,7 +93,7 @@ the INSTALL file in this directory.
 
 If you find a bug in the library, please make sure to tell us about it!
 
-You should first check the GNU MP web pages at http://gmplib.org/, under
+You should first check the GNU MP web pages at https://gmplib.org/, under
 "Status of the current release".  There will be patches for all known serious
 bugs there.
 

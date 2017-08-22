@@ -1,6 +1,6 @@
 /* Test gmp_scanf and related functions.
 
-Copyright 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+Copyright 2001-2004 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 
 /* Usage: t-scanf [-s]
@@ -28,14 +28,9 @@ the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
    check_f, but enough differences to make a common loop or a set of macros
    seem like too much trouble. */
 
+#include "config.h"	/* needed for the HAVE_, could also move gmp incls */
 
-#include "config.h"
-
-#if HAVE_STDARG
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include <stddef.h>    /* for ptrdiff_t */
 #include <stdio.h>
@@ -129,25 +124,12 @@ int   fromstring_next_c;
 
 /* Call gmp_fscanf, reading the "input" string data provided. */
 int
-#if HAVE_STDARG
 fromstring_gmp_fscanf (const char *input, const char *fmt, ...)
-#else
-fromstring_gmp_fscanf (va_alist)
-     va_dcl
-#endif
 {
   va_list  ap;
   FILE     *fp;
   int      ret;
-#if HAVE_STDARG
   va_start (ap, fmt);
-#else
-  const char    *input;
-  const char    *fmt;
-  va_start (ap);
-  input = va_arg (ap, const char *);
-  fmt = va_arg (ap, const char *);
-#endif
 
   fp = fopen (TEMPFILE, "w+");
   ASSERT_ALWAYS (fp != NULL);

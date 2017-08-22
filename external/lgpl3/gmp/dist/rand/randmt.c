@@ -9,17 +9,28 @@ Copyright 2002, 2003, 2006 Free Software Foundation, Inc.
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>   /* for NULL */
 
@@ -347,7 +358,7 @@ void
 __gmp_randclear_mt (gmp_randstate_t rstate)
 {
   (*__gmp_free_func) ((void *) RNG_STATE (rstate),
-		      ALLOC (rstate->_mp_seed) * BYTES_PER_MP_LIMB);
+		      ALLOC (rstate->_mp_seed) * GMP_LIMB_BYTES);
 }
 
 void __gmp_randiset_mt (gmp_randstate_ptr, gmp_randstate_srcptr);
@@ -362,7 +373,7 @@ static const gmp_randfnptr_t Mersenne_Twister_Generator_Noseed = {
 void
 __gmp_randiset_mt (gmp_randstate_ptr dst, gmp_randstate_srcptr src)
 {
-  const mp_size_t sz = ((sizeof (gmp_rand_mt_struct) - 1) / BYTES_PER_MP_LIMB) + 1;
+  const mp_size_t sz = ((sizeof (gmp_rand_mt_struct) - 1) / GMP_LIMB_BYTES) + 1;
   gmp_rand_mt_struct *dstp, *srcp;
   mp_size_t i;
 
@@ -385,7 +396,7 @@ __gmp_randiset_mt (gmp_randstate_ptr dst, gmp_randstate_srcptr src)
 void
 __gmp_randinit_mt_noseed (gmp_randstate_ptr dst)
 {
-  const mp_size_t sz = ((sizeof (gmp_rand_mt_struct) - 1) / BYTES_PER_MP_LIMB) + 1;
+  const mp_size_t sz = ((sizeof (gmp_rand_mt_struct) - 1) / GMP_LIMB_BYTES) + 1;
   gmp_rand_mt_struct *dstp;
   mp_size_t i;
 

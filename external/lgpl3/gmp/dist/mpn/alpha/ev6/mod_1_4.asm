@@ -5,19 +5,30 @@ dnl  Contributed to the GNU project by Torbjorn Granlund.
 dnl  Copyright 2009, 2010 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -264,7 +275,7 @@ PROLOGUE(mpn_mod_1s_4p_cps,gp)
 	sll	r17, r10, r9
 	mov	r9, r16
 	jsr	r26, mpn_invert_limb
-	ldah	r29, 0(r26)
+	LDGP(	r29, 0(r26))
 	subq	r31, r10, r2
 	lda	r1, 1(r31)
 	sll	r1, r10, r1
@@ -272,7 +283,6 @@ PROLOGUE(mpn_mod_1s_4p_cps,gp)
 	srl	r0, r2, r2
 	ldq	r26, 0(r30)
 	bis	r2, r1, r2
-	lda	r29, 0(r29)
 	stq	r0, 0(r11)
 	stq	r10, 8(r11)
 	mulq	r2, r3, r2

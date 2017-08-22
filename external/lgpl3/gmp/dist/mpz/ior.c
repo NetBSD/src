@@ -6,17 +6,28 @@ Software Foundation, Inc.
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -47,10 +58,9 @@ mpz_ior (mpz_ptr res, mpz_srcptr op1, mpz_srcptr op2)
 	    {
 	      if (ALLOC(res) < op1_size)
 		{
-		  _mpz_realloc (res, op1_size);
+		  res_ptr = MPZ_REALLOC (res, op1_size);
 		  /* No overlapping possible: op1_ptr = PTR(op1); */
 		  op2_ptr = PTR(op2);
-		  res_ptr = PTR(res);
 		}
 
 	      if (res_ptr != op1_ptr)
@@ -64,10 +74,9 @@ mpz_ior (mpz_ptr res, mpz_srcptr op1, mpz_srcptr op2)
 	    {
 	      if (ALLOC(res) < op2_size)
 		{
-		  _mpz_realloc (res, op2_size);
+		  res_ptr = MPZ_REALLOC (res, op2_size);
 		  op1_ptr = PTR(op1);
 		  /* No overlapping possible: op2_ptr = PTR(op2); */
-		  res_ptr = PTR(res);
 		}
 
 	      if (res_ptr != op2_ptr)
@@ -91,7 +100,6 @@ mpz_ior (mpz_ptr res, mpz_srcptr op1, mpz_srcptr op2)
       if (op2_size < 0)
 	{
 	  mp_ptr opx, opy;
-	  mp_limb_t cy;
 
 	  /* Both operands are negative, so will be the result.
 	     -((-OP1) | (-OP2)) = -(~(OP1 - 1) | ~(OP2 - 1)) =
@@ -120,17 +128,14 @@ mpz_ior (mpz_ptr res, mpz_srcptr op1, mpz_srcptr op2)
 
 	  if (res_size != 0)
 	    {
-	      res_ptr = MPZ_REALLOC (res, res_size + 1);
+	      res_ptr = MPZ_NEWALLOC (res, res_size + 1);
 
 	      /* Second loop computes the real result.  */
 	      mpn_and_n (res_ptr, op1_ptr, op2_ptr, res_size);
 
-	      cy = mpn_add_1 (res_ptr, res_ptr, res_size, (mp_limb_t) 1);
-	      if (cy)
-		{
-		  res_ptr[res_size] = cy;
-		  res_size++;
-		}
+	      res_ptr[res_size] = 0;
+	      MPN_INCR_U (res_ptr, res_size + 1, 1);
+	      res_size += res_ptr[res_size];
 	    }
 	  else
 	    {

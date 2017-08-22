@@ -1,22 +1,33 @@
 dnl  SPARC v9 mpn_sub_n -- Subtract two limb vectors of the same length > 0 and
 dnl  store difference in a third limb vector.
 
-dnl  Copyright 2001, 2002, 2003, 2011 Free Software Foundation, Inc.
+dnl  Copyright 2001-2003, 2011 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -84,7 +95,7 @@ L(com):
 	ldx	[vp-8],v3
 	subcc	n,8,n
 	sub	u0,v0,%g1	C main sub
-	sub	%g1,cy,%g4	C carry sub
+	sub	%g1,cy,%g5	C carry sub
 	orn	u0,v0,%g2
 	bl,pn	%xcc,.Lend4567
 	fanop
@@ -92,7 +103,7 @@ L(com):
 
 	.align	16
 C START MAIN LOOP
-.Loop:	orn	%g4,%g2,%g2
+.Loop:	orn	%g5,%g2,%g2
 	andn	u0,v0,%g3
 	ldx	[up+0],u0
 	fanop
@@ -104,15 +115,15 @@ C --
 C --
 	srlx	%g2,63,cy
 	sub	u1,v1,%g1
-	stx	%g4,[rp+0]
+	stx	%g5,[rp+0]
 	fanop
 C --
-	sub	%g1,cy,%g4
+	sub	%g1,cy,%g5
 	orn	u1,v1,%g2
 	fmnop
 	fanop
 C --
-	orn	%g4,%g2,%g2
+	orn	%g5,%g2,%g2
 	andn	u1,v1,%g3
 	ldx	[up-24],u1
 	fanop
@@ -124,15 +135,15 @@ C --
 C --
 	srlx	%g2,63,cy
 	sub	u2,v2,%g1
-	stx	%g4,[rp+8]
+	stx	%g5,[rp+8]
 	fanop
 C --
-	sub	%g1,cy,%g4
+	sub	%g1,cy,%g5
 	orn	u2,v2,%g2
 	fmnop
 	fanop
 C --
-	orn	%g4,%g2,%g2
+	orn	%g5,%g2,%g2
 	andn	u2,v2,%g3
 	ldx	[up-16],u2
 	fanop
@@ -144,15 +155,15 @@ C --
 C --
 	srlx	%g2,63,cy
 	sub	u3,v3,%g1
-	stx	%g4,[rp-16]
+	stx	%g5,[rp-16]
 	fanop
 C --
-	sub	%g1,cy,%g4
+	sub	%g1,cy,%g5
 	orn	u3,v3,%g2
 	fmnop
 	fanop
 C --
-	orn	%g4,%g2,%g2
+	orn	%g5,%g2,%g2
 	andn	u3,v3,%g3
 	ldx	[up-8],u3
 	fanop
@@ -164,45 +175,45 @@ C --
 C --
 	srlx	%g2,63,cy
 	sub	u0,v0,%g1
-	stx	%g4,[rp-8]
+	stx	%g5,[rp-8]
 	fanop
 C --
-	sub	%g1,cy,%g4
+	sub	%g1,cy,%g5
 	orn	u0,v0,%g2
 	bge,pt	%xcc,.Loop
 	fanop
 C END MAIN LOOP
 .Lend4567:
-	orn	%g4,%g2,%g2
+	orn	%g5,%g2,%g2
 	andn	u0,v0,%g3
 	andn	%g2,%g3,%g2
 	srlx	%g2,63,cy
 	sub	u1,v1,%g1
-	stx	%g4,[rp+0]
-	sub	%g1,cy,%g4
+	stx	%g5,[rp+0]
+	sub	%g1,cy,%g5
 	orn	u1,v1,%g2
-	orn	%g4,%g2,%g2
+	orn	%g5,%g2,%g2
 	andn	u1,v1,%g3
 	andn	%g2,%g3,%g2
 	srlx	%g2,63,cy
 	sub	u2,v2,%g1
-	stx	%g4,[rp+8]
-	sub	%g1,cy,%g4
+	stx	%g5,[rp+8]
+	sub	%g1,cy,%g5
 	orn	u2,v2,%g2
-	orn	%g4,%g2,%g2
+	orn	%g5,%g2,%g2
 	andn	u2,v2,%g3
 	andn	%g2,%g3,%g2
 	add	rp,32,rp
 	srlx	%g2,63,cy
 	sub	u3,v3,%g1
-	stx	%g4,[rp-16]
-	sub	%g1,cy,%g4
+	stx	%g5,[rp-16]
+	sub	%g1,cy,%g5
 	orn	u3,v3,%g2
-	orn	%g4,%g2,%g2
+	orn	%g5,%g2,%g2
 	andn	u3,v3,%g3
 	andn	%g2,%g3,%g2
 	srlx	%g2,63,cy
-	stx	%g4,[rp-8]
+	stx	%g5,[rp-8]
 
 	addcc	n,4,n
 	bz,pn	%xcc,.Lret
@@ -216,10 +227,10 @@ C END MAIN LOOP
 	subcc	n,1,n
 	sub	u0,v0,%g1
 	orn	u0,v0,%g2
-	sub	%g1,cy,%g4
+	sub	%g1,cy,%g5
 	andn	u0,v0,%g3
-	orn	%g4,%g2,%g2
-	stx	%g4,[rp-8]
+	orn	%g5,%g2,%g2
+	stx	%g5,[rp-8]
 	andn	%g2,%g3,%g2
 	bnz,pt	%xcc,.Loop0
 	srlx	%g2,63,cy

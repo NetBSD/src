@@ -5,19 +5,30 @@ dnl  Contributed to the GNU project by Torbjorn Granlund.
 dnl  Copyright 2010 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -42,8 +53,6 @@ define(`up1',`r14')
 define(`vp0',`vp')
 define(`vp1',`r15')
 
-define(`cmpltu',  `cmp.ltu')
-define(`cmpeqor', `cmp.eq.or')
 
 ASM_START()
 PROLOGUE(mpn_add_n_sub_n)
@@ -53,6 +62,7 @@ PROLOGUE(mpn_add_n_sub_n)
 ifdef(`HAVE_ABI_32',`
 	addp4	sp = 0, sp		C				M I
 	addp4	dp = 0, dp		C				M I
+	nop.i	0
 	addp4	up = 0, up		C				M I
 	addp4	vp = 0, vp		C				M I
 	zxt4	n = n			C				I

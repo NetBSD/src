@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <limits.h>
 #include <stdlib.h>
@@ -25,14 +25,6 @@ the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 #define MAXBITS 400
 #define COUNT 10000
-
-static void
-dump (const char *label, const mpz_t x)
-{
-  char *buf = mpz_get_str (NULL, 16, x);
-  fprintf (stderr, "%s: %s\n", label, buf);
-  testfree (buf);
-}
 
 /* Called when s is supposed to be floor(root(u,z)), and r = u - s^z */
 static int
@@ -46,7 +38,7 @@ rootrem_valid_p (const mpz_t u, const mpz_t s, const mpz_t r, unsigned long z)
   else
     mpz_pow_ui (t, s, z);
   mpz_sub (t, u, t);
-  if (mpz_sgn (t) != mpz_sgn(u) || mpz_cmp (t, r) != 0)
+  if ((mpz_sgn (t) != mpz_sgn(u) && mpz_sgn (t) != 0) || mpz_cmp (t, r) != 0)
     {
       mpz_clear (t);
       return 0;
@@ -82,7 +74,7 @@ testmain (int argc, char **argv)
     {
       mini_rrandomb (u, MAXBITS);
       mini_rrandomb (bs, 12);
-      e = mpz_getlimbn (bs, 0) % mpz_sizeinbase (u, 2) + 2;
+      e = mpz_getlimbn (bs, 0) % mpz_sizeinbase (u, 2) + 1;
       if ((e & 1) && (mpz_getlimbn (bs, 0) & (1L<<10)))
 	mpz_neg (u, u);
       mpz_rootrem (s, r, u, e);

@@ -1,23 +1,35 @@
 dnl  AMD64 mpn_com optimised for CPUs with fast SSE.
 
-dnl  Copyright 2003, 2005, 2007, 2011, 2012 Free Software Foundation, Inc.
+dnl  Copyright 2003, 2005, 2007, 2011, 2012, 2015 Free Software Foundation,
+dnl  Inc.
 
 dnl  Contributed to the GNU project by Torbjorn Granlund.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -25,13 +37,21 @@ C	     cycles/limb     cycles/limb     cycles/limb      good
 C              aligned	      unaligned	      best seen	     for cpu?
 C AMD K8,K9	 2.0		 2.0				N
 C AMD K10	 0.85		 1.3				Y/N
-C AMD bd1	 1.40		 1.40				Y
+C AMD bull	 1.40		 1.40				Y
+C AMD pile     0.9-1.4	       0.9-1.4				Y
+C AMD steam
+C AMD excavator
 C AMD bobcat	 3.1		 3.1				N
+C AMD jaguar	 0.91		 0.91		opt/opt		Y
 C Intel P4	 2.28		 illop				Y
 C Intel core2	 1.02		 1.02				N
 C Intel NHM	 0.53		 0.68				Y
-C Intel SBR	 0.51		 0.75				Y
+C Intel SBR	 0.51		 0.75		opt/0.65	Y/N
+C Intel IBR	 0.50		 0.57		opt/opt		Y
+C Intel HWL	 0.51		 0.64		opt/0.58	Y
+C Intel BWL	 0.61		 0.65		0.57/opt	Y
 C Intel atom	 3.68		 3.68				N
+C Intel SLM	 1.09		 1.35				N
 C VIA nano	 1.17		 5.09				Y/N
 
 C We try to do as many 16-byte operations as possible.  The top-most and
@@ -57,9 +77,6 @@ ASM_START()
 	ALIGN(16)
 PROLOGUE(mpn_com)
 	FUNC_ENTRY(3)
-
-	test	n, n
-	jz	L(don)
 
 	pcmpeqb	%xmm7, %xmm7		C set to 111...111
 

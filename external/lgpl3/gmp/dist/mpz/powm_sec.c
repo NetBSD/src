@@ -2,23 +2,34 @@
 
    Contributed to the GNU project by Torbjorn Granlund.
 
-Copyright 1991, 1993, 1994, 1996, 1997, 2000, 2001, 2002, 2005, 2008, 2009,
-2012 Free Software Foundation, Inc.
+Copyright 1991, 1993, 1994, 1996, 1997, 2000-2002, 2005, 2008, 2009, 2012 Free
+Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 
 #include "gmp.h"
@@ -54,19 +65,25 @@ mpz_powm_sec (mpz_ptr r, mpz_srcptr b, mpz_srcptr e, mpz_srcptr m)
 	}
       DIVIDE_BY_ZERO;
     }
-
   en = es;
+
   bn = ABSIZ(b);
 
+  if (UNLIKELY (bn == 0))
+    {
+      SIZ(r) = 0;
+      return;
+    }
+
   TMP_MARK;
-  tp = TMP_ALLOC_LIMBS (n + mpn_powm_sec_itch (bn, en, n));
+  tp = TMP_ALLOC_LIMBS (n + mpn_sec_powm_itch (bn, en * GMP_NUMB_BITS, n));
 
   rp = tp;  tp += n;
 
   bp = PTR(b);
   ep = PTR(e);
 
-  mpn_powm_sec (rp, bp, bn, ep, en, mp, n, tp);
+  mpn_sec_powm (rp, bp, bn, ep, en * GMP_NUMB_BITS, mp, n, tp);
 
   rn = n;
 

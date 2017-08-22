@@ -1,25 +1,35 @@
 ## Process this file with automake to generate Makefile.in
 
-# Copyright 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2008, 2009,
-# 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2000-2003, 2005-2011 Free Software Foundation, Inc.
 #
-# This file is part of the GNU MP Library.
+#  This file is part of the GNU MP Library.
 #
-# The GNU MP Library is free software; you can redistribute it and/or modify
-# it under the terms of the GNU Lesser General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or (at your
-# option) any later version.
+#  The GNU MP Library is free software; you can redistribute it and/or modify
+#  it under the terms of either:
 #
-# The GNU MP Library is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-# License for more details.
+#    * the GNU Lesser General Public License as published by the Free
+#      Software Foundation; either version 3 of the License, or (at your
+#      option) any later version.
 #
-# You should have received a copy of the GNU Lesser General Public License
-# along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+#  or
+#
+#    * the GNU General Public License as published by the Free Software
+#      Foundation; either version 2 of the License, or (at your option) any
+#      later version.
+#
+#  or both in parallel, as here.
+#
+#  The GNU MP Library is distributed in the hope that it will be useful, but
+#  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+#  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+#  for more details.
+#
+#  You should have received copies of the GNU General Public License and the
+#  GNU Lesser General Public License along with the GNU MP Library.  If not,
+#  see https://www.gnu.org/licenses/.
 
 
-INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/tests
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/tests
 
 EXTRA_DIST = alpha.asm pentium.asm sparcv9.asm hppa.asm hppa2.asm hppa2w.asm \
   ia64.asm powerpc.asm powerpc64.asm x86_64.asm many.pl
@@ -42,6 +52,7 @@ EXTRA_LTLIBRARIES = libspeed.la
 
 libspeed_la_SOURCES =							\
   common.c divrem1div.c divrem1inv.c divrem2div.c divrem2inv.c		\
+  div_qr_1n_pi1_1.c div_qr_1n_pi1_2.c div_qr_1_tune.c			\
   freq.c								\
   gcdext_single.c gcdext_double.c gcdextod.c gcdextos.c			\
   hgcd_lehmer.c hgcd_appr_lehmer.c hgcd_reduce_1.c hgcd_reduce_2.c	\
@@ -133,9 +144,9 @@ TUNE_MPN_SRCS_BASIC = div_qr_2.c bdiv_q.c bdiv_qr.c			\
   invertappr.c invert.c binvert.c divrem_2.c gcd.c gcdext.c		\
   get_str.c set_str.c matrix22_mul.c					\
   hgcd.c hgcd_appr.c hgcd_reduce.c					\
-  mul_n.c sqr.c powm_sec.c						\
+  mul_n.c sqr.c sec_powm.c						\
   mullo_n.c mul_fft.c mul.c tdiv_qr.c mulmod_bnm1.c sqrmod_bnm1.c	\
-  mulmid.c mulmid_n.c toom42_mulmid.c					\
+  mulmid.c mulmid_n.c toom42_mulmid.c sqrlo.c sqrlo_basecase.c		\
   nussbaumer_mul.c toom6h_mul.c toom8h_mul.c toom6_sqr.c toom8_sqr.c	\
   toom22_mul.c toom2_sqr.c toom33_mul.c toom3_sqr.c toom44_mul.c toom4_sqr.c
 

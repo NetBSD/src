@@ -1,6 +1,6 @@
 /* Test mpz_powm, mpz_mul, mpz_mod, mpz_mod_ui, mpz_div_ui.
 
-Copyright 1991, 1993, 1994, 1996, 1999, 2000, 2001, 2009, 2012 Free Software
+Copyright 1991, 1993, 1994, 1996, 1999-2001, 2009, 2012 Free Software
 Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>

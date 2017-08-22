@@ -1,21 +1,32 @@
 dnl  Alpha mpn_divrem_2 -- Divide an mpn number by a normalized 2-limb number.
 
-dnl  Copyright 2007, 2008 Free Software Foundation, Inc.
+dnl  Copyright 2007, 2008, 2013 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -41,8 +52,7 @@ define(`un_param',	`r19')
 define(`dp',		`r20')
 
 ASM_START()
-PROLOGUE(mpn_divrem_2)
-	ldgp	r29, 0(r27)
+PROLOGUE(mpn_divrem_2,gp)
 	lda	r30, -80(r30)
 	stq	r26, 0(r30)
 	stq	r9, 8(r30)
@@ -80,7 +90,7 @@ L(L8):	stq	r3, 72(r30)
 	blt	r19, L(L10)
 	bis	r31, r12, r16
 	jsr	r26, mpn_invert_limb
-	ldgp	r29, 0(r26)
+	LDGP(	r29, 0(r26))
 	mulq	r0, r12, r4		C t0 = LO(di * d1)
 	umulh	r0, r10, r2		C s1 = HI(di * d0)
 	addq	r4, r10, r4		C t0 += d0

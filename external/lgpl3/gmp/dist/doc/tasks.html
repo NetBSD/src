@@ -4,7 +4,7 @@
   <title>GMP Itemized Development Tasks</title>
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="stylesheet" href="gmp.css">
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 
 <center>
@@ -15,30 +15,40 @@
 
 <font size=-1>
 <pre>
-Copyright 2000, 2001, 2002, 2003, 2004, 2006, 2008, 2009 Free Software
-Foundation, Inc.
+Copyright 2000-2004, 2006, 2008, 2009 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published
-by the Free Software Foundation; either version 3 of the License, or (at
-your option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.
 </pre>
 </font>
 
 <hr>
 <!-- NB. timestamp updated automatically by emacs -->
-  This file current as of 5 Dec 2011.  An up-to-date version is available at
-  <a href="http://gmplib.org/tasks.html">http://gmplib.org/tasks.html</a>.
+  This file current as of 29 Jan 2014.  An up-to-date version is available at
+  <a href="https://gmplib.org/tasks.html">https://gmplib.org/tasks.html</a>.
   Please send comments about this page to gmp-devel<font>@</font>gmplib.org.
 
 <p> These are itemized GMP development tasks.  Not all the tasks
@@ -477,7 +487,7 @@ either already been taken care of, or have become irrelevant.
      Set <code>ALLOC(var)</code> to 0 to indicate nothing allocated, and let
      <code>_mpz_realloc</code> do the initial alloc.  Set
      <code>z-&gt;_mp_d</code> to a dummy that <code>mpz_get_ui</code> and
-     similar can unconditionally fetch from.  Niels Möller has had a go at
+     similar can unconditionally fetch from.  Niels MÃ¶ller has had a go at
      this.
      <br>
      The advantages of the lazy scheme would be:
@@ -514,7 +524,7 @@ either already been taken care of, or have become irrelevant.
      if they could share code with the current such functions (which should be
      possible).
 <li> <code>mpz_and_ui</code> etc might be of use sometimes.  Suggested by
-     Niels Möller.
+     Niels MÃ¶ller.
 <li> <code>mpf_set_str</code> and <code>mpf_inp_str</code> could usefully
      accept 0x, 0b etc when base==0.  Perhaps the exponent could default to
      decimal in this case, with a further 0x, 0b etc allowed there.
@@ -704,7 +714,7 @@ either already been taken care of, or have become irrelevant.
      Consider making these variant <code>mpz_set_str</code> etc forms
      available for <code>mpz_t</code> too, not just <code>mpz_class</code>
      etc.
-<li> <code>mpq_class operator+=</code>: Don't emit an unnecssary
+<li> <code>mpq_class operator+=</code>: Don't emit an unnecessary
      <code>mpq_set(q,q)</code> before <code>mpz_addmul</code> etc.
 <li> Put various bits of gmpxx.h into libgmpxx, to avoid excessive inlining.
      Candidates for this would be,
