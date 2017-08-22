@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.netbsd-gmp,v 1.4 2014/03/18 18:20:36 riastradh Exp $
+# $NetBSD: Makefile.netbsd-gmp,v 1.5 2017/08/22 09:57:18 mrg Exp $
 
 # hack makefile to help build gmp ./configure
 
@@ -15,5 +15,18 @@ ENV_ARGS=\
 			NM=${NM:Q} OBJDUMP=${OBJDUMP:Q} \
 			LIBS=-lintl
 
+.include "Makefile.arch"
+NEWCONFIGDIR?=	${NETBSDSRCDIR}
+ARCHDIR=	${NEWCONFIGDIR}/external/lgpl3/gmp/lib/libgmp/arch/${GMP_MACHINE_ARCH}
+
 all:
-	env ${ENV_ARGS} ${NETBSDSRCDIR}/external/lgpl3/gmp/dist/configure --host=${TARGET} --target=${TARGET}
+	mkdir -p build
+	cd build && env ${ENV_ARGS} ${NETBSDSRCDIR}/external/lgpl3/gmp/dist/configure --host=${TARGET} --target=${TARGET}
+
+copy-files:
+	cd build && cp gmp.h gmp-mparam.h config.h config.m4 ${ARCHDIR}
+	sed -i -e 's/define.*CONFIG_TOP_SRCDIR.*//' ${ARCHDIR}/config.m4
+	sed -i -e 's/__GMP_CC.*/__GMP_CC "gcc"/' ${ARCHDIR}/gmp.h
+	sed -i -e 's/GMP_MPARAM_H_SUGGEST[ 	]"\/.*dist\/mpn/GMP_MPARAM_H_SUGGEST ".\/mpn/' ${ARCHDIR}/config.h
+
+.include <bsd.obj.mk>
