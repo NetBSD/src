@@ -6,19 +6,30 @@ dnl  Contributed to the GNU project by Torbjorn Granlund.
 dnl  Copyright 2004, 2011 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
-
+dnl
 dnl  The GNU MP Library is free software; you can redistribute it and/or modify
-dnl  it under the terms of the GNU Lesser General Public License as published
-dnl  by the Free Software Foundation; either version 3 of the License, or (at
-dnl  your option) any later version.
-
+dnl  it under the terms of either:
+dnl
+dnl    * the GNU Lesser General Public License as published by the Free
+dnl      Software Foundation; either version 3 of the License, or (at your
+dnl      option) any later version.
+dnl
+dnl  or
+dnl
+dnl    * the GNU General Public License as published by the Free Software
+dnl      Foundation; either version 2 of the License, or (at your option) any
+dnl      later version.
+dnl
+dnl  or both in parallel, as here.
+dnl
 dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-dnl  License for more details.
-
-dnl  You should have received a copy of the GNU Lesser General Public License
-dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+dnl  for more details.
+dnl
+dnl  You should have received copies of the GNU General Public License and the
+dnl  GNU Lesser General Public License along with the GNU MP Library.  If not,
+dnl  see https://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
@@ -92,36 +103,37 @@ PROLOGUE(mpn_mul_2)
 	.body
 
 ifdef(`HAVE_ABI_32',`
-.mmi;		addp4	rp = 0, rp		C			M I
+ {.mmi;		addp4	rp = 0, rp		C			M I
 		addp4	up = 0, up		C			M I
 		addp4	vp = 0, vp		C			M I
-.mmi;		nop	1
+}{.mmi;		nop	1
 		nop	1
 		zxt4	n = n			C			I
-	;;')
+	;;
+}')
 
-.mmi;		ldf8	ux = [up], 8		C			M
+ {.mmi;		ldf8	ux = [up], 8		C			M
 		ldf8	v0 = [vp], 8		C			M
 		mov	r2 = ar.lc		C			I0
-.mmi;		nop	1			C			M
+}{.mmi;		nop	1			C			M
 		and	r14 = 3, n		C			M I
 		add	n = -2, n		C			M I
 	;;
-.mmi;		ldf8	uy = [up], 8		C			M
+}{.mmi;		ldf8	uy = [up], 8		C			M
 		ldf8	v1 = [vp]		C			M
-		shr.u	n = n, 2		C			I
-.mmi;		nop	1			C			M
+		shr.u	n = n, 2		C			I0
+}{.mmi;		nop	1			C			M
 		cmp.eq	p10, p0 = 1, r14	C			M I
 		cmp.eq	p11, p0 = 2, r14	C			M I
 	;;
-.mmi;		nop	1			C			M
+}{.mmi;		nop	1			C			M
 		cmp.eq	p12, p0 = 3, r14	C			M I
 		mov	ar.lc = n		C			I0
-.bbb;	(p10)	br.dptk	L(b01)			C			B
+}{.bbb;	(p10)	br.dptk	L(b01)			C			B
 	(p11)	br.dptk	L(b10)			C			B
 	(p12)	br.dptk	L(b11)			C			B
 	;;
-
+}
 	ALIGN(32)
 L(b00):		ldf8	u_1 = [up], 8
 		mov	acc1_2 = 0
@@ -257,7 +269,7 @@ L(b10):		br.cloop.dptk	L(gt2)
 		cmp.ltu	p8, p9 = s0, pr1_1
 		sub	r31 = -1, acc1_1
 	;;
-		.pred.rel "mutex", p8, p9
+	.pred.rel "mutex", p8, p9
 	(p8)	add	acc0 = pr1_2, acc1_1, 1
 	(p9)	add	acc0 = pr1_2, acc1_1
 	(p8)	cmp.leu	p10, p0 = r31, pr1_2
@@ -294,13 +306,13 @@ L(gt2):		ldf8	u_3 = [up], 8
 		ldf8	u_2 = [up], 8
 		getfsig	pr1_1 = fp1b_1
 	;;
-.mfi;		getfsig	acc1_1 = fp2a_1
+ {.mfi;		getfsig	acc1_1 = fp2a_1
 		xma.l	fp0b_0 = u_0, v0, f0
 		cmp.ne	p8, p9 = r0, r0
-.mfb;		cmp.ne	p12, p13 = r0, r0
+}{.mfb;		cmp.ne	p12, p13 = r0, r0
 		xma.hu	fp1a_0 = u_0, v0, f0
 		br	L(10)
-
+}
 
 	ALIGN(32)
 L(b11):		mov	acc1_3 = 0
@@ -364,8 +376,8 @@ L(gt3):		xma.l	fp0b_0 = ux, v0, f0
 C *** MAIN LOOP START ***
 	ALIGN(32)
 L(top):						C 00
-		.pred.rel "mutex", p8, p9
-		.pred.rel "mutex", p12, p13
+	.pred.rel "mutex", p8, p9
+	.pred.rel "mutex", p12, p13
 		ldf8	u_3 = [up], 8
 		getfsig	pr1_2 = fp1b_2
 	(p8)	cmp.leu	p6, p7 = acc0, pr0_1
@@ -373,7 +385,7 @@ L(top):						C 00
 	(p12)	cmp.leu	p10, p11 = s0, pr1_0
 	(p13)	cmp.ltu	p10, p11 = s0, pr1_0
 	;;					C 01
-		.pred.rel "mutex", p6, p7
+	.pred.rel "mutex", p6, p7
 		getfsig	acc1_2 = fp2a_2
 		st8	[rp] = s0, 8
 		xma.l	fp0b_1 = u_1, v0, f0
@@ -382,7 +394,7 @@ L(top):						C 00
 		xma.hu	fp1a_1 = u_1, v0, f0
 	;;					C 02
 L(01):
-		.pred.rel "mutex", p10, p11
+	.pred.rel "mutex", p10, p11
 		getfsig	pr0_0 = fp0b_0
 		xma.l	fp1b_0 = u_0, v1, fp1a_0
 	(p10)	add	s0 = pr1_1, acc0, 1
@@ -390,8 +402,8 @@ L(01):
 		xma.hu	fp2a_0 = u_0, v1, fp1a_0
 		nop	1
 	;;					C 03
-		.pred.rel "mutex", p6, p7
-		.pred.rel "mutex", p10, p11
+	.pred.rel "mutex", p6, p7
+	.pred.rel "mutex", p10, p11
 		ldf8	u_0 = [up], 8
 		getfsig	pr1_3 = fp1b_3
 	(p6)	cmp.leu	p8, p9 = acc0, pr0_2
@@ -399,7 +411,7 @@ L(01):
 	(p10)	cmp.leu	p12, p13 = s0, pr1_1
 	(p11)	cmp.ltu	p12, p13 = s0, pr1_1
 	;;					C 04
-		.pred.rel "mutex", p8, p9
+	.pred.rel "mutex", p8, p9
 		getfsig	acc1_3 = fp2a_3
 		st8	[rp] = s0, 8
 		xma.l	fp0b_2 = u_2, v0, f0
@@ -408,7 +420,7 @@ L(01):
 		xma.hu	fp1a_2 = u_2, v0, f0
 	;;					C 05
 L(00):
-		.pred.rel "mutex", p12, p13
+	.pred.rel "mutex", p12, p13
 		getfsig	pr0_1 = fp0b_1
 		xma.l	fp1b_1 = u_1, v1, fp1a_1
 	(p12)	add	s0 = pr1_2, acc0, 1
@@ -416,8 +428,8 @@ L(00):
 		xma.hu	fp2a_1 = u_1, v1, fp1a_1
 		nop	1
 	;;					C 06
-		.pred.rel "mutex", p8, p9
-		.pred.rel "mutex", p12, p13
+	.pred.rel "mutex", p8, p9
+	.pred.rel "mutex", p12, p13
 		ldf8	u_1 = [up], 8
 		getfsig	pr1_0 = fp1b_0
 	(p8)	cmp.leu	p6, p7 = acc0, pr0_3
@@ -425,7 +437,7 @@ L(00):
 	(p12)	cmp.leu	p10, p11 = s0, pr1_2
 	(p13)	cmp.ltu	p10, p11 = s0, pr1_2
 	;;					C 07
-		.pred.rel "mutex", p6, p7
+	.pred.rel "mutex", p6, p7
 		getfsig	acc1_0 = fp2a_0
 		st8	[rp] = s0, 8
 		xma.l	fp0b_3 = u_3, v0, f0
@@ -434,7 +446,7 @@ L(00):
 		xma.hu	fp1a_3 = u_3, v0, f0
 	;;					C 08
 L(11):
-		.pred.rel "mutex", p10, p11
+	.pred.rel "mutex", p10, p11
 		getfsig	pr0_2 = fp0b_2
 		xma.l	fp1b_2 = u_2, v1, fp1a_2
 	(p10)	add	s0 = pr1_3, acc0, 1
@@ -442,8 +454,8 @@ L(11):
 		xma.hu	fp2a_2 = u_2, v1, fp1a_2
 		nop	1
 	;;					C 09
-		.pred.rel "mutex", p6, p7
-		.pred.rel "mutex", p10, p11
+	.pred.rel "mutex", p6, p7
+	.pred.rel "mutex", p10, p11
 		ldf8	u_2 = [up], 8
 		getfsig	pr1_1 = fp1b_1
 	(p6)	cmp.leu	p8, p9 = acc0, pr0_0
@@ -451,7 +463,7 @@ L(11):
 	(p10)	cmp.leu	p12, p13 = s0, pr1_3
 	(p11)	cmp.ltu	p12, p13 = s0, pr1_3
 	;;					C 10
-		.pred.rel "mutex", p8, p9
+	.pred.rel "mutex", p8, p9
 		getfsig	acc1_1 = fp2a_1
 		st8	[rp] = s0, 8
 		xma.l	fp0b_0 = u_0, v0, f0
@@ -460,7 +472,7 @@ L(11):
 		xma.hu	fp1a_0 = u_0, v0, f0
 	;;					C 11
 L(10):
-		.pred.rel "mutex", p12, p13
+	.pred.rel "mutex", p12, p13
 		getfsig	pr0_3 = fp0b_3
 		xma.l	fp1b_3 = u_3, v1, fp1a_3
 	(p12)	add	s0 = pr1_0, acc0, 1
@@ -470,140 +482,144 @@ L(10):
 	;;
 C *** MAIN LOOP END ***
 
-		.pred.rel "mutex", p8, p9
-		.pred.rel "mutex", p12, p13
-.mmi;		getfsig	pr1_2 = fp1b_2
+	.pred.rel "mutex", p8, p9
+	.pred.rel "mutex", p12, p13
+ {.mmi;		getfsig	pr1_2 = fp1b_2
 		st8	[rp] = s0, 8
 	(p8)	cmp.leu	p6, p7 = acc0, pr0_1
-.mmi;	(p9)	cmp.ltu	p6, p7 = acc0, pr0_1
+}{.mmi;	(p9)	cmp.ltu	p6, p7 = acc0, pr0_1
 	(p12)	cmp.leu	p10, p11 = s0, pr1_0
 	(p13)	cmp.ltu	p10, p11 = s0, pr1_0
 	;;
-		.pred.rel "mutex", p6, p7
-.mfi;		getfsig	acc1_2 = fp2a_2
+}	.pred.rel "mutex", p6, p7
+ {.mfi;		getfsig	acc1_2 = fp2a_2
 		xma.l	fp0b_1 = u_1, v0, f0
 		nop	1
-.mmf;	(p6)	add	acc0 = pr0_2, acc1_0, 1
+}{.mmf;	(p6)	add	acc0 = pr0_2, acc1_0, 1
 	(p7)	add	acc0 = pr0_2, acc1_0
 		xma.hu	fp1a_1 = u_1, v0, f0
 	;;
+}
 L(cj5):
-		.pred.rel "mutex", p10, p11
-.mfi;		getfsig	pr0_0 = fp0b_0
+	.pred.rel "mutex", p10, p11
+ {.mfi;		getfsig	pr0_0 = fp0b_0
 		xma.l	fp1b_0 = u_0, v1, fp1a_0
 	(p10)	add	s0 = pr1_1, acc0, 1
-.mfi;	(p11)	add	s0 = pr1_1, acc0
+}{.mfi;	(p11)	add	s0 = pr1_1, acc0
 		xma.hu	fp2a_0 = u_0, v1, fp1a_0
 		nop	1
 	;;
-		.pred.rel "mutex", p6, p7
-		.pred.rel "mutex", p10, p11
-.mmi;		getfsig	pr1_3 = fp1b_3
+}	.pred.rel "mutex", p6, p7
+	.pred.rel "mutex", p10, p11
+ {.mmi;		getfsig	pr1_3 = fp1b_3
 		st8	[rp] = s0, 8
 	(p6)	cmp.leu	p8, p9 = acc0, pr0_2
-.mmi;	(p7)	cmp.ltu	p8, p9 = acc0, pr0_2
+}{.mmi;	(p7)	cmp.ltu	p8, p9 = acc0, pr0_2
 	(p10)	cmp.leu	p12, p13 = s0, pr1_1
 	(p11)	cmp.ltu	p12, p13 = s0, pr1_1
 	;;
-		.pred.rel "mutex", p8, p9
-.mfi;		getfsig	acc1_3 = fp2a_3
+}	.pred.rel "mutex", p8, p9
+ {.mfi;		getfsig	acc1_3 = fp2a_3
 		xma.l	fp0b_2 = u_2, v0, f0
 		nop	1
-.mmf;	(p8)	add	acc0 = pr0_3, acc1_1, 1
+}{.mmf;	(p8)	add	acc0 = pr0_3, acc1_1, 1
 	(p9)	add	acc0 = pr0_3, acc1_1
 		xma.hu	fp1a_2 = u_2, v0, f0
 	;;
+}
 L(cj4):
-		.pred.rel "mutex", p12, p13
-.mfi;		getfsig	pr0_1 = fp0b_1
+	.pred.rel "mutex", p12, p13
+ {.mfi;		getfsig	pr0_1 = fp0b_1
 		xma.l	fp1b_1 = u_1, v1, fp1a_1
 	(p12)	add	s0 = pr1_2, acc0, 1
-.mfi;	(p13)	add	s0 = pr1_2, acc0
+}{.mfi;	(p13)	add	s0 = pr1_2, acc0
 		xma.hu	fp2a_1 = u_1, v1, fp1a_1
 		nop	1
 	;;
-		.pred.rel "mutex", p8, p9
-		.pred.rel "mutex", p12, p13
-.mmi;		getfsig	pr1_0 = fp1b_0
+}	.pred.rel "mutex", p8, p9
+	.pred.rel "mutex", p12, p13
+ {.mmi;		getfsig	pr1_0 = fp1b_0
 		st8	[rp] = s0, 8
 	(p8)	cmp.leu	p6, p7 = acc0, pr0_3
-.mmi;	(p9)	cmp.ltu	p6, p7 = acc0, pr0_3
+}{.mmi;	(p9)	cmp.ltu	p6, p7 = acc0, pr0_3
 	(p12)	cmp.leu	p10, p11 = s0, pr1_2
 	(p13)	cmp.ltu	p10, p11 = s0, pr1_2
 	;;
-		.pred.rel "mutex", p6, p7
-.mmi;		getfsig	acc1_0 = fp2a_0
+}	.pred.rel "mutex", p6, p7
+ {.mmi;		getfsig	acc1_0 = fp2a_0
 	(p6)	add	acc0 = pr0_0, acc1_2, 1
 	(p7)	add	acc0 = pr0_0, acc1_2
 	;;
+}
 L(cj3):
-		.pred.rel "mutex", p10, p11
-.mfi;		getfsig	pr0_2 = fp0b_2
+	.pred.rel "mutex", p10, p11
+ {.mfi;		getfsig	pr0_2 = fp0b_2
 		xma.l	fp1b_2 = u_2, v1, fp1a_2
 	(p10)	add	s0 = pr1_3, acc0, 1
-.mfi;	(p11)	add	s0 = pr1_3, acc0
+}{.mfi;	(p11)	add	s0 = pr1_3, acc0
 		xma.hu	fp2a_2 = u_2, v1, fp1a_2
 		nop	1
 	;;
-		.pred.rel "mutex", p6, p7
-		.pred.rel "mutex", p10, p11
-.mmi;		getfsig	pr1_1 = fp1b_1
+}	.pred.rel "mutex", p6, p7
+	.pred.rel "mutex", p10, p11
+ {.mmi;		getfsig	pr1_1 = fp1b_1
 		st8	[rp] = s0, 8
 	(p6)	cmp.leu	p8, p9 = acc0, pr0_0
-.mmi;	(p7)	cmp.ltu	p8, p9 = acc0, pr0_0
+}{.mmi;	(p7)	cmp.ltu	p8, p9 = acc0, pr0_0
 	(p10)	cmp.leu	p12, p13 = s0, pr1_3
 	(p11)	cmp.ltu	p12, p13 = s0, pr1_3
 	;;
-		.pred.rel "mutex", p8, p9
-.mmi;		getfsig	acc1_1 = fp2a_1
+}	.pred.rel "mutex", p8, p9
+ {.mmi;		getfsig	acc1_1 = fp2a_1
 	(p8)	add	acc0 = pr0_1, acc1_3, 1
 	(p9)	add	acc0 = pr0_1, acc1_3
 	;;
-		.pred.rel "mutex", p12, p13
-.mmi;	(p12)	add	s0 = pr1_0, acc0, 1
+}	.pred.rel "mutex", p12, p13
+ {.mmi;	(p12)	add	s0 = pr1_0, acc0, 1
 	(p13)	add	s0 = pr1_0, acc0
 		nop	1
 	;;
-		.pred.rel "mutex", p8, p9
-		.pred.rel "mutex", p12, p13
-.mmi;		getfsig	pr1_2 = fp1b_2
+}	.pred.rel "mutex", p8, p9
+	.pred.rel "mutex", p12, p13
+ {.mmi;		getfsig	pr1_2 = fp1b_2
 		st8	[rp] = s0, 8
 	(p8)	cmp.leu	p6, p7 = acc0, pr0_1
-.mmi;	(p9)	cmp.ltu	p6, p7 = acc0, pr0_1
+}{.mmi;	(p9)	cmp.ltu	p6, p7 = acc0, pr0_1
 	(p12)	cmp.leu	p10, p11 = s0, pr1_0
 	(p13)	cmp.ltu	p10, p11 = s0, pr1_0
 	;;
-		.pred.rel "mutex", p6, p7
-.mmi;		getfsig	r8 = fp2a_2
+}	.pred.rel "mutex", p6, p7
+ {.mmi;		getfsig	r8 = fp2a_2
 	(p6)	add	acc0 = pr0_2, acc1_0, 1
 	(p7)	add	acc0 = pr0_2, acc1_0
 	;;
-		.pred.rel "mutex", p10, p11
-.mmi;	(p10)	add	s0 = pr1_1, acc0, 1
+}	.pred.rel "mutex", p10, p11
+ {.mmi;	(p10)	add	s0 = pr1_1, acc0, 1
 	(p11)	add	s0 = pr1_1, acc0
 	(p6)	cmp.leu	p8, p9 = acc0, pr0_2
 	;;
-		.pred.rel "mutex", p10, p11
-.mmi;	(p7)	cmp.ltu	p8, p9 = acc0, pr0_2
+}	.pred.rel "mutex", p10, p11
+ {.mmi;	(p7)	cmp.ltu	p8, p9 = acc0, pr0_2
 	(p10)	cmp.leu	p12, p13 = s0, pr1_1
 	(p11)	cmp.ltu	p12, p13 = s0, pr1_1
 	;;
-		.pred.rel "mutex", p8, p9
-.mmi;		st8	[rp] = s0, 8
+}	.pred.rel "mutex", p8, p9
+ {.mmi;		st8	[rp] = s0, 8
 	(p8)	add	acc0 = pr1_2, acc1_1, 1
 	(p9)	add	acc0 = pr1_2, acc1_1
 	;;
-		.pred.rel "mutex", p8, p9
-.mmi;	(p8)	cmp.leu	p10, p11 = acc0, pr1_2
+}	.pred.rel "mutex", p8, p9
+ {.mmi;	(p8)	cmp.leu	p10, p11 = acc0, pr1_2
 	(p9)	cmp.ltu	p10, p11 = acc0, pr1_2
 	(p12)	add	acc0 = 1, acc0
 	;;
-.mmi;		st8	[rp] = acc0, 8
+}{.mmi;		st8	[rp] = acc0, 8
 	(p12)	cmpeqor	p10, p0 = 0, acc0
 		nop	1
 	;;
-.mib;	(p10)	add	r8 = 1, r8
+}{.mib;	(p10)	add	r8 = 1, r8
 		mov	ar.lc = r2
 		br.ret.sptk.many b0
+}
 EPILOGUE()
 ASM_END()

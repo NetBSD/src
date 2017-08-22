@@ -2,22 +2,33 @@
 
 Contributed to the GNU project by Marco Bodrato.
 
-Copyright 2012 Free Software Foundation, Inc.
+Copyright 2012, 2013 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -47,7 +58,7 @@ mpz_mfac_uiui (mpz_ptr x, unsigned long n, unsigned long m)
   ASSERT (n <= GMP_NUMB_MAX);
   ASSERT (m != 0);
 
-  if (n < 3 || n - 3 < m - 1) { /* (n < 3 || n - 1 <= m || m == 0) */
+  if ((n < 3) | (n - 3 < m - 1)) { /* (n < 3 || n - 1 <= m || m == 0) */
     PTR (x)[0] = n + (n == 0);
     SIZ (x) = 1;
   } else { /* m < n - 1 < GMP_NUMB_MAX */
@@ -56,7 +67,7 @@ mpz_mfac_uiui (mpz_ptr x, unsigned long n, unsigned long m)
 
     sn = n;
     g = mpn_gcd_1 (&sn, 1, m);
-    if (g != 1) { n/=g; m/=g; }
+    if (g > 1) { n/=g; m/=g; }
 
     if (m <= 2) { /* fac or 2fac */
       if (m == 1) {
@@ -72,7 +83,7 @@ mpz_mfac_uiui (mpz_ptr x, unsigned long n, unsigned long m)
 	  return;
 	}
       } else { /* m == 2 */
-	if (g != 1) {
+	if (g > 1) {
 	  mpz_init (t);
 	  mpz_2fac_ui (t, n);
 	  sn = n / 2 + 1;
@@ -93,8 +104,12 @@ mpz_mfac_uiui (mpz_ptr x, unsigned long n, unsigned long m)
       n -= m;
       max_prod = GMP_NUMB_MAX / n;
 
-      TMP_MARK;
-      factors = TMP_ALLOC_LIMBS (sn / log_n_max (n) + 2);
+      if (g > 1)
+	factors = MPZ_NEWALLOC (x, sn / log_n_max (n) + 2);
+      else {
+	TMP_MARK;
+	factors = TMP_ALLOC_LIMBS (sn / log_n_max (n) + 2);
+      }
 
       for (; n > m; n -= m)
 	FACTOR_LIST_STORE (n, prod, max_prod, factors, j);
@@ -105,13 +120,14 @@ mpz_mfac_uiui (mpz_ptr x, unsigned long n, unsigned long m)
       if (g > 1) {
 	mpz_init (t);
 	mpz_prodlimbs (t, factors, j);
-      } else
+      } else {
 	mpz_prodlimbs (x, factors, j);
-
-      TMP_FREE;
+	TMP_FREE;
+	return;
+      }
     }
 
-    if (g > 1) {
+    {
       mpz_t p;
 
       mpz_init (p);

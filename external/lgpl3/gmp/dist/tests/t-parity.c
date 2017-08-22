@@ -1,6 +1,6 @@
 /* Test ULONG_PARITY.
 
-Copyright 2002 Free Software Foundation, Inc.
+Copyright 2002, 2014 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
+the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,7 +50,7 @@ check_various (void)
   check_one (1, 0x3111L);
 
   for (i = 0; i < BITS_PER_ULONG; i++)
-    check_one (1, 1L << i);
+    check_one (1, 1UL << i);
 }
 
 

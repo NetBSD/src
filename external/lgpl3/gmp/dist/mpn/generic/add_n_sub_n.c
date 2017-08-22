@@ -4,22 +4,33 @@
    SAFE TO REACH IT THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT IT'LL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
-Copyright 1999, 2000, 2001, 2006 Free Software Foundation, Inc.
+Copyright 1999-2001, 2006 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmp-impl.h"
@@ -28,7 +39,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #define L1_CACHE_SIZE 8192	/* only 68040 has less than this */
 #endif
 
-#define PART_SIZE (L1_CACHE_SIZE / BYTES_PER_MP_LIMB / 6)
+#define PART_SIZE (L1_CACHE_SIZE / GMP_LIMB_BYTES / 6)
 
 
 /* mpn_add_n_sub_n.
@@ -142,10 +153,10 @@ main (int argc, char **argv)
 
   n = strtol (argv[1], 0, 0);
 
-  r1p = malloc (n * BYTES_PER_MP_LIMB);
-  r2p = malloc (n * BYTES_PER_MP_LIMB);
-  s1p = malloc (n * BYTES_PER_MP_LIMB);
-  s2p = malloc (n * BYTES_PER_MP_LIMB);
+  r1p = malloc (n * GMP_LIMB_BYTES);
+  r2p = malloc (n * GMP_LIMB_BYTES);
+  s1p = malloc (n * GMP_LIMB_BYTES);
+  s2p = malloc (n * GMP_LIMB_BYTES);
   TIME (t,(mpn_add_n(r1p,s1p,s2p,n),mpn_sub_n(r1p,s1p,s2p,n)));
   printf ("              separate add and sub: %.3f\n", t);
   TIME (t,mpn_add_n_sub_n(r1p,r2p,s1p,s2p,n));

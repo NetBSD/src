@@ -1,24 +1,35 @@
-/* mpz_powm_ui(res,base,exp,mod) -- Set R to (U^E) mod M.
+/* mpz_powm_ui(res,base,exp,mod) -- Set R to (B^E) mod M.
 
-   Contributed to the GNU project by Torbjorn Granlund.
+   Contributed to the GNU project by Torbjörn Granlund.
 
-Copyright 1991, 1993, 1994, 1996, 1997, 2000, 2001, 2002, 2005, 2008, 2009,
-2011, 2012, 2013 Free Software Foundation, Inc.
+Copyright 1991, 1993, 1994, 1996, 1997, 2000-2002, 2005, 2008, 2009, 2011-2013
+Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 
 #include "gmp.h"
@@ -55,12 +66,18 @@ mod (mp_ptr np, mp_size_t nn, mp_srcptr dp, mp_size_t dn, gmp_pi1_t *dinv, mp_pt
   qp = tp;
 
   if (dn == 1)
-    np[0] = mpn_divrem_1 (qp, (mp_size_t) 0, np, nn, dp[0]);
+    {
+      np[0] = mpn_divrem_1 (qp, (mp_size_t) 0, np, nn, dp[0]);
+    }
   else if (dn == 2)
-    mpn_div_qr_2n_pi1 (qp, np, np, nn, dp[1], dp[0], dinv->inv32);
+    {
+      mpn_div_qr_2n_pi1 (qp, np, np, nn, dp[1], dp[0], dinv->inv32);
+    }
   else if (BELOW_THRESHOLD (dn, DC_DIV_QR_THRESHOLD) ||
 	   BELOW_THRESHOLD (nn - dn, DC_DIV_QR_THRESHOLD))
-    mpn_sbpi1_div_qr (qp, np, nn, dp, dn, dinv->inv32);
+    {
+      mpn_sbpi1_div_qr (qp, np, nn, dp, dn, dinv->inv32);
+    }
   else if (BELOW_THRESHOLD (dn, MUPI_DIV_QR_THRESHOLD) ||   /* fast condition */
 	   BELOW_THRESHOLD (nn, 2 * MU_DIV_QR_THRESHOLD) || /* fast condition */
 	   (double) (2 * (MU_DIV_QR_THRESHOLD - MUPI_DIV_QR_THRESHOLD)) * dn /* slow... */
@@ -73,9 +90,9 @@ mod (mp_ptr np, mp_size_t nn, mp_srcptr dp, mp_size_t dn, gmp_pi1_t *dinv, mp_pt
       /* We need to allocate separate remainder area, since mpn_mu_div_qr does
 	 not handle overlap between the numerator and remainder areas.
 	 FIXME: Make it handle such overlap.  */
-      mp_ptr rp = TMP_ALLOC_LIMBS (dn);
+      mp_ptr rp = TMP_BALLOC_LIMBS (dn);
       mp_size_t itch = mpn_mu_div_qr_itch (nn, dn, 0);
-      mp_ptr scratch = TMP_ALLOC_LIMBS (itch);
+      mp_ptr scratch = TMP_BALLOC_LIMBS (itch);
       mpn_mu_div_qr (qp, rp, np, nn, dp, dn, scratch);
       MPN_COPY (np, rp, dn);
     }
@@ -265,7 +282,7 @@ mpz_powm_ui (mpz_ptr r, mpz_srcptr b, unsigned long int el, mpz_srcptr m)
     }
   else
     {
-      /* For large exponents, fake a mpz_t exponent and deflect to the more
+      /* For large exponents, fake an mpz_t exponent and deflect to the more
 	 sophisticated mpz_powm.  */
       mpz_t e;
       mp_limb_t ep[LIMBS_PER_ULONG];
