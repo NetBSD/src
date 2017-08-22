@@ -3,24 +3,33 @@
    THE CONTENTS OF THIS FILE ARE FOR INTERNAL USE AND ARE ALMOST CERTAIN TO
    BE SUBJECT TO INCOMPATIBLE CHANGES IN FUTURE GNU MP RELEASES.
 
-Copyright 1991, 1993, 1994, 1995, 1996, 1997, 1999, 2000, 2001, 2002, 2003,
-2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software
-Foundation, Inc.
+Copyright 1991, 1993-1997, 1999-2015 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
 The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+it under the terms of either:
+
+  * the GNU Lesser General Public License as published by the Free
+    Software Foundation; either version 3 of the License, or (at your
+    option) any later version.
+
+or
+
+  * the GNU General Public License as published by the Free Software
+    Foundation; either version 2 of the License, or (at your option) any
+    later version.
+
+or both in parallel, as here.
 
 The GNU MP Library is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received copies of the GNU General Public License and the
+GNU Lesser General Public License along with the GNU MP Library.  If not,
+see https://www.gnu.org/licenses/.  */
 
 
 /* __GMP_DECLSPEC must be given on any global data that will be accessed
@@ -38,9 +47,9 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include <intrinsics.h>  /* for _popcnt */
 #endif
 
-/* limits.h is not used in general, since it's an ANSI-ism, and since on
-   solaris gcc 2.95 under -mcpu=ultrasparc in ABI=32 ends up getting wrong
-   values (the ABI=64 values).
+/* For INT_MAX, etc. We used to avoid it because of a bug (on solaris,
+   gcc 2.95 under -mcpu=ultrasparc in ABI=32 ends up getting wrong
+   values (the ABI=64 values)), but it should be safe now.
 
    On Cray vector systems, however, we need the system limits.h since sizes
    of signed and unsigned types can differ there, depending on compiler
@@ -48,9 +57,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
    reference, int can be 46 or 64 bits, whereas uint is always 64 bits; and
    short can be 24, 32, 46 or 64 bits, and different for ushort.  */
 
-#if defined _CRAY
 #include <limits.h>
-#endif
 
 /* For fat.h and other fat binary stuff.
    No need for __GMP_ATTRIBUTE_PURE or __GMP_NOTHROW, since functions
@@ -68,6 +75,10 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
   __GMP_DECLSPEC mp_limb_t name (mp_ptr, mp_srcptr, mp_size_t, mp_srcptr)
 #define DECL_bdiv_dbm1c(name) \
   __GMP_DECLSPEC mp_limb_t name (mp_ptr, mp_srcptr, mp_size_t, mp_limb_t, mp_limb_t)
+#define DECL_cnd_add_n(name) \
+  __GMP_DECLSPEC mp_limb_t name (mp_limb_t, mp_ptr, mp_srcptr, mp_srcptr, mp_size_t)
+#define DECL_cnd_sub_n(name) \
+  __GMP_DECLSPEC mp_limb_t name (mp_limb_t, mp_ptr, mp_srcptr, mp_srcptr, mp_size_t)
 #define DECL_com(name) \
   __GMP_DECLSPEC void name (mp_ptr, mp_srcptr, mp_size_t)
 #define DECL_copyd(name) \
@@ -89,7 +100,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #define DECL_mod_1(name) \
   __GMP_DECLSPEC mp_limb_t name (mp_srcptr, mp_size_t, mp_limb_t)
 #define DECL_mod_1_1p(name) \
-  __GMP_DECLSPEC mp_limb_t name (mp_srcptr, mp_size_t, mp_limb_t, mp_limb_t [])
+  __GMP_DECLSPEC mp_limb_t name (mp_srcptr, mp_size_t, mp_limb_t, const mp_limb_t [])
 #define DECL_mod_1_1p_cps(name) \
   __GMP_DECLSPEC void name (mp_limb_t cps[], mp_limb_t b)
 #define DECL_mod_1s_2p(name) \
@@ -208,10 +219,9 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 
 /* if not provided by gmp-mparam.h */
-#ifndef BYTES_PER_MP_LIMB
-#define BYTES_PER_MP_LIMB  SIZEOF_MP_LIMB_T
+#ifndef GMP_LIMB_BYTES
+#define GMP_LIMB_BYTES  SIZEOF_MP_LIMB_T
 #endif
-#define GMP_LIMB_BYTES  BYTES_PER_MP_LIMB
 #ifndef GMP_LIMB_BITS
 #define GMP_LIMB_BITS  (8 * SIZEOF_MP_LIMB_T)
 #endif
@@ -366,8 +376,9 @@ __GMP_DECLSPEC void  __gmp_tmp_reentrant_free (struct tmp_reentrant_t *);
 #define TMP_MARK		__tmp_marker = 0
 #define TMP_SALLOC(n)		alloca(n)
 #define TMP_BALLOC(n)		__gmp_tmp_reentrant_alloc (&__tmp_marker, n)
+/* The peculiar stack allocation limit here is chosen for efficient asm.  */
 #define TMP_ALLOC(n)							\
-  (LIKELY ((n) < 65536) ? TMP_SALLOC(n) : TMP_BALLOC(n))
+  (LIKELY ((n) <= 0x7f00) ? TMP_SALLOC(n) : TMP_BALLOC(n))
 #define TMP_SFREE
 #define TMP_FREE							\
   do {									\
@@ -418,7 +429,7 @@ struct tmp_debug_t {
 };
 struct tmp_debug_entry_t {
   struct tmp_debug_entry_t  *next;
-  char                      *block;
+  void                      *block;
   size_t                    size;
 };
 __GMP_DECLSPEC void  __gmp_tmp_debug_mark (const char *, int, struct tmp_debug_t **,
@@ -481,7 +492,7 @@ __GMP_DECLSPEC void  __gmp_tmp_debug_free (const char *, int, int,
 #define TMP_SALLOC_MP_PTRS(n)   TMP_SALLOC_TYPE(n,mp_ptr)
 #define TMP_BALLOC_MP_PTRS(n)   TMP_BALLOC_TYPE(n,mp_ptr)
 
-/* It's more efficient to allocate one block than two.  This is certainly
+/* It's more efficient to allocate one block than many.  This is certainly
    true of the malloc methods, but it can even be true of alloca if that
    involves copying a chunk of stack (various RISCs), or a call to a stack
    bounds check (mingw).  In any case, when debugging keep separate blocks
@@ -499,7 +510,21 @@ __GMP_DECLSPEC void  __gmp_tmp_debug_free (const char *, int, int,
 	(yp) = (xp) + (xsize);						\
       }									\
   } while (0)
-
+#define TMP_ALLOC_LIMBS_3(xp,xsize, yp,ysize, zp,zsize)			\
+  do {									\
+    if (WANT_TMP_DEBUG)							\
+      {									\
+	(xp) = TMP_ALLOC_LIMBS (xsize);					\
+	(yp) = TMP_ALLOC_LIMBS (ysize);					\
+	(zp) = TMP_ALLOC_LIMBS (zsize);					\
+      }									\
+    else								\
+      {									\
+	(xp) = TMP_ALLOC_LIMBS ((xsize) + (ysize) + (zsize));		\
+	(yp) = (xp) + (xsize);						\
+	(zp) = (yp) + (ysize);						\
+      }									\
+  } while (0)
 
 /* From gmp.h, nicer names for internal use. */
 #define CRAY_Pragma(str)               __GMP_CRAY_Pragma(str)
@@ -508,7 +533,8 @@ __GMP_DECLSPEC void  __gmp_tmp_debug_free (const char *, int, int,
 #define UNLIKELY(cond)                 __GMP_UNLIKELY(cond)
 
 #define ABS(x) ((x) >= 0 ? (x) : -(x))
-#define ABS_CAST(T,x) ((x) >= 0 ? (T)(x) : -((T)((x) + 1) - 1))
+#define NEG_CAST(T,x) (- (__GMP_CAST (T, (x) + 1) - 1))
+#define ABS_CAST(T,x) ((x) >= 0 ? __GMP_CAST (T, x) : NEG_CAST (T,x))
 #undef MIN
 #define MIN(l,o) ((l) < (o) ? (l) : (o))
 #undef MAX
@@ -538,22 +564,6 @@ __GMP_DECLSPEC void  __gmp_tmp_debug_free (const char *, int, int,
   ((n) >=  0x100) + ((n) >=  0x200) + ((n) >=  0x400) + ((n) >=  0x800) + \
   ((n) >= 0x1000) + ((n) >= 0x2000) + ((n) >= 0x4000) + ((n) >= 0x8000))
 
-/* The "short" defines are a bit different because shorts are promoted to
-   ints by ~ or >> etc.
-
-   #ifndef's are used since on some systems (HP?) header files other than
-   limits.h setup these defines.  We could forcibly #undef in that case, but
-   there seems no need to worry about that.  */
-
-#ifndef ULONG_MAX
-#define ULONG_MAX   __GMP_ULONG_MAX
-#endif
-#ifndef UINT_MAX
-#define UINT_MAX    __GMP_UINT_MAX
-#endif
-#ifndef USHRT_MAX
-#define USHRT_MAX   __GMP_USHRT_MAX
-#endif
 #define MP_LIMB_T_MAX      (~ (mp_limb_t) 0)
 
 /* Must cast ULONG_MAX etc to unsigned long etc, since they might not be
@@ -561,29 +571,8 @@ __GMP_DECLSPEC void  __gmp_tmp_debug_free (const char *, int, int,
    treats the plain decimal values in <limits.h> as signed.  */
 #define ULONG_HIGHBIT      (ULONG_MAX ^ ((unsigned long) ULONG_MAX >> 1))
 #define UINT_HIGHBIT       (UINT_MAX ^ ((unsigned) UINT_MAX >> 1))
-#define USHRT_HIGHBIT      ((unsigned short) (USHRT_MAX ^ ((unsigned short) USHRT_MAX >> 1)))
+#define USHRT_HIGHBIT      (USHRT_MAX ^ ((unsigned short) USHRT_MAX >> 1))
 #define GMP_LIMB_HIGHBIT  (MP_LIMB_T_MAX ^ (MP_LIMB_T_MAX >> 1))
-
-#ifndef LONG_MIN
-#define LONG_MIN           ((long) ULONG_HIGHBIT)
-#endif
-#ifndef LONG_MAX
-#define LONG_MAX           (-(LONG_MIN+1))
-#endif
-
-#ifndef INT_MIN
-#define INT_MIN            ((int) UINT_HIGHBIT)
-#endif
-#ifndef INT_MAX
-#define INT_MAX            (-(INT_MIN+1))
-#endif
-
-#ifndef SHRT_MIN
-#define SHRT_MIN           ((short) USHRT_HIGHBIT)
-#endif
-#ifndef SHRT_MAX
-#define SHRT_MAX           ((short) (-(SHRT_MIN+1)))
-#endif
 
 #if __GMP_MP_SIZE_T_INT
 #define MP_SIZE_T_MAX      INT_MAX
@@ -688,6 +677,19 @@ __GMP_DECLSPEC void  __gmp_tmp_debug_free (const char *, int, int,
     mpz_srcptr __mpz_srcptr_swap__tmp = (x);				\
     (x) = (y);								\
     (y) = __mpz_srcptr_swap__tmp;					\
+  } while (0)
+
+#define MPQ_PTR_SWAP(x, y)						\
+  do {                                                                  \
+    mpq_ptr __mpq_ptr_swap__tmp = (x);					\
+    (x) = (y);                                                          \
+    (y) = __mpq_ptr_swap__tmp;						\
+  } while (0)
+#define MPQ_SRCPTR_SWAP(x, y)                                           \
+  do {                                                                  \
+    mpq_srcptr __mpq_srcptr_swap__tmp = (x);                            \
+    (x) = (y);                                                          \
+    (y) = __mpq_srcptr_swap__tmp;                                       \
   } while (0)
 
 
@@ -1092,13 +1094,16 @@ __GMP_DECLSPEC void mpn_mullo_n (mp_ptr, mp_srcptr, mp_srcptr, mp_size_t);
 __GMP_DECLSPEC void mpn_mullo_basecase (mp_ptr, mp_srcptr, mp_srcptr, mp_size_t);
 #endif
 
-#define mpn_sqr __MPN(sqr)
-__GMP_DECLSPEC void mpn_sqr (mp_ptr, mp_srcptr, mp_size_t);
-
 #ifndef mpn_sqr_basecase  /* if not done with cpuvec in a fat binary */
 #define mpn_sqr_basecase __MPN(sqr_basecase)
 __GMP_DECLSPEC void mpn_sqr_basecase (mp_ptr, mp_srcptr, mp_size_t);
 #endif
+
+#define mpn_sqrlo __MPN(sqrlo)
+__GMP_DECLSPEC void mpn_sqrlo (mp_ptr, mp_srcptr, mp_size_t);
+
+#define mpn_sqrlo_basecase __MPN(sqrlo_basecase)
+__GMP_DECLSPEC void mpn_sqrlo_basecase (mp_ptr, mp_srcptr, mp_size_t);
 
 #define mpn_mulmid_basecase __MPN(mulmid_basecase)
 __GMP_DECLSPEC void mpn_mulmid_basecase (mp_ptr, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t);
@@ -1132,7 +1137,7 @@ __GMP_DECLSPEC void mpn_mod_1_1p_cps (mp_limb_t [4], mp_limb_t);
 #endif
 #ifndef mpn_mod_1_1p  /* if not done with cpuvec in a fat binary */
 #define mpn_mod_1_1p __MPN(mod_1_1p)
-__GMP_DECLSPEC mp_limb_t mpn_mod_1_1p (mp_srcptr, mp_size_t, mp_limb_t, mp_limb_t [4]) __GMP_ATTRIBUTE_PURE;
+__GMP_DECLSPEC mp_limb_t mpn_mod_1_1p (mp_srcptr, mp_size_t, mp_limb_t, const mp_limb_t [4]) __GMP_ATTRIBUTE_PURE;
 #endif
 
 #ifndef mpn_mod_1s_2p_cps  /* if not done with cpuvec in a fat binary */
@@ -1141,7 +1146,7 @@ __GMP_DECLSPEC void mpn_mod_1s_2p_cps (mp_limb_t [5], mp_limb_t);
 #endif
 #ifndef mpn_mod_1s_2p  /* if not done with cpuvec in a fat binary */
 #define mpn_mod_1s_2p __MPN(mod_1s_2p)
-__GMP_DECLSPEC mp_limb_t mpn_mod_1s_2p (mp_srcptr, mp_size_t, mp_limb_t, mp_limb_t [5]) __GMP_ATTRIBUTE_PURE;
+__GMP_DECLSPEC mp_limb_t mpn_mod_1s_2p (mp_srcptr, mp_size_t, mp_limb_t, const mp_limb_t [5]) __GMP_ATTRIBUTE_PURE;
 #endif
 
 #ifndef mpn_mod_1s_3p_cps  /* if not done with cpuvec in a fat binary */
@@ -1150,7 +1155,7 @@ __GMP_DECLSPEC void mpn_mod_1s_3p_cps (mp_limb_t [6], mp_limb_t);
 #endif
 #ifndef mpn_mod_1s_3p  /* if not done with cpuvec in a fat binary */
 #define mpn_mod_1s_3p __MPN(mod_1s_3p)
-__GMP_DECLSPEC mp_limb_t mpn_mod_1s_3p (mp_srcptr, mp_size_t, mp_limb_t, mp_limb_t [6]) __GMP_ATTRIBUTE_PURE;
+__GMP_DECLSPEC mp_limb_t mpn_mod_1s_3p (mp_srcptr, mp_size_t, mp_limb_t, const mp_limb_t [6]) __GMP_ATTRIBUTE_PURE;
 #endif
 
 #ifndef mpn_mod_1s_4p_cps  /* if not done with cpuvec in a fat binary */
@@ -1159,7 +1164,7 @@ __GMP_DECLSPEC void mpn_mod_1s_4p_cps (mp_limb_t [7], mp_limb_t);
 #endif
 #ifndef mpn_mod_1s_4p  /* if not done with cpuvec in a fat binary */
 #define mpn_mod_1s_4p __MPN(mod_1s_4p)
-__GMP_DECLSPEC mp_limb_t mpn_mod_1s_4p (mp_srcptr, mp_size_t, mp_limb_t, mp_limb_t [7]) __GMP_ATTRIBUTE_PURE;
+__GMP_DECLSPEC mp_limb_t mpn_mod_1s_4p (mp_srcptr, mp_size_t, mp_limb_t, const mp_limb_t [7]) __GMP_ATTRIBUTE_PURE;
 #endif
 
 #define mpn_bc_mulmod_bnm1 __MPN(bc_mulmod_bnm1)
@@ -1270,7 +1275,9 @@ __GMP_DECLSPEC extern gmp_randstate_t  __gmp_rands;
 #endif
 #define BELOW_THRESHOLD(size,thresh)  (! ABOVE_THRESHOLD (size, thresh))
 
-#define MPN_TOOM22_MUL_MINSIZE    4
+/* The minimal supported value for Toom22 depends also on Toom32 and
+   Toom42 implementations. */
+#define MPN_TOOM22_MUL_MINSIZE    6
 #define MPN_TOOM2_SQR_MINSIZE     4
 
 #define MPN_TOOM33_MUL_MINSIZE   17
@@ -1413,6 +1420,9 @@ __GMP_DECLSPEC void      mpn_nussbaumer_mul (mp_ptr, mp_srcptr, mp_size_t, mp_sr
 #define   mpn_fft_next_size __MPN(fft_next_size)
 __GMP_DECLSPEC mp_size_t mpn_fft_next_size (mp_size_t, int) ATTRIBUTE_CONST;
 
+#define   mpn_div_qr_1n_pi1 __MPN(div_qr_1n_pi1)
+  __GMP_DECLSPEC mp_limb_t mpn_div_qr_1n_pi1 (mp_ptr, mp_srcptr, mp_size_t, mp_limb_t, mp_limb_t, mp_limb_t);
+
 #define   mpn_div_qr_2n_pi1 __MPN(div_qr_2n_pi1)
   __GMP_DECLSPEC mp_limb_t mpn_div_qr_2n_pi1 (mp_ptr, mp_ptr, mp_srcptr, mp_size_t, mp_limb_t, mp_limb_t, mp_limb_t);
 
@@ -1444,19 +1454,19 @@ __GMP_DECLSPEC mp_limb_t mpn_dcpi1_divappr_q_n (mp_ptr, mp_ptr, mp_srcptr, mp_si
 #define   mpn_mu_div_qr __MPN(mu_div_qr)
 __GMP_DECLSPEC mp_limb_t mpn_mu_div_qr (mp_ptr, mp_ptr, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t, mp_ptr);
 #define   mpn_mu_div_qr_itch __MPN(mu_div_qr_itch)
-__GMP_DECLSPEC mp_size_t mpn_mu_div_qr_itch (mp_size_t, mp_size_t, int);
+__GMP_DECLSPEC mp_size_t mpn_mu_div_qr_itch (mp_size_t, mp_size_t, int) ATTRIBUTE_CONST;
 #define   mpn_mu_div_qr_choose_in __MPN(mu_div_qr_choose_in)
 __GMP_DECLSPEC mp_size_t mpn_mu_div_qr_choose_in (mp_size_t, mp_size_t, int);
 
 #define   mpn_preinv_mu_div_qr __MPN(preinv_mu_div_qr)
 __GMP_DECLSPEC mp_limb_t mpn_preinv_mu_div_qr (mp_ptr, mp_ptr, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t, mp_ptr);
 #define   mpn_preinv_mu_div_qr_itch __MPN(preinv_mu_div_qr_itch)
-__GMP_DECLSPEC mp_size_t mpn_preinv_mu_div_qr_itch (mp_size_t, mp_size_t, mp_size_t);
+__GMP_DECLSPEC mp_size_t mpn_preinv_mu_div_qr_itch (mp_size_t, mp_size_t, mp_size_t) ATTRIBUTE_CONST;
 
 #define   mpn_mu_divappr_q __MPN(mu_divappr_q)
 __GMP_DECLSPEC mp_limb_t mpn_mu_divappr_q (mp_ptr, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t, mp_ptr);
 #define   mpn_mu_divappr_q_itch __MPN(mu_divappr_q_itch)
-__GMP_DECLSPEC mp_size_t mpn_mu_divappr_q_itch (mp_size_t, mp_size_t, int);
+__GMP_DECLSPEC mp_size_t mpn_mu_divappr_q_itch (mp_size_t, mp_size_t, int) ATTRIBUTE_CONST;
 #define   mpn_mu_divappr_q_choose_in __MPN(mu_divappr_q_choose_in)
 __GMP_DECLSPEC mp_size_t mpn_mu_divappr_q_choose_in (mp_size_t, mp_size_t, int);
 
@@ -1466,7 +1476,7 @@ __GMP_DECLSPEC mp_limb_t mpn_preinv_mu_divappr_q (mp_ptr, mp_srcptr, mp_size_t, 
 #define   mpn_mu_div_q __MPN(mu_div_q)
 __GMP_DECLSPEC mp_limb_t mpn_mu_div_q (mp_ptr, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t, mp_ptr);
 #define   mpn_mu_div_q_itch __MPN(mu_div_q_itch)
-__GMP_DECLSPEC mp_size_t mpn_mu_div_q_itch (mp_size_t, mp_size_t, int);
+__GMP_DECLSPEC mp_size_t mpn_mu_div_q_itch (mp_size_t, mp_size_t, int) ATTRIBUTE_CONST;
 
 #define  mpn_div_q __MPN(div_q)
 __GMP_DECLSPEC void mpn_div_q (mp_ptr, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t, mp_ptr);
@@ -1479,12 +1489,12 @@ __GMP_DECLSPEC void      mpn_invert (mp_ptr, mp_srcptr, mp_size_t, mp_ptr);
 __GMP_DECLSPEC mp_limb_t mpn_ni_invertappr (mp_ptr, mp_srcptr, mp_size_t, mp_ptr);
 #define   mpn_invertappr __MPN(invertappr)
 __GMP_DECLSPEC mp_limb_t mpn_invertappr (mp_ptr, mp_srcptr, mp_size_t, mp_ptr);
-#define mpn_invertappr_itch(n)  (3 * (n) + 2)
+#define mpn_invertappr_itch(n)  (2 * (n))
 
 #define   mpn_binvert __MPN(binvert)
 __GMP_DECLSPEC void      mpn_binvert (mp_ptr, mp_srcptr, mp_size_t, mp_ptr);
 #define   mpn_binvert_itch __MPN(binvert_itch)
-__GMP_DECLSPEC mp_size_t mpn_binvert_itch (mp_size_t);
+__GMP_DECLSPEC mp_size_t mpn_binvert_itch (mp_size_t) ATTRIBUTE_CONST;
 
 #define mpn_bdiv_q_1 __MPN(bdiv_q_1)
 __GMP_DECLSPEC mp_limb_t mpn_bdiv_q_1 (mp_ptr, mp_srcptr, mp_size_t, mp_limb_t);
@@ -1501,42 +1511,42 @@ __GMP_DECLSPEC void      mpn_sbpi1_bdiv_q (mp_ptr, mp_ptr, mp_size_t, mp_srcptr,
 #define   mpn_dcpi1_bdiv_qr __MPN(dcpi1_bdiv_qr)
 __GMP_DECLSPEC mp_limb_t mpn_dcpi1_bdiv_qr (mp_ptr, mp_ptr, mp_size_t, mp_srcptr, mp_size_t, mp_limb_t);
 #define   mpn_dcpi1_bdiv_qr_n_itch __MPN(dcpi1_bdiv_qr_n_itch)
-__GMP_DECLSPEC mp_size_t mpn_dcpi1_bdiv_qr_n_itch (mp_size_t);
+__GMP_DECLSPEC mp_size_t mpn_dcpi1_bdiv_qr_n_itch (mp_size_t) ATTRIBUTE_CONST;
 
 #define   mpn_dcpi1_bdiv_qr_n __MPN(dcpi1_bdiv_qr_n)
 __GMP_DECLSPEC mp_limb_t mpn_dcpi1_bdiv_qr_n (mp_ptr, mp_ptr, mp_srcptr, mp_size_t, mp_limb_t, mp_ptr);
 #define   mpn_dcpi1_bdiv_q __MPN(dcpi1_bdiv_q)
 __GMP_DECLSPEC void      mpn_dcpi1_bdiv_q (mp_ptr, mp_ptr, mp_size_t, mp_srcptr, mp_size_t, mp_limb_t);
 
-#define   mpn_dcpi1_bdiv_q_n_itch __MPN(dcpi1_bdiv_q_n_itch)
-__GMP_DECLSPEC mp_size_t mpn_dcpi1_bdiv_q_n_itch (mp_size_t);
 #define   mpn_dcpi1_bdiv_q_n __MPN(dcpi1_bdiv_q_n)
 __GMP_DECLSPEC void      mpn_dcpi1_bdiv_q_n (mp_ptr, mp_ptr, mp_srcptr, mp_size_t, mp_limb_t, mp_ptr);
+#define   mpn_dcpi1_bdiv_q_n_itch __MPN(dcpi1_bdiv_q_n_itch)
+__GMP_DECLSPEC mp_size_t mpn_dcpi1_bdiv_q_n_itch (mp_size_t) ATTRIBUTE_CONST;
 
 #define   mpn_mu_bdiv_qr __MPN(mu_bdiv_qr)
 __GMP_DECLSPEC mp_limb_t mpn_mu_bdiv_qr (mp_ptr, mp_ptr, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t, mp_ptr);
 #define   mpn_mu_bdiv_qr_itch __MPN(mu_bdiv_qr_itch)
-__GMP_DECLSPEC mp_size_t mpn_mu_bdiv_qr_itch (mp_size_t, mp_size_t);
+__GMP_DECLSPEC mp_size_t mpn_mu_bdiv_qr_itch (mp_size_t, mp_size_t) ATTRIBUTE_CONST;
 
 #define   mpn_mu_bdiv_q __MPN(mu_bdiv_q)
 __GMP_DECLSPEC void      mpn_mu_bdiv_q (mp_ptr, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t, mp_ptr);
 #define   mpn_mu_bdiv_q_itch __MPN(mu_bdiv_q_itch)
-__GMP_DECLSPEC mp_size_t mpn_mu_bdiv_q_itch (mp_size_t, mp_size_t);
+__GMP_DECLSPEC mp_size_t mpn_mu_bdiv_q_itch (mp_size_t, mp_size_t) ATTRIBUTE_CONST;
 
 #define   mpn_bdiv_qr __MPN(bdiv_qr)
 __GMP_DECLSPEC mp_limb_t mpn_bdiv_qr (mp_ptr, mp_ptr, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t, mp_ptr);
 #define   mpn_bdiv_qr_itch __MPN(bdiv_qr_itch)
-__GMP_DECLSPEC mp_size_t mpn_bdiv_qr_itch (mp_size_t, mp_size_t);
+__GMP_DECLSPEC mp_size_t mpn_bdiv_qr_itch (mp_size_t, mp_size_t) ATTRIBUTE_CONST;
 
 #define   mpn_bdiv_q __MPN(bdiv_q)
 __GMP_DECLSPEC void      mpn_bdiv_q (mp_ptr, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t, mp_ptr);
 #define   mpn_bdiv_q_itch __MPN(bdiv_q_itch)
-__GMP_DECLSPEC mp_size_t mpn_bdiv_q_itch (mp_size_t, mp_size_t);
+__GMP_DECLSPEC mp_size_t mpn_bdiv_q_itch (mp_size_t, mp_size_t) ATTRIBUTE_CONST;
 
 #define   mpn_divexact __MPN(divexact)
 __GMP_DECLSPEC void      mpn_divexact (mp_ptr, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t);
 #define   mpn_divexact_itch __MPN(divexact_itch)
-__GMP_DECLSPEC mp_size_t mpn_divexact_itch (mp_size_t, mp_size_t);
+__GMP_DECLSPEC mp_size_t mpn_divexact_itch (mp_size_t, mp_size_t) ATTRIBUTE_CONST;
 
 #ifndef mpn_bdiv_dbm1c  /* if not done with cpuvec in a fat binary */
 #define   mpn_bdiv_dbm1c __MPN(bdiv_dbm1c)
@@ -1550,25 +1560,53 @@ __GMP_DECLSPEC mp_limb_t mpn_bdiv_dbm1c (mp_ptr, mp_srcptr, mp_size_t, mp_limb_t
 __GMP_DECLSPEC void      mpn_powm (mp_ptr, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t, mp_ptr);
 #define   mpn_powlo __MPN(powlo)
 __GMP_DECLSPEC void      mpn_powlo (mp_ptr, mp_srcptr, mp_srcptr, mp_size_t, mp_size_t, mp_ptr);
-#define   mpn_powm_sec __MPN(powm_sec)
-__GMP_DECLSPEC void      mpn_powm_sec (mp_ptr, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t, mp_ptr);
-#define   mpn_powm_sec_itch __MPN(powm_sec_itch)
-__GMP_DECLSPEC mp_size_t mpn_powm_sec_itch (mp_size_t, mp_size_t, mp_size_t);
-#define   mpn_tabselect __MPN(tabselect)
-__GMP_DECLSPEC void      mpn_tabselect (volatile mp_limb_t *, volatile mp_limb_t *, mp_size_t, mp_size_t, mp_size_t);
-#define   mpn_addcnd_n __MPN(addcnd_n)
-__GMP_DECLSPEC mp_limb_t mpn_addcnd_n (mp_ptr, mp_srcptr, mp_srcptr, mp_size_t, mp_limb_t);
-#define   mpn_subcnd_n __MPN(subcnd_n)
-__GMP_DECLSPEC mp_limb_t mpn_subcnd_n (mp_ptr, mp_srcptr, mp_srcptr, mp_size_t, mp_limb_t);
 
-#define mpn_sb_div_qr_sec __MPN(sb_div_qr_sec)
-__GMP_DECLSPEC void mpn_sb_div_qr_sec (mp_ptr, mp_ptr, mp_size_t, mp_srcptr, mp_size_t, mp_ptr);
-#define mpn_sbpi1_div_qr_sec __MPN(sbpi1_div_qr_sec)
-__GMP_DECLSPEC mp_limb_t mpn_sbpi1_div_qr_sec (mp_ptr, mp_ptr, mp_size_t, mp_srcptr, mp_size_t, mp_limb_t, mp_ptr);
-#define mpn_sb_div_r_sec __MPN(sb_div_r_sec)
-__GMP_DECLSPEC void mpn_sb_div_r_sec (mp_ptr, mp_size_t, mp_srcptr, mp_size_t, mp_ptr);
-#define mpn_sbpi1_div_r_sec __MPN(sbpi1_div_r_sec)
-__GMP_DECLSPEC void mpn_sbpi1_div_r_sec (mp_ptr, mp_size_t, mp_srcptr, mp_size_t, mp_limb_t, mp_ptr);
+#define mpn_sec_pi1_div_qr __MPN(sec_pi1_div_qr)
+__GMP_DECLSPEC mp_limb_t mpn_sec_pi1_div_qr (mp_ptr, mp_ptr, mp_size_t, mp_srcptr, mp_size_t, mp_limb_t, mp_ptr);
+#define mpn_sec_pi1_div_r __MPN(sec_pi1_div_r)
+__GMP_DECLSPEC void mpn_sec_pi1_div_r (mp_ptr, mp_size_t, mp_srcptr, mp_size_t, mp_limb_t, mp_ptr);
+
+
+/* Override mpn_addlsh1_n, mpn_addlsh2_n, mpn_sublsh1_n, etc with mpn_addlsh_n,
+   etc when !HAVE_NATIVE the former but HAVE_NATIVE_ the latter.  We then lie
+   and say these macros represent native functions, but leave a trace by using
+   the value 2 rather than 1.  */
+
+#if HAVE_NATIVE_mpn_addlsh_n && ! HAVE_NATIVE_mpn_addlsh1_n
+#undef mpn_addlsh1_n
+#define mpn_addlsh1_n(a,b,c,d) mpn_addlsh_n(a,b,c,d,1)
+#define HAVE_NATIVE_mpn_addlsh1_n 2
+#endif
+
+#if HAVE_NATIVE_mpn_addlsh_n && ! HAVE_NATIVE_mpn_addlsh2_n
+#undef mpn_addlsh2_n
+#define mpn_addlsh2_n(a,b,c,d) mpn_addlsh_n(a,b,c,d,2)
+#define HAVE_NATIVE_mpn_addlsh2_n 2
+#endif
+
+#if HAVE_NATIVE_mpn_sublsh_n && ! HAVE_NATIVE_mpn_sublsh1_n
+#undef mpn_sublsh1_n
+#define mpn_sublsh1_n(a,b,c,d) mpn_sublsh_n(a,b,c,d,1)
+#define HAVE_NATIVE_mpn_sublsh1_n 2
+#endif
+
+#if HAVE_NATIVE_mpn_sublsh_n && ! HAVE_NATIVE_mpn_sublsh2_n
+#undef mpn_sublsh2_n
+#define mpn_sublsh2_n(a,b,c,d) mpn_sublsh_n(a,b,c,d,2)
+#define HAVE_NATIVE_mpn_sublsh2_n 2
+#endif
+
+#if HAVE_NATIVE_mpn_rsblsh_n && ! HAVE_NATIVE_mpn_rsblsh1_n
+#undef mpn_rsblsh1_n
+#define mpn_rsblsh1_n(a,b,c,d) mpn_rsblsh_n(a,b,c,d,1)
+#define HAVE_NATIVE_mpn_rsblsh1_n 2
+#endif
+
+#if HAVE_NATIVE_mpn_rsblsh_n && ! HAVE_NATIVE_mpn_rsblsh2_n
+#undef mpn_rsblsh2_n
+#define mpn_rsblsh2_n(a,b,c,d) mpn_rsblsh_n(a,b,c,d,2)
+#define HAVE_NATIVE_mpn_rsblsh2_n 2
+#endif
 
 
 #ifndef DIVEXACT_BY3_METHOD
@@ -1810,35 +1848,35 @@ __GMP_DECLSPEC void mpn_copyd (mp_ptr, mp_srcptr, mp_size_t);
    would be good when on a GNU system.  */
 
 #if HAVE_HOST_CPU_FAMILY_power || HAVE_HOST_CPU_FAMILY_powerpc
+#define MPN_FILL(dst, n, f)						\
+  do {									\
+    mp_ptr __dst = (dst) - 1;						\
+    mp_size_t __n = (n);						\
+    ASSERT (__n > 0);							\
+    do									\
+      *++__dst = (f);							\
+    while (--__n);							\
+  } while (0)
+#endif
+
+#ifndef MPN_FILL
+#define MPN_FILL(dst, n, f)						\
+  do {									\
+    mp_ptr __dst = (dst);						\
+    mp_size_t __n = (n);						\
+    ASSERT (__n > 0);							\
+    do									\
+      *__dst++ = (f);							\
+    while (--__n);							\
+  } while (0)
+#endif
+
 #define MPN_ZERO(dst, n)						\
   do {									\
     ASSERT ((n) >= 0);							\
     if ((n) != 0)							\
-      {									\
-	mp_ptr __dst = (dst) - 1;					\
-	mp_size_t __n = (n);						\
-	do								\
-	  *++__dst = 0;							\
-	while (--__n);							\
-      }									\
+      MPN_FILL (dst, n, CNST_LIMB (0));					\
   } while (0)
-#endif
-
-#ifndef MPN_ZERO
-#define MPN_ZERO(dst, n)						\
-  do {									\
-    ASSERT ((n) >= 0);							\
-    if ((n) != 0)							\
-      {									\
-	mp_ptr __dst = (dst);						\
-	mp_size_t __n = (n);						\
-	do								\
-	  *__dst++ = 0;							\
-	while (--__n);							\
-      }									\
-  } while (0)
-#endif
-
 
 /* On the x86s repe/scasl doesn't seem useful, since it takes many cycles to
    start up and would need to strip a lot of zeros before it'd be faster
@@ -2056,6 +2094,12 @@ __GMP_DECLSPEC mp_limb_t gmp_primesieve (mp_ptr, mp_limb_t);
 #ifndef MULLO_BASECASE_THRESHOLD_LIMIT
 #define MULLO_BASECASE_THRESHOLD_LIMIT  MULLO_BASECASE_THRESHOLD
 #endif
+#ifndef SQRLO_BASECASE_THRESHOLD_LIMIT
+#define SQRLO_BASECASE_THRESHOLD_LIMIT  SQRLO_BASECASE_THRESHOLD
+#endif
+#ifndef SQRLO_DC_THRESHOLD_LIMIT
+#define SQRLO_DC_THRESHOLD_LIMIT  SQRLO_DC_THRESHOLD
+#endif
 
 /* SQR_BASECASE_THRESHOLD is where mpn_sqr_basecase should take over from
    mpn_mul_basecase.  Default is to use mpn_sqr_basecase from 0.  (Note that we
@@ -2068,7 +2112,7 @@ __GMP_DECLSPEC mp_limb_t gmp_primesieve (mp_ptr, mp_limb_t);
    should be used, and that may be never.  */
 
 #ifndef SQR_BASECASE_THRESHOLD
-#define SQR_BASECASE_THRESHOLD            0
+#define SQR_BASECASE_THRESHOLD            0  /* never use mpn_mul_basecase */
 #endif
 
 #ifndef SQR_TOOM2_THRESHOLD
@@ -2092,8 +2136,32 @@ __GMP_DECLSPEC mp_limb_t gmp_primesieve (mp_ptr, mp_limb_t);
 #define MULMID_TOOM42_THRESHOLD     MUL_TOOM22_THRESHOLD
 #endif
 
+#ifndef MULLO_BASECASE_THRESHOLD
+#define MULLO_BASECASE_THRESHOLD          0  /* never use mpn_mul_basecase */
+#endif
+
+#ifndef MULLO_DC_THRESHOLD
+#define MULLO_DC_THRESHOLD         (2*MUL_TOOM22_THRESHOLD)
+#endif
+
+#ifndef MULLO_MUL_N_THRESHOLD
+#define MULLO_MUL_N_THRESHOLD      (2*MUL_FFT_THRESHOLD)
+#endif
+
+#ifndef SQRLO_BASECASE_THRESHOLD
+#define SQRLO_BASECASE_THRESHOLD          0  /* never use mpn_sqr_basecase */
+#endif
+
+#ifndef SQRLO_DC_THRESHOLD
+#define SQRLO_DC_THRESHOLD         (MULLO_DC_THRESHOLD)
+#endif
+
+#ifndef SQRLO_SQR_THRESHOLD
+#define SQRLO_SQR_THRESHOLD        (MULLO_MUL_N_THRESHOLD)
+#endif
+
 #ifndef DC_DIV_QR_THRESHOLD
-#define DC_DIV_QR_THRESHOLD              50
+#define DC_DIV_QR_THRESHOLD        (2*MUL_TOOM22_THRESHOLD)
 #endif
 
 #ifndef DC_DIVAPPR_Q_THRESHOLD
@@ -2101,7 +2169,7 @@ __GMP_DECLSPEC mp_limb_t gmp_primesieve (mp_ptr, mp_limb_t);
 #endif
 
 #ifndef DC_BDIV_QR_THRESHOLD
-#define DC_BDIV_QR_THRESHOLD             50
+#define DC_BDIV_QR_THRESHOLD       (2*MUL_TOOM22_THRESHOLD)
 #endif
 
 #ifndef DC_BDIV_Q_THRESHOLD
@@ -2113,7 +2181,7 @@ __GMP_DECLSPEC mp_limb_t gmp_primesieve (mp_ptr, mp_limb_t);
 #endif
 
 #ifndef INV_MULMOD_BNM1_THRESHOLD
-#define INV_MULMOD_BNM1_THRESHOLD  (5*MULMOD_BNM1_THRESHOLD)
+#define INV_MULMOD_BNM1_THRESHOLD  (4*MULMOD_BNM1_THRESHOLD)
 #endif
 
 #ifndef INV_APPR_THRESHOLD
@@ -2229,8 +2297,8 @@ __GMP_DECLSPEC mp_limb_t gmp_primesieve (mp_ptr, mp_limb_t);
 
 struct fft_table_nk
 {
-  unsigned int n:27;
-  unsigned int k:5;
+  gmp_uint_least32_t n:27;
+  gmp_uint_least32_t k:5;
 };
 
 #ifndef FFT_TABLE_ATTRS
@@ -2300,11 +2368,7 @@ struct fft_table_nk
 /* ASSERT() is a private assertion checking scheme, similar to <assert.h>.
    ASSERT() does the check only if WANT_ASSERT is selected, ASSERT_ALWAYS()
    does it always.  Generally assertions are meant for development, but
-   might help when looking for a problem later too.
-
-   Note that strings shouldn't be used within the ASSERT expression,
-   eg. ASSERT(strcmp(s,"notgood")!=0), since the quotes upset the "expr"
-   used in the !HAVE_STRINGIZE case (ie. K&R).  */
+   might help when looking for a problem later too.  */
 
 #ifdef __LINE__
 #define ASSERT_LINE  __LINE__
@@ -2321,11 +2385,7 @@ struct fft_table_nk
 __GMP_DECLSPEC void __gmp_assert_header (const char *, int);
 __GMP_DECLSPEC void __gmp_assert_fail (const char *, int, const char *) ATTRIBUTE_NORETURN;
 
-#if HAVE_STRINGIZE
 #define ASSERT_FAIL(expr)  __gmp_assert_fail (ASSERT_FILE, ASSERT_LINE, #expr)
-#else
-#define ASSERT_FAIL(expr)  __gmp_assert_fail (ASSERT_FILE, ASSERT_LINE, "expr")
-#endif
 
 #define ASSERT_ALWAYS(expr)						\
   do {									\
@@ -2533,7 +2593,7 @@ __GMP_DECLSPEC void __gmp_assert_fail (const char *, int, const char *) ATTRIBUT
 __GMP_DECLSPEC mp_limb_t mpn_trialdiv (mp_srcptr, mp_size_t, mp_size_t, int *);
 
 #define mpn_remove __MPN(remove)
-__GMP_DECLSPEC mp_bitcnt_t mpn_remove (mp_ptr, mp_size_t *, mp_ptr, mp_size_t, mp_ptr, mp_size_t, mp_bitcnt_t);
+__GMP_DECLSPEC mp_bitcnt_t mpn_remove (mp_ptr, mp_size_t *, mp_srcptr, mp_size_t, mp_srcptr, mp_size_t, mp_bitcnt_t);
 
 
 /* ADDC_LIMB sets w=x+y and cout to 0 or 1 for a carry from that addition. */
@@ -2629,7 +2689,7 @@ __GMP_DECLSPEC mp_bitcnt_t mpn_remove (mp_ptr, mp_size_t *, mp_ptr, mp_size_t, m
 	   ASM_L(done) ":\n"						\
 	   : "=r" (__ptr_dummy)						\
 	   : "0"  (ptr),						\
-	     "ri" ((mp_limb_t) (incr)), "n" (sizeof(mp_limb_t))		\
+	     "re" ((mp_limb_t) (incr)), "n" (sizeof(mp_limb_t))		\
 	   : "memory");							\
       }									\
   } while (0)
@@ -2781,8 +2841,8 @@ __GMP_DECLSPEC mp_bitcnt_t mpn_remove (mp_ptr, mp_size_t *, mp_ptr, mp_size_t, m
 struct bases
 {
   /* Number of digits in the conversion base that always fits in an mp_limb_t.
-     For example, for base 10 on a machine where a mp_limb_t has 32 bits this
-     is 9, since 10**9 is the largest number that fits into a mp_limb_t.  */
+     For example, for base 10 on a machine where an mp_limb_t has 32 bits this
+     is 9, since 10**9 is the largest number that fits into an mp_limb_t.  */
   int chars_per_limb;
 
   /* log(2)/log(conversion_base) */
@@ -2985,7 +3045,7 @@ __GMP_DECLSPEC mp_limb_t mpn_invert_limb (mp_limb_t) ATTRIBUTE_CONST;
   } while (0)
 
 
-/* udiv_qrnnd_preinv -- Based on work by Niels Möller and Torbjörn Granlund.
+/* udiv_qrnnd_preinv -- Based on work by Niels MÃ¶ller and TorbjÃ¶rn Granlund.
    We write things strangely below, to help gcc.  A more straightforward
    version:
 	_r = (nl) - _qh * (d);
@@ -3144,11 +3204,6 @@ __GMP_DECLSPEC mp_limb_t mpn_mod_34lsub1 (mp_srcptr, mp_size_t) __GMP_ATTRIBUTE_
 #endif
 #ifndef BMOD_1_TO_MOD_1_THRESHOLD
 #define BMOD_1_TO_MOD_1_THRESHOLD  10
-#endif
-
-#ifndef mpn_divexact_1  /* if not done with cpuvec in a fat binary */
-#define mpn_divexact_1 __MPN(divexact_1)
-__GMP_DECLSPEC void    mpn_divexact_1 (mp_ptr, mp_srcptr, mp_size_t, mp_limb_t);
 #endif
 
 #define MPN_DIVREM_OR_DIVEXACT_1(rp, up, n, d)				\
@@ -3452,7 +3507,7 @@ __GMP_DECLSPEC extern const unsigned char  binvert_limb_table[128];
     mp_limb_t  __bswapl_src = (src);					\
     mp_limb_t  __dstl = 0;						\
     int	       __i;							\
-    for (__i = 0; __i < BYTES_PER_MP_LIMB; __i++)			\
+    for (__i = 0; __i < GMP_LIMB_BYTES; __i++)			\
       {									\
 	__dstl = (__dstl << 8) | (__bswapl_src & 0xFF);			\
 	__bswapl_src >>= 8;						\
@@ -4085,7 +4140,7 @@ __GMP_DECLSPEC void      mpn_matrix22_mul (mp_ptr, mp_ptr, mp_ptr, mp_ptr, mp_si
 #define   mpn_matrix22_mul_strassen __MPN(matrix22_mul_strassen)
 __GMP_DECLSPEC void      mpn_matrix22_mul_strassen (mp_ptr, mp_ptr, mp_ptr, mp_ptr, mp_size_t, mp_srcptr, mp_srcptr, mp_srcptr, mp_srcptr, mp_size_t, mp_ptr);
 #define   mpn_matrix22_mul_itch __MPN(matrix22_mul_itch)
-__GMP_DECLSPEC mp_size_t mpn_matrix22_mul_itch (mp_size_t, mp_size_t);
+__GMP_DECLSPEC mp_size_t mpn_matrix22_mul_itch (mp_size_t, mp_size_t) ATTRIBUTE_CONST;
 
 #ifndef MATRIX22_STRASSEN_THRESHOLD
 #define MATRIX22_STRASSEN_THRESHOLD 30
@@ -4165,16 +4220,16 @@ __GMP_DECLSPEC mp_size_t mpn_hgcd_step (mp_size_t, mp_ptr, mp_ptr, mp_size_t, st
 __GMP_DECLSPEC mp_size_t mpn_hgcd_reduce (struct hgcd_matrix *, mp_ptr, mp_ptr, mp_size_t, mp_size_t, mp_ptr);
 
 #define mpn_hgcd_reduce_itch __MPN(hgcd_reduce_itch)
-__GMP_DECLSPEC mp_size_t mpn_hgcd_reduce_itch (mp_size_t, mp_size_t);
+__GMP_DECLSPEC mp_size_t mpn_hgcd_reduce_itch (mp_size_t, mp_size_t) ATTRIBUTE_CONST;
 
 #define mpn_hgcd_itch __MPN (hgcd_itch)
-__GMP_DECLSPEC mp_size_t mpn_hgcd_itch (mp_size_t);
+__GMP_DECLSPEC mp_size_t mpn_hgcd_itch (mp_size_t) ATTRIBUTE_CONST;
 
 #define mpn_hgcd __MPN (hgcd)
 __GMP_DECLSPEC mp_size_t mpn_hgcd (mp_ptr, mp_ptr, mp_size_t, struct hgcd_matrix *, mp_ptr);
 
 #define mpn_hgcd_appr_itch __MPN (hgcd_appr_itch)
-__GMP_DECLSPEC mp_size_t mpn_hgcd_appr_itch (mp_size_t);
+__GMP_DECLSPEC mp_size_t mpn_hgcd_appr_itch (mp_size_t) ATTRIBUTE_CONST;
 
 #define mpn_hgcd_appr __MPN (hgcd_appr)
 __GMP_DECLSPEC int mpn_hgcd_appr (mp_ptr, mp_ptr, mp_size_t, struct hgcd_matrix *, mp_ptr);
@@ -4272,8 +4327,8 @@ __GMP_DECLSPEC extern mp_size_t __gmp_default_fp_limb_precision;
    down.  */
 #define DIGITS_IN_BASE_PER_LIMB(res, nlimbs, b)				\
   do {									\
-    mp_limb_t _ph, _pl;							\
-    umul_ppmm (_ph, _pl,						\
+    mp_limb_t _ph, _dummy;						\
+    umul_ppmm (_ph, _dummy,						\
 	       mp_bases[b].logb2, GMP_NUMB_BITS * (mp_limb_t) (nlimbs));\
     res = _ph;								\
   } while (0)
@@ -4538,10 +4593,6 @@ __GMP_DECLSPEC int __gmp_doscan (const struct gmp_doscan_funs_t *, void *, const
   } while (0)
 
 
-#define MPZ_PROVOKE_REALLOC(z)						\
-  do { ALLOC(z) = ABSIZ(z); } while (0)
-
-
 /* Enhancement: The "mod" and "gcd_1" functions below could have
    __GMP_ATTRIBUTE_PURE, but currently (gcc 3.3) that's not supported on
    function pointers, only actual functions.  It probably doesn't make much
@@ -4550,7 +4601,8 @@ __GMP_DECLSPEC int __gmp_doscan (const struct gmp_doscan_funs_t *, void *, const
 
 #if WANT_FAT_BINARY && (HAVE_HOST_CPU_FAMILY_x86 || HAVE_HOST_CPU_FAMILY_x86_64)
 /* NOTE: The function pointers in this struct are also in CPUVEC_FUNCS_LIST
-   in mpn/x86/x86-defs.m4.  Be sure to update that when changing here.  */
+   in mpn/x86/x86-defs.m4 and mpn/x86_64/x86_64-defs.m4.  Be sure to update
+   those when changing here.  */
 struct cpuvec_t {
   DECL_add_n           ((*add_n));
   DECL_addlsh1_n       ((*addlsh1_n));
@@ -4558,6 +4610,8 @@ struct cpuvec_t {
   DECL_addmul_1        ((*addmul_1));
   DECL_addmul_2        ((*addmul_2));
   DECL_bdiv_dbm1c      ((*bdiv_dbm1c));
+  DECL_cnd_add_n       ((*cnd_add_n));
+  DECL_cnd_sub_n       ((*cnd_sub_n));
   DECL_com             ((*com));
   DECL_copyd           ((*copyd));
   DECL_copyi           ((*copyi));
@@ -4634,18 +4688,6 @@ mpn_sub_nc (mp_ptr rp, mp_srcptr up, mp_srcptr vp, mp_size_t n, mp_limb_t ci)
   return co;
 }
 #endif
-
-static inline int
-mpn_zero_p (mp_srcptr ap, mp_size_t n)
-{
-  mp_size_t i;
-  for (i = n - 1; i >= 0; i--)
-    {
-      if (ap[i] != 0)
-	return 0;
-    }
-  return 1;
-}
 
 #if TUNE_PROGRAM_BUILD
 /* Some extras wanted when recompiling some .c files for use by the tune
@@ -4769,6 +4811,18 @@ extern mp_size_t			mullo_dc_threshold;
 #define MULLO_MUL_N_THRESHOLD		mullo_mul_n_threshold
 extern mp_size_t			mullo_mul_n_threshold;
 
+#undef	SQRLO_BASECASE_THRESHOLD
+#define SQRLO_BASECASE_THRESHOLD	sqrlo_basecase_threshold
+extern mp_size_t			sqrlo_basecase_threshold;
+
+#undef	SQRLO_DC_THRESHOLD
+#define SQRLO_DC_THRESHOLD		sqrlo_dc_threshold
+extern mp_size_t			sqrlo_dc_threshold;
+
+#undef	SQRLO_SQR_THRESHOLD
+#define SQRLO_SQR_THRESHOLD		sqrlo_sqr_threshold
+extern mp_size_t			sqrlo_sqr_threshold;
+
 #undef	MULMID_TOOM42_THRESHOLD
 #define MULMID_TOOM42_THRESHOLD		mulmid_toom42_threshold
 extern mp_size_t			mulmid_toom42_threshold;
@@ -4865,6 +4919,18 @@ extern mp_size_t			gcd_dc_threshold;
 #define GCDEXT_DC_THRESHOLD		gcdext_dc_threshold
 extern mp_size_t			gcdext_dc_threshold;
 
+#undef  DIV_QR_1N_PI1_METHOD
+#define DIV_QR_1N_PI1_METHOD		div_qr_1n_pi1_method
+extern int				div_qr_1n_pi1_method;
+
+#undef  DIV_QR_1_NORM_THRESHOLD
+#define DIV_QR_1_NORM_THRESHOLD		div_qr_1_norm_threshold
+extern mp_size_t			div_qr_1_norm_threshold;
+
+#undef  DIV_QR_1_UNNORM_THRESHOLD
+#define DIV_QR_1_UNNORM_THRESHOLD	div_qr_1_unnorm_threshold
+extern mp_size_t			div_qr_1_unnorm_threshold;
+
 #undef  DIVREM_1_NORM_THRESHOLD
 #define DIVREM_1_NORM_THRESHOLD		divrem_1_norm_threshold
 extern mp_size_t			divrem_1_norm_threshold;
@@ -4953,6 +5019,8 @@ extern struct fft_table_nk mpn_fft_table3[2][FFT_TABLE3_SIZE];
 #undef MUL_TOOM22_THRESHOLD_LIMIT
 #undef MUL_TOOM33_THRESHOLD_LIMIT
 #undef MULLO_BASECASE_THRESHOLD_LIMIT
+#undef SQRLO_BASECASE_THRESHOLD_LIMIT
+#undef SQRLO_DC_THRESHOLD_LIMIT
 #undef SQR_TOOM3_THRESHOLD_LIMIT
 #define SQR_TOOM2_MAX_GENERIC           200
 #define MUL_TOOM22_THRESHOLD_LIMIT      700
@@ -4965,6 +5033,8 @@ extern struct fft_table_nk mpn_fft_table3[2][FFT_TABLE3_SIZE];
 #define MUL_TOOM8H_THRESHOLD_LIMIT     1200
 #define SQR_TOOM8_THRESHOLD_LIMIT      1200
 #define MULLO_BASECASE_THRESHOLD_LIMIT  200
+#define SQRLO_BASECASE_THRESHOLD_LIMIT  200
+#define SQRLO_DC_THRESHOLD_LIMIT        400
 #define GET_STR_THRESHOLD_LIMIT         150
 #define FAC_DSC_THRESHOLD_LIMIT        2048
 
