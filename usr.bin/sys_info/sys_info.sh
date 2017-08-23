@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.7 2017/08/21 19:51:32 agc Exp $
+# $NetBSD: sys_info.sh,v 1.8 2017/08/23 01:17:46 kre Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -26,23 +26,52 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SYS_INFO_VERSION=20170821
-LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-/usr/lib:/usr/X11R7/lib}
+SYS_INFO_VERSION=$( D="\$Date: 2017/08/23 01:17:46 $"; set -f;
+			IFS=" /"; set -- $D; printf %s "$2$3$4" )
+
+PATH=$(sysctl -n user.cs_path)
+export PATH
+
+LIBRARY_PATH=${LD_LIBRARY_PATH:-/usr/lib:/usr/X11R7/lib}
+
+# default libraries when no args are given (sorted...)
+LIBS=
+LIBS="${LIBS} libc"
+LIBS="${LIBS} libcurses"
+LIBS="${LIBS} libdrm"
+LIBS="${LIBS} libm"
+LIBS="${LIBS} libresolv"
+LIBS="${LIBS} libsqlite"
+LIBS="${LIBS} libssh"
+LIBS="${LIBS} libstdc++"
+LIBS="${LIBS} libterminfo"
+LIBS="${LIBS} libutil"
+LIBS="${LIBS} libX11"
+LIBS="${LIBS} libXaw7"
+LIBS="${LIBS} libXcb"
+LIBS="${LIBS} libXfont"
+LIBS="${LIBS} libXft"
+LIBS="${LIBS} libXrandr"
+LIBS="${LIBS} libXt"
 
 # short script to look for an executable $2, and if found, to place
 # path in $1
 # taken from pkgsrc bootstrap
 which_prog()
 {
+	local IFS _var _name _d -
+	set -f
+
 	_var="$1"; _name="$2"
 
-	eval _tmp=\"\$$_var\"
-	if [ "x$_tmp" != "x" ]; then
+	eval _d=\"\$$_var\"
+	if [ -n "$_d" ]; then
 		# Variable is already set (by the user, for example)
 		return 0
 	fi
 
-	for _d in `echo $PATH | tr ':' ' '`; do
+	IFS=:
+	for _d in $PATH ; do
 		if [ -f "$_d/$_name" ] && [ -x "$_d/$_name" ]; then
 			# Program found
 			eval $_var=\""$_d/$_name"\"
@@ -53,139 +82,182 @@ which_prog()
 	return 1
 }
 
-# print out the version for the given argument
+savedIFS=unset
+saveIFS() { savedIFS="${IFS-unset}"; IFS="$1"; }
+restIFS() { test "${savedIFS}" = unset && unset IFS || IFS="${savedIFS}"; }
+
+run() {
+	 # must send to stderr, as run is used in $() sometimes.
+	 $verbose && printf >&2 '%s\n' "${PS4:-...: }${1}"
+	 eval "$1"
+}
+
+# print out the version for the given argument (or everything)
+
+# case patterns are sorted by output order so
+#	sys_info
+# and
+#	sys_info | sort -f
+# generate identical output
+
 getversion() {
 	case "$1" in
+	'')
+		# arriving here implies all==true, not possible otherwise
+		;&
 	awk)
-		awk --version | awk '{ print $1 "-" $3 }'
-		;;
-	bind|named)
-		named -v | awk '{ gsub("-", "", $2); gsub("P", "pl", $2); print tolower($1) "-" $2 }'
-		;;
-	bzip2)
-		bzip2 --help 2>&1 | awk '{ sub(",", "", $7); print "bzip2-" $7; exit }'
-		;;
-	calendar)
-		v=$(calendar -v 2>/dev/null || true)
-		case "${v}" in
-		"")	echo "calendar-20150701" ;;
-		*)	echo ${v} ;;
-		esac
-		;;
-	ftpd)
-		strings -a /usr/libexec/ftpd | awk '$1 == "NetBSD-ftpd" { print "ftpd-" $2 }'
-		;;
-	g++|c++)
-		g++ --version | awk '{ print $1 "-" $4; exit }'
-		;;
-	gcc|cc)
-		gcc --version | awk '{ print $1 "-" $4; exit }'
-		;;
-	grep)
-		grep --version | awk '{ print $1 "-" $4 $5; exit }'
-		;;
-	gzip)
-		gzip --version 2>&1 | awk '{ print $2 "-" $3 }'
-		;;
-	httpd|bozohttpd)
-		v=$(/usr/libexec/httpd -G 2>/dev/null || true)
+		run "awk --version | awk '{ print \$1 \"-\" \$3 }'"
+		$all || return 0 ;&
+	[Bb][Ii][Nn][Dd]|named)
+		run "named -v | awk '{ gsub(\"-\", \"\", \$2); gsub(\"P\", \"pl\", \$2); print tolower(\$1) \"-\" \$2 }'"
+		$all || return 0 ;&
+	bozohttpd|httpd)
+		v=$(run "/usr/libexec/httpd -G" 2>/dev/null)
 		case "${v}" in
 		"")
-			strings -a /usr/libexec/httpd | awk -F/ '$1 == "bozohttpd" && NF == 2 { print $1 "-" $2; exit }'
+			run  "strings -a /usr/libexec/httpd | awk -F/ '\$1 == \"bozohttpd\" && NF == 2 { print \$1 \"-\" \$2; exit }'"
 			;;
 		*)
-			echo bozohttpd-${v##*/}
+			printf '%s\n' "bozohttpd-${v##*/}"
 			;;
 		esac
-		;;
+		$all || return 0 ;&
+	bzip2)
+		run  "bzip2 --help 2>&1 | awk '{ sub(\",\", \"\", \$7); print \"bzip2-\" \$7; exit }'"
+		$all || return 0 ;&
+	calendar)
+		v=$(run "calendar -v" 2>/dev/null || true)
+		case "${v}" in
+		"")	printf '%s\n' "calendar-20150701" ;;
+		*)	printf '%s\n' "${v}" ;;
+		esac
+		$all || return 0 ;&
+	dhcpcd)
+		run  "dhcpcd --version | sed -e 's/ /-/g' -e 1q"
+		$all || return 0 ;&
+	ftpd)
+		run "strings -a /usr/libexec/ftpd | awk '\$1 == \"NetBSD-ftpd\" { print \"ftpd-\" \$2 }'"
+		$all || return 0 ;&
+	g++|c++)
+		run "g++ --version | awk '{ print \$1 \"-\" \$4; exit }'"
+		$all || return 0 ;&
+	gcc|cc)
+		run "gcc --version | awk '{ print \$1 \"-\" \$4; exit }'"
+		$all || return 0 ;&
+	grep)
+		run "grep --version | awk '{ print \$1 \"-\" \$4 \$5; exit }'"
+		$all || return 0 ;&
+	gzip)
+		run "gzip --version 2>&1 | awk '{ print \$2 \"-\" \$3 }'"
+		$all || return 0 ;&
 	lib*)
-		dlist=$(echo ${LD_LIBRARY_PATH} | awk '{ gsub(":", " "); print }')
-		for d in ${dlist}; do
-			if [ -e ${d}/$1.so ]; then
-				ls -al ${d}/$1.so | awk '{ sub(".*/", "", $11); sub("\\.so\\.", "-", $11); print $11 }'
-				break
-			fi
+		for L in ${1:-$LIBS}; do
+			saveIFS :
+			for d in ${LIBRARY_PATH} nowhere; do
+				restIFS
+				if [ -e ${d}/$L.so ]; then
+					run "ls -al \"${d}/$L.so\" | sed -e 's/^.*-> //' -e 's;^.*/;;' -e 's/\\.so\\./-/'"
+					break
+				fi
+			done
+			restIFS
+			test "$d" = nowhere && test -n "$1" &&
+				printf 2>&1 '%s\n' "$0: library $1 not found"
 		done
-		;;
-	netbsd)
-		uname -sr | awk '{ print $1 "-" $2 }'
-		;;
+		$all || return 0 ;&
+	[Nn]et[Bb][Ss][Dd]|kernel)
+		run "uname -sr | awk '{ print \$1 \"-\" \$2 }'"
+		$all || return 0 ;&
 	netpgp)
-		netpgp -V | awk '{ sub("/.*", "", $3); print "netpgp-" $3; exit }'
-		;;
+		run "netpgp -V | awk '{ sub(\"/.*\", \"\", \$3); print \"netpgp-\" \$3; exit }'"
+		$all || return 0 ;&
 	netpgpverify)
-		netpgpverify -v | awk '{ print $1 "-" $3 }'
-		;;
+		run "netpgpverify -v | awk '{ print \$1 \"-\" \$3 }'"
+		$all || return 0 ;&
 	ntp)
-		ntpq --version | awk '{ sub("-.", ""); sub("p", "pl", $2); print "ntp-" $2 }'
-		;;
+		run "ntpq --version | awk '{ sub(\"-.\", \"\"); sub(\"p\", \"pl\", \$2); print \"ntp-\" \$2 }'"
+		$all || return 0 ;&
+	openssh|ssh)
+		run "ssh -V 2>&1 | awk '{ sub(\"_\", \"-\", \$1); print tolower(\$1) }'"
+		$all || return 0 ;&
+	opensshd|sshd)
+		run "sshd -V 2>&1 | awk '/OpenSSH/ { sub(\"_\", \"D-\", \$1); print tolower(\$1) }'"
+		$all || return 0 ;&
 	openssl)
-		openssl version 2>/dev/null | awk '{ print tolower($1) "-" $2 }'
-		;;
+		run "openssl version 2>/dev/null | awk '{ print tolower(\$1) \"-\" \$2 }'"
+		$all || return 0 ;&
+	sh)
+		run "set -- \$NETBSD_SHELL; case \"\$1+\$2\" in *+BUILD*) ;; +) set -- ancient;; *) set -- \"\$1\";;esac; printf 'sh-%s\\n' \$1\${2:+-\${2#BUILD:}}"
+		$all || return 0 ;&
 	sqlite|sqlite3)
-		sqlite3 --version | awk '{ print "sqlite3-" $1 }'
-		;;
-	ssh|openssh)
-		ssh -V 2>&1 | awk '{ sub("_", "-", $1); print tolower($1) }'
-		;;
-	sshd)
-		sshd -V 2>&1 | awk '/OpenSSH/ { sub("_", "D-", $1); print tolower($1) }'
-		;;
+		run "sqlite3 --version | awk '{ print \"sqlite3-\" \$1 }'"
+		$all || return 0 ;&
 	sys_info)
-		echo sys_info-${SYS_INFO_VERSION}
-		;;
+		run "printf '%s\n' sys_info-${SYS_INFO_VERSION}"
+		$all || return 0 ;&
 	tcsh)
 		if which_prog tcshpath tcsh; then
-			${tcshpath} --version | awk '{ print $1 "-" $2 }'
+			run "${tcshpath} --version | awk '{ print \$1 \"-\" \$2 }'"
 		else
-			echo "tcsh: not found"
+			$all || printf >&2 '%s\n' "tcsh: not found"
 		fi
-		;;
+		$all || return 0 ;&
 	tzdata)
 		if [ -f /usr/share/zoneinfo/TZDATA_VERSION ]; then
-			cat /usr/share/zoneinfo/TZDATA_VERSION
+			run "cat /usr/share/zoneinfo/TZDATA_VERSION"
+		else
+			run "printf '%s\n' tzdata-too-old-to-matter"
 		fi
-		;;
+		$all || return 0 ;&
 	unbound)
 		if which_prog unboundpath unbound-control; then
-			${unboundpath} -h | awk '/^Version/ { print "unbound-" $2 }'
+			run "${unboundpath} -h | awk '/^Version/ { print \"unbound-\" \$2 }'"
 		else
-			echo "unbound: not found"
+			$all || printf >&2 '%s\n' "unbound: not found"
 		fi
-		;;
+		$all || return 0 ;&
+	[uU]ser[lL]and|release)
+		run "sed </etc/release -e 's/ /-/g' -e 's/^/userland-/' -e 1q"
+		$all || return 0 ;&
 	xz)
-		xz --version | awk '{ print $1 "-" $4; exit }'
+		run "xz --version | awk '{ print \$1 \"-\" \$4; exit }'"
+		$all || return 0 ;&
+
+	'')			# never matches
+		;;		# but terminates ;& sequence
+
+	*)	printf >&2 '%s\n' "Unrecognised subsystem: $1"
+		ERRS=1
 		;;
 	esac
 }
 
+verbose=false
 # check if we have our only option
-while [ $# -gt 0 ]; do
-	case "$1" in
-	-v)	set -x ;;
-	*)	break ;;
+while getopts "L:P:v" a; do
+	case "$a" in
+	v)	verbose=true;;
+	L)	LIBRARY_PATH=${OPTARG};;
+	P)	PATH=${OPTARG};;
+	\?)	printf >&2 '%s\n' \
+		    "Usage: $0 [-P path] [-L libdirs] [-v] [system...]"
+		exit 2
 	esac
-	shift
 done
+shift $((OPTIND - 1))
 
-all=false
-# if no arg specified, we want them all
 if [ $# -eq 0 ]; then
+	set -- ''
 	all=true
-fi
-
-# if we want to do every one, then let's get the arguments
-# not really scalable
-if ${all}; then
-	args='awk bind bzip2 calendar ftpd g++ gcc grep gzip httpd netbsd netpgp'
-	args="${args} netpgpverify ntp openssl sqlite ssh sshd sys_info tcsh"
-	args="${args} tzdata unbound xz"
 else
-	args=$(echo $@ | tr ' ' '\n' | sort | uniq)
+	# note this deletes any attempt to use '' as an arg.
+	set -- $( printf '%s\n' "$@" | sort -u )
+	all=false
 fi
-set -- ${args}
 
+ERRS=0
 while [ $# -gt 0 ]; do
-	getversion $1
+	getversion "$1"
 	shift
 done
+exit $ERRS
