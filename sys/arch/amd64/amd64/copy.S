@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.20 2015/12/09 16:55:18 maxv Exp $	*/
+/*	$NetBSD: copy.S,v 1.21 2017/08/23 08:04:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -446,7 +446,7 @@ ENTRY(ucas_64)
 	/* Fail if kernel-space */
 	movq	$VM_MAXUSER_ADDRESS-8, %r8
 	cmpq	%r8, %rdi
-	ja	_C_LABEL(ucas_fault)
+	ja	_C_LABEL(ucas_efault)
 	movq	%rsi, %rax
 .Lucas64_start:
 	/* Perform the CAS */
@@ -470,7 +470,7 @@ ENTRY(ucas_32)
 	/* Fail if kernel-space */
 	movq	$VM_MAXUSER_ADDRESS-4, %r8
 	cmpq	%r8, %rdi
-	ja	_C_LABEL(ucas_fault)
+	ja	_C_LABEL(ucas_efault)
 	movl	%esi, %eax
 .Lucas32_start:
 	/* Perform the CAS */
@@ -486,10 +486,9 @@ ENTRY(ucas_32)
 	ret
 	DEFERRED_SWITCH_CALL
 
-/*
- * Fault handler for ucas_*().
- * Just return the error set by trap().
- */
+ENTRY(ucas_efault)
+	movq	$EFAULT,%rax
+
 NENTRY(ucas_fault)
 	ret
 
