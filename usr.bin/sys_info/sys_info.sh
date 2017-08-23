@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.10 2017/08/23 19:18:38 kre Exp $
+# $NetBSD: sys_info.sh,v 1.11 2017/08/23 21:18:57 agc Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -26,8 +26,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SYS_INFO_VERSION=$( D="\$Date: 2017/08/23 19:18:38 $"; set -f;
-			IFS=" /"; set -- $D; printf %s "$2$3$4" )
+SYS_INFO_VERSION=20170823
 
 PATH=$(sysctl -n user.cs_path)
 export PATH
@@ -224,6 +223,9 @@ getversion() {
 		$all || return 0 ;&
 	xz)
 		run "xz --version | awk '{ print \$1 \"-\" \$4; exit }'"
+		$all || return 0 ;&
+	yacc)
+		run "yacc -V | sed -e 's| ||g'"
 		$all || return 0 ;&
 
 	'')			# never matches
