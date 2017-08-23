@@ -1,4 +1,4 @@
-/*	$NetBSD: t_stresep.c,v 1.3 2013/02/15 23:56:32 christos Exp $ */
+/*	$NetBSD: t_stresep.c,v 1.4 2017/08/23 10:29:51 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -61,6 +61,12 @@ ATF_TC_BODY(stresep_basic, tc)
 	expect("bar  foo");
 	expect("   baz");
 	expect("bar  ");
+
+	char brkstr2[] = "aa bb cc\\ \\ \\ \\ dd-";
+	q = brkstr2;
+	expect("aa");
+	expect("bb");
+	expect("cc    dd-");
 }
 
 ATF_TP_ADD_TCS(tp)
