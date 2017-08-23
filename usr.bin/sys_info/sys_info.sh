@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.8 2017/08/23 01:17:46 kre Exp $
+# $NetBSD: sys_info.sh,v 1.9 2017/08/23 18:15:53 agc Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -26,7 +26,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SYS_INFO_VERSION=$( D="\$Date: 2017/08/23 01:17:46 $"; set -f;
+SYS_INFO_VERSION=$( D="\$Date: 2017/08/23 18:15:53 $"; set -f;
 			IFS=" /"; set -- $D; printf %s "$2$3$4" )
 
 PATH=$(sysctl -n user.cs_path)
@@ -186,6 +186,11 @@ getversion() {
 	openssl)
 		run "openssl version 2>/dev/null | awk '{ print tolower(\$1) \"-\" \$2 }'"
 		$all || return 0 ;&
+	pkg_info|pkg_install)
+		if which_prog infopath pkg_info; then
+			run "printf 'pkg_install-%s\n' $(${infopath} -V)"
+		fi
+		$all || return 0 ;&
 	sh)
 		run "set -- \$NETBSD_SHELL; case \"\$1+\$2\" in *+BUILD*) ;; +) set -- ancient;; *) set -- \"\$1\";;esac; printf 'sh-%s\\n' \$1\${2:+-\${2#BUILD:}}"
 		$all || return 0 ;&
@@ -198,8 +203,6 @@ getversion() {
 	tcsh)
 		if which_prog tcshpath tcsh; then
 			run "${tcshpath} --version | awk '{ print \$1 \"-\" \$2 }'"
-		else
-			$all || printf >&2 '%s\n' "tcsh: not found"
 		fi
 		$all || return 0 ;&
 	tzdata)
