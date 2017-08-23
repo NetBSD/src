@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.9 2017/08/23 18:15:53 agc Exp $
+# $NetBSD: sys_info.sh,v 1.10 2017/08/23 19:18:38 kre Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -26,7 +26,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SYS_INFO_VERSION=$( D="\$Date: 2017/08/23 18:15:53 $"; set -f;
+SYS_INFO_VERSION=$( D="\$Date: 2017/08/23 19:18:38 $"; set -f;
 			IFS=" /"; set -- $D; printf %s "$2$3$4" )
 
 PATH=$(sysctl -n user.cs_path)
@@ -188,7 +188,7 @@ getversion() {
 		$all || return 0 ;&
 	pkg_info|pkg_install)
 		if which_prog infopath pkg_info; then
-			run "printf 'pkg_install-%s\n' $(${infopath} -V)"
+			run "printf 'pkg_install-%s\n' \$(${infopath} -V)"
 		fi
 		$all || return 0 ;&
 	sh)
