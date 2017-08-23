@@ -1,4 +1,4 @@
-/* $NetBSD: mdreloc.c,v 1.4 2017/08/10 19:03:25 joerg Exp $ */
+/* $NetBSD: mdreloc.c,v 1.5 2017/08/23 09:17:48 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.4 2017/08/10 19:03:25 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.5 2017/08/23 09:17:48 nisimura Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: mdreloc.c,v 1.4 2017/08/10 19:03:25 joerg Exp $");
 
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
-caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
+Elf_Addr _rtld_bind(const Obj_Entry *, Elf_Word);
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
@@ -84,11 +84,10 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 	for (const Elf_Rela *rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
-		unsigned long	 symnum;
-		Elf_Addr	 addend;
+		Elf_Addr	tmp;
+		unsigned long	symnum;
 
 		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-		addend = rela->r_addend;
 
 		switch (ELF_R_TYPE(rela->r_info)) {
 		case R_TYPE(ABS64):	/* word B + S + A */
@@ -115,17 +114,19 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 		case R_TYPE(ABS64):	/* word B + S + A */
 		case R_TYPE(GLOB_DAT):	/* word B + S */
-			*where = addend + (Elf_Addr)defobj->relocbase +
-			    def->st_value;
+			tmp = (Elf_Addr)defobj->relocbase + def->st_value +
+			    rela->r_addend;
+			if (*where != tmp)
+				*where = tmp;
 			rdbg(("ABS64/GLOB_DAT %s in %s --> %p @ %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)tmp, where, defobj->path));
 			break;
 
 		case R_TYPE(RELATIVE):	/* word B + A */
-			*where = addend + (Elf_Addr)obj->relocbase;
+			*where = (Elf_Addr)(obj->relocbase + rela->r_addend);
 			rdbg(("RELATIVE in %s --> %p", obj->path,
-			    (void *)tmp));
+			    (void *)*where));
 			break;
 
 		case R_TYPE(COPY):
@@ -145,11 +146,11 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TLS_TYPE(TLS_DTPREL):
-			*where = addend + (Elf_Addr)(def->st_value);
+			*where = (Elf_Addr)(def->st_value + rela->r_addend);
 
-			rdbg(("TLS_DTPOFF32 %s in %s --> %p",
+			rdbg(("TLS_DTPREL %s in %s --> %p",
 			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)tmp));
+			    obj->path, (void *)*where));
 
 			break;
 		case R_TLS_TYPE(TLS_DTPMOD):
@@ -157,7 +158,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 			rdbg(("TLS_DTPMOD %s in %s --> %p",
 			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)tmp));
+			    obj->path, (void *)*where));
 
 			break;
 
@@ -168,17 +169,18 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 			*where = (Elf_Addr)def->st_value + defobj->tlsoffset +
 			    sizeof(struct tls_tcb);
-			rdbg(("TLS_TPOFF32 %s in %s --> %p",
+			rdbg(("TLS_TPREL %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)tmp));
+			    obj->path, (void *)*where, defobj->path));
 			break;
 
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
-			    "contents = %p, symbol = %s",
+			    "addend = %p, contents = %p, symbol = %s",
 			    (u_long)ELF_R_SYM(rela->r_info),
 			    (u_long)ELF_R_TYPE(rela->r_info),
-			    (void *)rela->r_offset, *where,
+			    (void *)rela->r_offset, (void *)rela->r_addend,
+			    (void *)*where,
 			    obj->strtab + obj->symtab[symnum].st_name));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations",
@@ -244,7 +246,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rel *rel,
 	return 0;
 }
 
-caddr_t
+Elf_Addr
 _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
 	const Elf_Rel *rel = obj->pltrel + reloff;
@@ -256,7 +258,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 		_rtld_die();
 	_rtld_shared_exit();
 
-	return (caddr_t)new_value;
+	return new_value;
 }
 int
 _rtld_relocate_plt_objects(const Obj_Entry *obj)
