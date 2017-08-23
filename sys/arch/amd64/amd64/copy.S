@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.21 2017/08/23 08:04:22 maxv Exp $	*/
+/*	$NetBSD: copy.S,v 1.22 2017/08/23 08:14:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -44,8 +44,8 @@
 #include <machine/frameasm.h>
 
 #define GET_CURPCB(reg)	\
-	movq	CPUVAR(CURLWP), reg; \
-	movq	L_PCB(reg), reg
+	movq	CPUVAR(CURLWP),reg; \
+	movq	L_PCB(reg),reg
 
 /*
  * These are arranged so that the abnormal case is a forwards
@@ -55,10 +55,10 @@
 #define DEFERRED_SWITCH_CHECK \
 	CHECK_DEFERRED_SWITCH			; \
 	jnz	99f				; \
-    98:
+98:
 
 #define DEFERRED_SWITCH_CALL \
-    99:						; \
+99:						; \
 	call	_C_LABEL(do_pmap_load)		; \
 	jmp	98b
 
@@ -85,18 +85,18 @@ ENTRY(do_pmap_load)
 	pushq	%rdx
 	pushq	%rcx
 	pushq	%rbx
-	movq	CPUVAR(CURLWP), %rbx
+	movq	CPUVAR(CURLWP),%rbx
 1:
 	incl	L_NOPREEMPT(%rbx)
 	call	_C_LABEL(pmap_load)
 	decl	L_NOPREEMPT(%rbx)
 	jnz	2f
-	cmpl	$0, L_DOPREEMPT(%rbx)
+	cmpl	$0,L_DOPREEMPT(%rbx)
 	jz	2f
-	xorq	%rdi, %rdi
+	xorq	%rdi,%rdi
 	call	_C_LABEL(kpreempt)
 2:
-	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
+	cmpl	$0,CPUVAR(WANT_PMAPLOAD)
 	jnz	1b
 	popq	%rbx
 	popq	%rcx
@@ -194,6 +194,7 @@ ENTRY(copyout)
 	rep
 	movsb				/* copy remaining bytes */
 .Lcopyout_end:
+
 	xorl	%eax,%eax
 	ret
 	DEFERRED_SWITCH_CALL
@@ -221,6 +222,7 @@ ENTRY(copyin)
 	rep
 	movsb
 .Lcopyin_end:
+
 	xorl	%eax,%eax
 	ret
 	DEFERRED_SWITCH_CALL
@@ -256,6 +258,7 @@ ENTRY(copyoutstr)
 	jae	1f
 	movq	%rax,%rdx
 	movq	%rax,%r8
+
 .Lcopyoutstr_start:
 1:	incq	%rdx
 
@@ -266,6 +269,7 @@ ENTRY(copyoutstr)
 	testb	%al,%al
 	jnz	1b
 .Lcopyoutstr_end:
+
 	/* Success -- 0 byte reached. */
 	decq	%rdx
 	xorq	%rax,%rax
@@ -295,6 +299,7 @@ ENTRY(copyinstr)
 	jae	1f
 	movq	%rax,%rdx
 	movq	%rax,%r8
+
 .Lcopyinstr_start:
 1:	incq	%rdx
 
@@ -363,7 +368,7 @@ ENTRY(copystr)
 
 
 ENTRY(fuswintr)
-	cmpl	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
+	cmpl	$TLBSTATE_VALID,CPUVAR(TLBSTATE)
 	jnz	_C_LABEL(fusuaddrfault)
 	movq	$VM_MAXUSER_ADDRESS-2,%r11
 	cmpq	%r11,%rdi
@@ -371,7 +376,9 @@ ENTRY(fuswintr)
 	GET_CURPCB(%rcx)
 	leaq	_C_LABEL(fusuintrfailure)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
+
 	movzwl	(%rdi),%eax
+
 	movq	$0,PCB_ONFAULT(%rcx)
 	ret
 
@@ -383,13 +390,15 @@ ENTRY(fubyte)
 	GET_CURPCB(%rcx)
 	leaq	_C_LABEL(fusufailure)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
+
 	movzbl	(%rdi),%eax
+
 	movq	$0,PCB_ONFAULT(%rcx)
 	ret
 	DEFERRED_SWITCH_CALL
 
 ENTRY(suswintr)
-	cmpl	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
+	cmpl	$TLBSTATE_VALID,CPUVAR(TLBSTATE)
 	jnz	_C_LABEL(fusuaddrfault)
 	movq	$VM_MAXUSER_ADDRESS-2,%r11
 	cmpq	%r11,%rdi
@@ -397,7 +406,9 @@ ENTRY(suswintr)
 	GET_CURPCB(%rcx)
 	leaq	_C_LABEL(fusuintrfailure)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
+
 	movw	%si,(%rdi)
+
 	xorq	%rax,%rax
 	movq	%rax,PCB_ONFAULT(%rcx)
 	ret
@@ -413,6 +424,7 @@ ENTRY(subyte)
 	movq	%r11,PCB_ONFAULT(%rcx)
 
 	movb	%sil,(%rdi)
+
 	xorq	%rax,%rax
 	movq	%rax,PCB_ONFAULT(%rcx)
 	ret
@@ -444,21 +456,23 @@ ENTRY(fusuaddrfault)
 ENTRY(ucas_64)
 	DEFERRED_SWITCH_CHECK
 	/* Fail if kernel-space */
-	movq	$VM_MAXUSER_ADDRESS-8, %r8
-	cmpq	%r8, %rdi
+	movq	$VM_MAXUSER_ADDRESS-8,%r8
+	cmpq	%r8,%rdi
 	ja	_C_LABEL(ucas_efault)
-	movq	%rsi, %rax
+	movq	%rsi,%rax
+
 .Lucas64_start:
 	/* Perform the CAS */
 	lock
-	cmpxchgq %rdx, (%rdi)
+	cmpxchgq %rdx,(%rdi)
 .Lucas64_end:
+
 	/*
 	 * Note: %rax is "old" value.
 	 * Set the return values.
 	 */
-	movq	%rax, (%rcx)
-	xorq	%rax, %rax
+	movq	%rax,(%rcx)
+	xorq	%rax,%rax
 	ret
 	DEFERRED_SWITCH_CALL
 
@@ -468,21 +482,23 @@ ENTRY(ucas_64)
 ENTRY(ucas_32)
 	DEFERRED_SWITCH_CHECK
 	/* Fail if kernel-space */
-	movq	$VM_MAXUSER_ADDRESS-4, %r8
-	cmpq	%r8, %rdi
+	movq	$VM_MAXUSER_ADDRESS-4,%r8
+	cmpq	%r8,%rdi
 	ja	_C_LABEL(ucas_efault)
-	movl	%esi, %eax
+	movl	%esi,%eax
+
 .Lucas32_start:
 	/* Perform the CAS */
 	lock
-	cmpxchgl %edx, (%rdi)
+	cmpxchgl %edx,(%rdi)
 .Lucas32_end:
+
 	/*
 	 * Note: %eax is "old" value.
 	 * Set the return values.
 	 */
-	movl	%eax, (%rcx)
-	xorq	%rax, %rax
+	movl	%eax,(%rcx)
+	xorq	%rax,%rax
 	ret
 	DEFERRED_SWITCH_CALL
 
