@@ -1,4 +1,4 @@
-/* $NetBSD: vectors.S,v 1.3 2017/08/22 18:35:09 nisimura Exp $ */
+/* $NetBSD: vectors.S,v 1.4 2017/08/23 13:02:14 nisimura Exp $ */
 
 #include <aarch64/asm.h>
 #include "assym.h"
@@ -18,6 +18,9 @@ lr	.req	x30	/* link register */
 	.macro	VECT_INVAL, el, cause, regsize = 64
 	.align	7
 	/* small enough to fit 32 instrunction slot */
+	.if \el == 1
+	sub	sp, sp, #TF_SIZE
+	.endif
 	stp	x0, x1, [sp, #TF_X0]
 	stp	x2, x3, [sp, #TF_X2]
 	stp	x4, x5, [sp, #TF_X4]
@@ -37,7 +40,7 @@ lr	.req	x30	/* link register */
 	.if \el == 0
 	mrs	x20, sp_el0
 	.else
-	mrs	x20, sp_el1
+	mov	x20, sp
 	.endif
 	mrs	x21, elr_el1
 	mrs	x22, spsr_el1
@@ -48,10 +51,11 @@ lr	.req	x30	/* link register */
 	mrs	x24, far_el1
 	str	x23, [sp, #TF_ESR]
 	str	x24, [sp, #TF_FAR]
-	adr	lr, exception_trap_exit
+	ldr	lr, =exception_trap_exit
 	mov	x0, sp
 	mov	x1, #\cause
 	b	trap
+	/* !!! beware about remaining slot !!! */
 	.endm
 
 	.macro	exception_entry, el, regsize = 64
@@ -79,7 +83,7 @@ lr	.req	x30	/* link register */
 	mov	x29, xzr		/* fp pointed to user-space */
 	mrs	x20, sp_el0
 	.else
-	mrs	x20, sp_el1
+	mov	x20, sp
 	.endif
 	mrs	x21, elr_el1
 	mrs	x22, spsr_el1
@@ -92,11 +96,12 @@ lr	.req	x30	/* link register */
 	str	x24, [sp, #TF_FAR]
 	.endm
 
-	.pushsection ".entry.text", "ax"
+	.pushsection ".vectors", "ax"
+	.global _C_LABEL(el1_vectors)
 	.p2align 11
-ENTRY(el1_vectors)
+_C_LABEL(el1_vectors):
 /*
- * A64 exception taken from current Exception Level with SP_EL1.
+ * Exception taken from current Exception Level with SP_EL1.
  * (These shouldn't happen)
  */
 	VECT_INVAL	1, BAD_SYNC		/* Synchronous EL1t */
@@ -104,71 +109,73 @@ ENTRY(el1_vectors)
 	VECT_INVAL	1, BAD_FIQ		/* FIQ EL1t */
 	VECT_INVAL	1, BAD_ERROR		/* Error EL1t */
 /*
- * A64 exception taken from current Exception Level with SP.
- * EL1 (kernel exceptions)
+ * Exception taken from current Exception Level with SP.
+ * There are entries for exceptions caused in EL1 (kernel exceptions).
  */
 	VECT_ENTRY	el1_sync		/* Synchronous EL1h */
 	VECT_ENTRY	el1_irq			/* IRQ EL1h */
 	VECT_INVAL	1, BAD_FIQ		/* FIQ EL1h */
 	VECT_INVAL	1, BAD_ERROR		/* Error EL1h */
 /*
- * A64 exception taken from lower Exception Level.
- * EL0 (native user exceptions)
+ * Exception taken from lower Exception Level which is using AArch64
+ * There are entries for exceptions caused in EL0 (native user exceptions).
  */
 	VECT_ENTRY	el0_sync		/* Synchronous 64bit EL0 */
 	VECT_ENTRY	el0_irq			/* IRQ 64bit EL0 */
 	VECT_INVAL	0, BAD_FIQ		/* FIQ 64bit EL0 */
 	VECT_INVAL	0, BAD_ERROR		/* Error 64bit EL0 */
 /*
- * A32 exception taken from lower Exception Level.
- * EL0 (compat user exceptions)
+ * Exception taken from lower Exception Level which is using AArch32
+ * There are entries for exceptions caused in EL0 (compat user exceptions).
  */
 	VECT_ENTRY	el0_32sync		/* Synchronous 32bit EL0 */
 	VECT_ENTRY	el0_32irq		/* IRQ 32bit EL0 */
 	VECT_INVAL	0, BAD_FIQ, 32		/* FIQ 32bit EL0 */
 	VECT_INVAL	0, BAD_ERROR, 32	/* Error 32bit EL0 */
 
-ENTRY(el1_sync)
+_C_LABEL(el1_sync):
+	sub	sp, sp, #TF_SIZE
 	exception_entry 1
-	adr	lr, exception_trap_exit
+	ldr	lr, =exception_trap_exit
 	mov	x0, sp
 	mov	x1, xzr
 	b	trap
 END(el1_sync)
 
-ENTRY(el1_irq)
+_C_LABEL(el1_irq):
+	sub	sp, sp, #TF_SIZE
 	exception_entry 1
-	adr	lr, exception_trap_exit
+	ldr	lr, =exception_trap_exit
 	mov	x0, sp
 	b	interrupt
 END(el1_irq)
 
-ENTRY(el0_sync)
+_C_LABEL(el0_sync):
 	exception_entry 0
-	adr	lr, exception_trap_exit
+	ldr	lr, =exception_trap_exit
 	mov	x0, sp
 	mov	x1, xzr
 	b	trap
 END(el0_sync)
 
-ENTRY(el0_irq)
+_C_LABEL(el0_irq):
 	exception_entry 0
-	adr	lr, exception_trap_exit
+	ldr	lr, =exception_trap_exit
 	mov	x0, sp
 	b	interrupt
 END(el0_irq)
 
-ENTRY(el0_32sync)
+_C_LABEL(el0_32sync):
 	exception_entry 0, 32
-	adr	lr, exception_trap_exit
+	ldr	lr, =exception_trap_exit
 	mov	x0, sp
 	mov	x1, xzr
 	b	trap
 END(el0_32sync)
 
-ENTRY(el0_32irq)
+_C_LABEL(el0_32irq):
 	exception_entry 0, 32
-	adr	lr, exception_trap_exit
+	ldr	lr, =exception_trap_exit
 	mov	x0, sp
 	b	interrupt
 END(el0_32irq)
