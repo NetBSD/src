@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.111 2017/08/04 07:27:08 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.112 2017/08/23 13:04:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008, 2009, 2010, 2011, 2015, 2017
@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008,\
  2009, 2010, 2011, 2015, 2017 Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.111 2017/08/04 07:27:08 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.112 2017/08/23 13:04:17 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -212,6 +212,7 @@ __dead static	void	usage(void);
 __dead static	void	display_version(void);
 static	const suffixes_t *check_suffix(char *, int);
 static	ssize_t	read_retry(int, void *, size_t);
+static	ssize_t	write_retry(int, const void *, size_t);
 
 #ifdef SMALL
 #define infile_set(f,t) infile_set(f)
@@ -605,7 +606,7 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 	crc = crc32(0L, Z_NULL, 0);
 	for (;;) {
 		if (z.avail_out == 0) {
-			if (write(out, outbufp, BUFLEN) != BUFLEN) {
+			if (write_retry(out, outbufp, BUFLEN) != BUFLEN) {
 				maybe_warn("write");
 				out_tot = -1;
 				goto out;
@@ -655,7 +656,7 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 
 		len = (char *)z.next_out - outbufp;
 
-		w = write(out, outbufp, len);
+		w = write_retry(out, outbufp, len);
 		if (w == -1 || (size_t)w != len) {
 			maybe_warn("write");
 			out_tot = -1;
@@ -690,7 +691,7 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 	if (in_tot > 0xffffffff)
 		maybe_warn("input file size >= 4GB cannot be saved");
 #endif
-	if (write(out, outbufp, i) != i) {
+	if (write_retry(out, outbufp, i) != i) {
 		maybe_warn("write");
 		in_tot = -1;
 	} else
@@ -957,7 +958,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 				    /* don't write anything with -t */
 				    tflag == 0 &&
 #endif
-				    write(out, outbufp, wr) != wr) {
+				    write_retry(out, outbufp, wr) != wr) {
 					maybe_warn("error writing to output");
 					goto stop_and_fail;
 				}
@@ -1699,7 +1700,7 @@ cat_fd(unsigned char * prepend, size_t count, off_t *gsizep, int fd)
 	ssize_t w;
 
 	in_tot = count;
-	w = write(STDOUT_FILENO, prepend, count);
+	w = write_retry(STDOUT_FILENO, prepend, count);
 	if (w == -1 || (size_t)w != count) {
 		maybe_warn("write to stdout");
 		return -1;
@@ -1716,7 +1717,7 @@ cat_fd(unsigned char * prepend, size_t count, off_t *gsizep, int fd)
 		}
 		infile_newdata(rv);
 
-		if (write(STDOUT_FILENO, buf, rv) != rv) {
+		if (write_retry(STDOUT_FILENO, buf, rv) != rv) {
 			maybe_warn("write to stdout");
 			break;
 		}
@@ -2219,6 +2220,28 @@ read_retry(int fd, void *buf, size_t sz)
 			return ret;
 		} else if (ret == 0) {
 			break; /* EOF */
+		}
+		cp += ret;
+		left -= ret;
+	}
+
+	return sz - left;
+}
+
+static ssize_t
+write_retry(int fd, const void *buf, size_t sz)
+{
+	const char *cp = buf;
+	size_t left = MIN(sz, (size_t) SSIZE_MAX);
+
+	while (left > 0) {
+		ssize_t ret;
+
+		ret = write(fd, cp, left);
+		if (ret == -1) {
+			return ret;
+		} else if (ret == 0) {
+			abort();	/* Can't happen */
 		}
 		cp += ret;
 		left -= ret;
