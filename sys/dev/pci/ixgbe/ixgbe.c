@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.95 2017/07/03 08:29:58 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.96 2017/08/24 10:43:42 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4847,18 +4847,6 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	const char *xname = device_xname(dev);
 
 	/* Driver Statistics */
-#if 0
-	/* These counters are not updated by the software */
-	SYSCTL_ADD_ULONG(ctx, child, OID_AUTO, "mbuf_header_failed",
-			CTLFLAG_RD, &adapter->mbuf_header_failed,
-			"???");
-	SYSCTL_ADD_ULONG(ctx, child, OID_AUTO, "mbuf_packet_failed",
-			CTLFLAG_RD, &adapter->mbuf_packet_failed,
-			"???");
-	SYSCTL_ADD_ULONG(ctx, child, OID_AUTO, "no_tx_map_avail",
-			CTLFLAG_RD, &adapter->no_tx_map_avail,
-			"???");
-#endif
 	evcnt_attach_dynamic(&adapter->handleq, EVCNT_TYPE_MISC,
 	    NULL, xname, "Handled queue in softint");
 	evcnt_attach_dynamic(&adapter->req, EVCNT_TYPE_MISC,
