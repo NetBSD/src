@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.82 2017/08/24 11:33:28 jmcneill Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.83 2017/08/24 11:37:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.82 2017/08/24 11:33:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.83 2017/08/24 11:37:25 skrll Exp $");
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
@@ -131,8 +131,8 @@ extent_alloc_region_descriptor(struct extent *ex, int flags)
 	if (ex->ex_flags & EXF_FIXED) {
 		struct extent_fixed *fex = (struct extent_fixed *)ex;
 
-			if (!(ex->ex_flags & EXF_EARLY))
-		mutex_enter(&ex->ex_lock);
+		if (!(ex->ex_flags & EXF_EARLY))
+			mutex_enter(&ex->ex_lock);
 		for (;;) {
 			if ((rp = LIST_FIRST(&fex->fex_freelist)) != NULL) {
 				/*
