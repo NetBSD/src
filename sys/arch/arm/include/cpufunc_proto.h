@@ -44,6 +44,8 @@
 
 #ifdef _KERNEL
 
+#include "opt_multiprocessor.h"
+
 #include <sys/types.h>
 #include <arm/armreg.h>
 #include <arm/cpuconf.h>
@@ -309,13 +311,23 @@ void 	armv7_dcache_wbinv_all(void);
 void	armv7_idcache_wbinv_range(vaddr_t, vsize_t);
 void	armv7_idcache_wbinv_all(void);
 
-void	armv7_tlb_flushID(void);
-void	armv7_tlb_flushI(void);
-void	armv7_tlb_flushD(void);
+void	armv7up_tlb_flushID(void);
+void	armv7up_tlb_flushI(void);
+void	armv7up_tlb_flushD(void);
 
-void	armv7_tlb_flushID_SE(vaddr_t);
-void	armv7_tlb_flushI_SE(vaddr_t);
-void	armv7_tlb_flushD_SE(vaddr_t);
+void	armv7up_tlb_flushID_SE(vaddr_t);
+void	armv7up_tlb_flushI_SE(vaddr_t);
+void	armv7up_tlb_flushD_SE(vaddr_t);
+
+#ifdef MULTIPROCESSOR
+void	armv7mp_tlb_flushID(void);
+void	armv7mp_tlb_flushI(void);
+void	armv7mp_tlb_flushD(void);
+
+void	armv7mp_tlb_flushID_SE(vaddr_t);
+void	armv7mp_tlb_flushI_SE(vaddr_t);
+void	armv7mp_tlb_flushD_SE(vaddr_t);
+#endif
 
 void	armv7_cpu_sleep(int);
 void	armv7_drain_writebuf(void);
