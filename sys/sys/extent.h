@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.25 2017/07/27 10:04:28 skrll Exp $	*/
+/*	$NetBSD: extent.h,v 1.26 2017/08/24 11:33:28 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -73,8 +73,9 @@ struct extent_fixed {
 /* ex_flags; for internal use only */
 #define EXF_FIXED	__BIT(0)	/* extent uses fixed storage */
 #define EXF_NOCOALESCE	__BIT(1)	/* coalescing of regions not allowed */
+#define EXF_EARLY	__BIT(2)	/* no need to lock */
 
-#define EXF_BITS	"\20\2NOCOALESCE\1FIXED"
+#define EXF_BITS	"\20\3EARLY\2NOCOALESCE\1FIXED"
 
 /* misc. flags passed to extent functions */
 #define EX_NOWAIT	0		/* not safe to sleep */
@@ -85,6 +86,7 @@ struct extent_fixed {
 #define EX_MALLOCOK	__BIT(4)	/* safe to call kmem_alloc() */
 #define EX_WAITSPACE	__BIT(5)	/* wait for space to become free */
 #define EX_BOUNDZERO	__BIT(6)	/* boundary lines start at 0 */
+#define EX_EARLY	__BIT(7)	/* safe for early kernel bootstrap */
 
 /*
  * Special place holders for "alignment" and "boundary" arguments,
