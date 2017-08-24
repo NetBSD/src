@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdtvar.h,v 1.6 2017/06/29 20:55:10 jmcneill Exp $ */
+/* $NetBSD: arm_fdtvar.h,v 1.7 2017/08/24 13:06:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -67,6 +67,8 @@ const struct arm_platform *	arm_fdt_platform(void);
 
 void    arm_fdt_cpu_hatch_register(void *, void (*)(void *, struct cpu_info *));
 void    arm_fdt_cpu_hatch(struct cpu_info *);
+
+void	arm_fdt_timer_register(void (*)(void));
 
 void	arm_fdt_irq_set_handler(void (*)(void *));
 void	arm_fdt_irq_handler(void *);

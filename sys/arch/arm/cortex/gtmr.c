@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.18 2017/06/17 22:49:37 jmcneill Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.19 2017/08/24 13:06:23 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.18 2017/06/17 22:49:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.19 2017/08/24 13:06:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -223,7 +223,7 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 }
 
 void
-cpu_initclocks(void)
+gtmr_cpu_initclocks(void)
 {
 	struct gtmr_softc * const sc = &gtmr_sc;
 
