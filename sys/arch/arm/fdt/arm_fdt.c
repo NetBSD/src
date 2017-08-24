@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.4 2017/06/29 20:55:10 jmcneill Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.5 2017/08/24 13:06:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_arm_timer.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.4 2017/06/29 20:55:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.5 2017/08/24 13:06:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +63,7 @@ static TAILQ_HEAD(, arm_fdt_cpu_hatch_cb) arm_fdt_cpu_hatch_cbs =
     TAILQ_HEAD_INITIALIZER(arm_fdt_cpu_hatch_cbs);
 
 static void (*_arm_fdt_irq_handler)(void *) = NULL;
+static void (*_arm_fdt_timer_init)(void) = NULL;
 
 int
 arm_fdt_match(device_t parent, cfdata_t cf, void *aux)
@@ -145,6 +148,18 @@ arm_fdt_irq_handler(void *tf)
 }
 
 void
+arm_fdt_timer_register(void (*timerfn)(void))
+{
+	if (_arm_fdt_timer_init != NULL) {
+#ifdef DIAGNOSTIC
+		aprint_verbose("%s: timer already registered\n", __func__);
+#endif
+		return;
+	}
+	_arm_fdt_timer_init = timerfn;
+}
+
+void
 arm_fdt_memory_dump(paddr_t pa)
 {
 	const struct arm_platform *plat = arm_fdt_platform();
@@ -166,3 +181,13 @@ arm_fdt_memory_dump(paddr_t pa)
 		    bus_space_read_4(bst, bsh, i + 12));
 	}
 }
+
+#ifdef __HAVE_GENERIC_CPU_INITCLOCKS
+void
+cpu_initclocks(void)
+{
+	if (_arm_fdt_timer_init == NULL)
+		panic("cpu_initclocks: no timer registered");
+	_arm_fdt_timer_init();
+}
+#endif
