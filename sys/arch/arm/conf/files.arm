@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.133 2017/06/28 23:48:23 jmcneill Exp $
+#	$NetBSD: files.arm,v 1.134 2017/08/24 13:06:23 jmcneill Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -83,6 +83,9 @@ defflag	opt_arm_debug.h		VERBOSE_INIT_ARM
 defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
 				_ARM32_NEED_BUS_DMA_BOUNCE
 				BUSDMA_COUNTERS
+
+# Timer options
+defflag opt_arm_timer.h		__HAVE_GENERIC_CPU_INITCLOCKS
 
 # Floating point emulator
 obsolete defflag				ARMFPE
