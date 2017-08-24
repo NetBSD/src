@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.40 2017/08/20 05:48:00 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.41 2017/08/24 06:54:30 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -4585,4 +4585,9 @@ usr.sbin/racoon/Makefile			1.28
 
 	Update Heimdal to 7.1, fixing CVE-2016-2400.
 	[mrg, ticket #1493]
+
+sys/arch/i386/conf/GENERIC			patch
+
+	i386 GENERIC: disable VM86 by default.
+	[maxv, ticket #1463]
 
