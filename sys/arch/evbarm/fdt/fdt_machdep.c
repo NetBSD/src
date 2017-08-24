@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.12 2017/08/20 21:00:01 jakllsch Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.13 2017/08/24 11:33:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.12 2017/08/20 21:00:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.13 2017/08/24 11:33:28 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -230,7 +230,7 @@ fdt_build_bootconfig(uint64_t mem_addr, uint64_t mem_size)
 	int index, error;
  
 	fdt_memory_ext = extent_create("FDT Memory", mem_addr, max_addr,
-	    fdt_memory_ext_storage, sizeof(fdt_memory_ext_storage), 0);
+	    fdt_memory_ext_storage, sizeof(fdt_memory_ext_storage), EX_EARLY);
 
 	for (index = 0;
 	     fdtbus_get_reg64(memory, index, &addr, &size) == 0;
