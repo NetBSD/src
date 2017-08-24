@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.11 2017/08/23 21:18:57 agc Exp $
+# $NetBSD: sys_info.sh,v 1.12 2017/08/24 01:43:42 kre Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -26,7 +26,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SYS_INFO_VERSION=20170823
+SYS_INFO_VERSION=20170824
 
 PATH=$(sysctl -n user.cs_path)
 export PATH
@@ -102,8 +102,7 @@ run() {
 getversion() {
 	case "$1" in
 	'')
-		# arriving here implies all==true, not possible otherwise
-		;&
+		$all || return 0 ;&
 	awk)
 		run "awk --version | awk '{ print \$1 \"-\" \$3 }'"
 		$all || return 0 ;&
@@ -255,8 +254,6 @@ if [ $# -eq 0 ]; then
 	set -- ''
 	all=true
 else
-	# note this deletes any attempt to use '' as an arg.
-	set -- $( printf '%s\n' "$@" | sort -u )
 	all=false
 fi
 
