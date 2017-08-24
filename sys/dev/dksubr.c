@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.98 2017/08/13 22:23:16 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.99 2017/08/24 11:26:32 maya Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.98 2017/08/13 22:23:16 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.99 2017/08/24 11:26:32 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -497,7 +497,10 @@ dk_discard(struct dk_softc *dksc, dev_t dev, off_t pos, off_t len)
 	const struct dkdriver *dkd = dksc->sc_dkdev.dk_driver;
 	unsigned secsize = dksc->sc_dkdev.dk_geom.dg_secsize;
 	struct buf tmp, *bp = &tmp;
-	int maxsz, error;
+	int maxsz;
+	int error = 0;
+
+	KASSERT(len >= 0);
 
 	DPRINTF_FOLLOW(("%s(%s, %p, 0x"PRIx64", %jd, %jd)\n", __func__,
 	    dksc->sc_xname, dksc, (intmax_t)pos, (intmax_t)len));
