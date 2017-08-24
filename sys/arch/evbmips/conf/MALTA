@@ -1,17 +1,18 @@
-#	$NetBSD: MALTA,v 1.87 2017/08/19 09:10:24 maya Exp $
+#	$NetBSD: MALTA,v 1.88 2017/08/24 22:46:54 simonb Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.87 $"
+#ident 		"MALTA-$Revision: 1.88 $"
 
 maxusers	32
 
 options 	MIPS32
 options 	MIPS64
-#options 	NOFPU		# No FPU
-#options 	FPEMUL		# emulate FPU insn
+
+options 	NOFPU		# No FPU
+options 	FPEMUL		# emulate FPU insn
 
 # Options for necessary to use MD
 # options 	MEMORY_DISK_HOOKS
