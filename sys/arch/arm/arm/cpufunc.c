@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.163 2017/01/28 13:21:11 jakllsch Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.164 2017/08/24 14:19:36 jmcneill Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.163 2017/01/28 13:21:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.164 2017/08/24 14:19:36 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1300,12 +1300,12 @@ struct cpu_functions armv7_cpufuncs = {
 
 	/* TLB functions */
 
-	.cf_tlb_flushID		= armv7_tlb_flushID,
-	.cf_tlb_flushID_SE	= armv7_tlb_flushID_SE,
-	.cf_tlb_flushI		= armv7_tlb_flushI,
-	.cf_tlb_flushI_SE	= armv7_tlb_flushI_SE,
-	.cf_tlb_flushD		= armv7_tlb_flushD,
-	.cf_tlb_flushD_SE	= armv7_tlb_flushD_SE,
+	.cf_tlb_flushID		= armv7up_tlb_flushID,
+	.cf_tlb_flushID_SE	= armv7up_tlb_flushID_SE,
+	.cf_tlb_flushI		= armv7up_tlb_flushI,
+	.cf_tlb_flushI_SE	= armv7up_tlb_flushI_SE,
+	.cf_tlb_flushD		= armv7up_tlb_flushD,
+	.cf_tlb_flushD_SE	= armv7up_tlb_flushD_SE,
 
 	/* Cache operations */
 
@@ -2134,6 +2134,18 @@ set_cpufuncs(void)
 #if defined(CPU_CORTEX)
 	if (CPU_ID_CORTEX_P(cputype)) {
 		cpufuncs = armv7_cpufuncs;
+#ifdef MULTIPROCESSOR
+		/* If MP extensions are present, patch in MP TLB ops */
+		const uint32_t mpidr = armreg_mpidr_read();
+		if ((mpidr & (MPIDR_MP|MPIDR_U)) == MPIDR_MP) {
+			cpufuncs.cf_tlb_flushID = armv7mp_tlb_flushID;
+			cpufuncs.cf_tlb_flushID_SE = armv7mp_tlb_flushID_SE;
+			cpufuncs.cf_tlb_flushI = armv7mp_tlb_flushI;
+			cpufuncs.cf_tlb_flushI_SE = armv7mp_tlb_flushI_SE;
+			cpufuncs.cf_tlb_flushD = armv7mp_tlb_flushD;
+			cpufuncs.cf_tlb_flushD_SE = armv7mp_tlb_flushD_SE;
+		}
+#endif
 		cpu_do_powersave = 1;			/* Enable powersave */
 #if defined(CPU_ARMV6) || defined(CPU_PRE_ARMV6)
 		cpu_armv7_p = true;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.27 2017/03/16 16:13:20 chs Exp $	*/
+/*	$NetBSD: locore.h,v 1.28 2017/08/24 14:19:36 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -181,6 +181,7 @@ extern int cpu_processor_features[2];
 extern int cpu_media_and_vfp_features[2];
 
 extern bool arm_has_tlbiasid_p;
+extern bool arm_has_mpext_p;
 #ifdef MULTIPROCESSOR
 extern u_int arm_cpu_max;
 extern volatile u_int arm_cpu_hatched;
