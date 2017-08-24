@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.61 2017/08/12 03:29:23 ginsbach Exp $	*/
+/*	$NetBSD: strptime.c,v 1.62 2017/08/24 01:01:09 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.61 2017/08/12 03:29:23 ginsbach Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.62 2017/08/24 01:01:09 ginsbach Exp $");
 #endif
 
 #include "namespace.h"
@@ -521,11 +521,11 @@ namedzone:
 					/* Argh! No 'J'! */
 					if (*bp >= 'A' && *bp <= 'I')
 						tm->TM_GMTOFF =
-						    ('A' - 1) - (int)*bp;
+						    (int)*bp - ('A' - 1);
 					else if (*bp >= 'L' && *bp <= 'M')
-						tm->TM_GMTOFF = 'A' - (int)*bp;
+						tm->TM_GMTOFF = (int)*bp - 'A';
 					else if (*bp >= 'N' && *bp <= 'Y')
-						tm->TM_GMTOFF = (int)*bp - 'M';
+						tm->TM_GMTOFF = 'M' - (int)*bp;
 					tm->TM_GMTOFF *= SECSPERHOUR;
 #endif
 #ifdef TM_ZONE
