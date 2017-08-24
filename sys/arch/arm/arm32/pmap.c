@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.352 2017/07/27 10:56:42 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.353 2017/08/24 14:19:36 jmcneill Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.352 2017/07/27 10:56:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.353 2017/08/24 14:19:36 jmcneill Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -5071,11 +5071,11 @@ pmap_update(pmap_t pm)
 		pmap_md_pdetab_activate(pm, curlwp);
 	}
 
-#if defined(MULTIPROCESSOR)
-	armreg_bpiallis_write(0);
-#else
-	armreg_bpiall_write(0);
-#endif
+	if (arm_has_mpext_p)
+		armreg_bpiallis_write(0);
+	else
+		armreg_bpiall_write(0);
+
 	kpreempt_enable();
 
 	KASSERTMSG(pm == pmap_kernel()
@@ -7526,6 +7526,15 @@ pmap_pte_init_armv7(void)
 	} else if (__SHIFTOUT(armreg_mmfr2_read(), __BITS(12,15)) >= 2) {
 		arm_has_tlbiasid_p = true;
 	}
+
+	/*
+	 * Check the MPIDR to see if this CPU supports MP extensions.
+	 */
+#ifdef MULTIPROCESSOR
+	arm_has_mpext_p = (armreg_mpidr_read() & (MPIDR_MP|MPIDR_U)) == MPIDR_MP;
+#else
+	arm_has_mpext_p = false;
+#endif
 
 	pte_l1_s_prot_u = L1_S_PROT_U_armv7;
 	pte_l1_s_prot_w = L1_S_PROT_W_armv7;
