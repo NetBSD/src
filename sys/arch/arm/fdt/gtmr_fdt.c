@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_fdt.c,v 1.4 2017/07/20 01:52:17 jmcneill Exp $ */
+/* $NetBSD: gtmr_fdt.c,v 1.5 2017/08/24 13:06:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.4 2017/07/20 01:52:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.5 2017/08/24 13:06:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,6 +78,7 @@ gtmr_fdt_attach(device_t parent, device_t self, void *aux)
 	config_found(self, &mpcaa, NULL);
 
 	arm_fdt_cpu_hatch_register(self, gtmr_fdt_cpu_hatch);
+	arm_fdt_timer_register(gtmr_cpu_initclocks);
 }
 
 static void
