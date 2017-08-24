@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.83 2017/08/24 11:37:25 skrll Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.84 2017/08/24 17:18:55 kre Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.83 2017/08/24 11:37:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.84 2017/08/24 17:18:55 kre Exp $");
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.83 2017/08/24 11:37:25 skrll Exp $
 #include <stdio.h>
 #include <string.h>
 
+static inline void no_op(void) { return; }
+
 /*
  * Use multi-line #defines to avoid screwing up the kernel tags file;
  * without this, ctags produces a tags file where panic() shows up
@@ -82,17 +84,18 @@ pool_get(pool, flags)		kmem_alloc((pool)->pr_size,0)
 pool_put(pool, rp)		kmem_free(rp,0)
 #define	\
 panic(a ...)			printf(a)
-#define	mutex_init(a, b, c)
-#define	mutex_destroy(a)
-#define	mutex_enter(l)
-#define	mutex_exit(l)
-#define	cv_wait(cv, lock)
-#define	cv_broadcast(cv)
-#define	cv_init(a, b)
-#define	cv_destroy(a)
+#define	mutex_init(a, b, c)	no_op()
+#define	mutex_destroy(a)	no_op()
+#define	mutex_enter(l)		no_op()
+#define	mutex_exit(l)		no_op()
+#define	cv_wait(cv, lock)	no_op()
+#define	cv_broadcast(cv)	no_op()
+#define	cv_init(a, b)		no_op()
+#define	cv_destroy(a)		no_op()
 #define	KMEM_IS_RUNNING			(1)
 #define	IPL_VM				(0)
 #define	MUTEX_DEFAULT			(0)
+#define	KASSERT(exp)
 #endif
 
 static struct pool expool;
