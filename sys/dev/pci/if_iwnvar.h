@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnvar.h,v 1.19 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.19.6.1 2017/08/25 05:38:06 snj Exp $	*/
 /*	$OpenBSD: if_iwnvar.h,v 1.28 2014/09/09 18:55:08 sthen Exp $	*/
 
 /*-
@@ -338,7 +338,11 @@ struct iwn_softc {
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
 
+#define IWN_UCODE_API(ver)	(((ver) & 0x0000ff00) >> 8)
+	uint32_t		ucode_rev;
+
 	kmutex_t		sc_mtx;         /* mutex for init/stop */
 
+	int			sc_beacon_wait;	/* defer/skip sending */
 };
 
