@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.3 2017/08/25 21:43:49 nisimura Exp $ */
+/* $NetBSD: locore.S,v 1.4 2017/08/25 22:23:59 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include "opt_ddb.h"
 
-RCSID("$NetBSD: locore.S,v 1.3 2017/08/25 21:43:49 nisimura Exp $")
+RCSID("$NetBSD: locore.S,v 1.4 2017/08/25 22:23:59 nisimura Exp $")
 
 // XXX:AARCH64
 lr	.req	x30
@@ -304,10 +304,10 @@ ENTRY(cpu_set_onfault)
 	stp	x23, x24, [x0, #32]
 	stp	x25, x26, [x0, #48]
 	stp	x27, x28, [x0, #64]
-	stp	x29, x9, [x0, #80]
-	stp	lr, x1, [x0, #96]
-	mrs	x3, tpidr_el1		/* curcpu */
-	ldr	x2, [x3, #CI_CURLWP]	/* curlwp */
+	stp	x29, lr, [x0, #80]
+	stp	x9, x1, [x0, #96]
+	mrs	x3, tpidr_el1
+	ldr	x2, [x3, #CI_CURLWP]	/* curlwp = curcpu()->ci_curlwp */
 	str	x0, [x2, #L_MD_ONFAULT] /* l_md.md_onfault = fb */
 	mov	x0, #0
 END(cpu_set_onfault)
