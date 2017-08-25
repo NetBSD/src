@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.2 2017/08/16 22:48:11 nisimura Exp $ */
+/* $NetBSD: trap.c,v 1.3 2017/08/25 22:23:59 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,19 +31,103 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.2 2017/08/16 22:48:11 nisimura Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.3 2017/08/25 22:23:59 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/cpu.h>
+#include <sys/proc.h>
 #include <sys/userret.h>
+#include <sys/systm.h>
+
+#include <sys/signal.h>
+#include <sys/signalvar.h>
+#include <sys/siginfo.h>
 
 #include <aarch64/locore.h>
+
+static void
+dump_trapframe(struct trapframe *tf, void (*pr)(const char *, ...))
+{
+	(*pr)("trapframe @ %p:\n", tf);
+	(*pr)("esr=%016"PRIxREGISTER
+	    ",  pc=%016"PRIxREGISTER
+	    ",  lr=%016"PRIxREGISTER
+	    ",  sp=%016"PRIxREGISTER"\n",
+	    tf->tf_esr, tf->tf_pc, tf->tf_lr, tf->tf_sp);
+	(*pr)(" x0=%016"PRIxREGISTER
+	    ",  x1=%016"PRIxREGISTER
+	    ",  x2=%016"PRIxREGISTER
+	    ",  x3=%016"PRIxREGISTER"\n",
+	    tf->tf_reg[0], tf->tf_reg[1], tf->tf_reg[2], tf->tf_reg[3]);
+	(*pr)(" x4=%016"PRIxREGISTER
+	    ",  x5=%016"PRIxREGISTER
+	    ",  x6=%016"PRIxREGISTER
+	    ",  x7=%016"PRIxREGISTER"\n",
+	    tf->tf_reg[4], tf->tf_reg[5], tf->tf_reg[6], tf->tf_reg[7]);
+	(*pr)(" x8=%016"PRIxREGISTER
+	    ",  x9=%016"PRIxREGISTER
+	    ", x10=%016"PRIxREGISTER
+	    ", x11=%016"PRIxREGISTER"\n",
+	    tf->tf_reg[8], tf->tf_reg[9], tf->tf_reg[10], tf->tf_reg[11]);
+	(*pr)("x12=%016"PRIxREGISTER
+	    ", x13=%016"PRIxREGISTER
+	    ", x14=%016"PRIxREGISTER
+	    ", x15=%016"PRIxREGISTER"\n",
+	    tf->tf_reg[12], tf->tf_reg[13], tf->tf_reg[14], tf->tf_reg[15]);
+	(*pr)("x16=%016"PRIxREGISTER
+	    ", x17=%016"PRIxREGISTER
+	    ", x18=%016"PRIxREGISTER
+	    ", x19=%016"PRIxREGISTER"\n",
+	    tf->tf_reg[16], tf->tf_reg[17], tf->tf_reg[18], tf->tf_reg[19]);
+	(*pr)("x20=%016"PRIxREGISTER
+	    ", x21=%016"PRIxREGISTER
+	    ", x22=%016"PRIxREGISTER
+	    ", x23=%016"PRIxREGISTER"\n",
+	    tf->tf_reg[20], tf->tf_reg[21], tf->tf_reg[22], tf->tf_reg[23]);
+	(*pr)("x24=%016"PRIxREGISTER
+	    ", x25=%016"PRIxREGISTER
+	    ", x26=%016"PRIxREGISTER
+	    ", x27=%016"PRIxREGISTER"\n",
+	    tf->tf_reg[24], tf->tf_reg[25], tf->tf_reg[26], tf->tf_reg[27]);
+	(*pr)("x28=%016"PRIxREGISTER
+	    ", x29=%016"PRIxREGISTER
+	    ", x30=%016"PRIxREGISTER"\n",
+	    tf->tf_reg[28], tf->tf_reg[29], tf->tf_reg[30]);
+}
 
 void
 userret(struct lwp *l, struct trapframe *tf)
 {
 	mi_userret(l);
+}
+
+void
+trap(struct trapframe *tf, int reason)
+{
+	struct lwp * const l = curlwp;
+	size_t code = tf->tf_esr & 0xffff;
+	bool usertrap_p = tf->tf_esr & 01;
+	bool ok = true;
+	ksiginfo_t ksi;
+
+	code = code;
+	dump_trapframe(tf, printf);
+
+	if (usertrap_p) {
+		if (!ok)
+			(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
+		userret(l, tf);
+	}
+	else if (!ok) {
+		dump_trapframe(tf, printf);
+		panic("%s: fatal kernel trap", __func__);
+	}
+}
+
+void
+interrupt(struct trapframe *tf)
+{
 }
 
 // XXXAARCH64 might be populated in frame.h in future
@@ -59,8 +143,8 @@ userret(struct lwp *l, struct trapframe *tf)
 #define FB_X27	8
 #define FB_X28	9
 #define FB_X29	10
-#define FB_SP	11
-#define FB_LR	12
+#define FB_LR	11
+#define FB_SP	12
 #define FB_V0	13
 #define FB_MAX	14
 
