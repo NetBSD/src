@@ -1,4 +1,4 @@
-.\"	$NetBSD: locking.9,v 1.5 2017/04/16 07:05:24 wiz Exp $
+.\"	$NetBSD: locking.9,v 1.5.8.1 2017/08/25 05:50:00 snj Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -212,6 +212,36 @@ The read operations may happen from software interrupt at
 .Pp
 See
 .Xr pserialize 9 .
+.Ss Passive reference mechanism
+Passive references allow CPUs to cheaply acquire and release passive
+references to a resource, which guarantee the resource will not be
+destroyed until the reference is released.  Acquiring and releasing
+passive references requires no interprocessor synchronization, except
+when the resource is pending destruction.
+.Pp
+See
+.Xr psref 9 .
+.Ss Localcount mechanism
+Localcounts are used in the kernel to implement a medium-weight reference
+counting mechanism.  During normal operations, localcounts do not need
+the interprocessor synchronization associated with
+.Xr atomic_ops 3
+atomic memory operations, and (unlike
+.Xr psref 9 )
+localcount references can be held across sleeps and can migrate between
+CPUs.  Draining a localcount requires more expensive interprocessor
+synchronization than
+.Xr atomic_ops 3
+(similar to
+.Xr psref 9 ) .
+And localcount references require eight bytes of memory per object per-CPU,
+significantly more than
+.Xr atomic_ops 3
+and almost always more than
+.Xr psref 9 .
+.Pp
+See
+.Xr localcount 9 .
 .Ss Simple do-it-in-thread-context framework
 The workqueue utility routines are provided to defer work which is needed to be
 processed in a thread context.
@@ -236,6 +266,8 @@ can be used to protect shared resources between the contexts they overlap.
 .It Xr spl 9 Ta yes Ta no Ta no
 .It Xr splraiseipl 9 Ta yes Ta no Ta no
 .It Xr pserialize 9 Ta yes Ta yes Ta no
+.It Xr psref 9 Ta yes Ta yes Ta no
+.It Xr localcount 9 Ta yes Ta yes Ta no
 .It Xr workqueue 9 Ta yes Ta yes Ta yes
 .El
 .Sh SEE ALSO
