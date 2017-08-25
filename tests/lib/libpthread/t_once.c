@@ -1,4 +1,4 @@
-/* $NetBSD: t_once.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $ */
+/* $NetBSD: t_once.c,v 1.2 2017/08/25 22:59:47 ginsbach Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,8 +29,9 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_once.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $");
+__RCSID("$NetBSD: t_once.c,v 1.2 2017/08/25 22:59:47 ginsbach Exp $");
 
+#include <sys/time.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
