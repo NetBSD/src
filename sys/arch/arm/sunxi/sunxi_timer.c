@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_timer.c,v 1.1 2017/08/25 00:07:03 jmcneill Exp $ */
+/* $NetBSD: sunxi_timer.c,v 1.2 2017/08/25 21:52:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.1 2017/08/25 00:07:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.2 2017/08/25 21:52:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,6 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.1 2017/08/25 00:07:03 jmcneill Exp
 #define	 TMR0_CTRL_EN		__BIT(0)
 #define	TMR0_INTV_VALUE_REG	0x14
 #define	TMR0_CURNT_VALUE_REG	0x18
+#define	COUNTER64_CTRL_REG	0xa0
+#define	 COUNTER64_CTRL_CLK_SRC_SEL	__BIT(2)
+#define	 COUNTER64_CTRL_RLATCH_EN	__BIT(1)
+#define	 COUNTER64_CTRL_CLR_EN		__BIT(0)
+#define	COUNTER64_LOW_REG	0xa4
+#define	COUNTER64_HI_REG	0xa8
 
 static const char * const compatible[] = {
 	"allwinner,sun4i-a10-timer",
@@ -126,8 +132,17 @@ static u_int
 sunxi_timer_get_timecount(struct timecounter *tc)
 {
 	struct sunxi_timer_softc * const sc = tc->tc_priv;
+	uint32_t val;
 
-	return ~TIMER_READ(sc, TMR0_CURNT_VALUE_REG);
+	/* Enable read latch and wait for it to clear */
+	val = TIMER_READ(sc, COUNTER64_CTRL_REG);
+	val |= COUNTER64_CTRL_RLATCH_EN;
+	TIMER_WRITE(sc, COUNTER64_CTRL_REG, val);
+	do {
+		val = TIMER_READ(sc, COUNTER64_CTRL_REG);
+	} while (val & COUNTER64_CTRL_RLATCH_EN);
+
+	return TIMER_READ(sc, COUNTER64_LOW_REG);
 }
 
 static int
@@ -147,6 +162,7 @@ sunxi_timer_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
+	uint32_t val;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -180,12 +196,17 @@ sunxi_timer_attach(device_t parent, device_t self, void *aux)
 	    __SHIFTIN(TMR0_CTRL_CLK_SRC_OSC24M, TMR0_CTRL_CLK_SRC) |
 	    TMR0_CTRL_RELOAD | TMR0_CTRL_EN);
 
+	/* Set 64-bit counter source to OSC24M */
+	val = TIMER_READ(sc, COUNTER64_CTRL_REG);
+	val &= ~COUNTER64_CTRL_CLK_SRC_SEL;
+	TIMER_WRITE(sc, COUNTER64_CTRL_REG, val);
+
 	/* Timecounter setup */
 	tc->tc_get_timecount = sunxi_timer_get_timecount;
 	tc->tc_counter_mask = ~0u,
 	tc->tc_frequency = clk_get_rate(sc->sc_clk);
-	tc->tc_name = device_xname(self);
-	tc->tc_quality = 100;
+	tc->tc_name = "CNT64";
+	tc->tc_quality = arm_has_mpext_p ? -1 : 200;
 	tc->tc_priv = sc;
 	tc_init(tc);
 
