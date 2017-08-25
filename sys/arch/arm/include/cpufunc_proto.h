@@ -44,7 +44,9 @@
 
 #ifdef _KERNEL
 
-#include "opt_multiprocessor.h"
+#if !defined(_MODULE) && defined(_KERNEL_OPT)
+# include "opt_multiprocessor.h"
+#endif
 
 #include <sys/types.h>
 #include <arm/armreg.h>
