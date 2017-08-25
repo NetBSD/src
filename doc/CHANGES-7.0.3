@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.59 2017/08/25 03:52:13 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.60 2017/08/25 05:33:40 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -4921,4 +4921,16 @@ sys/arch/i386/conf/GENERIC			patch
 
 	i386 GENERIC: disable VM86 by default.
 	[maxv, ticket #1463]
+
+sys/external/bsd/ipf/netinet/fil.c		1.20
+sys/external/bsd/ipf/netinet/ip_frag.c		1.5
+sys/external/bsd/ipf/netinet/ip_state.c		1.7
+
+	Disconnect maintaining fragment state from keeping session
+	state. The user now must specify keep frags along with keep
+	state to have ipfilter do what it did before, as documented
+	in ipf.conf.5. (Cy Schubert @ FreeBSD)
+	Free the right fragment (Cy Schubert @ FreeBSD). This will
+	cause use after free issues and eventually panic.
+	[mrg, ticket #1412]
 
