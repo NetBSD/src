@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.42 2017/08/25 05:56:00 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.43 2017/08/25 14:40:11 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5333,4 +5333,9 @@ sys/arch/i386/conf/GENERIC			1.1158
 
 	i386 GENERIC: Disable VM86 by default.
 	[maxv, ticket #230]
+
+etc/etc.evbarm/Makefile.inc			1.83-1.84
+
+	Replace ALLWINNER_A80 (it's never really worked) with VEXPRESS_A15.
+	[snj, ticket #211]
 
