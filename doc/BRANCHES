@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.342 2017/06/04 07:17:09 snj Exp $
+#	$NetBSD: BRANCHES,v 1.343 2017/08/25 15:06:51 joerg Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -547,17 +547,6 @@ Maintainer:	Pierre Pronchery <khorben@netbsd.org>
 Scope:		kernel (OMAP3 support, device drivers)
 Notes:		Do not hesitate to communicate any change that would be welcome
 		in HEAD.
-
-Branch:		matt-timespec
-Description:	Convert the kernel to struct timespec as its primary time
-		storage mechanism.
-Status:		Inactive
-Start Date:	2005-02-19
-End Date:
-Base Tag:	
-Maintainer:	Matt Thomas <matt@NetBSD.org>
-Scope:		kernel
-Notes:	
 
 Branch:		matt-mips64
 Description:	Rototill the mips code to support LP64 mips and N32/N64 ABIs
