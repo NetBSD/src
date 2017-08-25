@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_twi.c,v 1.2 2017/07/01 22:49:09 jmcneill Exp $ */
+/* $NetBSD: sunxi_twi.c,v 1.3 2017/08/25 00:07:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.2 2017/07/01 22:49:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.3 2017/08/25 00:07:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,7 @@ static int sunxi_twi_match(device_t, cfdata_t, void *);
 static void sunxi_twi_attach(device_t, device_t, void *);
 
 static const char * const compatible[] = {
+	"allwinner,sun4i-a10-i2c",
 	"allwinner,sun6i-a31-i2c",
 	NULL
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.9 2017/08/13 19:18:08 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.10 2017/08/25 00:07:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -237,6 +237,7 @@ struct sunxi_ccu_prediv {
 	u_int		nparents;
 	uint32_t	prediv;
 	uint32_t	prediv_sel;
+	uint32_t	prediv_fixed;
 	uint32_t	div;
 	uint32_t	sel;
 	uint32_t	flags;
@@ -256,6 +257,11 @@ const char *sunxi_ccu_prediv_get_parent(struct sunxi_ccu_softc *,
 
 #define	SUNXI_CCU_PREDIV(_id, _name, _parents, _reg, _prediv,	\
 		     _prediv_sel, _div, _sel, _flags)		\
+	SUNXI_CCU_PREDIV_FIXED(_id, _name, _parents, _reg, _prediv, \
+		     _prediv_sel, 0, _div, _sel, _flags)
+
+#define	SUNXI_CCU_PREDIV_FIXED(_id, _name, _parents, _reg, _prediv, \
+		     _prediv_sel, _prediv_fixed, _div, _sel, _flags) \
 	[_id] = {						\
 		.type = SUNXI_CCU_PREDIV,			\
 		.base.name = (_name),				\
@@ -264,6 +270,7 @@ const char *sunxi_ccu_prediv_get_parent(struct sunxi_ccu_softc *,
 		.u.prediv.nparents = __arraycount(_parents),	\
 		.u.prediv.prediv = (_prediv),			\
 		.u.prediv.prediv_sel = (_prediv_sel),		\
+		.u.prediv.prediv_fixed = (_prediv_fixed),	\
 		.u.prediv.div = (_div),				\
 		.u.prediv.sel = (_sel),				\
 		.u.prediv.flags = (_flags),			\

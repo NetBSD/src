@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_div.c,v 1.1 2017/07/02 00:14:09 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu_div.c,v 1.2 2017/08/25 00:07:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_div.c,v 1.1 2017/07/02 00:14:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_div.c,v 1.2 2017/08/25 00:07:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,7 +57,11 @@ sunxi_ccu_div_get_rate(struct sunxi_ccu_softc *sc,
 		return 0;
 
 	val = CCU_READ(sc, div->reg);
-	ratio = __SHIFTOUT(val, div->div);
+	if (div->div)
+		ratio = __SHIFTOUT(val, div->div);
+	else
+		ratio = 0;
+
 	if ((div->flags & SUNXI_CCU_DIV_ZERO_IS_ONE) != 0 && ratio == 0)
 		ratio = 1;
 	if (div->flags & SUNXI_CCU_DIV_POWER_OF_TWO)

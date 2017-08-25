@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_prediv.c,v 1.2 2017/06/29 17:08:52 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu_prediv.c,v 1.3 2017/08/25 00:07:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_prediv.c,v 1.2 2017/06/29 17:08:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_prediv.c,v 1.3 2017/08/25 00:07:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -72,7 +72,10 @@ sunxi_ccu_prediv_get_rate(struct sunxi_ccu_softc *sc,
 	else
 		div++;
 
-	pre++;
+	if (prediv->prediv_fixed)
+		pre = prediv->prediv_fixed;
+	else
+		pre++;
 
 	if (prediv->flags & SUNXI_CCU_PREDIV_DIVIDE_BY_TWO)
 		pre *= 2;
