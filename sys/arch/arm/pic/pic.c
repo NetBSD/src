@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.37 2017/06/01 02:45:06 chs Exp $	*/
+/*	$NetBSD: pic.c,v 1.38 2017/08/25 20:36:16 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.37 2017/06/01 02:45:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.38 2017/08/25 20:36:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -206,7 +206,7 @@ intr_ipi_send(const kcpuset_t *kcp, u_long ipi)
 			sent_p = true;
 		}
 	}
-	KASSERT(cold || sent_p);
+	KASSERT(cold || sent_p || arm_cpu_max == 1);
 }
 #endif /* MULTIPROCESSOR */
 
