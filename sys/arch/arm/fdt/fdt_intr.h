@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.h,v 1.1 2017/05/30 22:00:25 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.h,v 1.2 2017/08/25 00:07:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -34,6 +34,7 @@
 #ifndef _LOCORE
 
 #define	__HAVE_PIC_SET_PRIORITY
+#define	__HAVE_PIC_PENDING_INTRS
 
 #define	PIC_MAXSOURCES		256
 #define	PIC_MAXMAXSOURCES	(PIC_MAXSOURCES + 32)
