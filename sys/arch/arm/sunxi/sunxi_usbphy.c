@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_usbphy.c,v 1.4 2017/08/25 00:07:03 jmcneill Exp $ */
+/* $NetBSD: sunxi_usbphy.c,v 1.5 2017/08/25 12:28:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.4 2017/08/25 00:07:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.5 2017/08/25 12:28:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -194,7 +194,7 @@ sunxi_usbphy_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
 
-	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+	if (fdtbus_get_reg_byname(phandle, "phy_ctrl", &addr, &size) != 0) {
 		aprint_error(": couldn't get phy ctrl registers\n");
 		return;
 	}
@@ -204,11 +204,14 @@ sunxi_usbphy_attach(device_t parent, device_t self, void *aux)
 	}
 
 	for (sc->sc_nphys = 0; sc->sc_nphys < SUNXI_MAXUSBPHY; sc->sc_nphys++) {
-		if (fdtbus_get_reg(phandle, sc->sc_nphys + 1, &addr, &size) != 0)
-			break;
 		phy = &sc->sc_phys[sc->sc_nphys];
 		phy->phy_index = sc->sc_nphys;
-		if (bus_space_map(sc->sc_bst, addr, size, 0, &phy->phy_bsh) != 0) {
+		snprintf(pname, sizeof(pname), "pmu%d", sc->sc_nphys);
+		if (fdtbus_get_reg_byname(phandle, pname, &addr, &size) != 0) {
+			/* There may be no registers for OTG PHY */
+			if (sc->sc_nphys > 0)
+				break;
+		} else if (bus_space_map(sc->sc_bst, addr, size, 0, &phy->phy_bsh) != 0) {
 			aprint_error(": failed to map reg #%d\n", sc->sc_nphys);
 			return;
 		}
