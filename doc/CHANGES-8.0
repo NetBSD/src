@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.41 2017/08/20 04:56:55 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.42 2017/08/25 05:56:00 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5271,4 +5271,66 @@ lib/libc/stdlib/merge.c				1.15
 	Gracefully handle a zero number of members argument in
 	mergesort(3).  PR lib/50316.
 	[ginsbach, ticket #214]
+
+sys/netinet/tcp_usrreq.c			1.216
+
+	Add some more getsockopt(2) params.  PR lib/52486.
+	[jdolecek, ticket #216]
+
+sys/dev/pci/if_iwn.c				1.85
+sys/dev/pci/if_iwnreg.h				1.17
+sys/dev/pci/if_iwnvar.h				1.20
+
+	Pull in some hardware support from FreeBSD. Also fix 5GHz
+	mode by adapting the method described in:
+	https://forums.freebsd.org/threads/53574/.
+	[mlelstv, ticket #218]
+
+sys/arch/evbarm/fdt/fdt_machdep.c		1.12
+
+	Ignore 0-sized memory regions in the FDT.
+	[jakllsch, ticket #220]
+
+sys/arch/x86/x86/idt.c				1.5
+
+	Remove incorrect KASSERT, only the allocation is protected
+	by cpu_lock.
+	[jdolecek, ticket #224]
+
+sys/arch/x86/x86/pmc.c				1.11
+
+	Fix GCC warning on NET4501, PR/52451.
+	[jdolecek, ticket #225]
+
+sys/dev/usb/xhci.c				1.73
+
+	Check both buses for ub_usepolling and schedule the soft
+	interrupt handler or call it directly.  Fixes usb keyboard
+	in ddb when attached to xhci.
+	[skrll, ticket #226]
+
+sys/kern/vfs_mount.c				1.67
+sys/kern/vfs_vnode.c				1.97-1.98
+sys/miscfs/deadfs/dead_vfsops.c			1.8
+sys/sys/vnode_impl.h				1.16
+
+	Change forced unmount to revert open device vnodes to
+	anonymous devices.
+	[hannken, ticket #227]
+
+sys/arch/arm/omap/am335x_prcm.c			1.10
+
+	Fix non-DIAGNOSTIC boot.
+	[skrll, ticket #228]
+
+share/man/man9/locking.9			1.6
+
+	Add locking(9) and psref(9) summaries to locking(9).
+	PR misc/52504
+	[pgoyette, ticket #229]
+
+sys/arch/i386/conf/GENERIC			1.1158
+
+	i386 GENERIC: Disable VM86 by default.
+	[maxv, ticket #230]
 
