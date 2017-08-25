@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.17 2017/07/19 20:18:07 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.18 2017/08/25 12:28:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.17 2017/07/19 20:18:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.18 2017/08/25 12:28:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -196,6 +196,32 @@ fdtbus_decode_range(int phandle, uint64_t paddr)
 
 	/* No mapping found */
 	return paddr;
+}
+
+int
+fdtbus_get_reg_byname(int phandle, const char *name, bus_addr_t *paddr,
+    bus_size_t *psize)
+{
+	const char *reg_names, *p;
+	u_int index;
+	int len, resid;
+	int error = ENOENT;
+
+	reg_names = fdtbus_get_prop(phandle, "reg-names", &len);
+	if (len <= 0)
+		return error;
+
+	p = reg_names;
+	for (index = 0, resid = len; resid > 0; index++) {
+		if (strcmp(p, name) == 0) {
+			error = fdtbus_get_reg(phandle, index, paddr, psize);
+			break;
+		}
+		resid -= strlen(p);
+		p += strlen(p) + 1;
+	}
+
+	return error;
 }
 
 int
