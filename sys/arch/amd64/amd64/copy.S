@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.22 2017/08/23 08:14:18 maxv Exp $	*/
+/*	$NetBSD: copy.S,v 1.23 2017/08/25 11:05:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -107,9 +107,6 @@ ENTRY(do_pmap_load)
 	ret
 
 /*
- * int kcopy(const void *from, void *to, size_t len);
- * Copy len bytes, abort on fault.
- *
  * Copy routines from and to userland, plus a few more. See the
  * section 9 manpages for info. Some cases can be optimized more.
  *
@@ -125,6 +122,10 @@ ENTRY(do_pmap_load)
  * be ably to do cache-line size copies....
  */
 
+/*
+ * int kcopy(const void *from, void *to, size_t len);
+ * Copy len bytes from and to kernel memory, and abort on fault.
+ */
 ENTRY(kcopy)
 	xchgq	%rdi,%rsi
 	movq	%rdx,%rcx
