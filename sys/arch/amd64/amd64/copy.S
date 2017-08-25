@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.23 2017/08/25 11:05:46 maxv Exp $	*/
+/*	$NetBSD: copy.S,v 1.24 2017/08/25 11:35:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -259,10 +259,9 @@ ENTRY(copyoutstr)
 	jae	1f
 	movq	%rax,%rdx
 	movq	%rax,%r8
-
-.Lcopyoutstr_start:
 1:	incq	%rdx
 
+.Lcopyoutstr_start:
 1:	decq	%rdx
 	jz	2f
 	lodsb
@@ -300,10 +299,9 @@ ENTRY(copyinstr)
 	jae	1f
 	movq	%rax,%rdx
 	movq	%rax,%r8
-
-.Lcopyinstr_start:
 1:	incq	%rdx
 
+.Lcopyinstr_start:
 1:	decq	%rdx
 	jz	2f
 	lodsb
