@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.22 2017/08/13 18:27:48 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.23 2017/08/25 00:07:03 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -8,6 +8,22 @@ include	"arch/evbarm/conf/std.sunxi"
 include	"arch/evbarm/conf/GENERIC.common"
 
 makeoptions	DTS="
+	sun5i-a13-difrnce-dit4350.dts
+	sun5i-a13-empire-electronix-d709.dts
+	sun5i-a13-empire-electronix-m712.dts
+	sun5i-a13-hsg-h702.dts
+	sun5i-a13-inet-98v-rev2.dts
+	sun5i-a13-licheepi-one.dts
+	sun5i-a13-olinuxino-micro.dts
+	sun5i-a13-olinuxino.dts
+	sun5i-a13-q8-tablet.dts
+	sun5i-a13-utoo-p66.dts
+
+	sun5i-gr8-evb.dts
+	sun5i-gr8-chip-pro.dts
+
+	sun5i-r8-chip.dts
+
 	sun6i-a31-app4-evb1.dts
 	sun6i-a31-colombus.dts
 	sun6i-a31-hummingbird.dts
@@ -32,6 +48,8 @@ makeoptions	DTS="
 "
 
 options 	CPU_CORTEXA7
+options 	CPU_CORTEXA8
+options 	SOC_SUN5I_A13
 options 	SOC_SUN6I_A31
 options 	SOC_SUN8I_A83T
 options 	SOC_SUN8I_H3
@@ -65,6 +83,7 @@ cpu*		at cpus?
 psci*		at fdt?
 
 # Clock and reset controllers
+sun5ia13ccu*	at fdt? pass 4		# A13 CCU
 sun6ia31ccu*	at fdt? pass 4		# A31 CCU
 sun8ia83tccu*	at fdt? pass 4		# A83T CCU
 sun8ih3ccu*	at fdt? pass 4		# H3 CCU
@@ -81,6 +100,7 @@ gpioleds*	at fdt?
 # Timer
 gtmr*		at fdt? pass 1		# ARM Generic Timer
 armgtmr0	at gtmr?
+sunxitimer*	at fdt? 		# Allwinner async timer
 
 # Watchdog
 sunxiwdt*	at fdt?			# Allwinner watchdog
@@ -88,6 +108,7 @@ sunxiwdt*	at fdt?			# Allwinner watchdog
 # Interrupt controller
 gic*		at fdt? pass 1		# GIC
 armgic0		at gic?
+sunxiintc*	at fdt? pass 1		# Allwinner INTC
 
 # Memory controller
 

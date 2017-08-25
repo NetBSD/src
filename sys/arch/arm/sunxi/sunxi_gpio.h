@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.h,v 1.4 2017/07/23 10:16:08 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.h,v 1.5 2017/08/25 00:07:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -49,6 +49,10 @@ struct sunxi_gpio_padconf {
 	uint32_t npins;
 	const struct sunxi_gpio_pins *pins;
 };
+
+#ifdef SOC_SUN5I_A13
+extern const struct sunxi_gpio_padconf sun5i_a13_padconf;
+#endif
 
 #ifdef SOC_SUN6I_A31
 extern const struct sunxi_gpio_padconf sun6i_a31_padconf;

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.6 2017/07/23 10:16:08 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.7 2017/08/25 00:07:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.6 2017/07/23 10:16:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.7 2017/08/25 00:07:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,12 +60,25 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.6 2017/07/23 10:16:08 jmcneill 
 
 #define	SUNXI_REF_FREQ	24000000
 
+#define	SUN4I_TIMER_BASE	0x01c20c00
+#define	SUN4I_TIMER_SIZE	0x90
+#define	SUN4I_TIMER_0_VAL	0x18
+
+#define	SUN4I_WDT_BASE		0x01c20c90
+#define	SUN4I_WDT_SIZE		0x10
+#define	SUN4I_WDT_CTRL		0x00
+#define	 SUN4I_WDT_CTRL_KEY	(0x333 << 1)
+#define	 SUN4I_WDT_CTRL_RESTART	__BIT(0)
+#define	SUN4I_WDT_MODE		0x04
+#define	 SUN4I_WDT_MODE_RST_EN	__BIT(1)
+#define	 SUN4I_WDT_MODE_EN	__BIT(0)
+
 #define	SUN6I_WDT_BASE		0x01c20ca0
 #define	SUN6I_WDT_SIZE		0x20
 #define	SUN6I_WDT_CFG		0x14
-#define	 SUN6I_WDT_CFG_SYS	1
+#define	 SUN6I_WDT_CFG_SYS	__BIT(0)
 #define	SUN6I_WDT_MODE		0x18
-#define	 SUN6I_WDT_MODE_EN	1
+#define	 SUN6I_WDT_MODE_EN	__BIT(0)
 
 
 #define	DEVMAP_ALIGN(a)	((a) & ~L1_S_OFFSET)
@@ -131,6 +144,49 @@ sunxi_platform_uart_freq(void)
 }
 
 static void
+sunxi_platform_null_bootstrap(void)
+{
+}
+
+static void
+sun4i_platform_reset(void)
+{
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
+	bus_space_handle_t bsh;
+
+	bus_space_map(bst, SUN4I_WDT_BASE, SUN4I_WDT_SIZE, 0, &bsh);
+
+	bus_space_write_4(bst, bsh, SUN4I_WDT_CTRL,
+	    SUN4I_WDT_CTRL_KEY | SUN4I_WDT_CTRL_RESTART);
+	for (;;) {
+		bus_space_write_4(bst, bsh, SUN4I_WDT_MODE,
+		    SUN4I_WDT_MODE_EN | SUN4I_WDT_MODE_RST_EN);
+	}
+}
+
+static void
+sun4i_platform_delay(u_int n)
+{
+	static bus_space_tag_t bst = &armv7_generic_bs_tag;
+	static bus_space_handle_t bsh = 0;
+	uint32_t cur, prev;
+	long ticks = n;
+
+	if (bsh == 0)
+		bus_space_map(bst, SUN4I_TIMER_BASE, SUN4I_TIMER_SIZE, 0, &bsh);
+
+	prev = ~bus_space_read_4(bst, bsh, SUN4I_TIMER_0_VAL);
+	while (ticks > 0) {
+		cur = ~bus_space_read_4(bst, bsh, SUN4I_TIMER_0_VAL);
+		if (cur > prev)
+			ticks -= (cur - prev);
+		else
+			ticks -= (~0U - cur + prev);
+		prev = cur;
+	}
+}
+
+static void
 sun6i_platform_reset(void)
 {
 	bus_space_tag_t bst = &armv7_generic_bs_tag;
@@ -142,14 +198,18 @@ sun6i_platform_reset(void)
 	bus_space_write_4(bst, bsh, SUN6I_WDT_MODE, SUN6I_WDT_MODE_EN);
 }
 
-static void
-sun50i_platform_bootstrap(void)
-{
-	/* XXX
-  	 * This should use psci_fdt_bootstrap, but it hangs
-  	 * (at least in aarch32 mode)
-  	 */
-}
+static const struct arm_platform sun5i_platform = {
+	.devmap = sunxi_platform_devmap,
+	.bootstrap = sunxi_platform_null_bootstrap,
+	.init_attach_args = sunxi_platform_init_attach_args,
+	.early_putchar = sunxi_platform_early_putchar,
+	.device_register = sunxi_platform_device_register,
+	.reset = sun4i_platform_reset,
+	.delay = sun4i_platform_delay,
+	.uart_freq = sunxi_platform_uart_freq,
+};
+
+ARM_PLATFORM(sun5i_a13, "allwinner,sun5i-a13", &sun5i_platform);
 
 static const struct arm_platform sun6i_platform = {
 	.devmap = sunxi_platform_devmap,
@@ -181,7 +241,7 @@ ARM_PLATFORM(sun8i_a83t, "allwinner,sun8i-a83t", &sun8i_platform);
 
 static const struct arm_platform sun50i_platform = {
 	.devmap = sunxi_platform_devmap,
-	.bootstrap = sun50i_platform_bootstrap,
+	.bootstrap = sunxi_platform_null_bootstrap,
 	.init_attach_args = sunxi_platform_init_attach_args,
 	.early_putchar = sunxi_platform_early_putchar,
 	.device_register = sunxi_platform_device_register,
