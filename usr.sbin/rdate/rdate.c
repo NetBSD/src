@@ -1,4 +1,4 @@
-/*	$NetBSD: rdate.c,v 1.21 2017/08/26 18:16:05 ginsbach Exp $	*/
+/*	$NetBSD: rdate.c,v 1.22 2017/08/26 19:26:32 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -34,7 +34,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rdate.c,v 1.21 2017/08/26 18:16:05 ginsbach Exp $");
+__RCSID("$NetBSD: rdate.c,v 1.22 2017/08/26 19:26:32 ginsbach Exp $");
 #endif /* lint */
 
 #include <sys/types.h>
@@ -59,7 +59,9 @@ static	void	usage(void);
 static void
 usage(void)
 {
-	(void) fprintf(stderr, "usage: %s [-aps] host\n", getprogname());
+	(void) fprintf(stderr, "usage: %s [-46aps] host\n", getprogname());
+	(void) fprintf(stderr, "  -4: use IPv4 addresses only\n");
+	(void) fprintf(stderr, "  -6: use IPv6 addresses only\n");
 	(void) fprintf(stderr, "  -a: use adjtime instead of instant change\n");
 	(void) fprintf(stderr, "  -p: just print, don't set\n");
 	(void) fprintf(stderr, "  -s: just set, don't print\n");
@@ -78,20 +80,29 @@ main(int argc, char *argv[])
 	struct addrinfo	hints, *res, *res0;
 	int             c;
 	int		error;
+	int		family = AF_UNSPEC;
 
 	adjustment = 0;
-	while ((c = getopt(argc, argv, "psa")) != -1)
+	while ((c = getopt(argc, argv, "46aps")) != -1)
 		switch (c) {
+		case '4':
+			family = AF_INET;
+			break;
+
+		case '6':
+			family  = AF_INET6;
+			break;
+
+		case 'a':
+			slidetime++;
+			break;
+
 		case 'p':
 			pr++;
 			break;
 
 		case 's':
 			silent++;
-			break;
-
-		case 'a':
-			slidetime++;
 			break;
 
 		default:
@@ -106,7 +117,7 @@ main(int argc, char *argv[])
 	hname = argv[optind];
 
 	memset(&hints, 0, sizeof (hints));
-	hints.ai_family = PF_UNSPEC;
+	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_CANONNAME;
 	error = getaddrinfo(hname, "time", &hints, &res0);
