@@ -1,4 +1,4 @@
-.\"	$NetBSD: rdate.8,v 1.11 2009/10/21 01:07:47 snj Exp $
+.\"	$NetBSD: rdate.8,v 1.12 2017/08/26 18:16:05 ginsbach Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Nd set the system's date from a remote host
 .Sh SYNOPSIS
 .Nm
-.Op Fl psa
+.Op Fl aps
 .Ar host
 .Sh DESCRIPTION
 .Nm
@@ -43,15 +43,15 @@ protocol which is usually implemented as a built-in service of
 Available options:
 .Pp
 .Bl -tag -width indent
-.It Fl p
-Do not set, just print the remote time
-.It Fl s
-Do not print the time.
 .It Fl a
 Use the
 .Xr adjtime 2
 call to gradually skew the local time to the
 remote time rather than just hopping.
+.It Fl p
+Do not set, just print the remote time
+.It Fl s
+Do not print the time.
 .El
 .Sh FILES
 .Bl -tag -width /var/log/wtmp -compact

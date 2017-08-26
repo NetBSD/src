@@ -1,4 +1,4 @@
-/*	$NetBSD: rdate.c,v 1.20 2017/05/04 16:26:09 sevan Exp $	*/
+/*	$NetBSD: rdate.c,v 1.21 2017/08/26 18:16:05 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -34,7 +34,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rdate.c,v 1.20 2017/05/04 16:26:09 sevan Exp $");
+__RCSID("$NetBSD: rdate.c,v 1.21 2017/08/26 18:16:05 ginsbach Exp $");
 #endif /* lint */
 
 #include <sys/types.h>
@@ -59,10 +59,10 @@ static	void	usage(void);
 static void
 usage(void)
 {
-	(void) fprintf(stderr, "usage: %s [-psa] host\n", getprogname());
+	(void) fprintf(stderr, "usage: %s [-aps] host\n", getprogname());
+	(void) fprintf(stderr, "  -a: use adjtime instead of instant change\n");
 	(void) fprintf(stderr, "  -p: just print, don't set\n");
 	(void) fprintf(stderr, "  -s: just set, don't print\n");
-	(void) fprintf(stderr, "  -a: use adjtime instead of instant change\n");
 }
 
 int
