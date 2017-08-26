@@ -1,4 +1,4 @@
-/* $NetBSD: tcakp.c,v 1.1 2017/08/26 21:02:35 jmcneill Exp $ */
+/* $NetBSD: tcakp.c,v 1.2 2017/08/26 22:31:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.1 2017/08/26 21:02:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.2 2017/08/26 22:31:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,8 +348,8 @@ tcakp_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": TCA8418\n");
 
 #ifdef FDT
-	sc->sc_ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_VM,
-	    FDT_INTR_MPSAFE, tcakp_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_VM, 0,
+	    tcakp_intr, sc);
 
 	tcakp_configure_fdt(sc);
 #endif
