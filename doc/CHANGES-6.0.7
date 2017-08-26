@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.111 2017/08/23 19:37:05 snj Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.112 2017/08/26 16:37:50 snj Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -12860,4 +12860,9 @@ sys/compat/linux/common/linux_time.c		1.38-1.39 via patch
 
 	missing cred check in linux_sys_settimeofday()
 	[mrg, ticket #1489]
+
+sys/arch/i386/conf/GENERIC			patch
+
+	i386 GENERIC: disable VM86 by default.
+	[maxv, ticket #1466]
 
