@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.303 2017/08/23 19:38:31 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.304 2017/08/26 16:37:14 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -18586,4 +18586,20 @@ bin/rmdir/rmdir.c				1.27
 
 	PR/48182: Fix rmdir -p handling of top-level (root) directory.
 	[ginsbach, ticket #1490]
+
+sys/arch/i386/conf/GENERIC			patch
+
+	i386 GENERIC: disable VM86 by default.
+	[maxv, ticket #1466]
+
+common/lib/libc/stdlib/_strtol.h		1.11 via patch
+common/lib/libc/stdlib/_strtoul.h		1.11 via patch
+tests/lib/libc/stdlib/t_strtol.c		1.6, 1.7
+
+	Fix testing of returned entptr, and fix three affected
+	tests.  PR lib/49632
+
+	Fix ISO C compliance: strtol of "0xX" should give the
+	largest valid numeric prefix, which is 0.
+	[joerg, ticket #1460]
 
