@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.12 2017/06/28 23:48:22 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.13 2017/08/26 15:05:48 jmcneill Exp $
 
 include	"dev/pckbport/files.pckbport"
 
@@ -19,9 +19,6 @@ file    arch/arm/fdt/gic_fdt.c             	gic_fdt
 
 attach	plcom at fdt with plcom_fdt
 file	arch/arm/fdt/plcom_fdt.c		plcom_fdt
-
-attach	genfb at fdt with plfb_fdt: fdt_display_timing
-file	arch/arm/fdt/plfb_fdt.c			plfb_fdt
 
 attach	plkmi at fdt with plkmi_fdt
 file	arch/arm/fdt/plkmi_fdt.c		plkmi_fdt
