@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.411 2017/05/06 21:46:31 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.412 2017/08/26 20:25:00 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -5119,9 +5119,6 @@ _C_LABEL(endtrapcode):
 	.align	8
 start:
 dostart:
-	mov	1, %g1
-	sllx	%g1, 63, %g1
-	wr	%g1, TICK_CMPR	! XXXXXXX clear and disable %tick_cmpr for now
 	/*
 	 * Startup.
 	 *
