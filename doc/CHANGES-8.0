@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.43 2017/08/25 14:40:11 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.44 2017/08/26 03:55:04 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5325,7 +5325,7 @@ sys/arch/arm/omap/am335x_prcm.c			1.10
 
 share/man/man9/locking.9			1.6
 
-	Add locking(9) and psref(9) summaries to locking(9).
+	Add localcount(9) and psref(9) summaries to locking(9).
 	PR misc/52504
 	[pgoyette, ticket #229]
 
