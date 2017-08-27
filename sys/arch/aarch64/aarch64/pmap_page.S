@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_page.S,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: pmap_page.S,v 1.2 2017/08/27 00:29:57 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include "assym.h"
 
-RCSID("$NetBSD: pmap_page.S,v 1.1 2014/08/10 05:47:37 matt Exp $");
+RCSID("$NetBSD: pmap_page.S,v 1.2 2017/08/27 00:29:57 ryo Exp $");
 
 /* LINTSTUB: void pmap_zero_page(paddr_t pa); */
 ENTRY(pmap_zero_page)
@@ -42,7 +42,7 @@ ENTRY(pmap_zero_page)
 	mrs	x2, dczid_el0
 	tbnz	x2, #4, 2f
 
-	mov	x3, #16
+	mov	x3, #4
 	lsl	x3, x3, x2
 
 1:	dc	zva, x0
