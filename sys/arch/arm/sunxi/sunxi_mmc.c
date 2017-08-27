@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.4 2017/08/25 00:07:03 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.5 2017/08/27 17:53:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.4 2017/08/25 00:07:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.5 2017/08/27 17:53:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -209,10 +209,6 @@ sunxi_mmc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_rst_ahb = fdtbus_reset_get(phandle, "ahb");
-	if (sc->sc_rst_ahb == NULL) {
-		aprint_error(": couldn't get resets\n");
-		return;
-	}
 
 	sc->sc_reg_vqmmc = fdtbus_regulator_acquire(phandle, "vqmmc-supply");
 
@@ -222,9 +218,11 @@ sunxi_mmc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (fdtbus_reset_deassert(sc->sc_rst_ahb) != 0) {
-		aprint_error(": couldn't de-assert resets\n");
-		return;
+	if (sc->sc_rst_ahb != NULL) {
+		if (fdtbus_reset_deassert(sc->sc_rst_ahb) != 0) {
+			aprint_error(": couldn't de-assert resets\n");
+			return;
+		}
 	}
 
 	sc->sc_dev = self;
