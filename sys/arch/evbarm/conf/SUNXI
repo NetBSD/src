@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.24 2017/08/27 02:22:17 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.25 2017/08/27 16:05:26 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -114,7 +114,8 @@ sunxiintc*	at fdt? pass 1		# Allwinner INTC
 # Memory controller
 
 # DMA controller
-sun6idma*	at fdt?			# DMA controller
+sun4idma*	at fdt?			# DMA controller (sun4i)
+sun6idma*	at fdt?			# DMA controller (sun6i)
 
 # Clock and Reset controller
 

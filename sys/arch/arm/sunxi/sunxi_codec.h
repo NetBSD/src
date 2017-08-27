@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_codec.h,v 1.1 2017/08/06 17:15:45 jmcneill Exp $ */
+/* $NetBSD: sunxi_codec.h,v 1.2 2017/08/27 16:05:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -125,5 +125,9 @@ extern const struct sunxi_codec_conf sun8i_h3_codecconf;
 #else
 #define	H3_CODEC_COMPATDATA
 #endif
+
+extern const struct sunxi_codec_conf sun4i_a10_codecconf;
+#define	A10_CODEC_COMPATDATA	\
+	{ "allwinner,sun4i-a10-codec",	(uintptr_t)&sun4i_a10_codecconf }
 
 #endif /* !_ARM_SUNXI_CODEC_H */
