@@ -1,4 +1,4 @@
-.\"	$NetBSD: locking.9,v 1.6 2017/08/23 22:27:55 pgoyette Exp $
+.\"	$NetBSD: locking.9,v 1.7 2017/08/27 20:43:37 wiz Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -215,21 +215,23 @@ See
 .Ss Passive reference mechanism
 Passive references allow CPUs to cheaply acquire and release passive
 references to a resource, which guarantee the resource will not be
-destroyed until the reference is released.  Acquiring and releasing
-passive references requires no interprocessor synchronization, except
-when the resource is pending destruction.
+destroyed until the reference is released.
+Acquiring and releasing passive references requires no interprocessor
+synchronization, except when the resource is pending destruction.
 .Pp
 See
 .Xr psref 9 .
 .Ss Localcount mechanism
 Localcounts are used in the kernel to implement a medium-weight reference
-counting mechanism.  During normal operations, localcounts do not need
+counting mechanism.
+During normal operations, localcounts do not need
 the interprocessor synchronization associated with
 .Xr atomic_ops 3
 atomic memory operations, and (unlike
 .Xr psref 9 )
 localcount references can be held across sleeps and can migrate between
-CPUs.  Draining a localcount requires more expensive interprocessor
+CPUs.
+Draining a localcount requires more expensive interprocessor
 synchronization than
 .Xr atomic_ops 3
 (similar to
