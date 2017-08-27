@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_a10_codec.c,v 1.1 2017/08/27 16:05:26 jmcneill Exp $ */
+/* $NetBSD: sun4i_a10_codec.c,v 1.2 2017/08/27 22:22:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun4i_a10_codec.c,v 1.1 2017/08/27 16:05:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun4i_a10_codec.c,v 1.2 2017/08/27 22:22:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -120,9 +120,17 @@ a10_codec_init(struct sunxi_codec_softc *sc)
 
 	/* Unmute PA */
 	SET4(sc, A10_DAC_ACTRL, A10_PAMUTE);
+
 	/* Set initial volume */
 	CLR4(sc, A10_DAC_ACTRL, A10_PAVOL);
 	SET4(sc, A10_DAC_ACTRL, __SHIFTIN(A10_DEFAULT_PAVOL, A10_PAVOL));
+
+	/* Enable DAC analog l/r channels and output mixer */
+	SET4(sc, A10_DAC_ACTRL, A10_DACAREN | A10_DACALEN | A10_DACPAS);
+
+	/* Enable ADC analog l/r channels */
+	SET4(sc, A10_ADC_ACTRL, A10_ADCREN | A10_ADCLEN);
+
 	/* Enable PA */
 	SET4(sc, A10_ADC_ACTRL, A10_PA_EN);
 
@@ -133,23 +141,8 @@ static void
 a10_codec_mute(struct sunxi_codec_softc *sc, int mute, u_int mode)
 {
 	if (mode == AUMODE_PLAY) {
-		const uint32_t pmask = A10_DACAREN|A10_DACALEN|A10_DACPAS;
-		if (mute) {
-			/* Mute DAC l/r channels to output mixer */
-			CLR4(sc, A10_DAC_ACTRL, pmask);
-		} else {
-			/* Enable DAC analog l/r channels and output mixer */
-			SET4(sc, A10_DAC_ACTRL, pmask);
-		}
-	} else {
-		const uint32_t rmask = A10_ADCREN|A10_ADCLEN;
-		if (mute) {
-			/* Disable ADC analog l/r channels */
-			CLR4(sc, A10_ADC_ACTRL, rmask);
-		} else {
-			/* Enable ADC analog l/r channels */
-			SET4(sc, A10_ADC_ACTRL, rmask);
-		}
+		if (sc->sc_pin_pa != NULL)
+			fdtbus_gpio_write(sc->sc_pin_pa, !mute);
 	}
 }
 
