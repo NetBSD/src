@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.18 2017/08/26 22:24:50 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.19 2017/08/27 02:19:46 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -142,6 +142,11 @@ file	arch/arm/sunxi/sun8i_h3_codec.c		h3_codec needs-flag
 # Display controller
 attach	genfb at fdt with sunxi_debe
 file	arch/arm/sunxi/sunxi_debe.c		sunxi_debe
+
+# Touch Screen controller
+device	sunxits: wsmousedev, tpcalib
+attach	sunxits at fdt with sunxi_ts
+file	arch/arm/sunxi/sunxi_ts.c		sunxi_ts
 
 # SOC parameters
 defflag	opt_soc.h			SOC_SUNXI
