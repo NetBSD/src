@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.132 2017/07/28 14:12:26 riastradh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.133 2017/08/27 08:38:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.132 2017/07/28 14:12:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.133 2017/08/27 08:38:32 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -977,14 +977,16 @@ static void
 cpu_set_tss_gates(struct cpu_info *ci)
 {
 	struct segment_descriptor sd;
+	void *doubleflt_stack;
 
-	ci->ci_doubleflt_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
+	doubleflt_stack = (void *)uvm_km_alloc(kernel_map, USPACE, 0,
 	    UVM_KMF_WIRED);
-	tss_init(&ci->ci_doubleflt_tss, ci->ci_doubleflt_stack,
-	    IDTVEC(tss_trap08));
+	tss_init(&ci->ci_doubleflt_tss, doubleflt_stack, IDTVEC(tss_trap08));
+
 	setsegment(&sd, &ci->ci_doubleflt_tss, sizeof(struct i386tss) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 	ci->ci_gdt[GTRAPTSS_SEL].sd = sd;
+
 	setgate(&idt[8], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
 	    GSEL(GTRAPTSS_SEL, SEL_KPL));
 
@@ -996,9 +998,11 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	 * XXX overwriting the gate set in db_machine_init.
 	 * Should rearrange the code so that it's set only once.
 	 */
-	ci->ci_ddbipi_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
+	void *ddbipi_stack;
+
+	ddbipi_stack = (void *)uvm_km_alloc(kernel_map, USPACE, 0,
 	    UVM_KMF_WIRED);
-	tss_init(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack,
+	tss_init(&ci->ci_ddbipi_tss, ddbipi_stack,
 	    x2apic_mode ? Xx2apic_intrddbipi : Xintrddbipi);
 
 	setsegment(&sd, &ci->ci_ddbipi_tss, sizeof(struct i386tss) - 1,
