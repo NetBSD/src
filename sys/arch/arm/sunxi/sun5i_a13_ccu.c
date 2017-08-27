@@ -1,4 +1,4 @@
-/* $NetBSD: sun5i_a13_ccu.c,v 1.2 2017/08/27 16:05:08 jmcneill Exp $ */
+/* $NetBSD: sun5i_a13_ccu.c,v 1.3 2017/08/27 17:53:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun5i_a13_ccu.c,v 1.2 2017/08/27 16:05:08 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun5i_a13_ccu.c,v 1.3 2017/08/27 17:53:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,9 @@ __KERNEL_RCSID(1, "$NetBSD: sun5i_a13_ccu.c,v 1.2 2017/08/27 16:05:08 jmcneill E
 #define	AHB_GATING_REG1		0x064
 #define	APB0_GATING_REG		0x068
 #define	APB1_GATING_REG		0x06c
+#define	SD0_SCLK_CFG_REG        0x088
+#define	SD1_SCLK_CFG_REG        0x08c
+#define	SD2_SCLK_CFG_REG        0x090
 #define	USBPHY_CFG_REG		0x0cc
 #define	BE_CFG_REG		0x104
 #define	FE_CFG_REG		0x10c
@@ -95,9 +98,10 @@ static struct sunxi_ccu_reset sun5i_a13_ccu_resets[] = {
 
 static const char *cpu_parents[] = { "losc", "osc24m", "pll_core", "pll_periph" };
 static const char *axi_parents[] = { "cpu" };
-static const char *ahb_parents[] = { "axi", "cpu", "pll_periph", NULL };
+static const char *ahb_parents[] = { "axi", "cpu", "pll_periph" };
 static const char *apb0_parents[] = { "ahb" };
-static const char *apb1_parents[] = { "osc24m", "pll_periph", "losc", NULL };
+static const char *apb1_parents[] = { "osc24m", "pll_periph", "losc" };
+static const char *mod_parents[] = { "osc24m", "pll_periph", "pll_ddr" };
 
 static const struct sunxi_ccu_nkmp_tbl sun5i_a13_ac_dig_table[] = {
 	{ 24576000, 86, 0, 21, 3 },
@@ -170,6 +174,28 @@ static struct sunxi_ccu_clk sun5i_a13_ccu_clks[] = {
 	    __BITS(4,0),		/* m */
 	    __BITS(25,24),		/* sel */
 	    0,				/* enable */
+	    SUNXI_CCU_NM_POWER_OF_TWO),
+
+	SUNXI_CCU_NM(A13_CLK_MMC0, "mmc0", mod_parents,
+	    SD0_SCLK_CFG_REG,		/* reg */
+	    __BITS(17,16),		/* n */
+	    __BITS(3,0),		/* m */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_NM_POWER_OF_TWO),
+	SUNXI_CCU_NM(A13_CLK_MMC1, "mmc1", mod_parents,
+	    SD1_SCLK_CFG_REG,		/* reg */
+	    __BITS(17,16),		/* n */
+	    __BITS(3,0),		/* m */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
+	    SUNXI_CCU_NM_POWER_OF_TWO),
+	SUNXI_CCU_NM(A13_CLK_MMC2, "mmc2", mod_parents,
+	    SD2_SCLK_CFG_REG,		/* reg */
+	    __BITS(17,16),		/* n */
+	    __BITS(3,0),		/* m */
+	    __BITS(25,24),		/* sel */
+	    __BIT(31),			/* enable */
 	    SUNXI_CCU_NM_POWER_OF_TWO),
 
 	/* AHB_GATING_REG0. Missing: SS, EMAC, TS, GPS */
