@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.12 2017/08/24 01:43:42 kre Exp $
+# $NetBSD: sys_info.sh,v 1.13 2017/08/27 20:40:22 wiz Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -244,7 +244,7 @@ while getopts "L:P:v" a; do
 	L)	LIBRARY_PATH=${OPTARG};;
 	P)	PATH=${OPTARG};;
 	\?)	printf >&2 '%s\n' \
-		    "Usage: $0 [-P path] [-L libdirs] [-v] [system...]"
+		    "Usage: $0 [-v] [-L lib-path] [-P path] [component ...]"
 		exit 2
 	esac
 done
