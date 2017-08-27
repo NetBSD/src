@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_codec.c,v 1.1 2017/08/06 17:15:45 jmcneill Exp $ */
+/* $NetBSD: sunxi_codec.c,v 1.2 2017/08/27 16:05:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.1 2017/08/06 17:15:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.2 2017/08/27 16:05:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.1 2017/08/06 17:15:45 jmcneill Exp
 #define	AC_ADC_CNT(_sc)		((_sc)->sc_cfg->ADC_CNT)
 
 static const struct of_compat_data compat_data[] = {
+	A10_CODEC_COMPATDATA,
 	H3_CODEC_COMPATDATA,
 	{ NULL }
 };
@@ -626,14 +627,12 @@ sunxi_codec_clock_init(int phandle)
 
 	/* De-assert reset */
 	rst = fdtbus_reset_get_index(phandle, 0);
-	if (rst == NULL) {
-		aprint_error(": couldn't find reset\n");
-		return ENXIO;
-	}
-	error = fdtbus_reset_deassert(rst);
-	if (error != 0) {
-		aprint_error(": couldn't de-assert reset: %d\n", error);
-		return error;
+	if (rst != NULL) {
+		error = fdtbus_reset_deassert(rst);
+		if (error != 0) {
+			aprint_error(": couldn't de-assert reset: %d\n", error);
+			return error;
+		}
 	}
 
 	return 0;
