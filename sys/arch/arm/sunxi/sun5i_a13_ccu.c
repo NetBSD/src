@@ -1,4 +1,4 @@
-/* $NetBSD: sun5i_a13_ccu.c,v 1.1 2017/08/25 00:07:03 jmcneill Exp $ */
+/* $NetBSD: sun5i_a13_ccu.c,v 1.2 2017/08/27 16:05:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun5i_a13_ccu.c,v 1.1 2017/08/25 00:07:03 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun5i_a13_ccu.c,v 1.2 2017/08/27 16:05:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun5i_a13_ccu.c,v 1.1 2017/08/25 00:07:03 jmcneill E
 #include <arm/sunxi/sun5i_a13_ccu.h>
 
 #define	PLL1_CFG_REG		0x000
+#define	PLL2_CFG_REG		0x008
 #define	PLL6_CFG_REG		0x028
 #define	OSC24M_CFG_REG		0x050
 #define	CPU_AHB_APB0_CFG_REG	0x054
@@ -54,6 +55,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun5i_a13_ccu.c,v 1.1 2017/08/25 00:07:03 jmcneill E
 #define	FE_CFG_REG		0x10c
 #define	CSI_CFG_REG		0x134
 #define	VE_CFG_REG		0x13c
+#define	AUDIO_CODEC_SCLK_CFG_REG 0x140
 #define	MALI_CLOCK_CFG_REG	0x154
 #define	IEP_SCLK_CFG_REG	0x160
 
@@ -97,6 +99,11 @@ static const char *ahb_parents[] = { "axi", "cpu", "pll_periph", NULL };
 static const char *apb0_parents[] = { "ahb" };
 static const char *apb1_parents[] = { "osc24m", "pll_periph", "losc", NULL };
 
+static const struct sunxi_ccu_nkmp_tbl sun5i_a13_ac_dig_table[] = {
+	{ 24576000, 86, 0, 21, 3 },
+	{ 0 }
+};
+
 static struct sunxi_ccu_clk sun5i_a13_ccu_clks[] = {
 	SUNXI_CCU_GATE(A13_CLK_HOSC, "osc24m", "hosc",
 	    OSC24M_CFG_REG, 0),
@@ -109,6 +116,17 @@ static struct sunxi_ccu_clk sun5i_a13_ccu_clks[] = {
 	    __BITS(17,16),		/* p */
 	    __BIT(31),			/* enable */
 	    SUNXI_CCU_NKMP_FACTOR_P_POW2 | SUNXI_CCU_NKMP_FACTOR_N_EXACT),
+
+	SUNXI_CCU_NKMP_TABLE(A13_CLK_PLL_AUDIO_BASE, "pll_audio", "osc24m",
+	    PLL2_CFG_REG,		/* reg */
+	    __BITS(14,8),		/* n */
+	    0,				/* k */
+	    __BITS(4,0),		/* m */
+	    __BITS(29,26),		/* p */
+	    __BIT(31),			/* enable */
+	    0,				/* lock */
+	    sun5i_a13_ac_dig_table,	/* table */
+	    0),
 
 	SUNXI_CCU_NKMP(A13_CLK_PERIPH, "pll_periph", "osc24m",
 	    PLL6_CFG_REG,		/* reg */
@@ -219,6 +237,10 @@ static struct sunxi_ccu_clk sun5i_a13_ccu_clks[] = {
 	    APB1_GATING_REG, 17),
 	SUNXI_CCU_GATE(A13_CLK_APB1_UART3, "apb1-uart3", "apb1",
 	    APB1_GATING_REG, 19),
+
+	/* AUDIO_CODEC_SCLK_CFG_REG */
+	SUNXI_CCU_GATE(A13_CLK_CODEC, "codec", "pll_audio",
+	    AUDIO_CODEC_SCLK_CFG_REG, 31),
 
 	/* USBPHY_CFG_REG */
 	SUNXI_CCU_GATE(A13_CLK_USB_OHCI, "usb-ohci", "osc24m",
