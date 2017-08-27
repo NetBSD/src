@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.164 2017/08/21 13:20:49 kre Exp $
+.\"	$NetBSD: sh.1,v 1.165 2017/08/27 20:32:20 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -86,8 +86,7 @@ is the standard command interpreter for the system.
 The current version of
 .Nm
 is in the process of being changed to conform more closely to the
-.Tn POSIX
-1003.2 and 1003.2a specifications for the shell.
+POSIX 1003.2 and 1003.2a specifications for the shell.
 This version has many
 features which make it appear similar in some respects to the Korn shell,
 but it is not a Korn shell clone (see
@@ -562,9 +561,7 @@ Otherwise it remains literal.
 .Bd -filled -offset indent
 .Bf Em
 Note: this form of quoting is still somewhat experimental,
-and yet to be included in the
-.Tn POSIX
-standard.
+and yet to be included in the POSIX standard.
 This implementation is based upon the current proposals for
 standardization, and is subject to change should the eventual
 adopted text differ.
@@ -610,7 +607,7 @@ manner similar to the way they would be in a string in the C language:
 An escaped
 .Sq a
 generates an alert (or
-.Sq Tn BEL )
+.Sq BEL )
 character, that is, control-G, or 0x07.
 In a similar way,
 .Sq b
@@ -703,8 +700,7 @@ be an alphabetic character (a letter), or one of the following:
 Other than
 .Sq \ec?
 the value obtained is the least significant 5 bits of the
-.Tn ASCII
-value of the character following the
+ASCII value of the character following the
 .Sq \ec
 escape sequence.
 That is what is commonly known as the
@@ -712,14 +708,8 @@ That is what is commonly known as the
 character obtained from the given character.
 The escape sequence
 .Sq \ec?
-yields the
-.Tn ASCII
-.Tn DEL
-character (0x7F).
-Note that to obtain the
-.Tn ASCII
-.Tn FS
-character (0x1C) this way,
+yields the ASCII DEL character (0x7F).
+Note that to obtain the ASCII FS character (0x1C) this way,
 .Pq "that is control-\e"
 the trailing
 .Sq \e
@@ -784,9 +774,7 @@ This use is strongly discouraged.
 .Ss Commands
 The shell interprets the words it reads according to a language, the
 specification of which is outside the scope of this man page (refer to the
-BNF in the
-.Tn POSIX
-1003.2 document).
+BNF in the POSIX 1003.2 document).
 Essentially though, a line is read and if the first
 word of the line (or after a control operator) is not a reserved word,
 then the shell has recognized a simple command.
@@ -957,9 +945,7 @@ described in the next section).
 When a normal program is executed, the shell runs the program,
 passing the arguments and the environment to the program.
 If the program is not a normal executable file, and if it does
-not begin with the "magic number" whose
-.Tn ASCII
-representation is "#!", so
+not begin with the "magic number" whose ASCII representation is "#!", so
 .Xr execve 2
 returns
 .Er ENOEXEC
@@ -1754,9 +1740,7 @@ and substitutes the calculated value of that expression.
 Arithmetic expressions use a syntax similar to that
 of the C language, and are evaluated using the
 .Ql intmax_t
-data type (this is an extension to
-.Tn POSIX ,
-which requires only
+data type (this is an extension to POSIX, which requires only
 .Ql long
 arithmetic.)
 Shell variables may be referenced by name inside an arithmetic
@@ -2115,9 +2099,7 @@ Traditionally Bourne-like shells
 (except
 .Xr ksh 1 ) ,
 made those file descriptors available to exec'ed processes.
-This behavior is required by the
-.Tn POSIX
-standard, so when the
+This behavior is required by the POSIX standard, so when the
 .Ic posix
 option is set, this shell also acts that way.
 To be assured the close-on-exec setting is off,
@@ -2311,8 +2293,7 @@ and
 .Xr open 2
 for more information.
 .It getopts Ar optstring var
-The
-.Tn POSIX
+The POSIX
 .Ic getopts
 command, not to be confused with the
 .Em Bell Labs
