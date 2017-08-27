@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.23 2017/08/25 00:07:03 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.24 2017/08/27 02:22:17 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -23,6 +23,7 @@ makeoptions	DTS="
 	sun5i-gr8-chip-pro.dts
 
 	sun5i-r8-chip.dts
+	sun5i-r8-pocketchip.dts
 
 	sun6i-a31-app4-evb1.dts
 	sun6i-a31-colombus.dts
@@ -135,6 +136,8 @@ sunxitwi*	at fdt?			# TWI
 options 	GTTWSI_ALLWINNER	# XXX this should be a driver flag
 sunxirsb*	at fdt?			# P2WI/RSB
 iic*		at i2cbus?
+tcakp*		at iic?			# TI TCA8418 Keypad Scan IC
+wskbd*		at tcakp? console ?
 
 # RTC
 sunxirtc*	at fdt?			# RTC
@@ -153,6 +156,29 @@ ld1		at sdmmc1
 ld2		at sdmmc2
 ld3		at sdmmc3
 ld*		at sdmmc?
+
+# Display
+genfb*		at fdt?
+wsdisplay*	at genfb?
+options 	VCONS_DRAW_INTR
+options 	WSEMUL_VT100
+options 	WS_DEFAULT_FG=WSCOL_WHITE
+options 	WS_DEFAULT_BG=WSCOL_BLACK
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_DEFAULTSCREENS=4
+
+# Touch Screen controller
+sunxits*	at fdt?			# Touch Screen controller
+wsmouse*	at sunxits? mux 0
+
+# wscons pseudo-devices
+pseudo-device	wsfont
+pseudo-device	wsmux
 
 # USB 2.0
 sunxiusbphy*	at fdt?	pass 9		# USB PHY
