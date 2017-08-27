@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.4 2008/05/10 15:31:05 martin Exp $	*/
+/*	$NetBSD: fb.c,v 1.5 2017/08/27 02:19:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin
@@ -41,7 +41,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fb.c,v 1.4 2008/05/10 15:31:05 martin Exp $");
+__RCSID("$NetBSD: fb.c,v 1.5 2017/08/27 02:19:08 jmcneill Exp $");
 #endif /* not lint */
 
 #define INVALID_CACHE -1
@@ -69,6 +69,8 @@ fb_dispmode(struct fb *fb, int dispmode)
 int
 fb_init(struct fb *fb, int fd)
 {
+	struct wsdisplay_fbinfo fbinfo;
+	u_int linebytes;
 	int y;
 	size_t size;
 
@@ -77,8 +79,22 @@ fb_init(struct fb *fb, int fd)
 	fb->conf.hf_conf_index = HPCFB_CURRENT_CONFIG;
 	if (ioctl(fb->fd, WSDISPLAYIO_GMODE, &fb->dispmode) < 0)
 		return (-1);
-	if (ioctl(fb->fd, HPCFBIO_GCONF, &fb->conf) < 0)
-		return (-1);
+	if (ioctl(fb->fd, HPCFBIO_GCONF, &fb->conf) < 0) {
+		if (ioctl(fb->fd, WSDISPLAYIO_GINFO, &fbinfo) < 0 ||
+		    ioctl(fb->fd, WSDISPLAYIO_LINEBYTES, &linebytes) < 0)
+			return (-1);
+		memset(&fb->conf, 0, sizeof(fb->conf));
+		fb->conf.hf_width = fbinfo.width;
+		fb->conf.hf_height = fbinfo.height;
+		fb->conf.hf_bytes_per_line = linebytes;
+		fb->conf.hf_nplanes = 1;
+		fb->conf.hf_bytes_per_plane = fbinfo.height * linebytes;
+		fb->conf.hf_pack_width = fbinfo.depth;
+		fb->conf.hf_pixels_per_pack = 1;
+		fb->conf.hf_pixel_width = 1;
+		fb->conf.hf_access_flags = HPCFB_ACCESS_STATIC |
+		    HPCFB_ACCESS_BYTE | HPCFB_ACCESS_WORD | HPCFB_ACCESS_DWORD;
+	}
 
 	if (fb_dispmode(fb, WSDISPLAYIO_MODE_MAPPED) < 0)
 		return (-1);
