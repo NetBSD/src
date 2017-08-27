@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.14 2017/06/28 23:45:20 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.15 2017/08/27 19:13:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.14 2017/06/28 23:45:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.15 2017/08/27 19:13:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,10 +92,13 @@ fdt_match(device_t parent, cfdata_t cf, void *aux)
 	if (match)
 		return match;
 
-	/* Some /clocks nodes have no compatible string */
-	if (!of_hasprop(phandle, "compatible") &&
-	    OF_finddevice("/clocks") == phandle)
-		return 1;
+	/* Some nodes have no compatible string */
+	if (!of_hasprop(phandle, "compatible")) {
+		if (OF_finddevice("/clocks") == phandle)
+			return 1;
+		if (OF_finddevice("/chosen") == phandle)
+			return 1;
+	}
 
 	/* Always match the root node */
 	return OF_finddevice("/") == phandle;
