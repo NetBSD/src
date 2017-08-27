@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.165 2017/08/26 07:17:12 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.166 2017/08/27 11:44:49 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.165 2017/08/26 07:17:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.166 2017/08/27 11:44:49 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1764,6 +1764,7 @@ get_cachetype_table(void)
 #endif /* ARM2 || ARM250 || ARM3 || ARM6 || ARM7 || SA110 || SA1100 || SA1111 || IXP12X0 */
 
 
+#if defined(CPU_CORTEX) || defined(CPU_PJ4B)
 static inline void
 set_cpufuncs_mpfixup(void)
 {
@@ -1780,6 +1781,7 @@ set_cpufuncs_mpfixup(void)
 	}
 #endif
 }
+#endif
 
 /*
  * Cannot panic here as we may not have a console yet ...
