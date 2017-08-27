@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.130 2017/02/10 23:26:23 palle Exp $ */
+/*	$NetBSD: cpu.c,v 1.131 2017/08/27 19:31:43 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130 2017/02/10 23:26:23 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.131 2017/08/27 19:31:43 palle Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -421,7 +421,7 @@ void
 cpu_attach(device_t parent, device_t dev, void *aux)
 {
 	int node;
-	long clk, sclk = 0;
+	unsigned int clk, sclk = 0;
 	struct mainbus_attach_args *ma = aux;
 	struct cpu_info *ci;
 	const char *sep;
