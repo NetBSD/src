@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.165 2017/08/27 20:32:20 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.166 2017/08/27 20:37:59 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -630,7 +630,7 @@ In addition to those there are 5 forms that need additional
 data, which is obtained from the subsequent characters.
 An escape
 .Pq \e
-followed by one, two or three, octal digits 
+followed by one, two or three, octal digits
 .Po So 0 Sc Ns \&.. Ns So 7 Sc Ns Pc
 is processed to form an 8 bit character value.
 If only one or two digits are present, the following
@@ -644,7 +644,7 @@ An escape followed by
 .Sq x
 (lower case only) can be followed by one or two
 hexadecimal digits
-.Po So 0 Sc Ns \&.. Ns So 9 Sc Ns , So A Sc Ns \&.. Ns So F Sc Ns , or So a Sc Ns \&.. Ns So f Sc Ns . Pc
+.Po So 0 Sc Ns \&.. Ns So 9 Sc , So A Sc Ns \&.. Ns So F Sc , or So a Sc Ns \&.. Ns So f Sc . Pc
 As with octal, if only one hex digit is present, the following
 character must be something other than a hex digit,
 so always giving 2 hex digits is best.
@@ -3073,9 +3073,8 @@ key while in command mode will pass the line to the shell.
 .Pp
 The
 .Ar emacs
-mode uses commands similar to a subset available in
-the
-.Xr emacs 1
+mode uses commands similar to a subset available in the
+.Ic emacs
 editor.
 With emacs-mode enabled, special keys can be used to modify the text
 in the buffer using the control key.
@@ -3188,7 +3187,7 @@ To allow smooth use of prompts, without needing redefinition, when
 .Xr editline 7
 is disabled, the character chosen should be one which will be
 ignored by the terminal if received, as when
-.Xr edlitline 7
+.Xr editline 7
 is not in use, the prompt strings are simply written to the terminal.
 For example, setting:
 .Bd -compact -literal -offset left
