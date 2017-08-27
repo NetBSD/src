@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_io_kern.c,v 1.4 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: v7fs_io_kern.c,v 1.5 2017/08/27 06:18:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,13 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_io_kern.c,v 1.4 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_io_kern.c,v 1.5 2017/08/27 06:18:16 skrll Exp $");
+
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
-#include <sys/cdefs.h>
-
-__KERNEL_RCSID(0, "$NetBSD: v7fs_io_kern.c,v 1.4 2017/06/01 02:45:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
