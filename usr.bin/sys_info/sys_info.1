@@ -1,4 +1,4 @@
-.\" $NetBSD: sys_info.1,v 1.4 2017/08/24 01:43:42 kre Exp $
+.\" $NetBSD: sys_info.1,v 1.5 2017/08/27 20:38:39 wiz Exp $
 .\"
 .\" Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 .\" All rights reserved.
@@ -62,7 +62,7 @@ Set
 If not given, the system default path, as obtained from
 .Ic user.cs_path
 via
-.Xr sysctl 1
+.Xr sysctl 8
 is used.
 To use the current value of $PATH from the caller, use:
 .Dl -P \*q$PATH\*q
@@ -88,8 +88,8 @@ otherwise, with status 0.
 .Xr awk 1 ,
 .Xr sed 1 ,
 .Xr strings 1 ,
-.Xr sysctl 1 ,
-.Xr uname 1
+.Xr uname 1 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
