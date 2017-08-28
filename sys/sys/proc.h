@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.341 2017/07/01 16:36:46 khorben Exp $	*/
+/*	$NetBSD: proc.h,v 1.342 2017/08/28 00:46:07 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -411,7 +411,6 @@ struct proc {
 			0x00000010 /* traced process wants LWP exit events */
 
 #define	PSL_TRACED	0x00000800 /* Debugged process being traced */
-#define	PSL_FSTRACE	0x00010000 /* Debugger process being traced by procfs */
 #define	PSL_CHTRACED	0x00400000 /* Child has been traced & reparented */
 #define	PSL_SYSCALL	0x04000000 /* process has PT_SYSCALL enabled */
 #define	PSL_SYSCALLEMU	0x08000000 /* cancel in-progress syscall */
@@ -436,7 +435,7 @@ struct proc {
  * Macro to compute the exit signal to be delivered.
  */
 #define	P_EXITSIG(p)	\
-    (((p)->p_slflag & (PSL_TRACED|PSL_FSTRACE)) ? SIGCHLD : p->p_exitsig)
+    (((p)->p_slflag & PSL_TRACED) ? SIGCHLD : p->p_exitsig)
 /*
  * Compute a wait(2) 16 bit exit status code
  */

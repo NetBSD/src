@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.22 2017/05/03 15:53:31 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.23 2017/08/28 00:46:07 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.22 2017/05/03 15:53:31 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.23 2017/08/28 00:46:07 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -472,17 +472,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		}
 
 		/*
-		 *	(2) it's being traced by procfs (which has
-		 *	    different signal delivery semantics),
-		 */
-		if (ISSET(t->p_slflag, PSL_FSTRACE)) {
-			DPRINTF(("file system traced\n"));
-			error = EBUSY;
-			break;
-		}
-
-		/*
-		 *	(3) it's not being traced by _you_, or
+		 *	(2) it's not being traced by _you_, or
 		 */
 		if (t->p_pptr != p) {
 			DPRINTF(("parent %d != %d\n", t->p_pptr->p_pid,
@@ -492,7 +482,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		}
 
 		/*
-		 *	(4) it's not currently stopped.
+		 *	(3) it's not currently stopped.
 		 */
 		if (t->p_stat != SSTOP || !t->p_waited /* XXXSMP */) {
 			DPRINTF(("stat %d flag %d\n", t->p_stat,
@@ -817,7 +807,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 			break;
 #endif
 		if (req == PT_DETACH) {
-			CLR(t->p_slflag, PSL_TRACED|PSL_FSTRACE|PSL_SYSCALL);
+			CLR(t->p_slflag, PSL_TRACED|PSL_SYSCALL);
 
 			/* give process back to original parent or init */
 			if (t->p_opptr != t->p_pptr) {
