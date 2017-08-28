@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.171 2017/07/28 15:16:39 riastradh Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.172 2017/08/28 04:57:11 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.171 2017/07/28 15:16:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.172 2017/08/28 04:57:11 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -985,7 +985,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 {
 	struct proc *p;
 	struct pgrp *pg;
-	struct ktr_desc *ktd = NULL;
+	struct ktr_desc *ktd = NULL, *nktd;
 	file_t *fp = *fpp;
 	int ret = 0;
 	int error = 0;
@@ -1015,22 +1015,22 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 		ktd = ktd_lookup(fp);
 		mutex_exit(&ktrace_lock);
 		if (ktd == NULL) {
-			ktd = kmem_alloc(sizeof(*ktd), KM_SLEEP);
-			TAILQ_INIT(&ktd->ktd_queue);
-			callout_init(&ktd->ktd_wakch, CALLOUT_MPSAFE);
-			cv_init(&ktd->ktd_cv, "ktrwait");
-			cv_init(&ktd->ktd_sync_cv, "ktrsync");
-			ktd->ktd_flags = 0;
-			ktd->ktd_qcount = 0;
-			ktd->ktd_error = 0;
-			ktd->ktd_errcnt = 0;
-			ktd->ktd_delayqcnt = ktd_delayqcnt;
-			ktd->ktd_wakedelay = mstohz(ktd_wakedelay);
-			ktd->ktd_intrwakdl = mstohz(ktd_intrwakdl);
-			ktd->ktd_ref = 0;
-			ktd->ktd_fp = fp;
+			nktd = kmem_alloc(sizeof(*nktd), KM_SLEEP);
+			TAILQ_INIT(&nktd->ktd_queue);
+			callout_init(&nktd->ktd_wakch, CALLOUT_MPSAFE);
+			cv_init(&nktd->ktd_cv, "ktrwait");
+			cv_init(&nktd->ktd_sync_cv, "ktrsync");
+			nktd->ktd_flags = 0;
+			nktd->ktd_qcount = 0;
+			nktd->ktd_error = 0;
+			nktd->ktd_errcnt = 0;
+			nktd->ktd_delayqcnt = ktd_delayqcnt;
+			nktd->ktd_wakedelay = mstohz(ktd_wakedelay);
+			nktd->ktd_intrwakdl = mstohz(ktd_intrwakdl);
+			nktd->ktd_ref = 0;
+			nktd->ktd_fp = fp;
 			mutex_enter(&ktrace_lock);
-			ktdref(ktd);
+			ktdref(nktd);
 			mutex_exit(&ktrace_lock);
 
 			/*
@@ -1038,16 +1038,16 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 			 * whether ktruss or ktrace.
 			 */
 			if (fp->f_type == DTYPE_PIPE)
-				ktd->ktd_flags |= KTDF_INTERACTIVE;
+				nktd->ktd_flags |= KTDF_INTERACTIVE;
 
 			mutex_enter(&fp->f_lock);
 			fp->f_count++;
 			mutex_exit(&fp->f_lock);
 			error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
-			    ktrace_thread, ktd, &ktd->ktd_lwp, "ktrace");
+			    ktrace_thread, nktd, &nktd->ktd_lwp, "ktrace");
 			if (error != 0) {
-				kmem_free(ktd, sizeof(*ktd));
-				ktd = NULL;
+				kmem_free(nktd, sizeof(*nktd));
+				nktd = NULL;
 				mutex_enter(&fp->f_lock);
 				fp->f_count--;
 				mutex_exit(&fp->f_lock);
@@ -1055,16 +1055,15 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 			}
 
 			mutex_enter(&ktrace_lock);
-			if (ktd_lookup(fp) != NULL) {
-				ktdrel(ktd);
-				ktd = NULL;
-			} else
-				TAILQ_INSERT_TAIL(&ktdq, ktd, ktd_list);
-			if (ktd == NULL)
-				cv_wait(&lbolt, &ktrace_lock);
+			ktd = ktd_lookup(fp);
+			if (ktd != NULL) {
+				ktdrel(nktd);
+				nktd = NULL;
+			} else {
+				TAILQ_INSERT_TAIL(&ktdq, nktd, ktd_list);
+				ktd = nktd;
+			}
 			mutex_exit(&ktrace_lock);
-			if (ktd == NULL)
-				goto done;
 		}
 		break;
 
