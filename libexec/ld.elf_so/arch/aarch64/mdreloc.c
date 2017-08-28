@@ -1,4 +1,4 @@
-/* $NetBSD: mdreloc.c,v 1.5 2017/08/23 09:17:48 nisimura Exp $ */
+/* $NetBSD: mdreloc.c,v 1.6 2017/08/28 06:59:25 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.5 2017/08/23 09:17:48 nisimura Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.6 2017/08/28 06:59:25 nisimura Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -44,9 +44,36 @@ void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 Elf_Addr _rtld_bind(const Obj_Entry *, Elf_Word);
 
+/*
+ * AARCH64 PLT looks like this;
+ *
+ *	PLT HEADER <8 instructions>
+ *	PLT ENTRY #0 <4 instructions>
+ *	PLT ENTRY #1 <4 instructions>
+ *	.
+ *	.
+ *	PLT ENTRY #n <4 instructions>
+ *
+ * PLT HEADER
+ *	stp  x16, x30, [sp, #-16]!
+ *	adrp x16, (GOT+16)
+ *	ldr  x17, [x16, #PLT_GOT+0x10]
+ *	add  x16, x16, #PLT_GOT+0x10
+ *	br   x17
+ *	nop
+ *	nop
+ *	nop
+ *
+ * PLT ENTRY #n
+ *	adrp x16, PLTGOT + n * 8
+ *	ldr  x17, [x16, PLTGOT + n * 8]
+ *	add  x16, x16, :lo12:PLTGOT + n * 8
+ *	br   x17
+ */
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
 {
+
 	obj->pltgot[1] = (Elf_Addr) obj;
 	obj->pltgot[2] = (Elf_Addr) &_rtld_bind_start;
 }
