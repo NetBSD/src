@@ -1,4 +1,4 @@
-/*	$NetBSD: acconfig.h,v 1.4.6.4 2017/04/25 19:54:07 snj Exp $	*/
+/*	$NetBSD: acconfig.h,v 1.4.6.5 2017/08/28 06:34:43 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
@@ -71,12 +71,6 @@
 
 /** define if gai_strerror() exists */
 #undef HAVE_GAISTRERROR
-
-/** define if arc4random() exists */
-#undef HAVE_ARC4RANDOM
-
-/** define if arc4random_addrandom() exists */
-#undef HAVE_ARC4RANDOM_ADDRANDOM
 
 /**
  * define if pthread_setconcurrency() should be called to tell the
