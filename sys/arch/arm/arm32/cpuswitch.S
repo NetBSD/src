@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.85.2.2 2015/06/06 14:39:55 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.85.2.3 2017/08/28 17:51:29 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.85.2.2 2015/06/06 14:39:55 skrll Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.85.2.3 2017/08/28 17:51:29 skrll Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 
@@ -354,25 +354,25 @@ AST_ALIGNMENT_FAULT_LOCALS
 ENTRY_NP(softint_switch)
 	push	{r4, r6, r7, lr}
 
-	ldr	r7, [r0, #L_CPU]		/* get curcpu */
+	ldr	r7, [r0, #L_CPU]	/* get curcpu */
 #if defined(TPIDRPRW_IS_CURLWP)
-	mrc	p15, 0, r4, c13, c0, 4		/* get old lwp */
+	mrc	p15, 0, r4, c13, c0, 4	/* get old lwp */
 #else
-	ldr	r4, [r7, #(CI_CURLWP)]		/* get old lwp */
+	ldr	r4, [r7, #(CI_CURLWP)]	/* get old lwp */
 #endif
-	mrs	r6, cpsr			/* we need to save this */
+	mrs	r6, cpsr		/* we need to save this */
 
 	/*
 	 * If the soft lwp blocks, it needs to return to softint_tramp
 	 */
-	mov	r2, sp				/* think ip */
-	adr	r3, softint_tramp		/* think lr */
+	mov	r2, sp			/* think ip */
+	adr	r3, softint_tramp	/* think lr */
 	push	{r2-r3}
 	push	{r4-r7}
 
-	mov	r5, r0				/* save new lwp */
+	mov	r5, r0			/* save new lwp */
 
-	ldr	r2, [r4, #(L_PCB)]		/* get old lwp's pcb */
+	ldr	r2, [r4, #(L_PCB)]	/* get old lwp's pcb */
 
 	/* Save all the registers into the old lwp's pcb */
 #if defined(__XSCALE__) || defined(_ARM_ARCH_6)
@@ -401,9 +401,9 @@ ENTRY_NP(softint_switch)
 	 * We're switching to a bound LWP so its l_cpu is already correct.
 	 */
 #if defined(TPIDRPRW_IS_CURLWP)
-	mcr	p15, 0, r5, c13, c0, 4		/* save new lwp */
+	mcr	p15, 0, r5, c13, c0, 4	/* save new lwp */
 #endif
-	str	r5, [r7, #(CI_CURLWP)]		/* save new lwp */
+	str	r5, [r7, #(CI_CURLWP)]	/* save new lwp */
 
 	/*
 	 * Normally, we'd get {r8-r13} but since this is a softint lwp
@@ -429,9 +429,9 @@ ENTRY_NP(softint_switch)
 
 	IRQdisable
 #if defined(TPIDRPRW_IS_CURLWP)
-	mcr	p15, 0, r4, c13, c0, 4		/* restore pinned lwp */
+	mcr	p15, 0, r4, c13, c0, 4	/* restore pinned lwp */
 #endif
-	str	r4, [r7, #(CI_CURLWP)]		/* restore pinned lwp */
+	str	r4, [r7, #(CI_CURLWP)]	/* restore pinned lwp */
 	ldr	sp, [r2, #(PCB_KSP)]	/* now running on the old stack. */
 
 	/* At this point we can allow IRQ's again. */

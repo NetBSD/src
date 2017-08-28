@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.39 2011/11/23 23:07:36 jmcneill Exp $ */
+/* $NetBSD: bba.c,v 1.39.26.1 2017/08/28 17:52:27 skrll Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.39 2011/11/23 23:07:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.39.26.1 2017/08/28 17:52:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,8 +321,6 @@ bba_allocm(void *addr, int direction, size_t size)
 	state |= 2;
 
 	m = kmem_alloc(sizeof(struct bba_mem), KM_SLEEP);
-	if (m == NULL)
-		goto bad;
 	m->addr = seg.ds_addr;
 	m->size = seg.ds_len;
 	m->kva = kva;

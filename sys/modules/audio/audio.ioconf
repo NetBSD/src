@@ -1,0 +1,9 @@
+#	$NetBSD: audio.ioconf,v 1.1.6.2 2017/08/28 17:53:09 skrll Exp $
+
+ioconf audio
+
+include "conf/files"
+
+pseudo-root audiobus*
+
+audio* at audiobus?

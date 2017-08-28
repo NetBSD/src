@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.50 2014/02/25 18:30:09 pooka Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.50.6.1 2017/08/28 17:52:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.50 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.50.6.1 2017/08/28 17:52:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -237,9 +237,6 @@ acpicpu_once_attach(void)
 	KASSERT(acpicpu_log == NULL);
 
 	acpicpu_sc = kmem_zalloc(maxcpus * sizeof(*sc), KM_SLEEP);
-
-	if (acpicpu_sc == NULL)
-		return ENOMEM;
 
 	for (i = 0; i < maxcpus; i++)
 		acpicpu_sc[i] = NULL;

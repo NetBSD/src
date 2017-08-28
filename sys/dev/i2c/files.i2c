@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.58.2.4 2016/07/09 20:25:02 skrll Exp $
+#	$NetBSD: files.i2c,v 1.58.2.5 2017/08/28 17:52:03 skrll Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -257,6 +257,8 @@ attach	titemp at iic
 file	dev/i2c/titemp.c			titemp
 
 # AMS AS3722 Power Management IC
-device	as3722pmic: sysmon_wdog
+device	as3722pmic { }: sysmon_wdog
+device	as3722reg: as3722pmic
 attach	as3722pmic at iic
+attach	as3722reg at as3722pmic
 file	dev/i2c/as3722.c			as3722pmic	needs-flag

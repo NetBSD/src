@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.28.4.2 2016/10/05 20:55:37 skrll Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.28.4.3 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,15 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.28.4.2 2016/10/05 20:55:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.28.4.3 2017/08/28 17:51:56 skrll Exp $");
 
 #include "opt_mtrr.h"
-#include "opt_perfctrs.h"
+#include "opt_pmc.h"
 #include "opt_user_ldt.h"
 #include "opt_compat_netbsd.h"
-#ifdef i386
-#include "opt_vm86.h"
-#endif
 #include "opt_xen.h"
 
 #include <sys/param.h>
@@ -68,9 +65,23 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.28.4.2 2016/10/05 20:55:37 skrll E
 #include <machine/mtrr.h>
 
 #ifdef __x86_64__
-/* Need to be checked. */
+/*
+ * The code for USER_LDT on amd64 is mostly functional, but it is still not
+ * enabled.
+ *
+ * On amd64 we are allowing only 8-byte-sized entries in the LDT, and we are
+ * not allowing the user to overwrite the existing entries (below LDT_SIZE).
+ * Note that USER_LDT is used only by 32bit applications, under compat_netbsd32.
+ * This is theoretically enough for Wine to work.
+ *
+ * However, letting segment registers have different location breaks amd64's
+ * Thread Local Storage: %fs and %gs must be reloaded when returning to
+ * userland. See the tech-kern@ archive from February 2017. A patch has been
+ * proposed to fix that, but Wine still randomly crashes; it is not clear
+ * whether the issues come from Wine, from netbsd32 or from the patch itself.
+ */
 #undef	USER_LDT
-#undef	PERFCTRS
+/* Need to be checked. */
 #undef	IOPERM
 #else
 #if defined(XEN)
@@ -80,11 +91,11 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.28.4.2 2016/10/05 20:55:37 skrll E
 #endif /* defined(XEN) */
 #endif
 
-#ifdef VM86
-#include <machine/vm86.h>
+#ifdef XEN
+#undef	PMC
 #endif
 
-#ifdef PERFCTRS
+#ifdef PMC
 #include <machine/pmc.h>
 #endif
 
@@ -168,14 +179,23 @@ x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
 	    ua->start + ua->num > 8192)
 		return (EINVAL);
 
+#ifdef __x86_64__
+	if (ua->start * sizeof(union descriptor) < LDT_SIZE)
+		return EINVAL;
+#endif
+
 	mutex_enter(&cpu_lock);
 
 	if (pmap->pm_ldt != NULL) {
 		nldt = pmap->pm_ldt_len / sizeof(*lp);
 		lp = pmap->pm_ldt;
 	} else {
+#ifdef __x86_64__
+		nldt = LDT_SIZE / sizeof(*lp);
+#else
 		nldt = NLDT;
-		lp = ldt;
+#endif
+		lp = (union descriptor *)ldtstore;
 	}
 
 	if (ua->start > nldt) {
@@ -244,6 +264,12 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	size_t old_len, new_len;
 	union descriptor *old_ldt, *new_ldt;
 
+#ifdef __x86_64__
+	const size_t min_ldt_size = LDT_SIZE;
+#else
+	const size_t min_ldt_size = NLDT * sizeof(union descriptor);
+#endif
+
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_SET,
 	    NULL, NULL, NULL, NULL);
 	if (error)
@@ -253,6 +279,11 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	    ua->start + ua->num > 8192)
 		return (EINVAL);
 
+#ifdef __x86_64__
+	if (ua->start * sizeof(union descriptor) < LDT_SIZE)
+		return EINVAL;
+#endif
+
 	/* Check descriptors for access violations. */
 	for (i = 0; i < ua->num; i++) {
 		union descriptor *desc = &descv[i];
@@ -261,6 +292,12 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 		case SDT_SYSNULL:
 			desc->sd.sd_p = 0;
 			break;
+#ifdef __x86_64__
+		case SDT_SYS286CGT:
+		case SDT_SYS386CGT:
+			/* We don't allow these on amd64. */
+			return EACCES;
+#else
 		case SDT_SYS286CGT:
 		case SDT_SYS386CGT:
 			/*
@@ -272,11 +309,12 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 			if (desc->gd.gd_p != 0 &&
 			    !ISLDT(desc->gd.gd_selector) &&
 			    ((IDXSEL(desc->gd.gd_selector) >= NGDT) ||
-			     (gdt[IDXSEL(desc->gd.gd_selector)].sd.sd_dpl !=
+			     (gdtstore[IDXSEL(desc->gd.gd_selector)].sd.sd_dpl !=
 				 SEL_UPL))) {
 				return EACCES;
 			}
 			break;
+#endif
 		case SDT_MEMEC:
 		case SDT_MEMEAC:
 		case SDT_MEMERC:
@@ -324,7 +362,7 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	for (;;) {
 		new_len = (ua->start + ua->num) * sizeof(union descriptor);
 		new_len = max(new_len, pmap->pm_ldt_len);
-		new_len = max(new_len, NLDT * sizeof(union descriptor));
+		new_len = max(new_len, min_ldt_size);
 		new_len = round_page(new_len);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
 		    new_len, 0, UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_WAITVA);
@@ -347,7 +385,7 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 		old_ldt = NULL;
 		old_len = 0;
 		old_sel = -1;
-		memcpy(new_ldt, ldt, NLDT * sizeof(union descriptor));
+		memcpy(new_ldt, ldtstore, min_ldt_size);
 	}
 
 	/* Apply requested changes. */
@@ -768,13 +806,18 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 		error = x86_iopl(l, SCARG(uap, parms), retval);
 		break;
 
-	case X86_GET_LDT:
+#ifdef i386
+	/*
+	 * On amd64, this is done via netbsd32_sysarch.
+	 */
+	case X86_GET_LDT: 
 		error = x86_get_ldt(l, SCARG(uap, parms), retval);
 		break;
 
 	case X86_SET_LDT:
 		error = x86_set_ldt(l, SCARG(uap, parms), retval);
 		break;
+#endif
 
 	case X86_GET_IOPERM:
 		error = x86_get_ioperm(l, SCARG(uap, parms), retval);
@@ -791,32 +834,17 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 		error = x86_set_mtrr(l, SCARG(uap, parms), retval);
 		break;
 
-#ifdef VM86
-	case X86_VM86:
-		error = x86_vm86(l, SCARG(uap, parms), retval);
-		break;
-	case X86_OLD_VM86:
-		error = compat_16_x86_vm86(l, SCARG(uap, parms), retval);
-		break;
-#endif
-
-#ifdef PERFCTRS
+#ifdef PMC
 	case X86_PMC_INFO:
-		KERNEL_LOCK(1, NULL);
-		error = pmc_info(l, SCARG(uap, parms), retval);
-		KERNEL_UNLOCK_ONE(NULL);
+		error = sys_pmc_info(l, SCARG(uap, parms), retval);
 		break;
 
 	case X86_PMC_STARTSTOP:
-		KERNEL_LOCK(1, NULL);
-		error = pmc_startstop(l, SCARG(uap, parms), retval);
-		KERNEL_UNLOCK_ONE(NULL);
+		error = sys_pmc_startstop(l, SCARG(uap, parms), retval);
 		break;
 
 	case X86_PMC_READ:
-		KERNEL_LOCK(1, NULL);
-		error = pmc_read(l, SCARG(uap, parms), retval);
-		KERNEL_UNLOCK_ONE(NULL);
+		error = sys_pmc_read(l, SCARG(uap, parms), retval);
 		break;
 #endif
 

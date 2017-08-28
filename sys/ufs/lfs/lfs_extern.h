@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.101.6.4 2016/07/09 20:25:25 skrll Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.101.6.5 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __BEGIN_DECLS
 
 #if defined(_KERNEL)
 
-extern int lfs_allclean_wakeup;
+extern kcondvar_t lfs_allclean_wakeup;
 extern struct pool lfs_inode_pool;		/* memory pool for inodes */
 extern struct pool lfs_dinode_pool;		/* memory pool for dinodes */
 extern struct pool lfs_inoext_pool;	/* memory pool for inode extension */
@@ -149,6 +149,8 @@ void lfs_freebuf(struct lfs *, struct buf *);
 struct buf *lfs_newbuf(struct lfs *, struct vnode *, daddr_t, size_t, int);
 void lfs_countlocked(int *, long *, const char *);
 int lfs_reserve(struct lfs *, struct vnode *, struct vnode *, int);
+int lfs_max_bufs(void);
+int lfs_wait_bufs(void);
 
 /* lfs_debug.c */
 #ifdef DEBUG

@@ -1,0 +1,7 @@
+$NetBSD: README,v 1.1.6.2 2017/08/28 17:52:35 skrll Exp $
+
+The headers in this directory are mostly either GPLv2 or GPLv2/X11 dual
+licensed. To be safe, DO NOT include dt-bindings headers from kernel sources.
+
+These headers are only meant to be used when generating .dtb files from .dts
+sources.

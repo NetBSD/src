@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.12 2014/02/09 16:41:42 chs Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.12.6.1 2017/08/28 17:51:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define LINUX_USRSTACK		0xC0000000
 
 #define LINUX_ELF_AUX_ARGSIZ 	\
-	(howmany(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)) + LINUX_RANDOM_BYTES)
+	(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info) + LINUX_RANDOM_BYTES)
 
 #define LINUX_DEBUGLINK_SIGNATURE
 

@@ -6,7 +6,7 @@ ENTRY(_start)
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
-  PROVIDE (__kernel_text = .;
+  PROVIDE (__kernel_text = .);
   .text           :
   {
     PROVIDE_HIDDEN (__eprol = .);
@@ -17,7 +17,7 @@ SECTIONS
     *(.text.hot .text.hot.*)
     *(.stub .text.* .gnu.linkonce.t.*)
     /* .gnu.warning sections are handled specially by elf32.em.  */
-    . = ALIGN(0x800)
+/*    . = ALIGN(0x800) */
     *(.vectors)
   } =0
   .rodata         : { *(.rodata .rodata.* .gnu.linkonce.r.*) }

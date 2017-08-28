@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.204.4.5 2017/02/05 13:40:56 skrll Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.204.4.6 2017/08/28 17:53:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.204.4.5 2017/02/05 13:40:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.204.4.6 2017/08/28 17:53:07 skrll Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -1000,8 +1000,6 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 	}
 
 	cp_time = kmem_alloc(node.sysctl_size, KM_SLEEP);
-	if (cp_time == NULL)
-		return (ENOMEM);
 	node.sysctl_data = cp_time;
 	memset(cp_time, 0, node.sysctl_size);
 
@@ -1409,8 +1407,6 @@ sysctl_kern_cpid(SYSCTLFN_ARGS)
 	}
 
 	cp_id = kmem_alloc(node.sysctl_size, KM_SLEEP);
-	if (cp_id == NULL)
-		return (ENOMEM);
 	node.sysctl_data = cp_id;
 	memset(cp_id, 0, node.sysctl_size);
 

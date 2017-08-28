@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.77.2.7 2017/02/05 13:40:01 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.77.2.8 2017/08/28 17:51:27 skrll Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -158,7 +158,6 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
-#include "opt_compat_ibcs2.h"
 #include "opt_xen.h"
 
 #include "assym.h"
@@ -210,6 +209,10 @@
 #define TABLESIZE \
   ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1 + UPAGES) \
     * PAGE_SIZE)
+
+/* Amount of VA used to map the kernel, the syms and the preloaded modules */
+#define BOOTMAP_VA_SIZE \
+	(NKL2_KIMG_ENTRIES * (1 << L2_SHIFT) - TABLESIZE - IOM_SIZE)
 
 /*
  * fillkpt - Fill in a kernel page table
@@ -325,7 +328,6 @@
 	.globl	_C_LABEL(bootinfo)
 	.globl	_C_LABEL(biosbasemem)
 	.globl	_C_LABEL(biosextmem)
-	.globl	_C_LABEL(gdtstore)
 
 	.type	_C_LABEL(tablesize), @object
 _C_LABEL(tablesize):	.long	TABLESIZE
@@ -443,7 +445,7 @@ ENTRY(start)
 	testl	%eax,%eax		/* bootinfo = NULL? */
 	jz	bootinfo_finished
 
-	movl	(%eax),%ebx		/* number of entries */
+	movl	(%eax),%ebx		/* bootinfo::bi_nentries */
 	movl	$RELOC(bootinfo),%ebp
 	movl	%ebp,%edx
 	addl	$BOOTINFO_MAXSIZE,%ebp
@@ -462,7 +464,7 @@ bootinfo_entryloop:
 
 	movl	(%ecx),%eax		/* btinfo_common::len (size of entry) */
 	movl	%edx,%edi
-	addl	(%ecx),%edx		/* update dest pointer */
+	addl	%eax,%edx		/* update dest pointer */
 	cmpl	%ebp,%edx		/* beyond bootinfo+BOOTINFO_MAXSIZE? */
 	jg	bootinfo_overflow
 
@@ -470,20 +472,31 @@ bootinfo_entryloop:
 	movl	%eax,%ecx
 
 	/*
-	 * If any modules were loaded, record where they end.  We'll need to
-	 * skip over them.
+	 * If any modules were loaded, record where they end. 'eblob' is used
+	 * later to compute the initial bootstrap tables.
 	 */
 	cmpl	$BTINFO_MODULELIST,4(%esi) /* btinfo_common::type */
-	jne	0f
+	jne	bootinfo_copy
 
-	pushl	12(%esi)		/* btinfo_modulelist::endpa */
-	popl	RELOC(eblob)
+	/* Skip the modules if we won't have enough VA to map them */
+	movl	12(%esi),%eax		/* btinfo_modulelist::endpa */
+	addl	$PGOFSET,%eax		/* roundup to a page */
+	andl	$~PGOFSET,%eax
+	cmpl	$BOOTMAP_VA_SIZE,%eax
+	jg	bootinfo_skip
+	movl	%eax,RELOC(eblob)
 	addl	$KERNBASE_LO,RELOC(eblob)
 	adcl	$KERNBASE_HI,RELOC(eblob)+4
 
-0:
+bootinfo_copy:
 	rep
 	movsb				/* copy esi -> edi */
+	jmp	bootinfo_next
+
+bootinfo_skip:
+	subl	%ecx,%edx		/* revert dest pointer */
+
+bootinfo_next:
 	popl	%eax
 	popl	%esi
 	popl	%edi
@@ -501,8 +514,8 @@ bootinfo_overflow:
 	movl	$RELOC(bootinfo),%ebp
 	movl	%ebp,%edx
 	subl	%ebx,(%edx)		/* correct the number of entries */
-
 bootinfo_finished:
+
 	/* Load 'esym' */
 	movl	16(%esp),%eax
 	testl	%eax,%eax		/* esym = NULL? */
@@ -1068,12 +1081,6 @@ skip_save:
 
 	/* Switch to newlwp's stack. */
 	movq	L_PCB(%r12),%r14
-#ifdef XEN /* XXX debug code */
-	cmpq	$0,PCB_RSP(%r14)
-	jne 999f
-	callq _C_LABEL(cpu_Debugger);
-999:
-#endif
 	movq	PCB_RSP(%r14),%rsp
 	movq	PCB_RBP(%r14),%rbp
 
@@ -1222,8 +1229,6 @@ IDTVEC_END(syscall32)
  * syscall()
  *
  * syscall insn entry.
- * This currently isn't much faster, but it can be made faster in the future.
- * (Actually we've already saved a few 100 clocks by not loading the trap gate)
  */
 IDTVEC(syscall)
 #ifndef XEN
@@ -1310,16 +1315,15 @@ do_syscall:
 	testl	$(MDL_IRET|MDL_COMPAT32),L_MD_FLAGS(%r14)
 	INTR_RESTORE_GPRS
 	movw	TF_ES(%rsp),%es
+	movw	TF_DS(%rsp),%ds
 	SWAPGS
 	jnz	2f
 #ifndef XEN
 	movq	TF_RIP(%rsp),%rcx	/* %rip for sysret */
 	movq	TF_RFLAGS(%rsp),%r11	/* %flags for sysret */
-	movw	TF_DS(%rsp),%ds
 	movq	TF_RSP(%rsp),%rsp
 	sysretq
 #else
-	movw	TF_DS(%rsp),%ds
 	addq	$TF_RIP,%rsp
 	pushq	$256	/* VGCF_IN_SYSCALL */
 	jmp	HYPERVISOR_iret
@@ -1332,7 +1336,6 @@ do_syscall:
  * then a SIGSEGV will be signalled.
  */
 2:
-	movw	TF_DS(%rsp),%ds
 	addq	$TF_RIP,%rsp
 	iretq
 
@@ -1386,27 +1389,6 @@ NENTRY(lwp_trampoline)
 END(lwp_trampoline)
 
 /*
- * oosyscall()
- *
- * Old call gate entry for syscall. only needed if we're
- * going to support running old i386 NetBSD 1.0 or ibcs2 binaries, etc,
- * on NetBSD/amd64.
- * The 64bit call gate can't request that arguments be copied from the
- * user stack (which the i386 code uses to get a gap for the flags).
- * push/pop are <read>:<modify_sp>:<write> cycles.
- */
-IDTVEC(oosyscall)
-	/* Set rflags in trap frame. */
-	pushq	(%rsp)		/* move user's %eip */
-	pushq	16(%rsp)	/* and %cs */
-	popq	8(%rsp)
-	pushfq
-	popq	16(%rsp)
-	pushq	$7		/* size of instruction for restart */
-	jmp	osyscall1
-IDTVEC_END(oosyscall)
-
-/*
  * osyscall()
  *
  * Trap gate entry for int $80 syscall, also used by sigreturn.
@@ -1418,7 +1400,6 @@ IDTVEC(osyscall)
 	addq $0x10,%rsp
 #endif
 	pushq	$2		/* size of instruction for restart */
-osyscall1:
 	pushq	$T_ASTFLT	/* trap # for doing ASTs */
 	INTRENTRY
 	STI(si)

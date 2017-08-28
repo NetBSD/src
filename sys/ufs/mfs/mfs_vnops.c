@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.55.4.1 2015/04/06 15:18:33 skrll Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.55.4.2 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.55.4.1 2015/04/06 15:18:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.55.4.2 2017/08/28 17:53:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ mfs_close(void *v)
 int
 mfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -290,12 +290,14 @@ mfs_inactive(void *v)
 int
 mfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct mfsnode *mfsp = VTOMFS(vp);
 	int refcnt;
+
+	VOP_UNLOCK(vp);
 
 	mutex_enter(&mfs_lock);
 	vp->v_data = NULL;

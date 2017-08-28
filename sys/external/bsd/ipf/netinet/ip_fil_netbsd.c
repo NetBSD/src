@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.11.4.4 2017/02/05 13:40:54 skrll Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.11.4.5 2017/08/28 17:52:34 skrll Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.11.4.4 2017/02/05 13:40:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.11.4.5 2017/08/28 17:52:34 skrll Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -78,6 +78,9 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:
 # include <netinet/icmp6.h>
 # if (__NetBSD_Version__ >= 106000000)
 #  include <netinet6/nd6.h>
+# endif
+# if __NetBSD_Version__ >= 499001100
+#  include <netinet6/scope6_var.h>
 # endif
 #endif
 #include "netinet/ip_fil.h"
@@ -582,8 +585,13 @@ ipfdetach(ipf_main_softc_t *softc)
 # if (__NetBSD_Version__ >= 104200000)
 #  if __NetBSD_Version__ >= 105110000
 #   if defined(PFIL_TYPE_IFNET) && defined(PFIL_IFNET)
+#    if __NetBSD_Version__ >= 799000400
+	(void) pfil_remove_ihook((void *)ipf_pfilsync, NULL,
+				PFIL_IFNET, ph_ifsync);
+#    else
 	(void) pfil_remove_hook((void *)ipf_pfilsync, NULL,
 				PFIL_IFNET, ph_ifsync);
+#    endif
 #   endif
 
 	if (ph_inet != NULL)
@@ -982,7 +990,7 @@ ipf_send_icmp_err(int type, fr_info_t *fin, int dst)
 		}
 		xtra = MIN(fin->fin_plen, avail - iclen - max_linkhdr);
 		xtra = MIN(xtra, IPV6_MMTU - iclen);
-		if (dst == 0) {
+		if (dst == 0 && !IN6_IS_ADDR_LINKLOCAL(&fin->fin_dst6.in6)) {
 			if (ipf_ifpaddr(&ipfmain, 6, FRI_NORMAL, ifp,
 				       &dst6, NULL) == -1) {
 				FREE_MB_T(m);
@@ -1415,6 +1423,12 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 		sockaddr_in6_init(&u.dst6, &fdp->fd_ip6.in6, 0, 0, 0);
 	else
 		sockaddr_in6_init(&u.dst6, &fin->fin_fi.fi_dst.in6, 0, 0, 0);
+	if ((error = in6_setscope(&u.dst6.sin6_addr, ifp,
+	    &u.dst6.sin6_scope_id)) != 0)
+		return error;
+	if ((error = sa6_embedscope(&u.dst6, 0)) != 0)
+		return error;
+
 	dst = &u.dst;
 	rtcache_setdst(ro, dst);
 
@@ -1426,6 +1440,9 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 	dst6->sin6_family = AF_INET6;
 	dst6->sin6_len = sizeof(struct sockaddr_in6);
 	dst6->sin6_addr = fin->fin_fi.fi_dst.in6;
+	/* KAME */
+	if (IN6_IS_ADDR_LINKLOCAL(&dst6->sin6_addr))
+		dst6->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 
 	if (fdp != NULL) {
 		if (IP6_NOTZERO(&fdp->fd_ip6))
@@ -1443,15 +1460,6 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 		error = EHOSTUNREACH;
 		goto bad;
 	}
-
-	/* KAME */
-# if __NetBSD_Version__ >= 499001100
-	if (IN6_IS_ADDR_LINKLOCAL(&u.dst6.sin6_addr))
-		u.dst6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
-# else
-	if (IN6_IS_ADDR_LINKLOCAL(&dst6->sin6_addr))
-		dst6->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
-# endif
 
 	{
 # if (__NetBSD_Version__ >= 106010000) && !defined(IN6_LINKMTU)
@@ -1478,7 +1486,7 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 # endif
 		if ((error == 0) && (m0->m_pkthdr.len <= mtu)) {
 # if __NetBSD_Version__ >= 499001100
-			error = nd6_output(ifp, ifp, m0, satocsin6(dst), rt);
+			error = ip6_if_output(ifp, ifp, m0, satocsin6(dst), rt);
 # else
 			error = nd6_output(ifp, ifp, m0, dst6, rt);
 # endif

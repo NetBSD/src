@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11.6.2 2015/09/22 12:06:16 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.11.6.3 2017/08/28 17:53:16 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../netinet
@@ -25,3 +25,9 @@ CPPFLAGS+=	-DPORTALGO_INET4_DEFAULT=PORTALGO_RANDOM_START
 # TCP debugging
 #SRCS+=		tcp_debug.c
 #CPPFLAGS+=	-DTCP_DEBUG
+
+# IPSEC
+SRCS+=			ip_ecn.c
+CPPFLAGS+=		-DIPSEC
+# To write rump-specific wrappers
+CPPFLAGS.in_proto.c+=	-DIPSEC_RUMPKERNEL

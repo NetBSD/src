@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.45.4.2 2015/09/22 12:05:54 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.45.4.3 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -32,8 +32,10 @@
 #ifndef _X86_INTR_H_
 #define _X86_INTR_H_
 
+#if !defined(XEN)
 #define	__HAVE_FAST_SOFTINTS
 #define	__HAVE_PREEMPTION
+#endif /*  !defined(XEN) */
 
 #ifdef _KERNEL
 #include <sys/types.h>
@@ -67,7 +69,9 @@
  */
 
 struct intrstub {
+#if !defined(XEN)
 	void *ist_entry;
+#endif
 	void *ist_recurse;
 	void *ist_resume;
 };
@@ -86,6 +90,10 @@ struct intrsource {
 	void *is_recurse;		/* entry for spllower */
 	void *is_resume;		/* entry for doreti */
 	lwp_t *is_lwp;			/* for soft interrupts */
+#if defined(XEN)
+	u_long ipl_evt_mask1;	/* pending events for this IPL */
+	u_long ipl_evt_mask2[NR_EVENT_CHANNELS];
+#endif
 	struct evcnt is_evcnt;		/* interrupt counter per cpu */
 	int is_flags;			/* see below */
 	int is_type;			/* level, edge */
@@ -116,8 +124,12 @@ struct intrhand {
 	void	*ih_realarg;
 	struct	intrhand *ih_next;
 	struct	intrhand **ih_prevp;
+#if !defined(XEN)
 	int	ih_pin;
 	int	ih_slot;
+#else
+	struct	intrhand *ih_evt_next;
+#endif
 	struct cpu_info *ih_cpu;
 };
 
@@ -177,6 +189,8 @@ void Xpreemptresume(void);
 extern struct intrstub i8259_stubs[];
 extern struct intrstub ioapic_edge_stubs[];
 extern struct intrstub ioapic_level_stubs[];
+extern struct intrstub x2apic_edge_stubs[];
+extern struct intrstub x2apic_level_stubs[];
 
 struct cpu_info;
 
@@ -204,7 +218,9 @@ int x86_send_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
 void x86_ipi_handler(void);
 
+#ifndef XEN
 extern void (* const ipifunc[X86_NIPI])(struct cpu_info *);
+#endif
 
 #endif /* _KERNEL */
 

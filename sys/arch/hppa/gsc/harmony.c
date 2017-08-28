@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.2.6.1 2015/06/06 14:39:59 skrll Exp $	*/
+/*	$NetBSD: harmony.c,v 1.2.6.2 2017/08/28 17:51:39 skrll Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -1052,8 +1052,6 @@ harmony_allocm(void *vsc, int dir, size_t size)
 
 	sc = vsc;
 	d = kmem_alloc(sizeof(*d), KM_SLEEP);
-	if (d == NULL)
-		goto fail;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0, BUS_DMA_WAITOK,
 	    &d->d_map) != 0)
@@ -1084,7 +1082,6 @@ fail2:
 	bus_dmamap_destroy(sc->sc_dmat, d->d_map);
 fail1:
 	kmem_free(d, sizeof(*d));
-fail:
 	return (NULL);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.84.4.8 2017/02/05 13:40:58 skrll Exp $	*/
+/*	$NetBSD: route.h,v 1.84.4.9 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -250,6 +250,11 @@ struct rt_msghdr {
 #define RTM_DELADDR	0x17	/* address being removed from iface */
 #define RTM_CHGADDR	0x18	/* address properties changed */
 
+/*
+ * setsockopt defines used for the filtering.
+ */
+#define	RO_MSGFILTER	1	/* array of which rtm_type to send to client */
+
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
 #define RTV_EXPIRE	0x4	/* init or lock _expire */
@@ -494,6 +499,10 @@ struct mbuf *
 int	rt_msg3(int, struct rt_addrinfo *, void *, struct rt_walkarg *, int *);
 void	rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
 void	route_enqueue(struct mbuf *, int);
+
+struct llentry;
+void	rt_clonedmsg(const struct sockaddr *, const struct ifnet *,
+	    const struct rtentry *);
 
 /* rtbl */
 int	rt_addaddr(rtbl_t *, struct rtentry *, const struct sockaddr *);

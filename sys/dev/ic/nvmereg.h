@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.1.2.5 2016/12/05 10:55:01 skrll Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.1.2.6 2017/08/28 17:52:03 skrll Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -37,10 +37,8 @@
 #define NVME_CAP_HI	0x0004
 #define NVME_VS		0x0008	/* Version */
 #define  NVME_VS_MJR(_r)	(((_r) >> 16) & 0xffff)
-#define  NVME_VS_MNR(_r)	((_r) & 0xffff)
-#define  NVME_VS_1_0		0x00010000
-#define  NVME_VS_1_1		0x00010100
-#define  NVME_VS_1_2		0x00010200
+#define  NVME_VS_MNR(_r)	(((_r) >> 8) & 0xff)
+#define  NVME_VS_TER(_r)	((_r) & 0xff)
 #define NVME_INTMS	0x000c	/* Interrupt Mask Set */
 #define NVME_INTMC	0x0010	/* Interrupt Mask Clear */
 #define NVME_CC		0x0014	/* Controller Configuration */
@@ -222,6 +220,7 @@ struct nvme_sqe_io {
 
 struct nvme_cqe {
 	uint32_t	cdw0;
+#define NVME_CQE_CDW0_VWC_WCE	__BIT(1)	/* Volatile Write Cache Enable */
 
 	uint32_t	_reserved;
 
@@ -313,6 +312,10 @@ struct nvme_cqe {
 #define NVM_CMD_WR_UNCOR	0x04 /* Write Uncorrectable */
 #define NVM_CMD_COMPARE		0x05 /* Compare */
 #define NVM_CMD_DSM		0x09 /* Dataset Management */
+
+/* Features for GET/SET FEATURES */
+#define NVM_FEATURE_VOLATILE_WRITE_CACHE	0x06	/* optional */
+#define NVM_FEATURE_NUMBER_OF_QUEUES		0x07	/* mandatory */
 
 /* Power State Descriptor Data */
 struct nvm_identify_psd {

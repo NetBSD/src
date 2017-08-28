@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.21.16.3 2016/10/05 20:55:40 skrll Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.21.16.4 2017/08/28 17:52:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,22 +59,22 @@ struct ld_softc {
 	int		sc_maxqueuecnt;	/* maximum h/w queue depth */
 
 	int		(*sc_dump)(struct ld_softc *, void *, int, int);
-	int		(*sc_flush)(struct ld_softc *, int);
+	int		(*sc_ioctl)(struct ld_softc *, u_long, void *, int32_t, bool);
 	int		(*sc_start)(struct ld_softc *, struct buf *);
-	int		(*sc_discard)(struct ld_softc *, off_t, off_t);
+	int		(*sc_discard)(struct ld_softc *, struct buf *);
 };
 
 /* sc_flags */
 #define	LDF_ENABLED	0x001		/* device enabled */
 #define	LDF_DRAIN	0x020		/* maxqueuecnt has changed; drain */
-
-/* sc_flush() flags */
-#define	LDFL_POLL	0x001		/* poll for completion */
+#define	LDF_NO_RND	0x040		/* do not attach rnd source */
+#define	LDF_MPSAFE	0x080		/* backend is MPSAFE */
 
 int	ldadjqparam(struct ld_softc *, int);
 void	ldattach(struct ld_softc *, const char *);
 int	ldbegindetach(struct ld_softc *, int);
 void	ldenddetach(struct ld_softc *);
 void	lddone(struct ld_softc *, struct buf *);
+void	lddiscardend(struct ld_softc *, struct buf *);
 
 #endif	/* !_DEV_LDVAR_H_ */

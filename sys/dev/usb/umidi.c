@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.65.14.14 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: umidi.c,v 1.65.14.15 2017/08/28 17:52:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.14 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.15 2017/08/28 17:52:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -784,9 +784,6 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 	sc->sc_in_num_endpoints = fp->num_in_ep;
 	sc->sc_endpoints_len = UMIDI_ENDPOINT_SIZE(sc);
 	sc->sc_endpoints = kmem_zalloc(sc->sc_endpoints_len, KM_SLEEP);
-	if (!sc->sc_endpoints)
-		return USBD_NOMEM;
-
 	sc->sc_out_ep = sc->sc_out_num_endpoints ? sc->sc_endpoints : NULL;
 	sc->sc_in_ep =
 	    sc->sc_in_num_endpoints ?
@@ -938,8 +935,6 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 	}
 	sc->sc_endpoints_len = UMIDI_ENDPOINT_SIZE(sc);
 	sc->sc_endpoints = kmem_zalloc(sc->sc_endpoints_len, KM_SLEEP);
-	if (!sc->sc_endpoints)
-		return USBD_NOMEM;
 	if (sc->sc_out_num_endpoints) {
 		sc->sc_out_ep = sc->sc_endpoints;
 		sc->sc_out_ep->sc = sc;
@@ -976,9 +971,6 @@ alloc_all_endpoints_genuine(struct umidi_softc *sc)
 	num_ep = interface_desc->bNumEndpoints;
 	sc->sc_endpoints_len = sizeof(struct umidi_endpoint) * num_ep;
 	sc->sc_endpoints = p = kmem_zalloc(sc->sc_endpoints_len, KM_SLEEP);
-	if (!p)
-		return USBD_NOMEM;
-
 	sc->sc_out_num_jacks = sc->sc_in_num_jacks = 0;
 	sc->sc_out_num_endpoints = sc->sc_in_num_endpoints = 0;
 	epaddr = -1;
@@ -1459,9 +1451,6 @@ alloc_all_mididevs(struct umidi_softc *sc, int nmidi)
 {
 	sc->sc_num_mididevs = nmidi;
 	sc->sc_mididevs = kmem_zalloc(sizeof(*sc->sc_mididevs)*nmidi, KM_SLEEP);
-	if (!sc->sc_mididevs)
-		return USBD_NOMEM;
-
 	return USBD_NORMAL_COMPLETION;
 }
 

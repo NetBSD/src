@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.47.6.2 2016/10/05 20:55:42 skrll Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.47.6.3 2017/08/28 17:52:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.47.6.2 2016/10/05 20:55:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.47.6.3 2017/08/28 17:52:05 skrll Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -1017,10 +1017,6 @@ cmpci_alloc_dmamem(struct cmpci_softc *sc, size_t size, void **r_addr)
 
 	error = 0;
 	n = kmem_alloc(sizeof(*n), KM_SLEEP);
-	if (n == NULL) {
-		error = ENOMEM;
-		goto quit;
-	}
 
 #define CMPCI_DMABUF_ALIGN    0x4
 #define CMPCI_DMABUF_BOUNDARY 0x0
@@ -1059,7 +1055,6 @@ cmpci_alloc_dmamem(struct cmpci_softc *sc, size_t size, void **r_addr)
 			n->cd_segs, sizeof(n->cd_segs)/sizeof(n->cd_segs[0]));
  mfree:
 	kmem_free(n, sizeof(*n));
- quit:
 	return error;
 }
 

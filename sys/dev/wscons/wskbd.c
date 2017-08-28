@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.135.2.1 2015/09/22 12:06:01 skrll Exp $ */
+/* $NetBSD: wskbd.c,v 1.135.2.2 2017/08/28 17:52:31 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.135.2.1 2015/09/22 12:06:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.135.2.2 2017/08/28 17:52:31 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -142,6 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.135.2.1 2015/09/22 12:06:01 skrll Exp $"
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wscons_callbacks.h>
+#include <dev/wscons/wsbelldata.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -311,23 +312,6 @@ const struct cdevsw wskbd_cdevsw = {
 	.d_kqfilter = wskbdkqfilter,
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER
-};
-
-#ifndef WSKBD_DEFAULT_BELL_PITCH
-#define	WSKBD_DEFAULT_BELL_PITCH	1500	/* 1500Hz */
-#endif
-#ifndef WSKBD_DEFAULT_BELL_PERIOD
-#define	WSKBD_DEFAULT_BELL_PERIOD	100	/* 100ms */
-#endif
-#ifndef WSKBD_DEFAULT_BELL_VOLUME
-#define	WSKBD_DEFAULT_BELL_VOLUME	50	/* 50% volume */
-#endif
-
-struct wskbd_bell_data wskbd_default_bell_data = {
-	WSKBD_BELL_DOALL,
-	WSKBD_DEFAULT_BELL_PITCH,
-	WSKBD_DEFAULT_BELL_PERIOD,
-	WSKBD_DEFAULT_BELL_VOLUME,
 };
 
 #ifdef WSDISPLAY_SCROLLSUPPORT
@@ -1075,17 +1059,6 @@ wskbd_displayioctl(device_t dev, u_long cmd, void *data, int flag,
 	int len, error;
 
 	switch (cmd) {
-#define	SETBELL(dstp, srcp, dfltp)					\
-    do {								\
-	(dstp)->pitch = ((srcp)->which & WSKBD_BELL_DOPITCH) ?		\
-	    (srcp)->pitch : (dfltp)->pitch;				\
-	(dstp)->period = ((srcp)->which & WSKBD_BELL_DOPERIOD) ?	\
-	    (srcp)->period : (dfltp)->period;				\
-	(dstp)->volume = ((srcp)->which & WSKBD_BELL_DOVOLUME) ?	\
-	    (srcp)->volume : (dfltp)->volume;				\
-	(dstp)->which = WSKBD_BELL_DOALL;				\
-    } while (0)
-
 	case WSKBDIO_BELL:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);

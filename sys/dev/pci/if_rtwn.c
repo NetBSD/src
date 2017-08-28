@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwn.c,v 1.1.2.7 2017/02/05 13:40:29 skrll Exp $	*/
+/*	$NetBSD: if_rtwn.c,v 1.1.2.8 2017/08/28 17:52:05 skrll Exp $	*/
 /*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
 #define	IEEE80211_NO_HT
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.1.2.7 2017/02/05 13:40:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.1.2.8 2017/08/28 17:52:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1957,10 +1957,13 @@ rtwn_tx(struct rtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	}
 	if (error != 0) {
 		/* Too many DMA segments, linearize mbuf. */
-		if ((m = m_defrag(m, M_DONTWAIT)) == NULL) {
+		struct mbuf *newm = m_defrag(m, M_DONTWAIT);
+		if (newm == NULL) {
 			aprint_error_dev(sc->sc_dev, "can't defrag mbuf\n");
+			m_freem(m);
 			return ENOBUFS;
 		}
+		m = newm;
 
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 		    BUS_DMA_NOWAIT | BUS_DMA_WRITE);

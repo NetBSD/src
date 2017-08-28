@@ -1,4 +1,4 @@
-/*	$NetBSD: sata_subr.c,v 1.21 2013/04/03 17:15:07 bouyer Exp $	*/
+/*	$NetBSD: sata_subr.c,v 1.21.12.1 2017/08/28 17:52:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * Common functions for Serial ATA.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.21 2013/04/03 17:15:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.21.12.1 2017/08/28 17:52:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,14 +85,15 @@ sata_reset_interface(struct ata_channel *chp, bus_space_tag_t sata_t,
 	uint32_t scontrol, sstatus;
 	int i;
 
-	/* bring the PHYs online.
+	/*
+	 * bring the PHYs online.
 	 * The work-around for errata #1 of the Intel GD31244 says that we must
 	 * write 0 to the port first to be sure of correctly initializing
 	 * the device. It doesn't hurt for other devices.
 	 */
 	bus_space_write_4(sata_t, scontrol_r, 0, 0);
 	scontrol = SControl_IPM_NONE | SControl_SPD_ANY | SControl_DET_INIT;
-	bus_space_write_4 (sata_t, scontrol_r, 0, scontrol);
+	bus_space_write_4(sata_t, scontrol_r, 0, scontrol);
 
 	ata_delay(50, "sataup", flags);
 	scontrol &= ~SControl_DET_INIT;

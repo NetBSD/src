@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/* $NetBSD: locore.h,v 1.1.6.1 2017/08/28 17:51:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -69,22 +69,19 @@ extern const pcu_ops_t pcu_fpu_ops;
 static inline bool
 fpu_used_p(lwp_t *l)
 {
-	KASSERT(l == curlwp);
-	return pcu_valid_p(&pcu_fpu_ops);
+	return pcu_valid_p(&pcu_fpu_ops, l);
 }
 
 static inline void
 fpu_discard(lwp_t *l, bool usesw)
 {
-	KASSERT(l == curlwp);
-	pcu_discard(&pcu_fpu_ops, usesw);
+	pcu_discard(&pcu_fpu_ops, l, usesw);
 }
 
 static inline void
 fpu_save(lwp_t *l)
 {
-	KASSERT(l == curlwp);
-	pcu_save(&pcu_fpu_ops);
+	pcu_save(&pcu_fpu_ops, l);
 }
 
 static inline void cpsie(register_t psw) __attribute__((__unused__));

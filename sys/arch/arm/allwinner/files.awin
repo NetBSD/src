@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.26.2.6 2016/05/29 08:44:16 skrll Exp $
+#	$NetBSD: files.awin,v 1.26.2.7 2017/08/28 17:51:29 skrll Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -109,6 +109,11 @@ file	arch/arm/allwinner/awin_eth.c		awin_eth
 # A20 GMAC
 attach	awge at awinio with awin_gige
 file	arch/arm/allwinner/awin_gige.c		awin_gige
+
+# A20 CAN
+device	awincan { } : ifnet
+attach	awincan at awinio with awin_can
+file	arch/arm/allwinner/awin_can.c		awin_can
 
 # USB2 OTG Controller
 attach	motg at awinio with awin_otg

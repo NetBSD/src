@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.16 2013/09/12 15:36:17 joerg Exp $ */
+/*	$NetBSD: profile.h,v 1.16.6.1 2017/08/28 17:51:52 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,7 +57,6 @@
 	__asm("add %o7, 8, %o1");\
 	__asm("1: rd %pc, %o2");\
 	__asm("add %o2," _MCOUNT_SYM "-1b, %o2");\
-	__asm("ld [%o2], %o2");\
 	__asm("jmpl %o2, %g0");\
 	__asm("add %i7, 8, %o0");
 #else
@@ -65,9 +64,10 @@
 	__asm(".global " _MCOUNT_ENTRY);\
 	__asm(_MCOUNT_ENTRY ":");\
 	__asm("add %o7, 8, %o1");\
+	__asm("mov %o7, %o3");\
 	__asm("1: call 2f; nop; 2:");\
 	__asm("add %o7," _MCOUNT_SYM "-1b, %o2");\
-	__asm("ld [%o2], %o2");\
+	__asm("mov %o3, %o7");\
 	__asm("jmpl %o2, %g0");\
 	__asm("add %i7, 8, %o0");
 #endif

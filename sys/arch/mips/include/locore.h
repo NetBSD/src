@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.94.2.4 2016/12/05 10:54:55 skrll Exp $ */
+/* $NetBSD: locore.h,v 1.94.2.5 2017/08/28 17:51:45 skrll Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -727,18 +727,18 @@ int	kdbpeek(vaddr_t);
 
 /* mips_dsp.c */
 void	dsp_init(void);
-void	dsp_discard(void);
+void	dsp_discard(lwp_t *);
 void	dsp_load(void);
-void	dsp_save(void);
-bool	dsp_used_p(void);
+void	dsp_save(lwp_t *);
+bool	dsp_used_p(const lwp_t *);
 extern const pcu_ops_t mips_dsp_ops;
 
 /* mips_fpu.c */
 void	fpu_init(void);
-void	fpu_discard(void);
+void	fpu_discard(lwp_t *);
 void	fpu_load(void);
-void	fpu_save(void);
-bool	fpu_used_p(void);
+void	fpu_save(lwp_t *);
+bool	fpu_used_p(const lwp_t *);
 extern const pcu_ops_t mips_fpu_ops;
 
 /* mips_machdep.c */

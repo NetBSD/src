@@ -1,18 +1,8 @@
-#	$NetBSD: files.exynos,v 1.2.2.2 2015/12/27 12:09:34 skrll Exp $
+#	$NetBSD: files.exynos,v 1.2.2.3 2017/08/28 17:51:34 skrll Exp $
 #
-# EXYNOS 5422 board configuration info
+# EXYNOS board configuration info
 #
 
-file	arch/evbarm/exynos/exynos_machdep.c
+include	"arch/evbarm/conf/files.fdt"
 
-# Kernel boot arguments
-defparam opt_machdep.h				BOOT_ARGS
-
-# FDT
-
-include "dev/ofw/files.ofw"
-include "dev/fdt/files.fdt"
-include "arch/arm/fdt/files.fdt"
-
-# Pull in Exynos SoC default
-include 	"arch/arm/samsung/files.exynos"
+include	"arch/arm/samsung/files.exynos"

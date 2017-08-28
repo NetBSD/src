@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL3X,v 1.56.2.1 2015/09/22 12:05:52 skrll Exp $
+# $NetBSD: INSTALL3X,v 1.56.2.2 2017/08/28 17:51:53 skrll Exp $
 #
 # INSTALL3X - Installation kernel for the Sun3X
 #
@@ -62,7 +62,6 @@ options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 #options 	COMPAT_LINUX	# can run Linux/m68k executables
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # File systems
 file-system	FFS		# Berkeley Fast Filesystem

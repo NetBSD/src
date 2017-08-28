@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.80.6.4 2016/10/05 20:56:12 skrll Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.80.6.5 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.80.6.4 2016/10/05 20:56:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.80.6.5 2017/08/28 17:53:17 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -194,7 +194,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 			ip->i_size = (lastblock + 1) * lfs_sb_getbsize(fs);
 			lfs_dino_setsize(fs, ip->i_din, ip->i_size);
 			uvm_vnp_setsize(vp, ip->i_size);
-			ip->i_flag |= IN_CHANGE | IN_UPDATE;
+			ip->i_state |= IN_CHANGE | IN_UPDATE;
 			/* if we got a buffer for this, write it out now */
 			if (bpp)
 				(void) VOP_BWRITE(bp->b_vp, bp);
@@ -368,13 +368,12 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 
 				/* get the block for the next iteration */
 				idaddr = lfs_iblock_get(fs, ibp->b_data, indirs[i].in_off);
-#ifdef DEBUG
+
 				if (vp == fs->lfs_ivnode) {
 					LFS_ENTER_LOG("balloc", __FILE__,
 						__LINE__, indirs[i].in_lbn,
 						ibp->b_flags, curproc->p_pid);
 				}
-#endif
 				/*
 				 * Write out the updated indirect block. Note
 				 * that this writes it out even if we didn't
@@ -450,13 +449,13 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 				panic("lfs_balloc: bread bno %lld",
 				    (long long)idp->in_lbn);
 			lfs_iblock_set(fs, ibp->b_data, idp->in_off, UNWRITTEN);
-#ifdef DEBUG
+
 			if (vp == fs->lfs_ivnode) {
 				LFS_ENTER_LOG("balloc", __FILE__,
 					__LINE__, idp->in_lbn,
 					ibp->b_flags, curproc->p_pid);
 			}
-#endif
+
 			VOP_BWRITE(ibp->b_vp, ibp);
 		}
 	} else if (bpp && !(bp->b_oflags & (BO_DONE|BO_DELWRI))) {
@@ -528,7 +527,6 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn,
     top:
 	if (bpp) {
 		rw_enter(&fs->lfs_fraglock, RW_READER);
-		LFS_DEBUG_COUNTLOCKED("frag");
 	}
 
 	/* check if we actually have enough frags available */
@@ -581,7 +579,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn,
 	/* increase the file's effective block count */
 	ip->i_lfs_effnblks += frags;
 	/* mark the inode dirty */
-	ip->i_flag |= IN_CHANGE | IN_UPDATE;
+	ip->i_state |= IN_CHANGE | IN_UPDATE;
 
 	if (bpp) {
 		obufsize = (*bpp)->b_bufsize;

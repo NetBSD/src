@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.2.4.2 2016/10/05 20:55:35 skrll Exp $	*/
+/*	$NetBSD: fenv.h,v 1.2.4.3 2017/08/28 17:51:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -59,6 +59,8 @@
 
 #define _ROUND_MASK	\
     (FE_TONEAREST | FE_TOWARDZERO)
+
+#ifdef __SH_FPU_ANY__
 
 typedef uint32_t fexcept_t;
 
@@ -289,5 +291,7 @@ fegetexcept(void)
 #endif /* _NETBSD_SOURCE || _GNU_SOURCE */
 
 __END_DECLS
+
+#endif /* __SH_FPU_ANY__ */
 
 #endif /* _SH3_FENV_H_ */

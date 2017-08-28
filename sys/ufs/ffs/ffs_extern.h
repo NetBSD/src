@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.80.10.2 2016/10/05 20:56:12 skrll Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.80.10.3 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -186,13 +186,13 @@ void	ffs_appleufs_set(struct appleufslabel *, const char *, time_t,
 			 uint64_t);
 
 /* ffs_bswap.c */
-void	ffs_sb_swap(struct fs*, struct fs *);
+void	ffs_sb_swap(const struct fs *, struct fs *);
 void	ffs_dinode1_swap(struct ufs1_dinode *, struct ufs1_dinode *);
 void	ffs_dinode2_swap(struct ufs2_dinode *, struct ufs2_dinode *);
 struct csum;
 void	ffs_csum_swap(struct csum *, struct csum *, int);
 struct csum_total;
-void	ffs_csumtotal_swap(struct csum_total *, struct csum_total *);
+void	ffs_csumtotal_swap(const struct csum_total *, struct csum_total *);
 void	ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 
 /* ffs_subr.c */

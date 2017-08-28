@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.72.2.1 2015/06/06 14:40:12 skrll Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.72.2.2 2017/08/28 17:52:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.72.2.1 2015/06/06 14:40:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.72.2.2 2017/08/28 17:52:26 skrll Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -208,7 +208,8 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 		flags = WSFONT_FIND_BESTWIDTH | WSFONT_FIND_BITMAP;
 		if ((ri->ri_flg & RI_ENABLE_ALPHA) != 0)
 			flags |= WSFONT_FIND_ALPHA;
-
+		if ((ri->ri_flg & RI_PREFER_ALPHA) != 0)
+			flags |= WSFONT_PREFER_ALPHA;
 		cookie = wsfont_find(NULL,
 			ri->ri_width / wantcols,
 			0,
@@ -298,9 +299,8 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	len = ri->ri_optfont.fontheight * ri->ri_optfont.stride *
 		      ri->ri_optfont.numchars; 
 
-	if (((ri->ri_flg & RI_NO_AUTO) == 0) && 
-	  ((ri->ri_optfont.data = kmem_zalloc(len, KM_SLEEP)) != NULL)) {
-
+	if ((ri->ri_flg & RI_NO_AUTO) == 0) {
+		ri->ri_optfont.data = kmem_zalloc(len, KM_SLEEP);
 		if (ri->ri_optfont.stride < ri->ri_optfont.fontwidth) {
 			switch (ri->ri_optfont.stride) {
 			case 1:
@@ -325,8 +325,10 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	/* Need this to frob the setup below */
 	bpp = (ri->ri_depth == 15 ? 16 : ri->ri_depth);
 
-	if ((ri->ri_flg & RI_CFGDONE) != 0)
+	if ((ri->ri_flg & RI_CFGDONE) != 0) {
 		ri->ri_bits = ri->ri_origbits;
+		ri->ri_hwbits = ri->ri_hworigbits;
+	}
 
 	/* Don't care if the caller wants a hideously small console */
 	if (wantrows < 10)
@@ -374,14 +376,14 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	if ((ri->ri_delta & 3) != 0)
 		panic("rasops_init: ri_delta not aligned on 32-bit boundary");
 #endif
+	ri->ri_origbits = ri->ri_bits;
+	ri->ri_hworigbits = ri->ri_hwbits;
+
 	/* Clear the entire display */
 	if ((ri->ri_flg & RI_CLEAR) != 0)
 		memset(ri->ri_bits, 0, ri->ri_stride * ri->ri_height);
 
 	/* Now centre our window if needs be */
-	ri->ri_origbits = ri->ri_bits;
-	ri->ri_hworigbits = ri->ri_hwbits;
-
 	if ((ri->ri_flg & RI_CENTER) != 0) {
 		ri->ri_bits += (((ri->ri_width * bpp >> 3) -
 		    ri->ri_emustride) >> 1) & ~3;
@@ -412,12 +414,14 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	ri->ri_ops.cursor = rasops_cursor;
 	ri->ri_do_cursor = rasops_do_cursor;
 
+	ri->ri_caps &= ~(WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
+		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE);
 	if (ri->ri_depth < 8 || (ri->ri_flg & RI_FORCEMONO) != 0) {
 		ri->ri_ops.allocattr = rasops_allocattr_mono;
-		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_REVERSE;
+		ri->ri_caps |= WSSCREEN_UNDERLINE | WSSCREEN_REVERSE;
 	} else {
 		ri->ri_ops.allocattr = rasops_allocattr_color;
-		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
+		ri->ri_caps |= WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	}
 
@@ -1725,7 +1729,7 @@ rasops_make_box_chars_alpha(struct rasops_info *ri)
 		}
 	}
 }
-
+ 
 /*
  * Return a colour map appropriate for the given struct rasops_info in the
  * same form used by rasops_cmap[]

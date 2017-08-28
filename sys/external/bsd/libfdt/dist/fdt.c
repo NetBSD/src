@@ -1,3 +1,5 @@
+/*	$NetBSD: fdt.c,v 1.1.1.1.2.3 2017/08/28 17:52:34 skrll Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  * Copyright (C) 2006 David Gibson, IBM Corporation.
@@ -76,18 +78,19 @@ int fdt_check_header(const void *fdt)
 
 const void *fdt_offset_ptr(const void *fdt, int offset, unsigned int len)
 {
-	const char *p;
+	unsigned absoffset = offset + fdt_off_dt_struct(fdt);
+
+	if ((absoffset < offset)
+	    || ((absoffset + len) < absoffset)
+	    || (absoffset + len) > fdt_totalsize(fdt))
+		return NULL;
 
 	if (fdt_version(fdt) >= 0x11)
 		if (((offset + len) < offset)
 		    || ((offset + len) > fdt_size_dt_struct(fdt)))
 			return NULL;
 
-	p = _fdt_offset_ptr(fdt, offset);
-
-	if (p + len < p)
-		return NULL;
-	return p;
+	return _fdt_offset_ptr(fdt, offset);
 }
 
 uint32_t fdt_next_tag(const void *fdt, int startoffset, int *nextoffset)

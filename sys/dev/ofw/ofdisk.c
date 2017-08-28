@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.48.2.2 2015/06/06 14:40:08 skrll Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.48.2.3 2017/08/28 17:52:04 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.48.2.2 2015/06/06 14:40:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.48.2.3 2017/08/28 17:52:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -131,7 +131,7 @@ ofdisk_match(device_t parent, cfdata_t match, void *aux)
 	if (l >= sizeof type)
 		return 0;
 	type[l] = 0;
-	return !strcmp(type, "block");
+	return strcmp(type, "block") == 0 || strcmp(type, "scsi") == 0;
 }
 
 static void

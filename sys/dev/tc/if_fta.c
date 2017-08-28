@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.28 2012/10/27 17:18:38 chs Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.28.14.1 2017/08/28 17:52:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -28,15 +28,15 @@
  */
 
 /*
- * DEC TurboChannel FDDI Controller; code for BSD derived operating systems
+ * DEC TURBOchannel FDDI Controller; code for BSD derived operating systems
  *
  * Written by Matt Thomas
  *
- *   This module supports the DEC DEFTA TurboChannel FDDI Controller
+ *   This module supports the DEC DEFTA TURBOchannel FDDI Controller
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fta.c,v 1.28 2012/10/27 17:18:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fta.c,v 1.28.14.1 2017/08/28 17:52:27 skrll Exp $");
 
 #include "opt_inet.h"
 

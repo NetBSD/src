@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.4.2.4 2016/12/05 10:54:50 skrll Exp $
+#	$NetBSD: files.imx6,v 1.4.2.5 2017/08/28 17:51:30 skrll Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -16,8 +16,8 @@ file	arch/arm/arm32/irq_dispatch.S
 
 define	bus_dma_generic
 file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm32/armv7_generic_dma.c	bus_dma_generic needs-flag
 file	arch/arm/arm/bus_space_a4x.S
-file	arch/arm/imx/imx_dma.c			bus_dma_generic needs-flag
 
 file	arch/arm/imx/imx6_board.c
 

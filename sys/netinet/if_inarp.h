@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.44.14.3 2016/12/05 10:55:28 skrll Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.44.14.4 2017/08/28 17:53:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -68,9 +68,6 @@ struct sockaddr_inarp {
 #define MAX_CONFLICTS           10
 #define RATE_LIMIT_INTERVAL     60
 #define DEFEND_INTERVAL         10
-
-#include <sys/malloc.h>
-MALLOC_DECLARE(M_IPARP);
 
 extern struct ifqueue arpintrq;
 void arp_ifinit(struct ifnet *, struct ifaddr *);

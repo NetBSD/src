@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.145.16.1 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.145.16.2 2017/08/28 17:52:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.145.16.1 2017/02/05 13:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.145.16.2 2017/08/28 17:52:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1837,12 +1837,15 @@ gotit:
 				goto reject;
 			}
 			break;
+		case MSG_IGN_WIDE_RESIDUE:
+			NCR_MSGS(("ignore wide residue "));
+			break;
 
 		default:
 			NCR_MSGS(("ident "));
 			scsipi_printaddr(ecb->xs->xs_periph);
-			printf("%s: unrecognized MESSAGE; sending REJECT\n",
-			    device_xname(sc->sc_dev));
+			printf("%s: unrecognized MESSAGE (%x); sending REJECT\n",
+			    device_xname(sc->sc_dev), sc->sc_imess[0]);
 		reject:
 			ncr53c9x_sched_msgout(SEND_REJECT);
 			break;

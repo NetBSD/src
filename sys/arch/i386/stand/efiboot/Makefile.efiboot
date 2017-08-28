@@ -1,24 +1,20 @@
-# $NetBSD: Makefile.efiboot,v 1.5.2.2 2017/02/05 13:40:12 skrll Exp $
+# $NetBSD: Makefile.efiboot,v 1.5.2.3 2017/08/28 17:51:41 skrll Exp $
 
 S=		${.CURDIR}/../../../../..
 
 NOMAN=		# defined
 PROG?=		boot.efi
 NEWVERSWHAT?=	"EFI Boot"
-VERSIONFILE?=	${.CURDIR}/../version
 
 AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 SOURCES?= start.S conf.c devopen.c efiboot.c self_reloc.c
 LIBI386SRCS= boot.c biosdisk.c bootinfo.c bootinfo_biosgeom.c
-LIBI386SRCS+= bootmenu.c boot_params.S diskbuf.c exec.c menuutils.c
+LIBI386SRCS+= bootmenu.c diskbuf.c exec.c menuutils.c
 LIBI386SRCS+= panic.c parseutils.c pread.c
 LIBI386SRCS+= eficons.c efidelay.c efidisk.c efidisk_ll.c efigetsecs.c
 LIBI386SRCS+= efimemory.c
 SRCS= ${SOURCES} ${EXTRA_SOURCES} ${LIBI386SRCS}
-.if !make(depend)
-SRCS+= vers.c
-.endif
 
 PIE_CFLAGS=
 PIE_LDFLAGS=
@@ -46,10 +42,9 @@ CPPFLAGS+= -I$S -I${.CURDIR} -I${.CURDIR}/.. -I$S/lib/libsa
 CPPFLAGS+= -I${.OBJDIR}
 CPPFLAGS+= -I${.CURDIR}/../../lib
 
-CWARNFLAGS.clang+= -Wno-invalid-noreturn #panic.c
 COPTS+= -ffreestanding -fPIC -fshort-wchar -fno-strict-aliasing -fno-builtin
 COPTS+= -fno-stack-protector
-COPTS+= ${${ACTIVE_CC} == "gcc":? -falign-functions=16 :}
+COPTS+= ${${ACTIVE_CC} == "gcc":? -Wno-error=unused-but-set-variable :}
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -DEFIBOOT
 
@@ -62,7 +57,6 @@ CPPFLAGS+= -DSUPPORT_CD9660
 CPPFLAGS+= -DSUPPORT_DOSFS
 CPPFLAGS+= -DSUPPORT_EXT2FS
 CPPFLAGS+= -DPASS_BIOSGEOM
-CPPFLAGS+= -DPASS_MEMMAP
 CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
 
 EFIDIR= ${S}/external/bsd/gnu-efi/dist
@@ -109,10 +103,8 @@ cleanlibdir:
 
 LIBLIST= ${LIBGNUEFI} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBSA}
 
-CLEANFILES+= vers.c
-
-vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.efiboot
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
+VERSIONMACHINE=x86
+.include "${S}/conf/newvers_stand.mk"
 
 CLEANFILES+=	${PROG}.so ${PROG}.tmp
 

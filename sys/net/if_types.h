@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.26 2012/08/05 21:21:41 wiz Exp $	*/
+/*	$NetBSD: if_types.h,v 1.26.16.1 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -263,6 +263,7 @@
 #define IFT_FAITH	0xf2
 #define IFT_PFLOG	0xf5		/* Packet filter logging */
 #define IFT_PFSYNC	0xf6		/* Packet filter state syncing */
+#define IFT_L2TP	0xf7		/* L2TPv3 I/F */
 #define IFT_CARP	0xf8		/* Common Address Redundancy Protocol */
 
 #endif /* !_NET_IF_TYPES_H_ */

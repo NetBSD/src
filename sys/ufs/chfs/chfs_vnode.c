@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.12.2.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.12.2.2 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -46,6 +46,8 @@ static bool
 chfs_vnode_lookup_selector(void *ctx, struct vnode *vp)
 {
 	ino_t *ino = ctx;
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	return (VTOI(vp) != NULL && VTOI(vp)->ino == *ino);
 }

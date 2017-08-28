@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.1.2.6 2016/10/05 20:55:32 skrll Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.1.2.7 2017/08/28 17:51:45 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -128,47 +128,6 @@ readreg(uint32_t reg)
 	wbflush();
 	return *(volatile int32_t *)MIPS_PHYS_TO_KSEG1(reg);
 }
-
-/* extra CP0 registers */
-static inline uint32_t
-MFC0(uint32_t r, uint32_t s)
-{
-	uint32_t ret = 0x12345678;
-
-	__asm volatile("mfc0 %0, $%1, %2; nop;" : "=r"(ret) : "i"(r), "i"(s));
-	return ret;
-}
-
-#define MTC0(v, r, s) __asm volatile("mtc0 %0, $%1, %2; nop;" :: "r"(v), "i"(r), "i"(s))
-
-#define CP0_CORE_CTRL	12	/* select 2 */
-	#define CC_SW_RST0	1	/* reset core 0 */
-	#define CC_SW_RST1	2	/* reset core 1 */
-	#define CC_RPC0		0x100	/* dedicated reset entry core 0 */
-	#define CC_RPC1		0x200	/* -- || -- core 1 */
-	#define CC_SLEEP0M	0x10000	/* mask sleep core 0 */
-	#define CC_SLEEP1M	0x20000	/* mask sleep core 1 */
-
-/* cores status, 12 select 3 */
-#define CS_MIRQ0_P	0x00001	/* mailbox IRQ for 0 pending */
-#define CS_MIRQ1_P	0x00002	/* || core 1 */
-#define CS_IRQ0_P	0x00100	/* peripheral IRQ for core 0 */
-#define CS_IRQ1_P	0x00200	/* || core 1 */
-#define CS_SLEEP0	0x10000	/* core 0 sleeping */
-#define CS_SLEEP1	0x20000	/* core 1 sleeping */
-
-/* cores reset entry & IRQ masks - 12 select 4 */
-#define REIM_MIRQ0_M	0x00001	/* allow mailbox IRQ for core 0 */
-#define REIM_MIRQ1_M	0x00002	/* allow mailbox IRQ for core 1 */
-#define REIM_IRQ0_M	0x00100	/* allow peripheral IRQ for core 0 */
-#define REIM_IRQ1_M	0x00200	/* allow peripheral IRQ for core 1 */
-#define REIM_ENTRY_M	0xfffff000	/* reset exception entry if RPCn=1 */
-
-#define CP0_CORE_MBOX	20	/* select 0 for core 0, 1 for 1 */
-
-#define CP0_CORE0_MBOX	_(20), 0
-#define CP0_CORE1_MBOX	_(20), 1
-
 
 
 /* power management */

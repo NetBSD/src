@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.237.6.3 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: wi.c,v 1.237.6.4 2017/08/28 17:52:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.237.6.3 2017/02/05 13:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.237.6.4 2017/08/28 17:52:04 skrll Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -3393,7 +3393,7 @@ wi_dump_pkt(struct wi_frame *wh, struct ieee80211_node *ni, int rssi)
 	    ni	? ni->ni_rates.rs_rates[ni->ni_txrate] & IEEE80211_RATE_VAL
 		: -1,
 	    rssi);
-	printf(" status 0x%x rx_tstamp1 %u rx_tstamp0 0x%u rx_silence %u\n",
+	printf(" status 0x%x rx_tstamp1 %#x rx_tstamp0 %#x rx_silence %u\n",
 		le16toh(wh->wi_status), le16toh(wh->wi_rx_tstamp1),
 		le16toh(wh->wi_rx_tstamp0), wh->wi_rx_silence);
 	printf(" rx_signal %u rx_rate %u rx_flow %u\n",

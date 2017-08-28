@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.146.2.7 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.146.2.8 2017/08/28 17:53:12 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,11 +65,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.146.2.7 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.146.2.8 2017/08/28 17:53:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
-#include "opt_compat_netbsd.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
 #include "opt_net_mpsafe.h"
@@ -104,10 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.146.2.7 2017/02/05 13:40:59 skrll Exp $
 #include <netipsec/ipsec_var.h>
 #include <netipsec/ipsec_private.h>
 #endif	/* IPSEC */
-
-#ifdef COMPAT_50
-#include <compat/sys/socket.h>
-#endif
 
 struct inpcbtable rawcbtable;
 
@@ -148,11 +143,8 @@ rip_sbappendaddr(struct inpcb *last, struct ip *ip, const struct sockaddr *sa,
 {
 	if (last->inp_flags & INP_NOHEADER)
 		m_adj(n, hlen);
-	if (last->inp_flags & INP_CONTROLOPTS
-#ifdef SO_OTIMESTAMP
-	    || last->inp_socket->so_options & SO_OTIMESTAMP
-#endif
-	    || last->inp_socket->so_options & SO_TIMESTAMP)
+	if (last->inp_flags & INP_CONTROLOPTS 
+	    || SOOPT_TIMESTAMP(last->inp_socket->so_options))
 		ip_savecontrol(last, &opts, ip, n);
 	if (sbappendaddr(&last->inp_socket->so_rcv, sa, n, opts) == 0) {
 		/* should notify about lost packet */
@@ -213,7 +205,7 @@ rip_input(struct mbuf *m, ...)
 #if defined(IPSEC)
 		/* check AH/ESP integrity. */
 		else if (ipsec_used &&
-		    ipsec4_in_reject_so(m, last->inp_socket)) {
+		    ipsec4_in_reject(m, last)) {
 			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 			/* do not inject data to pcb */
 		}
@@ -228,7 +220,7 @@ rip_input(struct mbuf *m, ...)
 #if defined(IPSEC)
 	/* check AH/ESP integrity. */
 	if (ipsec_used && last != NULL
-	    && ipsec4_in_reject_so(m, last->inp_socket)) {
+	    && ipsec4_in_reject(m, last)) {
 		m_freem(m);
 		IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		IP_STATDEC(IP_STAT_DELIVERED);
@@ -311,15 +303,31 @@ rip_ctlinput(int cmd, const struct sockaddr *sa, void *v)
  * Tack on options user may have setup with control call.
  */
 int
-rip_output(struct mbuf *m, struct inpcb *inp)
+rip_output(struct mbuf *m, struct inpcb *inp, struct mbuf *control,
+    struct lwp *l)
 {
 	struct ip *ip;
 	struct mbuf *opts;
-	int flags;
+	struct ip_pktopts pktopts;
+	kauth_cred_t cred;
+	int error, flags;
 
-	flags =
-	    (inp->inp_socket->so_options & SO_DONTROUTE) | IP_ALLOWBROADCAST
-	    | IP_RETURNMTU;
+	flags = (inp->inp_socket->so_options & SO_DONTROUTE) |
+	    IP_ALLOWBROADCAST | IP_RETURNMTU;
+
+	if (l == NULL)
+		cred = NULL;
+	else
+		cred = l->l_cred;
+
+	/* Setup IP outgoing packet options */
+	memset(&pktopts, 0, sizeof(pktopts));
+	error = ip_setpktopts(control, &pktopts, &flags, inp, cred,
+	    IPPROTO_RAW);
+	if (control != NULL)
+		m_freem(control);
+	if (error != 0)
+		goto release;
 
 	/*
 	 * If the user handed us a complete IP packet, use it.
@@ -327,25 +335,27 @@ rip_output(struct mbuf *m, struct inpcb *inp)
 	 */
 	if ((inp->inp_flags & INP_HDRINCL) == 0) {
 		if ((m->m_pkthdr.len + sizeof(struct ip)) > IP_MAXPACKET) {
-			m_freem(m);
-			return (EMSGSIZE);
+			error = EMSGSIZE;
+			goto release;
 		}
 		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
-		if (!m)
-			return (ENOBUFS);
+		if (!m) {
+			error = ENOBUFS;
+			goto release;
+		}
 		ip = mtod(m, struct ip *);
 		ip->ip_tos = 0;
 		ip->ip_off = htons(0);
 		ip->ip_p = inp->inp_ip.ip_p;
 		ip->ip_len = htons(m->m_pkthdr.len);
-		ip->ip_src = inp->inp_laddr;
+		ip->ip_src = pktopts.ippo_laddr.sin_addr;
 		ip->ip_dst = inp->inp_faddr;
 		ip->ip_ttl = MAXTTL;
 		opts = inp->inp_options;
 	} else {
 		if (m->m_pkthdr.len > IP_MAXPACKET) {
-			m_freem(m);
-			return (EMSGSIZE);
+			error = EMSGSIZE;
+			goto release;
 		}
 		ip = mtod(m, struct ip *);
 
@@ -358,15 +368,17 @@ rip_output(struct mbuf *m, struct inpcb *inp)
 			int hlen = ip->ip_hl << 2;
 
 			m = m_copyup(m, hlen, (max_linkhdr + 3) & ~3);
-			if (m == NULL)
-				return (ENOMEM);	/* XXX */
+			if (m == NULL) {
+				error = ENOMEM;	/* XXX */
+				goto release;
+			}
 			ip = mtod(m, struct ip *);
 		}
 
 		/* XXX userland passes ip_len and ip_off in host order */
 		if (m->m_pkthdr.len != ip->ip_len) {
-			m_freem(m);
-			return (EINVAL);
+			error = EINVAL;
+			goto release;
 		}
 		HTONS(ip->ip_len);
 		HTONS(ip->ip_off);
@@ -382,8 +394,13 @@ rip_output(struct mbuf *m, struct inpcb *inp)
 	 * IP output.  Note: if IP_RETURNMTU flag is set, the MTU size
 	 * will be stored in inp_errormtu.
 	 */
-	return ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions,
-	     inp->inp_socket);
+	return ip_output(m, opts, &inp->inp_route, flags, pktopts.ippo_imo,
+	    inp);
+
+ release:
+	if (m != NULL)
+		m_freem(m);
+	return error;
 }
 
 /*
@@ -755,12 +772,6 @@ rip_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 	 * Ship a packet out.  The appropriate raw output
 	 * routine handles any massaging necessary.
 	 */
-	if (control && control->m_len) {
-		m_freem(control);
-		m_freem(m);
-		return EINVAL;
-	}
-
 	s = splsoftnet();
 	if (nam) {
 		if ((so->so_state & SS_ISCONNECTED) != 0) {
@@ -768,21 +779,24 @@ rip_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 			goto die;
 		}
 		error = rip_connect_pcb(inp, (struct sockaddr_in *)nam);
-		if (error) {
-		die:
-			m_freem(m);
-			splx(s);
-			return error;
-		}
+		if (error)
+			goto die;
 	} else {
 		if ((so->so_state & SS_ISCONNECTED) == 0) {
 			error = ENOTCONN;
 			goto die;
 		}
 	}
-	error = rip_output(m, inp);
+	error = rip_output(m, inp, control, l);
+	m = NULL;
+	control = NULL;
 	if (nam)
 		rip_disconnect1(inp);
+ die:
+	if (m != NULL)
+		m_freem(m);
+	if (control != NULL)
+		m_freem(control);
 
 	splx(s);
 	return error;

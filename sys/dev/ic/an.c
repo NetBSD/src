@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.61.6.3 2017/02/05 13:40:27 skrll Exp $	*/
+/*	$NetBSD: an.c,v 1.61.6.4 2017/08/28 17:52:03 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.61.6.3 2017/02/05 13:40:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.61.6.4 2017/08/28 17:52:03 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -509,7 +509,7 @@ an_softintr(void *arg)
 		    sc->sc_ic.ic_state == IEEE80211_S_RUN &&
 		    !IFQ_IS_EMPTY(&ifp->if_snd)) {
 			s = splnet();
-			an_start(ifp);
+			an_start(ifp); /* in softint */
 			splx(s);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.234.2.5 2016/10/05 20:55:40 skrll Exp $	*/
+/*	$NetBSD: vnd.c,v 1.234.2.6 2017/08/28 17:52:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.234.2.5 2016/10/05 20:55:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.234.2.6 2017/08/28 17:52:00 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1267,56 +1267,83 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #ifdef VND_COMPRESSION
 			struct vnd_comp_header *ch;
 			int i;
-			u_int32_t comp_size;
-			u_int32_t comp_maxsize;
+			uint32_t comp_size;
+			uint32_t comp_maxsize;
 
 			/* allocate space for compresed file header */
 			ch = malloc(sizeof(struct vnd_comp_header),
-			M_TEMP, M_WAITOK);
+			    M_TEMP, M_WAITOK);
 
 			/* read compressed file header */
 			error = vn_rdwr(UIO_READ, nd.ni_vp, (void *)ch,
-			  sizeof(struct vnd_comp_header), 0, UIO_SYSSPACE,
-			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
+			    sizeof(struct vnd_comp_header), 0, UIO_SYSSPACE,
+			    IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
 			if (error) {
 				free(ch, M_TEMP);
 				VOP_UNLOCK(nd.ni_vp);
 				goto close_and_exit;
 			}
 
+			if (be32toh(ch->block_size) == 0 ||
+			    be32toh(ch->num_blocks) > UINT32_MAX - 1) {
+				free(ch, M_TEMP);
+				VOP_UNLOCK(nd.ni_vp);
+				goto close_and_exit;
+			}
+
 			/* save some header info */
-			vnd->sc_comp_blksz = ntohl(ch->block_size);
+			vnd->sc_comp_blksz = be32toh(ch->block_size);
 			/* note last offset is the file byte size */
-			vnd->sc_comp_numoffs = ntohl(ch->num_blocks)+1;
+			vnd->sc_comp_numoffs = be32toh(ch->num_blocks) + 1;
 			free(ch, M_TEMP);
 			if (!DK_DEV_BSIZE_OK(vnd->sc_comp_blksz)) {
 				VOP_UNLOCK(nd.ni_vp);
 				error = EINVAL;
 				goto close_and_exit;
 			}
-			if (sizeof(struct vnd_comp_header) +
-			  sizeof(u_int64_t) * vnd->sc_comp_numoffs >
-			  vattr.va_size) {
+			KASSERT(0 < vnd->sc_comp_blksz);
+			KASSERT(0 < vnd->sc_comp_numoffs);
+			/*
+			 * @#^@!$& gcc -Wtype-limits refuses to let me
+			 * write SIZE_MAX/sizeof(uint64_t) < numoffs,
+			 * because the range of the type on amd64 makes
+			 * the comparisons always false.
+			 */
+#if SIZE_MAX <= UINT32_MAX*(64/CHAR_BIT)
+			if (SIZE_MAX/sizeof(uint64_t) < vnd->sc_comp_numoffs) {
+				VOP_UNLOCK(nd.ni_vp);
+				error = EINVAL;
+				goto close_and_exit;
+			}
+#endif
+			if ((vattr.va_size < sizeof(struct vnd_comp_header)) ||
+			    (vattr.va_size - sizeof(struct vnd_comp_header) <
+				sizeof(uint64_t)*vnd->sc_comp_numoffs) ||
+			    (UQUAD_MAX/vnd->sc_comp_blksz <
+				vnd->sc_comp_numoffs - 1)) {
 				VOP_UNLOCK(nd.ni_vp);
 				error = EINVAL;
 				goto close_and_exit;
 			}
 
 			/* set decompressed file size */
+			KASSERT(vnd->sc_comp_numoffs - 1 <=
+			    UQUAD_MAX/vnd->sc_comp_blksz);
 			vattr.va_size =
 			    ((u_quad_t)vnd->sc_comp_numoffs - 1) *
 			     (u_quad_t)vnd->sc_comp_blksz;
 
 			/* allocate space for all the compressed offsets */
+			__CTASSERT(UINT32_MAX <= UQUAD_MAX/sizeof(uint64_t));
 			vnd->sc_comp_offsets =
-			malloc(sizeof(u_int64_t) * vnd->sc_comp_numoffs,
-			M_DEVBUF, M_WAITOK);
+			    malloc(sizeof(uint64_t) * vnd->sc_comp_numoffs,
+				M_DEVBUF, M_WAITOK);
 
 			/* read in the offsets */
 			error = vn_rdwr(UIO_READ, nd.ni_vp,
-			  (void *)vnd->sc_comp_offsets,
-			  sizeof(u_int64_t) * vnd->sc_comp_numoffs,
-			  sizeof(struct vnd_comp_header), UIO_SYSSPACE,
+			    (void *)vnd->sc_comp_offsets,
+			    sizeof(uint64_t) * vnd->sc_comp_numoffs,
+			    sizeof(struct vnd_comp_header), UIO_SYSSPACE,
 			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
 			if (error) {
 				VOP_UNLOCK(nd.ni_vp);
@@ -1329,22 +1356,24 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			comp_maxsize = 0;
 			for (i = 0; i < vnd->sc_comp_numoffs - 1; i++) {
 				vnd->sc_comp_offsets[i] =
-				  be64toh(vnd->sc_comp_offsets[i]);
-				comp_size = be64toh(vnd->sc_comp_offsets[i + 1])
-				  - vnd->sc_comp_offsets[i];
+				    be64toh(vnd->sc_comp_offsets[i]);
+				comp_size =
+				    be64toh(vnd->sc_comp_offsets[i + 1])
+				    - vnd->sc_comp_offsets[i];
 				if (comp_size > comp_maxsize)
 					comp_maxsize = comp_size;
 			}
 			vnd->sc_comp_offsets[vnd->sc_comp_numoffs - 1] =
-			  be64toh(vnd->sc_comp_offsets[vnd->sc_comp_numoffs - 1]);
+			    be64toh(vnd->sc_comp_offsets[vnd->sc_comp_numoffs
+				    - 1]);
 
 			/* create compressed data buffer */
 			vnd->sc_comp_buff = malloc(comp_maxsize,
-			  M_DEVBUF, M_WAITOK);
+			    M_DEVBUF, M_WAITOK);
 
 			/* create decompressed buffer */
 			vnd->sc_comp_decombuf = malloc(vnd->sc_comp_blksz,
-			  M_DEVBUF, M_WAITOK);
+			    M_DEVBUF, M_WAITOK);
 			vnd->sc_comp_buffblk = -1;
 
 			/* Initialize decompress stream */
@@ -1355,7 +1384,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			if (error) {
 				if (vnd->sc_comp_stream.msg)
 					printf("vnd%d: compressed file, %s\n",
-					  unit, vnd->sc_comp_stream.msg);
+					    unit, vnd->sc_comp_stream.msg);
 				VOP_UNLOCK(nd.ni_vp);
 				error = EINVAL;
 				goto close_and_exit;
@@ -2071,8 +2100,10 @@ vnd_modcmd(modcmd_t cmd, void *arg)
 		error = config_cfattach_attach(vnd_cd.cd_name, &vnd_ca);
 	        if (error) {
 			config_cfdriver_detach(&vnd_cd);
+#ifdef DIAGNOSTIC
 			aprint_error("%s: unable to register cfattach for \n"
 			    "%s, error %d", __func__, vnd_cd.cd_name, error);
+#endif
 			break;
 		}
 
@@ -2087,8 +2118,10 @@ vnd_modcmd(modcmd_t cmd, void *arg)
 		if (error) {
 			config_cfattach_detach(vnd_cd.cd_name, &vnd_ca);
 			config_cfdriver_detach(&vnd_cd);
+#ifdef DIAGNOSTIC
                         aprint_error("%s: unable to attach %s devsw, "
                             "error %d", __func__, vnd_cd.cd_name, error);
+#endif
 			break;
 		}
 #endif
@@ -2108,8 +2141,10 @@ vnd_modcmd(modcmd_t cmd, void *arg)
                 if (error) {
                         (void)devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
                             &vnd_cdevsw, &vnd_cmajor);
+#ifdef DIAGNOSTIC
                         aprint_error("%s: failed to detach %s cfattach, "
                             "error %d\n", __func__, vnd_cd.cd_name, error);
+#endif
                         break;
                 }
                 error = config_cfdriver_detach(&vnd_cd);
@@ -2117,9 +2152,11 @@ vnd_modcmd(modcmd_t cmd, void *arg)
                         (void)config_cfattach_attach(vnd_cd.cd_name, &vnd_ca);
                         (void)devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
                             &vnd_cdevsw, &vnd_cmajor);
+#ifdef DIAGNOSTIC
                         aprint_error("%s: failed to detach %s cfdriver, "
                             "error %d\n", __func__, vnd_cd.cd_name, error);
                         break;
+#endif
                 }
 #endif
 		break;

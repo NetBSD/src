@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.58.6.2 2016/10/05 20:56:03 skrll Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.58.6.3 2017/08/28 17:53:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.58.6.2 2016/10/05 20:56:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.58.6.3 2017/08/28 17:53:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,8 @@ genfs_getpages(void *v)
 	const bool overwrite = (flags & PGO_OVERWRITE) != 0;
 	const bool blockalloc = memwrite && (flags & PGO_NOBLOCKALLOC) == 0;
 	const bool glocked = (flags & PGO_GLOCKHELD) != 0;
-	const bool need_wapbl = blockalloc && vp->v_mount->mnt_wapbl;
-	bool has_trans_wapbl = false;
+	bool holds_wapbl = false;
+	struct mount *trans_mount = NULL;
 	UVMHIST_FUNC("genfs_getpages"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x/%x count %d",
@@ -138,6 +138,13 @@ genfs_getpages(void *v)
 
 	KASSERT(vp->v_type == VREG || vp->v_type == VDIR ||
 	    vp->v_type == VLNK || vp->v_type == VBLK);
+
+	error = vdead_check(vp, VDEAD_NOWAIT);
+	if (error) {
+		if ((flags & PGO_LOCKED) == 0)
+			mutex_exit(uobj->vmobjlock);
+		return error;
+	}
 
 startover:
 	error = 0;
@@ -291,20 +298,27 @@ startover:
 	UVMHIST_LOG(ubchist, "ridx %d npages %d startoff %ld endoff %ld",
 	    ridx, npages, startoffset, endoffset);
 
-	if (!has_trans_wapbl) {
-		fstrans_start(vp->v_mount, FSTRANS_SHARED);
+	if (trans_mount == NULL) {
+		trans_mount = vp->v_mount;
+		fstrans_start(trans_mount);
+		/*
+		 * check if this vnode is still valid.
+		 */
+		mutex_enter(vp->v_interlock);
+		error = vdead_check(vp, 0);
+		mutex_exit(vp->v_interlock);
+		if (error)
+			goto out_err_free;
 		/*
 		 * XXX: This assumes that we come here only via
 		 * the mmio path
 		 */
-		if (need_wapbl) {
-			error = WAPBL_BEGIN(vp->v_mount);
-			if (error) {
-				fstrans_done(vp->v_mount);
+		if (blockalloc && vp->v_mount->mnt_wapbl) {
+			error = WAPBL_BEGIN(trans_mount);
+			if (error)
 				goto out_err_free;
-			}
+			holds_wapbl = true;
 		}
-		has_trans_wapbl = true;
 	}
 
 	/*
@@ -421,11 +435,11 @@ startover:
 	mutex_exit(uobj->vmobjlock);
 	error = genfs_getpages_read(vp, pgs, npages, startoffset, diskeof,
 	    async, memwrite, blockalloc, glocked);
-	if (error == 0 && async)
-		goto out_err_free;
 	if (!glocked) {
 		genfs_node_unlock(vp);
 	}
+	if (error == 0 && async)
+		goto out_err_free;
 	mutex_enter(uobj->vmobjlock);
 
 	/*
@@ -491,16 +505,20 @@ out_err_free:
 	if (pgs != NULL && pgs != pgs_onstack)
 		kmem_free(pgs, pgs_size);
 out_err:
-	if (has_trans_wapbl) {
-		if (need_wapbl)
-			WAPBL_END(vp->v_mount);
-		fstrans_done(vp->v_mount);
+	if (trans_mount != NULL) {
+		if (holds_wapbl)
+			WAPBL_END(trans_mount);
+		fstrans_done(trans_mount);
 	}
 	return error;
 }
 
 /*
  * genfs_getpages_read: Read the pages in with VOP_BMAP/VOP_STRATEGY.
+ *
+ * "glocked" (which is currently not actually used) tells us not whether
+ * the genfs_node is locked on entry (it always is) but whether it was
+ * locked on entry to genfs_getpages.
  */
 static int
 genfs_getpages_read(struct vnode *vp, struct vm_page **pgs, int npages,
@@ -707,9 +725,6 @@ loopdone:
 	nestiobuf_done(mbp, skipbytes, error);
 	if (async) {
 		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
-		if (!glocked) {
-			genfs_node_unlock(vp);
-		}
 		return 0;
 	}
 	if (bp != NULL) {
@@ -835,11 +850,11 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
 	struct lwp * const l = curlwp ? curlwp : &lwp0;
 	struct genfs_node * const gp = VTOG(vp);
+	struct mount *trans_mp;
 	int flags;
 	int dirtygen;
 	bool modified;
-	bool need_wapbl;
-	bool has_trans;
+	bool holds_wapbl;
 	bool cleanall;
 	bool onworklst;
 
@@ -852,9 +867,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	UVMHIST_LOG(ubchist, "vp %p pages %d off 0x%x len 0x%x",
 	    vp, uobj->uo_npages, startoff, endoff - startoff);
 
-	has_trans = false;
-	need_wapbl = (!pagedaemon && vp->v_mount && vp->v_mount->mnt_wapbl &&
-	    (origflags & PGO_JOURNALLOCKED) == 0);
+	trans_mp = NULL;
+	holds_wapbl = false;
 
 retry:
 	modified = false;
@@ -867,10 +881,10 @@ retry:
 			if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
 				vn_syncer_remove_from_worklist(vp);
 		}
-		if (has_trans) {
-			if (need_wapbl)
-				WAPBL_END(vp->v_mount);
-			fstrans_done(vp->v_mount);
+		if (trans_mp) {
+			if (holds_wapbl)
+				WAPBL_END(trans_mp);
+			fstrans_done(trans_mp);
 		}
 		mutex_exit(slock);
 		return (0);
@@ -880,24 +894,41 @@ retry:
 	 * the vnode has pages, set up to process the request.
 	 */
 
-	if (!has_trans && (flags & PGO_CLEANIT) != 0) {
-		mutex_exit(slock);
+	if (trans_mp == NULL && (flags & PGO_CLEANIT) != 0) {
 		if (pagedaemon) {
-			error = fstrans_start_nowait(vp->v_mount, FSTRANS_LAZY);
-			if (error)
-				return error;
-		} else
-			fstrans_start(vp->v_mount, FSTRANS_LAZY);
-		if (need_wapbl) {
-			error = WAPBL_BEGIN(vp->v_mount);
+			/* Pagedaemon must not sleep here. */
+			trans_mp = vp->v_mount;
+			error = fstrans_start_nowait(trans_mp);
 			if (error) {
-				fstrans_done(vp->v_mount);
+				mutex_exit(slock);
 				return error;
 			}
+		} else {
+			/*
+			 * Cannot use vdeadcheck() here as this operation
+			 * usually gets used from VOP_RECLAIM().  Test for
+			 * change of v_mount instead and retry on change.
+			 */
+			mutex_exit(slock);
+			trans_mp = vp->v_mount;
+			fstrans_start(trans_mp);
+			if (vp->v_mount != trans_mp) {
+				fstrans_done(trans_mp);
+				trans_mp = NULL;
+			} else {
+				holds_wapbl = (trans_mp->mnt_wapbl &&
+				    (origflags & PGO_JOURNALLOCKED) == 0);
+				if (holds_wapbl) {
+					error = WAPBL_BEGIN(trans_mp);
+					if (error) {
+						fstrans_done(trans_mp);
+						return error;
+					}
+				}
+			}
+			mutex_enter(slock);
+			goto retry;
 		}
-		has_trans = true;
-		mutex_enter(slock);
-		goto retry;
 	}
 
 	error = 0;
@@ -1270,10 +1301,10 @@ skip_scan:
 		goto retry;
 	}
 
-	if (has_trans) {
-		if (need_wapbl)
-			WAPBL_END(vp->v_mount);
-		fstrans_done(vp->v_mount);
+	if (trans_mp) {
+		if (holds_wapbl)
+			WAPBL_END(trans_mp);
+		fstrans_done(trans_mp);
 	}
 
 	return (error);

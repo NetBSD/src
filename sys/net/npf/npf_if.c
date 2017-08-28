@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_if.c,v 1.4.6.3 2017/02/05 13:40:58 skrll Exp $	*/
+/*	$NetBSD: npf_if.c,v 1.4.6.4 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_if.c,v 1.4.6.3 2017/02/05 13:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_if.c,v 1.4.6.4 2017/08/28 17:53:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -153,6 +153,20 @@ npf_ifmap_getid(npf_t *npf, const ifnet_t *ifp)
 	const u_int i = (uintptr_t)npf->ifops->getmeta(ifp);
 	KASSERT(i <= npf->ifmap_cnt);
 	return i;
+}
+
+/*
+ * This function is toxic; it can return garbage since we don't
+ * lock, but it is only used temporarily and only for logging.
+ */
+void
+npf_ifmap_copyname(npf_t *npf, u_int id, char *buf, size_t len)
+{
+	if (id > 0 && id < npf->ifmap_cnt)
+		strlcpy(buf, npf->ifmap[id - 1].n_ifname,
+		    MIN(len, sizeof(npf->ifmap[id - 1].n_ifname)));
+	else
+		strlcpy(buf, "???", len);
 }
 
 const char *

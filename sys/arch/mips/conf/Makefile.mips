@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.61.2.3 2016/04/22 15:44:10 skrll Exp $
+#	$NetBSD: Makefile.mips,v 1.61.2.4 2017/08/28 17:51:45 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -47,18 +47,7 @@ CPPFLAGS+=	-D${MACHINE}
 DEFGP?=		-G 0
 GP?=		${DEFGP}
 
-.if ${ACTIVE_CC} == "gcc" && ${HAVE_GCC} == "48"
-# XXX
-# gcc does not pass floating point options to the assembler
-# by default, because it is afraid that the stricter tests
-# will break userland code. The new binutils is pickier about
-# this. Gcc 5.x fixes the issue so for now, set explicitly
-# the assembler soft-float flags when we build the kernel.
-# see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64569
-
-CFLAGS+=	-Wa,-msoft-float
-COPTS.mips_fpu.c+=	-Wa,-mhard-float
-.else
+.if ${ACTIVE_CC} == "gcc"
 COPTS.mips_fpu.c+=	-mhard-float -Wa,-mhard-float
 AFLAGS.fp.S+=		-Wa,-mhard-float
 .endif

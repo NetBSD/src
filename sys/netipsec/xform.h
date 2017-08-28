@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.7.32.1 2016/03/19 11:30:33 skrll Exp $	*/
+/*	$NetBSD: xform.h,v 1.7.32.2 2017/08/28 17:53:13 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
@@ -62,6 +62,7 @@ struct tdb_ident {
 /*
  * Opaque data structure hung off a crypto operation descriptor.
  */
+struct secasvar;
 struct tdb_crypto {
 	struct ipsecrequest	*tc_isr;	/* ipsec request state */
 	u_int32_t		tc_spi;		/* associated SPI */
@@ -70,10 +71,9 @@ struct tdb_crypto {
 	u_int8_t		tc_nxt;		/* next protocol, e.g. IPV4 */
 	int			tc_protoff;	/* current protocol offset */
 	int			tc_skip;	/* data offset */
-	void *			tc_ptr;		/* associated crypto data */
+	struct secasvar		*tc_sav;	/* ipsec SA */
 };
 
-struct secasvar;
 struct ipescrequest;
 
 struct xformsw {
@@ -90,10 +90,11 @@ struct xformsw {
 	const char	*xf_name;		/* human-readable name */
 	int	(*xf_init)(struct secasvar*, const struct xformsw*);/* setup */
 	int	(*xf_zeroize)(struct secasvar*);		/* cleanup */
-	int	(*xf_input)(struct mbuf*, const struct secasvar*, /* input */
+	int	(*xf_input)(struct mbuf*, struct secasvar*, /* input */
 			int, int);
 	int	(*xf_output)(struct mbuf*,	       		/* output */
-			struct ipsecrequest *, struct mbuf **, int, int);
+			struct ipsecrequest *, struct secasvar *,
+			struct mbuf **, int, int);
 	struct xformsw *xf_next;		/* list of registered xforms */
 };
 
@@ -106,7 +107,7 @@ struct cryptoini;
 /* XF_IP4 */
 extern	int ip4_input6(struct mbuf **m, int *offp, int proto);
 extern	void ip4_input(struct mbuf *m, int, int);
-extern	int ipip_output(struct mbuf *, struct ipsecrequest *,
+extern	int ipip_output(struct mbuf *, struct ipsecrequest *, struct secasvar *,
 			struct mbuf **, int, int);
 
 /* XF_AH */

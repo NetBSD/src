@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usdhc.c,v 1.1.2.2 2016/12/05 10:54:50 skrll Exp $ */
+/*	$NetBSD: imx6_usdhc.c,v 1.1.2.3 2017/08/28 17:51:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -30,7 +30,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usdhc.c,v 1.1.2.2 2016/12/05 10:54:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usdhc.c,v 1.1.2.3 2017/08/28 17:51:30 skrll Exp $");
 
 #include "imxgpio.h"
 
@@ -78,8 +78,11 @@ sdhc_match(device_t parent, cfdata_t cf, void *aux)
 	switch (aa->aa_addr) {
 	case IMX6_AIPS2_BASE + AIPS2_USDHC1_BASE:
 	case IMX6_AIPS2_BASE + AIPS2_USDHC2_BASE:
+		return 1;
 	case IMX6_AIPS2_BASE + AIPS2_USDHC3_BASE:
 	case IMX6_AIPS2_BASE + AIPS2_USDHC4_BASE:
+		if (IMX6_CHIPID_MAJOR(imx6_chip_id()) == CHIPID_MAJOR_IMX6UL)
+			break;
 		return 1;
 	}
 
@@ -89,11 +92,11 @@ sdhc_match(device_t parent, cfdata_t cf, void *aux)
 static int
 imx6_sdhc_card_detect(struct sdhc_softc *ssc)
 {
-	struct sdhc_axi_softc *sc;
 	int detect;
+#if NIMXGPIO > 0
+	struct sdhc_axi_softc *sc;
 
 	sc = device_private(ssc->sc_dev);
-#if NIMXGPIO > 0
 	if (sc->sc_gpio_cd >= 0) {
 		detect = gpio_data_read(sc->sc_gpio_cd);
 		if (sc->sc_gpio_cd_active == GPIO_PIN_LOW)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.121.2.2 2017/02/05 13:40:06 skrll Exp $
+# $NetBSD: GENERIC,v 1.121.2.3 2017/08/28 17:51:33 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -65,7 +65,6 @@ options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_43	# and 4.3BSD
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Executable format options
@@ -191,7 +190,7 @@ rlphy*		at mii? phy ?
 mbe*		at g2bus?			# SEGA LAN Adapter
 
 aica*		at g2bus?			# AICA Sound Processing Unit
-audio*		at aica?
+audio*		at audiobus?
 
 spkr*		at audio?		# PC speaker (synthesized)
 

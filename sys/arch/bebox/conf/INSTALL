@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.56.2.1 2017/02/05 13:40:05 skrll Exp $
+#	$NetBSD: INSTALL,v 1.56.2.2 2017/08/28 17:51:32 skrll Exp $
 #
 # First try for BeBox config file
 #
@@ -35,7 +35,6 @@ options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43	# 4.3BSD binary compatibility
 #options 	COMPAT_09	# NetBSD 0.9,
 #options 	COMPAT_10	# NetBSD 1.0,
@@ -67,6 +66,8 @@ file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS
 
 # Filesystem options
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	WAPBL		# File system journaling support

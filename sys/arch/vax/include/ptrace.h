@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.4.74.2 2015/12/27 12:09:44 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.4.74.3 2017/08/28 17:51:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *     This product includes software developed at Ludd, University of Lule}.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,16 +26,20 @@
  */
 
  /* All bugs are subject to removal without further notice */
-		
+
 
 #define PT_STEP         (PT_FIRSTMACH + 0)
 #define PT_GETREGS      (PT_FIRSTMACH + 1)
 #define PT_SETREGS      (PT_FIRSTMACH + 2)
+#define PT_SETSTEP      (PT_FIRSTMACH + 3)
+#define PT_CLEARSTEP    (PT_FIRSTMACH + 4)
 
 #define PT_MACHDEP_STRINGS \
 	"PT_STEP", \
 	"PT_GETREGS", \
-	"PT_SETREGS",
+	"PT_SETREGS", \
+	"PT_SETSTEP", \
+	"PT_CLEARSTEP",
 
 #include <machine/reg.h>
 
@@ -50,4 +49,5 @@
 #define PTRACE_REG_INTRV(r)	(r)->r0
 
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0x03 })
+#define PTRACE_BREAKPOINT_ASM	__asm __volatile("bpt")
 #define PTRACE_BREAKPOINT_SIZE	1

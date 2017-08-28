@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.142.2.8 2017/02/05 13:40:57 skrll Exp $
+#	$NetBSD: Makefile,v 1.142.2.9 2017/08/28 17:53:09 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ SUBDIR=		accf_dataready
 SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
 SUBDIR+=	aio
+SUBDIR+=	audio
 SUBDIR+=	blowfish
 SUBDIR+=	bpf
 SUBDIR+=	bpf_filter
@@ -55,6 +56,7 @@ SUBDIR+=	if_axen
 SUBDIR+=	if_faith
 SUBDIR+=	if_gif
 SUBDIR+=	if_gre
+SUBDIR+=	if_l2tp
 SUBDIR+=	if_loop
 SUBDIR+=	if_mpls
 SUBDIR+=	if_npflog
@@ -76,6 +78,7 @@ SUBDIR+=	lua
 SUBDIR+=	luasystm
 SUBDIR+=	luapmf
 SUBDIR+=	mfs
+SUBDIR+=	midi
 SUBDIR+=	miiverbose
 SUBDIR+=	miniroot
 SUBDIR+=	mqueue
@@ -112,6 +115,7 @@ SUBDIR+=	secmodel_bsd44
 SUBDIR+=	secmodel_extensions
 SUBDIR+=	secmodel_overlay
 SUBDIR+=	securelevel
+SUBDIR+=	sequencer
 SUBDIR+=	skipjack
 SUBDIR+=	slcompress
 SUBDIR+=	smbfs
@@ -130,6 +134,7 @@ SUBDIR+=	swcrypto
 SUBDIR+=	swsensor
 SUBDIR+=	swwdog
 SUBDIR+=	tmpfs
+SUBDIR+=	ualea
 SUBDIR+=	uatp
 SUBDIR+=	udf
 SUBDIR+=	umap
@@ -139,6 +144,7 @@ SUBDIR+=	vcoda
 SUBDIR+=	v7fs
 SUBDIR+=	vnd
 SUBDIR+=	wapbl
+SUBDIR+=	wsbell
 SUBDIR+=	zlib
 SUBDIR+=	tprof
 .if (defined(NOTYET))
@@ -259,8 +265,6 @@ SUBDIR+=	compat_netbsd32_sysvipc
 .if ${MACHINE_ARCH} == "i386"
 SUBDIR+=	ati_pcigart
 SUBDIR+=	compat_freebsd
-SUBDIR+=	compat_ibcs2
-SUBDIR+=	compat_svr4
 SUBDIR+=	mach64drm
 SUBDIR+=	mgadrm
 SUBDIR+=	nsclpcsio
@@ -404,6 +408,7 @@ SUBDIR+=	twa
 SUBDIR+=	twe
 SUBDIR+=	viomb
 SUBDIR+=	virtio
+SUBDIR+=	vioscsi
 .endif
 
 SUBDIR+=	examples	# build these regularly to avoid bit-rot

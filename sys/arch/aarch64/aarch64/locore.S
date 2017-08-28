@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: locore.S,v 1.1.6.1 2017/08/28 17:51:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,10 @@
 
 #include "opt_ddb.h"
 
-RCSID("$NetBSD: locore.S,v 1.1 2014/08/10 05:47:37 matt Exp $")
+RCSID("$NetBSD: locore.S,v 1.1.6.1 2017/08/28 17:51:26 skrll Exp $")
+
+// XXX:AARCH64
+lr	.req	x30
 
 /*
  * At IPL_SCHED:
@@ -116,6 +119,18 @@ ENTRY_NP(cpu_switchto)
 END(cpu_switchto)
 
 /*
+ *	x0 = lwp
+ *	x1 = ipl
+ */
+ENTRY_NP(cpu_switchto_softint)
+//
+//XXXAARCH64
+//
+	ret
+END(cpu_switchto_softint)
+
+
+/*
  * Called at IPL_SCHED
  *	x0 = old lwp (from cpu_switchto)
  *	x1 = new lwp (from cpu_switchto)
@@ -190,6 +205,29 @@ ENTRY(cpu_Debugger)
 END(cpu_Debugger)
 #endif /* DDB */
 
+/*
+ * int cpu_set_onfault(struct faultbuf *fb, register_t retval)
+ */
+ENTRY(cpu_set_onfault)
+	mov	x9, sp
+	stp	x19, x20, [x0, #0]
+	stp	x21, x22, [x0, #16]
+	stp	x23, x24, [x0, #32]
+	stp	x25, x26, [x0, #48]
+	stp	x27, x28, [x0, #64]
+	stp	x29, x9, [x0, #80]
+	stp	lr, x1, [x0, #96]
+	mrs	x3, tpidr_el1		/* curcpu */
+	ldr	x2, [x3, #CI_CURLWP]	/* curlwp */
+	str	x0, [x2, #L_MD_ONFAULT] /* l_md.md_onfault = fb */
+	mov	x0, #0
+END(cpu_set_onfault)
+
+/*
+ * setjmp(9)
+ * int setjmp(label_t *label);
+ * void longjmp(label_t *label);
+ */
 ENTRY(setjmp)
 	stp	x19, x20, [x0, #0]
 	stp	x21, x22, [x0, #16]

@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.36 2013/10/07 19:51:55 jakllsch Exp $	*/
+/*	$NetBSD: aceride.c,v 1.36.6.1 2017/08/28 17:52:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.36 2013/10/07 19:51:55 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.36.6.1 2017/08/28 17:52:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,8 +194,13 @@ acer_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc, sc->sc_tag,
 	    PCI_CLASS_REG));
 
-	/* From linux: enable "Cable Detection" */
 	if (rev >= 0xC2) {
+		/* From FreeBSD: use device interrupt as byte count end */
+		pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x4A,
+		    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x4A)
+		    | ACER_0x4A_BCEINT);
+
+		/* From linux: enable "Cable Detection" */
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x4B,
 		    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x4B)
 		    | ACER_0x4B_CDETECT);

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.61 2014/08/23 20:26:59 dholland Exp $
+# 	$NetBSD: INSTALL,v 1.61.2.1 2017/08/28 17:51:47 skrll Exp $
 
 #	config for bootable floppy kernel
 #
@@ -50,8 +50,6 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	COMPAT_60		# NetBSD 6.0, and
 #options 	COMPAT_70		# NetBSD 7.0 binary compatibility.
 options 	COMPAT_BSDPTY		# /dev/[pt]ty?? ptys.
-
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # File systems
 file-system	FFS		# Berkeley Fast Filesystem

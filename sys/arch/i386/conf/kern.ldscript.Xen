@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.Xen,v 1.6.2.3 2016/10/05 20:55:28 skrll Exp $	*/
+/*	$NetBSD: kern.ldscript.Xen,v 1.6.2.4 2017/08/28 17:51:40 skrll Exp $	*/
 
 #include "assym.h"
 
@@ -54,14 +54,15 @@ SECTIONS
 		*(COMMON)
 		. = ALIGN(32 / 8);
 	}
+	. = ALIGN(32 / 8);
+	_end = . ;
+	PROVIDE (end = .) ;
 
 	. = ALIGN(__PAGE_SIZE);
 
 	/* End of the kernel image */
 	__kernel_end = . ;
 
-	_end = . ;
-	PROVIDE (end = .) ;
 	.note.netbsd.ident :
 	{
 		KEEP(*(.note.netbsd.ident));

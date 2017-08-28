@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.2.2.2 2015/06/06 14:40:01 skrll Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.2.2.3 2017/08/28 17:51:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.2.2.2 2015/06/06 14:40:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.2.2.3 2017/08/28 17:51:45 skrll Exp $");
 
 #include "opt_octeon.h"
 
@@ -654,6 +654,7 @@ octeon_gmx_rgmii_speed(struct octeon_gmx_port_softc *sc)
 		break;
 	default:
 		baudrate = 0/* XXX */;
+		panic("unable to get baudrate");
 		break;
 	}
 	ifp->if_baudrate = baudrate;

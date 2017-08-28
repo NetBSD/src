@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.78.4.5 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.78.4.6 2017/08/28 17:52:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.78.4.5 2017/02/05 13:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.78.4.6 2017/08/28 17:52:03 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -786,8 +786,6 @@ esh_fpopen(dev_t dev, int oflags, int devtype,
 
 	recv = (struct esh_fp_ring_ctl *)
 	    malloc(sizeof(*recv), M_DEVBUF, M_WAITOK|M_ZERO);
-	if (recv == NULL)
-		return(ENOMEM);
 	TAILQ_INIT(&recv->ec_queue);
 
 	size = RR_FP_RECV_RING_SIZE * sizeof(struct rr_descr);

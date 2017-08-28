@@ -1,4 +1,4 @@
-#	$NetBSD: majors.luna68k,v 1.20.30.1 2016/12/05 10:54:54 skrll Exp $
+#	$NetBSD: majors.luna68k,v 1.20.30.2 2017/08/28 17:51:43 skrll Exp $
 #
 # Device majors for luna68k
 #
@@ -37,6 +37,7 @@ device-major	cgd		char 37  block 15	cgd
 device-major	ksyms		char 38			ksyms
 device-major	wsfont		char 39			wsfont
 device-major	xp		char 40			xp
+device-major	lcd		char 41			lcd
 
 device-major	nsmb		char 98			nsmb
 

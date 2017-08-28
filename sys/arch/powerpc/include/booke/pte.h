@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.6.30.2 2016/10/05 20:55:34 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.6.30.3 2017/08/28 17:51:49 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -269,6 +269,12 @@ pte_make_kenter_pa(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 	pt_entry |= pte_prot_bits(NULL, prot); /* pretend unmanaged */
 
 	return pt_entry;
+}
+
+static inline void
+pte_set(pt_entry_t *ptep, pt_entry_t pte)
+{
+	*ptep = pte;
 }
 
 #endif /* _KERNEL */

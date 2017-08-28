@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscallargs.h,v 1.73.2.1 2015/04/06 15:18:06 skrll Exp $ */
+/* $NetBSD: linux32_syscallargs.h,v 1.73.2.2 2017/08/28 17:51:59 skrll Exp $ */
 
 /*
  * System call argument lists.
@@ -9,6 +9,9 @@
 
 #ifndef _LINUX32_SYS_SYSCALLARGS_H_
 #define	_LINUX32_SYS_SYSCALLARGS_H_
+
+/* Forward declaration */
+struct lwp;
 
 #define	LINUX32_SYS_MAXSYSARGS	8
 

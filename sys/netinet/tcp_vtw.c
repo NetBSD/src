@@ -122,7 +122,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.12.2.5 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.12.2.6 2017/08/28 17:53:12 skrll Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -2383,9 +2383,6 @@ vtw_sys(struct lwp *l, const void *_, register_t *retval)
 		return EINVAL;
 
 	buf = kmem_alloc(len, KM_SLEEP);
-	if (!buf)
-		return ENOMEM;
-
 	rc = copyin(SCARG(uap, req), buf, len);
 	if (!rc) {
 		rc = vtw_debug_process(buf);

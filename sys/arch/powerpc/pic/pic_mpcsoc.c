@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_mpcsoc.c,v 1.5 2012/02/01 09:54:03 matt Exp $ */
+/*	$NetBSD: pic_mpcsoc.c,v 1.5.24.1 2017/08/28 17:51:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_mpcsoc.c,v 1.5 2012/02/01 09:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_mpcsoc.c,v 1.5.24.1 2017/08/28 17:51:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -90,7 +90,6 @@ setup_mpcpic(void *addr)
 
 	openpic_base = addr;
 	ops = kmem_alloc(sizeof(*ops), KM_SLEEP);
-	KASSERT(ops != NULL);
 	self = &ops->pic;
 
 	x = openpic_read(OPENPIC_FEATURE);

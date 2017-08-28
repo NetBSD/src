@@ -1,4 +1,4 @@
-#	$NetBSD: LINKITSMART7688,v 1.1.4.2 2016/12/05 10:54:52 skrll Exp $
+#	$NetBSD: LINKITSMART7688,v 1.1.4.3 2017/08/28 17:51:36 skrll Exp $
 #
 # MediaTek MT7688
 #
@@ -75,12 +75,9 @@ options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 #options 	COMPAT_SVR4	# binary compatibility with SVR4
-#options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
-#options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
@@ -104,6 +101,7 @@ file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FF snapshot support

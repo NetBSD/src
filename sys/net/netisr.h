@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.42.14.1 2015/06/06 14:40:25 skrll Exp $ */
+/* $NetBSD: netisr.h,v 1.42.14.2 2017/08/28 17:53:11 skrll Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -53,6 +53,7 @@
 #include "opt_atalk.h"
 #include "opt_mpls.h"
 #include "opt_natm.h"
+#include "opt_can.h"
 #include "arp.h"
 #endif /* defined(_KERNEL_OPT) */
 
@@ -90,6 +91,10 @@
 #ifdef NETATALK
 #include <netatalk/at_extern.h>
 #endif
+#ifdef CAN
+#include <netcan/can.h>
+#include <netcan/can_var.h>
+#endif
 
 #endif /* !defined(_LOCORE) */
 #endif /* defined(_KERNEL) */
@@ -109,6 +114,7 @@
 #define	NETISR_NATM	27		/* same as AF_NATM */
 #define	NETISR_ARP	28		/* same as AF_ARP */
 #define	NETISR_MPLS	33		/* same as AF_MPLS */
+#define	NETISR_CAN	35		/* same as AF_CAN */
 #define	NETISR_MAX	AF_MAX
 
 #if !defined(_LOCORE) && defined(_KERNEL)

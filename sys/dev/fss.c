@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.92.2.2 2016/10/05 20:55:39 skrll Exp $	*/
+/*	$NetBSD: fss.c,v 1.92.2.3 2017/08/28 17:52:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.92.2.2 2016/10/05 20:55:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.92.2.3 2017/08/28 17:52:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,31 +476,18 @@ fss_softc_alloc(struct fss_softc *sc)
 	if ((sc->sc_flags & FSS_PERSISTENT) == 0) {
 		sc->sc_copied =
 		    kmem_zalloc(howmany(sc->sc_clcount, NBBY), KM_SLEEP);
-		if (sc->sc_copied == NULL)
-			return(ENOMEM);
-
 		sc->sc_cache = kmem_alloc(sc->sc_cache_size *
 		    sizeof(struct fss_cache), KM_SLEEP);
-		if (sc->sc_cache == NULL)
-			return(ENOMEM);
-
 		for (i = 0; i < sc->sc_cache_size; i++) {
 			sc->sc_cache[i].fc_type = FSS_CACHE_FREE;
 			sc->sc_cache[i].fc_data =
 			    kmem_alloc(FSS_CLSIZE(sc), KM_SLEEP);
-			if (sc->sc_cache[i].fc_data == NULL)
-				return(ENOMEM);
 			cv_init(&sc->sc_cache[i].fc_state_cv, "cowwait1");
 		}
 
 		sc->sc_indir_valid =
 		    kmem_zalloc(howmany(sc->sc_indir_size, NBBY), KM_SLEEP);
-		if (sc->sc_indir_valid == NULL)
-			return(ENOMEM);
-
 		sc->sc_indir_data = kmem_zalloc(FSS_CLSIZE(sc), KM_SLEEP);
-		if (sc->sc_indir_data == NULL)
-			return(ENOMEM);
 	} else {
 		sc->sc_copied = NULL;
 		sc->sc_cache = NULL;
@@ -851,7 +838,10 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 
 	microtime(&sc->sc_time);
 
-	error = fscow_establish(sc->sc_mount, fss_copy_on_write, sc);
+	vrele_flush(sc->sc_mount);
+	error = VFS_SYNC(sc->sc_mount, MNT_WAIT, curlwp->l_cred);
+	if (error == 0)
+		error = fscow_establish(sc->sc_mount, fss_copy_on_write, sc);
 	if (error == 0)
 		sc->sc_flags |= FSS_ACTIVE;
 

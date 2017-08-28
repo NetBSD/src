@@ -1,4 +1,4 @@
-/*	$NetBSD: vbus.c,v 1.2.2.2 2016/07/09 20:24:57 skrll Exp $	*/
+/*	$NetBSD: vbus.c,v 1.2.2.3 2017/08/28 17:51:53 skrll Exp $	*/
 /*	$OpenBSD: vbus.c,v 1.8 2015/09/27 11:29:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -159,15 +159,15 @@ vbus_intr_map(int node, int ino, uint64_t *sysino)
 	if (imap_mask == NULL)
 		return (-1);
 	if (OF_getprop(parent, "interrupt-map-mask", imap_mask, len) != len)
-		return (-1);
+		goto out;
 
 	if (prom_getprop(parent, "interrupt-map", sizeof(int), &nimap, (void **)&imap))
-	  panic("vbus: can't get interrupt-map");
+		panic("vbus: can't get interrupt-map");
 
 	if (prom_getprop(node, "reg", sizeof(*reg), &nreg, (void **)&reg))
-		  panic("vbus: can't get reg");
+		panic("vbus: can't get reg");
 	if (nreg < address_cells)
-		return (-1);
+		goto out;
 
 	while (nimap >= address_cells + interrupt_cells + 2) {
 		if (vbus_cmp_cells(imap, reg, imap_mask, address_cells) &&
@@ -180,21 +180,24 @@ vbus_intr_map(int node, int ino, uint64_t *sysino)
 			reg = NULL;
 
 			if (prom_getprop(node, "reg", sizeof(*reg), &nreg, (void **)&reg))
-			  panic("vbus: can't get reg");
+				panic("vbus: can't get reg");
 
 			devhandle = reg[0] & 0x0fffffff;
 
 			err = hv_intr_devino_to_sysino(devhandle, devino, sysino);
 			if (err != H_EOK)
-			  return (-1);
+				goto out;
 
 			KASSERT(*sysino == INTVEC(*sysino));
+			free(imap_mask, M_DEVBUF);
 			return (0);
 		}
 		imap += address_cells + interrupt_cells + 2;
 		nimap -= address_cells + interrupt_cells + 2;
 	}
 
+out:
+	free(imap_mask, M_DEVBUF);
 	return (-1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.40.2.3 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.40.2.4 2017/08/28 17:53:12 skrll Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -106,6 +106,10 @@ struct	in6pcb {
 
 #define in6p_faddr	in6p_ip6.ip6_dst
 #define in6p_laddr	in6p_ip6.ip6_src
+
+#define	in6p_lock(in6p)		solock((in6p)->in6p_socket)
+#define	in6p_unlock(in6p)	sounlock((in6p)->in6p_socket)
+#define	in6p_locked(in6p)	solocked((in6p)->in6p_socket)
 
 /* states in inp_state: */
 #define	IN6P_ATTACHED		INP_ATTACHED

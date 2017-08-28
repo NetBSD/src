@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.24.2.4 2017/02/05 13:40:07 skrll Exp $
+#	$NetBSD: HPT5325,v 1.24.2.5 2017/08/28 17:51:34 skrll Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -58,6 +58,7 @@ file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
@@ -109,7 +110,6 @@ options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 options 	COMPAT_LINUX	# binary compatibility with Linux
@@ -391,7 +391,7 @@ usscanner* at uhub? port ?
 ugen*	at uhub? port ?
 
 # USB 3G datacards
-#u3ginit* at uhub? port ?
+#umodeswitch* at uhub? port ?
 #u3g*	at uhub? port ?
 #ucom*	at u3g?
 

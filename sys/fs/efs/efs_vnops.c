@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.33.4.3 2016/10/05 20:56:01 skrll Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.33.4.4 2017/08/28 17:53:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.33.4.3 2016/10/05 20:56:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.33.4.4 2017/08/28 17:53:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -560,7 +560,7 @@ efs_readlink(void *v)
 static int
 efs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		bool *a_recycle
@@ -568,7 +568,6 @@ efs_inactive(void *v)
 	struct efs_inode *eip = EFS_VTOI(ap->a_vp);
 
 	*ap->a_recycle = (eip->ei_mode == 0);
-	VOP_UNLOCK(ap->a_vp);
 
 	return (0);
 }
@@ -576,12 +575,14 @@ efs_inactive(void *v)
 static int
 efs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct efs_inode *eip = EFS_VTOI(vp);
+
+	VOP_UNLOCK(vp);
 
 	genfs_node_destroy(vp);
 	pool_put(&efs_inode_pool, eip);

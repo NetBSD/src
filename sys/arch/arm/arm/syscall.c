@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.60 2014/08/13 21:41:32 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.60.2.1 2017/08/28 17:51:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.60 2014/08/13 21:41:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.60.2.1 2017/08/28 17:51:29 skrll Exp $");
 
 #include <sys/cpu.h>
 #include <sys/device.h>
@@ -103,7 +103,7 @@ swi_handler(trapframe_t *tf)
 	/*
 	 * Enable interrupts if they were enabled before the exception.
 	 * Since all syscalls *should* come from user mode it will always
-	 * be safe to enable them, but check anyway. 
+	 * be safe to enable them, but check anyway.
 	 */
 #ifdef acorn26
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
@@ -155,7 +155,7 @@ swi_handler(trapframe_t *tf)
 #endif
 	}
 
-	lwp_settrapframe(l, tf);
+	KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf, lwp_trapframe(l));
 
 #ifdef CPU_ARM7
 	/*
@@ -225,7 +225,7 @@ syscall(struct trapframe *tf, lwp_t *l, uint32_t insn)
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLTRP;
 #ifdef THUMB_CODE
-		if (tf->tf_spsr & PSR_T_bit) 
+		if (tf->tf_spsr & PSR_T_bit)
 			ksi.ksi_addr = (void *)(tf->tf_pc - THUMB_INSN_SIZE);
 		else
 #endif

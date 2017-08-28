@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.30 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.31 2017/08/28 17:52:28 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.30 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.31 2017/08/28 17:52:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -316,8 +316,6 @@ uhub_attach(device_t parent, device_t self, void *aux)
 
 	hub = kmem_alloc(sizeof(*hub) + (nports-1) * sizeof(struct usbd_port),
 	    KM_SLEEP);
-	if (hub == NULL)
-		return;
 	dev->ud_hub = hub;
 	dev->ud_hub->uh_hubsoftc = sc;
 	hub->uh_explore = uhub_explore;
@@ -358,15 +356,8 @@ uhub_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_statuslen = (nports + 1 + 7) / 8;
 	sc->sc_statusbuf = kmem_alloc(sc->sc_statuslen, KM_SLEEP);
-	if (!sc->sc_statusbuf)
-		goto bad;
 	sc->sc_statuspend = kmem_zalloc(sc->sc_statuslen, KM_SLEEP);
-	if (!sc->sc_statuspend)
-		goto bad;
 	sc->sc_status = kmem_alloc(sc->sc_statuslen, KM_SLEEP);
-	if (!sc->sc_status)
-		goto bad;
-
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	memset(sc->sc_statuspend, 0, sc->sc_statuslen);
 
@@ -416,8 +407,6 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	if (UHUB_IS_HIGH_SPEED(sc) && nports > 0) {
 		tts = kmem_alloc((UHUB_IS_SINGLE_TT(sc) ? 1 : nports) *
 			     sizeof(struct usbd_tt), KM_SLEEP);
-		if (!tts)
-			goto bad;
 	}
 	/* Set up data structures */
 	for (p = 0; p < nports; p++) {

@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.128.2.2 2015/12/27 12:09:30 skrll Exp $
+#	$NetBSD: files.arm,v 1.128.2.3 2017/08/28 17:51:30 skrll Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -50,6 +50,7 @@ defflag	opt_cputypes.h		CPU_CORTEXA8: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA9: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA15: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA17: CPU_CORTEX
+defflag opt_cputypes.h		CPU_CORTEXA57: CPU_CORTEX
 defflag	opt_cputypes.h		FPU_VFP
 
 defparam opt_cpuoptions.h	XSCALE_CCLKCFG
@@ -83,12 +84,20 @@ defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
 				_ARM32_NEED_BUS_DMA_BOUNCE
 				BUSDMA_COUNTERS
 
+# Timer options
+defflag opt_arm_timer.h		__HAVE_GENERIC_CPU_INITCLOCKS
+
 # Floating point emulator
 obsolete defflag				ARMFPE
 
 # VFP support
 file	arch/arm/vfp/vfp_init.c			arm32
 #file	arch/arm/vfp/pmap_vfp.S			arm32 & fpu_vfp
+
+# Power State Coordination Interface (PSCI)
+device	psci
+file	arch/arm/arm/psci.c			psci
+file	arch/arm/arm/psci_arm.S			psci
 
 # PMAP_DEBUG (heavily abused option)
 defflag				PMAP_DEBUG

@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 299200 2016-05-06 22:54:56Z pfg $*/
-/*$NetBSD: ixgbe_common.c,v 1.2.4.6 2017/02/05 13:40:45 skrll Exp $*/
+/*$NetBSD: ixgbe_common.c,v 1.2.4.7 2017/08/28 17:52:26 skrll Exp $*/
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -493,6 +493,8 @@ s32 ixgbe_clear_hw_cntrs_generic(struct ixgbe_hw *hw)
 	IXGBE_READ_REG(hw, IXGBE_ILLERRC);
 	IXGBE_READ_REG(hw, IXGBE_ERRBC);
 	IXGBE_READ_REG(hw, IXGBE_MSPDC);
+	if (hw->mac.type >= ixgbe_mac_X550)
+		IXGBE_READ_REG(hw, IXGBE_MBSDC);
 	for (i = 0; i < 8; i++)
 		IXGBE_READ_REG(hw, IXGBE_MPC(i));
 

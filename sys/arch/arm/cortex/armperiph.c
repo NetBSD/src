@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.4.12.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.4.12.2 2017/08/28 17:51:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -106,6 +106,14 @@ static const struct armperiph_info a17_devices[] = {
 };
 #endif
 
+#ifdef CPU_CORTEXA57
+static const struct armperiph_info a57_devices[] = {
+	{ "armgic",  0x1000, 0x2000 },
+	{ "armgtmr", 0, 0 },
+	{ "", 0, 0 },
+};
+#endif
+
 
 static const struct mpcore_config {
 	const struct armperiph_info *cfg_devices;
@@ -126,6 +134,9 @@ static const struct mpcore_config {
 #endif
 #ifdef CPU_CORTEXA17
 	{ a17_devices, 0x410fc0e0, 8*4096 },
+#endif
+#ifdef CPU_CORTEXA57
+	{ a57_devices, 0x410fd070, 8*4096 },
 #endif
 };
 
@@ -218,7 +229,7 @@ armperiph_attach(device_t parent, device_t self, void *aux)
 			.mpcaa_off1 = cfg->cfg_devices[i].pi_off1,
 			.mpcaa_off2 = cfg->cfg_devices[i].pi_off2,
 		};
-#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA57)
 		if (strcmp(mpcaa.mpcaa_name, "armgtmr") == 0) {
 			mpcaa.mpcaa_irq = IRQ_GTMR_PPI_VTIMER;
 		}

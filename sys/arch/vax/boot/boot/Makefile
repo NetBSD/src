@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42.4.1 2016/03/19 11:30:06 skrll Exp $
+#	$NetBSD: Makefile,v 1.42.4.2 2017/08/28 17:51:54 skrll Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -7,7 +7,7 @@ S=	${.CURDIR}/../../../..
 PROG=	boot
 DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c if_ni.c
 SRCS=	srt0.S boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.S \
-	consio.c consio2.S str.S ${DEVS} findcpu.c vers.c
+	consio.c consio2.S str.S ${DEVS} findcpu.c
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBC=
@@ -16,7 +16,7 @@ LIBCRTI=
 LIBCRTBEGIN=
 LIBCRTEND=
 
-CLEANFILES+=${PROG} ${PROG}.sym vers.c
+CLEANFILES+=${PROG} ${PROG}.sym
 # XXX - hack, doesn't work with -O2 and gcc 4.8
 CFLAGS+=-O1
 CPPFLAGS+=-DSUPPORT_BOOTPARAMS -DSUPPORT_BOOTP -DSUPPORT_DHCP -D_STANDALONE \
@@ -40,11 +40,6 @@ KERN_AS=library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=${KERNLIB}
 
-.PHONY: vers.c
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version "${MACHINE}"
-
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${_MKTARGET_LINK}
 	${LD} -N -Ttext ${RELOC} -e nisse -o ${PROG}.sym ${OBJS} \
@@ -54,5 +49,8 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 install:
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 		${PROG} ${DESTDIR}${MDEC_DIR}/${PROG}
+
+VERSIONFLAGS+=-n
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.prog.mk>

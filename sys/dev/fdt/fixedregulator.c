@@ -1,4 +1,4 @@
-/* $NetBSD: fixedregulator.c,v 1.3.2.3 2016/07/09 20:25:02 skrll Exp $ */
+/* $NetBSD: fixedregulator.c,v 1.3.2.4 2017/08/28 17:52:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fixedregulator.c,v 1.3.2.3 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixedregulator.c,v 1.3.2.4 2017/08/28 17:52:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,9 @@ struct fixedregulator_softc {
 	bool		sc_boot_on;
 	bool		sc_enable_val;
 	uint32_t	sc_delay;
+
+	int		sc_gpioflags;
+	bool		sc_deferred;
 };
 
 CFATTACH_DECL_NEW(fregulator, sizeof(struct fixedregulator_softc),
@@ -81,7 +84,7 @@ fixedregulator_attach(device_t parent, device_t self, void *aux)
 	const struct fdt_attach_args *faa = aux;
 	const int phandle = faa->faa_phandle;
 	char *name;
-	int len, gpioflags;
+	int len;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
@@ -101,9 +104,9 @@ fixedregulator_attach(device_t parent, device_t self, void *aux)
 		aprint_normal("\n");
 	}
 
-	gpioflags = GPIO_PIN_OUTPUT;
+	sc->sc_gpioflags = GPIO_PIN_OUTPUT;
 	if (of_getprop_bool(phandle, "gpio-open-drain"))
-		gpioflags |= GPIO_PIN_OPENDRAIN;
+		sc->sc_gpioflags |= GPIO_PIN_OPENDRAIN;
 
 	sc->sc_always_on = of_getprop_bool(phandle, "regulator-always-on");
 	sc->sc_boot_on = of_getprop_bool(phandle, "regulator-boot-on");
@@ -111,9 +114,9 @@ fixedregulator_attach(device_t parent, device_t self, void *aux)
 	if (of_getprop_uint32(phandle, "startup-delay-us", &sc->sc_delay) != 0)
 		sc->sc_delay = 0;
 
-	sc->sc_pin = fdtbus_gpio_acquire(phandle, "gpio", gpioflags);
+	sc->sc_pin = fdtbus_gpio_acquire(phandle, "gpio", sc->sc_gpioflags);
 	if (sc->sc_pin == NULL)
-		sc->sc_always_on = true;
+		sc->sc_always_on = OF_getproplen(phandle, "gpio") <= 0;
 
 	fdtbus_register_regulator_controller(self, phandle,
 	    &fixedregulator_funcs);
@@ -129,6 +132,15 @@ fixedregulator_attach(device_t parent, device_t self, void *aux)
 static int
 fixedregulator_acquire(device_t dev)
 {
+	struct fixedregulator_softc * const sc = device_private(dev);
+
+	if (sc->sc_pin == NULL && !sc->sc_always_on) {
+		sc->sc_pin = fdtbus_gpio_acquire(sc->sc_phandle, "gpio",
+		    sc->sc_gpioflags);
+		if (sc->sc_pin == NULL)
+			return ENXIO;
+	}
+
 	return 0;
 }
 

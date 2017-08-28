@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stats.c,v 1.4 2008/05/04 07:22:14 thorpej Exp $	*/
+/*	$NetBSD: net_stats.c,v 1.4.68.1 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stats.c,v 1.4 2008/05/04 07:22:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stats.c,v 1.4.68.1 2017/08/28 17:53:11 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -77,9 +77,6 @@ netstat_sysctl(percpu_t *stat, u_int ncounters, SYSCTLFN_ARGS)
 	countersize = sizeof(uint64_t) * ncounters;
 
 	counters = kmem_zalloc(countersize, KM_SLEEP);
-	if (counters == NULL)
-		return (ENOMEM);
-
 	ctx.ctx_counters = counters;
 	ctx.ctx_ncounters = ncounters;
 

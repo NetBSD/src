@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 303890 2016-08-09 19:32:06Z dumbbell $*/
-/*$NetBSD: ixgbe.h,v 1.1.30.5 2017/02/05 13:40:45 skrll Exp $*/
+/*$NetBSD: ixgbe.h,v 1.1.30.6 2017/08/28 17:52:26 skrll Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -400,7 +400,6 @@ struct tx_ring {
 	u32			packets;
 	/* Soft Stats */
 	struct evcnt	   	tso_tx;
-	struct evcnt	   	no_tx_map_avail;
 	struct evcnt		no_desc_avail;
 	struct evcnt		total_packets;
 	struct evcnt		pcq_drops;
@@ -435,7 +434,6 @@ struct rx_ring {
 	u32			packets;
 
 	/* Soft stats */
-	struct evcnt		rx_irq;
 	struct evcnt		rx_copies;
 	struct evcnt		rx_packets;
 	struct evcnt 		rx_bytes;
@@ -476,6 +474,7 @@ struct adapter {
 
 	device_t		dev;
 	struct ifnet		*ifp;
+	struct if_percpuq	*ipq;	/* softint-based input queues */
 
 	struct resource		*pci_mem;
 	struct resource		*msix_mem;
@@ -579,13 +578,9 @@ struct adapter {
 #endif
 
 	/* Misc stats maintained by the driver */
-	struct evcnt   		dropped_pkts;
 	struct evcnt   		mbuf_defrag_failed;
-	struct evcnt	   	mbuf_header_failed;
-	struct evcnt	   	mbuf_packet_failed;
 	struct evcnt	   	efbig_tx_dma_setup;
 	struct evcnt	   	efbig2_tx_dma_setup;
-	struct evcnt	   	m_defrag_failed;
 	struct evcnt	   	einval_tx_dma_setup;
 	struct evcnt	   	other_tx_dma_setup;
 	struct evcnt	   	eagain_tx_dma_setup;
@@ -593,9 +588,6 @@ struct adapter {
 	struct evcnt	   	tso_err;
 	struct evcnt	   	watchdog_events;
 	struct evcnt		link_irq;
-	struct evcnt		morerx;
-	struct evcnt		moretx;
-	struct evcnt		txloops;
 	struct evcnt		handleq;
 	struct evcnt		req;
 

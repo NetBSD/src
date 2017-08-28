@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.17.6.3 2017/02/05 13:40:29 skrll Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.17.6.4 2017/08/28 17:52:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.17.6.3 2017/02/05 13:40:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.17.6.4 2017/08/28 17:52:05 skrll Exp $");
 
 #include "vlan.h"
 
@@ -572,6 +572,7 @@ ale_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->ale_eaddr);
 
 	if (pmf_device_register(self, NULL, NULL))
@@ -1313,8 +1314,7 @@ ale_intr(void *xsc)
 		}
 
 		ale_txeof(sc);
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			ale_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 
 	/* Re-enable interrupts. */

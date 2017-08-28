@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.39.4.4 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.39.4.5 2017/08/28 17:52:04 skrll Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.39.4.4 2017/02/05 13:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.39.4.5 2017/08/28 17:52:04 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -836,11 +836,6 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 		}
 
 		entry = kmem_alloc(sizeof(*entry), KM_SLEEP);
-		if (!entry) {
-			aprint_error_dev(self, "Can't alloc txmap entry\n");
-			bus_dmamap_destroy(sc->sc_dmat, dmamap);
-			goto fail4;
-		}
 		entry->dmamap = dmamap;
 		SIMPLEQ_INSERT_HEAD(&sc->sc_txmap_head, entry, link);
 	}
@@ -1709,12 +1704,6 @@ mvgbe_alloc_jumbo_mem(struct mvgbe_softc *sc)
 		sc->sc_cdata.mvgbe_jslots[i] = ptr;
 		ptr += MVGBE_JLEN;
 		entry = kmem_alloc(sizeof(struct mvgbe_jpool_entry), KM_SLEEP);
-		if (entry == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "no memory for jumbo buffer queue!\n");
-			error = ENOBUFS;
-			goto out;
-		}
 		entry->slot = i;
 		if (i)
 			LIST_INSERT_HEAD(&sc->sc_jfree_listhead, entry,

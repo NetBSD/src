@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.9.64.1 2017/02/05 13:40:02 skrll Exp $	*/
+/*	$NetBSD: userret.h,v 1.9.64.2 2017/08/28 17:51:28 skrll Exp $	*/
 
 /*
  * XXXfvdl same as i386 counterpart, but should probably be independent.
@@ -78,15 +78,13 @@ static __inline void userret(struct lwp *);
 static __inline void
 userret(struct lwp *l)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-	/*
-	 * Allow to mix debug registers with single step.
-	 */
-	if (l->l_md.md_flags & MDL_X86_HW_WATCHPOINTS)
-		set_x86_hw_watchpoints(l);
+	if (pcb->pcb_dbregs)
+		x86_dbregs_set(l);
 	else
-		clear_x86_hw_watchpoints();
+		x86_dbregs_clear(l);
 }

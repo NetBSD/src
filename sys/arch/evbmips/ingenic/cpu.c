@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1.2.3 2016/10/05 20:55:27 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.1.2.4 2017/08/28 17:51:36 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.3 2016/10/05 20:55:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.4 2017/08/28 17:51:36 skrll Exp $");
 
 #include "opt_ingenic.h"
 #include "opt_multiprocessor.h"
@@ -47,8 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.3 2016/10/05 20:55:27 skrll Exp $");
 #include <sys/cpu.h>
 
 #include <mips/locore.h>
-#include <mips/asm.h>
+#include <mips/ingenic/ingenic_coreregs.h>
 #include <mips/ingenic/ingenic_regs.h>
+#include <mips/ingenic/ingenic_var.h>
 
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);
@@ -85,14 +86,16 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		ci = startup_cpu_info;
 		wbflush();
 		vec = (uint32_t)&ingenic_wakeup;
-		reg = MFC0(12, 4);	/* reset entry reg */
+		reg = mips_cp0_corereim_read();
 		reg &= ~REIM_ENTRY_M;
 		reg |= vec;
-		MTC0(reg, 12, 4);
-		reg = MFC0(12, 2);	/* core control reg */
+		mips_cp0_corereim_write(reg);
+
+		reg = mips_cp0_corectrl_read();
 		reg |= CC_RPC1;		/* use our exception vector */
 		reg &= ~CC_SW_RST1;	/* get core 1 out of reset */
-		MTC0(reg, 12, 2);
+		mips_cp0_corectrl_write(reg);
+
 		while ((!kcpuset_isset(cpus_hatched, cpu_index(startup_cpu_info))) && (bail > 0)) {
 			delay(1000);
 			bail--;

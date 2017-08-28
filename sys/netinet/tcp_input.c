@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.334.4.7 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.334.4.8 2017/08/28 17:53:12 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.334.4.7 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.334.4.8 2017/08/28 17:53:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -904,6 +904,8 @@ tcp_input_checksum(int af, struct mbuf *m, const struct tcphdr *th,
 	 */
 
 	rcvif = m_get_rcvif(m, &s);
+	if (__predict_false(rcvif == NULL))
+		goto badcsum; /* XXX */
 
 	switch (af) {
 #ifdef INET
@@ -1482,7 +1484,7 @@ findpcb:
 #ifdef INET6
 			else if (in6p &&
 			    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0
-			    && ipsec6_in_reject_so(m, in6p->in6p_socket)) {
+			    && ipsec6_in_reject(m, in6p)) {
 				IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 				goto drop;
 			}
@@ -1833,7 +1835,14 @@ findpcb:
 					switch (af) {
 #ifdef INET
 					case AF_INET:
-						if (!ipsec4_in_reject_so(m, so))
+						/*
+						 * inp can be NULL when
+						 * receiving an IPv4 packet on
+						 * an IPv4-mapped IPv6 address.
+						 */
+						KASSERT(inp == NULL ||
+						    sotoinpcb(so) == inp);
+						if (!ipsec4_in_reject(m, inp))
 							break;
 						IPSEC_STATINC(
 						    IPSEC_STAT_IN_POLVIO);
@@ -1842,7 +1851,8 @@ findpcb:
 #endif
 #ifdef INET6
 					case AF_INET6:
-						if (!ipsec6_in_reject_so(m, so))
+						KASSERT(sotoin6pcb(so) == in6p);
+						if (!ipsec6_in_reject(m, in6p))
 							break;
 						IPSEC6_STATINC(
 						    IPSEC_STAT_IN_POLVIO);
@@ -3198,7 +3208,7 @@ tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
 	/*
 	 * Look up an SADB entry which matches the address of the peer.
 	 */
-	return KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI), 0, 0);
+	return KEY_LOOKUP_SA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI), 0, 0);
 #else
 	return NULL;
 #endif
@@ -3438,12 +3448,12 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 			TCP_STATINC(TCP_STAT_GOODSIG);
 
 		key_sa_recordxfer(sav, m);
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	}
 	return 0;
 out:
 	if (sav != NULL)
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	return -1;
 #endif
 }
@@ -4002,7 +4012,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		if (inp) {
 			inp->inp_laddr = ((struct sockaddr_in *)dst)->sin_addr;
 			inp->inp_lport = ((struct sockaddr_in *)dst)->sin_port;
-			inp->inp_options = ip_srcroute();
+			inp->inp_options = ip_srcroute(m);
 			in_pcbstate(inp, INP_BOUND);
 			if (inp->inp_options == NULL) {
 				inp->inp_options = sc->sc_ipopts;
@@ -4339,7 +4349,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		/*
 		 * Remember the IP options, if any.
 		 */
-		ipopts = ip_srcroute();
+		ipopts = ip_srcroute(m);
 		break;
 #endif
 	default:
@@ -4533,7 +4543,6 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	struct tcpcb *tp = NULL;
 	struct tcphdr *th;
 	u_int hlen;
-	struct socket *so;
 #ifdef TCP_SIGNATURE
 	struct secasvar *sav = NULL;
 	u_int8_t *sigp = NULL;
@@ -4582,18 +4591,8 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 
 	/* Fixup the mbuf. */
 	m->m_data += max_linkhdr;
-	if (sc->sc_tp) {
+	if (sc->sc_tp)
 		tp = sc->sc_tp;
-		if (tp->t_inpcb)
-			so = tp->t_inpcb->inp_socket;
-#ifdef INET6
-		else if (tp->t_in6pcb)
-			so = tp->t_in6pcb->in6p_socket;
-#endif
-		else
-			so = NULL;
-	} else
-		so = NULL;
 	m_reset_rcvif(m);
 	memset(mtod(m, u_char *), 0, tlen);
 
@@ -4715,7 +4714,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	if (sav) {
 		(void)tcp_signature(m, th, hlen, sav, sigp);
 		key_sa_recordxfer(sav, m);
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	}
 #endif
 
@@ -4816,7 +4815,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	case AF_INET:
 		error = ip_output(m, sc->sc_ipopts, ro,
 		    (ip_mtudisc ? IP_MTUDISC : 0),
-		    NULL, so);
+		    NULL, tp ? tp->t_inpcb : NULL);
 		break;
 #endif
 #ifdef INET6
@@ -4825,7 +4824,8 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		    (rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp : NULL);
 		rtcache_unref(rt, ro);
 
-		error = ip6_output(m, NULL /*XXX*/, ro, 0, NULL, so, NULL);
+		error = ip6_output(m, NULL /*XXX*/, ro, 0, NULL,
+		    tp ? tp->t_in6pcb : NULL, NULL);
 		break;
 #endif
 	default:

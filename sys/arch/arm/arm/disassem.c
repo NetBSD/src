@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.25.2.3 2015/12/27 12:09:29 skrll Exp $	*/
+/*	$NetBSD: disassem.c,v 1.25.2.4 2017/08/28 17:51:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.25.2.3 2015/12/27 12:09:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.25.2.4 2017/08/28 17:51:29 skrll Exp $");
 
 #include <sys/systm.h>
 
@@ -149,10 +149,10 @@ static const struct arm32_insn arm32_i[] = {
     { 0xfe5fffe0, 0xf84d0500, "srs",	"XnW!m" },
     { 0xfe50ffff, 0xf8100a00, "rfe",	"XnW" },
     { 0xfe000000, 0xfa000000, "blx",	"t" },		/* Before b and bl */
-    { 0xfe100090, 0xfc000000, "stc2",	"L#v" },
-    { 0x0e100090, 0x0c000000, "stc",	"L#v" },
     { 0x0ff00000, 0x0c400000, "mcrr",	"#&" },
     { 0x0ff00000, 0x0c500000, "mrrc",	"#&" },
+    { 0xfe100090, 0xfc000000, "stc2",	"L#v" },
+    { 0x0e100090, 0x0c000000, "stc",	"L#v" },
     { 0xfe100090, 0xfc100000, "ldc2",	"L#v" },
     { 0x0e100090, 0x0c100000, "ldc",	"L#v" },
     { 0xff000010, 0xfe000000, "cdp2",	"#y" },
@@ -169,7 +169,7 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0fe00070, 0x07e00050, "ubfx",	"dmir" },
     { 0xfff000f0, 0xe70000f0, "und",	"x" },		/* Special immediate? */
 
-    { 0x06000010, 0x06000010, "und",	"x" },		/* Remove when done with media */
+    { 0x0e000010, 0x06000010, "und",	"x" },		/* Remove when done with media */
 
     { 0x0d700000, 0x04200000, "strt",	"daW" },
     { 0x0d700000, 0x04300000, "ldrt",	"daW" },
@@ -204,18 +204,21 @@ static const struct arm32_insn arm32_i[] = {
 
     /* A5.2.7 Halfword multiply and multiply accumulate */
 
+    /* A5.2.9 Extra load/store instructions, unprivileged */
+
+    { 0x0f3000f0, 0x002000b0, "strht",	"de" },
+    { 0x0f3000f0, 0x003000b0, "ldrht",	"de" },
+    { 0x0f3000f0, 0x003000d0, "ldrsbt",	"de" },
+    { 0x0f3000f0, 0x003000f0, "ldrsht",	"de" },
+
     /* A5.2.8 Extra load/store instructions */
 
     { 0x0e1000f0, 0x000000b0, "strh",	"de" },
     { 0x0e1000f0, 0x001000b0, "ldrh",	"de" },
 
-    { 0x0e5000f0, 0x000000d0, "ldrd",	"de" },
-    { 0x0e5000f0, 0x001000d0, "ldrsb",	"de" },
-    { 0x0e5000f0, 0x004000d0, "ldrd",	"de" },
-    { 0x0e5000f0, 0x005000d0, "ldrsb",	"de" },
+    { 0x0e1000f0, 0x000000d0, "ldrd",	"de" },
+    { 0x0e1000f0, 0x001000d0, "ldrsb",	"de" },
 
-    { 0x0e1000f0, 0x000000f0, "ldrd",	"de" },
-    { 0x0e1000f0, 0x001000f0, "ldrsb",	"de" },
     { 0x0e1000f0, 0x000000f0, "strd",	"de" },
     { 0x0e1000f0, 0x001000f0, "ldrsh",	"de" },
 
@@ -896,15 +899,17 @@ disasm_insn_ldrxstrx(const disasm_interface_t *di, u_int insn, u_int loc)
 		di->di_printf("[r%d", (insn >> 16) & 0x0f);
 		if ((insn & 0x01400f0f) != 0x01400000) {
 			di->di_printf("%s, ", (insn & (1 << 24)) ? "" : "]");
-			if (!(insn & 0x00800000))
-				di->di_printf("-");
+			char const *sign = (insn & 0x00800000) ? "" : "-";
 			if (insn & (1 << 22))
-				di->di_printf("#0x%02x", offset);
+				di->di_printf("#%s0x%02x", sign, offset);
 			else
-				di->di_printf("r%d", (insn & 0x0f));
+				di->di_printf("%sr%d", sign, (insn & 0x0f));
 		}
-		if (insn & (1 << 24))
+		if (insn & (1 << 24)) {
 			di->di_printf("]");
+			if (__SHIFTOUT(insn, __BIT(21)))
+				di->di_printf("!");
+		}
 	}
 }
 

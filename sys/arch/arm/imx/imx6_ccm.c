@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.3.2.2 2016/12/05 10:54:50 skrll Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.3.2.3 2017/08/28 17:51:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.3.2.2 2016/12/05 10:54:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.3.2.3 2017/08/28 17:51:30 skrll Exp $");
 
 #include "opt_imx.h"
 #include "opt_imx6clk.h"
+#include "opt_cputypes.h"
 
 #include "locators.h"
 
@@ -48,7 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.3.2.2 2016/12/05 10:54:50 skrll Exp $
 #include <sys/param.h>
 
 #include <machine/cpu.h>
+#ifdef CPU_CORTEXA9
 #include <arm/cortex/a9tmr_var.h>
+#endif
 
 #include <arm/imx/imx6_ccmvar.h>
 #include <arm/imx/imx6_ccmreg.h>
@@ -439,7 +442,9 @@ imx6_set_clock(enum imx6_clock clk, uint32_t freq)
 
 					v = imx6_get_clock(IMX6CLK_ARM_ROOT);
 					cpufreq_set_all(v);
+#ifdef CPU_CORTEXA9
 					a9tmr_update_freq(v / IMX6_PERIPHCLK_N);
+#endif
 					return 0;
 				}
 			}
@@ -501,6 +506,7 @@ imx6_get_clock(enum imx6_clock clk)
 		break;
 
 	case IMX6CLK_PLL6:
+		/* XXX: iMX6UL has 2 div. which? */
 		v = imx6_ccm_read(CCM_ANALOG_PLL_ENET);
 		switch (v & CCM_ANALOG_PLL_ENET_DIV_SELECT_MASK) {
 		case 0:

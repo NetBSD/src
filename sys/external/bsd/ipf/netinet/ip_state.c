@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.6 2013/09/14 12:16:11 martin Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.6.6.1 2017/08/28 17:52:34 skrll Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -100,7 +100,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.6 2013/09/14 12:16:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.6.6.1 2017/08/28 17:52:34 skrll Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 1.1.1.2 2012/07/22 13:45:37 darrenr Exp";
@@ -1349,7 +1349,7 @@ ipf_state_add(ipf_main_softc_t *softc, fr_info_t *fin, ipstate_t **stsave,
 
 	/*
 	 * If a packet that was created locally is trying to go out but we
-	 * do not match here here because of this lock, it is likely that
+	 * do not match here because of this lock, it is likely that
 	 * the policy will block it and return network unreachable back up
 	 * the stack. To mitigate this error, EAGAIN is returned instead,
 	 * telling the IP stack to try sending this packet again later.
@@ -1414,7 +1414,7 @@ ipf_state_add(ipf_main_softc_t *softc, fr_info_t *fin, ipstate_t **stsave,
 	is->is_die = 1 + softc->ipf_ticks;
 	/*
 	 * We want to check everything that is a property of this packet,
-	 * but we don't (automatically) care about it's fragment status as
+	 * but we don't (automatically) care about its fragment status as
 	 * this may change.
 	 */
 	is->is_pass = pass;
@@ -3341,7 +3341,8 @@ ipf_state_check(fr_info_t *fin, u_32_t *passp)
 	 * If this packet is a fragment and the rule says to track fragments,
 	 * then create a new fragment cache entry.
 	 */
-	if ((fin->fin_flx & FI_FRAG) && FR_ISPASS(is->is_pass))
+	if (fin->fin_flx & FI_FRAG && FR_ISPASS(is->is_pass) &&
+	   is->is_pass & FR_KEEPFRAG)
 		(void) ipf_frag_new(softc, fin, is->is_pass);
 
 	/*

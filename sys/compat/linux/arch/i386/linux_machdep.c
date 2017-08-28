@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.159.2.2 2016/10/05 20:55:38 skrll Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.159.2.3 2017/08/28 17:51:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.159.2.2 2016/10/05 20:55:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.159.2.3 2017/08/28 17:51:58 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #endif
 
@@ -82,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.159.2.2 2016/10/05 20:55:38 skrl
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/sysarch.h>
-#include <machine/vm86.h>
 #include <machine/vmparam.h>
 
 #include <x86/fpu.h>
@@ -194,22 +192,12 @@ linux_save_sigcontext(struct lwp *l, struct trapframe *tf,
 	struct pcb *pcb = lwp_getpcb(l);
 
 	/* Save register context. */
-#ifdef VM86
-	if (tf->tf_eflags & PSL_VM) {
-		sc->sc_gs = tf->tf_vm86_gs;
-		sc->sc_fs = tf->tf_vm86_fs;
-		sc->sc_es = tf->tf_vm86_es;
-		sc->sc_ds = tf->tf_vm86_ds;
-		sc->sc_eflags = get_vflags(l);
-	} else
-#endif
-	{
-		sc->sc_gs = tf->tf_gs;
-		sc->sc_fs = tf->tf_fs;
-		sc->sc_es = tf->tf_es;
-		sc->sc_ds = tf->tf_ds;
-		sc->sc_eflags = tf->tf_eflags;
-	}
+	sc->sc_gs = tf->tf_gs;
+	sc->sc_fs = tf->tf_fs;
+	sc->sc_es = tf->tf_es;
+	sc->sc_ds = tf->tf_ds;
+	sc->sc_eflags = tf->tf_eflags;
+
 	sc->sc_edi = tf->tf_edi;
 	sc->sc_esi = tf->tf_esi;
 	sc->sc_esp = tf->tf_esp;
@@ -442,39 +430,22 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 	tf = l->l_md.md_regs;
 	DPRINTF(("sigreturn enter esp=0x%x eip=0x%x\n", tf->tf_esp, tf->tf_eip));
 
-#ifdef VM86
-	if (scp->sc_eflags & PSL_VM) {
-		void syscall_vm86(struct trapframe *);
+	/*
+	 * Check for security violations.  If we're returning to
+	 * protected mode, the CPU will validate the segment registers
+	 * automatically and generate a trap on violations.  We handle
+	 * the trap, rather than doing all of the checking here.
+	 */
+	if (((scp->sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+	    !USERMODE(scp->sc_cs, scp->sc_eflags))
+		return EINVAL;
 
-		tf->tf_vm86_gs = scp->sc_gs;
-		tf->tf_vm86_fs = scp->sc_fs;
-		tf->tf_vm86_es = scp->sc_es;
-		tf->tf_vm86_ds = scp->sc_ds;
-		set_vflags(l, scp->sc_eflags);
-		p->p_md.md_syscall = syscall_vm86;
-	} else
-#endif
-	{
-		/*
-		 * Check for security violations.  If we're returning to
-		 * protected mode, the CPU will validate the segment registers
-		 * automatically and generate a trap on violations.  We handle
-		 * the trap, rather than doing all of the checking here.
-		 */
-		if (((scp->sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-		    !USERMODE(scp->sc_cs, scp->sc_eflags))
-			return EINVAL;
+	tf->tf_gs = scp->sc_gs;
+	tf->tf_fs = scp->sc_fs;
+	tf->tf_es = scp->sc_es;
+	tf->tf_ds = scp->sc_ds;
+	tf->tf_eflags = scp->sc_eflags;
 
-		tf->tf_gs = scp->sc_gs;
-		tf->tf_fs = scp->sc_fs;
-		tf->tf_es = scp->sc_es;
-		tf->tf_ds = scp->sc_ds;
-#ifdef VM86
-		if (tf->tf_eflags & PSL_VM)
-			(*p->p_emul->e_syscall_intern)(p);
-#endif
-		tf->tf_eflags = scp->sc_eflags;
-	}
 	tf->tf_edi = scp->sc_edi;
 	tf->tf_esi = scp->sc_esi;
 	tf->tf_ebp = scp->sc_ebp;
@@ -535,7 +506,7 @@ linux_read_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
 	error = x86_get_ldt1(l, &gl, ldt_buf);
 	/* NB gl.num might have changed */
 	if (error == 0) {
-		*retval = gl.num * sizeof *ldt;
+		*retval = gl.num * sizeof(*ldtstore);
 		error = copyout(ldt_buf, SCARG(uap, ptr),
 		    gl.num * sizeof *ldt_buf);
 	}

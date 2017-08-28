@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_amdpmi.c,v 1.4.6.1 2017/02/05 13:40:23 skrll Exp $	*/
+/*	$NetBSD: tprof_amdpmi.c,v 1.4.6.2 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.4.6.1 2017/02/05 13:40:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.4.6.2 2017/08/28 17:51:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,10 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.4.6.1 2017/02/05 13:40:23 skrll E
 #define DC_refills_sys__EVENT	0x43
 #define DC_refills_sys__UNIT	0x1E
 
-/* Hardcode your counter here */
+/*
+ * Hardcode your counter here. There is no detection, so make sure it is
+ * supported by your CPU family.
+ */
 static uint32_t event = CPU_clocks__EVENT;
 static uint32_t unit = CPU_clocks__UNIT;
 static int ctrno = 0;
@@ -117,8 +120,8 @@ tprof_amdpmi_start_cpu(void *arg1, void *arg2)
 	wrmsr(PERFCTR(ctrno), counter_reset_val);
 	wrmsr(PERFEVTSEL(ctrno), pesr);
 
-	tprof_amdpmi_lapic_saved[cpu_index(ci)] = i82489_readreg(LAPIC_PCINT);
-	i82489_writereg(LAPIC_PCINT, LAPIC_DLMODE_NMI);
+	tprof_amdpmi_lapic_saved[cpu_index(ci)] = lapic_readreg(LAPIC_PCINT);
+	lapic_writereg(LAPIC_PCINT, LAPIC_DLMODE_NMI);
 
 	wrmsr(PERFEVTSEL(ctrno), pesr | PESR_EN);
 }
@@ -130,7 +133,7 @@ tprof_amdpmi_stop_cpu(void *arg1, void *arg2)
 
 	wrmsr(PERFEVTSEL(ctrno), 0);
 
-	i82489_writereg(LAPIC_PCINT, tprof_amdpmi_lapic_saved[cpu_index(ci)]);
+	lapic_writereg(LAPIC_PCINT, tprof_amdpmi_lapic_saved[cpu_index(ci)]);
 }
 
 static int
@@ -180,11 +183,9 @@ tprof_amdpmi_estimate_freq(void)
 static int
 tprof_amdpmi_start(tprof_backend_cookie_t *cookie)
 {
-	struct cpu_info * const ci = curcpu();
 	uint64_t xc;
 
-	if (!(cpu_vendor == CPUVENDOR_AMD) ||
-	    CPUID_TO_FAMILY(ci->ci_signature) != 0xf) { /* XXX */
+	if (cpu_vendor != CPUVENDOR_AMD) {
 		return ENOTSUP;
 	}
 

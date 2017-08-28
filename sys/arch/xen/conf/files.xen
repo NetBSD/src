@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.134.2.5 2017/02/05 13:40:23 skrll Exp $
+#	$NetBSD: files.xen,v 1.134.2.6 2017/08/28 17:51:57 skrll Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -45,7 +45,6 @@ file	arch/i386/i386/db_machdep.c	ddb
 file	arch/i386/i386/dumpsys.c
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
-file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/longrun.c
@@ -53,8 +52,6 @@ file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/lock_stubs.S
-
-file	arch/i386/i386/pmc.c			perfctrs
 
 file	crypto/des/arch/i386/des_enc.S		des
 file	crypto/des/arch/i386/des_cbc.S		des
@@ -69,7 +66,6 @@ file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c		ddb
 file	arch/amd64/amd64/db_machdep.c		ddb
-file	arch/amd64/amd64/kgdb_machdep.c	 kgdb
 file	arch/amd64/amd64/kobj_machdep.c	 	modular
 file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
@@ -86,6 +82,7 @@ file	arch/x86/x86/db_trace.c		ddb
 file	arch/x86/x86/fpu.c
 file	arch/x86/x86/dbregs.c
 file	arch/xen/x86/hypervisor_machdep.c
+file	arch/x86/x86/kgdb_machdep.c	kgdb
 # file 	arch/x86/x86/mtrr_i686.c	mtrr
 file	arch/x86/x86/syscall.c
 file	arch/xen/x86/x86_xpmap.c
@@ -148,16 +145,13 @@ file	arch/x86/x86/tsc.c		machdep
 file	arch/x86/x86/vm_machdep.c	machdep
 file	arch/x86/x86/x86_machdep.c	machdep
 file	arch/x86/x86/cpu_topology.c	machdep
+file	arch/x86/x86/platform.c		machdep
 
 include	"arch/xen/conf/files.compat"
 
 # BIOS32 routines
 define	bios32
-ifdef i386
-file	arch/i386/i386/bios32.c		bios32 needs-flag
-elifdef amd64
-file	arch/amd64/amd64/bios32.c	bios32 needs-flag
-endif
+file	arch/x86/x86/bios32.c		bios32 needs-flag
 
 # xen specific mainbus attributes
 define cpubus { [apid = -1] }
@@ -313,24 +307,10 @@ file	arch/x86/x86/powernow.c		powernow
 #
 
 ifdef i386
-# VM86 mode
-file	arch/i386/i386/vm86.c			vm86
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/i386/i386/compat_13_machdep.c	compat_13
-file	arch/i386/i386/compat_16_machdep.c	compat_16 | compat_ibcs2
-
-# SVR4 binary compatibility (COMPAT_SVR4)
-include	"compat/svr4/files.svr4"
-file	arch/i386/i386/svr4_machdep.c		compat_svr4
-file	arch/i386/i386/svr4_sigcode.S		compat_svr4
-file	arch/i386/i386/svr4_syscall.c		compat_svr4
-
-# iBCS-2 binary compatibility (COMPAT_IBCS2)
-include	"compat/ibcs2/files.ibcs2"
-file	arch/i386/i386/ibcs2_machdep.c		compat_ibcs2
-file	arch/i386/i386/ibcs2_sigcode.S		compat_ibcs2
-file	arch/i386/i386/ibcs2_syscall.c		compat_ibcs2
+file	arch/i386/i386/compat_16_machdep.c	compat_16
 
 # Linux binary compatibility (COMPAT_LINUX)
 include	"compat/linux/files.linux"
@@ -341,9 +321,6 @@ file	arch/x86/x86/linux_trap.c		compat_linux
 
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
 include	"compat/freebsd/files.freebsd"
-file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
-file	arch/i386/i386/freebsd_sigcode.S	compat_freebsd
-file	arch/i386/i386/freebsd_syscall.c	compat_freebsd
 
 elifdef amd64
 
@@ -376,6 +353,8 @@ include	"compat/ossaudio/files.ossaudio"
 # Bluetooth
 include "dev/bluetooth/files.bluetooth"
 
+include "dev/sdmmc/files.sdmmc"
+
 #
 # CARDBUS
 #
@@ -398,7 +377,7 @@ file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
 file	arch/x86/pci/pci_machdep.c	hypervisor & pci & dom0ops
 file	arch/xen/xen/pci_intr_machdep.c	hypervisor & pci
-file	arch/xen/xen/isa_machdep.c	hypervisor & dom0ops
+file	arch/x86/isa/isa_machdep.c	hypervisor & dom0ops
 file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 file	arch/xen/xen/xennetback_xenbus.c xvif
 file	arch/xen/xen/xennet_checksum.c	xvif | xennet

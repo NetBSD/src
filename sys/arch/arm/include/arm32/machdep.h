@@ -1,9 +1,9 @@
-/* $NetBSD: machdep.h,v 1.18.6.1 2015/12/27 12:09:31 skrll Exp $ */
+/* $NetBSD: machdep.h,v 1.18.6.2 2017/08/28 17:51:31 skrll Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
 
-/* Define various stack sizes in pages */ 
+/* Define various stack sizes in pages */
 #ifndef IRQ_STACK_SIZE
 #define IRQ_STACK_SIZE	1
 #endif
@@ -68,8 +68,8 @@ void prefetch_abort_handler(trapframe_t *);
 void undefinedinstruction_bounce(trapframe_t *);
 void dumpsys(void);
 
-/* 
- * note that we use void *as all the platforms have different ideas on what
+/*
+ * note that we use void * as all the platforms have different ideas on what
  * the structure is
  */
 u_int initarm(void *);

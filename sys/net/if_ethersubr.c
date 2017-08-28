@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.205.2.11 2017/02/05 13:40:58 skrll Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.205.2.12 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.11 2017/02/05 13:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.12 2017/08/28 17:53:11 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.11 2017/02/05 13:40:58 skrl
 #include "agr.h"
 
 #include <sys/sysctl.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mutex.h>
 #include <sys/ioctl.h>
@@ -247,23 +246,14 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 #ifdef INET
 	case AF_INET:
-#ifndef NET_MPSAFE
-		KERNEL_LOCK(1, NULL);
-#endif
 		if (m->m_flags & M_BCAST)
 			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else if (m->m_flags & M_MCAST)
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
 		else if ((error = arpresolve(ifp, rt, m, dst, edst,
 		    sizeof(edst))) != 0) {
-#ifndef NET_MPSAFE
-			KERNEL_UNLOCK_ONE(NULL);
-#endif
 			return error == EWOULDBLOCK ? 0 : error;
 		}
-#ifndef NET_MPSAFE
-		KERNEL_UNLOCK_ONE(NULL);
-#endif
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
@@ -303,9 +293,16 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #endif
 #ifdef INET6
 	case AF_INET6:
-		if (!nd6_storelladdr(ifp, rt, m, dst, edst, sizeof(edst))){
-			/* something bad happened */
-			return (0);
+		if (m->m_flags & M_BCAST)
+			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
+		else if (m->m_flags & M_MCAST) {
+			ETHER_MAP_IPV6_MULTICAST(&satocsin6(dst)->sin6_addr,
+			    edst);
+		} else {
+			error = nd6_resolve(ifp, rt, m, dst, edst,
+			    sizeof(edst));
+			if (error != 0)
+				return error == EWOULDBLOCK ? 0 : error;
 		}
 		etype = htons(ETHERTYPE_IPV6);
 		break;
@@ -991,7 +988,6 @@ ether_ifdetach(struct ifnet *ifp)
 {
 	struct ethercom *ec = (void *) ifp;
 	struct ether_multi *enm;
-	int s;
 
 	/*
 	 * Prevent further calls to ioctl (for example turning off
@@ -1014,15 +1010,13 @@ ether_ifdetach(struct ifnet *ifp)
 		vlan_ifdetach(ifp);
 #endif
 
-	s = splnet();
 	mutex_enter(ec->ec_lock);
 	while ((enm = LIST_FIRST(&ec->ec_multiaddrs)) != NULL) {
 		LIST_REMOVE(enm, enm_list);
-		kmem_free(enm, sizeof(*enm));
+		kmem_intr_free(enm, sizeof(*enm));
 		ec->ec_multicnt--;
 	}
 	mutex_exit(ec->ec_lock);
-	splx(s);
 
 	mutex_destroy(ec->ec_lock);
 
@@ -1234,7 +1228,7 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 	struct ether_multi *enm, *_enm;
 	u_char addrlo[ETHER_ADDR_LEN];
 	u_char addrhi[ETHER_ADDR_LEN];
-	int s, error = 0;
+	int error = 0;
 
 	/* Allocate out of lock */
 	/* XXX still can be called in softint */
@@ -1242,7 +1236,6 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 	if (enm == NULL)
 		return ENOBUFS;
 
-	s = splnet();
 	mutex_enter(ec->ec_lock);
 	error = ether_multiaddr(sa, addrlo, addrhi);
 	if (error != 0)
@@ -1268,8 +1261,7 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 		goto out;
 	}
 	/*
-	 * New address or range; malloc a new multicast record
-	 * and link it into the interface's multicast list.
+	 * Link a new multicast record into the interface's multicast list.
 	 */
 	memcpy(enm->enm_addrlo, addrlo, 6);
 	memcpy(enm->enm_addrhi, addrhi, 6);
@@ -1284,9 +1276,8 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 	enm = NULL;
 out:
 	mutex_exit(ec->ec_lock);
-	splx(s);
 	if (enm != NULL)
-		kmem_free(enm, sizeof(*enm));
+		kmem_intr_free(enm, sizeof(*enm));
 	return error;
 }
 
@@ -1299,9 +1290,8 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	struct ether_multi *enm;
 	u_char addrlo[ETHER_ADDR_LEN];
 	u_char addrhi[ETHER_ADDR_LEN];
-	int s, error;
+	int error;
 
-	s = splnet();
 	mutex_enter(ec->ec_lock);
 	error = ether_multiaddr(sa, addrlo, addrhi);
 	if (error != 0)
@@ -1328,9 +1318,8 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	LIST_REMOVE(enm, enm_list);
 	ec->ec_multicnt--;
 	mutex_exit(ec->ec_lock);
-	splx(s);
 
-	kmem_free(enm, sizeof(*enm));
+	kmem_intr_free(enm, sizeof(*enm));
 	/*
 	 * Return ENETRESET to inform the driver that the list has changed
 	 * and its reception filter should be adjusted accordingly.
@@ -1338,7 +1327,6 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	return ENETRESET;
 error:
 	mutex_exit(ec->ec_lock);
-	splx(s);
 	return error;
 }
 
@@ -1537,7 +1525,7 @@ ether_multicast_sysctl(SYSCTLFN_ARGS)
 	int error = 0;
 	size_t written;
 	struct psref psref;
-	int bound, s;
+	int bound;
 	unsigned int multicnt;
 	struct ether_multi_sysctl *addrs;
 	int i;
@@ -1573,12 +1561,10 @@ retry:
 	multicnt = ec->ec_multicnt;
 	addrs = kmem_alloc(sizeof(*addrs) * multicnt, KM_SLEEP);
 
-	s = splnet();
 	mutex_enter(ec->ec_lock);
 	if (multicnt < ec->ec_multicnt) {
 		/* The number of multicast addresses have increased */
 		mutex_exit(ec->ec_lock);
-		splx(s);
 		kmem_free(addrs, sizeof(*addrs) * multicnt);
 		goto retry;
 	}
@@ -1592,7 +1578,6 @@ retry:
 		i++;
 	}
 	mutex_exit(ec->ec_lock);
-	splx(s);
 
 	error = 0;
 	written = 0;

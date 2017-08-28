@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.410.2.9 2017/02/05 13:40:56 skrll Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.410.2.10 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.9 2017/02/05 13:40:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.10 2017/08/28 17:53:07 skrll Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -578,15 +578,11 @@ exec_autoload(void)
 		"exec_coff",
 		"exec_ecoff",
 		"compat_aoutm68k",
-		"compat_freebsd",
-		"compat_ibcs2",
 		"compat_linux",
 		"compat_linux32",
 		"compat_netbsd32",
 		"compat_sunos",
 		"compat_sunos32",
-		"compat_svr4",
-		"compat_svr4_32",
 		"compat_ultrix",
 		NULL
 	};
@@ -2531,7 +2527,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 
 	/* create LWP */
 	lwp_create(l1, p2, uaddr, 0, NULL, 0, spawn_return, spawn_data,
-	    &l2, l1->l_class);
+	    &l2, l1->l_class, &l1->l_sigmask, &l1->l_sigstk);
 	l2->l_ctxlink = NULL;	/* reset ucontext link */
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.4.2.4 2015/12/27 12:09:45 skrll Exp $	*/
+/*	$NetBSD: msipic.c,v 1.4.2.5 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.4.2.4 2015/12/27 12:09:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.4.2.5 2017/08/28 17:51:56 skrll Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -36,12 +36,12 @@ __KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.4.2.4 2015/12/27 12:09:45 skrll Exp $")
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
 #include <sys/mutex.h>
 
 #include <dev/pci/pcivar.h>
 
 #include <machine/i82489reg.h>
+#include <machine/i82489var.h>
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>
 #include <machine/pic.h>
@@ -237,14 +237,7 @@ msipic_construct_common_msi_pic(const struct pci_attach_args *pa,
 	int devid;
 
 	pic = kmem_alloc(sizeof(*pic), KM_SLEEP);
-	if (pic == NULL)
-		return NULL;
-
 	msipic = kmem_zalloc(sizeof(*msipic), KM_SLEEP);
-	if (msipic == NULL) {
-		kmem_free(pic, sizeof(*pic));
-		return NULL;
-	}
 
 	mutex_enter(&msipic_list_lock);
 
@@ -257,6 +250,7 @@ msipic_construct_common_msi_pic(const struct pci_attach_args *pa,
 	}
 
 	memcpy(pic, pic_tmpl, sizeof(*pic));
+	pic->pic_edge_stubs = x2apic_mode ? x2apic_edge_stubs : ioapic_edge_stubs,
 	pic->pic_msipic = msipic;
 	msipic->mp_pic = pic;
 	pci_decompose_tag(pa->pa_pc, pa->pa_tag,
@@ -431,8 +425,6 @@ static struct pic msi_pic_tmpl = {
 	.pic_hwunmask = msi_hwunmask,
 	.pic_addroute = msi_addroute,
 	.pic_delroute = msi_delroute,
-	.pic_edge_stubs = ioapic_edge_stubs,
-	.pic_ioapic = NULL,
 };
 
 /*
@@ -603,7 +595,6 @@ static struct pic msix_pic_tmpl = {
 	.pic_hwunmask = msix_hwunmask,
 	.pic_addroute = msix_addroute,
 	.pic_delroute = msix_delroute,
-	.pic_edge_stubs = ioapic_edge_stubs,
 };
 
 struct pic *

@@ -1,4 +1,4 @@
-	$NetBSD: README,v 1.3.4.2 2015/06/06 14:40:23 skrll Exp $
+	$NetBSD: README,v 1.3.4.3 2017/08/28 17:53:09 skrll Exp $
 
                            Kernel Developer's Manual
 
@@ -11,6 +11,7 @@ DESCRIPTION
      * readhappy       - basic implementation of read(9) with happy numbers
      * ping            - basic ioctl(9)
      * luahello        - the simplest `hello world' Lua module
+     * luareadhappy    - demonstrates calling Lua code from C
 
      To build the examples you need a local copy of NetBSD sources. You also
      need the comp set with toolchain. To build the module just enter a
@@ -52,8 +53,8 @@ HISTORY
      Husemann, Adam Hamsik, John Nemeth and Mindaugas Rasiukevicius.
 
      This document and additional modules (hello, readhappy, properties,
-     ping, and luahello) first appeared in NetBSD 8.0; they were written
-     by Kamil Rytarowski.
+     ping, luahello and luareadhappy) first appeared in NetBSD 8.0; they were
+     written by Kamil Rytarowski.
 
 AUTHORS
      This document was written by Kamil Rytarowski.

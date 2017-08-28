@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_uart.c,v 1.1 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: imx6_uart.c,v 1.1.2.1 2017/08/28 17:51:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Genetec Corporation.  All rights reserved.
@@ -47,6 +47,11 @@ imxuart_match(device_t parent, struct cfdata *cf, void *aux)
 	case (IMX6_AIPS2_BASE + AIPS2_UART4_BASE):
 	case (IMX6_AIPS2_BASE + AIPS2_UART5_BASE):
 		return 1;
+	case (IMX6_AIPS2_BASE + AIPS2_UART6_BASE):
+	case (IMX6_AIPS1_BASE + AIPS1_UART7_BASE):
+		if (IMX6_CHIPID_MAJOR(imx6_chip_id()) == CHIPID_MAJOR_IMX6UL)
+			return 1;
+		break;
 	}
 
 	return 0;

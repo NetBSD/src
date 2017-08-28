@@ -1,4 +1,4 @@
-/*	$Id: nmi.c,v 1.4 2013/11/26 20:29:40 rmind Exp $	*/
+/*	$Id: nmi.c,v 1.4.6.1 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c)2009,2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nmi.c,v 1.4 2013/11/26 20:29:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nmi.c,v 1.4.6.1 2017/08/28 17:51:56 skrll Exp $");
 
 /*
  * nmi dispatcher.
@@ -73,9 +73,6 @@ nmi_establish(int (*func)(const struct trapframe *, void *), void *arg)
 	struct nmi_handler *n;
 
 	n = kmem_alloc(sizeof(*n), KM_SLEEP);
-	if (n == NULL) {
-		return NULL;
-	}
 	n->n_func = func;
 	n->n_arg = arg;
 

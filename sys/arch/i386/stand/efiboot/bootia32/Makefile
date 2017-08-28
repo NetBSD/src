@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2017/02/05 13:40:12 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2017/08/28 17:51:41 skrll Exp $
 
 PROG=		bootia32.efi
 OBJFMT=		pei-i386
 
-EXTRA_SOURCES=	efibootia32.c
+EXTRA_SOURCES=	efibootia32.c startprog32.S
 
 CPUFLAGS=	-march=i686 -mtune=i686
 GNUEFIARCH=	ia32

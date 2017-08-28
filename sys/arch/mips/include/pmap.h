@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.63.4.3 2017/02/05 13:40:15 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.63.4.4 2017/08/28 17:51:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,6 +77,7 @@
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
 #include "opt_uvmhist.h"
+#include "opt_cputype.h"
 #endif
 
 #include <sys/evcnt.h>
@@ -241,6 +242,17 @@ paddr_t	pmap_md_pool_vtophys(vaddr_t);
 vaddr_t	pmap_md_pool_phystov(paddr_t);
 #define	POOL_VTOPHYS(va)	pmap_md_pool_vtophys((vaddr_t)va)
 #define	POOL_PHYSTOV(pa)	pmap_md_pool_phystov((paddr_t)pa)
+
+#ifdef MIPS64_SB1
+/* uncached accesses are bad; all accesses should be cached (and coherent) */
+#undef PMAP_PAGEIDLEZERO
+#define	PMAP_PAGEIDLEZERO(pa)   (pmap_zero_page(pa), true)
+
+int sbmips_cca_for_pa(paddr_t);
+
+#undef PMAP_CCA_FOR_PA
+#define	PMAP_CCA_FOR_PA(pa)	sbmips_cca_for_pa(pa)
+#endif
 
 #endif	/* _KERNEL */
 #endif	/* _MIPS_PMAP_H_ */

@@ -1,4 +1,4 @@
-/*     $NetBSD: efi.h,v 1.1.2.3 2017/02/05 13:40:23 skrll Exp $   */
+/*     $NetBSD: efi.h,v 1.1.2.4 2017/08/28 17:51:56 skrll Exp $   */
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -39,11 +39,19 @@
 #define        EFI_PAGE_SIZE           (1 << EFI_PAGE_SHIFT)
 #define        EFI_PAGE_MASK           (EFI_PAGE_SIZE - 1)
 
+#define	EFI_TABLE_ACPI20						\
+	{0x8868e871,0xe4f1,0x11d3,0xbc,0x22,{0x00,0x80,0xc7,0x3c,0x88,0x81}}
+#define	EFI_TABLE_ACPI10						\
+	{0xeb9d2d30,0x2d88,0x11d3,0x9a,0x16,{0x00,0x90,0x27,0x3f,0xc1,0x4d}}
+#define	EFI_TABLE_SMBIOS						\
+	{0xeb9d2d31,0x2d88,0x11d3,0x9a,0x16,{0x00,0x90,0x27,0x3f,0xc1,0x4d}}
+#define	EFI_TABLE_SMBIOS3						\
+	{0xf2fd1544,0x9794,0x4a2c,0x99,0x2e,{0xe5,0xbb,0xcf,0x20,0xe3,0x94}}
+
 extern const struct uuid EFI_UUID_ACPI20;
 extern const struct uuid EFI_UUID_ACPI10;
-
-#define        EFI_TABLE_SAL                           \
-       {0xeb9d2d32,0x2d88,0x11d3,0x9a,0x16,{0x00,0x90,0x27,0x3f,0xc1,0x4d}}
+extern const struct uuid EFI_UUID_SMBIOS;
+extern const struct uuid EFI_UUID_SMBIOS3;
 
 enum efi_reset {
        EFI_RESET_COLD,
@@ -53,11 +61,11 @@ enum efi_reset {
 typedef uint16_t       efi_char;
 typedef unsigned long efi_status;
 
-
 struct efi_cfgtbl {
        struct uuid     ct_uuid;
        void           *ct_data;
 };
+
 struct efi_md {
        uint32_t        md_type;
 #define        EFI_MD_TYPE_NULL        0
@@ -74,9 +82,10 @@ struct efi_md {
 #define        EFI_MD_TYPE_IOMEM       11      /* Memory-mapped I/O. */
 #define        EFI_MD_TYPE_IOPORT      12      /* I/O port space. */
 #define        EFI_MD_TYPE_PALCODE     13      /* PAL */
+#define        EFI_MD_TYPE_PMEM        14      /* Persistent memory. */
        uint32_t        __pad;
        uint64_t        md_phys;
-       void            *md_virt;
+       uint64_t        md_virt;
        uint64_t        md_pages;
        uint64_t        md_attr;
 #define        EFI_MD_ATTR_UC          0x0000000000000001UL
@@ -158,6 +167,53 @@ struct efi_systbl {
        struct efi_cfgtbl *st_cfgtbl;
 };
 
+#if defined(__amd64__)
+struct efi_cfgtbl32 {
+	struct uuid		ct_uuid;
+	uint32_t		ct_data;	/* void * */
+};
+
+struct efi_systbl32 {
+	struct efi_tblhdr	st_hdr;
+
+	uint32_t		st_fwvendor;
+	uint32_t		st_fwrev;
+	uint32_t		st_cin;		/* = 0 */
+	uint32_t		st_cinif;	/* = 0 */
+	uint32_t		st_cout;	/* = 0 */
+	uint32_t		st_coutif;	/* = 0 */
+	uint32_t		st_cerr;	/* = 0 */
+	uint32_t		st_cerrif;	/* = 0 */
+	uint32_t		st_rt;		/* struct efi_rt32 * */
+	uint32_t		st_bs;		/* = 0 */
+	uint32_t		st_entries;
+	uint32_t		st_cfgtbl;	/* struct efi_cfgtbl32 * */
+};
+#elif defined(__i386__)
+struct efi_cfgtbl64 {
+	struct uuid		ct_uuid;
+	uint64_t		ct_data;	/* void * */
+};
+
+struct efi_systbl64 {
+	struct efi_tblhdr	st_hdr;
+
+	uint64_t		st_fwvendor;
+	uint32_t		st_fwrev;
+	uint32_t		__pad;
+	uint64_t		st_cin;		/* = 0 */
+	uint64_t		st_cinif;	/* = 0 */
+	uint64_t		st_cout;	/* = 0 */
+	uint64_t		st_coutif;	/* = 0 */
+	uint64_t		st_cerr;	/* = 0 */
+	uint64_t		st_cerrif;	/* = 0 */
+	uint64_t		st_rt;		/* struct efi_rt64 * */
+	uint64_t		st_bs;		/* = 0 */
+	uint64_t		st_entries;
+	uint64_t		st_cfgtbl;	/* struct efi_cfgtbl64 * */
+};
+#endif
+
 bool               efi_probe(void);
 paddr_t            efi_getsystblpa(void);
 struct efi_systbl *efi_getsystbl(void);
@@ -165,6 +221,9 @@ paddr_t            efi_getcfgtblpa(const struct uuid*);
 void              *efi_getcfgtbl(const struct uuid*);
 int                efi_getbiosmemtype(uint32_t, uint64_t);
 const char        *efi_getmemtype_str(uint32_t);
+struct btinfo_memmap;
+struct btinfo_memmap *efi_get_e820memmap(void);
+
 /*
 void efi_boot_finish(void);
 int efi_boot_minimal(uint64_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.90 2014/11/09 18:08:07 maxv Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.90.2.1 2017/08/28 17:53:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.90 2014/11/09 18:08:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.90.2.1 2017/08/28 17:53:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,9 +140,6 @@ nullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/* Create the mount point. */
 	nmp = kmem_zalloc(sizeof(struct null_mount), KM_SLEEP);
 	mp->mnt_data = nmp;
-	nmp->nullm_vfs = lowerrootvp->v_mount;
-	if (nmp->nullm_vfs->mnt_flag & MNT_LOCAL)
-		mp->mnt_flag |= MNT_LOCAL;
 
 	/*
 	 * Make sure that the mount point is sufficiently initialized
@@ -175,7 +172,13 @@ nullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->la.target,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, curlwp);
-	return error;
+	if (error)
+		return error;
+
+	mp->mnt_lower = lowerrootvp->v_mount;
+	if (mp->mnt_lower->mnt_flag & MNT_LOCAL)
+		mp->mnt_flag |= MNT_LOCAL;
+	return 0;
 }
 
 int
@@ -228,7 +231,7 @@ struct vfsops nullfs_vfsops = {
 	.vfs_done = layerfs_done,
 	.vfs_snapshot = layerfs_snapshot,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = layerfs_suspendctl,
 	.vfs_renamelock_enter = layerfs_renamelock_enter,
 	.vfs_renamelock_exit = layerfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

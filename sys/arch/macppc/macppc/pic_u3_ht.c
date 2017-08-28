@@ -162,7 +162,6 @@ setup_u3_ht(uint32_t addr, uint32_t len, int bigendian)
 	u_int x;
 
 	u3_ht = kmem_alloc(sizeof(struct u3_ht_ops), KM_SLEEP);
-	KASSERT(u3_ht != NULL);
 	bzero(u3_ht, sizeof(struct u3_ht_ops));
 	pic = &u3_ht->pic;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.198.2.4 2016/10/05 20:56:01 skrll Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.198.2.5 2017/08/28 17:53:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.198.2.4 2016/10/05 20:56:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.198.2.5 2017/08/28 17:53:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1147,11 +1147,6 @@ puffs_vnop_getattr(void *v)
 static void
 zerofill_lastpage(struct vnode *vp, voff_t off)
 {
-	char zbuf[16384];
-	struct iovec iov;
-	struct uio uio;
-	vsize_t len;
-	int error;
 
 	if (trunc_page(off) == off)
 		return;
@@ -1159,27 +1154,8 @@ zerofill_lastpage(struct vnode *vp, voff_t off)
 	if (vp->v_writecount == 0)
 		return;
 
-	len = round_page(off) - off;
-	KASSERT(len < sizeof(zbuf));
-	memset(zbuf, 0, len);
-
-	iov.iov_base = zbuf;
-	iov.iov_len = len;
-	UIO_SETUP_SYSSPACE(&uio);
-	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1;
-	uio.uio_offset = off;
-	uio.uio_resid = len;
-	uio.uio_rw = UIO_WRITE;
-
-	error = ubc_uiomove(&vp->v_uobj, &uio, len,
-			    UVM_ADV_SEQUENTIAL, UBC_WRITE|UBC_UNMAP_FLAG(vp));
-	if (error) {
-		DPRINTF(("zero-fill 0x%" PRIxVSIZE "@0x%" PRIx64
-			 " failed: error = %d\n", len, off, error));
-	}
-
-	return;
+	vsize_t len = round_page(off) - off;
+	ubc_zerorange(&vp->v_uobj, off, len, UBC_WRITE|UBC_UNMAP_FLAG(vp));
 }
 
 static int
@@ -1276,6 +1252,7 @@ dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int flags)
 		pn->pn_serversize = vap->va_size;
 		if (flags & SETATTR_CHSIZE)
 			uvm_vnp_setsize(vp, vap->va_size);
+		puffs_updatenode(pn, PUFFS_UPDATECTIME | PUFFS_UPDATEMTIME, 0);
 	}
 
 	return 0;
@@ -1334,7 +1311,7 @@ callinactive(struct puffs_mount *pmp, puffs_cookie_t ck, int iaflag)
 int
 puffs_vnop_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 	} */ *ap = v;
@@ -1352,7 +1329,6 @@ puffs_vnop_inactive(void *v)
 	 * cookie was stall and the node likely already reclaimed.
 	 */
 	if (vp->v_type == VNON) {
-		VOP_UNLOCK(vp);
 		return 0;
 	}
 
@@ -1438,7 +1414,6 @@ puffs_vnop_inactive(void *v)
 	*ap->a_recycle = recycle;
 
 	mutex_exit(&pnode->pn_sizemtx);
-	VOP_UNLOCK(vp);
 
 	return 0;
 }
@@ -1468,13 +1443,15 @@ callreclaim(struct puffs_mount *pmp, puffs_cookie_t ck, int nlookup)
 int
 puffs_vnop_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	bool notifyserver = true;
+
+	VOP_UNLOCK(vp);
 
 	/*
 	 * first things first: check if someone is trying to reclaim the
@@ -1854,7 +1831,7 @@ callremove(struct puffs_mount *pmp, puffs_cookie_t dck, puffs_cookie_t ck,
 int
 puffs_vnop_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
@@ -1878,7 +1855,8 @@ puffs_vnop_remove(void *v)
 	    PUFFS_VN_REMOVE, VPTOPNC(dvp));
 
 	puffs_msg_enqueue(pmp, park_remove);
-	REFPN_AND_UNLOCKVP(dvp, dpn);
+	vref(dvp);		/* hang onto caller's reference at end */
+	REFPN(dpn);
 	if (dvp == vp)
 		REFPN(pn);
 	else
@@ -1977,7 +1955,7 @@ callrmdir(struct puffs_mount *pmp, puffs_cookie_t dck, puffs_cookie_t ck,
 int
 puffs_vnop_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
@@ -2000,7 +1978,9 @@ puffs_vnop_rmdir(void *v)
 	    PUFFS_VN_RMDIR, VPTOPNC(dvp));
 
 	puffs_msg_enqueue(pmp, park_rmdir);
-	REFPN_AND_UNLOCKVP(dvp, dpn);
+	vref(dvp);		/* hang onto caller's reference at end */
+	KASSERTMSG((dvp != vp), "rmdir .");
+	REFPN(dpn);
 	REFPN_AND_UNLOCKVP(vp, pn);
 	error = puffs_msg_wait2(pmp, park_rmdir, dpn, pn);
 

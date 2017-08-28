@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.61 2014/08/23 20:26:59 dholland Exp $
+#	$NetBSD: INSTALL,v 1.61.2.1 2017/08/28 17:51:49 skrll Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -41,6 +41,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 #file-system	PTYFS		# /dev/pts/N support
 
 # File system options
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

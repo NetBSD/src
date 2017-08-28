@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.325.2.5 2017/02/05 13:40:46 skrll Exp $	*/
+/*	$NetBSD: cd.c,v 1.325.2.6 2017/08/28 17:52:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.325.2.5 2017/02/05 13:40:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.325.2.6 2017/08/28 17:52:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,7 +354,7 @@ cddetach(device_t self, int flags)
 	}
 
 	/* kill any pending restart */
-	callout_stop(&cd->sc_callout);
+	callout_halt(&cd->sc_callout, NULL);
 
 	dk_drain(dksc);
 
@@ -428,8 +428,11 @@ cd_firstopen(device_t self, dev_t dev, int flag, int fmt)
 	    XS_CTL_IGNORE_MEDIA_CHANGE);
 	SC_DEBUG(periph, SCSIPI_DB1,
 	    ("cdopen: scsipi_prevent, error=%d\n", error));
-	if (error)
+	if (error) {
+		if (part == RAW_PART)
+			goto out;
 		goto bad;
+	}
 
 	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0) {
 		int param_error;
@@ -448,6 +451,8 @@ cd_firstopen(device_t self, dev_t dev, int flag, int fmt)
 	}
 
 	periph->periph_flags |= PERIPH_OPEN;
+
+out:
 	return 0;
 
 bad2:
@@ -459,7 +464,6 @@ bad2:
 bad:
 	scsipi_adapter_delref(adapt);
 	return error;
-
 }
 
 /*

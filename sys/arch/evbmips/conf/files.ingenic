@@ -1,7 +1,6 @@
-#	$NetBSD: files.ingenic,v 1.1.2.2 2016/03/19 11:29:58 skrll Exp $
+#	$NetBSD: files.ingenic,v 1.1.2.3 2017/08/28 17:51:36 skrll Exp $
 
 
-file	arch/mips/mips/bus_dma.c
 file	kern/subr_disk_mbr.c
 file	arch/evbmips/evbmips/interrupt.c
 

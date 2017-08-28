@@ -1,4 +1,4 @@
-#	$NetBSD: KOBO,v 1.6.2.1 2015/06/06 14:39:58 skrll Exp $
+#	$NetBSD: KOBO,v 1.6.2.2 2017/08/28 17:51:34 skrll Exp $
 #
 #	KOBO -- http://kobo.com
 #
@@ -24,8 +24,8 @@ options 	IMX51_IPGCLK_FREQ=50000000   # XXX This value is not correct.
 options 	CONSDEVNAME="\"imxuart\"",CONADDR=0x53fc0000
 options 	CONSPEED=115200	# Console speed
 
-options         DIAGNOSTIC      # internal consistency checks
-#options        DEBUG
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1

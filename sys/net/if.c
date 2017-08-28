@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.300.2.11 2017/02/05 13:40:58 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.300.2.12 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.11 2017/02/05 13:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.12 2017/08/28 17:53:11 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -138,9 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.11 2017/02/05 13:40:58 skrll Exp $");
 #include <net/pfil.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#ifndef IPSEC
 #include <netinet/ip_encap.h>
-#endif
 #include <net/bpf.h>
 
 #ifdef INET6
@@ -176,7 +174,7 @@ static size_t			if_indexlim = 0;
 static uint64_t			index_gen;
 /* Mutex to protect the above objects. */
 kmutex_t			ifnet_mtx __cacheline_aligned;
-struct psref_class		*ifnet_psref_class __read_mostly;
+static struct psref_class	*ifnet_psref_class __read_mostly;
 static pserialize_t		ifnet_psz;
 
 static kmutex_t			if_clone_mtx;
@@ -188,6 +186,7 @@ struct psref_class		*ifa_psref_class __read_mostly;
 
 static int	if_delroute_matcher(struct rtentry *, void *);
 
+static bool if_is_unit(const char *);
 static struct if_clone *if_clone_lookup(const char *, int *);
 
 static LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
@@ -291,7 +290,7 @@ ifinit(void)
 
 	if_sysctl_setup(NULL);
 
-#if (defined(INET) || defined(INET6)) && !defined(IPSEC)
+#if (defined(INET) || defined(INET6))
 	encapinit();
 #endif
 
@@ -378,6 +377,7 @@ int
 if_nulltransmit(struct ifnet *ifp, struct mbuf *m)
 {
 
+	m_freem(m);
 	return ENXIO;
 }
 
@@ -518,6 +518,23 @@ if_deactivate_sadl(struct ifnet *ifp)
 	ifafree(ifa);
 }
 
+static void
+if_replace_sadl(struct ifnet *ifp, struct ifaddr *ifa)
+{
+	struct ifaddr *old;
+
+	KASSERT(ifp->if_dl != NULL);
+
+	old = ifp->if_dl;
+
+	ifaref(ifa);
+	/* XXX Update if_dl and if_sadl atomically */
+	ifp->if_dl = ifa;
+	ifp->if_sadl = satosdl(ifa->ifa_addr);
+
+	ifafree(old);
+}
+
 void
 if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa0,
     const struct sockaddr_dl *sdl)
@@ -526,11 +543,11 @@ if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa0,
 	struct ifaddr *ifa;
 	int bound = curlwp_bind();
 
+	KASSERT(ifa_held(ifa0));
+
 	s = splsoftnet();
 
-	if_deactivate_sadl(ifp);
-
-	if_sadl_setrefs(ifp, ifa0);
+	if_replace_sadl(ifp, ifa0);
 
 	ss = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
@@ -702,6 +719,7 @@ if_initialize(ifnet_t *ifp)
 	PSLIST_INIT(&ifp->if_addr_pslist);
 	psref_target_init(&ifp->if_psref, ifnet_psref_class);
 	ifp->if_ioctl_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	LIST_INIT(&ifp->if_multiaddrs);
 
 	IFNET_LOCK();
 	if_getindex(ifp);
@@ -774,13 +792,7 @@ if_percpuq_softint(void *arg)
 
 	while ((m = if_percpuq_dequeue(ipq)) != NULL) {
 		ifp->if_ipackets++;
-#ifndef NET_MPSAFE
-		KERNEL_LOCK(1, NULL);
-#endif
 		bpf_mtap(ifp, m);
-#ifndef NET_MPSAFE
-		KERNEL_UNLOCK_ONE(NULL);
-#endif
 
 		ifp->_if_input(ifp, m);
 	}
@@ -801,9 +813,6 @@ if_percpuq_create(struct ifnet *ifp)
 	struct if_percpuq *ipq;
 
 	ipq = kmem_zalloc(sizeof(*ipq), KM_SLEEP);
-	if (ipq == NULL)
-		panic("kmem_zalloc failed");
-
 	ipq->ipq_ifp = ifp;
 	ipq->ipq_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
 	    if_percpuq_softint, ipq);
@@ -995,8 +1004,11 @@ if_deferred_start_softint(void *arg)
 static void
 if_deferred_start_common(struct ifnet *ifp)
 {
+	int s;
 
+	s = splnet();
 	if_start_lock(ifp);
+	splx(s);
 }
 
 static inline bool
@@ -1033,9 +1045,6 @@ if_deferred_start_init(struct ifnet *ifp, void (*func)(struct ifnet *))
 	struct if_deferred_start *ids;
 
 	ids = kmem_zalloc(sizeof(*ids), KM_SLEEP);
-	if (ids == NULL)
-		panic("kmem_zalloc failed");
-
 	ids->ids_ifp = ifp;
 	ids->ids_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
 	    if_deferred_start_softint, ids);
@@ -1072,13 +1081,7 @@ if_input(struct ifnet *ifp, struct mbuf *m)
 	KASSERT(!cpu_intr_p());
 
 	ifp->if_ipackets++;
-#ifndef NET_MPSAFE
-	KERNEL_LOCK(1, NULL);
-#endif
 	bpf_mtap(ifp, m);
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-#endif
 
 	ifp->_if_input(ifp, m);
 }
@@ -1211,9 +1214,6 @@ if_build_ifa_list(struct ifnet *ifp)
 		ifa_list_size++;
 
 	ifa_list = kmem_alloc(sizeof(*ifa) * ifa_list_size, KM_SLEEP);
-	if (ifa_list == NULL)
-		return;
-
 	i = 0;
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		ifa_list[i++] = ifa;
@@ -1360,11 +1360,7 @@ again:
 		if (family == AF_LINK)
 			continue;
 		dp = pffinddomain(family);
-#ifdef DIAGNOSTIC
-		if (dp == NULL)
-			panic("if_detach: no domain for AF %d",
-			    family);
-#endif
+		KASSERTMSG(dp != NULL, "no domain for AF %d", family);
 		/*
 		 * XXX These PURGEIF calls are redundant with the
 		 * purge-all-families calls below, but are left in for
@@ -1589,6 +1585,19 @@ if_clone_destroy(const char *name)
 	return (*ifc->ifc_destroy)(ifp);
 }
 
+static bool
+if_is_unit(const char *name)
+{
+
+	while(*name != '\0') {
+		if (*name < '0' || *name > '9')
+			return false;
+		name++;
+	}
+
+	return true;
+}
+
 /*
  * Look up a network interface cloner.
  */
@@ -1604,8 +1613,9 @@ if_clone_lookup(const char *name, int *unitp)
 
 	strcpy(ifname, "if_");
 	/* separate interface name from unit */
+	/* TODO: search unit number from backward */
 	for (dp = ifname + 3, cp = name; cp - name < IFNAMSIZ &&
-	    *cp && (*cp < '0' || *cp > '9');)
+	    *cp && !if_is_unit(cp);)
 		*dp++ = *cp++;
 
 	if (cp == name || cp - name == IFNAMSIZ || !*cp)
@@ -1665,9 +1675,10 @@ void
 if_clone_detach(struct if_clone *ifc)
 {
 
-	KASSERT(mutex_owned(&if_clone_mtx));
+	mutex_enter(&if_clone_mtx);
 	LIST_REMOVE(ifc, ifc_list);
 	if_cloners_count--;
+	mutex_exit(&if_clone_mtx);
 }
 
 /*
@@ -2227,16 +2238,20 @@ out:
 
 /*
  * Handle interface link state change notifications.
- * Must be called at splnet().
  */
-static void
-if_link_state_change0(struct ifnet *ifp, int link_state)
+void
+if_link_state_change_softint(struct ifnet *ifp, int link_state)
 {
 	struct domain *dp;
+	int s = splnet();
+
+	KASSERT(!cpu_intr_p());
 
 	/* Ensure the change is still valid. */
-	if (ifp->if_link_state == link_state)
+	if (ifp->if_link_state == link_state) {
+		splx(s);
 		return;
+	}
 
 #ifdef DEBUG
 	log(LOG_DEBUG, "%s: link state %s (was %s)\n", ifp->if_xname,
@@ -2281,6 +2296,7 @@ if_link_state_change0(struct ifnet *ifp, int link_state)
 		if (dp->dom_if_link_state_change != NULL)
 			dp->dom_if_link_state_change(ifp, link_state);
 	}
+	splx(s);
 }
 
 /*
@@ -2301,7 +2317,7 @@ if_link_state_change_si(void *arg)
 
 	/* Pop a link state change from the queue and process it. */
 	LQ_POP(ifp->if_link_queue, state);
-	if_link_state_change0(ifp, state);
+	if_link_state_change_softint(ifp, state);
 
 	/* If there is a link state change to come, schedule it. */
 	if (LQ_ITEM(ifp->if_link_queue, 0) != LINK_STATE_UNSET)
@@ -2523,14 +2539,8 @@ ifunit(const char *name)
 	/*
 	 * If the number took all of the name, then it's a valid ifindex.
 	 */
-	if (i == IFNAMSIZ || (cp != name && *cp == '\0')) {
-		if (unit >= if_indexlim)
-			return NULL;
-		ifp = ifindex2ifnet[unit];
-		if (ifp == NULL || if_is_deactivated(ifp))
-			return NULL;
-		return ifp;
-	}
+	if (i == IFNAMSIZ || (cp != name && *cp == '\0'))
+		return if_byindex(unit);
 
 	ifp = NULL;
 	s = pserialize_read_enter();
@@ -2569,14 +2579,8 @@ if_get(const char *name, struct psref *psref)
 	/*
 	 * If the number took all of the name, then it's a valid ifindex.
 	 */
-	if (i == IFNAMSIZ || (cp != name && *cp == '\0')) {
-		if (unit >= if_indexlim)
-			return NULL;
-		ifp = ifindex2ifnet[unit];
-		if (ifp == NULL || if_is_deactivated(ifp))
-			return NULL;
-		return ifp;
-	}
+	if (i == IFNAMSIZ || (cp != name && *cp == '\0'))
+		return if_get_byindex(unit, psref);
 
 	ifp = NULL;
 	s = pserialize_read_enter();
@@ -2595,8 +2599,8 @@ out:
 }
 
 /*
- * Release a reference of an ifnet object given by if_get or
- * if_get_byindex.
+ * Release a reference of an ifnet object given by if_get, if_get_byindex
+ * or if_get_bylla.
  */
 void
 if_put(const struct ifnet *ifp, struct psref *psref)
@@ -2613,7 +2617,7 @@ if_byindex(u_int idx)
 {
 	ifnet_t *ifp;
 
-	ifp = (idx < if_indexlim) ? ifindex2ifnet[idx] : NULL;
+	ifp = (__predict_true(idx < if_indexlim)) ? ifindex2ifnet[idx] : NULL;
 	if (ifp != NULL && if_is_deactivated(ifp))
 		ifp = NULL;
 	return ifp;
@@ -2631,9 +2635,7 @@ if_get_byindex(u_int idx, struct psref *psref)
 	int s;
 
 	s = pserialize_read_enter();
-	ifp = (__predict_true(idx < if_indexlim)) ? ifindex2ifnet[idx] : NULL;
-	if (ifp != NULL && if_is_deactivated(ifp))
-		ifp = NULL;
+	ifp = if_byindex(idx);
 	if (__predict_true(ifp != NULL))
 		psref_acquire(psref, &ifp->if_psref, ifnet_psref_class);
 	pserialize_read_exit(s);
@@ -2641,13 +2643,36 @@ if_get_byindex(u_int idx, struct psref *psref)
 	return ifp;
 }
 
+ifnet_t *
+if_get_bylla(const void *lla, unsigned char lla_len, struct psref *psref)
+{
+	ifnet_t *ifp;
+	int s;
+
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
+		if (if_is_deactivated(ifp))
+			continue;
+		if (ifp->if_addrlen != lla_len)
+			continue;
+		if (memcmp(lla, CLLADDR(ifp->if_sadl), lla_len) == 0) {
+			psref_acquire(psref, &ifp->if_psref,
+			    ifnet_psref_class);
+			break;
+		}
+	}
+	pserialize_read_exit(s);
+
+	return ifp;
+}
+
 /*
- * XXX it's safe only if the passed ifp is guaranteed to not be freed,
- * for example the ifp is already held or some other object is held which
- * guarantes the ifp to not be freed indirectly.
+ * Note that it's safe only if the passed ifp is guaranteed to not be freed,
+ * for example using pserialize or the ifp is already held or some other
+ * object is held which guarantes the ifp to not be freed indirectly.
  */
 void
-if_acquire_NOMPSAFE(struct ifnet *ifp, struct psref *psref)
+if_acquire(struct ifnet *ifp, struct psref *psref)
 {
 
 	KASSERT(ifp->if_index != 0);
@@ -3201,6 +3226,8 @@ static int
 if_transmit(struct ifnet *ifp, struct mbuf *m)
 {
 	int s, error;
+	size_t pktlen = m->m_pkthdr.len;
+	bool mcast = (m->m_flags & M_MCAST) != 0;
 
 	s = splnet();
 
@@ -3210,8 +3237,8 @@ if_transmit(struct ifnet *ifp, struct mbuf *m)
 		goto out;
 	}
 
-	ifp->if_obytes += m->m_pkthdr.len;;
-	if (m->m_flags & M_MCAST)
+	ifp->if_obytes += pktlen;
+	if (mcast)
 		ifp->if_omcasts++;
 
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
@@ -3235,9 +3262,11 @@ if_transmit_lock(struct ifnet *ifp, struct mbuf *m)
 	} else {
 		KERNEL_UNLOCK_ONE(NULL);
 		error = (*ifp->if_transmit)(ifp, m);
+		/* mbuf is alredy freed */
 	}
 #else /* !ALTQ */
 	error = (*ifp->if_transmit)(ifp, m);
+	/* mbuf is alredy freed */
 #endif /* !ALTQ */
 
 	return error;

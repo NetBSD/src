@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.6.10.2 2016/10/05 20:56:12 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.6.10.3 2017/08/28 17:53:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,8 +71,8 @@
  *	@(#)pmap.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_COMMON_PMAP_TLB_H_
-#define	_COMMON_PMAP_TLB_H_
+#ifndef	_UVM_PMAP_PMAP_TLB_H_
+#define	_UVM_PMAP_PMAP_TLB_H_
 
 #include <sys/evcnt.h>
 #include <sys/kcpuset.h>
@@ -115,7 +115,7 @@ struct pmap_tlb_info {
 #define	tlbinfo_noasids_p(ti)	((ti)->ti_asids_free == 0)
 	kmutex_t *ti_lock;
 	u_int ti_wired;			/* # of wired TLB entries */
-	tlb_asid_t ti_asid_hint;		/* probable next ASID to use */
+	tlb_asid_t ti_asid_hint;	/* probable next ASID to use */
 	tlb_asid_t ti_asid_max;
 	LIST_HEAD(, pmap_asid_info) ti_pais; /* list of active ASIDs */
 #ifdef MULTIPROCESSOR
@@ -179,4 +179,4 @@ void	pmap_tlb_check(pmap_t, bool (*)(void *, vaddr_t, tlb_asid_t, pt_entry_t));
 void	pmap_tlb_asid_check(void);
 
 #endif	/* _KERNEL */
-#endif	/* _COMMON_PMAP_TLB_H_ */
+#endif	/* _UVM_PMAP_PMAP_TLB_H_ */

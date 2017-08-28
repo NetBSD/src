@@ -1,4 +1,4 @@
-/*	$NetBSD: zl10353.c,v 1.3.30.1 2015/04/06 15:18:09 skrll Exp $ */
+/*	$NetBSD: zl10353.c,v 1.3.30.2 2017/08/28 17:52:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zl10353.c,v 1.3.30.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zl10353.c,v 1.3.30.2 2017/08/28 17:52:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -75,10 +75,6 @@ zl10353_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr)
 	struct zl10353 *zl;
 
 	zl = kmem_zalloc(sizeof(*zl), KM_SLEEP);
-
-	if (zl == NULL)
-		return NULL;
-
 	zl->zl_i2c = i2c;
 	zl->zl_i2c_addr = addr;
 	zl->zl_parent = parent;

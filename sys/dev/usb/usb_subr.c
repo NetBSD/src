@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.39 2017/01/03 12:50:50 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.40 2017/08/28 17:52:28 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.39 2017/01/03 12:50:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.40 2017/08/28 17:52:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -168,16 +168,18 @@ usbd_trim_spaces(char *p)
 static void
 usbd_get_device_string(struct usbd_device *ud, uByte index, char **buf)
 {
-	char *b = kmem_alloc(USB_MAX_ENCODED_STRING_LEN, KM_SLEEP);
-	if (b) {
-		usbd_status err = usbd_get_string0(ud, index, b, true);
-		if (err != USBD_NORMAL_COMPLETION) {
-			kmem_free(b, USB_MAX_ENCODED_STRING_LEN);
-			b = NULL;
-		} else {
-			usbd_trim_spaces(b);
-		}
+	char *b;
+	usbd_status err;
+
+	b = kmem_alloc(USB_MAX_ENCODED_STRING_LEN, KM_SLEEP);
+	err = usbd_get_string0(ud, index, b, true);
+	if (err != USBD_NORMAL_COMPLETION) {
+		kmem_free(b, USB_MAX_ENCODED_STRING_LEN);
+		b = NULL;
+	} else {
+		usbd_trim_spaces(b);
 	}
+
 	*buf = b;
 }
 
@@ -239,17 +241,14 @@ usbd_devinfo(struct usbd_device *dev, int showclass, char *cp, size_t l)
 	char *ep;
 
 	vendor = kmem_alloc(USB_MAX_ENCODED_STRING_LEN * 2, KM_SLEEP);
-	if (vendor == NULL) {
-		*cp = '\0';
-		return;
-	}
 	product = &vendor[USB_MAX_ENCODED_STRING_LEN];
 
 	ep = cp + l;
 
 	usbd_devinfo_vp(dev, vendor, USB_MAX_ENCODED_STRING_LEN,
 	    product, USB_MAX_ENCODED_STRING_LEN, 0, 1);
-	cp += snprintf(cp, ep - cp, "%s %s", vendor, product);
+	cp += snprintf(cp, ep - cp, "%s (%#04x) %s (%#04x)", vendor,
+	    UGETW(udd->idVendor), product, UGETW(udd->idProduct));
 	if (showclass)
 		cp += snprintf(cp, ep - cp, ", class %d/%d",
 		    udd->bDeviceClass, udd->bDeviceSubClass);
@@ -441,8 +440,6 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 	if (nendpt != 0) {
 		ifc->ui_endpoints = kmem_alloc(nendpt * sizeof(struct usbd_endpoint),
 				KM_SLEEP);
-		if (ifc->ui_endpoints == NULL)
-			return USBD_NOMEM;
 	} else
 		ifc->ui_endpoints = NULL;
 	ifc->ui_priv = NULL;
@@ -612,8 +609,6 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	}
 	len = UGETW(cd.wTotalLength);
 	cdp = kmem_alloc(len, KM_SLEEP);
-	if (cdp == NULL)
-		return USBD_NOMEM;
 
 	/* Get the full descriptor.  Try a few times for slow devices. */
 	for (i = 0; i < 3; i++) {
@@ -640,10 +635,6 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 		if (!err) {
 			int blen = UGETW(bd.wTotalLength);
 			bdp = kmem_alloc(blen, KM_SLEEP);
-			if (bdp == NULL) {
-				err = USBD_NOMEM;
-				goto bad;
-			}
 
 			/* Get the full desc */
 			for (i = 0; i < 3; i++) {
@@ -680,7 +671,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	 */
 	selfpowered = !!(cdp->bmAttributes & UC_SELF_POWERED);
 
-	DPRINTF("addr %d cno=%d attr=0x%02x, selfpowered=%d",
+	DPRINTF("addr %d cno=%d attr=%#02x, selfpowered=%d",
 	    dev->ud_addr, cdp->bConfigurationValue, cdp->bmAttributes,
 	    selfpowered);
 	DPRINTF("max power=%d", cdp->bMaxPower * 2, 0, 0, 0);
@@ -734,10 +725,6 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	nifc = cdp->bNumInterface;
 	dev->ud_ifaces = kmem_alloc(nifc * sizeof(struct usbd_interface),
 	    KM_SLEEP);
-	if (dev->ud_ifaces == NULL) {
-		err = USBD_NOMEM;
-		goto bad;
-	}
 	DPRINTFN(5, "dev=%p cdesc=%p", dev, cdp, 0, 0);
 	dev->ud_cdesc = cdp;
 	dev->ud_config = cdp->bConfigurationValue;
@@ -780,10 +767,6 @@ usbd_setup_pipe_flags(struct usbd_device *dev, struct usbd_interface *iface,
 
 	p = kmem_alloc(dev->ud_bus->ub_pipesize, KM_SLEEP);
 	DPRINTFN(1, "dev=%p addr=%d iface=%p ep=%p pipe=%p", dev, dev->ud_addr, iface, ep);
-	if (p == NULL) {
-		DPRINTFN(1, "(nomem)", 0, 0, 0, 0);
-		return USBD_NOMEM;
-	}
 	p->up_dev = dev;
 	p->up_iface = iface;
 	p->up_endpoint = ep;
@@ -799,7 +782,7 @@ usbd_setup_pipe_flags(struct usbd_device *dev, struct usbd_interface *iface,
 	SIMPLEQ_INIT(&p->up_queue);
 	err = dev->ud_bus->ub_methods->ubm_open(p);
 	if (err) {
-		DPRINTF("endpoint=0x%x failed, error=%d",
+		DPRINTF("endpoint=%#x failed, error=%d",
 		    ep->ue_edesc->bEndpointAddress, err, 0, 0);
 		kmem_free(p, dev->ud_bus->ub_pipesize);
 		return err;
@@ -860,8 +843,6 @@ usbd_attach_roothub(device_t parent, struct usbd_device *dev)
 	dv = config_found_ia(parent, "usbroothubif", &uaa, 0);
 	if (dv) {
 		dev->ud_subdevs = kmem_alloc(sizeof(dv), KM_SLEEP);
-		if (dev->ud_subdevs == NULL)
-			return USBD_NOMEM;
 		dev->ud_subdevs[0] = dv;
 		dev->ud_subdevlen = 1;
 	}
@@ -910,8 +891,6 @@ usbd_attachwholedevice(device_t parent, struct usbd_device *dev, int port,
 	KERNEL_UNLOCK_ONE(NULL);
 	if (dv) {
 		dev->ud_subdevs = kmem_alloc(sizeof(dv), KM_SLEEP);
-		if (dev->ud_subdevs == NULL)
-			return USBD_NOMEM;
 		dev->ud_subdevs[0] = dv;
 		dev->ud_subdevlen = 1;
 		dev->ud_nifaces_claimed = 1; /* XXX */
@@ -935,8 +914,6 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 
 	nifaces = dev->ud_cdesc->bNumInterface;
 	ifaces = kmem_zalloc(nifaces * sizeof(*ifaces), KM_SLEEP);
-	if (!ifaces)
-		return USBD_NOMEM;
 	for (i = 0; i < nifaces; i++) {
 		if (!dev->ud_subdevs[i]) {
 			ifaces[i] = &dev->ud_ifaces[i];
@@ -1189,9 +1166,6 @@ usbd_new_device(device_t parent, struct usbd_bus *bus, int depth, int speed,
 	}
 
 	dev = kmem_zalloc(sizeof(*dev), KM_SLEEP);
-	if (dev == NULL)
-		return USBD_NOMEM;
-
 	dev->ud_bus = bus;
 
 	/* Set up default endpoint handle. */
@@ -1403,8 +1377,8 @@ usbd_reload_device_desc(struct usbd_device *dev)
 	DPRINTFN(15, "bDeviceSubClass     %5u", udd->bDeviceSubClass, 0, 0, 0);
 	DPRINTFN(15, "bDeviceProtocol     %5u", udd->bDeviceProtocol, 0, 0, 0);
 	DPRINTFN(15, "bMaxPacketSize0     %5u", udd->bMaxPacketSize, 0, 0, 0);
-	DPRINTFN(15, "idVendor           0x%04x", udd->idVendor, 0, 0, 0);
-	DPRINTFN(15, "idProduct          0x%04x", udd->idProduct, 0, 0, 0);
+	DPRINTFN(15, "idVendor            %#04x", udd->idVendor, 0, 0, 0);
+	DPRINTFN(15, "idProduct           %#04x", udd->idProduct, 0, 0, 0);
 	DPRINTFN(15, "bcdDevice           %2x.%02x", udd->bcdDevice[1],
 	    udd->bcdDevice[0], 0, 0);
 	DPRINTFN(15, "iManufacturer       %5u", udd->iManufacturer, 0, 0, 0);
@@ -1458,11 +1432,11 @@ usbd_print(void *aux, const char *pnp)
 	 * by each driver.
 	 */
 	if (uaa->uaa_vendor != UHUB_UNK_VENDOR)
-		aprint_normal(" vendor 0x%04x", uaa->uaa_vendor);
+		aprint_normal(" vendor %#04x", uaa->uaa_vendor);
 	if (uaa->uaa_product != UHUB_UNK_PRODUCT)
-		aprint_normal(" product 0x%04x", uaa->uaa_product);
+		aprint_normal(" product %#04x", uaa->uaa_product);
 	if (uaa->uaa_release != UHUB_UNK_RELEASE)
-		aprint_normal(" release 0x%04x", uaa->uaa_release);
+		aprint_normal(" release %#04x", uaa->uaa_release);
 #endif
 	return UNCONF;
 }
@@ -1484,11 +1458,11 @@ usbd_ifprint(void *aux, const char *pnp)
 	 * by each driver.
 	 */
 	if (uaa->uaa_vendor != UHUB_UNK_VENDOR)
-		aprint_normal(" vendor 0x%04x", uaa->uaa_vendor);
+		aprint_normal(" vendor %#04x", uaa->uaa_vendor);
 	if (uaa->uaa_product != UHUB_UNK_PRODUCT)
-		aprint_normal(" product 0x%04x", uaa->uaa_product);
+		aprint_normal(" product %#04x", uaa->uaa_product);
 	if (uaa->uaa_release != UHUB_UNK_RELEASE)
-		aprint_normal(" release 0x%04x", uaa->uaa_release);
+		aprint_normal(" release %#04x", uaa->uaa_release);
 #endif
 	return UNCONF;
 }

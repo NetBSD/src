@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.113.2.6 2017/02/05 13:40:12 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.113.2.7 2017/08/28 17:51:40 skrll Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,15 +128,13 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.113.2.6 2017/02/05 13:40:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.113.2.7 2017/08/28 17:51:40 skrll Exp $");
 
-#include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
 #include "opt_modular.h"
 #include "opt_multiboot.h"
 #include "opt_realmem.h"
-#include "opt_vm86.h"
 #include "opt_xen.h"
 
 #include "assym.h"
@@ -343,11 +341,13 @@ _C_LABEL(Multiboot_Header):
 	jne	1f
 
 	/*
-	 * Indeed, a multiboot-compliant boot loader executed us.  We copy
-	 * the received Multiboot information structure into kernel's data
-	 * space to process it later -- after we are relocated.  It will
-	 * be safer to run complex C code than doing it at this point.
+	 * Indeed, a multiboot-compliant boot loader executed us. We switch
+	 * to the temporary stack, and copy the received Multiboot information
+	 * structure into kernel's data space to process it later -- after we
+	 * are relocated. It will be safer to run complex C code than doing it
+	 * at this point.
 	 */
+	movl	$_RELOC(tmpstk),%esp
 	pushl	%ebx		/* Address of Multiboot information */
 	call	_C_LABEL(multiboot_pre_reloc)
 	addl	$4,%esp
@@ -842,24 +842,6 @@ begin:
 	addl	$PDE_SIZE,%esp		/* pop paddr_t */
 	addl	$NGDT*8,%esp		/* pop temporary gdt */
 
-#ifdef SAFARI_FIFO_HACK
-	movb	$5,%al
-	movw	$0x37b,%dx
-	outb	%al,%dx
-	movw	$0x37f,%dx
-	inb	%dx,%al
-	movb	%al,%cl
-
-	orb	$1,%cl
-
-	movb	$5,%al
-	movw	$0x37b,%dx
-	outb	%al,%dx
-	movw	$0x37f,%dx
-	movb	%cl,%al
-	outb	%al,%dx
-#endif /* SAFARI_FIFO_HACK */
-
 	call 	_C_LABEL(main)
 #else /* XEN */
 	/* First, reset the PSL. */
@@ -1239,30 +1221,12 @@ ENTRY(savectx)
 END(savectx)
 
 /*
- * osyscall()
- *
- * Old call gate entry for syscall
- */
-IDTVEC(osyscall)
-#ifndef XEN
-	/* XXX we are in trouble! interrupts be off here. */
-	cli			/* must be first instruction */
-#endif
-	pushfl			/* set eflags in trap frame */
-	popl	8(%esp)
-	orl	$PSL_I,8(%esp)	/* re-enable ints on return to user */
-	pushl	$7		/* size of instruction for restart */
-	jmp	syscall1
-IDTVEC_END(osyscall)
-
-/*
  * syscall()
  *
  * Trap gate entry for syscall
  */
 IDTVEC(syscall)
 	pushl	$2		/* size of instruction for restart */
-syscall1:
 	pushl	$T_ASTFLT	/* trap # for doing ASTs */
 	INTRENTRY
 	STI(%eax)
@@ -1348,39 +1312,6 @@ syscall1:
 	addl	$4,%esp
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 IDTVEC_END(syscall)
-
-IDTVEC(svr4_fasttrap)
-	pushl	$2		/* size of instruction for restart */
-	pushl	$T_ASTFLT	/* trap # for doing ASTs */
-	INTRENTRY
-	STI(%eax)
-	pushl	$RW_READER
-	pushl	$_C_LABEL(svr4_fasttrap_lock)
-	call	_C_LABEL(rw_enter)
-	addl	$8,%esp
-	call	*_C_LABEL(svr4_fasttrap_vec)
-	pushl	$_C_LABEL(svr4_fasttrap_lock)
-	call	_C_LABEL(rw_exit)
-	addl	$4,%esp
-2:	/* Check for ASTs on exit to user mode. */
-	cli
-	CHECK_ASTPENDING(%eax)
-	je	1f
-	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%eax)
-	sti
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	pushl	%esp
-	call	_C_LABEL(trap)
-	addl	$4,%esp
-	jmp	2b
-1:	CHECK_DEFERRED_SWITCH
-	jnz	9f
-	INTRFASTEXIT
-9:	sti
-	call	_C_LABEL(pmap_load)
-	cli
-	jmp	2b
 
 /*
  * int npx586bug1(int a, int b)

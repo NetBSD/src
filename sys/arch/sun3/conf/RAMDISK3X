@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK3X,v 1.41 2013/04/27 18:19:54 christos Exp $
+# $NetBSD: RAMDISK3X,v 1.41.12.1 2017/08/28 17:51:53 skrll Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -36,8 +36,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 # Networking options
 options 	INET		# IP protocol stack support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
-
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS

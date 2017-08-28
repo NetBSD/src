@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.87.16.1 2015/06/06 14:40:06 skrll Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.87.16.2 2017/08/28 17:52:01 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.87.16.1 2015/06/06 14:40:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.87.16.2 2017/08/28 17:52:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -750,8 +750,7 @@ acpitz_print_processor_list(device_t dv)
 
 		aprint_normal(" %s", device_xname(ci->ci_dev));
 
-		if (sc->sc_psl)
-			sc->sc_psl[cnt] = ci;
+		sc->sc_psl[cnt] = ci;
 		++cnt;
 	}
 

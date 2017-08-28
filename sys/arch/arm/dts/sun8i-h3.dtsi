@@ -1,0 +1,61 @@
+/* $NetBSD: sun8i-h3.dtsi,v 1.1.6.2 2017/08/28 17:51:30 skrll Exp $ */
+
+/*-
+ * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+/ {
+	soc {
+		emac: ethernet@1c30000 {
+			compatible = "allwinner,sun8i-h3-emac";
+			reg = <0x01c30000 0x104>, <0x01c00030 0x4>;
+			reg-names = "emac", "syscon";
+			interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+			resets = <&ccu RST_BUS_EMAC>, <&ccu RST_BUS_EPHY>;
+			reset-names = "ahb", "ephy";
+			clocks = <&ccu CLK_BUS_EMAC>, <&ccu CLK_BUS_EPHY>;
+			clock-names = "ahb", "ephy";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+	};
+};
+
+&pio {
+	emac_pins_rgmii_a: emac_rgmii@0 {
+		pins = "PD0", "PD1", "PD2", "PD3", "PD4", "PD5",
+		       "PD7", "PD8", "PD9", "PD10", "PD12", "PD13",
+		       "PD15", "PD16", "PD17";
+		function = "emac";
+		drive-strength = <40>;
+	};
+
+	emac_phy_reset_pin: emac_phy_reset_pin@0 {
+		pins = "PD6";
+		function = "emac";
+		drive-strength = <10>;
+	};
+};

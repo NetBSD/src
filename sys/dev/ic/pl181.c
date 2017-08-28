@@ -1,4 +1,4 @@
-/* $NetBSD: pl181.c,v 1.1.2.2 2015/04/06 15:18:09 skrll Exp $ */
+/* $NetBSD: pl181.c,v 1.1.2.3 2017/08/28 17:52:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl181.c,v 1.1.2.2 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl181.c,v 1.1.2.3 2017/08/28 17:52:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +42,12 @@ __KERNEL_RCSID(0, "$NetBSD: pl181.c,v 1.1.2.2 2015/04/06 15:18:09 skrll Exp $");
 
 #include <dev/ic/pl181reg.h>
 #include <dev/ic/pl181var.h>
+
+/*
+ * Data length register is 16 bits for a maximum of 65535 bytes. Round
+ * maximum transfer size down to the nearest sector.
+ */
+#define	PLMMC_MAXXFER	rounddown(65535, SDMMC_SECTOR_SIZE)
 
 static int	plmmc_host_reset(sdmmc_chipset_handle_t);
 static uint32_t	plmmc_host_ocr(sdmmc_chipset_handle_t);
@@ -61,7 +67,7 @@ static int	plmmc_wait_status(struct plmmc_softc *, uint32_t, int);
 static int	plmmc_pio_wait(struct plmmc_softc *,
 				 struct sdmmc_command *);
 static int	plmmc_pio_transfer(struct plmmc_softc *,
-				     struct sdmmc_command *);
+				     struct sdmmc_command *, int);
 
 static struct sdmmc_chip_functions plmmc_chip_functions = {
 	.host_reset = plmmc_host_reset,
@@ -117,8 +123,9 @@ plmmc_init(struct plmmc_softc *sc)
 	saa.saa_sct = &plmmc_chip_functions;
 	saa.saa_sch = sc;
 	saa.saa_clkmin = 400;
-	saa.saa_clkmax = sc->sc_clock_freq / 1000;
-	saa.saa_caps = 0;
+	saa.saa_clkmax = sc->sc_max_freq > 0 ?
+	    sc->sc_max_freq / 1000 : sc->sc_clock_freq / 1000;
+	saa.saa_caps = SMC_CAPS_4BIT_MODE;
 
 	sc->sc_sdmmc_dev = config_found(sc->sc_dev, &saa, NULL);
 }
@@ -202,13 +209,13 @@ plmmc_pio_wait(struct plmmc_softc *sc, struct sdmmc_command *cmd)
 }
 
 static int
-plmmc_pio_transfer(struct plmmc_softc *sc, struct sdmmc_command *cmd)
+plmmc_pio_transfer(struct plmmc_softc *sc, struct sdmmc_command *cmd,
+    int xferlen)
 {
-	uint32_t *datap = (uint32_t *)cmd->c_data;
+	uint32_t *datap = (uint32_t *)cmd->c_buf;
 	int i;
 
-	cmd->c_resid = cmd->c_datalen;
-	for (i = 0; i < (cmd->c_datalen >> 2); i++) {
+	for (i = 0; i < xferlen / 4; i++) {
 		if (plmmc_pio_wait(sc, cmd))
 			return ETIMEDOUT;
 		if (cmd->c_flags & SCF_CMD_READ) {
@@ -217,6 +224,7 @@ plmmc_pio_transfer(struct plmmc_softc *sc, struct sdmmc_command *cmd)
 			MMCI_WRITE(sc, MMCI_FIFO_REG, datap[i]);
 		}
 		cmd->c_resid -= 4;
+		cmd->c_buf += 4;
 	}
 
 	return 0;
@@ -308,17 +316,20 @@ plmmc_bus_rod(sdmmc_chipset_handle_t sch, int on)
 }
 
 static void
-plmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
+plmmc_do_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 {
 	struct plmmc_softc *sc = sch;
 	uint32_t cmdval = MMCI_COMMAND_ENABLE;
 
-#ifdef PLMMC_DEBUG
-	device_printf(sc->sc_dev, "opcode %d flags %#x datalen %d\n",
-	    cmd->c_opcode, cmd->c_flags, cmd->c_datalen);
-#endif
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
-	mutex_enter(&sc->sc_intr_lock);
+	const int xferlen = min(cmd->c_resid, PLMMC_MAXXFER);
+
+#ifdef PLMMC_DEBUG
+	device_printf(sc->sc_dev,
+	    "opcode %d flags %#x datalen %d resid %d xferlen %d\n",
+	    cmd->c_opcode, cmd->c_flags, cmd->c_datalen, cmd->c_resid, xferlen);
+#endif
 
 	MMCI_WRITE(sc, MMCI_COMMAND_REG, 0);
 	MMCI_WRITE(sc, MMCI_MASK0_REG, 0);
@@ -336,9 +347,11 @@ plmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	if (cmd->c_flags & SCF_RSP_136)
 		cmdval |= MMCI_COMMAND_LONGRSP;
 
-	if (cmd->c_datalen > 0) {
-		unsigned int nblks = cmd->c_datalen / cmd->c_blklen;
-		if (nblks == 0 || (cmd->c_datalen % cmd->c_blklen) != 0)
+	uint32_t arg = cmd->c_arg;
+
+	if (xferlen > 0) {
+		unsigned int nblks = xferlen / cmd->c_blklen;
+		if (nblks == 0 || (xferlen % cmd->c_blklen) != 0)
 			++nblks;
 
 		const uint32_t dir = (cmd->c_flags & SCF_CMD_READ) ? 1 : 0;
@@ -350,13 +363,20 @@ plmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		    __SHIFTIN(dir, MMCI_DATA_CTRL_DIRECTION) |
 		    __SHIFTIN(blksize, MMCI_DATA_CTRL_BLOCKSIZE) |
 		    MMCI_DATA_CTRL_ENABLE);
+
+		/* Adjust blkno if necessary */
+		u_int blkoff =
+		    (cmd->c_datalen - cmd->c_resid) / SDMMC_SECTOR_SIZE;
+		if (!ISSET(cmd->c_flags, SCF_XFER_SDHC))
+			blkoff <<= SDMMC_SECTOR_SIZE_SB;
+		arg += blkoff;
 	}
 
-	MMCI_WRITE(sc, MMCI_ARGUMENT_REG, cmd->c_arg);
+	MMCI_WRITE(sc, MMCI_ARGUMENT_REG, arg);
 	MMCI_WRITE(sc, MMCI_COMMAND_REG, cmdval | cmd->c_opcode);
 
-	if (cmd->c_datalen > 0) {
-		cmd->c_error = plmmc_pio_transfer(sc, cmd);
+	if (xferlen > 0) {
+		cmd->c_error = plmmc_pio_transfer(sc, cmd, xferlen);
 		if (cmd->c_error) {
 			device_printf(sc->sc_dev,
 			    "error (%d) waiting for xfer\n", cmd->c_error);
@@ -364,7 +384,7 @@ plmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		}
 	}
 
-	if (cmd->c_flags & SCF_RSP_PRESENT) {
+	if ((cmd->c_flags & SCF_RSP_PRESENT) && cmd->c_resid == 0) {
 		cmd->c_error = plmmc_wait_status(sc,
 		    MMCI_INT_CMD_RESP_END|MMCI_INT_CMD_TIMEOUT, hz * 2);
 		if (cmd->c_error == 0 &&
@@ -399,7 +419,6 @@ plmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	}
 
 done:
-	cmd->c_flags |= SCF_ITSDONE;
 	MMCI_WRITE(sc, MMCI_COMMAND_REG, 0);
 	MMCI_WRITE(sc, MMCI_MASK0_REG, 0);
 	MMCI_WRITE(sc, MMCI_CLEAR_REG, 0xffffffff);
@@ -409,6 +428,38 @@ done:
 	device_printf(sc->sc_dev, "MMCI_STATUS_REG = %#x\n",
 	    MMCI_READ(sc, MMCI_STATUS_REG));
 #endif
+}
+
+static void
+plmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
+{
+	struct plmmc_softc *sc = sch;
+
+#ifdef PLMMC_DEBUG
+	device_printf(sc->sc_dev, "opcode %d flags %#x data %p datalen %d\n",
+	    cmd->c_opcode, cmd->c_flags, cmd->c_data, cmd->c_datalen);
+#endif
+
+	mutex_enter(&sc->sc_intr_lock);
+	cmd->c_resid = cmd->c_datalen;
+	cmd->c_buf = cmd->c_data;
+	do {
+		plmmc_do_command(sch, cmd);
+
+		if (cmd->c_resid > 0 && cmd->c_error == 0) {
+			/*
+			 * Multi block transfer and there is still data
+			 * remaining. Send a stop cmd between transfers.
+			 */
+			struct sdmmc_command stop_cmd;
+			memset(&stop_cmd, 0, sizeof(stop_cmd));
+			stop_cmd.c_opcode = MMC_STOP_TRANSMISSION;
+			stop_cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1B |
+			    SCF_RSP_SPI_R1B;
+			plmmc_do_command(sch, &stop_cmd);
+		}
+	} while (cmd->c_resid > 0 && cmd->c_error == 0);
+	cmd->c_flags |= SCF_ITSDONE;
 	mutex_exit(&sc->sc_intr_lock);
 }
 

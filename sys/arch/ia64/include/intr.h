@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2009/07/20 06:14:15 kiyohara Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.40.1 2017/08/28 17:51:42 skrll Exp $	*/
 
 /* XXX: cherry: To Be fixed when we switch on interrupts. */
 
@@ -69,5 +69,6 @@ extern uint64_t ia64_lapic_address;
 
 void *intr_establish(int, int, int, int (*)(void *), void *);
 void intr_disestablish(void *);
+void ia64_handle_intr(void *);
 
 #endif /* ! _IA64_INTR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.14.12.4 2016/10/05 20:55:56 skrll Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.14.12.5 2017/08/28 17:52:27 skrll Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -61,12 +61,18 @@
 #define SD_SEND_SWITCH_FUNC		6	/* R1 */
 #define SD_SEND_IF_COND			8	/* R7 */
 #define SD_VOLTAGE_SWITCH		11	/* R1 */
+#define SD_ERASE_WR_BLK_START		32	/* R1 */
+#define SD_ERASE_WR_BLK_END		33	/* R1 */
 
 /* SD application commands */			/* response type */
 #define SD_APP_SET_BUS_WIDTH		6	/* R1 */
 #define SD_APP_SD_STATUS		13	/* R1 */
 #define SD_APP_OP_COND			41	/* R3 */
 #define SD_APP_SEND_SCR			51	/* R1 */
+
+/* SD erase arguments */
+#define SD_ERASE_DISCARD		0x00000001
+#define SD_ERASE_FULE			0x00000002
 
 /* OCR bits */
 #define MMC_OCR_MEM_READY		(1U<<31)/* memory power-up status bit */
@@ -115,22 +121,41 @@
 #define SD_ARG_BUS_WIDTH_4		2
 
 /* EXT_CSD fields */
-#define EXT_CSD_BUS_WIDTH		183	/* WO */
-#define EXT_CSD_HS_TIMING		185	/* R/W */
-#define EXT_CSD_REV			192	/* RO */
-#define EXT_CSD_STRUCTURE		194	/* RO */
-#define EXT_CSD_CARD_TYPE		196	/* RO */
-#define EXT_CSD_SEC_COUNT		212	/* RO */
+#define EXT_CSD_FLUSH_CACHE		32	/* W/E_P */
+#define EXT_CSD_CACHE_CTRL		33	/* R/W/E_P */
+#define EXT_CSD_RST_N_FUNCTION		162	/* R/W */
+#define EXT_CSD_BUS_WIDTH		183	/* W/E_P */
+#define EXT_CSD_HS_TIMING		185	/* R/W/E_P */
+#define EXT_CSD_REV			192	/* R */
+#define EXT_CSD_STRUCTURE		194	/* R */
+#define EXT_CSD_CARD_TYPE		196	/* R */
+#define EXT_CSD_SEC_COUNT		212	/* R */
+#define EXT_CSD_CACHE_SIZE		249	/* R (4 bytes) */
 
 /* EXT_CSD field definitions */
 #define EXT_CSD_CMD_SET_NORMAL		(1U << 0)
 #define EXT_CSD_CMD_SET_SECURE		(1U << 1)
 #define EXT_CSD_CMD_SET_CPSECURE	(1U << 2)
 
+/* EXT_CSD_FLUSH_CACHE */
+#define EXT_CSD_FLUSH_CACHE_FLUSH	(1U << 0)
+#define EXT_CSD_FLUSH_CACHE_BARRIER	(1U << 1)
+
+/* EXT_CSD_CACHE_CTRL */
+#define EXT_CSD_CACHE_CTRL_CACHE_EN	(1U << 0)
+
 /* EXT_CSD_BUS_WIDTH */
 #define EXT_CSD_BUS_WIDTH_1		0	/* 1 bit mode */
 #define EXT_CSD_BUS_WIDTH_4		1	/* 4 bit mode */
 #define EXT_CSD_BUS_WIDTH_8		2	/* 8 bit mode */
+#define EXT_CSD_BUS_WIDTH_4_DDR		5	/* 4 bit mode (DDR) */
+#define EXT_CSD_BUS_WIDTH_8_DDR		6	/* 8 bit mode (DDR) */
+
+/* EXT_CSD_HS_TIMING */
+#define EXT_CSD_HS_TIMING_LEGACY	0
+#define EXT_CSD_HS_TIMING_HIGHSPEED	1
+#define EXT_CSD_HS_TIMING_HS200		2
+#define EXT_CSD_HS_TIMING_HS400		3
 
 /* EXT_CSD_STRUCTURE */
 #define EXT_CSD_STRUCTURE_VER_1_0	0	/* CSD Version No.1.0 */
@@ -138,19 +163,20 @@
 #define EXT_CSD_STRUCTURE_VER_1_2	2	/* Version 4.1-4.2-4.3 */
 
 /* EXT_CSD_CARD_TYPE */
-#define EXT_CSD_CARD_TYPE_F_26M		(1 << 0)
-#define EXT_CSD_CARD_TYPE_F_52M		(1 << 1)
-#define EXT_CSD_CARD_TYPE_F_52M_1_8V	(1 << 2)
-#define EXT_CSD_CARD_TYPE_F_52M_1_2V	(1 << 3)
-#define EXT_CSD_CARD_TYPE_F_HS200_1_8V	(1 << 4)
-#define EXT_CSD_CARD_TYPE_F_HS200_1_2V	(1 << 5)
-#define EXT_CSD_CARD_TYPE_F_HS400_1_8V	(1 << 6)
-#define EXT_CSD_CARD_TYPE_F_HS400_1_2V	(1 << 7)
-#define EXT_CSD_CARD_TYPE_26M		0x01
-#define EXT_CSD_CARD_TYPE_52M		0x03
-#define EXT_CSD_CARD_TYPE_52M_V18	0x07
-#define EXT_CSD_CARD_TYPE_52M_V12	0x0b
-#define EXT_CSD_CARD_TYPE_52M_V12_18	0x0f
+#define EXT_CSD_CARD_TYPE_F_26M		(1 << 0) /* HS 26 MHz */
+#define EXT_CSD_CARD_TYPE_F_52M		(1 << 1) /* HS 52 MHz */
+#define EXT_CSD_CARD_TYPE_F_DDR52_1_8V	(1 << 2) /* HS DDR 52 MHz 1.8V or 3V */
+#define EXT_CSD_CARD_TYPE_F_DDR52_1_2V	(1 << 3) /* HS DDR 52 MHz 1.2V */
+#define EXT_CSD_CARD_TYPE_F_HS200_1_8V	(1 << 4) /* HS200 SDR 200 MHz 1.8V */
+#define EXT_CSD_CARD_TYPE_F_HS200_1_2V	(1 << 5) /* HS200 SDR 200 MHz 1.2V */
+#define EXT_CSD_CARD_TYPE_F_HS400_1_8V	(1 << 6) /* HS400 DDR 200 MHz 1.8V */
+#define EXT_CSD_CARD_TYPE_F_HS400_1_2V	(1 << 7) /* HS400 DDR 200 MHz 1.2V */
+
+/* EXT_CSD_RST_N_FUNCTION */
+#define	EXT_CSD_RST_N_TMP_DISABLED	0x00
+#define	EXT_CSD_RST_N_PERM_ENABLED	0x01
+#define	EXT_CSD_RST_N_PERM_DISABLED	0x02
+#define	EXT_CSD_RST_N_MASK		0x03
 
 /* MMC_SWITCH access mode */
 #define MMC_SWITCH_MODE_CMD_SET		0x00	/* Change the command set */
@@ -332,6 +358,42 @@
 #define SCR_CMD_SUPPORT_CMD23(scr)	MMC_RSP_BITS((scr), 33, 1)
 #define SCR_CMD_SUPPORT_CMD20(scr)	MMC_RSP_BITS((scr), 32, 1)
 #define SCR_RESERVED2(scr)		MMC_RSP_BITS((scr), 0, 32)
+
+/* SSR (SD Status Register) */
+#define SSR_DAT_BUS_WIDTH(resp)		__bitfield((resp), 510, 2)
+#define  SSR_DAT_BUS_WIDTH_1		0
+#define  SSR_DAT_BUS_WIDTH_4		2
+#define SSR_SECURED_MODE(resp)		__bitfield((resp), 509, 1)
+#define SSR_SD_CARD_TYPE(resp)		__bitfield((resp), 480, 16)
+#define  SSR_SD_CARD_TYPE_RDWR		0
+#define  SSR_SD_CARD_TYPE_ROM		1
+#define  SSR_SD_CARD_TYPE_OTP		2
+#define SSR_SIZE_OF_PROTECTED_AREA(resp) __bitfield((resp), 448, 32)
+#define SSR_SPEED_CLASS(resp)		__bitfield((resp), 440, 8)
+#define  SSR_SPEED_CLASS_0		0
+#define  SSR_SPEED_CLASS_2		1
+#define  SSR_SPEED_CLASS_4		2
+#define  SSR_SPEED_CLASS_6		3
+#define  SSR_SPEED_CLASS_10		4
+#define SSR_PERFORMANCE_MOVE(resp)	__bitfield((resp), 432, 8)
+#define SSR_AU_SIZE(resp)		__bitfield((resp), 428, 4)
+#define SSR_ERASE_SIZE(resp)		__bitfield((resp), 408, 16)
+#define SSR_ERASE_TIMEOUT(resp)		__bitfield((resp), 402, 6)
+#define SSR_ERASE_OFFSET(resp)		__bitfield((resp), 400, 2)
+#define SSR_UHS_SPEED_GRADE(resp)	__bitfield((resp), 396, 4)
+#define  SSR_UHS_SPEED_GRADE_10MB	1
+#define  SSR_UHS_SPEED_GRADE_30MB	3
+#define SSR_UHS_AU_SIZE(resp)		__bitfield((resp), 392, 4)
+#define SSR_VIDEO_SPEED_CLASS(resp)	__bitfield((resp), 384, 8)
+#define SSR_VSC_AU_SIZE(resp)		__bitfield((resp), 368, 10)
+#define SSR_SUS_ADDR(resp)		__bitfield((resp), 346, 22)
+#define SSR_APP_PERF_CLASS(resp)	__bitfield((resp), 336, 4)
+#define  SSR_APP_PERF_CLASS_UNSUPPORTED	0
+#define  SSR_APP_PERF_CLASS_A1		1
+#define  SSR_APP_PERF_CLASS_A2		2
+#define SSR_PERFORMANCE_ENHANCE(resp)	__bitfield((resp), 328, 8)
+#define SSR_DISCARD_SUPPORT(resp)	__bitfield((resp), 313, 1)
+#define SSR_FULE_SUPPORT(resp)		__bitfield((resp), 312, 1)
 
 /* Status of Switch Function */
 #define SFUNC_STATUS_GROUP(status, group) \

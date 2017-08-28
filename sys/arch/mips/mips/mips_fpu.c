@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fpu.c,v 1.12.4.1 2016/04/22 15:44:10 skrll Exp $	*/
+/*	$NetBSD: mips_fpu.c,v 1.12.4.2 2017/08/28 17:51:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,9 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.12.4.1 2016/04/22 15:44:10 skrll Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.12.4.2 2017/08/28 17:51:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -58,9 +56,9 @@ const pcu_ops_t mips_fpu_ops = {
 };
 
 void
-fpu_discard(void)
+fpu_discard(lwp_t *l)
 {
-	pcu_discard(&mips_fpu_ops, false);
+	pcu_discard(&mips_fpu_ops, l, false);
 }
 
 void
@@ -70,15 +68,15 @@ fpu_load(void)
 }
 
 void
-fpu_save(void)
+fpu_save(lwp_t *l)
 {
-	pcu_save(&mips_fpu_ops);
+	pcu_save(&mips_fpu_ops, l);
 }
 
 bool
-fpu_used_p(void)
+fpu_used_p(const lwp_t *l)
 {
-	return pcu_valid_p(&mips_fpu_ops);
+	return pcu_valid_p(&mips_fpu_ops, l);
 }
 
 void

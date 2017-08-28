@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.35.4.4 2015/12/27 12:09:31 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.35.4.5 2017/08/28 17:51:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -98,17 +98,6 @@
 
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) -(PAGE_SIZE+1))
-
-#ifndef __ASSEMBLER__
-/* XXX max. amount of KVM to be used by buffers. */
-#ifndef VM_MAX_KERNEL_BUF
-extern vaddr_t virtual_avail;
-extern vaddr_t virtual_end;
-
-#define	VM_MAX_KERNEL_BUF	\
-	((virtual_end - virtual_avail) * 4 / 10)
-#endif
-#endif /* __ASSEMBLER__ */
 
 #endif /* _KERNEL || _KMEMUSER */
 

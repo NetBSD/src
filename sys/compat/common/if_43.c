@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.9.2.4 2016/12/05 10:54:59 skrll Exp $	*/
+/*	$NetBSD: if_43.c,v 1.9.2.5 2017/08/28 17:51:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.9.2.4 2016/12/05 10:54:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.9.2.5 2017/08/28 17:51:58 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -289,9 +289,6 @@ static int (*orig_compat_ifioctl)(struct socket *, u_long, u_long,
 void
 if_43_init(void)
 {
-	extern u_long (*vec_compat_cvtcmd)(u_long);
-	extern int (*vec_compat_ifioctl)(struct socket *, u_long, u_long,
-	    void *, struct lwp *);
 
 	orig_compat_cvtcmd = vec_compat_cvtcmd;
 	vec_compat_cvtcmd = compat_cvtcmd;

@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.73.14.2 2015/12/27 12:10:05 skrll Exp $ */
+/* $NetBSD: kern_auth.c,v 1.73.14.3 2017/08/28 17:53:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.73.14.2 2015/12/27 12:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.73.14.3 2017/08/28 17:53:07 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -754,15 +754,8 @@ kauth_register_scope(const char *id, kauth_scope_callback_t callback,
 
 	/* Allocate space for a new scope and listener. */
 	scope = kmem_alloc(sizeof(*scope), KM_SLEEP);
-	if (scope == NULL)
-		return NULL;
-	if (callback != NULL) {
+	if (callback != NULL)
 		listener = kmem_alloc(sizeof(*listener), KM_SLEEP);
-		if (listener == NULL) {
-			kmem_free(scope, sizeof(*scope));
-			return (NULL);
-		}
-	}
 
 	/*
 	 * Acquire scope list lock.
@@ -887,9 +880,6 @@ kauth_listen_scope(const char *id, kauth_scope_callback_t callback,
 	kauth_listener_t listener;
 
 	listener = kmem_alloc(sizeof(*listener), KM_SLEEP);
-	if (listener == NULL)
-		return (NULL);
-
 	rw_enter(&kauth_lock, RW_WRITER);
 
 	/*

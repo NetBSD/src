@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.2.2.3 2015/12/27 12:09:47 skrll Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.2.2.4 2017/08/28 17:51:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.2.2.3 2015/12/27 12:09:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.2.2.4 2017/08/28 17:51:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -56,10 +56,6 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 	kernconfig_lock();
 	mslen = (module_count+module_builtinlist+1) * sizeof(modstat_t);
 	mso = kmem_zalloc(mslen, KM_SLEEP);
-	if (mso == NULL) {
-		kernconfig_unlock();
-		return ENOMEM;
-	}
 	ms = mso;
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
 		mi = mod->mod_info;
@@ -180,5 +176,3 @@ netbsd32_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 
 	return error;
 }
-
-

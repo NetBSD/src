@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.98.2.3 2016/10/05 20:55:37 skrll Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.98.2.4 2017/08/28 17:51:57 skrll Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.98.2.3 2016/10/05 20:55:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.98.2.4 2017/08/28 17:51:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -827,7 +827,7 @@ int
 coda_inactive(void *v)
 {
 /* true args */
-    struct vop_inactive_args *ap = v;
+    struct vop_inactive_v2_args *ap = v;
     vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     kauth_cred_t cred __unused = NULL;
@@ -837,7 +837,6 @@ coda_inactive(void *v)
 
     if (IS_CTL_VP(vp)) {
 	MARK_INT_SAT(CODA_INACTIVE_STATS);
-	VOP_UNLOCK(vp);
 	return 0;
     }
 
@@ -857,7 +856,6 @@ coda_inactive(void *v)
 	printf("%s: %p ovp != NULL\n", __func__, vp);
 #endif
     /* XXX Do we need to VOP_CLOSE container vnodes? */
-    VOP_UNLOCK(vp);
     if (!IS_UNMOUNTING(cp))
 	*ap->a_recycle = true;
 
@@ -1073,7 +1071,7 @@ int
 coda_remove(void *v)
 {
 /* true args */
-    struct vop_remove_args *ap = v;
+    struct vop_remove_v2_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *cp = VTOC(dvp);
     vnode_t *vp = ap->a_vp;
@@ -1126,14 +1124,13 @@ coda_remove(void *v)
     CODADEBUG(CODA_REMOVE, myprintf(("in remove result %d\n",error)); )
 
     /*
-     * Unlock parent and child (avoiding double if ".").
+     * Unlock and release child (avoiding double if ".").
      */
     if (dvp == vp) {
 	vrele(vp);
     } else {
 	vput(vp);
     }
-    vput(dvp);
 
     return(error);
 }
@@ -1379,7 +1376,7 @@ int
 coda_rmdir(void *v)
 {
 /* true args */
-    struct vop_rmdir_args *ap = v;
+    struct vop_rmdir_v2_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     vnode_t *vp = ap->a_vp;
@@ -1431,8 +1428,7 @@ coda_rmdir(void *v)
     CODADEBUG(CODA_RMDIR, myprintf(("in rmdir result %d\n", error)); )
 
 exit:
-    /* vput both vnodes */
-    vput(dvp);
+    /* unlock and release child */
     if (dvp == vp) {
 	vrele(vp);
     } else {
@@ -1636,11 +1632,13 @@ int
 coda_reclaim(void *v)
 {
 /* true args */
-    struct vop_reclaim_args *ap = v;
+    struct vop_reclaim_v2_args *ap = v;
     vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
 /* upcall decl */
 /* locals */
+
+    VOP_UNLOCK(vp);
 
 /*
  * Forced unmount/flush will let vnodes with non zero use be destroyed!

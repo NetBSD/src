@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.28.2.11 2017/02/05 13:40:27 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.28.2.12 2017/08/28 17:52:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28.2.11 2017/02/05 13:40:27 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28.2.12 2017/08/28 17:52:03 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -261,6 +261,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 	/* Attach the interface. */
 	if_initialize(ifp);
 	sc->sc_ipq = if_percpuq_create(&sc->sc_ec.ec_if);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ec, dwc_gmac_ifflags_cb);
 	if_register(ifp);
@@ -1372,7 +1373,7 @@ dwc_gmac_intr(struct dwc_gmac_softc *sc)
 	 * Get more packets
 	 */
 	if (rv)
-		sc->sc_ec.ec_if.if_start(&sc->sc_ec.ec_if);
+		if_schedule_deferred_start(&sc->sc_ec.ec_if);
 
 	return rv;
 }

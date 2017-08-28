@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.145.2.3 2017/02/05 13:40:05 skrll Exp $
+# $NetBSD: GENERIC,v 1.145.2.4 2017/08/28 17:51:32 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.145.2.3 $"
+#ident 		"GENERIC-$Revision: 1.145.2.4 $"
 
 maxusers	32
 
@@ -71,7 +71,6 @@ options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_43	# 4.3BSD binary compatibility.
 #options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
@@ -99,6 +98,7 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

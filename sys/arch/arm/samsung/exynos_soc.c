@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.25.2.2 2015/12/27 12:09:32 skrll Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.25.2.3 2017/08/28 17:51:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,10 +31,8 @@
 
 #include "opt_exynos.h"
 
-#define	_ARM32_BUS_DMA_PRIVATE
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.25.2.2 2015/12/27 12:09:32 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.25.2.3 2017/08/28 17:51:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,7 +74,7 @@ struct cpu_freq {
 };
 
 
-#ifdef EXYNOS4
+#ifdef SOC_EXYNOS4
 const struct cpu_freq cpu_freq_settings_exynos4[] = {
 	{ 200, 3, 100, 2},
 	{ 300, 4, 200, 2},
@@ -100,7 +98,7 @@ const struct cpu_freq cpu_freq_settings_exynos4[] = {
 #endif
 
 
-#ifdef EXYNOS5
+#ifdef SOC_EXYNOS5
 #define EXYNOS5_DEFAULT_ENTRY 7
 const struct cpu_freq cpu_freq_settings_exynos5[] = {
 	{ 200,  3, 100, 2},
@@ -207,7 +205,7 @@ exynos_cpu_boot(int cpu)
 }
 
 
-#ifdef EXYNOS4
+#ifdef SOC_EXYNOS4
 /*
  * The latency values used below are `magic' and probably chosen empirically.
  * For the 4210 variant the data latency is lower, a 0x110. This is currently
@@ -456,13 +454,13 @@ exynos_dump_clocks(void)
 	uint32_t freq;
 
 	printf("Initial PLL settings\n");
-#ifdef EXYNOS4
+#ifdef SOC_EXYNOS4
 	DUMP_PLL(4, APLL);
 	DUMP_PLL(4, MPLL);
 	DUMP_PLL(4, EPLL);
 	DUMP_PLL(4, VPLL);
 #endif
-#ifdef EXYNOS5
+#ifdef SOC_EXYNOS5
 	DUMP_PLL(5, APLL);
 	DUMP_PLL(5, MPLL);
 	DUMP_PLL(5, KPLL);
@@ -480,6 +478,15 @@ exynos_dump_clocks(void)
 /* XXX clock stuff needs major work XXX */
 
 void
+exynos_init_clkout_for_usb(void)
+{
+	/* Select XUSBXTI as source for CLKOUT */
+	bus_space_write_4(&armv7_generic_bs_tag, exynos_pmu_bsh,
+	    EXYNOS_PMU_DEBUG_CLKOUT, 0x1000);
+}
+
+
+void
 exynos_clocks_bootstrap(void)
 {
 	KASSERT(ncpu_freq_settings != 0);
@@ -493,7 +500,7 @@ exynos_clocks_bootstrap(void)
 	/* set (max) cpufreq */
 	fsel = ncpu_freq_settings-1;
 
-#ifdef EXYNOS5
+#ifdef SOC_EXYNOS5
 	/* XXX BUGFIX selecting freq on E5 goes wrong for now XXX */
 	fsel = EXYNOS5_DEFAULT_ENTRY;
 #endif
@@ -524,7 +531,7 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	printf("Exynos early console operational\n\n");
 #endif
 
-#ifdef EXYNOS4
+#ifdef SOC_EXYNOS4
 	core_size = EXYNOS4_CORE_SIZE;
 	audiocore_size = EXYNOS4_AUDIOCORE_SIZE;
 	audiocore_pbase = EXYNOS4_AUDIOCORE_PBASE;
@@ -538,7 +545,7 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	ncpu_freq_settings = __arraycount(cpu_freq_settings_exynos4);
 #endif
 
-#ifdef EXYNOS5
+#ifdef SOC_EXYNOS5
 	core_size = EXYNOS5_CORE_SIZE;
 	audiocore_size = EXYNOS5_AUDIOCORE_SIZE;
 	audiocore_pbase = EXYNOS5_AUDIOCORE_PBASE;
@@ -594,9 +601,6 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 		panic("%s: failed to subregion cmu apll registers: %d",
 			__func__, error);
 
-	/* init bus dma tags */
-	exynos_dma_bootstrap(physmem * PAGE_SIZE);
-
 	/* gpio bootstrapping delayed */
 }
 
@@ -625,7 +629,7 @@ exynos_device_register(device_t self, void *aux)
 		extern uint32_t exynos_soc_id;
 
 		switch (EXYNOS_PRODUCT_ID(exynos_soc_id)) {
-#ifdef EXYNOS5
+#ifdef SOC_EXYNOS5
 		case 0xe5410:
 			/* offsets not changed on matt's request */
 #if 0
@@ -643,7 +647,7 @@ exynos_device_register(device_t self, void *aux)
 			break;
 		}
 #endif
-#ifdef EXYNOS4
+#ifdef SOC_EXYNOS4
 		case 0xe4410:
 		case 0xe4412: {
 			struct mpcore_attach_args * const mpcaa = aux;
@@ -661,7 +665,7 @@ exynos_device_register(device_t self, void *aux)
 		return;
 	}
 	if (device_is_a(self, "armgtmr") || device_is_a(self, "mct")) {
-#ifdef EXYNOS5
+#ifdef SOC_EXYNOS5
 		/*
 		 * The global timer is dependent on the MCT running.
 		 */
@@ -733,7 +737,7 @@ exynos_usb2_set_isolation(bool on)
 }
 
 
-#ifdef EXYNOS4
+#ifdef SOC_EXYNOS4
 static void
 exynos4_usb2phy_enable(bus_space_handle_t usb2phy_bsh)
 {
@@ -794,7 +798,7 @@ exynos4_usb2phy_enable(bus_space_handle_t usb2phy_bsh)
 #endif
 
 
-#ifdef EXYNOS5
+#ifdef SOC_EXYNOS5
 static void
 exynos5410_usb2phy_enable(bus_space_handle_t usb2phy_bsh)
 {
@@ -909,10 +913,10 @@ exynos_usb_phy_init(bus_space_handle_t usb2phy_bsh)
 	/* disable phy isolation */
 	exynos_usb2_set_isolation(false);
 
-#ifdef EXYNOS4
+#ifdef SOC_EXYNOS4
 	exynos4_usb2phy_enable(usb2phy_bsh);
 #endif
-#ifdef EXYNOS5
+#ifdef SOC_EXYNOS5
 	if (IS_EXYNOS5410_P()) {
 		exynos5410_usb2phy_enable(usb2phy_bsh);
 		/* TBD: USB3 phy init */

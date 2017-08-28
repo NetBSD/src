@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.81.2.4 2016/12/05 10:55:29 skrll Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.81.2.5 2017/08/28 17:53:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.81.2.4 2016/12/05 10:55:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.81.2.5 2017/08/28 17:53:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -475,6 +475,8 @@ static bool
 rump_print_selector(void *cl, struct vnode *vp)
 {
 	int *full = cl;
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	vfs_vnode_print(vp, *full, (void *)rumpuser_dprintf);
 	return false;

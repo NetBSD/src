@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.22.4.3 2016/10/05 20:56:11 skrll Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.22.4.4 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -43,7 +43,6 @@
 #include <sys/stat.h>
 #include <sys/fcntl.h>
 #include <sys/buf.h>
-#include <sys/fstrans.h>
 #include <sys/vnode.h>
 
 #include "chfs.h"
@@ -653,8 +652,6 @@ chfs_read(void *v)
 	if (uio->uio_resid == 0)
 		return (0);
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
-
 	if (uio->uio_offset >= ip->size)
 		goto out;
 
@@ -737,7 +734,6 @@ out:
 		ip->iflag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC) {
 			if (error) {
-				fstrans_done(vp->v_mount);
 				return error;
 			}
 			error = chfs_update(vp, NULL, NULL, UPDATE_WAIT);
@@ -745,7 +741,6 @@ out:
 	}
 
 	dbg("[END]\n");
-	fstrans_done(vp->v_mount);
 
 	return (error);
 }
@@ -832,8 +827,6 @@ chfs_write(void *v)
 	}
 	if (uio->uio_resid == 0)
 		return (0);
-
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
@@ -1003,7 +996,6 @@ out:
 
 
 	KASSERT(vp->v_size == ip->size);
-	fstrans_done(vp->v_mount);
 
 	mutex_enter(&chmp->chm_lock_mountfields);
 	error = chfs_write_flash_vnode(chmp, ip, ALLOC_NORMAL);
@@ -1040,9 +1032,9 @@ chfs_fsync(void *v)
 int
 chfs_remove(void *v)
 {
-	struct vnode *dvp = ((struct vop_remove_args *) v)->a_dvp;
-	struct vnode *vp = ((struct vop_remove_args *) v)->a_vp;
-	struct componentname *cnp = (((struct vop_remove_args *) v)->a_cnp);
+	struct vnode *dvp = ((struct vop_remove_v2_args *) v)->a_dvp;
+	struct vnode *vp = ((struct vop_remove_v2_args *) v)->a_vp;
+	struct componentname *cnp = (((struct vop_remove_v2_args *) v)->a_cnp);
 	dbg("remove\n");
 
 	KASSERT(VOP_ISLOCKED(dvp));
@@ -1064,7 +1056,6 @@ chfs_remove(void *v)
 	    parent, cnp->cn_nameptr, cnp->cn_namelen);
 
 out:
-	vput(dvp);
 	vput(vp);
 
 	return error;
@@ -1203,9 +1194,9 @@ chfs_mkdir(void *v)
 int
 chfs_rmdir(void *v)
 {
-	struct vnode *dvp = ((struct vop_rmdir_args *) v)->a_dvp;
-	struct vnode *vp = ((struct vop_rmdir_args *) v)->a_vp;
-	struct componentname *cnp = ((struct vop_rmdir_args *) v)->a_cnp;
+	struct vnode *dvp = ((struct vop_rmdir_v2_args *) v)->a_dvp;
+	struct vnode *vp = ((struct vop_rmdir_v2_args *) v)->a_vp;
+	struct componentname *cnp = ((struct vop_rmdir_v2_args *) v)->a_cnp;
 	dbg("rmdir()\n");
 
 	KASSERT(VOP_ISLOCKED(dvp));
@@ -1234,7 +1225,6 @@ chfs_rmdir(void *v)
 	    parent, cnp->cn_nameptr, cnp->cn_namelen);
 
 out:
-	vput(dvp);
 	vput(vp);
 
 	return error;
@@ -1460,7 +1450,7 @@ chfs_readlink(void *v)
 int
 chfs_inactive(void *v)
 {
-	struct vnode *vp = ((struct vop_inactive_args *) v)->a_vp;
+	struct vnode *vp = ((struct vop_inactive_v2_args *) v)->a_vp;
 	struct chfs_inode *ip = VTOI(vp);
 	struct chfs_vnode_cache *chvc;
 	dbg("inactive | vno: %llu\n", (unsigned long long)ip->ino);
@@ -1471,12 +1461,10 @@ chfs_inactive(void *v)
 	if (ip->ino) {
 		chvc = ip->chvc;
 		if (chvc->nlink)
-			*((struct vop_inactive_args *) v)->a_recycle = 0;
+			*((struct vop_inactive_v2_args *) v)->a_recycle = 0;
 	} else {
-		*((struct vop_inactive_args *) v)->a_recycle = 1;
+		*((struct vop_inactive_v2_args *) v)->a_recycle = 1;
 	}
-
-	VOP_UNLOCK(vp);
 
 	return 0;
 }
@@ -1486,11 +1474,13 @@ chfs_inactive(void *v)
 int
 chfs_reclaim(void *v)
 {
-	struct vop_reclaim_args *ap = v;
+	struct vop_reclaim_v2_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct chfs_inode *ip = VTOI(vp);
 	struct chfs_mount *chmp = ip->chmp;
 	struct chfs_dirent *fd;
+
+	VOP_UNLOCK(vp);
 
 	mutex_enter(&chmp->chm_lock_mountfields);
 

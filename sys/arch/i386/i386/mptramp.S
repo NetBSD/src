@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.27.6.1 2016/05/29 08:44:17 skrll Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.27.6.2 2017/08/28 17:51:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2016 The NetBSD Foundation, Inc.
@@ -42,11 +42,11 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD 
- *      Foundation, Inc. and its contributors.  
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
- *    contributors may be used to endorse or promote products derived  
- *    from this software without specific prior written permission.   
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -75,9 +75,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.27.6.1 2016/05/29 08:44:17 skrll Exp $");
-
-#include "opt_mpbios.h"		/* for MPDEBUG */
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.27.6.2 2017/08/28 17:51:40 skrll Exp $");
 
 #include "assym.h"
 #include <machine/specialreg.h>
@@ -91,29 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.27.6.1 2016/05/29 08:44:17 skrll Exp $
 #define RELOC(x)	_RELOC(_C_LABEL(x))
 
 #define _TRMP_LABEL(a)	a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
-
-#ifdef MPDEBUG
-/*
- * Debug code to stop aux. processors in various stages based on the
- * value in cpu_trace.
- *
- * %edi points at cpu_trace;
- * cpu_trace[0] is the "hold point";
- * cpu_trace[1] is the point which the CPU has reached;
- * cpu_trace[2] is the last value stored by HALTT.
- */
-#define HALT(x) \
-1:	movl (%edi),%ebx	;	\
-	cmpl $x,%ebx		;	\
-	jle 1b			;	\
-	movl $x,4(%edi)		;
-#define HALTT(x,y) \
-	movl y,8(%edi)		;	\
-	HALT(x)			;
-#else
-#define HALT(x)
-#define HALTT(x,y)
-#endif /* MPDEBUG */
 
 	.global _C_LABEL(cpu_spinup_trampoline)
 	.global _C_LABEL(cpu_spinup_trampoline_end)
@@ -129,34 +104,33 @@ LABEL(cpu_spinup_trampoline)
 	movw	%ax,%ds
 	movw	%ax,%es
 	movw	%ax,%ss
+
+	/* load flat descriptor table */
 #ifdef __clang__
-	lgdt (gdt_desc)			/* load flat descriptor table */
+	lgdt (gdt_desc)
 #else
-	data32 addr32 lgdt (gdt_desc)	/* load flat descriptor table */
+	data32 addr32 lgdt (gdt_desc)
 #endif
-	movl	%cr0, %eax	/* get cr0 */
-	orl	$CR0_PE, %eax	/* enable protected mode */
-	movl	%eax, %cr0	/* doit */
-	ljmpl	$0x8, $mp_startup
+
+	/* enable protected mode */
+	movl	%cr0,%eax
+	orl	$CR0_PE,%eax
+	movl	%eax,%cr0
+	ljmpl	$0x8,$mp_startup
 
 _TRMP_LABEL(mp_startup)
 	.code32
 
-	movl	$0x10, %eax	/* data segment */
-	movw	%ax, %ds
-	movw	%ax, %ss
-	movw	%ax, %es
-	movw	%ax, %fs
-	movw	%ax, %gs
+	movl	$0x10,%eax	/* data segment */
+	movw	%ax,%ds
+	movw	%ax,%ss
+	movw	%ax,%es
+	movw	%ax,%fs
+	movw	%ax,%gs
 
 	/* bootstrap stack end, with scratch space.. */
 	movl	$(MP_TRAMPOLINE+PAGE_SIZE-16),%esp
 
-#ifdef MPDEBUG
-	leal	RELOC(cpu_trace),%edi
-#endif
-
-	HALT(0x1)
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
 	popfl
@@ -192,7 +166,6 @@ no_NOX:
 
 	/* Load %cr3. */
 	movl	RELOC(mp_pdirpa),%ecx
-	HALTT(0x5,%ecx)
 	movl	%ecx,%cr3		/* load PTD addr into MMU */
 
 	/* Enable paging and the rest of it. */
@@ -200,46 +173,26 @@ no_NOX:
 	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
 	movl	%eax,%cr0
 
-#ifdef MPDEBUG
-	leal	_C_LABEL(cpu_trace),%edi
-#endif
-	HALT(0x6)
-
-
-/*
- * ok, we are now running with paging enabled and sharing page tables
- * with cpu0.  figure out which processor we really are, what stack we
- * should be on, etc.
- */
-
-	/* Don't touch lapic until BP has done init sequence. */
+	/* Wait until BP has done init sequence. */
 1:
 	movl	_C_LABEL(cpu_starting),%ecx
 	pause
-	testl	%ecx, %ecx
+	testl	%ecx,%ecx
 	jz	1b
 
-	HALTT(0x7, %ecx)
-
-	/* %ecx points at our cpu_info structure. */
-
-	movw	$((MAXGDTSIZ*8) - 1), 6(%esp)	/* prepare segment descriptor */
-	movl	CPU_INFO_GDT(%ecx), %eax	/* for our real gdt */
-	movl	%eax, 8(%esp)
+	movw	$(MAXGDTSIZ-1),6(%esp)	/* prepare segment descriptor */
+	movl	CPU_INFO_GDT(%ecx),%eax	/* for our real gdt */
+	movl	%eax,8(%esp)
 	lgdt	6(%esp)
-	HALT(0x8)
 	jmp	1f
 	nop
 1:
-	HALT(0x12)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax 	/* switch to new segment */
 	movl	%eax,%ds
 	movl	%eax,%es
 	movl	%eax,%ss
-	HALT(0x13)
 	pushl	$GSEL(GCODE_SEL, SEL_KPL)
 	pushl	$mp_cont
-	HALT(0x14)
 	lret
 	.align	4,0x0
 
@@ -254,36 +207,26 @@ _TRMP_LABEL(gdt_desc)
 _C_LABEL(cpu_spinup_trampoline_end):	/* end of code copied to MP_TRAMPOLINE */
 
 mp_cont:
-	HALT(0x15)
-
 	movl	CPU_INFO_IDLELWP(%ecx),%esi
 	movl	L_PCB(%esi),%esi
-
-	/* %esi now points at our PCB. */
-
-	HALTT(0x19, %esi)
 
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
 
-	HALT(0x20)
 	/* Switch address space. */
 	movl	PCB_CR3(%esi),%eax
-	HALTT(0x22, %eax)
 	movl	%eax,%cr3
-	HALT(0x25)
+
 	/* load segment registers. */
 	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax
-	HALTT(0x26,%eax)
 	movl	%eax,%fs
 	xorl	%eax,%eax
-	HALTT(0x27,%eax)
 	movl	%eax,%gs
+
 	movl	PCB_CR0(%esi),%eax
-	HALTT(0x28,%eax)
 	movl	%eax,%cr0
-	HALTT(0x30,%ecx)
 	pushl	%ecx
+
 	call	_C_LABEL(cpu_hatch)
 END(cpu_spinup_trampoline)
 
@@ -291,10 +234,4 @@ END(cpu_spinup_trampoline)
 LABEL(mp_pdirpa)
 	.long	0
 END(mp_pdirpa)
-#ifdef MPDEBUG
-LABEL(cpu_trace)
-	.long	0x40
-	.long	0xff
-	.long	0xff
-END(cpu_trace)
-#endif
+

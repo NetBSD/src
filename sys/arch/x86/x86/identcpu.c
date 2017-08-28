@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.47.2.4 2017/02/05 13:40:23 skrll Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.47.2.5 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.47.2.4 2017/02/05 13:40:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.47.2.5 2017/08/28 17:51:56 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -49,6 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.47.2.4 2017/02/05 13:40:23 skrll Exp 
 #include <x86/cacheinfo.h>
 #include <x86/cpuvar.h>
 #include <x86/cpu_msr.h>
+
+#include <x86/x86/vmtreg.h>	/* for vmt_hvcall() */
+#include <x86/x86/vmtvar.h>	/* for vmt_hvcall() */
 
 static const struct x86_cache_info intel_cpuid_cache_info[] = INTEL_CACHE_INFO;
 
@@ -551,7 +554,19 @@ cpu_probe_c3(struct cpu_info *ci)
 			}
 		    }
 
-		    /* Actually do the enables. */
+		    /*
+		     * Actually do the enables.  It's a little gross,
+		     * but per the PadLock programming guide, "Enabling
+		     * PadLock", condition 3, we must enable SSE too or
+		     * else the first use of RNG or ACE instructions
+		     * will generate a trap.
+		     *
+		     * We must do this early because of kernel RNG
+		     * initialization but it is safe without the full
+		     * FPU-detect as all these CPUs have SSE.
+		     */
+		    lcr4(rcr4() | CR4_OSFXSR);
+
 		    if (rng_enable) {
 			msr = rdmsr(MSR_VIA_RNG);
 			msr |= MSR_VIA_RNG_ENABLE;
@@ -900,6 +915,7 @@ cpu_probe(struct cpu_info *ci)
 		for (i = 0; i < __arraycount(cpu_feature); i++) {
 			cpu_feature[i] = ci->ci_feat_val[i];
 		}
+		identify_hypervisor();
 #ifndef XEN
 		/* Early patch of text segment. */
 		x86_patch(true);
@@ -937,7 +953,8 @@ cpu_identify(struct cpu_info *ci)
 	if (ci->ci_signature != 0)
 		aprint_normal(", id 0x%x", ci->ci_signature);
 	aprint_normal("\n");
-
+	aprint_normal_dev(ci->ci_dev, "package %lu, core %lu, smt %lu\n",
+	    ci->ci_package_id, ci->ci_core_id, ci->ci_smt_id);
 	if (cpu_brand_string[0] == '\0') {
 		strlcpy(cpu_brand_string, cpu_getmodel(),
 		    sizeof(cpu_brand_string));
@@ -981,4 +998,97 @@ cpu_identify(struct cpu_info *ci)
 	}
 #endif	/* i386 */
 
+}
+
+/*
+ * Hypervisor
+ */
+vm_guest_t vm_guest = VM_GUEST_NO;
+
+static const char * const vm_bios_vendors[] = {
+	"QEMU",				/* QEMU */
+	"Plex86",			/* Plex86 */
+	"Bochs",			/* Bochs */
+	"Xen",				/* Xen */
+	"BHYVE",			/* bhyve */
+	"Seabios",			/* KVM */
+};
+
+static const char * const vm_system_products[] = {
+	"VMware Virtual Platform",	/* VMWare VM */
+	"Virtual Machine",		/* Microsoft VirtualPC */
+	"VirtualBox",			/* Sun xVM VirtualBox */
+	"Parallels Virtual Platform",	/* Parallels VM */
+	"KVM",				/* KVM */
+};
+
+void
+identify_hypervisor(void)
+{
+	u_int regs[6];
+	char hv_vendor[12];
+	const char *p;
+	int i;
+
+	if (vm_guest != VM_GUEST_NO)
+		return;
+
+	/*
+	 * [RFC] CPUID usage for interaction between Hypervisors and Linux.
+	 * http://lkml.org/lkml/2008/10/1/246
+	 *
+	 * KB1009458: Mechanisms to determine if software is running in
+	 * a VMware virtual machine
+	 * http://kb.vmware.com/kb/1009458
+	 */
+	if (ISSET(cpu_feature[1], CPUID2_RAZ)) {
+		vm_guest = VM_GUEST_VM;
+		x86_cpuid(0x40000000, regs);
+		if (regs[0] >= 0x40000000) {
+			memcpy(&hv_vendor[0], &regs[1], sizeof(*regs));
+			memcpy(&hv_vendor[4], &regs[2], sizeof(*regs));
+			memcpy(&hv_vendor[8], &regs[3], sizeof(*regs));
+			if (memcmp(hv_vendor, "VMwareVMware", 12) == 0)
+				vm_guest = VM_GUEST_VMWARE;
+			else if (memcmp(hv_vendor, "Microsoft Hv", 12) == 0)
+				vm_guest = VM_GUEST_HV;
+			else if (memcmp(hv_vendor, "KVMKVMKVM\0\0\0", 12) == 0)
+				vm_guest = VM_GUEST_KVM;
+			/* FreeBSD bhyve: "bhyve bhyve " */
+			/* OpenBSD vmm:   "OpenBSDVMM58" */
+		}
+		return;
+	}
+
+	/*
+	 * Examine SMBIOS strings for older hypervisors.
+	 */
+	p = pmf_get_platform("system-serial");
+	if (p != NULL) {
+		if (strncmp(p, "VMware-", 7) == 0 || strncmp(p, "VMW", 3) == 0) {
+			vmt_hvcall(VM_CMD_GET_VERSION, regs);
+			if (regs[1] == VM_MAGIC) {
+				vm_guest = VM_GUEST_VMWARE;
+				return;
+			}
+		}
+	}
+	p = pmf_get_platform("bios-vendor");
+	if (p != NULL) {
+		for (i = 0; i < __arraycount(vm_bios_vendors); i++) {
+			if (strcmp(p, vm_bios_vendors[i]) == 0) {
+				vm_guest = VM_GUEST_VM;
+				return;
+			}
+		}
+	}
+	p = pmf_get_platform("system-product");
+	if (p != NULL) {
+		for (i = 0; i < __arraycount(vm_system_products); i++) {
+			if (strcmp(p, vm_system_products[i]) == 0) {
+				vm_guest = VM_GUEST_VM;
+				return;
+			}
+		}
+	}
 }

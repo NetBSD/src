@@ -1,4 +1,4 @@
-#	$NetBSD: files.mpc85xx,v 1.9.16.1 2015/04/06 15:17:56 skrll Exp $
+#	$NetBSD: files.mpc85xx,v 1.9.16.2 2017/08/28 17:51:38 skrll Exp $
 #
 # mpc85xx-specific configuration info
 
@@ -12,9 +12,6 @@ file	arch/powerpc/booke/e500_autoconf.c
 file	arch/powerpc/booke/e500_intr.c
 file	arch/powerpc/booke/e500_timer.c
 file	arch/powerpc/booke/e500_tlb.c
-
-# we usr MBR
-file	kern/subr_disk_mbr.c			disk
 
 # Memory Disk for install kernel
 file	dev/md_root.c				memory_disk_hooks

@@ -31,7 +31,7 @@
 
 #if defined(_KERNEL)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpm.c,v 1.3.8.2 2017/02/05 13:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpm.c,v 1.3.8.3 2017/08/28 17:53:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -159,8 +159,6 @@ hashmap_rehash(lpm_hmap_t *hmap, uint32_t size)
 		continue;
 	}
 	bucket = kmem_zalloc(hashsize * sizeof(lpm_ent_t *), KM_SLEEP);
-	if (bucket == NULL)
-		return false;
 	for (unsigned n = 0; n < hmap->hashsize; n++) {
 		lpm_ent_t *list = hmap->bucket[n];
 
@@ -203,9 +201,7 @@ hashmap_insert(lpm_hmap_t *hmap, const void *key, size_t len)
 		entry = entry->next;
 	}
 
-	if ((entry = kmem_alloc(entlen, KM_SLEEP)) == NULL)
-		return NULL;
-
+	entry = kmem_alloc(entlen, KM_SLEEP);
 	memcpy(entry->key, key, len);
 	entry->next = hmap->bucket[i];
 	entry->len = len;

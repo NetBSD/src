@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.51.4.13 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: ubt.c,v 1.51.4.14 2017/08/28 17:52:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.13 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.14 2017/08/28 17:52:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -373,6 +373,14 @@ const struct ubt_devno {
 	{   /* Apple Bluetooth Host Controller MacBookAir 6,1 */
 	    USB_VENDOR_APPLE,
 	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_7,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Apple Bluetooth Host Controller MacBookPro 9,2 */
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_8,
 	    -1,
 	    -1,
 	    -1,
@@ -992,10 +1000,6 @@ ubt_enable(device_t self)
 
 	/* Events */
 	sc->sc_evt_buf = kmem_alloc(UBT_BUFSIZ_EVENT, KM_SLEEP);
-	if (sc->sc_evt_buf == NULL) {
-		error = ENOMEM;
-		goto bad;
-	}
 	err = usbd_open_pipe_intr(sc->sc_iface0,
 				  sc->sc_evt_addr,
 				  USBD_SHORT_XFER_OK,

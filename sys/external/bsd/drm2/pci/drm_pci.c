@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.8.2.2 2015/06/06 14:40:20 skrll Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.8.2.3 2017/08/28 17:52:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.8.2.2 2015/06/06 14:40:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.8.2.3 2017/08/28 17:52:34 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -39,6 +39,11 @@ __KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.8.2.2 2015/06/06 14:40:20 skrll Exp $"
 #include <dev/pci/pcivar.h>
 
 #include <drm/drmP.h>
+
+struct drm_bus_irq_cookie {
+	pci_intr_handle_t *intr_handles;
+	void *ih_cookie;
+};
 
 static int	drm_pci_get_irq(struct drm_device *);
 static int	drm_pci_irq_install(struct drm_device *,
@@ -228,40 +233,63 @@ drm_pci_get_irq(struct drm_device *dev)
 
 static int
 drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
-    int flags, const char *name, void *arg,
-    struct drm_bus_irq_cookie **cookiep)
+    int flags, const char *name, void *arg, struct drm_bus_irq_cookie **cookiep)
 {
 	const struct pci_attach_args *const pa = drm_pci_attach_args(dev);
-	pci_intr_handle_t ih;
 	const char *intrstr;
-	void *ih_cookie;
 	char intrbuf[PCI_INTRSTR_LEN];
+	struct drm_bus_irq_cookie *irq_cookie;
 
-	if (pci_intr_map(pa, &ih))
-		return -ENOENT;
+	irq_cookie = kmem_alloc(sizeof(*irq_cookie), KM_SLEEP);
 
-	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	ih_cookie = pci_intr_establish(pa->pa_pc, ih, IPL_DRM, handler, arg);
-	if (ih_cookie == NULL) {
-		aprint_error_dev(dev->dev,
-		    "couldn't establish interrupt at %s (%s)\n",
-		    intrstr, name);
-		return -ENOENT;
+	if (dev->pdev->msi_enabled) {
+		if (dev->pdev->intr_handles == NULL) {
+			if (pci_msi_alloc_exact(pa, &irq_cookie->intr_handles,
+			    1)) {
+				aprint_error_dev(dev->dev,
+				    "couldn't allocate MSI (%s)\n", name);
+				goto error;
+			}
+		} else {
+			irq_cookie->intr_handles = dev->pdev->intr_handles;
+			dev->pdev->intr_handles = NULL;
+		}
+	} else {
+		if (pci_intx_alloc(pa, &irq_cookie->intr_handles)) {
+			aprint_error_dev(dev->dev,
+			    "couldn't allocate INTx interrupt (%s)\n", name);
+			goto error;
+		}
 	}
 
-	aprint_normal_dev(dev->dev, "interrupting at %s (%s)\n",
-	    intrstr, name);
-	*cookiep = (struct drm_bus_irq_cookie *)ih_cookie;
+	intrstr = pci_intr_string(pa->pa_pc, irq_cookie->intr_handles[0],
+	    intrbuf, sizeof(intrbuf));
+	irq_cookie->ih_cookie = pci_intr_establish_xname(pa->pa_pc,
+	    irq_cookie->intr_handles[0], IPL_DRM, handler, arg, name);
+	if (irq_cookie->ih_cookie == NULL) {
+		aprint_error_dev(dev->dev,
+		    "couldn't establish interrupt at %s (%s)\n", intrstr, name);
+		pci_intr_release(pa->pa_pc, irq_cookie->intr_handles, 1);
+		goto error;
+	}
+
+	aprint_normal_dev(dev->dev, "interrupting at %s (%s)\n", intrstr, name);
+	*cookiep = irq_cookie;
 	return 0;
+
+error:
+	kmem_free(irq_cookie, sizeof(*irq_cookie));
+	return -ENOENT;
 }
 
 static void
-drm_pci_irq_uninstall(struct drm_device *dev,
-    struct drm_bus_irq_cookie *cookie)
+drm_pci_irq_uninstall(struct drm_device *dev, struct drm_bus_irq_cookie *cookie)
 {
 	const struct pci_attach_args *pa = drm_pci_attach_args(dev);
 
-	pci_intr_disestablish(pa->pa_pc, (void *)cookie);
+	pci_intr_disestablish(pa->pa_pc, cookie->ih_cookie);
+	pci_intr_release(pa->pa_pc, cookie->intr_handles, 1);
+	kmem_free(cookie, sizeof(*cookie));
 }
 
 static const char *

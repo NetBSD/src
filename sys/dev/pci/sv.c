@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.50.6.1 2016/10/05 20:55:55 skrll Exp $ */
+/*      $NetBSD: sv.c,v 1.50.6.2 2017/08/28 17:52:25 skrll Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.50.6.1 2016/10/05 20:55:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.50.6.2 2017/08/28 17:52:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1415,8 +1415,6 @@ sv_malloc(void *addr, int direction, size_t size)
 
 	sc = addr;
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (p == NULL)
-		return NULL;
 	error = sv_allocmem(sc, size, 16, direction, p);
 	if (error) {
 		kmem_free(p, sizeof(*p));

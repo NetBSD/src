@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.120.2.2 2016/05/29 08:44:19 skrll Exp $	*/
+/*	$NetBSD: psycho.c,v 1.120.2.3 2017/08/28 17:51:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.120.2.2 2016/05/29 08:44:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.120.2.3 2017/08/28 17:51:53 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -228,9 +228,13 @@ static	int
 psycho_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-	char *model = prom_getpropstring(ma->ma_node, "model");
+	char *model;
 	int i;
 
+	if (ma->ma_node == 0)
+		return 0;	/* no OF node, can't be us */
+
+	model = prom_getpropstring(ma->ma_node, "model");
 	/* match on a name of "pci" and a sabre or a psycho */
 	if (strcmp(ma->ma_name, ROM_PCI_NAME) == 0) {
 		for (i=0; psycho_names[i].p_name; i++)
@@ -1173,6 +1177,8 @@ _psycho_bus_map(bus_space_tag_t t, bus_addr_t offset, bus_size_t size,
 			__func__, t->type, (unsigned long long)offset,
 			(unsigned long long)size, flags));
 
+	flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
+
 	ss = sparc_pci_childspace(t->type);
 	DPRINTF(PDB_BUSMAP, (" cspace %d", ss));
 
@@ -1199,6 +1205,8 @@ psycho_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
 	struct psycho_softc *sc = pp->pp_sc;
 	struct psycho_ranges *pr;
 	int ss;
+
+	flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
 
 	ss = sparc_pci_childspace(t->type);
 

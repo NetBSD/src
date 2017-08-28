@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.24.4.13 2016/12/05 10:55:20 skrll Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.24.4.14 2017/08/28 17:52:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.13 2016/12/05 10:55:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.14 2017/08/28 17:52:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1336,18 +1336,7 @@ utoppyopen(dev_t dev, int flag, int mode,
 	sc->sc_state = UTOPPY_STATE_OPENING;
 	sc->sc_turbo_mode = 0;
 	sc->sc_out_data = kmem_alloc(UTOPPY_BSIZE + 1, KM_SLEEP);
-	if (sc->sc_out_data == NULL) {
-		error = ENOMEM;
-		goto error;
-	}
-
 	sc->sc_in_data = kmem_alloc(UTOPPY_BSIZE + 1, KM_SLEEP);
-	if (sc->sc_in_data == NULL) {
-		kmem_free(sc->sc_out_data, UTOPPY_BSIZE + 1);
-		sc->sc_out_data = NULL;
-		error = ENOMEM;
-		goto error;
-	}
 
 	if ((error = utoppy_cancel(sc)) != 0)
 		goto error;

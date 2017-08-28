@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.94.4.3 2016/10/05 20:56:02 skrll Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.94.4.4 2017/08/28 17:53:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.94.4.3 2016/10/05 20:56:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.94.4.4 2017/08/28 17:53:06 skrll Exp $");
 #endif /* not lint */
 
 
@@ -71,16 +71,13 @@ __KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.94.4.3 2016/10/05 20:56:02 skrll Exp
 static int udf_do_readlink(struct udf_node *udf_node, uint64_t filesize,
 	uint8_t *targetbuf, int *length);
 
-/* externs */
-extern int prtactive;
-
 /* implementations of vnode functions; table follows at end */
 /* --------------------------------------------------------------------- */
 
 int
 udf_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool         *a_recycle;
 	} */ *ap = v;
@@ -92,7 +89,6 @@ udf_inactive(void *v)
 
 	if (udf_node == NULL) {
 		DPRINTF(NODE, ("udf_inactive: inactive NULL UDF node\n"));
-		VOP_UNLOCK(vp);
 		return 0;
 	}
 
@@ -115,14 +111,12 @@ udf_inactive(void *v)
 	*ap->a_recycle = false;
 	if ((refcnt == 0) && ((vp->v_vflag & VV_SYSTEM) == 0)) {
 		*ap->a_recycle = true;
-		VOP_UNLOCK(vp);
 		return 0;
 	}
 
 	/* write out its node */
 	if (udf_node->i_flags & (IN_CHANGE | IN_UPDATE | IN_MODIFIED))
 		udf_update(vp, NULL, NULL, NULL, 0);
-	VOP_UNLOCK(vp);
 
 	return 0;
 }
@@ -132,16 +126,16 @@ udf_inactive(void *v)
 int
 udf_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct udf_node *udf_node = VTOI(vp);
 	int refcnt;
 
+	VOP_UNLOCK(vp);
+
 	DPRINTF(NODE, ("udf_reclaim called for node %p\n", udf_node));
-	if (prtactive && vp->v_usecount > 1)
-		vprint("udf_reclaim(): pushing active", vp);
 
 	if (udf_node == NULL) {
 		DPRINTF(NODE, ("udf_reclaim(): null udfnode\n"));
@@ -1944,7 +1938,7 @@ udf_readlink(void *v)
 int
 udf_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1975,7 +1969,6 @@ udf_remove(void *v)
 		vrele(vp);
 	else
 		vput(vp);
-	vput(dvp);
 
 	return error;
 }
@@ -1985,7 +1978,7 @@ udf_remove(void *v)
 int
 udf_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -2002,8 +1995,7 @@ udf_rmdir(void *v)
 
 	/* don't allow '.' to be deleted */
 	if (dir_node == udf_node) {
-		vrele(dvp);
-		vput(vp);
+		vrele(vp);
 		return EINVAL;
 	}
 
@@ -2020,7 +2012,6 @@ udf_rmdir(void *v)
 	dirhash_put(udf_node->dir_hash);
 
 	if (!isempty) {
-		vput(dvp);
 		vput(vp);
 		return ENOTEMPTY;
 	}
@@ -2043,8 +2034,7 @@ udf_rmdir(void *v)
 	}
 	DPRINTFIF(NODE, error, ("\tgot error removing dir\n"));
 
-	/* unput the nodes and exit */
-	vput(dvp);
+	/* put the node and exit */
 	vput(vp);
 
 	return error;

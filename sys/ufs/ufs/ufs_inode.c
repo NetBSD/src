@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.92.2.5 2017/02/05 13:41:01 skrll Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.92.2.6 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.92.2.5 2017/02/05 13:41:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.92.2.6 2017/08/28 17:53:17 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.92.2.5 2017/02/05 13:41:01 skrll Exp
 #include <sys/namei.h>
 #include <sys/kauth.h>
 #include <sys/wapbl.h>
-#include <sys/fstrans.h>
 #include <sys/kmem.h>
 
 #include <ufs/ufs/inode.h>
@@ -70,15 +69,13 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.92.2.5 2017/02/05 13:41:01 skrll Exp
 
 #include <uvm/uvm.h>
 
-extern int prtactive;
-
 /*
  * Last reference to an inode.  If necessary, write or delete it.
  */
 int
 ufs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		struct bool *a_recycle;
 	} */ *ap = v;
@@ -90,8 +87,6 @@ ufs_inactive(void *v)
 	bool wapbl_locked = false;
 
 	UFS_WAPBL_JUNLOCK_ASSERT(mp);
-
-	fstrans_start(mp, FSTRANS_LAZY);
 
 	/*
 	 * Ignore inodes related to stale file handles.
@@ -153,8 +148,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	*ap->a_recycle = (ip->i_mode == 0);
-	VOP_UNLOCK(vp);
-	fstrans_done(mp);
+
 	return (allerror);
 }
 
@@ -165,9 +159,6 @@ int
 ufs_reclaim(struct vnode *vp)
 {
 	struct inode *ip = VTOI(vp);
-
-	if (prtactive && vp->v_usecount > 1)
-		vprint("ufs_reclaim: pushing active", vp);
 
 	if (!UFS_WAPBL_BEGIN(vp->v_mount)) {
 		UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);

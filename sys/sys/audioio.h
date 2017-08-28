@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.34.30.1 2017/02/05 13:41:01 skrll Exp $	*/
+/*	$NetBSD: audioio.h,v 1.34.30.2 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -143,11 +143,6 @@ typedef struct audio_encoding {
 #define AUDIO_ENCODINGFLAG_EMULATED 1 /* software emulation mode */
 } audio_encoding_t;
 
-struct audio_pid {
-	pid_t	pid;			/* for audio device belonging to pid */
-	lwpid_t	lwpid;			/* unused */
-};
-
 /*
  * Balance settings.
  */
@@ -162,6 +157,7 @@ struct audio_pid {
 #define	AUDIO_SPEAKER		0x01	/* built-in speaker */
 #define	AUDIO_HEADPHONE		0x02	/* headphone jack */
 #define	AUDIO_LINE_OUT		0x04	/* line out	 */
+#define	VC_OUT			0x08	/* virt chan out */
 
 /*
  * Input ports
@@ -170,6 +166,7 @@ struct audio_pid {
 #define	AUDIO_LINE_IN		0x02	/* line in	 */
 #define	AUDIO_CD		0x04	/* on-board CD inputs */
 #define	AUDIO_INTERNAL_CD_IN	AUDIO_CD	/* internal CDROM */
+#define	VC_IN			0x08	/* virt chan in */
 
 /*
  * Audio device operations
@@ -194,7 +191,8 @@ struct audio_pid {
 #define  AUDIO_PROP_PLAYBACK	0x10
 #define  AUDIO_PROP_CAPTURE	0x20
 #define AUDIO_GETBUFINFO	_IOR('A', 35, struct audio_info)
-#define AUDIO_SETPROC	_IOW('A', 36, struct audio_pid)
+#define AUDIO_SETCHAN	_IOW('A', 36, int)
+#define AUDIO_GETCHAN	_IOR('A', 37, int)
 
 /*
  * Mixer device
@@ -340,5 +338,6 @@ typedef struct mixer_ctrl {
 #define AudioCmonitor	"monitor"
 #define AudioCequalization	"equalization"
 #define AudioCmodem	"modem"
+#define AudioCvirtchan	"vchan"
 
 #endif /* !_SYS_AUDIOIO_H_ */

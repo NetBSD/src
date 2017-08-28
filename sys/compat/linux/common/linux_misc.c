@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.230.2.4 2017/02/05 13:40:25 skrll Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.230.2.5 2017/08/28 17:51:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.230.2.4 2017/02/05 13:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.230.2.5 2017/08/28 17:51:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,7 +603,7 @@ linux_sys_mprotect(struct lwp *l, const struct linux_sys_mprotect_args *uap, reg
 		}
 	}
 	vm_map_unlock(map);
-	return uvm_map_protect(map, start, end, prot, FALSE);
+	return uvm_map_protect_user(l, start, end, prot);
 }
 #endif /* USRSTACK */
 
@@ -748,8 +748,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic("linux_readdir");
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			if (cookie)

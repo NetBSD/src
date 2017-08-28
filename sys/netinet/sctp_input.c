@@ -1,5 +1,5 @@
 /*	$KAME: sctp_input.c,v 1.28 2005/04/21 18:36:21 nishida Exp $	*/
-/*	$NetBSD: sctp_input.c,v 1.1.2.4 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: sctp_input.c,v 1.1.2.5 2017/08/28 17:53:12 skrll Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.1.2.4 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.1.2.5 2017/08/28 17:53:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1729,19 +1729,6 @@ sctp_handle_cookie_echo(struct mbuf *m, int iphlen, int offset,
 	cookie_offset = offset + sizeof(struct sctp_chunkhdr);
 	cookie_len = ntohs(cp->ch.chunk_length);
 
-	if ((cookie->peerport != sh->src_port) &&
-	    (cookie->myport != sh->dest_port) &&
-	    (cookie->my_vtag != sh->v_tag)) {
-		/*
-		 * invalid ports or bad tag.  Note that we always leave
-		 * the v_tag in the header in network order and when we
-		 * stored it in the my_vtag slot we also left it in network
-		 * order. This maintians the match even though it may be in
-		 * the opposite byte order of the machine :->
-		 */
-		return (NULL);
-	}
-
 	/* compute size of packet */
 	if (m->m_flags & M_PKTHDR) {
 		size_of_pkt = m->m_pkthdr.len;
@@ -1767,6 +1754,20 @@ sctp_handle_cookie_echo(struct mbuf *m, int iphlen, int offset,
 #endif /* SCTP_DEBUG */
 		return (NULL);
 	}
+
+	if ((cookie->peerport != sh->src_port) &&
+	    (cookie->myport != sh->dest_port) &&
+	    (cookie->my_vtag != sh->v_tag)) {
+		/*
+		 * invalid ports or bad tag.  Note that we always leave
+		 * the v_tag in the header in network order and when we
+		 * stored it in the my_vtag slot we also left it in network
+		 * order. This maintians the match even though it may be in
+		 * the opposite byte order of the machine :->
+		 */
+		return (NULL);
+	}
+
 	/*
 	 * split off the signature into its own mbuf (since it
 	 * should not be calculated in the sctp_hash_digest_m() call).
@@ -3187,7 +3188,7 @@ sctp_process_control(struct mbuf *m, int iphlen, int *offset, int length,
 #ifdef SCTP_DEBUG
 			if (sctp_debug_on & SCTP_DEBUG_INPUT3) {
 				printf("sctp_process_control: chunk length invalid! *offset:%u, chk_length:%u > length:%u\n",
-				    *offset, length, chk_length);
+				    *offset, chk_length, length);
 			}
 #endif /* SCTP_DEBUG */
 			*offset = length;
@@ -4237,7 +4238,7 @@ sctp_input(struct mbuf *m, ...)
 	 * I very much doubt any of the IPSEC stuff will work but I have
 	 * no idea, so I will leave it in place.
 	 */
-	if (ipsec_used && ipsec4_in_reject_so(m, inp->ip_inp.inp.inp_socket)) {
+	if (ipsec_used && ipsec4_in_reject(m, (struct inpcb *)inp)) {
 #if 0
 		ipsecstat.in_polvio++;
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2014/01/16 01:15:33 christos Exp $
+#	$NetBSD: Makefile,v 1.4.8.1 2017/08/28 17:51:34 skrll Exp $
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
@@ -7,7 +7,6 @@
 PROG=e32boot.exe
 
 SRCS=e32boot.cpp netbsd.cpp
-SRCS+=vers.c
 OBJS=$(SRCS:R:S/$/.o/g)
 
 IN=$(PROG:.exe=.in)
@@ -59,14 +58,10 @@ $(IN): $(OBJS)
 	$(AR) r $@ $(OBJS)
 	$(RANLIB) $@
 
-.PHONY: vers.c
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version ${MACHINE}
-
-
 clean:
-	rm -f $(PROG) $(OBJS) vers.c $(IN) $(MAP)
+	rm -f $(PROG) $(OBJS) $(IN) $(MAP)
 	rm -f $(PROG:.exe=.bas) $(PROG:.exe=.exp)
+
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.files.mk>

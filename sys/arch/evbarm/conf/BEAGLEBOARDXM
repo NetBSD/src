@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARDXM,v 1.19.2.3 2016/12/05 10:54:51 skrll Exp $
+#	$NetBSD: BEAGLEBOARDXM,v 1.19.2.4 2017/08/28 17:51:34 skrll Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -46,6 +46,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support
@@ -95,7 +96,6 @@ options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
@@ -263,6 +263,7 @@ prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
 #wskbd*		at ukbd?
 #wsmouse*	at ums?
 
+# USB Ethernet adapters
 #axe*		at uhub? port ? configuration ? interface ?
 
 # Hardware clocking and power management

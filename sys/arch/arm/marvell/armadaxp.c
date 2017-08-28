@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.8.6.2 2017/02/05 13:40:04 skrll Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.8.6.3 2017/08/28 17:51:31 skrll Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.8.6.2 2017/02/05 13:40:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.8.6.3 2017/08/28 17:51:31 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -251,7 +251,7 @@ static struct mbus_description {
 	       	"PEX0(Lane2, Memory)" },
 	{ ARMADAXP_UNITID_PEX0, ARMADAXP_ATTR_PEXx3_MEM,
 	       	"PEX0(Lane3, Memory)" },
-	{ ARMADAXP_UNITID_PEX0, ARMADAXP_ATTR_PEX2_MEM,
+	{ ARMADAXP_UNITID_PEX2, ARMADAXP_ATTR_PEX2_MEM,
 	       	"PEX2(Lane0, Memory)" },
 	{ ARMADAXP_UNITID_PEX1, ARMADAXP_ATTR_PEXx0_MEM,
 	       	"PEX1(Lane0, Memory)" },
@@ -261,7 +261,7 @@ static struct mbus_description {
 	       	"PEX1(Lane2, Memory)" },
 	{ ARMADAXP_UNITID_PEX1, ARMADAXP_ATTR_PEXx3_MEM,
 	       	"PEX1(Lane3, Memory)" },
-	{ ARMADAXP_UNITID_PEX1, ARMADAXP_ATTR_PEX2_MEM,
+	{ ARMADAXP_UNITID_PEX3, ARMADAXP_ATTR_PEX3_MEM,
 	       	"PEX3(Lane0, Memory)" },
 	{ ARMADAXP_UNITID_PEX0, ARMADAXP_ATTR_PEXx0_IO,
 	       	"PEX0(Lane0, I/O)" },
@@ -271,7 +271,7 @@ static struct mbus_description {
 	       	"PEX0(Lane2, I/O)" },
 	{ ARMADAXP_UNITID_PEX0, ARMADAXP_ATTR_PEXx3_IO,
 	       	"PEX0(Lane3, I/O)" },
-	{ ARMADAXP_UNITID_PEX0, ARMADAXP_ATTR_PEX2_IO,
+	{ ARMADAXP_UNITID_PEX2, ARMADAXP_ATTR_PEX2_IO,
 	       	"PEX2(Lane0, I/O)" },
 	{ ARMADAXP_UNITID_PEX1, ARMADAXP_ATTR_PEXx0_IO,
 	       	"PEX1(Lane0, I/O)" },
@@ -281,7 +281,7 @@ static struct mbus_description {
 	       	"PEX1(Lane2, I/O)" },
 	{ ARMADAXP_UNITID_PEX1, ARMADAXP_ATTR_PEXx3_IO,
 	       	"PEX1(Lane3, I/O)" },
-	{ ARMADAXP_UNITID_PEX1, ARMADAXP_ATTR_PEX2_IO,
+	{ ARMADAXP_UNITID_PEX3, ARMADAXP_ATTR_PEX3_IO,
 	       	"PEX3(Lane0, I/O)" },
 
 	/* CRYPT */
@@ -312,7 +312,7 @@ static struct mbus_description {
 };
 
 /*
- * Default Mbus addrss decoding table for ARMADA XP
+ * Default Mbus address decoding table for ARMADA XP
  * this table may changed by device drivers.
  *
  * NOTE: some version of u-boot is broken. it writes old decoding table.
@@ -398,7 +398,7 @@ static struct mbus_table_def {
 		14, 0xd4000000, 0x04000000,
 		ARMADAXP_UNITID_DEVBUS, ARMADAXP_ATTR_DEVBUS_SPI0_CS0
 	},
-	{	
+	{
 		/* Security Accelerator SRAM, Engine 1, no data swap */
 		/* MODIFIED (added, 0xd0300000-0xd030ffff) */
 		15, 0xd0300000, 0x00010000,

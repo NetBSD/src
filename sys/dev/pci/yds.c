@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.56.2.1 2016/10/05 20:55:55 skrll Exp $	*/
+/*	$NetBSD: yds.c,v 1.56.2.2 2017/08/28 17:52:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.56.2.1 2016/10/05 20:55:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.56.2.2 2017/08/28 17:52:25 skrll Exp $");
 
 #include "mpu.h"
 
@@ -688,6 +688,7 @@ yds_suspend(device_t dv, const pmf_qual_t *qual)
 
 	mutex_enter(&sc->sc_lock);
 	mutex_spin_enter(&sc->sc_intr_lock);
+	sc->sc_enabled = 0;
 	sc->sc_dsctrl = pci_conf_read(pc, tag, YDS_PCI_DSCTRL);
 	sc->sc_legacy = pci_conf_read(pc, tag, YDS_PCI_LEGACY);
 	sc->sc_ba[0] = pci_conf_read(pc, tag, YDS_PCI_FM_BA);
@@ -718,14 +719,15 @@ yds_resume(device_t dv, const pmf_qual_t *qual)
 		PCI_COMMAND_MASTER_ENABLE);
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
 	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	mutex_spin_exit(&sc->sc_intr_lock);
 	if (yds_init(sc)) {
 		aprint_error_dev(dv, "reinitialize failed\n");
-		mutex_spin_exit(&sc->sc_intr_lock);
 		mutex_exit(&sc->sc_lock);
 		return false;
 	}
 
 	pci_conf_write(pc, tag, YDS_PCI_DSCTRL, sc->sc_dsctrl);
+	sc->sc_enabled = 1;
 	mutex_spin_exit(&sc->sc_intr_lock);
 	sc->sc_codec[0].codec_if->vtbl->restore_ports(sc->sc_codec[0].codec_if);
 	mutex_exit(&sc->sc_lock);
@@ -785,6 +787,7 @@ yds_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
+	sc->sc_enabled = 0;
 	sc->sc_dmatag = pa->pa_dmat;
 	sc->sc_pc = pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -940,6 +943,10 @@ detected:
 
 	if (!pmf_device_register(self, yds_suspend, yds_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	mutex_spin_enter(&sc->sc_intr_lock);
+	sc->sc_enabled = 1;
+	mutex_spin_exit(&sc->sc_intr_lock);
 }
 
 static int
@@ -1046,6 +1053,10 @@ yds_intr(void *p)
 	u_int status;
 
 	mutex_spin_enter(&sc->sc_intr_lock);
+	if (!sc->sc_enabled) {
+		mutex_spin_exit(&sc->sc_intr_lock);
+		return 0;
+	}
 
 	status = YREAD4(sc, YDS_STATUS);
 	DPRINTFN(1, ("yds_intr: status=%08x\n", status));
@@ -1666,8 +1677,6 @@ yds_malloc(void *addr, int direction, size_t size)
 	int error;
 
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (p == NULL)
-		return NULL;
 	sc = addr;
 	error = yds_allocmem(sc, size, 16, p);
 	if (error) {

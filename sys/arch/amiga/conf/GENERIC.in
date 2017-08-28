@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.129.2.1 2017/02/05 13:40:02 skrll Exp $
+# $NetBSD: GENERIC.in,v 1.129.2.2 2017/08/28 17:51:28 skrll Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.129.2.1 $"
+#ident 		"GENERIC-$Revision: 1.129.2.2 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -180,7 +180,6 @@ options 	UFS_EXTATTR	# Extended attribute support for UFS1
 #
 
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_43	# compatibility with 4.3BSD interfaces
 options 	COMPAT_09	# NetBSD 0.9,
 options 	COMPAT_10	# NetBSD 1.0,
@@ -196,7 +195,7 @@ options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
-options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
+#options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
 ')m4_dnl

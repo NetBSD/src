@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enetreg.h,v 1.1.2.1 2016/05/29 08:44:16 skrll Exp $	*/
+/*	$NetBSD: if_enetreg.h,v 1.1.2.2 2017/08/28 17:51:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -118,10 +118,14 @@
 # define ENET_RCR_PAUFWD		__BIT(13)
 # define ENET_RCR_PADEN			__BIT(12)
 # define ENET_RCR_RMII_10T		__BIT(9)
+# define ENET_RCR_RMII_MODE		__BIT(8)
 # define ENET_RCR_RGMII_EN		__BIT(6)
 # define ENET_RCR_FCE			__BIT(5)
+# define ENET_RCR_BC_REJ		__BIT(4)
 # define ENET_RCR_PROM			__BIT(3)
+# define ENET_RCR_MII_MODE		__BIT(2)
 # define ENET_RCR_DRT			__BIT(1)
+# define ENET_RCR_LOOP			__BIT(0)
 
 #define ENET_TCR			0x000000c4
 # define ENET_TCR_FDEN			__BIT(2)

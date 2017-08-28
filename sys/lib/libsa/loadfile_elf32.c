@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.30.6.4 2017/02/05 13:40:56 skrll Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.30.6.5 2017/08/28 17:53:08 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -321,7 +321,8 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		goto freephdr;
 	}
 
-	for (first = 1, i = 0; i < elf->e_phnum; i++) {
+	first = 1;
+	for (i = 0; i < elf->e_phnum; i++) {
 		internalize_phdr(elf->e_ident[EI_DATA], &phdr[i]);
 
 #ifndef MD_LOADSEG /* Allow processor ABI specific segment loads */
@@ -363,6 +364,10 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		}
 		if ((IS_TEXT(phdr[i]) && (flags & (LOAD_TEXT|COUNT_TEXT))) ||
 		    (IS_DATA(phdr[i]) && (flags & (LOAD_DATA|COUNT_DATA)))) {
+			/* XXX: Assume first address is lowest */
+			if (marks[MARK_DATA] == 0 && IS_DATA(phdr[i]))
+				marks[MARK_DATA] = LOADADDR(phdr[i].p_vaddr);
+
 			pos = phdr[i].p_vaddr;
 			if (minp > pos)
 				minp = pos;
@@ -427,42 +432,38 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		/*
 		 * First load the section names section.
 		 */
-		if (boot_load_ctf && (elf->e_shstrndx != 0)) {
+		if (boot_load_ctf && (elf->e_shstrndx != SHN_UNDEF)) {
+			Elf_Off shstroff = shp[elf->e_shstrndx].sh_offset;
+			shstrsz = shp[elf->e_shstrndx].sh_size;
 			if (flags & LOAD_SYM) {
-				if (lseek(fd, shp[elf->e_shstrndx].sh_offset,
-				    SEEK_SET) == -1) {
+				if (lseek(fd, shstroff, SEEK_SET) == -1) {
 					WARN(("lseek symbols"));
 					goto freeshp;
 				}
-				nr = READ(fd, maxp,
-				    shp[elf->e_shstrndx].sh_size);
+				nr = READ(fd, maxp, shstrsz);
 				if (nr == -1) {
 					WARN(("read symbols"));
 					goto freeshp;
 				}
-				if (nr !=
-				    (ssize_t)shp[elf->e_shstrndx].sh_size) {
+				if (nr != (ssize_t)shstrsz) {
 					errno = EIO;
 					WARN(("read symbols"));
 					goto freeshp;
 				}
+			}
 
-				shstr = ALLOC(shp[elf->e_shstrndx].sh_size);
-				shstrsz = shp[elf->e_shstrndx].sh_size;
-				if (lseek(fd, shp[elf->e_shstrndx].sh_offset,
-				    SEEK_SET) == -1) {
-					WARN(("lseek symbols"));
-					goto freeshp;
-				}
-				nr = read(fd, shstr,
-				    shp[elf->e_shstrndx].sh_size);
-				if (nr == -1) {
-					WARN(("read symbols"));
-					goto freeshp;
-				}
+			shstr = ALLOC(shstrsz);
+			if (lseek(fd, shstroff, SEEK_SET) == -1) {
+				WARN(("lseek symbols"));
+				goto freeshp;
+			}
+			nr = read(fd, shstr, shstrsz);
+			if (nr == -1) {
+				WARN(("read symbols"));
+				goto freeshp;
 			}
 			shp[elf->e_shstrndx].sh_offset = maxp - elfp;
-			maxp += roundup(shp[elf->e_shstrndx].sh_size, ELFROUND);
+			maxp += roundup(shstrsz, ELFROUND);
 		}
 
 		/*
@@ -471,7 +472,8 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		 * string table that isn't referenced by a symbol
 		 * table.
 		 */
-		for (first = 1, i = 0; i < elf->e_shnum; i++) {
+		first = 1;
+		for (i = 1; i < elf->e_shnum; i++) {
 			if (i == elf->e_shstrndx) {
 				/* already loaded this section */
 				continue;
@@ -480,8 +482,8 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 			case SHT_PROGBITS:
 				if (boot_load_ctf && shstr) {
 					/* got a CTF section? */
-					if (strncmp(".SUNW_ctf",
-					    &shstr[shp[i].sh_name], 10) == 0) {
+					if (strncmp(&shstr[shp[i].sh_name],
+						    ".SUNW_ctf", 10) == 0) {
 						goto havesym;
 					}
 				}
@@ -490,7 +492,7 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 				shp[i].sh_offset = 0;
 				break;
 			case SHT_STRTAB:
-				for (j = 0; j < elf->e_shnum; j++)
+				for (j = 1; j < elf->e_shnum; j++)
 					if (shp[j].sh_type == SHT_SYMTAB &&
 					    shp[j].sh_link == (unsigned int)i)
 						goto havesym;
@@ -569,10 +571,8 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 				PROGRESS(("]"));
 		}
 		DEALLOC(shp, sz);
-	}
-
-	if (shstr) {
-	    DEALLOC(shstr, shstrsz);
+		if (shstr)
+			DEALLOC(shstr, shstrsz);
 	}
 
 	/*

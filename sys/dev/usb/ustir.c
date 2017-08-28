@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.33.10.13 2016/12/05 10:55:20 skrll Exp $	*/
+/*	$NetBSD: ustir.c,v 1.33.10.14 2017/08/28 17:52:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.13 2016/12/05 10:55:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.14 2017/08/28 17:52:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -724,11 +724,6 @@ ustir_open(void *h, int flag, int mode,
 	sc->sc_wr_buf = usbd_get_buffer(sc->sc_wr_xfer);
 
 	sc->sc_ur_buf = kmem_alloc(IRDA_MAX_FRAME_SIZE, KM_SLEEP);
-	if (sc->sc_ur_buf == NULL) {
-		error = ENOMEM;
-		goto bad5;
-	}
-
 	sc->sc_rd_index = sc->sc_rd_count = 0;
 	sc->sc_closing = 0;
 	sc->sc_rd_readinprogress = 0;

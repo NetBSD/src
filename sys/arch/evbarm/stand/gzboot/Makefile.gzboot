@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.30.6.2 2016/03/19 11:29:58 skrll Exp $
+#	$NetBSD: Makefile.gzboot,v 1.30.6.3 2017/08/28 17:51:35 skrll Exp $
 
 NOMAN=  # defined
 
@@ -14,8 +14,6 @@ PROG=	${BASE}.bin
 WARNS=	1
 
 NEWVERSWHAT=	"Gzip Boot"
-VERSIONFILE=	${EVBARM_STAND}/gzboot/version
-
 BINMODE=644
 
 DBG=	-Os
@@ -39,11 +37,7 @@ CPPFLAGS+= -nostdinc -I. -I${EVBARM_STAND}/gzboot -I${EVBARM_STAND}/board
 CPPFLAGS+= -I${S} -I${S}/arch -I${S}/lib/libsa
 CPPFLAGS+= -I${S}/../common/dist/zlib
 CPPFLAGS+= ${ARM_APCS_FLAGS}
-.if ${HAVE_LLVM:Uno} != "no" || ${HAVE_GCC:U0} >= 48
 CPPFLAGS+=	-marm
-.else
-CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
-.endif
 
 CPPFLAGS+= -D_STANDALONE
 
@@ -63,9 +57,8 @@ COPTS+=	-fno-unwind-tables
 CWARNFLAGS+= -Werror
 CWARNFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
-CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
+CLEANFILES+= ${STARTFILE} ${BASE}.list
 CLEANFILES+= ${PROGSYM}
-SRCS+= vers.c
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -91,10 +84,7 @@ DIRECT_LDFLAGS= -M -T ${LDSCRIPT} --fix-v4bx
 
 LIBLIST=${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBSA}
 
-.PHONY: vers.c
-vers.c: ${VERSIONFILE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.ALLSRC} '${PLATFORM}' ${NEWVERSWHAT}
+.include "${S}/conf/newvers_stand.mk"
 
 ${PROG}: ${PROGSYM}
 	${OBJCOPY} -O binary ${PROGSYM} ${.TARGET}

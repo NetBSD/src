@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_DFC,v 1.26.2.1 2015/09/22 12:05:42 skrll Exp $
+#	$NetBSD: VIRTEX_DFC,v 1.26.2.2 2017/08/28 17:51:37 skrll Exp $
 #
 # VIRTEX_DFC
 #
@@ -59,7 +59,6 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43	# 4.3BSD binary compatibility.
 #options 	COMPAT_09	# NetBSD 0.9,
 #options 	COMPAT_10	# NetBSD 1.0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.136.4.8 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.136.4.9 2017/08/28 17:53:13 skrll Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.136.4.8 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.136.4.9 2017/08/28 17:53:13 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -514,7 +514,7 @@ rip6_output(struct mbuf *m, struct socket * const so,
 		struct ifnet *ret_oifp = NULL;
 
 		error = ip6_output(m, optp, &in6p->in6p_route, 0,
-		    in6p->in6p_moptions, so, &ret_oifp);
+		    in6p->in6p_moptions, in6p, &ret_oifp);
 		if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
 			if (ret_oifp)
 				icmp6_ifoutstat_inc(ret_oifp, type, code);
@@ -626,10 +626,6 @@ rip6_attach(struct socket *so, int proto)
 	in6p->in6p_cksum = -1;
 
 	in6p->in6p_icmp6filt = kmem_alloc(sizeof(struct icmp6_filter), KM_SLEEP);
-	if (in6p->in6p_icmp6filt == NULL) {
-		in6_pcbdetach(in6p);
-		return ENOMEM;
-	}
 	ICMP6_FILTER_SETPASSALL(in6p->in6p_icmp6filt);
 	KASSERT(solocked(so));
 	return error;

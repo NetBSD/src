@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.32.4.1 2015/04/06 15:18:19 skrll Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.32.4.2 2017/08/28 17:53:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.32.4.1 2015/04/06 15:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.32.4.2 2017/08/28 17:53:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -166,7 +166,7 @@ struct vfsops hfs_vfsops = {
 	.vfs_reinit = hfs_reinit,
 	.vfs_done = hfs_done,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

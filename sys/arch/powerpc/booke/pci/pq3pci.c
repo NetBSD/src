@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.17.4.3 2016/12/05 10:54:56 skrll Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.17.4.4 2017/08/28 17:51:49 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.17.4.3 2016/12/05 10:54:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.17.4.4 2017/08/28 17:51:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1283,8 +1283,6 @@ pq3pci_msi_alloc_vectors(struct pq3pci_softc *sc,
 
 	const size_t alloc_size = sizeof(*vectors) * count;
 	vectors = kmem_zalloc(alloc_size, KM_SLEEP);
-	if (vectors == NULL)
-		return ENOMEM;
 
 	for (int i = 0; i < count; ++i) {
 		pci_intr_handle_t handle = pq3pci_msi_alloc_one(IPL_VM);
@@ -1531,10 +1529,6 @@ pq3pci_intr_establish(void *v, pci_intr_handle_t handle, int ipl,
 
 	struct pq3pci_intrhand * const pih =
 	    kmem_zalloc(sizeof(*pih), KM_SLEEP);
-
-	if (pih == NULL)
-		return NULL;
-
 	pih->pih_ih.ih_class = IH_INTX;
 	pih->pih_ih.ih_func = func;
 	pih->pih_ih.ih_arg = arg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: efimemory.c,v 1.2.2.2 2017/02/05 13:40:12 skrll Exp $	*/
+/*	$NetBSD: efimemory.c,v 1.2.2.3 2017/08/28 17:51:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -35,7 +35,15 @@ static const char *memtypes[] = {
 	"available",
 	"reserved",
 	"ACPI reclaimable",
-	"ACPI NVS"
+	"ACPI NVS",
+	"unusable",
+	"disabled",
+	"Persistent",
+	"undefined (8)",
+	"undefined (9)",
+	"undefined (10)",
+	"undefined (11)",
+	"Persistent (Legacy)"
 };
 
 static const char *efimemtypes[] = {
@@ -53,6 +61,7 @@ static const char *efimemtypes[] = {
 	"MemoryMappedIO",
 	"MemoryMappedIOPortSpace",
 	"PalCode",
+	"PersistentMemory",
 };
 
 static int
@@ -74,6 +83,9 @@ getmemtype(EFI_MEMORY_DESCRIPTOR *md)
 	case EfiACPIMemoryNVS:
 		return BIM_NVS;
 
+	case EfiPersistentMemory:
+		return BIM_PMEM;
+
 	case EfiReservedMemoryType:
 	case EfiRuntimeServicesCode:
 	case EfiRuntimeServicesData:
@@ -82,14 +94,14 @@ getmemtype(EFI_MEMORY_DESCRIPTOR *md)
 	case EfiMemoryMappedIOPortSpace:
 	case EfiPalCode:
 	case EfiMaxMemoryType:
+	default:
 		return BIM_Reserved;
 	}
-	return BIM_Reserved;
 }
 
-static EFI_MEMORY_DESCRIPTOR *
-GetMemoryMap(OUT UINTN *NoEntries, OUT UINTN *MapKey, OUT UINTN *DescriptorSize,
-    OUT UINT32 *DescriptorVersion, bool sorted)
+EFI_MEMORY_DESCRIPTOR *
+efi_memory_get_map(UINTN *NoEntries, UINTN *MapKey, UINTN *DescriptorSize,
+    UINT32 *DescriptorVersion, bool sorted)
 {
 	EFI_MEMORY_DESCRIPTOR *desc, *md, *next, *target, tmp;
 	UINTN i, j;
@@ -98,7 +110,7 @@ GetMemoryMap(OUT UINTN *NoEntries, OUT UINTN *MapKey, OUT UINTN *DescriptorSize,
 	desc = LibMemoryMap(NoEntries, MapKey, DescriptorSize,
 	    DescriptorVersion);
 	if (desc == NULL)
-		Panic(L"LibMemoryMap failed");
+		Panic(L"efi_memory_get_map failed");
 
 	if (!sorted)
 		return desc;
@@ -128,7 +140,7 @@ getbasemem(void)
 	UINT32 DescriptorVersion;
 	EFI_PHYSICAL_ADDRESS basemem = 0, epa;
 
-	mdtop = GetMemoryMap(&NoEntries, &MapKey, &DescriptorSize,
+	mdtop = efi_memory_get_map(&NoEntries, &MapKey, &DescriptorSize,
 	    &DescriptorVersion, true);
 
 	for (i = 0, md = mdtop; i < NoEntries; i++, md = next) {
@@ -167,7 +179,7 @@ getextmemx(void)
 	bool first16m = true, first4g = true;
 	int extmem;
 
-	mdtop = GetMemoryMap(&NoEntries, &MapKey, &DescriptorSize,
+	mdtop = efi_memory_get_map(&NoEntries, &MapKey, &DescriptorSize,
 	    &DescriptorVersion, true);
 
 	for (i = 0, md = mdtop; i < NoEntries; i++, md = next) {
@@ -223,7 +235,7 @@ efi_memory_probe(void)
 	UINT32 DescriptorVersion;
 	int memtype;
 
-	mdtop = GetMemoryMap(&NoEntries, &MapKey, &DescriptorSize,
+	mdtop = efi_memory_get_map(&NoEntries, &MapKey, &DescriptorSize,
 	    &DescriptorVersion, false);
 
 	Print(L" mem[");
@@ -266,7 +278,7 @@ efi_memory_show_map(bool sorted)
 	else
 		rows -= 2;
 
-	mdtop = GetMemoryMap(&NoEntries, &MapKey, &DescriptorSize,
+	mdtop = efi_memory_get_map(&NoEntries, &MapKey, &DescriptorSize,
 	    &DescriptorVersion, sorted);
 
 	for (i = 0, md = mdtop; i < NoEntries; i++, md = next) {
@@ -297,32 +309,6 @@ efi_memory_show_map(bool sorted)
 	}
 
 	FreePool(mdtop);
-}
-
-void
-bi_getmemmap(void)
-{
-	EFI_MEMORY_DESCRIPTOR *md;
-	UINTN NoEntries, MapKey, DescriptorSize;
-	UINT32 DescriptorVersion;
-	struct btinfo_efimemmap *bim;
-	size_t allocsz;
-
-	md = GetMemoryMap(&NoEntries, &MapKey, &DescriptorSize,
-	    &DescriptorVersion, true);
-
-	allocsz = sizeof(struct btinfo_efimemmap) - 1
-	    + NoEntries * DescriptorSize;
-	bim = alloc(allocsz);
-
-	bim->num = NoEntries;
-	bim->version = DescriptorVersion;
-	bim->size = DescriptorSize;
-	memcpy(bim->memmap, md, NoEntries * DescriptorSize);
-
-	FreePool(md);
-
-	BI_ADD(bim, BTINFO_EFIMEMMAP, allocsz);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.24.4.3 2016/12/05 10:54:56 skrll Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.24.4.4 2017/08/28 17:51:48 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.24.4.3 2016/12/05 10:54:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.24.4.4 2017/08/28 17:51:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1173,7 +1173,6 @@ e500_intr_init(void)
 	 * Allow the required number of interrupt sources.
 	 */
 	is = kmem_zalloc(nirq * sizeof(*is), KM_SLEEP);
-	KASSERT(is);
 	e500_intr_sources = is;
 	e500_intr_last_source = is + nirq;
 
@@ -1233,7 +1232,6 @@ e500_intr_cpu_attach(struct cpu_info *ci)
 
 	cpu->cpu_evcnt_intrs =
 	    kmem_zalloc(nirq * sizeof(cpu->cpu_evcnt_intrs[0]), KM_SLEEP);
-	KASSERT(cpu->cpu_evcnt_intrs);
 
 	struct evcnt *evcnt = cpu->cpu_evcnt_intrs;
 	for (size_t j = 0; j < info->ii_external_sources; j++, evcnt++) {
@@ -1661,8 +1659,6 @@ interrupt_construct_intrids(const kcpuset_t *cpuset)
 
 	const size_t alloc_size = sizeof(int) + sizeof(intrid_t) * n;
 	ii_handler = kmem_zalloc(alloc_size, KM_SLEEP);
-	if (ii_handler == NULL)
-		return NULL;
 	ii_handler->iih_nids = n;
 	if (n == 0)
 		return ii_handler;

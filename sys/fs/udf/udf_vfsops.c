@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.67.4.3 2016/03/19 11:30:31 skrll Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.67.4.4 2017/08/28 17:53:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.67.4.3 2016/03/19 11:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.67.4.4 2017/08/28 17:53:06 skrll Exp $");
 #endif /* not lint */
 
 
@@ -118,7 +118,7 @@ struct vfsops udf_vfsops = {
 	.vfs_mountroot = udf_mountroot,
 	.vfs_snapshot = udf_snapshot,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
@@ -277,7 +277,6 @@ static void
 udf_release_system_nodes(struct mount *mp)
 {
 	struct udf_mount *ump = VFSTOUDF(mp);
-	int error;
 
 	/* if we haven't even got an ump, dont bother */
 	if (!ump)
@@ -294,10 +293,6 @@ udf_release_system_nodes(struct mount *mp)
 		vrele(ump->metadatamirror_node->vnode);
 	if (ump->metadatabitmap_node)
 		vrele(ump->metadatabitmap_node->vnode);
-
-	/* This flush should NOT write anything nor allow any node to remain */
-	if ((error = vflush(ump->vfs_mountp, NULLVP, 0)) != 0)
-		panic("Failure to flush UDF system vnodes\n");
 }
 
 
@@ -442,6 +437,8 @@ static bool
 udf_sanity_selector(void *cl, struct vnode *vp)
 {
 
+	KASSERT(mutex_owned(vp->v_interlock));
+
 	vprint("", vp);
 	if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) {
 		printf("  is locked\n");
@@ -517,6 +514,10 @@ udf_unmount(struct mount *mp, int mntflags)
 
 	/* NOTE release system nodes should NOT write anything */
 	udf_release_system_nodes(mp);
+
+	/* This flush should NOT write anything nor allow any node to remain */
+	if ((error = vflush(ump->vfs_mountp, NULLVP, 0)) != 0)
+		panic("Failure to flush UDF system vnodes\n");
 
 	/* finalise disc strategy */
 	udf_discstrat_finish(ump);

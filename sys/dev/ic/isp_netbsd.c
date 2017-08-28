@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.87.2.1 2015/04/06 15:18:09 skrll Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.87.2.2 2017/08/28 17:52:03 skrll Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.87.2.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.87.2.2 2017/08/28 17:52:03 skrll Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -475,6 +475,10 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, void *addr, int flag,
 		}
 		lim = local.count;
 		channel = local.channel;
+		if (channel >= isp->isp_nchan) {
+			retval = EINVAL;
+			break;
+		}
 
 		ua = *(isp_dlist_t **)addr;
 		uptr = &ua->wwns[0];

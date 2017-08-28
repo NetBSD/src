@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.60.2.5 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: nd6.h,v 1.60.2.6 2017/08/28 17:53:12 skrll Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -438,21 +438,15 @@ void nd6_llinfo_settimer(struct llentry *, time_t);
 void nd6_purge(struct ifnet *, struct in6_ifextra *);
 void nd6_assert_purged(struct ifnet *);
 void nd6_nud_hint(struct rtentry *);
-int nd6_resolve(struct ifnet *, struct rtentry *,
-	struct mbuf *, struct sockaddr *, u_char *);
+int nd6_resolve(struct ifnet *, const struct rtentry *, struct mbuf *,
+	const struct sockaddr *, uint8_t *, size_t);
 void nd6_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 int nd6_ioctl(u_long, void *, struct ifnet *);
 void nd6_cache_lladdr(struct ifnet *, struct in6_addr *,
 	char *, int, int, int);
-int nd6_output(struct ifnet *, struct ifnet *, struct mbuf *,
-	const struct sockaddr_in6 *, struct rtentry *);
-int nd6_storelladdr(const struct ifnet *, const struct rtentry *, struct mbuf *,
-	const struct sockaddr *, uint8_t *, size_t);
 int nd6_sysctl(int, void *, size_t *, void *, size_t);
 int nd6_need_cache(struct ifnet *);
 void nd6_llinfo_release_pkts(struct llentry *, struct ifnet *);
-int nd6_add_ifa_lle(struct in6_ifaddr *);
-void nd6_rem_ifa_lle(struct in6_ifaddr *);
 
 /* nd6_nbr.c */
 void nd6_na_input(struct mbuf *, int, int);
@@ -473,6 +467,7 @@ void nd6_defrouter_select(void);
 void nd6_defrtrlist_del(struct nd_defrouter *, struct in6_ifextra *);
 void nd6_prefix_unref(struct nd_prefix *);
 void nd6_prelist_remove(struct nd_prefix *);
+void nd6_invalidate_prefix(struct nd_prefix *);
 void nd6_pfxlist_onlink_check(void);
 struct nd_defrouter *nd6_defrouter_lookup(const struct in6_addr *, struct ifnet *);
 void nd6_rt_flush(struct in6_addr *, struct ifnet *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.37 2014/11/15 18:52:45 nakayama Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.37.2.1 2017/08/28 17:53:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.37 2014/11/15 18:52:45 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.37.2.1 2017/08/28 17:53:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,4 +379,33 @@ dup_sockaddr(struct sockaddr *sa, int canwait)
 	if (sa2)
 		memcpy(sa2, sa, sa->sa_len);
 	return sa2;
+}
+
+int
+dup_sockaddr_copyin(struct sockaddr **ksap, struct sockaddr *usa,
+    size_t usalen)
+{
+	struct sockaddr *ksa;
+
+	/* Make sure user provided enough data for a generic sockaddr.  */
+	if (usalen < sizeof(*ksa))
+		return EINVAL;
+
+	/* Don't let the user overfeed us.  */
+	usalen = MIN(usalen, sizeof(struct sockaddr_storage));
+
+	/* Copy the buffer in from userland.  */
+	ksa = smb_memdupin(usa, usalen);
+	if (ksa == NULL)
+		return ENOMEM;
+
+	/* Make sure the user's idea of sa_len is reasonable.  */
+	if (ksa->sa_len > usalen) {
+		smb_memfree(ksa);
+		return EINVAL;
+	}
+
+	/* Success!  */
+	*ksap = ksa;
+	return 0;
 }

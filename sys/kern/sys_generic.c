@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.130 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.130.2.1 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.130 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.130.2.1 2017/08/28 17:53:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,10 +234,6 @@ do_filereadv(int fd, const struct iovec *iovp, int iovcnt,
 				goto out;
 			}
 			iov = kmem_alloc(iovlen, KM_SLEEP);
-			if (iov == NULL) {
-				error = ENOMEM;
-				goto out;
-			}
 			needfree = iov;
 		}
 		error = copyin(iovp, iov, iovlen);
@@ -269,8 +265,7 @@ do_filereadv(int fd, const struct iovec *iovp, int iovcnt,
 	 */
 	if (ktrpoint(KTR_GENIO))  {
 		ktriov = kmem_alloc(iovlen, KM_SLEEP);
-		if (ktriov != NULL)
-			memcpy(ktriov, auio.uio_iov, iovlen);
+		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 
 	cnt = auio.uio_resid;
@@ -439,10 +434,6 @@ do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
 				goto out;
 			}
 			iov = kmem_alloc(iovlen, KM_SLEEP);
-			if (iov == NULL) {
-				error = ENOMEM;
-				goto out;
-			}
 			needfree = iov;
 		}
 		error = copyin(iovp, iov, iovlen);
@@ -474,8 +465,7 @@ do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
 	 */
 	if (ktrpoint(KTR_GENIO))  {
 		ktriov = kmem_alloc(iovlen, KM_SLEEP);
-		if (ktriov != NULL)
-			memcpy(ktriov, auio.uio_iov, iovlen);
+		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 
 	cnt = auio.uio_resid;

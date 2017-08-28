@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_pcppi.c,v 1.9.6.2 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: spkr_pcppi.c,v 1.9.6.3 2017/08/28 17:52:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.9.6.2 2017/02/05 13:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.9.6.3 2017/08/28 17:52:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,14 +66,18 @@ __KERNEL_RCSID(0, "$NetBSD: spkr_pcppi.c,v 1.9.6.2 2017/02/05 13:40:28 skrll Exp
 struct spkr_pcppi_softc {
 	struct spkr_softc sc_spkr;
 	pcppi_tag_t sc_pcppicookie;
+	void (*sc_bell_func)(pcppi_tag_t, int, int, int);
 };
 
 static int spkr_pcppi_probe(device_t, cfdata_t, void *);
 static void spkr_pcppi_attach(device_t, device_t, void *);
 static int spkr_pcppi_detach(device_t, int);
+static int spkr_pcppi_rescan(device_t, const char *, const int *);
+static void spkr_pcppi_childdet(device_t, device_t);
 
-CFATTACH_DECL_NEW(spkr_pcppi, sizeof(struct spkr_pcppi_softc),
-    spkr_pcppi_probe, spkr_pcppi_attach, spkr_pcppi_detach, NULL);
+CFATTACH_DECL3_NEW(spkr_pcppi, sizeof(struct spkr_pcppi_softc),
+    spkr_pcppi_probe, spkr_pcppi_attach, spkr_pcppi_detach, NULL,
+    spkr_pcppi_rescan, spkr_pcppi_childdet, 0);
 
 #define SPKRPRI (PZERO - 1)
 
@@ -85,7 +89,7 @@ spkr_pcppi_tone(device_t self, u_int xhz, u_int ticks)
 	aprint_debug_dev(self, "%s: %u %u\n", __func__, xhz, ticks);
 #endif /* SPKRDEBUG */
 	struct spkr_pcppi_softc *sc = device_private(self);
-	pcppi_bell(sc->sc_pcppicookie, xhz, ticks, PCPPI_BELL_SLEEP);
+	(*sc->sc_bell_func)(sc->sc_pcppicookie, xhz, ticks, PCPPI_BELL_SLEEP);
 }
 
 /* rest for given number of ticks */
@@ -120,6 +124,7 @@ spkr_pcppi_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": PC Speaker\n");
 
 	sc->sc_pcppicookie = pa->pa_cookie;
+	sc->sc_bell_func = pa->pa_bell_func;
 	spkr_attach(self, spkr_pcppi_tone, spkr_pcppi_rest);
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -137,4 +142,18 @@ spkr_pcppi_detach(device_t self, int flags)
 	sc->sc_pcppicookie = NULL;
 	pmf_device_deregister(self);
 	return 0;
+}
+
+static int
+spkr_pcppi_rescan(device_t self, const char *iattr, const int *locators)
+{
+
+	return spkr_rescan(self, iattr, locators);
+}
+
+static void
+spkr_pcppi_childdet(device_t self, device_t child)
+{
+
+	spkr_childdet(self, child);
 }

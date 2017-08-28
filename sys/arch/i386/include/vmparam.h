@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.81.4.2 2016/12/05 10:54:53 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.81.4.3 2017/08/28 17:51:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -114,15 +114,8 @@
 #include "opt_xen.h"
 #endif
 #define __USE_TOPDOWN_VM
-#define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
-    trunc_page(USRSTACK - MAXSSIZ - (sz))
 #define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
     round_page((vaddr_t)(da) + (vsize_t)MIN(maxdmap, MAXDSIZ_BU))
-
-/* XXX max. amount of KVM to be used by buffers. */
-#ifndef VM_MAX_KERNEL_BUF
-#define VM_MAX_KERNEL_BUF	(384 * 1024 * 1024)
-#endif
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)

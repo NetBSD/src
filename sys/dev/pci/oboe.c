@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.42.6.1 2015/09/22 12:05:59 skrll Exp $	*/
+/*	$NetBSD: oboe.c,v 1.42.6.2 2017/08/28 17:52:06 skrll Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.42.6.1 2015/09/22 12:05:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.42.6.2 2017/08/28 17:52:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -641,9 +641,7 @@ oboe_alloc_taskfile(struct oboe_softc *sc)
 	/* XXX */
 	uintptr_t addr =
 	    (uintptr_t)malloc(OBOE_TASK_BUF_LEN, M_DEVBUF, M_WAITOK);
-	if (addr == 0) {
-		goto bad;
-	}
+
 	addr &= ~(sizeof (struct OboeTaskFile) - 1);
 	addr += sizeof (struct OboeTaskFile);
 	sc->sc_taskfile = (struct OboeTaskFile *) addr;
@@ -653,26 +651,15 @@ oboe_alloc_taskfile(struct oboe_softc *sc)
 			malloc(TX_BUF_SZ, M_DEVBUF, M_WAITOK);
 		sc->sc_xmit_stores[i] =
 			malloc(TX_BUF_SZ, M_DEVBUF, M_WAITOK);
-		if (sc->sc_xmit_bufs[i] == NULL ||
-		    sc->sc_xmit_stores[i] == NULL) {
-			goto bad;
-		}
 	}
 	for (i = 0; i < RX_SLOTS; ++i) {
 		sc->sc_recv_bufs[i] =
 			malloc(RX_BUF_SZ, M_DEVBUF, M_WAITOK);
 		sc->sc_recv_stores[i] =
 			malloc(RX_BUF_SZ, M_DEVBUF, M_WAITOK);
-		if (sc->sc_recv_bufs[i] == NULL ||
-		    sc->sc_recv_stores[i] == NULL) {
-			goto bad;
-		}
 	}
 
 	return 0;
-bad:
-	printf("oboe: malloc for buffers failed()\n");
-	return 1;
 }
 
 static void

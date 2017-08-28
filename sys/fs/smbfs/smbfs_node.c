@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.52.2.2 2016/10/05 20:56:01 skrll Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.52.2.3 2017/08/28 17:53:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,10 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.52.2.2 2016/10/05 20:56:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.52.2.3 2017/08/28 17:53:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
 #include <sys/malloc.h>
@@ -63,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.52.2.2 2016/10/05 20:56:01 skrll Ex
 #include <fs/smbfs/smbfs_subr.h>
 
 extern int (**smbfs_vnodeop_p)(void *);
-extern int prtactive;
 
 static const struct genfs_ops smbfs_genfsops = {
 	.gop_write = genfs_compat_gop_write,
@@ -192,7 +192,8 @@ retry:
 		if ((vp->v_type == VDIR && (np->n_dosattr & SMB_FA_DIR) == 0) ||
 		    (vp->v_type == VREG && (np->n_dosattr & SMB_FA_DIR) != 0)) {
 			mutex_exit(&np->n_lock);
-			vgone(vp);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			smbfs_uncache(vp);
 			goto retry;
  		}
 	}
@@ -208,12 +209,60 @@ out:
 }
 
 /*
+ * Remove vnode that changed its type on the server from
+ * the vnode cache and the name cache.
+ */
+void
+smbfs_uncache(struct vnode *vp)
+{
+	static uint32_t gen = 0;
+	int error __diagused;
+	char newname[10];
+	struct mount *mp = vp->v_mount;
+	struct smbnode *np = VTOSMB(vp);
+	struct smbkey *key = np->n_key, *oldkey, *newkey;
+	int key_len = SMBFS_KEYSIZE(key->k_nmlen), newkey_len;
+
+	/* Setup old key as current key. */
+	oldkey = kmem_alloc(key_len, KM_SLEEP);
+	memcpy(oldkey, key, key_len);
+
+	/* Setup new key as unique and illegal name with colon. */
+	snprintf(newname, sizeof(newname), ":%08x", atomic_inc_uint_nv(&gen));
+	newkey = kmem_alloc(SMBFS_KEYSIZE(strlen(newname)), KM_SLEEP);
+	newkey->k_parent = NULL;
+	newkey->k_nmlen = strlen(newname);
+	memcpy(newkey->k_name, newname, newkey->k_nmlen);
+	newkey_len = SMBFS_KEYSIZE(newkey->k_nmlen);
+
+	/* Release parent and mark as gone. */
+	if (np->n_parent && (np->n_flag & NREFPARENT)) {
+		vrele(np->n_parent);
+		np->n_flag &= ~NREFPARENT;
+	}
+	np->n_flag |= NGONE;
+
+	/* Rekey the node. */
+	error = vcache_rekey_enter(mp, vp, oldkey, key_len, newkey, newkey_len);
+	KASSERT(error == 0);
+	np->n_key = newkey;
+	vcache_rekey_exit(mp, vp, oldkey, key_len, newkey, newkey_len);
+
+	/* Purge from name cache and cleanup. */
+	cache_purge(vp);
+	kmem_free(key, key_len);
+	kmem_free(oldkey, key_len);
+
+	vput(vp);
+}
+
+/*
  * Free smbnode, and give vnode back to system
  */
 int
 smbfs_reclaim(void *v)
 {
-        struct vop_reclaim_args /* {
+        struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 		struct thread *a_p;
         } */ *ap = v;
@@ -222,8 +271,7 @@ smbfs_reclaim(void *v)
 	struct smbnode *np = VTOSMB(vp);
 	struct smbmount *smp = VTOSMBFS(vp);
 
-	if (prtactive && vp->v_usecount > 1)
-		vprint("smbfs_reclaim(): pushing active", vp);
+	VOP_UNLOCK(vp);
 
 	SMBVDEBUG("%.*s,%d\n", (int) np->n_nmlen, np->n_name, vp->v_usecount);
 
@@ -259,7 +307,7 @@ smbfs_reclaim(void *v)
 int
 smbfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -289,7 +337,6 @@ smbfs_inactive(void *v)
 		smbfs_attr_cacheremove(vp);
 	}
 	*ap->a_recycle = ((vp->v_type == VNON) || (np->n_flag & NGONE) != 0);
-	VOP_UNLOCK(vp);
 
 	return (0);
 }

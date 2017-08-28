@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.54.4.1 2016/07/09 20:24:58 skrll Exp $	*/
+/*	$NetBSD: gencons.c,v 1.54.4.2 2017/08/28 17:51:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -13,9 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *     This product includes software developed at Ludd, University of Lule}.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -36,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.54.4.1 2016/07/09 20:24:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.54.4.2 2017/08/28 17:51:55 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"

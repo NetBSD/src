@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_gpio.c,v 1.1 2014/09/25 05:05:28 ryo Exp $ */
+/*	$NetBSD: imx6_gpio.c,v 1.1.2.1 2017/08/28 17:51:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_gpio.c,v 1.1 2014/09/25 05:05:28 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_gpio.c,v 1.1.2.1 2017/08/28 17:51:30 skrll Exp $");
 
 #include "opt_imx.h"
 
@@ -73,9 +73,13 @@ imxgpio_match(device_t parent, cfdata_t cfdata, void *aux)
 	case IMX6_AIPS1_BASE + AIPS1_GPIO3_BASE:
 	case IMX6_AIPS1_BASE + AIPS1_GPIO4_BASE:
 	case IMX6_AIPS1_BASE + AIPS1_GPIO5_BASE:
+		return 1;
 	case IMX6_AIPS1_BASE + AIPS1_GPIO6_BASE:
 	case IMX6_AIPS1_BASE + AIPS1_GPIO7_BASE:
-		return 1;
+		/* iMX6UL does not have GPIO7 */
+		if (IMX6_CHIPID_MAJOR(imx6_chip_id()) != CHIPID_MAJOR_IMX6UL)
+			return 1;
+		break;
 	}
 
 	return 0;

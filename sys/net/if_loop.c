@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.80.4.8 2016/12/05 10:55:27 skrll Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.80.4.9 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.80.4.8 2016/12/05 10:55:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.80.4.9 2017/08/28 17:53:11 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -361,10 +361,10 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		error = ENOBUFS;
 		goto out;
 	}
-	IF_ENQUEUE(ifq, m);
-	schednetisr(isr);
 	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_pkthdr.len;
+	IF_ENQUEUE(ifq, m);
+	schednetisr(isr);
 	splx(s);
 out:
 	KERNEL_UNLOCK_ONE(NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.11.2.3 2017/02/05 13:40:15 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.11.2.4 2017/08/28 17:51:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.11.2.3 2017/02/05 13:40:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.11.2.4 2017/08/28 17:51:45 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -111,10 +111,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.11.2.3 2017/02/05 13:40:15 skrll 
  * These warnings probably applies to other files under sys/arch/mips.
  */
 
-#include "opt_sysv.h"
 #include "opt_cputype.h"
-#include "opt_multiprocessor.h"
 #include "opt_mips_cache.h"
+#include "opt_multiprocessor.h"
+#include "opt_sysv.h"
 
 #define __MUTEX_PRIVATE
 #define __PMAP_PRIVATE
@@ -165,6 +165,10 @@ PMAP_COUNTER(zeroed_pages, "pages zeroed");
 PMAP_COUNTER(copied_pages, "pages copied");
 extern struct evcnt pmap_evcnt_page_cache_evictions;
 
+u_int pmap_page_cache_alias_mask;
+
+#define pmap_md_cache_indexof(x)	(((vaddr_t)(x)) & pmap_page_cache_alias_mask)
+
 static register_t
 pmap_md_map_ephemeral_page(struct vm_page *pg, bool locked_p, int prot,
     pt_entry_t *old_pte_p)
@@ -196,12 +200,20 @@ pmap_md_map_ephemeral_page(struct vm_page *pg, bool locked_p, int prot,
 		 */
 		kpreempt_disable(); // paired with the one in unmap
 		struct cpu_info * const ci = curcpu();
-		KASSERT(ci->ci_pmap_dstbase != 0);
+		if (MIPS_CACHE_VIRTUAL_ALIAS) {
+			KASSERT(ci->ci_pmap_dstbase != 0);
+			KASSERT(ci->ci_pmap_srcbase != 0);
 
+			const u_int __diagused mask = pmap_page_cache_alias_mask;
+			KASSERTMSG((ci->ci_pmap_dstbase & mask) == 0,
+			    "%#"PRIxVADDR, ci->ci_pmap_dstbase);
+			KASSERTMSG((ci->ci_pmap_srcbase & mask) == 0,
+			    "%#"PRIxVADDR, ci->ci_pmap_srcbase);
+		}
 		vaddr_t nva = (prot & VM_PROT_WRITE
 			? ci->ci_pmap_dstbase
 			: ci->ci_pmap_srcbase)
-		    + mips_cache_indexof(MIPS_CACHE_VIRTUAL_ALIAS
+		    + pmap_md_cache_indexof(MIPS_CACHE_VIRTUAL_ALIAS
 			? pv->pv_va
 			: pa);
 
@@ -330,8 +342,12 @@ pmap_bootstrap(void)
 	size_t sysmap_size;
 	pt_entry_t *sysmap;
 
-	if (MIPS_CACHE_VIRTUAL_ALIAS && uvmexp.ncolors)
+	if (MIPS_CACHE_VIRTUAL_ALIAS && uvmexp.ncolors) {
 		pmap_page_colormask = (uvmexp.ncolors - 1) << PAGE_SHIFT;
+		pmap_page_cache_alias_mask = max(
+		    mips_cache_info.mci_cache_alias_mask,
+		    mips_cache_info.mci_icache_alias_mask);
+	}
 
 #ifdef MULTIPROCESSOR
 	pmap_t pm = pmap_kernel();
@@ -509,16 +525,23 @@ pmap_md_alloc_ephemeral_address_space(struct cpu_info *ci)
 #endif
 	    || MIPS_CACHE_VIRTUAL_ALIAS
 	    || MIPS_ICACHE_VIRTUAL_ALIAS) {
-		vsize_t size = uvmexp.ncolors * PAGE_SIZE;
-		if (MIPS_ICACHE_VIRTUAL_ALIAS
-		    && mci->mci_picache_way_size > size)
-			size = mci->mci_picache_way_size;
-		ci->ci_pmap_dstbase = uvm_km_alloc(kernel_map, size, 0,
-		    UVM_KMF_COLORMATCH | UVM_KMF_VAONLY);
+		vsize_t size = max(mci->mci_pdcache_way_size, mci->mci_picache_way_size);;
+		const u_int __diagused mask = pmap_page_cache_alias_mask;
+
+		ci->ci_pmap_dstbase = uvm_km_alloc(kernel_map, size, size,
+		    UVM_KMF_VAONLY);
+
 		KASSERT(ci->ci_pmap_dstbase);
-		ci->ci_pmap_srcbase = uvm_km_alloc(kernel_map, size, 0,
-		    UVM_KMF_COLORMATCH | UVM_KMF_VAONLY);
+		KASSERT(!pmap_md_direct_mapped_vaddr_p(ci->ci_pmap_dstbase));
+		KASSERTMSG((ci->ci_pmap_dstbase & mask) == 0, "%#"PRIxVADDR,
+		    ci->ci_pmap_dstbase);
+
+		ci->ci_pmap_srcbase = uvm_km_alloc(kernel_map, size, size,
+		    UVM_KMF_VAONLY);
 		KASSERT(ci->ci_pmap_srcbase);
+		KASSERT(!pmap_md_direct_mapped_vaddr_p(ci->ci_pmap_srcbase));
+		KASSERTMSG((ci->ci_pmap_srcbase & mask) == 0, "%#"PRIxVADDR,
+		    ci->ci_pmap_srcbase);
 	}
 }
 
@@ -596,6 +619,8 @@ pmap_zero_page(paddr_t dst_pa)
 
 	struct vm_page * const dst_pg = PHYS_TO_VM_PAGE(dst_pa);
 
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(dst_pg)));
+
 	const register_t dst_va = pmap_md_map_ephemeral_page(dst_pg, false,
 	    VM_PROT_READ|VM_PROT_WRITE, &dst_pte);
 
@@ -625,6 +650,7 @@ pmap_copy_page(paddr_t src_pa, paddr_t dst_pa)
 	    VM_PROT_READ, &src_pte);
 
 	KASSERT(VM_PAGE_TO_MD(dst_pg)->mdpg_first.pv_pmap == NULL);
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(dst_pg)));
 	const register_t dst_va = pmap_md_map_ephemeral_page(dst_pg, false,
 	    VM_PROT_READ|VM_PROT_WRITE, &dst_pte);
 
@@ -645,8 +671,6 @@ pmap_md_page_syncicache(struct vm_page *pg, const kcpuset_t *onproc)
 		return;
 
 	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
-	pv_entry_t pv = &mdpg->mdpg_first;
-	const register_t va = (intptr_t)trunc_page(pv->pv_va);
 
 	/*
 	 * If onproc is empty, we could do a
@@ -658,14 +682,23 @@ pmap_md_page_syncicache(struct vm_page *pg, const kcpuset_t *onproc)
 	if (MIPS_HAS_R4K_MMU) {
 		if (VM_PAGEMD_CACHED_P(mdpg)) {
 			/* This was probably mapped cached by UBC so flush it */
-			mips_dcache_wbinv_range_index(va, PAGE_SIZE);
-			mips_icache_sync_range_index(va, PAGE_SIZE);
+			pt_entry_t pte;
+			const register_t tva = pmap_md_map_ephemeral_page(pg, false,
+			    VM_PROT_READ, &pte);
+
+			UVMHIST_LOG(pmaphist, "  va %#"PRIxVADDR, tva, 0, 0, 0);
+			mips_dcache_wbinv_range(tva, PAGE_SIZE);
+			mips_icache_sync_range(tva, PAGE_SIZE);
+
+			pmap_md_unmap_ephemeral_page(pg, false, tva, pte);
 		}
 	} else {
 		mips_icache_sync_range(MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg)),
 		    PAGE_SIZE);
 	}
 #ifdef MULTIPROCESSOR
+	pv_entry_t pv = &mdpg->mdpg_first;
+	const register_t va = (intptr_t)trunc_page(pv->pv_va);
 	pmap_tlb_syncicache(va, onproc);
 #endif
 }
@@ -698,7 +731,10 @@ pmap_md_map_poolpage(paddr_t pa, size_t len)
 		pv_entry_t pv = &mdpg->mdpg_first;
 		vaddr_t last_va = trunc_page(pv->pv_va);
 
+		KASSERT(len == PAGE_SIZE || last_va == pa);
 		KASSERT(pv->pv_pmap == NULL);
+		KASSERT(pv->pv_next == NULL);
+		KASSERT(!VM_PAGEMD_EXECPAGE_P(mdpg));
 
 		/*
 		 * If this page was last mapped with an address that
@@ -722,22 +758,20 @@ pmap_md_unmap_poolpage(vaddr_t va, size_t len)
 
 	const paddr_t pa = pmap_md_direct_mapped_vaddr_to_paddr(va);
 	struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
-	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 
 	KASSERT(pg);
+	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 
 	KASSERT(VM_PAGEMD_CACHED_P(mdpg));
-	mdpg->mdpg_first.pv_va = va;
-#if 0
-	if (MIPS_CACHE_VIRTUAL_ALIAS) {
-		/*
-		 * We've unmapped a poolpage.  Its contents are irrelevant.
-		 */
-		KASSERT((va & PAGE_MASK) == 0);
-		mips_dcache_inv_range(va, PAGE_SIZE);
-		mdpg->mdpg_first.pv_va = va;
-	}
-#endif
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(mdpg));
+
+	pv_entry_t pv = &mdpg->mdpg_first;
+
+	/* Note last mapped address for future color check */
+	pv->pv_va = va;
+
+	KASSERT(pv->pv_pmap == NULL);
+	KASSERT(pv->pv_next == NULL);
 
 	return pa;
 }
@@ -908,21 +942,33 @@ pmap_md_vca_add(struct vm_page *pg, vaddr_t va, pt_entry_t *ptep)
 	if (__predict_true(!mips_cache_badalias(pv->pv_va, va))) {
 		return false;
 	}
+	KASSERT(pv->pv_pmap != NULL);
+	bool ret = false;
 	for (pv_entry_t npv = pv; npv && npv->pv_pmap;) {
 		if (npv->pv_va & PV_KENTER) {
 			npv = npv->pv_next;
 			continue;
 		}
+		ret = true;
 		vaddr_t nva = trunc_page(npv->pv_va);
 		pmap_t npm = npv->pv_pmap;
 		VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 		pmap_remove(npm, nva, nva + PAGE_SIZE);
-		pmap_update(npm);
+
+		/*
+		 * pmap_update is not required here as we're the pmap
+		 * and we know that the invalidation happened or the
+		 * asid has been released (and activation is deferred)
+		 *
+		 * A deferred activation should NOT occur here.
+		 */
 		(void)VM_PAGEMD_PVLIST_LOCK(mdpg);
 
 		npv = pv;
 	}
-	return true;
+	KASSERT(ret == true);
+
+	return ret;
 #else	/* !PMAP_NO_PV_UNCACHED */
 	if (VM_PAGEMD_CACHED_P(mdpg)) {
 		/*
@@ -1019,12 +1065,10 @@ vaddr_t
 pmap_md_pool_phystov(paddr_t pa)
 {
 #ifdef _LP64
-	if ((pa & ~MIPS_PHYS_MASK) != 0) {
-		KASSERT(mips_options.mips3_xkphys_cached);
-		return MIPS_PHYS_TO_XKPHYS_CACHED(pa);
-	}
+	KASSERT(mips_options.mips3_xkphys_cached);
+	return MIPS_PHYS_TO_XKPHYS_CACHED(pa);
 #else
 	KASSERT((pa & ~MIPS_PHYS_MASK) == 0);
-#endif
 	return MIPS_PHYS_TO_KSEG0(pa);
+#endif
 }

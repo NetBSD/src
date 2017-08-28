@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.42 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: fms.c,v 1.42.6.1 2017/08/28 17:52:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.42 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.42.6.1 2017/08/28 17:52:05 skrll Exp $");
 
 #include "mpu.h"
 
@@ -686,10 +686,8 @@ fms_malloc(void *addr, int direction, size_t size)
 
 	sc = addr;
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (p == NULL)
-		return NULL;
-
 	p->size = size;
+
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &p->seg,
 				      1, &rseg, BUS_DMA_WAITOK)) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to allocate DMA, error = %d\n", error);

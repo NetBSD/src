@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.8.4.5 2017/02/05 13:40:23 skrll Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.8.4.6 2017/08/28 17:51:56 skrll Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8.4.5 2017/02/05 13:40:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8.4.6 2017/08/28 17:51:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,63 +366,38 @@ acpi_md_ncpus(void)
 static bool
 acpi_md_mcfg_validate(uint64_t addr, int bus_start, int *bus_end)
 {
-	union {
-		struct btinfo_common *common;
-		struct btinfo_memmap *bios;
-		struct btinfo_efimemmap *efi;
-	} bim;
+	struct btinfo_memmap *bim;
 	uint64_t size, mapaddr, mapsize;
 	uint32_t type;
-	int i, n, num;
-	bool efimemmap;
+	int i, n;
 
-	bim.common = lookup_bootinfo(BTINFO_EFIMEMMAP);
-	if (bim.common == NULL) {
-		bim.common = lookup_bootinfo(BTINFO_MEMMAP);
-		if (bim.common == NULL)
-			return false;
-	}
-	efimemmap = bim.common->type == BTINFO_EFIMEMMAP;
-	num = efimemmap ? bim.efi->num : bim.bios->num;
+#ifndef XEN
+	if (lookup_bootinfo(BTINFO_EFIMEMMAP) != NULL)
+		bim = efi_get_e820memmap();
+	else
+#endif
+		bim = lookup_bootinfo(BTINFO_MEMMAP);
+	if (bim == NULL)
+		return false;
 
 	size = *bus_end - bus_start + 1;
 	size *= ACPIMCFG_SIZE_PER_BUS;
-	for (i = 0; i < num; i++) {
-#ifndef XEN
-		if (efimemmap) {
-			struct efi_md *md = (struct efi_md *)
-			    (bim.efi->memmap + bim.efi->size * i);
-			mapaddr = md->md_phys;
-			mapsize = md->md_pages * EFI_PAGE_SIZE;
-			type = efi_getbiosmemtype(md->md_type, md->md_attr);
+	for (i = 0; i < bim->num; i++) {
+		mapaddr = bim->entry[i].addr;
+		mapsize = bim->entry[i].size;
+		type = bim->entry[i].type;
 
-			aprint_debug("MCFG: MEMMAP: "
-			    "p0x%016" PRIx64 "-0x%016" PRIx64
-			    ", v0x%016" PRIx64 "-0x%016" PRIx64
-			    ", size=0x%016" PRIx64 ", attr=0x%016" PRIx64
-			    ", type=%d(%s)\n",
-			    mapaddr, mapaddr + mapsize - 1,
-			    (uint64_t)(u_long)md->md_virt,
-			    (uint64_t)(u_long)md->md_virt + mapsize - 1,
-			    size, md->md_attr, md->md_type,
-			    efi_getmemtype_str(md->md_type));
-		} else
-#endif
-		{
-			mapaddr = bim.bios->entry[i].addr;
-			mapsize = bim.bios->entry[i].size;
-			type = bim.bios->entry[i].type;
-
-			aprint_debug("MCFG: MEMMAP: 0x%016" PRIx64
-			    "-0x%016" PRIx64 ", size=0x%016" PRIx64
-			    ", type=%d(%s)\n",
-			    mapaddr, mapaddr + mapsize - 1, mapsize, type,
-			    (type == BIM_Memory) ?  "Memory" :
-			    (type == BIM_Reserved) ?  "Reserved" :
-			    (type == BIM_ACPI) ? "ACPI" :
-			    (type == BIM_NVS) ? "NVS" :
-			    "unknown");
-		}
+		aprint_debug("MCFG: MEMMAP: 0x%016" PRIx64
+		    "-0x%016" PRIx64 ", size=0x%016" PRIx64
+		    ", type=%d(%s)\n",
+		    mapaddr, mapaddr + mapsize - 1, mapsize, type,
+		    (type == BIM_Memory) ?  "Memory" :
+		    (type == BIM_Reserved) ?  "Reserved" :
+		    (type == BIM_ACPI) ? "ACPI" :
+		    (type == BIM_NVS) ? "NVS" :
+		    (type == BIM_PMEM) ? "Persistent" :
+		    (type == BIM_PRAM) ? "Persistent (Legacy)" :
+		    "unknown");
 
 		switch (type) {
 		case BIM_ACPI:

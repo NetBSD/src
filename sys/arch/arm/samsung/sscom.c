@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.7.2.1 2015/06/06 14:39:57 skrll Exp $ */
+/*	$NetBSD: sscom.c,v 1.7.2.2 2017/08/28 17:51:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.7.2.1 2015/06/06 14:39:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.7.2.2 2017/08/28 17:51:32 skrll Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -179,13 +179,9 @@ static int	sscom_to_tiocm(struct sscom_softc *);
 static void	sscom_iflush(struct sscom_softc *);
 
 static int	sscomhwiflow(struct tty *tp, int block);
-#if defined(KGDB) || \
-    defined(SSCOM0CONSOLE) || defined(SSCOM1CONSOLE) || \
-    defined(SSCOM2CONSOLE) || defined(SSCOM3CONSOLE)
 static int	sscom_init(bus_space_tag_t, bus_space_handle_t,
 		    const struct sscom_uart_info *,
 		    int, int, tcflag_t, bus_space_handle_t *);
-#endif
 
 extern struct cfdriver sscom_cd;
 
@@ -1836,9 +1832,6 @@ sscomintr(void *v)
 }
 
 
-#if defined(KGDB) || \
-    defined(SSCOM0CONSOLE) || defined(SSCOM1CONSOLE) || \
-    defined(SSCOM2CONSOLE) || defined(SSCOM3CONSOLE)
 /*
  * Initialize UART for use as console or KGDB line.
  */
@@ -1882,11 +1875,6 @@ sscom_init(bus_space_tag_t iot, bus_space_handle_t base_ioh,
 	return 0;
 }
 
-#endif
-
-#if \
-    defined(SSCOM0CONSOLE) || defined(SSCOM1CONSOLE) || \
-    defined(SSCOM2CONSOLE) || defined(SSCOM3CONSOLE)
 /*
  * Following are all routines needed for SSCOM to act as console
  */
@@ -2023,8 +2011,6 @@ sscomcnpollc(dev_t dev, int on)
 
 	sscom_readaheadcount = 0;
 }
-
-#endif /* SSCOM0CONSOLE||SSCOM1CONSOLE */
 
 #ifdef KGDB
 int

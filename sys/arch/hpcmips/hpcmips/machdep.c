@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119.6.2 2017/02/05 13:40:11 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.119.6.3 2017/08/28 17:51:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119.6.2 2017/02/05 13:40:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119.6.3 2017/08/28 17:51:39 skrll Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -129,7 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119.6.2 2017/02/05 13:40:11 skrll Exp 
 #include <sys/exec_elf.h>
 #endif
 
-#if NBICONSDEV > 0 
+#if NBICONSDEV > 0
 #include <sys/conf.h>
 #include <dev/hpc/biconsvar.h>
 #include <dev/hpc/bicons.h>
@@ -193,13 +193,13 @@ extern void stacktrace(void); /*XXX*/
 
 /*
  * Do all the stuff that locore normally does before calling main().
- * Process arguments passed to us by the boot loader. 
+ * Process arguments passed to us by the boot loader.
  * Return the first page address following the system.
  */
 void
 mach_init(int argc, char *argv[], struct bootinfo *bi)
 {
-	/* 
+	/*
 	 * this routines stack is never polluted since stack pointer
 	 * is lower than kernel text segment, and at exiting, stack pointer
 	 * is changed to proc0.
@@ -273,8 +273,8 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	kloader_bootinfo_set(&kbi, argc, argv, bi, false);
 #endif
 
-	/* 
-	 * CPU core Specific Function Hooks 
+	/*
+	 * CPU core Specific Function Hooks
 	 */
 #if defined(VR41XX) && defined(TX39XX)
 	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
@@ -291,8 +291,8 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #endif
 
 #if NBICONSDEV > 0
-	/* 
-	 *  bicons don't need actual device initialize.  only bootinfo needed. 
+	/*
+	 *  bicons don't need actual device initialize.  only bootinfo needed.
 	 */
 	__bicons_enable = (bicons_init(&bicons) == 0);
 	if (__bicons_enable)
@@ -419,15 +419,15 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #else
 	(*platform.mem_init)((paddr_t)kernend - MIPS_KSEG0_START);
 #endif
-	/* 
-	 *  Clear currently unused D-RAM area 
+	/*
+	 *  Clear currently unused D-RAM area
 	 *  (For reboot Windows CE clearly)
 	 */
 	{
 		u_int32_t sp;
 		__asm volatile("move %0, $29" : "=r"(sp));
 		KDASSERT(sp > KERNBASE + 0x400);
-		memset((void *)(KERNBASE + 0x400), 0, sp - (KERNBASE + 0x400));
+		memset((void *)(KERNBASE + 0x400), 0, sp - (KERNBASE + 0x400) - 64);
 	}
 
 	printf("mem_cluster_cnt = %d\n", mem_cluster_cnt);

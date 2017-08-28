@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.21.4.4 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.21.4.5 2017/08/28 17:52:03 skrll Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.21.4.4 2017/02/05 13:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.21.4.5 2017/08/28 17:52:03 skrll Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -287,6 +287,7 @@ mb86950_config(struct mb86950_softc *sc, int *media,
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 
 	/* Feed the chip the station address. */
 	bus_space_write_region_1(bst, bsh, DLCR_NODE_ID, sc->sc_enaddr, ETHER_ADDR_LEN);
@@ -720,7 +721,7 @@ mb86950_intr(void *arg)
 	 */
 
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		mb86950_start(ifp);
+		if_schedule_deferred_start(ifp);
 
 	/* Set receive interrupts back */
 	bus_space_write_1(bst, bsh, DLCR_RX_INT_EN, RX_MASK);

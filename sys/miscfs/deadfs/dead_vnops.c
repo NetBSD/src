@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.57.4.1 2015/06/06 14:40:22 skrll Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.57.4.2 2017/08/28 17:53:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.57.4.1 2015/06/06 14:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.57.4.2 2017/08/28 17:53:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,13 +234,12 @@ dead_poll(void *v)
 int
 dead_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
-	vput(ap->a_dvp);
 	vput(ap->a_vp);
 
 	return EIO;
@@ -286,13 +285,12 @@ dead_rename(void *v)
 int
 dead_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
-	vput(ap->a_dvp);
 	vput(ap->a_vp);
 
 	return EIO;
@@ -301,13 +299,12 @@ dead_rmdir(void *v)
 int
 dead_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
 
 	*ap->a_recycle = false;
-	VOP_UNLOCK(ap->a_vp);
 
 	return 0;
 }

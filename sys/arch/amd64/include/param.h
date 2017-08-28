@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.18.16.2 2017/02/05 13:40:02 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.18.16.3 2017/08/28 17:51:28 skrll Exp $	*/
 
 #ifdef __x86_64__
 
@@ -28,6 +28,11 @@
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 #define	MAXIOMEM	0xffffffffffff
+
+/*
+ * Maximum physical memory supported by the implementation.
+ */
+#define MAXPHYSMEM	0x100000000000ULL /* 16TB */
 
 /*
  * XXXfvdl change this (after bootstrap) to take # of bits from

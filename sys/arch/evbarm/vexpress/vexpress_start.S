@@ -1,4 +1,4 @@
-/*	$NetBSD: vexpress_start.S,v 1.2.2.2 2015/04/06 15:17:56 skrll Exp $	*/
+/*	$NetBSD: vexpress_start.S,v 1.2.2.3 2017/08/28 17:51:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -37,18 +37,24 @@
 #include <arm/asm.h>
 #include <arm/armreg.h>
 #include "assym.h"
-#include "platform.h"
 
-RCSID("$NetBSD: vexpress_start.S,v 1.2.2.2 2015/04/06 15:17:56 skrll Exp $")
+RCSID("$NetBSD: vexpress_start.S,v 1.2.2.3 2017/08/28 17:51:36 skrll Exp $")
 
+#ifdef VERBOSE_INIT_ARM
 #define	XPUTC(n)	mov r0, n; bl xputc
 #define	XPUTC2(n)	mov r0, n; blx r11
+#else
+#define	XPUTC(n)
+#define	XPUTC2(n)
+#endif
 
-#define	INIT_MEMSIZE	128
-#define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + INIT_MEMSIZE * 0x100000 - L1_TABLE_SIZE)
+#define	INIT_MEMSIZE	64
+#define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + INIT_MEMSIZE * L1_S_SIZE - L1_TABLE_SIZE)
+
+#define	MD_CPU_HATCH	_C_LABEL(arm_fdt_cpu_hatch)
 
 /*
- * Kernel start routine for ODROID boards running on uboot firmware
+ * Kernel start routine for Versatile Express boards running on uboot firmware
  * At this point, this code has been loaded into SDRAM
  * and the MMU is off
  */
@@ -61,6 +67,24 @@ _C_LABEL(vexpress_start):
 #endif
 	/* Move into supervisor mode and disable IRQs/FIQs. */
 	cpsid	if, #PSR_SVC32_MODE
+
+	/* Save any arguments passed to us. */
+	movw	r4, #:lower16:uboot_args
+	movt	r4, #:upper16:uboot_args
+	sub	r4, r4, #KERNEL_BASE_VOFFSET
+	stmia	r4, {r0-r3}
+
+	/* Add DTB PA (1MB) from r2 to MMU init table */
+	movw	r3, #:lower16:(L1_S_SIZE - 1)		/* align DTB PA to 1M */
+	movt	r3, #:upper16:(L1_S_SIZE - 1)
+	bic	r0, r2, r3
+	orr	r0, r0, #1				/* 1MB mapping */
+	bic	r1, r2, r3
+	movw	r3, #:lower16:(L1_S_PROTO_armv7|L1_S_APv7_KRW|L1_S_CACHEABLE)
+	movt	r3, #:upper16:(L1_S_PROTO_armv7|L1_S_APv7_KRW|L1_S_CACHEABLE)
+	orr	r1, r1, r3
+	adr	r3, .Lmmu_init_table_dtb		/* table entry addr */
+	stmia	r3, {r0-r1}				/* patch table entry */
 
 	XPUTC('a')
 
@@ -129,6 +153,20 @@ xputc:
 	MMU_INIT(VEXPRESS_CORE_PBASE, VEXPRESS_CORE_PBASE,
 		VEXPRESS_CORE_SIZE / L1_S_SIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map VEXPRESS GIC */
+	MMU_INIT(VEXPRESS_GIC_VBASE, VEXPRESS_GIC_PBASE,
+		VEXPRESS_GIC_SIZE / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map VEXPRESS GIC */
+	MMU_INIT(VEXPRESS_GIC_PBASE, VEXPRESS_GIC_PBASE,
+		VEXPRESS_GIC_SIZE / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map DTB location in SDRAM, patched in later */
+.Lmmu_init_table_dtb:
+	MMU_INIT(0, 0, 0, 0)
 
         /* end of table */
         MMU_INIT(0, 0, 0, 0)

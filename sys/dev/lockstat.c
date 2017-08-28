@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.19.4.2 2015/09/22 12:05:56 skrll Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.19.4.3 2017/08/28 17:52:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.19.4.2 2015/09/22 12:05:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.19.4.3 2017/08/28 17:52:00 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -327,8 +327,6 @@ lockstat_alloc(lsenable_t *le)
 	sz = sizeof(*lb) * le->le_nbufs;
 
 	lb = kmem_zalloc(sz, KM_SLEEP);
-	if (lb == NULL)
-		return (ENOMEM);
 
 	/* coverity[assert_side_effect] */
 	KASSERT(!lockstat_dev_enabled);

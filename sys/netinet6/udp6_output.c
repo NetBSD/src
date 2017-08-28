@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.46.2.6 2016/12/05 10:55:28 skrll Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.46.2.7 2017/08/28 17:53:13 skrll Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.46.2.6 2016/12/05 10:55:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.46.2.7 2017/08/28 17:53:13 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -381,7 +381,7 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 
 		UDP6_STATINC(UDP6_STAT_OPACKETS);
 		error = ip6_output(m, optp, &in6p->in6p_route, 0,
-		    in6p->in6p_moptions, in6p->in6p_socket, NULL);
+		    in6p->in6p_moptions, in6p, NULL);
 		break;
 	case AF_INET:
 #ifdef INET
@@ -413,7 +413,7 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 
 		UDP_STATINC(UDP_STAT_OPACKETS);
 		error = ip_output(m, NULL, &in6p->in6p_route, flags /* XXX */,
-		    in6p->in6p_v4moptions, (struct socket *)in6p->in6p_socket);
+		    in6p->in6p_v4moptions, NULL);
 		break;
 #else
 		error = EAFNOSUPPORT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.54 2014/04/21 19:13:22 christos Exp $	*/
+/*	$NetBSD: pcb.h,v 1.54.4.1 2017/08/28 17:51:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -89,12 +89,10 @@ struct pcb {
 	struct segment_descriptor pcb_fsd;	/* %fs descriptor */
 	struct segment_descriptor pcb_gsd; 	/* %gs descriptor */
 	void 	*pcb_onfault;		/* copyin/out fault recovery */
-	int	vm86_eflags;		/* virtual eflags for vm86 mode */
-	int	vm86_flagmask;		/* flag mask for vm86 mode */
-	void	*vm86_userp;		/* XXX performance hack */
 	char	*pcb_iomap;		/* I/O permission bitmap */
+	struct dbreg	*pcb_dbregs;	/* CPU Debug Registers */
 
-	int	not_used[15];
+	int	not_used[17];
 
 	/* floating point state */
 	struct cpu_info	*pcb_fpcpu;	/* cpu holding our fp state. */

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.3 2017/02/05 13:40:57 skrll Exp $
+# $NetBSD: Makefile,v 1.1.2.4 2017/08/28 17:53:10 skrll Exp $
 
 .include "../Makefile.inc"
 
@@ -12,5 +12,6 @@ SRCS=	spkr.c spkr_pcppi.c
 SRCS+=	spkr_audio.c audiobell.c
 
 WARNS=	4
+CPPFLAGS+=	-DNWSMUX=1
 
 .include <bsd.kmodule.mk>

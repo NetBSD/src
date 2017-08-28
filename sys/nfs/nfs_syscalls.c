@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.155.2.2 2016/07/09 20:25:23 skrll Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.155.2.3 2017/08/28 17:53:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.155.2.2 2016/07/09 20:25:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.155.2.3 2017/08/28 17:53:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,6 +325,7 @@ do_nfssvc(struct nfssvc_copy_ops *ops, struct lwp *l, int flag, void *argp, regi
 					     M_COPYALL, M_WAIT);
 					break;
 				    default:
+					kmem_free(nuidp, sizeof(*nuidp));
 					return EAFNOSUPPORT;
 				    };
 				}

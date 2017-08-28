@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.39.6.1 2015/06/06 14:39:56 skrll Exp $	*/
+/*	$NetBSD: frame.h,v 1.39.6.2 2017/08/28 17:51:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -64,7 +64,7 @@ struct switchframe {
 	u_int	sf_sp;
 	u_int	sf_pc;
 };
- 
+
 /*
  * System stack frames.
  */
@@ -95,6 +95,7 @@ void validate_trapframe(trapframe_t *, int);
 #include "opt_cpuoptions.h"
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
+#include "opt_dtrace.h"
 
 #include <arm/locore.h>
 
@@ -240,7 +241,7 @@ void validate_trapframe(trapframe_t *, int);
 #define	ENABLE_ALIGNMENT_FAULTS						\
 	and	r7, r0, #(PSR_MODE)	/* Test for USR32 mode */	;\
 	GET_CURCPU(r4)			/* r4 = cpuinfo */
-	
+
 
 #define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
 	DO_PENDING_SOFTINTS						;\
@@ -423,7 +424,7 @@ LOCK_CAS_DEBUG_LOCALS
  * This should only be used if the processor is not currently in SVC32
  * mode. The processor mode is switched to SVC mode and the trap frame is
  * stored. The SVC lr field is used to store the previous value of
- * lr in SVC mode.  
+ * lr in SVC mode.
  *
  * NOTE: r13 and r14 are stored separately as a work around for the
  * SA110 rev 2 STM^ bug
@@ -440,13 +441,26 @@ LOCK_CAS_DEBUG_LOCALS
 	msr     cpsr_c, tmp		/* Punch into SVC mode */
 #endif
 
-#define PUSHFRAMEINSVC							   \
+#define PUSHXXXREGSANDSWITCH						   \
 	stmdb	sp, {r0-r3};		/* Save 4 registers */		   \
 	mov	r0, lr;			/* Save xxx32 r14 */		   \
 	mov	r1, sp;			/* Save xxx32 sp */		   \
 	mrs	r3, spsr;		/* Save xxx32 spsr */		   \
-	SET_CPSR_MODE(r2, PSR_SVC32_MODE);				   \
-	bic	r2, sp, #7;		/* Align new SVC sp */		   \
+	SET_CPSR_MODE(r2, PSR_SVC32_MODE)
+
+#ifdef KDTRACE_HOOKS
+#define PUSHDTRACEGAP							   \
+	and	r2, r3, #(PSR_MODE);					   \
+	cmp	r2, #(PSR_SVC32_MODE);	/* were we in SVC mode? */	   \
+	mov	r2, sp;							   \
+	subeq	r2, r2, #(4 * 16);	/* if so, leave a gap for dtrace */
+#else
+#define PUSHDTRACEGAP							   \
+	mov	r2, sp
+#endif
+
+#define PUSHTRAPFRAME(rX)						   \
+	bic	r2, rX, #7;		/* Align new SVC sp */		   \
 	str	r0, [r2, #-4]!;		/* Push return address */	   \
 	stmdb	r2!, {sp, lr};		/* Push SVC sp, lr */		   \
 	mov	sp, r2;			/* Keep stack aligned */	   \
@@ -457,6 +471,10 @@ LOCK_CAS_DEBUG_LOCALS
 	mov     r0, r0;                 /* NOP for previous instruction */ \
 	mrs	r0, spsr;		/* Get the SPSR */		   \
 	str	r0, [sp, #-TF_R0]!	/* Push the SPSR onto the stack */
+
+#define PUSHFRAMEINSVC							   \
+	PUSHXXXREGSANDSWITCH;						   \
+	PUSHTRAPFRAME(sp)
 
 /*
  * PULLFRAMEFROMSVCANDEXIT - macro to pull a trap frame from the stack

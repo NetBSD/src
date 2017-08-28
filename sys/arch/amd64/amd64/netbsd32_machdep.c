@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.92.6.5 2017/02/05 13:40:01 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.92.6.6 2017/08/28 17:51:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.92.6.5 2017/02/05 13:40:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.92.6.6 2017/08/28 17:51:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.92.6.5 2017/02/05 13:40:01 sk
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
 #include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
@@ -79,9 +80,19 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.92.6.5 2017/02/05 13:40:01 sk
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
 
+extern struct pool x86_dbregspl;
+
 /* Provide a the name of the architecture we're emulating */
 const char	machine32[] = "i386";
 const char	machine_arch32[] = "i386";
+
+#ifdef USER_LDT
+static int x86_64_get_ldt32(struct lwp *, void *, register_t *);
+static int x86_64_set_ldt32(struct lwp *, void *, register_t *);
+#else
+#define x86_64_get_ldt32(x, y, z)	ENOSYS
+#define x86_64_set_ldt32(x, y, z)	ENOSYS
+#endif
 
 #ifdef MTRR
 static int x86_64_get_mtrr32(struct lwp *, void *, register_t *);
@@ -115,7 +126,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	pcb = lwp_getpcb(l);
 
-#if defined(USER_LDT) && 0
+#if defined(USER_LDT)
 	pmap_ldt_cleanup(l);
 #endif
 
@@ -127,9 +138,12 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
 	    ?  __NetBSD_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 
-	p->p_flag |= PK_32;
+	if (pcb->pcb_dbregs != NULL) {
+		pool_put(&x86_dbregspl, pcb->pcb_dbregs);
+		pcb->pcb_dbregs = NULL;
+	}
 
-	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
+	p->p_flag |= PK_32;
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
@@ -520,15 +534,55 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs, size_t *sz)
 }
 
 int
+netbsd32_process_read_dbregs(struct lwp *l, struct dbreg32 *regs, size_t *sz)
+{
+#if notyet
+	struct pcb *pcb;
+
+	pcb = lwp_getpcb(l);
+
+	regs->dr[0] = pcb->pcb_dbregs->dr[0] & 0xffffffff;
+	regs->dr[1] = pcb->pcb_dbregs->dr[1] & 0xffffffff;
+	regs->dr[2] = pcb->pcb_dbregs->dr[2] & 0xffffffff;
+	regs->dr[3] = pcb->pcb_dbregs->dr[3] & 0xffffffff;
+
+	regs->dr[6] = pcb->pcb_dbregs->dr[6] & 0xffffffff;
+	regs->dr[7] = pcb->pcb_dbregs->dr[7] & 0xffffffff;
+
+	return 0;
+#else
+	return ENOTSUP;
+#endif
+}
+
+int
 netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
 {
-	struct trapframe *tf = l->l_md.md_regs;
+	struct trapframe *tf;
+	struct pcb *pcb;
+
+	tf = l->l_md.md_regs;
+	pcb = lwp_getpcb(l);
 
 	/*
-	 * Check for security violations. Taken from i386/process_machdep.c.
+	 * Check for security violations.
 	 */
-	if (((regs->r_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    !VALID_USER_CSEL32(regs->r_cs))
+	if (((regs->r_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
+		return EINVAL;
+	if (!VALID_USER_CSEL32(regs->r_cs))
+		return EINVAL;
+	if (regs->r_fs != 0 && !VALID_USER_DSEL32(regs->r_fs) &&
+	    !(VALID_USER_FSEL32(regs->r_fs) && pcb->pcb_fs != 0))
+		return EINVAL;
+	if (regs->r_gs != 0 && !VALID_USER_DSEL32(regs->r_gs) &&
+	    !(VALID_USER_GSEL32(regs->r_gs) && pcb->pcb_gs != 0))
+		return EINVAL;
+	if (regs->r_es != 0 && !VALID_USER_DSEL32(regs->r_es))
+		return EINVAL;
+	if (!VALID_USER_DSEL32(regs->r_ds) ||
+	    !VALID_USER_DSEL32(regs->r_ss))
+		return EINVAL;
+	if (regs->r_eip >= VM_MAXUSER_ADDRESS32)
 		return EINVAL;
 
 	tf->tf_rax = regs->r_eax;
@@ -562,6 +616,29 @@ netbsd32_process_write_fpregs(struct lwp *l, const struct fpreg32 *regs,
 }
 
 int
+netbsd32_process_write_dbregs(struct lwp *l, const struct dbreg32 *regs,
+    size_t sz)
+{
+#if notyet
+	struct pcb *pcb;
+
+	pcb = lwp_getpcb(l);
+
+	pcb->pcb_dbregs->dr[0] = regs->dr[0];
+	pcb->pcb_dbregs->dr[1] = regs->dr[1];
+	pcb->pcb_dbregs->dr[2] = regs->dr[2];
+	pcb->pcb_dbregs->dr[3] = regs->dr[3];
+
+	pcb->pcb_dbregs->dr[6] = regs->dr[6];
+	pcb->pcb_dbregs->dr[7] = regs->dr[7];
+
+	return 0;
+#else
+	return ENOTSUP;
+#endif
+}
+
+int
 netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap, register_t *retval)
 {
 	/* {
@@ -573,6 +650,14 @@ netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap, registe
 	switch (SCARG(uap, op)) {
 	case X86_IOPL:
 		error = x86_iopl(l,
+		    NETBSD32PTR64(SCARG(uap, parms)), retval);
+		break;
+	case X86_GET_LDT: 
+		error = x86_64_get_ldt32(l,
+		    NETBSD32PTR64(SCARG(uap, parms)), retval);
+		break;
+	case X86_SET_LDT: 
+		error = x86_64_set_ldt32(l,
 		    NETBSD32PTR64(SCARG(uap, parms)), retval);
 		break;
 	case X86_GET_MTRR:
@@ -589,6 +674,70 @@ netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap, registe
 	}
 	return error;
 }
+
+#ifdef USER_LDT
+static int
+x86_64_set_ldt32(struct lwp *l, void *args, register_t *retval)
+{
+	struct x86_set_ldt_args32 ua32;
+	struct x86_set_ldt_args ua;
+	union descriptor *descv;
+	int error;
+
+	if ((error = copyin(args, &ua32, sizeof(ua32))) != 0)
+		return (error);
+
+	ua.start = ua32.start;
+	ua.num = ua32.num;
+
+	if (ua.num < 0 || ua.num > 8192)
+		return EINVAL;
+
+	descv = malloc(sizeof(*descv) * ua.num, M_TEMP, M_NOWAIT);
+	if (descv == NULL)
+		return ENOMEM;
+
+	error = copyin((void *)(uintptr_t)ua32.desc, descv,
+	    sizeof(*descv) * ua.num);
+	if (error == 0)
+		error = x86_set_ldt1(l, &ua, descv);
+	*retval = ua.start;
+
+	free(descv, M_TEMP);
+	return error;
+}
+
+static int
+x86_64_get_ldt32(struct lwp *l, void *args, register_t *retval)
+{
+	struct x86_get_ldt_args32 ua32;
+	struct x86_get_ldt_args ua;
+	union descriptor *cp;
+	int error;
+
+	if ((error = copyin(args, &ua32, sizeof(ua32))) != 0)
+		return error;
+
+	ua.start = ua32.start;
+	ua.num = ua32.num;
+
+	if (ua.num < 0 || ua.num > 8192)
+		return EINVAL;
+
+	cp = malloc(ua.num * sizeof(union descriptor), M_TEMP, M_WAITOK);
+	if (cp == NULL)
+		return ENOMEM;
+
+	error = x86_get_ldt1(l, &ua, cp);
+	*retval = ua.num;
+	if (error == 0)
+		error = copyout(cp, (void *)(uintptr_t)ua32.desc,
+		    ua.num * sizeof(*cp));
+
+	free(cp, M_TEMP);
+	return error;
+}
+#endif
 
 #ifdef MTRR
 static int
@@ -629,10 +778,6 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 
 	size = n * sizeof(struct mtrr);
 	m64p = kmem_zalloc(size, KM_SLEEP);
-	if (m64p == NULL) {
-		error = ENOMEM;
-		goto fail;
-	}
 	error = mtrr_get(m64p, &n, l->l_proc, 0);
 	if (error != 0)
 		goto fail;
@@ -694,10 +839,6 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 
 	size = n * sizeof(struct mtrr);
 	m64p = kmem_zalloc(size, KM_SLEEP);
-	if (m64p == NULL) {
-		error = ENOMEM;
-		goto fail;
-	}
 	m32p = (struct mtrr32 *)(uintptr_t)args32.mtrrp;
 	mp = m64p;
 	for (i = 0; i < n; i++) {
@@ -901,34 +1042,44 @@ startlwp32(void *arg)
 
 /*
  * For various reasons, the amd64 port can't do what the i386 port does,
- * and rely on catching invalid user contexts on exit from the kernel.
+ * and relies on catching invalid user contexts on exit from the kernel.
  * These functions perform the needed checks.
  */
 
 static int
 check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 {
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	struct trapframe *tf;
 	struct pcb *pcb;
 
 	tf = l->l_md.md_regs;
 	pcb = lwp_getpcb(curlwp);
 
-	if (((scp->sc_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    !VALID_USER_CSEL32(scp->sc_cs))
+	if (((scp->sc_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
 		return EINVAL;
-	if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs) &&
-	    !(VALID_USER_FSEL32(scp->sc_fs) && pcb->pcb_fs != 0))
-		return EINVAL;
-	if (scp->sc_gs != 0 && !VALID_USER_DSEL32(scp->sc_gs) &&
-	    !(VALID_USER_GSEL32(scp->sc_gs) && pcb->pcb_gs != 0))
-		return EINVAL;
-	if (scp->sc_es != 0 && !VALID_USER_DSEL32(scp->sc_es))
-		return EINVAL;
-	if (!VALID_USER_DSEL32(scp->sc_ds) || !VALID_USER_DSEL32(scp->sc_ss))
-		return EINVAL;
-	if (scp->sc_eip >= VM_MAXUSER_ADDRESS32)
-		return EINVAL;
+
+	if (__predict_false(pmap->pm_ldt != NULL)) {
+		/* Only when the LDT is user-set (with USER_LDT) */
+		if (!USERMODE(scp->sc_cs, scp->sc_eflags))
+			return EINVAL;
+	} else {
+		if (!VALID_USER_CSEL32(scp->sc_cs))
+			return EINVAL;
+		if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs) &&
+			!(VALID_USER_FSEL32(scp->sc_fs) && pcb->pcb_fs != 0))
+			return EINVAL;
+		if (scp->sc_gs != 0 && !VALID_USER_DSEL32(scp->sc_gs) &&
+			!(VALID_USER_GSEL32(scp->sc_gs) && pcb->pcb_gs != 0))
+			return EINVAL;
+		if (scp->sc_es != 0 && !VALID_USER_DSEL32(scp->sc_es))
+			return EINVAL;
+		if (!VALID_USER_DSEL32(scp->sc_ds) || !VALID_USER_DSEL32(scp->sc_ss))
+			return EINVAL;
+		if (scp->sc_eip >= VM_MAXUSER_ADDRESS32)
+			return EINVAL;
+	}
+
 	return 0;
 }
 
@@ -937,14 +1088,21 @@ cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mcp)
 {
 	const __greg32_t *gr;
 	struct trapframe *tf;
-	struct pcb *pcb;
 
 	gr = mcp->__gregs;
 	tf = l->l_md.md_regs;
-	pcb = lwp_getpcb(l);
 
-	if (((gr[_REG32_EFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    !VALID_USER_CSEL32(gr[_REG32_CS]))
+	if (((gr[_REG32_EFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
+		return EINVAL;
+
+#ifdef USER_LDT
+	/* Userland is allowed to have unfamiliar segment register values */
+	if (!USERMODE(gr[_REG32_CS], gr[_REG32_EFL]))
+		return EINVAL;
+#else
+	struct pcb *pcb = lwp_getpcb(l);
+
+	if (!VALID_USER_CSEL32(gr[_REG32_CS]))
 		return EINVAL;
 	if (gr[_REG32_FS] != 0 && !VALID_USER_DSEL32(gr[_REG32_FS]) &&
 	    !(VALID_USER_FSEL32(gr[_REG32_FS]) && pcb->pcb_fs != 0))
@@ -957,8 +1115,11 @@ cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mcp)
 	if (!VALID_USER_DSEL32(gr[_REG32_DS]) ||
 	    !VALID_USER_DSEL32(gr[_REG32_SS]))
 		return EINVAL;
+#endif
+
 	if (gr[_REG32_EIP] >= VM_MAXUSER_ADDRESS32)
 		return EINVAL;
+
 	return 0;
 }
 

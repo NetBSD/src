@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.45.10.2 2016/10/05 20:56:11 skrll Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.45.10.3 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.45.10.2 2016/10/05 20:56:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.45.10.3 2017/08/28 17:53:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,16 +167,13 @@ nospace:
  *	  available inode is located.
  */
 int
-ext2fs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
-    struct vnode **vpp)
+ext2fs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred, ino_t *inop)
 {
 	struct inode *pip;
 	struct m_ext2fs *fs;
-	struct inode *ip;
 	ino_t ino, ipref;
-	int cg, error;
+	int cg;
 
-	*vpp = NULL;
 	pip = VTOI(pvp);
 	fs = pip->i_e2fs;
 	if (fs->e2fs.e2fs_ficount == 0)
@@ -190,32 +187,10 @@ ext2fs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	ino = (ino_t)ext2fs_hashalloc(pip, cg, (long)ipref, mode, ext2fs_nodealloccg);
 	if (ino == 0)
 		goto noinodes;
-	error = VFS_VGET(pvp->v_mount, ino, vpp);
-	if (error) {
-		ext2fs_vfree(pvp, ino, mode);
-		return error;
-	}
-	ip = VTOI(*vpp);
 
-	KASSERT(!E2FS_HAS_GD_CSUM(fs) || (fs->e2fs_gd[ino_to_cg(fs, ino)].ext2bgd_flags & h2fs16(E2FS_BG_INODE_ZEROED)) != 0);
-
-	/* check for already used inode; makes sense only for ZEROED itable */
-	if (__predict_false(ip->i_e2fs_mode && ip->i_e2fs_nlink != 0)) {
-		printf("mode = 0%o, nlinks %d, inum = %llu, fs = %s\n",
-		    ip->i_e2fs_mode, ip->i_e2fs_nlink,
-		    (unsigned long long)ip->i_number, fs->e2fs_fsmnt);
-		panic("ext2fs_valloc: dup alloc");
-	}
-
-	memset(ip->i_din.e2fs_din, 0, EXT2_DINODE_SIZE(fs));
-
-	/*
-	 * Set up a new generation number for this inode.
-	 */
-	if (++ext2gennumber < time_second)
-		ext2gennumber = time_second;
-	ip->i_e2fs_gen = ext2gennumber;
+	*inop = ino;
 	return 0;
+
 noinodes:
 	ext2fs_fserr(fs, kauth_cred_geteuid(cred), "out of inodes");
 	uprintf("\n%s: create/symlink failed, no inodes free\n", fs->e2fs_fsmnt);

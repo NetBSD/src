@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.7.8.4 2015/12/27 12:10:19 skrll Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.7.8.5 2017/08/28 17:53:17 skrll Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.7.8.4 2015/12/27 12:10:19 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.7.8.5 2017/08/28 17:53:17 skrll Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -110,8 +110,6 @@ READ(void *v)
 		return ffs_snapshot_read(vp, uio, ioflag);
 #endif /* !LFS_READWRITE */
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
-
 	if (uio->uio_offset >= ip->i_size)
 		goto out;
 
@@ -132,7 +130,6 @@ READ(void *v)
 
  out:
 	error = ulfs_post_read_update(vp, ap->a_ioflag, error);
-	fstrans_done(vp->v_mount);
 	return (error);
 }
 
@@ -173,8 +170,6 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 #ifndef LFS_READWRITE
 	KASSERT(!ISSET(ip->i_flags, (SF_SNAPSHOT | SF_SNAPINVAL)));
 #endif
-
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	if (uio->uio_offset >= ip->i_size)
 		goto out;
@@ -223,7 +218,6 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 
  out:
 	error = ulfs_post_read_update(vp, ioflag, error);
-	fstrans_done(vp->v_mount);
 	return (error);
 }
 
@@ -234,7 +228,7 @@ ulfs_post_read_update(struct vnode *vp, int ioflag, int oerror)
 	int error = oerror;
 
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
-		ip->i_flag |= IN_ACCESS;
+		ip->i_state |= IN_ACCESS;
 		if ((ioflag & IO_SYNC) == IO_SYNC) {
 			error = lfs_update(vp, NULL, NULL, UPDATE_WAIT);
 		}
@@ -297,8 +291,6 @@ WRITE(void *v)
 #endif
 	if (uio->uio_resid == 0)
 		return (0);
-
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
@@ -451,7 +443,6 @@ WRITE(void *v)
 out:
 	error = ulfs_post_write_update(vp, uio, ioflag, cred, osize, resid,
 	    extended, error);
-	fstrans_done(vp->v_mount);
 
 	return (error);
 }
@@ -495,8 +486,6 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 #endif
 	if (uio->uio_resid == 0)
 		return 0;
-
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	resid = uio->uio_resid;
@@ -579,7 +568,6 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 
 	error = ulfs_post_write_update(vp, uio, ioflag, cred, osize, resid,
 	    extended, error);
-	fstrans_done(vp->v_mount);
 
 	return (error);
 }
@@ -592,9 +580,9 @@ ulfs_post_write_update(struct vnode *vp, struct uio *uio, int ioflag,
 	int error = oerror;
 
 	/* Trigger ctime and mtime updates, and atime if MNT_RELATIME.  */
-	ip->i_flag |= IN_CHANGE | IN_UPDATE;
+	ip->i_state |= IN_CHANGE | IN_UPDATE;
 	if (vp->v_mount->mnt_flag & MNT_RELATIME)
-		ip->i_flag |= IN_ACCESS;
+		ip->i_state |= IN_ACCESS;
 
 	/*
 	 * If we successfully wrote any data and we are not the superuser,

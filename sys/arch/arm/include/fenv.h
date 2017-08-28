@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.2.8.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: fenv.h,v 1.2.8.2 2017/08/28 17:51:31 skrll Exp $	*/
 
 /* 
  * Based on ieeefp.h written by J.T. Conklin, Apr 28, 1995
@@ -33,6 +33,28 @@ typedef int fexcept_t;
 #define	FE_UPWARD	1	/* round toward positive infinity */
 #define	FE_DOWNWARD	2	/* round toward negative infinity */
 #define	FE_TOWARDZERO	3	/* round to zero (truncate) */
+
+#ifdef __SOFTFP__
+
+/*
+ * Provide a platform-specific softfloat ABI.
+ */
+
+#include <arm/vfpreg.h>
+
+#define __FENV_GET_FLAGS(__envp)	__SHIFTOUT(*(__envp), VFP_FPSCR_CSUM)
+#define __FENV_GET_MASK(__envp)		__SHIFTOUT(*(__envp), VFP_FPSCR_ESUM)
+#define __FENV_GET_ROUND(__envp)	__SHIFTOUT(*(__envp), VFP_FPSCR_RMODE)
+#define __FENV_SET_FLAGS(__envp, __val) \
+	*(__envp) = __SHIFTIN((__val), VFP_FPSCR_CSUM)
+#define __FENV_SET_MASK(__envp, __val) \
+	*(__envp) = __SHIFTIN((__val), VFP_FPSCR_ESUM)
+#define __FENV_SET_ROUND(__envp, __val) \
+	*(__envp) = __SHIFTIN((__val), VFP_FPSCR_RMODE)
+
+#define __HAVE_FENV_SOFTFLOAT_DEFS
+
+#endif /* __SOFTFP__ */
 
 __BEGIN_DECLS
 

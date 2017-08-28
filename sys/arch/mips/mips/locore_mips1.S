@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.84.16.3 2016/10/05 20:55:32 skrll Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.84.16.4 2017/08/28 17:51:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,7 +57,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: locore_mips1.S,v 1.84.16.3 2016/10/05 20:55:32 skrll Exp $")
+RCSID("$NetBSD: locore_mips1.S,v 1.84.16.4 2017/08/28 17:51:45 skrll Exp $")
 
 #include "assym.h"
 
@@ -1035,6 +1035,7 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	tlbwr					# write random TLB
 	j	k1
 	 rfe
+	.set	at
 END(MIPSX(kern_tlb_miss))
 
 #if 0
@@ -1368,7 +1369,7 @@ LEAF(MIPSX(tlb_invalidate_all))
 END(MIPSX(tlb_invalidate_all))
 
 /*
- * u_int mipsN_tlb_record_asids(u_long *bitmap, uint32_t asid_mask)
+ * u_int mipsN_tlb_record_asids(u_long *bitmap, uint32_t asid_max)
  *
  * Scan the random part of the TLB looking at non-global entries and
  * record each ASID in use into the bitmap.  Additionally, return the
@@ -1402,7 +1403,8 @@ LEAF(MIPSX(tlb_record_asids))
 	nop
 	and	t0, MIPS1_TLB_PID
 	srl	t0, MIPS1_TLB_PID_SHIFT		# shift to low bits
-	and	t0, a1				# focus on asid_mask
+	bgt	t0, a1, 4f			# > ASID max? skip
+	 nop
 
 	srl	a2, t0, 3 + LONG_SCALESHIFT	# drop low 5 bits
 	sll	a2, LONG_SCALESHIFT		# make an index for the bitmap

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.67.2.1 2015/09/22 12:05:55 skrll Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.67.2.2 2017/08/28 17:51:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.67.2.1 2015/09/22 12:05:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.67.2.2 2017/08/28 17:51:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -207,7 +207,8 @@ linux_clone_nptl(struct lwp *l, const struct linux_sys_clone_args *uap, register
 	}
 
 	error = lwp_create(l, p, uaddr, LWP_DETACHED | LWP_PIDLID,
-	    SCARG(uap, stack), 0, child_return, NULL, &l2, l->l_class);
+	    SCARG(uap, stack), 0, child_return, NULL, &l2, l->l_class,
+	    &l->l_sigmask, &l->l_sigstk);
 	if (__predict_false(error)) {
 		DPRINTF(("%s: lwp_create error=%d\n", __func__, error));
 		atomic_dec_uint(&nprocs);

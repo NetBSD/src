@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.71.6.2 2017/02/05 13:40:23 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.71.6.3 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.71.6.2 2017/02/05 13:40:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.71.6.3 2017/08/28 17:51:56 skrll Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -249,8 +249,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 			segs[curseg].ds_len += PAGE_SIZE;
 		} else {
 			curseg++;
-			if (curseg >= nsegs)
-				return EFBIG;
+			KASSERT(curseg < nsegs);
 			segs[curseg].ds_addr = curaddr;
 			segs[curseg].ds_len = PAGE_SIZE;
 		}
@@ -1654,10 +1653,6 @@ bus_dma_tag_create(bus_dma_tag_t obdt, const uint64_t present,
 		return EINVAL;
 
 	bdt = kmem_alloc(sizeof(struct x86_bus_dma_tag), KM_SLEEP);
-
-	if (bdt == NULL)
-		return ENOMEM;
-
 	*bdt = *obdt;
 	/* don't let bus_dmatag_destroy free these */
 	bdt->_tag_needs_free = 0;

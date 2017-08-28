@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.25 2014/02/20 18:19:10 dsl Exp $	*/
+/*	$NetBSD: pcb.h,v 1.25.6.1 2017/08/28 17:51:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 #ifdef __x86_64__
 
 #include <x86/cpu_extended_state.h>
+#include <amd64/reg.h>
 
 #define	NIOPORTS	1024		/* # of ports we allow to be mapped */
 
@@ -89,9 +90,10 @@ struct pcb {
 	void     *pcb_onfault;		/* copyin/out fault recovery */
 	uint64_t  pcb_fs;
 	uint64_t  pcb_gs;
+	struct dbreg *pcb_dbregs;
 	int pcb_iopl;
 
-	uint32_t pcb_unused[11];		/* unused */
+	uint32_t pcb_unused[9];		/* unused */
 
 	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
 	union savefpu	pcb_savefpu __aligned(64); /* floating point state */

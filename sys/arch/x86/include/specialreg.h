@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.80.2.7 2017/02/05 13:40:23 skrll Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.80.2.8 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -130,7 +130,7 @@
 #define CPUID_DE	0x00000004	/* has debugging extension */
 #define CPUID_PSE	0x00000008	/* has 4MB page size extension */
 #define CPUID_TSC	0x00000010	/* has time stamp counter */
-#define CPUID_MSR	0x00000020	/* has mode specific registers */
+#define CPUID_MSR	0x00000020	/* has model specific registers */
 #define CPUID_PAE	0x00000040	/* has phys address extension */
 #define CPUID_MCE	0x00000080	/* has machine check exception */
 #define CPUID_CX8	0x00000100	/* has CMPXCHG8B instruction */
@@ -144,7 +144,7 @@
 #define CPUID_PAT	0x00010000	/* Page Attribute Table */
 #define CPUID_PSE36	0x00020000	/* 36-bit PSE */
 #define CPUID_PN	0x00040000	/* processor serial number */
-#define CPUID_CFLUSH	0x00080000	/* CFLUSH insn supported */
+#define CPUID_CFLUSH	0x00080000	/* CLFLUSH insn supported */
 #define CPUID_B20	0x00100000	/* reserved */
 #define CPUID_DS	0x00200000	/* Debug Store */
 #define CPUID_ACPI	0x00400000	/* ACPI performance modulation regs */
@@ -163,7 +163,7 @@
 	"\5" "TSC"	"\6" "MSR"	"\7" "PAE"	"\10" "MCE" \
 	"\11" "CX8"	"\12" "APIC"	"\13" "B10"	"\14" "SEP" \
 	"\15" "MTRR"	"\16" "PGE"	"\17" "MCA"	"\20" "CMOV" \
-	"\21" "PAT"	"\22" "PSE36"	"\23" "PN"	"\24" "CFLUSH" \
+	"\21" "PAT"	"\22" "PSE36"	"\23" "PN"	"\24" "CLFLUSH" \
 	"\25" "B20"	"\26" "DS"	"\27" "ACPI"	"\30" "MMX" \
 	"\31" "FXSR"	"\32" "SSE"	"\33" "SSE2"	"\34" "SS" \
 	"\35" "HTT"	"\36" "TM"	"\37" "IA64"	"\40" "SBF"
@@ -551,6 +551,15 @@
 #define MSR_CTR1		0x013	/* P5 only (trap on P6) */
 #define MSR_IA32_PLATFORM_ID	0x017
 #define MSR_APICBASE		0x01b
+#define 	APICBASE_BSP		0x00000100	/* boot processor */
+#define 	APICBASE_EXTD		0x00000400	/* x2APIC mode */
+#define 	APICBASE_EN		0x00000800	/* software enable */
+/*
+ * APICBASE_PHYSADDR is actually variable-sized on some CPUs. But we're
+ * only interested in the initial value, which is guaranteed to fit the
+ * first 32 bits. So this macro is fine.
+ */
+#define 	APICBASE_PHYSADDR	0xfffff000	/* physical address */
 #define MSR_EBL_CR_POWERON	0x02a
 #define MSR_EBC_FREQUENCY_ID	0x02c	/* PIV only */
 #define MSR_TEST_CTL		0x033
@@ -651,15 +660,39 @@
 #define MSR_MC2_STATUS		0x409
 #define MSR_MC2_ADDR		0x40a
 #define MSR_MC2_MISC		0x40b
-#define MSR_MC4_CTL		0x40c
-#define MSR_MC4_STATUS		0x40d
-#define MSR_MC4_ADDR		0x40e
-#define MSR_MC4_MISC		0x40f
-#define MSR_MC3_CTL		0x410
-#define MSR_MC3_STATUS		0x411
-#define MSR_MC3_ADDR		0x412
-#define MSR_MC3_MISC		0x413
+#define MSR_MC3_CTL		0x40c
+#define MSR_MC3_STATUS		0x40d
+#define MSR_MC3_ADDR		0x40e
+#define MSR_MC3_MISC		0x40f
+#define MSR_MC4_CTL		0x410
+#define MSR_MC4_STATUS		0x411
+#define MSR_MC4_ADDR		0x412
+#define MSR_MC4_MISC		0x413
 				/* 0x480 - 0x490 VMX */
+#define MSR_X2APIC_BASE		0x800	/* 0x800 - 0xBFF */
+#define  MSR_X2APIC_ID			0x002	/* x2APIC ID. (RO) */
+#define  MSR_X2APIC_VERS		0x003	/* Version. (RO) */
+#define  MSR_X2APIC_TPRI		0x008	/* Task Prio. (RW) */
+#define  MSR_X2APIC_PPRI		0x00a	/* Processor prio. (RO) */
+#define  MSR_X2APIC_EOI			0x00b	/* End Int. (W) */
+#define  MSR_X2APIC_LDR			0x00d	/* Logical dest. (RO) */
+#define  MSR_X2APIC_SVR			0x00f	/* Spurious intvec (RW) */
+#define  MSR_X2APIC_ISR			0x010	/* In-Service Status (RO) */
+#define  MSR_X2APIC_TMR			0x018	/* Trigger Mode (RO) */
+#define  MSR_X2APIC_IRR			0x020	/* Interrupt Req (RO) */
+#define  MSR_X2APIC_ESR			0x028	/* Err status. (RW) */
+#define  MSR_X2APIC_LVT_CMCI		0x02f	/* LVT CMCI (RW) */
+#define  MSR_X2APIC_ICRLO		0x030	/* Int. cmd. (RW64) */
+#define  MSR_X2APIC_LVTT		0x032	/* Loc.vec.(timer) (RW) */
+#define  MSR_X2APIC_TMINT		0x033	/* Loc.vec (Thermal) (RW) */
+#define  MSR_X2APIC_PCINT		0x034	/* Loc.vec (Perf Mon) (RW) */
+#define  MSR_X2APIC_LVINT0		0x035	/* Loc.vec (LINT0) (RW) */
+#define  MSR_X2APIC_LVINT1		0x036	/* Loc.vec (LINT1) (RW) */
+#define  MSR_X2APIC_LVERR		0x037	/* Loc.vec (ERROR) (RW) */
+#define  MSR_X2APIC_ICR_TIMER		0x038	/* Initial count (RW) */
+#define  MSR_X2APIC_CCR_TIMER		0x039	/* Current count (RO) */
+#define  MSR_X2APIC_DCR_TIMER		0x03e	/* Divisor config (RW) */
+#define  MSR_X2APIC_SELF_IPI		0x03f	/* SELF IPI (W) */
 
 /*
  * VIA "Nehemiah" MSRs
@@ -694,13 +727,17 @@
 /*
  * AMD K8 (Opteron) MSRs.
  */
-#define MSR_SYSCFG	0xc0000010
+#define MSR_SYSCFG	0xc0010010
 
 #define MSR_EFER	0xc0000080		/* Extended feature enable */
-#define 	EFER_SCE		0x00000001	/* SYSCALL extension */
-#define 	EFER_LME		0x00000100	/* Long Mode Active */
-#define 	EFER_LMA		0x00000400	/* Long Mode Enabled */
-#define 	EFER_NXE		0x00000800	/* No-Execute Enabled */
+#define 	EFER_SCE	0x00000001	/* SYSCALL extension */
+#define 	EFER_LME	0x00000100	/* Long Mode Active */
+#define 	EFER_LMA	0x00000400	/* Long Mode Enabled */
+#define 	EFER_NXE	0x00000800	/* No-Execute Enabled */
+#define 	EFER_SVME	0x00001000	/* Secure Virtual Machine En. */
+#define 	EFER_LMSLE	0x00002000	/* Long Mode Segment Limit E. */
+#define 	EFER_FFXSR	0x00004000	/* Fast FXSAVE/FXRSTOR En. */
+#define 	EFER_TCE	0x00008000	/* Translation Cache Ext. */
 
 #define MSR_STAR	0xc0000081		/* 32 bit syscall gate addr */
 #define MSR_LSTAR	0xc0000082		/* 64 bit syscall gate addr */
@@ -994,90 +1031,208 @@
 #define PMC6_RET_SEG_RENAMES		0xd6	/* P-II and P-III only */
 
 /*
- * AMD K7 Event Selector MSR format.
+ * AMD K7. [Doc: 22007K.pdf, Feb 2002]
  */
-
+/* Event Selector MSR format */
 #define K7_EVTSEL_EVENT			0x000000ff
 #define K7_EVTSEL_UNIT			0x0000ff00
 #define K7_EVTSEL_UNIT_SHIFT		8
-#define K7_EVTSEL_USR			(1 << 16)
-#define K7_EVTSEL_OS			(1 << 17)
-#define K7_EVTSEL_E			(1 << 18)
-#define K7_EVTSEL_PC			(1 << 19)
-#define K7_EVTSEL_INT			(1 << 20)
-#define K7_EVTSEL_EN			(1 << 22)
-#define K7_EVTSEL_INV			(1 << 23)
+#define K7_EVTSEL_USR			__BIT(16)
+#define K7_EVTSEL_OS			__BIT(17)
+#define K7_EVTSEL_E			__BIT(18)
+#define K7_EVTSEL_PC			__BIT(19)
+#define K7_EVTSEL_INT			__BIT(20)
+#define K7_EVTSEL_EN			__BIT(22)
+#define K7_EVTSEL_INV			__BIT(23)
 #define K7_EVTSEL_COUNTER_MASK		0xff000000
 #define K7_EVTSEL_COUNTER_MASK_SHIFT	24
-
-/* Segment Register Loads */
-#define K7_SEGMENT_REG_LOADS		0x20
-
-#define K7_STORES_TO_ACTIVE_INST_STREAM	0x21
-
 /* Data Cache Unit */
 #define K7_DATA_CACHE_ACCESS		0x40
 #define K7_DATA_CACHE_MISS		0x41
 #define K7_DATA_CACHE_REFILL		0x42
 #define K7_DATA_CACHE_REFILL_SYSTEM	0x43
 #define K7_DATA_CACHE_WBACK		0x44
-#define K7_L2_DTLB_HIT			0x45
+#define K7_L1_DTLB_MISS			0x45
 #define K7_L2_DTLB_MISS			0x46
 #define K7_MISALIGNED_DATA_REF		0x47
-#define K7_SYSTEM_REQUEST		0x64
-#define K7_SYSTEM_REQUEST_TYPE		0x65
-
-#define K7_SNOOP_HIT			0x73
-#define K7_SINGLE_BIT_ECC_ERROR		0x74
-#define K7_CACHE_LINE_INVAL		0x75
-#define K7_CYCLES_PROCESSOR_IS_RUNNING	0x76
-#define K7_L2_REQUEST			0x79
-#define K7_L2_REQUEST_BUSY		0x7a
-
 /* Instruction Fetch Unit */
 #define K7_IFU_IFETCH			0x80
 #define K7_IFU_IFETCH_MISS		0x81
 #define K7_IFU_REFILL_FROM_L2		0x82
 #define K7_IFU_REFILL_FROM_SYSTEM	0x83
-#define K7_ITLB_L1_MISS			0x84
-#define K7_ITLB_L2_MISS			0x85
-#define K7_SNOOP_RESYNC			0x86
-#define K7_IFU_STALL			0x87
-
-#define K7_RETURN_STACK_HITS		0x88
-#define K7_RETURN_STACK_OVERFLOW	0x89
-
+#define K7_L1_ITLB_MISS			0x84
+#define K7_L2_ITLB_MISS			0x85
 /* Retired */
 #define K7_RETIRED_INST			0xc0
 #define K7_RETIRED_OPS			0xc1
-#define K7_RETIRED_BRANCHES		0xc2
+#define K7_RETIRED_BRANCH		0xc2
 #define K7_RETIRED_BRANCH_MISPREDICTED	0xc3
 #define K7_RETIRED_TAKEN_BRANCH		0xc4
 #define K7_RETIRED_TAKEN_BRANCH_MISPREDICTED	0xc5
 #define K7_RETIRED_FAR_CONTROL_TRANSFER	0xc6
 #define K7_RETIRED_RESYNC_BRANCH	0xc7
-#define K7_RETIRED_NEAR_RETURNS		0xc8
-#define K7_RETIRED_NEAR_RETURNS_MISPREDICTED	0xc9
-#define K7_RETIRED_INDIRECT_MISPREDICTED	0xca
-
 /* Interrupts */
 #define K7_CYCLES_INT_MASKED		0xcd
 #define K7_CYCLES_INT_PENDING_AND_MASKED	0xce
 #define K7_HW_INTR_RECV			0xcf
 
-#define K7_INSTRUCTION_DECODER_EMPTY	0xd0
-#define K7_DISPATCH_STALLS		0xd1
-#define K7_BRANCH_ABORTS_TO_RETIRE	0xd2
-#define K7_SERIALIZE			0xd3
-#define K7_SEGMENT_LOAD_STALL		0xd4
-#define K7_ICU_FULL			0xd5
-#define K7_RESERVATION_STATIONS_FULL	0xd6
-#define K7_FPU_FULL			0xd7
-#define K7_LS_FULL			0xd8
-#define K7_ALL_QUIET_STALL		0xd9
-#define K7_FAR_TRANSFER_OR_RESYNC_BRANCH_PENDING	0xda
+/*
+ * AMD 10h family PMCs. [Doc: 31116.pdf, Jan 2013]
+ */
+/*	Register MSRs			*/
+#define MSR_F10H_EVNTSEL0			0xc0010000
+#define MSR_F10H_EVNTSEL1			0xc0010001
+#define MSR_F10H_EVNTSEL2			0xc0010002
+#define MSR_F10H_EVNTSEL3			0xc0010003
+#define MSR_F10H_PERFCTR0			0xc0010004
+#define MSR_F10H_PERFCTR1			0xc0010005
+#define MSR_F10H_PERFCTR2			0xc0010006
+#define MSR_F10H_PERFCTR3			0xc0010007
+/*	Event Selector MSR format	*/
+#define F10H_EVTSEL_EVENT_MASK			0x000F000000FF
+#define F10H_EVTSEL_EVENT_SHIFT_LOW		0
+#define F10H_EVTSEL_EVENT_SHIFT_HIGH		32
+#define F10H_EVTSEL_UNIT_MASK			0x0000FF00
+#define F10H_EVTSEL_UNIT_SHIFT			8
+#define F10H_EVTSEL_USR				__BIT(16)
+#define F10H_EVTSEL_OS				__BIT(17)
+#define F10H_EVTSEL_EDGE			__BIT(18)
+#define F10H_EVTSEL_RSVD1			__BIT(19)
+#define F10H_EVTSEL_INT				__BIT(20)
+#define F10H_EVTSEL_RSVD2			__BIT(21)
+#define F10H_EVTSEL_EN				__BIT(22)
+#define F10H_EVTSEL_INV				__BIT(23)
+#define F10H_EVTSEL_COUNTER_MASK		0xFF000000
+#define F10H_EVTSEL_COUNTER_MASK_SHIFT		24
+/*	Floating Point Events		*/
+#define F10H_FP_DISPATCHED_FPU_OPS		0x00
+#define F10H_FP_CYCLES_EMPTY_FPU_OPS		0x01
+#define F10H_FP_DISPATCHED_FASTFLAG_OPS		0x02
+#define F10H_FP_RETIRED_SSE_OPS			0x03
+#define F10H_FP_RETIRED_MOVE_OPS		0x04
+#define F10H_FP_RETIRED_SERIALIZING_OPS		0x05
+#define F10H_FP_CYCLES_SERIALIZING_OP_SCHEDULER	0x06
+/*	Load/Store and TLB Events	*/
+#define F10H_SEGMENT_REG_LOADS			0x20
+#define	F10H_PIPELINE_RESTART_SELFMOD_CODE	0x21
+#define F10H_PIPELINE_RESTART_PROBE_HIT		0x22
+#define F10H_LS_BUFFER_2_FILL			0x23
+#define F10H_LOCKED_OPERATIONS			0x24
+#define F10H_RETIRED_CLFLUSH_INSTRUCTIONS	0x26
+#define F10H_RETIRED_CPUID_INSTRUCTIONS		0x27
+#define F10H_CANCELLED_STORE_LOAD_FORWARD_OPS	0x2A
+#define F10H_SMI_RECEIVED			0x2B
+/*	Data Cache Events		*/
+#define F10H_DATA_CACHE_ACCESS			0x40
+#define F10H_DATA_CACHE_MISS			0x41
+#define F10H_DATA_CACHE_REFILL_FROM_L2		0x42
+#define F10H_DATA_CACHE_REFILL_FROM_NORTHBRIDGE	0x43
+#define F10H_CACHE_LINES_EVICTED		0x44
+#define F10H_L1_DTLB_MISS			0x45
+#define F10H_L2_DTLB_MISS			0x46
+#define F10H_MISALIGNED_ACCESS			0x47
+#define F10H_MICROARCH_LATE_CANCEL_OF_ACCESS	0x48
+#define F10H_MICROARCH_EARLY_CANCEL_OF_ACCESS	0x49
+#define F10H_SINGLE_BIT_ECC_ERRORS_RECORDED	0x4A
+#define F10H_PREFETCH_INSTRUCTIONS_DISPATCHED	0x4B
+#define F10H_DCACHE_MISSES_LOCKED_INSTRUCTIONS	0x4C
+#define F10H_L1_DTLB_HIT			0x4D
+#define F10H_INEFFECTIVE_SOFTWARE_PREFETCHS	0x52
+#define F10H_GLOBAL_TLB_FLUSHES			0x54
+#define F10H_MEMORY_REQUESTS_BY_TYPE		0x65
+#define F10H_DATA_PREFETCHER			0x67
+#define F10H_MAB_REQUESTS			0x68
+#define F10H_MAB_WAIT_CYCLES			0x69
+#define F10H_NORTHBRIDGE_READ_RESP_BY_COH_STATE	0x6C
+#define F10H_OCTWORDS_WRITTEN_TO_SYSTEM		0x6D
+#define F10H_CPU_CLOCKS_NOT_HALTED		0x76
+#define F10H_REQUESTS_TO_L2_CACHE		0x7D
+#define F10H_L2_CACHE_MISSES			0x7E
+#define F10H_L2_FILL				0x7F
+/* F10H_PAGE_SIZE_MISMATCHES (0x01C0): reserved on some revisions */
+/*	Instruction Cache Events	*/
+#define F10H_INSTRUCTION_CACHE_FETCH		0x80
+#define F10H_INSTRUCTION_CACHE_MISS		0x81
+#define F10H_INSTRUCTION_CACHE_REFILL_FROM_L2	0x82
+#define F10H_INSTRUCTION_CACHE_REFILL_FROM_SYS	0x83
+#define F10H_L1_ITLB_MISS			0x84
+#define F10H_L2_ITLB_MISS			0x85
+#define F10H_PIPELINE_RESTART_INSTR_STREAM_PROBE	0x86
+#define F10H_INSTRUCTION_FETCH_STALL		0x87
+#define F10H_RETURN_STACK_HITS			0x88
+#define F10H_RETURN_STACK_OVERFLOWS		0x89
+#define F10H_INSTRUCTION_CACHE_VICTIMS		0x8B
+#define F10H_INSTRUCTION_CACHE_LINES_INVALIDATED	0x8C
+#define F10H_ITLD_RELOADS			0x99
+#define F10H_ITLD_RELOADS_ABORTED		0x9A
+/*	Execution Unit Events		*/
+#define F10H_RETIRED_INSTRUCTIONS		0xC0
+#define F10H_RETIRED_UOPS			0xC1
+#define F10H_RETIRED_BRANCH			0xC2
+#define F10H_RETIRED_MISPREDICTED_BRANCH	0xC3
+#define F10H_RETIRED_TAKEN_BRANCH		0xC4
+#define F10H_RETIRED_TAKEN_BRANCH_MISPREDICTED	0xC5
+#define F10H_RETIRED_FAR_CONTROL_TRANSFER	0xC6
+#define F10H_RETIRED_BRANCH_RESYNC		0xC7
+#define F10H_RETIRED_NEAR_RETURNS		0xC8
+#define F10H_RETIRED_NEAR_RETURNS_MISPREDICTED	0xC9
+#define F10H_RETIRED_INDIRECT_BRANCH_MISPREDICTED	0xCA
+#define F10H_RETIRED_MMX_FP_INSTRUCTIONS	0xCB
+#define F10H_RETIRED_FASTPATH_DOUBLE_OP_INSTR	0xCC
+#define F10H_INTERRUPTS_MASKED_CYCLES		0xCD
+#define F10H_INTERRUPTS_MASKED_CYCLES_INTERRUPT_PENDING	0xCE
+#define F10H_INTERRUPTS_TAKEN			0xCF
+#define F10H_DECODER_EMPTY			0xD0
+#define F10H_DISPATCH_STALLS			0xD1
+#define F10H_DISPATCH_STALLS_BRANCH_ABORT_RETIRE	0xD2
+#define F10H_DISPATCH_STALLS_SERIALIZATION	0xD3
+#define F10H_DISPATCH_STALLS_SEGMENT_LOAD	0xD4
+#define F10H_DISPATCH_STALLS_REORDER_BUF_FULL	0xD5
+#define F10H_DISPATCH_STALLS_RSV_STATION_FULL	0xD6
+#define F10H_DISPATCH_STALLS_FPU_FULL		0xD7
+#define F10H_DISPATCH_STALLS_LS_FULL		0xD8
+#define F10H_DISPATCH_STALLS_WAITING_ALL_QUITE	0xD9
+#define F10H_DISPATCH_STALLS_FAR_TRANSFER	0xDA
+#define F10H_FPU_EXCEPTIONS			0xDB
+#define F10H_DR0_BREAKPOINT_MATCHES		0xDC
+#define F10H_DR1_BREAKPOINT_MATCHES		0xDD
+#define F10H_DR2_BREAKPOINT_MATCHES		0xDE
+#define F10H_DR3_BREAKPOINT_MATCHES		0xDF
+/* F10H_RETIRED_X87_FP_OPERATIONS (0x01C0): reserved on some revisions */
+/* F10H_IBS_OPS_TAGGED (0x1CF): reserved on some revisions */
+/* F10H_LFENCE_INSTRUCTIONS_RETIRED (0x01D3): reserved on some revisions */
+/* F10H_SFENCE_INSTRUCTIONS_RETIRED (0x01D4): reserved on some revisions */
+/* F10H_MFENCE_INSTRUCTIONS_RETIRED (0x01D5): reserved on some revisions */
+/*	Memory Controller Events	*/
+#define F10H_DRAM_ACCESSES			0xE0
+#define F10H_DRAM_CONTROLLER_PT_OVERFLOWS	0xE1
+#define F10H_MEM_CONTROLLER_DRAM_COMMAND_SLOTS_MISSED	0xE2
+#define F10H_MEM_CONTROLLER_TURNAROUNDS		0xE3
+#define F10H_MEM_CONTROLLER_BYPASS_COUNTER_SATURATION	0xE4
+#define F10H_THERMAL_STATUS			0xE8
+#define F10H_CPU_IO_REQUESTS_TO_MEMORY_IO	0xE9
+#define F10H_CACHE_BLOCK_COMMANDS		0xEA
+#define F10H_SIZED_COMMANDS			0xEB
+#define F10H_PROBE_RESPONSES_AND_UPSTREAM_REQUESTS	0xEC
+#define F10H_GART_EVENTS			0xEE
+#define F10H_MEMORY_CONTROLLER_REQUESTS		0x01F0
+#define F10H_CPU_TO_DRAM_REQUESTS_TO_TARGET_NODE	0x01E0
+#define F10H_IO_TO_DRAM_REQUESTS_TO_TARGET_NODE	0x01E1
+#define F10H_CPU_READ_CMD_LATENCY_TARGET_NODE_03	0x01E2
+#define F10H_CPU_READ_CMD_REQUESTS_TARGET_NODE_03	0x01E3
+#define F10H_CPU_READ_CMD_LATENCY_TARGET_NODE_47	0x01E4
+#define F10H_CPU_READ_CMD_REQUESTS_TARGET_NODE_47	0x01E5
+#define F10H_CPU_CMD_LATENCY_TO_TARGET_NODE_0347	0x01E6
+#define F10H_CPU_REQUESTS_TO_TARGET_NODE_0347	0x01E7
+/*	Link Events			*/
+#define F10H_HYPERTRANSPORT_LINK0_TRANSMIT_BANDWIDTH	0xF6
+#define F10H_HYPERTRANSPORT_LINK1_TRANSMIT_BANDWIDTH	0xF7
+#define F10H_HYPERTRANSPORT_LINK2_TRANSMIT_BANDWIDTH	0xF8
+#define F10H_HYPERTRANSPORT_LINK3_TRANSMIT_BANDWIDTH	0x01F9
+/*	L3 Cache Events			*/
+/* F10H_READ_READ_REQUEST_TO_L3_CACHE (0x04E0): depends on the revision */
+/* F10H_L3_CACHE_MISSES (0x04E1): depends on the revision */
+/* F10H_L3_FILLS_FROM_L2_EVICTIONS (0x04E2): depends on the revision */
+#define F10H_L3_EVICTIONS			0x04E3
+/* F10H_NONCANCELLED_L3_READ_REQUESTS (0x04ED): depends on the revision */
 
-#define K7_BP0_MATCH			0xdc
-#define K7_BP1_MATCH			0xdd
-#define K7_BP2_MATCH			0xde
-#define K7_BP3_MATCH			0xdf

@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.38 2014/05/06 04:26:24 cherry Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.38.4.1 2017/08/28 17:51:57 skrll Exp $	*/
 
 /*
  *
@@ -49,8 +49,6 @@ void xpq_queue_tlb_flush(void);
 void xpq_queue_pin_table(paddr_t, int);
 void xpq_queue_unpin_table(paddr_t);
 int  xpq_update_foreign(paddr_t, pt_entry_t, int);
-void xen_vcpu_mcast_invlpg(vaddr_t, vaddr_t, kcpuset_t *);
-void xen_vcpu_bcast_invlpg(vaddr_t, vaddr_t);
 void xen_mcast_tlbflush(kcpuset_t *);
 void xen_bcast_tlbflush(void);
 void xen_mcast_invlpg(vaddr_t, kcpuset_t *);

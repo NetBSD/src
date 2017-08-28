@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.88.4.8 2017/02/05 13:40:58 skrll Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.88.4.9 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.88.4.8 2017/02/05 13:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.88.4.9 2017/08/28 17:53:11 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -250,9 +250,18 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 #endif
 #ifdef INET6
 	case AF_INET6:
-		if (!nd6_storelladdr(ifp, rt, m, dst, edst, sizeof(edst))){
-			/* something bad happened */
-			return (0);
+		if (m->m_flags & M_BCAST)
+			(void)memcpy(edst, fddibroadcastaddr, sizeof(edst));
+		else if (m->m_flags & M_MCAST) {
+			ETHER_MAP_IPV6_MULTICAST(&satocsin6(dst)->sin6_addr,
+			    edst);
+		} else {
+			error = nd6_resolve(ifp, rt, m, dst, edst,
+			    sizeof(edst));
+			if (error != 0) {
+				error = error == EWOULDBLOCK ? 0 : error;
+				return error;
+			}
 		}
 		etype = htons(ETHERTYPE_IPV6);
 		break;

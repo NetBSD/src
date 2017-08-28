@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51var.h,v 1.2.38.2 2015/12/27 12:09:30 skrll Exp $ */
+/*	$NetBSD: imx51var.h,v 1.2.38.3 2017/08/28 17:51:30 skrll Exp $ */
 
 /*
  * Copyright (c) 2015 Genetec Corporation.  All rights reserved.
@@ -46,6 +46,7 @@ void	imx_genfb_set_videomode(device_t, u_int, u_int);
 
 extern struct bus_space armv7_generic_bs_tag;
 extern struct bus_space armv7_generic_a4x_bs_tag;
+extern struct arm32_bus_dma_tag armv7_generic_dma_tag;
 extern struct arm32_bus_dma_tag imx_bus_dma_tag;
 
 void gpio_set_direction(uint32_t, uint32_t);

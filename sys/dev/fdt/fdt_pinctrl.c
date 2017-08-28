@@ -1,6 +1,7 @@
-/* $NetBSD: fdt_pinctrl.c,v 1.2.2.3 2016/12/05 10:55:01 skrll Exp $ */
+/* $NetBSD: fdt_pinctrl.c,v 1.2.2.4 2017/08/28 17:52:02 skrll Exp $ */
 
 /*-
+ * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
  * Copyright (c) 2015 Martin Fouts
  * All rights reserved.
  *
@@ -27,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.2.2.3 2016/12/05 10:55:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.2.2.4 2017/08/28 17:52:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,8 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.2.2.3 2016/12/05 10:55:01 skrll Ex
 #include <dev/fdt/fdtvar.h>
 
 struct fdtbus_pinctrl_controller {
+	device_t pc_dev;
 	int pc_phandle;
-	void *pc_cookie;
 	const struct fdtbus_pinctrl_controller_func *pc_funcs;
 
 	struct fdtbus_pinctrl_controller *pc_next;
@@ -47,13 +48,13 @@ struct fdtbus_pinctrl_controller {
 static struct fdtbus_pinctrl_controller *fdtbus_pc = NULL;
 
 int
-fdtbus_register_pinctrl_config(void *cookie, int phandle,
+fdtbus_register_pinctrl_config(device_t dev, int phandle,
     const struct fdtbus_pinctrl_controller_func *funcs)
 {
 	struct fdtbus_pinctrl_controller *pc;
 
 	pc = kmem_alloc(sizeof(*pc), KM_SLEEP);
-	pc->pc_cookie = cookie;
+	pc->pc_dev = dev;
 	pc->pc_phandle = phandle;
 	pc->pc_funcs = funcs;
 
@@ -78,57 +79,88 @@ fdtbus_pinctrl_lookup(int phandle)
 int
 fdtbus_pinctrl_set_config_index(int phandle, u_int index)
 {
-	char buf[80];
-	int len, handle;
 	struct fdtbus_pinctrl_controller *pc;
+	const u_int *pinctrl_data;
+	char buf[16];
+	u_int xref, pinctrl_cells;
+	int len, error;
 
-	snprintf(buf, 80, "pinctrl-%d", index);
+	snprintf(buf, sizeof(buf), "pinctrl-%u", index);
 
-	len = OF_getprop(phandle, buf, (char *)&handle,
-                        sizeof(handle));
-	if (len != sizeof(int)) {
-		printf("%s: couldn't get %s.\n", __func__, buf);
-               return -1;
-       }
+	pinctrl_data = fdtbus_get_prop(phandle, buf, &len);
+	if (pinctrl_data == NULL)
+		return ENOENT;
 
-	handle = fdtbus_get_phandle_from_native(be32toh(handle));
+	while (len > 0) {
+		xref = fdtbus_get_phandle_from_native(be32toh(pinctrl_data[0]));
+		pc = fdtbus_pinctrl_lookup(xref);
+		if (pc == NULL)
+			return ENXIO;
 
-	pc = fdtbus_pinctrl_lookup(handle);
-	if (!pc) {
-		printf("%s: Couldn't get handle %d for %s\n", __func__, handle,
-		       buf);
-		return -1;
+		if (of_getprop_uint32(OF_parent(xref), "#pinctrl-cells", &pinctrl_cells) != 0)
+			pinctrl_cells = 1;
+
+		error = pc->pc_funcs->set_config(pc->pc_dev, pinctrl_data, pinctrl_cells * 4);
+		if (error != 0)
+			return error;
+
+		pinctrl_data += pinctrl_cells;
+		len -= (pinctrl_cells * 4);
 	}
 
-	return pc->pc_funcs->set_config(pc->pc_cookie);
+	return 0;
 }
 
 int
 fdtbus_pinctrl_set_config(int phandle, const char *cfgname)
 {
-	int index = 0;
-	int len;
-	char *result;
-	char *next;
+	const char *pinctrl_names, *name;
+	int len, index;
 
-	len = OF_getproplen(phandle, "pinctrl-names");
-	if (len <= 0)
+	if ((len = OF_getproplen(phandle, "pinctrl-names")) < 0)
 		return -1;
-	result = kmem_zalloc(len, KM_SLEEP);
-	OF_getprop(phandle, "pinctrl-names", result, len);
 
-	next = result;
-	while (next - result < len) {
-		if (!strcmp(next, cfgname)) {
-			kmem_free(result, len);
+	pinctrl_names = fdtbus_get_string(phandle, "pinctrl-names");
+
+	for (name = pinctrl_names, index = 0; len > 0;
+	     name += strlen(name) + 1, index++) {
+		if (strcmp(name, cfgname) == 0)
 			return fdtbus_pinctrl_set_config_index(phandle, index);
-		}
-		index++;
-		while (*next)
-			next++;
-		next++;
 	}
 
-	kmem_free(result, len);
+	/* Not found */
 	return -1;
+}
+
+static void
+fdtbus_pinctrl_configure_node(int phandle)
+{
+	char buf[256];
+	int child, error;
+
+	for (child = OF_child(phandle); child; child = OF_peer(child)) {
+		if (!fdtbus_status_okay(child))
+			continue;
+
+		/* Configure child nodes */
+		fdtbus_pinctrl_configure_node(child);
+
+		/*
+		 * Set configuration 0 for this node. This may fail if the
+		 * pinctrl provider is missing; that's OK, we will re-configure
+		 * when that provider attaches.
+		 */
+		fdtbus_get_path(child, buf, sizeof(buf));
+		error = fdtbus_pinctrl_set_config_index(child, 0);
+		if (error == 0)
+			aprint_debug("pinctrl: set config pinctrl-0 for %s\n", buf);
+		else if (error != ENOENT)
+			aprint_debug("pinctrl: failed to set config pinctrl-0 for %s: %d\n", buf, error);
+	}
+}
+
+void
+fdtbus_pinctrl_configure(void)
+{
+	fdtbus_pinctrl_configure_node(OF_finddevice("/"));
 }

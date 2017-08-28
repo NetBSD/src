@@ -61,6 +61,7 @@ LIBFDT_1.2 {
 		fdt_size_cells;
 		fdt_stringlist_contains;
 		fdt_resize;
+		fdt_overlay_apply;
 
 	local:
 		*;

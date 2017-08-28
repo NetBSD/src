@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_start.S,v 1.1.2.5 2015/12/27 12:09:34 skrll Exp $ */
+/* $NetBSD: tegra_start.S,v 1.1.2.6 2017/08/28 17:51:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2015 The NetBSD Foundation, Inc.
@@ -30,22 +30,21 @@
  */
 
 #include "opt_tegra.h"
-#include "opt_com.h"
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_multiprocessor.h"
 #include "opt_arm_debug.h"
+#include "opt_fdt_arm.h"
 
 #include <arm/asm.h>
 #include <arm/armreg.h>
 #include "assym.h"
 
 #include <arm/nvidia/tegra_reg.h>
-#include <evbarm/tegra/platform.h>
 
-RCSID("$NetBSD: tegra_start.S,v 1.1.2.5 2015/12/27 12:09:34 skrll Exp $")
+RCSID("$NetBSD: tegra_start.S,v 1.1.2.6 2017/08/28 17:51:35 skrll Exp $")
 
-#if defined(VERBOSE_INIT_ARM)
+#if defined(VERBOSE_INIT_ARM) && defined(CONSADDR)
 #define	XPUTC(n)	mov r0, n; bl xputc
 #if KERNEL_BASE_VOFFSET == 0
 #define	XPUTC2(n)	mov r0, n; bl xputc
@@ -65,14 +64,10 @@ RCSID("$NetBSD: tegra_start.S,v 1.1.2.5 2015/12/27 12:09:34 skrll Exp $")
 #define INIT_MEMSIZE	128
 #define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + INIT_MEMSIZE * L1_S_SIZE - L1_TABLE_SIZE)
 
-#define	MD_CPU_HATCH	_C_LABEL(gtmr_init_cpu_clock)
-
-#if defined(SOC_TEGRA124)
-#define SOC_MPINIT	_C_LABEL(tegra124_mpinit)
-#endif
+#define	MD_CPU_HATCH	_C_LABEL(arm_fdt_cpu_hatch)
 
 /*
- * Kernel start routine for Tegra 124 SoC.
+ * Kernel start routine for Tegra SoCs.
  * At this point, this code has been loaded into SDRAM
  * and the MMU maybe on or maybe off.
  */

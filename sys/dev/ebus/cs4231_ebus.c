@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.35.26.1 2017/02/05 13:40:27 skrll Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.35.26.2 2017/08/28 17:52:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.35.26.1 2017/02/05 13:40:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.35.26.2 2017/08/28 17:52:02 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sparc_arch.h"
@@ -127,7 +127,7 @@ const struct audio_hw_if audiocs_ebus_hw_if = {
 };
 
 #ifdef AUDIO_DEBUG
-static void	cs4231_ebus_regdump(char *, struct cs4231_ebus_softc *);
+static void	cs4231_ebus_regdump(const char *, struct cs4231_ebus_softc *);
 #endif
 
 static int	cs4231_ebus_dma_reset(bus_space_tag_t, bus_space_handle_t);
@@ -280,7 +280,7 @@ cs4231_ebus_round_blocksize(void *addr, int blk, int mode,
 
 #ifdef AUDIO_DEBUG
 static void
-cs4231_ebus_regdump(char *label, struct cs4231_ebus_softc *ebsc)
+cs4231_ebus_regdump(const char *label, struct cs4231_ebus_softc *ebsc)
 {
 	/* char bits[128]; */
 

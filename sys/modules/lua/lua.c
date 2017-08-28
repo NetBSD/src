@@ -1,8 +1,8 @@
-/*	$NetBSD: lua.c,v 1.14.2.4 2017/02/05 13:40:57 skrll Exp $ */
+/*	$NetBSD: lua.c,v 1.14.2.5 2017/08/28 17:53:10 skrll Exp $ */
 
 /*
+ * Copyright (c) 2011 - 2017 by Marc Balmer <mbalmer@NetBSD.org>.
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
- * Copyright (c) 2011 - 2014 by Marc Balmer <mbalmer@NetBSD.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -335,10 +335,12 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			}
 
 		K = kluaL_newstate(create->name, create->desc, IPL_NONE);
-		K->ks_user = true;
 
 		if (K == NULL)
 			return ENOMEM;
+
+		K->ks_user = true;
+
 		if (lua_verbose)
 			device_printf(sc->sc_dev, "state %s created\n",
 			    create->name);
@@ -401,8 +403,8 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				if (pb == NULL)
 					return ENOMEM;
 				NDINIT(&nd, LOOKUP, FOLLOW | NOCHROOT, pb);
-				pathbuf_destroy(pb);
 				error = vn_open(&nd, FREAD, 0);
+				pathbuf_destroy(pb);
 				if (error) {
 					if (lua_verbose)
 						device_printf(sc->sc_dev,
@@ -517,6 +519,10 @@ lua_require(lua_State *L)
 					    "require module %s\n",
 					    md->mod_name);
 				luaL_requiref(L, md->mod_name, md->open, 0);
+
+				LIST_FOREACH(m, &s->lua_modules, mod_next)
+					if (m == md)
+						return 1;
 
 				md->refcount++;
 				LIST_INSERT_HEAD(&s->lua_modules, md, mod_next);

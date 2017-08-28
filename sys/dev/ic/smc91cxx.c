@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.88.4.5 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.88.4.6 2017/08/28 17:52:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.88.4.5 2017/02/05 13:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.88.4.6 2017/08/28 17:52:04 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -308,6 +308,7 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, myea);
 
 	/*
@@ -1077,7 +1078,7 @@ smc91cxx_intr(void *arg)
 	/*
 	 * Attempt to queue more packets for transmission.
 	 */
-	smc91cxx_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	/*
 	 * Reenable the interrupts we wish to receive now that processing

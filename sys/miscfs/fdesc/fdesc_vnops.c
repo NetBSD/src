@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.125.2.2 2016/10/05 20:56:03 skrll Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.125.2.3 2017/08/28 17:53:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.125.2.2 2016/10/05 20:56:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.125.2.3 2017/08/28 17:53:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -836,7 +836,7 @@ fdesc_kqfilter(void *v)
 int
 fdesc_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -848,18 +848,20 @@ fdesc_inactive(void *v)
 	 */
 	if (fd->fd_type == Fctty || fd->fd_type == Fdesc)
 		vp->v_type = VNON;
-	VOP_UNLOCK(vp);
+
 	return (0);
 }
 
 int
 fdesc_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct fdescnode *fd = VTOFDESC(vp);
+
+	VOP_UNLOCK(vp);
 
 	vp->v_data = NULL;
 	kmem_free(fd, sizeof(struct fdescnode));

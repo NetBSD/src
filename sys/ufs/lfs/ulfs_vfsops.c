@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vfsops.c,v 1.8.14.2 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: ulfs_vfsops.c,v 1.8.14.3 2017/08/28 17:53:17 skrll Exp $	*/
 /*  from NetBSD: ufs_vfsops.c,v 1.52 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.8.14.2 2015/09/22 12:06:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.8.14.3 2017/08/28 17:53:17 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -113,7 +113,7 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
 	int error;
 
 	/* Mark the mount busy, as we're passing it to kauth(9). */
-	error = vfs_busy(mp, NULL);
+	error = vfs_busy(mp);
 	if (error) {
 		return (error);
 	}
@@ -122,7 +122,7 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
 	error = lfsquota_handle_cmd(mp, l, args);
 
 	mutex_exit(&mp->mnt_updating);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	return (error);
 #endif
 }
@@ -169,7 +169,7 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
 	}
 
 	if (error) {
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		return (error);
 	}
 
@@ -204,7 +204,7 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
 		error = EINVAL;
 	}
 	mutex_exit(&mp->mnt_updating);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	return (error);
 #endif
 

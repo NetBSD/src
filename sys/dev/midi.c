@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.81.4.3 2016/10/05 20:55:40 skrll Exp $	*/
+/*	$NetBSD: midi.c,v 1.81.4.4 2017/08/28 17:52:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,10 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.81.4.3 2016/10/05 20:55:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.81.4.4 2017/08/28 17:52:00 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "midi.h"
 #include "sequencer.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -53,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.81.4.3 2016/10/05 20:55:40 skrll Exp $");
 #include <sys/midiio.h>
 #include <sys/device.h>
 #include <sys/intr.h>
+#include <sys/module.h>
 
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
@@ -1887,3 +1890,48 @@ midi_attach_mi(const struct midi_hw_if *mhwp, void *hdlp, device_t dev)
 }
 
 #endif /* NMIDI > 0 || NMIDIBUS > 0 */
+
+#ifdef _MODULE
+extern struct cfdriver midi_cd;
+#include "ioconf.c"
+
+devmajor_t midi_bmajor = -1, midi_cmajor = -1;
+#endif
+
+MODULE(MODULE_CLASS_DRIVER, midi, "audio");
+
+static int
+midi_modcmd(modcmd_t cmd, void *arg)
+{
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = devsw_attach(midi_cd.cd_name, NULL, &midi_bmajor,
+		    &midi_cdevsw, &midi_cmajor);
+		if (error)
+			break;
+
+		error = config_init_component(cfdriver_ioconf_midi,
+		    cfattach_ioconf_midi, cfdata_ioconf_midi);
+		if (error) {
+			devsw_detach(NULL, &midi_cdevsw);
+		}
+		break;
+	case MODULE_CMD_FINI:
+		devsw_detach(NULL, &midi_cdevsw);
+		error = config_fini_component(cfdriver_ioconf_midi,
+		   cfattach_ioconf_midi, cfdata_ioconf_midi);
+		if (error)
+			devsw_attach(midi_cd.cd_name, NULL, &midi_bmajor,
+			    &midi_cdevsw, &midi_cmajor);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
+}

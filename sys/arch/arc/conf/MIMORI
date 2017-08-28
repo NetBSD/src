@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.68.2.1 2015/09/22 12:05:36 skrll Exp $
+#	$NetBSD: MIMORI,v 1.68.2.2 2017/08/28 17:51:29 skrll Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -40,7 +40,6 @@ pseudo-device	ksyms
 #makeoptions	DEBUG="-g"		# compile full symbol table
 
 # Compatibility options
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_10	# NetBSD 1.0,
 options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# NetBSD 1.2,

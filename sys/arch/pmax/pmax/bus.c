@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.1.2.2 2016/12/05 10:54:56 skrll Exp $	*/
+/*	$NetBSD: bus.c,v 1.1.2.3 2017/08/28 17:51:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.1.2.2 2016/12/05 10:54:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.1.2.3 2017/08/28 17:51:48 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -117,10 +117,10 @@ _bus_dmamap_sync_r3k(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 #ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync_r3k: bad offset %lu (map size is %lu)",
-		      offset, map->dm_mapsize);
+		panic("%s: bad offset %ju (map size is %ju)", __func__,
+		      (uintmax_t)offset, (uintmax_t)map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
-		panic("_bus_dmamap_sync_r3k: bad length");
+		panic("%s: bad length", __func__);
 #endif
 
 	/*
@@ -182,9 +182,9 @@ _bus_dmamap_sync_r3k(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		addr = map->dm_segs[i].ds_addr;
 
 #ifdef BUS_DMA_DEBUG
-		printf("bus_dmamap_sync_r3k: flushing segment %d "
-		    "(0x%lx..0x%lx) ...", i, addr + offset,
-		    addr + offset + minlen - 1);
+		printf("%s: flushing segment %d (%#jx..%#jx) ...", __func__, i,
+		    (intmax_t)addr + offset,
+		    (intmax_t)addr + offset + minlen - 1);
 #endif
 		mips_dcache_inv_range(
 		    MIPS_PHYS_TO_KSEG0(addr + offset), minlen);
@@ -222,10 +222,10 @@ _bus_dmamap_sync_r4k(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 #ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync_r4k: bad offset %lu (map size is %lu)",
-		      offset, map->dm_mapsize);
+		panic("%s: bad offset %ju (map size is %ju)", __func__,
+		      (uintmax_t)offset, (uintmax_t)map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
-		panic("_bus_dmamap_sync_r4k: bad length");
+		panic("%s: bad length", __func__);
 #endif
 
 	/*
@@ -294,9 +294,9 @@ _bus_dmamap_sync_r4k(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		addr = map->dm_segs[i]._ds_vaddr;
 
 #ifdef BUS_DMA_DEBUG
-		printf("bus_dmamap_sync: flushing segment %d "
-		    "(0x%lx..0x%lx) ...", i, addr + offset,
-		    addr + offset + minlen - 1);
+		printf("%s: flushing segment %d (%#jx..%#jx) ...",
+		    __func__, i, (intmax_t)addr + offset,
+		    (intmax_t)ddr + offset + minlen - 1);
 #endif
 
 		/*

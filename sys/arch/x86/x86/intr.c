@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.77.4.7 2017/02/05 13:40:23 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.77.4.8 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.77.4.7 2017/02/05 13:40:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.77.4.8 2017/08/28 17:51:56 skrll Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -152,6 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.77.4.7 2017/02/05 13:40:23 skrll Exp $");
 #include <sys/atomic.h>
 #include <sys/xcall.h>
 #include <sys/interrupt.h>
+#include <sys/reboot.h> /* for AB_VERBOSE */
 
 #include <sys/kauth.h>
 #include <sys/conf.h>
@@ -266,9 +267,7 @@ intr_default_setup(void)
 	/* icu vectors */
 	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
 		idt_vec_reserve(ICU_OFFSET + i);
-		setgate(&idt[ICU_OFFSET + i],
-		    i8259_stubs[i].ist_entry, 0, SDT_SYS386IGT,
-		    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
+		idt_vec_set(ICU_OFFSET + i, i8259_stubs[i].ist_entry);
 	}
 
 	/*
@@ -557,15 +556,7 @@ intr_allocate_io_intrsource(const char *intrid)
 		return NULL;
 
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
-	if (isp == NULL) {
-		return NULL;
-	}
-
 	pep = kmem_zalloc(sizeof(*pep) * ncpu, KM_SLEEP);
-	if (pep == NULL) {
-		kmem_free(isp, sizeof(*isp));
-		return NULL;
-	}
 	isp->is_saved_evcnt = pep;
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		pep->cpuid = ci->ci_cpuid;
@@ -901,8 +892,7 @@ intr_establish_xcall(void *arg1, void *arg2)
 		}
 		source->is_resume = stubp->ist_resume;
 		source->is_recurse = stubp->ist_recurse;
-		setgate(&idt[idt_vec], stubp->ist_entry, 0, SDT_SYS386IGT,
-		    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
+		idt_vec_set(idt_vec, stubp->ist_entry);
 	}
 
 	/* Re-enable interrupts locally. */
@@ -925,20 +915,12 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 	const char *intrstr;
 	char intrstr_buf[INTRIDBUF];
 
-#ifdef DIAGNOSTIC
-	if (legacy_irq != -1 && (legacy_irq < 0 || legacy_irq > 15))
-		panic("%s: bad legacy IRQ value", __func__);
-
-	if (legacy_irq == -1 && pic == &i8259_pic)
-		panic("intr_establish: non-legacy IRQ on i8259");
-#endif
+	KASSERTMSG((legacy_irq == -1 || (0 <= legacy_irq && legacy_irq < 16)),
+	    "bad legacy IRQ value: %d", legacy_irq);
+	KASSERTMSG((legacy_irq != -1 || pic != &i8259_pic),
+	    "non-legacy IRQ on i8259");
 
 	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
-	if (ih == NULL) {
-		printf("%s: can't allocate handler info\n", __func__);
-		return NULL;
-	}
-
 	intrstr = create_intrid(legacy_irq, pic, pin, intrstr_buf,
 	    sizeof(intrstr_buf));
 	KASSERT(intrstr != NULL);
@@ -1084,12 +1066,11 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 	(*pic->pic_hwunmask)(pic, pin);
 	mutex_exit(&cpu_lock);
 
-#ifdef INTRDEBUG
-	printf("allocated pic %s type %s pin %d level %d to %s slot %d "
-	    "idt entry %d\n",
-	    pic->pic_name, type == IST_EDGE ? "edge" : "level", pin, level,
-	    device_xname(ci->ci_dev), slot, idt_vec);
-#endif
+	if (bootverbose || cpu_index(ci) != 0)
+		aprint_verbose("allocated pic %s type %s pin %d level %d to %s slot %d "
+		    "idt entry %d\n",
+		    pic->pic_name, type == IST_EDGE ? "edge" : "level", pin, level,
+		    device_xname(ci->ci_dev), slot, idt_vec);
 
 	return (ih);
 }
@@ -1171,11 +1152,9 @@ intr_disestablish_xcall(void *arg1, void *arg2)
 	/* If the source is free we can drop it now. */
 	intr_source_free(ci, ih->ih_slot, pic, idtvec);
 
-#ifdef INTRDEBUG
-	printf("%s: remove slot %d (pic %s pin %d vec %d)\n",
+	DPRINTF(("%s: remove slot %d (pic %s pin %d vec %d)\n",
 	    device_xname(ci->ci_dev), ih->ih_slot, pic->pic_name,
-	    ih->ih_pin, idtvec);
-#endif
+	    ih->ih_pin, idtvec));
 }
 
 static int
@@ -1323,7 +1302,6 @@ cpu_intr_init(struct cpu_info *ci)
 
 #if NLAPIC > 0
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
-	KASSERT(isp != NULL);
 	isp->is_recurse = Xrecurse_lapic_ltimer;
 	isp->is_resume = Xresume_lapic_ltimer;
 	fake_timer_intrhand.ih_level = IPL_CLOCK;
@@ -1337,7 +1315,6 @@ cpu_intr_init(struct cpu_info *ci)
 
 #ifdef MULTIPROCESSOR
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
-	KASSERT(isp != NULL);
 	isp->is_recurse = Xrecurse_lapic_ipi;
 	isp->is_resume = Xresume_lapic_ipi;
 	fake_ipi_intrhand.ih_level = IPL_HIGH;
@@ -1352,7 +1329,6 @@ cpu_intr_init(struct cpu_info *ci)
 #endif
 
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
-	KASSERT(isp != NULL);
 	isp->is_recurse = Xpreemptrecurse;
 	isp->is_resume = Xpreemptresume;
 	fake_preempt_intrhand.ih_level = IPL_PREEMPT;
@@ -1449,7 +1425,6 @@ softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 	ci = l->l_cpu;
 
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
-	KASSERT(isp != NULL);
 	isp->is_recurse = Xsoftintr;
 	isp->is_resume = Xsoftintr;
 	isp->is_pic = &softintr_pic;
@@ -1799,8 +1774,7 @@ intr_activate_xcall(void *arg1, void *arg2)
 	}
 	source->is_resume = stubp->ist_resume;
 	source->is_recurse = stubp->ist_recurse;
-	setgate(&idt[idt_vec], stubp->ist_entry, 0, SDT_SYS386IGT,
-	    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
+	idt_vec_set(idt_vec, stubp->ist_entry);
 
 	x86_write_psl(psl);
 

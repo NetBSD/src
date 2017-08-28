@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.h,v 1.10 2013/03/31 19:45:06 chs Exp $	*/
+/*	$NetBSD: mpacpi.h,v 1.10.12.1 2017/08/28 17:51:56 skrll Exp $	*/
 
 #ifndef _X86_MPACPI_H_
 #define _X86_MPACPI_H_
@@ -12,5 +12,8 @@ int mpacpi_pci_attach_hook(device_t, device_t,
 
 struct mp_intr_map;
 int mpacpi_findintr_linkdev(struct mp_intr_map *);
+
+extern bool acpi_present;
+extern bool mpacpi_active;
 
 #endif /* _X86_MPACPI_H_ */

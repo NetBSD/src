@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2s.c,v 1.11 2012/01/15 10:59:50 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_i2s.c,v 1.11.24.1 2017/08/28 17:51:32 skrll Exp $	*/
 /*	$OpenBSD: pxa2x0_i2s.c,v 1.7 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.11 2012/01/15 10:59:50 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.11.24.1 2017/08/28 17:51:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,8 +200,6 @@ pxa2x0_i2s_allocm(void *hdl, int direction, size_t size)
 	int error;
 
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (p == NULL)
-		return NULL;
 
 	dx = pxa2x0_dmac_allocate_xfer();
 	if (dx == NULL) {

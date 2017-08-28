@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.143.2.2 2017/02/05 13:40:12 skrll Exp $
+#	$NetBSD: INSTALL_TINY,v 1.143.2.3 2017/08/28 17:51:40 skrll Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -25,7 +25,6 @@ options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 maxusers	2		# estimated number of users
 
 # CPU-related options.
-#options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
 # This option allows you to force a serial console at the specified
@@ -83,10 +82,7 @@ no options 	EXEC_AOUT	# we don't a.out support
 #options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI compatibility.
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
-#options 	COMPAT_SVR4	# binary compatibility with SVR4
-#options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -111,6 +107,7 @@ file-system	MSDOSFS		# MS-DOS file system
 # Filesystem options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER	# Network File System server
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

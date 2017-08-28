@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.25.4.2 2016/05/29 08:44:30 skrll Exp $ */
+/* $NetBSD: if_plip.c,v 1.25.4.3 2017/08/28 17:52:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.25.4.2 2016/05/29 08:44:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.25.4.3 2017/08/28 17:52:26 skrll Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -445,6 +445,7 @@ lpioctl(struct ifnet *ifp, u_long cmd, void *data)
 		case AF_INET:
 			break;
 		default:
+			splx(s);
 			return EAFNOSUPPORT;
 		}
 		break;

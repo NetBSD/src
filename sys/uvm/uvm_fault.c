@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.196.4.1 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.196.4.2 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.196.4.1 2015/09/22 12:06:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.196.4.2 2017/08/28 17:53:17 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -950,7 +950,7 @@ uvm_fault_check(
 		    "<- protection failure (prot=%#x, access=%#x)",
 		    ufi->entry->protection, flt->access_type, 0, 0);
 		uvmfault_unlockmaps(ufi, false);
-		return EACCES;
+		return EFAULT;
 	}
 
 	/*
@@ -1602,9 +1602,7 @@ uvm_fault_lower(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_page **pages)
 {
-#ifdef DIAGNOSTIC
-	struct vm_amap *amap = ufi->entry->aref.ar_amap;
-#endif
+	struct vm_amap *amap __diagused = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	struct vm_page *uobjpage;
 	int error;
@@ -1822,11 +1820,14 @@ uvm_fault_lower_neighbor(
 	UVM_PAGE_OWN(pg, NULL);
 
 	KASSERT(mutex_owned(pg->uobject->vmobjlock));
-	(void) pmap_enter(ufi->orig_map->pmap, currva,
-	    VM_PAGE_TO_PHYS(pg),
+
+	const vm_prot_t mapprot = 
 	    readonly ? (flt->enter_prot & ~VM_PROT_WRITE) :
-	    flt->enter_prot & MASK(ufi->entry),
-	    PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0));
+	    flt->enter_prot & MASK(ufi->entry);
+	const u_int mapflags = 
+	    PMAP_CANFAIL | (flt->wire_mapping ? (mapprot | PMAP_WIRED) : 0);
+	(void) pmap_enter(ufi->orig_map->pmap, currva,
+	    VM_PAGE_TO_PHYS(pg), mapprot, mapflags);
 }
 
 /*

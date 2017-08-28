@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.4.2.8 2017/02/05 13:40:58 skrll Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.4.2.9 2017/08/28 17:53:11 skrll Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -33,6 +33,7 @@
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_inet6.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include "arp.h"
@@ -79,6 +80,8 @@ int
 lltable_dump_entry(struct lltable *llt, struct llentry *lle,
     struct rt_walkarg *w, struct sockaddr *sa)
 {
+#define RTF_LLINFO	0x400
+#define RTF_CLONED	0x2000
 	struct ifnet *ifp = llt->llt_ifp;
 	int error;
 	void *a;
@@ -106,9 +109,14 @@ lltable_dump_entry(struct lltable *llt, struct llentry *lle,
 		struct rt_msghdr *rtm = (struct rt_msghdr *)w->w_tmem;
 
 		/* Need to copy by myself */
+		rtm->rtm_index = ifp->if_index;
+		rtm->rtm_rmx.rmx_mtu = 0;
 		rtm->rtm_rmx.rmx_expire =
 		    (lle->la_flags & LLE_STATIC) ? 0 : lle->la_expire;
+		rtm->rtm_flags = RTF_UP;
 		rtm->rtm_flags |= RTF_HOST; /* For ndp */
+		/* For backward compatibility */
+		rtm->rtm_flags |= RTF_LLINFO | RTF_CLONED;
 		rtm->rtm_flags |= (lle->la_flags & LLE_STATIC) ? RTF_STATIC : 0;
 		if (lle->la_flags & LLE_PUB)
 			rtm->rtm_flags |= RTF_ANNOUNCE;
@@ -120,6 +128,8 @@ lltable_dump_entry(struct lltable *llt, struct llentry *lle,
 	}
 
 	return error;
+#undef RTF_LLINFO
+#undef RTF_CLONED
 }
 
 /*
@@ -148,7 +158,7 @@ lltable_dump_af(struct lltable *llt, struct rt_walkarg *w)
  * Dump arp state for a specific address family.
  */
 int
-lltable_sysctl_dumparp(int af, struct rt_walkarg *w)
+lltable_sysctl_dump(int af, struct rt_walkarg *w)
 {
 	struct lltable *llt;
 	int error = 0;
@@ -485,8 +495,8 @@ lltable_drain(int af)
 }
 
 void
-lltable_prefix_free(int af, struct sockaddr *prefix, struct sockaddr *mask,
-    u_int flags)
+lltable_prefix_free(const int af, const struct sockaddr *prefix,
+    const struct sockaddr *mask, const u_int flags)
 {
 	struct lltable *llt;
 

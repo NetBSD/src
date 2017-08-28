@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.43.4.3 2017/02/05 13:40:56 skrll Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.43.4.4 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.43.4.3 2017/02/05 13:40:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.43.4.4 2017/08/28 17:53:07 skrll Exp $");
 
 #include "opt_dtrace.h"
 
@@ -173,9 +173,6 @@ sched_cpuattach(struct cpu_info *ci)
 	/* Allocate the run queue */
 	size = roundup2(sizeof(runqueue_t), coherency_unit) + coherency_unit;
 	rq_ptr = kmem_zalloc(size, KM_SLEEP);
-	if (rq_ptr == NULL) {
-		panic("sched_cpuattach: could not allocate the runqueue");
-	}
 	ci_rq = (void *)(roundup2((uintptr_t)(rq_ptr), coherency_unit));
 
 	/* Initialize run queues */

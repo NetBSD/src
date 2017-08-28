@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.57.2.3 2017/02/05 13:40:25 skrll Exp $
+	$NetBSD: syscalls.master,v 1.57.2.4 2017/08/28 17:51:58 skrll Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -283,39 +283,39 @@
 			    struct linux_timespec *rmtp); }
 167	STD		{ void *|linux_sys||mremap(void *old_address, \
 			    size_t old_size, size_t new_size, u_long flags); }
-168	NOARGS		{ int|linux_sys||accept(int s, \
+168	STD		{ int|linux_sys||accept(int s, \
 			    struct osockaddr *name, int *anamelen); }
-169	NOARGS		{ int|linux_sys||bind(int s, \
+169	STD		{ int|linux_sys||bind(int s, \
 			    const struct osockaddr *name, int namelen); }
-170	NOARGS		{ int|linux_sys||connect(int s, \
-			    const struct sockaddr *name, int namelen); }
-171	NOARGS		{ int|linux_sys||getpeername(int fdes, void *asa, \
+170	STD		{ int|linux_sys||connect(int s, \
+			    const struct osockaddr *name, int namelen); }
+171	STD		{ int|linux_sys||getpeername(int fdes, void *asa, \
 			    int *alen); }
-172	NOARGS		{ int|linux_sys||getsockname(int fdes, void *asa, \
+172	STD		{ int|linux_sys||getsockname(int fdes, void *asa, \
 			    int *alen); }
-173	NOARGS		{ int|linux_sys||getsockopt(int s, int level, \
+173	STD		{ int|linux_sys||getsockopt(int s, int level, \
 			    int optname, void *optval, int *optlen); }
 174	NOARGS		{ int|sys||listen(int s, int backlog); }
-175	NOARGS		{ int|linux_sys||recv(int s, void *buf, int len, \
+175	STD		{ int|linux_sys||recv(int s, void *buf, int len, \
 			    int flags); }
-176	NOARGS		{ int|linux_sys||recvfrom(int s, void *buf, int len, \
+176	STD		{ int|linux_sys||recvfrom(int s, void *buf, int len, \
 			    int flags, struct osockaddr *from, \
 			    int *fromlenaddr); }
-177	NOARGS		{ int|linux_sys||recvmsg(int s, \
+177	STD		{ int|linux_sys||recvmsg(int s, \
 			    struct linux_msghdr *msg, u_int flags); }
-178	NOARGS		{ int|linux_sys||send(int s, void *buf, int len, \
+178	STD		{ int|linux_sys||send(int s, void *buf, int len, \
 			    int flags); }
-179	NOARGS		{ int|linux_sys||sendmsg(int s, \
+179	STD		{ int|linux_sys||sendmsg(int s, \
 			    struct linux_msghdr *msg, u_int flags); }
-180	NOARGS		{ int|linux_sys||sendto(int s, void *msg, \
+180	STD		{ int|linux_sys||sendto(int s, void *msg, \
 			    int len, int flags, struct osockaddr *to, \
 			    int tolen); }
-181	NOARGS		{ int|linux_sys||setsockopt(int s, int level, \
+181	STD		{ int|linux_sys||setsockopt(int s, int level, \
 			    int optname, void *optval, int optlen); }
 182	UNIMPL		shutdown
-183	NOARGS		{ int|linux_sys||socket(int domain, int type, \
+183	STD		{ int|linux_sys||socket(int domain, int type, \
 			    int protocol); }
-184	NOARGS		{ int|linux_sys||socketpair(int domain, int type, \
+184	STD		{ int|linux_sys||socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
 185	STD		{ int|linux_sys||setresuid(uid_t ruid, uid_t euid, \
 			    uid_t suid); }

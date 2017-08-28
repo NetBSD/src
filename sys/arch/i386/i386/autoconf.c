@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.100.6.1 2016/12/05 10:54:53 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.100.6.2 2017/08/28 17:51:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,9 +46,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.100.6.1 2016/12/05 10:54:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.100.6.2 2017/08/28 17:51:40 skrll Exp $");
 
-#include "opt_compat_oldboot.h"
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
 
@@ -105,6 +104,8 @@ cpu_configure(void)
 #if NBIOS32 > 0
 	bios32_init();
 	platform_init();
+	/* identify hypervisor type from SMBIOS */
+	identify_hypervisor();
 #endif
 #ifdef PCIBIOS
 	pcibios_init();
@@ -131,6 +132,6 @@ cpu_configure(void)
 
 	spl0();
 #if NLAPIC > 0
-	i82489_writereg(LAPIC_TPRI, 0);
+	lapic_write_tpri(0);
 #endif
 }

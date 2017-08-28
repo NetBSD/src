@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.33 2012/10/27 17:18:17 chs Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.33.14.1 2017/08/28 17:52:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.33 2012/10/27 17:18:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.33.14.1 2017/08/28 17:52:02 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -402,8 +402,8 @@ bivideo_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 
 		if (sc->sc_fbconf.hf_class != HPCFB_CLASS_INDEXCOLOR ||
 		    sc->sc_fbconf.hf_pack_width != 8 ||
-		    256 <= cmap->index ||
-		    256 < (cmap->index + cmap->count))
+		    cmap->index >= 256 ||
+		    cmap->count > 256 - cmap->index)
 			return (EINVAL);
 
 		error = copyout(&bivideo_cmap_r[cmap->index], cmap->red,

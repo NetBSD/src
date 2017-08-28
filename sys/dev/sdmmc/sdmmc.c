@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.23.2.4 2015/12/27 12:09:58 skrll Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.23.2.5 2017/08/28 17:52:27 skrll Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.23.2.4 2015/12/27 12:09:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.23.2.5 2017/08/28 17:52:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -399,6 +399,8 @@ sdmmc_card_attach(struct sdmmc_softc *sc)
 	DPRINTF(1,("%s: attach card\n", DEVNAME(sc)));
 
 	CLR(sc->sc_flags, SMF_CARD_ATTACHED);
+
+	sdmmc_chip_hw_reset(sc->sc_sct, sc->sc_sch);
 
 	/*
 	 * Power up the card (or card stack).

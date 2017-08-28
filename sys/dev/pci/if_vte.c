@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.11.4.5 2017/02/05 13:40:30 skrll Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.11.4.6 2017/08/28 17:52:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.11.4.5 2017/02/05 13:40:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.11.4.6 2017/08/28 17:52:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,6 +269,7 @@ vte_attach(device_t parent, device_t self, void *aux)
         ifp->if_timer = 0;
         IFQ_SET_READY(&ifp->if_snd);
         if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
         ether_ifattach(&(sc)->vte_if, (sc)->vte_eaddr);
 
 	if (pmf_device_register1(self, vte_suspend, vte_resume, vte_shutdown))
@@ -732,7 +733,8 @@ vte_encap(struct vte_softc *sc, struct mbuf **m_head)
 		m->m_len = m->m_pkthdr.len;
 	}
 
-	error = bus_dmamap_load_mbuf(sc->vte_dmatag, txd->tx_dmamap, m, 0);
+	error = bus_dmamap_load_mbuf(sc->vte_dmatag, txd->tx_dmamap, m,
+	    BUS_DMA_NOWAIT);
 	if (error != 0) {
 		txd->tx_flags &= ~VTE_TXMBUF;
 		return (NULL);
@@ -974,8 +976,7 @@ vte_intr(void *arg)
 			vte_txeof(sc);
 		if ((status & MISR_EVENT_CNT_OFLOW) != 0)
 			vte_stats_update(sc);
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			vte_ifstart(ifp);
+		if_schedule_deferred_start(ifp);
 		if (--n > 0)
 			status = CSR_READ_2(sc, VTE_MISR);
 		else
@@ -1055,7 +1056,7 @@ vte_newbuf(struct vte_softc *sc, struct vte_rxdesc *rxd)
 	m_adj(m, sizeof(uint32_t));
 
 	if (bus_dmamap_load_mbuf(sc->vte_dmatag,
-	    sc->vte_cdata.vte_rx_sparemap, m, 0) != 0) {
+	    sc->vte_cdata.vte_rx_sparemap, m, BUS_DMA_NOWAIT) != 0) {
 		m_freem(m);
 		return (ENOBUFS);
 	}

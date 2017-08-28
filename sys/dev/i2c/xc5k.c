@@ -1,4 +1,4 @@
-/* $NetBSD: xc5k.c,v 1.4.30.1 2015/04/06 15:18:09 skrll Exp $ */
+/* $NetBSD: xc5k.c,v 1.4.30.2 2017/08/28 17:52:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xc5k.c,v 1.4.30.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xc5k.c,v 1.4.30.2 2017/08/28 17:52:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,8 +250,6 @@ xc5k_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr,
 	uint16_t product_id;
 
 	xc = kmem_alloc(sizeof(*xc), KM_SLEEP);
-	if (xc == NULL)
-		return NULL;
 	xc->parent = parent;
 	xc->i2c = i2c;
 	xc->i2c_addr = addr;

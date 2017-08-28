@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.184.4.5 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: tulip.c,v 1.184.4.6 2017/08/28 17:52:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.184.4.5 2017/02/05 13:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.184.4.6 2017/08/28 17:52:04 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -524,6 +524,7 @@ tlp_attach(struct tulip_softc *sc, const uint8_t *enaddr)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, tlp_ifflags_cb);
 
@@ -1199,7 +1200,7 @@ tlp_intr(void *arg)
 	}
 
 	/* Try to get more packets going. */
-	tlp_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	if (handled)
 		rnd_add_uint32(&sc->sc_rnd_source, status);

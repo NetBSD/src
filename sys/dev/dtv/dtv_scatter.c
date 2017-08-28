@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_scatter.c,v 1.2 2014/08/09 13:34:10 jmcneill Exp $ */
+/* $NetBSD: dtv_scatter.c,v 1.2.4.1 2017/08/28 17:52:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_scatter.c,v 1.2 2014/08/09 13:34:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_scatter.c,v 1.2.4.1 2017/08/28 17:52:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -91,11 +91,6 @@ dtv_scatter_buf_set_size(struct dtv_scatter_buf *sb, size_t sz)
 	if (npages > 0) {
 		sb->sb_page_ary =
 		    kmem_alloc(sizeof(uint8_t *) * npages, KM_SLEEP);
-		if (sb->sb_page_ary == NULL) {
-			sb->sb_npages = oldnpages;
-			sb->sb_page_ary = old_ary;
-			return ENOMEM;
-		}
 	} else {
 		sb->sb_page_ary = NULL;
 	}

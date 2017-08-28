@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.9.6.2 2016/07/09 20:25:00 skrll Exp $      */
+/*      $NetBSD: pciback.c,v 1.9.6.3 2017/08/28 17:51:57 skrll Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.9.6.2 2016/07/09 20:25:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.9.6.3 2017/08/28 17:51:57 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -269,8 +269,8 @@ pciback_pci_attach(device_t parent, device_t self, void *aux)
 		    buf, sizeof(buf));
 		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 	}
-	unbind_pirq_from_evtch(APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle.pirq));
-	sc->sc_irq = APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle.pirq);
+	unbind_pirq_from_evtch(APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle));
+	sc->sc_irq = APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle);
 	/* XXX should be done elsewhere ? */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_INTERRUPT_REG);
 	reg &= ~ (PCI_INTERRUPT_LINE_MASK << PCI_INTERRUPT_LINE_SHIFT);

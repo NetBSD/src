@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.47.6.4 2016/12/05 10:54:59 skrll Exp $	*/
+/*	$NetBSD: lapic.c,v 1.47.6.5 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,8 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.47.6.4 2016/12/05 10:54:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.47.6.5 2017/08/28 17:51:56 skrll Exp $");
 
+#include "acpica.h"
+#include "ioapic.h"
+#include "opt_acpi.h"
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
 #include "opt_multiprocessor.h"
@@ -55,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.47.6.4 2016/12/05 10:54:59 skrll Exp $")
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
 #include <machine/vmparam.h>
+#include <machine/mpacpi.h>
 #include <machine/mpbiosvar.h>
 #include <machine/pcb.h>
 #include <machine/specialreg.h>
@@ -66,11 +70,31 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.47.6.4 2016/12/05 10:54:59 skrll Exp $")
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 
+#if NACPICA > 0
+#include <dev/acpi/acpica.h>
+#include <dev/acpi/acpivar.h>
+#endif
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#ifdef MULTIPROCESSOR
+#ifdef __x86_64__
+typedef void (vector)(void);
+extern vector Xx2apic_intrddbipi;
+extern int ddb_vec;
+#endif
+#endif
+#endif
+
+#include <x86/x86/vmtreg.h>	/* for vmt_hvcall() */
+#include <x86/x86/vmtvar.h>	/* for vmt_hvcall() */
+
 /* Referenced from vector.S */
 void		lapic_clockintr(void *, struct intrframe *);
 
 static void	lapic_delay(unsigned int);
 static uint32_t lapic_gettick(void);
+static void 	lapic_setup_bsp(paddr_t);
 static void 	lapic_map(paddr_t);
 
 static void lapic_hwmask(struct pic *, int);
@@ -85,9 +109,247 @@ struct pic local_pic = {
 	.pic_lock = __SIMPLELOCK_UNLOCKED,
 	.pic_hwmask = lapic_hwmask,
 	.pic_hwunmask = lapic_hwunmask,
-	.pic_addroute =lapic_setup,
+	.pic_addroute = lapic_setup,
 	.pic_delroute = lapic_setup,
 };
+
+static int i82489_ipi(int vec, int target, int dl);
+static int x2apic_ipi(int vec, int target, int dl);
+int (*x86_ipi)(int, int, int) = i82489_ipi;
+
+bool x2apic_mode __read_mostly;
+#ifdef LAPIC_ENABLE_X2APIC
+bool x2apic_enable = true;
+#else
+bool x2apic_enable = false;
+#endif
+
+static uint32_t
+i82489_readreg(u_int reg)
+{
+	return *((volatile uint32_t *)(local_apic_va + reg));
+}
+
+static void
+i82489_writereg(u_int reg, uint32_t val)
+{
+	*((volatile uint32_t *)(local_apic_va + reg)) = val;
+}
+
+static uint32_t
+i82489_cpu_number(void)
+{
+	return i82489_readreg(LAPIC_ID) >> LAPIC_ID_SHIFT;
+}
+
+static uint32_t
+x2apic_readreg(u_int reg)
+{
+	return rdmsr(MSR_X2APIC_BASE + (reg >> 4));
+}
+
+static void
+x2apic_writereg(u_int reg, uint32_t val)
+{
+	x86_mfence();
+	wrmsr(MSR_X2APIC_BASE + (reg >> 4), val);
+}
+
+static void
+x2apic_writereg64(u_int reg, uint64_t val)
+{
+	KDASSERT(reg == LAPIC_ICRLO);
+	x86_mfence();
+	wrmsr(MSR_X2APIC_BASE + (reg >> 4), val);
+}
+
+static void
+x2apic_write_icr(uint32_t hi, uint32_t lo)
+{
+	x2apic_writereg64(LAPIC_ICRLO, ((uint64_t)hi << 32) | lo);
+}
+
+static uint32_t
+x2apic_cpu_number(void)
+{
+	return x2apic_readreg(LAPIC_ID);
+}
+
+uint32_t
+lapic_readreg(u_int reg)
+{
+	if (x2apic_mode)
+		return x2apic_readreg(reg);
+	return i82489_readreg(reg);
+}
+
+void
+lapic_writereg(u_int reg, uint32_t val)
+{
+	if (x2apic_mode)
+		x2apic_writereg(reg, val);
+	else
+		i82489_writereg(reg, val);
+}
+
+void
+lapic_write_tpri(uint32_t val)
+{
+
+	val &= LAPIC_TPRI_MASK;
+#ifdef i386
+	lapic_writereg(LAPIC_TPRI, val);
+#else
+	lcr8(val >> 4);
+#endif
+}
+
+void
+lapic_eoi(void)
+{
+	lapic_writereg(LAPIC_EOI, 0);
+}
+
+uint32_t
+lapic_cpu_number(void)
+{
+	if (x2apic_mode)
+		return x2apic_cpu_number();
+	return i82489_cpu_number();
+}
+
+static void
+lapic_enable_x2apic(void)
+{
+	uint64_t apicbase;
+
+	apicbase = rdmsr(MSR_APICBASE);
+	if (!ISSET(apicbase, APICBASE_EN)) {
+		apicbase |= APICBASE_EN;
+		wrmsr(MSR_APICBASE, apicbase);
+	}
+	apicbase |= APICBASE_EXTD;
+	wrmsr(MSR_APICBASE, apicbase);
+}
+
+bool
+lapic_is_x2apic(void)
+{
+	uint64_t msr;
+
+	if (!ISSET(cpu_feature[0], CPUID_APIC) ||
+	    rdmsr_safe(MSR_APICBASE, &msr) == EFAULT)
+		return false;
+	return (msr & (APICBASE_EN | APICBASE_EXTD)) ==
+	    (APICBASE_EN | APICBASE_EXTD);
+}
+
+/*
+ * Initialize the local APIC on the BSP.
+ */
+static void
+lapic_setup_bsp(paddr_t lapic_base)
+{
+	u_int regs[4];
+	const char *reason = NULL;
+	const char *hw_vendor;
+	bool bios_x2apic;
+
+	if (ISSET(cpu_feature[1], CPUID2_X2APIC)) {
+#if NACPICA > 0
+		if (acpi_present) {
+			ACPI_TABLE_DMAR *dmar;
+			ACPI_STATUS status;
+
+			/*
+			 * Automatically detect several configurations where
+			 * x2APIC mode is known to cause troubles.  User can
+			 * override the setting with hw.x2apic_enable tunable.
+			 */
+			status = AcpiGetTable(ACPI_SIG_DMAR, 1,
+			    (ACPI_TABLE_HEADER **)&dmar);
+			if (ACPI_SUCCESS(status)) {
+				if (ISSET(dmar->Flags, ACPI_DMAR_X2APIC_OPT_OUT)) {
+					reason = "by DMAR table";
+				}
+				AcpiPutTable(&dmar->Header);
+			}
+		}
+#endif	/* NACPICA > 0 */
+		if (vm_guest == VM_GUEST_VMWARE) {
+			vmt_hvcall(VM_CMD_GET_VCPU_INFO, regs);
+			if (ISSET(regs[0], VCPUINFO_VCPU_RESERVED) ||
+			    !ISSET(regs[0], VCPUINFO_LEGACY_X2APIC))
+				reason = "inside VMWare without intr redirection";
+		} else if (vm_guest == VM_GUEST_XEN) {
+			reason = "due to running under XEN";
+		} else if (vm_guest == VM_GUEST_NO &&
+		    CPUID_TO_FAMILY(curcpu()->ci_signature) == 6 &&
+		    CPUID_TO_MODEL(curcpu()->ci_signature) == 0x2a) {
+			hw_vendor = pmf_get_platform("board-vendor");
+			if (hw_vendor != NULL) {
+				/*
+				 * It seems that some Lenovo and ASUS
+				 * SandyBridge-based notebook BIOSes have a bug
+				 * which prevents booting AP in x2APIC mode.
+				 * Since the only way to detect mobile CPU is
+				 * to check northbridge pci id, which cannot be done
+				 * that early, disable x2APIC for all Lenovo and ASUS
+				 * SandyBridge machines.
+				 */
+				if (strcmp(hw_vendor, "LENOVO") == 0 ||
+				    strcmp(hw_vendor, "ASUSTeK Computer Inc.") == 0) {
+					reason =
+					    "for a suspected SandyBridge BIOS bug";
+				}
+			}
+		}
+		bios_x2apic = lapic_is_x2apic();
+		if (reason != NULL && bios_x2apic) {
+			aprint_verbose("x2APIC should be disabled %s but "
+			    "already enabled by BIOS; enabling.\n", reason);
+			reason = NULL;
+		}
+		if (reason == NULL)
+			x2apic_mode = true;
+		else
+			aprint_verbose("x2APIC available but disabled %s\n", reason);
+		if (x2apic_enable != x2apic_mode) {
+			if (bios_x2apic && !x2apic_enable)
+				aprint_verbose("x2APIC disabled by user and "
+				    "enabled by BIOS; ignoring user setting.\n");
+			else
+				x2apic_mode = x2apic_enable;
+		}
+	}
+	if (x2apic_mode) {
+		x86_ipi = x2apic_ipi;
+#if NIOAPIC > 0
+		struct ioapic_softc *ioapic;
+		for (ioapic = ioapics; ioapic != NULL; ioapic = ioapic->sc_next) {
+			ioapic->sc_pic.pic_edge_stubs = x2apic_edge_stubs;
+			ioapic->sc_pic.pic_level_stubs = x2apic_level_stubs;
+		}
+#endif
+#if defined(DDB) && defined(MULTIPROCESSOR)
+#ifdef __x86_64__
+		setgate(&idt[ddb_vec], &Xx2apic_intrddbipi, 1, SDT_SYS386IGT,
+		    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
+#else
+		/* Set DDB IPI handler in cpu_set_tss_gates() when cpu0 is attached. */
+#endif
+#endif
+
+		x86_disable_intr();
+		lapic_enable_x2apic();
+#ifdef MULTIPROCESSOR
+		cpu_init_first();	/* catch up to changed cpu_number() */
+#endif
+		lapic_write_tpri(0);
+		x86_enable_intr();
+	} else
+		lapic_map(lapic_base);
+}
 
 static void
 lapic_map(paddr_t lapic_base)
@@ -103,12 +365,12 @@ lapic_map(paddr_t lapic_base)
 	 * is not present on the Pentium (is it?).
 	 */
 	if (CPUID_TO_FAMILY(curcpu()->ci_signature) >= 6) {
-		lapic_base = (paddr_t)rdmsr(LAPIC_MSR);
-		if ((lapic_base & LAPIC_MSR_ADDR) == 0) {
+		lapic_base = (paddr_t)rdmsr(MSR_APICBASE);
+		if ((lapic_base & APICBASE_PHYSADDR) == 0) {
 			lapic_base |= LAPIC_BASE;
 		}
-		wrmsr(LAPIC_MSR, lapic_base | LAPIC_MSR_ENABLE);
-		lapic_base &= LAPIC_MSR_ADDR;
+		wrmsr(MSR_APICBASE, lapic_base | APICBASE_EN);
+		lapic_base &= APICBASE_PHYSADDR;
 	}
 
 	x86_disable_intr();
@@ -130,7 +392,7 @@ lapic_map(paddr_t lapic_base)
 	cpu_init_first();	/* catch up to changed cpu_number() */
 #endif
 
-	i82489_writereg(LAPIC_TPRI, 0);
+	lapic_write_tpri(0);
 	x86_enable_intr();
 }
 
@@ -140,7 +402,7 @@ lapic_map(paddr_t lapic_base)
 void
 lapic_enable(void)
 {
-	i82489_writereg(LAPIC_SVR, LAPIC_SVR_ENABLE | LAPIC_SPURIOUS_VECTOR);
+	lapic_writereg(LAPIC_SVR, LAPIC_SVR_ENABLE | LAPIC_SPURIOUS_VECTOR);
 }
 
 void
@@ -154,9 +416,9 @@ lapic_set_lvt(void)
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
 		apic_format_redir(device_xname(ci->ci_dev), "prelint", 0, 0,
-		    i82489_readreg(LAPIC_LVINT0));
+		    lapic_readreg(LAPIC_LVINT0));
 		apic_format_redir(device_xname(ci->ci_dev), "prelint", 1, 0,
-		    i82489_readreg(LAPIC_LVINT1));
+		    lapic_readreg(LAPIC_LVINT1));
 	}
 #endif
 
@@ -165,18 +427,18 @@ lapic_set_lvt(void)
 	 * the 8259A for interrupt delivery.  Otherwise request the LAPIC to
 	 * get external interrupts via LINT0 for the primary CPU.
 	 */
-	lint0 = LAPIC_DLMODE_EXTINT;
+	lint0 = LAPIC_LVT_DM_EXTINT;
 	if (nioapics > 0 || !CPU_IS_PRIMARY(curcpu()))
 		lint0 |= LAPIC_LVT_MASKED;
-	i82489_writereg(LAPIC_LVINT0, lint0);
+	lapic_writereg(LAPIC_LVINT0, lint0);
 
 	/*
 	 * Non Maskable Interrupts are to be delivered to the primary CPU.
 	 */
-	lint1 = LAPIC_DLMODE_NMI;
+	lint1 = LAPIC_LVT_DM_NMI;
 	if (!CPU_IS_PRIMARY(curcpu()))
 		lint1 |= LAPIC_LVT_MASKED;
-	i82489_writereg(LAPIC_LVINT1, lint1);
+	lapic_writereg(LAPIC_LVINT1, lint1);
 
 	for (i = 0; i < mp_nintr; i++) {
 		mpi = &mp_intrs[i];
@@ -187,9 +449,9 @@ lapic_set_lvt(void)
 				    "%s: WARNING: bad pin value %d\n",
 				    __func__, mpi->ioapic_pin);
 			if (mpi->ioapic_pin == 0)
-				i82489_writereg(LAPIC_LVINT0, mpi->redir);
+				lapic_writereg(LAPIC_LVINT0, mpi->redir);
 			else
-				i82489_writereg(LAPIC_LVINT1, mpi->redir);
+				lapic_writereg(LAPIC_LVINT1, mpi->redir);
 		}
 	}
 
@@ -205,25 +467,27 @@ lapic_set_lvt(void)
 void
 lapic_boot_init(paddr_t lapic_base)
 {
-	lapic_map(lapic_base);
+
+	lapic_setup_bsp(lapic_base);
 
 #ifdef MULTIPROCESSOR
 	idt_vec_reserve(LAPIC_IPI_VECTOR);
-	idt_vec_set(LAPIC_IPI_VECTOR, Xintr_lapic_ipi);
+	idt_vec_set(LAPIC_IPI_VECTOR, x2apic_mode ? Xintr_x2apic_ipi : Xintr_lapic_ipi);
 	idt_vec_reserve(LAPIC_TLB_VECTOR);
-	idt_vec_set(LAPIC_TLB_VECTOR, Xintr_lapic_tlb);
+	idt_vec_set(LAPIC_TLB_VECTOR, x2apic_mode ? Xintr_x2apic_tlb : Xintr_lapic_tlb);
 #endif
 	idt_vec_reserve(LAPIC_SPURIOUS_VECTOR);
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
 
 	idt_vec_reserve(LAPIC_TIMER_VECTOR);
-	idt_vec_set(LAPIC_TIMER_VECTOR, Xintr_lapic_ltimer);
+	idt_vec_set(LAPIC_TIMER_VECTOR, x2apic_mode ? Xintr_x2apic_ltimer :
+	    Xintr_lapic_ltimer);
 }
 
 static uint32_t
 lapic_gettick(void)
 {
-	return i82489_readreg(LAPIC_CCR_TIMER);
+	return lapic_readreg(LAPIC_CCR_TIMER);
 }
 
 #include <sys/kernel.h>		/* for hz */
@@ -267,7 +531,7 @@ lapic_get_timecount(struct timecounter *tc)
 	if (cur_timer >= lapic_tval - 1) {
 		uint16_t reg = LAPIC_IRR + LAPIC_TIMER_VECTOR / 32 * 16;
 
-		if (i82489_readreg(reg) & (1 << (LAPIC_TIMER_VECTOR % 32))) {
+		if (lapic_readreg(reg) & (1 << (LAPIC_TIMER_VECTOR % 32))) {
 			cur_timer -= lapic_tval;
 		}
 	} else if (ci->ci_istate.ipending & (1 << LIR_TIMER))
@@ -315,11 +579,11 @@ lapic_initclocks(void)
 	 * then set divisor,
 	 * then unmask and set the vector.
 	 */
-	i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_TM | LAPIC_LVTT_M);
-	i82489_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-	i82489_writereg(LAPIC_ICR_TIMER, lapic_tval);
-	i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_TM | LAPIC_TIMER_VECTOR);
-	i82489_writereg(LAPIC_EOI, 0);
+	lapic_writereg(LAPIC_LVTT, LAPIC_LVTT_TM | LAPIC_LVTT_M);
+	lapic_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
+	lapic_writereg(LAPIC_ICR_TIMER, lapic_tval);
+	lapic_writereg(LAPIC_LVTT, LAPIC_LVTT_TM | LAPIC_TIMER_VECTOR);
+	lapic_eoi();
 }
 
 extern unsigned int gettick(void);	/* XXX put in header file */
@@ -352,9 +616,9 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	 * Configure timer to one-shot, interrupt masked,
 	 * large positive number.
 	 */
-	i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_M);
-	i82489_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-	i82489_writereg(LAPIC_ICR_TIMER, 0x80000000);
+	lapic_writereg(LAPIC_LVTT, LAPIC_LVTT_M);
+	lapic_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
+	lapic_writereg(LAPIC_ICR_TIMER, 0x80000000);
 
 	x86_disable_intr();
 
@@ -388,10 +652,10 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		lapic_tval = (lapic_per_second * 2) / hz;
 		lapic_tval = (lapic_tval / 2) + (lapic_tval & 0x1);
 
-		i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_TM | LAPIC_LVTT_M
+		lapic_writereg(LAPIC_LVTT, LAPIC_LVTT_TM | LAPIC_LVTT_M
 		    | LAPIC_TIMER_VECTOR);
-		i82489_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-		i82489_writereg(LAPIC_ICR_TIMER, lapic_tval);
+		lapic_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
+		lapic_writereg(LAPIC_ICR_TIMER, lapic_tval);
 
 		/*
 		 * Compute fixed-point ratios between cycles and
@@ -484,23 +748,21 @@ i82489_icr_wait(void)
 	}
 }
 
-int
-x86_ipi_init(int target)
+static int
+i82489_ipi_init(int target)
 {
 	uint32_t esr;
 
 	i82489_writereg(LAPIC_ESR, 0);
 	(void)i82489_readreg(LAPIC_ESR);
 
-	if ((target&LAPIC_DEST_MASK)==0)
-		i82489_writereg(LAPIC_ICRHI, target<<LAPIC_ID_SHIFT);
+	i82489_writereg(LAPIC_ICRHI, target << LAPIC_ID_SHIFT);
 
-	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
-	    LAPIC_DLMODE_INIT | LAPIC_LEVEL_ASSERT );
+	i82489_writereg(LAPIC_ICRLO, LAPIC_DLMODE_INIT | LAPIC_LEVEL_ASSERT);
 	i82489_icr_wait();
 	i8254_delay(10000);
-	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
-	     LAPIC_DLMODE_INIT | LAPIC_TRIGGER_LEVEL | LAPIC_LEVEL_DEASSERT);
+	i82489_writereg(LAPIC_ICRLO,
+	    LAPIC_DLMODE_INIT | LAPIC_TRIGGER_LEVEL | LAPIC_LEVEL_DEASSERT);
 	i82489_icr_wait();
 
 	if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0)
@@ -508,13 +770,13 @@ x86_ipi_init(int target)
 
 	esr = i82489_readreg(LAPIC_ESR);
 	if (esr != 0)
-		aprint_debug("x86_ipi_init: ESR %08x\n", esr);
+		aprint_debug("%s: ESR %08x\n", __func__, esr);
 
 	return 0;
 }
 
-int
-x86_ipi_startup(int target, int vec)
+static int
+i82489_ipi_startup(int target, int vec)
 {
 	uint32_t esr;
 
@@ -532,13 +794,13 @@ x86_ipi_startup(int target, int vec)
 
 	esr = i82489_readreg(LAPIC_ESR);
 	if (esr != 0)
-		aprint_debug("x86_ipi_startup: ESR %08x\n", esr);
+		aprint_debug("%s: ESR %08x\n", __func__, esr);
 
 	return 0;
 }
 
-int
-x86_ipi(int vec, int target, int dl)
+static int
+i82489_ipi(int vec, int target, int dl)
 {
 	int result, s;
 
@@ -564,6 +826,58 @@ x86_ipi(int vec, int target, int dl)
 	return result;
 }
 
+static int
+x2apic_ipi_init(int target)
+{
+
+	x2apic_write_icr(target, LAPIC_DLMODE_INIT | LAPIC_LEVEL_ASSERT);
+
+	i8254_delay(10000);
+
+	x2apic_write_icr(0,
+	    LAPIC_DLMODE_INIT | LAPIC_TRIGGER_LEVEL | LAPIC_LEVEL_DEASSERT);
+
+	return 0;
+}
+
+static int
+x2apic_ipi_startup(int target, int vec)
+{
+
+	x2apic_write_icr(target, vec | LAPIC_DLMODE_STARTUP | LAPIC_LEVEL_ASSERT);
+
+	return 0;
+}
+
+static int
+x2apic_ipi(int vec, int target, int dl)
+{
+	uint32_t dest_id = 0;
+
+	if ((target & LAPIC_DEST_MASK) == 0)
+		dest_id = target;
+
+	x2apic_write_icr(dest_id,
+	    (target & LAPIC_DEST_MASK) | vec | dl | LAPIC_LEVEL_ASSERT);
+
+	return 0;
+}
+
+int
+x86_ipi_init(int target)
+{
+	if (x2apic_mode)
+		return x2apic_ipi_init(target);
+	return i82489_ipi_init(target);
+}
+
+int
+x86_ipi_startup(int target, int vec)
+{
+	if (x2apic_mode)
+		return x2apic_ipi_startup(target, vec);
+	return i82489_ipi_startup(target, vec);
+}
 
 /*
  * Using 'pin numbers' as:
@@ -582,9 +896,9 @@ lapic_hwmask(struct pic *pic, int pin)
 	uint32_t val;
 
 	reg = LAPIC_LVTT + (pin << 4);
-	val = i82489_readreg(reg);
+	val = lapic_readreg(reg);
 	val |= LAPIC_LVT_MASKED;
-	i82489_writereg(reg, val);
+	lapic_writereg(reg, val);
 }
 
 static void
@@ -594,9 +908,9 @@ lapic_hwunmask(struct pic *pic, int pin)
 	uint32_t val;
 
 	reg = LAPIC_LVTT + (pin << 4);
-	val = i82489_readreg(reg);
+	val = lapic_readreg(reg);
 	val &= ~LAPIC_LVT_MASKED;
-	i82489_writereg(reg, val);
+	lapic_writereg(reg, val);
 }
 
 static void
@@ -611,13 +925,13 @@ lapic_dump(void)
 	struct cpu_info *ci = curcpu();
 
 	apic_format_redir(device_xname(ci->ci_dev), "timer", 0, 0,
-	    i82489_readreg(LAPIC_LVTT));
+	    lapic_readreg(LAPIC_LVTT));
 	apic_format_redir(device_xname(ci->ci_dev), "pcint", 0, 0,
-	    i82489_readreg(LAPIC_PCINT));
+	    lapic_readreg(LAPIC_PCINT));
 	apic_format_redir(device_xname(ci->ci_dev), "lint", 0, 0,
-	    i82489_readreg(LAPIC_LVINT0));
+	    lapic_readreg(LAPIC_LVINT0));
 	apic_format_redir(device_xname(ci->ci_dev), "lint", 1, 0,
-	    i82489_readreg(LAPIC_LVINT1));
+	    lapic_readreg(LAPIC_LVINT1));
 	apic_format_redir(device_xname(ci->ci_dev), "err", 0, 0,
-	    i82489_readreg(LAPIC_LVERR));
+	    lapic_readreg(LAPIC_LVERR));
 }

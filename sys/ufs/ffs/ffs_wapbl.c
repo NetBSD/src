@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.28.4.3 2016/12/05 10:55:30 skrll Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.28.4.4 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.28.4.3 2016/12/05 10:55:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.28.4.4 2017/08/28 17:53:17 skrll Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -342,6 +342,19 @@ ffs_wapbl_start(struct mount *mp)
 			    &count, &blksize, &extradata);
 			if (error)
 				return error;
+
+			/*
+			 * Make sure we don't carry over any delayed write
+			 * buffers when updating to log. Need to turn off
+			 * async termporarily, to prevent ffs_sync() writes
+			 * themselves being turned into delayed writes.
+			 */
+			if (mp->mnt_flag & MNT_UPDATE) {
+				int saveflag = mp->mnt_flag & MNT_ASYNC;
+				mp->mnt_flag &= ~MNT_ASYNC;
+				ffs_sync(mp, MNT_WAIT, FSCRED);
+				mp->mnt_flag |= saveflag;
+			}
 
 			error = wapbl_start(&mp->mnt_wapbl, mp, devvp, off,
 			    count, blksize, mp->mnt_wapbl_replay,
@@ -673,8 +686,7 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
 		 */
 		ip->i_nlink = 0;
 		DIP_ASSIGN(ip, nlink, 0);
-		VOP_UNLOCK(vp);
-		vgone(vp);
+		vput(vp);
 
 		return error;
 	}
@@ -683,8 +695,7 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
 	 * Now that we have the place-holder inode for the journal,
 	 * we don't need the vnode ever again.
 	 */
-	VOP_UNLOCK(vp);
-	vgone(vp);
+	vput(vp);
 
 	return 0;
 }

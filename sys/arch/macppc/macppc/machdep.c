@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.164 2012/12/11 03:00:00 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.164.14.1 2017/08/28 17:51:44 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164 2012/12/11 03:00:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164.14.1 2017/08/28 17:51:44 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -97,12 +97,14 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164 2012/12/11 03:00:00 macallan Exp $
 #include <macppc/dev/adbvar.h>
 #include <macppc/dev/pmuvar.h>
 #include <macppc/dev/cudavar.h>
+#include <macppc/dev/smuvar.h>
 
 #include <macppc/macppc/static_edid.h>
 
 #include "ksyms.h"
 #include "pmu.h"
 #include "cuda.h"
+#include "smu.h"
 
 struct genfb_colormap_callback gfb_cb;
 struct genfb_parameter_callback gpc_backlight, gpc_brightness;
@@ -211,6 +213,9 @@ cpu_reboot(int howto, char *what)
 		adb_poweroff();
 		printf("WARNING: powerdown failed!\n");
 #endif
+#if NSMU > 0
+		smu_poweroff();
+#endif
 	}
 
 	if (howto & RB_HALT) {
@@ -253,6 +258,9 @@ cpu_reboot(int howto, char *what)
 #if NADB > 0
 	adb_restart();	/* not return */
 #endif
+#if NSMU > 0
+	smu_restart();
+#endif
 	ppc_exit();
 }
 
@@ -274,8 +282,11 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 	uint32_t temp;
 	uint64_t cmap_cb, backlight_cb, brightness_cb;
 	int have_backlight = 0;
+#ifdef PMAC_G5
+	int have_palette = 0;
+#else
 	int have_palette = 1;
-
+#endif
 	if (node != console_node) {
 		/*
 		 * see if any child matches since OF attaches nodes for
@@ -350,7 +361,7 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 		prop_dictionary_set_uint64(dict, "cmap_callback", cmap_cb);
 	}
 
-	/* not let's look for backlight control */
+	/* now let's look for backlight control */
 	have_backlight = 0;
 	if (OF_getprop(node, "backlight-control", &temp, sizeof(temp)) == 4) {
 		have_backlight = 1;
@@ -385,6 +396,10 @@ add_model_specifics(prop_dictionary_t dict)
 		"PowerBook4,3", "PowerBook6,3", "PowerBook6,5", NULL};
 	const char *pismo[] = {
 		"PowerBook3,1", NULL};
+	const char *mini1[] = {
+		"PowerMac10,1", NULL};
+	const char *mini2[] = {
+		"PowerMac10,2", NULL};
 	int node;
 
 	node = OF_finddevice("/");
@@ -398,6 +413,12 @@ add_model_specifics(prop_dictionary_t dict)
 		edid = prop_data_create_data(edid_pismo, sizeof(edid_pismo));
 		prop_dictionary_set(dict, "EDID", edid);
 		prop_object_release(edid);
+	}
+	if (of_compatible(node, mini1) != -1) {
+		prop_dictionary_set_bool(dict, "dvi-internal", 1);
+	}
+	if (of_compatible(node, mini2) != -1) {
+		prop_dictionary_set_bool(dict, "dvi-external", 1);
 	}
 }
 

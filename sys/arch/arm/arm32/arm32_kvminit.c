@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.32.2.3 2017/02/05 13:40:03 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.32.2.4 2017/08/28 17:51:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -124,7 +124,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.32.2.3 2017/02/05 13:40:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.32.2.4 2017/08/28 17:51:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -141,6 +141,12 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.32.2.3 2017/02/05 13:40:03 skrll
 #include <arm/undefined.h>
 #include <arm/bootconfig.h>
 #include <arm/arm32/machdep.h>
+
+#ifdef MULTIPROCESSOR
+#ifndef __HAVE_CPU_UAREA_ALLOC_IDLELWP
+#error __HAVE_CPU_UAREA_ALLOC_IDLELWP required to not waste pages for idlestack
+#endif
+#endif
 
 struct bootmem_info bootmem_info;
 
@@ -681,7 +687,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	text.pv_pa = bmi->bmi_kernelstart;
 	text.pv_va = KERN_PHYSTOV(bmi, bmi->bmi_kernelstart);
 	text.pv_size = textsize;
-	text.pv_prot = VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE;
+	text.pv_prot = VM_PROT_READ | VM_PROT_EXECUTE;
 	text.pv_cache = PTE_CACHE;
 
 #ifdef VERBOSE_INIT_ARM

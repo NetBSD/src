@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.18 2014/03/03 22:09:32 dsl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18.6.1 2017/08/28 17:51:57 skrll Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2014/03/03 22:09:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18.6.1 2017/08/28 17:51:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,8 @@ int mp_nintr;
 int mp_isa_bus = -1;	    /* XXX */
 int mp_eisa_bus = -1;	   /* XXX */
 
-int acpi_present = 0;
-int mpacpi_active = 0;
+bool acpi_present;
+bool mpacpi_active;
 #ifdef MPVERBOSE
 int mp_verbose = 1;
 #else /* MPVERBOSE */
@@ -168,9 +168,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		}
 #endif /* PCI_BUS_FIXUP */
 #if NACPICA > 0
-		acpi_present = acpi_probe();
+		acpi_present = acpi_probe() != 0;
 		if (acpi_present)
-			mpacpi_active = mpacpi_scan_apics(self, &numcpus);
+			mpacpi_active = mpacpi_scan_apics(self, &numcpus) != 0;
 		if (!mpacpi_active)
 #endif
 		{

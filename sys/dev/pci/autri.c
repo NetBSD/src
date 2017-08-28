@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.52.4.1 2016/07/09 20:25:03 skrll Exp $	*/
+/*	$NetBSD: autri.c,v 1.52.4.2 2017/08/28 17:52:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.52.4.1 2016/07/09 20:25:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.52.4.2 2017/08/28 17:52:05 skrll Exp $");
 
 #include "midi.h"
 
@@ -553,7 +553,8 @@ autri_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, autri_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_AUDIO, autri_intr,
+	    sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -588,8 +589,7 @@ autri_attach(device_t parent, device_t self, void *aux)
 
 	r = ac97_attach(&codec->host_if, self, &sc->sc_lock);
 	if (r != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "can't attach codec (error 0x%X)\n", r);
+		aprint_error_dev(self, "can't attach codec (error 0x%X)\n", r);
 		return;
 	}
 
@@ -1095,8 +1095,6 @@ autri_malloc(void *addr, int direction, size_t size)
 	int error;
 
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (!p)
-		return NULL;
 	sc = addr;
 #if 0
 	error = autri_allocmem(sc, size, 16, p);

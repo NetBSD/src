@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.83 2012/07/30 23:56:48 matt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.83.16.1 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.83 2012/07/30 23:56:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.83.16.1 2017/08/28 17:53:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1110,9 +1110,7 @@ struct vm_page *
 uvm_loanbreak(struct vm_page *uobjpage)
 {
 	struct vm_page *pg;
-#ifdef DIAGNOSTIC
-	struct uvm_object *uobj = uobjpage->uobject;
-#endif
+	struct uvm_object *uobj __diagused = uobjpage->uobject;
 
 	KASSERT(uobj != NULL);
 	KASSERT(mutex_owned(uobj->vmobjlock));

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.88.2.2 2015/12/27 12:09:41 skrll Exp $
+# $NetBSD: GENERIC,v 1.88.2.3 2017/08/28 17:51:50 skrll Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.88.2.2 $"
+#ident 		"GENERIC-$Revision: 1.88.2.3 $"
 
 maxusers	32
 
@@ -81,7 +81,6 @@ options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 #options 	COMPAT_LINUX	# binary compatibility with Linux
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Wedge support
@@ -90,6 +89,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+#options	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
@@ -115,6 +115,7 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 options 	NFSSERVER	# Network File System server

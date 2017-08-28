@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_space.c,v 1.7.6.1 2017/02/05 13:40:04 skrll Exp $	*/
+/*	$NetBSD: mvsoc_space.c,v 1.7.6.2 2017/08/28 17:51:31 skrll Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.7.6.1 2017/02/05 13:40:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.7.6.2 2017/08/28 17:51:31 skrll Exp $");
 
 #include "opt_mvsoc.h"
 #include "mvpex.h"
@@ -300,6 +300,18 @@ struct bus_space armadaxp_pex03_mem_bs_tag = {
 struct bus_space armadaxp_pex03_io_bs_tag = {
 	/* cookie */
 	(void *)ARMADAXP_TAG_PEX03_IO,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+struct bus_space armadaxp_pex10_mem_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX10_MEM,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+struct bus_space armadaxp_pex10_io_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX10_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };

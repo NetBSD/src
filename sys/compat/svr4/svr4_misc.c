@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.156.2.1 2016/12/05 10:55:00 skrll Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.156.2.2 2017/08/28 17:52:00 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.156.2.1 2016/12/05 10:55:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.156.2.2 2017/08/28 17:52:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,8 +264,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic("svr4_getdents64: bad reclen");
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			if (cookie)
@@ -388,8 +390,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic("svr4_getdents: bad reclen");
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if (cookie)
 			off = *cookie++; /* each entry points to the next */
 		else

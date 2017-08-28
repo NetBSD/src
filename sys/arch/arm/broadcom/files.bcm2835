@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.23.2.2 2015/12/27 12:09:30 skrll Exp $
+#	$NetBSD: files.bcm2835,v 1.23.2.3 2017/08/28 17:51:30 skrll Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -57,9 +57,18 @@ file	arch/arm/broadcom/bcm2835_rng.c		bcmrng
 attach	plcom at obio with bcmplcom
 file	arch/arm/broadcom/bcm2835_plcom.c	bcmplcom
 
+# AUX UART (BCM2835_AUX_UART_BASE)
+attach	com at obio with bcmcom
+file	arch/arm/broadcom/bcm2835_com.c		bcmcom
+
 # External Mass Media Controller (BCM2835_EMMC_BASE)
 attach	sdhc at obio with bcmemmc
 file	arch/arm/broadcom/bcm2835_emmc.c	bcmemmc
+
+# SD Host Controller (BCM2835_SDHOST_BASE)
+device	sdhost: sdmmcbus
+attach	sdhost at obio with bcmsdhost
+file	arch/arm/broadcom/bcm2835_sdhost.c	bcmsdhost	needs-flag
 
 # DMA Controller (BCM2835_DMA0_BASE)
 device	bcmdmac

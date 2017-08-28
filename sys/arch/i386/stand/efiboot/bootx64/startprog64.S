@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog64.S,v 1.2.2.2 2017/02/05 13:40:13 skrll Exp $	*/
+/*	$NetBSD: startprog64.S,v 1.2.2.3 2017/08/28 17:51:41 skrll Exp $	*/
 /*	NetBSD: startprog.S,v 1.3 2003/02/01 14:48:18 dsl Exp	*/
 
 /* starts program in protected mode / flat space
@@ -78,25 +78,134 @@ _C_LABEL(startprog64_size):
 	.p2align 4,,15
 
 /*
- * startprog64(loadddr,entry,stack)
+ * startprog64(loadddr,entry,stack,kern_load,kern_start,kern_size)
  */
 ENTRY(startprog64_start)
 start:
 	/*
 	 * This function is to call the loaded kernel's start() with
 	 * 32bit segment mode from x64 mode.
-	 * %rdi: loaded start address
-	 * %rsi: kernel entry address
+	 * %rdi: kernel start address
+	 * %rsi: loaded kernel address
 	 * %rdx: stack address
+	 * %rcx: loaded kernel size
+	 * %r8 : loaded start address
+	 * %r9 : kernel entry address
 	 */
 
-	cld		# LynxOS depends on it
+	cld		/* LynxOS depends on it */
+
+	cli
+
+	/* Copy kernel */
+	mov	%rcx, %r12		/* original kernel size */
+	movq	%rdi, %r11		/* for misaligned check */
+
+#if !defined(NO_OVERLAP)
+	movq	%rdi, %r13
+	subq	%rsi, %r13
+#endif
+
+	shrq	$3, %rcx		/* count for copy by words */
+	jz	8f			/* j if less than 8 bytes */
+
+	lea	-8(%rdi, %r12), %r14	/* target address of last 8 */
+	mov	-8(%rsi, %r12), %r15	/* get last word */
+#if !defined(NO_OVERLAP)
+	cmpq	%r12, %r13		/* overlapping? */
+	jb	10f
+#endif
+
+/*
+ * Non-overlaping, copy forwards.
+ * Newer Intel cpus (Nehalem) will do 16byte read/write transfers
+ * if %ecx is more than 76.
+ * AMD might do something similar some day.
+ */
+	and	$7, %r11		/* destination misaligned ? */
+	jnz	2f
+	rep
+	movsq
+	mov	%r15, (%r14)		/* write last word */
+	jmp	.Lcopy_done
+
+/*
+ * Destination misaligned
+ * AMD say it is better to align the destination (not the source).
+ * This will also re-align copies if the source and dest are both
+ * misaligned by the same amount)
+ * (I think Nehalem will use its accelerated copy if the source
+ * and destination have the same alignment.)
+ */
+2:
+	lea	-9(%r11, %r12), %rcx	/* post re-alignment count */
+	neg	%r11			/* now -1 .. -7 */
+	mov	(%rsi), %r12		/* get first word */
+	mov	%rdi, %r13		/* target for first word */
+	lea	8(%rsi, %r11), %rsi
+	lea	8(%rdi, %r11), %rdi
+	shr	$3, %rcx
+	rep
+	movsq
+	mov	%r12, (%r13)		/* write first word */
+	mov	%r15, (%r14)		/* write last word */
+	jmp	.Lcopy_done
+
+#if !defined(NO_OVERLAP)
+/* Must copy backwards.
+ * Reverse copy is probably easy to code faster than 'rep movds'
+ * since that requires (IIRC) an extra clock every 3 iterations (AMD).
+ * However I don't suppose anything cares that much!
+ * The big cost is the std/cld pair - reputedly 50+ cycles on Netburst P4.
+ * The copy is aligned with the buffer start (more likely to
+ * be a multiple of 8 than the end).
+ */
+10:
+	lea	-8(%rsi, %rcx, 8), %rsi
+	lea	-8(%rdi, %rcx, 8), %rdi
+	std
+	rep
+	movsq
+	cld
+	mov	%r15, (%r14)	/* write last bytes */
+	jmp	.Lcopy_done
+#endif
+
+/* Less than 8 bytes to copy, copy by bytes */
+/* Intel Nehalem optimise 'rep movsb' for <= 7 bytes (9-15 clocks).
+ * For longer transfers it is 50+ !
+ */
+8:	mov	%r12, %rcx
+
+#if !defined(NO_OVERLAP)
+	cmpq	%r12, %r13	/* overlapping? */
+	jb	81f
+#endif
+
+	/* nope, copy forwards. */
+	rep
+	movsb
+	jmp	.Lcopy_done
+
+#if !defined(NO_OVERLAP)
+/* Must copy backwards */
+81:
+	lea	-1(%rsi, %rcx), %rsi
+	lea	-1(%rdi, %rcx), %rdi
+	std
+	rep
+	movsb
+	cld
+#endif
+	/* End of copy kernel */
+.Lcopy_done:
+
+	mov	%r8, %rdi	/* %rdi: loaded start address */
+	mov	%r9, %rsi	/* %rsi: kernel entry address */
 
 	/* Prepare jump address */
 	lea	(start32a - start)(%rdi), %rax
 	movl	%eax, (start32r - start)(%rdi)
-
-	cli
 
 	/* Setup GDT */
 	lea	(gdt - start)(%rdi), %rax
@@ -110,11 +219,11 @@ start:
 	.code32
 start32a:
 	movl	$DATA_SEGMENT, %eax
-	movw	%eax, %ds
-	movw	%eax, %es
-	movw	%eax, %fs
-	movw	%eax, %gs
-	movw	%eax, %ss
+	movw	%ax, %ds
+	movw	%ax, %es
+	movw	%ax, %fs
+	movw	%ax, %gs
+	movw	%ax, %ss
 
 	movl	%edx, %esp
 

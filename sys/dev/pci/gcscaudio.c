@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.14 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.14.6.1 2017/08/28 17:52:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.14 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.14.6.1 2017/08/28 17:52:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -679,8 +679,6 @@ gcscaudio_malloc(void *arg, int direction, size_t size)
 	sc = (struct gcscaudio_softc *)arg;
 
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (p == NULL)
-		return NULL;
 	p->size = size;
 
 	error = gcscaudio_allocate_dma(sc, size, &p->addr,

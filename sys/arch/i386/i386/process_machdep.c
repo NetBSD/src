@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.85.6.2 2017/02/05 13:40:12 skrll Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.85.6.3 2017/08/28 17:51:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -44,27 +44,39 @@
  *	registers or privileged bits in the PSL.
  *	The process is stopped at the time write_regs is called.
  *
+ * process_read_fpregs(proc, regs, sz)
+ *	Get the current user-visible register set from the process
+ *	and copy it into the regs structure (<machine/reg.h>).
+ *	The process is stopped at the time read_fpregs is called.
+ *
+ * process_write_fpregs(proc, regs, sz)
+ *	Update the current register set from the passed in regs
+ *	structure.  Take care to avoid clobbering special CPU
+ *	registers or privileged bits in the PSL.
+ *	The process is stopped at the time write_fpregs is called.
+ *
+ * process_read_dbregs(proc, regs)
+ *	Get the current user-visible register set from the process
+ *	and copy it into the regs structure (<machine/reg.h>).
+ *	The process is stopped at the time read_dbregs is called.
+ *
+ * process_write_dbregs(proc, regs)
+ *	Update the current register set from the passed in regs
+ *	structure.  Take care to avoid clobbering special CPU
+ *	registers or privileged bits in the PSL.
+ *	The process is stopped at the time write_dbregs is called.
+ *
  * process_sstep(proc)
  *	Arrange for the process to trap after executing a single instruction.
  *
  * process_set_pc(proc)
  *	Set the process's program counter.
  *
- * process_count_watchpoints(proc, retval)
- *	Return the number of supported hardware watchpoints.
- *
- * process_read_watchpoint(proc, watchpoint)
- *	Read hardware watchpoint of the given index.
- *
- * process_write_watchpoint(proc, watchpoint)
- *	Write hardware watchpoint of the given index.
- *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.85.6.2 2017/02/05 13:40:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.85.6.3 2017/08/28 17:51:40 skrll Exp $");
 
-#include "opt_vm86.h"
 #include "opt_ptrace.h"
 
 #include <sys/param.h>
@@ -84,10 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.85.6.2 2017/02/05 13:40:12 skr
 #include <x86/dbregs.h>
 #include <x86/fpu.h>
 
-#ifdef VM86
-#include <machine/vm86.h>
-#endif
-
 static inline struct trapframe *
 process_frame(struct lwp *l)
 {
@@ -100,22 +108,12 @@ process_read_regs(struct lwp *l, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(l);
 
-#ifdef VM86
-	if (tf->tf_eflags & PSL_VM) {
-		regs->r_gs = tf->tf_vm86_gs;
-		regs->r_fs = tf->tf_vm86_fs;
-		regs->r_es = tf->tf_vm86_es;
-		regs->r_ds = tf->tf_vm86_ds;
-		regs->r_eflags = get_vflags(l);
-	} else
-#endif
-	{
-		regs->r_gs = tf->tf_gs & 0xffff;
-		regs->r_fs = tf->tf_fs & 0xffff;
-		regs->r_es = tf->tf_es & 0xffff;
-		regs->r_ds = tf->tf_ds & 0xffff;
-		regs->r_eflags = tf->tf_eflags;
-	}
+	regs->r_gs = tf->tf_gs & 0xffff;
+	regs->r_fs = tf->tf_fs & 0xffff;
+	regs->r_es = tf->tf_es & 0xffff;
+	regs->r_ds = tf->tf_ds & 0xffff;
+	regs->r_eflags = tf->tf_eflags;
+
 	regs->r_edi = tf->tf_edi;
 	regs->r_esi = tf->tf_esi;
 	regs->r_ebp = tf->tf_ebp;
@@ -140,47 +138,34 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 	return 0;
 }
 
+int
+process_read_dbregs(struct lwp *l, struct dbreg *regs, size_t *sz)
+{
+
+	x86_dbregs_read(l, regs);
+
+	return 0;
+}
+
 #ifdef PTRACE_HOOKS
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
 {
 	struct trapframe *tf = process_frame(l);
 
-#ifdef VM86
-	if (regs->r_eflags & PSL_VM) {
-		void syscall_vm86(struct trapframe *);
+	/*
+	 * Check for security violations.
+	 */
+	if (((regs->r_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+	    !USERMODE(regs->r_cs, regs->r_eflags))
+		return (EINVAL);
 
-		tf->tf_vm86_gs = regs->r_gs;
-		tf->tf_vm86_fs = regs->r_fs;
-		tf->tf_vm86_es = regs->r_es;
-		tf->tf_vm86_ds = regs->r_ds;
-		set_vflags(l, regs->r_eflags);
-		/*
-		 * Make sure that attempts at system calls from vm86
-		 * mode die horribly.
-		 */
-		l->l_proc->p_md.md_syscall = syscall_vm86;
-	} else
-#endif
-	{
-		/*
-		 * Check for security violations.
-		 */
-		if (((regs->r_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-		    !USERMODE(regs->r_cs, regs->r_eflags))
-			return (EINVAL);
+	tf->tf_gs = regs->r_gs;
+	tf->tf_fs = regs->r_fs;
+	tf->tf_es = regs->r_es;
+	tf->tf_ds = regs->r_ds;
+	tf->tf_eflags = regs->r_eflags;
 
-		tf->tf_gs = regs->r_gs;
-		tf->tf_fs = regs->r_fs;
-		tf->tf_es = regs->r_es;
-		tf->tf_ds = regs->r_ds;
-#ifdef VM86
-		/* Restore normal syscall handler */
-		if (tf->tf_eflags & PSL_VM)
-			(*l->l_proc->p_emul->e_syscall_intern)(l->l_proc);
-#endif
-		tf->tf_eflags = regs->r_eflags;
-	}
 	tf->tf_edi = regs->r_edi;
 	tf->tf_esi = regs->r_esi;
 	tf->tf_ebp = regs->r_ebp;
@@ -205,6 +190,22 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 	return 0;
 }
 
+int
+process_write_dbregs(struct lwp *l, const struct dbreg *regs, size_t sz)
+{
+	int error;
+
+	/*
+	 * Check for security violations.
+	 */
+	error = x86_dbregs_validate(regs);
+	if (error != 0)                                                                                                               
+		return error;
+
+	x86_dbregs_write(l, regs);
+
+	return 0;
+}
 
 int
 process_sstep(struct lwp *l, int sstep)
@@ -348,85 +349,3 @@ process_machdep_validxmmregs(struct proc *p)
 }
 #endif /* __HAVE_PTRACE_MACHDEP */
 #endif /* PTRACE_HOOKS */
-
-int
-process_count_watchpoints(struct lwp *l, register_t *retval)
-{
-
-	*retval = X86_HW_WATCHPOINTS;
-
-	return (0);
-}
-
-int
-process_read_watchpoint(struct lwp *l, struct ptrace_watchpoint *pw)
-{
-
-	pw->pw_type = PTRACE_PW_TYPE_DBREGS;
-	pw->pw_md.md_address =
-	    (void*)(intptr_t)l->l_md.md_watchpoint[pw->pw_index].address;
-	pw->pw_md.md_condition = l->l_md.md_watchpoint[pw->pw_index].condition;
-	pw->pw_md.md_length = l->l_md.md_watchpoint[pw->pw_index].length;
-
-	return (0);
-}
-
-static void
-update_mdl_x86_hw_watchpoints(struct lwp *l)
-{
-	size_t i;
-		
-	for (i = 0; i < X86_HW_WATCHPOINTS; i++) {
-		if (l->l_md.md_watchpoint[0].address != 0) {
-			return;
-		}
-	}
-	l->l_md.md_flags &= ~MDL_X86_HW_WATCHPOINTS;
-}
-
-int
-process_write_watchpoint(struct lwp *l, struct ptrace_watchpoint *pw)
-{
-
-	if (pw->pw_index > X86_HW_WATCHPOINTS)
-		return (EINVAL);
-
-	if (pw->pw_type != PTRACE_PW_TYPE_DBREGS)
-		return (EINVAL);
-
-	if (pw->pw_md.md_address == 0) {
-		l->l_md.md_watchpoint[pw->pw_index].address = 0;
-		update_mdl_x86_hw_watchpoints(l);
-		return (0);
-	}
-
-	if ((vaddr_t)pw->pw_md.md_address > VM_MAXUSER_ADDRESS)
-		return (EINVAL);
-
-	switch (pw->pw_md.md_condition) {
-	case X86_HW_WATCHPOINT_DR7_CONDITION_EXECUTION:
-	case X86_HW_WATCHPOINT_DR7_CONDITION_DATA_WRITE:
-	case X86_HW_WATCHPOINT_DR7_CONDITION_DATA_READWRITE:
-		break;
-	default:
-		return (EINVAL);
-	}
-
-	switch (pw->pw_md.md_length) {
-	case X86_HW_WATCHPOINT_DR7_LENGTH_BYTE:
-	case X86_HW_WATCHPOINT_DR7_LENGTH_TWOBYTES:
-	case X86_HW_WATCHPOINT_DR7_LENGTH_FOURBYTES:
-		break;
-	default:
-		return (EINVAL);
-	}
-
-	l->l_md.md_watchpoint[pw->pw_index].address =
-	    (vaddr_t)pw->pw_md.md_address;
-	l->l_md.md_watchpoint[pw->pw_index].condition = pw->pw_md.md_condition;
-	l->l_md.md_watchpoint[pw->pw_index].length = pw->pw_md.md_length;
-
-	l->l_md.md_flags |= MDL_X86_HW_WATCHPOINTS;
-
-	return (0);
-}

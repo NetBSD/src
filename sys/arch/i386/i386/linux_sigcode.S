@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.S,v 1.8 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: linux_sigcode.S,v 1.8.64.1 2017/08/28 17:51:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,11 +64,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sigcode.S,v 1.8 2008/04/28 20:23:24 martin Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_vm86.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: linux_sigcode.S,v 1.8.64.1 2017/08/28 17:51:40 skrll Exp $");
 
 #include "assym.h"
 

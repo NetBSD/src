@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfbreg.h,v 1.5 2012/12/30 09:45:05 macallan Exp $	*/
+/*	$NetBSD: radeonfbreg.h,v 1.5.14.1 2017/08/28 17:52:25 skrll Exp $	*/
 
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_reg.h,v 1.31 2003/11/10 18:41:23 tsi Exp $ */
 /*
@@ -704,6 +704,7 @@
 #       define R200_FP2_SOURCE_SEL_CRTC2       (1 << 10)
 #       define R200_FP2_SOURCE_SEL_RMX         (2 << 10)
 #       define RADEON_FP2_SRC_SEL_MASK         (3 << 13)
+#       define RADEON_FP2_SRC_SEL_CRTC1        (0 << 13)
 #       define RADEON_FP2_SRC_SEL_CRTC2        (1 << 13)
 #       define RADEON_FP2_FP_POL               (1 << 16)
 #       define RADEON_FP2_LP_POL               (1 << 17)

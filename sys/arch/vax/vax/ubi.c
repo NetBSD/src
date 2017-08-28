@@ -1,4 +1,4 @@
-/*	$NetBSD: ubi.c,v 1.5 2012/10/29 12:55:41 chs Exp $ */
+/*	$NetBSD: ubi.c,v 1.5.14.1 2017/08/28 17:51:55 skrll Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -11,12 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed at Ludd, University of 
- *	Lule}, Sweden and its contributors.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubi.c,v 1.5 2012/10/29 12:55:41 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubi.c,v 1.5.14.1 2017/08/28 17:51:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

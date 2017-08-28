@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.25.2.2 2017/02/05 13:40:09 skrll Exp $
+# $NetBSD: LOONGSON,v 1.25.2.3 2017/08/28 17:51:36 skrll Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.25.2.2 $"
+#ident 		"LOONGSON-$Revision: 1.25.2.3 $"
 
 maxusers	16
 
@@ -36,6 +36,7 @@ options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	PMAP_FAULTINFO
 #options 	LOCKDEBUG
 makeoptions	DEBUG="-g"
+makeoptions	COPY_SYMTAB=1		# size for embedded symbol table
 options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=8192		# dmesg buffer size
 
@@ -95,6 +96,8 @@ options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
@@ -197,8 +200,10 @@ isa0		at pcib?
 pckbc0		at isa?				# PC keyboard controller
 pckbd*		at pckbc?			# PC keyboard
 pms*		at pckbc?			# PS/2 mouse for wsmouse
+#options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
+options 	PMS_ALPS_TOUCHPAD	# Enable support for Alps Touchpads
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
@@ -217,7 +222,7 @@ options  	WDC_NO_IDS #workaround CS5536+JMH330 interrupt disable bug
 
 # ATA (IDE) bus support
 atabus* at ata?
-options 	ATADEBUG
+#options 	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations

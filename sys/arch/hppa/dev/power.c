@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.1 2014/02/24 07:23:42 skrll Exp $	*/
+/*	$NetBSD: power.c,v 1.1.12.1 2017/08/28 17:51:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Jochen Kunz.
@@ -303,11 +303,6 @@ pwr_sw_init(struct power_softc *sc)
 
 	errmsg = "Can't alloc sysmon power switch.\n";
 	pwr_sw_sysmon = kmem_zalloc(sizeof(*pwr_sw_sysmon), KM_SLEEP);
-	if (pwr_sw_sysmon == NULL) {
-		error = ENOMEM;
-		goto err_kmem;
-	}
-
 	errmsg = "Can't register power switch with sysmon.\n";
 	sysmon_task_queue_init();
 	pwr_sw_sysmon->smpsw_name = "power switch";
@@ -323,9 +318,6 @@ pwr_sw_init(struct power_softc *sc)
 	return error;
 
 err_sysmon:
-	/* Nothing to do */
-
-err_kmem:
 	kmem_free(pwr_sw_sysmon, sizeof(*pwr_sw_sysmon));
 
 err_sysctl:

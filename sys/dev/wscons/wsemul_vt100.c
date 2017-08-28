@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.36.6.1 2015/09/22 12:06:01 skrll Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.36.6.2 2017/08/28 17:52:31 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.36.6.1 2015/09/22 12:06:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.36.6.2 2017/08/28 17:52:31 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsmsgattrs.h"
@@ -57,6 +57,7 @@ static void wsemul_vt100_getmsgattrs(void *, struct wsdisplay_msgattrs *);
 static void wsemul_vt100_setmsgattrs(void *, const struct wsscreen_descr *,
                                      const struct wsdisplay_msgattrs *);
 #endif /* WSDISPLAY_CUSTOM_OUTPUT */
+static void wsemul_vt100_resize(void *, const struct wsscreen_descr *);
 
 const struct wsemul_ops wsemul_vt100_ops = {
 	"vt100",
@@ -73,6 +74,7 @@ const struct wsemul_ops wsemul_vt100_ops = {
 	NULL,
 	NULL,
 #endif
+	.resize = wsemul_vt100_resize
 };
 
 struct wsemul_vt100_emuldata wsemul_vt100_console_emuldata;
@@ -253,8 +255,8 @@ wsemul_vt100_attach(int console, const struct wsscreen_descr *type,
 	vd = &edp->bd;
 	vd->cbcookie = cbcookie;
 
-	vd->tabs = malloc(vd->ncols, M_DEVBUF, M_NOWAIT);
-	vd->dblwid = malloc(vd->nrows, M_DEVBUF, M_NOWAIT|M_ZERO);
+	vd->tabs = malloc(1024, M_DEVBUF, M_NOWAIT);
+	vd->dblwid = malloc(1024, M_DEVBUF, M_NOWAIT|M_ZERO);
 	vd->dw = 0;
 	vd->dcsarg = malloc(DCS_MAXLEN, M_DEVBUF, M_NOWAIT);
 	edp->isolatin1tab = malloc(128 * sizeof(int), M_DEVBUF, M_NOWAIT);
@@ -285,6 +287,17 @@ wsemul_vt100_detach(void *cookie, u_int *crowp, u_int *ccolp)
 #undef f
 	if (edp != &wsemul_vt100_console_emuldata)
 		free(edp, M_DEVBUF);
+}
+
+static void
+wsemul_vt100_resize(void * cookie, const struct wsscreen_descr *type)
+{
+	struct wsemul_vt100_emuldata *edp = cookie;
+
+	edp->bd.nrows = type->nrows;
+	edp->bd.ncols = type->ncols;
+	wsemul_vt100_reset(edp);
+	wsemul_vt100_resetop(cookie, WSEMUL_CLEARSCREEN);
 }
 
 void

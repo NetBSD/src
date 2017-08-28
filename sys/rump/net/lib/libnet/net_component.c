@@ -1,4 +1,4 @@
-/*	$NetBSD: net_component.c,v 1.2.2.5 2017/02/05 13:41:00 skrll Exp $	*/
+/*	$NetBSD: net_component.c,v 1.2.2.6 2017/08/28 17:53:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_component.c,v 1.2.2.5 2017/02/05 13:41:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_component.c,v 1.2.2.6 2017/08/28 17:53:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: net_component.c,v 1.2.2.5 2017/02/05 13:41:00 skrll 
 
 #include <net/if.h>
 #include <net/if_llatbl.h>
+#include <net/if_l2tp.h>
 #include <net/route.h>
 
 #include <rump-sys/kern.h>

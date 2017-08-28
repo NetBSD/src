@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.67.4.15 2017/02/05 13:40:46 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.67.4.16 2017/08/28 17:52:27 skrll Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,11 +87,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.15 2017/02/05 13:40:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.16 2017/08/28 17:52:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_usb.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -278,6 +279,8 @@ static void	axe_unlock_mii(struct axe_softc *);
 
 static void	axe_ax88178_init(struct axe_softc *);
 static void	axe_ax88772_init(struct axe_softc *);
+static void	axe_ax88772a_init(struct axe_softc *);
+static void	axe_ax88772b_init(struct axe_softc *);
 
 /* Get exclusive access to the MII registers */
 static void

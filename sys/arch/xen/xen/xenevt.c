@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.41.4.2 2015/09/22 12:05:54 skrll Exp $      */
+/*      $NetBSD: xenevt.c,v 1.41.4.3 2017/08/28 17:51:57 skrll Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.41.4.2 2015/09/22 12:05:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.41.4.3 2017/08/28 17:51:57 skrll Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -172,11 +172,11 @@ xenevtattach(int n)
 	ih->ih_level = level;
 	ih->ih_fun = ih->ih_realfun = xenevt_processevt;
 	ih->ih_arg = ih->ih_realarg = NULL;
-	ih->ih_ipl_next = NULL;
+	ih->ih_next = NULL;
 	ih->ih_cpu = &cpu_info_primary;
 #ifdef MULTIPROCESSOR
 	if (!mpsafe) {
-		ih->ih_fun = intr_biglock_wrapper;
+		ih->ih_fun = xen_intr_biglock_wrapper;
 		ih->ih_arg = ih;
 	}
 #endif /* MULTIPROCESSOR */
@@ -493,8 +493,6 @@ xenevt_fwrite(struct file *fp, off_t *offp, struct uio *uio,
 	if (nentries >= NR_EVENT_CHANNELS)
 		return EMSGSIZE;
 	chans = kmem_alloc(nentries * sizeof(uint16_t), KM_SLEEP);
-	if (chans == NULL)
-		return ENOMEM;
 	error = uiomove(chans, uio->uio_resid, uio);
 	if (error)
 		goto out;

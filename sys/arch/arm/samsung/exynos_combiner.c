@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_combiner.c,v 1.3.2.3 2016/03/19 11:29:57 skrll Exp $ */
+/*	$NetBSD: exynos_combiner.c,v 1.3.2.4 2017/08/28 17:51:32 skrll Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.3.2.3 2016/03/19 11:29:57 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.3.2.4 2017/08/28 17:51:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,6 +66,7 @@ struct exynos_combiner_irq_entry {
 	int (*irq_handler)(void *);
 	void *				irq_arg;
 	struct exynos_combiner_irq_entry *irq_next;
+	bool				irq_mpsafe;
 };
 
 struct exynos_combiner_irq_block {
@@ -73,6 +74,7 @@ struct exynos_combiner_irq_block {
 	struct exynos_combiner_softc	*irq_sc;
 	struct exynos_combiner_irq_entry *irq_entries;
 	struct exynos_combiner_irq_block *irq_block_next;
+	void *irq_ih;
 };
 
 struct exynos_combiner_softc {
@@ -173,7 +175,7 @@ exynos_combiner_get_block(struct exynos_combiner_softc *sc, int block)
 
 static struct exynos_combiner_irq_entry *
 exynos_combiner_new_irq(struct exynos_combiner_irq_block *block,
-			int irq, int (*func)(void *), void *arg)
+			int irq, bool mpsafe, int (*func)(void *), void *arg)
 {
 	struct exynos_combiner_irq_entry * n = kmem_zalloc(sizeof(*n),
 							   KM_SLEEP);
@@ -181,6 +183,7 @@ exynos_combiner_new_irq(struct exynos_combiner_irq_block *block,
 	n->irq_handler = func;
 	n->irq_next = block->irq_entries;
 	n->irq_arg = arg;
+	n->irq_mpsafe = mpsafe;
 	block->irq_entries = n;
 	return n;
 }
@@ -196,7 +199,8 @@ exynos_combiner_get_irq(struct exynos_combiner_irq_block *b, int irq)
 	return NULL;
 }
 
-static int exynos_combiner_irq(void *cookie)
+static int
+exynos_combiner_irq(void *cookie)
 {
 	struct exynos_combiner_irq_block *blockp = cookie;
 	struct exynos_combiner_softc *sc = blockp->irq_sc;
@@ -211,9 +215,13 @@ static int exynos_combiner_irq(void *cookie)
 		if (istatus & 1 << irq) {
 			struct exynos_combiner_irq_entry *e =
 				exynos_combiner_get_irq(blockp, irq);
-			if (e)
+			if (e) {
+				if (!e->irq_mpsafe)
+					KERNEL_LOCK(1, curlwp);
 				e->irq_handler(e->irq_arg);
-			else
+				if (!e->irq_mpsafe)
+					KERNEL_UNLOCK_ONE(curlwp);
+			} else
 				printf("%s: Unexpected irq %d, %d\n", __func__,
 				       intr, irq);
 		}
@@ -229,6 +237,7 @@ exynos_combiner_establish(device_t dev, u_int *specifier,
 	struct exynos_combiner_softc * const sc = device_private(dev);
 	struct exynos_combiner_irq_block *blockp;
 	struct exynos_combiner_irq_entry *entryp;
+	const bool mpsafe = (flags & FDT_INTR_MPSAFE) != 0;
 
 	const u_int intr = be32toh(specifier[0]);
 	const u_int irq = be32toh(specifier[1]);
@@ -237,18 +246,19 @@ exynos_combiner_establish(device_t dev, u_int *specifier,
 		intr / COMBINER_BLOCKS_PER_GROUP * COMBINER_GROUP_SIZE
 		+ COMBINER_IESR_OFFSET;
 
-	blockp =  exynos_combiner_get_block(sc, intr);
+	blockp = exynos_combiner_get_block(sc, intr);
 	if (!blockp) {
 		blockp = exynos_combiner_new_block(sc, intr);
 		KASSERT(blockp);
-		intr_establish(intr, ipl, IST_LEVEL, exynos_combiner_irq,
-			       blockp);
+		blockp->irq_ih = fdtbus_intr_establish(sc->sc_phandle, intr,
+		    IPL_VM /* XXX */, FDT_INTR_MPSAFE, exynos_combiner_irq,
+		    blockp);
 	}
 
 	entryp = exynos_combiner_get_irq(blockp, irq);
 	if (entryp)
 		return NULL;
-	entryp = exynos_combiner_new_irq(blockp, irq, func, arg);
+	entryp = exynos_combiner_new_irq(blockp, irq, mpsafe, func, arg);
 	KASSERT(entryp);
 
 	int istatus =
@@ -262,7 +272,7 @@ static void
 exynos_combiner_disestablish(device_t dev, void *ih)
 {
 	/* MJF: Find the ih and disable the handler. */
-	intr_disestablish(ih);
+	panic("exynos_combiner_disestablish not implemented");
 }
 
 static bool

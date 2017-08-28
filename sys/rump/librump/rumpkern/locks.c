@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.69.4.3 2017/02/05 13:41:00 skrll Exp $	*/
+/*	$NetBSD: locks.c,v 1.69.4.4 2017/08/28 17:53:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.69.4.3 2017/02/05 13:41:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.69.4.4 2017/08/28 17:53:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -181,6 +181,16 @@ mutex_exit(kmutex_t *mtx)
 	rumpuser_mutex_exit(RUMPMTX(mtx));
 }
 __strong_alias(mutex_spin_exit,mutex_exit);
+
+int
+mutex_ownable(kmutex_t *mtx)
+{
+
+#ifdef LOCKDEBUG
+	WANTLOCK(mtx, -1);
+#endif
+	return 1;
+}
 
 int
 mutex_owned(kmutex_t *mtx)

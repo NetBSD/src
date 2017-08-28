@@ -1,4 +1,4 @@
-/*	$NetBSD: spkrio.h,v 1.2.6.2 2017/02/05 13:40:26 skrll Exp $	*/
+/*	$NetBSD: spkrio.h,v 1.2.6.3 2017/08/28 17:52:00 skrll Exp $	*/
 
 /*
  * spkrio.h -- interface definitions for speaker ioctl()
@@ -11,6 +11,8 @@
 
 #define SPKRTONE        _IOW('S', 1, tone_t)    /* emit tone */
 #define SPKRTUNE        _IO('S', 2)             /* emit tone sequence */
+#define SPKRGETVOL      _IOR('S', 3, u_int)     /* get volume */
+#define SPKRSETVOL      _IOW('S', 4, u_int)     /* set volume */
 
 typedef struct {
 	int	frequency;	/* in hertz */

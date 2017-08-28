@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.83.4.9 2017/02/05 13:40:58 skrll Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.83.4.10 2017/08/28 17:53:11 skrll Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.83.4.9 2017/02/05 13:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.83.4.10 2017/08/28 17:53:11 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -233,16 +233,12 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	struct gif_softc *sc;
 
 	sc = kmem_zalloc(sizeof(struct gif_softc), KM_SLEEP);
-	if (sc == NULL)
-		return ENOMEM;
 
 	if_initname(&sc->gif_if, ifc->ifc_name, unit);
 
 	gifattach0(sc);
 
 	sc->gif_ro_percpu = percpu_alloc(sizeof(struct route));
-	KASSERTMSG(sc->gif_ro_percpu != NULL,
-	    "failed to allocate sc->gif_ro_percpu");
 	LIST_INSERT_HEAD(&gif_softc_list, sc, gif_list);
 	return (0);
 }
@@ -448,22 +444,13 @@ gif_start(struct ifnet *ifp)
 	struct mbuf *m;
 	int family;
 	int len;
-#ifndef GIF_MPSAFE
-	int s;
-#endif
 	int error;
 
 	sc = ifp->if_softc;
 
 	/* output processing */
 	while (1) {
-#ifndef GIF_MPSAFE
-		s = splnet();
-#endif
 		IFQ_DEQUEUE(&sc->gif_if.if_snd, m);
-#ifndef GIF_MPSAFE
-		splx(s);
-#endif
 		if (m == NULL)
 			break;
 
@@ -587,9 +574,6 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 {
 	pktqueue_t *pktq;
 	size_t pktlen;
-#ifndef GIF_MPSAFE
-	int s;
-#endif
 
 	if (ifp == NULL) {
 		/* just in case */
@@ -624,18 +608,17 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 		return;
 	}
 
-#ifndef GIF_MPSAFE
-	s = splnet();
+#ifdef GIF_MPSAFE
+	const u_int h = curcpu()->ci_index;
+#else
+	const uint32_t h = pktq_rps_hash(m);
 #endif
-	if (__predict_true(pktq_enqueue(pktq, m, 0))) {
+	if (__predict_true(pktq_enqueue(pktq, m, h))) {
 		ifp->if_ibytes += pktlen;
 		ifp->if_ipackets++;
 	} else {
 		m_freem(m);
 	}
-#ifndef GIF_MPSAFE
-	splx(s);
-#endif
 }
 
 /* XXX how should we handle IPv6 scope on SIOC[GS]IFPHYADDR? */
@@ -1014,31 +997,34 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 
 	/*
 	 * Secondly, try to set new configurations.
-	 * If the setup failed, rollback to old configurations.
 	 */
-	do {
-		osrc = sc->gif_psrc;
-		odst = sc->gif_pdst;
-		sc->gif_psrc = nsrc;
-		sc->gif_pdst = ndst;
-
+	osrc = sc->gif_psrc;
+	odst = sc->gif_pdst;
+	sc->gif_psrc = nsrc;
+	sc->gif_pdst = ndst;
+	error = gif_encap_attach(sc);
+	if (error && osrc != NULL && odst != NULL) {
+		/*
+		 * Thirdly, when error occured, rollback to old configurations,
+		 * if last setting is valid.
+		 */
+		sc->gif_psrc = osrc;
+		sc->gif_pdst = odst;
+		osrc = nsrc; /* to free */
+		odst = ndst; /* to free */
 		error = gif_encap_attach(sc);
-		if (error) {
-			/* rollback to the last configuration. */
-			nsrc = osrc;
-			ndst = odst;
-			osrc = sc->gif_psrc;
-			odst = sc->gif_pdst;
-
-			continue;
-		}
-	} while (error != 0 && (nsrc != NULL && ndst != NULL));
-	/* Thirdly, even rollback failed, clear configurations. */
+	}
 	if (error) {
-		osrc = sc->gif_psrc;
-		odst = sc->gif_pdst;
+		/*
+		 * Fourthly, even rollback failed or last setting is not valid,
+		 * clear configurations.
+		 */
+		osrc = sc->gif_psrc; /* to free */
+		odst = sc->gif_pdst; /* to free */
 		sc->gif_psrc = NULL;
 		sc->gif_pdst = NULL;
+		sockaddr_free(nsrc);
+		sockaddr_free(ndst);
 	}
 
 	if (osrc)

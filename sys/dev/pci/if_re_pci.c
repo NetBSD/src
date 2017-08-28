@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.43.6.2 2015/12/27 12:09:50 skrll Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.43.6.3 2017/08/28 17:52:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.43.6.2 2015/12/27 12:09:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.43.6.3 2017/08/28 17:52:05 skrll Exp $");
 
 #include <sys/types.h>
 
@@ -239,6 +239,9 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 	if (t->rtk_basetype == RTK_8168 ||
 	    t->rtk_basetype == RTK_8101E)
 		sc->sc_quirk |= RTKQ_PCIE;
+
+	if (t->rtk_basetype == RTK_8168)
+		sc->sc_quirk |= RTKQ_IM_HW;
 
 	if (pci_dma64_available(pa) && (sc->sc_quirk & RTKQ_PCIE))
 		sc->sc_dmat = pa->pa_dmat64;

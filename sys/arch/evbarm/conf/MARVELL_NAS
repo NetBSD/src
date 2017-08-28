@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.21.2.2 2016/12/05 10:54:52 skrll Exp $
+#	$NetBSD: MARVELL_NAS,v 1.21.2.3 2017/08/28 17:51:34 skrll Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -54,6 +54,7 @@ file-system 	HFS		# experimental - Apple HFS+ (read-only)
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
@@ -105,7 +106,6 @@ options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

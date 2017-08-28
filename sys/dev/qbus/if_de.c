@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.29.36.2 2017/02/05 13:40:45 skrll Exp $	*/
+/*	$NetBSD: if_de.c,v 1.29.36.3 2017/08/28 17:52:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -45,13 +45,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -64,8 +57,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)if_de.c	7.12 (Berkeley) 12/16/90
  */
 
 /*
@@ -81,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.29.36.2 2017/02/05 13:40:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.29.36.3 2017/08/28 17:52:26 skrll Exp $");
 
 #include "opt_inet.h"
 

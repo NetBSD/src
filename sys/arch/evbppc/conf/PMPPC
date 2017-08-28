@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.35.2.2 2017/02/05 13:40:10 skrll Exp $
+#	$NetBSD: PMPPC,v 1.35.2.3 2017/08/28 17:51:37 skrll Exp $
 #
 #	PMPPC
 #
@@ -56,7 +56,6 @@ options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 #options 	COMPAT_43	# 4.3BSD binary compatibility.
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
@@ -81,6 +80,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options 	NFSSERVER	# Network File System server

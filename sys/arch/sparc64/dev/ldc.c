@@ -1,4 +1,4 @@
-/*	$NetBSD: ldc.c,v 1.2.4.2 2016/10/05 20:55:36 skrll Exp $	*/
+/*	$NetBSD: ldc.c,v 1.2.4.3 2017/08/28 17:51:53 skrll Exp $	*/
 /*	$OpenBSD: ldc.c,v 1.12 2015/03/21 18:02:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -554,6 +554,8 @@ ldc_queue_alloc(int nentries)
 		goto unmap;
 #else
 	 va = (vaddr_t)kmem_zalloc(size, KM_NOSLEEP);
+	 if (va == 0)
+		goto free;
 #endif
 	lq->lq_va = (vaddr_t)va;
 	lq->lq_nentries = nentries;
@@ -565,6 +567,9 @@ free:
 	bus_dmamem_free(t, &lq->lq_seg, 1);
 destroy:
 	bus_dmamap_destroy(t, lq->lq_map);
+#else
+free:
+	kmem_free(lq, sizeof(struct ldc_queue));
 #endif
 	return (NULL);
 }
@@ -637,6 +642,8 @@ ldc_map_alloc(int nentries)
 	}
 #else
 	va = (vaddr_t)kmem_zalloc(size, KM_NOSLEEP);
+	if (va == 0)
+		goto free;
 #endif
 	lm->lm_slot = (struct ldc_map_slot *)va;
 	lm->lm_nentries = nentries;
@@ -650,6 +657,9 @@ free:
 	bus_dmamem_free(t, &lm->lm_seg, 1);
 destroy:
 	bus_dmamap_destroy(t, lm->lm_map);
+#else
+free:
+	kmem_free(lm, sizeof(struct ldc_map));
 #endif
 	return (NULL);
 }

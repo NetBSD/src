@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.404.2.12 2017/02/05 13:40:01 skrll Exp $
+# $NetBSD: GENERIC,v 1.404.2.13 2017/08/28 17:51:28 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.404.2.12 $"
+#ident 		"GENERIC-$Revision: 1.404.2.13 $"
 
 maxusers	64		# estimated number of users
 
@@ -73,6 +73,9 @@ options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
+# CPU-related options
+#options 	USER_LDT	# user-settable LDT; used by WINE
+
 # CPU features
 acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
 coretemp*	at cpu?		# Intel on-die thermal sensor
@@ -80,6 +83,8 @@ est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 #odcm0		at cpu0		# On-demand clock modulation
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 vmt0		at cpu0		# VMware Tools
+
+options 	PMC		# performance-monitoring counters support
 
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
@@ -143,6 +148,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
+#options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
 file-system	FFS		# UFS
@@ -193,6 +199,7 @@ options 	IPSEC		# IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 options 	NETATALK	# AppleTalk networking protocols
+#options 	CAN		# Controller Area Network protocol
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -387,6 +394,7 @@ pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
+options 	PMS_ALPS_TOUCHPAD	# Enable support for Alps Touchpads
 vga*		at pci? dev ? function ?
 genfb*		at pci? dev ? function ?
 options 	VCONS_DRAW_INTR
@@ -1049,13 +1057,16 @@ radio*	at udsbr?
 ugen*	at uhub? port ?
 
 # USB 3G datacards
-u3ginit* at uhub? port ?
+umodeswitch* at uhub? port ?
 u3g*	at uhub? port ?
 ucom*	at u3g?
 
 # USB generic serial port (e.g., data over cellular)
 ugensa* at uhub? port ?
 ucom*	at ugensa?
+
+# Araneus Alea I/II TRNG
+#ualea* at uhub? port ? configuration ? interface ?
 
 # IrDA and Consumer Ir devices
 
@@ -1271,10 +1282,13 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
+pseudo-device	l2tp			# L2TPv3 interface
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 #pseudo-device	pfsync			# PF sync if
 #pseudo-device	npf			# NPF packet filter
+
+#pseudo-device	canloop			# CAN loopback interface
 
 #
 # accept filters

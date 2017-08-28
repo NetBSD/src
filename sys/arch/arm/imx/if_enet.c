@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.1.2.7 2017/02/05 13:40:03 skrll Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.1.2.8 2017/08/28 17:51:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.1.2.7 2017/02/05 13:40:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.1.2.8 2017/08/28 17:51:30 skrll Exp $");
 
 #include "vlan.h"
 
@@ -92,8 +92,10 @@ int enet_debug = 0;
 
 #define ENET_MAX_PKT_NSEGS	64
 
-#define ENET_TX_NEXTIDX(idx)	(((idx) >= (ENET_TX_RING_CNT - 1)) ? 0 : ((idx) + 1))
-#define ENET_RX_NEXTIDX(idx)	(((idx) >= (ENET_RX_RING_CNT - 1)) ? 0 : ((idx) + 1))
+#define ENET_TX_NEXTIDX(idx)	\
+	(((idx) >= (ENET_TX_RING_CNT - 1)) ? 0 : ((idx) + 1))
+#define ENET_RX_NEXTIDX(idx)	\
+	(((idx) >= (ENET_RX_RING_CNT - 1)) ? 0 : ((idx) + 1))
 
 #define TXDESC_WRITEOUT(idx)					\
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_txdesc_dmamap,	\
@@ -234,13 +236,15 @@ enet_attach_common(device_t self, bus_space_tag_t iot,
 		/* i.MX7 use 3 interrupts */
 		if ((sc->sc_ih2 = intr_establish(irq + 1, IPL_NET,
 		    IST_LEVEL, enet_intr, sc)) == NULL) {
-			aprint_error_dev(self, "unable to establish 2nd interrupt\n");
+			aprint_error_dev(self,
+			    "unable to establish 2nd interrupt\n");
 			intr_disestablish(sc->sc_ih);
 			goto failure;
 		}
 		if ((sc->sc_ih3 = intr_establish(irq + 2, IPL_NET,
 		    IST_LEVEL, enet_intr, sc)) == NULL) {
-			aprint_error_dev(self, "unable to establish 3rd interrupt\n");
+			aprint_error_dev(self,
+			    "unable to establish 3rd interrupt\n");
 			intr_disestablish(sc->sc_ih2);
 			intr_disestablish(sc->sc_ih);
 			goto failure;
@@ -1030,8 +1034,8 @@ enet_ioctl(struct ifnet *ifp, u_long command, void *data)
 			ENET_REG_WRITE(sc, ENET_FTRL, v);
 			v = ENET_REG_READ(sc, ENET_RCR);
 			v &= ~ENET_RCR_MAX_FL(0x3fff);
-			v |= ENET_RCR_MAX_FL(ifp->if_mtu +
-			    ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN);
+			v |= ENET_RCR_MAX_FL(ifp->if_mtu + ETHER_HDR_LEN +
+			    ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN);
 			ENET_REG_WRITE(sc, ENET_RCR, v);
 		}
 		break;
@@ -1187,6 +1191,7 @@ enet_miibus_statchg(struct ifnet *ifp)
 	case IFM_AUTO:
 	case IFM_1000_T:
 		ecr |= ENET_ECR_SPEED;		/* 1000Mbps mode */
+		rcr &= ~ENET_RCR_RMII_10T;
 		break;
 	case IFM_100_TX:
 		ecr &= ~ENET_ECR_SPEED;		/* 100Mbps mode */
@@ -1202,6 +1207,9 @@ enet_miibus_statchg(struct ifnet *ifp)
 		tcr = tcr0;
 		break;
 	}
+
+	if (sc->sc_rgmii == 0)
+		ecr &= ~ENET_ECR_SPEED;
 
 	if (sc->sc_flowflags & IFM_FLOW)
 		rcr |= ENET_RCR_FCE;
@@ -1578,7 +1586,8 @@ enet_encap_mbufalign(struct mbuf **mp)
 							ap = mt->m_dat;
 						}
 						ap = ALIGN_PTR(ap, ALIGNBYTE);
-						memcpy(ap, mt->m_data, mt->m_len);
+						memcpy(ap, mt->m_data,
+						    mt->m_len);
 						mt->m_data = ap;
 					}
 
@@ -1765,7 +1774,7 @@ enet_init_regs(struct enet_softc *sc, int init)
 	struct ifmedia_entry *ife;
 	paddr_t paddr;
 	uint32_t val;
-	int fulldup, ecr_speed, rcr_speed, flowctrl;
+	int miimode, fulldup, ecr_speed, rcr_speed, flowctrl;
 
 	if (init) {
 		fulldup = 1;
@@ -1798,6 +1807,9 @@ enet_init_regs(struct enet_softc *sc, int init)
 
 		flowctrl = sc->sc_flowflags & IFM_FLOW;
 	}
+
+	if (sc->sc_rgmii == 0)
+		ecr_speed = 0;
 
 	/* reset */
 	ENET_REG_WRITE(sc, ENET_ECR, ecr_speed | ENET_ECR_RESET);
@@ -1846,9 +1858,14 @@ enet_init_regs(struct enet_softc *sc, int init)
 	/* maximum frame size */
 	val = ENET_DEFAULT_PKT_LEN;
 	ENET_REG_WRITE(sc, ENET_FTRL, val);	/* Frame Truncation Length */
+
+	if (sc->sc_rgmii == 0)
+		miimode = ENET_RCR_RMII_MODE | ENET_RCR_MII_MODE;
+	else
+		miimode = ENET_RCR_RGMII_EN;
 	ENET_REG_WRITE(sc, ENET_RCR,
 	    ENET_RCR_PADEN |			/* RX frame padding remove */
-	    ENET_RCR_RGMII_EN |			/* use RGMII */
+	    miimode |
 	    (flowctrl ? ENET_RCR_FCE : 0) |	/* flow control enable */
 	    rcr_speed |
 	    (fulldup ? 0 : ENET_RCR_DRT) |
@@ -1880,7 +1897,7 @@ enet_init_regs(struct enet_softc *sc, int init)
 #if _BYTE_ORDER == _LITTLE_ENDIAN
 	    ENET_ECR_DBSWP |
 #endif
-	    ENET_ECR_SPEED |	/* default 1000Mbps mode */
+	    ecr_speed |
 	    ENET_ECR_EN1588 |	/* use enhanced TX/RX descriptor */
 	    ENET_ECR_ETHEREN);	/* Ethernet Enable */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.18 2011/04/04 20:37:55 dyoung Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.18.32.1 2017/08/28 17:51:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.18 2011/04/04 20:37:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.18.32.1 2017/08/28 17:51:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,25 +68,25 @@ pciide_machdep_compat_intr_establish(device_t dev,
 {
 	struct pintrhand *ih;
 	char evname[16];
-        struct xen_intr_handle xenih;
+        intr_handle_t xenih;
 #if NIOAPIC > 0
 	struct ioapic_softc *pic = NULL;
 #endif
 	int evtch;
 
-	xenih.pirq = PCIIDE_COMPAT_IRQ(chan);
-	xenih.pirq = 0;
+	xenih = PCIIDE_COMPAT_IRQ(chan);
+	xenih = 0;
 #if NIOAPIC > 0
 	if (mp_busses != NULL) {
 		int irq = PCIIDE_COMPAT_IRQ(chan);
 		if (intr_find_mpmapping(mp_isa_bus, irq, &xenih) == 0 ||
 		    intr_find_mpmapping(mp_eisa_bus, irq, &xenih) == 0) {
-			if (!APIC_IRQ_ISLEGACY(xenih.pirq)) {
-				pic = ioapic_find(APIC_IRQ_APIC(xenih.pirq));
+			if (!APIC_IRQ_ISLEGACY(xenih)) {
+				pic = ioapic_find(APIC_IRQ_APIC(xenih));
 				if (pic == NULL) {
 					printf("pciide_machdep_compat_intr_establish: "
 					    "unknown apic %d\n",
-					    APIC_IRQ_APIC(xenih.pirq));
+					    APIC_IRQ_APIC(xenih));
 					return NULL;
 				}
 			}
@@ -95,14 +95,14 @@ pciide_machdep_compat_intr_establish(device_t dev,
 			    "no MP mapping found\n");
 	}
 #endif
-	xenih.pirq |= PCIIDE_COMPAT_IRQ(chan);
-	evtch = xen_intr_map(&xenih.pirq, IST_EDGE);
+	xenih |= PCIIDE_COMPAT_IRQ(chan);
+	evtch = xen_intr_map((int *)&xenih, IST_EDGE);
 	if (evtch == -1)
 		return NULL;
 #if NIOAPIC > 0
 	if (pic)
 		snprintf(evname, sizeof(evname), "%s pin %d",
-		    device_xname(pic->sc_dev), APIC_IRQ_PIN(xenih.pirq));
+		    device_xname(pic->sc_dev), APIC_IRQ_PIN(xenih));
 	else
 #endif
 		snprintf(evname, sizeof(evname), "irq%d",
@@ -118,7 +118,7 @@ pciide_machdep_compat_intr_establish(device_t dev,
 #if NIOAPIC > 0
 	if (pic)
 		printf("%s pin %d", device_xname(pic->sc_dev),
-		       APIC_IRQ_PIN(xenih.pirq));
+		       APIC_IRQ_PIN(xenih));
 	else
 #endif
 		printf("irq %d", ih->pirq);

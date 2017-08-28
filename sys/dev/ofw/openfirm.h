@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.30.10.1 2015/12/27 12:09:50 skrll Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.30.10.2 2017/08/28 17:52:04 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -65,6 +65,10 @@ struct ofbus_attach_args {
 	int		oba_unit;
 };
 
+struct of_compat_data {
+	const char *compat;
+	uintptr_t data;
+};
 
 /*
  * Functions and variables provided by machine-dependent code.
@@ -106,6 +110,9 @@ int	openfirmware(void *);
  */
 int	of_compatible(int, const char * const *);
 int	of_match_compatible(int, const char * const *);
+int	of_match_compat_data(int, const struct of_compat_data *);
+const struct of_compat_data *
+	of_search_compatible(int, const struct of_compat_data *);
 int	of_decode_int(const unsigned char *);
 int	of_packagename(int, char *, int);
 int	of_find_firstchild_byname(int, const char *);
@@ -120,7 +127,8 @@ char	*of_get_mode_string(char *, int);
 
 void	of_enter_i2c_devs(prop_dictionary_t, int, size_t, int);
 
-bool	of_getprop_bool(int, const char *);
+bool	of_hasprop(int, const char *);
+#define of_getprop_bool	of_hasprop
 int	of_getprop_uint32(int, const char *, uint32_t *);
 
 #endif /*_OPENFIRM_H_*/

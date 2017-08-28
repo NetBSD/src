@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_mc.c,v 1.2.2.3 2015/12/27 12:09:31 skrll Exp $ */
+/* $NetBSD: tegra_mc.c,v 1.2.2.4 2017/08/28 17:51:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_mc.c,v 1.2.2.3 2015/12/27 12:09:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_mc.c,v 1.2.2.4 2017/08/28 17:51:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -124,7 +124,7 @@ tegra_mc_attach(device_t parent, device_t self, void *aux)
 	MC_WRITE(sc, MC_INTMASK_REG, MC_INT__ALL);
 }
 
-int
+static int
 tegra_mc_intr(void *v)
 {
 	struct tegra_mc_softc * const sc = v;
@@ -144,25 +144,4 @@ tegra_mc_intr(void *v)
 	MC_WRITE(sc, MC_INTSTATUS_REG, status);
 
 	return status;
-}
-
-psize_t
-tegra_mc_memsize(void)
-{
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-
-	if (mc_softc) {
-		bst = mc_softc->sc_bst;
-		bsh = mc_softc->sc_bsh;
-	} else {
-		bst = &armv7_generic_bs_tag;
-		bus_space_subregion(bst, tegra_apb_bsh,
-		    TEGRA_MC_OFFSET, TEGRA_MC_SIZE, &bsh);
-	}
-
-	const uint32_t emem_cfg = bus_space_read_4(bst, bsh, MC_EMEM_CFG_0_REG);
-	const psize_t nmb = __SHIFTOUT(emem_cfg, MC_EMEM_CFG_0_EMEM_SIZE_MB);
-
-	return nmb * 1024 * 1024;
 }

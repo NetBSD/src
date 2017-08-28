@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.18.36.1 2015/06/06 14:40:06 skrll Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.18.36.2 2017/08/28 17:52:01 skrll Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.18.36.1 2015/06/06 14:40:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.18.36.2 2017/08/28 17:52:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -192,9 +192,6 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 
 		ap = kmem_zalloc(sizeof(*ap), KM_SLEEP);
 
-		if (ap == NULL)
-			return AE_NO_MEMORY;
-
 		/*
 		 * If no _SEG exist, all PCI bus segments are assumed
 		 * to be in the PCI segment group 0 (ACPI 4.0, p. 277).
@@ -260,9 +257,6 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 		 * our bus number is its downstream bus number.
 		 */
 		ap = kmem_zalloc(sizeof(*ap), KM_SLEEP);
-
-		if (ap == NULL)
-			return AE_NO_MEMORY;
 
 		ap->ap_segment = ad->ad_parent->ad_pciinfo->ap_segment;
 		ap->ap_bus = ad->ad_parent->ad_pciinfo->ap_downbus;

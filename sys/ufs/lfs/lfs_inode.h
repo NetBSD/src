@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.7.4.2 2016/07/09 20:25:25 skrll Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.7.4.3 2017/08/28 17:53:17 skrll Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
@@ -107,7 +107,26 @@ struct inode {
 	struct	vnode *i_vnode;	/* Vnode associated with this inode. */
 	struct  ulfsmount *i_ump; /* Mount point associated with this inode. */
 	struct	vnode *i_devvp;	/* Vnode for block I/O. */
-	uint32_t i_flag;	/* flags, see below */
+
+	uint32_t i_state;	/* state */
+#define	IN_ACCESS	0x0001		/* Access time update request. */
+#define	IN_CHANGE	0x0002		/* Inode change time update request. */
+#define	IN_UPDATE	0x0004		/* Inode was written to; update mtime. */
+#define	IN_MODIFY	0x2000		/* Modification time update request. */
+#define	IN_MODIFIED	0x0008		/* Inode has been modified. */
+#define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
+/* 	   unused	0x0020 */	/* was IN_RENAME */
+#define	IN_SHLOCK	0x0040		/* File has shared lock. */
+#define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
+#define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
+#define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
+/* 	   unused	0x0400 */	/* was FFS-only IN_SPACECOUNTED */
+#define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
+#define IN_CDIROP       0x4000          /* LFS: dirop completed pending i/o */
+
+/* XXX this is missing some of the flags */
+#define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_MODIFY|IN_ACCESSED|IN_CLEANING)
+
 	dev_t	  i_dev;	/* Device associated with the inode. */
 	ino_t	  i_number;	/* The identity of the inode. */
 
@@ -154,22 +173,6 @@ struct inode {
 	union lfs_dinode *i_din;
 };
 
-/* These flags are kept in i_flag. */
-#define	IN_ACCESS	0x0001		/* Access time update request. */
-#define	IN_CHANGE	0x0002		/* Inode change time update request. */
-#define	IN_UPDATE	0x0004		/* Inode was written to; update mtime. */
-#define	IN_MODIFY	0x2000		/* Modification time update request. */
-#define	IN_MODIFIED	0x0008		/* Inode has been modified. */
-#define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
-/* 	   unused	0x0020 */	/* was IN_RENAME */
-#define	IN_SHLOCK	0x0040		/* File has shared lock. */
-#define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
-#define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
-#define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
-/* 	   unused	0x0400 */	/* was FFS-only IN_SPACECOUNTED */
-#define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
-#define IN_CDIROP       0x4000          /* LFS: dirop completed pending i/o */
-
 /*
  * LFS inode extensions.
  */
@@ -213,17 +216,6 @@ struct lfs_inode_ext {
 
 # define LFS_IS_MALLOC_BUF(bp) ((bp)->b_iodone == lfs_callback)
 
-# ifdef DEBUG
-#  define LFS_DEBUG_COUNTLOCKED(m) do {					\
-	if (lfs_debug_log_subsys[DLOG_LLIST]) {				\
-		lfs_countlocked(&locked_queue_count, &locked_queue_bytes, (m)); \
-		cv_broadcast(&locked_queue_cv);				\
-	}								\
-} while (0)
-# else
-#  define LFS_DEBUG_COUNTLOCKED(m)
-# endif
-
 /* log for debugging writes to the Ifile */
 # ifdef DEBUG
 struct lfs_log_entry {
@@ -238,10 +230,8 @@ extern int lfs_lognum;
 extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 #  define LFS_BWRITE_LOG(bp) lfs_bwrite_log((bp), __FILE__, __LINE__)
 #  define LFS_ENTER_LOG(theop, thefile, theline, lbn, theflags, thepid) do {\
-	int _s;								\
 									\
 	mutex_enter(&lfs_lock);						\
-	_s = splbio();							\
 	lfs_log[lfs_lognum].op = theop;					\
 	lfs_log[lfs_lognum].file = thefile;				\
 	lfs_log[lfs_lognum].line = (theline);				\
@@ -249,14 +239,7 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 	lfs_log[lfs_lognum].block = (lbn);				\
 	lfs_log[lfs_lognum].flags = (theflags);				\
 	lfs_lognum = (lfs_lognum + 1) % LFS_LOGLENGTH;			\
-	splx(_s);							\
 	mutex_exit(&lfs_lock);						\
-} while (0)
-
-#  define LFS_BCLEAN_LOG(fs, bp) do {					\
-	if ((bp)->b_vp == (fs)->lfs_ivnode)				\
-		LFS_ENTER_LOG("clear", __FILE__, __LINE__,		\
-			      bp->b_lblkno, bp->b_flags, curproc->p_pid);\
 } while (0)
 
 /* Must match list in lfs_vfsops.c ! */
@@ -279,6 +262,7 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 # else /* ! DEBUG */
 #  define LFS_BCLEAN_LOG(fs, bp)
 #  define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp)->b_vp, (bp))
+#  define LFS_ENTER_LOG(theop, thefile, theline, lbn, theflags, thepid) __nothing
 #  define DLOG(a)
 # endif /* ! DEBUG */
 #else /* ! _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.27.6.1 2015/12/27 12:09:30 skrll Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.27.6.2 2017/08/28 17:51:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.27.6.1 2015/12/27 12:09:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.27.6.2 2017/08/28 17:51:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,23 +77,21 @@ void		footbridge_pci_intr_disestablish(void *, void *);
 const struct evcnt *footbridge_pci_intr_evcnt(void *, pci_intr_handle_t);
 
 struct arm32_pci_chipset footbridge_pci_chipset = {
-	NULL,	/* conf_v */
 #ifdef netwinder
-	netwinder_pci_attach_hook,
+	.pc_attach_hook = netwinder_pci_attach_hook,
 #else
-	footbridge_pci_attach_hook,
+	.pc_attach_hook = footbridge_pci_attach_hook,
 #endif
-	footbridge_pci_bus_maxdevs,
-	footbridge_pci_make_tag,
-	footbridge_pci_decompose_tag,
-	footbridge_pci_conf_read,
-	footbridge_pci_conf_write,
-	NULL,	/* intr_v */
-	footbridge_pci_intr_map,
-	footbridge_pci_intr_string,
-	footbridge_pci_intr_evcnt,
-	footbridge_pci_intr_establish,
-	footbridge_pci_intr_disestablish
+	.pc_bus_maxdevs = footbridge_pci_bus_maxdevs,
+	.pc_make_tag = footbridge_pci_make_tag,
+	.pc_decompose_tag = footbridge_pci_decompose_tag,
+	.pc_conf_read = footbridge_pci_conf_read,
+	.pc_conf_write = footbridge_pci_conf_write,
+	.pc_intr_map = footbridge_pci_intr_map,
+	.pc_intr_string = footbridge_pci_intr_string,
+	.pc_intr_evcnt = footbridge_pci_intr_evcnt,
+	.pc_intr_establish = footbridge_pci_intr_establish,
+	.pc_intr_disestablish = footbridge_pci_intr_disestablish
 };
 
 struct arm32_dma_range footbridge_dma_ranges[1];

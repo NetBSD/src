@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.346.2.2 2017/02/05 13:40:01 skrll Exp $ */
+/* $NetBSD: machdep.c,v 1.346.2.3 2017/08/28 17:51:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346.2.2 2017/02/05 13:40:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346.2.3 2017/08/28 17:51:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1796,7 +1796,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	/* Save floating point register context, if any, and copy it. */
 	if (fpu_valid_p(l)) {
-		fpu_save();
+		fpu_save(l);
 		(void)memcpy(&mcp->__fpregs, &pcb->pcb_fp,
 		    sizeof (mcp->__fpregs));
 		mcp->__fpregs.__fp_fpcr = alpha_read_fp_c(l);
@@ -1844,7 +1844,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	/* Restore floating point register context, if any. */
 	if (flags & _UC_FPU) {
 		/* If we have an FP register context, get rid of it. */
-		fpu_discard(true);
+		fpu_discard(l, true);
 		(void)memcpy(&pcb->pcb_fp, &mcp->__fpregs,
 		    sizeof (pcb->pcb_fp));
 		l->l_md.md_flags = mcp->__fpregs.__fp_fpcr & MDLWP_FP_C;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.89.6.1 2015/04/06 15:17:57 skrll Exp $
+#	$NetBSD: Makefile.booters,v 1.89.6.2 2017/08/28 17:51:40 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -47,8 +47,7 @@ LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 .endif
 
-CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
-SRCS+=	vers.c
+CLEANFILES+= ${STARTFILE} ${BASE}.list
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -80,8 +79,8 @@ LDFLAGS+=-Wl,-M -Wl,-e,start 	# -N does not work properly.
 
 LIBLIST=${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 
-vers.c: ${VERSIONFILE} ${SOURCES} ${S}/conf/newvers_stand.sh
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
+VERSIONMACHINE=x86
+.include "${S}/conf/newvers_stand.mk"
 
 CLEANFILES+= ${BASE}.sym
 ${BASE}.sym: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}

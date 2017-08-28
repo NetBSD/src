@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.150.4.8 2017/02/05 13:40:03 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.150.4.9 2017/08/28 17:51:29 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.150.4.8 2017/02/05 13:40:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.150.4.9 2017/08/28 17:51:29 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1300,12 +1300,12 @@ struct cpu_functions armv7_cpufuncs = {
 
 	/* TLB functions */
 
-	.cf_tlb_flushID		= armv7_tlb_flushID,
-	.cf_tlb_flushID_SE	= armv7_tlb_flushID_SE,
-	.cf_tlb_flushI		= armv7_tlb_flushI,
-	.cf_tlb_flushI_SE	= armv7_tlb_flushI_SE,
-	.cf_tlb_flushD		= armv7_tlb_flushD,
-	.cf_tlb_flushD_SE	= armv7_tlb_flushD_SE,
+	.cf_tlb_flushID		= armv7up_tlb_flushID,
+	.cf_tlb_flushID_SE	= armv7up_tlb_flushID_SE,
+	.cf_tlb_flushI		= armv7up_tlb_flushI,
+	.cf_tlb_flushI_SE	= armv7up_tlb_flushI_SE,
+	.cf_tlb_flushD		= armv7up_tlb_flushD,
+	.cf_tlb_flushD_SE	= armv7up_tlb_flushD_SE,
 
 	/* Cache operations */
 
@@ -1364,12 +1364,12 @@ struct cpu_functions pj4bv7_cpufuncs = {
 
 	/* TLB functions */
 
-	.cf_tlb_flushID		= armv7_tlb_flushID,
-	.cf_tlb_flushID_SE	= armv7_tlb_flushID_SE,
-	.cf_tlb_flushI		= armv7_tlb_flushID,
-	.cf_tlb_flushI_SE	= armv7_tlb_flushID_SE,
-	.cf_tlb_flushD		= armv7_tlb_flushID,
-	.cf_tlb_flushD_SE	= armv7_tlb_flushID_SE,
+	.cf_tlb_flushID		= armv7up_tlb_flushID,
+	.cf_tlb_flushID_SE	= armv7up_tlb_flushID_SE,
+	.cf_tlb_flushI		= armv7up_tlb_flushID,
+	.cf_tlb_flushI_SE	= armv7up_tlb_flushID_SE,
+	.cf_tlb_flushD		= armv7up_tlb_flushID,
+	.cf_tlb_flushD_SE	= armv7up_tlb_flushID_SE,
 
 	/* Cache operations (see also pj4bv7_setup) */
 	.cf_icache_sync_all	= armv7_idcache_wbinv_all,
@@ -1763,6 +1763,26 @@ get_cachetype_table(void)
 
 #endif /* ARM2 || ARM250 || ARM3 || ARM6 || ARM7 || SA110 || SA1100 || SA1111 || IXP12X0 */
 
+
+#if defined(CPU_CORTEX) || defined(CPU_PJ4B)
+static inline void
+set_cpufuncs_mpfixup(void)
+{
+#ifdef MULTIPROCESSOR
+	/* If MP extensions are present, patch in MP TLB ops */
+	const uint32_t mpidr = armreg_mpidr_read();
+	if ((mpidr & (MPIDR_MP|MPIDR_U)) == MPIDR_MP) {
+		cpufuncs.cf_tlb_flushID = armv7mp_tlb_flushID;
+		cpufuncs.cf_tlb_flushID_SE = armv7mp_tlb_flushID_SE;
+		cpufuncs.cf_tlb_flushI = armv7mp_tlb_flushI;
+		cpufuncs.cf_tlb_flushI_SE = armv7mp_tlb_flushI_SE;
+		cpufuncs.cf_tlb_flushD = armv7mp_tlb_flushD;
+		cpufuncs.cf_tlb_flushD_SE = armv7mp_tlb_flushD_SE;
+	}
+#endif
+}
+#endif
+
 /*
  * Cannot panic here as we may not have a console yet ...
  */
@@ -2134,6 +2154,7 @@ set_cpufuncs(void)
 #if defined(CPU_CORTEX)
 	if (CPU_ID_CORTEX_P(cputype)) {
 		cpufuncs = armv7_cpufuncs;
+		set_cpufuncs_mpfixup();
 		cpu_do_powersave = 1;			/* Enable powersave */
 #if defined(CPU_ARMV6) || defined(CPU_PRE_ARMV6)
 		cpu_armv7_p = true;
@@ -2159,6 +2180,7 @@ set_cpufuncs(void)
 	    cputype == CPU_ID_ARM_88SV581X_V7) &&
 	    (armreg_pfr0_read() & ARM_PFR0_THUMBEE_MASK)) {
 		cpufuncs = pj4bv7_cpufuncs;
+		set_cpufuncs_mpfixup();
 #if defined(CPU_ARMV6) || defined(CPU_PRE_ARMV6)
 		cpu_armv7_p = true;
 #endif

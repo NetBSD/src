@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.1.2.2 2017/02/05 13:40:12 skrll Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.1.2.3 2017/08/28 17:51:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -48,10 +48,14 @@ extern EFI_HANDLE IH;
 extern EFI_DEVICE_PATH *efi_bootdp;
 extern EFI_LOADED_IMAGE *efi_li;
 extern uintptr_t efi_main_sp;
+extern physaddr_t efi_loadaddr, efi_kernel_start;
+extern u_long efi_kernel_size;
+extern bool efi_cleanuped;
 void efi_cleanup(void);
 
 /* eficons.c */
 int cninit(void);
+void consinit(int, int, int);
 void command_text(char *);
 void command_gop(char *);
 
@@ -61,6 +65,8 @@ void efi_disk_probe(void);
 /* efimemory.c */
 void efi_memory_probe(void);
 void efi_memory_show_map(bool);
+EFI_MEMORY_DESCRIPTOR *efi_memory_get_map(UINTN *, UINTN *, UINTN *, UINT32 *,
+    bool);
 
 /* panic.c */
 __dead VOID Panic(IN CHAR16 *, ...);

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.8.2.1 2017/02/05 13:40:06 skrll Exp $
+#	$NetBSD: GENERIC,v 1.8.2.2 2017/08/28 17:51:33 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/epoc32/conf/std.epoc32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.8.2.1 $"
+#ident 		"GENERIC-$Revision: 1.8.2.2 $"
 
 maxusers	32			# estimated number of users
 
@@ -49,6 +49,7 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support
@@ -80,7 +81,6 @@ options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_40	# NetBSD 4.0,
 #options 	COMPAT_50	# NetBSD 5.0 binary compatibility.
 #options 	COMPAT_43	# 4.3BSD binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 #options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

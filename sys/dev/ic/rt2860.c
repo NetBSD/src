@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.10.2.6 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.10.2.7 2017/08/28 17:52:03 skrll Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$FreeBSD: head/sys/dev/ral/rt2860.c 306591 2016-10-02 20:35:55Z avos $ */
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.10.2.6 2017/02/05 13:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.10.2.7 2017/08/28 17:52:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -74,6 +74,8 @@ int rt2860_debug = 0;
 #define MAXQS	6 /* Tx (4 EDCAs + HCCA + Mgt) and Rx rings */
 
 static void	rt2860_attachhook(device_t);
+static bool	rt2860_suspend(device_t self, const pmf_qual_t *qual);
+static bool	rt2860_wakeup(device_t self, const pmf_qual_t *qual);
 static int	rt2860_alloc_tx_ring(struct rt2860_softc *,
 		    struct rt2860_tx_ring *);
 static void	rt2860_reset_tx_ring(struct rt2860_softc *,
@@ -394,6 +396,7 @@ rt2860_attachhook(device_t self)
 	ifp->if_init = rt2860_init;
 	ifp->if_ioctl = rt2860_ioctl;
 	ifp->if_start = rt2860_start;
+	ifp->if_stop = rt2860_stop;
 	ifp->if_watchdog = rt2860_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
@@ -434,7 +437,7 @@ rt2860_attachhook(device_t self)
 
 	ieee80211_announce(ic);
 
-	if (pmf_device_register(sc->sc_dev, NULL, NULL))
+	if (pmf_device_register(sc->sc_dev, rt2860_wakeup, rt2860_suspend))
 		pmf_class_network_register(sc->sc_dev, ifp);
 	else
 		aprint_error_dev(sc->sc_dev,
@@ -466,29 +469,36 @@ rt2860_detach(void *xsc)
 	}
 
 	if (sc->ucode != NULL)
-		free(sc->ucode, M_DEVBUF);
+		firmware_free(sc->ucode, sc->ucsize);
 
 	return 0;
 }
 
-void
-rt2860_suspend(void *xsc)
+static bool
+rt2860_suspend(device_t self, const pmf_qual_t *qual)
 {
-	struct rt2860_softc *sc = xsc;
+	struct rt2860_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
 
 	if (ifp->if_flags & IFF_RUNNING)
 		rt2860_stop(ifp, 1);
+
+	return true;
 }
 
-void
-rt2860_wakeup(void *xsc)
+static bool
+rt2860_wakeup(device_t self, const pmf_qual_t *qual)
 {
-	struct rt2860_softc *sc = xsc;
+	struct rt2860_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
+	int s;
 
+	s = splnet();
 	if (ifp->if_flags & IFF_UP)
 		rt2860_init(ifp);
+	splx(s);
+
+	return true;
 }
 
 static int
@@ -1282,7 +1292,7 @@ rt2860_tx_intr(struct rt2860_softc *sc, int qid)
 	if (ring->queued <= RT2860_TX_RING_ONEMORE)
 		sc->qfullmsk &= ~(1 << qid);
 	ifp->if_flags &= ~IFF_OACTIVE;
-	rt2860_start(ifp);
+	rt2860_start(ifp); /* in softint */
 
 	splx(s);
 }

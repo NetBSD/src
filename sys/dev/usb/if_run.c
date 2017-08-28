@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.10.6.13 2017/01/29 15:58:14 skrll Exp $	*/
+/*	$NetBSD: if_run.c,v 1.10.6.14 2017/08/28 17:52:27 skrll Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.6.13 2017/01/29 15:58:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.6.14 2017/08/28 17:52:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -257,6 +257,7 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(RALINK,		RT3072),
 	USB_ID(RALINK,		RT3370),
 	USB_ID(RALINK,		RT3572),
+	USB_ID(RALINK,		RT5370),
 	USB_ID(RALINK,		RT5572),
 	USB_ID(RALINK,		RT8070),
 	USB_ID(SAMSUNG,		RT2870_1),

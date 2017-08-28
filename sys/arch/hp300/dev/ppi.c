@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.45 2014/07/25 08:10:33 dholland Exp $	*/
+/*	$NetBSD: ppi.c,v 1.45.4.1 2017/08/28 17:51:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,10 +65,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.45 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.45.4.1 2017/08/28 17:51:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/callout.h>
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -486,7 +487,6 @@ ppiioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 static int
 ppihztoms(int h)
 {
-	extern int hz;
 	int m = h;
 
 	if (m > 0)
@@ -497,7 +497,6 @@ ppihztoms(int h)
 static int
 ppimstohz(int m)
 {
-	extern int hz;
 	int h = m;
 
 	if (h > 0) {

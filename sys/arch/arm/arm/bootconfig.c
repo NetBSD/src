@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.c,v 1.7.2.2 2016/03/19 11:29:55 skrll Exp $	*/
+/*	$NetBSD: bootconfig.c,v 1.7.2.3 2017/08/28 17:51:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,9 +40,10 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.7.2.2 2016/03/19 11:29:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootconfig.c,v 1.7.2.3 2017/08/28 17:51:29 skrll Exp $");
 
 #include <sys/systm.h>
+#include <sys/kmem.h>
 
 #include <machine/bootconfig.h>
 
@@ -144,4 +145,35 @@ get_bootconf_option(char *opts, const char *opt, int type, void *result)
 			++ptr;
 	}
 	return 0;
+}
+
+char *
+get_bootconf_string(char *opts, const char *key)
+{
+	char *s, *ret;
+	int i = 0;
+
+	if (!get_bootconf_option(opts, key, BOOTOPT_TYPE_STRING, &s))
+		return NULL;
+
+	for (;;) {
+		if (s[i] == ' ' || s[i] == '\t' || s[i] == '\0')
+			break;
+		++i;
+	}
+
+	ret = kmem_alloc(i + 1, KM_SLEEP);
+	strlcpy(ret, s, i + 1);
+	return ret;
+}
+
+bool
+match_bootconf_option(char *opts, const char *key, const char *val)
+{
+	char *s;
+
+	if (!get_bootconf_option(opts, key, BOOTOPT_TYPE_STRING, &s))
+		return false;
+
+	return strncmp(s, val, strlen(val)) == 0;
 }

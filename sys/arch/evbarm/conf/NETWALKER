@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.32.2.2 2015/12/27 12:09:34 skrll Exp $
+#	$NetBSD: NETWALKER,v 1.32.2.3 2017/08/28 17:51:34 skrll Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -113,8 +113,8 @@ lidsw0		at gpio3 offset 12 mask 0x01 # intr 236
 imxpwm0		at axi? addr 0x73FB4000 irq 61
 
 # SPI NOR-Flash
-#spiflash0	at spiflashbus?
-#m25p0		at spi0 slave 1
+spiflash0	at spiflashbus?
+m25p0		at spi0 slave 1
 
 # SD/MMC
 sdhc0    	at axi? addr 0x70004000 irq 1	     # eSDHC1

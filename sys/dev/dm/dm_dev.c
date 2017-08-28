@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.9 2014/10/18 08:33:27 snj Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.9.2.1 2017/08/28 17:52:02 skrll Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -319,10 +319,7 @@ dm_dev_alloc(void)
 	dm_dev_t *dmv;
 
 	dmv = kmem_zalloc(sizeof(dm_dev_t), KM_SLEEP);
-
-	if (dmv != NULL)
-		dmv->diskp = kmem_zalloc(sizeof(struct disk), KM_SLEEP);
-
+	dmv->diskp = kmem_zalloc(sizeof(struct disk), KM_SLEEP);
 	return dmv;
 }
 /*

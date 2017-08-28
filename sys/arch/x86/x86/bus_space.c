@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.38.24.1 2017/02/05 13:40:23 skrll Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.38.24.2 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.38.24.1 2017/02/05 13:40:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.38.24.2 2017/08/28 17:51:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -934,10 +934,6 @@ bus_space_tag_create(bus_space_tag_t obst, const uint64_t present,
 		return EINVAL;
 
 	bst = kmem_alloc(sizeof(struct bus_space_tag), KM_SLEEP);
-
-	if (bst == NULL)
-		return ENOMEM;
-
 	bst->bst_super = obst;
 	bst->bst_type = obst->bst_type;
 

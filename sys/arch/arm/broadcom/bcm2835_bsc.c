@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc.c,v 1.3.2.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: bcm2835_bsc.c,v 1.3.2.2 2017/08/28 17:51:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.3.2.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.3.2.2 2017/08/28 17:51:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,8 +99,10 @@ bsciic_attach(device_t parent, device_t self, void *aux)
 {
 	struct bsciic_softc * const sc = device_private(self);
 	struct amba_attach_args * const aaa = aux;
+	prop_dictionary_t prop = device_properties(self);
 	struct i2cbus_attach_args iba;
 	u_int bscunit = ~0;
+	bool disable = false;
 	static ONCE_DECL(control);
 
 	switch (aaa->aaa_addr) {
@@ -110,6 +112,13 @@ bsciic_attach(device_t parent, device_t self, void *aux)
 	case BCM2835_BSC1_BASE:
 		bscunit = 1;
 		break;
+	}
+
+	prop_dictionary_get_bool(prop, "disable", &disable);
+	if (disable) {
+		aprint_naive(": disabled\n");
+		aprint_normal(": disabled\n");
+		return;
 	}
 
 	aprint_naive("\n");

@@ -44,6 +44,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 #options 	WAPBL		# File system journaling support
@@ -86,7 +87,6 @@ options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
@@ -217,6 +217,8 @@ geminigpio2	at obio0 addr 0x4f000000 intrbase 96  intr 24
 ##usb* at ehci?
 ##uhub* at usb?
 ##uhub* at uhub? port ?
+
+# USB Ethernet adapters
 ##axe* at uhub?
 
 # PCI

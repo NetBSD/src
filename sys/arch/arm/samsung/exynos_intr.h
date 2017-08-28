@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_intr.h,v 1.2 2014/09/05 08:01:05 skrll Exp $	*/
+/*	$NetBSD: exynos_intr.h,v 1.2.2.1 2017/08/28 17:51:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,18 +32,6 @@
 #ifndef _ARM_SAMSUNG_EXYNOS_INTR_H_
 #define _ARM_SAMSUNG_EXYNOS_INTR_H_
 
-#define	PIC_MAXSOURCES			GIC_MAXSOURCES(224)
-#define	PIC_MAXMAXSOURCES		(PIC_MAXSOURCES + 32)	/* XXX */
-
-/*
- * The Exynos uses a generic interrupt controller
- */
-#include <arm/cortex/gic_intr.h>
-
-#ifdef _KERNEL_OPT
-#include "opt_exynos.h"
-#endif
-
 /*
  * The GIC supports
  *   - 16 Software Generated Interrupts (SGIs)
@@ -60,10 +48,6 @@
     (EXYNOS_COMBINERBASE + ((g) * EXYNOS_BITSPERGROUP + (b)))
 
 #define	IRQ_MCT_LTIMER		IRQ_PPI(12)
-
-#ifdef EXYNOS5
-#include <arm/cortex/gtmr_intr.h>
-#endif
 
 #endif /* _ARM_SAMSUNG_EXYNOS_INTR_H_ */
 

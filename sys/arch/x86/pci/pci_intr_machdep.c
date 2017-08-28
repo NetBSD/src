@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.27.6.4 2016/12/05 10:54:59 skrll Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.27.6.5 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.27.6.4 2016/12/05 10:54:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.27.6.5 2017/08/28 17:51:56 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.27.6.4 2016/12/05 10:54:59 sk
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
 
 #include <dev/pci/pcivar.h>
 
@@ -401,11 +400,6 @@ pci_intx_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **pih)
 	const char *intrstr;
 
 	handle = kmem_zalloc(sizeof(*handle), KM_SLEEP);
-	if (handle == NULL) {
-		aprint_normal("cannot allocate pci_intr_handle_t\n");
-		return ENOMEM;
-	}
-
 	if (pci_intr_map(pa, handle) != 0) {
 		aprint_normal("cannot set up pci_intr_handle_t\n");
 		error = EINVAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.43 2009/11/12 19:24:06 dyoung Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.43.40.1 2017/08/28 17:52:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.43 2009/11/12 19:24:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.43.40.1 2017/08/28 17:52:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,8 @@ aic_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 	    cfe->num_memspace != 0 ||
 	    cfe->num_iospace != 1)
 		return (EINVAL);
+
+	cfe->iomask = 0;		/* XXX: wrong from cfe?, quirk? */
 	return (0);
 }
 

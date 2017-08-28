@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.109.2.5 2017/02/05 13:40:48 skrll Exp $ */
+/* $NetBSD: wsconsio.h,v 1.109.2.6 2017/08/28 17:52:31 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -339,7 +339,8 @@ struct wsmouse_repeat {
 #define	WSDISPLAY_TYPE_MGX	61	/* SSB 4096V-MGX */
 #define	WSDISPLAY_TYPE_MESON	62	/* Amlogic Meson ARM SoC */
 #define	WSDISPLAY_TYPE_TEGRA	63	/* NVIDIA Tegra ARM SoC */
-#define	WSDISPLAY_TYPE_PLATINUM	64	/* Apple onboard video 'platinum' */
+#define	WSDISPLAY_TYPE_PLATINUM	64	/* onboard fb in PowerMac 7200 */
+#define	WSDISPLAY_TYPE_PLFB	65	/* ARM PrimeCell PL11x */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -543,6 +544,7 @@ struct wsmux_device {
 #define	WSMUX_MOUSE	1
 #define	WSMUX_KBD	2
 #define	WSMUX_MUX	3
+#define	WSMUX_BELL	4
 	int idx;
 };
 #define	WSMUXIO_ADD_DEVICE	_IOW('W', 97, struct wsmux_device)
@@ -655,7 +657,8 @@ struct wsdisplayio_fbinfo {
 };
 
 /* fbi_flags */
-#define WSFB_VRAM_IS_RAM	1	/* hint for wsfb - don't shadow */
+#define WSFB_VRAM_IS_RAM	0x0001	/* hint for wsfb - don't shadow */
+#define WSFB_VRAM_IS_SPLIT	0x0002	/* workaround for wildcat... */
 
 #define WSDISPLAYIO_GET_FBINFO	_IOWR('W', 104, struct wsdisplayio_fbinfo)
 

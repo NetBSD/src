@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.80.4.4 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.80.4.5 2017/08/28 17:52:03 skrll Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.80.4.4 2017/02/05 13:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.80.4.5 2017/08/28 17:52:03 skrll Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -247,6 +247,7 @@ mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
@@ -1140,7 +1141,7 @@ mb86960_intr(void *arg)
 		 * receive operation priority.
 		 */
 		if ((ifp->if_flags & IFF_OACTIVE) == 0)
-			mb86960_start(ifp);
+			if_schedule_deferred_start(ifp);
 
 		if (rstat != 0 || tstat != 0)
 			rnd_add_uint32(&sc->rnd_source, rstat + tstat);

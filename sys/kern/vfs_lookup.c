@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.201.6.3 2016/04/22 15:44:16 skrll Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.201.6.4 2017/08/28 17:53:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.201.6.3 2016/04/22 15:44:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.201.6.4 2017/08/28 17:53:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -262,9 +262,6 @@ pathbuf_create_raw(void)
 	struct pathbuf *pb;
 
 	pb = kmem_alloc(sizeof(*pb), KM_SLEEP);
-	if (pb == NULL) {
-		return NULL;
-	}
 	pb->pb_path = PNBUF_GET();
 	if (pb->pb_path == NULL) {
 		kmem_free(pb, sizeof(*pb));
@@ -290,9 +287,6 @@ pathbuf_assimilate(char *pnbuf)
 	struct pathbuf *pb;
 
 	pb = kmem_alloc(sizeof(*pb), KM_SLEEP);
-	if (pb == NULL) {
-		return NULL;
-	}
 	pb->pb_path = pnbuf;
 	pb->pb_pathcopy = NULL;
 	pb->pb_pathcopyuses = 0;
@@ -679,8 +673,10 @@ namei_start(struct namei_state *state, int isnfsd,
 	}
 
 	/* NDAT may feed us with a non directory namei_getstartdir */
-	if (startdir->v_type != VDIR)
+	if (startdir->v_type != VDIR) {
+		vrele(startdir);
 		return ENOTDIR;
+	}
 
 	vn_lock(startdir, LK_EXCLUSIVE | LK_RETRY);
 
@@ -1087,7 +1083,7 @@ unionlookup:
 
 		KASSERT(searchdir != foundobj);
 
-		error = vfs_busy(mp, NULL);
+		error = vfs_busy(mp);
 		if (error != 0) {
 			vput(foundobj);
 			goto done;
@@ -1097,7 +1093,7 @@ unionlookup:
 		}
 		vput(foundobj);
 		error = VFS_ROOT(mp, &foundobj);
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		if (error) {
 			if (searchdir != NULL) {
 				vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);

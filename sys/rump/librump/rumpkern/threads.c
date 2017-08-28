@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.23.4.1 2016/03/19 11:30:37 skrll Exp $	*/
+/*	$NetBSD: threads.c,v 1.23.4.2 2017/08/28 17:53:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.23.4.1 2016/03/19 11:30:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.23.4.2 2017/08/28 17:53:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -293,8 +293,9 @@ lwpbouncer(void *arg)
 
 int
 lwp_create(struct lwp *l1, struct proc *p2, vaddr_t uaddr, int flags,
-           void *stack, size_t stacksize, void (*func)(void *), void *arg,
-           struct lwp **newlwpp, int sclass)
+    void *stack, size_t stacksize, void (*func)(void *), void *arg,
+    struct lwp **newlwpp, int sclass, const sigset_t *sigmask,
+    const stack_t *sigstk)
 {
 	struct thrdesc *td;
 	struct lwp *l;

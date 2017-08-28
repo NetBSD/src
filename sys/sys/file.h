@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.77.2.3 2017/02/05 13:41:01 skrll Exp $	*/
+/*	$NetBSD: file.h,v 1.77.2.4 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -103,6 +103,8 @@ union file_data {
 	struct kqueue *fd_kq;		// DTYPE_KQUEUE
 	void *fd_data;			// DTYPE_MISC
 	struct rnd_ctx *fd_rndctx;	// DTYPE_MISC (rnd)
+	struct audio_chan *fd_audioctx;	// DTYPE_MISC (audio)
+	struct pad_softc *fd_pad;	// DTYPE_MISC (pad)
 	int fd_devunit;			// DTYPE_MISC (tap)
 	struct bpf_d *fd_bpf;		// DTYPE_MISC (bpf)
 	struct fcrypt *fd_fcrypt;	// DTYPE_CRYPTO is not used
@@ -144,6 +146,8 @@ struct file {
 #define f_ksem		f_undata.fd_ks
 
 #define f_rndctx	f_undata.fd_rndctx
+#define f_audioctx	f_undata.fd_audioctx
+#define f_pad		f_undata.fd_pad
 #define f_devunit	f_undata.fd_devunit
 #define f_bpf		f_undata.fd_bpf
 #define f_fcrypt	f_undata.fd_fcrypt

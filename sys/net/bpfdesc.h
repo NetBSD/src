@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.38.6.1 2017/02/05 13:40:58 skrll Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.38.6.2 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -49,7 +49,14 @@
 #include <sys/pslist.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/psref.h>
 #endif
+
+struct bpf_filter {
+	struct bpf_insn *bf_insn; 	/* filter code */
+	size_t		bf_size;
+	bpfjit_func_t	bf_jitcode;	/* compiled filter program */
+};
 
 /*
  * Descriptor associated with each open bpf file.
@@ -76,7 +83,12 @@ struct bpf_d {
 
 	struct bpf_if *	bd_bif;		/* interface descriptor */
 	u_long		bd_rtout;	/* Read timeout in 'ticks' */
-	struct bpf_insn *bd_filter; 	/* filter code */
+	/* DEPRECATED. Keep it to avoid breaking kvm(3) users */
+	struct bpf_insn *_bd_filter; 	/* filter code */
+	/*
+	 * XXX we should make the counters per-CPU once we retire kvm(3) users
+	 * that directly access them.
+	 */
 	u_long		bd_rcount;	/* number of packets received */
 	u_long		bd_dcount;	/* number of packets dropped */
 	u_long		bd_ccount;	/* number of packets captured */
@@ -108,12 +120,14 @@ struct bpf_d {
 #ifdef _LP64
 	int		bd_compat32;	/* 32-bit stream on LP64 system */
 #endif
+	/* DEPRECATED. Keep it to avoid breaking kvm(3) users */
 	bpfjit_func_t	bd_jitcode;	/* compiled filter program */
-	size_t		bd_filter_size;
+	struct bpf_filter *bd_filter;
 #ifdef _KERNEL
 	struct pslist_entry	bd_bif_dlist_entry; /* For bpf_if */
 	struct pslist_entry	bd_bpf_dlist_entry; /* For the global list */
 	kmutex_t	*bd_mtx;
+	kmutex_t	*bd_buf_mtx;
 	kcondvar_t	bd_cv;
 #endif
 };
@@ -160,6 +174,7 @@ struct bpf_if {
 #ifdef _KERNEL
 	struct pslist_entry bif_iflist_entry;
 	struct pslist_head bif_dlist_head;
+	struct psref_target bif_psref;
 #endif
 };
 

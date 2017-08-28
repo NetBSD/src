@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.30 2014/04/18 15:00:37 christos Exp $	*/
+/*	$NetBSD: est.c,v 1.30.4.1 2017/08/28 17:51:56 skrll Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -76,7 +76,7 @@
  *   http://www.codemonkey.org.uk/projects/cpufreq/cpufreq-2.4.22-pre6-1.gz
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.30 2014/04/18 15:00:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.30.4.1 2017/08/28 17:51:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1236,10 +1236,6 @@ est_tables(device_t self)
 
 		sc->sc_fake_table = kmem_alloc(tablesize *
 		    sizeof(uint16_t), KM_SLEEP);
-
-		if (sc->sc_fake_table == NULL)
-			return false;
-
 		sc->sc_fake_fqlist.n = tablesize;
 
 		/* The frequency/voltage table is highest frequency first */
@@ -1267,10 +1263,6 @@ est_tables(device_t self)
 
 	sc->sc_freqs_len = sc->sc_fqlist->n * (sizeof("9999 ") - 1) + 1;
 	sc->sc_freqs = kmem_zalloc(sc->sc_freqs_len, KM_SLEEP);
-
-	if (sc->sc_freqs == NULL)
-		return false;
-
 	for (i = len = 0; i < sc->sc_fqlist->n; i++) {
 		if (len >= sc->sc_freqs_len)
 			break;

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.73 2014/03/24 20:06:33 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.73.6.1 2017/08/28 17:51:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73 2014/03/24 20:06:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73.6.1 2017/08/28 17:51:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -410,8 +410,6 @@ cpu_startup(void)
 
 	/* get ourself a message buffer */
 	um_msgbuf = kmem_zalloc(msgbufsize, KM_SLEEP);
-	if (um_msgbuf == NULL)
-		panic("couldn't allocate msgbuf");
 	initmsgbuf(um_msgbuf, msgbufsize);
 
 	/* allocate a submap for physio, 1Mb enough? */

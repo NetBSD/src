@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.17 2014/02/25 19:20:09 matt Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.17.6.1 2017/08/28 17:51:31 skrll Exp $	*/
 
 #ifndef _ARM_ELF_MACHDEP_H_
 #define _ARM_ELF_MACHDEP_H_
@@ -118,6 +118,8 @@
 #define R_ARM_TLS_IE12GP	111
 
 /* 112-127 are reserved for private experiments. */
+
+#define R_ARM_IRELATIVE		160
 
 #define R_ARM_RXPC25		249
 #define R_ARM_RSBREL32		250

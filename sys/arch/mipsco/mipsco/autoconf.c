@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 2014/05/29 10:11:41 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27.4.1 2017/08/28 17:51:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 2014/05/29 10:11:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.4.1 2017/08/28 17:51:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ struct mipsco_intrhand intrtab[MAX_INTR_COOKIES];
 /*
  * Determine mass storage and memory configuration for a machine.
  * Print CPU type, and then iterate over an array of devices
- * found on the baseboard or in turbochannel option slots.
+ * found on the baseboard or in TURBOchannel option slots.
  * Once devices are configured, enable interrupts, and probe
  * for attached scsi devices.
  */

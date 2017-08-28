@@ -1,4 +1,4 @@
-/*	$NetBSD: wqinput.c,v 1.1.2.2 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: wqinput.c,v 1.1.2.3 2017/08/28 17:53:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -160,7 +160,7 @@ wqinput_create(const char *name, void (*func)(struct mbuf *, int, int))
 	if (error != 0)
 		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 	pool_init(&wqi->wqi_work_pool, sizeof(struct wqinput_work), 0, 0, 0,
-	    namebuf, NULL, IPL_SOFTNET);
+	    name, NULL, IPL_SOFTNET);
 	wqi->wqi_worklists = percpu_alloc(sizeof(struct wqinput_worklist));
 	wqi->wqi_input = func;
 
@@ -249,6 +249,11 @@ wqinput_input(struct wqinput *wqi, struct mbuf *m, int off, int proto)
 	}
 
 	work = pool_get(&wqi->wqi_work_pool, PR_NOWAIT);
+	if (work == NULL) {
+		wwl->wwl_dropped++;
+		m_freem(m);
+		goto out;
+	}
 	work->ww_mbuf = m;
 	work->ww_off = off;
 	work->ww_proto = proto;

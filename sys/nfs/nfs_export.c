@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.58.6.1 2016/12/05 10:55:29 skrll Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.58.6.2 2017/08/28 17:53:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.58.6.1 2016/12/05 10:55:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.58.6.2 2017/08/28 17:53:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ netexport_fini(void)
 		netexport_wrlock();
 		ne = TAILQ_FIRST(&netexport_list);
 		mp = ne->ne_mount;
-		error = vfs_busy(mp, NULL);
+		error = vfs_busy(mp);
 		netexport_wrunlock();
 		if (error != 0) {
 			kpause("nfsfini", false, hz, NULL);
@@ -220,7 +220,7 @@ netexport_fini(void)
 		mutex_enter(&mp->mnt_updating);	/* mnt_flag */
 		netexport_unmount(mp);
 		mutex_exit(&mp->mnt_updating);	/* mnt_flag */
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 	}
 	rw_destroy(&netexport_lock);
 }
@@ -284,7 +284,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l,
 	}
 
 	/* Mark the file system busy. */
-	error = vfs_busy(mp, NULL);
+	error = vfs_busy(mp);
 	vput(vp);
 	if (error != 0)
 		return error;
@@ -332,7 +332,7 @@ out:
 	netexport_wrunlock();
 	if (nmp == NULL)
 		mutex_exit(&mp->mnt_updating);	/* mnt_flag */
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	return error;
 }
 

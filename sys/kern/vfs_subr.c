@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.445.2.5 2017/02/05 13:40:56 skrll Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.445.2.6 2017/08/28 17:53:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.445.2.5 2017/02/05 13:40:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.445.2.6 2017/08/28 17:53:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.445.2.5 2017/02/05 13:40:56 skrll Exp
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
+#include <sys/fstrans.h>
 #include <sys/vnode_impl.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
@@ -117,7 +118,6 @@ const int	vttoif_tab[9] = {
 }
 
 int doforce = 1;		/* 1 => permit forcible unmounting */
-int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
 
 extern struct mount *dead_rootmount;
 
@@ -567,7 +567,6 @@ time_t dirdelay  = 15;			/* time to delay syncing directories */
 time_t metadelay = 10;			/* time to delay syncing metadata */
 time_t lockdelay = 1;			/* time to delay if locking fails */
 
-kmutex_t		syncer_mutex;	/* used to freeze syncer, long term */
 static kmutex_t		syncer_data_lock; /* short term lock on data structs */
 
 static int		syncer_delayno = 0;
@@ -589,7 +588,6 @@ vn_initialize_syncerd(void)
 	for (i = 0; i < syncer_last; i++)
 		TAILQ_INIT(&syncer_workitem_pending[i]);
 
-	mutex_init(&syncer_mutex, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&syncer_data_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
@@ -758,34 +756,29 @@ lazy_sync_vnode(struct vnode *vp)
 void
 sched_sync(void *arg)
 {
+	mount_iterator_t *iter;
 	synclist_t *slp;
 	struct vnode *vp;
-	struct mount *mp, *nmp;
+	struct mount *mp;
 	time_t starttime;
 	bool synced;
 
 	for (;;) {
-		mutex_enter(&syncer_mutex);
-
 		starttime = time_second;
 
 		/*
 		 * Sync mounts whose dirty time has expired.
 		 */
-		mutex_enter(&mountlist_lock);
-		for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
+		mountlist_iterator_init(&iter);
+		while ((mp = mountlist_iterator_trynext(iter)) != NULL) {
 			if ((mp->mnt_iflag & IMNT_ONWORKLIST) == 0 ||
 			    mp->mnt_synclist_slot != syncer_delayno) {
-				nmp = TAILQ_NEXT(mp, mnt_list);
 				continue;
 			}
 			mp->mnt_synclist_slot = sync_delay_slot(sync_delay(mp));
-			if (vfs_busy(mp, &nmp))
-				continue;
 			VFS_SYNC(mp, MNT_LAZY, curlwp->l_cred);
-			vfs_unbusy(mp, false, &nmp);
 		}
-		mutex_exit(&mountlist_lock);
+		mountlist_iterator_destroy(iter);
 
 		mutex_enter(&syncer_data_lock);
 
@@ -832,7 +825,6 @@ sched_sync(void *arg)
 				    synced ? syncdelay : lockdelay);
 			}
 		}
-		mutex_exit(&syncer_mutex);
 
 		/*
 		 * If it has taken us less than a second to process the
@@ -963,8 +955,9 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 {
 	char *where = oldp;
 	size_t *sizep = oldlenp;
-	struct mount *mp, *nmp;
+	struct mount *mp;
 	vnode_t *vp, vbuf;
+	mount_iterator_t *iter;
 	struct vnode_iterator *marker;
 	char *bp = where;
 	char *ewhere;
@@ -984,17 +977,14 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	ewhere = where + *sizep;
 
 	sysctl_unlock();
-	mutex_enter(&mountlist_lock);
-	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
-		if (vfs_busy(mp, &nmp)) {
-			continue;
-		}
+	mountlist_iterator_init(&iter);
+	while ((mp = mountlist_iterator_next(iter)) != NULL) {
 		vfs_vnode_iterator_init(mp, &marker);
 		while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL))) {
 			if (bp + VPTRSZ + VNODESZ > ewhere) {
 				vrele(vp);
 				vfs_vnode_iterator_destroy(marker);
-				vfs_unbusy(mp, false, NULL);
+				mountlist_iterator_destroy(iter);
 				sysctl_relock();
 				*sizep = bp - where;
 				return (ENOMEM);
@@ -1004,7 +994,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 			    (error = copyout(&vbuf, bp + VPTRSZ, VNODESZ))) {
 				vrele(vp);
 				vfs_vnode_iterator_destroy(marker);
-				vfs_unbusy(mp, false, NULL);
+				mountlist_iterator_destroy(iter);
 				sysctl_relock();
 				return (error);
 			}
@@ -1012,9 +1002,8 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 			bp += VPTRSZ + VNODESZ;
 		}
 		vfs_vnode_iterator_destroy(marker);
-		vfs_unbusy(mp, false, &nmp);
 	}
-	mutex_exit(&mountlist_lock);
+	mountlist_iterator_destroy(iter);
 	sysctl_relock();
 
 	*sizep = bp - where;
@@ -1066,12 +1055,14 @@ vstate_name(enum vnode_state state)
 {
 
 	switch (state) {
+	case VS_ACTIVE:
+		return "ACTIVE";
 	case VS_MARKER:
 		return "MARKER";
 	case VS_LOADING:
 		return "LOADING";
-	case VS_ACTIVE:
-		return "ACTIVE";
+	case VS_LOADED:
+		return "LOADED";
 	case VS_BLOCKED:
 		return "BLOCKED";
 	case VS_RECLAIMING:
@@ -1506,7 +1497,7 @@ vfs_buf_print(struct buf *bp, int full, void (*pr)(const char *, ...))
 
 	snprintb(bf, sizeof(bf),
 	    buf_flagbits, bp->b_flags | bp->b_oflags | bp->b_cflags);
-	(*pr)("  error %d flags 0x%s\n", bp->b_error, bf);
+	(*pr)("  error %d flags %s\n", bp->b_error, bf);
 
 	(*pr)("  bufsize 0x%lx bcount 0x%lx resid 0x%lx\n",
 		  bp->b_bufsize, bp->b_bcount, bp->b_resid);
@@ -1545,7 +1536,7 @@ vfs_vnode_lock_print(void *vlock, int full, void (*pr)(const char *, ...))
 	struct mount *mp;
 	vnode_impl_t *vip;
 
-	TAILQ_FOREACH(mp, &mountlist, mnt_list) {
+	for (mp = _mountlist_next(NULL); mp; mp = _mountlist_next(mp)) {
 		TAILQ_FOREACH(vip, &mp->mnt_vnodelist, vi_mntvnodes) {
 			if (&vip->vi_lock != vlock)
 				continue;
@@ -1571,8 +1562,7 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	snprintb(sbuf, sizeof(sbuf), __IMNT_FLAG_BITS, mp->mnt_iflag);
 	(*pr)("iflag = %s\n", sbuf);
 
-	(*pr)("refcnt = %d unmounting @ %p updating @ %p\n", mp->mnt_refcnt,
-	    &mp->mnt_unmounting, &mp->mnt_updating);
+	(*pr)("refcnt = %d updating @ %p\n", mp->mnt_refcnt, &mp->mnt_updating);
 
 	(*pr)("statvfs cache:\n");
 	(*pr)("\tbsize = %lu\n",mp->mnt_stat.f_bsize);
@@ -1652,25 +1642,18 @@ void printlockedvnodes(void);
 void
 printlockedvnodes(void)
 {
-	struct mount *mp, *nmp;
+	struct mount *mp;
 	vnode_t *vp;
 	vnode_impl_t *vip;
 
 	printf("Locked vnodes\n");
-	mutex_enter(&mountlist_lock);
-	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
-		if (vfs_busy(mp, &nmp)) {
-			continue;
-		}
+	for (mp = _mountlist_next(NULL); mp; mp = _mountlist_next(mp)) {
 		TAILQ_FOREACH(vip, &mp->mnt_vnodelist, vi_mntvnodes) {
 			vp = VIMPL_TO_VNODE(vip);
 			if (VOP_ISLOCKED(vp))
 				vprint(NULL, vp);
 		}
-		mutex_enter(&mountlist_lock);
-		vfs_unbusy(mp, false, &nmp);
 	}
-	mutex_exit(&mountlist_lock);
 }
 
 #endif /* DDB || DEBUGPRINT */

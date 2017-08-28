@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.73.2.5 2016/03/19 11:30:31 skrll Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.73.2.6 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.73.2.5 2016/03/19 11:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.73.2.6 2017/08/28 17:53:07 skrll Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -336,8 +336,9 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	nglob = 0;
 	for (i = n = 0; i < nsyms; i++) {
 
-		/* This breaks CTF mapping, so don't do it when
-		 * DTrace is enabled
+		/*
+		 * This breaks CTF mapping, so don't do it when
+		 * DTrace is enabled.
 		 */
 #ifndef KDTRACE_HOOKS
 		/*
@@ -396,6 +397,7 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	tab->sd_symstart = nsym;
 	tab->sd_symsize = n * sizeof(Elf_Sym);
 	tab->sd_nglob = nglob;
+
 	addsymtab_strstart = str;
 	if (kheapsort(nsym, n, sizeof(Elf_Sym), addsymtab_compar, &ts) != 0)
 		panic("addsymtab");
@@ -731,11 +733,14 @@ ksyms_modload(const char *name, void *symstart, vsize_t symsize,
     char *strstart, vsize_t strsize)
 {
 	struct ksyms_symtab *st;
+	void *nmap;
 
 	st = kmem_zalloc(sizeof(*st), KM_SLEEP);
+	nmap = kmem_zalloc(symsize / sizeof(Elf_Sym) * sizeof (uint32_t),
+			   KM_SLEEP);
 	mutex_enter(&ksyms_lock);
 	addsymtab(name, symstart, symsize, strstart, strsize, st, symstart,
-	    NULL, 0, NULL);
+	    NULL, 0, nmap);
 	mutex_exit(&ksyms_lock);
 }
 
@@ -757,6 +762,8 @@ ksyms_modunload(const char *name)
 		if (!ksyms_isopen) {
 			TAILQ_REMOVE(&ksyms_symtabs, st, sd_queue);
 			ksyms_sizes_calc();
+			kmem_free(st->sd_nmap,
+				  st->sd_nmapsize * sizeof(uint32_t));
 			kmem_free(st, sizeof(*st));
 		}
 		break;
@@ -984,6 +991,8 @@ ksymsclose(dev_t dev, int oflags, int devtype, struct lwp *l)
 		next = TAILQ_NEXT(st, sd_queue);
 		if (st->sd_gone) {
 			TAILQ_REMOVE(&ksyms_symtabs, st, sd_queue);
+			kmem_free(st->sd_nmap,
+				  st->sd_nmapsize * sizeof(uint32_t));
 			kmem_free(st, sizeof(*st));
 			resize = true;
 		}

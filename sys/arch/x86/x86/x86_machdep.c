@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.67.4.4 2017/02/05 13:40:23 skrll Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.67.4.5 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.67.4.4 2017/02/05 13:40:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.67.4.5 2017/08/28 17:51:56 skrll Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.67.4.4 2017/02/05 13:40:23 skrll E
 
 #include <machine/bootinfo.h>
 #include <machine/vmparam.h>
+#include <machine/pmc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -510,24 +511,15 @@ x86_select_freelist(uint64_t maxaddr)
 }
 
 static int
-x86_add_cluster(struct extent *iomem_ex, uint64_t seg_start, uint64_t seg_end,
-    uint32_t type)
+x86_add_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 {
+	extern struct extent *iomem_ex;
+	const uint64_t endext = MAXIOMEM + 1;
 	uint64_t new_physmem = 0;
 	phys_ram_seg_t *cluster;
 	int i;
 
-#ifdef i386
-#ifdef PAE
-#define TOPLIMIT	0x1000000000ULL /* 64GB */
-#else
-#define TOPLIMIT	0x100000000ULL	/* 4GB */
-#endif
-#else
-#define TOPLIMIT	0x100000000000ULL /* 16TB */
-#endif
-
-	if (seg_end > TOPLIMIT) {
+	if (seg_end > MAXPHYSMEM) {
 		aprint_verbose("WARNING: skipping large memory map entry: "
 		    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n",
 		    seg_start, (seg_end - seg_start), type);
@@ -537,7 +529,7 @@ x86_add_cluster(struct extent *iomem_ex, uint64_t seg_start, uint64_t seg_end,
 	/*
 	 * XXX: Chop the last page off the size so that it can fit in avail_end.
 	 */
-	if (seg_end == TOPLIMIT)
+	if (seg_end == MAXPHYSMEM)
 		seg_end -= PAGE_SIZE;
 
 	if (seg_end <= seg_start)
@@ -555,15 +547,19 @@ x86_add_cluster(struct extent *iomem_ex, uint64_t seg_start, uint64_t seg_end,
 	}
 
 	/*
-	 * Allocate the physical addresses used by RAM from the iomem extent
-	 * map. This is done before the addresses are page rounded just to make
+	 * This cluster is used by RAM. If it is included in the iomem extent,
+	 * allocate it from there, so that we won't unintentionally reuse it
+	 * later with extent_alloc_region. A way to avoid collision (with UVM
+	 * for example).
+	 *
+	 * This is done before the addresses are page rounded just to make
 	 * sure we get them all.
 	 */
-	if (seg_start < 0x100000000ULL) {
+	if (seg_start < endext) {
 		uint64_t io_end;
 
-		if (seg_end > 0x100000000ULL)
-			io_end = 0x100000000ULL;
+		if (seg_end > endext)
+			io_end = endext;
 		else
 			io_end = seg_end;
 
@@ -583,8 +579,9 @@ x86_add_cluster(struct extent *iomem_ex, uint64_t seg_start, uint64_t seg_end,
 		return 0;
 
 	if (mem_cluster_cnt >= VM_PHYSSEG_MAX) {
-		panic("%s: too many memory segments (increase VM_PHYSSEG_MAX)",
-			__func__);
+		printf("WARNING: too many memory segments"
+		    "(increase VM_PHYSSEG_MAX)");
+		return -1;
 	}
 
 #ifdef PHYSMEM_MAX_ADDR
@@ -629,63 +626,38 @@ x86_add_cluster(struct extent *iomem_ex, uint64_t seg_start, uint64_t seg_end,
 }
 
 static int
-x86_parse_clusters(struct btinfo_common *bi, struct extent *iomem_ex)
+x86_parse_clusters(struct btinfo_memmap *bim)
 {
-	union {
-		struct btinfo_common *common;
-		struct btinfo_memmap *bios;
-		struct btinfo_efimemmap *efi;
-	} bim;
 	uint64_t seg_start, seg_end;
 	uint64_t addr, size;
 	uint32_t type;
-	int x, num;
-	bool efimemmap;
+	int x;
 
-	KASSERT(bi != NULL);
-	bim.common = bi;
-	efimemmap = bi->type == BTINFO_EFIMEMMAP;
-	num = efimemmap ? bim.efi->num : bim.bios->num;
-	KASSERT(num > 0);
+	KASSERT(bim != NULL);
+	KASSERT(bim->num > 0);
 
 #ifdef DEBUG_MEMLOAD
 	printf("MEMMAP: %s MEMORY MAP (%d ENTRIES):\n",
-	    efimemmap ? "UEFI" : "BIOS", num);
+	    lookup_bootinfo(BTINFO_EFIMEMMAP) != NULL ? "UEFI" : "BIOS",
+	    bim->num);
 #endif
 
-	for (x = 0; x < num; x++) {
-		if (efimemmap) {
-			struct efi_md *md = (struct efi_md *)
-			    (bim.efi->memmap + bim.efi->size * x);
-			addr = md->md_phys;
-			size = md->md_pages * EFI_PAGE_SIZE;
-			type = efi_getbiosmemtype(md->md_type, md->md_attr);
+	for (x = 0; x < bim->num; x++) {
+		addr = bim->entry[x].addr;
+		size = bim->entry[x].size;
+		type = bim->entry[x].type;
 #ifdef DEBUG_MEMLOAD
-			printf("MEMMAP: p0x%016" PRIx64 "-0x%016" PRIx64
-			    ", v0x%016" PRIx64 "-0x%016" PRIx64
-			    ", size=0x%016" PRIx64 ", attr=0x%016" PRIx64
-			    ", type=%d(%s)\n",
-			    addr, addr + size - 1,
-			    (uint64_t)(u_long)md->md_virt,
-			    (uint64_t)(u_long)md->md_virt + size - 1,
-			    size, md->md_attr, md->md_type,
-			    efi_getmemtype_str(md->md_type));
+		printf("MEMMAP: 0x%016" PRIx64 "-0x%016" PRIx64
+		    ", size=0x%016" PRIx64 ", type=%d(%s)\n",
+		    addr, addr + size - 1, size, type,
+		    (type == BIM_Memory) ?  "Memory" :
+		    (type == BIM_Reserved) ?  "Reserved" :
+		    (type == BIM_ACPI) ? "ACPI" :
+		    (type == BIM_NVS) ? "NVS" :
+		    (type == BIM_PMEM) ? "Persistent" :
+		    (type == BIM_PRAM) ? "Persistent (Legacy)" :
+		    "unknown");
 #endif
-		} else {
-			addr = bim.bios->entry[x].addr;
-			size = bim.bios->entry[x].size;
-			type = bim.bios->entry[x].type;
-#ifdef DEBUG_MEMLOAD
-			printf("MEMMAP: 0x%016" PRIx64 "-0x%016" PRIx64
-			    ", size=0x%016" PRIx64 ", type=%d(%s)\n",
-			    addr, addr + size - 1, size, type,
-			    (type == BIM_Memory) ?  "Memory" :
-			    (type == BIM_Reserved) ?  "Reserved" :
-			    (type == BIM_ACPI) ? "ACPI" :
-			    (type == BIM_NVS) ? "NVS" :
-			    "unknown");
-#endif
-		}
 
 		/* If the segment is not memory, skip it. */
 		switch (type) {
@@ -705,26 +677,24 @@ x86_parse_clusters(struct btinfo_common *bi, struct extent *iomem_ex)
 		seg_end = addr + size;
 
 		/*
-		 * XXX XXX: Avoid compatibility holes.
-		 *
-		 * Holes within memory space that allow access to be directed
-		 * to the PC-compatible frame buffer (0xa0000-0xbffff), to
-		 * adapter ROM space (0xc0000-0xdffff), and to system BIOS
-		 * space (0xe0000-0xfffff).
-		 *
-		 * Some laptop (for example, Toshiba Satellite2550X) report
-		 * this area and occurred problems, so we avoid this area.
+		 * XXX XXX: Avoid the ISA I/O MEM.
+		 * 
+		 * Some laptops (for example, Toshiba Satellite2550X) report
+		 * this area as valid.
 		 */
-		if (seg_start < 0x100000 && seg_end > 0xa0000) {
+		if (seg_start < IOM_END && seg_end > IOM_BEGIN) {
 			printf("WARNING: memory map entry overlaps "
 			    "with ``Compatibility Holes'': "
 			    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n", seg_start,
 			    seg_end - seg_start, type);
 
-			x86_add_cluster(iomem_ex, seg_start, 0xa0000, type);
-			x86_add_cluster(iomem_ex, 0x100000, seg_end, type);
+			if (x86_add_cluster(seg_start, IOM_BEGIN, type) == -1)
+				break;
+			if (x86_add_cluster(IOM_END, seg_end, type) == -1)
+				break;
 		} else {
-			x86_add_cluster(iomem_ex, seg_start, seg_end, type);
+			if (x86_add_cluster(seg_start, seg_end, type) == -1)
+				break;
 		}
 	}
 
@@ -732,8 +702,9 @@ x86_parse_clusters(struct btinfo_common *bi, struct extent *iomem_ex)
 }
 
 static int
-x86_fake_clusters(struct extent *iomem_ex)
+x86_fake_clusters(void)
 {
+	extern struct extent *iomem_ex;
 	phys_ram_seg_t *cluster;
 	KASSERT(mem_cluster_cnt == 0);
 
@@ -843,8 +814,7 @@ x86_load_region(uint64_t seg_start, uint64_t seg_end)
 void
 init_x86_clusters(void)
 {
-	extern struct extent *iomem_ex;
-	struct btinfo_memmap *bim = NULL;
+	struct btinfo_memmap *bim;
 	struct btinfo_efimemmap *biem;
 
 	/*
@@ -854,22 +824,24 @@ init_x86_clusters(void)
 #ifdef i386
 	extern int biosmem_implicit;
 	biem = lookup_bootinfo(BTINFO_EFIMEMMAP);
-	if (biem == NULL)
+	if (biem != NULL)
+		bim = efi_get_e820memmap();
+	else
 		bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if ((biosmem_implicit || (biosbasemem == 0 && biosextmem == 0)) &&
-	    ((bim != NULL && bim->num > 0) || (biem != NULL && biem->num > 0)))
-		x86_parse_clusters(biem != NULL ? &biem->common : &bim->common,
-		    iomem_ex);
+	    bim != NULL && bim->num > 0)
+		x86_parse_clusters(bim);
 #else
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 	biem = lookup_bootinfo(BTINFO_EFIMEMMAP);
-	if (biem == NULL)
+	if (biem != NULL)
+		bim = efi_get_e820memmap();
+	else
 		bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if ((bim != NULL && bim->num > 0) || (biem != NULL && biem->num > 0))
-		x86_parse_clusters(biem != NULL ? &biem->common : &bim->common,
-		    iomem_ex);
+	if (bim != NULL && bim->num > 0)
+		x86_parse_clusters(bim);
 #else
-	(void)bim, (void)biem, (void)iomem_ex;
+	(void)bim, (void)biem;
 #endif
 #endif
 
@@ -878,7 +850,7 @@ init_x86_clusters(void)
 		 * If x86_parse_clusters didn't find any valid segment, create
 		 * fake clusters.
 		 */
-		x86_fake_clusters(iomem_ex);
+		x86_fake_clusters();
 	}
 }
 
@@ -1096,10 +1068,10 @@ machdep_init(void)
 void
 x86_startup(void)
 {
-
 #if !defined(XEN)
 	nmi_init();
-#endif /* !defined(XEN) */
+	pmc_init();
+#endif
 }
 
 /*
@@ -1208,11 +1180,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	    CPU_SSE2);
 
 	const_sysctl(clog, "fpu_save", CTLTYPE_INT, x86_fpu_save,
-	    CTL_CREATE);
+	    CPU_FPU_SAVE);
 	const_sysctl(clog, "fpu_save_size", CTLTYPE_INT, x86_fpu_save_size,
-	    CTL_CREATE);
+	    CPU_FPU_SAVE_SIZE);
 	const_sysctl(clog, "xsave_features", CTLTYPE_QUAD, x86_xsave_features,
-	    CTL_CREATE);
+	    CPU_XSAVE_FEATURES);
 
 #ifndef XEN
 	const_sysctl(clog, "biosbasemem", CTLTYPE_INT, biosbasemem,

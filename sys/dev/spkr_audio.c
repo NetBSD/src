@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr_audio.c,v 1.3.6.2 2017/02/05 13:40:26 skrll Exp $	*/
+/*	$NetBSD: spkr_audio.c,v 1.3.6.3 2017/08/28 17:52:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.3.6.2 2017/02/05 13:40:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.3.6.3 2017/08/28 17:52:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,21 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: spkr_audio.c,v 1.3.6.2 2017/02/05 13:40:26 skrll Exp
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
-#include <sys/condvar.h>
-#include <sys/mutex.h>
-#include <sys/kthread.h>
 #include <sys/sysctl.h>
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
-
-struct vbell_args {
-	u_int pitch;
-	u_int period;
-	u_int volume;
-	bool dying;
-};
-
-static void bell_thread(void *) __dead;
 
 #include <dev/audiobellvar.h>
 
@@ -63,18 +51,17 @@ static void bell_thread(void *) __dead;
 static int spkr_audio_probe(device_t, cfdata_t, void *);
 static void spkr_audio_attach(device_t, device_t, void *);
 static int spkr_audio_detach(device_t, int);
+static int spkr_audio_rescan(device_t, const char *, const int *);
+static void spkr_audio_childdet(device_t, device_t);
 
 struct spkr_audio_softc {
 	struct spkr_softc sc_spkr;
-	lwp_t		*sc_bellthread;
-	kmutex_t	sc_bellock;
-	kcondvar_t	sc_bellcv;
 	device_t		sc_audiodev;
-	struct vbell_args sc_bell_args;
 };
 
-CFATTACH_DECL_NEW(spkr_audio, sizeof(struct spkr_audio_softc),
-    spkr_audio_probe, spkr_audio_attach, spkr_audio_detach, NULL);
+CFATTACH_DECL3_NEW(spkr_audio, sizeof(struct spkr_audio_softc),
+    spkr_audio_probe, spkr_audio_attach, spkr_audio_detach, NULL,
+    spkr_audio_rescan, spkr_audio_childdet, 0);
 
 static void
 spkr_audio_tone(device_t self, u_int xhz, u_int ticks)
@@ -84,7 +71,8 @@ spkr_audio_tone(device_t self, u_int xhz, u_int ticks)
 #ifdef SPKRDEBUG
 	aprint_debug_dev(self, "%s: %u %d\n", __func__, xhz, ticks);
 #endif /* SPKRDEBUG */
-	audiobell(sc->sc_audiodev, xhz, ticks * (1000 / hz), 80, 0);
+	audiobell(sc->sc_audiodev, xhz, ticks * (1000 / hz),
+	    sc->sc_spkr.sc_vol, 0);
 }
 
 static void
@@ -96,25 +84,9 @@ spkr_audio_rest(device_t self, int ticks)
 	aprint_debug_dev(self, "%s: %d\n", __func__, ticks);
 #endif /* SPKRDEBUG */
 	if (ticks > 0)
-		audiobell(sc->sc_audiodev, 0, ticks * (1000 / hz), 80, 0);
+		audiobell(sc->sc_audiodev, 0, ticks * (1000 / hz),
+		    sc->sc_spkr.sc_vol, 0);
 }
-
-#ifdef notyet
-static void
-spkr_audio_play(device_t self, u_int pitch, u_int period, u_int volume)
-{
-	struct spkr_audio_softc *sc = device_private(self);
-
-	mutex_enter(&sc->sc_bellock);
-	sc->sc_bell_args.dying = false;
-	sc->sc_bell_args.pitch = pitch;
-	sc->sc_bell_args.period = period;
-	sc->sc_bell_args.volume = volume;
-
-	cv_broadcast(&sc->sc_bellcv);
-	mutex_exit(&sc->sc_bellock);
-}
-#endif
 
 static int
 spkr_audio_probe(device_t parent, cfdata_t cf, void *aux)
@@ -132,14 +104,10 @@ spkr_audio_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": PC Speaker (synthesized)\n");
 
 	sc->sc_audiodev = parent;
+	sc->sc_spkr.sc_vol = 80;
 	
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n"); 
-	mutex_init(&sc->sc_bellock, MUTEX_DEFAULT, IPL_SCHED);
-	cv_init(&sc->sc_bellcv, "bellcv");
-
-	kthread_create(PRI_BIO, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
-	    bell_thread, sc, &sc->sc_bellthread, "%s", device_xname(self));
 
 	spkr_attach(self, spkr_audio_tone, spkr_audio_rest);
 }
@@ -147,7 +115,6 @@ spkr_audio_attach(device_t parent, device_t self, void *aux)
 static int
 spkr_audio_detach(device_t self, int flags)
 {
-	struct spkr_audio_softc *sc = device_private(self);
 	int error;
 
 	if ((error = spkr_detach(self, flags)) != 0)
@@ -155,41 +122,19 @@ spkr_audio_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	mutex_enter(&sc->sc_bellock);
-	sc->sc_bell_args.dying = true;
-
-	cv_broadcast(&sc->sc_bellcv);
-	mutex_exit(&sc->sc_bellock);
-
-	kthread_join(sc->sc_bellthread);
-	cv_destroy(&sc->sc_bellcv);
-	mutex_destroy(&sc->sc_bellock);
-
 	return 0;
 }
 
-static void
-bell_thread(void *arg)
+static int 
+spkr_audio_rescan(device_t self, const char *iattr, const int *locators)
 {
-	struct spkr_audio_softc *sc = arg;
-	struct vbell_args *vb = &sc->sc_bell_args;
-	u_int bpitch;
-	u_int bperiod;
-	u_int bvolume;
-	
-	for (;;) {
-		mutex_enter(&sc->sc_bellock);
-		cv_wait_sig(&sc->sc_bellcv, &sc->sc_bellock);
-		
-		if (vb->dying == true) {
-			mutex_exit(&sc->sc_bellock);
-			kthread_exit(0);
-		}
-		
-		bpitch = vb->pitch;
-		bperiod = vb->period;
-		bvolume = vb->volume;
-		mutex_exit(&sc->sc_bellock);
-		audiobell(sc->sc_audiodev, bpitch, bperiod, bvolume, 0);
-	}
+
+	return spkr_rescan(self, iattr, locators);
+}
+
+static void 
+spkr_audio_childdet(device_t self, device_t child)
+{
+ 
+	spkr_childdet(self, child);
 }

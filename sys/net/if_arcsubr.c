@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.66.4.8 2017/02/05 13:40:58 skrll Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.66.4.9 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.66.4.8 2017/02/05 13:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.66.4.9 2017/08/28 17:53:11 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -218,8 +218,14 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 #endif
 #ifdef INET6
 	case AF_INET6:
-		if (!nd6_storelladdr(ifp, rt, m, dst, &adst, sizeof(adst)))
-			return (0); /* it must be impossible, but... */
+		if (m->m_flags & M_MCAST) {
+			adst = 0;
+		} else {
+			error = nd6_resolve(ifp, rt, m, dst, &adst,
+			    sizeof(adst));
+			if (error != 0)
+				return error == EWOULDBLOCK ? 0 : error;
+		}
 		atype = htons(ARCTYPE_INET6);
 		newencoding = 1;
 		break;

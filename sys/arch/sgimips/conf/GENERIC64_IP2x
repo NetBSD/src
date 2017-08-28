@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC64_IP2x,v 1.4 2014/08/23 20:26:59 dholland Exp $
+#	$NetBSD: GENERIC64_IP2x,v 1.4.2.1 2017/08/28 17:51:51 skrll Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ include		"arch/sgimips/conf/std.sgimips64"
 no makeoptions	TEXTADDR			# entry point
 makeoptions	TEXTADDR=0xffffffff88069000	# entry point
 
-#ident		"GENERIC64-IP2x-$Revision: 1.4 $"
+#ident		"GENERIC64-IP2x-$Revision: 1.4.2.1 $"
 
 no makeoptions	WANT_ECOFF
 makeoptions	WANT_ECOFF="no"		# Create an ECOFF kernel in addition
@@ -43,7 +43,6 @@ makeoptions	WANT_ECOFF="no"		# Create an ECOFF kernel in addition
 #options 	COMPAT_20	# NetBSD 2.0,
 #options 	COMPAT_30	# NetBSD 3.0, and
 #options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix 

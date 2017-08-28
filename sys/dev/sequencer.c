@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.59.4.2 2015/09/22 12:05:56 skrll Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.59.4.3 2017/08/28 17:52:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,9 +55,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.59.4.2 2015/09/22 12:05:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.59.4.3 2017/08/28 17:52:00 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "sequencer.h"
+#include "midi.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -80,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.59.4.2 2015/09/22 12:05:56 skrll Exp
 #include <sys/pcq.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <dev/midi_if.h>
 #include <dev/midivar.h>
@@ -192,12 +196,6 @@ static struct sequencer_softc *
 sequencercreate(int unit)
 {
 	struct sequencer_softc *sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
-	if (sc == NULL) {
-#ifdef DIAGNOSTIC
-		printf("%s: out of memory\n", __func__);
-#endif
-		return NULL;
-	}
 	sc->sc_unit = unit;
 	callout_init(&sc->sc_callout, CALLOUT_MPSAFE);
 	sc->sih = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
@@ -1609,7 +1607,6 @@ midiseq_loadpatch(struct midi_dev *md,
 	return error;
 }
 
-#include "midi.h"
 #if NMIDI == 0
 static dev_type_open(midiopen);
 static dev_type_close(midiclose);
@@ -1667,3 +1664,50 @@ midi_writebytes(int unit, u_char *bf, int cc)
 	return (ENXIO);
 }
 #endif /* NMIDI == 0 */
+
+#ifdef _MODULE
+extern struct cfdriver sequencer_cd;
+#include "ioconf.c"
+
+devmajor_t sequencer_bmajor = -1, sequencer_cmajor = -1;
+#endif
+
+MODULE(MODULE_CLASS_DRIVER, sequencer, "midi");
+
+static int
+sequencer_modcmd(modcmd_t cmd, void *arg)
+{
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = devsw_attach(sequencer_cd.cd_name,
+		    NULL, &sequencer_bmajor,
+		    &sequencer_cdevsw, &sequencer_cmajor);
+		if (error)
+			break;
+
+		error = config_init_component(cfdriver_ioconf_sequencer,
+		    cfattach_ioconf_sequencer, cfdata_ioconf_sequencer);
+		if (error) {
+			devsw_detach(NULL, &sequencer_cdevsw);
+		}
+		break;
+	case MODULE_CMD_FINI:
+		devsw_detach(NULL, &sequencer_cdevsw);
+		error = config_fini_component(cfdriver_ioconf_sequencer,
+		   cfattach_ioconf_sequencer, cfdata_ioconf_sequencer);
+		if (error)
+			devsw_attach(sequencer_cd.cd_name,
+			    NULL, &sequencer_bmajor,
+			    &sequencer_cdevsw, &sequencer_cmajor);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
+}

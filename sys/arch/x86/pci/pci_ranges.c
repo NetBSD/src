@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_ranges.c,v 1.4.14.2 2016/07/09 20:24:59 skrll Exp $	*/
+/*	$NetBSD: pci_ranges.c,v 1.4.14.3 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.4.14.2 2016/07/09 20:24:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.4.14.3 2017/08/28 17:51:56 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,11 +92,8 @@ pci_alloc_dup(const pci_alloc_t *pal)
 {
 	pci_alloc_t *npal;
 
-	if ((npal = kmem_alloc(sizeof(*npal), KM_SLEEP)) == NULL)
-		return NULL;
-
+	npal = kmem_alloc(sizeof(*npal), KM_SLEEP);
 	*npal = *pal;
-
 	return npal;
 }
 

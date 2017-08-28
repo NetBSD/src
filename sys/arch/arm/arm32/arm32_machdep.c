@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.108.2.3 2016/10/05 20:55:24 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.108.2.4 2017/08/28 17:51:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.108.2.3 2016/10/05 20:55:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.108.2.4 2017/08/28 17:51:29 skrll Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -315,10 +315,30 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
+	/*
+	 * This is actually done by initarm_common, but not all ports use it
+	 * yet so do it here to catch them as well
+	 */
 	struct lwp * const l = &lwp0;
 	struct pcb * const pcb = lwp_getpcb(l);
+
+	/* Zero out the PCB. */
+ 	memset(pcb, 0, sizeof(*pcb));
+
 	pcb->pcb_ksp = uvm_lwp_getuarea(l) + USPACE_SVC_STACK_TOP;
-	lwp_settrapframe(l, (struct trapframe *)pcb->pcb_ksp - 1);
+	pcb->pcb_ksp -= sizeof(struct trapframe);
+
+	struct trapframe * tf = (struct trapframe *)pcb->pcb_ksp;
+
+	/* Zero out the trapframe. */
+	memset(tf, 0, sizeof(*tf));
+	lwp_settrapframe(l, tf);
+
+#if defined(__ARMEB__)
+	tf->tf_spsr = PSR_USR32_MODE | (CPU_IS_ARMV7_P() ? PSR_E_BIT : 0);
+#else
+ 	tf->tf_spsr = PSR_USR32_MODE;
+#endif
 }
 
 /*

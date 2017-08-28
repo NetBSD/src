@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.2.2.6 2016/04/22 15:44:09 skrll Exp $ */
+/* $NetBSD: tegra_var.h,v 1.2.2.7 2017/08/28 17:51:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,19 +39,8 @@ extern struct bus_space armv7_generic_bs_tag;
 extern struct bus_space armv7_generic_a4x_bs_tag;
 extern bus_space_handle_t tegra_ppsb_bsh;
 extern bus_space_handle_t tegra_apb_bsh;
-extern struct arm32_bus_dma_tag tegra_dma_tag;
 
-#define CHIP_ID_TEGRA20		0x20
-#define CHIP_ID_TEGRA30		0x30
-#define CHIP_ID_TEGRA114	0x35
-#define CHIP_ID_TEGRA124	0x40
-#define CHIP_ID_TEGRA132	0x13
-
-u_int	tegra_chip_id(void);
-const char *tegra_chip_name(void);
 void	tegra_bootstrap(void);
-void	tegra_dma_bootstrap(psize_t);
-void	tegra_cpuinit(void);
 
 struct tegra_gpio_pin;
 struct tegra_gpio_pin *tegra_gpio_acquire(const char *, u_int);
@@ -85,11 +74,12 @@ void	tegra_pmc_power(u_int, bool);
 void	tegra_pmc_remove_clamping(u_int);
 void	tegra_pmc_hdmi_enable(void);
 
-psize_t	tegra_mc_memsize(void);
-
 uint32_t tegra_fuse_read(u_int);
 
+void	tegra_timer_delay(u_int);
+
 void	tegra_xusbpad_sata_enable(void);
+void	tegra_xusbpad_xhci_enable(void);
 
 struct videomode;
 int	tegra_dc_port(device_t);
@@ -104,11 +94,12 @@ struct tegra_cpufreq_func {
 	size_t (*get_available)(u_int *, size_t);
 };
 void	tegra_cpufreq_register(const struct tegra_cpufreq_func *);
-void	tegra_cpufreq_init(void);
 
 #if defined(SOC_TEGRA124)
-void	tegra124_cpuinit(void);
 void	tegra124_mpinit(void);
+#endif
+#if defined(SOC_TEGRA210)
+void	tegra210_mpinit(void);
 #endif
 
 static void inline

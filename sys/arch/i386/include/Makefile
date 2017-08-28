@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43.4.1 2016/03/19 11:30:00 skrll Exp $
+#	$NetBSD: Makefile,v 1.43.4.2 2017/08/28 17:51:40 skrll Exp $
 
 INCSDIR= /usr/include/i386
 
@@ -7,9 +7,9 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h \
 	cdefs.h cpu.h cpu_rng.h cputypes.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
-	fenv.h float.h frame.h freebsd_machdep.h \
+	fenv.h float.h frame.h \
 	gdt.h \
-	ibcs2_machdep.h ieee.h ieeefp.h \
+	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h intrdefs.h \
 	joystick.h \
@@ -20,9 +20,9 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h \
 	pte.h ptrace.h \
 	reg.h rwlock.h \
 	segments.h setjmp.h signal.h sljit_machdep.h specialreg.h spkr.h \
-	svr4_machdep.h sysarch.h \
+	sysarch.h \
 	trap.h tss.h types.h \
-	vm86.h vmparam.h \
+	vmparam.h \
 	wchar_limits.h
 
 .include <bsd.kinc.mk>

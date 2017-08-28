@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.8.4.2 2015/06/06 14:39:55 skrll Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.8.4.3 2017/08/28 17:51:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.8.4.2 2015/06/06 14:39:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.8.4.3 2017/08/28 17:51:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,7 +103,9 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * This runs at a fixed frequency of 1 to 50MHz.
 	 */
-	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);
+	if (!prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq))
+		sc->sc_freq = armreg_cnt_frq_read();
+
 	KASSERT(sc->sc_freq != 0);
 
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
@@ -147,6 +149,10 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	gtmr_timecounter.tc_frequency = sc->sc_freq;
 
 	tc_init(&gtmr_timecounter);
+
+	/* Disable the timer until we are ready */
+	armreg_cntv_ctl_write(0);
+	armreg_cntp_ctl_write(0);
 }
 
 void
@@ -217,7 +223,7 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 }
 
 void
-cpu_initclocks(void)
+gtmr_cpu_initclocks(void)
 {
 	struct gtmr_softc * const sc = &gtmr_sc;
 

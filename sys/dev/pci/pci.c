@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.145.2.4 2016/03/19 11:30:11 skrll Exp $	*/
+/*	$NetBSD: pci.c,v 1.145.2.5 2017/08/28 17:52:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.145.2.4 2016/03/19 11:30:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.145.2.5 2017/08/28 17:52:06 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.145.2.4 2016/03/19 11:30:11 skrll Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/ppbvar.h>
 
 #include <net/if.h>
 
@@ -692,6 +693,26 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 	uint8_t devs[32];
 	int i, n;
 
+	device_t bridgedev;
+	bool arien = false;
+
+	/* Check PCIe ARI */
+	bridgedev = device_parent(sc->sc_dev);
+	if (device_is_a(bridgedev, "ppb")) {
+		struct ppb_softc *ppbsc = device_private(bridgedev);
+		pci_chipset_tag_t ppbpc = ppbsc->sc_pc;
+		pcitag_t ppbtag = ppbsc->sc_tag;
+		pcireg_t pciecap, reg;
+
+		if (pci_get_capability(ppbpc, ppbtag, PCI_CAP_PCIEXPRESS,
+		    &pciecap, NULL) != 0) {
+			reg = pci_conf_read(ppbpc, ppbtag, pciecap
+			    + PCIE_DCSR2);
+			if ((reg & PCIE_DCSR2_ARI_FWD) != 0)
+				arien = true;
+		}
+	}
+
 	n = pci_bus_devorder(sc->sc_pc, sc->sc_bus, devs, __arraycount(devs));
 	for (i = 0; i < n; i++) {
 		device = devs[i];
@@ -723,6 +744,8 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 		else if (qd != NULL &&
 		      (qd->quirks & PCI_QUIRK_MONOFUNCTION) != 0)
 			nfunctions = 1;
+		else if (arien)
+			nfunctions = 8; /* Scan all if ARI is enabled */
 		else
 			nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
 

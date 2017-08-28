@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.41.4.4 2016/03/19 11:29:57 skrll Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.41.4.5 2017/08/28 17:51:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -96,6 +96,7 @@ load_vfpregs(const struct vfpreg *fregs)
 	case FPU_VFP_CORTEXA15:
 	case FPU_VFP_CORTEXA15_QEMU:
 	case FPU_VFP_CORTEXA53:
+	case FPU_VFP_CORTEXA57:
 #endif
 		load_vfpregs_hi(fregs->vfp_regs);
 #ifdef CPU_ARM11
@@ -119,6 +120,7 @@ save_vfpregs(struct vfpreg *fregs)
 	case FPU_VFP_CORTEXA15:
 	case FPU_VFP_CORTEXA15_QEMU:
 	case FPU_VFP_CORTEXA53:
+	case FPU_VFP_CORTEXA57:
 #endif
 		save_vfpregs_hi(fregs->vfp_regs);
 #ifdef CPU_ARM11
@@ -196,7 +198,7 @@ vfp_fpscr_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	if (pcb->pcb_vfp.vfp_fpexc & VFP_FPEXC_EN)
 		return 1;
 
-	if (__predict_false(!vfp_used_p())) {
+	if (__predict_false(!vfp_used_p(l))) {
 		pcb->pcb_vfp.vfp_fpscr = vfp_fpscr_default;
 	}
 #endif
@@ -320,6 +322,7 @@ vfp_attach(struct cpu_info *ci)
 	case FPU_VFP_CORTEXA15:
 	case FPU_VFP_CORTEXA15_QEMU:
 	case FPU_VFP_CORTEXA53:
+	case FPU_VFP_CORTEXA57:
 		if (armreg_cpacr_read() & CPACR_V7_ASEDIS) {
 			model = "VFP 4.0+";
 		} else {
@@ -434,7 +437,7 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 		 */
 		armreg_fpexc_write(fpexc & ~(VFP_FPEXC_EX|VFP_FPEXC_FSUM));
 
-		pcu_save(&arm_vfp_ops);
+		pcu_save(&arm_vfp_ops, curlwp);
 
 		/*
 		 * XXX Need to emulate bounce instructions here to get correct
@@ -546,9 +549,9 @@ vfp_state_load(lwp_t *l, u_int flags)
 
 	if (fregs->vfp_fpexc & VFP_FPEXC_EX) {
 		/* Need to restore the exception handling state.  */
-		armreg_fpinst2_write(fregs->vfp_fpinst2);
+		armreg_fpinst_write(fregs->vfp_fpinst);
 		if (fregs->vfp_fpexc & VFP_FPEXC_FP2V)
-			armreg_fpinst_write(fregs->vfp_fpinst);
+			armreg_fpinst2_write(fregs->vfp_fpinst2);
 	}
 }
 
@@ -603,29 +606,30 @@ vfp_state_release(lwp_t *l)
 }
 
 void
-vfp_savecontext(void)
+vfp_savecontext(lwp_t *l)
 {
-	pcu_save(&arm_vfp_ops);
+	pcu_save(&arm_vfp_ops, l);
 }
 
 void
-vfp_discardcontext(bool used_p)
+vfp_discardcontext(lwp_t *l, bool used_p)
 {
-	pcu_discard(&arm_vfp_ops, used_p);
+	pcu_discard(&arm_vfp_ops, l, used_p);
 }
 
 bool
-vfp_used_p(void)
+vfp_used_p(const lwp_t *l)
 {
-	return pcu_valid_p(&arm_vfp_ops);
+	return pcu_valid_p(&arm_vfp_ops, l);
 }
 
 void
 vfp_getcontext(struct lwp *l, mcontext_t *mcp, int *flagsp)
 {
-	if (vfp_used_p()) {
+	if (vfp_used_p(l)) {
 		const struct pcb * const pcb = lwp_getpcb(l);
-		pcu_save(&arm_vfp_ops);
+
+		pcu_save(&arm_vfp_ops, l);
 		mcp->__fpu.__vfpregs.__vfp_fpscr = pcb->pcb_vfp.vfp_fpscr;
 		memcpy(mcp->__fpu.__vfpregs.__vfp_fstmx, pcb->pcb_vfp.vfp_regs,
 		    sizeof(mcp->__fpu.__vfpregs.__vfp_fstmx));
@@ -636,8 +640,9 @@ vfp_getcontext(struct lwp *l, mcontext_t *mcp, int *flagsp)
 void
 vfp_setcontext(struct lwp *l, const mcontext_t *mcp)
 {
-	pcu_discard(&arm_vfp_ops, true);
 	struct pcb * const pcb = lwp_getpcb(l);
+
+	pcu_discard(&arm_vfp_ops, l, true);
 	pcb->pcb_vfp.vfp_fpscr = mcp->__fpu.__vfpregs.__vfp_fpscr;
 	memcpy(pcb->pcb_vfp.vfp_regs, mcp->__fpu.__vfpregs.__vfp_fstmx,
 	    sizeof(mcp->__fpu.__vfpregs.__vfp_fstmx));

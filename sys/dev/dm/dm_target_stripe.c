@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.21 2014/08/19 14:43:28 christos Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.21.2.1 2017/08/28 17:52:02 skrll Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -200,13 +200,8 @@ dm_target_stripe_status(void *target_config)
 
 	tsc = target_config;
 
-	if ((params = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP)) == NULL)
-		return NULL;
-
-	if ((tmp = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP)) == NULL) {
-		kmem_free(params, DM_MAX_PARAMS_SIZE);
-		return NULL;
-	}
+	params = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP);
+	tmp = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP);
 
 	snprintf(params, DM_MAX_PARAMS_SIZE, "%d %" PRIu64,
 	    tsc->stripe_num, tsc->stripe_chunksize);

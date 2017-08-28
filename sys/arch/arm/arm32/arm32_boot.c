@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.10.2.4 2017/02/05 13:40:03 skrll Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.10.2.5 2017/08/28 17:51:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,7 +123,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.10.2.4 2017/02/05 13:40:03 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.10.2.5 2017/08/28 17:51:29 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -172,6 +172,27 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	 * this during uvm init.
 	 */
 	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
+
+	struct lwp * const l = &lwp0;
+	struct pcb * const pcb = lwp_getpcb(l);
+
+	/* Zero out the PCB. */
+ 	memset(pcb, 0, sizeof(*pcb));
+
+	pcb->pcb_ksp = uvm_lwp_getuarea(l) + USPACE_SVC_STACK_TOP;
+	pcb->pcb_ksp -= sizeof(struct trapframe);
+
+	struct trapframe * tf = (struct trapframe *)pcb->pcb_ksp;
+
+	/* Zero out the trapframe. */
+	memset(tf, 0, sizeof(*tf));
+	lwp_settrapframe(l, tf);
+
+#if defined(__ARMEB__)
+	tf->tf_spsr = PSR_USR32_MODE | (CPU_IS_ARMV7_P() ? PSR_E_BIT : 0);
+#else
+ 	tf->tf_spsr = PSR_USR32_MODE;
+#endif
 
 #ifdef VERBOSE_INIT_ARM
 	printf("bootstrap done.\n");
@@ -313,7 +334,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 #endif
 
 	/* We return the new stack pointer address */
-	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
+	return pcb->pcb_ksp;
 }
 
 #ifdef MULTIPROCESSOR

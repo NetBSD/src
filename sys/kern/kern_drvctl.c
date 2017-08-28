@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.36.4.2 2015/12/27 12:10:05 skrll Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.36.4.3 2017/08/28 17:53:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.36.4.2 2015/12/27 12:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.36.4.3 2017/08/28 17:53:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,12 +151,6 @@ devmon_insert(const char *event, prop_dictionary_t ev)
 	}
 
 	dce = kmem_alloc(sizeof(*dce), KM_SLEEP);
-	if (dce == NULL) {
-		prop_object_release(ev);
-		mutex_exit(&drvctl_lock);
-		return 0;
-	}
-
 	dce->dce_event = ev;
 
 	if (drvctl_eventcnt == DRVCTL_EVENTQ_DEPTH) {

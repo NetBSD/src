@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.40.2.4 2017/02/05 13:40:58 skrll Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.40.2.5 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.40.2.4 2017/02/05 13:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.40.2.5 2017/08/28 17:53:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -491,6 +491,10 @@ npf_mk_connlist(npf_t *npf, prop_array_t conlist, npf_ruleset_t *natlist,
 	return error;
 }
 
+#if defined(_NPF_TESTING) || defined(_NPF_STANDALONE)
+int npfctl_testing;
+#endif
+
 /*
  * npfctl_load: store passed data i.e. update settings, create passed
  * tables, rules and atomically activate all them.
@@ -512,14 +516,17 @@ npfctl_load(npf_t *npf, u_long cmd, void *data)
 	int error;
 
 	/* Retrieve the dictionary. */
-#if !defined(_NPF_TESTING) && !defined(_NPF_STANDALONE)
-	error = prop_dictionary_copyin_ioctl_size(pref, cmd, &npf_dict,
-	    4 * 1024 * 1024);
-	if (error)
-		return error;
-#else
-	npf_dict = (prop_dictionary_t)pref;
+#if defined(_NPF_TESTING) || defined(_NPF_STANDALONE)
+	if (npfctl_testing)
+		npf_dict = (prop_dictionary_t)pref;
+	else
 #endif
+	{
+		error = prop_dictionary_copyin_ioctl_size(pref, cmd, &npf_dict,
+		    4 * 1024 * 1024);
+		if (error)
+		    return error;
+	}
 
 	/* Dictionary for error reporting and version check. */
 	errdict = prop_dictionary_create();

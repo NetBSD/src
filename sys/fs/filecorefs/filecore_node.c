@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.27.2.1 2016/10/05 20:56:01 skrll Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.27.2.2 2017/08/28 17:53:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.27.2.1 2016/10/05 20:56:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.27.2.2 2017/08/28 17:53:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.27.2.1 2016/10/05 20:56:01 skrll
 #include <fs/filecorefs/filecore_mount.h>
 
 struct pool		filecore_node_pool;
-
-extern int prtactive;	/* 1 => print out reclaim of active vnodes */
 
 static const struct genfs_ops filecore_genfsops = {
         .gop_size = genfs_size,
@@ -213,7 +211,7 @@ filecore_loadvnode(struct mount *mp, struct vnode *vp,
 int
 filecore_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -227,7 +225,7 @@ filecore_inactive(void *v)
 	 */
 	ip->i_flag = 0;
 	*ap->a_recycle = (filecore_staleinode(ip) != 0);
-	VOP_UNLOCK(vp);
+
 	return error;
 }
 
@@ -237,15 +235,14 @@ filecore_inactive(void *v)
 int
 filecore_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip = VTOI(vp);
 
-	if (prtactive && vp->v_usecount > 1)
-		vprint("filecore_reclaim: pushing active", vp);
+	VOP_UNLOCK(vp);
 
 	/*
 	 * Purge old data structures associated with the inode.

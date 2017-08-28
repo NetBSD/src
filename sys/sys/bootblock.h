@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.57 2014/09/14 17:39:06 nonaka Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.57.2.1 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -1089,6 +1089,7 @@ struct x86_boot_params {
 #define	X86_BOOT_MAGIC_2	X86_BOOT_MAGIC(2)	/* bootxx.S */
 #define	X86_BOOT_MAGIC_PXE	X86_BOOT_MAGIC(3)	/* start_pxe.S */
 #define	X86_BOOT_MAGIC_FAT	X86_BOOT_MAGIC(4)	/* fatboot.S */
+#define	X86_BOOT_MAGIC_EFI	X86_BOOT_MAGIC(5)	/* efiboot/start.S */
 #define	X86_MBR_GPT_MAGIC	0xedb88320		/* gpt.S */
 
 		/* values for bp_flags */

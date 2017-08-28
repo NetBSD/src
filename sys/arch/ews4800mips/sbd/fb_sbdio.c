@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sbdio.c,v 1.14.2.1 2015/09/22 12:05:42 skrll Exp $	*/
+/*	$NetBSD: fb_sbdio.c,v 1.14.2.2 2017/08/28 17:51:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define WIRED_FB_TLB
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.14.2.1 2015/09/22 12:05:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.14.2.2 2017/08/28 17:51:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,6 +303,8 @@ _fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		if (ri->ri_flg == RI_FORCEMONO)
 			break;
 		ga_clut_get(ga);
+		if (cmap->index >= 256 || cmap->count > 256 - cmap->index)
+			return (EINVAL);
 		for (i = 0; i < cmap->count; i++) {
 			cmap->red[i] = ga->clut[cmap->index + i][0];
 			cmap->green[i] = ga->clut[cmap->index + i][1];
@@ -313,6 +315,8 @@ _fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	case WSDISPLAYIO_PUTCMAP:
 		if (ri->ri_flg == RI_FORCEMONO)
 			break;
+		if (cmap->index >= 256 || cmap->count > 256 - cmap->index)
+			return (EINVAL);
 		for (i = 0; i < cmap->count; i++) {
 			ga->clut[cmap->index + i][0] = cmap->red[i];
 			ga->clut[cmap->index + i][1] = cmap->green[i];

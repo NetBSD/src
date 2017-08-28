@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.24.2.5 2016/12/05 10:54:50 skrll Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.24.2.6 2017/08/28 17:51:30 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,6 +50,10 @@
 	blx	ip
 #endif
 
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17)
+	.arch		armv7a
+	.arch_extension virt
+#endif
 
 // We'll modify va and pa at run time so we can use relocatable addresses.
 #define MMU_INIT(va,pa,n_sec,attr) \
@@ -778,6 +782,7 @@ cortex_mpcontinuation:
 	movw	r2, #:lower16:MD_CPU_HATCH	// pass md_cpu_hatch
 	movt	r2, #:upper16:MD_CPU_HATCH	// pass md_cpu_hatch
 	bl	_C_LABEL(cpu_hatch)
+	mov	fp, #0				// top stack frame
 	b	_C_LABEL(idle_loop)		// never to return
 ASEND(cortex_mpcontinuation)
 

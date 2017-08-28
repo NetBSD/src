@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.81.4.13 2017/02/05 13:40:46 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.81.4.14 2017/08/28 17:52:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.13 2017/02/05 13:40:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.14 2017/08/28 17:52:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -478,11 +478,6 @@ kue_attach(device_t parent, device_t self, void *aux)
 
 	sc->kue_mcfilters = kmem_alloc(KUE_MCFILTCNT(sc) * ETHER_ADDR_LEN,
 	    KM_SLEEP);
-	if (sc->kue_mcfilters == NULL) {
-		aprint_error_dev(self,
-		    "no memory for multicast filter buffer\n");
-		return;
-	}
 
 	s = splnet();
 

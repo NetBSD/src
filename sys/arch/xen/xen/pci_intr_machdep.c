@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.16.6.1 2015/04/06 15:18:04 skrll Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.16.6.2 2017/08/28 17:51:57 skrll Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.16.6.1 2015/04/06 15:18:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.16.6.2 2017/08/28 17:51:57 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,11 +61,21 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.16.6.1 2015/04/06 15:18:04 sk
 #include <machine/mpacpi.h>
 #endif
 
+/* XXX: cherry@: Hack - this is a symptom of lapic vs. ioapic
+ * needing more code separation.
+ */
+#if NIOAPIC > 0
+#define IRQ_LEGACY_IRQ(_irq) APIC_IRQ_LEGACY_IRQ(_irq)
+#else
+#define IRQ_LEGACY_IRQ(_irq) (_irq & 0xff)
+#endif
+
 int
 pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int pin;
 	int line;
+	int evtch;
 
 #if NIOAPIC > 0
 	int rawpin = pa->pa_rawintrpin;
@@ -85,17 +95,17 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		printf("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
-	ihp->pirq = 0;
+	*ihp = 0;
 
 #if NIOAPIC > 0
 	pci_decompose_tag(pc, pa->pa_tag, &bus, &dev, &func);
 	if (mp_busses != NULL) {
 		if (intr_find_mpmapping(bus, (dev<<2)|(rawpin-1), ihp) == 0) {
-			if (ihp->pirq & APIC_INT_VIA_APIC) {
+			if (*ihp & APIC_INT_VIA_APIC) {
 				/* make sure a new IRQ will be allocated */
-				ihp->pirq &= ~0xff;
+				*ihp &= ~0xff;
 			} else {
-				ihp->pirq |= line;
+				*ihp |= line;
 			}
 			goto end;
 		}
@@ -124,8 +134,8 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 #if NIOAPIC > 0
 	if (mp_busses != NULL) {
 		if (intr_find_mpmapping(mp_isa_bus, line, ihp) == 0) {
-			if ((ihp->pirq & 0xff) == 0)
-				ihp->pirq |= line;
+			if ((*ihp & 0xff) == 0)
+				*ihp |= line;
 			goto end;
 		}
 		printf("pci_intr_map: bus %d dev %d func %d pin %d; line %d\n",
@@ -134,20 +144,19 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	}
 #endif /* NIOAPIC */
 
-	ihp->pirq = line;
+	*ihp = line;
 
 #if NIOAPIC > 0
 end:
 #endif
-	ihp->evtch = xen_intr_map(&ihp->pirq, IST_LEVEL);
-	if (ihp->evtch == -1)
+	evtch = xen_intr_map((int *)ihp, IST_LEVEL);
+	if (evtch == -1)
 		goto bad;
 
 	return 0;
 
 bad:
-	ihp->pirq = -1;
-	ihp->evtch = -1;
+	*ihp = -1;
 	return 1;
 }
 
@@ -155,23 +164,26 @@ const char *
 pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
     size_t len)
 {
+	int evtch;
+
+	evtch = get_pirq_to_evtch(IRQ_LEGACY_IRQ(ih));
 #if NIOAPIC > 0
 	struct ioapic_softc *pic;
-	if (ih.pirq & APIC_INT_VIA_APIC) {
-		pic = ioapic_find(APIC_IRQ_APIC(ih.pirq));
+	if (ih & APIC_INT_VIA_APIC) {
+		pic = ioapic_find(APIC_IRQ_APIC(ih));
 		if (pic == NULL) {
 			printf("%s: bad ioapic %d\n", __func__,
-			    APIC_IRQ_APIC(ih.pirq));
+			    APIC_IRQ_APIC(ih));
 			return NULL;
 		}
 		snprintf(buf, len, "%s pin %d, event channel %d",
-		    device_xname(pic->sc_dev), APIC_IRQ_PIN(ih.pirq),
-		    ih.evtch);
+		    device_xname(pic->sc_dev), APIC_IRQ_PIN(ih),
+		    evtch);
 		return buf;
 	}
 #endif
-	snprintf(buf, len, "irq %d, event channel %d",
-	    ih.pirq, ih.evtch);
+	snprintf(buf, len, "irq %"PRIu64", event channel %d",
+	    ih, evtch);
 	return buf;
 }
 
@@ -201,21 +213,21 @@ pci_intr_establish(pci_chipset_tag_t pcitag, pci_intr_handle_t intrh,
 	char evname[16];
 #if NIOAPIC > 0
 	struct ioapic_softc *pic;
-	if (intrh.pirq & APIC_INT_VIA_APIC) {
-		pic = ioapic_find(APIC_IRQ_APIC(intrh.pirq));
+	if (intrh & APIC_INT_VIA_APIC) {
+		pic = ioapic_find(APIC_IRQ_APIC(intrh));
 		if (pic == NULL) {
 			printf("pci_intr_establish: bad ioapic %d\n",
-			    APIC_IRQ_APIC(intrh.pirq));
+			    APIC_IRQ_APIC(intrh));
 			return NULL;
 		}
 		snprintf(evname, sizeof(evname), "%s pin %d",
-		    device_xname(pic->sc_dev), APIC_IRQ_PIN(intrh.pirq));
+		    device_xname(pic->sc_dev), APIC_IRQ_PIN(intrh));
 	} else
 #endif
-		snprintf(evname, sizeof(evname), "irq%d", intrh.pirq);
+		snprintf(evname, sizeof(evname), "irq%"PRIu64, intrh);
 
-	return (void *)pirq_establish(intrh.pirq & 0xff,
-	    intrh.evtch, func, arg, level, evname);
+	return (void *)pirq_establish(IRQ_LEGACY_IRQ(intrh),
+	    get_pirq_to_evtch(IRQ_LEGACY_IRQ(intrh)), func, arg, level, evname);
 }
 
 void

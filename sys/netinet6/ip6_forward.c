@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.74.2.5 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.74.2.6 2017/08/28 17:53:12 skrll Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.74.2.5 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.74.2.6 2017/08/28 17:53:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -401,7 +401,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 		goto freecopy;
 	ip6 = mtod(m, struct ip6_hdr *);
 
-	error = nd6_output(rt->rt_ifp, origifp, m, dst, rt);
+	error = ip6_if_output(rt->rt_ifp, origifp, m, dst, rt);
 	if (error) {
 		in6_ifstat_inc(rt->rt_ifp, ifs6_out_discard);
 		IP6_STATINC(IP6_STAT_CANTFORWARD);
@@ -460,6 +460,10 @@ ip6_forward(struct mbuf *m, int srcrt)
  drop:
  	m_freem(m);
  out:
+#ifdef IPSEC
+	if (sp != NULL)
+		KEY_SP_UNREF(&sp);
+#endif
 	rtcache_unref(rt, ro);
 	if (ro != NULL)
 		percpu_putref(ip6_forward_rt_percpu);

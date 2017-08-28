@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.20 2013/11/09 21:31:56 christos Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.20.6.1 2017/08/28 17:52:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.20 2013/11/09 21:31:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.20.6.1 2017/08/28 17:52:02 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcapm.h"
@@ -415,6 +415,8 @@ hpcapm_get_event(void *scx, u_int *event_type, u_int *event_info)
 				sc->power_state = APM_SYS_READY;
 			} else
 				*event_info = 0;
+			splx(s);
+
 			return (0);
 		}
 	}

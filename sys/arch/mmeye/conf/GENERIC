@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.120.2.1 2015/09/22 12:05:48 skrll Exp $
+# $NetBSD: GENERIC,v 1.120.2.2 2017/08/28 17:51:46 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.120.2.1 $"
+#ident 		"GENERIC-$Revision: 1.120.2.2 $"
 
 maxusers	16		# estimated number of users
 
@@ -72,7 +72,6 @@ options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_43	# and 4.3BSD
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	BSDDISKLABEL_EI	# endian independent disklabel support
 options 	COMPAT_MMEYE_OLDLABEL	# old mmeye's disklabel support
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

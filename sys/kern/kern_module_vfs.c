@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.12.30.3 2017/02/05 13:40:56 skrll Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.12.30.4 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.12.30.3 2017/02/05 13:40:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.12.30.4 2017/08/28 17:53:07 skrll Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -198,11 +198,6 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 	}
 
 	base = kmem_alloc(plistsize, KM_SLEEP);
-	if (base == NULL) {
-		error = ENOMEM;
-		goto out3;
-	}
-
 	error = vn_rdwr(UIO_READ, nd.ni_vp, base, sb.st_size, 0,
 	    UIO_SYSSPACE, IO_NODELOCKED, curlwp->l_cred, &resid, curlwp);
 	*((uint8_t *)base + sb.st_size) = '\0';

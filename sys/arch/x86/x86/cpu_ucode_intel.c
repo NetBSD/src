@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.5.6.4 2016/12/05 10:54:59 skrll Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.5.6.5 2017/08/28 17:51:56 skrll Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.5.6.4 2016/12/05 10:54:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.5.6.5 2017/08/28 17:51:56 skrll Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
@@ -127,10 +127,6 @@ cpu_ucode_intel_apply(struct cpu_ucode_softc *sc, int cpuno)
 		/* Make the buffer 16 byte aligned */
 		newbufsize = sc->sc_blobsize + 15;
 		uha = kmem_alloc(newbufsize, KM_SLEEP);
-		if (uha == NULL) {
-			printf("%s: memory allocation failed\n", __func__);
-			return EINVAL;
-		}
 		uh = (struct intel1_ucode_header *)roundup2((uintptr_t)uha, 16);
 		/* Copy to the new area */
 		memcpy(uh, sc->sc_blob, sc->sc_blobsize);

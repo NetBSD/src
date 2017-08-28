@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.94.2.7 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.94.2.8 2017/08/28 17:53:12 skrll Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.94.2.7 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.94.2.8 2017/08/28 17:53:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -712,6 +712,7 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 	/* some of the interfaces are inherently not IPv6 capable */
 	switch (ifp->if_type) {
 	case IFT_BRIDGE:
+	case IFT_L2TP:
 #ifdef IFT_PFLOG
 	case IFT_PFLOG:
 #endif
@@ -733,9 +734,6 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 		    if_name(ifp));
 		return;
 	}
-
-	/* create a multicast kludge storage (if we have not had one) */
-	in6_createmkludge(ifp);
 
 	/*
 	 * quirks based on interface type
@@ -811,11 +809,10 @@ in6_ifdetach(struct ifnet *ifp)
 	/* nuke any of IPv6 addresses we have */
 	if_purgeaddrs(ifp, AF_INET6, in6_purgeaddr);
 
+	in6_purge_multi(ifp);
+
 	/* remove ip6_mrouter stuff */
 	ip6_mrouter_detach(ifp);
-
-	/* cleanup multicast address kludge table, if there is any */
-	in6_purgemkludge(ifp);
 
 	/* remove neighbor management table */
 	nd6_purge(ifp, NULL);

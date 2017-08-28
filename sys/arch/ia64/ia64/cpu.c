@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.14 2014/04/03 17:04:46 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.14.6.1 2017/08/28 17:51:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2014/04/03 17:04:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14.6.1 2017/08/28 17:51:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2014/04/03 17:04:46 martin Exp $");
 
 #define MHz	1000000L
 #define GHz	(1000L * MHz)
+
+extern int ia64_sync_icache_needed;
 
 struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE);
 struct cpu_info *cpu_info_list = &cpu_info_primary;
@@ -162,6 +164,19 @@ identifycpu(struct cpu_softc *sc)
 			break;
 		case 0x02:
 			model_name = "Madison II";
+			break;
+		}
+		break;
+	case 0x20:
+		ia64_sync_icache_needed = 1;
+
+		family_name = "Itanium 2";
+		switch (model) {
+		case 0x00:
+			model_name = "Montecito";
+			break;
+		case 0x01:
+			model_name = "Montvale";
 			break;
 		}
 		break;

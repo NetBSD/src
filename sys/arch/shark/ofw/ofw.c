@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.63.6.3 2017/02/05 13:40:20 skrll Exp $	*/
+/*	$NetBSD: ofw.c,v 1.63.6.4 2017/08/28 17:51:51 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.63.6.3 2017/02/05 13:40:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.63.6.4 2017/08/28 17:51:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1755,8 +1755,12 @@ ofw_gettranslation(vaddr_t va)
 #endif
 	exists = 0;	    /* gets set to true if translation exists */
 	if (OF_call_method("translate", mmu_ihandle, 1, 3, va, &pa, &mode,
-	    &exists) != 0)
+	    &exists) != 0) {
+#ifdef OFW_DEBUG
+		printf("(failed)\n");
+#endif
 		return(-1);
+	}
 
 #ifdef OFW_DEBUG
 	printf("%d %x\n", exists, (uint32_t)pa);
@@ -1771,7 +1775,7 @@ ofw_settranslation(vaddr_t va, paddr_t pa, vsize_t size, int mode)
 	int mmu_ihandle = ofw_mmu_ihandle();
 
 #ifdef OFW_DEBUG
-	printf("ofw_settranslation (%x, %x, %x, %x) --> void", (uint32_t)va,
+	printf("ofw_settranslation (%x, %x, %x, %x) --> void\n", (uint32_t)va,
 	    (uint32_t)pa, (uint32_t)size, (uint32_t)mode);
 #endif
 	if (OF_call_method("map", mmu_ihandle, 4, 0, pa, va, size, mode) != 0)

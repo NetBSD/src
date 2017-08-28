@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.115.2.2 2015/12/27 12:10:04 skrll Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.115.2.3 2017/08/28 17:53:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.115.2.2 2015/12/27 12:10:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.115.2.3 2017/08/28 17:53:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -511,6 +511,9 @@ puffs_vfsop_statvfs(struct mount *mp, struct statvfs *sbp)
 static bool
 pageflush_selector(void *cl, struct vnode *vp)
 {
+
+	KASSERT(mutex_owned(vp->v_interlock));
+
 	return vp->v_type == VREG &&
 	    !(LIST_EMPTY(&vp->v_dirtyblkhd) && UVM_OBJ_IS_CLEAN(&vp->v_uobj));
 }
@@ -871,7 +874,7 @@ struct vfsops puffs_vfsops = {
 	.vfs_done = puffs_vfsop_done,
 	.vfs_snapshot = puffs_vfsop_snapshot,
 	.vfs_extattrctl = puffs_vfsop_extattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

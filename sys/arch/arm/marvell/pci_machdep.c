@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.8.6.2 2016/10/05 20:55:25 skrll Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.8.6.3 2017/08/28 17:51:31 skrll Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.8.6.2 2016/10/05 20:55:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.8.6.3 2017/08/28 17:51:31 skrll Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -93,6 +93,7 @@ struct arm32_pci_chipset arm32_gtpci_chipset = {
 	gtpci_gpp_intr_map,
 	gtpci_gpp_intr_string,
 	gtpci_gpp_intr_evcnt,
+	NULL,	/* intr_setattr */
 	gtpci_gpp_intr_establish,
 	gtpci_gpp_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK
@@ -123,6 +124,7 @@ struct arm32_pci_chipset arm32_mvpex0_chipset = {
 	mvpex_intr_map,
 	mvpex_intr_string,
 	mvpex_intr_evcnt,
+	NULL,	/* intr_setattr */
 	mvpex_intr_establish,
 	mvpex_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK
@@ -146,6 +148,7 @@ struct arm32_pci_chipset arm32_mvpex1_chipset = {
 	mvpex_intr_map,
 	mvpex_intr_string,
 	mvpex_intr_evcnt,
+	NULL,	/* intr_setattr */
 	mvpex_intr_establish,
 	mvpex_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK
@@ -169,6 +172,7 @@ struct arm32_pci_chipset arm32_mvpex2_chipset = {
 	mvpex_intr_map,
 	mvpex_intr_string,
 	mvpex_intr_evcnt,
+	NULL,	/* intr_setattr */
 	mvpex_intr_establish,
 	mvpex_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK
@@ -192,6 +196,7 @@ struct arm32_pci_chipset arm32_mvpex3_chipset = {
 	mvpex_intr_map,
 	mvpex_intr_string,
 	mvpex_intr_evcnt,
+	NULL,	/* intr_setattr */
 	mvpex_intr_establish,
 	mvpex_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK
@@ -215,6 +220,7 @@ struct arm32_pci_chipset arm32_mvpex4_chipset = {
 	mvpex_intr_map,
 	mvpex_intr_string,
 	mvpex_intr_evcnt,
+	NULL,	/* intr_setattr */
 	mvpex_intr_establish,
 	mvpex_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK
@@ -238,6 +244,31 @@ struct arm32_pci_chipset arm32_mvpex5_chipset = {
 	mvpex_intr_map,
 	mvpex_intr_string,
 	mvpex_intr_evcnt,
+	NULL,	/* intr_setattr */
+	mvpex_intr_establish,
+	mvpex_intr_disestablish,
+#ifdef __HAVE_PCI_CONF_HOOK
+	mvpex_conf_hook,
+#endif
+	mvpex_conf_interrupt,
+};
+struct arm32_pci_chipset arm32_mvpex6_chipset = {
+	NULL,	/* conf_v */
+	mvpex_attach_hook,
+	mvpex_bus_maxdevs,
+	mvpex_make_tag,
+	mvpex_decompose_tag,
+#if NMVPEX_MBUS > 0
+	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+#else
+	mvpex_conf_read,
+#endif
+	mvpex_conf_write,
+	NULL,	/* intr_v */
+	mvpex_intr_map,
+	mvpex_intr_string,
+	mvpex_intr_evcnt,
+	NULL,	/* intr_setattr */
 	mvpex_intr_establish,
 	mvpex_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK

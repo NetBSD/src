@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.31.6.1 2015/09/22 12:06:00 skrll Exp $ */
+/* $NetBSD: pckbd.c,v 1.31.6.2 2017/08/28 17:52:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.31.6.1 2015/09/22 12:06:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.31.6.2 2017/08/28 17:52:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1010,6 +1010,7 @@ pckbd_ioctl(void *v, u_long cmd, void *data, int flag,
 	case WSKBDIO_GETLEDS:
 		*(int *)data = pckbd_led_decode(sc->sc_ledstate);
 		return 0;
+#if 0
 	case WSKBDIO_COMPLEXBELL:
 #define d ((struct wskbd_bell_data *)data)
 		/*
@@ -1019,6 +1020,7 @@ pckbd_ioctl(void *v, u_long cmd, void *data, int flag,
 		pckbd_bell(d->pitch, d->period, d->volume, 0);
 #undef d
 		return 0;
+#endif
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
 		sc->rawkbd = (*(int *)data == WSKBD_RAW);

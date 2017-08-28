@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.80.2.1 2015/09/22 12:05:36 skrll Exp $
+#	$NetBSD: PICA,v 1.80.2.2 2017/08/28 17:51:29 skrll Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -39,7 +39,6 @@ pseudo-device	ksyms
 #makeoptions	DEBUG="-g"		# compile full symbol table
 
 # Compatibility options
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_10	# NetBSD 1.0,
 options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# NetBSD 1.2,

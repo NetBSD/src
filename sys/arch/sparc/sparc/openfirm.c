@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.19.2.2 2016/04/22 15:44:11 skrll Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.19.2.3 2017/08/28 17:51:52 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.19.2.2 2016/04/22 15:44:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.19.2.3 2017/08/28 17:51:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,6 +166,7 @@ OF_getproplen(int handle, const char *prop)
 		cell_t size;
 	} args;
 
+	KASSERT(handle != 0);
 	args.name = ADR2CELL("getproplen");
 	args.nargs = 2;
 	args.nreturns = 1;
@@ -190,6 +191,7 @@ OF_getprop(int handle, const char *prop, void *buf, int buflen)
 		cell_t size;
 	} args;
 
+	KASSERT(handle != 0);
 	if (buflen > NBPG)
 		return -1;
 	args.name = ADR2CELL("getprop");

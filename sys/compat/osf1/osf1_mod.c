@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mod.c,v 1.4 2014/03/07 01:33:43 christos Exp $	*/
+/*	$NetBSD: osf1_mod.c,v 1.4.6.1 2017/08/28 17:51:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mod.c,v 1.4 2014/03/07 01:33:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mod.c,v 1.4.6.1 2017/08/28 17:51:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -48,8 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_mod.c,v 1.4 2014/03/07 01:33:43 christos Exp $"
 
 MODULE(MODULE_CLASS_EXEC, compat_osf1, "compat,exec_ecoff");
 
-#define OSF1_ARGLEN howmany(OSF1_MAX_AUX_ENTRIES * sizeof (struct osf1_auxv) + \
-      2 * (MAXPATHLEN + 1), sizeof (char *)) /* exec & loader names */
+#define OSF1_ARGLEN \
+	(OSF1_MAX_AUX_ENTRIES * sizeof (struct osf1_auxv) + \
+	 2 * (MAXPATHLEN + 1)) /* exec & loader names */
 
 static struct execsw osf1_execsw = {
 	.es_hdrsz = ECOFF_HDR_SIZE,

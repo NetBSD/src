@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.23.6.2 2017/02/05 13:40:23 skrll Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.23.6.3 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -119,6 +119,10 @@ struct bi_memmap_entry {
 #define	BIM_Reserved	2	/* in use or reserved by the system */
 #define	BIM_ACPI	3	/* ACPI Reclaim memory */
 #define	BIM_NVS		4	/* ACPI NVS memory */
+#define	BIM_Unusable	5	/* errors have been detected */
+#define	BIM_Disabled	6	/* not enabled */
+#define	BIM_PMEM	7	/* Persistent memory */
+#define	BIM_PRAM	12	/* legacy NVDIMM (OEM defined) */
 
 struct btinfo_memmap {
 	struct btinfo_common common;

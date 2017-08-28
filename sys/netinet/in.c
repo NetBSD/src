@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.148.2.11 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: in.c,v 1.148.2.12 2017/08/28 17:53:12 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148.2.11 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148.2.12 2017/08/28 17:53:12 skrll Exp $");
 
 #include "arp.h"
 
@@ -258,6 +258,43 @@ in_localaddr(struct in_addr in)
 }
 
 /*
+ * like in_localaddr() but can specify ifp.
+ */
+int
+in_direct(struct in_addr in, struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+	int localaddr = 0;
+	int s;
+
+	KASSERT(ifp != NULL);
+
+#define ia (ifatoia(ifa))
+	s = pserialize_read_enter();
+	if (subnetsarelocal) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
+			if (ifa->ifa_addr->sa_family == AF_INET &&
+			    ((in.s_addr & ia->ia_netmask) == ia->ia_net)) {
+				localaddr = 1;
+				break;
+			}
+		}
+	} else {
+		IFADDR_READER_FOREACH(ifa, ifp) {
+			if (ifa->ifa_addr->sa_family == AF_INET &&
+			    (in.s_addr & ia->ia_subnetmask) == ia->ia_subnet) {
+				localaddr = 1;
+				break;
+			}
+		}
+	}
+	pserialize_read_exit(s);
+
+	return localaddr;
+#undef ia
+}
+
+/*
  * Determine whether an IP address is in a reserved set of addresses
  * that may not be forwarded, or whether datagrams to that destination
  * may be forwarded.
@@ -292,24 +329,6 @@ in_socktrim(struct sockaddr_in *ap)
 			(ap)->sin_len = cp - (char *) (ap) + 1;
 			break;
 		}
-}
-
-/*
- *  Routine to take an Internet address and convert into a
- *  "dotted quad" representation for printing.
- *  Caller has to make sure that buf is at least INET_ADDRSTRLEN long.
- */
-const char *
-in_fmtaddr(char *buf, struct in_addr addr)
-{
-	addr.s_addr = ntohl(addr.s_addr);
-
-	snprintf(buf, INET_ADDRSTRLEN, "%d.%d.%d.%d",
-	    (addr.s_addr >> 24) & 0xFF,
-	    (addr.s_addr >> 16) & 0xFF,
-	    (addr.s_addr >>  8) & 0xFF,
-	    (addr.s_addr >>  0) & 0xFF);
-	return buf;
 }
 
 /*
@@ -513,6 +532,11 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			IN_ADDRHASH_ENTRY_INIT(ia);
 			IN_ADDRLIST_ENTRY_INIT(ia);
 			ifa_psref_init(&ia->ia_ifa);
+			/*
+			 * We need a reference to make ia survive over in_ifinit
+			 * that does ifaref and ifafree.
+			 */
+			ifaref(&ia->ia_ifa);
 
 			newifaddr = 1;
 		}
@@ -699,6 +723,8 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
 		IN_ADDRLIST_WRITER_INSERT_TAIL(ia);
 		in_addrhash_insert_locked(ia);
+		/* Release a reference that is held just after creation. */
+		ifafree(&ia->ia_ifa);
 		mutex_exit(&in_ifaddr_lock);
 	} else if (need_reinsert) {
 		in_addrhash_insert(ia);
@@ -802,10 +828,12 @@ in_scrubaddr(struct in_ifaddr *ia)
 	in_scrubprefix(ia);
 	in_ifremlocal(&ia->ia_ifa);
 
+	mutex_enter(&in_ifaddr_lock);
 	if (ia->ia_allhosts != NULL) {
 		in_delmulti(ia->ia_allhosts);
 		ia->ia_allhosts = NULL;
 	}
+	mutex_exit(&in_ifaddr_lock);
 }
 
 /*
@@ -1135,7 +1163,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	s = splsoftnet();
 	error = if_addr_init(ifp, &ia->ia_ifa, true);
 	splx(s);
-	/* Now clear the try tentative flag, it's job is done. */
+	/* Now clear the try tentative flag, its job is done. */
 	ia->ia4_flags &= ~IN_IFF_TRYTENTATIVE;
 	if (error != 0) {
 		ia->ia_addr = oldaddr;
@@ -1158,9 +1186,6 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 		ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
 		ia->ia4_flags = newflags;
 	}
-
-	/* Add the local route to the address */
-	in_ifaddlocal(&ia->ia_ifa);
 
 	i = ia->ia_addr.sin_addr.s_addr;
 	if (ifp->if_flags & IFF_POINTOPOINT)
@@ -1185,11 +1210,10 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	ia->ia_net = i & ia->ia_netmask;
 	ia->ia_subnet = i & ia->ia_subnetmask;
 	in_socktrim(&ia->ia_sockmask);
+
 	/* re-calculate the "in_maxmtu" value */
 	in_setmaxmtu();
-	/*
-	 * Add route for the network.
-	 */
+
 	ia->ia_ifa.ifa_metric = ifp->if_metric;
 	if (ifp->if_flags & IFF_BROADCAST) {
 		ia->ia_broadaddr.sin_addr.s_addr =
@@ -1204,17 +1228,25 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 			return (0);
 		flags |= RTF_HOST;
 	}
+
+	/* Add the local route to the address */
+	in_ifaddlocal(&ia->ia_ifa);
+
+	/* Add the prefix route for the address */
 	error = in_addprefix(ia, flags);
+
 	/*
 	 * If the interface supports multicast, join the "all hosts"
 	 * multicast group on that interface.
 	 */
+	mutex_enter(&in_ifaddr_lock);
 	if ((ifp->if_flags & IFF_MULTICAST) != 0 && ia->ia_allhosts == NULL) {
 		struct in_addr addr;
 
 		addr.s_addr = INADDR_ALLHOSTS_GROUP;
 		ia->ia_allhosts = in_addmulti(&addr, ifp);
 	}
+	mutex_exit(&in_ifaddr_lock);
 
 	if (hostIsNew &&
 	    ia->ia4_flags & IN_IFF_TENTATIVE &&
@@ -1510,6 +1542,7 @@ in_if_down(struct ifnet *ifp)
 {
 
 	in_if_link_down(ifp);
+	lltable_purge_entries(LLTABLE(ifp));
 }
 
 void
@@ -1901,12 +1934,15 @@ in_lltable_match_prefix(const struct sockaddr *prefix,
 {
 	const struct sockaddr_in *pfx = (const struct sockaddr_in *)prefix;
 	const struct sockaddr_in *msk = (const struct sockaddr_in *)mask;
+	struct in_addr lle_addr;
+
+	lle_addr.s_addr = ntohl(lle->r_l3addr.addr4.s_addr);
 
 	/*
 	 * (flags & LLE_STATIC) means deleting all entries
 	 * including static ARP entries.
 	 */
-	if (IN_ARE_MASKED_ADDR_EQUAL(lle->r_l3addr.addr4, pfx, msk) &&
+	if (IN_ARE_MASKED_ADDR_EQUAL(lle_addr, pfx, msk) &&
 	    ((flags & LLE_STATIC) || !(lle->la_flags & LLE_STATIC)))
 		return (1);
 
@@ -2071,16 +2107,24 @@ in_lltable_delete(struct lltable *llt, u_int flags,
 
 	lle = in_lltable_find_dst(llt, sin->sin_addr);
 	if (lle == NULL) {
-#ifdef DIAGNOSTIC
-		log(LOG_INFO, "interface address is missing from cache = %p  in delete\n", lle);
+#ifdef DEBUG
+		char buf[64];
+		sockaddr_format(l3addr, buf, sizeof(buf));
+		log(LOG_INFO, "%s: cache for %s is not found\n",
+		    __func__, buf);
 #endif
 		return (ENOENT);
 	}
 
 	LLE_WLOCK(lle);
 	lle->la_flags |= LLE_DELETED;
-#ifdef DIAGNOSTIC
-	log(LOG_INFO, "ifaddr cache = %p is deleted\n", lle);
+#ifdef DEBUG
+	{
+		char buf[64];
+		sockaddr_format(l3addr, buf, sizeof(buf));
+		log(LOG_INFO, "%s: cache for %s (%p) is deleted\n",
+		    __func__, buf, lle);
+	}
 #endif
 	if ((lle->la_flags & (LLE_STATIC | LLE_IFADDR)) == LLE_STATIC)
 		llentry_free(lle);
@@ -2329,7 +2373,6 @@ in_domifattach(struct ifnet *ifp)
 	struct in_ifinfo *ii;
 
 	ii = kmem_zalloc(sizeof(struct in_ifinfo), KM_SLEEP);
-	KASSERT(ii != NULL);
 
 #if NARP > 0
 	ii->ii_llt = in_lltattach(ifp);

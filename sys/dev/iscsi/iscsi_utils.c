@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.5.14.3 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.5.14.4 2017/08/28 17:52:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -319,6 +319,34 @@ create_ccbs(session_t *sess)
 
 		DEB(9, ("Create_ccbs: ccb %p itt %x\n", ccb, ccb->ITT));
 		TAILQ_INSERT_HEAD(&sess->ccb_pool, ccb, chain);
+	}
+}
+
+/*
+ *    destroy_ccbs
+ *       Kill the callouts
+ *
+ *    Parameter:  The session owning the CCBs.
+ */
+
+void
+destroy_ccbs(session_t *sess)
+{
+	int i;
+	ccb_t *ccb;
+
+	/* Note: CCBs are initialized to 0 with connection structure */
+
+	for (i = 0, ccb = sess->ccb; i < CCBS_PER_SESSION; i++, ccb++) {
+
+		callout_halt(&ccb->timeout, NULL);
+		callout_destroy(&ccb->timeout);
+
+		DEB(9, ("destroy_ccbs: ccb %p itt %x\n", ccb, ccb->ITT));
+		KASSERT((ccb->flags & CCBF_WAITQUEUE) == 0);
+		KASSERT(ccb->disp == CCBDISP_UNUSED);
+		KASSERT(ccb->connection == NULL);
+		TAILQ_REMOVE(&sess->ccb_pool, ccb, chain);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.235.2.6 2016/10/05 20:56:03 skrll Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.235.2.7 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.235.2.6 2016/10/05 20:56:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.235.2.7 2017/08/28 17:53:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -295,7 +295,8 @@ sopendfree_thread(void *v)
 
 			for (; m != NULL; m = next) {
 				next = m->m_next;
-				KASSERT((~m->m_flags & (M_EXT|M_EXT_PAGES)) == 0);
+				KASSERT((~m->m_flags & (M_EXT|M_EXT_PAGES)) ==
+				    0);
 				KASSERT(m->m_ext.ext_refcnt == 0);
 
 				rv += m->m_ext.ext_size;
@@ -434,17 +435,20 @@ socket_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 
 	case KAUTH_REQ_NETWORK_SOCKET_OPEN:
 		/* We allow "raw" routing/bluetooth sockets to anyone. */
-		if ((u_long)arg1 == PF_ROUTE || (u_long)arg1 == PF_OROUTE
-		    || (u_long)arg1 == PF_BLUETOOTH) {
+		switch ((u_long)arg1) {
+		case PF_ROUTE:
+		case PF_OROUTE:
+		case PF_BLUETOOTH:
+		case PF_CAN:
 			result = KAUTH_RESULT_ALLOW;
-		} else {
+			break;
+		default:
 			/* Privileged, let secmodel handle this. */
 			if ((u_long)arg2 == SOCK_RAW)
 				break;
+			result = KAUTH_RESULT_ALLOW;
+			break;
 		}
-
-		result = KAUTH_RESULT_ALLOW;
-
 		break;
 
 	case KAUTH_REQ_NETWORK_SOCKET_CANSEE:
@@ -1065,8 +1069,8 @@ sosend(struct socket *so, struct sockaddr *addr, struct uio *uio,
 			if (resid > 0)
 				so->so_state |= SS_MORETOCOME;
 			if (flags & MSG_OOB) {
-				error = (*so->so_proto->pr_usrreqs->pr_sendoob)(so,
-				    top, control);
+				error = (*so->so_proto->pr_usrreqs->pr_sendoob)(
+				    so, top, control);
 			} else {
 				error = (*so->so_proto->pr_usrreqs->pr_send)(so,
 				    top, addr, control, l);
@@ -1407,7 +1411,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 				 */
 				if (dom->dom_dispose != NULL &&
 				    type == SCM_RIGHTS) {
-				    	sounlock(so);
+					sounlock(so);
 					(*dom->dom_dispose)(cm);
 					solock(so);
 				}
@@ -1721,22 +1725,22 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 		KASSERT(solocked(so));
 		break;
 
-  	case SO_LINGER:
- 		error = sockopt_get(sopt, &l, sizeof(l));
+	case SO_LINGER:
+		error = sockopt_get(sopt, &l, sizeof(l));
 		solock(so);
- 		if (error)
- 			break;
- 		if (l.l_linger < 0 || l.l_linger > USHRT_MAX ||
- 		    l.l_linger > (INT_MAX / hz)) {
+		if (error)
+			break;
+		if (l.l_linger < 0 || l.l_linger > USHRT_MAX ||
+		    l.l_linger > (INT_MAX / hz)) {
 			error = EDOM;
 			break;
 		}
- 		so->so_linger = l.l_linger;
- 		if (l.l_onoff)
- 			so->so_options |= SO_LINGER;
- 		else
- 			so->so_options &= ~SO_LINGER;
-   		break;
+		so->so_linger = l.l_linger;
+		if (l.l_onoff)
+			so->so_options |= SO_LINGER;
+		else
+			so->so_options &= ~SO_LINGER;
+		break;
 
 	case SO_DEBUG:
 	case SO_KEEPALIVE:
@@ -2092,7 +2096,7 @@ sockopt_destroy(struct sockopt *sopt)
 /*
  * set sockopt value
  *	- value is copied into sockopt
- * 	- memory is allocated when necessary, will not sleep
+ *	- memory is allocated when necessary, will not sleep
  */
 int
 sockopt_set(struct sockopt *sopt, const void *buf, size_t len)
@@ -2404,6 +2408,33 @@ sopoll(struct socket *so, int events)
 	sounlock(so);
 
 	return revents;
+}
+
+struct mbuf **
+sbsavetimestamp(int opt, struct mbuf *m, struct mbuf **mp)
+{
+	struct timeval tv;
+	microtime(&tv);
+
+#ifdef SO_OTIMESTAMP
+	if (opt & SO_OTIMESTAMP) {
+		struct timeval50 tv50;
+
+		timeval_to_timeval50(&tv, &tv50);
+		*mp = sbcreatecontrol(&tv50, sizeof(tv50),
+		    SCM_OTIMESTAMP, SOL_SOCKET);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	} else
+#endif
+
+	if (opt & SO_TIMESTAMP) {
+		*mp = sbcreatecontrol(&tv, sizeof(tv),
+		    SCM_TIMESTAMP, SOL_SOCKET);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+	return mp;
 }
 
 

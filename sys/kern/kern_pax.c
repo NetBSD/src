@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.27.6.6 2016/10/05 20:56:02 skrll Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.27.6.7 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.27.6.6 2016/10/05 20:56:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.27.6.7 2017/08/28 17:53:07 skrll Exp $");
 
 #include "opt_pax.h"
 
@@ -291,7 +291,7 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 	sysctl_createv(clog, 0, &rnode, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "debug",
-		       SYSCTL_DESCR("Pring ASLR selected addresses."),
+		       SYSCTL_DESCR("Print ASLR selected addresses."),
 		       NULL, 0, &pax_aslr_debug, 0,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &rnode, NULL,
@@ -423,42 +423,48 @@ pax_mprotect_elf_flags_active(uint32_t flags)
 	return true;
 }
 
-void
-pax_mprotect_adjust(
+vm_prot_t
+pax_mprotect_maxprotect(
 #ifdef PAX_MPROTECT_DEBUG
     const char *file, size_t line,
 #endif
-    struct lwp *l, vm_prot_t *prot, vm_prot_t *maxprot)
+    struct lwp *l, vm_prot_t active, vm_prot_t extra, vm_prot_t maxprot)
 {
 	uint32_t flags;
 
 	flags = l->l_proc->p_pax;
 	if (!pax_flags_active(flags, P_PAX_MPROTECT))
-		return;
+		return maxprot;
 
-	if ((*prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) != VM_PROT_EXECUTE) {
+	return (active|extra) & maxprot;
+}
+
+int
+pax_mprotect_validate(
+#ifdef PAX_MPROTECT_DEBUG
+    const char *file, size_t line,
+#endif
+    struct lwp *l, vm_prot_t prot)
+{
+	uint32_t flags;
+
+	flags = l->l_proc->p_pax;
+	if (!pax_flags_active(flags, P_PAX_MPROTECT))
+		return 0;
+
+	if ((prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) ==
+	    (VM_PROT_WRITE|VM_PROT_EXECUTE)) {
 #ifdef PAX_MPROTECT_DEBUG
 		struct proc *p = l->l_proc;
-		if ((*prot & VM_PROT_EXECUTE) && pax_mprotect_debug) {
-			printf("%s: %s,%zu: %d.%d (%s): -x\n",
+
+		if (pax_mprotect_debug)
+			printf("%s: %s,%zu: %d.%d (%s): WX rejected\n",
 			    __func__, file, line,
 			    p->p_pid, l->l_lid, p->p_comm);
-		}
 #endif
-		*prot &= ~VM_PROT_EXECUTE;
-		*maxprot &= ~VM_PROT_EXECUTE;
-	} else {
-#ifdef PAX_MPROTECT_DEBUG
-		struct proc *p = l->l_proc;
-		if ((*prot & VM_PROT_WRITE) && pax_mprotect_debug) {
-			printf("%s: %s,%zu: %d.%d (%s): -w\n",
-			    __func__, file, line,
-			    p->p_pid, l->l_lid, p->p_comm);
-		}
-#endif
-		*prot &= ~VM_PROT_WRITE;
-		*maxprot &= ~VM_PROT_WRITE;
+		return EACCES;
 	}
+	return 0;
 }
 
 /*
@@ -578,7 +584,7 @@ pax_aslr_offset(vaddr_t align)
 	uint32_t rand;
 	vaddr_t offset;
 
-	pax_align = align == 0 ? PGSHIFT : align;
+	pax_align = align == 0 ? PAGE_SIZE : align;
 	l2 = ilog2(pax_align);
 
 	rand = cprng_fast32();
@@ -590,7 +596,8 @@ pax_aslr_offset(vaddr_t align)
 #define	PAX_TRUNC(a, b)	((a) & ~((b) - 1))
 
 	delta = PAX_ASLR_DELTA(rand, l2, PAX_ASLR_DELTA_EXEC_LEN);
-	offset = PAX_TRUNC(delta, pax_align) + PAGE_SIZE;
+	offset = PAX_TRUNC(delta, pax_align);
+	offset = MAX(offset, pax_align);
 
 	PAX_DPRINTF("rand=%#x l2=%#zx pax_align=%#zx delta=%#zx offset=%#jx",
 	    rand, l2, pax_align, delta, (uintmax_t)offset);
@@ -608,9 +615,9 @@ pax_aslr_exec_offset(struct exec_package *epp, vaddr_t align)
 	if (pax_aslr_flags & PAX_ASLR_EXEC_OFFSET)
 		goto out;
 #endif
-	return pax_aslr_offset(align) + PAGE_SIZE;
+	return pax_aslr_offset(align);
 out:
-	return MAX(align, PAGE_SIZE);
+	return 0;
 }
 
 voff_t

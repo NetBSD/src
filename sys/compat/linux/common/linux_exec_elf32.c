@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.91.4.2 2015/09/22 12:05:55 skrll Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.91.4.3 2017/08/28 17:51:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.91.4.2 2015/09/22 12:05:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.91.4.3 2017/08/28 17:51:59 skrll Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -273,7 +273,7 @@ ELFNAME2(linux,signature)(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
 	int error;
 	static const char linux[] = "Linux";
 
-	if (eh->e_ident[EI_OSABI] == 3 ||
+	if (eh->e_ident[EI_OSABI] == ELFOSABI_LINUX ||
 	    memcmp(&eh->e_ident[EI_ABIVERSION], linux, sizeof(linux)) == 0)
 		return 0;
 

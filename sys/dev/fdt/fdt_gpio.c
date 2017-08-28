@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_gpio.c,v 1.3.2.3 2016/12/05 10:55:01 skrll Exp $ */
+/* $NetBSD: fdt_gpio.c,v 1.3.2.4 2017/08/28 17:52:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_gpio.c,v 1.3.2.3 2016/12/05 10:55:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_gpio.c,v 1.3.2.4 2017/08/28 17:52:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -80,39 +80,45 @@ fdtbus_get_gpio_controller(int phandle)
 struct fdtbus_gpio_pin *
 fdtbus_gpio_acquire(int phandle, const char *prop, int flags)
 {
+	return fdtbus_gpio_acquire_index(phandle, prop, 0, flags);
+}
+
+struct fdtbus_gpio_pin *
+fdtbus_gpio_acquire_index(int phandle, const char *prop,
+    int index, int flags)
+{
 	struct fdtbus_gpio_controller *gc;
-	struct fdtbus_gpio_pin *gp;
-	int gpio_phandle, len;
-	u_int *data;
+	struct fdtbus_gpio_pin *gp = NULL;
+	const uint32_t *gpios, *p;
+	u_int n, gpio_cells;
+	int len, resid;
 
-	gpio_phandle = fdtbus_get_phandle(phandle, prop);
-	if (gpio_phandle == -1) {
+	gpios = fdtbus_get_prop(phandle, prop, &len);
+	if (gpios == NULL)
 		return NULL;
-	}
 
-	gc = fdtbus_get_gpio_controller(gpio_phandle);
-	if (gc == NULL) {
-		return NULL;
-	}
-
-	len = OF_getproplen(phandle, prop);
-	if (len < 4) {
-		return NULL;
-	}
-
-	data = kmem_alloc(len, KM_SLEEP);
-	if (OF_getprop(phandle, prop, data, len) != len) {
-		kmem_free(data, len);
-		return NULL;
-	}
-
-	gp = kmem_alloc(sizeof(*gp), KM_SLEEP);
-	gp->gp_gc = gc;
-	gp->gp_priv = gc->gc_funcs->acquire(gc->gc_dev, data, len, flags);
-	if (gp->gp_priv == NULL) {
-		kmem_free(data, len);
-		kmem_free(gp, sizeof(*gp));
-		return NULL;
+	p = gpios;
+	for (n = 0, resid = len; resid > 0; n++) {
+		const int gc_phandle =
+		    fdtbus_get_phandle_from_native(be32toh(p[0]));
+		if (of_getprop_uint32(gc_phandle, "#gpio-cells", &gpio_cells))
+			break;
+		if (n == index) {
+			gc = fdtbus_get_gpio_controller(gc_phandle);
+			if (gc == NULL)
+				return NULL;
+			gp = kmem_alloc(sizeof(*gp), KM_SLEEP);
+			gp->gp_gc = gc;
+			gp->gp_priv = gc->gc_funcs->acquire(gc->gc_dev,
+			    &p[0], (gpio_cells + 1) * 4, flags);
+			if (gp->gp_priv == NULL) {
+				kmem_free(gp, sizeof(*gp));
+				return NULL;
+			}
+			break;
+		}
+		resid -= (gpio_cells + 1) * 4;
+		p += gpio_cells + 1;
 	}
 
 	return gp;
