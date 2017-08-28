@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.110 2017/08/28 05:58:30 wiz Exp $
+.\" $NetBSD: kauth.9,v 1.111 2017/08/28 06:04:00 wiz Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -625,7 +625,6 @@ indicating how many processes exist on the system at the time of the check.
 Checks whether setting a process
 .Xr kevent 2
 filter is allowed.
-.Pp
 .It Dv KAUTH_PROCESS_NICE
 Checks whether the
 .Em nice
@@ -791,7 +790,7 @@ interface to the system is allowed.
 .El
 .It Dv KAUTH_NETWORK_INTERFACE_PVC
 Check if operations performed on a PVC device (e.g.
-.Xr midway 4 )
+.Xr en 4 )
 are allowed.
 .Ar req
 can be one of the following:
@@ -1192,7 +1191,6 @@ request.
 .Ss Bluetooth Devices
 Authorizing actions relevant to Bluetooth devices is done using the standard
 authorization wrapper, with the following actions:
-.Pp
 .Bl -tag -width compact
 .It KAUTH_DEVICE_BLUETOOTH_BCSP
 Check if operations on a
@@ -1275,7 +1273,6 @@ describing the command.
 Authorization actions relevant to the kernel random device,
 .Xr rnd 4 ,
 is done using the standard authorization wrapper, with the following actions:
-.Pp
 .Bl -tag -width compact
 .It KAUTH_DEVICE_RND_ADDDATA
 Check if adding data to the entropy pool is allowed.
@@ -1288,7 +1285,6 @@ Check if privileged settings can be changed.
 Authorization actions relevant to
 .Xr wscons 4
 are done using the standard authorization wrapper, with the following actions:
-.Pp
 .Bl -tag -width compact
 .It KAUTH_DEVICE_WSCONS_KEYBOARD_BELL
 Check if setting the default bell is allowed.
@@ -1316,7 +1312,7 @@ in a single call.
 Two helper functions help generate the
 .Ar action
 value for a couple of common cases: translating file system access to a
-.Xr kauth 9
+.Nm
 action and checking access to a vnode.
 .Pp
 The first,
@@ -1357,7 +1353,7 @@ value or
 indicating that the file system on which the authorization is made is remote
 and cannot provide us with a fall-back decision.
 In this case,
-.Xr kauth 9
+.Nm
 can only short-circuit the request but the file system will have the last
 word if there is no definitive allow or deny decision.
 .Pp
@@ -1536,7 +1532,9 @@ of the parent and child processes, respectively.
 .It Dv KAUTH_CRED_CHROOT
 The credentials in cred belong to a process whose root directory is
 changed through
-.Xr change_root 9
+.Fn change_root
+(see
+.Xr vfs 9 ).
 .Pp
 .Ar Arg0
 is the new
@@ -1702,7 +1700,6 @@ Attaching private data to credentials works by registering a key to serve
 as a unique identifier, distinguishing various sets of private data that
 may be associated with the credentials.
 Registering, and deregistering, a key is done by using these routines:
-.Pp
 .Bl -tag -width compact
 .It Ft int Fn kauth_register_key "secmodel_t sm" "kauth_key_t *keyp"
 Register new key for private data for security model
@@ -1849,7 +1846,6 @@ Clone credentials from
 to
 .Ar cred2 ,
 except for the lock and reference count.
-.Pp
 .It Ft kauth_cred_t Fn kauth_cred_dup "kauth_cred_t cred"
 Duplicate
 .Ar cred .
