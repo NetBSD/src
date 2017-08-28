@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tcp.c,v 1.4 2016/03/04 18:52:01 christos Exp $	*/
+/*	$NetBSD: t_tcp.c,v 1.5 2017/08/28 09:30:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_tcp.c,v 1.4 2016/03/04 18:52:01 christos Exp $");
+__RCSID("$Id: t_tcp.c,v 1.5 2017/08/28 09:30:29 christos Exp $");
 #endif
 
 /* Example code. Should block; does with accept not paccept. */
@@ -71,32 +71,50 @@ ding(int al)
 }
 
 static void 
-paccept_block(bool pacceptblock, bool fcntlblock)
+paccept_block(sa_family_t family, bool pacceptblock, bool fcntlblock)
 {
 	int srvr = -1, clnt = -1, as = -1;
 	int ok, fl;
 	ssize_t n;
 	char buf[10];
-	struct sockaddr_in sin, ba;
+	struct sockaddr_storage ss, bs;
+	struct sockaddr_in *sin;
+	struct sockaddr_in6 *sin6;
 	struct sigaction sa;
+	socklen_t slen;
 
-	srvr = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+	srvr = socket(family, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (srvr == -1)
 		FAIL("socket");
 
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
+	memset(&ss, 0, sizeof(ss));
+	switch (ss.ss_family = family) {
+	case AF_INET:
+		sin = (void *)&ss;
+		slen = sizeof(*sin);
+		sin->sin_port = htons(0);
+		sin->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+		break;
+	case AF_INET6:
+		sin6 = (void *)&ss;
+		slen = sizeof(*sin6);
+		sin6->sin6_port = htons(0);
+		sin6->sin6_addr = in6addr_loopback;
+		break;
+	default:
+		errno = EINVAL;
+		FAIL("bad family");
+	}
 #ifdef BSD4_4
-	sin.sin_len = sizeof(sin);
+	ss.ss_len = slen;
 #endif
-	sin.sin_port = htons(0);
-	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-	ok = bind(srvr, (const struct sockaddr *)&sin, (socklen_t)sizeof(sin));
+
+	ok = bind(srvr, (const struct sockaddr *)&ss, slen);
 	if (ok == -1)
 		FAIL("bind");
 
-	socklen_t addrlen = sizeof(struct sockaddr_in);
-	ok = getsockname(srvr, (struct sockaddr *)&ba, &addrlen);
+	socklen_t addrlen = slen;
+	ok = getsockname(srvr, (struct sockaddr *)&bs, &addrlen);
 	if (ok == -1)
 		FAIL("getsockname");
 
@@ -104,16 +122,16 @@ paccept_block(bool pacceptblock, bool fcntlblock)
 	if (ok == -1)
 		FAIL("listen");
 
-	clnt = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+	clnt = socket(family, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (clnt == -1)
 		FAIL("socket");
 
 	/* may not connect first time */
-	ok = connect(clnt, (struct sockaddr *) &ba, addrlen);
+	ok = connect(clnt, (struct sockaddr *) &bs, addrlen);
 	if (ok != -1 || errno != EINPROGRESS)
 		FAIL("expected connect to fail");
 	as = paccept(srvr, NULL, NULL, NULL, pacceptblock ? 0 : SOCK_NONBLOCK);
-	ok = connect(clnt, (struct sockaddr *) &ba, addrlen);
+	ok = connect(clnt, (struct sockaddr *) &bs, addrlen);
 	if (ok == -1 && errno != EISCONN)
 		FAIL("connect failed");
 
@@ -169,59 +187,101 @@ fail:
 
 #ifndef TEST
 
-ATF_TC(paccept_reset_nonblock);
-ATF_TC_HEAD(paccept_reset_nonblock, tc)
+ATF_TC(paccept4_reset_nonblock);
+ATF_TC_HEAD(paccept4_reset_nonblock, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Check that paccept(2) resets "
-	    "the non-blocking flag on non-blocking sockets");
+	    "the non-blocking flag on non-blocking sockets (ipv4)");
 }
 
-ATF_TC_BODY(paccept_reset_nonblock, tc)
+ATF_TC_BODY(paccept4_reset_nonblock, tc)
 {
-	paccept_block(true, false);
+	paccept_block(AF_INET, true, false);
 }
 
-ATF_TC(fcntl_reset_nonblock);
-ATF_TC_HEAD(fcntl_reset_nonblock, tc)
-{
-
-	atf_tc_set_md_var(tc, "descr", "Check that fcntl(2) resets "
-	    "the non-blocking flag on non-blocking sockets");
-}
-
-ATF_TC_BODY(fcntl_reset_nonblock, tc)
-{
-	paccept_block(false, true);
-}
-
-ATF_TC(paccept_nonblock);
-ATF_TC_HEAD(paccept_nonblock, tc)
+ATF_TC(fcntl4_reset_nonblock);
+ATF_TC_HEAD(fcntl4_reset_nonblock, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Check that fcntl(2) resets "
-	    "the non-blocking flag on non-blocking sockets");
+	    "the non-blocking flag on non-blocking sockets (ipv4)");
 }
 
-ATF_TC_BODY(paccept_nonblock, tc)
+ATF_TC_BODY(fcntl4_reset_nonblock, tc)
 {
-	paccept_block(false, false);
+	paccept_block(AF_INET, false, true);
+}
+
+ATF_TC(paccept4_nonblock);
+ATF_TC_HEAD(paccept4_nonblock, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Check that fcntl(2) resets "
+	    "the non-blocking flag on non-blocking sockets (ipv4)");
+}
+
+ATF_TC_BODY(paccept4_nonblock, tc)
+{
+	paccept_block(AF_INET, false, false);
+}
+
+ATF_TC(paccept6_reset_nonblock);
+ATF_TC_HEAD(paccept6_reset_nonblock, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Check that paccept(2) resets "
+	    "the non-blocking flag on non-blocking sockets (ipv6)");
+}
+
+ATF_TC_BODY(paccept6_reset_nonblock, tc)
+{
+	paccept_block(AF_INET6, true, false);
+}
+
+ATF_TC(fcntl6_reset_nonblock);
+ATF_TC_HEAD(fcntl6_reset_nonblock, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Check that fcntl(2) resets "
+	    "the non-blocking flag on non-blocking sockets (ipv6)");
+}
+
+ATF_TC_BODY(fcntl6_reset_nonblock, tc)
+{
+	paccept_block(AF_INET6, false, true);
+}
+
+ATF_TC(paccept6_nonblock);
+ATF_TC_HEAD(paccept6_nonblock, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Check that fcntl(2) resets "
+	    "the non-blocking flag on non-blocking sockets (ipv6)");
+}
+
+ATF_TC_BODY(paccept6_nonblock, tc)
+{
+	paccept_block(AF_INET6, false, false);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, paccept_reset_nonblock);
-	ATF_TP_ADD_TC(tp, fcntl_reset_nonblock);
-	ATF_TP_ADD_TC(tp, paccept_nonblock);
+	ATF_TP_ADD_TC(tp, paccept4_reset_nonblock);
+	ATF_TP_ADD_TC(tp, fcntl4_reset_nonblock);
+	ATF_TP_ADD_TC(tp, paccept4_nonblock);
+	ATF_TP_ADD_TC(tp, paccept6_reset_nonblock);
+	ATF_TP_ADD_TC(tp, fcntl6_reset_nonblock);
+	ATF_TP_ADD_TC(tp, paccept6_nonblock);
 	return atf_no_error();
 }
 #else
 int
 main(int argc, char *argv[])
 {
-	paccept_block(false);
-	paccept_block(true);
+	paccept_block(AF_INET, false, false);
+	paccept_block(AF_INET, true, false);
 	return 0;
 }
 #endif
