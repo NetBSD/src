@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.304 2017/08/26 16:37:14 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.305 2017/08/28 06:35:09 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -18602,4 +18602,27 @@ tests/lib/libc/stdlib/t_strtol.c		1.6, 1.7
 	Fix ISO C compliance: strtol of "0xX" should give the
 	largest valid numeric prefix, which is 0.
 	[joerg, ticket #1460]
+
+external/bsd/bind/dist/CHANGES			patch
+external/bsd/bind/dist/FAQ.xml			patch
+external/bsd/bind/dist/FAQ 			delete
+external/bsd/bind/dist/HISTORY.md		patch
+external/bsd/bind/dist/OPTIONS			patch
+external/bsd/bind/dist/OPTIONS.md		patch
+external/bsd/bind/dist/README.md		patch
+external/bsd/bind/dist/HISTORY			patch
+external/bsd/bind/dist/Makefile.in		patch
+external/bsd/bind/dist/README			patch
+external/bsd/bind/dist/acconfig.h		patch
+external/bsd/bind/dist/bind.keys		patch
+external/bsd/bind/dist/config.h.in		patch
+external/bsd/bind/dist/configure		patch
+external/bsd/bind/dist/configure.in		patch
+external/bsd/bind/dist/isc-config.sh.1		patch
+external/bsd/bind/dist/isc-config.sh.docbook	patch
+external/bsd/bind/dist/isc-config.sh.html	patch
+external/bsd/bind/dist/srcid external/bsd/bind/dist/version patch
+
+	Update BIND to 9.9.11.
+	[mrg, ticket #1491]
 
