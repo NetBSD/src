@@ -70,12 +70,6 @@
 /** define if gai_strerror() exists */
 #undef HAVE_GAISTRERROR
 
-/** define if arc4random() exists */
-#undef HAVE_ARC4RANDOM
-
-/** define if arc4random_addrandom() exists */
-#undef HAVE_ARC4RANDOM_ADDRANDOM
-
 /**
  * define if pthread_setconcurrency() should be called to tell the
  * OS how many threads we might want to run.
@@ -194,6 +188,15 @@ int sigwait(const unsigned int *set, int *sig);
    MSVC and with C++ compilers. */
 #undef FLEXIBLE_ARRAY_MEMBER
 
+/* Define to 1 if you have the `arc4random' function. */
+#undef HAVE_ARC4RANDOM
+
+/* Define to 1 if you have the `arc4random_addrandom' function. */
+#undef HAVE_ARC4RANDOM_ADDRANDOM
+
+/* Define to 1 if you have the `arc4random_stir' function. */
+#undef HAVE_ARC4RANDOM_STIR
+
 /* Define to 1 if the compiler supports __builtin_expect. */
 #undef HAVE_BUILTIN_EXPECT
 
@@ -214,6 +217,15 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `dlsym' function. */
 #undef HAVE_DLSYM
+
+/* Define to 1 if you have the <editline/readline.h> header file. */
+#undef HAVE_EDITLINE_READLINE_H
+
+/* Define to 1 if you have the <edit/readline/history.h> header file. */
+#undef HAVE_EDIT_READLINE_HISTORY_H
+
+/* Define to 1 if you have the <edit/readline/readline.h> header file. */
+#undef HAVE_EDIT_READLINE_READLINE_H
 
 /* Define to 1 if you have the `EVP_sha256' function. */
 #undef HAVE_EVP_SHA256
@@ -320,6 +332,15 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if your OpenSSL version supports GOST. */
 #undef HAVE_OPENSSL_GOST
 
+/* Define to 1 if you have the <pthread_np.h> header file. */
+#undef HAVE_PTHREAD_NP_H
+
+/* Define to 1 if you have the `pthread_setname_np' function. */
+#undef HAVE_PTHREAD_SETNAME_NP
+
+/* Define to 1 if you have the `pthread_set_name_np' function. */
+#undef HAVE_PTHREAD_SET_NAME_NP
+
 /* Define to 1 if you have the `pthread_yield' function. */
 #undef HAVE_PTHREAD_YIELD
 
@@ -328,6 +349,12 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `readline' function. */
 #undef HAVE_READLINE
+
+/* Define to 1 if you have the <readline/history.h> header file. */
+#undef HAVE_READLINE_HISTORY_H
+
+/* Define to 1 if you have the <readline/readline.h> header file. */
+#undef HAVE_READLINE_READLINE_H
 
 /* Define to 1 if you have the <regex.h> header file. */
 #undef HAVE_REGEX_H
@@ -409,9 +436,6 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `usleep' function. */
 #undef HAVE_USLEEP
-
-/* HMAC_*() return ints */
-#undef HMAC_RETURN_INT
 
 /* return type of gai_strerror */
 #undef IRS_GAISTRERROR_RETURN_T
