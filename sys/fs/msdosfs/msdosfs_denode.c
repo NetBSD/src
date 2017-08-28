@@ -1,4 +1,4 @@
-// /*	$NetBSD: msdosfs_denode.c,v 1.50.4.2 2016/10/05 20:56:01 skrll Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.50.4.3 2017/08/28 17:53:06 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,12 +48,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.50.4.2 2016/10/05 20:56:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.50.4.3 2017/08/28 17:53:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
-#include <sys/fstrans.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
@@ -73,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.50.4.2 2016/10/05 20:56:01 skrl
 #include <fs/msdosfs/fat.h>
 
 struct pool msdosfs_denode_pool;
-
-extern int prtactive;
 
 struct fh_key {
 	struct msdosfsmount *fhk_mount;
@@ -533,21 +530,19 @@ deextend(struct denode *dep, u_long length, kauth_cred_t cred)
 int
 msdosfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct mount *mp = vp->v_mount;
 	struct denode *dep = VTODE(vp);
 
-	fstrans_start(mp, FSTRANS_LAZY);
+	VOP_UNLOCK(vp);
+
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_reclaim(): dep %p, file %s, refcnt %ld\n",
 	    dep, dep->de_Name, dep->de_refcnt);
 #endif
 
-	if (prtactive && vp->v_usecount > 1)
-		vprint("msdosfs_reclaim(): pushing active", vp);
 	/*
 	 * Purge old data structures associated with the denode.
 	 */
@@ -566,19 +561,17 @@ msdosfs_reclaim(void *v)
 	vp->v_data = NULL;
 	mutex_exit(vp->v_interlock);
 	pool_put(&msdosfs_denode_pool, dep);
-	fstrans_done(mp);
 	return (0);
 }
 
 int
 msdosfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct mount *mp = vp->v_mount;
 	struct denode *dep = VTODE(vp);
 	int error = 0;
 
@@ -586,7 +579,6 @@ msdosfs_inactive(void *v)
 	printf("msdosfs_inactive(): dep %p, de_Name[0] %x\n", dep, dep->de_Name[0]);
 #endif
 
-	fstrans_start(mp, FSTRANS_LAZY);
 	/*
 	 * Get rid of denodes related to stale file handles.
 	 */
@@ -622,8 +614,7 @@ out:
 		vp->v_usecount, dep->de_Name[0]);
 #endif
 	*ap->a_recycle = (dep->de_Name[0] == SLOT_DELETED);
-	VOP_UNLOCK(vp);
-	fstrans_done(mp);
+
 	return (error);
 }
 

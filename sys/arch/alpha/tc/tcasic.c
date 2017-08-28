@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.44.24.1 2017/02/05 13:40:01 skrll Exp $ */
+/* $NetBSD: tcasic.c,v 1.44.24.2 2017/08/28 17:51:27 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.44.24.1 2017/02/05 13:40:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.44.24.2 2017/08/28 17:51:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,11 +64,11 @@ tcasicmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	/* Make sure that we're looking for a TurboChannel ASIC. */
+	/* Make sure that we're looking for a TURBOchannel ASIC. */
 	if (strcmp(ma->ma_name, tcasic_cd.cd_name))
 	        return (0);
 
-	/* Make sure that the system supports a TurboChannel ASIC. */
+	/* Make sure that the system supports a TURBOchannel ASIC. */
 	if ((cputype != ST_DEC_3000_500) && (cputype != ST_DEC_3000_300))
 		return (0);
 
@@ -222,7 +222,7 @@ tc_fb_cnattach(tc_addr_t tcaddr)
 	char tcname[TC_ROM_LLEN];
 	int i;
 
-	if (tc_badaddr(tcaddr) || (tc_checkslot(tcaddr, tcname) == 0))
+	if (tc_badaddr(tcaddr) || (tc_checkslot(tcaddr, tcname, NULL) == 0))
 		return (EINVAL);
 
 	for (i = 0; i < sizeof(cnboards) / sizeof(cnboards[0]); i++)

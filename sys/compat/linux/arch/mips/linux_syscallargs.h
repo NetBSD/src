@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.61.2.4 2017/02/05 13:40:25 skrll Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.61.2.5 2017/08/28 17:51:58 skrll Exp $ */
 
 /*
  * System call argument lists.
@@ -9,6 +9,9 @@
 
 #ifndef _LINUX_SYS_SYSCALLARGS_H_
 #define	_LINUX_SYS_SYSCALLARGS_H_
+
+/* Forward declaration */
+struct lwp;
 
 #define	LINUX_SYS_MAXSYSARGS	8
 
@@ -549,37 +552,125 @@ struct linux_sys_mremap_args {
 };
 check_syscall_args(linux_sys_mremap)
 
-struct linux_sys_accept_args;
+struct linux_sys_accept_args {
+	syscallarg(int) s;
+	syscallarg(struct osockaddr *) name;
+	syscallarg(int *) anamelen;
+};
+check_syscall_args(linux_sys_accept)
 
-struct linux_sys_bind_args;
+struct linux_sys_bind_args {
+	syscallarg(int) s;
+	syscallarg(const struct osockaddr *) name;
+	syscallarg(int) namelen;
+};
+check_syscall_args(linux_sys_bind)
 
-struct linux_sys_connect_args;
+struct linux_sys_connect_args {
+	syscallarg(int) s;
+	syscallarg(const struct osockaddr *) name;
+	syscallarg(int) namelen;
+};
+check_syscall_args(linux_sys_connect)
 
-struct linux_sys_getpeername_args;
+struct linux_sys_getpeername_args {
+	syscallarg(int) fdes;
+	syscallarg(void *) asa;
+	syscallarg(int *) alen;
+};
+check_syscall_args(linux_sys_getpeername)
 
-struct linux_sys_getsockname_args;
+struct linux_sys_getsockname_args {
+	syscallarg(int) fdes;
+	syscallarg(void *) asa;
+	syscallarg(int *) alen;
+};
+check_syscall_args(linux_sys_getsockname)
 
-struct linux_sys_getsockopt_args;
+struct linux_sys_getsockopt_args {
+	syscallarg(int) s;
+	syscallarg(int) level;
+	syscallarg(int) optname;
+	syscallarg(void *) optval;
+	syscallarg(int *) optlen;
+};
+check_syscall_args(linux_sys_getsockopt)
 
 struct sys_listen_args;
 
-struct linux_sys_recv_args;
+struct linux_sys_recv_args {
+	syscallarg(int) s;
+	syscallarg(void *) buf;
+	syscallarg(int) len;
+	syscallarg(int) flags;
+};
+check_syscall_args(linux_sys_recv)
 
-struct linux_sys_recvfrom_args;
+struct linux_sys_recvfrom_args {
+	syscallarg(int) s;
+	syscallarg(void *) buf;
+	syscallarg(int) len;
+	syscallarg(int) flags;
+	syscallarg(struct osockaddr *) from;
+	syscallarg(int *) fromlenaddr;
+};
+check_syscall_args(linux_sys_recvfrom)
 
-struct linux_sys_recvmsg_args;
+struct linux_sys_recvmsg_args {
+	syscallarg(int) s;
+	syscallarg(struct linux_msghdr *) msg;
+	syscallarg(u_int) flags;
+};
+check_syscall_args(linux_sys_recvmsg)
 
-struct linux_sys_send_args;
+struct linux_sys_send_args {
+	syscallarg(int) s;
+	syscallarg(void *) buf;
+	syscallarg(int) len;
+	syscallarg(int) flags;
+};
+check_syscall_args(linux_sys_send)
 
-struct linux_sys_sendmsg_args;
+struct linux_sys_sendmsg_args {
+	syscallarg(int) s;
+	syscallarg(struct linux_msghdr *) msg;
+	syscallarg(u_int) flags;
+};
+check_syscall_args(linux_sys_sendmsg)
 
-struct linux_sys_sendto_args;
+struct linux_sys_sendto_args {
+	syscallarg(int) s;
+	syscallarg(void *) msg;
+	syscallarg(int) len;
+	syscallarg(int) flags;
+	syscallarg(struct osockaddr *) to;
+	syscallarg(int) tolen;
+};
+check_syscall_args(linux_sys_sendto)
 
-struct linux_sys_setsockopt_args;
+struct linux_sys_setsockopt_args {
+	syscallarg(int) s;
+	syscallarg(int) level;
+	syscallarg(int) optname;
+	syscallarg(void *) optval;
+	syscallarg(int) optlen;
+};
+check_syscall_args(linux_sys_setsockopt)
 
-struct linux_sys_socket_args;
+struct linux_sys_socket_args {
+	syscallarg(int) domain;
+	syscallarg(int) type;
+	syscallarg(int) protocol;
+};
+check_syscall_args(linux_sys_socket)
 
-struct linux_sys_socketpair_args;
+struct linux_sys_socketpair_args {
+	syscallarg(int) domain;
+	syscallarg(int) type;
+	syscallarg(int) protocol;
+	syscallarg(int *) rsv;
+};
+check_syscall_args(linux_sys_socketpair)
 
 struct linux_sys_setresuid_args {
 	syscallarg(uid_t) ruid;

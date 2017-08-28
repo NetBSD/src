@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.252.2.6 2017/02/05 13:40:56 skrll Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.252.2.7 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.252.2.6 2017/02/05 13:40:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.252.2.7 2017/08/28 17:53:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -170,9 +170,23 @@ u_int	nbuf;			/* desired number of buffer headers */
 u_int	bufpages = BUFPAGES;	/* optional hardwired count */
 u_int	bufcache = BUFCACHE;	/* max % of RAM to use for buffer cache */
 
-/* Function prototypes */
-struct bqueue;
+/*
+ * Definitions for the buffer free lists.
+ */
+#define	BQUEUES		3		/* number of free buffer queues */
 
+#define	BQ_LOCKED	0		/* super-blocks &c */
+#define	BQ_LRU		1		/* lru, useful buffers */
+#define	BQ_AGE		2		/* rubbish */
+
+struct bqueue {
+	TAILQ_HEAD(, buf) bq_queue;
+	uint64_t bq_bytes;
+	buf_t *bq_marker;
+};
+static struct bqueue bufqueues[BQUEUES];
+
+/* Function prototypes */
 static void buf_setwm(void);
 static int buf_trim(void);
 static void *bufpool_page_alloc(struct pool *, int);
@@ -217,7 +231,6 @@ biohist_init(void)
 	(&bufhashtbl[(((long)(dvp) >> 8) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
-struct bqueue bufqueues[BQUEUES];
 
 static kcondvar_t needbuffer_cv;
 
@@ -1230,8 +1243,8 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 		if (allocbuf(bp, size, preserve)) {
 			mutex_enter(&bufcache_lock);
 			LIST_REMOVE(bp, b_hash);
+			brelsel(bp, BC_INVAL);
 			mutex_exit(&bufcache_lock);
-			brelse(bp, BC_INVAL);
 			return NULL;
 		}
 	}
@@ -1530,8 +1543,8 @@ biowait(buf_t *bp)
 
 	mutex_enter(bp->b_objlock);
 
-	BIOHIST_CALLARGS(biohist, "bp=%p, oflags=0x%x",
-	    bp, bp->b_oflags, 0, 0);
+	BIOHIST_CALLARGS(biohist, "bp=%p, oflags=0x%x, ret_addr=%p",
+	    bp, bp->b_oflags, __builtin_return_address(0), 0);
 
 	while (!ISSET(bp->b_oflags, BO_DONE | BO_DELWRI)) {
 		BIOHIST_LOG(biohist, "waiting bp=%p", bp, 0, 0, 0);
@@ -2027,7 +2040,7 @@ nestiobuf_iodone(buf_t *bp)
 void
 nestiobuf_setup(buf_t *mbp, buf_t *bp, int offset, size_t size)
 {
-	const int b_read = mbp->b_flags & B_READ;
+	const int b_pass = mbp->b_flags & (B_READ|B_MEDIA_FLAGS);
 	struct vnode *vp = mbp->b_vp;
 
 	KASSERT(mbp->b_bcount >= offset + size);
@@ -2035,14 +2048,14 @@ nestiobuf_setup(buf_t *mbp, buf_t *bp, int offset, size_t size)
 	bp->b_dev = mbp->b_dev;
 	bp->b_objlock = mbp->b_objlock;
 	bp->b_cflags = BC_BUSY;
-	bp->b_flags = B_ASYNC | b_read;
+	bp->b_flags = B_ASYNC | b_pass;
 	bp->b_iodone = nestiobuf_iodone;
 	bp->b_data = (char *)mbp->b_data + offset;
 	bp->b_resid = bp->b_bcount = size;
 	bp->b_bufsize = bp->b_bcount;
 	bp->b_private = mbp;
 	BIO_COPYPRIO(bp, mbp);
-	if (!b_read && vp != NULL) {
+	if (BUF_ISWRITE(bp) && vp != NULL) {
 		mutex_enter(vp->v_interlock);
 		vp->v_numoutput++;
 		mutex_exit(vp->v_interlock);
@@ -2135,4 +2148,15 @@ bbusy(buf_t *bp, bool intr, int timo, kmutex_t *interlock)
 	bp->b_cflags |= BC_BUSY;
 
 	return 0;
+}
+
+/*
+ * Nothing outside this file should really need to know about nbuf,
+ * but a few things still want to read it, so give them a way to do that.
+ */
+int
+buf_nbuf(void)
+{
+
+	return nbuf;
 }

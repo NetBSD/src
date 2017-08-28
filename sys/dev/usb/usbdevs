@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.684.2.10 2017/02/05 13:40:46 skrll Exp $
+$NetBSD: usbdevs,v 1.684.2.11 2017/08/28 17:52:28 skrll Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@ vendor SAMSUNG		0x04e8	Samsung Electronics
 vendor ANNABOOKS	0x04ed	Annabooks
 vendor JVC		0x04f1	JVC
 vendor CHICONY		0x04f2	Chicony Electronics
+vendor ELAN		0x04f3  ELAN Microelectronics
 vendor BROTHER		0x04f9	Brother Industries
 vendor DALLAS		0x04fa	Dallas Semiconductor
 vendor AIPTEK2		0x04fc	AIPTEK International
@@ -320,6 +321,7 @@ vendor STSN		0x07ef	STSN
 vendor CENTURY		0x07f7	CENTURY Corporation
 vendor BEWAN		0x07fa	Bewan
 vendor ZOOM		0x0803	Zoom Telephonics
+vendor SYNET		0x0812	Synet Electronics
 vendor BROADLOGIC	0x0827	BroadLogic
 vendor HANDSPRING	0x082d	Handspring
 vendor PALM		0x0830	Palm Computing
@@ -483,6 +485,7 @@ vendor CREATIVE2	0x1292	Creative Labs
 vendor BELKIN2		0x1293	Belkin Components
 vendor CYBERTAN		0x129b	CyberTAN Technology
 vendor HUAWEI		0x12d1	Huawei Technologies
+vendor ARANEUS		0x12d8	Araneus Information Systems Oy
 vendor AINCOMM		0x12fd	Aincomm
 vendor MOBILITY		0x1342	Mobility
 vendor DICKSMITH	0x1371	Dick Smith Electronics
@@ -551,6 +554,7 @@ vendor ENCORE		0x203d	Encore
 vendor HAUPPAUGE2	0x2040	Hauppauge Computer Works
 vendor PARA		0x20b8	PARA Industrial
 vendor TRENDNET		0x20f4	TRENDnet
+vendor RTSYS		0x2100	RT Systems
 vendor DLINK3		0x2101  D-Link
 vendor VIALABS		0x2109	VIA Labs
 vendor ERICSSON		0x2282	Ericsson
@@ -760,6 +764,9 @@ product AGFA SNAPSCANE25	0x2095	SnapScan e25
 product AGFA SNAPSCANE26	0x2097	SnapScan e26
 product AGFA SNAPSCANE52	0x20fd	SnapScan e52
 
+/* Araneus products */
+product ARANEUS ALEA		0x0001	Alea I/II TRNG
+
 /* Aincomm products */
 product AINCOMM AWU2000B	0x1001	AWU2000B
 
@@ -883,6 +890,7 @@ product APPLE BLUETOOTH_HOST_4	0x821b	Bluetooth USB Host Controller MacBookAir 3
 product APPLE BLUETOOTH_HOST_5	0x821f	Bluetooth USB Host Controller MacBookAir 4,1
 product APPLE BLUETOOTH_HOST_6	0x8281	Bluetooth USB Host Controller MacMini 5,1
 product APPLE BLUETOOTH_HOST_7	0x828f	Bluetooth USB Host Controller MacBookAir 6,1
+product APPLE BLUETOOTH_HOST_8	0x821d	Bluetooth USB Host Controller MacBookPro 9,2
 product APPLE BLUETOOTH		0x8300	Bluetooth
 
 /* ArkMicroChips products */
@@ -1770,6 +1778,7 @@ product HP 4670V		0x3005	ScanJet 4670v
 product HP P1100		0x3102	Photosmart P1100
 product HP V125W		0x3307	v125w
 product HP 6127			0x3504	Deskjet 6127
+product HP UN2430		0x371d	Sierra un2430 WWAN/GPS Module
 product HP HN210E		0x811c	Ethernet HN210E
 
 /* HP products */
@@ -2288,6 +2297,7 @@ product MOBILITY EASIDOCK	0x0304	EasiDock Ethernet
 
 /* MosChip Semiconductor */
 product MOSCHIP MCS7703		0x7703	MCS7703 USB Serial Adapter
+product MOSCHIP MCS7720		0x7720	MCS7720 USB Serial Adapter
 product MOSCHIP MCS7780		0x7780	MCS7780 Fast IrDA Adapter
 product MOSCHIP MCS7781		0x7781	MCS7781 Fast IrDA Adapter
 product MOSCHIP MCS7784		0x7784	MCS7784 Slow IrDA Adapter
@@ -2715,6 +2725,7 @@ product RALINK RT2570		0x1706	RT2570
 product RALINK RT2070		0x2070	RT2070
 product RALINK RT2570_2		0x2570	RT2570
 product RALINK RT2573		0x2573	RT2573
+product RALINK RT73		0x2578	RT73
 product RALINK RT2671		0x2671	RT2671
 product RALINK RT2770		0x2770	RT2770
 product RALINK RT2870		0x2870	RT2870
@@ -2812,9 +2823,15 @@ product ROLAND PC50		0x008c	EDIROL PC-50
 product ROLAND UA101F		0x008d	EDIROL UA-101 USB1
 product ROLAND UA1EX		0x0096	EDIROL UA-1EX
 product ROLAND UM3		0x009A	EDIROL UM-3
-product ROLAND UA4FX 		0x00A3	EDIROL UA-4FX
-product ROLAND SONICCELL	0x00C2	SonicCell
+product ROLAND UA4FX 		0x00a3	EDIROL UA-4FX
+product ROLAND SONICCELL	0x00c2	SonicCell
+product ROLAND UA25EXA		0x00e6	EDIROL UA-25EX (advanced)
+product ROLAND UA25EX		0x00e7	EDIROL UA-25EX
 product ROLAND UMONE		0x012a	UM-ONE MIDI I/F
+product ROLAND QUADCAPTURE	0x012f	QUAD-CAPTURE
+
+/* RT Systems products */
+product RTSYS CT57A		0x9e51	CT57A Radio Cable
 
 /* Sagem products */
 product SAGEM XG760A		0x004a	XG-760A
@@ -3189,6 +3206,9 @@ product SWEEX2 LW154		0x0154	LW154
 product SWEEX2 LW303		0x0302	LW303
 product SWEEX2 LW313		0x0313	LW313
 
+/* Synet Electronics products */
+product SYNET MWP54SS		0x3101	MW-P54SS USB Wireless Broadband Router
+
 /* System TALKS, Inc. */
 product SYSTEMTALKS SGCX2UL	0x1920	SGC-X2UL
 
@@ -3254,6 +3274,7 @@ product TOSHIBA HSDPA_MODEM_EU870DT1	0x1302	HSDPA 3G Modem Card
 
 /* TP-Link products */
 product TPLINK RTL8192CU	0x0100	RTL8192CU
+product TPLINK RTL8188EU	0x010c	RTL8188EU
 
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive

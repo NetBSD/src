@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.43 2014/09/05 09:21:54 matt Exp $ */
+/* $NetBSD: osf1_file.c,v 1.43.2.1 2017/08/28 17:51:59 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.43 2014/09/05 09:21:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.43.2.1 2017/08/28 17:51:59 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -201,8 +201,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic("osf1_sys_getdirentries: bad reclen");
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if (cookie)
 			off = *cookie++; /* each entry points to the next */
 		else

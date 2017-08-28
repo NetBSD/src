@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.h,v 1.23.4.2 2016/03/19 11:30:32 skrll Exp $	*/
+/*	$NetBSD: raw_cb.h,v 1.23.4.3 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -46,6 +46,8 @@ struct rawcb {
 	struct	sockaddr *rcb_faddr;	/* destination address */
 	struct	sockaddr *rcb_laddr;	/* socket's address */
 	struct	sockproto rcb_proto;	/* protocol family, protocol */
+	int	(*rcb_filter)(struct mbuf *, struct sockproto *,
+		              struct rawcb *);
 	size_t	rcb_len;
 };
 

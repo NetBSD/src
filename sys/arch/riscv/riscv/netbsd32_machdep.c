@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: netbsd32_machdep.c,v 1.1.2.3 2015/12/27 12:09:41 skrll Exp $");
+__RCSID("$NetBSD: netbsd32_machdep.c,v 1.1.2.4 2017/08/28 17:51:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -92,12 +92,12 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 
 	/* Save floating point register context, if any. */
 	KASSERT(l == curlwp);
-	if (fpu_valid_p()) {
+	if (fpu_valid_p(l)) {
 		/*
 		 * If this process is the current FP owner, dump its
 		 * context to the PCB first.
 		 */
-		fpu_save();
+		fpu_save(l);
 
 		struct pcb * const pcb = lwp_getpcb(l);
 		*(struct fpreg *)mcp->__fregs = pcb->pcb_fpregs;
@@ -149,7 +149,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 	if (flags & _UC_FPU) {
 		KASSERT(l == curlwp);
 		/* Tell PCU we are replacing the FPU contents. */
-		fpu_replace();
+		fpu_replace(l);
 
 		/*
 		 * The PCB FP regs struct includes the FP CSR, so use the
@@ -185,4 +185,3 @@ netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size,
 	else
 		return VM_DEFAULT_ADDRESS32_BOTTOMUP(base, size);
 }
-

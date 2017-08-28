@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.1.12.1 2017/08/28 17:51:39 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.h,v 1.10 2001/05/05 22:33:42 art Exp $	*/
 
@@ -90,5 +90,3 @@ void pdc_scanbus(device_t, struct confargs *,
 
 int	mbprint(void *, const char *);
 int	mbsubmatch(device_t, struct cfdata *, const int *, void *);
-
-void	dumpconf(void);

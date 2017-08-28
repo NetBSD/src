@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.1.2.2 2017/02/05 13:40:12 skrll Exp $	*/
+/*	$NetBSD: eficons.c,v 1.1.2.3 2017/08/28 17:51:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -34,6 +34,8 @@
 #include "bootinfo.h"
 #include "vbe.h"
 
+extern struct x86_boot_params boot_params;
+
 struct btinfo_console btinfo_console;
 
 static EFI_GRAPHICS_OUTPUT_PROTOCOL *efi_gop;
@@ -46,6 +48,68 @@ static int keybuf_write = 0;
 static void eficons_init_video(void);
 static void efi_switch_video_to_text_mode(void);
 
+static int
+getcomaddr(int idx)
+{
+	static const short comioport[4] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
+
+	if (idx < __arraycount(comioport))
+		return comioport[idx];
+	return 0;
+}
+
+/*
+ * XXX only pass console parameters to kernel.
+ */
+void
+consinit(int dev, int ioport, int speed)
+{
+	int iodev;
+
+#if defined(CONSPEED)
+	btinfo_console.speed = CONSPEED;
+#else
+	btinfo_console.speed = 9600;
+#endif
+
+	switch (dev) {
+	case CONSDEV_AUTO:
+		/* XXX comport */
+		goto nocom;
+
+	case CONSDEV_COM0:
+	case CONSDEV_COM1:
+	case CONSDEV_COM2:
+	case CONSDEV_COM3:
+		iodev = dev;
+comport:
+		btinfo_console.addr = ioport;
+		if (btinfo_console.addr == 0) {
+			btinfo_console.addr = getcomaddr(iodev - CONSDEV_COM0);
+			if (btinfo_console.addr == 0)
+				goto nocom;
+		}
+		if (speed != 0)
+			btinfo_console.speed = speed;
+		break;
+
+	case CONSDEV_COM0KBD:
+	case CONSDEV_COM1KBD:
+	case CONSDEV_COM2KBD:
+	case CONSDEV_COM3KBD:
+		iodev = dev - CONSDEV_COM0KBD + CONSDEV_COM0;
+		goto comport;	/* XXX kbd */
+
+	case CONSDEV_PC:
+	default:
+nocom:
+		iodev = CONSDEV_PC;
+		break;
+	}
+
+	strlcpy(btinfo_console.devname, iodev == CONSDEV_PC ? "pc" : "com", 16);
+}
+
 int
 cninit(void)
 {
@@ -53,10 +117,8 @@ cninit(void)
 	efi_switch_video_to_text_mode();
 	eficons_init_video();
 
-	/* XXX serial console */
-	btinfo_console.devname[0] = 'p';
-	btinfo_console.devname[1] = 'c';
-	btinfo_console.devname[2] = 0;
+	consinit(boot_params.bp_consdev, boot_params.bp_consaddr,
+	    boot_params.bp_conspeed);
 
 	return 0;
 }
@@ -209,9 +271,6 @@ bi_framebuffer(void)
 	EFI_STATUS status;
 	EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info;
 	struct btinfo_framebuffer fb;
-	UINT64 res, bestres = 0;
-	UINTN sz;
-	UINT32 i;
 	INT32 bestmode = -1;
 
 	if (efi_gop == NULL) {
@@ -222,7 +281,12 @@ bi_framebuffer(void)
 	if (efi_gop_mode >= 0) {
 		bestmode = efi_gop_mode;
 	} else {
-		/* XXX EDID? EFI_EDID_DISCOVERD_PROTOCOL */
+#if 0
+		UINT64 res, bestres = 0;
+		UINTN sz;
+		UINT32 i;
+
+		/* XXX EDID? EFI_EDID_DISCOVERED_PROTOCOL */
 		for (i = 0; i < efi_gop->Mode->MaxMode; i++) {
 			status = uefi_call_wrapper(efi_gop->QueryMode, 4,
 			    efi_gop, i, &sz, &info);
@@ -237,6 +301,7 @@ bi_framebuffer(void)
 				bestres = res;
 			}
 		}
+#endif
 	}
 	if (bestmode >= 0) {
 		status = uefi_call_wrapper(efi_gop->SetMode, 2, efi_gop,
@@ -496,24 +561,27 @@ static void
 eficons_init_video(void)
 {
 	EFI_STATUS status;
-	UINTN cols, rows, dim = 0;
-	INT32 i, best = -1;
+	UINTN cols, rows;
+	INT32 i, best, mode80x25, mode100x31;
 
 	/*
 	 * Setup text mode
 	 */
 	uefi_call_wrapper(ST->ConOut->Reset, 2, ST->ConOut, TRUE);
 
+	mode80x25 = mode100x31 = -1;
 	for (i = 0; i < ST->ConOut->Mode->MaxMode; i++) {
 		status = uefi_call_wrapper(ST->ConOut->QueryMode, 4,
 		    ST->ConOut, i, &cols, &rows);
 		if (EFI_ERROR(status))
 			continue;
-		if (dim < cols * rows) {
-			dim = cols * rows;
-			best = i;
-		}
+
+		if (mode80x25 < 0 && cols == 80 && rows == 25)
+			mode80x25 = i;
+		else if (mode100x31 < 0 && cols == 100 && rows == 31)
+			mode100x31 = i;
 	}
+	best = mode100x31 >= 0 ? mode100x31 : mode80x25 >= 0 ? mode80x25 : -1;
 	if (best >= 0)
 		uefi_call_wrapper(ST->ConOut->SetMode, 2, ST->ConOut, best);
 	uefi_call_wrapper(ST->ConOut->EnableCursor, 2, ST->ConOut, TRUE);

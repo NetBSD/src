@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.90.4.5 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: hme.c,v 1.90.4.6 2017/08/28 17:52:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.90.4.5 2017/02/05 13:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.90.4.6 2017/08/28 17:52:03 skrll Exp $");
 
 /* #define HMEDEBUG */
 
@@ -306,6 +306,7 @@ hme_config(struct hme_softc *sc)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	if (pmf_device_register1(sc->sc_dev, NULL, NULL, hme_shutdown))
@@ -1021,7 +1022,7 @@ hme_tint(struct hme_softc *sc)
 	/* Update ring */
 	sc->sc_rb.rb_tdtail = ri;
 
-	hme_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	if (sc->sc_rb.rb_td_nbusy == 0)
 		ifp->if_timer = 0;

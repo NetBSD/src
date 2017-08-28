@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.170.6.1 2015/06/06 14:40:26 skrll Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.170.6.2 2017/08/28 17:53:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.170.6.1 2015/06/06 14:40:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.170.6.2 2017/08/28 17:53:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1859,6 +1859,7 @@ out:
 			nqsrv_getl(nd.ni_dvp, ND_WRITE);
 			nqsrv_getl(vp, ND_WRITE);
 			error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+			vput(nd.ni_dvp);
 		} else {
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			if (nd.ni_dvp == vp)
@@ -2601,6 +2602,7 @@ out:
 		nqsrv_getl(nd.ni_dvp, ND_WRITE);
 		nqsrv_getl(vp, ND_WRITE);
 		error = VOP_RMDIR(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+		vput(nd.ni_dvp);
 	} else {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == nd.ni_vp)

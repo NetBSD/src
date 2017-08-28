@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.7.2.2 2016/10/05 20:55:24 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.7.2.3 2017/08/28 17:51:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.7.2.2 2016/10/05 20:55:24 skrll Exp 
 #include <arm/locore.h>
 
 bool arm_has_tlbiasid_p;	// CPU supports TLBIASID system coprocessor op
+bool arm_has_mpext_p;		// CPU supports MP extensions
 
 tlb_asid_t
 tlb_get_asid(void)
@@ -64,11 +65,11 @@ tlb_invalidate_all(void)
 {
 	const bool vivt_icache_p = arm_pcache.icache_type == CACHE_TYPE_VIVT;
 	arm_dsb();
-#ifdef MULTIPROCESSOR
-	armreg_tlbiallis_write(0);
-#else
-	armreg_tlbiall_write(0);
-#endif
+	if (arm_has_mpext_p) {
+		armreg_tlbiallis_write(0);
+	} else {
+		armreg_tlbiall_write(0);
+	}
 	arm_isb();
 	if (__predict_false(vivt_icache_p)) {
 		if (arm_has_tlbiasid_p) {
@@ -94,20 +95,20 @@ tlb_invalidate_asids(tlb_asid_t lo, tlb_asid_t hi)
 	arm_dsb();
 	if (arm_has_tlbiasid_p) {
 		for (; lo <= hi; lo++) {
-#ifdef MULTIPROCESSOR
-			armreg_tlbiasidis_write(lo);
-#else
-			armreg_tlbiasid_write(lo);
-#endif
+			if (arm_has_mpext_p) {
+				armreg_tlbiasidis_write(lo);
+			} else {
+				armreg_tlbiasid_write(lo);
+			}
 		}
 		arm_dsb();
 		arm_isb();
 		if (__predict_false(vivt_icache_p)) {
-#ifdef MULTIPROCESSOR
-			armreg_icialluis_write(0);
-#else
-			armreg_iciallu_write(0);
-#endif
+			if (arm_has_mpext_p) {
+				armreg_icialluis_write(0);
+			} else {
+				armreg_iciallu_write(0);
+			}
 		}
 	} else {
 		armreg_tlbiall_write(0);
@@ -125,12 +126,11 @@ tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 	arm_dsb();
 	va = trunc_page(va) | asid;
 	for (vaddr_t eva = va + PAGE_SIZE; va < eva; va += L2_S_SIZE) {
-#ifdef MULTIPROCESSOR
-		armreg_tlbimvais_write(va);
-#else
-		armreg_tlbimva_write(va);
-#endif
-		//armreg_tlbiall_write(asid);
+		if (arm_has_mpext_p) {
+			armreg_tlbimvais_write(va);
+		} else {
+			armreg_tlbimva_write(va);
+		}
 	}
 	arm_isb();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.133.2.10 2017/02/05 13:40:58 skrll Exp $	*/
+/*	$NetBSD: route.c,v 1.133.2.11 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.133.2.10 2017/02/05 13:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.133.2.11 2017/08/28 17:53:11 skrll Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -123,6 +123,9 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.133.2.10 2017/02/05 13:40:58 skrll Exp $
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
+#if defined(INET) || defined(INET6)
+#include <net/if_llatbl.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -280,7 +283,7 @@ static void rtcache_invalidate(struct dom_rtlist *);
 static void rt_ref(struct rtentry *);
 
 static struct rtentry *
-    rtalloc1_locked(const struct sockaddr *, int, bool);
+    rtalloc1_locked(const struct sockaddr *, int, bool, bool);
 static struct rtentry *
     rtcache_validate_locked(struct route *);
 static void rtcache_free_locked(struct route *);
@@ -557,7 +560,8 @@ dump_rt(const struct rtentry *rt)
  * will be incremented. The caller has to rtfree it by itself.
  */
 struct rtentry *
-rtalloc1_locked(const struct sockaddr *dst, int report, bool wait_ok)
+rtalloc1_locked(const struct sockaddr *dst, int report, bool wait_ok,
+    bool wlock)
 {
 	rtbl_t *rtbl;
 	struct rtentry *rt;
@@ -599,6 +603,10 @@ retry:
 
 		if (need_lock)
 			RTCACHE_WLOCK();
+		if (wlock)
+			RT_WLOCK();
+		else
+			RT_RLOCK();
 		goto retry;
 	}
 #endif /* NET_MPSAFE */
@@ -627,7 +635,7 @@ rtalloc1(const struct sockaddr *dst, int report)
 	struct rtentry *rt;
 
 	RT_RLOCK();
-	rt = rtalloc1_locked(dst, report, true);
+	rt = rtalloc1_locked(dst, report, true, false);
 	RT_UNLOCK();
 
 	return rt;
@@ -918,15 +926,27 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 			 * Smash the current notion of the gateway to
 			 * this destination.  Should check about netmask!!!
 			 */
-			/*
-			 * FIXME NOMPSAFE: the rtentry is updated with the existence
-			 * of refeferences of it.
-			 */
-			error = rt_setgate(rt, gateway);
+#ifdef NET_MPSAFE
+			KASSERT(!cpu_softintr_p());
+
+			error = rt_update_prepare(rt);
 			if (error == 0) {
-				rt->rt_flags |= RTF_MODIFIED;
-				flags |= RTF_MODIFIED;
+#endif
+				error = rt_setgate(rt, gateway);
+				if (error == 0) {
+					rt->rt_flags |= RTF_MODIFIED;
+					flags |= RTF_MODIFIED;
+				}
+#ifdef NET_MPSAFE
+				rt_update_finish(rt);
+			} else {
+				/*
+				 * If error != 0, the rtentry is being
+				 * destroyed, so doing nothing doesn't
+				 * matter.
+				 */
 			}
+#endif
 			stat = &rtstat.rts_newgateway;
 		}
 	} else
@@ -1012,9 +1032,17 @@ ifa_ifwithroute_psref(int flags, const struct sockaddr *dst,
 		int s;
 		struct rtentry *rt;
 
-		rt = rtalloc1(dst, 0);
+		/* XXX we cannot call rtalloc1 if holding the rt lock */
+		if (RT_LOCKED())
+			rt = rtalloc1_locked(gateway, 0, true, true);
+		else
+			rt = rtalloc1(gateway, 0);
 		if (rt == NULL)
 			return NULL;
+		if (rt->rt_flags & RTF_GATEWAY) {
+			rt_unref(rt);
+			return NULL;
+		}
 		/*
 		 * Just in case. May not need to do this workaround.
 		 * Revisit when working on rtentry MP-ification.
@@ -1147,7 +1175,7 @@ rt_getifa(struct rt_addrinfo *info, struct psref *psref)
 		return NULL;
 got:
 	if (ifa->ifa_getifa != NULL) {
-		/* FIXME NOMPSAFE */
+		/* FIXME ifa_getifa is NOMPSAFE */
 		ifa = (*ifa->ifa_getifa)(ifa, dst);
 		if (ifa == NULL)
 			return NULL;
@@ -1170,7 +1198,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 	int error = 0, rc;
 	struct rtentry *rt;
 	rtbl_t *rtbl;
-	struct ifaddr *ifa = NULL, *ifa2 = NULL;
+	struct ifaddr *ifa = NULL;
 	struct sockaddr_storage maskeddst;
 	const struct sockaddr *dst = info->rti_info[RTAX_DST];
 	const struct sockaddr *gateway = info->rti_info[RTAX_GATEWAY];
@@ -1224,6 +1252,10 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		need_unlock = false;
 		rt_timer_remove_all(rt);
 		rtcache_clear_rtentry(dst->sa_family, rt);
+#if defined(INET) || defined(INET6)
+		if (netmask != NULL)
+			lltable_prefix_free(dst->sa_family, dst, netmask, 0);
+#endif
 		if (ret_nrt == NULL) {
 			/* Adjust the refcount */
 			rt_ref(rt);
@@ -1276,6 +1308,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 
 		ss = pserialize_read_enter();
 		if (info->rti_info[RTAX_IFP] != NULL) {
+			struct ifaddr *ifa2;
 			ifa2 = ifa_ifwithnet(info->rti_info[RTAX_IFP]);
 			if (ifa2 != NULL)
 				rt->rt_ifp = ifa2->ifa_ifp;
@@ -1366,7 +1399,7 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 
 		/* XXX we cannot call rtalloc1 if holding the rt lock */
 		if (RT_LOCKED())
-			gwrt = rtalloc1_locked(gate, 1, false);
+			gwrt = rtalloc1_locked(gate, 1, false, true);
 		else
 			gwrt = rtalloc1(gate, 1);
 		/*
@@ -1496,10 +1529,6 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		break;
 	case RTM_ADD:
 		/*
-		 * FIXME NOMPSAFE: the rtentry is updated with the existence
-		 * of refeferences of it.
-		 */
-		/*
 		 * XXX it looks just reverting rt_ifa replaced by ifa_rtrequest
 		 * called via rtrequest1. Can we just prevent the replacement
 		 * somehow and remove the following code? And also doesn't
@@ -1508,14 +1537,30 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		if (rt->rt_ifa != ifa) {
 			printf("rtinit: wrong ifa (%p) was (%p)\n", ifa,
 				rt->rt_ifa);
-			if (rt->rt_ifa->ifa_rtrequest != NULL) {
-				rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt,
-				    &info);
+#ifdef NET_MPSAFE
+			KASSERT(!cpu_softintr_p());
+
+			error = rt_update_prepare(rt);
+			if (error == 0) {
+#endif
+				if (rt->rt_ifa->ifa_rtrequest != NULL) {
+					rt->rt_ifa->ifa_rtrequest(RTM_DELETE,
+					    rt, &info);
+				}
+				rt_replace_ifa(rt, ifa);
+				rt->rt_ifp = ifa->ifa_ifp;
+				if (ifa->ifa_rtrequest != NULL)
+					ifa->ifa_rtrequest(RTM_ADD, rt, &info);
+#ifdef NET_MPSAFE
+				rt_update_finish(rt);
+			} else {
+				/*
+				 * If error != 0, the rtentry is being
+				 * destroyed, so doing nothing doesn't
+				 * matter.
+				 */
 			}
-			rt_replace_ifa(rt, ifa);
-			rt->rt_ifp = ifa->ifa_ifp;
-			if (ifa->ifa_rtrequest != NULL)
-				ifa->ifa_rtrequest(RTM_ADD, rt, &info);
+#endif
 		}
 		rt_newmsg(cmd, rt);
 		rt_unref(rt);
@@ -1549,8 +1594,6 @@ rt_ifa_addlocal(struct ifaddr *ifa)
 
 		memset(&info, 0, sizeof(info));
 		info.rti_flags = RTF_HOST | RTF_LOCAL;
-		if (!(ifa->ifa_ifp->if_flags & (IFF_LOOPBACK|IFF_POINTOPOINT)))
-			info.rti_flags |= RTF_LLDATA;
 		info.rti_info[RTAX_DST] = ifa->ifa_addr;
 		info.rti_info[RTAX_GATEWAY] =
 		    (const struct sockaddr *)ifa->ifa_ifp->if_sadl;

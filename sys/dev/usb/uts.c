@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.3.14.4 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: uts.c,v 1.3.14.5 2017/08/28 17:52:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.3.14.4 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.3.14.5 2017/08/28 17:52:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -205,9 +205,19 @@ uts_attach(device_t parent, device_t self, void *aux)
 	/* requires HID usage Digitizer:In_Range */
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_DIGITIZERS, HUD_IN_RANGE),
 		uha->reportid, hid_input, &sc->sc_loc_z, &flags)) {
-		aprint_error_dev(sc->sc_hdev.sc_dev,
-		    "touchscreen has no range report\n");
-		return;
+		if (uha->uiaa->uiaa_vendor == USB_VENDOR_ELAN) {
+			/*
+			 * XXX
+			 * ELAN touchscreens error out here but still return
+			 * valid data
+			 */
+			aprint_debug_dev(sc->sc_hdev.sc_dev,
+			    "ELAN touchscreen found, working around bug.\n");
+		} else {
+			aprint_error_dev(sc->sc_hdev.sc_dev,
+			    "touchscreen has no range report\n");
+			return;
+		}
 	}
 
 	/* multi-touch support would need HUD_CONTACTID and HUD_CONTACTMAX */
@@ -233,22 +243,23 @@ uts_attach(device_t parent, device_t self, void *aux)
 	sc->sc_calibcoords.maxy = 4095;
 	sc->sc_calibcoords.samplelen = WSMOUSE_CALIBCOORDS_RESET;
 	d = hid_start_parse(desc, size, hid_input);
-	while (hid_get_item(d, &item)) {
-		if (item.kind != hid_input
-		    || HID_GET_USAGE_PAGE(item.usage) != HUP_GENERIC_DESKTOP
-		    || item.report_ID != sc->sc_hdev.sc_report_id)
-			continue;
-		if (HID_GET_USAGE(item.usage) == HUG_X) {
-			sc->sc_calibcoords.minx = item.logical_minimum;
-			sc->sc_calibcoords.maxx = item.logical_maximum;
+	if (d != NULL) {
+		while (hid_get_item(d, &item)) {
+			if (item.kind != hid_input
+			    || HID_GET_USAGE_PAGE(item.usage) != HUP_GENERIC_DESKTOP
+			    || item.report_ID != sc->sc_hdev.sc_report_id)
+				continue;
+			if (HID_GET_USAGE(item.usage) == HUG_X) {
+				sc->sc_calibcoords.minx = item.logical_minimum;
+				sc->sc_calibcoords.maxx = item.logical_maximum;
+			}
+			if (HID_GET_USAGE(item.usage) == HUG_Y) {
+				sc->sc_calibcoords.miny = item.logical_minimum;
+				sc->sc_calibcoords.maxy = item.logical_maximum;
+			}
 		}
-		if (HID_GET_USAGE(item.usage) == HUG_Y) {
-			sc->sc_calibcoords.miny = item.logical_minimum;
-			sc->sc_calibcoords.maxy = item.logical_maximum;
-		}
+		hid_end_parse(d);
 	}
-	hid_end_parse(d);
-
 	tpcalib_init(&sc->sc_tpcalib);
 	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
 	    (void *)&sc->sc_calibcoords, 0, 0);

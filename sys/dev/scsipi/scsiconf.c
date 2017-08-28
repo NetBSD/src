@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.273.4.3 2016/12/05 10:55:17 skrll Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.273.4.4 2017/08/28 17:52:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.273.4.3 2016/12/05 10:55:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.273.4.4 2017/08/28 17:52:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,43 +333,19 @@ scsibusdetach(device_t self, int flags)
 {
 	struct scsibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = sc->sc_channel;
-	struct scsipi_periph *periph;
-	int ctarget, clun;
-	struct scsipi_xfer *xs;
 	int error;
 
 	/*
 	 * Detach all of the periphs.
 	 */
-	if ((error = scsipi_target_detach(chan, -1, -1, flags)) != 0)
+	error = scsipi_target_detach(chan, -1, -1, flags);
+	if (error)
 		return error;
 
 	pmf_device_deregister(self);
 
 	/*
-	 * Process outstanding commands (which will never complete as the
-	 * controller is gone).
-	 *
-	 * XXX Surely this is redundant?  If we get this far, the
-	 * XXX peripherals have all been detached.
-	 */
-	for (ctarget = 0; ctarget < chan->chan_ntargets; ctarget++) {
-		if (ctarget == chan->chan_id)
-			continue;
-		for (clun = 0; clun < chan->chan_nluns; clun++) {
-			periph = scsipi_lookup_periph(chan, ctarget, clun);
-			if (periph == NULL)
-				continue;
-			TAILQ_FOREACH(xs, &periph->periph_xferq, device_q) {
-				callout_stop(&xs->xs_callout);
-				xs->error = XS_DRIVER_STUFFUP;
-				scsipi_done(xs);
-			}
-		}
-	}
-
-	/*
-	 * Now shut down the channel.
+	 * Shut down the channel.
 	 */
 	scsipi_channel_shutdown(chan);
 
@@ -697,6 +673,8 @@ static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SEAGATE ", "ST296N          ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST318404LC      ", ""},     PQUIRK_NOLUNS},
+	{{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "ST39236LC       ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST15150N        ", ""},     PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.28.8.1 2017/02/05 13:40:58 skrll Exp $	*/
+/*	$NetBSD: pfil.c,v 1.28.8.2 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.28.8.1 2017/02/05 13:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.28.8.2 2017/08/28 17:53:11 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -232,8 +232,8 @@ pfil_list_add(pfil_listset_t *phlistset, pfil_polyfunc_t func, void *arg,
 	pfh->pfil_arg  = arg;
 
 	/* switch from oldlist to newlist */
-	phlistset->active = newlist;
 	membar_producer();
+	phlistset->active = newlist;
 #ifdef NET_MPSAFE
 	pserialize_perform(pfil_psz);
 #endif

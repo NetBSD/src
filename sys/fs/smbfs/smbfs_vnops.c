@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.92.2.1 2015/04/06 15:18:19 skrll Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.92.2.2 2017/08/28 17:53:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.92.2.1 2015/04/06 15:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.92.2.2 2017/08/28 17:53:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -618,7 +618,7 @@ smbfs_create(void *v)
 int
 smbfs_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode * a_dvp;
 		struct vnode * a_vp;
@@ -648,7 +648,6 @@ smbfs_remove(void *v)
 		vrele(vp);
 	else
 		vput(vp);
-	vput(dvp);
 	return (error);
 }
 
@@ -822,7 +821,7 @@ smbfs_mkdir(void *v)
 int
 smbfs_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -837,8 +836,7 @@ smbfs_rmdir(void *v)
 	int error;
 
 	if (dvp == vp) {
-		vrele(dvp);
-		vput(dvp);
+		vrele(vp);
 		return (EINVAL);
 	}
 
@@ -853,7 +851,6 @@ smbfs_rmdir(void *v)
 	cache_purge(dvp);
 	cache_purge(vp);
 	vput(vp);
-	vput(dvp);
 
 	return (error);
 }
@@ -1272,8 +1269,7 @@ smbfs_lookup(void *v)
 		cache_purge(newvp);
 		if (newvp != dvp) {
 			if (killit) {
-				VOP_UNLOCK(newvp);
-				vgone(newvp);
+				smbfs_uncache(newvp);
 			} else
 				vput(newvp);
 		} else

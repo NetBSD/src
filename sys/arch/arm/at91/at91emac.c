@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.13.14.5 2017/02/05 13:40:03 skrll Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.13.14.5 2017/02/05 13:40:03 skrll Exp $	*/
+/*	$Id: at91emac.c,v 1.13.14.6 2017/08/28 17:51:29 skrll Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.13.14.6 2017/08/28 17:51:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.13.14.5 2017/02/05 13:40:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.13.14.6 2017/08/28 17:51:29 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -312,9 +312,8 @@ emac_intr(void *arg)
 //		bus_dmamap_sync(sc->sc_dmat, sc->rbqpage_dmamap, 0, sc->rbqlen, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 
-	if (emac_gctx(sc) > 0 && IFQ_IS_EMPTY(&ifp->if_snd) == 0) {
-		emac_ifstart(ifp);
-	}
+	if (emac_gctx(sc) > 0)
+		if_schedule_deferred_start(ifp);
 #if 0 // reloop
 	irq = EMAC_READ(IntStsC);
 	if ((irq & (IntSts_RxSQ|IntSts_ECI)) != 0)
@@ -496,6 +495,7 @@ emac_init(struct emac_softc *sc)
 	ifp->if_softc = sc;
         IFQ_SET_READY(&ifp->if_snd);
         if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
         ether_ifattach(ifp, (sc)->sc_enaddr);
 }
 

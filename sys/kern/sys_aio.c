@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.40.2.1 2016/07/09 20:25:20 skrll Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.40.2.2 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.40.2.1 2016/07/09 20:25:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.40.2.2 2017/08/28 17:53:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -192,8 +192,6 @@ aio_procinit(struct proc *p)
 
 	/* Allocate and initialize AIO structure */
 	aio = kmem_zalloc(sizeof(struct aioproc), KM_SLEEP);
-	if (aio == NULL)
-		return EAGAIN;
 
 	/* Initialize queue and their synchronization structures */
 	mutex_init(&aio->aio_mtx, MUTEX_DEFAULT, IPL_NONE);
@@ -211,7 +209,7 @@ aio_procinit(struct proc *p)
 		return EAGAIN;
 	}
 	error = lwp_create(curlwp, p, uaddr, 0, NULL, 0, aio_worker,
-	    NULL, &l, curlwp->l_class);
+	    NULL, &l, curlwp->l_class, &curlwp->l_sigmask, &curlwp->l_sigstk);
 	if (error != 0) {
 		uvm_uarea_free(uaddr);
 		aio_exit(p, aio);

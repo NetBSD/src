@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.43 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.43.2.1 2017/08/28 17:51:37 skrll Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -60,7 +60,6 @@ options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_43	# 4.3BSD binary compatibility.
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems

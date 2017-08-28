@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.166.2.2 2016/10/05 20:56:02 skrll Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.166.2.3 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.166.2.2 2016/10/05 20:56:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.166.2.3 2017/08/28 17:53:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,11 +503,7 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 
 	kte = pool_cache_get(kte_cache, PR_WAITOK);
 	if (sz > sizeof(kte->kte_space)) {
-		if ((buf = kmem_alloc(sz, KM_SLEEP)) == NULL) {
-			pool_cache_put(kte_cache, kte);
-			ktrexit(l);
-			return ENOMEM;
-		}
+		buf = kmem_alloc(sz, KM_SLEEP);
 	} else
 		buf = kte->kte_space;
 
@@ -930,7 +926,7 @@ ktruser(const char *id, void *addr, size_t len, int ustr)
 
 	user_dta = (void *)(ktp + 1);
 	if ((error = copyin(addr, user_dta, len)) != 0)
-		len = 0;
+		kte->kte_kth.ktr_len = 0;
 
 	ktraddentry(l, kte, KTA_WAITOK);
 	return error;

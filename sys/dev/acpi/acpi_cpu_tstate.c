@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.32 2013/11/20 13:39:59 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.32.6.1 2017/08/28 17:52:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.32 2013/11/20 13:39:59 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.32.6.1 2017/08/28 17:52:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -564,10 +564,6 @@ acpicpu_tstate_fadt(struct acpicpu_softc *sc)
 		kmem_free(sc->sc_tstate, sc->sc_tstate_count * size);
 
 	sc->sc_tstate = kmem_zalloc(count * size, KM_SLEEP);
-
-	if (sc->sc_tstate == NULL)
-		return ENOMEM;
-
 	sc->sc_tstate_count = count;
 
 	/*

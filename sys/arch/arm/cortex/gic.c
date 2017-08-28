@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.12.2.3 2015/09/22 12:05:37 skrll Exp $	*/
+/*	$NetBSD: gic.c,v 1.12.2.4 2017/08/28 17:51:30 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,14 +34,14 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.12.2.3 2015/09/22 12:05:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.12.2.4 2017/08/28 17:51:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/evcnt.h>
 #include <sys/intr.h>
-#include <sys/cpu.h>
 #include <sys/proc.h>
 
 #include <arm/armreg.h>
@@ -51,7 +51,14 @@ __KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.12.2.3 2015/09/22 12:05:37 skrll Exp $");
 #include <arm/cortex/gic_reg.h>
 #include <arm/cortex/mpcore_var.h>
 
-#define	ARMGIC_SGI_IPIBASE	(16 - NIPI)
+void armgic_irq_handler(void *);
+
+#define	ARMGIC_SGI_IPIBASE	0
+
+/*
+ * SGIs 8-16 are reserved for use by ARM Trusted Firmware.
+ */
+__CTASSERT(ARMGIC_SGI_IPIBASE + NIPI <= 8);
 
 static int armgic_match(device_t, cfdata_t, void *);
 static void armgic_attach(device_t, device_t, void *);
@@ -98,6 +105,7 @@ static struct armgic_softc {
 #ifdef MULTIPROCESSOR
 	uint32_t sc_mptargets;
 #endif
+	uint32_t sc_bptargets;
 } armgic_softc = {
 	.sc_pic = {
 		.pic_ops = &armgic_picops,
@@ -135,6 +143,29 @@ static inline void
 gicd_write(struct armgic_softc *sc, bus_size_t o, uint32_t v)
 {
 	bus_space_write_4(sc->sc_memt, sc->sc_gicdh, o, v);
+}
+
+static uint32_t
+gicd_find_targets(struct armgic_softc *sc)
+{
+	uint32_t targets = 0;
+
+	/*
+	 * GICD_ITARGETSR0 through 7 are read-only, and each field returns
+	 * a value that corresponds only to the processor reading the
+	 * register. Use this to determine the current processor's
+	 * CPU interface number.
+	 */
+	for (int i = 0; i < 8; i++) {
+		targets = gicd_read(sc, GICD_ITARGETSRn(i));
+		if (targets != 0)
+			break;
+	}
+	targets |= (targets >> 16);
+	targets |= (targets >> 8);
+	targets &= 0xff;
+
+	return targets ? targets : 1;
 }
 
 /*
@@ -230,25 +261,20 @@ armgic_irq_handler(void *tf)
 
 	KASSERTMSG(old_ipl != IPL_HIGH, "old_ipl %d pmr %#x hppir %#x",
 	    old_ipl, gicc_read(sc, GICC_PMR), gicc_read(sc, GICC_HPPIR));
-#if 0
-	printf("%s(enter): %s: pmr=%u hppir=%u\n",
-	    __func__, ci->ci_data.cpu_name,
-	    gicc_read(sc, GICC_PMR),
-	    gicc_read(sc, GICC_HPPIR));
-#elif 0
-	printf("(%u:%d", ci->ci_index, old_ipl);
-#endif
 
 	for (;;) {
 		uint32_t iar = gicc_read(sc, GICC_IAR);
 		uint32_t irq = __SHIFTOUT(iar, GICC_IAR_IRQ);
-		//printf(".%u", irq);
-		if (irq == GICC_IAR_IRQ_SPURIOUS) {
+
+		if (irq == GICC_IAR_IRQ_SPURIOUS ||
+		    irq == GICC_IAR_IRQ_SSPURIOUS) {
 			iar = gicc_read(sc, GICC_IAR);
 			irq = __SHIFTOUT(iar, GICC_IAR_IRQ);
 			if (irq == GICC_IAR_IRQ_SPURIOUS)
 				break;
-			//printf(".%u", irq);
+			if (irq == GICC_IAR_IRQ_SSPURIOUS) {
+				break;
+			}
 		}
 
 		//const uint32_t cpuid = __SHIFTOUT(iar, GICC_IAR_CPUID_MASK);
@@ -267,27 +293,17 @@ armgic_irq_handler(void *tf)
 		 *
 		 * However, if are just raising ipl, we can just update ci_cpl.
 		 */
-#if 0
-		const int ipl = armgic_priority_to_ipl(gicc_read(sc, GICC_RPR));
-		KASSERTMSG(panicstr != NULL || ipl == is->is_ipl,
-		    "%s: irq %d: running ipl %d != source ipl %u",
-		    ci->ci_data.cpu_name, irq, ipl, is->is_ipl);
-#else
 		const int ipl = is->is_ipl;
-#endif
 		if (__predict_false(ipl < ci->ci_cpl)) {
-			//printf("<");
 			pic_do_pending_ints(I32_bit, ipl, tf);
 			KASSERT(ci->ci_cpl == ipl);
 		} else {
 			KASSERTMSG(ipl > ci->ci_cpl, "ipl %d cpl %d hw-ipl %#x",
 			    ipl, ci->ci_cpl,
 			    gicc_read(sc, GICC_PMR));
-			//printf(">");
 			gicc_write(sc, GICC_PMR, armgic_ipl_to_priority(ipl));
 			ci->ci_cpl = ipl;
 		}
-		//printf("$");
 		cpsie(I32_bit);
 		pic_dispatch(is, tf);
 		cpsid(I32_bit);
@@ -299,24 +315,14 @@ armgic_irq_handler(void *tf)
 #endif
 	}
 
-	// printf("%s(%p): exit (%zu dispatched)\n", __func__, tf, n);
 	/*
 	 * Now handle any pending ints.
 	 */
-	//printf("!");
 	KASSERT(old_ipl != IPL_HIGH);
 	pic_do_pending_ints(I32_bit, old_ipl, tf);
 	KASSERTMSG(ci->ci_cpl == old_ipl, "ci_cpl %d old_ipl %d", ci->ci_cpl, old_ipl);
 	KASSERT(old_mtx_count == ci->ci_mtx_count);
 	KASSERT(old_l_biglocks == ci->ci_curlwp->l_biglocks);
-#if 0
-	printf("%s(exit): %s(%d): pmr=%u hppir=%u\n",
-	    __func__, ci->ci_data.cpu_name, ci->ci_cpl,
-	    gicc_read(sc, GICC_PMR),
-	    gicc_read(sc, GICC_HPPIR));
-#elif 0
-	printf("->%#x)", ((struct trapframe *)tf)->tf_pc);
-#endif
 }
 
 void
@@ -354,7 +360,7 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		} else
 #endif
 #endif
-		targets |= 1 << byte_shift;
+		targets |= sc->sc_bptargets << byte_shift;
 		gicd_write(sc, targets_reg, targets);
 
 		/*
@@ -369,10 +375,6 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		}
 		if (new_cfg != cfg) {
 			gicd_write(sc, cfg_reg, new_cfg);
-#if 0
-			printf("%s: irq %u: cfg changed from %#x to %#x\n",
-			    pic->pic_name, is->is_irq, cfg, new_cfg);
-#endif
 		}
 #ifdef MULTIPROCESSOR
 	} else {
@@ -393,36 +395,31 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	priority &= ~(0xff << byte_shift);
 	priority |= armgic_ipl_to_priority(is->is_ipl) << byte_shift;
 	gicd_write(sc, priority_reg, priority);
-
-#if 0
-	printf("%s: irq %u: target %#x cfg %u priority %#x (%u)\n",
-	    pic->pic_name, is->is_irq, (targets >> byte_shift) & 0xff,
-	    (cfg >> twopair_shift) & 3, (priority >> byte_shift) & 0xff,
-	    is->is_ipl);
-#endif
 }
 
 #ifdef MULTIPROCESSOR
 static void
 armgic_cpu_init_priorities(struct armgic_softc *sc)
 {
+	/* Set lowest priority, i.e. disable interrupts */
+	for (size_t i = 0; i < 32; i += 4) {
+		const bus_size_t priority_reg = GICD_IPRIORITYRn(i / 4);
+		gicd_write(sc, priority_reg, ~0);
+	}
+}
+
+static void
+armgic_cpu_update_priorities(struct armgic_softc *sc)
+{
 	uint32_t enabled = sc->sc_enabled_local;
 	for (size_t i = 0; i < 32; i += 4, enabled >>= 4) {
-		/*
-		 * If there are no enabled interrupts for the priority register,
-		 * don't bother changing it.
-		 */
-		if ((enabled & 0x0f) == 0)
-			continue;
-		/*
-		 * Since priorities are in 3210 order, it'
-		 */
 		const bus_size_t priority_reg = GICD_IPRIORITYRn(i / 4);
 		uint32_t priority = gicd_read(sc, priority_reg);
 		uint32_t byte_mask = 0xff;
 		size_t byte_shift = 0;
 		for (size_t j = 0; j < 4; j++, byte_mask <<= 8, byte_shift += 8) {
 			struct intrsource * const is = sc->sc_pic.pic_sources[i+j];
+			priority |= byte_mask;
 			if (is == NULL || is == &armgic_dummy_source)
 				continue;
 			priority &= ~byte_mask;
@@ -454,14 +451,15 @@ void
 armgic_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 {
 	struct armgic_softc * const sc = PICTOSOFTC(pic);
-	sc->sc_mptargets |= 1 << cpu_index(ci);
+	sc->sc_mptargets |= gicd_find_targets(sc);
 	KASSERTMSG(ci->ci_cpl == IPL_HIGH, "ipl %d not IPL_HIGH", ci->ci_cpl);
+	armgic_cpu_init_priorities(sc);
 	if (!CPU_IS_PRIMARY(ci)) {
-		if (sc->sc_mptargets != 1) {
+		if (popcount(sc->sc_mptargets) != 1) {
 			armgic_cpu_init_targets(sc);
 		}
 		if (sc->sc_enabled_local) {
-			armgic_cpu_init_priorities(sc);
+			armgic_cpu_update_priorities(sc);
 			gicd_write(sc, GICD_ISENABLERn(0),
 			    sc->sc_enabled_local);
 		}
@@ -495,9 +493,7 @@ armgic_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 		sgir |= GICD_SGIR_TargetListFilter_NotMe;
 	}
 
-	//printf("%s: %s: %#x", __func__, curcpu()->ci_data.cpu_name, sgir);
 	gicd_write(sc, GICD_SGIR, sgir);
-	//printf("\n");
 }
 #endif
 
@@ -539,6 +535,17 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	uint32_t pmr = gicc_read(sc, GICC_PMR);
 	u_int priorities = 1 << popcount32(pmr);
 
+	const uint32_t iidr = gicc_read(sc, GICC_IIDR);
+	const int iidr_prod = __SHIFTOUT(iidr, GICC_IIDR_ProductID);
+	const int iidr_arch = __SHIFTOUT(iidr, GICC_IIDR_ArchVersion);
+	const int iidr_rev = __SHIFTOUT(iidr, GICC_IIDR_Revision);
+	const int iidr_imp = __SHIFTOUT(iidr, GICC_IIDR_Implementer);
+
+	/*
+	 * Find the boot processor's CPU interface number.
+	 */
+	sc->sc_bptargets = gicd_find_targets(sc);
+
 	/*
 	 * Let's find out how many real sources we have.
 	 */
@@ -568,6 +575,9 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Generic Interrupt Controller, "
 	    "%zu sources (%zu valid)\n",
 	    sc->sc_pic.pic_maxsources, sc->sc_gic_lines);
+	aprint_debug_dev(sc->sc_dev, "Architecture version %d"
+	    " (0x%x:%d rev %d)\n", iidr_arch, iidr_imp, iidr_prod,
+	    iidr_rev);
 
 #ifdef MULTIPROCESSOR
 	sc->sc_pic.pic_cpus = kcpuset_running;
@@ -610,6 +620,8 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	    pic_handle_softint, (void *)SOFTINT_SERIAL);
 #endif
 #ifdef MULTIPROCESSOR
+	armgic_cpu_init(&sc->sc_pic, curcpu());
+
 	intr_establish(ARMGIC_SGI_IPIBASE + IPI_AST, IPL_VM,
 	    IST_MPSAFE | IST_EDGE, pic_ipi_ast, (void *)-1);
 	intr_establish(ARMGIC_SGI_IPIBASE + IPI_XCALL, IPL_HIGH,
@@ -628,13 +640,13 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	intr_establish(ARMGIC_SGI_IPIBASE + IPI_KPREEMPT, IPL_VM,
 	    IST_MPSAFE | IST_EDGE, pic_ipi_kpreempt, (void *)-1);
 #endif
-	armgic_cpu_init(&sc->sc_pic, curcpu());
 #endif
 
 	const u_int ppis = popcount32(sc->sc_gic_valid_lines[0] >> 16);
 	const u_int sgis = popcount32(sc->sc_gic_valid_lines[0] & 0xffff);
-	aprint_normal_dev(sc->sc_dev, "%u Priorities, %zu SPIs, %u PPIs, %u SGIs\n",
-	    priorities, sc->sc_gic_lines - ppis - sgis, ppis, sgis);
+	aprint_normal_dev(sc->sc_dev, "%u Priorities, %zu SPIs, %u PPIs, "
+	    "%u SGIs\n",  priorities, sc->sc_gic_lines - ppis - sgis, ppis,
+	    sgis);
 }
 
 CFATTACH_DECL_NEW(armgic, 0,

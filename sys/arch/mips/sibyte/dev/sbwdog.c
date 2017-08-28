@@ -1,4 +1,4 @@
-/* $NetBSD: sbwdog.c,v 1.13.30.1 2016/10/05 20:55:32 skrll Exp $ */
+/* $NetBSD: sbwdog.c,v 1.13.30.2 2017/08/28 17:51:46 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.13.30.1 2016/10/05 20:55:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.13.30.2 2017/08/28 17:51:46 skrll Exp $");
 
 #include "locators.h"
 
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.13.30.1 2016/10/05 20:55:32 skrll Exp $
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/include/sb1250_scd.h>
 #include <mips/sibyte/dev/sbscdvar.h>
+
+#include <evbmips/sbmips/systemsw.h>
 
 #define	SBWDOG_DEFAULT_PERIOD	5	/* Default to 5 seconds. */
 

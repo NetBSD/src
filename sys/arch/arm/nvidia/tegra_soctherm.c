@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soctherm.c,v 1.3.2.2 2015/12/27 12:09:31 skrll Exp $ */
+/* $NetBSD: tegra_soctherm.c,v 1.3.2.3 2017/08/28 17:51:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soctherm.c,v 1.3.2.2 2015/12/27 12:09:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soctherm.c,v 1.3.2.3 2017/08/28 17:51:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -135,7 +135,7 @@ struct tegra_soctherm_softc {
 };
 
 static int	tegra_soctherm_init_clocks(struct tegra_soctherm_softc *);
-static void	tegra_soctherm_init_sensors(struct tegra_soctherm_softc *);
+static void	tegra_soctherm_init_sensors(device_t);
 static void	tegra_soctherm_init_sensor(struct tegra_soctherm_softc *,
 		    struct tegra_soctherm_sensor *);
 static void	tegra_soctherm_refresh(struct sysmon_envsys *, envsys_data_t *);
@@ -159,13 +159,17 @@ CFATTACH_DECL_NEW(tegra_soctherm, sizeof(struct tegra_soctherm_softc),
 #define SENSOR_SET_CLEAR(sc, s, reg, set, clr)	\
     tegra_reg_set_clear((sc)->sc_bst, (sc)->sc_bsh, (s)->s_base + (reg), (set), (clr))
 
+static const struct of_compat_data compat_data[] = {
+	{ "nvidia,tegra124-soctherm",	(uintptr_t)&tegra124_soctherm_config },
+	{ NULL }
+};
+
 static int
 tegra_soctherm_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,tegra124-soctherm", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -173,25 +177,26 @@ tegra_soctherm_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_soctherm_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
 
-	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
-	sc->sc_clk_tsensor = fdtbus_clock_get(faa->faa_phandle, "tsensor");
+	sc->sc_clk_tsensor = fdtbus_clock_get(phandle, "tsensor");
 	if (sc->sc_clk_tsensor == NULL) {
 		aprint_error(": couldn't get clock tsensor\n");
 		return;
 	}
-	sc->sc_clk_soctherm = fdtbus_clock_get(faa->faa_phandle, "soctherm");
+	sc->sc_clk_soctherm = fdtbus_clock_get(phandle, "soctherm");
 	if (sc->sc_clk_soctherm == NULL) {
 		aprint_error(": couldn't get clock soctherm\n");
 		return;
 	}
-	sc->sc_rst_soctherm = fdtbus_reset_get(faa->faa_phandle, "soctherm");
+	sc->sc_rst_soctherm = fdtbus_reset_get(phandle, "soctherm");
 	if (sc->sc_rst_soctherm == NULL) {
 		aprint_error(": couldn't get reset soctherm\n");
 		return;
@@ -208,47 +213,25 @@ tegra_soctherm_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": SOC_THERM\n");
 
-	if (tegra_chip_id() == CHIP_ID_TEGRA124) {
-		sc->sc_config = &tegra124_soctherm_config;
-	}
-
+	sc->sc_config = (void *)of_search_compatible(phandle, compat_data)->data;
 	if (sc->sc_config == NULL) {
-		aprint_error_dev(self, "unsupported chip ID\n");
+		aprint_error_dev(self, "unsupported SoC\n");
 		return;
 	}
 
 	if (tegra_soctherm_init_clocks(sc) != 0)
 		return;
 
-	tegra_soctherm_init_sensors(sc);
+	config_defer(self, tegra_soctherm_init_sensors);
 }
 
 static int
 tegra_soctherm_init_clocks(struct tegra_soctherm_softc *sc)
 {
-	struct clk *pll_p_out0;
-	struct clk *clk_m;
 	int error;
-
-	pll_p_out0 = clk_get("pll_p_out0");
-	if (pll_p_out0 == NULL) {
-		aprint_error_dev(sc->sc_dev, "couldn't find pll_p_out0\n");
-		return ENOENT;
-	}
-	clk_m = clk_get("clk_m");
-	if (clk_m == NULL) {
-		aprint_error_dev(sc->sc_dev, "couldn't find clk_m\n");
-		return ENOENT;
-	}
 
 	fdtbus_reset_assert(sc->sc_rst_soctherm);
 
-	error = clk_set_parent(sc->sc_clk_soctherm, pll_p_out0);
-	if (error) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't set soctherm parent: %d\n", error);
-		return error;
-	}
 	error = clk_set_rate(sc->sc_clk_soctherm, 51000000);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
@@ -256,12 +239,6 @@ tegra_soctherm_init_clocks(struct tegra_soctherm_softc *sc)
 		return error;
 	}
 
-	error = clk_set_parent(sc->sc_clk_tsensor, clk_m);
-	if (error) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't set tsensor parent: %d\n", error);
-		return error;
-	}
 	error = clk_set_rate(sc->sc_clk_tsensor, 400000);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
@@ -289,8 +266,9 @@ tegra_soctherm_init_clocks(struct tegra_soctherm_softc *sc)
 }
 
 static void
-tegra_soctherm_init_sensors(struct tegra_soctherm_softc *sc)
+tegra_soctherm_init_sensors(device_t dev)
 {
+	struct tegra_soctherm_softc * const sc = device_private(dev);
 	const struct tegra_soctherm_config *config = sc->sc_config;
 	const u_int nsensors = __arraycount(tegra_soctherm_sensors);
 	const size_t len = sizeof(*sc->sc_sensors) * nsensors;

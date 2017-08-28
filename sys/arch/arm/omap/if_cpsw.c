@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.6.4.6 2017/02/05 13:40:04 skrll Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.6.4.7 2017/08/28 17:51:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.6.4.6 2017/02/05 13:40:04 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.6.4.7 2017/08/28 17:51:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -486,7 +486,6 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	    (void *)sc->sc_bsh_rxdescs);
 
 	sc->sc_rdp = kmem_alloc(sizeof(*sc->sc_rdp), KM_SLEEP);
-	KASSERT(sc->sc_rdp != NULL);
 
 	for (i = 0; i < CPSW_NTXDESCS; i++) {
 		if ((error = bus_dmamap_create(sc->sc_bdt, MCLBYTES,
@@ -508,7 +507,6 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_txpad = kmem_zalloc(ETHER_MIN_LEN, KM_SLEEP);
-	KASSERT(sc->sc_txpad != NULL);
 	bus_dmamap_create(sc->sc_bdt, ETHER_MIN_LEN, 1, ETHER_MIN_LEN, 0,
 	    BUS_DMA_WAITOK, &sc->sc_txpad_dm);
 	bus_dmamap_load(sc->sc_bdt, sc->sc_txpad_dm, sc->sc_txpad,

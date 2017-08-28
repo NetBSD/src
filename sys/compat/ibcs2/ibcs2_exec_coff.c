@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.26 2013/10/25 14:46:35 martin Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.26.6.1 2017/08/28 17:51:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.26 2013/10/25 14:46:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.26.6.1 2017/08/28 17:51:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,6 +454,10 @@ exec_ibcs2_coff_prep_zmagic(struct lwp *l, struct exec_package *epp, struct coff
 		}
 		bufp = tbuf;
 		while (len) {
+			if (len < sizeof(struct coff_slhdr)) {
+				free(tbuf, M_TEMP);
+				return ENOEXEC;
+			}
 			slhdr = (struct coff_slhdr *)bufp;
 
 			if (slhdr->path_index > LONG_MAX / sizeof(long) ||
@@ -465,7 +469,9 @@ exec_ibcs2_coff_prep_zmagic(struct lwp *l, struct exec_package *epp, struct coff
 			/* path_index = slhdr->path_index * sizeof(long); */
 			entry_len = slhdr->entry_len * sizeof(long);
 
-			if (entry_len > len) {
+			if (entry_len < sizeof(struct coff_slhdr) ||
+			    entry_len > len ||
+			    strnlen(slhdr->sl_name, entry_len) == entry_len) {
 				free(tbuf, M_TEMP);
 				return ENOEXEC;
 			}

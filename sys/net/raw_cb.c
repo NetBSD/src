@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.c,v 1.22 2014/05/21 20:43:56 rmind Exp $	*/
+/*	$NetBSD: raw_cb.c,v 1.22.4.1 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.22 2014/05/21 20:43:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.22.4.1 2017/08/28 17:53:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,6 @@ raw_detach(struct socket *so)
 
 	KASSERT(rp != NULL);
 	KASSERT(solocked(so));
-	KASSERT(so->so_lock == softnet_lock);	/* XXX */
 
 	/* Remove the last reference. */
 	LIST_REMOVE(rp, rcb_list);
@@ -113,6 +112,10 @@ raw_detach(struct socket *so)
 	/* Note: sofree() drops the socket's lock. */
 	sofree(so);
 	kmem_free(rp, rcb_len);
+	if (so->so_lock != softnet_lock) {
+		so->so_lock = softnet_lock;
+		mutex_obj_hold(softnet_lock);
+	}
 	mutex_enter(softnet_lock);
 }
 

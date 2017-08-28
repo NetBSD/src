@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.13.2.1 2016/07/09 20:24:59 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.13.2.2 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13.2.1 2016/07/09 20:24:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13.2.2 2017/08/28 17:51:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,10 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13.2.1 2016/07/09 20:24:59 skrll Exp $
 #include "opt_dtrace.h"
 
 #ifndef __x86_64__
-#include "opt_vm86.h"
-#ifdef VM86
-void		syscall_vm86(struct trapframe *);
-#endif
 int		x86_copyargs(void *, void *, size_t);
 #endif
 
@@ -65,18 +61,6 @@ child_return(void *arg)
 {
 	struct lwp *l = arg;
 	struct trapframe *tf = l->l_md.md_regs;
-	struct proc *p = l->l_proc;
-
-	if (p->p_slflag & PSL_TRACED) {
-		ksiginfo_t ksi;
-
-		mutex_enter(proc_lock);
-                KSI_INIT_EMPTY(&ksi);
-                ksi.ksi_signo = SIGTRAP;
-                ksi.ksi_lid = l->l_lid;
-                kpsignal(p, &ksi, NULL);
-		mutex_exit(proc_lock);
-	}
 
 	X86_TF_RAX(tf) = 0;
 	X86_TF_RFLAGS(tf) &= ~PSL_C;
@@ -191,26 +175,3 @@ syscall_intern(struct proc *p)
 	p->p_md.md_syscall = syscall;
 }
 
-#ifdef VM86
-
-void
-syscall_vm86(struct trapframe *frame)
-{
-	struct lwp *l;
-	struct proc *p;
-	ksiginfo_t ksi;
-
-	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = SIGBUS;
-	ksi.ksi_code = BUS_OBJERR;
-	ksi.ksi_trap = T_PROTFLT;
-	ksi.ksi_addr = (void *)frame->tf_eip;
-
-	l = curlwp;
-	p = l->l_proc;
-
-	(*p->p_emul->e_trapsignal)(l, &ksi);
-	userret(l);
-}
-
-#endif

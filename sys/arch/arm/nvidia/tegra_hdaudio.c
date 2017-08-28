@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdaudio.c,v 1.1.2.5 2015/12/27 12:09:31 skrll Exp $ */
+/* $NetBSD: tegra_hdaudio.c,v 1.1.2.6 2017/08/28 17:51:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.1.2.5 2015/12/27 12:09:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.1.2.6 2017/08/28 17:51:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -183,14 +183,7 @@ static int
 tegra_hdaudio_init_clocks(struct tegra_hdaudio_softc *sc)
 {
 	device_t self = sc->sc.sc_dev;
-	struct clk *pll_p_out0;
 	int error;
-
-	pll_p_out0 = clk_get("pll_p_out0");
-	if (pll_p_out0 == NULL) {
-		aprint_error_dev(self, "couldn't find pll_p_out0\n");
-		return ENOENT;
-	}
 
 	/* Assert resets */
 	fdtbus_reset_assert(sc->sc_rst_hda);
@@ -198,11 +191,6 @@ tegra_hdaudio_init_clocks(struct tegra_hdaudio_softc *sc)
 	fdtbus_reset_assert(sc->sc_rst_hda2codec_2x);
 
 	/* Set hda to 48MHz and enable it */
-	error = clk_set_parent(sc->sc_clk_hda, pll_p_out0);
-	if (error) {
-		aprint_error_dev(self, "coulnd't set hda parent: %d\n", error);
-		return error;
-	}
 	error = clk_set_rate(sc->sc_clk_hda, 48000000);
 	if (error) {
 		aprint_error_dev(self, "couldn't set hda frequency: %d\n",
@@ -225,12 +213,6 @@ tegra_hdaudio_init_clocks(struct tegra_hdaudio_softc *sc)
 	}
 
 	/* Set hda2codec_2x to 48MHz and enable it */
-	error = clk_set_parent(sc->sc_clk_hda2codec_2x, pll_p_out0);
-	if (error) {
-		aprint_error_dev(self, "couldn't set hda2codec_2x parent: %d\n",
-		    error);
-		return error;
-	}
 	error = clk_set_rate(sc->sc_clk_hda2codec_2x, 48000000);
 	if (error) {
 		aprint_error_dev(self,

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.63.2.15 2017/01/29 15:58:14 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.63.2.16 2017/08/28 17:52:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.15 2017/01/29 15:58:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.16 2017/08/28 17:52:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -473,8 +473,6 @@ usbd_read_report_desc(struct usbd_interface *ifc, void **descp, int *sizep)
 		return USBD_IOERROR;
 	*sizep = UGETW(hid->descrs[0].wDescriptorLength);
 	*descp = kmem_alloc(*sizep, KM_SLEEP);
-	if (*descp == NULL)
-		return USBD_NOMEM;
 	err = usbd_get_report_descriptor(dev, id->bInterfaceNumber,
 					 *sizep, *descp);
 	if (err) {

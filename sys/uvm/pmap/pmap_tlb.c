@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.10.2.4 2016/12/05 10:55:30 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.10.2.5 2017/08/28 17:53:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.10.2.4 2016/12/05 10:55:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.10.2.5 2017/08/28 17:53:18 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -721,7 +721,7 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 }
 #endif /* MULTIPROCESSOR && PMAP_TLB_NEED_SHOOTDOWN */
 
-#ifndef PMAP_TLB_HWPAGEWALKER
+#ifndef PMAP_HWPAGEWALKER
 int
 pmap_tlb_update_addr(pmap_t pm, vaddr_t va, pt_entry_t pte, u_int flags)
 {
@@ -762,7 +762,7 @@ pmap_tlb_update_addr(pmap_t pm, vaddr_t va, pt_entry_t pte, u_int flags)
 
 	return rv;
 }
-#endif /* !PMAP_TLB_HWPAGEWALKER */
+#endif /* !PMAP_HWPAGEWALKER */
 
 void
 pmap_tlb_invalidate_addr(pmap_t pm, vaddr_t va)
@@ -826,7 +826,7 @@ pmap_tlb_asid_alloc(struct pmap_tlb_info *ti, pmap_t pm,
 	 * a new one.
 	 */
 	if (__predict_true(TLBINFO_ASID_INUSE_P(ti, ti->ti_asid_hint))) {
-		const size_t nbpw __diagused = 8*sizeof(ti->ti_asid_bitmap[0]);
+		const size_t nbpw = 8 * sizeof(ti->ti_asid_bitmap[0]);
 		size_t i;
 		u_long bits;
 		for (i = 0; (bits = ~ti->ti_asid_bitmap[i]) == 0; i++) {

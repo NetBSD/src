@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.97.2.1 2015/04/06 15:18:19 skrll Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.97.2.2 2017/08/28 17:53:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.97.2.1 2015/04/06 15:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.97.2.2 2017/08/28 17:53:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,14 +115,14 @@ ntfs_mountroot(void)
 	args.mode = 0777;
 
 	if ((error = ntfs_mountfs(rootvp, mp, &args, l)) != 0) {
-		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
+		vfs_unbusy(mp);
+		vfs_rele(mp);
 		return (error);
 	}
 
 	mountlist_append(mp);
 	(void)ntfs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	return (0);
 }
 
@@ -883,7 +883,7 @@ struct vfsops ntfs_vfsops = {
 	.vfs_mountroot = ntfs_mountroot,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

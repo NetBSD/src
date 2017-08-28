@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.202.2.6 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.202.2.7 2017/08/28 17:53:12 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.202.2.6 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.202.2.7 2017/08/28 17:53:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -464,17 +464,14 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 #ifdef TCP_SIGNATURE
 		case TCP_MD5SIG:
 			optval = (tp->t_flags & TF_SIGNATURE) ? 1 : 0;
-			error = sockopt_set(sopt, &optval, sizeof(optval));
-			break;
+			goto setval;
 #endif
 		case TCP_NODELAY:
 			optval = tp->t_flags & TF_NODELAY;
-			error = sockopt_set(sopt, &optval, sizeof(optval));
-			break;
+			goto setval;
 		case TCP_MAXSEG:
 			optval = tp->t_peermss;
-			error = sockopt_set(sopt, &optval, sizeof(optval));
-			break;
+			goto setval;
 		case TCP_INFO:
 			tcp_fill_info(tp, &ti);
 			error = sockopt_set(sopt, &ti, sizeof ti);
@@ -483,6 +480,19 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		case TCP_CONGCTL:
 			break;
 #endif
+		case TCP_KEEPIDLE:
+			optval = tp->t_keepidle;
+			goto setval;
+		case TCP_KEEPINTVL:
+			optval = tp->t_keepintvl;
+			goto setval;
+		case TCP_KEEPCNT:
+			optval = tp->t_keepcnt;
+			goto setval;
+		case TCP_KEEPINIT:
+			optval = tp->t_keepcnt;
+setval:			error = sockopt_set(sopt, &optval, sizeof(optval));
+			break;
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -2150,12 +2160,6 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("Use RFC1323 time stamp options"),
 		       sysctl_update_tcpcb_template, 0, &tcp_do_timestamps, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_TSTAMP, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "compat_42",
-		       SYSCTL_DESCR("Enable workarounds for 4.2BSD TCP bugs"),
-		       NULL, 0, &tcp_compat_42, 0,
-		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_COMPAT_42, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "cwm",

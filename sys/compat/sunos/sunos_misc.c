@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.169.2.1 2015/12/27 12:09:47 skrll Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.169.2.2 2017/08/28 17:51:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.169.2.1 2015/12/27 12:09:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.169.2.2 2017/08/28 17:51:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,8 +414,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic("sunos_getdents");
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if ((*cookie >> 32) != 0) {
 			compat_offseterr(vp, "sunos_getdents");
 			error = EINVAL;

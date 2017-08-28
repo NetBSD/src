@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.107.4.4 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.107.4.5 2017/08/28 17:53:12 skrll Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.107.4.4 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.107.4.5 2017/08/28 17:53:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1551,7 +1551,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	int error __mrt6debugused = 0;
 	int s;
 	static struct route ro;
-	struct in6_multi *in6m;
+	bool ingroup;
 	struct sockaddr_in6 dst6;
 	u_long linkmtu;
 
@@ -1608,8 +1608,8 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	 */
 	sockaddr_in6_init(&dst6, &ip6->ip6_dst, 0, 0, 0);
 
-	IN6_LOOKUP_MULTI(ip6->ip6_dst, ifp, in6m);
-	if (in6m != NULL) {
+	ingroup = in6_multi_group(&ip6->ip6_dst, ifp);
+	if (ingroup) {
 		ip6_mloopback(ifp, m,
 		    satocsin6(rtcache_getdst(&ro)));
 	}
@@ -1620,12 +1620,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	 */
 	linkmtu = IN6_LINKMTU(ifp);
 	if (mb_copy->m_pkthdr.len <= linkmtu || linkmtu < IPV6_MMTU) {
-		/*
-		 * We could call if_output directly here, but we use
-		 * nd6_output on purpose to see if IPv6 operation is allowed
-		 * on the interface.
-		 */
-		error = nd6_output(ifp, ifp, mb_copy, &dst6, NULL);
+		error = ip6_if_output(ifp, ifp, mb_copy, &dst6, NULL);
 #ifdef MRT6DEBUG
 		if (mrt6debug & DEBUG_XMIT)
 			log(LOG_DEBUG, "phyint_send on mif %td err %d\n",

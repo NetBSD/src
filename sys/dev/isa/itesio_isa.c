@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.24.14.1 2015/06/06 14:40:08 skrll Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.24.14.2 2017/08/28 17:52:04 skrll Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.24.14.1 2015/06/06 14:40:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.24.14.2 2017/08/28 17:52:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -136,6 +136,7 @@ itesio_isa_match(device_t parent, cfdata_t match, void *aux)
 	bus_space_unmap(ia->ia_iot, ioh, 2);
 
 	switch (cr) {
+	case ITESIO_ID8628:
 	case ITESIO_ID8705:
 	case ITESIO_ID8712:
 	case ITESIO_ID8716:

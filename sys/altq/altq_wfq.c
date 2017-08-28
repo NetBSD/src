@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.20.6.1 2016/04/22 15:44:08 skrll Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.20.6.2 2017/08/28 17:51:26 skrll Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.14 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.20.6.1 2016/04/22 15:44:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.20.6.2 2017/08/28 17:51:26 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -517,13 +517,14 @@ wfq_setweight(struct wfq_setweight *swp)
 	wfq *queue;
 	int old;
 
-	if (swp->weight < 0) {
-		printf("set weight in natural number\n");
+	if (swp->weight < 0)
 		return (EINVAL);
-	}
 
 	if ((wfqp = altq_lookup(swp->iface.wfq_ifacename, ALTQT_WFQ)) == NULL)
 		return (EBADF);
+
+	if (swp->qid < 0 || swp->qid >= wfqp->nums)
+		return (EINVAL);
 
 	queue = &wfqp->queue[swp->qid];
 	old = queue->weight;
@@ -543,7 +544,7 @@ wfq_getstats(struct wfq_getstats *gsp)
 	if ((wfqp = altq_lookup(gsp->iface.wfq_ifacename, ALTQT_WFQ)) == NULL)
 		return (EBADF);
 
-	if (gsp->qid >= wfqp->nums)
+	if (gsp->qid < 0 || gsp->qid >= wfqp->nums)
 		return (EINVAL);
 
 	queue = &wfqp->queue[gsp->qid];

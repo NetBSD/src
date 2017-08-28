@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.99.4.5 2017/02/05 13:40:56 skrll Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.99.4.6 2017/08/28 17:53:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,30 +58,30 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.99.4.5 2017/02/05 13:40:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.99.4.6 2017/08/28 17:53:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
-#include "opt_revcache.h"
 #include "opt_dtrace.h"
+#include "opt_revcache.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/sysctl.h>
-#include <sys/time.h>
-#include <sys/mount.h>
-#include <sys/vnode_impl.h>
-#include <sys/namei.h>
-#include <sys/errno.h>
-#include <sys/pool.h>
-#include <sys/mutex.h>
 #include <sys/atomic.h>
-#include <sys/kthread.h>
-#include <sys/kernel.h>
 #include <sys/cpu.h>
+#include <sys/errno.h>
 #include <sys/evcnt.h>
+#include <sys/kernel.h>
+#include <sys/kthread.h>
+#include <sys/mount.h>
+#include <sys/mutex.h>
+#include <sys/namei.h>
+#include <sys/pool.h>
 #include <sys/sdt.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/vnode_impl.h>
 
 #define NAMECACHE_ENTER_REVERSE
 /*
@@ -100,77 +100,145 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.99.4.5 2017/02/05 13:40:56 skrll Exp
  * Upon reaching the last segment of a path, if the reference
  * is for DELETE, or NOCACHE is set (rewrite), and the
  * name is located in the cache, it will be dropped.
- * The entry is dropped also when it was not possible to lock
- * the cached vnode, either because vcache_tryvget() failed or
- * the generation number has changed while waiting for the lock.
  */
 
 /*
- * The locking in this subsystem works as follows:
+ * Cache entry lifetime:
  *
- * When an entry is added to the cache, via cache_enter(),
- * namecache_lock is taken to exclude other writers.  The new
- * entry is added to the hash list in a way which permits
- * concurrent lookups and invalidations in the cache done on
- * other CPUs to continue in parallel.
+ *	nonexistent
+ *	---create---> active
+ *	---invalidate---> queued
+ *	---reclaim---> nonexistent.
  *
- * When a lookup is done in the cache, via cache_lookup() or
- * cache_lookup_raw(), the per-cpu lock below is taken.  This
- * protects calls to cache_lookup_entry() and cache_invalidate()
- * against cache_reclaim() but allows lookups to continue in
- * parallel with cache_enter().
+ * States:
+ * - Nonexistent.  Cache entry does not exist.
  *
- * cache_revlookup() takes namecache_lock to exclude cache_enter()
- * and cache_reclaim() since the list it operates on is not
- * maintained to allow concurrent reads.
+ * - Active.  cache_lookup, cache_lookup_raw, cache_revlookup can look
+ *   up, acquire references, and hand off references to vnodes,
+ *   e.g. via v_interlock.  Marked by nonnull ncp->nc_dvp.
  *
- * When cache_reclaim() is called namecache_lock is held to hold
- * off calls to cache_enter()/cache_revlookup() and each of the
- * per-cpu locks is taken to hold off lookups.  Holding all these
- * locks essentially idles the subsystem, ensuring there are no
- * concurrent references to the cache entries being freed.
+ * - Queued.  Pending desstruction by cache_reclaim.  Cannot be used by
+ *   cache_lookup, cache_lookup_raw, or cache_revlookup.  May still be
+ *   on lists.  Marked by null ncp->nc_dvp.
  *
- * 32 bit per-cpu statistic counters (struct nchstats_percpu) are
- * incremented when the operations they count are performed while
- * running on the corresponding CPU.  Frequently individual counters
- * are incremented while holding a lock (either a per-cpu lock or
- * namecache_lock) sufficient to preclude concurrent increments
- * being done to the same counter, so non-atomic increments are
- * done using the COUNT() macro.  Counters which are incremented
- * when one of these locks is not held use the COUNT_UNL() macro
- * instead.  COUNT_UNL() could be defined to do atomic increments
- * but currently just does what COUNT() does, on the theory that
- * it is unlikely the non-atomic increment will be interrupted
- * by something on the same CPU that increments the same counter,
- * but even if it does happen the consequences aren't serious.
+ * Transitions:
+ *
+ * - Create: nonexistent--->active
+ *
+ *   Done by cache_enter(dvp, vp, name, namelen, cnflags), called by
+ *   VOP_LOOKUP after the answer is found.  Allocates a struct
+ *   namecache object, initializes it with the above fields, and
+ *   activates it by inserting it into the forward and reverse tables.
+ *
+ * - Invalidate: active--->queued
+ *
+ *   Done by cache_invalidate.  If not already invalidated, nullify
+ *   ncp->nc_dvp and ncp->nc_vp, and add to cache_gcqueue.  Called,
+ *   among various other places, in cache_lookup(dvp, name, namelen,
+ *   nameiop, cnflags, &iswht, &vp) when MAKEENTRY is missing from
+ *   cnflags.
+ *
+ * - Reclaim: queued--->nonexistent
+ *
+ *   Done by cache_reclaim.  Disassociate ncp from any lists it is on
+ *   and free memory.
+ */
+
+/*
+ * Locking.
+ *
+ * L namecache_lock		Global lock for namecache table and queues.
+ * C struct nchcpu::cpu_lock	Per-CPU lock to reduce read contention.
+ * N struct namecache::nc_lock	Per-entry lock.
+ * V struct vnode::v_interlock	Vnode interlock.
+ *
+ * Lock order: L -> C -> N -> V
+ *
+ *	Examples:
+ *	. L->C: cache_reclaim
+ *	. C->N->V: cache_lookup
+ *	. L->N->V: cache_purge1, cache_revlookup
+ *
+ * All use serialized by namecache_lock:
+ *
+ *	nclruhead / struct namecache::nc_lru
+ *	ncvhashtbl / struct namecache::nc_vhash
+ *	struct vnode_impl::vi_dnclist / struct namecache::nc_dvlist
+ *	struct vnode_impl::vi_nclist / struct namecache::nc_vlist
+ *	nchstats
+ *
+ * - Insertion serialized by namecache_lock,
+ * - read protected by per-CPU lock,
+ * - insert/read ordering guaranteed by memory barriers, and
+ * - deletion allowed only under namecache_lock and *all* per-CPU locks
+ *   in CPU_INFO_FOREACH order:
+ *
+ *	nchashtbl / struct namecache::nc_hash
+ *
+ *   The per-CPU locks exist only to reduce the probability of
+ *   contention between readers.  We do not bind to a CPU, so
+ *   contention is still possible.
+ *
+ * All use serialized by struct namecache::nc_lock:
+ *
+ *	struct namecache::nc_dvp
+ *	struct namecache::nc_vp
+ *	struct namecache::nc_gcqueue (*)
+ *	struct namecache::nc_hittime (**)
+ *
+ * (*) Once on the queue, only cache_thread uses this nc_gcqueue, unlocked.
+ * (**) cache_prune reads nc_hittime unlocked, since approximate is OK.
+ *
+ * Unlocked because stable after initialization:
+ *
+ *	struct namecache::nc_dvp
+ *	struct namecache::nc_vp
+ *	struct namecache::nc_flags
+ *	struct namecache::nc_nlen
+ *	struct namecache::nc_name
+ *
+ * Unlocked because approximation is OK:
+ *
+ *	struct nchcpu::cpu_stats
+ *	struct nchcpu::cpu_stats_last
+ *
+ * Updates under namecache_lock or any per-CPU lock are marked with
+ * COUNT, while updates outside those locks are marked with COUNT_UNL.
+ *
+ * - The theory seems to have been that you could replace COUNT_UNL by
+ *   atomic operations -- except that doesn't help unless you also
+ *   replace COUNT by atomic operations, because mixing atomics and
+ *   nonatomics is a recipe for failure.
+ * - We use 32-bit per-CPU counters and 64-bit global counters under
+ *   the theory that 32-bit counters are less likely to be hosed by
+ *   nonatomic increment.
+ */
+
+/*
+ * The comment below is preserved for posterity in case it is
+ * important, but it is clear that everywhere the namecache_count_*()
+ * functions are called, other cache_*() functions that take the same
+ * locks are also called, so I can't imagine how this could be a
+ * problem:
  *
  * N.B.: Attempting to protect COUNT_UNL() increments by taking
  * a per-cpu lock in the namecache_count_*() functions causes
  * a deadlock.  Don't do that, use atomic increments instead if
  * the imperfections here bug you.
+ */
+
+/*
+ * struct nchstats_percpu:
  *
- * The 64 bit system-wide statistic counts (struct nchstats) are
- * maintained by sampling the per-cpu counters periodically, adding
- * in the deltas since the last samples and recording the current
- * samples to use to compute the next delta.  The sampling is done
- * as a side effect of cache_reclaim() which is run periodically,
- * for its own purposes, often enough to avoid overflow of the 32
- * bit counters.  While sampling in this fashion requires no locking
- * it is never-the-less done only after all locks have been taken by
- * cache_reclaim() to allow cache_stat_sysctl() to hold off
- * cache_reclaim() with minimal locking.
- *
- * cache_stat_sysctl() takes its CPU's per-cpu lock to hold off
- * cache_reclaim() so that it can copy the subsystem total stats
- * without them being concurrently modified.  If CACHE_STATS_CURRENT
- * is defined it also harvests the per-cpu increments into the total,
- * which again requires cache_reclaim() to be held off.
- *
- * The per-cpu data (a lock and the per-cpu stats structures)
- * are defined next.
+ *	Per-CPU counters.
  */
 struct nchstats_percpu _NAMEI_CACHE_STATS(uint32_t);
 
+/*
+ * struct nchcpu:
+ *
+ *	Per-CPU namecache state: lock and per-CPU counters.
+ */
 struct nchcpu {
 	kmutex_t		cpu_lock;
 	struct nchstats_percpu	cpu_stats;
@@ -252,7 +320,6 @@ static struct evcnt cache_ev_over;
 static struct evcnt cache_ev_under;
 static struct evcnt cache_ev_forced;
 
-static void cache_invalidate(struct namecache *);
 static struct namecache *cache_lookup_entry(
     const struct vnode *, const char *, size_t);
 static void cache_thread(void *);
@@ -498,7 +565,7 @@ cache_lookup_entry(const struct vnode *dvp, const char *name, size_t namelen)
  * other errors, and the value of VN might or might not have been set
  * depending on what error occurred.)
  */
-int
+bool
 cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	     uint32_t nameiop, uint32_t cnflags,
 	     int *iswht_ret, struct vnode **vn_ret)
@@ -506,7 +573,8 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	struct namecache *ncp;
 	struct vnode *vp;
 	struct nchcpu *cpup;
-	int error, ret_value;
+	int error;
+	bool hit;
 
 
 	/* Establish default result values */
@@ -516,7 +584,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	*vn_ret = NULL;
 
 	if (__predict_false(!doingcache)) {
-		return 0;
+		return false;
 	}
 
 	cpup = curcpu()->ci_data.cpu_nch;
@@ -527,7 +595,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		COUNT(cpup, ncs_long);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
-		return 0;
+		return false;
 	}
 
 	ncp = cache_lookup_entry(dvp, name, namelen);
@@ -535,7 +603,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		COUNT(cpup, ncs_miss);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
-		return 0;
+		return false;
 	}
 	if ((cnflags & MAKEENTRY) == 0) {
 		COUNT(cpup, ncs_badhits);
@@ -548,7 +616,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
-		return 0;
+		return false;
 	}
 	if (ncp->nc_vp == NULL) {
 		if (iswht_ret != NULL) {
@@ -565,7 +633,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		    (cnflags & ISLASTCN) == 0)) {
 			COUNT(cpup, ncs_neghits);
 			/* found neg entry; vn is already null from above */
-			ret_value = 1;
+			hit = true;
 		} else {
 			COUNT(cpup, ncs_badhits);
 			/*
@@ -575,11 +643,11 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 			 */
 			cache_invalidate(ncp);
 			/* found nothing */
-			ret_value = 0;
+			hit = false;
 		}
 		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
-		return ret_value;
+		return hit;
 	}
 
 	vp = ncp->nc_vp;
@@ -599,20 +667,20 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		 */
 		COUNT_UNL(cpup, ncs_falsehits);
 		/* found nothing */
-		return 0;
+		return false;
 	}
 
 	COUNT_UNL(cpup, ncs_goodhits);
 	/* found it */
 	*vn_ret = vp;
-	return 1;
+	return true;
 }
 
 
 /*
  * Cut-'n-pasted version of the above without the nameiop argument.
  */
-int
+bool
 cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 		 uint32_t cnflags,
 		 int *iswht_ret, struct vnode **vn_ret)
@@ -630,7 +698,7 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 
 	if (__predict_false(!doingcache)) {
 		/* found nothing */
-		return 0;
+		return false;
 	}
 
 	cpup = curcpu()->ci_data.cpu_nch;
@@ -639,14 +707,14 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 		COUNT(cpup, ncs_long);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
-		return 0;
+		return false;
 	}
 	ncp = cache_lookup_entry(dvp, name, namelen);
 	if (__predict_false(ncp == NULL)) {
 		COUNT(cpup, ncs_miss);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
-		return 0;
+		return false;
 	}
 	vp = ncp->nc_vp;
 	if (vp == NULL) {
@@ -662,7 +730,7 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
 		/* found negative entry; vn is already null from above */
-		return 1;
+		return true;
 	}
 	mutex_enter(vp->v_interlock);
 	mutex_exit(&ncp->nc_lock);
@@ -680,13 +748,13 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 		 */
 		COUNT_UNL(cpup, ncs_falsehits);
 		/* found nothing */
-		return 0;
+		return false;
 	}
 
 	COUNT_UNL(cpup, ncs_goodhits); /* XXX can be "badhits" */
 	/* found it */
 	*vn_ret = vp;
-	return 1;
+	return true;
 }
 
 /*

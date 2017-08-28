@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.5 2017/02/05 13:40:10 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.1.2.6 2017/08/28 17:51:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.5 2017/02/05 13:40:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.6 2017/08/28 17:51:36 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.5 2017/02/05 13:40:10 skrll Exp $"
 #include <mips/locore.h>
 #include <mips/cpuregs.h>
 
+#include <mips/ingenic/ingenic_coreregs.h>
 #include <mips/ingenic/ingenic_regs.h>
 #include <mips/ingenic/ingenic_var.h>
 
@@ -128,12 +129,12 @@ ingenic_cpu_init(struct cpu_info *ci)
 	uint32_t reg;
 
 	/* enable IPIs for this core */
-	reg = MFC0(12, 4);	/* reset entry and interrupts */
+	reg = mips_cp0_corereim_read();
 	if (cpu_index(ci) == 1) {
 		reg |= REIM_MIRQ1_M;
 	} else
 		reg |= REIM_MIRQ0_M;
-	MTC0(reg, 12, 4);
+	mips_cp0_corereim_write(reg);
 	printf("%s %d %08x\n", __func__, cpu_index(ci), reg);
 }
 
@@ -147,9 +148,9 @@ ingenic_send_ipi(struct cpu_info *ci, int tag)
 	mutex_enter(&ingenic_ipi_lock);
 	if (kcpuset_isset(cpus_running, cpu_index(ci))) {
 		if (cpu_index(ci) == 0) {
-			MTC0(msg, CP0_CORE_MBOX, 0);
+			mips_cp0_corembox_write(msg, 0);
 		} else {
-			MTC0(msg, CP0_CORE_MBOX, 1);
+			mips_cp0_corembox_write(msg, 1);
 		}
 	}
 	mutex_exit(&ingenic_ipi_lock);

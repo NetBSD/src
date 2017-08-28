@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.43.2.1 2015/06/06 14:40:06 skrll Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.43.2.2 2017/08/28 17:52:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.43.2.1 2015/06/06 14:40:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.43.2.2 2017/08/28 17:52:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,13 +234,10 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 	rct.caa=caa;
 	rct.minbus = minbus;
 	rct.maxbus = maxbus;
-	if ((rct.bussize_ioreqs  = kmem_zalloc(size, KM_SLEEP)) == NULL ||
-	    (rct.bussize_memreqs = kmem_zalloc(size, KM_SLEEP)) == NULL ||
-	    (rct.iobustags =
-	     kmem_zalloc(maxbus * sizeof(rbus_tag_t), KM_SLEEP)) == NULL ||
-	    (rct.membustags =
-	     kmem_zalloc(maxbus * sizeof(rbus_tag_t), KM_SLEEP)) == NULL)
-		panic("%s: memory allocation failed", __func__);
+	rct.bussize_ioreqs = kmem_zalloc(size, KM_SLEEP);
+	rct.bussize_memreqs = kmem_zalloc(size, KM_SLEEP);
+	rct.iobustags = kmem_zalloc(maxbus * sizeof(rbus_tag_t), KM_SLEEP);
+	rct.membustags = kmem_zalloc(maxbus * sizeof(rbus_tag_t), KM_SLEEP);
 
 	printf("%s: sizing buses %d-%d\n",
 	       device_xname(rct.csc->sc_dev),
@@ -709,4 +706,3 @@ ppb_activate(device_t self, enum devact act)
   printf("ppb_activate called\n");
   return 0;
 }
-

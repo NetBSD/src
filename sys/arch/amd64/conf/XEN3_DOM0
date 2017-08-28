@@ -1,8 +1,8 @@
-# $NetBSD: XEN3_DOM0,v 1.112.2.8 2017/02/05 13:40:02 skrll Exp $
+# $NetBSD: XEN3_DOM0,v 1.112.2.9 2017/08/28 17:51:28 skrll Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
-#options 	MULTIPROCESSOR	# (experimental)
+#options 	MULTIPROCESSOR	# (not yet - dom0 stuff is not MP-safe)
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -86,6 +86,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
+#options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
 file-system	FFS		# UFS
@@ -368,6 +369,7 @@ ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 iwm*	at pci? dev ? function ?	# Intel Wireless WiFi Link 7xxx
+ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
@@ -794,6 +796,19 @@ wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 btsco* at bthub?
+
+
+# SD/MMC/SDIO Controller and Device support
+
+# SD/MMC controller
+sdhc*	at pci?		# SD Host Controller
+rtsx*	at pci?		# Realtek RTS5209/RTS5229 Card Reader
+#sdhc*	at cardbus?	# SD Host Controller
+sdmmc*	at sdhc?	# SD/MMC bus
+sdmmc*	at rtsx?	# SD/MMC bus
+
+ld*	at sdmmc?
+
 
 # Cryptographic Devices
 

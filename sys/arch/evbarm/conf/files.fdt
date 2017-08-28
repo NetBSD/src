@@ -1,0 +1,12 @@
+#	$NetBSD: files.fdt,v 1.1.6.2 2017/08/28 17:51:34 skrll Exp $
+#
+# FDT-based kernel configuration info
+#
+
+file	arch/evbarm/fdt/fdt_machdep.c
+
+defparam opt_machdep.h				BOOT_ARGS
+
+include "dev/ofw/files.ofw"
+include "dev/fdt/files.fdt"
+include "arch/arm/fdt/files.fdt"

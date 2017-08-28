@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38.6.3 2016/12/05 10:54:59 skrll Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.6.4 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.6.3 2016/12/05 10:54:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.6.4 2017/08/28 17:51:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,6 +250,7 @@ acpi_md_sleep_enter(int state)
 void
 acpi_cpu_sleep(struct cpu_info *ci)
 {
+	uint64_t xcr0 = 0;
 	int s;
 
 	KASSERT(!CPU_IS_PRIMARY(ci));
@@ -259,12 +260,21 @@ acpi_cpu_sleep(struct cpu_info *ci)
 	fpusave_cpu(true);
 	x86_disable_intr();
 
+	/*
+	 * XXX also need to save the PMCs, the dbregs, and probably a few
+	 * MSRs too.
+	 */
+	if (rcr4() & CR4_OSXSAVE)
+		xcr0 = rdxcr(0);
+
 	if (acpi_md_sleep_prepare(-1))
 		goto out;
 
 	/* Execute Wakeup */
 	cpu_init_msrs(ci, false);
 	fpuinit(ci);
+	if (rcr4() & CR4_OSXSAVE)
+		wrxcr(0, xcr0);
 
 #if NLAPIC > 0
 	lapic_enable();
@@ -285,6 +295,7 @@ out:
 int
 acpi_md_sleep(int state)
 {
+	uint64_t xcr0 = 0;
 	int s, ret = 0;
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
@@ -315,12 +326,21 @@ acpi_md_sleep(int state)
 	}
 #endif
 
+	/*
+	 * XXX also need to save the PMCs, the dbregs, and probably a few
+	 * MSRs too.
+	 */
+	if (rcr4() & CR4_OSXSAVE)
+		xcr0 = rdxcr(0);
+
 	if (acpi_md_sleep_prepare(state))
 		goto out;
 
 	/* Execute Wakeup */
 	cpu_init_msrs(&cpu_info_primary, false);
 	fpuinit(&cpu_info_primary);
+	if (rcr4() & CR4_OSXSAVE)
+		wrxcr(0, xcr0);
 	i8259_reinit();
 #if NLAPIC > 0
 	lapic_enable();

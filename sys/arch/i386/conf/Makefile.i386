@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.183.2.1 2015/09/22 12:05:44 skrll Exp $
+#	$NetBSD: Makefile.i386,v 1.183.2.2 2017/08/28 17:51:40 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -83,8 +83,8 @@ KERNLDSCRIPT?=	${I386}/conf/kern.ldscript
 ## (6) port specific target dependencies
 ##
 
-freebsd_sigcode.o i386func.o ibcs2_sigcode.o linux_support.o: assym.h
-linux_sigcode.o lock_stubs.o svr4_sigcode.o mach_sigcode.o: assym.h
+i386func.o: assym.h
+linux_sigcode.o lock_stubs.o: assym.h
 cpufunc.o cpu_in_cksum.o pnpbioscall.o bioscall.o: assym.h
 mptramp.o: assym.h
 acpi_wakeup_low.o busfunc.o: assym.h

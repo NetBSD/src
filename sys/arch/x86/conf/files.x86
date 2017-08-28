@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.83.2.3 2016/03/19 11:30:07 skrll Exp $
+#	$NetBSD: files.x86,v 1.83.2.4 2017/08/28 17:51:56 skrll Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -20,6 +20,10 @@ define  cpubus { [apid = -1] }
 define	cpufeaturebus {}
 define  ioapicbus { [apid = -1] }
 define  ipmibus {}
+
+# BIOS32 routines
+define	bios32
+file	arch/x86/x86/bios32.c		bios32 needs-flag
 
 #
 # CPU features
@@ -80,6 +84,7 @@ file	arch/x86/x86/genfb_machdep.c	machdep
 file	arch/x86/x86/identcpu.c		machdep
 file	arch/x86/x86/i8259.c		machdep
 file	arch/x86/x86/intr.c		machdep
+file	arch/x86/x86/kgdb_machdep.c	kgdb
 file	arch/x86/x86/nmi.c		machdep
 file	arch/x86/x86/idt.c		machdep
 file	arch/x86/x86/ipi.c		machdep
@@ -88,6 +93,7 @@ file 	arch/x86/x86/patch.c		machdep
 file	arch/x86/x86/platform.c		machdep
 file 	arch/x86/x86/pmap.c		machdep
 file 	arch/x86/x86/pmap_tlb.c		machdep
+file 	arch/x86/x86/pmc.c		machdep
 file	arch/x86/x86/procfs_machdep.c	procfs
 file	arch/x86/x86/sys_machdep.c	machdep
 file	arch/x86/x86/syscall.c		machdep

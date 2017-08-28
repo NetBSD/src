@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.16 2014/10/20 21:18:00 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.16.4.1 2017/08/28 17:51:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.16 2014/10/20 21:18:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.16.4.1 2017/08/28 17:51:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1018,8 +1018,6 @@ awinac_allocm(void *priv, int dir, size_t size)
 	int error;
 
 	dma = kmem_alloc(sizeof(*dma), KM_SLEEP);
-	if (dma == NULL)
-		return NULL;
 
 	error = awinac_allocdma(sc, size, 16, dma);
 	if (error) {

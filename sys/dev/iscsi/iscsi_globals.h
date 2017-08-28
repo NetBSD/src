@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.6.14.2 2016/07/09 20:25:03 skrll Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.6.14.3 2017/08/28 17:52:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -717,6 +717,7 @@ uint32_t gen_digest(void *, int);
 uint32_t gen_digest_2(void *, int, void *, int);
 
 void create_ccbs(session_t *);
+void destroy_ccbs(session_t *);
 ccb_t *get_ccb(connection_t *, bool);
 void free_ccb(ccb_t *);
 void suspend_ccb(ccb_t *, bool);

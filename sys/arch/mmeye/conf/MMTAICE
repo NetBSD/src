@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.51.8.2 2016/10/05 20:55:32 skrll Exp $
+#	$NetBSD: MMTAICE,v 1.51.8.3 2017/08/28 17:51:46 skrll Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -76,7 +76,6 @@ options 	SYSCALL_DEBUG
 
 # Compatibility options
 options 	COMPAT_43	# and 4.3BSD
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	BSDDISKLABEL_EI	# endian independent disklabel support
 options 	COMPAT_MMEYE_OLDLABEL	# old mmeye's disklabel support
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

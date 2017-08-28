@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_audio.c,v 1.1.40.3 2015/03/21 11:33:37 skrll Exp $ */
+/* $NetBSD: auvitek_audio.c,v 1.1.40.4 2017/08/28 17:52:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_audio.c,v 1.1.40.3 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_audio.c,v 1.1.40.4 2017/08/28 17:52:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,6 @@ auvitek_audio_attach(struct auvitek_softc *sc)
 
 	nifaces = udev->ud_cdesc->bNumInterface;
 	ifaces = kmem_zalloc(nifaces * sizeof(*ifaces), KM_SLEEP);
-	if (ifaces == NULL) {
-		aprint_error_dev(sc->sc_dev, "audio attach: no memory\n");
-		return ENOMEM;
-	}
 	for (i = 0; i < nifaces; i++) {
 		ifaces[i] = &udev->ud_ifaces[i];
 	}

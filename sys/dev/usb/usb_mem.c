@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.65.2.15 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.65.2.16 2017/08/28 17:52:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.15 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.16 2017/08/28 17:52:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -140,10 +140,6 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	mutex_exit(&usb_blk_lock);
 
 	b = kmem_zalloc(sizeof(*b), KM_SLEEP);
-	if (b == NULL) {
-		goto fail;
-	}
-
 	b->tag = tag;
 	b->size = size;
 	b->align = align;
@@ -155,10 +151,6 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 		b->nsegs = (size + (PAGE_SIZE-1)) / PAGE_SIZE;
 
 	b->segs = kmem_alloc(b->nsegs * sizeof(*b->segs), KM_SLEEP);
-	if (b->segs == NULL) {
-		kmem_free(b, sizeof(*b));
-		goto fail;
-	}
 	b->nsegs_alloc = b->nsegs;
 
 	error = bus_dmamem_alloc(tag, b->size, align, 0,
@@ -199,7 +191,6 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
  free0:
 	kmem_free(b->segs, b->nsegs_alloc * sizeof(*b->segs));
 	kmem_free(b, sizeof(*b));
- fail:
 	mutex_enter(&usb_blk_lock);
 
 	return USBD_NOMEM;

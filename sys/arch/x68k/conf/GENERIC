@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.179.2.2 2017/02/05 13:40:22 skrll Exp $
+# $NetBSD: GENERIC,v 1.179.2.3 2017/08/28 17:51:55 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.179.2.2 $"
+#ident 		"GENERIC-$Revision: 1.179.2.3 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -165,7 +165,6 @@ options 	COMPAT_AOUT_M68K # compatibility with NetBSD/m68k a.out
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility; broken
 #options 	COMPAT_SVR4	# SVR4 binary compatibility; broken
 #options 	COMPAT_LINUX	# Linux/m68k binary compatibility
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.

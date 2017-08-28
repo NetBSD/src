@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.57.2.2 2017/02/05 13:40:00 skrll Exp $
+#	$NetBSD: EB7500ATX,v 1.57.2.3 2017/08/28 17:51:27 skrll Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.57.2.2 $"
+#ident		"EB7500ATX-$Revision: 1.57.2.3 $"
 
 # estimated number of users
 maxusers	32
@@ -108,7 +108,6 @@ options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0, and
 options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.59.4.8 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.59.4.9 2017/08/28 17:53:12 skrll Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.59.4.8 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.59.4.9 2017/08/28 17:53:12 skrll Exp $");
 
 /*
  * TODO:
@@ -250,6 +250,12 @@ static __inline u_int16_t
 carp_cksum(struct mbuf *m, int len)
 {
 	return (in_cksum(m, len));
+}
+
+static __inline u_int16_t
+carp6_cksum(struct mbuf *m, uint32_t off, uint32_t len)
+{
+	return (in6_cksum(m, IPPROTO_CARP, off, len));
 }
 
 static void
@@ -601,16 +607,13 @@ _carp6_proto_input(struct mbuf *m, int off, int proto)
 		return;
 	}
 
-
 	/* verify the CARP checksum */
-	m->m_data += off;
-	if (carp_cksum(m, sizeof(*ch))) {
+	if (carp6_cksum(m, off, sizeof(*ch))) {
 		CARP_STATINC(CARP_STAT_BADSUM);
 		CARP_LOG(sc, ("checksum failed, on %s", rcvif->if_xname));
 		m_freem(m);
 		return;
 	}
-	m->m_data -= off;
 
 	carp_proto_input_c(m, ch, AF_INET6);
 	return;
@@ -709,9 +712,11 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 	/* verify the hash */
 	if (carp_hmac_verify(sc, ch->carp_counter, ch->carp_md)) {
 		struct ip *ip;
+		char ipbuf[INET_ADDRSTRLEN];
+#ifdef INET6
 		struct ip6_hdr *ip6;
 		char ip6buf[INET6_ADDRSTRLEN];
-		char ipbuf[INET_ADDRSTRLEN];
+#endif
 
 		CARP_STATINC(CARP_STAT_BADAUTH);
 		sc->sc_if.if_ierrors++;
@@ -720,14 +725,16 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		case AF_INET:
 			ip = mtod(m, struct ip *);
 			CARP_LOG(sc, ("incorrect hash from %s", 
-			    in_fmtaddr(ipbuf, ip->ip_src)));
+			    IN_PRINT(ipbuf, &ip->ip_src)));
 			break;
 
+#ifdef INET6
 		case AF_INET6:
 			ip6 = mtod(m, struct ip6_hdr *);
 			CARP_LOG(sc, ("incorrect hash from %s",
 			    IN6_PRINT(ip6buf, &ip6->ip6_src)));
 			break;
+#endif
 
 		default: CARP_LOG(sc, ("incorrect hash"));
 			break;
@@ -972,7 +979,7 @@ carp_send_ad_all(void)
 		if (ifp->if_carp == NULL || ifp->if_type == IFT_CARP)
 			continue;
 
-		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_acquire(ifp, &psref);
 		pserialize_read_exit(s);
 
 		cif = (struct carp_if *)ifp->if_carp;
@@ -983,7 +990,7 @@ carp_send_ad_all(void)
 		}
 
 		s = pserialize_read_enter();
-		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_release(ifp, &psref);
 	}
 	pserialize_read_exit(s);
 	curlwp_bindx(bound);
@@ -1120,7 +1127,7 @@ carp_send_ad(void *v)
 		}
 	}
 #endif /* INET */
-#ifdef INET6_notyet
+#ifdef INET6
 	if (sc->sc_naddrs6) {
 		struct ip6_hdr *ip6;
 		struct ifaddr *ifa;
@@ -1161,7 +1168,7 @@ carp_send_ad(void *v)
 
 		ip6->ip6_dst.s6_addr16[0] = htons(0xff02);
 		ip6->ip6_dst.s6_addr8[15] = 0x12;
-		if (in6_setscope(&ip6->ip6_dst, sc->sc_carpdev, NULL) != 0) {
+		if (in6_setscope(&ip6->ip6_dst, &sc->sc_if, NULL) != 0) {
 			sc->sc_if.if_oerrors++;
 			m_freem(m);
 			CARP_LOG(sc, ("in6_setscope failed"));
@@ -1173,9 +1180,8 @@ carp_send_ad(void *v)
 		if (carp_prepare_ad(m, sc, ch_ptr))
 			goto retry_later;
 
-		m->m_data += sizeof(*ip6);
-		ch_ptr->carp_cksum = carp_cksum(m, len - sizeof(*ip6));
-		m->m_data -= sizeof(*ip6);
+		ch_ptr->carp_cksum = carp6_cksum(m, sizeof(*ip6),
+		    len - sizeof(*ip6));
 
 		nanotime(&sc->sc_if.if_lastchange);
 		sc->sc_if.if_opackets++;
@@ -1530,7 +1536,7 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 			callout_schedule(&sc->sc_md_tmo, tvtohz(&tv));
 			break;
 #endif /* INET */
-#ifdef INET6_notyet
+#ifdef INET6
 		case AF_INET6:
 			callout_schedule(&sc->sc_md6_tmo, tvtohz(&tv));
 			break;
@@ -1538,7 +1544,7 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 		default:
 			if (sc->sc_naddrs)
 				callout_schedule(&sc->sc_md_tmo, tvtohz(&tv));
-#ifdef INET6_notyet
+#ifdef INET6
 			if (sc->sc_naddrs6)
 				callout_schedule(&sc->sc_md6_tmo, tvtohz(&tv));
 #endif /* INET6 */
@@ -2166,6 +2172,8 @@ static void
 carp_set_state(struct carp_softc *sc, int state)
 {
 	static const char *carp_states[] = { CARP_STATES };
+	int link_state;
+
 	if (sc->sc_state == state)
 		return;
 
@@ -2174,16 +2182,16 @@ carp_set_state(struct carp_softc *sc, int state)
 	sc->sc_state = state;
 	switch (state) {
 	case BACKUP:
-		sc->sc_if.if_link_state = LINK_STATE_DOWN;
+		link_state = LINK_STATE_DOWN;
 		break;
 	case MASTER:
-		sc->sc_if.if_link_state = LINK_STATE_UP;
+		link_state = LINK_STATE_UP;
 		break;
 	default:
-		sc->sc_if.if_link_state = LINK_STATE_UNKNOWN;
+		link_state = LINK_STATE_UNKNOWN;
 		break;
 	}
-	rt_ifmsg(&sc->sc_if);
+	if_link_state_change_softint(&sc->sc_if, link_state);
 }
 
 void

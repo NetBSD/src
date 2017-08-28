@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.207.2.3 2016/07/09 20:25:04 skrll Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.207.2.4 2017/08/28 17:52:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.207.2.3 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.207.2.4 2017/08/28 17:52:06 skrll Exp $");
 
 /*
 #define CBB_DEBUG
@@ -931,7 +931,8 @@ pccbb_intrinit(struct pccbb_softc *sc)
 	 * than any other hard interrupts.
 	 */
 	KASSERT(sc->sc_ih == NULL);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, pccbbintr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_BIO, pccbbintr, sc,
+	    device_xname(sc->sc_dev));
 
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");

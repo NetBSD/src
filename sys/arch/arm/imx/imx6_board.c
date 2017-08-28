@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_board.c,v 1.2.2.4 2016/12/05 10:54:50 skrll Exp $	*/
+/*	$NetBSD: imx6_board.c,v 1.2.2.5 2017/08/28 17:51:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.2.2.4 2016/12/05 10:54:50 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.2.2.5 2017/08/28 17:51:30 skrll Exp $");
 
 #include "opt_imx.h"
 #include "arml2cc.h"
+#include "opt_cputypes.h"
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -223,6 +224,14 @@ imx6_device_register(device_t self, void *aux)
 		   imx6_armrootclk() / IMX6_PERIPHCLK_N);
 		return;
 	}
+#ifdef CPU_CORTEXA7
+	/* also for A7 */
+	if (device_is_a(self, "armgtmr")) {
+		prop_dictionary_set_uint32(dict, "frequency",
+		    armreg_cnt_frq_read());
+		return;
+	}
+#endif
 }
 
 #ifdef MULTIPROCESSOR

@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.17.4.4 2016/07/09 20:25:21 skrll Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.17.4.5 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.17.4.4 2016/07/09 20:25:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.17.4.5 2017/08/28 17:53:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,6 @@ bstp_send_config_bpdu(struct bridge_softc *sc, struct bridge_iflist *bif,
 	struct mbuf *m;
 	struct ether_header *eh;
 	struct bstp_cbpdu bpdu;
-	int s;
 
 	KASSERT(BRIDGE_LOCKED(sc));
 
@@ -277,9 +276,7 @@ bstp_send_config_bpdu(struct bridge_softc *sc, struct bridge_iflist *bif,
 	memcpy(mtod(m, char *) + sizeof(*eh), &bpdu, sizeof(bpdu));
 
 	BRIDGE_UNLOCK(sc);
-	s = splnet();
 	bridge_enqueue(sc, ifp, m, 0);
-	splx(s);
 	BRIDGE_LOCK(sc);
 }
 
@@ -365,7 +362,6 @@ bstp_transmit_tcn(struct bridge_softc *sc)
 	struct ifnet *ifp;
 	struct ether_header *eh;
 	struct mbuf *m;
-	int s;
 
 	KASSERT(BRIDGE_LOCKED(sc));
 
@@ -397,9 +393,7 @@ bstp_transmit_tcn(struct bridge_softc *sc)
 	memcpy(mtod(m, char *) + sizeof(*eh), &bpdu, sizeof(bpdu));
 
 	BRIDGE_UNLOCK(sc);
-	s = splnet();
 	bridge_enqueue(sc, ifp, m, 0);
-	splx(s);
 	BRIDGE_LOCK(sc);
 }
 
@@ -1062,9 +1056,7 @@ bstp_tick(void *arg)
 {
 	struct bridge_softc *sc = arg;
 	struct bridge_iflist *bif;
-	int s;
 
-	s = splnet();
 	BRIDGE_LOCK(sc);
 
 	BRIDGE_IFLIST_WRITER_FOREACH(bif, sc) {
@@ -1114,7 +1106,6 @@ bstp_tick(void *arg)
 		callout_reset(&sc->sc_bstpcallout, hz, bstp_tick, sc);
 
 	BRIDGE_UNLOCK(sc);
-	splx(s);
 }
 
 static void

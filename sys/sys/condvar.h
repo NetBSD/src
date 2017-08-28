@@ -1,4 +1,4 @@
-/*	$NetBSD: condvar.h,v 1.12.40.1 2016/04/22 15:44:19 skrll Exp $	*/
+/*	$NetBSD: condvar.h,v 1.12.40.2 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@ typedef struct kcondvar {
 
 #ifdef _KERNEL
 
+struct bintime;
 struct kmutex;
 
 void	cv_init(kcondvar_t *, const char *);
@@ -47,6 +48,10 @@ void	cv_wait(kcondvar_t *, struct kmutex *);
 int	cv_wait_sig(kcondvar_t *, struct kmutex *);
 int	cv_timedwait(kcondvar_t *, struct kmutex *, int);
 int	cv_timedwait_sig(kcondvar_t *, struct kmutex *, int);
+int	cv_timedwaitbt(kcondvar_t *, struct kmutex *, struct bintime *,
+	    const struct bintime *);
+int	cv_timedwaitbt_sig(kcondvar_t *, struct kmutex *, struct bintime *,
+	    const struct bintime *);
 
 void	cv_signal(kcondvar_t *);
 void	cv_broadcast(kcondvar_t *);

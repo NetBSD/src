@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.160.6.5 2016/07/09 20:25:25 skrll Exp $	*/
+/*	$NetBSD: lfs.h,v 1.160.6.6 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -511,13 +511,6 @@ union lfs_dinode {
 #define LFS_UNUSED_LBN	-1
 
 /*
- * "struct inode" associated definitions
- */
-
-/* For convenience */
-#define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_MODIFY|IN_ACCESSED|IN_CLEANING)
-
-/*
  * On-disk and in-memory checkpoint segment usage structure.
  */
 typedef struct segusage SEGUSE;
@@ -976,6 +969,7 @@ struct lfs {
 	uint32_t lfs_iocount;		/* number of ios pending */
 	uint32_t lfs_writer;		/* don't allow any dirops to start */
 	uint32_t lfs_dirops;		/* count of active directory ops */
+	kcondvar_t lfs_diropscv;	/* condvar of active directory ops */
 	uint32_t lfs_dirvcount;		/* count of VDIROP nodes in this fs */
 	uint32_t lfs_doifile;		/* Write ifile blocks on next write */
 	uint32_t lfs_nactive;		/* Number of segments since last ckp */
@@ -1018,6 +1012,7 @@ struct lfs {
 	daddr_t  lfs_cleanint[LFS_MAX_CLEANIND]; /* Active cleaning intervals */
 	int 	 lfs_cleanind;		/* Index into intervals */
 	int lfs_sleepers;		/* # procs sleeping this fs */
+	kcondvar_t lfs_sleeperscv;	
 	int lfs_pages;			/* dirty pages blaming this fs */
 	lfs_bm_t *lfs_ino_bitmap;	/* Inuse inodes bitmap */
 	int lfs_nowrap;			/* Suspend log wrap */
@@ -1052,7 +1047,7 @@ struct lfs {
 	/* XXX: should be replaced with a condvar */
 	int lfs_availsleep;
 	/* This one replaces &lfs_nextseg... all ditto */
-	int lfs_nextsegsleep;
+	kcondvar_t lfs_nextsegsleep;
 
 	/* Cleaner lwp, set on first bmapv syscall. */
 	struct lwp *lfs_cleaner_thread;

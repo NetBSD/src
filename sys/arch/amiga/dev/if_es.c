@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.52.6.4 2017/02/05 13:40:02 skrll Exp $ */
+/*	$NetBSD: if_es.c,v 1.52.6.5 2017/08/28 17:51:28 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.52.6.4 2017/02/05 13:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.52.6.5 2017/08/28 17:51:28 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -185,6 +185,7 @@ esattach(device_t parent, device_t self, void *aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, myaddr);
 
 	/* Print additional info when attached. */
@@ -292,7 +293,7 @@ esinit(struct es_softc *sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* Attempt to start output, if any. */
-	esstart(ifp);
+	if_schedule_deferred_start(ifp);
 
 	splx(s);
 }

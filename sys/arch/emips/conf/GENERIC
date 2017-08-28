@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.15.2.1 2017/02/05 13:40:06 skrll Exp $
+# $NetBSD: GENERIC,v 1.15.2.2 2017/08/28 17:51:33 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/emips/conf/std.emips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.15.2.1 $"
+#ident		"GENERIC-$Revision: 1.15.2.2 $"
 
 maxusers	64
 
@@ -91,6 +91,7 @@ file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
@@ -137,7 +138,6 @@ options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0, and
 options 	COMPAT_30	# NetBSD 3.0 binary compatibility.
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Workstation console options

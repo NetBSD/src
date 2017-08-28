@@ -1,4 +1,4 @@
-/* $NetBSD: tc_bus_mem.c,v 1.35.6.1 2016/10/05 20:55:23 skrll Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.35.6.2 2017/08/28 17:51:27 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,12 +28,12 @@
  */
 
 /*
- * Common TurboChannel Chipset "bus memory" functions.
+ * Common TURBOchannel Chipset "bus memory" functions.
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.35.6.1 2016/10/05 20:55:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.35.6.2 2017/08/28 17:51:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

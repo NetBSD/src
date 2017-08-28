@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.38.2.3 2016/03/19 11:30:04 skrll Exp $ */
+/* $NetBSD: crmfb.c,v 1.38.2.4 2017/08/28 17:51:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.38.2.3 2016/03/19 11:30:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.38.2.4 2017/08/28 17:51:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ struct wsscreen_descr crmfb_defaultscreen = {
 	0, 0,
 	NULL,
 	8, 16,
-	WSSCREEN_WSCOLORS,
+	WSSCREEN_WSCOLORS | WSSCREEN_RESIZE,
 	NULL,
 };
 
@@ -356,6 +356,7 @@ crmfb_attach(device_t parent, device_t self, void *opaque)
 	    sc->sc_dma.size, 0, BUS_DMA_NOWAIT, &sc->sc_dma.map);
 	if (rv)
 		panic("crmfb_attach: can't create DMA map");
+
 	rv = bus_dmamap_load(sc->sc_dmat, sc->sc_dma.map, sc->sc_dma.addr,
 	    sc->sc_dma.size, NULL, BUS_DMA_NOWAIT);
 	if (rv)
@@ -366,8 +367,10 @@ crmfb_attach(device_t parent, device_t self, void *opaque)
 	for (i = 0; i < (sc->sc_tiles_x * sc->sc_tiles_y); i++) {
 		p[i] = ((uint32_t)v >> 16) + i;
 	}
+
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmai.map, 0, sc->sc_dmai.size,
 	    BUS_DMASYNC_PREWRITE);
+
 	sc->sc_linear = (paddr_t)DMAADDR(sc->sc_dma) + 0x100000 * sc->sc_tiles_x;
 	sc->sc_lptr =  (char *)KERNADDR(sc->sc_dma) + (0x100000 * sc->sc_tiles_x);
 
@@ -602,7 +605,10 @@ crmfb_init_screen(void *c, struct vcons_screen *scr, int existing,
 	sc = (struct crmfb_softc *)c;
 	ri = &scr->scr_ri;
 
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | RI_ENABLE_ALPHA;
+	scr->scr_flags |= VCONS_LOADFONT;
+
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR |
+		     RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
 	ri->ri_depth = sc->sc_console_depth;
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
@@ -629,7 +635,7 @@ crmfb_init_screen(void *c, struct vcons_screen *scr, int existing,
 	ri->ri_bits = NULL;
 
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_RESIZE;
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 	    ri->ri_width / ri->ri_font->fontwidth);
 	ri->ri_hw = scr;

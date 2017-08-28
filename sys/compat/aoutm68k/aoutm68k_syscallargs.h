@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_syscallargs.h,v 1.41.6.1 2015/04/06 15:18:05 skrll Exp $ */
+/* $NetBSD: aoutm68k_syscallargs.h,v 1.41.6.2 2017/08/28 17:51:57 skrll Exp $ */
 
 /*
  * System call argument lists.
@@ -9,6 +9,9 @@
 
 #ifndef _AOUTM68K_SYS_SYSCALLARGS_H_
 #define	_AOUTM68K_SYS_SYSCALLARGS_H_
+
+/* Forward declaration */
+struct lwp;
 
 #define	AOUTM68K_SYS_MAXSYSARGS	8
 

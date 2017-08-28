@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.55.36.4 2017/02/05 13:40:21 skrll Exp $ */
+/*	$NetBSD: if_ie.c,v 1.55.36.5 2017/08/28 17:51:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.55.36.4 2017/02/05 13:40:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.55.36.5 2017/08/28 17:51:53 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -350,6 +350,7 @@ ie_attach(struct ie_softc *sc)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_addr);
 }
 
@@ -638,7 +639,7 @@ ietint(struct ie_softc *sc)
 	if (sc->xmit_busy > 0)
 		iexmit(sc);
 
-	iestart(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 /*

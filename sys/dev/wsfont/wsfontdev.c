@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontdev.c,v 1.16.4.1 2015/09/22 12:06:01 skrll Exp $ */
+/* $NetBSD: wsfontdev.c,v 1.16.4.2 2017/08/28 17:52:31 skrll Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.16.4.1 2015/09/22 12:06:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.16.4.2 2017/08/28 17:52:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ static int
 wsfontioctl(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
-	char nbuf[16];
+	char nbuf[64];
 	void *buf;
 	int res;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.118.30.2 2015/09/22 12:05:53 skrll Exp $
+#	$NetBSD: files.vax,v 1.118.30.3 2017/08/28 17:51:54 skrll Exp $
 #
 # new style config file for vax architecture
 #
@@ -107,11 +107,11 @@ include "dev/mscp/files.mscp"
 # Unibus/Q22 bus definitions
 include "dev/qbus/files.uba"
 
-# TurboCHANNEL bus support and device drivers
+# TURBOchannel bus support and device drivers
 include "dev/tc/files.tc"
 
-attach	tc at vsbus with tcbus
-file	arch/vax/vsa/tc_vsbus.c		tcbus
+attach	tc at vsbus with tc_vsbus
+file	arch/vax/vsa/tc_vsbus.c		tc_vsbus
 
 attach	uba at mainbus with uba_mainbus
 file	arch/vax/uba/uba_mainbus.c	uba_mainbus
@@ -179,6 +179,11 @@ include "dev/scsipi/files.scsipi"
 device	si: scsi, ncr5380sbc
 attach	si at vsbus with si_vsbus
 file	arch/vax/vsa/ncr.c		si_vsbus
+
+#
+# Machine-independent ATA drivers
+#
+include "dev/ata/files.ata"
 
 # Monochrome framebuffer on VS3100.
 device	smg: displaydev, wsemuldisplaydev
@@ -411,5 +416,13 @@ include "compat/vax1k/files.vax1k"
 #arch/vax/if/if_pcl.c		optional pcl device-driver
 #arch/vax/if/if_vv.c		optional vv device-driver
 #arch/vax/if/raw_hy.c		optional hy device-driver
+
+# this wants to be probed as late as possible.
+#
+# Machine-independent USB device support
+#
+include "dev/usb/files.usb"
+
+include "dev/bluetooth/files.bluetooth"
 
 include "arch/vax/conf/majors.vax"

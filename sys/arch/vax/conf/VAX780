@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.19.2.2 2017/02/05 13:40:22 skrll Exp $
+# $NetBSD: VAX780,v 1.19.2.3 2017/08/28 17:51:54 skrll Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -131,7 +131,7 @@ options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0, and
 options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
 options 	COMPAT_ULTRIX	# DEC Ultrix binary compatibility.
-#options 	COMPAT_IBCS2	# DEC SVR.3 compatilibity
+#options 	COMPAT_IBCS2	# DEC SVR.3 compatibility
 #options 	NO_INSN_EMULATE	# CPU does not lack some hardware instructions.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

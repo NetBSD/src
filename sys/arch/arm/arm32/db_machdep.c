@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.22.2.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.22.2.2 2017/08/28 17:51:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.22.2.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.22.2.2 2017/08/28 17:51:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -447,7 +447,7 @@ db_show_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *m
 	    frame->tf_r8, frame->tf_r9, frame->tf_r10, frame->tf_r11);
 	db_printf("r12=%08x r13=%08x r14=%08x r15=%08x\n",
 	    frame->tf_r12, frame->tf_usr_sp, frame->tf_usr_lr, frame->tf_pc);
-	db_printf("slr=%08x\n", frame->tf_svc_lr);
+	db_printf("slr=%08x ssp=%08x\n", frame->tf_svc_lr, frame->tf_svc_sp);
 }
 
 #if defined(_KERNEL) && defined(MULTIPROCESSOR)

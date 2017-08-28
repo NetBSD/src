@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1.2.2 2017/02/05 13:40:12 skrll Exp $	*/
+/*	$NetBSD: start.S,v 1.1.2.3 2017/08/28 17:51:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Rui Paulo <rpaulo@FreeBSD.org>
@@ -29,6 +29,7 @@
  */
 
 #include <machine/asm.h>
+#include <sys/bootblock.h>
 
 	.text
 	.align	16
@@ -72,3 +73,18 @@ END(_start)
 	.long   0
 	.long   10
 	.word   0
+
+	/* boot parameters */
+	.text
+	.code16
+	.align 512
+.Lfake_bootxx:
+	jmp	1f
+	.balign 4
+	.long	X86_BOOT_MAGIC_EFI	/* checked by installboot */
+	.globl _C_LABEL(boot_params)
+_C_LABEL(boot_params):			/* space for patchable variables */
+	.long	1f - boot_params	/* length of this data area */
+#include <boot_params.S>
+	. = .Lfake_bootxx + 0x80	/* Space for patching unknown params */
+1:

@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.45.4.4 2016/12/05 10:55:16 skrll Exp $ */
+/* $NetBSD: piixpm.c,v 1.45.4.5 2017/08/28 17:52:25 skrll Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.45.4.4 2016/12/05 10:55:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.45.4.5 2017/08/28 17:52:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,7 +490,7 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 			break;
 		DELAY(PIIXPM_DELAY);
 	}
-	DPRINTF(("%s: exec: st 0x%d\n", device_xname(sc->sc_dev), st & 0xff));
+	DPRINTF(("%s: exec: st %#x\n", device_xname(sc->sc_dev), st & 0xff));
 	if (st & PIIX_SMB_HS_BUSY)
 		return (1);
 
@@ -615,7 +615,7 @@ piixpm_intr(void *arg)
 		/* Interrupt was not for us */
 		return (0);
 
-	DPRINTF(("%s: intr st 0x%d\n", device_xname(sc->sc_dev), st & 0xff));
+	DPRINTF(("%s: intr st %#x\n", device_xname(sc->sc_dev), st & 0xff));
 
 	/* Clear status bits */
 	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, st);

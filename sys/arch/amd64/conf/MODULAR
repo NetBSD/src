@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.5.2.3 2017/02/05 13:40:01 skrll Exp $
+# $NetBSD: MODULAR,v 1.5.2.4 2017/08/28 17:51:28 skrll Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
@@ -11,6 +11,9 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no est0		at cpu0
 -no powernow0	at cpu0
 -no vmt0		at cpu0
+
+-no spkr*	at pcppi?	# PC speaker
+-no spkr*	at audio?	# PC speaker (synthesized)
 
 -no options 	COMPAT_15	# NetBSD 1.5,
 -no options 	COMPAT_16	# NetBSD 1.6,
@@ -116,6 +119,7 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 -no pseudo-device	vlan			# IEEE 802.1q encapsulation
 -no pseudo-device	agr			# IEEE 802.3ad link aggregation
+-no pseudo-device	l2tp			# L2TPv3 interface
 -no pseudo-device	npf			# NPF packet filter
 
 #

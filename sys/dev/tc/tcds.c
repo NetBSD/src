@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.25 2009/08/22 17:38:06 tsutsui Exp $ */
+/* $NetBSD: tcds.c,v 1.25.40.1 2017/08/28 17:52:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.25 2009/08/22 17:38:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.25.40.1 2017/08/28 17:52:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -163,7 +163,7 @@ tcdsattach(device_t parent, device_t self, void *aux)
 	if (td == NULL)
 		panic("\ntcdsattach: impossible");
 
-	printf(": TurboChannel Dual SCSI");
+	printf(": TURBOchannel Dual SCSI");
 	if (td->td_flags & TCDSF_BASEBOARD)
 		printf(" (baseboard)");
 	printf("\n");

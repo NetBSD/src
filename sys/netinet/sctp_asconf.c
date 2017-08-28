@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_asconf.c,v 1.1.2.6 2017/02/05 13:40:59 skrll Exp $ */
+/*	$NetBSD: sctp_asconf.c,v 1.1.2.7 2017/08/28 17:53:12 skrll Exp $ */
 /*	$KAME: sctp_asconf.c,v 1.25 2005/06/16 20:44:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.1.2.6 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.1.2.7 2017/08/28 17:53:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.1.2.6 2017/02/05 13:40:59 skrll Ex
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet/icmp6.h>
+#include <netinet6/nd6.h>
 #include <netinet6/scope6_var.h>
 #include <netinet6/nd6.h>
 #endif /* INET6 */
@@ -1556,8 +1557,9 @@ sctp_is_desired_interface_type(struct ifaddr *ifa)
 static uint32_t
 sctp_is_scopeid_in_nets(struct sctp_tcb *stcb, struct sockaddr *sa)
 {
-	struct sockaddr_in6 *sin6 /* , *net6 */ ;
-	/*struct sctp_nets *net;*/
+	struct sockaddr_in6 *sin6;
+	const struct sockaddr_in6 *net6;
+	struct sctp_nets *net;
 
 	if (sa->sa_family != AF_INET6) {
 		/* wrong family */
@@ -1569,13 +1571,12 @@ sctp_is_scopeid_in_nets(struct sctp_tcb *stcb, struct sockaddr *sa)
 		/* not link local address */
 		return (0);
 	}
-#if 0
 	/* hunt through our destination nets list for this scope_id */
 	TAILQ_FOREACH(net, &stcb->asoc.nets, sctp_next) {
 		if ((rtcache_getdst(&net->ro))->sa_family !=
 		    AF_INET6)
 			continue;
-		net6 = (struct sockaddr_in6 *)rtcache_getdst(&net->ro);
+		net6 = (const struct sockaddr_in6 *)rtcache_getdst(&net->ro);
 		if (IN6_IS_ADDR_LINKLOCAL(&net6->sin6_addr) == 0)
 			continue;
 		if (sctp_is_same_scope(sin6, net6)) {
@@ -1583,7 +1584,6 @@ sctp_is_scopeid_in_nets(struct sctp_tcb *stcb, struct sockaddr *sa)
 			return (1);
 		}
 	}
-#endif
 	/* didn't find one */
 	return (0);
 }

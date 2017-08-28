@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.98.6.1 2015/09/22 12:05:45 skrll Exp $ */
+/* $NetBSD: machdep.c,v 1.98.6.2 2017/08/28 17:51:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.6.1 2015/09/22 12:05:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.6.2 2017/08/28 17:51:43 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -319,7 +319,6 @@ cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
-	extern void greeting(void);
 
 	if (fputype != FPU_NONE)
 		m68k_make_fpu_idle_frame();
@@ -348,11 +347,6 @@ cpu_startup(void)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-
-	/*
-	 * Say "Hi" to the world
-	 */
-	greeting();
 }
 
 void

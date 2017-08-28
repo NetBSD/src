@@ -1,10 +1,10 @@
-#	$NetBSD: XEN3_DOM0,v 1.93.2.7 2017/02/05 13:40:12 skrll Exp $
+#	$NetBSD: XEN3_DOM0,v 1.93.2.8 2017/08/28 17:51:40 skrll Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
 include 	"arch/xen/conf/std.xen"
 
-#options 	MULTIPROCESSOR	# (experimental)
+#options 	MULTIPROCESSOR	# (not yet - dom0 stuff is not MP-safe)
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -28,7 +28,6 @@ options 	DOM0OPS
 
 makeoptions	CPUFLAGS="-march=i686"
 
-#options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
 # CPU features
@@ -93,12 +92,9 @@ options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+#options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
-options 	COMPAT_SVR4	# binary compatibility with SVR4
-options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -109,6 +105,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
+#options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
 file-system	FFS		# UFS
@@ -688,6 +685,23 @@ ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394
 sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
+
+# SD/MMC/SDIO Controller and Device support
+
+# PCI SD/MMC controller
+sdhc*	at pci?				# SD Host Controller
+rtsx*	at pci?				# Realtek RTS5209/RTS5229 Card Reader
+
+# CardBus SD/MMC controller
+#sdhc*	at cardbus? function ?		# SD Host Controller
+
+sdmmc*	at sdhc?			# SD/MMC bus
+sdmmc*	at rtsx?			# SD/MMC bus
+ld*	at sdmmc?
+
+
+# Audio Devices
+
 # PCI audio devices
 auacer* at pci? dev ? function ?	# ALi M5455 integrated AC'97 Audio
 auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
@@ -766,6 +780,7 @@ wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 btsco* at bthub?
+
 
 # Cryptographic Devices
 

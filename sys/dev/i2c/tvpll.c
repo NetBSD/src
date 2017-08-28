@@ -1,4 +1,4 @@
-/* $NetBSD: tvpll.c,v 1.5.6.1 2015/04/06 15:18:09 skrll Exp $ */
+/* $NetBSD: tvpll.c,v 1.5.6.2 2017/08/28 17:52:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tvpll.c,v 1.5.6.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tvpll.c,v 1.5.6.2 2017/08/28 17:52:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,6 @@ tvpll_open(device_t parent, i2c_tag_t t, i2c_addr_t a, struct tvpll_data *p)
 	struct tvpll *tvpll;
 
 	tvpll = kmem_alloc(sizeof(struct tvpll), KM_SLEEP);
-        if (tvpll == NULL)
-                return NULL;
-
 	tvpll->tag = t;
 	tvpll->addr = a;
 

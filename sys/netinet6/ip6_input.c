@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.149.4.10 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.149.4.11 2017/08/28 17:53:12 skrll Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,20 +62,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.149.4.10 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.149.4.11 2017/08/28 17:53:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_ipsec.h"
-#include "opt_compat_netbsd.h"
 #include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
@@ -120,11 +118,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.149.4.10 2017/02/05 13:40:59 skrll E
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
 #endif /* IPSEC */
-
-#ifdef COMPAT_50
-#include <compat/sys/time.h>
-#include <compat/sys/socket.h>
-#endif
 
 #include <netinet6/ip6protosw.h>
 
@@ -206,10 +199,7 @@ ip6_init(void)
 	KASSERT(inet6_pfil_hook != NULL);
 
 	ip6stat_percpu = percpu_alloc(sizeof(uint64_t) * IP6_NSTATS);
-
 	ip6_forward_rt_percpu = percpu_alloc(sizeof(struct route));
-	if (ip6_forward_rt_percpu == NULL)
-		panic("failed to alllocate ip6_forward_rt_percpu");
 }
 
 static void
@@ -459,15 +449,15 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	 * Multicast check
 	 */
 	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
-	  	struct	in6_multi *in6m = 0;
+		bool ingroup;
 
 		in6_ifstat_inc(rcvif, ifs6_in_mcast);
 		/*
 		 * See if we belong to the destination multicast group on the
 		 * arrival interface.
 		 */
-		IN6_LOOKUP_MULTI(ip6->ip6_dst, rcvif, in6m);
-		if (in6m)
+		ingroup = in6_multi_group(&ip6->ip6_dst, rcvif);
+		if (ingroup)
 			ours = 1;
 		else if (!ip6_mrouter) {
 			uint64_t *ip6s = IP6_STAT_GETREF();
@@ -800,9 +790,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 			    & PR_LASTHDR) != 0) {
 				int error;
 
-				SOFTNET_LOCK();
 				error = ipsec6_input(m);
-				SOFTNET_UNLOCK();
 				if (error)
 					goto bad;
 			}
@@ -1089,33 +1077,15 @@ void
 ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 	struct ip6_hdr *ip6, struct mbuf *m)
 {
+	struct socket *so = in6p->in6p_socket;
 #ifdef RFC2292
 #define IS2292(x, y)	((in6p->in6p_flags & IN6P_RFC2292) ? (x) : (y))
 #else
 #define IS2292(x, y)	(y)
 #endif
 
-	if (in6p->in6p_socket->so_options & SO_TIMESTAMP
-#ifdef SO_OTIMESTAMP
-	    || in6p->in6p_socket->so_options & SO_OTIMESTAMP
-#endif
-	) {
-		struct timeval tv;
-
-		microtime(&tv);
-#ifdef SO_OTIMESTAMP
-		if (in6p->in6p_socket->so_options & SO_OTIMESTAMP) {
-			struct timeval50 tv50;
-			timeval_to_timeval50(&tv, &tv50);
-			*mp = sbcreatecontrol((void *) &tv50, sizeof(tv50),
-			    SCM_OTIMESTAMP, SOL_SOCKET);
-		} else
-#endif
-		*mp = sbcreatecontrol((void *) &tv, sizeof(tv),
-		    SCM_TIMESTAMP, SOL_SOCKET);
-		if (*mp)
-			mp = &(*mp)->m_next;
-	}
+	if (SOOPT_TIMESTAMP(so->so_options))
+		mp = sbsavetimestamp(so->so_options, m, mp);
 
 	/* some OSes call this logic with IPv4 packet, for SO_TIMESTAMP */
 	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION)
@@ -1128,8 +1098,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 		memcpy(&pi6.ipi6_addr, &ip6->ip6_dst, sizeof(struct in6_addr));
 		in6_clearscope(&pi6.ipi6_addr);	/* XXX */
 		pi6.ipi6_ifindex = m->m_pkthdr.rcvif_index;
-		*mp = sbcreatecontrol((void *) &pi6,
-		    sizeof(struct in6_pktinfo),
+		*mp = sbcreatecontrol(&pi6, sizeof(pi6),
 		    IS2292(IPV6_2292PKTINFO, IPV6_PKTINFO), IPPROTO_IPV6);
 		if (*mp)
 			mp = &(*mp)->m_next;
@@ -1138,7 +1107,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 	if (in6p->in6p_flags & IN6P_HOPLIMIT) {
 		int hlim = ip6->ip6_hlim & 0xff;
 
-		*mp = sbcreatecontrol((void *) &hlim, sizeof(int),
+		*mp = sbcreatecontrol(&hlim, sizeof(hlim),
 		    IS2292(IPV6_2292HOPLIMIT, IPV6_HOPLIMIT), IPPROTO_IPV6);
 		if (*mp)
 			mp = &(*mp)->m_next;
@@ -1152,7 +1121,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 		flowinfo >>= 20;
 
 		tclass = flowinfo & 0xff;
-		*mp = sbcreatecontrol((void *)&tclass, sizeof(tclass),
+		*mp = sbcreatecontrol(&tclass, sizeof(tclass),
 		    IPV6_TCLASS, IPPROTO_IPV6);
 
 		if (*mp)
@@ -1200,7 +1169,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 			 * be removed before returning in the RFC 2292.
 			 * Note: this constraint is removed in RFC3542.
 			 */
-			*mp = sbcreatecontrol((void *)hbh, hbhlen,
+			*mp = sbcreatecontrol(hbh, hbhlen,
 			    IS2292(IPV6_2292HOPOPTS, IPV6_HOPOPTS),
 			    IPPROTO_IPV6);
 			if (*mp)
@@ -1262,7 +1231,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 				if (!(in6p->in6p_flags & IN6P_DSTOPTS))
 					break;
 
-				*mp = sbcreatecontrol((void *)ip6e, elen,
+				*mp = sbcreatecontrol(ip6e, elen,
 				    IS2292(IPV6_2292DSTOPTS, IPV6_DSTOPTS),
 				    IPPROTO_IPV6);
 				if (*mp)
@@ -1273,7 +1242,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 				if (!(in6p->in6p_flags & IN6P_RTHDR))
 					break;
 
-				*mp = sbcreatecontrol((void *)ip6e, elen,
+				*mp = sbcreatecontrol(ip6e, elen,
 				    IS2292(IPV6_2292RTHDR, IPV6_RTHDR),
 				    IPPROTO_IPV6);
 				if (*mp)
@@ -1323,10 +1292,7 @@ ip6_notify_pmtu(struct in6pcb *in6p, const struct sockaddr_in6 *dst,
 	if (mtu == NULL)
 		return;
 
-#ifdef DIAGNOSTIC
-	if (so == NULL)		/* I believe this is impossible */
-		panic("ip6_notify_pmtu: socket is NULL");
-#endif
+	KASSERT(so != NULL);
 
 	memset(&mtuctl, 0, sizeof(mtuctl));	/* zero-clear for safety */
 	mtuctl.ip6m_mtu = *mtu;
@@ -1334,7 +1300,7 @@ ip6_notify_pmtu(struct in6pcb *in6p, const struct sockaddr_in6 *dst,
 	if (sa6_recoverscope(&mtuctl.ip6m_addr))
 		return;
 
-	if ((m_mtu = sbcreatecontrol((void *)&mtuctl, sizeof(mtuctl),
+	if ((m_mtu = sbcreatecontrol(&mtuctl, sizeof(mtuctl),
 	    IPV6_PATHMTU, IPPROTO_IPV6)) == NULL)
 		return;
 

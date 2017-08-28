@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.66.6.1 2015/12/27 12:09:45 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.66.6.2 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -49,7 +49,6 @@
 #include "opt_xen.h"
 #ifdef i386
 #include "opt_user_ldt.h"
-#include "opt_vm86.h"
 #endif
 #endif
 
@@ -125,13 +124,22 @@ struct cpu_info {
 	uintptr_t ci_pmap_data[128 / sizeof(uintptr_t)];
 
 #ifdef XEN
-	struct iplsource  *ci_isources[NIPL];
 	u_long ci_evtmask[NR_EVENT_CHANNELS]; /* events allowed on this CPU */
-#else
-	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 #endif
+	struct intrsource *ci_isources[MAX_INTR_SOURCES];
+
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
+
+#ifndef __HAVE_DIRECT_MAP
+#define VPAGE_SRC 0
+#define VPAGE_DST 1
+#define VPAGE_ZER 2
+#define VPAGE_PTP 3
+#define VPAGE_MAX 4
+	vaddr_t		vpage[VPAGE_MAX];
+	pt_entry_t	*vpage_pte[VPAGE_MAX];
+#endif
 
 	/* The following must be aligned for cmpxchg8b. */
 	struct {
@@ -170,7 +178,7 @@ struct cpu_info {
 	const struct cpu_functions *ci_func;  /* start/stop functions */
 	struct trapframe *ci_ddb_regs;
 
-	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
+	u_int ci_cflush_lsize;	/* CLFLUSH insn line size */
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
 
 	union descriptor *ci_gdt;
@@ -358,8 +366,10 @@ extern void	cpu_signotify(struct lwp *);
 extern void (*delay_func)(unsigned int);
 struct timeval;
 
+#ifndef __HIDE_DELAY
 #define	DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
+#endif
 
 extern int biosbasemem;
 extern int biosextmem;
@@ -396,13 +406,7 @@ extern void (*x86_cpu_idle)(void);
 #define	cpu_idle() (*x86_cpu_idle)()
 
 /* machdep.c */
-void	dumpconf(void);
 void	cpu_reset(void);
-void	i386_proc0_tss_ldt_init(void);
-void	dumpconf(void);
-void	cpu_reset(void);
-void	x86_64_proc0_tss_ldt_init(void);
-void	x86_64_init_pcb_tss_ldt(struct cpu_info *);
 
 /* longrun.c */
 u_int 	tmx86_get_longrun_mode(void);
@@ -412,6 +416,18 @@ void 	tmx86_init_longrun(void);
 /* identcpu.c */
 void 	cpu_probe(struct cpu_info *);
 void	cpu_identify(struct cpu_info *);
+void	identify_hypervisor(void);
+
+typedef enum vm_guest {
+	VM_GUEST_NO = 0,
+	VM_GUEST_VM,
+	VM_GUEST_XEN,
+	VM_GUEST_HV,
+	VM_GUEST_VMWARE,
+	VM_GUEST_KVM,
+	VM_LAST
+} vm_guest_t;
+extern vm_guest_t vm_guest;
 
 /* cpu_topology.c */
 void	x86_cpu_topology(struct cpu_info *);
@@ -461,11 +477,6 @@ int	x86_set_ldt(struct lwp *, void *, register_t *);
 void	isa_defaultirq(void);
 int	isa_nmi(void);
 
-#ifdef VM86
-/* vm86.c */
-void	vm86_gpfault(struct lwp *, int);
-#endif /* VM86 */
-
 /* consinit.c */
 void kgdb_port_init(void);
 
@@ -502,7 +513,17 @@ void x86_bus_space_mallocok(void);
 #define	CPU_TMLR_FREQUENCY	12	/* int: current frequency */
 #define	CPU_TMLR_VOLTAGE	13	/* int: curret voltage */
 #define	CPU_TMLR_PERCENTAGE	14	/* int: current clock percentage */
-#define	CPU_MAXID		15	/* number of valid machdep ids */
+#define	CPU_FPU_SAVE		15	/* int: FPU Instructions layout
+					 * to use this, CPU_OSFXSR must be true
+					 * 0: FSAVE
+					 * 1: FXSAVE
+					 * 2: XSAVE
+					 * 3: XSAVEOPT
+					 */
+#define	CPU_FPU_SAVE_SIZE	16	/* int: FPU Instruction layout size */
+#define	CPU_XSAVE_FEATURES	17	/* quad: XSAVE features */
+
+#define	CPU_MAXID		18	/* number of valid machdep ids */
 
 /*
  * Structure for CPU_DISKINFO sysctl call.

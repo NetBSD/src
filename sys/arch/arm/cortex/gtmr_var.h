@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_var.h,v 1.4.8.1 2015/04/06 15:17:52 skrll Exp $ */
+/* $NetBSD: gtmr_var.h,v 1.4.8.2 2017/08/28 17:51:30 skrll Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,11 +45,17 @@ struct gtmr_softc {
 };
 
 #ifdef _KERNEL
+#include "opt_arm_timer.h"
 struct cpu_info;
 int	gtmr_intr(void *);
 void	gtmr_init_cpu_clock(struct cpu_info *);
 void	gtmr_delay(unsigned int n);
 void	gtmr_bootdelay(unsigned int n);
+#ifdef __HAVE_GENERIC_CPU_INITCLOCKS
+void	gtmr_cpu_initclocks(void);
+#else 
+#define gtmr_cpu_initclocks	cpu_initclocks
+#endif
 #endif
 
 #endif /* _ARM_CORTEX_GTMR_VAR_ */

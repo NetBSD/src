@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.c,v 1.1.2.2 2017/02/05 13:40:12 skrll Exp $	*/
+/*	$NetBSD: efiboot.c,v 1.1.2.3 2017/08/28 17:51:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -35,6 +35,9 @@ EFI_HANDLE IH;
 EFI_DEVICE_PATH *efi_bootdp;
 EFI_LOADED_IMAGE *efi_li;
 uintptr_t efi_main_sp;
+physaddr_t efi_loadaddr, efi_kernel_start;
+u_long efi_kernel_size;
+bool efi_cleanuped;
 
 static EFI_PHYSICAL_ADDRESS heap_start = EFI_ALLOCATE_MAX_ADDRESS;
 static UINTN heap_size = 1 * 1024 * 1024;			/* 1MB */
@@ -97,6 +100,8 @@ efi_cleanup(void)
 	EFI_MEMORY_DESCRIPTOR *desc;
 	UINTN NoEntries, MapKey, DescriptorSize;
 	UINT32 DescriptorVersion;
+	struct btinfo_efimemmap *bim;
+	size_t allocsz;
 
 	clearit();
 
@@ -108,17 +113,27 @@ efi_cleanup(void)
 	BI_ADD(&btinfo_efi, BTINFO_EFI, sizeof(btinfo_efi));
 
 	NoEntries = 0;
-	desc = LibMemoryMap(&NoEntries, &MapKey, &DescriptorSize,
-	    &DescriptorVersion);
+	desc = efi_memory_get_map(&NoEntries, &MapKey, &DescriptorSize,
+	    &DescriptorVersion, true);
 	status = uefi_call_wrapper(BS->ExitBootServices, 2, IH, MapKey);
 	if (EFI_ERROR(status)) {
 		FreePool(desc);
-		desc = LibMemoryMap(&NoEntries, &MapKey, &DescriptorSize,
-		    &DescriptorVersion);
+		desc = efi_memory_get_map(&NoEntries, &MapKey, &DescriptorSize,
+		    &DescriptorVersion, true);
 		status = uefi_call_wrapper(BS->ExitBootServices, 2, IH, MapKey);
 		if (EFI_ERROR(status))
 			Panic(L"ExitBootServices failed");
 	}
+	efi_cleanuped = true;
+
+	allocsz = sizeof(struct btinfo_efimemmap) - 1
+	    + NoEntries * DescriptorSize;
+	bim = alloc(allocsz);
+	bim->num = NoEntries;
+	bim->version = DescriptorVersion;
+	bim->size = DescriptorSize;
+	memcpy(bim->memmap, desc, NoEntries * DescriptorSize);
+	BI_ADD(bim, BTINFO_EFIMEMMAP, allocsz);
 }
 
 static void

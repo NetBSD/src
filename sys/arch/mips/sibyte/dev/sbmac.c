@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.43.2.4 2017/02/05 13:40:15 skrll Exp $ */
+/* $NetBSD: sbmac.c,v 1.43.2.5 2017/08/28 17:51:46 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.43.2.4 2017/02/05 13:40:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.43.2.5 2017/08/28 17:51:46 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -74,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.43.2.4 2017/02/05 13:40:15 skrll Exp $")
 #include <mips/sibyte/include/sb1250_mac.h>
 #include <mips/sibyte/include/sb1250_dma.h>
 #include <mips/sibyte/include/sb1250_scd.h>
+
+#include <evbmips/sbmips/systemsw.h>
 
 /* Simple types */
 
@@ -1754,7 +1756,7 @@ sbmac_intr(void *xsc, uint32_t status, vaddr_t pc)
 	}
 
 	/* try to get more packets going */
-	sbmac_start(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 
@@ -2353,5 +2355,6 @@ sbmac_attach(device_t parent, device_t self, void *aux)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eaddr);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.18.6.1 2016/12/05 10:55:26 skrll Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.18.6.2 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*-
  * Copyright (c)2004,2005,2006,2008,2009,2011,2012 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.18.6.1 2016/12/05 10:55:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.18.6.2 2017/08/28 17:53:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,7 @@ bufq_priocscan_selectqueue(struct bufq_priocscan *q, const struct buf *bp)
 static void
 bufq_priocscan_put(struct bufq_state *bufq, struct buf *bp)
 {
-	struct bufq_priocscan *q = bufq->bq_private;
+	struct bufq_priocscan *q = bufq_private(bufq);
 	struct cscan_queue *cq;
 
 	cq = bufq_priocscan_selectqueue(q, bp);
@@ -273,7 +273,7 @@ bufq_priocscan_put(struct bufq_state *bufq, struct buf *bp)
 static struct buf *
 bufq_priocscan_get(struct bufq_state *bufq, int remove)
 {
-	struct bufq_priocscan *q = bufq->bq_private;
+	struct bufq_priocscan *q = bufq_private(bufq);
 	struct priocscan_queue *pq, *npq;
 	struct priocscan_queue *first; /* highest priority non-empty queue */
 	const struct priocscan_queue *epq;
@@ -394,7 +394,7 @@ bufq_priocscan_get(struct bufq_state *bufq, int remove)
 static struct buf *
 bufq_priocscan_cancel(struct bufq_state *bufq, struct buf *bp)
 {
-	struct bufq_priocscan * const q = bufq->bq_private;
+	struct bufq_priocscan * const q = bufq_private(bufq);
 	unsigned int i;
 
 	for (i = 0; i < PRIOCSCAN_NQUEUE; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.103.4.1 2015/04/06 15:18:19 skrll Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.103.4.2 2017/08/28 17:53:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.103.4.1 2015/04/06 15:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.103.4.2 2017/08/28 17:53:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ struct vfsops smbfs_vfsops = {
 	.vfs_mountroot = (void *)eopnotsupp,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
@@ -397,6 +397,8 @@ static bool
 smbfs_sync_selector(void *cl, struct vnode *vp)
 {
 	struct smbnode *np;
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	np = VTOSMB(vp);
 	if (np == NULL)

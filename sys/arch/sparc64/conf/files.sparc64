@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.145.6.4 2016/10/05 20:55:35 skrll Exp $
+#	$NetBSD: files.sparc64,v 1.145.6.5 2017/08/28 17:51:52 skrll Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -93,10 +93,6 @@ file	arch/sparc64/dev/psm.c			psm
 
 device timer
 attach timer at mainbus, sbus
-
-device power
-attach power at sbus, ebus
-file	arch/sparc64/dev/power.c		power
 
 device	tda: sysmon_envsys
 attach	tda at iic

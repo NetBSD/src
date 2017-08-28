@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.102.2.7 2017/02/05 13:40:58 skrll Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.102.2.8 2017/08/28 17:53:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.102.2.7 2017/02/05 13:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.102.2.8 2017/08/28 17:53:11 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.102.2.7 2017/02/05 13:40:58 skrll Exp
 #include <sys/sysctl.h>
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
+#include <sys/psref.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -640,7 +641,8 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 			break;	/* ignored */
 		case PPPOE_TAG_HUNIQUE: {
 			struct ifnet *rcvif;
-			int s;
+			struct psref psref;
+
 			if (sc != NULL)
 				break;
 			n = m_pulldown(m, off + sizeof(*pt), len, &noff);
@@ -653,10 +655,12 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 			hunique = mtod(n, uint8_t *) + noff;
 			hunique_len = len;
 #endif
-			rcvif = m_get_rcvif(m, &s);
-			sc = pppoe_find_softc_by_hunique(mtod(n, char *) + noff,
-			    len, rcvif, RW_READER);
-			m_put_rcvif(rcvif, &s);
+			rcvif = m_get_rcvif_psref(m, &psref);
+			if (rcvif != NULL) {
+				sc = pppoe_find_softc_by_hunique(mtod(n, char *) + noff,
+				    len, rcvif, RW_READER);
+			}
+			m_put_rcvif_psref(rcvif, &psref);
 			if (sc != NULL) {
 				strlcpy(devname, sc->sc_sppp.pp_if.if_xname,
 				    sizeof(devname));
@@ -786,6 +790,9 @@ breakbreak:;
 #endif /* PPPOE_SERVER */
 	case PPPOE_CODE_PADR:
 #ifdef PPPOE_SERVER
+	    {
+		struct ifnet *rcvif;
+		struct psref psref;
 		/*
 		 * get sc from ac_cookie if IFF_PASSIVE
 		 */
@@ -794,10 +801,15 @@ breakbreak:;
 			printf("pppoe: received PADR but not includes ac_cookie\n");
 			goto done;
 		}
-		sc = pppoe_find_softc_by_hunique(ac_cookie,
-						 ac_cookie_len,
-						 m_get_rcvif_NOMPSAFE(m),
-						 RW_WRITER);
+
+		rcvif = m_get_rcvif_psref(m, &psref);
+		if (__predict_true(rcvif != NULL)) {
+			sc = pppoe_find_softc_by_hunique(ac_cookie,
+							 ac_cookie_len,
+							 rcvif,
+							 RW_WRITER);
+		}
+		m_put_rcvif_psref(rcvif, &psref);
 		if (sc == NULL) {
 			/* be quiet if there is not a single pppoe instance */
 			if (!LIST_EMPTY(&pppoe_softc_list))
@@ -835,6 +847,7 @@ breakbreak:;
 		sc->sc_sppp.pp_up(&sc->sc_sppp);
 		sppp_lock_exit(&sc->sc_sppp);
 		break;
+	    }
 #else
 		/* ignore, we are no access concentrator */
 		goto done;
@@ -935,11 +948,14 @@ breakbreak:;
 		break;
 	case PPPOE_CODE_PADT: {
 		struct ifnet *rcvif;
-		int s;
+		struct psref psref;
 
-		rcvif = m_get_rcvif(m, &s);
-		sc = pppoe_find_softc_by_session(session, rcvif, RW_WRITER);
-		m_put_rcvif(rcvif, &s);
+		rcvif = m_get_rcvif_psref(m, &psref);
+		if (__predict_true(rcvif != NULL)) {
+			sc = pppoe_find_softc_by_session(session, rcvif,
+			    RW_WRITER);
+		}
+		m_put_rcvif_psref(rcvif, &psref);
 		if (sc == NULL)
 			goto done;
 
@@ -1350,7 +1366,6 @@ pppoe_send_padi(struct pppoe_softc *sc)
 	}
 
 #ifdef PPPOE_DEBUG
-	p += sizeof sc;
 	if (p - mtod(m0, uint8_t *) != len + PPPOE_HEADERLEN)
 		panic("pppoe_send_padi: garbled output len, should be %ld, is %ld",
 		    (long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, uint8_t *)));
@@ -1650,7 +1665,6 @@ pppoe_send_padr(struct pppoe_softc *sc)
 	}
 
 #ifdef PPPOE_DEBUG
-	p += sizeof sc;
 	if (p - mtod(m0, uint8_t *) != len + PPPOE_HEADERLEN)
 		panic("pppoe_send_padr: garbled output len, should be %ld, is %ld",
 			(long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, uint8_t *)));

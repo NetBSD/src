@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.26.4.4 2017/02/05 13:40:49 skrll Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.26.4.5 2017/08/28 17:52:31 skrll Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.26.4.4 2017/02/05 13:40:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.26.4.5 2017/08/28 17:52:31 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -126,14 +126,14 @@ pfi_initialize(void)
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		struct psref psref;
-		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_acquire(ifp, &psref);
 		pserialize_read_exit(s);
 
 		pfi_init_groups(ifp);
 		pfi_attach_ifnet(ifp);
 
 		s = pserialize_read_enter();
-		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_release(ifp, &psref);
 	}
 	pserialize_read_exit(s);
 	curlwp_bindx(bound);
@@ -159,14 +159,14 @@ pfi_destroy(void)
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		struct psref psref;
-		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_acquire(ifp, &psref);
 		pserialize_read_exit(s);
 
 		pfi_detach_ifnet(ifp);
 		pfi_destroy_groups(ifp);
 
 		s = pserialize_read_enter();
-		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_release(ifp, &psref);
 	}
 	pserialize_read_exit(s);
 	curlwp_bindx(bound);

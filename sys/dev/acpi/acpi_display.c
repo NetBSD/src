@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.12.2.2 2016/04/22 15:44:13 skrll Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.12.2.3 2017/08/28 17:52:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.12.2.2 2016/04/22 15:44:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.12.2.3 2017/08/28 17:52:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1424,19 +1424,9 @@ acpidisp_init_odinfo(const struct acpidisp_vga_softc *asc)
 	 * Allocate and fill the struct acpidisp_odinfo to be returned.
 	 */
 	oi = kmem_zalloc(sizeof(*oi), KM_SLEEP);
-	if (oi == NULL) {
-		rv = AE_NO_MEMORY;
-		goto fail;
-	}
-
 	oi->oi_dev_count = pkg->Package.Count;
-
 	oi->oi_dev = kmem_zalloc(oi->oi_dev_count * sizeof(*oi->oi_dev),
 	    KM_SLEEP);
-	if (oi->oi_dev == NULL) {
-		rv = AE_NO_MEMORY;
-		goto fail;
-	}
 
 	/*
 	 * Fill the array oi->oi_dev.
@@ -1465,14 +1455,8 @@ acpidisp_init_odinfo(const struct acpidisp_vga_softc *asc)
 	 */
 	if (count < oi->oi_dev_count) {
 		devp = kmem_alloc(count * sizeof(*devp), KM_SLEEP);
-		if (devp == NULL) {
-			rv = AE_NO_MEMORY;
-			goto fail;
-		}
-
 		(void)memcpy(devp, oi->oi_dev, count * sizeof(*devp));
 		kmem_free(oi->oi_dev, oi->oi_dev_count * sizeof(*oi->oi_dev));
-
 		oi->oi_dev = devp;
 		oi->oi_dev_count = count;
 	}
@@ -1609,10 +1593,6 @@ acpidisp_init_brctl(const struct acpidisp_out_softc *osc)
 	 * Allocate and fill the struct acpidisp_brctl to be returned.
 	 */
 	bc = kmem_zalloc(sizeof(*bc), KM_SLEEP);
-	if (bc == NULL) {
-		rv = AE_NO_MEMORY;
-		goto fail;
-	}
 
 	/* At most 256 brightness levels (8-bit integers). */
 	if (pkg->Package.Count > 256)
@@ -1622,10 +1602,6 @@ acpidisp_init_brctl(const struct acpidisp_out_softc *osc)
 
 	bc->bc_level = kmem_zalloc(bc->bc_level_count * sizeof(*bc->bc_level),
 	    KM_SLEEP);
-	if (bc->bc_level == NULL) {
-		rv = AE_NO_MEMORY;
-		goto fail;
-	}
 
 	/*
 	 * Fill the array bc->bc_level with an insertion sort.
@@ -1666,15 +1642,9 @@ acpidisp_init_brctl(const struct acpidisp_out_softc *osc)
 	 */
 	if (count < bc->bc_level_count) {
 		levelp = kmem_alloc(count * sizeof(*levelp), KM_SLEEP);
-		if (levelp == NULL) {
-			rv = AE_NO_MEMORY;
-			goto fail;
-		}
-
 		(void)memcpy(levelp, bc->bc_level, count * sizeof(*levelp));
 		kmem_free(bc->bc_level,
 		    bc->bc_level_count * sizeof(*bc->bc_level));
-
 		bc->bc_level = levelp;
 		bc->bc_level_count = count;
 	}

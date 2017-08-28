@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.69.4.3 2015/09/22 12:05:37 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.69.4.4 2017/08/28 17:51:29 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -246,8 +246,11 @@ define	VFP_FPEXC_EN		VFP_FPEXC_EN
 define	NSACR_VFPCP		NSACR_CPn(VFP_COPROC)|NSACR_CPn(VFP_COPROC2)
 
 # Constants required for in_cksum() and friends.
-define	M_LEN				offsetof(struct mbuf, m_len)
-define	M_DATA				offsetof(struct mbuf, m_data)
-define	M_NEXT				offsetof(struct mbuf, m_next)
-define	IP_SRC				offsetof(struct ip, ip_src)
-define	IP_DST				offsetof(struct ip, ip_dst)
+define	M_LEN			offsetof(struct mbuf, m_len)
+define	M_DATA			offsetof(struct mbuf, m_data)
+define	M_NEXT			offsetof(struct mbuf, m_next)
+define	IP_SRC			offsetof(struct ip, ip_src)
+define	IP_DST			offsetof(struct ip, ip_dst)
+
+# Cache information
+define	DCACHE_SIZE		offsetof(struct arm_cache_info, dcache_size)

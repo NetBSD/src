@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.8.24.1 2016/05/29 08:44:18 skrll Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.8.24.2 2017/08/28 17:51:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.8.24.1 2016/05/29 08:44:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.8.24.2 2017/08/28 17:51:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -56,7 +56,6 @@ setup_openpic(void *addr, int passthrough)
 
 	openpic_base = (void *)addr;
 	opicops = kmem_alloc(sizeof(*opicops), KM_SLEEP);
-	KASSERT(opicops != NULL);
 	pic = &opicops->pic;
 
 	x = openpic_read(OPENPIC_FEATURE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.9.2.4 2016/10/05 20:55:27 skrll Exp $ */
+/*	$NetBSD: intr.c,v 1.9.2.5 2017/08/28 17:51:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9.2.4 2016/10/05 20:55:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9.2.5 2017/08/28 17:51:36 skrll Exp $");
 
 #define __INTR_PRIVATE
 
@@ -44,7 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9.2.4 2016/10/05 20:55:27 skrll Exp $");
 #include <mips/locore.h>
 #include <machine/intr.h>
 
+#include <mips/ingenic/ingenic_var.h>
 #include <mips/ingenic/ingenic_regs.h>
+#include <mips/ingenic/ingenic_coreregs.h>
 
 #include "opt_ingenic.h"
 
@@ -126,14 +128,15 @@ evbmips_intr_init(void)
 	writereg(JZ_ICMR1, 0xffffffff);
 
 	/* allow peripheral interrupts to core 0 only */
-	reg = MFC0(12, 4);	/* reset entry and interrupts */
+	reg = mips_cp0_corereim_read();
 	reg &= 0xffff0000;
 	reg |= REIM_IRQ0_M | REIM_MIRQ0_M;
 #ifdef MULTIPROCESSOR
 	reg |= REIM_MIRQ1_M;
 #endif
-	MTC0(reg, 12, 4);
-	MTC0(0, 20, 1);	/* ping the 2nd core */
+	mips_cp0_corereim_write(reg);
+
+	mips_cp0_corembox_write(1, 0);		/* ping the 2nd core */
 	DPRINTF("%s %08x\n", __func__, reg);
 }
 
@@ -146,12 +149,12 @@ evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 
 #if 0
 	snprintf(buffer, 256, "pending: %08x CR %08x\n", ipending,
-	    MFC0(MIPS_COP_0_CAUSE, 0));
+	   mipsNN_cp0_cause_read());
 	ingenic_puts(buffer);
 #endif
 #endif
 	/* see which core we're on */
-	id = MFC0(15, 1) & 7;
+	id = mipsNN_cp0_ebase_read() & 7;
 
 	/*
 	 * XXX
@@ -166,12 +169,12 @@ evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 		int s = splsched();
 
 		/* read pending IPIs */
-		reg = MFC0(12, 3);
+		reg = mips_cp0_corestatus_read();
 		if (id == 0) {
 			if (reg & CS_MIRQ0_P) {
 #ifdef MULTIPROCESSOR
 				uint32_t tag;
-				tag = MFC0(CP0_CORE_MBOX, 0);
+				tag = mips_cp0_corembox_read(id);
 
 				ipi_process(curcpu(), tag);
 #ifdef INGENIC_INTR_DEBUG
@@ -182,13 +185,13 @@ evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 #endif
 				reg &= (~CS_MIRQ0_P);
 				/* clear it */
-				MTC0(reg, 12, 3);
+				mips_cp0_corestatus_write(reg);
 			}
 		} else if (id == 1) {
 			if (reg & CS_MIRQ1_P) {
 #ifdef MULTIPROCESSOR
 				uint32_t tag;
-				tag = MFC0(CP0_CORE_MBOX, 1);
+				tag = mips_cp0_corembox_read(id);
 				ingenic_puts("1");
 				if (tag & 0x400)
 					hardclock(cf);
@@ -201,7 +204,7 @@ evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 #endif
 				reg &= (~CS_MIRQ1_P);
 				/* clear it */
-				MTC0(reg, 12, 3);
+				mips_cp0_corestatus_write(reg);
 			}
 		}
 		splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_tableset.c,v 1.22.4.2 2017/02/05 13:40:58 skrll Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.22.4.3 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009-2016 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.22.4.2 2017/02/05 13:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.22.4.3 2017/08/28 17:53:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -369,7 +369,7 @@ npf_table_create(const char *name, u_int tid, int type,
 		LIST_INIT(&t->t_list);
 		break;
 	case NPF_TABLE_HASH:
-		size = MIN(size, 128);
+		size = MAX(size, 128);
 		t->t_hashl = hashinit(size, HASH_LIST, true, &t->t_hashmask);
 		if (t->t_hashl == NULL) {
 			goto out;

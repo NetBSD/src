@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.70 2014/07/27 16:47:26 hannken Exp $	*/
+/*	$NetBSD: procfs.h,v 1.70.4.1 2017/08/28 17:53:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -110,6 +110,7 @@ typedef enum {
 	PFSstatm,	/* process memory info (if -o linux) */
 	PFSversion,	/* kernel version (if -o linux) */
 	PFStask,	/* task subdirector (if -o linux) */
+	PFSauxv,	/* ELF Auxiliary Vector */
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODE_TYPES
 #endif
@@ -192,6 +193,7 @@ const vfs_namemap_t *vfs_findname(const vfs_namemap_t *, const char *, int);
 
 int procfs_proc_lock(int, struct proc **, int);
 void procfs_proc_unlock(struct proc *);
+struct mount;
 int procfs_allocvp(struct mount *, struct vnode **, pid_t, pfstype, int);
 int procfs_donote(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
@@ -233,11 +235,14 @@ int procfs_doemul(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 int procfs_doversion(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
+int procfs_doauxv(struct lwp *, struct proc *, struct pfsnode *,
+    struct uio *);
 
 void procfs_revoke_vnodes(struct proc *, void *);
 int procfs_getfp(struct pfsnode *, struct proc *, struct file **);
 
 /* functions to check whether or not files should be displayed */
+int procfs_validauxv(struct lwp *, struct mount *);
 int procfs_validfile(struct lwp *, struct mount *);
 int procfs_validfpregs(struct lwp *, struct mount *);
 int procfs_validregs(struct lwp *, struct mount *);

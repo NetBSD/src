@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.249.4.9 2017/02/05 13:41:01 skrll Exp $	*/
+/*	$NetBSD: vnode.h,v 1.249.4.10 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -379,10 +379,6 @@ extern unsigned int	numvnodes;	/* current number of vnodes */
 #define	VDESC_VP1_WILLRELE	0x00000002
 #define	VDESC_VP2_WILLRELE	0x00000004
 #define	VDESC_VP3_WILLRELE	0x00000008
-#define	VDESC_VP0_WILLUNLOCK	0x00000100
-#define	VDESC_VP1_WILLUNLOCK	0x00000200
-#define	VDESC_VP2_WILLUNLOCK	0x00000400
-#define	VDESC_VP3_WILLUNLOCK	0x00000800
 #define	VDESC_VP0_WILLPUT	0x00000101
 #define	VDESC_VP1_WILLPUT	0x00000202
 #define	VDESC_VP2_WILLPUT	0x00000404
@@ -515,6 +511,7 @@ void 	vput(struct vnode *);
 bool	vrecycle(struct vnode *);
 void 	vrele(struct vnode *);
 void 	vrele_async(struct vnode *);
+void	vrele_flush(struct mount *);
 int	vtruncbuf(struct vnode *, daddr_t, bool, int);
 void	vwakeup(struct buf *);
 int	vdead_check(struct vnode *, int);
@@ -551,6 +548,23 @@ int	vn_extattr_set(struct vnode *, int, int, const char *, size_t,
 int	vn_extattr_rm(struct vnode *, int, int, const char *, struct lwp *);
 void	vn_ra_allocctx(struct vnode *);
 int	vn_fifo_bypass(void *);
+
+#ifdef DIAGNOSTIC
+static inline bool
+vn_locked(struct vnode *_vp)
+{
+
+	return (_vp->v_vflag & VV_LOCKSWORK) == 0 ||
+	    VOP_ISLOCKED(_vp) == LK_EXCLUSIVE;
+}
+
+static inline bool
+vn_anylocked(struct vnode *_vp)
+{
+
+	return (_vp->v_vflag & VV_LOCKSWORK) == 0 || VOP_ISLOCKED(_vp);
+}
+#endif
 
 /* initialise global vnode management */
 void	vntblinit(void);

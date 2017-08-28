@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_com.c,v 1.1.2.4 2015/12/27 12:09:31 skrll Exp $ */
+/* $NetBSD: tegra_com.c,v 1.1.2.5 2017/08/28 17:51:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.1.2.4 2015/12/27 12:09:31 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.1.2.5 2017/08/28 17:51:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,6 +51,13 @@ __KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.1.2.4 2015/12/27 12:09:31 skrll Exp 
 static int tegra_com_match(device_t, cfdata_t, void *);
 static void tegra_com_attach(device_t, device_t, void *);
 
+static const char * const compatible[] = {
+	"nvidia,tegra210-uart",
+	"nvidia,tegra124-uart",
+	"nvidia,tegra20-uart",
+	NULL
+};
+
 struct tegra_com_softc {
 	struct com_softc tsc_sc;
 	void *tsc_ih;
@@ -65,7 +72,6 @@ CFATTACH_DECL_NEW(tegra_com, sizeof(struct tegra_com_softc),
 static int
 tegra_com_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,tegra124-uart", NULL };
 	struct fdt_attach_args * const faa = aux;
 
 	return of_match_compatible(faa->faa_phandle, compatible);
@@ -142,3 +148,39 @@ tegra_com_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 }
+
+/*
+ * Console support
+ */
+
+static int
+tegra_com_console_match(int phandle)
+{
+	return of_match_compatible(phandle, compatible);
+}
+
+static void
+tegra_com_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
+{
+	const int phandle = faa->faa_phandle;
+	bus_space_tag_t bst = faa->faa_a4x_bst;
+	bus_addr_t addr;
+	tcflag_t flags;
+	int speed;
+
+	fdtbus_get_reg(phandle, 0, &addr, NULL);
+	speed = fdtbus_get_stdout_speed();
+	if (speed < 0)
+		speed = 115200;	/* default */
+	flags = fdtbus_get_stdout_flags();
+
+	if (comcnattach(bst, addr, speed, uart_freq, COM_TYPE_TEGRA, flags))
+		panic("Cannot initialize tegra com console");
+}
+
+static const struct fdt_console tegra_com_console = {
+	.match = tegra_com_console_match,
+	.consinit = tegra_com_console_consinit,
+};
+
+FDT_CONSOLE(tegra_com, &tegra_com_console);

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_blist.c,v 1.12 2013/12/09 09:35:17 wiz Exp $	*/
+/*	$NetBSD: subr_blist.c,v 1.12.6.1 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 Matthew Dillon.  All Rights Reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.12 2013/12/09 09:35:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.12.6.1 2017/08/28 17:53:07 skrll Exp $");
 #if 0
 __FBSDID("$FreeBSD: src/sys/kern/subr_blist.c,v 1.17 2004/06/04 04:03:25 alc Exp $");
 #endif
@@ -112,8 +112,8 @@ __FBSDID("$FreeBSD: src/sys/kern/subr_blist.c,v 1.17 2004/06/04 04:03:25 alc Exp
 #include <inttypes.h>
 
 #define	KM_SLEEP 1
-#define	kmem_zalloc(a,b,c) calloc(1, (a))
-#define	kmem_alloc(a,b,c) malloc(a)
+#define	kmem_zalloc(a,b) calloc(1, (a))
+#define	kmem_alloc(a,b) malloc(a)
 #define	kmem_free(a,b) free(a)
 
 #include "../sys/blist.h"

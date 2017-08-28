@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.43.4.4 2016/07/09 20:25:23 skrll Exp $	*/
+/*	$NetBSD: keysock.c,v 1.43.4.5 2017/08/28 17:53:13 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.43.4.4 2016/07/09 20:25:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.43.4.5 2017/08/28 17:53:13 skrll Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.43.4.4 2016/07/09 20:25:23 skrll Exp $
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
+#include <sys/syslog.h>
 
 #include <net/raw_cb.h>
 #include <net/route.h>
@@ -58,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.43.4.4 2016/07/09 20:25:23 skrll Exp $
 #include <netipsec/keysock.h>
 #include <netipsec/key_debug.h>
 
-#include <netipsec/ipsec_osdep.h>
 #include <netipsec/ipsec_private.h>
 
 struct key_cb {
@@ -82,6 +83,15 @@ static int key_sendup0(struct rawcb *, struct mbuf *, int, int);
 
 int key_registered_sb_max = (2048 * MHLEN); /* XXX arbitrary */
 
+static kmutex_t *key_so_mtx;
+
+void
+key_init_so(void)
+{
+
+	key_so_mtx = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+}
+
 /*
  * key_output()
  */
@@ -92,8 +102,7 @@ key_output(struct mbuf *m, struct socket *so)
 	int len, error = 0;
 	int s;
 
-	if (m == 0)
-		panic("key_output: NULL pointer was passed");
+	KASSERT(m != NULL);
 
 	{
 		uint64_t *ps = PFKEY_STAT_GETREF();
@@ -117,10 +126,10 @@ key_output(struct mbuf *m, struct socket *so)
 		}
 	}
 
-	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("key_output: not M_PKTHDR ??");
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
 
-	KEYDEBUG(KEYDEBUG_KEY_DUMP, kdebug_mbuf(m));
+	if (KEYDEBUG_ON(KEYDEBUG_KEY_DUMP))
+		kdebug_mbuf(m);
 
 	msg = mtod(m, struct sadb_msg *);
 	PFKEY_STATINC(PFKEY_STAT_OUT_MSGTYPE + msg->sadb_msg_type);
@@ -184,10 +193,14 @@ key_sendup0(
 		ok = sbappendaddrchain(&rp->rcb_socket->so_rcv,
 			       (struct sockaddr *)&key_src, m, sbprio);
 
-	  if (!ok) {
+	if (!ok) {
+		log(LOG_WARNING,
+		    "%s: couldn't send PF_KEY message to the socket\n",
+		    __func__);
 		PFKEY_STATINC(PFKEY_STAT_IN_NOMEM);
 		m_freem(m);
 		error = ENOBUFS;
+		rp->rcb_socket->so_rcv.sb_overflowed++;
 	} else
 		error = 0;
 	sorwakeup(rp->rcb_socket);
@@ -202,13 +215,13 @@ key_sendup(struct socket *so, struct sadb_msg *msg, u_int len,
 	struct mbuf *m, *n, *mprev;
 	int tlen;
 
-	/* sanity check */
-	if (so == 0 || msg == 0)
-		panic("key_sendup: NULL pointer was passed");
+	KASSERT(so != NULL);
+	KASSERT(msg != NULL);
 
-	KEYDEBUG(KEYDEBUG_KEY_DUMP,
+	if (KEYDEBUG_ON(KEYDEBUG_KEY_DUMP)) {
 		printf("key_sendup: \n");
-		kdebug_sadb(msg));
+		kdebug_sadb(msg);
+	}
 
 	/*
 	 * we increment statistics here, just in case we have ENOBUFS
@@ -287,8 +300,8 @@ key_sendup(struct socket *so, struct sadb_msg *msg, u_int len,
 }
 
 /* so can be NULL if target != KEY_SENDUP_ONE */
-int
-key_sendup_mbuf(struct socket *so, struct mbuf *m,
+static int
+_key_sendup_mbuf(struct socket *so, struct mbuf *m,
 		int target/*, sbprio */)
 {
 	struct mbuf *n;
@@ -298,10 +311,8 @@ key_sendup_mbuf(struct socket *so, struct mbuf *m,
 	int error = 0;
 	int sbprio = 0; /* XXX should be a parameter */
 
-	if (m == NULL)
-		panic("key_sendup_mbuf: NULL pointer was passed");
-	if (so == NULL && target == KEY_SENDUP_ONE)
-		panic("key_sendup_mbuf: NULL pointer was passed");
+	KASSERT(m != NULL);
+	KASSERT(so != NULL || target != KEY_SENDUP_ONE);
 
 	/*
 	 * RFC 2367 says ACQUIRE and other kernel-generated messages
@@ -341,7 +352,7 @@ key_sendup_mbuf(struct socket *so, struct mbuf *m,
 		PFKEY_STATINC(PFKEY_STAT_IN_MSGTYPE + msg->sadb_msg_type);
 	}
 
-	LIST_FOREACH(rp, &rawcb_list, rcb_list)
+	LIST_FOREACH(rp, &rawcb, rcb_list)
 	{
 		struct socket * kso = rp->rcb_socket;
 		if (rp->rcb_proto.sp_family != PF_KEY)
@@ -422,6 +433,24 @@ key_sendup_mbuf(struct socket *so, struct mbuf *m,
 	return error;
 }
 
+int
+key_sendup_mbuf(struct socket *so, struct mbuf *m,
+		int target/*, sbprio */)
+{
+	int error;
+
+	if (so == NULL)
+		mutex_enter(key_so_mtx);
+	else
+		KASSERT(solocked(so));
+
+	error = _key_sendup_mbuf(so, m, target);
+
+	if (so == NULL)
+		mutex_exit(key_so_mtx);
+	return error;
+}
+
 static int
 key_attach(struct socket *so, int proto)
 {
@@ -434,6 +463,12 @@ key_attach(struct socket *so, int proto)
 	so->so_pcb = kp;
 
 	s = splsoftnet();
+
+	KASSERT(so->so_lock == NULL);
+	mutex_obj_hold(key_so_mtx);
+	so->so_lock = key_so_mtx;
+	solock(so);
+
 	error = raw_attach(so, proto);
 	if (error) {
 		PFKEY_STATINC(PFKEY_STAT_SOCKERR);
@@ -463,6 +498,7 @@ key_detach(struct socket *so)
 	struct keycb *kp = (struct keycb *)sotorawcb(so);
 	int s;
 
+	KASSERT(!cpu_softintr_p());
 	KASSERT(solocked(so));
 	KASSERT(kp != NULL);
 

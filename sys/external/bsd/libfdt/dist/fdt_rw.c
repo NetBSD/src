@@ -1,3 +1,5 @@
+/*	$NetBSD: fdt_rw.c,v 1.1.1.1.2.3 2017/08/28 17:52:34 skrll Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  * Copyright (C) 2006 David Gibson, IBM Corporation.
@@ -191,17 +193,13 @@ int fdt_add_mem_rsv(void *fdt, uint64_t address, uint64_t size)
 int fdt_del_mem_rsv(void *fdt, int n)
 {
 	struct fdt_reserve_entry *re = _fdt_mem_rsv_w(fdt, n);
-	int err;
 
 	FDT_RW_CHECK_HEADER(fdt);
 
 	if (n >= fdt_num_mem_rsv(fdt))
 		return -FDT_ERR_NOTFOUND;
 
-	err = _fdt_splice_mem_rsv(fdt, re, 1, 0);
-	if (err)
-		return err;
-	return 0;
+	return _fdt_splice_mem_rsv(fdt, re, 1, 0);
 }
 
 static int _fdt_resize_property(void *fdt, int nodeoffset, const char *name,
@@ -287,7 +285,8 @@ int fdt_setprop(void *fdt, int nodeoffset, const char *name,
 	if (err)
 		return err;
 
-	memcpy(prop->data, val, len);
+	if (len)
+		memcpy(prop->data, val, len);
 	return 0;
 }
 

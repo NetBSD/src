@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.7.2.2 2017/02/05 13:41:01 skrll Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.7.2.3 2017/08/28 17:53:17 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1226,7 +1226,7 @@ bool
 uvm_physseg_unplug(paddr_t pfn, size_t pages)
 {
 	uvm_physseg_t upm;
-	paddr_t off = 0, start, end;
+	paddr_t off = 0, start __diagused, end;
 	struct uvm_physseg *seg;
 
 	upm = uvm_physseg_find(pfn, &off);
@@ -1246,9 +1246,6 @@ uvm_physseg_unplug(paddr_t pfn, size_t pages)
 		return false;
 	}
 
-#ifndef DIAGNOSTIC
-	(void) start;
-#endif
 	KASSERT(pfn == start + off); /* sanity */
 
 	if (__predict_true(uvm.page_init_done == true)) {

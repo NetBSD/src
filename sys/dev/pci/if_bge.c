@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.277.4.9 2017/02/05 13:40:29 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.277.4.10 2017/08/28 17:52:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.277.4.9 2017/02/05 13:40:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.277.4.10 2017/08/28 17:52:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -585,11 +585,11 @@ static const struct bge_product {
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57760,
-	  "Broadcom BCM57760 Fast Ethernet",
+	  "Broadcom BCM57760 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57761,
-	  "Broadcom BCM57761 Fast Ethernet",
+	  "Broadcom BCM57761 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57762,
@@ -597,47 +597,47 @@ static const struct bge_product {
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57765,
-	  "Broadcom BCM57765 Fast Ethernet",
+	  "Broadcom BCM57765 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57766,
-	  "Broadcom BCM57766 Fast Ethernet",
+	  "Broadcom BCM57766 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57780,
-	  "Broadcom BCM57780 Fast Ethernet",
+	  "Broadcom BCM57780 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57781,
-	  "Broadcom BCM57781 Fast Ethernet",
+	  "Broadcom BCM57781 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57782,
-	  "Broadcom BCM57782 Fast Ethernet",
+	  "Broadcom BCM57782 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57785,
-	  "Broadcom BCM57785 Fast Ethernet",
+	  "Broadcom BCM57785 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57786,
-	  "Broadcom BCM57786 Fast Ethernet",
+	  "Broadcom BCM57786 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57788,
-	  "Broadcom BCM57788 Fast Ethernet",
+	  "Broadcom BCM57788 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57790,
-	  "Broadcom BCM57790 Fast Ethernet",
+	  "Broadcom BCM57790 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57791,
-	  "Broadcom BCM57791 Fast Ethernet",
+	  "Broadcom BCM57791 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57795,
-	  "Broadcom BCM57795 Fast Ethernet",
+	  "Broadcom BCM57795 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_SCHNEIDERKOCH,
 	  PCI_PRODUCT_SCHNEIDERKOCH_SK_9DX1,
@@ -743,6 +743,7 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5906_A2, "BCM5906 A2" },
 	{ BGE_CHIPID_BCM57765_A0, "BCM57765 A0" },
 	{ BGE_CHIPID_BCM57765_B0, "BCM57765 B0" },
+	{ BGE_CHIPID_BCM57766_A0, "BCM57766 A0" },
 	{ BGE_CHIPID_BCM57780_A0, "BCM57780 A0" },
 	{ BGE_CHIPID_BCM57780_A1, "BCM57780 A1" },
 
@@ -2319,6 +2320,11 @@ bge_chipinit(struct bge_softc *sc)
 			CSR_WRITE_4(sc, BGE_MODE_CTL, mode_ctl);
 		}
 		if (BGE_CHIPREV(sc->bge_chipid) != BGE_CHIPREV_57765_AX) {
+			/*
+			 * For the 57766 and non Ax versions of 57765, bootcode
+			 * needs to setup the PCIE Fast Training Sequence (FTS)
+			 * value to prevent transmit hangs.
+			 */
 			reg = CSR_READ_4(sc, BGE_CPMU_PADRNG_CTL);
 			CSR_WRITE_4(sc, BGE_CPMU_PADRNG_CTL,
 			    reg | BGE_CPMU_PADRNG_CTL_RDIV2);
@@ -2661,7 +2667,7 @@ bge_blockinit(struct bge_softc *sc)
 		/*
 		 * Bits 31-16: Programmable ring size (2048, 1024, 512, .., 32)
 		 * Bits 15-2 : Maximum RX frame size
-		 * Bit 1     : 1 = Ring Disabled, 0 = Ring ENabled
+		 * Bit 1     : 1 = Ring Disabled, 0 = Ring Enabled
 		 * Bit 0     : Reserved
 		 */
 		rcb->bge_maxlen_flags =
@@ -3266,7 +3272,9 @@ bge_chipid(const struct pci_attach_args *pa)
 		case PCI_PRODUCT_BROADCOM_BCM57765:
 		case PCI_PRODUCT_BROADCOM_BCM57766:
 		case PCI_PRODUCT_BROADCOM_BCM57781:
+		case PCI_PRODUCT_BROADCOM_BCM57782:
 		case PCI_PRODUCT_BROADCOM_BCM57785:
+		case PCI_PRODUCT_BROADCOM_BCM57786:
 		case PCI_PRODUCT_BROADCOM_BCM57791:
 		case PCI_PRODUCT_BROADCOM_BCM57795:
 			id = pci_conf_read(pa->pa_pc, pa->pa_tag,
@@ -3421,9 +3429,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	sc->bge_chipid = bge_chipid(pa);
 	sc->bge_phy_addr = bge_phy_addr(sc);
 
-	if ((pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PCIEXPRESS,
-	        &sc->bge_pciecap, NULL) != 0)
-	    || (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785)) {
+	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PCIEXPRESS,
+	    &sc->bge_pciecap, NULL) != 0) {
 		/* PCIe */
 		sc->bge_flags |= BGEF_PCIE;
 		/* Extract supported maximum payload size. */
@@ -3436,6 +3443,9 @@ bge_attach(device_t parent, device_t self, void *aux)
 		else
 			sc->bge_expmrq = 4096;
 		bge_set_max_readrq(sc);
+	} else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785) {
+		/* PCIe without PCIe cap */
+		sc->bge_flags |= BGEF_PCIE;
 	} else if ((pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_PCISTATE) &
 		BGE_PCISTATE_PCI_BUSMODE) == 0) {
 		/* PCI-X */
@@ -3741,8 +3751,8 @@ alloc_retry:
 	intrstr = pci_intr_string(pc, sc->bge_pihp[0], intrbuf,
 	    sizeof(intrbuf));
 	DPRINTFN(5, ("pci_intr_establish\n"));
-	sc->bge_intrhand = pci_intr_establish(pc, sc->bge_pihp[0], IPL_NET,
-	    bge_intr, sc);
+	sc->bge_intrhand = pci_intr_establish_xname(pc, sc->bge_pihp[0],
+	    IPL_NET, bge_intr, sc, device_xname(sc->bge_dev));
 	if (sc->bge_intrhand == NULL) {
 		intr_type = pci_intr_type(pc, sc->bge_pihp[0]);
 		aprint_error_dev(sc->bge_dev,"unable to establish %s\n",
@@ -3775,7 +3785,7 @@ alloc_retry:
 	 * we use tagged status only for MSI case on BCM5717. Otherwise
 	 * MSI on BCM5717 does not work.
 	 */
-	if (BGE_IS_5717_PLUS(sc) && sc->bge_flags & BGEF_MSI)
+	if (BGE_IS_57765_PLUS(sc) && sc->bge_flags & BGEF_MSI)
 		sc->bge_flags |= BGEF_TAGGED_STATUS;
 
 	/*
@@ -4073,6 +4083,10 @@ alloc_retry:
 	 */
 	evcnt_attach_dynamic(&sc->bge_ev_intr, EVCNT_TYPE_INTR,
 	    NULL, device_xname(sc->bge_dev), "intr");
+	evcnt_attach_dynamic(&sc->bge_ev_intr_spurious, EVCNT_TYPE_INTR,
+	    NULL, device_xname(sc->bge_dev), "intr_spurious");
+	evcnt_attach_dynamic(&sc->bge_ev_intr_spurious2, EVCNT_TYPE_INTR,
+	    NULL, device_xname(sc->bge_dev), "intr_spurious2");
 	evcnt_attach_dynamic(&sc->bge_ev_tx_xoff, EVCNT_TYPE_MISC,
 	    NULL, device_xname(sc->bge_dev), "tx_xoff");
 	evcnt_attach_dynamic(&sc->bge_ev_tx_xon, EVCNT_TYPE_MISC,
@@ -4133,6 +4147,23 @@ bge_detach(device_t self, int flags __unused)
 static void
 bge_release_resources(struct bge_softc *sc)
 {
+
+	/* Detach sysctl */
+	if (sc->bge_log != NULL)
+		sysctl_teardown(&sc->bge_log);
+
+#ifdef BGE_EVENT_COUNTERS
+	/* Detach event counters. */
+	evcnt_detach(&sc->bge_ev_intr);
+	evcnt_detach(&sc->bge_ev_intr_spurious);
+	evcnt_detach(&sc->bge_ev_intr_spurious2);
+	evcnt_detach(&sc->bge_ev_tx_xoff);
+	evcnt_detach(&sc->bge_ev_tx_xon);
+	evcnt_detach(&sc->bge_ev_rx_xoff);
+	evcnt_detach(&sc->bge_ev_rx_xon);
+	evcnt_detach(&sc->bge_ev_rx_macctl);
+	evcnt_detach(&sc->bge_ev_xoffentered);
+#endif /* BGE_EVENT_COUNTERS */
 
 	/* Disestablish the interrupt handler */
 	if (sc->bge_intrhand != NULL) {
@@ -4233,6 +4264,13 @@ bge_reset(struct bge_softc *sc)
 	 * write ~BGE_MAGIC_NUMBER to the same location.
 	 */
 	bge_writemem_ind(sc, BGE_SRAM_FW_MB, BGE_SRAM_FW_MB_MAGIC);
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780) {
+		val = CSR_READ_4(sc, BGE_PCIE_LINKCTL);
+		val = (val & ~BGE_PCIE_LINKCTL_L1_PLL_PDEN)
+		    | BGE_PCIE_LINKCTL_L1_PLL_PDDIS;
+		CSR_WRITE_4(sc, BGE_PCIE_LINKCTL, val);
+	}
 
 	/* 5718 reset step 6, 57XX step 7 */
 	reset = BGE_MISCCFG_RESET_CORE_CLOCKS | BGE_32BITTIME_66MHZ;
@@ -4729,12 +4767,14 @@ bge_intr(void *xsc)
 	if (sc->bge_flags & BGEF_TAGGED_STATUS) {
 		if (sc->bge_lasttag == statustag &&
 		    (~pcistate & intrmask)) {
+			BGE_EVCNT_INCR(sc->bge_ev_intr_spurious);
 			return (0);
 		}
 		sc->bge_lasttag = statustag;
 	} else {
 		if (!(statusword & BGE_STATFLAG_UPDATED) &&
 		    !(~pcistate & intrmask)) {
+			BGE_EVCNT_INCR(sc->bge_ev_intr_spurious2);
 			return (0);
 		}
 		statustag = 0;
@@ -5485,6 +5525,32 @@ bge_init(struct ifnet *ifp)
 		reg &= ~BGE_CPMU_HST_ACC_MACCLK_MASK;
 		reg |= BGE_CPMU_HST_ACC_MACCLK_6_25;
 		CSR_WRITE_4(sc, BGE_CPMU_HST_ACC, reg);
+	}
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780) {
+		pcireg_t aercap;
+
+		reg = CSR_READ_4(sc, BGE_PCIE_PWRMNG_THRESH);
+		reg = (reg & ~BGE_PCIE_PWRMNG_L1THRESH_MASK)
+		    | BGE_PCIE_PWRMNG_L1THRESH_4MS
+		    | BGE_PCIE_PWRMNG_EXTASPMTMR_EN;
+		CSR_WRITE_4(sc, BGE_PCIE_PWRMNG_THRESH, reg);
+
+		reg = CSR_READ_4(sc, BGE_PCIE_EIDLE_DELAY);
+		reg = (reg & ~BGE_PCIE_EIDLE_DELAY_MASK)
+		    | BGE_PCIE_EIDLE_DELAY_13CLK;
+		CSR_WRITE_4(sc, BGE_PCIE_EIDLE_DELAY, reg);
+
+		/* Clear correctable error */
+		if (pci_get_ext_capability(sc->sc_pc, sc->sc_pcitag,
+		    PCI_EXTCAP_AER, &aercap, NULL) != 0)
+			pci_conf_write(sc->sc_pc, sc->sc_pcitag,
+			    aercap + PCI_AER_COR_STATUS, 0xffffffff);
+
+		reg = CSR_READ_4(sc, BGE_PCIE_LINKCTL);
+		reg = (reg & ~BGE_PCIE_LINKCTL_L1_PLL_PDEN)
+		    | BGE_PCIE_LINKCTL_L1_PLL_PDDIS;
+		CSR_WRITE_4(sc, BGE_PCIE_LINKCTL, reg);
 	}
 
 	bge_sig_post_reset(sc, BGE_RESET_START);

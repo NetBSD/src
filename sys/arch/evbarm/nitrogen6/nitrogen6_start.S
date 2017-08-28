@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_start.S,v 1.1 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: nitrogen6_start.S,v 1.1.2.1 2017/08/28 17:51:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -37,7 +37,7 @@
 #include <arm/cortex/scu_reg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: nitrogen6_start.S,v 1.1 2014/09/25 05:05:28 ryo Exp $")
+RCSID("$NetBSD: nitrogen6_start.S,v 1.1.2.1 2017/08/28 17:51:35 skrll Exp $")
 
 #ifndef CONADDR
 #define CONADDR		0x021e8000
@@ -155,7 +155,7 @@ _C_LABEL(nitrogen6_start):
 	mov	r3, #0	/* flags for arm_cpu_hatched */
 
 	cmp	r0, #0
-	ble	9f
+	ble	.hatch_done
 
 #ifdef VERBOSE_INIT_ARM
 	/* wait to prevent the mixing of console output */
@@ -221,10 +221,10 @@ _C_LABEL(nitrogen6_start):
 .not_hatched:
 	PRINT("\r\nnot hatched. arm_cpu_hatched=")
 	PRINT_R0
-	b	9f
+	b	.hatch_done
 .hatched:
 	PRINT("\r\nMULTIPROCESSOR hatched!\r\n")
-9:
+.hatch_done:
 #endif
 
 	PRINT("jump to start()\r\n")
@@ -256,6 +256,9 @@ mmu_init_table:
 	    (BOOT_MEMSIZE * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 	    L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_CACHEABLE)
 #endif
+	MMU_INIT(KERNEL_BASE, KERNEL_BASE - KERNEL_BASE_VOFFSET,
+	    (BOOT_MEMSIZE * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+	    L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_CACHEABLE)
 
 	/* Map the 2MB of primary peripherals (AIPS1 + AIPS2) */
 	MMU_INIT(KERNEL_IO_IOREG_VBASE, IMX6_IOREG_PBASE,

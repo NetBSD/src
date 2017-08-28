@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.25.6.10 2017/02/01 07:55:08 skrll Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.25.6.11 2017/08/28 17:52:27 skrll Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.6.10 2017/02/01 07:55:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.6.11 2017/08/28 17:52:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1009,11 +1009,6 @@ otus_open_pipes(struct otus_softc *sc)
 		goto fail;
 	}
 	sc->sc_ibuf = kmem_alloc(sc->sc_ibuf_size, KM_SLEEP);
-	if (sc->sc_ibuf == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "could not allocate Rx intr buffer\n");
-		goto fail;
-	}
 	error = usbd_open_pipe_intr(sc->sc_iface, AR_EPT_INTR_RX_NO,
 	    USBD_SHORT_XFER_OK, &sc->sc_cmd_rx_pipe, sc, sc->sc_ibuf,
 	    sc->sc_ibuf_size, otus_intr, USBD_DEFAULT_INTERVAL);

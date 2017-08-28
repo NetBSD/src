@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR_CP,v 1.9.2.2 2015/09/22 12:05:40 skrll Exp $
+#	$NetBSD: INTEGRATOR_CP,v 1.9.2.3 2017/08/28 17:51:34 skrll Exp $
 #
 #	INTEGRATOR_CP -- ARM Integrator CP kernel
 #
@@ -47,6 +47,7 @@ file-system	TMPFS		# memory file system
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support
@@ -90,7 +91,6 @@ options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options

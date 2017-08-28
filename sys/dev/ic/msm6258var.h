@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258var.h,v 1.8 2011/10/16 03:10:18 isaki Exp $	*/
+/*	$NetBSD: msm6258var.h,v 1.8.30.1 2017/08/28 17:52:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,3 +32,11 @@ extern stream_filter_factory_t msm6258_slinear16_to_adpcm;
 extern stream_filter_factory_t msm6258_linear8_to_adpcm;
 extern stream_filter_factory_t msm6258_adpcm_to_slinear16;
 extern stream_filter_factory_t msm6258_adpcm_to_linear8;
+
+/* XXX */
+extern void *vs_alloc_msm6258codec(void);
+extern void vs_free_msm6258codec(void *);
+extern void vs_slinear16be_to_adpcm(void *, void *, const void *, int);
+extern void vs_slinear8_to_adpcm(void *, void *, const void *, int);
+extern void vs_adpcm_to_slinear16be(void *, void *, int, const void *);
+extern void vs_adpcm_to_slinear8(void *, void *, int, const void *);

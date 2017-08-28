@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.110.4.4 2016/10/05 20:56:11 skrll Exp $	*/
+/*	$NetBSD: socket.h,v 1.110.4.5 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -221,7 +221,8 @@ struct	accept_filter_arg {
 #define	AF_IEEE80211	32		/* IEEE80211 */
 #define	AF_MPLS		33		/* MultiProtocol Label Switching */
 #define	AF_ROUTE	34		/* Internal Routing Protocol */
-#define	AF_MAX		35
+#define	AF_CAN		35
+#define	AF_MAX		36
 
 /*
  * Structure used by kernel to store most
@@ -330,6 +331,7 @@ struct sockaddr_storage {
 #define PF_BLUETOOTH	AF_BLUETOOTH
 #define	PF_MPLS		AF_MPLS
 #define	PF_ROUTE	AF_ROUTE
+#define	PF_CAN		AF_CAN
 
 #define	PF_MAX		AF_MAX
 
@@ -623,6 +625,7 @@ sockaddr_getlen(const struct sockaddr *sa)
 }
 
 __BEGIN_DECLS
+socklen_t sockaddr_getsize_by_family(sa_family_t);
 struct sockaddr *sockaddr_copy(struct sockaddr *, socklen_t,
     const struct sockaddr *);
 struct sockaddr *sockaddr_externalize(struct sockaddr *, socklen_t,
@@ -631,7 +634,7 @@ struct sockaddr *sockaddr_alloc(sa_family_t, socklen_t, int);
 const void *sockaddr_const_addr(const struct sockaddr *, socklen_t *);
 void *sockaddr_addr(struct sockaddr *, socklen_t *);
 const struct sockaddr *sockaddr_any(const struct sockaddr *);
-const struct sockaddr *sockaddr_any_by_family(int);
+const struct sockaddr *sockaddr_any_by_family(sa_family_t);
 const void *sockaddr_anyaddr(const struct sockaddr *, socklen_t *);
 int sockaddr_cmp(const struct sockaddr *, const struct sockaddr *);
 struct sockaddr *sockaddr_dup(const struct sockaddr *, int);
@@ -644,6 +647,7 @@ __END_DECLS
 
 __BEGIN_DECLS
 int	accept(int, struct sockaddr * __restrict, socklen_t * __restrict);
+int	accept4(int, struct sockaddr * __restrict, socklen_t * __restrict, int);
 int	bind(int, const struct sockaddr *, socklen_t);
 int	connect(int, const struct sockaddr *, socklen_t);
 int	getpeername(int, struct sockaddr * __restrict, socklen_t * __restrict);

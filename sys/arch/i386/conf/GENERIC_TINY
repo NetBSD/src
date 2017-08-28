@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.141.2.2 2017/02/05 13:40:12 skrll Exp $
+#	$NetBSD: GENERIC_TINY,v 1.141.2.3 2017/08/28 17:51:40 skrll Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -14,7 +14,6 @@ makeoptions	USE_SSP="no"
 maxusers	8		# estimated number of users
 
 # CPU-related options.
-#options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
 # This option allows you to force a serial console at the specified
@@ -74,10 +73,7 @@ options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
-#options 	COMPAT_SVR4	# binary compatibility with SVR4
-#options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

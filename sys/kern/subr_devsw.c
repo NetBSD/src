@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.33.2.2 2017/02/05 13:40:56 skrll Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.33.2.3 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.33.2.2 2017/02/05 13:40:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.33.2.3 2017/08/28 17:53:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -252,7 +252,7 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 	}
 
 	if (*devmajor >= MAXDEVSW) {
-		printf("bdevsw_attach: block majors exhausted");
+		printf("%s: block majors exhausted", __func__);
 		return (ENOMEM);
 	}
 
@@ -299,7 +299,7 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 	}
 
 	if (*devmajor >= MAXDEVSW) {
-		printf("cdevsw_attach: character majors exhausted");
+		printf("%s: character majors exhausted", __func__);
 		return (ENOMEM);
 	}
 
@@ -551,7 +551,7 @@ devsw_name2blk(const char *name, char *devname, size_t devnamelen)
 		if (devname != NULL) {
 #ifdef DEVSW_DEBUG
 			if (strlen(conv->d_name) >= devnamelen)
-				printf("devsw_name2blk: too short buffer");
+				printf("%s: too short buffer", __func__);
 #endif /* DEVSW_DEBUG */
 			strncpy(devname, conv->d_name, devnamelen);
 			devname[devnamelen - 1] = '\0';
@@ -599,7 +599,7 @@ devsw_name2chr(const char *name, char *devname, size_t devnamelen)
 		if (devname != NULL) {
 #ifdef DEVSW_DEBUG
 			if (strlen(conv->d_name) >= devnamelen)
-				printf("devsw_name2chr: too short buffer");
+				printf("%s: too short buffer", __func__);
 #endif /* DEVSW_DEBUG */
 			strncpy(devname, conv->d_name, devnamelen);
 			devname[devnamelen - 1] = '\0';

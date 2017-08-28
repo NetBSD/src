@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz_pci.c,v 1.5.6.2 2016/10/05 20:55:32 skrll Exp $ */
+/* $NetBSD: sbbrz_pci.c,v 1.5.6.3 2017/08/28 17:51:46 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.5.6.2 2016/10/05 20:55:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.5.6.3 2017/08/28 17:51:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.5.6.2 2016/10/05 20:55:32 skrll Exp 
 #include <mips/sibyte/include/sb1250_scd.h>
 #include <mips/sibyte/include/sb1250_int.h>
 #include <mips/sibyte/pci/sbbrzvar.h>
+
+#include <evbmips/sbmips/systemsw.h>
 
 void		sbbrz_pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);

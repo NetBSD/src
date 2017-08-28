@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.c,v 1.9.2.1 2015/09/22 12:05:37 skrll Exp $ */
+/* $NetBSD: bcm2835_dmac.c,v 1.9.2.2 2017/08/28 17:51:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.9.2.1 2015/09/22 12:05:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.9.2.2 2017/08/28 17:51:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,10 +132,6 @@ bcm_dmac_attach(device_t parent, device_t self, void *aux)
 	sc->sc_nchannels = 31 - __builtin_clz(sc->sc_channelmask);
 	sc->sc_channels = kmem_alloc(
 	    sizeof(*sc->sc_channels) * sc->sc_nchannels, KM_SLEEP);
-	if (sc->sc_channels == NULL) {
-		aprint_error(": couldn't allocate channels\n");
-		return;
-	}
 
 	aprint_normal(":");
 	for (index = 0; index < sc->sc_nchannels; index++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: inbmphyreg.h,v 1.3.32.2 2016/12/05 10:55:02 skrll Exp $	*/
+/*	$NetBSD: inbmphyreg.h,v 1.3.32.3 2017/08/28 17:52:04 skrll Exp $	*/
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
 All rights reserved.
@@ -90,6 +90,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #define HV_OEM_BITS_LPLU	(1 << 2)
 #define HV_OEM_BITS_A1KDIS	(1 << 6)
 #define HV_OEM_BITS_ANEGNOW	(1 << 10)
+
+#define HV_LED_CONFIG		BME1000_REG(0, 30)
 
 #define	HV_KMRN_MODE_CTRL	BME1000_REG(BM_PORT_CTRL_PAGE, 16)
 #define	HV_KMRN_MDIO_SLOW	0x0400

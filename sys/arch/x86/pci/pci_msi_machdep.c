@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.5.2.4 2016/12/05 10:54:59 skrll Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.5.2.5 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,9 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.5.2.4 2016/12/05 10:54:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.5.2.5 2017/08/28 17:51:56 skrll Exp $");
 
 #include "opt_intrdebug.h"
+#include "ioapic.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.5.2.4 2016/12/05 10:54:59 skrl
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
 
 #include <dev/pci/pcivar.h>
 
@@ -99,11 +99,6 @@ pci_msi_alloc_vectors(struct pic *msi_pic, uint *table_indexes, int *count)
 	char intrstr_buf[INTRIDBUF];
 
 	vectors = kmem_zalloc(sizeof(vectors[0]) * (*count), KM_SLEEP);
-	if (vectors == NULL) {
-		DPRINTF(("cannot allocate vectors\n"));
-		return NULL;
-	}
-
 	mutex_enter(&cpu_lock);
 	for (i = 0; i < *count; i++) {
 		u_int table_index;
@@ -161,6 +156,13 @@ pci_msi_alloc_common(pci_intr_handle_t **ihps, int *count,
 	struct pic *msi_pic;
 	pci_intr_handle_t *vectors;
 	int error, i;
+
+#if NIOAPIC > 0
+	if (nioapics == 0) {
+		DPRINTF(("no IOAPIC.\n"));
+		return ENODEV;
+	}
+#endif
 
 	if ((pa->pa_flags & PCI_FLAGS_MSI_OKAY) == 0) {
 		DPRINTF(("PCI host bridge does not support MSI.\n"));
@@ -243,6 +245,13 @@ pci_msix_alloc_common(pci_intr_handle_t **ihps, u_int *table_indexes,
 	struct pic *msix_pic;
 	pci_intr_handle_t *vectors;
 	int error, i;
+
+#if NIOAPIC > 0
+	if (nioapics == 0) {
+		DPRINTF(("no IOAPIC.\n"));
+		return ENODEV;
+	}
+#endif
 
 	if ((pa->pa_flags & PCI_FLAGS_MSIX_OKAY) == 0) {
 		DPRINTF(("PCI host bridge does not support MSI-X.\n"));

@@ -1,3 +1,5 @@
+/*	$NetBSD: fdt_strerror.c,v 1.1.1.1.2.3 2017/08/28 17:52:34 skrll Exp $	*/
+
 /*
  * libfdt - Flat Device Tree manipulation
  * Copyright (C) 2006 David Gibson, IBM Corporation.
@@ -69,6 +71,7 @@ static struct fdt_errtabent fdt_errtable[] = {
 
 	FDT_ERRTABENT(FDT_ERR_BADOFFSET),
 	FDT_ERRTABENT(FDT_ERR_BADPATH),
+	FDT_ERRTABENT(FDT_ERR_BADPHANDLE),
 	FDT_ERRTABENT(FDT_ERR_BADSTATE),
 
 	FDT_ERRTABENT(FDT_ERR_TRUNCATED),
@@ -76,6 +79,11 @@ static struct fdt_errtabent fdt_errtable[] = {
 	FDT_ERRTABENT(FDT_ERR_BADVERSION),
 	FDT_ERRTABENT(FDT_ERR_BADSTRUCTURE),
 	FDT_ERRTABENT(FDT_ERR_BADLAYOUT),
+	FDT_ERRTABENT(FDT_ERR_INTERNAL),
+	FDT_ERRTABENT(FDT_ERR_BADNCELLS),
+	FDT_ERRTABENT(FDT_ERR_BADVALUE),
+	FDT_ERRTABENT(FDT_ERR_BADOVERLAY),
+	FDT_ERRTABENT(FDT_ERR_NOPHANDLES),
 };
 #define FDT_ERRTABSIZE	(sizeof(fdt_errtable) / sizeof(fdt_errtable[0]))
 

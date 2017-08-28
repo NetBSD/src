@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21.4.1 2016/07/09 20:24:58 skrll Exp $
+#	$NetBSD: Makefile,v 1.21.4.2 2017/08/28 17:51:55 skrll Exp $
 
 NOMAN=		# defined
 
@@ -27,12 +27,8 @@ COMMONDIR=	$M/stand/common
 LIBIOCS=	$M/stand/libiocs
 SRCS=	boot_ustar.S
 
-SRCS+=		vers.c
-CLEANFILES+=	vers.c
-vers.c:	${VERSIONFILE}
-	${_MKTARGET_CREATE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh \
-	    ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+
+.include "${S}/conf/newvers_stand.mk"
 
 CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"
 CPPFLAGS+= -DBOOT_MAXSIZE="$(BOOT_MAXSIZE)"

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_readinode.c,v 1.9 2014/09/01 16:31:17 he Exp $	*/
+/*	$NetBSD: chfs_readinode.c,v 1.9.2.1 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -158,10 +158,6 @@ chfs_check_td_data(struct chfs_mount *chmp,
 
 	/* Read data. */
 	buf = kmem_alloc(len, KM_SLEEP);
-	if (!buf) {
-		dbg("allocating error\n");
-		return 2;
-	}
 	err = chfs_read_leb(chmp, nref->nref_lnr, buf, ofs, len, &retlen);
 	if (err) {
 		dbg("error while reading: %d\n", err);
@@ -799,13 +795,7 @@ chfs_get_data_nodes(struct chfs_mount *chmp,
 
 	len = sizeof(struct chfs_flash_data_node);
 	buf = kmem_alloc(len, KM_SLEEP);
-
 	dnode = kmem_alloc(len, KM_SLEEP);
-	if (!dnode) {
-		kmem_free(buf, len);
-		return ENOMEM;
-	}
-
 	nref = chfs_first_valid_data_ref(ip->chvc->dnode);
 
 	/* Update highest version. */
@@ -1077,8 +1067,6 @@ chfs_read_inode_internal(struct chfs_mount *chmp, struct chfs_inode *ip)
 	}
 
 	buf = kmem_alloc(len, KM_SLEEP);
-	if (!buf)
-		return ENOMEM;
 
 	/* Set inode size from its vnode information node. */
 	err = chfs_read_leb(chmp, ip->chvc->v->nref_lnr, buf, CHFS_GET_OFS(ip->chvc->v->nref_offset), len, &retlen);

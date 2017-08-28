@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.18 2011/04/04 20:37:55 dyoung Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.18.32.1 2017/08/28 17:51:57 skrll Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -60,7 +60,7 @@
 /*
  * Types provided to machine-independent PCI code
  */
-typedef struct xen_intr_handle pci_intr_handle_t;
+typedef intr_handle_t pci_intr_handle_t;
 
 #include <x86/pci_machdep_common.h>
 

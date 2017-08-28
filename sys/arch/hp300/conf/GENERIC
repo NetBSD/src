@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.190.2.2 2017/02/05 13:40:11 skrll Exp $
+# $NetBSD: GENERIC,v 1.190.2.3 2017/08/28 17:51:38 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.190.2.2 $"
+#ident 		"GENERIC-$Revision: 1.190.2.3 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -92,7 +92,6 @@ options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Binary compatibility.
 options 	COMPAT_AOUT_M68K	# NetBSD/m68k a.out binary compatibility

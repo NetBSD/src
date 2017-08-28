@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VTC100,v 1.1.2.4 2016/12/05 10:54:52 skrll Exp $
+#	$NetBSD: VTC100,v 1.1.2.5 2017/08/28 17:51:34 skrll Exp $
 #
 #	VTC100 -- NEXCOM VTC100 Kernel
 #
@@ -50,6 +50,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support
@@ -99,7 +100,6 @@ options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
@@ -133,7 +133,6 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
-#options 	KDTRACE_HOOKS	# kernel DTrace hooks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

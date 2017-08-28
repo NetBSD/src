@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pmc.c,v 1.2.2.4 2015/12/27 12:09:31 skrll Exp $ */
+/* $NetBSD: tegra_pmc.c,v 1.2.2.5 2017/08/28 17:51:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.2.2.4 2015/12/27 12:09:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.2.2.5 2017/08/28 17:51:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,7 +59,11 @@ CFATTACH_DECL_NEW(tegra_pmc, sizeof(struct tegra_pmc_softc),
 static int
 tegra_pmc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,tegra124-pmc", NULL };
+	const char * const compatible[] = {
+		"nvidia,tegra210-pmc",
+		"nvidia,tegra124-pmc",
+		NULL
+	};
 	struct fdt_attach_args * const faa = aux;
 
 	return of_match_compatible(faa->faa_phandle, compatible);
@@ -165,10 +169,10 @@ tegra_pmc_remove_clamping(u_int partid)
 
 	tegra_pmc_get_bs(&bst, &bsh);
 
-	if (tegra_chip_id() == CHIP_ID_TEGRA124) {
+	if (partid == PMC_PARTID_TD) {
 		/*
-		 * On Tegra124 the GPU power clamping is controlled by a
-		 * separate register
+		 * On Tegra124 and later, the GPU power clamping is
+		 * controlled by a separate register
 		 */
 		bus_space_write_4(bst, bsh, PMC_GPU_RG_CNTRL_REG, 0);
 		return;

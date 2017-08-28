@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24.14.1 2015/12/27 12:09:28 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24.14.2 2017/08/28 17:51:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24.14.1 2015/12/27 12:09:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24.14.2 2017/08/28 17:51:27 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_intrdebug.h"
@@ -91,9 +91,9 @@ cpu_configure(void)
 #if NBIOS32 > 0
 	bios32_init();
 	platform_init();
+	/* identify hypervisor type from SMBIOS */
+	identify_hypervisor();
 #endif
-
-	x86_64_proc0_tss_ldt_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");

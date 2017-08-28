@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.191.4.6 2017/02/05 13:41:01 skrll Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.191.4.7 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -121,16 +121,61 @@
 #define UVM_ADV_MASK	0x7	/* mask */
 
 /* bits 0xffff0000: mapping flags */
-#define UVM_FLAG_FIXED   0x010000 /* find space */
-#define UVM_FLAG_OVERLAY 0x020000 /* establish overlay */
-#define UVM_FLAG_NOMERGE 0x040000 /* don't merge map entries */
-#define UVM_FLAG_COPYONW 0x080000 /* set copy_on_write flag */
-#define UVM_FLAG_AMAPPAD 0x100000 /* for bss: pad amap to reduce allocations */
-#define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
-#define UVM_FLAG_NOWAIT  0x400000 /* not allowed to sleep */
-#define UVM_FLAG_WAITVA  0x800000 /* wait for va */
-#define UVM_FLAG_VAONLY  0x2000000 /* unmap: no pages are mapped */
-#define UVM_FLAG_COLORMATCH 0x4000000 /* match color given in off */
+#define UVM_FLAG_FIXED		0x00010000 /* find space */
+#define UVM_FLAG_OVERLAY	0x00020000 /* establish overlay */
+#define UVM_FLAG_NOMERGE	0x00040000 /* don't merge map entries */
+#define UVM_FLAG_COPYONW	0x00080000 /* set copy_on_write flag */
+#define UVM_FLAG_AMAPPAD	0x00100000 /* for bss: pad amap */
+#define UVM_FLAG_TRYLOCK	0x00200000 /* fail if we can not lock map */
+#define UVM_FLAG_NOWAIT		0x00400000 /* not allowed to sleep */
+#define UVM_FLAG_WAITVA		0x00800000 /* wait for va */
+#define UVM_FLAG_VAONLY		0x02000000 /* unmap: no pages are mapped */
+#define UVM_FLAG_COLORMATCH	0x04000000 /* match color given in off */
+#define UVM_FLAG_UNMAP		0x08000000 /* unmap existing entries */
+
+#define UVM_FLAG_BITS "\177\020\
+F\0\3\
+:\0PROT=NONE\0\
+:\1PROT=R\0\
+:\2PROT=W\0\
+:\3PROT=RW\0\
+:\4PROT=X\0\
+:\5PROT=RX\0\
+:\6PROT=WX\0\
+:\7PROT=RWX\0\
+F\4\2\
+:\0INH=SHARE\0\
+:\1INH=COPY\0\
+:\2INH=NONE\0\
+:\3INH=DONATE\0\
+F\10\3\
+:\0MAXPROT=NONE\0\
+:\1MAXPROT=R\0\
+:\2MAXPROT=W\0\
+:\3MAXPROT=RW\0\
+:\4MAXPROT=X\0\
+:\5MAXPROT=RX\0\
+:\6MAXPROT=WX\0\
+:\7MAXPROT=RWX\0\
+F\14\3\
+:\0ADV=NORMAL\0\
+:\1ADV=RANDOM\0\
+:\2ADV=SEQUENTIAL\0\
+:\3ADV=WILLNEED\0\
+:\4ADV=DONTNEED\0\
+:\5ADV=NOREUSE\0\
+b\20FIXED\0\
+b\21OVERLAY\0\
+b\22NOMERGE\0\
+b\23COPYONW\0\
+b\24AMAPPAD\0\
+b\25TRYLOCK\0\
+b\26NOWAIT\0\
+b\27WAITVA\0\
+b\30VAONLY\0\
+b\31COLORMATCH\0\
+b\32UNMAP\0\
+"
 
 /* macros to extract info */
 #define UVM_PROTECTION(X)	((X) & UVM_PROT_MASK)
@@ -662,6 +707,8 @@ bool			uvm_map_checkprot(struct vm_map *, vaddr_t,
 			    vaddr_t, vm_prot_t);
 int			uvm_map_protect(struct vm_map *, vaddr_t,
 			    vaddr_t, vm_prot_t, bool);
+int			uvm_map_protect_user(struct lwp *, vaddr_t, vaddr_t,
+			    vm_prot_t);
 struct vmspace		*uvmspace_alloc(vaddr_t, vaddr_t, bool);
 void			uvmspace_init(struct vmspace *, struct pmap *,
 			    vaddr_t, vaddr_t, bool);

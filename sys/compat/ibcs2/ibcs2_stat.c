@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.48 2014/09/05 09:21:54 matt Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.48.2.1 2017/08/28 17:51:58 skrll Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.48 2014/09/05 09:21:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.48.2.1 2017/08/28 17:51:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,11 +147,13 @@ ibcs2_sys_statfs(struct lwp *l, const struct ibcs2_sys_statfs_args *uap, registe
 		return (error);
 	mp = vp->v_mount;
 	sp = &mp->mnt_stat;
-	vrele(vp);
 	if ((error = VFS_STATVFS(mp, sp)) != 0)
-		return (error);
+		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
-	return cvt_statfs(sp, (void *)SCARG(uap, buf), SCARG(uap, len));
+	error = cvt_statfs(sp, (void *)SCARG(uap, buf), SCARG(uap, len));
+out:
+	vrele(vp);
+	return (error);
 }
 
 int
@@ -200,12 +202,14 @@ ibcs2_sys_statvfs(struct lwp *l, const struct ibcs2_sys_statvfs_args *uap, regis
 		return (error);
 	mp = vp->v_mount;
 	sp = &mp->mnt_stat;
-	vrele(vp);
 	if ((error = VFS_STATVFS(mp, sp)) != 0)
-		return (error);
+		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
-	return cvt_statvfs(sp, (void *)SCARG(uap, buf),
-			   sizeof(struct ibcs2_statvfs));
+	error = cvt_statvfs(sp, (void *)SCARG(uap, buf),
+	    sizeof(struct ibcs2_statvfs));
+out:
+	vrele(vp);
+	return error;
 }
 
 int

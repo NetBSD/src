@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlanvar.h,v 1.9 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: if_vlanvar.h,v 1.9.64.1 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -86,6 +86,37 @@ struct vlanreq {
 #ifdef _KERNEL
 void	vlan_input(struct ifnet *, struct mbuf *);
 void	vlan_ifdetach(struct ifnet *);
+
+/*
+ * Locking notes:
+ * + ifv_list.list is protected by ifv_list.lock (an adaptive mutex)
+ *     ifv_list.list is list of all ifvlans, and it is used to avoid
+ *     unload while busy.
+ * + ifv_hash.lists is protected by
+ *   - ifv_hash.lock (an adaptive mutex) for writer
+ *   - pserialize for reader
+ *     ifv_hash.lists is hashed list of all configured
+ *     vlan interface, and it is used to avoid unload while busy.
+ * + ifvlan->ifv_linkmib is protected by
+ *   - ifvlan->ifv_lock (an adaptive mutex) for writer
+ *   - ifv_linkmib->ifvm_psref for reader
+ *     ifvlan->ifv_linkmib is used for variant values while tagging
+ *     and untagging
+ *
+ * Locking order:
+ *     - ifv_list.lock => struct ifvlan->ifv_lock
+ *     - struct ifvlan->ifv_lock => ifv_hash.lock
+ * Other mutexes must not hold simultaneously
+ *
+ *   NOTICE
+ *     - ifvlan must not have a variant value while tagging and
+ *       untagging. Such variant values must be in ifvlan->ifv_mib
+ *     - ifvlan->ifv_mib is modified like read-copy-update.
+ *       So, once we dereference ifvlan->ifv_mib,
+ *       we must keep the pointer during the same context. If we
+ *       re-dereference ifvlan->ifv_mib, the ifv_mib may be other
+ *       one because of concurrent writer processing.
+ */
 #endif	/* _KERNEL */
 
 #endif	/* !_NET_IF_VLANVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.72.14.1 2016/05/29 08:44:40 skrll Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.72.14.2 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -237,6 +237,13 @@ struct vm_map {
 #define	VM_MAP_DYING		0x20		/* rw: map is being destroyed */
 #define	VM_MAP_TOPDOWN		0x40		/* ro: arrange map top-down */
 #define	VM_MAP_WANTVA		0x100		/* rw: want va */
+
+#define VM_MAP_BITS	"\177\020\
+b\0PAGEABLE\0\
+b\2WIREFUTURE\0\
+b\5DYING\0\
+b\6TOPDOWN\0\
+b\10WANTVA\0"
 
 #ifdef _KERNEL
 struct uvm_map_args {

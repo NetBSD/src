@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.308.6.3 2016/07/09 20:25:20 skrll Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.308.6.4 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.308.6.3 2016/07/09 20:25:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.308.6.4 2017/08/28 17:53:07 skrll Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -1208,11 +1208,11 @@ sched_pstats(void)
 		if (__predict_false(runtm >= rlim->rlim_cur)) {
 			if (runtm >= rlim->rlim_max) {
 				sig = SIGKILL;
-				log(LOG_NOTICE, "pid %d is killed: %s\n",
-					p->p_pid, "exceeded RLIMIT_CPU");
+				log(LOG_NOTICE,
+				    "pid %d, command %s, is killed: %s\n",
+				    p->p_pid, p->p_comm, "exceeded RLIMIT_CPU");
 				uprintf("pid %d, command %s, is killed: %s\n",
-					p->p_pid, p->p_comm,
-					"exceeded RLIMIT_CPU");
+				    p->p_pid, p->p_comm, "exceeded RLIMIT_CPU");
 			} else {
 				sig = SIGXCPU;
 				if (rlim->rlim_cur < rlim->rlim_max)

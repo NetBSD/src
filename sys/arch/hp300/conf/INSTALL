@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.60 2014/08/23 20:26:58 dholland Exp $
+# $NetBSD: INSTALL,v 1.60.2.1 2017/08/28 17:51:38 skrll Exp $
 #
 # INSTALL machine description file
 #
@@ -58,7 +58,6 @@ maxusers	32
 #options 	COMPAT_50	# NetBSD 5.0,
 #options 	COMPAT_60	# NetBSD 6.0, and
 #options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SYSVSHM		# System V-style shared memory
 #options 	SYSVSEM		# System V-style semaphores

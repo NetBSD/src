@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.18.2.3 2015/09/22 12:05:37 skrll Exp $	*/
+/*	$NetBSD: locore.h,v 1.18.2.4 2017/08/28 17:51:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -181,6 +181,7 @@ extern int cpu_processor_features[2];
 extern int cpu_media_and_vfp_features[2];
 
 extern bool arm_has_tlbiasid_p;
+extern bool arm_has_mpext_p;
 #ifdef MULTIPROCESSOR
 extern u_int arm_cpu_max;
 extern volatile u_int arm_cpu_hatched;
@@ -310,11 +311,11 @@ void	ucas_ras_check(trapframe_t *);
 
 /* vfp_init.c */
 void	vfp_attach(struct cpu_info *);
-void	vfp_discardcontext(bool);
-void	vfp_savecontext(void);
+void	vfp_discardcontext(lwp_t *, bool);
+void	vfp_savecontext(lwp_t *);
 void	vfp_kernel_acquire(void);
 void	vfp_kernel_release(void);
-bool	vfp_used_p(void);
+bool	vfp_used_p(const lwp_t *);
 extern const pcu_ops_t arm_vfp_ops;
 
 #endif	/* !_LOCORE */

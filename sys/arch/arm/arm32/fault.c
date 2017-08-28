@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.102.2.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.102.2.2 2017/08/28 17:51:29 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.102.2.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.102.2.2 2017/08/28 17:51:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,9 +310,8 @@ data_abort_handler(trapframe_t *tf)
 		return;
 	}
 
-	if (user) {
-		lwp_settrapframe(l, tf);
-	}
+	KASSERTMSG(!user || tf == lwp_trapframe(l), "tf %p vs %p", tf,
+	    lwp_trapframe(l));
 
 	/*
 	 * Make sure the Program Counter is sane. We could fall foul of
@@ -624,7 +623,7 @@ dab_align(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l, ksiginfo_t *ksi)
 	ksi->ksi_addr = (uint32_t *)(intptr_t)far;
 	ksi->ksi_trap = fsr;
 
-	lwp_settrapframe(l, tf);
+	KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf, lwp_trapframe(l));
 
 	return (1);
 }
@@ -731,7 +730,7 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l,
 	ksi->ksi_addr = (uint32_t *)(intptr_t)far;
 	ksi->ksi_trap = fsr;
 
-	lwp_settrapframe(l, tf);
+	KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf, lwp_trapframe(l));
 
 	return (1);
 }
@@ -834,7 +833,8 @@ prefetch_abort_handler(trapframe_t *tf)
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLOPC;
 		ksi.ksi_addr = (uint32_t *)(intptr_t) tf->tf_pc;
-		lwp_settrapframe(l, tf);
+		KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf,
+		    lwp_trapframe(l));
 		goto do_trapsignal;
 	default:
 		break;
@@ -846,7 +846,7 @@ prefetch_abort_handler(trapframe_t *tf)
 
 	/* Get fault address */
 	fault_pc = tf->tf_pc;
-	lwp_settrapframe(l, tf);
+	KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf, lwp_trapframe(l));
 	UVMHIST_LOG(maphist, " (pc=0x%x, l=0x%x, tf=0x%x)",
 	    fault_pc, l, tf, 0);
 

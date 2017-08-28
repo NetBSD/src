@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.6.16.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.6.16.2 2017/08/28 17:51:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -54,6 +54,8 @@ struct boot_physmem {
 };
 
 int get_bootconf_option(char *, const char *, int, void *);
+bool match_bootconf_option(char *, const char *, const char *);
+char *get_bootconf_string(char *, const char *);
 
 extern char *boot_args;
 #endif	/* _KERNEL */

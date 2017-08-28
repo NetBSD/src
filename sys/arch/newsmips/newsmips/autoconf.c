@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38 2014/03/24 20:05:20 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38.6.1 2017/08/28 17:51:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38 2014/03/24 20:05:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38.6.1 2017/08/28 17:51:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ static void findroot(void);
 /*
  * Determine mass storage and memory configuration for a machine.
  * Print CPU type, and then iterate over an array of devices
- * found on the baseboard or in turbochannel option slots.
+ * found on the baseboard or in TURBOchannel option slots.
  * Once devices are configured, enable interrupts, and probe
  * for attached scsi devices.
  */

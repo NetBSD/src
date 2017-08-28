@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.45.2.1 2015/06/06 14:40:22 skrll Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.45.2.2 2017/08/28 17:53:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.45.2.1 2015/06/06 14:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.45.2.2 2017/08/28 17:53:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.45.2.1 2015/06/06 14:40:22 skrll 
 #include <sys/module.h>
 
 #include <miscfs/specfs/specdev.h>
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
 
@@ -126,7 +127,7 @@ layerfs_start(struct mount *mp, int flags)
 {
 
 #ifdef notyet
-	return VFS_START(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, flags);
+	return VFS_START(mp->mnt_lower, flags);
 #else
 	return 0;
 #endif
@@ -155,7 +156,7 @@ int
 layerfs_quotactl(struct mount *mp, struct quotactl_args *args)
 {
 
-	return VFS_QUOTACTL(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, args);
+	return VFS_QUOTACTL(mp->mnt_lower, args);
 }
 
 int
@@ -165,10 +166,7 @@ layerfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	int error;
 
 	sbuf = kmem_zalloc(sizeof(*sbuf), KM_SLEEP);
-	if (sbuf == NULL) {
-		return ENOMEM;
-	}
-	error = VFS_STATVFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, sbuf);
+	error = VFS_STATVFS(mp->mnt_lower, sbuf);
 	if (error) {
 		goto done;
 	}
@@ -215,8 +213,6 @@ layerfs_loadvnode(struct mount *mp, struct vnode *vp,
 	memcpy(&lowervp, key, key_len);
 
 	xp = kmem_alloc(lmp->layerm_size, KM_SLEEP);
-	if (xp == NULL)
-		return ENOMEM;
 
 	/* Share the interlock with the lower node. */
 	mutex_obj_hold(lowervp->v_interlock);
@@ -245,7 +241,7 @@ layerfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	struct vnode *vp;
 	int error;
 
-	error = VFS_VGET(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, ino, &vp);
+	error = VFS_VGET(mp->mnt_lower, ino, &vp);
 	if (error) {
 		*vpp = NULL;
 		return error;
@@ -272,7 +268,7 @@ layerfs_fhtovp(struct mount *mp, struct fid *fidp, struct vnode **vpp)
 	struct vnode *vp;
 	int error;
 
-	error = VFS_FHTOVP(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, fidp, &vp);
+	error = VFS_FHTOVP(mp->mnt_lower, fidp, &vp);
 	if (error) {
 		*vpp = NULL;
 		return error;
@@ -321,6 +317,23 @@ layerfs_snapshot(struct mount *mp, struct vnode *vp,
 	return EOPNOTSUPP;
 }
 
+/*
+ * layerfs_suspendctl - suspend a layered file system
+ *
+ * Here we should suspend the lower file system(s) too.  At present
+ * this will deadlock as we don't know which to suspend first.
+ *
+ * This routine serves as a central resource for this behavior; all
+ * layered file systems don't need to worry about the above. Also, if
+ * things get fixed, all layers get the benefit.
+ */
+int
+layerfs_suspendctl(struct mount *mp, int cmd)
+{
+
+	return genfs_suspendctl(mp, cmd);
+}
+
 SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")
 {
 	const struct sysctlnode *layerfs_node = NULL;
@@ -360,12 +373,12 @@ int
 layerfs_renamelock_enter(struct mount *mp)
 {
 
-	return VFS_RENAMELOCK_ENTER(MOUNTTOLAYERMOUNT(mp)->layerm_vfs);
+	return VFS_RENAMELOCK_ENTER(mp->mnt_lower);
 }
 
 void
 layerfs_renamelock_exit(struct mount *mp)
 {
 
-	VFS_RENAMELOCK_EXIT(MOUNTTOLAYERMOUNT(mp)->layerm_vfs);
+	VFS_RENAMELOCK_EXIT(mp->mnt_lower);
 }

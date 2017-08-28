@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.h,v 1.17.6.1 2017/02/05 13:40:25 skrll Exp $	*/
+/*	$NetBSD: linux_socketcall.h,v 1.17.6.2 2017/08/28 17:51:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -241,22 +241,6 @@ struct linux_sys_recv_args {
 	syscallarg(void *) buf;
 	syscallarg(int) len;
 	syscallarg(int) flags;
-};
-#endif
-
-/* These are only used for their size: */
-
-#ifndef LINUX_SYS_listen
-struct linux_sys_listen_args {
-	syscallarg(int) s;
-	syscallarg(int) backlog;
-};
-#endif
-
-#ifndef LINUX_SYS_shutdown
-struct linux_sys_shutdown_args {
-	syscallarg(int) s;
-	syscallarg(int) how;
 };
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmpagemd.h,v 1.2.6.1 2016/10/05 20:56:12 skrll Exp $	*/
+/*	$NetBSD: vmpagemd.h,v 1.2.6.2 2017/08/28 17:53:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,8 +35,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMON_PMAP_TLB_VMPAGEMD_H_
-#define _COMMON_PMAP_TLB_VMPAGEMD_H_
+#ifndef _UVM_PMAP_VMPAGEMD_H_
+#define _UVM_PMAP_VMPAGEMD_H_
 
 #ifdef _LOCORE
 #error use assym.h instead
@@ -60,17 +60,17 @@ typedef struct pv_entry {
 	struct pv_entry *pv_next;
 	struct pmap *pv_pmap;
 	vaddr_t pv_va;
-#define	PV_KENTER		0x0001
+#define	PV_KENTER		__BIT(0)
 } *pv_entry_t;
 
 #ifndef _MODULE
 
-#define	VM_PAGEMD_REFERENCED	0x0001	/* page has been recently referenced */
-#define	VM_PAGEMD_MODIFIED	0x0002	/* page has been modified */
-#define	VM_PAGEMD_POOLPAGE	0x0004	/* page is used as a poolpage */
-#define	VM_PAGEMD_EXECPAGE	0x0008	/* page is exec mapped */
+#define	VM_PAGEMD_REFERENCED	__BIT(0)	/* page has been referenced */
+#define	VM_PAGEMD_MODIFIED	__BIT(1)	/* page has been modified */
+#define	VM_PAGEMD_POOLPAGE	__BIT(2)	/* page is used as a poolpage */
+#define	VM_PAGEMD_EXECPAGE	__BIT(3)	/* page is exec mapped */
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
-#define	VM_PAGEMD_UNCACHED	0x0010	/* page is mapped uncached */
+#define	VM_PAGEMD_UNCACHED	__BIT(4)	/* page is mapped uncached */
 #endif
 
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
@@ -86,9 +86,9 @@ typedef struct pv_entry {
 
 struct vm_page_md {
 	volatile unsigned long mdpg_attrs;	/* page attributes */
-	struct pv_entry mdpg_first;	/* pv_entry first */
+	struct pv_entry mdpg_first;		/* pv_entry first */
 #if defined(MULTIPROCESSOR) || defined(MODULAR) || defined(_MODULE)
-	kmutex_t *mdpg_lock;		/* pv list lock */
+	kmutex_t *mdpg_lock;			/* pv list lock */
 #endif
 };
 
@@ -158,4 +158,4 @@ do {									\
 
 #endif /* _MODULE */
 
-#endif /* __COMMON_PMAP_TLB_VMPAGEMD_H_ */
+#endif /* _UVM_PMAP_VMPAGEMD_H_ */

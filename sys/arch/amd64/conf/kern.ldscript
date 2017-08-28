@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.8.2.3 2016/05/29 08:44:15 skrll Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.8.2.4 2017/08/28 17:51:28 skrll Exp $	*/
 
 #include "assym.h"
 
@@ -13,12 +13,13 @@ __LARGE_PAGE_SIZE = 0x200000 ;
 ENTRY(_start)
 SECTIONS
 {
-	.text :
+	.text : AT (ADDR(.text) & 0x0fffffff)
 	{
 		*(.text)
 		*(.text.*)
 		*(.stub)
-	}
+		. = ALIGN(__LARGE_PAGE_SIZE);
+	} =0xCC
 	_etext = . ;
 	PROVIDE (etext = .) ;
 
@@ -35,7 +36,7 @@ SECTIONS
 		*(.rodata.*)
 	}
 
-	. = ALIGN(__PAGE_SIZE);
+	. = ALIGN(__LARGE_PAGE_SIZE);
 
 	__data_start = . ;
 	.data :
@@ -63,7 +64,7 @@ SECTIONS
 		*(.bss)
 		*(.bss.*)
 		*(COMMON)
-		. = ALIGN(64 / 8);
+		. = ALIGN(__LARGE_PAGE_SIZE);
 	}
 
 	. = ALIGN(__PAGE_SIZE);
@@ -79,11 +80,3 @@ SECTIONS
 	}
 }
 
-SECTIONS
-{
-	.text :
-	AT (ADDR(.text) & 0x0fffffff)
-	{
-		*(.text)
-	} = 0
-}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.95.2.1 2015/04/06 15:18:20 skrll Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.95.2.2 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.95.2.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.95.2.2 2017/08/28 17:53:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -228,7 +228,7 @@ sockaddr_const_addr(const struct sockaddr *sa, socklen_t *slenp)
 }
 
 const struct sockaddr *
-sockaddr_any_by_family(int family)
+sockaddr_any_by_family(sa_family_t family)
 {
 	const struct domain *dom;
 
@@ -255,42 +255,44 @@ sockaddr_anyaddr(const struct sockaddr *sa, socklen_t *slenp)
 	return sockaddr_const_addr(any, slenp);
 }
 
+socklen_t
+sockaddr_getsize_by_family(sa_family_t af)
+{
+	switch (af) {
+	case AF_INET:
+		return sizeof(struct sockaddr_in);
+	case AF_INET6:
+		return sizeof(struct sockaddr_in6);
+	case AF_UNIX:
+		return sizeof(struct sockaddr_un);
+	case AF_LINK:
+		return sizeof(struct sockaddr_dl);
+	case AF_APPLETALK:
+		return sizeof(struct sockaddr_at);
+	default:
+#ifdef DIAGNOSTIC
+		printf("%s: Unhandled address family=%hhu\n", __func__, af);
+#endif
+		return 0;
+	}
+}
+
 #ifdef DIAGNOSTIC
 static void
 sockaddr_checklen(const struct sockaddr *sa)
 {
-	socklen_t len = 0;
-	switch (sa->sa_family) {
-	case AF_INET:
-		len = sizeof(struct sockaddr_in);
-		break;
-	case AF_INET6:
-		len = sizeof(struct sockaddr_in6);
-		break;
-	case AF_UNIX:
-		len = sizeof(struct sockaddr_un);
-		break;
-	case AF_LINK:
-		len = sizeof(struct sockaddr_dl);
-		// As long as it is not 0...
-		if (sa->sa_len != 0)
-			return;
-		break;
-	case AF_APPLETALK:
-		len = sizeof(struct sockaddr_at);
-		break;
-	default:
-		printf("%s: Unhandled af=%hhu socklen=%hhu\n", __func__,
-		    sa->sa_family, sa->sa_len);
+	// Can't tell how much was allocated, if it was allocated.
+	if (sa->sa_family == AF_LINK)
 		return;
-	}
-	if (len != sa->sa_len) {
-		char buf[512];
-		sockaddr_format(sa, buf, sizeof(buf));
-		printf("%s: %p bad len af=%hhu socklen=%hhu len=%u [%s]\n",
-		    __func__, sa, sa->sa_family, sa->sa_len,
-		    (unsigned)len, buf);
-	}
+
+	socklen_t len = sockaddr_getsize_by_family(sa->sa_family);
+	if (len == 0 || len == sa->sa_len)
+		return;
+
+	char buf[512];
+	sockaddr_format(sa, buf, sizeof(buf));
+	printf("%s: %p bad len af=%hhu socklen=%hhu len=%u [%s]\n",
+	    __func__, sa, sa->sa_family, sa->sa_len, (unsigned)len, buf);
 }
 #else
 #define sockaddr_checklen(sa) ((void)0)

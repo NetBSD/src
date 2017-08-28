@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnreg.h,v 1.15 2014/11/09 14:40:54 nonaka Exp $	*/
+/*	$NetBSD: if_iwnreg.h,v 1.15.2.1 2017/08/28 17:52:05 skrll Exp $	*/
 /*	$OpenBSD: if_iwnreg.h,v 1.49 2014/09/09 18:56:24 sthen Exp $	*/
 
 /*-
@@ -440,6 +440,7 @@ struct iwn_tx_cmd {
 #define IWN_CMD_TXPOWER_DBM		149
 #define IWN_CMD_TXPOWER			151
 #define IWN5000_CMD_TX_ANT_CONFIG	152
+#define IWN_CMD_TXPOWER_DBM_V1		152
 #define IWN_CMD_BT_COEX			155
 #define IWN_CMD_GET_STATISTICS		156
 #define IWN_CMD_SET_CRITICAL_TEMP	164
@@ -1594,7 +1595,17 @@ struct iwn_eeprom_chan {
 } __packed;
 
 struct iwn_eeprom_enhinfo {
-	uint16_t	chan;
+	uint8_t		flags;
+#define IWN_ENHINFO_VALID       (1 << 0)
+#define IWN_ENHINFO_5GHZ        (1 << 1)
+#define IWN_ENHINFO_OFDM        (1 << 2)
+#define IWN_ENHINFO_HT40        (1 << 3)
+#define IWN_ENHINFO_HTAP        (1 << 4)
+#define IWN_ENHINFO_RES1        (1 << 5)
+#define IWN_ENHINFO_RES2        (1 << 6)
+#define IWN_ENHINFO_COMMON      (1 << 7)
+
+	uint8_t		chan;
 	int8_t		chain[3];	/* max power in half-dBm */
 	uint8_t		reserved;
 	int8_t		mimo2;		/* max power in half-dBm */
@@ -1813,6 +1824,7 @@ struct iwn_sensitivity_limits {
 	uint32_t	min_energy_cck;
 	uint32_t	energy_cck;
 	uint32_t	energy_ofdm;
+	uint32_t	barker_mrc;
 };
 
 /*
@@ -1827,7 +1839,8 @@ static const struct iwn_sensitivity_limits iwn4965_sensitivity_limits = {
 	200, 400,
 	 97,
 	100,
-	100
+	100,
+	390
 };
 
 static const struct iwn_sensitivity_limits iwn5000_sensitivity_limits = {
@@ -1839,7 +1852,8 @@ static const struct iwn_sensitivity_limits iwn5000_sensitivity_limits = {
 	170, 400,
 	 95,
 	 95,
-	 95
+	 95,
+	390
 };
 
 static const struct iwn_sensitivity_limits iwn5150_sensitivity_limits = {
@@ -1851,7 +1865,8 @@ static const struct iwn_sensitivity_limits iwn5150_sensitivity_limits = {
 	170, 400,
 	 95,
 	 95,
-	 95
+	 95,
+	390
 };
 
 static const struct iwn_sensitivity_limits iwn1000_sensitivity_limits = {
@@ -1863,7 +1878,8 @@ static const struct iwn_sensitivity_limits iwn1000_sensitivity_limits = {
 	170, 400,
 	 95,
 	 95,
-	 95
+	 95,
+	390
 };
 
 static const struct iwn_sensitivity_limits iwn6000_sensitivity_limits = {
@@ -1875,7 +1891,21 @@ static const struct iwn_sensitivity_limits iwn6000_sensitivity_limits = {
 	160, 310,
 	 97,
 	 97,
-	100
+	100,
+	390
+};
+
+static const struct iwn_sensitivity_limits iwn6235_sensitivity_limits = {
+	105, 110,
+	192, 232,
+	 80, 145,
+	128, 232,
+	125, 175,
+	160, 310,
+	100,
+	110,
+	110,
+	336
 };
 
 static const struct iwn_sensitivity_limits iwn2000_sensitivity_limits = {
@@ -1887,7 +1917,21 @@ static const struct iwn_sensitivity_limits iwn2000_sensitivity_limits = {
 	160, 310,
 	 97,
 	 97,
-	100
+	100,
+	336
+};
+
+static const struct iwn_sensitivity_limits iwn2030_sensitivity_limits = {
+	105,110,
+	128,232,
+	80,145,
+	128,232,
+	125,175,
+	160,310,
+	97,
+	97,
+	110,
+	390
 };
 
 /* Map TID to TX scheduler's FIFO. */
@@ -1940,7 +1984,7 @@ static const char * const iwn_fw_errmsg[] = {
 	"NMI_INTERRUPT_DATA_ACTION_PT",
 	"NMI_TRM_HW_ER",
 	"NMI_INTERRUPT_TRM",
-	"NMI_INTERRUPT_BREAKPOINT"
+	"NMI_INTERRUPT_BREAKPOINT",
 	"DEBUG_0",
 	"DEBUG_1",
 	"DEBUG_2",

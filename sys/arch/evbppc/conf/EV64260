@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.64.2.1 2017/02/05 13:40:10 skrll Exp $
+#	$NetBSD: EV64260,v 1.64.2.2 2017/08/28 17:51:37 skrll Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -79,7 +79,6 @@ options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_43	# 4.3BSD binary compatibility.
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems

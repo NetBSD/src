@@ -122,24 +122,36 @@ AdInitialize (
     Status = AcpiOsInitialize ();
     if (ACPI_FAILURE (Status))
     {
+        fprintf (stderr, "Could not initialize ACPICA subsystem: %s\n",
+            AcpiFormatException (Status));
+
         return (Status);
     }
 
     Status = AcpiUtInitGlobals ();
     if (ACPI_FAILURE (Status))
     {
+        fprintf (stderr, "Could not initialize ACPICA globals: %s\n",
+            AcpiFormatException (Status));
+
         return (Status);
     }
 
     Status = AcpiUtMutexInitialize ();
     if (ACPI_FAILURE (Status))
     {
+        fprintf (stderr, "Could not initialize ACPICA mutex objects: %s\n",
+            AcpiFormatException (Status));
+
         return (Status);
     }
 
     Status = AcpiNsRootInitialize ();
     if (ACPI_FAILURE (Status))
     {
+        fprintf (stderr, "Could not initialize ACPICA namespace: %s\n",
+            AcpiFormatException (Status));
+
         return (Status);
     }
 
@@ -149,7 +161,7 @@ AdInitialize (
     AcpiGbl_RootTableList.CurrentTableCount = 0;
     AcpiGbl_RootTableList.Tables = LocalTables;
 
-    return (Status);
+    return (AE_OK);
 }
 
 
@@ -326,6 +338,21 @@ AdDisassembleOneTable (
     ACPI_OWNER_ID           OwnerId;
 
 
+#ifdef ACPI_ASL_COMPILER
+
+    /*
+     * For ASL-/ASL+ converter: replace the temporary "XXXX"
+     * table signature with the original. This "XXXX" makes
+     * it harder for the AML interpreter to run the badaml
+     * (.xxx) file produced from the converter in case if
+     * it fails to get deleted.
+     */
+    if (Gbl_CaptureComments)
+    {
+        strncpy (Table->Signature, AcpiGbl_TableSig, 4);
+    }
+#endif
+
     /* ForceAmlDisassembly means to assume the table contains valid AML */
 
     if (!AcpiGbl_ForceAmlDisassembly && !AcpiUtIsAmlTable (Table))
@@ -475,6 +502,7 @@ AdReparseOneTable (
     ACPI_OWNER_ID           OwnerId)
 {
     ACPI_STATUS             Status;
+    ACPI_COMMENT_ADDR_NODE  *AddrListHead;
 
 
     fprintf (stderr,
@@ -507,6 +535,15 @@ AdReparseOneTable (
     /* New namespace, add the external definitions first */
 
     AcpiDmAddExternalsToNamespace ();
+
+    /* For -ca option: clear the list of comment addresses. */
+
+    while (AcpiGbl_CommentAddrListHead)
+    {
+        AddrListHead= AcpiGbl_CommentAddrListHead;
+        AcpiGbl_CommentAddrListHead = AcpiGbl_CommentAddrListHead->Next;
+        AcpiOsFree(AddrListHead);
+    }
 
     /* Parse the table again. No need to reload it, however */
 

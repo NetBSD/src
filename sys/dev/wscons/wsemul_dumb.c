@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_dumb.c,v 1.15 2010/01/28 22:36:19 drochner Exp $ */
+/* $NetBSD: wsemul_dumb.c,v 1.15.40.1 2017/08/28 17:52:31 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.15 2010/01/28 22:36:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.15.40.1 2017/08/28 17:52:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ const struct wsemul_ops wsemul_dumb_ops = {
 	wsemul_dumb_resetop,
 	NULL,	/* getmsgattrs */
 	NULL,	/* setmsgattrs */
+	NULL	/* resize */
 };
 
 struct wsemul_dumb_emuldata {

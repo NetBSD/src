@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.120.4.7 2017/02/05 13:40:58 skrll Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.120.4.8 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.120.4.7 2017/02/05 13:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.120.4.8 2017/08/28 17:53:11 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -303,6 +303,7 @@ tun_clone_destroy(struct ifnet *ifp)
 		softint_disestablish(tp->tun_osih);
 		softint_disestablish(tp->tun_isih);
 		mutex_destroy(&tp->tun_lock);
+		cv_destroy(&tp->tun_cv);
 		kmem_free(tp, sizeof(*tp));
 	}
 

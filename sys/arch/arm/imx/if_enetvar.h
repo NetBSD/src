@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enetvar.h,v 1.1.2.2 2016/05/29 08:44:16 skrll Exp $	*/
+/*	$NetBSD: if_enetvar.h,v 1.1.2.3 2017/08/28 17:51:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -58,6 +58,7 @@ struct enet_softc {
 
 	int sc_unit;
 	int sc_imxtype;
+	int sc_rgmii;
 	unsigned int sc_pllclock;
 
 	/* interrupts */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mct_var.h,v 1.3.2.1 2015/12/27 12:09:32 skrll Exp $	*/
+/*	$NetBSD: mct_var.h,v 1.3.2.2 2017/08/28 17:51:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@ static struct mct_softc {
 } mct_sc;
 
 void mct_init_cpu_clock(struct cpu_info *ci);
+void mct_delay(u_int);
 
 #endif /* _ARM_SAMSUNG_MCT_VAR_H_ */
 

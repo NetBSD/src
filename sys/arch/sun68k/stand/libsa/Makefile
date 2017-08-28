@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2013/11/07 19:52:56 christos Exp $
+#	$NetBSD: Makefile,v 1.31.6.1 2017/08/28 17:51:54 skrll Exp $
 
 # Logically src/sys
 .include <bsd.own.mk>
@@ -25,7 +25,7 @@ CFLAGS+= -Wa,-m68851 -msoft-float
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 COPTS= -Os -fno-defer-pop -ffreestanding -fno-unwind-tables
 CPPFLAGS= ${DEFS} ${DEBUG} ${INCL}
-CLEANFILES= SRT0.o SRT1.o vers.c
+CLEANFILES= SRT0.o SRT1.o
 
 SRCS= SRT0.S SRT1.c
 OBJS= SRT0.o SRT1.o

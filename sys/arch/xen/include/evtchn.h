@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.22.14.1 2015/04/06 15:18:04 skrll Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.22.14.2 2017/08/28 17:51:57 skrll Exp $	*/
 
 /*
  *
@@ -53,6 +53,7 @@ extern int xen_debug_handler(void *);
 
 int bind_virq_to_evtch(int);
 int bind_pirq_to_evtch(int);
+int get_pirq_to_evtch(int);
 int unbind_pirq_from_evtch(int);
 int unbind_virq_from_evtch(int);
 

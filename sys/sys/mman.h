@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.48.4.2 2016/07/09 20:25:24 skrll Exp $	*/
+/*	$NetBSD: mman.h,v 1.48.4.3 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -64,24 +64,28 @@ typedef	__off_t		off_t;		/* file offset */
 #define	PROT_WRITE	0x02	/* pages can be written */
 #define	PROT_EXEC	0x04	/* pages can be executed */
 
+#ifdef _NETBSD_SOURCE
+/*
+ * PAX mprotect prohibits setting protection bits
+ * missing from the original mmap call unless explicitly
+ * requested with PROT_MPROTECT.
+ */
+#define        PROT_MPROTECT(x)                ((x) << 3)
+#define        PROT_MPROTECT_EXTRACT(x)        (((x) >> 3) & 0x7)
+#endif
+
 /*
  * Flags contain sharing type and options.
  * Sharing types; choose one.
  */
 #define	MAP_SHARED	0x0001	/* share changes */
 #define	MAP_PRIVATE	0x0002	/* changes are private */
-
-#ifdef _KERNEL
-/*
- * Deprecated flag; these are treated as MAP_PRIVATE internally by
- * the kernel.
- */
-#define	MAP_COPY	0x0004	/* "copy" region at mmap time */
-#endif
+	/* old MAP_COPY	0x0004	   "copy" region at mmap time */
 
 /*
  * Other flags
  */
+#define	MAP_REMAPDUP	 0x0004	/* mremap only: duplicate the mapping */
 #define	MAP_FIXED	 0x0010	/* map addr must be exactly as requested */
 #define	MAP_RENAME	 0x0020	/* Sun: rename private pages to file */
 #define	MAP_NORESERVE	 0x0040	/* Sun: don't reserve needed swap area */

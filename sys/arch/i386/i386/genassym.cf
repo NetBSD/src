@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.97.6.1 2015/09/22 12:05:44 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.97.6.2 2017/08/28 17:51:40 skrll Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,6 @@
 #
 
 if defined(_KERNEL_OPT)
-include "opt_compat_svr4.h"
 include "opt_compat_freebsd.h"
 include "opt_compat_linux.h"
 include "opt_compat_netbsd.h"
@@ -108,17 +107,13 @@ endif
 
 include <compat/sys/signal.h>
 
-ifdef COMPAT_SVR4
-include <compat/svr4/svr4_ucontext.h>
-endif
-
 ifdef COMPAT_LINUX
 include <compat/linux/common/linux_signal.h>
 include <compat/linux/common/linux_machdep.h>
 endif
 
 ifdef COMPAT_FREEBSD
-include <machine/freebsd_machdep.h>
+include <compat/freebsd/freebsd_machdep.h>
 endif
 
 if NIOAPIC > 0
@@ -230,11 +225,6 @@ define	TF_PUSHSIZE		offsetof(struct trapframe, tf_trapno)
 
 define	FRAMESIZE		sizeof(struct trapframe)
 
-ifdef COMPAT_SVR4
-define	SVR4_SIGF_HANDLER	offsetof(struct svr4_sigframe, sf_handler)
-define	SVR4_SIGF_UC		offsetof(struct svr4_sigframe, sf_uc)
-endif
-
 ifdef COMPAT_LINUX
 define	LINUX_SIGF_HANDLER	offsetof(struct linux_sigframe, sf_handler)
 define	LINUX_SIGF_SC		offsetof(struct linux_sigframe, sf_sc)
@@ -250,11 +240,7 @@ endif
 define	IH_FUN			offsetof(struct intrhand, ih_fun)
 define	IH_ARG			offsetof(struct intrhand, ih_arg)
 define	IH_LEVEL		offsetof(struct intrhand, ih_level)
-ifdef XEN
-define	IH_IPL_NEXT		offsetof(struct intrhand, ih_ipl_next)
-else
 define	IH_NEXT			offsetof(struct intrhand, ih_next)
-endif
 
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
@@ -322,13 +308,6 @@ endif
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
 define	SIZEOF_ISTUB		sizeof(struct intrstub)
 
-ifdef XEN
-define	SIZEOF_IPLSOURCE	sizeof(struct iplsource)
-define	IS_RECURSE		offsetof(struct iplsource, ipl_recurse)
-define	IS_RESUME		offsetof(struct iplsource, ipl_resume)
-define	IS_HANDLERS		offsetof(struct iplsource, ipl_handlers)
-define	EV_EVCNTL		offsetof(struct evcnt, ev_count)
-else
 define	SIZEOF_ISOURCE		sizeof(struct intrsource)
 define	IS_RECURSE		offsetof(struct intrsource, is_recurse)
 define	IS_RESUME		offsetof(struct intrsource, is_resume)
@@ -341,7 +320,6 @@ define	IS_PIN			offsetof(struct intrsource, is_pin)
 define	IS_TYPE			offsetof(struct intrsource, is_type)
 define	IS_MAXLEVEL		offsetof(struct intrsource, is_maxlevel)
 define	IS_LWP			offsetof(struct intrsource, is_lwp)
-endif
 
 define	TREC_SP			offsetof(struct trec, tr_sp)
 define	TREC_HPC		offsetof(struct trec, tr_hpc)
@@ -377,7 +355,6 @@ define	IREENT_MAGIC		IREENT_MAGIC
 define	PSL_AC			PSL_AC
 define	PSL_MBO			PSL_MBO
 define	PSL_ID			PSL_ID
-define	PSL_VM			PSL_VM
 define	PSL_I			PSL_I
 
 define	MTX_IPL			offsetof(struct kmutex, u.s.mtxs_ipl)

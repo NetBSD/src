@@ -55,7 +55,7 @@
 #endif
 
 #ifndef	MAXTSIZ
-#define	MAXTSIZ			(64*1024*1024)		/* maximum text size */
+#define	MAXTSIZ			(128*1024*1024)		/* maximum text size */
 #endif
 
 #ifndef	MAXDSIZ
@@ -195,10 +195,6 @@
 
 #ifndef VM_PHYS_SIZE
 #define	VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
-#endif
-
-#ifndef VM_MAX_KERNEL_BUF
-#define	VM_MAX_KERNEL_BUF	(SEGMENT_LENGTH * 3 / 4)
 #endif
 
 #endif /* _POWERPC_OEA_VMPARAM_H_ */

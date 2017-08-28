@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.21.6.1 2016/10/05 20:55:32 skrll Exp $
+#	$NetBSD: Makefile.booters,v 1.21.6.2 2017/08/28 17:51:46 skrll Exp $
 
 NOMAN=		# defined
 NOPIE=		# defined
@@ -74,8 +74,9 @@ STRIPSECTIONS?= -R .reginfo -R .mdebug.abi32 -R .comment -R .pdr \
 PROG=		${SECONDARY_PROG}
 LOAD_ADDRESS=	${SECONDARY_LOAD_ADDRESS}
 CPPFLAGS+=	-DSECONDARY_BOOTBLOCK
-SRCS+=	vers.c
-CLEANFILES+= vers.c
+
+.include "${S}/conf/newvers_stand.mk"
+
 .else
 
 .endif
@@ -108,11 +109,6 @@ SAMISCMAKEFLAGS+=SA_INCLUDE_NET=no
 LIBSA=		${SALIB}
 
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
-
-.PHONY: vers.c
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    -N ${.CURDIR}/version "mipsco"
 
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
 	${_MKTARGET_LINK}

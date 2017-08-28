@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.106.2.3 2017/02/05 13:40:19 skrll Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.106.2.4 2017/08/28 17:51:51 skrll Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.106.2.3 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.106.2.4 $"
 
 maxusers	32
 
@@ -76,7 +76,6 @@ options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix 

@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.77.2.1 2015/09/22 12:05:42 skrll Exp $
+#	$NetBSD: IPAQ,v 1.77.2.2 2017/08/28 17:51:38 skrll Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -81,7 +81,6 @@ options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0, and
 options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options

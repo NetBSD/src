@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.47.6.2 2015/12/27 12:10:05 skrll Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.47.6.3 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.47.6.2 2015/12/27 12:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.47.6.3 2017/08/28 17:53:07 skrll Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -241,8 +241,6 @@ callout_init_cpu(struct cpu_info *ci)
 
 	if ((cc = ci->ci_data.cpu_callout) == NULL) {
 		cc = kmem_zalloc(sizeof(*cc), KM_SLEEP);
-		if (cc == NULL)
-			panic("callout_init_cpu (1)");
 		cc->cc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
 		CIRCQ_INIT(&cc->cc_todo);
 		for (b = 0; b < BUCKETS; b++)

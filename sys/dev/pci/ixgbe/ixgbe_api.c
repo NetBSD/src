@@ -31,13 +31,15 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.c 299200 2016-05-06 22:54:56Z pfg $*/
-/*$NetBSD: ixgbe_api.c,v 1.2.4.6 2017/02/05 13:40:45 skrll Exp $*/
+/*$NetBSD: ixgbe_api.c,v 1.2.4.7 2017/08/28 17:52:26 skrll Exp $*/
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
 
+#define IXGBE_EMPTY_PARAM
+
 static const u32 ixgbe_mvals_base[IXGBE_MVALS_IDX_LIMIT] = {
-	IXGBE_MVALS_INIT()
+	IXGBE_MVALS_INIT(IXGBE_EMPTY_PARAM)
 };
 
 static const u32 ixgbe_mvals_X540[IXGBE_MVALS_IDX_LIMIT] = {

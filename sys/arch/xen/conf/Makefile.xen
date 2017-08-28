@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.38.2.2 2017/02/05 13:40:23 skrll Exp $
+#	$NetBSD: Makefile.xen,v 1.38.2.3 2017/08/28 17:51:57 skrll Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -115,13 +115,12 @@ KERNLDSCRIPT?=	$S/arch/${XEN_BUILD}/conf/kern.ldscript.Xen
 ##
 
 .if ${XEN_BUILD} == i386
-freebsd_sigcode.o ibcs2_sigcode.o linux_sigcode.o: assym.h
-svr4_sigcode.o mach_sigcode.o: assym.h
-apmcall.o pnpbioscall.o bioscall.o: assym.h
+linux_sigcode.o: assym.h
+pnpbioscall.o bioscall.o: assym.h
 mptramp.o: assym.h
 .elif  ${XEN_BUILD} == amd64
 locore.o machdep.o: Makefile
-linux_support.o linux32_sigcode.o netbsd32_sigcode.o: assym.h
+linux32_sigcode.o netbsd32_sigcode.o: assym.h
 .endif
 busfunc.o cpu_in_cksum.o cpufunc.o lock_stubs.o: assym.h
 

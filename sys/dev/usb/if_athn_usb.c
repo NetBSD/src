@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.6.8.19 2017/02/05 13:40:46 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.6.8.20 2017/08/28 17:52:27 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.19 2017/02/05 13:40:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.20 2017/08/28 17:52:27 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -589,11 +589,6 @@ athn_usb_open_pipes(struct athn_usb_softc *usc)
 		goto fail;
 	}
 	usc->usc_ibuf = kmem_alloc(usc->usc_ibufsize, KM_SLEEP);
-	if (usc->usc_ibuf == NULL) {
-		aprint_error_dev(usc->usc_dev,
-		    "could not allocate Rx intr buffer\n");
-		goto fail;
-	}
 
 	error = usbd_open_pipe_intr(usc->usc_iface, AR_PIPE_RX_INTR,
 	    USBD_SHORT_XFER_OK, &usc->usc_rx_intr_pipe, usc, usc->usc_ibuf,

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.81.2.1 2015/09/22 12:05:35 skrll Exp $
+# $NetBSD: GENERIC,v 1.81.2.2 2017/08/28 17:51:26 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -105,7 +105,6 @@ options 	INET6		# IPV6
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

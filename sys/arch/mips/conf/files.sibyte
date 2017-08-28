@@ -66,6 +66,7 @@ attach	xirtc at smbus
 device	m41t81rtc
 attach	m41t81rtc at smbus
 
-file	arch/sbmips/sbmips/rtc.c		xirtc | m41t81rtc
+# XXX move to arch/mips/sibyte?
+file	arch/evbmips/sbmips/rtc.c		xirtc | m41t81rtc
 
 file	arch/mips/sibyte/dev/sbbuswatch.c

@@ -1,4 +1,4 @@
-/* $NetBSD: cfbreg.h,v 1.2 1997/04/06 08:47:20 cgd Exp $ */
+/* $NetBSD: cfbreg.h,v 1.2.226.1 2017/08/28 17:51:27 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  * ``PMAG-BA TURBOchannel Color Frame Buffer Functional Specification
  * (Revision 1.2)'', availalable via anonymous FTP from gatekeeper.dec.com.
  *
- * All definitions are in "dense" TurboChannel space.
+ * All definitions are in "dense" TURBOchannel space.
  */
 
 /*

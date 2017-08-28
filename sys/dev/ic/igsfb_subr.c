@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_subr.c,v 1.12.40.1 2017/02/05 13:40:28 skrll Exp $ */
+/*	$NetBSD: igsfb_subr.c,v 1.12.40.2 2017/08/28 17:52:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -32,7 +32,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.12.40.1 2017/02/05 13:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.12.40.2 2017/08/28 17:52:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,10 +436,9 @@ igsfb_hw_setup(struct igsfb_devconfig *dc)
 	igsfb_init_ext(dc);
 	igsfb_init_dac(dc);
 
-	i = 0;
-	while ((strcmp(dc->dc_modestring, videomode_list[i].name) != 0) &&	
-	       ( i < videomode_count)) {
-		i++;
+	for (i = 0; i < videomode_count; i++) {
+		if (strcmp(dc->dc_modestring, videomode_list[i].name) == 0)
+			break;
 	}
 
 	if (i < videomode_count) {

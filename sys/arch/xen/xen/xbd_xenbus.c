@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.66.4.4 2015/12/27 12:09:45 skrll Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.66.4.5 2017/08/28 17:51:57 skrll Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.66.4.4 2015/12/27 12:09:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.66.4.5 2017/08/28 17:51:57 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -327,7 +327,7 @@ xbd_xenbus_detach(device_t dev, int flags)
 		sc->sc_shutdown = BLKIF_SHUTDOWN_LOCAL;
 		/* wait for requests to complete */
 		while (sc->sc_backend_status == BLKIF_STATE_CONNECTED &&
-		    sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
+		    disk_isbusy(&sc->sc_dksc.sc_dkdev))
 			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach", hz/2);
 
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosing);
@@ -392,7 +392,7 @@ xbd_xenbus_suspend(device_t dev, const pmf_qual_t *qual) {
 	s = splbio();
 	/* wait for requests to complete, then suspend device */
 	while (sc->sc_backend_status == BLKIF_STATE_CONNECTED &&
-	    sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
+	    disk_isbusy(&sc->sc_dksc.sc_dkdev))
 		tsleep(xbd_xenbus_suspend, PRIBIO, "xbdsuspend", hz/2);
 
 	hypervisor_mask_event(sc->sc_evtchn);
@@ -530,7 +530,7 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 			sc->sc_shutdown = BLKIF_SHUTDOWN_REMOTE;
 		/* wait for requests to complete */
 		while (sc->sc_backend_status == BLKIF_STATE_CONNECTED &&
-		    sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
+		    disk_isbusy(&sc->sc_dksc.sc_dkdev))
 			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach", hz/2);
 		splx(s);
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosed);

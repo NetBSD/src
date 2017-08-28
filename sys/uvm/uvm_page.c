@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.186.2.2 2017/02/05 13:41:01 skrll Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.186.2.3 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.186.2.2 2017/02/05 13:41:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.186.2.3 2017/08/28 17:53:17 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -720,11 +720,6 @@ uvm_page_recolor(int newncolors)
 	bucketmemsize = bucketcount * sizeof(struct pgflbucket) * 2;
 	bucketarray = kmem_alloc(bucketmemsize, KM_SLEEP);
 	cpuarray = bucketarray + bucketcount;
-	if (bucketarray == NULL) {
-		printf("WARNING: unable to allocate %ld page color buckets\n",
-		    (long) bucketcount);
-		return;
-	}
 
 	mutex_spin_enter(&uvm_fpageqlock);
 
@@ -1867,7 +1862,7 @@ uvm_page_printall(void (*pr)(const char *, ...))
 	     uvm_physseg_valid_p(i);
 	     i = uvm_physseg_get_next(i)) {
 		for (pfn = uvm_physseg_get_start(i);
-		     pfn <= uvm_physseg_get_end(i);
+		     pfn < uvm_physseg_get_end(i);
 		     pfn++) {
 			pg = PHYS_TO_VM_PAGE(ptoa(pfn));
 

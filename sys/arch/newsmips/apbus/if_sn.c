@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.34.14.3 2017/02/05 13:40:16 skrll Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.34.14.4 2017/08/28 17:51:47 skrll Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.34.14.3 2017/02/05 13:40:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.34.14.4 2017/08/28 17:51:47 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -216,6 +216,7 @@ snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	ifp->if_watchdog = snwatchdog;
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, lladdr);
 
 	return 0;
@@ -858,7 +859,7 @@ snintr(void *arg)
 				sc->sc_mptally++;
 #endif
 		}
-		snstart(&sc->sc_if);
+		if_schedule_deferred_start(&sc->sc_if);
 	}
 	return handled;
 }
@@ -1089,7 +1090,10 @@ sonic_get(struct sn_softc *sc, void *pkt, int datalen)
 		if (datalen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
-				if (top) m_freem(top);
+				if (top)
+					m_freem(top);
+				else
+					m_freem(m);
 				return 0;
 			}
 			len = MCLBYTES;

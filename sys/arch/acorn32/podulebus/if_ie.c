@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.34.2.4 2017/02/05 13:40:00 skrll Exp $ */
+/* $NetBSD: if_ie.c,v 1.34.2.5 2017/08/28 17:51:27 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.34.2.4 2017/02/05 13:40:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.34.2.5 2017/08/28 17:51:27 skrll Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -452,6 +452,7 @@ ieattach(device_t parent, device_t self, void *aux)
 	
 	/* Signed, dated then sent */
         if_attach (ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, hwaddr);
 
 	/* "Hmm," said nuts, "what if the attach fails" */
@@ -615,7 +616,7 @@ ieioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 
 	case SIOCSIFFLAGS:
 	    if ((error = ifioctl_common(ifp, cmd, data)) != 0)
-		return error;
+		break;
 	    sc->promisc = ifp->if_flags & ( IFF_PROMISC | IFF_ALLMULTI );
 
 	    if ( IZCLR(ifp,IFF_UP) && IZSET(ifp,IFF_RUNNING) )
@@ -1555,7 +1556,7 @@ ietint(struct ie_softc *sc)
     if ( sc->xmit_free<NTXBUF )
 	iexmit(sc);
 
-    iestart(ifp);
+    if_schedule_deferred_start(ifp);
 }
 
 /* End of if_ie.c */

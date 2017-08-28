@@ -1,4 +1,4 @@
-/*	$NetBSD: tcreg.h,v 1.3 2005/12/11 12:24:00 christos Exp $	*/
+/*	$NetBSD: tcreg.h,v 1.3.140.1 2017/08/28 17:52:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 #define __DEV_TC_TCREG_H__
 
 /*
- * TurboChannel bus and register definitions.
+ * TURBOchannel bus and register definitions.
  */
 
 #define	TC_ROM_LLEN		8

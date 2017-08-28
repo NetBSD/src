@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.87.6.2 2016/12/05 10:55:17 skrll Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.87.6.3 2017/08/28 17:52:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.87.6.2 2016/12/05 10:55:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.87.6.3 2017/08/28 17:52:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,6 +147,7 @@ atapibusattach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	chan->chan_name = device_xname(sc->sc_dev);
+	chan->chan_id = -1;
 
 	/* ATAPI has no LUNs. */
 	chan->chan_nluns = 1;
@@ -192,38 +193,27 @@ atapibuschilddet(device_t self, device_t child)
 	mutex_exit(chan_mtx(chan));
 }
 
+/* same as scsibusdetach */
 static int
 atapibusdetach(device_t self, int flags)
 {
 	struct atapibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = sc->sc_channel;
-	struct scsipi_periph *periph;
-	int target, error = 0;
+	int error = 0;
+
+	/*
+	 * Detach all of the periphs.
+	 */
+	error = scsipi_target_detach(chan, -1, -1, flags);
+	if (error)
+		return error;
+
+	pmf_device_deregister(self);
 
 	/*
 	 * Shut down the channel.
 	 */
 	scsipi_channel_shutdown(chan);
-
-	/* for config_detach() */
-	KERNEL_LOCK(1, curlwp);
-
-	/*
-	 * Now detach all of the periphs.
-	 */
-	mutex_enter(chan_mtx(chan));
-	for (target = 0; target < chan->chan_ntargets; target++) {
-		periph = scsipi_lookup_periph_locked(chan, target, 0);
-		if (periph == NULL)
-			continue;
-		error = config_detach(periph->periph_dev, flags);
-		if (error) {
-			mutex_exit(chan_mtx(chan));
-			goto out;
-		}
-		KASSERT(scsipi_lookup_periph(chan, target, 0) == NULL);
-	}
-	mutex_exit(chan_mtx(chan));
 
 	cv_destroy(&chan->chan_cv_xs);
 	cv_destroy(&chan->chan_cv_comp);
@@ -232,10 +222,7 @@ atapibusdetach(device_t self, int flags)
 	if (atomic_dec_uint_nv(&chan_running(chan)) == 0)
 		mutex_destroy(chan_mtx(chan));
 
-out:
-	/* XXXSMP scsipi */
-	KERNEL_UNLOCK_ONE(curlwp);
-	return error;
+	return 0;
 }
 
 static int

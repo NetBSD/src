@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.30 2016/12/29 08:15:18 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.31 2017/08/28 17:52:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.30 2016/12/29 08:15:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.31 2017/08/28 17:52:34 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1297,11 +1297,6 @@ dwc2_init(struct dwc2_softc *sc)
 	    "dwc2qtd", NULL, IPL_USB, NULL, NULL, NULL);
 
 	sc->sc_hsotg = kmem_zalloc(sizeof(struct dwc2_hsotg), KM_SLEEP);
-	if (sc->sc_hsotg == NULL) {
-		err = ENOMEM;
-		goto fail1;
-	}
-
 	sc->sc_hsotg->hsotg_sc = sc;
 	sc->sc_hsotg->dev = sc->sc_dev;
 	sc->sc_hcdenabled = true;
@@ -1330,11 +1325,6 @@ dwc2_init(struct dwc2_softc *sc)
 	}
 
 	hsotg->core_params = kmem_zalloc(sizeof(*hsotg->core_params), KM_SLEEP);
-	if (!hsotg->core_params) {
-		retval = -ENOMEM;
-		goto fail2;
-	}
-
 	dwc2_set_all_params(hsotg->core_params, -1);
 
 	/* Validate parameter values */
@@ -1367,7 +1357,6 @@ dwc2_init(struct dwc2_softc *sc)
 fail2:
 	err = -retval;
 	kmem_free(sc->sc_hsotg, sizeof(struct dwc2_hsotg));
-fail1:
 	softint_disestablish(sc->sc_rhc_si);
 
 	return err;

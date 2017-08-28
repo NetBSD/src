@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.59.2.6 2017/02/05 13:40:07 skrll Exp $
+#	$NetBSD: RPI,v 1.59.2.7 2017/08/28 17:51:34 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -66,12 +66,15 @@ vchiq0		at obio?
 
 # AUDS
 vcaudio0	at vchiq0
-audio0		at vcaudio0
+audio*		at audiobus?
 
 spkr*		at audio?		# PC speaker (synthesized)
 
 # PL011 uart
 plcom0		at obio?
+
+# AUX UART
+com0		at obio?
 
 # Framebuffer console
 genfb0		at obio?
@@ -95,6 +98,10 @@ bcmgpio1	at obio?	# pins 32 ... 53
 # Arasan SD/MMC Interface
 sdhc* at obio?
 sdmmc*  at sdhc?
+
+# SD host controller
+sdhost* at obio?
+sdmmc* at sdhost?
 
 ld*     at sdmmc?
 
@@ -212,3 +219,8 @@ pseudo-device	wsfont
 
 # local configuration
 cinclude "arch/evbarm/conf/RPI.local"
+
+# Bluetooth serial UART devices
+pseudo-device btuart
+pseudo-device bcsp
+pseudo-device bthfive

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.12.6.16 2015/12/12 15:03:56 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.12.6.17 2017/08/28 17:51:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.16 2015/12/12 15:03:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.17 2017/08/28 17:51:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -475,12 +475,10 @@ ahci_allocx(struct usbd_bus *bus, unsigned int nframes)
 		xfer = kmem_alloc(sizeof(*xfer), KM_SLEEP);
 	}
 
-	if (xfer) {
-		memset(xfer, 0, sizeof(*xfer));
+	memset(xfer, 0, sizeof(*xfer));
 #ifdef DIAGNOSTIC
-		xfer->ux_state = XFER_BUSY;
+	xfer->ux_state = XFER_BUSY;
 #endif
-	}
 
 	return xfer;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.186.2.2 2016/10/05 20:56:11 skrll Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.186.2.3 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.186.2.2 2016/10/05 20:56:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.186.2.3 2017/08/28 17:53:16 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -131,6 +131,7 @@ struct vfsops ext2fs_vfsops = {
 	.vfs_sync = ext2fs_sync,
 	.vfs_vget = ufs_vget,
 	.vfs_loadvnode = ext2fs_loadvnode,
+	.vfs_newvnode = ext2fs_newvnode,
 	.vfs_fhtovp = ext2fs_fhtovp,
 	.vfs_vptofh = ext2fs_vptofh,
 	.vfs_init = ext2fs_init,
@@ -139,7 +140,7 @@ struct vfsops ext2fs_vfsops = {
 	.vfs_mountroot = ext2fs_mountroot,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
@@ -279,8 +280,8 @@ ext2fs_mountroot(void)
 	}
 
 	if ((error = ext2fs_mountfs(rootvp, mp)) != 0) {
-		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
+		vfs_unbusy(mp);
+		vfs_rele(mp);
 		return error;
 	}
 	mountlist_append(mp);
@@ -288,7 +289,7 @@ ext2fs_mountroot(void)
 	fs = ump->um_e2fs;
 	ext2fs_sb_setmountinfo(fs, mp);
 	(void)ext2fs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	setrootfstime((time_t)fs->e2fs.e2fs_wtime);
 	return 0;
 }
@@ -674,7 +675,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
-	m_fs = kmem_zalloc(sizeof(struct m_ext2fs), KM_SLEEP);
+	m_fs = kmem_zalloc(sizeof(*m_fs), KM_SLEEP);
 	e2fs_sbload(fs, &m_fs->e2fs);
 
 	brelse(bp, 0);
@@ -683,7 +684,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	/* Once swapped, validate and fill in the superblock. */
 	error = ext2fs_sbfill(m_fs, ronly);
 	if (error) {
-		kmem_free(m_fs, sizeof(struct m_ext2fs));
+		kmem_free(m_fs, sizeof(*m_fs));
 		goto out;
 	}
 	m_fs->e2fs_ronly = ronly;
@@ -754,7 +755,7 @@ out:
 	if (bp != NULL)
 		brelse(bp, 0);
 	if (ump) {
-		kmem_free(ump->um_e2fs, sizeof(struct m_ext2fs));
+		kmem_free(ump->um_e2fs, sizeof(*m_fs));
 		kmem_free(ump, sizeof(*ump));
 		mp->mnt_data = NULL;
 	}
@@ -882,6 +883,8 @@ ext2fs_sync_selector(void *cl, struct vnode *vp)
 {
 	struct inode *ip;
 
+	KASSERT(mutex_owned(vp->v_interlock));
+
 	ip = VTOI(vp);
 	/*
 	 * Skip the vnode/inode if inaccessible.
@@ -964,25 +967,16 @@ ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 }
 
 /*
- * Read an inode from disk and initialize this vnode / inode pair.
- * Caller assures no other thread will try to load this inode.
+ * Load inode from disk and initialize vnode.
  */
-int
-ext2fs_loadvnode(struct mount *mp, struct vnode *vp,
-    const void *key, size_t key_len, const void **new_key)
+static int
+ext2fs_init_vnode(struct ufsmount *ump, struct vnode *vp, ino_t ino)
 {
-	ino_t ino;
 	struct m_ext2fs *fs;
 	struct inode *ip;
-	struct ufsmount *ump;
 	struct buf *bp;
-	dev_t dev;
 	int error;
 
-	KASSERT(key_len == sizeof(ino));
-	memcpy(&ino, key, key_len);
-	ump = VFSTOUFS(mp);
-	dev = ump->um_dev;
 	fs = ump->um_e2fs;
 
 	/* Read in the disk contents for the inode, copy into the inode. */
@@ -994,25 +988,20 @@ ext2fs_loadvnode(struct mount *mp, struct vnode *vp,
 	/* Allocate and initialize inode. */
 	ip = pool_get(&ext2fs_inode_pool, PR_WAITOK);
 	memset(ip, 0, sizeof(struct inode));
-	vp->v_tag = VT_EXT2FS;
-	vp->v_op = ext2fs_vnodeop_p;
-	vp->v_vflag |= VV_LOCKSWORK;
-	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_ump = ump;
 	ip->i_e2fs = fs;
-	ip->i_dev = dev;
+	ip->i_dev = ump->um_dev;
 	ip->i_number = ino;
 	ip->i_e2fs_last_lblk = 0;
 	ip->i_e2fs_last_blk = 0;
 
-	/* Initialize genfs node. */
-	genfs_node_init(vp, &ext2fs_genfsops);
-
 	error = ext2fs_loadvnode_content(fs, ino, bp, ip);
 	brelse(bp, 0);
-	if (error)
+	if (error) {
+		pool_put(&ext2fs_inode_pool, ip);
 		return error;
+	}
 
 	/* If the inode was deleted, reset all fields */
 	if (ip->i_e2fs_dtime != 0) {
@@ -1021,6 +1010,41 @@ ext2fs_loadvnode(struct mount *mp, struct vnode *vp,
 		(void)ext2fs_setnblock(ip, 0);
 		memset(ip->i_e2fs_blocks, 0, sizeof(ip->i_e2fs_blocks));
 	}
+
+	/* Initialise vnode with this inode. */
+	vp->v_tag = VT_EXT2FS;
+	vp->v_op = ext2fs_vnodeop_p;
+	vp->v_vflag |= VV_LOCKSWORK;
+	vp->v_data = ip;
+
+	/* Initialize genfs node. */
+	genfs_node_init(vp, &ext2fs_genfsops);
+
+	return 0;
+}
+
+/*
+ * Read an inode from disk and initialize this vnode / inode pair.
+ * Caller assures no other thread will try to load this inode.
+ */
+int
+ext2fs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
+	ino_t ino;
+	struct inode *ip;
+	struct ufsmount *ump;
+	int error;
+
+	KASSERT(key_len == sizeof(ino));
+	memcpy(&ino, key, key_len);
+	ump = VFSTOUFS(mp);
+
+	error = ext2fs_init_vnode(ump, vp, ino);
+	if (error)
+		return error;
+
+	ip = VTOI(vp);
 
 	/* Initialize the vnode from the inode. */
 	ext2fs_vinit(mp, ext2fs_specop_p, ext2fs_fifoop_p, &vp);
@@ -1041,6 +1065,113 @@ ext2fs_loadvnode(struct mount *mp, struct vnode *vp,
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			ip->i_flag |= IN_MODIFIED;
 	}
+	uvm_vnp_setsize(vp, ext2fs_size(ip));
+	*new_key = &ip->i_number;
+	return 0;
+}
+
+/*
+ * Create a new inode on disk and initialize this vnode / inode pair.
+ */
+int
+ext2fs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
+    struct vattr *vap, kauth_cred_t cred,
+    size_t *key_len, const void **new_key)
+{
+	ino_t ino;
+	struct inode *ip, *pdir;
+	struct m_ext2fs *fs;
+	struct ufsmount *ump;
+	int error, mode;
+
+	KASSERT(dvp->v_mount == mp);
+	KASSERT(vap->va_type != VNON);
+
+	*key_len = sizeof(ino);
+
+	pdir = VTOI(dvp);
+	fs = pdir->i_e2fs;
+	ump = VFSTOUFS(mp);
+	mode = MAKEIMODE(vap->va_type, vap->va_mode);
+
+	/* Allocate fresh inode. */
+	error = ext2fs_valloc(dvp, mode, cred, &ino);
+	if (error)
+		return error;
+
+	/* Attach inode to vnode. */
+	error = ext2fs_init_vnode(ump, vp, ino);
+	if (error) {
+		ext2fs_vfree(dvp, ino, mode);
+		return error;
+	}
+
+	ip = VTOI(vp);
+
+	KASSERT(!E2FS_HAS_GD_CSUM(fs) || (fs->e2fs_gd[ino_to_cg(fs, ino)].ext2bgd_flags & h2fs16(E2FS_BG_INODE_ZEROED)) != 0);
+
+	/* check for already used inode; makes sense only for ZEROED itable */
+	if (__predict_false(ip->i_e2fs_mode && ip->i_e2fs_nlink != 0)) {
+		printf("mode = 0%o, nlinks %d, inum = %llu, fs = %s\n",
+		    ip->i_e2fs_mode, ip->i_e2fs_nlink,
+		    (unsigned long long)ip->i_number, fs->e2fs_fsmnt);
+		panic("ext2fs_valloc: dup alloc");
+	}
+
+	memset(ip->i_din.e2fs_din, 0, EXT2_DINODE_SIZE(fs));
+
+	/*
+	 * Set up a new generation number for this inode.
+	 */
+	if (++ext2gennumber < time_second)
+		ext2gennumber = time_second;
+	ip->i_e2fs_gen = ext2gennumber;
+
+	ip->i_uid = kauth_cred_geteuid(cred);
+	ip->i_e2fs_uid = ip->i_uid & 0xffff;
+	ip->i_e2fs_gid = pdir->i_e2fs_gid;
+	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0) {
+		ip->i_e2fs_uid_high = (ip->i_uid >> 16) & 0xffff;
+		ip->i_e2fs_gid_high = pdir->i_e2fs_gid_high;
+	} else {
+		ip->i_e2fs_uid_high = 0;
+		ip->i_e2fs_gid_high = 0;
+	}
+	ip->i_gid = ip->i_e2fs_gid | (ip->i_e2fs_gid_high << 16);
+	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
+	ip->i_e2fs_mode = mode;
+	vp->v_type = IFTOVT(mode);
+	ip->i_e2fs_nlink = 1;
+
+	/* Authorize setting SGID if needed. */
+	if (ip->i_e2fs_mode & ISGID) {
+		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY,
+		    vp, NULL, genfs_can_chmod(vp->v_type, cred, ip->i_uid,
+		    ip->i_gid, mode));
+		if (error)
+			ip->i_e2fs_mode &= ~ISGID;
+	}
+
+	/* Initialize extra_isize according to what is set in superblock */
+	if (EXT2F_HAS_ROCOMPAT_FEATURE(ip->i_e2fs, EXT2F_ROCOMPAT_EXTRA_ISIZE)
+	    && EXT2_DINODE_SIZE(ip->i_e2fs) > EXT2_REV0_DINODE_SIZE) {
+		ip->i_din.e2fs_din->e2di_extra_isize = ip->i_e2fs->e2fs.e4fs_want_extra_isize;
+	}
+
+	/* Set create time if possible */
+	if (EXT2_DINODE_FITS(ip->i_din.e2fs_din, e2di_crtime, EXT2_DINODE_SIZE(ip->i_e2fs))) {
+		struct timespec now;
+		vfs_timestamp(&now);
+		EXT2_DINODE_TIME_SET(&now, ip->i_din.e2fs_din, e2di_crtime, EXT2_DINODE_SIZE(ip->i_e2fs));
+	}
+
+	/* Initialize the vnode from the inode. */
+	ext2fs_vinit(mp, ext2fs_specop_p, ext2fs_fifoop_p, &vp);
+
+	/* Finish inode initialization. */
+	ip->i_devvp = ump->um_devvp;
+	vref(ip->i_devvp);
+
 	uvm_vnp_setsize(vp, ext2fs_size(ip));
 	*new_key = &ip->i_number;
 	return 0;

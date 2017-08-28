@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.25.2.3 2015/12/27 12:09:31 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.25.2.4 2017/08/28 17:51:31 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.25.2.3 2015/12/27 12:09:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.25.2.4 2017/08/28 17:51:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -651,7 +651,6 @@ pic_add(struct pic_softc *pic, int irqbase)
 #if defined(__HAVE_PIC_PENDING_INTRS) && defined(MULTIPROCESSOR)
 	if (__predict_false(pic_pending_percpu == NULL)) {
 		pic_pending_percpu = percpu_alloc(sizeof(struct pic_pending));
-		KASSERT(pic_pending_percpu != NULL);
 
 		/*
 		 * Now zero the per-cpu pending data.
@@ -703,7 +702,6 @@ pic_add(struct pic_softc *pic, int irqbase)
 	 * problem can be solved with sufficient indirection.
 	 */
 	pic->pic_percpu = percpu_alloc(sizeof(struct pic_percpu));
-	KASSERT(pic->pic_percpu != NULL);
 
 	/*
 	 * Now allocate the per-cpu evcnts.
@@ -760,9 +758,6 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	}
 
 	is = kmem_zalloc(sizeof(*is), KM_SLEEP);
-	if (is == NULL)
-		return NULL;
-
 	is->is_pic = pic;
 	is->is_irq = irq;
 	is->is_ipl = ipl;

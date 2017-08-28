@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.181.2.11 2017/02/05 13:40:58 skrll Exp $	*/
+/*	$NetBSD: if.h,v 1.181.2.12 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -231,6 +231,7 @@ struct callout;
 struct krwlock;
 struct if_percpuq;
 struct if_deferred_start;
+struct in6_multi;
 
 typedef unsigned short if_index_t;
 
@@ -344,6 +345,8 @@ typedef struct ifnet {
 	struct psref_target     if_psref;
 	struct pslist_head	if_addr_pslist;
 	struct if_deferred_start	*if_deferred_start;
+	/* XXX should be protocol independent */
+	LIST_HEAD(, in6_multi) if_multiaddrs;
 #endif
 } ifnet_t;
 
@@ -953,6 +956,7 @@ void	if_purgeaddrs(struct ifnet *, int, void (*)(struct ifaddr *));
 void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);
 void	if_link_state_change(struct ifnet *, int);
+void	if_link_state_change_softint(struct ifnet *, int);
 void	if_up(struct ifnet *);
 void	ifinit(void);
 void	ifinit1(void);
@@ -970,8 +974,10 @@ struct	ifnet *ifunit(const char *);
 struct	ifnet *if_get(const char *, struct psref *);
 ifnet_t *if_byindex(u_int);
 ifnet_t *if_get_byindex(u_int, struct psref *);
+ifnet_t *if_get_bylla(const void *, unsigned char, struct psref *);
 void	if_put(const struct ifnet *, struct psref *);
-void	if_acquire_NOMPSAFE(struct ifnet *, struct psref *);
+void	if_acquire(struct ifnet *, struct psref *);
+#define	if_release	if_put
 
 static inline if_index_t
 if_get_index(const struct ifnet *ifp)
@@ -1167,7 +1173,6 @@ __END_DECLS
 	} while (0)
 
 extern struct pslist_head ifnet_pslist;
-extern struct psref_class *ifnet_psref_class;
 extern kmutex_t ifnet_mtx;
 
 extern struct ifnet *lo0ifp;

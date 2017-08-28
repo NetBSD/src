@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.54.2.9 2017/02/05 13:40:26 skrll Exp $ */
+/* $NetBSD: dksubr.c,v 1.54.2.10 2017/08/28 17:52:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.54.2.9 2017/02/05 13:40:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.54.2.10 2017/08/28 17:52:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,16 +102,20 @@ dk_attach(struct dk_softc *dksc)
 	dksc->sc_flags |= DKF_WARNLABEL | DKF_LABELSANITY;
 #endif
 
-	/* Attach the device into the rnd source list. */
-	rnd_attach_source(&dksc->sc_rnd_source, dksc->sc_xname,
-	    RND_TYPE_DISK, RND_FLAG_DEFAULT);
+	if ((dksc->sc_flags & DKF_NO_RND) == 0) {
+		/* Attach the device into the rnd source list. */
+		rnd_attach_source(&dksc->sc_rnd_source, dksc->sc_xname,
+		    RND_TYPE_DISK, RND_FLAG_DEFAULT);
+	}
 }
 
 void
 dk_detach(struct dk_softc *dksc)
 {
-	/* Unhook the entropy source. */
-	rnd_detach_source(&dksc->sc_rnd_source);
+	if ((dksc->sc_flags & DKF_NO_RND) == 0) {
+		/* Unhook the entropy source. */
+		rnd_detach_source(&dksc->sc_rnd_source);
+	}
 
 	dksc->sc_flags &= ~DKF_READYFORDUMP;
 	mutex_destroy(&dksc->sc_iolock);
@@ -339,6 +343,7 @@ dk_strategy_defer(struct dk_softc *dksc, struct buf *bp)
 	 * Queue buffer only
 	 */
 	mutex_enter(&dksc->sc_iolock);
+	disk_wait(&dksc->sc_dkdev);
 	bufq_put(dksc->sc_bufq, bp);
 	mutex_exit(&dksc->sc_iolock);
 
@@ -375,8 +380,10 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 
 	mutex_enter(&dksc->sc_iolock);
 
-	if (bp != NULL)
+	if (bp != NULL) {
+		disk_wait(&dksc->sc_dkdev);
 		bufq_put(dksc->sc_bufq, bp);
+	}
 
 	/*
 	 * If another thread is running the queue, increment
@@ -417,6 +424,7 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 			if (error == EAGAIN) {
 				dksc->sc_deferred = bp;
 				disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
+				disk_wait(&dksc->sc_dkdev);
 				break;
 			}
 
@@ -454,7 +462,8 @@ dk_done1(struct dk_softc *dksc, struct buf *bp, bool lock)
 	if (lock)
 		mutex_exit(&dksc->sc_iolock);
 
-	rnd_add_uint32(&dksc->sc_rnd_source, bp->b_rawblkno);
+	if ((dksc->sc_flags & DKF_NO_RND) == 0)
+		rnd_add_uint32(&dksc->sc_rnd_source, bp->b_rawblkno);
 
 	biodone(bp);
 }
@@ -488,7 +497,10 @@ dk_discard(struct dk_softc *dksc, dev_t dev, off_t pos, off_t len)
 	const struct dkdriver *dkd = dksc->sc_dkdev.dk_driver;
 	unsigned secsize = dksc->sc_dkdev.dk_geom.dg_secsize;
 	struct buf tmp, *bp = &tmp;
-	int error;
+	int maxsz;
+	int error = 0;
+
+	KASSERT(len >= 0);
 
 	DPRINTF_FOLLOW(("%s(%s, %p, 0x"PRIx64", %jd, %jd)\n", __func__,
 	    dksc->sc_xname, dksc, (intmax_t)pos, (intmax_t)len));
@@ -498,22 +510,32 @@ dk_discard(struct dk_softc *dksc, dev_t dev, off_t pos, off_t len)
 		return ENXIO;
 	}
 
-	if (secsize == 0 || (pos % secsize) != 0)
+	if (secsize == 0 || (pos % secsize) != 0 || (len % secsize) != 0)
 		return EINVAL;
 
-	/* enough data to please the bounds checking code */
-	bp->b_dev = dev;
-	bp->b_blkno = (daddr_t)(pos / secsize);
-	bp->b_bcount = len;
-	bp->b_flags = B_WRITE;
+	/* largest value that b_bcount can store */
+	maxsz = rounddown(INT_MAX, secsize);
 
-	error = dk_translate(dksc, bp);
-	if (error >= 0)
-		return error;
+	while (len > 0) {
+		/* enough data to please the bounds checking code */
+		bp->b_dev = dev;
+		bp->b_blkno = (daddr_t)(pos / secsize);
+		bp->b_bcount = min(len, maxsz);
+		bp->b_flags = B_WRITE;
 
-	error = dkd->d_discard(dksc->sc_dev,
-		(off_t)bp->b_rawblkno * secsize,
-		(off_t)bp->b_bcount);
+		error = dk_translate(dksc, bp);
+		if (error >= 0)
+			break;
+
+		error = dkd->d_discard(dksc->sc_dev,
+			(off_t)bp->b_rawblkno * secsize,
+			(off_t)bp->b_bcount);
+		if (error)
+			break;
+
+		pos += bp->b_bcount;
+		len -= bp->b_bcount;
+	}
 
 	return error;
 }
@@ -888,13 +910,16 @@ dk_getdisklabel(struct dk_softc *dksc, dev_t dev)
 		return;
 
 	/* Sanity check */
-	if (lp->d_secperunit < UINT32_MAX ?
-		lp->d_secperunit != dg->dg_secperunit :
-		lp->d_secperunit > dg->dg_secperunit)
+	if (lp->d_secperunit > dg->dg_secperunit)
 		printf("WARNING: %s: total sector size in disklabel (%ju) "
 		    "!= the size of %s (%ju)\n", dksc->sc_xname,
 		    (uintmax_t)lp->d_secperunit, dksc->sc_xname,
 		    (uintmax_t)dg->dg_secperunit);
+	else if (lp->d_secperunit < UINT32_MAX &&
+	         lp->d_secperunit < dg->dg_secperunit)
+		printf("%s: %ju trailing sectors not covered by disklabel\n",
+		    dksc->sc_xname,
+		    (uintmax_t)dg->dg_secperunit - lp->d_secperunit);
 
 	for (i=0; i < lp->d_npartitions; i++) {
 		pp = &lp->d_partitions[i];

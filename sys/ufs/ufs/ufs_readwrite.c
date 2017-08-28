@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.107.10.2 2015/06/06 14:40:31 skrll Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.107.10.3 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.107.10.2 2015/06/06 14:40:31 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.107.10.3 2017/08/28 17:53:17 skrll Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -121,8 +121,6 @@ READ(void *v)
 		return ffs_snapshot_read(vp, uio, ioflag);
 #endif /* !LFS_READWRITE */
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
-
 	if (uio->uio_offset >= ip->i_size)
 		goto out;
 
@@ -143,7 +141,6 @@ READ(void *v)
 
  out:
 	error = ufs_post_read_update(vp, ap->a_ioflag, error);
-	fstrans_done(vp->v_mount);
 	return (error);
 }
 
@@ -183,8 +180,6 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 #ifndef LFS_READWRITE
 	KASSERT(!ISSET(ip->i_flags, (SF_SNAPSHOT | SF_SNAPINVAL)));
 #endif
-
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	if (uio->uio_offset >= ip->i_size)
 		goto out;
@@ -233,7 +228,6 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 
  out:
 	error = ufs_post_read_update(vp, ioflag, error);
-	fstrans_done(vp->v_mount);
 	return (error);
 }
 
@@ -317,8 +311,6 @@ WRITE(void *v)
 	if (uio->uio_resid == 0)
 		return (0);
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
-
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
 	origoff = uio->uio_offset;
@@ -357,7 +349,6 @@ WRITE(void *v)
 	 */
 	error = UFS_WAPBL_BEGIN(vp->v_mount);
 	if (error) {
-		fstrans_done(vp->v_mount);
 		return error;
 	}
 
@@ -502,7 +493,6 @@ out:
 	error = ufs_post_write_update(vp, uio, ioflag, cred, osize, resid,
 	    extended, error);
 	UFS_WAPBL_END(vp->v_mount);
-	fstrans_done(vp->v_mount);
 
 	return (error);
 }
@@ -550,8 +540,6 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 #endif
 	if (uio->uio_resid == 0)
 		return 0;
-
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	resid = uio->uio_resid;
@@ -634,7 +622,6 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 
 	error = ufs_post_write_update(vp, uio, ioflag, cred, osize, resid,
 	    extended, error);
-	fstrans_done(vp->v_mount);
 
 	return (error);
 }

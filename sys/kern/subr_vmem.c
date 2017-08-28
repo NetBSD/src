@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.92.6.3 2016/07/09 20:25:20 skrll Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.92.6.4 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.92.6.3 2016/07/09 20:25:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.92.6.4 2017/08/28 17:53:07 skrll Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1037,6 +1037,7 @@ int
 vmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags, vmem_addr_t *addrp)
 {
 	const vm_flag_t strat __diagused = flags & VM_FITMASK;
+	int error;
 
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
@@ -1056,12 +1057,16 @@ vmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags, vmem_addr_t *addrp)
 		p = pool_cache_get(qc->qc_cache, vmf_to_prf(flags));
 		if (addrp != NULL)
 			*addrp = (vmem_addr_t)p;
-		return (p == NULL) ? ENOMEM : 0;
+		error = (p == NULL) ? ENOMEM : 0;
+		goto out;
 	}
 #endif /* defined(QCACHE) */
 
-	return vmem_xalloc(vm, size, 0, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX,
+	error = vmem_xalloc(vm, size, 0, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX,
 	    flags, addrp);
+out:
+	KASSERT(error == 0 || (flags & VM_SLEEP) == 0);
+	return error;
 }
 
 int

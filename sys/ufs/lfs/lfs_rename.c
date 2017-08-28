@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.7.8.3 2016/07/09 20:25:25 skrll Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.7.8.4 2017/08/28 17:53:17 skrll Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.7.8.3 2016/07/09 20:25:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.7.8.4 2017/08/28 17:53:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -803,7 +803,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	KASSERT((nlink_t)VTOI(fvp)->i_nlink < LINK_MAX);
 	VTOI(fvp)->i_nlink++;
 	DIP_ASSIGN(VTOI(fvp), nlink, VTOI(fvp)->i_nlink);
-	VTOI(fvp)->i_flag |= IN_CHANGE;
+	VTOI(fvp)->i_state |= IN_CHANGE;
 	error = lfs_update(fvp, NULL, NULL, UPDATE_DIROP);
 	if (error)
 		goto whymustithurtsomuch;
@@ -830,7 +830,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 			KASSERT((nlink_t)VTOI(tdvp)->i_nlink < LINK_MAX);
 			VTOI(tdvp)->i_nlink++;
 			DIP_ASSIGN(VTOI(tdvp), nlink, VTOI(tdvp)->i_nlink);
-			VTOI(tdvp)->i_flag |= IN_CHANGE;
+			VTOI(tdvp)->i_state |= IN_CHANGE;
 			error = lfs_update(tdvp, NULL, NULL, UPDATE_DIROP);
 			if (error) {
 				/*
@@ -841,7 +841,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 				VTOI(tdvp)->i_nlink--;
 				DIP_ASSIGN(VTOI(tdvp), nlink,
 				    VTOI(tdvp)->i_nlink);
-				VTOI(tdvp)->i_flag |= IN_CHANGE;
+				VTOI(tdvp)->i_state |= IN_CHANGE;
 				goto whymustithurtsomuch;
 			}
 		}
@@ -861,7 +861,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 				VTOI(tdvp)->i_nlink--;
 				DIP_ASSIGN(VTOI(tdvp), nlink,
 				    VTOI(tdvp)->i_nlink);
-				VTOI(tdvp)->i_flag |= IN_CHANGE;
+				VTOI(tdvp)->i_state |= IN_CHANGE;
 				(void)lfs_update(tdvp, NULL, NULL,
 				    UPDATE_WAIT | UPDATE_DIROP);
 			}
@@ -900,7 +900,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 			KASSERT(0 < VTOI(tdvp)->i_nlink);
 			VTOI(tdvp)->i_nlink--;
 			DIP_ASSIGN(VTOI(tdvp), nlink, VTOI(tdvp)->i_nlink);
-			VTOI(tdvp)->i_flag |= IN_CHANGE;
+			VTOI(tdvp)->i_state |= IN_CHANGE;
 		}
 
 		if (directory_p) {
@@ -1008,7 +1008,7 @@ whymustithurtsomuch:
 	KASSERT(0 < VTOI(fvp)->i_nlink);
 	VTOI(fvp)->i_nlink--;
 	DIP_ASSIGN(VTOI(fvp), nlink, VTOI(fvp)->i_nlink);
-	VTOI(fvp)->i_flag |= IN_CHANGE;
+	VTOI(fvp)->i_state |= IN_CHANGE;
 
 arghmybrainhurts:
 /*ihateyou:*/

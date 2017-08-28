@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.30.2.3 2016/10/05 20:56:01 skrll Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.30.2.4 2017/08/28 17:53:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.30.2.3 2016/10/05 20:56:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.30.2.4 2017/08/28 17:53:06 skrll Exp $");
 #endif /* not lint */
 
 
@@ -61,16 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.30.2.3 2016/10/05 20:56:01 skrll E
 #define VTOI(vnode) ((struct nilfs_node *) (vnode)->v_data)
 
 
-/* externs */
-extern int prtactive;
-
 /* implementations of vnode functions; table follows at end */
 /* --------------------------------------------------------------------- */
 
 int
 nilfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool         *a_recycle;
 	} */ *ap = v;
@@ -90,7 +87,6 @@ nilfs_inactive(void *v)
 	 * referenced anymore in a directory we ought to free up the resources
 	 * on disc if applicable.
 	 */
-	VOP_UNLOCK(vp);
 
 	return 0;
 }
@@ -100,15 +96,15 @@ nilfs_inactive(void *v)
 int
 nilfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nilfs_node *nilfs_node = VTOI(vp);
 
+	VOP_UNLOCK(vp);
+
 	DPRINTF(NODE, ("nilfs_reclaim called for node %p\n", nilfs_node));
-	if (prtactive && vp->v_usecount > 1)
-		vprint("nilfs_reclaim(): pushing active", vp);
 
 	if (nilfs_node == NULL) {
 		DPRINTF(NODE, ("nilfs_reclaim(): null nilfsnode\n"));
@@ -1405,7 +1401,7 @@ out_unlocked:
 int
 nilfs_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1436,7 +1432,6 @@ nilfs_remove(void *v)
 		vrele(vp);
 	else
 		vput(vp);
-	vput(dvp);
 
 	return error;
 }
@@ -1446,7 +1441,7 @@ nilfs_remove(void *v)
 int
 nilfs_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1463,8 +1458,7 @@ nilfs_rmdir(void *v)
 
 	/* don't allow '.' to be deleted */
 	if (dir_node == nilfs_node) {
-		vrele(dvp);
-		vput(vp);
+		vrele(vp);
 		return EINVAL;
 	}
 
@@ -1473,7 +1467,6 @@ nilfs_rmdir(void *v)
 	refcnt = 2; /* XXX */
 	if (refcnt > 1) {
 		/* NOT empty */
-		vput(dvp);
 		vput(vp);
 		return ENOTEMPTY;
 	}
@@ -1487,8 +1480,7 @@ nilfs_rmdir(void *v)
 	}
 	DPRINTFIF(NODE, error, ("\tgot error removing file\n"));
 
-	/* unput the nodes and exit */
-	vput(dvp);
+	/* put the node and exit */
 	vput(vp);
 
 	return error;

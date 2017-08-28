@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.63.4.5 2017/02/05 13:40:24 skrll Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.63.4.6 2017/08/28 17:51:57 skrll Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.63.4.5 2017/02/05 13:40:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.63.4.6 2017/08/28 17:51:57 skrll Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -1074,26 +1074,35 @@ again:
 		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 
 		m_set_rcvif(m, ifp);
-		req->rxreq_va = (vaddr_t)pool_cache_get_paddr(
-		    if_xennetrxbuf_cache, PR_NOWAIT, &req->rxreq_pa);
-		if (__predict_false(req->rxreq_va == 0)) {
-			printf("%s: rx no buf\n", ifp->if_xname);
-			ifp->if_ierrors++;
-			req->rxreq_va = va;
-			req->rxreq_pa = pa;
-			xennet_rx_free_req(req);
-			m_freem(m);
-			continue;
+		if (rx->status <= MHLEN) {
+			/* small packet; copy to mbuf data area */
+			m_copyback(m, 0, rx->status, pktp);
+			KASSERT(m->m_pkthdr.len == rx->status);
+			KASSERT(m->m_len == rx->status);
+		} else {
+			/* large packet; attach buffer to mbuf */
+			req->rxreq_va = (vaddr_t)pool_cache_get_paddr(
+			    if_xennetrxbuf_cache, PR_NOWAIT, &req->rxreq_pa);
+			if (__predict_false(req->rxreq_va == 0)) {
+				printf("%s: rx no buf\n", ifp->if_xname);
+				ifp->if_ierrors++;
+				req->rxreq_va = va;
+				req->rxreq_pa = pa;
+				xennet_rx_free_req(req);
+				m_freem(m);
+				continue;
+			}
+			m->m_len = m->m_pkthdr.len = rx->status;
+			MEXTADD(m, pktp, rx->status,
+			    M_DEVBUF, xennet_rx_mbuf_free, NULL);
+			m->m_ext.ext_paddr = pa;
+			m->m_flags |= M_EXT_RW; /* we own the buffer */
 		}
-		m->m_len = m->m_pkthdr.len = rx->status;
-		MEXTADD(m, pktp, rx->status,
-		    M_DEVBUF, xennet_rx_mbuf_free, NULL);
-		m->m_flags |= M_EXT_RW; /* we own the buffer */
-		m->m_ext.ext_paddr = pa;
 		if ((rx->flags & NETRXF_csum_blank) != 0) {
 			xennet_checksum_fill(&m);
 			if (m == NULL) {
 				ifp->if_ierrors++;
+				xennet_rx_free_req(req);
 				continue;
 			}
 		}

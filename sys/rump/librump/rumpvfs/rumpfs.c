@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.130.2.5 2017/02/05 13:41:00 skrll Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.130.2.6 2017/08/28 17:53:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.130.2.5 2017/02/05 13:41:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.130.2.6 2017/08/28 17:53:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.130.2.5 2017/02/05 13:41:00 skrll Exp $
 #include <sys/stat.h>
 #include <sys/syscallargs.h>
 #include <sys/vnode.h>
+#include <sys/fstrans.h>
 #include <sys/unistd.h>
 
 #include <miscfs/fifofs/fifo.h>
@@ -216,7 +217,6 @@ struct rumpfs_node {
 
 struct rumpfs_mount {
 	struct vnode *rfsmp_rvp;
-	bool rfsmp_rdonly;
 };
 
 #define INO_WHITEOUT 1
@@ -492,8 +492,12 @@ etfsremove(const char *key)
 			mp = NULL;
 		}
 		mutex_exit(&reclock);
-		if (mp && vcache_get(mp, &rn, sizeof(rn), &vp) == 0)
+		if (mp && vcache_get(mp, &rn, sizeof(rn), &vp) == 0) {
+			rv = vfs_suspend(mp, 0);
+			KASSERT(rv == 0);
 			vgone(vp);
+			vfs_resume(mp);
+		}
 	}
 
 	if (et->et_rn->rn_hostpath != NULL)
@@ -984,7 +988,7 @@ rump_vop_mkdir(void *v)
 static int
 rump_vop_rmdir(void *v)
 {
-        struct vop_rmdir_args /* {
+        struct vop_rmdir_v2_args /* {
                 struct vnode *a_dvp;
                 struct vnode *a_vp;
                 struct componentname *a_cnp;
@@ -1016,16 +1020,14 @@ rump_vop_rmdir(void *v)
 	rn->rn_va.va_nlink = 0;
 
 out:
-	vput(dvp);
 	vput(vp);
-
 	return rv;
 }
 
 static int
 rump_vop_remove(void *v)
 {
-        struct vop_remove_args /* {
+        struct vop_remove_v2_args /* {
                 struct vnode *a_dvp;
                 struct vnode *a_vp;
                 struct componentname *a_cnp;
@@ -1044,9 +1046,7 @@ rump_vop_remove(void *v)
 	rn->rn_flags |= RUMPNODE_CANRECLAIM;
 	rn->rn_va.va_nlink = 0;
 
-	vput(dvp);
 	vput(vp);
-
 	return rv;
 }
 
@@ -1593,7 +1593,7 @@ rump_vop_success(void *v)
 static int
 rump_vop_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -1612,18 +1612,19 @@ rump_vop_inactive(void *v)
 	}
 	*ap->a_recycle = (rn->rn_flags & RUMPNODE_CANRECLAIM) ? true : false;
 
-	VOP_UNLOCK(vp);
 	return 0;
 }
 
 static int
 rump_vop_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct rumpfs_node *rn = vp->v_data;
+
+	VOP_UNLOCK(vp);
 
 	mutex_enter(&reclock);
 	rn->rn_vp = NULL;
@@ -1779,7 +1780,7 @@ struct vfsops rumpfs_vfsops = {
 	.vfs_mountroot =	rumpfs_mountroot,
 	.vfs_snapshot =		(void *)eopnotsupp,
 	.vfs_extattrctl =	(void *)eopnotsupp,
-	.vfs_suspendctl =	(void *)eopnotsupp,
+	.vfs_suspendctl =	genfs_suspendctl,
 	.vfs_renamelock_enter =	genfs_renamelock_enter,
 	.vfs_renamelock_exit =	genfs_renamelock_exit,
 	.vfs_opv_descs =	rump_opv_descs,
@@ -1806,7 +1807,6 @@ rumpfs_mountfs(struct mount *mp)
 	}
 
 	rfsmp->rfsmp_rvp->v_vflag |= VV_ROOT;
-	rfsmp->rfsmp_rdonly = (mp->mnt_flag & MNT_RDONLY) != 0;
 
 	mp->mnt_data = rfsmp;
 	mp->mnt_stat.f_namemax = RUMPFS_MAXNAMLEN;
@@ -1822,14 +1822,13 @@ rumpfs_mountfs(struct mount *mp)
 int
 rumpfs_mount(struct mount *mp, const char *mntpath, void *arg, size_t *alen)
 {
-	struct rumpfs_mount *rfsmp = mp->mnt_data;
 	int error, flags;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		return 0;
 	}
 	if (mp->mnt_flag & MNT_UPDATE) {
-		if (!rfsmp->rfsmp_rdonly && (mp->mnt_flag & MNT_RDONLY)) {
+		if ((mp->mnt_iflag & IMNT_WANTRDONLY)) {
 			/* Changing from read/write to read-only. */
 			flags = WRITECLOSE;
 			if ((mp->mnt_flag & MNT_FORCE))
@@ -1837,11 +1836,6 @@ rumpfs_mount(struct mount *mp, const char *mntpath, void *arg, size_t *alen)
 			error = vflush(mp, NULL, flags);
 			if (error)
 				return error;
-			rfsmp->rfsmp_rdonly = true;
-		}
-		if (rfsmp->rfsmp_rdonly && (mp->mnt_flag & IMNT_WANTRDWR)) {
-			/* Changing from read-only to read/write. */
-			rfsmp->rfsmp_rdonly = false;
 		}
 		return 0;
 	}
@@ -1966,7 +1960,6 @@ int
 rumpfs_mountroot()
 {
 	struct mount *mp;
-	struct rumpfs_mount *rfsmp;
 	int error;
 
 	if ((error = vfs_rootmountalloc(MOUNT_RUMPFS, "rootdev", &mp)) != 0) {
@@ -1984,10 +1977,8 @@ rumpfs_mountroot()
 	if (error)
 		panic("set_statvfs_info failed for rootfs: %d", error);
 
-	rfsmp = mp->mnt_data;
 	mp->mnt_flag &= ~MNT_RDONLY;
-	rfsmp->rfsmp_rdonly = false;
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 
 	return 0;
 }

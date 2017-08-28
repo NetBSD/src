@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.15.12.1 2015/06/06 14:40:05 skrll Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.15.12.2 2017/08/28 17:51:59 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.15.12.1 2015/06/06 14:40:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.15.12.2 2017/08/28 17:51:59 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,7 +74,11 @@ netbsd32__lwp_create(struct lwp *l, const struct netbsd32__lwp_create_args *uap,
 	if (error)
 		goto fail;
 
-	error = do_lwp_create(l, newuc, SCARG(uap, flags), &lid);
+	const sigset_t *sigmask = newuc->uc_flags & _UC_SIGMASK ?
+	    &newuc->uc_sigmask : &l->l_sigmask;
+
+	error = do_lwp_create(l, newuc, SCARG(uap, flags), &lid, sigmask,
+	    &SS_INIT);
 	if (error)
 		goto fail;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.179.2.5 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.179.2.6 2017/08/28 17:53:12 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.179.2.5 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.179.2.6 2017/08/28 17:53:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -361,7 +361,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	if (inp) {
 #if defined(IPSEC)
 		if (ipsec_used &&
-		    !IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND))
+		    !ipsec_pcb_skip_ipsec(inp->inp_sp, IPSEC_DIR_OUTBOUND))
 			optlen += ipsec4_hdrsiz_tcp(tp);
 #endif
 		optlen += ip_optlen(inp);
@@ -372,7 +372,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	if (in6p && tp->t_family == AF_INET) {
 #if defined(IPSEC)
 		if (ipsec_used &&
-		    !IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
+		    !ipsec_pcb_skip_ipsec(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
 			optlen += ipsec4_hdrsiz_tcp(tp);
 #endif
 		/* XXX size -= ip_optlen(in6p); */
@@ -381,7 +381,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	if (in6p && tp->t_family == AF_INET6) {
 #if defined(IPSEC)
 		if (ipsec_used &&
-		    !IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
+		    !ipsec_pcb_skip_ipsec(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
 			optlen += ipsec6_hdrsiz_tcp(tp);
 #endif
 		optlen += ip6_optlen(in6p);
@@ -641,7 +641,7 @@ tcp_output(struct tcpcb *tp)
 #if defined(INET)
 	has_tso4 = tp->t_inpcb != NULL &&
 #if defined(IPSEC)
-	    (!ipsec_used || IPSEC_PCB_SKIP_IPSEC(tp->t_inpcb->inp_sp,
+	    (!ipsec_used || ipsec_pcb_skip_ipsec(tp->t_inpcb->inp_sp,
 	    IPSEC_DIR_OUTBOUND)) &&
 #endif
 	    (rt = rtcache_validate(&tp->t_inpcb->inp_route)) != NULL &&
@@ -654,7 +654,7 @@ tcp_output(struct tcpcb *tp)
 #if defined(INET6)
 	has_tso6 = tp->t_in6pcb != NULL &&
 #if defined(IPSEC)
-	    (!ipsec_used || IPSEC_PCB_SKIP_IPSEC(tp->t_in6pcb->in6p_sp,
+	    (!ipsec_used || ipsec_pcb_skip_ipsec(tp->t_in6pcb->in6p_sp,
 	    IPSEC_DIR_OUTBOUND)) &&
 #endif
 	    (rt = rtcache_validate(&tp->t_in6pcb->in6p_route)) != NULL &&
@@ -1505,7 +1505,7 @@ reset:			TCP_REASS_UNLOCK(tp);
 		tcp_signature(m, th, (char *)th - mtod(m, char *), sav, sigp);
 
 		key_sa_recordxfer(sav, m);
-		KEY_FREESAV(&sav);
+		KEY_SA_UNREF(&sav);
 	}
 #endif
 
@@ -1680,7 +1680,7 @@ timer:
 			opts = NULL;
 		error = ip_output(m, opts, ro,
 			(tp->t_mtudisc ? IP_MTUDISC : 0) |
-			(so->so_options & SO_DONTROUTE), NULL, so);
+			(so->so_options & SO_DONTROUTE), NULL, tp->t_inpcb);
 		break;
 	    }
 #endif
@@ -1694,7 +1694,7 @@ timer:
 		else
 			opts = NULL;
 		error = ip6_output(m, opts, ro, so->so_options & SO_DONTROUTE,
-			NULL, so, NULL);
+			NULL, tp->t_in6pcb, NULL);
 		break;
 	    }
 #endif

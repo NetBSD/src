@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.6.6.2 2017/02/05 13:40:26 skrll Exp $	*/
+/*	$NetBSD: spkr.c,v 1.6.6.3 2017/08/28 17:52:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.6.6.2 2017/02/05 13:40:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.6.6.3 2017/08/28 17:52:00 skrll Exp $");
+#if defined(_KERNEL_OPT)
+#include "wsmux.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.6.6.2 2017/02/05 13:40:26 skrll Exp $");
 
 #include <dev/spkrio.h>
 #include <dev/spkrvar.h>
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsbellvar.h>
+#include <dev/wscons/wsbellmuxvar.h>
 
 dev_type_open(spkropen);
 dev_type_close(spkrclose);
@@ -365,20 +371,57 @@ spkr_attach(device_t self, void (*tone)(device_t, u_int, u_int),
 	sc->sc_tone = tone;
 	sc->sc_rest = rest;
 	sc->sc_inbuf = NULL;
+	sc->sc_wsbelldev = NULL;
+
+	spkr_rescan(self, "", NULL);
 }
 
 int
 spkr_detach(device_t self, int flags)
 {
 	struct spkr_softc *sc = device_private(self);
+	int rc;
 
 #ifdef SPKRDEBUG
 	aprint_debug("%s: entering for unit %d\n", __func__, self->dv_unit);
 #endif /* SPKRDEBUG */
 	if (sc == NULL)
 		return ENXIO;
+
+	/* XXXNS If speaker never closes, we cannot complete the detach. */
+	while ((flags & DETACH_FORCE) != 0 && sc->sc_inbuf != NULL)
+		kpause("spkrwait", TRUE, 1, NULL);
 	if (sc->sc_inbuf != NULL)
 		return EBUSY;
+
+	rc = config_detach_children(self, flags);
+
+	return rc;
+}
+
+/* ARGSUSED */
+int
+spkr_rescan(device_t self, const char *iattr, const int *locators)
+{
+#if NWSMUX > 0
+	struct spkr_softc *sc = device_private(self);
+	struct wsbelldev_attach_args a;
+
+	if (sc->sc_wsbelldev == NULL) {
+		a.accesscookie = sc;
+		sc->sc_wsbelldev = config_found(self, &a, wsbelldevprint);
+	}
+#endif
+	return 0;
+}
+
+int
+spkr_childdet(device_t self, device_t child)
+{
+	struct spkr_softc *sc = device_private(self);
+
+	if (sc->sc_wsbelldev == child)
+		sc->sc_wsbelldev = NULL;
 
 	return 0;
 }
@@ -484,6 +527,14 @@ spkrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			playonetone(sc, &ttp);
 		}
 		return 0;
+	case SPKRGETVOL:
+		if (data != NULL)
+			*(u_int *)data = sc->sc_vol;
+		return 0;
+	case SPKRSETVOL:
+		if (data != NULL && *(u_int *)data <= 100)
+			sc->sc_vol = *(u_int *)data;
+		return 0;
 	default:
 		return ENOTTY;
 	}
@@ -494,17 +545,19 @@ extern struct cfdriver spkr_cd;
 #include "ioconf.c"
 #endif
 
-MODULE(MODULE_CLASS_DRIVER, spkr, "" /* audio and/or pcppi */ );
+MODULE(MODULE_CLASS_DRIVER, spkr, "audio" /* and/or pcppi */ );
 
 int
 spkr_modcmd(modcmd_t cmd, void *arg)
 {
+	int error = 0;
 #ifdef _MODULE
 	devmajor_t bmajor, cmajor;
-	int error = 0;
+#endif
 
 	switch(cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
 		bmajor = cmajor = -1;
 		error = devsw_attach(spkr_cd.cd_name, NULL, &bmajor,
 		    &spkr_cdevsw, &cmajor);
@@ -516,15 +569,18 @@ spkr_modcmd(modcmd_t cmd, void *arg)
 		if (error) {
 			devsw_detach(NULL, &spkr_cdevsw);
 		}
+#endif
 		break;
 
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
 		devsw_detach(NULL, &spkr_cdevsw);
 		error = config_fini_component(cfdriver_ioconf_spkr,
 		    cfattach_ioconf_spkr, cfdata_ioconf_spkr);
 		if (error)
 			devsw_attach(spkr_cd.cd_name, NULL, &bmajor,
 			    &spkr_cdevsw, &cmajor);
+#endif
 		break;
 
 	default:
@@ -533,7 +589,4 @@ spkr_modcmd(modcmd_t cmd, void *arg)
 	}
 
 	return error;
-#else
-	return 0;
-#endif
 }

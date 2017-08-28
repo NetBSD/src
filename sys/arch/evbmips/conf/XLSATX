@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.21.2.1 2015/09/22 12:05:41 skrll Exp $
+#	$NetBSD: XLSATX,v 1.21.2.2 2017/08/28 17:51:36 skrll Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.21.2.1 $"
+#ident 		"XLSATX-$Revision: 1.21.2.2 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -33,7 +33,7 @@ options 	NTP		# network time protocol
 
 # Debugging options
 options 	DIAGNOSTIC	# extra kernel sanity checking
-options 	DEBUG		# extra kernel debugging support
+#options 	DEBUG		# extra kernel debugging support
 options 	MSGBUFSIZE=65536 # kernel dmesg buffer
 options 	USERCONF	# userconf(4) support
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -105,9 +105,6 @@ options 	INET6		# IPV6
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
-
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
-#options 	TCP_COMPAT_42
 
 # JIT compiler for bpfilter
 #options	SLJIT

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcchip.h,v 1.4.32.1 2015/09/22 12:06:00 skrll Exp $	*/
+/*	$NetBSD: sdmmcchip.h,v 1.4.32.2 2017/08/28 17:52:27 skrll Exp $	*/
 /*	$OpenBSD: sdmmcchip.h,v 1.3 2007/05/31 10:09:01 uwe Exp $	*/
 
 /*
@@ -62,6 +62,9 @@ struct sdmmc_chip_functions {
 	int		(*signal_voltage)(sdmmc_chipset_handle_t, int);
 	int		(*bus_clock_ddr)(sdmmc_chipset_handle_t, int, bool);
 	int		(*execute_tuning)(sdmmc_chipset_handle_t, int);
+
+	/* hardware reset */
+	void		(*hw_reset)(sdmmc_chipset_handle_t);
 };
 
 /* host controller reset */
@@ -97,9 +100,12 @@ struct sdmmc_chip_functions {
 	((tag)->card_intr_ack((handle)))
 /* UHS functions */
 #define sdmmc_chip_signal_voltage(tag, handle, voltage)			\
-	((tag)->signal_voltage((handle), (voltage)))
+	((tag)->signal_voltage ? (tag)->signal_voltage((handle), (voltage)) : EINVAL)
 #define sdmmc_chip_execute_tuning(tag, handle, timing)			\
 	((tag)->execute_tuning ? (tag)->execute_tuning((handle), (timing)) : EINVAL)
+/* hardware reset */
+#define	sdmmc_chip_hw_reset(tag, handle)				\
+	((tag)->hw_reset ? (tag)->hw_reset((handle)) : /*CONSTCOND*/0)
 
 /* clock frequencies for sdmmc_chip_bus_clock() */
 #define SDMMC_SDCLK_OFF		0

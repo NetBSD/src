@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.22.14.3 2017/02/05 13:40:15 skrll Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.22.14.4 2017/08/28 17:51:44 skrll Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.22.14.3 2017/02/05 13:40:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.22.14.4 2017/08/28 17:51:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -802,6 +802,8 @@ netdock_get(struct netdock_softc *sc, int datalen)
 			if ((m->m_flags & M_EXT) == 0) {
 				if (top)
 					m_freem(top);
+				else
+					m_freem(m);
 				return (NULL);
 			}
 			len = MCLBYTES;

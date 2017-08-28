@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.13.64.1 2016/10/05 20:55:28 skrll Exp $	*/
+/*	$NetBSD: gdt.h,v 1.13.64.2 2017/08/28 17:51:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@ struct pmap;
 
 void gdt_init(void);
 void gdt_init_cpu(struct cpu_info *);
-void gdt_reload_cpu(struct cpu_info *);
 void gdt_alloc_cpu(struct cpu_info *);
 int tss_alloc(const struct i386tss *);
 void tss_free(int);
@@ -45,5 +44,5 @@ void ldt_free(int);
 
 #endif /* LOCORE */
 
-#define	MINGDTSIZ	512
-#define	MAXGDTSIZ	8192
+#define	MINGDTSIZ	PAGE_SIZE
+#define	MAXGDTSIZ	65536

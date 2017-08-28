@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_pinctrl.c,v 1.6.2.3 2016/03/19 11:29:57 skrll Exp $ */
+/*	$NetBSD: exynos_pinctrl.c,v 1.6.2.4 2017/08/28 17:51:32 skrll Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.6.2.3 2016/03/19 11:29:57 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.6.2.4 2017/08/28 17:51:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,16 +55,15 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.6.2.3 2016/03/19 11:29:57 skrll
 
 struct exynos_pinctrl_config {
 	int pc_phandle;
-	struct exynos_gpio_pin_cfg *pc_pincfg;
+	struct exynos_gpio_pin_cfg pc_pincfg;
 	struct exynos_pinctrl_softc *pc_sc;
 };
 
 static int exynos_pinctrl_match(device_t, cfdata_t, void *);
 static void exynos_pinctrl_attach(device_t, device_t, void *);
 
-static int  exynos_pinctrl_set_cfg(void *);
-static struct exynos_gpio_pin_cfg *
-exynos_parse_config(struct exynos_pinctrl_config *pc);
+static int  exynos_pinctrl_set_cfg(device_t, const void *, size_t);
+static void exynos_parse_config(int, struct exynos_gpio_pin_cfg *);
 
 static struct fdtbus_pinctrl_controller_func exynos_pinctrl_controller_func = {
 	.set_config = exynos_pinctrl_set_cfg
@@ -76,8 +75,10 @@ CFATTACH_DECL_NEW(exynos_pinctrl, sizeof(struct exynos_pinctrl_softc),
 static int
 exynos_pinctrl_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "samsung,exynos5420-pinctrl",
-					    NULL };
+	const char * const compatible[] = {
+	    "samsung,exynos5410-pinctrl",
+	    "samsung,exynos5420-pinctrl",
+	    NULL };
 	struct fdt_attach_args * const faa = aux;
 	return of_match_compatible(faa->faa_phandle, compatible);
 }
@@ -126,90 +127,61 @@ exynos_pinctrl_attach(device_t parent, device_t self, void *aux)
 		}
 
 		if (is_pinctrl(child)) {
-			struct exynos_pinctrl_config *pc;
-			pc = kmem_alloc(sizeof(*pc), KM_SLEEP);
-			pc->pc_phandle = child;
-			pc->pc_sc = sc;
-			pc->pc_pincfg = exynos_parse_config(pc);
-			fdtbus_register_pinctrl_config(pc, child,
+			fdtbus_register_pinctrl_config(self, child,
 						       &exynos_pinctrl_controller_func);
 		}
 	}
+
+	fdtbus_pinctrl_configure();
 }
 
-static struct exynos_gpio_pin_cfg *
-exynos_parse_config(struct exynos_pinctrl_config *pc)
+static void
+exynos_parse_config(int phandle, struct exynos_gpio_pin_cfg *gc)
 {
-	struct exynos_gpio_pin_cfg *gc = kmem_zalloc(sizeof(*gc), KM_SLEEP);
-	int len;
-	int value;
-
-	len = OF_getprop(pc->pc_phandle, "samsung,pin-function",
-			 &value, sizeof(value));
-	if (len > 0) {
-		gc->cfg = be32toh(value);
-	}
-
-	len = OF_getprop(pc->pc_phandle, "samsung,pin-pud", &value,
-			 sizeof(&value));
-	if (len > 0) {
-		gc->pud = be32toh(value);
-	}
-
-	len = OF_getprop(pc->pc_phandle, "samsung,pin-drv", &value,
-			 sizeof(&value));
-	if (len > 0) {
-		gc->drv = be32toh(value);
-	}
-
-	len = OF_getprop(pc->pc_phandle, "samsung,pin-conpwd", &value,
-			 sizeof(&value));
-	if (len > 0) {
-		gc->conpwd = be32toh(value);
-	}
-
-	len = OF_getprop(pc->pc_phandle, "samsung,pin-pudpwd", &value,
-			 sizeof(&value));
-	if (len > 0) {
-		gc->pudpwd = be32toh(value);
-	}
-	return gc;
+	of_getprop_uint32(phandle, "samsung,pin-function", &gc->cfg);
+	of_getprop_uint32(phandle, "samsung,pin-pud", &gc->pud);
+	of_getprop_uint32(phandle, "samsung,pin-drv", &gc->drv);
+	of_getprop_uint32(phandle, "samsung,pin-conpwd", &gc->conpwd);
+	of_getprop_uint32(phandle, "samsung,pin-pudpwd", &gc->pudpwd);
 }
 
 static int
 exynos_do_config(struct exynos_pinctrl_config *pc)
 {
-	struct exynos_gpio_pin_cfg *gc = pc->pc_pincfg;
+	struct exynos_gpio_pin_cfg *gc = &pc->pc_pincfg;
 	struct exynos_gpio_bank *bank;
-	int len;
-	char result[20];
+	const char *pins;
 
-	if (gc == NULL) {
-		printf("%s: No configuration available\n", __func__);
+	int pins_len = OF_getproplen(pc->pc_phandle, "samsung,pins");
+	if (pins_len <= 0)
 		return -1;
+
+	for (pins = fdtbus_get_string(pc->pc_phandle, "samsung,pins");
+	     pins_len > 0;
+	     pins_len -= strlen(pins) + 1, pins += strlen(pins) + 1) {
+		bank = exynos_gpio_bank_lookup(pins);
+		if (bank == NULL) {
+			aprint_error_dev(pc->pc_sc->sc_dev,
+			    "unknown pin name '%s'\n", pins);
+			continue;
+		}
+		exynos_gpio_pin_ctl_write(bank, gc);
 	}
 
-	len = OF_getprop(pc->pc_phandle, "samsung,pins", result,
-			 sizeof(result));
-	if (len <= 0) {
-		printf("%s: couldn't get pins. (%d)\n", __func__,
-			pc->pc_phandle);
-		return -1;
-	}
-
-	bank = exynos_gpio_bank_lookup(&result[0]);
-	if (!bank) {
-		printf("%s: Couldn't get bank \"%s\".\n", __func__, result);
-		return -1;
-	}
-
-	exynos_gpio_pin_ctl_write(bank, gc);
 	return 0;
 }
 	
 static int
-exynos_pinctrl_set_cfg(void *cookie)
+exynos_pinctrl_set_cfg(device_t dev, const void *data, size_t len)
 {
-	struct exynos_pinctrl_config *pc = cookie;
-	return exynos_do_config(pc);
+	struct exynos_pinctrl_config pc;
+
+	if (len != 4)
+		return -1;
+
+	pc.pc_phandle = fdtbus_get_phandle_from_native(be32dec(data));
+	pc.pc_sc = device_private(dev);
+	exynos_parse_config(pc.pc_phandle, &pc.pc_pincfg);
+
+	return exynos_do_config(&pc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.c,v 1.7.2.3 2016/12/05 10:54:48 skrll Exp $	*/
+/*	$NetBSD: altq_jobs.c,v 1.7.2.4 2017/08/28 17:51:26 skrll Exp $	*/
 /*	$KAME: altq_jobs.c,v 1.11 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (c) 2001, the Rector and Board of Visitors of the
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.7.2.3 2016/12/05 10:54:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.7.2.4 2017/08/28 17:51:26 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -2110,10 +2110,9 @@ jobscmd_class_stats(struct jobs_class_stats *ap)
 	usp = ap->stats;
 	for (pri = 0; pri <= jif->jif_maxpri; pri++) {
 		cl = jif->jif_classes[pri];
+		(void)memset(&stats, 0, sizeof(stats));
 		if (cl != NULL)
 			get_class_stats(&stats, cl);
-		else
-			(void)memset(&stats, 0, sizeof(stats));
 		if ((error = copyout((void *)&stats, (void *)usp++,
 				     sizeof(stats))) != 0)
 			return (error);

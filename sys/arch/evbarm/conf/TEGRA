@@ -1,68 +1,86 @@
 #
-#	$NetBSD: TEGRA,v 1.6.2.5 2017/02/05 13:40:07 skrll Exp $
+#	$NetBSD: TEGRA,v 1.6.2.6 2017/08/28 17:51:34 skrll Exp $
 #
-#	NVIDIA Tegra K1 (T124)
+#	NVIDIA Tegra family SoCs
 #
 
 include	"arch/evbarm/conf/std.tegra"
 include	"arch/evbarm/conf/GENERIC.common"
 
+makeoptions	DTS="
+	tegra124-apalis-eval.dts
+	tegra124-jetson-tk1.dts
+	tegra124-nyan-big.dts
+	tegra124-nyan-blaze.dts
+	tegra124-venice2.dts
+"
+
 options 	CPU_CORTEXA15
+options 	CPU_CORTEXA57
 options 	SOC_TEGRA124
+options 	SOC_TEGRA210
 options 	MULTIPROCESSOR
 
 pseudo-device 	openfirm	# /dev/openfirm
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+#options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+# CONSADDR is required for early init messages from VERBOSE_INIT_ARM.
+#options 	CONSADDR=0x70006300
+
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
 
 config		netbsd		root on ? type ?
 
-mainbus0	at root
-cpu*		at mainbus?
+# Device tree support
+armfdt0		at root
+fdt*		at fdtbus?
 
-# A15 core devices
-armperiph0	at mainbus?
-armgic0		at armperiph?				# Interrupt Controller
-armgtmr0	at armperiph?				# ARM Generic Timer
+# CPUs
+cpus*		at fdt? pass 0
+cpu*		at cpus?
 
-# On-board I/O
-tegrafdt0	at mainbus?
-fdt0		at tegrafdt0
-simplebus*	at fdt?
-fdt*		at simplebus?
+# CPU frequency scaling
+tegra124cpu*	at cpu?
 
-fregulator*	at fdt?
+fclock*		at fdt? pass 4
+fregulator*	at fdt? pass 4
 gpiokeys*	at fdt?
 
+# Timer
+gtmr*		at fdt? pass 1		# ARM Generic Timer
+armgtmr0	at gtmr?
+tegratimer*	at fdt?			# Timers
+
 # Interrupt controller
-tegralic*	at fdt?			# LIC
-gic*		at fdt?			# GIC
+tegralic*	at fdt? pass 1		# LIC
+gic*		at fdt? pass 1		# GIC
+armgic0		at gic?
 
 # Memory controller
-tegramc*	at fdt?			# MC
+tegramc*	at fdt?	pass 4		# MC
+
+# DMA controller
+tegraapbdma*	at fdt? pass 4		# APB DMA
 
 # FUSE controller
-tegrafuse*	at fdt?			# FUSE
+tegrafuse*	at fdt? pass 4		# FUSE
 
 # Power management controller
-tegrapmc*	at fdt?			# PMC
+tegrapmc*	at fdt? pass 4		# PMC
 
 # Clock and Reset controller
-tegra124car*	at fdt?			# CAR
+tegra124car*	at fdt? pass 3		# CAR (T124)
+tegra210car*	at fdt? pass 3		# CAR (T210)
 
 # GPIO controller
-tegragpio*	at fdt?			# GPIO
+tegragpio*	at fdt? pass 2		# GPIO
 gpio*		at gpiobus?
-
-# Timers
-tegratimer*	at fdt?			# Timers
 
 # MPIO / Pinmux
 tegrampio*	at fdt?			# MPIO
@@ -88,7 +106,6 @@ athn*		at pci? dev ? function ?	# Atheros IEEE 802.11
 
 # UART
 com*		at fdt?			# UART
-options 	CONSADDR=0x70006300, CONSPEED=115200
 
 # I2C
 tegrai2c*	at fdt?			# I2C
@@ -96,6 +113,7 @@ iic*		at tegrai2c?
 titemp*		at iic?
 seeprom*	at iic?
 as3722pmic*	at iic?
+as3722reg*	at as3722pmic?
 
 # RTC
 tegrartc*	at fdt?			# RTC

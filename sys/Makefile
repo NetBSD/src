@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.79 2013/03/01 18:25:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.79.14.1 2017/08/28 17:51:26 skrll Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	altq arch compat dev fs miscfs \
-	net net80211 netatalk netbt netipsec netinet netinet6 \
+	net net80211 netatalk netbt netcan netipsec netinet netinet6 \
         netisdn netkey netmpls netnatm netsmb \
 	nfs opencrypto sys ufs uvm
 

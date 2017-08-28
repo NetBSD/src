@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.50.4.2 2017/02/05 13:40:55 skrll Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.50.4.3 2017/08/28 17:53:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -216,9 +216,6 @@ typedef struct tmpfs_mount {
 	uint64_t		tm_mem_limit;
 	uint64_t		tm_bytes_used;
 	kmutex_t		tm_acc_lock;
-
-	/* Read-only indicator. */
-	bool			tm_rdonly;
 
 	/* Pointer to the root inode. */
 	tmpfs_node_t *		tm_root;

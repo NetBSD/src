@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.23.6.1 2015/04/06 15:17:53 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.23.6.2 2017/08/28 17:51:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -101,8 +101,10 @@
     
 #ifdef _KERNEL
 #ifndef _LOCORE
+#ifndef __HIDE_DELAY
 void	delay(unsigned);
 #define DELAY(x)	delay(x)
+#endif
 #endif
 #endif
 

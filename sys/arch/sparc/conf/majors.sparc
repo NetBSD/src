@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.33.30.1 2015/06/06 14:40:03 skrll Exp $
+#	$NetBSD: majors.sparc,v 1.33.30.2 2017/08/28 17:51:52 skrll Exp $
 #
 # Device majors for sparc
 #
@@ -121,3 +121,8 @@ device-major	joy		char 137		joy
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.
+
+# ld has (eroneously) been assigned a MD major on some ports, this one
+# is from the (mostly unused) sys/conf/majors.storage
+device-major	ld		char 303 block	303	ld
+

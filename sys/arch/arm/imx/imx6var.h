@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6var.h,v 1.2.2.3 2016/12/05 10:54:50 skrll Exp $	*/
+/*	$NetBSD: imx6var.h,v 1.2.2.4 2017/08/28 17:51:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -42,7 +42,7 @@ struct axi_attach_args {
 };
 
 extern struct bus_space armv7_generic_bs_tag;
-extern struct arm32_bus_dma_tag imx_bus_dma_tag;
+extern struct arm32_bus_dma_tag armv7_generic_dma_tag;
 extern bus_space_tag_t imx6_armcore_bst;
 extern bus_space_handle_t imx6_armcore_bsh;
 
@@ -50,8 +50,8 @@ extern bus_space_handle_t imx6_armcore_bsh;
 struct iomux_conf {
 	uint32_t pin;	/* ((MUXADDR<<16)|PADADDR) */
 #define IOMUX_CONF_EOT	((uint32_t)(-1))
-	uint32_t mux:8,
-	         pad:24;
+	uint32_t mux;
+	uint32_t pad;
 };
 
 uint32_t iomux_read(uint32_t);
@@ -76,6 +76,7 @@ uint32_t imx6_chip_id(void);
 #define CHIPID_MAJOR_IMX6DL		0x00610000
 #define CHIPID_MAJOR_IMX6SOLO		0x00620000
 #define CHIPID_MAJOR_IMX6Q		0x00630000
+#define CHIPID_MAJOR_IMX6UL		0x00640000
 #define IMX6_CHIPID_MAJOR(v)		((v) & CHIPID_MAJOR_MASK)
 #define IMX6_CHIPID_MINOR(v)		((v) & CHIPID_MINOR_MASK)
 

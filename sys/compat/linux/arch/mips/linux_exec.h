@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.15 2014/02/09 16:41:42 chs Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.15.6.1 2017/08/28 17:51:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #define LINUX_GCC_SIGNATURE 1
 
 #define LINUX_ELF_AUX_ARGSIZ \
-	(howmany(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)) + LINUX_RANDOM_BYTES)
+	(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info) + LINUX_RANDOM_BYTES)
 
 #define linux_exec_setup_stack	exec_setup_stack
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_usb.c,v 1.2 2014/07/25 07:49:56 hkenken Exp $	*/
+/*	$NetBSD: imx51_usb.c,v 1.2.4.1 2017/08/28 17:51:30 skrll Exp $	*/
 /*
  * Copyright (c) 2010  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_usb.c,v 1.2 2014/07/25 07:49:56 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_usb.c,v 1.2.4.1 2017/08/28 17:51:30 skrll Exp $");
 
 #include "opt_imx.h"
 
@@ -80,7 +80,7 @@ imxusbc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
         aa.aa_iot = sc->sc_iot;
 	aa.aa_ioh = sc->sc_ioh;
-	aa.aa_dmat = &imx_bus_dma_tag;
+	aa.aa_dmat = &armv7_generic_dma_tag;
         aa.aa_unit = cf->cf_loc[IMXUSBCCF_UNIT];
 	aa.aa_irq = cf->cf_loc[IMXUSBCCF_IRQ];
 

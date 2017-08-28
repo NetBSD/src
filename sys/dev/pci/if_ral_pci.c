@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_pci.c,v 1.21.6.2 2016/07/09 20:25:04 skrll Exp $	*/
+/*	$NetBSD: if_ral_pci.c,v 1.21.6.3 2017/08/28 17:52:05 skrll Exp $	*/
 /*	$OpenBSD: if_ral_pci.c,v 1.24 2015/11/24 17:11:39 mpi Exp $  */
 
 /*-
@@ -21,7 +21,7 @@
  * PCI front-end for the Ralink RT2560/RT2561/RT2860/RT3090 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.21.6.2 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.21.6.3 2017/08/28 17:52:05 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -56,42 +56,24 @@ __KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.21.6.2 2016/07/09 20:25:04 skrll Ex
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#define RAL_POWER_MANAGEMENT 0	/* Disabled for now */
-
 static struct ral_opns {
 	int	(*attach)(void *, int);
 	int	(*detach)(void *);
-#if RAL_POWER_MANAGEMENT
-	void	(*suspend)(void *);
-	void	(*wakeup)(void *);
-#endif
 	int	(*intr)(void *);
 
 }  ral_rt2560_opns = {
 	rt2560_attach,
 	rt2560_detach,
-#if RAL_POWER_MANAGEMENT
-	rt2560_suspend,
-	rt2560_wakeup,
-#endif
 	rt2560_intr
 
 }, ral_rt2661_opns = {
 	rt2661_attach,
 	rt2661_detach,
-#if RAL_POWER_MANAGEMENT
-	rt2661_suspend,
-	rt2661_wakeup,
-#endif
 	rt2661_intr
 
 }, ral_rt2860_opns = {
 	rt2860_attach,
 	rt2860_detach,
-#if RAL_POWER_MANAGEMENT
-	rt2860_suspend,
-	rt2860_wakeup,
-#endif
 	rt2860_intr
 };
 
@@ -116,15 +98,9 @@ struct ral_pci_softc {
 int	ral_pci_match(device_t, cfdata_t, void *);
 void	ral_pci_attach(device_t, device_t, void *);
 int	ral_pci_detach(device_t, int);
-#if RAL_POWER_MANAGEMENT
-int	ral_pci_activate(struct device *, devact_t);
-void	ral_pci_wakeup(struct ral_pci_softc *);
-#else
-#define ral_pci_activate NULL
-#endif
 
 CFATTACH_DECL_NEW(ral_pci, sizeof (struct ral_pci_softc),
-	ral_pci_match, ral_pci_attach, ral_pci_detach, ral_pci_activate);
+	ral_pci_match, ral_pci_attach, ral_pci_detach, NULL);
 
 static const struct ral_pci_matchid {
 	pci_vendor_id_t         ral_vendor;
@@ -276,33 +252,3 @@ ral_pci_detach(device_t self, int flags)
 
 	return 0;
 }
-
-#if RAL_POWER_MANAGEMENT
-int
-ral_pci_activate(struct device *self, devact_t act)
-{
-	struct ral_pci_softc *psc = (struct ral_pci_softc *)self;
-	struct rt2560_softc *sc = &psc->sc_sc;
-
-	switch (act) {
-	case DVACT_SUSPEND:
-		(*psc->sc_opns->suspend)(sc);
-		break;
-	case DVACT_WAKEUP:
-		ral_pci_wakeup(psc);
-		break;
-	}
-	return 0;
-}
-
-void
-ral_pci_wakeup(struct ral_pci_softc *psc)
-{
-	struct rt2560_softc *sc = &psc->sc_sc;
-	int s;
-
-	s = splnet();
-	(*psc->sc_opns->wakeup)(sc);
-	splx(s);
-}
-#endif

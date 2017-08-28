@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.33.74.1 2016/03/19 11:30:00 skrll Exp $	*/
+/*	$NetBSD: profile.h,v 1.33.74.2 2017/08/28 17:51:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,12 @@
 #define MCOUNT_COMPAT	/* nothing */
 #endif
 
+#if defined(_REENTRANT) && !defined(_KERNEL) 
+#define MCOUNT_ACTIVE	if (_gmonparam.state != GMON_PROF_ON) return
+#else
+#define MCOUNT_ACTIVE	
+#endif
+
 #define	MCOUNT \
 MCOUNT_COMPAT								\
 extern void mcount(void) __asm(MCOUNT_ENTRY)				\
@@ -55,6 +61,7 @@ mcount(void)								\
 	int selfpc, frompcindex;					\
 	int eax, ecx, edx;						\
 									\
+	MCOUNT_ACTIVE;							\
 	__asm volatile("movl %%eax,%0" : "=g" (eax));			\
 	__asm volatile("movl %%ecx,%0" : "=g" (ecx));			\
 	__asm volatile("movl %%edx,%0" : "=g" (edx));			\
@@ -64,12 +71,11 @@ mcount(void)								\
 	 *								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	__asm volatile("movl 4(%%ebp),%0" : "=r" (selfpc));		\
+	selfpc = (int)__builtin_return_address(0);			\
 	/*								\
-	 * frompcindex = pc pushed by call into self.			\
+	 * frompcindex = stack frame of caller, assuming frame pointer	\
 	 */								\
-	__asm volatile("movl (%%ebp),%0;movl 4(%0),%0"			\
-	    : "=r" (frompcindex));					\
+	frompcindex = ((int *)__builtin_frame_address(1))[1];		\
 	_mcount((u_long)frompcindex, (u_long)selfpc);			\
 									\
 	__asm volatile("movl %0,%%edx" : : "g" (edx));			\

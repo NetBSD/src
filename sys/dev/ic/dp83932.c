@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.36.6.3 2017/02/05 13:40:27 skrll Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.36.6.4 2017/08/28 17:52:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.36.6.3 2017/02/05 13:40:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.36.6.4 2017/08/28 17:52:03 skrll Exp $");
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,6 +212,7 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	/*
@@ -611,7 +613,7 @@ sonic_intr(void *arg)
 	if (handled) {
 		if (wantinit)
 			(void)sonic_init(ifp);
-		sonic_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 
 	return handled;
@@ -784,8 +786,10 @@ sonic_rxintr(struct sonic_softc *sc)
 				goto dropit;
 			if (len > (MHLEN - 2)) {
 				MCLGET(m, M_DONTWAIT);
-				if ((m->m_flags & M_EXT) == 0)
+				if ((m->m_flags & M_EXT) == 0) {
+					m_freem(m);
 					goto dropit;
+				}
 			}
 			m->m_data += 2;
 			/*

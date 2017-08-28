@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.45.2.6 2017/02/05 13:40:14 skrll Exp $
+# $NetBSD: GENERIC,v 1.45.2.7 2017/08/28 17:51:43 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.45.2.6 $"
+#ident          "GENERIC-$Revision: 1.45.2.7 $"
 
 maxusers	16		# estimated number of users
 
@@ -87,7 +87,6 @@ options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_43	# and 4.3BSD
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -121,6 +120,7 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

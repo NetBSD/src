@@ -1,4 +1,4 @@
-/* $NetBSD: clk.c,v 1.1.2.2 2015/12/27 12:09:49 skrll Exp $ */
+/* $NetBSD: clk.c,v 1.1.2.3 2017/08/28 17:52:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,47 +27,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clk.c,v 1.1.2.2 2015/12/27 12:09:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clk.c,v 1.1.2.3 2017/08/28 17:52:01 skrll Exp $");
 
 #include <sys/param.h>
 
 #include <dev/clk/clk.h>
 #include <dev/clk/clk_backend.h>
 
-static const char *clk_backend = NULL;
-static const struct clk_funcs *clk_funcs = NULL;
-static void *clk_priv = NULL;
-
-int
-clk_backend_register(const char *name, const struct clk_funcs *funcs, void *priv)
-{
-	KASSERT(clk_funcs == NULL);
-
-	clk_backend = name;
-	clk_funcs = funcs;
-	clk_priv = priv;
-
-	return 0;
-}
-
 struct clk *
-clk_get(const char *name)
+clk_get(struct clk_domain *domain, const char *name)
 {
-	if (clk_funcs == NULL)
-		return NULL;
-	return clk_funcs->get(clk_priv, name);
+	return domain->funcs->get(domain->priv, name);
 }
 
 void
 clk_put(struct clk *clk)
 {
-	return clk_funcs->put(clk_priv, clk);
+	return clk->domain->funcs->put(clk->domain->priv, clk);
 }
 
 u_int
 clk_get_rate(struct clk *clk)
 {
-	return clk_funcs->get_rate(clk_priv, clk);
+	return clk->domain->funcs->get_rate(clk->domain->priv, clk);
 }
 
 int
@@ -75,31 +57,44 @@ clk_set_rate(struct clk *clk, u_int rate)
 {
 	if (clk->flags & CLK_SET_RATE_PARENT) {
 		return clk_set_rate(clk_get_parent(clk), rate);
+	} else if (clk->domain->funcs->set_rate) {
+		return clk->domain->funcs->set_rate(clk->domain->priv,
+		    clk, rate);
 	} else {
-		return clk_funcs->set_rate(clk_priv, clk, rate);
+		return EINVAL;
 	}
 }
 
 int
 clk_enable(struct clk *clk)
 {
-	return clk_funcs->enable(clk_priv, clk);
+	if (clk->domain->funcs->enable)
+		return clk->domain->funcs->enable(clk->domain->priv, clk);
+	else
+		return 0;
 }
 
 int
 clk_disable(struct clk *clk)
 {
-	return clk_funcs->disable(clk_priv, clk);
+	if (clk->domain->funcs->disable)
+		return clk->domain->funcs->disable(clk->domain->priv, clk);
+	else
+		return EINVAL;
 }
 
 int
 clk_set_parent(struct clk *clk, struct clk *parent_clk)
 {
-	return clk_funcs->set_parent(clk_priv, clk, parent_clk);
+	if (clk->domain->funcs->set_parent)
+		return clk->domain->funcs->set_parent(clk->domain->priv,
+		    clk, parent_clk);
+	else
+		return EINVAL;
 }
 
 struct clk *
 clk_get_parent(struct clk *clk)
 {
-	return clk_funcs->get_parent(clk_priv, clk);
+	return clk->domain->funcs->get_parent(clk->domain->priv, clk);
 }

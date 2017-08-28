@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.c,v 1.1.30.2 2016/12/05 10:55:17 skrll Exp $ */
+/* $NetBSD: ixgbe_netbsd.c,v 1.1.30.3 2017/08/28 17:52:26 skrll Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,9 +57,7 @@ ixgbe_dma_tag_create(bus_dma_tag_t dmat, bus_size_t alignment,
 
 	*dtp = NULL;
 
-	if ((dt = kmem_zalloc(sizeof(*dt), KM_SLEEP)) == NULL)
-		return ENOMEM;
-
+	dt = kmem_zalloc(sizeof(*dt), KM_SLEEP);
 	dt->dt_dmat = dmat;
 	dt->dt_alignment = alignment;
 	dt->dt_boundary = boundary;
@@ -138,9 +136,6 @@ ixgbe_newext(ixgbe_extmem_head_t *eh, bus_dma_tag_t dmat, size_t size)
 	int nseg, rc;
 
 	em = kmem_zalloc(sizeof(*em), KM_SLEEP);
-
-	if (em == NULL)
-		return NULL;
 
 	rc = bus_dmamem_alloc(dmat, size, PAGE_SIZE, 0, &em->em_seg, 1, &nseg,
 	    BUS_DMA_WAITOK);

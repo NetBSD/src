@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.160.2.7 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.160.2.8 2017/08/28 17:53:12 skrll Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.160.2.7 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.160.2.8 2017/08/28 17:53:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -180,6 +180,31 @@ ip6_handle_rthdr(struct ip6_rthdr *rh, struct ip6_hdr *ip6)
 }
 
 /*
+ * Send an IP packet to a host.
+ */
+int
+ip6_if_output(struct ifnet * const ifp, struct ifnet * const origifp,
+    struct mbuf * const m,
+    const struct sockaddr_in6 * const dst, const struct rtentry *rt)
+{
+	int error = 0;
+
+	if (rt != NULL) {
+		error = rt_check_reject_route(rt, ifp);
+		if (error != 0) {
+			m_freem(m);
+			return error;
+		}
+	}
+
+	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
+		error = if_output_lock(ifp, origifp, m, sin6tocsa(dst), rt);
+	else
+		error = if_output_lock(ifp, ifp, m, sin6tocsa(dst), rt);
+	return error;
+}
+
+/*
  * IP6 output. The packet in mbuf chain m contains a skeletal IP6
  * header (with pri, len, nxt, hlim, src, dst).
  * This function may modify ver and hlim only.
@@ -197,7 +222,7 @@ ip6_output(
     struct route *ro,
     int flags,
     struct ip6_moptions *im6o,
-    struct socket *so,
+    struct in6pcb *in6p,
     struct ifnet **ifpp		/* XXX: just for statistics */
 )
 {
@@ -286,7 +311,7 @@ ip6_output(
 	if (ipsec_used) {
 		/* Check the security policy (SP) for the packet */
 
-		sp = ipsec6_check_policy(m, so, flags, &needipsec, &error);
+		sp = ipsec6_check_policy(m, in6p, flags, &needipsec, &error);
 		if (error != 0) {
 			/*
 			 * Hack: -EINVAL is used to signal that a packet
@@ -557,7 +582,7 @@ ip6_output(
 		origifp = ia->ia_ifp;
 		if (if_is_deactivated(origifp))
 			goto bad;
-		if_acquire_NOMPSAFE(origifp, &psref_ia);
+		if_acquire(origifp, &psref_ia);
 		release_psref_ia = true;
 	} else
 		origifp = ifp;
@@ -611,7 +636,7 @@ ip6_output(
 	if (!IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
 		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
 	else {
-		struct	in6_multi *in6m;
+		bool ingroup;
 
 		m->m_flags = (m->m_flags & ~M_BCAST) | M_MCAST;
 
@@ -627,9 +652,8 @@ ip6_output(
 			goto bad;
 		}
 
-		IN6_LOOKUP_MULTI(ip6->ip6_dst, ifp, in6m);
-		if (in6m != NULL &&
-		   (im6o == NULL || im6o->im6o_multicast_loop)) {
+		ingroup = in6_multi_group(&ip6->ip6_dst, ifp);
+		if (ingroup && (im6o == NULL || im6o->im6o_multicast_loop)) {
 			/*
 			 * If we belong to the destination multicast group
 			 * on the outgoing interface, and the caller did not
@@ -844,7 +868,7 @@ ip6_output(
 		KASSERT(dst != NULL);
 		if (__predict_true(!tso ||
 		    (ifp->if_capenable & IFCAP_TSOv6) != 0)) {
-			error = nd6_output(ifp, origifp, m, dst, rt);
+			error = ip6_if_output(ifp, origifp, m, dst, rt);
 		} else {
 			error = ip6_tso_output(ifp, origifp, m, dst, rt);
 		}
@@ -1030,7 +1054,7 @@ sendorfree:
 			}
 			pserialize_read_exit(s);
 			KASSERT(dst != NULL);
-			error = nd6_output(ifp, origifp, m, dst, rt);
+			error = ip6_if_output(ifp, origifp, m, dst, rt);
 		} else
 			m_freem(m);
 	}
@@ -1045,7 +1069,7 @@ done:
 
 #ifdef IPSEC
 	if (sp != NULL)
-		KEY_FREESP(&sp);
+		KEY_SP_UNREF(&sp);
 #endif /* IPSEC */
 
 	if_put(ifp, &psref);
@@ -1334,6 +1358,7 @@ ip6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	int error, optval;
 	int level, optname;
 
+	KASSERT(solocked(so));
 	KASSERT(sopt != NULL);
 
 	level = sopt->sopt_level;
@@ -2048,6 +2073,8 @@ ip6_pcbopts(struct ip6_pktopts **pktopt, struct socket *so,
 	struct mbuf *m;
 	int error = 0;
 
+	KASSERT(solocked(so));
+
 	/* turn off any old options. */
 	if (opt) {
 #ifdef DIAGNOSTIC
@@ -2353,13 +2380,14 @@ ip6_freepcbopts(struct ip6_pktopts *pktopt)
 }
 
 int
-ip6_get_membership(const struct sockopt *sopt, struct ifnet **ifp, void *v,
-    size_t l)
+ip6_get_membership(const struct sockopt *sopt, struct ifnet **ifp,
+    struct psref *psref, void *v, size_t l)
 {
 	struct ipv6_mreq mreq;
 	int error;
 	struct in6_addr *ia = &mreq.ipv6mr_multiaddr;
 	struct in_addr *ia4 = (void *)&ia->s6_addr32[3];
+
 	error = sockopt_get(sopt, &mreq, sizeof(mreq));
 	if (error != 0)
 		return error;
@@ -2410,15 +2438,16 @@ ip6_get_membership(const struct sockopt *sopt, struct ifnet **ifp, void *v,
 		if (error != 0)
 			return error;
 		rt = rtcache_init(&ro);
-		*ifp = rt != NULL ? rt->rt_ifp : NULL;
-		/* FIXME *ifp is NOMPSAFE */
+		*ifp = rt != NULL ?
+		    if_get_byindex(rt->rt_ifp->if_index, psref) : NULL;
 		rtcache_unref(rt, &ro);
 		rtcache_free(&ro);
 	} else {
 		/*
 		 * If the interface is specified, validate it.
 		 */
-		if ((*ifp = if_byindex(mreq.ipv6mr_interface)) == NULL)
+		*ifp = if_get_byindex(mreq.ipv6mr_interface, psref);
+		if (*ifp == NULL)
 			return ENXIO;	/* XXX EINVAL? */
 	}
 	if (sizeof(*ia) == l)
@@ -2442,6 +2471,8 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 	struct ip6_moptions *im6o = in6p->in6p_moptions;
 	struct in6_multi_mship *imm;
 
+	KASSERT(in6p_locked(in6p));
+
 	if (im6o == NULL) {
 		/*
 		 * No multicast option buffer attached to the pcb;
@@ -2459,7 +2490,8 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 
 	switch (sopt->sopt_name) {
 
-	case IPV6_MULTICAST_IF:
+	case IPV6_MULTICAST_IF: {
+		int s;
 		/*
 		 * Select the interface for outgoing multicast packets.
 		 */
@@ -2467,19 +2499,24 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		if (error != 0)
 			break;
 
+		s = pserialize_read_enter();
 		if (ifindex != 0) {
 			if ((ifp = if_byindex(ifindex)) == NULL) {
+				pserialize_read_exit(s);
 				error = ENXIO;	/* XXX EINVAL? */
 				break;
 			}
 			if ((ifp->if_flags & IFF_MULTICAST) == 0) {
+				pserialize_read_exit(s);
 				error = EADDRNOTAVAIL;
 				break;
 			}
 		} else
 			ifp = NULL;
 		im6o->im6o_multicast_if_index = if_get_index(ifp);
+		pserialize_read_exit(s);
 		break;
+	    }
 
 	case IPV6_MULTICAST_HOPS:
 	    {
@@ -2516,17 +2553,25 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		im6o->im6o_multicast_loop = loop;
 		break;
 
-	case IPV6_JOIN_GROUP:
+	case IPV6_JOIN_GROUP: {
+		int bound;
+		struct psref psref;
 		/*
 		 * Add a multicast group membership.
 		 * Group must be a valid IP6 multicast address.
 		 */
-		if ((error = ip6_get_membership(sopt, &ifp, &ia, sizeof(ia))))
+		bound = curlwp_bind();
+		ifp = NULL;
+		error = ip6_get_membership(sopt, &ifp, &psref, &ia, sizeof(ia));
+		if (error != 0) {
+			KASSERT(ifp == NULL);
+			curlwp_bindx(bound);
 			return error;
+		}
 
 		if (IN6_IS_ADDR_V4MAPPED(&ia)) {
 			error = ip_setmoptions(&in6p->in6p_v4moptions, sopt);
-			break;
+			goto put_break;
 		}
 		/*
 		 * See if we found an interface, and confirm that it
@@ -2534,26 +2579,26 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		 */
 		if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0) {
 			error = EADDRNOTAVAIL;
-			break;
+			goto put_break;
 		}
 
 		if (in6_setscope(&ia, ifp, NULL)) {
 			error = EADDRNOTAVAIL; /* XXX: should not happen */
-			break;
+			goto put_break;
 		}
 
 		/*
 		 * See if the membership already exists.
 		 */
-		for (imm = im6o->im6o_memberships.lh_first;
-		     imm != NULL; imm = imm->i6mm_chain.le_next)
+		LIST_FOREACH(imm, &im6o->im6o_memberships, i6mm_chain) {
 			if (imm->i6mm_maddr->in6m_ifp == ifp &&
 			    IN6_ARE_ADDR_EQUAL(&imm->i6mm_maddr->in6m_addr,
 			    &ia))
-				break;
+				goto put_break;
+		}
 		if (imm != NULL) {
 			error = EADDRINUSE;
-			break;
+			goto put_break;
 		}
 		/*
 		 * Everything looks good; add a new record to the multicast
@@ -2561,9 +2606,13 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		 */
 		imm = in6_joingroup(ifp, &ia, &error, 0);
 		if (imm == NULL)
-			break;
+			goto put_break;
 		LIST_INSERT_HEAD(&im6o->im6o_memberships, imm, i6mm_chain);
+	    put_break:
+		if_put(ifp, &psref);
+		curlwp_bindx(bound);
 		break;
+	    }
 
 	case IPV6_LEAVE_GROUP:
 		/*
@@ -2631,8 +2680,7 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		/*
 		 * Find the membership in the membership list.
 		 */
-		for (imm = im6o->im6o_memberships.lh_first;
-		     imm != NULL; imm = imm->i6mm_chain.le_next) {
+		LIST_FOREACH(imm, &im6o->im6o_memberships, i6mm_chain) {
 			if ((ifp == NULL || imm->i6mm_maddr->in6m_ifp == ifp) &&
 			    IN6_ARE_ADDR_EQUAL(&imm->i6mm_maddr->in6m_addr,
 			    &mreq.ipv6mr_multiaddr))
@@ -2662,7 +2710,7 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 	if (im6o->im6o_multicast_if_index == 0 &&
 	    im6o->im6o_multicast_hlim == ip6_defmcasthlim &&
 	    im6o->im6o_multicast_loop == IPV6_DEFAULT_MULTICAST_LOOP &&
-	    im6o->im6o_memberships.lh_first == NULL) {
+	    LIST_EMPTY(&im6o->im6o_memberships)) {
 		free(in6p->in6p_moptions, M_IPMOPTS);
 		in6p->in6p_moptions = NULL;
 	}
@@ -2721,12 +2769,13 @@ ip6_getmoptions(struct sockopt *sopt, struct in6pcb *in6p)
 void
 ip6_freemoptions(struct ip6_moptions *im6o)
 {
-	struct in6_multi_mship *imm;
+	struct in6_multi_mship *imm, *nimm;
 
 	if (im6o == NULL)
 		return;
 
-	while ((imm = im6o->im6o_memberships.lh_first) != NULL) {
+	/* The owner of im6o (in6p) should be protected by solock */
+	LIST_FOREACH_SAFE(imm, &im6o->im6o_memberships, i6mm_chain, nimm) {
 		LIST_REMOVE(imm, i6mm_chain);
 		in6_leavegroup(imm);
 	}

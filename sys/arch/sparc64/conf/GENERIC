@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.177.2.9 2017/02/05 13:40:21 skrll Exp $
+# $NetBSD: GENERIC,v 1.177.2.10 2017/08/28 17:51:52 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.177.2.9 $"
+#ident 		"GENERIC-$Revision: 1.177.2.10 $"
 
 maxusers	64
 
@@ -149,13 +149,12 @@ options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
-options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility -- 64-bit only
+#options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
+#options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility -- 64-bit only
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility -- 64-bit only
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
 
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.
@@ -423,6 +422,15 @@ twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 ld*	at cac? unit ?			# logical disk devices
 ld*	at twe? unit ?
 ld*	at mlx? unit ?
+
+# Virtio devices
+virtio* at pci? dev ? function ?	# Virtio PCI device
+# the baloon driver can not work on machines with non-4k pages
+#viomb*	at virtio?			# Virtio memory balloon device
+ld*	at virtio?			# Virtio disk device
+vioif*	at virtio?			# Virtio network device
+viornd* at virtio?			# Virtio entropy device
+vioscsi* at virtio?			# Virtio SCSI device
 
 ## Floppy controller and drive found on SPARCstations.
 
@@ -1024,6 +1032,6 @@ options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
 options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
 # XXX: there is no PLT format for sparc64 that cooperates with
 # MPROTECT, so disable it for now
-options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
-options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
+# options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+# options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
 options 	PAX_ASLR=1		# PaX Address Space Layout Randomization

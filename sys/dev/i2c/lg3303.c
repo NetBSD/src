@@ -1,4 +1,4 @@
-/* $NetBSD: lg3303.c,v 1.8.30.1 2015/04/06 15:18:09 skrll Exp $ */
+/* $NetBSD: lg3303.c,v 1.8.30.2 2017/08/28 17:52:03 skrll Exp $ */
 
 /*-
  * Copyright 2007 Jason Harmening
@@ -28,7 +28,7 @@
  */
 
 #include <sys/param.h>
-__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.8.30.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.8.30.2 2017/08/28 17:52:03 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -87,8 +87,6 @@ lg3303_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr, int flags)
 	struct lg3303 *lg;
 
 	lg = kmem_alloc(sizeof(*lg), KM_SLEEP);
-	if (lg == NULL)
-		return NULL;
 	lg->parent = parent;
 	lg->i2c = i2c;
 	lg->i2c_addr = addr;

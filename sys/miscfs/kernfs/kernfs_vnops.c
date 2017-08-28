@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.154.4.2 2016/10/05 20:56:03 skrll Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.154.4.3 2017/08/28 17:53:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.154.4.2 2016/10/05 20:56:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.154.4.3 2017/08/28 17:53:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1061,25 +1061,26 @@ kernfs_readdir(void *v)
 int
 kernfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
 
 	*ap->a_recycle = false;
-	VOP_UNLOCK(vp);
+
 	return (0);
 }
 
 int
 kernfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct kernfs_node *kfs = VTOKERN(vp);
+
+	VOP_UNLOCK(vp);
 
 	vp->v_data = NULL;
 	mutex_enter(&kfs_lock);

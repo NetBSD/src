@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_dwcmmc.c,v 1.2.2.3 2016/07/09 20:24:50 skrll Exp $ */
+/* $NetBSD: exynos_dwcmmc.c,v 1.2.2.4 2017/08/28 17:51:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.2.2.3 2016/07/09 20:24:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.2.2.4 2017/08/28 17:51:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,10 +43,17 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.2.2.3 2016/07/09 20:24:50 skrll 
 #include <dev/ic/dwc_mmc_var.h>
 #include <dev/fdt/fdtvar.h>
 
+#define	FIFO_REG	0x200
+#define	MPS_BEGIN	0x200
+#define	MPS_END		0x204
+#define	MPS_CTRL	0x20c
+#define	 MPS_CTRL_SECURE_WRITE		__BIT(6)
+#define	 MPS_CTRL_NON_SECURE_READ	__BIT(5)
+#define	 MPS_CTRL_NON_SECURE_WRITE	__BIT(4)
+#define	 MPS_CTRL_VALID			__BIT(0)
+
 static int	exynos_dwcmmc_match(device_t, cfdata_t, void *);
 static void	exynos_dwcmmc_attach(device_t, device_t, void *);
-
-static void	exynos_dwcmmc_attach_i(device_t);
 
 static int	exynos_dwcmmc_card_detect(struct dwc_mmc_softc *);
 
@@ -61,6 +68,7 @@ CFATTACH_DECL_NEW(exynos_dwcmmc, sizeof(struct dwc_mmc_softc),
 	exynos_dwcmmc_match, exynos_dwcmmc_attach, NULL, NULL);
 
 static const char * const exynos_dwcmmc_compat[] = {
+	"samsung,exynos5250-dw-mshc",
 	"samsung,exynos5420-dw-mshc-smu",
 	"samsung,exynos5420-dw-mshc",
 	NULL
@@ -137,12 +145,13 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_clock_freq = clk_get_rate(esc->sc_clk_ciu) / (ciu_div + 1);
 	sc->sc_fifo_depth = fifo_depth;
+	sc->sc_fifo_reg = FIFO_REG;
+	sc->sc_flags = DWC_MMC_F_USE_HOLD_REG | DWC_MMC_F_DMA;
 
 	esc->sc_pin_cd = fdtbus_gpio_acquire(phandle, "cd-gpios",
 	    GPIO_PIN_INPUT);
-	if (esc->sc_pin_cd) {
+	if (esc->sc_pin_cd)
 		sc->sc_card_detect = exynos_dwcmmc_card_detect;
-	}
 
 	aprint_naive("\n");
 	aprint_normal(": MHS (%u Hz)\n", sc->sc_clock_freq);
@@ -151,6 +160,9 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
+
+	if (dwc_mmc_init(sc) != 0)
+		return;
 
 	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_BIO, 0,
 	    dwc_mmc_intr, sc);
@@ -161,16 +173,15 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
-	config_interrupts(self, exynos_dwcmmc_attach_i);
-}
-
-static void
-exynos_dwcmmc_attach_i(device_t self)
-{
-	struct exynos_dwcmmc_softc *esc = device_private(self);
-	struct dwc_mmc_softc *sc = &esc->sc;
-
-	dwc_mmc_init(sc);
+	/* Disable encryption mode */
+	const char * compat_enc[] = { "samsung,exynos5420-dw-mshc-smu", NULL };
+	if (of_match_compatible(phandle, compat_enc)) {
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, MPS_BEGIN, 0);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, MPS_END, ~0U);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, MPS_CTRL,
+		    MPS_CTRL_NON_SECURE_READ | MPS_CTRL_NON_SECURE_WRITE |
+		    MPS_CTRL_SECURE_WRITE | MPS_CTRL_VALID);
+	}
 }
 
 static int

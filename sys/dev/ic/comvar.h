@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.79.2.2 2016/05/29 08:44:21 skrll Exp $	*/
+/*	$NetBSD: comvar.h,v 1.79.2.3 2017/08/28 17:52:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -247,6 +247,7 @@ struct com_softc {
 #define	COM_TYPE_16550_NOERS	5	/* like a 16550, no ERS */
 #define	COM_TYPE_INGENIC	6	/* JZ4780 built-in */
 #define	COM_TYPE_TEGRA		7	/* NVIDIA Tegra built-in */
+#define	COM_TYPE_BCMAUXUART	8	/* BCM2835 AUX UART */
 
 	/* power management hooks */
 	int (*enable)(struct com_softc *);

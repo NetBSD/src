@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_readprio.c,v 1.13.42.1 2016/12/05 10:55:26 skrll Exp $	*/
+/*	$NetBSD: bufq_readprio.c,v 1.13.42.2 2017/08/28 17:53:07 skrll Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.13.42.1 2016/12/05 10:55:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_readprio.c,v 1.13.42.2 2017/08/28 17:53:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ BUFQ_DEFINE(readprio, 30, bufq_readprio_init);
 static void
 bufq_prio_put(struct bufq_state *bufq, struct buf *bp)
 {
-	struct bufq_prio *prio = bufq->bq_private;
+	struct bufq_prio *prio = bufq_private(bufq);
 	struct buf *bq;
 	int sortby;
 
@@ -155,7 +155,7 @@ bufq_prio_put(struct bufq_state *bufq, struct buf *bp)
 static struct buf *
 bufq_prio_get(struct bufq_state *bufq, int remove)
 {
-	struct bufq_prio *prio = bufq->bq_private;
+	struct bufq_prio *prio = bufq_private(bufq);
 	struct buf *bp;
 
 	/*
@@ -218,7 +218,7 @@ bufq_prio_get(struct bufq_state *bufq, int remove)
 static struct buf *
 bufq_prio_cancel(struct bufq_state *bufq, struct buf *buf)
 {
-	struct bufq_prio *prio = bufq->bq_private;
+	struct bufq_prio *prio = bufq_private(bufq);
 	struct buf *bq;
 
 	/* search read queue */

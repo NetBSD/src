@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12.6.1 2017/02/05 13:40:13 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.6.2 2017/08/28 17:51:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ struct cpu_info {
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
 	uint32_t ci_initapicid;		/* our intitial APIC ID */
-	struct pmap *ci_pmap;		/* current pmap */
+	struct pmap *ci_pmap;		/* current pmap */ /* XXX FreeBSD has *pcb_current_pmap in pcb ? */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	paddr_t ci_curpcb;		/* PA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* our idle PCB */
@@ -111,6 +111,7 @@ struct cpu_info {
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 	uint64_t ci_clock;		/* clock counter */
 	uint64_t ci_clockadj;		/* clock adjust */
+	uint64_t ci_vhpt;		/* address of vhpt */
 };
 
 
@@ -149,14 +150,13 @@ struct clockframe {
 #define	TRAPF_CPL(tf)		((tf)->tf_special.psr & IA64_PSR_CPL)
 #define	TRAPF_USERMODE(tf)	(TRAPF_CPL(tf) != IA64_PSR_CPL_KERN)
 
-#define __empty do { } while (/*CONSTCOND*/0)
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid. XXX:Fixme.... On the ia64 I haven't yet figured 
  * out what to do about this.. XXX.
  */
 /* extern void	cpu_need_proftick(struct lwp *l); */
-#define cpu_need_proftick(l) __empty
+#define cpu_need_proftick(l) __nothing
 
 /*
  * Notify the LWP l that it has a signal pending, process as soon as possible.
@@ -169,14 +169,14 @@ struct clockframe {
 	__USE(f);			\
 } while(/*CONSTCOND*/0)
 
-#define setsoftclock()        __empty       /*XXX: FIXME */
+#define setsoftclock()        __nothing       /*XXX: FIXME */
 
 /* machdep.c */
 int cpu_maxproc(void); /*XXX: Fill in machdep.c */
 
-#define	cpu_proc_fork(p1, p2)  __empty	/* XXX: Look into this. */
+#define	cpu_proc_fork(p1, p2)  __nothing	/* XXX: Look into this. */
 
-#define DELAY(x)	 __empty	/* XXX: FIXME */
+#define DELAY(x)	 __nothing	/* XXX: FIXME */
 
 static inline void cpu_idle(void);
 static inline

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.149.2.7 2016/10/05 20:56:12 skrll Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.149.2.8 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.149.2.7 2016/10/05 20:56:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.149.2.8 2017/08/28 17:53:17 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -287,7 +287,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	vaddr_t addr;
 	off_t pos;
 	vsize_t size, pageoff, newsize;
-	vm_prot_t prot, maxprot;
+	vm_prot_t prot, maxprot, extraprot;
 	int flags, fd, advice;
 	vaddr_t defaddr;
 	struct file *fp = NULL;
@@ -304,6 +304,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
 	prot = SCARG(uap, prot) & VM_PROT_ALL;
+	extraprot = PROT_MPROTECT_EXTRACT(SCARG(uap, prot));
 	flags = SCARG(uap, flags);
 	fd = SCARG(uap, fd);
 	pos = SCARG(uap, pos);
@@ -312,21 +313,6 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	orig_addr = addr;
 #endif /* PAX_ASLR */
 
-	/*
-	 * Fixup the old deprecated MAP_COPY into MAP_PRIVATE, and
-	 * validate the flags.
-	 */
-	if (flags & MAP_COPY) {
-		flags = (flags & ~MAP_COPY) | MAP_PRIVATE;
-#if defined(COMPAT_10) && defined(__i386__)
-		/*
-		 * Ancient kernel on x86 did not obey PROT_EXEC on i386 at least
-		 * and ld.so did not turn it on. We take care of this on amd64
-		 * in compat32.
-		 */
-		prot |= PROT_EXEC;
-#endif
-	}
 	if ((flags & (MAP_SHARED|MAP_PRIVATE)) == (MAP_SHARED|MAP_PRIVATE))
 		return EINVAL;
 
@@ -411,7 +397,11 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 		pos = 0;
 	}
 
-	PAX_MPROTECT_ADJUST(l, &prot, &maxprot);
+	maxprot = PAX_MPROTECT_MAXPROTECT(l, prot, extraprot, maxprot);
+	if (((prot | extraprot) & maxprot) != (prot | extraprot))
+		return EACCES;
+	if ((error = PAX_MPROTECT_VALIDATE(l, prot)))
+		return error;
 
 	pax_aslr_mmap(l, &addr, orig_addr, flags);
 
@@ -627,8 +617,7 @@ sys_mprotect(struct lwp *l, const struct sys_mprotect_args *uap,
 	if (error)
 		return EINVAL;
 
-	error = uvm_map_protect(&p->p_vmspace->vm_map, addr, addr + size, prot,
-				false);
+	error = uvm_map_protect_user(l, addr, addr + size, prot);
 	return error;
 }
 
@@ -935,7 +924,7 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 
 	/*
 	 * for non-fixed mappings, round off the suggested address.
-	 * for fixed mappings, check alignment and zap old mappings.
+	 * for fixed mappings, check alignment.
 	 */
 
 	if ((flags & MAP_FIXED) == 0) {
@@ -943,8 +932,7 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	} else {
 		if (*addr & PAGE_MASK)
 			return EINVAL;
-		uvmflag |= UVM_FLAG_FIXED;
-		(void) uvm_unmap(map, *addr, *addr + size);
+		uvmflag |= UVM_FLAG_FIXED | UVM_FLAG_UNMAP;
 	}
 
 	/*

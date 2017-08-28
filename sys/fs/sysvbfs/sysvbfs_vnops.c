@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.54.4.3 2016/10/05 20:56:02 skrll Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.54.4.4 2017/08/28 17:53:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.54.4.3 2016/10/05 20:56:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.54.4.4 2017/08/28 17:53:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -508,7 +508,7 @@ sysvbfs_write(void *arg)
 int
 sysvbfs_remove(void *arg)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode * a_dvp;
 		struct vnode * a_vp;
@@ -523,8 +523,10 @@ sysvbfs_remove(void *arg)
 
 	DPRINTF("%s: delete %s\n", __func__, ap->a_cnp->cn_nameptr);
 
-	if (vp->v_type == VDIR)
+	if (vp->v_type == VDIR) {
+		vrele(vp);
 		return EPERM;
+	}
 
 	if ((err = bfs_file_delete(bfs, ap->a_cnp->cn_nameptr, true)) != 0)
 		DPRINTF("%s: bfs_file_delete failed.\n", __func__);
@@ -535,7 +537,6 @@ sysvbfs_remove(void *arg)
 		vrele(vp);
 	else
 		vput(vp);
-	vput(dvp);
 
 	if (err == 0) {
 		bnode->removed = 1;
@@ -676,7 +677,7 @@ sysvbfs_readdir(void *v)
 int
 sysvbfs_inactive(void *arg)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *a = arg;
@@ -688,7 +689,6 @@ sysvbfs_inactive(void *arg)
 		*a->a_recycle = true;
 	else
 		*a->a_recycle = false;
-	VOP_UNLOCK(v);
 
 	return 0;
 }
@@ -697,12 +697,14 @@ int
 sysvbfs_reclaim(void *v)
 {
 	extern struct pool sysvbfs_node_pool;
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct sysvbfs_node *bnode = vp->v_data;
 	struct bfs *bfs = bnode->bmp->bfs;
+
+	VOP_UNLOCK(vp);
 
 	DPRINTF("%s:\n", __func__);
 

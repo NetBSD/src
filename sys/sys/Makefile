@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.152.2.5 2017/02/05 13:41:01 skrll Exp $
+#	$NetBSD: Makefile,v 1.152.2.6 2017/08/28 17:53:16 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,7 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	ioctl_compat.h iostat.h ipc.h \
 	joystick.h \
 	kcore.h kcpuset.h kgdb.h kmem.h ksem.h ksyms.h ktrace.h \
-	localedef.h lock.h lockf.h lua.h lwp.h lwpctl.h \
+	localcount.h localedef.h lock.h lockf.h lua.h lwp.h lwpctl.h \
 	malloc.h mallocvar.h mbuf.h md4.h md5.h midiio.h \
 	mman.h module.h mount.h mqueue.h msg.h msgbuf.h mtio.h mutex.h \
 	namei.h null.h \
@@ -43,7 +43,7 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	tape.h termios.h time.h timeb.h timepps.h times.h timespec.h \
 	timex.h tls.h trace.h tree.h tty.h ttychars.h ttycom.h \
 	ttydefaults.h ttydev.h types.h \
-	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h uuid.h \
+	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h utsname.h uuid.h \
 	vadvise.h verified_exec.h videoio.h vmmeter.h vnode.h vnode_if.h \
 	wait.h wapbl.h wapbl_replay.h wdog.h xattr.h
 

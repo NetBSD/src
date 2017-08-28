@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.34.6.3 2016/07/09 20:24:49 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.34.6.4 2017/08/28 17:51:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.34.6.3 2016/07/09 20:24:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.34.6.4 2017/08/28 17:51:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,6 +126,9 @@ int mp_nintr;
 int mp_isa_bus = -1;
 int mp_eisa_bus = -1;
 
+bool acpi_present;
+bool mpacpi_active;
+
 # ifdef MPVERBOSE
 #  if MPVERBOSE > 0
 int mp_verbose = MPVERBOSE;
@@ -160,13 +163,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #if NPCI > 0
 	int mode;
 #endif
-#if NACPICA > 0
-	int acpi_present = 0;
-#endif
 #ifdef MPBIOS
 	int mpbios_present = 0;
 #endif
-	int mpacpi_active = 0;
 	int numcpus = 0;
 #if defined(PCI_BUS_FIXUP)
 	int pci_maxbus = 0;
@@ -202,14 +201,14 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 #if NACPICA > 0
 	if ((boothowto & RB_MD2) == 0 && acpi_check(self, "acpibus"))
-		acpi_present = acpi_probe();
+		acpi_present = acpi_probe() != 0;
 	/*
 	 * First, see if the MADT contains CPUs, and possibly I/O APICs.
 	 * Building the interrupt routing structures can only
 	 * be done later (via a callback).
 	 */
 	if (acpi_present)
-		mpacpi_active = mpacpi_scan_apics(self, &numcpus);
+		mpacpi_active = mpacpi_scan_apics(self, &numcpus) != 0;
 #endif
 
 	if (!mpacpi_active) {

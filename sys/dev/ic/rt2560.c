@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.25.16.3 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.25.16.4 2017/08/28 17:52:03 skrll Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.25.16.3 2017/02/05 13:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.25.16.4 2017/08/28 17:52:03 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -1167,7 +1167,7 @@ rt2560_tx_intr(struct rt2560_softc *sc)
 
 	sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	rt2560_start(ifp);
+	rt2560_start(ifp); /* in softint */
 
 	splx(s);
 }
@@ -1240,7 +1240,7 @@ rt2560_prio_intr(struct rt2560_softc *sc)
 
 	sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	rt2560_start(ifp);
+	rt2560_start(ifp); /* in softint */
 
 	splx(s);
 }

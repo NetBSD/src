@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.65.6.1 2016/07/09 20:25:03 skrll Exp $	*/
+/*	$NetBSD: eso.c,v 1.65.6.2 2017/08/28 17:52:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.65.6.1 2016/07/09 20:25:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.65.6.2 2017/08/28 17:52:05 skrll Exp $");
 
 #include "mpu.h"
 
@@ -1639,8 +1639,7 @@ eso_allocm(void *hdl, int direction, size_t size)
 	int error;
 
 	sc = hdl;
-	if ((ed = kmem_alloc(sizeof (*ed), KM_SLEEP)) == NULL)
-		return NULL;
+	ed = kmem_alloc(sizeof (*ed), KM_SLEEP);
 
 	/*
 	 * Apparently the Audio 1 DMA controller's current address

@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.32.6.2 2016/10/05 20:55:41 skrll Exp $	*/
+/*	$NetBSD: ciss.c,v 1.32.6.3 2017/08/28 17:52:03 skrll Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.32.6.2 2016/10/05 20:55:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.32.6.3 2017/08/28 17:52:03 skrll Exp $");
 
 #include "bio.h"
 
@@ -1299,12 +1299,12 @@ ciss_ioctl(device_t dev, u_long cmd, void *addr)
 		/* FALLTHROUGH */
 	case BIOCDISK:
 		bd = (struct bioc_disk *)addr;
-		if (bd->bd_volid > sc->maxunits) {
+		if (bd->bd_volid < 0 || bd->bd_volid > sc->maxunits) {
 			error = EINVAL;
 			break;
 		}
 		ldp = sc->sc_lds[0];
-		if (!ldp || (pd = bd->bd_diskid) > ldp->ndrives) {
+		if (!ldp || (pd = bd->bd_diskid) < 0 || pd > ldp->ndrives) {
 			error = EINVAL;
 			break;
 		}
@@ -1405,7 +1405,7 @@ ciss_ioctl_vol(struct ciss_softc *sc, struct bioc_vol *bv)
 	int error = 0;
 	u_int blks;
 
-	if (bv->bv_volid > sc->maxunits) {
+	if (bv->bv_volid < 0 || bv->bv_volid > sc->maxunits) {
 		return EINVAL;
 	}
 	ldp = sc->sc_lds[bv->bv_volid];

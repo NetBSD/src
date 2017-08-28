@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.23.6.1 2016/07/09 20:25:18 skrll Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.23.6.2 2017/08/28 17:52:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -42,9 +42,10 @@ struct vcons_screen {
 	void *scr_cookie;
 	struct vcons_data *scr_vd;
 	struct vcons_data *scr_origvd;
-	const struct wsscreen_descr *scr_type;
+	struct wsscreen_descr *scr_type;
 	uint32_t *scr_chars;
 	long *scr_attrs;
+	void (*putchar)(void *, int, int, u_int, long);
 	long scr_defattr;
 	/* static flags set by the driver */
 	uint32_t scr_flags;
@@ -63,6 +64,7 @@ struct vcons_screen {
 #define VCONS_NO_COPYCOLS	0x10	/* use putchar() based copycols() */
 #define VCONS_NO_COPYROWS	0x20	/* use putchar() based copyrows() */
 #define VCONS_DONT_READ		0x30	/* avoid framebuffer reads */
+#define VCONS_LOADFONT		0x40	/* driver can load_font() */
 	/* status flags used by vcons */
 	uint32_t scr_status;
 #define VCONS_IS_VISIBLE	1	/* this screen is currently visible */
@@ -112,10 +114,10 @@ struct vcons_data {
 	void (*erasecols)(void *, int, int, int, long);
 	void (*copyrows)(void *, int, int, int);
 	void (*eraserows)(void *, int, int, long);
-	void (*putchar)(void *, int, int, u_int, long);
 	void (*cursor)(void *, int, int, int);
 	/* called before vcons_redraw_screen */
-	void (*show_screen_cb)(struct vcons_screen *);
+	void *show_screen_cookie;
+	void (*show_screen_cb)(struct vcons_screen *, void *);
 	/* virtual screen management stuff */
 	void (*switch_cb)(void *, int, int);
 	void *switch_cb_arg;
@@ -124,6 +126,7 @@ struct vcons_data {
 	LIST_HEAD(, vcons_screen) screens;
 	struct vcons_screen *active, *wanted;
 	const struct wsscreen_descr *currenttype;
+	struct wsscreen_descr *defaulttype;
 	int switch_poll_count;
 #ifdef VCONS_DRAW_INTR
 	int cells;

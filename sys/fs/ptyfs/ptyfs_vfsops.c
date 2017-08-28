@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.55 2014/10/21 16:05:01 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.55.2.1 2017/08/28 17:53:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.55 2014/10/21 16:05:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.55.2.1 2017/08/28 17:53:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -492,7 +492,7 @@ struct vfsops ptyfs_vfsops = {
 	.vfs_done = ptyfs_done,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = (void *)eopnotsupp,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

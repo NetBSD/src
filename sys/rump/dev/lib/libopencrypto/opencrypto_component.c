@@ -1,4 +1,4 @@
-/*	$NetBSD: opencrypto_component.c,v 1.1.12.3 2016/03/19 11:30:34 skrll Exp $ */
+/*	$NetBSD: opencrypto_component.c,v 1.1.12.4 2017/08/28 17:53:14 skrll Exp $ */
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opencrypto_component.c,v 1.1.12.3 2016/03/19 11:30:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opencrypto_component.c,v 1.1.12.4 2017/08/28 17:53:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -64,5 +64,20 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	 */
 	crypto_init();
 	rump_pdev_add(cryptoattach, 1);
+#if 0
+	/*
+	 * rump defines "_MODULE" in spite of using built-in module
+	 * initialization(module_init_class()). So, swcryptoattach_internal()
+	 * is called by two functions, one is swcryptoattach() and the other is
+	 * swcrypto_modcmd().
+	 * That causes "builtin module `swcrypto' failed to init" WARNING message.
+	 * To suppress this warning, we let rump use swcrypto_modcmd() call-path
+	 * only.
+	 *
+	 * TODO:
+	 * There is still "crypto: unable to register devsw" message. it should
+	 * be suppressed.
+	 */
 	rump_pdev_add(swcryptoattach, 0);
+#endif
 }

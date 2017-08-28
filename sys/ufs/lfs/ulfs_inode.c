@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.9.8.5 2016/10/05 20:56:12 skrll Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.9.8.6 2017/08/28 17:53:17 skrll Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.89 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.9.8.5 2016/10/05 20:56:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.9.8.6 2017/08/28 17:53:17 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.9.8.5 2016/10/05 20:56:12 skrll Exp
 #include <sys/kernel.h>
 #include <sys/namei.h>
 #include <sys/kauth.h>
-#include <sys/fstrans.h>
 #include <sys/kmem.h>
 
 #include <ufs/lfs/lfs.h>
@@ -72,26 +71,21 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.9.8.5 2016/10/05 20:56:12 skrll Exp
 
 #include <uvm/uvm.h>
 
-extern int prtactive;
-
 /*
  * Last reference to an inode.  If necessary, write or delete it.
  */
 int
 ulfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		struct bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct mount *transmp;
 	mode_t mode;
 	int error = 0;
 
-	transmp = vp->v_mount;
-	fstrans_start(transmp, FSTRANS_LAZY);
 	/*
 	 * Ignore inodes related to stale file handles.
 	 */
@@ -112,13 +106,13 @@ ulfs_inactive(void *v)
 		ip->i_mode = 0;
 		ip->i_omode = mode;
 		DIP_ASSIGN(ip, mode, 0);
-		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+		ip->i_state |= IN_CHANGE | IN_UPDATE;
 		/*
 		 * Defer final inode free and update to ulfs_reclaim().
 		 */
 	}
 
-	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
+	if (ip->i_state & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		lfs_update(vp, NULL, NULL, 0);
 	}
 
@@ -128,8 +122,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	*ap->a_recycle = (ip->i_mode == 0);
-	VOP_UNLOCK(vp);
-	fstrans_done(transmp);
+
 	return (error);
 }
 
@@ -140,9 +133,6 @@ int
 ulfs_reclaim(struct vnode *vp)
 {
 	struct inode *ip = VTOI(vp);
-
-	if (prtactive && vp->v_usecount > 1)
-		vprint("ulfs_reclaim: pushing active", vp);
 
 	/* XXX: do we really need two of these? */
 	/* note: originally the first was inside a wapbl txn */

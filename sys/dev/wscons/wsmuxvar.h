@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmuxvar.h,v 1.15 2013/11/23 20:56:41 christos Exp $	*/
+/*	$NetBSD: wsmuxvar.h,v 1.15.6.1 2017/08/28 17:52:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,13 +37,9 @@ struct wsevsrc {
 	const struct wssrcops *me_ops;	/* method pointers */
 	struct wseventvar me_evar;	/* wseventvar opened directly */
 	struct wseventvar *me_evp;	/* our wseventvar when open */
-#if NWSDISPLAY > 0
 	device_t me_dispdv;       /* our display if part of one */
-#endif
-#if NWSMUX > 0
 	struct wsmux_softc *me_parent;	/* parent mux device */
 	TAILQ_ENTRY(wsevsrc) me_next;	/* sibling pointers */
-#endif
 };
 
 /*
@@ -70,7 +66,6 @@ struct wssrcops {
 #define wsevsrc_set_display(me, arg) \
 	((me)->me_ops->dsetdisplay((me)->me_dv, arg))
 
-#if NWSMUX > 0
 struct wsmux_softc {
 	struct wsevsrc sc_base;
 	struct proc *sc_p;		/* open proc */
@@ -89,5 +84,4 @@ int	wsmux_set_display(struct wsmux_softc *, device_t);
 
 int	wskbd_add_mux(int, struct wsmux_softc *);
 int	wsmouse_add_mux(int, struct wsmux_softc *);
-
-#endif /* NWSMUX > 0 */
+int	wsbell_add_mux(int, struct wsmux_softc *);

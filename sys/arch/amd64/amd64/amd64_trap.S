@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.2.10.2 2016/10/05 20:55:23 skrll Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.2.10.3 2017/08/28 17:51:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.2.10.2 2016/10/05 20:55:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.2.10.3 2017/08/28 17:51:27 skrll Exp $");
 #endif
 
 /*
@@ -103,39 +103,54 @@ IDTVEC(trap01)
 	ZTRAP(T_TRCTRAP)
 IDTVEC_END(trap01)
 
+/*
+ * Non Maskable Interrupts are a special case: they can be triggered even
+ * with interrupts disabled, and once triggered they block further NMIs
+ * until an 'iret' instruction is executed.
+ *
+ * Therefore we don't enable interrupts, because the CPU could switch to
+ * another LWP, call 'iret' and unintentionally leave the NMI mode.
+ *
+ * We need to be careful about %gs too, because it is possible that we were
+ * running in kernel mode with a userland %gs.
+ */
 IDTVEC(trap02)
 #if defined(XEN)
 	ZTRAP(T_NMI)
-#else /* defined(XEN) */
-	pushq $0
-	pushq $T_NMI
+#else
+	pushq	$0
+	pushq	$T_NMI
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
-	movl	$MSR_GSBASE,%ecx
-	rdmsr
-	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
-	jae	1f
-	swapgs
 	movw	%gs,TF_GS(%rsp)
 	movw	%fs,TF_FS(%rsp)
 	movw	%es,TF_ES(%rsp)
 	movw	%ds,TF_DS(%rsp)
+
+	movl	$MSR_GSBASE,%ecx
+	rdmsr
+	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
+	jae	noswapgs
+
+	swapgs
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
+	swapgs
+	jmp	nmileave
+
+noswapgs:
+	movq	%rsp,%rdi
+	incq	CPUVAR(NTRAP)
+	call	_C_LABEL(trap)
+
+nmileave:
 	movw	TF_ES(%rsp),%es
 	movw	TF_DS(%rsp),%ds
-	swapgs
-	jmp	2f
-1:
-	movq	%rsp,%rdi
-	incq	CPUVAR(NTRAP)
-	call	_C_LABEL(trap)
-2:
 	INTR_RESTORE_GPRS
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
-#endif /* defined(XEN) */
+#endif
 IDTVEC_END(trap02)
 
 IDTVEC(trap03)

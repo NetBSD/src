@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.55.2.9 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.55.2.10 2017/08/28 17:53:12 skrll Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.55.2.9 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.55.2.10 2017/08/28 17:53:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -773,7 +773,7 @@ getroute:
 	    !if_is_deactivated(rt->rt_ifa->ifa_ifp)) {
 		if_put(*retifp, psref);
 		*retifp = rt->rt_ifa->ifa_ifp;
-		if_acquire_NOMPSAFE(*retifp, psref);
+		if_acquire(*retifp, psref);
 	}
 out:
 	rtcache_unref(rt, ro);

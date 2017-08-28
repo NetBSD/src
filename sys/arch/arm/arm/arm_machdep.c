@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.43.2.1 2015/06/06 14:39:55 skrll Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.43.2.2 2017/08/28 17:51:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.43.2.1 2015/06/06 14:39:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.43.2.2 2017/08/28 17:51:29 skrll Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -121,10 +121,14 @@ struct cpu_info cpu_info_store = {
 };
 
 #ifdef MULTIPROCESSOR
-struct cpu_info *cpu_info[MAXCPUS] = {
+#define	NCPUINFO	MAXCPUS
+#else
+#define	NCPUINFO	1
+#endif
+
+struct cpu_info *cpu_info[NCPUINFO] = {
 	[0] = &cpu_info_store
 };
-#endif
 
 const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 #if defined(FPU_VFP)
@@ -187,7 +191,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_spsr = PSR_USR32_MODE | (CPU_IS_ARMV7_P() ? PSR_E_BIT : 0);
 #else
 	tf->tf_spsr = PSR_USR32_MODE;
-#endif /* __ARMEB__ */ 
+#endif /* __ARMEB__ */
 
 #ifdef THUMB_CODE
 	if (pack->ep_entry & 1)
@@ -201,7 +205,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		l->l_md.md_flags |= MDLWP_NOALIGNFLT;
 #endif
 #ifdef FPU_VFP
-	vfp_discardcontext(false);
+	vfp_discardcontext(l, false);
 #endif
 }
 
@@ -213,7 +217,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 void
 startlwp(void *arg)
 {
-	ucontext_t *uc = (ucontext_t *)arg; 
+	ucontext_t *uc = (ucontext_t *)arg;
 	lwp_t *l = curlwp;
 	int error __diagused;
 

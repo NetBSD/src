@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.1.2.3 2017/02/05 13:40:15 skrll Exp $	*/
+/*	$NetBSD: fenv.h,v 1.1.2.4 2017/08/28 17:51:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -33,14 +33,6 @@
 
 #include <sys/stdint.h>
 
-#ifndef	__fenv_static
-#define	__fenv_static	static
-#endif
-
-typedef	uint32_t 	fpu_control_t __attribute__((__mode__(__SI__)));
-typedef	fpu_control_t	fenv_t;
-typedef	fpu_control_t	fexcept_t;
-
 /* Exception flags */
 #define	FE_INEXACT	0x0004
 #define	FE_UNDERFLOW	0x0008
@@ -57,6 +49,17 @@ typedef	fpu_control_t	fexcept_t;
 #define	FE_DOWNWARD	0x0003
 #define	_ROUND_MASK	(FE_TONEAREST | FE_DOWNWARD | \
 			 FE_UPWARD | FE_TOWARDZERO)
+
+#ifndef __mips_soft_float
+
+#ifndef	__fenv_static
+#define	__fenv_static	static
+#endif
+
+typedef	uint32_t 	fpu_control_t __attribute__((__mode__(__SI__)));
+typedef	fpu_control_t	fenv_t;
+typedef	fpu_control_t	fexcept_t;
+
 __BEGIN_DECLS
 
 /* Default floating-point environment */
@@ -67,9 +70,21 @@ extern const fenv_t	__fe_dfl_env;
 #define	_ENABLE_MASK	(FE_ALL_EXCEPT << _ENABLE_SHIFT)
 #define _ENABLE_SHIFT    5
 
+static inline fpu_control_t
+__rfs(void)
+{
+	fpu_control_t __fpsr;
 
-#define	__rfs(__fpsr)	__asm __volatile("cfc1 %0,$31" : "=r" ((*__fpsr)))
-#define	__wfs(__fpsr)	__asm __volatile("ctc1 %0,$31" : : "r" (__fpsr))
+	__asm __volatile("cfc1 %0,$31" : "=r" (__fpsr));
+	return __fpsr;
+}
+
+static inline void
+__wfs(fpu_control_t __fpsr)
+{
+
+	__asm __volatile("ctc1 %0,$31" : : "r" (__fpsr));
+}
 
 __fenv_static inline int
 feclearexcept(int __excepts)
@@ -77,7 +92,7 @@ feclearexcept(int __excepts)
 	fexcept_t __fpsr;
 
 	__excepts &= FE_ALL_EXCEPT;
-	__rfs(&__fpsr);
+	__fpsr = __rfs();
 	__fpsr &= ~(__excepts | (__excepts << _ENABLE_SHIFT));
 	__wfs(__fpsr);
 	return 0;
@@ -88,7 +103,7 @@ fegetexceptflag(fexcept_t *__flagp, int __excepts)
 {
 	fexcept_t __fpsr;
 
-	__rfs(&__fpsr);
+	__fpsr = __rfs();
 	*__flagp = __fpsr & __excepts;
 	return (0);
 }
@@ -98,7 +113,7 @@ fesetexceptflag(const fexcept_t *__flagp, int __excepts)
 {
 	fexcept_t __fpsr;
 
-	__rfs(&__fpsr);
+	__fpsr = __rfs();
 	__fpsr &= ~__excepts;
 	__fpsr |= *__flagp & __excepts;
 	__wfs(__fpsr);
@@ -119,7 +134,7 @@ fetestexcept(int __excepts)
 {
 	fexcept_t __fpsr;
 
-	__rfs(&__fpsr);
+	__fpsr = __rfs();
 	return (__fpsr & __excepts);
 }
 
@@ -128,7 +143,7 @@ fegetround(void)
 {
 	fexcept_t __fpsr;
 
-	__rfs(&__fpsr);
+	__fpsr = __rfs();
 	return __fpsr & _ROUND_MASK;
 }
 
@@ -139,10 +154,10 @@ fesetround(int __round)
 
 	if (__round & ~_ROUND_MASK)
 		return 1;
-	__rfs(&__fpsr);
+	__fpsr = __rfs();
 	__fpsr &= ~_ROUND_MASK;
 	__fpsr |= __round;
-	__wfs(&__fpsr);
+	__wfs(__fpsr);
 
 	return 0;
 }
@@ -151,7 +166,7 @@ __fenv_static inline int
 fegetenv(fenv_t *__envp)
 {
 
-	__rfs(__envp);
+	*__envp = __rfs();
 	return (0);
 }
 
@@ -160,7 +175,7 @@ feholdexcept(fenv_t *__envp)
 {
 	fenv_t __env;
 
-	__rfs(&__env);
+	__env = __rfs();
 	*__envp = __env;
 	__env &= ~(FE_ALL_EXCEPT | _ENABLE_MASK);
 	__wfs(__env);
@@ -180,7 +195,7 @@ feupdateenv(const fenv_t *__envp)
 {
 	fexcept_t __fpsr;
 
-	__rfs(&__fpsr);
+	__fpsr = __rfs();
 	__wfs(*__envp);
 	feraiseexcept(__fpsr & FE_ALL_EXCEPT);
 	return (0);
@@ -188,14 +203,12 @@ feupdateenv(const fenv_t *__envp)
 
 #if defined(_NETBSD_SOURCE) || defined(_GNU_SOURCE)
 
-/* We currently provide no external definitions of the functions below. */
-
-static inline int
+__fenv_static inline int
 feenableexcept(int __excepts)
 {
 	fenv_t __old_fpsr, __new_fpsr;
 
-	__rfs(&__new_fpsr);
+	__new_fpsr = __rfs();
 	__old_fpsr = (__new_fpsr & _ENABLE_MASK) >> _ENABLE_SHIFT;
 	__excepts &= FE_ALL_EXCEPT;
 	__new_fpsr |= __excepts << _ENABLE_SHIFT;
@@ -203,12 +216,12 @@ feenableexcept(int __excepts)
 	return __old_fpsr;
 }
 
-static inline int
+__fenv_static inline int
 fedisableexcept(int __excepts)
 {
 	fenv_t __old_fpsr, __new_fpsr;
 
-	__rfs(&__new_fpsr);
+	__new_fpsr = __rfs();
 	__old_fpsr = (__new_fpsr & _ENABLE_MASK) >> _ENABLE_SHIFT;
 	__excepts &= FE_ALL_EXCEPT;
 	__new_fpsr &= ~(__excepts << _ENABLE_SHIFT);
@@ -216,17 +229,19 @@ fedisableexcept(int __excepts)
 	return __old_fpsr;
 }
 
-static inline int
+__fenv_static inline int
 fegetexcept(void)
 {
 	fenv_t __fpsr;
 
-	__rfs(&__fpsr);
+	__fpsr = __rfs();
 	return ((__fpsr & _ENABLE_MASK) >> _ENABLE_SHIFT);
 }
 
 #endif /* _NETBSD_SOURCE || _GNU_SOURCE */
 
 __END_DECLS
+
+#endif /* __mips_soft_float */
 
 #endif	/* !_FENV_H_ */

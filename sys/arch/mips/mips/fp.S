@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.44.30.2 2016/12/05 10:54:55 skrll Exp $	*/
+/*	$NetBSD: fp.S,v 1.44.30.3 2017/08/28 17:51:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -145,7 +145,7 @@ NESTED(mips_emul_fp, CALLFRAME_SIZ, ra)
 #else
 	cfc1	a2, MIPS_FPU_CSR		# get exception register
 	PTR_L	a3, fmt_tbl(v0)			# switch on FUNC & FMT
-	and	a2, a2, ~MIPS_FPU_EXCEPTION_UNIMPL	# clear exception
+	and	a2, a2, ~MIPS_FPU_EXCEPTION_BITS	# clear exception
 	ctc1	a2, MIPS_FPU_CSR
 #endif
 	j	a3

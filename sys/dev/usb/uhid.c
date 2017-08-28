@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.92.4.11 2016/10/27 07:46:19 skrll Exp $	*/
+/*	$NetBSD: uhid.c,v 1.92.4.12 2017/08/28 17:52:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.11 2016/10/27 07:46:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.12 2017/08/28 17:52:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -615,7 +615,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 		err = uhidev_get_report(&sc->sc_hdev, re->ucr_report,
 		    re->ucr_data, size + extra);
 		if (extra)
-			memcpy(re->ucr_data, re->ucr_data+1, size);
+			memmove(re->ucr_data, re->ucr_data+1, size);
 		if (err)
 			return EIO;
 		break;

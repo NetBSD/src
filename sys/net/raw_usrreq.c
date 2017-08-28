@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.52.4.2 2016/03/19 11:30:32 skrll Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.52.4.3 2017/08/28 17:53:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.52.4.2 2016/03/19 11:30:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.52.4.3 2017/08/28 17:53:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -106,6 +106,9 @@ raw_input(struct mbuf *m0, ...)
 		if (rp->rcb_laddr && !equal(rp->rcb_laddr, dst))
 			continue;
 		if (rp->rcb_faddr && !equal(rp->rcb_faddr, src))
+			continue;
+		/* Run any filtering that may have been installed. */
+		if (rp->rcb_filter != NULL && rp->rcb_filter(m, proto, rp) != 0)
 			continue;
 		if (last != NULL) {
 			struct mbuf *n;

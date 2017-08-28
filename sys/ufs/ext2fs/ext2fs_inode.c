@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.81.10.2 2016/10/05 20:56:11 skrll Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.81.10.3 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.81.10.2 2016/10/05 20:56:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.81.10.3 2017/08/28 17:53:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.81.10.2 2016/10/05 20:56:11 skrll
 
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
-
-extern int prtactive;
 
 static int ext2fs_indirtrunc(struct inode *, daddr_t, daddr_t,
 				  daddr_t, int, long *);
@@ -190,7 +188,7 @@ ext2fs_setnblock(struct inode *ip, uint64_t nblock)
 int
 ext2fs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -198,8 +196,6 @@ ext2fs_inactive(void *v)
 	struct inode *ip = VTOI(vp);
 	int error = 0;
 
-	if (prtactive && vp->v_usecount != 0)
-		vprint("ext2fs_inactive: pushing active", vp);
 	/* Get rid of inodes related to stale file handles. */
 	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0)
 		goto out;
@@ -223,7 +219,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	*ap->a_recycle = (ip->i_e2fs_dtime != 0);
-	VOP_UNLOCK(vp);
+
 	return error;
 }
 

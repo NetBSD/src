@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.102.2.10 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.102.2.11 2017/08/28 17:53:13 skrll Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.102.2.10 2017/02/05 13:40:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.102.2.11 2017/08/28 17:53:13 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.102.2.10 2017/02/05 13:40:59 skrll Exp
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -394,14 +394,9 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	/* estimate the size of message */
 	maxlen = sizeof(*ip6) + sizeof(*nd_ns);
 	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
-#ifdef DIAGNOSTIC
-	if (max_linkhdr + maxlen >= MCLBYTES) {
-		printf("nd6_ns_output: max_linkhdr + maxlen >= MCLBYTES "
-		    "(%d + %d > %d)\n", max_linkhdr, maxlen, MCLBYTES);
-		panic("nd6_ns_output: insufficient MCLBYTES");
-		/* NOTREACHED */
-	}
-#endif
+	KASSERTMSG(max_linkhdr + maxlen < MCLBYTES,
+	    "max_linkhdr + maxlen >= MCLBYTES (%d + %d >= %d)",
+	    max_linkhdr, maxlen, MCLBYTES);
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m && max_linkhdr + maxlen >= MHLEN) {
@@ -910,14 +905,9 @@ nd6_na_output(
 	/* estimate the size of message */
 	maxlen = sizeof(*ip6) + sizeof(*nd_na);
 	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
-#ifdef DIAGNOSTIC
-	if (max_linkhdr + maxlen >= MCLBYTES) {
-		printf("nd6_na_output: max_linkhdr + maxlen >= MCLBYTES "
-		    "(%d + %d > %d)\n", max_linkhdr, maxlen, MCLBYTES);
-		panic("nd6_na_output: insufficient MCLBYTES");
-		/* NOTREACHED */
-	}
-#endif
+	KASSERTMSG(max_linkhdr + maxlen < MCLBYTES,
+	    "max_linkhdr + maxlen >= MCLBYTES (%d + %d >= %d)",
+	    max_linkhdr, maxlen, MCLBYTES);
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m && max_linkhdr + maxlen >= MHLEN) {
@@ -1154,14 +1144,17 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 	if (!(ifa->ifa_ifp->if_flags & IFF_UP))
 		return;
 
+	dp = kmem_intr_alloc(sizeof(*dp), KM_NOSLEEP);
+
 	mutex_enter(&nd6_dad_lock);
 	if (nd6_dad_find(ifa) != NULL) {
 		mutex_exit(&nd6_dad_lock);
 		/* DAD already in progress */
+		if (dp != NULL)
+			kmem_intr_free(dp, sizeof(*dp));
 		return;
 	}
 
-	dp = malloc(sizeof(*dp), M_IP6NDP, M_NOWAIT);
 	if (dp == NULL) {
 		mutex_exit(&nd6_dad_lock);
 		log(LOG_ERR, "nd6_dad_start: memory allocation failed for "
@@ -1170,8 +1163,6 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		return;
 	}
-	memset(dp, 0, sizeof(*dp));
-	callout_init(&dp->dad_timer_ch, CALLOUT_MPSAFE);
 
 	/*
 	 * Send NS packet for DAD, ip6_dad_count times.
@@ -1179,6 +1170,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 	 * first packet to be sent from the interface after interface
 	 * (re)initialization.
 	 */
+	callout_init(&dp->dad_timer_ch, CALLOUT_MPSAFE);
 	dp->dad_ifa = ifa;
 	ifaref(ifa);	/* just for safety */
 	dp->dad_count = ip6_dad_count;
@@ -1223,8 +1215,7 @@ nd6_dad_stop(struct ifaddr *ifa)
 
 	nd6_dad_stoptimer(dp);
 
-	free(dp, M_IP6NDP);
-	dp = NULL;
+	kmem_intr_free(dp, sizeof(*dp));
 	ifafree(ifa);
 }
 
@@ -1235,6 +1226,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 	struct dadq *dp;
 	int duplicate = 0;
 	char ip6buf[INET6_ADDRSTRLEN];
+	bool need_free = false;
 
 #ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
@@ -1273,9 +1265,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 			if_name(ifa->ifa_ifp));
 
 		TAILQ_REMOVE(&dadq, dp, dad_list);
-		free(dp, M_IP6NDP);
-		dp = NULL;
-		ifafree(ifa);
+		need_free = true;
 		goto done;
 	}
 
@@ -1322,14 +1312,17 @@ nd6_dad_timer(struct ifaddr *ifa)
 			    IN6_PRINT(ip6buf, &ia->ia_addr.sin6_addr));
 
 			TAILQ_REMOVE(&dadq, dp, dad_list);
-			free(dp, M_IP6NDP);
-			dp = NULL;
-			ifafree(ifa);
+			need_free = true;
 		}
 	}
-
 done:
 	mutex_exit(&nd6_dad_lock);
+
+	if (need_free) {
+		kmem_intr_free(dp, sizeof(*dp));
+		ifafree(ifa);
+		ifa = NULL;
+	}
 
 	if (duplicate)
 		nd6_dad_duplicated(ifa);
@@ -1413,8 +1406,7 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 	TAILQ_REMOVE(&dadq, dp, dad_list);
 	mutex_exit(&nd6_dad_lock);
 
-	free(dp, M_IP6NDP);
-	dp = NULL;
+	kmem_intr_free(dp, sizeof(*dp));
 	ifafree(ifa);
 }
 

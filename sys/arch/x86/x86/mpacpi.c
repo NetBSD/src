@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.97.12.2 2016/07/09 20:24:59 skrll Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.97.12.3 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.97.12.2 2016/07/09 20:24:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.97.12.3 2017/08/28 17:51:56 skrll Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -743,13 +743,7 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 	mp_nintr = nintr;
 
 	mp_busses = kmem_zalloc(sizeof(struct mp_bus) * mp_nbus, KM_SLEEP);
-	if (mp_busses == NULL)
-		panic("can't allocate mp_busses");
-
 	mp_intrs = kmem_zalloc(sizeof(struct mp_intr_map) * mp_nintr, KM_SLEEP);
-	if (mp_intrs == NULL)
-		panic("can't allocate mp_intrs");
-
 	mbp = &mp_busses[mp_isa_bus];
 	mbp->mb_name = "isa";
 	mbp->mb_idx = 0;

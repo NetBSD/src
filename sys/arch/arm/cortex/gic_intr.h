@@ -1,4 +1,4 @@
-/*	$NetBSD: gic_intr.h,v 1.2 2014/04/09 16:59:53 matt Exp $	*/
+/*	$NetBSD: gic_intr.h,v 1.2.4.1 2017/08/28 17:51:30 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,9 @@
 #ifndef _ARM_CORTEX_GIC_INTR_H_
 #define _ARM_CORTEX_GIC_INTR_H_
 
+#ifndef ARM_IRQ_HANDLER
 #define	ARM_IRQ_HANDLER		_C_LABEL(armgic_irq_handler)
+#endif
 
 #ifndef _LOCORE
 

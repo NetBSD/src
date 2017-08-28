@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.227.4.1 2016/07/09 20:25:23 skrll Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.227.4.2 2017/08/28 17:53:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.227.4.1 2016/07/09 20:25:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.227.4.2 2017/08/28 17:53:13 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1752,6 +1752,8 @@ nfs_clearcommit_selector(void *cl, struct vnode *vp)
 	struct nfs_clearcommit_ctx *c = cl;
 	struct nfsnode *np;
 	struct vm_page *pg;
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	np = VTONFS(vp);
 	if (vp->v_type != VREG || vp->v_mount != c->mp || np == NULL)

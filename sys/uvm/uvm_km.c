@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.138.14.2 2016/10/05 20:56:12 skrll Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.138.14.3 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.138.14.2 2016/10/05 20:56:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.138.14.3 2017/08/28 17:53:17 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -414,8 +414,6 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *vmin /* IN/OUT */,
 	pmap_reference(vm_map_pmap(map));
 	if (submap == NULL) {
 		submap = kmem_alloc(sizeof(*submap), KM_SLEEP);
-		if (submap == NULL)
-			panic("uvm_km_suballoc: unable to create submap");
 	}
 	uvm_map_setup(submap, *vmin, *vmax, flags);
 	submap->pmap = vm_map_pmap(map);
@@ -816,9 +814,7 @@ again:
 	loopsize = size;
 
 	while (loopsize) {
-#ifdef DIAGNOSTIC
-		paddr_t pa;
-#endif
+		paddr_t pa __diagused;
 		KASSERTMSG(!pmap_extract(pmap_kernel(), loopva, &pa),
 		    "loopva=%#"PRIxVADDR" loopsize=%#"PRIxVSIZE
 		    " pa=%#"PRIxPADDR" vmem=%p",

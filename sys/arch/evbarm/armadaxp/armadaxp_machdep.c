@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.8.8.2 2017/02/05 13:40:06 skrll Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.8.8.3 2017/08/28 17:51:34 skrll Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.8.8.2 2017/02/05 13:40:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.8.8.3 2017/08/28 17:51:34 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_mvsoc.h"
@@ -235,8 +235,13 @@ reset_axp_pcie_win(void)
 			    ARMADAXP_TAG_PEX01_MEM, ARMADAXP_TAG_PEX01_IO,
 			    ARMADAXP_TAG_PEX02_MEM, ARMADAXP_TAG_PEX02_IO,
 			    ARMADAXP_TAG_PEX03_MEM, ARMADAXP_TAG_PEX03_IO,
+			    ARMADAXP_TAG_PEX10_MEM, ARMADAXP_TAG_PEX10_IO,
+			    ARMADAXP_TAG_PEX11_MEM, ARMADAXP_TAG_PEX11_IO,
+			    ARMADAXP_TAG_PEX12_MEM, ARMADAXP_TAG_PEX12_IO,
+			    ARMADAXP_TAG_PEX13_MEM, ARMADAXP_TAG_PEX13_IO,
 			    ARMADAXP_TAG_PEX2_MEM, ARMADAXP_TAG_PEX2_IO,
-			    ARMADAXP_TAG_PEX3_MEM, ARMADAXP_TAG_PEX3_IO};
+			    ARMADAXP_TAG_PEX3_MEM, ARMADAXP_TAG_PEX3_IO
+			};
 
 	nwindow = ARMADAXP_MLMB_NWINDOW;
 	nremap = ARMADAXP_MLMB_NREMAP;
@@ -501,12 +506,13 @@ axp_device_register(device_t dev, void *aux)
 	    armadaxp_pex01_io_bs_tag, armadaxp_pex01_mem_bs_tag,
 	    armadaxp_pex02_io_bs_tag, armadaxp_pex02_mem_bs_tag,
 	    armadaxp_pex03_io_bs_tag, armadaxp_pex03_mem_bs_tag,
+	    armadaxp_pex10_io_bs_tag, armadaxp_pex10_mem_bs_tag,
 	    armadaxp_pex2_io_bs_tag, armadaxp_pex2_mem_bs_tag,
 	    armadaxp_pex3_io_bs_tag, armadaxp_pex3_mem_bs_tag;
 	extern struct arm32_pci_chipset arm32_mvpex0_chipset,
 	    arm32_mvpex1_chipset, arm32_mvpex2_chipset,
 	    arm32_mvpex3_chipset, arm32_mvpex4_chipset,
-	    arm32_mvpex5_chipset;
+	    arm32_mvpex5_chipset, arm32_mvpex6_chipset;
 
 	struct marvell_attach_args *mva = aux;
 
@@ -523,34 +529,40 @@ axp_device_register(device_t dev, void *aux)
 			arm32_mvpex_chipset = &arm32_mvpex0_chipset;
 			iotag = ARMADAXP_TAG_PEX00_IO;
 			memtag = ARMADAXP_TAG_PEX00_MEM;
-		} else if (mva->mva_offset == MVSOC_PEX_BASE + 0x4000) {
+		} else if (mva->mva_offset == ARMADAXP_PEX01_BASE) {
 			mvpex_io_bs_tag = &armadaxp_pex01_io_bs_tag;
 			mvpex_mem_bs_tag = &armadaxp_pex01_mem_bs_tag;
 			arm32_mvpex_chipset = &arm32_mvpex1_chipset;
 			iotag = ARMADAXP_TAG_PEX01_IO;
 			memtag = ARMADAXP_TAG_PEX01_MEM;
-		} else if (mva->mva_offset == MVSOC_PEX_BASE + 0x8000) {
+		} else if (mva->mva_offset == ARMADAXP_PEX02_BASE) {
 			mvpex_io_bs_tag = &armadaxp_pex02_io_bs_tag;
 			mvpex_mem_bs_tag = &armadaxp_pex02_mem_bs_tag;
 			arm32_mvpex_chipset = &arm32_mvpex2_chipset;
 			iotag = ARMADAXP_TAG_PEX02_IO;
 			memtag = ARMADAXP_TAG_PEX02_MEM;
-		} else if (mva->mva_offset == MVSOC_PEX_BASE + 0xc000) {
+		} else if (mva->mva_offset == ARMADAXP_PEX03_BASE) {
 			mvpex_io_bs_tag = &armadaxp_pex03_io_bs_tag;
 			mvpex_mem_bs_tag = &armadaxp_pex03_mem_bs_tag;
 			arm32_mvpex_chipset = &arm32_mvpex3_chipset;
 			iotag = ARMADAXP_TAG_PEX03_IO;
 			memtag = ARMADAXP_TAG_PEX03_MEM;
-		} else if (mva->mva_offset == MVSOC_PEX_BASE + 0x2000) {
+		} else if (mva->mva_offset == ARMADAXP_PEX10_BASE) {
+			mvpex_io_bs_tag = &armadaxp_pex10_io_bs_tag;
+			mvpex_mem_bs_tag = &armadaxp_pex10_mem_bs_tag;
+			arm32_mvpex_chipset = &arm32_mvpex4_chipset;
+			iotag = ARMADAXP_TAG_PEX10_IO;
+			memtag = ARMADAXP_TAG_PEX10_MEM;
+		} else if (mva->mva_offset == ARMADAXP_PEX2_BASE) {
 			mvpex_io_bs_tag = &armadaxp_pex2_io_bs_tag;
 			mvpex_mem_bs_tag = &armadaxp_pex2_mem_bs_tag;
-			arm32_mvpex_chipset = &arm32_mvpex4_chipset;
+			arm32_mvpex_chipset = &arm32_mvpex5_chipset;
 			iotag = ARMADAXP_TAG_PEX2_IO;
 			memtag = ARMADAXP_TAG_PEX2_MEM;
 		} else {
 			mvpex_io_bs_tag = &armadaxp_pex3_io_bs_tag;
 			mvpex_mem_bs_tag = &armadaxp_pex3_mem_bs_tag;
-			arm32_mvpex_chipset = &arm32_mvpex5_chipset;
+			arm32_mvpex_chipset = &arm32_mvpex6_chipset;
 			iotag = ARMADAXP_TAG_PEX3_IO;
 			memtag = ARMADAXP_TAG_PEX3_MEM;
 		}

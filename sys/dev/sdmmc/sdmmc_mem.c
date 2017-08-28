@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.31.6.5 2016/10/05 20:55:56 skrll Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.31.6.6 2017/08/28 17:52:27 skrll Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.31.6.5 2016/10/05 20:55:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.31.6.6 2017/08/28 17:52:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -79,11 +79,15 @@ static int sdmmc_mem_send_csd(struct sdmmc_softc *, struct sdmmc_function *,
 static int sdmmc_mem_send_scr(struct sdmmc_softc *, struct sdmmc_function *,
     uint32_t *scr);
 static int sdmmc_mem_decode_scr(struct sdmmc_softc *, struct sdmmc_function *);
+static int sdmmc_mem_send_ssr(struct sdmmc_softc *, struct sdmmc_function *,
+    sdmmc_bitfield512_t *);
+static int sdmmc_mem_decode_ssr(struct sdmmc_softc *, struct sdmmc_function *,
+    sdmmc_bitfield512_t *);
 static int sdmmc_mem_send_cxd_data(struct sdmmc_softc *, int, void *, size_t);
 static int sdmmc_set_bus_width(struct sdmmc_function *, int);
 static int sdmmc_mem_sd_switch(struct sdmmc_function *, int, int, int, sdmmc_bitfield512_t *);
 static int sdmmc_mem_mmc_switch(struct sdmmc_function *, uint8_t, uint8_t,
-    uint8_t);
+    uint8_t, bool);
 static int sdmmc_mem_signal_voltage(struct sdmmc_softc *, int);
 static int sdmmc_mem_spi_read_ocr(struct sdmmc_softc *, uint32_t, uint32_t *);
 static int sdmmc_mem_single_read_block(struct sdmmc_function *, uint32_t,
@@ -744,9 +748,6 @@ sdmmc_mem_execute_tuning(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
 	int timing = -1;
 
-	if (!ISSET(sc->sc_flags, SMF_UHS_MODE))
-		return 0;
-
 	if (ISSET(sc->sc_flags, SMF_SD_MODE)) {
 		if (!ISSET(sc->sc_flags, SMF_UHS_MODE))
 			return 0;
@@ -781,7 +782,7 @@ static int
 sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
 	int support_func, best_func, bus_clock, error, i;
-	sdmmc_bitfield512_t status; /* Switch Function Status */
+	sdmmc_bitfield512_t status;
 	bool ddr = false;
 
 	/* change bus clock */
@@ -891,6 +892,15 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	sc->sc_transfer_mode = switch_group0_functions[best_func].name;
 	sc->sc_busddr = ddr;
 
+	/* get card status */
+	error = sdmmc_mem_send_ssr(sc, sf, &status);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "can't get SD status: %d\n",
+		    error);
+		return error;
+	}
+	sdmmc_mem_decode_ssr(sc, sf, &status);
+
 	/* execute tuning (UHS) */
 	error = sdmmc_mem_execute_tuning(sc, sf);
 	if (error) {
@@ -907,6 +917,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	int width, value, hs_timing, bus_clock, error;
 	uint8_t ext_csd[512];
 	uint32_t sectors = 0;
+	bool ddr = false;
 
 	sc->sc_transfer_mode = NULL;
 
@@ -933,18 +944,23 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 				ext_csd[EXT_CSD_STRUCTURE]);
 			return ENOTSUP;
 		}
+		sf->ext_csd.rev = ext_csd[EXT_CSD_REV];
 
-		sc->sc_transfer_mode = NULL;
 		if (ISSET(sc->sc_caps, SMC_CAPS_MMC_HS200) &&
 		    ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_HS200_1_8V) {
 			sf->csd.tran_speed = 200000;	/* 200MHz SDR */
-			hs_timing = 2;
+			hs_timing = EXT_CSD_HS_TIMING_HS200;
+		} else if (ISSET(sc->sc_caps, SMC_CAPS_MMC_DDR52) &&
+		    ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_DDR52_1_8V) {
+			sf->csd.tran_speed = 52000;	/* 52MHz */
+			hs_timing = EXT_CSD_HS_TIMING_HIGHSPEED;
+			ddr = true;
 		} else if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_52M) {
 			sf->csd.tran_speed = 52000;	/* 52MHz */
-			hs_timing = 1;
+			hs_timing = EXT_CSD_HS_TIMING_HIGHSPEED;
 		} else if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_26M) {
 			sf->csd.tran_speed = 26000;	/* 26MHz */
-			hs_timing = 0;
+			hs_timing = EXT_CSD_HS_TIMING_LEGACY;
 		} else {
 			aprint_error_dev(sc->sc_dev,
 			    "unknown CARD_TYPE: 0x%x\n",
@@ -965,7 +981,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 		if (width != 1) {
 			error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
-			    EXT_CSD_BUS_WIDTH, value);
+			    EXT_CSD_BUS_WIDTH, value, false);
 			if (error == 0)
 				error = sdmmc_chip_bus_width(sc->sc_sct,
 				    sc->sc_sch, width);
@@ -980,13 +996,13 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		}
 		sf->width = width;
 
-		if (hs_timing == 1 &&
+		if (hs_timing == EXT_CSD_HS_TIMING_HIGHSPEED &&
 		    !ISSET(sc->sc_caps, SMC_CAPS_MMC_HIGHSPEED)) {
-			hs_timing = 0;
+			hs_timing = EXT_CSD_HS_TIMING_LEGACY;
 		}
-		if (hs_timing) {
+		if (hs_timing != EXT_CSD_HS_TIMING_LEGACY) {
 			error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
-			    EXT_CSD_HS_TIMING, hs_timing);
+			    EXT_CSD_HS_TIMING, hs_timing, false);
 			if (error) {
 				aprint_error_dev(sc->sc_dev,
 				    "can't change high speed %d, error %d\n",
@@ -1007,7 +1023,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			}
 		}
 
-		if (hs_timing) {
+		if (hs_timing != EXT_CSD_HS_TIMING_LEGACY) {
 			error = sdmmc_mem_send_cxd_data(sc,
 			    MMC_SEND_EXT_CSD, ext_csd, sizeof(ext_csd));
 			if (error) {
@@ -1022,6 +1038,47 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			}
 		}
 
+		/*
+		 * HS_TIMING must be set to “0x1” before setting BUS_WIDTH
+		 * for dual data rate operation
+		 */
+		if (ddr &&
+		    hs_timing == EXT_CSD_HS_TIMING_HIGHSPEED &&
+		    width > 1) {
+			error = sdmmc_mem_mmc_switch(sf,
+			    EXT_CSD_CMD_SET_NORMAL, EXT_CSD_BUS_WIDTH,
+			    (width == 8) ? EXT_CSD_BUS_WIDTH_8_DDR :
+			      EXT_CSD_BUS_WIDTH_4_DDR, false);
+			if (error) {
+				DPRINTF(("%s: can't switch to DDR"
+				    " (%d bit)\n", SDMMCDEVNAME(sc), width));
+				return error;
+			}
+
+			delay(10000);
+
+			error = sdmmc_mem_signal_voltage(sc,
+			    SDMMC_SIGNAL_VOLTAGE_180);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+				    "can't switch signaling voltage\n");
+				return error;
+			}
+
+			error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch,
+			    sc->sc_busclk, ddr);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+				    "can't change bus clock\n");
+				return error;
+			}
+
+			delay(10000);
+
+			sc->sc_transfer_mode = "DDR52";
+			sc->sc_busddr = ddr;
+		}
+
 		sectors = ext_csd[EXT_CSD_SEC_COUNT + 0] << 0 |
 		    ext_csd[EXT_CSD_SEC_COUNT + 1] << 8  |
 		    ext_csd[EXT_CSD_SEC_COUNT + 2] << 16 |
@@ -1031,7 +1088,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			sf->csd.capacity = sectors;
 		}
 
-		if (hs_timing == 2) {
+		if (hs_timing == EXT_CSD_HS_TIMING_HS200) {
 			sc->sc_transfer_mode = "HS200";
 
 			/* execute tuning (HS200) */
@@ -1041,8 +1098,28 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 				    "can't execute MMC tuning\n");
 				return error;
 			}
-		} else {
-			sc->sc_transfer_mode = NULL;
+		}
+
+		if (sf->ext_csd.rev >= 5) {
+			sf->ext_csd.rst_n_function =
+			    ext_csd[EXT_CSD_RST_N_FUNCTION];
+		}
+
+		if (sf->ext_csd.rev >= 6) {
+			sf->ext_csd.cache_size =
+			    le32dec(&ext_csd[EXT_CSD_CACHE_SIZE]) * 1024;
+		}
+		if (sf->ext_csd.cache_size > 0) {
+			/* eMMC cache present, enable it */
+			error = sdmmc_mem_mmc_switch(sf,
+			    EXT_CSD_CMD_SET_NORMAL, EXT_CSD_CACHE_CTRL,
+			    EXT_CSD_CACHE_CTRL_CACHE_EN, false);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+				    "can't enable cache: %d\n", error);
+			} else {
+				SET(sf->flags, SFF_CACHE_ENABLED);
+			}
 		}
 	} else {
 		if (sc->sc_busclk > sf->csd.tran_speed)
@@ -1219,6 +1296,134 @@ sdmmc_mem_decode_scr(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		    SDMMCDEVNAME(sc), ver));
 		return EINVAL;
 	}
+	return 0;
+}
+
+static int
+sdmmc_mem_send_ssr(struct sdmmc_softc *sc, struct sdmmc_function *sf,
+    sdmmc_bitfield512_t *ssr)
+{
+	struct sdmmc_command cmd;
+	bus_dma_segment_t ds[1];
+	void *ptr = NULL;
+	int datalen = 64;
+	int rseg;
+	int error = 0;
+
+	/* Don't lock */
+
+	if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
+		error = bus_dmamem_alloc(sc->sc_dmat, datalen, PAGE_SIZE, 0,
+		    ds, 1, &rseg, BUS_DMA_NOWAIT);
+		if (error)
+			goto out;
+		error = bus_dmamem_map(sc->sc_dmat, ds, 1, datalen, &ptr,
+		    BUS_DMA_NOWAIT);
+		if (error)
+			goto dmamem_free;
+		error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmap, ptr, datalen,
+		    NULL, BUS_DMA_NOWAIT|BUS_DMA_STREAMING|BUS_DMA_READ);
+		if (error)
+			goto dmamem_unmap;
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, datalen,
+		    BUS_DMASYNC_PREREAD);
+	} else {
+		ptr = malloc(datalen, M_DEVBUF, M_NOWAIT | M_ZERO);
+		if (ptr == NULL)
+			goto out;
+	}
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.c_data = ptr;
+	cmd.c_datalen = datalen;
+	cmd.c_blklen = datalen;
+	cmd.c_arg = 0;
+	cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ | SCF_RSP_R1 | SCF_RSP_SPI_R1;
+	cmd.c_opcode = SD_APP_SD_STATUS;
+	if (ISSET(sc->sc_caps, SMC_CAPS_DMA))
+		cmd.c_dmamap = sc->sc_dmap;
+
+	error = sdmmc_app_command(sc, sf, &cmd);
+	if (error == 0) {
+		if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, datalen,
+			    BUS_DMASYNC_POSTREAD);
+		}
+		memcpy(ssr, ptr, datalen);
+	}
+
+out:
+	if (ptr != NULL) {
+		if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
+			bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
+dmamem_unmap:
+			bus_dmamem_unmap(sc->sc_dmat, ptr, datalen);
+dmamem_free:
+			bus_dmamem_free(sc->sc_dmat, ds, rseg);
+		} else {
+			free(ptr, M_DEVBUF);
+		}
+	}
+	DPRINTF(("%s: sdmem_mem_send_ssr: error = %d\n", SDMMCDEVNAME(sc),
+	    error));
+
+	if (error == 0)
+		sdmmc_be512_to_bitfield512(ssr);
+
+#ifdef SDMMC_DEBUG
+	if (error == 0)
+		sdmmc_dump_data("SSR", ssr, datalen);
+#endif
+	return error;
+}
+
+static int
+sdmmc_mem_decode_ssr(struct sdmmc_softc *sc, struct sdmmc_function *sf,
+    sdmmc_bitfield512_t *ssr_bitfield)
+{
+	uint32_t *ssr = (uint32_t *)ssr_bitfield;
+	int speed_class_val, bus_width_val;
+
+	const int bus_width = SSR_DAT_BUS_WIDTH(ssr);
+	const int speed_class = SSR_SPEED_CLASS(ssr);
+	const int uhs_speed_grade = SSR_UHS_SPEED_GRADE(ssr);
+	const int video_speed_class = SSR_VIDEO_SPEED_CLASS(ssr);
+	const int app_perf_class = SSR_APP_PERF_CLASS(ssr);
+
+	switch (speed_class) {
+	case SSR_SPEED_CLASS_0:	speed_class_val = 0; break;
+	case SSR_SPEED_CLASS_2: speed_class_val = 2; break;
+	case SSR_SPEED_CLASS_4: speed_class_val = 4; break;
+	case SSR_SPEED_CLASS_6: speed_class_val = 6; break;
+	case SSR_SPEED_CLASS_10: speed_class_val = 10; break;
+	default: speed_class_val = -1; break;
+	}
+
+	switch (bus_width) {
+	case SSR_DAT_BUS_WIDTH_1: bus_width_val = 1; break;
+	case SSR_DAT_BUS_WIDTH_4: bus_width_val = 4; break;
+	default: bus_width_val = -1;
+	}
+
+	/*
+	 * Log card status
+	 */
+	device_printf(sc->sc_dev, "SD card status:");
+	if (bus_width_val != -1)
+		printf(" %d-bit", bus_width_val);
+	else
+		printf(" unknown bus width");
+	if (speed_class_val != -1)
+		printf(", C%d", speed_class_val);
+	if (uhs_speed_grade)
+		printf(", U%d", uhs_speed_grade);
+	if (video_speed_class)
+		printf(", V%d", video_speed_class);
+	if (app_perf_class)
+		printf(", A%d", app_perf_class);
+	printf("\n");
+
 	return 0;
 }
 
@@ -1412,7 +1617,7 @@ dmamem_free:
 
 static int
 sdmmc_mem_mmc_switch(struct sdmmc_function *sf, uint8_t set, uint8_t index,
-    uint8_t value)
+    uint8_t value, bool poll)
 {
 	struct sdmmc_softc *sc = sf->sc;
 	struct sdmmc_command cmd;
@@ -1423,6 +1628,9 @@ sdmmc_mem_mmc_switch(struct sdmmc_function *sf, uint8_t set, uint8_t index,
 	cmd.c_arg = (MMC_SWITCH_MODE_WRITE_BYTE << 24) |
 	    (index << 16) | (value << 8) | set;
 	cmd.c_flags = SCF_RSP_SPI_R1B | SCF_RSP_R1B | SCF_CMD_AC;
+
+	if (poll)
+		cmd.c_flags |= SCF_POLL;
 
 	error = sdmmc_mmc_command(sc, &cmd);
 	if (error)
@@ -1435,6 +1643,8 @@ sdmmc_mem_mmc_switch(struct sdmmc_function *sf, uint8_t set, uint8_t index,
 			if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE))
 				cmd.c_arg = MMC_ARG_RCA(sf->rca);
 			cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1 | SCF_RSP_SPI_R2;
+			if (poll)
+				cmd.c_flags |= SCF_POLL;
 			error = sdmmc_mmc_command(sc, &cmd);
 			if (error)
 				break;
@@ -1594,6 +1804,8 @@ sdmmc_mem_read_block_subr(struct sdmmc_function *sf, bus_dmamap_t dmap,
 	if (!ISSET(sf->flags, SFF_SDHC))
 		cmd.c_arg <<= SDMMC_SECTOR_SIZE_SB;
 	cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ | SCF_RSP_R1 | SCF_RSP_SPI_R1;
+	if (ISSET(sf->flags, SFF_SDHC))
+		cmd.c_flags |= SCF_XFER_SDHC;
 	if (ISSET(sc->sc_caps, SMC_CAPS_DMA))
 		cmd.c_dmamap = dmap;
 
@@ -1819,6 +2031,8 @@ sdmmc_mem_write_block_subr(struct sdmmc_function *sf, bus_dmamap_t dmap,
 	if (!ISSET(sf->flags, SFF_SDHC))
 		cmd.c_arg <<= SDMMC_SECTOR_SIZE_SB;
 	cmd.c_flags = SCF_CMD_ADTC | SCF_RSP_R1;
+	if (ISSET(sf->flags, SFF_SDHC))
+		cmd.c_flags |= SCF_XFER_SDHC;
 	if (ISSET(sc->sc_caps, SMC_CAPS_DMA))
 		cmd.c_dmamap = dmap;
 
@@ -1933,6 +2147,92 @@ unload:
 out:
 	mutex_exit(&sc->sc_mtx);
 	SDMMC_UNLOCK(sc);
+
+	return error;
+}
+
+int
+sdmmc_mem_discard(struct sdmmc_function *sf, uint32_t sblkno, uint32_t eblkno)
+{
+	struct sdmmc_softc *sc = sf->sc;
+	struct sdmmc_command cmd;
+	int error;
+
+	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE))
+		return ENODEV;	/* XXX not tested */
+
+	if (eblkno < sblkno)
+		return EINVAL;
+
+	SDMMC_LOCK(sc);
+	mutex_enter(&sc->sc_mtx);
+
+	/* Set the address of the first write block to be erased */
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.c_opcode = ISSET(sc->sc_flags, SMF_SD_MODE) ?
+	    SD_ERASE_WR_BLK_START : MMC_TAG_ERASE_GROUP_START;
+	cmd.c_arg = sblkno;
+	if (!ISSET(sf->flags, SFF_SDHC))
+		cmd.c_arg <<= SDMMC_SECTOR_SIZE_SB;
+	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
+	error = sdmmc_mmc_command(sc, &cmd);
+	if (error)
+		goto out;
+
+	/* Set the address of the last write block to be erased */
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.c_opcode = ISSET(sc->sc_flags, SMF_SD_MODE) ?
+	    SD_ERASE_WR_BLK_END : MMC_TAG_ERASE_GROUP_END;
+	cmd.c_arg = eblkno;
+	if (!ISSET(sf->flags, SFF_SDHC))
+		cmd.c_arg <<= SDMMC_SECTOR_SIZE_SB;
+	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
+	error = sdmmc_mmc_command(sc, &cmd);
+	if (error)
+		goto out;
+
+	/* Start the erase operation */
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.c_opcode = MMC_ERASE;
+	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1B;
+	error = sdmmc_mmc_command(sc, &cmd);
+	if (error)
+		goto out;
+
+out:
+	mutex_exit(&sc->sc_mtx);
+	SDMMC_UNLOCK(sc);
+
+#ifdef SDMMC_DEBUG
+	device_printf(sc->sc_dev, "discard blk %u-%u error %d\n",
+	    sblkno, eblkno, error);
+#endif
+
+	return error;
+}
+
+int
+sdmmc_mem_flush_cache(struct sdmmc_function *sf, bool poll)
+{
+	struct sdmmc_softc *sc = sf->sc;
+	int error;
+
+	if (!ISSET(sf->flags, SFF_CACHE_ENABLED))
+		return 0;
+
+	SDMMC_LOCK(sc);
+	mutex_enter(&sc->sc_mtx);
+
+	error = sdmmc_mem_mmc_switch(sf,
+	    EXT_CSD_CMD_SET_NORMAL, EXT_CSD_FLUSH_CACHE,
+	    EXT_CSD_FLUSH_CACHE_FLUSH, poll);
+
+	mutex_exit(&sc->sc_mtx);
+	SDMMC_UNLOCK(sc);
+
+#ifdef SDMMC_DEBUG
+	device_printf(sc->sc_dev, "mmc flush cache error %d\n", error);
+#endif
 
 	return error;
 }

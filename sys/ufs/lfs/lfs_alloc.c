@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.119.6.4 2016/10/05 20:56:12 skrll Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.119.6.5 2017/08/28 17:53:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.119.6.4 2016/10/05 20:56:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.119.6.5 2017/08/28 17:53:17 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -168,10 +168,8 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 	 */
 	LFS_GET_HEADFREE(fs, cip, cbp, &oldlast);
 	LFS_PUT_HEADFREE(fs, cip, cbp, i);
-#ifdef DIAGNOSTIC
-	if (lfs_sb_getfreehd(fs) == LFS_UNUSED_INUM)
-		panic("inode 0 allocated [2]");
-#endif /* DIAGNOSTIC */
+	KASSERTMSG((lfs_sb_getfreehd(fs) != LFS_UNUSED_INUM),
+	    "inode 0 allocated [2]");
 
 	/* inode number to stop at (XXX: why *x*max?) */
 	xmax = i + lfs_sb_getifpb(fs);
@@ -298,10 +296,8 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 			return error;
 		}
 	}
-#ifdef DIAGNOSTIC
-	if (lfs_sb_getfreehd(fs) == LFS_UNUSED_INUM)
-		panic("inode 0 allocated [3]");
-#endif /* DIAGNOSTIC */
+	KASSERTMSG((lfs_sb_getfreehd(fs) != LFS_UNUSED_INUM),
+	    "inode 0 allocated [3]");
 
 	/* Set superblock modified bit */
 	mutex_enter(&lfs_lock);
@@ -322,9 +318,6 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
  *
  * Called in the same context as lfs_valloc and therefore shares the
  * same locking assumptions.
- *
- * XXX: WHICH MEANS IT OUGHT TO TAKE THE SEGLOCK WHILE FROBBING THIS
- * XXX: STUFF. REALLY.
  */
 int
 lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
@@ -334,9 +327,12 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 	ino_t headino, thisino, oldnext;
 	CLEANERINFO *cip;
 
-	/* XXX: check for readonly */
-	/* XXX: assert no seglock */
-	/* XXX: should take seglock (as noted above) */
+	if (fs->lfs_ronly)
+		return EROFS;
+
+	ASSERT_NO_SEGLOCK(fs);
+
+	lfs_seglock(fs, SEGM_PROT);
 
 	/*
 	 * If the ifile is too short to contain this inum, extend it.
@@ -385,7 +381,7 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 		if (nextfree == LFS_UNUSED_INUM) {
 			/* hit the end -- this inode is not available */
 			brelse(bp, 0);
-			/* XXX release seglock (see above) */
+			lfs_segunlock(fs);
 			return ENOENT;
 		}
 		/* found it; update the next pointer */
@@ -395,7 +391,7 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 	}
 
 	/* done */
-	/* XXX release seglock (see above) */
+	lfs_segunlock(fs);
 	return 0;
 }
 
@@ -510,11 +506,11 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	/*
 	 * If the inode was in a dirop, it isn't now.
 	 *
-	 * XXX: why are (v_uflag & VU_DIROP) and (ip->i_flag & IN_ADIROP)
+	 * XXX: why are (v_uflag & VU_DIROP) and (ip->i_state & IN_ADIROP)
 	 * not updated together in one function? (and why do both exist,
 	 * anyway?)
 	 */
-	lfs_unmark_vnode(vp);
+	UNMARK_VNODE(vp);
 
 	mutex_enter(&lfs_lock);
 	if (vp->v_uflag & VU_DIROP) {
@@ -555,7 +551,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	mutex_exit(&lfs_lock);
 
 	/* Turn off all inode modification flags */
-	ip->i_flag &= ~IN_ALLMOD;
+	ip->i_state &= ~IN_ALLMOD;
 
 	/* Mark it deleted */
 	ip->i_lfs_iflags |= LFSI_DELETED;
@@ -667,12 +663,8 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 			}
 		}
 	}
-#ifdef DIAGNOSTIC
 	/* XXX: shouldn't this check be further up *before* we trash the fs? */
-	if (ino == LFS_UNUSED_INUM) {
-		panic("inode 0 freed");
-	}
-#endif /* DIAGNOSTIC */
+	KASSERTMSG((ino != LFS_UNUSED_INUM), "inode 0 freed");
 
 	/*
 	 * Update the segment summary for the segment where the on-disk
@@ -681,18 +673,12 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	if (old_iaddr != LFS_UNUSED_DADDR) {
 		/* load it */
 		LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, old_iaddr), bp);
-#ifdef DIAGNOSTIC
 		/* the number of bytes in the segment should not become < 0 */
-		if (sup->su_nbytes < DINOSIZE(fs)) {
-			printf("lfs_vfree: negative byte count"
-			       " (segment %" PRIu32 " short by %d)\n",
-			       lfs_dtosn(fs, old_iaddr),
-			       (int)DINOSIZE(fs) -
-				    sup->su_nbytes);
-			panic("lfs_vfree: negative byte count");
-			sup->su_nbytes = DINOSIZE(fs);
-		}
-#endif
+		KASSERTMSG((sup->su_nbytes >= DINOSIZE(fs)),
+		    "lfs_vfree: negative byte count"
+		    " (segment %" PRIu32 " short by %d)\n",
+		    lfs_dtosn(fs, old_iaddr),
+		    (int)DINOSIZE(fs) - sup->su_nbytes);
 		/* update the number of bytes in the segment */
 		sup->su_nbytes -= DINOSIZE(fs);
 		/* write the segment entry */

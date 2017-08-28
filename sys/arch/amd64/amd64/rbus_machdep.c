@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.6 2014/06/29 23:21:28 jakllsch Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.6.4.1 2017/08/28 17:51:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.6 2014/06/29 23:21:28 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.6.4.1 2017/08/28 17:51:28 skrll Exp $");
 
 #include "opt_pcifixup.h"
 
@@ -123,7 +123,7 @@ rbus_pccbb_parent_io(struct pci_attach_args *pa)
 
 	ret = rbus_new_root_share(pa->pa_iot, ex, start, size, 0);
 	if (ret == NULL)
-	  panic("failed to alloc I/O space");
+		panic("failed to alloc I/O space");
 
 	return ret;
 }

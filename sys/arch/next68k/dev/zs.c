@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.33 2008/06/13 12:26:55 cegger Exp $	*/
+/*	$NetBSD: zs.c,v 1.33.60.1 2017/08/28 17:51:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.33 2008/06/13 12:26:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.33.60.1 2017/08/28 17:51:47 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -183,7 +183,7 @@ zs_match(device_t parent, cfdata_t cf, void *aux)
 	if (zs_attached)
 		return 0;
 
-	ia->ia_addr = (void *)IIOV(NEXT_P_SCC);
+	ia->ia_addr = (void *)NEXT_P_SCC;
 
 	return 1;
 }

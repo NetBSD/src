@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.116.2.2 2017/02/05 13:40:00 skrll Exp $
+# 	$NetBSD: GENERIC,v 1.116.2.3 2017/08/28 17:51:27 skrll Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.116.2.2 $"
+#ident		"GENERIC-$Revision: 1.116.2.3 $"
 
 # estimated number of users
 maxusers	32
@@ -121,7 +121,6 @@ options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0,
 options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options

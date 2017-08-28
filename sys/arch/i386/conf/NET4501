@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.87.2.1 2015/09/22 12:05:44 skrll Exp $
+# $NetBSD: NET4501,v 1.87.2.2 2017/08/28 17:51:40 skrll Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.87.2.1 $"
+#ident 		"NET4501-$Revision: 1.87.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -20,11 +20,10 @@ options 	TIMER_FREQ=1189200
 makeoptions	COPTS="-Os"
 
 # CPU-related options.
-#options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
 #options 	MTRR		# memory-type range register syscall support
-#options 	PERFCTRS	# performance-monitoring counters support
+#options 	PMC		# performance-monitoring counters support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -94,10 +93,7 @@ options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI compatibility.
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
-#options 	COMPAT_SVR4	# binary compatibility with SVR4
-#options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

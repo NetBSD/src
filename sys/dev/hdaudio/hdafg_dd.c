@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg_dd.c,v 1.1.2.2 2015/04/06 15:18:08 skrll Exp $ */
+/* $NetBSD: hdafg_dd.c,v 1.1.2.3 2017/08/28 17:52:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg_dd.c,v 1.1.2.2 2015/04/06 15:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg_dd.c,v 1.1.2.3 2017/08/28 17:52:02 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,12 +50,16 @@ hdafg_dd_parse_info(uint8_t *data, size_t datalen, struct hdafg_dd_info *hdi)
 	struct eld_baseline_block *block = &hdi->eld;
 	unsigned int i;
 
+#ifdef HDAFG_HDMI_DEBUG
 	printf("hdafg_dd_parse_info: datalen=%u\n", (unsigned int)datalen);
+#endif
 
 	memset(hdi, 0, sizeof(*hdi));
 
 	if (datalen < sizeof(block->header)) {
+#ifdef HDAFG_HDMI_DEBUG
 		printf(" no room for header\n");
+#endif
 		return EINVAL;
 	}
 
@@ -65,7 +69,9 @@ hdafg_dd_parse_info(uint8_t *data, size_t datalen, struct hdafg_dd_info *hdi)
 
 	if (datalen < block->header.baseline_eld_len * 4 ||
 	    datalen < sizeof(*block) - sizeof(block->header)) {
+#ifdef HDAFG_HDMI_DEBUG
 		printf(" ack!\n");
+#endif
 		return EINVAL;
 	}
 
@@ -76,7 +82,9 @@ hdafg_dd_parse_info(uint8_t *data, size_t datalen, struct hdafg_dd_info *hdi)
 	datalen -= sizeof(*block) - sizeof(block->header);
 
 	if (datalen < ELD_MNL(block)) {
+#ifdef HDAFG_HDMI_DEBUG
 		printf(" MNL=%u\n", ELD_MNL(block));
+#endif
 		return EINVAL;
 	}
 
@@ -85,10 +93,12 @@ hdafg_dd_parse_info(uint8_t *data, size_t datalen, struct hdafg_dd_info *hdi)
 	datalen -= ELD_MNL(block);
 
 	if (datalen != ELD_SAD_COUNT(block) * sizeof(hdi->sad[0])) {
+#ifdef HDAFG_HDMI_DEBUG
 		printf(" datalen %u sadcount %u sizeof sad %u\n",
 		    (unsigned int)datalen,
 		    ELD_SAD_COUNT(block),
 		    (unsigned int)sizeof(hdi->sad[0]));
+#endif
 		return EINVAL;
 	}
 	hdi->nsad = ELD_SAD_COUNT(block);
@@ -98,7 +108,9 @@ hdafg_dd_parse_info(uint8_t *data, size_t datalen, struct hdafg_dd_info *hdi)
 		datalen -= sizeof(hdi->sad[i]);
 	}
 
+#ifdef HDAFG_HDMI_DEBUG
 	printf("datalen = %u\n", (unsigned int)datalen);
+#endif
 	KASSERT(datalen == 0);
 
 	return 0;

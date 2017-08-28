@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.36.6.1 2016/07/09 20:25:14 skrll Exp $	*/
+/*	$NetBSD: trm.c,v 1.36.6.2 2017/08/28 17:52:25 skrll Exp $	*/
 /*-
  * Copyright (c) 2002 Izumi Tsutsui.  All rights reserved.
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.36.6.1 2016/07/09 20:25:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.36.6.2 2017/08/28 17:52:25 skrll Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -412,7 +412,7 @@ trm_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t command;
 	const char *intrstr;
-	int fl = 0;
+	int fl = -1;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
@@ -437,7 +437,7 @@ trm_attach(device_t parent, device_t self, void *aux)
 		    &ioh, NULL, NULL);
 	}
 	if (fl != 0) {
-		aprint_verbose_dev(self, "couldn't map MMIO registers, tryion PIO\n");
+		aprint_verbose_dev(self, "couldn't map MMIO registers, trying PIO\n");
 		if ((fl = pci_mapreg_map(pa, TRM_BAR_PIO, PCI_MAPREG_TYPE_IO,
 		    0, &iot, &ioh, NULL, NULL)) != 0) {
 			aprint_error(": unable to map registers (%d)\n", fl);

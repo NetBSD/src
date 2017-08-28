@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.3.2.2 2017/02/05 13:40:12 skrll Exp $	*/
+/*	$NetBSD: panic.c,v 1.3.2.3 2017/08/28 17:51:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -47,13 +47,15 @@ Panic(
 	va_end(args);
 	reboot();
 	/*NOTREACHED*/
+	__unreachable();
 }
 
-void
+__dead void
 reboot(void)
 {
 
-	WaitForSingleEvent(ST->ConIn->WaitForKey, 0);
+	if (!efi_cleanuped)
+		WaitForSingleEvent(ST->ConIn->WaitForKey, 0);
 
 	uefi_call_wrapper(RT->ResetSystem, 4, EfiResetCold, EFI_SUCCESS,
 	    0, NULL);
@@ -61,7 +63,7 @@ reboot(void)
 		continue;
 }
 
-void
+__dead void
 _rtt(void)
 {
 

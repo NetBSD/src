@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.90.6.2 2017/02/05 13:40:21 skrll Exp $ */
+/*	$NetBSD: db_interface.c,v 1.90.6.3 2017/08/28 17:51:52 skrll Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.90.6.2 2017/02/05 13:40:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.90.6.3 2017/08/28 17:51:52 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -113,8 +113,6 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 }
 #endif
 
-db_regs_t *ddb_regp;
-
 #if defined(DDB)
 
 /*
@@ -131,81 +129,6 @@ cpu_Debugger(void)
 #endif /* DDB */
 
 #if defined(DDB) || defined(_KMEMUSER)
-
-static long nil;
-
-/*
- * Machine register set.
- */
-#define dbreg(xx) (long *)offsetof(db_regs_t, db_tf.tf_ ## xx)
-#define dbregfr(xx) (long *)offsetof(db_regs_t, db_fr.fr_ ## xx)
-
-static int db_sparc_regop(const struct db_variable *, db_expr_t *, int);
-
-const struct db_variable db_regs[] = {
-	{ "psr",	dbreg(psr),		db_sparc_regop, NULL, },
-	{ "pc",		dbreg(pc),		db_sparc_regop, NULL, },
-	{ "npc",	dbreg(npc),		db_sparc_regop, NULL, },
-	{ "y",		dbreg(y),		db_sparc_regop, NULL, },
-	{ "wim",	dbreg(global[0]),	db_sparc_regop, NULL, }, /* see reg.h */
-	{ "g0",		&nil,			FCN_NULL, 	NULL, },
-	{ "g1",		dbreg(global[1]),	db_sparc_regop, NULL, },
-	{ "g2",		dbreg(global[2]),	db_sparc_regop, NULL, },
-	{ "g3",		dbreg(global[3]),	db_sparc_regop, NULL, },
-	{ "g4",		dbreg(global[4]),	db_sparc_regop, NULL, },
-	{ "g5",		dbreg(global[5]),	db_sparc_regop, NULL, },
-	{ "g6",		dbreg(global[6]),	db_sparc_regop, NULL, },
-	{ "g7",		dbreg(global[7]),	db_sparc_regop, NULL, },
-	{ "o0",		dbreg(out[0]),		db_sparc_regop, NULL, },
-	{ "o1",		dbreg(out[1]),		db_sparc_regop, NULL, },
-	{ "o2",		dbreg(out[2]),		db_sparc_regop, NULL, },
-	{ "o3",		dbreg(out[3]),		db_sparc_regop, NULL, },
-	{ "o4",		dbreg(out[4]),		db_sparc_regop, NULL, },
-	{ "o5",		dbreg(out[5]),		db_sparc_regop, NULL, },
-	{ "o6",		dbreg(out[6]),		db_sparc_regop, NULL, },
-	{ "o7",		dbreg(out[7]),		db_sparc_regop, NULL, },
-	{ "l0",		dbregfr(local[0]),	db_sparc_regop, NULL, },
-	{ "l1",		dbregfr(local[1]),	db_sparc_regop, NULL, },
-	{ "l2",		dbregfr(local[2]),	db_sparc_regop, NULL, },
-	{ "l3",		dbregfr(local[3]),	db_sparc_regop, NULL, },
-	{ "l4",		dbregfr(local[4]),	db_sparc_regop, NULL, },
-	{ "l5",		dbregfr(local[5]),	db_sparc_regop, NULL, },
-	{ "l6",		dbregfr(local[6]),	db_sparc_regop, NULL, },
-	{ "l7",		dbregfr(local[7]),	db_sparc_regop, NULL, },
-	{ "i0",		dbregfr(arg[0]),	db_sparc_regop, NULL, },
-	{ "i1",		dbregfr(arg[1]),	db_sparc_regop, NULL, },
-	{ "i2",		dbregfr(arg[2]),	db_sparc_regop, NULL, },
-	{ "i3",		dbregfr(arg[3]),	db_sparc_regop, NULL, },
-	{ "i4",		dbregfr(arg[4]),	db_sparc_regop, NULL, },
-	{ "i5",		dbregfr(arg[5]),	db_sparc_regop, NULL, },
-	{ "i6",		dbregfr(fp),		db_sparc_regop, NULL, },
-	{ "i7",		dbregfr(pc),		db_sparc_regop, NULL, },
-};
-const struct db_variable * const db_eregs =
-    db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
-
-static int
-db_sparc_regop (const struct db_variable *vp, db_expr_t *val, int opcode)
-{
-	db_expr_t *regaddr =
-	    (db_expr_t *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
-
-	switch (opcode) {
-	case DB_VAR_GET:
-		*val = *regaddr;
-		break;
-	case DB_VAR_SET:
-		*regaddr = *val;
-		break;
-	default:
-#ifdef _KERNEL
-		panic("db_sparc_regop: unknown op %d", opcode);
-#else
-		printf("db_sparc_regop: unknown op %d\n", opcode);
-#endif
-	}
-	return 0;
-}
 
 int	db_active = 0;
 

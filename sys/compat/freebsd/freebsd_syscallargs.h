@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscallargs.h,v 1.82.6.1 2015/04/06 15:18:05 skrll Exp $ */
+/* $NetBSD: freebsd_syscallargs.h,v 1.82.6.2 2017/08/28 17:51:58 skrll Exp $ */
 
 /*
  * System call argument lists.
@@ -9,6 +9,9 @@
 
 #ifndef _FREEBSD_SYS_SYSCALLARGS_H_
 #define	_FREEBSD_SYS_SYSCALLARGS_H_
+
+/* Forward declaration */
+struct lwp;
 
 #define	FREEBSD_SYS_MAXSYSARGS	8
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.8.74.2 2015/12/27 12:09:37 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.8.74.3 2017/08/28 17:51:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -40,13 +40,17 @@
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
+#define	PT_SETSTEP	(PT_FIRSTMACH + 5)
+#define	PT_CLEARSTEP	(PT_FIRSTMACH + 6)
 
 #define PT_MACHDEP_STRINGS \
 	"PT_STEP", \
 	"PT_GETREGS", \
 	"PT_SETREGS", \
 	"PT_GETFPREGS", \
-	"PT_SETFPREGS",
+	"PT_SETFPREGS", \
+	"PT_SETSTEP", \
+	"PT_CLEARSTEP",
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->r_pc
@@ -55,6 +59,7 @@
 #define PTRACE_REG_INTRV(r)	(r)->r_regs[0]
 
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0x4e, 0x4f })
+#define PTRACE_BREAKPOINT_ASM	__asm __volatile("trap #15" ::: "memory")
 #define PTRACE_BREAKPOINT_SIZE	2
 
 #endif /* !_M68K_PTRACE_H_ */

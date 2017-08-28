@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.2.74.1 2015/09/22 12:05:44 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.2.74.2 2017/08/28 17:51:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -38,13 +38,17 @@
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
+#define	PT_SETSTEP	(PT_FIRSTMACH + 5)
+#define	PT_CLEARSTEP	(PT_FIRSTMACH + 6)
 
 #define PT_MACHDEP_STRINGS \
 	"PT_STEP", \
 	"PT_GETREGS", \
 	"PT_SETREGS", \
 	"PT_GETFPREGS", \
-	"PT_SETFPREGS",
+	"PT_SETFPREGS", \
+	"PT_SETSTEP", \
+	"PT_CLEARSTEP",
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->r_special.iip

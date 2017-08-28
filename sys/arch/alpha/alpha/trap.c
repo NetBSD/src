@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.131.4.1 2015/04/06 15:17:50 skrll Exp $ */
+/* $NetBSD: trap.c,v 1.131.4.2 2017/08/28 17:51:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131.4.1 2015/04/06 15:17:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131.4.2 2017/08/28 17:51:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -641,13 +641,13 @@ static const int reg_to_framereg[32] = {
 
 #define	unaligned_load_floating(storage, mod) do {			\
 	struct pcb * const pcb = lwp_getpcb(l);				\
-	fpu_save();							\
+	fpu_save(l);							\
 	unaligned_load(storage, frp, mod)				\
 } while (/*CONSTCOND*/0)
 
 #define	unaligned_store_floating(storage, mod) do {			\
 	struct pcb * const pcb = lwp_getpcb(l);				\
-	fpu_save();							\
+	fpu_save(l);							\
 	unaligned_store(storage, frp, mod)				\
 } while (/*CONSTCOND*/0)
 

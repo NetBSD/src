@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.32.16.2 2016/12/05 10:54:59 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.32.16.3 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.32.16.2 2016/12/05 10:54:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.32.16.3 2017/08/28 17:51:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,8 +211,8 @@ isa_intr_establish_xname(isa_chipset_tag_t ic, int irq, int type, int level,
 	struct pic *pic;
 	int pin;
 #if NIOAPIC > 0
-	intr_handle_t mpih;
-	struct ioapic_softc *ioapic;
+	intr_handle_t mpih = 0;
+	struct ioapic_softc *ioapic = NULL;
 #endif
 
 	pin = irq;
@@ -237,20 +237,48 @@ isa_intr_establish_xname(isa_chipset_tag_t ic, int irq, int type, int level,
 			printf("isa_intr_establish: no MP mapping found\n");
 	}
 #endif
+#if defined(XEN)
+	KASSERT(APIC_IRQ_ISLEGACY(irq));
+
+	int evtch;
+	char evname[16];
+
+	mpih |= APIC_IRQ_LEGACY_IRQ(irq);
+
+	evtch = xen_intr_map((int *)&mpih, type); /* XXX: legacy - xen just tosses irq back at us */
+	if (evtch == -1)
+		return NULL;
+#if NIOAPIC > 0
+	if (ioapic)
+		snprintf(evname, sizeof(evname), "%s pin %d",
+		    device_xname(ioapic->sc_dev), pin);
+	else
+#endif
+		snprintf(evname, sizeof(evname), "irq%d", irq);
+
+	aprint_debug("irq: %d requested on pic: %s.\n", irq, pic->pic_name);
+
+	return (void *)pirq_establish(irq, evtch, ih_fun, ih_arg, level,
+	    evname);
+#else /* defined(XEN) */
 	return intr_establish_xname(irq, pic, pin, type, level, ih_fun, ih_arg,
 	    false, xname);
+#endif
+
 }
 
 /* Deregister an interrupt handler. */
 void
 isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
+#if !defined(XEN)
 	struct intrhand *ih = arg;
 
 	if (!LEGAL_IRQ(ih->ih_pin))
 		panic("intr_disestablish: bogus irq");
 
 	intr_disestablish(ih);
+#endif	
 }
 
 void

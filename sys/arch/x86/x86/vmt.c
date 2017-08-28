@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.10.4.5 2016/12/05 10:54:59 skrll Exp $ */
+/* $NetBSD: vmt.c,v 1.10.4.6 2017/08/28 17:51:56 skrll Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -46,130 +46,10 @@
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_taskq.h>
 
+#include <x86/x86/vmtreg.h>
+#include <x86/x86/vmtvar.h>
+
 /* #define VMT_DEBUG */
-
-/* OS name to report to host */
-#ifdef __i386__
-#define VM_OS_NAME	"other"
-#else
-#define VM_OS_NAME	"other-64"
-#endif
-
-/* "The" magic number, always occupies the EAX register. */
-#define VM_MAGIC			0x564D5868
-
-/* Port numbers, passed on EDX.LOW . */
-#define VM_PORT_CMD			0x5658
-#define VM_PORT_RPC			0x5659
-
-/* Commands, passed on ECX.LOW. */
-#define VM_CMD_GET_SPEED		0x01
-#define VM_CMD_APM			0x02
-#define VM_CMD_GET_MOUSEPOS		0x04
-#define VM_CMD_SET_MOUSEPOS		0x05
-#define VM_CMD_GET_CLIPBOARD_LEN	0x06
-#define VM_CMD_GET_CLIPBOARD		0x07
-#define VM_CMD_SET_CLIPBOARD_LEN	0x08
-#define VM_CMD_SET_CLIPBOARD		0x09
-#define VM_CMD_GET_VERSION		0x0a
-#define  VM_VERSION_UNMANAGED			0x7fffffff
-#define VM_CMD_GET_DEVINFO		0x0b
-#define VM_CMD_DEV_ADDREMOVE		0x0c
-#define VM_CMD_GET_GUI_OPTIONS		0x0d
-#define VM_CMD_SET_GUI_OPTIONS		0x0e
-#define VM_CMD_GET_SCREEN_SIZE		0x0f
-#define VM_CMD_GET_HWVER		0x11
-#define VM_CMD_POPUP_OSNOTFOUND		0x12
-#define VM_CMD_GET_BIOS_UUID		0x13
-#define VM_CMD_GET_MEM_SIZE		0x14
-/*#define VM_CMD_GET_TIME		0x17 */	/* deprecated */
-#define VM_CMD_RPC			0x1e
-#define VM_CMD_GET_TIME_FULL		0x2e
-
-/* RPC sub-commands, passed on ECX.HIGH. */
-#define VM_RPC_OPEN			0x00
-#define VM_RPC_SET_LENGTH		0x01
-#define VM_RPC_SET_DATA			0x02
-#define VM_RPC_GET_LENGTH		0x03
-#define VM_RPC_GET_DATA			0x04
-#define VM_RPC_GET_END			0x05
-#define VM_RPC_CLOSE			0x06
-
-/* RPC magic numbers, passed on EBX. */
-#define VM_RPC_OPEN_RPCI	0x49435052UL /* with VM_RPC_OPEN. */
-#define VM_RPC_OPEN_TCLO	0x4F4C4354UL /* with VP_RPC_OPEN. */
-#define VM_RPC_ENH_DATA		0x00010000UL /* with enhanced RPC data calls. */
-
-#define VM_RPC_FLAG_COOKIE	0x80000000UL
-
-/* RPC reply flags */
-#define VM_RPC_REPLY_SUCCESS	0x0001
-#define VM_RPC_REPLY_DORECV	0x0002		/* incoming message available */
-#define VM_RPC_REPLY_CLOSED	0x0004		/* RPC channel is closed */
-#define VM_RPC_REPLY_UNSENT	0x0008		/* incoming message was removed? */
-#define VM_RPC_REPLY_CHECKPOINT	0x0010		/* checkpoint occurred -> retry */
-#define VM_RPC_REPLY_POWEROFF	0x0020		/* underlying device is powering off */
-#define VM_RPC_REPLY_TIMEOUT	0x0040
-#define VM_RPC_REPLY_HB		0x0080		/* high-bandwidth tx/rx available */
-
-/* VM state change IDs */
-#define VM_STATE_CHANGE_HALT	1
-#define VM_STATE_CHANGE_REBOOT	2
-#define VM_STATE_CHANGE_POWERON 3
-#define VM_STATE_CHANGE_RESUME  4
-#define VM_STATE_CHANGE_SUSPEND 5
-
-/* VM guest info keys */
-#define VM_GUEST_INFO_DNS_NAME		1
-#define VM_GUEST_INFO_IP_ADDRESS	2
-#define VM_GUEST_INFO_DISK_FREE_SPACE	3
-#define VM_GUEST_INFO_BUILD_NUMBER	4
-#define VM_GUEST_INFO_OS_NAME_FULL	5
-#define VM_GUEST_INFO_OS_NAME		6
-#define VM_GUEST_INFO_UPTIME		7
-#define VM_GUEST_INFO_MEMORY		8
-#define VM_GUEST_INFO_IP_ADDRESS_V2	9
-
-/* RPC responses */
-#define VM_RPC_REPLY_OK			"OK "
-#define VM_RPC_RESET_REPLY		"OK ATR toolbox"
-#define VM_RPC_REPLY_ERROR		"ERROR Unknown command"
-#define VM_RPC_REPLY_ERROR_IP_ADDR	"ERROR Unable to find guest IP address"
-
-/* A register. */
-union vm_reg {
-	struct {
-		uint16_t low;
-		uint16_t high;
-	} part;
-	uint32_t word;
-#ifdef __amd64__
-	struct {
-		uint32_t low;
-		uint32_t high;
-	} words;
-	uint64_t quad;
-#endif
-} __packed;
-
-/* A register frame. */
-/* XXX 'volatile' as a workaround because BACKDOOR_OP is likely broken */
-struct vm_backdoor {
-	volatile union vm_reg eax;
-	volatile union vm_reg ebx;
-	volatile union vm_reg ecx;
-	volatile union vm_reg edx;
-	volatile union vm_reg esi;
-	volatile union vm_reg edi;
-	volatile union vm_reg ebp;
-} __packed;
-
-/* RPC context. */
-struct vm_rpc {
-	uint16_t channel;
-	uint32_t cookie1;
-	uint32_t cookie2;
-};
 
 static int	vmt_match(device_t, cfdata_t, void *);
 static void	vmt_attach(device_t, device_t, void *);
@@ -328,10 +208,6 @@ vmt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_rpc_buf = kmem_alloc(VMT_RPC_BUFLEN, KM_SLEEP);
-	if (sc->sc_rpc_buf == NULL) {
-		aprint_error_dev(self, "unable to allocate buffer for RPC\n");
-		goto free;
-	}
 
 	if (vm_rpc_open(&sc->sc_tclo_rpc, VM_RPC_OPEN_TCLO) != 0) {
 		aprint_error_dev(self, "failed to open backdoor RPC channel (TCLO protocol)\n");
@@ -860,64 +736,6 @@ vmt_tclo_tick(void *xarg)
 out:
 	callout_schedule(&sc->sc_tclo_tick, sc->sc_tclo_ping ? hz : 1);
 }
-
-#define BACKDOOR_OP_I386(op, frame)		\
-	__asm__ __volatile__ (			\
-		"pushal;"			\
-		"pushl %%eax;"			\
-		"movl 0x18(%%eax), %%ebp;"	\
-		"movl 0x14(%%eax), %%edi;"	\
-		"movl 0x10(%%eax), %%esi;"	\
-		"movl 0x0c(%%eax), %%edx;"	\
-		"movl 0x08(%%eax), %%ecx;"	\
-		"movl 0x04(%%eax), %%ebx;"	\
-		"movl 0x00(%%eax), %%eax;"	\
-		op				\
-		"xchgl %%eax, 0x00(%%esp);"	\
-		"movl %%ebp, 0x18(%%eax);"	\
-		"movl %%edi, 0x14(%%eax);"	\
-		"movl %%esi, 0x10(%%eax);"	\
-		"movl %%edx, 0x0c(%%eax);"	\
-		"movl %%ecx, 0x08(%%eax);"	\
-		"movl %%ebx, 0x04(%%eax);"	\
-		"popl 0x00(%%eax);"		\
-		"popal;"			\
-		:				\
-		:"a"(frame)			\
-	)
-
-#define BACKDOOR_OP_AMD64(op, frame)		\
-	__asm__ __volatile__ (			\
-		"pushq %%rbp;			\n\t" \
-		"pushq %%rax;			\n\t" \
-		"movq 0x30(%%rax), %%rbp;	\n\t" \
-		"movq 0x28(%%rax), %%rdi;	\n\t" \
-		"movq 0x20(%%rax), %%rsi;	\n\t" \
-		"movq 0x18(%%rax), %%rdx;	\n\t" \
-		"movq 0x10(%%rax), %%rcx;	\n\t" \
-		"movq 0x08(%%rax), %%rbx;	\n\t" \
-		"movq 0x00(%%rax), %%rax;	\n\t" \
-		op				"\n\t" \
-		"xchgq %%rax, 0x00(%%rsp);	\n\t" \
-		"movq %%rbp, 0x30(%%rax);	\n\t" \
-		"movq %%rdi, 0x28(%%rax);	\n\t" \
-		"movq %%rsi, 0x20(%%rax);	\n\t" \
-		"movq %%rdx, 0x18(%%rax);	\n\t" \
-		"movq %%rcx, 0x10(%%rax);	\n\t" \
-		"movq %%rbx, 0x08(%%rax);	\n\t" \
-		"popq 0x00(%%rax);		\n\t" \
-		"popq %%rbp;			\n\t" \
-		: /* No outputs. */ : "a" (frame) \
-		  /* No pushal on amd64 so warn gcc about the clobbered registers. */ \
-		: "rbx", "rcx", "rdx", "rdi", "rsi", "cc", "memory" \
-	)
-
-
-#ifdef __i386__
-#define BACKDOOR_OP(op, frame) BACKDOOR_OP_I386(op, frame)
-#else
-#define BACKDOOR_OP(op, frame) BACKDOOR_OP_AMD64(op, frame)
-#endif
 
 static void
 vm_cmd(struct vm_backdoor *frame)

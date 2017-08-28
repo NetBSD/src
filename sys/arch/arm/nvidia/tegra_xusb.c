@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.1.2.4 2017/02/05 13:40:04 skrll Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.1.2.5 2017/08/28 17:51:31 skrll Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.1.2.4 2017/02/05 13:40:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.1.2.5 2017/08/28 17:51:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,6 +56,14 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.1.2.4 2017/02/05 13:40:04 skrll Exp
 
 #include <dev/usb/xhcireg.h>
 #include <dev/usb/xhcivar.h>
+
+#ifdef TEGRA_XUSB_DEBUG
+int tegra_xusb_debug = 1;
+#else
+int tegra_xusb_debug = 0;
+#endif
+
+#define DPRINTF(...)	if (tegra_xusb_debug) device_printf(__VA_ARGS__)
 
 static int	tegra_xusb_match(device_t, cfdata_t, void *);
 static void	tegra_xusb_attach(device_t, device_t, void *);
@@ -93,7 +101,7 @@ static void	csb_write_4(struct tegra_xusb_softc * const, bus_size_t,
     uint32_t);
 	
 static void	tegra_xusb_init(struct tegra_xusb_softc * const);
-static void	tegra_xusb_load_fw(struct tegra_xusb_softc * const);
+static int	tegra_xusb_load_fw(struct tegra_xusb_softc * const);
 
 static int	xusb_mailbox_send(struct tegra_xusb_softc * const, uint32_t);
 
@@ -126,10 +134,10 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
-	int error;
+	struct fdtbus_reset *rst;
 	struct clk *clk;
 	uint32_t rate;
-	struct fdtbus_reset *rst;
+	int error;
 
 	aprint_naive("\n");
 	aprint_normal(": XUSB\n");
@@ -149,7 +157,7 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
 		return;
 	}
-	printf("mapped %#llx\n", (uint64_t)addr);
+	DPRINTF(sc->sc_dev, "mapped %#llx\n", (uint64_t)addr);
 
 	if (fdtbus_get_reg(faa->faa_phandle, 1, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -160,7 +168,7 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
 		return;
 	}
-	printf("mapped %#llx\n", (uint64_t)addr);
+	DPRINTF(sc->sc_dev, "mapped %#llx\n", (uint64_t)addr);
 
 	if (fdtbus_get_reg(faa->faa_phandle, 2, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -171,7 +179,7 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
 		return;
 	}
-	printf("mapped %#llx\n", (uint64_t)addr);
+	DPRINTF(sc->sc_dev, "mapped %#llx\n", (uint64_t)addr);
 
 	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");
@@ -201,102 +209,80 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
-	struct clk * const pll_p_out0 = clk_get("pll_p_out0");
-	KASSERT(pll_p_out0 != NULL);
-
-	struct clk * const pll_u_48 = clk_get("pll_u_48");
-	KASSERT(pll_u_48 != NULL);
-
-	struct clk * const pll_u_480 = clk_get("pll_u_480");
-	KASSERT(pll_u_480 != NULL);
-
 	clk = fdtbus_clock_get(faa->faa_phandle, "pll_e");
 	rate = clk_get_rate(clk);
 	error = clk_enable(clk); /* XXX set frequency */
-	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
+	DPRINTF(sc->sc_dev, "rate %u error %d\n", rate, error);
 	tegra_xusb_attach_check(sc, error, "failed to enable pll_e clock");
 
 	clk = fdtbus_clock_get(faa->faa_phandle, "xusb_host_src");
-	error = clk_set_parent(clk, pll_p_out0);
-	tegra_xusb_attach_check(sc, error, "failed to set xusb_host_src clock parent");
-	
 	rate = clk_get_rate(clk);
-	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
+	DPRINTF(sc->sc_dev, "rate %u error %d\n", rate, error);
 	error = clk_set_rate(clk, 102000000);
 	tegra_xusb_attach_check(sc, error, "failed to set xusb_host_src clock rate");
 
 	rate = clk_get_rate(clk);
 	error = clk_enable(clk); /* XXX set frequency */
-	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
+	DPRINTF(sc->sc_dev, "rate %u error %d\n", rate, error);
 	tegra_xusb_attach_check(sc, error, "failed to enable xusb_host_src clock");
 
 	clk = fdtbus_clock_get(faa->faa_phandle, "xusb_falcon_src");
-	error = clk_set_parent(clk, pll_p_out0);
-	tegra_xusb_attach_check(sc, error, "failed to set xusb_falcon_src clock parent");
-
 	rate = clk_get_rate(clk);
-	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
+	DPRINTF(sc->sc_dev, "rate %u error %d\n", rate, error);
 	error = clk_set_rate(clk, 204000000);
 	tegra_xusb_attach_check(sc, error, "failed to set xusb_falcon_src clock rate");
 
 	rate = clk_get_rate(clk);
 	error = clk_enable(clk);
-	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
+	DPRINTF(sc->sc_dev, "rate %u error %d\n", rate, error);
 	tegra_xusb_attach_check(sc, error, "failed to enable xusb_falcon_src clock");
 
 	clk = fdtbus_clock_get(faa->faa_phandle, "xusb_host");
 	rate = clk_get_rate(clk);
 	error = clk_enable(clk); /* XXX set frequency */
-	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
+	DPRINTF(sc->sc_dev, "rate %u error %d\n", rate, error);
 
 	clk = fdtbus_clock_get(faa->faa_phandle, "xusb_ss");
 	rate = clk_get_rate(clk);
 	error = clk_enable(clk); /* XXX set frequency */
-	device_printf(sc->sc_dev, "xusb_ss rate %u error %d\n", rate, error);
+	DPRINTF(sc->sc_dev, "xusb_ss rate %u error %d\n", rate, error);
 	tegra_xusb_attach_check(sc, error, "failed to enable xusb_ss clock");
 
 	psc->sc_clk_ss_src = fdtbus_clock_get(faa->faa_phandle, "xusb_ss_src");
 	tegra_xusb_attach_check(sc, psc->sc_clk_ss_src == NULL,
 		"failed to get xusb_ss_src clock");
-	rate = clk_get_rate(psc->sc_clk_ss_src);
-	device_printf(sc->sc_dev, "xusb_ss_src rate %u\n", rate);
 
+	rate = clk_get_rate(psc->sc_clk_ss_src);
+	DPRINTF(sc->sc_dev, "xusb_ss_src rate %u\n", rate);
 	error = clk_set_rate(psc->sc_clk_ss_src, 2000000);
 	rate = clk_get_rate(psc->sc_clk_ss_src);
-	device_printf(sc->sc_dev, "xusb_ss_src rate %u error %d\n", rate,
-	    error);
+	DPRINTF(sc->sc_dev, "xusb_ss_src rate %u error %d\n", rate, error);
 	tegra_xusb_attach_check(sc, error, "failed to get xusb_ss_src clock rate");
 
-	error = clk_set_parent(psc->sc_clk_ss_src, pll_u_480);
-	tegra_xusb_attach_check(sc, error, "failed to set xusb_ss_src clock parent");
-
 	rate = clk_get_rate(psc->sc_clk_ss_src);
-	device_printf(sc->sc_dev, "ss_src rate %u\n", rate);
+	DPRINTF(sc->sc_dev, "ss_src rate %u\n", rate);
 	tegra_xusb_attach_check(sc, error, "failed to set xusb_ss_src clock rate");
 
 	error = clk_set_rate(psc->sc_clk_ss_src, 120000000);
 	rate = clk_get_rate(psc->sc_clk_ss_src);
-	device_printf(sc->sc_dev, "ss_src rate %u error %d\n", rate, error);
+	DPRINTF(sc->sc_dev, "ss_src rate %u error %d\n", rate, error);
 	tegra_xusb_attach_check(sc, error, "failed to get xusb_ss_src clock rate");
 
 	error = clk_enable(psc->sc_clk_ss_src);
-	device_printf(sc->sc_dev, "ss_src rate %u error %d\n", rate, error);
+	DPRINTF(sc->sc_dev, "ss_src rate %u error %d\n", rate, error);
 	tegra_xusb_attach_check(sc, error, "failed to enable xusb_ss_src clock");
 
 #if 0
 	clk = fdtbus_clock_get(faa->faa_phandle, "xusb_hs_src");
 	error = 0;
 	rate = clk_get_rate(clk);
-	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
+	DPRINTF(sc->sc_dev, "rate %u error %d\n", rate, error);
 #endif
 
 	clk = fdtbus_clock_get(faa->faa_phandle, "xusb_fs_src");
-	error = clk_set_parent(clk, pll_u_48);
-	tegra_xusb_attach_check(sc, error, "failed to set xusb_fs_src clock parent");
-
 	rate = clk_get_rate(clk);
 	error = clk_enable(clk); /* XXX set frequency */
-	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
+	DPRINTF(sc->sc_dev, "rate %u error %d\n", rate, error);
 	tegra_xusb_attach_check(sc, error, "failed to enable xusb_fs_src clock");
 
 	rst = fdtbus_reset_get(faa->faa_phandle, "xusb_host");
@@ -332,26 +318,29 @@ tegra_xusb_mountroot(device_t self)
 	uint32_t val;
 	int error;
 
-	device_printf(sc->sc_dev, "%s()\n", __func__);
+	DPRINTF(sc->sc_dev, "%s()\n", __func__);
 
 	val = bus_space_read_4(bst, ipfsh, 0x0);
-	device_printf(sc->sc_dev, "%s ipfs 0x0 = 0x%x\n", __func__, val);
+	DPRINTF(sc->sc_dev, "%s ipfs 0x0 = 0x%x\n", __func__, val);
 
-	tegra_xusb_load_fw(psc);
-	device_printf(sc->sc_dev, "post fw\n");
+	if (tegra_xusb_load_fw(psc) != 0)
+		return;
+	DPRINTF(sc->sc_dev, "post fw\n");
+
+	tegra_xusbpad_xhci_enable();
 
 	clk = fdtbus_clock_get(psc->sc_phandle, "xusb_falcon_src");
 	rate = clk_get_rate(clk);
 	error = clk_enable(clk);
-	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
+	DPRINTF(sc->sc_dev, "rate %u error %d\n", rate, error);
 
 	clk = fdtbus_clock_get(psc->sc_phandle, "xusb_host_src");
 	rate = clk_get_rate(clk);
 	error = clk_enable(clk);
-	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
+	DPRINTF(sc->sc_dev, "rate %u error %d\n", rate, error);
 
 	val = bus_space_read_4(bst, ipfsh, 0x0);
-	device_printf(sc->sc_dev, "%s ipfs 0x0 = 0x%x\n", __func__, val);
+	DPRINTF(sc->sc_dev, "%s ipfs 0x0 = 0x%x\n", __func__, val);
 
 	rst = fdtbus_reset_get(psc->sc_phandle, "xusb_host");
 	fdtbus_reset_deassert(rst);
@@ -363,7 +352,7 @@ tegra_xusb_mountroot(device_t self)
 	fdtbus_reset_deassert(rst);
 
 	val = csb_read_4(psc, XUSB_CSB_FALCON_CPUCTL_REG);
-	device_printf(sc->sc_dev, "XUSB_FALC_CPUCTL 0x%x\n", val);
+	DPRINTF(sc->sc_dev, "XUSB_FALC_CPUCTL 0x%x\n", val);
 
 
 	error = xhci_init(sc);
@@ -394,20 +383,20 @@ tegra_xusb_intr_mbox(void *v)
 	uint32_t msg;
 	int error;
 
-	device_printf(sc->sc_dev, "%s()\n", __func__);
+	DPRINTF(sc->sc_dev, "%s()\n", __func__);
 
 	irv = bus_space_read_4(bst, fpcih, T_XUSB_CFG_ARU_SMI_INTR_REG);
-	device_printf(sc->sc_dev, "XUSB_CFG_ARU_SMI_INTR 0x%x\n", irv);
+	DPRINTF(sc->sc_dev, "XUSB_CFG_ARU_SMI_INTR 0x%x\n", irv);
 	bus_space_write_4(bst, fpcih, T_XUSB_CFG_ARU_SMI_INTR_REG, irv);
 
 	if (irv & T_XUSB_CFG_ARU_SMI_INTR_FW_HANG)
-		device_printf(sc->sc_dev, "firmware hang\n");
+		aprint_error_dev(sc->sc_dev, "firmware hang\n");
 
 	msg = bus_space_read_4(bst, fpcih, T_XUSB_CFG_ARU_MAILBOX_DATA_OUT_REG);
-	device_printf(sc->sc_dev, "XUSB_CFG_ARU_MBOX_DATA_OUT 0x%x\n", msg);
+	DPRINTF(sc->sc_dev, "XUSB_CFG_ARU_MBOX_DATA_OUT 0x%x\n", msg);
 
 	val = bus_space_read_4(bst, fpcih, T_XUSB_CFG_ARU_MAILBOX_CMD_REG);
-	device_printf(sc->sc_dev, "XUSB_CFG_ARU_MBOX_CMD 0x%x\n", val);
+	DPRINTF(sc->sc_dev, "XUSB_CFG_ARU_MBOX_CMD 0x%x\n", val);
 	val &= ~T_XUSB_CFG_ARU_MAILBOX_CMD_DEST_SMI;
 	bus_space_write_4(bst, fpcih, T_XUSB_CFG_ARU_MAILBOX_CMD_REG, val);
 
@@ -420,19 +409,19 @@ tegra_xusb_intr_mbox(void *v)
 	switch (type) {
 	case 2:
 	case 3:
-		device_printf(sc->sc_dev, "FALC_CLOCK %u\n", data * 1000);
+		DPRINTF(sc->sc_dev, "FALC_CLOCK %u\n", data * 1000);
 		break;
 	case 4:
 	case 5:
-		device_printf(sc->sc_dev, "SSPI_CLOCK %u\n", data * 1000);
+		DPRINTF(sc->sc_dev, "SSPI_CLOCK %u\n", data * 1000);
 		rate = clk_get_rate(psc->sc_clk_ss_src);
-		device_printf(sc->sc_dev, "rate of psc->sc_clk_ss_src %u\n",
+		DPRINTF(sc->sc_dev, "rate of psc->sc_clk_ss_src %u\n",
 		    rate);
 		error = clk_set_rate(psc->sc_clk_ss_src, data * 1000);
 		if (error != 0)
 			goto clk_fail;
 		rate = clk_get_rate(psc->sc_clk_ss_src);
-		device_printf(sc->sc_dev,
+		DPRINTF(sc->sc_dev,
 		    "rate of psc->sc_clk_ss_src %u after\n", rate);
 		if (data == (rate / 1000)) {
 			msg = __SHIFTIN(128, MAILBOX_DATA_TYPE) |
@@ -473,52 +462,52 @@ tegra_xusb_init(struct tegra_xusb_softc * const psc)
 	const bus_space_handle_t ipfsh = psc->sc_bsh_ipfs;
 	const bus_space_handle_t fpcih = psc->sc_bsh_fpci;
 
-	device_printf(sc->sc_dev, "%s()\n", __func__);
+	DPRINTF(sc->sc_dev, "%s()\n", __func__);
 
-	device_printf(sc->sc_dev, "%s ipfs 0x0 = 0x%x\n", __func__,
+	DPRINTF(sc->sc_dev, "%s ipfs 0x0 = 0x%x\n", __func__,
 	    bus_space_read_4(bst, ipfsh, 0x0));
 
-	device_printf(sc->sc_dev, "%s ipfs 0x40 = 0x%x\n", __func__,
+	DPRINTF(sc->sc_dev, "%s ipfs 0x40 = 0x%x\n", __func__,
 	    bus_space_read_4(bst, ipfsh, 0x40));
 
-	device_printf(sc->sc_dev, "%s ipfs 0x80 = 0x%x\n", __func__,
+	DPRINTF(sc->sc_dev, "%s ipfs 0x80 = 0x%x\n", __func__,
 	    bus_space_read_4(bst, ipfsh, 0x80));
 	/* FPCI_BAR0_START and FPCI_BAR0_ACCESS_TYPE */
 	bus_space_write_4(bst, ipfsh, 0x80, 0x00100000);
-	device_printf(sc->sc_dev, "%s ipfs 0x80 = 0x%x\n", __func__,
+	DPRINTF(sc->sc_dev, "%s ipfs 0x80 = 0x%x\n", __func__,
 	    bus_space_read_4(bst, ipfsh, 0x80));
 
-	device_printf(sc->sc_dev, "%s ipfs 0x180 = 0x%x\n", __func__,
+	DPRINTF(sc->sc_dev, "%s ipfs 0x180 = 0x%x\n", __func__,
 	    bus_space_read_4(bst, ipfsh, 0x180));
 	/* EN_FPCI */
 	tegra_reg_set_clear(bst, ipfsh, 0x180, 1, 0);
-	device_printf(sc->sc_dev, "%s ipfs 0x180 = 0x%x\n", __func__,
+	DPRINTF(sc->sc_dev, "%s ipfs 0x180 = 0x%x\n", __func__,
 	    bus_space_read_4(bst, ipfsh, 0x180));
 
-	device_printf(sc->sc_dev, "%s fpci PCI_COMMAND_STATUS_REG = 0x%x\n",
+	DPRINTF(sc->sc_dev, "%s fpci PCI_COMMAND_STATUS_REG = 0x%x\n",
 	    __func__, bus_space_read_4(bst, fpcih, PCI_COMMAND_STATUS_REG));
 	tegra_reg_set_clear(bst, fpcih, PCI_COMMAND_STATUS_REG,
 	    PCI_COMMAND_MASTER_ENABLE|PCI_COMMAND_MEM_ENABLE, 0x0);
-	device_printf(sc->sc_dev, "%s fpci PCI_COMMAND_STATUS_REG = 0x%x\n",
+	DPRINTF(sc->sc_dev, "%s fpci PCI_COMMAND_STATUS_REG = 0x%x\n",
 	    __func__, bus_space_read_4(bst, fpcih, PCI_COMMAND_STATUS_REG));
 
-	device_printf(sc->sc_dev, "%s fpci PCI_BAR0 = 0x%x\n", __func__,
+	DPRINTF(sc->sc_dev, "%s fpci PCI_BAR0 = 0x%x\n", __func__,
 	    bus_space_read_4(bst, fpcih, PCI_BAR0));
 	/* match FPCI BAR0 to above */
 	bus_space_write_4(bst, fpcih, PCI_BAR0, 0x10000000);
-	device_printf(sc->sc_dev, "%s fpci PCI_BAR0 = 0x%x\n", __func__,
+	DPRINTF(sc->sc_dev, "%s fpci PCI_BAR0 = 0x%x\n", __func__,
 	    bus_space_read_4(bst, fpcih, PCI_BAR0));
 	
-	device_printf(sc->sc_dev, "%s ipfs 0x188 = 0x%x\n", __func__,
+	DPRINTF(sc->sc_dev, "%s ipfs 0x188 = 0x%x\n", __func__,
 	    bus_space_read_4(bst, ipfsh, 0x188));
 	tegra_reg_set_clear(bst, ipfsh, 0x188, __BIT(16), 0);
-	device_printf(sc->sc_dev, "%s ipfs 0x188 = 0x%x\n", __func__,
+	DPRINTF(sc->sc_dev, "%s ipfs 0x188 = 0x%x\n", __func__,
 	    bus_space_read_4(bst, ipfsh, 0x188));
 
-	device_printf(sc->sc_dev, "%s fpci 0x1bc = 0x%x\n", __func__,
+	DPRINTF(sc->sc_dev, "%s fpci 0x1bc = 0x%x\n", __func__,
 	    bus_space_read_4(bst, fpcih, 0x1bc));
 	bus_space_write_4(bst, fpcih, 0x1bc, 0x80);
-	device_printf(sc->sc_dev, "%s fpci 0x1bc = 0x%x\n", __func__,
+	DPRINTF(sc->sc_dev, "%s fpci 0x1bc = 0x%x\n", __func__,
 	    bus_space_read_4(bst, fpcih, 0x1bc));
 }
 
@@ -579,7 +568,7 @@ fw_dma_free(struct tegra_xusb_softc * const psc, struct fw_dma * const p)
 #define FWHEADER_FWIMG_LEN 100
 #define FWHEADER__LEN 256
 
-static void
+static int
 tegra_xusb_load_fw(struct tegra_xusb_softc * const psc)
 {
 	struct xhci_softc * const sc = &psc->sc_xhci;
@@ -596,8 +585,8 @@ tegra_xusb_load_fw(struct tegra_xusb_softc * const psc)
 #else
 	if ((error = firmware_open("nvidia/tegra124", "xusb.bin", &fw)) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "could not open firmware file %s: %d\n", "xusb.bin", error);
-		return;
+		    "couldn't load firmware from 'nvidia/tegra124/xusb.bin': %d\n", error);
+		return error;
 	}
 	firmware_size = firmware_get_size(fw);
 #endif
@@ -607,11 +596,11 @@ tegra_xusb_load_fw(struct tegra_xusb_softc * const psc)
 #if !defined(TEGRA124_XUSB_BIN_STATIC)
 		firmware_close(fw);
 #endif
-		return;
+		return error;
 	}
 
 	firmware_image = psc->sc_fw_dma.addr;
-	device_printf(sc->sc_dev, "blob %p len %zu\n", firmware_image,
+	DPRINTF(sc->sc_dev, "blob %p len %zu\n", firmware_image,
 	    firmware_size);
 
 #if defined(TEGRA124_XUSB_BIN_STATIC)
@@ -621,7 +610,7 @@ tegra_xusb_load_fw(struct tegra_xusb_softc * const psc)
 	if (error != 0) {
 		fw_dma_free(psc, &psc->sc_fw_dma);
 		firmware_close(fw);
-		return;
+		return error;
 	}
 	firmware_close(fw);
 #endif
@@ -633,22 +622,22 @@ tegra_xusb_load_fw(struct tegra_xusb_softc * const psc)
 	const uint32_t boot_codesize = le32dec(&header[FWHEADER_BOOT_CODESIZE]);
 
 	if (fwimg_len != firmware_size)
-		device_printf(sc->sc_dev, "fwimg_len mismatch %u != %zu\n",
+		aprint_error_dev(sc->sc_dev, "fwimg_len mismatch %u != %zu\n",
 		    fwimg_len, firmware_size);
 
 	bus_dmamap_sync(sc->sc_bus.ub_dmatag, psc->sc_fw_dma.map, 0,
 	    firmware_size, BUS_DMASYNC_PREWRITE);
 
-	device_printf(sc->sc_dev, "XUSB_FALC_CPUCTL 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_FALC_CPUCTL 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_FALCON_CPUCTL_REG));
-	device_printf(sc->sc_dev, "XUSB_CSB_MP_ILOAD_BASE_LO 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_CSB_MP_ILOAD_BASE_LO 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_MEMPOOL_ILOAD_BASE_LO_REG));
 
-	device_printf(sc->sc_dev, "XUSB_CSB_MP_ILOAD_ATTR 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_CSB_MP_ILOAD_ATTR 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_MEMPOOL_ILOAD_ATTR_REG));
 	csb_write_4(psc, XUSB_CSB_MEMPOOL_ILOAD_ATTR_REG,
 	    fwimg_len);
-	device_printf(sc->sc_dev, "XUSB_CSB_MP_ILOAD_ATTR 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_CSB_MP_ILOAD_ATTR 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_MEMPOOL_ILOAD_ATTR_REG));
 
 	const uint64_t fwbase = psc->sc_fw_dma.map->dm_segs[0].ds_addr +
@@ -656,24 +645,24 @@ tegra_xusb_load_fw(struct tegra_xusb_softc * const psc)
 
 	csb_write_4(psc, XUSB_CSB_MEMPOOL_ILOAD_BASE_HI_REG, fwbase >> 32);
 	csb_write_4(psc, XUSB_CSB_MEMPOOL_ILOAD_BASE_LO_REG, fwbase);
-	device_printf(sc->sc_dev, "XUSB_CSB_MP_ILOAD_BASE_LO 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_CSB_MP_ILOAD_BASE_LO 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_MEMPOOL_ILOAD_BASE_LO_REG));
-	device_printf(sc->sc_dev, "XUSB_CSB_MP_ILOAD_BASE_HI 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_CSB_MP_ILOAD_BASE_HI 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_MEMPOOL_ILOAD_BASE_HI_REG));
 
-	device_printf(sc->sc_dev, "XUSB_CSB_MP_APMAP 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_CSB_MP_APMAP 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_MEMPOOL_APMAP_REG));
 	csb_write_4(psc, XUSB_CSB_MEMPOOL_APMAP_REG,
 	    XUSB_CSB_MEMPOOL_APMAP_BOOTPATH);
-	device_printf(sc->sc_dev, "XUSB_CSB_MP_APMAP 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_CSB_MP_APMAP 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_MEMPOOL_APMAP_REG));
 
-	device_printf(sc->sc_dev, "XUSB_CSB_MP_L2IMEMOP_TRIG 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_CSB_MP_L2IMEMOP_TRIG 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_MEMPOOL_L2IMEMOP_TRIG_REG));
 	csb_write_4(psc, XUSB_CSB_MEMPOOL_L2IMEMOP_TRIG_REG,
 	    __SHIFTIN(ACTION_L2IMEM_INVALIDATE_ALL,
 		XUSB_CSB_MEMPOOL_L2IMEMOP_TRIG_ACTION));
-	device_printf(sc->sc_dev, "XUSB_CSB_MP_L2IMEMOP_TRIG 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_CSB_MP_L2IMEMOP_TRIG 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_MEMPOOL_L2IMEMOP_TRIG_REG));
 
 	const u_int code_tag_blocks =
@@ -682,57 +671,59 @@ tegra_xusb_load_fw(struct tegra_xusb_softc * const psc)
 	    howmany(boot_codesize, IMEM_BLOCK_SIZE);
 	const u_int code_blocks = code_tag_blocks + code_size_blocks;
 
-	device_printf(sc->sc_dev, "XUSB_CSB_MP_L2IMEMOP_SIZE 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_CSB_MP_L2IMEMOP_SIZE 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_MEMPOOL_L2IMEMOP_SIZE_REG));
 	csb_write_4(psc, XUSB_CSB_MEMPOOL_L2IMEMOP_SIZE_REG,
 	    __SHIFTIN(code_tag_blocks,
 		XUSB_CSB_MEMPOOL_L2IMEMOP_SIZE_SRC_OFFSET) |
 	    __SHIFTIN(code_size_blocks,
 		XUSB_CSB_MEMPOOL_L2IMEMOP_SIZE_SRC_COUNT));
-	device_printf(sc->sc_dev, "XUSB_CSB_MP_L2IMEMOP_SIZE 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_CSB_MP_L2IMEMOP_SIZE 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_MEMPOOL_L2IMEMOP_SIZE_REG));
 
-	device_printf(sc->sc_dev, "XUSB_CSB_MP_L2IMEMOP_TRIG 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_CSB_MP_L2IMEMOP_TRIG 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_MEMPOOL_L2IMEMOP_TRIG_REG));
 	csb_write_4(psc, XUSB_CSB_MEMPOOL_L2IMEMOP_TRIG_REG,
 	    __SHIFTIN(ACTION_L2IMEM_LOAD_LOCKED_RESULT,
 		XUSB_CSB_MEMPOOL_L2IMEMOP_TRIG_ACTION));
-	device_printf(sc->sc_dev, "XUSB_CSB_MP_L2IMEMOP_TRIG 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_CSB_MP_L2IMEMOP_TRIG 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_MEMPOOL_L2IMEMOP_TRIG_REG));
 
-	device_printf(sc->sc_dev, "XUSB_FALC_IMFILLCTL 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_FALC_IMFILLCTL 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_FALCON_IMFILLCTL_REG));
 	csb_write_4(psc, XUSB_CSB_FALCON_IMFILLCTL_REG, code_size_blocks);
-	device_printf(sc->sc_dev, "XUSB_FALC_IMFILLCTL 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_FALC_IMFILLCTL 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_FALCON_IMFILLCTL_REG));
 
-	device_printf(sc->sc_dev, "XUSB_FALC_IMFILLRNG1 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_FALC_IMFILLRNG1 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_FALCON_IMFILLRNG1_REG));
 	csb_write_4(psc, XUSB_CSB_FALCON_IMFILLRNG1_REG,
 	    __SHIFTIN(code_tag_blocks, XUSB_CSB_FALCON_IMFILLRNG1_TAG_LO) |
 	    __SHIFTIN(code_blocks, XUSB_CSB_FALCON_IMFILLRNG1_TAG_HI));
-	device_printf(sc->sc_dev, "XUSB_FALC_IMFILLRNG1 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_FALC_IMFILLRNG1 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_FALCON_IMFILLRNG1_REG));
 
-	device_printf(sc->sc_dev, "XUSB_FALC_DMACTL 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_FALC_DMACTL 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_FALCON_DMACTL_REG));
 	csb_write_4(psc, XUSB_CSB_FALCON_DMACTL_REG, 0);
-	device_printf(sc->sc_dev, "XUSB_FALC_DMACTL 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_FALC_DMACTL 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_FALCON_DMACTL_REG));
 
-	device_printf(sc->sc_dev, "XUSB_FALC_BOOTVEC 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_FALC_BOOTVEC 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_FALCON_BOOTVEC_REG));
 	csb_write_4(psc, XUSB_CSB_FALCON_BOOTVEC_REG,
 	    boot_codetag);
-	device_printf(sc->sc_dev, "XUSB_FALC_BOOTVEC 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_FALC_BOOTVEC 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_FALCON_BOOTVEC_REG));
 
-	device_printf(sc->sc_dev, "XUSB_FALC_CPUCTL 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_FALC_CPUCTL 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_FALCON_CPUCTL_REG));
 	csb_write_4(psc, XUSB_CSB_FALCON_CPUCTL_REG,
 	    XUSB_CSB_FALCON_CPUCTL_STARTCPU);
-	device_printf(sc->sc_dev, "XUSB_FALC_CPUCTL 0x%x\n",
+	DPRINTF(sc->sc_dev, "XUSB_FALC_CPUCTL 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_FALCON_CPUCTL_REG));
+
+	return 0;
 }
 
 static uint32_t
@@ -774,7 +765,7 @@ xusb_mailbox_send(struct tegra_xusb_softc * const psc, uint32_t msg)
 	if (!(type == 128 || type == 129)) {
 		val = bus_space_read_4(bst, fpcih,
 		    T_XUSB_CFG_ARU_MAILBOX_OWNER_REG);
-		device_printf(sc->sc_dev, "XUSB_CFG_ARU_MBOX_OWNER 0x%x\n",
+		DPRINTF(sc->sc_dev, "XUSB_CFG_ARU_MBOX_OWNER 0x%x\n",
 		    val);
 		if (val != MAILBOX_OWNER_NONE) {
 			return EBUSY;
@@ -785,7 +776,7 @@ xusb_mailbox_send(struct tegra_xusb_softc * const psc, uint32_t msg)
 
 		val = bus_space_read_4(bst, fpcih,
 		    T_XUSB_CFG_ARU_MAILBOX_OWNER_REG);
-		device_printf(sc->sc_dev, "XUSB_CFG_ARU_MBOX_OWNER 0x%x\n",
+		DPRINTF(sc->sc_dev, "XUSB_CFG_ARU_MBOX_OWNER 0x%x\n",
 		    val);
 		if (val != MAILBOX_OWNER_SW) {
 			return EBUSY;
@@ -805,7 +796,7 @@ xusb_mailbox_send(struct tegra_xusb_softc * const psc, uint32_t msg)
 		for (u_int i = 0; i < 2500; i++) {
 			val = bus_space_read_4(bst, fpcih,
 			    T_XUSB_CFG_ARU_MAILBOX_OWNER_REG);
-			device_printf(sc->sc_dev,
+			DPRINTF(sc->sc_dev,
 			    "XUSB_CFG_ARU_MBOX_OWNER 0x%x\n", val);
 			if (val == MAILBOX_OWNER_NONE) {
 				break;
@@ -815,10 +806,10 @@ xusb_mailbox_send(struct tegra_xusb_softc * const psc, uint32_t msg)
 
 		val = bus_space_read_4(bst, fpcih,
 		    T_XUSB_CFG_ARU_MAILBOX_OWNER_REG);
-		device_printf(sc->sc_dev,
+		DPRINTF(sc->sc_dev,
 		    "XUSB_CFG_ARU_MBOX_OWNER 0x%x\n", val);
 		if (val != MAILBOX_OWNER_NONE) {
-			device_printf(sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "timeout, XUSB_CFG_ARU_MBOX_OWNER 0x%x\n", val);
 		}
 	}

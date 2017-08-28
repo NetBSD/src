@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.74.2.7 2017/02/05 13:40:29 skrll Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.74.2.8 2017/08/28 17:52:05 skrll Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.74.2.7 2017/02/05 13:40:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.74.2.8 2017/08/28 17:52:05 skrll Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -790,7 +790,7 @@ iwn5000_attach(struct iwn_softc *sc, pci_product_id_t pid)
 			sc->fwname = "iwlwifi-6000g2a-5.ucode";
 		break;
 	case IWN_HW_REV_TYPE_2030:
-		sc->limits = &iwn2000_sensitivity_limits;
+		sc->limits = &iwn2030_sensitivity_limits;
 		sc->fwname = "iwlwifi-2030-6.ucode";
 		ops->config_bt_coex = iwn_config_bt_coex_adv2;
 		break;
@@ -1781,6 +1781,7 @@ iwn_read_eeprom_enhinfo(struct iwn_softc *sc)
 	struct iwn_eeprom_enhinfo enhinfo[35];
 	uint16_t val, base;
 	int8_t maxpwr;
+	uint8_t flags;
 	int i;
 
 	iwn_read_prom_data(sc, IWN5000_EEPROM_REG, &val, 2);
@@ -1790,7 +1791,8 @@ iwn_read_eeprom_enhinfo(struct iwn_softc *sc)
 
 	memset(sc->enh_maxpwr, 0, sizeof sc->enh_maxpwr);
 	for (i = 0; i < __arraycount(enhinfo); i++) {
-		if (enhinfo[i].chan == 0 || enhinfo[i].reserved != 0)
+		flags = enhinfo[i].flags;
+		if (!(flags & IWN_ENHINFO_VALID))
 			continue;	/* Skip invalid entries. */
 
 		maxpwr = 0;
@@ -1915,6 +1917,10 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		sc->rxon.filter &= ~htole32(IWN_FILTER_BSS);
 		sc->calib.state = IWN_CALIB_STATE_INIT;
 
+		/* Wait until we hear a beacon before we transmit */
+		if (IEEE80211_IS_CHAN_PASSIVE(ic->ic_curchan))
+			sc->sc_beacon_wait = 1;
+
 		if ((error = iwn_auth(sc)) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not move to auth state\n");
@@ -1923,6 +1929,18 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 
 	case IEEE80211_S_RUN:
+		/*
+		 * RUN -> RUN transition; Just restart timers.
+		 */
+		if (ic->ic_state == IEEE80211_S_RUN) {
+			sc->calib_cnt = 0;
+			break;
+		}
+
+		/* Wait until we hear a beacon before we transmit */
+		if (IEEE80211_IS_CHAN_PASSIVE(ic->ic_curchan))
+			sc->sc_beacon_wait = 1;
+
 		if ((error = iwn_run(sc)) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not move to run state\n");
@@ -1933,6 +1951,13 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_INIT:
 		sc->sc_flags &= ~IWN_FLAG_SCANNING;
 		sc->calib.state = IWN_CALIB_STATE_INIT;
+		/*
+		 * Purge the xmit queue so we don't have old frames
+		 * during a new association attempt.
+		 */
+		sc->sc_beacon_wait = 0;
+		ifp->if_flags &= ~IFF_OACTIVE;
+		iwn_start(ifp);
 		break;
 	}
 
@@ -2152,6 +2177,25 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		}
 
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+	}
+
+	/*
+	 * If it's a beacon and we're waiting, then do the wakeup.
+	 */
+	if (sc->sc_beacon_wait) {
+		uint8_t type, subtype;
+		type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
+		subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+		/*
+		 * This assumes at this point we've received our own
+		 * beacon.
+		 */
+		if (type == IEEE80211_FC0_TYPE_MGT &&
+		    subtype == IEEE80211_FC0_SUBTYPE_BEACON) {
+			sc->sc_beacon_wait = 0;
+			ifp->if_flags &= ~IFF_OACTIVE;
+			iwn_start(ifp);
+		}
 	}
 
 	/* Send the frame to the 802.11 layer. */
@@ -3142,6 +3186,11 @@ iwn_start(struct ifnet *ifp)
 		return;
 
 	for (;;) {
+		if (sc->sc_beacon_wait == 1) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
 		if (sc->qfullmsk != 0) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
@@ -3184,7 +3233,8 @@ iwn_start(struct ifnet *ifp)
 		ac = (eh->ether_type != htons(ETHERTYPE_PAE)) ?
 		    M_WME_GETAC(m) : WME_AC_BE;
 
-		bpf_mtap(ifp, m);
+		if (sc->sc_beacon_wait == 0)
+			bpf_mtap(ifp, m);
 
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
@@ -3192,6 +3242,9 @@ iwn_start(struct ifnet *ifp)
 			continue;
 		}
 sendit:
+		if (sc->sc_beacon_wait)
+			continue;
+
 		bpf_mtap3(ic->ic_rawbpf, m);
 
 		if (iwn_tx(sc, m, ni, ac) != 0) {
@@ -3203,6 +3256,9 @@ sendit:
 		sc->sc_tx_timer = 5;
 		ifp->if_timer = 1;
 	}
+
+	if (sc->sc_beacon_wait > 1)
+		sc->sc_beacon_wait = 0;
 }
 
 static void
@@ -3695,6 +3751,7 @@ static int
 iwn5000_set_txpower(struct iwn_softc *sc, int async)
 {
 	struct iwn5000_cmd_txpower cmd;
+	int cmdid;
 
 	/*
 	 * TX power calibration is handled automatically by the firmware
@@ -3705,7 +3762,11 @@ iwn5000_set_txpower(struct iwn_softc *sc, int async)
 	cmd.flags = IWN5000_TXPOWER_NO_CLOSED;
 	cmd.srv_limit = IWN5000_TXPOWER_AUTO;
 	DPRINTF(("setting TX power\n"));
-	return iwn_cmd(sc, IWN_CMD_TXPOWER_DBM, &cmd, sizeof cmd, async);
+	if (IWN_UCODE_API(sc->ucode_rev) == 1)
+		cmdid = IWN_CMD_TXPOWER_DBM_V1;
+	else
+		cmdid = IWN_CMD_TXPOWER_DBM;
+	return iwn_cmd(sc, cmdid, &cmd, sizeof cmd, async);
 }
 
 /*
@@ -4166,7 +4227,7 @@ iwn_send_sensitivity(struct iwn_softc *sc)
 	cmd.energy_cck       = htole16(calib->energy_cck);
 	/* Barker modulation: use default values. */
 	cmd.corr_barker      = htole16(190);
-	cmd.corr_barker_mrc  = htole16(390);
+	cmd.corr_barker_mrc  = htole16(sc->limits->barker_mrc);
 	if (!(sc->sc_flags & IWN_FLAG_ENH_SENS))
 		goto send;
 	/* Enhanced sensitivity settings. */
@@ -5677,6 +5738,8 @@ iwn_read_firmware_leg(struct iwn_softc *sc, struct iwn_fw_info *fw)
 	ptr = (const uint32_t *)fw->data;
 	rev = le32toh(*ptr++);
 
+	sc->ucode_rev = rev;
+
 	/* Check firmware API version. */
 	if (IWN_FW_API(rev) <= 1) {
 		aprint_error_dev(sc->sc_dev,
@@ -5742,6 +5805,7 @@ iwn_read_firmware_tlv(struct iwn_softc *sc, struct iwn_fw_info *fw,
 	}
 	DPRINTF(("FW: \"%.64s\", build 0x%x\n", hdr->descr,
 	    le32toh(hdr->build)));
+	sc->ucode_rev = le32toh(hdr->rev);
 
 	/*
 	 * Select the closest supported alternative that is less than
@@ -6329,6 +6393,8 @@ iwn_init(struct ifnet *ifp)
 		    "could not configure device\n");
 		goto fail;
 	}
+
+	sc->sc_beacon_wait = 0;
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;

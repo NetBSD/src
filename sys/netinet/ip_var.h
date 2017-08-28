@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.107.2.6 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.107.2.7 2017/08/28 17:53:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -123,6 +123,12 @@ struct ip_moptions {
 	struct	  in_multi *imo_membership[IP_MAX_MEMBERSHIPS];
 };
 
+struct ip_pktopts {
+	struct sockaddr_in ippo_laddr;	/* source address */
+	struct ip_moptions *ippo_imo;	/* inp->inp_moptions or &ippo_imobuf */
+	struct ip_moptions ippo_imobuf;	/* use when IP_PKTINFO */
+};
+
 /*
  * IP statistics.
  * Each counter is an unsigned 64-bit value.
@@ -157,8 +163,9 @@ struct ip_moptions {
 #define	IP_STAT_TOOLONG		27	/* ip length > max ip packet size */
 #define	IP_STAT_NOGIF		28	/* no match gif found */
 #define	IP_STAT_BADADDR		29	/* invalid address on header */
+#define	IP_STAT_NOL2TP		30	/* no match l2tp found */
 
-#define	IP_NSTATS		30
+#define	IP_NSTATS		31
 
 #ifdef _KERNEL
 
@@ -181,6 +188,7 @@ __CTASSERT(SO_BROADCAST ==	0x0020);
 
 #define	IP_IGMP_MCAST		0x0040		/* IGMP for mcast join/leave */
 #define	IP_MTUDISC		0x0400		/* Path MTU Discovery; set DF */
+#define	IP_ROUTETOIFINDEX	0x0800	/* force route imo_multicast_if_index */
 
 extern struct domain inetdomain;
 extern const struct pr_usrreqs rip_usrreqs;
@@ -206,13 +214,15 @@ void	ip_init(void);
 void	in_init(void);
 
 int	 ip_ctloutput(int, struct socket *, struct sockopt *);
+int	 ip_setpktopts(struct mbuf *, struct ip_pktopts *, int *,
+	    struct inpcb *, kauth_cred_t, int);
 void	 ip_drain(void);
 void	 ip_drainstub(void);
 void	 ip_freemoptions(struct ip_moptions *);
 int	 ip_optcopy(struct ip *, struct ip *);
 u_int	 ip_optlen(struct inpcb *);
 int	 ip_output(struct mbuf *, struct mbuf *, struct route *, int,
-	    struct ip_moptions *, struct socket *);
+	    struct ip_moptions *, struct inpcb *);
 int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
 
 void	 ip_reass_init(void);
@@ -225,14 +235,14 @@ void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
 void	 ip_slowtimo(void);
 void	 ip_fasttimo(void);
 struct mbuf *
-	 ip_srcroute(void);
+	 ip_srcroute(struct mbuf *);
 int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 void	 ip_statinc(u_int);
 void *	 rip_ctlinput(int, const struct sockaddr *, void *);
 int	 rip_ctloutput(int, struct socket *, struct sockopt *);
 void	 rip_init(void);
 void	 rip_input(struct mbuf *, ...);
-int	 rip_output(struct mbuf *, struct inpcb *);
+int	 rip_output(struct mbuf *, struct inpcb *, struct mbuf *, struct lwp *);
 int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 

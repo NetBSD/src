@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.329.2.4 2016/05/29 08:44:21 skrll Exp $ */
+/* $NetBSD: com.c,v 1.329.2.5 2017/08/28 17:52:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.329.2.4 2016/05/29 08:44:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.329.2.5 2017/08/28 17:52:03 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -471,6 +471,14 @@ com_attach_subr(struct com_softc *sc)
 	case COM_TYPE_TEGRA:
 		sc->sc_fifolen = 8;
 		fifo_msg = "Tegra UART, working fifo";
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		CSR_WRITE_1(regsp, COM_REG_FIFO,
+		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
+		goto fifodelay;
+
+	case COM_TYPE_BCMAUXUART:
+		sc->sc_fifolen = 1;
+		fifo_msg = "BCM AUX UART, working fifo";
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		CSR_WRITE_1(regsp, COM_REG_FIFO,
 		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
@@ -2107,6 +2115,9 @@ again:	do {
 			}
 #endif
 		}
+
+		if (sc->sc_type == COM_TYPE_BCMAUXUART && ISSET(iir, IIR_RXRDY))
+			lsr |= LSR_RXRDY;
 
 		if (ISSET(lsr, LSR_RCV_MASK) &&
 		    !ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {

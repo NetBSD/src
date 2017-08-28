@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.12.2.2 2015/12/27 12:09:31 skrll Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.12.2.3 2017/08/28 17:51:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.12.2.2 2015/12/27 12:09:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.12.2.3 2017/08/28 17:51:31 skrll Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -233,9 +233,6 @@ tegra_fb_create(struct drm_device *ddev, struct drm_file *file,
 		return NULL;
 
 	fb = kmem_zalloc(sizeof(*fb), KM_SLEEP);
-	if (fb == NULL)
-		goto unref;
-
 	fb->obj = to_tegra_gem_obj(gem_obj);
 	fb->base.pitches[0] = cmd->pitches[0];
 	fb->base.offsets[0] = cmd->offsets[0];
@@ -254,7 +251,6 @@ tegra_fb_create(struct drm_device *ddev, struct drm_file *file,
 	drm_framebuffer_cleanup(&fb->base);
 dealloc:
 	kmem_free(fb, sizeof(*fb));
-unref:
 	drm_gem_object_unreference_unlocked(gem_obj);
 
 	return NULL;
@@ -284,14 +280,13 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 {
 	struct tegra_drm_softc * const sc = tegra_drm_private(ddev);
 	struct tegra_crtc *crtc;
-	struct clk *clk_parent;
 	bus_addr_t offset;
 	bus_size_t size;
 	u_int intr;
 	int error;
 
 	if (sc->sc_clk_dc[index] == NULL ||
-	    sc->sc_clk_dc_parent[index] == NULL ||
+	    sc->sc_clk_hdmi_parent == NULL ||
 	    sc->sc_rst_dc[index] == NULL) {
 		DRM_ERROR("no clocks configured for crtc %d\n", index);
 		return -EIO;
@@ -313,9 +308,6 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 	}
 
 	crtc = kmem_zalloc(sizeof(*crtc), KM_SLEEP);
-	if (crtc == NULL)
-		return -ENOMEM;
-
 	crtc->index = index;
 	crtc->bst = sc->sc_bst;
 	error = bus_space_map(crtc->bst, offset, size, 0, &crtc->bsh);
@@ -345,13 +337,9 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 	tegra_pmc_power(pmc_partid, true);
 	tegra_pmc_remove_clamping(pmc_partid);
 
-	/* Set parent clock */
-	clk_parent = clk_get("pll_d2_out0");
-	if (clk_parent == NULL) {
-		DRM_ERROR("couldn't find pll_d2_out0\n");
-		return -EIO;
-	}
-	error = clk_set_parent(sc->sc_clk_dc[index], clk_parent);
+	/* Set parent clock to the HDMI parent (ignoring DC parent in DT!) */
+	error = clk_set_parent(sc->sc_clk_dc[index],
+	    sc->sc_clk_hdmi_parent);
 	if (error) {
 		DRM_ERROR("failed to set crtc %d clock parent: %d\n",
 		    index, error);
@@ -368,7 +356,7 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 	/* Leave reset */
 	fdtbus_reset_deassert(sc->sc_rst_dc[index]);
 
-	crtc->clk_parent = clk_parent;
+	crtc->clk_parent = sc->sc_clk_hdmi_parent;
 
 	DC_WRITE(crtc, DC_CMD_INT_ENABLE_REG, DC_CMD_INT_V_BLANK);
 
@@ -803,13 +791,10 @@ tegra_encoder_init(struct drm_device *ddev)
 		return -EIO;
 	}
 
-	encoder = kmem_zalloc(sizeof(*encoder), KM_SLEEP);
-	if (encoder == NULL)
-		return -ENOMEM;
-
 	const bus_addr_t offset = TEGRA_GHOST_BASE + TEGRA_HDMI_OFFSET;
 	const bus_size_t size = TEGRA_HDMI_SIZE;
 
+	encoder = kmem_zalloc(sizeof(*encoder), KM_SLEEP);
 	encoder->bst = sc->sc_bst;
 	error = bus_space_map(encoder->bst, offset, size, 0, &encoder->bsh);
 	if (error) {
@@ -1179,8 +1164,6 @@ tegra_connector_init(struct drm_device *ddev, struct drm_encoder *encoder)
 	struct tegra_connector *connector;
 
 	connector = kmem_zalloc(sizeof(*connector), KM_SLEEP);
-	if (connector == NULL)
-		return -ENOMEM;
 
 	drm_connector_init(ddev, &connector->base, &tegra_connector_funcs,
 	    DRM_MODE_CONNECTOR_HDMIA);

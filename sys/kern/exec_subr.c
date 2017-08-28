@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.71.6.3 2016/05/29 08:44:37 skrll Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.71.6.4 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.71.6.3 2016/05/29 08:44:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.71.6.4 2017/08/28 17:53:07 skrll Exp $");
 
 #include "opt_pax.h"
 
@@ -66,6 +66,9 @@ VMCMD_EVCNT_DECL(kills);
 #else
 #define DPRINTF(a)
 #endif
+
+unsigned int user_stack_guard_size = 1024 * 1024;
+unsigned int user_thread_stack_guard_size = 64 * 1024;
 
 /*
  * new_vmcmd():
@@ -155,6 +158,19 @@ kill_vmcmds(struct exec_vmcmd_set *evsp)
  *	appropriate for handling demand-paged text and data segments.
  */
 
+static int
+vmcmd_get_prot(struct lwp *l, const struct exec_vmcmd *cmd, vm_prot_t *prot,
+    vm_prot_t *maxprot)
+{
+
+	*prot = cmd->ev_prot;
+	*maxprot = PAX_MPROTECT_MAXPROTECT(l, *prot, 0, UVM_PROT_ALL);
+
+	if ((*prot & *maxprot) != *prot)
+		return EACCES;
+	return PAX_MPROTECT_VALIDATE(l, *prot);
+}
+
 int
 vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 {
@@ -179,9 +195,8 @@ vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 	if (cmd->ev_len & PAGE_MASK)
 		return EINVAL;
 
-	prot = cmd->ev_prot;
-	maxprot = UVM_PROT_ALL;
-	PAX_MPROTECT_ADJUST(l, &prot, &maxprot);
+	if ((error = vmcmd_get_prot(l, cmd, &prot, &maxprot)) != 0)
+		return error;
 
 	/*
 	 * check the file system's opinion about mmapping the file
@@ -259,9 +274,8 @@ vmcmd_readvn(struct lwp *l, struct exec_vmcmd *cmd)
 	if (error)
 		return error;
 
-	prot = cmd->ev_prot;
-	maxprot = VM_PROT_ALL;
-	PAX_MPROTECT_ADJUST(l, &prot, &maxprot);
+	if ((error = vmcmd_get_prot(l, cmd, &prot, &maxprot)) != 0)
+		return error;
 
 #ifdef PMAP_NEED_PROCWR
 	/*
@@ -317,9 +331,8 @@ vmcmd_map_zero(struct lwp *l, struct exec_vmcmd *cmd)
 	cmd->ev_addr -= diff;			/* required by uvm_map */
 	cmd->ev_len += diff;
 
-	prot = cmd->ev_prot;
-	maxprot = UVM_PROT_ALL;
-	PAX_MPROTECT_ADJUST(l, &prot, &maxprot);
+	if ((error = vmcmd_get_prot(l, cmd, &prot, &maxprot)) != 0)
+		return error;
 
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
 			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
@@ -430,6 +443,17 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	    (uintmax_t)access_size, (uintmax_t)access_linear_min,
 	    (uintmax_t)noaccess_size, (uintmax_t)noaccess_linear_min));
 
+	if (user_stack_guard_size > 0) {
+#ifdef __MACHINE_STACK_GROWS_UP
+		vsize_t guard_size = MIN(VM_MAXUSER_ADDRESS - epp->ep_maxsaddr, user_stack_guard_size);
+		if (guard_size > 0)
+			NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, guard_size,
+			    epp->ep_maxsaddr, NULL, 0, VM_PROT_NONE);
+#else
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, user_stack_guard_size,
+		    epp->ep_maxsaddr - user_stack_guard_size, NULL, 0, VM_PROT_NONE);
+#endif
+	}
 	if (noaccess_size > 0 && noaccess_size <= MAXSSIZ) {
 		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
 		    noaccess_linear_min, NULL, 0, VM_PROT_NONE, VMCMD_STACK);

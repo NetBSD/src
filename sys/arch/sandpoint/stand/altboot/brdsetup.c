@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.35.4.1 2015/12/27 12:09:41 skrll Exp $ */
+/* $NetBSD: brdsetup.c,v 1.35.4.2 2017/08/28 17:51:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ static void send_iomega(int, int, int, int, int, int);
 static inline uint32_t mfmsr(void);
 static inline void mtmsr(uint32_t);
 static inline uint32_t cputype(void);
-static inline u_quad_t mftb(void);
+static inline uint64_t mftb(void);
 static void init_uart(unsigned, unsigned, uint8_t);
 static void send_sat(char *);
 static unsigned mpc107memsize(void);
@@ -269,7 +269,8 @@ brdsetup(void)
 				brdtype = BRD_KUROBOXT4;
 		}
 	}
-	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x11ab) {
+	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x1148
+	    || PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x11ab) {
 		/* SKnet/Marvell (sk) at dev 15 */
 		brdtype = BRD_SYNOLOGY;
 	}
@@ -873,8 +874,11 @@ synopcifix(struct brdprop *brd)
 		 * with several seconds delay, but no CPLD register to
 		 * monitor the power state. So all we can do is to
 		 * wait some more seconds during SATA-init.
+		 * Also wait some seconds now, to make sure the first
+		 * disk is ready after a cold start.
 		 */
 		sata_delay[1] = SYNO_DISK_DELAY;
+		delay(10 * 1024 * 1024);
 	}
 
   cpld_done:
@@ -1012,7 +1016,7 @@ _rtt(void)
 satime_t
 getsecs(void)
 {
-	u_quad_t tb = mftb();
+	uint64_t tb = mftb();
 
 	return (tb / ticks_per_sec);
 }
@@ -1021,13 +1025,13 @@ getsecs(void)
  * Wait for about n microseconds (at least!).
  */
 void
-delay(u_int n)
+delay(unsigned n)
 {
-	u_quad_t tb;
-	u_long scratch, tbh, tbl;
+	uint64_t tb;
+	uint32_t scratch, tbh, tbl;
 
 	tb = mftb();
-	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
+	tb += ((uint64_t)n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
 	asm volatile ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f; mftb %0; cmpw 0, %0,%2; blt 1b; 2:" : "=&r"(scratch) : "r"(tbh), "r"(tbl));
@@ -1113,11 +1117,11 @@ cputype(void)
 	return pvr >> 16;
 }
 
-static inline u_quad_t
+static inline uint64_t
 mftb(void)
 {
-	u_long scratch;
-	u_quad_t tb;
+	uint32_t scratch;
+	uint64_t tb;
 
 	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
 	    : "=r"(tb), "=r"(scratch));

@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.17.4.2 2015/12/27 12:09:34 skrll Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.17.4.3 2017/08/28 17:51:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.17.4.2 2015/12/27 12:09:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.17.4.3 2017/08/28 17:51:35 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -144,6 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.17.4.2 2015/12/27 12:09:34 s
 #include <arm/imx/imxuartreg.h>
 #include <arm/imx/imxuartvar.h>
 #include <arm/imx/imx51_iomuxreg.h>
+#include <arm/imx/imxgpiovar.h>
 
 #include <evbarm/netwalker/netwalker_reg.h>
 #include <evbarm/netwalker/netwalker.h>
@@ -463,27 +464,21 @@ const struct iomux_setup iomux_setup_data[] = {
 	IOMUX_DATA(IOMUXC_GPIO3_IPP_IND_G_IN_3_SELECT_INPUT, INPUT_DAISY_0),
 	IOMUX_MP(CSI2_D12, ALT3, KEEPER | DSEHIGH | SRE), /* GPIO4_9 */
 	IOMUX_MP(CSI2_D13, ALT3, KEEPER | DSEHIGH | SRE),
-#if 1
 	IOMUX_MP(GPIO1_2, ALT1, DSEHIGH | ODE),	/* LCD backlight by PWM */
-#else
-	IOMUX_MP(GPIO1_2, ALT0, DSEHIGH | ODE),	/* LCD backlight by GPIO */
-#endif
-	IOMUX_MP(EIM_A19, ALT1, SRE | DSEHIGH),
+
+	IOMUX_MP(EIM_A19, ALT1, SRE | DSEHIGH),	/* GPIO2_13 */
+
 	/* XXX VGA pins */
 	IOMUX_M(DI_GP4, ALT4),
-	IOMUX_M(GPIO1_8, SION | ALT0),
-
 	IOMUX_MP(GPIO1_8, SION | ALT0, HYS | DSEMID | PU_100K),
-	/* I2C1 */
-	IOMUX_MP(EIM_D16, SION | ALT4, HYS | ODE | DSEHIGH | SRE),
-	IOMUX_MP(EIM_D19, SION | ALT4, SRE),	/* SCL */
-	IOMUX_MP(EIM_A19, ALT1, SRE | DSEHIGH), /* GPIO2_13 */
 
-#if 0
-	IOMUX_MP(EIM_A23, ALT1, 0),
-#else
+	/* I2C1 */
+	IOMUX_MP(EIM_D16, SION | ALT4, HYS | ODE | DSEHIGH | SRE),	/* SDA */
+	IOMUX_MP(EIM_D19, SION | ALT4, SRE),			       	/* SCL */
+	IOMUX_DATA(IOMUXC_I2C1_IPP_SDA_IN_SELECT_INPUT, INPUT_DAISY_0),
+	IOMUX_DATA(IOMUXC_I2C1_IPP_SCL_IN_SELECT_INPUT, INPUT_DAISY_0),
+
 	IOMUX_M(EIM_A23, ALT1),	/* GPIO2_17 */
-#endif
 
 	/* BT */
 	IOMUX_M(EIM_D20, ALT1),	/* GPIO2_4 BT host wakeup */
@@ -497,6 +492,7 @@ const struct iomux_setup iomux_setup_data[] = {
 	IOMUX_MP(EIM_D27, ALT3, KEEPER | PU_100K | DSEHIGH | SRE), /* RTS */
 	IOMUX_M(NANDF_D15, ALT3),	/* GPIO3_25 */
 	IOMUX_MP(NANDF_D14, ALT3, HYS | PULL | PU_100K ),	/* GPIO3_26 */
+	IOMUX_DATA(IOMUXC_UART3_IPP_UART_RTS_B_SELECT_INPUT, INPUT_DAISY_3),
 
 	/* OJ6SH-T25 */
 	IOMUX_M(CSI1_D9, ALT3),			/* GPIO3_13 */
@@ -532,12 +528,11 @@ const struct iomux_setup iomux_setup_data[] = {
 	/* 26M Osc */
 	IOMUX_MP(DI1_PIN12, ALT4, KEEPER | DSEHIGH | SRE), /* GPIO3_1 */
 
-	/* I2C */
-	IOMUX_MP(KEY_COL4, SION | ALT3, SRE),
+	/* I2C2 */
+	IOMUX_MP(KEY_COL5, SION | ALT3, HYS | ODE | DSEHIGH | SRE),	/* SDA */
+	IOMUX_MP(KEY_COL4, SION | ALT3, SRE),				/* SCL */
 	IOMUX_DATA(IOMUXC_I2C2_IPP_SCL_IN_SELECT_INPUT, INPUT_DAISY_1),
-	IOMUX_MP(KEY_COL5, SION | ALT3, HYS | ODE | DSEHIGH | SRE),
 	IOMUX_DATA(IOMUXC_I2C2_IPP_SDA_IN_SELECT_INPUT, INPUT_DAISY_1),
-	IOMUX_DATA(IOMUXC_UART3_IPP_UART_RTS_B_SELECT_INPUT, INPUT_DAISY_3),
 
 	/* NAND */
 	IOMUX_MP(NANDF_WE_B, ALT0, HVE | DSEHIGH | PULL | PU_47K),

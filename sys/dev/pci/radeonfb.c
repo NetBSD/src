@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.88 2014/11/05 19:39:17 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.88.2.1 2017/08/28 17:52:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.88 2014/11/05 19:39:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.88.2.1 2017/08/28 17:52:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ static struct wsscreen_descr radeonfb_stdscreen = {
 	0, 0,		/* ncols, nrows */
 	NULL,		/* textops */
 	8, 16,		/* fontwidth, fontheight */
-	WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE, /* capabilities */
+	WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE | WSSCREEN_RESIZE, /* capabilities */
 	0,		/* modecookie */
 };
 
@@ -379,6 +379,9 @@ static struct {
 	{ PCI_PRODUCT_ATI_RADEON_R423_UT,	RADEON_R420, 0 },
 	{ PCI_PRODUCT_ATI_RADEON_R423_5D57,	RADEON_R420, 0 },
 	{ PCI_PRODUCT_ATI_RADEON_R430_554F,	RADEON_R420, 0 },
+
+	/* R5xx family */
+	{ 0x7240,	RADEON_R420, 0 },	
 #endif
 	{ 0, 0, 0 }
 };
@@ -413,7 +416,7 @@ static const struct {
 	{ RADEON_R200,	{{15000, 0xa1b}, {-1, 0xa3f}}},
 	{ RADEON_RV250,	{{15500, 0x81b}, {-1, 0x83f}}},
 	{ RADEON_RS300, {{0, 0}}},
-	{ RADEON_RV280,	{{13000, 0x400f4}, {15000, 0x400f7}}},
+	{ RADEON_RV280,	{{13000, 0x400f4}, {15000, 0x400f7}, {-1, 0x40111}}},
 	{ RADEON_R300,	{{-1, 0xb01cb}}},
 	{ RADEON_R350,	{{-1, 0xb01cb}}},
 	{ RADEON_RV350,	{{15000, 0xb0155}, {-1, 0xb01cb}}},
@@ -569,9 +572,6 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	PRINTREG(RADEON_CRTC2_GEN_CNTL);
 	PRINTREG(RADEON_DISP_OUTPUT_CNTL);
 	PRINTREG(RADEON_DAC_CNTL2);
-	PRINTREG(RADEON_FP_GEN_CNTL);
-	PRINTREG(RADEON_FP2_GEN_CNTL);
-
 	PRINTREG(RADEON_BIOS_4_SCRATCH);
 	PRINTREG(RADEON_FP_GEN_CNTL);
 	sc->sc_fp_gen_cntl = GET32(sc, RADEON_FP_GEN_CNTL);
@@ -582,7 +582,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	PRINTREG(RADEON_LVDS_GEN_CNTL);
 	PRINTREG(RADEON_FP_HORZ_STRETCH);
 	PRINTREG(RADEON_FP_VERT_STRETCH);
-
+	PRINTREG(RADEON_DISP_HW_DEBUG);
 	if (IS_RV100(sc))
 		PUT32(sc, RADEON_TMDS_PLL_CNTL, 0xa27);
 
@@ -598,7 +598,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		    RADEON_TMDS_TRANSMITTER_PLLEN,
 		    ~(RADEON_TMDS_TRANSMITTER_PLLEN | RADEON_TMDS_TRANSMITTER_PLLRST));
 	}
-	
+
 	radeonfb_i2c_init(sc);
 
 	radeonfb_loadbios(sc, pa);
@@ -704,11 +704,29 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 				      RADEON_FP_SEL_CRTC1,
 				    ~RADEON_FP_SEL_MASK);
 			}
+		case RADEON_TMDS_EXT:
+			/* point FP2 at the CRTC this port uses */
+			DPRINTF(("%s: plugging external TMDS into CRTC %d\n",
+			    __func__, sc->sc_ports[i].rp_number));
+			if (IS_R300(sc)) {
+				PATCH32(sc, RADEON_FP2_GEN_CNTL,
+				    sc->sc_ports[i].rp_number ?
+				      R200_FP2_SOURCE_SEL_CRTC2 :
+				      R200_FP2_SOURCE_SEL_CRTC1,
+				    ~R200_FP2_SOURCE_SEL_CRTC2);
+			} else {
+				PATCH32(sc, RADEON_FP2_GEN_CNTL,
+				    sc->sc_ports[i].rp_number ?
+				      RADEON_FP2_SRC_SEL_CRTC2 :
+				      RADEON_FP2_SRC_SEL_CRTC1,
+				    ~RADEON_FP2_SRC_SEL_CRTC2);
+			}
 		}
 	}
 	PRINTREG(RADEON_DAC_CNTL2);
 	PRINTREG(RADEON_DISP_HW_DEBUG);
 
+	PRINTREG(RADEON_DAC_CNTL);
 	/* other DAC programming */
 	v = GET32(sc, RADEON_DAC_CNTL);
 	v &= (RADEON_DAC_RANGE_CNTL_MASK | RADEON_DAC_BLANKING);
@@ -939,6 +957,9 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		    ri->ri_font->fontwidth,
 		    ri->ri_font->fontheight,
 		    defattr);
+		dp->rd_vd.show_screen_cookie = &dp->rd_gc;
+		dp->rd_vd.show_screen_cb = glyphcache_adapt;
+
 		if (dp->rd_console) {
 
 			radeonfb_modeswitch(dp);
@@ -1017,6 +1038,9 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	PRINTREG(RADEON_DAC_CNTL2);
 	PRINTREG(RADEON_FP_GEN_CNTL);
 	PRINTREG(RADEON_FP2_GEN_CNTL);
+	PRINTREG(RADEON_TMDS_CNTL);
+	PRINTREG(RADEON_TMDS_TRANSMITTER_CNTL);
+	PRINTREG(RADEON_TMDS_PLL_CNTL);
 
 	return;
 
@@ -1733,6 +1757,13 @@ radeonfb_getconnectors(struct radeonfb_softc *sc)
 			if (conn == RADEON_CONN_NONE)
 				continue;	/* no connector */
 
+
+
+			/* 
+			 * XXX
+			 * both Mac Mini variants have both outputs wired to 
+			 * the same connector and share the DDC lines
+			 */ 
 			if ((found > 0) &&
 			    (sc->sc_ports[port].rp_ddc_type == ddc)) {
 				/* duplicate entry for same connector */
@@ -1766,8 +1797,33 @@ radeonfb_getconnectors(struct radeonfb_softc *sc)
 
 nobios:
 	if (!found) {
+		bool dvi_ext = FALSE, dvi_int = FALSE;
 		DPRINTF(("No connector info in BIOS!\n"));
-		if IS_MOBILITY(sc) {
+		prop_dictionary_get_bool(device_properties(sc->sc_dev),
+		    "dvi-internal", &dvi_int);
+		prop_dictionary_get_bool(device_properties(sc->sc_dev),
+		    "dvi-external", &dvi_ext);
+		if (dvi_ext) {
+			sc->sc_ports[0].rp_mon_type = RADEON_MT_UNKNOWN;
+			sc->sc_ports[0].rp_ddc_type = RADEON_DDC_CRT2;
+			sc->sc_ports[0].rp_dac_type = RADEON_DAC_PRIMARY;
+			sc->sc_ports[0].rp_conn_type = RADEON_CONN_DVI_I;
+			sc->sc_ports[0].rp_tmds_type = RADEON_TMDS_EXT;	/* output to fp2 */
+			sc->sc_ports[0].rp_number = 0;
+			sc->sc_ports[1].rp_mon_type = RADEON_MT_UNKNOWN;
+			sc->sc_ports[1].rp_ddc_type = RADEON_DDC_NONE;
+			sc->sc_ports[1].rp_dac_type = RADEON_DAC_UNKNOWN;
+			sc->sc_ports[1].rp_conn_type = RADEON_CONN_NONE;
+			sc->sc_ports[1].rp_tmds_type = RADEON_TMDS_UNKNOWN;
+			sc->sc_ports[1].rp_number = 1;
+		} else	if (dvi_int) {
+			sc->sc_ports[0].rp_mon_type = RADEON_MT_UNKNOWN;
+			sc->sc_ports[0].rp_ddc_type = RADEON_DDC_CRT2;
+			sc->sc_ports[0].rp_dac_type = RADEON_DAC_PRIMARY;
+			sc->sc_ports[0].rp_conn_type = RADEON_CONN_DVI_I;
+			sc->sc_ports[0].rp_tmds_type = RADEON_TMDS_INT;
+			sc->sc_ports[0].rp_number = 0;
+		} else if IS_MOBILITY(sc) {
 			/* default, port 0 = internal TMDS, port 1 = CRT */
 			sc->sc_ports[0].rp_mon_type = RADEON_MT_UNKNOWN;
 			sc->sc_ports[0].rp_ddc_type = RADEON_DDC_DVI;
@@ -2380,6 +2436,8 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	/* initialize font subsystem */
 	wsfont_init();
 
+	scr->scr_flags |= VCONS_LOADFONT;
+
 	DPRINTF(("init screen called, existing %d\n", existing));
 
 	ri->ri_depth = dp->rd_bpp;
@@ -2389,10 +2447,10 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_flg = RI_CENTER;
 	switch (ri->ri_depth) {
 		case 8:
-			ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
+			ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB | RI_PREFER_ALPHA;
 			break;
 		case 32:
-			ri->ri_flg |= RI_ENABLE_ALPHA;
+			ri->ri_flg |= RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
 			/* we run radeons in RGB even on SPARC hardware */
 			ri->ri_rnum = 8;
 			ri->ri_gnum = 8;
@@ -2424,7 +2482,7 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	/* initialize and look for an initial font */
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
+		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE | WSSCREEN_RESIZE;
 
 	rasops_reconfig(ri, dp->rd_virty / ri->ri_font->fontheight,
 		    dp->rd_virtx / ri->ri_font->fontwidth);

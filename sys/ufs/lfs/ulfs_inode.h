@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.h,v 1.12.6.2 2016/07/09 20:25:25 skrll Exp $	*/
+/*	$NetBSD: ulfs_inode.h,v 1.12.6.3 2017/08/28 17:53:17 skrll Exp $	*/
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
 /*
@@ -69,8 +69,8 @@ void lfs_unset_dirop(struct lfs *, struct vnode *, const char *);
 #define	LFS_MAX_RESOURCE(x, u)	(((x) >> 2) - 10 * (u))
 #define	LFS_WAIT_RESOURCE(x, u)	(((x) >> 1) - ((x) >> 3) - 10 * (u))
 #define	LFS_INVERSE_MAX_RESOURCE(x, u)	(((x) + 10 * (u)) << 2)
-#define LFS_MAX_BUFS	    LFS_MAX_RESOURCE(nbuf, 1)
-#define LFS_WAIT_BUFS	    LFS_WAIT_RESOURCE(nbuf, 1)
+#define LFS_MAX_BUFS	    lfs_max_bufs()
+#define LFS_WAIT_BUFS	    lfs_wait_bufs()
 #define LFS_INVERSE_MAX_BUFS(n)	LFS_INVERSE_MAX_RESOURCE(n, 1)
 #define LFS_MAX_BYTES	    LFS_MAX_RESOURCE(bufmem_lowater, PAGE_SIZE)
 #define LFS_INVERSE_MAX_BYTES(n) LFS_INVERSE_MAX_RESOURCE(n, PAGE_SIZE)
@@ -175,7 +175,7 @@ struct lfid {
 
 #define WRITEINPROG(vp) ((vp)->v_numoutput > 0 ||			\
 	(!LIST_EMPTY(&(vp)->v_dirtyblkhd) &&				\
-	 !(VTOI(vp)->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING))))
+	 !(VTOI(vp)->i_state & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING))))
 
 
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1118.2.12 2017/02/05 13:40:12 skrll Exp $
+# $NetBSD: GENERIC,v 1.1118.2.13 2017/08/28 17:51:40 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,12 +22,11 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1118.2.12 $"
+#ident 		"GENERIC-$Revision: 1.1118.2.13 $"
 
 maxusers	64		# estimated number of users
 
 # CPU-related options.
-options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	PAE		# PAE mode (36 bits physical addressing)
 
@@ -42,8 +41,7 @@ viac7temp*	at cpu?		# VIA C7 temperature sensor
 vmt0		at cpu0		# VMware Tools
 
 options 	MTRR		# memory-type range register syscall support
-# doesn't work with MP just yet..
-#options 	PERFCTRS	# performance-monitoring counters support
+options 	PMC		# performance-monitoring counters support
 
 options 	MULTIBOOT	# Multiboot support (see multiboot(8))
 
@@ -142,11 +140,8 @@ options 	COMPAT_60	# NetBSD 6.0, and
 options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
-options 	COMPAT_SVR4	# binary compatibility with SVR4
-options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_NDIS	# NDIS network driver
@@ -158,6 +153,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
+#options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 file-system	FFS		# UFS
 file-system	NFS		# Network File System client
@@ -207,6 +203,7 @@ options 	IPSEC		# IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 options 	NETATALK	# AppleTalk networking protocols
+#options 	CAN		# Controller Area Network protocol
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -539,6 +536,7 @@ pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
+options 	PMS_ALPS_TOUCHPAD	# Enable support for Alps Touchpads
 # vga@isa and pcdisplay@isa are disabled; see PR#49290
 #vga0		at isa?
 vga*		at pci? dev ? function ?
@@ -1352,13 +1350,16 @@ radio*	at udsbr?
 ugen*	at uhub? port ?
 
 # USB 3G datacards
-u3ginit* at uhub? port ?
+umodeswitch* at uhub? port ?
 u3g*	at uhub? port ?
 ucom*	at u3g?
 
 # USB generic serial port (e.g., data over cellular)
 ugensa* at uhub? port ?
 ucom*	at ugensa?
+
+# Araneus Alea I/II TRNG
+#ualea* at uhub? port ? configuration ? interface ?
 
 # IrDA and Consumer Ir devices
 
@@ -1676,6 +1677,8 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	etherip 		# Tunnel Ethernet over IP
 # srt is EXPERIMENTAL
 #pseudo-device	srt			# source-address-based routing
+
+#pseudo-device	canloop			# CAN loopback interface
 
 #
 # accept filters

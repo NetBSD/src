@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.41.2.1 2016/07/09 20:25:03 skrll Exp $ */
+/* $NetBSD: auixp.c,v 1.41.2.2 2017/08/28 17:52:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.41.2.1 2016/07/09 20:25:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.41.2.2 2017/08/28 17:52:05 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -470,8 +470,6 @@ auixp_malloc(void *hdl, int direction, size_t size)
 	sc = co->sc;
 	/* get us a auixp_dma structure */
 	dma = kmem_alloc(sizeof(*dma), KM_SLEEP);
-	if (!dma)
-		return NULL;
 
 	/* get us a dma buffer itself */
 	error = auixp_allocmem(sc, size, 16, dma);
@@ -644,8 +642,6 @@ auixp_allocate_dma_chain(struct auixp_softc *sc, struct auixp_dma **dmap)
 	/* allocate keeper of dma area */
 	*dmap = NULL;
 	dma = kmem_zalloc(sizeof(struct auixp_dma), KM_SLEEP);
-	if (!dma)
-		return ENOMEM;
 
 	/* allocate for daisychain of IXP hardware-dma descriptors */
 	error = auixp_allocmem(sc, DMA_DESC_CHAIN * sizeof(atiixp_dma_desc_t),

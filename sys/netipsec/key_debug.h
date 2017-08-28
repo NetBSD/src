@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.h,v 1.6.32.1 2016/03/19 11:30:33 skrll Exp $	*/
+/*	$NetBSD: key_debug.h,v 1.6.32.2 2017/08/28 17:53:13 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_debug.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.h,v 1.10 2001/08/05 08:37:52 itojun Exp $	*/
 
@@ -55,8 +55,14 @@
 #define KEYDEBUG_IPSEC_DATA	(KEYDEBUG_IPSEC | KEYDEBUG_DATA)
 #define KEYDEBUG_IPSEC_DUMP	(KEYDEBUG_IPSEC | KEYDEBUG_DUMP)
 
-#define KEYDEBUG(lev,arg) \
-	do { if ((key_debug_level & (lev)) == (lev)) { arg; } } while (/*CONSTCOND*/ 0)
+#define KEYDEBUG_ON(lev)	((key_debug_level & (lev)) == (lev))
+
+#define KEYDEBUG_PRINTF(lev, fmt, ...)				\
+	do {							\
+		if (KEYDEBUG_ON((lev)))				\
+			log(LOG_DEBUG, "%s: " fmt, __func__,	\
+			    __VA_ARGS__);			\
+	} while (0)
 
 extern u_int32_t key_debug_level;
 #endif /*_KERNEL*/

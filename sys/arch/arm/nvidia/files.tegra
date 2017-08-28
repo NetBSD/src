@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.2.2.6 2016/10/05 20:55:25 skrll Exp $
+#	$NetBSD: files.tegra,v 1.2.2.7 2017/08/28 17:51:31 skrll Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -11,16 +11,21 @@ file	arch/arm/arm32/arm32_kvminit.c
 file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm32/armv7_generic_dma.c
 file	arch/arm/arm/bus_space_a4x.S
 
+file	arch/arm/nvidia/tegra_platform.c
 file	arch/arm/nvidia/tegra_soc.c
 file	arch/arm/nvidia/tegra_cpufreq.c
-file	arch/arm/nvidia/soc_tegra124.c		soc_tegra124
 
-# On-board I/O
-device	tegrafdt : bus_space_generic, fdtbus
-attach	tegrafdt at mainbus with tegra_fdt
-file	arch/arm/nvidia/tegra_fdt.c		tegra_fdt
+# Tegra T124 (32-bit K1) support
+file	arch/arm/nvidia/soc_tegra124.c		soc_tegra124
+device	tegra124cpu
+attach	tegra124cpu at cpu with tegra124_cpu
+file	arch/arm/nvidia/tegra124_cpu.c		tegra124_cpu
+
+# Tegra T210 (X1) support
+file	arch/arm/nvidia/soc_tegra210.c		soc_tegra210
 
 # Interrupt controller
 device	tegralic
@@ -42,10 +47,15 @@ device	tegrafuse
 attach	tegrafuse at fdt with tegra_fuse
 file	arch/arm/nvidia/tegra_fuse.c		tegra_fuse
 
-# Clock and Reset controller
+# Clock and Reset controller (T124)
 device	tegra124car: clk
 attach	tegra124car at fdt with tegra124_car
 file	arch/arm/nvidia/tegra124_car.c		tegra124_car
+
+# Clock and Reset controller (T210)
+device	tegra210car: clk
+attach	tegra210car at fdt with tegra210_car
+file	arch/arm/nvidia/tegra210_car.c		tegra210_car
 
 # GPIO controller
 device	tegragpio: gpiobus
@@ -62,10 +72,16 @@ device	tegrampio
 attach	tegrampio at fdt with tegra_mpio
 file	arch/arm/nvidia/tegra_mpio.c		tegra_mpio
 
+# APB DMA
+device	tegraapbdma
+attach	tegraapbdma at fdt with tegra_apbdma
+file	arch/arm/nvidia/tegra_apbdma.c		tegra_apbdma
+
 # XUSB PADCTL
 device	tegraxusbpad
 attach	tegraxusbpad at fdt with tegra_xusbpad
 file	arch/arm/nvidia/tegra_xusbpad.c		tegra_xusbpad
+defflag	opt_tegra.h				TEGRA_XUSBPAD_DEBUG
 
 # UART
 attach	com at fdt with tegra_com
@@ -93,6 +109,7 @@ file	arch/arm/nvidia/tegra_ehci.c		tegra_ehci
 # XUSB (USB 3.0)
 attach	xhci at fdt with tegra_xusb
 file	arch/arm/nvidia/tegra_xusb.c		tegra_xusb
+defflag	opt_tegra.h				TEGRA_XUSB_DEBUG
 
 # SDMMC
 attach	sdhc at fdt with tegra_sdhc
@@ -139,14 +156,8 @@ file	arch/arm/nvidia/tegra_fb.c		tegra_fb
 attach	nouveau at fdt with tegra_nouveau
 file	arch/arm/nvidia/tegra_nouveau.c		tegra_nouveau
 
-# Console parameters
-defparam opt_tegra.h			CONADDR
-defparam opt_tegra.h			CONSPEED
-defparam opt_tegra.h			CONMODE
-
-# Memory parameters
-defparam opt_tegra.h			MEMSIZE
-
 # SOC parameters
 defflag	opt_tegra.h			SOC_TEGRAK1
+defflag	opt_tegra.h			SOC_TEGRAX1
 defflag	opt_tegra.h			SOC_TEGRA124: SOC_TEGRAK1
+defflag	opt_tegra.h			SOC_TEGRA210: SOC_TEGRAX1

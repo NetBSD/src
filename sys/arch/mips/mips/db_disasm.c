@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.24.30.2 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.24.30.3 2017/08/28 17:51:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.24.30.2 2015/09/22 12:05:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.24.30.3 2017/08/28 17:51:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -623,13 +623,13 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 			break;
 
 		case OP_CT:
-			db_printf("ctc1\t%s,f%d",
+			db_printf("ctc1\t%s,%d",
 			    reg_name[i.RType.rt],
 			    i.RType.rd);
 			break;
 
 		case OP_CF:
-			db_printf("cfc1\t%s,f%d",
+			db_printf("cfc1\t%s,%d",
 			    reg_name[i.RType.rt],
 			    i.RType.rd);
 			break;

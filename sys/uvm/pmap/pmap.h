@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4.6.3 2016/10/05 20:56:12 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4.6.4 2017/08/28 17:53:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,8 +71,8 @@
  *	@(#)pmap.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_COMMON_PMAP_H_
-#define	_COMMON_PMAP_H_
+#ifndef	_UVM_PMAP_PMAP_H_
+#define	_UVM_PMAP_PMAP_H_
 
 #include <uvm/uvm_stat.h>
 #ifdef UVMHIST
@@ -218,4 +218,4 @@ struct evcnt pmap_evcnt_##name = \
 EVCNT_ATTACH_STATIC(pmap_evcnt_##name)
 
 #endif	/* _KERNEL */
-#endif	/* _COMMON_PMAP_H_ */
+#endif	/* _UVM_PMAP_PMAP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.11.6.9 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: udl.c,v 1.11.6.10 2017/08/28 17:52:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.6.9 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.6.10 2017/08/28 17:52:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -841,22 +841,10 @@ udl_fbmem_alloc(struct udl_softc *sc)
 {
 
 	mutex_enter(&sc->sc_thread_mtx);
-	if (sc->sc_fbmem == NULL) {
+	if (sc->sc_fbmem == NULL)
 		sc->sc_fbmem = kmem_zalloc(UDL_FBMEM_SIZE(sc), KM_SLEEP);
-		if (sc->sc_fbmem == NULL) {
-			mutex_exit(&sc->sc_thread_mtx);
-			return -1;
-		}
-	}
-	if (sc->sc_fbmem_prev == NULL) {
+	if (sc->sc_fbmem_prev == NULL)
 		sc->sc_fbmem_prev = kmem_zalloc(UDL_FBMEM_SIZE(sc), KM_SLEEP);
-		if (sc->sc_fbmem_prev == NULL) {
-			kmem_free(sc->sc_fbmem, UDL_FBMEM_SIZE(sc));
-			sc->sc_fbmem = NULL;
-			mutex_exit(&sc->sc_thread_mtx);
-			return -1;
-		}
-	}
 	mutex_exit(&sc->sc_thread_mtx);
 
 	return 0;

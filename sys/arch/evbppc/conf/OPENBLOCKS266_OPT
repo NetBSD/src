@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.18.2.2 2017/02/05 13:40:10 skrll Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.18.2.3 2017/08/28 17:51:37 skrll Exp $
 #
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
@@ -288,7 +288,7 @@ radio*	at udsbr?
 ugen*	at uhub? port ?
 
 # USB 3G datacards
-u3ginit* at uhub? port ?
+umodeswitch* at uhub? port ?
 u3g*	at uhub? port ?
 ucom*	at u3g?
 

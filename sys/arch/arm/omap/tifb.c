@@ -1,4 +1,4 @@
-/*	$NetBSD: tifb.c,v 1.3.2.2 2016/12/05 10:54:50 skrll Exp $	*/
+/*	$NetBSD: tifb.c,v 1.3.2.3 2017/08/28 17:51:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.3.2.2 2016/12/05 10:54:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.3.2.3 2017/08/28 17:51:31 skrll Exp $");
 
 #include "opt_omap.h"
 
@@ -803,6 +803,7 @@ tifb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	case WSDISPLAYIO_SCURSOR:
 //		cursor = data;
 //		return omapfb_do_cursor(sc, cursor);
+		break;
 	}
 	return EPASSTHROUGH;
 }

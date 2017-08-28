@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.2.2.5 2016/12/05 10:55:03 skrll Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.2.2.6 2017/08/28 17:52:06 skrll Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.2.2.5 2016/12/05 10:55:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.2.2.6 2017/08/28 17:52:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,19 +177,8 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_intr_disestablish = nvme_pci_intr_disestablish;
 
 	sc->sc_ih = kmem_zalloc(sizeof(*sc->sc_ih) * psc->psc_nintrs, KM_SLEEP);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "unable to allocate ih memory\n");
-		goto intr_release;
-	}
-
 	sc->sc_softih = kmem_zalloc(
 	    sizeof(*sc->sc_softih) * psc->psc_nintrs, KM_SLEEP);
-	if (sc->sc_softih == NULL) {
-		aprint_error_dev(self,
-		    "unable to allocate softih memory\n");
-		goto intr_free;
-	}
-
 	if (nvme_attach(sc) != 0) {
 		/* error printed by nvme_attach() */
 		goto softintr_free;
@@ -203,10 +192,8 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 
 softintr_free:
 	kmem_free(sc->sc_softih, sizeof(*sc->sc_softih) * psc->psc_nintrs);
-intr_free:
 	kmem_free(sc->sc_ih, sizeof(*sc->sc_ih) * psc->psc_nintrs);
 	sc->sc_nq = 0;
-intr_release:
 	pci_intr_release(pa->pa_pc, psc->psc_intrs, psc->psc_nintrs);
 	psc->psc_nintrs = 0;
 unmap:
@@ -462,7 +449,6 @@ retry:
 	}
 	sc->sc_use_mq = alloced_counts[intr_type] > 1;
 	sc->sc_nq = sc->sc_use_mq ? alloced_counts[intr_type] - 1 : 1;
-
 
 	return 0;
 }

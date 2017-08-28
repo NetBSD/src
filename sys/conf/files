@@ -1,7 +1,7 @@
-#	$NetBSD: files,v 1.1121.2.12 2017/02/05 13:40:26 skrll Exp $
+#	$NetBSD: files,v 1.1121.2.13 2017/08/28 17:52:00 skrll Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
-version 	20150846
+version 	20170615
 
 #
 # device classes
@@ -90,6 +90,7 @@ defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
 				DKWEDGE_METHOD_GPT
 				DKWEDGE_METHOD_MBR
 				DKWEDGE_METHOD_APPLE
+				DKWEDGE_METHOD_RDB
 
 defflag	opt_veriexec.h		VERIFIED_EXEC_FP_SHA1
 				VERIFIED_EXEC_FP_SHA256
@@ -119,6 +120,8 @@ defparam opt_pax.h		PAX_MPROTECT
 defflag	opt_fileassoc.h		FILEASSOC
 
 defflag	opt_gre.h		GRE_DEBUG
+
+defparam opt_l2tp.h		L2TP_ID_HASH_SIZE
 
 # Write Ahead Physical Block Logging
 defflag opt_wapbl.h		WAPBL WAPBL_DEBUG
@@ -229,6 +232,7 @@ file	net/bpfjit.c	sljit & bpfjit
 include "net80211/files.net80211"
 include "netatalk/files.netatalk"
 include "netbt/files.netbt"
+include "netcan/files.netcan"
 include "netinet/files.netinet"
 include "netinet6/files.netinet6"
 include "netipsec/files.netipsec"
@@ -340,7 +344,7 @@ define	pckbport_machdep_cnattach
 define	firmload
 
 # speaker devices, attaches to audio or pcppi drivers
-device	spkr
+device	spkr: wsbelldev
 file	dev/spkr.c			spkr
 
 include "dev/files.audio"
@@ -1181,6 +1185,7 @@ define	wsdisplaydev		{[kbdmux = 1]}
 define	wsemuldisplaydev	{[console = -1], [kbdmux = 1]}
 define	wskbddev		{[console = -1], [mux = 1]}
 define	wsmousedev		{[mux = 0]}
+define	wsbelldev		{[console = -1], [mux = 1]}
 define	vcons
 # attribute to pull in raster support
 #
@@ -1235,7 +1240,7 @@ include "dev/wsfb/files.wsfb"
 define	isabus	{ }			# ISA attachment
 define	eisabus	{ }			# EISA attachment
 define	pcibus	{[bus = -1]}		# PCI attachment
-define	tcbus	{ }			# TurboChannel attachment
+define	tcbus	{ }			# TURBOchannel attachment
 define	mcabus	{ }			# MicroChannel attachment
 define	usbus	{ }			# USB attachment
 define	fwbus	{ }			# IEEE 1394 attachment
@@ -1310,6 +1315,18 @@ file	dev/ic/rtsx.c			rtsx
 defflag	opt_dwc_mmc.h	DWC_MMC_DEBUG
 device	dwcmmc: sdmmcbus
 file	dev/ic/dwc_mmc.c		dwcmmc
+
+# ARM PrimeCell PL031 (RTC) real time clock
+device	plrtc
+file	dev/ic/pl031.c			plrtc
+
+# ARM PrimeCell PL041 (AACI) Advanced Audio CODEC interface
+device	aaci: audiobus, auconv, aurateconv, mulaw, ac97
+file	dev/ic/pl041.c			aaci
+
+# ARM PrimeCell PL050 (KMI) PS2 keyboard/mouse interface
+device	plkmi: pckbport
+file	dev/ic/pl050.c			plkmi
 
 # ARM PrimeCell PL181 (MMCI) host controller
 device	plmmc: sdmmcbus
@@ -1435,6 +1452,8 @@ defpseudo stf:		ifnet
 defpseudodev tap:	ifnet, ether, arp
 defpseudo carp:		ifnet, ether, arp
 defpseudodev etherip:	ifnet, ether, arp
+defpseudodev l2tp:	ifnet, ether, arp
+defpseudo canloop:	ifnet
 
 defpseudo sequencer
 defpseudo clockctl
@@ -1486,6 +1505,9 @@ file	dev/pud/pud_dev.c		pud
 
 # device-mapper driver for LVM
 include "dev/dm/files.dm"
+
+# LED framework
+file	dev/led.c			leds
 
 #
 # File systems

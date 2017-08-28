@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.320.2.4 2017/02/05 13:40:15 skrll Exp $
+# $NetBSD: GENERIC,v 1.320.2.5 2017/08/28 17:51:44 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.320.2.4 $"
+#ident 		"GENERIC-$Revision: 1.320.2.5 $"
 
 maxusers	32
 
@@ -81,15 +81,15 @@ options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Wedge support
 options         DKWEDGE_AUTODISCOVER    # Automatically add dk(4) instances
 options         DKWEDGE_METHOD_GPT      # Supports GPT partitions as wedges
-#options		DKWEDGE_METHOD_BSDLABEL # Support disklabel entries as wedges
-#options		DKWEDGE_METHOD_MBR      # Support MBR partitions as wedges
-#options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+#options	DKWEDGE_METHOD_BSDLABEL # Support disklabel entries as wedges
+#options	DKWEDGE_METHOD_MBR      # Support MBR partitions as wedges
+#options	DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+#options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
@@ -552,7 +552,7 @@ uslsa*  at uhub? port ?         # Silicon Labs USB-RS232 serial adapter
 ucom*   at uslsa? portno ?
 
 # USB 3G datacards
-u3ginit* at uhub? port ?
+umodeswitch* at uhub? port ?
 u3g*    at uhub? port ?
 ucom*   at u3g?
 
@@ -642,6 +642,7 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	openfirm		# /dev/openfirm
 pseudo-device	wsmux			# mouse and keyboard multiplexer
+pseudo-device 	wsfont
 pseudo-device	swwdog			# software watchdog driver - swwdog(4)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

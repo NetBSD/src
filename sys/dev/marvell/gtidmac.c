@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.11.6.1 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.11.6.2 2017/08/28 17:52:04 skrll Exp $	*/
 /*
  * Copyright (c) 2008, 2012, 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.11.6.1 2017/02/05 13:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.11.6.2 2017/08/28 17:52:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -446,10 +446,7 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 	n = idmac_nchan * GTIDMAC_NDESC + xore_nchan * MVXORE_NDESC;
 	sc->sc_dd_buffer =
 	    kmem_alloc(sizeof(struct gtidmac_dma_desc) * n, KM_SLEEP);
-	if (sc->sc_dd_buffer == NULL) {
-		aprint_error_dev(self, "can't allocate memory\n");
-		goto fail1;
-	}
+
 	/* pattern buffer */
 	if (bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
 	    &sc->sc_pattern_segment, 1, &nsegs, BUS_DMA_NOWAIT)) {
@@ -551,7 +548,6 @@ fail3:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_pattern_segment, 1);
 fail2:
 	kmem_free(sc->sc_dd_buffer, sizeof(struct gtidmac_dma_desc) * n);
-fail1:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, mva->mva_size);
 	return;
 }
@@ -1978,7 +1974,7 @@ gtidmac_dump_xorereg(struct gtidmac_softc *sc, int chan)
 	    "\177\020"
 	    "b\017RegAccProtect\0b\016DesSwp\0b\015DwrReqSwp\0b\014DrdResSwp\0",
 	    val);
-	printf(" Configuration    : 0x%s\n", buf);
+	printf(" Configuration    : %s\n", buf);
 	opmode = val & MVXORE_XEXCR_OM_MASK;
 	printf("    OperationMode : %s operation\n",
 	  opmode == MVXORE_XEXCR_OM_XOR ? "XOR calculate" :
@@ -2076,7 +2072,7 @@ gtidmac_dump_xoredesc(struct gtidmac_softc *sc, struct gtidmac_dma_desc *dd,
 
 		snprintb(buf, sizeof(buf), "\177\020b\037Own\0b\036Success\0",
 		    desc->stat);
-		printf("  Status                  : 0x%s\n", buf);
+		printf("  Status                  : %s\n", buf);
 		if (desc->cmd & MVXORE_DESC_CMD_CRCLAST && post)
 			printf("  CRC-32 Result           : 0x%08x\n",
 			    desc->result);
@@ -2085,7 +2081,7 @@ gtidmac_dump_xoredesc(struct gtidmac_softc *sc, struct gtidmac_dma_desc *dd,
 		    "b\007Src7Cmd\0b\006Src6Cmd\0b\005Src5Cmd\0b\004Src4Cmd\0"
 		    "b\003Src3Cmd\0b\002Src2Cmd\0b\001Src1Cmd\0b\000Src0Cmd\0",
 		    desc->cmd);
-		printf("  Command                 : 0x%s\n", buf);
+		printf("  Command                 : %s\n", buf);
 		printf("  Next Descriptor Address : 0x%08x\n", desc->nextda);
 		printf("  Byte Count              :   0x%06x\n", desc->bcnt);
 		printf("  Destination Address     : 0x%08x\n", desc->dstaddr);

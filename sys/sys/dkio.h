@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.20.2.2 2015/12/27 12:10:18 skrll Exp $	*/
+/*	$NetBSD: dkio.h,v 1.20.2.3 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -85,6 +85,17 @@
 #define	DKCACHE_RCHANGE	0x000100 /* read enable is changeable */
 #define	DKCACHE_WCHANGE	0x000200 /* write enable is changeable */
 #define	DKCACHE_SAVE	0x010000 /* cache parameters are savable/save them */
+#define	DKCACHE_FUA	0x020000 /* Force Unit Access supported */
+#define	DKCACHE_DPO	0x040000 /* Disable Page Out supported */
+
+/*
+ * Combine disk cache flags of two drives to get common cache capabilities.
+ * All common flags are retained. Besides this, if one of the disks
+ * has a write cache enabled or changeable, propagate those flags into result,
+ * even if it's not shared, to indicate that write cache is present.
+ */
+#define DKCACHE_COMBINE(a, b) \
+	(((a) & (b)) | (((a) | (b)) & (DKCACHE_WRITE|DKCACHE_WCHANGE)))
 
 		/* sync disk cache */
 #define	DIOCCACHESYNC	_IOW('d', 118, int)	/* sync cache (force?) */

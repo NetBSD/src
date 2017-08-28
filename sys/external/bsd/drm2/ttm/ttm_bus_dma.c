@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bus_dma.c,v 1.1.8.1 2016/05/29 08:44:36 skrll Exp $	*/
+/*	$NetBSD: ttm_bus_dma.c,v 1.1.8.2 2017/08/28 17:52:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.1.8.1 2016/05/29 08:44:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.1.8.2 2017/08/28 17:52:34 skrll Exp $");
 
 #include <sys/bus.h>
 
@@ -47,36 +47,28 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.1.8.1 2016/05/29 08:44:36 skrll Ex
  *	its DMA map.  The wiring and loading are stable as long as the
  *	associated bo is reserved.
  *
- *	Transitions from tt_unpopulated or tt_unbound to tt_unbound.
- *	Marks as wired, a.k.a. !swapped.
+ *	Transitions from tt_unpopulated to tt_unbound.  Marks as wired,
+ *	a.k.a. !swapped.
  */
 int
 ttm_bus_dma_populate(struct ttm_dma_tt *ttm_dma)
 {
 	int ret;
 
-	KASSERT(ttm_dma->ttm.state != tt_bound);
+	KASSERT(ttm_dma->ttm.state == tt_unpopulated);
 
-	/* Check the current state.  */
-	if (ttm_dma->ttm.state == tt_unbound) {
-		/*
-		 * If it's populated, then if the pages are wired and
-		 * loaded already, nothing to do.
-		 */
-		if (!ISSET(ttm_dma->ttm.page_flags, TTM_PAGE_FLAG_SWAPPED))
-			return 0;
-	} else if (ttm_dma->ttm.state == tt_unpopulated) {
-		/* If it's unpopulated, it can't be swapped.  */
-		KASSERT(!ISSET(ttm_dma->ttm.page_flags,
-			TTM_PAGE_FLAG_SWAPPED));
-		/* Pretend it is now, for the sake of ttm_tt_wire.  */
-		ttm_dma->ttm.page_flags |= TTM_PAGE_FLAG_SWAPPED;
-	}
+	/* If it's unpopulated, it can't be swapped.  */
+	KASSERT(!ISSET(ttm_dma->ttm.page_flags, TTM_PAGE_FLAG_SWAPPED));
+	/* Pretend it is now, for the sake of ttm_tt_wire.  */
+	ttm_dma->ttm.page_flags |= TTM_PAGE_FLAG_SWAPPED;
 
 	/* Wire the uvm pages and fill the ttm page array.  */
 	ret = ttm_tt_wire(&ttm_dma->ttm);
 	if (ret)
 		goto fail0;
+
+	/* Mark it populated but unbound.  */
+	ttm_dma->ttm.state = tt_unbound;
 
 	/* Load the DMA map.  */
 	/* XXX errno NetBSD->Linux */
@@ -89,15 +81,14 @@ ttm_bus_dma_populate(struct ttm_dma_tt *ttm_dma)
 	/* Mark it wired.  */
 	ttm_dma->ttm.page_flags &= ~TTM_PAGE_FLAG_SWAPPED;
 
-	/* Mark it populated but unbound.  */
-	ttm_dma->ttm.state = tt_unbound;
-
 	/* Success!  */
 	return 0;
 
 fail2: __unused
 	bus_dmamap_unload(ttm_dma->ttm.bdev->dmat, ttm_dma->dma_address);
-fail1:	ttm_tt_unwire(&ttm_dma->ttm);
+fail1:	KASSERT(ttm_dma->ttm.state == tt_unbound);
+	ttm_tt_unwire(&ttm_dma->ttm);
+	ttm_dma->ttm.state = tt_unpopulated;
 fail0:	KASSERT(ret);
 	return ret;
 }

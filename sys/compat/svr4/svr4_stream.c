@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.81.2.3 2016/10/05 20:55:39 skrll Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.81.2.4 2017/08/28 17:52:00 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.81.2.3 2016/10/05 20:55:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.81.2.4 2017/08/28 17:52:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -328,6 +328,7 @@ clean_pipe(struct lwp *l, const char *path)
 		goto bad;
 
 	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+	vput(nd.ni_dvp);
 	pathbuf_destroy(pb);
 	return error;
 
@@ -526,11 +527,17 @@ si_listen(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 	if (st == NULL)
 		return EINVAL;
 
-	if (ioc->len > sizeof(lst))
+	if (ioc->len < offsetof(struct svr4_strmcmd, pad) ||
+	    ioc->len > sizeof(lst))
 		return EINVAL;
 
 	if ((error = copyin(NETBSD32PTR(ioc->buf), &lst, ioc->len)) != 0)
 		return error;
+	if (lst.offs < 0 ||
+	    lst.len < 0 ||
+	    lst.len > ioc->len ||
+	    ioc->len - lst.len < lst.offs)
+		return EINVAL;
 
 	if (lst.cmd != SVR4_TI_OLD_BIND_REQUEST) {
 		DPRINTF(("si_listen: bad request %ld\n", lst.cmd));
@@ -716,7 +723,9 @@ ti_getinfo(file_t *fp, int fd, struct svr4_strioctl *ioc,
 
 	memset(&info, 0, sizeof(info));
 
-	if (ioc->len > sizeof(info))
+	/* tsdu is next after cmd, the only field we read */
+	if (ioc->len < offsetof(struct svr4_infocmd, tsdu) ||
+	    ioc->len > sizeof(info))
 		return EINVAL;
 
 	if ((error = copyin(NETBSD32PTR(ioc->buf), &info, ioc->len)) != 0)
@@ -762,7 +771,8 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 		return EINVAL;
 	}
 
-	if (ioc->len > sizeof(bnd))
+	if (ioc->len < offsetof(struct svr4_strmcmd, pad) ||
+	    ioc->len > sizeof(bnd))
 		return EINVAL;
 
 	if ((error = copyin(NETBSD32PTR(ioc->buf), &bnd, ioc->len)) != 0)
@@ -772,6 +782,11 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 		DPRINTF(("ti_bind: bad request %ld\n", bnd.cmd));
 		return EINVAL;
 	}
+	if (bnd.offs < 0 ||
+	    bnd.len < 0 ||
+	    bnd.len > ioc->len ||
+	    ioc->len - bnd.len < bnd.offs)
+		return EINVAL;
 
 	switch (st->s_family) {
 	case AF_INET:
@@ -781,6 +796,9 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 		if (bnd.offs == 0)
 			goto reply;
 
+		if (ioc->len < sizeof(struct svr4_netaddr_in) ||
+		    bnd.offs > ioc->len - sizeof(struct svr4_netaddr_in))
+			return EINVAL;
 		netaddr_to_sockaddr_in(sain, &bnd);
 
 		DPRINTF(("TI_BIND: fam %d, port %d, addr %x\n",
@@ -794,6 +812,9 @@ ti_bind(file_t *fp, int fd, struct svr4_strioctl *ioc, struct lwp *l)
 		if (bnd.offs == 0)
 			goto reply;
 
+		if (ioc->len < sizeof(struct svr4_netaddr_un) ||
+		    bnd.offs > ioc->len - sizeof(struct svr4_netaddr_un))
+			return EINVAL;
 		netaddr_to_sockaddr_un(saun, &bnd);
 
 		if (saun->sun_path[0] == '\0')
@@ -1411,7 +1432,8 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 		goto out;
 	}
 
-	if (ctl.len > sizeof(sc)) {
+	if (ctl.len < offsetof(struct svr4_strmcmd, pad) ||
+	    ctl.len > sizeof(sc)) {
 		DPRINTF(("putmsg: Bad control size %ld != %d\n",
 		    (unsigned long)sizeof(struct svr4_strmcmd), ctl.len));
 		error = EINVAL;
@@ -1420,6 +1442,13 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 
 	if ((error = copyin(NETBSD32PTR(ctl.buf), &sc, ctl.len)) != 0)
 		goto out;
+	if (sc.offs < 0 ||
+	    sc.len < 0 ||
+	    sc.len > ctl.len ||
+	    sc.offs > ctl.len - sc.len) {
+		error = EINVAL;
+		goto out;
+	}
 
 	switch (st->s_family) {
 	case AF_INET:
@@ -1463,8 +1492,11 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 			*retval = 0;
 			error = 0;
 			goto out;
-		}
-		else {
+		} else if (sc.len < sizeof(dev_t[2])) {
+			*retval = 0;
+			error = EINVAL;
+			goto out;
+		} else {
 			/* Maybe we've been given a device/inode pair */
 			dev_t *dev = SVR4_ADDROF(&sc);
 			svr4_ino_t *ino = (svr4_ino_t *) &dev[1];
@@ -1489,10 +1521,12 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
  	switch (st->s_cmd = sc.cmd) {
 	case SVR4_TI_CONNECT_REQUEST:	/* connect 	*/
 	 	KERNEL_UNLOCK_ONE(NULL);
+		fd_putfile(SCARG(uap, fd));
 		return do_sys_connect(l, SCARG(uap, fd), skp);
 
 	case SVR4_TI_SENDTO_REQUEST:	/* sendto 	*/
 	 	KERNEL_UNLOCK_ONE(NULL);
+		fd_putfile(SCARG(uap, fd));
 		msg.msg_name = skp;
 		msg.msg_namelen = skp->sa_len;
 		msg.msg_iov = &aiov;
@@ -1722,8 +1756,16 @@ svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_
 		if (ctl.len > sizeof(sc))
 			ctl.len = sizeof(sc);
 
+		if (ctl.len < offsetof(struct svr4_strmcmd, pad)) {
+			error = EINVAL;
+			goto out;
+		}
 		if ((error = copyin(NETBSD32PTR(ctl.buf), &sc, ctl.len)) != 0)
 			goto out;
+		if (sc.offs < 0) {
+			error = EINVAL;
+			goto out;
+		}
 
 		msg.msg_name = NULL;
 		msg.msg_namelen = 0;

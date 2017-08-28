@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmppc,v 1.6 2011/06/22 18:06:32 matt Exp $
+#	$NetBSD: files.pmppc,v 1.6.30.1 2017/08/28 17:51:38 skrll Exp $
 #
 #
 maxpartitions 16
@@ -9,7 +9,6 @@ include "arch/powerpc/pic/files.pic"
 
 file	arch/evbppc/pmppc/autoconf.c
 file	arch/powerpc/powerpc/clock.c
-file	kern/subr_disk_mbr.c			disk
 file	arch/evbppc/pmppc/pic_cpc700.c
 file	arch/evbppc/pmppc/machdep.c
 

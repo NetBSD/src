@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.164.2.4 2017/02/05 13:40:46 skrll Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.164.2.5 2017/08/28 17:52:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.164.2.4 2017/02/05 13:40:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.164.2.5 2017/08/28 17:52:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -2238,8 +2238,10 @@ void
 scsipi_async_event(struct scsipi_channel *chan, scsipi_async_event_t event,
     void *arg)
 {
+	bool lock = chan_running(chan) > 0;
 
-	mutex_enter(chan_mtx(chan));
+	if (lock)
+		mutex_enter(chan_mtx(chan));
 	switch (event) {
 	case ASYNC_EVENT_MAX_OPENINGS:
 		scsipi_async_event_max_openings(chan,
@@ -2256,7 +2258,8 @@ scsipi_async_event(struct scsipi_channel *chan, scsipi_async_event_t event,
 		scsipi_async_event_channel_reset(chan);
 		break;
 	}
-	mutex_exit(chan_mtx(chan));
+	if (lock)
+		mutex_exit(chan_mtx(chan));
 }
 
 /*
@@ -2400,9 +2403,10 @@ scsipi_target_detach(struct scsipi_channel *chan, int target, int lun,
     int flags)
 {
 	struct scsipi_periph *periph;
+	device_t tdev;
 	int ctarget, mintarget, maxtarget;
 	int clun, minlun, maxlun;
-	int error;
+	int error = 0;
 
 	if (target == -1) {
 		mintarget = 0;
@@ -2426,20 +2430,33 @@ scsipi_target_detach(struct scsipi_channel *chan, int target, int lun,
 		maxlun = lun + 1;
 	}
 
+	/* for config_detach */
+	KERNEL_LOCK(1, curlwp);
+
+	mutex_enter(chan_mtx(chan));
 	for (ctarget = mintarget; ctarget < maxtarget; ctarget++) {
 		if (ctarget == chan->chan_id)
 			continue;
 
 		for (clun = minlun; clun < maxlun; clun++) {
-			periph = scsipi_lookup_periph(chan, ctarget, clun);
+			periph = scsipi_lookup_periph_locked(chan, ctarget, clun);
 			if (periph == NULL)
 				continue;
-			error = config_detach(periph->periph_dev, flags);
+			tdev = periph->periph_dev;
+			mutex_exit(chan_mtx(chan));
+			error = config_detach(tdev, flags);
 			if (error)
-				return error;
+				goto out;
+			mutex_enter(chan_mtx(chan));
+			KASSERT(scsipi_lookup_periph_locked(chan, ctarget, clun) == NULL);
 		}
 	}
-	return 0;
+	mutex_exit(chan_mtx(chan));
+
+out:
+	KERNEL_UNLOCK_ONE(curlwp);
+
+	return error;
 }
 
 /*

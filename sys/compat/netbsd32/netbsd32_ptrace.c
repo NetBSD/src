@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ptrace.c,v 1.2.4.3 2017/02/05 13:40:26 skrll Exp $	*/
+/*	$NetBSD: netbsd32_ptrace.c,v 1.2.4.4 2017/08/28 17:51:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.2.4.3 2017/02/05 13:40:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.2.4.4 2017/08/28 17:51:59 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -58,8 +58,7 @@ static int netbsd32_copyinpiod(struct ptrace_io_desc *, const void *);
 static void netbsd32_copyoutpiod(const struct ptrace_io_desc *, void *);
 static int netbsd32_doregs(struct lwp *, struct lwp *, struct uio *);
 static int netbsd32_dofpregs(struct lwp *, struct lwp *, struct uio *);
-static int netbsd32_dowatchpoint(struct lwp *, struct lwp *, int,
-	    struct ptrace_watchpoint *, void *, register_t *);
+static int netbsd32_dodbregs(struct lwp *, struct lwp *, struct uio *);
 
 
 static int
@@ -168,13 +167,41 @@ netbsd32_dofpregs(struct lwp *curl /*tracer*/,
 }
 
 static int
-netbsd32_dowatchpoint(struct lwp *curl /*tracer*/, struct lwp *l /*traced*/,
-    int write, struct ptrace_watchpoint *pw, void *addr, register_t *retval)
+netbsd32_dodbregs(struct lwp *curl /*tracer*/,
+    struct lwp *l /*traced*/,
+    struct uio *uio)
 {
+#if defined(PT_GETDBREGS) || defined(PT_SETDBREGS)
+	process_dbreg32 r32;
+	int error;
+	char *kv;
+	size_t kl;
 
-	/* unimplemented */
+	KASSERT(l->l_proc->p_flag & PK_32);
+	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r32))
+		return EINVAL;
+	kl = sizeof(r32);
+	kv = (char *)&r32;
 
+	kv += uio->uio_offset;
+	kl -= uio->uio_offset;
+	if (kl > uio->uio_resid)
+		kl = uio->uio_resid;
+
+	error = process_read_dbregs32(l, &r32, &kl);
+	if (error == 0)
+		error = uiomove(kv, kl, uio);
+	if (error == 0 && uio->uio_rw == UIO_WRITE) {
+		if (l->l_stat != LSSTOP)
+			error = EBUSY;
+		else
+			error = process_write_dbregs32(l, &r32, kl);
+	}
+	uio->uio_offset = 0;
+	return error;
+#else
 	return EINVAL;
+#endif
 }
 
 static struct ptrace_methods netbsd32_ptm = {
@@ -182,7 +209,7 @@ static struct ptrace_methods netbsd32_ptm = {
 	.ptm_copyoutpiod = netbsd32_copyoutpiod,
 	.ptm_doregs = netbsd32_doregs,
 	.ptm_dofpregs = netbsd32_dofpregs,
-	.ptm_dowatchpoint = netbsd32_dowatchpoint
+	.ptm_dodbregs = netbsd32_dodbregs
 };
 
 

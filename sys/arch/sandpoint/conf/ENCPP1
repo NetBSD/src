@@ -1,4 +1,4 @@
-# $NetBSD: ENCPP1,v 1.12.2.1 2017/02/05 13:40:19 skrll Exp $
+# $NetBSD: ENCPP1,v 1.12.2.2 2017/08/28 17:51:50 skrll Exp $
 #
 # Ampro EnCorePP1 machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ENCPP1-$Revision: 1.12.2.1 $"
+#ident 		"ENCPP1-$Revision: 1.12.2.2 $"
 
 maxusers	32
 
@@ -59,7 +59,6 @@ options 	COMPAT_30	# NetBSD 3.0, and
 options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
 options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 #options 	COMPAT_LINUX		# Linux binary compatibility
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	MSGBUFSIZE=65536
@@ -77,6 +76,8 @@ file-system 	PROCFS
 #file-system 	UNION
 file-system	PTYFS		# /dev/pts/N support
 
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 options 	INET

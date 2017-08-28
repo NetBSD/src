@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.752.6.6 2017/02/05 13:40:12 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.752.6.7 2017/08/28 17:51:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,13 +67,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752.6.6 2017/02/05 13:40:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752.6.7 2017/08/28 17:51:40 skrll Exp $");
 
 #include "opt_beep.h"
-#include "opt_compat_ibcs2.h"
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
-#include "opt_compat_svr4.h"
 #include "opt_cpureset_delay.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -85,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752.6.6 2017/02/05 13:40:12 skrll Exp 
 #include "opt_physmem.h"
 #include "opt_realmem.h"
 #include "opt_user_ldt.h"
-#include "opt_vm86.h"
 #include "opt_xen.h"
 #include "isa.h"
 #include "pci.h"
@@ -143,6 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752.6.6 2017/02/05 13:40:12 skrll Exp 
 #include <x86/x86/tsc.h>
 
 #include <x86/fpu.h>
+#include <x86/dbregs.h>
 #include <x86/machdep.h>
 
 #include <machine/multiboot.h>
@@ -171,10 +169,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752.6.6 2017/02/05 13:40:12 skrll Exp 
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
-#endif
-
-#ifdef VM86
-#include <machine/vm86.h>
 #endif
 
 #include "acpica.h"
@@ -236,6 +230,8 @@ int i386_use_fxsave;
 int i386_has_sse;
 int i386_has_sse2;
 
+struct pool x86_dbregspl;
+
 vaddr_t idt_vaddr;
 paddr_t idt_paddr;
 vaddr_t gdt_vaddr;
@@ -263,7 +259,6 @@ void (*delay_func)(unsigned int) = i8254_delay;
 void (*initclock_func)(void) = i8254_initclocks;
 #endif
 
-
 /*
  * Size of memory segments, before any memory is stolen.
  */
@@ -272,6 +267,8 @@ int mem_cluster_cnt = 0;
 
 void init386(paddr_t);
 void initgdt(union descriptor *);
+
+static void i386_proc0_pcb_ldt_init(void);
 
 extern int time_adjusted;
 
@@ -332,14 +329,6 @@ native_loader(int bl_boothowto, int bl_bootdev,
 #define RELOC(type, x) ((type)((vaddr_t)(x) - KERNBASE))
 
 	*RELOC(int *, &boothowto) = bl_boothowto;
-
-#ifdef COMPAT_OLDBOOT
-	/*
-	 * Pre-1.3 boot loaders gave the boot device as a parameter
-	 * (instead of a bootinfo entry).
-	 */
-	*RELOC(int *, &bootdev) = bl_bootdev;
-#endif
 
 	/*
 	 * The boot loader provides a physical, non-relocated address
@@ -478,7 +467,7 @@ cpu_startup(void)
 #endif
 
 	gdt_init();
-	i386_proc0_tss_ldt_init();
+	i386_proc0_pcb_ldt_init();
 
 #ifndef XEN
 	cpu_init_tss(&cpu_info_primary);
@@ -489,28 +478,24 @@ cpu_startup(void)
 }
 
 /*
- * Set up proc0's TSS and LDT.
+ * Set up proc0's PCB and LDT.
  */
-void
-i386_proc0_tss_ldt_init(void)
+static void
+i386_proc0_pcb_ldt_init(void)
 {
-	struct lwp *l;
-	struct pcb *pcb __diagused;
+	struct lwp *l = &lwp0;
+	struct pcb *pcb = lwp_getpcb(l);
 
-	l = &lwp0;
-	pcb = lwp_getpcb(l);
-
-	pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	pcb->pcb_esp0 = uvm_lwp_getuarea(l) + USPACE - 16;
 	pcb->pcb_iopl = SEL_KPL;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
-	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
-	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
-	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
+	memcpy(&pcb->pcb_fsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_fsd));
+	memcpy(&pcb->pcb_gsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_gsd));
+	pcb->pcb_dbregs = NULL;
 
 #ifndef XEN
-	lldt(pmap_kernel()->pm_ldt_sel);
+	lldt(GSEL(GLDT_SEL, SEL_KPL));
 #else
 	HYPERVISOR_fpu_taskswitch(1);
 	XENPRINTF(("lwp tss sp %p ss %04x/%04x\n",
@@ -603,12 +588,7 @@ getframe(struct lwp *l, int sig, int *onstack)
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (*onstack)
 		return (char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
-#ifdef VM86
-	if (tf->tf_eflags & PSL_VM)
-		return (void *)(tf->tf_esp + (tf->tf_ss << 4));
-	else
-#endif
-		return (void *)tf->tf_esp;
+	return (void *)tf->tf_esp;
 }
 
 /*
@@ -649,7 +629,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	int sig = ksi->ksi_signo;
 	struct sigframe_siginfo *fp = getframe(l, sig, &onstack), frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	struct trapframe *tf = l->l_md.md_regs;
 
 	KASSERT(mutex_owned(p->p_lock));
 
@@ -667,8 +646,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 
-	if (tf->tf_eflags & PSL_VM)
-		(*p->p_emul->e_syscall_intern)(p);
 	sendsig_reset(l, sig);
 
 	mutex_exit(p->p_lock);
@@ -838,10 +815,12 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
 	    ? __INITIAL_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 
-	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
-	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
-
-	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
+	memcpy(&pcb->pcb_fsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_fsd));
+	memcpy(&pcb->pcb_gsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_gsd));
+	if (pcb->pcb_dbregs != NULL) {
+		pool_put(&x86_dbregspl, pcb->pcb_dbregs);
+		pcb->pcb_dbregs = NULL;
+	}
 
 	tf = l->l_md.md_regs;
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
@@ -867,8 +846,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
  * Initialize segments and descriptor tables
  */
 
-union	descriptor *gdt, *ldt;
-union	descriptor *pentium_idt;
+union descriptor *gdtstore, *ldtstore;
+union descriptor *pentium_idt;
 extern vaddr_t lwp0uarea;
 
 void
@@ -928,11 +907,7 @@ setsegment(struct segment_descriptor *sd, const void *base, size_t limit,
 #define	IDTVEC(name)	__CONCAT(X, name)
 typedef void (vector)(void);
 extern vector IDTVEC(syscall);
-extern vector IDTVEC(osyscall);
 extern vector *IDTVEC(exceptions)[];
-extern vector IDTVEC(svr4_fasttrap);
-void (*svr4_fasttrap_vec)(void) = (void (*)(void))nullop;
-krwlock_t svr4_fasttrap_lock;
 #ifdef XEN
 #define MAX_XEN_IDT 128
 trap_info_t xen_idt[MAX_XEN_IDT];
@@ -958,35 +933,38 @@ void
 initgdt(union descriptor *tgdt)
 {
 	KASSERT(tgdt != NULL);
-
-	gdt = tgdt;
+	
+	gdtstore = tgdt;
 #ifdef XEN
 	u_long	frames[16];
 #else
 	struct region_descriptor region;
-	memset(gdt, 0, NGDT*sizeof(*gdt));
-#endif /* XEN */
+	memset(gdtstore, 0, NGDT * sizeof(*gdtstore));
+#endif
+
 	/* make gdt gates and memory segments */
-	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GUCODE_SEL].sd, 0, x86_btop(I386_MAX_EXE_ADDR) - 1,
+	setsegment(&gdtstore[GCODE_SEL].sd, 0, 0xfffff,
+	    SDT_MEMERA, SEL_KPL, 1, 1);
+	setsegment(&gdtstore[GDATA_SEL].sd, 0, 0xfffff,
+	    SDT_MEMRWA, SEL_KPL, 1, 1);
+	setsegment(&gdtstore[GUCODE_SEL].sd, 0, x86_btop(I386_MAX_EXE_ADDR) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUCODEBIG_SEL].sd, 0, 0xfffff,
+	setsegment(&gdtstore[GUCODEBIG_SEL].sd, 0, 0xfffff,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUDATA_SEL].sd, 0, 0xfffff,
+	setsegment(&gdtstore[GUDATA_SEL].sd, 0, 0xfffff,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
 #if NBIOSCALL > 0
 	/* bios trampoline GDT entries */
-	setsegment(&gdt[GBIOSCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 0,
-	    0);
-	setsegment(&gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 0,
-	    0);
+	setsegment(&gdtstore[GBIOSCODE_SEL].sd, 0, 0xfffff,
+	    SDT_MEMERA, SEL_KPL, 0, 0);
+	setsegment(&gdtstore[GBIOSDATA_SEL].sd, 0, 0xfffff,
+	    SDT_MEMRWA, SEL_KPL, 0, 0);
 #endif
-	setsegment(&gdt[GCPU_SEL].sd, &cpu_info_primary,
+	setsegment(&gdtstore[GCPU_SEL].sd, &cpu_info_primary,
 	    sizeof(struct cpu_info) - 1, SDT_MEMRWA, SEL_KPL, 1, 0);
 
 #ifndef XEN
-	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
+	setregion(&region, gdtstore, NGDT * sizeof(gdtstore[0]) - 1);
 	lgdt(&region);
 #else /* !XEN */
 	/*
@@ -997,7 +975,7 @@ initgdt(union descriptor *tgdt)
 	xpmap_phys_to_machine_mapping =
 	    (unsigned long *)xen_start_info.mfn_list;
 
-	frames[0] = xpmap_ptom((uint32_t)gdt - KERNBASE) >> PAGE_SHIFT;
+	frames[0] = xpmap_ptom((uint32_t)gdtstore - KERNBASE) >> PAGE_SHIFT;
 	{	/*
 		 * Enter the gdt page RO into the kernel map. We can't
 		 * use pmap_kenter_pa() here, because %fs is not
@@ -1009,10 +987,11 @@ initgdt(union descriptor *tgdt)
 		extern pt_entry_t xpmap_pg_nx;
 		pt_entry_t pte;
 
-		pte = pmap_pa2pte((vaddr_t)gdt - KERNBASE);
-		pte |= PG_k | PG_RO | xpmap_pg_nx | PG_V;
+		pte = pmap_pa2pte((vaddr_t)gdtstore - KERNBASE);
+		pte |= PG_RO | xpmap_pg_nx | PG_V;
 
-		if (HYPERVISOR_update_va_mapping((vaddr_t)gdt, pte, UVMF_INVLPG) < 0) {
+		if (HYPERVISOR_update_va_mapping((vaddr_t)gdtstore, pte,
+		    UVMF_INVLPG) < 0) {
 			panic("gdt page RO update failed.\n");
 		}
 
@@ -1084,6 +1063,7 @@ init386(paddr_t first_avail)
 	extern int biostramp_image_size;
 	extern u_char biostramp_image[];
 #endif
+	struct pcb *pcb;
 
 	KASSERT(first_avail % PAGE_SIZE == 0);
 
@@ -1105,8 +1085,8 @@ init386(paddr_t first_avail)
 	use_pae = 0;
 #endif
 
+	pcb = lwp_getpcb(&lwp0);
 #ifdef XEN
-	struct pcb *pcb = lwp_getpcb(&lwp0);
 	pcb->pcb_cr3 = PDPpaddr;
 	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
 	    PDPpaddr, xpmap_ptom(PDPpaddr)));
@@ -1153,7 +1133,7 @@ init386(paddr_t first_avail)
 
 	/* Use the dummy page as a gdt */
 	extern vaddr_t xen_dummy_page;
-	gdt = (void *)xen_dummy_page;
+	gdtstore = (void *)xen_dummy_page;
 
 	/* Determine physical address space */
 	avail_end = ctob((paddr_t)xen_start_info.nr_pages);
@@ -1170,7 +1150,7 @@ init386(paddr_t first_avail)
 	 * initialised. initgdt() uses pmap_kenter_pa so it can't be called
 	 * before the above variables are set.
 	 */
-	initgdt(gdt);
+	initgdt(gdtstore);
 
 	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
 #endif /* XEN */
@@ -1212,7 +1192,7 @@ init386(paddr_t first_avail)
 		pt_entry_t pte;
 
 		pte = pmap_pa2pte((vaddr_t)tmpgdt - KERNBASE);
-		pte |= PG_k | PG_RW | xpmap_pg_nx | PG_V;
+		pte |= PG_RW | xpmap_pg_nx | PG_V;
 
 		if (HYPERVISOR_update_va_mapping((vaddr_t)tmpgdt, pte, UVMF_INVLPG) < 0) {
 			panic("tmpgdt page relaim RW update failed.\n");
@@ -1262,31 +1242,27 @@ init386(paddr_t first_avail)
 	pmap_update(pmap_kernel());
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 
-	tgdt = gdt;
+	tgdt = gdtstore;
 	idt = (struct gate_descriptor *)idt_vaddr;
-	gdt = (union descriptor *)gdt_vaddr;
-	ldt = (union descriptor *)ldt_vaddr;
+	gdtstore = (union descriptor *)gdt_vaddr;
+	ldtstore = (union descriptor *)ldt_vaddr;
 
-	memcpy(gdt, tgdt, NGDT * sizeof(*gdt));
+	memcpy(gdtstore, tgdt, NGDT * sizeof(*gdtstore));
 
-	setsegment(&gdt[GLDT_SEL].sd, ldt, NLDT * sizeof(ldt[0]) - 1,
-	    SDT_SYSLDT, SEL_KPL, 0, 0);
+	setsegment(&gdtstore[GLDT_SEL].sd, ldtstore,
+	    NLDT * sizeof(ldtstore[0]) - 1, SDT_SYSLDT, SEL_KPL, 0, 0);
 #else
 	HYPERVISOR_set_callbacks(
 	    GSEL(GCODE_SEL, SEL_KPL), (unsigned long)hypervisor_callback,
 	    GSEL(GCODE_SEL, SEL_KPL), (unsigned long)failsafe_callback);
 
-	ldt = (union descriptor *)idt_vaddr;
+	ldtstore = (union descriptor *)idt_vaddr;
 #endif /* XEN */
 
 	/* make ldt gates and memory segments */
-	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1,
-	    SDT_SYS386CGT, SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
-
-	ldt[LUCODE_SEL] = gdt[GUCODE_SEL];
-	ldt[LUCODEBIG_SEL] = gdt[GUCODEBIG_SEL];
-	ldt[LUDATA_SEL] = gdt[GUDATA_SEL];
-	ldt[LSOL26CALLS_SEL] = ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];
+	ldtstore[LUCODE_SEL] = gdtstore[GUCODE_SEL];
+	ldtstore[LUCODEBIG_SEL] = gdtstore[GUCODEBIG_SEL];
+	ldtstore[LUDATA_SEL] = gdtstore[GUDATA_SEL];
 
 #ifndef XEN
 	/* exceptions */
@@ -1301,11 +1277,8 @@ init386(paddr_t first_avail)
 	idt_vec_reserve(128);
 	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386IGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
-	idt_vec_reserve(0xd2);
-	setgate(&idt[0xd2], &IDTVEC(svr4_fasttrap), 0, SDT_SYS386IGT,
-	    SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
 
-	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
+	setregion(&region, gdtstore, NGDT * sizeof(gdtstore[0]) - 1);
 	lgdt(&region);
 
 	cpu_init_idt();
@@ -1342,11 +1315,6 @@ init386(paddr_t first_avail)
 	xen_idt[xen_idt_idx].address = (uint32_t)&IDTVEC(syscall);
 	xen_idt_idx++;
 	KASSERT(xen_idt_idx < MAX_XEN_IDT);
-	xen_idt[xen_idt_idx].vector = 0xd2;
-	xen_idt[xen_idt_idx].flags = SEL_UPL;
-	xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
-	xen_idt[xen_idt_idx].address = (uint32_t)&IDTVEC(svr4_fasttrap);
-	xen_idt_idx++;
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
 	cpu_init_idt();
 #endif /* XEN */
@@ -1396,7 +1364,12 @@ init386(paddr_t first_avail)
 		cngetc();
 	}
 
-	rw_init(&svr4_fasttrap_lock);
+	pcb->pcb_dbregs = NULL;
+
+	x86_dbregs_setup_initdbstate();
+
+	pool_init(&x86_dbregspl, sizeof(struct dbreg), 16, 0, 0, "dbregs",                                                                                   
+	    NULL, IPL_NONE);
 }
 
 #include <dev/ic/mc146818reg.h>		/* for NVRAM POST */
@@ -1472,22 +1445,12 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	__greg_t ras_eip;
 
 	/* Save register context. */
-#ifdef VM86
-	if (tf->tf_eflags & PSL_VM) {
-		gr[_REG_GS]  = tf->tf_vm86_gs;
-		gr[_REG_FS]  = tf->tf_vm86_fs;
-		gr[_REG_ES]  = tf->tf_vm86_es;
-		gr[_REG_DS]  = tf->tf_vm86_ds;
-		gr[_REG_EFL] = get_vflags(l);
-	} else
-#endif
-	{
-		gr[_REG_GS]  = tf->tf_gs;
-		gr[_REG_FS]  = tf->tf_fs;
-		gr[_REG_ES]  = tf->tf_es;
-		gr[_REG_DS]  = tf->tf_ds;
-		gr[_REG_EFL] = tf->tf_eflags;
-	}
+	gr[_REG_GS]  = tf->tf_gs;
+	gr[_REG_FS]  = tf->tf_fs;
+	gr[_REG_ES]  = tf->tf_es;
+	gr[_REG_DS]  = tf->tf_ds;
+	gr[_REG_EFL] = tf->tf_eflags;
+
 	gr[_REG_EDI]    = tf->tf_edi;
 	gr[_REG_ESI]    = tf->tf_esi;
 	gr[_REG_EBP]    = tf->tf_ebp;
@@ -1559,32 +1522,18 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {
-#ifdef VM86
-		if (gr[_REG_EFL] & PSL_VM) {
-			tf->tf_vm86_gs = gr[_REG_GS];
-			tf->tf_vm86_fs = gr[_REG_FS];
-			tf->tf_vm86_es = gr[_REG_ES];
-			tf->tf_vm86_ds = gr[_REG_DS];
-			set_vflags(l, gr[_REG_EFL]);
-			if (flags & _UC_VM) {
-				void syscall_vm86(struct trapframe *);
-				l->l_proc->p_md.md_syscall = syscall_vm86;
-			}
-		} else
-#endif
-		{
-			error = cpu_mcontext_validate(l, mcp);
-			if (error)
-				return error;
+		error = cpu_mcontext_validate(l, mcp);
+		if (error)
+			return error;
 
-			tf->tf_gs = gr[_REG_GS];
-			tf->tf_fs = gr[_REG_FS];
-			tf->tf_es = gr[_REG_ES];
-			tf->tf_ds = gr[_REG_DS];
-			/* Only change the user-alterable part of eflags */
-			tf->tf_eflags &= ~PSL_USER;
-			tf->tf_eflags |= (gr[_REG_EFL] & PSL_USER);
-		}
+		tf->tf_gs = gr[_REG_GS];
+		tf->tf_fs = gr[_REG_FS];
+		tf->tf_es = gr[_REG_ES];
+		tf->tf_ds = gr[_REG_DS];
+		/* Only change the user-alterable part of eflags */
+		tf->tf_eflags &= ~PSL_USER;
+		tf->tf_eflags |= (gr[_REG_EFL] & PSL_USER);
+
 		tf->tf_edi    = gr[_REG_EDI];
 		tf->tf_esi    = gr[_REG_ESI];
 		tf->tf_ebp    = gr[_REG_EBP];

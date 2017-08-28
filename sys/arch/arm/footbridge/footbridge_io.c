@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.22 2014/02/22 20:33:00 matt Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.22.6.1 2017/08/28 17:51:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.22 2014/02/22 20:33:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.22.6.1 2017/08/28 17:51:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,8 +182,8 @@ int
 footbridge_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
-	bus_addr_t startpa, endpa, pa;
-	vaddr_t va;
+	paddr_t startpa, endpa, pa;
+	const struct pmap_devmap *pd;
 
 	/* Round the allocation to page boundries */
 	startpa = trunc_page(bpa);
@@ -200,12 +200,19 @@ footbridge_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 		return 0;
 	}
 
+	pa = bpa;
+ 	if ((pd = pmap_devmap_find_pa(pa, size)) != NULL) {
+ 		/* Device was statically mapped. */
+ 		*bshp = pd->pd_va + (pa - pd->pd_pa);
+ 		return 0;
+ 	}
+
 	/*
 	 * Eventually this function will do the mapping check for overlapping / 
 	 * multiple mappings
 	 */
 
-	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
+	vaddr_t va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (va == 0)
 		return ENOMEM;

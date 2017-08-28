@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_vf.h 282289 2015-04-30 22:53:27Z erj $*/
-/*$NetBSD: ixgbe_vf.h,v 1.1.30.3 2016/12/05 10:55:17 skrll Exp $*/
+/*$NetBSD: ixgbe_vf.h,v 1.1.30.4 2017/08/28 17:52:26 skrll Exp $*/
 
 #ifndef __IXGBE_VF_H__
 #define __IXGBE_VF_H__
@@ -91,6 +91,7 @@
 
 
 struct ixgbevf_hw_stats {
+	char namebuf[32];
 	u64 base_vfgprc;
 	u64 base_vfgptc;
 	u64 base_vfgorc;

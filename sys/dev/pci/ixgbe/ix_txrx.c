@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.10.2.3 2017/02/05 13:40:45 skrll Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.10.2.4 2017/08/28 17:52:25 skrll Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -162,17 +162,6 @@ ixgbe_start_locked(struct tx_ring *txr, struct ifnet * ifp)
 			break;
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
-		if (rc == EFBIG) {
-			struct mbuf *mtmp;
-
-			if ((mtmp = m_defrag(m_head, M_NOWAIT)) != NULL) {
-				m_head = mtmp;
-				rc = ixgbe_xmit(txr, m_head);
-				if (rc != 0)
-					adapter->efbig2_tx_dma_setup.ev_count++;
-			} else
-				adapter->m_defrag_failed.ev_count++;
-		}
 		if (rc != 0) {
 			m_freem(m_head);
 			continue;
@@ -344,10 +333,12 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 {
 	struct m_tag *mtag;
 	struct adapter  *adapter = txr->adapter;
+	struct ifnet	*ifp = adapter->ifp;
 	struct ethercom *ec = &adapter->osdep.ec;
 	u32		olinfo_status = 0, cmd_type_len;
 	int             i, j, error;
 	int		first;
+	bool		remap = TRUE;
 	bus_dmamap_t	map;
 	struct ixgbe_tx_buf *txbuf;
 	union ixgbe_adv_tx_desc *txd = NULL;
@@ -371,10 +362,12 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 	/*
 	 * Map the packet for DMA.
 	 */
+retry:
 	error = bus_dmamap_load_mbuf(txr->txtag->dt_dmat, map,
 	    m_head, BUS_DMA_NOWAIT);
 
 	if (__predict_false(error)) {
+		struct mbuf *m;
 
 		switch (error) {
 		case EAGAIN:
@@ -384,12 +377,25 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 			adapter->enomem_tx_dma_setup.ev_count++;
 			return EAGAIN;
 		case EFBIG:
-			/*
-			 * XXX Try it again?
-			 * do m_defrag() and retry bus_dmamap_load_mbuf().
-			 */
-			adapter->efbig_tx_dma_setup.ev_count++;
-			return error;
+			/* Try it again? - one try */
+			if (remap == TRUE) {
+				remap = FALSE;
+				/*
+				 * XXX: m_defrag will choke on
+				 * non-MCLBYTES-sized clusters
+				 */
+				adapter->efbig_tx_dma_setup.ev_count++;
+				m = m_defrag(m_head, M_NOWAIT);
+				if (m == NULL) {
+					adapter->mbuf_defrag_failed.ev_count++;
+					return ENOBUFS;
+				}
+				m_head = m;
+				goto retry;
+			} else {
+				adapter->efbig2_tx_dma_setup.ev_count++;
+				return error;
+			}
 		case EINVAL:
 			adapter->einval_tx_dma_setup.ev_count++;
 			return error;
@@ -475,6 +481,13 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 	 */
 	++txr->total_packets.ev_count;
 	IXGBE_WRITE_REG(&adapter->hw, txr->tail, i);
+
+	/*
+	 * XXXX NOMPSAFE: ifp->if_data should be percpu.
+	 */
+	ifp->if_obytes += m_head->m_pkthdr.len;
+	if (m_head->m_flags & M_MCAST)
+		ifp->if_omcasts++;
 
 	/* Mark queue as having work */
 	if (txr->busy == 0)
@@ -745,10 +758,9 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	if (mp->m_pkthdr.csum_flags & (M_CSUM_TSOv4|M_CSUM_TSOv6)) {
 		int rv = ixgbe_tso_setup(txr, mp, cmd_type_len, olinfo_status);
 
-		if (rv != 0) {
+		if (rv != 0)
 			++adapter->tso_err.ev_count;
-			return rv;
-		}
+		return rv;
 	}
 
 	if ((mp->m_pkthdr.csum_flags & M_CSUM_OFFLOAD) == 0)
@@ -1434,21 +1446,10 @@ fail:
 
 static void     
 ixgbe_free_receive_ring(struct rx_ring *rxr)
-{ 
-	struct ixgbe_rx_buf       *rxbuf;
+{
 
 	for (int i = 0; i < rxr->num_desc; i++) {
-		rxbuf = &rxr->rx_buffers[i];
-		if (rxbuf->buf != NULL) {
-			bus_dmamap_sync(rxr->ptag->dt_dmat, rxbuf->pmap,
-			    0, rxbuf->buf->m_pkthdr.len,
-			    BUS_DMASYNC_POSTREAD);
-			ixgbe_dmamap_unload(rxr->ptag, rxbuf->pmap);
-			rxbuf->buf->m_flags |= M_PKTHDR;
-			m_freem(rxbuf->buf);
-			rxbuf->buf = NULL;
-			rxbuf->flags = 0;
-		}
+		ixgbe_rx_discard(rxr, i);
 	}
 }
 
@@ -1498,7 +1499,8 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	 * or size of jumbo mbufs may have changed.
 	 */
 	ixgbe_jcl_reinit(&adapter->jcl_head, rxr->ptag->dt_dmat,
-	    2 * adapter->num_rx_desc, adapter->rx_mbuf_sz);
+	    (2 * adapter->num_rx_desc) * adapter->num_queues,
+	    adapter->rx_mbuf_sz);
 
 	IXGBE_RX_LOCK(rxr);
 
@@ -1619,7 +1621,9 @@ fail:
 	 */
 	for (int i = 0; i < j; ++i) {
 		rxr = &adapter->rx_rings[i];
+		IXGBE_RX_LOCK(rxr);
 		ixgbe_free_receive_ring(rxr);
+		IXGBE_RX_UNLOCK(rxr);
 	}
 
 	return (ENOBUFS);
@@ -1673,15 +1677,7 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 	if (rxr->rx_buffers != NULL) {
 		for (int i = 0; i < adapter->num_rx_desc; i++) {
 			rxbuf = &rxr->rx_buffers[i];
-			if (rxbuf->buf != NULL) {
-				bus_dmamap_sync(rxr->ptag->dt_dmat,
-				    rxbuf->pmap, 0, rxbuf->buf->m_pkthdr.len,
-				    BUS_DMASYNC_POSTREAD);
-				ixgbe_dmamap_unload(rxr->ptag, rxbuf->pmap);
-				rxbuf->buf->m_flags |= M_PKTHDR;
-				m_freem(rxbuf->buf);
-			}
-			rxbuf->buf = NULL;
+			ixgbe_rx_discard(rxr, i);
 			if (rxbuf->pmap != NULL) {
 				ixgbe_dmamap_destroy(rxr->ptag, rxbuf->pmap);
 				rxbuf->pmap = NULL;
@@ -1704,10 +1700,9 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 static __inline void
 ixgbe_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m, u32 ptype)
 {
-	int s;
+	struct adapter	*adapter = ifp->if_softc;
 
 #ifdef LRO
-	struct adapter	*adapter = ifp->if_softc;
 	struct ethercom *ec = &adapter->osdep.ec;
 
         /*
@@ -1738,9 +1733,7 @@ ixgbe_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m, u32 ptype
 
 	IXGBE_RX_UNLOCK(rxr);
 
-	s = splnet();
-	if_input(ifp, m);
-	splx(s);
+	if_percpuq_enqueue(adapter->ipq, m);
 
 	IXGBE_RX_LOCK(rxr);
 }
@@ -1761,12 +1754,15 @@ ixgbe_rx_discard(struct rx_ring *rxr, int i)
 	** and mapping.
 	*/
 
-	if (rbuf->buf != NULL) {/* Partial chain ? */
-		rbuf->fmp->m_flags |= M_PKTHDR;
+	if (rbuf->fmp != NULL) {/* Partial chain ? */
+		bus_dmamap_sync(rxr->ptag->dt_dmat, rbuf->pmap, 0,
+		    rbuf->buf->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
 		m_freem(rbuf->fmp);
 		rbuf->fmp = NULL;
 		rbuf->buf = NULL; /* rbuf->buf is part of fmp's chain */
 	} else if (rbuf->buf) {
+		bus_dmamap_sync(rxr->ptag->dt_dmat, rbuf->pmap, 0,
+		    rbuf->buf->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
 		m_free(rbuf->buf);
 		rbuf->buf = NULL;
 	}
@@ -1860,6 +1856,9 @@ ixgbe_rxeof(struct ix_queue *que)
 			goto next_desc;
 		}
 
+		bus_dmamap_sync(rxr->ptag->dt_dmat, rbuf->pmap, 0,
+		    rbuf->buf->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
+
 		/*
 		** On 82599 which supports a hardware
 		** LRO (called HW RSC), packets need
@@ -1946,7 +1945,6 @@ ixgbe_rxeof(struct ix_queue *que)
 			mp->m_next = nbuf->buf;
 		} else { /* Sending this frame */
 			m_set_rcvif(sendmp, ifp);
-			ifp->if_ipackets++;
 			rxr->rx_packets.ev_count++;
 			/* capture data for AIM */
 			rxr->bytes += sendmp->m_pkthdr.len;

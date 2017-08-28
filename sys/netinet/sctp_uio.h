@@ -1,5 +1,5 @@
 /*	$KAME: sctp_uio.h,v 1.11 2005/03/06 16:04:18 itojun Exp $	*/
-/*	$NetBSD: sctp_uio.h,v 1.1.2.2 2015/12/27 12:10:07 skrll Exp $ */
+/*	$NetBSD: sctp_uio.h,v 1.1.2.3 2017/08/28 17:53:12 skrll Exp $ */
 
 #ifndef __SCTP_UIO_H__
 #define __SCTP_UIO_H__
@@ -52,7 +52,7 @@ struct sctp_event_subscribe {
 	u_int8_t sctp_partial_delivery_event;
 	u_int8_t sctp_adaption_layer_event;
 	u_int8_t sctp_stream_reset_events;
-};
+} __packed;
 
 /* ancillary data types */
 #define SCTP_INIT	0x0001
@@ -66,7 +66,7 @@ struct sctp_initmsg {
 	u_int32_t sinit_max_instreams;
 	u_int16_t sinit_max_attempts;
 	u_int16_t sinit_max_init_timeo;
-};
+} __packed;
 
 struct sctp_sndrcvinfo {
 	u_int16_t sinfo_stream;
@@ -78,7 +78,7 @@ struct sctp_sndrcvinfo {
 	u_int32_t sinfo_tsn;
 	u_int32_t sinfo_cumtsn;
 	sctp_assoc_t sinfo_assoc_id;
-};
+} __packed;
 
 struct sctp_snd_all_completes {
 	u_int16_t sall_stream;
@@ -87,7 +87,7 @@ struct sctp_snd_all_completes {
 	u_int32_t sall_context;
 	u_int32_t sall_num_sent;
 	u_int32_t sall_num_failed;
-};
+} __packed;
 
 /* send/recv flags */
 /* MSG_EOF (0x0100) is reused from sys/socket.h */
@@ -110,14 +110,14 @@ struct sctp_pcbinfo {
 	u_int32_t chk_count;
 	u_int32_t sockq_count;
 	u_int32_t mbuf_track;
-};
+} __packed;
 
 struct sctp_sockstat {
 	sctp_assoc_t ss_assoc_id;
 	u_int32_t ss_total_sndbuf;
 	u_int32_t ss_total_mbuf_sndbuf;
 	u_int32_t ss_total_recv_buf;
-};
+} __packed;
 
 /*
  * notification event structures
@@ -135,7 +135,7 @@ struct sctp_assoc_change {
 	u_int16_t sac_outbound_streams;
 	u_int16_t sac_inbound_streams;
 	sctp_assoc_t sac_assoc_id;
-};
+} __packed;
 /* sac_state values */
 
 #define SCTP_COMM_UP		0x0001
@@ -154,7 +154,7 @@ struct sctp_paddr_change {
 	u_int32_t spc_state;
 	u_int32_t spc_error;
 	sctp_assoc_t spc_assoc_id;
-};
+} __packed;
 /* paddr state values */
 #define SCTP_ADDR_AVAILABLE	0x0001
 #define SCTP_ADDR_UNREACHABLE	0x0002
@@ -199,7 +199,7 @@ struct sctp_remote_error {
 	u_int16_t sre_error;
 	sctp_assoc_t sre_assoc_id;
 	u_int8_t  sre_data[4];
-};
+} __packed;
 
 /* data send failure event */
 struct sctp_send_failed {
@@ -210,7 +210,7 @@ struct sctp_send_failed {
 	struct sctp_sndrcvinfo ssf_info;
 	sctp_assoc_t ssf_assoc_id;
 	u_int8_t ssf_data[4];
-};
+} __packed;
 
 /* flag that indicates state of data */
 #define SCTP_DATA_UNSENT	0x0001	/* inqueue never on wire */
@@ -222,7 +222,7 @@ struct sctp_shutdown_event {
 	u_int16_t	sse_flags;
 	u_int32_t	sse_length;
 	sctp_assoc_t	sse_assoc_id;
-};
+} __packed;
 
 /* Adaption layer indication stuff */
 struct sctp_adaption_event {
@@ -231,11 +231,11 @@ struct sctp_adaption_event {
 	u_int32_t	sai_length;
 	u_int32_t	sai_adaption_ind;
 	sctp_assoc_t	sai_assoc_id;
-};
+} __packed;
 
 struct sctp_setadaption {
 	u_int32_t	ssb_adaption_ind;
-};
+} __packed;
 
 /* pdapi indications */
 struct sctp_pdapi_event {
@@ -244,7 +244,7 @@ struct sctp_pdapi_event {
 	u_int32_t	pdapi_length;
 	u_int32_t	pdapi_indication;
 	sctp_assoc_t	pdapi_assoc_id;
-};
+} __packed;
 
 
 #define SCTP_PARTIAL_DELIVERY_ABORTED	0x0001
@@ -257,7 +257,7 @@ struct sctp_stream_reset_event {
 	u_int32_t	strreset_length;
 	sctp_assoc_t    strreset_assoc_id;
 	u_int16_t       strreset_list[0];
-};
+} __packed;
 
 /* flags in strreset_flags filed */
 #define SCTP_STRRESET_INBOUND_STR  0x0001
@@ -272,7 +272,7 @@ struct sctp_assoc_ids {
 	u_int8_t asls_numb_present;
 	u_int8_t asls_more_to_get;
 	sctp_assoc_t asls_assoc_id[MAX_ASOC_IDS_RET];
-};
+} __packed;
 
 /* notification types */
 #define SCTP_ASSOC_CHANGE		0x0001
@@ -290,7 +290,7 @@ struct sctp_tlv {
 	u_int16_t sn_type;
 	u_int16_t sn_flags;
 	u_int32_t sn_length;
-};
+} __packed;
 
 
 /* notification event */
@@ -304,7 +304,7 @@ union sctp_notification {
 	struct sctp_adaption_event sn_adaption_event;
 	struct sctp_pdapi_event sn_pdapi_event;
 	struct sctp_stream_reset_event sn_strreset_event;
-};
+} __packed;
 
 /*
  * socket option structs
@@ -317,7 +317,7 @@ struct sctp_paddrparams {
 	struct sockaddr_storage spp_address;
 	u_int32_t spp_hbinterval;
 	u_int16_t spp_pathmaxrxt;
-};
+} __packed;
 
 struct sctp_paddrinfo {
 	sctp_assoc_t spinfo_assoc_id;
@@ -327,14 +327,14 @@ struct sctp_paddrinfo {
 	u_int32_t spinfo_srtt;
 	u_int32_t spinfo_rto;
 	u_int32_t spinfo_mtu;
-};
+} __packed;
 
 struct sctp_rtoinfo {
 	sctp_assoc_t srto_assoc_id;
 	u_int32_t srto_initial;
 	u_int32_t srto_max;
 	u_int32_t srto_min;
-};
+} __packed;
 
 struct sctp_assocparams {
 	sctp_assoc_t sasoc_assoc_id;
@@ -343,30 +343,30 @@ struct sctp_assocparams {
         u_int32_t sasoc_peer_rwnd;
         u_int32_t sasoc_local_rwnd;
         u_int32_t sasoc_cookie_life;
-};
+} __packed;
 
 struct sctp_setprim {
 	sctp_assoc_t ssp_assoc_id;
 	struct sockaddr_storage ssp_addr;
-};
+} __packed;
 
 struct sctp_setpeerprim {
 	sctp_assoc_t sspp_assoc_id;
 	struct sockaddr_storage sspp_addr;
-};
+} __packed;
 
 struct sctp_getaddresses {
 	sctp_assoc_t sget_assoc_id;
 	/* addr is filled in for N * sockaddr_storage */
 	struct sockaddr addr[1];
-};
+} __packed;
 
 struct sctp_setstrm_timeout {
 	sctp_assoc_t ssto_assoc_id;
 	u_int32_t ssto_timeout;
 	u_int32_t ssto_streamid_start;
 	u_int32_t ssto_streamid_end;
-};
+} __packed;
 
 struct sctp_status {
 	sctp_assoc_t sstat_assoc_id;
@@ -378,14 +378,14 @@ struct sctp_status {
         u_int16_t sstat_outstrms;
         u_int32_t sstat_fragmentation_point;
 	struct sctp_paddrinfo sstat_primary;
-};
+} __packed;
 
 struct sctp_cwnd_args {
 	struct sctp_nets *net;		/* network to */
 	u_int32_t cwnd_new_value;	/* cwnd in k */
 	u_int32_t inflight;		/* flightsize in k */
 	int cwnd_augment;		/* increment to it */
-};
+} __packed;
 
 struct sctp_blk_args {
 	u_int32_t onmb;			/* in 1k bytes */
@@ -394,7 +394,7 @@ struct sctp_blk_args {
 	u_int16_t maxsb;		/* in 1k bytes */
 	u_int16_t send_sent_qcnt;	/* chnk cnt */
 	u_int16_t stream_qcnt;		/* chnk cnt */
-};
+} __packed;
 
 /*
  * Max we can reset in one setting, note this is dictated not by the
@@ -413,14 +413,14 @@ struct sctp_stream_reset {
 	u_int16_t    strrst_flags;
 	u_int16_t    strrst_num_streams;	/* 0 == ALL */
 	u_int16_t    strrst_list[0];		/* list if strrst_num_streams is not 0*/
-};
+} __packed;
 
 
 struct sctp_get_nonce_values {
 	sctp_assoc_t gn_assoc_id;
 	u_int32_t    gn_peers_tag;
 	u_int32_t    gn_local_tag;
-};
+} __packed;
 
 /* Debugging logs */
 struct sctp_str_log{
@@ -428,33 +428,33 @@ struct sctp_str_log{
 	u_int32_t e_tsn;
 	u_int16_t n_sseq;
 	u_int16_t e_sseq;
-};
+} __packed;
 
 struct sctp_fr_log {
 	u_int32_t largest_tsn;
 	u_int32_t largest_new_tsn;
 	u_int32_t tsn;
-};
+} __packed;
 
 struct sctp_fr_map {
 	u_int32_t base;
 	u_int32_t cum;
 	u_int32_t high;
-};
+} __packed;
 
 struct sctp_rwnd_log {
 	u_int32_t rwnd;
 	u_int32_t send_size;
 	u_int32_t overhead;
 	u_int32_t new_rwnd;
-};
+} __packed;
 
 struct sctp_mbcnt_log {
 	u_int32_t total_queue_size;
 	u_int32_t size_change;
 	u_int32_t total_queue_mb_size;
 	u_int32_t mbcnt_change;
-};
+} __packed;
 
 struct sctp_cwnd_log{
 	union {
@@ -469,7 +469,7 @@ struct sctp_cwnd_log{
 	u_int8_t from;
 	u_int8_t event_type;
 
-};
+} __packed;
 
 struct sctp_cwnd_log_req{
 	int num_in_log;     /* Number in log */
@@ -477,7 +477,7 @@ struct sctp_cwnd_log_req{
 	int start_at;       /* start at this one */
 	int end_at;         /* end at this one */
 	struct sctp_cwnd_log log[0];
-};
+} __packed;
 
 
 

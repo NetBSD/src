@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.55.2.5 2017/02/05 13:40:08 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.55.2.6 2017/08/28 17:51:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.55.2.5 2017/02/05 13:40:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.55.2.6 2017/08/28 17:51:35 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -42,10 +42,12 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.55.2.5 2017/02/05 13:40:08 skrll E
 #include "opt_vcprop.h"
 
 #include "sdhc.h"
+#include "bcmsdhost.h"
 #include "bcmdwctwo.h"
 #include "bcmspi.h"
 #include "bsciic.h"
 #include "plcom.h"
+#include "com.h"
 #include "genfb.h"
 #include "ukbd.h"
 
@@ -74,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.55.2.5 2017/02/05 13:40:08 skrll E
 #include <arm/broadcom/bcm2835var.h>
 #include <arm/broadcom/bcm2835_pmvar.h>
 #include <arm/broadcom/bcm2835_mbox.h>
+#include <arm/broadcom/bcm2835_gpio_subr.h>
 #include <arm/broadcom/bcm_amba.h>
 
 #include <evbarm/rpi/vcio.h>
@@ -93,6 +96,10 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.55.2.5 2017/02/05 13:40:08 skrll E
 #if NPLCOM > 0
 #include <evbarm/dev/plcomreg.h>
 #include <evbarm/dev/plcomvar.h>
+#endif
+
+#if NCOM > 0
+#include <dev/ic/comvar.h>
 #endif
 
 #if NGENFB > 0
@@ -180,6 +187,8 @@ static struct plcom_instance rpi_pi = {
 static struct __aligned(16) {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_clockrate	vbt_uartclockrate;
+	struct vcprop_tag_clockrate	vbt_coreclockrate;
+	struct vcprop_tag_boardrev	vbt_boardrev;
 	struct vcprop_tag end;
 } vb_uart = {
 	.vb_hdr = {
@@ -193,6 +202,21 @@ static struct __aligned(16) {
 			.vpt_rcode = VCPROPTAG_REQUEST
 		},
 		.id = VCPROP_CLK_UART
+	},
+	.vbt_coreclockrate = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
+			.vpt_len = VCPROPTAG_LEN(vb_uart.vbt_coreclockrate),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+		.id = VCPROP_CLK_CORE
+	},
+	.vbt_boardrev = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_BOARDREVISION,
+			.vpt_len = VCPROPTAG_LEN(vb_uart.vbt_boardrev),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
 	},
 	.end = {
 		.vpt_tag = VCPROPTAG_NULL
@@ -211,6 +235,7 @@ static struct __aligned(16) {
 	struct vcprop_tag_cmdline	vbt_cmdline;
 	struct vcprop_tag_clockrate	vbt_emmcclockrate;
 	struct vcprop_tag_clockrate	vbt_armclockrate;
+	struct vcprop_tag_clockrate	vbt_coreclockrate;
 	struct vcprop_tag end;
 } vb = {
 	.vb_hdr = {
@@ -288,6 +313,14 @@ static struct __aligned(16) {
 			.vpt_rcode = VCPROPTAG_REQUEST
 		},
 		.id = VCPROP_CLK_ARM
+	},
+	.vbt_coreclockrate = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_coreclockrate),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+		.id = VCPROP_CLK_CORE
 	},
 	.end = {
 		.vpt_tag = VCPROPTAG_NULL
@@ -413,6 +446,23 @@ static uint8_t cursor_mask[8 * 64], cursor_bitmap[8 * 64];
 #endif
 #endif
 
+/*
+ * Return true if this model Raspberry Pi has Bluetooth/Wi-Fi support
+ */ 
+static bool
+rpi_rev_has_btwifi(uint32_t rev)
+{
+	if ((rev & VCPROP_REV_ENCFLAG) == 0)
+		return false;
+
+	switch (__SHIFTOUT(rev, VCPROP_REV_MODEL)) {
+	case RPI_MODEL_B_PI3:
+	case RPI_MODEL_ZERO_W:
+		return true;
+	default:
+		return false;
+	}
+}
 
 static void
 rpi_uartinit(void)
@@ -426,12 +476,66 @@ rpi_uartinit(void)
 
 	bcm2835_mbox_read(iot, ioh, BCMMBOX_CHANARM2VC, &res);
 
-	cpu_dcache_inv_range((vaddr_t)&vb, sizeof(vb));
+	cpu_dcache_inv_range((vaddr_t)&vb_uart, sizeof(vb_uart));
+
+	if (vcprop_tag_success_p(&vb_uart.vbt_boardrev.tag)) {
+		if (rpi_rev_has_btwifi(vb_uart.vbt_boardrev.rev)) {
+#if NCOM > 0
+			/* Enable AUX UART on GPIO header */
+			bcm2835gpio_function_select(14, BCM2835_GPIO_ALT5);
+			bcm2835gpio_function_select(15, BCM2835_GPIO_ALT5);
+#else
+			/* Enable UART0 (PL011) on GPIO header */
+			bcm2835gpio_function_select(14, BCM2835_GPIO_ALT0);
+			bcm2835gpio_function_select(15, BCM2835_GPIO_ALT0);
+#endif
+		}
+	}
 
 	if (vcprop_tag_success_p(&vb_uart.vbt_uartclockrate.tag))
 		uart_clk = vb_uart.vbt_uartclockrate.rate;
 }
 
+
+static void
+rpi_pinctrl(void)
+{
+#if NBCMSDHOST > 0
+	if (rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
+		/*
+		 * If the sdhost driver is present, map the SD card slot to the
+		 * SD host controller and the sdhci driver to the SDIO pins.
+		 */
+		for (int pin = 48; pin <= 53; pin++) {
+			/* Enable SDHOST on SD card slot */
+			bcm2835gpio_function_select(pin, BCM2835_GPIO_ALT0);
+		}
+		for (int pin = 34; pin <= 39; pin++) {
+			/* Enable SDHCI on SDIO */
+			bcm2835gpio_function_select(pin, BCM2835_GPIO_ALT3);
+			bcm2835gpio_function_setpull(pin,
+			    pin == 34 ? BCM2835_GPIO_GPPUD_PULLOFF :
+			    BCM2835_GPIO_GPPUD_PULLUP);
+		}
+	}
+#endif
+
+	if (rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
+#if NCOM > 0
+		/* Enable UART0 (PL011) on BT */
+		bcm2835gpio_function_select(32, BCM2835_GPIO_ALT3);
+		bcm2835gpio_function_select(33, BCM2835_GPIO_ALT3);
+#else
+		/* Enable AUX UART on BT */
+		bcm2835gpio_function_select(32, BCM2835_GPIO_ALT5);
+		bcm2835gpio_function_select(33, BCM2835_GPIO_ALT5);
+#endif
+		bcm2835gpio_function_setpull(32, BCM2835_GPIO_GPPUD_PULLOFF);
+		bcm2835gpio_function_setpull(33, BCM2835_GPIO_GPPUD_PULLUP);
+		bcm2835gpio_function_select(43, BCM2835_GPIO_ALT0);
+		bcm2835gpio_function_setpull(43, BCM2835_GPIO_GPPUD_PULLOFF);
+	}
+}
 
 
 static void
@@ -730,19 +834,15 @@ initarm(void *arg)
 	/* we've a specific device_register routine */
 	evbarm_device_register = rpi_device_register;
 
+	/* Change pinctrl settings */
+	rpi_pinctrl();
+
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 }
 
-void
-consinit(void)
+static void
+consinit_plcom(void)
 {
-	static int consinit_called = 0;
-
-	if (consinit_called != 0)
-		return;
-
-	consinit_called = 1;
-
 #if (NPLCOM > 0 && defined(PLCONSOLE))
 	/*
 	 * Initialise the diagnostic serial console
@@ -752,8 +852,48 @@ consinit(void)
 
 	plcomcnattach(&rpi_pi, plcomcnspeed, uart_clk,
 	    plcomcnmode, PLCOMCNUNIT);
-
 #endif
+}
+
+static void
+consinit_com(void)
+{
+#if NCOM > 0
+	bus_space_tag_t iot = &bcm2835_a4x_bs_tag;
+	const bus_addr_t addr = BCM2835_AUX_UART_BASE;
+	const int speed = B115200;
+	u_int freq = 0;
+	const u_int flags = TTYDEF_CFLAG;
+
+	if (vcprop_tag_success_p(&vb_uart.vbt_coreclockrate.tag))
+		freq = vb.vbt_coreclockrate.rate * 2;
+
+	comcnattach(iot, addr, speed, freq, COM_TYPE_BCMAUXUART, flags);
+#endif
+}
+
+void
+consinit(void)
+{
+	static int consinit_called = 0;
+	bool use_auxuart = false;
+
+	if (consinit_called != 0)
+		return;
+
+	consinit_called = 1;
+
+#if NCOM > 0
+	if (vcprop_tag_success_p(&vb_uart.vbt_boardrev.tag) &&
+	    rpi_rev_has_btwifi(vb_uart.vbt_boardrev.rev)) {
+		use_auxuart = true;
+	}
+#endif
+
+	if (use_auxuart)
+		consinit_com();
+	else
+		consinit_plcom();
 }
 
 #ifdef KGDB
@@ -1137,17 +1277,32 @@ rpi_device_register(device_t dev, void *aux)
 		prop_dictionary_set_uint32(dict,
 		    "frequency", vb_uart.vbt_uartclockrate.rate);
 	}
+	if (device_is_a(dev, "com") &&
+	    vcprop_tag_success_p(&vb.vbt_coreclockrate.tag) &&
+	    vb.vbt_coreclockrate.rate > 0) {
+		prop_dictionary_set_uint32(dict,
+		    "frequency", vb.vbt_coreclockrate.rate);
+	}
 	if (device_is_a(dev, "bcmdmac") &&
 	    vcprop_tag_success_p(&vb.vbt_dmachan.tag)) {
 		prop_dictionary_set_uint32(dict,
 		    "chanmask", vb.vbt_dmachan.mask);
 	}
-#if NSDHC > 0
 	if (device_is_a(dev, "sdhc") &&
 	    vcprop_tag_success_p(&vb.vbt_emmcclockrate.tag) &&
 	    vb.vbt_emmcclockrate.rate > 0) {
 		prop_dictionary_set_uint32(dict,
 		    "frequency", vb.vbt_emmcclockrate.rate);
+	}
+	if (device_is_a(dev, "sdhost") &&
+	    vcprop_tag_success_p(&vb.vbt_coreclockrate.tag) &&
+	    vb.vbt_coreclockrate.rate > 0) {
+		prop_dictionary_set_uint32(dict,
+		    "frequency", vb.vbt_coreclockrate.rate);
+		if (!rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
+			/* No btwifi and sdhost driver is present */
+			prop_dictionary_set_bool(dict, "disable", true);
+		}
 	}
 	if (booted_device == NULL &&
 	    device_is_a(dev, "ld") &&
@@ -1155,7 +1310,6 @@ rpi_device_register(device_t dev, void *aux)
 		booted_partition = 0;
 		booted_device = dev;
 	}
-#endif
 	if (device_is_a(dev, "usmsc") &&
 	    vcprop_tag_success_p(&vb.vbt_macaddr.tag)) {
 		const uint8_t enaddr[ETHER_ADDR_LEN] = {
@@ -1201,6 +1355,14 @@ rpi_device_register(device_t dev, void *aux)
 		}
 	}
 #endif
+
+	/* BSC0 is used internally on some boards */
+	if (device_is_a(dev, "bsciic") &&
+	    ((struct amba_attach_args *)aux)->aaa_addr == BCM2835_BSC0_BASE) {
+		if (rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
+			prop_dictionary_set_bool(dict, "disable", true);
+		}
+	}
 }
 
 SYSCTL_SETUP(sysctl_machdep_rpi, "sysctl machdep subtree setup (rpi)")

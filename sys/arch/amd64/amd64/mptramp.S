@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.17.6.3 2016/10/05 20:55:23 skrll Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.17.6.4 2017/08/28 17:51:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2016 The NetBSD Foundation, Inc.
@@ -74,8 +74,6 @@
  *        by a idle-thread
  */
 
-#include "opt_mpbios.h"		/* for MPDEBUG */
-
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/specialreg.h>
@@ -88,29 +86,6 @@
 #define RELOC(x)	_RELOC(_C_LABEL(x))
 
 #define _TRMP_LABEL(a)	a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
-
-#ifdef MPDEBUG
-/*
- * Debug code to stop aux. processors in various stages based on the
- * value in cpu_trace.
- *
- * %edi points at cpu_trace;
- * cpu_trace[0] is the "hold point";
- * cpu_trace[1] is the point which the CPU has reached;
- * cpu_trace[2] is the last value stored by HALTT.
- */
-#define HALT(x) \
-1:	movl (%edi),%ebx	;	\
-	cmpl $x,%ebx		;	\
-	jle 1b			;	\
-	movl $x,4(%edi)		;
-#define HALTT(x,y) \
-	movl y,8(%edi)		;	\
-	HALT(x)			;
-#else
-#define HALT(x)
-#define HALTT(x,y)
-#endif /* MPDEBUG */
 
 	.global _C_LABEL(cpu_spinup_trampoline)
 	.global _C_LABEL(cpu_spinup_trampoline_end)
@@ -127,34 +102,33 @@ LABEL(cpu_spinup_trampoline)
 	movw	%ax,%ds
 	movw	%ax,%es
 	movw	%ax,%ss
+
+	/* load flat descriptor table */
 #ifdef __clang__
-	lgdt (mptramp_gdt32_desc)	/* load flat descriptor table */
+	lgdt (mptramp_gdt32_desc)
 #else
-	data32 addr32 lgdt (mptramp_gdt32_desc) /* load flat descriptor table */
+	data32 addr32 lgdt (mptramp_gdt32_desc)
 #endif
-	movl	%cr0, %eax	/* get cr0 */
-	orl	$CR0_PE, %eax	/* enable protected mode */
-	movl	%eax, %cr0	/* doit */
-	ljmpl	$0x8, $mp_startup
+
+	/* enable protected mode */
+	movl	%cr0,%eax
+	orl	$CR0_PE,%eax
+	movl	%eax,%cr0
+	ljmpl	$0x8,$mp_startup
 
 _TRMP_LABEL(mp_startup)
 	.code32
 
-	movl	$0x10, %eax	/* data segment */
-	movw	%ax, %ds
-	movw	%ax, %ss
-	movw	%ax, %es
-	movw	%ax, %fs
-	movw	%ax, %gs
+	movl	$0x10,%eax	/* data segment */
+	movw	%ax,%ds
+	movw	%ax,%ss
+	movw	%ax,%es
+	movw	%ax,%fs
+	movw	%ax,%gs
 
 	/* bootstrap stack end, with scratch space.. */
 	movl	$(MP_TRAMPOLINE+PAGE_SIZE-16),%esp
 
-#ifdef MPDEBUG
-	leal	RELOC(cpu_trace),%edi
-#endif
-
-	HALT(0x1)
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
 	popfl
@@ -236,11 +210,11 @@ _TRMP_LABEL(mptramp_longmode)
 
 _C_LABEL(cpu_spinup_trampoline_end):	/* end of code copied to MP_TRAMPOLINE */
 
-	/* Don't touch lapic until BP has done init sequence. */
+	/* Wait until BP has done init sequence. */
 1:
 	movq	_C_LABEL(cpu_starting),%rdi
 	pause
-	testq	%rdi, %rdi
+	testq	%rdi,%rdi
 	jz	1b
 
 	movq	CPU_INFO_IDLELWP(%rdi),%rsi
@@ -257,8 +231,10 @@ _C_LABEL(cpu_spinup_trampoline_end):	/* end of code copied to MP_TRAMPOLINE */
 	/* Switch address space. */
 	movq	PCB_CR3(%rsi),%rax
 	movq	%rax,%cr3
+
 	movl	PCB_CR0(%rsi),%eax
 	movq	%rax,%cr0
+
 	call	_C_LABEL(cpu_hatch)
 END(cpu_spinup_trampoline)
 
@@ -266,10 +242,4 @@ END(cpu_spinup_trampoline)
 LABEL(mp_pdirpa)
 	.quad	0
 END(mp_pdirpa)
-#ifdef MPDEBUG
-LABEL(cpu_trace)
-	.quad	0x40
-	.quad	0xff
-	.quad	0xff
-END(cpu_trace)
-#endif
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_board.c,v 1.1.2.3 2016/12/05 10:54:50 skrll Exp $	*/
+/*	$NetBSD: imx7_board.c,v 1.1.2.4 2017/08/28 17:51:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_board.c,v 1.1.2.3 2016/12/05 10:54:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_board.c,v 1.1.2.4 2017/08/28 17:51:30 skrll Exp $");
 
 #include "opt_imx.h"
 
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: imx7_board.c,v 1.1.2.3 2016/12/05 10:54:50 skrll Exp
 
 static void imx7_soc_init(void);
 
-bus_space_tag_t imx7_ioreg_bst = &imx_bs_tag;
+bus_space_tag_t imx7_ioreg_bst = &armv7_generic_bs_tag;
 bus_space_handle_t imx7_ioreg_bsh;
-bus_space_tag_t imx7_armcore_bst = &imx_bs_tag;
+bus_space_tag_t imx7_armcore_bst = &armv7_generic_bs_tag;
 bus_space_handle_t imx7_armcore_bsh;
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.56.2.2 2015/06/06 14:40:14 skrll Exp $ */
+/*	$NetBSD: genfb.c,v 1.56.2.3 2017/08/28 17:52:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.56.2.2 2015/06/06 14:40:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.56.2.3 2017/08/28 17:52:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,6 +130,15 @@ genfb_init(struct genfb_softc *sc)
 		sc->sc_fbaddr = (void *)(uintptr_t)fbaddr;
 	}
 
+	sc->sc_shadowfb = NULL;
+	if (!prop_dictionary_get_bool(dict, "enable_shadowfb",
+	    &sc->sc_enable_shadowfb))
+#ifdef GENFB_SHADOWFB
+		sc->sc_enable_shadowfb = true;
+#else
+		sc->sc_enable_shadowfb = false;
+#endif
+
 	if (!prop_dictionary_get_uint32(dict, "linebytes", &sc->sc_stride))
 		sc->sc_stride = (sc->sc_width * sc->sc_depth) >> 3;
 
@@ -226,7 +235,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		0, 0,
 		NULL,
 		8, 16,
-		WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
+		WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		  WSSCREEN_RESIZE,
 		NULL
 	};
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
@@ -240,11 +250,11 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	sc->sc_accessops.mmap = genfb_mmap;
 	sc->sc_accessops.pollc = genfb_pollc;
 
-#ifdef GENFB_SHADOWFB
-	sc->sc_shadowfb = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
-	if (sc->sc_want_clear == false && sc->sc_shadowfb != NULL)
-		memcpy(sc->sc_shadowfb, sc->sc_fbaddr, sc->sc_fbsize);
-#endif
+	if (sc->sc_enable_shadowfb) {
+		sc->sc_shadowfb = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
+		if (sc->sc_want_clear == false)
+			memcpy(sc->sc_shadowfb, sc->sc_fbaddr, sc->sc_fbsize);
+	}
 
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &sc->sc_accessops);
@@ -529,14 +539,12 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	if (sc->sc_want_clear)
 		ri->ri_flg |= RI_FULLCLEAR;
 
-#ifdef GENFB_SHADOWFB
-	if (sc->sc_shadowfb != NULL) {
+	scr->scr_flags |= VCONS_LOADFONT;
 
+	if (sc->sc_shadowfb != NULL) {
 		ri->ri_hwbits = (char *)sc->sc_fbaddr;
 		ri->ri_bits = (char *)sc->sc_shadowfb;
-	} else
-#endif
-	{
+	} else {
 		ri->ri_bits = (char *)sc->sc_fbaddr;
 		scr->scr_flags |= VCONS_DONT_READ;
 	}
@@ -577,8 +585,8 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 
 
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS;
-
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		  WSSCREEN_RESIZE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
 

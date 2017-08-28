@@ -1,4 +1,4 @@
-/*	$NetBSD: jzfb_regs.h,v 1.1.2.2 2016/04/22 15:44:10 skrll Exp $ */
+/*	$NetBSD: jzfb_regs.h,v 1.1.2.3 2017/08/28 17:51:45 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz

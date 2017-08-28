@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.63.2.5 2017/02/05 13:40:59 skrll Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.63.2.6 2017/08/28 17:53:12 skrll Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -349,10 +349,11 @@ void	ip6_forward(struct mbuf *, int);
 
 void	ip6_mloopback(struct ifnet *, struct mbuf *,
 	              const struct sockaddr_in6 *);
-int	ip6_output(struct mbuf *, struct ip6_pktopts *,
-			struct route *, int,
-			struct ip6_moptions *, struct socket *,
-			struct ifnet **);
+int	ip6_output(struct mbuf *, struct ip6_pktopts *, struct route *, int,
+	    struct ip6_moptions *, struct in6pcb *, struct ifnet **);
+int	ip6_if_output(struct ifnet * const, struct ifnet * const,
+	    struct mbuf * const,
+	    const struct sockaddr_in6 * const, const struct rtentry *);
 int	ip6_ctloutput(int, struct socket *, struct sockopt *);
 int	ip6_raw_ctloutput(int, struct socket *, struct sockopt *);
 void	ip6_initpktopts(struct ip6_pktopts *);
@@ -401,8 +402,8 @@ int	in6_selectsrc(struct sockaddr_in6 *, struct ip6_pktopts *,
 	   struct ifnet **, struct psref *, struct in6_addr *);
 int in6_selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
 	struct route **, struct rtentry **, bool);
-int	ip6_get_membership(const struct sockopt *, struct ifnet **, void *,
-	size_t);
+int	ip6_get_membership(const struct sockopt *, struct ifnet **,
+	    struct psref *, void *, size_t);
 
 u_int32_t ip6_randomid(void);
 u_int32_t ip6_randomflowlabel(void);

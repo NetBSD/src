@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.48.2.1 2015/09/22 12:05:35 skrll Exp $
+# $NetBSD: FOURMEG,v 1.48.2.2 2017/08/28 17:51:26 skrll Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -73,7 +73,6 @@ options 	INET6		# IPV6
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

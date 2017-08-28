@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.11.32.2 2016/07/09 20:25:23 skrll Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.11.32.3 2017/08/28 17:53:13 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_debug.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.c,v 1.26 2001/06/27 10:46:50 sakane Exp $	*/
 
@@ -33,12 +33,11 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.11.32.2 2016/07/09 20:25:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.11.32.3 2017/08/28 17:53:13 skrll Exp $");
 #endif
 
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
 #endif
 
 #include <sys/types.h>
@@ -52,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.11.32.2 2016/07/09 20:25:23 skrll Ex
 
 #include <net/route.h>
 
+#include <netipsec/key.h>
 #include <netipsec/key_var.h>
 #include <netipsec/key_debug.h>
 
@@ -106,7 +106,7 @@ kdebug_sadb(const struct sadb_msg *base)
 
 	while (tlen > 0) {
 		printf("sadb_ext{ len=%u type=%u }\n",
-		    ext->sadb_ext_len, ext->sadb_ext_type);
+		    PFKEY_UNUNIT64(ext->sadb_ext_len), ext->sadb_ext_type);
 
 		if (ext->sadb_ext_len == 0) {
 			printf("kdebug_sadb: invalid ext_len=0 was passed.\n");
@@ -462,7 +462,7 @@ kdebug_secpolicy(const struct secpolicy *sp)
 		panic("kdebug_secpolicy: NULL pointer was passed");
 
 	printf("secpolicy{ refcnt=%u state=%u policy=%u\n",
-		sp->refcnt, sp->state, sp->policy);
+	    key_sp_refcnt(sp), sp->state, sp->policy);
 
 	kdebug_secpolicyindex(&sp->spidx);
 
@@ -480,9 +480,6 @@ kdebug_secpolicy(const struct secpolicy *sp)
 
 			printf("  level=%u\n", isr->level);
 			kdebug_secasindex(&isr->saidx);
-
-			if (isr->sav != NULL)
-				kdebug_secasv(isr->sav);
 		}
 		printf("  }\n");
 	    }
@@ -553,7 +550,7 @@ kdebug_secasv(const struct secasvar *sav)
 	kdebug_secasindex(&sav->sah->saidx);
 
 	printf("  refcnt=%u state=%u auth=%u enc=%u\n",
-	    sav->refcnt, sav->state, sav->alg_auth, sav->alg_enc);
+	    key_sa_refcnt(sav), sav->state, sav->alg_auth, sav->alg_enc);
 	printf("  spi=%u flags=%u\n",
 	    (u_int32_t)ntohl(sav->spi), sav->flags);
 
@@ -624,12 +621,10 @@ kdebug_mbufhdr(const struct mbuf *m)
 	}
 
 	if (m->m_flags & M_EXT) {
-#ifdef __FreeBSD__ /* mbuf differences */
 		printf("  m_ext{ ext_buf:%p ext_free:%p "
-		       "ext_size:%u ext_ref:%p }\n",
+		       "ext_size:%zu ext_refcnt:%u }\n",
 			m->m_ext.ext_buf, m->m_ext.ext_free,
-			m->m_ext.ext_size, m->m_ext.ext_ref);
-#endif /* __FreeBSD__ */
+			m->m_ext.ext_size, m->m_ext.ext_refcnt);
 	}
 
 	return;

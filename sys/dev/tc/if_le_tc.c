@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_tc.c,v 1.21 2008/04/04 12:25:07 tsutsui Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.21.68.1 2017/08/28 17:52:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,11 +28,11 @@
  */
 
 /*
- * LANCE on TurboChannel.
+ * LANCE on TURBOchannel.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.21 2008/04/04 12:25:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.21.68.1 2017/08/28 17:52:27 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -91,7 +91,7 @@ le_tc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	/*
-	 * It's on the turbochannel proper, or a kn02
+	 * It's on the TURBOchannel proper, or a kn02
 	 * baseboard implementation of a TC option card.
 	 */
 	lesc->sc_r1 = (struct lereg1 *)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.150.2.7 2016/10/05 20:56:10 skrll Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.150.2.8 2017/08/28 17:53:15 skrll Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -51,7 +51,7 @@ SRCS+=	locks.c
 vers.c: ${RUMPTOP}/../conf/newvers.sh ${RUMPTOP}/../conf/osrelease.sh \
 		${RUMPTOP}/../sys/param.h ${_NETBSD_VERSION_DEPENDS}
 	${_MKMSG_CREATE} vers.c
-	${HOST_SH} ${RUMPTOP}/../conf/newvers.sh -i RUMP-ROAST -n -r
+	${HOST_SH} ${RUMPTOP}/../conf/newvers.sh -i RUMP-ROAST -n -R
 SRCS+=		vers.c
 CLEANFILES+=	vers.c version
 
@@ -109,6 +109,7 @@ SRCS+=	init_sysctl_base.c	\
 	subr_kcpuset.c		\
 	subr_kmem.c		\
 	subr_kobj.c		\
+	subr_localcount.c	\
 	subr_log.c		\
 	subr_lwp_specificdata.c	\
 	subr_once.c		\

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.6.1 2017/02/05 13:40:13 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.6.2 2017/08/28 17:51:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -142,8 +142,10 @@ uint64_t processor_frequency;
 uint64_t bus_frequency;
 uint64_t itc_frequency;
 uint64_t ia64_pal_base;
+uint64_t ia64_pal_size;
 uint64_t ia64_port_base;
 
+int ia64_sync_icache_needed = 0;
 
 extern uint64_t ia64_gateway_page[];
 
@@ -251,6 +253,30 @@ void
 cpu_dumpconf(void)
 {
 	return;
+}
+
+void
+map_vhpt(uintptr_t vhpt)
+{
+        pt_entry_t pte;
+        uint64_t psr;
+
+        pte = PTE_PRESENT | PTE_MA_WB | PTE_ACCESSED | PTE_DIRTY |
+		PTE_PL_KERN | PTE_AR_RW;
+        pte |= vhpt & PTE_PPN_MASK;
+
+        __asm __volatile("ptr.d %0,%1" :: "r"(vhpt),
+			 "r"(pmap_vhpt_log2size << 2));
+
+        __asm __volatile("mov   %0=psr" : "=r"(psr));
+        __asm __volatile("rsm   psr.ic|psr.i");
+        ia64_srlz_i();
+        ia64_set_ifa(vhpt);
+        ia64_set_itir(pmap_vhpt_log2size << 2);
+        ia64_srlz_d();
+        __asm __volatile("itr.d dtr[%0]=%1" :: "r"(3), "r"(pte));
+        __asm __volatile("mov   psr.l=%0" :: "r" (psr));
+        ia64_srlz_i();
 }
 
 void
@@ -368,6 +394,15 @@ ia64_init(void)
 
 	ia64_set_fpsr(IA64_FPSR_DEFAULT);
 
+	/*
+	 * Region 6 is direct mapped UC and region 7 is direct mapped
+	 * WC. The details of this is controlled by the Alt {I,D}TLB
+	 * handlers. Here we just make sure that they have the largest
+	 * possible page size to minimise TLB usage.
+	 */
+	ia64_set_rr(IA64_RR_BASE(6), (6 << 8) | (LOG2_ID_PAGE_SIZE << 2));
+	ia64_set_rr(IA64_RR_BASE(7), (7 << 8) | (LOG2_ID_PAGE_SIZE << 2));
+	ia64_srlz_d();
 
 	/*
 	 * TODO: Get critical system information (if possible, from the
@@ -792,4 +827,38 @@ mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
 
 	return 0; /* TODO: Implement. */
+}
+
+void
+ia64_sync_icache(vaddr_t va, vsize_t sz)
+{
+	vaddr_t lim;
+
+        if (!ia64_sync_icache_needed)
+                return;
+
+        lim = va + sz;
+        while (va < lim) {
+                ia64_fc_i(va);
+                va += 32;       /* XXX */
+        }
+
+        ia64_sync_i();
+        ia64_srlz_i();
+}
+
+/*
+ * Construct a PCB from a trapframe. This is called from kdb_trap() where
+ * we want to start a backtrace from the function that caused us to enter
+ * the debugger. We have the context in the trapframe, but base the trace
+ * on the PCB. The PCB doesn't have to be perfect, as long as it contains
+ * enough for a backtrace.
+ */
+void
+makectx(struct trapframe *tf, struct pcb *pcb)
+{
+        pcb->pcb_special = tf->tf_special;
+        pcb->pcb_special.__spare = ~0UL;        /* XXX see unwind.c */
+        save_callee_saved(&pcb->pcb_preserved);
+        save_callee_saved_fp(&pcb->pcb_preserved_fp);
 }

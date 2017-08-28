@@ -41,7 +41,7 @@
 #include <arm/allwinner/awin_reg.h>
 #include <evbarm/awin/platform.h>
 
-RCSID("$NetBSD: awin_start.S,v 1.6.2.2 2015/06/06 14:39:57 skrll Exp $")
+RCSID("$NetBSD: awin_start.S,v 1.6.2.3 2017/08/28 17:51:34 skrll Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -170,6 +170,10 @@ _C_LABEL(awin_start):
 #endif
 	lsr	r1, r1, #16
 
+	/* Set up a small stack in case gtmr_bootdelay() wants it */
+	movw	sp, #:lower16:awin_initstkbase
+	movt	sp, #:upper16:awin_initstkbase
+
 	// MP init based on SoC ID
 #if defined(ALLWINNER_A20)
 # if defined(ALLWINNER_A31)
@@ -208,6 +212,13 @@ _C_LABEL(awin_start):
 #ifndef KERNEL_BASES_EQUAL
 	.popsection
 #endif
+
+	.pushsection .bss
+	.align	8
+awin_initstk:
+	.space	32
+awin_initstkbase:
+	.popsection
 
 #include <arm/cortex/a9_mpsubr.S>
 
@@ -323,11 +334,11 @@ a31_mpinit:
 	setend	le			// everything here is little-endian
 #endif
 
-	mov	r12, #1			// CPU number
+	mov	r10, #1			// CPU number
 
 a31_mpinit_cpu:
 
-	add	r1, r12, #'0'
+	add	r1, r10, #'0'
 	XPUTC2(r1)
 
 	/* Set where the other CPU(s) are going to execute */
@@ -339,7 +350,7 @@ a31_mpinit_cpu:
 	/* Assert CPU core reset */
 	mov	r1, #0
 	mov	r2, #0x40
-	mul	r7, r12, r2
+	mul	r7, r10, r2
 	add	r7, r7, #AWIN_A31_CPUCFG_CPU0_RST_CTRL_REG
 	str	r1, [r5, r7]
 	dsb
@@ -347,7 +358,7 @@ a31_mpinit_cpu:
 	/* Ensure CPUX reset also invalidates its L1 caches */
 	ldr	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG]
 	mov	r0, #1
-	lsl	r0, r0, r12
+	lsl	r0, r0, r10
 	bic	r1, r1, r0
 	str	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG]
 	dsb
@@ -355,13 +366,13 @@ a31_mpinit_cpu:
 	/* Release power clamp */
 	mov	r1, #0xe7
 	mov	r2, #0x4
-	mul	r7, r12, r2
+	mul	r7, r10, r2
 	add	r7, r7, #AWIN_A31_PRCM_CPUX_PWR_CLAMP_REG
 	str	r1, [r6, r7]
 	dsb
 
 	mov	r2, #0x40
-	mul	r7, r12, r2
+	mul	r7, r10, r2
 	add	r7, r7, #AWIN_A31_CPUCFG_CPU0_PWR_CLAMP_STATUS_REG
 1:
 	ldr	r1, [r5, r7]
@@ -375,13 +386,13 @@ a31_mpinit_cpu:
 	/* Restore power clamp */
 	mov	r1, #0
 	mov	r2, #0x4
-	mul	r7, r12, r2
+	mul	r7, r10, r2
 	add	r7, r7, #AWIN_A31_PRCM_CPUX_PWR_CLAMP_REG
 	str	r1, [r6, r7]
 	dsb
 
 	mov	r2, #0x40
-	mul	r7, r12, r2
+	mul	r7, r10, r2
 	add	r7, r7, #AWIN_A31_CPUCFG_CPU0_PWR_CLAMP_STATUS_REG
 1:
 	ldr	r1, [r5, r7]
@@ -395,7 +406,7 @@ a31_mpinit_cpu:
 	/* Clear power-off gating */
 	ldr	r1, [r6, #AWIN_A31_PRCM_PWROFF_GATING_REG]
 	mov	r0, #1
-	lsl	r0, r0, r12
+	lsl	r0, r0, r10
 	bic	r1, r1, r0
 	str	r1, [r6, #AWIN_A31_PRCM_PWROFF_GATING_REG]
 	dsb
@@ -407,14 +418,14 @@ a31_mpinit_cpu:
 	/* Bring CPUX out of reset */
 	mov	r1, #(AWIN_A31_CPUCFG_RST_CTRL_CPU_RESET|AWIN_A31_CPUCFG_RST_CTRL_CORE_RESET)
 	mov	r2, #0x40
-	mul	r7, r12, r2
+	mul	r7, r10, r2
 	add	r7, r7, #AWIN_A31_CPUCFG_CPU0_RST_CTRL_REG
 	str	r1, [r5, r7]
 	dsb
 
 	/* If there is another CPU, start it */
-	add	r12, r12, #1
-	cmp	r12, #3
+	add	r10, r10, #1
+	cmp	r10, #3
 	ble	a31_mpinit_cpu
 
 #ifdef __ARMEB__
@@ -462,11 +473,11 @@ a80_mpinit:
 	setend	le			// everything here is little-endian
 #endif
 
-	mov	r12, #1			// CPU number
+	mov	r10, #1			// CPU number
 
 a80_mpinit_cpu:
 
-	add	r1, r12, #'0'
+	add	r1, r10, #'0'
 	XPUTC2(r1)
 
 	/* Set where the other CPU(s) are going to execute */
@@ -478,27 +489,27 @@ a80_mpinit_cpu:
 	/* Assert CPU power on reset */
 	ldr	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_RST_REG]
 	mov	r0, #1
-	lsl	r0, r0, r12
+	lsl	r0, r0, r10
 	bic	r1, r1, r0
 	str	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_RST_REG]
 
 	/* Assert CPU core reset */
 	ldr	r1, [r5, #AWIN_A80_RCPUCFG_CLUSTER0_RST_REG]
 	mov	r0, #1
-	lsl	r0, r0, r12
+	lsl	r0, r0, r10
 	bic	r1, r1, r0
 	str	r1, [r5, #AWIN_A80_RCPUCFG_CLUSTER0_RST_REG]
 
 	/* Release power clamp */
 	mov	r1, #0x00
 	mov	r2, #0x4
-	mul	r7, r12, r2
+	mul	r7, r10, r2
 	add	r7, r7, #AWIN_A80_RPRCM_CLUSTER0_PRW_CLAMP_REG
 	str	r1, [r6, r7]
 	dsb
 
 	mov	r2, #0x40
-	mul	r7, r12, r2
+	mul	r7, r10, r2
 	add	r7, r7, #AWIN_A80_RPRCM_CLUSTER0_PRW_CLAMP_STATUS_REG
 1:
 	ldr	r1, [r5, r7]
@@ -512,7 +523,7 @@ a80_mpinit_cpu:
 	/* Clear power-off gating */
 	ldr	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_PWR_GATING_REG]
 	mov	r0, #1
-	lsl	r0, r0, r12
+	lsl	r0, r0, r10
 	bic	r1, r1, r0
 	str	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_PWR_GATING_REG]
 	dsb
@@ -524,21 +535,21 @@ a80_mpinit_cpu:
 	/* Bring core out of reset */
 	ldr	r1, [r5, #AWIN_A80_RCPUCFG_CLUSTER0_RST_REG]
 	mov	r0, #1
-	lsl	r0, r0, r12
+	lsl	r0, r0, r10
 	orr	r1, r1, r0
 	str	r1, [r5, #AWIN_A80_RCPUCFG_CLUSTER0_RST_REG]
 
 	/* Bring cpu power-on out of reset */
 	ldr	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_RST_REG]
 	mov	r0, #1
-	lsl	r0, r0, r12
+	lsl	r0, r0, r10
 	orr	r1, r1, r0
 	str	r1, [r6, #AWIN_A80_RPRCM_CLUSTER0_RST_REG]
 	dsb
 
 	/* If there is another CPU, start it */
-	add	r12, r12, #1
-	cmp	r12, #3
+	add	r10, r10, #1
+	cmp	r10, #3
 	ble	a80_mpinit_cpu
 
 #ifdef __ARMEB__

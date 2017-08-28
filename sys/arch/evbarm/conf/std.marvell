@@ -1,11 +1,14 @@
-#	$NetBSD: std.marvell,v 1.3 2012/12/16 23:47:56 matt Exp $
+#	$NetBSD: std.marvell,v 1.3.14.1 2017/08/28 17:51:34 skrll Exp $
 #
-# standard NetBSD/evbarm for MAEVELL options
+# standard NetBSD/evbarm for MARVELL options
 
 machine	evbarm arm
 include		"arch/evbarm/conf/std.evbarm"
 
 include 	"arch/evbarm/conf/files.marvell"
+
+options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
 
 options 	__HAVE_PCI_CONF_HOOK		# should be in types.h
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
@@ -16,3 +19,4 @@ options 	KERNEL_BASE_EXT=0xc0000000
 makeoptions	LOADADDRESS="0xc0008000"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.marvell"
 options 	ARM_INTR_IMPL="<arch/arm/marvell/mvsoc_intr.h>"
+

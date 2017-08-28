@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_wdog.c,v 1.1 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: imx6_wdog.c,v 1.1.2.1 2017/08/28 17:51:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_wdog.c,v 1.1 2014/09/25 05:05:28 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_wdog.c,v 1.1.2.1 2017/08/28 17:51:30 skrll Exp $");
 
 #include "opt_imx.h"
 
@@ -48,9 +48,13 @@ wdog_match(device_t parent, struct cfdata *cf, void *aux)
 	case IMX6_AIPS1_BASE + AIPS1_WDOG1_BASE:
 	case IMX6_AIPS1_BASE + AIPS1_WDOG2_BASE:
 		return 1;
+	case IMX6_AIPS2_BASE + AIPS2_WDOG3_BASE:
+		if (IMX6_CHIPID_MAJOR(imx6_chip_id()) == CHIPID_MAJOR_IMX6UL)
+			return 1;
+		break;
 	}
 
-	return (0);
+	return 0;
 }
 
 void

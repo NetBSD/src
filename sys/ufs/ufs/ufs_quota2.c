@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.39.4.2 2016/12/05 10:55:30 skrll Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.39.4.3 2017/08/28 17:53:17 skrll Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.39.4.2 2016/12/05 10:55:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.39.4.3 2017/08/28 17:53:17 skrll Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.39.4.2 2016/12/05 10:55:30 skrll Ex
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/fstrans.h>
 #include <sys/kauth.h>
 #include <sys/wapbl.h>
 #include <sys/quota.h>

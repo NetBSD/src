@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.306.4.2 2016/03/19 11:30:33 skrll Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.306.4.3 2017/08/28 17:53:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.306.4.2 2016/03/19 11:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.306.4.3 2017/08/28 17:53:13 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1738,7 +1738,7 @@ again:
 int
 nfs_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode * a_dvp;
 		struct vnode * a_vp;
@@ -1790,7 +1790,6 @@ nfs_remove(void *v)
 		vrele(vp);
 	else
 		vput(vp);
-	vput(dvp);
 	return (error);
 }
 
@@ -2265,7 +2264,7 @@ nfs_mkdir(void *v)
 int
 nfs_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -2288,8 +2287,7 @@ nfs_rmdir(void *v)
 	struct nfsnode *dnp;
 
 	if (dvp == vp) {
-		vrele(dvp);
-		vput(dvp);
+		vrele(vp);
 		return (EINVAL);
 	}
 	nfsstats.rpccnt[NFSPROC_RMDIR]++;
@@ -2311,7 +2309,6 @@ nfs_rmdir(void *v)
 	VN_KNOTE(vp, NOTE_DELETE);
 	cache_purge(vp);
 	vput(vp);
-	vput(dvp);
 	/*
 	 * Kludge: Map ENOENT => 0 assuming that you have a reply to a retry.
 	 */

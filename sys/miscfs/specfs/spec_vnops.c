@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.145.4.8 2017/02/05 13:40:57 skrll Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.145.4.9 2017/08/28 17:53:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.145.4.8 2017/02/05 13:40:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.145.4.9 2017/08/28 17:53:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -230,15 +230,7 @@ spec_node_init(vnode_t *vp, dev_t rdev)
 	 * the vnode to the hash table.
 	 */
 	sn = kmem_alloc(sizeof(*sn), KM_SLEEP);
-	if (sn == NULL) {
-		/* XXX */
-		panic("spec_node_init: unable to allocate memory");
-	}
 	sd = kmem_alloc(sizeof(*sd), KM_SLEEP);
-	if (sd == NULL) {
-		/* XXX */
-		panic("spec_node_init: unable to allocate memory");
-	}
 	mutex_enter(&device_lock);
 	vpp = &specfs_hash[SPECHASH(rdev)];
 	for (vp2 = *vpp; vp2 != NULL; vp2 = vp2->v_specnext) {
@@ -588,13 +580,16 @@ spec_open(void *v)
 		 * For block devices, permit only one open.  The buffer
 		 * cache cannot remain self-consistent with multiple
 		 * vnodes holding a block device open.
+		 *
+		 * Treat zero opencnt with non-NULL mountpoint as open.
+		 * This may happen after forced detach of a mounted device.
 		 */
 		mutex_enter(&device_lock);
 		if (sn->sn_gone) {
 			mutex_exit(&device_lock);
 			return (EBADF);
 		}
-		if (sd->sd_opencnt != 0) {
+		if (sd->sd_opencnt != 0 || sd->sd_mountpoint != NULL) {
 			mutex_exit(&device_lock);
 			return EBUSY;
 		}
@@ -1053,6 +1048,16 @@ spec_strategy(void *v)
 	bp->b_dev = dev;
 
 	if (!(bp->b_flags & B_READ)) {
+#ifdef DIAGNOSTIC
+		if (bp->b_vp && bp->b_vp->v_type == VBLK) {
+			struct mount *mp = spec_node_getmountedfs(bp->b_vp);
+
+			if (mp && (mp->mnt_flag & MNT_RDONLY)) {
+				printf("%s blk %"PRId64" written while ro!\n",
+				    mp->mnt_stat.f_mntonname, bp->b_blkno);
+			}
+		}
+#endif /* DIAGNOSTIC */
 		error = fscow_run(bp, false);
 		if (error)
 			goto out;
@@ -1072,25 +1077,26 @@ out:
 int
 spec_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		struct bool *a_recycle;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
 
-	KASSERT(vp->v_mount == dead_rootmount);
+	KASSERT(ap->a_vp->v_mount == dead_rootmount);
 	*ap->a_recycle = true;
-	VOP_UNLOCK(vp);
+
 	return 0;
 }
 
 int
 spec_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	struct vnode *vp __diagused = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
+
+	VOP_UNLOCK(vp);
 
 	KASSERT(vp->v_mount == dead_rootmount);
 	return 0;

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.15.2.2 2015/09/22 12:05:40 skrll Exp $
+#	$NetBSD: ARMADAXP,v 1.15.2.3 2017/08/28 17:51:34 skrll Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -50,6 +50,7 @@ file-system	PUFFS		# Pass-to-Userspace Framework File System
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support
@@ -96,7 +97,6 @@ options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_30	# NetBSD 3.0,
 #options 	COMPAT_40	# NetBSD 4.0, and
 options 	COMPAT_50	# NetBSD 5.0 binary compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
@@ -274,6 +274,9 @@ options 	PCI_NETBSD_CONFIGURE
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 pci*		at mvpex?
 pchb*		at pci? dev ? function ?	# PCI-Host bridges
+
+# PCI Serial-ATA Host Controller
+mvsata* 	at pci? dev ? function ?
 
 # PCI Ethernet
 wm*		at pci? dev ? function ?	# Intel 8254x gigabit

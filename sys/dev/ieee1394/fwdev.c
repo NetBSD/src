@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.30.4.1 2016/12/05 10:55:01 skrll Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.30.4.2 2017/08/28 17:52:04 skrll Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.30.4.1 2016/12/05 10:55:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.30.4.2 2017/08/28 17:52:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -614,6 +614,8 @@ out:
 			    /* XXX */
 			    PAGE_SIZE, PAGE_SIZE, 5, fc, (void *)fwb, fw_hand);
 			STAILQ_INSERT_TAIL(&d->binds, fwb, chlist);
+		} else {
+			free(fwb, M_FW);
 		}
 		break;
 

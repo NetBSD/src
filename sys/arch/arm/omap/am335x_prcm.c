@@ -1,4 +1,4 @@
-/*	$NetBSD: am335x_prcm.c,v 1.8.2.1 2016/12/05 10:54:50 skrll Exp $	*/
+/*	$NetBSD: am335x_prcm.c,v 1.8.2.2 2017/08/28 17:51:31 skrll Exp $	*/
 
 /*
  * TI OMAP Power, Reset, and Clock Management on the AM335x
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.8.2.1 2016/12/05 10:54:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.8.2.2 2017/08/28 17:51:31 skrll Exp $");
 
 #include "tps65217pmic.h"
 
@@ -61,18 +61,12 @@ static void
 am335x_prcm_check_clkctrl(bus_size_t cm_module,
     bus_size_t clkctrl_reg, uint32_t v)
 {
-#ifdef DIAGNOSTIC
 	uint32_t u = prcm_read_4(cm_module, clkctrl_reg);
 
 	if (__SHIFTOUT(u, AM335X_CLKCTRL_MODULEMODE_MASK) !=
 	    __SHIFTOUT(v, AM335X_CLKCTRL_MODULEMODE_MASK))
 		aprint_error("clkctrl didn't take: %"PRIx32" -/-> %"PRIx32"\n",
 		    u, v);
-#else
-	(void)cm_module;
-	(void)clkctrl_reg;
-	(void)v;
-#endif
 }
 
 void

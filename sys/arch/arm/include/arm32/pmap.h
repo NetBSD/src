@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.137.2.5 2016/10/05 20:55:25 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.137.2.6 2017/08/28 17:51:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -84,8 +84,8 @@
 #endif
 
 #ifdef ARM_MMU_EXTENDED
+#define PMAP_HWPAGEWALKER		1
 #define PMAP_TLB_MAX			1
-#define PMAP_TLB_HWPAGEWALKER		1
 #if PMAP_TLB_MAX > 1
 #define PMAP_TLB_NEED_SHOOTDOWN		1
 #endif
@@ -167,7 +167,7 @@
 
 #ifndef _LOCORE
 
-#ifndef PMAP_MMU_EXTENDED
+#ifndef ARM_MMU_EXTENDED
 struct l1_ttable;
 struct l2_dtable;
 
@@ -480,15 +480,21 @@ vtophys(vaddr_t va)
 extern int pmap_needs_pte_sync;
 #if defined(_KERNEL_OPT)
 /*
+ * Perform compile time evaluation of PMAP_NEEDS_PTE_SYNC when only a
+ * single MMU type is selected.
+ *
  * StrongARM SA-1 caches do not have a write-through mode.  So, on these,
- * we need to do PTE syncs.  If only SA-1 is configured, then evaluate
- * this at compile time.
+ * we need to do PTE syncs. Additionally, V6 MMUs also need PTE syncs.
+ * Finally, MEMC, GENERIC and XSCALE MMUs do not need PTE syncs.
+ *
+ * Use run time evaluation for all other cases.
+ *
  */
-#if (ARM_MMU_SA1 + ARM_MMU_V6 != 0) && (ARM_NMMUS == 1)
+#if (ARM_NMMUS == 1)
+#if (ARM_MMU_SA1 + ARM_MMU_V6 != 0)
 #define	PMAP_INCLUDE_PTE_SYNC
-#if (ARM_MMU_V6 > 0)
 #define	PMAP_NEEDS_PTE_SYNC	1
-#elif (ARM_MMU_SA1 == 0)
+#elif (ARM_MMU_MEMC + ARM_MMU_GENERIC + ARM_MMU_XSCALE != 0)
 #define	PMAP_NEEDS_PTE_SYNC	0
 #endif
 #endif
@@ -722,12 +728,12 @@ extern void (*pmap_zero_page_func)(paddr_t);
  */
 #define	L1_S_PROT_U_generic	(L1_S_AP(AP_U))
 #define	L1_S_PROT_W_generic	(L1_S_AP(AP_W))
-#define	L1_S_PROT_RO_generic	(0)
+#define	L1_S_PROT_RO_generic	(L1_S_AP(AP_R))	/* AP_W == AP_R */
 #define	L1_S_PROT_MASK_generic	(L1_S_PROT_U|L1_S_PROT_W|L1_S_PROT_RO)
 
 #define	L1_S_PROT_U_xscale	(L1_S_AP(AP_U))
 #define	L1_S_PROT_W_xscale	(L1_S_AP(AP_W))
-#define	L1_S_PROT_RO_xscale	(0)
+#define	L1_S_PROT_RO_xscale	(L1_S_AP(AP_R))	/* AP_W == AP_R */
 #define	L1_S_PROT_MASK_xscale	(L1_S_PROT_U|L1_S_PROT_W|L1_S_PROT_RO)
 
 #define	L1_S_PROT_U_armv6	(L1_S_AP(AP_R) | L1_S_AP(AP_U))
@@ -748,12 +754,12 @@ extern void (*pmap_zero_page_func)(paddr_t);
 
 #define	L2_L_PROT_U_generic	(L2_AP(AP_U))
 #define	L2_L_PROT_W_generic	(L2_AP(AP_W))
-#define	L2_L_PROT_RO_generic	(0)
+#define	L2_L_PROT_RO_generic	(L2_AP(AP_R))
 #define	L2_L_PROT_MASK_generic	(L2_L_PROT_U|L2_L_PROT_W|L2_L_PROT_RO)
 
 #define	L2_L_PROT_U_xscale	(L2_AP(AP_U))
 #define	L2_L_PROT_W_xscale	(L2_AP(AP_W))
-#define	L2_L_PROT_RO_xscale	(0)
+#define	L2_L_PROT_RO_xscale	(L2_AP(AP_R))
 #define	L2_L_PROT_MASK_xscale	(L2_L_PROT_U|L2_L_PROT_W|L2_L_PROT_RO)
 
 #define	L2_L_PROT_U_armv6n	(L2_AP0(AP_R) | L2_AP0(AP_U))
@@ -774,12 +780,12 @@ extern void (*pmap_zero_page_func)(paddr_t);
 
 #define	L2_S_PROT_U_generic	(L2_AP(AP_U))
 #define	L2_S_PROT_W_generic	(L2_AP(AP_W))
-#define	L2_S_PROT_RO_generic	(0)
+#define	L2_S_PROT_RO_generic	(L2_AP(AP_R))
 #define	L2_S_PROT_MASK_generic	(L2_S_PROT_U|L2_S_PROT_W|L2_S_PROT_RO)
 
 #define	L2_S_PROT_U_xscale	(L2_AP0(AP_U))
 #define	L2_S_PROT_W_xscale	(L2_AP0(AP_W))
-#define	L2_S_PROT_RO_xscale	(0)
+#define	L2_S_PROT_RO_xscale	(L2_AP(AP_R))
 #define	L2_S_PROT_MASK_xscale	(L2_S_PROT_U|L2_S_PROT_W|L2_S_PROT_RO)
 
 #define	L2_S_PROT_U_armv6n	(L2_AP0(AP_R) | L2_AP0(AP_U))
@@ -918,8 +924,10 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_armv6n
 #define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_armv6n
 
-/* These prototypes make writeable mappings, while the other MMU types
- * make read-only mappings. */
+/*
+ * These prototypes make writeable mappings, while the other MMU types
+ * make read-only mappings.
+ */
 #define	L1_SS_PROTO		L1_SS_PROTO_armv6
 #define	L1_S_PROTO		L1_S_PROTO_armv6
 #define	L1_C_PROTO		L1_C_PROTO_armv6
@@ -1001,8 +1009,10 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_armv7
 #define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_armv7
 
-/* These prototypes make writeable mappings, while the other MMU types
- * make read-only mappings. */
+/*
+ * These prototypes make writeable mappings, while the other MMU types
+ * make read-only mappings.
+ */
 #define	L1_SS_PROTO		L1_SS_PROTO_armv7
 #define	L1_S_PROTO		L1_S_PROTO_armv7
 #define	L1_C_PROTO		L1_C_PROTO_armv7
@@ -1017,11 +1027,15 @@ extern void (*pmap_zero_page_func)(paddr_t);
  */
 #define l1pte_set_writable(pte)	(((pte) & ~L1_S_PROT_RO) | L1_S_PROT_W)
 #define l1pte_set_readonly(pte)	(((pte) & ~L1_S_PROT_W) | L1_S_PROT_RO)
-#define l2pte_set_writable(pte)	(((pte) & ~L2_S_PROT_RO) | L2_S_PROT_W)
-#define l2pte_set_readonly(pte)	(((pte) & ~L2_S_PROT_W) | L2_S_PROT_RO)
+
+#define l2pte_set_writable(pte)	(L2_S_PROT_W == L2_S_PROT_RO ? \
+    ((pte) | L2_S_PROT_W) : (((pte) & ~L2_S_PROT_RO) | L2_S_PROT_W))
+
+#define l2pte_set_readonly(pte)	(L2_S_PROT_W == L2_S_PROT_RO ? \
+    ((pte) & ~L2_S_PROT_RO) : (((pte) & ~L2_S_PROT_W) | L2_S_PROT_RO))
 
 #define l2pte_writable_p(pte)	(((pte) & L2_S_PROT_W) == L2_S_PROT_W && \
-				 (L2_S_PROT_RO == 0 || \
+				 (L2_S_PROT_W == L2_S_PROT_RO || \
 				  ((pte) & L2_S_PROT_RO) != L2_S_PROT_RO))
 
 /*
@@ -1029,13 +1043,16 @@ extern void (*pmap_zero_page_func)(paddr_t);
  * Note that the compiler will usually fold these at compile time.
  */
 #define	L1_S_PROT(ku, pr)	((((ku) == PTE_USER) ? L1_S_PROT_U : 0) | \
-				 (((pr) & VM_PROT_WRITE) ? L1_S_PROT_W : L1_S_PROT_RO))
+	(((pr) & VM_PROT_WRITE) ? L1_S_PROT_W :				  \
+	    (L1_S_PROT_W == L1_S_PROT_RO ? 0 : L1_S_PROT_RO)))
 
 #define	L2_L_PROT(ku, pr)	((((ku) == PTE_USER) ? L2_L_PROT_U : 0) | \
-				 (((pr) & VM_PROT_WRITE) ? L2_L_PROT_W : L2_L_PROT_RO))
+	(((pr) & VM_PROT_WRITE) ? L2_L_PROT_W :				  \
+	    (L2_L_PROT_W == L2_L_PROT_RO ? 0 : L2_L_PROT_RO)))
 
 #define	L2_S_PROT(ku, pr)	((((ku) == PTE_USER) ? L2_S_PROT_U : 0) | \
-				 (((pr) & VM_PROT_WRITE) ? L2_S_PROT_W : L2_S_PROT_RO))
+	(((pr) & VM_PROT_WRITE) ? L2_S_PROT_W :				  \
+	    (L2_S_PROT_W == L2_S_PROT_RO ? 0 : L2_S_PROT_RO)))
 
 /*
  * Macros to test if a mapping is mappable with an L1 SuperSection,

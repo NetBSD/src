@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.82.2.1 2015/09/22 12:05:48 skrll Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.82.2.2 2017/08/28 17:51:47 skrll Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.82.2.1 $"
+#ident 		"GENERIC_TINY-$Revision: 1.82.2.2 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -61,8 +61,6 @@ options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 #options 	COMPAT_SUNOS		# binary compatibility with SunOS
 #options 	COMPAT_LINUX		# binary compatibllity with Linux/m68k
 options 	COMPAT_BSDPTY		# /dev/[pt]ty?? ptys.
-
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Filesystem options
 file-system	FFS		# Berkeley Fast Filesystem

@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860var.h,v 1.2.2.4 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: rt2860var.h,v 1.2.2.5 2017/08/28 17:52:03 skrll Exp $	*/
 /*	$OpenBSD: rt2860var.h,v 1.23 2016/03/21 21:16:30 stsp Exp $	*/
 
 /*-
@@ -212,6 +212,4 @@ struct rt2860_softc {
 
 int	rt2860_attach(void *, int);
 int	rt2860_detach(void *);
-void	rt2860_suspend(void *);
-void	rt2860_wakeup(void *);
 int	rt2860_intr(void *);

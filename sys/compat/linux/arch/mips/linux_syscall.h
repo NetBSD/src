@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.62.2.4 2017/02/05 13:40:25 skrll Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.62.2.5 2017/08/28 17:51:58 skrll Exp $ */
 
 /*
  * System call numbers.
@@ -421,7 +421,7 @@
 /* syscall: "bind" ret: "int" args: "int" "const struct osockaddr *" "int" */
 #define	LINUX_SYS_bind	169
 
-/* syscall: "connect" ret: "int" args: "int" "const struct sockaddr *" "int" */
+/* syscall: "connect" ret: "int" args: "int" "const struct osockaddr *" "int" */
 #define	LINUX_SYS_connect	170
 
 /* syscall: "getpeername" ret: "int" args: "int" "void *" "int *" */

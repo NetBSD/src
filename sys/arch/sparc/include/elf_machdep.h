@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.7.40.1 2017/02/05 13:40:21 skrll Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.7.40.2 2017/08/28 17:51:52 skrll Exp $	*/
 
 #define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -86,5 +86,8 @@
 #define R_SPARC_TLS_DTPOFF64	77
 #define R_SPARC_TLS_TPOFF32	78
 #define R_SPARC_TLS_TPOFF64	79
+
+#define R_SPARC_JMP_IREL	248
+#define R_SPARC_IRELATIVE	249
 
 #define R_TYPE(name)		__CONCAT(R_SPARC_,name)

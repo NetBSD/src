@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.150 2014/08/12 20:27:10 joerg Exp $	*/
+/*	$NetBSD: trap.c,v 1.150.2.1 2017/08/28 17:51:49 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.150 2014/08/12 20:27:10 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.150.2.1 2017/08/28 17:51:49 skrll Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -262,18 +262,28 @@ trap(struct trapframe *tf)
 			    tf->tf_dar, tf->tf_srr0, tf->tf_dsisr, rv);
 		}
 		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = EXC_DSI;
 		ksi.ksi_addr = (void *)tf->tf_dar;
-		ksi.ksi_code =
-		    (tf->tf_dsisr & DSISR_PROTECT ? SEGV_ACCERR : SEGV_MAPERR);
-		if (rv == ENOMEM) {
-			printf("UVM: pid %d.%d (%s), uid %d killed: "
-			       "out of swap\n",
-			       p->p_pid, l->l_lid, p->p_comm,
-			       l->l_cred ?
-			       kauth_cred_geteuid(l->l_cred) : -1);
+vm_signal:
+		switch (rv) {
+		case EINVAL:
+			ksi.ksi_signo = SIGBUS;
+			ksi.ksi_code = BUS_ADRERR;
+			break;
+		case EACCES:
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_ACCERR;
+			break;
+		case ENOMEM:
 			ksi.ksi_signo = SIGKILL;
+			printf("UVM: pid %d.%d (%s), uid %d killed: "
+			       "out of swap\n", p->p_pid, l->l_lid, p->p_comm,
+			       l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1);
+			break;
+		default:
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_MAPERR;
+			break;
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		break;
@@ -323,12 +333,9 @@ trap(struct trapframe *tf)
 			    tf->tf_srr0, tf->tf_srr1);
 		}
 		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = EXC_ISI;
 		ksi.ksi_addr = (void *)tf->tf_srr0;
-		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
-		(*p->p_emul->e_trapsignal)(l, &ksi);
-		break;
+		goto vm_signal;
 
 	case EXC_FPU|EXC_USER:
 		ci->ci_ev_fpu.ev_count++;
@@ -750,12 +757,12 @@ fix_unaligned(struct lwp *l, struct trapframe *tf)
 				memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
 				fpu_mark_used(l);
 			} else {
-				fpu_save();
+				fpu_save(l);
 			}
 
-				if (copyin((void *)tf->tf_dar, fpreg,
-				    sizeof(double)) != 0)
-					return -1;
+			if (copyin((void *)tf->tf_dar, fpreg,
+				   sizeof(double)) != 0)
+				return -1;
 
 			if (dsi->flags & DSI_OP_INDEXED) {
 			    /* do nothing */
@@ -796,12 +803,12 @@ fix_unaligned(struct lwp *l, struct trapframe *tf)
 				memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
 				fpu_mark_used(l);
 			} else {
-				fpu_save();
+				fpu_save(l);
 			}
 
-				if (copyout(fpreg, (void *)tf->tf_dar,
+			if (copyout(fpreg, (void *)tf->tf_dar,
 				    sizeof(double)) != 0)
-					return -1;
+				return -1;
 
 			if (dsi->flags & DSI_OP_INDEXED) {
 			    /* do nothing */
@@ -1015,6 +1022,7 @@ int
 emulated_opcode(struct lwp *l, struct trapframe *tf)
 {
 	uint32_t opcode;
+
 	if (copyin((void *)tf->tf_srr0, &opcode, sizeof(opcode)) != 0)
 		return 0;
 
@@ -1038,7 +1046,7 @@ emulated_opcode(struct lwp *l, struct trapframe *tf)
 		return 1;
 	}
 
-#define	OPC_MTMSR_CODE		0x7c0000a8
+#define	OPC_MTMSR_CODE		0x7c000124
 #define	OPC_MTMSR_MASK		0xfc1fffff
 #define	OPC_MTMSR		OPC_MTMSR_CODE
 #define	OPC_MTMSR_REG(o)	(((o) >> 21) & 0x1f)
@@ -1049,15 +1057,24 @@ emulated_opcode(struct lwp *l, struct trapframe *tf)
 		register_t msr = tf->tf_fixreg[OPC_MTMSR_REG(opcode)];
 
 		/*
+		 * Ignore the FP enable bit in the requested MSR.
+		 * It might be set in the thread's actual MSR but the
+		 * user code isn't allowed to change it.
+		 */
+		msr &= ~PSL_FP;
+
+		/*
 		 * Don't let the user muck with bits he's not allowed to.
 		 */
 		if (!PSL_USEROK_P(msr))
 			return 0;
+
 		/*
 		 * For now, only update the FP exception mode.
 		 */
 		pcb->pcb_flags &= ~(PSL_FE0|PSL_FE1);
 		pcb->pcb_flags |= msr & (PSL_FE0|PSL_FE1);
+
 		/*
 		 * If we think we have the FPU, update SRR1 too.  If we're
 		 * wrong userret() will take care of it.

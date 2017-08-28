@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_interrupt.c,v 1.1.2.2 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: subr_interrupt.c,v 1.1.2.3 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_interrupt.c,v 1.1.2.2 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_interrupt.c,v 1.1.2.3 2017/08/28 17:53:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,9 +325,6 @@ interrupt_intrio_list_sysctl(SYSCTLFN_ARGS)
 		return ENOMEM;
 
 	buf = kmem_zalloc(*oldlenp, KM_SLEEP);
-	if (buf == NULL)
-		return ENOMEM;
-
 	ret = interrupt_intrio_list(buf, *oldlenp);
 	if (ret < 0) {
 		error = -ret;

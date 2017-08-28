@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.1.14.11 2017/01/29 15:58:14 skrll Exp $	*/
+/*	$NetBSD: udsir.c,v 1.1.14.12 2017/08/28 17:52:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.11 2017/01/29 15:58:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.12 2017/08/28 17:52:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -357,11 +357,6 @@ udsir_open(void *h, int flag, int mode, struct lwp *l)
 	sc->sc_wr_buf = usbd_get_buffer(sc->sc_wr_xfer);
 
 	sc->sc_ur_buf = kmem_alloc(IRDA_MAX_FRAME_SIZE, KM_SLEEP);
-	if (sc->sc_ur_buf == NULL) {
-		error = ENOMEM;
-		goto bad5;
-	}
-
 	sc->sc_rd_index = sc->sc_rd_count = 0;
 	sc->sc_closing = 0;
 	sc->sc_rd_readinprogress = 0;

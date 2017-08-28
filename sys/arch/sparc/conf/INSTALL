@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.90.2.3 2017/02/05 13:40:20 skrll Exp $
+#	$NetBSD: INSTALL,v 1.90.2.4 2017/08/28 17:51:52 skrll Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -19,7 +19,7 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 ## The miniroot size must be kept in sync manually with the size of
 ## the `ramdisk' image (which is built in distrib/sparc/ramdisk).
-options 	MEMORY_DISK_ROOT_SIZE=1800	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=2000	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 pseudo-device	md			# memory disk device (ramdisk)
@@ -150,7 +150,6 @@ options 	INSECURE
 #options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 #options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.

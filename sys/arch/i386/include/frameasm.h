@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.15 2011/07/26 12:57:35 yamt Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.15.30.1 2017/08/28 17:51:40 skrll Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -9,22 +9,22 @@
 #endif
 
 #if !defined(XEN)
-#define CLI(reg)        cli
-#define STI(reg)        sti
+#define CLI(reg)	cli
+#define STI(reg)	sti
 #else
 /* XXX assym.h */
-#define TRAP_INSTR      int $0x82
-#define XEN_BLOCK_EVENTS(reg)   movb $1,EVTCHN_UPCALL_MASK(reg)
-#define XEN_UNBLOCK_EVENTS(reg) movb $0,EVTCHN_UPCALL_MASK(reg)
-#define XEN_TEST_PENDING(reg)   testb $0xFF,EVTCHN_UPCALL_PENDING(reg)
+#define TRAP_INSTR	int	$0x82
+#define XEN_BLOCK_EVENTS(reg)	movb	$1,EVTCHN_UPCALL_MASK(reg)
+#define XEN_UNBLOCK_EVENTS(reg)	movb	$0,EVTCHN_UPCALL_MASK(reg)
+#define XEN_TEST_PENDING(reg)	testb	$0xFF,EVTCHN_UPCALL_PENDING(reg)
 
-#define CLI(reg)        movl    CPUVAR(VCPU),reg ;  \
-                        XEN_BLOCK_EVENTS(reg)
-#define STI(reg)        movl    CPUVAR(VCPU),reg ;  \
+#define CLI(reg)	movl	CPUVAR(VCPU),reg ;  \
+			XEN_BLOCK_EVENTS(reg)
+#define STI(reg)	movl	CPUVAR(VCPU),reg ;  \
 			XEN_UNBLOCK_EVENTS(reg)
-#define STIC(reg)       movl    CPUVAR(VCPU),reg ;  \
+#define STIC(reg)	movl	CPUVAR(VCPU),reg ;  \
 			XEN_UNBLOCK_EVENTS(reg)  ; \
-			testb $0xff,EVTCHN_UPCALL_PENDING(reg)
+			testb	$0xff,EVTCHN_UPCALL_PENDING(reg)
 #endif
 
 #ifndef TRAPLOG
@@ -60,7 +60,7 @@
 	rdmsr			;			\
 	movl	%eax,TREC_IBT(%ebx)
 #endif
-		
+
 /*
  * These are used on interrupt or trap entry or exit.
  */

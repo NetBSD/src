@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.22 2011/11/24 03:35:57 mrg Exp $ */
+/* $NetBSD: haltwo.c,v 1.22.26.1 2017/08/28 17:51:51 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.22 2011/11/24 03:35:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.22.26.1 2017/08/28 17:51:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -690,9 +690,6 @@ haltwo_malloc(void *v, int direction, size_t size)
 	DPRINTF(("haltwo_malloc size = %d\n", size));
 	sc = v;
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (p == NULL)
-		return NULL;
-
 	if (haltwo_alloc_dmamem(sc, size, p)) {
 		kmem_free(p, sizeof(*p));
 		return NULL;

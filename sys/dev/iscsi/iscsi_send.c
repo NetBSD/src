@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.10.2.4 2017/02/05 13:40:28 skrll Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.10.2.5 2017/08/28 17:52:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -417,12 +417,6 @@ iscsi_send_thread(void *par)
 		KASSERT(ccb->disp >= CCBDISP_NOWAIT);
 		wake_ccb(ccb, conn->terminating);
 		/* NOTE: wake_ccb will remove the CCB from the queue */
-	}
-
-	if (conn->in_session) {
-		conn->in_session = FALSE;
-		TAILQ_REMOVE(&sess->conn_list, conn, connections);
-		sess->mru_connection = TAILQ_FIRST(&sess->conn_list);
 	}
 
 	add_connection_cleanup(conn);
@@ -1489,6 +1483,7 @@ send_run_xfer(session_t *session, struct scsipi_xfer *xs)
 		xs->error = XS_SELTIMEOUT;
 		DEBC(conn, 10, ("run_xfer on dead connection\n"));
 		scsipi_done(xs);
+		unref_session(session);
 		return;
 	}
 
@@ -1496,6 +1491,7 @@ send_run_xfer(session_t *session, struct scsipi_xfer *xs)
 		if (send_task_management(conn, NULL, xs, TARGET_WARM_RESET)) {
 			xs->error = XS_SELTIMEOUT;
 			scsipi_done(xs);
+			unref_session(session);
 		}
 		return;
 	}
@@ -1505,6 +1501,7 @@ send_run_xfer(session_t *session, struct scsipi_xfer *xs)
 		xs->error = XS_BUSY;
 		DEBC(conn, 5, ("No CCB in run_xfer, %d in use.\n", conn->usecount));
 		scsipi_done(xs);
+		unref_session(session);
 		return;
 	}
 	/* copy parameters into CCB for easier access */

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_carreg.h,v 1.1.2.4 2017/02/05 13:40:04 skrll Exp $ */
+/* $NetBSD: tegra124_carreg.h,v 1.1.2.5 2017/08/28 17:51:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,8 @@
 
 #ifndef _ARM_TEGRA124_CARREG_H
 #define _ARM_TEGRA124_CARREG_H
+
+#define TEGRA124_REF_FREQ	12000000
 
 #define CAR_RST_SOURCE_REG	0x00
 #define CAR_RST_SOURCE_WDT_EN		__BIT(5)

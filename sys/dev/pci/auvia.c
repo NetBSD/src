@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.77 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: auvia.c,v 1.77.6.1 2017/08/28 17:52:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.77 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.77.6.1 2017/08/28 17:52:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -926,8 +926,6 @@ auvia_malloc_dmamem(void *addr, int direction, size_t size)
 	int rseg;
 
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (p == NULL)
-		return NULL;
 	sc = addr;
 	p->size = size;
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &p->seg,

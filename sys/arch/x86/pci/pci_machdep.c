@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.69.2.4 2016/10/05 20:55:37 skrll Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.69.2.5 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.69.2.4 2016/10/05 20:55:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.69.2.5 2017/08/28 17:51:56 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -483,7 +483,12 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 	    PCI_SUBCLASS(class) != PCI_SUBCLASS_BRIDGE_HOST)
 		return;
 
-	if (pci_has_msi_quirk(id, PCI_QUIRK_DISABLE_MSI)) {
+	/* VMware and KVM use old chipset, but they can use MSI/MSI-X */
+	if ((cpu_feature[1] & CPUID2_RAZ)
+	    && (pci_has_msi_quirk(id, PCI_QUIRK_ENABLE_MSI_VM))) {
+			pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
+			pba->pba_flags |= PCI_FLAGS_MSIX_OKAY;
+	} else if (pci_has_msi_quirk(id, PCI_QUIRK_DISABLE_MSI)) {
 		pba->pba_flags &= ~PCI_FLAGS_MSI_OKAY;
 		pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
 		aprint_verbose("\n");
@@ -498,14 +503,6 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 	} else {
 		pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
 		pba->pba_flags |= PCI_FLAGS_MSIX_OKAY;
-	}
-
-	/* VMware and KVM use old chipset, but they can use MSI/MSI-X */
-	if (cpu_feature[1] & CPUID2_RAZ) {
-		if (pci_has_msi_quirk(id, PCI_QUIRK_ENABLE_MSI_VM)) {
-			pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
-			pba->pba_flags |= PCI_FLAGS_MSIX_OKAY;
-		}
 	}
 
 	/*
@@ -926,10 +923,6 @@ pci_chipset_tag_create(pci_chipset_tag_t opc, const uint64_t present,
 		return EINVAL;
 
 	pc = kmem_alloc(sizeof(struct pci_chipset_tag), KM_SLEEP);
-
-	if (pc == NULL)
-		return ENOMEM;
-
 	pc->pc_super = opc;
 
 	for (bits = present; bits != 0; bits = nbits) {
@@ -1098,6 +1091,8 @@ device_pci_register(device_t dev, void *aux)
 				if (ri->ri_bits != NULL) {
 					prop_dictionary_set_uint64(dict,
 					    "virtual_address",
+					    ri->ri_hwbits != NULL ?
+					    (vaddr_t)ri->ri_hworigbits :
 					    (vaddr_t)ri->ri_origbits);
 				}
 #endif
@@ -1124,6 +1119,11 @@ device_pci_register(device_t dev, void *aux)
 
 #if NWSDISPLAY > 0 && NGENFB > 0
 				if (device_is_a(dev, "genfb")) {
+					prop_dictionary_set_bool(dict,
+					    "enable_shadowfb",
+					    ri->ri_hwbits != NULL ?
+					      true : false);
+
 					x86_genfb_set_console_dev(dev);
 #ifdef DDB
 					db_trap_callback =

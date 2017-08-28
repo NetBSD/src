@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_bmap.c,v 1.5.8.1 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: ulfs_bmap.c,v 1.5.8.2 2017/08/28 17:53:17 skrll Exp $	*/
 /*  from NetBSD: ufs_bmap.c,v 1.50 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_bmap.c,v 1.5.8.1 2015/09/22 12:06:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_bmap.c,v 1.5.8.2 2017/08/28 17:53:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_bmap.c,v 1.5.8.1 2015/09/22 12:06:17 skrll Exp 
 #include <sys/mount.h>
 #include <sys/resourcevar.h>
 #include <sys/trace.h>
-#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -113,10 +112,8 @@ ulfs_bmap(void *v)
 	if (ap->a_bnp == NULL)
 		return (0);
 
-	fstrans_start(ap->a_vp->v_mount, FSTRANS_SHARED);
 	error = ulfs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL, NULL,
 	    ap->a_runp, ulfs_issequential);
-	fstrans_done(ap->a_vp->v_mount);
 	return error;
 }
 
@@ -152,10 +149,8 @@ ulfs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 	mp = vp->v_mount;
 	ump = ip->i_ump;
 	fs = ip->i_lfs;
-#ifdef DIAGNOSTIC
-	if ((ap != NULL && nump == NULL) || (ap == NULL && nump != NULL))
-		panic("ulfs_bmaparray: invalid arguments");
-#endif
+	KASSERTMSG(((ap == NULL) == (nump == NULL)),
+	    "ulfs_bmaparray: invalid arguments: ap=%p, nump=%p", ap, nump);
 
 	if (runp) {
 		/*
@@ -275,12 +270,9 @@ ulfs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		}
 		if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 			trace(TR_BREADHIT, pack(vp, size), metalbn);
-		}
-#ifdef DIAGNOSTIC
-		else if (!daddr)
-			panic("ulfs_bmaparray: indirect block not in cache");
-#endif
-		else {
+		} else {
+			KASSERTMSG(daddr,
+			    "ulfs_bmaparray: indirect block not in cache");
 			trace(TR_BREADMISS, pack(vp, size), metalbn);
 			bp->b_blkno = blkptrtodb(fs, daddr);
 			bp->b_flags |= B_READ;

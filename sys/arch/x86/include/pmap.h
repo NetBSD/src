@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.55.6.5 2016/12/05 10:54:59 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.55.6.6 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -181,16 +181,6 @@ struct pmap {
 #endif
 
 /*
- * flag to be used for kernel mappings: PG_u on Xen/amd64,
- * 0 otherwise.
- */
-#if defined(XEN) && defined(__x86_64__)
-#define PG_k PG_u
-#else
-#define PG_k 0
-#endif
-
-/*
  * MD flags that we use for pmap_enter and pmap_kenter_pa:
  */
 
@@ -277,6 +267,10 @@ int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
 u_int		x86_mmap_flags(paddr_t);
 
 bool		pmap_is_curpmap(struct pmap *);
+
+#ifndef __HAVE_DIRECT_MAP
+void		pmap_vpage_cpu_init(struct cpu_info *);
+#endif
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -491,11 +485,13 @@ void	pmap_free_ptps(struct vm_page *);
 
 #ifdef __HAVE_DIRECT_MAP
 
-#define L4_SLOT_DIRECT		509
+#define L4_SLOT_DIRECT		456
 #define PDIR_SLOT_DIRECT	L4_SLOT_DIRECT
 
+#define NL4_SLOT_DIRECT		32
+
 #define PMAP_DIRECT_BASE	(VA_SIGN_NEG((L4_SLOT_DIRECT * NBPD_L4)))
-#define PMAP_DIRECT_END		(VA_SIGN_NEG(((L4_SLOT_DIRECT + 1) * NBPD_L4)))
+#define PMAP_DIRECT_END		(PMAP_DIRECT_BASE + NL4_SLOT_DIRECT * NBPD_L4)
 
 #define PMAP_DIRECT_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE + (pa))
 #define PMAP_DIRECT_UNMAP(va)	((paddr_t)(va) - PMAP_DIRECT_BASE)

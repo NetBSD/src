@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.rumpdevcomp,v 1.19.2.2 2015/12/27 12:10:08 skrll Exp $
+#	$NetBSD: Makefile.rumpdevcomp,v 1.19.2.3 2017/08/28 17:53:14 skrll Exp $
 #
 
 RUMPDEVCOMP=	audio bpf cgd disk dm drvctl fss md netsmb		\
 		pad pud	putter raidframe rnd scsipi sysmon vnd wscons	\
 		opencrypto
 
-RUMPUSBDEVS=	ubt ucom ugenhc ulpt umass usb
+RUMPUSBDEVS=	ualea ubt ucom ugenhc ulpt umass usb
 
 RUMPPCIDEVS=	pci pci_if_iwn pci_if_pcn pci_if_wm
 RUMPPCIDEVS+=	pci_usbhc

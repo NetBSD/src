@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.48.6.15 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.48.6.16 2017/08/28 17:52:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.15 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.16 2017/08/28 17:52:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -138,6 +138,7 @@ static const struct usb_devno rum_devs[] = {
 	{ USB_VENDOR_SITECOMEU,		USB_PRODUCT_SITECOMEU_WL172 },
 	{ USB_VENDOR_SPARKLAN,		USB_PRODUCT_SPARKLAN_RT2573 },
 	{ USB_VENDOR_SURECOM,		USB_PRODUCT_SURECOM_RT2573 },
+	{ USB_VENDOR_SYNET,		USB_PRODUCT_SYNET_MWP54SS },
 	{ USB_VENDOR_ZYXEL,		USB_PRODUCT_ZYXEL_RT2573 }
 };
 

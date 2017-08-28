@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.luna68k,v 1.24.4.1 2016/12/05 10:54:54 skrll Exp $
+#	$NetBSD: files.luna68k,v 1.24.4.2 2017/08/28 17:51:43 skrll Exp $
 #
 maxpartitions 8
 maxusers 2 8 64
@@ -22,7 +22,6 @@ file arch/m68k/m68k/procfs_machdep.c	procfs
 file arch/m68k/m68k/sys_machdep.c
 file arch/m68k/m68k/vm_machdep.c
 file dev/cons.c
-file arch/luna68k/dev/lcd.c
 
 device mainbus {}
 attach mainbus at root
@@ -31,6 +30,10 @@ file arch/luna68k/luna68k/mainbus.c
 device clock
 attach clock at mainbus
 file arch/luna68k/dev/timekeeper.c	clock
+
+device lcd
+attach lcd at mainbus
+file	arch/luna68k/dev/lcd.c		lcd needs-flag
 
 attach le at mainbus: le24
 file arch/luna68k/dev/if_le.c		le

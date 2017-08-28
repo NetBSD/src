@@ -1,14 +1,20 @@
-/*	$NetBSD: if_iwmreg.h,v 1.2.2.3 2017/02/05 13:40:29 skrll Exp $	*/
+/*	$NetBSD: if_iwmreg.h,v 1.2.2.4 2017/08/28 17:52:05 skrll Exp $	*/
 /*	OpenBSD: if_iwmreg.h,v 1.19 2016/09/20 11:46:09 stsp Exp 	*/
 
-/******************************************************************************
+/*-
+ * Based on BSD-licensed source modules in the Linux iwlwifi driver,
+ * which were used as the reference documentation for this implementation.
+ *
+ ***********************************************************************
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
  * redistributing this file, you may do so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * Copyright(c) 2005 - 2014 Intel Corporation. All rights reserved.
+ * Copyright(c) 2008 - 2014 Intel Corporation. All rights reserved.
+ * Copyright(c) 2013 - 2015 Intel Mobile Communications GmbH
+ * Copyright(c) 2016        Intel Deutschland GmbH
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
@@ -28,12 +34,14 @@
  * in the file called COPYING.
  *
  * Contact Information:
- *  Intel Linux Wireless <ilw@linux.intel.com>
+ *  Intel Linux Wireless <linuxwifi@intel.com>
  * Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
  *
  * BSD LICENSE
  *
  * Copyright(c) 2005 - 2014 Intel Corporation. All rights reserved.
+ * Copyright(c) 2013 - 2015 Intel Mobile Communications GmbH
+ * Copyright(c) 2016        Intel Deutschland GmbH
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,8 +69,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *****************************************************************************/
+ */
 
 /*
  * CSR (control and status registers)
@@ -656,12 +663,12 @@ enum iwm_ucode_tlv_flag {
  * @IWM_NUM_UCODE_TLV_API: number of bits used
  */
 enum iwm_ucode_tlv_api {
-	IWM_UCODE_TLV_API_FRAGMENTED_SCAN	= (1 << 8),
-	IWM_UCODE_TLV_API_WIFI_MCC_UPDATE	= (1 << 9),
-	IWM_UCODE_TLV_API_WIDE_CMD_HDR		= (1 << 14),
-	IWM_UCODE_TLV_API_LQ_SS_PARAMS		= (1 << 18),
-	IWM_UCODE_TLV_API_EXT_SCAN_PRIORITY	= (1 << 24),
-	IWM_UCODE_TLV_API_TX_POWER_CHAIN	= (1 << 27),
+	IWM_UCODE_TLV_API_FRAGMENTED_SCAN	= 8,
+	IWM_UCODE_TLV_API_WIFI_MCC_UPDATE	= 9,
+	IWM_UCODE_TLV_API_WIDE_CMD_HDR		= 14,
+	IWM_UCODE_TLV_API_LQ_SS_PARAMS		= 18,
+	IWM_UCODE_TLV_API_EXT_SCAN_PRIORITY	= 24,
+	IWM_UCODE_TLV_API_TX_POWER_CHAIN	= 27,
 
 	IWM_NUM_UCODE_TLV_API = 32
 };
@@ -946,6 +953,7 @@ enum iwm_ucode_tlv_type {
 	IWM_UCODE_TLV_FW_DBG_TRIGGER	= 40,
 	IWM_UCODE_TLV_FW_UNDOCUMENTED1	= 48,	/* undocumented TLV */
 	IWM_UCODE_TLV_FW_GSCAN_CAPA	= 50,
+	IWM_UCODE_TLV_FW_MEM_SEG	= 51,
 };
 
 struct iwm_ucode_tlv {
@@ -1757,6 +1765,9 @@ enum {
 
 	IWM_LQ_CMD = 0x4e,
 
+	/* paging block to FW cpu2 */
+	IWM_FW_PAGING_BLOCK_CMD = 0x4f,
+
 	/* Calibration */
 	IWM_TEMPERATURE_NOTIFICATION = 0x62,
 	IWM_CALIBRATION_CFG_CMD = 0x65,
@@ -2132,6 +2143,48 @@ struct iwm_nvm_access_cmd {
 	uint16_t length;
 	uint8_t data[];
 } __packed; /* IWM_NVM_ACCESS_CMD_API_S_VER_2 */
+
+#define IWM_NUM_OF_FW_PAGING_BLOCKS	33 /* 32 for data and 1 block for CSS */
+
+/*
+ * struct iwm_fw_paging_cmd - paging layout
+ *
+ * (IWM_FW_PAGING_BLOCK_CMD = 0x4f)
+ *
+ * Send to FW the paging layout in the driver.
+ *
+ * @flags: various flags for the command
+ * @block_size: the block size in powers of 2
+ * @block_num: number of blocks specified in the command.
+ * @device_phy_addr: virtual addresses from device side
+ *	32 bit address for API version 1, 64 bit address for API version 2.
+*/
+struct iwm_fw_paging_cmd {
+	uint32_t flags;
+	uint32_t block_size;
+	uint32_t block_num;
+	union {
+		uint32_t addr32[IWM_NUM_OF_FW_PAGING_BLOCKS];
+		uint64_t addr64[IWM_NUM_OF_FW_PAGING_BLOCKS];
+	} device_phy_addr;
+} __packed; /* FW_PAGING_BLOCK_CMD_API_S_VER_2 */
+
+/*
+ * Fw items ID's
+ *
+ * @IWM_FW_ITEM_ID_PAGING: Address of the pages that the FW will upload
+ *	download
+ */
+enum iwm_fw_item_id {
+	IWM_FW_ITEM_ID_PAGING = 3,
+};
+
+/*
+ * struct iwm_fw_get_item_cmd - get an item from the fw
+ */
+struct iwm_fw_get_item_cmd {
+	uint32_t item_id;
+} __packed; /* FW_GET_ITEM_CMD_API_S_VER_1 */
 
 /**
  * struct iwm_nvm_access_resp_ver2 - response to IWM_NVM_ACCESS_CMD
@@ -6507,6 +6560,36 @@ iwm_rx_packet_payload_len(const struct iwm_rx_packet *pkt)
 
 #define IWM_MIN_DBM	-100
 #define IWM_MAX_DBM	-33	/* realistic guess */
+
+/*
+ * Block paging calculations
+ */
+#define IWM_PAGE_2_EXP_SIZE 12 /* 4K == 2^12 */
+#define IWM_FW_PAGING_SIZE (1 << IWM_PAGE_2_EXP_SIZE) /* page size is 4KB */
+#define IWM_PAGE_PER_GROUP_2_EXP_SIZE 3
+/* 8 pages per group */
+#define IWM_NUM_OF_PAGE_PER_GROUP (1 << IWM_PAGE_PER_GROUP_2_EXP_SIZE)
+/* don't change, support only 32KB size */
+#define IWM_PAGING_BLOCK_SIZE (IWM_NUM_OF_PAGE_PER_GROUP * IWM_FW_PAGING_SIZE)
+/* 32K == 2^15 */
+#define IWM_BLOCK_2_EXP_SIZE (IWM_PAGE_2_EXP_SIZE + IWM_PAGE_PER_GROUP_2_EXP_SIZE)
+
+/*
+ * Image paging calculations
+ */
+#define IWM_BLOCK_PER_IMAGE_2_EXP_SIZE 5
+/* 2^5 == 32 blocks per image */
+#define IWM_NUM_OF_BLOCK_PER_IMAGE (1 << IWM_BLOCK_PER_IMAGE_2_EXP_SIZE)
+/* maximum image size 1024KB */
+#define IWM_MAX_PAGING_IMAGE_SIZE (IWM_NUM_OF_BLOCK_PER_IMAGE * IWM_PAGING_BLOCK_SIZE)
+
+/* Virtual address signature */
+#define IWM_PAGING_ADDR_SIG 0xAA000000
+
+#define IWM_PAGING_CMD_IS_SECURED (1 << 9)
+#define IWM_PAGING_CMD_IS_ENABLED (1 << 8)
+#define IWM_PAGING_CMD_NUM_OF_PAGES_IN_LAST_GRP_POS 0
+#define IWM_PAGING_TLV_SECURE_MASK 1
 
 #define IWM_READ(sc, reg)						\
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (reg))

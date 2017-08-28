@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.40 2014/01/11 17:06:15 christos Exp $	*/
+/*	$NetBSD: spl.S,v 1.40.6.1 2017/08/28 17:51:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,9 +30,8 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.40 2014/01/11 17:06:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.40.6.1 2017/08/28 17:51:40 skrll Exp $");
 
-#include "opt_vm86.h"
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
 #include "opt_xen.h"
@@ -276,12 +275,7 @@ IDTVEC(doreti)
 5:
 	testb   $CHK_UPL,TF_CS(%esp)
 	jnz	doreti_checkast
-#ifdef VM86
-	testl	$PSL_VM,TF_EFLAGS(%esp)
-	jz	6f
-#else
 	jmp	6f
-#endif
 	.type	_C_LABEL(doreti_checkast), @function
 LABEL(doreti_checkast)
 	CHECK_ASTPENDING(%eax)
@@ -417,10 +411,6 @@ IDTVEC(preemptresume)
 	sti
 	testb   $CHK_UPL, TF_CS(%esp)
 	jnz	1f
-#ifdef VM86
-	testl	$PSL_VM,TF_EFLAGS(%esp)
-	jnz	1f
-#endif
 	movl	TF_EIP(%esp), %eax
 	pushl	%eax
 	call	_C_LABEL(kpreempt)		# from kernel

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.182.24.1 2017/02/05 13:40:22 skrll Exp $	   */
+/*	$NetBSD: pmap.c,v 1.182.24.2 2017/08/28 17:51:55 skrll Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *     This product includes software developed at Ludd, University of Lule}.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182.24.1 2017/02/05 13:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182.24.2 2017/08/28 17:51:55 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"

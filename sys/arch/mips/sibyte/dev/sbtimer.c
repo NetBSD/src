@@ -1,4 +1,4 @@
-/* $NetBSD: sbtimer.c,v 1.19.32.1 2016/10/05 20:55:32 skrll Exp $ */
+/* $NetBSD: sbtimer.c,v 1.19.32.2 2017/08/28 17:51:46 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.19.32.1 2016/10/05 20:55:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.19.32.2 2017/08/28 17:51:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.19.32.1 2016/10/05 20:55:32 skrll Exp 
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/include/sb1250_scd.h>
 #include <mips/sibyte/dev/sbscdvar.h>
+
+#include <evbmips/sbmips/systemsw.h>
 
 struct sbtimer_softc {
 	device_t sc_dev;

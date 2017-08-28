@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.3 2013/04/23 05:42:23 matt Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.3.12.1 2017/08/28 17:51:31 skrll Exp $	*/
 
 /* 
  * Based on ieeefp.h written by J.T. Conklin, Apr 28, 1995
@@ -19,6 +19,12 @@
 /* Exception type (used by fpsetmask() et al.) */
 
 typedef int fp_except;
+
+/* adjust for FP_* and FE_* value differences */ 
+#define	__FPE(x) (x)
+#define	__FEE(x) (x)
+#define	__FPR(x) (x)
+#define	__FER(x) (x)
 
 /* Bit defines for fp_except */
 

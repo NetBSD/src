@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.215.4.4 2017/02/05 13:41:01 skrll Exp $	*/
+/*	$NetBSD: mount.h,v 1.215.4.5 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -44,14 +44,16 @@
 #ifndef _STANDALONE
 #include <sys/param.h> /* precautionary upon removal from ucred.h */
 #include <sys/time.h>
-#include <sys/uio.h>
 #include <sys/ucred.h>
 #include <sys/fstypes.h>
+#include <sys/statvfs.h>
+#if defined(_KERNEL) || defined(__EXPOSE_MOUNT)
+#include <sys/uio.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
-#include <sys/statvfs.h>
 #include <sys/specificdata.h>
 #include <sys/condvar.h>
+#endif	/* defined(_KERNEL) || defined(__EXPOSE_MOUNT) */
 #endif	/* !_STANDALONE */
 
 /*
@@ -97,45 +99,6 @@
 #define MOUNT_RUMPFS	"rumpfs"	/* rump virtual file system */
 #define	MOUNT_V7FS	"v7fs"		/* 7th Edition of Unix Filesystem */
 
-#ifndef _STANDALONE
-
-struct vnode;
-struct vnode_impl;
-struct vattr;
-
-/*
- * Structure per mounted file system.  Each mounted file system has an
- * array of operations and an instance record.  The file systems are
- * put on a doubly linked list.
- */
-struct mount {
-	TAILQ_ENTRY(mount) mnt_list;		/* mount list */
-	TAILQ_HEAD(, vnode_impl) mnt_vnodelist;	/* list of vnodes this mount */
-	struct vfsops	*mnt_op;		/* operations on fs */
-	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
-	int		mnt_synclist_slot;	/* synclist slot index */
-	void		*mnt_transinfo;		/* for FS-internal use */
-	void		*mnt_data;		/* private data */
-	kmutex_t	mnt_unmounting;		/* to prevent new activity */
-	kmutex_t	mnt_renamelock;		/* per-fs rename lock */
-	int		mnt_refcnt;		/* ref count on this structure */
-	unsigned int	mnt_busynest;		/* vfs_busy nestings */
-	int		mnt_flag;		/* flags */
-	int		mnt_iflag;		/* internal flags */
-	int		mnt_fs_bshift;		/* offset shift for lblkno */
-	int		mnt_dev_bshift;		/* shift for device sectors */
-	struct statvfs	mnt_stat;		/* cache of filesystem stats */
-	specificdata_reference
-			mnt_specdataref;	/* subsystem specific data */
-	kmutex_t	mnt_updating;		/* to serialize updates */
-	struct wapbl_ops
-			*mnt_wapbl_op;		/* logging ops */
-	struct wapbl	*mnt_wapbl;		/* log info */
-	struct wapbl_replay
-			*mnt_wapbl_replay;	/* replay support XXX: what? */
-	uint64_t	mnt_gen;
-};
-
 /*
  * Sysctl CTL_VFS definitions.
  *
@@ -152,6 +115,48 @@ struct mount {
 #define VFS_USERMOUNT	3		/* enable/disable fs mnt by non-root */
 #define	VFS_MAGICLINKS  4		/* expand 'magic' symlinks */
 #define	VFSGEN_MAXID	5		/* number of valid vfs.generic ids */
+
+#ifndef _STANDALONE
+
+#if defined(_KERNEL) || defined(__EXPOSE_MOUNT)
+
+struct vnode;
+struct vnode_impl;
+struct vattr;
+
+/*
+ * Structure per mounted file system.  Each mounted file system has an
+ * array of operations and an instance record.
+ */
+struct mount {
+	TAILQ_HEAD(, vnode_impl) mnt_vnodelist;	/* list of vnodes this mount */
+	struct vfsops	*mnt_op;		/* operations on fs */
+	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
+	struct mount	*mnt_lower;		/* fs mounted on */
+	int		mnt_synclist_slot;	/* synclist slot index */
+	void		*mnt_transinfo;		/* for FS-internal use */
+	void		*mnt_data;		/* private data */
+	kmutex_t	mnt_renamelock;		/* per-fs rename lock */
+	int		mnt_refcnt;		/* ref count on this structure */
+	int		mnt_flag;		/* flags */
+	int		mnt_iflag;		/* internal flags */
+	int		mnt_fs_bshift;		/* offset shift for lblkno */
+	int		mnt_dev_bshift;		/* shift for device sectors */
+	struct statvfs	mnt_stat;		/* cache of filesystem stats */
+	specificdata_reference
+			mnt_specdataref;	/* subsystem specific data */
+	kmutex_t	mnt_updating;		/* to serialize updates */
+	struct wapbl_ops
+			*mnt_wapbl_op;		/* logging ops */
+	struct wapbl	*mnt_wapbl;		/* log info */
+	struct wapbl_replay
+			*mnt_wapbl_replay;	/* replay support XXX: what? */
+	uint64_t	mnt_gen;
+};
+
+#endif /* defined(_KERNEL) || defined(__EXPOSE_MOUNT) */
+
+#ifdef _KERNEL
 
 /*
  * USE THE SAME NAMES AS MOUNT_*!
@@ -192,8 +197,6 @@ struct mount {
 	{ "magiclinks", CTLTYPE_INT }, \
 }
 
-#if defined(_KERNEL)
-
 struct quotactl_args;		/* in sys/quotactl.h */
 struct quotastat;		/* in sys/quotactl.h */
 struct quotaidtypestat;		/* in sys/quotactl.h */
@@ -201,10 +204,6 @@ struct quotaobjtypestat;	/* in sys/quotactl.h */
 struct quotakcursor;		/* in sys/quotactl.h */
 struct quotakey;		/* in sys/quota.h */
 struct quotaval;		/* in sys/quota.h */
-
-#if __STDC__
-struct nameidata;
-#endif
 
 /*
  * Operations supported on mounted file system.
@@ -271,14 +270,8 @@ int	VFS_SNAPSHOT(struct mount *, struct vnode *, struct timespec *);
 int	VFS_EXTATTRCTL(struct mount *, int, struct vnode *, int, const char *);
 int	VFS_SUSPENDCTL(struct mount *, int);
 
-#endif /* _KERNEL */
-
-#ifdef _KERNEL
-#if __STDC__
-struct mbuf;
 struct vnodeopv_desc;
 struct kauth_cred;
-#endif
 
 #define	VFS_MAX_MOUNT_DATA	8192
 
@@ -417,15 +410,17 @@ void	vfs_sync_all(struct lwp *);
 bool	vfs_unmountall(struct lwp *);	    /* unmount file systems */
 bool	vfs_unmountall1(struct lwp *, bool, bool);
 bool	vfs_unmount_forceone(struct lwp *);
-int 	vfs_busy(struct mount *, struct mount **);
+int 	vfs_busy(struct mount *);
+int 	vfs_trybusy(struct mount *);
 int	vfs_rootmountalloc(const char *, const char *, struct mount **);
-void	vfs_unbusy(struct mount *, bool, struct mount **);
+void	vfs_unbusy(struct mount *);
 int	vfs_attach(struct vfsops *);
 int	vfs_detach(struct vfsops *);
 void	vfs_reinit(void);
 struct vfsops *vfs_getopsbyname(const char *);
 void	vfs_delref(struct vfsops *);
-void	vfs_destroy(struct mount *);
+void	vfs_ref(struct mount *);
+void	vfs_rele(struct mount *);
 struct mount *vfs_mountalloc(struct vfsops *, struct vnode *);
 int	vfs_stdextattrctl(struct mount *, int, struct vnode *,
 	    int, const char *);
@@ -457,7 +452,6 @@ struct vnode *vfs_vnode_iterator_next(struct vnode_iterator *,
 
 /* Syncer */
 extern int	syncer_maxdelay;
-extern kmutex_t	syncer_mutex;
 extern time_t	syncdelay;
 extern time_t	filedelay;
 extern time_t	dirdelay;
@@ -465,10 +459,8 @@ extern time_t	metadelay;
 void	vfs_syncer_add_to_worklist(struct mount *);
 void	vfs_syncer_remove_from_worklist(struct mount *);
 
-extern	TAILQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
 extern	int nvfssw;
-extern  kmutex_t mountlist_lock;
 extern	kmutex_t vfs_list_lock;
 
 void	vfs_mount_sysinit(void);
@@ -493,7 +485,15 @@ void *	mount_getspecific(struct mount *, specificdata_key_t);
 void	mount_setspecific(struct mount *, specificdata_key_t, void *);
 
 int	usermount_common_policy(struct mount *, u_long);
+
+typedef struct mount_iterator mount_iterator_t; /* Opaque. */
+void	mountlist_iterator_init(mount_iterator_t **);
+void	mountlist_iterator_destroy(mount_iterator_t *);
+struct mount *mountlist_iterator_next(mount_iterator_t *);
+struct mount *mountlist_iterator_trynext(mount_iterator_t *);
+struct mount *_mountlist_next(struct mount *);
 void	mountlist_append(struct mount *);
+void	mountlist_remove(struct mount *);
 
 LIST_HEAD(vfs_list_head, vfsops);
 extern struct vfs_list_head vfs_list;

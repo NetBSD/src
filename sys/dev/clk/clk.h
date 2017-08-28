@@ -1,4 +1,4 @@
-/* $NetBSD: clk.h,v 1.1.2.2 2015/12/27 12:09:49 skrll Exp $ */
+/* $NetBSD: clk.h,v 1.1.2.3 2017/08/28 17:52:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,9 +29,10 @@
 #ifndef _DEV_CLK_CLK_H
 #define _DEV_CLK_CLK_H
 
+struct clk_domain;
 struct clk;
 
-struct clk *	clk_get(const char *);
+struct clk *	clk_get(struct clk_domain *, const char *);
 void		clk_put(struct clk *);
 u_int		clk_get_rate(struct clk *);
 int		clk_set_rate(struct clk *, u_int);

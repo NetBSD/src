@@ -1,4 +1,33 @@
-/*	$NetBSD: x86_xpmap.c,v 1.53.4.4 2017/02/05 13:40:23 skrll Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.53.4.5 2017/08/28 17:51:57 skrll Exp $	*/
+
+/*
+ * Copyright (c) 2017 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Maxime Villard.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -66,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.53.4.4 2017/02/05 13:40:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.53.4.5 2017/08/28 17:51:57 skrll Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -87,30 +116,27 @@ __KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.53.4.4 2017/02/05 13:40:23 skrll Exp
 #include <machine/isa_machdep.h>
 
 #undef	XENDEBUG
-/* #define XENDEBUG_SYNC */
 
 #ifdef XENDEBUG
 #define	XENPRINTF(x) printf x
-#define	XENPRINTK2(x) /* printk x */
-static char XBUF[256];
 #else
 #define	XENPRINTF(x)
-#define	XENPRINTK2(x)
 #endif
 
-volatile shared_info_t *HYPERVISOR_shared_info;
 /* Xen requires the start_info struct to be page aligned */
 union start_info_union start_info_union __aligned(PAGE_SIZE);
-unsigned long *xpmap_phys_to_machine_mapping;
-kmutex_t pte_lock;
-vaddr_t xen_dummy_page;
 
+volatile shared_info_t *HYPERVISOR_shared_info __read_mostly;
+unsigned long *xpmap_phys_to_machine_mapping __read_mostly;
+kmutex_t pte_lock __cacheline_aligned;
+vaddr_t xen_dummy_page;
 pt_entry_t xpmap_pg_nx __read_mostly;
 
-void xen_failsafe_handler(void);
+#define XPQUEUE_SIZE 2048
+static mmu_update_t xpq_queue_array[MAXCPUS][XPQUEUE_SIZE];
+static int xpq_idx_array[MAXCPUS];
 
-#define HYPERVISOR_mmu_update_self(req, count, success_count) \
-	HYPERVISOR_mmu_update((req), (count), (success_count), DOMID_SELF)
+void xen_failsafe_handler(void);
 
 extern volatile struct xencons_interface *xencons_interface; /* XXX */
 extern struct xenstore_domain_interface *xenstore_interface; /* XXX */
@@ -166,66 +192,30 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 	splx(s);
 }
 
-#ifdef XENDEBUG
-void xpq_debug_dump(void);
-#endif
-
-#define XPQUEUE_SIZE 2048
-static mmu_update_t xpq_queue_array[MAXCPUS][XPQUEUE_SIZE];
-static int xpq_idx_array[MAXCPUS];
-
-#ifdef i386
-extern union descriptor tmpgdt[];
-#endif
-
 void
 xpq_flush_queue(void)
 {
-	int i, ok = 0, ret;
+	mmu_update_t *xpq_queue;
+	int done = 0, ret, xpq_idx;
 
-	mmu_update_t *xpq_queue = xpq_queue_array[curcpu()->ci_cpuid];
-	int xpq_idx = xpq_idx_array[curcpu()->ci_cpuid];
-
-	XENPRINTK2(("flush queue %p entries %d\n", xpq_queue, xpq_idx));
-	for (i = 0; i < xpq_idx; i++)
-		XENPRINTK2(("%d: 0x%08" PRIx64 " 0x%08" PRIx64 "\n", i,
-		    xpq_queue[i].ptr, xpq_queue[i].val));
+	xpq_idx = xpq_idx_array[curcpu()->ci_cpuid];
+	xpq_queue = xpq_queue_array[curcpu()->ci_cpuid];
 
 retry:
-	ret = HYPERVISOR_mmu_update_self(xpq_queue, xpq_idx, &ok);
+	ret = HYPERVISOR_mmu_update(xpq_queue, xpq_idx, &done, DOMID_SELF);
 
-	if (xpq_idx != 0 && ret < 0) {
-		struct cpu_info *ci;
-		CPU_INFO_ITERATOR cii;
-
+	if (ret < 0 && xpq_idx != 0) {
 		printf("xpq_flush_queue: %d entries (%d successful) on "
 		    "cpu%d (%ld)\n",
-		    xpq_idx, ok, curcpu()->ci_index, curcpu()->ci_cpuid);
+		    xpq_idx, done, curcpu()->ci_index, curcpu()->ci_cpuid);
 
-		if (ok != 0) {
-			xpq_queue += ok;
-			xpq_idx -= ok;
-			ok = 0;
+		if (done != 0) {
+			xpq_queue += done;
+			xpq_idx -= done;
+			done = 0;
 			goto retry;
 		}
 
-		for (CPU_INFO_FOREACH(cii, ci)) {
-			xpq_queue = xpq_queue_array[ci->ci_cpuid];
-			xpq_idx = xpq_idx_array[ci->ci_cpuid];
-			printf("cpu%d (%ld):\n", ci->ci_index, ci->ci_cpuid);
-			for (i = 0; i < xpq_idx; i++) {
-				printf("  0x%016" PRIx64 ": 0x%016" PRIx64 "\n",
-				   xpq_queue[i].ptr, xpq_queue[i].val);
-			}
-#ifdef __x86_64__
-			for (i = 0; i < PDIR_SLOT_PTE; i++) {
-				if (ci->ci_kpm_pdir[i] == 0)
-					continue;
-				printf(" kpm_pdir[%d]: 0x%" PRIx64 "\n",
-				    i, ci->ci_kpm_pdir[i]);
-			}
-#endif
-		}
 		panic("HYPERVISOR_mmu_update failed, ret: %d\n", ret);
 	}
 	xpq_idx_array[curcpu()->ci_cpuid] = 0;
@@ -242,49 +232,36 @@ xpq_increment_idx(void)
 void
 xpq_queue_machphys_update(paddr_t ma, paddr_t pa)
 {
-
 	mmu_update_t *xpq_queue = xpq_queue_array[curcpu()->ci_cpuid];
 	int xpq_idx = xpq_idx_array[curcpu()->ci_cpuid];
-
-	XENPRINTK2(("xpq_queue_machphys_update ma=0x%" PRIx64 " pa=0x%" PRIx64
-	    "\n", (int64_t)ma, (int64_t)pa));
 
 	xpq_queue[xpq_idx].ptr = ma | MMU_MACHPHYS_UPDATE;
 	xpq_queue[xpq_idx].val = pa >> PAGE_SHIFT;
 	xpq_increment_idx();
-#ifdef XENDEBUG_SYNC
-	xpq_flush_queue();
-#endif
 }
 
 void
 xpq_queue_pte_update(paddr_t ptr, pt_entry_t val)
 {
-
 	mmu_update_t *xpq_queue = xpq_queue_array[curcpu()->ci_cpuid];
 	int xpq_idx = xpq_idx_array[curcpu()->ci_cpuid];
 
-	KASSERT((ptr & 3) == 0);
-	xpq_queue[xpq_idx].ptr = (paddr_t)ptr | MMU_NORMAL_PT_UPDATE;
+	xpq_queue[xpq_idx].ptr = ptr | MMU_NORMAL_PT_UPDATE;
 	xpq_queue[xpq_idx].val = val;
 	xpq_increment_idx();
-#ifdef XENDEBUG_SYNC
-	xpq_flush_queue();
-#endif
 }
 
 void
 xpq_queue_pt_switch(paddr_t pa)
 {
 	struct mmuext_op op;
+
 	xpq_flush_queue();
 
-	XENPRINTK2(("xpq_queue_pt_switch: 0x%" PRIx64 " 0x%" PRIx64 "\n",
-	    (int64_t)pa, (int64_t)pa));
 	op.cmd = MMUEXT_NEW_BASEPTR;
 	op.arg1.mfn = pa >> PAGE_SHIFT;
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_pt_switch");
+		panic(__func__);
 }
 
 void
@@ -294,14 +271,10 @@ xpq_queue_pin_table(paddr_t pa, int lvl)
 
 	xpq_flush_queue();
 
-	XENPRINTK2(("xpq_queue_pin_l%d_table: %#" PRIxPADDR "\n",
-	    lvl + 1, pa));
-
-	op.arg1.mfn = pa >> PAGE_SHIFT;
 	op.cmd = lvl;
-
+	op.arg1.mfn = pa >> PAGE_SHIFT;
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_pin_table");
+		panic(__func__);
 }
 
 void
@@ -311,11 +284,10 @@ xpq_queue_unpin_table(paddr_t pa)
 
 	xpq_flush_queue();
 
-	XENPRINTK2(("xpq_queue_unpin_table: %#" PRIxPADDR "\n", pa));
-	op.arg1.mfn = pa >> PAGE_SHIFT;
 	op.cmd = MMUEXT_UNPIN_TABLE;
+	op.arg1.mfn = pa >> PAGE_SHIFT;
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_unpin_table");
+		panic(__func__);
 }
 
 void
@@ -325,13 +297,12 @@ xpq_queue_set_ldt(vaddr_t va, uint32_t entries)
 
 	xpq_flush_queue();
 
-	XENPRINTK2(("xpq_queue_set_ldt\n"));
 	KASSERT(va == (va & ~PAGE_MASK));
 	op.cmd = MMUEXT_SET_LDT;
 	op.arg1.linear_addr = va;
 	op.arg2.nr_ents = entries;
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_set_ldt");
+		panic(__func__);
 }
 
 void
@@ -341,10 +312,9 @@ xpq_queue_tlb_flush(void)
 
 	xpq_flush_queue();
 
-	XENPRINTK2(("xpq_queue_tlb_flush\n"));
 	op.cmd = MMUEXT_TLB_FLUSH_LOCAL;
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_tlb_flush");
+		panic(__func__);
 }
 
 void
@@ -354,7 +324,6 @@ xpq_flush_cache(void)
 
 	xpq_flush_queue();
 
-	XENPRINTK2(("xpq_queue_flush_cache\n"));
 	asm("wbinvd":::"memory");
 	splx(s); /* XXX: removeme */
 }
@@ -363,13 +332,13 @@ void
 xpq_queue_invlpg(vaddr_t va)
 {
 	struct mmuext_op op;
+
 	xpq_flush_queue();
 
-	XENPRINTK2(("xpq_queue_invlpg %#" PRIxVADDR "\n", va));
 	op.cmd = MMUEXT_INVLPG_LOCAL;
 	op.arg1.linear_addr = (va & ~PAGE_MASK);
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_invlpg");
+		panic(__func__);
 }
 
 void
@@ -380,18 +349,14 @@ xen_mcast_invlpg(vaddr_t va, kcpuset_t *kc)
 
 	kcpuset_export_u32(kc, &xcpumask.xcpum_km[0], sizeof(xcpumask));
 
-	/* Flush pending page updates */
 	xpq_flush_queue();
 
 	op.cmd = MMUEXT_INVLPG_MULTI;
 	op.arg1.linear_addr = va;
 	op.arg2.vcpumask = &xcpumask.xcpum_xm;
 
-	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
-		panic("xpq_queue_invlpg_all");
-	}
-
-	return;
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
+		panic(__func__);
 }
 
 void
@@ -399,17 +364,13 @@ xen_bcast_invlpg(vaddr_t va)
 {
 	mmuext_op_t op;
 
-	/* Flush pending page updates */
 	xpq_flush_queue();
 
 	op.cmd = MMUEXT_INVLPG_ALL;
 	op.arg1.linear_addr = va;
 
-	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
-		panic("xpq_queue_invlpg_all");
-	}
-
-	return;
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
+		panic(__func__);
 }
 
 /* This is a synchronous call. */
@@ -421,17 +382,13 @@ xen_mcast_tlbflush(kcpuset_t *kc)
 
 	kcpuset_export_u32(kc, &xcpumask.xcpum_km[0], sizeof(xcpumask));
 
-	/* Flush pending page updates */
 	xpq_flush_queue();
 
 	op.cmd = MMUEXT_TLB_FLUSH_MULTI;
 	op.arg2.vcpumask = &xcpumask.xcpum_xm;
 
-	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
-		panic("xpq_queue_invlpg_all");
-	}
-
-	return;
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
+		panic(__func__);
 }
 
 /* This is a synchronous call. */
@@ -440,59 +397,14 @@ xen_bcast_tlbflush(void)
 {
 	mmuext_op_t op;
 
-	/* Flush pending page updates */
 	xpq_flush_queue();
 
 	op.cmd = MMUEXT_TLB_FLUSH_ALL;
 
-	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
-		panic("xpq_queue_invlpg_all");
-	}
-
-	return;
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
+		panic(__func__);
 }
 
-/* This is a synchronous call. */
-void
-xen_vcpu_mcast_invlpg(vaddr_t sva, vaddr_t eva, kcpuset_t *kc)
-{
-	KASSERT(eva > sva);
-
-	/* Flush pending page updates */
-	xpq_flush_queue();
-
-	/* Align to nearest page boundary */
-	sva &= ~PAGE_MASK;
-	eva &= ~PAGE_MASK;
-
-	for ( ; sva <= eva; sva += PAGE_SIZE) {
-		xen_mcast_invlpg(sva, kc);
-	}
-
-	return;
-}
-
-/* This is a synchronous call. */
-void
-xen_vcpu_bcast_invlpg(vaddr_t sva, vaddr_t eva)
-{
-	KASSERT(eva > sva);
-
-	/* Flush pending page updates */
-	xpq_flush_queue();
-
-	/* Align to nearest page boundary */
-	sva &= ~PAGE_MASK;
-	eva &= ~PAGE_MASK;
-
-	for ( ; sva <= eva; sva += PAGE_SIZE) {
-		xen_bcast_invlpg(sva);
-	}
-
-	return;
-}
-
-/* Copy a page */
 void
 xen_copy_page(paddr_t srcpa, paddr_t dstpa)
 {
@@ -502,12 +414,10 @@ xen_copy_page(paddr_t srcpa, paddr_t dstpa)
 	op.arg1.mfn = xpmap_ptom(dstpa) >> PAGE_SHIFT;
 	op.arg2.src_mfn = xpmap_ptom(srcpa) >> PAGE_SHIFT;
 
-	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
 		panic(__func__);
-	}
 }
 
-/* Zero a physical page */
 void
 xen_pagezero(paddr_t pa)
 {
@@ -516,9 +426,8 @@ xen_pagezero(paddr_t pa)
 	op.cmd = MMUEXT_CLEAR_PAGE;
 	op.arg1.mfn = xpmap_ptom(pa) >> PAGE_SHIFT;
 
-	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
 		panic(__func__);
-	}
 }
 
 int
@@ -533,42 +442,8 @@ xpq_update_foreign(paddr_t ptr, pt_entry_t val, int dom)
 	op.val = val;
 	if (HYPERVISOR_mmu_update(&op, 1, &ok, dom) < 0)
 		return EFAULT;
-	return (0);
+	return 0;
 }
-
-#ifdef XENDEBUG
-void
-xpq_debug_dump(void)
-{
-	int i;
-
-	mmu_update_t *xpq_queue = xpq_queue_array[curcpu()->ci_cpuid];
-	int xpq_idx = xpq_idx_array[curcpu()->ci_cpuid];
-
-	XENPRINTK2(("idx: %d\n", xpq_idx));
-	for (i = 0; i < xpq_idx; i++) {
-		snprintf(XBUF, sizeof(XBUF), "%" PRIx64 " %08" PRIx64,
-		    xpq_queue[i].ptr, xpq_queue[i].val);
-		if (++i < xpq_idx)
-			snprintf(XBUF + strlen(XBUF),
-			    sizeof(XBUF) - strlen(XBUF),
-			    "%" PRIx64 " %08" PRIx64,
-			    xpq_queue[i].ptr, xpq_queue[i].val);
-		if (++i < xpq_idx)
-			snprintf(XBUF + strlen(XBUF),
-			    sizeof(XBUF) - strlen(XBUF),
-			    "%" PRIx64 " %08" PRIx64,
-			    xpq_queue[i].ptr, xpq_queue[i].val);
-		if (++i < xpq_idx)
-			snprintf(XBUF + strlen(XBUF),
-			    sizeof(XBUF) - strlen(XBUF),
-			    "%" PRIx64 " %08" PRIx64,
-			    xpq_queue[i].ptr, xpq_queue[i].val);
-		XENPRINTK2(("%d: %s\n", xpq_idx, XBUF));
-	}
-}
-#endif
-
 
 #if L2_SLOT_KERNBASE > 0
 #define TABLE_L2_ENTRIES (2 * (NKL2_KIMG_ENTRIES + 1))
@@ -594,7 +469,7 @@ static const int l2_4_count = PTP_LEVELS - 1;
  *
  * Virtual address space of the kernel when leaving this function:
  * +--------------+------------------+-------------+------------+---------------
- * | KERNEL IMAGE | BOOTSTRAP TABLES | PROC0 UAREA | DUMMY PAGE | HYPER. SHARED 
+ * | KERNEL IMAGE | BOOTSTRAP TABLES | PROC0 UAREA | DUMMY PAGE | HYPER. SHARED
  * +--------------+------------------+-------------+------------+---------------
  *
  * ------+-----------------+-------------+
@@ -745,6 +620,9 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	extern char __data_start;
 	extern char __kernel_end;
 	extern char *early_zerop; /* from pmap.c */
+#ifdef i386
+	extern union descriptor tmpgdt[];
+#endif
 
 	/*
 	 * Layout of RW area after the kernel image:
@@ -816,7 +694,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 
 	addr = ((u_long)pdtpe) - KERNBASE;
 	bt_pgd[pl4_pi(KERNTEXTOFF)] = bt_cpu_pgd[pl4_pi(KERNTEXTOFF)] =
-	    xpmap_ptom_masked(addr) | PG_k | PG_V | PG_RW;
+	    xpmap_ptom_masked(addr) | PG_V | PG_RW;
 #else
 	pdtpe = bt_pgd;
 #endif
@@ -829,7 +707,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 
 	addr = ((u_long)pde) - KERNBASE;
 	pdtpe[pl3_pi(KERNTEXTOFF)] =
-	    xpmap_ptom_masked(addr) | PG_k | PG_V | PG_RW;
+	    xpmap_ptom_masked(addr) | PG_V | PG_RW;
 #elif defined(PAE)
 	/*
 	 * Our PAE-style level 2, 5 contiguous pages (4 L2 + 1 shadow).
@@ -849,10 +727,10 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	 */
 	addr = ((u_long)pde) - KERNBASE;
 	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
-		pdtpe[i] = xpmap_ptom_masked(addr) | PG_k | PG_V;
+		pdtpe[i] = xpmap_ptom_masked(addr) | PG_V;
 	}
 	addr += PAGE_SIZE;
-	pdtpe[3] = xpmap_ptom_masked(addr) | PG_k | PG_V;
+	pdtpe[3] = xpmap_ptom_masked(addr) | PG_V;
 #else
 	pde = bt_pgd;
 #endif
@@ -898,7 +776,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 			}
 #endif
 
-			pte[pl1_pi(page)] |= PG_k | PG_V;
+			pte[pl1_pi(page)] |= PG_V;
 			if (page < (vaddr_t)&__rodata_start) {
 				/* Map the kernel text RX. */
 				pte[pl1_pi(page)] |= PG_RO;
@@ -938,7 +816,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 
 		addr = ((u_long)pte) - KERNBASE;
 		pde[pl2_pi(cur_page)] =
-		    xpmap_ptom_masked(addr) | PG_k | PG_RW | PG_V;
+		    xpmap_ptom_masked(addr) | PG_RW | PG_V;
 
 		/* Mark readonly */
 		xen_bt_set_readonly((vaddr_t)pte);
@@ -960,7 +838,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	 */
 	addr = (u_long)pde - KERNBASE;
 	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
-		pde[PDIR_SLOT_PTE + i] = xpmap_ptom_masked(addr) | PG_k | PG_V |
+		pde[PDIR_SLOT_PTE + i] = xpmap_ptom_masked(addr) | PG_V |
 		    xpmap_pg_nx;
 	}
 
@@ -977,11 +855,11 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 
 	/* Recursive entry in pmap_kernel(). */
 	bt_pgd[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)bt_pgd - KERNBASE)
-	    | PG_k | PG_RO | PG_V | xpmap_pg_nx;
+	    | PG_RO | PG_V | xpmap_pg_nx;
 #ifdef __x86_64__
 	/* Recursive entry in higher-level per-cpu PD. */
 	bt_cpu_pgd[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)bt_cpu_pgd - KERNBASE)
-	    | PG_k | PG_RO | PG_V | xpmap_pg_nx;
+	    | PG_RO | PG_V | xpmap_pg_nx;
 #endif
 
 	/* Mark tables RO */
@@ -1024,7 +902,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 		addr = (u_long)pde - KERNBASE + PAGE_SIZE * 3;
 		xpq_queue_pte_update(
 		    xpmap_ptom(((vaddr_t)&pde[PDIR_SLOT_PTE + 3]) - KERNBASE),
-		    xpmap_ptom_masked(addr) | PG_k | PG_V);
+		    xpmap_ptom_masked(addr) | PG_V);
 		xpq_flush_queue();
 	}
 #elif defined(__x86_64__)
@@ -1069,7 +947,7 @@ xen_bt_set_readonly(vaddr_t page)
 	pt_entry_t entry;
 
 	entry = xpmap_ptom_masked(page - KERNBASE);
-	entry |= PG_k | PG_V | xpmap_pg_nx;
+	entry |= PG_V | xpmap_pg_nx;
 
 	HYPERVISOR_update_va_mapping(page, entry, UVMF_INVLPG);
 }

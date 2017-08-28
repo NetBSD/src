@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata_pci.c,v 1.8 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: mvsata_pci.c,v 1.8.6.1 2017/08/28 17:52:06 skrll Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata_pci.c,v 1.8 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata_pci.c,v 1.8.6.1 2017/08/28 17:52:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -194,8 +194,8 @@ mvsata_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(psc->psc_pc, intrhandle, intrbuf, sizeof(intrbuf));
-	psc->psc_ih = pci_intr_establish(psc->psc_pc, intrhandle, IPL_BIO,
-	    mvsata_pci_intr, sc);
+	psc->psc_ih = pci_intr_establish_xname(psc->psc_pc, intrhandle, IPL_BIO,
+	    mvsata_pci_intr, sc, device_xname(self));
 	if (psc->psc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;

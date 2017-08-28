@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.42.4.4 2017/02/05 13:40:28 skrll Exp $ */
+/* $NetBSD: lemac.c,v 1.42.4.5 2017/08/28 17:52:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.42.4.4 2017/02/05 13:40:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.42.4.5 2017/08/28 17:52:03 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -171,7 +171,7 @@ lemac_tne_intr(
 	}
     }
     sc->sc_if.if_flags &= ~IFF_OACTIVE;
-    lemac_ifstart(&sc->sc_if);
+    if_schedule_deferred_start(&sc->sc_if);
 }
 
 static void
@@ -997,6 +997,7 @@ lemac_ifattach(
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),

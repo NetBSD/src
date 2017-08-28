@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.4.2.3 2015/09/22 12:05:37 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.4.2.4 2017/08/28 17:51:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.4.2.3 2015/09/22 12:05:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.4.2.4 2017/08/28 17:51:30 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -163,7 +163,7 @@ static const char * const bcm2835_sources[BCM2835_NIRQ] = {
 	"(unused 44)",	"pwa0",		"pwa1",		"(unused 47)",
 	"smi",		"gpio[0]",	"gpio[1]",	"gpio[2]",
 	"gpio[3]",	"i2c",		"spi",		"pcm",
-	"sdio",		"uart",		"(unused 58)",	"(unused 59)",
+	"sdhost",	"uart",		"(unused 58)",	"(unused 59)",
 	"(unused 60)",	"(unused 61)",	"emmc",		"(unused 63)",
 	"Timer",	"Mailbox",	"Doorbell0",	"Doorbell1",
 	"GPU0 Halted",	"GPU1 Halted",	"Illegal #1",	"Illegal #0"

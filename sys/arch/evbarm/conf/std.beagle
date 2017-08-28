@@ -1,4 +1,4 @@
-#	$NetBSD: std.beagle,v 1.13 2014/08/24 07:59:22 jnemeth Exp $
+#	$NetBSD: std.beagle,v 1.13.2.1 2017/08/28 17:51:34 skrll Exp $
 #
 # standard NetBSD/evbarm for BEAGLEBOARD options
 
@@ -12,6 +12,7 @@ include		"arch/evbarm/conf/files.beagle"
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
 options 	__HAVE_CPU_COUNTER
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	CORTEX_PMC
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	ARM_HAS_VBAR

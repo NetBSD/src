@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.17 2014/08/18 17:16:19 agc Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.17.2.1 2017/08/28 17:52:02 skrll Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -343,7 +343,7 @@ dm_target_snapshot_destroy(dm_table_entry_t * table_en)
 
 	return 0;
 }
-/* Add this target dependiences to prop_array_t */
+/* Add this target dependencies to prop_array_t */
 int
 dm_target_snapshot_deps(dm_table_entry_t * table_en,
     prop_array_t prop_array)

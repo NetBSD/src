@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.156.2.7 2016/10/05 20:56:11 skrll Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.156.2.8 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -897,6 +897,7 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_VLAN				1  /* VLAN ID */
 #define PACKET_TAG_ENCAP			2  /* encapsulation data */
 #define PACKET_TAG_ESP				3  /* ESP information */
+#define PACKET_TAG_SO				4  /* sending socket pointer */
 #define PACKET_TAG_PF				11 /* packet filter */
 #define PACKET_TAG_ALTQ_QID			12 /* ALTQ queue id */
 
@@ -922,6 +923,7 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 						    */
 
 #define	PACKET_TAG_MPLS				29 /* Indicate it's for MPLS */
+#define	PACKET_TAG_SRCROUTE			30 /* IPv4 source routing */
 
 /*
  * Return the number of bytes in the mbuf chain, m.
@@ -1006,16 +1008,24 @@ void m_print(const struct mbuf *, const char *, void (*)(const char *, ...)
 /*
  * Get rcvif of a mbuf.
  *
- * The caller must call m_put_rcvif after using rcvif. The caller cannot
- * block or sleep during using rcvif. Insofar as the constraint is satisfied,
- * the API ensures a got rcvif isn't be freed until m_put_rcvif is called.
+ * The caller must call m_put_rcvif after using rcvif if the returned rcvif
+ * isn't NULL. If the returned rcvif is NULL, the caller doesn't need to call
+ * m_put_rcvif (although calling it is safe).
+ *
+ * The caller must not block or sleep while using rcvif. The API ensures a
+ * returned rcvif isn't freed until m_put_rcvif is called.
  */
 static __inline struct ifnet *
 m_get_rcvif(const struct mbuf *m, int *s)
 {
+	struct ifnet *ifp;
 
 	*s = pserialize_read_enter();
-	return if_byindex(m->m_pkthdr.rcvif_index);
+	ifp = if_byindex(m->m_pkthdr.rcvif_index);
+	if (__predict_false(ifp == NULL))
+		pserialize_read_exit(*s);
+
+	return ifp;
 }
 
 static __inline void

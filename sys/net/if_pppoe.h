@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.h,v 1.11.64.2 2016/04/22 15:44:17 skrll Exp $ */
+/* $NetBSD: if_pppoe.h,v 1.11.64.3 2017/08/28 17:53:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,5 +69,11 @@ struct pppoeconnectionstate {
 void pppoe_input(struct ifnet *, struct mbuf *);
 void pppoedisc_input(struct ifnet *, struct mbuf *);
 #endif /* _KERNEL */
+/*
+ * TODO: Locking notes
+ * Currently, the if_pppoe.c and if_spppsubr.c locking is too complexity.
+ * So, we will restructure locks, and then we describe the restructureed
+ * locking note.
+ */
 #endif /* !_NET_IF_PPPOE_H_ */
 

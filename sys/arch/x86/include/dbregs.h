@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.h,v 1.1.2.3 2017/02/05 13:40:23 skrll Exp $	*/
+/*	$NetBSD: dbregs.h,v 1.1.2.4 2017/08/28 17:51:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,23 +30,22 @@
 #ifndef	_X86_DBREGS_H_
 #define	_X86_DBREGS_H_
 
-#if defined(_KERNEL)
-
 #include <sys/param.h>
 #include <sys/types.h>
+#include <machine/reg.h>
 
 /*
  * CPU Debug Status Register (DR6)
  *
  * Reserved bits: 4-12 and on x86_64 32-64
  */
-#define X86_HW_WATCHPOINT_DR6_DR0_BREAKPOINT_CONDITION_DETECTED	__BIT(0)
-#define X86_HW_WATCHPOINT_DR6_DR1_BREAKPOINT_CONDITION_DETECTED	__BIT(1)
-#define X86_HW_WATCHPOINT_DR6_DR2_BREAKPOINT_CONDITION_DETECTED	__BIT(2)
-#define X86_HW_WATCHPOINT_DR6_DR3_BREAKPOINT_CONDITION_DETECTED	__BIT(3)
-#define X86_HW_WATCHPOINT_DR6_DEBUG_REGISTER_ACCESS_DETECTED	__BIT(13)
-#define X86_HW_WATCHPOINT_DR6_SINGLE_STEP			__BIT(14)
-#define X86_HW_WATCHPOINT_DR6_TASK_SWITCH			__BIT(15)
+#define X86_DR6_DR0_BREAKPOINT_CONDITION_DETECTED	__BIT(0)
+#define X86_DR6_DR1_BREAKPOINT_CONDITION_DETECTED	__BIT(1)
+#define X86_DR6_DR2_BREAKPOINT_CONDITION_DETECTED	__BIT(2)
+#define X86_DR6_DR3_BREAKPOINT_CONDITION_DETECTED	__BIT(3)
+#define X86_DR6_DEBUG_REGISTER_ACCESS_DETECTED		__BIT(13)
+#define X86_DR6_SINGLE_STEP				__BIT(14)
+#define X86_DR6_TASK_SWITCH				__BIT(15)
 
 /*
  * CPU Debug Control Register (DR7)
@@ -57,108 +56,97 @@
  *
  * Reserved bits: 10, 12, 14-15 and on x86_64 32-64
  */
-#define X86_HW_WATCHPOINT_DR7_LOCAL_DR0_BREAKPOINT		__BIT(0)
-#define X86_HW_WATCHPOINT_DR7_GLOBAL_DR0_BREAKPOINT		__BIT(1)
-#define X86_HW_WATCHPOINT_DR7_LOCAL_DR1_BREAKPOINT		__BIT(2)
-#define X86_HW_WATCHPOINT_DR7_GLOBAL_DR1_BREAKPOINT		__BIT(3)
-#define X86_HW_WATCHPOINT_DR7_LOCAL_DR2_BREAKPOINT		__BIT(4)
-#define X86_HW_WATCHPOINT_DR7_GLOBAL_DR2_BREAKPOINT		__BIT(5)
-#define X86_HW_WATCHPOINT_DR7_LOCAL_DR3_BREAKPOINT		__BIT(6)
-#define X86_HW_WATCHPOINT_DR7_GLOBAL_DR3_BREAKPOINT		__BIT(7)
-#define X86_HW_WATCHPOINT_DR7_LOCAL_EXACT_BREAKPOINT		__BIT(8)
-#define X86_HW_WATCHPOINT_DR7_GLOBAL_EXACT_BREAKPOINT		__BIT(9)
-#define X86_HW_WATCHPOINT_DR7_RESTRICTED_TRANSACTIONAL_MEMORY	__BIT(11)
-#define X86_HW_WATCHPOINT_DR7_GENERAL_DETECT_ENABLE		__BIT(13)
+#define X86_DR7_LOCAL_DR0_BREAKPOINT		__BIT(0)
+#define X86_DR7_GLOBAL_DR0_BREAKPOINT		__BIT(1)
+#define X86_DR7_LOCAL_DR1_BREAKPOINT		__BIT(2)
+#define X86_DR7_GLOBAL_DR1_BREAKPOINT		__BIT(3)
+#define X86_DR7_LOCAL_DR2_BREAKPOINT		__BIT(4)
+#define X86_DR7_GLOBAL_DR2_BREAKPOINT		__BIT(5)
+#define X86_DR7_LOCAL_DR3_BREAKPOINT		__BIT(6)
+#define X86_DR7_GLOBAL_DR3_BREAKPOINT		__BIT(7)
+#define X86_DR7_LOCAL_EXACT_BREAKPOINT		__BIT(8)
+#define X86_DR7_GLOBAL_EXACT_BREAKPOINT		__BIT(9)
+#define X86_DR7_RESTRICTED_TRANSACTIONAL_MEMORY	__BIT(11)
+#define X86_DR7_GENERAL_DETECT_ENABLE		__BIT(13)
 
-#define X86_HW_WATCHPOINT_DR7_DR0_CONDITION_MASK		__BITS(16, 17)
-#define X86_HW_WATCHPOINT_DR7_DR0_LENGTH_MASK			__BITS(18, 19)
-#define X86_HW_WATCHPOINT_DR7_DR1_CONDITION_MASK		__BITS(20, 21)
-#define X86_HW_WATCHPOINT_DR7_DR1_LENGTH_MASK			__BITS(22, 23)
-#define X86_HW_WATCHPOINT_DR7_DR2_CONDITION_MASK		__BITS(24, 25)
-#define X86_HW_WATCHPOINT_DR7_DR2_LENGTH_MASK			__BITS(26, 27)
-#define X86_HW_WATCHPOINT_DR7_DR3_CONDITION_MASK		__BITS(28, 29)
-#define X86_HW_WATCHPOINT_DR7_DR3_LENGTH_MASK			__BITS(30, 31)
-
-#endif /* !defined(_KERNEL) */
+#define X86_DR7_DR0_CONDITION_MASK		__BITS(16, 17)
+#define X86_DR7_DR0_LENGTH_MASK			__BITS(18, 19)
+#define X86_DR7_DR1_CONDITION_MASK		__BITS(20, 21)
+#define X86_DR7_DR1_LENGTH_MASK			__BITS(22, 23)
+#define X86_DR7_DR2_CONDITION_MASK		__BITS(24, 25)
+#define X86_DR7_DR2_LENGTH_MASK			__BITS(26, 27)
+#define X86_DR7_DR3_CONDITION_MASK		__BITS(28, 29)
+#define X86_DR7_DR3_LENGTH_MASK			__BITS(30, 31)
 
 /*
- * X86_HW_WATCHPOINT_DR7_CONDITION_IO_READWRITE is currently unused
+ * X86_DR7_CONDITION_IO_READWRITE is currently unused
  * it requires DE (debug extension) flag in control register CR4 set
  * not all CPUs support it
  */
-enum x86_hw_watchpoint_condition {
-	X86_HW_WATCHPOINT_DR7_CONDITION_EXECUTION	= 0x0,
-	X86_HW_WATCHPOINT_DR7_CONDITION_DATA_WRITE	= 0x1,
-	X86_HW_WATCHPOINT_DR7_CONDITION_IO_READWRITE	= 0x2,
-	X86_HW_WATCHPOINT_DR7_CONDITION_DATA_READWRITE	= 0x3
+enum x86_dr7_condition {
+	X86_DR7_CONDITION_EXECUTION		= 0x0,
+	X86_DR7_CONDITION_DATA_WRITE		= 0x1,
+	X86_DR7_CONDITION_IO_READWRITE		= 0x2,
+	X86_DR7_CONDITION_DATA_READWRITE	= 0x3
 };
 
 /*
  * 0x2 is currently unimplemented - it reflects 8 bytes on modern CPUs
  */
-enum x86_hw_watchpoint_length {
-	X86_HW_WATCHPOINT_DR7_LENGTH_BYTE	= 0x0,
-	X86_HW_WATCHPOINT_DR7_LENGTH_TWOBYTES	= 0x1,
+enum x86_dr7_length {
+	X86_DR7_LENGTH_BYTE		= 0x0,
+	X86_DR7_LENGTH_TWOBYTES		= 0x1,
 	/* 0x2 undefined */
-	X86_HW_WATCHPOINT_DR7_LENGTH_FOURBYTES	= 0x3
+	X86_DR7_LENGTH_FOURBYTES	= 0x3
 };
 
 /*
- * 0x2 is currently unimplemented - it reflects 8 bytes on modern CPUs
+ * The number of available watchpoint/breakpoint registers available since
+ * Intel 80386. New CPUs (x86_64) ship with up to 16 Debug Registers but they
+ * still offer the same number of watchpoints/breakpoints.
  */
-enum x86_hw_watchpoint_event {
-	X86_HW_WATCHPOINT_EVENT_NONE		= 0x0,
-	X86_HW_WATCHPOINT_EVENT_FIRED		= 0x1,
-	X86_HW_WATCHPOINT_EVENT_FIRED_AND_SSTEP	= 0x2,
-};
-
-#if defined(_KMEMUSER) || defined(_KERNEL)
+#define X86_DBREGS	4
 
 /*
- * The number of available watchpoint registers available since Intel 80386
- * New CPUs ship with up to 16 Debug Registers but they still offer four
- * watchpoints, while there other registers are reserved
+ * Store the initial Debug Register state of CPU
+ * This copy will be used to initialize new debug register state
  */
-#define X86_HW_WATCHPOINTS	4
+void x86_dbregs_setup_initdbstate(void);
 
 /*
- * lwpid - 0 means all LWPs in the process
- * address - 0 means that watchpoint is disabled
+ * Reset CPU Debug Registers - to be used after returning to user context
  */
-struct x86_hw_watchpoint {
-	vaddr_t	address;
-	enum x86_hw_watchpoint_condition condition;
-	enum x86_hw_watchpoint_length length;
-};
+void x86_dbregs_clear(struct lwp *l);
 
-#endif /* !defined(_KMEMUSER) && !defined(_KERNEL) */
+/*
+ * Retrieve Debug Registers from LWP's PCB and save in regs
+ * In case of empty register set, initialize it
+ */
+void x86_dbregs_read(struct lwp *l, struct dbreg *regs);
 
-#if defined(_KERNEL)
 /*
  * Set CPU Debug Registers - to be used before entering user-land context
  */
-void set_x86_hw_watchpoints(struct lwp *l);
+void x86_dbregs_set(struct lwp *l);
 
 /*
- * Reset CPU Debug Registers - to be used after entering kernel context
+ * Store DR6 in LWP - to be used in trap function
  */
-void clear_x86_hw_watchpoints(void);
-
-/*
- * Check if trap is triggered from user-land if so return nonzero value
- */
-int user_trap_x86_hw_watchpoint(void);
+void x86_dbregs_store_dr6(struct lwp *l);
 
 /*
  * Check if trap is triggered from user-land if so return nonzero value
  */
-int x86_hw_watchpoint_type(int);
+int x86_dbregs_user_trap(void);
 
 /*
- * Return register that fired
+ * Check if trap is triggered from user-land if so return nonzero value
  */
-int x86_hw_watchpoint_reg(int);
+int x86_dbregs_validate(const struct dbreg *regs);
 
-#endif /* !defined(_KERNEL) */
+/*
+ * Write new Debug Registers from regs into LWP's PCB
+ */
+void x86_dbregs_write(struct lwp *l, const struct dbreg *regs);
 
 #endif /* !_X86_DBREGS_H_ */

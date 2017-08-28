@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.59.2.1 2016/10/05 20:56:01 skrll Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.59.2.2 2017/08/28 17:53:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.59.2.1 2016/10/05 20:56:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.59.2.2 2017/08/28 17:53:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,6 @@ static int	ntfs_lookup(void *);
 static int	ntfs_bmap(void *);
 static int	ntfs_fsync(void *);
 static int	ntfs_pathconf(void *);
-
-extern int prtactive;
 
 /*
  * This is a noop, simply returning what one has been given.
@@ -205,18 +203,17 @@ ntfs_getattr(void *v)
 int
 ntfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
+		bool *a_recycle;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	struct vnode *vp __unused = ap->a_vp;
 #ifdef NTFS_DEBUG
 	struct ntnode *ip = VTONT(vp);
 #endif
 
 	dprintf(("ntfs_inactive: vnode: %p, ntnode: %llu\n", vp,
 	    (unsigned long long)ip->i_number));
-
-	VOP_UNLOCK(vp);
 
 	/* XXX since we don't support any filesystem changes
 	 * right now, nothing more needs to be done
@@ -230,7 +227,7 @@ ntfs_inactive(void *v)
 int
 ntfs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -239,11 +236,10 @@ ntfs_reclaim(void *v)
 	const int attrlen = strlen(fp->f_attrname);
 	int error;
 
+	VOP_UNLOCK(vp);
+
 	dprintf(("ntfs_reclaim: vnode: %p, ntnode: %llu\n", vp,
 	    (unsigned long long)ip->i_number));
-
-	if (prtactive && vp->v_usecount > 1)
-		vprint("ntfs_reclaim: pushing active", vp);
 
 	if ((error = ntfs_ntget(ip)) != 0)
 		return (error);

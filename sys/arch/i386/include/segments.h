@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.54.32.2 2016/10/05 20:55:28 skrll Exp $	*/
+/*	$NetBSD: segments.h,v 1.54.32.3 2017/08/28 17:51:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -104,23 +104,22 @@
 #endif /* XEN */
 #define ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
 #define SEL_LDT		4		/* local descriptor table */
+
+/* Dynamically allocated TSSs and LDTs start (byte offset) */
+#define DYNSEL_START	(NGDT << 3)
+
 #define IDXSEL(s)	(((s) >> 3) & 0x1fff)		/* index of selector */
 #define IDXSELN(s)	(((s) >> 3))			/* index of selector */
+#define IDXDYNSEL(s)	((((s) & ~SEL_RPL) - DYNSEL_START) >> 3)
+
 #define GSEL(s,r)	(((s) << 3) | r)		/* a global selector */
+#define GSYSSEL(s,r)	GSEL(s,r)			/* compat with amd64 */
+#define GDYNSEL(s,r)	((((s) << 3) + DYNSEL_START) | r | SEL_KPL)
+
 #define LSEL(s,r)	(((s) << 3) | r | SEL_LDT)	/* a local selector */
-#define GSYSSEL(s,r)	GSEL(s,r)	/* compat with amd64 */
 
-#if defined(_KERNEL_OPT)
-#include "opt_vm86.h"
-#endif
-
-#ifdef VM86
-#define USERMODE(c, f)		(ISPL(c) == SEL_UPL || ((f) & PSL_VM) != 0)
-#define KERNELMODE(c, f)	(ISPL(c) == SEL_KPL && ((f) & PSL_VM) == 0)
-#else
 #define USERMODE(c, f)		(ISPL(c) == SEL_UPL)
 #define KERNELMODE(c, f)	(ISPL(c) == SEL_KPL)
-#endif
 
 #ifndef _LOCORE
 
@@ -190,14 +189,13 @@ struct region_descriptor {
 #endif
 
 #ifdef _KERNEL
-extern union descriptor *gdt, *ldt;
+extern union descriptor *gdtstore, *ldtstore;
 extern struct gate_descriptor *idt;
 
 void setgate(struct gate_descriptor *, void *, int, int, int, int);
 void setregion(struct region_descriptor *, void *, size_t);
 void setsegment(struct segment_descriptor *, const void *, size_t, int, int,
     int, int);
-void setgdt(int, const void *, size_t, int, int, int, int);
 void unsetgate(struct gate_descriptor *);
 void cpu_init_idt(void);
 void update_descriptor(union descriptor *, union descriptor *);

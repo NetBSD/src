@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.29.4.3 2016/07/09 20:24:48 skrll Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.29.4.4 2017/08/28 17:51:26 skrll Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.29.4.3 2016/07/09 20:24:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.29.4.4 2017/08/28 17:51:26 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -360,7 +360,7 @@ tbr_timeout(void *arg)
 		struct psref psref;
 		if (!TBR_IS_ENABLED(&ifp->if_snd))
 			continue;
-		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_acquire(ifp, &psref);
 		pserialize_read_exit(s);
 
 		active++;
@@ -371,7 +371,7 @@ tbr_timeout(void *arg)
 		}
 
 		s = pserialize_read_enter();
-		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_release(ifp, &psref);
 	}
 	pserialize_read_exit(s);
 

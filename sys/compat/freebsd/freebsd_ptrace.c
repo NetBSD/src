@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.20 2014/01/19 13:35:58 dsl Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.20.6.1 2017/08/28 17:51:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.20 2014/01/19 13:35:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.20.6.1 2017/08/28 17:51:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.20 2014/01/19 13:35:58 dsl Exp 
 #include <compat/sys/signalvar.h>
 
 #include <machine/reg.h>
-#include <machine/freebsd_machdep.h>
+#include <compat/freebsd/freebsd_machdep.h>
 
 #include <compat/common/compat_util.h>
 #include <compat/freebsd/freebsd_syscallargs.h>

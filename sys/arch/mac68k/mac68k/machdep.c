@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.348.2.1 2015/09/22 12:05:46 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.348.2.2 2017/08/28 17:51:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.348.2.1 2015/09/22 12:05:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.348.2.2 2017/08/28 17:51:44 skrll Exp $");
 
 #include "opt_adb.h"
 #include "opt_copy_symtab.h"
@@ -646,7 +646,7 @@ cpu_dumpconf(void)
 	chdrsize = cpu_dumpsize();
 
 	dumpsize = 0;
-	for (i = 0; m->ram_segs[i].size && i < M68K_NPHYS_RAM_SEGS; i++)
+	for (i = 0; i < M68K_NPHYS_RAM_SEGS && m->ram_segs[i].size; i++)
 		dumpsize += btoc(m->ram_segs[i].size);
 
 	/*
@@ -872,12 +872,10 @@ getenvvars(u_long flag, char *buf)
 	extern long macos_gmtbias;
 	int root_scsi_id;
 	u_long root_ata_dev;
-#ifdef	__ELF__
 	int i;
 	Elf_Ehdr *ehdr;
 	Elf_Shdr *shp;
 	vaddr_t minsym;
-#endif
 
 	/*
 	 * If flag & 0x80000000 == 0, then we're booting with the old booter
@@ -990,7 +988,6 @@ getenvvars(u_long flag, char *buf)
  	ADBReInit_JTBL = getenv("ADBREINIT_JTBL");
  	mrg_ADBIntrPtr = (void *)getenv("ADBINTERRUPT");
 
-#ifdef	__ELF__
 	/*
 	 * Check the ELF headers.
 	 */
@@ -1017,10 +1014,6 @@ getenvvars(u_long flag, char *buf)
 
 	symsize = 1;
 	ssym = (int *)ehdr;
-#else
-	symsize = *(int *)&end;
-	ssym = ((int *)&end) + 1;
-#endif
 }
 
 static long

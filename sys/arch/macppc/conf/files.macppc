@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.101.2.1 2016/07/09 20:24:53 skrll Exp $
+#	$NetBSD: files.macppc,v 1.101.2.2 2017/08/28 17:51:44 skrll Exp $
 #
 # macppc-specific configuration info
 
@@ -179,6 +179,22 @@ file arch/macppc/dev/zs_kgdb.c			zsc & kgdb
 device zstty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c				zstty needs-flag
+
+define smu {}
+device smu: smu, obio
+attach smu at mainbus
+file arch/macppc/dev/smu.c			smu needs-flag
+defflag	opt_smu.h	SMU_DEBUG
+
+define smuiic {}
+device smuiic: smuiic, i2cbus
+attach smuiic at smu
+file arch/macppc/dev/smuiic.c			smuiic
+
+device smusat
+attach smusat at smuiic
+file arch/macppc/dev/smusat.c			smusat
+defflag	opt_smusat.h	SMUSAT_DEBUG
 
 include "dev/adb/files.adb"
 

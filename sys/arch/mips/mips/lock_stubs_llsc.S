@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_llsc.S,v 1.2.30.3 2016/10/05 20:55:32 skrll Exp $	*/
+/*	$NetBSD: lock_stubs_llsc.S,v 1.2.30.4 2017/08/28 17:51:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: lock_stubs_llsc.S,v 1.2.30.3 2016/10/05 20:55:32 skrll Exp $")
+RCSID("$NetBSD: lock_stubs_llsc.S,v 1.2.30.4 2017/08/28 17:51:45 skrll Exp $")
 
 #include "assym.h"
 
@@ -134,7 +134,6 @@ STATIC_LEAF(llsc_ucas_uint)
 	move	v0, zero
 
 1:	INT_LL	t0, 0(a0)
-	 nop
 	bne	t0, a1, 2f
 	 move	t1, a2
 	INT_SC	t1, 0(a0)
@@ -162,7 +161,6 @@ STATIC_LEAF(llsc_ucas_ulong)
 	move	v0, zero
 
 1:	LONG_LL	t0, 0(a0)
-	 nop
 	bne	t0, a1, 2f
 	 move	t1, a2
 	LONG_SC	t1, 0(a0)
@@ -188,7 +186,6 @@ END(llsc_ucaserr)
  */
 STATIC_LEAF(llsc_mutex_enter)
 	PTR_LL	t0, MTX_OWNER(a0)
-	nop
 1:
 	bnez	t0, 2f
 	 move	t2, MIPS_CURLWP
@@ -252,7 +249,6 @@ STATIC_NESTED(llsc_mutex_spin_enter, CALLFRAME_SIZ, ra)
 	 */
 1:
 	INT_L	ta2, CPU_INFO_MTX_COUNT(t2)
-	nop
 	INT_ADDU ta3, ta2, -1
 	INT_S	ta3, CPU_INFO_MTX_COUNT(t2)
 	bltz	ta2, 2f
@@ -262,7 +258,6 @@ STATIC_NESTED(llsc_mutex_spin_enter, CALLFRAME_SIZ, ra)
 #ifdef PARANOIA
 	INT_L	ta1, CPU_INFO_MTX_OLDSPL(t2)
 	INT_L	ta2, CPU_INFO_CPL(t2)	# get updated CPL
-	nop
 	sltu	v0, ta2, ta0		# v0 = cpl < mtx_ipl
 	sltu	v1, ta2, ta1		# v1 = cpl < oldspl
 	sll	v0, 1
@@ -272,7 +267,6 @@ STATIC_NESTED(llsc_mutex_spin_enter, CALLFRAME_SIZ, ra)
 #endif /* PARANOIA */
 #if defined(FULL)
 	INT_LL	t3, MTX_LOCK(t0)
-	nop
 3:
 	bnez	t3, 4f
 	 li	t1, 1
@@ -297,7 +291,6 @@ LEAF(llsc_mutex_spin_exit)
 	PTR_L	t2, L_CPU(MIPS_CURLWP)
 #if defined(DIAGNOSTIC)
 	INT_L	t0, MTX_LOCK(a0)
-	nop
 	beqz	t0, 2f
 	 nop
 	INT_S	zero, MTX_LOCK(a0)
@@ -310,7 +303,6 @@ LEAF(llsc_mutex_spin_exit)
 	 */
 #ifdef PARANOIA
 	INT_L	a2, MTX_IPL(a0)
-	nop
 #endif
 	INT_L	a0, CPU_INFO_MTX_OLDSPL(t2)
 
@@ -318,7 +310,6 @@ LEAF(llsc_mutex_spin_exit)
 	 * Increment the mutex count
 	 */
 	INT_L	t0, CPU_INFO_MTX_COUNT(t2)
-	nop
 	INT_ADDU t0, t0, 1
 	INT_S	t0, CPU_INFO_MTX_COUNT(t2)
 

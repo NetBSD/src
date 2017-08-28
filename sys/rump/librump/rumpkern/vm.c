@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.159.4.5 2016/10/05 20:56:10 skrll Exp $	*/
+/*	$NetBSD: vm.c,v 1.159.4.6 2017/08/28 17:53:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159.4.5 2016/10/05 20:56:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159.4.6 2017/08/28 17:53:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -409,6 +409,13 @@ uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t vmin, vaddr_t vmax,
 	vm->vm_refcnt = 1;
 }
 
+int
+uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
+    bool new_pageable, int lockflags)
+{
+	return 0;
+}
+
 void
 uvm_pagewire(struct vm_page *pg)
 {
@@ -713,6 +720,24 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 	return EOPNOTSUPP;
 }
+
+int
+uvm_map(struct vm_map *map, vaddr_t *startp, vsize_t size,
+    struct uvm_object *uobj, voff_t uoffset, vsize_t align,
+    uvm_flag_t flags)
+{
+
+	*startp = (vaddr_t)rump_hypermalloc(size, align, true, "uvm_map");
+	return *startp != 0 ? 0 : ENOMEM;
+}
+
+void
+uvm_unmap1(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
+{
+
+	rump_hyperfree((void*)start, end-start);
+}
+
 
 /*
  * UVM km

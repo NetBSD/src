@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_dme.c,v 1.1.2.3 2015/12/27 12:09:38 skrll Exp $ */
+/*	$NetBSD: ingenic_dme.c,v 1.1.2.4 2017/08/28 17:51:45 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_dme.c,v 1.1.2.3 2015/12/27 12:09:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_dme.c,v 1.1.2.4 2017/08/28 17:51:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ fail:
 static int
 ingenic_dme_intr(void *arg)
 {
-	uint32_t reg;	
+	uint32_t reg;
 	int ret = 0;
 
 	/* see if it's us */

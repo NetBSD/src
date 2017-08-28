@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.59.4.3 2017/02/05 13:40:13 skrll Exp $	 */
+/*	$NetBSD: exec.c,v 1.59.4.4 2017/08/28 17:51:41 skrll Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -112,7 +112,6 @@
 #ifdef EFIBOOT
 #include "efiboot.h"
 #undef DEBUG	/* XXX */
-static u_long efi_loadaddr;
 #endif
 
 #define BOOT_NARGS	6
@@ -151,6 +150,11 @@ static void	module_init(const char *);
 static void	module_add_common(const char *, uint8_t);
 
 static void	userconf_init(void);
+
+static void	extract_device(const char *, char *, size_t);
+static void	module_base_path(char *, size_t);
+static int	module_open(boot_module_t *, int, const char *, const char *,
+		    bool);
 
 void
 framebuffer_configure(struct btinfo_framebuffer *fb)
@@ -196,6 +200,10 @@ module_add_common(const char *name, uint8_t type)
 
 	while (*name == ' ' || *name == '\t')
 		++name;
+
+	for (bm = boot_modules; bm != NULL; bm = bm->bm_next)
+		if (bm->bm_type == type && strcmp(bm->bm_path, name) == 0)
+			return;
 
 	bm = alloc(sizeof(boot_module_t));
 	len = strlen(name) + 1;
@@ -300,31 +308,6 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 			return ENOMEM;
 	}
 #endif
-#ifdef EFIBOOT
-	{
-		EFI_STATUS status;
-		EFI_PHYSICAL_ADDRESS addr;
-		UINTN kernsize;
-
-		marks[MARK_START] = loadaddr;
-		if ((fd = loadfile(file, marks, COUNT_KERNEL)) == -1)
-			return EIO;
-		close(fd);
-
-		/* Allocate temporary arena. */
-		addr = EFI_ALLOCATE_MAX_ADDRESS;
-		kernsize = marks[MARK_END] - loadaddr;
-		kernsize += 1 * 1024 * 1024;	/* XXX: kernel size COUNT_KERNEL vs LOAD_KERNL (lacked some SYMTAB?) */
-		kernsize = EFI_SIZE_TO_PAGES(kernsize);
-		status = uefi_call_wrapper(BS->AllocatePages, 4,
-		    AllocateMaxAddress, EfiLoaderData, kernsize, &addr);
-		if (EFI_ERROR(status))
-			return ENOMEM;
-		efi_loadaddr = loadaddr = addr;
-
-		memset(marks, 0, sizeof(marks[0]) * MARK_MAX);
-	}
-#endif
 	marks[MARK_START] = loadaddr;
 	if ((fd = loadfile(file, marks,
 	    LOAD_KERNEL & ~(floppy ? LOAD_BACKWARDS : 0))) == -1)
@@ -362,15 +345,6 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 		ppbcopy(loadaddr, origaddr, marks[MARK_END]);
 	}
 #endif
-#ifdef EFIBOOT
-	marks[MARK_START] -= loadaddr;
-	marks[MARK_ENTRY] -= loadaddr;
-	marks[MARK_DATA] -= loadaddr;
-	/* MARK_NSYM */
-	marks[MARK_SYM] -= loadaddr;
-	marks[MARK_END] -= loadaddr;
-	/* Copy the kernel to original load address later. */
-#endif
 	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) &
 	    (-sizeof(int));
 	image_end = marks[MARK_END];
@@ -389,6 +363,9 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	u_long extmem;
 	u_long basemem;
 	int error;
+#ifdef EFIBOOT
+	int i;
+#endif
 
 #ifdef	DEBUG
 	printf("exec: file=%s loadaddr=0x%lx\n", file ? file : "NULL",
@@ -409,6 +386,15 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 		errno = error;
 		goto out;
 	}
+#ifdef EFIBOOT
+	/* adjust to the real load address */
+	marks[MARK_START] -= efi_loadaddr;
+	marks[MARK_ENTRY] -= efi_loadaddr;
+	marks[MARK_DATA] -= efi_loadaddr;
+	/* MARK_NSYM */
+	marks[MARK_SYM] -= efi_loadaddr;
+	marks[MARK_END] -= efi_loadaddr;
+#endif
 
 	boot_argv[0] = boothowto;
 	boot_argv[1] = 0;
@@ -421,6 +407,14 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	if (boot_modules_enabled) {
 		module_init(file);
 		if (btinfo_modulelist) {
+#ifdef EFIBOOT
+			/* convert module loaded address to paddr */
+			struct bi_modulelist_entry *bim;
+			bim = (void *)(btinfo_modulelist + 1);
+			for (i = 0; i < btinfo_modulelist->num; i++, bim++)
+				bim->base -= efi_loadaddr;
+			btinfo_modulelist->endpa -= efi_loadaddr;
+#endif
 			BI_ADD(btinfo_modulelist, BTINFO_MODULELIST,
 			    btinfo_modulelist_size);
 		}
@@ -449,10 +443,16 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	if (callback != NULL)
 		(*callback)();
 #ifdef EFIBOOT
-	/* Copy the kernel to original load address. */
-	memmove((void *)marks[MARK_START],
-	    (void *)(efi_loadaddr + marks[MARK_START]),
-	    marks[MARK_END] - marks[MARK_START]);
+	/* Copy bootinfo to safe arena. */
+	for (i = 0; i < bootinfo->nentries; i++) {
+		struct btinfo_common *bi = (void *)(u_long)bootinfo->entry[i];
+		char *p = alloc(bi->len);
+		memcpy(p, bi, bi->len);
+		bootinfo->entry[i] = vtophys(p);
+	}
+
+	efi_kernel_start = marks[MARK_START];
+	efi_kernel_size = image_end - efi_loadaddr - efi_kernel_start;
 #endif
 	startprog(marks[MARK_ENTRY], BOOT_NARGS, boot_argv,
 	    x86_trunc_page(basemem * 1024));
@@ -462,6 +462,55 @@ out:
 	BI_FREE();
 	bootinfo = NULL;
 	return -1;
+}
+
+int
+count_netbsd(const char *file, u_long *rsz)
+{
+	u_long marks[MARK_MAX];
+	char kdev[64];
+	char base_path[64] = "/";
+	struct stat st;
+	boot_module_t *bm;
+	u_long sz;
+	int err, fd;
+
+	howto = AB_SILENT;
+
+	memset(marks, 0, sizeof(marks));
+	if ((fd = loadfile(file, marks, COUNT_KERNEL | LOAD_NOTE)) == -1)
+		return -1;
+	close(fd);
+	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) &
+	    (-sizeof(int));
+	sz = marks[MARK_END];
+
+	/* The modules must be allocated after the kernel */
+	if (boot_modules_enabled) {
+		extract_device(file, kdev, sizeof(kdev));
+		module_base_path(base_path, sizeof(base_path));
+
+		/* If the root fs type is unusual, load its module. */
+		if (fsmod != NULL)
+			module_add_common(fsmod, BM_TYPE_KMOD);
+
+		for (bm = boot_modules; bm; bm = bm->bm_next) {
+			fd = module_open(bm, 0, kdev, base_path, false);
+			if (fd == -1)
+				continue;
+			sz = (sz + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+			err = fstat(fd, &st);
+			if (err == -1 || st.st_size == -1) {
+				close(fd);
+				continue;
+			}
+			sz += st.st_size;
+			close(fd);
+		}
+	}
+
+	*rsz = sz;
+	return 0;
 }
 
 static void
@@ -479,7 +528,7 @@ extract_device(const char *path, char *buf, size_t buflen)
 }
 
 static const char *
-module_path(boot_module_t *bm, const char *kdev)
+module_path(boot_module_t *bm, const char *kdev, const char *base_path)
 {
 	static char buf[256];
 	char name_buf[256], dev_buf[64];
@@ -503,7 +552,7 @@ module_path(boot_module_t *bm, const char *kdev)
 			p++;
 			extract_device(name, dev_buf, sizeof(dev_buf));
 			snprintf(buf, sizeof(buf), "%s%s/%s/%s.kmod",
-			    dev_buf, module_base, p, p);
+			    dev_buf, base_path, p, p);
 		}
 	} else {
 		/* device not specified; load from kernel device if known */
@@ -511,20 +560,21 @@ module_path(boot_module_t *bm, const char *kdev)
 			snprintf(buf, sizeof(buf), "%s%s", kdev, name);
 		else
 			snprintf(buf, sizeof(buf), "%s%s/%s/%s.kmod",
-			    kdev, module_base, name, name);
+			    kdev, base_path, name, name);
 	}
 
 	return buf;
 }
 
 static int
-module_open(boot_module_t *bm, int mode, const char *kdev, bool doload)
+module_open(boot_module_t *bm, int mode, const char *kdev,
+    const char *base_path, bool doload)
 {
 	int fd;
 	const char *path;
 
 	/* check the expanded path first */
-	path = module_path(bm, kdev);
+	path = module_path(bm, kdev, base_path);
 	fd = open(path, mode);
 	if (fd != -1) {
 		if ((howto & AB_SILENT) == 0 && doload)
@@ -545,19 +595,9 @@ module_open(boot_module_t *bm, int mode, const char *kdev, bool doload)
 }
 
 static void
-module_init(const char *kernel_path)
+module_base_path(char *buf, size_t bufsize)
 {
-	struct bi_modulelist_entry *bi;
-	struct stat st;
 	const char *machine;
-	char kdev[64];
-	char *buf;
-	boot_module_t *bm;
-	ssize_t len;
-	off_t off;
-	int err, fd, nfail = 0;
-
-	extract_device(kernel_path, kdev, sizeof(kdev));
 
 	switch (netbsd_elf_class) {
 	case ELFCLASS32:
@@ -572,23 +612,39 @@ module_init(const char *kernel_path)
 	}
 	if (netbsd_version / 1000000 % 100 == 99) {
 		/* -current */
-		snprintf(module_base, sizeof(module_base),
+		snprintf(buf, bufsize,
 		    "/stand/%s/%d.%d.%d/modules", machine,
 		    netbsd_version / 100000000,
 		    netbsd_version / 1000000 % 100,
 		    netbsd_version / 100 % 100);
 	} else if (netbsd_version != 0) {
 		/* release */
-		snprintf(module_base, sizeof(module_base),
+		snprintf(buf, bufsize,
 		    "/stand/%s/%d.%d/modules", machine,
 		    netbsd_version / 100000000,
 		    netbsd_version / 1000000 % 100);
 	}
+}
+
+static void
+module_init(const char *kernel_path)
+{
+	struct bi_modulelist_entry *bi;
+	struct stat st;
+	char kdev[64];
+	char *buf;
+	boot_module_t *bm;
+	ssize_t len;
+	off_t off;
+	int err, fd, nfail = 0;
+
+	extract_device(kernel_path, kdev, sizeof(kdev));
+	module_base_path(module_base, sizeof(module_base));
 
 	/* First, see which modules are valid and calculate btinfo size */
 	len = sizeof(struct btinfo_modulelist);
 	for (bm = boot_modules; bm; bm = bm->bm_next) {
-		fd = module_open(bm, 0, kdev, false);
+		fd = module_open(bm, 0, kdev, module_base, false);
 		if (fd == -1) {
 			bm->bm_len = -1;
 			++nfail;
@@ -625,7 +681,7 @@ module_init(const char *kernel_path)
 	for (bm = boot_modules; bm; bm = bm->bm_next) {
 		if (bm->bm_len == -1)
 			continue;
-		fd = module_open(bm, 0, kdev, true);
+		fd = module_open(bm, 0, kdev, module_base, true);
 		if (fd == -1)
 			continue;
 		image_end = (image_end + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);

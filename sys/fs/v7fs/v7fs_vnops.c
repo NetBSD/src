@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.17.4.3 2016/10/05 20:56:02 skrll Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.17.4.4 2017/08/28 17:53:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.17.4.3 2016/10/05 20:56:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.17.4.4 2017/08/28 17:53:07 skrll Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -499,8 +499,11 @@ v7fs_setattr(void *v)
 	/* File size change. */
 	if ((vap->va_size != VNOVAL) && (vp->v_type == VREG)) {
 		error = v7fs_datablock_size_change(fs, vap->va_size, inode);
-		if (error == 0)
+		if (error == 0) {
 			uvm_vnp_setsize(vp, vap->va_size);
+			v7node->update_mtime = true;
+			v7node->update_ctime = true;
+		}
 	}
 	uid_t uid = inode->uid;
 	gid_t gid = inode->gid;
@@ -677,7 +680,7 @@ v7fs_fsync(void *v)
 int
 v7fs_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 				  struct vnodeop_desc *a_desc;
 				  struct vnode * a_dvp;
 				  struct vnode * a_vp;
@@ -714,7 +717,6 @@ out:
 		vrele(vp); /* v_usecount-- of unlocked vp */
 	else
 		vput(vp); /* unlock vp and then v_usecount-- */
-	vput(dvp);
 
 	return error;
 }
@@ -862,7 +864,7 @@ v7fs_mkdir(void *v)
 int
 v7fs_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 				 struct vnode		*a_dvp;
 				 struct vnode		*a_vp;
 				 struct componentname	*a_cnp;
@@ -892,7 +894,6 @@ v7fs_rmdir(void *v)
 	uvm_vnp_setsize(dvp, v7fs_inode_filesize(&parent_node->inode));
 out:
 	vput(vp);
-	vput(dvp);
 
 	return error;
 }
@@ -1007,7 +1008,7 @@ v7fs_readdir(void *v)
 int
 v7fs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 				    struct vnode *a_vp;
 				    bool *a_recycle;
 				    } */ *a = v;
@@ -1023,8 +1024,6 @@ v7fs_inactive(void *v)
 		*a->a_recycle = true;
 	}
 
-	VOP_UNLOCK(vp);
-
 	return 0;
 }
 
@@ -1033,13 +1032,15 @@ v7fs_reclaim(void *v)
 {
 	/*This vnode is no longer referenced by kernel. */
 	extern struct pool v7fs_node_pool;
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 				   struct vnode *a_vp;
 				   } */ *a = v;
 	struct vnode *vp = a->a_vp;
 	struct v7fs_node *v7node = vp->v_data;
 	struct v7fs_self *fs = v7node->v7fsmount->core;
 	struct v7fs_inode *inode = &v7node->inode;
+
+	VOP_UNLOCK(vp);
 
 	DPRINTF("%p #%d\n", vp, inode->inode_number);
 	if (v7fs_inode_nlink(inode) == 0) {

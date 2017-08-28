@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx6.c,v 1.1.2.3 2016/12/05 10:54:50 skrll Exp $	*/
+/*	$NetBSD: if_enet_imx6.c,v 1.1.2.4 2017/08/28 17:51:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.1.2.3 2016/12/05 10:54:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.1.2.4 2017/08/28 17:51:30 skrll Exp $");
 
 #include "locators.h"
 #include "imxccm.h"
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.1.2.3 2016/12/05 10:54:50 skrll E
 #include <arm/imx/imx6_reg.h>
 #include <arm/imx/imx6_ccmreg.h>
 #include <arm/imx/imx6_ccmvar.h>
+#include <arm/imx/imx6_iomuxreg.h>
 #include <arm/imx/imx6_ocotpreg.h>
 #include <arm/imx/imx6_ocotpvar.h>
 #include <arm/imx/if_enetreg.h>
@@ -56,6 +57,10 @@ enet_match(device_t parent __unused, struct cfdata *match __unused, void *aux)
 	switch (aa->aa_addr) {
 	case (IMX6_AIPS2_BASE + AIPS2_ENET_BASE):
 		return 1;
+	case (IMX6_AIPS1_BASE + AIPS1_ENET2_BASE):
+		if (IMX6_CHIPID_MAJOR(imx6_chip_id()) == CHIPID_MAJOR_IMX6UL)
+			return 1;
+		break;
 	}
 
 	return 0;
@@ -77,7 +82,19 @@ enet_attach(device_t parent, device_t self, void *aux)
 		aa->aa_size = AIPS_ENET_SIZE;
 
 	sc->sc_imxtype = 6;	/* i.MX6 */
-	sc->sc_unit = 0;
+	if (IMX6_CHIPID_MAJOR(imx6_chip_id()) == CHIPID_MAJOR_IMX6UL)
+		sc->sc_rgmii = 0;
+	else
+		sc->sc_rgmii = 1;
+
+	switch (aa->aa_addr) {
+	case (IMX6_AIPS2_BASE + AIPS2_ENET_BASE):
+		sc->sc_unit = 0;
+		break;
+	case (IMX6_AIPS1_BASE + AIPS1_ENET2_BASE):
+		sc->sc_unit = 1;
+		break;
+	}
 
 #if NIMXOCOTP > 0
 	/* get mac-address from OCOTP */
@@ -88,16 +105,43 @@ enet_attach(device_t parent, device_t self, void *aux)
 	sc->sc_enaddr[2] = eaddr >> 24;
 	sc->sc_enaddr[3] = eaddr >> 16;
 	sc->sc_enaddr[4] = eaddr >> 8;
-	sc->sc_enaddr[5] = eaddr;
+	sc->sc_enaddr[5] = eaddr + sc->sc_unit;
 #endif
 
 #if NIMXCCM > 0
 	/* PLL power up */
 	if (imx6_pll_power(CCM_ANALOG_PLL_ENET, 1,
-		CCM_ANALOG_PLL_ENET_ENABLE) != 0) {
+	    CCM_ANALOG_PLL_ENET_ENABLE) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't enable CCM_ANALOG_PLL_ENET\n");
 		return;
+	}
+
+	if (IMX6_CHIPID_MAJOR(imx6_chip_id()) == CHIPID_MAJOR_IMX6UL) {
+		uint32_t v;
+
+		/* iMX6UL */
+		if ((imx6_pll_power(CCM_ANALOG_PLL_ENET, 1,
+		    CCM_ANALOG_PLL_ENET_ENET_25M_REF_EN) != 0) ||
+		    (imx6_pll_power(CCM_ANALOG_PLL_ENET, 1,
+		    CCM_ANALOG_PLL_ENET_ENET2_125M_EN) != 0)) {
+			aprint_error_dev(sc->sc_dev,
+			    "couldn't enable CCM_ANALOG_PLL_ENET\n");
+			return;
+		}
+
+		v = iomux_read(IMX6UL_IOMUX_GPR1);
+		switch (sc->sc_unit) {
+		case 0:
+			v |= IMX6UL_IOMUX_GPR1_ENET1_TX_CLK_DIR;
+			v &= ~IMX6UL_IOMUX_GPR1_ENET1_CLK_SEL;
+			break;
+		case 1:
+			v |= IMX6UL_IOMUX_GPR1_ENET2_TX_CLK_DIR;
+			v &= ~IMX6UL_IOMUX_GPR1_ENET2_CLK_SEL;
+			break;
+		}
+		iomux_write(IMX6UL_IOMUX_GPR1, v);
 	}
 
 	sc->sc_pllclock = imx6_get_clock(IMX6CLK_PLL6);

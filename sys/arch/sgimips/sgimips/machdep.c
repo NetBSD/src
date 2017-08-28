@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.140.6.3 2017/02/05 13:40:20 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.140.6.4 2017/08/28 17:51:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140.6.3 2017/02/05 13:40:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140.6.4 2017/08/28 17:51:51 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -255,7 +255,10 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	struct btinfo_symtab *bi_syms;
 #endif
 #ifdef _LP64
-	char *argv[argc+1];
+	char *argv[20];
+
+	if (argc >= __arraycount(argv))
+		panic("too many args");
 
 	for (i = 0; i < argc; i++) {
 		argv[i] = (void *)(intptr_t)argv32[i];

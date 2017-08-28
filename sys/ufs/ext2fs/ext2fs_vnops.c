@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.115.2.3 2016/10/05 20:56:11 skrll Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.115.2.4 2017/08/28 17:53:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.115.2.3 2016/10/05 20:56:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.115.2.4 2017/08/28 17:53:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,8 @@ extern int prtactive;
 static int ext2fs_chmod(struct vnode *, int, kauth_cred_t, struct lwp *);
 static int ext2fs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
 				struct lwp *);
+static int ext2fs_makeinode(struct vattr *, struct vnode *, struct vnode **,
+				struct componentname *, int);
 
 union _qcvt {
 	int64_t	qcvt;
@@ -134,9 +136,7 @@ ext2fs_create(void *v)
 	} */ *ap = v;
 	int	error;
 
-	error =
-	    ext2fs_makeinode(MAKEIMODE(ap->a_vap->va_type, ap->a_vap->va_mode),
-			     ap->a_dvp, ap->a_vpp, ap->a_cnp, 1);
+	error = ext2fs_makeinode(ap->a_vap, ap->a_dvp, ap->a_vpp, ap->a_cnp, 1);
 
 	if (error)
 		return error;
@@ -162,37 +162,13 @@ ext2fs_mknod(void *v)
 	struct vnode **vpp = ap->a_vpp;
 	struct inode *ip;
 	int error;
-	struct mount	*mp;
-	ino_t		ino;
 
-	if ((error = ext2fs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
-		    ap->a_dvp, vpp, ap->a_cnp, 1)) != 0)
+	if ((error = ext2fs_makeinode(vap, ap->a_dvp, vpp, ap->a_cnp, 1)) != 0)
 		return error;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
-	mp  = (*vpp)->v_mount;
-	ino = ip->i_number;
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
-	if (vap->va_rdev != VNOVAL) {
-		/*
-		 * Want to be able to use this to make badblock
-		 * inodes, so don't truncate the dev number.
-		 */
-		ip->i_din.e2fs_din->e2di_rdev = h2fs32(vap->va_rdev);
-	}
-	/*
-	 * Remove inode so that it will be reloaded by vcache_get and
-	 * checked to see if it is an alias of an existing entry in
-	 * the inode cache.
-	 */
-	(*vpp)->v_type = VNON;
 	VOP_UNLOCK(*vpp);
-	vgone(*vpp);
-	error = vcache_get(mp, &ino, sizeof(ino), vpp);
-	if (error != 0) {
-		*vpp = NULL;
-		return error;
-	}
 	return 0;
 }
 
@@ -556,7 +532,7 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 int
 ext2fs_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -590,7 +566,6 @@ ext2fs_remove(void *v)
 		vrele(vp);
 	else
 		vput(vp);
-	vput(dvp);
 	return error;
 }
 
@@ -677,11 +652,12 @@ ext2fs_mkdir(void *v)
 	ulr = &VTOI(dvp)->i_crap;
 	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
+	KASSERT(ap->a_vap->va_type == VDIR);
+
 	/*
 	 * Acquire the inode, but don't sync/direnter it just yet
 	 */
-	error = ext2fs_makeinode(IFDIR | ap->a_vap->va_mode, ap->a_dvp,
-			      &tvp, ap->a_cnp, 0);
+	error = ext2fs_makeinode(ap->a_vap, ap->a_dvp, &tvp, ap->a_cnp, 0);
 	if (error)
 		goto out;
 
@@ -787,7 +763,7 @@ out:
 int
 ext2fs_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -810,8 +786,7 @@ ext2fs_rmdir(void *v)
 	 * No rmdir "." please.
 	 */
 	if (dp == ip) {
-		vrele(dvp);
-		vput(vp);
+		vrele(vp);
 		return EINVAL;
 	}
 	/*
@@ -845,8 +820,6 @@ ext2fs_rmdir(void *v)
 	dp->i_flag |= IN_CHANGE;
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	cache_purge(dvp);
-	vput(dvp);
-	dvp = NULL;
 	/*
 	 * Truncate inode.  The only stuff left
 	 * in the directory is "." and "..".  The
@@ -863,8 +836,6 @@ ext2fs_rmdir(void *v)
 	cache_purge(ITOV(ip));
 out:
 	VN_KNOTE(vp, NOTE_DELETE);
-	if (dvp)
-		vput(dvp);
 	vput(vp);
 	return error;
 }
@@ -887,8 +858,8 @@ ext2fs_symlink(void *v)
 	int		len, error;
 
 	vpp = ap->a_vpp;
-	error = ext2fs_makeinode(IFLNK | ap->a_vap->va_mode, ap->a_dvp,
-			      vpp, ap->a_cnp, 1);
+	KASSERT(ap->a_vap->va_type == VLNK);
+	error = ext2fs_makeinode(ap->a_vap, ap->a_dvp, vpp, ap->a_cnp, 1);
 	if (error)
 		return error;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
@@ -1036,8 +1007,8 @@ ext2fs_vinit(struct mount *mntp, int (**specops)(void *),
 /*
  * Allocate a new inode.
  */
-int
-ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
+static int
+ext2fs_makeinode(struct vattr *vap, struct vnode *dvp, struct vnode **vpp,
 		struct componentname *cnp, int do_direnter)
 {
 	struct inode *ip, *pdir;
@@ -1052,51 +1023,16 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	UFS_CHECK_CRAPCOUNTER(pdir);
 
 	*vpp = NULL;
-	if ((mode & IFMT) == 0)
-		mode |= IFREG;
 
-	if ((error = ext2fs_valloc(dvp, mode, cnp->cn_cred, &tvp)) != 0) {
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, &tvp);
+	if (error)
+		return error;
+	error = vn_lock(tvp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(tvp);
 		return error;
 	}
 	ip = VTOI(tvp);
-	ip->i_uid = kauth_cred_geteuid(cnp->cn_cred);
-	ip->i_e2fs_uid = ip->i_uid & 0xffff;
-	ip->i_e2fs_gid = pdir->i_e2fs_gid;
-	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0) {
-		ip->i_e2fs_uid_high = (ip->i_uid >> 16) & 0xffff;
-		ip->i_e2fs_gid_high = pdir->i_e2fs_gid_high;
-	} else {
-		ip->i_e2fs_uid_high = 0;
-		ip->i_e2fs_gid_high = 0;
-	}
-	ip->i_gid = ip->i_e2fs_gid | (ip->i_e2fs_gid_high << 16);
-	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
-	ip->i_e2fs_mode = mode;
-	tvp->v_type = IFTOVT(mode);	/* Rest init'd in getnewvnode(). */
-	ip->i_e2fs_nlink = 1;
-
-	/* Authorize setting SGID if needed. */
-	if (ip->i_e2fs_mode & ISGID) {
-		error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_WRITE_SECURITY,
-		    tvp, NULL, genfs_can_chmod(tvp->v_type, cnp->cn_cred, ip->i_uid,
-		    ip->i_gid, mode));
-		if (error)
-			ip->i_e2fs_mode &= ~ISGID;
-	}
-
-	/* Initialize extra_isize according to what is set in superblock */
-	if (EXT2F_HAS_ROCOMPAT_FEATURE(ip->i_e2fs, EXT2F_ROCOMPAT_EXTRA_ISIZE)
-	    && EXT2_DINODE_SIZE(ip->i_e2fs) > EXT2_REV0_DINODE_SIZE) {
-		ip->i_din.e2fs_din->e2di_extra_isize = ip->i_e2fs->e2fs.e4fs_want_extra_isize;
-	}
-
-	/* Set create time if possible */
-	if (EXT2_DINODE_FITS(ip->i_din.e2fs_din, e2di_crtime, EXT2_DINODE_SIZE(ip->i_e2fs))) {
-		struct timespec now;
-		vfs_timestamp(&now);
-		EXT2_DINODE_TIME_SET(&now, ip->i_din.e2fs_din, e2di_crtime, EXT2_DINODE_SIZE(ip->i_e2fs));
-	}
-
 	if (do_direnter) {
 		/*
 		 * Make sure inode goes to disk before directory entry.
@@ -1116,7 +1052,6 @@ bad:
 	 * Write error occurred trying to update the inode
 	 * or the directory so must deallocate the inode.
 	 */
-	tvp->v_type = VNON;	/* Stop explosion if VBLK */
 	ip->i_e2fs_nlink = 0;
 	ip->i_flag |= IN_CHANGE;
 	vput(tvp);
@@ -1129,12 +1064,14 @@ bad:
 int
 ext2fs_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	int error;
+
+	VOP_UNLOCK(vp);
 
 	/*
 	 * The inode must be freed and updated before being removed

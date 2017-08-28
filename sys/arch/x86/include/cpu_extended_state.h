@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_extended_state.h,v 1.9.12.1 2016/10/05 20:55:36 skrll Exp $	*/
+/*	$NetBSD: cpu_extended_state.h,v 1.9.12.2 2017/08/28 17:51:56 skrll Exp $	*/
 
 #ifndef _X86_CPU_EXTENDED_STATE_H_
 #define _X86_CPU_EXTENDED_STATE_H_
@@ -225,12 +225,8 @@ union savefpu {
 #define	__NetBSD_COMPAT_NPXCW__	0x127f
 /* FreeBSD leaves some exceptions unmasked as well. */
 #define	__FreeBSD_NPXCW__	0x1272
-/* iBCS2 goes a bit further and leaves the underflow exception unmasked. */
-#define	__iBCS2_NPXCW__		0x0262
 /* Linux just uses the default control word. */
 #define	__Linux_NPXCW__		__INITIAL_NPXCW__
-/* SVR4 uses the same control word as iBCS2. */
-#define	__SVR4_NPXCW__		0x0262
 
 /*
  * The default MXCSR value at reset is 0x1f80, IA-32 Instruction

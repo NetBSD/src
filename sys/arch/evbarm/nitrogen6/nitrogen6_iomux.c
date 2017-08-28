@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_iomux.c,v 1.1.2.4 2016/12/05 10:54:52 skrll Exp $	*/
+/*	$NetBSD: nitrogen6_iomux.c,v 1.1.2.5 2017/08/28 17:51:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Ryo Shimizu <ryo@nerv.org>
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_iomux.c,v 1.1.2.4 2016/12/05 10:54:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_iomux.c,v 1.1.2.5 2017/08/28 17:51:35 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include <sys/bus.h>
@@ -57,6 +57,7 @@ static void nitrogen6_gpio_config(const struct gpio_conf *);
 #define	cubox_i			3
 #define	hummingboard		4
 #define	hummingboard_edge	5
+#define	ccimx6ulstarter		6
 
 #define PAD_UART	\
 		(PAD_CTL_HYS | PAD_CTL_PUS_100K_PU | PAD_CTL_PULL |	\
@@ -111,6 +112,17 @@ static void nitrogen6_gpio_config(const struct gpio_conf *);
 		(PAD_CTL_HYS | PAD_CTL_PUS_100K_PD | PAD_CTL_PULL |	\
 		 PAD_CTL_SPEED_100MHZ | PAD_CTL_DSE_40OHM | PAD_CTL_SRE_SLOW)
 #define PAD_OUTPUT_40OHM	(PAD_CTL_SPEED_100MHZ | PAD_CTL_DSE_40OHM)
+
+#define PAD_ENET6UL \
+		(PAD_CTL_PUS_100K_PU | PAD_CTL_PULL | \
+		 PAD_CTL_SPEED_200MHZ | PAD_CTL_DSE_45OHM | PAD_CTL_SRE_FAST)
+#define PAD_ENET6UL_REFCLK \
+		(PAD_CTL_PUS_100K_PD | \
+		 PAD_CTL_SPEED_LOW50MHZ | PAD_CTL_DSE_40OHM | PAD_CTL_SRE_FAST)
+
+#define PAD_LCD_HSYNC \
+		(PAD_CTL_PUS_100K_PD | PAD_CTL_KEEPER | \
+		 PAD_CTL_SPEED_100MHZ | PAD_CTL_DSE_40OHM | PAD_CTL_SRE_SLOW)
 
 #define PAD_PCIE_GPIO \
 		(PAD_CTL_HYS | PAD_CTL_PUS_22K_PU | PAD_CTL_PULL |	\
@@ -457,6 +469,71 @@ static const struct iomux_conf iomux_data_6dq[] = {
 	{.pin = IOMUX_CONF_EOT}
 };
 
+/* iMX6 UltraLight */
+static const struct iomux_conf iomux_data_6ul[] = {
+	/* Digi-Key i.MX6UL Starter Kit */
+#if (EVBARM_BOARDTYPE == ccimx6ulstarter)
+	{
+		.pin = MUX_PIN(IMX6UL, GPIO1_IO07),
+		.mux = IOMUX_CONFIG_ALT0,	/* ENET1_MDC */
+		.pad = PAD_ENET6UL
+	},
+	{
+		.pin = MUX_PIN(IMX6UL, GPIO1_IO06),
+		.mux = IOMUX_CONFIG_ALT0,	/* ENET1_MDIO */
+		.pad = PAD_ENET6UL
+	},
+	{
+		.pin = MUX_PIN(IMX6UL, ENET1_RX_EN),
+		.mux = IOMUX_CONFIG_ALT0,	/* ENET1_RX_EN */
+		.pad = PAD_ENET6UL
+	},
+	{
+		.pin = MUX_PIN(IMX6UL, ENET1_RX_ER),
+		.mux = IOMUX_CONFIG_ALT0,	/* ENET1_RX_ER */
+		.pad = PAD_ENET6UL
+	},
+	{
+		.pin = MUX_PIN(IMX6UL, ENET1_RX_DATA0),
+		.mux = IOMUX_CONFIG_ALT0,	/* ENET1_RDATA00 */
+		.pad = PAD_ENET6UL
+	},
+	{
+		.pin = MUX_PIN(IMX6UL, ENET1_RX_DATA1),
+		.mux = IOMUX_CONFIG_ALT0,	/* ENET1_RDATA01 */
+		.pad = PAD_ENET6UL
+	},
+	{
+		.pin = MUX_PIN(IMX6UL, ENET1_TX_EN),
+		.mux = IOMUX_CONFIG_ALT0,	/* ENET1_TX_EN */
+		.pad = PAD_ENET6UL
+	},
+	{
+		.pin = MUX_PIN(IMX6UL, ENET1_TX_DATA0),
+		.mux = IOMUX_CONFIG_ALT0,	/* ENET1_TDATA00 */
+		.pad = PAD_ENET6UL
+	},
+	{
+		.pin = MUX_PIN(IMX6UL, ENET1_TX_DATA1),
+		.mux = IOMUX_CONFIG_ALT0,	/* ENET1_TDATA01 */
+		.pad = PAD_ENET6UL
+	},
+	{
+		.pin = MUX_PIN(IMX6UL, ENET1_TX_CLK),
+		.mux = IOMUX_CONFIG_ALT4 |	/* ENET1_REF_CLK */
+		    IOMUX_CONFIG_SION,		/* Force input ENET1_TX_CLK */
+		.pad = PAD_ENET6UL_REFCLK
+	},
+	{
+		.pin = MUX_PIN(IMX6UL, LCD_HSYNC),
+		.mux = IOMUX_CONFIG_ALT5,	/* GPIO3_IO02 */
+		.pad = PAD_LCD_HSYNC
+	},
+#endif
+	/* end of table */
+	{.pin = IOMUX_CONF_EOT}
+};
+
 static const struct gpio_conf gpio_data[] = {
 	/*	GPIOn, PIN,	dir,		value	*/
 #if (EVBARM_BOARDTYPE == nitrogen6x)
@@ -489,6 +566,9 @@ static const struct gpio_conf gpio_data[] = {
 	{	1,	4,	GPIO_DIR_IN,	0	}, /* USDHC2 */
 	{	2,	11,	GPIO_DIR_OUT,	0	}, /* PCIe */
 #endif
+#if (EVBARM_BOARDTYPE == ccimx6ulstarter)
+	{	3,	2,	GPIO_DIR_OUT,	1	}, /* ENET1 phy */
+#endif
 
 	/* end of table */
 	{	0,	0,	0,		0	},
@@ -497,6 +577,8 @@ static const struct gpio_conf gpio_data[] = {
 
 #define AIPS1_ADDR(addr)	\
 	((volatile uint32_t *)(KERNEL_IO_IOREG_VBASE + (addr)))
+#define IOMUX_READ(reg)	\
+	(*AIPS1_ADDR(AIPS1_IOMUXC_BASE + (reg)))
 #define IOMUX_WRITE(reg, val)	\
 	(*AIPS1_ADDR(AIPS1_IOMUXC_BASE + (reg)) = (val))
 #define GPIO_ADDR(group, reg)	\
@@ -510,12 +592,20 @@ nitrogen6_mux_config(const struct iomux_conf *conflist)
 
 	for (i = 0; conflist[i].pin != IOMUX_CONF_EOT; i++) {
 		reg = IOMUX_PIN_TO_PAD_ADDRESS(conflist[i].pin);
-		if (reg != IOMUX_PAD_NONE)
+		if (reg != IOMUX_PAD_NONE) {
+#ifdef IOMUX_DEBUG
+			printf("IOMUX PAD[%08x] = %08x -> %08x\n", reg, IOMUX_READ(reg), conflist[i].pad);
+#endif
 			IOMUX_WRITE(reg, conflist[i].pad);
+		}
 
 		reg = IOMUX_PIN_TO_MUX_ADDRESS(conflist[i].pin);
-		if (reg != IOMUX_MUX_NONE)
+		if (reg != IOMUX_MUX_NONE) {
+#ifdef IOMUX_DEBUG
+			printf("IOMUX MUX[%08x] = %08x -> %08x\n", reg, IOMUX_READ(reg), conflist[i].mux);
+#endif
 			IOMUX_WRITE(reg, conflist[i].mux);
+		}
 	}
 }
 
@@ -556,8 +646,10 @@ nitrogen6_setup_iomux(void)
 	case CHIPID_MAJOR_IMX6Q:
 		nitrogen6_mux_config(iomux_data_6dq);
 		break;
+	case CHIPID_MAJOR_IMX6UL:
+		nitrogen6_mux_config(iomux_data_6ul);
+		break;
 	default:
-		panic("unknown IMX6_CHIPID %08x\n", imx6_chip_id());
 		break;
 	}
 	nitrogen6_gpio_config(gpio_data);
@@ -567,6 +659,8 @@ void
 nitrogen6_device_register(device_t self, void *aux)
 {
 	prop_dictionary_t dict = device_properties(self);
+
+	(void)&dict;
 
 	imx6_device_register(self, aux);
 
@@ -592,6 +686,9 @@ nitrogen6_device_register(device_t self, void *aux)
 	}
 	if (device_is_a(self, "imxpcie") &&
 	    device_is_a(device_parent(self), "axi")) {
+#if (EVBARM_BOARDTYPE == nitrogen6max)
+		prop_dictionary_set_cstring(dict, "imx6pcie-reset-gpio", "!6,31");
+#endif
 #if (EVBARM_BOARDTYPE == hummingboard)
 		prop_dictionary_set_cstring(dict, "imx6pcie-reset-gpio", "!3,4");
 #endif
