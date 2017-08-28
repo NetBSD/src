@@ -1,4 +1,4 @@
-.\" $NetBSD: extent.9,v 1.34 2017/07/03 21:28:48 wiz Exp $
+.\" $NetBSD: extent.9,v 1.35 2017/08/28 06:16:14 skrll Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -132,6 +132,13 @@ flag
 may be passed to allocation requests to indicate that a fixed extent
 map may be extended using a call to
 .Fn malloc .
+.Pp
+If the flag
+.Dv EX_EARLY
+is specified, no
+.Xr mutex 9
+calls are made in the expecation that
+mutual exclusion is not avilable or required.
 .Pp
 .Fn extent_destroy
 destroys the extent map
@@ -275,7 +282,9 @@ Print out information about extent
 This function always succeeds.
 Behavior is undefined if invalid arguments are provided.
 .Sh LOCKING
-The extent manager performs all necessary locking on the extent map
+The extent manager performs all necessary locking (unless
+.Dv EX_EARLY
+is specified) on the extent map
 itself, and any other data structures internal to the extent manager.
 The locks used by the extent manager are simplelocks, and will never sleep
 .Po
