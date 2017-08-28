@@ -1,4 +1,4 @@
-#	$NetBSD: std.zynq,v 1.1 2015/01/23 12:34:09 hkenken Exp $
+#	$NetBSD: std.zynq,v 1.2 2017/08/28 08:00:20 skrll Exp $
 #
 # standard NetBSD/evbarm for ZYNQ options
 
@@ -13,6 +13,7 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 options 	ARM_HAS_VBAR
 options 	PMAP_NEED_ALLOC_POOLPAGE
 options 	__HAVE_CPU_COUNTER
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	TPIDRPRW_IS_CURCPU
