@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.223 2017/03/25 05:55:36 pgoyette Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.224 2017/08/28 00:46:07 kamil Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -623,7 +623,6 @@ struct kinfo_proc2 {
 #define	P_WEXIT			0x00002000
 #define	P_EXEC			0x00004000
 #define	P_OWEUPC		0x00008000
-#define	P_FSTRACE		0x00010000
 #define	P_NOCLDWAIT		0x00020000
 #define	P_32			0x00040000
 #define	P_CLDSIGIGN		0x00080000
