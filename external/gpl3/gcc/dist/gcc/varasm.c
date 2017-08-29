@@ -978,11 +978,17 @@ decode_reg_name (const char *name)
 }
 
 
-/* Return true if DECL's initializer is suitable for a BSS section.  */
+/*
+ * Return true if DECL's initializer is suitable for a BSS section.
+ * If there is an explicit section name attribute, assume that it is not
+ * for a BSS section, independent of the name.
+ */
 
 bool
 bss_initializer_p (const_tree decl)
 {
+  if (DECL_SECTION_NAME (decl) != NULL)
+    return false;
   return (DECL_INITIAL (decl) == NULL
 	  /* In LTO we have no errors in program; error_mark_node is used
 	     to mark offlined constructors.  */
@@ -6402,7 +6408,7 @@ categorize_decl_for_section (const_tree decl, int reloc)
 	ret = SECCAT_BSS;
       else if (! TREE_READONLY (decl)
 	       || TREE_SIDE_EFFECTS (decl)
-	       || ! TREE_CONSTANT (DECL_INITIAL (decl)))
+	       || (DECL_INITIAL(decl) != NULL && ! TREE_CONSTANT (DECL_INITIAL (decl))))
 	{
 	  /* Here the reloc_rw_mask is not testing whether the section should
 	     be read-only or not, but whether the dynamic link will have to
@@ -6422,7 +6428,8 @@ categorize_decl_for_section (const_tree decl, int reloc)
 	   location.  -fmerge-all-constants allows even that (at the
 	   expense of not conforming).  */
 	ret = SECCAT_RODATA;
-      else if (TREE_CODE (DECL_INITIAL (decl)) == STRING_CST)
+      else if (DECL_INITIAL (decl) != NULL
+               && TREE_CODE (DECL_INITIAL (decl)) == STRING_CST)
 	ret = SECCAT_RODATA_MERGE_STR_INIT;
       else
 	ret = SECCAT_RODATA_MERGE_CONST;
@@ -6446,6 +6453,7 @@ categorize_decl_for_section (const_tree decl, int reloc)
 	 no concept of a read-only thread-local-data section.  */
       if (ret == SECCAT_BSS
 	       || (flag_zero_initialized_in_bss
+		   && DECL_INITIAL(decl) != NULL
 		   && initializer_zerop (DECL_INITIAL (decl))))
 	ret = SECCAT_TBSS;
       else

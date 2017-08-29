@@ -178,7 +178,7 @@ extern int mips_dwarf2_addr_size (void);
 #define DWARF2_ADDR_SIZE(bfd) mips_dwarf2_addr_size ()
 #define DWARF2_FDE_RELOC_SIZE (compact_eh ? 4 : mips_dwarf2_addr_size ())
 #define DWARF2_FDE_RELOC_ENCODING(enc) \
-  (enc | (compact_eh ? DW_EH_PE_pcrel : 0))
+  (compact_eh ? (enc)|DW_EH_PE_pcrel : DW_EH_PE_absptr)
 
 #define TARGET_USE_CFIPOP 1
 

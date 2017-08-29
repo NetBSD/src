@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1009.2.1 2017/07/18 17:32:50 snj Exp $
+#	$NetBSD: bsd.own.mk,v 1.1009.2.2 2017/08/29 09:10:36 bouyer Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -788,22 +788,9 @@ MKLINT.ia64=	no
 MKGDB.ia64=	no
 
 #
-# On the MIPS, all libs are compiled with ABIcalls (and are thus PIC),
-# not just shared libraries, so don't build the _pic version.
-#
-.if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
-    ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb"
-MKPICLIB:=	no
-.endif
-
-.if !defined(COMMON_MACHINE_ARCH)
-# Native PowerPC64 ABI is PIC.
-MKPICLIB.powerpc64:=	no
-.endif
-
-#
 # On VAX using ELF, all objects are PIC, not just shared libraries,
-# so don't build the _pic version.
+# so don't build the _pic version. VAX has no native TLS support either,
+# so differences between TLS models are not relevant.
 #
 MKPICLIB.vax=	no
 
