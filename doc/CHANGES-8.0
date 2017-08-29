@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.44 2017/08/26 03:55:04 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.45 2017/08/29 09:44:25 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5338,4 +5338,84 @@ etc/etc.evbarm/Makefile.inc			1.83-1.84
 
 	Replace ALLWINNER_A80 (it's never really worked) with VEXPRESS_A15.
 	[snj, ticket #211]
+
+external/gpl3/binutils/dist/bfd/elfxx-mips.c	1.11
+external/gpl3/binutils/dist/bfd/elfxx-sparc.c	1.12
+external/gpl3/binutils/dist/gas/config/tc-mips.h 1.7
+external/gpl3/gcc/dist/gcc/config/arm/arm.h	1.14
+external/gpl3/gcc/dist/gcc/config/mips/netbsd.h	1.10
+external/gpl3/gcc/dist/gcc/configure		1.16
+external/gpl3/gcc/dist/gcc/configure.ac		1.14
+external/gpl3/gcc/dist/gcc/varasm.c		1.2, 1.3
+lib/csu/arch/mips/crtend.S			1.4
+lib/csu/common/crtbegin.c			1.14
+share/mk/bsd.own.mk				1.1011
+
+	Fix a bunch of .eh_frame and TLS related issues.
+	[joerg, ticket #240]
+
+distrib/sets/lists/debug/mi			1.219
+distrib/sets/lists/debug/shl.mi			1.178 - 1.180
+distrib/sets/lists/tests/mi			1.755
+distrib/sets/lists/tests/shl.mi			1.11
+external/gpl3/gcc/lib/libstdc++-v3/arch/alpha/c++config.h 1.19
+external/gpl3/gcc/lib/libstdc++-v3/arch/arm/c++config.h 1.21
+external/gpl3/gcc/lib/libstdc++-v3/arch/armeb/c++config.h 1.21
+external/gpl3/gcc/lib/libstdc++-v3/arch/coldfire/c++config.h 1.12
+external/gpl3/gcc/lib/libstdc++-v3/arch/earm/c++config.h 1.19
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmeb/c++config.h 1.17
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmhf/c++config.h 1.17
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmhfeb/c++config.h 1.15
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv4/c++config.h 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv4eb/c++config.h 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6/c++config.h 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6eb/c++config.h 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6hf/c++config.h 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6hfeb/c++config.h 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7/c++config.h 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7eb/c++config.h 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7hf/c++config.h 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7hfeb/c++config.h 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/hppa/c++config.h 1.19
+external/gpl3/gcc/lib/libstdc++-v3/arch/i386/c++config.h 1.20
+external/gpl3/gcc/lib/libstdc++-v3/arch/ia64/c++config.h 1.5
+external/gpl3/gcc/lib/libstdc++-v3/arch/m68000/c++config.h 1.15
+external/gpl3/gcc/lib/libstdc++-v3/arch/m68k/c++config.h 1.19
+external/gpl3/gcc/lib/libstdc++-v3/arch/mips64eb/c++config.h 1.19
+external/gpl3/gcc/lib/libstdc++-v3/arch/mips64el/c++config.h 1.18
+external/gpl3/gcc/lib/libstdc++-v3/arch/mipseb/c++config.h 1.21
+external/gpl3/gcc/lib/libstdc++-v3/arch/mipsel/c++config.h 1.19
+external/gpl3/gcc/lib/libstdc++-v3/arch/or1k/c++config.h 1.6
+external/gpl3/gcc/lib/libstdc++-v3/arch/powerpc/c++config.h 1.20
+external/gpl3/gcc/lib/libstdc++-v3/arch/powerpc64/c++config.h 1.8
+external/gpl3/gcc/lib/libstdc++-v3/arch/riscv32/c++config.h 1.5
+external/gpl3/gcc/lib/libstdc++-v3/arch/riscv64/c++config.h 1.5
+external/gpl3/gcc/lib/libstdc++-v3/arch/sh3eb/c++config.h 1.19
+external/gpl3/gcc/lib/libstdc++-v3/arch/sh3el/c++config.h 1.21
+external/gpl3/gcc/lib/libstdc++-v3/arch/sparc/c++config.h 1.20
+external/gpl3/gcc/lib/libstdc++-v3/arch/sparc64/c++config.h 1.19
+external/gpl3/gcc/lib/libstdc++-v3/arch/vax/c++config.h 1.21
+external/gpl3/gcc/lib/libstdc++-v3/arch/x86_64/c++config.h 1.23
+include/dlfcn.h					1.25
+lib/libc/dlfcn/dlfcn_elf.c			1.14
+lib/libc/include/atexit.h			1.1, 1.2
+lib/libc/stdlib/Makefile.inc			1.93
+lib/libc/stdlib/atexit.h			delete
+lib/libc/stdlib/cxa_thread_atexit.c		1.1
+lib/libc/stdlib/exit.c				1.16, 1.17
+lib/libpthread/pthread.c			1.150
+libexec/ld.elf_so/rtld.c			1.185
+libexec/ld.elf_so/rtld.h			1.129
+libexec/ld.elf_so/symbols.map			1.2
+tests/lib/libpthread/Makefile			1.13
+tests/lib/libpthread/h_thread_local_dtor.cpp	1.1
+tests/lib/libpthread/t_thread_local_dtor.sh	1.1
+tests/libexec/ld.elf_so/Makefile		1.9
+tests/libexec/ld.elf_so/h_thread_local_dtor.c	1.1
+tests/libexec/ld.elf_so/helper_dso3/Makefile	1.1
+tests/libexec/ld.elf_so/helper_dso3/h_helper_dso3.cpp 1.1
+tests/libexec/ld.elf_so/t_thread_local_dtor.sh	1.1
+
+	various fixes for destructors for thread_local objects at process exit.
+	[joerg, ticket #127]
 
