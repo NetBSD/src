@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.45 2017/08/29 09:44:25 bouyer Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.46 2017/08/29 09:45:47 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5418,4 +5418,24 @@ tests/libexec/ld.elf_so/t_thread_local_dtor.sh	1.1
 
 	various fixes for destructors for thread_local objects at process exit.
 	[joerg, ticket #127]
+
+sys/arch/amd64/conf/GENERIC
+sys/arch/amd64/conf/XEN3_DOM0
+sys/arch/amd64/conf/XEN3_DOMU
+sys/arch/cobalt/conf/GENERIC
+sys/arch/evbarm/conf/BEAGLEBONE
+sys/arch/evbarm/conf/BEAGLEBOARD
+sys/arch/evbarm/conf/BEAGLEBOARDXM
+sys/arch/evbarm/conf/GENERIC.common
+sys/arch/i386/conf/GENERIC
+sys/arch/i386/conf/XEN3_DOM0
+sys/arch/i386/conf/XEN3_DOMU
+sys/arch/mvmeppc/conf/GENERIC
+sys/arch/shark/conf/GENERIC
+sys/arch/sparc64/conf/GENERIC
+sys/arch/zaurus/conf/GENERIC
+
+	Re-enable options DIAGNOSTIC temporarily (that is: partly back out
+	ticket #60, we will re-apply it later).
+	[skrll, ticket #60]
 
