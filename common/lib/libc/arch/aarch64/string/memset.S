@@ -1,4 +1,4 @@
-/* $NetBSD: memset.S,v 1.1 2014/08/10 05:47:35 matt Exp $ */
+/* $NetBSD: memset.S,v 1.2 2017/08/29 15:00:23 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ ENTRY(memset)
 	add	x13, x15, x2	/* get ending address */
 	asr	x13, x13, x9	/* "ending" block numebr */
 	cmp	x13, x12	/* how many blocks? */
-	b.eq	.Lfilled	/*   none, do it 16 bytes at a time */
+	b.ls	.Lfilled	/*   none, do it 16 bytes at a time */
 
 	/*
 	 * Now we have one or more blocks to deal with.  First now we need
@@ -144,7 +144,7 @@ ENTRY(memset)
 
 	sub	x7, x10, x7	/* subtract offset from block length */
 	sub	x2, x2, x7	/* subtract that from length */
-	asr	x7, x7, #2	/* qword -> word */
+	asr	x7, x7, #4	/* length -> N*16 */
 
 	tbz	x15, #0, .Lzero_hword_aligned
 	strb	wzr, [x15], #1
@@ -158,28 +158,18 @@ ENTRY(memset)
 	tbz	x15, #3, .Lzero_qword_aligned
 	str	xzr, [x15], #8
 .Lzero_qword_aligned:
-	cbz	x7, .Lblock_aligned /* no qwords? just branch */
-	adr	x6, .Lblock_aligned
-	sub	x6, x6, x7	/* backup to write the last N qwords */
-	br	x6		/* and do it */
+	cbz	x7, .Lblock_aligned	/* less than 16 bytes? just branch */
+	adr	x6, .Lunrolled_end
+	sub	x6, x6, x7, lsl #2	/* backup to write the last N insn */
+	br	x6			/* and do it */
+
 	/*
-	 * This is valid for cache lines <= 256 bytes.
+	 * The maximum size of DCZID_EL0:BS supported is 2048 bytes.
 	 */
+	.rept (2048 / 16) - 1
 	stp	xzr, xzr, [x15], #16
-	stp	xzr, xzr, [x15], #16
-	stp	xzr, xzr, [x15], #16
-	stp	xzr, xzr, [x15], #16
-	stp	xzr, xzr, [x15], #16
-	stp	xzr, xzr, [x15], #16
-	stp	xzr, xzr, [x15], #16
-	stp	xzr, xzr, [x15], #16
-	stp	xzr, xzr, [x15], #16
-	stp	xzr, xzr, [x15], #16
-	stp	xzr, xzr, [x15], #16
-	stp	xzr, xzr, [x15], #16
-	stp	xzr, xzr, [x15], #16
-	stp	xzr, xzr, [x15], #16
-	stp	xzr, xzr, [x15], #16
+	.endr
+.Lunrolled_end:
 
 /*
  * Now we are block aligned.
@@ -193,7 +183,7 @@ ENTRY(memset)
 	ret
 
 .Lblock_done:
-	and	x2, x2, x12	/* make positive again */
+	and	x2, x2, x11	/* make positive again */
 	mov	x6, xzr		/* fill 2nd xword */
 	b	.Lqword_loop	/* and finish filling */
 
