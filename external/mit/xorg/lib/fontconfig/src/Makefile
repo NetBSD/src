@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2016/09/27 19:18:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.20 2017/08/29 09:02:10 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,6 @@ SRCS=	fcatomic.c \
 	fcformat.c \
 	fcfreetype.c \
 	fcfs.c \
-	fchash.c \
 	fcinit.c \
 	fclang.c \
 	fclist.c \
@@ -26,9 +25,11 @@ SRCS=	fcatomic.c \
 	fcname.c \
 	fcobjs.c \
 	fcpat.c \
+	fcrange.c \
 	fcserialize.c \
 	fcstat.c \
 	fcstr.c \
+	fcweight.c \
 	fcxml.c \
 	ftglue.c
 
