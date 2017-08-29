@@ -1,4 +1,4 @@
-.\"	$NetBSD: strfmon.3,v 1.5 2014/03/18 18:20:37 riastradh Exp $
+.\"	$NetBSD: strfmon.3,v 1.5.18.1 2017/08/29 11:51:50 martin Exp $
 .\"
 .\" Copyright (c) 2001 Jeroen Ruigrok van der Werven <asmodai@FreeBSD.org>
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" 	From: FreeBSD: Id: strfmon.3,v 1.7 2003/01/06 06:21:25 tjr Exp
 .\"
-.Dd October 12, 2002
+.Dd August 15, 2017
 .Dt STRFMON 3
 .Os
 .Sh NAME
@@ -38,6 +38,8 @@
 .In monetary.h
 .Ft ssize_t
 .Fn strfmon "char * restrict s" "size_t maxsize" "const char * restrict format" "..."
+.Ft ssize_t
+.Fn strfmon_l "char * restrict s" "size_t maxsize" "locale_t loc" "const char * restrict format" "..."
 .Sh DESCRIPTION
 The
 .Fn strfmon
@@ -48,6 +50,14 @@ as controlled by the string pointed to by
 No more than
 .Fa maxsize
 bytes are placed into the array.
+.Pp
+The
+.Fn strfmon_l
+function behaves the same as
+.Fn strfmon ,
+but uses the locale
+.Fa loc
+instead of the process global locale.
 .Pp
 The format string is composed of zero or more directives:
 ordinary characters (not
