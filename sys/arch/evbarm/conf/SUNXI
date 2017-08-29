@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.25 2017/08/27 16:05:26 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.26 2017/08/29 09:55:25 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -139,6 +139,7 @@ sunxirsb*	at fdt?			# P2WI/RSB
 iic*		at i2cbus?
 tcakp*		at iic?			# TI TCA8418 Keypad Scan IC
 wskbd*		at tcakp? console ?
+axp20x*		at iic?			# AXP209 Power Management IC
 
 # RTC
 sunxirtc*	at fdt?			# RTC
