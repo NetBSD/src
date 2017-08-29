@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.149.2.21 2017/08/28 17:52:28 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.149.2.22 2017/08/29 06:49:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.21 2017/08/28 17:52:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.22 2017/08/29 06:49:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -679,7 +679,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
-	 * Record buffer pinters for data transfer (it's huge), command and
+	 * Record buffer pointers for data transfer (it's huge), command and
 	 * status data here
 	 */
 	switch (sc->sc_wire) {
