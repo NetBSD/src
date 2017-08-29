@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.31 2017/05/11 07:56:43 maya Exp $
+# $NetBSD: LOONGSON,v 1.31.2.1 2017/08/29 13:12:47 martin Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.31 $"
+#ident 		"LOONGSON-$Revision: 1.31.2.1 $"
 
 maxusers	16
 
@@ -220,7 +220,7 @@ options  	WDC_NO_IDS #workaround CS5536+JMH330 interrupt disable bug
 
 # ATA (IDE) bus support
 atabus* at ata?
-options 	ATADEBUG
+#options 	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
