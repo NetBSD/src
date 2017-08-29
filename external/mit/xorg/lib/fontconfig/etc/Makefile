@@ -1,4 +1,18 @@
-#	$NetBSD: Makefile,v 1.3 2009/09/07 21:07:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2017/08/29 20:53:56 mrg Exp $
+
+# When updating fontconfig, be sure to update the fonts.conf.  This
+# requires running ./configure like this:
+#
+#   env PKG_CONFIG_PATH=/usr/X11R7/share/pkgconfig \
+#   ./configure \
+#      --localstatedir=/var \
+#      --with-default-fonts=/usr/X11R7/lib/X11/fonts \
+#      --with-add-fonts=/usr/pkg/lib/X11/fonts,/usr/pkg/share/fonts \
+#      --with-configdir=conf.d
+#
+# and then running gmake fonts.conf and copying the new file here.
+# (gmake is required here as the FC_CONFIGDIR pattern uses $(subst).)
+#
 
 SUBDIR=	conf.d conf.avail
 
