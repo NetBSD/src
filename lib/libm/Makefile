@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.191 2017/05/06 18:03:24 christos Exp $
+#  $NetBSD: Makefile,v 1.191.2.1 2017/08/29 11:45:18 martin Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -62,17 +62,19 @@ COMMON_SRCS+= fenv.c
 .endif
 COMMON_SRCS+= e_sqrtl.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
+
 .elif (${LIBC_MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
 ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
 COMMON_SRCS+= fenv.c
 COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
+
 .elif (${LIBC_MACHINE_CPU} == "arm")
 .PATH.c: ${.CURDIR}/arch/arm
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS+= fenv.c
 .endif
-COMMON_SRCS+= s_nexttowardf.c s_nearbyint.c s_rintl.c
+COMMON_SRCS+= s_nexttowardf.c s_rintl.c
 .for f in fenv.c lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
 COPTS.$f +=	-mfpu=vfp
 .endfor
@@ -81,24 +83,29 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .PATH.S: ${.CURDIR}/arch/arm
 ARCH_SRCS = e_sqrt.S e_sqrtf.S lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
 .endif
+
 .elif (${LIBC_MACHINE_ARCH} == "ia64")
 .PATH: ${.CURDIR}/arch/ia64
 COMMON_SRCS += fenv.c
+
 .elif (${LIBC_MACHINE_ARCH} == "hppa")
 .PATH.c: ${.CURDIR}/arch/hppa
-COMMON_SRCS+= fenv.c s_nexttowardf.c s_nearbyint.c s_rintl.c
+COMMON_SRCS+= fenv.c s_nexttowardf.c s_rintl.c
+
 .elif (${LIBC_MACHINE_ARCH} == "sparc")
 .PATH: ${.CURDIR}/arch/sparc
 COMMON_SRCS+= fenv.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
+
 .elif (${LIBC_MACHINE_ARCH} == "sparc64")
 .PATH: ${.CURDIR}/arch/sparc64
 COMMON_SRCS+= fenv.c
-COMMON_SRCS+= s_nexttowardf.c s_nearbyint.c s_rintl.c
+COMMON_SRCS+= s_nexttowardf.c s_rintl.c
 .ifndef _COMPAT_M32_MK_
 COMMON_SRCS+= s_nexttoward.c
 .endif
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
+
 .elif ((${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "x86_64"))
 
 # XXX consider making this LIBC_MACHINE_ARCH?
@@ -107,8 +114,7 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .endif
 .PATH:	${.CURDIR}/arch/i387
 
-COMMON_SRCS+= fenv.c s_nexttoward.c s_nexttowardf.c \
-	s_nearbyint.c s_rintl.c
+COMMON_SRCS+= fenv.c s_nexttoward.c s_nexttowardf.c s_rintl.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
@@ -128,6 +134,7 @@ s_${f}.o s_${f}.pico s_${f}.po s_${f}.go s_${f}.d: s_${f}.c
 .if (${MACHINE_ARCH} == "i386")
 SUBDIR=arch/i387
 .endif
+
 .elif (${LIBC_MACHINE_ARCH} == "m68k")
 .if defined(M68060)
 .PATH:	${.CURDIR}/arch/m68060
@@ -146,10 +153,11 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 	    e_log10.S e_remainder.S e_scalb.S e_sinh.S e_sqrt.S s_atan.S \
 	    s_ceil.S s_copysign.S s_cos.S s_expm1.S s_finite.S s_floor.S \
 	    s_log1p.S s_logb.S s_rint.S s_scalbn.S s_sin.S s_tan.S s_tanh.S
-COMMON_SRCS += fenv.c
+COMMON_SRCS += fenv.c s_rintl.c
 .endif
 .endif
 # end of m68k
+
 .elif (${LIBC_MACHINE_ARCH} == "vax")
 .PATH:	${.CURDIR}/arch/vax
 
@@ -160,6 +168,7 @@ COMMON_SRCS += fenv.c
 # and emulation code isn't written yet.
 ARCH_SRCS = n_scalbn.S
 WARNS?=5
+
 .elif (${LIBC_MACHINE_CPU} == "riscv")
 .PATH:	${.CURDIR}/arch/riscv
 
@@ -172,22 +181,26 @@ ARCH_SRCS += s_fma.S s_fmaf.S
 ARCH_SRCS += s_fmax.S s_fmaxf.S
 ARCH_SRCS += s_fmin.S s_fminf.S
 .endif
+
 .elif (${LIBC_MACHINE_ARCH} == "powerpc")
 .PATH:	${.CURDIR}/arch/powerpc
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS += fenv.c
 .endif
+
 .elif (${LIBC_MACHINE_CPU} == "mips")
 .PATH:	${.CURDIR}/arch/mips
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS += fenv.c
 .endif
+
 .elif (${LIBC_MACHINE_CPU} == "sh3")
 .PATH:	${.CURDIR}/arch/sh3
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS += fenv.c
 .endif
 .endif
+# End of list of CPU tests
 
 WARNS?=5
 
@@ -253,7 +266,7 @@ COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \
 	s_lrint.c s_lrintf.c s_lrintl.c \
 	s_lround.c s_lroundf.c s_lroundl.c \
 	s_log1pf.c s_logb.c s_logbf.c s_logbl.c \
-	s_matherr.c s_modff.c s_modfl.c s_nextafter.c s_nextafterl.c \
+	s_matherr.c s_modff.c s_modfl.c s_nearbyint.c s_nextafter.c s_nextafterl.c \
 	s_nextafterf.c s_remquo.c s_remquof.c s_rint.c s_rintf.c \
 	s_round.c s_roundf.c s_roundl.c s_scalbn.c \
 	s_scalbnf.c s_scalbnl.c s_signgam.c s_significand.c s_significandf.c s_sin.c \
