@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.738 2017/07/09 19:37:33 christos Exp $
+$NetBSD: usbdevs,v 1.739 2017/08/29 18:31:19 ryoon Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -3396,6 +3396,8 @@ product WACOM GRAPHIRE3_6X8	0x0014	Graphire3 6x8
 product WACOM GRAPHIRE4_4X5	0x0015	Graphire4 4x5
 product WACOM INTUOSA5		0x0021	Intuos A5
 product WACOM GD0912U		0x0022	Intuos 9x12 Graphics Tablet
+product WACOM XD0912U		0x0043	Intuos2 A4 i-920 XD-0912-U
+product WACOM CTH690K0		0x033e	Intuos Art CTH-690/K0
 
 /* Weltrend Semiconductor */
 product WELTREND HID		0x2201	HID Device
