@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.38 2017/08/25 20:36:16 jmcneill Exp $	*/
+/*	$NetBSD: pic.c,v 1.39 2017/08/29 22:57:05 nisimura Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.38 2017/08/25 20:36:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.39 2017/08/29 22:57:05 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -159,6 +159,7 @@ pic_ipi_ddb(void *arg)
 	kdb_trap(-1, arg);
 	return 1;
 }
+#endif /* DDB */
 
 #ifdef __HAVE_PREEMPTION
 int
@@ -167,8 +168,7 @@ pic_ipi_kpreempt(void *arg)
 	atomic_or_uint(&curcpu()->ci_astpending, __BIT(1));
 	return 1;
 }
-#endif
-#endif /* MULTIPROCESSOR */
+#endif /* __HAVE_PREEMPTION */
 
 void
 intr_cpu_init(struct cpu_info *ci)
