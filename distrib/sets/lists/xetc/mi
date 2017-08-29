@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.27 2016/12/15 12:56:52 kre Exp $
+# $NetBSD: mi,v 1.28 2017/08/29 09:02:10 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -58,6 +58,10 @@
 ./etc/X11/xsm/system.xsm				-unknown-	xorg
 ./etc/drirc						-unknown-	xorg
 ./etc/fonts/conf.avail/10-autohint.conf			-unknown-	xorg
+./etc/fonts/conf.avail/10-hinting-full.conf		-unknown-	xorg
+./etc/fonts/conf.avail/10-hinting-medium.conf		-unknown-	xorg
+./etc/fonts/conf.avail/10-hinting-none.conf		-unknown-	xorg
+./etc/fonts/conf.avail/10-hinting-slight.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/10-no-sub-pixel.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/10-scale-bitmap-fonts.conf	-unknown-	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-bgr.conf		-unknown-	xorg
@@ -88,6 +92,7 @@
 ./etc/fonts/conf.avail/80-delicious.conf		-unknown-	xorg
 ./etc/fonts/conf.avail/90-synthetic.conf		-unknown-	xorg
 ./etc/fonts/conf.d/10-scale-bitmap-fonts.conf		-unknown-	xorg
+./etc/fonts/conf.d/10-hinting-slight.conf		-unknown-	xorg
 ./etc/fonts/conf.d/20-fix-globaladvance.conf		-unknown-	obsolete
 ./etc/fonts/conf.d/20-unhint-small-vera.conf		-unknown-	xorg
 ./etc/fonts/conf.d/30-metric-aliases.conf		-unknown-	xorg
