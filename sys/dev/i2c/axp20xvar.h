@@ -1,4 +1,4 @@
-/*      $NetBSD: axp20xvar.h,v 1.1 2015/10/15 13:41:11 bouyer Exp $       */
+/*      $NetBSD: axp20xvar.h,v 1.2 2017/08/29 10:10:54 jmcneill Exp $       */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -31,5 +31,6 @@
 #define AXP20X_DCDC3	3
 
 int	axp20x_set_dcdc(device_t, int, int, bool);
+void	axp20x_poweroff(device_t);
 
 #endif /* _DEV_I2C_AXP20XVAR_H_ */
