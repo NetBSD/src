@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.47 2017/08/29 13:20:05 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.48 2017/08/29 15:05:55 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5458,9 +5458,12 @@ tests/lib/libc/locale/t_strfmon.c		1.1
 	[joerg, ticket #215]
 
 lib/libm/Makefile               1.197-1.201
+lib/libm/src/s_nextafter.c	1.15-1.16
 tests/lib/libm/t_fe_round.c     1.7
 
 	Ensure nexttowardf() is included on all IEEE targets.
+	On systems without __HAVE_LONG_DOUBLE, alias nexttoward()
+	to nextafter().
 	Add rintl() for aarch64 and mips, and nexttoward() for m68k.
 	Add a test which verifies that nextafter() and nexttoward() are
 	present in the implementation.
