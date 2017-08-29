@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.100 2017/05/15 10:59:24 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.100.2.1 2017/08/29 12:47:29 martin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -148,6 +148,13 @@
 	li reg, MIPS_SR_KX; mtc0 reg, MIPS_COP_0_STATUS
 #define	SET_EXCEPTION_LEVEL(reg) \
 	li reg, MIPS_SR_EXL | MIPS_SR_KX; mtc0 reg, MIPS_COP_0_STATUS
+#endif
+
+#ifdef MIPS3_LOONGSON2
+#define KERN_ENTRY_ERRATA \
+	li k0, MIPS_DIAG_BTB_CLEAR|MIPS_DIAG_RAS_DISABLE; mtc0 k0, MIPS_COP_0_DIAG
+#else
+#define KERN_ENTRY_ERRATA /* nothing */
 #endif
 
 #if MIPS1
@@ -1288,10 +1295,7 @@ NESTED_NOPROFILE(MIPSX(user_reserved_insn), CALLFRAME_SIZ, ra)
 	/*
 	 * Save a minimum of registers to see if this is rdhwr $3,$29
 	 */
-#ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_BTB_CLEAR
-	mtc0	k0, MIPS_COP_0_DIAG
-#endif
+	KERN_ENTRY_ERRATA
 	/* K1 already has CURLWP */
 	PTR_L	k0, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	PTR_ADDU k0, USPACE - TF_SIZ - CALLFRAME_SIZ
@@ -1353,10 +1357,7 @@ NESTED_NOPROFILE(MIPSX(user_gen_exception), CALLFRAME_SIZ, ra)
 	/*
 	 * Save all the registers except the kernel temporaries onto the stack.
 	 */
-#ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_BTB_CLEAR
-	mtc0	k0, MIPS_COP_0_DIAG
-#endif
+	KERN_ENTRY_ERRATA
 	/* K1 already has CURLWP */
 	PTR_L	k0, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	PTR_ADDU k0, USPACE - TF_SIZ - CALLFRAME_SIZ
@@ -1468,10 +1469,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
  * Save the relevant user registers onto the kernel stack.
  * We don't need to save s0 - s8 because the compiler does it for us.
  */
-#ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_BTB_CLEAR
-	mtc0	k0, MIPS_COP_0_DIAG
-#endif
+	KERN_ENTRY_ERRATA
 	/* k1 contains curlwp */
 	PTR_L	k0, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	PTR_ADDU k0, USPACE - TF_SIZ - CALLFRAME_SIZ
@@ -1660,10 +1658,7 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 	/*
 	 * Save all the registers but kernel temporaries onto the stack.
 	 */
-#ifdef MIPS3_LOONGSON2
-	li	k0, MIPS_DIAG_BTB_CLEAR
-	mtc0	k0, MIPS_COP_0_DIAG
-#endif
+	KERN_ENTRY_ERRATA
 	/* k1 already contains cpulwp */
 	PTR_L	k0, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	PTR_ADDU k0, USPACE - TF_SIZ - CALLFRAME_SIZ
@@ -2655,10 +2650,6 @@ MIPSX(user_return):
 	REG_L	s6, CALLFRAME_SIZ+TF_REG_S6(sp)		# $22
 	REG_L	s7, CALLFRAME_SIZ+TF_REG_S7(sp)		# $23
 	REG_L	s8, CALLFRAME_SIZ+TF_REG_S8(sp)		# $30
-#ifdef MIPS3_LOONGSON2
-	li	t0, (MIPS_DIAG_BTB_CLEAR|MIPS_DIAG_ITLB_CLEAR)
-	mtc0	t0, MIPS_COP_0_DIAG
-#endif
 MIPSX(user_intr_return):
 #ifdef PARANOIA
 	PTR_L	t0, L_CPU(MIPS_CURLWP)
