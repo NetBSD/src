@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.76 2017/03/05 09:27:52 mrg Exp $
+# $NetBSD: shl.mi,v 1.77 2017/08/29 09:02:10 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -175,7 +175,7 @@
 ./usr/X11R7/lib/libexpat.so.2.0			-obsolete-		obsolete
 ./usr/X11R7/lib/libfontconfig.so		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libfontconfig.so.2		-unknown-		xorg,compatx11file
-./usr/X11R7/lib/libfontconfig.so.2.2		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libfontconfig.so.2.3		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libfontenc.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libfontenc.so.2			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libfontenc.so.2.0		-unknown-		xorg,compatx11file
