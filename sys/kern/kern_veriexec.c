@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.14 2017/08/29 10:23:12 pgoyette Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.15 2017/08/29 12:48:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.14 2017/08/29 10:23:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.15 2017/08/29 12:48:50 pgoyette Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1079,7 +1079,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 		log(LOG_ERR, "Veriexec: Invalid or unknown fingerprint type "
 		    "`%s' for file `%s'.\n", fp_type, file);
 		error = EOPNOTSUPP;
-		goto free_out;
+		goto out;
 	}
 
 	if (prop_data_size(prop_dictionary_get(dict, "fp")) !=
@@ -1087,7 +1087,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 		log(LOG_ERR, "Veriexec: Bad fingerprint length for `%s'.\n",
 		    file);
 		error = EINVAL;
-		goto free_out;
+		goto out;
 	}
 
 	vfe->fp = kmem_alloc(vfe->ops->hash_len, KM_SLEEP);
@@ -1156,18 +1156,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	veriexec_bypass = 0;
 
   unlock_out:
-	if (error) {
-		kmem_free(vfe->fp, vfe->ops->hash_len);
-		if (vfe->filename != NULL)
-			kmem_free(vfe->filename, vfe->filename_len);
-	}
 	rw_exit(&veriexec_op_lock);
-
-  free_out:
-	if (error) {
-		rw_destroy(&vfe->lock);
-		kmem_free(vfe, sizeof(*vfe));
-	}
 
   out:
 	vrele(vp);
