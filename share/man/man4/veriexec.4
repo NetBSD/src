@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.4,v 1.23 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: veriexec.4,v 1.24 2017/08/29 23:38:50 pgoyette Exp $
 .\"
 .\" Copyright 2005 Elad Efrat <elad@bsd.org.il>
 .\" Copyright 2005 Brett Lymn <blymn@netbsd.org>
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 19, 2011
+.Dd August 30, 2017
 .Dt VERIEXEC 4
 .Os
 .Sh NAME
@@ -59,12 +59,13 @@ Load an entry for a file to be monitored by
 .Em Veriexec .
 .Pp
 The dictionary passed contains the following elements:
-.Bl -column entryxtype string
+.Bl -column keepxfilename string
 .It Sy Name	Type	Purpose
 .It file	string	filename for this entry
 .It entry-type	uint8	entry type ( see below )
 .It fp-type	string	fingerprint hashing algorithm
 .It fp	data	the fingerprint
+.It keep-filename	bool	whether or not to retain the entry's filename
 .El
 .Pp
 .Dq entry-type
@@ -90,7 +91,7 @@ Dump the
 .Em Veriexec
 monitored files database from the kernel.
 .Pp
-Only files that the filename is kept for them will be dumped.
+Only files for which the filename was kept will be dumped.
 The returned array contains dictionaries with the following elements:
 .Bl -column entryxtype string
 .It Sy Name	Type	Purpose
