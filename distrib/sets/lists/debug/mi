@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.216.2.1 2017/07/18 17:32:50 snj Exp $
+# $NetBSD: mi,v 1.216.2.2 2017/08/29 09:43:16 bouyer Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2196,6 +2196,7 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_cancel.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_exit.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_resolv.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/h_thread_local_dtor.debug	tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_barrier.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_cond.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_condwait.debug		tests-lib-tests		debug,atf,compattestfile

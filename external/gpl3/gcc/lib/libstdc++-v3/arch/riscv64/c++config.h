@@ -1132,7 +1132,7 @@ namespace std
 /* #undef _GLIBCXX_HAVE__TANL */
 
 /* Define to 1 if you have the `__cxa_thread_atexit_impl' function. */
-/* #undef _GLIBCXX_HAVE___CXA_THREAD_ATEXIT_IMPL */
+#define _GLIBCXX_HAVE___CXA_THREAD_ATEXIT_IMPL 1
 
 /* Define as const if the declaration of iconv() needs const. */
 #define _GLIBCXX_ICONV_CONST const

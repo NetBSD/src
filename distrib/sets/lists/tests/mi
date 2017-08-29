@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.752 2017/06/01 15:45:02 perseant Exp $
+# $NetBSD: mi,v 1.752.2.1 2017/08/29 09:43:17 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3043,6 +3043,7 @@
 ./usr/tests/lib/libpthread/h_cancel		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/h_exit		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/h_resolv		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/h_thread_local_dtor	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_atexit		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_barrier		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_cancel		tests-lib-tests		compattestfile,atf
@@ -3068,6 +3069,7 @@
 ./usr/tests/lib/libpthread/t_sleep		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_status		tests-obsolete		obsolete
 ./usr/tests/lib/libpthread/t_swapcontext	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/t_thread_local_dtor	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_timedmutex		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread_dbg			tests-obsolete		obsolete
 ./usr/tests/lib/libpthread_dbg/Atffile		tests-obsolete		obsolete
@@ -3205,6 +3207,7 @@
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2	tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/h_ifunc		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/h_locking		tests-libexec-tests	compattestfile,atf,pic
+./usr/tests/libexec/ld.elf_so/h_thread_local_dtor	tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_df_1_noopen	tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_dl_symver	tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_dlerror-cleared	tests-libexec-tests	compattestfile,atf,pic
@@ -3212,6 +3215,7 @@
 ./usr/tests/libexec/ld.elf_so/t_dlinfo		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_dlvsym		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_ifunc		tests-libexec-tests	compattestfile,atf,pic
+./usr/tests/libexec/ld.elf_so/t_thread_local_dtor	tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/modules				tests-sys-tests		compattestfile,atf
 ./usr/tests/net					tests-net-tests		compattestfile,atf
 ./usr/tests/net/Atffile				tests-net-tests		compattestfile,atf

@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.24 2012/02/16 23:00:39 joerg Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.24.24.1 2017/08/29 09:43:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,6 +34,12 @@
 
 #include <sys/featuretest.h>
 #include <sys/cdefs.h>
+#include <machine/ansi.h>
+
+#ifdef	_BSD_SSIZE_T_
+typedef	_BSD_SSIZE_T_	ssize_t;
+#undef	_BSD_SSIZE_T_
+#endif
 
 #if defined(_NETBSD_SOURCE)
 typedef struct _dl_info {
@@ -59,6 +65,7 @@ int	dlctl(void *, int, void *);
 int	dlinfo(void *, int, void *);
 void	*dlvsym(void * __restrict, const char * __restrict,
 	    const char * __restrict);
+void	__dl_cxa_refcount(void *, ssize_t);
 #endif
 __aconst char *dlerror(void);
 __END_DECLS

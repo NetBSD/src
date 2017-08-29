@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.92 2016/04/01 12:37:48 msaitoh Exp $
+#	$NetBSD: Makefile.inc,v 1.92.8.1 2017/08/29 09:43:16 bouyer Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -6,7 +6,7 @@
 
 SRCS+=	_env.c _rand48.c \
 	a64l.c abort.c aligned_alloc.c atexit.c atof.c atoi.c atol.c atoll.c \
-	bsearch.c drand48.c exit.c \
+	bsearch.c cxa_thread_atexit.c drand48.c exit.c \
 	getenv.c getopt.c getopt_long.c getsubopt.c \
 	hcreate.c heapsort.c imaxdiv.c insque.c jrand48.c l64a.c lldiv.c \
 	lcong48.c lrand48.c lsearch.c merge.c mi_vector_hash.c mrand48.c \

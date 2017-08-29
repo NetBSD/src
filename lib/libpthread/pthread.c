@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.147 2015/05/29 16:05:13 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.147.8.1 2017/08/29 09:43:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.147 2015/05/29 16:05:13 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.147.8.1 2017/08/29 09:43:16 bouyer Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: pthread.c,v 1.147 2015/05/29 16:05:13 christos Exp $");
 #include <unistd.h>
 #include <sched.h>
 
+#include "atexit.h"
 #include "pthread.h"
 #include "pthread_int.h"
 #include "pthread_makelwp.h"
@@ -637,6 +638,10 @@ pthread_exit(void *retval)
 		}
 		pthread_mutex_lock(&self->pt_lock);
 	}
+
+	pthread_mutex_unlock(&self->pt_lock);
+	__cxa_thread_run_atexit();
+	pthread_mutex_lock(&self->pt_lock);
 
 	/* Perform cleanup of thread-specific data */
 	pthread__destroy_tsd(self);
