@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.13 2017/08/29 10:19:54 pgoyette Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.14 2017/08/29 10:23:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.13 2017/08/29 10:19:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.14 2017/08/29 10:23:12 pgoyette Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1156,8 +1156,11 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	veriexec_bypass = 0;
 
   unlock_out:
-	if (error)
+	if (error) {
 		kmem_free(vfe->fp, vfe->ops->hash_len);
+		if (vfe->filename != NULL)
+			kmem_free(vfe->filename, vfe->filename_len);
+	}
 	rw_exit(&veriexec_op_lock);
 
   free_out:
