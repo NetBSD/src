@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.143 2017/02/13 06:11:01 snj Exp $
+# $NetBSD: mi,v 1.144 2017/08/29 07:53:54 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -674,6 +674,7 @@
 ./usr/X11R7/lib/X11/xkb/geometry/sgi_vndr/indigo	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/sgi_vndr/indy		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/sony			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/geometry/steelseries		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/sun			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/teck			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/thinkpad		-unknown-	xorg
@@ -848,7 +849,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/be			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/ben			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/bg			-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/bn			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/bn			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/br			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/brai			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/braille			-unknown-	obsolete
@@ -1695,6 +1696,7 @@
 ./usr/X11R7/share/examples/ssh-askpass/SshAskpass-default.ad	-unknown-	xorg
 ./usr/X11R7/share/examples/ssh-askpass/SshAskpass-green.ad	-unknown-	xorg
 ./usr/X11R7/share/examples/ssh-askpass/SshAskpass-motif.ad	-unknown-	xorg
+./usr/X11R7/share/libdrm				base-x11-root	xorg
 ./usr/X11R7/share/pciids				base-x11-root	xorg
 ./usr/X11R7/share/xcb					base-x11-root	xorg
 ./usr/libdata/debug/usr/X11R7				base-sys-usr	xorg
