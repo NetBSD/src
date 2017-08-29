@@ -89,7 +89,36 @@ ATF_TC_BODY(fe_round, tc)
 		    (fegetround() == values[i].round_mode),
 		    "Didn't get the same rounding mode out!\n"
 		    "(index %d) fed in %d rounding mode, got %d out\n",
-		    i, fegetround(), values[i].round_mode);
+		    i, values[i].round_mode, fegetround());
+	}
+}
+
+ATF_TC(fe_nearbyint);
+ATF_TC_HEAD(fe_nearbyint, tc)
+{
+	atf_tc_set_md_var(tc, "descr","Checking IEEE 754 rounding modes using nearbyint");
+}
+
+ATF_TC_BODY(fe_nearbyint, tc)
+{
+	double received;
+
+	for (unsigned int i = 0; i < __arraycount(values); i++) {
+		fesetround(values[i].round_mode);
+
+		received = nearbyint(values[i].input);
+		ATF_CHECK_MSG(
+		    (fabs(received - values[i].expected) < EPSILON),
+		    "nearbyint rounding wrong, difference too large\n"
+		    "input: %f (index %d): got %f, expected %ld\n",
+		    values[i].input, i, received, values[i].expected);
+
+		/* Do we get the same rounding mode out? */
+		ATF_CHECK_MSG(
+		    (fegetround() == values[i].round_mode),
+		    "Didn't get the same rounding mode out!\n"
+		    "(index %d) fed in %d rounding mode, got %d out\n",
+		    i, values[i].round_mode, fegetround());
 	}
 }
 
@@ -97,6 +126,7 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, fe_round);
+	ATF_TP_ADD_TC(tp, fe_nearbyint);
 
 	return atf_no_error();
 }
@@ -115,9 +145,24 @@ ATF_TC_BODY(t_nofe_round, tc)
 	atf_tc_skip("no fenv.h support on this architecture");
 }
 
+ATF_TC(t_nofe_nearbyint);
+
+ATF_TC_HEAD(t_nofe_nearbyint, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "dummy test case - no fenv.h support");
+}
+
+ATF_TC_BODY(t_nofe_nearbyint, tc)
+{
+	atf_tc_skip("no fenv.h support on this architecture");
+}
+
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, t_nofe_round);
+	ATF_TP_ADD_TC(tp, t_nofe_nearbyint);
 	return atf_no_error();
 }
 
