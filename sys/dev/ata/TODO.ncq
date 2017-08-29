@@ -2,6 +2,11 @@ Bugs
 ----
 test wd* at umass?, confirm the ata_channel kludge works
 
+c_start() needs to be called on splbio to avoid spurious irq during reset,
+is not e.g. in ata thread and may not in atastart() neither
+- wdc.c never calls atastart() (start always false)
+- ata_wdc.c calls atastart() regardless if error
+
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------
 do biodone() in wddone() starting the dump to not leak bufs when dumping from
