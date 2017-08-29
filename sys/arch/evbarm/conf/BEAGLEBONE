@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.42.2.2 2017/07/05 13:58:48 martin Exp $
+#	$NetBSD: BEAGLEBONE,v 1.42.2.3 2017/08/29 09:42:19 martin Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -20,7 +20,7 @@ options 	TI_AM335X
 
 # Development and Debugging options
 
-#options 	DEBUG
+options 	DEBUG
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
 

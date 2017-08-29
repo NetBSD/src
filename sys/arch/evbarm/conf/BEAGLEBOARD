@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.61.6.1 2017/07/05 13:58:48 martin Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.61.6.2 2017/08/29 09:42:19 martin Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -125,7 +125,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-#options 	DIAGNOSTIC	# internal consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging

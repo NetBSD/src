@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.127.6.1 2017/07/05 13:58:48 martin Exp $
+#	$NetBSD: GENERIC,v 1.127.6.2 2017/08/29 09:42:19 martin Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.127.6.1 $"
+#ident		"GENERIC-$Revision: 1.127.6.2 $"
 
 # estimated number of users
 maxusers	32
@@ -153,7 +153,7 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
-#options 	DIAGNOSTIC	# internal consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	DDB		# in-kernel debugger
 makeoptions	COPY_SYMTAB=1 	# reserve symbol space for DDB
