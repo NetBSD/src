@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.126.6.2 2017/07/24 06:15:54 snj Exp $	 */
+/*	$NetBSD: rtld.h,v 1.126.6.3 2017/08/29 09:43:17 bouyer Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -298,6 +298,7 @@ typedef struct Struct_Obj_Entry {
 	size_t		init_arraysz;	/* # of entries in it */
 	Elf_Addr	*fini_array;	/* start of fini array */
 	size_t		fini_arraysz;	/* # of entries in it */
+	size_t		cxa_refcount;	/* For TLS destructors. */
 #ifdef __ARM_EABI__
 	void		*exidx_start;
 	size_t		exidx_sz;
@@ -355,6 +356,7 @@ __dso_public int dl_iterate_phdr(int (*)(struct dl_phdr_info *, size_t, void *),
     void *);
 
 __dso_public void *_dlauxinfo(void) __pure;
+__dso_public void __dl_cxa_refcount(void *addr, ssize_t delta);
 
 #if defined(__ARM_EABI__) && !defined(__ARM_DWARF_EH__)
 /*

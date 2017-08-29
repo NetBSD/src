@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn_elf.c,v 1.13 2012/06/24 15:26:03 christos Exp $	*/
+/*	$NetBSD: dlfcn_elf.c,v 1.13.24.1 2017/08/29 09:43:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dlfcn_elf.c,v 1.13 2012/06/24 15:26:03 christos Exp $");
+__RCSID("$NetBSD: dlfcn_elf.c,v 1.13.24.1 2017/08/29 09:43:18 bouyer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -75,6 +75,7 @@ __weak_alias(__dlerror,___dlerror)
 __weak_alias(__dladdr,___dladdr)
 __weak_alias(__dlinfo,___dlinfo)
 __weak_alias(__dl_iterate_phdr,___dl_iterate_phdr)
+__weak_alias(__dl_cxa_refcount, ___dl_cxa_refcount)
 #endif
 
 /*
@@ -202,4 +203,12 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),
 	phdr_info.dlpi_name = dlpi_name;
 
 	return callback(&phdr_info, sizeof(phdr_info), data);
+}
+
+void ___dl_cxa_refcount(void *, ssize_t);
+
+/*ARGSUSED*/
+void
+___dl_cxa_refcount(void *dso_symbol, ssize_t delta)
+{
 }

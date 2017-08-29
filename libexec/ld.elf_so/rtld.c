@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.183.4.1 2017/06/10 06:27:51 snj Exp $	 */
+/*	$NetBSD: rtld.c,v 1.183.4.2 2017/08/29 09:43:17 bouyer Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.183.4.1 2017/06/10 06:27:51 snj Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.183.4.2 2017/08/29 09:43:17 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1423,6 +1423,45 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *), void *pa
 
 	_rtld_shared_exit();
 	return error;
+}
+
+void
+__dl_cxa_refcount(void *addr, ssize_t delta)
+{
+	sigset_t mask;
+	Obj_Entry *obj;
+
+	if (delta == 0)
+		return;
+
+	dbg(("__dl_cxa_refcount of %p with %zd", addr, delta));
+
+	_rtld_exclusive_enter(&mask);
+	obj = _rtld_obj_from_addr(addr);
+
+	if (obj == NULL) {
+		dbg(("__dl_cxa_refcont: address not found"));
+		_rtld_error("No shared object contains address");
+		_rtld_exclusive_exit(&mask);
+		return;
+	}
+	if (delta > 0 && obj->cxa_refcount > SIZE_MAX - delta)
+		_rtld_error("Reference count overflow");
+	else if (delta < 0 && obj->cxa_refcount < -1 + (size_t)-(delta + 1))
+		_rtld_error("Reference count underflow");
+	else {
+		if (obj->cxa_refcount == 0)
+			++obj->refcount;
+		obj->cxa_refcount += delta;
+		dbg(("new reference count: %zu", obj->cxa_refcount));
+		if (obj->cxa_refcount == 0) {
+			--obj->refcount;
+			if (obj->refcount == 0)
+				_rtld_unload_object(&mask, obj, true);
+		}
+	}
+
+	_rtld_exclusive_exit(&mask);
 }
 
 /*

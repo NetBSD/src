@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.10 2015/06/22 06:02:02 matt Exp $
+# $NetBSD: shl.mi,v 1.10.8.1 2017/08/29 09:43:18 bouyer Exp $
 #
 ./usr/tests/lib/csu/h_initfini3_dso.so		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/h_initfini3_dso.so.1	tests-lib-tests		compattestfile,atf
@@ -20,6 +20,8 @@
 ./usr/tests/libexec/ld.elf_so/libh_helper_dso1.so.1				tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/libh_helper_dso2.so				tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/libh_helper_dso2.so.1				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_helper_dso3.so				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_helper_dso3.so.1				tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso.so				tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso.so.1			tests-libexec-tests	compattestfile,atf
 ./usr/tests/util/id/libfake.so.0		tests-obsolete		obsolete

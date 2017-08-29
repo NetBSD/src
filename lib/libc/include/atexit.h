@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.h,v 1.11 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: atexit.h,v 1.2.2.2 2017/08/29 09:43:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -29,5 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdbool.h>
+
 int	__cxa_atexit(void (*)(void *), void *, void *);
 void	__cxa_finalize(void *);
+void	__cxa_thread_run_atexit(void);
+int	__cxa_thread_atexit(void (*)(void *), void *, void *);
+
+#ifdef _LIBC
+extern __dso_hidden bool __cxa_thread_atexit_used;
+#endif

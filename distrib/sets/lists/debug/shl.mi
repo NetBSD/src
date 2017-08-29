@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.176.2.1 2017/06/21 18:03:17 snj Exp $
+# $NetBSD: shl.mi,v 1.176.2.2 2017/08/29 09:43:16 bouyer Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -307,12 +307,16 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_thread_local_dtor.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso1.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso2.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso3.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso_g.a	comp-c-debuglib	atf,debuglib,compattestfile
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso_g.a	comp-c-debuglib	atf,debuglib,compattestfile
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso_g.a	comp-c-debuglib	atf,debuglib,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_helper_dso1_g.a			comp-c-debuglib	atf,debuglib,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_helper_dso2_g.a			comp-c-debuglib	atf,debuglib,compattestfile
+./usr/tests/libexec/ld.elf_so/libh_helper_dso3_g.a			comp-c-debuglib	atf,debuglib,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso_g.a			comp-c-debuglib	atf,debuglib,compattestfile
+
