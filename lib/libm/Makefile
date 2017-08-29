@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.191.2.2 2017/08/29 11:58:26 martin Exp $
+#  $NetBSD: Makefile,v 1.191.2.3 2017/08/29 14:31:43 martin Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -60,7 +60,7 @@ ARCH_SRCS+= s_fma.S s_fmaf.S s_fmax.S s_fmaxf.S s_fmin.S s_fminf.S
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS+= fenv.c
 .endif
-COMMON_SRCS+= s_rintl.c
+COMMON_SRCS+= s_nexttoward.c s_rintl.c
 COMMON_SRCS+= e_sqrtl.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 
@@ -195,6 +195,10 @@ COMMON_SRCS += fenv.c
 COMMON_SRCS += fenv.c
 .endif
 COMMON_SRCS+= s_rintl.c
+.if (${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el") \
+    && (!defined(CPUFLAGS) || empty(CPUFLAGS:M-mabi=32))
+COMMON_SRCS+= s_nexttoward.c
+.endif
 
 .elif (${LIBC_MACHINE_CPU} == "sh3")
 .PATH:	${.CURDIR}/arch/sh3
