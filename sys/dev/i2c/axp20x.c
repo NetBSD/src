@@ -1,7 +1,7 @@
-/* $NetBSD: axp20x.c,v 1.5 2017/05/14 11:39:17 tnn Exp $ */
+/* $NetBSD: axp20x.c,v 1.6 2017/08/29 09:55:03 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_fdt.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.5 2017/05/14 11:39:17 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.6 2017/08/29 09:55:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,6 +182,7 @@ struct axp20x_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
+	int		sc_phandle;
 
 	uint8_t 	sc_inputstatus;
 	uint8_t 	sc_powermode;
@@ -198,9 +201,19 @@ static int	axp20x_write(struct axp20x_softc *, uint8_t, uint8_t *, size_t, int);
 CFATTACH_DECL_NEW(axp20x, sizeof(struct axp20x_softc),
     axp20x_match, axp20x_attach, NULL, NULL);
 
+static const char * compatible[] = {
+	"x-powers,axp209",
+	NULL
+};
+
 static int
 axp20x_match(device_t parent, cfdata_t match, void *aux)
 {
+	struct i2c_attach_args * const ia = aux;
+
+	if (ia->ia_name != NULL)
+		return iic_compat_match(ia, compatible);
+
 	return 1;
 }
 
@@ -216,6 +229,7 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
+	sc->sc_phandle = ia->ia_cookie;
 
 	error = axp20x_read(sc, AXP_INPUT_STATUS,
 	    &sc->sc_inputstatus, 1, I2C_F_POLL);
