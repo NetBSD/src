@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2013/06/03 20:23:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2017/08/29 09:02:10 mrg Exp $
 
 .include <bsd.own.mk>
 
 .PATH:	${X11SRCDIR.fontconfig}/conf.d
 FONTCONFIG_LINKS= \
+	10-hinting-slight.conf \
 	10-scale-bitmap-fonts.conf \
 	20-unhint-small-vera.conf \
 	30-urw-aliases.conf \

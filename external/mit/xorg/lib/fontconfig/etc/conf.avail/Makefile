@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile,v 1.4 2013/06/03 20:23:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2017/08/29 09:02:10 mrg Exp $
 
 .include <bsd.own.mk>
 
 .PATH:	${X11SRCDIR.fontconfig}/conf.d
 CONFIGFILES= \
 	10-autohint.conf \
+	10-hinting-full.conf \
+	10-hinting-medium.conf \
+	10-hinting-none.conf \
+	10-hinting-slight.conf \
 	10-no-sub-pixel.conf \
 	10-sub-pixel-bgr.conf \
 	10-sub-pixel-rgb.conf \
