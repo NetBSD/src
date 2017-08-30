@@ -1,4 +1,4 @@
-/*	$NetBSD: destest.c,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: destest.c,v 1.1.1.1.6.1 2017/08/30 07:10:55 snj Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -33,15 +33,13 @@
  * SUCH DAMAGE.
  */
 
-#include "config.h"
+#include <config.h>
+#include <krb5/roken.h>
 
 #ifdef KRB5
 #include <krb5/krb5-types.h>
 #endif
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -495,7 +493,7 @@ main(int argc, char **argv)
 	      24,
 	      0x14a5029a,
 	      "\x33\xd2\xb5\x8a\x14\xa5\x02\x9a");
-	
+
     cbc_cksum("\xfb\x89\xa1\x9d\xa7\xec\xc1\x5e",
 	      "\x9c\x7f\x47\xd0\x79\x5d\x4b\x97",
 	      "\xb6\x8b\x48\xe0\x01\x78\xec\x50\x7f\xf1\xfd\xd2\x87\x76\xba\x4b\x9c\x5c\xc7\x25",
@@ -601,7 +599,7 @@ main(int argc, char **argv)
 	       "\x38\xef\x49\xbc\xdd\xbb\x6b\x73\xc0\xd7\xa6\x70\xe0\x1b\xde\x8d\xe6\xb4\xc6\x69\xca\x5e\x1e");
 
     weak_test(1, "\x01\x01\x01\x01\x01\x01\x01\x01"); /* weak keys */
-    weak_test(1, "\x01\x01\x01\x01\x01\x01\x01\x01"); 
+    weak_test(1, "\x01\x01\x01\x01\x01\x01\x01\x01");
     weak_test(1, "\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE");
     weak_test(1, "\x1F\x1F\x1F\x1F\x0E\x0E\x0E\x0E");
     weak_test(1, "\xE0\xE0\xE0\xE0\xF1\xF1\xF1\xF1");

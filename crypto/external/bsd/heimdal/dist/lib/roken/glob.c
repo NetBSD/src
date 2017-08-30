@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.1.1.1 2011/04/13 18:15:41 elric Exp $	*/
+/*	$NetBSD: glob.c,v 1.1.1.1.6.1 2017/08/30 07:11:03 snj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -386,14 +386,14 @@ globtilde(const Char *pattern, Char *patbuf, glob_t *pglob)
 	/* Copy the home directory */
 	for (b = patbuf; *h; *b++ = *h++)
 		continue;
-	
+
 	/* Append the rest of the pattern */
 	while ((*b++ = *p++) != CHAR_EOS)
 		continue;
 
 	return patbuf;
 }
-	
+
 
 /*
  * The main glob() routine: compiles the pattern (optionally processing
@@ -406,7 +406,7 @@ static int
 glob0(const Char *pattern, glob_t *pglob)
 {
 	const Char *qpatnext;
-	int c, err, oldpathc;
+	int c, ret, oldpathc;
 	Char *bufnext, patbuf[MaxPathLen+1];
 	size_t limit = 0;
 
@@ -466,8 +466,8 @@ glob0(const Char *pattern, glob_t *pglob)
 	qprintf("glob0:", patbuf);
 #endif
 
-	if ((err = glob1(patbuf, pglob, &limit)) != 0)
-		return(err);
+	if ((ret = glob1(patbuf, pglob, &limit)) != 0)
+		return(ret);
 
 	/*
 	 * If there was no match we are going to append the pattern
@@ -534,7 +534,7 @@ glob2(Char *pathbuf, Char *pathend, Char *pattern, glob_t *pglob,
 			*pathend = CHAR_EOS;
 			if (g_lstat(pathbuf, &sb, pglob))
 				return(0);
-		
+
 			if (((pglob->gl_flags & GLOB_MARK) &&
 			    pathend[-1] != CHAR_SEP) && (S_ISDIR(sb.st_mode)
 			    || (S_ISLNK(sb.st_mode) &&
@@ -574,7 +574,7 @@ glob3(Char *pathbuf, Char *pathend, Char *pattern, Char *restpattern,
 {
 	struct dirent *dp;
 	DIR *dirp;
-	int err;
+	int ret;
 	char buf[MaxPathLen];
 
 	/*
@@ -587,7 +587,7 @@ glob3(Char *pathbuf, Char *pathend, Char *pattern, Char *restpattern,
 
 	*pathend = CHAR_EOS;
 	errno = 0;
-	
+
 	if ((dirp = g_opendir(pathbuf, pglob)) == NULL) {
 		/* TODO: don't call for ENOENT or ENOTDIR? */
 		if (pglob->gl_errfunc) {
@@ -599,7 +599,7 @@ glob3(Char *pathbuf, Char *pathend, Char *pattern, Char *restpattern,
 		return(0);
 	}
 
-	err = 0;
+	ret = 0;
 
 	/* Search directory for matching names. */
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
@@ -620,8 +620,8 @@ glob3(Char *pathbuf, Char *pathend, Char *pattern, Char *restpattern,
 			*pathend = CHAR_EOS;
 			continue;
 		}
-		err = glob2(pathbuf, --dc, restpattern, pglob, limit);
-		if (err)
+		ret = glob2(pathbuf, --dc, restpattern, pglob, limit);
+		if (ret)
 			break;
 	}
 
@@ -629,7 +629,7 @@ glob3(Char *pathbuf, Char *pathend, Char *pattern, Char *restpattern,
 		(*pglob->gl_closedir)(dirp);
 	else
 		closedir(dirp);
-	return(err);
+	return(ret);
 }
 
 

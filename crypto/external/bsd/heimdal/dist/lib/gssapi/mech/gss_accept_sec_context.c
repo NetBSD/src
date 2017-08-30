@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_accept_sec_context.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_accept_sec_context.c,v 1.1.1.1.6.1 2017/08/30 07:10:54 snj Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -36,17 +36,17 @@ parse_header(const gss_buffer_t input_token, gss_OID mech_oid)
 	unsigned char *p = input_token->value;
 	size_t len = input_token->length;
 	size_t a, b;
-	
+
 	/*
 	 * Token must start with [APPLICATION 0] SEQUENCE.
 	 * But if it doesn't assume it is DCE-STYLE Kerberos!
 	 */
 	if (len == 0)
 		return (GSS_S_DEFECTIVE_TOKEN);
-	
+
 	p++;
 	len--;
-		
+
 	/*
 	 * Decode the length and make sure it agrees with the
 	 * token length.
@@ -73,7 +73,7 @@ parse_header(const gss_buffer_t input_token, gss_OID mech_oid)
 	}
 	if (a != len)
 		return (GSS_S_DEFECTIVE_TOKEN);
-		
+
 	/*
 	 * Decode the OID for the mechanism. Simplify life by
 	 * assuming that the OID length is less than 128 bytes.
@@ -86,9 +86,9 @@ parse_header(const gss_buffer_t input_token, gss_OID mech_oid)
 	p += 2;
 	len -= 2;
 	mech_oid->elements = p;
-	
+
 	return GSS_S_COMPLETE;
-}		
+}
 
 static gss_OID_desc krb5_mechanism =
     {9, rk_UNCONST("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")};
@@ -146,7 +146,7 @@ choose_mech(const gss_buffer_t input, gss_OID mech_oid)
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_accept_sec_context(OM_uint32 *minor_status,
     gss_ctx_id_t *context_handle,
-    const gss_cred_id_t acceptor_cred_handle,
+    gss_const_cred_id_t acceptor_cred_handle,
     const gss_buffer_t input_token,
     const gss_channel_bindings_t input_chan_bindings,
     gss_name_t *src_name,
@@ -223,7 +223,7 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 		acceptor_mc = GSS_C_NO_CREDENTIAL;
 	}
 	delegated_mc = GSS_C_NO_CREDENTIAL;
-	
+
 	mech_ret_flags = 0;
 	major_status = m->gm_accept_sec_context(minor_status,
 	    &ctx->gc_ctx,
@@ -269,7 +269,7 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 			mech_ret_flags &=
 			    ~(GSS_C_DELEG_FLAG|GSS_C_DELEG_POLICY_FLAG);
 		} else if (gss_oid_equal(mech_ret_type, &m->gm_mech_oid) == 0) {
-			/* 
+			/*
 			 * If the returned mech_type is not the same
 			 * as the mech, assume its pseudo mech type
 			 * and the returned type is already a

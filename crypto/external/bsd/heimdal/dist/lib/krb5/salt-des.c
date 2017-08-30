@@ -1,4 +1,4 @@
-/*	$NetBSD: salt-des.c,v 1.1.1.1 2011/04/13 18:15:37 elric Exp $	*/
+/*	$NetBSD: salt-des.c,v 1.1.1.1.6.1 2017/08/30 07:11:02 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -54,7 +54,7 @@ krb5_DES_AFS3_CMU_string_to_key (krb5_data pw,
 				 DES_cblock *key)
 {
     char  password[8+1];	/* crypt is limited to 8 chars anyway */
-    int   i;
+    size_t   i;
 
     for(i = 0; i < 8; i++) {
 	char c = ((i < pw.length) ? ((char*)pw.data)[i] : 0) ^
@@ -91,7 +91,7 @@ krb5_DES_AFS3_Transarc_string_to_key (krb5_data pw,
     memcpy(password, pw.data, min(pw.length, sizeof(password)));
     if(pw.length < sizeof(password)) {
 	int len = min(cell.length, sizeof(password) - pw.length);
-	int i;
+	size_t i;
 
 	memcpy(password + pw.length, cell.data, len);
 	for (i = pw.length; i < pw.length + len; ++i)
@@ -140,7 +140,7 @@ static void
 DES_string_to_key_int(unsigned char *data, size_t length, DES_cblock *key)
 {
     DES_key_schedule schedule;
-    int i;
+    size_t i;
     int reverse = 0;
     unsigned char *p;
 
@@ -193,10 +193,8 @@ krb5_DES_string_to_key(krb5_context context,
 
     len = password.length + salt.saltvalue.length;
     s = malloc(len);
-    if(len > 0 && s == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (len > 0 && s == NULL)
+	return krb5_enomem(context);
     memcpy(s, password.data, password.length);
     memcpy(s + password.length, salt.saltvalue.data, salt.saltvalue.length);
     DES_string_to_key_int(s, len, &tmp);
@@ -221,6 +219,6 @@ struct salt_type _krb5_des_salt[] = {
 	DES_AFS3_string_to_key
     },
 #endif
-    { 0 }
+    { 0, NULL, NULL }
 };
 #endif

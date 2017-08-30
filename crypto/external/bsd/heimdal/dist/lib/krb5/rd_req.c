@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_req.c,v 1.1.1.1 2011/04/13 18:15:37 elric Exp $	*/
+/*	$NetBSD: rd_req.c,v 1.1.1.1.6.1 2017/08/30 07:11:02 snj Exp $	*/
 
 
 /*
@@ -61,7 +61,7 @@ decrypt_tkt_enc_part (krb5_context context,
 
     ret = decode_EncTicketPart(plain.data, plain.length, decr_part, &len);
     if (ret)
-        krb5_set_error_message(context, ret, 
+        krb5_set_error_message(context, ret,
 			       N_("Failed to decode encrypted "
 				  "ticket part", ""));
     krb5_data_free (&plain);
@@ -137,9 +137,9 @@ static krb5_error_code
 check_transited(krb5_context context, Ticket *ticket, EncTicketPart *enc)
 {
     char **realms;
-    unsigned int num_realms;
+    unsigned int num_realms, n;
     krb5_error_code ret;
-	
+
     /*
      * Windows 2000 and 2003 uses this inside their TGT so it's normaly
      * not seen by others, however, samba4 joined with a Windows AD as
@@ -163,6 +163,8 @@ check_transited(krb5_context context, Ticket *ticket, EncTicketPart *enc)
     ret = krb5_check_transited(context, enc->crealm,
 			       ticket->realm,
 			       realms, num_realms, NULL);
+    for (n = 0; n < num_realms; n++)
+	free(realms[n]);
     free(realms);
     return ret;
 }
@@ -173,50 +175,17 @@ find_etypelist(krb5_context context,
 	       EtypeList *etypes)
 {
     krb5_error_code ret;
-    krb5_authdata *ad;
-    krb5_authdata adIfRelevant;
-    unsigned i;
-
-    adIfRelevant.len = 0;
-
-    etypes->len = 0;
-    etypes->val = NULL;
-
-    ad = auth_context->authenticator->authorization_data;
-    if (ad == NULL)
-	return 0;
-
-    for (i = 0; i < ad->len; i++) {
-	if (ad->val[i].ad_type == KRB5_AUTHDATA_IF_RELEVANT) {
-	    ret = decode_AD_IF_RELEVANT(ad->val[i].ad_data.data,
-					ad->val[i].ad_data.length,
-					&adIfRelevant,
-					NULL);
-	    if (ret)
-		return ret;
-
-	    if (adIfRelevant.len == 1 &&
-		adIfRelevant.val[0].ad_type ==
-			KRB5_AUTHDATA_GSS_API_ETYPE_NEGOTIATION) {
-		break;
-	    }
-	    free_AD_IF_RELEVANT(&adIfRelevant);
-	    adIfRelevant.len = 0;
-	}
-    }
-
-    if (adIfRelevant.len == 0)
-	return 0;
-
-    ret = decode_EtypeList(adIfRelevant.val[0].ad_data.data,
-			   adIfRelevant.val[0].ad_data.length,
-			   etypes,
-			   NULL);
+    krb5_data data;
+  
+    ret = _krb5_get_ad(context, auth_context->authenticator->authorization_data, NULL, KRB5_AUTHDATA_GSS_API_ETYPE_NEGOTIATION, &data);
     if (ret)
-	krb5_clear_error_message(context);
-
-    free_AD_IF_RELEVANT(&adIfRelevant);
-
+  	return 0;
+    
+    ret = decode_EtypeList(data.data, data.length, etypes, NULL);
+    krb5_data_free(&data);
+    if (ret)
+  	krb5_clear_error_message(context);
+    
     return ret;
 }
 
@@ -252,7 +221,7 @@ krb5_decrypt_ticket(krb5_context context,
 	    krb5_clear_error_message (context);
 	    return KRB5KRB_AP_ERR_TKT_EXPIRED;
 	}
-	
+
 	if(!t.flags.transited_policy_checked) {
 	    ret = check_transited(context, ticket, &t);
 	    if(ret) {
@@ -276,33 +245,26 @@ krb5_verify_authenticator_checksum(krb5_context context,
 				   size_t len)
 {
     krb5_error_code ret;
-    krb5_keyblock *key;
+    krb5_keyblock *key = NULL;
     krb5_authenticator authenticator;
     krb5_crypto crypto;
 
-    ret = krb5_auth_con_getauthenticator (context,
-				      ac,
-				      &authenticator);
-    if(ret)
+    ret = krb5_auth_con_getauthenticator(context, ac, &authenticator);
+    if (ret)
 	return ret;
-    if(authenticator->cksum == NULL) {
-	krb5_free_authenticator(context, &authenticator);
-	return -17;
+    if (authenticator->cksum == NULL) {
+	ret = -17;
+        goto out;
     }
     ret = krb5_auth_con_getkey(context, ac, &key);
-    if(ret) {
-	krb5_free_authenticator(context, &authenticator);
-	return ret;
-    }
+    if (ret)
+        goto out;
     ret = krb5_crypto_init(context, key, 0, &crypto);
-    if(ret)
+    if (ret)
 	goto out;
-    ret = krb5_verify_checksum (context,
-				crypto,
-				KRB5_KU_AP_REQ_AUTH_CKSUM,
-				data,
-				len,
-				authenticator->cksum);
+    ret = krb5_verify_checksum(context, crypto,
+                               KRB5_KU_AP_REQ_AUTH_CKSUM,
+                               data, len, authenticator->cksum);
     krb5_crypto_destroy(context, crypto);
 out:
     krb5_free_authenticator(context, &authenticator);
@@ -348,6 +310,8 @@ krb5_verify_ap_req2(krb5_context context,
     krb5_error_code ret;
     EtypeList etypes;
 
+    memset(&etypes, 0, sizeof(etypes));
+
     if (ticket)
 	*ticket = NULL;
 
@@ -361,8 +325,7 @@ krb5_verify_ap_req2(krb5_context context,
 
     t = calloc(1, sizeof(*t));
     if (t == NULL) {
-	ret = ENOMEM;
-	krb5_clear_error_message (context);
+	ret = krb5_enomem(context);
 	goto out;
     }
 
@@ -404,7 +367,7 @@ krb5_verify_ap_req2(krb5_context context,
     {
 	krb5_principal p1, p2;
 	krb5_boolean res;
-	
+
 	_krb5_principalname2krb5_principal(context,
 					   &p1,
 					   ac->authenticator->cname,
@@ -441,7 +404,7 @@ krb5_verify_ap_req2(krb5_context context,
 
 	krb5_timeofday (context, &now);
 
-	if (abs(ac->authenticator->ctime - now) > context->max_skew) {
+	if (labs(ac->authenticator->ctime - now) > context->max_skew) {
 	    ret = KRB5KRB_AP_ERR_SKEW;
 	    krb5_clear_error_message (context);
 	    goto out;
@@ -468,7 +431,7 @@ krb5_verify_ap_req2(krb5_context context,
     ac->keytype = ETYPE_NULL;
 
     if (etypes.val) {
-	int i;
+	size_t i;
 
 	for (i = 0; i < etypes.len; i++) {
 	    if (krb5_enctype_valid(context, etypes.val[i]) == 0) {
@@ -484,7 +447,7 @@ krb5_verify_ap_req2(krb5_context context,
 
     if (ap_req_options) {
 	*ap_req_options = 0;
-	if (ac->keytype != ETYPE_NULL)
+	if (ac->keytype != (krb5_enctype)ETYPE_NULL)
 	    *ap_req_options |= AP_OPTS_USE_SUBKEY;
 	if (ap_req->ap_options.use_session_key)
 	    *ap_req_options |= AP_OPTS_USE_SESSION_KEY;
@@ -504,13 +467,14 @@ krb5_verify_ap_req2(krb5_context context,
     free_EtypeList(&etypes);
     return 0;
  out:
+    free_EtypeList(&etypes);
     if (t)
 	krb5_free_ticket (context, t);
     if (auth_context == NULL || *auth_context == NULL)
 	krb5_auth_con_free (context, ac);
     return ret;
 }
-		
+
 /*
  *
  */
@@ -545,11 +509,8 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rd_req_in_ctx_alloc(krb5_context context, krb5_rd_req_in_ctx *ctx)
 {
     *ctx = calloc(1, sizeof(**ctx));
-    if (*ctx == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (*ctx == NULL)
+	return krb5_enomem(context);
     (*ctx)->check_pac = (context->flags & KRB5_CTX_F_CHECK_PAC) ? 1 : 0;
     return 0;
 }
@@ -680,10 +641,22 @@ krb5_rd_req_out_ctx_free(krb5_context context, krb5_rd_req_out_ctx ctx)
     free(ctx);
 }
 
-/*
+/**
+ * Process an AP_REQ message.
  *
+ * @param context        Kerberos 5 context.
+ * @param auth_context   authentication context of the peer.
+ * @param inbuf          the AP_REQ message, obtained for example with krb5_read_message().
+ * @param server         server principal.
+ * @param keytab         server keytab.
+ * @param ap_req_options set to the AP_REQ options. See the AP_OPTS_* defines.
+ * @param ticket         on success, set to the authenticated client credentials.
+ *                       Must be deallocated with krb5_free_ticket(). If not
+ *                       interested, pass a NULL value.
+ *
+ * @return 0 to indicate success. Otherwise a Kerberos error code is
+ *         returned, see krb5_get_error_message().
  */
-
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rd_req(krb5_context context,
 	    krb5_auth_context *auth_context,
@@ -822,12 +795,12 @@ out:
  *        default values for the authentication context will used.
  * @param inbuf the (AP-REQ) authentication buffer
  *
- * @param server the server with authenticate as, if NULL the function
+ * @param server the server to authenticate to. If NULL the function
  *        will try to find any available credential in the keytab
  *        that will verify the reply. The function will prefer the
- *        server the server client specified in the AP-REQ, but if
+ *        server specified in the AP-REQ, but if
  *        there is no mach, it will try all keytab entries for a
- *        match. This have serious performance issues for larger keytabs.
+ *        match. This has serious performance issues for large keytabs.
  *
  * @param inctx control the behavior of the function, if NULL, the
  *        default behavior is used.
@@ -854,11 +827,8 @@ krb5_rd_req_ctx(krb5_context context,
     *outctx = NULL;
 
     o = calloc(1, sizeof(*o));
-    if (o == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (o == NULL)
+	return krb5_enomem(context);
 
     if (*auth_context == NULL) {
 	ret = krb5_auth_con_init(context, auth_context);
@@ -870,7 +840,7 @@ krb5_rd_req_ctx(krb5_context context,
     if(ret)
 	goto out;
 
-    /* Save that principal that was in the request */
+    /* Save the principal that was in the request */
     ret = _krb5_principalname2krb5_principal(context,
 					     &o->server,
 					     ap_req.ticket.sname,
@@ -951,7 +921,7 @@ krb5_rd_req_ctx(krb5_context context,
 				  &o->ap_req_options,
 				  &o->ticket,
 				  KRB5_KU_AP_REQ_AUTH);
-	
+
 	if (ret)
 	    goto out;
 
@@ -974,7 +944,7 @@ krb5_rd_req_ctx(krb5_context context,
 	    goto out;
 
 	done = 0;
-	while (!done) { 
+	while (!done) {
 	    krb5_principal p;
 
 	    ret = krb5_kt_next_entry(context, id, &entry, &cursor);
@@ -982,11 +952,10 @@ krb5_rd_req_ctx(krb5_context context,
 		_krb5_kt_principal_not_found(context, ret, id, o->server,
 					     ap_req.ticket.enc_part.etype,
 					     kvno);
-		goto out;
+		break;
 	    }
 
-	    if (entry.keyblock.keytype != ap_req.ticket.enc_part.etype ||
-		(kvno && kvno != entry.vno)) {
+	    if (entry.keyblock.keytype != ap_req.ticket.enc_part.etype) {
 		krb5_kt_free_entry (context, &entry);
 		continue;
 	    }
@@ -1010,28 +979,30 @@ krb5_rd_req_ctx(krb5_context context,
 	     * and update the service principal in the ticket to match
 	     * whatever is in the keytab.
 	     */
-	    
-	    ret = krb5_copy_keyblock(context, 
+
+	    ret = krb5_copy_keyblock(context,
 				     &entry.keyblock,
 				     &o->keyblock);
 	    if (ret) {
 		krb5_kt_free_entry (context, &entry);
-		goto out;
-	    }	    
+		break;
+	    }
 
 	    ret = krb5_copy_principal(context, entry.principal, &p);
 	    if (ret) {
 		krb5_kt_free_entry (context, &entry);
-		goto out;
+		break;
 	    }
 	    krb5_free_principal(context, o->ticket->server);
 	    o->ticket->server = p;
-	    
+
 	    krb5_kt_free_entry (context, &entry);
 
 	    done = 1;
 	}
 	krb5_kt_end_seq_get (context, id, &cursor);
+        if (ret)
+            goto out;
     }
 
     /* If there is a PAC, verify its server signature */
@@ -1048,7 +1019,7 @@ krb5_rd_req_ctx(krb5_context context,
 	    krb5_data_free(&data);
 	    if (ret)
 		goto out;
-	
+
 	    ret = krb5_pac_verify(context,
 				  pac,
 				  o->ticket->ticket.authtime,

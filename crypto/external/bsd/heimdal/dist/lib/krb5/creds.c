@@ -1,4 +1,4 @@
-/*	$NetBSD: creds.c,v 1.1.1.1 2011/04/13 18:15:32 elric Exp $	*/
+/*	$NetBSD: creds.c,v 1.1.1.1.6.1 2017/08/30 07:11:00 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -140,13 +140,9 @@ krb5_copy_creds (krb5_context context,
 {
     krb5_creds *c;
 
-    c = malloc (sizeof (*c));
-    if (c == NULL) {
-	krb5_set_error_message (context, ENOMEM,
-				N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
-    memset (c, 0, sizeof(*c));
+    c = calloc(1, sizeof(*c));
+    if (c == NULL)
+	return krb5_enomem(context);
     *outcred = c;
     return krb5_copy_creds_contents (context, incred, c);
 }
@@ -166,8 +162,9 @@ krb5_copy_creds (krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_free_creds (krb5_context context, krb5_creds *c)
 {
-    krb5_free_cred_contents (context, c);
-    free (c);
+    if (c != NULL)
+        krb5_free_cred_contents(context, c);
+    free(c);
     return 0;
 }
 
@@ -230,7 +227,7 @@ krb5_compare_creds(krb5_context context, krb5_flags whichfields,
 	    match = krb5_principal_compare (context, mcreds->client,
 					    creds->client);
     }
-	
+
     if (match && (whichfields & KRB5_TC_MATCH_KEYTYPE))
         match = mcreds->session.keytype == creds->session.keytype;
 

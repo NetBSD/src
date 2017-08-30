@@ -1,4 +1,4 @@
-/*	$NetBSD: der_free.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $	*/
+/*	$NetBSD: der_free.c,v 1.1.1.1.6.1 2017/08/30 07:10:52 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 
 #include "der_locl.h"
 
-__RCSID("$NetBSD: der_free.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $");
+__RCSID("$NetBSD: der_free.c,v 1.1.1.1.6.1 2017/08/30 07:10:52 snj Exp $");
 
 void
 der_free_general_string (heim_general_string *str)
@@ -53,7 +53,19 @@ der_free_integer (int *i)
 }
 
 void
+der_free_integer64 (int64_t *i)
+{
+    *i = 0;
+}
+
+void
 der_free_unsigned (unsigned *u)
+{
+    *u = 0;
+}
+
+void
+der_free_unsigned64 (uint64_t *u)
 {
     *u = 0;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.6.1 2013/05/19 22:18:06 riz Exp $
+#	$NetBSD: Makefile,v 1.1.6.2 2017/08/30 07:10:48 snj Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -12,7 +12,7 @@ CLEANFILES+=	krb5-config
 
 krb5-config: krb5-config.in
 	${TOOL_SED} -e "s!@PACKAGE\@!heimdal!g" \
-	        -e "s!@VERSION\@!1.5pre1!g" \
+	        -e "s!@VERSION\@!1.5.3!g" \
 	        -e "s!@prefix\@!/!g" \
 	        -e "s!@exec_prefix\@!/!g" \
 	        -e "s!@libdir\@!/usr/lib!g" \

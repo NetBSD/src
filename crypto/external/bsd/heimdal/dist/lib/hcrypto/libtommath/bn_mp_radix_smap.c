@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_radix_smap.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_radix_smap.c,v 1.1.1.1.6.1 2017/08/30 07:10:57 snj Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_RADIX_SMAP_C
@@ -21,6 +21,6 @@
 const char *mp_s_rmap = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/";
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_radix_smap.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_radix_smap.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

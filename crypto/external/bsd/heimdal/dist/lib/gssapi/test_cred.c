@@ -1,4 +1,4 @@
-/*	$NetBSD: test_cred.c,v 1.1.1.1 2011/04/13 18:14:44 elric Exp $	*/
+/*	$NetBSD: test_cred.c,v 1.1.1.1.6.1 2017/08/30 07:10:53 snj Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Kungliga Tekniska Högskolan
@@ -101,7 +101,7 @@ acquire_release_loop(gss_name_t name, int counter, gss_cred_usage_t usage)
 	if (maj_stat != GSS_S_COMPLETE)
 	    gss_err(1, min_stat, "aquire %d %d != GSS_S_COMPLETE",
 		    i, (int)maj_stat);
-				
+
 	maj_stat = gss_release_cred(&min_stat, &cred);
 	if (maj_stat != GSS_S_COMPLETE)
 	    gss_err(1, min_stat, "release %d %d != GSS_S_COMPLETE",
@@ -137,7 +137,7 @@ acquire_add_release_add(gss_name_t name, gss_cred_usage_t usage)
 			    NULL,
 			    NULL,
 			    NULL);
-			
+
     if (maj_stat != GSS_S_COMPLETE)
 	gss_err(1, min_stat, "add_cred %d != GSS_S_COMPLETE", (int)maj_stat);
 
@@ -156,6 +156,8 @@ acquire_add_release_add(gss_name_t name, gss_cred_usage_t usage)
 			    NULL,
 			    NULL,
 			    NULL);
+    if (maj_stat != GSS_S_COMPLETE)
+	gss_err(1, min_stat, "add_cred 2 %d != GSS_S_COMPLETE", (int)maj_stat);
 
     maj_stat = gss_release_cred(&min_stat, &cred2);
     if (maj_stat != GSS_S_COMPLETE)
@@ -163,7 +165,7 @@ acquire_add_release_add(gss_name_t name, gss_cred_usage_t usage)
 
     maj_stat = gss_release_cred(&min_stat, &cred3);
     if (maj_stat != GSS_S_COMPLETE)
-	gss_err(1, min_stat, "release 2 %d != GSS_S_COMPLETE", (int)maj_stat);
+	gss_err(1, min_stat, "release 3 %d != GSS_S_COMPLETE", (int)maj_stat);
 }
 
 static int version_flag = 0;

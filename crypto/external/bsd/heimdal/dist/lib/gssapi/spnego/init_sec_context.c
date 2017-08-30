@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sec_context.c,v 1.1.1.1 2011/04/13 18:14:48 elric Exp $	*/
+/*	$NetBSD: init_sec_context.c,v 1.1.1.1.6.1 2017/08/30 07:10:55 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -179,9 +179,9 @@ spnego_reply_internal(OM_uint32 *minor_status,
 static OM_uint32
 spnego_initial
            (OM_uint32 * minor_status,
-	    gss_cred_id_t cred,
+	    gss_const_cred_id_t cred,
             gss_ctx_id_t * context_handle,
-            const gss_name_t target_name,
+            gss_const_name_t target_name,
             const gss_OID mech_type,
             OM_uint32 req_flags,
             OM_uint32 time_req,
@@ -376,9 +376,9 @@ spnego_initial
 static OM_uint32
 spnego_reply
            (OM_uint32 * minor_status,
-	    const gss_cred_id_t cred,
+	    gss_const_cred_id_t cred,
             gss_ctx_id_t * context_handle,
-            const gss_name_t target_name,
+            gss_const_name_t target_name,
             const gss_OID mech_type,
             OM_uint32 req_flags,
             OM_uint32 time_req,
@@ -394,7 +394,7 @@ spnego_reply
     NegotiationToken resp;
     gss_OID_desc mech;
     int require_mic;
-    size_t buf_len;
+    size_t buf_len = 0;
     gss_buffer_desc mic_buf, mech_buf;
     gss_buffer_desc mech_output_token;
     gssspnego_ctx ctx;
@@ -559,8 +559,10 @@ spnego_reply
 	    *minor_status = ret;
 	    return GSS_S_FAILURE;
 	}
-	if (mech_buf.length != buf_len)
+	if (mech_buf.length != buf_len) {
 	    abort();
+            UNREACHABLE(return GSS_S_FAILURE);
+        }
 
 	if (resp.u.negTokenResp.mechListMIC == NULL) {
 	    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
@@ -614,9 +616,9 @@ spnego_reply
 OM_uint32 GSSAPI_CALLCONV
 _gss_spnego_init_sec_context
            (OM_uint32 * minor_status,
-            const gss_cred_id_t initiator_cred_handle,
+            gss_const_cred_id_t initiator_cred_handle,
             gss_ctx_id_t * context_handle,
-            const gss_name_t target_name,
+            gss_const_name_t target_name,
             const gss_OID mech_type,
             OM_uint32 req_flags,
             OM_uint32 time_req,

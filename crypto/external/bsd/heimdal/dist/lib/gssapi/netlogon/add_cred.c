@@ -1,4 +1,4 @@
-/*	$NetBSD: add_cred.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: add_cred.c,v 1.1.1.1.6.1 2017/08/30 07:10:54 snj Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -39,8 +39,8 @@
 
 OM_uint32 _netlogon_add_cred (
      OM_uint32           *minor_status,
-     const gss_cred_id_t input_cred_handle,
-     const gss_name_t    desired_name,
+     gss_const_cred_id_t input_cred_handle,
+     gss_const_name_t    desired_name,
      const gss_OID       desired_mech,
      gss_cred_usage_t    cred_usage,
      OM_uint32           initiator_time_req,

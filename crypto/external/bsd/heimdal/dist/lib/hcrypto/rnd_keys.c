@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd_keys.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: rnd_keys.c,v 1.1.1.1.6.1 2017/08/30 07:10:56 snj Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1999 Kungliga Tekniska Högskolan
@@ -33,15 +33,14 @@
  * SUCH DAMAGE.
  */
 
-#include "config.h"
-
+#include <config.h>
+#include <krb5/roken.h>
 
 #define HC_DEPRECATED
 
 #ifdef KRB5
 #include <krb5/krb5-types.h>
 #endif
-#include <stdlib.h>
 
 #include <des.h>
 #include <rand.h>

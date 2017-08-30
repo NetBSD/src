@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_wrap.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: gss_wrap.c,v 1.1.1.1.6.1 2017/08/30 07:10:54 snj Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -47,7 +47,7 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_wrap(OM_uint32 *minor_status,
-    const gss_ctx_id_t context_handle,
+    gss_const_ctx_id_t context_handle,
     int conf_req_flag,
     gss_qop_t qop_req,
     const gss_buffer_t input_message_buffer,

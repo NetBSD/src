@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_length.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $	*/
+/*	$NetBSD: gen_length.c,v 1.1.1.1.6.1 2017/08/30 07:10:52 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "gen_locl.h"
 
-__RCSID("$NetBSD: gen_length.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $");
+__RCSID("$NetBSD: gen_length.c,v 1.1.1.1.6.1 2017/08/30 07:10:52 snj Exp $");
 
 static void
 length_primitive (const char *typename,
@@ -82,16 +82,17 @@ length_type (const char *name, const Type *t,
 	    fprintf(codefile, "}\n");
 	} else if (t->range == NULL) {
 	    length_primitive ("heim_integer", name, variable);
-	} else if (t->range->min == INT_MIN && t->range->max == INT_MAX) {
+	} else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX) {
+	    length_primitive ("integer64", name, variable);
+	} else if (t->range->min >= 0 && t->range->max > UINT_MAX) {
+	    length_primitive ("unsigned64", name, variable);
+	} else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX) {
 	    length_primitive ("integer", name, variable);
-	} else if (t->range->min == 0 && t->range->max == UINT_MAX) {
-	    length_primitive ("unsigned", name, variable);
-	} else if (t->range->min == 0 && t->range->max == INT_MAX) {
+	} else if (t->range->min >= 0 && t->range->max <= UINT_MAX) {
 	    length_primitive ("unsigned", name, variable);
 	} else
-	    errx(1, "%s: unsupported range %d -> %d",
-		 name, t->range->min, t->range->max);
-
+	    errx(1, "%s: unsupported range %lld -> %lld",
+		 name, (long long)t->range->min, (long long)t->range->max);
 	break;
     case TBoolean:
 	fprintf (codefile, "%s += 1;\n", variable);
@@ -190,14 +191,15 @@ length_type (const char *name, const Type *t,
 	fprintf (codefile,
 		 "{\n"
 		 "size_t %s_oldret = %s;\n"
-		 "int i;\n"
+		 "unsigned int n_%s;\n"
 		 "%s = 0;\n",
-		 tmpstr, variable, variable);
+		 tmpstr, variable, tmpstr, variable);
 
-	fprintf (codefile, "for(i = (%s)->len - 1; i >= 0; --i){\n", name);
+	fprintf (codefile, "for(n_%s = (%s)->len; n_%s > 0; --n_%s){\n",
+		 tmpstr, name, tmpstr, tmpstr);
 	fprintf (codefile, "size_t %s_for_oldret = %s;\n"
 		 "%s = 0;\n", tmpstr, variable, variable);
-	if (asprintf (&n, "&(%s)->val[i]", name) < 0  || n == NULL)
+	if (asprintf (&n, "&(%s)->val[n_%s - 1]", name, tmpstr) < 0  || n == NULL)
 	    errx(1, "malloc");
 	if (asprintf (&sname, "%s_S_Of", tmpstr) < 0 || sname == NULL)
 	    errx(1, "malloc");

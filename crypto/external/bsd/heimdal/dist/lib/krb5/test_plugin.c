@@ -1,4 +1,4 @@
-/*	$NetBSD: test_plugin.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: test_plugin.c,v 1.1.1.1.6.1 2017/08/30 07:11:02 snj Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -79,7 +79,8 @@ krb5plugin_service_locate_ftable resolve = {
     0,
     resolve_init,
     resolve_fini,
-    resolve_lookup
+    resolve_lookup,
+    NULL
 };
 
 
@@ -98,7 +99,7 @@ main(int argc, char **argv)
     if (ret)
 	errx(1, "krb5_init_contex");
 
-    ret = krb5_plugin_register(context, PLUGIN_TYPE_DATA, 
+    ret = krb5_plugin_register(context, PLUGIN_TYPE_DATA,
 			       KRB5_PLUGIN_LOCATE, &resolve);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_plugin_register");
@@ -115,11 +116,13 @@ main(int argc, char **argv)
 
     while(krb5_krbhst_next_as_string(context, handle, host, sizeof(host)) == 0){
 	found++;
- 	if (strcmp(host, "127.0.0.2") != 0)
+ 	if (!found && strcmp(host, "127.0.0.2") != 0 && strcmp(host, "tcp/127.0.0.2") != 0)
 	    krb5_errx(context, 1, "wrong address: %s", host);
     }
     if (!found)
 	krb5_errx(context, 1, "failed to find host");
+    if (found < 2)
+	krb5_errx(context, 1, "did not get the two expected results");
 
     krb5_krbhst_free(context, handle);
 

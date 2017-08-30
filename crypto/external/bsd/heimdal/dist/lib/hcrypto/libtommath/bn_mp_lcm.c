@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_lcm.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_lcm.c,v 1.1.1.1.6.1 2017/08/30 07:10:56 snj Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_LCM_C
@@ -57,6 +57,6 @@ LBL_T:
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_lcm.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_lcm.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

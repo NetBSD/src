@@ -1,4 +1,4 @@
-/*	$NetBSD: acache.c,v 1.1.1.1 2011/04/13 18:15:31 elric Exp $	*/
+/*	$NetBSD: acache.c,v 1.1.1.1.6.1 2017/08/30 07:11:00 snj Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2007 Kungliga Tekniska Högskolan
@@ -80,7 +80,7 @@ static const struct {
 static krb5_error_code
 translate_cc_error(krb5_context context, cc_int32 error)
 {
-    int i;
+    size_t i;
     krb5_clear_error_message(context);
     for(i = 0; i < sizeof(cc_errors)/sizeof(cc_errors[0]); i++)
 	if (cc_errors[i].error == error)
@@ -127,7 +127,7 @@ init_ccapi(krb5_context context)
 #ifdef KRB5_USE_PATH_TOKENS
     {
       char * explib = NULL;
-      if (_krb5_expand_path_tokens(context, lib, &explib) == 0) {
+      if (_krb5_expand_path_tokens(context, lib, 0, &explib) == 0) {
 	cc_handle = dlopen(explib, RTLD_LAZY|RTLD_LOCAL);
 	free(explib);
       }
@@ -170,7 +170,7 @@ init_ccapi(krb5_context context)
 #endif
 }
 
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _heim_krb5_ipc_client_set_target_uid(uid_t uid)
 {
     init_ccapi(NULL);
@@ -178,7 +178,7 @@ _heim_krb5_ipc_client_set_target_uid(uid_t uid)
         (*set_target_uid)(uid);
 }
 
-void
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _heim_krb5_ipc_client_clear_target(void)
 {
     init_ccapi(NULL);
@@ -261,7 +261,7 @@ make_cred_from_ccred(krb5_context context,
 	if (cred->addresses.val == NULL)
 	    goto nomem;
 	cred->addresses.len = i;
-	
+
 	for (i = 0; i < cred->addresses.len; i++) {
 	    cred->addresses.val[i].addr_type = incred->addresses[i]->type;
 	    ret = krb5_data_copy(&cred->addresses.val[i].address,
@@ -305,8 +305,7 @@ make_cred_from_ccred(krb5_context context,
     return 0;
 
 nomem:
-    ret = ENOMEM;
-    krb5_set_error_message(context, ret, N_("malloc: out of memory", "malloc"));
+    ret = krb5_enomem(context);
 
 fail:
     krb5_free_cred_contents(context, cred);
@@ -339,7 +338,7 @@ make_ccred_from_cred(krb5_context context,
 		     cc_credentials_v5_t *cred)
 {
     krb5_error_code ret;
-    int i;
+    size_t i;
 
     memset(cred, 0, sizeof(*cred));
 
@@ -548,7 +547,7 @@ acc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 	error = (*a->ccache->func->get_kdc_time_offset)(a->ccache,
 							cc_credentials_v5,
 							&offset);
-	if (error == 0) 
+	if (error == 0)
 	    context->kdc_sec_offset = offset;
 
     } else if (error == ccErrCCacheNotFound) {
@@ -889,7 +888,7 @@ acc_get_version(krb5_context context,
 {
     return 0;
 }
-		
+
 struct cache_iter {
     cc_context_t context;
     cc_ccache_iterator_t iter;
@@ -907,10 +906,8 @@ acc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 	return ret;
 
     iter = calloc(1, sizeof(*iter));
-    if (iter == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
-    }
+    if (iter == NULL)
+	return krb5_enomem(context);
 
     error = (*init_func)(&iter->context, ccapi_version_3, NULL, NULL);
     if (error) {
@@ -963,7 +960,7 @@ acc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
 	acc_close(context, *id);
 	*id = NULL;
 	return translate_cc_error(context, error);
-    }	
+    }
     return 0;
 }
 
@@ -1033,15 +1030,13 @@ acc_get_default_name(krb5_context context, char **str)
 	(*cc->func->release)(cc);
 	return translate_cc_error(context, error);
     }
-	
+
     error = asprintf(str, "API:%s", name->data);
     (*name->func->release)(name);
     (*cc->func->release)(cc);
 
-    if (error < 0 || *str == NULL) {
-	krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (error < 0 || *str == NULL)
+	return krb5_enomem(context);
     return 0;
 }
 
@@ -1116,7 +1111,9 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_acc_ops = {
     acc_move,
     acc_get_default_name,
     acc_set_default,
-    acc_lastchange
+    acc_lastchange,
+    NULL,
+    NULL,
 };
 
 #endif

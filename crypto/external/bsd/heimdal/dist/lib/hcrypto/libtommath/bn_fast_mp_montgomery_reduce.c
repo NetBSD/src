@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_fast_mp_montgomery_reduce.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_fast_mp_montgomery_reduce.c,v 1.1.1.1.6.1 2017/08/30 07:10:56 snj Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_FAST_MP_MONTGOMERY_REDUCE_C
@@ -169,6 +169,6 @@ int fast_mp_montgomery_reduce (mp_int * x, mp_int * n, mp_digit rho)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_fast_mp_montgomery_reduce.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_fast_mp_montgomery_reduce.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */
