@@ -1,4 +1,4 @@
-/*	$NetBSD: sbbuswatch.c,v 1.3 2016/07/21 17:02:47 christos Exp $	*/
+/*	$NetBSD: sbbuswatch.c,v 1.3.8.1 2017/08/30 15:45:03 martin Exp $	*/
 /*
  * Copyright (c) 2010, The NetBSD Foundation, Inc.  All rights reserved.
  *
@@ -37,6 +37,8 @@
 #include <mips/sibyte/include/sb1250_int.h>
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/dev/sbbuswatchvar.h>
+
+#include <evbmips/sbmips/systemsw.h>
 
 #define READ_REG(rp)            mips3_ld((register_t)(rp))
 #define WRITE_REG(rp, val)      mips3_sd((register_t)(rp), (val))

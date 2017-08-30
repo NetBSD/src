@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.48 2017/02/20 08:25:57 ozaki-r Exp $ */
+/* $NetBSD: sbmac.c,v 1.48.6.1 2017/08/30 15:45:03 martin Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.48 2017/02/20 08:25:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.48.6.1 2017/08/30 15:45:03 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -74,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.48 2017/02/20 08:25:57 ozaki-r Exp $");
 #include <mips/sibyte/include/sb1250_mac.h>
 #include <mips/sibyte/include/sb1250_dma.h>
 #include <mips/sibyte/include/sb1250_scd.h>
+
+#include <evbmips/sbmips/systemsw.h>
 
 /* Simple types */
 

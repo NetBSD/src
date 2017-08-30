@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 2011/03/18 16:30:01 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.9.48.1 2017/08/30 15:45:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,7 +55,7 @@
 #ifndef _LOCORE
 
 void	delay(int n);
-#define	DELAY	 	delay
+#define	DELAY(x)	 	delay(x)
 
 #include <machine/intr.h>
 

@@ -1,0 +1,2 @@
+# $NetBSD: NetBSD.dist.evbmips,v 1.1.2.2 2017/08/30 15:45:04 martin Exp $
+./usr/mdec/sbmips

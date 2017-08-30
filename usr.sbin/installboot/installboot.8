@@ -1,6 +1,6 @@
-.\"	$NetBSD: installboot.8,v 1.92 2017/03/15 11:22:47 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.92.4.1 2017/08/30 15:45:04 martin Exp $
 .\"
-.\" Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -524,6 +524,37 @@ Installed copy of secondary bootstrap.
 Searched for by the primary bootstrap if
 .Pa /boot. Ns Sy MACHINE
 is not found.
+.
+.El
+.
+.Ss Nx Ns Tn /evbmips files
+.
+The
+.Nx Ns Tn /evbmips
+bootstrap files currently only apply to the SBMIPS kernels for the
+SiByte/Broadcom BCM1250 and BCM1480 CPUs.
+.Bl -tag -width /usr/mdec/sbmips/bootxx_cd9660
+.
+.It Pa /usr/mdec/sbmips/boot
+.Nx Ns Tn /evbmips
+secondary bootstrap for
+.Sy FFSv1 ,
+.Sy FFSv2 ,
+.Sy LFSv1 ,
+and
+.Sy LFSv2 .
+.It Pa /usr/mdec/sbmips/bootxx_cd9660
+SBMIPS primary bootstrap for ISO 9660 file system.
+.It Pa /usr/mdec/sbmips/bootxx_ffs
+SBMIPS primary bootstrap for FFSv1 and FFSv2 file system.
+.It Pa /usr/mdec/sbmips/bootxx_lfs
+SBMIPS primary bootstrap for LFSv1 and LFSv2 file system.
+.It Pa /usr/mdec/sbmips/netboot
+SBMIPS primary bootstrap for network root.
+.Pp
+Note that
+.Nm
+does not currently support evbmips directly.
 .
 .El
 .
