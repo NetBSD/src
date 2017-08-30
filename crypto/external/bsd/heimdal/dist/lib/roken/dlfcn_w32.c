@@ -1,21 +1,21 @@
-/*	$NetBSD: dlfcn_w32.c,v 1.1.1.1 2011/04/13 18:15:40 elric Exp $	*/
+/*	$NetBSD: dlfcn_w32.c,v 1.1.1.1.12.1 2017/08/30 06:54:31 snj Exp $	*/
 
 /***********************************************************************
  * Copyright (c) 2009, Secure Endpoints Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * - Redistributions of source code must retain the above copyright
  *   notice, this list of conditions and the following disclaimer.
- * 
+ *
  * - Redistributions in binary form must reproduce the above copyright
  *   notice, this list of conditions and the following disclaimer in
  *   the documentation and/or other materials provided with the
  *   distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -28,7 +28,7 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  **********************************************************************/
 
 #include <config.h>
@@ -146,7 +146,7 @@ dlopen(const char *fn, int flags)
 
     old_error_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
 
-    hm = LoadLibrary(fn);
+    hm = LoadLibraryEx(fn, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
 
     if (hm == NULL) {
 	set_error_from_last();
@@ -165,3 +165,23 @@ dlsym(void * vhm, const char * func_name)
     return (DLSYM_RET_TYPE)(ULONG_PTR)GetProcAddress(hm, func_name);
 }
 
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+dladdr(void *addr, Dl_info *dli)
+{
+    HMODULE hm;
+    DWORD nsize;
+
+    memset(dli, 0, sizeof(*dli));
+    dli->dli_fname = dli->_dli_buf;
+
+    if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                           GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+			   (LPCTSTR)(ULONG_PTR)addr, &hm))
+        return 0;
+
+    nsize = GetModuleFileName(hm, dli->_dli_buf, sizeof(dli->_dli_buf));
+    dli->_dli_buf[sizeof(dli->_dli_buf) - 1] = '\0';
+    if (nsize >= sizeof(dli->_dli_buf))
+        return 0; /* truncated? can't be... */
+    return 1;
+}

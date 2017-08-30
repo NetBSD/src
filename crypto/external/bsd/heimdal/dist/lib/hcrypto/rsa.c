@@ -1,4 +1,4 @@
-/*	$NetBSD: rsa.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: rsa.c,v 1.1.1.1.12.1 2017/08/30 06:54:26 snj Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -34,9 +34,7 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
+#include <krb5/roken.h>
 #include <krb5/krb5-types.h>
 #include <krb5/rfc2459_asn1.h>
 
@@ -45,8 +43,6 @@
 #include <rsa.h>
 
 #include "common.h"
-
-#include <krb5/roken.h>
 
 /**
  * @page page_rsa RSA - public-key cryptography
@@ -57,12 +53,12 @@
  *
  * Speed for RSA in seconds
  *   no key blinding
- *   1000 iteration, 
+ *   1000 iteration,
  *   same rsa keys (1024 and 2048)
  *   operation performed each eteration sign, verify, encrypt, decrypt on a random bit pattern
  *
  * name		1024	2048	4098
- * =================================	
+ * =================================
  * gmp: 	 0.73	  6.60	 44.80
  * tfm: 	 2.45	    --	    --
  * ltm:		 3.79	 20.74	105.41	(default in hcrypto)
@@ -444,11 +440,11 @@ RSA_verify(int type, const unsigned char *from, unsigned int flen,
 	    free_DigestInfo(&di);
 	    return -1;
 	}
-	
+
 	ret = der_heim_oid_cmp(&digest_alg->algorithm,
 			       &di.digestAlgorithm.algorithm);
 	free_DigestInfo(&di);
-	
+
 	if (ret != 0)
 	    return 0;
 	return 1;
@@ -508,6 +504,7 @@ static const RSA_METHOD rsa_null_method = {
     null_rsa_init,
     null_rsa_finish,
     0,
+    NULL,
     NULL,
     NULL,
     NULL
@@ -579,7 +576,7 @@ d2i_RSAPrivateKey(RSA *rsa, const unsigned char **pp, size_t len)
 	RSA_free(k);
 	return NULL;
     }
-	
+
     return k;
 }
 
@@ -703,6 +700,6 @@ d2i_RSAPublicKey(RSA *rsa, const unsigned char **pp, size_t len)
 	RSA_free(k);
 	return NULL;
     }
-	
+
     return k;
 }

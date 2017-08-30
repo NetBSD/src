@@ -1,4 +1,4 @@
-/*	$NetBSD: glue.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: glue.c,v 1.1.1.1.12.1 2017/08/30 06:54:21 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -34,7 +34,7 @@
 
 #include "kcm_locl.h"
 
-__RCSID("$NetBSD: glue.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $");
+__RCSID("$NetBSD: glue.c,v 1.1.1.1.12.1 2017/08/30 06:54:21 snj Exp $");
 
 /*
  * Server-side loopback glue for credentials cache operations; this
@@ -265,7 +265,16 @@ static const krb5_cc_ops krb5_kcmss_ops = {
     kcmss_end_get,
     kcmss_remove_cred,
     kcmss_set_flags,
-    kcmss_get_version
+    kcmss_get_version,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
 };
 
 krb5_error_code

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.270.2.1 2012/03/02 18:27:55 riz Exp $
+#	$NetBSD: bsd.prog.mk,v 1.270.2.1.4.1 2017/08/30 06:54:40 snj Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -202,9 +202,9 @@ PAM_STATIC_DPADD+= ${LIBSSH}
 .endif
 .if (${MKKERBEROS} != "no")
 PAM_STATIC_LDADD+= -lkafs -lkrb5 -lhx509 -lwind -lasn1 \
-	-lroken -lcom_err -lheimbase -lcrypto
+	-lroken -lcom_err -lheimbase -lcrypto -lsqlite3
 PAM_STATIC_DPADD+= ${LIBKAFS} ${LIBKRB5} ${LIBHX509} ${LIBWIND} ${LIBASN1} \
-	${LIBROKEN} ${LIBCOM_ERR} ${LIBHEIMBASE} ${LIBCRYPTO}
+	${LIBROKEN} ${LIBCOM_ERR} ${LIBHEIMBASE} ${LIBCRYPTO} ${LIBSQLITE3}
 .endif
 .if (${MKSKEY} != "no")
 PAM_STATIC_LDADD+= -lskey

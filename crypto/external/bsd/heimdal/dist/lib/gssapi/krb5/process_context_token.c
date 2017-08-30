@@ -1,4 +1,4 @@
-/*	$NetBSD: process_context_token.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: process_context_token.c,v 1.1.1.1.12.1 2017/08/30 06:54:24 snj Exp $	*/
 
 /*
  * Copyright (c) 2003 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_process_context_token (
 	OM_uint32          *minor_status,
-	const gss_ctx_id_t context_handle,
+	gss_const_ctx_id_t context_handle,
 	const gss_buffer_t token_buffer
     )
 {
@@ -54,7 +54,8 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_process_context_token (
 				       (gsskrb5_ctx)context_handle,
 				       context,
 				       token_buffer, &empty_buffer,
-				       GSS_C_QOP_DEFAULT, "\x01\x02");
+				       GSS_C_QOP_DEFAULT,
+				       "\x01\x02");
 
     if (ret == GSS_S_COMPLETE)
 	ret = _gsskrb5_delete_sec_context(minor_status,

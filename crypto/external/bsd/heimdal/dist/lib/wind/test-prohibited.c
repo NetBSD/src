@@ -1,4 +1,4 @@
-/*	$NetBSD: test-prohibited.c,v 1.1.1.1 2011/04/13 18:15:58 elric Exp $	*/
+/*	$NetBSD: test-prohibited.c,v 1.1.1.1.12.1 2017/08/30 06:54:32 snj Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -129,7 +129,7 @@ main(void)
 		    positives[i]);
 	    ++failures;
 	}
-	
+
     for (i = 0; i < sizeof(negatives)/sizeof(negatives[0]); ++i)
 	if (_wind_stringprep_error(negatives[i], WIND_PROFILE_NAME)) {
 	    printf ("code-point 0x%x not marked as non-prohibited\n",

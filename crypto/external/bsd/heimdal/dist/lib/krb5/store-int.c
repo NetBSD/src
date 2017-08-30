@@ -1,4 +1,4 @@
-/*	$NetBSD: store-int.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: store-int.c,v 1.1.1.1.12.1 2017/08/30 06:54:31 snj Exp $	*/
 
 /*
  * Copyright (c) 1997-2008 Kungliga Tekniska Högskolan
@@ -36,7 +36,7 @@
 #include "krb5_locl.h"
 
 KRB5_LIB_FUNCTION krb5_ssize_t KRB5_LIB_CALL
-_krb5_put_int(void *buffer, unsigned long value, size_t size)
+_krb5_put_int(void *buffer, uint64_t value, size_t size)
 {
     unsigned char *p = buffer;
     int i;
@@ -48,13 +48,22 @@ _krb5_put_int(void *buffer, unsigned long value, size_t size)
 }
 
 KRB5_LIB_FUNCTION krb5_ssize_t KRB5_LIB_CALL
-_krb5_get_int(void *buffer, unsigned long *value, size_t size)
+_krb5_get_int64(void *buffer, uint64_t *value, size_t size)
 {
     unsigned char *p = buffer;
     unsigned long v = 0;
-    int i;
+    size_t i;
     for (i = 0; i < size; i++)
 	v = (v << 8) + p[i];
     *value = v;
     return size;
+}
+
+KRB5_LIB_FUNCTION krb5_ssize_t KRB5_LIB_CALL
+_krb5_get_int(void *buffer, unsigned long *value, size_t size)
+{
+    uint64_t v64;
+    krb5_ssize_t bytes = _krb5_get_int64(buffer, &v64, size);
+    *value = v64;
+    return bytes;
 }

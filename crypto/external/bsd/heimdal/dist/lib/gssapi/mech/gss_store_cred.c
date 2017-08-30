@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_store_cred.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: gss_store_cred.c,v 1.1.1.1.12.1 2017/08/30 06:54:24 snj Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -47,7 +47,9 @@ gss_store_cred(OM_uint32         *minor_status,
 {
     struct _gss_cred *cred = (struct _gss_cred *) input_cred_handle;
     struct _gss_mechanism_cred *mc;
-    OM_uint32 maj, junk;
+    OM_uint32 maj = GSS_S_FAILURE;
+    OM_uint32 junk;
+    size_t successes = 0;
 
     if (minor_status == NULL)
 	return GSS_S_FAILURE;
@@ -55,7 +57,7 @@ gss_store_cred(OM_uint32         *minor_status,
 	*elements_stored = NULL;
     if (cred_usage_stored)
 	*cred_usage_stored = 0;
-	
+
     if (cred == NULL)
 	return GSS_S_NO_CONTEXT;
 
@@ -71,26 +73,30 @@ gss_store_cred(OM_uint32         *minor_status,
 	if (m == NULL || m->gm_store_cred == NULL)
 	    continue;
 
-	if (desired_mech) {
-	    maj = gss_oid_equal(&m->gm_mech_oid, desired_mech);
-	    if (maj != 0)
-		continue;
-	}
+        if (desired_mech != GSS_C_NO_OID &&
+            !gss_oid_equal(&m->gm_mech_oid, desired_mech))
+            continue;
 
 	maj = (m->gm_store_cred)(minor_status, mc->gmc_cred,
 				 cred_usage, desired_mech, overwrite_cred,
 				 default_cred, NULL, cred_usage_stored);
-	if (maj != GSS_S_COMPLETE) {
-	    gss_release_oid_set(&junk, elements_stored);
-	    return maj;
-	}
-
-	if (elements_stored) {
-	    gss_add_oid_set_member(&junk,
-				   &m->gm_mech_oid,
-				   elements_stored);
-	}
+        if (maj == GSS_S_COMPLETE) {
+            if (elements_stored)
+                gss_add_oid_set_member(&junk, desired_mech, elements_stored);
+            successes++;
+        } else if (desired_mech != GSS_C_NO_OID) {
+            gss_release_oid_set(&junk, elements_stored);
+            return maj;
+        }
 
     }
+
+    if (successes == 0) {
+        if (maj != GSS_S_COMPLETE)
+            return maj; /* last failure */
+        return GSS_S_FAILURE;
+    }
+
+    *minor_status = 0;
     return GSS_S_COMPLETE;
 }

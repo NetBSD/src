@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_prime_is_prime.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_prime_is_prime.c,v 1.1.1.1.12.1 2017/08/30 06:54:26 snj Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_PRIME_IS_PRIME_C
@@ -80,6 +80,6 @@ LBL_B:mp_clear (&b);
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_prime_is_prime.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_prime_is_prime.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

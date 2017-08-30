@@ -1,4 +1,4 @@
-/*	$NetBSD: rsa-tfm.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: rsa-tfm.c,v 1.1.1.1.12.1 2017/08/30 06:54:26 snj Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007, 2010 Kungliga Tekniska Högskolan
@@ -34,15 +34,11 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
+#include <krb5/roken.h>
 #include <krb5/krb5-types.h>
 #include <assert.h>
 
 #include <rsa.h>
-
-#include <krb5/roken.h>
 
 #ifdef USE_HCRYPTO_TFM
 
@@ -144,7 +140,7 @@ tfm_rsa_public_encrypt(int flen, const unsigned char* from,
     memcpy(p, from, flen);
     p += flen;
     assert((p - p0) == size - 1);
-    
+
     fp_init_multi(&enc, &dec, NULL);
     fp_read_unsigned_bin(&dec, p0, size - 1);
     free(p0);

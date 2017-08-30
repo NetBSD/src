@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/04 02:08:50 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2017/08/30 06:54:40 snj Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 
@@ -48,8 +48,8 @@ LDADD+= -lasn1
 # libcrypto is required by libgssapi, libkrb5, and libhx509
 # libwind is required by libhx509
 CPPFLAGS+= -DENCRYPTION
-DPADD+= ${LIBCOM_ERR} ${LIBROKEN} ${LIBWIND} ${LIBCRYPTO}
-LDADD+= -lcom_err -lroken -lwind -lcrypto
+DPADD+= ${LIBCOM_ERR} ${LIBROKEN} ${LIBWIND} ${LIBCRYPTO} ${LIBSQLITE3}
+LDADD+= -lcom_err -lroken -lwind -lcrypto -lsqlite3
 
 
 # libutil is required by libroken

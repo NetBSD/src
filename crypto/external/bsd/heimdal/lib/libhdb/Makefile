@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:17 he Exp $
+# $NetBSD: Makefile,v 1.2.12.1 2017/08/30 06:54:37 snj Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -13,6 +13,7 @@ LIB=		hdb
 
 LIBDPLIBS+=	hx509		${HEIMBASE}/lib/libhx509	\
 		crypto		${SSLBASE}/lib/libcrypto	\
+		krb5		${HEIMBASE}/lib/libkrb5		\
 		asn1		${HEIMBASE}/lib/libasn1		\
 		com_err		${HEIMBASE}/lib/libcom_err	\
 		roken		${HEIMBASE}/lib/libroken	\
@@ -20,19 +21,22 @@ LIBDPLIBS+=	hx509		${HEIMBASE}/lib/libhx509	\
 		heimbase	${HEIMBASE}/lib/libheimbase
 
 HEIMSRCS= hdb_err.et hdb.asn1
+ASN1_OPTS.hdb.asn1+= --one-code-file --sequence=HDB-Ext-KeySet --sequence=Keys
 
 SRCS=			\
 	common.c	\
 	db.c		\
 	db3.c		\
+	dbinfo.c	\
 	ext.c		\
-	hdb-ldap.c	\
-	hdb.c		\
 	hdb-keytab.c	\
+	hdb-ldap.c	\
 	hdb-mitdb.c	\
+	hdb-sqlite.c	\
+	hdb.c		\
+	hdb_err.c	\
 	keys.c		\
 	keytab.c	\
-	dbinfo.c	\
 	mkey.c		\
 	ndbm.c		\
 	print.c

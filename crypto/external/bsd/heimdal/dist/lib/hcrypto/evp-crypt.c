@@ -1,4 +1,4 @@
-/*	$NetBSD: evp-crypt.c,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: evp-crypt.c,v 1.1.1.1.12.1 2017/08/30 06:54:25 snj Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -36,13 +36,10 @@
 /* Windows crypto provider plugin, sample */
 
 #include <config.h>
+#include <krb5/roken.h>
 
 #define HC_DEPRECATED
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
 
 #include <evp.h>
@@ -138,7 +135,7 @@ crypto_des_ede3_cbc_init(EVP_CIPHER_CTX *ctx,
 }
 
 /**
- * The tripple DES cipher type (Micrsoft crypt provider)
+ * The triple DES cipher type (Micrsoft crypt provider)
  *
  * @return the DES-EDE3-CBC EVP_CIPHER pointer.
  *

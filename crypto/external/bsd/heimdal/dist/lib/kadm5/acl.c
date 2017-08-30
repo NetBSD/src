@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: acl.c,v 1.1.1.1.12.1 2017/08/30 06:54:29 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: acl.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("$NetBSD: acl.c,v 1.1.1.1.12.1 2017/08/30 06:54:29 snj Exp $");
 
 static struct units acl_units[] = {
     { "all",		KADM5_PRIV_ALL },
@@ -46,7 +46,8 @@ static struct units acl_units[] = {
     { "modify",		KADM5_PRIV_MODIFY },
     { "add",		KADM5_PRIV_ADD },
     { "get", 		KADM5_PRIV_GET },
-    { NULL }
+    { "get-keys",	KADM5_PRIV_GET_KEYS },
+    { NULL,		0 }
 };
 
 kadm5_ret_t
@@ -179,6 +180,8 @@ check_flags (unsigned op,
 
     if(res & KADM5_PRIV_GET)
 	return KADM5_AUTH_GET;
+    if(res & KADM5_PRIV_GET_KEYS)
+	return KADM5_AUTH_GET_KEYS;
     if(res & KADM5_PRIV_ADD)
 	return KADM5_AUTH_ADD;
     if(res & KADM5_PRIV_MODIFY)

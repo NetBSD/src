@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_user.c,v 1.1.1.1 2011/04/13 18:15:39 elric Exp $	*/
+/*	$NetBSD: verify_user.c,v 1.1.1.1.12.1 2017/08/30 06:54:31 snj Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
@@ -102,11 +102,8 @@ KRB5_LIB_FUNCTION int KRB5_LIB_CALL
 krb5_verify_opt_alloc(krb5_context context, krb5_verify_opt **opt)
 {
     *opt = calloc(1, sizeof(**opt));
-    if ((*opt) == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if ((*opt) == NULL)
+	return krb5_enomem(context);
     krb5_verify_opt_init(*opt);
     return 0;
 }
@@ -197,7 +194,7 @@ krb5_verify_user_opt(krb5_context context,
 	if (ret)
 	    return ret;
 	ret = KRB5_CONFIG_NODEFREALM;
-	
+
 	for (r = realms; *r != NULL && ret != 0; ++r) {
 	    ret = krb5_principal_set_realm(context, principal, *r);
 	    if (ret) {

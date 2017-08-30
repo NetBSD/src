@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1738.2.7.2.5 2016/10/05 10:23:24 bouyer Exp $
+#	$NetBSD: mi,v 1.1738.2.7.2.6 2017/08/30 06:54:39 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3667,6 +3667,7 @@
 ./usr/libdata/debug/usr/bin/kpasswd.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/bin/ktrace.debug	comp-debug-debug	debug
 ./usr/libdata/debug/usr/bin/ktruss.debug	comp-debug-debug	debug
+./usr/libdata/debug/usr/bin/kvno.debug		comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/bin/lam.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/last.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/lastcomm.debug	comp-util-debug		debug
@@ -7023,6 +7024,9 @@
 ./usr/share/man/cat3/jnf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/jrand48.0			comp-c-catman		.cat
 ./usr/share/man/cat3/kadm5_pwcheck.0		comp-krb5-catman	kerberos,.cat
+./usr/share/man/cat3/kadm5_add_passwd_quality_verifier.0		comp-krb5-catman	kerberos,.cat
+./usr/share/man/cat3/kadm5_check_password_quality.0		comp-krb5-catman	kerberos,.cat
+./usr/share/man/cat3/kadm5_setup_passwd_quality_check.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/kafs.0			comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/kerberos.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/keyname.0			comp-c-catman		.cat
@@ -7440,6 +7444,7 @@
 ./usr/share/man/cat3/krb5_print_address.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/krb5_prompt.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_prompter_posix.0	comp-krb5-catman	kerberos,.cat
+./usr/share/man/cat3/krb5_pwcheck.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_random_to_key.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/krb5_rc_close.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_rc_default.0		comp-krb5-catman	kerberos,.cat
@@ -13326,6 +13331,9 @@
 ./usr/share/man/html3/jnf.html			comp-c-htmlman		html
 ./usr/share/man/html3/jrand48.html		comp-c-htmlman		html
 ./usr/share/man/html3/kadm5_pwcheck.html	comp-krb5-htmlman	kerberos,html
+./usr/share/man/html3/kadm5_add_passwd_quality_verifier.html	comp-krb5-htmlman	kerberos,html
+./usr/share/man/html3/kadm5_check_password_quality.html	comp-krb5-htmlman	kerberos,html
+./usr/share/man/html3/kadm5_setup_passwd_quality_check.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/kafs.html			comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/keyname.html		comp-c-htmlman		html
 ./usr/share/man/html3/keypad.html		comp-c-htmlman		html
@@ -13741,6 +13749,7 @@
 ./usr/share/man/html3/krb5_print_address.html	comp-obsolete		obsolete
 ./usr/share/man/html3/krb5_prompt.html		comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb5_prompter_posix.html	comp-krb5-htmlman	kerberos,html
+./usr/share/man/html3/krb5_pwcheck.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb5_random_to_key.html	comp-obsolete		obsolete
 ./usr/share/man/html3/krb5_rc_close.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb5_rc_default.html	comp-krb5-htmlman	kerberos,html
@@ -19548,6 +19557,9 @@
 ./usr/share/man/man3/jnf.3			comp-c-man		.man
 ./usr/share/man/man3/jrand48.3			comp-c-man		.man
 ./usr/share/man/man3/kadm5_pwcheck.3		comp-krb5-man		kerberos,.man
+./usr/share/man/man3/kadm5_add_passwd_quality_verifier.3		comp-krb5-man		kerberos,.man
+./usr/share/man/man3/kadm5_check_password_quality.3		comp-krb5-man		kerberos,.man
+./usr/share/man/man3/kadm5_setup_passwd_quality_check.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/kafs.3			comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/kerberos.3			comp-obsolete		obsolete
 ./usr/share/man/man3/keyname.3			comp-c-man		.man
@@ -19965,6 +19977,7 @@
 ./usr/share/man/man3/krb5_print_address.3	comp-obsolete		obsolete
 ./usr/share/man/man3/krb5_prompt.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_prompter_posix.3	comp-krb5-man		kerberos,.man
+./usr/share/man/man3/krb5_pwcheck.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_random_to_key.3	comp-obsolete		obsolete
 ./usr/share/man/man3/krb5_rc_close.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_rc_default.3		comp-krb5-man		kerberos,.man
