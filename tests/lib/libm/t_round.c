@@ -1,4 +1,4 @@
-/* $NetBSD: t_round.c,v 1.5 2017/08/30 10:51:06 maya Exp $ */
+/* $NetBSD: t_round.c,v 1.6 2017/08/30 14:24:20 maya Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -100,10 +100,9 @@ ATF_TC_BODY(rounding_alpha, tc)
 
         printf("d = %g\n", d);
         u = (gimpy_limb_t) d;
-        printf("sizeof u: %zu\n", sizeof(u));
 
         for (; i > 0; i--) {
-                printf("i=%d, u: %lu\n", i, u);
+                printf("i=%d, u: %"PRIu64"\n", i, u);
                 ATF_CHECK(!(u & 1));
                 u = u >> 1;
         }
