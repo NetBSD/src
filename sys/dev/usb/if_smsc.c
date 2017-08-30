@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.36 2017/04/15 14:38:44 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.37 2017/08/30 10:08:22 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -694,6 +694,12 @@ smsc_start_locked(struct ifnet *ifp)
 		return;
 	}
 
+	/* Any free USB transfers? */
+	if (sc->sc_cdata.tx_free == 0) {
+		smsc_dbg_printf(sc, "%s: all USB transfers in use\n", __func__);
+		return;
+	}
+
 	if ((ifp->if_flags & (IFF_OACTIVE|IFF_RUNNING)) != IFF_RUNNING) {
 		smsc_dbg_printf(sc, "%s: not running\n", __func__);
 		return;
@@ -703,15 +709,21 @@ smsc_start_locked(struct ifnet *ifp)
 	if (m_head == NULL)
 		return;
 
+	sc->sc_cdata.tx_free--;
+
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
-	if (smsc_encap(sc, m_head, 0)) {
+	if (smsc_encap(sc, m_head, sc->sc_cdata.tx_next)) {
 		m_free(m_head);
+		sc->sc_cdata.tx_free++;
 		return;
 	}
 
+	sc->sc_cdata.tx_next = (sc->sc_cdata.tx_next + 1) % SMSC_TX_LIST_CNT;
+
 	bpf_mtap(ifp, m_head);
 
-	ifp->if_flags |= IFF_OACTIVE;
+	if (sc->sc_cdata.tx_free == 0)
+		ifp->if_flags |= IFF_OACTIVE;
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
@@ -1559,6 +1571,7 @@ smsc_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		return;
 	}
 
+	sc->sc_cdata.tx_free++;
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -1607,6 +1620,9 @@ smsc_tx_list_init(struct smsc_softc *sc)
 			c->sc_buf = usbd_get_buffer(c->sc_xfer);
 		}
 	}
+
+	cd->tx_free = SMSC_TX_LIST_CNT;
+	cd->tx_next = 0;
 
 	return 0;
 }
@@ -1720,8 +1736,6 @@ smsc_encap(struct smsc_softc *sc, struct mbuf *m, int idx)
 	if (err != USBD_IN_PROGRESS) {
 		return EIO;
 	}
-
-	sc->sc_cdata.tx_cnt++;
 
 	return 0;
 }
