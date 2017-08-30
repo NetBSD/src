@@ -2,20 +2,13 @@
  * EAP server method: EAP-TNC (Trusted Network Connect)
  * Copyright (c) 2007-2010, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
 
 #include "common.h"
-#include "base64.h"
 #include "eap_i.h"
 #include "tncs.h"
 
@@ -91,7 +84,8 @@ static void * eap_tnc_init(struct eap_sm *sm)
 		return NULL;
 	}
 
-	data->fragment_size = 1300;
+	data->fragment_size = sm->fragment_size > 100 ?
+		sm->fragment_size - 98 : 1300;
 
 	return data;
 }
@@ -486,7 +480,8 @@ static void eap_tnc_process(struct eap_sm *sm, void *priv,
 		message_length = WPA_GET_BE32(pos);
 		pos += 4;
 
-		if (message_length < (u32) (end - pos)) {
+		if (message_length < (u32) (end - pos) ||
+		    message_length > 75000) {
 			wpa_printf(MSG_DEBUG, "EAP-TNC: Invalid Message "
 				   "Length (%d; %ld remaining in this msg)",
 				   message_length, (long) (end - pos));
@@ -559,7 +554,6 @@ static Boolean eap_tnc_isSuccess(struct eap_sm *sm, void *priv)
 int eap_server_tnc_register(void)
 {
 	struct eap_method *eap;
-	int ret;
 
 	eap = eap_server_method_alloc(EAP_SERVER_METHOD_INTERFACE_VERSION,
 				      EAP_VENDOR_IETF, EAP_TYPE_TNC, "TNC");
@@ -574,8 +568,5 @@ int eap_server_tnc_register(void)
 	eap->isDone = eap_tnc_isDone;
 	eap->isSuccess = eap_tnc_isSuccess;
 
-	ret = eap_server_method_register(eap);
-	if (ret)
-		eap_server_method_free(eap);
-	return ret;
+	return eap_server_method_register(eap);
 }

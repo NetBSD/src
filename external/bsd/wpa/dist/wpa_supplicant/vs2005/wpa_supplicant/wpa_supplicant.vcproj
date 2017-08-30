@@ -251,6 +251,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\drivers\driver_common.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\drivers\driver_ndis.c"
 				>
 			</File>
@@ -392,6 +396,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\crypto\sha1-pbkdf2.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\crypto\sha1-prf.c"
 				>
 			</File>
 			<File

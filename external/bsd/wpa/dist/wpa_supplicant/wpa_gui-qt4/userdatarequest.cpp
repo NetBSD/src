@@ -2,14 +2,8 @@
  * wpa_gui - UserDataRequest class
  * Copyright (c) 2005-2006, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "userdatarequest.h"
@@ -18,7 +12,7 @@
 
 
 UserDataRequest::UserDataRequest(QWidget *parent, const char *, bool,
-				 Qt::WFlags)
+				 Qt::WindowFlags)
 	: QDialog(parent)
 {
 	setupUi(this);
@@ -95,6 +89,6 @@ void UserDataRequest::sendReply()
 	QString cmd = QString(WPA_CTRL_RSP) + field + '-' +
 		QString::number(networkid) + ':' +
 		queryEdit->text();
-	wpagui->ctrlRequest(cmd.toAscii().constData(), reply, &reply_len);
+	wpagui->ctrlRequest(cmd.toLocal8Bit().constData(), reply, &reply_len);
 	accept();
 }

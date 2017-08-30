@@ -1,15 +1,9 @@
 /*
  * RADIUS authentication server
- * Copyright (c) 2005-2009, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2005-2009, 2011, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef RADIUS_SERVER_H
@@ -28,6 +22,11 @@ struct radius_server_conf {
 	int auth_port;
 
 	/**
+	 * acct_port - UDP port to listen to as an accounting server
+	 */
+	int acct_port;
+
+	/**
 	 * client_file - RADIUS client configuration file
 	 *
 	 * This file contains the RADIUS clients and the shared secret to be
@@ -39,6 +38,11 @@ struct radius_server_conf {
 	 * with '#' are skipped and can be used as comments.
 	 */
 	char *client_file;
+
+	/**
+	 * sqlite_file - SQLite database for storing debug log information
+	 */
+	const char *sqlite_file;
 
 	/**
 	 * conf_ctx - Context pointer for callbacks
@@ -143,6 +147,32 @@ struct radius_server_conf {
 	int tnc;
 
 	/**
+	 * pwd_group - EAP-pwd D-H group
+	 *
+	 * This is used to select which D-H group to use with EAP-pwd.
+	 */
+	u16 pwd_group;
+
+	/**
+	 * server_id - Server identity
+	 */
+	const char *server_id;
+
+	/**
+	 * erp - Whether EAP Re-authentication Protocol (ERP) is enabled
+	 *
+	 * This controls whether the authentication server derives ERP key
+	 * hierarchy (rRK and rIK) from full EAP authentication and allows
+	 * these keys to be used to perform ERP to derive rMSK instead of full
+	 * EAP authentication to derive MSK.
+	 */
+	int erp;
+
+	const char *erp_domain;
+
+	unsigned int tls_session_lifetime;
+
+	/**
 	 * wps - Wi-Fi Protected Setup context
 	 *
 	 * If WPS is used with an external RADIUS server (which is quite
@@ -194,12 +224,20 @@ struct radius_server_conf {
 	 * msg_ctx - Context data for wpa_msg() calls
 	 */
 	void *msg_ctx;
+
+#ifdef CONFIG_RADIUS_TEST
+	const char *dump_msk_file;
+#endif /* CONFIG_RADIUS_TEST */
+
+	char *subscr_remediation_url;
+	u8 subscr_remediation_method;
 };
 
 
 struct radius_server_data *
 radius_server_init(struct radius_server_conf *conf);
 
+void radius_server_erp_flush(struct radius_server_data *data);
 void radius_server_deinit(struct radius_server_data *data);
 
 int radius_server_get_mib(struct radius_server_data *data, char *buf,

@@ -4,14 +4,8 @@
  * Copyright (c) 2009, Witold Sowa <witold.sowa@gmail.com>
  * Copyright (c) 2010, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "utils/includes.h"
@@ -43,14 +37,16 @@ static struct interfaces * add_interface(struct dl_list *list,
 	iface = os_zalloc(sizeof(struct interfaces));
 	if (!iface)
 		return NULL;
-	iface->xml = wpabuf_alloc(3000);
-	if (iface->xml == NULL) {
+	iface->dbus_interface = os_strdup(dbus_interface);
+	iface->xml = wpabuf_alloc(15000);
+	if (iface->dbus_interface == NULL || iface->xml == NULL) {
+		os_free(iface->dbus_interface);
+		wpabuf_free(iface->xml);
 		os_free(iface);
 		return NULL;
 	}
 	wpabuf_printf(iface->xml, "<interface name=\"%s\">", dbus_interface);
 	dl_list_add_tail(list, &iface->list);
-	iface->dbus_interface = os_strdup(dbus_interface);
 	return iface;
 }
 
@@ -89,10 +85,11 @@ static void add_entry(struct wpabuf *xml, const char *type, const char *name,
 static void add_property(struct wpabuf *xml,
 			 const struct wpa_dbus_property_desc *dsc)
 {
-	wpabuf_printf(xml, "<property name=\"%s\" type=\"%s\" access=\"%s\"/>",
+	wpabuf_printf(xml, "<property name=\"%s\" type=\"%s\" "
+		      "access=\"%s%s\"/>",
 		      dsc->dbus_property, dsc->type,
-		      (dsc->access == R ? "read" :
-		       (dsc->access == W ? "write" : "readwrite")));
+		      dsc->getter ? "read" : "",
+		      dsc->setter ? "write" : "");
 }
 
 
@@ -101,6 +98,7 @@ static void extract_interfaces_methods(
 {
 	const struct wpa_dbus_method_desc *dsc;
 	struct interfaces *iface;
+
 	for (dsc = methods; dsc && dsc->dbus_method; dsc++) {
 		iface = add_interface(list, dsc->dbus_interface);
 		if (iface)
@@ -115,6 +113,7 @@ static void extract_interfaces_signals(
 {
 	const struct wpa_dbus_signal_desc *dsc;
 	struct interfaces *iface;
+
 	for (dsc = signals; dsc && dsc->dbus_signal; dsc++) {
 		iface = add_interface(list, dsc->dbus_interface);
 		if (iface)
@@ -129,6 +128,7 @@ static void extract_interfaces_properties(
 {
 	const struct wpa_dbus_property_desc *dsc;
 	struct interfaces *iface;
+
 	for (dsc = properties; dsc && dsc->dbus_property; dsc++) {
 		iface = add_interface(list, dsc->dbus_interface);
 		if (iface)
@@ -159,10 +159,16 @@ static void extract_interfaces(struct dl_list *list,
 static void add_interfaces(struct dl_list *list, struct wpabuf *xml)
 {
 	struct interfaces *iface, *n;
+
 	dl_list_for_each_safe(iface, n, list, struct interfaces, list) {
 		if (wpabuf_len(iface->xml) + 20 < wpabuf_tailroom(xml)) {
 			wpabuf_put_buf(xml, iface->xml);
 			wpabuf_put_str(xml, "</interface>");
+		} else {
+			wpa_printf(MSG_DEBUG,
+				   "dbus: Not enough room for add_interfaces inspect data: tailroom %u, add %u",
+				   (unsigned int) wpabuf_tailroom(xml),
+				   (unsigned int) wpabuf_len(iface->xml));
 		}
 		dl_list_del(&iface->list);
 		wpabuf_free(iface->xml);
@@ -228,6 +234,7 @@ static void add_wpas_interfaces(struct wpabuf *xml,
 				struct wpa_dbus_object_desc *obj_dsc)
 {
 	struct dl_list ifaces;
+
 	dl_list_init(&ifaces);
 	extract_interfaces(&ifaces, obj_dsc);
 	add_interfaces(&ifaces, xml);
@@ -250,7 +257,7 @@ DBusMessage * wpa_dbus_introspect(DBusMessage *message,
 	DBusMessage *reply;
 	struct wpabuf *xml;
 
-	xml = wpabuf_alloc(4000);
+	xml = wpabuf_alloc(20000);
 	if (xml == NULL)
 		return NULL;
 
@@ -269,6 +276,7 @@ DBusMessage * wpa_dbus_introspect(DBusMessage *message,
 	reply = dbus_message_new_method_return(message);
 	if (reply) {
 		const char *intro_str = wpabuf_head(xml);
+
 		dbus_message_append_args(reply, DBUS_TYPE_STRING, &intro_str,
 					 DBUS_TYPE_INVALID);
 	}

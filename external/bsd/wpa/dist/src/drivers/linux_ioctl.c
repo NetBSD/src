@@ -2,14 +2,8 @@
  * Linux ioctl helper functions for driver wrappers
  * Copyright (c) 2002-2010, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "utils/includes.h"
@@ -24,6 +18,7 @@
 int linux_set_iface_flags(int sock, const char *ifname, int dev_up)
 {
 	struct ifreq ifr;
+	int ret;
 
 	if (sock < 0)
 		return -1;
@@ -32,9 +27,10 @@ int linux_set_iface_flags(int sock, const char *ifname, int dev_up)
 	os_strlcpy(ifr.ifr_name, ifname, IFNAMSIZ);
 
 	if (ioctl(sock, SIOCGIFFLAGS, &ifr) != 0) {
+		ret = errno ? -errno : -999;
 		wpa_printf(MSG_ERROR, "Could not read interface %s flags: %s",
 			   ifname, strerror(errno));
-		return -1;
+		return ret;
 	}
 
 	if (dev_up) {
@@ -48,12 +44,36 @@ int linux_set_iface_flags(int sock, const char *ifname, int dev_up)
 	}
 
 	if (ioctl(sock, SIOCSIFFLAGS, &ifr) != 0) {
-		wpa_printf(MSG_ERROR, "Could not set interface %s flags: %s",
-			   ifname, strerror(errno));
-		return -1;
+		ret = errno ? -errno : -999;
+		wpa_printf(MSG_ERROR, "Could not set interface %s flags (%s): "
+			   "%s",
+			   ifname, dev_up ? "UP" : "DOWN", strerror(errno));
+		return ret;
 	}
 
 	return 0;
+}
+
+
+int linux_iface_up(int sock, const char *ifname)
+{
+	struct ifreq ifr;
+	int ret;
+
+	if (sock < 0)
+		return -1;
+
+	os_memset(&ifr, 0, sizeof(ifr));
+	os_strlcpy(ifr.ifr_name, ifname, IFNAMSIZ);
+
+	if (ioctl(sock, SIOCGIFFLAGS, &ifr) != 0) {
+		ret = errno ? -errno : -999;
+		wpa_printf(MSG_ERROR, "Could not read interface %s flags: %s",
+			   ifname, strerror(errno));
+		return ret;
+	}
+
+	return !!(ifr.ifr_flags & IFF_UP);
 }
 
 
@@ -184,15 +204,41 @@ int linux_br_del_if(int sock, const char *brname, const char *ifname)
 int linux_br_get(char *brname, const char *ifname)
 {
 	char path[128], brlink[128], *pos;
+	ssize_t res;
+
 	os_snprintf(path, sizeof(path), "/sys/class/net/%s/brport/bridge",
 		    ifname);
-	os_memset(brlink, 0, sizeof(brlink));
-	if (readlink(path, brlink, sizeof(brlink) - 1) < 0)
+	res = readlink(path, brlink, sizeof(brlink));
+	if (res < 0 || (size_t) res >= sizeof(brlink))
 		return -1;
+	brlink[res] = '\0';
 	pos = os_strrchr(brlink, '/');
 	if (pos == NULL)
 		return -1;
 	pos++;
 	os_strlcpy(brname, pos, IFNAMSIZ);
+	return 0;
+}
+
+
+int linux_master_get(char *master_ifname, const char *ifname)
+{
+	char buf[128], masterlink[128], *pos;
+	ssize_t res;
+
+	/* check whether there is a master */
+	os_snprintf(buf, sizeof(buf), "/sys/class/net/%s/master", ifname);
+
+	res = readlink(buf, masterlink, sizeof(masterlink));
+	if (res < 0 || (size_t) res >= sizeof(masterlink))
+		return -1;
+
+	masterlink[res] = '\0';
+
+	pos = os_strrchr(masterlink, '/');
+	if (pos == NULL)
+		return -1;
+	pos++;
+	os_strlcpy(master_ifname, pos, IFNAMSIZ);
 	return 0;
 }
