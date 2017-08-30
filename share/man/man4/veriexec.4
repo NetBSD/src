@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.4,v 1.24 2017/08/29 23:38:50 pgoyette Exp $
+.\" $NetBSD: veriexec.4,v 1.25 2017/08/30 05:47:24 wiz Exp $
 .\"
 .\" Copyright 2005 Elad Efrat <elad@bsd.org.il>
 .\" Copyright 2005 Brett Lymn <blymn@netbsd.org>
@@ -60,7 +60,7 @@ Load an entry for a file to be monitored by
 .Pp
 The dictionary passed contains the following elements:
 .Bl -column keepxfilename string
-.It Sy Name	Type	Purpose
+.It Sy Name Ta Sy Type Ta Sy Purpose
 .It file	string	filename for this entry
 .It entry-type	uint8	entry type ( see below )
 .It fp-type	string	fingerprint hashing algorithm
@@ -71,7 +71,7 @@ The dictionary passed contains the following elements:
 .Dq entry-type
 can be one or more (binary-OR'd) of the following:
 .Bl -column veriexecxuntrusted effect
-.It Sy Type	Effect
+.It Sy Type Ta Sy Effect
 .It Dv VERIEXEC_DIRECT	can execute directly
 .It Dv VERIEXEC_INDIRECT	can execute indirectly (interpreter, Xr mmap 2 )
 .It Dv VERIEXEC_FILE	can be opened
@@ -83,7 +83,7 @@ Removes either an entry for a single file or entries for an entire mount from
 .Pp
 The dictionary passed contains the following elements:
 .Bl -column file string
-.It Sy Name	Type	Purpose
+.It Sy Name Ta Sy Type Ta Sy Purpose
 .It file	string	filename or mount-point
 .El
 .It Dv VERIEXEC_DUMP
@@ -94,7 +94,7 @@ monitored files database from the kernel.
 Only files for which the filename was kept will be dumped.
 The returned array contains dictionaries with the following elements:
 .Bl -column entryxtype string
-.It Sy Name	Type	Purpose
+.It Sy Name Ta Sy Type Ta Sy Purpose
 .It file	string	filename
 .It fp-type	string	fingerprint hashing algorithm
 .It fp	data	the fingerprint
@@ -113,13 +113,13 @@ about a file, returning information that may be useful about it.
 .Pp
 The dictionary passed contains the following elements:
 .Bl -column file string
-.It Sy Name	Type	Purpose
+.It Sy Name Ta Sy Type Ta Sy Purpose
 .It file	string	filename
 .El
 .Pp
 The dictionary returned contains the following elements:
 .Bl -column entryxtype string
-.It Sy Name	Type	Purpose
+.It Sy Name Ta Sy Type Ta Sy Purpose
 .It entry-type	uint8	entry type ( see above )
 .It status	uint8	entry status
 .It fp-type	string	fingerprint hashing algorithm
@@ -129,7 +129,7 @@ The dictionary returned contains the following elements:
 .Dq status
 can be one of the following:
 .Bl -column fingerprintxmismatch effect
-.It Sy Status	Meaning
+.It Sy Status Ta Sy Meaning
 .It Dv FINGERPRINT_NOTEVAL	not evaluated
 .It Dv FINGERPRINT_VALID	fingerprint match
 .It Dv FINGERPRINT_MISMATCH	fingerprint mismatch
