@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.70 2017/03/04 19:11:01 bouyer Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.71 2017/08/30 16:01:55 maxv Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -22,7 +22,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 /*
@@ -85,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.70 2017/03/04 19:11:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.71 2017/08/30 16:01:55 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -135,7 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.70 2017/03/04 19:11:01 bouyer
 #undef XENNET_DEBUG
 #ifdef XENNET_DEBUG
 #define XEDB_FOLLOW     0x01
-#define XEDB_INIT       0x02 
+#define XEDB_INIT       0x02
 #define XEDB_EVENT      0x04
 #define XEDB_MBUF       0x08
 #define XEDB_MEM        0x10
@@ -146,6 +145,8 @@ int xennet_debug = 0xff;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+extern pt_entry_t xpmap_pg_nx;
 
 #define GRANT_INVALID_REF -1 /* entry is free */
 
@@ -200,7 +201,7 @@ struct xennet_xenbus_softc {
 	unsigned long sc_rx_feature;
 #define FEATURE_RX_FLIP		0
 #define FEATURE_RX_COPY		1
-	krndsource_t     sc_rnd_source;
+	krndsource_t sc_rnd_source;
 };
 #define SC_NLIVEREQ(sc) ((sc)->sc_rx_ring.req_prod_pvt - \
 			    (sc)->sc_rx_ring.sring->rsp_prod)
@@ -310,7 +311,6 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 		    "xnfrx", NULL, IPL_VM, NULL, NULL, NULL);
 		if_xennetrxbuf_cache_inited = 1;
 	}
-		
 
 	/* initialize free RX and RX request lists */
 	mutex_init(&sc->sc_tx_lock, MUTEX_DEFAULT, IPL_NET);
@@ -438,7 +438,7 @@ xennet_xenbus_detach(device_t self, int flags)
 		    UVM_KMF_WIRED);
 	}
 	splx(s1);
-		
+
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
@@ -626,7 +626,7 @@ xennet_xenbus_suspend(device_t dev, const pmf_qual_t *qual)
 		tsleep(xennet_xenbus_suspend, PRIBIO, "xnet_suspend", hz/2);
 		xennet_handler(sc);
 	}
-	
+
 	/*
 	 * dom0 may still use references to the grants we gave away
 	 * earlier during RX buffers allocation. So we do not free RX buffers
@@ -790,7 +790,7 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 	multicall_entry_t mcl[2];
 
 	mutex_enter(&sc->sc_rx_lock);
-	
+
 	DPRINTF(("%s: xennet_free_rx_buffer\n", device_xname(sc->sc_dev)));
 	/* get back memory from RX ring */
 	for (i = 0; i < NET_RX_RING_SIZE; i++) {
@@ -840,8 +840,8 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 				/* remap the page */
 				mmu[0].ptr = (ma << PAGE_SHIFT) | MMU_MACHPHYS_UPDATE;
 				mmu[0].val = pa >> PAGE_SHIFT;
-				MULTI_update_va_mapping(&mcl[0], va, 
-				    (ma << PAGE_SHIFT) | PG_V | PG_KW,
+				MULTI_update_va_mapping(&mcl[0], va,
+				    (ma << PAGE_SHIFT) | PG_V | PG_KW | xpmap_pg_nx,
 				    UVMF_TLB_FLUSH|UVMF_ALL);
 				xpmap_ptom_map(pa, ptoa(ma));
 				mcl[1].op = __HYPERVISOR_mmu_update;
@@ -883,7 +883,7 @@ static void
 xennet_rx_free_req(struct xennet_rxreq *req)
 {
 	struct xennet_xenbus_softc *sc = req->rxreq_sc;
-	
+
 	KASSERT(mutex_owned(&sc->sc_rx_lock));
 
 	/* puts back the RX request in the list of free RX requests */
@@ -895,7 +895,7 @@ xennet_rx_free_req(struct xennet_rxreq *req)
 	 * RX buffers to catch-up with backend's consumption
 	 */
 	req->rxreq_gntref = GRANT_INVALID_REF;
-	
+
 	if (sc->sc_free_rxreql >= (NET_RX_RING_SIZE * 4 / 5) &&
 	    __predict_true(sc->sc_backend_status == BEST_CONNECTED)) {
 		xennet_alloc_rx_buffer(sc);
@@ -945,7 +945,7 @@ again:
 
 	sc->sc_tx_ring.rsp_cons = resp_prod;
 	/* set new event and check for race with rsp_cons update */
-	sc->sc_tx_ring.sring->rsp_event = 
+	sc->sc_tx_ring.sring->rsp_event =
 	    resp_prod + ((sc->sc_tx_ring.sring->req_prod - resp_prod) >> 1) + 1;
 	ifp->if_timer = 0;
 	xen_wmb();
@@ -1032,13 +1032,14 @@ again:
 
 		pa = req->rxreq_pa;
 		va = req->rxreq_va;
-		
+
 		if (sc->sc_rx_feature == FEATURE_RX_FLIP) {
 			/* remap the page */
 			mmu[0].ptr = (ma << PAGE_SHIFT) | MMU_MACHPHYS_UPDATE;
 			mmu[0].val = pa >> PAGE_SHIFT;
-			MULTI_update_va_mapping(&mcl[0], va, 
-			    (ma << PAGE_SHIFT) | PG_V | PG_KW, UVMF_TLB_FLUSH|UVMF_ALL);
+			MULTI_update_va_mapping(&mcl[0], va,
+			    (ma << PAGE_SHIFT) | PG_V | PG_KW | xpmap_pg_nx,
+			    UVMF_TLB_FLUSH|UVMF_ALL);
 			xpmap_ptom_map(pa, ptoa(ma));
 			mcl[1].op = __HYPERVISOR_mmu_update;
 			mcl[1].args[0] = (unsigned long)mmu;
@@ -1116,14 +1117,14 @@ again:
 	sc->sc_rx_ring.rsp_cons = i;
 	RING_FINAL_CHECK_FOR_RESPONSES(&sc->sc_rx_ring, more_to_do);
 	mutex_exit(&sc->sc_rx_lock);
-	
+
 	if (more_to_do)
 		goto again;
 
 	return 1;
 }
 
-/* 
+/*
  * The output routine of a xennet interface
  * Called at splnet.
  */
@@ -1469,7 +1470,7 @@ xennet_hex_dump(const unsigned char *pkt, size_t len, const char *type, int id)
 			for(j=0; j<16; j++)
 				printf("%c", pkt[i-15+j]>=32 &&
 				    pkt[i-15+j]<127?pkt[i-15+j]:'.');
-			printf("%c\n%c%c%c%c%c%c%c%c  ", '|', 
+			printf("%c\n%c%c%c%c%c%c%c%c  ", '|',
 			    XCHR((i+1)>>28), XCHR((i+1)>>24),
 			    XCHR((i+1)>>20), XCHR((i+1)>>16),
 			    XCHR((i+1)>>12), XCHR((i+1)>>8),
