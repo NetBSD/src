@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.11 2017/08/18 14:52:19 maxv Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.12 2017/08/30 15:34:57 maxv Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.11 2017/08/18 14:52:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.12 2017/08/30 15:34:57 maxv Exp $");
 #endif
 
 /*
@@ -139,7 +139,7 @@ IDTVEC_END(trap05)
 	SUPERALIGN_TEXT
 IDTVEC(trap06)
 	/* Check if there is no DTrace hook registered. */
-	cmpl	$0,dtrace_invop_jump_addr
+	cmpl	$0,%ss:dtrace_invop_jump_addr
 	je	norm_ill
 
 	/* Check if this is a user fault. */
