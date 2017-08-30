@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.96 2017/08/24 10:43:42 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.97 2017/08/30 01:25:07 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2960,6 +2960,7 @@ static int
 ixgbe_setup_msix(struct adapter *adapter)
 {
 	device_t dev = adapter->dev;
+	struct ixgbe_mac_info *mac = &adapter->hw.mac;
 	int want, queues, msgs;
 
 	/* Override by tuneable */
@@ -2986,8 +2987,9 @@ ixgbe_setup_msix(struct adapter *adapter)
 	if (ixgbe_num_queues != 0)
 		queues = ixgbe_num_queues;
 	/* Set max queues to 8 when autoconfiguring */
-	else if ((ixgbe_num_queues == 0) && (queues > 8))
-		queues = 8;
+	else
+		queues = min(queues,
+		    min(mac->max_tx_queues, mac->max_rx_queues));
 
 	/* reflect correct sysctl value */
 	ixgbe_num_queues = queues;
