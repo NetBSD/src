@@ -1,4 +1,4 @@
-/* $NetBSD: t_round.c,v 1.6 2017/08/30 14:24:20 maya Exp $ */
+/* $NetBSD: t_round.c,v 1.7 2017/08/30 22:55:41 maya Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdint.h>
 
 /*
  * This tests for a bug in the initial implementation where
@@ -108,11 +109,27 @@ ATF_TC_BODY(rounding_alpha, tc)
         }
 }
 
+ATF_TC(rounding_alpha_simple);
+ATF_TC_HEAD(rounding_alpha_simple, tc)
+{
+	atf_tc_set_md_var(tc, "descr","Checking double to uint64_t edge case");
+}
+
+ATF_TC_BODY(rounding_alpha_simple, tc)
+{
+	double even = 9223372036854775808.000000; /* 2^63 */
+	uint64_t unsigned_even = even;
+
+	ATF_CHECK_MSG(unsigned_even % 2 == 0,
+	    "2^63 casted to uint64_t is odd");
+
+}
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, round_dir);
 	ATF_TP_ADD_TC(tp, rounding_alpha);
+	ATF_TP_ADD_TC(tp, rounding_alpha_simple);
 
 	return atf_no_error();
 }
