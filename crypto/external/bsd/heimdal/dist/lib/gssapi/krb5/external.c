@@ -1,4 +1,4 @@
-/*	$NetBSD: external.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: external.c,v 1.1.1.1.20.1 2017/08/30 06:57:28 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
@@ -182,7 +182,7 @@ static gss_mo_desc krb5_mo[] = {
 	GSS_C_MA_SASL_MECH_NAME,
 	GSS_MO_MA,
 	"SASL mech name",
-	"GS2-KRB5",
+	rk_UNCONST("GS2-KRB5"),
 	_gss_mo_get_ctx_as_string,
 	NULL
     },
@@ -190,7 +190,7 @@ static gss_mo_desc krb5_mo[] = {
 	GSS_C_MA_MECH_NAME,
 	GSS_MO_MA,
 	"Mechanism name",
-	"KRB5",
+	rk_UNCONST("KRB5"),
 	_gss_mo_get_ctx_as_string,
 	NULL
     },
@@ -198,73 +198,137 @@ static gss_mo_desc krb5_mo[] = {
 	GSS_C_MA_MECH_DESCRIPTION,
 	GSS_MO_MA,
 	"Mechanism description",
-	"Heimdal Kerberos 5 mech",
+	rk_UNCONST("Heimdal Kerberos 5 mech"),
 	_gss_mo_get_ctx_as_string,
 	NULL
     },
     {
 	GSS_C_MA_MECH_CONCRETE,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_ITOK_FRAMED,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_AUTH_INIT,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_AUTH_TARG,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_AUTH_INIT_ANON,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_DELEG_CRED,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_INTEG_PROT,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_CONF_PROT,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_MIC,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_WRAP,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_PROT_READY,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_REPLAY_DET,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_OOS_DET,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_CBINDINGS,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_PFS,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     },
     {
 	GSS_C_MA_CTX_TRANS,
-	GSS_MO_MA
+	GSS_MO_MA,
+	NULL,
+	NULL,
+	NULL,
+	NULL
     }
 };
 
@@ -275,7 +339,7 @@ static gss_mo_desc krb5_mo[] = {
 static gssapi_mech_interface_desc krb5_mech = {
     GMI_VERSION,
     "kerberos 5",
-    {9, "\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" },
+    {9, rk_UNCONST("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02") },
     0,
     _gsskrb5_acquire_cred,
     _gsskrb5_release_cred,
@@ -317,7 +381,7 @@ static gssapi_mech_interface_desc krb5_mech = {
     _gsskrb5_store_cred,
     _gsskrb5_export_cred,
     _gsskrb5_import_cred,
-    NULL,
+    _gsskrb5_acquire_cred_ext,
     NULL,
     NULL,
     NULL,
@@ -325,7 +389,16 @@ static gssapi_mech_interface_desc krb5_mech = {
     NULL,
     NULL,
     krb5_mo,
-    sizeof(krb5_mo) / sizeof(krb5_mo[0])
+    sizeof(krb5_mo) / sizeof(krb5_mo[0]),
+    _gsskrb5_localname,
+    _gsskrb5_authorize_localname,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
 };
 
 gssapi_mech_interface

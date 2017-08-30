@@ -3,12 +3,12 @@ dnl
 dnl CHECK_COMPILE_ET
 AC_DEFUN([CHECK_COMPILE_ET], [
 
-AC_CHECK_PROG(COMPILE_ET, compile_et, [compile_et])
+AC_CHECK_PROG(COMPILE_ET, compile_et, [compile_et], [no])
 
 krb_cv_compile_et="no"
 krb_cv_com_err_need_r=""
 krb_cv_compile_et_cross=no
-if test "${COMPILE_ET}" = "compile_et"; then
+if test "${COMPILE_ET}" != "no"; then
 
 dnl We have compile_et.  Now let's see if it supports `prefix' and `index'.
 AC_MSG_CHECKING(whether compile_et has the features we need)
@@ -28,7 +28,8 @@ if ${COMPILE_ET} conftest_et.et >/dev/null 2>&1; then
     CPPFLAGS="-I/usr/include/et ${CPPFLAGS}"
   fi
   dnl Check that the `prefix' and `index' directives were honored.
-  AC_RUN_IFELSE([
+  AC_LANG(C)
+  AC_RUN_IFELSE([AC_LANG_SOURCE([
 #include <com_err.h>
 #include <string.h>
 #include "conftest_et.h"
@@ -37,7 +38,7 @@ int main(int argc, char **argv){
 #error compile_et does not handle error_table N M
 #endif
 return (CONFTEST_CODE2 - CONFTEST_CODE1) != 127;}
-  ], [krb_cv_compile_et="yes"],[CPPFLAGS="${save_CPPFLAGS}"],
+  ])], [krb_cv_compile_et="yes"],[CPPFLAGS="${save_CPPFLAGS}"],
   [krb_cv_compile_et="yes" krb_cv_compile_et_cross=yes] )
 fi
 AC_MSG_RESULT(${krb_cv_compile_et})
@@ -84,6 +85,7 @@ if test "${krb_cv_com_err}" = "yes"; then
     LIB_com_err_a=""
     LIB_com_err_so=""
     AC_MSG_NOTICE(Using the already-installed com_err)
+    COMPILE_ET="${ac_cv_prog_COMPILE_ET}"
     localcomerr=no
 elif test "${krb_cv_com_err}" = "cross"; then
     DIR_com_err="com_err"
@@ -91,6 +93,7 @@ elif test "${krb_cv_com_err}" = "cross"; then
     LIB_com_err_a="\$(top_builddir)/lib/com_err/.libs/libcom_err.a"
     LIB_com_err_so="\$(top_builddir)/lib/com_err/.libs/libcom_err.so"
     AC_MSG_NOTICE(Using our own com_err with toolchain compile_et)
+    COMPILE_ET="${ac_cv_prog_COMPILE_ET}"
     localcomerr=yes
 else
     COMPILE_ET="\$(top_builddir)/lib/com_err/compile_et"
@@ -102,6 +105,7 @@ else
     localcomerr=yes
 fi
 AM_CONDITIONAL(COM_ERR, test "$localcomerr" = yes)dnl
+AC_SUBST(COMPILE_ET)
 AC_SUBST(DIR_com_err)
 AC_SUBST(LIB_com_err)
 AC_SUBST(LIB_com_err_a)

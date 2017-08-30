@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.1.1.1 2011/04/13 18:14:43 elric Exp $	*/
+/*	$NetBSD: parse.y,v 1.1.1.1.20.1 2017/08/30 06:57:27 snj Exp $	*/
 
 %{
 /*
@@ -119,7 +119,7 @@ statement	: INDEX NUMBER
 		| EC STRING ',' STRING
 		{
 		    struct error_code *ec = malloc(sizeof(*ec));
-		
+
 		    if (ec == NULL)
 			errx(1, "malloc");
 

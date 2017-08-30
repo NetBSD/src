@@ -1,4 +1,4 @@
-/*	$NetBSD: test_bn.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: test_bn.c,v 1.1.1.1.20.1 2017/08/30 06:57:31 snj Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -34,12 +34,7 @@
  */
 
 #include <config.h>
-
-#include <sys/types.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <krb5/roken.h>
 
 #include <bn.h>
 #include <rand.h>
@@ -350,7 +345,7 @@ test_BN_CTX(void)
 
     if ((c = BN_CTX_new()) == NULL)
 	return 1;
-    
+
     for (i = 0; i < testnum; i++) {
 	BN_CTX_start(c);
 	BN_CTX_end(c);

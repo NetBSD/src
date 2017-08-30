@@ -1,20 +1,25 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_REVISION($Revision: 1.1.1.1 $)
+AC_REVISION($Revision: 1.1.1.1.20.1 $)
 AC_PREREQ(2.62)
 test -z "$CFLAGS" && CFLAGS="-g"
-AC_INIT([Heimdal],[1.5pre1],[heimdal-bugs@h5l.org])
+AC_INIT([Heimdal],[7.99.1],[https://github.com/heimdal/heimdal/issues])
 AC_CONFIG_SRCDIR([kuser/kinit.c])
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_MACRO_DIR([cf])
 
-AM_INIT_AUTOMAKE([foreign 1.10.3])
+AM_INIT_AUTOMAKE([foreign 1.11])
 AM_MAINTAINER_MODE
+
+LT_PREREQ([2.2])
+LT_INIT([shared static win32-dll])
+
 
 dnl Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CPP
-AC_PROG_LIBTOOL
+
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 AC_PREFIX_DEFAULT(/usr/heimdal)
 
@@ -40,6 +45,17 @@ AC_DEFINE([_GNU_SOURCE], 1,
 AC_OBJEXT
 AC_EXEEXT
 
+dnl
+dnl this is needed when der-protos.h or der-private.h has to be generated
+dnl
+if ! test -f "$srcdir/lib/asn1/der-protos.h" ||
+   ! test -f "$srcdir/lib/asn1/der-private.h"; then
+    AC_KRB_PROG_PERL
+    AC_KRB_PERL_MOD(Getopt::Std)
+    AC_KRB_PERL_MOD(File::Compare)
+    AC_KRB_PERL_MOD(JSON)
+fi
+
 dnl AC_KRB_PROG_YACC
 AC_PROG_YACC
 AM_PROG_LEX
@@ -52,9 +68,6 @@ CC="$CC $abi"
 libdir="$libdir$abilibdirext"
 
 AC_C___ATTRIBUTE__
-
-LT_PREREQ([2.2])
-LT_INIT([shared static win32-dll])
 
 AM_CONDITIONAL(ENABLE_SHARED, test "$enable_shared" = "yes")
 rk_VERSIONSCRIPT
@@ -88,13 +101,15 @@ else
 
    ASN1_COMPILE_DEP=
    SLC_DEP=
+
+   ac_cv_prog_COMPILE_ET=${with_cross_tools}compile_et
+
 fi
 
 AC_SUBST([ASN1_COMPILE])
 AC_SUBST([ASN1_COMPILE_DEP])
 AC_SUBST([SLC])
 AC_SUBST([SLC_DEP])
-
 
 dnl ---
 
@@ -172,6 +187,8 @@ if test "X$with_sqlite3" != Xyes ; then
 fi
 AM_CONDITIONAL(SQLITE3,  test "X$with_sqlite3" = Xyes)
 
+AC_DEFINE(HAVE_SQLITE3, 1, [Define if you want support for sqlite in Heimdal.])
+
 AC_ARG_ENABLE(sqlite-cache, 
 	AS_HELP_STRING([--disable-sqlite-cache],[if you want support for cache in sqlite]))
 if test "$enable_sqlite_cache" != no; then
@@ -193,12 +210,6 @@ AC_ARG_WITH([hdbdir],
 DIR_hdbdir="$with_hdbdir"
 AC_SUBST([DIR_hdbdir])
 
-
-dnl no kerberos4 any more
-with_krb4=no
-AC_SUBST(INCLUDE_krb4)
-AC_SUBST(LIB_krb4)
-AM_CONDITIONAL(KRB4, false)
 
 AM_CONDITIONAL(KRB5, true)
 AM_CONDITIONAL(do_roken_rename, true)
@@ -241,6 +252,7 @@ if test "$enable_afs_support" = no; then
 	NO_AFS="1"
 fi
 AC_SUBST(NO_AFS)dnl
+AM_CONDITIONAL(NO_AFS, test "$enable_afs_support" = no)
 
 rk_DB
 
@@ -275,6 +287,12 @@ fi
 
 rk_CHECK_MAN
 
+AC_CHECK_HEADERS([\
+	readline/readline.h	\
+	readline.h		\
+	editline/readline.h	\
+])
+
 rk_TEST_PACKAGE(readline,
 [#include <stdio.h>
 #if defined(HAVE_READLINE_READLINE_H)
@@ -290,21 +308,15 @@ rk_TEST_PACKAGE(libedit,
 #include <readline/readline.h>
 #elif defined(HAVE_READLINE_H)
 #include <readline.h>
+#elif defined(HAVE_EDITLINE_READLINE_H)
+#include <editline/readline.h>
 #endif
-],-ledit,,, READLINE,, [readline.h readline/readline.h])
+],-ledit,,, READLINE,, [readline.h readline/readline.h editline/readline.h])
 
 AC_CONFIG_SUBDIRS([lib/libedit])
 
-rk_TEST_PACKAGE(hesiod,[#include <hesiod.h>],-lhesiod,,, HESIOD)
-
 KRB_C_BIGENDIAN
 AC_C_INLINE
-
-KRB_CHECK_X
-
-AM_CONDITIONAL(HAVE_X, test "$no_x" != yes)
-
-AC_CHECK_XAU
 
 dnl AM_C_PROTOTYPES
 
@@ -323,12 +335,12 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS([\
 	CommonCrypto/CommonDigest.h		\
 	CommonCrypto/CommonCryptor.h		\
-	arpa/ftp.h				\
 	arpa/telnet.h				\
 	bind/bitypes.h				\
 	bsdsetjmp.h				\
 	curses.h				\
 	dlfcn.h					\
+	execinfo.h				\
 	fnmatch.h				\
 	inttypes.h				\
 	io.h					\
@@ -373,8 +385,6 @@ AC_CHECK_HEADERS([\
 	tmpdir.h				\
 	udb.h					\
 	util.h					\
-	utmp.h					\
-	utmpx.h					\
 ])
 
 dnl On Solaris 8 there's a compilation warning for term.h because
@@ -456,10 +466,13 @@ AC_CHECK_FUNCS([				\
 	_getpty					\
 	_scrsize				\
 	arc4random				\
+	backtrace				\
 	fcntl					\
+	fork					\
 	getpeereid				\
 	getpeerucred				\
 	grantpt					\
+	kill					\
 	mktime					\
 	ptsname					\
 	rand					\
@@ -482,12 +495,13 @@ AC_CHECK_FUNCS([				\
 	umask					\
 	unlockpt				\
 	vhangup					\
+	waitpid					\
 	yp_get_default_domain			\
 ])
 
 AC_MSG_CHECKING([checking for __sync_add_and_fetch])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>]],
-	[[unsigned int foo; __sync_add_and_fetch(&foo, 1);]])],
+	[[unsigned int foo, bar; bar = __sync_add_and_fetch(&foo, 1);]])],
 	[ac_rk_have___sync_add_and_fetch=yes], [ac_rk_have___sync_add_and_fetch=no])
 if test "$ac_rk_have___sync_add_and_fetch" = "yes" ; then
 	AC_DEFINE_UNQUOTED(HAVE___SYNC_ADD_AND_FETCH, 1, [have __sync_add_and_fetch])
@@ -497,6 +511,7 @@ AC_MSG_RESULT($ac_rk_have___sync_add_and_fetch)
 AC_FUNC_MMAP
 
 KRB_CAPABILITIES
+rk_DLADDR
 
 AC_CHECK_GETPWNAM_R_POSIX
 
@@ -529,26 +544,6 @@ dnl Cray stuff
 AC_CHECK_FUNCS(getudbnam setlim)
 
 dnl AC_KRB_FUNC_GETCWD_BROKEN
-
-dnl
-dnl Check for fields in struct utmp
-dnl
-
-AC_HAVE_STRUCT_FIELD(struct utmp, ut_addr, [#include <utmp.h>])
-AC_HAVE_STRUCT_FIELD(struct utmp, ut_host, [#include <utmp.h>])
-AC_HAVE_STRUCT_FIELD(struct utmp, ut_id, [#include <utmp.h>])
-AC_HAVE_STRUCT_FIELD(struct utmp, ut_pid, [#include <utmp.h>])
-AC_HAVE_STRUCT_FIELD(struct utmp, ut_type, [#include <utmp.h>])
-AC_HAVE_STRUCT_FIELD(struct utmp, ut_user, [#include <utmp.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_host, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_id, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_line, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_pid, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_tv, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_type, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_user, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_exit, [#include <utmpx.h>])
-AC_HAVE_STRUCT_FIELD(struct utmpx, ut_syslen, [#include <utmpx.h>])
 
 AC_CHECK_TYPES([int8_t, int16_t, int32_t, int64_t, 
 	u_int8_t, u_int16_t, u_int32_t, u_int64_t,
@@ -594,6 +589,11 @@ AH_BOTTOM([#ifdef ROKEN_RENAME
 #include "roken_rename.h"
 #endif])
 
+AC_ARG_ENABLE(heimdal-documentation,
+	AS_HELP_STRING([--disable-heimdal-documentation],
+		[if you want disable to heimdal documentation]))
+AM_CONDITIONAL(HEIMDAL_DOCUMENTATION, test "$enable_heimdal_documentation" != no)
+
 AC_CONFIG_FILES(Makefile 		\
 	etc/Makefile			\
 	include/Makefile		\
@@ -601,7 +601,7 @@ AC_CONFIG_FILES(Makefile 		\
 	include/hcrypto/Makefile	\
 	include/kadm5/Makefile		\
 	lib/Makefile			\
-	base/Makefile			\
+	lib/base/Makefile			\
 	lib/asn1/Makefile		\
 	lib/com_err/Makefile		\
 	lib/hcrypto/Makefile		\
@@ -629,24 +629,10 @@ AC_CONFIG_FILES(Makefile 		\
 	kdc/Makefile			\
 	appl/Makefile			\
 	appl/afsutil/Makefile		\
-	appl/ftp/Makefile		\
-	appl/ftp/common/Makefile	\
-	appl/ftp/ftp/Makefile		\
-	appl/ftp/ftpd/Makefile		\
+	appl/dbutils/Makefile		\
 	appl/gssmask/Makefile		\
-	appl/kx/Makefile		\
-	appl/login/Makefile		\
 	appl/otp/Makefile		\
-	appl/popper/Makefile		\
-	appl/push/Makefile		\
-	appl/rsh/Makefile		\
-	appl/rcp/Makefile		\
 	appl/su/Makefile		\
-	appl/xnlock/Makefile		\
-	appl/telnet/Makefile		\
-	appl/telnet/libtelnet/Makefile	\
-	appl/telnet/telnet/Makefile	\
-	appl/telnet/telnetd/Makefile	\
 	appl/test/Makefile		\
 	appl/kf/Makefile		\
 	appl/dceutils/Makefile		\

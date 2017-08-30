@@ -1,4 +1,4 @@
-/*	$NetBSD: print_version.c,v 1.2 2011/04/14 18:23:23 elric Exp $	*/
+/*	$NetBSD: print_version.c,v 1.2.20.1 2017/08/30 06:57:40 snj Exp $	*/
 
 /*
  * Copyright (c) 1998 - 2006 Kungliga Tekniska Högskolan
@@ -35,8 +35,9 @@
 
 
 #include <config.h>
+#include <krb5/krb5-types.h>
 
-#define VERSION_HIDDEN static
+#define VERSION_HIDDEN static HEIMDAL_UNUSED_ATTRIBUTE
 
 #include <krb5/roken.h>
 
@@ -53,7 +54,7 @@ print_version(const char *progname)
     if(*package_list == '\0')
 	package_list = "no version information";
     fprintf(stderr, "%s (%s)\n", progname, package_list);
-    fprintf(stderr, "Copyright 1995-2011 Kungliga Tekniska Högskolan\n");
+    fprintf(stderr, "Copyright 1995-2014 Kungliga Tekniska Högskolan\n");
 #ifdef PACKAGE_BUGREPORT
     fprintf(stderr, "Send bug-reports to %s\n", PACKAGE_BUGREPORT);
 #endif

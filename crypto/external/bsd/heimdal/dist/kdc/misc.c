@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.1.1.1 2011/04/13 18:14:37 elric Exp $	*/
+/*	$NetBSD: misc.c,v 1.1.1.1.20.1 2017/08/30 06:57:25 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -35,6 +35,22 @@
 
 #include "kdc_locl.h"
 
+static int
+name_type_ok(krb5_context context,
+             krb5_kdc_configuration *config,
+             krb5_const_principal principal)
+{
+    int nt = krb5_principal_get_type(context, principal);
+
+    if (!krb5_principal_is_krbtgt(context, principal))
+        return 1;
+    if (nt == KRB5_NT_SRV_INST || nt == KRB5_NT_UNKNOWN)
+        return 1;
+    if (config->strict_nametypes == 0)
+        return 1;
+    return 0;
+}
+
 struct timeval _kdc_now;
 
 krb5_error_code
@@ -42,49 +58,49 @@ _kdc_db_fetch(krb5_context context,
 	      krb5_kdc_configuration *config,
 	      krb5_const_principal principal,
 	      unsigned flags,
-	      krb5int32 *kvno_ptr,
+	      krb5uint32 *kvno_ptr,
 	      HDB **db,
 	      hdb_entry_ex **h)
 {
-    hdb_entry_ex *ent;
+    hdb_entry_ex *ent = NULL;
     krb5_error_code ret = HDB_ERR_NOENTRY;
     int i;
     unsigned kvno = 0;
+    krb5_principal enterprise_principal = NULL;
+    krb5_const_principal princ;
 
-    if (kvno_ptr) {
-	    kvno = *kvno_ptr;
-	    flags |= HDB_F_KVNO_SPECIFIED;
+    *h = NULL;
+
+    if (!name_type_ok(context, config, principal))
+        goto out2;
+
+    if (kvno_ptr != NULL && *kvno_ptr != 0) {
+	kvno = *kvno_ptr;
+	flags |= HDB_F_KVNO_SPECIFIED;
+    } else {
+	flags |= HDB_F_ALL_KVNOS;
     }
 
-    ent = calloc (1, sizeof (*ent));
-    if (ent == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+    ent = calloc(1, sizeof (*ent));
+    if (ent == NULL)
+        return krb5_enomem(context);
+
+    if (principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL) {
+        if (principal->name.name_string.len != 1) {
+            ret = KRB5_PARSE_MALFORMED;
+            krb5_set_error_message(context, ret,
+                                   "malformed request: "
+                                   "enterprise name with %d name components",
+                                   principal->name.name_string.len);
+            goto out;
+        }
+        ret = krb5_parse_name(context, principal->name.name_string.val[0],
+                              &enterprise_principal);
+        if (ret)
+            goto out;
     }
 
-    for(i = 0; i < config->num_db; i++) {
-	krb5_principal enterprise_principal = NULL;
-	if (!(config->db[i]->hdb_capability_flags & HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL) 
-	    && principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL) {
-	    if (principal->name.name_string.len != 1) {
-		ret = KRB5_PARSE_MALFORMED;
-		krb5_set_error_message(context, ret,
-				       "malformed request: "
-				       "enterprise name with %d name components",
-				       principal->name.name_string.len);
-		free(ent);
-		return ret;
-	    }
-	    ret = krb5_parse_name(context, principal->name.name_string.val[0],
-				  &enterprise_principal);
-	    if (ret) {
-		free(ent);
-		return ret;
-	    }
-
-	    principal = enterprise_principal;
-	}
-
+    for (i = 0; i < config->num_db; i++) {
 	ret = config->db[i]->hdb_open(context, config->db[i], O_RDONLY, 0);
 	if (ret) {
 	    const char *msg = krb5_get_error_message(context, ret);
@@ -93,26 +109,56 @@ _kdc_db_fetch(krb5_context context,
 	    continue;
 	}
 
+        princ = principal;
+        if (!(config->db[i]->hdb_capability_flags & HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL) && enterprise_principal)
+            princ = enterprise_principal;
+
 	ret = config->db[i]->hdb_fetch_kvno(context,
 					    config->db[i],
-					    principal,
+					    princ,
 					    flags | HDB_F_DECRYPT,
 					    kvno,
 					    ent);
-
-	krb5_free_principal(context, enterprise_principal);
-
 	config->db[i]->hdb_close(context, config->db[i]);
-	if(ret == 0) {
+
+	switch (ret) {
+	case HDB_ERR_WRONG_REALM:
+	    /*
+	     * the ent->entry.principal just contains hints for the client
+	     * to retry. This is important for enterprise principal routing
+	     * between trusts.
+	     */
+	    /* fall through */
+	case 0:
 	    if (db)
 		*db = config->db[i];
 	    *h = ent;
-	    return 0;
+            ent = NULL;
+            goto out;
+
+	case HDB_ERR_NOENTRY:
+	    /* Check the other databases */
+	    continue;
+
+	default:
+	    /* 
+	     * This is really important, because errors like
+	     * HDB_ERR_NOT_FOUND_HERE (used to indicate to Samba that
+	     * the RODC on which this code is running does not have
+	     * the key we need, and so a proxy to the KDC is required)
+	     * have specific meaning, and need to be propogated up.
+	     */
+	    goto out;
 	}
     }
+
+out2:
+    if (ret == HDB_ERR_NOENTRY) {
+	krb5_set_error_message(context, ret, "no such entry found in hdb");
+    }
+out:
+    krb5_free_principal(context, enterprise_principal);
     free(ent);
-    krb5_set_error_message(context, ret,
-			   "no such entry found in hdb");
     return ret;
 }
 
@@ -136,24 +182,42 @@ _kdc_get_preferred_key(krb5_context context,
 		       krb5_enctype *enctype,
 		       Key **key)
 {
-    const krb5_enctype *p;
     krb5_error_code ret;
     int i;
 
-    p = krb5_kerberos_enctypes(context);
+    if (config->use_strongest_server_key) {
+	const krb5_enctype *p = krb5_kerberos_enctypes(context);
 
-    for (i = 0; p[i] != ETYPE_NULL; i++) {
-	if (krb5_enctype_valid(context, p[i]) != 0)
-	    continue;
-	ret = hdb_enctype2key(context, &h->entry, p[i], key);
-	if (ret == 0) {
-	    *enctype = p[i];
+	for (i = 0; p[i] != (krb5_enctype)ETYPE_NULL; i++) {
+	    if (krb5_enctype_valid(context, p[i]) != 0 &&
+		!_kdc_is_weak_exception(h->entry.principal, p[i]))
+		continue;
+	    ret = hdb_enctype2key(context, &h->entry, NULL, p[i], key);
+	    if (ret != 0)
+		continue;
+	    if (enctype != NULL)
+		*enctype = p[i];
+	    return 0;
+	}
+    } else {
+	*key = NULL;
+
+	for (i = 0; i < h->entry.keys.len; i++) {
+	    if (krb5_enctype_valid(context, h->entry.keys.val[i].key.keytype) != 0 &&
+		!_kdc_is_weak_exception(h->entry.principal, h->entry.keys.val[i].key.keytype))
+		continue;
+	    ret = hdb_enctype2key(context, &h->entry, NULL,
+				  h->entry.keys.val[i].key.keytype, key);
+	    if (ret != 0)
+		continue;
+	    if (enctype != NULL)
+		*enctype = (*key)->key.keytype;
 	    return 0;
 	}
     }
 
     krb5_set_error_message(context, EINVAL,
 			   "No valid kerberos key found for %s", name);
-    return EINVAL;
+    return EINVAL; /* XXX */
 }
 

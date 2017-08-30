@@ -1,4 +1,4 @@
-/*	$NetBSD: decapsulate.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: decapsulate.c,v 1.1.1.1.20.1 2017/08/30 06:57:28 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -191,6 +191,9 @@ _gssapi_verify_pad(gss_buffer_t wrapped_token,
     u_char *pad;
     size_t padlength;
     int i;
+
+    if (wrapped_token->length < 1)
+	return GSS_S_BAD_MECH;
 
     pad = (u_char *)wrapped_token->value + wrapped_token->length - 1;
     padlength = *pad;

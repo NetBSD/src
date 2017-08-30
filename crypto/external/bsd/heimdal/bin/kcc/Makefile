@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:16 he Exp $
+# $NetBSD: Makefile,v 1.2.20.1 2017/08/30 06:57:21 snj Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -12,14 +12,15 @@ LINKS+= ${BINDIR}/kcc ${BINDIR}/klist
 
 MAN= klist.1
 
-HEIMSRCS= kcc-commands.in
+HEIMSRCS= heimtools-commands.in
 
 SRCS=	copy_cred_cache.c	\
-	kcc.c			\
+	heimtools.c		\
 	klist.c			\
 	kswitch.c
 
 CPPFLAGS+= -I${DESTDIR}/usr/include/krb5
+CPPFLAGS+= -I${HEIMDIST}/kuser
 
 LDADD+= -lkafs -lsl
 LDADD+= -ledit -lterminfo

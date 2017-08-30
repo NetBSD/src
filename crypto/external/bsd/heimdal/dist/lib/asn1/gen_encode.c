@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_encode.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $	*/
+/*	$NetBSD: gen_encode.c,v 1.1.1.1.20.1 2017/08/30 06:57:26 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -35,8 +35,6 @@
 
 #include "gen_locl.h"
 
-__RCSID("$NetBSD: gen_encode.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $");
-
 static void
 encode_primitive (const char *typename, const char *name)
 {
@@ -52,7 +50,7 @@ classname(Der_class class)
 {
     const char *cn[] = { "ASN1_C_UNIV", "ASN1_C_APPL",
 			 "ASN1_C_CONTEXT", "ASN1_C_PRIV" };
-    if(class < ASN1_C_UNIV || class > ASN1_C_PRIVATE)
+    if ((int)class >= sizeof(cn) / sizeof(cn[0]))
 	return "???";
     return cn[class];
 }
@@ -131,15 +129,18 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	    fprintf(codefile, "}\n;");
 	} else if (t->range == NULL) {
 	    encode_primitive ("heim_integer", name);
-	} else if (t->range->min == INT_MIN && t->range->max == INT_MAX) {
+	} else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX) {
+	    encode_primitive ("integer64", name);
+	} else if (t->range->min >= 0 && t->range->max > UINT_MAX) {
+	    encode_primitive ("unsigned64", name);
+	} else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX) {
 	    encode_primitive ("integer", name);
-	} else if (t->range->min == 0 && t->range->max == UINT_MAX) {
-	    encode_primitive ("unsigned", name);
-	} else if (t->range->min == 0 && t->range->max == INT_MAX) {
+	} else if (t->range->min >= 0 && t->range->max <= UINT_MAX) {
 	    encode_primitive ("unsigned", name);
 	} else
-	    errx(1, "%s: unsupported range %d -> %d",
-		 name, t->range->min, t->range->max);
+	    errx(1, "%s: unsupported range %lld -> %lld",
+		 name, (long long)t->range->min, (long long)t->range->max);
+
 	constructed = 0;
 	break;
     case TBoolean:
@@ -276,7 +277,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	    else if(m->defval)
 		gen_compare_defval(s + 1, m->defval);
 	    fprintf (codefile, "{\n");
-	    fprintf (codefile, "size_t %s_oldret = ret;\n", tmpstr);
+	    fprintf (codefile, "size_t %s_oldret HEIMDAL_UNUSED_ATTRIBUTE = ret;\n", tmpstr);
 	    fprintf (codefile, "ret = 0;\n");
 	    encode_type (s, m->type, m->gen_name);
 	    fprintf (codefile, "ret += %s_oldret;\n", tmpstr);
@@ -289,7 +290,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 
 	fprintf(codefile,
 		"{\n"
-		"struct heim_octet_string *val;\n"
+		"heim_octet_string *val;\n"
 		"size_t elen = 0, totallen = 0;\n"
 		"int eret = 0;\n");
 
@@ -304,7 +305,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 		name, name);
 
 	fprintf(codefile,
-		"for(i = 0; i < (%s)->len; i++) {\n",
+		"for(i = 0; i < (int)(%s)->len; i++) {\n",
 		name);
 
 	fprintf(codefile,
@@ -328,7 +329,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 
 	fprintf(codefile,
 		"if (totallen > len) {\n"
-		"for (i = 0; i < (%s)->len; i++) {\n"
+		"for (i = 0; i < (int)(%s)->len; i++) {\n"
 		"free(val[i].data);\n"
 		"}\n"
 		"free(val);\n"
@@ -341,7 +342,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 		name);
 
 	fprintf (codefile,
-		 "for(i = (%s)->len - 1; i >= 0; --i) {\n"
+		 "for(i = (int)(%s)->len - 1; i >= 0; --i) {\n"
 		 "p -= val[i].length;\n"
 		 "ret += val[i].length;\n"
 		 "memcpy(p + 1, val[i].data, val[i].length);\n"
@@ -357,7 +358,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	char *n = NULL;
 
 	fprintf (codefile,
-		 "for(i = (%s)->len - 1; i >= 0; --i) {\n"
+		 "for(i = (int)(%s)->len - 1; i >= 0; --i) {\n"
 		 "size_t %s_for_oldret = ret;\n"
 		 "ret = 0;\n",
 		 name, tmpstr);
@@ -505,7 +506,7 @@ void
 generate_type_encode (const Symbol *s)
 {
     fprintf (codefile, "int ASN1CALL\n"
-	     "encode_%s(unsigned char *p, size_t len,"
+	     "encode_%s(unsigned char *p HEIMDAL_UNUSED_ATTRIBUTE, size_t len HEIMDAL_UNUSED_ATTRIBUTE,"
 	     " const %s *data, size_t *size)\n"
 	     "{\n",
 	     s->gen_name, s->gen_name);
@@ -536,10 +537,9 @@ generate_type_encode (const Symbol *s)
     case TType:
     case TChoice:
 	fprintf (codefile,
-		 "size_t ret = 0;\n"
-		 "size_t l;\n"
-		 "int i, e;\n\n");
-	fprintf(codefile, "i = 0;\n"); /* hack to avoid `unused variable' */
+		 "size_t ret HEIMDAL_UNUSED_ATTRIBUTE = 0;\n"
+		 "size_t l HEIMDAL_UNUSED_ATTRIBUTE;\n"
+		 "int i HEIMDAL_UNUSED_ATTRIBUTE, e HEIMDAL_UNUSED_ATTRIBUTE;\n\n");
 
 	encode_type("data", s->type, "Top");
 

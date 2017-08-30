@@ -1,4 +1,4 @@
-/*	$NetBSD: compile_et.c,v 1.1.1.1 2011/04/13 18:14:43 elric Exp $	*/
+/*	$NetBSD: compile_et.c,v 1.1.1.1.20.1 2017/08/30 06:57:27 snj Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Kungliga Tekniska Högskolan
@@ -39,6 +39,7 @@
 
 #include "compile_et.h"
 #include <getarg.h>
+#include <libgen.h>
 
 #include <roken.h>
 #include <err.h>
@@ -47,7 +48,7 @@
 int numerror;
 extern FILE *yyin;
 
-extern void yyparse(void);
+int yyparse(void);
 
 long base_id;
 int number;
@@ -58,7 +59,8 @@ char name[128];
 char Basename[128];
 
 #ifdef YYDEBUG
-extern int yydebug = 1;
+extern int yydebug;
+int yydebug = 1;
 #endif
 
 char *filename;
@@ -77,7 +79,7 @@ generate_c(void)
     if(c_file == NULL)
 	return 1;
 
-    fprintf(c_file, "/* Generated from %s */\n", filename);
+    fprintf(c_file, "/* Generated from %s */\n", basename(filename));
     if(id_str)
 	fprintf(c_file, "/* %s */\n", id_str);
     fprintf(c_file, "\n");
@@ -95,7 +97,7 @@ generate_c(void)
 	    fprintf(c_file, "\t/* %03d */ \"Reserved %s error (%d)\",\n",
 		    n, name, n);
 	    n++;
-	
+
 	}
 	fprintf(c_file, "\t/* %03d */ N_(\"%s\"),\n",
 		ec->number, ec->string);
@@ -142,7 +144,7 @@ generate_h(void)
 	if(!isalnum((unsigned char)*p))
 	    *p = '_';
 
-    fprintf(h_file, "/* Generated from %s */\n", filename);
+    fprintf(h_file, "/* Generated from %s */\n", basename(filename));
     if(id_str)
 	fprintf(h_file, "/* %s */\n", id_str);
     fprintf(h_file, "\n");
@@ -188,8 +190,8 @@ generate(void)
 int version_flag;
 int help_flag;
 struct getargs args[] = {
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 int num_args = sizeof(args) / sizeof(args[0]);
 
@@ -222,7 +224,7 @@ main(int argc, char **argv)
     yyin = fopen(filename, "r");
     if(yyin == NULL)
 	err(1, "%s", filename);
-	
+
 
     p = strrchr(filename, rk_PATH_DELIM);
     if(p)

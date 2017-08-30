@@ -1,4 +1,4 @@
-/*	$NetBSD: creds.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: creds.c,v 1.1.1.1.20.1 2017/08/30 06:57:28 snj Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -49,7 +49,7 @@ _gsskrb5_export_cred(OM_uint32 *minor_status,
     char *str;
 
     GSSAPI_KRB5_INIT (&context);
-    
+
     if (handle->usage != GSS_C_INITIATE && handle->usage != GSS_C_BOTH) {
 	*minor_status = GSS_KRB5_S_G_BAD_USAGE;
 	return GSS_S_FAILURE;
@@ -64,6 +64,9 @@ _gsskrb5_export_cred(OM_uint32 *minor_status,
     type = krb5_cc_get_type(context, handle->ccache);
     if (strcmp(type, "MEMORY") == 0) {
 	krb5_creds *creds;
+	krb5_data config_start_realm;
+	char *start_realm;
+
 	ret = krb5_store_uint32(sp, 0);
 	if (ret) {
 	    krb5_storage_free(sp);
@@ -71,9 +74,25 @@ _gsskrb5_export_cred(OM_uint32 *minor_status,
 	    return GSS_S_FAILURE;
 	}
 
-	ret = _krb5_get_krbtgt(context, handle->ccache,
-			       handle->principal->realm,
-			       &creds);
+	ret = krb5_cc_get_config(context, handle->ccache, NULL, "start_realm",
+				 &config_start_realm);
+	if (ret == 0) {
+	    start_realm = strndup(config_start_realm.data,
+				  config_start_realm.length);
+	    krb5_data_free(&config_start_realm);
+	} else {
+	    start_realm = strdup(krb5_principal_get_realm(context,
+							  handle->principal));
+	}
+	if (start_realm == NULL) {
+	    *minor_status = krb5_enomem(context);
+	    krb5_storage_free(sp);
+	    return GSS_S_FAILURE;
+	}
+
+	ret = _krb5_get_krbtgt(context, handle->ccache, start_realm, &creds);
+	free(start_realm);
+	start_realm = NULL;
 	if (ret) {
 	    krb5_storage_free(sp);
 	    *minor_status = ret;
@@ -95,14 +114,14 @@ _gsskrb5_export_cred(OM_uint32 *minor_status,
 	    *minor_status = ret;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	ret = krb5_cc_get_full_name(context, handle->ccache, &str);
 	if (ret) {
 	    krb5_storage_free(sp);
 	    *minor_status = ret;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	ret = krb5_store_string(sp, str);
 	free(str);
 	if (ret) {
@@ -212,6 +231,10 @@ _gsskrb5_import_cred(OM_uint32 * minor_status,
 
 	ret = krb5_cc_store_cred(context, id, &creds);
 	krb5_free_cred_contents(context, &creds);
+	if (ret) {
+	    *minor_status = ret;
+	    return GSS_S_FAILURE;
+	}
 
 	flags |= GSS_CF_DESTROY_CRED_ON_RELEASE;
 
@@ -224,7 +247,7 @@ _gsskrb5_import_cred(OM_uint32 * minor_status,
 	    *minor_status = ret;
 	    return GSS_S_FAILURE;
 	}
-	
+
 	ret = krb5_cc_resolve(context, str, &id);
 	krb5_xfree(str);
 	if (ret) {

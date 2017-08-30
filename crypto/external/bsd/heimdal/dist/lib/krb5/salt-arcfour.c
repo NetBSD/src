@@ -1,4 +1,4 @@
-/*	$NetBSD: salt-arcfour.c,v 1.1.1.1 2011/04/13 18:15:37 elric Exp $	*/
+/*	$NetBSD: salt-arcfour.c,v 1.1.1.1.20.1 2017/08/30 06:57:37 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -45,13 +45,12 @@ ARCFOUR_string_to_key(krb5_context context,
 {
     krb5_error_code ret;
     uint16_t *s = NULL;
-    size_t len, i;
+    size_t len = 0, i;
     EVP_MD_CTX *m;
 
     m = EVP_MD_CTX_create();
     if (m == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+	ret = krb5_enomem(context);
 	goto out;
     }
 
@@ -60,22 +59,20 @@ ARCFOUR_string_to_key(krb5_context context,
     ret = wind_utf8ucs2_length(password.data, &len);
     if (ret) {
 	krb5_set_error_message (context, ret,
-				N_("Password not an UCS2 string", ""));
+				N_("Password is not valid UTF-8", ""));
 	goto out;
     }
 
     s = malloc (len * sizeof(s[0]));
     if (len != 0 && s == NULL) {
-	krb5_set_error_message (context, ENOMEM,
-				N_("malloc: out of memory", ""));
-	ret = ENOMEM;
+	ret = krb5_enomem(context);
 	goto out;
     }
 
     ret = wind_utf8ucs2(password.data, s, &len);
     if (ret) {
 	krb5_set_error_message (context, ret,
-				N_("Password not an UCS2 string", ""));
+				N_("Password is not valid UTF-8", ""));
 	goto out;
     }
 
@@ -91,7 +88,7 @@ ARCFOUR_string_to_key(krb5_context context,
     key->keytype = enctype;
     ret = krb5_data_alloc (&key->keyvalue, 16);
     if (ret) {
-	krb5_set_error_message (context, ENOMEM, N_("malloc: out of memory", ""));
+	krb5_enomem(context);
 	goto out;
     }
     EVP_DigestFinal_ex (m, key->keyvalue.data, NULL);
@@ -110,5 +107,5 @@ struct salt_type _krb5_arcfour_salt[] = {
 	"pw-salt",
 	ARCFOUR_string_to_key
     },
-    { 0 }
+    { 0, NULL, NULL }
 };

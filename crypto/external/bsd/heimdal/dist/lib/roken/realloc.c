@@ -1,4 +1,4 @@
-/*	$NetBSD: realloc.c,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $	*/
+/*	$NetBSD: realloc.c,v 1.1.1.1.20.1 2017/08/30 06:57:39 snj Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -38,6 +38,7 @@
 
 #include <stdlib.h>
 #include <krb5/roken.h>
+#undef realloc
 
 ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
 rk_realloc(void *ptr, size_t size)

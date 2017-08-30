@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2011/04/13 18:14:37 elric Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.1.20.1 2017/08/30 06:57:25 snj Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -46,9 +46,14 @@
 
 sig_atomic_t exit_flag = 0;
 
-#ifdef SUPPORT_DETACH
 int detach_from_console = -1;
-#endif
+int daemon_child = -1;
+int do_bonjour = -1;
+
+static RETSIGTYPE
+sigchld(int sig)
+{
+}
 
 static RETSIGTYPE
 sigterm(int sig)
@@ -70,8 +75,12 @@ switch_environment(void)
     if ((runas_string || chroot_string) && geteuid() != 0)
 	errx(1, "no running as root, can't switch user/chroot");
 
-    if (chroot_string && chroot(chroot_string) != 0)
-	errx(1, "chroot(%s)", "chroot_string failed");
+    if (chroot_string) {
+	if (chroot(chroot_string))
+	    err(1, "chroot(%s) failed", chroot_string);
+	if (chdir("/"))
+	    err(1, "chdir(/) after chroot failed");
+    }
 
     if (runas_string) {
 	struct passwd *pw;
@@ -82,11 +91,11 @@ switch_environment(void)
 
 	if (initgroups(pw->pw_name, pw->pw_gid) < 0)
 	    err(1, "initgroups failed");
-	
+
 #ifndef HAVE_CAPNG
 	if (setgid(pw->pw_gid) < 0)
 	    err(1, "setgid(%s) failed", runas_string);
-	
+
 	if (setuid(pw->pw_uid) < 0)
 	    err(1, "setuid(%s)", runas_string);
 #else
@@ -103,13 +112,13 @@ switch_environment(void)
 #endif
 }
 
-
 int
 main(int argc, char **argv)
 {
     krb5_error_code ret;
     krb5_context context;
     krb5_kdc_configuration *config;
+    int optidx = 0;
 
     setprogname(argv[0]);
 
@@ -119,11 +128,11 @@ main(int argc, char **argv)
     else if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
 
-    ret = krb5_kt_register(context, &hdb_kt_ops);
+    ret = krb5_kt_register(context, &hdb_get_kt_ops);
     if (ret)
 	errx (1, "krb5_kt_register(HDB) failed: %d", ret);
 
-    config = configure(context, argc, argv);
+    config = configure(context, argc, argv, &optidx);
 
 #ifdef HAVE_SIGACTION
     {
@@ -139,6 +148,11 @@ main(int argc, char **argv)
 	sigaction(SIGXCPU, &sa, NULL);
 #endif
 
+#ifdef SIGCHLD
+	sa.sa_handler = sigchld;
+	sigaction(SIGCHLD, &sa, NULL);
+#endif
+
 	sa.sa_handler = SIG_IGN;
 #ifdef SIGPIPE
 	sigaction(SIGPIPE, &sa, NULL);
@@ -147,6 +161,9 @@ main(int argc, char **argv)
 #else
     signal(SIGINT, sigterm);
     signal(SIGTERM, sigterm);
+#ifdef SIGCHLD
+    signal(SIGCHLD, sigchld);
+#endif
 #ifdef SIGXCPU
     signal(SIGXCPU, sigterm);
 #endif
@@ -154,18 +171,11 @@ main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
 #endif
 #endif
-#ifdef SUPPORT_DETACH
-    if (detach_from_console)
-	daemon(0, 0);
-#endif
-#ifdef __APPLE__
-    bonjour_announce(context, config);
-#endif
-    pidfile(NULL);
+    rk_pidfile(NULL);
 
     switch_environment();
 
-    loop(context, config);
+    start_kdc(context, config, argv[0]);
     krb5_free_context(context);
     return 0;
 }

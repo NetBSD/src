@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf-test.c,v 1.1.1.1 2011/04/13 18:15:43 elric Exp $	*/
+/*	$NetBSD: snprintf-test.c,v 1.1.1.1.20.1 2017/08/30 06:57:39 snj Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
@@ -35,6 +35,9 @@
 #include <config.h>
 #include <krb5/roken.h>
 #include <limits.h>
+
+extern int rk_snprintf(char *, size_t, const char *, ...);
+extern int rk_vsnprintf(char *, size_t, const char *, va_list);
 
 static int
 try (const char *format, ...)
@@ -134,9 +137,10 @@ cmp_with_sprintf_long_long (void)
 {
     int tot = 0;
     long long long_long_values[] = {
-	((long long)LONG_MIN) -1, LONG_MIN, -17, -1,
-	0,
-	1, 17, 4711, 65535, LONG_MAX, ((long long)LONG_MAX) + 1};
+	((long long)LONG_MIN) - (sizeof(long long) > sizeof(long)),
+        LONG_MIN, -17, -1, 0, 1, 17, 4711, 65535, LONG_MAX,
+        ((long long)LONG_MAX) + (sizeof(long long) > sizeof(long))
+    };
     int i;
 
     for (i = 0; i < sizeof(long_long_values) / sizeof(long_long_values[0]); ++i) {

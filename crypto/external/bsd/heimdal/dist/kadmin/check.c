@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.1.1.1 2011/04/13 18:14:34 elric Exp $	*/
+/*	$NetBSD: check.c,v 1.1.1.1.20.1 2017/08/30 06:57:24 snj Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -53,7 +53,7 @@ get_check_entry(const char *name, kadm5_principal_ent_rec *ent)
     }
 
     memset(ent, 0, sizeof(*ent));
-    ret = kadm5_get_principal(kadm_handle, principal, ent, 0);
+    ret = kadm5_get_principal(kadm_handle, principal, ent, KADM5_ATTRIBUTES);
     krb5_free_principal(context, principal);
     if(ret)
 	return 1;
@@ -88,7 +88,7 @@ do_check_entry(krb5_principal principal, void *data)
 	ret = krb5_enctype_keysize(context,
 				   princ.key_data[i].key_data_type[0],
 				   &keysize);
-	if (ret == 0 && keysize != princ.key_data[i].key_data_length[0]) {
+	if (ret == 0 && keysize != (size_t)princ.key_data[i].key_data_length[0]) {
 	    krb5_warnx(context,
 		       "Principal %s enctype %d, wrong length: %lu\n",
 		       name, princ.key_data[i].key_data_type[0],
@@ -185,6 +185,35 @@ check(void *opt, int argc, char **argv)
     free(p);
 
     kadm5_free_principal_ent(kadm_handle, &ent);
+
+    /*
+     * Check default@REALM
+     *
+     * Check that disallow-all-tix is set on the default principal
+     * (or that the entry doesn't exists)
+     */
+
+    if (asprintf(&p, "default@%s", realm) == -1) {
+	krb5_warn(context, errno, "asprintf");
+	goto fail;
+    }
+
+    ret = get_check_entry(p, &ent);
+    if (ret == 0) {
+	if ((ent.attributes & KRB5_KDB_DISALLOW_ALL_TIX) == 0) {
+	    printf("default template entry is not disabled\n");
+	    ret = EINVAL;
+	}
+	kadm5_free_principal_ent(kadm_handle, &ent);
+
+    } else {
+	ret = 0;
+    }
+
+    free(p);
+
+    if (ret)
+	goto fail;
 
     /*
      * Check for duplicate afs keys

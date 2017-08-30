@@ -1,4 +1,4 @@
-/*	$NetBSD: daemon.c,v 1.1.1.1 2011/04/13 18:15:40 elric Exp $	*/
+/*	$NetBSD: daemon.c,v 1.1.1.1.20.1 2017/08/30 06:57:38 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -74,7 +74,7 @@ daemon(int nochdir, int noclose)
 	dup2(fd, STDOUT_FILENO);
 	dup2(fd, STDERR_FILENO);
 	if (fd > 2)
-	    close (fd);
+	    (void) close(fd);
     }
     return (0);
 }

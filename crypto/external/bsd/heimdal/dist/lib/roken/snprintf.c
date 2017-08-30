@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf.c,v 1.1.1.1 2011/04/13 18:15:43 elric Exp $	*/
+/*	$NetBSD: snprintf.c,v 1.1.1.1.20.1 2017/08/30 06:57:39 snj Exp $	*/
 
 /*
  * Copyright (c) 1995-2003 Kungliga Tekniska Högskolan
@@ -119,6 +119,10 @@ typedef unsigned long u_longest;
 typedef long longest;
 #endif
 
+#ifndef HAVE_UINTPTR_T
+typedef u_longest uintptr_t;
+#endif
+
 
 
 static size_t
@@ -192,7 +196,7 @@ append_number(struct snprintf_state *state,
            no such wording for %x. This would mean that %#.o would
            output "0", but %#.x "". This does not make sense, and is
            also not what other printf implementations are doing. */
-	
+
 	if(prec <= nlen && nstr[nstart] != '0' && nstr[nstart] != '\0')
 	    prec = nlen + 1;
     }
@@ -210,13 +214,13 @@ append_number(struct snprintf_state *state,
 	    width -= prec;
 	else
 	    width -= nlen;
-	
+
 	if(use_alternative(flags, num, base))
 	    width -= 2;
-	
+
 	if(signchar != '\0')
 	    width--;
-	
+
 	/* pad to width */
 	len += pad(state, width, ' ');
     }
@@ -238,12 +242,12 @@ append_number(struct snprintf_state *state,
     } else
 	/* pad to prec with zeros */
 	len += pad(state, prec - nlen, '0');
-	
+
     while(nstr[nstart] != '\0') {
 	(*state->append_char)(state, nstr[nstart++]);
 	++len;
     }
-	
+
     if(flags & minus_flag)
 	len += pad(state, width - len, ' ');
 
@@ -274,7 +278,7 @@ append_string (struct snprintf_state *state,
 	len += pad(state, width, ' ');
 
     if (prec != -1) {
-	while (*arg && prec--) {
+	while (prec-- && *arg) {
 	    (*state->append_char) (state, *arg++);
 	    ++len;
 	}
@@ -500,7 +504,7 @@ xyzprintf (struct snprintf_state *state, const char *char_format, va_list ap)
 		break;
 	    }
 	    case 'p' : {
-		u_longest arg = (u_longest)va_arg(ap, void*);
+		uintptr_t arg = (uintptr_t)va_arg(ap, void*);
 
 		len += append_number (state, arg, 0x10, "0123456789ABCDEF",
 				      width, prec, flags, 0);

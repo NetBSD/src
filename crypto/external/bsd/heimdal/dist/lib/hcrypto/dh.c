@@ -1,4 +1,4 @@
-/*	$NetBSD: dh.c,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: dh.c,v 1.1.1.1.20.1 2017/08/30 06:57:30 snj Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -36,15 +36,12 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include <krb5/roken.h>
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <krb5/krb5-types.h>
 #include <krb5/rfc2459_asn1.h>
 
 #include <dh.h>
-
-#include <krb5/roken.h>
 
 /**
  * @page page_dh DH - Diffie-Hellman key exchange
@@ -541,8 +538,10 @@ i2d_DHparams(DH *dh, unsigned char **pp)
 	free_DHParameter(&data);
 	if (ret)
 	    return -1;
-	if (len != size)
+	if (len != size) {
 	    abort();
+            return -1;
+        }
 
 	memcpy(*pp, p, size);
 	free(p);

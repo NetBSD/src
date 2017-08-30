@@ -1,4 +1,4 @@
-/*	$NetBSD: kdc-replay.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: kdc-replay.c,v 1.1.1.1.20.1 2017/08/30 06:57:25 snj Exp $	*/
 
 /*
  * Copyright (c) 2007 Kungliga Tekniska Högskolan
@@ -39,11 +39,11 @@ static int version_flag;
 static int help_flag;
 
 struct getargs args[] = {
-    { "version",   0,	arg_flag, &version_flag },
-    { "help",     'h',	arg_flag, &help_flag }
+    { "version",   0,	arg_flag, &version_flag, NULL, NULL },
+    { "help",     'h',	arg_flag, &help_flag,    NULL, NULL }
 };
 
-const static int num_args = sizeof(args) / sizeof(args[0]);
+static const int num_args = sizeof(args) / sizeof(args[0]);
 
 static void
 usage(int ret)
@@ -92,7 +92,7 @@ main(int argc, char **argv)
     if (config->enable_pkinit) {
 	if (config->pkinit_kdc_identity == NULL)
 	    krb5_errx(context, 1, "pkinit enabled but no identity");
- 
+
 	if (config->pkinit_kdc_anchors == NULL)
 	    krb5_errx(context, 1, "pkinit enabled but no X509 anchors");
 
