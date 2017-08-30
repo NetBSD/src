@@ -1,4 +1,4 @@
-/* $NetBSD: t_round.c,v 1.4 2013/11/11 23:57:34 joerg Exp $ */
+/* $NetBSD: t_round.c,v 1.5 2017/08/30 10:51:06 maya Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -26,9 +26,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
+
 #include <atf-c.h>
 #include <float.h>
 #include <math.h>
+#include <stdio.h>
 
 /*
  * This tests for a bug in the initial implementation where
@@ -76,10 +79,41 @@ ATF_TC_BODY(round_dir, tc)
 	ATF_CHECK(fabsl(cl) < SMALL_NUM);
 }
 
+ATF_TC(rounding_alpha);
+ATF_TC_HEAD(rounding_alpha, tc)
+{
+	atf_tc_set_md_var(tc, "descr","Checking MPFR's config failure with -mieee on Alpha");
+}
+
+typedef uint64_t gimpy_limb_t;
+#define GIMPY_NUMB_BITS 64
+
+ATF_TC_BODY(rounding_alpha, tc)
+{
+        double d;
+        gimpy_limb_t u;
+        int i;
+
+        d = 1.0;
+        for (i = 0; i < GIMPY_NUMB_BITS - 1; i++)
+                d = d + d;
+
+        printf("d = %g\n", d);
+        u = (gimpy_limb_t) d;
+        printf("sizeof u: %zu\n", sizeof(u));
+
+        for (; i > 0; i--) {
+                printf("i=%d, u: %lu\n", i, u);
+                ATF_CHECK(!(u & 1));
+                u = u >> 1;
+        }
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, round_dir);
+	ATF_TP_ADD_TC(tp, rounding_alpha);
 
 	return atf_no_error();
 }
