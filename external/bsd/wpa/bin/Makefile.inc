@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2010/08/04 17:12:33 christos Exp $
+# $NetBSD: Makefile.inc,v 1.1.8.1 2017/08/30 05:48:08 snj Exp $
 
 BINDIR?=	/usr/sbin
 
@@ -14,6 +14,7 @@ HOSTAPD_DISTDIR?=		${WPA_DISTDIR}/hostapd
 	${WPA_DISTDIR}/src/crypto \
 	${WPA_DISTDIR}/src/eap_common \
 	${WPA_DISTDIR}/src/eapol_supp \
+	${WPA_DISTDIR}/src/fst \
 	${WPA_DISTDIR}/src/l2_packet \
 	${WPA_DISTDIR}/src/utils
 
@@ -25,10 +26,6 @@ CPPFLAGS+= \
 	-I${WPA_DISTDIR}/src/l2_packet \
 	-I${WPA_DISTDIR}/src/utils
 
-CPPFLAGS+=-DCONFIG_CTRL_IFACE -DCONFIG_CTRL_IFACE_UNIX
+CPPFLAGS+=-DCONFIG_CTRL_IFACE -DCONFIG_CTRL_IFACE_UNIX -DCONFIG_ELOOP_KQUEUE
 
 .include <bsd.own.mk>
-
-.if ${MKCRYPTO} == "no"
-NO_OPENSSL=	# defined
-.endif

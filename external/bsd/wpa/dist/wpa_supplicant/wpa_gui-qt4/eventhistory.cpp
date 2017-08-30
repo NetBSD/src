@@ -2,14 +2,8 @@
  * wpa_gui - EventHistory class
  * Copyright (c) 2005-2006, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include <QHeaderView>
@@ -79,15 +73,15 @@ void EventListModel::addEvent(QString time, QString msg)
 }
 
 
-EventHistory::EventHistory(QWidget *parent, const char *, bool, Qt::WFlags)
+EventHistory::EventHistory(QWidget *parent, const char *, bool, Qt::WindowFlags)
 	: QDialog(parent)
 {
 	setupUi(this);
 
 	connect(closeButton, SIGNAL(clicked()), this, SLOT(close()));
 
-	eventListView->setItemsExpandable(FALSE);
-	eventListView->setRootIsDecorated(FALSE);
+	eventListView->setItemsExpandable(false);
+	eventListView->setRootIsDecorated(false);
 	elm = new EventListModel(parent);
 	eventListView->setModel(elm);
 }

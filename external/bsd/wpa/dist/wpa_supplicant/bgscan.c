@@ -2,14 +2,8 @@
  * WPA Supplicant - background scan and roaming interface
  * Copyright (c) 2009-2010, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -19,21 +13,21 @@
 #include "config_ssid.h"
 #include "bgscan.h"
 
-#ifdef CONFIG_BGSCAN_SIMPLE
-extern const struct bgscan_ops bgscan_simple_ops;
-#endif /* CONFIG_BGSCAN_SIMPLE */
 
 static const struct bgscan_ops * bgscan_modules[] = {
 #ifdef CONFIG_BGSCAN_SIMPLE
 	&bgscan_simple_ops,
 #endif /* CONFIG_BGSCAN_SIMPLE */
+#ifdef CONFIG_BGSCAN_LEARN
+	&bgscan_learn_ops,
+#endif /* CONFIG_BGSCAN_LEARN */
 	NULL
 };
 
 
-int bgscan_init(struct wpa_supplicant *wpa_s, struct wpa_ssid *ssid)
+int bgscan_init(struct wpa_supplicant *wpa_s, struct wpa_ssid *ssid,
+		const char *name)
 {
-	const char *name = ssid->bgscan;
 	const char *params;
 	size_t nlen;
 	int i;
@@ -41,7 +35,7 @@ int bgscan_init(struct wpa_supplicant *wpa_s, struct wpa_ssid *ssid)
 
 	bgscan_deinit(wpa_s);
 	if (name == NULL)
-		return 0;
+		return -1;
 
 	params = os_strchr(name, ':');
 	if (params == NULL) {
@@ -88,10 +82,12 @@ void bgscan_deinit(struct wpa_supplicant *wpa_s)
 }
 
 
-int bgscan_notify_scan(struct wpa_supplicant *wpa_s)
+int bgscan_notify_scan(struct wpa_supplicant *wpa_s,
+		       struct wpa_scan_results *scan_res)
 {
 	if (wpa_s->bgscan && wpa_s->bgscan_priv)
-		return wpa_s->bgscan->notify_scan(wpa_s->bgscan_priv);
+		return wpa_s->bgscan->notify_scan(wpa_s->bgscan_priv,
+						  scan_res);
 	return 0;
 }
 
@@ -103,8 +99,13 @@ void bgscan_notify_beacon_loss(struct wpa_supplicant *wpa_s)
 }
 
 
-void bgscan_notify_signal_change(struct wpa_supplicant *wpa_s, int above)
+void bgscan_notify_signal_change(struct wpa_supplicant *wpa_s, int above,
+				 int current_signal, int current_noise,
+				 int current_txrate)
 {
 	if (wpa_s->bgscan && wpa_s->bgscan_priv)
-		wpa_s->bgscan->notify_signal_change(wpa_s->bgscan_priv, above);
+		wpa_s->bgscan->notify_signal_change(wpa_s->bgscan_priv, above,
+						    current_signal,
+						    current_noise,
+						    current_txrate);
 }

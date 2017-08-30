@@ -1,23 +1,17 @@
 /*
  * WPA Supplicant - roboswitch driver interface
- * Copyright (c) 2008-2009 Jouke Witteveen
+ * Copyright (c) 2008-2012 Jouke Witteveen
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
 #include <sys/ioctl.h>
-#include <linux/if.h>
 #include <linux/sockios.h>
 #include <linux/if_ether.h>
 #include <linux/mii.h>
+#include <net/if.h>
 
 #include "common.h"
 #include "driver.h"
@@ -97,7 +91,8 @@ static u16 wpa_driver_roboswitch_mdio_read(
 	mii->reg_num = reg;
 
 	if (ioctl(drv->fd, SIOCGMIIREG, &drv->ifr) < 0) {
-		perror("ioctl[SIOCGMIIREG]");
+		wpa_printf(MSG_ERROR, "ioctl[SIOCGMIIREG]: %s",
+			   strerror(errno));
 		return 0x00;
 	}
 	return mii->val_out;
@@ -114,7 +109,8 @@ static void wpa_driver_roboswitch_mdio_write(
 	mii->val_in = val;
 
 	if (ioctl(drv->fd, SIOCSMIIREG, &drv->ifr) < 0) {
-		perror("ioctl[SIOCSMIIREG");
+		wpa_printf(MSG_ERROR, "ioctl[SIOCSMIIREG]: %s",
+			   strerror(errno));
 	}
 }
 
@@ -266,17 +262,17 @@ static int wpa_driver_roboswitch_join(struct wpa_driver_roboswitch_data *drv,
 					    ROBO_ARLCTRL_CONF, read1, 1);
 	} else {
 		/* if both multiport addresses are the same we can add */
-		wpa_driver_roboswitch_read(drv, ROBO_ARLCTRL_PAGE,
-					   ROBO_ARLCTRL_ADDR_1, read1, 3);
-		wpa_driver_roboswitch_read(drv, ROBO_ARLCTRL_PAGE,
-					   ROBO_ARLCTRL_ADDR_2, read2, 3);
-		if (os_memcmp(read1, read2, 6) != 0)
+		if (wpa_driver_roboswitch_read(drv, ROBO_ARLCTRL_PAGE,
+					       ROBO_ARLCTRL_ADDR_1, read1, 3) ||
+		    wpa_driver_roboswitch_read(drv, ROBO_ARLCTRL_PAGE,
+					       ROBO_ARLCTRL_ADDR_2, read2, 3) ||
+		    os_memcmp(read1, read2, 6) != 0)
 			return -1;
-		wpa_driver_roboswitch_read(drv, ROBO_ARLCTRL_PAGE,
-					   ROBO_ARLCTRL_VEC_1, read1, 1);
-		wpa_driver_roboswitch_read(drv, ROBO_ARLCTRL_PAGE,
-					   ROBO_ARLCTRL_VEC_2, read2, 1);
-		if (read1[0] != read2[0])
+		if (wpa_driver_roboswitch_read(drv, ROBO_ARLCTRL_PAGE,
+					       ROBO_ARLCTRL_VEC_1, read1, 1) ||
+		    wpa_driver_roboswitch_read(drv, ROBO_ARLCTRL_PAGE,
+					       ROBO_ARLCTRL_VEC_2, read2, 1) ||
+		    read1[0] != read2[0])
 			return -1;
 		wpa_driver_roboswitch_write(drv, ROBO_ARLCTRL_PAGE,
 					    ROBO_ARLCTRL_ADDR_1, addr_be16, 3);
@@ -364,7 +360,7 @@ static void * wpa_driver_roboswitch_init(void *ctx, const char *ifname)
 	/* copy ifname and take a pointer to the second to last character */
 	sep = drv->ifname +
 	      os_strlcpy(drv->ifname, ifname, sizeof(drv->ifname)) - 2;
-	/* find the '.' seperating <interface> and <vlan> */
+	/* find the '.' separating <interface> and <vlan> */
 	while (sep > drv->ifname && *sep != '.') sep--;
 	if (sep <= drv->ifname) {
 		wpa_printf(MSG_INFO, "%s: No <interface>.<vlan> pair in "
@@ -400,11 +396,14 @@ static void * wpa_driver_roboswitch_init(void *ctx, const char *ifname)
 	os_memset(&drv->ifr, 0, sizeof(drv->ifr));
 	os_strlcpy(drv->ifr.ifr_name, drv->ifname, IFNAMSIZ);
 	if (ioctl(drv->fd, SIOCGMIIPHY, &drv->ifr) < 0) {
-		perror("ioctl[SIOCGMIIPHY]");
+		wpa_printf(MSG_ERROR, "ioctl[SIOCGMIIPHY]: %s",
+			   strerror(errno));
 		os_free(drv);
 		return NULL;
 	}
-	if (if_mii(&drv->ifr)->phy_id != ROBO_PHY_ADDR) {
+	/* BCM63xx devices provide 0 here */
+	if (if_mii(&drv->ifr)->phy_id != ROBO_PHY_ADDR &&
+	    if_mii(&drv->ifr)->phy_id != 0) {
 		wpa_printf(MSG_INFO, "%s: Invalid phy address (not a "
 			   "RoboSwitch?)", __func__);
 		os_free(drv);
