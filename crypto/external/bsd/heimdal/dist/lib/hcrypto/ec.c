@@ -1,4 +1,4 @@
-/*	$NetBSD: ec.c,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: ec.c,v 1.1.1.1.6.1 2017/08/30 07:10:55 snj Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -93,7 +93,7 @@ EC_KEY *
 EC_KEY_new_by_curve_name(EC_GROUP_ID nid)
 {
     EC_KEY *key;
-    
+
     key = calloc(1, sizeof(*key));
     return key;
 }

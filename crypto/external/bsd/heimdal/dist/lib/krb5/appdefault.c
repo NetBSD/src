@@ -1,4 +1,4 @@
-/*	$NetBSD: appdefault.c,v 1.1.1.1 2011/04/13 18:15:31 elric Exp $	*/
+/*	$NetBSD: appdefault.c,v 1.1.1.1.6.1 2017/08/30 07:11:00 snj Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
@@ -49,7 +49,7 @@ krb5_appdefault_boolean(krb5_context context, const char *appname,
     if(realm != NULL)
 	def_val = krb5_config_get_bool_default(context, NULL, def_val,
 					       "realms", realm, option, NULL);
-	
+
     def_val = krb5_config_get_bool_default(context, NULL, def_val,
 					   "appdefaults",
 					   option,

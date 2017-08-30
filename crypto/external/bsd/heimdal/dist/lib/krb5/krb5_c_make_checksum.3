@@ -1,4 +1,4 @@
-.\"	$NetBSD: krb5_c_make_checksum.3,v 1.2 2011/04/28 14:34:33 wiz Exp $
+.\"	$NetBSD: krb5_c_make_checksum.3,v 1.2.6.1 2017/08/30 07:11:01 snj Exp $
 .\"
 .\" Copyright (c) 2003 - 2006 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -170,7 +170,7 @@ The functions starting with krb5_c are compat functions with MIT kerberos.
 The
 .Li krb5_enc_data
 structure holds and encrypted data.
-There are two public accessable members of
+There are two public accessible members of
 .Li krb5_enc_data .
 .Li enctype
 that holds the encryption type of the data encrypted and
@@ -187,7 +187,7 @@ decrypts
 .Fa input
 and store the data in
 .Fa output.
-If 
+If
 .Fa ivec
 is
 .Dv NULL
@@ -259,7 +259,7 @@ If some either of
 .Fa data
 or
 .Fa checksum
-is not needed for the application, 
+is not needed for the application,
 .Dv NULL
 can be passed in.
 .Pp

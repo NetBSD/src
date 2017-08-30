@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.1.1.1 2011/04/13 18:14:35 elric Exp $	*/
+/*	$NetBSD: cache.c,v 1.1.1.1.6.1 2017/08/30 07:10:50 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -44,12 +44,15 @@ char *kcm_ccache_nextid(pid_t pid, uid_t uid, gid_t gid)
 {
     unsigned n;
     char *name;
+    int ret;
 
     HEIMDAL_MUTEX_lock(&ccache_mutex);
     n = ++ccache_nextid;
     HEIMDAL_MUTEX_unlock(&ccache_mutex);
 
-    asprintf(&name, "%ld:%u", (long)uid, n);
+    ret = asprintf(&name, "%ld:%u", (long)uid, n);
+    if (ret == -1)
+	return NULL;
 
     return name;
 }
@@ -104,7 +107,7 @@ kcm_ccache_resolve_by_uuid(krb5_context context,
     for (p = ccache_head; p != NULL; p = p->next) {
 	if ((p->flags & KCM_FLAGS_VALID) == 0)
 	    continue;
-	if (memcmp(p->uuid, uuid, sizeof(uuid)) == 0) {
+	if (memcmp(p->uuid, uuid, sizeof(*uuid)) == 0) {
 	    ret = 0;
 	    break;
 	}
@@ -170,7 +173,7 @@ krb5_error_code kcm_debug_ccache(krb5_context context)
 	    krb5_unparse_name(context, p->client, &cpn);
 	if (p->server != NULL)
 	    krb5_unparse_name(context, p->server, &spn);
-	
+
 	kcm_log(7, "cache %08x: name %s refcnt %d flags %04x mode %04o "
 		"uid %d gid %d client %s server %s ncreds %d",
 		p, p->name, p->refcnt, p->flags, p->mode, p->uid, p->gid,

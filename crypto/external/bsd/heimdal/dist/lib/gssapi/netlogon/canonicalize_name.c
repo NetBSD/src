@@ -1,4 +1,4 @@
-/*	$NetBSD: canonicalize_name.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: canonicalize_name.c,v 1.1.1.1.6.1 2017/08/30 07:10:54 snj Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -39,7 +39,7 @@
 
 OM_uint32 _netlogon_canonicalize_name (
             OM_uint32 * minor_status,
-            const gss_name_t input_name,
+            gss_const_name_t input_name,
             const gss_OID mech_type,
             gss_name_t * output_name
            )

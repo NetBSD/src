@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_import_sec_context.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_import_sec_context.c,v 1.1.1.1.6.1 2017/08/30 07:10:54 snj Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -60,7 +60,7 @@ gss_import_sec_context(OM_uint32 *minor_status,
 	mech_oid.elements = p + 2;
 	buf.length = len - 2 - mech_oid.length;
 	buf.value = p + 2 + mech_oid.length;
-	
+
 	m = __gss_get_mechanism(&mech_oid);
 	if (!m)
 		return (GSS_S_DEFECTIVE_TOKEN);

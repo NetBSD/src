@@ -1,4 +1,4 @@
-/*	$NetBSD: ks_keychain.c,v 1.1.1.1 2011/04/13 18:15:11 elric Exp $	*/
+/*	$NetBSD: ks_keychain.c,v 1.1.1.1.6.1 2017/08/30 07:10:58 snj Exp $	*/
 
 /*
  * Copyright (c) 2007 Kungliga Tekniska Högskolan
@@ -37,6 +37,9 @@
 
 #ifdef HAVE_FRAMEWORK_SECURITY
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 #include <Security/Security.h>
 
 /* Missing function decls in pre Leopard */
@@ -52,7 +55,7 @@ OSStatus SecKeyGetCredentials(SecKeyRef, CSSM_ACL_AUTHORIZATION_TAG,
 static int
 getAttribute(SecKeychainItemRef itemRef, SecItemAttr item,
 	     SecKeychainAttributeList **attrs)
-{	
+{
     SecKeychainAttributeInfo attrInfo;
     UInt32 attrFormat = 0;
     OSStatus ret;
@@ -140,10 +143,10 @@ kc_rsa_private_encrypt(int flen,
 
     in.Data = (uint8 *)from;
     in.Length = flen;
-	
+
     sig.Data = (uint8 *)to;
     sig.Length = kc->keysize;
-	
+
     cret = CSSM_SignData(sigHandle, &in, 1, CSSM_ALGID_NONE, &sig);
     if(cret) {
 	/* cssmErrorString(cret); */
@@ -199,10 +202,10 @@ kc_rsa_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
 
     in.Data = (uint8 *)from;
     in.Length = flen;
-	
+
     out.Data = (uint8 *)to;
     out.Length = kc->keysize;
-	
+
     rem.Data = (uint8 *)remdata;
     rem.Length = sizeof(remdata);
 
@@ -246,6 +249,7 @@ static const RSA_METHOD kc_rsa_pkcs1_method = {
     kc_rsa_init,
     kc_rsa_finish,
     0,
+    NULL,
     NULL,
     NULL,
     NULL
@@ -342,11 +346,13 @@ keychain_init(hx509_context context,
 	    if (ret != noErr) {
 		hx509_set_error_string(context, 0, ENOENT,
 				       "Failed to open %s", residue);
+		free(ctx);
 		return ENOENT;
 	    }
 	} else {
 	    hx509_set_error_string(context, 0, ENOENT,
 				   "Unknown subtype %s", residue);
+	    free(ctx);
 	    return ENOENT;
 	}
     }
@@ -422,8 +428,8 @@ keychain_iter_start(hx509_context context,
 
 	    SecCertificateGetData(cr, &cssm);
 
-	    ret = hx509_cert_init_data(context, cssm.Data, cssm.Length, &cert);
-	    if (ret)
+	    cert = hx509_cert_init_data(context, cssm.Data, cssm.Length, NULL);
+	    if (cert == NULL)
 		continue;
 
 	    ret = hx509_certs_add(context, iter->certs, cert);
@@ -472,6 +478,7 @@ keychain_iter(hx509_context context,
     UInt32 attrFormat[1] = { 0 };
     SecKeychainItemRef itemRef;
     SecItemAttr item[1];
+    heim_error_t error = NULL;
     struct iter *iter = cursor;
     OSStatus ret;
     UInt32 len;
@@ -487,7 +494,7 @@ keychain_iter(hx509_context context,
 	return 0;
     else if (ret != 0)
 	return EINVAL;
-	
+
     /*
      * Pick out certificate and matching "keyid"
      */
@@ -503,9 +510,12 @@ keychain_iter(hx509_context context,
     if (ret)
 	return EINVAL;
 
-    ret = hx509_cert_init_data(context, ptr, len, cert);
-    if (ret)
+    *cert = hx509_cert_init_data(context, ptr, len, &error);
+    if (*cert == NULL) {
+	ret = heim_error_get_code(error);
+	heim_release(error);
 	goto out;
+    }
 
     /*
      * Find related private key if there is one by looking at
@@ -519,7 +529,7 @@ keychain_iter(hx509_context context,
 	attrKeyid.tag = kSecKeyLabel;
 	attrKeyid.length = attrs->attr[0].length;
 	attrKeyid.data = attrs->attr[0].data;
-	
+
 	attrList.count = 1;
 	attrList.attr = &attrKeyid;
 
@@ -588,8 +598,13 @@ struct hx509_keyset_ops keyset_keychain = {
     NULL,
     keychain_iter_start,
     keychain_iter,
-    keychain_iter_end
+    keychain_iter_end,
+    NULL,
+    NULL,
+    NULL
 };
+
+#pragma clang diagnostic pop
 
 #endif /* HAVE_FRAMEWORK_SECURITY */
 

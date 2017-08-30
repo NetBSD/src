@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1379.2.14 2015/04/16 07:01:38 snj Exp $
+# $NetBSD: mi,v 1.1379.2.15 2017/08/30 07:11:12 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -234,6 +234,7 @@
 ./usr/share/man/cat1/ksh.0			man-util-catman		.cat
 ./usr/share/man/cat1/ktrace.0			man-debug-catman	.cat
 ./usr/share/man/cat1/ktruss.0			man-debug-catman	.cat
+./usr/share/man/cat1/kvno.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/lam.0			man-util-catman		.cat
 ./usr/share/man/cat1/last.0			man-util-catman		.cat
 ./usr/share/man/cat1/lastcomm.0			man-util-catman		.cat
@@ -2435,6 +2436,7 @@
 ./usr/share/man/cat8/kadmind.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kcm.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kdc.0			man-krb5-catman		kerberos,.cat
+./usr/share/man/cat8/kdigest.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kerberos.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kfd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/kimpersonate.0		man-krb5-catman		kerberos,.cat
@@ -3180,6 +3182,7 @@
 ./usr/share/man/html1/ksh.html			man-util-htmlman	html
 ./usr/share/man/html1/ktrace.html		man-debug-htmlman	html
 ./usr/share/man/html1/ktruss.html		man-debug-htmlman	html
+./usr/share/man/html1/kvno.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html1/lam.html			man-util-htmlman	html
 ./usr/share/man/html1/last.html			man-util-htmlman	html
 ./usr/share/man/html1/lastcomm.html		man-util-htmlman	html
@@ -5127,6 +5130,7 @@
 ./usr/share/man/html8/kadmind.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kcm.html			man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kdc.html			man-krb5-htmlman	kerberos,html
+./usr/share/man/html8/kdigest.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kerberos.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kimpersonate.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kpasswdd.html		man-krb5-htmlman	kerberos,html
@@ -5769,6 +5773,7 @@
 ./usr/share/man/man1/ksh.1			man-util-man		.man
 ./usr/share/man/man1/ktrace.1			man-debug-man		.man
 ./usr/share/man/man1/ktruss.1			man-debug-man		.man
+./usr/share/man/man1/kvno.1			man-krb5-man		kerberos,.man
 ./usr/share/man/man1/lam.1			man-util-man		.man
 ./usr/share/man/man1/last.1			man-util-man		.man
 ./usr/share/man/man1/lastcomm.1			man-util-man		.man
@@ -7970,6 +7975,7 @@
 ./usr/share/man/man8/kadmind.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kcm.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kdc.8			man-krb5-man		kerberos,.man
+./usr/share/man/man8/kdigest.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kerberos.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kfd.8			man-obsolete		obsolete
 ./usr/share/man/man8/kimpersonate.8		man-krb5-man		kerberos,.man

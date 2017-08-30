@@ -1,4 +1,4 @@
-/*	$NetBSD: revoke.c,v 1.2 2011/04/14 18:22:35 elric Exp $	*/
+/*	$NetBSD: revoke.c,v 1.2.6.1 2017/08/30 07:10:58 snj Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -178,9 +178,9 @@ verify_ocsp(hx509_context context,
     hx509_cert signer = NULL;
     hx509_query q;
     int ret;
-	
+
     _hx509_query_clear(&q);
-	
+
     /*
      * Need to match on issuer too in case there are two CA that have
      * issued the same name to a certificate. One example of this is
@@ -200,7 +200,7 @@ verify_ocsp(hx509_context context,
 	q.keyhash_sha1 = &ocsp->ocsp.tbsResponseData.responderID.u.byKey;
 	break;
     }
-	
+
     ret = hx509_certs_find(context, certs, &q, &signer);
     if (ret && ocsp->certs)
 	ret = hx509_certs_find(context, ocsp->certs, &q, &signer);
@@ -339,8 +339,10 @@ load_ocsp(hx509_context context, struct revoke_ocsp *ocsp)
 	return ret;
 
     ret = stat(ocsp->path, &sb);
-    if (ret)
+    if (ret) {
+        rk_xfree(data);
 	return errno;
+    }
 
     ret = parse_ocsp_basic(data, length, &basic);
     rk_xfree(data);
@@ -351,7 +353,7 @@ load_ocsp(hx509_context context, struct revoke_ocsp *ocsp)
     }
 
     if (basic.certs) {
-	int i;
+	size_t i;
 
 	ret = hx509_certs_init(context, "MEMORY:ocsp-certs", 0,
 			       NULL, &certs);
@@ -362,11 +364,11 @@ load_ocsp(hx509_context context, struct revoke_ocsp *ocsp)
 
 	for (i = 0; i < basic.certs->len; i++) {
 	    hx509_cert c;
-	
-	    ret = hx509_cert_init(context, &basic.certs->val[i], &c);
-	    if (ret)
+
+	    c = hx509_cert_init(context, &basic.certs->val[i], NULL);
+	    if (c == NULL)
 		continue;
-	
+
 	    ret = hx509_certs_add(context, certs, c);
 	    hx509_cert_free(c);
 	    if (ret)
@@ -465,7 +467,7 @@ verify_crl(hx509_context context,
     hx509_query q;
     time_t t;
     int ret;
-	
+
     t = _hx509_Time2time_t(&crl->tbsCertList.thisUpdate);
     if (t > time_now) {
 	hx509_set_error_string(context, 0, HX509_CRL_USED_BEFORE_TIME,
@@ -487,7 +489,7 @@ verify_crl(hx509_context context,
     }
 
     _hx509_query_clear(&q);
-	
+
     /*
      * If it's the signer have CRLSIGN bit set, use that as the signer
      * cert for the certificate, otherwise, search for a certificate.
@@ -498,7 +500,7 @@ verify_crl(hx509_context context,
 	q.match = HX509_QUERY_MATCH_SUBJECT_NAME;
 	q.match |= HX509_QUERY_KU_CRLSIGN;
 	q.subject_name = &crl->tbsCertList.issuer;
-	
+
 	ret = hx509_certs_find(context, certs, &q, &signer);
 	if (ret) {
 	    hx509_set_error_string(context, HX509_ERROR_APPEND, ret,
@@ -528,11 +530,11 @@ verify_crl(hx509_context context,
 	hx509_cert crl_parent;
 
 	_hx509_query_clear(&q);
-	
+
 	q.match = HX509_QUERY_MATCH_SUBJECT_NAME;
 	q.match |= HX509_QUERY_KU_CRLSIGN;
 	q.subject_name = &_hx509_get_cert(signer)->tbsCertificate.issuer;
-	
+
 	ret = hx509_certs_find(context, certs, &q, &crl_parent);
 	if (ret) {
 	    hx509_set_error_string(context, HX509_ERROR_APPEND, ret,
@@ -563,27 +565,18 @@ out:
 }
 
 static int
-load_crl(const char *path, time_t *t, CRLCertificateList *crl)
+crl_parser(hx509_context context, const char *type,
+	   const hx509_pem_header *header,
+	   const void *data, size_t len, void *ctx)
 {
-    size_t length, size;
-    struct stat sb;
-    void *data;
+    CRLCertificateList *crl = (CRLCertificateList *)ctx;
+    size_t size;
     int ret;
 
-    memset(crl, 0, sizeof(*crl));
+    if (strcasecmp("X509 CRL", type) != 0)
+	return HX509_CRYPTO_SIG_INVALID_FORMAT;
 
-    ret = rk_undumpdata(path, &data, &length);
-    if (ret)
-	return ret;
-
-    ret = stat(path, &sb);
-    if (ret)
-	return errno;
-
-    *t = sb.st_mtime;
-
-    ret = decode_CRLCertificateList(data, length, crl, &size);
-    rk_xfree(data);
+    ret = decode_CRLCertificateList(data, len, crl, &size);
     if (ret)
 	return ret;
 
@@ -592,7 +585,45 @@ load_crl(const char *path, time_t *t, CRLCertificateList *crl)
 	free_CRLCertificateList(crl);
 	return HX509_CRYPTO_SIG_INVALID_FORMAT;
     }
+
     return 0;
+}
+
+static int
+load_crl(hx509_context context, const char *path, time_t *t, CRLCertificateList *crl)
+{
+    struct stat sb;
+    size_t length;
+    void *data;
+    FILE *f;
+    int ret;
+
+    memset(crl, 0, sizeof(*crl));
+
+    ret = stat(path, &sb);
+    if (ret)
+	return errno;
+    
+    *t = sb.st_mtime;
+	
+    if ((f = fopen(path, "r")) == NULL)
+	return errno;
+
+    rk_cloexec_file(f);
+
+    ret = hx509_pem_read(context, f, crl_parser, crl);
+    fclose(f);
+
+    if (ret == HX509_PARSING_KEY_FAILED) {
+
+	ret = rk_undumpdata(path, &data, &length);
+	if (ret)
+	    return ret;
+
+	ret = crl_parser(context, "X509 CRL", NULL, data, length, crl);
+	rk_xfree(data);
+    }
+    return ret;
 }
 
 /**
@@ -626,7 +657,7 @@ hx509_revoke_add_crl(hx509_context context,
     path += 5;
 
     for (i = 0; i < ctx->crls.len; i++) {
-	if (strcmp(ctx->crls.val[0].path, path) == 0)
+	if (strcmp(ctx->crls.val[i].path, path) == 0)
 	    return 0;
     }
 
@@ -646,7 +677,8 @@ hx509_revoke_add_crl(hx509_context context,
 	return ENOMEM;
     }
 
-    ret = load_crl(path,
+    ret = load_crl(context,
+		   path,
 		   &ctx->crls.val[ctx->crls.len].last_modfied,
 		   &ctx->crls.val[ctx->crls.len].crl);
     if (ret) {
@@ -675,7 +707,6 @@ hx509_revoke_add_crl(hx509_context context,
  *
  * @ingroup hx509_revoke
  */
-
 
 int
 hx509_revoke_verify(hx509_context context,
@@ -720,7 +751,7 @@ hx509_revoke_verify(hx509_context context,
 				   &c->tbsCertificate.serialNumber);
 	    if (ret != 0)
 		continue;
-	
+
 	    /* verify issuer hashes hash */
 	    ret = _hx509_verify_signature(context,
 					  NULL,
@@ -762,8 +793,7 @@ hx509_revoke_verify(hx509_context context,
 	    if (ocsp->ocsp.tbsResponseData.responses.val[j].nextUpdate) {
 		if (*ocsp->ocsp.tbsResponseData.responses.val[j].nextUpdate < now)
 		    continue;
-	    } else
-		/* Should force a refetch, but can we ? */;
+	    } /* else should force a refetch, but can we ? */
 
 	    return 0;
 	}
@@ -784,7 +814,7 @@ hx509_revoke_verify(hx509_context context,
 	if (ret == 0 && crl->last_modfied != sb.st_mtime) {
 	    CRLCertificateList cl;
 
-	    ret = load_crl(crl->path, &crl->last_modfied, &cl);
+	    ret = load_crl(context, crl->path, &crl->last_modfied, &cl);
 	    if (ret == 0) {
 		free_CRLCertificateList(&crl->crl);
 		crl->crl = cl;
@@ -831,12 +861,12 @@ hx509_revoke_verify(hx509_context context,
 	    t = _hx509_Time2time_t(&crl->crl.tbsCertList.revokedCertificates->val[j].revocationDate);
 	    if (t > now)
 		continue;
-	
+
 	    if (crl->crl.tbsCertList.revokedCertificates->val[j].crlEntryExtensions)
 		for (k = 0; k < crl->crl.tbsCertList.revokedCertificates->val[j].crlEntryExtensions->len; k++)
 		    if (crl->crl.tbsCertList.revokedCertificates->val[j].crlEntryExtensions->val[k].critical)
 			return HX509_CRL_UNKNOWN_EXTENSION;
-	
+
 	    hx509_set_error_string(context, 0,
 				   HX509_CERT_REVOKED,
 				   "Certificate revoked by issuer in CRL");
@@ -1005,7 +1035,7 @@ hx509_ocsp_request(hx509_context context,
 	}
 
 	es = req.tbsRequest.requestExtensions;
-	
+
 	es->val = calloc(es->len, sizeof(es->val[0]));
 	if (es->val == NULL) {
 	    ret = ENOMEM;
@@ -1024,7 +1054,7 @@ hx509_ocsp_request(hx509_context context,
 	    goto out;
 	}
 	es->val[0].extnValue.length = 10;
-	
+
 	ret = RAND_bytes(es->val[0].extnValue.data,
 			 es->val[0].extnValue.length);
 	if (ret != 1) {
@@ -1067,6 +1097,140 @@ printable_time(time_t t)
     return s;
 }
 
+/*
+ *
+ */
+
+static int
+print_ocsp(hx509_context context, struct revoke_ocsp *ocsp, FILE *out)
+{
+    int ret = 0;
+    size_t i;
+
+    fprintf(out, "signer: ");
+
+    switch(ocsp->ocsp.tbsResponseData.responderID.element) {
+    case choice_OCSPResponderID_byName: {
+	hx509_name n;
+	char *s;
+	_hx509_name_from_Name(&ocsp->ocsp.tbsResponseData.responderID.u.byName, &n);
+	hx509_name_to_string(n, &s);
+	hx509_name_free(&n);
+	fprintf(out, " byName: %s\n", s);
+	free(s);
+	break;
+    }
+    case choice_OCSPResponderID_byKey: {
+	char *s;
+	hex_encode(ocsp->ocsp.tbsResponseData.responderID.u.byKey.data,
+		   ocsp->ocsp.tbsResponseData.responderID.u.byKey.length,
+		   &s);
+	fprintf(out, " byKey: %s\n", s);
+	free(s);
+	break;
+    }
+    default:
+	_hx509_abort("choice_OCSPResponderID unknown");
+	break;
+    }
+
+    fprintf(out, "producedAt: %s\n",
+	    printable_time(ocsp->ocsp.tbsResponseData.producedAt));
+
+    fprintf(out, "replies: %d\n", ocsp->ocsp.tbsResponseData.responses.len);
+
+    for (i = 0; i < ocsp->ocsp.tbsResponseData.responses.len; i++) {
+	const char *status;
+	switch (ocsp->ocsp.tbsResponseData.responses.val[i].certStatus.element) {
+	case choice_OCSPCertStatus_good:
+	    status = "good";
+	    break;
+	case choice_OCSPCertStatus_revoked:
+	    status = "revoked";
+	    break;
+	case choice_OCSPCertStatus_unknown:
+	    status = "unknown";
+	    break;
+	default:
+	    status = "element unknown";
+	}
+
+	fprintf(out, "\t%llu. status: %s\n", (unsigned long long)i, status);
+
+	fprintf(out, "\tthisUpdate: %s\n",
+		printable_time(ocsp->ocsp.tbsResponseData.responses.val[i].thisUpdate));
+	if (ocsp->ocsp.tbsResponseData.responses.val[i].nextUpdate)
+	    fprintf(out, "\tproducedAt: %s\n",
+		    printable_time(ocsp->ocsp.tbsResponseData.responses.val[i].thisUpdate));
+
+    }
+
+    fprintf(out, "appended certs:\n");
+    if (ocsp->certs)
+	ret = hx509_certs_iter_f(context, ocsp->certs, hx509_ci_print_names, out);
+
+    return ret;
+}
+	   
+static int
+print_crl(hx509_context context, struct revoke_crl *crl, FILE *out)
+{
+    {
+	hx509_name n;
+	char *s;
+	_hx509_name_from_Name(&crl->crl.tbsCertList.issuer, &n);
+	hx509_name_to_string(n, &s);
+	hx509_name_free(&n);
+	fprintf(out, " issuer: %s\n", s);
+	free(s);
+    }
+
+    fprintf(out, " thisUpdate: %s\n", 
+	    printable_time(_hx509_Time2time_t(&crl->crl.tbsCertList.thisUpdate)));
+
+    return 0;
+}
+
+
+/*
+ *
+ */
+
+int
+hx509_revoke_print(hx509_context context,
+		   hx509_revoke_ctx ctx,
+		   FILE *out)
+{
+    int saved_ret = 0, ret;
+    size_t n;
+
+    for (n = 0; n < ctx->ocsps.len; n++) {
+	struct revoke_ocsp *ocsp = &ctx->ocsps.val[n];
+
+	fprintf(out, "OCSP %s\n", ocsp->path);
+
+	ret = print_ocsp(context, ocsp, out);
+	if (ret) {
+	    fprintf(out, "failure printing OCSP: %d\n", ret);
+	    saved_ret = ret;
+	}
+    }
+
+    for (n = 0; n < ctx->crls.len; n++) {
+	struct revoke_crl *crl = &ctx->crls.val[n];
+
+	fprintf(out, "CRL %s\n", crl->path);
+
+	ret = print_crl(context, crl, out);
+	if (ret) {
+	    fprintf(out, "failure printing CRL: %d\n", ret);
+	    saved_ret = ret;
+	}
+    }
+    return saved_ret;
+
+}
+
 /**
  * Print the OCSP reply stored in a file.
  *
@@ -1083,7 +1247,7 @@ int
 hx509_revoke_ocsp_print(hx509_context context, const char *path, FILE *out)
 {
     struct revoke_ocsp ocsp;
-    int ret, i;
+    int ret;
 
     if (out == NULL)
 	out = stdout;
@@ -1100,67 +1264,7 @@ hx509_revoke_ocsp_print(hx509_context context, const char *path, FILE *out)
 	return ret;
     }
 
-    fprintf(out, "signer: ");
-
-    switch(ocsp.ocsp.tbsResponseData.responderID.element) {
-    case choice_OCSPResponderID_byName: {
-	hx509_name n;
-	char *s;
-	_hx509_name_from_Name(&ocsp.ocsp.tbsResponseData.responderID.u.byName, &n);
-	hx509_name_to_string(n, &s);
-	hx509_name_free(&n);
-	fprintf(out, " byName: %s\n", s);
-	free(s);
-	break;
-    }
-    case choice_OCSPResponderID_byKey: {
-	char *s;
-	hex_encode(ocsp.ocsp.tbsResponseData.responderID.u.byKey.data,
-		   ocsp.ocsp.tbsResponseData.responderID.u.byKey.length,
-		   &s);
-	fprintf(out, " byKey: %s\n", s);
-	free(s);
-	break;
-    }
-    default:
-	_hx509_abort("choice_OCSPResponderID unknown");
-	break;
-    }
-
-    fprintf(out, "producedAt: %s\n",
-	    printable_time(ocsp.ocsp.tbsResponseData.producedAt));
-
-    fprintf(out, "replies: %d\n", ocsp.ocsp.tbsResponseData.responses.len);
-
-    for (i = 0; i < ocsp.ocsp.tbsResponseData.responses.len; i++) {
-	const char *status;
-	switch (ocsp.ocsp.tbsResponseData.responses.val[i].certStatus.element) {
-	case choice_OCSPCertStatus_good:
-	    status = "good";
-	    break;
-	case choice_OCSPCertStatus_revoked:
-	    status = "revoked";
-	    break;
-	case choice_OCSPCertStatus_unknown:
-	    status = "unknown";
-	    break;
-	default:
-	    status = "element unknown";
-	}
-
-	fprintf(out, "\t%d. status: %s\n", i, status);
-
-	fprintf(out, "\tthisUpdate: %s\n",
-		printable_time(ocsp.ocsp.tbsResponseData.responses.val[i].thisUpdate));
-	if (ocsp.ocsp.tbsResponseData.responses.val[i].nextUpdate)
-	    fprintf(out, "\tproducedAt: %s\n",
-		    printable_time(ocsp.ocsp.tbsResponseData.responses.val[i].thisUpdate));
-
-    }
-
-    fprintf(out, "appended certs:\n");
-    if (ocsp.certs)
-	ret = hx509_certs_iter_f(context, ocsp.certs, hx509_ci_print_names, out);
+    ret = print_ocsp(context, &ocsp, out);
 
     free_ocsp(&ocsp);
     return ret;
@@ -1195,7 +1299,8 @@ hx509_ocsp_verify(hx509_context context,
 {
     const Certificate *c = _hx509_get_cert(cert);
     OCSPBasicOCSPResponse basic;
-    int ret, i;
+    int ret;
+    size_t i;
 
     if (now == 0)
 	now = time(NULL);
@@ -1215,7 +1320,7 @@ hx509_ocsp_verify(hx509_context context,
 			       &c->tbsCertificate.serialNumber);
 	if (ret != 0)
 	    continue;
-	
+
 	/* verify issuer hashes hash */
 	ret = _hx509_verify_signature(context,
 				      NULL,
@@ -1255,7 +1360,7 @@ hx509_ocsp_verify(hx509_context context,
     {
 	hx509_name name;
 	char *subject;
-	
+
 	ret = hx509_cert_get_subject(cert, &name);
 	if (ret) {
 	    hx509_clear_error_string(context);

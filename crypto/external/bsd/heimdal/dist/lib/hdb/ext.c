@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.c,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $	*/
+/*	$NetBSD: ext.c,v 1.1.1.1.6.1 2017/08/30 07:10:58 snj Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2005 Kungliga Tekniska Högskolan
@@ -39,7 +39,7 @@
 krb5_error_code
 hdb_entry_check_mandatory(krb5_context context, const hdb_entry *ent)
 {
-    int i;
+    size_t i;
 
     if (ent->extensions == NULL)
 	return 0;
@@ -65,13 +65,13 @@ hdb_entry_check_mandatory(krb5_context context, const hdb_entry *ent)
 HDB_extension *
 hdb_find_extension(const hdb_entry *entry, int type)
 {
-    int i;
+    size_t i;
 
     if (entry->extensions == NULL)
 	return NULL;
 
     for (i = 0; i < entry->extensions->len; i++)
-	if (entry->extensions->val[i].data.element == type)
+	if (entry->extensions->val[i].data.element == (unsigned)type)
 	    return &entry->extensions->val[i];
     return NULL;
 }
@@ -103,7 +103,7 @@ hdb_replace_extension(krb5_context context,
 	ext2 = hdb_find_extension(entry, ext->data.element);
     } else {
 	/*
-	 * This is an unknown extention, and we are asked to replace a
+	 * This is an unknown extension, and we are asked to replace a
 	 * possible entry in `entry' that is of the same type. This
 	 * might seem impossible, but ASN.1 CHOICE comes to our
 	 * rescue. The first tag in each branch in the CHOICE is
@@ -114,7 +114,7 @@ hdb_replace_extension(krb5_context context,
 	Der_type replace_type, list_type;
 	unsigned int replace_tag, list_tag;
 	size_t size;
-	int i;
+	size_t i;
 
 	ret = der_get_tag(ext->data.u.asn1_ellipsis.data,
 			  ext->data.u.asn1_ellipsis.length,
@@ -122,7 +122,7 @@ hdb_replace_extension(krb5_context context,
 			  &size);
 	if (ret) {
 	    krb5_set_error_message(context, ret, "hdb: failed to decode "
-				   "replacement hdb extention");
+				   "replacement hdb extension");
 	    return ret;
 	}
 
@@ -138,7 +138,7 @@ hdb_replace_extension(krb5_context context,
 			      &size);
 	    if (ret) {
 		krb5_set_error_message(context, ret, "hdb: failed to decode "
-				       "present hdb extention");
+				       "present hdb extension");
 		return ret;
 	    }
 
@@ -155,7 +155,7 @@ hdb_replace_extension(krb5_context context,
 	ret = copy_HDB_extension(ext, ext2);
 	if (ret)
 	    krb5_set_error_message(context, ret, "hdb: failed to copy replacement "
-				   "hdb extention");
+				   "hdb extension");
 	return ret;
     }
 
@@ -182,13 +182,13 @@ hdb_clear_extension(krb5_context context,
 		    hdb_entry *entry,
 		    int type)
 {
-    int i;
+    size_t i;
 
     if (entry->extensions == NULL)
 	return 0;
 
     for (i = 0; i < entry->extensions->len; i++) {
-	if (entry->extensions->val[i].data.element == type) {
+	if (entry->extensions->val[i].data.element == (unsigned)type) {
 	    free_HDB_extension(&entry->extensions->val[i]);
 	    memmove(&entry->extensions->val[i],
 		    &entry->extensions->val[i + 1],
@@ -288,7 +288,7 @@ hdb_entry_get_password(krb5_context context, HDB *db,
 
     ext = hdb_find_extension(entry, choice_HDB_extension_data_password);
     if (ext) {
-	heim_utf8_string str;
+	heim_utf8_string xstr;
 	heim_octet_string pw;
 
 	if (db->hdb_master_key_set && ext->data.u.password.mkvno) {
@@ -316,13 +316,13 @@ hdb_entry_get_password(krb5_context context, HDB *db,
 	    return ret;
 	}
 
-	str = pw.data;
-	if (str[pw.length - 1] != '\0') {
+	xstr = pw.data;
+	if (xstr[pw.length - 1] != '\0') {
 	    krb5_set_error_message(context, EINVAL, "malformed password");
 	    return EINVAL;
 	}
 
-	*p = strdup(str);
+	*p = strdup(xstr);
 
 	der_free_octet_string(&pw);
 	if (*p == NULL) {
@@ -434,3 +434,101 @@ hdb_entry_get_aliases(const hdb_entry *entry, const HDB_Ext_Aliases **a)
 
     return 0;
 }
+
+unsigned int
+hdb_entry_get_kvno_diff_clnt(const hdb_entry *entry)
+{
+    const HDB_extension *ext;
+
+    ext = hdb_find_extension(entry,
+			     choice_HDB_extension_data_hist_kvno_diff_clnt);
+    if (ext)
+	return ext->data.u.hist_kvno_diff_clnt;
+    return 1;
+}
+
+krb5_error_code
+hdb_entry_set_kvno_diff_clnt(krb5_context context, hdb_entry *entry,
+			     unsigned int diff)
+{
+    HDB_extension ext;
+
+    if (diff > 16384)
+	return EINVAL;
+    ext.mandatory = FALSE;
+    ext.data.element = choice_HDB_extension_data_hist_kvno_diff_clnt;
+    ext.data.u.hist_kvno_diff_clnt = diff;
+    return hdb_replace_extension(context, entry, &ext);
+}
+
+krb5_error_code
+hdb_entry_clear_kvno_diff_clnt(krb5_context context, hdb_entry *entry)
+{
+    return hdb_clear_extension(context, entry,
+			       choice_HDB_extension_data_hist_kvno_diff_clnt);
+}
+
+unsigned int
+hdb_entry_get_kvno_diff_svc(const hdb_entry *entry)
+{
+    const HDB_extension *ext;
+
+    ext = hdb_find_extension(entry,
+			     choice_HDB_extension_data_hist_kvno_diff_svc);
+    if (ext)
+	return ext->data.u.hist_kvno_diff_svc;
+    return 1024; /* max_life effectively provides a better default */
+}
+
+krb5_error_code
+hdb_entry_set_kvno_diff_svc(krb5_context context, hdb_entry *entry,
+			    unsigned int diff)
+{
+    HDB_extension ext;
+
+    if (diff > 16384)
+	return EINVAL;
+    ext.mandatory = FALSE;
+    ext.data.element = choice_HDB_extension_data_hist_kvno_diff_svc;
+    ext.data.u.hist_kvno_diff_svc = diff;
+    return hdb_replace_extension(context, entry, &ext);
+}
+
+krb5_error_code
+hdb_entry_clear_kvno_diff_svc(krb5_context context, hdb_entry *entry)
+{
+    return hdb_clear_extension(context, entry,
+			       choice_HDB_extension_data_hist_kvno_diff_svc);
+}
+
+krb5_error_code
+hdb_set_last_modified_by(krb5_context context, hdb_entry *entry,
+                         krb5_principal modby, time_t modtime)
+{
+    krb5_error_code ret;
+    Event *old_ev;
+    Event *ev;
+
+    old_ev = entry->modified_by;
+
+    ev = calloc(1, sizeof (*ev));
+    if (!ev)
+        return ENOMEM;
+    if (modby)
+        ret = krb5_copy_principal(context, modby, &ev->principal);
+    else
+        ret = krb5_parse_name(context, "root/admin", &ev->principal);
+    if (ret) {
+        free(ev);
+        return ret;
+    }
+    ev->time = modtime;
+    if (!ev->time)
+        time(&ev->time);
+
+    entry->modified_by = ev;
+    if (old_ev)
+        free_Event(old_ev);
+    return 0;
+}
+

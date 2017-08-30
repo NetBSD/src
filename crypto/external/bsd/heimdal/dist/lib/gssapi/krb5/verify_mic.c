@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_mic.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: verify_mic.c,v 1.1.1.1.6.1 2017/08/30 07:10:54 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -46,7 +46,7 @@ verify_mic_des
             const gss_buffer_t token_buffer,
             gss_qop_t * qop_state,
 	    krb5_keyblock *key,
-	    char *type
+	    const char *type
 	    )
 {
   u_char *p;
@@ -144,7 +144,7 @@ verify_mic_des3
             const gss_buffer_t token_buffer,
             gss_qop_t * qop_state,
 	    krb5_keyblock *key,
-	    char *type
+	    const char *type
 	    )
 {
   u_char *p;
@@ -253,6 +253,15 @@ retry:
   csum.checksum.length = 20;
   csum.checksum.data   = p + 8;
 
+  krb5_crypto_destroy (context, crypto);
+  ret = krb5_crypto_init(context, key,
+			 ETYPE_DES3_CBC_SHA1, &crypto);
+  if (ret) {
+      free (tmp);
+      *minor_status = ret;
+      return GSS_S_FAILURE;
+  }
+
   ret = krb5_verify_checksum (context, crypto,
 			      KRB5_KU_USAGE_SIGN,
 			      tmp, message_buffer->length + 8,
@@ -278,12 +287,11 @@ _gsskrb5_verify_mic_internal
             const gss_buffer_t message_buffer,
             const gss_buffer_t token_buffer,
             gss_qop_t * qop_state,
-	    char * type
+	    const char * type
 	    )
 {
     krb5_keyblock *key;
     OM_uint32 ret;
-    krb5_keytype keytype;
 
     if (ctx->more_flags & IS_CFX)
         return _gssapi_verify_mic_cfx (minor_status, ctx,
@@ -298,9 +306,11 @@ _gsskrb5_verify_mic_internal
 	return GSS_S_FAILURE;
     }
     *minor_status = 0;
-    krb5_enctype_to_keytype (context, key->keytype, &keytype);
-    switch (keytype) {
-    case KEYTYPE_DES :
+
+    switch (key->keytype) {
+    case KRB5_ENCTYPE_DES_CBC_CRC :
+    case KRB5_ENCTYPE_DES_CBC_MD4 :
+    case KRB5_ENCTYPE_DES_CBC_MD5 :
 #ifdef HEIM_WEAK_CRYPTO
 	ret = verify_mic_des (minor_status, ctx, context,
 			      message_buffer, token_buffer, qop_state, key,
@@ -309,13 +319,14 @@ _gsskrb5_verify_mic_internal
       ret = GSS_S_FAILURE;
 #endif
 	break;
-    case KEYTYPE_DES3 :
+    case KRB5_ENCTYPE_DES3_CBC_MD5 :
+    case KRB5_ENCTYPE_DES3_CBC_SHA1 :
 	ret = verify_mic_des3 (minor_status, ctx, context,
 			       message_buffer, token_buffer, qop_state, key,
 			       type);
 	break;
-    case KEYTYPE_ARCFOUR :
-    case KEYTYPE_ARCFOUR_56 :
+    case KRB5_ENCTYPE_ARCFOUR_HMAC_MD5:
+    case KRB5_ENCTYPE_ARCFOUR_HMAC_MD5_56:
 	ret = _gssapi_verify_mic_arcfour (minor_status, ctx,
 					  context,
 					  message_buffer, token_buffer,
@@ -332,7 +343,7 @@ _gsskrb5_verify_mic_internal
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_verify_mic
            (OM_uint32 * minor_status,
-            const gss_ctx_id_t context_handle,
+            gss_const_ctx_id_t context_handle,
             const gss_buffer_t message_buffer,
             const gss_buffer_t token_buffer,
             gss_qop_t * qop_state
@@ -350,7 +361,7 @@ _gsskrb5_verify_mic
 				       (gsskrb5_ctx)context_handle,
 				       context,
 				       message_buffer, token_buffer,
-				       qop_state, "\x01\x01");
+				       qop_state, (void *)(intptr_t)"\x01\x01");
 
     return ret;
 }

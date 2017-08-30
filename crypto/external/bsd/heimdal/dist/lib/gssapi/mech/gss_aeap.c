@@ -1,8 +1,8 @@
-/*	$NetBSD: gss_aeap.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_aeap.c,v 1.1.1.1.6.1 2017/08/30 07:10:54 snj Exp $	*/
 
 /*
  * AEAD support
- */ 
+ */
 
 #include "mech_locl.h"
 
@@ -92,7 +92,7 @@ gss_unwrap_iov(OM_uint32 *minor_status,
 	       int iov_count)
 {
 	struct _gss_context *ctx = (struct _gss_context *) context_handle;
-	gssapi_mech_interface m;	  
+	gssapi_mech_interface m;
 
 	if (minor_status)
 	    *minor_status = 0;
@@ -170,7 +170,7 @@ gss_release_iov_buffer(OM_uint32 *minor_status,
 		       int iov_count)
 {
     OM_uint32 junk;
-    size_t i;
+    int i;
 
     if (minor_status)
 	*minor_status = 0;
@@ -201,7 +201,7 @@ gss_OID_desc GSSAPI_LIB_FUNCTION __gss_c_attr_stream_sizes_oid_desc =
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_context_query_attributes(OM_uint32 *minor_status,
-			     const gss_ctx_id_t context_handle,
+			     gss_const_ctx_id_t context_handle,
 			     const gss_OID attribute,
 			     void *data,
 			     size_t len)
@@ -215,4 +215,122 @@ gss_context_query_attributes(OM_uint32 *minor_status,
     }
 
     return GSS_S_FAILURE;
+}
+
+/*
+ * AEAD wrap API for a single piece of associated data, for compatibility
+ * with MIT and as specified by draft-howard-gssapi-aead-00.txt.
+ *
+ * @ingroup gssapi
+ */
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_wrap_aead(OM_uint32 *minor_status,
+	      gss_ctx_id_t context_handle,
+              int conf_req_flag,
+              gss_qop_t qop_req,
+              gss_buffer_t input_assoc_buffer,
+              gss_buffer_t input_payload_buffer,
+              int *conf_state,
+              gss_buffer_t output_message_buffer)
+{
+    OM_uint32 major_status, tmp, flags = 0;
+    gss_iov_buffer_desc iov[5];
+    size_t i;
+    unsigned char *p;
+
+    memset(iov, 0, sizeof(iov));
+
+    iov[0].type = GSS_IOV_BUFFER_TYPE_HEADER;
+
+    iov[1].type = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
+    if (input_assoc_buffer)
+	iov[1].buffer = *input_assoc_buffer;
+
+    iov[2].type = GSS_IOV_BUFFER_TYPE_DATA;
+    if (input_payload_buffer)
+	iov[2].buffer.length = input_payload_buffer->length;
+
+    gss_inquire_context(minor_status, context_handle, NULL, NULL,
+			NULL, NULL, &flags, NULL, NULL);
+
+    /* krb5 mech rejects padding/trailer if DCE-style is set */
+    iov[3].type = (flags & GSS_C_DCE_STYLE) ? GSS_IOV_BUFFER_TYPE_EMPTY
+					    : GSS_IOV_BUFFER_TYPE_PADDING;
+    iov[4].type = (flags & GSS_C_DCE_STYLE) ? GSS_IOV_BUFFER_TYPE_EMPTY
+					    : GSS_IOV_BUFFER_TYPE_TRAILER;
+
+    major_status = gss_wrap_iov_length(minor_status, context_handle,
+				       conf_req_flag, qop_req, conf_state,
+				       iov, 5);
+    if (GSS_ERROR(major_status))
+	return major_status;
+
+    for (i = 0, output_message_buffer->length = 0; i < 5; i++) {
+        if (GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_SIGN_ONLY)
+	    continue;
+
+	output_message_buffer->length += iov[i].buffer.length;
+    }
+
+    output_message_buffer->value = malloc(output_message_buffer->length);
+    if (output_message_buffer->value == NULL) {
+	*minor_status = ENOMEM;
+	return GSS_S_FAILURE;
+    }
+
+    for (i = 0, p = output_message_buffer->value; i < 5; i++) {
+	if (GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_SIGN_ONLY)
+	    continue;
+	else if (GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_DATA)
+	    memcpy(p, input_payload_buffer->value, input_payload_buffer->length);
+
+	iov[i].buffer.value = p;
+	p += iov[i].buffer.length;
+    }
+
+    major_status = gss_wrap_iov(minor_status, context_handle, conf_req_flag,
+				qop_req, conf_state, iov, 5);
+    if (GSS_ERROR(major_status))
+        gss_release_buffer(&tmp, output_message_buffer);
+
+    return major_status;
+}
+
+/*
+ * AEAD unwrap for a single piece of associated data, for compatibility
+ * with MIT and as specified by draft-howard-gssapi-aead-00.txt.
+ *
+ * @ingroup gssapi
+ */
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_unwrap_aead(OM_uint32 *minor_status,
+		gss_ctx_id_t context_handle,
+		gss_buffer_t input_message_buffer,
+		gss_buffer_t input_assoc_buffer,
+		gss_buffer_t output_payload_buffer,
+		int *conf_state,
+		gss_qop_t *qop_state)
+{
+    OM_uint32 major_status, tmp;
+    gss_iov_buffer_desc iov[3];
+
+    memset(iov, 0, sizeof(iov));
+
+    iov[0].type = GSS_IOV_BUFFER_TYPE_STREAM;
+    iov[0].buffer = *input_message_buffer;
+
+    iov[1].type = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
+    if (input_assoc_buffer)
+	iov[1].buffer = *input_assoc_buffer;
+
+    iov[2].type = GSS_IOV_BUFFER_TYPE_DATA | GSS_IOV_BUFFER_FLAG_ALLOCATE;
+
+    major_status = gss_unwrap_iov(minor_status, context_handle, conf_state,
+				  qop_state, iov, 3);
+    if (GSS_ERROR(major_status))
+	gss_release_iov_buffer(&tmp, &iov[2], 1);
+    else
+	*output_payload_buffer = iov[2].buffer;
+
+    return major_status;
 }

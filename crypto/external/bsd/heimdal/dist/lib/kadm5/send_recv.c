@@ -1,4 +1,4 @@
-/*	$NetBSD: send_recv.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $	*/
+/*	$NetBSD: send_recv.c,v 1.1.1.1.6.1 2017/08/30 07:11:00 snj Exp $	*/
 
 /*
  * Copyright (c) 1997-2003, 2006 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: send_recv.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $");
+__RCSID("$NetBSD: send_recv.c,v 1.1.1.1.6.1 2017/08/30 07:11:00 snj Exp $");
 
 kadm5_ret_t
 _kadm5_client_send(kadm5_client_context *context, krb5_storage *sp)
@@ -45,7 +45,7 @@ _kadm5_client_send(kadm5_client_context *context, krb5_storage *sp)
     size_t len;
     krb5_storage *sock;
 
-    assert(context->sock != -1);
+    assert(context->sock != rk_INVALID_SOCKET);
 
     len = krb5_storage_seek(sp, 0, SEEK_CUR);
     ret = krb5_data_alloc(&msg, len);
@@ -61,7 +61,7 @@ _kadm5_client_send(kadm5_client_context *context, krb5_storage *sp)
     if(ret)
 	return ret;
 
-    sock = krb5_storage_from_fd(context->sock);
+    sock = krb5_storage_from_socket(context->sock);
     if(sock == NULL) {
 	krb5_clear_error_message(context->context);
 	krb5_data_free(&out);
@@ -83,7 +83,7 @@ _kadm5_client_recv(kadm5_client_context *context, krb5_data *reply)
     krb5_data data;
     krb5_storage *sock;
 
-    sock = krb5_storage_from_fd(context->sock);
+    sock = krb5_storage_from_socket(context->sock);
     if(sock == NULL) {
 	krb5_clear_error_message(context->context);
 	return ENOMEM;

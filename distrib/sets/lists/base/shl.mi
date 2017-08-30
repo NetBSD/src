@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.616.2.19 2017/08/15 05:27:54 snj Exp $
+# $NetBSD: shl.mi,v 1.616.2.20 2017/08/30 07:11:11 snj Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -155,8 +155,8 @@
 ./usr/lib/libarchive.so.3			base-sys-shlib
 ./usr/lib/libarchive.so.3.1			base-sys-shlib
 ./usr/lib/libasn1.so				base-krb5-shlib		kerberos
-./usr/lib/libasn1.so.9				base-krb5-shlib		kerberos
-./usr/lib/libasn1.so.9.0			base-krb5-shlib		kerberos
+./usr/lib/libasn1.so.10				base-krb5-shlib		kerberos
+./usr/lib/libasn1.so.10.0			base-krb5-shlib		kerberos
 ./usr/lib/libavl.so				base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libavl.so.0				base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libavl.so.0.0          		base-zfs-shlib		zfs,dynamicroot
@@ -179,8 +179,8 @@
 ./usr/lib/libc.so.12.181			base-sys-shlib
 ./usr/lib/libcdk.so				base-obsolete		obsolete
 ./usr/lib/libcom_err.so				base-krb5-shlib		kerberos
-./usr/lib/libcom_err.so.7			base-krb5-shlib		kerberos
-./usr/lib/libcom_err.so.7.0			base-krb5-shlib		kerberos
+./usr/lib/libcom_err.so.8			base-krb5-shlib		kerberos
+./usr/lib/libcom_err.so.8.0			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so				base-sys-shlib
 ./usr/lib/libcrypt.so.1				base-sys-shlib
 ./usr/lib/libcrypt.so.1.0			base-sys-shlib
@@ -249,20 +249,20 @@
 ./usr/lib/libgomp.so.1				base-sys-shlib		gcc=45
 ./usr/lib/libgomp.so.1.0			base-sys-shlib		gcc=45
 ./usr/lib/libgssapi.so				base-krb5-shlib		kerberos
-./usr/lib/libgssapi.so.10			base-krb5-shlib		kerberos
-./usr/lib/libgssapi.so.10.0			base-krb5-shlib		kerberos
+./usr/lib/libgssapi.so.11			base-krb5-shlib		kerberos
+./usr/lib/libgssapi.so.11.0			base-krb5-shlib		kerberos
 ./usr/lib/libhdb.so				base-krb5-shlib		kerberos
-./usr/lib/libhdb.so.14				base-krb5-shlib		kerberos
-./usr/lib/libhdb.so.14.0			base-krb5-shlib		kerberos
+./usr/lib/libhdb.so.15				base-krb5-shlib		kerberos
+./usr/lib/libhdb.so.15.0			base-krb5-shlib		kerberos
 ./usr/lib/libheimbase.so			base-krb5-shlib		kerberos
-./usr/lib/libheimbase.so.1			base-krb5-shlib		kerberos
-./usr/lib/libheimbase.so.1.0			base-krb5-shlib		kerberos
+./usr/lib/libheimbase.so.2			base-krb5-shlib		kerberos
+./usr/lib/libheimbase.so.2.0			base-krb5-shlib		kerberos
 ./usr/lib/libheimntlm.so			base-krb5-shlib		kerberos
-./usr/lib/libheimntlm.so.4			base-krb5-shlib		kerberos
-./usr/lib/libheimntlm.so.4.0			base-krb5-shlib		kerberos
+./usr/lib/libheimntlm.so.5			base-krb5-shlib		kerberos
+./usr/lib/libheimntlm.so.5.0			base-krb5-shlib		kerberos
 ./usr/lib/libhx509.so				base-krb5-shlib		kerberos
-./usr/lib/libhx509.so.5				base-krb5-shlib		kerberos
-./usr/lib/libhx509.so.5.0			base-krb5-shlib		kerberos
+./usr/lib/libhx509.so.6				base-krb5-shlib		kerberos
+./usr/lib/libhx509.so.6.0			base-krb5-shlib		kerberos
 ./usr/lib/libintl.so				base-sys-shlib
 ./usr/lib/libintl.so.1				base-sys-shlib
 ./usr/lib/libintl.so.1.0			base-sys-shlib
@@ -289,22 +289,22 @@
 ./usr/lib/libisns.so.0.0			base-isns-shlib	
 ./usr/lib/libkadm.so				base-obsolete		obsolete
 ./usr/lib/libkadm5clnt.so			base-krb5-shlib		kerberos
-./usr/lib/libkadm5clnt.so.13			base-krb5-shlib		kerberos
-./usr/lib/libkadm5clnt.so.13.0			base-krb5-shlib		kerberos
+./usr/lib/libkadm5clnt.so.14			base-krb5-shlib		kerberos
+./usr/lib/libkadm5clnt.so.14.0			base-krb5-shlib		kerberos
 ./usr/lib/libkadm5srv.so			base-krb5-shlib		kerberos
-./usr/lib/libkadm5srv.so.14			base-krb5-shlib		kerberos
-./usr/lib/libkadm5srv.so.14.0			base-krb5-shlib		kerberos
+./usr/lib/libkadm5srv.so.15			base-krb5-shlib		kerberos
+./usr/lib/libkadm5srv.so.15.0			base-krb5-shlib		kerberos
 ./usr/lib/libkafs.so				base-krb5-shlib		kerberos
-./usr/lib/libkafs.so.12				base-krb5-shlib		kerberos
-./usr/lib/libkafs.so.12.0			base-krb5-shlib		kerberos
+./usr/lib/libkafs.so.13				base-krb5-shlib		kerberos
+./usr/lib/libkafs.so.13.0			base-krb5-shlib		kerberos
 ./usr/lib/libkdc.so				base-krb5-shlib		kerberos
-./usr/lib/libkdc.so.2				base-krb5-shlib		kerberos
-./usr/lib/libkdc.so.2.0				base-krb5-shlib		kerberos
+./usr/lib/libkdc.so.3				base-krb5-shlib		kerberos
+./usr/lib/libkdc.so.3.0				base-krb5-shlib		kerberos
 ./usr/lib/libkdb.so				base-obsolete		obsolete
 ./usr/lib/libkrb.so				base-obsolete		obsolete
 ./usr/lib/libkrb5.so				base-krb5-shlib		kerberos
-./usr/lib/libkrb5.so.26				base-krb5-shlib		kerberos
-./usr/lib/libkrb5.so.26.0			base-krb5-shlib		kerberos
+./usr/lib/libkrb5.so.27				base-krb5-shlib		kerberos
+./usr/lib/libkrb5.so.27.0			base-krb5-shlib		kerberos
 ./usr/lib/libkstream.so				base-obsolete		obsolete
 ./usr/lib/libkvm.so				base-sys-shlib
 ./usr/lib/libkvm.so.6				base-sys-shlib
@@ -408,8 +408,8 @@
 ./usr/lib/libresolv.so.2			base-net-shlib
 ./usr/lib/libresolv.so.2.0			base-net-shlib
 ./usr/lib/libroken.so				base-krb5-shlib		kerberos
-./usr/lib/libroken.so.19			base-krb5-shlib		kerberos
-./usr/lib/libroken.so.19.0			base-krb5-shlib		kerberos
+./usr/lib/libroken.so.20			base-krb5-shlib		kerberos
+./usr/lib/libroken.so.20.0			base-krb5-shlib		kerberos
 ./usr/lib/librpcsvc.so				base-net-shlib
 ./usr/lib/librpcsvc.so.1			base-net-shlib
 ./usr/lib/librpcsvc.so.1.0			base-net-shlib
@@ -655,8 +655,8 @@
 ./usr/lib/libskey.so.2				base-sys-shlib		skey
 ./usr/lib/libskey.so.2.0			base-sys-shlib		skey
 ./usr/lib/libsl.so				base-krb5-shlib		kerberos
-./usr/lib/libsl.so.5				base-krb5-shlib		kerberos
-./usr/lib/libsl.so.5.0				base-krb5-shlib		kerberos
+./usr/lib/libsl.so.6				base-krb5-shlib		kerberos
+./usr/lib/libsl.so.6.0				base-krb5-shlib		kerberos
 ./usr/lib/libsqlite3.so				base-sys-shlib
 ./usr/lib/libsqlite3.so.1			base-sys-shlib
 ./usr/lib/libsqlite3.so.1.1			base-sys-shlib
@@ -702,8 +702,8 @@
 ./usr/lib/libuutil.so.0				base-zfs-shlib		dynamicroot,zfs
 ./usr/lib/libuutil.so.0.0			base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/libwind.so				base-krb5-shlib		kerberos
-./usr/lib/libwind.so.0				base-krb5-shlib		kerberos
-./usr/lib/libwind.so.0.0			base-krb5-shlib		kerberos
+./usr/lib/libwind.so.1				base-krb5-shlib		kerberos
+./usr/lib/libwind.so.1.0			base-krb5-shlib		kerberos
 ./usr/lib/libwrap.so				base-net-shlib
 ./usr/lib/libwrap.so.1				base-net-shlib
 ./usr/lib/libwrap.so.1.0			base-net-shlib

@@ -1,4 +1,4 @@
-/*	$NetBSD: sl.h,v 1.1.1.2 2011/04/14 14:09:33 elric Exp $	*/
+/*	$NetBSD: sl.h,v 1.1.1.2.6.1 2017/08/30 07:11:03 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2004 Kungliga Tekniska Högskolan
@@ -43,10 +43,10 @@
 typedef int (*cmd_func)(int, char **);
 
 struct sl_cmd {
-  char *name;
+  const char *name;
   cmd_func func;
-  char *usage;
-  char *help;
+  const char *usage;
+  const char *help;
 };
 
 typedef struct sl_cmd SL_cmd;
@@ -63,6 +63,8 @@ int sl_make_argv(char*, int*, char***);
 void sl_apropos (SL_cmd *cmd, const char *topic);
 SL_cmd *sl_match (SL_cmd *cmds, char *cmd, int exactp);
 void sl_slc_help (SL_cmd *cmds, int argc, char **argv);
+void sl_did_you_mean(SL_cmd *cmds, const char *match);
+
 
 #ifdef __cplusplus
 }

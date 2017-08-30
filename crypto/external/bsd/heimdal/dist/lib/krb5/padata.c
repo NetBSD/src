@@ -1,4 +1,4 @@
-/*	$NetBSD: padata.c,v 1.1.1.1 2011/04/13 18:15:36 elric Exp $	*/
+/*	$NetBSD: padata.c,v 1.1.1.1.6.1 2017/08/30 07:11:01 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Kungliga Tekniska Högskolan
@@ -38,8 +38,8 @@
 KRB5_LIB_FUNCTION PA_DATA * KRB5_LIB_CALL
 krb5_find_padata(PA_DATA *val, unsigned len, int type, int *idx)
 {
-    for(; *idx < len; (*idx)++)
-	if(val[*idx].padata_type == type)
+    for(; *idx < (int)len; (*idx)++)
+	if(val[*idx].padata_type == (unsigned)type)
 	    return val + *idx;
     return NULL;
 }
@@ -51,11 +51,8 @@ krb5_padata_add(krb5_context context, METHOD_DATA *md,
     PA_DATA *pa;
 
     pa = realloc (md->val, (md->len + 1) * sizeof(*md->val));
-    if (pa == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (pa == NULL)
+	return krb5_enomem(context);
     md->val = pa;
 
     pa[md->len].padata_type = type;

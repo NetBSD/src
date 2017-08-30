@@ -1,4 +1,4 @@
-/*	$NetBSD: ks_dir.c,v 1.1.1.1 2011/04/13 18:15:11 elric Exp $	*/
+/*	$NetBSD: ks_dir.c,v 1.1.1.1.6.1 2017/08/30 07:10:58 snj Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -160,10 +160,10 @@ dir_iter(hx509_context context,
 	}
 	if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0)
 	    continue;
-	
+
 	if (asprintf(&fn, "FILE:%s/%s", (char *)data, dir->d_name) == -1)
 	    return ENOMEM;
-	
+
 	ret = hx509_certs_init(context, fn, 0, NULL, &d->certs);
 	if (ret == 0) {
 
@@ -213,7 +213,10 @@ static struct hx509_keyset_ops keyset_dir = {
     NULL,
     dir_iter_start,
     dir_iter,
-    dir_iter_end
+    dir_iter_end,
+    NULL,
+    NULL,
+    NULL
 };
 
 void

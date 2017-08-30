@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:54 elric Exp $
+# $NetBSD: Makefile,v 1.1.6.1 2017/08/30 07:11:10 snj Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -17,6 +17,8 @@ SRCS=						\
 	concat.c				\
 	cloexec.c				\
 	ct.c					\
+	dumpdata.c				\
+	detach.c				\
 	dumpdata.c				\
 	environment.c				\
 	ecalloc.c				\
@@ -38,6 +40,7 @@ SRCS=						\
 	issuid.c				\
 	k_getpwnam.c				\
 	k_getpwuid.c				\
+	memset_s.c				\
 	mini_inetd.c				\
 	net_read.c				\
 	net_write.c				\

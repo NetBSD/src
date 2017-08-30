@@ -1,4 +1,4 @@
-/*	$NetBSD: destroy_c.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: destroy_c.c,v 1.1.1.1.6.1 2017/08/30 07:10:59 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: destroy_c.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("$NetBSD: destroy_c.c,v 1.1.1.1.6.1 2017/08/30 07:10:59 snj Exp $");
 
 kadm5_ret_t
 kadm5_c_destroy(void *server_handle)
@@ -44,7 +44,7 @@ kadm5_c_destroy(void *server_handle)
 
     free(context->realm);
     free(context->admin_server);
-    close(context->sock);
+    rk_closesocket(context->sock);
     if (context->client_name)
 	free(context->client_name);
     if (context->service_name)
@@ -53,5 +53,6 @@ kadm5_c_destroy(void *server_handle)
 	krb5_auth_con_free(context->context, context->ac);
     if(context->my_context)
 	krb5_free_context(context->context);
+    free(context);
     return 0;
 }
