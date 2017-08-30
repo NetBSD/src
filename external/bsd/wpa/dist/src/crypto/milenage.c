@@ -2,14 +2,8 @@
  * 3GPP AKA - Milenage algorithm (3GPP TS 35.205, .206, .207, .208)
  * Copyright (c) 2006-2007 <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  *
  * This file implements an example authentication algorithm defined for 3GPP
  * AKA. This can be used to implement a simple HLR/AuC into hlr_auc_gw to allow
@@ -223,7 +217,7 @@ int milenage_auts(const u8 *opc, const u8 *k, const u8 *_rand, const u8 *auts,
 	for (i = 0; i < 6; i++)
 		sqn[i] = auts[i] ^ ak[i];
 	if (milenage_f1(opc, k, _rand, sqn, amf, NULL, mac_s) ||
-	    memcmp(mac_s, auts + 6, 8) != 0)
+	    os_memcmp_const(mac_s, auts + 6, 8) != 0)
 		return -1;
 	return 0;
 }
@@ -318,7 +312,7 @@ int milenage_check(const u8 *opc, const u8 *k, const u8 *sqn, const u8 *_rand,
 
 	wpa_hexdump(MSG_DEBUG, "Milenage: MAC_A", mac_a, 8);
 
-	if (os_memcmp(mac_a, autn + 8, 8) != 0) {
+	if (os_memcmp_const(mac_a, autn + 8, 8) != 0) {
 		wpa_printf(MSG_DEBUG, "Milenage: MAC mismatch");
 		wpa_hexdump(MSG_DEBUG, "Milenage: Received MAC_A",
 			    autn + 8, 8);

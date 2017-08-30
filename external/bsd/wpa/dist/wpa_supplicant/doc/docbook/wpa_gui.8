@@ -3,13 +3,13 @@
 .\" <http://shell.ipoline.com/~elmert/comp/docbook2X/> 
 .\" Please send any bug reports, improvements, comments, patches, 
 .\" etc. to Steve Cheng <steve@ggi-project.org>.
-.TH "WPA_GUI" "8" "07 September 2010" "" ""
+.TH "WPA_GUI" "8" "02 October 2016" "" ""
 
 .SH NAME
 wpa_gui \- WPA Graphical User Interface
 .SH SYNOPSIS
 
-\fBwpa_gui\fR [ \fB-p \fIpath to ctrl sockets\fB\fR ] [ \fB-i \fIifname\fB\fR ] [ \fB-t\fR ]
+\fBwpa_gui\fR [ \fB-p \fIpath to ctrl sockets\fB\fR ] [ \fB-i \fIifname\fB\fR ] [ \fB-m \fIseconds\fB\fR ] [ \fB-t\fR ] [ \fB-q\fR ]
 
 .SH "OVERVIEW"
 .PP
@@ -32,20 +32,29 @@ Specify the interface that is being
 configured. By default, choose the first interface found with
 a control socket in the socket path.
 .TP
+\fB-m seconds\fR
+Set the update interval in seconds for the signal
+strength meter. This value must be a positive integer, otherwise
+meter is not enabled (default behavior).
+.TP
 \fB-t\fR
 Start program in the system tray only (if the window
 manager supports it). By default the main status window is
 shown.
+.TP
+\fB-q\fR
+Run program in the quiet mode - do not display tray
+icon pop-up messages.
 .SH "SEE ALSO"
 .PP
 \fBwpa_cli\fR(8)
 \fBwpa_supplicant\fR(8)
 .SH "LEGAL"
 .PP
-wpa_supplicant is copyright (c) 2003-2007,
+wpa_supplicant is copyright (c) 2003-2016,
 Jouni Malinen <j@w1.fi> and
 contributors.
 All Rights Reserved.
 .PP
-This program is dual-licensed under both the GPL version 2
-and BSD license. Either license may be used at your option.
+This program is licensed under the BSD license (the one with
+advertisement clause removed).

@@ -2,14 +2,8 @@
  * WPA Supplicant / dbus-based control interface (WPS)
  * Copyright (c) 2006, Dan Williams <dcbw@redhat.com> and Red Hat, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -42,20 +36,19 @@ DBusMessage * wpas_dbus_iface_wps_pbc(DBusMessage *message,
 				   DBUS_TYPE_INVALID))
 		return wpas_dbus_new_invalid_opts_error(message, NULL);
 
-	if (!os_strcmp(arg_bssid, "any"))
-		ret = wpas_wps_start_pbc(wpa_s, NULL);
+	if (os_strcmp(arg_bssid, "any") == 0)
+		ret = wpas_wps_start_pbc(wpa_s, NULL, 0);
 	else if (!hwaddr_aton(arg_bssid, bssid))
-		ret = wpas_wps_start_pbc(wpa_s, bssid);
+		ret = wpas_wps_start_pbc(wpa_s, bssid, 0);
 	else {
 		return wpas_dbus_new_invalid_opts_error(message,
 							"Invalid BSSID");
 	}
 
 	if (ret < 0) {
-		return dbus_message_new_error(message,
-					      WPAS_ERROR_WPS_PBC_ERROR,
-					      "Could not start PBC "
-					      "negotiation");
+		return dbus_message_new_error(
+			message, WPAS_ERROR_WPS_PBC_ERROR,
+			"Could not start PBC negotiation");
 	}
 
 	return wpas_dbus_new_success_reply(message);
@@ -79,12 +72,13 @@ DBusMessage * wpas_dbus_iface_wps_pin(DBusMessage *message,
 	char *pin = NULL;
 	u8 bssid[ETH_ALEN], *_bssid = NULL;
 	int ret = 0;
+	char npin[9];
 
 	if (!dbus_message_get_args(message, NULL, DBUS_TYPE_STRING, &arg_bssid,
 				   DBUS_TYPE_STRING, &pin, DBUS_TYPE_INVALID))
 		return wpas_dbus_new_invalid_opts_error(message, NULL);
 
-	if (!os_strcmp(arg_bssid, "any"))
+	if (os_strcmp(arg_bssid, "any") == 0)
 		_bssid = NULL;
 	else if (!hwaddr_aton(arg_bssid, bssid))
 		_bssid = bssid;
@@ -94,9 +88,11 @@ DBusMessage * wpas_dbus_iface_wps_pin(DBusMessage *message,
 	}
 
 	if (os_strlen(pin) > 0)
-		ret = wpas_wps_start_pin(wpa_s, _bssid, pin);
+		ret = wpas_wps_start_pin(wpa_s, _bssid, pin, 0,
+					 DEV_PW_DEFAULT);
 	else
-		ret = wpas_wps_start_pin(wpa_s, _bssid, NULL);
+		ret = wpas_wps_start_pin(wpa_s, _bssid, NULL, 0,
+					 DEV_PW_DEFAULT);
 
 	if (ret < 0) {
 		return dbus_message_new_error(message,
@@ -108,15 +104,12 @@ DBusMessage * wpas_dbus_iface_wps_pin(DBusMessage *message,
 	if (reply == NULL)
 		return NULL;
 
-	if (ret == 0) {
-		dbus_message_append_args(reply, DBUS_TYPE_STRING, &pin,
-					 DBUS_TYPE_INVALID);
-	} else {
-		char npin[9];
+	if (ret > 0) {
 		os_snprintf(npin, sizeof(npin), "%08d", ret);
-		dbus_message_append_args(reply, DBUS_TYPE_STRING, &npin,
-					 DBUS_TYPE_INVALID);
+		pin = npin;
 	}
+	dbus_message_append_args(reply, DBUS_TYPE_STRING, &pin,
+				 DBUS_TYPE_INVALID);
 	return reply;
 }
 
@@ -142,9 +135,7 @@ DBusMessage * wpas_dbus_iface_wps_reg(DBusMessage *message,
 				   DBUS_TYPE_STRING, &pin, DBUS_TYPE_INVALID))
 		return wpas_dbus_new_invalid_opts_error(message, NULL);
 
-	if (!os_strcmp(arg_bssid, "any"))
-		ret = wpas_wps_start_reg(wpa_s, NULL, pin, NULL);
-	else if (!hwaddr_aton(arg_bssid, bssid))
+	if (!hwaddr_aton(arg_bssid, bssid))
 		ret = wpas_wps_start_reg(wpa_s, bssid, pin, NULL);
 	else {
 		return wpas_dbus_new_invalid_opts_error(message,
@@ -153,7 +144,7 @@ DBusMessage * wpas_dbus_iface_wps_reg(DBusMessage *message,
 
 	if (ret < 0) {
 		return dbus_message_new_error(message,
-					      WPAS_ERROR_WPS_PBC_ERROR,
+					      WPAS_ERROR_WPS_REG_ERROR,
 					      "Could not request credentials");
 	}
 

@@ -2,14 +2,8 @@
  * EAP peer method: EAP-FAST PAC file processing
  * Copyright (c) 2004-2006, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -336,6 +330,8 @@ static const char * eap_fast_parse_end(struct eap_fast_pac **pac_root,
 static const char * eap_fast_parse_pac_type(struct eap_fast_pac *pac,
 					    char *pos)
 {
+	if (!pos)
+		return "Cannot parse pac type";
 	pac->pac_type = atoi(pos);
 	if (pac->pac_type != PAC_TYPE_TUNNEL_PAC &&
 	    pac->pac_type != PAC_TYPE_USER_AUTHORIZATION &&
@@ -428,8 +424,12 @@ int eap_fast_load_pac(struct eap_sm *sm, struct eap_fast_pac **pac_root,
 	if (eap_fast_init_pac_data(sm, pac_file, &rc) < 0)
 		return 0;
 
-	if (eap_fast_read_line(&rc, &pos) < 0 ||
-	    os_strcmp(pac_file_hdr, rc.buf) != 0)
+	if (eap_fast_read_line(&rc, &pos) < 0) {
+		/* empty file - assume it is fine to overwrite */
+		eap_fast_deinit_pac_data(&rc);
+		return 0;
+	}
+	if (os_strcmp(pac_file_hdr, rc.buf) != 0)
 		err = "Unrecognized header line";
 
 	while (!err && eap_fast_read_line(&rc, &pos) == 0) {
@@ -455,7 +455,8 @@ int eap_fast_load_pac(struct eap_sm *sm, struct eap_fast_pac **pac_root,
 	}
 
 	if (pac) {
-		err = "PAC block not terminated with END";
+		if (!err)
+			err = "PAC block not terminated with END";
 		eap_fast_free_pac(pac);
 	}
 
@@ -497,34 +498,35 @@ static void eap_fast_write(char **buf, char **pos, size_t *buf_len,
 			*buf = NULL;
 			return;
 		}
+		*pos = nbuf + (*pos - *buf);
 		*buf = nbuf;
 		*buf_len += need;
 	}
 	end = *buf + *buf_len;
 
 	ret = os_snprintf(*pos, end - *pos, "%s=", field);
-	if (ret < 0 || ret >= end - *pos)
+	if (os_snprintf_error(end - *pos, ret))
 		return;
 	*pos += ret;
 	*pos += wpa_snprintf_hex(*pos, end - *pos, data, len);
 	ret = os_snprintf(*pos, end - *pos, "\n");
-	if (ret < 0 || ret >= end - *pos)
+	if (os_snprintf_error(end - *pos, ret))
 		return;
 	*pos += ret;
 
 	if (txt) {
 		ret = os_snprintf(*pos, end - *pos, "%s-txt=", field);
-		if (ret < 0 || ret >= end - *pos)
+		if (os_snprintf_error(end - *pos, ret))
 			return;
 		*pos += ret;
 		for (i = 0; i < len; i++) {
 			ret = os_snprintf(*pos, end - *pos, "%c", data[i]);
-			if (ret < 0 || ret >= end - *pos)
+			if (os_snprintf_error(end - *pos, ret))
 				return;
 			*pos += ret;
 		}
 		ret = os_snprintf(*pos, end - *pos, "\n");
-		if (ret < 0 || ret >= end - *pos)
+		if (os_snprintf_error(end - *pos, ret))
 			return;
 		*pos += ret;
 	}
@@ -577,7 +579,7 @@ static int eap_fast_add_pac_data(struct eap_fast_pac *pac, char **buf,
 
 	ret = os_snprintf(*pos, *buf + *buf_len - *pos,
 			  "START\nPAC-Type=%d\n", pac->pac_type);
-	if (ret < 0 || ret >= *buf + *buf_len - *pos)
+	if (os_snprintf_error(*buf + *buf_len - *pos, ret))
 		return -1;
 
 	*pos += ret;
@@ -599,7 +601,7 @@ static int eap_fast_add_pac_data(struct eap_fast_pac *pac, char **buf,
 		return -1;
 	}
 	ret = os_snprintf(*pos, *buf + *buf_len - *pos, "END\n");
-	if (ret < 0 || ret >= *buf + *buf_len - *pos)
+	if (os_snprintf_error(*buf + *buf_len - *pos, ret))
 		return -1;
 	*pos += ret;
 
@@ -631,7 +633,7 @@ int eap_fast_save_pac(struct eap_sm *sm, struct eap_fast_pac *pac_root,
 		return -1;
 
 	ret = os_snprintf(pos, buf + buf_len - pos, "%s\n", pac_file_hdr);
-	if (ret < 0 || ret >= buf + buf_len - pos) {
+	if (os_snprintf_error(buf + buf_len - pos, ret)) {
 		os_free(buf);
 		return -1;
 	}
@@ -708,12 +710,12 @@ static void eap_fast_pac_get_a_id(struct eap_fast_pac *pac)
 	pos = pac->pac_info;
 	end = pos + pac->pac_info_len;
 
-	while (pos + 4 < end) {
+	while (end - pos > 4) {
 		type = WPA_GET_BE16(pos);
 		pos += 2;
 		len = WPA_GET_BE16(pos);
 		pos += 2;
-		if (pos + len > end)
+		if (len > (unsigned int) (end - pos))
 			break;
 
 		if (type == PAC_TYPE_A_ID) {
@@ -798,8 +800,12 @@ int eap_fast_load_pac_bin(struct eap_sm *sm, struct eap_fast_pac **pac_root,
 	pos = buf + 6;
 	end = buf + len;
 	while (pos < end) {
-		if (end - pos < 2 + 32 + 2 + 2)
+		u16 val;
+
+		if (end - pos < 2 + EAP_FAST_PAC_KEY_LEN + 2 + 2) {
+			pac = NULL;
 			goto parse_fail;
+		}
 
 		pac = os_zalloc(sizeof(*pac));
 		if (pac == NULL)
@@ -809,19 +815,23 @@ int eap_fast_load_pac_bin(struct eap_sm *sm, struct eap_fast_pac **pac_root,
 		pos += 2;
 		os_memcpy(pac->pac_key, pos, EAP_FAST_PAC_KEY_LEN);
 		pos += EAP_FAST_PAC_KEY_LEN;
-		pac->pac_opaque_len = WPA_GET_BE16(pos);
+		val = WPA_GET_BE16(pos);
 		pos += 2;
-		if (pos + pac->pac_opaque_len + 2 > end)
+		if (val > end - pos)
 			goto parse_fail;
+		pac->pac_opaque_len = val;
 		pac->pac_opaque = os_malloc(pac->pac_opaque_len);
 		if (pac->pac_opaque == NULL)
 			goto parse_fail;
 		os_memcpy(pac->pac_opaque, pos, pac->pac_opaque_len);
 		pos += pac->pac_opaque_len;
-		pac->pac_info_len = WPA_GET_BE16(pos);
-		pos += 2;
-		if (pos + pac->pac_info_len > end)
+		if (2 > end - pos)
 			goto parse_fail;
+		val = WPA_GET_BE16(pos);
+		pos += 2;
+		if (val > end - pos)
+			goto parse_fail;
+		pac->pac_info_len = val;
 		pac->pac_info = os_malloc(pac->pac_info_len);
 		if (pac->pac_info == NULL)
 			goto parse_fail;
