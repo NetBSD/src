@@ -2,14 +2,8 @@
  * Event loop
  * Copyright (c) 2002-2006, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  *
  * This file defines an event loop interface that supports processing events
  * from registered timeouts (i.e., do something after N seconds), sockets
@@ -144,7 +138,7 @@ void eloop_unregister_sock(int sock, eloop_event_type type);
  * Returns: 0 on success, -1 on failure
  *
  * Register an event handler for the given event. This function is used to
- * register eloop implementation specific events which are mainly targetted for
+ * register eloop implementation specific events which are mainly targeted for
  * operating system specific code (driver interface and l2_packet) since the
  * portable code will not be able to use such an OS-specific call. The handler
  * function will be called whenever the event is triggered. The handler
@@ -201,6 +195,21 @@ int eloop_cancel_timeout(eloop_timeout_handler handler,
 			 void *eloop_data, void *user_data);
 
 /**
+ * eloop_cancel_timeout_one - Cancel a single timeout
+ * @handler: Matching callback function
+ * @eloop_data: Matching eloop_data
+ * @user_data: Matching user_data
+ * @remaining: Time left on the cancelled timer
+ * Returns: Number of cancelled timeouts
+ *
+ * Cancel matching <handler,eloop_data,user_data> timeout registered with
+ * eloop_register_timeout() and return the remaining time left.
+ */
+int eloop_cancel_timeout_one(eloop_timeout_handler handler,
+			     void *eloop_data, void *user_data,
+			     struct os_reltime *remaining);
+
+/**
  * eloop_is_timeout_registered - Check if a timeout is already registered
  * @handler: Matching callback function
  * @eloop_data: Matching eloop_data
@@ -212,6 +221,40 @@ int eloop_cancel_timeout(eloop_timeout_handler handler,
  */
 int eloop_is_timeout_registered(eloop_timeout_handler handler,
 				void *eloop_data, void *user_data);
+
+/**
+ * eloop_deplete_timeout - Deplete a timeout that is already registered
+ * @req_secs: Requested number of seconds to the timeout
+ * @req_usecs: Requested number of microseconds to the timeout
+ * @handler: Matching callback function
+ * @eloop_data: Matching eloop_data
+ * @user_data: Matching user_data
+ * Returns: 1 if the timeout is depleted, 0 if no change is made, -1 if no
+ * timeout matched
+ *
+ * Find a registered matching <handler,eloop_data,user_data> timeout. If found,
+ * deplete the timeout if remaining time is more than the requested time.
+ */
+int eloop_deplete_timeout(unsigned int req_secs, unsigned int req_usecs,
+			  eloop_timeout_handler handler, void *eloop_data,
+			  void *user_data);
+
+/**
+ * eloop_replenish_timeout - Replenish a timeout that is already registered
+ * @req_secs: Requested number of seconds to the timeout
+ * @req_usecs: Requested number of microseconds to the timeout
+ * @handler: Matching callback function
+ * @eloop_data: Matching eloop_data
+ * @user_data: Matching user_data
+ * Returns: 1 if the timeout is replenished, 0 if no change is made, -1 if no
+ * timeout matched
+ *
+ * Find a registered matching <handler,eloop_data,user_data> timeout. If found,
+ * replenish the timeout if remaining time is less than the requested time.
+ */
+int eloop_replenish_timeout(unsigned int req_secs, unsigned int req_usecs,
+			    eloop_timeout_handler handler, void *eloop_data,
+			    void *user_data);
 
 /**
  * eloop_register_signal - Register handler for signals
@@ -268,6 +311,14 @@ int eloop_register_signal_terminate(eloop_signal_handler handler,
  */
 int eloop_register_signal_reconfig(eloop_signal_handler handler,
 				   void *user_data);
+
+/**
+ * eloop_sock_requeue - Requeue sockets
+ *
+ * Requeue sockets after forking because some implementations require this,
+ * such as epoll and kqueue.
+ */
+int eloop_sock_requeue(void);
 
 /**
  * eloop_run - Start the event loop

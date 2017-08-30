@@ -2,14 +2,8 @@
  * Universally Unique IDentifier (UUID)
  * Copyright (c) 2008, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -61,7 +55,7 @@ int uuid_bin2str(const u8 *bin, char *str, size_t max_len)
 			  bin[4], bin[5], bin[6], bin[7],
 			  bin[8], bin[9], bin[10], bin[11],
 			  bin[12], bin[13], bin[14], bin[15]);
-	if (len < 0 || (size_t) len >= max_len)
+	if (os_snprintf_error(max_len, len))
 		return -1;
 	return 0;
 }

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2010/08/29 15:53:01 christos Exp $
+# $NetBSD: Makefile,v 1.2.14.1 2017/08/30 05:50:37 snj Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -12,24 +12,34 @@ ap_config.c \
 ap_drv_ops.c \
 ap_mlme.c \
 authsrv.c \
+beacon.c \
+bss_load.c \
 ctrl_iface_ap.c \
 drv_callbacks.c \
+eap_user_db.c \
 hostapd.c \
 ieee802_11_auth.c \
+ieee802_11_shared.c \
 ieee802_1x.c \
+neighbor_db.c \
 peerkey_auth.c \
 pmksa_cache_auth.c \
 preauth_auth.c \
+rrm.c \
 sta_info.c \
 tkip_countermeasures.c \
 utils.c \
+vlan_ifconfig.c \
 vlan_init.c \
+vlan.c \
 wpa_auth.c \
 wpa_auth_glue.c \
 wpa_auth_ie.c
 
 # common
 SRCS+= \
+ctrl_iface_common.c \
+hw_features_common.c \
 ieee802_11_common.c \
 wpa_common.c \
 wpa_ctrl.c
@@ -37,11 +47,13 @@ wpa_ctrl.c
 # drivers
 SRCS+= \
 driver_bsd.c \
+driver_common.c \
 drivers.c
 
 # radius
 SRCS+= \
 radius.c \
+radius_das.c \
 radius_client.c \
 radius_server.c
 
@@ -60,7 +72,6 @@ SRCS+= \
 main.c \
 config_file.c \
 ctrl_iface.c \
-dump_state.c \
 eap_register.c
 
 # l2_packet
@@ -80,9 +91,14 @@ eap_server_methods.c
 
 # crypto
 SRCS+= \
-md5.c \
-sha1.c \
-sha1-pbkdf2.c
+random.c \
+sha1-prf.c
+
+# crypto for non-openssl
+NO_SRCS+= \
+aes-cbc.c \
+aes-wrap.c \
+md5.c
 
 .PATH.c: \
 	${HOSTAPD_DISTDIR} \
@@ -134,12 +150,10 @@ CPPFLAGS+= -DPKCS12_FUNCS
 
 # crypto
 SRCS+= \
-aes-cbc.c \
 aes-ctr.c \
 aes-eax.c \
 aes-encblock.c \
 aes-omac1.c \
-aes-wrap.c \
 crypto_openssl.c \
 dh_groups.c \
 fips_prf_openssl.c \
@@ -187,7 +201,9 @@ DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBDES}
 LDADD+= -lssl -lcrypto -ldes
 .else
 CPPFLAGS+= -DINTERNAL_AES -DINTERNAL_MD5 -DINTERNAL_SHA1 -DCONFIG_NO_PBKDF2
+CPPFLAGS+= -DCONFIG_CRYPTO_INTERNAL
 SRCS+=  tls_none.c sha1-internal.c md5-internal.c aes-xinternal.c rc4.c
+SRCS+= sha1-pbkdf2.c sha1.c md5.c
 .endif
 
 .include <bsd.prog.mk>

@@ -1,15 +1,9 @@
 /*
  * Netlink helper functions for driver wrappers
- * Copyright (c) 2002-2009, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2002-2014, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -34,7 +28,7 @@ static void netlink_receive_link(struct netlink_data *netlink,
 	if (cb == NULL || NLMSG_PAYLOAD(h, 0) < sizeof(struct ifinfomsg))
 		return;
 	cb(netlink->cfg->ctx, NLMSG_DATA(h),
-	   NLMSG_DATA(h) + NLMSG_ALIGN(sizeof(struct ifinfomsg)),
+	   (u8 *) NLMSG_DATA(h) + NLMSG_ALIGN(sizeof(struct ifinfomsg)),
 	   NLMSG_PAYLOAD(h, sizeof(struct ifinfomsg)));
 }
 
@@ -103,8 +97,6 @@ struct netlink_data * netlink_init(struct netlink_config *cfg)
 	if (netlink == NULL)
 		return NULL;
 
-	netlink->cfg = cfg;
-
 	netlink->sock = socket(PF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
 	if (netlink->sock < 0) {
 		wpa_printf(MSG_ERROR, "netlink: Failed to open netlink "
@@ -127,6 +119,8 @@ struct netlink_data * netlink_init(struct netlink_config *cfg)
 	eloop_register_read_sock(netlink->sock, netlink_receive, netlink,
 				 NULL);
 
+	netlink->cfg = cfg;
+
 	return netlink;
 }
 
@@ -142,6 +136,35 @@ void netlink_deinit(struct netlink_data *netlink)
 	os_free(netlink->cfg);
 	os_free(netlink);
 }
+
+
+static const char * linkmode_str(int mode)
+{
+	switch (mode) {
+	case -1:
+		return "no change";
+	case 0:
+		return "kernel-control";
+	case 1:
+		return "userspace-control";
+	}
+	return "?";
+}
+
+
+static const char * operstate_str(int state)
+{
+	switch (state) {
+	case -1:
+		return "no change";
+	case IF_OPER_DORMANT:
+		return "IF_OPER_DORMANT";
+	case IF_OPER_UP:
+		return "IF_OPER_UP";
+	}
+	return "?";
+}
+
 
 int netlink_send_oper_ifla(struct netlink_data *netlink, int ifindex,
 			   int linkmode, int operstate)
@@ -176,8 +199,7 @@ int netlink_send_oper_ifla(struct netlink_data *netlink, int ifindex,
 		rta->rta_type = IFLA_LINKMODE;
 		rta->rta_len = RTA_LENGTH(sizeof(char));
 		*((char *) RTA_DATA(rta)) = linkmode;
-		req.hdr.nlmsg_len = NLMSG_ALIGN(req.hdr.nlmsg_len) +
-			RTA_LENGTH(sizeof(char));
+		req.hdr.nlmsg_len += RTA_SPACE(sizeof(char));
 	}
 	if (operstate != -1) {
 		rta = aliasing_hide_typecast(
@@ -186,12 +208,12 @@ int netlink_send_oper_ifla(struct netlink_data *netlink, int ifindex,
 		rta->rta_type = IFLA_OPERSTATE;
 		rta->rta_len = RTA_LENGTH(sizeof(char));
 		*((char *) RTA_DATA(rta)) = operstate;
-		req.hdr.nlmsg_len = NLMSG_ALIGN(req.hdr.nlmsg_len) +
-			RTA_LENGTH(sizeof(char));
+		req.hdr.nlmsg_len += RTA_SPACE(sizeof(char));
 	}
 
-	wpa_printf(MSG_DEBUG, "netlink: Operstate: linkmode=%d, operstate=%d",
-		   linkmode, operstate);
+	wpa_printf(MSG_DEBUG, "netlink: Operstate: ifindex=%d linkmode=%d (%s), operstate=%d (%s)",
+		   ifindex, linkmode, linkmode_str(linkmode),
+		   operstate, operstate_str(operstate));
 
 	ret = send(netlink->sock, &req, req.hdr.nlmsg_len, 0);
 	if (ret < 0) {

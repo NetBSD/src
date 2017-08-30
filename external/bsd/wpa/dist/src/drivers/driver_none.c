@@ -2,14 +2,8 @@
  * Driver interface for RADIUS server or WPS ER only (no driver)
  * Copyright (c) 2008, Atheros Communications
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -80,13 +74,6 @@ static void none_driver_deinit(void *priv)
 }
 
 
-static int none_driver_send_eapol(void *priv, const u8 *dest, u16 proto,
-				  const u8 *data, size_t data_len)
-{
-	return -1;
-}
-
-
 const struct wpa_driver_ops wpa_driver_none_ops = {
 	.name = "none",
 	.desc = "no driver (RADIUS server/WPS ER)",
@@ -95,5 +82,4 @@ const struct wpa_driver_ops wpa_driver_none_ops = {
 	.send_ether = none_driver_send_ether,
 	.init = none_driver_init,
 	.deinit = none_driver_deinit,
-	.send_eapol = none_driver_send_eapol,
 };
