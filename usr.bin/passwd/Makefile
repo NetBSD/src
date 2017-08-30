@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2011/04/24 21:42:06 elric Exp $
+#	$NetBSD: Makefile,v 1.42.12.1 2017/08/30 06:54:40 snj Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
@@ -30,7 +30,9 @@ CPPFLAGS+= -DKERBEROS5
 SRCS+=	krb5_passwd.c
 
 DPADD+=	${LIBKRB5} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN} ${LIBCRYPT}
+DPADD+=	${LIBSQLITE3}
 LDADD+=	-lkrb5 -lcrypto -lasn1 -lcom_err -lroken -lcrypt
+LDADD+=	-lsqlite3
 LINKS+=	${BINDIR}/passwd ${BINDIR}/kpasswd
 MAN+=	kpasswd.1
 .endif

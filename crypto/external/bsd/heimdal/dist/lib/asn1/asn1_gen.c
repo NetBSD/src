@@ -1,4 +1,4 @@
-/*	$NetBSD: asn1_gen.c,v 1.1.1.1 2011/04/13 18:14:39 elric Exp $	*/
+/*	$NetBSD: asn1_gen.c,v 1.1.1.1.12.1 2017/08/30 06:54:22 snj Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -42,7 +42,7 @@
 #include <krb5/hex.h>
 #include <err.h>
 
-__RCSID("$NetBSD: asn1_gen.c,v 1.1.1.1 2011/04/13 18:14:39 elric Exp $");
+__RCSID("$NetBSD: asn1_gen.c,v 1.1.1.1.12.1 2017/08/30 06:54:22 snj Exp $");
 
 static int
 doit(const char *fn)
@@ -152,8 +152,8 @@ doit(const char *fn)
 static int version_flag;
 static int help_flag;
 struct getargs args[] = {
-    { "version", 0, arg_flag, &version_flag },
-    { "help", 0, arg_flag, &help_flag }
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
 int num_args = sizeof(args) / sizeof(args[0]);
 

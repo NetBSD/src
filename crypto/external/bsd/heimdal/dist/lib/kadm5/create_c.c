@@ -1,4 +1,4 @@
-/*	$NetBSD: create_c.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: create_c.c,v 1.1.1.1.12.1 2017/08/30 06:54:29 snj Exp $	*/
 
 /*
  * Copyright (c) 1997-2000, 2005-2006 Kungliga Tekniska Högskolan
@@ -35,12 +35,14 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: create_c.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("$NetBSD: create_c.c,v 1.1.1.1.12.1 2017/08/30 06:54:29 snj Exp $");
 
 kadm5_ret_t
 kadm5_c_create_principal(void *server_handle,
 			 kadm5_principal_ent_t princ,
 			 uint32_t mask,
+			 int n_ks_tuple,
+			 krb5_key_salt_tuple *ks_tuple,
 			 const char *password)
 {
     kadm5_client_context *context = server_handle;
@@ -49,6 +51,14 @@ kadm5_c_create_principal(void *server_handle,
     unsigned char buf[1024];
     int32_t tmp;
     krb5_data reply;
+
+    /*
+     * We should get around to implementing this...  At the moment, the
+     * the server side API is implemented but the wire protocol has not
+     * been updated.
+     */
+    if (n_ks_tuple > 0)
+	return KADM5_KS_TUPLE_NOSUPP;
 
     ret = _kadm5_connect(server_handle);
     if(ret)

@@ -1,4 +1,4 @@
-/*	$NetBSD: test_cfx.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: test_cfx.c,v 1.1.1.1.12.1 2017/08/30 06:54:24 snj Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -105,7 +105,7 @@ test_special(krb5_context context, krb5_crypto crypto,
     OM_uint32 minor;
 
     ctx.crypto = crypto;
-    
+
     ret = _gssapi_wrap_size_cfx(&minor,
 				&ctx,
 				context,
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 	errx(1, "krb5_context_init: %d", ret);
 
     ret = krb5_generate_random_keyblock(context,
-					ENCTYPE_AES256_CTS_HMAC_SHA1_96,
+					KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96,
 					&keyblock);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_generate_random_keyblock");
@@ -161,7 +161,7 @@ main(int argc, char **argv)
 
     test_special(context, crypto, 1, 60);
     test_special(context, crypto, 0, 60);
-    
+
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++) {
 	test_range(&tests[i], 1, context, crypto);
 	test_range(&tests[i], 0, context, crypto);

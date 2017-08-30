@@ -2,8 +2,6 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += $(INCLUDE_hcrypto)
-
 man_MANS = kpasswd.1 kpasswdd.8
 
 bin_PROGRAMS = kpasswd
@@ -22,11 +20,11 @@ kpasswdd_LDADD = \
 	$(LDADD) \
 	$(LIB_pidfile) \
 	$(LIB_dlopen) \
-	$(DBLIB)
+	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
 
 LDADD = $(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken)
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = NTMakefile $(man_MANS)

@@ -1,4 +1,4 @@
-/*	$NetBSD: default_keys.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: default_keys.c,v 1.1.1.1.12.1 2017/08/30 06:54:29 snj Exp $	*/
 
 /*
  * Copyright (c) 2003 Kungliga Tekniska Högskolan
@@ -36,7 +36,7 @@
 #include "kadm5_locl.h"
 #include <err.h>
 
-__RCSID("$NetBSD: default_keys.c,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $");
+__RCSID("$NetBSD: default_keys.c,v 1.1.1.1.12.1 2017/08/30 06:54:29 snj Exp $");
 
 static void
 print_keys(krb5_context context, Key *keys, size_t nkeys)
@@ -74,7 +74,7 @@ print_keys(krb5_context context, Key *keys, size_t nkeys)
 	    if (keys[i].salt->salt.length)
 		printf("%.*s", (int)keys[i].salt->salt.length,
 		       (char *)keys[i].salt->salt.data);
-	}	
+	}
 	printf("\n");
     }
     printf("end keys:\n");
@@ -87,7 +87,8 @@ parse_file(krb5_context context, krb5_principal principal, int no_salt)
     size_t nkeys;
     Key *keys;
 
-    ret = hdb_generate_key_set(context, principal, &keys, &nkeys, no_salt);
+    ret = hdb_generate_key_set(context, principal, NULL, 0, &keys, &nkeys,
+			       no_salt);
     if (ret)
 	krb5_err(context, 1, ret, "hdb_generate_key_set");
 

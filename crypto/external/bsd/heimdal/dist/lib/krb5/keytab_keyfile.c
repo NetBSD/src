@@ -1,4 +1,4 @@
-/*	$NetBSD: keytab_keyfile.c,v 1.1.1.1 2011/04/13 18:15:34 elric Exp $	*/
+/*	$NetBSD: keytab_keyfile.c,v 1.1.1.1.12.1 2017/08/30 06:54:30 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
@@ -91,11 +91,8 @@ get_cell_and_realm (krb5_context context, struct akf_data *d)
     fclose(f);
 
     d->cell = strdup (buf);
-    if (d->cell == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (d->cell == NULL)
+	return krb5_enomem(context);
 
     f = fopen (AFS_SERVERMAGICKRBCONF, "r");
     if (f != NULL) {
@@ -119,9 +116,7 @@ get_cell_and_realm (krb5_context context, struct akf_data *d)
     if (d->realm == NULL) {
 	free (d->cell);
 	d->cell = NULL;
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     return 0;
 }
@@ -134,13 +129,10 @@ static krb5_error_code KRB5_CALLCONV
 akf_resolve(krb5_context context, const char *name, krb5_keytab id)
 {
     int ret;
-    struct akf_data *d = malloc(sizeof (struct akf_data));
+    struct akf_data *d = calloc(1, sizeof (struct akf_data));
 
-    if (d == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
-    }
+    if (d == NULL)
+	return krb5_enomem(context);
 
     d->num_entries = 0;
     ret = get_cell_and_realm (context, d);
@@ -153,9 +145,7 @@ akf_resolve(krb5_context context, const char *name, krb5_keytab id)
 	free (d->cell);
 	free (d->realm);
 	free (d);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     id->data = d;
 
@@ -214,9 +204,17 @@ akf_start_seq_get(krb5_context context,
 	return ret;
     }
 
+    c->data = NULL;
     c->sp = krb5_storage_from_fd(c->fd);
+    if (c->sp == NULL) {
+	close(c->fd);
+	krb5_clear_error_message (context);
+	return KRB5_KT_NOTFOUND;
+    }
+    krb5_storage_set_eof_code(c->sp, KRB5_KT_END);
+
     ret = krb5_ret_uint32(c->sp, &d->num_entries);
-    if(ret) {
+    if(ret || d->num_entries > INT_MAX / 8) {
 	krb5_storage_free(c->sp);
 	close(c->fd);
 	krb5_clear_error_message (context);
@@ -257,14 +255,15 @@ akf_next_entry(krb5_context context,
 
     entry->vno = kvno;
 
-    entry->keyblock.keytype         = ETYPE_DES_CBC_MD5;
+    if (cursor->data)
+	entry->keyblock.keytype         = ETYPE_DES_CBC_MD5;
+    else
+	entry->keyblock.keytype         = ETYPE_DES_CBC_CRC;
     entry->keyblock.keyvalue.length = 8;
     entry->keyblock.keyvalue.data   = malloc (8);
     if (entry->keyblock.keyvalue.data == NULL) {
 	krb5_free_principal (context, entry->principal);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	ret = ENOMEM;
+	ret = krb5_enomem(context);
 	goto out;
     }
 
@@ -279,7 +278,11 @@ akf_next_entry(krb5_context context,
     entry->aliases = NULL;
 
  out:
-    krb5_storage_seek(cursor->sp, pos + 4 + 8, SEEK_SET);
+    if (cursor->data) {
+	krb5_storage_seek(cursor->sp, pos + 4 + 8, SEEK_SET);
+	cursor->data = NULL;
+    } else
+	cursor->data = cursor;
     return ret;
 }
 
@@ -290,6 +293,7 @@ akf_end_seq_get(krb5_context context,
 {
     krb5_storage_free(cursor->sp);
     close(cursor->fd);
+    cursor->data = NULL;
     return 0;
 }
 
@@ -334,9 +338,7 @@ akf_add_entry(krb5_context context,
     sp = krb5_storage_from_fd(fd);
     if(sp == NULL) {
 	close(fd);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     if (created)
 	len = 0;
@@ -350,7 +352,7 @@ akf_add_entry(krb5_context context,
 				   strerror(ret));
 	    return ret;
 	}
-	
+
 	ret = krb5_ret_int32(sp, &len);
 	if(ret) {
 	    krb5_storage_free(sp);
@@ -389,7 +391,7 @@ akf_add_entry(krb5_context context,
     }
 
     len++;
-	
+
     if(krb5_storage_seek(sp, 0, SEEK_SET) < 0) {
 	ret = errno;
 	krb5_set_error_message (context, ret,
@@ -397,7 +399,7 @@ akf_add_entry(krb5_context context,
 				strerror(ret));
 	goto out;
     }
-	
+
     ret = krb5_store_int32(sp, len);
     if(ret) {
 	ret = errno;
@@ -412,7 +414,7 @@ akf_add_entry(krb5_context context,
 				N_("seek to end: %s", ""), strerror(ret));
 	goto out;
     }
-	
+
     ret = krb5_store_int32(sp, entry->vno);
     if(ret) {
 	krb5_set_error_message(context, ret,
@@ -448,7 +450,9 @@ const krb5_kt_ops krb5_akf_ops = {
     akf_next_entry,
     akf_end_seq_get,
     akf_add_entry,
-    NULL /* remove */
+    NULL, /* remove */
+    NULL,
+    0
 };
 
 #endif /* HEIMDAL_SMALLER */

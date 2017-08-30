@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.1 2011/04/13 18:15:11 elric Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.1.12.1 2017/08/30 06:54:28 snj Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2006 Kungliga Tekniska Högskolan
@@ -95,12 +95,12 @@ hx509_pem_write(hx509_context context, const char *type,
 
     while (size > 0) {
 	ssize_t l;
-	
+
 	length = size;
 	if (length > ENCODE_LINE_LENGTH)
 	    length = ENCODE_LINE_LENGTH;
-	
-	l = base64_encode(p, length, &line);
+
+	l = rk_base64_encode(p, length, &line);
 	if (l < 0) {
 	    hx509_set_error_string(context, 0, ENOMEM,
 				   "malloc - out of memory");
@@ -213,7 +213,7 @@ hx509_pem_read(hx509_context context,
 	    if (i > 0)
 		i--;
 	}
-	
+
 	switch (where) {
 	case BEFORE:
 	    if (strncmp("-----BEGIN ", buf, 11) == 0) {
@@ -257,12 +257,12 @@ hx509_pem_read(hx509_context context,
 	    }
 
 	    p = emalloc(i);
-	    i = base64_decode(buf, p);
+	    i = rk_base64_decode(buf, p);
 	    if (i < 0) {
 		free(p);
 		goto out;
 	    }
-	
+
 	    data = erealloc(data, len + i);
 	    memcpy(((char *)data) + len, p, i);
 	    free(p);

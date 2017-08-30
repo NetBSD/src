@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_init_set_int.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_init_set_int.c,v 1.1.1.1.12.1 2017/08/30 06:54:26 snj Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_INIT_SET_INT_C
@@ -28,6 +28,6 @@ int mp_init_set_int (mp_int * a, unsigned long b)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_init_set_int.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_init_set_int.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

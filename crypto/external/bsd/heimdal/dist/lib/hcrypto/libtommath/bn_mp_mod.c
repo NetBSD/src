@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_mod.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_mod.c,v 1.1.1.1.12.1 2017/08/30 06:54:26 snj Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_MOD_C
@@ -17,7 +17,7 @@
  * Tom St Denis, tomstdenis@gmail.com, http://libtom.org
  */
 
-/* c = a mod b, 0 <= c < b */
+/* c = a mod b, 0 <= c < b if b > 0, b < c <= 0 if b < 0 */
 int
 mp_mod (mp_int * a, mp_int * b, mp_int * c)
 {
@@ -33,11 +33,11 @@ mp_mod (mp_int * a, mp_int * b, mp_int * c)
     return res;
   }
 
-  if (t.sign != b->sign) {
-    res = mp_add (b, &t, c);
-  } else {
+  if (mp_iszero(&t) || t.sign == b->sign) {
     res = MP_OKAY;
     mp_exch (&t, c);
+  } else {
+    res = mp_add (b, &t, c);
   }
 
   mp_clear (&t);
@@ -45,6 +45,6 @@ mp_mod (mp_int * a, mp_int * b, mp_int * c)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_mod.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_mod.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

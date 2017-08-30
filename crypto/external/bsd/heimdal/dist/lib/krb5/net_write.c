@@ -1,4 +1,4 @@
-/*	$NetBSD: net_write.c,v 1.1.1.1 2011/04/13 18:15:36 elric Exp $	*/
+/*	$NetBSD: net_write.c,v 1.1.1.1.12.1 2017/08/30 06:54:30 snj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Kungliga Tekniska Högskolan
@@ -76,7 +76,7 @@ krb5_net_write_block(krb5_context context,
 	  if (rk_SOCK_ERRNO == EINTR)
 	      continue;
 	  return -1;
-      } 
+      }
 
 #ifdef HAVE_WINSOCK
       if (ret == 0) {

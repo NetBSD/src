@@ -1,4 +1,4 @@
-/*	$NetBSD: ui.c,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: ui.c,v 1.1.1.1.12.1 2017/08/30 06:54:26 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000, 2005 Kungliga Tekniska Högskolan
@@ -34,15 +34,11 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <krb5/roken.h>
 #include <signal.h>
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
-#include <krb5/roken.h>
 
 #include <ui.h>
 #ifdef HAVE_CONIO_H
@@ -64,7 +60,7 @@ intr(int sig)
  */
 
 static int
-read_string(const char *preprompt, const char *prompt, 
+read_string(const char *preprompt, const char *prompt,
 	    char *buf, size_t len, int echo)
 {
     int of = 0;
@@ -88,13 +84,13 @@ read_string(const char *preprompt, const char *prompt,
     if(of)
 	p--;
     *p = 0;
-    
+
     if(echo == 0){
 	printf("\n");
     }
 
     signal(SIGINT, oldsigintr);
-    
+
     if(intr_flag)
 	return -2;
     if(of)

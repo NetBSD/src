@@ -1,4 +1,4 @@
-/*	$NetBSD: inquire_sec_context_by_oid.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: inquire_sec_context_by_oid.c,v 1.1.1.1.12.1 2017/08/30 06:54:24 snj Exp $	*/
 
 /*
  * Copyright (c) 2004, PADL Software Pty Ltd.
@@ -151,7 +151,6 @@ static OM_uint32 inquire_sec_context_get_subkey
     }
 
     ret = krb5_store_keyblock(sp, *key);
-    krb5_free_keyblock (context, key);
     if (ret)
 	goto out;
 
@@ -161,22 +160,63 @@ static OM_uint32 inquire_sec_context_get_subkey
 
     {
 	gss_buffer_desc value;
-	
+
 	value.length = data.length;
 	value.value = data.data;
-	
+
 	maj_stat = gss_add_buffer_set_member(minor_status,
 					     &value,
 					     data_set);
     }
 
 out:
+    krb5_free_keyblock(context, key);
     krb5_data_free(&data);
     if (sp)
 	krb5_storage_free(sp);
     if (ret) {
 	*minor_status = ret;
 	maj_stat = GSS_S_FAILURE;
+    }
+    return maj_stat;
+}
+
+static OM_uint32 inquire_sec_context_get_sspi_session_key
+            (OM_uint32 *minor_status,
+             const gsskrb5_ctx context_handle,
+             krb5_context context,
+             gss_buffer_set_t *data_set)
+{
+    krb5_keyblock *key;
+    OM_uint32 maj_stat = GSS_S_COMPLETE;
+    krb5_error_code ret;
+    gss_buffer_desc value;
+
+    HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
+    ret = _gsskrb5i_get_token_key(context_handle, context, &key);
+    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+
+    if (ret)
+        goto out;
+    if (key == NULL) {
+        ret = EINVAL;
+        goto out;
+    }
+
+    value.length = key->keyvalue.length;
+    value.value = key->keyvalue.data;
+
+    maj_stat = gss_add_buffer_set_member(minor_status,
+                                         &value,
+                                         data_set);
+    krb5_free_keyblock(context, key);
+
+    /* MIT also returns the enctype encoded as an OID in data_set[1] */
+
+out:
+    if (ret) {
+        *minor_status = ret;
+        maj_stat = GSS_S_FAILURE;
     }
     return maj_stat;
 }
@@ -295,7 +335,8 @@ export_lucid_sec_context_v1(OM_uint32 *minor_status,
     if (ret) goto out;
     ret = krb5_store_int32(sp, (context_handle->more_flags & LOCAL) ? 1 : 0);
     if (ret) goto out;
-    ret = krb5_store_int32(sp, context_handle->lifetime);
+    /* XXX need krb5_store_int64() */
+    ret = krb5_store_int32(sp, context_handle->endtime);
     if (ret) goto out;
     krb5_auth_con_getlocalseqnumber (context,
 				     context_handle->auth_context,
@@ -466,10 +507,10 @@ get_service_keyblock
 
     {
 	gss_buffer_desc value;
-	
+
 	value.length = data.length;
 	value.value = data.data;
-	
+
 	maj_stat = gss_add_buffer_set_member(minor_status,
 					     &value,
 					     data_set);
@@ -491,7 +532,7 @@ out:
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_sec_context_by_oid
            (OM_uint32 *minor_status,
-            const gss_ctx_id_t context_handle,
+            gss_const_ctx_id_t context_handle,
             const gss_OID desired_object,
             gss_buffer_set_t *data_set)
 {
@@ -532,6 +573,11 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_sec_context_by_oid
 					      context,
 					      ACCEPTOR_KEY,
 					      data_set);
+    } else if (gss_oid_equal(desired_object, GSS_C_INQ_SSPI_SESSION_KEY)) {
+        return inquire_sec_context_get_sspi_session_key(minor_status,
+                                                        ctx,
+                                                        context,
+                                                        data_set);
     } else if (gss_oid_equal(desired_object, GSS_KRB5_GET_AUTHTIME_X)) {
 	return get_authtime(minor_status, ctx, data_set);
     } else if (oid_prefix_equal(desired_object,

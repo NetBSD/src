@@ -1,4 +1,4 @@
-/*	$NetBSD: keyblock.c,v 1.1.1.1 2011/04/13 18:15:34 elric Exp $	*/
+/*	$NetBSD: keyblock.c,v 1.1.1.1.12.1 2017/08/30 06:54:30 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -67,7 +67,7 @@ krb5_free_keyblock_contents(krb5_context context,
 	if (keyblock->keyvalue.data != NULL)
 	    memset(keyblock->keyvalue.data, 0, keyblock->keyvalue.length);
 	krb5_data_free (&keyblock->keyvalue);
-	keyblock->keytype = ENCTYPE_NULL;
+	keyblock->keytype = KRB5_ENCTYPE_NULL;
     }
 }
 
@@ -133,14 +133,12 @@ krb5_copy_keyblock (krb5_context context,
 {
     krb5_error_code ret;
     krb5_keyblock *k;
-    
+
     *to = NULL;
 
     k = calloc (1, sizeof(*k));
-    if (k == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
-    }
+    if (k == NULL)
+	return krb5_enomem(context);
 
     ret = krb5_copy_keyblock_contents (context, inblock, k);
     if (ret) {

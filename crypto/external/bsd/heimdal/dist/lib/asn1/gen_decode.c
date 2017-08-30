@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_decode.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $	*/
+/*	$NetBSD: gen_decode.c,v 1.1.1.1.12.1 2017/08/30 06:54:22 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -36,7 +36,7 @@
 #include "gen_locl.h"
 #include "lex.h"
 
-__RCSID("$NetBSD: gen_decode.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $");
+__RCSID("$NetBSD: gen_decode.c,v 1.1.1.1.12.1 2017/08/30 06:54:22 snj Exp $");
 
 static void
 decode_primitive (const char *typename, const char *name, const char *forwstr)
@@ -191,27 +191,28 @@ range_check(const char *name,
 {
     if (r->min == r->max + 2 || r->min < r->max)
 	fprintf (codefile,
-		 "if ((%s)->%s > %d) {\n"
+		 "if ((%s)->%s > %lld) {\n"
 		 "e = ASN1_MAX_CONSTRAINT; %s;\n"
 		 "}\n",
-		 name, length, r->max, forwstr);
-    if (r->min - 1 == r->max || r->min < r->max)
+		 name, length, (long long)r->max, forwstr);
+    if ((r->min - 1 == r->max || r->min < r->max) && r->min > 0)
 	fprintf (codefile,
-		 "if ((%s)->%s < %d) {\n"
+		 "if ((%s)->%s < %lld) {\n"
 		 "e = ASN1_MIN_CONSTRAINT; %s;\n"
 		 "}\n",
-		 name, length, r->min, forwstr);
+		 name, length, (long long)r->min, forwstr);
     if (r->max == r->min)
 	fprintf (codefile,
-		 "if ((%s)->%s != %d) {\n"
+		 "if ((%s)->%s != %lld) {\n"
 		 "e = ASN1_EXACT_CONSTRAINT; %s;\n"
 		 "}\n",
-		 name, length, r->min, forwstr);
+		 name, length, (long long)r->min, forwstr);
 }
 
 static int
 decode_type (const char *name, const Type *t, int optional,
-	     const char *forwstr, const char *tmpstr, const char *dertype)
+	     const char *forwstr, const char *tmpstr, const char *dertype,
+	     unsigned int depth)
 {
     switch (t->type) {
     case TType: {
@@ -243,6 +244,14 @@ decode_type (const char *name, const Type *t, int optional,
     }
     case TInteger:
 	if(t->members) {
+	    /*
+	     * This will produce a worning, how its hard to fix since:
+	     * if its enum to an NameType, we can add appriate
+	     * type-cast. If its not though, we have to figure out if
+	     * there is negative enum enum and use appropriate
+	     * signness and size on the intertype we cast the result
+	     * too.
+	     */
 	    fprintf(codefile,
 		    "{\n"
 		    "int enumint;\n");
@@ -253,15 +262,17 @@ decode_type (const char *name, const Type *t, int optional,
 		    name);
 	} else if (t->range == NULL) {
 	    decode_primitive ("heim_integer", name, forwstr);
-	} else if (t->range->min == INT_MIN && t->range->max == INT_MAX) {
+	} else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX) {
+	    decode_primitive ("integer64", name, forwstr);
+	} else if (t->range->min >= 0 && t->range->max > UINT_MAX) {
+	    decode_primitive ("unsigned64", name, forwstr);
+	} else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX) {
 	    decode_primitive ("integer", name, forwstr);
-	} else if (t->range->min == 0 && t->range->max == UINT_MAX) {
-	    decode_primitive ("unsigned", name, forwstr);
-	} else if (t->range->min == 0 && t->range->max == INT_MAX) {
+	} else if (t->range->min >= 0 && t->range->max <= UINT_MAX) {
 	    decode_primitive ("unsigned", name, forwstr);
 	} else
-	    errx(1, "%s: unsupported range %d -> %d",
-		 name, t->range->min, t->range->max);
+	    errx(1, "%s: unsupported range %lld -> %lld",
+		 name, (long long)t->range->min, (long long)t->range->max);
 	break;
     case TBoolean:
       decode_primitive ("boolean", name, forwstr);
@@ -330,7 +341,8 @@ decode_type (const char *name, const Type *t, int optional,
 	    if (asprintf (&s, "%s(%s)->%s", m->optional ? "" : "&",
 			  name, m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
-	    decode_type (s, m->type, m->optional, forwstr, m->gen_name, NULL);
+	    decode_type (s, m->type, m->optional, forwstr, m->gen_name, NULL,
+		depth + 1);
 	    free (s);
 	}
 
@@ -371,7 +383,7 @@ decode_type (const char *name, const Type *t, int optional,
 			"%s = calloc(1, sizeof(*%s));\n"
 			"if (%s == NULL) { e = ENOMEM; %s; }\n",
 			s, s, s, forwstr);
-	    decode_type (s, m->type, 0, forwstr, m->gen_name, NULL);
+	    decode_type (s, m->type, 0, forwstr, m->gen_name, NULL, depth + 1);
 	    free (s);
 
 	    fprintf(codefile, "members |= (1 << %d);\n", memno);
@@ -444,7 +456,7 @@ decode_type (const char *name, const Type *t, int optional,
 	    errx(1, "malloc");
 	if (asprintf (&sname, "%s_s_of", tmpstr) < 0 || sname == NULL)
 	    errx(1, "malloc");
-	decode_type (n, t->subtype, 0, forwstr, sname, NULL);
+	decode_type (n, t->subtype, 0, forwstr, sname, NULL, depth + 1);
 	fprintf (codefile,
 		 "(%s)->len++;\n"
 		 "len = %s_origlen - ret;\n"
@@ -482,7 +494,7 @@ decode_type (const char *name, const Type *t, int optional,
 		tmpstr, tmpstr, typestring);
 	if(support_ber)
 	    fprintf(codefile,
-		    "int is_indefinite;\n");
+		    "int is_indefinite%u;\n", depth);
 
 	fprintf(codefile, "e = der_match_tag_and_length(p, len, %s, &%s, %s, "
 		"&%s_datalen, &l);\n",
@@ -518,20 +530,20 @@ decode_type (const char *name, const Type *t, int optional,
 		 tmpstr);
 	if(support_ber)
 	    fprintf (codefile,
-		     "if((is_indefinite = _heim_fix_dce(%s_datalen, &len)) < 0)\n"
+		     "if((is_indefinite%u = _heim_fix_dce(%s_datalen, &len)) < 0)\n"
 		     "{ e = ASN1_BAD_FORMAT; %s; }\n"
-		     "if (is_indefinite) { if (len < 2) { e = ASN1_OVERRUN; %s; } len -= 2; }",
-		     tmpstr, forwstr, forwstr);
+		     "if (is_indefinite%u) { if (len < 2) { e = ASN1_OVERRUN; %s; } len -= 2; }",
+		     depth, tmpstr, forwstr, depth, forwstr);
 	else
 	    fprintf(codefile,
 		    "if (%s_datalen > len) { e = ASN1_OVERRUN; %s; }\n"
 		    "len = %s_datalen;\n", tmpstr, forwstr, tmpstr);
 	if (asprintf (&tname, "%s_Tag", tmpstr) < 0 || tname == NULL)
 	    errx(1, "malloc");
-	decode_type (name, t->subtype, 0, forwstr, tname, ide);
+	decode_type (name, t->subtype, 0, forwstr, tname, ide, depth + 1);
 	if(support_ber)
 	    fprintf(codefile,
-		    "if(is_indefinite){\n"
+		    "if(is_indefinite%u){\n"
 		    "len += 2;\n"
 		    "e = der_match_tag_and_length(p, len, "
 		    "(Der_class)0, &%s, UT_EndOfContent, "
@@ -540,6 +552,7 @@ decode_type (const char *name, const Type *t, int optional,
 		    "p += l; len -= l; ret += l;\n"
 		    "if (%s != (Der_type)0) { e = ASN1_BAD_ID; %s; }\n"
 		    "} else \n",
+		    depth,
 		    typestring,
 		    tmpstr,
 		    forwstr,
@@ -586,7 +599,8 @@ decode_type (const char *name, const Type *t, int optional,
 	    if (asprintf (&s, "%s(%s)->u.%s", m->optional ? "" : "&",
 			  name, m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
-	    decode_type (s, m->type, m->optional, forwstr, m->gen_name, NULL);
+	    decode_type (s, m->type, m->optional, forwstr, m->gen_name, NULL,
+		depth + 1);
 	    fprintf(codefile,
 		    "(%s)->element = %s;\n",
 		    name, m->label);
@@ -607,7 +621,7 @@ decode_type (const char *name, const Type *t, int optional,
 		    "(%s)->element = %s;\n"
 		    "p += len;\n"
 		    "ret += len;\n"
-		    "len -= len;\n"
+		    "len = 0;\n"
 		    "}\n",
 		    name, have_ellipsis->gen_name,
 		    name, have_ellipsis->gen_name,
@@ -664,8 +678,8 @@ generate_type_decode (const Symbol *s)
     int preserve = preserve_type(s->name) ? TRUE : FALSE;
 
     fprintf (codefile, "int ASN1CALL\n"
-	     "decode_%s(const unsigned char *p,"
-	     " size_t len, %s *data, size_t *size)\n"
+	     "decode_%s(const unsigned char *p HEIMDAL_UNUSED_ATTRIBUTE,"
+	     " size_t len HEIMDAL_UNUSED_ATTRIBUTE, %s *data, size_t *size)\n"
 	     "{\n",
 	     s->gen_name, s->gen_name);
 
@@ -696,15 +710,15 @@ generate_type_decode (const Symbol *s)
     case TChoice:
 	fprintf (codefile,
 		 "size_t ret = 0;\n"
-		 "size_t l;\n"
-		 "int e;\n");
+		 "size_t l HEIMDAL_UNUSED_ATTRIBUTE;\n"
+		 "int e HEIMDAL_UNUSED_ATTRIBUTE;\n");
 	if (preserve)
 	    fprintf (codefile, "const unsigned char *begin = p;\n");
 
 	fprintf (codefile, "\n");
 	fprintf (codefile, "memset(data, 0, sizeof(*data));\n"); /* hack to avoid `unused variable' */
 
-	decode_type ("data", s->type, 0, "goto fail", "Top", NULL);
+	decode_type ("data", s->type, 0, "goto fail", "Top", NULL, 1);
 	if (preserve)
 	    fprintf (codefile,
 		     "data->_save.data = calloc(1, ret);\n"

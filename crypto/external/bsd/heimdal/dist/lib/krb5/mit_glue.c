@@ -1,4 +1,4 @@
-/*	$NetBSD: mit_glue.c,v 1.1.1.1 2011/04/13 18:15:36 elric Exp $	*/
+/*	$NetBSD: mit_glue.c,v 1.1.1.1.12.1 2017/08/30 06:54:30 snj Exp $	*/
 
 /*
  * Copyright (c) 2003 Kungliga Tekniska Högskolan
@@ -32,8 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#define KRB5_DEPRECATED
 
 #include "krb5_locl.h"
 
@@ -100,7 +98,7 @@ krb5_c_get_checksum(krb5_context context, const krb5_checksum *cksum,
     if (data) {
 	*data = malloc(sizeof(**data));
 	if (*data == NULL)
-	    return ENOMEM;
+	    return krb5_enomem(context);
 
 	ret = der_copy_octet_string(&cksum->checksum, *data);
 	if (ret) {
@@ -143,7 +141,7 @@ krb5_checksum_free(krb5_context context, krb5_checksum *cksum)
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_c_valid_enctype (krb5_enctype etype)
 {
-    return krb5_enctype_valid(NULL, etype);
+    return !krb5_enctype_valid(NULL, etype);
 }
 
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
@@ -171,7 +169,7 @@ krb5_copy_checksum (krb5_context context,
 {
     *new = malloc(sizeof(**new));
     if (*new == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
     return copy_Checksum(old, *new);
 }
 
@@ -228,7 +226,7 @@ krb5_c_decrypt(krb5_context context,
 	krb5_crypto_destroy(context, crypto);
 	return ret;
 	}
-	
+
 	if (blocksize > ivec->length) {
 	    krb5_crypto_destroy(context, crypto);
 	    return KRB5_BAD_MSIZE;
@@ -318,12 +316,12 @@ krb5_c_encrypt_length(krb5_context context,
  * @ingroup krb5_deprecated
  */
 
-KRB5_DEPRECATED
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_enctype_compare(krb5_context context,
 		       krb5_enctype e1,
 		       krb5_enctype e2,
 		       krb5_boolean *similar)
+    KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     *similar = (e1 == e2);
     return 0;
@@ -382,7 +380,8 @@ krb5_c_prf(krb5_context context,
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_random_make_octets(krb5_context context, krb5_data * data)
 {
-    return krb5_generate_random_keyblock(context, data->length, data->data);
+    krb5_generate_random_block(data->data, data->length);
+    return 0;
 }
 
 /**

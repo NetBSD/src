@@ -1,4 +1,4 @@
-/*	$NetBSD: kadm5_locl.h,v 1.1.1.2 2011/04/14 14:09:17 elric Exp $	*/
+/*	$NetBSD: kadm5_locl.h,v 1.1.1.2.12.1 2017/08/30 06:54:29 snj Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
@@ -40,6 +40,7 @@
 
 #include <config.h>
 #include <krb5/roken.h>
+#include <krb5/heimbase.h>
 
 #include <stdio.h>
 #include <stdlib.h>
