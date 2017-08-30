@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.58 2016/12/15 09:28:04 ozaki-r Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.59 2017/08/30 16:01:55 maxv Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -22,11 +22,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.58 2016/12/15 09:28:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.59 2017/08/30 16:01:55 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -54,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.58 2016/12/15 09:28:04 ozaki
 
 #include <net/if_ether.h>
 
-
 #include <xen/xen.h>
 #include <xen/xen_shm.h>
 #include <xen/evtchn.h>
@@ -68,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.58 2016/12/15 09:28:04 ozaki
 #else
 #define XENPRINTF(x)
 #endif
+
+extern pt_entry_t xpmap_pg_nx;
 
 #define NET_TX_RING_SIZE __RING_SIZE((netif_tx_sring_t *)0, PAGE_SIZE)
 #define NET_RX_RING_SIZE __RING_SIZE((netif_rx_sring_t *)0, PAGE_SIZE)
@@ -648,7 +648,6 @@ xnetif_lookup(domid_t dom , uint32_t handle)
 	return NULL;
 }
 
-
 /* get a page to remplace a mbuf cluster page given to a domain */
 static int
 xennetback_get_mcl_page(paddr_t *map)
@@ -664,7 +663,6 @@ xennetback_get_mcl_page(paddr_t *map)
 	*map = ((paddr_t)mcl_pages[mcl_pages_alloc]) << PAGE_SHIFT;
 	mcl_pages_alloc--;
 	return 0;
-	
 }
 
 static void
@@ -795,7 +793,7 @@ xennetback_evthandler(void *arg)
 		XENPRINTF(("%s pkt offset %d size %d id %d req_cons %d\n",
 		    xneti->xni_if.if_xname, txreq.offset,
 		    txreq.size, txreq.id, MASK_NETIF_TX_IDX(req_cons)));
-		
+
 		pkt = pool_get(&xni_pkt_pool, PR_NOWAIT);
 		if (__predict_false(pkt == NULL)) {
 			static struct timeval lasttime;
@@ -818,7 +816,7 @@ xennetback_evthandler(void *arg)
 			m_freem(m);
 			continue;
 		}
-			
+
 		if (__predict_false(err)) {
 			printf("%s: mapping foreing page failed: %d\n",
 			    xneti->xni_if.if_xname, err);
@@ -889,7 +887,7 @@ so always copy for now.
 			}
 		}
 		m_set_rcvif(m, ifp);
-		
+
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 	xen_rmb(); /* be sure to read the request before updating pointer */
@@ -1062,7 +1060,7 @@ xennetback_ifsoftstart_transfer(void *arg)
 			 */
 			xpmap_ptom_map(xmit_pa, newp_ma);
 			MULTI_update_va_mapping(mclp, xmit_va,
-			    newp_ma | PG_V | PG_RW | PG_U | PG_M, 0);
+			    newp_ma | PG_V | PG_RW | PG_U | PG_M | xpmap_pg_nx, 0);
 			mclp++;
 			gop->mfn = xmit_ma >> PAGE_SHIFT;
 			gop->domid = xneti->xni_domid;
@@ -1144,7 +1142,7 @@ xennetback_ifsoftstart_transfer(void *arg)
 					rxresp->status = NETIF_RSP_ERROR;
 				}
 			}
-					
+
 			/* update pointer */
 			KASSERT(
 			    xneti->xni_rxring.rsp_prod_pvt + i == resp_prod);
@@ -1378,7 +1376,7 @@ xennetback_ifsoftstart_copy(void *arg)
 					rxresp->status = NETIF_RSP_ERROR;
 				}
 			}
-					
+
 			/* update pointer */
 			KASSERT(
 			    xneti->xni_rxring.rsp_prod_pvt + i == resp_prod);
@@ -1414,7 +1412,6 @@ xennetback_ifsoftstart_copy(void *arg)
 	splx(s);
 }
 
-
 static void
 xennetback_ifwatchdog(struct ifnet * ifp)
 {
@@ -1428,7 +1425,6 @@ xennetback_ifwatchdog(struct ifnet * ifp)
 	XENPRINTF(("xennetback_ifwatchdog\n"));
 	xennetback_ifstart(ifp);
 }
-
 
 static int
 xennetback_ifinit(struct ifnet *ifp)
