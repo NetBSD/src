@@ -11,6 +11,8 @@ include ../lib.rules
 
 CFLAGS += -DCONFIG_INTERNAL_LIBTOMMATH
 CFLAGS += -DCONFIG_CRYPTO_INTERNAL
+CFLAGS += -DCONFIG_TLSV11
+CFLAGS += -DCONFIG_TLSV12
 
 LIB_OBJS= \
 	asn1.o \
@@ -22,6 +24,7 @@ LIB_OBJS= \
 	tlsv1_client.o \
 	tlsv1_client_read.o \
 	tlsv1_client_write.o \
+	tlsv1_client_ocsp.o \
 	tlsv1_common.o \
 	tlsv1_cred.o \
 	tlsv1_record.o \
