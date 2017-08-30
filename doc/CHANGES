@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2286.2.1 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2286.2.2 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -521,3 +521,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	file(1): Upgraded to 5.31. [christos 20170524]
 	can(4): Added a socketcan implementation, a socket layer for
 		CAN busses. [bouyer 20170527]
+	evbmips: Merge sbmips port into evbmips. [mrg 20170815]
