@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:52 elric Exp $
+# $NetBSD: Makefile,v 1.1.20.1 2017/08/30 06:57:46 snj Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -10,8 +10,10 @@ NOLINT=		# defined
 .PATH:		${HEIMDIST}/lib/kadm5
 
 LIB=		kadm5srv
+CPPFLAGS+=	-I${HEIMDIST}/lib/krb5
 
 LIBDPLIBS+=	krb5	${.CURDIR}/../libkrb5 \
+		com_err	${.CURDIR}/../libcom_err \
 		hdb	${.CURDIR}/../libhdb \
 		roken	${.CURDIR}/../libroken
 
@@ -42,10 +44,17 @@ SRCS =				\
 	randkey_s.c		\
 	rename_s.c		\
 	server_glue.c		\
+	setkey3_s.c		\
 	set_keys.c		\
 	set_modifier.c
 
 MAN= kadm5_pwcheck.3
+
+MLINKS= \
+        kadm5_pwcheck.3      kadm5_setup_passwd_quality_check.3        \
+        kadm5_pwcheck.3      kadm5_add_passwd_quality_verifier.3        \
+        kadm5_pwcheck.3      kadm5_check_password_quality.3        \
+        kadm5_pwcheck.3      krb5_pwcheck.3        \
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.lib.mk>

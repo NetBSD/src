@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm_wrap.c,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $	*/
+/*	$NetBSD: ndbm_wrap.c,v 1.1.1.1.20.1 2017/08/30 06:57:39 snj Exp $	*/
 
 /*
  * Copyright (c) 2002 Kungliga Tekniska Högskolan
@@ -113,19 +113,20 @@ static datum
 dbm_get (DB *db, int flags)
 {
     DBT key, value;
-    datum datum;
+    datum d;
 #ifdef HAVE_DB3
     if(cursor == NULL)
 	db->cursor(db, NULL, &cursor, 0);
     if(cursor->c_get(cursor, &key, &value, flags) != 0) {
-	datum.dptr = NULL;
-	datum.dsize = 0;
+	d.dptr = NULL;
+	d.dsize = 0;
     } else
-	DBT2DATUM(&value, &datum);
+	DBT2DATUM(&value, &d);
 #else
     db->seq(db, &key, &value, flags);
+    DBT2DATUM(&value, &d);
 #endif
-    return datum;
+    return d;
 }
 
 #ifndef DB_FIRST
@@ -150,8 +151,10 @@ dbm_nextkey (DBM *db)
 ROKEN_LIB_FUNCTION DBM* ROKEN_LIB_CALL
 dbm_open (const char *file, int flags, mode_t mode)
 {
-    DB *db;
+#ifdef HAVE_DB3
     int myflags = 0;
+#endif
+    DB *db;
     char *fn = malloc(strlen(file) + 4);
     if(fn == NULL)
 	return NULL;

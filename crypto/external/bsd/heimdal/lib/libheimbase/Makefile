@@ -1,17 +1,22 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:51 elric Exp $
+# $NetBSD: Makefile,v 1.1.20.1 2017/08/30 06:57:45 snj Exp $
 
 USE_FORT?= yes	# network protocol library
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
 
-.PATH:		${HEIMDIST}/base
+.PATH:		${HEIMDIST}/lib/base
 
 LIB=		heimbase
 
 SRCS=			\
 	array.c		\
+	bsearch.c	\
+	db.c		\
+	data.c		\
 	dict.c		\
+	error.c		\
+	json.c		\
 	number.c	\
 	bool.c		\
 	heimbase.c	\

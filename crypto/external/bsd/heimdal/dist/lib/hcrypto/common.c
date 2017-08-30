@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: common.c,v 1.1.1.1.20.1 2017/08/30 06:57:30 snj Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -36,11 +36,7 @@
  */
 
 #include <config.h>
-
-#include <errno.h>
-
-#include <stdio.h>
-#include <stdlib.h>
+#include <krb5/roken.h>
 
 #include <krb5/krb5-types.h>
 #include <krb5/rfc2459_asn1.h>

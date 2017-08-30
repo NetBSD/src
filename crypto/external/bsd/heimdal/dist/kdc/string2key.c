@@ -1,4 +1,4 @@
-/*	$NetBSD: string2key.c,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $	*/
+/*	$NetBSD: string2key.c,v 1.1.1.1.20.1 2017/08/30 06:57:25 snj Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
@@ -47,15 +47,17 @@ int version;
 int help;
 
 struct getargs args[] = {
-    { "version5", '5', arg_flag,   &version5, "Output Kerberos v5 string-to-key" },
-    { "version4", '4', arg_flag,   &version4, "Output Kerberos v4 string-to-key" },
-    { "afs",      'a', arg_flag,   &afs, "Output AFS string-to-key" },
+    { "version5", '5', arg_flag,   &version5, "Output Kerberos v5 string-to-key",
+	NULL },
+    { "version4", '4', arg_flag,   &version4, "Output Kerberos v4 string-to-key",
+	NULL },
+    { "afs",      'a', arg_flag,   &afs, "Output AFS string-to-key", NULL },
     { "cell",     'c', arg_string, &cell, "AFS cell to use", "cell" },
     { "password", 'w', arg_string, &password, "Password to use", "password" },
     { "principal",'p', arg_string, &principal, "Kerberos v5 principal to use", "principal" },
-    { "keytype",  'k', arg_string, rk_UNCONST(&keytype_str), "Keytype" },
-    { "version",    0, arg_flag,   &version, "print version" },
-    { "help",       0, arg_flag,   &help, NULL }
+    { "keytype",  'k', arg_string, rk_UNCONST(&keytype_str), "Keytype", NULL },
+    { "version",    0, arg_flag,   &version, "print version", NULL },
+    { "help",       0, arg_flag,   &help, NULL, NULL }
 };
 
 int num_args = sizeof(args) / sizeof(args[0]);
@@ -75,7 +77,7 @@ tokey(krb5_context context,
       const char *label)
 {
     krb5_error_code ret;
-    int i;
+    size_t i;
     krb5_keyblock key;
     char *e;
 
@@ -128,9 +130,9 @@ main(int argc, char **argv)
     if(ret)
 	krb5_err(context, 1, ret, "krb5_string_to_enctype");
 
-    if((etype != ETYPE_DES_CBC_CRC &&
-	etype != ETYPE_DES_CBC_MD4 &&
-	etype != ETYPE_DES_CBC_MD5) &&
+    if((etype != (krb5_enctype)ETYPE_DES_CBC_CRC &&
+	etype != (krb5_enctype)ETYPE_DES_CBC_MD4 &&
+	etype != (krb5_enctype)ETYPE_DES_CBC_MD5) &&
        (afs || version4)) {
 	if(!version5) {
 	    etype = ETYPE_DES_CBC_CRC;
@@ -161,10 +163,15 @@ main(int argc, char **argv)
 	    return 1;
 	password = buf;
     }
-	
+
     if(version5){
-	krb5_parse_name(context, principal, &princ);
-	krb5_get_pw_salt(context, princ, &salt);
+	ret = krb5_parse_name(context, principal, &princ);
+	if (ret)
+	    krb5_err(context, 1, ret, "failed to unparse name: %s", principal);
+	ret = krb5_get_pw_salt(context, princ, &salt);
+	if (ret)
+	    krb5_err(context, 1, ret, "failed to get salt for %s", principal);
+
 	tokey(context, etype, password, salt, "Kerberos 5 (%s)");
 	krb5_free_salt(context, salt);
     }

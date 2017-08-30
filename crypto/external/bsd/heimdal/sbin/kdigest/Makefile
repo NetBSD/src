@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:19 he Exp $
+# $NetBSD: Makefile,v 1.2.20.1 2017/08/30 06:57:47 snj Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -6,8 +6,7 @@
 .PATH: ${HEIMDIST}/kuser
 
 PROG= kdigest
-# no man-page yet
-MAN=
+MAN= kdigest.8
 
 HEIMSRCS+= kdigest.c kdigest-commands.in
 

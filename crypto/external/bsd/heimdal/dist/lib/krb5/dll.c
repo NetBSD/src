@@ -1,21 +1,21 @@
-/*	$NetBSD: dll.c,v 1.1.1.1 2011/04/13 18:15:33 elric Exp $	*/
+/*	$NetBSD: dll.c,v 1.1.1.1.20.1 2017/08/30 06:57:36 snj Exp $	*/
 
 /***********************************************************************
  * Copyright (c) 2009, Secure Endpoints Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * - Redistributions of source code must retain the above copyright
  *   notice, this list of conditions and the following disclaimer.
- * 
+ *
  * - Redistributions in binary form must reproduce the above copyright
  *   notice, this list of conditions and the following disclaimer in
  *   the documentation and/or other materials provided with the
  *   distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -28,17 +28,34 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  **********************************************************************/
 
 #include<windows.h>
 
+extern void heim_w32_service_thread_detach(void *);
+
 HINSTANCE _krb5_hInstance = NULL;
+
+#if NTDDI_VERSION >= NTDDI_VISTA
+extern BOOL WINAPI
+_hc_w32crypto_DllMain(HINSTANCE hinstDLL,
+		      DWORD fdwReason,
+		      LPVOID lpvReserved);
+#endif
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL,
 		    DWORD fdwReason,
 		    LPVOID lpvReserved)
 {
+#if NTDDI_VERSION >= NTDDI_VISTA
+    BOOL ret;
+
+    ret = _hc_w32crypto_DllMain(hinstDLL, fdwReason, lpvReserved);
+    if (!ret)
+	return ret;
+#endif
+
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
 
@@ -52,6 +69,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,
 	return FALSE;
 
     case DLL_THREAD_DETACH:
+        heim_w32_service_thread_detach(NULL);
 	return FALSE;
     }
 

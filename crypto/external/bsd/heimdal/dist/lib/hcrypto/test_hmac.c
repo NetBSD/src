@@ -1,4 +1,4 @@
-/*	$NetBSD: test_hmac.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: test_hmac.c,v 1.1.1.1.20.1 2017/08/30 06:57:31 snj Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -34,16 +34,10 @@
  */
 
 #include <config.h>
-
-#include <sys/types.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <krb5/roken.h>
 
 #include <hmac.h>
 #include <evp.h>
-#include <krb5/roken.h>
 
 int
 main(int argc, char **argv)
@@ -73,6 +67,6 @@ main(int argc, char **argv)
 	printf("wrong answer\n");
 	return 1;
     }
-	
+
     return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_wrap_size_limit.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: gss_wrap_size_limit.c,v 1.1.1.1.20.1 2017/08/30 06:57:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -32,7 +32,7 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_wrap_size_limit(OM_uint32 *minor_status,
-    const gss_ctx_id_t context_handle,
+    gss_const_ctx_id_t context_handle,
     int conf_req_flag,
     gss_qop_t qop_req,
     OM_uint32 req_output_size,
@@ -40,7 +40,7 @@ gss_wrap_size_limit(OM_uint32 *minor_status,
 {
 	struct _gss_context *ctx = (struct _gss_context *) context_handle;
 	gssapi_mech_interface m;
-	
+
 	*max_input_size = 0;
 	if (ctx == NULL) {
 	    *minor_status = 0;

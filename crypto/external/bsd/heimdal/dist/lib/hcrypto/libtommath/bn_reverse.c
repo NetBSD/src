@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_reverse.c,v 1.1.1.1 2011/04/13 18:14:55 elric Exp $	*/
+/*	$NetBSD: bn_reverse.c,v 1.1.1.1.20.1 2017/08/30 06:57:32 snj Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_REVERSE_C
@@ -36,6 +36,6 @@ bn_reverse (unsigned char *s, int len)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_reverse.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_reverse.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

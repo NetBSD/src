@@ -1,4 +1,4 @@
-/*	$NetBSD: camellia-ntt.c,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: camellia-ntt.c,v 1.1.1.1.20.1 2017/08/30 06:57:30 snj Exp $	*/
 
 /* camellia.c ver 1.2.0
  *
@@ -32,15 +32,11 @@
  *  http://info.isl.ntt.co.jp/crypt/eng/camellia/specifications.html
  */
 
-#include "config.h"
-
-#include <string.h>
-#include <stdlib.h>
+#include <config.h>
+#include <krb5/roken.h>
 
 #include <krb5/krb5-types.h>
 #include "camellia-ntt.h"
-
-#include <krb5/roken.h>
 
 /* key constants */
 
@@ -1059,7 +1055,7 @@ static void camellia_encrypt128(const u32 *subkey, u32 *io)
     io[1] = io[3];
     io[2] = t0;
     io[3] = t1;
-	
+
     return;
 }
 
@@ -1277,7 +1273,7 @@ static void camellia_decrypt256(const u32 *subkey, u32 *io)
     /* pre whitening but absorb kw2*/
     io[0] ^= CamelliaSubkeyL(32);
     io[1] ^= CamelliaSubkeyR(32);
-	
+
     /* main iteration */
     CAMELLIA_ROUNDSM(io[0],io[1],
 		     CamelliaSubkeyL(31),CamelliaSubkeyR(31),

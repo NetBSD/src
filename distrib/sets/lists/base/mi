@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.984.2.15.2.6 2017/08/10 06:44:10 snj Exp $
+# $NetBSD: mi,v 1.984.2.15.2.7 2017/08/30 06:57:47 snj Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -510,6 +510,7 @@
 ./usr/bin/krb5-config				base-krb5-bin		kerberos
 ./usr/bin/ktrace				base-debug-bin
 ./usr/bin/ktruss				base-debug-bin
+./usr/bin/kvno					base-krb5-bin		kerberos
 ./usr/bin/lam					base-util-bin
 ./usr/bin/last					base-util-bin
 ./usr/bin/lastcomm				base-util-bin

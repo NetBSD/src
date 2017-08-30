@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12.4.1.6.3 2017/04/25 20:53:22 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.12.4.1.6.4 2017/08/30 06:57:49 snj Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -98,9 +98,9 @@ CPPFLAGS+=-DGSSAPI
 .if ${MKKERBEROS} != "no"
 .if !defined (LIB) || empty(LIB)
 LDADD+=	-lgssapi -lheimntlm -lkrb5 -lhx509 -lheimbase \
-	-lcom_err  -lroken -lasn1 -lwind
+	-lcom_err  -lroken -lasn1 -lwind -lsqlite3
 DPADD+=	${LIBGSSAPI} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBHEIMBASE} \
-	${LIBCOM_ERR} ${LIBROKEN} ${LIBASN1} ${LIBWIND}
+	${LIBCOM_ERR} ${LIBROKEN} ${LIBASN1} ${LIBWIND} ${LIBSQLITE3}
 .else
 .for L in gssapi krb5 hx509 heimntlm heimbase com_err roken asn1 wind
 LIBDPLIBS+=     $L ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/lib$L

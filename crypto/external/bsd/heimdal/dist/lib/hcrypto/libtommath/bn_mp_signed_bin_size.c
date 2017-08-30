@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_signed_bin_size.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_signed_bin_size.c,v 1.1.1.1.20.1 2017/08/30 06:57:32 snj Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_SIGNED_BIN_SIZE_C
@@ -24,6 +24,6 @@ int mp_signed_bin_size (mp_int * a)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_signed_bin_size.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_signed_bin_size.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

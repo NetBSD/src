@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.1.1.1 2011/04/13 18:15:11 elric Exp $	*/
+/*	$NetBSD: lock.c,v 1.1.1.1.20.1 2017/08/30 06:57:34 snj Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2006 Kungliga Tekniska Högskolan
@@ -49,7 +49,10 @@ struct hx509_lock_data {
 };
 
 static struct hx509_lock_data empty_lock_data = {
-    { 0, NULL }
+    { 0, NULL },
+    NULL,
+    NULL,
+    NULL
 };
 
 hx509_lock _hx509_empty_lock = &empty_lock_data;
@@ -123,7 +126,7 @@ _hx509_lock_unlock_certs(hx509_lock lock)
 void
 hx509_lock_reset_passwords(hx509_lock lock)
 {
-    int i;
+    size_t i;
     for (i = 0; i < lock->password.len; i++)
 	free(lock->password.val[i]);
     free(lock->password.val);

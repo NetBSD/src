@@ -1,4 +1,4 @@
-/*	$NetBSD: kcpytkt.c,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $	*/
+/*	$NetBSD: kcpytkt.c,v 1.1.1.1.20.1 2017/08/30 06:57:25 snj Exp $	*/
 
 
 #include "kuser_locl.h"
@@ -6,6 +6,7 @@
 static char *etypestr = 0;
 static char *fromccachestr = 0;
 static char *flagstr = 0;
+static int  exp_ok = 0;
 static int  quiet_flag = 0;
 static int  version_flag = 0;
 static int  help_flag = 0;
@@ -17,6 +18,8 @@ struct getargs args[] = {
       "Encryption type", "enctype" },
     { "flags", 'f', arg_string, &flagstr,
       "Flags", "flags" },
+    { "expired-ok", 'E', arg_flag, &exp_ok,
+	"Keep expired tickets" },
     { "quiet", 'q', arg_flag, &quiet_flag, "Quiet" },
     { "version",        0, arg_flag, &version_flag },
     { "help",           0, arg_flag, &help_flag }
@@ -64,7 +67,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-static void do_kcpytkt (int count, char *names[], 
+static void do_kcpytkt (int count, char *names[],
                         char *fromccachestr, char *etypestr, int flags)
 {
     krb5_context context;
@@ -131,8 +134,13 @@ static void do_kcpytkt (int count, char *names[],
 
 	in_creds.session.keytype = etype;
 
+	if (!exp_ok) {
+	    krb5_timeofday(context, &in_creds.times.endtime);
+	    retflags |= KRB5_TC_MATCH_TIMES;
+	}
+
         ret = krb5_cc_retrieve_cred(context, fromccache, retflags,
-                                    &in_creds, &out_creds);  
+                                    &in_creds, &out_creds);
 	if (ret) {
             krb5_warn(context, ret, "Can't retrieve credentials for %s", princ);
 
