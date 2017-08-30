@@ -1,15 +1,9 @@
 /*
  * hostapd - IEEE 802.11i-2004 / WPA Authenticator: Internal definitions
- * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2015, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef WPA_AUTH_I_H
@@ -32,6 +26,7 @@ struct wpa_state_machine {
 	struct wpa_group *group;
 
 	u8 addr[ETH_ALEN];
+	u8 p2p_dev_addr[ETH_ALEN];
 
 	enum {
 		WPA_PTK_INITIALIZE, WPA_PTK_DISCONNECT, WPA_PTK_DISCONNECTED,
@@ -63,16 +58,20 @@ struct wpa_state_machine {
 	Boolean GUpdateStationKeys;
 	u8 ANonce[WPA_NONCE_LEN];
 	u8 SNonce[WPA_NONCE_LEN];
-	u8 PMK[PMK_LEN];
+	u8 alt_SNonce[WPA_NONCE_LEN];
+	u8 alt_replay_counter[WPA_REPLAY_COUNTER_LEN];
+	u8 PMK[PMK_LEN_MAX];
+	unsigned int pmk_len;
 	struct wpa_ptk PTK;
 	Boolean PTK_valid;
 	Boolean pairwise_set;
 	int keycount;
 	Boolean Pair;
-	struct {
+	struct wpa_key_replay_counter {
 		u8 counter[WPA_REPLAY_COUNTER_LEN];
 		Boolean valid;
-	} key_replay[RSNA_MAX_EAPOL_RETRIES];
+	} key_replay[RSNA_MAX_EAPOL_RETRIES],
+		prev_key_replay[RSNA_MAX_EAPOL_RETRIES];
 	Boolean PInitAKeys; /* WPA only, not in IEEE 802.11i */
 	Boolean PTKRequest; /* not in IEEE 802.11i state machine */
 	Boolean has_GTK;
@@ -86,10 +85,14 @@ struct wpa_state_machine {
 	unsigned int pending_deinit:1;
 	unsigned int started:1;
 	unsigned int mgmt_frame_prot:1;
+	unsigned int rx_eapol_key_secure:1;
+	unsigned int update_snonce:1;
+	unsigned int alt_snonce_valid:1;
 #ifdef CONFIG_IEEE80211R
 	unsigned int ft_completed:1;
 	unsigned int pmk_r1_name_valid:1;
 #endif /* CONFIG_IEEE80211R */
+	unsigned int is_wnmsleep:1;
 
 	u8 req_replay_counter[WPA_REPLAY_COUNTER_LEN];
 	int req_replay_counter_used;
@@ -119,7 +122,22 @@ struct wpa_state_machine {
 	u8 sup_pmk_r1_name[WPA_PMK_NAME_LEN]; /* PMKR1Name from EAPOL-Key
 					       * message 2/4 */
 	u8 *assoc_resp_ftie;
+
+	void (*ft_pending_cb)(void *ctx, const u8 *dst, const u8 *bssid,
+			      u16 auth_transaction, u16 status,
+			      const u8 *ies, size_t ies_len);
+	void *ft_pending_cb_ctx;
+	struct wpabuf *ft_pending_req_ies;
+	u8 ft_pending_pull_nonce[FT_R0KH_R1KH_PULL_NONCE_LEN];
+	u8 ft_pending_auth_transaction;
+	u8 ft_pending_current_ap[ETH_ALEN];
 #endif /* CONFIG_IEEE80211R */
+
+	int pending_1_of_4_timeout;
+
+#ifdef CONFIG_P2P
+	u8 ip_addr[4];
+#endif /* CONFIG_P2P */
 };
 
 
@@ -138,17 +156,23 @@ struct wpa_group {
 
 	enum {
 		WPA_GROUP_GTK_INIT = 0,
-		WPA_GROUP_SETKEYS, WPA_GROUP_SETKEYSDONE
+		WPA_GROUP_SETKEYS, WPA_GROUP_SETKEYSDONE,
+		WPA_GROUP_FATAL_FAILURE
 	} wpa_group_state;
 
 	u8 GMK[WPA_GMK_LEN];
 	u8 GTK[2][WPA_GTK_MAX_LEN];
 	u8 GNonce[WPA_NONCE_LEN];
 	Boolean changed;
+	Boolean first_sta_seen;
+	Boolean reject_4way_hs_for_entropy;
 #ifdef CONFIG_IEEE80211W
-	u8 IGTK[2][WPA_IGTK_LEN];
+	u8 IGTK[2][WPA_IGTK_MAX_LEN];
 	int GN_igtk, GM_igtk;
 #endif /* CONFIG_IEEE80211W */
+	/* Number of references except those in struct wpa_group->next */
+	unsigned int references;
+	unsigned int num_setup_iface;
 };
 
 
@@ -181,6 +205,10 @@ struct wpa_authenticator {
 
 	struct rsn_pmksa_cache *pmksa;
 	struct wpa_ft_pmk_cache *ft_pmk_cache;
+
+#ifdef CONFIG_P2P
+	struct bitfield *ip_pool;
+#endif /* CONFIG_P2P */
 };
 
 
@@ -206,11 +234,14 @@ int wpa_auth_for_each_auth(struct wpa_authenticator *wpa_auth,
 int wpa_stsl_remove(struct wpa_authenticator *wpa_auth,
 		    struct wpa_stsl_negotiation *neg);
 void wpa_smk_error(struct wpa_authenticator *wpa_auth,
-		   struct wpa_state_machine *sm, struct wpa_eapol_key *key);
+		   struct wpa_state_machine *sm,
+		   const u8 *key_data, size_t key_data_len);
 void wpa_smk_m1(struct wpa_authenticator *wpa_auth,
-		struct wpa_state_machine *sm, struct wpa_eapol_key *key);
+		struct wpa_state_machine *sm, struct wpa_eapol_key *key,
+		const u8 *key_data, size_t key_data_len);
 void wpa_smk_m3(struct wpa_authenticator *wpa_auth,
-		struct wpa_state_machine *sm, struct wpa_eapol_key *key);
+		struct wpa_state_machine *sm, struct wpa_eapol_key *key,
+		const u8 *key_data, size_t key_data_len);
 #endif /* CONFIG_PEERKEY */
 
 #ifdef CONFIG_IEEE80211R
@@ -221,7 +252,7 @@ int wpa_write_ftie(struct wpa_auth_config *conf, const u8 *r0kh_id,
 		   u8 *buf, size_t len, const u8 *subelem,
 		   size_t subelem_len);
 int wpa_auth_derive_ptk_ft(struct wpa_state_machine *sm, const u8 *pmk,
-			   struct wpa_ptk *ptk, size_t ptk_len);
+			   struct wpa_ptk *ptk);
 struct wpa_ft_pmk_cache * wpa_ft_pmk_cache_init(void);
 void wpa_ft_pmk_cache_deinit(struct wpa_ft_pmk_cache *cache);
 void wpa_ft_install_ptk(struct wpa_state_machine *sm);

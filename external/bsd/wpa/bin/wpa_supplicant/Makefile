@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/08/04 17:12:34 christos Exp $
+# $NetBSD: Makefile,v 1.1.14.1 2017/08/30 05:50:37 snj Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -11,7 +11,9 @@ common.c \
 config.c \
 config_file.c \
 ctrl_iface.c \
+ctrl_iface_common.c \
 ctrl_iface_unix.c \
+driver_common.c \
 driver_bsd.c \
 driver_wired.c \
 drivers.c \
@@ -21,16 +23,19 @@ eap_register.c \
 eapol_supp_sm.c \
 eloop.c \
 events.c \
+hw_features_common.c \
+ieee802_11_common.c \
 l2_packet_freebsd.c \
 main.c \
-md5.c \
 notify.c \
 os_unix.c \
 peerkey.c \
 pmksa_cache.c \
 preauth.c \
+random.c \
 scan.c \
-sha1.c \
+sha1-prf.c \
+wmm_ac.c \
 wpa.c \
 wpa_common.c \
 wpa_debug.c \
@@ -38,6 +43,7 @@ wpa_ie.c \
 wpa_supplicant.c \
 wpabuf.c \
 wpas_glue.c
+
 
 MAN=	wpa_supplicant.8 wpa_supplicant.conf.5
 
@@ -54,12 +60,30 @@ CPPFLAGS+= \
 
 CPPFLAGS+=-DCONFIG_BACKEND_FILE
 CPPFLAGS+=-DCONFIG_PEERKEY
-CPPFLAGS+=-DCONFIG_DRIVER_WIRED
+CPPFLAGS+=-DCONFIG_MATCH_IFACE
 CPPFLAGS+=-DCONFIG_DRIVER_BSD
+CPPFLAGS+=-DCONFIG_DRIVER_WIRED
 CPPFLAGS+=-DCONFIG_CTRL_IFACE
 CPPFLAGS+=-DCONFIG_CTRL_IFACE_UNIX
 CPPFLAGS+=-DCONFIG_SMARTCARD
 CPPFLAGS+=-DCONFIG_DEBUG_FILE
+CPPFLAGS+=-DCONFIG_DEBUG_SYSLOG
+
+#CPPFLAGS+=-DCONFIG_FST
+#SRCS+=fst.c \
+#fst_ctrl_aux.c \
+#fst_ctrl_iface.c \
+#fst_group.c \
+#fst_iface.c \
+#fst_session.c
+
+#CPPFLAGS+=-DCONFIG_ACS
+#CPPFLAGS+=-DCONFIG_MBO
+#CPPFLAGS+=-DCONFIG_WNM 
+#CPPFLAGS+=-DCONFIG_AP
+#SRCS+=ap.c \
+#gas.c \
+#mbo.c 
 
 DPADD+=	${LIBPCAP}
 LDADD+=	-lpcap
@@ -96,7 +120,6 @@ eap_tls_common.c \
 eap_ttls.c \
 ms_funcs.c \
 mschapv2.c \
-sha1-pbkdf2.c \
 sha1-tlsprf.c \
 tls_openssl.c
 
@@ -104,7 +127,6 @@ SRCS+=aes-ctr.c \
 aes-eax.c \
 aes-encblock.c \
 aes-omac1.c \
-aes-unwrap.c \
 
 # NB: requires patch to openssl
 #CPPFLAGS+= -DEAP_FAST
@@ -114,7 +136,10 @@ DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBDES}
 LDADD+= -lssl -lcrypto -ldes
 .else
 CPPFLAGS+= -DINTERNAL_AES -DINTERNAL_MD5 -DINTERNAL_SHA1 -DCONFIG_NO_PBKDF2
-SRCS+=	tls_none.c sha1-internal.c md5-internal.c aes-xinternal.c rc4.c
+SRCS+= tls_none.c sha1-internal.c md5-internal.c aes-xinternal.c rc4.c
+CPPFLAGS+= -DCONFIG_CRYPTO_INTERNAL
+#SRCS+= aes-unwrap.c md5.c
+SRCS+= sha1-pbkdf2.c sha1.c md5.c
 .endif
 
 .endif

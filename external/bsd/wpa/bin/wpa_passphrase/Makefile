@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/08/04 17:12:34 christos Exp $
+# $NetBSD: Makefile,v 1.1.14.1 2017/08/30 05:50:37 snj Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -6,10 +6,8 @@
 
 PROG=	wpa_passphrase
 SRCS= \
-md5.c \
+common.c \
 os_unix.c \
-sha1-pbkdf2.c \
-sha1.c \
 wpa_debug.c \
 wpa_passphrase.c \
 wpabuf.c 
@@ -20,7 +18,9 @@ DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBDES}
 LDADD+= -lssl -lcrypto -ldes
 .else
 CPPFLAGS+= -DINTERNAL_AES -DINTERNAL_MD5 -DINTERNAL_SHA1
+CPPFLAGS+= -DCONFIG_CRYPTO_INTERNAL
 SRCS+=	tls_none.c md5-internal.c sha1-internal.c
+SRCS+= sha1-pbkdf2.c sha1.c md5.c
 .endif
 
 

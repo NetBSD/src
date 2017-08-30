@@ -2,14 +2,8 @@
  * EAP peer: Method registration
  * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -23,6 +17,8 @@
 
 
 static struct eap_method *eap_methods = NULL;
+
+static void eap_peer_method_free(struct eap_method *method);
 
 
 /**
@@ -77,6 +73,8 @@ EapType eap_peer_get_type(const char *name, int *vendor)
 const char * eap_get_name(int vendor, EapType type)
 {
 	struct eap_method *m;
+	if (vendor == EAP_VENDOR_IETF && type == EAP_TYPE_EXPANDED)
+		return "expanded";
 	for (m = eap_methods; m; m = m->next) {
 		if (m->vendor == vendor && m->method == type)
 			return m->name;
@@ -107,7 +105,7 @@ size_t eap_get_names(char *buf, size_t buflen)
 	for (m = eap_methods; m; m = m->next) {
 		ret = os_snprintf(pos, end - pos, "%s%s",
 				  m == eap_methods ? "" : " ", m->name);
-		if (ret < 0 || ret >= end - pos)
+		if (os_snprintf_error(end - pos, ret))
 			break;
 		pos += ret;
 	}
@@ -137,7 +135,7 @@ char ** eap_get_names_as_string_array(size_t *num)
 	for (m = eap_methods; m; m = m->next)
 		array_len++;
 
-	array = os_zalloc(sizeof(char *) * (array_len + 1));
+	array = os_calloc(array_len + 1, sizeof(char *));
 	if (array == NULL)
 		return NULL;
 
@@ -299,7 +297,7 @@ struct eap_method * eap_peer_method_alloc(int version, int vendor,
  * eap_peer_method_free - Free EAP peer method structure
  * @method: Method structure allocated with eap_peer_method_alloc()
  */
-void eap_peer_method_free(struct eap_method *method)
+static void eap_peer_method_free(struct eap_method *method)
 {
 	os_free(method);
 }
@@ -307,26 +305,31 @@ void eap_peer_method_free(struct eap_method *method)
 
 /**
  * eap_peer_method_register - Register an EAP peer method
- * @method: EAP method to register
+ * @method: EAP method to register from eap_peer_method_alloc()
  * Returns: 0 on success, -1 on invalid method, or -2 if a matching EAP method
  * has already been registered
  *
  * Each EAP peer method needs to call this function to register itself as a
- * supported EAP method.
+ * supported EAP method. The caller must not free the allocated method data
+ * regardless of the return value.
  */
 int eap_peer_method_register(struct eap_method *method)
 {
 	struct eap_method *m, *last = NULL;
 
 	if (method == NULL || method->name == NULL ||
-	    method->version != EAP_PEER_METHOD_INTERFACE_VERSION)
+	    method->version != EAP_PEER_METHOD_INTERFACE_VERSION) {
+		eap_peer_method_free(method);
 		return -1;
+	}
 
 	for (m = eap_methods; m; m = m->next) {
 		if ((m->vendor == method->vendor &&
 		     m->method == method->method) ||
-		    os_strcmp(m->name, method->name) == 0)
+		    os_strcmp(m->name, method->name) == 0) {
+			eap_peer_method_free(method);
 			return -2;
+		}
 		last = m;
 	}
 

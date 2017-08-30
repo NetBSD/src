@@ -2,14 +2,8 @@
  * Crypto wrapper for internal crypto implementation - RSA parts
  * Copyright (c) 2006-2009, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -17,7 +11,6 @@
 #include "common.h"
 #include "crypto.h"
 #include "tls/rsa.h"
-#include "tls/bignum.h"
 #include "tls/pkcs1.h"
 #include "tls/pkcs8.h"
 
@@ -30,6 +23,15 @@ struct crypto_public_key * crypto_public_key_import(const u8 *key, size_t len)
 {
 	return (struct crypto_public_key *)
 		crypto_rsa_import_public_key(key, len);
+}
+
+
+struct crypto_public_key *
+crypto_public_key_import_parts(const u8 *n, size_t n_len,
+			       const u8 *e, size_t e_len)
+{
+	return (struct crypto_public_key *)
+		crypto_rsa_import_public_key_parts(n, n_len, e, e_len);
 }
 
 

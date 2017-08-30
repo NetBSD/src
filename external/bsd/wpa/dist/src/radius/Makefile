@@ -1,7 +1,7 @@
 all: libradius.a
 
 clean:
-	rm -f *~ *.o *.d libradius.a
+	rm -f *~ *.o *.d *.gcno *.gcda *.gcov libradius.a
 
 install:
 	@echo Nothing to be made.
@@ -14,6 +14,7 @@ CFLAGS += -DCONFIG_IPV6
 LIB_OBJS= \
 	radius.o \
 	radius_client.o \
+	radius_das.o \
 	radius_server.o
 
 libradius.a: $(LIB_OBJS)

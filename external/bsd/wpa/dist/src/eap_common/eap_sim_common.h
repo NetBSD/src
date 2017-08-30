@@ -2,14 +2,8 @@
  * EAP peer/server: EAP-SIM/AKA/AKA' shared routines
  * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef EAP_SIM_COMMON_H
@@ -217,7 +211,8 @@ u8 * eap_sim_parse_encr(const u8 *k_encr, const u8 *encr_data,
 struct eap_sim_msg;
 
 struct eap_sim_msg * eap_sim_msg_init(int code, int id, int type, int subtype);
-struct wpabuf * eap_sim_msg_finish(struct eap_sim_msg *msg, const u8 *k_aut,
+struct wpabuf * eap_sim_msg_finish(struct eap_sim_msg *msg, int type,
+				   const u8 *k_aut,
 				   const u8 *extra, size_t extra_len);
 void eap_sim_msg_free(struct eap_sim_msg *msg);
 u8 * eap_sim_msg_add_full(struct eap_sim_msg *msg, u8 attr,

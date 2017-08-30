@@ -1,15 +1,9 @@
 /*
  * Wi-Fi Protected Setup - External Registrar
- * Copyright (c) 2009, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2009-2013, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -62,11 +56,15 @@ static void wps_er_sta_event(struct wps_context *wps, struct wps_er_sta *sta,
 }
 
 
-static struct wps_er_sta * wps_er_sta_get(struct wps_er_ap *ap, const u8 *addr)
+static struct wps_er_sta * wps_er_sta_get(struct wps_er_ap *ap, const u8 *addr,
+					  const u8 *uuid)
 {
 	struct wps_er_sta *sta;
 	dl_list_for_each(sta, &ap->sta, struct wps_er_sta, list) {
-		if (os_memcmp(sta->addr, addr, ETH_ALEN) == 0)
+		if ((addr == NULL ||
+		     os_memcmp(sta->addr, addr, ETH_ALEN) == 0) &&
+		    (uuid == NULL ||
+		     os_memcmp(uuid, sta->uuid, WPS_UUID_LEN) == 0))
 			return sta;
 	}
 	return NULL;
@@ -99,13 +97,16 @@ static void wps_er_sta_remove_all(struct wps_er_ap *ap)
 
 
 static struct wps_er_ap * wps_er_ap_get(struct wps_er *er,
-					struct in_addr *addr, const u8 *uuid)
+					struct in_addr *addr, const u8 *uuid,
+					const u8 *mac_addr)
 {
 	struct wps_er_ap *ap;
 	dl_list_for_each(ap, &er->ap, struct wps_er_ap, list) {
 		if ((addr == NULL || ap->addr.s_addr == addr->s_addr) &&
 		    (uuid == NULL ||
-		     os_memcmp(uuid, ap->uuid, WPS_UUID_LEN) == 0))
+		     os_memcmp(uuid, ap->uuid, WPS_UUID_LEN) == 0) &&
+		    (mac_addr == NULL ||
+		     os_memcmp(mac_addr, ap->mac_addr, ETH_ALEN) == 0))
 			return ap;
 	}
 	return NULL;
@@ -184,10 +185,8 @@ static void wps_er_ap_unsubscribed(struct wps_er *er, struct wps_er_ap *ap)
 	dl_list_del(&ap->list);
 	wps_er_ap_free(ap);
 
-	if (er->deinitializing && dl_list_empty(&er->ap_unsubscribing)) {
-		eloop_cancel_timeout(wps_er_deinit_finish, er, NULL);
+	if (er->deinitializing && dl_list_empty(&er->ap_unsubscribing))
 		wps_er_deinit_finish(er, NULL);
-	}
 }
 
 
@@ -275,6 +274,64 @@ fail:
 	wps_er_ap_unsubscribed(ap->er, ap);
 }
 
+
+static struct wps_er_ap_settings * wps_er_ap_get_settings(struct wps_er *er,
+							  const u8 *uuid)
+{
+	struct wps_er_ap_settings *s;
+	dl_list_for_each(s, &er->ap_settings, struct wps_er_ap_settings, list)
+		if (os_memcmp(uuid, s->uuid, WPS_UUID_LEN) == 0)
+			return s;
+	return NULL;
+}
+
+
+int wps_er_ap_cache_settings(struct wps_er *er, struct in_addr *addr)
+{
+	struct wps_er_ap *ap;
+	struct wps_er_ap_settings *settings;
+
+	ap = wps_er_ap_get(er, addr, NULL, NULL);
+	if (ap == NULL || ap->ap_settings == NULL)
+		return -1;
+
+	settings = wps_er_ap_get_settings(er, ap->uuid);
+	if (!settings) {
+		settings = os_zalloc(sizeof(*settings));
+		if (settings == NULL)
+			return -1;
+		os_memcpy(settings->uuid, ap->uuid, WPS_UUID_LEN);
+		dl_list_add(&er->ap_settings, &settings->list);
+	}
+	os_memcpy(&settings->ap_settings, ap->ap_settings,
+		  sizeof(struct wps_credential));
+
+	return 0;
+}
+
+
+static int wps_er_ap_use_cached_settings(struct wps_er *er,
+					 struct wps_er_ap *ap)
+{
+	struct wps_er_ap_settings *s;
+
+	if (ap->ap_settings)
+		return 0;
+
+	s = wps_er_ap_get_settings(ap->er, ap->uuid);
+	if (!s)
+		return -1;
+
+	ap->ap_settings = os_malloc(sizeof(*ap->ap_settings));
+	if (ap->ap_settings == NULL)
+		return -1;
+
+	os_memcpy(ap->ap_settings, &s->ap_settings, sizeof(*ap->ap_settings));
+	wpa_printf(MSG_DEBUG, "WPS ER: Use cached AP settings");
+	return 0;
+}
+
+
 static void wps_er_ap_remove_entry(struct wps_er *er, struct wps_er_ap *ap)
 {
 	wpa_printf(MSG_DEBUG, "WPS ER: Removing AP entry for %s (%s)",
@@ -352,6 +409,7 @@ static void wps_er_http_subscribe_cb(void *ctx, struct http_client *c,
 		wpa_printf(MSG_DEBUG, "WPS ER: Subscribed to events");
 		ap->subscribed = 1;
 		wps_er_get_sid(ap, http_client_get_hdr_line(c, "SID"));
+		wps_er_ap_use_cached_settings(ap->er, ap);
 		wps_er_ap_event(ap->er->wps, ap, WPS_EV_ER_AP_ADD);
 		break;
 	case HTTP_CLIENT_FAILED:
@@ -439,15 +497,60 @@ static void wps_er_get_device_info(struct wps_er_ap *ap)
 }
 
 
+static const char * wps_er_find_wfadevice(const char *data)
+{
+	const char *tag, *tagname, *end;
+	char *val;
+	int found = 0;
+
+	while (!found) {
+		/* Find next <device> */
+		for (;;) {
+			if (xml_next_tag(data, &tag, &tagname, &end))
+				return NULL;
+			data = end;
+			if (!os_strncasecmp(tagname, "device", 6) &&
+			    *tag != '/' &&
+			    (tagname[6] == '>' || !isgraph(tagname[6]))) {
+				break;
+			}
+		}
+
+		/* Check whether deviceType is WFADevice */
+		val = xml_get_first_item(data, "deviceType");
+		if (val == NULL)
+			return NULL;
+		wpa_printf(MSG_DEBUG, "WPS ER: Found deviceType '%s'", val);
+		found = os_strcasecmp(val, "urn:schemas-wifialliance-org:"
+				      "device:WFADevice:1") == 0;
+		os_free(val);
+	}
+
+	return data;
+}
+
+
 static void wps_er_parse_device_description(struct wps_er_ap *ap,
 					    struct wpabuf *reply)
 {
 	/* Note: reply includes null termination after the buffer data */
-	const char *data = wpabuf_head(reply);
+	const char *tmp, *data = wpabuf_head(reply);
 	char *pos;
 
 	wpa_hexdump_ascii(MSG_MSGDUMP, "WPS ER: Device info",
 			  wpabuf_head(reply), wpabuf_len(reply));
+
+	/*
+	 * The root device description may include multiple devices, so first
+	 * find the beginning of the WFADevice description to allow the
+	 * simplistic parser to pick the correct entries.
+	 */
+	tmp = wps_er_find_wfadevice(data);
+	if (tmp == NULL) {
+		wpa_printf(MSG_DEBUG, "WPS ER: WFADevice:1 device not found - "
+			   "trying to parse invalid data");
+	} else
+		data = tmp;
 
 	ap->friendly_name = xml_get_first_item(data, "friendlyName");
 	wpa_printf(MSG_DEBUG, "WPS ER: friendlyName='%s'", ap->friendly_name);
@@ -476,12 +579,15 @@ static void wps_er_parse_device_description(struct wps_er_ap *ap,
 	wpa_printf(MSG_DEBUG, "WPS ER: serialNumber='%s'", ap->serial_number);
 
 	ap->udn = xml_get_first_item(data, "UDN");
-	wpa_printf(MSG_DEBUG, "WPS ER: UDN='%s'", ap->udn);
-	pos = os_strstr(ap->udn, "uuid:");
-	if (pos) {
-		pos += 5;
-		if (uuid_str2bin(pos, ap->uuid) < 0)
-			wpa_printf(MSG_DEBUG, "WPS ER: Invalid UUID in UDN");
+	if (ap->udn) {
+		wpa_printf(MSG_DEBUG, "WPS ER: UDN='%s'", ap->udn);
+		pos = os_strstr(ap->udn, "uuid:");
+		if (pos) {
+			pos += 5;
+			if (uuid_str2bin(pos, ap->uuid) < 0)
+				wpa_printf(MSG_DEBUG,
+					   "WPS ER: Invalid UUID in UDN");
+		}
 	}
 
 	ap->upc = xml_get_first_item(data, "UPC");
@@ -534,7 +640,7 @@ void wps_er_ap_add(struct wps_er *er, const u8 *uuid, struct in_addr *addr,
 {
 	struct wps_er_ap *ap;
 
-	ap = wps_er_ap_get(er, addr, uuid);
+	ap = wps_er_ap_get(er, addr, uuid, NULL);
 	if (ap) {
 		/* Update advertisement timeout */
 		eloop_cancel_timeout(wps_er_ap_timeout, er, ap);
@@ -583,8 +689,12 @@ void wps_er_ap_remove(struct wps_er *er, struct in_addr *addr)
 static void wps_er_ap_remove_all(struct wps_er *er)
 {
 	struct wps_er_ap *prev, *ap;
+	struct wps_er_ap_settings *prev_s, *s;
 	dl_list_for_each_safe(ap, prev, &er->ap, struct wps_er_ap, list)
 		wps_er_ap_remove_entry(er, ap);
+	dl_list_for_each_safe(s, prev_s, &er->ap_settings,
+			      struct wps_er_ap_settings, list)
+		os_free(s);
 }
 
 
@@ -649,7 +759,7 @@ static struct wps_er_sta * wps_er_add_sta_data(struct wps_er_ap *ap,
 					       struct wps_parse_attr *attr,
 					       int probe_req)
 {
-	struct wps_er_sta *sta = wps_er_sta_get(ap, addr);
+	struct wps_er_sta *sta = wps_er_sta_get(ap, addr, NULL);
 	int new_sta = 0;
 	int m1;
 
@@ -687,52 +797,31 @@ static struct wps_er_sta * wps_er_add_sta_data(struct wps_er_ap *ap,
 
 	if (attr->manufacturer) {
 		os_free(sta->manufacturer);
-		sta->manufacturer = os_malloc(attr->manufacturer_len + 1);
-		if (sta->manufacturer) {
-			os_memcpy(sta->manufacturer, attr->manufacturer,
-				  attr->manufacturer_len);
-			sta->manufacturer[attr->manufacturer_len] = '\0';
-		}
+		sta->manufacturer = dup_binstr(attr->manufacturer,
+					       attr->manufacturer_len);
 	}
 
 	if (attr->model_name) {
 		os_free(sta->model_name);
-		sta->model_name = os_malloc(attr->model_name_len + 1);
-		if (sta->model_name) {
-			os_memcpy(sta->model_name, attr->model_name,
-				  attr->model_name_len);
-			sta->model_name[attr->model_name_len] = '\0';
-		}
+		sta->model_name = dup_binstr(attr->model_name,
+					     attr->model_name_len);
 	}
 
 	if (attr->model_number) {
 		os_free(sta->model_number);
-		sta->model_number = os_malloc(attr->model_number_len + 1);
-		if (sta->model_number) {
-			os_memcpy(sta->model_number, attr->model_number,
-				  attr->model_number_len);
-			sta->model_number[attr->model_number_len] = '\0';
-		}
+		sta->model_number = dup_binstr(attr->model_number,
+					       attr->model_number_len);
 	}
 
 	if (attr->serial_number) {
 		os_free(sta->serial_number);
-		sta->serial_number = os_malloc(attr->serial_number_len + 1);
-		if (sta->serial_number) {
-			os_memcpy(sta->serial_number, attr->serial_number,
-				  attr->serial_number_len);
-			sta->serial_number[attr->serial_number_len] = '\0';
-		}
+		sta->serial_number = dup_binstr(attr->serial_number,
+						attr->serial_number_len);
 	}
 
 	if (attr->dev_name) {
 		os_free(sta->dev_name);
-		sta->dev_name = os_malloc(attr->dev_name_len + 1);
-		if (sta->dev_name) {
-			os_memcpy(sta->dev_name, attr->dev_name,
-				  attr->dev_name_len);
-			sta->dev_name[attr->dev_name_len] = '\0';
-		}
+		sta->dev_name = dup_binstr(attr->dev_name, attr->dev_name_len);
 	}
 
 	eloop_cancel_timeout(wps_er_sta_timeout, sta, NULL);
@@ -756,6 +845,12 @@ static void wps_er_process_wlanevent_probe_req(struct wps_er_ap *ap,
 	wpa_hexdump_buf(MSG_MSGDUMP, "WPS ER: WLANEvent - Enrollee's message "
 			"(TLVs from Probe Request)", msg);
 
+	if (wps_validate_probe_req(msg, addr) < 0) {
+		wpa_printf(MSG_INFO, "WPS-STRICT: ER: Ignore invalid proxied "
+			   "Probe Request frame from " MACSTR, MAC2STR(addr));
+		return;
+	}
+
 	if (wps_parse_msg(msg, &attr) < 0) {
 		wpa_printf(MSG_DEBUG, "WPS ER: Failed to parse TLVs in "
 			   "WLANEvent message");
@@ -763,6 +858,7 @@ static void wps_er_process_wlanevent_probe_req(struct wps_er_ap *ap,
 	}
 
 	wps_er_add_sta_data(ap, addr, &attr, 1);
+	wps_registrar_probe_req_rx(ap->er->wps->registrar, addr, msg, 0);
 }
 
 
@@ -1151,7 +1247,7 @@ static void wps_er_http_req(void *ctx, struct http_request *req)
 
 
 struct wps_er *
-wps_er_init(struct wps_context *wps, const char *ifname)
+wps_er_init(struct wps_context *wps, const char *ifname, const char *filter)
 {
 	struct wps_er *er;
 	struct in_addr addr;
@@ -1161,6 +1257,7 @@ wps_er_init(struct wps_context *wps, const char *ifname)
 		return NULL;
 	dl_list_init(&er->ap);
 	dl_list_init(&er->ap_unsubscribing);
+	dl_list_init(&er->ap_settings);
 
 	er->multicast_sd = -1;
 	er->ssdp_sd = -1;
@@ -1175,15 +1272,42 @@ wps_er_init(struct wps_context *wps, const char *ifname)
 	/* Limit event_id to < 32 bits to avoid issues with atoi() */
 	er->event_id &= 0x0fffffff;
 
-	if (get_netif_info(ifname, &er->ip_addr, &er->ip_addr_text,
+	if (filter && os_strncmp(filter, "ifname=", 7) == 0) {
+		const char *pos, *end;
+		pos = filter + 7;
+		end = os_strchr(pos, ' ');
+		if (end) {
+			size_t len = end - pos;
+			os_strlcpy(er->ifname, pos, len < sizeof(er->ifname) ?
+				   len + 1 : sizeof(er->ifname));
+			filter = end + 1;
+		} else {
+			os_strlcpy(er->ifname, pos, sizeof(er->ifname));
+			filter = NULL;
+		}
+		er->forced_ifname = 1;
+	}
+
+	if (filter) {
+		if (inet_aton(filter, &er->filter_addr) == 0) {
+			wpa_printf(MSG_INFO, "WPS UPnP: Invalid filter "
+				   "address %s", filter);
+			wps_er_deinit(er, NULL, NULL);
+			return NULL;
+		}
+		wpa_printf(MSG_DEBUG, "WPS UPnP: Only accepting connections "
+			   "with %s", filter);
+	}
+	if (get_netif_info(er->ifname, &er->ip_addr, &er->ip_addr_text,
 			   er->mac_addr)) {
 		wpa_printf(MSG_INFO, "WPS UPnP: Could not get IP/MAC address "
-			   "for %s. Does it have IP address?", ifname);
+			   "for %s. Does it have IP address?", er->ifname);
 		wps_er_deinit(er, NULL, NULL);
 		return NULL;
 	}
 
 	if (wps_er_ssdp_init(er) < 0) {
+		wpa_printf(MSG_INFO, "WPS UPnP: SSDP initialization failed");
 		wps_er_deinit(er, NULL, NULL);
 		return NULL;
 	}
@@ -1191,6 +1315,7 @@ wps_er_init(struct wps_context *wps, const char *ifname)
 	addr.s_addr = er->ip_addr;
 	er->http_srv = http_server_init(&addr, -1, wps_er_http_req, er);
 	if (er->http_srv == NULL) {
+		wpa_printf(MSG_INFO, "WPS UPnP: HTTP initialization failed");
 		wps_er_deinit(er, NULL, NULL);
 		return NULL;
 	}
@@ -1223,9 +1348,19 @@ static void wps_er_deinit_finish(void *eloop_data, void *user_ctx)
 	struct wps_er *er = eloop_data;
 	void (*deinit_done_cb)(void *ctx);
 	void *deinit_done_ctx;
+	struct wps_er_ap *ap, *tmp;
 
 	wpa_printf(MSG_DEBUG, "WPS ER: Finishing deinit");
 
+	dl_list_for_each_safe(ap, tmp, &er->ap_unsubscribing, struct wps_er_ap,
+			      list) {
+		wpa_printf(MSG_DEBUG, "WPS ER: AP entry for %s (%s) still in ap_unsubscribing list - free it",
+			   inet_ntoa(ap->addr), ap->location);
+		dl_list_del(&ap->list);
+		wps_er_ap_free(ap);
+	}
+
+	eloop_cancel_timeout(wps_er_deinit_finish, er, NULL);
 	deinit_done_cb = er->deinit_done_cb;
 	deinit_done_ctx = er->deinit_done_ctx;
 	os_free(er->ip_addr_text);
@@ -1256,19 +1391,30 @@ static void wps_er_http_set_sel_reg_cb(void *ctx, struct http_client *c,
 				       enum http_client_event event)
 {
 	struct wps_er_ap *ap = ctx;
+	union wps_event_data data;
+
+	os_memset(&data, 0, sizeof(data));
 
 	switch (event) {
 	case HTTP_CLIENT_OK:
 		wpa_printf(MSG_DEBUG, "WPS ER: SetSelectedRegistrar OK");
+		data.set_sel_reg.state = WPS_ER_SET_SEL_REG_DONE;
+		data.set_sel_reg.uuid = ap->uuid;
 		break;
 	case HTTP_CLIENT_FAILED:
 	case HTTP_CLIENT_INVALID_REPLY:
 	case HTTP_CLIENT_TIMEOUT:
 		wpa_printf(MSG_DEBUG, "WPS ER: SetSelectedRegistrar failed");
+		data.set_sel_reg.state = WPS_ER_SET_SEL_REG_FAILED;
+		data.set_sel_reg.uuid = ap->uuid;
 		break;
 	}
 	http_client_free(ap->http);
 	ap->http = NULL;
+
+	if (data.set_sel_reg.uuid)
+		ap->er->wps->event_cb(ap->er->wps->cb_ctx,
+				      WPS_EV_ER_SET_SELECTED_REGISTRAR, &data);
 }
 
 
@@ -1287,6 +1433,12 @@ static void wps_er_send_set_sel_reg(struct wps_er_ap *ap, struct wpabuf *msg)
 	if (ap->http) {
 		wpa_printf(MSG_DEBUG, "WPS ER: Pending HTTP request for AP - "
 			   "ignore new request");
+		return;
+	}
+
+	if (ap->wps) {
+		wpa_printf(MSG_DEBUG, "WPS ER: Pending WPS operation for AP - "
+			   "skip SetSelectedRegistrar");
 		return;
 	}
 
@@ -1339,43 +1491,113 @@ static int wps_er_build_sel_reg_config_methods(struct wpabuf *msg,
 }
 
 
+static int wps_er_build_uuid_r(struct wpabuf *msg, const u8 *uuid_r)
+{
+	wpabuf_put_be16(msg, ATTR_UUID_R);
+	wpabuf_put_be16(msg, WPS_UUID_LEN);
+	wpabuf_put_data(msg, uuid_r, WPS_UUID_LEN);
+	return 0;
+}
+
+
 void wps_er_set_sel_reg(struct wps_er *er, int sel_reg, u16 dev_passwd_id,
 			u16 sel_reg_config_methods)
 {
 	struct wpabuf *msg;
 	struct wps_er_ap *ap;
+	struct wps_registrar *reg = er->wps->registrar;
+	const u8 *auth_macs;
+	u8 bcast[ETH_ALEN];
+	size_t count;
+	union wps_event_data data;
+
+	if (er->skip_set_sel_reg) {
+		wpa_printf(MSG_DEBUG, "WPS ER: Skip SetSelectedRegistrar");
+		return;
+	}
 
 	msg = wpabuf_alloc(500);
 	if (msg == NULL)
 		return;
 
+	auth_macs = wps_authorized_macs(reg, &count);
+	if (count == 0) {
+		os_memset(bcast, 0xff, ETH_ALEN);
+		auth_macs = bcast;
+		count = 1;
+	}
+
 	if (wps_build_version(msg) ||
 	    wps_er_build_selected_registrar(msg, sel_reg) ||
 	    wps_er_build_dev_password_id(msg, dev_passwd_id) ||
-	    wps_er_build_sel_reg_config_methods(msg, sel_reg_config_methods)) {
+	    wps_er_build_sel_reg_config_methods(msg, sel_reg_config_methods) ||
+	    wps_build_wfa_ext(msg, 0, auth_macs, count) ||
+	    wps_er_build_uuid_r(msg, er->wps->uuid)) {
 		wpabuf_free(msg);
 		return;
 	}
 
-	dl_list_for_each(ap, &er->ap, struct wps_er_ap, list)
+	os_memset(&data, 0, sizeof(data));
+	data.set_sel_reg.sel_reg = sel_reg;
+	data.set_sel_reg.dev_passwd_id = dev_passwd_id;
+	data.set_sel_reg.sel_reg_config_methods = sel_reg_config_methods;
+	data.set_sel_reg.state = WPS_ER_SET_SEL_REG_START;
+
+	dl_list_for_each(ap, &er->ap, struct wps_er_ap, list) {
+		if (er->set_sel_reg_uuid_filter &&
+		    os_memcmp(ap->uuid, er->set_sel_reg_uuid_filter,
+			      WPS_UUID_LEN) != 0)
+			continue;
+		data.set_sel_reg.uuid = ap->uuid;
+		er->wps->event_cb(er->wps->cb_ctx,
+				  WPS_EV_ER_SET_SELECTED_REGISTRAR, &data);
 		wps_er_send_set_sel_reg(ap, msg);
+	}
 
 	wpabuf_free(msg);
 }
 
 
-int wps_er_pbc(struct wps_er *er, const u8 *uuid)
+int wps_er_pbc(struct wps_er *er, const u8 *uuid, const u8 *addr)
 {
+	int res;
+	struct wps_er_ap *ap;
+
 	if (er == NULL || er->wps == NULL)
 		return -1;
 
-	/*
-	 * TODO: Should enable PBC mode only in a single AP based on which AP
-	 * the Enrollee (uuid) is using. Now, we may end up enabling multiple
-	 * APs in PBC mode which could result in session overlap at the
-	 * Enrollee.
-	 */
-	if (wps_registrar_button_pushed(er->wps->registrar))
+	if (wps_registrar_pbc_overlap(er->wps->registrar, NULL, NULL)) {
+		wpa_printf(MSG_DEBUG, "WPS ER: PBC overlap - do not start PBC "
+			   "mode");
+		return -2;
+	}
+
+	if (uuid)
+		ap = wps_er_ap_get(er, NULL, uuid, NULL);
+	else
+		ap = NULL;
+	if (ap == NULL) {
+		struct wps_er_sta *sta = NULL;
+		dl_list_for_each(ap, &er->ap, struct wps_er_ap, list) {
+			sta = wps_er_sta_get(ap, addr, uuid);
+			if (sta) {
+				uuid = ap->uuid;
+				break;
+			}
+		}
+		if (sta == NULL)
+			return -3; /* Unknown UUID */
+	}
+
+	if (ap->ap_settings == NULL) {
+		wpa_printf(MSG_DEBUG, "WPS ER: AP settings not known");
+		return -4;
+	}
+
+	er->set_sel_reg_uuid_filter = uuid;
+	res = wps_registrar_button_pushed(er->wps->registrar, NULL);
+	er->set_sel_reg_uuid_filter = NULL;
+	if (res)
 		return -1;
 
 	return 0;
@@ -1385,6 +1607,8 @@ int wps_er_pbc(struct wps_er *er, const u8 *uuid)
 static void wps_er_ap_settings_cb(void *ctx, const struct wps_credential *cred)
 {
 	struct wps_er_ap *ap = ctx;
+	union wps_event_data data;
+
 	wpa_printf(MSG_DEBUG, "WPS ER: AP Settings received");
 	os_free(ap->ap_settings);
 	ap->ap_settings = os_malloc(sizeof(*cred));
@@ -1393,7 +1617,24 @@ static void wps_er_ap_settings_cb(void *ctx, const struct wps_credential *cred)
 		ap->ap_settings->cred_attr = NULL;
 	}
 
-	/* TODO: send info through ctrl_iface */
+	os_memset(&data, 0, sizeof(data));
+	data.ap_settings.uuid = ap->uuid;
+	data.ap_settings.cred = cred;
+	ap->er->wps->event_cb(ap->er->wps->cb_ctx, WPS_EV_ER_AP_SETTINGS,
+			      &data);
+}
+
+
+const u8 * wps_er_get_sta_uuid(struct wps_er *er, const u8 *addr)
+{
+	struct wps_er_ap *ap;
+	dl_list_for_each(ap, &er->ap, struct wps_er_ap, list) {
+		struct wps_er_sta *sta;
+		sta = wps_er_sta_get(ap, addr, NULL);
+		if (sta)
+			return sta->uuid;
+	}
+	return NULL;
 }
 
 
@@ -1408,11 +1649,15 @@ static void wps_er_http_put_message_cb(void *ctx, struct http_client *c,
 	case HTTP_CLIENT_OK:
 		wpa_printf(MSG_DEBUG, "WPS ER: PutMessage OK");
 		reply = http_client_get_body(c);
-		if (reply == NULL)
+		if (reply)
+			msg = os_zalloc(wpabuf_len(reply) + 1);
+		if (msg == NULL) {
+			if (ap->wps) {
+				wps_deinit(ap->wps);
+				ap->wps = NULL;
+			}
 			break;
-		msg = os_zalloc(wpabuf_len(reply) + 1);
-		if (msg == NULL)
-			break;
+		}
 		os_memcpy(msg, wpabuf_head(reply), wpabuf_len(reply));
 		break;
 	case HTTP_CLIENT_FAILED:
@@ -1436,6 +1681,8 @@ static void wps_er_http_put_message_cb(void *ctx, struct http_client *c,
 		if (buf == NULL) {
 			wpa_printf(MSG_DEBUG, "WPS ER: Could not extract "
 				   "NewOutMessage from PutMessage response");
+			wps_deinit(ap->wps);
+			ap->wps = NULL;
 			return;
 		}
 		wps_er_ap_process(ap, buf);
@@ -1466,31 +1713,56 @@ static void wps_er_ap_put_message(struct wps_er_ap *ap,
 	url = http_client_url_parse(ap->control_url, &dst, &path);
 	if (url == NULL) {
 		wpa_printf(MSG_DEBUG, "WPS ER: Failed to parse controlURL");
-		return;
+		goto fail;
 	}
 
 	buf = wps_er_soap_hdr(msg, "PutMessage", "NewInMessage", path, &dst,
 			      &len_ptr, &body_ptr);
 	os_free(url);
 	if (buf == NULL)
-		return;
+		goto fail;
 
 	wps_er_soap_end(buf, "PutMessage", len_ptr, body_ptr);
 
 	ap->http = http_client_addr(&dst, buf, 10000,
 				    wps_er_http_put_message_cb, ap);
-	if (ap->http == NULL)
+	if (ap->http == NULL) {
 		wpabuf_free(buf);
+		goto fail;
+	}
+	return;
+
+fail:
+	if (ap->wps) {
+		wps_deinit(ap->wps);
+		ap->wps = NULL;
+	}
 }
 
 
 static void wps_er_ap_process(struct wps_er_ap *ap, struct wpabuf *msg)
 {
 	enum wps_process_res res;
+	struct wps_parse_attr attr;
+	enum wsc_op_code op_code;
 
-	res = wps_process_msg(ap->wps, WSC_MSG, msg);
+	op_code = WSC_MSG;
+	if (wps_parse_msg(msg, &attr) == 0 && attr.msg_type) {
+		switch (*attr.msg_type) {
+		case WPS_WSC_ACK:
+			op_code = WSC_ACK;
+			break;
+		case WPS_WSC_NACK:
+			op_code = WSC_NACK;
+			break;
+		case WPS_WSC_DONE:
+			op_code = WSC_Done;
+			break;
+		}
+	}
+
+	res = wps_process_msg(ap->wps, op_code, msg);
 	if (res == WPS_CONTINUE) {
-		enum wsc_op_code op_code;
 		struct wpabuf *next = wps_get_msg(ap->wps, &op_code);
 		if (next) {
 			wps_er_ap_put_message(ap, next);
@@ -1501,6 +1773,10 @@ static void wps_er_ap_process(struct wps_er_ap *ap, struct wpabuf *msg)
 			wps_deinit(ap->wps);
 			ap->wps = NULL;
 		}
+	} else if (res == WPS_DONE) {
+		wpa_printf(MSG_DEBUG, "WPS ER: Protocol run done");
+		wps_deinit(ap->wps);
+		ap->wps = NULL;
 	} else {
 		wpa_printf(MSG_DEBUG, "WPS ER: Failed to process message from "
 			   "AP (res=%d)", res);
@@ -1633,20 +1909,22 @@ static int wps_er_send_get_device_info(struct wps_er_ap *ap,
 }
 
 
-int wps_er_learn(struct wps_er *er, const u8 *uuid, const u8 *pin,
-		 size_t pin_len)
+int wps_er_learn(struct wps_er *er, const u8 *uuid, const u8 *addr,
+		 const u8 *pin, size_t pin_len)
 {
 	struct wps_er_ap *ap;
 
 	if (er == NULL)
 		return -1;
 
-	ap = wps_er_ap_get(er, NULL, uuid);
+	ap = wps_er_ap_get(er, NULL, uuid, addr);
 	if (ap == NULL) {
 		wpa_printf(MSG_DEBUG, "WPS ER: AP not found for learn "
 			   "request");
 		return -1;
 	}
+	if (uuid == NULL)
+		uuid = ap->uuid;
 	if (ap->wps) {
 		wpa_printf(MSG_DEBUG, "WPS ER: Pending operation ongoing "
 			   "with the AP - cannot start learn");
@@ -1656,8 +1934,175 @@ int wps_er_learn(struct wps_er *er, const u8 *uuid, const u8 *pin,
 	if (wps_er_send_get_device_info(ap, wps_er_ap_learn_m1) < 0)
 		return -1;
 
-	/* TODO: add PIN without SetSelectedRegistrar trigger to all APs */
-	wps_registrar_add_pin(er->wps->registrar, uuid, pin, pin_len, 0);
+	er->skip_set_sel_reg = 1;
+	wps_registrar_add_pin(er->wps->registrar, NULL, uuid, pin, pin_len, 0);
+	er->skip_set_sel_reg = 0;
 
 	return 0;
 }
+
+
+int wps_er_set_config(struct wps_er *er, const u8 *uuid, const u8 *addr,
+		      const struct wps_credential *cred)
+{
+	struct wps_er_ap *ap;
+
+	if (er == NULL)
+		return -1;
+
+	ap = wps_er_ap_get(er, NULL, uuid, addr);
+	if (ap == NULL) {
+		wpa_printf(MSG_DEBUG, "WPS ER: AP not found for set config "
+			   "request");
+		return -1;
+	}
+
+	os_free(ap->ap_settings);
+	ap->ap_settings = os_malloc(sizeof(*cred));
+	if (ap->ap_settings == NULL)
+		return -1;
+	os_memcpy(ap->ap_settings, cred, sizeof(*cred));
+	ap->ap_settings->cred_attr = NULL;
+	wpa_printf(MSG_DEBUG, "WPS ER: Updated local AP settings based set "
+		   "config request");
+
+	return 0;
+}
+
+
+static void wps_er_ap_config_m1(struct wps_er_ap *ap, struct wpabuf *m1)
+{
+	struct wps_config cfg;
+
+	if (ap->wps) {
+		wpa_printf(MSG_DEBUG, "WPS ER: Protocol run already in "
+			   "progress with this AP");
+		return;
+	}
+
+	os_memset(&cfg, 0, sizeof(cfg));
+	cfg.wps = ap->er->wps;
+	cfg.registrar = 1;
+	cfg.new_ap_settings = ap->ap_settings;
+	ap->wps = wps_init(&cfg);
+	if (ap->wps == NULL)
+		return;
+	ap->wps->ap_settings_cb = NULL;
+	ap->wps->ap_settings_cb_ctx = NULL;
+
+	wps_er_ap_process(ap, m1);
+}
+
+
+int wps_er_config(struct wps_er *er, const u8 *uuid, const u8 *addr,
+		  const u8 *pin, size_t pin_len,
+		  const struct wps_credential *cred)
+{
+	struct wps_er_ap *ap;
+
+	if (er == NULL)
+		return -1;
+
+	ap = wps_er_ap_get(er, NULL, uuid, addr);
+	if (ap == NULL) {
+		wpa_printf(MSG_DEBUG, "WPS ER: AP not found for config "
+			   "request");
+		return -1;
+	}
+	if (uuid == NULL)
+		uuid = ap->uuid;
+	if (ap->wps) {
+		wpa_printf(MSG_DEBUG, "WPS ER: Pending operation ongoing "
+			   "with the AP - cannot start config");
+		return -1;
+	}
+
+	os_free(ap->ap_settings);
+	ap->ap_settings = os_malloc(sizeof(*cred));
+	if (ap->ap_settings == NULL)
+		return -1;
+	os_memcpy(ap->ap_settings, cred, sizeof(*cred));
+	ap->ap_settings->cred_attr = NULL;
+
+	if (wps_er_send_get_device_info(ap, wps_er_ap_config_m1) < 0)
+		return -1;
+
+	er->skip_set_sel_reg = 1;
+	wps_registrar_add_pin(er->wps->registrar, NULL, uuid, pin, pin_len, 0);
+	er->skip_set_sel_reg = 0;
+
+	return 0;
+}
+
+
+#ifdef CONFIG_WPS_NFC
+
+struct wpabuf * wps_er_config_token_from_cred(struct wps_context *wps,
+					      struct wps_credential *cred)
+{
+	struct wpabuf *ret;
+	struct wps_data data;
+
+	ret = wpabuf_alloc(500);
+	if (ret == NULL)
+		return NULL;
+
+	os_memset(&data, 0, sizeof(data));
+	data.wps = wps;
+	data.use_cred = cred;
+	if (wps_build_cred(&data, ret) ||
+	    wps_build_wfa_ext(ret, 0, NULL, 0)) {
+		wpabuf_free(ret);
+		return NULL;
+	}
+
+	return ret;
+}
+
+
+struct wpabuf * wps_er_nfc_config_token(struct wps_er *er, const u8 *uuid,
+					const u8 *addr)
+{
+	struct wps_er_ap *ap;
+
+	if (er == NULL)
+		return NULL;
+
+	ap = wps_er_ap_get(er, NULL, uuid, addr);
+	if (ap == NULL)
+		return NULL;
+	if (ap->ap_settings == NULL) {
+		wpa_printf(MSG_DEBUG, "WPS ER: No settings known for the "
+			   "selected AP");
+		return NULL;
+	}
+
+	return wps_er_config_token_from_cred(er->wps, ap->ap_settings);
+}
+
+
+struct wpabuf * wps_er_nfc_handover_sel(struct wps_er *er,
+					struct wps_context *wps, const u8 *uuid,
+					const u8 *addr, struct wpabuf *pubkey)
+{
+	struct wps_er_ap *ap;
+
+	if (er == NULL)
+		return NULL;
+
+	ap = wps_er_ap_get(er, NULL, uuid, addr);
+	if (ap == NULL)
+		return NULL;
+	if (ap->ap_settings == NULL) {
+		wpa_printf(MSG_DEBUG, "WPS ER: No settings known for the "
+			   "selected AP");
+		return NULL;
+	}
+
+	os_memcpy(wps->ssid, ap->ap_settings->ssid, ap->ap_settings->ssid_len);
+	wps->ssid_len = ap->ap_settings->ssid_len;
+
+	return wps_build_nfc_handover_sel(wps, pubkey, addr, 0);
+}
+
+#endif /* CONFIG_WPS_NFC */

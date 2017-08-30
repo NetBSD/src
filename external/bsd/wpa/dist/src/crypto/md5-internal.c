@@ -2,14 +2,8 @@
  * MD5 hash implementation and interface functions
  * Copyright (c) 2003-2005, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -38,6 +32,9 @@ int md5_vector(size_t num_elem, const u8 *addr[], const size_t *len, u8 *mac)
 {
 	MD5_CTX ctx;
 	size_t i;
+
+	if (TEST_FAIL())
+		return -1;
 
 	MD5Init(&ctx);
 	for (i = 0; i < num_elem; i++)
@@ -182,13 +179,13 @@ void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
     byteReverse(ctx->in, 14);
 
     /* Append length in bits and transform */
-    ((u32 *) ctx->in)[14] = ctx->bits[0];
-    ((u32 *) ctx->in)[15] = ctx->bits[1];
+    ((u32 *) aliasing_hide_typecast(ctx->in, u32))[14] = ctx->bits[0];
+    ((u32 *) aliasing_hide_typecast(ctx->in, u32))[15] = ctx->bits[1];
 
     MD5Transform(ctx->buf, (u32 *) ctx->in);
     byteReverse((unsigned char *) ctx->buf, 4);
     os_memcpy(digest, ctx->buf, 16);
-    os_memset(ctx, 0, sizeof(ctx));	/* In case it's sensitive */
+    os_memset(ctx, 0, sizeof(*ctx));	/* In case it's sensitive */
 }
 
 /* The four core functions - F1 is optimized somewhat */
