@@ -1,4 +1,4 @@
-/* $NetBSD: tcakp.c,v 1.2 2017/08/26 22:31:02 jmcneill Exp $ */
+/* $NetBSD: tcakp.c,v 1.3 2017/08/30 00:40:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.2 2017/08/26 22:31:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.3 2017/08/30 00:40:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.2 2017/08/26 22:31:02 jmcneill Exp $");
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
-
-/* XXX keymap */
-#include <dev/pckbport/wskbdmap_mfii.c>
+#include <dev/wscons/linux_keymap.h>
 
 #ifdef FDT
 #include <dev/fdt/fdtvar.h>
@@ -317,7 +315,7 @@ static const struct wskbd_consops tcakp_consops = {
 #endif
 
 static const struct wskbd_mapdata tcakp_keymapdata = {
-	pckbd_keydesctab,
+	linux_keymap_keydesctab,
 	KB_US,
 };
 
