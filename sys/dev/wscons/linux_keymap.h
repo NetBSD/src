@@ -1,4 +1,4 @@
-/* $NetBSD: linux_keymap.h,v 1.1 2017/08/30 00:39:27 jmcneill Exp $ */
+/* $NetBSD: linux_keymap.h,v 1.2 2017/08/31 19:55:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,6 +31,6 @@
 
 #include <dev/wscons/wsksymvar.h>
 
-extern const struct wscons_keydesc linux_keymap_keydesctab[];
+uint8_t linux_key_to_usb(u_int);
 
 #endif /* !_WSCONS_LINUX_KEYMAP_H */
