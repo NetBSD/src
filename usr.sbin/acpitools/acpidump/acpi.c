@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.19 2017/08/31 06:53:58 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.20 2017/08/31 09:27:51 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.19 2017/08/31 06:53:58 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.20 2017/08/31 09:27:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -2043,7 +2043,7 @@ acpi_print_nfit(ACPI_NFIT_HEADER *nfit)
 		    (u_int)ctlreg->SubsystemDeviceId);
 		printf("\tSubsystemRevisionId=%u\n",
 		    (u_int)ctlreg->SubsystemRevisionId);
-		printf("\tValidFields=%u\n", (u_int)ctlreg->ValidFields);
+		printf("\tValidFields=%02x\n", (u_int)ctlreg->ValidFields);
 		printf("\tManufacturingLocation=%u\n",
 		    (u_int)ctlreg->ManufacturingLocation);
 		printf("\tManufacturingDate=%u\n",
@@ -2066,8 +2066,7 @@ acpi_print_nfit(ACPI_NFIT_HEADER *nfit)
 #define PRINTFLAG(var, flag)	printflag((var), ACPI_NFIT_## flag, #flag)
 
 		printf("\tFlags=");
-		PRINTFLAG(ctlreg->Flags, ADD_ONLINE_ONLY);
-		PRINTFLAG(ctlreg->Flags, PROXIMITY_VALID);
+		PRINTFLAG(ctlreg->Flags, CONTROL_BUFFERED);
 		PRINTFLAG_END();
 
 #undef PRINTFLAG
