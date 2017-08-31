@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.51 2017/08/31 08:43:41 bouyer Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.52 2017/08/31 11:48:21 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5631,4 +5631,79 @@ sys/kern/kern_exec.c			patch
 	Disables compat_svr4 and compat_svr4_32 on each architecture,
 	and removes the associated module autoload entries.
 	[maxv, ticket #237]
+
+sys/dev/audio.c					1.386-1.387,1.392
+
+	Reset mixer ports on opening /dev/sound.
+	Ensure to call mix write if inserting silence into the hw ring.
+	If the harware ring is starved of data, insert silence into
+	the mix ring so mix_write can function properly.
+	[nat, ticket #238]
+
+sys/arch/evbmips/conf/MALTA			1.88
+sys/arch/evbmips/conf/MALTA32			1.4
+sys/arch/evbmips/conf/MALTA64			1.8
+sys/arch/mips/mips/bds_emul.S			1.9
+
+	Re-enable the NOFPU and (renamed) FPEMUL options.  None of the Malta
+	CPU daughter cards currently supported by NetBSD have an FPU.
+	mips_emul_daddi and mips_emul_daddiu don't exist, but there are
+	bcemul_daddi and bcemul_daddiu here that should be used.  however,
+	bcemul_daddi needed to be changed to use dadd not daddui.
+	[mrg, ticket #239]
+
+sys/arch/powerpc/include/oea/vmparam.h		1.20
+
+	Raise the maximum text size value to 128MB, this allows binaries
+	such as clang which currently has a text area of around 96MB to
+	execute successfully on macppc.
+	[sevan, ticket #241]
+
+usr.sbin/bta2dpd/bta2dpd/bta2dpd.c		1.4
+
+	Connection state machine improvement upon transition from
+	AVDTP_OPEN to AVDTP_START/SUSPEND.
+	[nat, ticket #242]
+
+sys/netinet6/in6_src.c				1.80
+
+	Fix mapped IPv4 source selection: in6_selectif failing is not fatal.
+	[christos, ticket #243]
+
+etc/MAKEDEV.tmpl				1.186
+
+	Create a device node for veriexec by default.
+	[sevan, ticket #244]
+
+sys/arch/x86/x86/procfs_machdep.c		1.16
+
+	Check buffer length correctly to not to print a garbage character.
+	[msaitoh, ticket #247]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.96-1.97
+sys/dev/pci/ixgbe/ixgbe.h			1.25
+
+	Remove unused counters.
+	Don't limit number of queue pairs to 8.
+	[msaitoh, ticket #248]
+
+sys/arch/hppa/stand/Makefile.buildboot		1.4
+sys/arch/hppa/stand/Makefile.inc		1.4
+sys/arch/hppa/stand/boot/ld.script		1.2
+
+	Disable PIE and SSP.
+	Ensure all data is captured under the edata symbol for srt0.S
+	to relocate it correctly.
+	[skrll, ticket #249]
+
+bin/sh/var.c					1.67
+
+	Correct a rare sh core dump from recent changes.
+	[kre, ticket #250]
+
+sys/kern/kern_veriexec.c			1.16
+
+	When adding a new veriexec_file_entry, if an entry already exists with
+	all the same values (except for the filename) just ignore it.
+	[pgoyette, ticket #251]
 
