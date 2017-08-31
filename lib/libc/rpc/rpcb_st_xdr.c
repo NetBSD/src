@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_st_xdr.c,v 1.7.46.1 2013/03/14 22:03:09 riz Exp $	*/
+/*	$NetBSD: rpcb_st_xdr.c,v 1.7.46.2 2017/08/31 13:43:19 martin Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rpcb_st_xdr.c,v 1.7.46.1 2013/03/14 22:03:09 riz Exp $");
+__RCSID("$NetBSD: rpcb_st_xdr.c,v 1.7.46.2 2017/08/31 13:43:19 martin Exp $");
 #endif
 
 #include "namespace.h"
@@ -267,6 +267,9 @@ xdr_rpcb_stat(xdrs, objp)
 		return (FALSE);
 	}
 	if (!xdr_rpcbs_addrlist_ptr(xdrs, &objp->addrinfo)) {
+		return (FALSE);
+	}
+	if (!xdr_rpcbs_rmtcalllist_ptr(xdrs, &objp->rmtinfo)) {
 		return (FALSE);
 	}
 	return (TRUE);
