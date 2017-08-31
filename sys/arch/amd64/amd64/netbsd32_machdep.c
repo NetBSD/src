@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.107 2017/07/25 18:03:56 maxv Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.108 2017/08/31 15:41:14 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.107 2017/07/25 18:03:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.108 2017/08/31 15:41:14 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1076,9 +1076,10 @@ check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 			return EINVAL;
 		if (!VALID_USER_DSEL32(scp->sc_ds) || !VALID_USER_DSEL32(scp->sc_ss))
 			return EINVAL;
-		if (scp->sc_eip >= VM_MAXUSER_ADDRESS32)
-			return EINVAL;
 	}
+
+	if (scp->sc_eip >= VM_MAXUSER_ADDRESS32)
+		return EINVAL;
 
 	return 0;
 }
