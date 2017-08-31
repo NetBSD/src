@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.15 2017/05/15 04:21:14 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.15.2.1 2017/08/31 11:34:54 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15 2017/05/15 04:21:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15.2.1 2017/08/31 11:34:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ procfs_getcpuinfstr(char *bf, size_t *len)
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		procfs_getonecpu(i++, ci, bf, &used);
 		total += used + 1;
-		if (used + 1 < size) {
+		if (used + 1 <= size) {
 			bf += used;
 			*bf++ = '\n';
 			size -= used + 1;
