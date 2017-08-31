@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.49 2017/08/30 15:46:43 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.50 2017/08/31 08:07:09 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5519,8 +5519,7 @@ sys/arch/evbmips/sbmips/systemsw.h
 sys/arch/evbmips/sbmips/zbbus.c			upto 1.2
 sys/arch/evbmips/stand/Makefile			1.1
 sys/arch/evbmips/stand/sbmips/Makefile
-sys/arch/evbmips/stand/sbmips/Makefile.bootprogs upto 1.2
-sys/arch/evbmips/stand/sbmips/Makefile.bootprogs 1.3
+sys/arch/evbmips/stand/sbmips/Makefile.bootprogs upto 1.3
 sys/arch/evbmips/stand/sbmips/Makefile.bootxx
 sys/arch/evbmips/stand/sbmips/Makefile.inc	upto 1.3
 sys/arch/evbmips/stand/sbmips/boot/Makefile
