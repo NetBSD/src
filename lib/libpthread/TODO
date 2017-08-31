@@ -1,12 +1,8 @@
-$NetBSD: TODO,v 1.18 2017/02/08 03:44:41 kamil Exp $
+$NetBSD: TODO,v 1.18.4.1 2017/08/31 08:32:39 bouyer Exp $
 
 Interfaces/features to implement:
 
 - Realtime extensions: priority inheritance.
-
-- Allow threads to change their stack size.
-
-- Allow threads to modify the red zone size; cf. pthread_attr_setguardsize(3).
 
 - Keep a pool of dead LWPs so that we do not have take the full hit of
   _lwp_create() every time pthread_create() is called.

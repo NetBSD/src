@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.147.8.2 2017/08/31 08:24:43 bouyer Exp $	*/
+/*	$NetBSD: pthread.c,v 1.147.8.3 2017/08/31 08:32:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.147.8.2 2017/08/31 08:24:43 bouyer Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.147.8.3 2017/08/31 08:32:39 bouyer Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -40,7 +40,9 @@ __RCSID("$NetBSD: pthread.c,v 1.147.8.2 2017/08/31 08:24:43 bouyer Exp $");
 #include <sys/lwp.h>
 #include <sys/lwpctl.h>
 #include <sys/resource.h>
+#include <sys/sysctl.h>
 #include <sys/tls.h>
+#include <uvm/uvm_param.h>
 
 #include <assert.h>
 #include <dlfcn.h>
@@ -116,6 +118,7 @@ int pthread__dbg;	/* set by libpthread_dbg if active */
  * stack pointer to thread data afterwards.
  */
 size_t	pthread__stacksize;
+size_t	pthread__guardsize;
 size_t	pthread__pagesize;
 static struct __pthread_st *pthread__main;
 static size_t __pthread_st_size;
@@ -165,6 +168,9 @@ pthread__init(void)
 	pthread_t first;
 	char *p;
 	int i;
+	int mib[2];
+	unsigned int value;
+	size_t len;
 	extern int __isthreaded;
 
 	/*
@@ -182,6 +188,14 @@ pthread__init(void)
 
 	pthread__pagesize = (size_t)sysconf(_SC_PAGESIZE);
 	pthread__concurrency = (int)sysconf(_SC_NPROCESSORS_CONF);
+
+	mib[0] = CTL_VM;
+	mib[1] = VM_THREAD_GUARD_SIZE;
+	len = sizeof(value);
+	if (sysctl(mib, __arraycount(mib), &value, &len, NULL, 0) == 0)
+		pthread__guardsize = value;
+	else
+		pthread__guardsize = pthread__pagesize;
 
 	/* Initialize locks first; they're needed elsewhere. */
 	pthread__lockprim_init();
@@ -336,16 +350,19 @@ pthread__getstack(pthread_t newthread, const pthread_attr_t *attr)
 
 	if (attr != NULL) {
 		pthread_attr_getstack(attr, &stackbase, &stacksize);
+		pthread_attr_getguardsize(attr, &guardsize);
 	} else {
 		stackbase = NULL;
 		stacksize = 0;
+		guardsize = pthread__guardsize;
 	}
 	if (stacksize == 0)
 		stacksize = pthread__stacksize;
 
 	if (newthread->pt_stack_allocated) {
 		if (stackbase == NULL &&
-		    newthread->pt_stack.ss_size == stacksize)
+		    newthread->pt_stack.ss_size == stacksize &&
+		    newthread->pt_guardsize == guardsize)
 			return 0;
 		stackbase2 = newthread->pt_stack.ss_sp;
 #ifndef __MACHINE_STACK_GROWS_UP
@@ -363,14 +380,13 @@ pthread__getstack(pthread_t newthread, const pthread_attr_t *attr)
 
 	if (stackbase == NULL) {
 		stacksize = ((stacksize - 1) | (pthread__pagesize - 1)) + 1;
-		guardsize = pthread__pagesize;
+		guardsize = ((guardsize - 1) | (pthread__pagesize - 1)) + 1;
 		stackbase = mmap(NULL, stacksize + guardsize,
 		    PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
 		if (stackbase == MAP_FAILED)
 			return ENOMEM;
 		allocated = true;
 	} else {
-		guardsize = 0;
 		allocated = false;
 	}
 #ifdef __MACHINE_STACK_GROWS_UP
@@ -1285,7 +1301,9 @@ pthread__initmainstack(void)
 {
 	struct rlimit slimit;
 	const AuxInfo *aux;
-	size_t size;
+	size_t size, len;
+	int mib[2];
+	unsigned int value;
 
 	_DIAGASSERT(_dlauxinfo() != NULL);
 
@@ -1294,6 +1312,13 @@ pthread__initmainstack(void)
 		    "Couldn't get stack resource consumption limits");
 	size = slimit.rlim_cur;
 	pthread__main->pt_stack.ss_size = size;
+	pthread__main->pt_guardsize = pthread__pagesize;
+
+	mib[0] = CTL_VM;
+	mib[1] = VM_GUARD_SIZE;
+	len = sizeof(value);
+	if (sysctl(mib, __arraycount(mib), &value, &len, NULL, 0) == 0)
+		pthread__main->pt_guardsize = value;
 
 	for (aux = _dlauxinfo(); aux->a_type != AT_NULL; ++aux) {
 		if (aux->a_type == AT_STACKBASE) {

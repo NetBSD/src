@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.84 2017/02/11 15:05:15 maxv Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.84.6.1 2017/08/31 08:32:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -114,8 +114,6 @@
 #include "opt_xen.h"
 #endif
 #define __USE_TOPDOWN_VM
-#define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
-    trunc_page(USRSTACK - MAXSSIZ - (sz))
 #define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
     round_page((vaddr_t)(da) + (vsize_t)MIN(maxdmap, MAXDSIZ_BU))
 
