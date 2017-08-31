@@ -1,4 +1,4 @@
-/* $NetBSD: booted_dev.c,v 1.2.4.2 2017/08/30 15:45:04 martin Exp $ */
+/* $NetBSD: booted_dev.c,v 1.2.4.3 2017/08/31 08:18:08 martin Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -35,8 +35,8 @@
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 
-#include "stand/common/common.h"
-#include "stand/common/cfe_api.h"
+#include "stand/sbmips/common/common.h"
+#include "stand/sbmips/common/cfe_api.h"
 
 int	booted_dev_fd;
 #if defined(PRIMARY_BOOTBLOCK) || defined(UNIFIED_BOOTBLOCK)

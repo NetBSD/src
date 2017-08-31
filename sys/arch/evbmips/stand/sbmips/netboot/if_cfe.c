@@ -1,4 +1,4 @@
-/* $NetBSD: if_cfe.c,v 1.2.4.2 2017/08/30 15:45:03 martin Exp $ */
+/* $NetBSD: if_cfe.c,v 1.2.4.3 2017/08/31 08:18:08 martin Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -43,10 +43,10 @@
 #include <lib/libsa/netif.h>
 #include <lib/libkern/libkern.h>
 
-#include "stand/common/common.h"
-#include "stand/common/bbinfo.h"
-#include "stand/common/cfe_api.h"
-#include "stand/common/cfe_ioctl.h"
+#include "stand/sbmips/common/common.h"
+#include "stand/sbmips/common/bbinfo.h"
+#include "stand/sbmips/common/cfe_api.h"
+#include "stand/sbmips/common/cfe_ioctl.h"
 
 int cfenet_probe(struct netif *, void *);
 int cfenet_match(struct netif *, void *);
