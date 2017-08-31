@@ -1,11 +1,11 @@
-/*	$NetBSD: amd64_trap.S,v 1.7 2017/08/18 14:52:19 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.8 2017/08/31 09:33:19 maxv Exp $	*/
 
-/*-
- * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum and by Andrew Doran.
+ * by Charles M. Hannum, by Andrew Doran and by Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.7 2017/08/18 14:52:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.8 2017/08/31 09:33:19 maxv Exp $");
 #endif
 
 /*
@@ -78,12 +78,12 @@ __KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.7 2017/08/18 14:52:19 maxv Exp $");
  * (possibly the next clock tick).  Thus, we disable interrupt before checking,
  * and only enable them again on the final `iret' or before calling the AST
  * handler.
- */ 
+ */
 
 /*****************************************************************************/
 
 #ifdef	XEN
-#define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp 
+#define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp
 #else
 #define	PRE_TRAP
 #endif
@@ -214,7 +214,7 @@ IDTVEC(trap07)
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
+#endif
 	movq	%rsp,%rdi
 	call	_C_LABEL(fpudna)
 	jmp	.Lalltraps_checkusr
@@ -253,43 +253,7 @@ IDTVEC_END(trap0c)
 
 IDTVEC(trap0d)		/* #GP() General protection */
 	TRAP_NJ(T_PROTFLT)
-#ifdef check_swapgs
 	jmp	check_swapgs
-#else
-/*
- * We need to worry about traps in kernel mode while the kernel %gs isn't
- * loaded. These are either faults on iretq during return to user or loads to
- * %gs.
- *
- * When such traps happen, we have CPL=0 and %gs=userland, and we must perform
- * an additional swapgs to get %gs=kernel.
- */
-check_swapgs:
-	INTRENTRY_L(3f,1:)
-2:
-	sti
-	jmp	calltrap
-3:
-	/*
-	 * Trap in kernel mode.
-	 */
-	/* Case 1: fault on iretq? */
-	movq	TF_RIP(%rsp),%rax
-	cmpw	$0xcf48,(%rax)		/* Faulting instruction is iretq ? */
-	jne	5f			/* Jump if not */
-	movq	TF_RSP(%rsp),%rax	/* Must read %rsp, may be a pad word */
-	testb	$SEL_UPL,8(%rax)	/* Check %cs of outer iret frame */
-	je	2b			/* jump if iret was to kernel  */
-	jmp	1b			/* to user - must restore %gs */
-5:
-
-	/* Case 2: move to %gs? */
-	movw	(%rax),%ax
-	andb	$070,%ah		/* mask mod/rm from mod/reg/rm */
-	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
-	jne	2b			/* No - normal kernel fault */
-	jmp	1b			/* Yes - restore %gs */
-#endif
 IDTVEC_END(trap0d)
 
 IDTVEC(trap0e)
@@ -302,7 +266,7 @@ IDTVEC(trap0f)
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
+#endif
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(trap0f)
 IDTVEC_END(intrspurious)
@@ -313,7 +277,7 @@ IDTVEC(trap10)
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
+#endif
 	movq	%rsp,%rdi
 	call	_C_LABEL(fputrap)
 	jmp	.Lalltraps_checkusr
@@ -380,9 +344,9 @@ IDTVEC_END(exceptions)
 
 /*
  * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
- * segment registers or during the iret itself).
- * The address of the (possibly reconstructed) user trap frame is
- * passed as an argument.
+ * segment registers or during the iret itself). The address of the (possibly
+ * reconstructed) user trap frame is passed as an argument.
+ *
  * Typically the code will have raised a SIGSEGV which will be actioned
  * by the code below.
  */
@@ -392,9 +356,46 @@ LABEL(trap_return_fault_return)
 #ifdef DIAGNOSTIC
 	/* We can't recover the saved %rbx, so suppress warning */
 	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
+#endif
 	jmp	.Lalltraps_checkusr
 END(trap_return_fault_return)
+
+#ifndef check_swapgs
+/*
+ * We need to worry about traps in kernel mode while the kernel %gs isn't
+ * loaded. These are either faults on iretq during return to user or loads to
+ * %gs.
+ *
+ * When such traps happen, we have CPL=0 and %gs=userland, and we must perform
+ * an additional swapgs to get %gs=kernel.
+ */
+NENTRY(check_swapgs)
+	INTRENTRY_L(3f,1:)
+2:
+	sti
+	jmp	calltrap
+3:
+	/*
+	 * Trap in kernel mode.
+	 */
+	/* Case 1: fault on iretq? */
+	movq	TF_RIP(%rsp),%rax
+	cmpw	$0xcf48,(%rax)		/* Faulting instruction is iretq ? */
+	jne	5f			/* Jump if not */
+	movq	TF_RSP(%rsp),%rax	/* Must read %rsp, may be a pad word */
+	testb	$SEL_UPL,8(%rax)	/* Check %cs of outer iret frame */
+	je	2b			/* jump if iret was to kernel  */
+	jmp	1b			/* to user - must restore %gs */
+5:
+
+	/* Case 2: move to %gs? */
+	movw	(%rax),%ax
+	andb	$070,%ah		/* mask mod/rm from mod/reg/rm */
+	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
+	jne	2b			/* No - normal kernel fault */
+	jmp	1b			/* Yes - restore %gs */
+END(check_swapgs)
+#endif
 
 /*
  * All traps go through here. Call the generic trap handler, and
@@ -407,13 +408,15 @@ NENTRY(alltraps)
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
+#endif
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
+
 .Lalltraps_checkusr:
 	testb	$SEL_RPL,TF_CS(%rsp)
 	jz	6f
+
 .Lalltraps_checkast:
 	movq	CPUVAR(CURLWP),%r14
 	/* Check for ASTs on exit to user mode. */
@@ -429,13 +432,21 @@ calltrap:
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 3:	CHECK_DEFERRED_SWITCH
 	jnz	9f
-#ifndef DIAGNOSTIC
-6:	INTRFASTEXIT
-#else /* DIAGNOSTIC */
-6:	cmpl	CPUVAR(ILEVEL),%ebx
-	jne	3f
+
+6:
+#ifdef DIAGNOSTIC
+	cmpl	CPUVAR(ILEVEL),%ebx
+	jne	.Lspl_error
+#endif
 	INTRFASTEXIT
-3:	STI(si)
+
+9:	STI(si)
+	call	_C_LABEL(do_pmap_load)
+	jmp	.Lalltraps_checkast	/* re-check ASTs */
+
+#ifdef DIAGNOSTIC
+.Lspl_error:
+	STI(si)
 	movabsq	$4f,%rdi
 	movl	CPUVAR(ILEVEL),%esi
 	movl	%ebx,%edx
@@ -445,8 +456,6 @@ calltrap:
 	call	_C_LABEL(spllower)
 	jmp	.Lalltraps_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
-#endif /* DIAGNOSTIC */
-9:	STI(si)
-	call	_C_LABEL(do_pmap_load)
-	jmp	.Lalltraps_checkast	/* re-check ASTs */
+#endif
 END(alltraps)
+
