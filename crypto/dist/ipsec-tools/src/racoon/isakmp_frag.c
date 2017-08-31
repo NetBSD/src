@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_frag.c,v 1.6 2017/01/24 19:23:31 christos Exp $	*/
+/*	$NetBSD: isakmp_frag.c,v 1.6.4.1 2017/08/31 08:50:57 bouyer Exp $	*/
 
 /* Id: isakmp_frag.c,v 1.4 2004/11/13 17:31:36 manubsd Exp */
 
@@ -179,20 +179,26 @@ isakmp_frag_insert(struct ph1handle *iph1, struct isakmp_frag_item *item)
 	struct isakmp_frag_item *pitem = NULL;
 	struct isakmp_frag_item *citem = iph1->frag_chain;
 
+	/* no frag yet, just insert at beginning of list */
 	if (iph1->frag_chain == NULL) {
 		iph1->frag_chain = item;
 		return 0;
 	}
 
 	do {
+		/* duplicate fragment number, abort (CVE-2016-10396) */
 		if (citem->frag_num == item->frag_num)
 			return -1;
 
+		/* need to insert before current item */
 		if (citem->frag_num > item->frag_num) {
-			if (pitem)
+			if (pitem != NULL)
 				pitem->frag_next = item;
+			else
+				/* insert at the beginning of the list  */
+				iph1->frag_chain = item;
 			item->frag_next = citem;
-			break;
+			return 0;
 		}
 
 		pitem = citem;
@@ -200,8 +206,7 @@ isakmp_frag_insert(struct ph1handle *iph1, struct isakmp_frag_item *item)
 	} while (citem != NULL);
 
 	/* we reached the end of the list, insert */
-	if (citem == NULL)
-	      pitem->frag_next = item;
+	pitem->frag_next = item;
 	return 0;
 }
 
