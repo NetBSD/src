@@ -1,4 +1,4 @@
-/*	$NetBSD: merge.c,v 1.13 2011/05/18 19:36:36 dsl Exp $	*/
+/*	$NetBSD: merge.c,v 1.13.6.1 2017/08/31 15:05:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)merge.c	8.2 (Berkeley) 2/14/94";
 #else
-__RCSID("$NetBSD: merge.c,v 1.13 2011/05/18 19:36:36 dsl Exp $");
+__RCSID("$NetBSD: merge.c,v 1.13.6.1 2017/08/31 15:05:50 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -127,6 +127,9 @@ mergesort(base, nmemb, size, cmp)
 		errno = EINVAL;
 		return (-1);
 	}
+
+	if (nmemb == 0)
+		return (0);
 
 	/*
 	 * XXX
