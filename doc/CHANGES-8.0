@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.50 2017/08/31 08:07:09 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.51 2017/08/31 08:43:41 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5566,4 +5566,69 @@ usr.sbin/installboot/installboot.8		1.94
 
 	Move sys/arch/sbmips/* into sys/arch/evbmips/*/sbmips.
 	[mrg, Ticket #231]
+
+lib/libpthread/pthread.c			1.149
+
+	Do not look at environmental variables for suid/guid binaries.
+	[joerg, ticket #232]
+
+lib/libpthread/TODO				1.19
+lib/libpthread/pthread.c			1.148
+lib/libpthread/pthread_attr.c			1.17
+lib/libpthread/pthread_attr_getguardsize.3	1.4
+lib/libpthread/pthread_int.h			1.94
+sys/arch/amd64/include/vmparam.h		1.42, 1.43
+sys/arch/i386/include/vmparam.h			1.85
+sys/arch/mips/include/vmparam.h			1.58, 1.59
+sys/arch/powerpc/include/vmparam.h		1.20
+sys/arch/riscv/include/vmparam.h		1.2, 1.3
+sys/kern/exec_subr.c				1.79 - 1.82
+sys/uvm/uvm_meter.c				1.66
+sys/uvm/uvm_param.h				1.36, 1.37
+tests/lib/libpthread/t_join.c			1.9
+
+	Always include a 1MB guard area beyond the end of stack. While ASLR will
+	normally create a guard area as well, this provides a deterministic area
+	for all binaries.
+
+	Mitigates the rest of CVE-2017-1000374 and CVE-2017-1000375 from
+	Qualys.
+
+	Export the guard size of the main thread via vm.guard_size. Add a
+	complementary writable sysctl for the initial guard size of threads
+	created via pthread_create. Let the existing attribut accessors do the
+	right thing. Raise the default guard size for threads to 64KB.
+	[joerg, ticket #234]
+
+external/gpl3/gcc/dist/gcc/config/netbsd.h	1.19, 1.20
+
+	Fix efficient unwinding for static programs.
+	[joerg, ticket #235]
+
+libexec/ld.elf_so/symbol.c			1.69
+
+	If a DF_1_NODELETE DSO has been removed from the DAG list, it still
+	needs to be able to resolve relocations against itself. As such, search
+	the referencing object explicitly last, if it hasn't been searched
+	before.
+	[joerg, ticket #236]
+
+sys/arch/amiga/conf/DRACO		patch
+sys/arch/amiga/conf/GENERIC		patch
+sys/arch/amiga/conf/GENERIC.in		patch
+sys/arch/i386/conf/ALL			patch
+sys/arch/i386/conf/GENERIC		patch
+sys/arch/i386/conf/XEN3_DOM0		patch
+sys/arch/i386/conf/XEN3_DOMU		patch
+sys/arch/sparc/conf/GENERIC		patch
+sys/arch/sparc/conf/KRUPS		patch
+sys/arch/sparc/conf/MRCOFFEE		patch
+sys/arch/sparc/conf/TADPOLE3GX		patch
+sys/arch/sparc64/conf/GENERIC		patch
+sys/arch/sparc64/conf/NONPLUS64		patch
+sys/kern/kern_exec.c			patch
+
+	Disables compat_svr4 and compat_svr4_32 on each architecture,
+	and removes the associated module autoload entries.
+	[maxv, ticket #237]
 
