@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.55.2.1 2017/07/23 14:58:14 snj Exp $	*/
+/*	$NetBSD: var.c,v 1.55.2.2 2017/08/31 11:43:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.55.2.1 2017/07/23 14:58:14 snj Exp $");
+__RCSID("$NetBSD: var.c,v 1.55.2.2 2017/08/31 11:43:44 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -472,7 +472,7 @@ setvareq(char *s, int flags)
 		return;
 	}
 	vp = ckmalloc(sizeof (*vp));
-	vp->flags = flags & ~(VNOFUNC|VFUNCREF|VSTRFIXED);
+	vp->flags = flags & ~(VNOFUNC|VFUNCREF);
 	vp->text = s;
 	vp->name_len = nlen;
 	vp->next = *vpp;
