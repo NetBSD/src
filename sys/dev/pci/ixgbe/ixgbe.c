@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.88.2.2 2017/08/05 03:49:35 snj Exp $*/
+/*$NetBSD: ixgbe.c,v 1.88.2.3 2017/08/31 11:37:37 martin Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2960,6 +2960,7 @@ static int
 ixgbe_setup_msix(struct adapter *adapter)
 {
 	device_t dev = adapter->dev;
+	struct ixgbe_mac_info *mac = &adapter->hw.mac;
 	int want, queues, msgs;
 
 	/* Override by tuneable */
@@ -2986,8 +2987,9 @@ ixgbe_setup_msix(struct adapter *adapter)
 	if (ixgbe_num_queues != 0)
 		queues = ixgbe_num_queues;
 	/* Set max queues to 8 when autoconfiguring */
-	else if ((ixgbe_num_queues == 0) && (queues > 8))
-		queues = 8;
+	else
+		queues = min(queues,
+		    min(mac->max_tx_queues, mac->max_rx_queues));
 
 	/* reflect correct sysctl value */
 	ixgbe_num_queues = queues;
@@ -4847,18 +4849,6 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	const char *xname = device_xname(dev);
 
 	/* Driver Statistics */
-#if 0
-	/* These counters are not updated by the software */
-	SYSCTL_ADD_ULONG(ctx, child, OID_AUTO, "mbuf_header_failed",
-			CTLFLAG_RD, &adapter->mbuf_header_failed,
-			"???");
-	SYSCTL_ADD_ULONG(ctx, child, OID_AUTO, "mbuf_packet_failed",
-			CTLFLAG_RD, &adapter->mbuf_packet_failed,
-			"???");
-	SYSCTL_ADD_ULONG(ctx, child, OID_AUTO, "no_tx_map_avail",
-			CTLFLAG_RD, &adapter->no_tx_map_avail,
-			"???");
-#endif
 	evcnt_attach_dynamic(&adapter->handleq, EVCNT_TYPE_MISC,
 	    NULL, xname, "Handled queue in softint");
 	evcnt_attach_dynamic(&adapter->req, EVCNT_TYPE_MISC,
