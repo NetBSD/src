@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.79 2017/02/17 03:57:17 ozaki-r Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.79.6.1 2017/08/31 11:24:03 martin Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.79 2017/02/17 03:57:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.79.6.1 2017/08/31 11:24:03 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -461,7 +461,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	struct in6_ifaddr *ia = NULL;
 	struct in6_pktinfo *pi = NULL;
 	u_int32_t odstzone;
-	int error;
+	int error = 0, iferror;
 #if defined(MIP6) && NMIP > 0
 	u_int8_t ip6po_usecoa = 0;
 #endif /* MIP6 && NMIP > 0 */
@@ -484,7 +484,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * to this function (e.g., for identifying the appropriate scope zone
 	 * ID).
 	 */
-	error = in6_selectif(dstsock, opts, mopts, ro, &ifp, PSREF);
+	iferror = in6_selectif(dstsock, opts, mopts, ro, &ifp, PSREF);
 	if (ifpp != NULL)
 		*ifpp = ifp;
 
@@ -549,8 +549,10 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * The outgoing interface is crucial in the general selection procedure
 	 * below.  If it is not known at this point, we fail.
 	 */
-	if (ifp == NULL)
+	if (ifp == NULL) {
+		error = iferror;
 		goto exit;
+	}
 
 	/*
 	 * If the address is not yet determined, choose the best one based on
