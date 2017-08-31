@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile.buildboot,v 1.3 2017/04/08 19:53:20 christos Exp $
+#	$NetBSD: Makefile.buildboot,v 1.3.6.1 2017/08/31 11:41:29 martin Exp $
 
+NOPIE=yes
+NOSSP=yes
 NODEBUG=yes
 RELOC=	120000
 HEAP_LIMIT=0x1c0000
