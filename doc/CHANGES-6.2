@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.306 2017/08/30 07:12:21 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.307 2017/08/31 15:20:47 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -20862,4 +20862,35 @@ usr.sbin/racoon/Makefile			1.28
 
 	Update Heimdal to 7.1.
 	[mrg, ticket #1493]
+
+lib/libc/rpc/rpcb_st_xdr.c			1.12
+
+	Add missing xdr_rpcbs_rmtcalllist_ptr call in xdr_rpcb_stat.
+	[ginsbach, ticket #1494]
+
+lib/libc/stdlib/merge.c				1.15
+
+	Gracefully handle a zero number of members argument in mergesort(3).
+	[ginsbach, ticket #1495]
+
+usr.sbin/syslogd/syslogd.c			1.123
+
+	Fixed incorrect syslogd(8) internal time conversions that could
+	result in incorrect timestamp values being logged.
+	[ginsbach, ticket #1496]
+
+external/bsd/cron/dist/database.c		1.8
+
+	Allow crontab files being writable by owner.
+	[ginsbach, ticket #1498]
+
+sys/arch/evbmips/conf/MALTA			1.88
+sys/arch/evbmips/conf/MALTA32			1.4
+sys/arch/evbmips/conf/MALTA64			1.8
+sys/arch/mips/mips/bds_emul.S			1.9
+
+	Re-enable the NOFPU and (renamed) FPEMUL options.  None of the Malta
+	CPU daughter cards currently supported by NetBSD have an FPU.
+	Fix FPU emulation.
+	[mrg, ticket #1499]
 
