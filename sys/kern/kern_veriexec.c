@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.12 2017/04/12 10:30:02 hannken Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.12.4.1 2017/08/31 11:46:23 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.12 2017/04/12 10:30:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.12.4.1 2017/08/31 11:46:23 martin Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1050,9 +1050,11 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 {
 	struct veriexec_table_entry *vte;
 	struct veriexec_file_entry *vfe = NULL;
+	struct veriexec_file_entry *ovfe;
 	struct vnode *vp;
 	const char *file, *fp_type;
 	int error;
+	bool ignore_dup = false;
 
 	if (!prop_dictionary_get_cstring_nocopy(dict, "file", &file))
 		return (EINVAL);
@@ -1096,12 +1098,6 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 
 	rw_enter(&veriexec_op_lock, RW_WRITER);
 
-	if (veriexec_get(vp)) {
-		/* We already have an entry for this file. */
-		error = EEXIST;
-		goto unlock_out;
-	}
-
 	/* Continue entry initialization. */
 	if (prop_dictionary_get_uint8(dict, "entry-type", &vfe->type) == FALSE)
 		vfe->type = 0;
@@ -1140,6 +1136,22 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 		vfe->status = status;
 	}
 
+	/*
+	 * If we already have an entry for this file, and it matches
+	 * the new entry exactly (except for the filename, which may
+	 * hard-linked!), we just ignore the new entry.  If the new
+	 * entry differs, report the error.
+	 */
+	if ((ovfe = veriexec_get(vp)) != NULL) {
+		error = EEXIST;
+		if (vfe->type == ovfe->type &&
+		    vfe->status == ovfe->status &&
+		    vfe->ops == ovfe->ops &&
+		    memcmp(vfe->fp, ovfe->fp, vfe->ops->hash_len) == 0)
+			ignore_dup = true;
+		goto unlock_out;
+	}
+
 	vte = veriexec_table_lookup(vp->v_mount);
 	if (vte == NULL)
 		vte = veriexec_table_add(l, vp->v_mount);
@@ -1162,6 +1174,9 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	vrele(vp);
 	if (error)
 		veriexec_file_free(vfe);
+
+	if (ignore_dup && error == EEXIST)
+		error = 0;
 
 	return (error);
 }
