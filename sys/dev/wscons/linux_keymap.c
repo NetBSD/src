@@ -1,4 +1,4 @@
-/* $NetBSD: linux_keymap.c,v 1.1 2017/08/30 00:39:27 jmcneill Exp $ */
+/* $NetBSD: linux_keymap.c,v 1.2 2017/08/31 19:55:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1997-2017 The NetBSD Foundation, Inc.
@@ -30,145 +30,157 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_keymap.c,v 1.1 2017/08/30 00:39:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_keymap.c,v 1.2 2017/08/31 19:55:43 jmcneill Exp $");
 
 #include <sys/types.h>
-#include <dev/wscons/wsksymdef.h>
-#include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/linux_keymap.h>
 
-#define KC(n) KS_KEYCODE(n)
-
-static const keysym_t linux_keymap_keydesc_us[] = {
-/*  pos      command		normal		shifted */
-    KC(1),   KS_Cmd_Debugger,	KS_Escape,
-    KC(2),  			KS_1,		KS_exclam,
-    KC(3),  			KS_2,		KS_at,
-    KC(4),  			KS_3,		KS_numbersign,
-    KC(5),  			KS_4,		KS_dollar,
-    KC(6),  			KS_5,		KS_percent,
-    KC(7),  			KS_6,		KS_asciicircum,
-    KC(8),  			KS_7,		KS_ampersand,
-    KC(9),  			KS_8,		KS_asterisk,
-    KC(10), 			KS_9,		KS_parenleft,
-    KC(11), 			KS_0,		KS_parenright,
-    KC(12), 			KS_minus,	KS_underscore,
-    KC(13), 			KS_equal,	KS_plus,
-    KC(14),  KS_Cmd_ResetEmul,	KS_Delete,
-    KC(15), 			KS_Tab,
-    KC(16), 			KS_q,
-    KC(17), 			KS_w,
-    KC(18), 			KS_e,
-    KC(19), 			KS_r,
-    KC(20), 			KS_t,
-    KC(21), 			KS_y,
-    KC(22), 			KS_u,
-    KC(23), 			KS_i,
-    KC(24), 			KS_o,
-    KC(25), 			KS_p,
-    KC(26), 			KS_bracketleft,	KS_braceleft,
-    KC(27), 			KS_bracketright, KS_braceright,
-    KC(28), 			KS_Return,
-    KC(29),  KS_Cmd1,		KS_Control_L,
-    KC(30), 			KS_a,
-    KC(31), 			KS_s,
-    KC(32), 			KS_d,
-    KC(33), 			KS_f,
-    KC(34), 			KS_g,
-    KC(35), 			KS_h,
-    KC(36), 			KS_j,
-    KC(37), 			KS_k,
-    KC(38), 			KS_l,
-    KC(39), 			KS_semicolon,	KS_colon,
-    KC(40), 			KS_apostrophe,	KS_quotedbl,
-    KC(41), 			KS_grave,	KS_asciitilde,
-    KC(42), 			KS_Shift_L,
-    KC(43), 			KS_backslash,	KS_bar,
-    KC(44), 			KS_z,
-    KC(45), 			KS_x,
-    KC(46), 			KS_c,
-    KC(47), 			KS_v,
-    KC(48), 			KS_b,
-    KC(49), 			KS_n,
-    KC(50), 			KS_m,
-    KC(51), 			KS_comma,	KS_less,
-    KC(52), 			KS_period,	KS_greater,
-    KC(53), 			KS_slash,	KS_question,
-    KC(54), 			KS_Shift_R,
-    KC(55), 			KS_KP_Multiply,
-    KC(56),  KS_Cmd2,		KS_Alt_L,
-    KC(57), 			KS_space,
-    KC(58), 			KS_Caps_Lock,
-    KC(59),  KS_Cmd_Screen0,	KS_f1,
-    KC(60),  KS_Cmd_Screen1,	KS_f2,
-    KC(61),  KS_Cmd_Screen2,	KS_f3,
-    KC(62),  KS_Cmd_Screen3,	KS_f4,
-    KC(63),  KS_Cmd_Screen4,	KS_f5,
-    KC(64),  KS_Cmd_Screen5,	KS_f6,
-    KC(65),  KS_Cmd_Screen6,	KS_f7,
-    KC(66),  KS_Cmd_Screen7,	KS_f8,
-    KC(67),  KS_Cmd_Screen8,	KS_f9,
-    KC(68),  KS_Cmd_Screen9,	KS_f10,
-    KC(69), 			KS_Num_Lock,
-    KC(70), 			KS_Hold_Screen,
-    KC(71), 			KS_KP_Home,	KS_KP_7,
-    KC(72), 			KS_KP_Up,	KS_KP_8,
-    KC(73), KS_Cmd_ScrollFastUp, KS_KP_Prior,	KS_KP_9,
-    KC(74), 			KS_KP_Subtract,
-    KC(75), 			KS_KP_Left,	KS_KP_4,
-    KC(76), 			KS_KP_Begin,	KS_KP_5,
-    KC(77), 			KS_KP_Right,	KS_KP_6,
-    KC(78), 			KS_KP_Add,
-    KC(79), 			KS_KP_End,	KS_KP_1,
-    KC(80), 			KS_KP_Down,	KS_KP_2,
-    KC(81), KS_Cmd_ScrollFastDown, KS_KP_Next,	KS_KP_3,
-    KC(82), 			KS_KP_Insert,	KS_KP_0,
-    KC(83), 			KS_KP_Delete,	KS_KP_Decimal,
-    KC(87), 			KS_f11,
-    KC(88), 			KS_f12,
-    KC(96),			KS_KP_Enter,
-    KC(97),			KS_Control_R,
-    KC(98),			KS_KP_Divide,
-    KC(99),			KS_Print_Screen,
-    KC(100),			KS_Alt_R,	KS_Multi_key,
-    KC(102),			KS_Home,
-    KC(103),			KS_Up,
-    KC(104), KS_Cmd_ScrollFastUp, KS_Prior,
-    KC(105),			KS_Left,
-    KC(106),			KS_Right,
-    KC(107),			KS_End,
-    KC(108),			KS_Down,
-    KC(109), KS_Cmd_ScrollFastDown, KS_Next,
-    KC(110),			KS_Insert,
-    KC(111),			KS_Delete,
-    KC(113),			KS_Cmd_VolumeToggle,
-    KC(114),			KS_Cmd_VolumeDown,
-    KC(115),			KS_Cmd_VolumeUp,
-    KC(119),			KS_Pause, /* Break */
-    KC(125),			KS_Meta_L,
-    KC(126),			KS_Meta_R,
-    KC(128),			KS_Stop,
-    KC(129),			KS_Again,
-    KC(130),			KS_Props,
-    KC(131),			KS_Undo,
-    KC(132),			KS_Front,
-    KC(133),			KS_Copy,
-    KC(134),			KS_Open,
-    KC(135),			KS_Paste,
-    KC(136),			KS_Find,
-    KC(137),			KS_Cut,
-    KC(138),			KS_Help,
-    KC(139),			KS_Menu,
+static const uint8_t linux_key_to_usb_map[] = {
+	[0  ] /*         KEY_RESERVED */ =	0x00,
+	[1  ] /*              KEY_ESC */ =	0x29,
+	[2  ] /*                KEY_1 */ =	0x1e,
+	[3  ] /*                KEY_2 */ =	0x1f,
+	[4  ] /*                KEY_3 */ =	0x20,
+	[5  ] /*                KEY_4 */ =	0x21,
+	[6  ] /*                KEY_5 */ =	0x22,
+	[7  ] /*                KEY_6 */ =	0x23,
+	[8  ] /*                KEY_7 */ =	0x24,
+	[9  ] /*                KEY_8 */ =	0x25,
+	[10 ] /*                KEY_9 */ =	0x26,
+	[11 ] /*                KEY_0 */ =	0x27,
+	[12 ] /*            KEY_MINUS */ =	0x2d,
+	[13 ] /*            KEY_EQUAL */ =	0x2e,
+	[14 ] /*        KEY_BACKSPACE */ =	0x2a,
+	[15 ] /*              KEY_TAB */ =	0x2b,
+	[16 ] /*                KEY_Q */ =	0x14,
+	[17 ] /*                KEY_W */ =	0x1a,
+	[18 ] /*                KEY_E */ =	0x08,
+	[19 ] /*                KEY_R */ =	0x15,
+	[20 ] /*                KEY_T */ =	0x17,
+	[21 ] /*                KEY_Y */ =	0x1c,
+	[22 ] /*                KEY_U */ =	0x18,
+	[23 ] /*                KEY_I */ =	0x0c,
+	[24 ] /*                KEY_O */ =	0x12,
+	[25 ] /*                KEY_P */ =	0x13,
+	[26 ] /*        KEY_LEFTBRACE */ =	0x2f,
+	[27 ] /*       KEY_RIGHTBRACE */ =	0x30,
+	[28 ] /*            KEY_ENTER */ =	0x28,
+	[29 ] /*         KEY_LEFTCTRL */ =	0xe0,
+	[30 ] /*                KEY_A */ =	0x04,
+	[31 ] /*                KEY_S */ =	0x16,
+	[32 ] /*                KEY_D */ =	0x07,
+	[33 ] /*                KEY_F */ =	0x09,
+	[34 ] /*                KEY_G */ =	0x0a,
+	[35 ] /*                KEY_H */ =	0x0b,
+	[36 ] /*                KEY_J */ =	0x0d,
+	[37 ] /*                KEY_K */ =	0x0e,
+	[38 ] /*                KEY_L */ =	0x0f,
+	[39 ] /*        KEY_SEMICOLON */ =	0x33,
+	[40 ] /*       KEY_APOSTROPHE */ =	0x34,
+	[41 ] /*            KEY_GRAVE */ =	0x35,
+	[42 ] /*        KEY_LEFTSHIFT */ =	0xe1,
+	[43 ] /*        KEY_BACKSLASH */ =	0x31,
+	[44 ] /*                KEY_Z */ =	0x1d,
+	[45 ] /*                KEY_X */ =	0x1b,
+	[46 ] /*                KEY_C */ =	0x06,
+	[47 ] /*                KEY_V */ =	0x19,
+	[48 ] /*                KEY_B */ =	0x05,
+	[49 ] /*                KEY_N */ =	0x11,
+	[50 ] /*                KEY_M */ =	0x10,
+	[51 ] /*            KEY_COMMA */ =	0x36,
+	[52 ] /*              KEY_DOT */ =	0x37,
+	[53 ] /*            KEY_SLASH */ =	0x38,
+	[54 ] /*       KEY_RIGHTSHIFT */ =	0xe5,
+	[55 ] /*       KEY_KPASTERISK */ =	0x55,
+	[56 ] /*          KEY_LEFTALT */ =	0xe2,
+	[57 ] /*            KEY_SPACE */ =	0x2c,
+	[58 ] /*         KEY_CAPSLOCK */ =	0x39,
+	[59 ] /*               KEY_F1 */ =	0x3a,
+	[60 ] /*               KEY_F2 */ =	0x3b,
+	[61 ] /*               KEY_F3 */ =	0x3c,
+	[62 ] /*               KEY_F4 */ =	0x3d,
+	[63 ] /*               KEY_F5 */ =	0x3e,
+	[64 ] /*               KEY_F6 */ =	0x3f,
+	[65 ] /*               KEY_F7 */ =	0x40,
+	[66 ] /*               KEY_F8 */ =	0x41,
+	[67 ] /*               KEY_F9 */ =	0x42,
+	[68 ] /*              KEY_F10 */ =	0x43,
+	[69 ] /*          KEY_NUMLOCK */ =	0x53,
+	[70 ] /*       KEY_SCROLLLOCK */ =	0x47,
+	[71 ] /*              KEY_KP7 */ =	0x5f,
+	[72 ] /*              KEY_KP8 */ =	0x60,
+	[73 ] /*              KEY_KP9 */ =	0x61,
+	[74 ] /*          KEY_KPMINUS */ =	0x56,
+	[75 ] /*              KEY_KP4 */ =	0x5c,
+	[76 ] /*              KEY_KP5 */ =	0x5d,
+	[77 ] /*              KEY_KP6 */ =	0x5e,
+	[78 ] /*           KEY_KPPLUS */ =	0x57,
+	[79 ] /*              KEY_KP1 */ =	0x59,
+	[80 ] /*              KEY_KP2 */ =	0x5a,
+	[81 ] /*              KEY_KP3 */ =	0x5b,
+	[82 ] /*              KEY_KP0 */ =	0x62,
+	[83 ] /*            KEY_KPDOT */ =	0x63,
+	[85 ] /*   KEY_ZENKAKUHANKAKU */ =	0x94,
+#if 0
+	[86 ] /*            KEY_102ND */ =	???
+#endif
+	[87 ] /*              KEY_F11 */ =	0x44,
+	[88 ] /*              KEY_F12 */ =	0x45,
+	[89 ] /*               KEY_RO */ =	0x87,
+	[90 ] /*         KEY_KATAKANA */ =	0x92,
+	[91 ] /*         KEY_HIRAGANA */ =	0x93,
+	[92 ] /*           KEY_HENKAN */ =	0x8a,
+	[93 ] /* KEY_KATAKANAHIRAGANA */ =	0x88,
+	[94 ] /*         KEY_MUHENKAN */ =	0x8b,
+	[95 ] /*        KEY_KPJPCOMMA */ =	0x8c,
+	[96 ] /*          KEY_KPENTER */ =	0x58,
+	[97 ] /*        KEY_RIGHTCTRL */ =	0xe4,
+	[98 ] /*          KEY_KPSLASH */ =	0x54,
+	[99 ] /*            KEY_SYSRQ */ =	0x9a,
+	[100] /*         KEY_RIGHTALT */ =	0xe6,
+#if 0
+	[101] /*         KEY_LINEFEED */ =	???
+#endif
+	[102] /*             KEY_HOME */ =	0x4a,
+	[103] /*               KEY_UP */ =	0x52,
+	[104] /*           KEY_PAGEUP */ =	0x4b,
+	[105] /*             KEY_LEFT */ =	0x50,
+	[106] /*            KEY_RIGHT */ =	0x4f,
+	[107] /*              KEY_END */ =	0x4d,
+	[108] /*             KEY_DOWN */ =	0x51,
+	[109] /*         KEY_PAGEDOWN */ =	0x4e,
+	[110] /*           KEY_INSERT */ =	0x49,
+	[111] /*           KEY_DELETE */ =	0x4c,
+#if 0
+	[112] /*            KEY_MACRO */ =	???
+#endif
+	[113] /*             KEY_MUTE */ =	0x7f,
+	[114] /*       KEY_VOLUMEDOWN */ =	0x81,
+	[115] /*         KEY_VOLUMEUP */ =	0x80,
+	[116] /*            KEY_POWER */ =	0x66,
+	[117] /*          KEY_KPEQUAL */ =	0x67,
+#if 0
+	[118] /*      KEY_KPPLUSMINUS */ =	???
+#endif
+	[119] /*            KEY_PAUSE */ =	0x48,
+#if 0
+	[120] /*            KEY_SCALE */ =	???
+#endif
+	[121] /*          KEY_KPCOMMA */ =	0x85,
+	[122] /*          KEY_HANGEUL */ =	0x90,
+	[123] /*            KEY_HANJA */ =	0x91,
+	[124] /*              KEY_YEN */ =	0x89,
+	[125] /*         KEY_LEFTMETA */ =	0xe3,
+	[126] /*        KEY_RIGHTMETA */ =	0xe7,
+#if 0
+	[127] /*          KEY_COMPOSE */ =	???
+#endif
 };
 
-#define KBD_MAP(name, base, map) \
-			{ name, base, sizeof(map)/sizeof(keysym_t), map }
-
-const struct wscons_keydesc linux_keymap_keydesctab[] = {
-	KBD_MAP(KB_US,			0,	linux_keymap_keydesc_us),
-
-	{0, 0, 0, 0}
-};
-
-#undef KBD_MAP
-#undef KC
+uint8_t
+linux_key_to_usb(u_int code)
+{
+	if (code >= __arraycount(linux_key_to_usb_map))
+		return 0x00;	/* No Event */
+	return linux_key_to_usb_map[code];
+}
