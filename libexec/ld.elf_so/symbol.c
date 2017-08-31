@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.67.6.1 2017/07/04 12:47:58 martin Exp $	 */
+/*	$NetBSD: symbol.c,v 1.67.6.2 2017/08/31 08:36:58 bouyer Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.67.6.1 2017/07/04 12:47:58 martin Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.67.6.2 2017/08/31 08:36:58 bouyer Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -476,6 +476,21 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
 			defobj = obj;
+		}
+	}
+
+	/*
+	 * Finally, look in the referencing object if not linked symbolically.
+	 * This is necessary for DF_1_NODELETE objects where the containing DAG
+	 * has been unlinked, so local references are resolved properly.
+	 */
+	if ((def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) &&
+	    !refobj->symbolic && !_rtld_donelist_check(&donelist, refobj)) {
+		rdbg(("search referencing object for %s", name));
+		symp = _rtld_symlook_obj(name, hash, refobj, flags, ventry);
+		if (symp != NULL) {
+			def = symp;
+			defobj = refobj;
 		}
 	}
 
