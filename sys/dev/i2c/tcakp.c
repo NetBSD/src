@@ -1,4 +1,4 @@
-/* $NetBSD: tcakp.c,v 1.3 2017/08/30 00:40:09 jmcneill Exp $ */
+/* $NetBSD: tcakp.c,v 1.4 2017/08/31 19:55:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.3 2017/08/30 00:40:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.4 2017/08/31 19:55:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,14 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.3 2017/08/30 00:40:09 jmcneill Exp $");
 #define	TCA_DEBOUNCE_DIS1	0x29
 #define	TCA_DEBOUNCE_DIS2	0x2a
 #define	TCA_DEBOUNCE_DIS3	0x2b
-
-#ifdef FDT
-#define KC(n)	KS_KEYCODE(n)
-static const keysym_t tcakp_linux_event_keydesc[] = {
-	KC(1),		
-};
-#undef KC
-#endif
 
 struct tcakp_softc {
 	device_t	sc_dev;
@@ -160,7 +152,7 @@ tcakp_intr(void *priv)
 
 			u_int type = pressed ? WSCONS_EVENT_KEY_DOWN :
 					       WSCONS_EVENT_KEY_UP;
-			int key = sc->sc_keymap[index];
+			int key = linux_key_to_usb(sc->sc_keymap[index]);
 
 			if (sc->sc_wskbddev)
 				wskbd_input(sc->sc_wskbddev, type, key);
@@ -264,7 +256,7 @@ tcakp_ioctl(void *v, u_long cmd, void *data, int flag, lwp_t *l)
 {
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
-		*(int *)data = WSKBD_TYPE_TCAKP;
+		*(int *)data = WSKBD_TYPE_USB;
 		return 0;
 	}
 
@@ -314,8 +306,9 @@ static const struct wskbd_consops tcakp_consops = {
 };
 #endif
 
+extern const struct wscons_keydesc ukbd_keydesctab[];
 static const struct wskbd_mapdata tcakp_keymapdata = {
-	linux_keymap_keydesctab,
+	ukbd_keydesctab,
 	KB_US,
 };
 
