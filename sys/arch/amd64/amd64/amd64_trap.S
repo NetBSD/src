@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.8 2017/08/31 09:33:19 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.9 2017/08/31 10:30:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.8 2017/08/31 09:33:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.9 2017/08/31 10:30:58 maxv Exp $");
 #endif
 
 /*
@@ -378,7 +378,13 @@ NENTRY(check_swapgs)
 	/*
 	 * Trap in kernel mode.
 	 */
-	/* Case 1: fault on iretq? */
+
+	/* Case 1: fault on sysretq? */
+	leaq	do_sysret(%rip),%rdi
+	cmpq	%rdi,TF_RIP(%rsp)
+	je	1b
+
+	/* Case 2: fault on iretq? */
 	movq	TF_RIP(%rsp),%rax
 	cmpw	$0xcf48,(%rax)		/* Faulting instruction is iretq ? */
 	jne	5f			/* Jump if not */
@@ -388,7 +394,7 @@ NENTRY(check_swapgs)
 	jmp	1b			/* to user - must restore %gs */
 5:
 
-	/* Case 2: move to %gs? */
+	/* Case 3: move to %gs? */
 	movw	(%rax),%ax
 	andb	$070,%ah		/* mask mod/rm from mod/reg/rm */
 	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
