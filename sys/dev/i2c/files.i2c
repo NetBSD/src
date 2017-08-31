@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.74 2017/08/26 21:02:35 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.75 2017/08/31 19:55:43 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -264,6 +264,6 @@ attach	as3722reg at as3722pmic
 file	dev/i2c/as3722.c			as3722pmic	needs-flag
 
 # Texas Instruments TCA8418 Keypad Scan IC
-device	tcakp: wskbddev
+device	tcakp: wskbddev, linux_keymap
 attach	tcakp at iic
 file	dev/i2c/tcakp.c				tcakp
