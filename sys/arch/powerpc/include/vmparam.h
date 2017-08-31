@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.19 2014/10/18 08:33:26 snj Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19.12.1 2017/08/31 08:32:39 bouyer Exp $	*/
 
 #ifndef _POWERPC_VMPARAM_H_
 #define _POWERPC_VMPARAM_H_
@@ -25,8 +25,6 @@
  * top of the next lower segment.
  */
 #define	__USE_TOPDOWN_VM
-#define	VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
-    ((VM_MAXUSER_ADDRESS - MAXSSIZ) - round_page(sz))
 #define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
     round_page((vaddr_t)(da) + (vsize_t)maxdmap)
 

@@ -1,4 +1,4 @@
-/* $NetBSD: t_join.c,v 1.8 2012/03/12 20:17:16 joerg Exp $ */
+/* $NetBSD: t_join.c,v 1.8.24.1 2017/08/31 08:32:39 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_join.c,v 1.8 2012/03/12 20:17:16 joerg Exp $");
+__RCSID("$NetBSD: t_join.c,v 1.8.24.1 2017/08/31 08:32:39 bouyer Exp $");
 
 #include <errno.h>
 #include <pthread.h>
@@ -104,6 +104,7 @@ threadfunc1(void *arg)
 		error = true;
 
 		ATF_REQUIRE(pthread_attr_setstacksize(&attr, STACKSIZE * (i + 1)) == 0);
+		ATF_REQUIRE(pthread_attr_setguardsize(&attr, STACKSIZE * (i + 2)) == 0);
 
 		rv = pthread_create(&thread[i], &attr, threadfunc2, (void *)i);
 
@@ -148,13 +149,15 @@ threadfunc2(void *arg)
 	static uintptr_t i = 0;
 	uintptr_t j;
 	pthread_attr_t attr;
-	size_t stacksize;
+	size_t stacksize, guardsize;
 
 	j = (uintptr_t)arg;
 
 	ATF_REQUIRE(pthread_attr_get_np(pthread_self(), &attr) == 0);
 	ATF_REQUIRE(pthread_attr_getstacksize(&attr, &stacksize) == 0);
 	ATF_REQUIRE(stacksize == STACKSIZE * (j + 1));
+	ATF_REQUIRE(pthread_attr_getguardsize(&attr, &guardsize) == 0);
+	ATF_REQUIRE(guardsize == STACKSIZE * (j + 2));
 	ATF_REQUIRE(pthread_attr_destroy(&attr) == 0);
 
 	if (i++ == j)

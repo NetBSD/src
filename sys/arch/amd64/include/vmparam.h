@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.39 2017/02/11 15:05:15 maxv Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.39.6.1 2017/08/31 08:32:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -133,13 +133,11 @@
 #endif
 #define __USE_TOPDOWN_VM
 
-#define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
-    trunc_page(USRSTACK - MAXSSIZ - (sz))
 #define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
     round_page((vaddr_t)(da) + (vsize_t)maxdmap)
 
 #define VM_DEFAULT_ADDRESS32_TOPDOWN(da, sz) \
-	trunc_page(USRSTACK32 - MAXSSIZ32 - (sz))
+	trunc_page(USRSTACK32 - MAXSSIZ32 - (sz) - user_stack_guard_size)
 #define VM_DEFAULT_ADDRESS32_BOTTOMUP(da, sz) \
     round_page((vaddr_t)(da) + (vsize_t)MAXDSIZ32)
 

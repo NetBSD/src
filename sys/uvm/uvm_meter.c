@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.65 2014/12/01 04:11:14 msaitoh Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.65.10.1 2017/08/31 08:32:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.65 2014/12/01 04:11:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.65.10.1 2017/08/31 08:32:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,6 +281,18 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 		       SYSCTL_DESCR("Maximum user address"),
 		       NULL, VM_MAX_ADDRESS, NULL, 0,
 		       CTL_VM, VM_MAXADDRESS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_UNSIGNED,
+		       CTLTYPE_INT, "guard_size",
+		       SYSCTL_DESCR("Guard size of main thread"),
+		       NULL, 0, &user_stack_guard_size, 0,
+		       CTL_VM, VM_GUARD_SIZE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_UNSIGNED|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "thread_guard_size",
+		       SYSCTL_DESCR("Guard size of other threads"),
+		       NULL, 0, &user_thread_stack_guard_size, 0,
+		       CTL_VM, VM_THREAD_GUARD_SIZE, CTL_EOL);
 
 	uvmpdpol_sysctlsetup();
 }
