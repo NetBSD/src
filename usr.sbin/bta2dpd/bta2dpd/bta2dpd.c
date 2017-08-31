@@ -1,4 +1,4 @@
-/* $NetBSD: bta2dpd.c,v 1.3 2017/05/27 10:04:57 nat Exp $ */
+/* $NetBSD: bta2dpd.c,v 1.3.2.1 2017/08/31 11:21:43 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -674,7 +674,8 @@ do_ctlreq(int fd, short ev, void *arg)
 		case AVDTP_SUSPEND:
 		case AVDTP_START:
 			avdtpSendAccept(fd, fd, trans, signal);
-			state = 6;
+			if (state < 6)
+				state = 6;
 			break;
 		default:
 			avdtpSendReject(fd, fd, trans, signal);
@@ -717,7 +718,8 @@ do_ctlreq(int fd, short ev, void *arg)
 			break;
 		case AVDTP_SUSPEND:
 		case AVDTP_START:
-			state = 6;
+			if (state < 6)
+				state = 6;
 			break;
 		default:
 			avdtpSendReject(fd, fd, trans, signal);
@@ -730,7 +732,7 @@ do_ctlreq(int fd, short ev, void *arg)
 	if (state < 5 || state > 7)
 		return;
 
-	if (asSpeaker) {
+	if (asSpeaker && state == 6) {
 		len = sizeof(addr);
 		if ((sc = accept(orighc,(struct sockaddr*)&addr, &len)) < 0)
 			err(EXIT_FAILURE, "stream accept");
