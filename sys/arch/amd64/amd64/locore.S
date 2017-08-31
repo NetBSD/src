@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.126 2017/08/10 12:49:11 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.127 2017/08/31 09:27:28 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1264,28 +1264,19 @@ IDTVEC(syscall)
 
 	movq	$2,TF_ERR(%rsp)		/* syscall instruction size */
 	movq	$T_ASTFLT,TF_TRAPNO(%rsp)
-
-	movw	%es,TF_ES(%rsp)
-	sti
-	INTR_SAVE_GPRS
-	movw	%fs,TF_FS(%rsp)
-	movw	%gs,TF_GS(%rsp)
-	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
 #else
 	/* Xen already switched to kernel stack */
-	pushq	%rsi
-	STI(si)
-	popq	%rsi
 	addq	$0x10,%rsp	/* gap to match cs:rip */
 	pushq	$2		/* error code */
 	pushq	$T_ASTFLT
 	subq	$TF_REGSIZE,%rsp
+#endif
 	INTR_SAVE_GPRS
+	movw	%es,TF_ES(%rsp)
 	movw	%fs,TF_FS(%rsp)
 	movw	%gs,TF_GS(%rsp)
-	movw	%es,TF_ES(%rsp)
 	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
-#endif
+	STI(si)
 
 do_syscall:
 	movq	CPUVAR(CURLWP),%r14
