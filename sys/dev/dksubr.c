@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.97 2017/04/27 17:07:22 jdolecek Exp $ */
+/* $NetBSD: dksubr.c,v 1.97.2.1 2017/09/01 09:59:10 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.97 2017/04/27 17:07:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.97.2.1 2017/09/01 09:59:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -497,7 +497,10 @@ dk_discard(struct dk_softc *dksc, dev_t dev, off_t pos, off_t len)
 	const struct dkdriver *dkd = dksc->sc_dkdev.dk_driver;
 	unsigned secsize = dksc->sc_dkdev.dk_geom.dg_secsize;
 	struct buf tmp, *bp = &tmp;
-	int error;
+	int maxsz;
+	int error = 0;
+
+	KASSERT(len >= 0);
 
 	DPRINTF_FOLLOW(("%s(%s, %p, 0x"PRIx64", %jd, %jd)\n", __func__,
 	    dksc->sc_xname, dksc, (intmax_t)pos, (intmax_t)len));
@@ -507,22 +510,32 @@ dk_discard(struct dk_softc *dksc, dev_t dev, off_t pos, off_t len)
 		return ENXIO;
 	}
 
-	if (secsize == 0 || (pos % secsize) != 0)
+	if (secsize == 0 || (pos % secsize) != 0 || (len % secsize) != 0)
 		return EINVAL;
 
-	/* enough data to please the bounds checking code */
-	bp->b_dev = dev;
-	bp->b_blkno = (daddr_t)(pos / secsize);
-	bp->b_bcount = len;
-	bp->b_flags = B_WRITE;
+	/* largest value that b_bcount can store */
+	maxsz = rounddown(INT_MAX, secsize);
 
-	error = dk_translate(dksc, bp);
-	if (error >= 0)
-		return error;
+	while (len > 0) {
+		/* enough data to please the bounds checking code */
+		bp->b_dev = dev;
+		bp->b_blkno = (daddr_t)(pos / secsize);
+		bp->b_bcount = min(len, maxsz);
+		bp->b_flags = B_WRITE;
 
-	error = dkd->d_discard(dksc->sc_dev,
-		(off_t)bp->b_rawblkno * secsize,
-		(off_t)bp->b_bcount);
+		error = dk_translate(dksc, bp);
+		if (error >= 0)
+			break;
+
+		error = dkd->d_discard(dksc->sc_dev,
+			(off_t)bp->b_rawblkno * secsize,
+			(off_t)bp->b_bcount);
+		if (error)
+			break;
+
+		pos += bp->b_bcount;
+		len -= bp->b_bcount;
+	}
 
 	return error;
 }

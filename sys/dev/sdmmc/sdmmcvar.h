@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.23.6.3 2017/07/25 01:49:13 snj Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.23.6.4 2017/09/01 09:59:10 martin Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -381,7 +381,7 @@ int	sdmmc_mem_read_block(struct sdmmc_function *, uint32_t, u_char *,
 	    size_t);
 int	sdmmc_mem_write_block(struct sdmmc_function *, uint32_t, u_char *,
 	    size_t);
-int	sdmmc_mem_discard(struct sdmmc_function *, off_t, off_t);
+int	sdmmc_mem_discard(struct sdmmc_function *, uint32_t, uint32_t);
 int	sdmmc_mem_flush_cache(struct sdmmc_function *, bool);
 
 #endif	/* _SDMMCVAR_H_ */

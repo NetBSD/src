@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.56.4.3 2017/07/25 01:49:13 snj Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.56.4.4 2017/09/01 09:59:10 martin Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.56.4.3 2017/07/25 01:49:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.56.4.4 2017/09/01 09:59:10 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -2152,7 +2152,7 @@ out:
 }
 
 int
-sdmmc_mem_discard(struct sdmmc_function *sf, off_t pos, off_t len)
+sdmmc_mem_discard(struct sdmmc_function *sf, uint32_t sblkno, uint32_t eblkno)
 {
 	struct sdmmc_softc *sc = sf->sc;
 	struct sdmmc_command cmd;
@@ -2161,13 +2161,8 @@ sdmmc_mem_discard(struct sdmmc_function *sf, off_t pos, off_t len)
 	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE))
 		return ENODEV;	/* XXX not tested */
 
-	/* Erase what we can in the specified range. */
-	const off_t start = roundup(pos, SDMMC_SECTOR_SIZE);
-	const off_t end = rounddown(pos + len, SDMMC_SECTOR_SIZE) - 1;
-	if (end < start)
+	if (eblkno < sblkno)
 		return EINVAL;
-	const uint32_t sblkno = start / SDMMC_SECTOR_SIZE;
-	const uint32_t eblkno = end / SDMMC_SECTOR_SIZE;
 
 	SDMMC_LOCK(sc);
 	mutex_enter(&sc->sc_mtx);

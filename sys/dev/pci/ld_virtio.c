@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.15 2017/03/25 18:02:06 jdolecek Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.15.6.1 2017/09/01 09:59:11 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.15 2017/03/25 18:02:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.15.6.1 2017/09/01 09:59:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	ld->sc_dump = ld_virtio_dump;
 	ld->sc_start = ld_virtio_start;
 
-	ld->sc_flags = LDF_ENABLED;
+	ld->sc_flags = LDF_ENABLED | LDF_MPSAFE;
 	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 
 	return;

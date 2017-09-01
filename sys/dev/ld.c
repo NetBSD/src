@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.101 2017/04/27 17:07:22 jdolecek Exp $	*/
+/*	$NetBSD: ld.c,v 1.101.2.1 2017/09/01 09:59:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.101 2017/04/27 17:07:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.101.2.1 2017/09/01 09:59:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,6 +419,9 @@ ld_diskstart(device_t dev, struct buf *bp)
 	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt)
 		return EAGAIN;
 
+	if ((sc->sc_flags & LDF_MPSAFE) == 0)
+		KERNEL_LOCK(1, curlwp);
+
 	mutex_enter(&sc->sc_mutex);
 
 	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt)
@@ -430,6 +433,9 @@ ld_diskstart(device_t dev, struct buf *bp)
 	}
 
 	mutex_exit(&sc->sc_mutex);
+
+	if ((sc->sc_flags & LDF_MPSAFE) == 0)
+		KERNEL_UNLOCK_ONE(curlwp);
 
 	return error;
 }
@@ -589,11 +595,45 @@ static int
 ld_discard(device_t dev, off_t pos, off_t len)
 {
 	struct ld_softc *sc = device_private(dev);
+	struct buf dbuf, *bp = &dbuf;
+	int error = 0;
+
+	KASSERT(len <= INT_MAX);
 
 	if (sc->sc_discard == NULL)
 		return (ENODEV);
 
-	return (*sc->sc_discard)(sc, pos, len);
+	if ((sc->sc_flags & LDF_MPSAFE) == 0)
+		KERNEL_LOCK(1, curlwp);
+
+	buf_init(bp);
+	bp->b_vp = NULL;
+	bp->b_data = NULL;
+	bp->b_bufsize = 0;
+	bp->b_rawblkno = pos / sc->sc_secsize;
+	bp->b_bcount = len;
+	bp->b_flags = B_WRITE;
+	bp->b_cflags = BC_BUSY;
+
+	error = (*sc->sc_discard)(sc, bp);
+	if (error == 0)
+		error = biowait(bp);
+
+	buf_destroy(bp);
+
+	if ((sc->sc_flags & LDF_MPSAFE) == 0)
+		KERNEL_UNLOCK_ONE(curlwp);
+
+	return error;
+}
+
+void
+lddiscardend(struct ld_softc *sc, struct buf *bp)
+{
+
+	if (bp->b_error)
+		bp->b_resid = bp->b_bcount;
+	biodone(bp);
 }
 
 static int
