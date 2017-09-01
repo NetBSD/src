@@ -1,4 +1,4 @@
-# $NetBSD: t_atexit.sh,v 1.1 2011/01/12 19:44:08 pgoyette Exp $
+# $NetBSD: t_atexit.sh,v 1.1.38.1 2017/09/01 08:49:03 martin Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,7 @@ atexit_head()
 atexit_body()
 {
 	$(atf_get_srcdir)/h_atexit >out \
-		|| atf_fail "h_exit failed, see output of the test for details"
+		|| atf_fail "h_atexit failed, see output of the test for details"
 
 	cat >exp <<EOF
 cxa_handler_5
@@ -45,7 +45,7 @@ normal_handler_0
 EOF
 
 	diff -Nru exp out \
-		|| atf_fail "h_exit failed, see output of the test for details"
+		|| atf_fail "h_atexit failed, see output of the test for details"
 }
 
 atf_init_test_cases()
