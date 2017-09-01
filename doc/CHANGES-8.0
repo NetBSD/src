@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.52 2017/08/31 11:48:21 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.53 2017/09/01 10:01:09 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5706,4 +5706,54 @@ sys/kern/kern_veriexec.c			1.16
 	When adding a new veriexec_file_entry, if an entry already exists with
 	all the same values (except for the filename) just ignore it.
 	[pgoyette, ticket #251]
+
+tests/libexec/ld.elf_so/h_thread_local_dtor.c	1.2
+
+	Avoid a race condition between dlclose and thread termination.
+	[joerg, ticket #253]
+
+external/gpl3/gcc/dist/gcc/config/m68k/netbsd-elf.h 1.11
+external/gpl3/gcc/dist/gcc/config/netbsd-elf.h	1.12
+
+	Fix GCC specs to always default to -shared-libgcc,
+	except on Sun2, which just uses plain -lgcc.
+	[joerg, ticket #254]
+
+tests/lib/libc/stdlib/t_atexit.sh		1.2
+
+	Reference correct binary in error messages.
+	[joerg, ticket #255]
+
+sys/external/bsd/drm2/include/linux/pci.h	1.24
+
+	Disable MSI on DRMKMS, it is causing problems on some older
+	nvidia graphics cards.
+	[maya, ticket #259]
+
+sys/arch/hppa/stand/cdboot/ld.script		1.2
+
+	Use the same linker script as sys/arch/hppa/stand/boot and fix the gcc
+	5.3 problem here as well.
+	[skrll, ticket #260]
+
+sys/dev/dksubr.c				1.98-1.99
+sys/dev/i2o/ld_iop.c				1.39
+sys/dev/ic/ld_cac.c				1.31
+sys/dev/ic/ld_nvme.c				1.17
+sys/dev/ld.c					1.102-1.103
+sys/dev/ldvar.h					1.31-1.32
+sys/dev/pci/ld_virtio.c				1.16
+sys/dev/sdmmc/ld_sdmmc.c			1.32-1.34
+sys/dev/sdmmc/sdmmc_mem.c			1.62
+sys/dev/sdmmc/sdmmcvar.h			1.29
+
+	While ld(4) is MP safe, many backends are not.
+	Add a flag for backends that are MP safe. Take KERNEL_LOCK when calling
+	into a backend that doesn't have the flag set. Do the same for the
+	discard routine.
+	Defer sdmmc discard operations to the sdmmc task queue.
+	Validate length for discard operation and split operation when
+	byte length doesn't fit into 'int'.
+	Avoid gcc warnings.
+	[mlelstv, ticket #261]
 
