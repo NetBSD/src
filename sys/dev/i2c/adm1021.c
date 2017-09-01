@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.12 2016/01/04 19:24:15 christos Exp $ */
+/*	$NetBSD: adm1021.c,v 1.13 2017/09/01 20:11:59 macallan Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -20,15 +20,15 @@
 /*
  * Driver for ADM1021 and compatible temperature sensors, including ADM1021,
  * ADM1021A, ADM1023, ADM1032, GL523SM, G781, LM84, MAX1617, MAX1617A,
- * NE1617A, and Xeon embedded temperature sensors.
+ * NE1617A, MAX6642 and Xeon embedded temperature sensors.
  *
  * Some sensors differ from the ADM1021/MAX1617/NE1617A:
- *                         ADM1021A ADM1023 ADM1032 G781 LM84 MAX1617A
- *   company/revision reg  X        X       X       X         X
- *   no negative temps     X        X       X       X
- *   11-bit remote temp             X       X       X
+ *                         ADM1021A ADM1023 ADM1032 G781 LM84 MAX1617A MAX6642
+ *   company/revision reg  X        X       X       X         X        X
+ *   no negative temps     X        X       X       X 
+ *   11-bit remote temp             X       X       X                  X
  *   no low limits                                       X
- *   therm (high) limits                    X       X
+ *   therm (high) limits                    X       X                  X
  *
  * Registers 0x00 to 0x0f have separate read/write addresses, but
  * registers 0x10 and above have the same read/write address.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.12 2016/01/04 19:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.13 2017/09/01 20:11:59 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +145,7 @@ CFATTACH_DECL_NEW(admtemp, sizeof(struct admtemp_softc),
 /* XXX: add flags for compats to admtemp_setflags() */
 static const char * admtemp_compats[] = {
 	"i2c-max1617",
+	"max6642",
 	NULL
 };
 
@@ -160,7 +161,7 @@ admtemp_match(device_t parent, cfdata_t match, void *aux)
 		 */
 		if (((ia->ia_addr >= 0x18) && (ia->ia_addr <= 0x1a)) ||
 		    ((ia->ia_addr >= 0x29) && (ia->ia_addr <= 0x2b)) ||
-		    ((ia->ia_addr >= 0x4c) && (ia->ia_addr <= 0x4e)))
+		    ((ia->ia_addr >= 0x48) && (ia->ia_addr <= 0x4e)))
 			return (1);
 	} else {
 		/*
@@ -233,6 +234,11 @@ admtemp_setflags(struct admtemp_softc *sc, struct i2c_attach_args *ia,
 			strlcpy(name, "MAX1617A", ADMTEMP_NAMELEN);
 			return;
 		}
+		if (strcmp("max6642", ia->ia_compat[i]) == 0) {
+			sc->sc_noneg = 0;
+			strlcpy(name, "MAX6642", ADMTEMP_NAMELEN);
+			return;
+		}
 	}
 
 	/* Indirect config */
@@ -249,7 +255,19 @@ admtemp_setflags(struct admtemp_softc *sc, struct i2c_attach_args *ia,
 
 	if (*comp == ADM1021_COMPANY_MAXIM) {
 		sc->sc_noneg = 0;
-		strlcpy(name, "MAX1617A", ADMTEMP_NAMELEN);
+		/*
+		 * MAX6642 doesn't have a revision register
+		 * XXX this works only on macppc with iic at pmu because the
+		 * pmu doesn't return an error for nonexistant registers, it
+		 * just repeats previous data
+		 */
+		if (*comp == *rev) {		
+			sc->sc_therm = 0;	/* */
+			sc->sc_ext11 = 1;
+			strlcpy(name, "MAX6642", ADMTEMP_NAMELEN);
+		} else {
+			strlcpy(name, "MAX1617A", ADMTEMP_NAMELEN);
+		}
 	}
 
 	if (*comp == ADM1021_COMPANY_GMT) {
