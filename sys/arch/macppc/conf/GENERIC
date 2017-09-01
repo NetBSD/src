@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.331 2017/08/11 21:03:23 macallan Exp $
+# $NetBSD: GENERIC,v 1.332 2017/09/01 20:58:14 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.331 $"
+#ident 		"GENERIC-$Revision: 1.332 $"
 
 maxusers	32
 
@@ -395,9 +395,13 @@ wsmouse*	at wsmousedev?
 battery* at pmu?		# legacy battery, for ohare-based PowerBooks
 smartbat* at pmu?		# Smart battery, found in newer *Books
 
+iic* 		at pmu?		# some PMUs have IIC
+admtemp* 	at iic?		# found on Mini
+
 iic0	at cuda0		# CUDA's IIC bus
-sgsmix0 at iic0 addr 0x8a	# additional mixer found in beige G3
-				# use with awacs
+sgsmix0 at iic0 addr 0x8a	# Additional mixer found in beige G3
+				# use with awacs. Hardwired because there is
+				# no OF node for it.
 
 zsc*	at obio?
 zstty*	at zsc? channel ?
@@ -412,8 +416,8 @@ ki2c*	at obio?			# Keywest I2C
 ki2c*	at uni_n?			# Keywest I2C
 iic*	at ki2c?
 dbcool*	at ki2c?			# dbCool thermal monitor & fan control
-
 deq*	at ki2c?			# mixer/equalizer, needed by snapper
+
 wi*	at obio?			# AirMac
 snapper* at obio?			# Snapper audio device
 
