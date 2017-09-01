@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.26.4.4 2017/07/25 01:49:13 snj Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.26.4.5 2017/09/01 09:59:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.26.4.4 2017/07/25 01:49:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.26.4.5 2017/09/01 09:59:10 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -65,12 +65,16 @@ __KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.26.4.4 2017/07/25 01:49:13 snj Exp $"
 #define	LD_SDMMC_IORETRIES	5	/* number of retries before giving up */
 #define	RECOVERYTIME		hz/2	/* time to wait before retrying a cmd */
 
+#define	LD_SDMMC_MAXQUEUECNT	4	/* number of queued bio requests */
+#define	LD_SDMMC_MAXTASKCNT	8	/* number of tasks in task pool */
+
 struct ld_sdmmc_softc;
 
 struct ld_sdmmc_task {
 	struct sdmmc_task task;
 
 	struct ld_sdmmc_softc *task_sc;
+
 	struct buf *task_bp;
 	int task_retries; /* number of xfer retry */
 	struct callout task_restart_ch;
@@ -81,9 +85,12 @@ struct ld_sdmmc_softc {
 	int sc_hwunit;
 
 	struct sdmmc_function *sc_sf;
-#define LD_SDMMC_MAXQUEUECNT 4
-	struct ld_sdmmc_task sc_task[LD_SDMMC_MAXQUEUECNT];
+	struct ld_sdmmc_task sc_task[LD_SDMMC_MAXTASKCNT];
 	pcq_t *sc_freeq;
+
+	struct evcnt sc_ev_discard;	/* discard counter */
+	struct evcnt sc_ev_discarderr;	/* discard error counter */
+	struct evcnt sc_ev_discardbusy;	/* discard busy counter */
 };
 
 static int ld_sdmmc_match(device_t, cfdata_t, void *);
@@ -93,11 +100,12 @@ static int ld_sdmmc_detach(device_t, int);
 static int ld_sdmmc_dump(struct ld_softc *, void *, int, int);
 static int ld_sdmmc_start(struct ld_softc *, struct buf *);
 static void ld_sdmmc_restart(void *);
-static int ld_sdmmc_discard(struct ld_softc *, off_t, off_t);
+static int ld_sdmmc_discard(struct ld_softc *, struct buf *);
 static int ld_sdmmc_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 
 static void ld_sdmmc_doattach(void *);
 static void ld_sdmmc_dobio(void *);
+static void ld_sdmmc_dodiscard(void *);
 
 CFATTACH_DECL_NEW(ld_sdmmc, sizeof(struct ld_sdmmc_softc),
     ld_sdmmc_match, ld_sdmmc_attach, ld_sdmmc_detach, NULL);
@@ -132,6 +140,13 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	    sa->sf->cid.rev, sa->sf->cid.psn, sa->sf->cid.mdt);
 	aprint_naive("\n");
 
+	evcnt_attach_dynamic(&sc->sc_ev_discard, EVCNT_TYPE_MISC,
+	    NULL, device_xname(self), "sdmmc discard count");
+	evcnt_attach_dynamic(&sc->sc_ev_discarderr, EVCNT_TYPE_MISC,
+	    NULL, device_xname(self), "sdmmc discard errors");
+	evcnt_attach_dynamic(&sc->sc_ev_discardbusy, EVCNT_TYPE_MISC,
+	    NULL, device_xname(self), "sdmmc discard busy");
+
 	const int ntask = __arraycount(sc->sc_task);
 	sc->sc_freeq = pcq_create(ntask, KM_SLEEP);
 	for (i = 0; i < ntask; i++) {
@@ -144,7 +159,7 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hwunit = 0;	/* always 0? */
 	sc->sc_sf = sa->sf;
 
-	ld->sc_flags = LDF_ENABLED;
+	ld->sc_flags = LDF_ENABLED | LDF_MPSAFE;
 	ld->sc_secperunit = sc->sc_sf->csd.capacity;
 	ld->sc_secsize = SDMMC_SECTOR_SIZE;
 	ld->sc_maxxfer = MAXPHYS;
@@ -208,6 +223,9 @@ ld_sdmmc_detach(device_t dev, int flags)
 		callout_destroy(&sc->sc_task[i].task_restart_ch);
 
 	pcq_destroy(sc->sc_freeq);
+	evcnt_detach(&sc->sc_ev_discard);
+	evcnt_detach(&sc->sc_ev_discarderr);
+	evcnt_detach(&sc->sc_ev_discardbusy);
 
 	return 0;
 }
@@ -309,12 +327,51 @@ ld_sdmmc_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	    blkcnt * ld->sc_secsize);
 }
 
+static void
+ld_sdmmc_dodiscard(void *arg)
+{
+	struct ld_sdmmc_task *task = arg;
+	struct ld_sdmmc_softc *sc = task->task_sc;
+	struct buf *bp = task->task_bp;
+	uint32_t sblkno, nblks;
+	int error;
+
+	/* first and last block to erase */
+	sblkno = bp->b_rawblkno;
+	nblks  = howmany(bp->b_bcount, sc->sc_ld.sc_secsize);
+
+	/* An error from discard is non-fatal */
+	error = sdmmc_mem_discard(sc->sc_sf, sblkno, sblkno + nblks - 1);
+	if (error != 0)
+		sc->sc_ev_discarderr.ev_count++;
+	else
+		sc->sc_ev_discard.ev_count++;
+	pcq_put(sc->sc_freeq, task);
+
+	if (error)
+		bp->b_error = error;
+
+	lddiscardend(&sc->sc_ld, bp);
+}
+
 static int
-ld_sdmmc_discard(struct ld_softc *ld, off_t pos, off_t len)
+ld_sdmmc_discard(struct ld_softc *ld, struct buf *bp)
 {
 	struct ld_sdmmc_softc *sc = device_private(ld->sc_dv);
+	struct ld_sdmmc_task *task = pcq_get(sc->sc_freeq);
 
-	return sdmmc_mem_discard(sc->sc_sf, pos, len);
+	if (task == NULL) {
+		sc->sc_ev_discardbusy.ev_count++;
+		return 0;
+	}
+
+	task->task_bp = bp;
+
+	sdmmc_init_task(&task->task, ld_sdmmc_dodiscard, task);
+
+	sdmmc_add_task(sc->sc_sf->sc, &task->task);
+
+	return 0;
 }
 
 static int

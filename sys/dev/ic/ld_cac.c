@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.30 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.30.8.1 2017/09/01 09:59:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.30 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.30.8.1 2017/09/01 09:59:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ ld_cac_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": %s array\n", type);
 
 	/* XXX We should verify this... */
-	ld->sc_flags = LDF_ENABLED;
+	ld->sc_flags = LDF_ENABLED | LDF_MPSAFE;
 	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 }
 

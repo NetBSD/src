@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.30 2017/04/27 17:07:22 jdolecek Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.30.2.1 2017/09/01 09:59:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,18 +61,20 @@ struct ld_softc {
 	int		(*sc_dump)(struct ld_softc *, void *, int, int);
 	int		(*sc_ioctl)(struct ld_softc *, u_long, void *, int32_t, bool);
 	int		(*sc_start)(struct ld_softc *, struct buf *);
-	int		(*sc_discard)(struct ld_softc *, off_t, off_t);
+	int		(*sc_discard)(struct ld_softc *, struct buf *);
 };
 
 /* sc_flags */
 #define	LDF_ENABLED	0x001		/* device enabled */
 #define	LDF_DRAIN	0x020		/* maxqueuecnt has changed; drain */
 #define	LDF_NO_RND	0x040		/* do not attach rnd source */
+#define	LDF_MPSAFE	0x080		/* backend is MPSAFE */
 
 int	ldadjqparam(struct ld_softc *, int);
 void	ldattach(struct ld_softc *, const char *);
 int	ldbegindetach(struct ld_softc *, int);
 void	ldenddetach(struct ld_softc *);
 void	lddone(struct ld_softc *, struct buf *);
+void	lddiscardend(struct ld_softc *, struct buf *);
 
 #endif	/* !_DEV_LDVAR_H_ */
