@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.20 2017/08/31 09:27:51 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.21 2017/09/01 05:53:09 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.20 2017/08/31 09:27:51 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.21 2017/09/01 05:53:09 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -67,7 +67,6 @@ static void	acpi_print_whea(ACPI_WHEA_HEADER *whea,
 		    void (*print_action)(ACPI_WHEA_HEADER *),
 		    void (*print_ins)(ACPI_WHEA_HEADER *),
 		    void (*print_flags)(ACPI_WHEA_HEADER *));
-static int	acpi_get_fadt_revision(ACPI_TABLE_FADT *fadt);
 static uint64_t	acpi_select_address(uint32_t, uint64_t);
 static void	acpi_handle_fadt(ACPI_TABLE_HEADER *fadt);
 static void	acpi_print_cpu(u_char cpu_id);
@@ -170,10 +169,12 @@ static void
 printflag_end(void)
 {
 
-	if (pf_sep != '{') {
+	if (pf_sep == ',') {
 		printf("}");
-		pf_sep = '{';
+	} else if (pf_sep == '{') {
+		printf("{}");
 	}
+	pf_sep = '{';
 	printf("\n");
 }
 
@@ -771,31 +772,6 @@ acpi_handle_hest(ACPI_TABLE_HEADER *sdp)
 	}
 
 	printf(END_COMMENT);
-}
-
-/* The FADT revision indicates whether we use the DSDT or X_DSDT addresses. */
-static int
-acpi_get_fadt_revision(ACPI_TABLE_FADT *fadt)
-{
-	int fadt_revision;
-
-	/* Set the FADT revision separately from the RSDP version. */
-	if (addr_size == 8) {
-		fadt_revision = 2;
-
-		/*
-		 * A few systems (e.g., IBM T23) have an RSDP that claims
-		 * revision 2 but the 64 bit addresses are invalid.  If
-		 * revision 2 and the 32 bit address is non-zero but the
-		 * 32 and 64 bit versions don't match, prefer the 32 bit
-		 * version for all subsequent tables.
-		 */
-		if (fadt->Facs != 0 &&
-		    (fadt->XFacs & 0xffffffff) != fadt->Facs)
-			fadt_revision = 1;
-	} else
-		fadt_revision = 1;
-	return (fadt_revision);
 }
 
 static uint64_t
@@ -2774,7 +2750,8 @@ acpi_print_rsdt(ACPI_TABLE_HEADER *rsdp)
 
 static const char *acpi_pm_profiles[] = {
 	"Unspecified", "Desktop", "Mobile", "Workstation",
-	"Enterprise Server", "SOHO Server", "Appliance PC"
+	"Enterprise Server", "SOHO Server", "Appliance PC",
+	"Performance Server", "Tablet"
 };
 
 static void
@@ -2788,6 +2765,7 @@ acpi_print_fadt(ACPI_TABLE_HEADER *sdp)
 	acpi_print_sdt(sdp);
 	printf(" \tFACS=0x%x, DSDT=0x%x\n", fadt->Facs,
 	       fadt->Dsdt);
+	/* XXX ACPI 2.0 eliminated this */
 	printf("\tINT_MODEL=%s\n", fadt->Model ? "APIC" : "PIC");
 	if (fadt->PreferredProfile >= sizeof(acpi_pm_profiles) / sizeof(char *))
 		pm = "Reserved";
@@ -2877,45 +2855,77 @@ acpi_print_fadt(ACPI_TABLE_HEADER *sdp)
 	PRINTFLAG(fadt->Flags, LOW_POWER_S0);
 	PRINTFLAG_END();
 
-#undef PRINTFLAG
+	if (sdp->Length < ACPI_FADT_V2_SIZE)
+		goto out;
 
 	if (fadt->Flags & ACPI_FADT_RESET_REGISTER) {
 		printf("\tRESET_REG=");
 		acpi_print_gas(&fadt->ResetRegister);
 		printf(", RESET_VALUE=%#x\n", fadt->ResetValue);
 	}
-	if (acpi_get_fadt_revision(fadt) > 1) {
-		printf("\tX_FACS=0x%016jx, ", (uintmax_t)fadt->XFacs);
-		printf("X_DSDT=0x%016jx\n", (uintmax_t)fadt->XDsdt);
-		printf("\tX_PM1a_EVT_BLK=");
-		acpi_print_gas(&fadt->XPm1aEventBlock);
-		if (fadt->XPm1bEventBlock.Address != 0) {
-			printf("\n\tX_PM1b_EVT_BLK=");
-			acpi_print_gas(&fadt->XPm1bEventBlock);
-		}
-		printf("\n\tX_PM1a_CNT_BLK=");
-		acpi_print_gas(&fadt->XPm1aControlBlock);
-		if (fadt->XPm1bControlBlock.Address != 0) {
-			printf("\n\tX_PM1b_CNT_BLK=");
-			acpi_print_gas(&fadt->XPm1bControlBlock);
-		}
-		if (fadt->XPm2ControlBlock.Address != 0) {
-			printf("\n\tX_PM2_CNT_BLK=");
-			acpi_print_gas(&fadt->XPm2ControlBlock);
-		}
-		printf("\n\tX_PM_TMR_BLK=");
-		acpi_print_gas(&fadt->XPmTimerBlock);
-		if (fadt->XGpe0Block.Address != 0) {
-			printf("\n\tX_GPE0_BLK=");
-			acpi_print_gas(&fadt->XGpe0Block);
-		}
-		if (fadt->XGpe1Block.Address != 0) {
-			printf("\n\tX_GPE1_BLK=");
-			acpi_print_gas(&fadt->XGpe1Block);
-		}
+
+	printf("\tArmBootFlags=");
+	PRINTFLAG(fadt->ArmBootFlags, PSCI_COMPLIANT);
+	PRINTFLAG(fadt->ArmBootFlags, PSCI_USE_HVC);
+	PRINTFLAG_END();
+
+#undef PRINTFLAG
+
+	printf("\tMinorRevision=%u\n", fadt->MinorRevision);
+
+	if (sdp->Length < ACPI_FADT_V3_SIZE)
+		goto out;
+
+	printf("\tX_FACS=0x%016jx, ", (uintmax_t)fadt->XFacs);
+	printf("X_DSDT=0x%016jx\n", (uintmax_t)fadt->XDsdt);
+	printf("\tX_PM1a_EVT_BLK=");
+	acpi_print_gas(&fadt->XPm1aEventBlock);
+	if (fadt->XPm1bEventBlock.Address != 0) {
+		printf("\n\tX_PM1b_EVT_BLK=");
+		acpi_print_gas(&fadt->XPm1bEventBlock);
+	}
+	printf("\n\tX_PM1a_CNT_BLK=");
+	acpi_print_gas(&fadt->XPm1aControlBlock);
+	if (fadt->XPm1bControlBlock.Address != 0) {
+		printf("\n\tX_PM1b_CNT_BLK=");
+		acpi_print_gas(&fadt->XPm1bControlBlock);
+	}
+	if (fadt->XPm2ControlBlock.Address != 0) {
+		printf("\n\tX_PM2_CNT_BLK=");
+		acpi_print_gas(&fadt->XPm2ControlBlock);
+	}
+	printf("\n\tX_PM_TMR_BLK=");
+	acpi_print_gas(&fadt->XPmTimerBlock);
+	if (fadt->XGpe0Block.Address != 0) {
+		printf("\n\tX_GPE0_BLK=");
+		acpi_print_gas(&fadt->XGpe0Block);
+	}
+	if (fadt->XGpe1Block.Address != 0) {
+		printf("\n\tX_GPE1_BLK=");
+		acpi_print_gas(&fadt->XGpe1Block);
+	}
+	printf("\n");
+
+	if (sdp->Length < ACPI_FADT_V5_SIZE)
+		goto out;
+
+	if (fadt->SleepControl.Address != 0) {
+		printf("\tSleepControl=");
+		acpi_print_gas(&fadt->SleepControl);
+		printf("\n");
+	}
+	if (fadt->SleepStatus.Address != 0) {
+		printf("\n\tSleepStatus=");
+		acpi_print_gas(&fadt->SleepStatus);
 		printf("\n");
 	}
 
+	if (sdp->Length < ACPI_FADT_V6_SIZE)
+		goto out;
+
+	printf("\tHypervisorId=0x%016"PRIx64"\n", fadt->HypervisorId);
+
+out:
 	printf(END_COMMENT);
 }
 
@@ -2927,24 +2937,33 @@ acpi_print_facs(ACPI_TABLE_FACS *facs)
 	printf("HwSig=0x%08x, ", facs->HardwareSignature);
 	printf("Firm_Wake_Vec=0x%08x\n", facs->FirmwareWakingVector);
 
+#define PRINTFLAG(var, flag)	printflag((var), ACPI_GLOCK_## flag, #flag)
+
 	printf("\tGlobal_Lock=");
-	if (facs->GlobalLock != 0) {
-		if (facs->GlobalLock & ACPI_GLOCK_PENDING)
-			printf("PENDING,");
-		if (facs->GlobalLock & ACPI_GLOCK_OWNED)
-			printf("OWNED");
-	}
-	printf("\n");
+	PRINTFLAG(facs->GlobalLock, PENDING);
+	PRINTFLAG(facs->GlobalLock, OWNED);
+	PRINTFLAG_END();
+
+#undef PRINTFLAG
+
+#define PRINTFLAG(var, flag)	printflag((var), ACPI_FACS_## flag, #flag)
 
 	printf("\tFlags=");
-	if (facs->Flags & ACPI_FACS_S4_BIOS_PRESENT)
-		printf("S4BIOS");
-	printf("\n");
+	PRINTFLAG(facs->Flags, S4_BIOS_PRESENT);
+	PRINTFLAG(facs->Flags, 64BIT_WAKE);
+	PRINTFLAG_END();
+
+#undef PRINTFLAG
 
 	if (facs->XFirmwareWakingVector != 0)
 		printf("\tX_Firm_Wake_Vec=%016jx\n",
 		    (uintmax_t)facs->XFirmwareWakingVector);
 	printf("\tVersion=%u\n", facs->Version);
+
+	printf("\tOspmFlags={");
+	if (facs->OspmFlags & ACPI_FACS_64BIT_ENVIRONMENT)
+		printf("64BIT_WAKE");
+	printf("}\n");
 
 	printf(END_COMMENT);
 }
