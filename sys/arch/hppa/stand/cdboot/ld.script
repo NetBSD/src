@@ -1,6 +1,6 @@
-/*	$NetBSD: ld.script,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: ld.script,v 1.1.28.1 2017/09/01 09:52:40 martin Exp $	*/
 
-/*	$OpenBSD: ld.script,v 1.1 2003/03/28 22:42:26 mickey Exp $	*/
+/*	$OpenBSD: ld.script,v 1.2 1999/04/20 20:02:37 mickey Exp $	*/
 
 OUTPUT_FORMAT("elf32-hppa")
 OUTPUT_ARCH(hppa)
@@ -12,18 +12,18 @@ SECTIONS {
 	. = + SIZEOF_HEADERS;
 	.text : {
 		*(.text)
-		*(.text.*)
+		*(.text.1)
 		*(.rodata)
 		*(.rodata1)
 		*($CODE$)
-		etext = .;
-	} = 0x08000240
+		etext = ABSOLUTE(.);
+	} = 0x08000240 /* nop */
 
 	/* Read-write sections, merged into data segment: */
 	.data : {
 		$global$ = .;
 		*(.data)
-		*(.data1)
+		*(.data*)
 		*(.sdata)
 		*(.sdata2)
 		*(.dynamic)
