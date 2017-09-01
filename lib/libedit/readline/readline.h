@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.41 2016/10/28 18:32:35 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.42 2017/09/01 10:19:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -147,6 +147,7 @@ int		 rl_initialize(void);
 void		 using_history(void);
 int		 add_history(const char *);
 void		 clear_history(void);
+int		 append_history(int, const char *);
 void		 stifle_history(int);
 int		 unstifle_history(void);
 int		 history_is_stifled(void);
@@ -182,6 +183,7 @@ void		 rl_display_match_list(char **, int, int);
 int		 rl_insert(int, int);
 int		 rl_insert_text(const char *);
 void		 rl_reset_terminal(const char *);
+void		 rl_resize_terminal(void);
 int		 rl_bind_key(int, rl_command_func_t *);
 int		 rl_newline(int, int);
 void		 rl_callback_read_char(void);
