@@ -113,3 +113,8 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef TARGET_UNWIND_TABLES_DEFAULT
 #define TARGET_UNWIND_TABLES_DEFAULT true
+
+#undef REAL_LIBGCC_SPEC
+#define REAL_LIBGCC_SPEC						   \
+   "%{static|static-libgcc:-lgcc}"					   \
+   "%{!static:%{!static-libgcc:--as-needed -lgcc_s --no-as-needed -lgcc}}"
