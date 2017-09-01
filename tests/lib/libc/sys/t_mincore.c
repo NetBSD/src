@@ -1,4 +1,4 @@
-/* $NetBSD: t_mincore.c,v 1.12 2017/09/01 16:27:02 kre Exp $ */
+/* $NetBSD: t_mincore.c,v 1.13 2017/09/01 16:51:58 kre Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mincore.c,v 1.12 2017/09/01 16:27:02 kre Exp $");
+__RCSID("$NetBSD: t_mincore.c,v 1.13 2017/09/01 16:51:58 kre Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -80,6 +80,10 @@ static const char	path[] = "mincore";
 static size_t		check_residency(void *, size_t);
 
 #define ATF_REQUIRE_STRERROR(a) ATF_REQUIRE_MSG(a, " (%s)", strerror(errno))
+
+#ifndef PROT_MPROTECT
+# define PROT_MPROTECT(flags)	(0)
+#endif
 
 static size_t
 check_residency(void *addr, size_t npgs)
