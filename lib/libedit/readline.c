@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.141 2017/04/21 05:38:03 abhinav Exp $	*/
+/*	$NetBSD: readline.c,v 1.142 2017/09/01 10:19:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.141 2017/04/21 05:38:03 abhinav Exp $");
+__RCSID("$NetBSD: readline.c,v 1.142 2017/09/01 10:19:10 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -122,6 +122,7 @@ int readline_echoing_p = 1;
 int _rl_print_completions_horizontally = 0;
 VFunction *rl_redisplay_function = NULL;
 Function *rl_startup_hook = NULL;
+int rl_did_startup_hook = 0;
 VFunction *rl_completion_display_matches_hook = NULL;
 VFunction *rl_prep_term_function = (VFunction *)rl_prep_terminal;
 VFunction *rl_deprep_term_function = (VFunction *)rl_deprep_terminal;
@@ -385,9 +386,6 @@ rl_initialize(void)
 	_resize_fun(e, &rl_line_buffer);
 	_rl_update_pos();
 
-	if (rl_startup_hook)
-		(*rl_startup_hook)(NULL, 0);
-
 	return 0;
 }
 
@@ -408,6 +406,11 @@ readline(const char *p)
 
 	if (e == NULL || h == NULL)
 		rl_initialize();
+	if (rl_did_startup_hook == 0 && rl_startup_hook) {
+		rl_did_startup_hook = 1;
+		(*rl_startup_hook)(NULL, 0);
+	}
+
 
 	rl_done = 0;
 
@@ -1365,6 +1368,28 @@ write_history(const char *filename)
 	    (errno ? errno : EINVAL) : 0;
 }
 
+int
+append_history(int n, const char *filename)
+{
+	HistEvent ev;
+	FILE *fp;
+
+	if (h == NULL || e == NULL)
+		rl_initialize();
+	if (filename == NULL && (filename = _default_history_file()) == NULL)
+		return errno;
+
+	if ((fp = fopen(filename, "a")) == NULL)
+		return errno;
+
+	if (history(h, &ev, H_NSAVE_FP, (size_t)n,  fp) == -1) {
+		int serrno = errno ? errno : EINVAL;
+		fclose(fp);
+		return serrno;
+	}
+	fclose(fp);
+	return 0;
+}
 
 /*
  * returns history ``num''th event
@@ -2058,8 +2083,9 @@ rl_callback_handler_install(const char *prompt, rl_vcpfunc_t *linefunc)
 void
 rl_callback_handler_remove(void)
 {
-	el_set(e, EL_UNBUFFERED, 0);
 	rl_linefunc = NULL;
+	el_end(e);
+	e = NULL;
 }
 
 void
@@ -2368,4 +2394,10 @@ int
 rl_set_keyboard_input_timeout(int u __attribute__((__unused__)))
 {
 	return 0;
+}
+
+void
+rl_resize_terminal(void)
+{
+	el_resize(e);
 }

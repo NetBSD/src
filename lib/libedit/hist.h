@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.h,v 1.22 2016/05/09 21:46:56 christos Exp $	*/
+/*	$NetBSD: hist.h,v 1.23 2017/09/01 10:19:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -59,14 +59,15 @@ typedef struct el_history_t {
     (((el)->el_flags & NARROW_HISTORY) ? hist_convert(el, fn, arg) : \
 	HIST_FUN_INTERNAL(el, fn, arg))
 
-#define	HIST_NEXT(el)		HIST_FUN(el, H_NEXT, NULL)
-#define	HIST_FIRST(el)		HIST_FUN(el, H_FIRST, NULL)
-#define	HIST_LAST(el)		HIST_FUN(el, H_LAST, NULL)
-#define	HIST_PREV(el)		HIST_FUN(el, H_PREV, NULL)
-#define	HIST_SET(el, num)	HIST_FUN(el, H_SET, num)
-#define	HIST_LOAD(el, fname)	HIST_FUN(el, H_LOAD fname)
-#define	HIST_SAVE(el, fname)	HIST_FUN(el, H_SAVE fname)
-#define	HIST_SAVE_FP(el, fp)	HIST_FUN(el, H_SAVE_FP fp)
+#define	HIST_NEXT(el)			HIST_FUN(el, H_NEXT, NULL)
+#define	HIST_FIRST(el)			HIST_FUN(el, H_FIRST, NULL)
+#define	HIST_LAST(el)			HIST_FUN(el, H_LAST, NULL)
+#define	HIST_PREV(el)			HIST_FUN(el, H_PREV, NULL)
+#define	HIST_SET(el, num)		HIST_FUN(el, H_SET, num)
+#define	HIST_LOAD(el, fname)		HIST_FUN(el, H_LOAD fname)
+#define	HIST_SAVE(el, fname)		HIST_FUN(el, H_SAVE fname)
+#define	HIST_SAVE_FP(el, fp)		HIST_FUN(el, H_SAVE_FP, fp)
+#define	HIST_NSAVE_FP(el, n, fp)	HIST_FUN(el, H_NSAVE_FP, n, fp)
 
 libedit_private int		hist_init(EditLine *);
 libedit_private void		hist_end(EditLine *);
