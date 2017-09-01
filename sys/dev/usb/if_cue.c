@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.68.4.15 2017/02/05 13:40:46 skrll Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.68.4.16 2017/09/01 13:45:24 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68.4.15 2017/02/05 13:40:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68.4.16 2017/09/01 13:45:24 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1118,7 +1118,7 @@ cue_init_locked(struct ifnet *ifp)
 	for (i = 0; i < CUE_RX_LIST_CNT; i++) {
 		struct cue_chain *c = &sc->cue_cdata.cue_rx_chain[i];
 		usbd_setup_xfer(c->cue_xfer, c, c->cue_buf, CUE_BUFSZ,
-		USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, cue_rxeof);
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, cue_rxeof);
 		usbd_transfer(c->cue_xfer);
 	}
 
