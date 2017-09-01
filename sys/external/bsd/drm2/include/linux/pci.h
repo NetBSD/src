@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.23 2017/03/02 04:31:51 nonaka Exp $	*/
+/*	$NetBSD: pci.h,v 1.23.6.1 2017/09/01 09:51:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -293,6 +293,7 @@ pci_write_config_byte(struct pci_dev *pdev, int reg, uint8_t value)
 static inline int
 pci_enable_msi(struct pci_dev *pdev)
 {
+#ifdef notyet
 	const struct pci_attach_args *const pa = &pdev->pd_pa;
 
 	if (pci_msi_alloc_exact(pa, &pdev->intr_handles, 1))
@@ -300,6 +301,9 @@ pci_enable_msi(struct pci_dev *pdev)
 
 	pdev->msi_enabled = 1;
 	return 0;
+#else
+	return -ENOSYS;
+#endif
 }
 
 static inline void
