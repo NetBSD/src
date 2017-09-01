@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.21 2017/09/01 05:53:09 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.22 2017/09/01 18:35:50 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.21 2017/09/01 05:53:09 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.22 2017/09/01 18:35:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -57,7 +57,7 @@ static void	acpi_print_string(char *s, size_t length);
 static void	acpi_print_gas(ACPI_GENERIC_ADDRESS *gas);
 static void	acpi_print_pci(uint16_t vendorid, uint16_t deviceid,
 		    uint8_t seg, uint8_t bus, uint8_t device, uint8_t func);
-static void	acpi_print_pci_sbfd(uint8_t seg, uint8_t bus, uint8_t device,
+static void	acpi_print_pci_sbdf(uint8_t seg, uint8_t bus, uint8_t device,
 		    uint8_t func);
 #ifdef notyet
 static void	acpi_print_hest_generic_status(ACPI_HEST_GENERIC_STATUS *);
@@ -82,6 +82,7 @@ static void	acpi_handle_bert(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_boot(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_cpep(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_dbgp(ACPI_TABLE_HEADER *sdp);
+static void	acpi_handle_dbg2(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_einj(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_erst(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_hest(ACPI_TABLE_HEADER *sdp);
@@ -93,6 +94,7 @@ static void	acpi_handle_mcfg(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_sbst(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_slit(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_spcr(ACPI_TABLE_HEADER *sdp);
+static void	acpi_handle_spmi(ACPI_TABLE_HEADER *sdp);
 static void	acpi_print_srat_cpu(uint32_t apic_id,
 		    uint32_t proximity_domain,
 		    uint32_t flags, uint32_t clockdomain);
@@ -102,8 +104,10 @@ static void	acpi_handle_srat(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_tcpa(ACPI_TABLE_HEADER *sdp);
 static void	acpi_print_nfit(ACPI_NFIT_HEADER *nfit);
 static void	acpi_handle_nfit(ACPI_TABLE_HEADER *sdp);
+static void	acpi_handle_uefi(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_waet(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_wdat(ACPI_TABLE_HEADER *sdp);
+static void	acpi_handle_wddt(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_wdrt(ACPI_TABLE_HEADER *sdp);
 static void	acpi_print_sdt(ACPI_TABLE_HEADER *sdp);
 static void	acpi_dump_bytes(ACPI_TABLE_HEADER *sdp);
@@ -266,7 +270,7 @@ acpi_print_pci(uint16_t vendorid, uint16_t deviceid,
 }
 
 static void
-acpi_print_pci_sbfd(uint8_t seg, uint8_t bus, uint8_t device, uint8_t func)
+acpi_print_pci_sbdf(uint8_t seg, uint8_t bus, uint8_t device, uint8_t func)
 {
 	if (bus == 0xff && device == 0xff && func == 0xff) {
 		printf("\tPCI Device=NONE\n");
@@ -396,7 +400,7 @@ acpi_print_hest_aer_common(ACPI_HEST_AER_COMMON *data)
 		data->RecordsToPreallocate);
 	printf("\tMax. Sections per Record=%d\n", data->MaxSectionsPerRecord);
 	if (!(data->Flags & ACPI_HEST_GLOBAL))
-		acpi_print_pci_sbfd(0, data->Bus, data->Device, data->Function);
+		acpi_print_pci_sbdf(0, data->Bus, data->Device, data->Function);
 	printf("\tDevice Control=0x%x\n", data->DeviceControl);
 	printf("\tUncorrectable Error Mask Register=0x%x\n",
 		data->UncorrectableMask);
@@ -1251,6 +1255,113 @@ acpi_handle_dbgp(ACPI_TABLE_HEADER *sdp)
 }
 
 static void
+acpi_print_dbg2_device(ACPI_DBG2_DEVICE *dev)
+{
+
+	printf("\t\tRevision=%u\n", dev->Revision);
+	printf("\t\tLength=%u\n", dev->Length);
+	printf("\t\tRegisterCount=%u\n", dev->RegisterCount);
+
+	printf("\t\tNamepath=");
+	acpi_print_string((char *)((vaddr_t)dev + dev->NamepathOffset),
+	    dev->NamepathLength);
+	printf("\n");
+
+	if (dev->OemDataLength) {
+		printf("\t\tOemDataLength=%u\n", dev->OemDataLength);
+		printf("\t\tOemDataOffset=%u\n", dev->OemDataOffset);
+		/* XXX need dump */
+	}
+
+	printf("\t\tPortType=");
+	switch (dev->PortType) {
+	case ACPI_DBG2_SERIAL_PORT:
+		printf("Serial\n" "\t\tPortSubtype=");
+		switch (dev->PortSubtype) {
+		case ACPI_DBG2_16550_COMPATIBLE:
+			printf("Fully 16550 compatible\n");
+			break;
+		case ACPI_DBG2_16550_SUBSET:
+			printf("16550 subset with DBGP Rev. 1\n");
+			break;
+		case ACPI_DBG2_ARM_PL011:
+			printf("ARM PL011\n");
+			break;
+		case ACPI_DBG2_ARM_SBSA_32BIT:
+			printf("ARM SBSA 32bit only\n");
+			break;
+		case ACPI_DBG2_ARM_SBSA_GENERIC:
+			printf("ARM SBSA Generic\n");
+			break;
+		case ACPI_DBG2_ARM_DCC:
+			printf("ARM DCC\n");
+			break;
+		case ACPI_DBG2_BCM2835:
+			printf("BCM2835\n");
+			break;
+		default:
+			printf("reserved (%04hx)\n", dev->PortSubtype);
+			break;
+		}
+		break;
+	case ACPI_DBG2_1394_PORT:
+		printf("IEEE1394\n" "\t\tPortSubtype=");
+		if (dev->PortSubtype == ACPI_DBG2_1394_STANDARD)
+			printf("Standard\n");
+		else
+			printf("reserved (%04hx)\n", dev->PortSubtype);
+		break;
+	case ACPI_DBG2_USB_PORT:
+		printf("USB\n" "\t\tPortSubtype=");
+		switch (dev->PortSubtype) {
+		case ACPI_DBG2_USB_XHCI:
+			printf("XHCIn");
+			break;
+		case ACPI_DBG2_USB_EHCI:
+			printf("EHCI\n");
+			break;
+		default:
+			printf("reserved (%04hx)\n", dev->PortSubtype);
+			break;
+		}
+		break;
+	case ACPI_DBG2_NET_PORT:
+		printf("Net\n" "\t\tPciVendorID=%04x\n", dev->PortSubtype);
+		break;
+	default:
+		printf("reserved (%04hx)\n", dev->PortType);
+		printf("\t\tPortSubtype=reserved (%04hx)\n", dev->PortSubtype);
+		break;
+	}
+
+	printf("\t\tBaseAddressOffset=0x%04x\n", dev->BaseAddressOffset);
+	printf("\t\tAddressSizeOffset=0x%04x\n", dev->AddressSizeOffset);
+}
+
+static void
+acpi_handle_dbg2(ACPI_TABLE_HEADER *sdp)
+{
+	ACPI_TABLE_DBG2 *dbg2;
+	ACPI_DBG2_DEVICE *device;
+	unsigned int i;
+
+	printf(BEGIN_COMMENT);
+	acpi_print_sdt(sdp);
+	dbg2 = (ACPI_TABLE_DBG2 *)sdp;
+
+	printf("\tCount=%u\n", dbg2->InfoCount);
+	device = (ACPI_DBG2_DEVICE *)((vaddr_t)sdp + dbg2->InfoOffset);
+	for (i = 0; i < dbg2->InfoCount; i++) {
+		printf("\tDevice %u={\n", i);
+		acpi_print_dbg2_device(device);
+		printf("\t}\n");
+		device++;
+	}
+
+	printf(END_COMMENT);
+}
+
+static void
 acpi_print_einj_action(ACPI_WHEA_HEADER *whea)
 {
 	printf("\tACTION={");
@@ -1814,6 +1925,56 @@ acpi_handle_spcr(ACPI_TABLE_HEADER *sdp)
 	if (spcr->PciFlags & ACPI_SPCR_DO_NOT_DISABLE)
 		printf("DONOT_DISABLE");
 	printf("}\n");
+
+	printf(END_COMMENT);
+}
+
+static void
+acpi_handle_spmi(ACPI_TABLE_HEADER *sdp)
+{
+	ACPI_TABLE_SPMI *spmi;
+
+	printf(BEGIN_COMMENT);
+	acpi_print_sdt(sdp);
+	spmi = (ACPI_TABLE_SPMI *)sdp;
+
+	printf("\tInterface Type=");
+	switch (spmi->InterfaceType) {
+	case ACPI_SPMI_KEYBOARD:
+		printf("Keyboard Controller Stype (KCS)");
+		break;
+	case ACPI_SPMI_SMI:
+		printf("Server Management Interface Chip (SMIC)");
+		break;
+	case ACPI_SPMI_BLOCK_TRANSFER:
+		printf("Block Transfer (BT)");
+		break;
+	case ACPI_SPMI_SMBUS:
+		printf("SMBus System Interface (SSIF)");
+		break;
+	default:
+		printf("Reserved(%d)", spmi->InterfaceType);
+		break;
+	}
+	printf("\n\tSpecRevision=%d.%d\n", spmi->SpecRevision >> 8,
+		spmi->SpecRevision & 0xff);
+
+	printf("\n\tInterrupt Type={");
+	if (spmi->InterruptType & 0x1) {
+		printf("\n\t\tSCI triggered GPE=%d", spmi->GpeNumber);
+	}
+	if (spmi->InterruptType & 0x2) {
+		printf("\n\t\tIO APIC/SAPIC={ GSI=%d }", spmi->Interrupt);
+	}
+	printf("\n\t}\n");
+
+	printf("\tBase Address=");
+	acpi_print_gas(&spmi->IpmiRegister);
+	printf("\n");
+
+	if ((spmi->PciDeviceFlag & 0x01) != 0)
+		acpi_print_pci_sbdf(spmi->PciSegment, spmi->PciBus,
+		    spmi->PciDevice, spmi->PciFunction);
 
 	printf(END_COMMENT);
 }
@@ -2479,6 +2640,30 @@ acpi_handle_dmar(ACPI_TABLE_HEADER *sdp)
 }
 
 static void
+acpi_handle_uefi(ACPI_TABLE_HEADER *sdp)
+{
+	ACPI_TABLE_UEFI *uefi;
+	char *uuidstr;
+	uint32_t status;
+
+	printf(BEGIN_COMMENT);
+	acpi_print_sdt(sdp);
+	uefi = (ACPI_TABLE_UEFI *)sdp;
+
+	uuid_to_string((uuid_t *)(uefi->Identifier),
+	    &uuidstr, &status);
+	if (status != uuid_s_ok)
+		errx(1, "uuid_to_string: status=%u", status);
+	printf("\tUUID=%s\n", uuidstr);
+	free(uuidstr);
+
+	printf("\tDataOffset=%04hx\n", uefi->DataOffset);
+	/* XXX need write */
+
+	printf(END_COMMENT);
+}
+
+static void
 acpi_handle_waet(ACPI_TABLE_HEADER *sdp)
 {
 	ACPI_TABLE_WAET *waet;
@@ -2609,7 +2794,7 @@ acpi_handle_wdat(ACPI_TABLE_HEADER *sdp)
 
 	printf("\tHeader Length=%d\n", wdat->HeaderLength);
 
-	acpi_print_pci_sbfd(wdat->PciSegment, wdat->PciBus, wdat->PciDevice,
+	acpi_print_pci_sbdf(wdat->PciSegment, wdat->PciBus, wdat->PciDevice,
 	    wdat->PciFunction);
 	printf("\n\tTimer Counter Period=%d msec\n", wdat->TimerPeriod);
 	printf("\tTimer Maximum Counter Value=%d\n", wdat->MaxCount);
@@ -2632,6 +2817,46 @@ acpi_handle_wdat(ACPI_TABLE_HEADER *sdp)
 		    NULL);
 		wdat_pos += sizeof(ACPI_WDAT_ENTRY);
 	}
+	printf(END_COMMENT);
+}
+
+static void
+acpi_handle_wddt(ACPI_TABLE_HEADER *sdp)
+{
+	ACPI_TABLE_WDDT *wddt;
+
+	printf(BEGIN_COMMENT);
+	acpi_print_sdt(sdp);
+	wddt = (ACPI_TABLE_WDDT *)sdp;
+
+	printf("\tSpecVersion=%04hx\n", wddt->SpecVersion);
+	printf("\tTableVersion=%04hx\n", wddt->TableVersion);
+	printf("\tPciVendorID=%04hx\n", wddt->PciVendorId);
+	printf("\tAddress=");
+	acpi_print_gas(&wddt->Address);
+	printf("\n\tTimer Maximum Counter Value=%d\n", wddt->MaxCount);
+	printf("\tTimer Minimum Counter Value=%d\n", wddt->MinCount); 
+	printf("\tTimer Counter Period=%d\n", wddt->Period);
+
+#define PRINTFLAG(var, flag)	printflag((var), ACPI_WDDT_## flag, #flag)
+
+	printf("\tStatus=");
+	PRINTFLAG(wddt->Status, AVAILABLE);
+	PRINTFLAG(wddt->Status, ACTIVE);
+	PRINTFLAG(wddt->Status, TCO_OS_OWNED);
+	PRINTFLAG(wddt->Status, USER_RESET);
+	PRINTFLAG(wddt->Status, WDT_RESET);
+	PRINTFLAG(wddt->Status, POWER_FAIL);
+	PRINTFLAG(wddt->Status, UNKNOWN_RESET);
+	PRINTFLAG_END();
+
+	printf("\tCapability=");
+	PRINTFLAG(wddt->Capability, AUTO_RESET);
+	PRINTFLAG(wddt->Capability, ALERT_SUPPORT);
+	PRINTFLAG_END();
+
+#undef PRINTFLAG
+
 	printf(END_COMMENT);
 }
 
@@ -3056,6 +3281,8 @@ acpi_handle_rsdt(ACPI_TABLE_HEADER *rsdp)
 			acpi_handle_cpep(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_DBGP, 4))
 			acpi_handle_dbgp(sdp);
+		else if (!memcmp(sdp->Signature, ACPI_SIG_DBG2, 4))
+			acpi_handle_dbg2(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_DMAR, 4))
 			acpi_handle_dmar(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_EINJ, 4))
@@ -3080,16 +3307,22 @@ acpi_handle_rsdt(ACPI_TABLE_HEADER *rsdp)
 			acpi_handle_slit(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_SPCR, 4))
 			acpi_handle_spcr(sdp);
+		else if (!memcmp(sdp->Signature, ACPI_SIG_SPMI, 4))
+			acpi_handle_spmi(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_SRAT, 4))
 			acpi_handle_srat(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_TCPA, 4))
 			acpi_handle_tcpa(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_NFIT, 4))
 			acpi_handle_nfit(sdp);
+		else if (!memcmp(sdp->Signature, ACPI_SIG_UEFI, 4))
+			acpi_handle_uefi(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_WAET, 4))
 			acpi_handle_waet(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_WDAT, 4))
 			acpi_handle_wdat(sdp);
+		else if (!memcmp(sdp->Signature, ACPI_SIG_WDDT, 4))
+			acpi_handle_wddt(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_WDRT, 4))
 			acpi_handle_wdrt(sdp);
 		else {
