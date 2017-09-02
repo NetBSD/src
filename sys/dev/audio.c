@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.405 2017/09/02 13:28:11 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.406 2017/09/02 15:26:43 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.405 2017/09/02 13:28:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.406 2017/09/02 15:26:43 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -275,7 +275,7 @@ int	mix_write(void *);
 int	mix_read(void *);
 int	audio_check_params(struct audio_params *);
 
-void	audio_calc_blksize(struct audio_softc *, int, struct virtual_channel *);
+int	audio_calc_blksize(struct audio_softc *, const audio_params_t *);
 void	audio_fill_silence(const struct audio_params *, uint8_t *, int);
 int	audio_silence_copyout(struct audio_softc *, int, struct uio *);
 
@@ -2617,29 +2617,14 @@ audio_clear_intr_unlocked(struct audio_softc *sc, struct virtual_channel *vc)
 	mutex_exit(sc->sc_intr_lock);
 }
 
-void
-audio_calc_blksize(struct audio_softc *sc, int mode,
-		   struct virtual_channel *vc)
+int
+audio_calc_blksize(struct audio_softc *sc, const audio_params_t *parm)
 {
-	const audio_params_t *parm;
-	struct audio_stream *rb;
-	int *blksize;
+	int blksize;
 
-	if (mode == AUMODE_PLAY) {
-		rb = vc->sc_pustream;
-		parm = &rb->param;
-		blksize = &vc->sc_mpr.blksize;
-	} else {
-		rb = vc->sc_rustream;
-		parm = &rb->param;
-		blksize = &vc->sc_mrr.blksize;
-	}
-
-	*blksize = parm->sample_rate * audio_blk_ms / 1000 *
+	blksize = parm->sample_rate * audio_blk_ms / 1000 *
 	     parm->channels * parm->precision / NBBY;
-
-	DPRINTF(("audio_calc_blksize: %s blksize=%d\n",
-		 mode == AUMODE_PLAY ? "play" : "record", *blksize));
+	return blksize;
 }
 
 void
@@ -4693,12 +4678,18 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 			audio_clear_intr_unlocked(sc, vc);
 			cleared = true;
 		}
-		if (nr > 0)
-			audio_calc_blksize(sc, AUMODE_RECORD, vc);
-		if (np > 0)
-			audio_calc_blksize(sc, AUMODE_PLAY, vc);
-		sc->sc_pr.blksize = vc->sc_mpr.blksize;
-		sc->sc_rr.blksize = vc->sc_mrr.blksize;
+		if (nr > 0) {
+			sc->sc_rr.blksize = audio_calc_blksize(sc,
+			    &vc->sc_rparams);
+			vc->sc_mrr.blksize = audio_calc_blksize(sc,
+			    &vc->sc_mrr.s.param);
+		}
+		if (np > 0) {
+			sc->sc_pr.blksize = audio_calc_blksize(sc,
+			    &vc->sc_pparams);
+			vc->sc_mpr.blksize = audio_calc_blksize(sc,
+			    &vc->sc_mpr.s.param);
+		}
 	}
 
 	if (hw->commit_settings && sc->sc_opens == 0) {
@@ -5355,13 +5346,13 @@ mix_read(void *arg)
 		DPRINTF(("%s: call trigger_input\n", __func__));
 		sc->sc_rec_started = true;
 		error = sc->hw_if->trigger_input(sc->hw_hdl, vc->sc_mrr.s.start,
-		    vc->sc_mrr.s.end, blksize,
+		    vc->sc_mrr.s.end, vc->sc_mrr.blksize,
 		    audio_rint, (void *)sc, &vc->sc_mrr.s.param);
 	} else if (sc->hw_if->start_input) {
 		DPRINTF(("%s: call start_input\n", __func__));
 		sc->sc_rec_started = true;
 		error = sc->hw_if->start_input(sc->hw_hdl,
-		    vc->sc_mrr.s.inp, blksize,
+		    vc->sc_mrr.s.inp, vc->sc_mrr.blksize,
 		    audio_rint, (void *)sc);
 	}
 	if (error) {
@@ -5409,18 +5400,17 @@ mix_write(void *arg)
 	stream_filter_t *filter;
 	stream_fetcher_t *fetcher;
 	stream_fetcher_t null_fetcher;
-	int cc, cc1, cc2, blksize, error, used;
+	int cc, cc1, cc2, error, used;
 	const uint8_t *orig;
 	uint8_t *tocopy;
 
 	vc = sc->sc_hwvc;
-	blksize = vc->sc_mpr.blksize;
 	error = 0;
 
-	if (audio_stream_get_used(vc->sc_pustream) <= blksize) {
+	if (audio_stream_get_used(vc->sc_pustream) <= sc->sc_pr.blksize) {
 		tocopy = vc->sc_pustream->inp;
 		orig = sc->sc_pr.s.outp;
-		used = blksize;
+		used = sc->sc_pr.blksize;
 		while (used > 0) {
 			cc = used;
 			cc1 = vc->sc_pustream->end - tocopy;
@@ -5442,10 +5432,10 @@ mix_write(void *arg)
 		}
 
 		vc->sc_pustream->inp = audio_stream_add_inp(vc->sc_pustream,
-		    vc->sc_pustream->inp, blksize);
+		    vc->sc_pustream->inp, sc->sc_pr.blksize);
 
 		sc->sc_pr.s.outp = audio_stream_add_outp(&sc->sc_pr.s,
-		    sc->sc_pr.s.outp, blksize);
+		    sc->sc_pr.s.outp, sc->sc_pr.blksize);
 	}
 
 	if (vc->sc_npfilters > 0) {
@@ -5453,20 +5443,20 @@ mix_write(void *arg)
 		filter = vc->sc_pfilters[0];
 		filter->set_fetcher(filter, &null_fetcher);
 		fetcher = &vc->sc_pfilters[vc->sc_npfilters - 1]->base;
-		fetcher->fetch_to(sc, fetcher, &vc->sc_mpr.s, blksize);
+		fetcher->fetch_to(sc, fetcher, &vc->sc_mpr.s, vc->sc_mpr.blksize);
  	}
 
 	if (sc->hw_if->trigger_output && sc->sc_trigger_started == false) {
 		DPRINTF(("%s: call trigger_output\n", __func__));
 		sc->sc_trigger_started = true;
 		error = sc->hw_if->trigger_output(sc->hw_hdl,
-		    vc->sc_mpr.s.start, vc->sc_mpr.s.end, blksize,
+		    vc->sc_mpr.s.start, vc->sc_mpr.s.end, vc->sc_mpr.blksize,
 		    audio_pint, (void *)sc, &vc->sc_mpr.s.param);
 	} else if (sc->hw_if->start_output) {
 		DPRINTF(("%s: call start_output\n", __func__));
 		sc->sc_trigger_started = true;
 		error = sc->hw_if->start_output(sc->hw_hdl,
-		    __UNCONST(vc->sc_mpr.s.outp), blksize,
+		    __UNCONST(vc->sc_mpr.s.outp), vc->sc_mpr.blksize,
 		    audio_pint, (void *)sc);
 	}
 
@@ -5958,11 +5948,7 @@ vchan_autoconfig(struct audio_softc *sc)
 				    AUMODE_PLAY | AUMODE_PLAY_ALL |
 				    AUMODE_RECORD);
 				if (vc->sc_npfilters > 0 &&
-				    (vc->sc_mpr.s.param.precision !=
-				     sc->sc_vchan_params.precision ||
-				    vc->sc_mpr.s.param.validbits !=
-				     sc->sc_vchan_params.precision ||
-				    vc->sc_mpr.s.param.sample_rate !=
+				    (vc->sc_mpr.s.param.sample_rate !=
 				     sc->sc_vchan_params.sample_rate ||
 				    vc->sc_mpr.s.param.channels !=
 				     sc->sc_vchan_params.channels))
