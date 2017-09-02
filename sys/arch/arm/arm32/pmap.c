@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.354 2017/09/02 11:52:30 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.355 2017/09/02 11:57:09 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.354 2017/09/02 11:52:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.355 2017/09/02 11:57:09 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -1937,8 +1937,7 @@ pmap_vac_me_user(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va)
 			/* Writable mappings */
 			if (pv->pv_flags & PVF_WRITE)
 				++writable;
-		} else
-		if (pv->pv_flags & PVF_WRITE)
+		} else if (pv->pv_flags & PVF_WRITE)
 			other_writable = 1;
 	}
 
@@ -1981,8 +1980,7 @@ pmap_vac_me_user(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va)
 			PTE_SYNC_CURRENT(pv->pv_pmap, ptep);
 		}
 		cpu_cpwait();
-	} else
-	if (entries > cacheable_entries) {
+	} else if (entries > cacheable_entries) {
 		/*
 		 * Turn cacheing back on for some pages.  If it is a kernel
 		 * page, only do so if there are no other writable pages.
@@ -2425,8 +2423,7 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 					npte |= pte_l2_s_cache_mode;
 					pv->pv_flags &= ~PVF_NC;
 				}
-			} else
-			if (l2pte_writable_p(opte)) {
+			} else if (l2pte_writable_p(opte)) {
 				/*
 				 * Entry is writable/cacheable: check if pmap
 				 * is current if it is flush it, otherwise it
