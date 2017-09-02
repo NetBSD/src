@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.97 2017/09/01 10:19:10 christos Exp $
+.\"	$NetBSD: editline.3,v 1.98 2017/09/02 06:48:10 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -844,7 +844,7 @@ Save the history list to the opened
 pointer
 .Fa fp .
 .It Dv H_NSAVE_FP , Fa "size_t n" , Fa "FILE *fp"
-Save the last 
+Save the last
 .Ft n
 history entries to the opened
 .Ft FILE
@@ -860,7 +860,7 @@ be entered into the history.
 Delete the event numbered
 .Fa e .
 This function is only provided for
-.Xr readline 3
+.Nm readline
 compatibility.
 The caller is responsible for free'ing the string in the returned
 .Fa HistEvent .
