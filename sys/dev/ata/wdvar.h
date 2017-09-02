@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.43.4.7 2017/07/19 19:39:28 jdolecek Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.43.4.8 2017/09/02 12:01:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -28,7 +28,7 @@
 #define	_DEV_ATA_WDVAR_H_
 
 #ifdef _KERNEL_OPT
-#include "opt_wd_softbadsect.h"
+#include "opt_wd.h"
 #endif
 
 #include <sys/rndsource.h>
