@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-h3.dtsi,v 1.1 2017/07/13 01:17:58 jmcneill Exp $ */
+/* $NetBSD: sun8i-h3.dtsi,v 1.2 2017/09/02 17:35:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,6 +27,19 @@
  */
 
 / {
+	chosen {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		framebuffer@0 {
+			compatible = "allwinner,simple-framebuffer",
+				     "simple-framebuffer";
+			allwinner,pipeline = "mixer0-lcd0-hdmi";
+			status = "disabled";
+		};
+	};
+
 	soc {
 		emac: ethernet@1c30000 {
 			compatible = "allwinner,sun8i-h3-emac";
