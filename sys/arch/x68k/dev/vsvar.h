@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.14 2017/08/05 06:05:37 isaki Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.15 2017/09/02 12:52:55 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -72,6 +72,7 @@ struct vs_dma {
 	struct vs_dma		*vd_next;
 };
 #define KVADDR(dma)	((void *)(dma)->vd_addr)
+#define KVADDR_END(dma) ((void *)((size_t)KVADDR(dma) + (dma)->vd_size)))
 #define DMAADDR(dma)	((dma)->vd_map->dm_segs[0].ds_addr)
 
 struct vs_softc {
@@ -87,14 +88,11 @@ struct vs_softc {
 	bus_dma_tag_t sc_dmat;
 	struct dmac_channel_stat *sc_dma_ch;
 	struct vs_dma *sc_dmas;
+	struct vs_dma *sc_prev_vd;
 
 	struct {
 		struct dmac_dma_xfer *xfer;
 		int rate;
-		int precision;
-		int bufsize, blksize;
-		int dmap;
-		void *rblock;		/* block specified by start_input() */
 	} sc_current;
 	int sc_active;
 
@@ -104,11 +102,4 @@ struct vs_softc {
 	void (*sc_rintr)(void *);
 	void *sc_parg;
 	void *sc_rarg;
-
-	/* local conversion */
-	void (*sc_pconv)(void *, void *, const void *, int);
-	void (*sc_rconv)(void *, void *, int, const void *);
-	void *sc_hwbuf;			/* ADPCM buffer */
-	int sc_hwbufsize;		/* buffer size */
-	void *sc_codec;			/* msm6258codecvar */
 };
