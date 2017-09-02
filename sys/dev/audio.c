@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.403 2017/08/20 05:12:17 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.404 2017/09/02 13:22:51 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.403 2017/08/20 05:12:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.404 2017/09/02 13:22:51 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2018,11 +2018,8 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 	const struct audio_hw_if *hw;
 	int error;
 
-	if (vc == NULL) {
+	if (vc == NULL)
 		vc = sc->sc_hwvc;
-		sc->sc_pr.blksize = vc->sc_mpr.blksize;
-		sc->sc_rr.blksize = vc->sc_mrr.blksize;
-	}
 
 	DPRINTF(("audio_initbufs: mode=0x%x\n", vc->sc_mode));
 	hw = sc->hw_if;
@@ -2038,8 +2035,6 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 				return error;
 		}
 	}
-	if (vc == sc->sc_hwvc)
-		sc->sc_rr.blksize = vc->sc_mrr.blksize;
 
 	if (audio_can_playback(sc) &&
 		((vc->sc_open & AUOPEN_WRITE) || vc == sc->sc_hwvc)) {
@@ -2054,8 +2049,6 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 				return error;
 		}
 	}
-	if (vc == sc->sc_hwvc)
-		sc->sc_pr.blksize = vc->sc_mpr.blksize;
 
 #ifdef AUDIO_INTR_TIME
 	if (audio_can_playback(sc)) {
