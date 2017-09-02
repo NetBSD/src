@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.404 2017/09/02 13:22:51 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.405 2017/09/02 13:28:11 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.404 2017/09/02 13:22:51 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.405 2017/09/02 13:28:11 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4610,13 +4610,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 		vc->sc_rparams = rp;
 	}
 
-	/* Play params can affect the record params, so recalculate blksize. */
-	if (nr > 0 || np > 0 || reset) {
-		if (nr > 0)
-			audio_calc_blksize(sc, AUMODE_RECORD, vc);
-		if (np > 0)
-			audio_calc_blksize(sc, AUMODE_PLAY, vc);
-	}
 #ifdef AUDIO_DEBUG
 	if (audiodebug > 1 && nr > 0) {
 	    audio_print_params("audiosetinfo() After setting record params:",
@@ -4706,9 +4699,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 			audio_calc_blksize(sc, AUMODE_PLAY, vc);
 		sc->sc_pr.blksize = vc->sc_mpr.blksize;
 		sc->sc_rr.blksize = vc->sc_mrr.blksize;
-	} else {
-		vc->sc_mpr.blksize = sc->sc_pr.blksize;
-		vc->sc_mrr.blksize = sc->sc_rr.blksize;
 	}
 
 	if (hw->commit_settings && sc->sc_opens == 0) {
