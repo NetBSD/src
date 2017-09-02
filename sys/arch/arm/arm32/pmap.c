@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.353 2017/08/24 14:19:36 jmcneill Exp $	*/
+/*	$NetBSD: pmap.c,v 1.354 2017/09/02 11:52:30 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.353 2017/08/24 14:19:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.354 2017/09/02 11:52:30 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -1971,10 +1971,8 @@ pmap_vac_me_user(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va)
 
 			if ((va != pv->pv_va || pm != pv->pv_pmap)
 			    && l2pte_valid_p(opte)) {
-#ifdef PMAP_CACHE_VIVT
 				pmap_cache_wbinv_page(pv->pv_pmap, pv->pv_va,
 				    true, pv->pv_flags);
-#endif
 				pmap_tlb_flush_SE(pv->pv_pmap, pv->pv_va,
 				    pv->pv_flags);
 			}
