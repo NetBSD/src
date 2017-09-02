@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.23 2017/08/05 05:53:26 isaki Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.24 2017/09/02 12:57:35 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.23 2017/08/05 05:53:26 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.24 2017/09/02 12:57:35 isaki Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -411,112 +411,4 @@ DEFINE_FILTER(msm6258_adpcm_to_linear8)
 	dst->inp = d;
 	this->src->outp = s;
 	return 0;
-}
-
-
-/*
- * XXX MI audio(4) layer does not seem to support non SLINEAR devices.
- * XXX So vs(4) converts SLINEAR <-> ADPCM itself.
- * XXX This is temporary way, of course.
- */
-
-void *
-vs_alloc_msm6258codec(void)
-{
-	return (void *)msm6258_factory(NULL, NULL);
-}
-
-void
-vs_free_msm6258codec(void *arg)
-{
-	stream_filter_t *filter = (stream_filter_t *)arg;
-	if (filter != NULL) {
-		filter->dtor(filter);
-	}
-}
-
-void
-vs_slinear16be_to_adpcm(void *arg, void *dst, const void *src, int srclen)
-{
-	struct msm6258_codecvar *mc = (struct msm6258_codecvar *)arg;
-	const int16_t *s, *end;
-	uint8_t *d;
-
-	s = (const int16_t *)src;
-	d = (uint8_t *)dst;
-	end = (const int16_t *)((const int8_t *)src + srclen);
-	while (s < end) {
-		uint8_t f;
-		int16_t ss;
-		ss = be16toh(*s++);
-		f  = pcm2adpcm_step(mc, ss);
-		ss = be16toh(*s++);
-		f |= pcm2adpcm_step(mc, ss) << 4;
-		*d++ = f;
-	}
-}
-
-void
-vs_slinear8_to_adpcm(void *arg, void *dst, const void *src, int srclen)
-{
-	struct msm6258_codecvar *mc = (struct msm6258_codecvar *)arg;
-	const int8_t *s, *end;
-	uint8_t *d;
-
-	s = (const int8_t *)src;
-	d = (uint8_t *)dst;
-	end = (const int8_t *)src + srclen;
-	while (s < end) {
-		uint8_t f;
-		int16_t ss;
-		ss = ((int16_t)*s) * 256;
-		s++;
-		f  = pcm2adpcm_step(mc, ss);
-		ss = ((int16_t)*s) * 256;
-		s++;
-		f |= pcm2adpcm_step(mc, ss) << 4;
-		*d++ = f;
-	}
-}
-
-void
-vs_adpcm_to_slinear16be(void *arg, void *dst, int dstlen, const void *src)
-{
-	struct msm6258_codecvar *mc = (struct msm6258_codecvar *)arg;
-	const uint8_t *s, *end;
-	int16_t *d;
-
-	s = (const int8_t *)src;
-	d = (int16_t *)dst;
-	end = s + (dstlen / 4);
-	while (s < end) {
-		uint8_t a;
-		int16_t s1, s2;
-		a = *s++;
-		s1 = adpcm2pcm_step(mc, a & 0x0f);
-		s2 = adpcm2pcm_step(mc, a >> 4);
-		*d++ = s1;
-		*d++ = s2;
-	}
-}
-
-void
-vs_adpcm_to_slinear8(void *arg, void *dst, int dstlen, const void *src)
-{
-	struct msm6258_codecvar *mc = (struct msm6258_codecvar *)arg;
-	const uint8_t *s, *end;
-	int8_t *d;
-
-	s = (const int8_t *)src;
-	d = (int8_t *)dst;
-	end = s + (dstlen / 2);
-	while (s < end) {
-		uint8_t a;
-		int16_t s1, s2;
-		a = *s++;
-		s1 = adpcm2pcm_step(mc, a & 0x0f);
-		s2 = adpcm2pcm_step(mc, a >> 4);
-		*d++ = s1 / 256;
-		*d++ = s2 / 256;
-	}
 }
