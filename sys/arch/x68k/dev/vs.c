@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.46 2017/08/11 07:08:40 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.47 2017/09/02 12:52:55 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.46 2017/08/11 07:08:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.47 2017/09/02 12:52:55 isaki Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -101,7 +101,6 @@ static void vs_get_locks(void *, kmutex_t **, kmutex_t **);
 static int vs_round_sr(u_long);
 static void vs_set_sr(struct vs_softc *, int);
 static inline void vs_set_po(struct vs_softc *, u_long);
-static void *vs_realloc_hwbuf(struct vs_softc *, int);
 
 extern struct cfdriver vs_cd;
 
@@ -130,8 +129,8 @@ static const struct audio_hw_if vs_hw_if = {
 	vs_set_port,
 	vs_get_port,
 	vs_query_devinfo,
-	NULL,			/* allocm */
-	NULL,			/* freem */
+	vs_allocm,
+	vs_freem,
 	vs_round_buffersize,
 	NULL,			/* mappage */
 	vs_get_props,
@@ -160,6 +159,8 @@ struct {
 };
 
 #define NUM_RATE	(sizeof(vs_l2r)/sizeof(vs_l2r[0]))
+
+extern stream_filter_factory_t null_filter;
 
 static int
 vs_match(device_t parent, cfdata_t cf, void *aux)
@@ -220,10 +221,8 @@ vs_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hw_if = &vs_hw_if;
 	sc->sc_addr = (void *) ia->ia_addr;
 	sc->sc_dmas = NULL;
+	sc->sc_prev_vd = NULL;
 	sc->sc_active = 0;
-	sc->sc_hwbuf = NULL;
-	sc->sc_hwbufsize = 0;
-	sc->sc_codec = vs_alloc_msm6258codec();
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 
@@ -257,13 +256,9 @@ vs_dmaintr(void *hdl)
 
 	mutex_spin_enter(&sc->sc_intr_lock);
 
-	sc->sc_active = 0;
 	if (sc->sc_pintr) {
 		sc->sc_pintr(sc->sc_parg);
 	} else if (sc->sc_rintr) {
-		/* convert ADPCM to slinear */
-		sc->sc_rconv(sc->sc_codec, sc->sc_current.rblock,
-		    sc->sc_current.blksize, sc->sc_hwbuf);
 		sc->sc_rintr(sc->sc_rarg);
 	} else {
 		printf("vs_dmaintr: spurious interrupt\n");
@@ -301,6 +296,7 @@ vs_open(void *hdl, int flags)
 	sc = hdl;
 	sc->sc_pintr = NULL;
 	sc->sc_rintr = NULL;
+	sc->sc_active = 0;
 
 	return 0;
 }
@@ -369,6 +365,8 @@ vs_set_params(void *hdl, int setmode, int usemode,
 	stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	struct vs_softc *sc;
+	stream_filter_factory_t *pconv;
+	stream_filter_factory_t *rconv;
 	int rate;
 
 	sc = hdl;
@@ -391,16 +389,12 @@ vs_set_params(void *hdl, int setmode, int usemode,
 	}
 
 	if (play->precision == 8 && play->encoding == AUDIO_ENCODING_SLINEAR) {
-		sc->sc_current.precision = 8;
-		sc->sc_pconv = vs_slinear8_to_adpcm;
-		sc->sc_rconv = vs_adpcm_to_slinear8;
-
+		pconv = msm6258_linear8_to_adpcm;
+		rconv = msm6258_adpcm_to_linear8;
 	} else if (play->precision == 16 &&
 	           play->encoding == AUDIO_ENCODING_SLINEAR_BE) {
-		sc->sc_current.precision = 16;
-		sc->sc_pconv = vs_slinear16be_to_adpcm;
-		sc->sc_rconv = vs_adpcm_to_slinear16be;
-
+		pconv = msm6258_slinear16_to_adpcm;
+		rconv = msm6258_adpcm_to_slinear16;
 	} else {
 		DPRINTF(1, ("prec/enc not matched\n"));
 		return EINVAL;
@@ -410,11 +404,20 @@ vs_set_params(void *hdl, int setmode, int usemode,
 
 	/* pfil and rfil are independent even if !AUDIO_PROP_INDEPENDENT */
 
-	/*
-	 * XXX MI audio(4) layer does not seem to support non SLINEAR devices.
-	 * So vs(4) behaves as SLINEAR device completely against MI layer
-	 * and converts SLINEAR <-> ADPCM by myself.
-	 */
+	if ((setmode & AUMODE_PLAY) != 0) {
+		pfil->append(pfil, null_filter, play);
+		play->encoding = AUDIO_ENCODING_ADPCM;
+		play->validbits = 4;
+		play->precision = 4;
+		pfil->append(pfil, pconv, play);
+	}
+	if ((setmode & AUMODE_RECORD) != 0) {
+		rfil->append(rfil, null_filter, rec);
+		rec->encoding = AUDIO_ENCODING_ADPCM;
+		rec->validbits = 4;
+		rec->precision = 4;
+		rfil->append(rfil, rconv, rec);
+	}
 
 	DPRINTF(1, ("accepted\n"));
 	return 0;
@@ -470,22 +473,6 @@ vs_init_input(void *hdl, void *buffer, int size)
 	return 0;
 }
 
-/* (re)allocate sc_hwbuf with hwbufsize */
-static void *
-vs_realloc_hwbuf(struct vs_softc *sc, int hwbufsize)
-{
-	if (sc->sc_hwbuf != NULL) {
-		vs_freem(sc, sc->sc_hwbuf, sc->sc_hwbufsize);
-	}
-	sc->sc_hwbufsize = hwbufsize;
-	sc->sc_hwbuf = vs_allocm(sc, 0, sc->sc_hwbufsize);
-	if (sc->sc_hwbuf == NULL) {
-		sc->sc_hwbufsize = 0;
-		return NULL;
-	}
-	return sc->sc_hwbuf;
-}
-
 static int
 vs_start_output(void *hdl, void *block, int blksize, void (*intr)(void *),
 	void *arg)
@@ -493,42 +480,40 @@ vs_start_output(void *hdl, void *block, int blksize, void (*intr)(void *),
 	struct vs_softc *sc;
 	struct vs_dma *vd;
 	struct dmac_channel_stat *chan;
-	int hwblksize;
 
 	DPRINTF(2, ("%s: block=%p blksize=%d\n", __func__, block, blksize));
 	sc = hdl;
 
-	hwblksize = blksize / (sc->sc_current.precision / 4);
-	if (hwblksize > sc->sc_hwbufsize) {
-		if (vs_realloc_hwbuf(sc, hwblksize) == NULL) {
-			DPRINTF(1, ("%s: alloc hwbuf failed\n", __func__));
-			return ENOMEM;
-		}
-	}
-
-	/* Convert slinear to ADPCM */
-	sc->sc_pconv(sc->sc_codec, sc->sc_hwbuf, block, blksize);
-
 	sc->sc_pintr = intr;
 	sc->sc_parg  = arg;
-	sc->sc_current.blksize = hwblksize;
-	sc->sc_current.bufsize = hwblksize;
-	sc->sc_current.dmap = 0;
 
-	/* vd is always first of sc_dmas */
-	vd = sc->sc_dmas;
+	/* Find DMA buffer. */
+	for (vd = sc->sc_dmas; vd != NULL; vd = vd->vd_next) {
+		if (KVADDR(vd) <= block && block < KVADDR_END(vd)
+			break;
+	}
+	if (vd == NULL) {
+		printf("%s: start_output: bad addr %p\n",
+		    device_xname(sc->sc_dev), block);
+		return EINVAL;
+	}
 
 	chan = sc->sc_dma_ch;
 
-	sc->sc_current.xfer = dmac_prepare_xfer(chan, sc->sc_dmat, vd->vd_map,
-	    DMAC_OCR_DIR_MTD,
-	    (DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT),
-	    sc->sc_addr + MSM6258_DATA * 2 + 1);
+	if (vd != sc->sc_prev_vd) {
+		sc->sc_current.xfer = dmac_prepare_xfer(chan, sc->sc_dmat,
+		    vd->vd_map, DMAC_OCR_DIR_MTD,
+		    (DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT),
+		    sc->sc_addr + MSM6258_DATA * 2 + 1);
+		sc->sc_prev_vd = vd;
+	}
+	dmac_start_xfer_offset(chan->ch_softc, sc->sc_current.xfer,
+	    (int)block - (int)KVADDR(vd), blksize);
 
-	dmac_start_xfer_offset(chan->ch_softc, sc->sc_current.xfer, 0,
-	    sc->sc_current.blksize);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 2);
-	sc->sc_active = 1;
+	if (sc->sc_active == 0) {
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 2);
+		sc->sc_active = 1;
+	}
 
 	return 0;
 }
@@ -540,40 +525,40 @@ vs_start_input(void *hdl, void *block, int blksize, void (*intr)(void *),
 	struct vs_softc *sc;
 	struct vs_dma *vd;
 	struct dmac_channel_stat *chan;
-	int hwblksize;
 
 	DPRINTF(2, ("%s: block=%p blksize=%d\n", __func__, block, blksize));
 	sc = hdl;
 
-	hwblksize = blksize / (sc->sc_current.precision / 4);
-	if (hwblksize > sc->sc_hwbufsize) {
-		if (vs_realloc_hwbuf(sc, hwblksize) == NULL) {
-			DPRINTF(1, ("%s: alloc hwbuf failed\n", __func__));
-			return ENOMEM;
-		}
-	}
-
 	sc->sc_rintr = intr;
 	sc->sc_rarg  = arg;
-	sc->sc_current.rblock = block;
-	sc->sc_current.blksize = hwblksize;
-	sc->sc_current.bufsize = hwblksize;
-	sc->sc_current.dmap = 0;
 
-	/* vd is always first of sc_dmas */
-	vd = sc->sc_dmas;
+	/* Find DMA buffer. */
+	for (vd = sc->sc_dmas; vd != NULL; vd = vd->vd_next) {
+		if (KVADDR(vd) <= block && block < KVADDR_END(vd)
+			break;
+	}
+	if (vd == NULL) {
+		printf("%s: start_output: bad addr %p\n",
+		    device_xname(sc->sc_dev), block);
+		return EINVAL;
+	}
 
 	chan = sc->sc_dma_ch;
 
-	sc->sc_current.xfer = dmac_prepare_xfer(chan, sc->sc_dmat, vd->vd_map,
-	    DMAC_OCR_DIR_DTM,
-	    (DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT),
-	    sc->sc_addr + MSM6258_DATA * 2 + 1);
+	if (vd != sc->sc_prev_vd) {
+		sc->sc_current.xfer = dmac_prepare_xfer(chan, sc->sc_dmat,
+		    vd->vd_map, DMAC_OCR_DIR_DTM,
+		    (DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT),
+		    sc->sc_addr + MSM6258_DATA * 2 + 1);
+		sc->sc_prev_vd = vd;
+	}
+	dmac_start_xfer_offset(chan->ch_softc, sc->sc_current.xfer,
+	    (int)block - (int)KVADDR(vd), blksize);
 
-	dmac_start_xfer_offset(chan->ch_softc, sc->sc_current.xfer, 0,
-	    sc->sc_current.blksize);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 4);
-	sc->sc_active = 1;
+	if (sc->sc_active == 0) {
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 4);
+		sc->sc_active = 1;
+	}
 
 	return 0;
 }
@@ -591,9 +576,6 @@ vs_halt_output(void *hdl)
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 1);
 		sc->sc_active = 0;
 	}
-	vs_freem(sc, sc->sc_hwbuf, sc->sc_hwbufsize);
-	sc->sc_hwbuf = NULL;
-	sc->sc_hwbufsize = 0;
 
 	return 0;
 }
@@ -611,9 +593,6 @@ vs_halt_input(void *hdl)
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 1);
 		sc->sc_active = 0;
 	}
-	vs_freem(sc, sc->sc_hwbuf, sc->sc_hwbufsize);
-	sc->sc_hwbuf = NULL;
-	sc->sc_hwbufsize = 0;
 
 	return 0;
 }
