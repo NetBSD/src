@@ -1,6 +1,6 @@
-/*	$NetBSD: gdt.c,v 1.40 2017/07/02 11:21:13 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.41 2017/09/02 12:57:03 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.40 2017/07/02 11:21:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.41 2017/09/02 12:57:03 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -66,7 +66,7 @@ typedef struct {
 	size_t nslots;
 } gdt_bitmap_t;
 
-size_t gdt_size;			/* size of GDT in bytes */	
+size_t gdt_size;			/* size of GDT in bytes */
 static gdt_bitmap_t gdt_bitmap;		/* bitmap of busy slots */
 
 #if defined(USER_LDT) || !defined(XEN)
@@ -130,21 +130,16 @@ gdt_init(void)
 	struct cpu_info *ci = &cpu_info_primary;
 
 	/* Initialize the global values */
-	gdt_size = MINGDTSIZ;
+	gdt_size = MAXGDTSIZ;
 	memset(&gdt_bitmap.busy, 0, sizeof(gdt_bitmap.busy));
 	gdt_bitmap.nslots = NSLOTS(gdt_size);
 
 	old_gdt = gdtstore;
 
-	/* Allocate MAXGDTSIZ bytes of virtual memory. */
-	gdtstore = (char *)uvm_km_alloc(kernel_map, MAXGDTSIZ, 0,
+	/* Allocate gdt_size bytes of memory. */
+	gdtstore = (char *)uvm_km_alloc(kernel_map, gdt_size, 0,
 	    UVM_KMF_VAONLY);
-
-	/*
-	 * Allocate only MINGDTSIZ bytes of physical memory. We will grow this
-	 * area in gdt_grow at run-time if needed.
-	 */
-	for (va = (vaddr_t)gdtstore; va < (vaddr_t)gdtstore + MINGDTSIZ;
+	for (va = (vaddr_t)gdtstore; va < (vaddr_t)gdtstore + gdt_size;
 	    va += PAGE_SIZE) {
 		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
 		if (pg == NULL) {
@@ -173,15 +168,12 @@ gdt_init(void)
 void
 gdt_alloc_cpu(struct cpu_info *ci)
 {
-	int max_len = MAXGDTSIZ;
-	int min_len = MINGDTSIZ;
 	struct vm_page *pg;
 	vaddr_t va;
 
-	ci->ci_gdt = (union descriptor *)uvm_km_alloc(kernel_map, max_len,
+	ci->ci_gdt = (union descriptor *)uvm_km_alloc(kernel_map, gdt_size,
 	    0, UVM_KMF_VAONLY);
-
-	for (va = (vaddr_t)ci->ci_gdt; va < (vaddr_t)ci->ci_gdt + min_len;
+	for (va = (vaddr_t)ci->ci_gdt; va < (vaddr_t)ci->ci_gdt + gdt_size;
 	    va += PAGE_SIZE) {
 		while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO))
 		    == NULL) {
@@ -192,7 +184,6 @@ gdt_alloc_cpu(struct cpu_info *ci)
 	}
 	pmap_update(pmap_kernel());
 
-	memset(ci->ci_gdt, 0, min_len);
 	memcpy(ci->ci_gdt, gdtstore, gdt_size);
 }
 
@@ -207,51 +198,11 @@ gdt_init_cpu(struct cpu_info *ci)
 
 	KASSERT(curcpu() == ci);
 
-#ifndef XEN
-	setregion(&region, ci->ci_gdt, (uint16_t)(MAXGDTSIZ - 1));
-#else
 	setregion(&region, ci->ci_gdt, (uint16_t)(gdt_size - 1));
-#endif
 	lgdt(&region);
 }
 
 #if !defined(XEN) || defined(USER_LDT)
-/*
- * Grow the GDT. The GDT is present on each CPU, so we need to iterate over all
- * of them. We already have the virtual memory, we only need to grow the
- * physical memory.
- */
-static void
-gdt_grow(void)
-{
-	size_t old_size;
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-	struct vm_page *pg;
-	vaddr_t va;
-
-	old_size = gdt_size;
-	gdt_size *= 2;
-	if (gdt_size > MAXGDTSIZ)
-		gdt_size = MAXGDTSIZ;
-	gdt_bitmap.nslots = NSLOTS(gdt_size);
-
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		for (va = (vaddr_t)(ci->ci_gdt) + old_size;
-		     va < (vaddr_t)(ci->ci_gdt) + gdt_size;
-		     va += PAGE_SIZE) {
-			while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO)) ==
-			    NULL) {
-				uvm_wait("gdt_grow");
-			}
-			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ | VM_PROT_WRITE, 0);
-		}
-	}
-
-	pmap_update(pmap_kernel());
-}
-
 static int
 gdt_get_slot(void)
 {
@@ -259,17 +210,14 @@ gdt_get_slot(void)
 
 	KASSERT(mutex_owned(&cpu_lock));
 
-	while (1) {
-		for (i = 0; i < gdt_bitmap.nslots; i++) {
-			if (!gdt_bitmap.busy[i]) {
-				gdt_bitmap.busy[i] = true;
-				return (int)i;
-			}
+	for (i = 0; i < gdt_bitmap.nslots; i++) {
+		if (!gdt_bitmap.busy[i]) {
+			gdt_bitmap.busy[i] = true;
+			return (int)i;
 		}
-		if (gdt_size >= MAXGDTSIZ)
-			panic("gdt_get_slot: out of memory");
-		gdt_grow();
 	}
+	panic("gdt_get_slot: out of memory");
+
 	/* NOTREACHED */
 	return 0;
 }
@@ -357,12 +305,12 @@ lgdt(struct region_descriptor *desc)
 	 */
 	va = desc->rd_base + desc->rd_limit + 1;
 	memset((void *)va, 0, roundup(va, PAGE_SIZE) - va);
+
+	/*
+	 * The lgdt instruction uses virtual addresses, do some translation for
+	 * Xen. Mark pages R/O too, otherwise Xen will refuse to use them.
+	 */
 	for (i = 0; i < roundup(desc->rd_limit, PAGE_SIZE) >> PAGE_SHIFT; i++) {
-		/*
-		 * The lgdt instruction uses virtual addresses,
-		 * do some translation for Xen.
-		 * Mark pages R/O too, else Xen will refuse to use them.
-		 */
 		frames[i] = ((paddr_t) xpmap_ptetomach(
 		    (pt_entry_t *)(desc->rd_base + (i << PAGE_SHIFT)))) >>
 		    PAGE_SHIFT;
