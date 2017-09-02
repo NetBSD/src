@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.47 2017/09/02 12:52:55 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.48 2017/09/02 15:40:31 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.47 2017/09/02 12:52:55 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.48 2017/09/02 15:40:31 isaki Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -159,8 +159,6 @@ struct {
 };
 
 #define NUM_RATE	(sizeof(vs_l2r)/sizeof(vs_l2r[0]))
-
-extern stream_filter_factory_t null_filter;
 
 static int
 vs_match(device_t parent, cfdata_t cf, void *aux)
@@ -365,6 +363,7 @@ vs_set_params(void *hdl, int setmode, int usemode,
 	stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	struct vs_softc *sc;
+	audio_params_t hw;
 	stream_filter_factory_t *pconv;
 	stream_filter_factory_t *rconv;
 	int rate;
@@ -405,18 +404,18 @@ vs_set_params(void *hdl, int setmode, int usemode,
 	/* pfil and rfil are independent even if !AUDIO_PROP_INDEPENDENT */
 
 	if ((setmode & AUMODE_PLAY) != 0) {
-		pfil->append(pfil, null_filter, play);
-		play->encoding = AUDIO_ENCODING_ADPCM;
-		play->validbits = 4;
-		play->precision = 4;
-		pfil->append(pfil, pconv, play);
+		hw = *play;
+		hw.encoding = AUDIO_ENCODING_ADPCM;
+		hw.precision = 4;
+		hw.validbits = 4;
+		pfil->prepend(pfil, pconv, &hw);
 	}
 	if ((setmode & AUMODE_RECORD) != 0) {
-		rfil->append(rfil, null_filter, rec);
-		rec->encoding = AUDIO_ENCODING_ADPCM;
-		rec->validbits = 4;
-		rec->precision = 4;
-		rfil->append(rfil, rconv, rec);
+		hw = *rec;
+		hw.encoding = AUDIO_ENCODING_ADPCM;
+		hw.precision = 4;
+		hw.validbits = 4;
+		rfil->prepend(rfil, rconv, &hw);
 	}
 
 	DPRINTF(1, ("accepted\n"));
