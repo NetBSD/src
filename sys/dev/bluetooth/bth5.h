@@ -1,4 +1,4 @@
-/*	$NetBSD: bth5.h,v 1.1 2017/08/10 13:22:19 nat Exp $	*/
+/*	$NetBSD: bth5.h,v 1.2 2017/09/03 23:11:19 nat Exp $	*/
 /*
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
@@ -62,6 +62,9 @@ typedef struct {
 #define BTH5_FLAGS_PROTOCOL_TYPE 0x80
 #define BTH5_FLAGS_PROTOCOL_REL	0x80
 
+#define BTH5_CONFIG_ACK_MASK	0x07
+#define BTH5_CONFIG_FLOW_MASK	(1 << 7)
+
 #define BTH5_SET_PLEN(hdrp, n)				\
 	do {						\
 		(hdrp)->plen1 = ((n) & 0x00f);		\
@@ -76,8 +79,6 @@ typedef struct {
 
 
 #define BTH5_IDENT_ACKPKT	0	/* Used by MUX Layer */
-/* Other Protocol Identifier values described to bcore-sp-007P */
-
 
 /* definitions of SLIP Layer */
 #define BTH5_SLIP_PKTSTART	0xc0
@@ -98,7 +99,6 @@ typedef struct {
 
 
 /*
- * Reference to bcore-sp-007p.
  *   Channel Allocation
  */
 #define BTH5_CHANNEL_HCI_CMD	1	/* HCI Command and Event */

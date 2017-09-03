@@ -1,4 +1,4 @@
-/*	$NetBSD: bth5.c,v 1.4 2017/08/14 12:51:11 nat Exp $	*/
+/*	$NetBSD: bth5.c,v 1.5 2017/09/03 23:11:19 nat Exp $	*/
 /*
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bth5.c,v 1.4 2017/08/14 12:51:11 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bth5.c,v 1.5 2017/09/03 23:11:19 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -110,14 +110,16 @@ struct bth5_softc {
 	MBUFQ_HEAD() sc_seqq;			/* Sequencing Layer queue */
 	MBUFQ_HEAD() sc_seq_retryq;		/* retry queue */
 	uint32_t sc_seq_txseq;
-	uint32_t sc_seq_txack;
 	uint32_t sc_seq_expected_rxseq;
+	uint32_t sc_seq_total_rxpkts;
+	uint32_t sc_seq_winack;
 	uint32_t sc_seq_winspace;
 	uint32_t sc_seq_retries;
 	callout_t sc_seq_timer;
 	uint32_t sc_seq_timeout;
 	uint32_t sc_seq_winsize;
 	uint32_t sc_seq_retry_limit;
+	bool	 sc_oof_flow_control;
 
 	/* variables of Datagram Queue Layer */
 	MBUFQ_HEAD() sc_dgq;			/* Datagram Queue Layer queue */
@@ -500,10 +502,13 @@ bth5_slip_transmit(struct tty *tp)
 	struct mbuf *m;
 	int count, rlen;
 	uint8_t *rptr;
+	int s;
 
 	m = sc->sc_txp;
 	if (m == NULL) {
+		s = spltty();
 		sc->sc_flags &= ~BTH5_XMIT;
+		splx(s);
 		bth5_mux_transmit(sc);
 		return 0;
 	}
@@ -526,12 +531,18 @@ bth5_slip_transmit(struct tty *tp)
 		count++;
 
 		if (sc->sc_slip_txrsv == BTH5_SLIP_ESCAPE_PKTEND ||
-		    sc->sc_slip_txrsv == BTH5_SLIP_ESCAPE_XON ||
-		    sc->sc_slip_txrsv == BTH5_SLIP_ESCAPE_XOFF ||
 		    sc->sc_slip_txrsv == BTH5_SLIP_ESCAPE_ESCAPE) {
 			rlen++;
 			rptr++;
 		}
+		if (sc->sc_oof_flow_control == true) {
+			if (sc->sc_slip_txrsv == BTH5_SLIP_ESCAPE_XON ||
+			    sc->sc_slip_txrsv == BTH5_SLIP_ESCAPE_XOFF) {
+				rlen++;
+				rptr++;
+			}
+		}
+
 		sc->sc_slip_txrsv = 0;
 	}
 
@@ -571,7 +582,8 @@ bth5_slip_transmit(struct tty *tp)
 			}
 			DPRINTFN(4, ("0x%02x ", BTH5_SLIP_ESCAPE_PKTEND));
 			rptr++;
-		} else if (*rptr == BTH5_SLIP_XON) {
+		} else if (sc->sc_oof_flow_control == true && *rptr ==
+							 BTH5_SLIP_XON) {
 			if (putc(BTH5_SLIP_ESCAPE, &tp->t_outq) < 0)
 				break;
 			count++;
@@ -583,7 +595,8 @@ bth5_slip_transmit(struct tty *tp)
 			}
 			DPRINTFN(4, ("0x%02x ", BTH5_SLIP_ESCAPE_XON));
 			rptr++;
-		} else if (*rptr == BTH5_SLIP_XOFF) {
+		} else if (sc->sc_oof_flow_control == true && *rptr ==
+							 BTH5_SLIP_XOFF) {
 			if (putc(BTH5_SLIP_ESCAPE, &tp->t_outq) < 0)
 				break;
 			count++;
@@ -728,10 +741,12 @@ bth5_slip_receive(int c, struct tty *tp)
 			if (c == BTH5_SLIP_ESCAPE_PKTEND)
 				mtod(m, uint8_t *)[m->m_len++] =
 				    BTH5_SLIP_PKTEND;
-			else if (c == BTH5_SLIP_ESCAPE_XON)
+			else if (sc->sc_oof_flow_control == true &&
+						c == BTH5_SLIP_ESCAPE_XON)
 				mtod(m, uint8_t *)[m->m_len++] =
 				    BTH5_SLIP_XON;
-			else if (c == BTH5_SLIP_ESCAPE_XOFF)
+			else if (sc->sc_oof_flow_control == true &&
+						c == BTH5_SLIP_ESCAPE_XOFF)
 				mtod(m, uint8_t *)[m->m_len++] =
 				    BTH5_SLIP_XOFF;
 			else if (c == BTH5_SLIP_ESCAPE_ESCAPE)
@@ -921,6 +936,7 @@ bth5_mux_transmit(struct bth5_softc *sc)
 {
 	struct mbuf *m;
 	bth5_hdr_t *hdrp;
+	int s;
 
 	DPRINTFN(2, ("%s: mux transmit: sc_flags=0x%x, choke=%d",
 	    device_xname(sc->sc_dev), sc->sc_flags, sc->sc_mux_choke));
@@ -963,8 +979,12 @@ bth5_mux_transmit(struct bth5_softc *sc)
 		hdrp->flags |= BTH5_FLAGS_PROTOCOL_REL;		/* Reliable */
 		goto transmit;
 	}
-	sc->sc_flags &= ~BTH5_XMIT;
-	bth5_start(sc);
+
+	s = spltty();
+	if ((sc->sc_flags & BTH5_XMIT) == 0)
+		bth5_start(sc);
+	splx(s);
+
 	if (sc->sc_mux_send_ack == true) {
 		m = bth5_create_ackpkt();
 		if (m != NULL)
@@ -975,6 +995,7 @@ bth5_mux_transmit(struct bth5_softc *sc)
 
 	/* Nothing to send */
 	DPRINTFN(2, ("\n"));
+
 	return;
 
 transmit:
@@ -1017,6 +1038,9 @@ bth5_mux_receive(struct bth5_softc *sc, struct mbuf *m)
 	if (BTH5_FLAGS_SEQ(hdrp->flags) == 0 &&
 	    hdrp->ident == BTH5_IDENT_ACKPKT &&
 	    BTH5_GET_PLEN(hdrp) == 0) {
+		sc->sc_seq_txseq = BTH5_FLAGS_ACK(hdrp->flags);
+		bth5_send_ack_command(sc);
+		bth5_mux_transmit(sc);
 		m_freem(m);
 		return;
 	}
@@ -1076,11 +1100,12 @@ static void
 bth5_sequencing_receive(struct bth5_softc *sc, struct mbuf *m)
 {
 	bth5_hdr_t hdr;
-	uint32_t exp_rxseq, rxseq;
+	uint32_t exp_rxseq, rxack, rxseq;
 
 	exp_rxseq = sc->sc_seq_expected_rxseq & BTH5_FLAGS_SEQ_MASK;
 	m_copydata(m, 0, sizeof(bth5_hdr_t), &hdr);
 	rxseq = BTH5_FLAGS_SEQ(hdr.flags);
+	rxack = BTH5_FLAGS_ACK(hdr.flags);
 
 	DPRINTFN(1, ("%s: seq receive: rxseq=%d, expected %d\n",
 	    device_xname(sc->sc_dev), rxseq, exp_rxseq));
@@ -1145,16 +1170,13 @@ bth5_sequencing_receive(struct bth5_softc *sc, struct mbuf *m)
 		m_freem(m);
 		break;
 	}
+	bth5_send_ack_command(sc);
+	sc->sc_seq_txseq = rxack;
+	sc->sc_seq_expected_rxseq = (rxseq + 1) & BTH5_FLAGS_SEQ_MASK;
+	sc->sc_seq_total_rxpkts++;
 
-	if (sc->sc_seq_expected_rxseq / sc->sc_seq_winsize  ==
-					 sc->sc_seq_winsize) {
-		bth5_send_ack_command(sc);
-		sc->sc_seq_txack = sc->sc_seq_expected_rxseq & BTH5_FLAGS_SEQ_MASK;
-	} else
-		sc->sc_seq_txack = rxseq;
-
-	sc->sc_seq_expected_rxseq =
-	    (sc->sc_seq_expected_rxseq + 1);
+	if (sc->sc_seq_total_rxpkts % sc->sc_seq_winack == 0)
+		bth5_mux_transmit(sc);
 }
 
 static bool
@@ -1207,7 +1229,6 @@ bth5_tx_reliable_pkt(struct bth5_softc *sc, struct mbuf *m, u_int protocol_id)
 		bth5_packet_print(m);
 #endif
 
-	sc->sc_seq_txseq = (sc->sc_seq_txseq + 1) & BTH5_FLAGS_SEQ_MASK;
 	sc->sc_seq_winspace--;
 	_retrans = m_copym(m, 0, M_COPYALL, M_WAIT);
 	if (_retrans == NULL) {
@@ -1216,6 +1237,7 @@ bth5_tx_reliable_pkt(struct bth5_softc *sc, struct mbuf *m, u_int protocol_id)
 	}
 	MBUFQ_ENQUEUE(&sc->sc_seq_retryq, _retrans);
 	bth5_mux_transmit(sc);
+	sc->sc_seq_txseq = (sc->sc_seq_txseq + 1) & BTH5_FLAGS_SEQ_MASK;
 
 	return true;
 out:
@@ -1227,7 +1249,7 @@ static __inline u_int
 bth5_get_txack(struct bth5_softc *sc)
 {
 
-	return sc->sc_seq_txack;
+	return sc->sc_seq_expected_rxseq;
 }
 
 static void
@@ -1254,6 +1276,8 @@ bth5_signal_rxack(struct bth5_softc *sc, uint32_t rxack)
 				MBUFQ_DEQUEUE(&sc->sc_seq_retryq, m0);
 				m_freem(m0);
 				sc->sc_seq_winspace++;
+				if (sc->sc_seq_winspace > sc->sc_seq_winsize)
+					sc->sc_seq_winspace = sc->sc_seq_winsize;
 			}
 			break;
 		}
@@ -1285,6 +1309,8 @@ bth5_timer_timeout(void *arg)
 	DPRINTFN(1, ("%s: seq timeout: retries=%d\n",
 	    device_xname(sc->sc_dev), sc->sc_seq_retries));
 
+	bth5_send_ack_command(sc);
+	bth5_mux_transmit(sc);
 	s = splserial();
 	for (m = MBUFQ_FIRST(&sc->sc_seq_retryq); m != NULL;
 	    m = MBUFQ_NEXT(m)) {
@@ -1325,7 +1351,6 @@ bth5_sequencing_reset(struct bth5_softc *sc)
 
 
 	sc->sc_seq_txseq = 0;
-	sc->sc_seq_txack = 0;
 	sc->sc_seq_winspace = sc->sc_seq_winsize;
 	sc->sc_seq_retries = 0;
 	callout_stop(&sc->sc_seq_timer);
@@ -1334,6 +1359,7 @@ bth5_sequencing_reset(struct bth5_softc *sc)
 
 	/* XXXX: expected_rxseq should be set by MUX Layer */
 	sc->sc_seq_expected_rxseq = 0;
+	sc->sc_seq_total_rxpkts = 0;
 }
 
 
@@ -1502,7 +1528,8 @@ static void
 bth5_input_le(struct bth5_softc *sc, struct mbuf *m)
 {
 	uint16_t *rcvpkt;
-	int i;
+	int i, len;
+	uint8_t config[3];
 	const uint8_t *rplypkt;
 	static struct {
 		const char *type;
@@ -1527,7 +1554,7 @@ bth5_input_le(struct bth5_softc *sc, struct mbuf *m)
 	i = 0;
 
 	/* length of le packets is 2 */
-	if (m->m_len == sizeof(uint16_t))
+	if (m->m_len >= sizeof(uint16_t))
 		for (i = 0; pkt[i].type != NULL; i++)
 			if (*(const uint16_t *)pkt[i].datap == *rcvpkt)
 				break;
@@ -1536,6 +1563,8 @@ bth5_input_le(struct bth5_softc *sc, struct mbuf *m)
 		m_freem(m);
 		return;
 	}
+
+	len = m->m_len;
 
 	rplypkt = NULL;
 	switch (sc->sc_le_state) {
@@ -1558,14 +1587,26 @@ bth5_input_le(struct bth5_softc *sc, struct mbuf *m)
 	case le_state_curious:
 		if (*rcvpkt == *(const uint16_t *)sync)
 			rplypkt = syncresp;
-		else if (*rcvpkt == *(const uint16_t *)syncresp)
+		else if (*rcvpkt == *(const uint16_t *)syncresp) {
 			rplypkt = conf;
+			len = 3;
+		}
 		else if (*rcvpkt == *(const uint16_t *)conf)
 			rplypkt = confresp;
-		else if (*rcvpkt == *(const uint16_t *)confresp) {
+		else if (*rcvpkt == *(const uint16_t *)confresp &&
+				m->m_len == 3) {
 			DPRINTF(("%s: state change to garrulous:\n",
 			    device_xname(sc->sc_dev)));
 
+			memcpy(config, conf, sizeof(uint16_t));
+			config[2] = (uint8_t)rcvpkt[1];
+			sc->sc_seq_winack = config[2] & BTH5_CONFIG_ACK_MASK;
+			if (config[2] & BTH5_CONFIG_FLOW_MASK)
+				sc->sc_oof_flow_control = true;
+			else
+				sc->sc_oof_flow_control = false;
+
+			bth5_sequencing_reset(sc);
 			bth5_set_choke(sc, false);
 			callout_stop(&sc->sc_le_timer);
 			sc->sc_le_state = le_state_garrulous;
@@ -1583,7 +1624,7 @@ bth5_input_le(struct bth5_softc *sc, struct mbuf *m)
 			    "received sync! peer to reset?\n");
 
 			bth5_sequencing_reset(sc);
-			rplypkt = sync;
+			rplypkt = syncresp;
 			sc->sc_le_state = le_state_shy;
 		} else
 			aprint_error_dev(sc->sc_dev,
@@ -1591,7 +1632,6 @@ bth5_input_le(struct bth5_softc *sc, struct mbuf *m)
 		break;
 	}
 
-	int len = m->m_len;
 	m_freem(m);
 
 	if (rplypkt != NULL) {
@@ -1601,7 +1641,8 @@ bth5_input_le(struct bth5_softc *sc, struct mbuf *m)
 		else {
 			/* length of le packets is 2 */
 			m->m_pkthdr.len = m->m_len = 0;
-			if (rplypkt == confresp || rplypkt == conf)
+			if (rplypkt == (const uint8_t *)&config
+			    || rplypkt == confresp || rplypkt == conf)
 				m_copyback(m, 0, len, rplypkt);
 			else
 				m_copyback(m, 0, 2, rplypkt);
