@@ -1,4 +1,4 @@
-/* $NetBSD: t_round.c,v 1.7 2017/08/30 22:55:41 maya Exp $ */
+/* $NetBSD: t_round.c,v 1.8 2017/09/03 13:29:55 maya Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -103,8 +103,8 @@ ATF_TC_BODY(rounding_alpha, tc)
         u = (gimpy_limb_t) d;
 
         for (; i > 0; i--) {
-                printf("i=%d, u: %"PRIu64"\n", i, u);
-                ATF_CHECK(!(u & 1));
+                ATF_CHECK_MSG((u % 2 == 0),
+		    "%"PRIu64" is not an even number! (iteration %d)", u , i);
                 u = u >> 1;
         }
 }
@@ -115,13 +115,15 @@ ATF_TC_HEAD(rounding_alpha_simple, tc)
 	atf_tc_set_md_var(tc, "descr","Checking double to uint64_t edge case");
 }
 
+
+double rounding_alpha_simple_even = 9223372036854775808.000000; /* 2^63 */
+
 ATF_TC_BODY(rounding_alpha_simple, tc)
 {
-	double even = 9223372036854775808.000000; /* 2^63 */
-	uint64_t unsigned_even = even;
+	uint64_t unsigned_even = rounding_alpha_simple_even;
 
 	ATF_CHECK_MSG(unsigned_even % 2 == 0,
-	    "2^63 casted to uint64_t is odd");
+	    "2^63 casted to uint64_t is odd (got %"PRIu64")", unsigned_even);
 
 }
 ATF_TP_ADD_TCS(tp)
