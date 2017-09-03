@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.102 2017/07/31 18:54:40 maxv Exp $	*/
+/*	$NetBSD: intr.c,v 1.103 2017/09/03 06:24:49 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.102 2017/07/31 18:54:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.103 2017/09/03 06:24:49 cherry Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -246,8 +246,6 @@ static const char *create_intrid(int, struct pic *, int, char *, size_t);
 static struct intrsource *intr_get_io_intrsource(const char *);
 static void intr_free_io_intrsource_direct(struct intrsource *);
 static int intr_num_handlers(struct intrsource *);
-
-static const char *legacy_intr_string(int, char *, size_t, struct pic *);
 
 static int intr_find_unused_slot(struct cpu_info *, int *);
 static void intr_activate_xcall(void *, void *);
