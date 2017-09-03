@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.98 2017/09/03 09:01:03 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.99 2017/09/03 09:19:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2017/09/03 09:01:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2017/09/03 09:19:51 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -152,6 +152,13 @@ const char * const trap_type[] = {
 int	trap_types = __arraycount(trap_type);
 
 #define	IDTVEC(name)	__CONCAT(X, name)
+
+static void
+onfault_restore(struct trapframe *frame, void *onfault, int error)
+{
+	frame->tf_rip = (uintptr_t)onfault;
+	frame->tf_rax = error;
+}
 
 static void *
 onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
@@ -405,11 +412,7 @@ trap(struct trapframe *frame)
 		/* Check for copyin/copyout fault. */
 		onfault = onfault_handler(pcb, frame);
 		if (onfault != NULL) {
-copyefault:
-			error = EFAULT;
-copyfault:
-			frame->tf_rip = (uintptr_t)onfault;
-			frame->tf_rax = error;
+			onfault_restore(frame, onfault, EFAULT);
 			return;
 		}
 
@@ -537,7 +540,8 @@ copyfault:
 		 */
 		onfault = pcb->pcb_onfault;
 		if (onfault == fusuintrfailure) {
-			goto copyefault;
+			onfault_restore(frame, fusuintrfailure, EFAULT);
+			return;
 		}
 		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
 			goto we_re_toast;
@@ -547,7 +551,7 @@ copyfault:
 
 		if (frame->tf_err & PGEX_X) {
 			/* SMEP might have brought us here */
-			if (cr2 > VM_MIN_ADDRESS && cr2 <= VM_MAXUSER_ADDRESS)
+			if (cr2 < VM_MAXUSER_ADDRESS)
 				panic("prevented execution of %p (SMEP)",
 				    (void *)cr2);
 		}
@@ -658,8 +662,11 @@ faultcommon:
 
 		if (type == T_PAGEFLT) {
 			onfault = onfault_handler(pcb, frame);
-			if (onfault != NULL)
-				goto copyfault;
+			if (onfault != NULL) {
+				onfault_restore(frame, onfault, error);
+				return;
+			}
+
 			printf("uvm_fault(%p, 0x%lx, %d) -> %x\n",
 			    map, va, ftype, error);
 			goto we_re_toast;
