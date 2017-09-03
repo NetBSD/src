@@ -1,4 +1,4 @@
-/* $NetBSD: t_round.c,v 1.8 2017/09/03 13:29:55 maya Exp $ */
+/* $NetBSD: t_round.c,v 1.9 2017/09/03 13:41:19 wiz Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ ATF_TC_BODY(rounding_alpha_simple, tc)
 	uint64_t unsigned_even = rounding_alpha_simple_even;
 
 	ATF_CHECK_MSG(unsigned_even % 2 == 0,
-	    "2^63 casted to uint64_t is odd (got %"PRIu64")", unsigned_even);
+	    "2^63 cast to uint64_t is odd (got %"PRIu64")", unsigned_even);
 
 }
 ATF_TP_ADD_TCS(tp)
