@@ -1,7 +1,7 @@
-/*	$NetBSD: init_bcm43xx.c,v 1.4 2017/08/14 05:28:23 nat Exp $	*/
+/*	$NetBSD: init_bcm43xx.c,v 1.5 2017/09/03 22:54:12 nat Exp $	*/
 
 /*-
- * Copyright (c) 2017 Iain Hibbert
+ * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
  *
  * Copyright (c) 2008 Iain Hibbert
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init_bcm43xx.c,v 1.4 2017/08/14 05:28:23 nat Exp $");
+__RCSID("$NetBSD: init_bcm43xx.c,v 1.5 2017/09/03 22:54:12 nat Exp $");
 
 #include <sys/param.h>
 
