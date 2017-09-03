@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.7 2017/08/25 00:07:03 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.8 2017/09/03 13:59:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.7 2017/08/25 00:07:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.8 2017/09/03 13:59:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.7 2017/08/25 00:07:03 jmcneill 
 #include <arm/fdt/psci_fdt.h>
 
 #include <arm/sunxi/sunxi_platform.h>
+
+#include <libfdt.h>
 
 #define	SUNXI_REF_FREQ	24000000
 
@@ -144,8 +146,24 @@ sunxi_platform_uart_freq(void)
 }
 
 static void
-sunxi_platform_null_bootstrap(void)
+sunxi_platform_bootstrap(void)
 {
+	if (match_bootconf_option(boot_args, "console", "fb")) {
+		void *fdt_data = __UNCONST(fdtbus_get_data());
+		const int chosen_off = fdt_path_offset(fdt_data, "/chosen");
+		const int framebuffer_off =
+		    fdt_path_offset(fdt_data, "/chosen/framebuffer");
+		if (chosen_off >= 0 && framebuffer_off >= 0)
+			fdt_setprop_string(fdt_data, chosen_off, "stdout-path",
+			    "/chosen/framebuffer");
+	}
+}
+
+static void
+sunxi_platform_psci_bootstrap(void)
+{
+	psci_fdt_bootstrap();
+	sunxi_platform_bootstrap();
 }
 
 static void
@@ -200,7 +218,7 @@ sun6i_platform_reset(void)
 
 static const struct arm_platform sun5i_platform = {
 	.devmap = sunxi_platform_devmap,
-	.bootstrap = sunxi_platform_null_bootstrap,
+	.bootstrap = sunxi_platform_bootstrap,
 	.init_attach_args = sunxi_platform_init_attach_args,
 	.early_putchar = sunxi_platform_early_putchar,
 	.device_register = sunxi_platform_device_register,
@@ -213,7 +231,7 @@ ARM_PLATFORM(sun5i_a13, "allwinner,sun5i-a13", &sun5i_platform);
 
 static const struct arm_platform sun6i_platform = {
 	.devmap = sunxi_platform_devmap,
-	.bootstrap = psci_fdt_bootstrap,
+	.bootstrap = sunxi_platform_psci_bootstrap,
 	.init_attach_args = sunxi_platform_init_attach_args,
 	.early_putchar = sunxi_platform_early_putchar,
 	.device_register = sunxi_platform_device_register,
@@ -226,7 +244,7 @@ ARM_PLATFORM(sun6i_a31, "allwinner,sun6i-a31", &sun6i_platform);
 
 static const struct arm_platform sun8i_platform = {
 	.devmap = sunxi_platform_devmap,
-	.bootstrap = psci_fdt_bootstrap,
+	.bootstrap = sunxi_platform_psci_bootstrap,
 	.init_attach_args = sunxi_platform_init_attach_args,
 	.early_putchar = sunxi_platform_early_putchar,
 	.device_register = sunxi_platform_device_register,
@@ -241,7 +259,7 @@ ARM_PLATFORM(sun8i_a83t, "allwinner,sun8i-a83t", &sun8i_platform);
 
 static const struct arm_platform sun50i_platform = {
 	.devmap = sunxi_platform_devmap,
-	.bootstrap = sunxi_platform_null_bootstrap,
+	.bootstrap = sunxi_platform_bootstrap,
 	.init_attach_args = sunxi_platform_init_attach_args,
 	.early_putchar = sunxi_platform_early_putchar,
 	.device_register = sunxi_platform_device_register,
