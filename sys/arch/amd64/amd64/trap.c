@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.97 2017/09/03 08:52:18 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.98 2017/09/03 09:01:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2017/09/03 08:52:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2017/09/03 09:01:03 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -401,6 +401,7 @@ trap(struct trapframe *frame)
 	case T_TSSFLT:
 		if (p == NULL)
 			goto we_re_toast;
+
 		/* Check for copyin/copyout fault. */
 		onfault = onfault_handler(pcb, frame);
 		if (onfault != NULL) {
@@ -412,7 +413,6 @@ copyfault:
 			return;
 		}
 
-kernelfault:
 		trap_user_kernelmode(frame, type, l, p);
 		goto we_re_toast;
 
@@ -662,7 +662,7 @@ faultcommon:
 				goto copyfault;
 			printf("uvm_fault(%p, 0x%lx, %d) -> %x\n",
 			    map, va, ftype, error);
-			goto kernelfault;
+			goto we_re_toast;
 		}
 
 		KSI_INIT_TRAP(&ksi);
