@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.1,v 1.1.2.29 2017/08/27 05:46:11 snj Exp $
+# $NetBSD: CHANGES-7.1.1,v 1.1.2.30 2017/09/04 16:08:52 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.1.1
 release:
@@ -3632,4 +3632,10 @@ sys/arch/i386/conf/GENERIC			patch
 
 	i386 GENERIC: disable VM86 by default.
 	[maxv, ticket #1463]
+
+sys/arch/sparc64/sparc64/compat_13_machdep.c	1.24
+
+	Apply only CCR. Otherwise userland could set PSTATE_PRIV
+	in %pstate and get kernel privileges on the hardware.
+	[maxv, ticket #1504]
 
