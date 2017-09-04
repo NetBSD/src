@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.43 2017/09/04 06:39:31 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.44 2017/09/04 16:09:34 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -4623,4 +4623,10 @@ usr.sbin/syslogd/syslogd.c			1.123
 	Fixed incorrect syslogd(8) internal time conversions that could
 	result in incorrect timestamp values being logged.  PR/51234.
 	[ginsbach, ticket #1496]
+
+sys/arch/sparc64/sparc64/compat_13_machdep.c	1.24
+
+	Apply only CCR. Otherwise userland could set PSTATE_PRIV
+	in %pstate and get kernel privileges on the hardware.
+	[maxv, ticket #1504]
 
