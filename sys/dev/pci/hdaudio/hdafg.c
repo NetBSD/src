@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.21.2.1 2015/09/04 15:07:08 martin Exp $ */
+/* $NetBSD: hdafg.c,v 1.21.2.2 2017/09/04 06:10:30 snj Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.21.2.1 2015/09/04 15:07:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.21.2.2 2017/09/04 06:10:30 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -874,15 +874,19 @@ hdafg_assoc_dump_dd(struct hdafg_softc *sc, struct hdaudio_assoc *as, int pin,
 			res = (*cmd)(sc->sc_codec, as->as_pins[pin],
 			    CORB_GET_HDMI_ELD_DATA, i);
 			if (!(res & COP_ELD_VALID)) {
+#ifdef HDAFG_HDMI_DEBUG
 				hda_error(sc, "bad ELD size (%u/%u)\n",
 				    i, elddatalen);
+#endif
 				break;
 			}
 			elddata[i] = COP_ELD_DATA(res);
 		}
 
 		if (hdafg_dd_parse_info(elddata, elddatalen, &hdi) != 0) {
+#ifdef HDAFG_HDMI_DEBUG
 			hda_error(sc, "failed to parse ELD data\n");
+#endif
 			return;
 		}
 
@@ -4260,7 +4264,9 @@ hdafg_unsol(device_t self, uint8_t tag)
 
 	switch (tag) {
 	case HDAUDIO_UNSOLTAG_EVENT_DD:
+#ifdef HDAFG_HDMI_DEBUG
 		hda_print(sc, "unsol: display device hotplug\n");
+#endif
 		for (i = 0; i < sc->sc_nassocs; i++) {
 			if (as[i].as_displaydev == false)
 				continue;
@@ -4272,7 +4278,9 @@ hdafg_unsol(device_t self, uint8_t tag)
 		}
 		break;
 	default:
+#ifdef HDAFG_HDMI_DEBUG
 		hda_print(sc, "unsol: tag=%u\n", tag);
+#endif
 		break;
 	}
 
