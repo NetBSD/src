@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.54 2017/09/04 06:52:11 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.55 2017/09/04 16:11:37 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5770,4 +5770,10 @@ sys/dev/usb/ukbd.c				1.137-1.138
 	Support more varieties of USB keyboard reports.
 	Always try to set USB HID devices into Report Protocol.
 	[jakllsch, ticket #263]
+
+sys/arch/sparc64/sparc64/compat_13_machdep.c	1.24
+
+	Apply only CCR. Otherwise userland could set PSTATE_PRIV
+	in %pstate and get kernel privileges on the hardware.
+	[maxv, ticket #264]
 
