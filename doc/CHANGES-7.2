@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.42 2017/08/25 03:49:54 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.43 2017/09/04 06:39:31 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -4591,4 +4591,36 @@ sys/arch/i386/conf/GENERIC			patch
 
 	i386 GENERIC: disable VM86 by default.
 	[maxv, ticket #1463]
+
+usr.bin/systat/main.c				1.51
+usr.bin/systat/systat.1				1.47 via patch
+
+	add a basic "-b" option - that outputs one display and exits.
+	[mrg, ticket #1491]
+
+sys/dev/hdaudio/hdafg.c				1.13 (s,hdaudio,pci/hdaudio,)
+sys/dev/hdaudio/hdafg_dd.c			1.2 (s,hdaudio,pci/hdaudio,)
+
+	put all the ELD debugging messages under #ifdef HDAFG_HDMI_DEBUG.
+	[mrg, ticket #1492]
+
+lib/libc/rpc/rpcb_st_xdr.c			1.12
+
+	Fixed NetBSD RPCBPROC_GETSTAT endocde/decode interoperability
+	issues with other operating systems. The get statistics option
+	(-m) of rpcifno now works correctly against other
+	implementations of rpcbind and vice versa.
+	[ginsbach, ticket #1494]
+
+lib/libc/stdlib/merge.c				1.15
+
+	Gracefully handle a zero number of members argument in
+	mergesort(3).
+	[ginsbach, ticket #1495]
+
+usr.sbin/syslogd/syslogd.c			1.123
+
+	Fixed incorrect syslogd(8) internal time conversions that could
+	result in incorrect timestamp values being logged.  PR/51234.
+	[ginsbach, ticket #1496]
 
