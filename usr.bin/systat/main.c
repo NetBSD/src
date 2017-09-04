@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.48 2014/06/03 22:22:41 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.48.2.1 2017/09/04 06:04:06 snj Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.48 2014/06/03 22:22:41 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.48.2.1 2017/09/04 06:04:06 snj Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -96,6 +96,7 @@ main(int argc, char **argv)
 	const char *all;
 	struct clockinfo clk;
 	size_t len;
+	int bflag = 0;
 
 	all = "all";
 	egid = getegid();
@@ -119,6 +120,9 @@ main(int argc, char **argv)
 		case 't':
 			if ((turns = atoi(optarg)) <= 0)
 				errx(1, "turns <= 0.");
+			break;
+		case 'b':
+			bflag = !bflag;
 			break;
 		case '?':
 		default:
@@ -226,9 +230,12 @@ main(int argc, char **argv)
 	dellave = 0.0;
 
 	display(0);
-	noecho();
-	cbreak();
-	keyboard();
+	if (!bflag) {
+		noecho();
+		cbreak();
+		keyboard();
+	} else
+		die(0);
 	/*NOTREACHED*/
 }
 
