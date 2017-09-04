@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.111 2017/08/30 07:05:24 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.112 2017/09/04 16:04:59 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -14798,4 +14798,10 @@ usr.sbin/racoon/Makefile			1.28
 
 	Update Heimdal to 7.1.
 	[mrg, ticket #1493]
+
+sys/arch/sparc64/sparc64/compat_13_machdep.c	1.24
+
+	Apply only CCR. Otherwise userland could set PSTATE_PRIV
+	in %pstate and get kernel privileges on the hardware.
+	[maxv, ticket #1501]
 
