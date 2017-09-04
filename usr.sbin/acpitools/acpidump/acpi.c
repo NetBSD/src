@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.24 2017/09/04 08:08:41 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.25 2017/09/04 08:12:29 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.24 2017/09/04 08:08:41 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.25 2017/09/04 08:12:29 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -317,7 +317,7 @@ acpi_print_hest_errorbank(ACPI_HEST_IA_ERROR_BANK *bank)
 {
 	printf("\n");
 	printf("\tBank Number=%d\n", bank->BankNumber);
-	printf("\tClear Status On Init={ %s }\n",
+	printf("\tClear Status On Init={%s}\n",
 		bank->ClearStatusOnInit ? "NO" : "YES");
 	printf("\tStatus Data Format={ ");
 	switch (bank->StatusFormat) {
@@ -344,43 +344,43 @@ acpi_print_hest_errorbank(ACPI_HEST_IA_ERROR_BANK *bank)
 static void
 acpi_print_hest_header(ACPI_HEST_HEADER *hest)
 {
-	printf("\tType={ ");
+	printf("\tType={");
 	switch (hest->Type) {
 	case ACPI_HEST_TYPE_IA32_CHECK:
 		printf("IA32 Machine Check Exception");
 		break;
 	case ACPI_HEST_TYPE_IA32_CORRECTED_CHECK:
-		printf("IA32 Corrected Machine Check\n");
+		printf("IA32 Corrected Machine Check");
 		break;
 	case ACPI_HEST_TYPE_IA32_NMI:
-		printf("IA32 Non-Maskable Interrupt\n");
+		printf("IA32 Non-Maskable Interrupt");
 		break;
 	case ACPI_HEST_TYPE_NOT_USED3:
 	case ACPI_HEST_TYPE_NOT_USED4:
 	case ACPI_HEST_TYPE_NOT_USED5:
-		printf("unused type: %d\n", hest->Type);
+		printf("unused type: %d", hest->Type);
 		break;
 	case ACPI_HEST_TYPE_AER_ROOT_PORT:
-		printf("PCI Express Root Port AER\n");
+		printf("PCI Express Root Port AER");
 		break;
 	case ACPI_HEST_TYPE_AER_ENDPOINT:
-		printf("PCI Express Endpoint AER\n");
+		printf("PCI Express Endpoint AER");
 		break;
 	case ACPI_HEST_TYPE_AER_BRIDGE:
-		printf("PCI Express/PCI-X Bridge AER\n");
+		printf("PCI Express/PCI-X Bridge AER");
 		break;
 	case ACPI_HEST_TYPE_GENERIC_ERROR:
-		printf("Generic Hardware Error Source\n");
+		printf("Generic Hardware Error Source");
 		break;
 	case ACPI_HEST_TYPE_GENERIC_ERROR_V2:
-		printf("Generic Hardware Error Source version 2\n");
+		printf("Generic Hardware Error Source version 2");
 		break;
 	case ACPI_HEST_TYPE_RESERVED:
 	default:
-		printf("Reserved\n");
+		printf("Reserved (%d)", hest->Type);
 		break;
 	}
-	printf(" }\n");
+	printf("}\n");
 	printf("\tSourceId=%d\n", hest->SourceId);
 }
 
@@ -417,7 +417,7 @@ static void
 acpi_print_hest_notify(ACPI_HEST_NOTIFY *notify)
 {
 	printf("\tHW Error Notification={\n");
-	printf("\t\tType={ ");
+	printf("\t\tType={");
 	switch (notify->Type) {
 	case ACPI_HEST_NOTIFY_POLLED:
 		printf("POLLED");
@@ -456,10 +456,10 @@ acpi_print_hest_notify(ACPI_HEST_NOTIFY *notify)
 		printf("RESERVED");
 		break;
 	default:
-		printf(" %d (reserved)", notify->Type);
+		printf("%d (reserved)", notify->Type);
 		break;
 	}
-	printf(" }\n");
+	printf("}\n");
 
 	printf("\t\tLength=%d\n", notify->Length);
 
@@ -674,13 +674,14 @@ acpi_print_hest_generic(ACPI_HEST_GENERIC *data)
 	acpi_print_hest_header(&data->Header);
 	if (data->RelatedSourceId != 0xffff)
 		printf("\tReleated SourceId=%d\n", data->RelatedSourceId);
-	printf("\tEnabled={ %s }\n", data->Enabled ? "YES" : "NO");
+	printf("\tEnabled={%s}\n", data->Enabled ? "YES" : "NO");
 	printf("\tNumber of Records to pre-allocate=%u\n",
 		data->RecordsToPreallocate);
 	printf("\tMax Sections per Record=%u\n", data->MaxSectionsPerRecord);
 	printf("\tMax Raw Data Length=%u\n", data->MaxRawDataLength);
 	printf("\tError Status Address=");
 	acpi_print_gas(&data->ErrorStatusAddress);
+	printf("\n");
 	acpi_print_hest_notify(&data->Notify);
 	printf("\tError Block Length=%u\n", data->ErrorBlockLength);
 }
@@ -1005,7 +1006,7 @@ acpi_print_gicm_flags(ACPI_MADT_GENERIC_MSI_FRAME *gicm)
 {
 	uint32_t flags = gicm->Flags;
 
-	printf("\tFLAGS={ ");
+	printf("\tFLAGS={");
 	if (flags & ACPI_MADT_OVERRIDE_SPI_VALUES)
 		printf("SPI Count/Base Select");
 	printf("}\n");
@@ -1446,7 +1447,7 @@ acpi_print_einj_flags(ACPI_WHEA_HEADER *whea)
 {
 	uint32_t flags = whea->Flags;
 
-	printf("\tFLAGS={ ");
+	printf("\tFLAGS={");
 	if (flags & ACPI_EINJ_PRESERVE)
 		printf("PRESERVED");
 	printf("}\n");
@@ -1622,7 +1623,7 @@ acpi_print_erst_flags(ACPI_WHEA_HEADER *whea)
 {
 	uint32_t flags = whea->Flags;
 
-	printf("\tFLAGS={ ");
+	printf("\tFLAGS={");
 	if (flags & ACPI_ERST_PRESERVE)
 		printf("PRESERVED");
 	printf("}\n");
@@ -2775,7 +2776,7 @@ acpi_print_wdat_instruction(ACPI_WHEA_HEADER *whea)
 	}
 
 	if (whea->Instruction & ACPI_WDAT_PRESERVE_REGISTER)
-		printf(", Preserve Register ");
+		printf(", Preserve Register");
 
 	printf("}\n");
 }
