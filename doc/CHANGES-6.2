@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.307 2017/08/31 15:20:47 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.308 2017/09/04 16:05:39 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -20893,4 +20893,10 @@ sys/arch/mips/mips/bds_emul.S			1.9
 	CPU daughter cards currently supported by NetBSD have an FPU.
 	Fix FPU emulation.
 	[mrg, ticket #1499]
+
+sys/arch/sparc64/sparc64/compat_13_machdep.c	1.24
+
+	Apply only CCR. Otherwise userland could set PSTATE_PRIV
+	in %pstate and get kernel privileges on the hardware.
+	[maxv, ticket #1501]
 
