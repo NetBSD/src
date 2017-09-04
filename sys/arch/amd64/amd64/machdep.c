@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.255 2017/03/24 17:09:36 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.255.6.1 2017/09/04 20:41:28 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2017/03/24 17:09:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255.6.1 2017/09/04 20:41:28 snj Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1324,6 +1324,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	}
 
 	l->l_proc->p_flag &= ~PK_32;
+
+	l->l_md.md_flags = MDL_IRET;
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);

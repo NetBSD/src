@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.123.6.1 2017/07/05 19:59:29 snj Exp $	*/
+/*	$NetBSD: locore.S,v 1.123.6.2 2017/09/04 20:41:28 snj Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1082,12 +1082,6 @@ skip_save:
 
 	/* Switch to newlwp's stack. */
 	movq	L_PCB(%r12),%r14
-#ifdef XEN /* XXX debug code */
-	cmpq	$0,PCB_RSP(%r14)
-	jne 999f
-	callq _C_LABEL(cpu_Debugger);
-999:
-#endif
 	movq	PCB_RSP(%r14),%rsp
 	movq	PCB_RBP(%r14),%rbp
 
@@ -1236,8 +1230,6 @@ IDTVEC_END(syscall32)
  * syscall()
  *
  * syscall insn entry.
- * This currently isn't much faster, but it can be made faster in the future.
- * (Actually we've already saved a few 100 clocks by not loading the trap gate)
  */
 IDTVEC(syscall)
 #ifndef XEN
