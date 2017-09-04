@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_acafh.c,v 1.3 2014/01/03 00:33:06 rkujawa Exp $ */
+/*	$NetBSD: wdc_acafh.c,v 1.4 2017/09/04 17:26:06 phx Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003, 2013 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_acafh.c,v 1.3 2014/01/03 00:33:06 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_acafh.c,v 1.4 2017/09/04 17:26:06 phx Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,8 +74,6 @@ struct wdc_acafh_slot {
 };
 
 struct wdc_acafh_softc {
-	device_t		sc_dev;
-
 	struct wdc_softc	sc_wdcdev;
 	struct ata_channel	*sc_chanlist[WDC_ACAFH_SLOTS];
 	struct wdc_acafh_slot	sc_slots[WDC_ACAFH_SLOTS];
@@ -113,8 +111,6 @@ wdc_acafh_attach(device_t parent, device_t self, void *aux)
 	int i;
 
 	aprint_normal(": ACA500 CompactFlash interface\n");
-
-	sc->sc_dev = device_private(self);
 	sc->aca_sc = device_private(parent);
 
 	gayle_init();
@@ -148,6 +144,12 @@ wdc_acafh_attach(device_t parent, device_t self, void *aux)
 void
 wdc_acafh_attach_channel(struct wdc_acafh_softc *sc, int chnum)
 {
+#ifdef WDC_ACAFH_DEBUG
+	device_t self;
+
+	self = sc->sc_wdcdev.sc_atac.atac_dev;
+#endif /* WDC_ACAFH_DEBUG */
+
 	sc->sc_chanlist[chnum] = &sc->sc_slots[chnum].channel;
 	memset(&sc->sc_slots[chnum],0,sizeof(struct wdc_acafh_slot));
 	sc->sc_slots[chnum].channel.ch_channel = chnum;
@@ -160,17 +162,19 @@ wdc_acafh_attach_channel(struct wdc_acafh_softc *sc, int chnum)
 	wdcattach(&sc->sc_slots[chnum].channel);
 
 #ifdef WDC_ACAFH_DEBUG
-	aprint_normal_dev(sc->sc_dev, "done init for channel %d\n", chnum);
+	aprint_normal_dev(self, "done init for channel %d\n", chnum);
 #endif /* WDC_ACAFH_DEBUG */
-
 }
 
 void
 wdc_acafh_map_channel(struct wdc_acafh_softc *sc, int chnum)
 {
 	struct wdc_regs *wdr;
-	int i;
 	bus_addr_t off;
+	device_t self;
+	int i;
+
+	self = sc->sc_wdcdev.sc_atac.atac_dev;
 
 	wdr = CHAN_TO_WDC_REGS(&sc->sc_slots[chnum].channel);
 	wdr->cmd_iot = &sc->cmd_iot;
@@ -182,7 +186,7 @@ wdc_acafh_map_channel(struct wdc_acafh_softc *sc, int chnum)
 
 	if (bus_space_map(wdr->cmd_iot, off, 0x40, 0,
 			  &wdr->cmd_baseioh)) {
-		aprint_error_dev(sc->sc_dev, "couldn't map regs\n");
+		aprint_error_dev(self, "couldn't map regs\n");
 		return;
 	}
 
@@ -193,7 +197,7 @@ wdc_acafh_map_channel(struct wdc_acafh_softc *sc, int chnum)
 
 			bus_space_unmap(wdr->cmd_iot,
 			    wdr->cmd_baseioh, 0x40);
-			aprint_error_dev(sc->sc_dev, "couldn't map regs\n");
+			aprint_error_dev(self, "couldn't map regs\n");
 			return;
 		}
 	}
