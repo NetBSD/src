@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.23 2017/09/04 07:59:15 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.24 2017/09/04 08:08:41 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.23 2017/09/04 07:59:15 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.24 2017/09/04 08:08:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -244,7 +244,8 @@ acpi_print_gas(ACPI_GENERIC_ADDRESS *gas)
 	case ACPI_GAS_DATATABLE:
 	case ACPI_GAS_FIXED:
 	default:
-		printf("0x%016jx (?)", (uintmax_t)gas->Address);
+		printf("0x%016jx (SpaceID=%hhu)", (uintmax_t)gas->Address,
+		    gas->SpaceId);
 		break;
 	}
 }
@@ -461,20 +462,19 @@ acpi_print_hest_notify(ACPI_HEST_NOTIFY *notify)
 	printf(" }\n");
 
 	printf("\t\tLength=%d\n", notify->Length);
-	printf("\t\tConfig Write Enable={\n");
-	if (notify->ConfigWriteEnable & ACPI_HEST_TYPE)
-		printf("TYPE");
-	if (notify->ConfigWriteEnable & ACPI_HEST_POLL_INTERVAL)
-		printf("POLL INTERVAL");
-	if (notify->ConfigWriteEnable & ACPI_HEST_POLL_THRESHOLD_VALUE)
-		printf("THRESHOLD VALUE");
-	if (notify->ConfigWriteEnable & ACPI_HEST_POLL_THRESHOLD_WINDOW)
-		printf("THRESHOLD WINDOW");
-	if (notify->ConfigWriteEnable & ACPI_HEST_ERR_THRESHOLD_VALUE)
-		printf("THRESHOLD VALUE");
-	if (notify->ConfigWriteEnable & ACPI_HEST_ERR_THRESHOLD_WINDOW)
-		printf("THRESHOLD WINDOW");
-	printf("}\n");
+
+#define PRINTFLAG(var, flag)	printflag((var), ACPI_HEST_## flag, #flag)
+
+	printf("\t\tConfig Write Enable=");
+	PRINTFLAG(notify->ConfigWriteEnable, TYPE);
+	PRINTFLAG(notify->ConfigWriteEnable, POLL_INTERVAL);
+	PRINTFLAG(notify->ConfigWriteEnable, POLL_THRESHOLD_VALUE);
+	PRINTFLAG(notify->ConfigWriteEnable, POLL_THRESHOLD_WINDOW);
+	PRINTFLAG(notify->ConfigWriteEnable, ERR_THRESHOLD_VALUE);
+	PRINTFLAG(notify->ConfigWriteEnable, ERR_THRESHOLD_WINDOW);
+	PRINTFLAG_END();
+
+#undef PRINTFLAG
 
 	printf("\t\tPoll Interval=%d msec\n", notify->PollInterval);
 	printf("\t\tInterrupt Vector=%d\n", notify->Vector);
@@ -675,15 +675,14 @@ acpi_print_hest_generic(ACPI_HEST_GENERIC *data)
 	if (data->RelatedSourceId != 0xffff)
 		printf("\tReleated SourceId=%d\n", data->RelatedSourceId);
 	printf("\tEnabled={ %s }\n", data->Enabled ? "YES" : "NO");
-	printf("\tNumber of Records to pre-allocate=%d\n",
+	printf("\tNumber of Records to pre-allocate=%u\n",
 		data->RecordsToPreallocate);
-	printf("\tMax Sections per Record=%d\n",
-		data->MaxSectionsPerRecord);
-	printf("\tMax Raw Data Length=%d\n", data->MaxRawDataLength);
+	printf("\tMax Sections per Record=%u\n", data->MaxSectionsPerRecord);
+	printf("\tMax Raw Data Length=%u\n", data->MaxRawDataLength);
 	printf("\tError Status Address=");
 	acpi_print_gas(&data->ErrorStatusAddress);
 	acpi_print_hest_notify(&data->Notify);
-	printf("\tError Block Length=%d\n", data->ErrorBlockLength);
+	printf("\tError Block Length=%u\n", data->ErrorBlockLength);
 }
 
 static void
@@ -707,7 +706,6 @@ acpi_handle_hest(ACPI_TABLE_HEADER *sdp)
 	ACPI_TABLE_HEST *hest;
 	ACPI_HEST_HEADER *subhest;
 	uint32_t i, pos;
-	void *subtable;
 
 	printf(BEGIN_COMMENT);
 	acpi_print_sdt(sdp);
@@ -717,23 +715,24 @@ acpi_handle_hest(ACPI_TABLE_HEADER *sdp)
 	pos = sizeof(ACPI_TABLE_HEST);
 	for (i = 0; i < hest->ErrorSourceCount; i++) {
 		subhest = (ACPI_HEST_HEADER *)((char *)hest + pos);
-		subtable = (void *)((char *)subhest + sizeof(ACPI_HEST_HEADER));
 		printf("\n");
 
-		printf("\tType={ ");
 		switch (subhest->Type) {
 		case ACPI_HEST_TYPE_IA32_CHECK:
-			acpi_print_hest_ia32_check(subtable);
+			acpi_print_hest_ia32_check(
+				(ACPI_HEST_IA_MACHINE_CHECK *)subhest);
 			pos += sizeof(ACPI_HEST_IA_MACHINE_CHECK);
 			break;
 
 		case ACPI_HEST_TYPE_IA32_CORRECTED_CHECK:
-			acpi_print_hest_ia32_correctedcheck(subtable);
+			acpi_print_hest_ia32_correctedcheck(
+				(ACPI_HEST_IA_CORRECTED *)subhest);
 			pos += sizeof(ACPI_HEST_IA_CORRECTED);
 			break;
 
 		case ACPI_HEST_TYPE_IA32_NMI:
-			acpi_print_hest_ia32_nmi(subtable);
+			acpi_print_hest_ia32_nmi(
+				(ACPI_HEST_IA_NMI *)subhest);
 			pos += sizeof(ACPI_HEST_IA_NMI);
 			break;
 
@@ -744,27 +743,28 @@ acpi_handle_hest(ACPI_TABLE_HEADER *sdp)
 			break;
 
 		case ACPI_HEST_TYPE_AER_ROOT_PORT:
-			acpi_print_hest_aer_root(subtable);
+			acpi_print_hest_aer_root((ACPI_HEST_AER_ROOT *)subhest);
 			pos += sizeof(ACPI_HEST_AER_ROOT);
 			break;
 
 		case ACPI_HEST_TYPE_AER_ENDPOINT:
-			acpi_print_hest_aer_endpoint(subtable);
-			pos += sizeof(ACPI_HEST_AER_ROOT);
+			acpi_print_hest_aer_endpoint((ACPI_HEST_AER *)subhest);
+			pos += sizeof(ACPI_HEST_AER);
 			break;
 
 		case ACPI_HEST_TYPE_AER_BRIDGE:
-			acpi_print_hest_aer_bridge(subtable);
+			acpi_print_hest_aer_bridge((ACPI_HEST_AER_BRIDGE *)subhest);
 			pos += sizeof(ACPI_HEST_AER_BRIDGE);
 			break;
 
 		case ACPI_HEST_TYPE_GENERIC_ERROR:
-			acpi_print_hest_generic(subtable);
+			acpi_print_hest_generic((ACPI_HEST_GENERIC *)subhest);
 			pos += sizeof(ACPI_HEST_GENERIC);
 			break;
 
 		case ACPI_HEST_TYPE_GENERIC_ERROR_V2:
-			acpi_print_hest_generic_v2(subtable);
+			acpi_print_hest_generic_v2(
+				(ACPI_HEST_GENERIC_V2 *)subhest);
 			pos += sizeof(ACPI_HEST_GENERIC_V2);
 			break;
 
