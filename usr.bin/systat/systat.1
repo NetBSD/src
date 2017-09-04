@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.43 2013/10/18 22:42:31 bad Exp $
+.\"	$NetBSD: systat.1,v 1.43.4.1 2017/09/04 06:04:06 snj Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd October 19, 2012
+.Dd November 16, 2016
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd display system statistics on a CRT
 .Sh SYNOPSIS
 .Nm
-.Op Fl n
+.Op Fl bn
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Op Fl t Ar turns
@@ -94,6 +94,8 @@ Extract the name list from
 .Ar system
 instead of the default
 .Pa /netbsd .
+.It Fl b
+Show the chosen display once and exit.
 .It Fl n
 Do not resolve IP addresses into string hostnames
 .Pq FQDNs
@@ -577,3 +579,8 @@ The
 .Ic vmstat
 display looks out of place because it is (it was added in as
 a separate display from what used to be a different program).
+.Pp
+The
+.Fl b
+option requires a real terminal and could be converted to
+simply output to standard output.
