@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.535 2017/05/16 17:40:01 snj Exp $
+.\"	$NetBSD: main,v 1.536 2017/09/04 14:48:09 bacon Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1113,6 +1113,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Julian Assange Ta Mt proff@NetBSD.org
 .It Ta Lennart Augustsson Ta Mt augustss@NetBSD.org
 .It Ta Zafer Aydogan Ta Mt zafer@NetBSD.org
+.It Ta Jason Bacon Ta Mt bacon@NetBSD.org
 .It Ta Christoph Badura Ta Mt bad@NetBSD.org
 .It Ta Marc Balmer Ta Mt mbalmer@NetBSD.org
 .It Ta Bang Jun-Young Ta Mt junyoung@NetBSD.org
