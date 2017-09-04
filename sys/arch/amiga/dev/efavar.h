@@ -1,4 +1,4 @@
-/*	$NetBSD: efavar.h,v 1.1 2011/10/27 22:12:23 rkujawa Exp $ */
+/*	$NetBSD: efavar.h,v 1.2 2017/09/04 17:26:06 phx Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 #define PIO_COUNT		6
 
 struct efa_port {
-
 	struct ata_channel	chan;
 	struct ata_queue	queue;
 
@@ -48,8 +47,6 @@ struct efa_port {
 };
 
 struct efa_softc {
-	device_t		sc_dev;
-
 	struct wdc_softc	sc_wdcdev;
 	struct ata_channel	*sc_chanlist[FATA1_CHANNELS];
 
