@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.165 2017/01/19 16:05:00 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.165.6.1 2017/09/04 06:40:37 snj Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.165 2017/01/19 16:05:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.165.6.1 2017/09/04 06:40:37 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -775,6 +775,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			len = UGETW(ur->ucr_request.wLength);
 			kmem_free(ptr, len);
 		}
+		break;
 	}
 
 	case USB_DEVICEINFO:
