@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.53 2017/09/01 10:01:09 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.54 2017/09/04 06:52:11 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5756,4 +5756,18 @@ sys/dev/sdmmc/sdmmcvar.h			1.29
 	byte length doesn't fit into 'int'.
 	Avoid gcc warnings.
 	[mlelstv, ticket #261]
+
+sys/dev/usb/usb.c				1.166
+
+	Add a missing break that should have been included in
+	revision 1.163.
+	[skrll, ticket #262]
+
+sys/dev/usb/uhidev.c				1.71
+sys/dev/usb/ukbd.c				1.137-1.138
+
+	Fix memory leak in report parsing error paths.
+	Support more varieties of USB keyboard reports.
+	Always try to set USB HID devices into Report Protocol.
+	[jakllsch, ticket #263]
 
