@@ -359,7 +359,7 @@
 /*
  * Defined if we are enabling SIT (Source Identity Token).
  */
-#define ISC_PLATFORM_USESIT 1
+#undef ISC_PLATFORM_USESIT
 
 /***
  ***	Windows dll support.
