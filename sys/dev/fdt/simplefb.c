@@ -1,4 +1,4 @@
-/* $NetBSD: simplefb.c,v 1.1 2017/08/27 19:14:32 jmcneill Exp $ */
+/* $NetBSD: simplefb.c,v 1.2 2017/09/04 18:01:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.1 2017/08/27 19:14:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.2 2017/09/04 18:01:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,6 +51,8 @@ struct simplefb_softc {
 
 	bus_addr_t sc_paddr;
 };
+
+static int simplefb_console_phandle = -1;
 
 static bool
 simplefb_shutdown(device_t self, int flags)
@@ -118,6 +120,12 @@ simplefb_attach_genfb(struct simplefb_softc *sc)
 		return ENXIO;
 	}
 
+	if (size == 0) {
+		aprint_naive("\n");
+		aprint_normal(": disabled\n");
+		return ENXIO;
+	}
+
 	if (of_getprop_uint32(phandle, "width", &width) != 0 ||
 	    of_getprop_uint32(phandle, "height", &height) != 0 ||
 	    of_getprop_uint32(phandle, "stride", &stride) != 0 ||
@@ -169,8 +177,8 @@ simplefb_attach_genfb(struct simplefb_softc *sc)
 	ops.genfb_ioctl = simplefb_ioctl;
 	ops.genfb_mmap = simplefb_mmap;
 
-	bool is_console = false;
-	prop_dictionary_get_bool(dict, "is_console", &is_console);
+	const bool is_console = phandle == simplefb_console_phandle;
+
 	prop_dictionary_set_bool(dict, "is_console", is_console);
 
 	if (is_console)
@@ -207,3 +215,23 @@ simplefb_attach(device_t parent, device_t self, void *aux)
 
 CFATTACH_DECL_NEW(simplefb, sizeof(struct simplefb_softc),
 	simplefb_match, simplefb_attach, NULL, NULL);
+
+static int
+simplefb_console_match(int phandle)
+{
+	return of_match_compatible(phandle, compatible);
+}
+
+static void
+simplefb_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
+{
+	simplefb_console_phandle = faa->faa_phandle;
+	genfb_cnattach();
+}
+
+static const struct fdt_console simplefb_fdt_console = {
+	.match = simplefb_console_match,
+	.consinit = simplefb_console_consinit
+};
+
+FDT_CONSOLE(simplefb, &simplefb_fdt_console);
