@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.22 2017/09/01 18:35:50 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.23 2017/09/04 07:59:15 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.22 2017/09/01 18:35:50 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.23 2017/09/04 07:59:15 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -2785,7 +2785,7 @@ acpi_handle_wdat(ACPI_TABLE_HEADER *sdp)
 {
 	ACPI_TABLE_WDAT *wdat;
 	ACPI_WHEA_HEADER *whea;
-	char *wdat_pos;
+	ACPI_WDAT_ENTRY *wdat_pos;
 	u_int i;
 
 	printf(BEGIN_COMMENT);
@@ -2807,15 +2807,14 @@ acpi_handle_wdat(ACPI_TABLE_HEADER *sdp)
 		printf(", STOPPED");
 	printf("}\n");
 
-	wdat_pos = ((char *)wdat + sizeof(ACPI_TABLE_HEADER)
-	    + wdat->HeaderLength);
+	wdat_pos = (ACPI_WDAT_ENTRY *)((char *)wdat + sizeof(ACPI_TABLE_WDAT));
 
 	for (i = 0; i < wdat->Entries; i++) {
 		whea = (ACPI_WHEA_HEADER *)wdat_pos;
 		acpi_print_whea(whea,
 		    acpi_print_wdat_action, acpi_print_wdat_instruction,
 		    NULL);
-		wdat_pos += sizeof(ACPI_WDAT_ENTRY);
+		wdat_pos++;
 	}
 	printf(END_COMMENT);
 }
