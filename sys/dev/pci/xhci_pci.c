@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.8 2017/01/19 16:05:00 skrll Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.9 2017/09/05 08:01:43 skrll Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.8 2017/01/19 16:05:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.9 2017/09/05 08:01:43 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_xhci_pci.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,8 +177,16 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
+	/* Allocation settings */
+	int counts[PCI_INTR_TYPE_SIZE] = {
+		[PCI_INTR_TYPE_INTX] = 1,
+#ifndef XHCI_DISABLE_MSI
+		[PCI_INTR_TYPE_MSI] = 1,
+#endif
+	};
+
 	/* Allocate and establish the interrupt. */
-	if (pci_intr_alloc(pa, &psc->sc_pihp, NULL, 0)) {
+	if (pci_intr_alloc(pa, &psc->sc_pihp, counts, PCI_INTR_TYPE_MSIX)) {
 		aprint_error_dev(self, "can't allocate handler\n");
 		goto fail;
 	}
