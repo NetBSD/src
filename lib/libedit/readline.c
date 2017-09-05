@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.142 2017/09/01 10:19:10 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.143 2017/09/05 18:07:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.142 2017/09/01 10:19:10 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.143 2017/09/05 18:07:59 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -290,7 +290,9 @@ rl_initialize(void)
 	if (tcgetattr(fileno(rl_instream), &t) != -1 && (t.c_lflag & ECHO) == 0)
 		editmode = 0;
 
-	e = el_init(rl_readline_name, rl_instream, rl_outstream, stderr);
+	e = el_init_internal(rl_readline_name, rl_instream, rl_outstream,
+	    stderr, fileno(rl_instream), fileno(rl_outstream), fileno(stderr),
+	    NO_RESET);
 
 	if (!editmode)
 		el_set(e, EL_EDITMODE, 0);
@@ -386,6 +388,8 @@ rl_initialize(void)
 	_resize_fun(e, &rl_line_buffer);
 	_rl_update_pos();
 
+	tty_end(e);
+
 	return 0;
 }
 
@@ -410,15 +414,17 @@ readline(const char *p)
 		rl_did_startup_hook = 1;
 		(*rl_startup_hook)(NULL, 0);
 	}
+	tty_init(e);
 
 
 	rl_done = 0;
 
 	(void)setjmp(topbuf);
+	buf = NULL;
 
 	/* update prompt accordingly to what has been passed */
 	if (rl_set_prompt(prompt) == -1)
-		return NULL;
+		goto out;
 
 	if (rl_pre_input_hook)
 		(*rl_pre_input_hook)(NULL, 0);
@@ -443,7 +449,7 @@ readline(const char *p)
 
 		buf = strdup(ret);
 		if (buf == NULL)
-			return NULL;
+			goto out;
 		lastidx = count - 1;
 		if (buf[lastidx] == '\n')
 			buf[lastidx] = '\0';
@@ -453,6 +459,8 @@ readline(const char *p)
 	history(h, &ev, H_GETSIZE);
 	history_length = ev.num;
 
+out:
+	tty_end(e);
 	return buf;
 }
 
