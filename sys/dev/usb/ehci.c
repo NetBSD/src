@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.109 2017/08/28 17:52:27 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.110 2017/09/05 07:01:12 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.109 2017/08/28 17:52:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.110 2017/09/05 07:01:12 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3154,10 +3154,8 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	 */
 	if (xfer->ux_hcflags & UXFER_ABORTING) {
 		DPRINTF("already aborting", 0, 0, 0, 0);
-#ifdef DIAGNOSTIC
-		if (status == USBD_TIMEOUT)
-			printf("ehci_abort_xfer: TIMEOUT while aborting\n");
-#endif
+		KASSERT(status != USBD_TIMEOUT);
+
 		/* Override the status which might be USBD_TIMEOUT. */
 		xfer->ux_status = status;
 		DPRINTF("waiting for abort to finish", 0, 0, 0, 0);
@@ -3313,10 +3311,7 @@ ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 	if (xfer->ux_hcflags & UXFER_ABORTING) {
 		DPRINTF("already aborting", 0, 0, 0, 0);
 
-#ifdef DIAGNOSTIC
-		if (status == USBD_TIMEOUT)
-			printf("ehci_abort_isoc_xfer: TIMEOUT while aborting\n");
-#endif
+		KASSERT(status != USBD_TIMEOUT);
 
 		xfer->ux_status = status;
 		DPRINTF("waiting for abort to finish", 0, 0, 0, 0);
@@ -3445,6 +3440,7 @@ ehci_timeout_task(void *addr)
 	DPRINTF("xfer=%p", xfer, 0, 0, 0);
 
 	mutex_enter(&sc->sc_lock);
+	KASSERT(xfer->ux_status == USBD_TIMEOUT);
 	ehci_abort_xfer(xfer, USBD_TIMEOUT);
 	mutex_exit(&sc->sc_lock);
 }
