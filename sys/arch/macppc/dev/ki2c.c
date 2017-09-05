@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.19 2016/02/14 19:54:20 chs Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.20 2017/09/05 17:21:09 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -36,6 +36,12 @@
 #include <machine/autoconf.h>
 
 #include <macppc/dev/ki2cvar.h>
+
+#ifdef KI2C_DEBUG
+#define DPRINTF printf
+#else
+#define DPRINTF while (0) printf
+#endif
 
 int ki2c_match(device_t, cfdata_t, void *);
 void ki2c_attach(device_t, device_t, void *);
@@ -79,10 +85,12 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	struct ki2c_softc *sc = device_private(self);
 	struct confargs *ca = aux;
 	int node = ca->ca_node;
+	uint32_t addr;
 	int rate, child, namelen, i2cbus;
 	struct ki2c_confargs ka;
 	struct i2cbus_attach_args iba;
-
+	prop_dictionary_t dict = device_properties(self);
+	prop_array_t cfg;
 	char name[32];
 	u_int reg[20];
 
@@ -90,15 +98,16 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
 	if (OF_getprop(node, "AAPL,i2c-rate", &rate, 4) != 4) {
-		printf(": cannot get i2c-rate\n");
+		aprint_error(": cannot get i2c-rate\n");
 		return;
 	}
-	if (OF_getprop(node, "AAPL,address", &sc->sc_reg, 4) != 4) {
-		printf(": unable to find i2c address\n");
+	if (OF_getprop(node, "AAPL,address", &addr, 4) != 4) {
+		aprint_error(": unable to find i2c address\n");
 		return;
 	}
+	sc->sc_reg = mapiodev(addr, PAGE_SIZE, false);
 	if (OF_getprop(node, "AAPL,address-step", &sc->sc_regstep, 4) != 4) {
-		printf(": unable to find i2c address step\n");
+		aprint_error(": unable to find i2c address step\n");
 		return;
 	}
 
@@ -114,6 +123,10 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 	ki2c_writereg(sc, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
 	
+	cfg = prop_array_create();
+	prop_dictionary_set(dict, "i2c-child-devices", cfg);
+	prop_object_release(cfg);
+
 	/* fill in the i2c tag */
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = ki2c_i2c_acquire_bus;
@@ -162,7 +175,7 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 			    sizeof(reg));
 		}
 		if (ok > 0) {
-			ka.ka_addr = reg[0];
+			ka.ka_addr = reg[0] >> 1;
 			ka.ka_tag = &sc->sc_i2c;	
 			config_found_ia(self, "ki2c", &ka, ki2c_print);
 		} 
@@ -315,7 +328,7 @@ ki2c_poll(struct ki2c_softc *sc, int timo)
 			ki2c_intr(sc);
 		timo -= 100;
 		if (timo < 0) {
-			printf("i2c_poll: timeout\n");
+			DPRINTF("i2c_poll: timeout\n");
 			return -1;
 		}
 		delay(100);
@@ -350,7 +363,7 @@ ki2c_start(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 	if (ki2c_poll(sc, timo))
 		return -1;
 	if (sc->sc_flags & I2C_ERROR) {
-		printf("I2C_ERROR\n");
+		DPRINTF("I2C_ERROR\n");
 		return -1;
 	}
 	return 0;
@@ -360,9 +373,7 @@ int
 ki2c_read(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 {
 	sc->sc_flags = I2C_READING;
-	#ifdef KI2C_DEBUG
-		printf("ki2c_read: %02x %d\n", addr, len);
-	#endif
+	DPRINTF("ki2c_read: %02x %d\n", addr, len);
 	return ki2c_start(sc, addr, subaddr, data, len);
 }
 
@@ -370,9 +381,7 @@ int
 ki2c_write(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 {
 	sc->sc_flags = 0;
-	#ifdef KI2C_DEBUG
-		printf("ki2c_write: %02x %d\n",addr,len);
-	#endif
+	DPRINTF("ki2c_write: %02x %d\n",addr,len);
 	return ki2c_start(sc, addr, subaddr, data, len);
 }
 
@@ -442,11 +451,11 @@ ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 		}
 	}
 
-	if (ki2c_write(sc, addr, 0, wp, w_len) !=0 )
+	if (ki2c_write(sc, addr << 1, 0, wp, w_len) !=0 )
 		return -1;
 
 	if (I2C_OP_READ_P(op)) {
-		if (ki2c_read(sc, addr, 0, vbuf, buflen) !=0 )
+		if (ki2c_read(sc, addr << 1, 0, vbuf, buflen) !=0 )
 			return -1;
 	}
 	return 0;
