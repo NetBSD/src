@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.42 2017/06/27 23:25:13 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.43 2017/09/05 18:07:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@
 #define	UNBUFFERED	0x08
 #define	CHARSET_IS_UTF8 0x10
 #define	NARROW_HISTORY	0x40
+#define	NO_RESET	0x80
 
 typedef unsigned char el_action_t;	/* Index to command array	*/
 
@@ -141,6 +142,8 @@ struct editline {
 };
 
 libedit_private int	el_editmode(EditLine *, int, const wchar_t **);
+libedit_private EditLine *el_init_internal(const char *, FILE *, FILE *,
+    FILE *, int, int, int, int);
 
 #ifdef DEBUG
 #define	EL_ABORT(a)	do { \

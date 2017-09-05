@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.65 2016/05/09 21:46:56 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.66 2017/09/05 18:07:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.65 2016/05/09 21:46:56 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.66 2017/09/05 18:07:59 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -497,7 +497,7 @@ tty_setty(EditLine *el, int action, const struct termios *t)
 static int
 tty_setup(EditLine *el)
 {
-	int rst = 1;
+	int rst = (el->el_flags & NO_RESET) == 0;
 
 	if (el->el_flags & EDIT_DISABLED)
 		return 0;

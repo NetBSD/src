@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.94 2017/06/27 23:25:13 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.95 2017/09/05 18:07:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.94 2017/06/27 23:25:13 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.95 2017/09/05 18:07:59 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -67,9 +67,9 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 	fileno(ferr));
 }
 
-EditLine *
-el_init_fd(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
-    int fdin, int fdout, int fderr)
+libedit_private EditLine *
+el_init_internal(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
+    int fdin, int fdout, int fderr, int flags)
 {
 	EditLine *el = el_malloc(sizeof(*el));
 
@@ -95,7 +95,7 @@ el_init_fd(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
 	/*
          * Initialize all the modules. Order is important!!!
          */
-	el->el_flags = 0;
+	el->el_flags = flags;
 	if (setlocale(LC_CTYPE, NULL) != NULL){
 		if (strcmp(nl_langinfo(CODESET), "UTF-8") == 0)
 			el->el_flags |= CHARSET_IS_UTF8;
@@ -123,6 +123,12 @@ el_init_fd(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
 	return el;
 }
 
+EditLine *
+el_init_fd(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
+    int fdin, int fdout, int fderr)
+{
+	return el_init_internal(prog, fin, fout, ferr, fdin, fdout, fderr, 0);
+}
 
 /* el_end():
  *	Clean up.
