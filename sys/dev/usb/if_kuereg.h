@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.18.24.3 2016/03/20 08:42:19 skrll Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.18.24.4 2017/09/05 07:04:17 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -178,6 +178,10 @@ struct kue_softc {
 	uint16_t		kue_rxfilt;
 	uint8_t			*kue_mcfilters;
 	struct kue_cdata	kue_cdata;
+
+	kmutex_t		kue_lock;
+	kmutex_t		kue_txlock;
+	kmutex_t		kue_rxlock;
 
 	bool			kue_dying;
 	bool			kue_attached;
