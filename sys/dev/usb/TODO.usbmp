@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.8.4.13 2017/02/14 06:45:21 skrll Exp $
+$NetBSD: TODO.usbmp,v 1.8.4.14 2017/09/05 07:07:15 skrll Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -23,7 +23,6 @@ usb_detach_{waitold,wakeup} to cv_{wait,broadcast} conversion:
       if_aue.c
       if_axe.c
       if_axen.c
-      if_smsc.c
       if_udav.c
       if_url.c
       ubt.c
@@ -73,7 +72,6 @@ splusb drivers:
   - if_otus.c
   - if_rum.c
   - if_run.c
-  - if_smsc.c
   - if_udav.c
   - if_upl.c
   - if_ural.c
@@ -121,7 +119,6 @@ missing CALLOUT_MPSAFE drivers:
   - if_otus.c
   - if_rum.c
   - if_run.c
-  - if_smsc.c
   - if_udav.c
   - if_upgt.c
   - if_ural.c
@@ -144,7 +141,6 @@ missing USB_TASKQ_MPSAFE tasks:
   - if_otus.c
   - if_rum.c
   - if_run.c
-  - if_smsc.c
   - if_udav.c
   - if_upgt.c
   - if_ural.c
