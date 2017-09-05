@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.47.4.16 2017/02/05 13:40:46 skrll Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.47.4.17 2017/09/05 07:06:30 skrll Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.16 2017/02/05 13:40:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.17 2017/09/05 07:06:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -220,7 +220,6 @@ upl_attach(device_t parent, device_t self, void *aux)
 	struct upl_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	char			*devinfop;
-	int			s;
 	struct usbd_device *	dev = uaa->uaa_device;
 	struct usbd_interface *	iface;
 	usbd_status		err;
@@ -285,8 +284,6 @@ upl_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	s = splnet();
-
 	/* Initialize interface info.*/
 	ifp = &sc->sc_if;
 	ifp->if_softc = sc;
@@ -316,7 +313,6 @@ upl_attach(device_t parent, device_t self, void *aux)
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	sc->sc_attached = 1;
-	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
