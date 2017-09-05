@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.134 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.135 2017/09/05 05:03:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.134 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.135 2017/09/05 05:03:02 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -366,14 +366,11 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int i, j;
 
 	sc = device_lookup_private(&ugen_cd, unit);
-	if (sc == NULL)
+	if (sc == NULL || sc->sc_dying)
 		return ENXIO;
 
 	DPRINTFN(5, ("ugenopen: flag=%d, mode=%d, unit=%d endpt=%d\n",
 		     flag, mode, unit, endpt));
-
-	if (sc == NULL || sc->sc_dying)
-		return ENXIO;
 
 	/* The control endpoint allows multiple opens. */
 	if (endpt == USB_CONTROL_ENDPOINT) {
@@ -513,7 +510,7 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 	int i;
 
 	sc = device_lookup_private(& ugen_cd, UGENUNIT(dev));
-	if (sc == NULL)
+	if (sc == NULL || sc->sc_dying)
 		return ENXIO;
 
 	DPRINTFN(5, ("ugenclose: flag=%d, mode=%d, unit=%d, endpt=%d\n",
@@ -588,9 +585,6 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	int error = 0;
 
 	DPRINTFN(5, ("%s: ugenread: %d\n", device_xname(sc->sc_dev), endpt));
-
-	if (sc->sc_dying)
-		return EIO;
 
 	if (endpt == USB_CONTROL_ENDPOINT)
 		return ENODEV;
@@ -801,7 +795,7 @@ ugenread(dev_t dev, struct uio *uio, int flag)
 	int error;
 
 	sc = device_lookup_private(& ugen_cd, UGENUNIT(dev));
-	if (sc == NULL)
+	if (sc == NULL || sc->sc_dying)
 		return ENXIO;
 
 	mutex_enter(&sc->sc_lock);
@@ -831,9 +825,6 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 	usbd_status err;
 
 	DPRINTFN(5, ("%s: ugenwrite: %d\n", device_xname(sc->sc_dev), endpt));
-
-	if (sc->sc_dying)
-		return EIO;
 
 	if (endpt == USB_CONTROL_ENDPOINT)
 		return ENODEV;
@@ -995,7 +986,7 @@ ugenwrite(dev_t dev, struct uio *uio, int flag)
 	int error;
 
 	sc = device_lookup_private(& ugen_cd, UGENUNIT(dev));
-	if (sc == NULL)
+	if (sc == NULL || sc->sc_dying)
 		return ENXIO;
 
 	mutex_enter(&sc->sc_lock);
@@ -1830,7 +1821,7 @@ ugenioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	int error;
 
 	sc = device_lookup_private(& ugen_cd, UGENUNIT(dev));
-	if (sc == NULL)
+	if (sc == NULL || sc->sc_dying)
 		return ENXIO;
 
 	sc->sc_refcnt++;
@@ -1954,6 +1945,10 @@ static int
 filt_ugenread_intr(struct knote *kn, long hint)
 {
 	struct ugen_endpoint *sce = kn->kn_hook;
+	struct ugen_softc *sc = sce->sc;
+
+	if (sc->sc_dying)
+		return 0;
 
 	kn->kn_data = sce->q.c_cc;
 	return kn->kn_data > 0;
@@ -1963,6 +1958,10 @@ static int
 filt_ugenread_isoc(struct knote *kn, long hint)
 {
 	struct ugen_endpoint *sce = kn->kn_hook;
+	struct ugen_softc *sc = sce->sc;
+
+	if (sc->sc_dying)
+		return 0;
 
 	if (sce->cur == sce->fill)
 		return 0;
@@ -1980,6 +1979,10 @@ static int
 filt_ugenread_bulk(struct knote *kn, long hint)
 {
 	struct ugen_endpoint *sce = kn->kn_hook;
+	struct ugen_softc *sc = sce->sc;
+
+	if (sc->sc_dying)
+		return 0;
 
 	if (!(sce->state & UGEN_BULK_RA))
 		/*
@@ -2001,6 +2004,10 @@ static int
 filt_ugenwrite_bulk(struct knote *kn, long hint)
 {
 	struct ugen_endpoint *sce = kn->kn_hook;
+	struct ugen_softc *sc = sce->sc;
+
+	if (sc->sc_dying)
+		return 0;
 
 	if (!(sce->state & UGEN_BULK_WB))
 		/*
@@ -2038,10 +2045,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 	struct klist *klist;
 
 	sc = device_lookup_private(&ugen_cd, UGENUNIT(dev));
-	if (sc == NULL)
-		return ENXIO;
-
-	if (sc->sc_dying)
+	if (sc == NULL || sc->sc_dying)
 		return ENXIO;
 
 	if (UGENENDPOINT(dev) == USB_CONTROL_ENDPOINT)
