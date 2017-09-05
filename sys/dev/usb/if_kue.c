@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.81.4.14 2017/08/28 17:52:27 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.81.4.15 2017/09/05 07:04:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.14 2017/08/28 17:52:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.15 2017/09/05 07:04:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -166,15 +166,20 @@ CFATTACH_DECL_NEW(kue, sizeof(struct kue_softc), kue_match, kue_attach,
     kue_detach, kue_activate);
 
 static int kue_tx_list_init(struct kue_softc *);
+static void kue_tx_list_free(struct kue_softc *);
 static int kue_rx_list_init(struct kue_softc *);
+static void kue_rx_list_free(struct kue_softc *);
 static int kue_send(struct kue_softc *, struct mbuf *, int);
 static int kue_open_pipes(struct kue_softc *);
 static void kue_rxeof(struct usbd_xfer *, void *, usbd_status);
 static void kue_txeof(struct usbd_xfer *, void *, usbd_status);
 static void kue_start(struct ifnet *);
+static void kue_start_locked(struct ifnet *);
 static int kue_ioctl(struct ifnet *, u_long, void *);
 static void kue_init(void *);
+static void kue_init_locked(void *);
 static void kue_stop(struct kue_softc *);
+static void kue_stop_locked(struct kue_softc *);
 static void kue_watchdog(struct ifnet *);
 
 static void kue_setmulti(struct kue_softc *);
@@ -398,7 +403,6 @@ kue_attach(device_t parent, device_t self, void *aux)
 	struct kue_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	char			*devinfop;
-	int			s;
 	struct ifnet		*ifp;
 	struct usbd_device *	dev = uaa->uaa_device;
 	struct usbd_interface *	iface;
@@ -479,8 +483,6 @@ kue_attach(device_t parent, device_t self, void *aux)
 	sc->kue_mcfilters = kmem_alloc(KUE_MCFILTCNT(sc) * ETHER_ADDR_LEN,
 	    KM_SLEEP);
 
-	s = splnet();
-
 	/*
 	 * A KLSI chip was detected. Inform the world.
 	 */
@@ -506,7 +508,6 @@ kue_attach(device_t parent, device_t self, void *aux)
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	sc->kue_attached = true;
-	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->kue_udev, sc->kue_dev);
 
@@ -599,6 +600,18 @@ kue_rx_list_init(struct kue_softc *sc)
 	return 0;
 }
 
+static void
+kue_rx_list_free(struct kue_softc *sc)
+{
+	/* Free RX resources. */
+	for (int i = 0; i < KUE_RX_LIST_CNT; i++) {
+		if (sc->kue_cdata.kue_rx_chain[i].kue_xfer != NULL) {
+			usbd_destroy_xfer(sc->kue_cdata.kue_rx_chain[i].kue_xfer);
+			sc->kue_cdata.kue_rx_chain[i].kue_xfer = NULL;
+		}
+	}
+}
+
 static int
 kue_tx_list_init(struct kue_softc *sc)
 {
@@ -623,6 +636,18 @@ kue_tx_list_init(struct kue_softc *sc)
 	}
 
 	return 0;
+}
+
+static void
+kue_tx_list_free(struct kue_softc *sc)
+{
+	/* Free TX resources. */
+	for (int i = 0; i < KUE_TX_LIST_CNT; i++) {
+		if (sc->kue_cdata.kue_tx_chain[i].kue_xfer != NULL) {
+			usbd_destroy_xfer(sc->kue_cdata.kue_tx_chain[i].kue_xfer);
+			sc->kue_cdata.kue_tx_chain[i].kue_xfer = NULL;
+		}
+	}
 }
 
 /*
@@ -813,6 +838,17 @@ kue_send(struct kue_softc *sc, struct mbuf *m, int idx)
 static void
 kue_start(struct ifnet *ifp)
 {
+	struct kue_softc *sc = ifp->if_softc;
+	KASSERT(ifp->if_extflags & IFEF_START_MPSAFE);
+
+	mutex_enter(&sc->kue_txlock);
+	kue_start_locked(ifp);
+	mutex_exit(&sc->kue_txlock);
+}
+
+static void
+kue_start_locked(struct ifnet *ifp)
+{
 	struct kue_softc	*sc = ifp->if_softc;
 	struct mbuf		*m;
 
@@ -853,17 +889,24 @@ kue_start(struct ifnet *ifp)
 static void
 kue_init(void *xsc)
 {
+	struct kue_softc *sc = xsc;
+
+	mutex_enter(&sc->kue_lock);
+	kue_init_locked(xsc);
+	mutex_exit(&sc->kue_lock);
+}
+
+static void
+kue_init_locked(void *xsc)
+{
 	struct kue_softc	*sc = xsc;
 	struct ifnet		*ifp = GET_IFP(sc);
-	int			s;
 	uint8_t			eaddr[ETHER_ADDR_LEN];
 
 	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->kue_dev),__func__));
 
 	if (ifp->if_flags & IFF_RUNNING)
 		return;
-
-	s = splnet();
 
 	memcpy(eaddr, CLLADDR(ifp->if_sadl), sizeof(eaddr));
 	/* Set MAC address */
@@ -892,21 +935,18 @@ kue_init(void *xsc)
 
 	if (sc->kue_ep[KUE_ENDPT_RX] == NULL) {
 		if (kue_open_pipes(sc)) {
-			splx(s);
 			return;
 		}
 	}
 	/* Init TX ring. */
 	if (kue_tx_list_init(sc)) {
 		printf("%s: tx list init failed\n", device_xname(sc->kue_dev));
-		splx(s);
 		return;
 	}
 
 	/* Init RX ring. */
 	if (kue_rx_list_init(sc)) {
 		printf("%s: rx list init failed\n", device_xname(sc->kue_dev));
-		splx(s);
 		return;
 	}
 
@@ -922,8 +962,6 @@ kue_init(void *xsc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-
-	splx(s);
 }
 
 static int
@@ -957,8 +995,6 @@ static int
 kue_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct kue_softc	*sc = ifp->if_softc;
-	struct ifaddr 		*ifa = (struct ifaddr *)data;
-	struct ifreq		*ifr = (struct ifreq *)data;
 	int			s, error = 0;
 
 	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->kue_dev),__func__));
@@ -969,29 +1005,7 @@ kue_ioctl(struct ifnet *ifp, u_long command, void *data)
 	s = splnet();
 
 	switch(command) {
-	case SIOCINITIFADDR:
-		ifp->if_flags |= IFF_UP;
-		kue_init(sc);
-
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			arp_ifinit(ifp, ifa);
-			break;
-#endif /* INET */
-		}
-		break;
-
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
-			error = EINVAL;
-		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
-			error = 0;
-		break;
-
 	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, command, data)) != 0)
-			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
 			    ifp->if_flags & IFF_PROMISC &&
@@ -1059,16 +1073,23 @@ kue_watchdog(struct ifnet *ifp)
 	splx(s);
 }
 
+static void
+kue_stop(struct kue_softc *sc)
+{
+	mutex_enter(&sc->kue_lock);
+	kue_stop_locked(sc);
+	mutex_exit(&sc->kue_lock);
+}
+
 /*
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
 static void
-kue_stop(struct kue_softc *sc)
+kue_stop_locked(struct kue_softc *sc)
 {
 	usbd_status		err;
 	struct ifnet		*ifp;
-	int			i;
 
 	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->kue_dev),__func__));
 
@@ -1100,21 +1121,8 @@ kue_stop(struct kue_softc *sc)
 		}
 	}
 
-	/* Free RX resources. */
-	for (i = 0; i < KUE_RX_LIST_CNT; i++) {
-		if (sc->kue_cdata.kue_rx_chain[i].kue_xfer != NULL) {
-			usbd_destroy_xfer(sc->kue_cdata.kue_rx_chain[i].kue_xfer);
-			sc->kue_cdata.kue_rx_chain[i].kue_xfer = NULL;
-		}
-	}
-
-	/* Free TX resources. */
-	for (i = 0; i < KUE_TX_LIST_CNT; i++) {
-		if (sc->kue_cdata.kue_tx_chain[i].kue_xfer != NULL) {
-			usbd_destroy_xfer(sc->kue_cdata.kue_tx_chain[i].kue_xfer);
-			sc->kue_cdata.kue_tx_chain[i].kue_xfer = NULL;
-		}
-	}
+	kue_rx_list_free(sc);
+	kue_tx_list_free(sc);
 
 	/* Close pipes. */
 	if (sc->kue_ep[KUE_ENDPT_RX] != NULL) {
