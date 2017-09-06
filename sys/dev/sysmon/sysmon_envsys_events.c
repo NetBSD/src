@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.119 2017/06/01 02:45:11 chs Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.120 2017/09/06 11:08:53 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.119 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.120 2017/09/06 11:08:53 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -480,8 +480,6 @@ sme_remove_event(sme_event_t *see, struct sysmon_envsys *sme)
 
 	KASSERT(mutex_owned(&sme->sme_mtx));
 
-	if (see->see_edata->flags & ENVSYS_FHAS_ENTROPY)
-		rnd_detach_source(&see->see_edata->rnd_src);
 	LIST_REMOVE(see, see_list);
 	kmem_free(see, sizeof(*see));
 }
