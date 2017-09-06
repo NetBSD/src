@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.166 2017/08/11 22:55:49 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.167 2017/09/06 03:10:09 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 2017/08/11 22:55:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2017/09/06 03:10:09 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -331,14 +331,14 @@ copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 			prop_dictionary_set_uint32(dict, "address", fbaddr);
 	}
 	if (of_to_dataprop(dict, node, "EDID", "EDID")) {
-		aprint_verbose("found EDID property...\n");
+		aprint_debug("found EDID property...\n");
 	} else if (of_to_dataprop(dict, node, "EDID,A", "EDID")) {
-		aprint_verbose("found EDID,A\n");
+		aprint_debug("found EDID,A\n");
 	} else if (of_to_dataprop(dict, node, "EDID,B", "EDID")) {
 		memset(name, 0, sizeof(name));
 		OF_getprop(node, "name", name, sizeof(name));
 		if (strcmp(name, "NVDA,NVMac") == 0) {
-			aprint_verbose("found EDID,B on nvidia - assuming digital output\n");
+			aprint_debug("found EDID,B on nvidia - assuming digital output\n");
 			prop_dictionary_set_bool(dict, "no_palette_control", 1);
 			have_palette = 0;
 		}
