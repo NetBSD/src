@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.24 2008/12/14 13:51:33 wiz Exp $
+.\" $NetBSD: pms.4,v 1.25 2017/09/06 14:38:41 ryoon Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -46,6 +46,7 @@
 .Cd options PMS_DISABLE_POWERHOOK
 .Cd options PMS_SYNAPTICS_TOUCHPAD
 .Cd options PMS_ELANTECH_TOUCHPAD
+.Cd options PMS_ALPS_TOUCHPAD
 .Sh DESCRIPTION
 The
 .Nm
@@ -84,15 +85,19 @@ In addition, the
 .Nm
 driver supports the
 .Dq Synaptics
-and
+,
 .Dq Elantech
+and
+.Dq ALPS
 touchpads in native mode, enabled with the
 .Va PMS_SYNAPTICS_TOUCHPAD
-and
+,
 .Va PMS_ELANTECH_TOUCHPAD
+and
+.Va PMS_ALPS_TOUCHPAD
 kernel options.
 This allows the driver to take advantage of extra
-features available on Synaptics and Elantech Touchpads.
+features available on Synaptics, Elantech and ALPS Touchpads.
 The following
 .Xr sysctl 8
 variables control behavior of Synaptics touchpads:
@@ -164,6 +169,17 @@ and 3 for z).
 .Pp
 For Elantech touchpads, the Z-axis is emulated using two-finger
 Y-axis reporting.
+.Pp
+The following
+.Xr sysctl 8
+variables control behavior of ALPS touchpads:
+.Bl -tag
+.It Dv hw.alps.touchpad_xy_precision_shift
+.It Dv hw.alps.tackstick_xy_precision_shift
+Decreased values improve the accuracy of X and Y-axis reporting
+at the expense of slower mouse movement (default 2 for touchpad
+and 1 for TrackStick).
+.El
 .Sh SEE ALSO
 .Xr pckbc 4 ,
 .Xr ums 4 ,
