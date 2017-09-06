@@ -1,4 +1,4 @@
-.\"	$NetBSD: sm.4,v 1.14 2017/09/06 14:54:34 ryoon Exp $
+.\"	$NetBSD: sm.4,v 1.15 2017/09/06 17:11:41 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,8 +70,8 @@ The nubus attachment of the
 driver supports SMC-based Ethernet cards for the macintosh.
 .Sh MEDIA SELECTION
 The SMC91C1xx supports the MII interface and so the list of supported
-media depends on several factors, including which PHY is attached.  The
-SMC91C9x supports AUI and UTP media types.
+media depends on several factors, including which PHY is attached.
+The SMC91C9x supports AUI and UTP media types.
 .Pp
 To enable the AUI media, select the
 .Em 10base5
@@ -80,7 +80,8 @@ or
 media type with
 .Xr ifconfig 8 Ns 's
 .Cm media
-directive.  To select UTP, select the
+directive.
+To select UTP, select the
 .Em 10baseT
 or
 .Em utp
