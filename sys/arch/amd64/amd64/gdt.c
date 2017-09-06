@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.41 2017/09/02 12:57:03 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.42 2017/09/06 12:39:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.41 2017/09/02 12:57:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.42 2017/09/06 12:39:18 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -130,7 +130,11 @@ gdt_init(void)
 	struct cpu_info *ci = &cpu_info_primary;
 
 	/* Initialize the global values */
+#ifdef XEN
+	gdt_size = FIRST_RESERVED_GDT_BYTE;
+#else
 	gdt_size = MAXGDTSIZ;
+#endif
 	memset(&gdt_bitmap.busy, 0, sizeof(gdt_bitmap.busy));
 	gdt_bitmap.nslots = NSLOTS(gdt_size);
 
