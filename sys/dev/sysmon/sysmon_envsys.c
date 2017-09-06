@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.139 2015/12/14 01:08:47 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.140 2017/09/06 11:08:53 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.139 2015/12/14 01:08:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.140 2017/09/06 11:08:53 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -650,6 +650,8 @@ sysmon_envsys_sensor_detach(struct sysmon_envsys *sme, envsys_data_t *edata)
 	/*
 	 * remove it, unhook from rnd(4), and decrement the sensors count.
 	 */
+	if (oedata->flags & ENVSYS_FHAS_ENTROPY)
+		rnd_detach_source(&oedata->rnd_src);
 	sme_event_unregister_sensor(sme, edata);
 	if (LIST_EMPTY(&sme->sme_events_list)) {
 		sme_events_halt_callout(sme);
@@ -970,6 +972,7 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 {
 	prop_array_t array;
 	struct sysmon_envsys *osme;
+	envsys_data_t *edata;
 
 	KASSERT(sme != NULL);
 
@@ -986,6 +989,10 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 	}
 	LIST_REMOVE(sme, sme_list);
 	mutex_exit(&sme_global_mtx);
+
+	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
+		sysmon_envsys_sensor_detach(sme, edata);
+	}
 
 	/*
 	 * Unregister all events associated with device.
