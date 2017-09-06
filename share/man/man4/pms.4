@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.27 2017/09/06 14:40:26 ryoon Exp $
+.\" $NetBSD: pms.4,v 1.28 2017/09/06 17:15:54 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -84,14 +84,12 @@ kernel option disables PS/2 reset on resume.
 In addition, the
 .Nm
 driver supports the
-.Dq Synaptics
-,
+.Dq Synaptics ,
 .Dq Elantech
 and
 .Dq ALPS
 touchpads in native mode, enabled with the
-.Va PMS_SYNAPTICS_TOUCHPAD
-,
+.Va PMS_SYNAPTICS_TOUCHPAD ,
 .Va PMS_ELANTECH_TOUCHPAD
 and
 .Va PMS_ALPS_TOUCHPAD
@@ -102,7 +100,7 @@ features available on Synaptics, Elantech and ALPS Touchpads.
 The following
 .Xr sysctl 8
 variables control behavior of Synaptics touchpads:
-.Bl -tag
+.Bl -tag -width 8n
 .It Dv hw.synaptics.up_down_emulation
 If the touchpad reports the existence of Up/Down buttons, this value
 determines if they should be reported as button 4 and 5 events or if
@@ -160,7 +158,7 @@ ignored (default 4).
 The following
 .Xr sysctl 8
 variables control behavior of Elantech touchpads:
-.Bl -tag
+.Bl -tag -width 8n
 .It Dv hw.elantech.xy_precision_shift
 .It Dv hw.elantech.z_precision_shift
 Increased values improve the accuracy of X, Y, and Z-axis reporting
@@ -174,7 +172,7 @@ Y-axis reporting.
 The following
 .Xr sysctl 8
 variables control behavior of ALPS touchpads:
-.Bl -tag
+.Bl -tag -width 8n
 .It Dv hw.alps.touchpad_xy_precision_shift
 .It Dv hw.alps.tackstick_xy_precision_shift
 Decreased values improve the accuracy of X and Y-axis reporting
@@ -186,21 +184,29 @@ and 1 for TrackStick).
 .Xr ums 4 ,
 .Xr wsmouse 4
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
-driver was originally written by Christopher G. Demetriou.
+driver was originally written by
+.An Christopher G. Demetriou .
 The changes to merge the
 .Dq IntelliMouse
 protocol in, and reset the mouse in the event of protocol problems, were
-contributed by Peter Seebach.
+contributed by
+.An Peter Seebach .
 Special thanks to Ray Trent, at Synaptics, who contributed valuable
 insight into how to identify bogus mouse data.
 The changes to add
 .Dq Synaptics
-pad support were by Ales Krenek, Kentaro A. Kurahone, and Steve C. Woodford.
+pad support were by
+.An Ales Krenek ,
+.An Kentaro A. Kurahone ,
+and
+.An Steve C. Woodford .
 The changes to add
 .Dq Elantech
-pad support were by Jared D. McNeill.
+pad support were by
+.An Jared D. McNeill .
 .Sh BUGS
 It is possible for the driver to mistakenly negotiate the non-scroll-wheel
 protocol, after which it is unlikely to recover until the device is closed
