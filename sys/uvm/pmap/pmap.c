@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 2017/06/24 07:30:17 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36 2017/09/07 06:29:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2017/06/24 07:30:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 2017/09/07 06:29:47 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -774,10 +774,12 @@ pmap_page_remove(struct vm_page *pg)
 		pmap_md_tlb_miss_lock_enter();
 		const pt_entry_t npte = pte_nv_entry(is_kernel_pmap_p);
 		pte_set(ptep, npte);
-		/*
-		 * Flush the TLB for the given address.
-		 */
-		pmap_tlb_invalidate_addr(pmap, va);
+		if (__predict_true(!(pmap->pm_flags & PMAP_DEFERRED_ACTIVATE))) {
+			/*
+			 * Flush the TLB for the given address.
+			 */
+			pmap_tlb_invalidate_addr(pmap, va);
+		}
 		pmap_md_tlb_miss_lock_exit();
 
 		/*
@@ -903,10 +905,13 @@ pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 		}
 		pmap_md_tlb_miss_lock_enter();
 		pte_set(ptep, npte);
-		/*
-		 * Flush the TLB for the given address.
-		 */
-		pmap_tlb_invalidate_addr(pmap, sva);
+		if (__predict_true(!(pmap->pm_flags & PMAP_DEFERRED_ACTIVATE))) {
+
+			/*
+			 * Flush the TLB for the given address.
+			 */
+			pmap_tlb_invalidate_addr(pmap, sva);
+		}
 		pmap_md_tlb_miss_lock_exit();
 	}
 
