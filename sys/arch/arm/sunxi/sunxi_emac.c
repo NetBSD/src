@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.4 2017/07/07 21:40:56 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.5 2017/09/07 01:07:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.4 2017/07/07 21:40:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.5 2017/09/07 01:07:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -131,11 +131,13 @@ static int sunxi_emac_tx_interval = TX_INTERVAL_DEFAULT;
 enum sunxi_emac_type {
 	EMAC_A83T = 1,
 	EMAC_H3,
+	EMAC_A64,
 };
 
 static const struct of_compat_data compat_data[] = {
 	{ "allwinner,sun8i-a83t-emac",	EMAC_A83T },
 	{ "allwinner,sun8i-h3-emac",	EMAC_H3 },
+	{ "allwinner,sun50i-a64-emac",	EMAC_A64 },
 	{ NULL }
 };
 
