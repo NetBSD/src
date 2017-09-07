@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.2 2017/09/07 10:23:32 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.3 2017/09/07 23:19:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.2 2017/09/07 10:23:32 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.3 2017/09/07 23:19:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,8 +47,6 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.2 2017/09/07 10:23:32 jmcneill 
 #define	AHB1_APB1_CFG_REG	0x054
 #define	APB2_CFG_REG		0x058
 #define	AHB2_CFG_REG		0x05c
-#define	 AHB2_CLK_CFG		__BITS(1,0)
-#define	 AHB2_CLK_CFG_PLL_PERIPH0_2	1
 #define	BUS_CLK_GATING_REG0	0x060
 #define	BUS_CLK_GATING_REG1	0x064
 #define	BUS_CLK_GATING_REG2	0x068
@@ -301,18 +299,6 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    USBPHY_CFG_REG, 17),
 };
 
-static void
-sun50i_a64_ccu_init(struct sunxi_ccu_softc *sc)
-{
-	uint32_t val;
-
-	/* Set AHB2 source to PLL_PERIPH/2 */
-	val = CCU_READ(sc, AHB2_CFG_REG);
-	val &= ~AHB2_CLK_CFG;
-	val |= __SHIFTIN(AHB2_CLK_CFG_PLL_PERIPH0_2, AHB2_CLK_CFG);
-	CCU_WRITE(sc, AHB2_CFG_REG, val);
-}
-
 static int
 sun50i_a64_ccu_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -342,8 +328,6 @@ sun50i_a64_ccu_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": A64 CCU\n");
-
-	sun50i_a64_ccu_init(sc);
 
 	sunxi_ccu_print(sc);
 }
