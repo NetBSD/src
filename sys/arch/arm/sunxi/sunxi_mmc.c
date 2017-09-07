@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.5 2017/08/27 17:53:10 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.6 2017/09/07 01:07:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.5 2017/08/27 17:53:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.6 2017/09/07 01:07:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -167,6 +167,7 @@ CFATTACH_DECL_NEW(sunxi_mmc, sizeof(struct sunxi_mmc_softc),
 static const char * const compatible[] = {
 	"allwinner,sun5i-a13-mmc",
 	"allwinner,sun7i-a20-mmc",
+	"allwinner,sun50i-a64-mmc",
 	NULL
 };
 
