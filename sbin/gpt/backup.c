@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: backup.c,v 1.17 2017/09/06 18:17:18 christos Exp $");
+__RCSID("$NetBSD: backup.c,v 1.18 2017/09/07 10:23:33 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -231,8 +231,8 @@ store_tbl(gpt_t gpt, const map_t m, prop_dictionary_t *type_dict)
 		PROP_ERR(propnum);
 		rc = prop_dictionary_set(gpt_dict, "attributes", propnum);
 		PROP_ERR(rc);
-		utf16_to_utf8(ent->ent_name, sizeof(ent->ent_name), utfbuf,
-		    sizeof(utfbuf));
+		utf16_to_utf8(ent->ent_name, __arraycount(ent->ent_name),
+		    utfbuf, __arraycount(utfbuf));
 		if (utfbuf[0] != '\0') {
 			propstr = prop_string_create_cstring((char *)utfbuf);
 			PROP_ERR(propstr);
