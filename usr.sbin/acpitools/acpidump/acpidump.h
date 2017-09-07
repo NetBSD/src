@@ -1,4 +1,4 @@
-/* $NetBSD: acpidump.h,v 1.6 2017/08/04 06:30:36 msaitoh Exp $ */
+/* $NetBSD: acpidump.h,v 1.7 2017/09/07 04:40:56 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -35,17 +35,6 @@
 #include <stdlib.h> /* for size_t */
 #include <acpi_common.h>
 #include <dev/acpi/acpica.h>
-
-/* GAS address space ID constants. */
-#define	ACPI_GAS_MEMORY		0
-#define	ACPI_GAS_IO		1
-#define	ACPI_GAS_PCI		2
-#define	ACPI_GAS_EMBEDDED	3
-#define	ACPI_GAS_SMBUS		4
-#define	ACPI_GAS_CMOS		5
-#define	ACPI_GAS_PCIBAR		6
-#define	ACPI_GAS_DATATABLE	7
-#define	ACPI_GAS_FIXED		0x7f
 
 /* Subfields in the HPET Id member. */
 #define	ACPI_HPET_ID_HARDWARE_REV_ID	0x000000ff
