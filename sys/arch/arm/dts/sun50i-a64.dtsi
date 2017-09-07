@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64.dtsi,v 1.1 2017/09/07 21:37:56 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64.dtsi,v 1.2 2017/09/07 21:46:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,6 +27,19 @@
  */
 
 / {
+	chosen {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		framebuffer@0 {
+			compatible = "allwinner,simple-framebuffer",
+				     "simple-framebuffer";
+			allwinner,pipeline = "mixer1-lcd1-hdmi";
+			status = "disabled";
+		};
+	};
+
 	soc {
 		emac: ethernet@1c30000 {
 			compatible = "allwinner,sun50i-a64-emac";
