@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.27 2017/09/07 01:07:04 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.28 2017/09/07 21:22:51 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -7,6 +7,8 @@
 include	"arch/evbarm/conf/std.sunxi"
 include	"arch/evbarm/conf/GENERIC.common"
 
+makeoptions	DTSGNUARCH="arm arm64"
+makeoptions	DTSSUBDIR="allwinner"
 makeoptions	DTS="
 	sun5i-a13-difrnce-dit4350.dts
 	sun5i-a13-empire-electronix-d709.dts
@@ -46,6 +48,10 @@ makeoptions	DTS="
 	sun8i-h3-orangepi-pc.dts
 	sun8i-h3-orangepi-plus.dts
 	sun8i-h3-orangepi-plus2e.dts
+
+	sun50i-a64-bananapi-m64.dts
+	sun50i-a64-pine64-plus.dts
+	sun50i-a64-pine64.dts
 "
 
 options 	MULTIPROCESSOR
