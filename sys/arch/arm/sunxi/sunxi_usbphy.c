@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_usbphy.c,v 1.6 2017/09/07 01:07:04 jmcneill Exp $ */
+/* $NetBSD: sunxi_usbphy.c,v 1.7 2017/09/07 10:30:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.6 2017/09/07 01:07:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.7 2017/09/07 10:30:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -144,11 +144,15 @@ sunxi_usbphy_enable(device_t dev, void *priv, bool enable)
 		USBPHY_WRITE(sc, phy->phy_index, HCI_ICR, val);
 	}
 
-	if (sc->sc_type == USBPHY_H3) {
-		/* H3-specific */
+	switch (sc->sc_type) {
+	case USBPHY_H3:
+	case USBPHY_A64:
 		val = USBPHY_READ(sc, phy->phy_index, PMU_UNK_H3);
 		val &= ~PMU_UNK_H3_CLR;
 		USBPHY_WRITE(sc, phy->phy_index, PMU_UNK_H3, val);
+		break;
+	default:
+		break;
 	}
 
 	if (phy->phy_reg == NULL)
