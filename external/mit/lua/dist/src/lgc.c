@@ -1,4 +1,4 @@
-/*	$NetBSD: lgc.c,v 1.8 2017/04/26 13:17:33 mbalmer Exp $	*/
+/*	$NetBSD: lgc.c,v 1.9 2017/09/07 12:52:29 mbalmer Exp $	*/
 
 /*
 ** Id: lgc.c,v 2.215 2016/12/22 13:08:50 roberto Exp 
@@ -647,8 +647,9 @@ static void clearkeys (global_State *g, GCObject *l, GCObject *f) {
     for (n = gnode(h, 0); n < limit; n++) {
       if (!ttisnil(gval(n)) && (iscleared(g, gkey(n)))) {
         setnilvalue(gval(n));  /* remove value ... */
-        removeentry(n);  /* and remove entry from table */
       }
+      if (ttisnil(gval(n)))  /* is entry empty? */
+        removeentry(n);  /* remove entry from table */
     }
   }
 }
