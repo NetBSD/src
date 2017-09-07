@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_usbphy.c,v 1.5 2017/08/25 12:28:51 jmcneill Exp $ */
+/* $NetBSD: sunxi_usbphy.c,v 1.6 2017/09/07 01:07:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.5 2017/08/25 12:28:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.6 2017/09/07 01:07:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,12 +57,14 @@ enum sunxi_usbphy_type {
 	USBPHY_A13,
 	USBPHY_A31,
 	USBPHY_H3,
+	USBPHY_A64,
 };
 
 static const struct of_compat_data compat_data[] = {
 	{ "allwinner,sun5i-a13-usb-phy",	USBPHY_A13 },
 	{ "allwinner,sun6i-a31-usb-phy",	USBPHY_A31 },
 	{ "allwinner,sun8i-h3-usb-phy",		USBPHY_H3 },
+	{ "allwinner,sun50i-a64-usb-phy",	USBPHY_A64 },
 	{ NULL }
 };
 
