@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.5 2017/09/07 01:07:04 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.6 2017/09/07 21:36:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.5 2017/09/07 01:07:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.6 2017/09/07 21:36:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1285,7 +1285,7 @@ sunxi_emac_get_resources(struct sunxi_emac_softc *sc)
 
 	if ((sc->rst_ahb = fdtbus_reset_get(phandle, "ahb")) == NULL)
 		return ENXIO;
-	sc->rst_ahb = fdtbus_reset_get(phandle, "ephy");
+	sc->rst_ephy = fdtbus_reset_get(phandle, "ephy");
 
 	/* Regulator is optional */
 	sc->reg_phy = fdtbus_regulator_acquire(phandle, "phy-supply");
