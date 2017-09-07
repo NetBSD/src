@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.25 2017/09/04 08:12:29 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.26 2017/09/07 04:40:56 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.25 2017/09/04 08:12:29 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.26 2017/09/07 04:40:56 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -211,7 +211,7 @@ static void
 acpi_print_gas(ACPI_GENERIC_ADDRESS *gas)
 {
 	switch(gas->SpaceId) {
-	case ACPI_GAS_MEMORY:
+	case ACPI_ADR_SPACE_SYSTEM_MEMORY:
 		if (gas->BitWidth <= 32)
 			printf("0x%08x:%u[%u] (Memory)",
 			    (u_int)gas->Address, gas->BitOffset,
@@ -221,28 +221,31 @@ acpi_print_gas(ACPI_GENERIC_ADDRESS *gas)
 			    (uintmax_t)gas->Address, gas->BitOffset,
 			    gas->BitWidth);
 		break;
-	case ACPI_GAS_IO:
+	case ACPI_ADR_SPACE_SYSTEM_IO:
 		printf("0x%02x:%u[%u] (IO)", (u_int)gas->Address,
 		    gas->BitOffset, gas->BitWidth);
 		break;
-	case ACPI_GAS_PCI:
+	case ACPI_ADR_SPACE_PCI_CONFIG:
 		printf("%x:%x+0x%x (PCI)", (uint16_t)(gas->Address >> 32),
 		       (uint16_t)((gas->Address >> 16) & 0xffff),
 		       (uint16_t)gas->Address);
 		break;
 	/* XXX How to handle these below? */
-	case ACPI_GAS_EMBEDDED:
+	case ACPI_ADR_SPACE_EC:
 		printf("0x%x:%u[%u] (EC)", (uint16_t)gas->Address,
 		       gas->BitOffset, gas->BitWidth);
 		break;
-	case ACPI_GAS_SMBUS:
+	case ACPI_ADR_SPACE_SMBUS:
 		printf("0x%x:%u[%u] (SMBus)", (uint16_t)gas->Address,
 		       gas->BitOffset, gas->BitWidth);
 		break;
-	case ACPI_GAS_CMOS:
-	case ACPI_GAS_PCIBAR:
-	case ACPI_GAS_DATATABLE:
-	case ACPI_GAS_FIXED:
+	case ACPI_ADR_SPACE_CMOS:
+	case ACPI_ADR_SPACE_PCI_BAR_TARGET:
+	case ACPI_ADR_SPACE_IPMI:
+	case ACPI_ADR_SPACE_GPIO:
+	case ACPI_ADR_SPACE_GSBUS:
+	case ACPI_ADR_SPACE_PLATFORM_COMM:
+	case ACPI_ADR_SPACE_FIXED_HARDWARE:
 	default:
 		printf("0x%016jx (SpaceID=%hhu)", (uintmax_t)gas->Address,
 		    gas->SpaceId);
