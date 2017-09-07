@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.101 2017/08/11 06:27:12 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.102 2017/09/07 06:40:42 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -247,6 +247,12 @@
 	    | ((CPUID_TO_BASEFAMILY(cpuid) != 0x0f)		\
 		&& (CPUID_TO_BASEFAMILY(cpuid) != 0x06)		\
 		? 0 : (CPUID_TO_EXTMODEL(cpuid) << 4)))
+
+/* CPUID Fn00000001 %ebx */
+#define	CPUID_BRAND_INDEX	__BITS(7,0)
+#define	CPUID_CLFUSH_SIZE	__BITS(15,8)
+#define	CPUID_HTT_CORES		__BITS(23,16)
+#define	CPUID_LOCAL_APIC_ID	__BITS(31,24)
 
 /*
  * Intel Deterministic Cache Parameter Leaf

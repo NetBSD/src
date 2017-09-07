@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.74 2016/10/11 04:16:28 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.75 2017/09/07 06:40:42 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.74 2016/10/11 04:16:28 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.75 2017/09/07 06:40:42 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1506,9 +1506,9 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	ci->ci_model = CPUID_TO_MODEL(ci->ci_signature);
 
 	/* Brand is low order 8 bits of ebx */
-	ci->ci_brand_id = descs[1] & 0xff;
+	ci->ci_brand_id = __SHIFTOUT(descs[1], CPUID_BRAND_INDEX);
 	/* Initial local APIC ID */
-	ci->ci_initapicid = (descs[1] >> 24) & 0xff;
+	ci->ci_initapicid = __SHIFTOUT(descs[1], CPUID_LOCAL_APIC_ID);
 
 	ci->ci_feat_val[1] = descs[2];
 	ci->ci_feat_val[0] = descs[3];
@@ -1668,7 +1668,7 @@ identifycpu_cpuids(struct cpu_info *ci)
 
 	if ((ci->ci_feat_val[0] & CPUID_HTT) != 0) {
 		x86_cpuid(1, descs);
-		lp_max = (descs[1] >> 16) & 0xff;
+		lp_max = __SHIFTOUT(descs[1], CPUID_HTT_CORES);
 	}
 	if (ci->ci_cpuid_level >= 4) {
 		x86_cpuid2(4, 0, descs);
