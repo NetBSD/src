@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.11 2017/02/10 17:53:24 christos Exp $	*/
+/*	$NetBSD: magic.c,v 1.12 2017/09/08 13:40:25 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -36,9 +36,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: magic.c,v 1.100 2016/07/18 11:43:05 christos Exp $")
+FILE_RCSID("@(#)$File: magic.c,v 1.102 2017/08/28 13:39:18 christos Exp $")
 #else
-__RCSID("$NetBSD: magic.c,v 1.11 2017/02/10 17:53:24 christos Exp $");
+__RCSID("$NetBSD: magic.c,v 1.12 2017/09/08 13:40:25 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -173,7 +173,7 @@ DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 {
 	if (fdwReason == DLL_PROCESS_ATTACH)
 		_w32_dll_instance = hinstDLL;
-	return TRUE;
+	return 1;
 }
 #endif
 
@@ -415,7 +415,7 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 	int	ispipe = 0;
 	off_t	pos = (off_t)-1;
 
-	if (file_reset(ms) == -1)
+	if (file_reset(ms, 1) == -1)
 		goto out;
 
 	/*
@@ -544,7 +544,7 @@ magic_buffer(struct magic_set *ms, const void *buf, size_t nb)
 {
 	if (ms == NULL)
 		return NULL;
-	if (file_reset(ms) == -1)
+	if (file_reset(ms, 1) == -1)
 		return NULL;
 	/*
 	 * The main work is done here!
@@ -571,6 +571,15 @@ magic_errno(struct magic_set *ms)
 	if (ms == NULL)
 		return EINVAL;
 	return (ms->event_flags & EVENT_HAD_ERR) ? ms->error : 0;
+}
+
+public int
+magic_getflags(struct magic_set *ms)
+{
+	if (ms == NULL)
+		return -1;
+
+	return ms->flags;
 }
 
 public int
