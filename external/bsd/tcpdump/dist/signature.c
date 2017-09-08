@@ -12,12 +12,12 @@
  *
  * Functions for signature and digest verification.
  *
- * Original code by Hannes Gredler (hannes@juniper.net)
+ * Original code by Hannes Gredler (hannes@gredler.at)
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: signature.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: signature.c,v 1.8 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H

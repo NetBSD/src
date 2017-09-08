@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: smbutil.c,v 1.5 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: smbutil.c,v 1.6 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -242,6 +242,7 @@ name_len(netdissect_options *ndo,
 	    return(-1);	/* name goes past the end of the buffer */
 	ND_TCHECK2(*s, 1);
 	s += (*s) + 1;
+	ND_TCHECK2(*s, 1);
     }
     return(PTR_DIFF(s, s0) + 1);
 

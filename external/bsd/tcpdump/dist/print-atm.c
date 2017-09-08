@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-atm.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-atm.c,v 1.9 2017/09/08 14:01:12 christos Exp $");
 #endif
 
 /* \summary: Asynchronous Transfer Mode (ATM) printer */
@@ -267,7 +267,7 @@ atm_if_print(netdissect_options *ndo,
         if (*p == LLC_UI) {
             if (ndo->ndo_eflag)
                 ND_PRINT((ndo, "CNLPID "));
-            isoclns_print(ndo, p + 1, length - 1, caplen - 1);
+            isoclns_print(ndo, p + 1, length - 1);
             return hdrlen;
         }
 

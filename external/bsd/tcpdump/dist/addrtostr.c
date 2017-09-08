@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addrtostr.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: addrtostr.c,v 1.4 2017/09/08 14:01:12 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -115,25 +115,24 @@ addrtostr6 (const void *src, char *dst, size_t size)
   size_t space_left, added_space;
   int snprintfed;
   struct {
-    long base;
-    long len;
+    int base;
+    int len;
   } best, cur;
-  u_long words [IN6ADDRSZ / INT16SZ];
-  u_int  i;
+  uint16_t words [IN6ADDRSZ / INT16SZ];
+  int  i;
 
   /* Preprocess:
    *  Copy the input (bytewise) array into a wordwise array.
    *  Find the longest run of 0x00's in src[] for :: shorthanding.
    */
-  memset (words, 0, sizeof(words));
-  for (i = 0; i < IN6ADDRSZ; i++)
-      words[i/2] |= (srcaddr[i] << ((1 - (i % 2)) << 3));
+  for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++)
+      words[i] = (srcaddr[2*i] << 8) | srcaddr[2*i + 1];
 
   best.len = 0;
   best.base = -1;
   cur.len = 0;
   cur.base  = -1;
-  for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++)
+  for (i = 0; i < (int)(IN6ADDRSZ / INT16SZ); i++)
   {
     if (words[i] == 0)
     {
@@ -166,7 +165,7 @@ addrtostr6 (const void *src, char *dst, size_t size)
         *dp++ = c; \
         space_left--; \
     }
-  for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++)
+  for (i = 0; i < (int)(IN6ADDRSZ / INT16SZ); i++)
   {
     /* Are we inside the best run of 0x00's?
      */
@@ -197,7 +196,7 @@ addrtostr6 (const void *src, char *dst, size_t size)
       space_left -= added_space;
       break;
     }
-    snprintfed = snprintf (dp, space_left, "%lx", words[i]);
+    snprintfed = snprintf (dp, space_left, "%x", words[i]);
     if (snprintfed < 0)
         return (NULL);
     if ((size_t) snprintfed >= space_left)
