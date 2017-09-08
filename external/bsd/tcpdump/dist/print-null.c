@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-null.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-null.c,v 1.8 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 /* \summary: BSD loopback device printer */
@@ -122,7 +122,7 @@ null_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_char
 		break;
 
 	case BSD_AFNUM_ISO:
-		isoclns_print(ndo, p, length, caplen);
+		isoclns_print(ndo, p, length);
 		break;
 
 	case BSD_AFNUM_APPLETALK:

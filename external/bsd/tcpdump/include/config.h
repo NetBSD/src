@@ -35,6 +35,9 @@
 /* Define to 1 if you have the `ether_ntohost' function. */
 #define HAVE_ETHER_NTOHOST 1
 
+/* Define to 1 if you have the `EVP_CipherInit_ex' function. */
+#define HAVE_EVP_CIPHERINIT_EX 1
+
 /* Define to 1 if you have the `EVP_CIPHER_CTX_new' function. */
 #define HAVE_EVP_CIPHER_CTX_NEW 1
 

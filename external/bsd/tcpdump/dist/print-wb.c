@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-wb.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-wb.c,v 1.8 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 /* \summary: White Board printer */
@@ -268,9 +268,8 @@ wb_prep(netdissect_options *ndo,
 	const u_char *ep = ndo->ndo_snapend;
 
 	ND_PRINT((ndo, " wb-prep:"));
-	if (len < sizeof(*prep)) {
+	if (len < sizeof(*prep) || !ND_TTEST(*prep))
 		return (-1);
-	}
 	n = EXTRACT_32BITS(&prep->pp_n);
 	ps = (const struct pgstate *)(prep + 1);
 	while (--n >= 0 && ND_TTEST(*ps)) {
@@ -424,31 +423,37 @@ wb_print(netdissect_options *ndo,
 	case PT_ID:
 		if (wb_id(ndo, (const struct pkt_id *)(ph + 1), len) >= 0)
 			return;
+		ND_PRINT((ndo, "%s", tstr));
 		break;
 
 	case PT_RREQ:
 		if (wb_rreq(ndo, (const struct pkt_rreq *)(ph + 1), len) >= 0)
 			return;
+		ND_PRINT((ndo, "%s", tstr));
 		break;
 
 	case PT_RREP:
 		if (wb_rrep(ndo, (const struct pkt_rrep *)(ph + 1), len) >= 0)
 			return;
+		ND_PRINT((ndo, "%s", tstr));
 		break;
 
 	case PT_DRAWOP:
 		if (wb_drawop(ndo, (const struct pkt_dop *)(ph + 1), len) >= 0)
 			return;
+		ND_PRINT((ndo, "%s", tstr));
 		break;
 
 	case PT_PREQ:
 		if (wb_preq(ndo, (const struct pkt_preq *)(ph + 1), len) >= 0)
 			return;
+		ND_PRINT((ndo, "%s", tstr));
 		break;
 
 	case PT_PREP:
 		if (wb_prep(ndo, (const struct pkt_prep *)(ph + 1), len) >= 0)
 			return;
+		ND_PRINT((ndo, "%s", tstr));
 		break;
 
 	default:

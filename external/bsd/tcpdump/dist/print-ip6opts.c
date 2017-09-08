@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ip6opts.c,v 1.6 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-ip6opts.c,v 1.7 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 /* \summary: IPv6 header option printer */
@@ -40,11 +40,11 @@ __RCSID("$NetBSD: print-ip6opts.c,v 1.6 2017/02/05 04:05:05 spz Exp $");
 
 #include <netdissect-stdinc.h>
 
-#include "ip6.h"
-
 #include "netdissect.h"
 #include "addrtoname.h"
 #include "extract.h"
+
+#include "ip6.h"
 
 static void
 ip6_sopt_print(netdissect_options *ndo, const u_char *bp, int len)

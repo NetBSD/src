@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2004  Hannes Gredler <hannes@tcpdump.org>
+ * Copyright (c) 1998-2004  Hannes Gredler <hannes@gredler.at>
  *      The TCPDUMP project
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-syslog.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-syslog.c,v 1.8 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 /* \summary: Syslog protocol printer */

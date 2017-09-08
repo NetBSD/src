@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-beep.c,v 1.6 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-beep.c,v 1.7 2017/09/08 14:01:12 christos Exp $");
 #endif
 
 /* \summary: Blocks Extensible Exchange Protocol (BEEP) printer */
@@ -33,9 +33,17 @@ __RCSID("$NetBSD: print-beep.c,v 1.6 2017/02/05 04:05:05 spz Exp $");
  */
 
 static int
-l_strnstart(const char *tstr1, u_int tl1, const char *str2, u_int l2)
+l_strnstart(netdissect_options *ndo, const char *tstr1, u_int tl1,
+    const char *str2, u_int l2)
 {
-
+	if (!ND_TTEST2(*str2, tl1)) {
+		/*
+		 * We don't have tl1 bytes worth of captured data
+		 * for the string, so we can't check for this
+		 * string.
+		 */
+		return 0;
+	}
 	if (tl1 > l2)
 		return 0;
 
@@ -46,19 +54,19 @@ void
 beep_print(netdissect_options *ndo, const u_char *bp, u_int length)
 {
 
-	if (l_strnstart("MSG", 4, (const char *)bp, length)) /* A REQuest */
+	if (l_strnstart(ndo, "MSG", 4, (const char *)bp, length)) /* A REQuest */
 		ND_PRINT((ndo, " BEEP MSG"));
-	else if (l_strnstart("RPY ", 4, (const char *)bp, length))
+	else if (l_strnstart(ndo, "RPY ", 4, (const char *)bp, length))
 		ND_PRINT((ndo, " BEEP RPY"));
-	else if (l_strnstart("ERR ", 4, (const char *)bp, length))
+	else if (l_strnstart(ndo, "ERR ", 4, (const char *)bp, length))
 		ND_PRINT((ndo, " BEEP ERR"));
-	else if (l_strnstart("ANS ", 4, (const char *)bp, length))
+	else if (l_strnstart(ndo, "ANS ", 4, (const char *)bp, length))
 		ND_PRINT((ndo, " BEEP ANS"));
-	else if (l_strnstart("NUL ", 4, (const char *)bp, length))
+	else if (l_strnstart(ndo, "NUL ", 4, (const char *)bp, length))
 		ND_PRINT((ndo, " BEEP NUL"));
-	else if (l_strnstart("SEQ ", 4, (const char *)bp, length))
+	else if (l_strnstart(ndo, "SEQ ", 4, (const char *)bp, length))
 		ND_PRINT((ndo, " BEEP SEQ"));
-	else if (l_strnstart("END", 4, (const char *)bp, length))
+	else if (l_strnstart(ndo, "END", 4, (const char *)bp, length))
 		ND_PRINT((ndo, " BEEP END"));
 	else
 		ND_PRINT((ndo, " BEEP (payload or undecoded)"));

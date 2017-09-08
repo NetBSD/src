@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-telnet.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-telnet.c,v 1.8 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 /* \summary: Telnet option printer */
@@ -440,6 +440,7 @@ telnet_parse(netdissect_options *ndo, const u_char *sp, u_int length, int print)
 				break;
 			p++;
 		}
+		ND_TCHECK(*p);
 		if (*p != IAC)
 			goto pktend;
 

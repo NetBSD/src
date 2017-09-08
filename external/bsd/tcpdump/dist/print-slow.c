@@ -15,12 +15,12 @@
  * support for the IEEE "slow protocols" LACP, MARKER as per 802.3ad
  *                                       OAM as per 802.3ah
  *
- * Original code by Hannes Gredler (hannes@juniper.net)
+ * Original code by Hannes Gredler (hannes@gredler.at)
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-slow.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-slow.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 /* \summary: IEEE "slow protocols" (802.3ad/802.3ah) printer */

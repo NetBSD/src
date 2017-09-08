@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-m3ua.c,v 1.4 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-m3ua.c,v 1.5 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 /* \summary: Message Transfer Part 3 (MTP3) User Adaptation Layer (M3UA) printer */
@@ -72,7 +72,7 @@ static const struct tok MessageClasses[] = {
 	{ M3UA_MSGC_SSNM,     "SS7"                   },
 	{ M3UA_MSGC_ASPSM,    "ASP"                   },
 	{ M3UA_MSGC_ASPTM,    "ASP"                   },
-	{ M3UA_MSGC_RKM,      "Routing Key Managment" },
+	{ M3UA_MSGC_RKM,      "Routing Key Management"},
 	{ 0, NULL }
 };
 

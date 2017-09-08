@@ -10,14 +10,14 @@
  * LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE.
  *
- * Original code by Hannes Gredler (hannes@juniper.net)
+ * Original code by Hannes Gredler (hannes@gredler.at)
  * Turned into common "text protocol" code, which this uses, by
  * Guy Harris.
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sip.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-sip.c,v 1.8 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 /* \summary: Session Initiation Protocol (SIP) printer */

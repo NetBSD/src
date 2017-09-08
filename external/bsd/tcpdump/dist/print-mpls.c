@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-mpls.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-mpls.c,v 1.8 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 /* \summary: Multi-Protocol Label Switching (MPLS) printer */
@@ -206,7 +206,7 @@ mpls_print(netdissect_options *ndo, const u_char *bp, u_int length)
 		break;
 
 	case PT_OSI:
-		isoclns_print(ndo, p, length, length);
+		isoclns_print(ndo, p, length);
 		break;
 
 	default:

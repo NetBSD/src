@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-fr.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-fr.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 /* \summary: Frame Relay printer */
@@ -334,7 +334,7 @@ fr_print(netdissect_options *ndo,
 	case NLPID_CLNP:
 	case NLPID_ESIS:
 	case NLPID_ISIS:
-		isoclns_print(ndo, p - 1, length + 1, ndo->ndo_snapend - p + 1); /* OSI printers need the NLPID field */
+		isoclns_print(ndo, p - 1, length + 1); /* OSI printers need the NLPID field */
 		break;
 
 	case NLPID_SNAP:

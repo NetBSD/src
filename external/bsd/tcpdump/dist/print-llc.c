@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-llc.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-llc.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 /* \summary: IEEE 802.2 LLC printer */
@@ -329,7 +329,7 @@ llc_print(netdissect_options *ndo, const u_char *p, u_int length, u_int caplen,
 #endif
 	if (ssap == LLCSAP_ISONS && dsap == LLCSAP_ISONS
 	    && control == LLC_UI) {
-		isoclns_print(ndo, p, length, caplen);
+		isoclns_print(ndo, p, length);
 		return (hdrlen);
 	}
 

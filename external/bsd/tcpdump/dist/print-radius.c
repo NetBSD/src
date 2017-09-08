@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-radius.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-radius.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -501,10 +501,7 @@ print_attr_string(netdissect_options *ndo,
    {
       case TUNNEL_PASS:
            if (length < 3)
-           {
-              ND_PRINT((ndo, "%s", tstr));
-              return;
-           }
+              goto trunc;
            if (*data && (*data <=0x1F) )
               ND_PRINT((ndo, "Tag[%u] ", *data));
            else
@@ -524,10 +521,7 @@ print_attr_string(netdissect_options *ndo,
            if (*data <= 0x1F)
            {
               if (length < 1)
-              {
-                 ND_PRINT((ndo, "%s", tstr));
-                 return;
-              }
+                 goto trunc;
               if (*data)
                 ND_PRINT((ndo, "Tag[%u] ", *data));
               else
@@ -537,6 +531,8 @@ print_attr_string(netdissect_options *ndo,
            }
         break;
       case EGRESS_VLAN_NAME:
+           if (length < 1)
+              goto trunc;
            ND_PRINT((ndo, "%s (0x%02x) ",
                   tok2str(rfc4675_tagged,"Unknown tag",*data),
                   *data));
@@ -545,7 +541,7 @@ print_attr_string(netdissect_options *ndo,
         break;
    }
 
-   for (i=0; *data && i < length ; i++, data++)
+   for (i=0; i < length && *data; i++, data++)
        ND_PRINT((ndo, "%c", (*data < 32 || *data > 126) ? '.' : *data));
 
    return;

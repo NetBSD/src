@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: tcpdump2netbsd,v 1.1 2013/04/06 19:33:07 christos Exp $
+#	$NetBSD: tcpdump2netbsd,v 1.2 2017/09/08 14:01:12 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,7 @@
 #
 #	$ cd /some/where/temporary
 #	$ tar xpfz /new/amd/release/tar/file
-#	$ sh /usr/src/external/bsd/tcpdump/dist/tcpdump2netbsd tcpdump-x.y.z `pwd`
+#	$ sh /usr/src/external/bsd/tcpdump/dist/tcpdump2netbsd tcpdump-x.y.z
 #	$ cd src/dist/am-utils
 #	$ cvs -d cvs.netbsd.org:/cvsroot import -m "Import tcpdump x.y.z" src/external/bsd/tcpdump/dist TCPDUMP tcpdump-x_y_z
 #	$ cd ../../../tcpdump-x.y.z
