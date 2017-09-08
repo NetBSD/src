@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.1.1.10 2017/05/24 23:59:57 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.1.1.11 2017/09/08 13:22:41 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -30,9 +30,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: readelf.c,v 1.136 2017/03/29 19:09:52 christos Exp $")
+FILE_RCSID("@(#)$File: readelf.c,v 1.138 2017/08/27 07:55:02 christos Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.1.1.10 2017/05/24 23:59:57 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.1.1.11 2017/09/08 13:22:41 christos Exp $");
 #endif
 #endif
 
@@ -517,7 +517,7 @@ do_bid_note(struct magic_set *ms, unsigned char *nbuf, uint32_t type,
     size_t noff, size_t doff, int *flags)
 {
 	if (namesz == 4 && strcmp((char *)&nbuf[noff], "GNU") == 0 &&
-	    type == NT_GNU_BUILD_ID && (descsz >= 4 || descsz <= 20)) {
+	    type == NT_GNU_BUILD_ID && (descsz >= 4 && descsz <= 20)) {
 		uint8_t desc[20];
 		const char *btype;
 		uint32_t i;
@@ -1215,8 +1215,8 @@ doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
 	size_t nbadcap = 0;
 	void *nbuf;
 	off_t noff, coff, name_off;
-	uint64_t cap_hw1 = 0;	/* SunOS 5.x hardware capabilites */
-	uint64_t cap_sf1 = 0;	/* SunOS 5.x software capabilites */
+	uint64_t cap_hw1 = 0;	/* SunOS 5.x hardware capabilities */
+	uint64_t cap_sf1 = 0;	/* SunOS 5.x software capabilities */
 	char name[50];
 	ssize_t namesize;
 

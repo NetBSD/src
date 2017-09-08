@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.1.1.10 2017/05/24 23:59:56 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.1.1.11 2017/09/08 13:22:41 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: compress.c,v 1.104 2017/03/29 15:57:48 christos Exp $")
+FILE_RCSID("@(#)$File: compress.c,v 1.105 2017/05/25 00:13:03 christos Exp $")
 #else
-__RCSID("$NetBSD: compress.c,v 1.1.1.10 2017/05/24 23:59:56 christos Exp $");
+__RCSID("$NetBSD: compress.c,v 1.1.1.11 2017/09/08 13:22:41 christos Exp $");
 #endif
 #endif
 
@@ -757,7 +757,7 @@ err:
 	} else if (!WIFEXITED(status)) {
 		DPRINTF("Child not exited (%#x)\n", status);
 	} else if (WEXITSTATUS(status) != 0) {
-		DPRINTF("Child exited (%#u)\n", WEXITSTATUS(status));
+		DPRINTF("Child exited (%#x)\n", WEXITSTATUS(status));
 	}
 
 	closefd(fdp[STDIN_FILENO], 0);

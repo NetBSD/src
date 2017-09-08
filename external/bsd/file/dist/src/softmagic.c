@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.1.1.12 2017/05/24 23:59:56 christos Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.1.1.13 2017/09/08 13:22:41 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: softmagic.c,v 1.248 2017/04/21 16:54:57 christos Exp $")
+FILE_RCSID("@(#)$File: softmagic.c,v 1.249 2017/06/19 18:30:25 christos Exp $")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.1.1.12 2017/05/24 23:59:56 christos Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.1.1.13 2017/09/08 13:22:41 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -1205,7 +1205,7 @@ mcopy(struct magic_set *ms, union VALUETYPE *p, int type, int indir,
 			const char *end;
 			size_t lines, linecnt, bytecnt;
 
-			if (s == NULL) {
+			if (s == NULL || nbytes < offset) {
 				ms->search.s_len = 0;
 				ms->search.s = NULL;
 				return 0;
