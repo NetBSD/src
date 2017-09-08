@@ -1,4 +1,4 @@
-/*	$NetBSD: kobo_machdep.c,v 1.3 2015/05/07 04:13:47 hkenken Exp $	*/
+/*	$NetBSD: kobo_machdep.c,v 1.4 2017/09/08 05:29:12 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobo_machdep.c,v 1.3 2015/05/07 04:13:47 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobo_machdep.c,v 1.4 2017/09/08 05:29:12 hkenken Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -525,7 +525,7 @@ consinit(void)
 #else
 		consaddr = IMX51_UART2_BASE;
 #endif
-		imxuart_cons_attach(&armv7_generic_bs_tag, consaddr, consrate, consmode);
+		imxuart_cnattach(&armv7_generic_bs_tag, consaddr, consrate, consmode);
 		return;
 	}
 #endif

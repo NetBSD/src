@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_uart.c,v 1.1 2016/05/17 06:44:45 ryo Exp $	*/
+/*	$NetBSD: imx7_uart.c,v 1.2 2017/09/08 05:29:12 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2013 Genetec Corporation.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_uart.c,v 1.1 2016/05/17 06:44:45 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_uart.c,v 1.2 2017/09/08 05:29:12 hkenken Exp $");
 
 #include "opt_imxuart.h"
 
@@ -41,9 +41,15 @@ __KERNEL_RCSID(0, "$NetBSD: imx7_uart.c,v 1.1 2016/05/17 06:44:45 ryo Exp $");
 #include <arm/imx/imxuartreg.h>
 #include <arm/imx/imxuartvar.h>
 
+static int imx7_uart_match(device_t, struct cfdata *, void *);
+static void imx7_uart_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(imx7_uart, sizeof(struct imxuart_softc),
+    imx7_uart_match, imx7_uart_attach, NULL, NULL);
+
 /* ARGSUSED */
 int
-imxuart_match(device_t parent __unused, struct cfdata *cf __unused, void *aux)
+imx7_uart_match(device_t parent __unused, struct cfdata *cf __unused, void *aux)
 {
 	struct axi_attach_args * const aa = aux;
 
@@ -62,7 +68,7 @@ imxuart_match(device_t parent __unused, struct cfdata *cf __unused, void *aux)
 }
 
 void
-imxuart_attach(device_t parent, device_t self, void *aux)
+imx7_uart_attach(device_t parent, device_t self, void *aux)
 {
 	struct axi_attach_args * aa = aux;
 
