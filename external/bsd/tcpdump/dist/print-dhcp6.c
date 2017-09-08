@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-dhcp6.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-dhcp6.c,v 1.8 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -523,6 +523,10 @@ dhcp6opt_print(netdissect_options *ndo,
 			ND_PRINT((ndo, "...)"));
 			break;
 		case DH6OPT_RECONF_MSG:
+			if (optlen != 1) {
+				ND_PRINT((ndo, " ?)"));
+				break;
+			}
 			tp = (const u_char *)(dh6o + 1);
 			switch (*tp) {
 			case DH6_RENEW:

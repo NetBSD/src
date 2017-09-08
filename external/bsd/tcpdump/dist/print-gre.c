@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-gre.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-gre.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -231,7 +231,7 @@ gre_print_0(netdissect_options *ndo, const u_char *bp, u_int length)
 		atalk_print(ndo, bp, len);
 		break;
 	case ETHERTYPE_GRE_ISO:
-		isoclns_print(ndo, bp, len, ndo->ndo_snapend - bp);
+		isoclns_print(ndo, bp, len);
 		break;
 	case ETHERTYPE_TEB:
 		ether_print(ndo, bp, len, ndo->ndo_snapend - bp, NULL, NULL);

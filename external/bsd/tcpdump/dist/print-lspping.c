@@ -10,12 +10,12 @@
  * LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE.
  *
- * Original code by Hannes Gredler (hannes@juniper.net)
+ * Original code by Hannes Gredler (hannes@gredler.at)
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-lspping.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-lspping.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 /* \summary: MPLS LSP PING printer */
@@ -109,6 +109,7 @@ static const struct tok lspping_return_code_values[] = {
     { 11, "No label entry at stack-depth"},
     { 12, "Protocol not associated with interface at FEC stack depth"},
     { 13, "Premature termination of ping due to label stack shrinking to a single label"},
+    { 0,  NULL},
 };
 
 

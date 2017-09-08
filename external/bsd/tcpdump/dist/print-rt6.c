@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-rt6.c,v 1.6 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-rt6.c,v 1.7 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 /* \summary: IPv6 routing header printer */
@@ -34,11 +34,11 @@ __RCSID("$NetBSD: print-rt6.c,v 1.6 2017/02/05 04:05:05 spz Exp $");
 
 #include <string.h>
 
-#include "ip6.h"
-
 #include "netdissect.h"
 #include "addrtoname.h"
 #include "extract.h"
+
+#include "ip6.h"
 
 int
 rt6_print(netdissect_options *ndo, register const u_char *bp, const u_char *bp2 _U_)
@@ -50,13 +50,13 @@ rt6_print(netdissect_options *ndo, register const u_char *bp, const u_char *bp2 
 	register const struct in6_addr *addr;
 
 	dp = (const struct ip6_rthdr *)bp;
-	len = dp->ip6r_len;
 
 	/* 'ep' points to the end of available data. */
 	ep = ndo->ndo_snapend;
 
 	ND_TCHECK(dp->ip6r_segleft);
 
+	len = dp->ip6r_len;
 	ND_PRINT((ndo, "srcrt (len=%d", dp->ip6r_len));	/*)*/
 	ND_PRINT((ndo, ", type=%d", dp->ip6r_type));
 	ND_PRINT((ndo, ", segleft=%d", dp->ip6r_segleft));
@@ -67,7 +67,7 @@ rt6_print(netdissect_options *ndo, register const u_char *bp, const u_char *bp2 
 		dp0 = (const struct ip6_rthdr0 *)dp;
 
 		ND_TCHECK(dp0->ip6r0_reserved);
-		if (dp0->ip6r0_reserved || ndo->ndo_vflag) {
+		if (EXTRACT_32BITS(dp0->ip6r0_reserved) || ndo->ndo_vflag) {
 			ND_PRINT((ndo, ", rsv=0x%0x",
 			    EXTRACT_32BITS(&dp0->ip6r0_reserved)));
 		}
