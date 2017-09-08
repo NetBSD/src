@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: images,v 1.123 2017/04/04 20:34:24 christos Exp $
+# $File: images,v 1.126 2017/06/11 22:25:44 christos Exp $
 # images:  file(1) magic for image formats (see also "iff", and "c-lang" for
 # XPM bitmaps)
 #
@@ -35,11 +35,6 @@
 >>>16	ubyte			<33
 # skip more by looking for pixel size 0Fh 10h 18h 20h
 >>>>16	ubyte&0xC0		0x00
-# skip 260-16.ico by looking for no color map
->>>>>1	ubyte			0
-# implies no first map entry
->>>>>>3	uleshort		0
->>>>>>>0	use		tga-image
 # Color Map
 >>>>>1	belong&0xfff7ffff	0x01010000
 >>>>>>0		use		tga-image
@@ -47,6 +42,12 @@
 >>>>>>0		use		tga-image
 >>>>>1	belong&0xfff7ffff	0x00030000
 >>>>>>0		use		tga-image
+>>>>>1	default			x
+# skip 260-16.ico by looking for no color map
+>>>>>>1	ubyte			0
+# implies no first map entry
+>>>>>>>3	uleshort		0
+>>>>>>>>0	use		tga-image
 #	display tga bitmap image information
 0	name				tga-image
 >2	ubyte		<34		Targa image data
@@ -175,42 +176,42 @@
 >>>&0	regex		=[0-9]{1,50}			\b %s
 
 0	search/1	P1
->0	regex/4		P1[A-Za-z0-9_]
+>0	regex/4		P1[\040\t\f\r\n]
 >>0	use		netpbm
 >>>0	string		x	\b, bitmap
 !:strength + 45
 !:mime	image/x-portable-bitmap
 
 0	search/1	P2
->0	regex/4		P2[A-Za-z0-9_]
+>0	regex/4		P2[\040\t\f\r\n]
 >>0	use		netpbm
 >>>0	string		x	\b, greymap
 !:strength + 45
 !:mime	image/x-portable-greymap
 
 0	search/1	P3
->0	regex/4		P3[A-Za-z0-9_]
+>0	regex/4		P3[\040\t\f\r\n]
 >>0	use		netpbm
 >>>0	string		x	\b, pixmap
 !:strength + 45
 !:mime	image/x-portable-pixmap
 
 0	string		P4
->0	regex/4		P4[A-Za-z0-9_]
+>0	regex/4		P4[\040\t\f\r\n]
 >>0	use		netpbm
 >>>0	string		x	\b, rawbits, bitmap
 !:strength + 45
 !:mime	image/x-portable-bitmap
 
 0	string		P5
->0	regex/4		P5[A-Za-z0-9_]
+>0	regex/4		P5[\040\t\f\r\n]
 >>0	use		netpbm
 >>>0	string		x	\b, rawbits, greymap
 !:strength + 45
 !:mime	image/x-portable-greymap
 
 0	string		P6
->0	regex/4		P6[A-Za-z0-9_]
+>0	regex/4		P6[\040\t\f\r\n]
 >>0	use		netpbm
 >>>0	string		x	\b, rawbits, pixmap
 !:strength + 45
@@ -418,22 +419,35 @@
 # (Greg Roelofs, newt@uchicago.edu)
 # (Albert Cahalan, acahalan@cs.uml.edu)
 #
-# 137 P N G \r \n ^Z \n [4-byte length] H E A D [HEAD data] [HEAD crc] ...
+# 137 P N G \r \n ^Z \n [4-byte length] I H D R [HEAD data] [HEAD crc] ...
 #
-0	string		\x89PNG\x0d\x0a\x1a\x0a		PNG image data
+
+# IHDR parser
+0	name		png-ihdr
+>0	belong		x		\b, %d x
+>4	belong		x		%d,
+>8	byte		x		%d-bit
+>9	byte		0		grayscale,
+>9	byte		2		\b/color RGB,
+>9	byte		3		colormap,
+>9	byte		4		gray+alpha,
+>9	byte		6		\b/color RGBA,
+#>10	byte		0		deflate/32K,
+>12	byte		0		non-interlaced
+>12	byte		1		interlaced
+
+# Standard PNG image.
+0	string		\x89PNG\x0d\x0a\x1a\x0a\x00\x00\x00\x0DIHDR	PNG image data
 !:mime	image/png
 !:strength +10
->16	belong		x		\b, %d x
->20	belong		x		%d,
->24	byte		x		%d-bit
->25	byte		0		grayscale,
->25	byte		2		\b/color RGB,
->25	byte		3		colormap,
->25	byte		4		gray+alpha,
->25	byte		6		\b/color RGBA,
-#>26	byte		0		deflate/32K,
->28	byte		0		non-interlaced
->28	byte		1		interlaced
+>16	use		png-ihdr
+
+# Apple CgBI PNG image.
+0	string		\x89PNG\x0d\x0a\x1a\x0a\x00\x00\x00\x04CgBI
+>24	string  	\x00\x00\x00\x0DIHDR	PNG image data (CgBI)
+!:mime	image/png
+!:strength +10
+>>32	use		png-ihdr
 
 # possible GIF replacements; none yet released!
 # (Greg Roelofs, newt@uchicago.edu)

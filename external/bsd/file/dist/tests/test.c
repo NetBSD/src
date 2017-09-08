@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.1.1.3 2015/01/02 20:34:28 christos Exp $	*/
+/*	$NetBSD: test.c,v 1.1.1.4 2017/09/08 13:22:45 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -82,7 +82,8 @@ main(int argc, char **argv)
 		return 10;
 	}
 	if (magic_load(ms, NULL) == -1) {
-		(void)fprintf(stderr, "ERROR loading with NULL file: %s\n", magic_error(ms));
+		(void)fprintf(stderr, "ERROR loading with NULL file: %s\n",
+		    magic_error(ms));
 		return 11;
 	}
 
