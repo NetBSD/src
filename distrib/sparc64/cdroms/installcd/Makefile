@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2017/02/10 16:43:59 christos Exp $
+#	$NetBSD: Makefile,v 1.29 2017/09/08 09:50:45 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ CD_SETS+=	modules
 SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
 
 CDRELEASE_NOISOS=	true
+CDRELEASE_NODEBUG=	true
 CDBOOTIMAGEDIR!= cd ${NETBSDSRCDIR}/distrib/sparc64/bootfs && ${PRINTOBJDIR}
 CDBOOTIMAGE=    ${CDBOOTIMAGEDIR}/boot.fs
 SUN_BOOT_ARGS:=  - - - - ${CDBOOTIMAGE}
