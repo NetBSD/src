@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.224 2017/08/28 00:46:07 kamil Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.225 2017/09/08 10:53:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -764,7 +764,7 @@ struct buf_sysctl {
 
 /*
  * kern.file2 returns an array of these structures, which are designed
- * both to be immune to be immune to 32/64 bit emulation issues and to
+ * both to be immune to 32/64 bit emulation issues and to
  * provide backwards compatibility.  The order differs slightly from
  * that of the real struct file, and some fields are taken from other
  * structures (struct vnode, struct proc) in order to make the file
