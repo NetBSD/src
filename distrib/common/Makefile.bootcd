@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.38 2017/02/16 02:37:32 christos Exp $
+#	$NetBSD: Makefile.bootcd,v 1.39 2017/09/08 09:50:44 martin Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -14,6 +14,7 @@
 # Optional variables:
 #	CDRELEASE	Set to 'true' to include $RELEASEDIR/$MACHINE on the CD
 #	CDRELEASE_NOISOS Excludes installation/cdrom directory if set
+#	CDRELEASE_NODEBUG	Excludes debug sets if set
 #	CDSOURCE	Set to 'true' to include $RELEASEDIR/source on the CD
 #	CDEXTRA		Set to a list of files or directories containing extra
 #			stuff to put on CD (set by build.sh -C flag)
@@ -50,6 +51,9 @@ CDROMS_RELEASEDIR?=	images
 .endif
 .if defined(CDRELEASE_NOISOS)
 CDRELEASE_EXCLUDE=	-s ',./installation/cdrom.*,,gp'
+.endif
+.if defined(CDRELEASE_NODEBUG)
+CDRELEASE_EXCLUDE=+	-s ',./binary/sets/debug.tgz,,gp'	-s ',./binary/sets/xdebug.tgz,,gp'
 .endif
 .if !defined(CDRELEASE_LIVEIMAGE)
 CDRELEASE_EXCLUDE+=	-s ',./installation/liveimage.*,,gp'
