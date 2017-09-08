@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.h,v 1.1.1.8 2017/05/24 23:59:57 christos Exp $	*/
+/*	$NetBSD: readelf.h,v 1.1.1.9 2017/09/08 13:22:41 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -143,7 +143,7 @@ typedef struct {
 #define	SHT_SYMTAB	2
 #define	SHT_NOTE	7
 #define	SHT_DYNSYM	11
-#define	SHT_SUNW_cap	0x6ffffff5	/* SunOS 5.x hw/sw capabilites */
+#define	SHT_SUNW_cap	0x6ffffff5	/* SunOS 5.x hw/sw capabilities */
 
 /* elf type */
 #define	ELFDATANONE	0		/* e_ident[EI_DATA] */
