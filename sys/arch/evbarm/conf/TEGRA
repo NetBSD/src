@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.26 2017/07/21 01:01:22 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.27 2017/09/08 10:17:18 jmcneill Exp $
 #
 #	NVIDIA Tegra family SoCs
 #
@@ -7,12 +7,19 @@
 include	"arch/evbarm/conf/std.tegra"
 include	"arch/evbarm/conf/GENERIC.common"
 
+makeoptions	DTSGNUARCH="arm arm64"
+makeoptions	DTSSUBDIR="nvidia"
 makeoptions	DTS="
 	tegra124-apalis-eval.dts
 	tegra124-jetson-tk1.dts
 	tegra124-nyan-big.dts
 	tegra124-nyan-blaze.dts
 	tegra124-venice2.dts
+
+	tegra210-p2371-0000.dts
+	tegra210-p2371-2180.dts
+	tegra210-p2571.dts
+	tegra210-smaug.dts
 "
 
 options 	CPU_CORTEXA15
