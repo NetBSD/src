@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.26 2014/07/25 08:10:34 dholland Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.27 2017/09/08 08:16:09 skrll Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.26 2014/07/25 08:10:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.27 2017/09/08 08:16:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -167,7 +167,6 @@ ofromrw(dev_t dev, struct uio *uio, int flags)
 		if (uio->uio_offset >= sc->size)
 			break;
 
-		/* XXX: Use unamanged mapping. */
 		v = sc->base + uio->uio_offset;
 		pmap_kenter_pa((vaddr_t)memhook, trunc_page(v),
 		    uio->uio_rw == UIO_READ ?  VM_PROT_READ : VM_PROT_WRITE,
