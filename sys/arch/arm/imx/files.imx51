@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx51,v 1.16 2017/08/18 21:45:25 jakllsch Exp $
+#	$NetBSD: files.imx51,v 1.17 2017/09/08 05:29:12 hkenken Exp $
 #
 # Configuration info for the Freescale i.MX5x
 #
@@ -94,9 +94,9 @@ file	arch/arm/imx/imx_genfb.c	imx_genfb
 
 # iMX UART
 device	imxuart
-attach	imxuart at axi
+attach	imxuart at axi with imx51_uart
 file	arch/arm/imx/imxuart.c			imxuart	needs-flag
-file	arch/arm/imx/imx51_uart.c		imxuart
+file	arch/arm/imx/imx51_uart.c		imx51_uart
 defflag	opt_imxuart.h				IMXUARTCONSOLE
 
 # USB controller

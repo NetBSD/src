@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_uart.c,v 1.3 2014/07/25 07:49:56 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_uart.c,v 1.4 2017/09/08 05:29:12 hkenken Exp $");
 
 #include "opt_imx.h"
 #include "opt_imxuart.h"
@@ -39,8 +39,14 @@ __KERNEL_RCSID(0, "$NetBSD: imx51_uart.c,v 1.3 2014/07/25 07:49:56 hkenken Exp $
 #include <arm/imx/imxuartreg.h>
 #include <arm/imx/imxuartvar.h>
 
+static int imx51_uart_match(device_t, struct cfdata *, void *);
+static void imx51_uart_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(imx51_uart, sizeof(struct imxuart_softc),
+    imx51_uart_match, imx51_uart_attach, NULL, NULL);
+
 int
-imxuart_match(device_t parent, struct cfdata *cf, void *aux)
+imx51_uart_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct axi_attach_args * const aa = aux;
 
@@ -55,11 +61,11 @@ imxuart_match(device_t parent, struct cfdata *cf, void *aux)
 }
 
 void
-imxuart_attach(device_t parent, device_t self, void *aux)
+imx51_uart_attach(device_t parent, device_t self, void *aux)
 {
 	struct axi_attach_args * aa = aux;
 
-	imxuart_attach_common(parent, self, 
+	imxuart_attach_common(parent, self,
 	    aa->aa_iot, aa->aa_addr, aa->aa_size, aa->aa_irq, 0);
 }
 
