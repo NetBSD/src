@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1468 2017/09/08 07:44:39 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1469 2017/09/08 13:41:39 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -425,8 +425,8 @@ Notes:
 Please use "expat" as the vendor tag for CVS imports.
 
 Package:	file
-Version:	5.31
-Current Vers:	5.31
+Version:	5.32
+Current Vers:	5.32
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:	http://www.darwinsys.com/file/
