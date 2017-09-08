@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-bootp.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -327,6 +327,7 @@ bootp_print(netdissect_options *ndo,
 	if (EXTRACT_16BITS(&bp->bp_secs))
 		ND_PRINT((ndo, ", secs %d", EXTRACT_16BITS(&bp->bp_secs)));
 
+	ND_TCHECK(bp->bp_flags);
 	ND_PRINT((ndo, ", Flags [%s]",
 		  bittok2str(bootp_flag_values, "none", EXTRACT_16BITS(&bp->bp_flags))));
 	if (ndo->ndo_vflag > 1)

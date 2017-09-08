@@ -12,12 +12,12 @@
  * LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE.
  *
- * Original code by Hannes Gredler (hannes@juniper.net)
+ * Original code by Hannes Gredler (hannes@gredler.at)
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af.c,v 1.5 2017/01/24 23:29:13 christos Exp $");
+__RCSID("$NetBSD: af.c,v 1.6 2017/09/08 14:01:12 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H

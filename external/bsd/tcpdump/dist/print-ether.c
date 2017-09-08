@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ether.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-ether.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 /* \summary: Ethernet printer */
@@ -371,7 +371,7 @@ ethertype_print(netdissect_options *ndo,
 			ND_PRINT((ndo, " [|osi]"));
 			return (1);
 		}
-		isoclns_print(ndo, p + 1, length - 1, caplen - 1);
+		isoclns_print(ndo, p + 1, length - 1);
 		return(1);
 
 	case ETHERTYPE_PPPOED:
