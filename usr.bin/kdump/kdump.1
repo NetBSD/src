@@ -1,4 +1,4 @@
-.\"	$NetBSD: kdump.1,v 1.26 2003/11/16 23:10:00 wiz Exp $
+.\"	$NetBSD: kdump.1,v 1.27 2017/09/08 21:09:29 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)kdump.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd November 15, 2003
+.Dd September 9, 2017
 .Dt KDUMP 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd display kernel trace data
 .Sh SYNOPSIS
 .Nm
-.Op Fl dlNnRT
+.Op Fl EdlNnRT
 .Op Fl e Ar emulation
 .Op Fl f Ar file
 .Op Fl m Ar maxdata
@@ -60,6 +60,8 @@ The options are as follows:
 .Bl -tag -width Fl
 .It Fl d
 Display all numbers in decimal.
+.It Fl E
+Display elapsed timestamps (time since beginning of trace).
 .It Fl e Ar emulation
 If an emulation of a process is unknown,
 interpret system call maps assuming the named emulation instead of
