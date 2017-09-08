@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx7,v 1.4 2017/08/18 21:45:25 jakllsch Exp $
+#	$NetBSD: files.imx7,v 1.5 2017/09/08 05:29:12 hkenken Exp $
 #
 # Configuration info for the Freescale i.MX7
 #
@@ -69,9 +69,9 @@ file	arch/arm/imx/imx7_i2c.c			imxi2c
 
 # iMX UART
 device	imxuart
-attach	imxuart at axi
+attach	imxuart at axi with imx7_uart
 file	arch/arm/imx/imxuart.c			imxuart	needs-flag
-file	arch/arm/imx/imx7_uart.c		imxuart
+file	arch/arm/imx/imx7_uart.c		imx7_uart
 defflag opt_imxuart.h				IMXUARTCONSOLE
 
 # iMX7 10/100/1000-Mbps Ethernet MAC(ENET)

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_machdep.c,v 1.5 2017/08/17 09:11:04 hkenken Exp $	*/
+/*	$NetBSD: imx7_machdep.c,v 1.6 2017/09/08 05:29:12 hkenken Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_machdep.c,v 1.5 2017/08/17 09:11:04 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_machdep.c,v 1.6 2017/09/08 05:29:12 hkenken Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -305,7 +305,7 @@ consinit(void)
 		paddr_t consaddr;
 
 		consaddr = CONADDR;
-		imxuart_cons_attach(&armv7_generic_bs_tag, consaddr, consrate, consmode);
+		imxuart_cnattach(&armv7_generic_bs_tag, consaddr, consrate, consmode);
 		return;
 	}
 # endif /* (NIMXUART > 0) && defined(IMXUARTCONSOLE) */
