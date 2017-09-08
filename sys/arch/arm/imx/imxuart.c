@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.19 2015/07/30 04:39:42 ryo Exp $ */
+/* $NetBSD: imxuart.c,v 1.20 2017/09/08 05:29:12 hkenken Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.19 2015/07/30 04:39:42 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.20 2017/09/08 05:29:12 hkenken Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.19 2015/07/30 04:39:42 ryo Exp $");
 #include "opt_multiprocessor.h"
 #include "opt_ntp.h"
 #include "opt_imxuart.h"
-#include "opt_imx.h"
 
 #ifdef RND_COM
 #include <sys/rndsource.h>
@@ -165,115 +164,6 @@ __KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.19 2015/07/30 04:39:42 ryo Exp $");
 #define	IMXUART_RING_SIZE	2048
 #endif
 
-typedef struct imxuart_softc {
-	device_t	sc_dev;
-
-	struct imxuart_regs {
-		bus_space_tag_t		ur_iot;
-		bus_space_handle_t	ur_ioh;
-		bus_addr_t		ur_iobase;
-#if 0
-		bus_size_t		ur_nports;
-		bus_size_t		ur_map[16];
-#endif
-	} sc_regs;
-
-#define	sc_bt	sc_regs.ur_iot
-#define	sc_bh	sc_regs.ur_ioh
-
-	uint32_t		sc_intrspec_enb;
-	uint32_t	sc_ucr2_d;	/* target value for UCR2 */
-	uint32_t	sc_ucr[4];	/* cached value of UCRn */
-#define	sc_ucr1	sc_ucr[0]
-#define	sc_ucr2	sc_ucr[1]
-#define	sc_ucr3	sc_ucr[2]
-#define	sc_ucr4	sc_ucr[3]
-
-	uint			sc_init_cnt;
-
-	bus_addr_t		sc_addr;
-	bus_size_t		sc_size;
-	int			sc_intr;
-
-	u_char	sc_hwflags;
-/* Hardware flag masks */
-#define	IMXUART_HW_FLOW 	__BIT(0)
-#define	IMXUART_HW_DEV_OK	__BIT(1)
-#define	IMXUART_HW_CONSOLE	__BIT(2)
-#define	IMXUART_HW_KGDB 	__BIT(3)
-
-
-	bool	enabled;
-
-	u_char	sc_swflags;
-
-	u_char sc_rx_flags;
-#define	IMXUART_RX_TTY_BLOCKED  	__BIT(0)
-#define	IMXUART_RX_TTY_OVERFLOWED	__BIT(1)
-#define	IMXUART_RX_IBUF_BLOCKED 	__BIT(2)
-#define	IMXUART_RX_IBUF_OVERFLOWED	__BIT(3)
-#define	IMXUART_RX_ANY_BLOCK					\
-	(IMXUART_RX_TTY_BLOCKED|IMXUART_RX_TTY_OVERFLOWED| 	\
-	    IMXUART_RX_IBUF_BLOCKED|IMXUART_RX_IBUF_OVERFLOWED)
-
-	bool	sc_tx_busy, sc_tx_done, sc_tx_stopped;
-	bool	sc_rx_ready,sc_st_check;
-	u_short	sc_txfifo_len, sc_txfifo_thresh;
-
-	uint16_t	*sc_rbuf;
-	u_int		sc_rbuf_size;
-	u_int		sc_rbuf_in;
-	u_int		sc_rbuf_out;
-#define	IMXUART_RBUF_AVAIL(sc)					\
-	((sc->sc_rbuf_out <= sc->sc_rbuf_in) ?			\
-	(sc->sc_rbuf_in - sc->sc_rbuf_out) :			\
-	(sc->sc_rbuf_size - (sc->sc_rbuf_out - sc->sc_rbuf_in)))
-
-#define	IMXUART_RBUF_SPACE(sc)	\
-	((sc->sc_rbuf_in <= sc->sc_rbuf_out ?			    \
-	    sc->sc_rbuf_size - (sc->sc_rbuf_out - sc->sc_rbuf_in) : \
-	    sc->sc_rbuf_in - sc->sc_rbuf_out) - 1)
-/* increment ringbuffer pointer */
-#define	IMXUART_RBUF_INC(sc,v,i)	(((v) + (i))&((sc->sc_rbuf_size)-1))
-	u_int	sc_r_lowat;
-	u_int	sc_r_hiwat;
-
-	/* output chunk */
- 	u_char *sc_tba;
- 	u_int sc_tbc;
-	u_int sc_heldtbc;
-	/* pending parameter changes */
-	u_char	sc_pending;
-#define	IMXUART_PEND_PARAM	__BIT(0)
-#define	IMXUART_PEND_SPEED	__BIT(1)
-
-
-	struct callout sc_diag_callout;
-	kmutex_t sc_lock;
-	void *sc_ih;		/* interrupt handler */
-	void *sc_si;		/* soft interrupt */
-	struct tty		*sc_tty;
-
-	/* power management hooks */
-	int (*enable)(struct imxuart_softc *);
-	void (*disable)(struct imxuart_softc *);
-
-	struct {
-		ulong err;
-		ulong brk;
-		ulong prerr;
-		ulong frmerr;
-		ulong ovrrun;
-	}	sc_errors;
-
-	struct imxuart_baudrate_ratio {
-		uint16_t numerator;	/* UBIR */
-		uint16_t modulator;	/* UBMR */
-	} sc_ratio;
-
-} imxuart_softc_t;
-
-
 int	imxuspeed(long, struct imxuart_baudrate_ratio *);
 int	imxuparam(struct tty *, struct termios *);
 void	imxustart(struct tty *);
@@ -309,10 +199,6 @@ static void imxuart_control_txint(struct imxuart_softc *, bool);
 static u_int imxuart_txfifo_space(struct imxuart_softc *sc);
 
 static	uint32_t	cflag_to_ucr2(tcflag_t, uint32_t);
-
-CFATTACH_DECL_NEW(imxuart, sizeof(struct imxuart_softc),
-    imxuart_match, imxuart_attach, NULL, NULL);
-
 
 #define	integrate	static inline
 void 	imxusoft(void *);
@@ -399,9 +285,8 @@ void
 imxuart_attach_common(device_t parent, device_t self,
     bus_space_tag_t iot, paddr_t iobase, size_t size, int intr, int flags)
 {
-	imxuart_softc_t *sc = device_private(self);
+	struct imxuart_softc *sc = device_private(self);
 	struct imxuart_regs *regsp = &sc->sc_regs;
-	struct tty *tp;
 	bus_space_handle_t ioh;
 
 	aprint_naive("\n");
@@ -420,6 +305,17 @@ imxuart_attach_common(device_t parent, device_t self,
 		return;
 	}
 	regsp->ur_ioh = ioh;
+
+	imxuart_attach_subr(sc);
+}
+
+void
+imxuart_attach_subr(struct imxuart_softc *sc)
+{
+	struct imxuart_regs *regsp = &sc->sc_regs;
+	bus_space_tag_t iot = regsp->ur_iot;
+	bus_space_handle_t ioh = regsp->ur_ioh;
+	struct tty *tp;
 
 	callout_init(&sc->sc_diag_callout, 0);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
@@ -550,7 +446,6 @@ gcd(long m, long n)
 		return m;
 	return gcd(n, m % n);
 }
-
 
 int
 imxuspeed(long speed, struct imxuart_baudrate_ratio *ratio)
@@ -2348,8 +2243,8 @@ struct consdev imxucons = {
 
 
 int
-imxuart_cons_attach(bus_space_tag_t iot, paddr_t iobase, u_int rate,
-		    tcflag_t cflag)
+imxuart_cnattach(bus_space_tag_t iot, paddr_t iobase, u_int rate,
+    tcflag_t cflag)
 {
 	struct imxuart_regs regs;
 	int res;
