@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2310 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2311 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -54,4 +54,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	ixg(4), ixv(4): Add C3000 support. Add bypass function 	support for
 		bypass adapters. [msaitoh 20170830]
 	file(1): Upgraded to 5.32. [christos 20170908]
-
+	tcpdump(8): Import 4.9.2. [christos 20170908]
