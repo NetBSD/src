@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_uart.c,v 1.2 2017/06/09 18:14:59 ryo Exp $	*/
+/*	$NetBSD: imx6_uart.c,v 1.3 2017/09/08 05:29:12 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2013 Genetec Corporation.  All rights reserved.
@@ -35,8 +35,14 @@
 #include <arm/imx/imxuartreg.h>
 #include <arm/imx/imxuartvar.h>
 
+static int imx6_uart_match(device_t, struct cfdata *, void *);
+static void imx6_uart_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(imx6_uart, sizeof(struct imxuart_softc),
+    imx6_uart_match, imx6_uart_attach, NULL, NULL);
+
 int
-imxuart_match(device_t parent, struct cfdata *cf, void *aux)
+imx6_uart_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct axi_attach_args * const aa = aux;
 
@@ -58,7 +64,7 @@ imxuart_match(device_t parent, struct cfdata *cf, void *aux)
 }
 
 void
-imxuart_attach(device_t parent, device_t self, void *aux)
+imx6_uart_attach(device_t parent, device_t self, void *aux)
 {
 	struct axi_attach_args * aa = aux;
 
