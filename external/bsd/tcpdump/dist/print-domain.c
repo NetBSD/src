@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-domain.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-domain.c,v 1.8 2017/09/08 14:01:13 christos Exp $");
 #endif
 
 /* \summary: Domain Name System (DNS) printer */
@@ -156,15 +156,14 @@ ns_nprint(netdissect_options *ndo,
 	register u_int i, l;
 	register const u_char *rp = NULL;
 	register int compress = 0;
-	int chars_processed;
 	int elt;
-	int data_size = ndo->ndo_snapend - bp;
+	u_int offset, max_offset;
 
 	if ((l = labellen(ndo, cp)) == (u_int)-1)
 		return(NULL);
 	if (!ND_TTEST2(*cp, 1))
 		return(NULL);
-	chars_processed = 1;
+	max_offset = (u_int)(cp - bp);
 	if (((i = *cp++) & INDIR_MASK) != INDIR_MASK) {
 		compress = 0;
 		rp = cp + l;
@@ -179,24 +178,28 @@ ns_nprint(netdissect_options *ndo,
 				}
 				if (!ND_TTEST2(*cp, 1))
 					return(NULL);
-				cp = bp + (((i << 8) | *cp) & 0x3fff);
+				offset = (((i << 8) | *cp) & 0x3fff);
+				/*
+				 * This must move backwards in the packet.
+				 * No RFC explicitly says that, but BIND's
+				 * name decompression code requires it,
+				 * as a way of preventing infinite loops
+				 * and other bad behavior, and it's probably
+				 * what was intended (compress by pointing
+				 * to domain name suffixes already seen in
+				 * the packet).
+				 */
+				if (offset >= max_offset) {
+					ND_PRINT((ndo, "<BAD PTR>"));
+					return(NULL);
+				}
+				max_offset = offset;
+				cp = bp + offset;
 				if ((l = labellen(ndo, cp)) == (u_int)-1)
 					return(NULL);
 				if (!ND_TTEST2(*cp, 1))
 					return(NULL);
 				i = *cp++;
-				chars_processed++;
-
-				/*
-				 * If we've looked at every character in
-				 * the message, this pointer will make
-				 * us look at some character again,
-				 * which means we're looping.
-				 */
-				if (chars_processed >= data_size) {
-					ND_PRINT((ndo, "<LOOP>"));
-					return (NULL);
-				}
 				continue;
 			}
 			if ((i & INDIR_MASK) == EDNS0_MASK) {
@@ -217,14 +220,12 @@ ns_nprint(netdissect_options *ndo,
 			}
 
 			cp += l;
-			chars_processed += l;
 			ND_PRINT((ndo, "."));
 			if ((l = labellen(ndo, cp)) == (u_int)-1)
 				return(NULL);
 			if (!ND_TTEST2(*cp, 1))
 				return(NULL);
 			i = *cp++;
-			chars_processed++;
 			if (!compress)
 				rp += l + 1;
 		}

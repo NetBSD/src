@@ -14,12 +14,12 @@
  *
  * miscellaneous checksumming routines
  *
- * Original code by Hannes Gredler (hannes@juniper.net)
+ * Original code by Hannes Gredler (hannes@gredler.at)
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: checksum.c,v 1.6 2017/01/24 23:29:13 christos Exp $");
+__RCSID("$NetBSD: checksum.c,v 1.7 2017/09/08 14:01:12 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
