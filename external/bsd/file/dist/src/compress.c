@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.13 2017/05/25 00:11:26 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.14 2017/09/08 13:40:25 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: compress.c,v 1.104 2017/03/29 15:57:48 christos Exp $")
+FILE_RCSID("@(#)$File: compress.c,v 1.105 2017/05/25 00:13:03 christos Exp $")
 #else
-__RCSID("$NetBSD: compress.c,v 1.13 2017/05/25 00:11:26 christos Exp $");
+__RCSID("$NetBSD: compress.c,v 1.14 2017/09/08 13:40:25 christos Exp $");
 #endif
 #endif
 
