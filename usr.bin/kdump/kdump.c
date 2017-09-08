@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.126 2017/09/08 20:36:56 uwe Exp $	*/
+/*	$NetBSD: kdump.c,v 1.127 2017/09/08 21:09:29 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.126 2017/09/08 20:36:56 uwe Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.127 2017/09/08 21:09:29 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,11 @@ __RCSID("$NetBSD: kdump.c,v 1.126 2017/09/08 20:36:56 uwe Exp $");
 #include "setemul.h"
 
 #include <sys/syscall.h>
+
+#define TIMESTAMP_NONE		0x0
+#define TIMESTAMP_ABSOLUTE	0x1
+#define TIMESTAMP_ELAPSED	0x2
+#define TIMESTAMP_RELATIVE	0x4
 
 static int timestamp, decimal, plain, tail, maxdata = -1, numeric;
 static int word_size = 0;
@@ -162,9 +167,14 @@ main(int argc, char **argv)
 		}
 		return 0;
 	}
-		
-	while ((ch = getopt(argc, argv, "e:f:dlm:Nnp:RTt:xX:")) != -1) {
+
+	timestamp = TIMESTAMP_NONE;
+
+	while ((ch = getopt(argc, argv, "Ee:f:dlm:Nnp:RTt:xX:")) != -1) {
 		switch (ch) {
+		case 'E':
+			timestamp |= TIMESTAMP_ELAPSED;
+			break;
 		case 'e':
 			emul_name = strdup(optarg); /* it's safer to copy it */
 			break;
@@ -194,10 +204,10 @@ main(int argc, char **argv)
 			plain++;
 			break;
 		case 'R':
-			timestamp = 2;	/* relative timestamp */
+			timestamp |= TIMESTAMP_RELATIVE;
 			break;
 		case 'T':
-			timestamp = 1;
+			timestamp |= TIMESTAMP_ABSOLUTE;
 			break;
 		case 't':
 			trset = 1;
@@ -329,7 +339,7 @@ dumpheader(struct ktr_header *kth)
 {
 	char unknown[64];
 	const char *type;
-	static struct timespec prevtime;
+	static struct timespec starttime, prevtime;
 	struct timespec temp;
 	int col;
 
@@ -386,20 +396,34 @@ dumpheader(struct ktr_header *kth)
 	col = printf("%6d %6d ", kth->ktr_pid, kth->ktr_lid);
 	col += printf("%-8.*s ", MAXCOMLEN, kth->ktr_comm);
 	if (timestamp) {
-		if (timestamp == 2) {
+		if (timestamp & TIMESTAMP_ABSOLUTE) {
+			temp.tv_sec = kth->ktr_ts.tv_sec;
+			temp.tv_nsec = kth->ktr_ts.tv_nsec;
+			col += printf("%lld.%09ld ",
+			    (long long)temp.tv_sec, (long)temp.tv_nsec);
+		}
+
+		if (timestamp & TIMESTAMP_ELAPSED) {
+			if (starttime.tv_sec == 0) {
+				starttime.tv_sec = kth->ktr_ts.tv_sec;
+				starttime.tv_nsec = kth->ktr_ts.tv_nsec;
+				temp.tv_sec = temp.tv_nsec = 0;
+			} else
+				timespecsub(&kth->ktr_ts, &starttime, &temp);
+			col += printf("%lld.%09ld ",
+			    (long long)temp.tv_sec, (long)temp.tv_nsec);
+		}
+
+		if (timestamp & TIMESTAMP_RELATIVE) {
 			if (prevtime.tv_sec == 0)
 				temp.tv_sec = temp.tv_nsec = 0;
 			else
 				timespecsub(&kth->ktr_ts, &prevtime, &temp);
 			prevtime.tv_sec = kth->ktr_ts.tv_sec;
 			prevtime.tv_nsec = kth->ktr_ts.tv_nsec;
-		} else {
-			temp.tv_sec = kth->ktr_ts.tv_sec;
-			temp.tv_nsec = kth->ktr_ts.tv_nsec;
+			col += printf("%lld.%09ld ",
+			    (long long)temp.tv_sec, (long)temp.tv_nsec);
 		}
-
-		col += printf("%lld.%09ld ",
-		    (long long)temp.tv_sec, (long)temp.tv_nsec);
 	}
 	col += printf("%-4s  ", type);
 	return col;
