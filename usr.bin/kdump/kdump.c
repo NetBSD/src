@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.127 2017/09/08 21:09:29 uwe Exp $	*/
+/*	$NetBSD: kdump.c,v 1.128 2017/09/08 21:45:08 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.127 2017/09/08 21:09:29 uwe Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.128 2017/09/08 21:45:08 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,6 +109,7 @@ static const char * const linux_ptrace_ops[] = {
 
 static int	fread_tail(void *, size_t, size_t);
 static int	dumpheader(struct ktr_header *);
+static int	output_ts(const struct timespec *);
 static void	output_long(u_long, int);
 static void	ioctldecode(u_long);
 static void	ktrsyscall(struct ktr_syscall *);
@@ -399,8 +400,7 @@ dumpheader(struct ktr_header *kth)
 		if (timestamp & TIMESTAMP_ABSOLUTE) {
 			temp.tv_sec = kth->ktr_ts.tv_sec;
 			temp.tv_nsec = kth->ktr_ts.tv_nsec;
-			col += printf("%lld.%09ld ",
-			    (long long)temp.tv_sec, (long)temp.tv_nsec);
+			col += output_ts(&temp);
 		}
 
 		if (timestamp & TIMESTAMP_ELAPSED) {
@@ -410,8 +410,7 @@ dumpheader(struct ktr_header *kth)
 				temp.tv_sec = temp.tv_nsec = 0;
 			} else
 				timespecsub(&kth->ktr_ts, &starttime, &temp);
-			col += printf("%lld.%09ld ",
-			    (long long)temp.tv_sec, (long)temp.tv_nsec);
+			col += output_ts(&temp);
 		}
 
 		if (timestamp & TIMESTAMP_RELATIVE) {
@@ -421,11 +420,39 @@ dumpheader(struct ktr_header *kth)
 				timespecsub(&kth->ktr_ts, &prevtime, &temp);
 			prevtime.tv_sec = kth->ktr_ts.tv_sec;
 			prevtime.tv_nsec = kth->ktr_ts.tv_nsec;
-			col += printf("%lld.%09ld ",
-			    (long long)temp.tv_sec, (long)temp.tv_nsec);
+			col += output_ts(&temp);
 		}
 	}
 	col += printf("%-4s  ", type);
+	return col;
+}
+
+static int
+output_ts(const struct timespec *ts)
+{
+	int col;
+
+	if (__predict_true(ts->tv_sec >= 0))
+	    col = printf("%lld.%09ld ",
+			 (long long)ts->tv_sec, (long)ts->tv_nsec);
+	else {
+	    /*
+	     * The time represented by a timespec object ts is always
+	     *
+	     *   ts.tv_sec + ts.tv_nsec * 1e-9
+	     *
+	     * where ts.tv_sec may be negative but ts.tv_nsec is
+	     * always in [0, 1e9).  So, for example, -1/4 second is
+	     * represented by the struct timespec object
+	     *
+	     *   { .tv_sec = -1, .tv_nsec = 750000000 }
+	     */
+	    const struct timespec zero_ts = { 0, 0 };
+	    struct timespec abs_ts;
+	    timespecsub(&zero_ts, ts, &abs_ts);
+	    col = printf("-%lld.%09ld ",
+			 (long long)abs_ts.tv_sec, (long)abs_ts.tv_nsec);
+	}
 	return col;
 }
 
