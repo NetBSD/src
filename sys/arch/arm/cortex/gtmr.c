@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.19 2017/08/24 13:06:23 jmcneill Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.20 2017/09/09 13:14:30 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.19 2017/08/24 13:06:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.20 2017/09/09 13:14:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -291,6 +291,10 @@ gtmr_intr(void *arg)
 	struct gtmr_softc * const sc = &gtmr_sc;
 
 	arm_isb();
+
+	const uint32_t ctl = armreg_cntv_ctl_read();
+	if ((ctl & ARM_CNTCTL_ISTATUS) == 0)
+		return 0;
 
 	const uint64_t now = armreg_cntv_ct_read();
 	uint64_t delta = now - ci->ci_lastintr;
