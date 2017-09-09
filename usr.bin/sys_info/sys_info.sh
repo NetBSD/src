@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: sys_info.sh,v 1.13 2017/08/27 20:40:22 wiz Exp $
+# $NetBSD: sys_info.sh,v 1.14 2017/09/09 14:12:09 jmcneill Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -26,7 +26,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SYS_INFO_VERSION=20170824
+SYS_INFO_VERSION=20170909
 
 PATH=$(sysctl -n user.cs_path)
 export PATH
@@ -132,6 +132,9 @@ getversion() {
 		$all || return 0 ;&
 	dhcpcd)
 		run  "dhcpcd --version | sed -e 's/ /-/g' -e 1q"
+		$all || return 0 ;&
+	dtc)
+		run "dtc --version | sed 's/Version: DTC /dtc-/'"
 		$all || return 0 ;&
 	ftpd)
 		run "strings -a /usr/libexec/ftpd | awk '\$1 == \"NetBSD-ftpd\" { print \"ftpd-\" \$2 }'"
