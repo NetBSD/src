@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.22 2016/07/20 21:02:04 christos Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.23 2017/09/09 23:21:45 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -114,10 +114,10 @@ struct	__pthread_mutex_st {
 	__pthread_spin_t ptm_errorcheck;
 #ifdef __CPU_SIMPLE_LOCK_PAD
 	uint8_t		ptm_pad1[3];
-#ifdef __cplusplus
-#define _PTHREAD_MUTEX_PAD(a)	{ 0, 0, 0 },
-#else
+#if (__STDC_VERSION__ - 0) >= 199901L
 #define _PTHREAD_MUTEX_PAD(a)	.a = { 0, 0, 0 },
+#else
+#define _PTHREAD_MUTEX_PAD(a)	{ 0, 0, 0 },
 #endif
 #else
 #define _PTHREAD_MUTEX_PAD(a)
@@ -138,12 +138,12 @@ struct	__pthread_mutex_st {
 #define	_PT_MUTEX_MAGIC	0x33330003
 #define	_PT_MUTEX_DEAD	0xDEAD0003
 
-#ifdef __cplusplus
-#define _PTHREAD_MUTEX_INI(a, b) b
-#define _PTHREAD_MUTEX_UNI(a) { 0 }
-#else
+#if (__STDC_VERSION__ - 0) >= 199901L
 #define _PTHREAD_MUTEX_INI(a, b) .a = b
 #define _PTHREAD_MUTEX_UNI(a) .a = 0
+#else
+#define _PTHREAD_MUTEX_INI(a, b) b
+#define _PTHREAD_MUTEX_UNI(a) { 0 }
 #endif
 
 #define _PTHREAD_MUTEX_INITIALIZER {					\
