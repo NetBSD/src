@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2145 2017/08/12 08:21:30 maxv Exp $
+#	$NetBSD: mi,v 1.2146 2017/09/09 18:18:27 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -5977,6 +5977,7 @@
 ./usr/share/man/cat3/des_string_to_key.0	comp-c-catman		.cat
 ./usr/share/man/cat3/des_xcbc_encrypt.0		comp-c-catman		.cat
 ./usr/share/man/cat3/devname.0			comp-c-catman		.cat
+./usr/share/man/cat3/devname_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/dgettext.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dh.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/difftime.0			comp-c-catman		.cat
@@ -13565,6 +13566,7 @@
 ./usr/share/man/html3/des_string_to_key.html	comp-c-htmlman		html
 ./usr/share/man/html3/des_xcbc_encrypt.html	comp-c-htmlman		html
 ./usr/share/man/html3/devname.html		comp-c-htmlman		html
+./usr/share/man/html3/devname_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/dgettext.html		comp-c-htmlman		html
 ./usr/share/man/html3/difftime.html		comp-c-htmlman		html
 ./usr/share/man/html3/dir.html			comp-c-htmlman		html
@@ -21060,6 +21062,7 @@
 ./usr/share/man/man3/des_string_to_key.3	comp-c-man		.man
 ./usr/share/man/man3/des_xcbc_encrypt.3		comp-c-man		.man
 ./usr/share/man/man3/devname.3			comp-c-man		.man
+./usr/share/man/man3/devname_r.3		comp-c-man		.man
 ./usr/share/man/man3/dgettext.3			comp-c-man		.man
 ./usr/share/man/man3/dh.3			comp-obsolete		obsolete
 ./usr/share/man/man3/difftime.3			comp-c-man		.man
