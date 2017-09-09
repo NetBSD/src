@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.56 2017/09/04 20:47:59 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.57 2017/09/09 17:38:24 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5786,4 +5786,23 @@ sys/compat/linux/arch/amd64/linux_machdep.c	1.52
 	return value of ucas_32 and ucas_64, and reorder some code to
 	reduce the diff with SMAP.
 	[maxv, ticket #257]
+
+sys/compat/linux32/arch/amd64/linux32_machdep.c	1.39
+
+	Fix a ring0 escalation vulnerability in compat_linux32 where the
+	index of %cs is controlled by userland, making it easy to trigger
+	the page fault and get kernel privileges.
+	[maxv, ticket #270]
+
+sys/arch/amd64/conf/ALL				1.68
+sys/arch/i386/conf/ALL				1.428
+sys/arch/i386/i386/i386_trap.S			1.12
+sys/arch/i386/i386/locore.S			1.149-1.150
+sys/arch/x86/x86/sys_machdep.c			1.38
+
+	i386:
+	- use a proper stack for multiboot
+	- use %ss instead of %ds in trap06
+	- reject call gates in the LDT, and remove LDT_DEBUG
+	[maxv, ticket #258]
 
