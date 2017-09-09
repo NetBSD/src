@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.65 2017/07/04 21:19:33 mlelstv Exp $	*/
+/*	$NetBSD: iostat.c,v 1.66 2017/09/09 23:51:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.65 2017/07/04 21:19:33 mlelstv Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.66 2017/09/09 23:51:58 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ static int selectdrives(int, char *[]);
 int
 main(int argc, char *argv[])
 {
-	int ch, hdrcnt, ndrives, lines;
+	int ch, hdrcnt, hdroffset, ndrives, lines;
 	struct timespec	tv;
 	struct ttysize ts;
 
@@ -210,10 +210,13 @@ main(int argc, char *argv[])
 		if (todo == 0)
 			errx(1, "no drives");
 	}
-	if (ISSET(todo, SHOW_STATS_X | SHOW_STATS_Y))
+	if (ISSET(todo, SHOW_STATS_X | SHOW_STATS_Y)) {
 		lines = ndrives;
-	else
+		hdroffset = 3;
+	} else {
 		lines = 1;
+		hdroffset = 4;
+	}
 
 	tv.tv_sec = interval;
 	tv.tv_nsec = 0;
@@ -222,10 +225,10 @@ main(int argc, char *argv[])
 	(void)signal(SIGCONT, sig_header);
 
 	for (hdrcnt = 1;;) {
-		if (do_header || lines > 1 || (hdrcnt -= lines) <= 0) {
+		if (do_header || (hdrcnt -= lines) <= 0) {
 			do_header = 0;
 			header();
-			hdrcnt = winlines - 4;
+			hdrcnt = winlines - hdroffset;
 		}
 
 		if (!ISSET(todo, SHOW_TOTALS)) {
