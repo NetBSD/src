@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.29 2011/03/04 22:25:31 joerg Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.29.16.1 2017/09/09 16:53:34 snj Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.29 2011/03/04 22:25:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.29.16.1 2017/09/09 16:53:34 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -428,8 +428,9 @@ linux32_restore_sigcontext(struct lwp *l, struct linux32_sigcontext *scp,
 	/*
 	 * Check for security violations.
 	 */
-	if (((scp->sc_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(scp->sc_cs, scp->sc_eflags))
+	if (((scp->sc_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
+		return EINVAL;
+	if (!VALID_USER_CSEL32(scp->sc_cs))
 		return EINVAL;
 
 	if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs) &&
