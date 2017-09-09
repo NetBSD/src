@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.44 2017/09/04 16:09:34 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.45 2017/09/09 16:57:48 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -4629,4 +4629,11 @@ sys/arch/sparc64/sparc64/compat_13_machdep.c	1.24
 	Apply only CCR. Otherwise userland could set PSTATE_PRIV
 	in %pstate and get kernel privileges on the hardware.
 	[maxv, ticket #1504]
+
+sys/compat/linux32/arch/amd64/linux32_machdep.c	1.39
+
+	Fix a ring0 escalation vulnerability in compat_linux32 where the
+	index of %cs is controlled by userland, making it easy to trigger
+	the page fault and get kernel privileges.
+	[maxv, ticket #1507]
 
