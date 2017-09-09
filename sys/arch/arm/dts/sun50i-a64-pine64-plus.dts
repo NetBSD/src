@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64-pine64-plus.dts,v 1.1 2017/09/07 21:37:56 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64-pine64-plus.dts,v 1.2 2017/09/09 12:05:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -40,4 +40,12 @@
 	phy1: ethernet-phy@1 {
 		reg = <1>;
 	};
+};
+
+&ehci0 {
+	status = "okay";
+};
+
+&ohci0 {
+	status = "okay";
 };
