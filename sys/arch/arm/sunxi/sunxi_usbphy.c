@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_usbphy.c,v 1.7 2017/09/07 10:30:46 jmcneill Exp $ */
+/* $NetBSD: sunxi_usbphy.c,v 1.8 2017/09/09 11:58:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.7 2017/09/07 10:30:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.8 2017/09/09 11:58:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,14 +39,34 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.7 2017/09/07 10:30:46 jmcneill Ex
 
 #include <dev/fdt/fdtvar.h>
 
-#define	OTG_PHY_CFG		0x20
-#define	 OTG_PHY_ROUTE_OTG	__BIT(0)
+/* PHY control registers */
+#define	PHYCTL_ICR		0x00
+#define	 PHYCTL_ICR_ID_PULLUP	__BIT(17)
+#define	 PHYCTL_ICR_DPDM_PULLUP	__BIT(16)
+#define	 PHYCTL_ICR_FORCE_ID	__BITS(15,14)
+#define	  PHYCTL_ICR_FORCE_ID_LOW	2
+#define	  PHYCTL_ICR_FORCE_ID_HIGH	3
+#define	 PHYCTL_ICR_FORCE_VBUS	__BITS(13,12)
+#define	  PHYCTL_ICR_FORCE_VBUS_LOW	2
+#define	  PHYCTL_ICR_FORCE_VBUS_HIGH	3
+#define	PHYCTL_A10		0x04
+#define	PHYCTL_A33		0x10
+#define	 PHYCTL_ADDR		__BITS(15,8)
+#define	 PHYCTL_DATA		__BIT(7)
+#define	PHYCTL_OTG_CFG		0x20
+#define	 PHYCTL_OTG_ROUTE_OTG	__BIT(0)
 
-#define	HCI_ICR			0x00
-#define	 HCI_AHB_INCR8		__BIT(10)
-#define	 HCI_AHB_INCR4		__BIT(9)
-#define	 HCI_AHB_INCRX_ALIGN	__BIT(8)
-#define	 HCI_ULPI_BYPASS	__BIT(0)
+/* PHY registers */
+#define	PHY_RES45_CAL_EN	0x0c
+#define	PHY_TX_AMPLITUDE_TUNE	0x20
+#define	PHY_DISCON_TH_SEL	0x2a
+
+/* PMU registers */
+#define	PMU_CFG			0x00
+#define	 AHB_INCR8		__BIT(10)
+#define	 AHB_INCR4		__BIT(9)
+#define	 AHB_INCRX_ALIGN	__BIT(8)
+#define	 ULPI_BYPASS		__BIT(0)
 #define	PMU_UNK_H3		0x10
 #define	 PMU_UNK_H3_CLR		__BIT(1)
 
@@ -89,15 +109,67 @@ struct sunxi_usbphy_softc {
 	struct fdtbus_gpio_pin	*sc_gpio_vbus_det;
 };
 
-#define	USBPHY_READ(sc, id, reg)			\
+#define	PHYCTL_READ(sc, reg)				\
+	bus_space_read_4((sc)->sc_bst,			\
+	    (sc)->sc_bsh_phy_ctrl, (reg))
+#define	PHYCTL_WRITE(sc, reg, val)			\
+	bus_space_write_4((sc)->sc_bst,			\
+	    (sc)->sc_bsh_phy_ctrl, (reg), (val))
+#define	PMU_READ(sc, id, reg)			\
 	bus_space_read_4((sc)->sc_bst,			\
 	    (sc)->sc_phys[(id)].phy_bsh, (reg))
-#define	USBPHY_WRITE(sc, id, reg, val)			\
+#define	PMU_WRITE(sc, id, reg, val)			\
 	bus_space_write_4((sc)->sc_bst,			\
 	    (sc)->sc_phys[(id)].phy_bsh, (reg), (val))
 
 CFATTACH_DECL_NEW(sunxi_usbphy, sizeof(struct sunxi_usbphy_softc),
 	sunxi_usbphy_match, sunxi_usbphy_attach, NULL, NULL);
+
+static void
+sunxi_usbphy_write(struct sunxi_usbphy_softc *sc,
+    struct sunxi_usbphy *phy, u_int bit_addr, u_int bits,
+    u_int len)
+{
+	const uint32_t usbc_mask = __BIT(phy->phy_index * 2);;
+	bus_size_t reg;
+	uint32_t val;
+
+	switch (sc->sc_type) {
+	case USBPHY_A13:
+	case USBPHY_A31:
+		reg = PHYCTL_A10;
+		break;
+	case USBPHY_H3:
+	case USBPHY_A64:
+		reg = PHYCTL_A33;
+		break;
+	default:
+		panic("unsupported phy type");
+	}
+
+	if (reg == PHYCTL_A33)
+		PHYCTL_WRITE(sc, reg, 0);
+
+	for (; len > 0; bit_addr++, bits >>= 1, len--) {
+		val = PHYCTL_READ(sc, reg);
+		val &= ~PHYCTL_ADDR;
+		val |= __SHIFTIN(bit_addr, PHYCTL_ADDR);
+		PHYCTL_WRITE(sc, reg, val);
+
+		val = PHYCTL_READ(sc, reg);
+		val &= ~PHYCTL_DATA;
+		val |= __SHIFTIN(bits & 1, PHYCTL_DATA);
+		PHYCTL_WRITE(sc, reg, val);
+
+		PHYCTL_READ(sc, reg);
+		val |= usbc_mask;
+		PHYCTL_WRITE(sc, reg, val);
+
+		PHYCTL_READ(sc, reg);
+		val &= ~usbc_mask;
+		PHYCTL_WRITE(sc, reg, val);
+	}
+}
 
 static bool
 sunxi_usbphy_vbus_detect(struct sunxi_usbphy_softc *sc)
@@ -132,27 +204,81 @@ sunxi_usbphy_enable(device_t dev, void *priv, bool enable)
 {
 	struct sunxi_usbphy_softc * const sc = device_private(dev);
 	struct sunxi_usbphy * const phy = priv;
+	u_int disc_thresh;
+	bool phy0_reroute;
 	uint32_t val;
 
-	if (phy->phy_index > 0) {
-		/* Enable passby */
-		val = USBPHY_READ(sc, phy->phy_index, HCI_ICR);
-		val |= HCI_ULPI_BYPASS;
-		val |= HCI_AHB_INCR8;
-		val |= HCI_AHB_INCR4;
-		val |= HCI_AHB_INCRX_ALIGN;
-		USBPHY_WRITE(sc, phy->phy_index, HCI_ICR, val);
+	switch (sc->sc_type) {
+	case USBPHY_A13:
+		disc_thresh = 0x2;
+		phy0_reroute = false;
+		break;
+	case USBPHY_A31:
+		disc_thresh = 0x3;
+		phy0_reroute = false;
+		break;
+	case USBPHY_A64:
+	case USBPHY_H3:
+		disc_thresh = 0x3;
+		phy0_reroute = true;
+		break;
+	}
+
+	if (phy->phy_bsh) {
+		/* Enable/disable passby */
+		const uint32_t mask =
+		    ULPI_BYPASS|AHB_INCR8|AHB_INCR4|AHB_INCRX_ALIGN;
+		val = PMU_READ(sc, phy->phy_index, PMU_CFG);
+		if (enable)
+			val |= mask;
+		else
+			val &= ~mask;
+		PMU_WRITE(sc, phy->phy_index, PMU_CFG, val);
 	}
 
 	switch (sc->sc_type) {
 	case USBPHY_H3:
 	case USBPHY_A64:
-		val = USBPHY_READ(sc, phy->phy_index, PMU_UNK_H3);
-		val &= ~PMU_UNK_H3_CLR;
-		USBPHY_WRITE(sc, phy->phy_index, PMU_UNK_H3, val);
+		if (enable && phy->phy_bsh) {
+			val = PMU_READ(sc, phy->phy_index, PMU_UNK_H3);
+			val &= ~PMU_UNK_H3_CLR;
+			PMU_WRITE(sc, phy->phy_index, PMU_UNK_H3, val);
+		}
 		break;
 	default:
 		break;
+	}
+
+	if (enable) {
+		if (phy->phy_index == 0)
+			sunxi_usbphy_write(sc, phy, PHY_RES45_CAL_EN, 0x1, 1);
+		sunxi_usbphy_write(sc, phy, PHY_TX_AMPLITUDE_TUNE, 0x14, 5);
+		sunxi_usbphy_write(sc, phy, PHY_DISCON_TH_SEL, disc_thresh, 2);
+	}
+
+	if (phy->phy_index == 0) {
+		const uint32_t mask =
+		    PHYCTL_ICR_ID_PULLUP|PHYCTL_ICR_DPDM_PULLUP;
+		val = PHYCTL_READ(sc, PHYCTL_ICR);
+
+		if (enable)
+			val |= mask;
+		else
+			val &= ~mask;
+
+		/* XXX only host mode is supported */
+		val &= ~PHYCTL_ICR_FORCE_ID;
+		val |= __SHIFTIN(PHYCTL_ICR_FORCE_ID_LOW, PHYCTL_ICR_FORCE_ID);
+		val &= ~PHYCTL_ICR_FORCE_VBUS;
+		val |= __SHIFTIN(PHYCTL_ICR_FORCE_VBUS_HIGH, PHYCTL_ICR_FORCE_VBUS);
+
+		PHYCTL_WRITE(sc, PHYCTL_ICR, val);
+
+		if (phy0_reroute) {
+			val = PHYCTL_READ(sc, PHYCTL_OTG_CFG);
+			val &= ~PHYCTL_OTG_ROUTE_OTG;
+			PHYCTL_WRITE(sc, PHYCTL_OTG_CFG, val);
+		}
 	}
 
 	if (phy->phy_reg == NULL)
