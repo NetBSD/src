@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.28 2017/09/07 21:22:51 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.29 2017/09/09 12:02:57 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -197,8 +197,11 @@ pseudo-device	wsmux
 sunxiusbphy*	at fdt?	pass 9		# USB PHY
 ehci*		at fdt?			# EHCI
 ohci*		at fdt?			# OHCI
+motg*		at fdt?			# USB OTG
+options 	MOTG_ALLWINNER		# XXX this should be a driver flag
 usb*		at ehci?
 usb*		at ohci?
+usb*		at motg?
 
 include "dev/usb/usbdevices.config"
 midi*		at midibus?
