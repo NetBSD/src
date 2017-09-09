@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.22 2017/09/07 01:07:04 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.23 2017/09/09 12:01:04 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -158,6 +158,10 @@ file	dev/fdt/simplefb.c			simplefb
 device	sunxits: wsmousedev, tpcalib
 attach	sunxits at fdt with sunxi_ts
 file	arch/arm/sunxi/sunxi_ts.c		sunxi_ts
+
+# USB OTG
+attach	motg at fdt with sunxi_musb
+file	arch/arm/sunxi/sunxi_musb.c		sunxi_musb
 
 # SOC parameters
 defflag	opt_soc.h			SOC_SUNXI
