@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.199 2017/05/09 11:14:16 kre Exp $
+#	$NetBSD: Makefile.inc,v 1.200 2017/09/09 18:18:28 kamil Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -90,6 +90,7 @@ MLINKS+=bswap.3 bswap16.3 bswap.3 bswap32.3 bswap.3 bswap64.3
 MLINKS+=cpuset.3 cpuset_create.3 cpuset.3 cpuset_destroy.3 \
 	cpuset.3 cpuset_zero.3 cpuset.3 cpuset_set.3 cpuset.3 cpuset_clr.3 \
 	cpuset.3 cpuset_isset.3 cpuset.3 cpuset_size.3
+MLINKS+=devname.3 devname_r.3
 MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
 	directory.3 readdir.3 directory.3 readdir_r.3 directory.3 \
 	rewinddir.3 directory.3 seekdir.3 directory.3 telldir.3 \
