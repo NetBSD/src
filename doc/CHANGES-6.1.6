@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.112 2017/09/04 16:04:59 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.113 2017/09/09 16:54:15 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -14804,4 +14804,12 @@ sys/arch/sparc64/sparc64/compat_13_machdep.c	1.24
 	Apply only CCR. Otherwise userland could set PSTATE_PRIV
 	in %pstate and get kernel privileges on the hardware.
 	[maxv, ticket #1501]
+
+sys/compat/linux32/arch/amd64/linux32_machdep.c	1.39
+
+
+	Fix a ring0 escalation vulnerability in compat_linux32 where the
+	index of %cs is controlled by userland, making it easy to trigger
+	the page fault and get kernel privileges.
+	[maxv, ticket #1502]
 
