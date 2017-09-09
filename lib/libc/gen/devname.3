@@ -1,4 +1,4 @@
-.\"	$NetBSD: devname.3,v 1.12 2012/06/03 21:42:46 joerg Exp $
+.\"	$NetBSD: devname.3,v 1.13 2017/09/09 18:00:39 kamil Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,11 +29,12 @@
 .\"
 .\"     @(#)devname.3	8.2 (Berkeley) 4/29/95
 .\"
-.Dd June 3, 2012
+.Dd September 9, 2017
 .Dt DEVNAME 3
 .Os
 .Sh NAME
-.Nm devname
+.Nm devname ,
+.Nm devname_r
 .Nd get device name
 .Sh LIBRARY
 .Lb libc
@@ -42,10 +43,12 @@
 .In sys/stat.h
 .Ft char *
 .Fn devname "dev_t dev" "mode_t type"
+.Ft int
+.Fn devname_r "dev_t dev" "mode_t type" "char *path" "size_t len"
 .Sh DESCRIPTION
 The
 .Fn devname
-function returns a pointer to the name of the block or character
+function returns a pointer to the static buffer with the name of the block or character
 device in
 .Dq Pa /dev
 with a device number of
@@ -58,9 +61,49 @@ available,
 .Dv NULL
 is returned.
 .Pp
+The
+.Fn devname_r
+function is a reentrand and thread-safe version of
+.Fn devname .
+This function returns the device name by copying it into the
+.Fa path
+argument with up to
+.Fa len
+characters.
+The
+.Fa path
+argument is always nul-terminated.
+.Pp
 The traditional display for applications when no device is
 found is the string
 .Dq ?? .
+.Sh RETURN VALUES
+If successful,
+.Fn devname
+returns a pointer to a nul-terminated string containing the name of the device.
+If an error occurs
+.Fa devname
+will return
+.Dv NULL .
+.Pp
+If successful,
+.Fn devname_r
+places a nul-terminated string containing the name of the device and returns 0.
+If error occurs
+.Fn devname_r
+will return error number indicating what went wrong.
+.Sh ERRORS
+The
+.Fn devname
+and
+.Fn devname_r
+functions my fail if:
+.Bl -tag -width Er
+.It Bq Er ENOENT
+the corresponding device does not exist
+.It Bq Er ERANGE
+the passed buffer length is too short
+.El
 .Sh FILES
 .Bl -tag -width /var/run/dev.cdb -compact
 .It Pa /var/run/dev.cdb
@@ -74,3 +117,12 @@ The
 .Nm devname
 function call appeared in
 .Bx 4.4 .
+.Pp
+The
+.Fn devname_r
+function first appeared in
+.Nx 6.0 .
+.Sh BUGS
+The
+.Fn devname
+function does not set errno on failure.
