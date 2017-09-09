@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.99 2017/07/05 17:54:46 christos Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.100 2017/09/09 14:41:19 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.99 2017/07/05 17:54:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.100 2017/09/09 14:41:19 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -575,6 +575,16 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 			continue;
 		if (len >= elem_size && elem_count > 0) {
 			mutex_enter(&fp->f_lock);
+			/*
+			 * Do not add references, if the count reached 0.
+			 * Since the check above has been performed without
+			 * locking, it must be rechecked here as a concurrent
+			 * closef could have reduced it.
+			 */
+			if (fp->f_count == 0) {
+				mutex_exit(&fp->f_lock);
+				continue;
+			}
 			fp->f_count++;
 			mutex_exit(&fp->f_lock);
 			LIST_INSERT_AFTER(fp, dfp, f_list);
