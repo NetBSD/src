@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.6.6.1 2017/08/01 23:18:30 snj Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.6.6.2 2017/09/09 17:29:40 snj Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.6.6.1 2017/08/01 23:18:30 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.6.6.2 2017/09/09 17:29:40 snj Exp $");
 #endif
 
 /*
@@ -139,7 +139,7 @@ IDTVEC_END(trap05)
 	SUPERALIGN_TEXT
 IDTVEC(trap06)
 	/* Check if there is no DTrace hook registered. */
-	cmpl	$0,dtrace_invop_jump_addr
+	cmpl	$0,%ss:dtrace_invop_jump_addr
 	je	norm_ill
 
 	/* Check if this is a user fault. */

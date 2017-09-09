@@ -1,11 +1,11 @@
-/*	$NetBSD: sys_machdep.c,v 1.35.6.1 2017/08/01 23:18:30 snj Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.35.6.2 2017/09/09 17:29:41 snj Exp $	*/
 
-/*-
- * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum, and by Andrew Doran.
+ * by Charles M. Hannum, by Andrew Doran, and by Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.35.6.1 2017/08/01 23:18:30 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.35.6.2 2017/09/09 17:29:41 snj Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_pmc.h"
@@ -117,19 +117,6 @@ int x86_set_sdbase(void *, char, lwp_t *, bool);
 int x86_get_sdbase32(void *, char);
 int x86_get_sdbase(void *, char);
 
-#if defined(USER_LDT) && defined(LDT_DEBUG)
-static void x86_print_ldt(int, const struct segment_descriptor *);
-
-static void
-x86_print_ldt(int i, const struct segment_descriptor *d)
-{
-	printf("[%d] lolimit=0x%x, lobase=0x%x, type=%u, dpl=%u, p=%u, "
-	    "hilimit=0x%x, xx=%x, def32=%u, gran=%u, hibase=0x%x\n",
-	    i, d->sd_lolimit, d->sd_lobase, d->sd_type, d->sd_dpl, d->sd_p,
-	    d->sd_hilimit, d->sd_xx, d->sd_def32, d->sd_gran, d->sd_hibase);
-}
-#endif
-
 int
 x86_get_ldt(struct lwp *l, void *args, register_t *retval)
 {
@@ -172,24 +159,23 @@ x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
 	int nldt, num;
 	union descriptor *lp;
 
+#ifdef __x86_64__
+	const size_t min_ldt_size = LDT_SIZE;
+#else
+	const size_t min_ldt_size = NLDT * sizeof(union descriptor);
+#endif
+
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_GET,
 	    NULL, NULL, NULL, NULL);
 	if (error)
-		return (error);
-
-#ifdef	LDT_DEBUG
-	printf("x86_get_ldt: start=%d num=%d descs=%p\n", ua->start,
-	    ua->num, ua->desc);
-#endif
+		return error;
 
 	if (ua->start < 0 || ua->num < 0 || ua->start > 8192 || ua->num > 8192 ||
 	    ua->start + ua->num > 8192)
-		return (EINVAL);
-
-#ifdef __x86_64__
-	if (ua->start * sizeof(union descriptor) < LDT_SIZE)
 		return EINVAL;
-#endif
+
+	if (ua->start * sizeof(union descriptor) < min_ldt_size)
+		return EINVAL;
 
 	mutex_enter(&cpu_lock);
 
@@ -207,19 +193,12 @@ x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
 
 	if (ua->start > nldt) {
 		mutex_exit(&cpu_lock);
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	lp += ua->start;
 	num = min(ua->num, nldt - ua->start);
 	ua->num = num;
-#ifdef LDT_DEBUG
-	{
-		int i;
-		for (i = 0; i < num; i++)
-			x86_print_ldt(i, &lp[i].sd);
-	}
-#endif
 
 	memcpy(cp, lp, num * sizeof(union descriptor));
 	mutex_exit(&cpu_lock);
@@ -239,7 +218,7 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 	int error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
-		return (error);
+		return error;
 
 	if (ua.num < 0 || ua.num > 8192)
 		return EINVAL;
@@ -280,16 +259,14 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_SET,
 	    NULL, NULL, NULL, NULL);
 	if (error)
-		return (error);
+		return error;
 
 	if (ua->start < 0 || ua->num < 0 || ua->start > 8192 || ua->num > 8192 ||
 	    ua->start + ua->num > 8192)
-		return (EINVAL);
-
-#ifdef __x86_64__
-	if (ua->start * sizeof(union descriptor) < LDT_SIZE)
 		return EINVAL;
-#endif
+
+	if (ua->start * sizeof(union descriptor) < min_ldt_size)
+		return EINVAL;
 
 	/* Check descriptors for access violations. */
 	for (i = 0; i < ua->num; i++) {
@@ -299,29 +276,6 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 		case SDT_SYSNULL:
 			desc->sd.sd_p = 0;
 			break;
-#ifdef __x86_64__
-		case SDT_SYS286CGT:
-		case SDT_SYS386CGT:
-			/* We don't allow these on amd64. */
-			return EACCES;
-#else
-		case SDT_SYS286CGT:
-		case SDT_SYS386CGT:
-			/*
-			 * Only allow call gates targeting a segment
-			 * in the LDT or a user segment in the fixed
-			 * part of the gdt.  Segments in the LDT are
-			 * constrained (below) to be user segments.
-			 */
-			if (desc->gd.gd_p != 0 &&
-			    !ISLDT(desc->gd.gd_selector) &&
-			    ((IDXSEL(desc->gd.gd_selector) >= NGDT) ||
-			     (gdtstore[IDXSEL(desc->gd.gd_selector)].sd.sd_dpl !=
-				 SEL_UPL))) {
-				return EACCES;
-			}
-			break;
-#endif
 		case SDT_MEMEC:
 		case SDT_MEMEAC:
 		case SDT_MEMERC:
@@ -344,13 +298,7 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 		case SDT_MEMERA:
 			break;
 		default:
-			/*
-			 * Make sure that unknown descriptor types are
-			 * not marked present.
-			 */
-			if (desc->sd.sd_p != 0)
-				return EACCES;
-			break;
+			return EACCES;
 		}
 
 		if (desc->sd.sd_p != 0) {
@@ -448,7 +396,7 @@ x86_iopl(struct lwp *l, void *args, register_t *retval)
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPL,
 	    NULL, NULL, NULL, NULL);
 	if (error)
-		return (error);
+		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return error;
@@ -499,10 +447,10 @@ x86_get_ioperm(struct lwp *l, void *args, register_t *retval)
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_GET,
 	    NULL, NULL, NULL, NULL);
 	if (error)
-		return (error);
+		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
-		return (error);
+		return error;
 
 	iomap = pcb->pcb_iomap;
 	if (iomap == NULL) {
@@ -533,10 +481,10 @@ x86_set_ioperm(struct lwp *l, void *args, register_t *retval)
   	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_SET,
 	    NULL, NULL, NULL, NULL);
 	if (error)
-		return (error);
+		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
-		return (error);
+		return error;
 
 	new = kmem_alloc(IOMAPSIZE, KM_SLEEP);
 	error = copyin(ua.iomap, new, IOMAPSIZE);
@@ -576,7 +524,7 @@ x86_get_mtrr(struct lwp *l, void *args, register_t *retval)
  	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_GET,
 	    NULL, NULL, NULL, NULL);
 	if (error)
-		return (error);
+		return error;
 
 	error = copyin(args, &ua, sizeof ua);
 	if (error != 0)
@@ -611,7 +559,7 @@ x86_set_mtrr(struct lwp *l, void *args, register_t *retval)
  	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_SET,
 	    NULL, NULL, NULL, NULL);
 	if (error)
-		return (error);
+		return error;
 
 	error = copyin(args, &ua, sizeof ua);
 	if (error != 0)
@@ -884,7 +832,7 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 		error = EINVAL;
 		break;
 	}
-	return (error);
+	return error;
 }
 
 int

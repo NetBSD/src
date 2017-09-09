@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.145.6.1 2017/07/05 19:59:29 snj Exp $	*/
+/*	$NetBSD: locore.S,v 1.145.6.2 2017/09/09 17:29:40 snj Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.145.6.1 2017/07/05 19:59:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.145.6.2 2017/09/09 17:29:40 snj Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -343,11 +343,13 @@ _C_LABEL(Multiboot_Header):
 	jne	1f
 
 	/*
-	 * Indeed, a multiboot-compliant boot loader executed us.  We copy
-	 * the received Multiboot information structure into kernel's data
-	 * space to process it later -- after we are relocated.  It will
-	 * be safer to run complex C code than doing it at this point.
+	 * Indeed, a multiboot-compliant boot loader executed us. We switch
+	 * to the temporary stack, and copy the received Multiboot information
+	 * structure into kernel's data space to process it later -- after we
+	 * are relocated. It will be safer to run complex C code than doing it
+	 * at this point.
 	 */
+	movl	$_RELOC(tmpstk),%esp
 	pushl	%ebx		/* Address of Multiboot information */
 	call	_C_LABEL(multiboot_pre_reloc)
 	addl	$4,%esp
@@ -841,24 +843,6 @@ begin:
 	call	_C_LABEL(init386)
 	addl	$PDE_SIZE,%esp		/* pop paddr_t */
 	addl	$NGDT*8,%esp		/* pop temporary gdt */
-
-#ifdef SAFARI_FIFO_HACK
-	movb	$5,%al
-	movw	$0x37b,%dx
-	outb	%al,%dx
-	movw	$0x37f,%dx
-	inb	%dx,%al
-	movb	%al,%cl
-
-	orb	$1,%cl
-
-	movb	$5,%al
-	movw	$0x37b,%dx
-	outb	%al,%dx
-	movw	$0x37f,%dx
-	movb	%cl,%al
-	outb	%al,%dx
-#endif /* SAFARI_FIFO_HACK */
 
 	call 	_C_LABEL(main)
 #else /* XEN */

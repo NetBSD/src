@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.59 2017/05/27 22:53:29 bouyer Exp $
+# $NetBSD: ALL,v 1.59.2.1 2017/09/09 17:29:40 snj Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.59 $"
+#ident		"ALL-$Revision: 1.59.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -2076,7 +2076,6 @@ options KSYMS_DEBUG
 options KUE_DEBUG
 options LANA_DEBUG
 options LCD_DEBUG
-options LDT_DEBUG
 options LEDEBUG
 options LE_DEBUG
 options LIFDEBUG
