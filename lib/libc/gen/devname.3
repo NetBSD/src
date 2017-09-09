@@ -1,4 +1,4 @@
-.\"	$NetBSD: devname.3,v 1.13 2017/09/09 18:00:39 kamil Exp $
+.\"	$NetBSD: devname.3,v 1.14 2017/09/09 18:45:04 kamil Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -94,10 +94,8 @@ If error occurs
 will return error number indicating what went wrong.
 .Sh ERRORS
 The
-.Fn devname
-and
 .Fn devname_r
-functions my fail if:
+function my fail if:
 .Bl -tag -width Er
 .It Bq Er ENOENT
 the corresponding device does not exist
@@ -122,7 +120,3 @@ The
 .Fn devname_r
 function first appeared in
 .Nx 6.0 .
-.Sh BUGS
-The
-.Fn devname
-function does not set errno on failure.
