@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2311 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2312 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -55,3 +55,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		bypass adapters. [msaitoh 20170830]
 	file(1): Upgraded to 5.32. [christos 20170908]
 	tcpdump(8): Import 4.9.2. [christos 20170908]
+	veriexecgen(8): drop support for MD5, SHA1, RMD160. [sevan 20170909]
