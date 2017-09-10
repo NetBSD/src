@@ -1,4 +1,4 @@
-/*	$NetBSD: uaccess.h,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: uaccess.h,v 1.3 2017/09/10 22:51:48 maya Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _ASM_UACCESS_H_
 
 #include <sys/types.h>
+#include <sys/errno.h>
 #include <sys/systm.h>
 
 /* XXX This is a cop-out.  */
