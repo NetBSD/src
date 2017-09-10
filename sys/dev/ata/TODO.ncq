@@ -2,10 +2,12 @@ Bugs
 ----
 test wd* at umass?, confirm the ata_channel kludge works
 
-c_start() needs to be called on splbio to avoid spurious irq during reset,
-is not e.g. in ata thread and may not in atastart() neither
+revise calls to atastart() - now called alsoafter ATASTART_ABORT(), call
+only from intr routine
 - wdc.c never calls atastart() (start always false)
 - ata_wdc.c calls atastart() regardless if error
+
+reconsider freeze/thaw in error recovery - can it screw up with thread?
 
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------

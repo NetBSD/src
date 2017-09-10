@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.24 2017/08/12 22:12:04 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.25 2017/09/10 19:31:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -166,7 +166,13 @@ struct ata_xfer {
 	TAILQ_ENTRY(ata_xfer) c_activechain;
 
 	/* Low-level protocol handlers. */
-	void	(*c_start)(struct ata_channel *, struct ata_xfer *);
+	int	(*c_start)(struct ata_channel *, struct ata_xfer *);
+#define ATASTART_STARTED	0	/* xfer started, waiting for intr */
+#define ATASTART_TH		1	/* xfer needs to be run in thread */
+#define ATASTART_POLL		2	/* xfer needs to be polled */
+#define ATASTART_ABORT		3	/* error occurred, abort xfer */
+	void	(*c_poll)(struct ata_channel *, struct ata_xfer *);
+	void	(*c_abort)(struct ata_channel *, struct ata_xfer *);
 	int	(*c_intr)(struct ata_channel *, struct ata_xfer *, int);
 	void	(*c_kill_xfer)(struct ata_channel *, struct ata_xfer *, int);
 };
@@ -508,6 +514,7 @@ struct ata_xfer *ata_get_xfer_ext(struct ata_channel *, int, uint8_t);
 void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_deactivate_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);
+int	ata_xfer_start(struct ata_xfer *xfer);
 
 void	ata_timeout(void *);
 bool	ata_timo_xfer_check(struct ata_xfer *);
@@ -517,7 +524,9 @@ void	ata_reset_channel(struct ata_channel *, int);
 void	ata_channel_freeze(struct ata_channel *);
 void	ata_channel_thaw(struct ata_channel *);
 void	ata_channel_start(struct ata_channel *, int);
-void	ata_thread_wake(struct ata_channel *);
+void	ata_channel_lock(struct ata_channel *);
+void	ata_channel_unlock(struct ata_channel *);
+void	ata_channel_lock_owned(struct ata_channel *);
 
 int	ata_addref(struct ata_channel *);
 void	ata_delref(struct ata_channel *);
