@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.24 2017/09/10 18:37:21 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.25 2017/09/10 19:31:15 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.24 2017/09/10 18:37:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.25 2017/09/10 19:31:15 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -129,21 +129,24 @@ static void mvsata_atapi_kill_pending(struct scsipi_periph *);
 static void mvsata_setup_channel(struct ata_channel *);
 
 #ifndef MVSATA_WITHOUTDMA
-static void mvsata_bio_start(struct ata_channel *, struct ata_xfer *);
+static int mvsata_bio_start(struct ata_channel *, struct ata_xfer *);
 static int mvsata_bio_intr(struct ata_channel *, struct ata_xfer *, int);
+static void mvsata_bio_poll(struct ata_channel *, struct ata_xfer *);
 static void mvsata_bio_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
 static void mvsata_bio_done(struct ata_channel *, struct ata_xfer *);
 static int mvsata_bio_ready(struct mvsata_port *, struct ata_bio *, int,
 			    int);
-static void mvsata_wdc_cmd_start(struct ata_channel *, struct ata_xfer *);
+static int mvsata_wdc_cmd_start(struct ata_channel *, struct ata_xfer *);
 static int mvsata_wdc_cmd_intr(struct ata_channel *, struct ata_xfer *, int);
+static void mvsata_wdc_cmd_poll(struct ata_channel *, struct ata_xfer *);
 static void mvsata_wdc_cmd_kill_xfer(struct ata_channel *, struct ata_xfer *,
 				     int);
-static void mvsata_wdc_cmd_done(struct ata_channel *, struct ata_xfer *, int);
+static void mvsata_wdc_cmd_done(struct ata_channel *, struct ata_xfer *);
 static void mvsata_wdc_cmd_done_end(struct ata_channel *, struct ata_xfer *);
 #if NATAPIBUS > 0
-static void mvsata_atapi_start(struct ata_channel *, struct ata_xfer *);
+static int mvsata_atapi_start(struct ata_channel *, struct ata_xfer *);
 static int mvsata_atapi_intr(struct ata_channel *, struct ata_xfer *, int);
+static void mvsata_atapi_poll(struct ata_channel *, struct ata_xfer *);
 static void mvsata_atapi_kill_xfer(struct ata_channel *, struct ata_xfer *,
 				   int);
 static void mvsata_atapi_reset(struct ata_channel *, struct ata_xfer *);
@@ -1088,12 +1091,14 @@ mvsata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_bcount = ata_bio->bcount;
 	xfer->c_start = mvsata_bio_start;
 	xfer->c_intr = mvsata_bio_intr;
+	xfer->c_poll = mvsata_bio_poll;
+	xfer->c_abort = mvsata_bio_done;
 	xfer->c_kill_xfer = mvsata_bio_kill_xfer;
 	ata_exec_xfer(chp, xfer);
 	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
 
-static void
+static int
 mvsata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
@@ -1109,6 +1114,8 @@ mvsata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	DPRINTF(DEBUG_FUNCS|DEBUG_XFERS, ("%s:%d: mvsata_bio_start: drive=%d\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive));
+
+	ata_channel_lock_owned(chp);
 
 	if (xfer->c_flags & C_DMA)
 		if (drvp->n_xfers <= NXFER)
@@ -1185,8 +1192,7 @@ mvsata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 				}
 				ata_bio->error = ERR_DMA;
 				ata_bio->r_error = 0;
-				mvsata_bio_done(chp, xfer);
-				return;
+				return ATASTART_ABORT;
 			}
 			chp->ch_flags |= ATACH_DMA_WAIT;
 			/* start timeout machinery */
@@ -1248,13 +1254,11 @@ do_pio:
 			 */
 			if ((xfer->c_flags & C_POLL) == 0 &&
 			    (chp->ch_flags & ATACH_TH_RUN) == 0) {
-				ata_thread_wake(chp);
-				return;
+				return ATASTART_TH;
 			}
 			if (mvsata_bio_ready(mvport, ata_bio, xfer->c_drive,
 			    (xfer->c_flags & C_POLL) ? AT_POLL : 0) != 0) {
-				mvsata_bio_done(chp, xfer);
-				return;
+				return ATASTART_ABORT;
 			}
 		}
 
@@ -1266,7 +1270,7 @@ do_pio:
 		case WDCWAIT_TOUT:
 			goto timeout;
 		case WDCWAIT_THR:
-			return;
+			return ATASTART_TH;
 		}
 		if (ata_bio->flags & ATA_LBA48)
 			wdccommandext(chp, 0, atacmd_to48(cmd),
@@ -1302,14 +1306,13 @@ do_pio:
 			    chp->ch_channel, xfer->c_drive, ATACH_ST(tfd),
 			    ATACH_ERR(tfd));
 			ata_bio->error = TIMEOUT;
-			mvsata_bio_done(chp, xfer);
-			return;
+			return ATASTART_ABORT;
 		}
 		if (ATACH_ST(tfd) & WDCS_ERR) {
 			ata_bio->error = ERROR;
 			ata_bio->r_error = ATACH_ERR(tfd);
 			mvsata_bio_done(chp, xfer);
-			return;
+			return ATASTART_ABORT;
 		}
 
 		wdc->dataout_pio(chp, drvp->drive_flags,
@@ -1318,26 +1321,35 @@ do_pio:
 
 intr:
 	/* Wait for IRQ (either real or polled) */
-	if ((ata_bio->flags & ATA_POLL) != 0) {
-		/* Wait for at last 400ns for status bit to be valid */
-		delay(1);
-		if (chp->ch_flags & ATACH_DMA_WAIT) {
-			mvsata_edma_wait(mvport, xfer, ATA_DELAY);
-			sc->sc_enable_intr(mvport, 1 /*on*/);
-			chp->ch_flags &= ~ATACH_DMA_WAIT;
-		}
-		if ((ata_bio->flags & ATA_ITSDONE) == 0)
-			mvsata_bio_intr(chp, xfer, 0);
-	}
-	return;
+	if ((ata_bio->flags & ATA_POLL) != 0)
+		return ATASTART_POLL;
+	else
+		return ATASTART_STARTED;
 
 timeout:
 	aprint_error_dev(atac->atac_dev,
 	    "channel %d: drive %d not ready, st=0x%02x, err=0x%02x\n",
 	    chp->ch_channel, xfer->c_drive, ATACH_ST(tfd), ATACH_ERR(tfd));
 	ata_bio->error = TIMEOUT;
-	mvsata_bio_done(chp, xfer);
-	return;
+	return ATASTART_ABORT;
+}
+
+static void
+mvsata_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	struct mvsata_port *mvport = (struct mvsata_port *)chp;
+	struct mvsata_softc *sc = device_private(MVSATA_DEV2(mvport));
+
+	/* Wait for at last 400ns for status bit to be valid */
+	delay(1);
+	if (chp->ch_flags & ATACH_DMA_WAIT) {
+		mvsata_edma_wait(mvport, xfer, ATA_DELAY);
+		sc->sc_enable_intr(mvport, 1 /*on*/);
+		chp->ch_flags &= ~ATACH_DMA_WAIT;
+	}
+
+	if ((xfer->c_bio.flags & ATA_ITSDONE) == 0)
+		mvsata_bio_intr(chp, xfer, 0);
 }
 
 static int
@@ -1353,6 +1365,8 @@ mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	    device_xname(atac->atac_dev), chp->ch_channel, __func__,
 	    xfer->c_drive));
 
+	ata_channel_lock(chp);
+
 	chp->ch_flags &= ~(ATACH_DMA_WAIT);
 
 	/*
@@ -1361,6 +1375,7 @@ mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	 */
 	if (xfer->c_flags & C_TIMEOU) {
 		ata_bio->error = TIMEOUT;
+		ata_channel_unlock(chp);
 		mvsata_bio_done(chp, xfer);
 		return 1;
 	}
@@ -1384,6 +1399,7 @@ mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		    chp->ch_channel, xfer->c_drive, xfer->c_bcount,
 		    xfer->c_skip);
 		ata_bio->error = TIMEOUT;
+		ata_channel_unlock(chp);
 		mvsata_bio_done(chp, xfer);
 		return 1;
 	}
@@ -1398,6 +1414,7 @@ mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 
 	/* if we had an error, end */
 	if (ata_bio->error != NOERROR) {
+		ata_channel_unlock(chp);
 		mvsata_bio_done(chp, xfer);
 		return 1;
 	}
@@ -1409,6 +1426,7 @@ mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 			    "channel %d: drive %d read intr before drq\n",
 			    chp->ch_channel, xfer->c_drive);
 			ata_bio->error = TIMEOUT;
+			ata_channel_unlock(chp);
 			mvsata_bio_done(chp, xfer);
 			return 1;
 		}
@@ -1421,16 +1439,19 @@ end:
 	ata_bio->blkdone += ata_bio->nblks;
 	xfer->c_skip += ata_bio->nbytes;
 	xfer->c_bcount -= ata_bio->nbytes;
+
 	/* See if this transfer is complete. */
 	if (xfer->c_bcount > 0) {
-		if ((ata_bio->flags & ATA_POLL) == 0)
+		if ((ata_bio->flags & ATA_POLL) == 0) {
 			/* Start the next operation */
-			mvsata_bio_start(chp, xfer);
-		else
+			ata_xfer_start(xfer);
+		} else {
 			/* Let mvsata_bio_start do the loop */
-			return 1;
+		}
+		ata_channel_unlock(chp);
 	} else { /* Done with this transfer */
 		ata_bio->error = NOERROR;
+		ata_channel_unlock(chp);
 		mvsata_bio_done(chp, xfer);
 	}
 	return 1;
@@ -1654,6 +1675,8 @@ mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_bcount = ata_c->bcount;
 	xfer->c_start = mvsata_wdc_cmd_start;
 	xfer->c_intr = mvsata_wdc_cmd_intr;
+	xfer->c_poll = mvsata_wdc_cmd_poll;
+	xfer->c_abort = mvsata_wdc_cmd_done;
 	xfer->c_kill_xfer = mvsata_wdc_cmd_kill_xfer;
 	s = splbio();
 	ata_exec_xfer(chp, xfer);
@@ -1676,7 +1699,7 @@ mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	return rv;
 }
 
-static void
+static int
 mvsata_wdc_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
@@ -1688,6 +1711,8 @@ mvsata_wdc_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	DPRINTF(DEBUG_FUNCS|DEBUG_XFERS,
 	    ("%s:%d: mvsata_cmd_start: drive=%d\n",
 	    device_xname(MVSATA_DEV2(mvport)), chp->ch_channel, drive));
+
+	ata_channel_lock_owned(chp);
 
 	/* First, EDMA disable, if enabled this channel. */
 	KASSERT((chp->ch_flags & ATACH_NCQ) == 0);
@@ -1703,10 +1728,9 @@ mvsata_wdc_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		break;
 	case WDCWAIT_TOUT:
 		ata_c->flags |= AT_TIMEOU;
-		mvsata_wdc_cmd_done(chp, xfer, tfd);
-		return;
+		return ATASTART_ABORT;
 	case WDCWAIT_THR:
-		return;
+		return ATASTART_TH;
 	}
 	if (ata_c->flags & AT_POLL)
 		/* polled command, disable interrupts */
@@ -1728,8 +1752,15 @@ mvsata_wdc_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	if ((ata_c->flags & AT_POLL) == 0) {
 		callout_reset(&xfer->c_timo_callout, ata_c->timeout / 1000 * hz,
 		    wdctimeout, xfer);
-		return;
+		return ATASTART_STARTED;
 	}
+
+	return ATASTART_POLL;
+}
+
+static void
+mvsata_wdc_cmd_poll(struct ata_channel *chp, struct ata_xfer *xfer)
+{
 	/*
 	 * Polled command. Wait for drive ready or drq. Done in intr().
 	 * Wait for at last 400ns for status bit to be valid.
@@ -1749,6 +1780,8 @@ mvsata_wdc_cmd_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	int wflags;
 	int drive_flags;
 	int tfd;
+
+	ata_channel_lock(chp);
 
 	if (ata_c->r_command == WDCC_IDENTIFY ||
 	    ata_c->r_command == ATAPI_IDENTIFY_DEVICE)
@@ -1795,16 +1828,20 @@ again:
 		if (wdcwait(chp, ata_c->r_st_bmask | WDCS_DRQ,
 		    ata_c->r_st_bmask, (irq == 0) ? ata_c->timeout : 0,
 		    wflags, &tfd) ==  WDCWAIT_TOUT) {
-			if (irq && (xfer->c_flags & C_TIMEOU) == 0)
+			if (irq && (xfer->c_flags & C_TIMEOU) == 0) {
+				ata_channel_unlock(chp);
 				return 0;	/* IRQ was not for us */
+			}
 			ata_c->flags |= AT_TIMEOU;
 		}
 		goto out;
 	}
 	if (wdcwait(chp, ata_c->r_st_pmask, ata_c->r_st_pmask,
 	    (irq == 0) ? ata_c->timeout : 0, wflags, &tfd) == WDCWAIT_TOUT) {
-		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
-		    return 0;	/* IRQ was not for us */
+		if (irq && (xfer->c_flags & C_TIMEOU) == 0) {
+			ata_channel_unlock(chp);
+			return 0;	/* IRQ was not for us */
+		}
 		ata_c->flags |= AT_TIMEOU;
 		goto out;
 	}
@@ -1831,12 +1868,24 @@ again:
 		if ((ata_c->flags & AT_POLL) == 0) {
 			callout_reset(&xfer->c_timo_callout,
 			    mstohz(ata_c->timeout), wdctimeout, xfer);
+			ata_channel_unlock(chp);
 			return 1;
 		} else
 			goto again;
 	}
 out:
-	mvsata_wdc_cmd_done(chp, xfer, tfd);
+	if (ATACH_ST(tfd) & WDCS_DWF)
+		ata_c->flags |= AT_DF;
+	if (ATACH_ST(tfd) & WDCS_ERR) {
+		ata_c->flags |= AT_ERROR;
+		ata_c->r_error = ATACH_ERR(tfd);
+	}
+	ata_channel_unlock(chp);
+	mvsata_wdc_cmd_done(chp, xfer);
+
+	if ((ATACH_ST(tfd) & WDCS_ERR) == 0)
+		atastart(chp);
+
 	return 1;
 }
 
@@ -1880,7 +1929,7 @@ mvsata_wdc_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 }
 
 static void
-mvsata_wdc_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
+mvsata_wdc_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	struct atac_softc *atac = chp->ch_atac;
@@ -1894,12 +1943,6 @@ mvsata_wdc_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	if (ata_waitdrain_xfer_check(chp, xfer))
 		return;
 
-	if (ATACH_ST(tfd) & WDCS_DWF)
-		ata_c->flags |= AT_DF;
-	if (ATACH_ST(tfd) & WDCS_ERR) {
-		ata_c->flags |= AT_ERROR;
-		ata_c->r_error = ATACH_ERR(tfd);
-	}
 	if ((ata_c->flags & AT_READREG) != 0 &&
 	    device_is_active(atac->atac_dev) &&
 	    (ata_c->flags & (AT_ERROR | AT_DF)) == 0) {
@@ -1952,8 +1995,6 @@ mvsata_wdc_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	}
 
 	mvsata_wdc_cmd_done_end(chp, xfer);
-	if ((ATACH_ST(tfd) & WDCS_ERR) == 0)
-		atastart(chp);
 }
 
 static void
@@ -2017,6 +2058,8 @@ mvsata_atapi_scsipi_request(struct scsipi_channel *chan,
 		xfer->c_bcount = sc_xfer->datalen;
 		xfer->c_start = mvsata_atapi_start;
 		xfer->c_intr = mvsata_atapi_intr;
+		xfer->c_poll = mvsata_atapi_poll;
+		xfer->c_abort = mvsata_atapi_reset;
 		xfer->c_kill_xfer = mvsata_atapi_kill_xfer;
 		xfer->c_dscpoll = 0;
 		s = splbio();
@@ -2036,7 +2079,7 @@ mvsata_atapi_scsipi_request(struct scsipi_channel *chan,
 	}
 }
 
-static void
+static int
 mvsata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct mvsata_softc *sc = (struct mvsata_softc *)chp->ch_atac;
@@ -2053,6 +2096,8 @@ mvsata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	    device_xname(chp->ch_atac->atac_dev), chp->ch_channel,
 	    xfer->c_drive, sc_xfer->xs_control));
 
+	ata_channel_lock_owned(chp);
+
 	KASSERT((chp->ch_flags  & ATACH_NCQ) == 0);
 	if (mvport->port_edmamode_curr != nodma)
 		mvsata_edma_disable(mvport, 10 /* ms */, wait_flags);
@@ -2067,8 +2112,7 @@ mvsata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		/* If it's not a polled command, we need the kernel thread */
 		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0 &&
 		    (chp->ch_flags & ATACH_TH_RUN) == 0) {
-			ata_thread_wake(chp);
-			return;
+			return ATASTART_TH;
 		}
 		/*
 		 * disable interrupts, all commands here should be quick
@@ -2154,11 +2198,11 @@ ready:
 		    wdctimeout, xfer);
 
 	MVSATA_WDC_WRITE_1(mvport, SRB_H, WDSD_IBM);
-	if (wdc_wait_for_unbusy(chp, ATAPI_DELAY, wait_flags, &tfd)) {
+	if (wdc_wait_for_unbusy(chp, ATAPI_DELAY, wait_flags, &tfd) != 0) {
 		aprint_error_dev(atac->atac_dev, "not ready, st = %02x\n",
 		    ATACH_ST(tfd));
 		sc_xfer->error = XS_TIMEOUT;
-		mvsata_atapi_reset(chp, xfer);
+		return ATASTART_ABORT;
 	}
 
 	/*
@@ -2176,27 +2220,13 @@ ready:
 
 	/*
 	 * If there is no interrupt for CMD input, busy-wait for it (done in
-	 * the interrupt routine. If it is a polled command, call the interrupt
-	 * routine until command is done.
+	 * the interrupt routine. Poll routine will exit early in this case.
 	 */
 	if ((sc_xfer->xs_periph->periph_cap & ATAPI_CFG_DRQ_MASK) !=
-	    ATAPI_CFG_IRQ_DRQ || (sc_xfer->xs_control & XS_CTL_POLL)) {
-		/* Wait for at last 400ns for status bit to be valid */
-		DELAY(1);
-		mvsata_atapi_intr(chp, xfer, 0);
-	}
-	if (sc_xfer->xs_control & XS_CTL_POLL) {
-		if (chp->ch_flags & ATACH_DMA_WAIT) {
-			wdc_dmawait(chp, xfer, sc_xfer->timeout);
-			chp->ch_flags &= ~ATACH_DMA_WAIT;
-		}
-		while ((sc_xfer->xs_status & XS_STS_DONE) == 0) {
-			/* Wait for at last 400ns for status bit to be valid */
-			DELAY(1);
-			mvsata_atapi_intr(chp, xfer, 0);
-		}
-	}
-	return;
+	    ATAPI_CFG_IRQ_DRQ || (sc_xfer->xs_control & XS_CTL_POLL))
+		return ATASTART_POLL;
+	else
+		return ATASTART_STARTED;
 
 timeout:
 	aprint_error_dev(atac->atac_dev, "channel %d drive %d: %s timed out\n",
@@ -2204,8 +2234,7 @@ timeout:
 	sc_xfer->error = XS_TIMEOUT;
 	MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_4BIT);
 	delay(10);		/* some drives need a little delay here */
-	mvsata_atapi_reset(chp, xfer);
-	return;
+	return ATASTART_ABORT;
 
 error:
 	aprint_error_dev(atac->atac_dev,
@@ -2215,8 +2244,36 @@ error:
 	sc_xfer->sense.atapi_sense = ATACH_ERR(tfd);
 	MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_4BIT);
 	delay(10);		/* some drives need a little delay here */
-	mvsata_atapi_reset(chp, xfer);
-	return;
+	return ATASTART_ABORT;
+}
+
+static void
+mvsata_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	/*
+	 * If there is no interrupt for CMD input, busy-wait for it (done in
+	 * the interrupt routine. If it is a polled command, call the interrupt
+	 * routine until command is done.
+	 */
+	const bool poll = ((xfer->c_scsipi->xs_control & XS_CTL_POLL) != 0);
+
+	/* Wait for at last 400ns for status bit to be valid */
+	DELAY(1);
+	mvsata_atapi_intr(chp, xfer, 0);
+
+	if (!poll)
+		return;
+
+	if (chp->ch_flags & ATACH_DMA_WAIT) {
+		wdc_dmawait(chp, xfer, xfer->c_scsipi->timeout);
+		chp->ch_flags &= ~ATACH_DMA_WAIT;
+	}
+
+	while ((xfer->c_scsipi->xs_status & XS_STS_DONE) == 0) {
+		/* Wait for at last 400ns for status bit to be valid */
+		DELAY(1);
+		mvsata_atapi_intr(chp, xfer, 0);
+	}
 }
 
 static int
@@ -2230,6 +2287,8 @@ mvsata_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	int len, phase, ire, error, retries=0, i;
 	int tfd;
 	void *cmd;
+
+	ata_channel_lock(chp);
 
 	DPRINTF(DEBUG_FUNCS|DEBUG_XFERS,
 	    ("%s:%d:%d: mvsata_atapi_intr\n",
@@ -2247,6 +2306,7 @@ mvsata_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	 * Don't try to continue transfer, we may have missed cycles.
 	 */
 	if ((xfer->c_flags & (C_TIMEOU | C_DMA)) == C_TIMEOU) {
+		ata_channel_unlock(chp);
 		sc_xfer->error = XS_TIMEOUT;
 		mvsata_atapi_reset(chp, xfer);
 		return 1;
@@ -2256,14 +2316,17 @@ mvsata_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	MVSATA_WDC_WRITE_1(mvport, SRB_H, WDSD_IBM);
 	if (wdc_wait_for_unbusy(chp,
 	    (irq == 0) ? sc_xfer->timeout : 0, AT_POLL, &tfd) == WDCWAIT_TOUT) {
-		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
+		if (irq && (xfer->c_flags & C_TIMEOU) == 0) {
+			ata_channel_unlock(chp);
 			return 0; /* IRQ was not for us */
+		}
 		aprint_error_dev(atac->atac_dev,
 		    "channel %d: device timeout, c_bcount=%d, c_skip=%d\n",
 		    chp->ch_channel, xfer->c_bcount, xfer->c_skip);
 		if (xfer->c_flags & C_DMA)
 			ata_dmaerr(drvp,
 			    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
+		ata_channel_unlock(chp);
 		sc_xfer->error = XS_TIMEOUT;
 		mvsata_atapi_reset(chp, xfer);
 		return 1;
@@ -2275,6 +2338,7 @@ mvsata_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	 */
 	if ((xfer->c_flags & C_TIMEOU) && (xfer->c_flags & C_DMA)) {
 		ata_dmaerr(drvp, (xfer->c_flags & C_POLL) ? AT_POLL : 0);
+		ata_channel_unlock(chp);
 		sc_xfer->error = XS_RESET;
 		mvsata_atapi_reset(chp, xfer);
 		return (1);
@@ -2324,6 +2388,7 @@ again:
 			mvsata_bdma_start(mvport);
 			chp->ch_flags |= ATACH_DMA_WAIT;
 		}
+		ata_channel_unlock(chp);
 		return 1;
 
 	case PHASE_DATAOUT:
@@ -2358,6 +2423,7 @@ again:
 
 		xfer->c_skip += len;
 		xfer->c_bcount -= len;
+		ata_channel_unlock(chp);
 		return 1;
 
 	case PHASE_DATAIN:
@@ -2371,6 +2437,7 @@ again:
 			if (xfer->c_flags & C_DMA)
 				ata_dmaerr(drvp,
 				    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
+			ata_channel_unlock(chp);
 			sc_xfer->error = XS_TIMEOUT;
 			mvsata_atapi_reset(chp, xfer);
 			return 1;
@@ -2392,6 +2459,7 @@ again:
 
 		xfer->c_skip += len;
 		xfer->c_bcount -= len;
+		ata_channel_unlock(chp);
 		return 1;
 
 	case PHASE_ABORTED:
@@ -2400,6 +2468,7 @@ again:
 		if (xfer->c_flags & C_DMA)
 			xfer->c_bcount -= sc_xfer->datalen;
 		sc_xfer->resid = xfer->c_bcount;
+		/* this will unlock channel lock too */
 		mvsata_atapi_phase_complete(xfer);
 		return 1;
 
@@ -2422,6 +2491,7 @@ again:
 			if (xfer->c_flags & C_DMA)
 				ata_dmaerr(drvp,
 				    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
+			ata_channel_unlock(chp);
 			sc_xfer->error = XS_RESET;
 			mvsata_atapi_reset(chp, xfer);
 			return (1);
@@ -2431,6 +2501,7 @@ again:
 	    ("mvsata_atapi_intr: %s (end), error 0x%x "
 	    "sense 0x%x\n", __func__,
 	    sc_xfer->error, sc_xfer->sense.atapi_sense));
+	ata_channel_unlock(chp);
 	mvsata_atapi_done(chp, xfer);
 	return 1;
 }
@@ -2481,6 +2552,8 @@ mvsata_atapi_reset(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	int tfd;
 
+	ata_channel_lock(chp);
+
 	mvsata_pmp_select(mvport, xfer->c_drive);
 
 	wdccommandshort(chp, 0, ATAPI_SOFT_RESET);
@@ -2490,6 +2563,9 @@ mvsata_atapi_reset(struct ata_channel *chp, struct ata_xfer *xfer)
 		    chp->ch_channel, xfer->c_drive);
 		sc_xfer->error = XS_SELTIMEOUT;
 	}
+
+	ata_channel_unlock(chp);
+
 	mvsata_atapi_done(chp, xfer);
 	return;
 }
@@ -2503,6 +2579,8 @@ mvsata_atapi_phase_complete(struct ata_xfer *xfer)
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int tfd;
+
+	ata_channel_lock_owned(chp);
 
 	/* wait for DSC if needed */
 	if (drvp->drive_flags & ATA_DRIVE_ATAPIDSCW) {
@@ -2520,12 +2598,14 @@ mvsata_atapi_phase_complete(struct ata_xfer *xfer)
 				aprint_error_dev(atac->atac_dev,
 				    "channel %d: wait_for_dsc failed\n",
 				    chp->ch_channel);
+				ata_channel_unlock(chp);
 				sc_xfer->error = XS_TIMEOUT;
 				mvsata_atapi_reset(chp, xfer);
-				return;
-			} else
+			} else {
 				callout_reset(&xfer->c_timo_callout, 1,
 				    mvsata_atapi_polldsc, xfer);
+				ata_channel_unlock(chp);
+			}
 			return;
 		}
 	}
@@ -2550,6 +2630,7 @@ mvsata_atapi_phase_complete(struct ata_xfer *xfer)
 		    if (wdc->dma_status & (WDC_DMAST_NOIRQ | WDC_DMAST_ERR)) {
 			ata_dmaerr(drvp,
 			    (xfer->c_flags & C_POLL) ? AT_POLL : 0);
+			ata_channel_unlock(chp);
 			sc_xfer->error = XS_RESET;
 			mvsata_atapi_reset(chp, xfer);
 			return;
@@ -2575,6 +2656,7 @@ mvsata_atapi_phase_complete(struct ata_xfer *xfer)
 	    " mvsata_atapi_done(), error 0x%x sense 0x%x\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
 	    sc_xfer->error, sc_xfer->sense.atapi_sense));
+	ata_channel_unlock(chp);
 	mvsata_atapi_done(chp, xfer);
 }
 
@@ -2614,8 +2696,13 @@ mvsata_atapi_done(struct ata_channel *chp, struct ata_xfer *xfer)
 static void
 mvsata_atapi_polldsc(void *arg)
 {
+	struct ata_xfer *xfer = arg;
+	struct ata_channel *chp = xfer->c_chp;
 
-	mvsata_atapi_phase_complete(arg);
+	ata_channel_lock(chp);
+
+	/* this will unlock channel lock too */
+	mvsata_atapi_phase_complete(xfer);
 }
 #endif	/* NATAPIBUS > 0 */
 

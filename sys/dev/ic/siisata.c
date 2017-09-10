@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.36 2017/08/15 20:12:28 jakllsch Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.37 2017/09/10 19:31:15 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.36 2017/08/15 20:12:28 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.37 2017/09/10 19:31:15 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,14 +147,18 @@ int siisata_ata_addref(struct ata_drive_datas *);
 void siisata_ata_delref(struct ata_drive_datas *);
 void siisata_killpending(struct ata_drive_datas *);
 
-void siisata_cmd_start(struct ata_channel *, struct ata_xfer *);
+int siisata_cmd_start(struct ata_channel *, struct ata_xfer *);
 int siisata_cmd_complete(struct ata_channel *, struct ata_xfer *, int);
+void siisata_cmd_poll(struct ata_channel *, struct ata_xfer *);
+void siisata_cmd_abort(struct ata_channel *, struct ata_xfer *);
 void siisata_cmd_done(struct ata_channel *, struct ata_xfer *, int);
 static void siisata_cmd_done_end(struct ata_channel *, struct ata_xfer *);
 void siisata_cmd_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
 
-void siisata_bio_start(struct ata_channel *, struct ata_xfer *);
+int siisata_bio_start(struct ata_channel *, struct ata_xfer *);
 int siisata_bio_complete(struct ata_channel *, struct ata_xfer *, int);
+void siisata_bio_poll(struct ata_channel *, struct ata_xfer *);
+void siisata_bio_abort(struct ata_channel *, struct ata_xfer *);
 void siisata_bio_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
 int siisata_exec_command(struct ata_drive_datas *, struct ata_xfer *);
 
@@ -169,8 +173,10 @@ void siisata_channel_recover(struct ata_channel *, uint32_t);
 void siisata_atapibus_attach(struct atabus_softc *);
 void siisata_atapi_probe_device(struct atapibus_softc *, int);
 void siisata_atapi_minphys(struct buf *);
-void siisata_atapi_start(struct ata_channel *,struct ata_xfer *);
+int siisata_atapi_start(struct ata_channel *,struct ata_xfer *);
 int siisata_atapi_complete(struct ata_channel *, struct ata_xfer *, int);
+void siisata_atapi_poll(struct ata_channel *, struct ata_xfer *);
+void siisata_atapi_abort(struct ata_channel *, struct ata_xfer *);
 void siisata_atapi_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
 void siisata_atapi_scsipi_request(struct scsipi_channel *,
     scsipi_adapter_req_t, void *);
@@ -979,6 +985,8 @@ siisata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_bcount = ata_c->bcount;
 	xfer->c_start = siisata_cmd_start;
 	xfer->c_intr = siisata_cmd_complete;
+	xfer->c_poll = siisata_cmd_poll;
+	xfer->c_abort = siisata_cmd_abort;
 	xfer->c_kill_xfer = siisata_cmd_kill_xfer;
 	s = splbio();
 	ata_exec_xfer(chp, xfer);
@@ -1010,18 +1018,19 @@ siisata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	return ret;
 }
 
-void
+int
 siisata_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
 	struct ata_command *ata_c = &xfer->c_ata_c;
 	struct siisata_prb *prb;
-	int i;
 
 	SIISATA_DEBUG_PRINT(("%s: %s port %d drive %d command 0x%x, slot %d\n",
 	    SIISATANAME((struct siisata_softc *)chp->ch_atac), __func__,
 	    chp->ch_channel, xfer->c_drive, ata_c->r_command, xfer->c_slot),
 	    DEBUG_FUNCS|DEBUG_XFERS);
+
+	ata_channel_lock_owned(chp);
 
 	prb = schp->sch_prb[xfer->c_slot];
 	memset(prb, 0, SIISATA_CMD_SIZE);
@@ -1040,8 +1049,7 @@ siisata_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	    ata_c->bcount,
 	    (ata_c->flags & AT_READ) ? BUS_DMA_READ : BUS_DMA_WRITE)) {
 		ata_c->flags |= AT_DF;
-		siisata_cmd_complete(chp, xfer, 0);
-		return;
+		return ATASTART_ABORT;
 	}
 
 	if (xfer->c_flags & C_POLL) {
@@ -1056,30 +1064,42 @@ siisata_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	if ((ata_c->flags & AT_POLL) == 0) {
 		callout_reset(&xfer->c_timo_callout, mstohz(ata_c->timeout),
 		    ata_timeout, xfer);
-		goto out;
-	}
+		return ATASTART_STARTED;
+	} else
+		return ATASTART_POLL;
+}
+
+void
+siisata_cmd_poll(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	struct siisata_channel *schp = (struct siisata_channel *)chp;
 
 	/*
 	 * polled command
 	 */
-	for (i = 0; i < ata_c->timeout * 10; i++) {
-		if (ata_c->flags & AT_DONE)
+	for (int i = 0; i < xfer->c_ata_c.timeout * 10; i++) {
+		if (xfer->c_ata_c.flags & AT_DONE)
 			break;
 		siisata_intr_port(schp);
 		DELAY(100);
 	}
 
-	if ((ata_c->flags & AT_DONE) == 0) {
+	if ((xfer->c_ata_c.flags & AT_DONE) == 0) {
 		ata_timeout(xfer);
 	}
 
 	/* reenable interrupts */
 	siisata_enable_port_interrupt(chp);
-out:
+
 	SIISATA_DEBUG_PRINT(("%s: %s: done\n",
 	    SIISATANAME((struct siisata_softc *)chp->ch_atac), __func__),
 	    DEBUG_FUNCS);
-	return;
+}
+
+void
+siisata_cmd_abort(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	siisata_cmd_complete(chp, xfer, 0);
 }
 
 void
@@ -1228,23 +1248,26 @@ siisata_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_bcount = ata_bio->bcount;
 	xfer->c_start = siisata_bio_start;
 	xfer->c_intr = siisata_bio_complete;
+	xfer->c_poll = siisata_bio_poll;
+	xfer->c_abort = siisata_bio_abort;
 	xfer->c_kill_xfer = siisata_bio_kill_xfer;
 	ata_exec_xfer(chp, xfer);
 	return (ata_bio->flags & ATA_ITSDONE) ?
 	    ATACMD_COMPLETE : ATACMD_QUEUED;
 }
 
-void
+int
 siisata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
 	struct siisata_prb *prb;
 	struct ata_bio *ata_bio = &xfer->c_bio;
-	int i;
 
 	SIISATA_DEBUG_PRINT(("%s: %s port %d slot %d drive %d\n",
 	    SIISATANAME((struct siisata_softc *)chp->ch_atac), __func__,
 	    chp->ch_channel, xfer->c_slot, xfer->c_drive), DEBUG_FUNCS);
+
+	ata_channel_lock_owned(chp);
 
 	prb = schp->sch_prb[xfer->c_slot];
 	memset(prb, 0, SIISATA_CMD_SIZE);
@@ -1257,8 +1280,7 @@ siisata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	    (ata_bio->flags & ATA_READ) ? BUS_DMA_READ : BUS_DMA_WRITE)) {
 		ata_bio->error = ERR_DMA;
 		ata_bio->r_error = 0;
-		siisata_bio_complete(chp, xfer, 0);
-		return;
+		return ATASTART_ABORT;
 	}
 
 	if (xfer->c_flags & C_POLL) {
@@ -1272,29 +1294,41 @@ siisata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	if ((ata_bio->flags & ATA_POLL) == 0) {
 		callout_reset(&xfer->c_timo_callout, mstohz(ATA_DELAY),
 		    ata_timeout, xfer);
-		goto out;
-	}
+		return ATASTART_STARTED;
+	} else
+		return ATASTART_POLL;
+}
+
+void
+siisata_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	struct siisata_channel *schp = (struct siisata_channel *)chp;
 
 	/*
 	 * polled command
 	 */
-	for (i = 0; i < ATA_DELAY * 10; i++) {
-		if (ata_bio->flags & ATA_ITSDONE)
+	for (int i = 0; i < ATA_DELAY * 10; i++) {
+		if (xfer->c_bio.flags & ATA_ITSDONE)
 			break;
 		siisata_intr_port(schp);
 		DELAY(100);
 	}
 
-	if ((ata_bio->flags & ATA_ITSDONE) == 0) {
+	if ((xfer->c_bio.flags & ATA_ITSDONE) == 0) {
 		ata_timeout(xfer);
 	}
 
 	siisata_enable_port_interrupt(chp);
-out:
+
 	SIISATA_DEBUG_PRINT(("%s: %s: done\n",
 	    SIISATANAME((struct siisata_softc *)chp->ch_atac), __func__),
 	    DEBUG_FUNCS);
-	return;
+}
+
+void
+siisata_bio_abort(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	siisata_cmd_complete(chp, xfer, 0);
 }
 
 void
@@ -1797,6 +1831,8 @@ siisata_atapi_scsipi_request(struct scsipi_channel *chan,
 		xfer->c_bcount = sc_xfer->datalen;
 		xfer->c_start = siisata_atapi_start;
 		xfer->c_intr = siisata_atapi_complete;
+		xfer->c_poll = siisata_atapi_poll;
+		xfer->c_abort = siisata_atapi_abort;
 		xfer->c_kill_xfer = siisata_atapi_kill_xfer;
 		xfer->c_dscpoll = 0;
 		s = splbio();
@@ -1815,19 +1851,20 @@ siisata_atapi_scsipi_request(struct scsipi_channel *chan,
 	}
 }
 
-void
+int
 siisata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
 	struct siisata_prb *prbp;
 
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
-	int i;
 
 	SIISATA_DEBUG_PRINT( ("%s: %s:%d:%d, scsi flags 0x%x\n", __func__,
 	    SIISATANAME((struct siisata_softc *)chp->ch_atac), chp->ch_channel,
 	    chp->ch_drive[xfer->c_drive].drive, sc_xfer->xs_control),
 	    DEBUG_XFERS);
+
+	ata_channel_lock_owned(chp);
 
 	prbp = schp->sch_prb[xfer->c_slot];
 	memset(prbp, 0, SIISATA_CMD_SIZE);
@@ -1851,8 +1888,10 @@ siisata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		xfer->c_bcount,
 		(sc_xfer->xs_control & XS_CTL_DATA_IN) ?
 		BUS_DMA_READ : BUS_DMA_WRITE)
-	)
-		panic("%s", __func__);
+	) {
+		sc_xfer->error = XS_DRIVER_STUFFUP;
+		return ATASTART_ABORT;
+	}
 
 	if (xfer->c_flags & C_POLL) {
 		/* polled command, disable interrupts */
@@ -1865,28 +1904,40 @@ siisata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	if ((xfer->c_flags & C_POLL) == 0) {
 		callout_reset(&xfer->c_timo_callout, mstohz(sc_xfer->timeout),
 		    ata_timeout, xfer);
-		goto out;
-	}
+		return ATASTART_STARTED;
+	} else
+		return ATASTART_POLL;
+}
+
+void
+siisata_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	struct siisata_channel *schp = (struct siisata_channel *)chp;
 
 	/*
 	 * polled command
 	 */
-	for (i = 0; i < ATA_DELAY * 10; i++) {
-		if (sc_xfer->xs_status & XS_STS_DONE)
+	for (int i = 0; i < ATA_DELAY * 10; i++) {
+		if (xfer->c_scsipi->xs_status & XS_STS_DONE)
 			break;
 		siisata_intr_port(schp);
 		DELAY(100);
 	}
-	if ((sc_xfer->xs_status & XS_STS_DONE) == 0) {
+	if ((xfer->c_scsipi->xs_status & XS_STS_DONE) == 0) {
 		ata_timeout(xfer);
 	}
 	/* reenable interrupts */
 	siisata_enable_port_interrupt(chp);
-out:
+
 	SIISATA_DEBUG_PRINT(("%s: %s: done\n",
 	    SIISATANAME((struct siisata_softc *)chp->ch_atac), __func__),
-	    DEBUG_FUNCS);
-	return;
+            DEBUG_FUNCS);
+}
+
+void
+siisata_atapi_abort(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	siisata_atapi_complete(chp, xfer, 0);
 }
 
 int
@@ -1909,8 +1960,6 @@ siisata_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer,
 
 	if (xfer->c_flags & C_TIMEOU) {
 		sc_xfer->error = XS_TIMEOUT;
-	} else if ((ATACH_ST(tfd) & WDCS_ERR) == 0) {
-		sc_xfer->error = XS_NOERROR;
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, schp->sch_datad[xfer->c_slot], 0,
