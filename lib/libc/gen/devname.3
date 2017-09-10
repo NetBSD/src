@@ -1,4 +1,4 @@
-.\"	$NetBSD: devname.3,v 1.14 2017/09/09 18:45:04 kamil Exp $
+.\"	$NetBSD: devname.3,v 1.15 2017/09/10 00:49:40 kre Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,8 +48,8 @@
 .Sh DESCRIPTION
 The
 .Fn devname
-function returns a pointer to the static buffer with the name of the block or character
-device in
+function returns a pointer to the static buffer with the name of the
+block or character device in
 .Dq Pa /dev
 with a device number of
 .Fa dev ,
@@ -63,7 +63,7 @@ is returned.
 .Pp
 The
 .Fn devname_r
-function is a reentrand and thread-safe version of
+function is a reentrant and thread-safe version of
 .Fn devname .
 This function returns the device name by copying it into the
 .Fa path
@@ -88,10 +88,15 @@ will return
 .Pp
 If successful,
 .Fn devname_r
-places a nul-terminated string containing the name of the device and returns 0.
-If error occurs
+places a nul-terminated string containing the name of the device in
+the buffer pointed to by
+.Ar path
+and returns 0.
+If an error occurs
 .Fn devname_r
-will return error number indicating what went wrong.
+will return an error number from
+.In sys/errno.h
+indicating what went wrong.
 .Sh ERRORS
 The
 .Fn devname_r
