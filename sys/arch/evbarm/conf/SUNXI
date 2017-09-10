@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.29 2017/09/09 12:02:57 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.30 2017/09/10 17:06:58 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -52,6 +52,7 @@ makeoptions	DTS="
 	sun50i-a64-bananapi-m64.dts
 	sun50i-a64-pine64-plus.dts
 	sun50i-a64-pine64.dts
+	sun50i-a64-pinebook.dts
 "
 
 options 	MULTIPROCESSOR
