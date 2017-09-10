@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.13 2017/08/24 11:33:28 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.14 2017/09/10 23:03:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.13 2017/08/24 11:33:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.14 2017/09/10 23:03:06 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.13 2017/08/24 11:33:28 jmcneill Ex
 #include "opt_arm_debug.h"
 #include "opt_multiprocessor.h"
 #include "opt_cpuoptions.h"
+
+#include "ukbd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +72,10 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.13 2017/08/24 11:33:28 jmcneill Ex
 #include <evbarm/fdt/platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>
+
+#if NUKBD > 0
+#include <dev/usb/ukbdvar.h>
+#endif
 
 #ifdef MEMORY_DISK_DYNAMIC
 #include <dev/md.h>
@@ -503,6 +509,10 @@ consinit(void)
 		uart_freq = plat->uart_freq();
 
 	cons->consinit(&faa, uart_freq);
+
+#if NUKBD > 0
+	ukbd_cnattach();	/* allow USB keyboard to become console */
+#endif
 
 	initialized = true;
 }
