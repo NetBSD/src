@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.29 2017/08/15 11:21:32 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.30 2017/09/10 19:22:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.29 2017/08/15 11:21:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.30 2017/09/10 19:22:56 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -586,7 +586,7 @@ atabus_thread(void *arg)
 	struct ata_channel *chp = sc->sc_chan;
 	struct ata_queue *chq = chp->ch_queue;
 	struct ata_xfer *xfer;
-	int i;
+	int i, s;
 
 	mutex_enter(&chp->ch_lock);
 	chp->ch_flags |= ATACH_TH_RUN;
@@ -630,7 +630,9 @@ atabus_thread(void *arg)
 			 */
 			mutex_exit(&chp->ch_lock);
 			ata_channel_thaw(chp);
+			s = splbio();
 			ata_reset_channel(chp, AT_WAIT | chp->ch_reset_flags);
+			splx(s);
 			mutex_enter(&chp->ch_lock);
 		} else if (chq->queue_active > 0 && chq->queue_freeze == 1) {
 			/*
@@ -644,7 +646,9 @@ atabus_thread(void *arg)
 			ata_channel_thaw(chp);
 			xfer = ata_queue_get_active_xfer(chp);
 			KASSERT(xfer != NULL);
+			s = splbio();
 			(*xfer->c_start)(xfer->c_chp, xfer);
+			splx(s);
 			mutex_enter(&chp->ch_lock);
 		} else if (chq->queue_freeze > 1)
 			panic("%s: queue_freeze", __func__);
