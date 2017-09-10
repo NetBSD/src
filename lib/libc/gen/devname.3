@@ -1,4 +1,4 @@
-.\"	$NetBSD: devname.3,v 1.15 2017/09/10 00:49:40 kre Exp $
+.\"	$NetBSD: devname.3,v 1.16 2017/09/10 10:12:21 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -97,20 +97,20 @@ If an error occurs
 will return an error number from
 .In sys/errno.h
 indicating what went wrong.
+.Sh FILES
+.Bl -tag -width /var/run/dev.cdb -compact
+.It Pa /var/run/dev.cdb
+Device database file.
+.El
 .Sh ERRORS
 The
 .Fn devname_r
 function my fail if:
 .Bl -tag -width Er
 .It Bq Er ENOENT
-the corresponding device does not exist
+The corresponding device does not exist.
 .It Bq Er ERANGE
-the passed buffer length is too short
-.El
-.Sh FILES
-.Bl -tag -width /var/run/dev.cdb -compact
-.It Pa /var/run/dev.cdb
-Device database file.
+The passed buffer length is too short.
 .El
 .Sh SEE ALSO
 .Xr stat 2 ,
