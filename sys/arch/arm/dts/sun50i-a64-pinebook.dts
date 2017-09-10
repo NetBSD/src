@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64-pinebook.dts,v 1.1 2017/09/10 17:06:58 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64-pinebook.dts,v 1.2 2017/09/10 18:40:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,11 @@
 
 #include "../../../external/gpl2/dts/dist/arch/arm64/boot/dts/allwinner/sun50i-a64-pine64.dts"
 #include "sun50i-a64.dtsi"
+
+/ {
+	model = "Pine64 Pinebook";
+	compatible = "pine64,pinebook", "allwinner,sun50i-a64";
+};
 
 &ehci0 {
 	status = "okay";
