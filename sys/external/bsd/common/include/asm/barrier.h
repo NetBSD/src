@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.2 2017/09/11 05:22:10 maya Exp $	*/
+/*	$NetBSD: barrier.h,v 1.3 2017/09/11 07:33:45 maya Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 #define	mb	membar_sync
 #define	wmb	membar_producer
 #define	rmb	membar_consumer
-#define	dsb	membar_producer
 
 #ifdef __alpha__		/* XXX As if...  */
 #  define	read_barrier_depends	membar_sync
