@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.6 2017/09/07 01:07:04 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.7 2017/09/11 22:00:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.6 2017/09/07 01:07:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.7 2017/09/11 22:00:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,8 +67,6 @@ static const struct sunxi_mmc_delay sunxi_mmc_delays[] = {
 };
 
 #define SUNXI_MMC_NDESC		16
-#define	SUNXI_MMC_DMA_XFERLEN	0x10000
-#define	SUNXI_MMC_DMA_FTRGLEVEL	0x20070008
 
 struct sunxi_mmc_softc;
 
@@ -110,6 +108,16 @@ static struct sdmmc_chip_functions sunxi_mmc_chip_functions = {
 	.card_intr_ack = sunxi_mmc_card_intr_ack,
 };
 
+struct sunxi_mmc_config {
+	u_int idma_xferlen;
+	u_int flags;
+#define	SUNXI_MMC_FLAG_CALIB_REG	0x01
+#define	SUNXI_MMC_FLAG_NEW_TIMINGS	0x02
+#define	SUNXI_MMC_FLAG_MASK_DATA0	0x04
+	const struct sunxi_mmc_delay *delays;
+	uint32_t dma_ftrglevel;
+};
+
 struct sunxi_mmc_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
@@ -127,9 +135,8 @@ struct sunxi_mmc_softc {
 
 	device_t sc_sdmmc_dev;
 
-	uint32_t sc_dma_ftrglevel;
+	struct sunxi_mmc_config *sc_config;
 
-	uint32_t sc_idma_xferlen;
 	bus_dma_segment_t sc_idma_segs[1];
 	int sc_idma_nsegs;
 	bus_size_t sc_idma_size;
@@ -164,11 +171,34 @@ CFATTACH_DECL_NEW(sunxi_mmc, sizeof(struct sunxi_mmc_softc),
 #define MMC_READ(sc, reg) \
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 
-static const char * const compatible[] = {
-	"allwinner,sun5i-a13-mmc",
-	"allwinner,sun7i-a20-mmc",
-	"allwinner,sun50i-a64-mmc",
-	NULL
+static const struct sunxi_mmc_config sun5i_a13_mmc_config = {
+	.idma_xferlen = 0x10000,
+	.dma_ftrglevel = 0x20070008,
+	.delays = NULL,
+	.flags = 0,
+};
+
+static const struct sunxi_mmc_config sun7i_a20_mmc_config = {
+	.idma_xferlen = 0x10000,
+	.dma_ftrglevel = 0x20070008,
+	.delays = sunxi_mmc_delays,
+	.flags = 0,
+};
+
+static const struct sunxi_mmc_config sun50i_a64_mmc_config = {
+	.idma_xferlen = 0x10000,
+	.dma_ftrglevel = 0x20070008,
+	.delays = NULL,
+	.flags = SUNXI_MMC_FLAG_CALIB_REG |
+		 SUNXI_MMC_FLAG_NEW_TIMINGS |
+		 SUNXI_MMC_FLAG_MASK_DATA0,
+};
+
+static const struct of_compat_data compat_data[] = {
+	{ "allwinner,sun5i-a13-mmc",	(uintptr_t)&sun5i_a13_mmc_config },
+	{ "allwinner,sun7i-a20-mmc",	(uintptr_t)&sun7i_a20_mmc_config },
+	{ "allwinner,sun50i-a64-mmc",	(uintptr_t)&sun50i_a64_mmc_config },
+	{ NULL }
 };
 
 static int
@@ -176,7 +206,7 @@ sunxi_mmc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -228,6 +258,7 @@ sunxi_mmc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
+	sc->sc_config = (void *)of_search_compatible(phandle, compat_data)->data;
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_dmat = faa->faa_dmat;
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_BIO);
@@ -249,8 +280,6 @@ sunxi_mmc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_gpio_cd_inverted = of_hasprop(phandle, "cd-inverted") ? 0 : 1;
 	sc->sc_gpio_wp_inverted = of_hasprop(phandle, "wp-inverted") ? 0 : 1;
-
-	sc->sc_dma_ftrglevel = SUNXI_MMC_DMA_FTRGLEVEL;
 
 	if (sunxi_mmc_idma_setup(sc) != 0) {
 		aprint_error_dev(self, "failed to setup DMA\n");
@@ -278,8 +307,6 @@ static int
 sunxi_mmc_idma_setup(struct sunxi_mmc_softc *sc)
 {
 	int error;
-
-	sc->sc_idma_xferlen = SUNXI_MMC_DMA_XFERLEN;
 
 	sc->sc_idma_ndesc = SUNXI_MMC_NDESC;
 	sc->sc_idma_size = sizeof(struct sunxi_mmc_idma_descriptor) *
@@ -334,11 +361,14 @@ sunxi_mmc_set_clock(struct sunxi_mmc_softc *sc, u_int freq, bool ddr)
 	} else
 		return EINVAL;
 
-	delays = &sunxi_mmc_delays[timing];
-
 	error = clk_set_rate(sc->sc_clk_mmc, (freq * 1000) << ddr);
 	if (error != 0)
 		return error;
+
+	if (sc->sc_config->delays == NULL)
+		return 0;
+
+	delays = &sc->sc_config->delays[timing];
 
 	if (sc->sc_clk_sample) {
 		error = clk_set_rate(sc->sc_clk_sample, delays->sample_phase);
@@ -601,14 +631,22 @@ static int
 sunxi_mmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 {
 	struct sunxi_mmc_softc *sc = sch;
-	uint32_t clkcr, gctrl;
+	uint32_t clkcr, gctrl, ntsr;
+	const u_int flags = sc->sc_config->flags;
 
 	clkcr = MMC_READ(sc, SUNXI_MMC_CLKCR);
 	if (clkcr & SUNXI_MMC_CLKCR_CARDCLKON) {
 		clkcr &= ~SUNXI_MMC_CLKCR_CARDCLKON;
+		if (flags & SUNXI_MMC_CLKCR_MASK_DATA0)
+			clkcr |= SUNXI_MMC_CLKCR_MASK_DATA0;
 		MMC_WRITE(sc, SUNXI_MMC_CLKCR, clkcr);
 		if (sunxi_mmc_update_clock(sc) != 0)
 			return 1;
+		if (flags & SUNXI_MMC_CLKCR_MASK_DATA0) {
+			clkcr = MMC_READ(sc, SUNXI_MMC_CLKCR);
+			clkcr &= ~SUNXI_MMC_CLKCR_MASK_DATA0;
+			MMC_WRITE(sc, SUNXI_MMC_CLKCR, clkcr);
+		}
 	}
 
 	if (freq) {
@@ -616,6 +654,16 @@ sunxi_mmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 		clkcr &= ~SUNXI_MMC_CLKCR_DIV;
 		clkcr |= __SHIFTIN(ddr, SUNXI_MMC_CLKCR_DIV);
 		MMC_WRITE(sc, SUNXI_MMC_CLKCR, clkcr);
+
+		if (flags & SUNXI_MMC_FLAG_NEW_TIMINGS) {
+			ntsr = MMC_READ(sc, SUNXI_MMC_NTSR);
+			ntsr |= SUNXI_MMC_NTSR_MODE_SELECT;
+			MMC_WRITE(sc, SUNXI_MMC_NTSR, ntsr);
+		}
+
+		if (flags & SUNXI_MMC_FLAG_CALIB_REG)
+			MMC_WRITE(sc, SUNXI_MMC_SAMP_DL, SUNXI_MMC_SAMP_DL_SW_EN);
+
 		if (sunxi_mmc_update_clock(sc) != 0)
 			return 1;
 
@@ -630,9 +678,16 @@ sunxi_mmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 			return 1;
 
 		clkcr |= SUNXI_MMC_CLKCR_CARDCLKON;
+		if (flags & SUNXI_MMC_CLKCR_MASK_DATA0)
+			clkcr |= SUNXI_MMC_CLKCR_MASK_DATA0;
 		MMC_WRITE(sc, SUNXI_MMC_CLKCR, clkcr);
 		if (sunxi_mmc_update_clock(sc) != 0)
 			return 1;
+		if (flags & SUNXI_MMC_CLKCR_MASK_DATA0) {
+			clkcr = MMC_READ(sc, SUNXI_MMC_CLKCR);
+			clkcr &= ~SUNXI_MMC_CLKCR_MASK_DATA0;
+			MMC_WRITE(sc, SUNXI_MMC_CLKCR, clkcr);
+		}
 	}
 
 	return 0;
@@ -718,7 +773,7 @@ sunxi_mmc_dma_prepare(struct sunxi_mmc_softc *sc, struct sdmmc_command *cmd)
 		while (resid > 0) {
 			if (desc == sc->sc_idma_ndesc)
 				break;
-			len = min(sc->sc_idma_xferlen, resid);
+			len = min(sc->sc_config->idma_xferlen, resid);
 			dma[desc].dma_buf_size = htole32(len);
 			dma[desc].dma_buf_addr = htole32(paddr + off);
 			dma[desc].dma_config = htole32(SUNXI_MMC_IDMA_CONFIG_CH |
@@ -772,7 +827,7 @@ sunxi_mmc_dma_prepare(struct sunxi_mmc_softc *sc, struct sdmmc_command *cmd)
 		val |= SUNXI_MMC_IDST_TRANSMIT_INT;
 	MMC_WRITE(sc, SUNXI_MMC_IDIE, val);
 	MMC_WRITE(sc, SUNXI_MMC_DLBA, desc_paddr);
-	MMC_WRITE(sc, SUNXI_MMC_FTRGLEVEL, sc->sc_dma_ftrglevel);
+	MMC_WRITE(sc, SUNXI_MMC_FTRGLEVEL, sc->sc_config->dma_ftrglevel);
 
 	return 0;
 }
