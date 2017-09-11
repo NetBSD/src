@@ -28,6 +28,10 @@
 #ifndef __VCHI_NETBSD_H__
 #define __VCHI_NETBSD_H__
 
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
+
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/bus.h>
