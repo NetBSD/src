@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.58 2017/08/30 08:49:18 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.59 2017/09/11 09:52:13 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -418,7 +418,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	/* If no mac address was assigned, make a random one */
 	if (!ixv_check_ether_addr(hw->mac.addr)) {
 		u8 addr[ETHER_ADDR_LEN];
-		uint64_t rndval = cprng_fast64();
+		uint64_t rndval = cprng_strong64();
 
 		memcpy(addr, &rndval, sizeof(addr));
 		addr[0] &= 0xFE;
