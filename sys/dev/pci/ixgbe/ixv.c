@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.59 2017/09/11 09:52:13 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.60 2017/09/11 10:11:05 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -290,7 +290,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	pcireg_t	id, subid;
 	ixgbe_vendor_info_t *ent;
 	const struct pci_attach_args *pa = aux;
-
+	const char *apivstr;
 	INIT_DEBUGOUT("ixv_attach: begin");
 
 	/*
@@ -414,6 +414,27 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	if (error)
 		aprint_normal_dev(dev,
 		    "MBX API negotiation failed during attach!\n");
+	switch (hw->api_version) {
+	case ixgbe_mbox_api_10:
+		apivstr = "1.0";
+		break;
+	case ixgbe_mbox_api_20:
+		apivstr = "2.0";
+		break;
+	case ixgbe_mbox_api_11:
+		apivstr = "1.1";
+		break;
+	case ixgbe_mbox_api_12:
+		apivstr = "1.2";
+		break;
+	case ixgbe_mbox_api_13:
+		apivstr = "1.3";
+		break;
+	default:
+		apivstr = "unknown";
+		break;
+	}
+	aprint_normal_dev(dev, "Mailbox API %s\n", apivstr);
 
 	/* If no mac address was assigned, make a random one */
 	if (!ixv_check_ether_addr(hw->mac.addr)) {
