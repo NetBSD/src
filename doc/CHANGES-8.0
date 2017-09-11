@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.57 2017/09/09 17:38:24 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.58 2017/09/11 05:45:46 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -5805,4 +5805,101 @@ sys/arch/x86/x86/sys_machdep.c			1.38
 	- use %ss instead of %ds in trap06
 	- reject call gates in the LDT, and remove LDT_DEBUG
 	[maxv, ticket #258]
+
+crypto/external/bsd/heimdal/dist/cf/check-getpwuid_r-posix.m4 1.1
+crypto/external/bsd/heimdal/dist/configure.ac	1.3
+crypto/external/bsd/heimdal/dist/kcm/client.c	1.3
+crypto/external/bsd/heimdal/dist/kcm/config.c	1.3
+crypto/external/bsd/heimdal/dist/lib/gssapi/mech/gss_pname_to_uid.c 1.3
+crypto/external/bsd/heimdal/dist/lib/hx509/softp11.c 1.3
+crypto/external/bsd/heimdal/dist/lib/krb5/config_file.c 1.3
+crypto/external/bsd/heimdal/dist/lib/krb5/get_default_principal.c 1.3
+crypto/external/bsd/heimdal/dist/lib/krb5/kuserok.c 1.3
+crypto/external/bsd/heimdal/dist/lib/roken/getxxyyy.c 1.3
+crypto/external/bsd/heimdal/dist/lib/roken/roken.h.in 1.5
+crypto/external/bsd/heimdal/include/config.h	1.9
+crypto/external/bsd/heimdal/include/roken.h	1.8
+
+	- Always use rk_getpwnam_r
+	- Use getpwuid_r instead of getpwuid, so that we don't trash
+	  getpw*() internal buffers.
+	[mlelstv, ticket #277]
+
+sys/arch/i386/conf/GENERIC			1.1159 via patch
+sys/arch/i386/conf/XEN3_DOM0			1.114 via patch
+sys/arch/i386/conf/XEN3_DOMU			1.78 via patch
+sys/kern/kern_exec.c				1.443-1.444 via patch
+
+	- Disable ibcs2 by default.
+	- Remove compat_ibcs2 from the list of autoloaded modules.
+	- Remove compat_freebsd from the list of autoloaded modules.
+	[maxv, ticket #256]
+
+sys/arch/amiga/dev/wdc_xsurf.c			1.3
+
+	Fix a panic while ifconfig(8)ing an Xsurf-based ne(4).
+	[phx, ticket #265]
+
+external/bsd/dhcpcd/dist/src/dhcp.c		1.2
+
+	dhcpcd: Fix classless static routes
+	[bsiegert, ticket #266]
+
+sys/arch/mips/include/vmparam.h			1.60
+
+	Don't define UVM_KM_VMFREELIST on mips as it excludes
+	some memory ranges unnecessarily.  PR/52501.
+	[skrll, ticket #267]
+
+usr.sbin/mtree/only.c				1.3
+
+	Don't modify strings stored in hash, otherwise filling up of
+	directory hierarchy stops if the same hash value occurs in
+	directory and leaf.
+	[nakayama, ticket #268]
+
+sys/arch/arm/sunxi/sunxi_emac.c			1.6
+
+	Fix a typo that prevented ahb reset from ever being deasserted.
+	[jmcneill, ticket #269]
+
+sys/arch/arm/cortex/gtmr.c			1.20
+
+	gtmr_intr: If the ISTATUS bit is 0, timer condition is not met.
+	In this case, just return 0.
+	[jmcneill, ticket #271]
+
+usr.sbin/veriexecgen/veriexecgen.8		1.18-1.19
+usr.sbin/veriexecgen/veriexecgen.c		1.18
+
+	Remove the ability to generate a signature database with
+	the hash algorithms MD5, SHA1 & RMD160 which are either broken
+	or on their way to being broken.
+	[sevan, ticket #272]
+
+sys/dev/audio.c					1.368, 1.370
+sys/dev/audiovar.h				1.57
+
+	audio(4):
+	Fix division by zero when precision < 8 in ifdef
+	AUDIO_INTR_TIME. Improve in #ifdef AUDIO_INTR_TIME.
+	Stop 19 year old weird #define, stop signed/unsigned mixing,
+	use int64_t instead of (u_)long to avoid integer overflow,
+	rearrange definitions in header, and fix indent.
+	[isaki, ticket #273]
+
+sys/dev/audio.c					1.379, 1.380, 1.385, 1.398
+
+	audio(4):
+	Fix error handling of ring buffers allocation in audioattach().
+	NULL dereference, dead code, reference to uninitialized
+	variable, and mutex leak.
+	Fix a resource leak on error handling in audio_alloc_ring().
+	Fix resource leaks on error handling in audio_open().
+	Avoid possibility of integer overflow (and clean up).
+	- On 32bit arch and type argument is int32_t, orig[m] * tomix[m]
+	  is calculated first with int32 (possibility of overflow here)
+	  and then cast to int64_t for assignment.
+	- bigger_type is sufficient for product and result.
+	[isaki, ticket #274]
 
