@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_REVISION($Revision: 1.1.1.1.12.1 $)
+AC_REVISION($Revision: 1.1.1.1.12.2 $)
 AC_PREREQ(2.62)
 test -z "$CFLAGS" && CFLAGS="-g"
 AC_INIT([Heimdal],[7.99.1],[https://github.com/heimdal/heimdal/issues])
@@ -514,6 +514,7 @@ KRB_CAPABILITIES
 rk_DLADDR
 
 AC_CHECK_GETPWNAM_R_POSIX
+AC_CHECK_GETPWUID_R_POSIX
 
 dnl detect doors on solaris
 if test "$enable_pthread_support" != no; then
