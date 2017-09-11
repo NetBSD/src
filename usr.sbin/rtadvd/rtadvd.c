@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.54 2017/09/11 14:12:07 christos Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.55 2017/09/11 14:12:28 christos Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -265,10 +265,15 @@ main(int argc, char *argv[])
 
 #ifdef __NetBSD__
 	/* record the current PID */
-	if (pidfile(pidfilepath) < 0) {
-		syslog(LOG_ERR,
-		    "<%s> failed to open the pid log file, run anyway.",
-		    __func__);
+	if (pidfile(pidfilepath) == -1) {
+		if (errno == EEXIST) {
+			syslog(LOG_ERR, "Another instance of `%s' is running "
+			    "(pid %d); exiting.", getprogname(),
+			    pidfile_read(pidfilepath));
+			return EXIT_FAILURE;
+		}
+		syslog(LOG_ERR, "Failed to open the pid log file `%s' (%m), "
+		    "run anyway.", pidfilepath);
 	}
 #endif
 
