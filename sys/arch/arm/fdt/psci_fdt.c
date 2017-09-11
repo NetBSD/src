@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.2 2017/08/05 11:58:19 jmcneill Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.3 2017/09/11 09:21:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.2 2017/08/05 11:58:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.3 2017/09/11 09:21:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,6 +59,25 @@ static const char * const compatible[] = {
 
 CFATTACH_DECL_NEW(psci_fdt, 0, psci_fdt_match, psci_fdt_attach, NULL, NULL);
 
+static void
+psci_fdt_reset(device_t dev)
+{
+	delay(500000);
+	psci_system_reset();
+}
+
+static void
+psci_fdt_poweroff(device_t dev)
+{
+	delay(500000);
+	psci_system_off();
+}
+
+static const struct fdtbus_power_controller_func psci_power_funcs = {
+	.reset = psci_fdt_reset,
+	.poweroff = psci_fdt_poweroff,
+};
+
 static int
 psci_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -81,6 +100,9 @@ psci_fdt_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": PSCI %u.%u\n", ver_maj, ver_min);
+
+	fdtbus_register_power_controller(self, phandle,
+	    &psci_power_funcs);
 }
 
 static int
