@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.442.4.1 2017/08/31 08:41:33 bouyer Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.442.4.2 2017/09/11 05:13:45 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.442.4.1 2017/08/31 08:41:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.442.4.2 2017/09/11 05:13:45 snj Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -578,8 +578,6 @@ exec_autoload(void)
 		"exec_coff",
 		"exec_ecoff",
 		"compat_aoutm68k",
-		"compat_freebsd",
-		"compat_ibcs2",
 		"compat_linux",
 		"compat_linux32",
 		"compat_netbsd32",

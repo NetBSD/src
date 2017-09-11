@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.77.2.3 2017/08/31 08:41:33 bouyer Exp $
+# $NetBSD: XEN3_DOMU,v 1.77.2.4 2017/09/11 05:13:45 snj Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -82,7 +82,7 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 #options 	COMPAT_SVR4	# binary compatibility with SVR4
-options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
+#options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
