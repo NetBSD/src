@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.6.4.2 2016/12/08 08:06:38 snj Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.6.4.3 2017/09/11 05:50:12 snj Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6.4.2 2016/12/08 08:06:38 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6.4.3 2017/09/11 05:50:12 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ static const char * const x86_features[][32] = {
 	"clwb", NULL, "avx512pf", "avx512er",
 	"avx512cd", "sha_ni", "avx512bw", "avx512vl"},
 
-	{ /* (10) 0000000d eax */
+	{ /* (10) 0x0000000d eax */
 	"xsaveopt", "xsavec", "xgetbv1", "xsaves", NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -145,6 +145,38 @@ static const char * const x86_features[][32] = {
 
 	{ /* (12) 0x0000000f:1 edx */
 	"cqm_occup_llc", NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+
+	{ /* (13) 0x80000008 ebx */
+	"clzero", "irperf", NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+
+	{ /* (14) 0x00000006 eax */
+	"dtherm", "ida", "arat", NULL, "pln", NULL, "pts", "hwp",
+	"hwp_notify", "hwp_act_window", "hwp_epp","hwp_pkg_req",
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+
+	{ /* (15) 0x8000000a edx */
+	"npt", "lbrv", "svm_lock", "nrip_save",
+	"tsc_scale", "vmcb_clean", "flushbyasid", "decodeassists",
+	NULL, NULL, "pausefilter", NULL, "pfthreshold", "avic", NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+
+	{ /* (16) 0x00000007:0 ecx */
+	NULL, "avx512vbmi", NULL, "pku", "ospke", NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, "avx512_vpopcntdq", NULL,
+	"la57", NULL, NULL, NULL, NULL, NULL, "rdpid", NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+
+	{ /* (17) 0x80000007 ebx */
+	"overflow_recov", "succor", "smca", NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
@@ -171,7 +203,7 @@ procfs_getcpuinfstr(char *bf, size_t *len)
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		procfs_getonecpu(i++, ci, bf, &used);
 		total += used + 1;
-		if (used + 1 < size) {
+		if (used + 1 <= size) {
 			bf += used;
 			*bf++ = '\n';
 			size -= used + 1;
@@ -246,9 +278,18 @@ procfs_getonecpufeatures(struct cpu_info *ci, char *p, size_t *left)
 	    left);
 	diff = last - *left;
 
-	/* (10) 0000000d eax */
+	/* (10) 0x0000000d eax */
 	/* (11) 0x0000000f(ecx=0) edx */
 	/* (12) 0x0000000f(ecx=1) edx */
+	/* (13) 0x80000008 ebx */
+	/* (14) 0x00000006 eax */
+	/* (15) 0x8000000a edx */
+
+	procfs_getonefeatreg(ci->ci_feat_val[6], x86_features[16], p + diff,
+	    left);
+	diff = last - *left;
+
+	/* (17) 0x80000007 ebx */
 
 	return 0; /* XXX */
 }
@@ -318,17 +359,36 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, size_t *len)
 		left = 0;
 
 	l = snprintf(p, left,
+	    "apicid\t\t: %d\n"
+	    "initial apicid\t: %d\n",
+	    ci->ci_acpiid,
+	    ci->ci_initapicid
+	);
+	size += l;
+	if (l < left) {
+		left -= l;
+		p += l;
+	} else
+		left = 0;
+
+	l = snprintf(p, left,
+#ifdef __i386__
 	    "fdiv_bug\t: %s\n"
+#endif
 	    "fpu\t\t: %s\n"
 	    "fpu_exception\t: yes\n"
 	    "cpuid level\t: %d\n"
 	    "wp\t\t: %s\n"
-	    "flags\t\t: %s\n",
+	    "flags\t\t: %s\n"
+	    "clflush size\t: %d\n",
+#ifdef __i386__
 	    i386_fpu_fdivbug ? "yes" : "no",	/* an old pentium */
+#endif
 	    i386_fpu_present ? "yes" : "no",	/* not a 486SX */
 	    cpuid_level,
 	    (rcr0() & CR0_WP) ? "yes" : "no",
-	    featurebuf
+	    featurebuf,
+	    ci->ci_cflush_lsize
 	);
 	size += l;
 
