@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.17 2009/08/21 04:09:41 elad Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.17.38.1 2017/09/11 05:27:19 snj Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: veriexecgen.c,v 1.17 2009/08/21 04:09:41 elad Exp $");
+__RCSID("$NetBSD: veriexecgen.c,v 1.17.38.1 2017/09/11 05:27:19 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,10 +57,7 @@ __RCSID("$NetBSD: veriexecgen.c,v 1.17 2009/08/21 04:09:41 elad Exp $");
 #include <unistd.h>
 #include <util.h>
 
-#include <md5.h>
-#include <sha1.h>
 #include <sha2.h>
-#include <rmd160.h>
 
 #define IS_EXEC(mode) ((mode) & (S_IXUSR | S_IXGRP | S_IXOTH))
 
@@ -100,12 +97,9 @@ TAILQ_HEAD(, fentry) fehead;
 
 /* define the possible hash algorithms */
 static hash_t	 hashes[] = {
-	{ "MD5", MD5File },
-	{ "SHA1", SHA1File },
 	{ "SHA256", SHA256_File },
 	{ "SHA384", SHA384_File },
 	{ "SHA512", SHA512_File },
-	{ "RMD160", RMD160File },
 	{ NULL, NULL },
 };
 

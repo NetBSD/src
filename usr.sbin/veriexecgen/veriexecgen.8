@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecgen.8,v 1.17 2011/04/28 11:24:28 wiz Exp $
+.\" $NetBSD: veriexecgen.8,v 1.17.36.1 2017/09/11 05:27:19 snj Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 18, 2008
+.Dd September 9, 2017
 .Dt VERIEXECGEN 8
 .Os
 .Sh NAME
@@ -102,13 +102,10 @@ Use
 .Ar algorithm
 for the fingerprints.
 Must be one of
-.Dq md5 ,
-.Dq sha1 ,
 .Dq sha256 ,
 .Dq sha384 ,
-.Dq sha512 ,
 or
-.Dq rmd160 .
+.Dq sha512 .
 .It Fl v
 Verbose mode.
 Print messages describing what operations are being done.
@@ -147,11 +144,11 @@ appending to the default fingerprint database:
 .Pp
 Fingerprint files in
 .Pa /path/to/somewhere using
-.Dq rmd160
+.Dq sha512
 as the hashing algorithm, saving to
 .Pa /etc/somewhere.fp :
 .Bd -literal -offset indent
-# veriexecgen -d /path/to/somewhere -t rmd160 -o /etc/somewhere.fp
+# veriexecgen -d /path/to/somewhere -t sha512 -o /etc/somewhere.fp
 .Ed
 .Sh SEE ALSO
 .Xr veriexec 4 ,
