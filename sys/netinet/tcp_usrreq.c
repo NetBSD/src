@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.200.2.2 2015/02/21 13:40:19 martin Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.200.2.3 2017/09/11 05:46:43 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.200.2.2 2015/02/21 13:40:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.200.2.3 2017/09/11 05:46:43 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -500,17 +500,14 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 #ifdef TCP_SIGNATURE
 		case TCP_MD5SIG:
 			optval = (tp->t_flags & TF_SIGNATURE) ? 1 : 0;
-			error = sockopt_set(sopt, &optval, sizeof(optval));
-			break;
+			goto setval;
 #endif
 		case TCP_NODELAY:
 			optval = tp->t_flags & TF_NODELAY;
-			error = sockopt_set(sopt, &optval, sizeof(optval));
-			break;
+			goto setval;
 		case TCP_MAXSEG:
 			optval = tp->t_peermss;
-			error = sockopt_set(sopt, &optval, sizeof(optval));
-			break;
+			goto setval;
 		case TCP_INFO:
 			tcp_fill_info(tp, &ti);
 			error = sockopt_set(sopt, &ti, sizeof ti);
@@ -519,6 +516,19 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		case TCP_CONGCTL:
 			break;
 #endif
+		case TCP_KEEPIDLE:
+			optval = tp->t_keepidle;
+			goto setval;
+		case TCP_KEEPINTVL:
+			optval = tp->t_keepintvl;
+			goto setval;
+		case TCP_KEEPCNT:
+			optval = tp->t_keepcnt;
+			goto setval;
+		case TCP_KEEPINIT:
+			optval = tp->t_keepcnt;
+setval:			error = sockopt_set(sopt, &optval, sizeof(optval));
+			break;
 		default:
 			error = ENOPROTOOPT;
 			break;
