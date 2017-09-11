@@ -471,6 +471,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the `getpwnam_r' function. */
 #define HAVE_GETPWNAM_R 1
 
+/* Define to 1 if you have the `getpwuid_r' function. */
+#define HAVE_GETPWUID_R 1
+
 /* Define to 1 if you have the `getrlimit' function. */
 #define HAVE_GETRLIMIT 1
 
@@ -1469,6 +1472,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define if getpwnam_r has POSIX flavour. */
 #define POSIX_GETPWNAM_R 1
+
+/* Define if getpwuid_r has POSIX flavour. */
+#define POSIX_GETPWUID_R 1
 
 /* Define if you have the readline package. */
 /* #undef READLINE */
