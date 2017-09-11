@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.57.8.1 2017/08/31 08:32:39 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.57.8.2 2017/09/11 05:20:26 snj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -208,8 +208,6 @@
 #endif
 
 #ifdef _KERNEL
-#define	UVM_KM_VMFREELIST	mips_poolpage_vmfreelist
-extern int mips_poolpage_vmfreelist;
 #ifdef ENABLE_MIPS_16KB_PAGE
 extern vaddr_t mips_vm_maxuser_address;
 #endif
