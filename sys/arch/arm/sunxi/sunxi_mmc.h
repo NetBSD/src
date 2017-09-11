@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.h,v 1.2 2017/07/17 23:31:05 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.h,v 1.3 2017/09/11 22:00:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -59,6 +59,7 @@
 #define SUNXI_MMC_IDIE			0x008C
 #define SUNXI_MMC_CHDA			0x0090
 #define SUNXI_MMC_CBDA			0x0094
+#define	SUNXI_MMC_SAMP_DL		0x0144
 
 #define SUNXI_MMC_GCTRL_ACCESS_BY_AHB	__BIT(31)
 #define SUNXI_MMC_GCTRL_WAIT_MEM_ACCESS_DONE __BIT(30)
@@ -72,6 +73,7 @@
 #define SUNXI_MMC_GCTRL_RESET \
 	(SUNXI_MMC_GCTRL_SOFTRESET | SUNXI_MMC_GCTRL_FIFORESET | \
 	 SUNXI_MMC_GCTRL_DMARESET)
+#define	SUNXI_MMC_CLKCR_MASK_DATA0	__BIT(31)
 #define SUNXI_MMC_CLKCR_LOWPOWERON	__BIT(17)
 #define SUNXI_MMC_CLKCR_CARDCLKON	__BIT(16)
 #define SUNXI_MMC_CLKCR_DIV		__BITS(7,0)
@@ -165,6 +167,7 @@
 #define SUNXI_MMC_IDMA_CONFIG_ER	__BIT(5)
 #define SUNXI_MMC_IDMA_CONFIG_CES	__BIT(30)
 #define SUNXI_MMC_IDMA_CONFIG_OWN	__BIT(31)
+#define	SUNXI_MMC_SAMP_DL_SW_EN		__BIT(7)
 
 struct sunxi_mmc_idma_descriptor {
 	uint32_t        dma_config;
