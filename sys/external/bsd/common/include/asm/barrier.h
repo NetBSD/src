@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: barrier.h,v 1.1 2017/09/11 05:20:17 maya Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
