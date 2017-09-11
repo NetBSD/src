@@ -1,4 +1,4 @@
-/*	$NetBSD: kuserok.c,v 1.1.1.2.2.1 2017/08/20 05:46:42 snj Exp $	*/
+/*	$NetBSD: kuserok.c,v 1.1.1.2.2.2 2017/09/11 04:53:55 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -625,7 +625,7 @@ kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
 	if (!_krb5_homedir_access(context))
 	    return KRB5_PLUGIN_NO_HANDLE;
 
-	if (getpwnam_r(luser, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
+	if (rk_getpwnam_r(luser, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
 	    krb5_set_error_message(context, errno, "User unknown (getpwnam_r())");
 	    return KRB5_PLUGIN_NO_HANDLE;
 	}

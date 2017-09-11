@@ -1,4 +1,4 @@
-/*	$NetBSD: get_default_principal.c,v 1.1.1.2.2.1 2017/08/20 05:46:41 snj Exp $	*/
+/*	$NetBSD: get_default_principal.c,v 1.1.1.2.2.2 2017/09/11 04:53:55 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -78,9 +78,11 @@ _krb5_get_default_principal_local (krb5_context context,
 	else
 	    ret = krb5_make_principal(context, princ, NULL, "root", NULL);
     } else {
-	struct passwd *pw = getpwuid(uid);
-	if(pw != NULL)
-	    user = pw->pw_name;
+	struct passwd pw, *pwd = NULL;
+	char pwbuf[2048];
+
+	if (rk_getpwuid_r(uid, &pw, pwbuf, sizeof(pwbuf), &pwd) == 0)
+	    user = pwd->pw_name;
 	else {
 	    user = get_env_user();
 	    if(user == NULL)
