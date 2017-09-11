@@ -1,4 +1,4 @@
-/*      $NetBSD: wdc_xsurf.c,v 1.2 2012/11/21 22:37:03 rkujawa Exp $ */
+/*      $NetBSD: wdc_xsurf.c,v 1.2.34.1 2017/09/11 05:14:56 snj Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ void		wdc_xsurf_attach_channel(struct wdc_xsurf_softc *, int);
 void		wdc_xsurf_map_channel(struct wdc_xsurf_softc *, int);
 int		wdc_xsurf_intr(void *arg);
 
-CFATTACH_DECL_NEW(wdc_xsurf, sizeof(struct wdc_softc),
+CFATTACH_DECL_NEW(wdc_xsurf, sizeof(struct wdc_xsurf_softc),
     wdc_xsurf_match, wdc_xsurf_attach, NULL, NULL);
 
 static const unsigned int wdc_xsurf_wdr_offsets[] = {
