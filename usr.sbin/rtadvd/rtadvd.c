@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.53 2017/04/11 14:29:23 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.54 2017/09/11 14:12:07 christos Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -219,14 +219,13 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 	if (argc == 0) {
-		fprintf(stderr,
-			"usage: rtadvd [-DdfRs] [-c conffile]"
-			" [-M ifname] [-p pidfile] interface ...\n");
-		exit(1);
+		fprintf(stderr, "Ysage: %s [-DdfRs] [-c conffile]"
+		    " [-M ifname] [-p pidfile] interface ...\n", getprogname());
+		return EXIT_FAILURE;
 	}
 
 	if (prog_init && prog_init() == -1) {
-		err(1, "init failed");
+		err(EXIT_FAILURE, "init failed");
 	}
 
 	logopt = LOG_NDELAY | LOG_PID;
@@ -248,7 +247,7 @@ main(int argc, char *argv[])
 			    RTADVD_USER);
 		else
 			syslog(LOG_ERR, "getpwnam: %s: %m", RTADVD_USER);
-		exit(1);
+		return EXIT_FAILURE;
 	}
 
 	/* timer initialization */
@@ -285,18 +284,18 @@ main(int argc, char *argv[])
 	syslog(LOG_INFO, "dropping privileges to %s", RTADVD_USER);
 	if (prog_chroot(pw->pw_dir) == -1) {
 		syslog(LOG_ERR, "chroot: %s: %m", pw->pw_dir);
-		exit(1);
+		return EXIT_FAILURE;
 	}
 	if (prog_chdir("/") == -1) {
 		syslog(LOG_ERR, "chdir: /: %m");
-		exit(1);
+		return EXIT_FAILURE;
 	}
 	if (prog_setgroups(1, &pw->pw_gid) == -1 ||
 	    prog_setgid(pw->pw_gid) == -1 ||
 	    prog_setuid(pw->pw_uid) == -1)
 	{
 		syslog(LOG_ERR, "failed to drop privileges: %m");
-		exit(1);
+		return EXIT_FAILURE;
 	}
 
 	signal(SIGINT, set_die);
@@ -330,10 +329,10 @@ main(int argc, char *argv[])
 
 		if (timeout != NULL) {
 			syslog(LOG_DEBUG,
-			    "<%s> set timer to %ld:%ld. waiting for "
+			    "<%s> set timer to %jd:%jd. waiting for "
 			    "inputs or timeout", __func__,
-			    (long int)timeout->tv_sec,
-			    (long int)timeout->tv_nsec);
+			    (intmax_t)timeout->tv_sec,
+			    (intmax_t)timeout->tv_nsec);
 		} else {
 			syslog(LOG_DEBUG,
 			    "<%s> there's no timer. waiting for inputs",
@@ -355,7 +354,7 @@ main(int argc, char *argv[])
 		if (set[0].revents & POLLIN)
 			rtadvd_input();
 	}
-	exit(0);		/* NOTREACHED */
+	return EXIT_SUCCESS;	/* NOTREACHED */
 }
 
 static void
@@ -397,13 +396,13 @@ die(void)
 		syslog(LOG_NOTICE, "<%s> gracefully terminated", __func__);
 		free(rcvcmsgbuf);
 		free(sndcmsgbuf);
-		exit(0);
+		exit(EXIT_SUCCESS);
 		/* NOT REACHED */
 	}
 
 	if (TAILQ_FIRST(&ralist) == NULL) {
 		syslog(LOG_NOTICE, "<%s> gracefully terminated", __func__);
-		exit(0);
+		exit(EXIT_SUCCESS);
 		/* NOT REACHED */
 	}
 
@@ -432,7 +431,7 @@ die(void)
 		rai->maxinterval = MIN_DELAY_BETWEEN_RAS;
 		rai->leaving_adv = MAX_FINAL_RTR_ADVERTISEMENTS;
 		ra_output(rai);
-		ra_timer_update((void *)rai, &rai->timer->tm);
+		ra_timer_update(rai, &rai->timer->tm);
 		rtadvd_set_timer(&rai->timer->tm, rai->timer);
 	}
 }
@@ -688,7 +687,7 @@ rtmsg_input(void)
 			rtadvd_remove_timer(&rai->timer);
 			rai->timer = rtadvd_add_timer(ra_timeout,
 			    ra_timer_update, rai, rai);
-			ra_timer_update((void *)rai, &rai->timer->tm);
+			ra_timer_update(rai, &rai->timer->tm);
 			rtadvd_set_timer(&rai->timer->tm, rai->timer);
 		} else if (prefixchange && rai->ifflags & IFF_UP) {
 			/*
@@ -901,8 +900,6 @@ rtadvd_input(void)
 		    __func__, icp->icmp6_type);
 		return;
 	}
-
-	return;
 }
 
 static void
@@ -993,7 +990,6 @@ rs_input(int len, struct nd_router_solicit *rs,
 
 done:
 	free_ndopts(&ndopts);
-	return;
 }
 
 void
@@ -1196,7 +1192,6 @@ ra_input(int len, struct nd_router_advert *ra,
 	
 done:
 	free_ndopts(&ndopts);
-	return;
 }
 
 /* return a non-zero value if the received prefix is inconsitent with ours */
@@ -1212,7 +1207,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 
 #if 0				/* impossible */
 	if (pinfo->nd_opt_pi_type != ND_OPT_PREFIX_INFORMATION)
-		return(0);
+		return 0;
 #endif
 
 	/*
@@ -1242,7 +1237,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 		       inet_ntop(AF_INET6, &from->sin6_addr,
 				 ntopbuf, INET6_ADDRSTRLEN),
 		       rai->ifname);
-		return(0);
+		return 0;
 	}
 
 	preferred_time = ntohl(pinfo->nd_opt_pi_preferred_time);
@@ -1325,7 +1320,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 		inconsistent++;
 	}
 
-	return(inconsistent);
+	return inconsistent;
 }
 
 struct prefix *
@@ -1341,16 +1336,16 @@ find_prefix(struct rainfo *rai, struct in6_addr *prefix, int plen)
 		bytelen = plen / 8;
 		bitlen = plen % 8;
 		bitmask = 0xff << (8 - bitlen);
-		if (memcmp((void *)prefix, (void *)&pp->prefix, bytelen))
+		if (memcmp(prefix, &pp->prefix, bytelen))
 			continue;
 		if (bitlen == 0 ||
 		    ((prefix->s6_addr[bytelen] & bitmask) == 
 		     (pp->prefix.s6_addr[bytelen] & bitmask))) {
-			return(pp);
+			return pp;
 		}
 	}
 
-	return(NULL);
+	return NULL;
 }
 
 /* check if p0/plen0 matches p1/plen1; return 1 if matches, otherwise 0. */
@@ -1362,19 +1357,19 @@ prefix_match(struct in6_addr *p0, int plen0,
 	unsigned char bitmask;
 
 	if (plen0 < plen1)
-		return(0);
+		return 0;
 	bytelen = plen1 / 8;
 	bitlen = plen1 % 8;
 	bitmask = 0xff << (8 - bitlen);
-	if (memcmp((void *)p0, (void *)p1, bytelen))
-		return(0);
+	if (memcmp(p0, p1, bytelen))
+		return 0;
 	if (bitlen == 0 ||
 	    ((p0->s6_addr[bytelen] & bitmask) ==
 	     (p1->s6_addr[bytelen] & bitmask))) { 
-		return(1);
+		return 1;
 	}
 
-	return(0);
+	return 0;
 }
 
 static int
@@ -1475,12 +1470,11 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 		}
 	}
 
-	return(0);
+	return 0;
 
   bad:
 	free_ndopts(ndopts);
-
-	return(-1);
+	return -1;
 }
 
 static void
@@ -1509,19 +1503,19 @@ sock_open(void)
 	rcvcmsgbuf = malloc(rcvcmsgbuflen);
 	if (rcvcmsgbuf == NULL) {
 		syslog(LOG_ERR, "<%s> malloc: %m", __func__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	sndcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo));
 	sndcmsgbuf = malloc(sndcmsgbuflen);
 	if (sndcmsgbuf == NULL) {
 		syslog(LOG_ERR, "<%s> malloc: %m", __func__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	if ((sock = prog_socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0) {
 		syslog(LOG_ERR, "<%s> socket: %m", __func__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	/* RFC 4861 Section 4.2 */
@@ -1529,7 +1523,7 @@ sock_open(void)
 	if (prog_setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &on,
 		       sizeof(on)) == -1) {
 		syslog(LOG_ERR, "<%s> IPV6_MULTICAST_HOPS: %m", __func__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	/* specify to tell receiving interface */
@@ -1538,13 +1532,13 @@ sock_open(void)
 	if (prog_setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
 		       sizeof(on)) < 0) {
 		syslog(LOG_ERR, "<%s> IPV6_RECVPKTINFO: %m", __func__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 #else  /* old adv. API */
 	if (prog_setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO, &on,
 		       sizeof(on)) < 0) {
 		syslog(LOG_ERR, "<%s> IPV6_PKTINFO: %m", __func__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 #endif 
 
@@ -1554,13 +1548,13 @@ sock_open(void)
 	if (prog_setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
 		       sizeof(on)) < 0) {
 		syslog(LOG_ERR, "<%s> IPV6_RECVHOPLIMIT: %m", __func__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 #else  /* old adv. API */
 	if (prog_setsockopt(sock, IPPROTO_IPV6, IPV6_HOPLIMIT, &on,
 		       sizeof(on)) < 0) {
 		syslog(LOG_ERR, "<%s> IPV6_HOPLIMIT: %m", __func__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 #endif
 
@@ -1572,7 +1566,7 @@ sock_open(void)
 	if (prog_setsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
 		       sizeof(filt)) < 0) {
 		syslog(LOG_ERR, "<%s> IICMP6_FILTER: %m", __func__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	/*
@@ -1583,7 +1577,7 @@ sock_open(void)
 	{
 		syslog(LOG_ERR, "<%s> inet_pton failed(library bug?)",
 		    __func__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	TAILQ_FOREACH(ra, &ralist, next) {
 		mreq.ipv6mr_interface = ra->ifindex;
@@ -1591,7 +1585,7 @@ sock_open(void)
 			       sizeof(mreq)) < 0) {
 			syslog(LOG_ERR, "<%s> IPV6_JOIN_GROUP(link) on %s: %m",
 			       __func__, ra->ifname);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 
@@ -1605,7 +1599,7 @@ sock_open(void)
 		{
 			syslog(LOG_ERR, "<%s> inet_pton failed(library bug?)",
 			    __func__);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		ra = TAILQ_FIRST(&ralist);
 		if (mcastif) {
@@ -1614,7 +1608,7 @@ sock_open(void)
 				syslog(LOG_ERR,
 				       "<%s> invalid interface: %s",
 				       __func__, mcastif);
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 		} else
 			mreq.ipv6mr_interface = ra->ifindex;
@@ -1624,7 +1618,7 @@ sock_open(void)
 			       "<%s> IPV6_JOIN_GROUP(site) on %s: %m",
 			       __func__,
 			       mcastif ? mcastif : ra->ifname);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 	
@@ -1642,10 +1636,8 @@ sock_open(void)
 	sndmhdr.msg_namelen = sizeof(struct sockaddr_in6);
 	sndmhdr.msg_iov = sndiov;
 	sndmhdr.msg_iovlen = 1;
-	sndmhdr.msg_control = (void *)sndcmsgbuf;
+	sndmhdr.msg_control = sndcmsgbuf;
 	sndmhdr.msg_controllen = sndcmsgbuflen;
-	
-	return;
 }
 
 /* open a routing socket to watch the routing table */
@@ -1665,7 +1657,7 @@ rtsock_open(void)
 
 	if ((rtsock = prog_socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
 		syslog(LOG_ERR, "<%s> socket: %m", __func__);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 #ifdef RO_MSGFILTER
 	if (setsockopt(rtsock, PF_ROUTE, RO_MSGFILTER,
@@ -1681,10 +1673,10 @@ if_indextorainfo(unsigned int idx)
 
 	TAILQ_FOREACH(rai, &ralist, next) {
 		if (rai->ifindex == idx)
-			return(rai);
+			return rai;
 	}
 
-	return(NULL);		/* search failed */
+	return NULL;		/* search failed */
 }
 
 struct rainfo *
@@ -1801,7 +1793,7 @@ ra_timeout(void *data)
 	       __func__, rai->ifname);
 
 	if (ra_output(rai))
-		return(rai->timer);
+		return rai->timer;
 	return NULL;
 }
 
@@ -1837,9 +1829,7 @@ ra_timer_update(void *data, struct timespec *tm)
 	tm->tv_nsec = 0;
 
 	syslog(LOG_DEBUG,
-	       "<%s> RA timer on %s is set to %ld:%ld",
+	       "<%s> RA timer on %s is set to %jd:%jd",
 	       __func__, rai->ifname,
-	       (long int)tm->tv_sec, (long int)tm->tv_nsec);
-
-	return;
+	       (intmax_t)tm->tv_sec, (intmax_t)tm->tv_nsec);
 }
