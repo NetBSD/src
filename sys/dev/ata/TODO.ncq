@@ -2,8 +2,6 @@ Bugs
 ----
 test wd* at umass?, confirm the ata_channel kludge works
 
-reconsider freeze/thaw in error recovery - can it screw up with thread?
-
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------
 do biodone() in wddone() starting the dump to not leak bufs when dumping from
