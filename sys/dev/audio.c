@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.357.2.6 2017/09/11 05:29:37 snj Exp $	*/
+/*	$NetBSD: audio.c,v 1.357.2.7 2017/09/11 05:33:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.6 2017/09/11 05:29:37 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.7 2017/09/11 05:33:23 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -275,6 +275,7 @@ void	audio_calc_blksize(struct audio_softc *, int, struct virtual_channel *);
 void	audio_fill_silence(struct audio_params *, uint8_t *, int);
 int	audio_silence_copyout(struct audio_softc *, int, struct uio *);
 
+static int	audio_allocbufs(struct audio_softc *, struct virtual_channel *);
 void	audio_init_ringbuffer(struct audio_softc *,
 			      struct audio_ringbuffer *, int);
 int	audio_initbufs(struct audio_softc *, struct virtual_channel *);
@@ -483,7 +484,6 @@ audioattach(device_t parent, device_t self, void *aux)
 	mixer_devinfo_t mi;
 	int iclass, mclass, oclass, rclass, props;
 	int record_master_found, record_source_found;
-	bool can_capture, can_playback;
 
 	sc = device_private(self);
 	sc->dev = self;
@@ -571,7 +571,6 @@ audioattach(device_t parent, device_t self, void *aux)
 	    hwp->query_devinfo == 0 ||
 	    hwp->get_props == 0) {
 		aprint_error(": missing method\n");
-		sc->hw_if = NULL;
 		return;
 	}
 #endif
@@ -602,56 +601,16 @@ audioattach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	mutex_enter(sc->sc_lock);
-	can_playback = audio_can_playback(sc);
-	can_capture = audio_can_capture(sc);
-
-	if (can_playback) {
-		error = audio_alloc_ring(sc, &sc->sc_pr,
-	    	    AUMODE_PLAY, AU_RING_SIZE);
-		if (error)
-			goto bad_play;
-
-		error = audio_alloc_ring(sc, &vc->sc_mpr,
-	    	    AUMODE_PLAY, AU_RING_SIZE);
-bad_play:
-		if (error) {
-			if (sc->sc_pr.s.start != NULL)
-				audio_free_ring(sc, &sc->sc_pr);
-			sc->hw_if = NULL;
-			if (vc->sc_mpr.s.start != 0)
-				audio_free_ring(sc, &vc->sc_mpr);
-			sc->hw_if = NULL;
-			aprint_error_dev(sc->sc_dev, "could not allocate play "
-			    "buffer\n");
-			return;
-		}
+	if (audio_allocbufs(sc, vc) != 0) {
+		aprint_error_dev(sc->sc_dev,
+			"could not allocate ring buffer\n");
+		mutex_exit(sc->sc_lock);
+		return;
 	}
-	if (can_capture) {
-		error = audio_alloc_ring(sc, &sc->sc_rr,
-		    AUMODE_RECORD, AU_RING_SIZE);
-		if (error)
-			goto bad_rec;
-
-		error = audio_alloc_ring(sc, &vc->sc_mrr,
-		    AUMODE_RECORD, AU_RING_SIZE);
-bad_rec:
-		if (error) {
-			if (vc->sc_mrr.s.start != NULL)
-				audio_free_ring(sc, &vc->sc_mrr);
-			if (sc->sc_pr.s.start != NULL)
-				audio_free_ring(sc, &sc->sc_pr);
-			if (vc->sc_mpr.s.start != 0)
-				audio_free_ring(sc, &vc->sc_mpr);
-			sc->hw_if = NULL;
-			aprint_error_dev(sc->sc_dev, "could not allocate record"
-			   " buffer\n");
-			return;
-		}
-	}
+	mutex_exit(sc->sc_lock);
 
 	sc->sc_lastgain = 128;
 	sc->sc_multiuser = false;
-	mutex_exit(sc->sc_lock);
 
 	error = vchan_autoconfig(sc);
 	if (error != 0) {
@@ -1178,6 +1137,54 @@ audio_print_params(const char *s, struct audio_params *p)
 }
 #endif
 
+/* Allocate all ring buffers. called from audioattach() */
+static int
+audio_allocbufs(struct audio_softc *sc, struct virtual_channel *vc)
+{
+	int error;
+
+	sc->sc_pr.s.start = NULL;
+	vc->sc_mpr.s.start = NULL;
+	sc->sc_rr.s.start = NULL;
+	vc->sc_mrr.s.start = NULL;
+
+	if (audio_can_playback(sc)) {
+		error = audio_alloc_ring(sc, &sc->sc_pr,
+		    AUMODE_PLAY, AU_RING_SIZE);
+		if (error)
+			goto bad_play1;
+
+		error = audio_alloc_ring(sc, &vc->sc_mpr,
+		    AUMODE_PLAY, AU_RING_SIZE);
+		if (error)
+			goto bad_play2;
+	}
+	if (audio_can_capture(sc)) {
+		error = audio_alloc_ring(sc, &sc->sc_rr,
+		    AUMODE_RECORD, AU_RING_SIZE);
+		if (error)
+			goto bad_rec1;
+
+		error = audio_alloc_ring(sc, &vc->sc_mrr,
+		    AUMODE_RECORD, AU_RING_SIZE);
+		if (error)
+			goto bad_rec2;
+	}
+	return 0;
+
+bad_rec2:
+	if (sc->sc_rr.s.start != NULL)
+		audio_free_ring(sc, &sc->sc_rr);
+bad_rec1:
+	if (vc->sc_mpr.s.start != NULL)
+		audio_free_ring(sc, &vc->sc_mpr);
+bad_play2:
+	if (sc->sc_pr.s.start != NULL)
+		audio_free_ring(sc, &sc->sc_pr);
+bad_play1:
+	return error;
+}
+
 int
 audio_alloc_ring(struct audio_softc *sc, struct audio_ringbuffer *r,
 		 int direction, size_t bufsize)
@@ -1231,6 +1238,7 @@ audio_alloc_ring(struct audio_softc *sc, struct audio_ringbuffer *r,
 		    false, 0);
 		if (error) {
 			uvm_unmap(kernel_map, vstart, vstart + vsize);
+			uao_detach(r->uobj);
 			r->uobj = NULL;		/* paranoia */
 			return error;
 		}
@@ -2160,19 +2168,12 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	DPRINTF(("audio_open: flags=0x%x sc=%p hdl=%p\n",
 		 flags, sc, sc->hw_hdl));
 
-	error = audio_alloc_ring(sc, &vc->sc_mpr,
-	    	    AUMODE_PLAY, AU_RING_SIZE);
-	if (!error) {
-		error = audio_alloc_ring(sc, &vc->sc_mrr,
-	    	    AUMODE_RECORD, AU_RING_SIZE);
-	}
-	if (error) {
-		audio_free_ring(sc, &vc->sc_mrr);
-		audio_free_ring(sc, &vc->sc_mpr);
-		kmem_free(vc, sizeof(struct virtual_channel));
-		kmem_free(chan, sizeof(struct audio_chan));
-		return error;
-	}
+	error = audio_alloc_ring(sc, &vc->sc_mpr, AUMODE_PLAY, AU_RING_SIZE);
+	if (error)
+		goto bad;
+	error = audio_alloc_ring(sc, &vc->sc_mrr, AUMODE_RECORD, AU_RING_SIZE);
+	if (error)
+		goto bad;
 
 	if (sc->sc_opens == 0) {
 		sc->sc_credentials = kauth_cred_get();
@@ -2182,11 +2183,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			error = hw->open(sc->hw_hdl, flags);
 			mutex_exit(sc->sc_intr_lock);
 			if (error) {
-				kmem_free(vc,
-				    sizeof(struct virtual_channel));
-				kmem_free(chan,
-				    sizeof(struct audio_chan));
-				return error;
+				goto bad;
 			}
 		}
 		audio_initbufs(sc, NULL);
@@ -2262,7 +2259,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 
 	error = fd_allocfile(&fp, &fd);
 	if (error)
-		return error;
+		goto bad;
 
 	DPRINTF(("audio_open: done sc_mode = 0x%x\n", vc->sc_mode));
 
@@ -5615,8 +5612,8 @@ done:
 		  struct virtual_channel *vc)				\
 	{								\
 		int blksize, cc, cc1, cc2, m, resid;			\
-		int64_t product;					\
-		int64_t result;						\
+		bigger_type product;					\
+		bigger_type result;					\
 		type *orig, *tomix;					\
 									\
 		blksize = sc->sc_pr.blksize;				\
@@ -5637,8 +5634,8 @@ done:
 			for (m = 0; m < (cc / (name / NBBY)); m++) {	\
 				tomix[m] = (bigger_type)tomix[m] *	\
 				    (bigger_type)(vc->sc_swvol) / 255;	\
-				result = orig[m] + tomix[m];		\
-				product = orig[m] * tomix[m];		\
+				result = (bigger_type)orig[m] + tomix[m]; \
+				product = (bigger_type)orig[m] * tomix[m]; \
 				if (orig[m] > 0 && tomix[m] > 0)	\
 					result -= product / MAXVAL;	\
 				else if (orig[m] < 0 && tomix[m] < 0)	\
