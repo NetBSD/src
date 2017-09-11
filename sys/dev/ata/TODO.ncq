@@ -2,11 +2,6 @@ Bugs
 ----
 test wd* at umass?, confirm the ata_channel kludge works
 
-revise calls to atastart() - now called alsoafter ATASTART_ABORT(), call
-only from intr routine
-- wdc.c never calls atastart() (start always false)
-- ata_wdc.c calls atastart() regardless if error
-
 reconsider freeze/thaw in error recovery - can it screw up with thread?
 
 Other random notes (do outside the NCQ branch):
