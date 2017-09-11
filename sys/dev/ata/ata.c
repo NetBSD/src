@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.31 2017/09/10 19:31:15 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.32 2017/09/11 22:16:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.31 2017/09/10 19:31:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.32 2017/09/11 22:16:18 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1230,8 +1230,6 @@ ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	else
 		TAILQ_INSERT_HEAD(&chp->ch_queue->queue_xfer, xfer,
 		    c_xferchain);
-	ATADEBUG_PRINT(("atastart from ata_exec_xfer, flags 0x%x\n",
-	    chp->ch_flags), DEBUG_XFERS);
 
 	/*
 	 * if polling and can sleep, wait for the xfer to be at head of queue
@@ -1256,6 +1254,8 @@ ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	ata_channel_unlock(chp);
 
+	ATADEBUG_PRINT(("atastart from ata_exec_xfer, flags 0x%x\n",
+	    chp->ch_flags), DEBUG_XFERS);
 	atastart(chp);
 }
 
