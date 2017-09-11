@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.357.2.5 2017/08/31 11:10:37 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.357.2.6 2017/09/11 05:29:37 snj Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.5 2017/08/31 11:10:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.6 2017/09/11 05:29:37 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2059,28 +2059,24 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 		sc->sc_pr.blksize = vc->sc_mpr.blksize;
 
 #ifdef AUDIO_INTR_TIME
-#define double u_long
 	if (audio_can_playback(sc)) {
 		sc->sc_pnintr = 0;
-		sc->sc_pblktime = (u_long)(
-		    (double)vc->sc_mpr.blksize * 100000 /
-		    (double)(vc->sc_pparams.precision / NBBY *
-			     vc->sc_pparams.channels *
-			     vc->sc_pparams.sample_rate)) * 10;
-		DPRINTF(("audio: play blktime = %lu for %d\n",
+		sc->sc_pblktime = (int64_t)vc->sc_mpr.blksize * 1000000 /
+		    (vc->sc_pparams.channels *
+		     vc->sc_pparams.sample_rate *
+		     vc->sc_pparams.precision / NBBY);
+		DPRINTF(("audio: play blktime = %" PRId64 " for %d\n",
 			 sc->sc_pblktime, vc->sc_mpr.blksize));
 	}
 	if (audio_can_capture(sc)) {
 		sc->sc_rnintr = 0;
-		sc->sc_rblktime = (u_long)(
-		    (double)vc->sc_mrr.blksize * 100000 /
-		    (double)(vc->sc_rparams.precision / NBBY *
-			     vc->sc_rparams.channels *
-			     vc->sc_rparams.sample_rate)) * 10;
-		DPRINTF(("audio: record blktime = %lu for %d\n",
+		sc->sc_rblktime = (int64_t)vc->sc_mrr.blksize * 1000000 /
+		    (vc->sc_rparams.channels *
+		     vc->sc_rparams.sample_rate *
+		     vc->sc_rparams.precision / NBBY);
+		DPRINTF(("audio: record blktime = %" PRId64 " for %d\n",
 			 sc->sc_rblktime, vc->sc_mrr.blksize));
 	}
-#undef double
 #endif
 
 	return 0;
@@ -3764,26 +3760,28 @@ audio_mix(void *v)
 #ifdef AUDIO_INTR_TIME
 		{
 			struct timeval tv;
-			u_long t;
+			int64_t t;
 			microtime(&tv);
-			t = tv.tv_usec + 1000000 * tv.tv_sec;
+			t = (int64_t)tv.tv_sec * 1000000 + tv.tv_usec;
 			if (sc->sc_pnintr) {
-				long lastdelta, totdelta;
+				int64_t lastdelta, totdelta;
 				lastdelta = t - sc->sc_plastintr -
 				    sc->sc_pblktime;
 				if (lastdelta > sc->sc_pblktime / 3) {
 					printf("audio: play interrupt(%d) off "
-				       "relative by %ld us (%lu)\n",
+					       "relative by %" PRId64 " us "
+					       "(%" PRId64 ")\n",
 					       sc->sc_pnintr, lastdelta,
 					       sc->sc_pblktime);
 				}
 				totdelta = t - sc->sc_pfirstintr -
-					sc->sc_pblktime * sc->sc_pnintr;
+				    sc->sc_pblktime * sc->sc_pnintr;
 				if (totdelta > sc->sc_pblktime) {
 					printf("audio: play interrupt(%d) "
-					       "off absolute by %ld us (%lu) "
-					       "(LOST)\n", sc->sc_pnintr,
-					       totdelta, sc->sc_pblktime);
+					       "off absolute by %" PRId64 " us "
+					       "(%" PRId64 ") (LOST)\n",
+					       sc->sc_pnintr, totdelta,
+					       sc->sc_pblktime);
 					sc->sc_pnintr++;
 					/* avoid repeated messages */
 				}
@@ -3995,25 +3993,27 @@ audio_upmix(void *v)
 #ifdef AUDIO_INTR_TIME
 		{
 			struct timeval tv;
-			u_long t;
+			int64_t t;
 			microtime(&tv);
-			t = tv.tv_usec + 1000000 * tv.tv_sec;
+			t = (int64_t)tv.tv_sec * 1000000 + tv.tv_usec;
 			if (sc->sc_rnintr) {
-				long lastdelta, totdelta;
+				int64_t lastdelta, totdelta;
 				lastdelta = t - sc->sc_rlastintr -
 				    sc->sc_rblktime;
 				if (lastdelta > sc->sc_rblktime / 5) {
 					printf("audio: record interrupt(%d) "
-					       "off relative by %ld us (%lu)\n",
+					       "off relative by %" PRId64 " us "
+					       "(%" PRId64 ")\n",
 					       sc->sc_rnintr, lastdelta,
 					       sc->sc_rblktime);
 				}
 				totdelta = t - sc->sc_rfirstintr -
-					sc->sc_rblktime * sc->sc_rnintr;
+				    sc->sc_rblktime * sc->sc_rnintr;
 				if (totdelta > sc->sc_rblktime / 2) {
 					sc->sc_rnintr++;
 					printf("audio: record interrupt(%d) "
-					       "off absolute by %ld us (%lu)\n",
+					       "off absolute by %" PRId64 " us "
+					       "(%" PRId64 ")\n",
 					       sc->sc_rnintr, totdelta,
 					       sc->sc_rblktime);
 					sc->sc_rnintr++;
