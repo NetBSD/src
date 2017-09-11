@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.32 2013/10/26 18:47:27 jdc Exp $ */
+/*	$NetBSD: autoconf.h,v 1.33 2017/09/11 19:25:07 palle Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ int	matchbyname(device_t, cfdata_t, void *);
  * `clockfreq' produces a printable representation of a clock frequency
  * (this is just a frill).
  */
-char	*clockfreq(long);
+char	*clockfreq(uint64_t);
 
 /* Kernel initialization routine. */
 void	bootstrap(void *, void *, void *, void *, void *);
