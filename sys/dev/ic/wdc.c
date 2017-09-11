@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.283.2.14 2017/09/10 19:31:15 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.283.2.15 2017/09/11 22:19:23 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.14 2017/09/10 19:31:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.15 2017/09/11 22:19:23 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1589,7 +1589,7 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	struct ata_command *ata_c = &xfer->c_ata_c;
-	bool start = false;
+	bool start = true;
 
 	ATADEBUG_PRINT(("__wdccommand_done %s:%d:%d flags 0x%x\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
