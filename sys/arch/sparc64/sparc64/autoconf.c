@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.211 2017/03/26 12:59:29 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.212 2017/09/11 19:25:07 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.211 2017/03/26 12:59:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.212 2017/09/11 19:25:07 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -521,16 +521,16 @@ cpu_rootconf(void)
 }
 
 char *
-clockfreq(long freq)
+clockfreq(uint64_t freq)
 {
 	static char buf[10];
 	size_t len;
 
 	freq /= 1000;
-	len = snprintf(buf, sizeof(buf), "%ld", freq / 1000);
+	len = snprintf(buf, sizeof(buf), "%" PRIu64, freq / 1000);
 	freq %= 1000;
 	if (freq)
-		snprintf(buf + len, sizeof(buf) - len, ".%03ld", freq);
+		snprintf(buf + len, sizeof(buf) - len, ".%03" PRIu64, freq);
 	return buf;
 }
 

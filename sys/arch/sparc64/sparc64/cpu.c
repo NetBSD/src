@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.131 2017/08/27 19:31:43 palle Exp $ */
+/*	$NetBSD: cpu.c,v 1.132 2017/09/11 19:25:07 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.131 2017/08/27 19:31:43 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.132 2017/09/11 19:25:07 palle Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -421,7 +421,7 @@ void
 cpu_attach(device_t parent, device_t dev, void *aux)
 {
 	int node;
-	unsigned int clk, sclk = 0;
+	uint64_t clk, sclk = 0;
 	struct mainbus_attach_args *ma = aux;
 	struct cpu_info *ci;
 	const char *sep;
@@ -465,7 +465,9 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 			     device_xname(dev), "timer");
 	mutex_init(&ci->ci_ctx_lock, MUTEX_SPIN, IPL_VM);
 
-	clk = prom_getpropint(node, "clock-frequency", 0);
+	clk = prom_getpropuint64(node, "clock-frequency64", 0);
+	if (clk == 0)
+	  clk = prom_getpropint(node, "clock-frequency", 0);
 	if (clk == 0) {
 		/*
 		 * Try to find it in the OpenPROM root...
