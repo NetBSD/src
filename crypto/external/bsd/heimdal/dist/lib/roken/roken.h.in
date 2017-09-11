@@ -650,6 +650,13 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_getpwnam_r(const char *, struct passwd *, char *, size_t, struct passwd **);
 #endif
 
+#ifdef POSIX_GETPWUID_R
+#define rk_getpwuid_r(_u, _pw, _b, _sz, _pwd) getpwuid_r(_u, _pw, _b, _sz, _pwd)
+#else
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_getpwuid_r(uid_t, struct passwd *, char *, size_t, struct passwd **);
+#endif
+
 ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL get_default_username (void);
 
 #ifndef HAVE_SETEUID
