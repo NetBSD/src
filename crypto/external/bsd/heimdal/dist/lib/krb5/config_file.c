@@ -1,4 +1,4 @@
-/*	$NetBSD: config_file.c,v 1.1.1.1.20.1 2017/08/30 06:57:36 snj Exp $	*/
+/*	$NetBSD: config_file.c,v 1.1.1.1.20.2 2017/09/11 04:43:19 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -441,9 +441,11 @@ krb5_config_parse_file_multi (krb5_context context,
 	    home = getenv("HOME");
 
 	if (home == NULL) {
-	    struct passwd *pw = getpwuid(getuid());
-	    if(pw != NULL)
-		home = pw->pw_dir;
+	    struct passwd pw, *pwd = NULL;
+	    char pwbuf[2048];
+
+	    if (rk_getpwuid_r(getuid(), &pw, pwbuf, sizeof(pwbuf), &pwd) == 0)
+		home = pwd->pw_dir;
 	}
 	if (home) {
 	    int aret;

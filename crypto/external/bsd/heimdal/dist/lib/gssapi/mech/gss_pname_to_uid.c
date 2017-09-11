@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_pname_to_uid.c,v 1.2.10.2 2017/08/30 06:57:29 snj Exp $	*/
+/*	$NetBSD: gss_pname_to_uid.c,v 1.2.10.3 2017/09/11 04:43:19 snj Exp $	*/
 
 /*
  * Copyright (c) 2011, PADL Software Pty Ltd.
@@ -150,12 +150,8 @@ gss_pname_to_uid(OM_uint32 *minor_status,
     OM_uint32 major, tmpMinor;
     gss_buffer_desc localname = GSS_C_EMPTY_BUFFER;
     char *szLocalname;
-#ifdef POSIX_GETPWNAM_R
     char pwbuf[2048];
     struct passwd pw, *pwd;
-#else
-    struct passwd *pwd;
-#endif
 
     major = gss_localname(minor_status, pname, mech_type, &localname);
     if (GSS_ERROR(major))
@@ -171,12 +167,8 @@ gss_pname_to_uid(OM_uint32 *minor_status,
     memcpy(szLocalname, localname.value, localname.length);
     szLocalname[localname.length] = '\0';
 
-#ifdef POSIX_GETPWNAM_R
-    if (getpwnam_r(szLocalname, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0)
+    if (rk_getpwnam_r(szLocalname, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0)
         pwd = NULL;
-#else
-    pwd = getpwnam(szLocalname);
-#endif
 
     gss_release_buffer(&tmpMinor, &localname);
     free(szLocalname);
