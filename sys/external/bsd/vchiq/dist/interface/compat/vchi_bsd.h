@@ -28,10 +28,6 @@
 #ifndef __VCHI_NETBSD_H__
 #define __VCHI_NETBSD_H__
 
-#ifdef _KERNEL_OPT
-#include "opt_multiprocessor.h"
-#endif
-
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +45,7 @@
 #include <sys/callout.h>
 
 #include <linux/completion.h>
+#include <asm/barrier.h>
 
 /*
  * Copy from/to user API
@@ -330,21 +327,6 @@ typedef	off_t	loff_t;
 
 #define BCM2835_MBOX_CHAN_VCHIQ	3
 #define bcm_mbox_write	bcmmbox_write
-
-#define mb      membar_sync
-#define wmb     membar_producer
-#define rmb     membar_consumer
-#define dsb	membar_producer
-
-#ifdef MULTIPROCESSOR
-#  define       smp_mb                          mb
-#  define       smp_wmb                         wmb
-#  define       smp_rmb                         rmb
-#else
-#  define       smp_mb()                        do {} while (0)
-#  define       smp_wmb()                       do {} while (0)
-#  define       smp_rmb()                       do {} while (0)
-#endif
 
 #define device_print_prettyname(dev)	device_printf((dev), "")
 
