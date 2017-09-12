@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.62 2017/08/20 15:58:43 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.63 2017/09/12 13:43:37 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.62 2017/08/20 15:58:43 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.63 2017/09/12 13:43:37 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -2017,6 +2017,18 @@ sdmmc_mem_write_block_subr(struct sdmmc_function *sf, bus_dmamap_t dmap,
 
 	if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
 		error = sdmmc_select_card(sc, sf);
+		if (error)
+			goto out;
+	}
+
+	const int nblk = howmany(datalen, SDMMC_SECTOR_SIZE);
+	if (ISSET(sc->sc_flags, SMF_SD_MODE) && nblk > 1) {
+		/* Set the number of write blocks to be pre-erased */
+		memset(&cmd, 0, sizeof(cmd));
+		cmd.c_opcode = SD_APP_SET_WR_BLK_ERASE_COUNT;
+		cmd.c_flags = SCF_RSP_R1 | SCF_RSP_SPI_R1 | SCF_CMD_AC;
+		cmd.c_arg = nblk;
+		error = sdmmc_app_command(sc, sf, &cmd);
 		if (error)
 			goto out;
 	}
