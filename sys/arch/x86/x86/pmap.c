@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.256 2017/07/28 14:13:11 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.257 2017/09/12 01:01:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.256 2017/07/28 14:13:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.257 2017/09/12 01:01:25 mrg Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1154,6 +1154,7 @@ pmap_kremove(vaddr_t sva, vsize_t len)
 void
 pmap_kremove_local(vaddr_t sva, vsize_t len)
 {
+
 	pmap_kremove1(sva, len, true);
 }
 
