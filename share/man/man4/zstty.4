@@ -1,4 +1,4 @@
-.\"	$NetBSD: zstty.4,v 1.15 2017/07/09 06:37:34 tsutsui Exp $
+.\"	$NetBSD: zstty.4,v 1.16 2017/09/12 14:48:11 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,20 +27,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 9, 2017
+.Dd September 12, 2017
 .Dt ZSTTY 4
 .Os
 .Sh NAME
 .Nm zstty ,
 .Nm zsc ,
 .Nm zs
-.Nd
-.Tn Zilog
-8530 Serial Communications Controller (SCC) for
-.Tn RS-232C ,
-.Tn RS-422 ,
-and
-.Tn RS-423
+.Nd Zilog 8530 Serial Communications Controller (SCC) for RS-232C, RS-422, and RS-423
 .Sh SYNOPSIS
 .Cd options PPS_SYNC
 .Cd options PPS_TRAILING_EDGE
@@ -156,13 +150,7 @@ and
 .Sh DESCRIPTION
 The
 .Nm
-driver provides
-.Tn TTY
-support for
-.Tn Zilog
-8530 Dual
-.Tn UART
-chips.
+driver provides TTY support for Zilog 8530 Dual UART chips.
 .Pp
 Input and output for each line may set to any baud rate in the
 range 50 to 38400 (and higher on some machines).
@@ -170,12 +158,7 @@ range 50 to 38400 (and higher on some machines).
 The
 .Em PPS_SYNC
 option enables code to use the Data Carrier Detect (DCD) signal line for attachment
-to an external precision clock source
-.Po
-e.g.,
-.Tn GPS ,
-.Tn CDMA
-.Pc
+to an external precision clock source (e.g., GPS, CDMA)
 which generates a Pulse Per Second (PPS) signal.
 This is used by
 .Xr ntpd 8
@@ -235,7 +218,6 @@ This usually means input flow-control is not configured correctly
 .Xr kbd 4 ,
 .Xr ms 4 ,
 .Xr options 4 ,
-.Xr scc 4 ,
 .Xr tty 4 ,
 .Xr ntpd 8
 .Sh HISTORY
@@ -253,9 +235,7 @@ on alpha is created by
 .Xr MAKEDEV 8
 with minor number 2, so the corresponding device should be zstty2, not zstty1.
 .Sh BUGS
-The old
-.Tn Zilog
-8530 chip has a very small FIFO (3 bytes?) and
+The old Zilog 8530 chip has a very small FIFO (3 bytes?) and
 therefore has very strict latency requirements for the
 interrupt service routine.
 This limits the usable baud rates on many machines.
