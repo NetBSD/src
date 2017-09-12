@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.32 2017/07/16 17:11:46 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.33 2017/09/12 13:43:37 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 /* SD application commands */			/* response type */
 #define SD_APP_SET_BUS_WIDTH		6	/* R1 */
 #define SD_APP_SD_STATUS		13	/* R1 */
+#define SD_APP_SET_WR_BLK_ERASE_COUNT	23	/* R1 */
 #define SD_APP_OP_COND			41	/* R3 */
 #define SD_APP_SEND_SCR			51	/* R1 */
 
