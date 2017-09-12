@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.12 2017/08/26 17:59:24 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.13 2017/09/12 10:46:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.12 2017/08/26 17:59:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.13 2017/09/12 10:46:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.12 2017/08/26 17:59:24 jmcneill Exp
 #include <sys/kmem.h>
 #include <sys/gpio.h>
 #include <sys/bitops.h>
+#include <sys/lwp.h>
 
 #include <dev/fdt/fdtvar.h>
 #include <dev/gpio/gpiovar.h>
