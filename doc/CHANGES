@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2312 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2313 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -47,6 +47,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	lm(4): Add support for NCT5174D, NCT6775F, NCT6779D and NCT679[1235]D.
 		[msaitoh 20170711]
 	arm: Add support for NVIDIA Tegra X1 SoC. [jmcneill 20170720]
+	itesio(4): Add support IT8628E. [hauke 20170814]
 	ichsmb(4): Add support for Intel C3000. [msaitoh 20170817]
 	ismt(4): Add support for Intel C3000. [msaitoh 20170817]
 	powerpc: Bump MAXTSIZ to 128MB for OEA based systems [sevan 20170818]
@@ -56,3 +57,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	file(1): Upgraded to 5.32. [christos 20170908]
 	tcpdump(8): Import 4.9.2. [christos 20170908]
 	veriexecgen(8): drop support for MD5, SHA1, RMD160. [sevan 20170909]
+	itesio(4): Add support IT8728GF and IT877[12]E [hauke 20170814]
