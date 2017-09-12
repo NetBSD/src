@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.60 2017/09/11 10:11:05 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.61 2017/09/12 05:28:31 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -808,7 +808,6 @@ ixv_msix_que(void *arg)
 {
 	struct ix_queue	*que = arg;
 	struct adapter  *adapter = que->adapter;
-	struct ifnet    *ifp = adapter->ifp;
 	struct tx_ring	*txr = que->txr;
 	struct rx_ring	*rxr = que->rxr;
 	bool		more;
@@ -826,19 +825,6 @@ ixv_msix_que(void *arg)
 
 	IXGBE_TX_LOCK(txr);
 	ixgbe_txeof(txr);
-	/*
-	 * Make certain that if the stack
-	 * has anything queued the task gets
-	 * scheduled to handle it.
-	 */
-	if (!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX))
-		if (!ixgbe_mq_ring_empty(ifp, txr->txr_interq))
-			ixgbe_mq_start_locked(ifp, txr);
-		/* Only for queue 0 */
-		/* NetBSD still needs this for CBQ */
-		if ((&adapter->queues[0] == que)
-		    && (!ixgbe_legacy_ring_empty(ifp, NULL)))
-			ixgbe_legacy_start_locked(ifp, txr);
 	IXGBE_TX_UNLOCK(txr);
 
 	/* Do AIM now? */
@@ -2545,6 +2531,7 @@ ixv_handle_que(void *context)
 			if (!ixgbe_mq_ring_empty(ifp, txr->txr_interq))
 				ixgbe_mq_start_locked(ifp, txr);
 		/* Only for queue 0 */
+		/* NetBSD still needs this for CBQ */
 		if ((&adapter->queues[0] == que)
 		    && (!ixgbe_legacy_ring_empty(ifp, NULL)))
 			ixgbe_legacy_start_locked(ifp, txr);
